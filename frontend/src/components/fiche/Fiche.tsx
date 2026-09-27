@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState, useRef, type ReactNode } from 'react'
 import { addToPipeline, ajouterParcelle, ApiError, archivePipeline, createProjet, getDossierStatut, getFaisabilite, getFiche, getGabarit, getMoi, getParcelExposition, getPipelineForParcel, getPipelineMeta, getProjets, getWatch, is429, patchPipeline, postSignalement, preDossierUrl, projetsPourParcelle, SOURCE, toggleWatch } from '../../lib/api'
 import { verdictMeta } from '../../lib/status'
 import { AnalyseLabuseCard } from './AnalyseLabuseCard'   // RETOURS-14 P1 — carte « Analyse LABUSE » extraite (testable), affiche la version servie
-import { fmtInt, fmtM2, fmtLibelleBrut, iduComplet } from '../../lib/format'
+import { fmtInt, fmtM2, fmtDateNum, fmtLibelleBrut, iduComplet } from '../../lib/format'
 import { layerLabel } from '../../lib/layers'
 import { CLIENT } from '../../lib/strings'
 import { Squelette } from '../Loading'
@@ -1498,16 +1498,24 @@ export function Fiche({ idu }: { idu: string }) {
                 ? <MicroJauge pct={pctConsomme} label={CLIENT.fiche.sdpConsommee(pctConsomme)} tip={CLIENT.fiche.sdpConsommeeTip(reglesSdp ?? null)} />
                 : <MicroJauge pct={0} label={[reglesArticle ? `art. ${reglesArticle}` : null].filter(Boolean).join(' · ') || 'PLU'} />}>
               <div className="flex flex-col gap-3">
-                {/* KELFONCIER-FIX-2 (Lot G) — maquette v3 : Verdict en tête (zone + statut d'ouverture
-                    AU, servis). Le règlement calibré reste rendu en détail par ReglementPluBlock (dont
-                    les règles-valeurs passent en Tuiles). Aucune donnée recalculée. */}
-                {(reglesZone || f.au_ouverture) && (
-                  <Verdict ton={f.au_ouverture?.bloquant ? 'ambre' : 'vert'}
-                    reponse={reglesZone
-                      ? <>{reglesZone}{zoneSous ? `, ${zoneSous}` : ''}{f.au_ouverture ? ` : ${f.au_ouverture.statut}` : ''}</>
-                      : 'Zone non publiée au GPU'}
-                    contexte={f.au_ouverture?.motif || undefined} />
-                )}
+                {/* FICHE-FIX-4 (Lot F) — VERDICT COMPLET pour TOUTES les zones (calibrées ou non) :
+                    zone + nature + « N destinations interdites · N sous condition » (comptes servis
+                    reglement_plu.zones[].destinations). Aucun nombre recalculé. */}
+                {(reglesZone || f.au_ouverture) && (() => {
+                  const dst = (f.reglement_plu?.zones ?? []).reduce((a, z) => ({
+                    int: a.int + (z.destinations?.interdites?.length ?? 0),
+                    sc: a.sc + (z.destinations?.sous_conditions?.length ?? 0),
+                  }), { int: 0, sc: 0 })
+                  const destTxt = [dst.int > 0 ? `${dst.int} destination${dst.int > 1 ? 's' : ''} interdite${dst.int > 1 ? 's' : ''}` : null,
+                    dst.sc > 0 ? `${dst.sc} sous condition` : null].filter(Boolean).join(' · ') || null
+                  return (
+                    <Verdict ton={f.au_ouverture?.bloquant ? 'ambre' : 'vert'}
+                      reponse={reglesZone
+                        ? <>{reglesZone}{zoneSous ? `, ${zoneSous}` : ''}{f.au_ouverture ? ` : ${f.au_ouverture.statut}` : ''}</>
+                        : 'Zone non publiée au GPU'}
+                      contexte={f.au_ouverture?.motif || destTxt || undefined} />
+                  )
+                })()}
                 <ChiffreDissous l="Zone" t={tuileZone} />
                 {/* M75 — obligation APER (ombrières PV, grand parking > 1 500 m²) : contrainte
                     réglementaire portant sur le terrain, INFORMATION. Libellé backend (mêmes mots
@@ -1523,34 +1531,20 @@ export function Fiche({ idu }: { idu: string }) {
                     </Vigilance>
                   </div>
                 )}
-                {f.plu_fraicheur?.libelle && (
-                  <div data-plu-fraicheur={f.plu_fraicheur.statut}>
-                    <Vigilance tone={f.plu_fraicheur.statut === 'a_jour' ? 'mint' : 'creuser'}
-                      title={<><span className="mr-1">{f.plu_fraicheur.statut === 'a_jour' ? '🕓' : '▲'}</span>{f.plu_fraicheur.document_servi || f.plu_fraicheur.libelle}</>}>
-                      {f.plu_fraicheur.document_servi ? (
-                        <>
-                          {f.plu_fraicheur.fait_foi && (
-                            <span className="block text-[10px] text-txt-dim">✓ {f.plu_fraicheur.fait_foi}</span>
-                          )}
-                          {f.plu_fraicheur.en_cours && (
-                            /* M57-P1 (d) : a_jour → avertissement NEUTRE ; les autres statuts portent une
-                               procédure RÉELLE → « En cours (non servi) » conservé. */
-                            f.plu_fraicheur.statut === 'a_jour'
-                              ? <span className="block text-[10px] text-txt-dim">{f.plu_fraicheur.en_cours}</span>
-                              : <span className="block text-[10px] text-st-creuser">⏳ En cours (non servi) : {f.plu_fraicheur.en_cours}</span>
-                          )}
-                          {f.plu_fraicheur.action && (
-                            <span className="block text-[10px] text-txt-mut">→ {f.plu_fraicheur.action}</span>
-                          )}
-                        </>
-                      ) : (
-                        f.plu_fraicheur.note && f.plu_fraicheur.statut !== 'a_jour'
-                          ? <span className="block text-[10px] text-txt-dim">{f.plu_fraicheur.note}</span>
-                          : null
-                      )}
-                    </Vigilance>
-                  </div>
-                )}
+                {/* FICHE-FIX-4 (Lot F) — PLU en une Ligne : « approuvé le JJ/MM/AAAA » + badge document
+                    (opposable / procédure). Le détail (fait foi, procédure en cours, action) derrière le « i ». */}
+                {f.plu_fraicheur?.libelle && (() => {
+                  const pf = f.plu_fraicheur!
+                  const paras = [pf.fait_foi ? `✓ ${pf.fait_foi}` : null,
+                    pf.en_cours ? (pf.statut === 'a_jour' ? pf.en_cours : `En cours (non servi) : ${pf.en_cours}`) : null,
+                    pf.action ? `→ ${pf.action}` : null, pf.note].filter(Boolean) as string[]
+                  return (
+                    <div data-plu-fraicheur={pf.statut}><Lignes>
+                      <Ligne label={<>PLU{paras.length > 0 ? <InfoI tip={<div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>{paras.map((s, i) => <span key={i}>{s}</span>)}</div>} aria="Sur le document PLU" /> : null}</>}
+                        valeur={<span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>{pf.horizon ? `approuvé le ${fmtDateNum(pf.horizon)}` : (pf.document_servi || 'document')}{pf.statut === 'a_jour' && <Badge ton="vert">document</Badge>}</span>} />
+                    </Lignes></div>
+                  )
+                })()}
                 {/* M41 — Radar procédures PLU : stade + conséquences parcellaires servables. */}
                 {f.radar_procedure?.indisponible && <BlocIndisponible titre="Radar procédures PLU" />}
                 {f.radar_procedure?.synthese?.etat && (
@@ -1608,42 +1602,30 @@ export function Fiche({ idu }: { idu: string }) {
                     N bâtiments » (layer bati) répète §3 Bâti (nb_batiments) → retirée. */}
                 {(() => { const rl = reglesLines.filter((l) => l.result !== 'PASS' && l.layer !== 'zonage_plu_gpu' && l.layer !== 'bati'); return rl.length > 0
                   ? <div><GroupLabel>Situation</GroupLabel><div className="flex flex-col gap-1">{rl.map((l, i) => <Line key={i} line={l} hideWeight hideDate />)}</div></div> : null })()}
-                {/* M60 P1c — PORTES en pied d'Urbanisme : les liens Annuaire PLU + lettre de zonage
-                    REPRIS en forme porte (.porte-outil), accroches contextualisées (zone PLU). */}
-                {/* M137-P — les 3 outils PLU fusionnés dans le hub « plu » : la porte Annuaire ouvre le
-                    hub PRÉ-REMPLI sur l'Annuaire (pluPrefill : commune + zone servie). */}
-                <PorteOutil ico="§" data="annuaire" titre="Annuaire PLU de la commune"
-                  sous={reglesZone ? `Le règlement de la zone ${reglesZone} — articles, prescriptions` : 'Le règlement PLU de la commune'}
-                  onClick={() => { setPluPrefillF({ insee: idu.slice(0, 5), zone: reglesZone ?? null }); setModule('plu') }} />
-                {/* EXPORTS-2 lot 8 — « Lettre de vérification de zonage » supprimée (décision Vic
-                    07/09) : la section 2 du Dossier couvre le zonage entièrement. */}
-                {/* M70 déc. 9 — PORTE Vérif procédure PLU dans Urbanisme (grille terminale supprimée).
-                    L'outil lit selectedIdu (préservé par setModule) → pré-rempli sur la parcelle. */}
-                <PorteOutil ico="⚖" data="verif-procedure" titre="Vérif procédure PLU"
-                  sous={reglesZone ? `Commune en procédure ? (zone ${reglesZone})` : 'La commune est-elle en procédure PLU ?'}
-                  onClick={() => { setPluVueF('procedure'); setModule('plu') }} />
+                {/* FICHE-FIX-4 (Lot F) — les 2 outils PLU (Annuaire · Vérif procédure) en boutons
+                    OutilsSection au lieu de grandes cartes PorteOutil. M137-P : Annuaire ouvre le hub
+                    pré-rempli (commune + zone servie) ; Vérif procédure lit selectedIdu. */}
+                <OutilsSection outils={[
+                  { label: 'Annuaire PLU', principal: true, data: 'annuaire',
+                    onClick: () => { setPluPrefillF({ insee: idu.slice(0, 5), zone: reglesZone ?? null }); setModule('plu') } },
+                  { label: 'Vérif procédure', data: 'verif-procedure',
+                    onClick: () => { setPluVueF('procedure'); setModule('plu') } },
+                ]} />
                 {/* RTAA DOM (§4) — rappel réglementaire de conception, servi par le bilan (b.rtaa). */}
                 <RtaaFromBilan idu={idu} />
                 {/* Dispositifs et périmètres (§4) — ER / EBC / doc urba / DPU / PEB / SUP (SOURCES-1 lot 1). */}
                 {f.dispositifs && <DispositifsBody d={f.dispositifs} />}
-                {/* SOURCES-FIX-1 A3 — SCOT (document supra-communal opposable au PLU) : nom + date
-                    d'approbation, même couche que la carte et la fiche commune (spatial_layers kind=scot). */}
+                {/* SOURCES-FIX-1 A3 — SCOT (document supra-communal opposable au PLU). FICHE-FIX-4
+                    (Lot F) : en Ligne comme les autres, source derrière le « i ». */}
                 {f.scot && (
-                  <div data-scot className="text-[12.5px]">
-                    <GroupLabel>SCOT (schéma de cohérence territoriale)</GroupLabel>
-                    {f.scot.disponible ? (
-                      <div className="flex flex-col gap-0.5">
-                        <div>
-                          <span className="font-semibold">{f.scot.nom ?? 'SCOT'}</span>
-                          {f.scot.statut && <span className="text-txt-mut"> — {f.scot.statut}</span>}
-                          {f.scot.date_approbation && <span className="text-txt-mut"> · approuvé le {f.scot.date_approbation.split('-').reverse().join('/')}</span>}
-                        </div>
-                        <div className="text-[11px] text-txt-dim">{f.scot.source}</div>
-                      </div>
-                    ) : (
-                      <div className="text-[12px] text-txt-dim"><span className="text-mint">✓</span> Sans objet — parcelle hors périmètre SCOT. <span className="text-txt-dim">({f.scot.source})</span></div>
-                    )}
-                  </div>
+                  <div data-scot><Lignes>
+                    <Ligne label={<>SCOT<InfoI tip={<>Schéma de cohérence territoriale — document supra-communal opposable au PLU. {f.scot.source}</>} aria="Sur le SCOT" /></>}
+                      valeur={f.scot.disponible
+                        ? <>{f.scot.nom ?? 'SCOT'}{f.scot.date_approbation ? <small> · approuvé le {fmtDateNum(f.scot.date_approbation)}</small> : (f.scot.statut ? <small> · {f.scot.statut}</small> : null)}</>
+                        : 'hors périmètre'}
+                      ton={f.scot.disponible ? undefined : 'gris'}
+                      title={f.scot.disponible ? (f.scot.nom ?? undefined) : undefined} />
+                  </Lignes></div>
                 )}
                 {/* FICHE-FIX-2 P4 — mixité sociale (LLS) branchée sur la règle VALIDÉE de la zone
                     (reglement_plu.mixite, lue des regles calibrées). Validée → seuil + quota + citation

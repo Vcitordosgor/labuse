@@ -17,6 +17,17 @@ import { Chevron } from '../ui/Chevron'
 // KELFONCIER-FIX-2 (Lot G) — les règles-valeurs de la zone passent en Tuiles de la maquette v3.
 import { Tuiles, type Tuile } from './formes'
 
+// FICHE-FIX-4 (Lot F) — les 6 dimensions de règle, en gris « non calibré », pour les zones dont le
+// règlement n'est pas indexé à la lettre dans LABUSE (même gabarit que les zones calibrées).
+const REGLES_NON_CALIBRE: Tuile[] = [
+  { label: 'Hauteur max', valeur: '—', sous: 'non calibré', ton: 'gris' },
+  { label: 'Emprise', valeur: '—', sous: 'non calibré', ton: 'gris' },
+  { label: 'Recul voie', valeur: '—', sous: 'non calibré', ton: 'gris' },
+  { label: 'Recul limites', valeur: '—', sous: 'non calibré', ton: 'gris' },
+  { label: 'Pleine terre', valeur: '—', sous: 'non calibré', ton: 'gris' },
+  { label: 'Stationnement', valeur: '—', sous: 'non calibré', ton: 'gris' },
+]
+
 // ── M9 lot 4 — ligne « Destinations » de la zone (résumé + dépliable) ──
 export function ZoneDestinationsLigne({ d }: { d: FicheZoneDestinations }) {
   const [open, setOpen] = useState(false)
@@ -103,14 +114,22 @@ export function ReglementPluBlock({ rp }: { rp: ReglementPlu }) {
                 sous: rv.reference ? (rv.reference.split(',')[0].replace(/^Zone \S+ /, '').trim() || undefined) : undefined,
                 ton: rv.etat === 'chiffre' || rv.etat === 'texte' ? undefined : 'gris',
               }))} />
-          ) : z.articles.length > 0 && (
-            <ul className="mt-1 flex flex-col gap-0.5">
-              {z.articles.slice(0, 6).map((a, j) => (
-                <li key={j} className="text-[11.5px]">
-                  <a className="f-ref" href={a.url ?? z.url ?? '#'} target="_blank" rel="noreferrer">{a.reference}</a>
-                </li>
-              ))}
-            </ul>
+          ) : (
+            // FICHE-FIX-4 (Lot F) — MÊME GABARIT pour les zones non indexées : les 6 tuiles de règles
+            // en gris « non calibré » (au lieu d'un paragraphe gris), le règlement écrit reste lié
+            // (en-tête « voir le règlement ») et les articles éventuels listés sous les tuiles.
+            <>
+              <Tuiles cols={3} items={REGLES_NON_CALIBRE} />
+              {z.articles.length > 0 && (
+                <ul className="mt-1 flex flex-col gap-0.5">
+                  {z.articles.slice(0, 6).map((a, j) => (
+                    <li key={j} className="text-[11.5px]">
+                      <a className="f-ref" href={a.url ?? z.url ?? '#'} target="_blank" rel="noreferrer">{a.reference}</a>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </>
           )}
           {/* DESTINATIONS-1 (X4.2) — la ligne « Destinations » de la zone (résumé + dépliable). */}
           {z.destinations && <ZoneDestinationsLigne d={z.destinations} />}
