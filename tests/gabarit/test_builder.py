@@ -288,7 +288,17 @@ def _sup_geojson() -> str:
 
 def test_sup_intersectante_deduite_du_gabarit(monkeypatch):
     """Une SUP (kind='sup') intersectant la parcelle → Exclusion type='sup' dans la zone d'implantation
-    (le moteur la retranche comme le PPR) + règle SUP « integrated »."""
+    (le moteur la retranche comme le PPR) + règle SUP « integrated ».
+
+    fix/sup-source — le test exerce désormais la VALIDATION : quand une SUP est présente, sa source
+    doit être enregistrée au catalogue (`sources`), sinon `validate_input` rejette l'exclusion
+    (« exclusion[sup] : source absente du catalogue ») → `compute_gabarit` = incomplete → le résiduel
+    replie sur `residuel_legacy` (régression RUN11-VS-RUN10 §8). SANS `sources.append(sup_src)` ce test
+    est ROUGE ; AVEC, il est VERT. (L'ancienne version ne vérifiait que la présence de l'exclusion,
+    jamais que l'entrée validait — d'où le bug passé inaperçu : la FakeSession renvoyait « SUP absente »,
+    donc aucune exclusion SUP n'était créée et le chemin cassé n'était pas exercé.)"""
+    from labuse.gabarit.validate import validate_input
+
     monkeypatch.setattr(B, "zone_dominante", lambda s, pid: _zone())
     monkeypatch.setattr(B, "resolve_zone", lambda code, com: _rules())
     monkeypatch.setattr(B, "classify_parcel_limits", lambda s, pid, **kw: _fake_limites())
@@ -303,6 +313,13 @@ def test_sup_intersectante_deduite_du_gabarit(monkeypatch):
     assert any(x.type == "sup" for x in b.input.exclusions)
     sup_rule = [a for a in b.input.applicableRules if a.id == "SUP"]
     assert sup_rule and sup_rule[0].integrationStatus == "integrated"
+
+    # cœur du fix : la source SUP est au catalogue et l'exclusion passe la validation.
+    assert any(s.document == "SUP — servitudes d'utilité publique" for s in b.input.sources), \
+        "source SUP absente du catalogue (sources.append(sup_src) manquant)"
+    errs = validate_input(b.input)
+    assert not any(("exclusion[sup]" in e and "catalogue" in e) for e in errs), \
+        f"la SUP est rejetée à la validation : {errs}"
 
 
 def test_sans_sup_regle_non_integree(monkeypatch):
