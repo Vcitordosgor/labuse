@@ -12,8 +12,10 @@ import { fmtInt } from '../../lib/format'
 import type { FicheZoneDestinations, ReglementPlu } from '../../lib/types'
 import { BlocIndisponible } from './BlocIndisponible'
 import { DestinationBadge } from '../outils/DestinationSelect'   // DESTINATIONS-1 (X4.2) — pastille contour partagée
-import { GroupLabel, FactRow, RefLink, FactNote } from './primitives'
+import { GroupLabel, FactNote } from './primitives'
 import { Chevron } from '../ui/Chevron'
+// KELFONCIER-FIX-2 (Lot G) — les règles-valeurs de la zone passent en Tuiles de la maquette v3.
+import { Tuiles, type Tuile } from './formes'
 
 // ── M9 lot 4 — ligne « Destinations » de la zone (résumé + dépliable) ──
 export function ZoneDestinationsLigne({ d }: { d: FicheZoneDestinations }) {
@@ -94,15 +96,13 @@ export function ReglementPluBlock({ rp }: { rp: ReglementPlu }) {
             Règlement — zone <Trace id="zone_plu_famille"><span>{z.zone}</span></Trace>{aCheval && pct(z.part) ? <span className="text-txt-dim"> · {pct(z.part)} de la parcelle</span> : null}
           </GroupLabel>
           {z.regles_valeurs && z.regles_valeurs.length > 0 ? (
-            <div>
-              {z.regles_valeurs.map((rv, j) => (
-                <FactRow key={j} label={rv.libelle} value={rv.valeur}
-                  tone={rv.etat === 'chiffre' || rv.etat === 'texte' ? undefined : 'mute'}
-                  src={rv.reference
-                    ? <RefLink href={rv.url} title={rv.reference}>{rv.reference.split(',')[0].replace(/^Zone \S+ /, '').trim() || 'source'}</RefLink>
-                    : undefined} />
-              ))}
-            </div>
+            <Tuiles cols={z.regles_valeurs.length >= 5 ? 3 : 2}
+              items={z.regles_valeurs.map((rv): Tuile => ({
+                label: rv.libelle,
+                valeur: rv.valeur,
+                sous: rv.reference ? (rv.reference.split(',')[0].replace(/^Zone \S+ /, '').trim() || undefined) : undefined,
+                ton: rv.etat === 'chiffre' || rv.etat === 'texte' ? undefined : 'gris',
+              }))} />
           ) : z.articles.length > 0 && (
             <ul className="mt-1 flex flex-col gap-0.5">
               {z.articles.slice(0, 6).map((a, j) => (

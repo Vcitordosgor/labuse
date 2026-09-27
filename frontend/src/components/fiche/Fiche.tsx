@@ -2,7 +2,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Tip } from '../Tip'
 import { Bouton } from '../ui/Bouton'
 import { Badge } from '../ui/Badge'
-import { Siren } from '../shared/Siren'   // RETOURS-12 T2 — SIREN cliquable Pappers
 import { useEffect, useMemo, useState, useRef, type ReactNode } from 'react'
 import { addToPipeline, ajouterParcelle, ApiError, archivePipeline, createProjet, getDossierStatut, getFaisabilite, getFiche, getGabarit, getMoi, getParcelExposition, getPipelineForParcel, getPipelineMeta, getProjets, getWatch, is429, patchPipeline, postSignalement, preDossierUrl, projetsPourParcelle, SOURCE, toggleWatch } from '../../lib/api'
 import { verdictMeta } from '../../lib/status'
@@ -35,7 +34,7 @@ import { IC, FicheAccordionCtx, RefDrawer, GroupLabel, MicroJauge, MicroPastille
 import { TransformationBlock, FaisabiliteTab, BilanTab, TaxeAmenagementBlock, FiscalLeviersBlock, RtaaFromBilan, DispositifsBody, ModeBBody } from './constructibilite'
 import { BatiBlock, FiliationBlock } from './leBien'
 // KELFONCIER-FIX-2 (Partie B) — les formes de la maquette v3 (Verdict · Tuiles · BarreEmpilée…).
-import { Verdict, Tuiles, type Tuile, BarreEmpilee, type Part, Ligne } from './formes'
+import { Verdict, Tuiles, type Tuile, BarreEmpilee, type Part, Lignes, Ligne } from './formes'
 import { RisquesSection } from './risques'
 import { MarcheSection, DerniereVenteBlock } from './marche'
 import { ReseauxSection, EquipementsBadges } from './reseaux'
@@ -1209,9 +1208,8 @@ export function Fiche({ idu }: { idu: string }) {
           // FICHE-RANGEMENT-2 Lot 1 — les 6 tuiles d'en-tête sont DISSOUTES : chaque valeur (et son
           // « i » de source) est reportée VERBATIM dans le RefDrawer de sa section (RECETTE-5..8).
           const nf = (n: number) => n.toLocaleString('fr-FR')
-          // Surface → §1 Identité (contenance cadastrale DGFiP).
-          const tuileSurface = { v: f.surface_m2 != null ? fmtM2(f.surface_m2) : '—', vide: f.surface_m2 == null,
-            i: 'Contenance cadastrale de la parcelle (DGFiP).' }
+          // Surface → bandeau de tête (le bloc `data-fiche-tuiles`) UNIQUEMENT ; retirée d'Identité
+          // (KELFONCIER-FIX-2 Lot G, maquette v3 : la contenance ne se répète pas dans la section).
           // Zone → §4 Urbanisme (zone PLU au point de la parcelle) + son sous-titre lisible.
           const zUp = (reglesZone ?? '').toUpperCase()
           const zoneSous = !zUp ? undefined
@@ -1307,54 +1305,50 @@ export function Fiche({ idu }: { idu: string }) {
               value={proprioSignal ? shorten(proprioSignal.detail).slice(0, 20) : (f.proprietaire_moral ? proprioType.slice(0, 18) : (f.surface_m2 != null ? fmtM2(f.surface_m2) : 'privé'))}
               micro={proprioPastilles.length ? <MicroPastilles items={proprioPastilles} /> : undefined}>
               <div className="flex flex-col gap-3">
-                <ChiffreDissous l="Surface" t={tuileSurface} />
+                {/* KELFONCIER-FIX-2 (Lot G) — maquette v3 : Verdict + Tuiles×4 (SIREN · Créée·état ·
+                    Activité · BODACC). Surface retirée d'ici (elle vit dans le bandeau de tête, doublon
+                    assumé §sommaire). Aucune donnée recalculée : SIREN, activité, état, procédure sont
+                    servis (SIRENE / DGFiP) et réagencés tels quels. */}
                 {/* ⑤ PROPRIÉTÉ (relocalisée §1) — société (M43) + signaux vendeur. */}
                 <div className="flex flex-col gap-2">
-                {f.proprietaire_moral ? (
-                  <div>
-                    {/* RETOURS-23 Z3 — plus de card-elev : kicker + fait à plat. */}
-                    <GroupLabel>Propriétaire (DGFiP)</GroupLabel>
-                    <div className="mt-1 text-xs font-medium text-txt-hi">{f.proprietaire_moral.denomination ?? '—'}</div>
-                    <div className="mt-0.5 flex items-center gap-3 text-[10.5px] text-txt-mut">
-                      {f.proprietaire_moral.siren && <span className="font-mono">SIREN <Siren value={f.proprietaire_moral.siren} className="font-mono text-txt-mut" /></span>}
-                      {f.proprietaire_moral.groupe_label && <span>{f.proprietaire_moral.groupe_label}</span>}
+                {f.proprietaire_moral ? (() => {
+                  const pm = f.proprietaire_moral
+                  const id = pm.identite
+                  const anc = f.anciennete_detention
+                  const proc = pm.etat_societe
+                  const tuiles: Tuile[] = [
+                    { label: 'SIREN',
+                      valeur: pm.siren
+                        ? <a data-annuaire-entreprises href={id?.annuaire_url ?? `https://annuaire-entreprises.data.gouv.fr/entreprise/${pm.siren}`}
+                            target="_blank" rel="noreferrer noopener" className="font-mono text-mint hover:underline">{pm.siren}</a>
+                        : '—',
+                      sous: pm.siren ? 'annuaire des entreprises ↗' : undefined, ton: pm.siren ? undefined : 'gris' },
+                    { label: 'Créée · état',
+                      valeur: <>{id?.date_creation ? id.date_creation.slice(0, 4) : '—'}{id?.actif != null ? <small style={{ marginLeft: 4, color: id.actif ? 'var(--mint)' : 'var(--st-ecartee)' }}>{id.actif ? 'active' : 'cessée'}</small> : null}</>,
+                      sous: id?.source ? 'SIRENE' : undefined, ton: id?.date_creation ? undefined : 'gris' },
+                    { label: 'Activité', valeur: <span style={{ fontSize: 12 }}>{id?.activite ?? '—'}</span>,
+                      sous: id?.ape ?? undefined, ton: id?.activite ? undefined : 'gris' },
+                    { label: 'BODACC', valeur: <span style={{ fontSize: 12 }}>{proc ? proc.libelle : 'aucune procédure'}</span>,
+                      sous: proc ? 'procédure collective' : 'DGFiP / BODACC', ton: proc ? 'ambre' : 'vert' },
+                  ]
+                  return (
+                    <div>
+                      <Verdict ton="vert" reponse={pm.denomination ?? 'Propriétaire (personne morale)'}
+                        contexte={[anc?.disponible && anc.depuis_annee ? `propriétaire depuis ${anc.depuis_annee}` : null,
+                          proc ? proc.libelle : 'aucune procédure collective'].filter(Boolean).join(' — ') || undefined} />
+                      <Tuiles items={tuiles} />
+                      {(id?.siege || pm.groupe_label) && (
+                        <Lignes>
+                          {id?.siege && <Ligne label="Siège" valeur={<>{id.siege}{id.siege_commune ? <small> · {id.siege_commune}</small> : null}</>} />}
+                          {pm.groupe_label && <Ligne label="Groupe" valeur={pm.groupe_label} />}
+                        </Lignes>
+                      )}
+                      {proc && (
+                        <FactNote>{proc.libelle} (Sourcé {proc.etats.map((e) => e.source).filter((s, i, a) => a.indexOf(s) === i).join(' / ')}) — {proc.note}</FactNote>
+                      )}
                     </div>
-                    {/* RETOURS-11F3 F11 — carte d'identité publique (SIRENE) : activité, siège, création,
-                        état actif — faits publics d'entreprise, jamais une personne. */}
-                    {f.proprietaire_moral.identite && (
-                      <div data-proprio-identite className="mt-1.5 flex flex-col gap-0.5 border-t border-bd/60 pt-1.5 text-[10.5px] text-txt-mut">
-                        {f.proprietaire_moral.identite.activite && <div><span className="text-txt-dim">Activité </span><span className="text-txt">{f.proprietaire_moral.identite.activite}</span>{f.proprietaire_moral.identite.ape && <span className="ml-1 font-mono text-txt-dim">({f.proprietaire_moral.identite.ape})</span>}</div>}
-                        {f.proprietaire_moral.identite.siege && <div><span className="text-txt-dim">Siège </span><span className="text-txt">{f.proprietaire_moral.identite.siege}</span></div>}
-                        <div className="flex gap-3">
-                          {f.proprietaire_moral.identite.date_creation && <span><span className="text-txt-dim">Créée </span>{f.proprietaire_moral.identite.date_creation}</span>}
-                          {f.proprietaire_moral.identite.actif != null && <span className={f.proprietaire_moral.identite.actif ? 'text-mint' : 'text-st-ecartee'}>{f.proprietaire_moral.identite.actif ? 'active' : 'cessée'}</span>}
-                        </div>
-                        <div className="text-[9.5px] text-txt-dim italic">{f.proprietaire_moral.identite.source}</div>
-                      </div>
-                    )}
-                    {/* RETOURS-11 F11 — lien vers l'Annuaire des entreprises (fiche INPI/INSEE publique). */}
-                    {f.proprietaire_moral.siren && (
-                      <a data-annuaire-entreprises target="_blank" rel="noreferrer noopener"
-                        href={`https://annuaire-entreprises.data.gouv.fr/entreprise/${f.proprietaire_moral.siren}`}
-                        className="mt-1 inline-block text-[10.5px] text-mint underline decoration-dotted">
-                        Annuaire des entreprises ↗
-                      </a>
-                    )}
-                    {f.proprietaire_moral.etat_societe && (
-                      // M43 — fait public d'entreprise (état société) : on le DIT, on n'en déduit RIEN
-                      // (pas de vigilance, pas de badge, pas de filtre). PM only ; jamais la personne.
-                      <div className="mt-2 border-t border-bd/60 pt-1.5 text-[10.5px] text-txt-mut">
-                        <span className="text-txt-hi">{f.proprietaire_moral.etat_societe.libelle}</span>
-                        <span className="ml-1 text-txt-dim">
-                          (Sourcé {f.proprietaire_moral.etat_societe.etats.map((e) => e.source).filter((s, i, a) => a.indexOf(s) === i).join(' / ')})
-                        </span>
-                        <div className="mt-0.5 text-[9.5px] text-txt-dim italic">{f.proprietaire_moral.etat_societe.note}</div>
-                      </div>
-                    )}
-                    {/* M60 P1c — lien inline « voir le patrimoine » retiré : une seule entrée par outil,
-                        la PORTE Scan patrimoine est au pied du tiroir (voir plus bas). */}
-                  </div>
-                ) : (
+                  )
+                })() : (
                   <FactNote>
                     Propriétaire : personne physique ou non recensé au fichier des personnes morales
                     (identité nominative : workflow SPF/CERFA, jamais automatisée).
@@ -1503,6 +1497,16 @@ export function Fiche({ idu }: { idu: string }) {
                 ? <MicroJauge pct={pctConsomme} label={CLIENT.fiche.sdpConsommee(pctConsomme)} tip={CLIENT.fiche.sdpConsommeeTip(reglesSdp ?? null)} />
                 : <MicroJauge pct={0} label={[reglesArticle ? `art. ${reglesArticle}` : null].filter(Boolean).join(' · ') || 'PLU'} />}>
               <div className="flex flex-col gap-3">
+                {/* KELFONCIER-FIX-2 (Lot G) — maquette v3 : Verdict en tête (zone + statut d'ouverture
+                    AU, servis). Le règlement calibré reste rendu en détail par ReglementPluBlock (dont
+                    les règles-valeurs passent en Tuiles). Aucune donnée recalculée. */}
+                {(reglesZone || f.au_ouverture) && (
+                  <Verdict ton={f.au_ouverture?.bloquant ? 'ambre' : 'vert'}
+                    reponse={reglesZone
+                      ? <>{reglesZone}{zoneSous ? `, ${zoneSous}` : ''}{f.au_ouverture ? ` : ${f.au_ouverture.statut}` : ''}</>
+                      : 'Zone non publiée au GPU'}
+                    contexte={f.au_ouverture?.motif || undefined} />
+                )}
                 <ChiffreDissous l="Zone" t={tuileZone} />
                 {/* M75 — obligation APER (ombrières PV, grand parking > 1 500 m²) : contrainte
                     réglementaire portant sur le terrain, INFORMATION. Libellé backend (mêmes mots
