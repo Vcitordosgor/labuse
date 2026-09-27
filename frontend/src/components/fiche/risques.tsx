@@ -11,9 +11,8 @@
  */
 import type { Fiche } from '../../lib/types'
 import { useApp } from '../../store/useApp'
-import { IC, RefDrawer, Line, GroupLabel, Rappel, FactNote } from './primitives'
+import { IC, RefDrawer, Line, GroupLabel, FactNote } from './primitives'
 import { Badge } from '../ui/Badge'
-import { Trace } from '../../lib/trace'
 // KELFONCIER-FIX-2 (Lot H) — maquette v3 : Verdict en tête + aléas en Jauge3 (3 crans + % servi).
 // FICHE-FIX-4 (Lot G) — CASIAS/EnR/mesures en Ligne de vigilance, CatNat en Repli, Pièges en bouton.
 import { Verdict, Jauge3, Lignes, Ligne, Repli, OutilsSection, InfoI } from './formes'
@@ -173,45 +172,42 @@ export function RisquesSection({ f }: { f: Fiche; idu: string }) {
         ) : null}
         {/* AUTRES VIGILANCES (hors aléas structurés) — chaque ligne marquée d'une puce ambre.
             RETOURS-20 Z1·02 — le titre encadré (font-mono caps) devient un KICKER partagé (GroupLabel). */}
-        {autresVig.length > 0 && (
+        {/* FICHE-FIX-5 (Lot F) — VIGILANCES en Lignes AMBRE (plus de puce ▲ ni d'encadré) : le libellé
+            avant « — », le détail après, la source derrière le « i ». Les lignes HT/HTA (ex-Rappel
+            encadré) rejoignent la même liste. Aucune donnée retirée. */}
+        {(autresVig.length > 0 || f.proximites?.ligne_ht || f.proximites?.ligne_mt) && (
           <div>
             <GroupLabel>Vigilances</GroupLabel>
-            <div className="flex flex-col gap-1">
+            <Lignes>
               {autresVig.map((l, i) => {
-                // CIRCUIT-2 lot 5.2 — le NIVEAU D'ALÉA porte l'étiquette de traçage (classe) :
-                // les lignes « Aléa … — niveau … » ouvrent le tiroir de leur couche.
-                const detail = (l.detail || '') as string
-                const alea = detail.startsWith('Aléa')
-                  ? (detail.toLowerCase().includes('inondation') ? 'alea_inondation_couche' : 'alea_mvt_couche')
-                  : null
-                const ligne = <div className="min-w-0 flex-1"><Line line={l} hideWeight hideDate /></div>
+                const det = (l.detail || '') as string
+                const dash = det.indexOf('—')
+                const label = dash >= 0 ? det.slice(0, dash).trim() : det
+                const val = dash >= 0 ? det.slice(dash + 1).trim() : ''
+                const src = l.source ? String(l.source) : ''
                 return (
-                  <div key={i} className="flex items-start gap-2">
-                    <span aria-hidden className="mt-2 shrink-0 text-st-creuser">▲</span>
-                    {alea ? <Trace id={alea}>{ligne}</Trace> : ligne}
-                  </div>
+                  <Ligne key={`v-${i}`} ton="ambre" title={det}
+                    label={<><span className="text-amber">{label}</span>{src ? <InfoI aria="Source de la vigilance" tip={src} /> : null}</>}
+                    valeur={val} />
                 )
               })}
-            </div>
+              {f.proximites?.ligne_ht && (
+                <Ligne ton="ambre" title={f.proximites.ligne_ht.libelle}
+                  label={<><span className="text-amber">Ligne haute tension</span><InfoI aria="Sur la ligne HT" tip={`${f.proximites.ligne_ht.libelle} — ${f.proximites.ligne_ht.source}`} /></>}
+                  valeur="au contact" />
+              )}
+              {f.proximites?.ligne_mt && (
+                <Ligne ton="ambre" title={f.proximites.ligne_mt.libelle}
+                  label={<><span className="text-amber">Ligne moyenne tension</span><InfoI aria="Sur la ligne HTA" tip={`${f.proximites.ligne_mt.libelle} — ${f.proximites.ligne_mt.source}`} /></>}
+                  valeur="à proximité" />
+              )}
+            </Lignes>
           </div>
         )}
         {/* lignes non évaluées (donnée absente) — dites, jamais masquées. */}
         {inconnues.length > 0 && (
           <div className="flex flex-col gap-1">
             {inconnues.map((l, i) => <Line key={i} line={l} hideWeight hideDate />)}
-          </div>
-        )}
-        {/* M106 P4 — ligne HT la plus proche : une CONTRAINTE (distance, jamais un booléen). La servitude
-            I4 n'est pas cartographiée (à vérifier gestionnaire). Seuil de pertinence appliqué en amont (F0). */}
-        {f.proximites?.ligne_ht && (
-          <div data-ligne-ht>
-            <Rappel src={f.proximites.ligne_ht.source}>{f.proximites.ligne_ht.libelle}</Rappel>
-          </div>
-        )}
-        {/* FICHE-COUCHES-2 lot 1 — ligne moyenne tension (HTA) : même famille que la HT, contrainte de proximité. */}
-        {f.proximites?.ligne_mt && (
-          <div data-ligne-mt>
-            <Rappel src={f.proximites.ligne_mt.source}>{f.proximites.ligne_mt.libelle}</Rappel>
           </div>
         )}
         {/* « rien à signaler » REPLIÉ — ne noie plus les vraies alertes. */}
