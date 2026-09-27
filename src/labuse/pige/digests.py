@@ -58,11 +58,18 @@ def _lien_radar(base_url: str) -> str:
 
 # ── données ──────────────────────────────────────────────────────────────────────────────
 
-def _biens_du_jour(db: Session) -> list[dict]:
-    """Biens VALIDÉS saisis AUJOURD'HUI (heure Réunion), statuts vivants, enrichis pour la carte :
-    portail + lien + date de relevé (dernière annonce), baisse de prix (dernier constat à la baisse)."""
+def _biens_du_jour(db: Session, depuis=None) -> list[dict]:
+    """Biens VALIDÉS saisis DEPUIS `depuis` (timestamptz), statuts vivants, enrichis pour la carte :
+    portail + lien + date de relevé (dernière annonce), baisse de prix (dernier constat à la baisse).
+
+    VEILLE-FIX-2 (Lot A) — `depuis=None` garde le comportement historique « du jour » (début de journée
+    Réunion). `radar-cloche` passe désormais le HORODATAGE DU DERNIER PASSAGE du job : une annonce
+    déposée à 21 h–minuit (capture du soir) est ainsi vue le lendemain matin, alors qu'elle échappait à
+    la fenêtre « aujourd'hui »."""
+    borne = ("((now() AT TIME ZONE 'Indian/Reunion')::date AT TIME ZONE 'Indian/Reunion')"
+             if depuis is None else ":depuis")
     rows = db.execute(text(
-        """SELECT b.bien_id, b.commune, b.type_bien, b.est_copro, b.idu,
+        f"""SELECT b.bien_id, b.commune, b.type_bien, b.est_copro, b.idu,
                   f.prix, f.surface_hab, f.surface_terrain, f.particulier_pro,
                   a.portail, a.url_sortante, coalesce(a.date_saisie, b.date_premiere_saisie) AS date_releve,
                   ph.ancien_prix, ph.nouveau_prix
@@ -79,9 +86,9 @@ def _biens_du_jour(db: Session) -> list[dict]:
              -- RADAR-DEPOT-2 D5 — les copropriétés (appartements) sont embasées mais JAMAIS servies comme
              -- annonces : absentes des digests ET des alertes de veille (matche() lit cette même liste).
              AND b.est_copro = false
-             AND b.date_premiere_saisie AT TIME ZONE 'Indian/Reunion'
-                 >= (now() AT TIME ZONE 'Indian/Reunion')::date
-           ORDER BY b.bien_id DESC""")).mappings().all()
+             AND b.date_premiere_saisie >= {borne}
+           ORDER BY b.bien_id DESC"""),
+        ({"depuis": depuis} if depuis is not None else {})).mappings().all()
     # `faits` (sous-dict) pour `veille.matche` (contrat partagé) + champs plats pour la carte.
     out = []
     for r in rows:
@@ -289,14 +296,45 @@ def _clients_actifs(db: Session) -> list[dict]:
         "GROUP BY c.id, c.nom ORDER BY c.id")).mappings()]
 
 
+# VEILLE-FIX-2 (Lot A) — HORODATAGE du dernier passage de `radar-cloche`, persistant. La fenêtre du job
+# n'est plus « aujourd'hui » mais « depuis le dernier passage » (repli J-1 au premier passage) : la
+# capture du soir (21 h–minuit) est vue le lendemain matin.
+_WATERMARK_RADAR = "radar-cloche"
+
+
+def _ensure_watermark(db: Session) -> None:
+    db.execute(text("CREATE TABLE IF NOT EXISTS pige_watermark ("
+                    " nom text PRIMARY KEY, ts timestamptz NOT NULL)"))
+
+
+def _watermark_get(db: Session, nom: str):
+    return db.execute(text("SELECT ts FROM pige_watermark WHERE nom = :n"), {"n": nom}).scalar()
+
+
+def _watermark_set(db: Session, nom: str, ts) -> None:
+    db.execute(text("INSERT INTO pige_watermark (nom, ts) VALUES (:n, :t) "
+                    "ON CONFLICT (nom) DO UPDATE SET ts = EXCLUDED.ts"), {"n": nom, "t": ts})
+
+
 def evaluer_radar_cloche(db: Session) -> dict:
-    """VEILLE-2 (Lot 3) — pose à la CLOCHE du haut (compte-scopé, kind `radar`) chaque annonce du jour
-    qui matche une veille du client → clic vers l'ANNONCE (pas la fiche : `idu=None`, `lien=url`). C'est
-    le producteur des événements Radar que le digest du matin (Lot 5) reprend. Zéro mail ici. Idempotent
-    (dédup compte+bien+jour). Un ESSAI EXPIRÉ ne reçoit rien (`_clients_actifs` filtre déjà)."""
+    """VEILLE-2 (Lot 3) / VEILLE-FIX-2 (Lot A) — pose à la CLOCHE du haut (compte-scopé, kind `radar`)
+    chaque annonce vue DEPUIS LE DERNIER PASSAGE qui matche une veille du client → clic vers l'ANNONCE.
+    C'est le producteur des événements Radar que le digest du matin reprend. Zéro mail ici. Idempotent
+    (dédup compte+bien+jour). Un ESSAI EXPIRÉ ne reçoit rien (`_clients_actifs` filtre déjà).
+
+    VEILLE-FIX-2 (Lot A) — la fenêtre n'est plus « aujourd'hui » mais « depuis le dernier passage »
+    (horodatage persistant, repli J-1 au premier passage) : la capture du soir est vue le lendemain."""
+    from datetime import datetime, time, timedelta, timezone
+
     from ..api.events import creer_notification
+    _ensure_watermark(db)
+    debut = datetime.now(timezone.utc)
     jour = today_reunion()
-    biens = _biens_du_jour(db)
+    # repli au 1er passage = DÉBUT D'HIER (00:00 heure Réunion) — robuste : capte tout le dépôt du soir,
+    # jamais un « now − 24 h » glissant qui raterait une annonce déposée à 22 h la veille.
+    repli = datetime.combine(jour - timedelta(days=1), time(0, 0), tzinfo=timezone(timedelta(hours=4)))
+    depuis = _watermark_get(db, _WATERMARK_RADAR) or repli
+    biens = _biens_du_jour(db, depuis)
     n = 0
     for c in _clients_actifs(db):
         for v in veille_mod.lister(db, c["compte_id"]):
@@ -310,6 +348,7 @@ def evaluer_radar_cloche(db: Session) -> dict:
                     detail=f"{prix} · {_libelle_veille(v)}",
                     lien=b.get("url_sortante") or _lien_radar(""),
                     dedup=f"radar:{c['compte_id']}:{b['bien_id']}:{jour.isoformat()}") else 0
+    _watermark_set(db, _WATERMARK_RADAR, debut)             # borne haute = début du passage (aucun trou)
     db.commit()
     return {"radar": n}
 

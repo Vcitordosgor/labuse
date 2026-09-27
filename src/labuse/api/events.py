@@ -12,6 +12,7 @@ import logging
 from datetime import date, datetime, timedelta, timezone
 
 from ..tz import today_reunion as _today_reunion   # REVUE · R2 — jour métier en heure Réunion
+from .. import veille_grille   # VEILLE-FIX-2 — la grille (config/veille.yaml) fait loi
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -281,8 +282,10 @@ DIGEST_HEURE_REUNION = 7                     # 7h00 heure Réunion (config)
 # type de préférence : flux CLOCHE informatif, hors des 3 chaînes, jamais d'e-mail.
 _KINDS_PAR_PREF = {   # type de registre → kinds event_log (perso) qu'il gouverne à la cloche
     "veille_zone": ("veille", "match", "veille_zone"),
-    "parcelle_suivie": ("permis", "bascule", "bodacc", "parcelle_suivie"),
-    "annonce_produit": ("annonce_produit", "radar"),   # VEILLE-2 — le Radar suit la pref « Annonces »
+    # VEILLE-FIX-2 — la mise en vente d'une parcelle suivie suit la pref « parcelles suivies ».
+    "parcelle_suivie": ("permis", "bascule", "bodacc", "parcelle_suivie", "parcelle_en_vente"),
+    # VEILLE-2/FIX-2 — Radar + baisses + retraits suivent la pref « Annonces ».
+    "annonce_produit": ("annonce_produit", "radar", "radar_baisse", "radar_retrait"),
     "maintenance": ("maintenance",),
 }
 
@@ -647,23 +650,24 @@ _MARKET_KINDS = ("bascule", "bodacc", "match")
 # (historiques permis/veille + nouveaux types de registre). annonce/maintenance sont IMMÉDIATS (chaîne
 # 3), hors digest ; systeme_pilote = cloche seule.
 _PERSO_KINDS = ("permis", "veille", "parcelle_suivie", "veille_zone")
-# VEILLE-2 (Lot 5) — le DIGEST DU MATIN porte TOUT ce qui change pour le compte : parcelles suivies +
-# Radar (kinds compte-scopés ci-dessous) + nouveautés de l'app (kind `nouveaute`, broadcast, traité à
-# part). Le marché reste HORS du mail (flux cloche seulement). Un seul mail par jour.
-_DIGEST_KINDS = ("parcelle_suivie", "radar")
+# VEILLE-FIX-2 — les listes de kinds DÉRIVENT désormais de LA GRILLE (config/veille.yaml, lue par
+# `veille_grille`), plus jamais recopiées en dur : toute décision « cloche / digest / immédiat » a une
+# seule source de vérité, gardée par test_veille_grille. Le DIGEST DU MATIN porte les kinds `mail:
+# digest` de la grille (parcelles suivies + Radar : nouvelles, baisses, retraits). Le marché reste HORS
+# du mail (flux cloche seulement). La mise en vente (`mail: immediat`) est envoyée à part, jamais dans le
+# digest. Un seul mail par jour.
+_DIGEST_KINDS = veille_grille.kinds_digest()
+_IMMEDIAT_KINDS = veille_grille.kinds_immediat()
 
-# VEILLE-2 (Lot 3) — LA CLOCHE DU HAUT porte une LISTE FERMÉE de types, en QUATRE catégories, chacune
-# avec son texte et son clic. Tout autre kind d'event_log n'apparaît PAS à la cloche du CLIENT (le
-# bucket pilote, compte NULL, garde sa vue de diagnostic complète) :
-#   · parcelle suivie (kind `parcelle_suivie`, compte-scopé)   → la fiche parcelle ;
-#   · Radar          (kind `radar`, compte-scopé, un match)    → l'annonce ;
-#   · marché         (bascule/bodacc/match, broadcast NULL)    → la fiche parcelle ;
-#   · nouveauté app  (kind `nouveaute`, broadcast NULL)        → la page Sources (jamais un millésime).
+# VEILLE-2 (Lot 3) / VEILLE-FIX-2 — LA CLOCHE DU HAUT porte une LISTE FERMÉE de types (grille : cloche
+# oui/tete), chacun avec son texte et son clic. Tout autre kind d'event_log n'apparaît PAS à la cloche du
+# CLIENT (le bucket pilote, compte NULL, garde sa vue de diagnostic complète). Les kinds de marché
+# historiques (bodacc/match) restent affichés en broadcast même s'ils ne sont pas nommés dans la grille.
 _NOUVEAUTE_KINDS = ("nouveaute",)
 # BROADCAST = compte NULL VISIBLE DE TOUS les comptes (marché + nouveautés de l'app). Un compte neuf
 # ouvre à 0 (un broadcast antérieur à sa création est lu d'office — cf. _seen).
 _BROADCAST_KINDS = _MARKET_KINDS + _NOUVEAUTE_KINDS
-_CLOCHE_KINDS = ("parcelle_suivie", "radar") + _MARKET_KINDS + _NOUVEAUTE_KINDS
+_CLOCHE_KINDS = tuple(dict.fromkeys(veille_grille.kinds_cloche() + _MARKET_KINDS + _NOUVEAUTE_KINDS))
 
 
 def _cloche_closed_sql(cid: int | None, alias: str = "e") -> str:
