@@ -164,6 +164,11 @@ class Hypotheses:
 # Hypotheses ciblé(s), unité, bornes de vraisemblance (hors bornes = ignoré, jamais un calcul détourné),
 # et `pct` (valeur stockée en fraction 0-1, affichée/saisie en %). L'override N'EST JAMAIS persisté en
 # base : il vit dans le projet (doctrine 09/09), ne resservira pas sur une autre parcelle.
+# RETOURS-15 C3 (P17) — SEULES trois VRAIES hypothèses de modélisation restent éditables : occupation
+# du gabarit, rendement SDP → habitable, surface moyenne par logement. Les valeurs FIXÉES PAR LE PLU
+# (hauteur d'un niveau, densité logts/ha/niveau, surface d'une place de stationnement) ne sont JAMAIS
+# des hypothèses (décision Vic) — elles sont retirées des champs modifiables (elles restent servies par
+# le moteur, non éditables). Un override sur une clé retirée est ignoré (clé blanche seulement).
 HYP_EDITABLES = [
     {"key": "coef_occupation", "label": "Occupation du gabarit", "champs": ["coef_occupation"],
      "unite": "%", "pct": True, "min": 10.0, "max": 100.0},
@@ -171,12 +176,6 @@ HYP_EDITABLES = [
      "unite": "%", "pct": True, "min": 50.0, "max": 100.0},
     {"key": "logement_m2", "label": "Surface moyenne / logement", "champs": ["logement_m2_bas", "logement_m2_haut"],
      "unite": "m²", "pct": False, "min": 20.0, "max": 200.0},
-    {"key": "densite_logts_ha_par_niveau", "label": "Densité (logts/ha/niveau)", "champs": ["densite_logts_ha_par_niveau"],
-     "unite": "logts/ha", "pct": False, "min": 1.0, "max": 200.0},
-    {"key": "place_m2", "label": "Surface d'une place de stationnement", "champs": ["place_m2"],
-     "unite": "m²", "pct": False, "min": 10.0, "max": 60.0},
-    {"key": "etage_m", "label": "Hauteur d'un niveau", "champs": ["etage_m"],
-     "unite": "m", "pct": False, "min": 2.0, "max": 6.0},
 ]
 _HYP_EDIT_BY_KEY = {e["key"]: e for e in HYP_EDITABLES}
 
