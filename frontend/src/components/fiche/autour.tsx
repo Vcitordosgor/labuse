@@ -21,7 +21,8 @@ import { useApp } from '../../store/useApp'
 import { IC, RefDrawer, GroupLabel, FactNote } from './primitives'
 import { Badge } from '../ui/Badge'
 // KELFONCIER-FIX-2 (Lot I) — maquette v3 : Verdict + OutilsSection (Permis commune · Fiche commune).
-import { Verdict, OutilsSection, type OutilSection } from './formes'
+// FICHE-FIX-4 (Lot K) — Proximité en 3 tuiles, quartier INSEE en tuiles 2 colonnes.
+import { Verdict, OutilsSection, type OutilSection, Tuiles, type Tuile } from './formes'
 
 // FICHE-RANGEMENT-2 Lot 1 — §1 Identité : l'historique des permis DE la parcelle (fait d'identité
 // du bien), extrait pour la future section.
@@ -60,13 +61,20 @@ export function HistoriqueSiteBlock({ f }: { f: Fiche }) {
 
 export function AutourSection({ f, idu }: { f: Fiche; idu: string }) {
   const eq = f.proximites_equipements
-  // KELFONCIER-FIX-2 (Lot I) — Verdict léger (fait de voisinage servi) + OutilsSection en pied.
+  // FICHE-FIX-4 (Lot K) — Verdict utile (secteur + niveau de vie + pauvreté + commerces) + tuiles.
   const eqItems0 = (eq?.items ?? []).filter((e) => !/^bus$|transport/i.test(e.cat))
-  const nearest = eqItems0[0]
-  const nearestTxt = nearest ? `${nearest.cat} à ${nearest.distance_m >= 1000 ? `${(nearest.distance_m / 1000).toFixed(1).replace('.', ',')} km` : `${fmtInt(nearest.distance_m)} m`}` : null
+  const fmtDist = (m: number) => m >= 1000 ? `${(m / 1000).toFixed(1).replace('.', ',')} km` : `${fmtInt(m)} m`
+  const commerce = eqItems0.find((e) => /commerce/i.test(e.cat))
+  const filo = f.marche_secteur?.filosofi_200m
+  const iris = f.iris_quartier
+  const verdictCtx = [
+    filo?.nivvie_moyen_eur != null ? `niveau de vie ${fmtInt(filo.nivvie_moyen_eur)} €` : null,
+    filo?.taux_pauvrete_pct != null ? `${filo.taux_pauvrete_pct} % sous le seuil de pauvreté` : null,
+    commerce ? `commerces à ${fmtDist(commerce.distance_m)}` : null,
+  ].filter(Boolean).join(', ') || undefined
   const outils: OutilSection[] = []
   if (f.commune) {
-    outils.push({ label: 'Permis de la commune', data: 'permis', principal: true,
+    outils.push({ label: 'Permis commune', data: 'permis', principal: true,
       onClick: () => { const st = useApp.getState(); st.setCommune(f.commune!); st.setCommunesFilter([f.commune!]); st.setModule('permis') } })
     outils.push({ label: 'Fiche commune', data: 'fiche-commune',
       onClick: () => { const st = useApp.getState(); st.setCommune(f.commune!); st.setContexteCommune(f.commune!) } })
@@ -75,59 +83,39 @@ export function AutourSection({ f, idu }: { f: Fiche; idu: string }) {
     <RefDrawer id="quartier" icon={IC.contexte} name="Quartier"
       context="Équipements, population et permis du voisinage"
       value={<Badge ton="vert">isochrone</Badge>}>
-      {/* KELFONCIER-FIX-2 (Lot I) — Verdict en tête (équipement le plus proche + quartier INSEE, servis). */}
-      <Verdict ton="vert" reponse={f.iris_quartier?.nom ? `Quartier ${f.iris_quartier.nom}` : 'Voisinage'}
-        contexte={nearestTxt ? `le plus proche : ${nearestTxt}` : undefined} />
-      {/* ÉQUIPEMENTS — UN moteur (BPE+OSM dédoublonnés, distance à pied). Absent = omis (jamais « 0 m »).
-          Z1·02 — le label-caps « À proximité » devient un kicker ; les tuiles de distance (maquette) restent. */}
-      {/* RECETTE-6 (C3) — le TRANSPORT (« Bus ») vit dans « Réseaux » (arrêt nommé + réseau + distance,
-          plus riche). On le RETIRE d'ici pour qu'un fait vive dans une seule section — les autres y renvoient. */}
-      {(() => { const items = (eq?.items ?? []).filter((e) => !/^bus$|transport/i.test(e.cat)); return items.length > 0 && (
+      {/* FICHE-FIX-4 (Lot K) — Verdict utile : secteur + niveau de vie + pauvreté + commerces (servis). */}
+      <Verdict ton="vert"
+        reponse={f.secteur ? `Secteur ${f.secteur}` : (iris?.nom ? `Quartier ${iris.nom}` : 'Voisinage')}
+        contexte={verdictCtx} />
+      {/* FICHE-FIX-4 (Lot K) — Proximité en 3 tuiles (École · Commerces · Santé). Bus vit dans Réseaux. */}
+      {eqItems0.length > 0 && (
         <div data-proximites-equip>
-          <GroupLabel>À proximité</GroupLabel>
-          <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-[11.5px] text-txt-mut">
-            {items.map((e, i) => (
-              <span key={i}><span className="text-txt">{e.cat}</span>{' '}
-                <span className="tnum">{e.distance_m >= 1000
-                  ? `${(e.distance_m / 1000).toFixed(1).replace('.', ',')} km`
-                  : `${fmtInt(e.distance_m)} m`}</span></span>
-            ))}
-          </div>
+          <GroupLabel>À proximité (à pied)</GroupLabel>
+          <Tuiles cols={eqItems0.length >= 3 ? 3 : 2}
+            items={eqItems0.slice(0, 3).map((e): Tuile => ({ label: e.cat, valeur: fmtDist(e.distance_m) }))} />
         </div>
-      ) })()}
+      )}
 
       {/* QUI VIT LÀ — socio-éco secteur (Filosofi Sourcé + parc social) rapatrié de Marché, + isochrone. */}
       {f.marche_secteur && <MarcheSecteurBlock ms={f.marche_secteur} />}
 
-      {/* SOURCES-1 lot 6 — le QUARTIER INSEE (IRIS, RP2022) : vacance, âge du bâti, ménages.
-          Maille DITE (quartier IRIS — affine la commune, ne la remplace pas). Absent = omis. */}
-      {f.iris_quartier && (
-        <div data-iris-quartier>
-          <GroupLabel>Le quartier INSEE{f.iris_quartier.nom ? ` — ${f.iris_quartier.nom}` : ''}</GroupLabel>
-          <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-[11.5px] text-txt-mut">
-            {f.iris_quartier.logements != null && (
-              <span><span className="text-txt tnum">{fmtInt(f.iris_quartier.logements)}</span> logements</span>
-            )}
-            {f.iris_quartier.vacance_pct != null && (
-              <span>vacance <span className="text-txt tnum">{String(f.iris_quartier.vacance_pct).replace('.', ',')} %</span></span>
-            )}
-            {f.iris_quartier.part_bati_avant_1990_pct != null && (
-              <span>bâti d'avant 1990 <span className="text-txt tnum">{String(f.iris_quartier.part_bati_avant_1990_pct).replace('.', ',')} %</span></span>
-            )}
-            {f.iris_quartier.taille_menages != null && (
-              <span><span className="text-txt tnum">{String(f.iris_quartier.taille_menages).replace('.', ',')}</span> pers./ménage</span>
-            )}
-            {f.iris_quartier.part_60_plus_pct != null && (
-              <span>60 ans et + <span className="text-txt tnum">{String(f.iris_quartier.part_60_plus_pct).replace('.', ',')} %</span></span>
-            )}
-            {f.iris_quartier.part_hlm_pct != null && (
-              <span>HLM <span className="text-txt tnum">{String(f.iris_quartier.part_hlm_pct).replace('.', ',')} %</span></span>
-            )}
+      {/* FICHE-FIX-4 (Lot K) — le QUARTIER INSEE (IRIS) en tuiles 2 colonnes ; source en note. */}
+      {iris && (() => {
+        const t: Tuile[] = []
+        if (iris.logements != null) t.push({ label: 'Logements', valeur: fmtInt(iris.logements) })
+        if (iris.vacance_pct != null) t.push({ label: 'Vacance', valeur: <>{String(iris.vacance_pct).replace('.', ',')} <small>%</small></> })
+        if (iris.part_bati_avant_1990_pct != null) t.push({ label: 'Bâti avant 1990', valeur: <>{String(iris.part_bati_avant_1990_pct).replace('.', ',')} <small>%</small></> })
+        if (iris.taille_menages != null) t.push({ label: 'Pers./ménage', valeur: String(iris.taille_menages).replace('.', ',') })
+        if (iris.part_60_plus_pct != null) t.push({ label: '60 ans et +', valeur: <>{String(iris.part_60_plus_pct).replace('.', ',')} <small>%</small></> })
+        if (iris.part_hlm_pct != null) t.push({ label: 'HLM', valeur: <>{String(iris.part_hlm_pct).replace('.', ',')} <small>%</small></> })
+        return (
+          <div data-iris-quartier>
+            <GroupLabel>Quartier INSEE{iris.nom ? ` — ${iris.nom}` : ''}</GroupLabel>
+            {t.length > 0 && <Tuiles cols={2} items={t} />}
+            <FactNote>{iris.source} — {iris.millesime}. Maille quartier (IRIS) : affine la commune, ne la remplace pas.</FactNote>
           </div>
-          <FactNote>{f.iris_quartier.source} — {f.iris_quartier.millesime}. Maille quartier (IRIS) :
-            affine la commune, ne la remplace pas.</FactNote>
-        </div>
-      )}
+        )
+      })()}
       <AutourZoneBlock idu={idu} />
 
       {/* PERMIS À PROXIMITÉ — UN tableau cliquable (rapatrié de Réseaux, F0). */}
