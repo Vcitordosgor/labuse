@@ -27,6 +27,7 @@ import { ListPaginationFooter, usePagination } from '../ListPagination'
 import { Bouton } from '../ui/Bouton'
 import { Chip } from '../ui/Chip'
 import { Retour } from '../ui/Retour'
+import { Chevron } from '../ui/Chevron'   // RETOURS-15 D8 — l'encart total+communes se replie en accordéon
 
 // A1 — plus de date « gelée » en dur : le millésime affiché à l'écran est celui SERVI par l'endpoint
 // (parcel_solar.source_millesime). Un seul millésime par écran, jamais deux dates contradictoires.
@@ -97,6 +98,7 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
   const qc = useQueryClient()
   const [commune, setCommune] = useState<string | null>(null)
   const [montre, setMontre] = useState(false)
+  const [encartOuvert, setEncartOuvert] = useState(true)   // RETOURS-15 D8 — replié une fois la liste montrée, rouvrable
   const [inclureAConfirmer, setInclureAConfirmer] = useState(false)
   const [pasPiscine, setPasPiscine] = useState<Set<string>>(new Set())
 
@@ -117,10 +119,11 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
   const page = usePagination(items.length)
   const [carteBusy, setCarteBusy] = useState(false)
   useEffect(() => () => setModuleMap({ idus: [], extra: null }), [setModuleMap])
-  useEffect(() => { setMontre(false); setModuleMap({ idus: [], extra: null }) }, [commune, setModuleMap])
+  useEffect(() => { setMontre(false); setEncartOuvert(true); setModuleMap({ idus: [], extra: null }) }, [commune, setModuleMap])
   // « Voir les piscines » : charge la liste ET pose les points goutte sur la carte (comme avant).
+  // RETOURS-15 D8 — l'encart total+communes se replie pour laisser la place à la liste (rouvrable).
   const voirPiscines = async () => {
-    setMontre(true); setCarteBusy(true)
+    setMontre(true); setEncartOuvert(false); setCarteBusy(true)
     try { setModuleMap({ idus: [], extra: await getPiscinesPoints(commune, 0, inclureAConfirmer) }) }
     finally { setCarteBusy(false) }
   }
@@ -137,36 +140,44 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
       {agg.isLoading && <Squelette bloc />}
       {agg.isError && <ErrorState message="Détection piscines momentanément indisponible." retry={() => agg.refetch()} />}
       {agg.data && (
-        <div className="rounded-lg border px-3 py-2.5" style={{ borderColor: `${TOKENS.mint}4d`, background: `${TOKENS.mint}0f` }}>
-          <div className="mt-0.5">
-            <b data-piscines-total className="tnum text-2xl font-semibold" style={{ color: TOKENS.mint }}>{fmtInt(agg.data.total)}</b>
-            <span className="ml-2 text-[11px] text-txt-mut">piscines détectées {commune ? `à ${commune}` : 'à La Réunion'}</span>
+        <details data-piscines-encart open={encartOuvert}
+          onToggle={(e) => setEncartOuvert((e.target as HTMLDetailsElement).open)}
+          className="group rounded-lg border" style={{ borderColor: `${TOKENS.mint}4d`, background: `${TOKENS.mint}0f` }}>
+          <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2.5">
+            {/* RETOURS-15 D8 — le total+communes se replie une fois « Voir les piscines » cliqué,
+                laissant la place à la liste des parcelles ; rouvrable par le chevron. */}
+            <div className="min-w-0 flex-1">
+              <b data-piscines-total className="tnum text-2xl font-semibold" style={{ color: TOKENS.mint }}>{fmtInt(agg.data.total)}</b>
+              <span className="ml-2 text-[11px] text-txt-mut">piscines détectées {commune ? `à ${commune}` : 'à La Réunion'}</span>
+            </div>
+            <Chevron open={encartOuvert} />
+          </summary>
+          <div className="px-3 pb-2.5">
+            {agg.data.confiance && (
+              <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px]">
+                <button data-piscines-toggle-aconfirmer onClick={() => setInclureAConfirmer((v) => !v)}
+                  className="rounded border px-1.5 py-0.5 font-medium transition-colors duration-quick hover:brightness-110"
+                  style={inclureAConfirmer
+                    ? { borderColor: `${TOKENS.mint}66`, color: TOKENS.mint, background: `${TOKENS.mint}12` }
+                    : { borderColor: 'var(--line-2)', color: 'var(--txt-mut)' }}>
+                  {inclureAConfirmer ? '✓ à confirmer incluses' : `inclure à confirmer (+${fmtInt(agg.data.confiance.incertaines)})`}
+                </button>
+              </div>
+            )}
+            <div data-piscines-source className="mt-1 text-[9px] leading-snug text-txt-dim">Source : IGN FLAIR et CoSIA, 2025</div>
+            {/* (2) FILTRE commune (liste des communes, comptes) */}
+            {!commune && agg.data.communes.length > 0 && (
+              <div className="mt-2 flex flex-col gap-0.5">
+                {agg.data.communes.slice(0, 8).map((c) => (
+                  <div key={c.commune} className="flex items-baseline justify-between gap-2 text-[11px]">
+                    <Bouton niveau="lien" onClick={() => setCommune(c.commune)}>{c.commune}</Bouton>
+                    <span className="tnum text-txt">{fmtInt(c.n)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-          {agg.data.confiance && (
-            <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px]">
-              <span className="text-txt-dim">Statut <b className="text-txt-mut">servie</b> (précision ≥ 85 %) par défaut.</span>
-              <button data-piscines-toggle-aconfirmer onClick={() => setInclureAConfirmer((v) => !v)}
-                className="rounded border px-1.5 py-0.5 font-medium transition-colors duration-quick hover:brightness-110"
-                style={inclureAConfirmer
-                  ? { borderColor: `${TOKENS.mint}66`, color: TOKENS.mint, background: `${TOKENS.mint}12` }
-                  : { borderColor: 'var(--line-2)', color: 'var(--txt-mut)' }}>
-                {inclureAConfirmer ? '✓ à confirmer incluses' : `inclure à confirmer (+${fmtInt(agg.data.confiance.incertaines)})`}
-              </button>
-            </div>
-          )}
-          <div data-piscines-source className="mt-1 text-[9px] leading-snug text-txt-dim">{agg.data.source}</div>
-          {/* (2) FILTRE commune (liste des communes, comptes) */}
-          {!commune && agg.data.communes.length > 0 && (
-            <div className="mt-2 flex flex-col gap-0.5">
-              {agg.data.communes.slice(0, 8).map((c) => (
-                <div key={c.commune} className="flex items-baseline justify-between gap-2 text-[11px]">
-                  <Bouton niveau="lien" onClick={() => setCommune(c.commune)}>{c.commune}</Bouton>
-                  <span className="tnum text-txt">{fmtInt(c.n)}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        </details>
       )}
 
       {/* (3) BOUTON PRIMAIRE « Voir les piscines » */}
