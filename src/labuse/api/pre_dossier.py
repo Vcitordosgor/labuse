@@ -361,6 +361,28 @@ def _regles_et_pieces(db: Session, idu: str, scen: dict | None = None) -> bytes:
                       f"créée (art. L524-7 du Code du patrimoine) — chiffrée sur la SDP du projet</td></tr></table>")
     except Exception:  # noqa: BLE001 — enrichissement optionnel, ne casse pas la fiche
         pass
+    # FAISABILITE-3 (Lot C) — le pré-dossier PC lit LE MÊME appel de faisabilité (faisabilite_scenario)
+    # avec le scénario TERRAIN LIBÉRÉ par défaut, et l'écrit EN TOUTES LETTRES (le scénario, la SDP, la
+    # surface à démolir). Aucun calcul propre : le moteur (parcel_faisabilite) fait tout.
+    capa = ""
+    try:
+        from ..faisabilite.scenarios import faisabilite_scenario
+        pid = db.execute(text("SELECT id FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
+        pan = faisabilite_scenario(db, pid, "terrain_libere") if pid else None
+        if pan and pan.get("constructible"):
+            lg = pan.get("logements") or [0, 0]
+            lg_txt = (f" · {lg[0]}" + ("" if lg[0] == lg[1] else f"–{lg[1]}") + " logement(s)") if max(lg) > 0 else ""
+            demo = pan.get("surface_a_demolir_m2")
+            capa = (f"<h2>Capacité constructible — scénario « terrain libéré »</h2>"
+                    f"<p>Scénario retenu : <b>terrain libéré</b> (l'enveloppe du terrain, bâti existant "
+                    f"compté à 0). Surface de plancher jusqu'à <b>~{pan['sdp_possible_m2']:g} m²</b>{lg_txt}."
+                    + (f" Surface à démolir estimée : ~{demo:g} m² (à chiffrer)." if demo else "")
+                    + " Pré-faisabilité sur règlement public, pas un certificat d'urbanisme.</p>")
+        elif pan and not pan.get("logement_autorise"):
+            capa = ("<h2>Capacité constructible</h2><p>Logement non autorisé dans cette zone "
+                    "(habitat interdit au règlement).</p>")
+    except Exception:  # noqa: BLE001 — la capacité est un enrichissement, ne casse pas le pré-dossier
+        capa = ""
     pieces = "".join(f"<tr><td>{c}</td><td>{lib}</td><td>{etat}</td></tr>"
                      for c, lib, etat in PIECES_PCMI)
     body = (f"<h2>Zonage du document d'urbanisme</h2>"
@@ -370,6 +392,7 @@ def _regles_et_pieces(db: Session, idu: str, scen: dict | None = None) -> bytes:
                f"servitudes) peuvent modifier ces valeurs.</p>" if regles else "")
             + (f"<h2>Prescriptions graphiques</h2><ul>{presc}</ul>" if presc else "")
             + f"<h2>Servitudes et périmètres connus</h2><ul>{serv_html}</ul>"
+            + capa
             + extra
             + f"<h2>Pièces à joindre (CERFA {scen['cerfa']}, {scen['type']})</h2>"
             + (f"<p class='note'>Scénario retenu : collectif → dépôt sur CERFA 13409 (pièces PC1 à "
