@@ -117,6 +117,7 @@ export const filterParams = (f: Filters): Record<string, string | number> => ({
   ...(f.pmApe?.length ? { pm_ape: f.pmApe.join(',') } : {}),
   ...(f.pmDirigMin != null ? { pm_dirig_min: f.pmDirigMin } : {}),
   ...(f.pmDirigMax != null ? { pm_dirig_max: f.pmDirigMax } : {}),
+  ...(f.pmAge?.length ? { pm_age: f.pmAge.join(',') } : {}),   // KELFONCIER-FIX-1 (Lot B) — tranche d'âge dirigeant
   // KELFONCIER-FIX-1 (Lot D) — filtres bâti : hauteur LiDAR faîtage (m) + emprise bâtie (%).
   ...(f.hauteurMin != null ? { hauteur_min: f.hauteurMin } : {}),
   ...(f.hauteurMax != null ? { hauteur_max: f.hauteurMax } : {}),

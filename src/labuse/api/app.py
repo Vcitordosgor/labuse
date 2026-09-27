@@ -1390,6 +1390,7 @@ def _q_v2_where(run_label: str,
                 pm_denom: str | None = None, pm_siren: str | None = None,
                 pm_forme: str | None = None, pm_ape: str | None = None,
                 pm_dirig_min: int | None = None, pm_dirig_max: int | None = None,
+                pm_age: str | None = None,
                 zfang: str | None = None, frr: str | None = None,
                 hauteur_min: float | None = None, hauteur_max: float | None = None,
                 emprise_min: int | None = None, emprise_max: int | None = None) -> tuple[str, dict]:
@@ -1690,6 +1691,24 @@ def _q_v2_where(run_label: str,
         if pm_dirig_max is not None:
             cond += " AND vpg.nb_dirigeants <= :pm_dirig_max"; params["pm_dirig_max"] = pm_dirig_max
         conds.append(cond + ")")
+    if pm_age and pm_age.strip():
+        # KELFONCIER-FIX-1 (Lot B) — TRANCHE d'âge du dirigeant (JAMAIS l'âge exact) : <50 / 50-69 / ≥70.
+        # Filtre sur `v_pm_propension_vendre.age_max_dirigeant` (âge MAX des dirigeants, déjà calculé et
+        # déjà consommé en interne par la veille succession — aucune donnée personnelle NOUVELLE exposée,
+        # et jamais l'âge exact : seule la tranche est un critère). OU entre tranches. Le contrôle exact-âge
+        # (config filtre_age_dirigeant, garde FORBIDDEN_FLAGS_RGPD) reste fermé et intact.
+        tranches = {x.strip() for x in pm_age.split(",") if x.strip()}
+        _BUCKETS = {
+            "moins50": "vpa.age_max_dirigeant < 50",
+            "50_69": "vpa.age_max_dirigeant BETWEEN 50 AND 69",
+            "70plus": "vpa.age_max_dirigeant >= 70",
+        }
+        picked_age = [_BUCKETS[t] for t in ("moins50", "50_69", "70plus") if t in tranches]
+        if picked_age:
+            conds.append("EXISTS (SELECT 1 FROM parcelle_personne_morale pmga"
+                         " JOIN v_pm_propension_vendre vpa ON vpa.siren = pmga.siren"
+                         " WHERE pmga.idu = p.idu AND vpa.age_max_dirigeant IS NOT NULL"
+                         " AND (" + " OR ".join(picked_age) + "))")
     if copro:   # propriété : copropriété RNIC (avec / sans) — s2.copro
         cp = [x.strip() for x in copro.split(",") if x.strip()]
         if "avec" in cp and "sans" not in cp:
@@ -1854,6 +1873,8 @@ class FiltreCriteres:
     pm_ape: str | None = None
     pm_dirig_min: int | None = None
     pm_dirig_max: int | None = None
+    # KELFONCIER-FIX-1 (Lot B) — tranche d'âge du dirigeant (CSV parmi moins50 / 50_69 / 70plus).
+    pm_age: str | None = None
     # COUCHES-2 point 4 — statut ZFANG (renforce/standard) et FRR (totalite/partie/hors), CSV.
     zfang: str | None = None
     frr: str | None = None
@@ -1879,6 +1900,7 @@ class FiltreCriteres:
                            droits_residuels=self.droits_residuels,
                            pm_denom=self.pm_denom, pm_siren=self.pm_siren, pm_forme=self.pm_forme,
                            pm_ape=self.pm_ape, pm_dirig_min=self.pm_dirig_min, pm_dirig_max=self.pm_dirig_max,
+                           pm_age=self.pm_age,
                            zfang=self.zfang, frr=self.frr,
                            hauteur_min=self.hauteur_min, hauteur_max=self.hauteur_max,
                            emprise_min=self.emprise_min, emprise_max=self.emprise_max)
@@ -1896,7 +1918,7 @@ class FiltreCriteres:
                 self.modeb_travaux_m2, self.modeb_loyer_m2, self.modeb_rendement_pct,
                 self.signaux, self.droits_residuels,
                 self.pm_denom, self.pm_siren, self.pm_forme, self.pm_ape,
-                self.pm_dirig_min, self.pm_dirig_max, self.zfang, self.frr,
+                self.pm_dirig_min, self.pm_dirig_max, self.pm_age, self.zfang, self.frr,
                 self.destination,   # FAISABILITE-1 lot B — la destination entre dans le memo (compteur exact)
                 self.hauteur_min, self.hauteur_max, self.emprise_min, self.emprise_max)   # KELFONCIER-FIX-1 Lot D
 
@@ -3543,7 +3565,7 @@ _HASH_STR = {"fx": "flags_exclus", "cs": "communes", "zf": "zonage", "sv": "sign
              "cst": "constructibilite", "es": "etat_sol", "zpx": "zone_plu",
              "pt": "proprietaire_type", "soc": "etat_societe", "cp": "copro",
              "drr": "droits_residuels", "pmf": "pm_forme", "pma": "pm_ape",
-             "pmd": "pm_denom", "pms": "pm_siren",
+             "pmd": "pm_denom", "pms": "pm_siren", "pag": "pm_age",   # KELFONCIER-FIX-1 (Lot B) — tranche d'âge dirigeant
              "zfa": "zfang", "frr": "frr"}   # FILTRES-FIX-1 (lot 1) — ZFANG/FRR évalués par la veille (même moteur que la carte)
 #: dimensions du hash RÉELLEMENT évaluables (les seules connues du mappage) — pour l'annonce
 #: « cette veille surveille : … » et le signalement de ce qui n'est PAS retenu (KO-7 point 2).

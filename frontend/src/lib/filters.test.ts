@@ -18,6 +18,8 @@ describe('filters URL persistence (M55-D)', () => {
       flagsExclus: ['icpe'], communes: ['Saint-Paul'],
       zonagePlu: ['U', 'AU'], constructibilite: ['constructible'], etatSol: ['nu'],
       zonePlu: ['UA'], proprietaireType: ['pm'], etatSociete: ['radiee'], copro: ['sans'],
+      pmForme: ['SCI'], pmApe: ['68.20B'], pmAge: ['70plus'], pmDenom: 'OMEGA', pmSiren: '900000001',   // KELFONCIER-FIX-1 (Lot B) — critères propriétaire persistent
+      pmDirigMin: 1, pmDirigMax: 5,
       signaux: ['defisc', 'friche'],   // stage 6 : le groupe Signaux de vie persiste (clé sv)
       zfangRegime: ['renforce'], frrClassement: ['partie'],   // FILTRES-FIX-1 (lot 1) — ZFANG/FRR persistent (clés zfa/frr)
       hauteurMin: 3, hauteurMax: 12, empriseMin: 5, empriseMax: 80,   // KELFONCIER-FIX-1 (Lot D) — filtres bâti persistent (hmin/hmax/emin/emax)
@@ -75,6 +77,14 @@ describe('filters URL persistence (M55-D)', () => {
     expect(back.empriseMax).toBe(80)
     expect(back.analyseLabuse).toBe(false)   // bâti mesuré = terrain, pas une opinion
     expect(hasOpinion(back as Filters)).toBe(false)
+  })
+
+  // KELFONCIER-FIX-1 (Lot B) — la tranche d'âge du dirigeant (pmAge → pag) persiste au hash et
+  // compte comme critère (badge « Filtres (N) »), sans jamais porter l'âge exact.
+  it('Lot B — tranche d\'âge dirigeant (pag) persiste et compte', () => {
+    const back = filtersFromHash('#f=1&pag=50_69,70plus')!.filters
+    expect(back.pmAge).toEqual(['50_69', '70plus'])
+    expect(countActiveFilters({ ...EMPTY_FILTERS, pmAge: ['70plus'] })).toBe(1)
   })
 
   // KELFONCIER-FIX-1 (Lot E) — rappel : « sans copropriété » (hc) reste au hash + compteur.

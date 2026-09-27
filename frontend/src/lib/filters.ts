@@ -104,7 +104,7 @@ export interface Chip { token: string; label: string }
 // aient été posés (rapides du header OU panneau). Le MODE (analyseLabuse) n'est PAS un filtre → exclu.
 const F_ARRAYS: (keyof Filters)[] = ['tiers', 'flags', 'flagsExclus', 'communes', 'zonagePlu',
   'constructibilite', 'etatSol', 'zonePlu', 'proprietaireType', 'etatSociete', 'copro', 'signaux', 'droitsResiduels',
-  'pmForme', 'pmApe',   // KF1 (rattrapage KelFoncier) — facettes propriétaire
+  'pmForme', 'pmApe', 'pmAge',   // KF1 (rattrapage KelFoncier) — facettes propriétaire ; pmAge = tranche d'âge (KELFONCIER-FIX-1 Lot B)
   'zfangRegime', 'frrClassement']   // FILTRES-FIX-1 (lot 1) — ZFANG/FRR comptés comme les autres facettes (badge, compteur vivant)
 const F_NUMS: (keyof Filters)[] = ['surfaceMin', 'surfaceMax', 'sdpMin', 'sdpMax',
   'capaciteMin', 'multMin', 'rangMax', 'budgetMax', 'chargeMin', 'chargeMax',
@@ -134,7 +134,7 @@ const TERRAIN_FIELDS = new Set<keyof Filters>(['surfaceMin', 'surfaceMax', 'zona
   // FAISABILITE-1 (lot B) — la CAPACITÉ (SDP restante, logements, destination) est un FAIT lu au PLU
   // + parcel_residuel servi, pas une opinion LABUSE → n'allume PAS l'interrupteur d'analyse.
   'sdpMin', 'sdpMax', 'capaciteMin', 'destinationAutorisee',
-  'pmForme', 'pmApe', 'pmDirigMin', 'pmDirigMax',   // KF1 — critères propriétaire = faits (DGFiP), pas une opinion LABUSE
+  'pmForme', 'pmApe', 'pmAge', 'pmDirigMin', 'pmDirigMax',   // KF1 — critères propriétaire = faits (DGFiP/INPI), pas une opinion LABUSE
   'hauteurMin', 'hauteurMax', 'empriseMin', 'empriseMax',   // KELFONCIER-FIX-1 (Lot D) — le bâti mesuré = un FAIT (LiDAR/run servi), pas une opinion
   'zfangRegime', 'frrClassement'])   // FILTRES-FIX-1 (lot 1) — statut fiscal de la commune = un FAIT (territoire_fiscal), pas une opinion
 export function hasOpinion(f: Filters): boolean {
@@ -231,7 +231,7 @@ const CSV_KEYS: [keyof Filters, string][] = [
   ['signaux', 'sv'],
   ['constructibilite', 'cst'], ['etatSol', 'es'], ['zonePlu', 'zpx'],
   ['proprietaireType', 'pt'], ['etatSociete', 'soc'], ['copro', 'cp'], ['droitsResiduels', 'drr'],
-  ['pmForme', 'pmf'], ['pmApe', 'pma'],   // KF1 — forme juridique / code APE (codes réels des facettes)
+  ['pmForme', 'pmf'], ['pmApe', 'pma'], ['pmAge', 'pag'],   // KF1 — forme juridique / code APE / tranche d'âge dirigeant (KELFONCIER-FIX-1 Lot B)
   ['zfangRegime', 'zfa'], ['frrClassement', 'frr'],   // FILTRES-FIX-1 (lot 1) — ZFANG/FRR persistés (URL, Mes vues, veille)
 ]
 // KF1 — clés texte (dénomination, SIREN) : persistées telles quelles dans le hash.
