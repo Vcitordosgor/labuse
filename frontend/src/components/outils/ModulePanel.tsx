@@ -1709,23 +1709,10 @@ export function M10() {
    Le nom ne promet pas l'exhaustivité (pas de « contrôle complet » / « due diligence »). */
 function Risques() {
   const selectedIdu = useApp((s) => s.selectedIdu)
-  // depuis une fiche (parcelle sélectionnée) → entrée détail ; sinon libre choix, détail par défaut.
-  const [entree, setEntree] = useState<'parcelle' | 'lot'>('parcelle')
-  return (
-    <>
-      <div data-risques-entrees className="flex gap-1">
-        {([['parcelle', 'Une parcelle'], ['lot', 'Un lot']] as const).map(([k, lbl]) => (
-          <button key={k} data-risques-entree={k} onClick={() => setEntree(k)}
-            className={`flex-1 rounded-lg border px-2 py-1 text-[11px] font-medium transition-colors duration-quick ${
-              entree === k ? 'border-mint/60 bg-mint/10 text-mint' : 'border-line-2 text-txt-mut hover:text-txt'}`}>
-            {lbl}
-          </button>
-        ))}
-      </div>
-      {/* parcelle : servitudes détail + NON COUVERT ; lot : risque + checklist + NON COUVERT reporté */}
-      {entree === 'parcelle' ? <O5Servitudes key={selectedIdu ?? 'o5'} /> : <M10 />}
-    </>
-  )
+  // RETOURS-15 B8 (P14) — le mode « Un lot » est RETIRÉ : l'outil ne fait plus que « Une parcelle »
+  // (plus de bascule d'entrée). M10 (le flux lot) reste exporté pour son test unitaire, mais n'est
+  // plus câblé à l'outil.
+  return <O5Servitudes key={selectedIdu ?? 'o5'} />
 }
 
 

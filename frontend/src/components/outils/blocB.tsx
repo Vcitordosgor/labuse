@@ -54,9 +54,11 @@ export function O5Servitudes() {
           (replié, plus bas). */}
       <Banner>Ce qui peut bloquer un projet sans se voir sur la carte : servitudes, sols, bruit,
         assainissement. Chaque servitude est nommée, datée et sourcée.</Banner>
-      {/* PATRON OMNIBOX (M137) — adresse OU IDU dans le même champ (ParcelInput partagé). Le clic
-          carte est déjà capté par l'effet selectedIdu ci-dessus → withCarte inutile ici. */}
-      <ParcelInput dataAttr="o5-idu" placeholder="Adresse, IDU ou référence (BW0917)" onPick={allerA} />
+      {/* PATRON OMNIBOX (M137) — adresse OU IDU dans le même champ (ParcelInput partagé). RETOURS-15 B8
+          — withCarte=false : le clic carte est capté par l'effet selectedIdu ci-dessus (il analyse ET
+          ouvre la fiche) ; on ne laisse pas l'auto-consommation du socle rappeler `allerA` (qui ferait
+          select(null) et refermerait la fiche). Plus de bouton/invite carte ici. */}
+      <ParcelInput dataAttr="o5-idu" withCarte={false} placeholder="Adresse, IDU ou référence (BW0917)" onPick={allerA} />
       {q.isLoading && <Squelette lignes={4} />}
       {q.isError && <ErrorState className="py-6" message="Servitudes indisponibles." retry={() => q.refetch()} />}
       {d && (
@@ -65,10 +67,7 @@ export function O5Servitudes() {
             <span className="num-key text-base text-mint">{d.n}</span>
             <span className="text-txt-mut">servitude(s)/contrainte(s) sur</span>
             <span className="font-mono text-txt-hi">{d.idu.slice(8, 10)} {d.idu.slice(10)}</span>
-            {/* PIEGES-RISQUES-1 pt2 — lien PERMANENT « Ouvrir la fiche → » (jaune, DA existante) : la fiche
-                ne s'ouvre QUE sur ce clic (l'ouvrir d'office fermerait l'outil). `select` monte la fiche parcelle. */}
-            <button data-o5-fiche onClick={() => select(d.idu)}
-              className="ml-auto text-[10.5px] font-medium text-amber hover:underline">Ouvrir la fiche →</button>
+            {/* RETOURS-15 B8 — « Ouvrir la fiche → » RETIRÉ : la fiche s'ouvre déjà au clic carte (select). */}
           </div>
           {d.servitudes.map((s, i) => (
             <div key={i} className="rounded-lg bg-surface-3 px-3 py-2 shadow-elev-1">
