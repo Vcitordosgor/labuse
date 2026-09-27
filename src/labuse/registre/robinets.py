@@ -133,7 +133,11 @@ ROBINETS: dict[str, Robinet] = {
  "fiche_parcelle_droit_sols": _r("fiche", "Dispositifs et périmètres (droit des sols)", "fiche_parcelle",
     "/parcels/{idu} (clé dispositifs)", "json_puis_js",
     chiffres=("dispositifs_parcelle", "er_emplacement_reserve", "ebc_classe",
-              "dpu_perimetre", "peb_zone",)),
+              "dpu_perimetre", "peb_zone", "scot_parcelle",)),
+ # SOURCES-FIX-1 (A1/A2) — contraintes environnementales servies à la parcelle (mêmes couches que la carte).
+ "fiche_parcelle_contraintes_env": _r("fiche", "Contraintes environnementales (APER / mesures compensatoires)",
+    "fiche_parcelle", "/parcels/{idu} (clés enr_exclue_toiture, mesures_compensatoires)", "json_puis_js",
+    chiffres=("enr_exclue_parcelle", "mesures_compensatoires_parcelle",)),
  # ── SOURCES-1 lot 2 — nature et eau ──
  "couche_dpf": _r("couche", "Ravines et reculs (DPF)", None,
     "/map/tiles/dpf/{z}/{x}/{y}.pbf", "tuiles", chiffres=("dpf_couche",)),

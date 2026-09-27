@@ -3,9 +3,11 @@
 UN critère, UN endroit : le compteur d'accueil (`accueil.py`) ET la liste `/sources` lisent d'ici.
 Exclusions de l'AFFICHAGE (l'ingestion et les tables restent, seul l'écran change) :
   · les DOUBLON de catalogue (même donnée qu'une ligne canonique — M71) ;
-  · les sources MASQUÉES : mortes à l'affichage. M97 : le mécanisme reste, l'ensemble est VIDE —
-    Office de l'eau (masquée M87 comme « QA seul ») est SERVIE à la fiche depuis M95
-    (anc_office_eau_commune, Sourcé commune) ; une source servie s'affiche (audit M96 G1).
+  · les sources MASQUÉES : mortes à l'affichage. M97 : le mécanisme reste, l'ensemble est VIDE.
+    NOTE (SOURCES-FIX-1) : l'ancien exemple « Office de l'eau est SERVIE à la fiche » est PÉRIMÉ —
+    depuis SOURCES-3 lot 0.2, l'ANC commune est porté par l'INSEE RP2022 EGOUL (anc_maille_taux) et
+    Office de l'eau est RETIRÉE (statut 'retiree', plus aucun lecteur du code). Une source retirée
+    sort de la vitrine par son statut (WHERE_AFFICHEES), pas par un masquage.
 """
 from __future__ import annotations
 

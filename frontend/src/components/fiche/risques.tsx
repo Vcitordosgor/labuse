@@ -130,6 +130,52 @@ export function RisquesSection({ f }: { f: Fiche; idu: string }) {
             )}
           </div>
         )}
+        {/* SOURCES-FIX-1 A1 — zone où les EnR au SOL sont exclues (loi APER, sauf toiture). */}
+        {f.enr_exclue_toiture && (
+          <div data-enr-exclue>
+            <GroupLabel>EnR au sol interdites (APER, sauf toiture)</GroupLabel>
+            {f.enr_exclue_toiture.disponible ? (
+              <div className="flex flex-col gap-1 text-[12.5px]">
+                {f.enr_exclue_toiture.zones.map((zn, i) => (
+                  <div key={i} className="flex items-start gap-2">
+                    <span aria-hidden className="mt-1.5 shrink-0 text-st-creuser">▲</span>
+                    <div className="min-w-0 flex-1">
+                      <span className="font-semibold">{zn.libelle ?? 'Zone exclue'}</span>
+                      {zn.gestionnaire && <span className="text-txt-mut"> — {zn.gestionnaire}</span>}
+                      <div className="text-[11.5px] text-txt-mut">Photovoltaïque/ombrière au sol exclu ; en toiture non concerné.</div>
+                    </div>
+                  </div>
+                ))}
+                <div className="text-[11px] text-txt-dim">{f.enr_exclue_toiture.source} · {f.enr_exclue_toiture.millesime}</div>
+              </div>
+            ) : (
+              <div className="text-[12px] text-txt-dim"><span className="text-mint">✓</span> Sans objet — parcelle hors zone d'exclusion EnR. <span className="text-txt-dim">({f.enr_exclue_toiture.millesime})</span></div>
+            )}
+          </div>
+        )}
+        {/* SOURCES-FIX-1 A2 — mesures compensatoires environnementales (GéoMCE) sur la parcelle. */}
+        {f.mesures_compensatoires && (
+          <div data-mesures-compensatoires>
+            <GroupLabel>Mesure compensatoire (GéoMCE)</GroupLabel>
+            {f.mesures_compensatoires.disponible ? (
+              <div className="flex flex-col gap-1 text-[12.5px]">
+                {f.mesures_compensatoires.mesures.map((m, i) => (
+                  <div key={i} className="flex items-start gap-2">
+                    <span aria-hidden className="mt-1.5 shrink-0 text-st-creuser">▲</span>
+                    <div className="min-w-0 flex-1">
+                      <span className="font-semibold">{m.type_mesure ?? 'Mesure compensatoire'}</span>
+                      {m.projet && <span className="text-txt-mut"> — {m.projet}</span>}
+                      {m.date_decision && <span className="text-txt-mut"> · {m.date_decision}</span>}
+                    </div>
+                  </div>
+                ))}
+                <div className="text-[11px] text-txt-dim">{f.mesures_compensatoires.source} · {f.mesures_compensatoires.millesime}</div>
+              </div>
+            ) : (
+              <div className="text-[12px] text-txt-dim"><span className="text-mint">✓</span> Sans objet — aucune mesure compensatoire sur la parcelle. <span className="text-txt-dim">({f.mesures_compensatoires.millesime})</span></div>
+            )}
+          </div>
+        )}
         {/* RETOUCHES-1 lot C.12 — CatNat : les 5 arrêtés de catastrophe naturelle les plus récents. */}
         {f.catnat && (
           <div data-catnat>

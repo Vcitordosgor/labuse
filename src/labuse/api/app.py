@@ -4272,6 +4272,12 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
         "catnat": _blocs3.catnat(db, idu),
         "pm_voisines": _blocs3.pm_voisines(db, idu),
         "anciennete_detention": _blocs3.anciennete_detention(db, idu),
+        # SOURCES-FIX-1 (A1/A2/A3) — 3 contraintes qui touchent la parcelle et manquaient à la fiche :
+        # zone EnR interdite hors toiture (APER) + mesures compensatoires (§Risques), SCOT (§Urbanisme).
+        # Mêmes couches que la carte (spatial_layers), intersection LIVE, même libellé.
+        "enr_exclue_toiture": _blocs3.enr_exclue_toiture(db, idu),
+        "mesures_compensatoires": _blocs3.mesures_compensatoires(db, idu),
+        "scot": _blocs3.scot(db, idu),
     }
 
 

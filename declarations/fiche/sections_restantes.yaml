@@ -148,6 +148,14 @@ donnees:
     absence_type: absente_ici
     statut_juridique: opposable
     pourquoi: "Prescriptions opposables du droit des sols ; replié, dans la même section que les dispositifs."
+  # SOURCES-FIX-1 A3 — le SCOT (document supra-communal opposable au PLU), même couche que la carte.
+  - quoi:  scot_parcelle
+    ou:    { rang: 30, etat: replie, section: "Droit des sols (ER · EBC · DPU · PEB)" , fiche_section: urbanisme }
+    comment: { libelle: "SCOT", format: texte, i: "Schéma de cohérence territoriale couvrant la parcelle (nom, date d'approbation) — document supra-communal opposable au PLU. Source : Géoportail de l'urbanisme (GPU)." }
+    absence: "SCOT : la parcelle n'est couverte par aucun schéma de cohérence territoriale."
+    absence_type: absente_ici
+    statut_juridique: opposable
+    pourquoi: "Cadre supra-communal opposable au PLU ; replié, dans la section droit des sols."
 ---
 surface:   fiche_parcelle_autour
 nom:       "Autour de cette parcelle"

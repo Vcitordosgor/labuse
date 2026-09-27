@@ -184,6 +184,47 @@ def _c_plu_fraicheur(db, idu, f):
     return _nz(f.get("plu_fraicheur"))
 
 
+# SOURCES-FIX-1 (A1/A2/A3) — les trois contraintes servies à la parcelle entrent au Dossier PDF
+# (miroir), section Risques (EnR exclue, mesures compensatoires) et Urbanisme (SCOT).
+@extracteur("enr_exclue_parcelle")
+def _c_enr_exclue(db, idu, f):
+    d = f.get("enr_exclue_toiture")
+    if not isinstance(d, dict) or not d.get("disponible"):
+        return None
+    out = []
+    for z in d.get("zones") or []:
+        lib = z.get("libelle") or "Zone exclue"
+        out.append(f"{lib} ({z['gestionnaire']})" if z.get("gestionnaire") else lib)
+    return " · ".join(out) or None
+
+
+@extracteur("mesures_compensatoires_parcelle")
+def _c_mesures_comp(db, idu, f):
+    d = f.get("mesures_compensatoires")
+    if not isinstance(d, dict) or not d.get("disponible"):
+        return None
+    out = []
+    for m in d.get("mesures") or []:
+        bits = [m.get("type_mesure") or "Mesure compensatoire"]
+        if m.get("projet"):
+            bits.append(m["projet"])
+        if m.get("date_decision"):
+            bits.append(m["date_decision"])
+        out.append(" — ".join(bits))
+    return " · ".join(out) or None
+
+
+@extracteur("scot_parcelle")
+def _c_scot(db, idu, f):
+    d = f.get("scot")
+    if not isinstance(d, dict) or not d.get("disponible"):
+        return None
+    bits = [d.get("nom") or "SCOT"]
+    if d.get("date_approbation"):
+        bits.append(f"approuvé le {d['date_approbation']}")
+    return " — ".join(bits)
+
+
 @extracteur("sar_divergence")
 def _c_sar(db, idu, f):
     ligne = next((l for l in (f.get("lines") or [])

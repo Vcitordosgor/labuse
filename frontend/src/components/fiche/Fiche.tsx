@@ -1583,6 +1583,25 @@ export function Fiche({ idu }: { idu: string }) {
                 <RtaaFromBilan idu={idu} />
                 {/* Dispositifs et périmètres (§4) — ER / EBC / doc urba / DPU / PEB / SUP (SOURCES-1 lot 1). */}
                 {f.dispositifs && <DispositifsBody d={f.dispositifs} />}
+                {/* SOURCES-FIX-1 A3 — SCOT (document supra-communal opposable au PLU) : nom + date
+                    d'approbation, même couche que la carte et la fiche commune (spatial_layers kind=scot). */}
+                {f.scot && (
+                  <div data-scot className="text-[12.5px]">
+                    <GroupLabel>SCOT (schéma de cohérence territoriale)</GroupLabel>
+                    {f.scot.disponible ? (
+                      <div className="flex flex-col gap-0.5">
+                        <div>
+                          <span className="font-semibold">{f.scot.nom ?? 'SCOT'}</span>
+                          {f.scot.statut && <span className="text-txt-mut"> — {f.scot.statut}</span>}
+                          {f.scot.date_approbation && <span className="text-txt-mut"> · approuvé le {f.scot.date_approbation.split('-').reverse().join('/')}</span>}
+                        </div>
+                        <div className="text-[11px] text-txt-dim">{f.scot.source}</div>
+                      </div>
+                    ) : (
+                      <div className="text-[12px] text-txt-dim"><span className="text-mint">✓</span> Sans objet — parcelle hors périmètre SCOT. <span className="text-txt-dim">({f.scot.source})</span></div>
+                    )}
+                  </div>
+                )}
                 {/* FICHE-FIX-2 P4 — mixité sociale (LLS) branchée sur la règle VALIDÉE de la zone
                     (reglement_plu.mixite, lue des regles calibrées). Validée → seuil + quota + citation
                     sourcés ; propose/absente → « non modélisée pour cette zone » (jamais « non
