@@ -557,7 +557,9 @@ export function ContextePanel() {
               </LigneCarte>
 
               <LigneCarte id="foncier" chiffre="n_parcelles_commune" ic="◫" titre="Foncier et rareté"
-                sous={`${fmt(d.foncier?.stock_opportunites.n)} parcelles promues${r?.['horizon_epuisement_ans'] != null ? ` · ZAN ${fmtDec(r['horizon_epuisement_ans'])} ans` : ''}`}
+                // RETOURS-15 B2 — la ligne « N parcelles promues » (classement LABUSE, hors périmètre)
+                // est retirée du sous-titre ; on garde l'horizon ZAN, sinon le compte factuel de parcelles.
+                sous={r?.['horizon_epuisement_ans'] != null ? `ZAN ${fmtDec(r['horizon_epuisement_ans'])} ans` : `${fmt(d.foncier?.n_parcelles)} parcelles`}
                 val={d.foncier ? `${fmt(d.foncier.stock_opportunites.ha)} ha` : null} ton="orange">
                 {d.foncier && (
                   <>
