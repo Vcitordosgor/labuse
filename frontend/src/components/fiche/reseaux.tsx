@@ -10,7 +10,6 @@
  * et l'activité de dépôt DÉMÉNAGENT vers « Autour » (un seul tableau, F0). Piscine/pente restent en
  * tête (caractéristiques du terrain). Auto-suffisante ; cycle-free.
  */
-import type { ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getOrthoEquipements } from '../../lib/api'
 import { fmtDistance as fmtDistanceM } from '../../lib/geo'
@@ -18,7 +17,7 @@ import type { Fiche } from '../../lib/types'
 import { BlocIndisponible } from './BlocIndisponible'
 import { ViabilisationBlock, assainissementResume } from './ViabilisationBlock'
 import { GestionnairesBlock } from './GestionnairesBlock'
-import { IC, RefDrawer, Line, GroupLabel, FactRow, FactNote } from './primitives'
+import { IC, RefDrawer, Line, GroupLabel } from './primitives'
 import { Badge } from '../ui/Badge'
 // KELFONCIER-FIX-2 (Lot H) — maquette v3 : Verdict + CasesEtat (glance eau·élec / fibre / bus /
 // assainissement), le détail (accès, gestionnaires, viabilisation…) reste rendu en dessous.
@@ -29,19 +28,16 @@ import { Verdict, CasesEtat, type CaseEtat, Lignes, Ligne, InfoI } from './forme
 // quand terrassement lourd probable). Donnée inchangée (mêmes chiffres, même source ortho).
 export function EquipementsBadges({ idu }: { idu: string }) {
   const { data: e } = useQuery({ queryKey: ['equip', idu], queryFn: () => getOrthoEquipements(idu), retry: false })
-  if (!e) return null
-  const rows: { label: string; value: ReactNode; tone?: 'warn'; src?: string }[] = []
-  if (e['piscine']) rows.push({ label: 'Piscine', value: <>~{e['piscine_m2']} <small>m²</small></>,
-    src: `détection ortho — confiance ${e['piscine_confiance']}` })
-  // FICHE-RANGEMENT-1 Lot 1 (doublon #4) — la PENTE vit UNE fois, dans la tuile d'en-tête « Pente »
-  // (triage glance, même source RGE ALTI ; son sous-titre dit plat/modérée/forte/très forte). On ne
-  // la répète plus ici ; « Terrain » ne garde que la piscine (fait propre à l'ortho).
-  if (!rows.length) return null
+  if (!e || !e['piscine']) return null
+  // FICHE-FIX-5 (Lot D) — sous-bloc « Détections » : la piscine en une Ligne « Piscine ~N m² ·
+  // confiance X », la méthode (BD ORTHO) derrière le « i ». La pente vit dans la tuile d'en-tête.
   return (
     <div data-terrain>
-      <GroupLabel>Terrain</GroupLabel>
-      {rows.map((r) => <FactRow key={r.label} label={r.label} value={r.value} tone={r.tone} src={r.src} />)}
-      {e['source'] ? <FactNote>{String(e['source'])}</FactNote> : null}
+      <GroupLabel>Détections</GroupLabel>
+      <Lignes>
+        <Ligne label={<>Piscine<InfoI aria="Sur la détection piscine" tip={`Détection par imagerie ortho (BD ORTHO IGN)${e['source'] ? ` · ${String(e['source'])}` : ''}.`} /></>}
+          valeur={<>~{e['piscine_m2']} <small>m² · confiance {String(e['piscine_confiance']).replace('.', ',')}</small></>} />
+      </Lignes>
     </div>
   )
 }

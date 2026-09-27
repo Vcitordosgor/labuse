@@ -1236,7 +1236,7 @@ export function Fiche({ idu }: { idu: string }) {
             v: expo.isLoading ? '…' : (expoOrient && expoOrient !== 'plat' ? expoOrient : expoOrient === 'plat' ? 'Plat' : '—'),
             s: expoOrient === 'plat' ? 'terrain quasi plat'
               : expo.isLoading ? 'calcul en cours'
-              : !expoOrient ? 'relief non disponible' : 'versant (RGE ALTI, fenêtre 200 m)',
+              : !expoOrient ? 'relief non disponible' : 'versant · RGE ALTI',
             vide: !expoOrient,
             i: 'Orientation du versant de la parcelle (Nord, Sud-Est…), calculée sur le modèle d’altitude RGE ALTI (IGN) dans une fenêtre de 200 m autour du centroïde. La pente affichée est celle de l’emprise (tuile « Pente ») ; l’exposition n’en affiche pas une seconde. « — » : relief non disponible sur la parcelle.' }
           // Taxe foncière → §7 Fiscalité (TFPB part communale, REI DGFiP) — désormais en Tuile (Lot I).
