@@ -710,7 +710,10 @@ export function Fiche({ idu }: { idu: string }) {
           (sticky top:0 se cale au bord du padding), laissant un liseré de 4px au-dessus par lequel le
           contenu défilait. Sans padding-haut, l'en-tête colle au BORD du panneau (voir .tete-collee, coins
           hauts carrés = fond plein jusqu'au bord). L'espacement des tuiles reste porté par gap-3. */}
-      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overflow-x-clip px-[14px] pb-4">
+      {/* FICHE-FIX-4 (Lot A1) — marge haute du conteneur défilant : la carte d'en-tête FLOTTE sous la
+          barre haute (bord + coins arrondis entièrement visibles) au lieu d'être rognée au bord. Au
+          défilement, l'en-tête collant se cale à top:0 (voir .tete-collee, coins tous arrondis). */}
+      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overflow-x-clip px-[14px] pb-4 pt-2.5">
       {/* RETOURS-13 P7 — EN-TÊTE COLLÉ. SEUL le bloc identité (PARCELLE·commune, IDU, adresse, icônes,
           croix de fermeture) reste collé en haut au défilement — un client ferme la fiche sans remonter.
           Les 6 tuiles NE collent PAS (carte séparée dessous). Le bloc est un ENFANT DIRECT du conteneur

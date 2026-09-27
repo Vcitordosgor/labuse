@@ -1236,9 +1236,14 @@ export function MapView() {
     // (Étudier un bien, Permis, œil ambre des Projets…) — le réglage vaut pour tous.
     const zoomCible = (surface: number | null | undefined): number =>
       surface != null && surface > 10_000 ? 16.5 : surface != null && surface > 2_500 ? 17 : 18
+    // FICHE-FIX-4 (Lot A2) — MARGE POUR LE PANNEAU : quand la fiche est ouverte (selectedIdu), elle
+    // couvre les 400 px de droite ; on décale la cible de ~200 px vers la gauche pour que la parcelle
+    // (détourée du liseré blanc `parcels-sel`) soit centrée dans la zone VISIBLE, pas sous le panneau.
+    // Le focus sans fiche (focusIdu seul) ne décale pas.
+    const panelOffset: [number, number] = selectedIdu ? [-200, 0] : [0, 0]
     const centroidReady = (c: [number, number] | null, surface?: number | null) => {
       if (!c || cancelled) return
-      m.flyTo({ center: c, zoom: Math.max(m.getZoom(), zoomCible(surface)), duration: 800 })
+      m.flyTo({ center: c, zoom: Math.max(m.getZoom(), zoomCible(surface)), offset: panelOffset, duration: 800 })
     }
     if (feat) centroidReady(roughCentroid(feat.geometry), (feat.properties as { surface_m2?: number }).surface_m2)
     else {
