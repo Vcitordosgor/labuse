@@ -1390,7 +1390,9 @@ def _q_v2_where(run_label: str,
                 pm_denom: str | None = None, pm_siren: str | None = None,
                 pm_forme: str | None = None, pm_ape: str | None = None,
                 pm_dirig_min: int | None = None, pm_dirig_max: int | None = None,
-                zfang: str | None = None, frr: str | None = None) -> tuple[str, dict]:
+                zfang: str | None = None, frr: str | None = None,
+                hauteur_min: float | None = None, hauteur_max: float | None = None,
+                emprise_min: int | None = None, emprise_max: int | None = None) -> tuple[str, dict]:
     """Fragment WHERE partagé liste/stats — les MÊMES filtres que les chips du front. Mode
     « Toute l'île » : le client ne détient plus les 431k features en mémoire, le serveur
     filtre en SQL (chiffres SQL-exacts, mêmes clés que matchScope côté front).
@@ -1710,6 +1712,27 @@ def _q_v2_where(run_label: str,
         conds.append("EXISTS (SELECT 1 FROM territoire_fiscal_commune tfc WHERE tfc.insee = left(p.idu, 5)"
                      " AND tfc.frr_classement = ANY(CAST(:f_frr AS text[])))")
         params["f_frr"] = [x.strip() for x in frr.split(",") if x.strip()]
+    # ── KELFONCIER-FIX-1 (Lot D) — FILTRES BÂTI (données à la maille parcelle) ──
+    # Hauteur LiDAR (faîtage mesuré, batiment_hauteur_lidar) = la MÊME source que la fiche §3 Bâti
+    # (hauteur_bati_m, id registre le_bien.hauteur_bati_m, faîtage LiDAR HD). Filtre min/max en mètres :
+    # la parcelle doit porter un bâti mesuré au LiDAR dans la fourchette. Emprise bâtie en % = la colonne
+    # taux_emprise_pct du RUN SERVI (parcel_residuel) — exactement celle qui partitionne « État du sol ».
+    if hauteur_min is not None:
+        conds.append("EXISTS (SELECT 1 FROM batiment_hauteur_lidar bhl0 WHERE bhl0.idu = p.idu"
+                     " AND bhl0.faitage_m >= :f_hmin)")
+        params["f_hmin"] = hauteur_min
+    if hauteur_max is not None:
+        conds.append("EXISTS (SELECT 1 FROM batiment_hauteur_lidar bhl1 WHERE bhl1.idu = p.idu"
+                     " AND bhl1.faitage_m <= :f_hmax)")
+        params["f_hmax"] = hauteur_max
+    if emprise_min is not None:
+        conds.append("EXISTS (SELECT 1 FROM parcel_residuel re0 WHERE re0.parcel_id = p.id"
+                     " AND COALESCE(re0.taux_emprise_pct,0) >= :f_empmin)")
+        params["f_empmin"] = emprise_min
+    if emprise_max is not None:
+        conds.append("EXISTS (SELECT 1 FROM parcel_residuel re1 WHERE re1.parcel_id = p.id"
+                     " AND COALESCE(re1.taux_emprise_pct,0) <= :f_empmax)")
+        params["f_empmax"] = emprise_max
     # ── M45-B (Lot 1) — tiroir ÉCONOMIE (câblage sur données existantes ; étiquettes Sourcé/Estimé) ──
     if budget_max is not None:
         # « Mon budget » : prix d'achat max admissible (charge foncière SUPPORTABLE, M22-A) ≤ budget.
@@ -1834,6 +1857,11 @@ class FiltreCriteres:
     # COUCHES-2 point 4 — statut ZFANG (renforce/standard) et FRR (totalite/partie/hors), CSV.
     zfang: str | None = None
     frr: str | None = None
+    # KELFONCIER-FIX-1 (Lot D) — filtres bâti : hauteur LiDAR faîtage (m) et emprise bâtie (%).
+    hauteur_min: float | None = None
+    hauteur_max: float | None = None
+    emprise_min: int | None = None
+    emprise_max: int | None = None
 
     def where(self) -> tuple[str, dict]:
         return _q_v2_where(self.source, self.surface_min, self.surface_max,
@@ -1851,7 +1879,9 @@ class FiltreCriteres:
                            droits_residuels=self.droits_residuels,
                            pm_denom=self.pm_denom, pm_siren=self.pm_siren, pm_forme=self.pm_forme,
                            pm_ape=self.pm_ape, pm_dirig_min=self.pm_dirig_min, pm_dirig_max=self.pm_dirig_max,
-                           zfang=self.zfang, frr=self.frr)
+                           zfang=self.zfang, frr=self.frr,
+                           hauteur_min=self.hauteur_min, hauteur_max=self.hauteur_max,
+                           emprise_min=self.emprise_min, emprise_max=self.emprise_max)
 
     def cache_key(self) -> tuple:
         return ("filtre", self.source, self.commune, self.surface_min,
@@ -1867,7 +1897,8 @@ class FiltreCriteres:
                 self.signaux, self.droits_residuels,
                 self.pm_denom, self.pm_siren, self.pm_forme, self.pm_ape,
                 self.pm_dirig_min, self.pm_dirig_max, self.zfang, self.frr,
-                self.destination)   # FAISABILITE-1 lot B — la destination entre dans le memo (compteur exact)
+                self.destination,   # FAISABILITE-1 lot B — la destination entre dans le memo (compteur exact)
+                self.hauteur_min, self.hauteur_max, self.emprise_min, self.emprise_max)   # KELFONCIER-FIX-1 Lot D
 
 
 @app.get("/parcels")
@@ -3501,7 +3532,10 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
 _HASH_NUM = {"smin": "surface_min", "smax": "surface_max", "sdp": "sdp_min", "sdpx": "sdp_max",
              "cap": "capacite_min", "rm": "rang_max", "bud": "budget_max", "chmin": "charge_min",
              "chmax": "charge_max", "pmin": "prix_marche_min", "pmax": "prix_marche_max",
-             "ca": "ca_min", "pdmin": "pm_dirig_min", "pdmax": "pm_dirig_max"}
+             "ca": "ca_min", "pdmin": "pm_dirig_min", "pdmax": "pm_dirig_max",
+             "emin": "emprise_min", "emax": "emprise_max"}   # KELFONCIER-FIX-1 Lot D — emprise bâtie (% entier)
+# KELFONCIER-FIX-1 Lot D — hauteur LiDAR (mètres, décimale) : évaluée comme `mm` (float, hors _HASH_NUM int).
+_HASH_FLOAT = {"hmin": "hauteur_min", "hmax": "hauteur_max"}
 _HASH_BOOL = {"ev": "evenement", "vs2": "veille", "hc": "hors_copro", "pm": "personne_morale",
               "sd": "sous_densite", "rnv": "renouvellement", "np": "npnru", "aa": "adresse_absente",
               "mf": "marche_fiable", "mb": "mode_b_rentable"}
@@ -3516,7 +3550,7 @@ _HASH_STR = {"fx": "flags_exclus", "cs": "communes", "zf": "zonage", "sv": "sign
 #: FILTRES-FIX-1 (lot 3) — `mm` (multiplicateur min) EST appliqué par filtre_from_hash (branche
 #: dédiée `mult_min`) : il est donc évaluable, plus jamais étiqueté « non évaluable » alors qu'il
 #: filtre. Il figure déjà dans _DIM_LABELS → annoncé dans « cette veille surveille : … ».
-DIMENSIONS_VEILLE_EVALUABLES = frozenset({"tv", "mm", *_HASH_NUM, *_HASH_BOOL, *_HASH_STR})
+DIMENSIONS_VEILLE_EVALUABLES = frozenset({"tv", "mm", *_HASH_NUM, *_HASH_FLOAT, *_HASH_BOOL, *_HASH_STR})
 
 
 def filtre_from_hash(hash_str: str) -> "FiltreCriteres":
@@ -3533,6 +3567,10 @@ def filtre_from_hash(hash_str: str) -> "FiltreCriteres":
             setattr(c, field, int(v))
     if g("mm") not in (None, ""):
         c.mult_min = float(g("mm"))
+    for k, field in _HASH_FLOAT.items():   # KELFONCIER-FIX-1 Lot D — hauteur LiDAR (m, décimale)
+        v = g(k)
+        if v not in (None, ""):
+            setattr(c, field, float(v))
     for k, field in _HASH_BOOL.items():
         if g(k) == "1":
             setattr(c, field, True)

@@ -20,6 +20,7 @@ describe('filters URL persistence (M55-D)', () => {
       zonePlu: ['UA'], proprietaireType: ['pm'], etatSociete: ['radiee'], copro: ['sans'],
       signaux: ['defisc', 'friche'],   // stage 6 : le groupe Signaux de vie persiste (clé sv)
       zfangRegime: ['renforce'], frrClassement: ['partie'],   // FILTRES-FIX-1 (lot 1) — ZFANG/FRR persistent (clés zfa/frr)
+      hauteurMin: 3, hauteurMax: 12, empriseMin: 5, empriseMax: 80,   // KELFONCIER-FIX-1 (Lot D) — filtres bâti persistent (hmin/hmax/emin/emax)
       analyseLabuse: true,   // stage 4 : allumé (cohérent avec les critères d'opinion présents)
     }
     const hash = filtersToHash(f, null)
@@ -63,8 +64,20 @@ describe('filters URL persistence (M55-D)', () => {
     expect(back.flags ?? []).toEqual([])   // la clé contraintes est ignorée, le lien s'ouvre
   })
 
-  // KELFONCIER-FIX-1 (Lot E) — « sans copropriété » entre dans le hash (URL/Mes vues/veille) et le
-  // compteur de critères actifs (badge « Filtres (N) »).
+  // KELFONCIER-FIX-1 (Lot D) — les filtres bâti entrent dans le hash (URL/Mes vues/veille), le
+  // compteur de critères actifs (badge « Filtres (N) »), et restent des FAITS (n'allument PAS
+  // l'interrupteur d'analyse — hasOpinion faux).
+  it('Lot D — filtres bâti persistent (hmin/hmax/emin/emax) et sont des faits', () => {
+    const back = filtersFromHash('#f=1&hmin=3&hmax=12&emin=5&emax=80')!.filters
+    expect(back.hauteurMin).toBe(3)
+    expect(back.hauteurMax).toBe(12)
+    expect(back.empriseMin).toBe(5)
+    expect(back.empriseMax).toBe(80)
+    expect(back.analyseLabuse).toBe(false)   // bâti mesuré = terrain, pas une opinion
+    expect(hasOpinion(back as Filters)).toBe(false)
+  })
+
+  // KELFONCIER-FIX-1 (Lot E) — rappel : « sans copropriété » (hc) reste au hash + compteur.
   it('Lot E — « sans copropriété » (hc) persiste dans le hash et compte comme critère', () => {
     const hash = filtersToHash({ ...EMPTY_FILTERS, horsCopro: true }, null)
     expect(hash).toContain('hc=1')

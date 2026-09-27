@@ -117,6 +117,11 @@ export const filterParams = (f: Filters): Record<string, string | number> => ({
   ...(f.pmApe?.length ? { pm_ape: f.pmApe.join(',') } : {}),
   ...(f.pmDirigMin != null ? { pm_dirig_min: f.pmDirigMin } : {}),
   ...(f.pmDirigMax != null ? { pm_dirig_max: f.pmDirigMax } : {}),
+  // KELFONCIER-FIX-1 (Lot D) — filtres bâti : hauteur LiDAR faîtage (m) + emprise bâtie (%).
+  ...(f.hauteurMin != null ? { hauteur_min: f.hauteurMin } : {}),
+  ...(f.hauteurMax != null ? { hauteur_max: f.hauteurMax } : {}),
+  ...(f.empriseMin != null ? { emprise_min: f.empriseMin } : {}),
+  ...(f.empriseMax != null ? { emprise_max: f.empriseMax } : {}),
   ...(f.caMin != null ? { ca_min: f.caMin } : {}),
   // mode B rentable : porte AUSSI les paramètres du curseur SESSION partagé (L2)
   ...(f.modeBRentable ? {

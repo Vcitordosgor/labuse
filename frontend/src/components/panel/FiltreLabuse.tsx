@@ -589,6 +589,19 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
             label="Sans copropriété" />
           <p className="mt-1 text-[10px] leading-snug text-txt-dim">Écarte les parcelles en copropriété (immatriculation RNIC ou copro DVF).</p>
         </div>
+        {/* KELFONCIER-FIX-1 (Lot D) — FILTRES BÂTI : la MÊME donnée que la fiche §3 Bâti. Hauteur LiDAR
+            faîtage (batiment_hauteur_lidar, id registre le_bien.hauteur_bati_m) et emprise bâtie en %
+            (taux_emprise_pct du run servi, la colonne d'« État du sol »). Compteur SQL, ET avec le reste. */}
+        <div>
+          <p className="label-caps text-txt-dim">Hauteur du bâti (LiDAR)</p>
+          <div className="mt-1 flex items-center gap-1.5"><NumField field="hauteurMin" ph="min" /><span className="text-txt-dim">–</span><NumField field="hauteurMax" ph="max" suffix="m" /></div>
+          <p className="mt-1 text-[10px] leading-snug text-txt-dim">Faîtage mesuré au LiDAR HD (la hauteur de la fiche §Bâti) ; les parcelles au bâti non mesuré n’entrent pas dans une fourchette.</p>
+        </div>
+        <div>
+          <p className="label-caps text-txt-dim">Emprise bâtie</p>
+          <div className="mt-1 flex items-center gap-1.5"><NumField field="empriseMin" ph="min" /><span className="text-txt-dim">–</span><NumField field="empriseMax" ph="max" suffix="%" /></div>
+          <p className="mt-1 text-[10px] leading-snug text-txt-dim">Part de la parcelle déjà couverte par du bâti (run servi) — la même que « État du sol ».</p>
+        </div>
         {/* RETOURS-14 P5 — ZFANG (zone franche) et FRR (ruralités) ont quitté « Le terrain » : ils vivent
             désormais dans la section repliée « Affiner la recherche » (bas du panneau). */}
       </div>

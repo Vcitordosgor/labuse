@@ -129,6 +129,12 @@ export interface Filters {
   pmApe: string[]                // codes APE / activités (codes réels des facettes) → pm_ape
   pmDirigMin: number | null      // nombre de dirigeants (min) → pm_dirig_min
   pmDirigMax: number | null      // nombre de dirigeants (max) → pm_dirig_max
+  // KELFONCIER-FIX-1 (Lot D) — filtres BÂTI : hauteur LiDAR faîtage (m) et emprise bâtie (%),
+  // MÊME source que la fiche §3 Bâti (batiment_hauteur_lidar / parcel_residuel.taux_emprise_pct du run servi).
+  hauteurMin: number | null      // hauteur LiDAR faîtage minimale (m) → hauteur_min
+  hauteurMax: number | null      // hauteur LiDAR faîtage maximale (m) → hauteur_max
+  empriseMin: number | null      // emprise bâtie minimale (%) → emprise_min
+  empriseMax: number | null      // emprise bâtie maximale (%) → emprise_max
 }
 
 export const EMPTY_FILTERS: Filters = {
@@ -145,6 +151,7 @@ export const EMPTY_FILTERS: Filters = {
   marcheFiable: false, caMin: null, modeBRentable: false,
   signaux: [],
   pmDenom: null, pmSiren: null, pmForme: [], pmApe: [], pmDirigMin: null, pmDirigMax: null,
+  hauteurMin: null, hauteurMax: null, empriseMin: null, empriseMax: null,
 }
 
 // M45-B (Lot 2) — curseur mode B PARTAGÉ (session unique, rien persisté) : travaux + loyer +

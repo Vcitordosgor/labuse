@@ -108,7 +108,8 @@ const F_ARRAYS: (keyof Filters)[] = ['tiers', 'flags', 'flagsExclus', 'communes'
   'zfangRegime', 'frrClassement']   // FILTRES-FIX-1 (lot 1) — ZFANG/FRR comptés comme les autres facettes (badge, compteur vivant)
 const F_NUMS: (keyof Filters)[] = ['surfaceMin', 'surfaceMax', 'sdpMin', 'sdpMax',
   'capaciteMin', 'multMin', 'rangMax', 'budgetMax', 'chargeMin', 'chargeMax',
-  'prixMarcheMin', 'prixMarcheMax', 'caMin', 'pmDirigMin', 'pmDirigMax']
+  'prixMarcheMin', 'prixMarcheMax', 'caMin', 'pmDirigMin', 'pmDirigMax',
+  'hauteurMin', 'hauteurMax', 'empriseMin', 'empriseMax']   // KELFONCIER-FIX-1 (Lot D) — filtres bâti
 const F_BOOLS: (keyof Filters)[] = ['evenement', 'veille', 'horsCopro', 'personneMorale',
   'sousDensite', 'renouvellement', 'npnru', 'adresseAbsente', 'marcheFiable', 'modeBRentable']
 // KF1 — champs texte libres (dénomination, SIREN) : comptés/persistés comme les autres.
@@ -134,6 +135,7 @@ const TERRAIN_FIELDS = new Set<keyof Filters>(['surfaceMin', 'surfaceMax', 'zona
   // + parcel_residuel servi, pas une opinion LABUSE → n'allume PAS l'interrupteur d'analyse.
   'sdpMin', 'sdpMax', 'capaciteMin', 'destinationAutorisee',
   'pmForme', 'pmApe', 'pmDirigMin', 'pmDirigMax',   // KF1 — critères propriétaire = faits (DGFiP), pas une opinion LABUSE
+  'hauteurMin', 'hauteurMax', 'empriseMin', 'empriseMax',   // KELFONCIER-FIX-1 (Lot D) — le bâti mesuré = un FAIT (LiDAR/run servi), pas une opinion
   'zfangRegime', 'frrClassement'])   // FILTRES-FIX-1 (lot 1) — statut fiscal de la commune = un FAIT (territoire_fiscal), pas une opinion
 export function hasOpinion(f: Filters): boolean {
   for (const k of F_ARRAYS) if (!TERRAIN_FIELDS.has(k) && (f[k] as unknown[]).length) return true
@@ -159,6 +161,13 @@ export function resumeCriteres(f: Filters, signalLabels: Record<string, string> 
   if (f.capaciteMin != null) parts.push(`≥ ${f.capaciteMin} logt${f.capaciteMin > 1 ? 's' : ''}`)
   if (f.destinationAutorisee) parts.push('destination autorisée')
   if (f.etatSol.length === 1) parts.push(f.etatSol[0] === 'nu' ? 'terrain nu' : 'bâti')
+  // KELFONCIER-FIX-1 (Lot D) — filtres bâti dans le récap de la Révélation.
+  if (f.hauteurMin != null && f.hauteurMax != null) parts.push(`hauteur ${f.hauteurMin}–${f.hauteurMax} m`)
+  else if (f.hauteurMin != null) parts.push(`hauteur ≥ ${f.hauteurMin} m`)
+  else if (f.hauteurMax != null) parts.push(`hauteur ≤ ${f.hauteurMax} m`)
+  if (f.empriseMin != null && f.empriseMax != null) parts.push(`emprise ${f.empriseMin}–${f.empriseMax} %`)
+  else if (f.empriseMin != null) parts.push(`emprise ≥ ${f.empriseMin} %`)
+  else if (f.empriseMax != null) parts.push(`emprise ≤ ${f.empriseMax} %`)
   for (const sg of f.signaux) parts.push(signalLabels[sg] ?? sg)
   if (f.tiers.length) parts.push(`tiers ${f.tiers.length}`)
   if (!parts.length) return null
@@ -206,6 +215,8 @@ const NUM_KEYS: [keyof Filters, string][] = [
   ['budgetMax', 'bud'], ['chargeMin', 'chmin'], ['chargeMax', 'chmax'],
   ['prixMarcheMin', 'pmin'], ['prixMarcheMax', 'pmax'], ['caMin', 'ca'],
   ['pmDirigMin', 'pdmin'], ['pmDirigMax', 'pdmax'],   // KF1 — nombre de dirigeants
+  ['hauteurMin', 'hmin'], ['hauteurMax', 'hmax'],   // KELFONCIER-FIX-1 (Lot D) — hauteur LiDAR (m)
+  ['empriseMin', 'emin'], ['empriseMax', 'emax'],   // KELFONCIER-FIX-1 (Lot D) — emprise bâtie (%)
 ]
 const BOOL_KEYS: [keyof Filters, string][] = [
   ['evenement', 'ev'], ['veille', 'vs2'], ['horsCopro', 'hc'], ['personneMorale', 'pm'],
