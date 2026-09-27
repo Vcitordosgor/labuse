@@ -16,7 +16,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { getPiscinesAgregat, getPiscinesListe, getPiscinesPoints, getSolaireFiche,
-  postPasUnePiscine, type PiscineItem, type SolaireFiche } from '../../lib/api'
+  postPasUnePiscine, type SolaireFiche } from '../../lib/api'
 import { fmtInt } from '../../lib/format'
 import { TOKENS } from '../../lib/tokens'
 import { useApp } from '../../store/useApp'
@@ -24,9 +24,7 @@ import { ParcelInput } from '../ParcelInput'
 import { Squelette } from '../Loading'
 import { ErrorState } from '../States'
 import { ListPaginationFooter, usePagination } from '../ListPagination'
-import { Siren } from '../shared/Siren'
 import { Bouton } from '../ui/Bouton'
-import { Case } from '../ui/Case'
 import { Chip } from '../ui/Chip'
 import { Retour } from '../ui/Retour'
 
@@ -86,97 +84,64 @@ function BackBar({ onBack, titre }: { onBack: () => void; titre: string }) {
   )
 }
 
-// A2 — cellule propriétaire : PM = dénomination (+ SIREN public, cliquable Pappers) ; particulier
-// JAMAIS nommé (même règle privacy que l'Assemblage).
-function ProprioCell({ p }: { p: PiscineItem['proprio'] }) {
-  if (p.type === 'personne_morale')
-    return (
-      <span className="text-txt">
-        {p.denomination}{p.siren ? <> · <Siren value={p.siren} className="font-mono text-[10px] text-txt-dim" /></> : null}
-      </span>
-    )
-  return <span className="italic text-txt-dim">particulier — non nommé</span>
-}
-
-// ── MODE PISCINES (pisciniste) — PISCINES-2 : la stat d'abord, puis carte + LISTE actionnable ──
-// Source UNIQUE fusionnée `piscines` (FLAIR ∪ CoSIA dédoublonnées, statut servie/à confirmer/écartée
-// selon la précision MESURÉE par classe). L'outil sert à repérer les bassins À ÉQUIPER (chauffage
-// solaire, couverture, PAC, entretien) et à écrire à leurs occupants. Aucune notion de « potentiel
-// solaire » (hors sujet). Le seul geste de sortie = « Écrire aux occupants → » (Courrier).
-const PISC_SURF_MIN = [
-  { v: 0, label: 'toutes' }, { v: 15, label: '≥ 15 m²' }, { v: 25, label: '≥ 25 m²' }, { v: 40, label: '≥ 40 m²' },
-]
+// ── MODE PISCINES (pisciniste) — PISCINES-2 / RETOURS-15 C6 : la stat d'abord, puis « Voir les
+// piscines » (liste + points goutte). Source UNIQUE fusionnée `piscines` (FLAIR ∪ CoSIA dédoublonnées,
+// statut servie/à confirmer/écartée selon la précision MESURÉE par classe).
 function ModePiscines({ onBack }: { onBack: () => void }) {
-  const select = useApp((s) => s.select)
+  // RETOURS-15 C6 — refonte du chemin Piscines : (1) encart « N piscines détectées à La Réunion »,
+  // (2) filtre commune, (3) « Voir les piscines » → liste (IDU · commune · surface parcelle) + points
+  // goutte. Clic ligne → focusParcelle(fiche). Sections « courrier », « surface », « propriétaire »
+  // retirées. « pas une piscine » (correction de donnée) et « à confirmer » (qualité) conservés.
+  const focusParcelle = useApp((s) => s.focusParcelle)
   const setModuleMap = useApp((s) => s.setModuleMap)
-  const setModule = useApp((s) => s.setModule)
-  const setCourrierPrefillIdus = useApp((s) => s.setCourrierPrefillIdus)
-  const pushOutilRetour = useApp((s) => s.pushOutilRetour)
   const qc = useQueryClient()
   const [commune, setCommune] = useState<string | null>(null)
   const [montre, setMontre] = useState(false)
-  // statut : « servie » par défaut (précision mesurée ≥ 85 %) ; la bascule ajoute « à confirmer ».
   const [inclureAConfirmer, setInclureAConfirmer] = useState(false)
-  const [surfMin, setSurfMin] = useState(0)
-  const [proprio, setProprio] = useState<'tous' | 'pm' | 'pp'>('tous')
-  const [sel, setSel] = useState<Set<string>>(new Set())   // sélection → Courrier « à l'occupant »
   const [pasPiscine, setPasPiscine] = useState<Set<string>>(new Set())
 
   const agg = useQuery({ queryKey: ['piscines-agg', commune, inclureAConfirmer], queryFn: () => getPiscinesAgregat(commune, 0, inclureAConfirmer), staleTime: 60_000 })
   const list = useQuery({
-    queryKey: ['piscines-liste', commune, inclureAConfirmer, surfMin, proprio],
-    queryFn: () => getPiscinesListe({ commune, statut: inclureAConfirmer ? 'tous' : 'servie', surfMin, proprio }),
+    queryKey: ['piscines-liste', commune, inclureAConfirmer],
+    queryFn: () => getPiscinesListe({ commune, statut: inclureAConfirmer ? 'tous' : 'servie' }),
     staleTime: 60_000, enabled: montre,
   })
   const signalerPasPiscine = async (idu: string) => {
     setPasPiscine((s) => new Set(s).add(idu))
-    setSel((s) => { const n = new Set(s); n.delete(idu); return n })
     try { await postPasUnePiscine(idu) } finally {
       qc.invalidateQueries({ queryKey: ['piscines-agg'] }); qc.invalidateQueries({ queryKey: ['piscines-liste'] })
     }
   }
   const annulerPasPiscine = (idu: string) => setPasPiscine((s) => { const n = new Set(s); n.delete(idu); return n })
-
   const items = (list.data?.items ?? []).filter((it) => !pasPiscine.has(it.idu))
   const page = usePagination(items.length)
   const [carteBusy, setCarteBusy] = useState(false)
-  const [carteAffichee, setCarteAffichee] = useState(false)
   useEffect(() => () => setModuleMap({ idus: [], extra: null }), [setModuleMap])
-  useEffect(() => { setCarteAffichee(false); setModuleMap({ idus: [], extra: null }) }, [commune, setModuleMap])
-  const voirCarte = async () => {
-    if (carteAffichee) { setModuleMap({ idus: [], extra: null }); setCarteAffichee(false); return }
-    setCarteBusy(true)
-    try { setModuleMap({ idus: [], extra: await getPiscinesPoints(commune, 0, inclureAConfirmer) }); setCarteAffichee(true) }
+  useEffect(() => { setMontre(false); setModuleMap({ idus: [], extra: null }) }, [commune, setModuleMap])
+  // « Voir les piscines » : charge la liste ET pose les points goutte sur la carte (comme avant).
+  const voirPiscines = async () => {
+    setMontre(true); setCarteBusy(true)
+    try { setModuleMap({ idus: [], extra: await getPiscinesPoints(commune, 0, inclureAConfirmer) }) }
     finally { setCarteBusy(false) }
-  }
-  const idusCourrier = [...sel].filter((idu) => !pasPiscine.has(idu))
-  const ecrireOccupants = () => {
-    setCourrierPrefillIdus(idusCourrier); setModule('courriers')
-    pushOutilRetour({ module: 'prospection-solaire', label: 'Prospection solaire' })
   }
   const SOURCE_LBL: Record<string, string> = { flair: 'FLAIR', cosia: 'CoSIA', 'flair+cosia': 'FLAIR+CoSIA' }
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
-      <BackBar onBack={onBack} titre="💧 Piscines — à équiper" />
-      <p className="text-[10.5px] leading-snug text-txt-mut">
-        Les bassins détectés, à <b className="text-txt">équiper</b> : chauffage solaire, couverture / volet,
-        pompe à chaleur, entretien. Repérez-les par commune, puis <b className="text-txt">écrivez à leurs occupants</b>.
-      </p>
+      <BackBar onBack={onBack} titre="💧 Piscines" />
       {commune && (
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-          <Retour data-piscines-reset label="Toute l’île" onClick={() => setCommune(null)} />
-        </div>
+        <Retour data-piscines-reset label="Toute l’île" onClick={() => setCommune(null)} />
       )}
 
-      {/* SYNTHÈSE — total (servie) + par commune */}
+      {/* (1) ENCART « N piscines détectées à La Réunion » (ou dans la commune) */}
       {agg.isLoading && <Squelette bloc />}
       {agg.isError && <ErrorState message="Détection piscines momentanément indisponible." retry={() => agg.refetch()} />}
       {agg.data && (
         <div className="rounded-lg border px-3 py-2.5" style={{ borderColor: `${TOKENS.mint}4d`, background: `${TOKENS.mint}0f` }}>
-          <div className="text-[10px] text-txt-dim">Piscines détectées — {commune ?? 'toute l’île'}</div>
-          <div className="mt-0.5"><b data-piscines-total className="tnum text-2xl font-semibold" style={{ color: TOKENS.mint }}>{fmtInt(agg.data.total)}</b>
-            <span className="ml-2 text-[9.5px] text-txt-dim">source fusionnée · à confirmer sur site</span></div>
+          <div className="mt-0.5">
+            <b data-piscines-total className="tnum text-2xl font-semibold" style={{ color: TOKENS.mint }}>{fmtInt(agg.data.total)}</b>
+            <span className="ml-2 text-[11px] text-txt-mut">piscines détectées {commune ? `à ${commune}` : 'à La Réunion'}</span>
+          </div>
           {agg.data.confiance && (
             <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px]">
               <span className="text-txt-dim">Statut <b className="text-txt-mut">servie</b> (précision ≥ 85 %) par défaut.</span>
@@ -187,12 +152,10 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
                   : { borderColor: 'var(--line-2)', color: 'var(--txt-mut)' }}>
                 {inclureAConfirmer ? '✓ à confirmer incluses' : `inclure à confirmer (+${fmtInt(agg.data.confiance.incertaines)})`}
               </button>
-              {(agg.data.corrigees ?? 0) > 0 && (
-                <span className="text-txt-dim">· {fmtInt(agg.data.corrigees ?? 0)} retirée(s) « pas une piscine »</span>
-              )}
             </div>
           )}
           <div data-piscines-source className="mt-1 text-[9px] leading-snug text-txt-dim">{agg.data.source}</div>
+          {/* (2) FILTRE commune (liste des communes, comptes) */}
           {!commune && agg.data.communes.length > 0 && (
             <div className="mt-2 flex flex-col gap-0.5">
               {agg.data.communes.slice(0, 8).map((c) => (
@@ -206,58 +169,26 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
         </div>
       )}
 
-      {/* FILTRES pisciniste : surface min · propriétaire PM/PP */}
-      {agg.data && (
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] text-txt-mut">
-          <label className="flex items-center gap-1.5">Surface
-            <select data-piscines-surf-min value={surfMin} onChange={(e) => setSurfMin(Number(e.target.value))}
-              className="h-8 rounded-md border border-line-2 bg-surface-3 px-2 text-txt focus:border-mint focus:outline-none">
-              {PISC_SURF_MIN.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
-            </select>
-          </label>
-          <label className="flex items-center gap-1.5">Propriétaire
-            <select data-piscines-proprio value={proprio} onChange={(e) => setProprio(e.target.value as 'tous' | 'pm' | 'pp')}
-              className="h-8 rounded-md border border-line-2 bg-surface-3 px-2 text-txt focus:border-mint focus:outline-none">
-              <option value="tous">tous</option><option value="pm">personne morale</option><option value="pp">particulier</option>
-            </select>
-          </label>
-        </div>
-      )}
-
+      {/* (3) BOUTON PRIMAIRE « Voir les piscines » */}
       {agg.data && !montre && (
-        <Bouton niveau="primaire" ton="vert" data-piscines-voir onClick={() => setMontre(true)} className="shrink-0">
-          Voir les parcelles
+        <Bouton niveau="primaire" ton="vert" data-piscines-voir onClick={voirPiscines} disabled={carteBusy} className="shrink-0">
+          {carteBusy ? 'Chargement…' : 'Voir les piscines'}
         </Bouton>
       )}
-      {agg.data && montre && (
-        <button data-solaire-carte data-carte-affichee={carteAffichee ? '1' : '0'} onClick={voirCarte} disabled={carteBusy}
-          className="rounded-lg border py-1.5 text-center text-[11px] font-medium transition-colors duration-quick hover:brightness-110"
-          style={carteAffichee
-            ? { borderColor: `${TOKENS.mint}66`, color: 'var(--txt-mut)', background: 'transparent' }
-            : { borderColor: `${TOKENS.mint}66`, color: TOKENS.mint, background: `${TOKENS.mint}12` }}>
-          {carteBusy ? '💧 Chargement…' : carteAffichee ? 'Masquer sur la carte' : `💧 Voir sur la carte (${fmtInt(agg.data.total)})`}
-        </button>
-      )}
 
-      {/* LISTE : parcelle · commune · surface bassin · source · statut · propriétaire · sélection + chip */}
+      {/* LISTE : IDU · commune · surface de parcelle · source. Clic ligne → focusParcelle(fiche) + points goutte. */}
       {list.isLoading && <Squelette lignes={6} />}
       {list.data && (
         <>
           <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
             {items.slice(0, page.shown).map((it, i) => (
-              <div key={`${it.idu}-${i}`} data-piscines-row
-                className="rounded-lg border border-line-2 bg-surface-3 px-2.5 py-1.5">
+              <div key={`${it.idu}-${i}`} data-piscines-row role="button" tabIndex={0}
+                onClick={() => focusParcelle(it.idu, { fiche: true })}
+                className="hover-fill cursor-pointer rounded-lg border border-line-2 bg-surface-3 px-2.5 py-1.5 transition-colors duration-quick">
                 <div className="flex items-center gap-2">
-                  <Case data-piscines-sel aria-label="Sélectionner"
-                    checked={sel.has(it.idu)}
-                    onChange={() => setSel((s) => { const n = new Set(s); n.has(it.idu) ? n.delete(it.idu) : n.add(it.idu); return n })} />
-                  <span className="cursor-pointer font-mono text-[11px] text-txt-hi hover:text-mint" onClick={() => select(it.idu)}>{it.idu.slice(8)}</span>
+                  <span className="font-mono text-[11px] text-txt-hi">{it.idu.slice(8)}</span>
+                  <span className="shrink-0 text-[10.5px] text-txt-mut">{it.commune}</span>
                   <span className="ml-auto tnum text-[11px] text-txt">{it.surface_m2 == null ? '—' : `${fmtInt(it.surface_m2)} m²`}</span>
-                </div>
-                <div className="mt-0.5 flex flex-wrap items-center gap-1.5 pl-6 text-[10.5px]">
-                  <span className="shrink-0 text-txt-mut">{it.commune}</span>
-                  <span className="text-txt-dim">·</span>
-                  <span className="min-w-0 flex-1 truncate"><ProprioCell p={it.proprio} /></span>
                   <span className="shrink-0 rounded bg-surface-2 px-1 text-[8.5px] text-txt-dim">{SOURCE_LBL[it.source] ?? it.source}</span>
                   {it.statut === 'a_confirmer' && <span className="shrink-0 rounded bg-amber-500/15 px-1 text-[8.5px] font-medium text-amber-500">à confirmer</span>}
                   <Chip data-piscines-pas ton="neutre" className="shrink-0"
@@ -278,11 +209,6 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
               </span>
             )}
           </ListPaginationFooter>
-          {/* SEUL geste de sortie : Courrier « à l'occupant » (81 % des propriétaires sont des particuliers non nommés). */}
-          <Bouton niveau="secondaire" ton="vert" data-piscines-courrier disabled={idusCourrier.length === 0}
-            onClick={ecrireOccupants} className="shrink-0">
-            ✉ Écrire aux occupants ({idusCourrier.length}) →
-          </Bouton>
         </>
       )}
       <p className="text-[9.5px] leading-snug text-txt-dim">Source unique fusionnée FLAIR ∪ CoSIA (IGN 20 cm 2025) · propriétaire DGFiP</p>

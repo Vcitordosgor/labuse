@@ -15,7 +15,6 @@ import { Legend } from './Legend'
 import { CouchesTuyauLayers } from './CouchesTuyau'  // COUCHES-TUYAU-1 lot 2
 import { VefaDetail } from './VefaDetail'
 import { MapToolbar } from './MapToolbar'
-import { Squelette } from '../Loading'
 
 // ── Fonds de plan : registre PARTAGÉ (carte principale + comparateur swipe). Voir ./basemaps.
 
@@ -1468,12 +1467,17 @@ export function MapView() {
       {/* COUCHES-TUYAU-1 lot 2 — le tuyau : sources vectorielles des 52 couches + légende bas-droite */}
       <CouchesTuyauLayers map={map} ready={mapReady} />
       <VefaDetail />{/* SECTEUR-2b (U1) — panneau de détail au clic sur une commune VEFA */}
-      {/* B1/P5 : chargement carte DISCRET (données GeoJSON + tuiles MVT) — jamais figé */}
+      {/* B1/P5 : chargement carte DISCRET (données GeoJSON + tuiles MVT) — jamais figé.
+          RETOURS-15 S5 — l'ancienne « pilule vide » : une pastille rounded-full de largeur fixe qui
+          ne contenait qu'un Squelette 1 ligne (message en aria seulement) → visuellement un ovale
+          vide. On affiche désormais le MESSAGE en clair (pastille dimensionnée à son contenu), avec
+          un point qui pulse — plus de pilule vide, la largeur suit le texte. */}
       {(geo.isFetching || tilesLoading || layersFetching > 0) && (
-        <div data-carte-loading className="pointer-events-none absolute left-1/2 top-4 w-40 -translate-x-1/2 rounded-full border border-mint/30 bg-surface-2 px-4 py-2 shadow-elev-2">
+        <div data-carte-loading role="status" aria-live="polite"
+          className="pointer-events-none absolute left-1/2 top-4 flex -translate-x-1/2 items-center gap-2 rounded-full border border-mint/30 bg-surface-2 px-3.5 py-1.5 text-[11px] text-txt-dim shadow-elev-2">
           {/* COUCHES-2 point 2 — priorité au message le plus précis : parcelles > couche > carte. */}
-          {/* DA — squelette unique (plus de gros points Loading) ; le message précis reste en aria. */}
-          <Squelette lignes={1} label={geo.isFetching ? 'Chargement des parcelles' : layersFetching > 0 ? 'Chargement de la couche…' : 'Chargement de la carte…'} />
+          <span className="sk h-2.5 w-2.5 shrink-0 rounded-full" aria-hidden />
+          {geo.isFetching ? 'Chargement des parcelles…' : layersFetching > 0 ? 'Chargement de la couche…' : 'Chargement de la carte…'}
         </div>
       )}
       {/* P3 : rappel de ce que signifie le violet pendant une recherche active */}

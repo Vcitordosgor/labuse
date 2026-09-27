@@ -48,9 +48,10 @@ function AcquisitionsRecentes() {
     placeholderData: (prev) => prev,   // « Voir plus » n'efface pas la liste pendant le rechargement
   })
   const d = q.data
-  // O16(c) — la fiche parcelle s'ouvre en SUPERPOSITION (carte-overlay via `select`) : on ne touche
-  // NI à `view` NI à `module`, l'outil Communes reste monté dessous et se retrouve à la fermeture.
-  const ouvrirParcelle = (idu: string) => useApp.getState().select(idu)
+  // RETOURS-15 B4 (P7) — clic sur une parcelle de la liste → focusParcelle(idu, {fiche}) : ZOOM +
+  // CONTOUR surligné + fiche (le geste unique du socle S3). L'outil Communes reste monté à gauche
+  // (module='communes'), la fiche s'ouvre en superposition à droite.
+  const ouvrirParcelle = (idu: string) => useApp.getState().focusParcelle(idu, { fiche: true })
   // O16(e) — Scan patrimoine d'un acquéreur : même idiome que « Voir le patrimoine » (m02Prefill + module).
   const ouvrirScanPatrimoine = (siren: string) => {
     const s = useApp.getState()

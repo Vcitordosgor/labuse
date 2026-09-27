@@ -434,6 +434,7 @@ export const nafFamilles = () =>
 export interface EtudeZoneInput {
   idu?: string | null; lon?: number | null; lat?: number | null
   geom?: unknown | null; naf?: string | null; minutes: number; mode: 'pied' | 'voiture'
+  rayon_km?: number | null           // RETOURS-15 B9 — ampleur par défaut : rayon (0,5/1/2/5 km)
   sous_destination?: string | null   // DESTINATIONS-1 (X4.1) — slug R151-28 (verdict par zone PLU)
   titre?: string | null
 }

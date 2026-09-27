@@ -78,14 +78,16 @@ describe('SOLAIRE — deux modes', () => {
     expect(screen.queryByText(/gelées 11\/07\/2026/)).toBeNull()
   })
 
-  it('PISCINES-2 : SYNTHÈSE d’emblée (à équiper), « Voir les parcelles » ouvre la liste', async () => {
+  it('RETOURS-15 C6 : encart « N piscines détectées à La Réunion », « Voir les piscines » ouvre la liste', async () => {
     renderTool()
     fireEvent.click(document.querySelector('[data-solaire-mode="piscines"]')!)
-    // la synthèse (total + par commune) apparaît d'emblée ; le listing attend « Voir les parcelles ».
+    // (1) encart total + (2) par commune apparaissent d'emblée ; (3) « Voir les piscines » ouvre la liste.
     await waitFor(() => expect(document.querySelector('[data-piscines-total]')?.textContent).toContain('480'))
-    expect(screen.getByText(/à équiper/)).toBeTruthy()          // en-tête métier pisciniste
-    expect(screen.getByText('Saint-Pierre')).toBeTruthy()       // ligne par commune
+    expect(document.body.textContent).toContain('piscines détectées à La Réunion')   // C6 — encart
+    expect(document.body.textContent).not.toContain('à équiper')                     // sous-texte retiré
+    expect(screen.getByText('Saint-Pierre')).toBeTruthy()       // filtre par commune
     expect(document.querySelector('[data-piscines-row]')).toBeNull()   // pas encore de listing
+    expect(document.querySelector('[data-piscines-voir]')?.textContent).toContain('Voir les piscines')
     fireEvent.click(document.querySelector('[data-piscines-voir]')!)
     await waitFor(() => expect(document.querySelectorAll('[data-piscines-row]').length).toBe(2))
     expect(document.querySelector('[data-piscines-voir]')).toBeNull()  // le bouton a disparu
@@ -131,24 +133,22 @@ describe('SOLAIRE — deux modes', () => {
     expect(document.querySelector('[data-solaire-kwc-hyp]')?.textContent).toContain('0,2 kWc/m²')
   })
 
-  it('PISCINES-2 (A.3) — liste : propriétaire PM/PP · sélection → Courrier « aux occupants » · chip « pas une piscine »', async () => {
+  it('RETOURS-15 C6 — liste IDU · commune · surface ; clic ligne → fiche ; sans courrier/propriétaire/sélection', async () => {
     renderTool()
     fireEvent.click(document.querySelector('[data-solaire-mode="piscines"]')!)
     await waitFor(() => expect(document.querySelector('[data-piscines-voir]')).toBeTruthy())
-    fireEvent.click(document.querySelector('[data-piscines-voir]')!)   // ouvre le listing
+    fireEvent.click(document.querySelector('[data-piscines-voir]')!)   // « Voir les piscines »
     await waitFor(() => expect(document.querySelectorAll('[data-piscines-row]').length).toBe(2))
     const body = document.body.textContent ?? ''
-    expect(body).toContain('SCI SOLEIL')                 // PM nommée + SIREN
-    expect(body).toContain('particulier — non nommé')    // particulier jamais nommé
-    // le SEUL geste de sortie = Courrier « aux occupants » sur la sélection (réserve n°2 de Vic).
-    expect(document.querySelector('[data-piscines-courrier]')).toBeTruthy()
-    expect(document.querySelectorAll('[data-piscines-sel]').length).toBe(2)   // une case par ligne
-    // « pas une piscine » est un CHIP (plus un lien-texte) : un par ligne.
+    // C6 — plus de propriétaire dans la liste, plus de section Courrier ni de cases de sélection.
+    expect(body).not.toContain('SCI SOLEIL')
+    expect(document.querySelector('[data-piscines-courrier]')).toBeNull()
+    expect(document.querySelectorAll('[data-piscines-sel]').length).toBe(0)
+    // IDU · commune · surface affichés ; « pas une piscine » (correction) conservé.
+    expect(body).toContain('Saint-Paul')
     expect(document.querySelectorAll('[data-piscines-pas]').length).toBe(2)
-    // le bouton Courrier est désactivé tant que rien n'est sélectionné, puis actif après une coche.
-    const courrier = document.querySelector('[data-piscines-courrier]') as HTMLButtonElement
-    expect(courrier.disabled).toBe(true)
-    fireEvent.click(document.querySelector('[data-piscines-sel]')!)
-    await waitFor(() => expect((document.querySelector('[data-piscines-courrier]') as HTMLButtonElement).disabled).toBe(false))
+    // clic sur une ligne → focusParcelle(fiche) : la fiche s'ouvre (selectedIdu posé).
+    fireEvent.click(document.querySelector('[data-piscines-row]')!)
+    expect(useApp.getState().selectedIdu).toBe('97411000AP0000')
   })
 })

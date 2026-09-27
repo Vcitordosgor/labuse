@@ -10,7 +10,6 @@ import { ParcelInput } from '../ParcelInput'
 import { Tip } from '../Tip'
 import { Squelette } from '../Loading'
 import { ErrorState } from '../States'
-import { Bouton } from '../ui/Bouton'
 import { Case } from '../ui/Case'
 import { Chevron } from '../ui/Chevron'
 
@@ -65,6 +64,7 @@ function CheckField({ label, checked, onChange, hint, dataAttr }: {
 export function TaxeAmenagement() {
   const cfg = useQuery({ queryKey: ['taxe-config'], queryFn: getTaxeConfig })
   const selectedIdu = useApp((s) => s.selectedIdu)   // parcelle sélectionnée → ouverture « depuis la parcelle »
+  const focusParcelle = useApp((s) => s.focusParcelle)   // RETOURS-15 C5 — résolution → zoom + contour + fiche
 
   // ── saisie ──
   const [surface, setSurface] = useState<number | null>(null)
@@ -166,12 +166,13 @@ export function TaxeAmenagement() {
         </Tip>
       </div>
       {/* barre UNIQUE (adresse / IDU / référence courte — moteur ParcelInput, comme Étudier un bien) */}
-      <ParcelInput dataAttr="taxe-parcelle" onPick={(i: string) => setPrefillIdu(i)}
+      {/* RETOURS-15 C5 — résolution d'adresse → focusParcelle(idu, {fiche}) : zoom + contour + fiche. */}
+      <ParcelInput dataAttr="taxe-parcelle" onPick={(i: string) => { setPrefillIdu(i); focusParcelle(i, { fiche: true }) }}
         placeholder="Adresse, IDU ou référence (BW0917)" />
       {!prefillIdu && (
         <p data-taxe-attente className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] leading-snug text-txt-dim">
-          Le formulaire s'ouvrira quand une parcelle sera choisie — LABUSE préremplit alors la
-          surface taxable avec la SDP constructible au gabarit (modifiable).
+          Le formulaire s'ouvrira quand une parcelle sera choisie — vous saisissez la surface taxable
+          de votre projet (surface close et couverte, garages et annexes inclus).
         </p>
       )}
       {prefillIdu && (
@@ -200,22 +201,13 @@ export function TaxeAmenagement() {
         {/* TAXE-FIX-1 point 4 — la SURFACE TAXABLE n'est PAS la SDP : c'est la somme des surfaces
             closes et couvertes sous plus de 1,80 m, calculée au nu intérieur des façades, GARAGES
             ET ANNEXES INCLUS (CGI art. 1635 quater H ; la SDP d'urbanisme, elle, les déduit). */}
+        {/* RETOURS-15 C5 (P20) — l'outil ne parle QUE de surface taxable : le bloc « SDP restante au
+            gabarit… Partir de la SDP du projet » est retiré (la SDP d'urbanisme n'est pas la surface
+            taxable, art. 1635 quater H). Le champ reste vide, saisi par l'utilisateur. */}
         <NumField dataAttr="surface" label="Surface taxable" unit="m²" value={surface}
           onChange={(v) => setSurface(v)}
-          hint={`${prefill.data && prefill.data.sdp_gabarit_m2 == null
-            ? `Gabarit non calculable${prefill.data.zone_plu ? ` en zone ${prefill.data.zone_plu}` : ''} — saisissez la surface de votre projet. `
-            : ''}Surface close et couverte > 1,80 m, garages et annexes INCLUS (CGI 1635 quater H) — ≠ SDP. Valeur forfaitaire ${fmtEur(c.valeur_forfaitaire_m2.hors_idf)}/m² (hors Île-de-France, DOM inclus).${
+          hint={`Surface close et couverte > 1,80 m, garages et annexes INCLUS (CGI 1635 quater H) — ≠ SDP. Valeur forfaitaire ${fmtEur(c.valeur_forfaitaire_m2.hors_idf)}/m² (hors Île-de-France, DOM inclus).${
             c.exoneration_surface_min_m2 ? ` Surface < ${fmtInt(c.exoneration_surface_min_m2)} m² : exonérée.` : ''}`} />
-        {/* OUTILS-FIX-2 B1 — repère « SDP restante au gabarit » À CÔTÉ du champ + geste « reprendre »
-            (copie dans le champ sur demande), jamais d'office. TAXE-FIX-1 point 4 — le bouton dit
-            que la SDP est un POINT DE DÉPART à compléter (garages/annexes), pas la surface taxable. */}
-        {prefill.data?.sdp_gabarit_m2 != null && (
-          <div data-taxe-repere className="-mt-0.5 flex items-center gap-2 text-[10.5px] leading-snug text-txt-dim">
-            <span>SDP {prefill.data.deja_batie ? 'restante au gabarit (parcelle déjà bâtie)' : 'au gabarit'} : <b className="text-mint">{fmtM2(prefill.data.sdp_gabarit_m2)}</b></span>
-            <Bouton niveau="lien" data-taxe-reprendre onClick={() => setSurface(prefill.data!.sdp_gabarit_m2!)}
-              className="shrink-0">Partir de la SDP du projet (à compléter : garages, annexes)</Bouton>
-          </div>
-        )}
 
         <div className="flex flex-col gap-1.5">
           <CheckField dataAttr="residence" label="Résidence principale"

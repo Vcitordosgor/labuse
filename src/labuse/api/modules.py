@@ -290,6 +290,7 @@ def patrimoine(siren: str, fmt: str = "json",
     rows = db.execute(text("""
         SELECT p.id, p.idu, p.commune, p.surface_m2, z.zone_fam, r.sdp_residuelle_m2,
                s2.tier AS tier_v2, s2.rang AS rang_v2,
+               COALESCE(pb.emprise_bati_m2, 0) AS emprise_bati,   -- RETOURS-15 B5 : bâti / nu
                (d.status IN ('exclue', 'faux_positif_probable')) AS etage0
         FROM parcelle_personne_morale pm
         JOIN parcels p ON p.idu = pm.idu
@@ -297,6 +298,7 @@ def patrimoine(siren: str, fmt: str = "json",
         LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
         LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
         LEFT JOIN parcel_zone_plu z ON z.idu = p.idu
+        LEFT JOIN p_model_bati pb ON pb.idu = p.idu
         WHERE pm.siren = :s ORDER BY s2.rang ASC NULLS LAST"""),
         {"s": siren, "run": runs.cascade(), "v2run": _score_v2_run_id(db)}).mappings().all()
     bodacc = db.execute(text(
@@ -357,6 +359,14 @@ def patrimoine(siren: str, fmt: str = "json",
     n_actionnables = sum(1 for r in rows if r["tier_v2"] in _TIERS_ACTIONNABLES
                          and not r["etage0"] and r["idu"] not in ecartees_par_vous)
     sdp_residuelle = round(sum(r["sdp_residuelle_m2"] or 0 for r in rows))
+    # RETOURS-15 B5 (P10) — chiffres FACTUELS de l'onglet Possession (clients notaires / agences /
+    # apporteurs, pas promoteurs) : surface totale détenue, terrains nus vs bâtis (emprise bâtie DGFiP
+    # p_model_bati), et parcelles en zone constructible U ou AU (zone_fam servi). Remplacent
+    # « actionnables » et « valorisation » (langage promoteur) en TITRE — sans nouvelle donnée lourde.
+    surface_totale_m2 = round(sum(r["surface_m2"] or 0 for r in rows))
+    n_terrains_batis = sum(1 for r in rows if (r["emprise_bati"] or 0) > 0)
+    n_terrains_nus = len(rows) - n_terrains_batis
+    n_constructible_u_au = sum(1 for r in rows if r["zone_fam"] in ("U", "AU"))
     # #3 VALORISATION indicative du foncier nu (zones U/AU) au RÉFÉRENTIEL UNIQUE prix terrain de zone
     # (ligne2_terrain_zone, une fois par commune). Indicative — seules les zones U/AU ont un prix marché.
     prix_zone: dict[tuple[str, str], float] = {}
@@ -405,6 +415,20 @@ def patrimoine(siren: str, fmt: str = "json",
                     best = list(comp)
             id2idu = {r["id"]: r["idu"] for r in rows}
             assiette_contigue = [id2idu[i] for i in best] if len(best) >= 2 else []
+    # RETOURS-15 C9 (pont Blocs → Scan) — les BLOCS CONTIGUS du propriétaire, MÊME MOTEUR que l'outil
+    # Blocs fonciers (table `parcel_blocs`, bâtie par `labuse blocs-build`). Un bloc = ≥ 2 parcelles
+    # contiguës du même SIREN. On sert le compte + les groupes (repr, n, surface, communes, SDP).
+    blocs_contigus: dict = {"n": 0, "items": []}
+    if db.execute(text("SELECT to_regclass('parcel_blocs') IS NOT NULL")).scalar():
+        brs = db.execute(text("""
+            SELECT b.id AS bloc_id, b.n_parcelles, b.surface_totale_m2, b.communes, b.sdp_residuelle_m2,
+                   (SELECT min(m.idu) FROM parcel_bloc_membres m WHERE m.bloc_id = b.id) AS idu_repr
+            FROM parcel_blocs b WHERE b.siren = :s
+            ORDER BY b.n_parcelles DESC, b.surface_totale_m2 DESC"""), {"s": siren}).mappings().all()
+        blocs_contigus = {"n": len(brs), "items": [
+            {"bloc_id": r["bloc_id"], "n_parcelles": r["n_parcelles"], "surface_m2": r["surface_totale_m2"],
+             "communes": r["communes"], "sdp_residuelle_m2": r["sdp_residuelle_m2"], "idu_repr": r["idu_repr"]}
+            for r in brs[:12]]}
     # GB-017/018 — EXPORT CSV du portefeuille (raison sociale ENTIÈRE ; notice GB-016 si plafond).
     if fmt == "csv":
         import csv as _csv
@@ -434,6 +458,11 @@ def patrimoine(siren: str, fmt: str = "json",
     return {
         "siren": siren, "nom": nom, "n_parcelles": len(rows),
         "millesime_majic": millesime_majic,   # OUTILS-FIX-4 A1 — fraîcheur des fichiers fonciers servis
+        # RETOURS-15 B5 — chiffres factuels de l'onglet Possession (voir plus haut).
+        "surface_totale_m2": surface_totale_m2,
+        "n_terrains_nus": n_terrains_nus,
+        "n_terrains_batis": n_terrains_batis,
+        "n_constructible_u_au": n_constructible_u_au,
         "n_actionnables": n_actionnables,
         # KO-10 — le libellé front dit « hors écartées par vous » SI ce compte a écarté des parcelles.
         "hors_ecartees_par_vous": bool(ecartees_par_vous),
@@ -445,6 +474,7 @@ def patrimoine(siren: str, fmt: str = "json",
         "depot_comptes": depot,          # DONNEES-1 lot 2.3 — {annee, depuis_ans} ou None (aucun dépôt)
         "inpi_sans_dirigeant": inpi_sans_dirigeant,
         "assiette_contigue": assiette_contigue,
+        "blocs_contigus": blocs_contigus,   # RETOURS-15 C9 — pont Blocs fonciers (compte + groupes)
         "total": len(rows), "affiches": len(page), "offset": offset, "limit": limit,
         "tronquee": offset + limit < len(rows),
         "items": [{"idu": r["idu"], "commune": r["commune"],

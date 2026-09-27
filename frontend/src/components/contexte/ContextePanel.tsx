@@ -7,7 +7,6 @@ import { useApp } from '../../store/useApp'
 import { Squelette } from '../Loading'
 import { ErrorState } from '../States'
 import { CONTACT_VIDE, ContactEdit, trimContact, type ContactForm } from '../shared/ContactEdit'  // RETOURS-8 (R6)
-import { Bouton } from '../ui/Bouton'
 import { Chevron } from '../ui/Chevron'
 import { GrilleOutils, OutilCase } from '../shared/GrilleOutils'   // COMMUNE-FIX-1 (C9) — grille d'outils PARTAGÉE (même rendu que la fiche parcelle)
 
@@ -321,26 +320,16 @@ export function ContextePanel() {
                   </div>
                 ))}
               </div>
-              {/* COMMUNE-FIX-1 (B5) — « Voir ses parcelles » : filtre commune + verdict + listing, ET
-                  recadre la carte sur l'emprise de la commune. Avant, le zoom reposait sur l'effet « fit
-                  au changement de commune » — inopérant ici puisque la commune est DÉJÀ la courante (fiche
-                  ouverte via le clic-commune) → le bouton semblait mort. `refitCommune()` force le recadrage. */}
-              <Bouton niveau="primaire" ton="vert" data-communes-parcelles className="mt-3 w-full" onClick={() => {
-                const s = useApp.getState()
-                s.setView('cartes'); s.setCommune(commune); s.setCommunesFilter([commune])
-                s.setFilter('analyseLabuse', true); s.setVerdict(true)
-                s.openListing(); s.refitCommune()
-              }}>Voir ses parcelles →</Bouton>
+              {/* RETOURS-15 C10 — le bouton « Voir ses parcelles → » est RETIRÉ de la fiche commune. */}
               {/* COMMUNE-FIX-1 (C9) — « Étudier cette commune » : le MÊME composant partagé que la section
                   « Étudier ce bien » de la fiche parcelle (GrilleOutils/OutilCase, tuiles icône+nom, survol
-                  vert plein). Remplace les anciens raccourcis et TOUS les liens texte « → » des cartes.
-                  Tuiles pré-remplies sur la commune (ouvrirOutil pose commune + module). Aucune nouvelle DA. */}
+                  vert plein). Tuiles pré-remplies sur la commune (ouvrirOutil pose commune + module).
+                  RETOURS-15 C10 — la tuile « Densifier » est RETIRÉE de « Étudier cette commune ». */}
               <div data-etudier-commune className="mt-3">
                 <p className="mb-1.5 font-mono text-[10px] uppercase tracking-[0.13em] text-txt-dim">Étudier cette commune</p>
                 <GrilleOutils>
                   <OutilCase ic="§" nom="PLU" data-tuile-plu onClick={() => ouvrirOutil(commune, insee, 'plu')} />
                   <OutilCase ic="▤" nom="Permis" data-tuile-permis onClick={() => ouvrirOutil(commune, insee, 'permis')} />
-                  <OutilCase ic="◫" nom="Densifier" data-tuile-densifier onClick={() => ouvrirOutil(commune, insee, 'renouvellement')} />
                   <OutilCase ic="◎" nom="Étude de zone" data-tuile-etude-zone onClick={() => ouvrirOutil(commune, insee, 'etude-zone')} />
                   <OutilCase ic="▦" nom="Communes" data-tuile-communes onClick={() => ouvrirOutil(commune, insee, 'communes')} />
                 </GrilleOutils>
@@ -405,7 +394,8 @@ export function ContextePanel() {
                 <Source nom="INSEE · IGN contours IRIS · Annuaire de l'administration" />
               </LigneCarte>
 
-              <LigneCarte id="population" chiffre="habitants_n" ic="P" titre="Population et logement" defaultOpen
+              {/* RETOURS-15 C10 — toutes les sections FERMÉES par défaut (plus de defaultOpen). */}
+              <LigneCarte id="population" chiffre="habitants_n" ic="P" titre="Population et logement"
                 sous={`${d.population.logements != null ? `${fmt(d.population.logements)} logts` : ''}${d.population.vacance_pct != null ? ` · ${fmtDec(d.population.vacance_pct)} % vacants` : ''} · INSEE`}
                 val={d.population.habitants != null ? `${fmt(d.population.habitants)} hab.` : null}>
                 <div className="mb-2 flex flex-col gap-0.5 text-[12px]">
@@ -469,7 +459,7 @@ export function ContextePanel() {
               {/* ═══ LE MARCHÉ ═══ */}
               <GroupeLabel>Le marché</GroupeLabel>
 
-              <LigneCarte id="marche" chiffre="prix_ancien_median_eur_m2" ic="↗" titre="Prix" defaultOpen
+              <LigneCarte id="marche" chiffre="prix_ancien_median_eur_m2" ic="↗" titre="Prix"
                 sous={`ancien ${fmt(d.comparable?.ancien_median_eur_m2)} · neuf ${fmt(d.comparable?.neuf_eur_m2)} €/m²`}
                 val={tendPct != null ? `${Number(tendPct) > 0 ? '+' : ''}${fmtDec(tendPct)} %` : null}
                 ton={tendPct != null && Number(tendPct) < 0 ? 'rouge' : 'vert'}>
@@ -557,7 +547,9 @@ export function ContextePanel() {
               </LigneCarte>
 
               <LigneCarte id="foncier" chiffre="n_parcelles_commune" ic="◫" titre="Foncier et rareté"
-                sous={`${fmt(d.foncier?.stock_opportunites.n)} parcelles promues${r?.['horizon_epuisement_ans'] != null ? ` · ZAN ${fmtDec(r['horizon_epuisement_ans'])} ans` : ''}`}
+                // RETOURS-15 B2 — la ligne « N parcelles promues » (classement LABUSE, hors périmètre)
+                // est retirée du sous-titre ; on garde l'horizon ZAN, sinon le compte factuel de parcelles.
+                sous={r?.['horizon_epuisement_ans'] != null ? `ZAN ${fmtDec(r['horizon_epuisement_ans'])} ans` : `${fmt(d.foncier?.n_parcelles)} parcelles`}
                 val={d.foncier ? `${fmt(d.foncier.stock_opportunites.ha)} ha` : null} ton="orange">
                 {d.foncier && (
                   <>

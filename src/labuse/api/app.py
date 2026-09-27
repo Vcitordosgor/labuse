@@ -5651,6 +5651,7 @@ class EtudeZoneIn(BaseModel):
     sous_destination: str | None = None   # DESTINATIONS-1 (X4.1) — slug R151-28 (verdict par zone PLU)
     minutes: int = 10               # 5 / 10 / 15
     mode: str = "voiture"           # voiture / pied
+    rayon_km: float | None = None   # RETOURS-15 B9 — ampleur PAR DÉFAUT : rayon (0,5 / 1 / 2 / 5 km)
     titre: str | None = None        # libellé d'entrée (adresse) pour le titre du PDF
 
 
@@ -5691,11 +5692,23 @@ def etude_zone(inp: EtudeZoneIn, db: Session = Depends(get_db)) -> dict:
     if lon is None or lat is None:
         raise HTTPException(400, "fournir une parcelle (idu), un point (lon/lat) ou un polygone (geom)")
 
+    # RETOURS-15 B9 — AMPLEUR PAR RAYON (défaut de l'outil) : on fabrique un cercle exact (buffer en
+    # mètres via geography) autour du point et on le passe comme zone (court-circuite l'isochrone, comme
+    # un polygone dessiné) → même moteur, aucun cercle « approximatif » masqué. Sans rayon → isochrone.
+    rayon_km = inp.rayon_km if inp.rayon_km in (0.5, 1, 2, 5) else None
+    is_rayon = rayon_km is not None and geom is None
+    if is_rayon:
+        gj = db.execute(text(
+            "SELECT ST_AsGeoJSON(ST_Buffer(ST_SetSRID(ST_MakePoint(:lon, :lat), 4326)::geography, :r)::geometry) AS g"),
+            {"lon": lon, "lat": lat, "r": rayon_km * 1000}).scalar()
+        geom = json.loads(gj)
+
     out = etude_de_zone(db, lon, lat, minutes, mode, geom_geojson=geom, naf=naf,
                         sous_destination=(inp.sous_destination or None))
     out["origine"] = {"lon": lon, "lat": lat}
     out["adresse"] = adresse            # LOT D — periment réellement mesuré (point) : « depuis {adresse} »
-    out["entree"] = "polygone" if geom is not None else "point"
+    out["entree"] = "rayon" if is_rayon else ("polygone" if geom is not None else "point")
+    out["rayon_km"] = rayon_km if is_rayon else None
     out["naf_label"] = naf_label(naf) if naf else None
     if out.get("zone_disponible"):
         out["marche"] = out.get("marche")   # déjà posé par etude_de_zone
@@ -5748,6 +5761,13 @@ def etude_zone_entreprises(inp: EtudeZoneIn, db: Session = Depends(get_db)) -> d
         if not pt or pt["lon"] is None:
             raise HTTPException(404, "parcelle introuvable ou sans géométrie")
         lon, lat = float(pt["lon"]), float(pt["lat"])
+    # RETOURS-15 B9 — même emprise que l'étude : rayon (cercle) prioritaire, sinon polygone, sinon isochrone.
+    rayon_km = inp.rayon_km if inp.rayon_km in (0.5, 1, 2, 5) else None
+    if geom is None and rayon_km is not None and lon is not None and lat is not None:
+        gj = db.execute(text(
+            "SELECT ST_AsGeoJSON(ST_Buffer(ST_SetSRID(ST_MakePoint(:lon, :lat), 4326)::geography, :r)::geometry) AS g"),
+            {"lon": lon, "lat": lat, "r": rayon_km * 1000}).scalar()
+        geom = json.loads(gj)
     # emprise = polygone dessiné, sinon isochrone (cachée : pas de recalcul si l'étude vient de tourner)
     if geom is None:
         if lon is None or lat is None:

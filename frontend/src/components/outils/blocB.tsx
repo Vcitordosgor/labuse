@@ -54,9 +54,11 @@ export function O5Servitudes() {
           (replié, plus bas). */}
       <Banner>Ce qui peut bloquer un projet sans se voir sur la carte : servitudes, sols, bruit,
         assainissement. Chaque servitude est nommée, datée et sourcée.</Banner>
-      {/* PATRON OMNIBOX (M137) — adresse OU IDU dans le même champ (ParcelInput partagé). Le clic
-          carte est déjà capté par l'effet selectedIdu ci-dessus → withCarte inutile ici. */}
-      <ParcelInput dataAttr="o5-idu" placeholder="Adresse, IDU ou référence (BW0917)" onPick={allerA} />
+      {/* PATRON OMNIBOX (M137) — adresse OU IDU dans le même champ (ParcelInput partagé). RETOURS-15 B8
+          — withCarte=false : le clic carte est capté par l'effet selectedIdu ci-dessus (il analyse ET
+          ouvre la fiche) ; on ne laisse pas l'auto-consommation du socle rappeler `allerA` (qui ferait
+          select(null) et refermerait la fiche). Plus de bouton/invite carte ici. */}
+      <ParcelInput dataAttr="o5-idu" withCarte={false} placeholder="Adresse, IDU ou référence (BW0917)" onPick={allerA} />
       {q.isLoading && <Squelette lignes={4} />}
       {q.isError && <ErrorState className="py-6" message="Servitudes indisponibles." retry={() => q.refetch()} />}
       {d && (
@@ -65,10 +67,7 @@ export function O5Servitudes() {
             <span className="num-key text-base text-mint">{d.n}</span>
             <span className="text-txt-mut">servitude(s)/contrainte(s) sur</span>
             <span className="font-mono text-txt-hi">{d.idu.slice(8, 10)} {d.idu.slice(10)}</span>
-            {/* PIEGES-RISQUES-1 pt2 — lien PERMANENT « Ouvrir la fiche → » (jaune, DA existante) : la fiche
-                ne s'ouvre QUE sur ce clic (l'ouvrir d'office fermerait l'outil). `select` monte la fiche parcelle. */}
-            <button data-o5-fiche onClick={() => select(d.idu)}
-              className="ml-auto text-[10.5px] font-medium text-amber hover:underline">Ouvrir la fiche →</button>
+            {/* RETOURS-15 B8 — « Ouvrir la fiche → » RETIRÉ : la fiche s'ouvre déjà au clic carte (select). */}
           </div>
           {d.servitudes.map((s, i) => (
             <div key={i} className="rounded-lg bg-surface-3 px-3 py-2 shadow-elev-1">
@@ -124,10 +123,8 @@ type Comparateur = {
 // PERMIS : la donnée servie est un CUMUL SUR 5 ANS (comparateur.py : INTERVAL '5 years'), PAS un
 // glissant 12 mois — la maquette disait « Permis 12 m », c'était illustratif et faux. On étiquette vrai.
 const O6_COLS: { k: string; head: string; title: string; tip?: string; best?: 'max' | 'min' }[] = [
-  // RETOURS-11 O14b (décision Vic) — « Stock foncier » renommé « Parcelles à potentiel »
-  // (= Priorité + À suivre), définition au survol.
-  { k: 'stock', head: 'Parcelles à potentiel', best: 'max',
-    title: 'Parcelles à potentiel — parcelles promues par LABUSE sur la commune (palier À suivre, run servi)' },
+  // RETOURS-15 B2 (P4) — la colonne « Parcelles à potentiel » (stock) est RETIRÉE : c'est le
+  // classement LABUSE, hors périmètre de ce comparateur (décision Vic).
   { k: 'velocite', head: 'Instruction (mois)', best: 'min',
     title: 'Instruction — délai médian dépôt→autorisation, en mois (plus bas = plus rapide)' },
   { k: 'permis', head: 'Permis (5 ans)',
@@ -149,14 +146,14 @@ const O6_COLS: { k: string; head: string; title: string; tip?: string; best?: 'm
 ]
 // Rendu en GRAND (overlay ≤ 1100 px) : colonnes larges, tout lisible, zéro scroll horizontal. Dernière
 // piste = affordance de clic (chevron › / « Ouvrir la fiche → » au survol).
-const O6_GRID = 'grid-cols-[minmax(140px,1.5fr)_repeat(7,minmax(72px,1fr))_minmax(96px,0.7fr)] gap-x-2'
+const O6_GRID = 'grid-cols-[minmax(140px,1.5fr)_repeat(6,minmax(72px,1fr))_minmax(96px,0.7fr)] gap-x-2'
 const fmtFr = (v: unknown) => (v == null ? '—' : Number(v).toLocaleString('fr-FR'))
 
 // `onSelect` : dans l'outil Communes, cliquer une ligne ouvre la fiche commune.
 export function O6Comparateur({ onSelect }: { onSelect?: (commune: string) => void } = {}) {
-  // Tri par CLIC sur l'en-tête ; défaut = stock foncier décroissant (l'entrée la plus parlante :
-  // où il y a le plus de foncier à travailler). Re-clic sur la même colonne inverse le sens.
-  const [tri, setTri] = useState<{ k: string; dir: 'desc' | 'asc' }>({ k: 'stock', dir: 'desc' })
+  // Tri par CLIC sur l'en-tête ; défaut = dynamisme des permis (5 ans) décroissant depuis que la
+  // colonne « Parcelles à potentiel » est retirée (B2). Re-clic sur la même colonne inverse le sens.
+  const [tri, setTri] = useState<{ k: string; dir: 'desc' | 'asc' }>({ k: 'permis', dir: 'desc' })
   const q = useQuery({ queryKey: ['o6'], queryFn: () => jfetch<Comparateur>('/comparateur-communes') })
   const clicTri = (k: string) => setTri((t) => (t.k === k ? { k, dir: t.dir === 'desc' ? 'asc' : 'desc' } : { k, dir: 'desc' }))
   const rows = [...(q.data?.communes ?? [])].sort((a, b) => {
@@ -241,7 +238,6 @@ export function CommunesLegende() {
   return (
     <div data-o6-legende className="text-[10px] leading-relaxed text-txt-dim">
       <b className="text-txt-mut">Légende :</b>{' '}
-      <b>Parcelles à potentiel</b> = parcelles promues par LABUSE (palier À suivre) ·{' '}
       <b>Instruction</b> = délai médian dépôt→autorisation (mois) ·{' '}
       <b>Permis 5 ans</b> = permis SITADEL cumulés sur 5 ans ·{' '}
       <b>Déficit SRU</b> = objectif légal − taux de logement social (points) ·{' '}

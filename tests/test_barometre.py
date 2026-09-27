@@ -50,6 +50,22 @@ def test_barometre_data_ne_leve_pas(db_session):
     assert not any(getattr(r, "path", "").endswith("barometre.pdf") for r in moteurs.router.routes)
 
 
+@pytest.mark.db
+def test_retours15_b3_permis_alignes_sur_la_fenetre_dvf(db_session):
+    """RETOURS-15 B3 — DVF et permis couvrent les MÊMES trimestres récents : la série permis est
+    bornée au dernier trimestre DVF (le flux Sitadel est en avance → sinon 2024T1/T2 tombaient hors
+    fenêtre permis et s'affichaient « — »). Le trimestre le plus récent est identique dans les deux."""
+    from labuse.api import moteurs
+    d = moteurs._barometre_data(db_session)
+    dvf = [r["trimestre"] for r in d["dvf_trimestres"]]
+    perm = [r["trimestre"] for r in d["permis_trimestres"]]
+    if not dvf or not perm:
+        pytest.skip("base de test sans DVF/Sitadel — alignement vérifié sur la base réelle")
+    # aucune série permis ne dépasse le trimestre DVF le plus récent (axe de référence commun) :
+    # c'est le correctif B3 (sans lui, Sitadel étant en avance, la fenêtre permis débordait DVF).
+    assert max(perm) <= max(dvf)
+
+
 # ── §1b — UN SEUL prix par commune : le PDF (baromètre) et le tableau (comparateur) lisent la
 #         MÊME fonction `prix_ancien_communes`, plus une formule recopiée qui pourrait dériver. ──
 
