@@ -118,6 +118,22 @@ def annonce_html(titre: str, corps: str, *, lien: str | None = None, lien_desabo
             f"<p style=\"margin:22px 0 0;color:#888;font-size:12px\">{pied}</p></div></body></html>")
 
 
+# ── VEILLE-FIX-2 (Lot B) · MISE EN VENTE d'une parcelle SUIVIE — mail IMMÉDIAT, gabarit dédié.
+#    La seule notification instantanée de la grille (Vic 27/09) : une annonce Radar rattachée à une
+#    parcelle que le client suit vient de paraître. Sobre, un seul lien vers l'annonce. ──
+def mise_en_vente_email(idu_court: str, commune: str, type_label: str, prix: str, *,
+                        lien: str | None = None, lien_desabo: str = "", lien_prefs: str = "") -> tuple[str, str, str]:
+    """Retourne (sujet, texte, html). Envoi immédiat, une fois par annonce."""
+    sujet = f"LABUSE — votre parcelle {idu_court} est mise en vente"
+    corps = (f"Une annonce vient de paraître sur une parcelle que vous suivez : {idu_court} "
+             f"— {type_label} à {commune}, {prix}.")
+    txt, _ = annonce_email(f"votre parcelle {idu_court} est mise en vente", corps,
+                           lien=lien, lien_desabo=lien_desabo, lien_prefs=lien_prefs)
+    html = annonce_html(f"votre parcelle {idu_court} est mise en vente", corps,
+                        lien=lien, lien_desabo=lien_desabo, lien_prefs=lien_prefs)
+    return sujet, txt, html
+
+
 # ── M85-B · maintenance (chaîne 3) — gabarit DISTINCT : dates et durée de coupure EN ÉVIDENCE,
 #    NON désactivable (conséquences réelles) → aucun lien de désinscription. ──
 def maintenance_email(titre: str, corps: str, *, debut: str = "", fin: str = "",

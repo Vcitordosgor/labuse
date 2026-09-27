@@ -93,7 +93,9 @@ def test_digest_porte_radar_et_nouveaute():
         db.execute(text("DELETE FROM mail_queue WHERE compte_id=:c"), {"c": cid})
         _ev(db, kind="radar", cid=cid, titre="Nouvelle annonce pour votre veille — Maison à Saint-Paul",
             lien="https://www.leboncoin.fr/ad/ventes_immobilieres/456", source="Radar")
-        # nouveauté de l'app (broadcast) POSTÉRIEURE à la création du compte → dans son mail
+        # VEILLE-FIX-2 (grille Vic 27/09) — la NOUVELLE SOURCE est désormais CLOCHE POUR TOUS, JAMAIS
+        # dans le mail (l'inclusion `nouveaute` de VEILLE-2 Lot 5 est retirée) : le digest porte le Radar,
+        # pas la nouveauté.
         events.annoncer_nouveaute(db, "Nouvelle source dans LABUSE (test)")
         db.commit()
 
@@ -101,7 +103,8 @@ def test_digest_porte_radar_et_nouveaute():
         d = next(x for x in r["details"] if x["compte"] == cid)
         assert d["statut"] == "simulé"
         corps = (d.get("corps") or "").lower()
-        assert "annonce" in corps or "source" in corps    # Radar et/ou nouveauté présents
+        assert "annonce" in corps                          # le Radar est présent…
+        assert "nouvelle source dans labuse" not in corps  # …mais PLUS la nouveauté (grille : mail=non)
 
         comptes.supprimer_utilisateur(db, email)
         db.execute(text("DELETE FROM mail_queue WHERE compte_id=:c"), {"c": cid})

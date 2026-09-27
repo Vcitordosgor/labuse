@@ -1069,8 +1069,11 @@ def _digest_data(db: Session, cid: int | None = None, jours: int = 7) -> dict:
     # PERSONNEL : listé en détail, CLOISON STRICTE (le marché n'apparaît PAS ici). M85-B : fenêtre
     # paramétrable (J-1 pour le digest quotidien du matin). ORDRE (hiérarchie du mandant) : la MUTATION
     # d'abord (événement majeur), puis les autres changements de parcelle SUIVIE, puis les veilles de zone.
-    # VEILLE-2 (Lot 5) — un seul mail : parcelles suivies + Radar (compte-scopés) + nouveautés de l'app
-    # (broadcast `nouveaute`, comptées seulement si POSTÉRIEURES à la création du compte — comme la cloche).
+    # VEILLE-FIX-2 (grille Vic 27/09) — le digest ne porte QUE les kinds `mail: digest` de la grille
+    # (parcelles suivies + Radar : nouvelles, baisses, retraits), TOUS compte-scopés. La NOUVELLE SOURCE
+    # (`nouveaute`) et la BASCULE sont désormais CLOCHE POUR TOUS, JAMAIS dans le mail : l'ancienne
+    # inclusion `nouveaute` de VEILLE-2 (Lot 5) est RETIRÉE. La mise en vente (`parcelle_en_vente`) est un
+    # MAIL IMMÉDIAT, jamais dans le digest (donc hors `_DIGEST_KINDS`).
     events = db.execute(text("""
         SELECT e.kind, e.idu, e.titre, e.detail, e.demo, e.source, d.q_score, d.a_score, d.matrice_statut
         FROM event_log e
@@ -1078,9 +1081,7 @@ def _digest_data(db: Session, cid: int | None = None, jours: int = 7) -> dict:
         LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
         WHERE e.ts >= now() - make_interval(days => :jours)
           AND e.envoi_statut IS DISTINCT FROM 'rattrapage'   -- M137-M : le rattrapage vit à la cloche, jamais au digest/mail
-          AND ( (e.compte_id IS NOT DISTINCT FROM :cid AND e.kind = ANY(:digest))
-                OR (e.compte_id IS NULL AND e.kind = 'nouveaute'
-                    AND e.ts >= COALESCE((SELECT c.created_at FROM comptes c WHERE c.id = :cid), '-infinity'::timestamptz)) )
+          AND e.compte_id IS NOT DISTINCT FROM :cid AND e.kind = ANY(:digest)
         ORDER BY (e.source = 'Mutation') DESC, (e.kind = 'parcelle_suivie') DESC,
                  e.ts DESC NULLS LAST LIMIT 20"""),
         {"run": runs.cascade(), "cid": cid, "digest": list(_DIGEST_KINDS), "jours": jours}).mappings().all()  # C1 cascade
