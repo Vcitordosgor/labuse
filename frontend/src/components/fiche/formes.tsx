@@ -11,6 +11,19 @@
 import { useState, type CSSProperties, type ReactNode } from 'react'
 import { Bouton } from '../ui/Bouton'
 import { Chip } from '../ui/Chip'
+import { Tip } from '../Tip'
+
+// ── « i » PARTAGÉ (FICHE-FIX-4) ─────────────────────────────────────────────
+// Le point « i » qui porte un texte d'explication : jamais un paragraphe dans le flux, toujours
+// derrière ce déclencheur (clic/tap/focus, cf. Tip `garder`). Utilisable en `info` de <Ligne> ou seul.
+export function InfoI({ tip, aria = 'Détails' }: { tip: ReactNode; aria?: string }) {
+  return (
+    <Tip tip={tip} garder side="bottom">
+      <span role="button" tabIndex={0} aria-label={aria}
+        style={{ marginLeft: 3, display: 'inline-flex', width: 12, height: 12, flex: 'none', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', border: '1px solid var(--line-2)', fontSize: 8, fontWeight: 700, lineHeight: 1, color: 'var(--txt-dim)', cursor: 'pointer', verticalAlign: 'middle' }}>i</span>
+    </Tip>
+  )
+}
 
 // Maquette v3 → tokens de l'app. Le vert redevient un SIGNAL (mint), l'ambre = attention, le rouge =
 // blocage, le gris = neutre/absent. « txt » = clair (--txt-hi), « mut » = gris libellé, « dim » = discret.

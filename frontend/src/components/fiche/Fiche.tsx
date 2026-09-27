@@ -34,7 +34,7 @@ import { IC, FicheAccordionCtx, RefDrawer, GroupLabel, MicroJauge, MicroPastille
 import { TransformationBlock, FaisabiliteTab, BilanTab, TaxeAmenagementBlock, FiscalLeviersBlock, RtaaFromBilan, DispositifsBody, ModeBBody } from './constructibilite'
 import { BatiBlock, FiliationBlock } from './leBien'
 // KELFONCIER-FIX-2 (Partie B) — les formes de la maquette v3 (Verdict · Tuiles · BarreEmpilée…).
-import { Verdict, Tuiles, type Tuile, BarreEmpilee, type Part, Lignes, Ligne, Pastilles, type Pastille, OutilsSection, type OutilSection } from './formes'
+import { Verdict, Tuiles, type Tuile, BarreEmpilee, type Part, Lignes, Ligne, Pastilles, type Pastille, OutilsSection, type OutilSection, InfoI } from './formes'
 import { RisquesSection } from './risques'
 import { MarcheSection, DerniereVenteBlock } from './marche'
 import { ReseauxSection, EquipementsBadges } from './reseaux'
@@ -1357,34 +1357,34 @@ export function Fiche({ idu }: { idu: string }) {
                         (voir plus bas). L'outil courrier (M09, pré-rempli sur la parcelle) est inchangé. */}
                   </FactNote>
                 )}
-                {proprioLines.length > 0 && <div className="flex flex-col gap-1">{proprioLines.map((l, i) => <Line key={i} line={l} hideWeight hideDate />)}</div>}
+                {/* FICHE-FIX-4 (Lot C) — la liste brute des lignes « proprio » (BODACC, « personne
+                    morale »…) FAISAIT DOUBLON avec les Tuiles/Verdict ci-dessus (maquette : aucune
+                    liste grise ici). Les signaux vendeur restent portés par les pastilles de l'en-tête
+                    du tiroir (proprioPastilles) ; `proprioLines` reste calculé pour elles. */}
                 {/* L1 (KF-2) — historique du propriétaire moral par millésime + diff constaté (hors
                     scoring). R6 : `pm` dit au composant si la parcelle a un propriétaire moral —
                     absence de timeline = ligne honnête (PM) ou silence justifié (PP). */}
                 <ProprietaireHistorique h={f.proprietaire_historique} pm={!!f.proprietaire_moral} />
-                {/* RETOUCHES-1 lot C.14 — ancienneté de détention : PM = millésimes DGFiP (1ʳᵉ apparition
-                    du SIREN) ; PP = dernière mutation DVF (jamais nommée). « sans objet » si inconnue. */}
+                {/* FICHE-FIX-4 (Lot C) — ancienneté de détention en une Ligne « Détention ≥ N ans
+                    (depuis AAAA) », source derrière le « i ». RETOUCHES-1 C.14 : PM = millésimes DGFiP
+                    (1ʳᵉ apparition du SIREN) ; PP = dernière mutation DVF (jamais nommée). */}
                 {f.anciennete_detention?.disponible && (
-                  <div data-anciennete className="text-[11.5px] text-txt-mut">
-                    Propriétaire actuel depuis <b className="text-txt">≥ {f.anciennete_detention.depuis_ans} an{(f.anciennete_detention.depuis_ans ?? 0) > 1 ? 's' : ''}</b>
-                    {f.anciennete_detention.depuis_annee ? <span> (depuis {f.anciennete_detention.depuis_annee})</span> : null}
-                    <span className="text-txt-dim"> — {f.anciennete_detention.source}{f.anciennete_detention.millesime ? ` · ${f.anciennete_detention.millesime}` : ''}</span>
-                  </div>
+                  <div data-anciennete><Lignes>
+                    <Ligne label={<>Détention<InfoI tip={`${f.anciennete_detention.source}${f.anciennete_detention.millesime ? ` · ${f.anciennete_detention.millesime}` : ''}`} aria="Source de l'ancienneté de détention" /></>}
+                      valeur={<>≥ {f.anciennete_detention.depuis_ans} an{(f.anciennete_detention.depuis_ans ?? 0) > 1 ? 's' : ''}{f.anciennete_detention.depuis_annee ? ` (depuis ${f.anciennete_detention.depuis_annee})` : ''}</>} />
+                  </Lignes></div>
                 )}
                 {/* M125-2 — copropriété(s) RNIC rattachées (donnée réelle, cible bailleur/copro) */}
                 {f.coproprietes && f.coproprietes.length > 0 && <CoproprietesBlock copros={f.coproprietes} />}
-                {/* M60 P1c — PORTE en pied : Scan patrimoine PRÉ-REMPLI (SIREN du propriétaire). */}
-                {f.proprietaire_moral?.siren && (
-                  <PorteOutil ico="⌂" data="patrimoine" titre="Scan patrimoine du propriétaire"
-                    sous={`Tout le foncier de ${f.proprietaire_moral.denomination ?? 'ce propriétaire'} · SIREN ${f.proprietaire_moral.siren}`}
-                    onClick={() => { setM02Prefill(f.proprietaire_moral!.siren!); setModule('patrimoine') }} />
-                )}
-                {/* M70 point 7a — PORTE en pied : Courrier SPF (personne physique / non recensée). */}
-                {!f.proprietaire_moral && (
-                  <PorteOutil ico="✉" data="spf-letter" titre={CLIENT.fiche.export.spf}
-                    sous="Courrier pré-rempli à envoyer au SPF pour identifier le propriétaire."
-                    onClick={() => { setCourrierPrefill(idu); setModule('courriers') }} />
-                )}
+                {/* FICHE-FIX-4 (Lot C) — outil en pied : Scan patrimoine (PM) OU Courrier SPF (PP), en
+                    bouton OutilsSection au lieu d'une grande carte PorteOutil. */}
+                {f.proprietaire_moral?.siren ? (
+                  <OutilsSection outils={[{ label: 'Scan patrimoine du propriétaire', principal: true, full: true, data: 'patrimoine',
+                    onClick: () => { setM02Prefill(f.proprietaire_moral!.siren!); setModule('patrimoine') } }]} />
+                ) : !f.proprietaire_moral ? (
+                  <OutilsSection outils={[{ label: CLIENT.fiche.export.spf, principal: true, full: true, data: 'spf-letter',
+                    onClick: () => { setCourrierPrefill(idu); setModule('courriers') } }]} />
+                ) : null}
                 </div>
                 {/* DERNIÈRE VENTE (DVF) — fait d'identité, relocalisé de Marché (§8→§1). */}
                 <DerniereVenteBlock f={f} />

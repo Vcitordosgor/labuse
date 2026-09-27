@@ -12,7 +12,7 @@
  * (transition non-breaking ; le tiroir « Le bien » sera dissous à l'étape 4).
  */
 import type { Fiche } from '../../lib/types'
-import { fmtInt } from '../../lib/format'
+import { fmtInt, fmtDateNum } from '../../lib/format'
 import { IC, RefDrawer, FactRow, FactNote, GroupLabel } from './primitives'
 import { Badge } from '../ui/Badge'
 // KELFONCIER-FIX-2 (Partie B, Lot F) — les blocs Bâti/Terrain composent désormais les FORMES de la
@@ -215,30 +215,26 @@ export function TerrainDuBienBlock({ f }: { f: Fiche }) {
   )
 }
 
-/** §1 Identité — historique cadastral officiel (filiation DFI). */
+/** §1 Identité — historique cadastral officiel (filiation DFI).
+ *  FICHE-FIX-4 (Lot C) — chaque filiation en une Ligne (« Issue de » / « A donné », valeur qui passe
+ *  à la ligne proprement), le paragraphe de méthode passe en source (FactNote). */
 export function FiliationBlock({ f }: { f: Fiche }) {
   if (!f.filiation) return null
   const fi = f.filiation
   return (
     <div data-le-bien-filiation>
-      <div className="mt-2 mb-1 text-[11px] uppercase tracking-wide opacity-60">
-        Historique cadastral (filiation officielle)
-      </div>
-      {fi.meres?.map((m) => (
-        <FactRow key={`m-${m.idu}-${m.date}`} label="Issue de"
-          value={<>{m.idu}{m.date ? <small> · {m.date}</small> : null}
-            {m.nature ? <small> · {m.nature}</small> : null}</>} />
-      ))}
-      {fi.filles?.map((x) => (
-        <FactRow key={`f-${x.idu}-${x.date}`} label="A donné"
-          value={<>{x.idu}{x.date ? <small> · {x.date}</small> : null}
-            {x.nature ? <small> · {x.nature}</small> : null}</>} />
-      ))}
-      {fi.division_recente && (
-        <FactNote>Division récente (événement ≥ 2023) — signal de mouvement foncier.</FactNote>
-      )}
-      <FactNote>{fi.source}. Contrôle croisé avec le cadastre d'époque
-        (géométrie) — deux canaux, jamais un conflit.</FactNote>
+      <GroupLabel>Filiation cadastrale</GroupLabel>
+      <Lignes>
+        {fi.meres?.map((m) => (
+          <Ligne key={`m-${m.idu}-${m.date}`} label="Issue de"
+            valeur={<>{m.idu}{m.date ? <small> · {fmtDateNum(m.date)}</small> : null}{m.nature ? <small> · {m.nature}</small> : null}</>} />
+        ))}
+        {fi.filles?.map((x) => (
+          <Ligne key={`f-${x.idu}-${x.date}`} label="A donné"
+            valeur={<>{x.idu}{x.date ? <small> · {fmtDateNum(x.date)}</small> : null}{x.nature ? <small> · {x.nature}</small> : null}</>} />
+        ))}
+      </Lignes>
+      <FactNote>{fi.division_recente ? 'Division récente (événement ≥ 2023) — signal de mouvement foncier. ' : ''}{fi.source}. Contrôle croisé avec le cadastre d'époque (géométrie) — deux canaux, jamais un conflit.</FactNote>
     </div>
   )
 }

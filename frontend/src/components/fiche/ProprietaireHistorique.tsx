@@ -3,21 +3,25 @@
  * Millésimes DGFiP 2019→2025 (Licence Ouverte 2.0, situation au 1ᵉʳ janvier). Le changement de
  * propriétaire moral d'une année à l'autre est un CONSTAT sourcé — jamais une vente affirmée, jamais
  * un signal de scoring. RGPD : personnes morales uniquement. Aucun fetch (charge utile de la fiche).
+ *
+ * FICHE-FIX-4 (Lot C) — mise en Frise (un seul segment « 2019 → 2025 · nom » même sans changement) ;
+ * les trois paragraphes gris (constat DGFiP, « n'affirme pas une vente », millésimes) passent derrière
+ * le « i » de l'historique ; le détail des millésimes va dans un Repli « anciens propriétaires · N ».
  */
-import { useState } from 'react'
 import { Siren } from '../shared/Siren'   // RETOURS-12 T2 — SIREN cliquable Pappers
 import type { Fiche } from '../../lib/types'
-import { GroupLabel, FactNote } from './primitives'
+import { GroupLabel } from './primitives'
+import { Frise, type Segment, Repli, InfoI, Lignes, Ligne } from './formes'
 
 type Histo = NonNullable<Fiche['proprietaire_historique']>
 
+/** Nombre de changements identifiés (≥1 → il y a d'anciens propriétaires distincts). */
+export function aDesAnciensProprietaires(h: Histo | null | undefined): number {
+  if (!h || h.n_millesimes < 2) return 0
+  return h.changements.filter((c) => !c.non_identifiable).length
+}
+
 export function ProprietaireHistorique({ h, pm }: { h: Histo | null | undefined; pm: boolean }) {
-  const [ouvert, setOuvert] = useState(false)
-  // RETOURS-1 R6 (Vic) — enquête : le composant était monté et fonctionnel, mais MUET hors
-  // couverture (fichier PM = ~19 % des parcelles ; < 2 millésimes = rien) → sur la plupart des
-  // parcelles testées, aucune trace, aucune explication. Désormais : parcelle PM sans timeline =
-  // une ligne d'absence honnête ; parcelle PP = rien (le bloc au-dessus explique déjà le workflow
-  // SPF, le fichier DGFiP ne couvre que les personnes morales).
   if (!h || h.n_millesimes < 2) {
     if (!pm) return null
     return (
@@ -30,73 +34,42 @@ export function ProprietaireHistorique({ h, pm }: { h: Histo | null | undefined;
   const premier = h.millesimes[0]
   const dernier = h.millesimes[h.millesimes.length - 1]
 
+  // Segments de la frise : millésimes consécutifs de même dénomination regroupés. Un seul segment
+  // (aucun changement) = « premier → dernier · nom ». Le dernier segment est l'ACTUEL (vert).
+  type Seg = { annee: number; nom: string }
+  const segs: Seg[] = []
+  for (const m of h.millesimes) {
+    const nom = m.denomination ?? 'PM non identifiable'
+    if (segs.length && segs[segs.length - 1].nom === nom) continue
+    segs.push({ annee: m.millesime, nom })
+  }
+  const friseSegments: Segment[] = segs.length <= 1
+    ? [{ annee: `${premier.millesime} → ${dernier.millesime}`, label: dernier.denomination ?? 'PM non identifiable', ton: 'actuel' }]
+    : segs.map((s, i) => ({ annee: s.annee, label: s.nom, ton: i === segs.length - 1 ? 'actuel' : 'ancien' }))
+
+  // Les 3 explications grises, derrière le « i » (jamais dans le flux).
+  const tip = (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <span>Constat cadastral : le propriétaire déclaré au fichier des personnes morales, par millésime.</span>
+      <span>Un changement de propriétaire moral n'affirme pas une vente — ce n'est pas un signal de classement.</span>
+      <span>{h.note}</span>
+    </div>
+  )
+
   return (
     <div data-proprietaire-historique>
-      {/* RETOURS-23 Z3 — plus de card-elev : kicker + faits à plat. */}
-      <GroupLabel>Historique du propriétaire (DGFiP)</GroupLabel>
-
-      {h.changements.length > 0 ? (
-        <div className="mt-1.5 flex flex-col gap-1.5">
-          {/* DONNEES-FIX-1 lot B — un changement n'est affiché comme tel que si les deux SIREN sont
-              réels et différents ; sinon « propriétaire PM non identifiable (DGFiP) » (même règle que
-              la frise Remonter le temps), jamais un faux « X → X ». */}
-          {h.changements.map((c, i) => (
-            c.non_identifiable ? (
-              <div key={i} data-proprietaire-non-identifiable className="text-[11px] leading-snug text-txt-mut">
-                <span className="mr-1.5 rounded bg-line-2/40 px-1.5 py-0.5 font-mono text-[10px] text-txt-dim">
-                  {c.de_millesime} → {c.a_millesime}
-                </span>
-                Propriétaire PM non identifiable (DGFiP)
-              </div>
-            ) : (
-              <div key={i} className="text-[11px] leading-snug text-txt">
-                <span className="mr-1.5 rounded bg-mint-bg px-1.5 py-0.5 font-mono text-[10px] text-mint">
-                  {c.de_millesime} → {c.a_millesime}
-                </span>
-                <span className="text-txt-mut">{c.denomination_avant ?? '—'}</span>
-                <span className="mx-1 text-txt-dim">→</span>
-                <span className="font-medium text-txt-hi">{c.denomination_apres ?? '—'}</span>
-                {(c.siren_avant || c.siren_apres) && (
-                  <div className="mt-0.5 font-mono text-[9.5px] text-txt-dim">
-                    SIREN <Siren value={c.siren_avant} className="font-mono text-txt-dim" /> → <Siren value={c.siren_apres} className="font-mono text-txt-dim" />
-                  </div>
-                )}
-              </div>
-            )
-          ))}
-        </div>
-      ) : (
-        <div data-proprietaire-sans-changement className="mt-1.5 text-[11px] text-txt-mut">
-          {/* RETOURS-11 F11 — sans changement, un TEXTE honnête (« même propriétaire 2019 → 2025 »),
-              plus le bouton trompeur « voir les anciens propriétaires » (il n'y en a aucun). */}
-          Même propriétaire moral {premier.millesime} → {dernier.millesime} (aucun changement constaté).
-        </div>
+      <GroupLabel right={<InfoI tip={tip} aria="Sur l'historique du propriétaire" />}>Historique du propriétaire</GroupLabel>
+      <Frise segments={friseSegments} />
+      {aDesAnciensProprietaires(h) > 0 && (
+        <Repli compteur={h.n_millesimes} label={`anciens propriétaires (${premier.millesime}–${dernier.millesime})`}>
+          <Lignes>
+            {h.millesimes.map((m) => (
+              <Ligne key={m.millesime} label={<span className="font-mono text-txt-dim">{m.millesime}</span>}
+                valeur={<>{m.denomination ?? 'PM non identifiable'}{m.siren ? <> · <Siren value={m.siren} className="font-mono text-[10px] text-txt-off" /></> : null}</>} />
+            ))}
+          </Lignes>
+        </Repli>
       )}
-
-      {/* R6 — un VRAI bouton (l'ex-lien gris 10,5 px souligné pointillé passait inaperçu — cause
-          n° 2 de l'invisibilité). RETOURS-11 F11 : le bouton n'apparaît QUE s'il y a une transition
-          listée — sinon il laissait croire à d'anciens propriétaires inexistants. */}
-      {h.changements.length > 0 && (
-        <button type="button" data-histo-toggle onClick={() => setOuvert((o) => !o)}
-          className="mt-2 w-full rounded-md border border-line-2 bg-mint/[0.05] px-2.5 py-1.5 text-left text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/15">
-          {ouvert
-            ? 'Masquer les anciens propriétaires'
-            : `Voir les anciens propriétaires — ${h.n_millesimes} millésimes (${premier.millesime}–${dernier.millesime})`}
-        </button>
-      )}
-      {ouvert && h.changements.length > 0 && (
-        <div className="mt-1.5 flex flex-col gap-0.5 border-t border-bd/60 pt-1.5">
-          {h.millesimes.map((m) => (
-            <div key={m.millesime} className="flex items-baseline gap-2 text-[10.5px] leading-snug">
-              <span className="w-8 shrink-0 font-mono text-txt-dim">{m.millesime}</span>
-              <span className="text-txt">{m.denomination ?? '—'}</span>
-              {m.siren && <span className="font-mono text-[9.5px] text-txt-dim">· <Siren value={m.siren} className="font-mono text-txt-dim" /></span>}
-            </div>
-          ))}
-        </div>
-      )}
-
-      <FactNote>{h.note}</FactNote>
     </div>
   )
 }
