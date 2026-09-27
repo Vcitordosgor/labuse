@@ -33,7 +33,9 @@ import { IC, FicheAccordionCtx, RefDrawer, GroupLabel, MicroJauge, MicroPastille
 // sections encore mono-nature (Risques, Réseaux, Marché, Quartier) restent des composants réutilisés.
 // Fiche ré-exporte Calculette + FaisabiliteTab (consommés par CalculetteFonciere / M22Programme).
 import { TransformationBlock, FaisabiliteTab, BilanTab, TaxeAmenagementBlock, FiscalLeviersBlock, RtaaFromBilan, DispositifsBody, ModeBBody } from './constructibilite'
-import { BatiBlock, TerrainDuBienBlock, FiliationBlock } from './leBien'
+import { BatiBlock, FiliationBlock } from './leBien'
+// KELFONCIER-FIX-2 (Partie B) — les formes de la maquette v3 (Verdict · Tuiles · BarreEmpilée…).
+import { Verdict, Tuiles, type Tuile, BarreEmpilee, type Part, Ligne } from './formes'
 import { RisquesSection } from './risques'
 import { MarcheSection, DerniereVenteBlock } from './marche'
 import { ReseauxSection, EquipementsBadges } from './reseaux'
@@ -1417,22 +1419,58 @@ export function Fiche({ idu }: { idu: string }) {
               context={[penteSous ? `pente ${penteSous}` : null, expoOrient && expoOrient !== 'plat' ? String(expoOrient) : null].filter(Boolean).join(' · ') || undefined}
               value={penteDeg != null ? `${nf(penteDeg)} °` : (expoOrient && expoOrient !== 'plat' ? String(expoOrient) : undefined)}>
               <div className="flex flex-col gap-3">
-                <ChiffreDissous l="Pente" t={tuilePente} />
-                <ChiffreDissous l="Exposition" t={tuileExpo} />
+                {/* KELFONCIER-FIX-2 (Lot F) — maquette v3 : Verdict + Tuiles (pente·expo·surface
+                    libre·sol artificialisé) + BarreEmpilée CoSIA. Toutes les valeurs sont servies
+                    (aucun recalcul) ; le verdict réagence des faits déjà servis. */}
+                {(() => {
+                  const lb = f.le_bien
+                  const cos = lb?.cosia_couverture
+                  const artif = lb?.ocsge?.part_artif_pct
+                  const vRep = expoOrient === 'plat' ? 'Terrain plat'
+                    : expoOrient ? `Versant ${expoOrient}`
+                    : (penteSous ? `Terrain ${penteSous}` : 'Terrain')
+                  const vCtx = [
+                    penteDeg != null ? `${nf(penteDeg)} °` : null,
+                    lb?.surface_libre_m2 != null ? `${fmtInt(lb.surface_libre_m2)} m² au sol libre` : null,
+                    artif != null ? `${artif.toLocaleString('fr-FR')} % artificialisé (OCS GE)` : null,
+                  ].filter(Boolean).join(' · ')
+                  const tuiles: Tuile[] = [
+                    { label: 'Pente', valeur: <>{tuilePente.v}{tuilePente.s ? <small> {tuilePente.s}</small> : null}</>, ton: tuilePente.vide ? 'gris' : undefined },
+                    { label: 'Exposition', valeur: tuileExpo.v, sous: tuileExpo.s, ton: tuileExpo.vide ? 'gris' : undefined },
+                  ]
+                  if (lb?.surface_libre_m2 != null) tuiles.push({ label: 'Surface au sol libre', valeur: <>{fmtInt(lb.surface_libre_m2)} <small>m²</small></> })
+                  if (artif != null) tuiles.push({ label: 'Sol artificialisé', valeur: <>{artif.toLocaleString('fr-FR')} <small>%</small></>, sous: `OCS GE ${lb!.ocsge!.millesime}` })
+                  const parts = ([
+                    cos?.part_impermeabilisee_pct != null ? { pct: cos.part_impermeabilisee_pct, color: '#6b7280', label: `Imperméabilisé ${cos.part_impermeabilisee_pct.toLocaleString('fr-FR')} %` } : null,
+                    cos?.part_vegetalisee_boisee_pct != null ? { pct: cos.part_vegetalisee_boisee_pct, color: 'var(--mint)', label: `Végétalisé ${cos.part_vegetalisee_boisee_pct.toLocaleString('fr-FR')} %` } : null,
+                    cos?.part_sol_nu_pct != null ? { pct: cos.part_sol_nu_pct, color: 'var(--line-2)', label: `Sol nu ${cos.part_sol_nu_pct.toLocaleString('fr-FR')} %` } : null,
+                  ].filter(Boolean) as Part[])
+                  return (
+                    <>
+                      <Verdict ton="vert" reponse={vRep} contexte={vCtx || undefined} />
+                      <Tuiles items={tuiles} />
+                      {parts.length > 0 && (
+                        <div data-le-bien-terrain>
+                          <GroupLabel>Couverture du sol · CoSIA 20 cm</GroupLabel>
+                          <BarreEmpilee parts={parts} />
+                        </div>
+                      )}
+                    </>
+                  )
+                })()}
                 {/* FICHE-RANGEMENT-3 Lot 5 — AZIMUT du versant (aspect_deg, MNT RGE ALTI) : le cap
                     précis derrière l'orientation lisible (0° = Nord, sens horaire). */}
                 {expoData?.aspect_deg != null && (
                   <div data-terrain-azimut>
-                    <FactRow label="Azimut du versant"
-                      value={<>{nf(expoData.aspect_deg)} <small>° (0 = Nord, sens horaire)</small></>}
-                      src="RGE ALTI (IGN) — MNT" />
+                    <Ligne label="Azimut du versant"
+                      valeur={<>{nf(expoData.aspect_deg)} <small>° (0 = Nord, sens horaire)</small></>} />
                   </div>
                 )}
-                <TerrainDuBienBlock f={f} />
                 <EquipementsBadges idu={idu} />
                 {/* RETOURS-13 P6 — coupe altimétrique (repliable) le long du plus grand axe, ou d'une
                     ligne dessinée. Lue LIVE dans le RGE ALTI (le même relief que la pente ci-dessus). */}
                 <ProfilAltimetrique idu={idu} />
+                <FactNote>OCS GE (IGN, donnée d’îlot, décret 2023-1096) · CoSIA (IGN, détection IA, mesure de la parcelle) · pente et exposition RGE ALTI (IGN).</FactNote>
               </div>
             </RefDrawer>
 
