@@ -17,7 +17,7 @@ import type { Fiche } from '../../lib/types'
 import { BlocIndisponible } from './BlocIndisponible'
 import { ViabilisationBlock, assainissementResume } from './ViabilisationBlock'
 import { GestionnairesBlock } from './GestionnairesBlock'
-import { IC, RefDrawer, Line, GroupLabel } from './primitives'
+import { IC, RefDrawer, GroupLabel } from './primitives'
 import { Badge } from '../ui/Badge'
 // KELFONCIER-FIX-2 (Lot H) — maquette v3 : Verdict + CasesEtat (glance eau·élec / fibre / bus /
 // assainissement), le détail (accès, gestionnaires, viabilisation…) reste rendu en dessous.
@@ -115,11 +115,25 @@ export function ReseauxSection({ f }: { f: Fiche; idu: string }) {
           )}
         </Lignes>
 
-        {/* ① ACCÈS — le verdict d'accès (moteur `acces`) reste en primitive Line (fait scoré + source). */}
+        {/* FICHE-FIX-5 (Lot G) — ACCÈS (moteur `acces`) en Lignes : libellé avant « — », détail après,
+            source derrière le « i ». */}
         {(accesLignes.length > 0 || trans?.indisponible) && (
           <div data-bloc-acces>
             <GroupLabel>Accès</GroupLabel>
-            {accesLignes.length > 0 && <div className="flex flex-col gap-1">{accesLignes.map((l, i) => <Line key={i} line={l} hideWeight hideDate />)}</div>}
+            {accesLignes.length > 0 && (
+              <Lignes>
+                {accesLignes.map((l, i) => {
+                  const det = (l.detail || '') as string
+                  const dash = det.indexOf('—')
+                  const src = l.source ? String(l.source) : ''
+                  return (
+                    <Ligne key={i} title={det}
+                      label={<>{dash >= 0 ? det.slice(0, dash).trim() : 'Accès voirie'}{src ? <InfoI aria="Source de l'accès" tip={src} /> : null}</>}
+                      valeur={dash >= 0 ? det.slice(dash + 1).trim() : det} />
+                  )
+                })}
+              </Lignes>
+            )}
             {trans?.indisponible && <div className="mt-1"><BlocIndisponible titre="Proximités (transport)" /></div>}
           </div>
         )}
