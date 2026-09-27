@@ -10,6 +10,8 @@
 Les deux runs couvrent le **même jeu de 431 663 parcelles** (0 parcelle présente d'un seul côté). La vue servie `parcel_residuel` pointe bien sur `run_seq = 10` (vérifié sur `pg_get_viewdef`).
 
 > ⚠️ **Constat majeur, développé au §7 :** run 11 n'est *pas* seulement « run 10 + LiDAR + SUP ». Il embarque une **régression de couverture du moteur gabarit** : 73 609 parcelles perdent leur assiette gabarit et retombent sur l'assiette `residuel_legacy` (plus généreuse), dont des communes entières (Saint-André −93 %, La Plaine-des-Palmistes −100 %, Les Trois-Bassins −99 %, Saint-Denis −80 %). Cette régression, et non l'ajout LiDAR/SUP, explique ~43 % de la hausse de SDP et **inverse** le sens des deltas attendus par le mandat.
+>
+> 🔎 **CAUSE IDENTIFIÉE (§8, addendum 2026-09-27) :** bug de RETOUCHES-1 lot D.15 (`cc995f93`) — l'exclusion SUP est ajoutée au gabarit **sans enregistrer sa source au catalogue** (`sources.append(sup_src)` manquant). `validate_input` rejette alors l'entrée (`exclusion[sup] : source absente du catalogue`) → `compute_gabarit` = `incomplete` → repli legacy. **Toute parcelle intersectée par une SUP bascule.** Correctif = 1 ligne (non appliqué, lecture seule) puis relancer un run.
 
 ---
 
@@ -227,4 +229,58 @@ Les 24 communes gagnent des parcelles scorées (le LiDAR est îlien). Saint-Phil
 
 ---
 
-*Sources : `residuel_runs`, `parcel_residuel_runs` (run_seq 10 & 11), `score_labuse` (label `q_v15`), caches de scoring (`parcel_terrain`, `parcels.geom_2975`, `batiment_hauteur_lidar`, `parcel_au_statut`, `dryrun_cascade_results` label `q_v13_sources1`), barème `config/score_labuse.yaml`. Base `postgresql://openclaw@localhost:5432/labuse`, lecture seule. Dry-run bandes rejoué exactement en SQL et validé au bit près contre le run servi.*
+## 8. Cause de la chute de couverture gabarit (207 467 → 133 858)
+
+**Addendum du 2026-09-27 — enquête sur les 73 609 parcelles qui perdent l'assiette gabarit. Lecture seule (`SELECT` + rejeu du moteur en session read-only).**
+
+### 8.0 Verdict en une ligne
+
+**Bug introduit par RETOUCHES-1 lot D.15 (commit `cc995f93`).** En ajoutant l'exclusion SUP à `build_gabarit_input`, D.15 attache une source `sup_src` à l'exclusion **sans jamais l'ajouter au catalogue des sources** (`sources.append(sup_src)` manquant, alors que le PPR le fait). Du coup `validate_input` rejette l'entrée (`exclusion[sup] : source absente du catalogue`), `compute_gabarit` renvoie `status="incomplete"`, `_assiette_gabarit` renvoie `None`, et le résiduel bascule sur l'assiette `residuel_legacy`. **Toute parcelle intersectée par une SUP tombe donc en legacy.**
+
+### 8.1 Preuve empirique — rejeu du moteur sur 200 parcelles gabarit@run10 / legacy@run11
+
+Population totale du basculement : **73 447** parcelles `gabarit → residuel_legacy`. Échantillon stratifié de 200 (40 par commune : La Plaine-des-Palmistes, Les Trois-Bassins, Saint-André, Saint-Denis, Saint-Paul), rejoué avec le code de HEAD `cc419770` (= le commit du run 11, donc reproduction fidèle) :
+
+| Résultat de `_assiette_gabarit` | Parcelles |
+|---|---:|
+| `compute_gabarit status=incomplete` | **200 / 200 (100 %)** |
+| dont erreur `exclusion[sup] : source absente du catalogue` | 200 |
+| (1 parcelle ajoute aussi `exclusion[sup] : géométrie d'exclusion invalide` — sliver d'intersection) |  |
+
+`build_gabarit_input` **ne renvoie jamais `None` ni `blocking`** pour ces parcelles — l'entrée est construite, puis **rejetée à la validation**. Contrôle : 5 parcelles restées gabarit@run11 (sans SUP) → `status=ok`, 0 erreur.
+
+Exemple (`97415000BC0343`, Saint-Paul) :
+- catalogue des sources = { Cadastre, PLU — Saint-Paul, PPR — zonage réglementaire, BD TOPO® voirie } — **pas de source SUP** ;
+- `exclusions = [ppr_rouge (source: PPR — dans le catalogue), sup (source: « SUP — servitudes d'utilité publique » — ABSENTE du catalogue)]` ;
+- → `validate_input` → `['exclusion[sup] : source absente du catalogue']` → `incomplete`.
+
+### 8.2 Le bug au niveau du code
+
+`src/labuse/gabarit/builder.py` :
+- **PPR (ligne 342)** : `sources.append(ppr_src)` → la source PPR entre au catalogue.
+- **SUP (D.15, lignes 373-389)** : `sup_src` créée, attachée à l'`Exclusion` (l. 384) **et** à l'`ApplicableRule` (l. 389), mais **aucun `sources.append(sup_src)`**.
+
+`src/labuse/gabarit/validate.py:151` — pour chaque exclusion : `_check_value_source(ex.source, "exclusion[…]")`, qui exige `src.document ∈ catalogue`. La source SUP n'y étant pas → erreur → `compute_gabarit` (`engine.py:71-74`) renvoie `incomplete`.
+
+**Correctif (1 ligne, non appliqué — mandat lecture seule) :** ajouter `sources.append(sup_src)` dans le bloc SUP (juste après la création de `sup_src`, l. 373), en miroir exact du PPR. Puis relancer un run résiduel île. Les tests `test_builder` de D.15 ne l'ont pas attrapé car `FakeSession` renvoie « SUP absente » → aucune exclusion SUP créée → le chemin cassé (exclusion présente + source hors catalogue) n'est jamais exercé.
+
+### 8.3 Pourquoi la concentration par commune (La Plaine −100 %, Trois-Bassins −99 %)
+
+Le basculement frappe **exactement les parcelles intersectées par une SUP** (`kind='sup'`). Or la SUP dominante est le sous-type **`el10`** : **une seule géométrie ≈ 1 055 km²** (une copie par commune) — une emprise d'échelle « Hauts / domaine forestier ». Elle recouvre **quasi intégralement** les communes d'altitude (La Plaine-des-Palmistes, Les Trois-Bassins, Saint-André en grande partie) → ~100 % de bascule ; elle ne mord que **partiellement** sur les parcelles urbaines littorales (Saint-Paul 27 %, Saint-Pierre, Le Tampon). Le gradient de bascule par commune (§7) suit donc l'emprise géographique du SUP `el10`, pas autre chose.
+
+### 8.4 Les trois pistes du mandat, tranchées
+
+| # | Piste | Verdict |
+|---|---|---|
+| **1** | Délai max / exception avalée → legacy | **Écartée comme mécanisme de bascule.** Une exception dans `compute_residuel_batch` est **comptée et n'écrit RIEN** (parcelle absente), elle ne produit pas de legacy ; et le moteur batch n'a **aucun `statement_timeout`** (`db.py:74-92`, plafond réservé à l'API). La bascule est un échec **propre** de `validate_input`. ⚠️ *Confirmée en revanche comme cause du ralentissement ×7,5 (32 689 s vs 4 370 s)* : la requête spatiale SUP par parcelle (`ST_Union`/`ST_MakeValid`/`ST_ClipByBox2D` contre l'énorme géométrie `el10`) s'exécute pour **chaque** parcelle. |
+| — | Concentration temporelle (ordre de traitement) ? | **Non — spatiale.** La part de legacy par heure de traitement fluctue (39→69→88→72→36→31→30 %) **sans dérive croissante** : elle suit la commune traitée dans la fenêtre (ordre géographique), pas le temps écoulé. Aucune signature de dégradation/timeout. |
+| **2** | Le SUP vide/échoue la zone quand la couche est **absente ou invalide** | **Écartée telle quelle.** Les 417 géométries SUP sont **toutes valides** (0 invalide) et **présentes** ; l'échec survient précisément quand le SUP **est présent et valide**, par non-enregistrement de sa source au catalogue — pas par zone vidée ni par couche absente. (Le 1/200 « géométrie d'exclusion invalide » est un sliver d'intersection marginal, pas la cause de masse.) |
+| **3** | Une dépendance du gabarit modifiée par D.15 | **Confirmée — c'est la cause.** D.15 est l'unique changement du chemin gabarit ; le bug est le `sources.append(sup_src)` manquant. La bascule ZONES-FAMILLE-1 (`labuse_zone_famille(subtype)`, aussi dans le diff des deux commits) a été **écartée** : les familles se résolvent correctement dans les communes vidées (U→U, AUc→AU, A→A, N→N vérifiés) ; ce n'est pas elle. |
+
+### 8.5 Conséquence pour la servabilité (rappel §7)
+
+La régression est **entièrement imputable au bug D.15**, pas à l'intention « SUP déduit ». Le correctif d'une ligne rétablit la couverture gabarit ; il faudra ensuite **relancer un run** (le run 11 restant non servable en l'état). Bénéfice collatéral du correctif : la requête SUP par parcelle pourra aussi être optimisée (elle est responsable du ×7,5 de durée).
+
+---
+
+*Sources : `residuel_runs`, `parcel_residuel_runs` (run_seq 10 & 11), `score_labuse` (label `q_v15`), caches de scoring (`parcel_terrain`, `parcels.geom_2975`, `batiment_hauteur_lidar`, `parcel_au_statut`, `dryrun_cascade_results` label `q_v13_sources1`), barème `config/score_labuse.yaml`, `spatial_layers` (kind='sup'). Base `postgresql://openclaw@localhost:5432/labuse`, lecture seule. Dry-run bandes rejoué exactement en SQL et validé au bit près contre le run servi. §8 : moteur gabarit (`build_gabarit_input`+`compute_gabarit`) rejoué en session read-only sur 200 parcelles ; commits comparés `babcc084` (run 10) vs `cc419770` (run 11).*
