@@ -55,6 +55,7 @@ import { Bouton } from '../ui/Bouton'
 import { Case } from '../ui/Case'
 import { Retour } from '../ui/Retour'
 import { Chevron } from '../ui/Chevron'
+import { Chip } from '../ui/Chip'
 
 /* ───────── primitives partagées (doctrine module : violet, bandeau honnête, liste→fiche) ───────── */
 
@@ -1177,30 +1178,22 @@ export function M08() {
       ) : (
       <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
         <p className="label-caps text-[9.5px]">L'année à revoir (avant)</p>
-        {/* FRISE des millésimes — l'« avant » se choisit le long d'une frise chronologique ; l'« après »
-            est épinglé à droite sur aujourd'hui (verrouillé). Seuls les millésimes servant réellement
-            des dalles sur le 974 y figurent (TEMPS_MILLESIMES, vérifiés par GetTile). */}
-        <div data-temps-frise className="mt-2">
-          <div className="flex items-end gap-0.5">
-            {TEMPS_MILLESIMES.map((m) => {
-              const on = cmpLeft === m.key
-              return (
-                <button key={m.key} data-cmp-left={m.key} onClick={() => setCmpLeft(m.key)}
-                  aria-pressed={on}
-                  className="group flex flex-1 flex-col items-center gap-1 pt-0.5">
-                  <span className={`font-mono text-[10px] leading-none ${on ? 'text-mint' : 'text-txt-dim group-hover:text-txt'}`}>{m.an}</span>
-                  <span className={`h-2.5 w-2.5 rounded-full border ${on ? 'border-mint bg-mint' : 'border-line-2 bg-transparent group-hover:border-txt-mut'}`} />
-                </button>
-              )
-            })}
-            {/* borne « après » = aujourd'hui, verrouillée */}
-            <div className="flex flex-1 flex-col items-center gap-1 pt-0.5">
-              <span className="font-mono text-[10px] leading-none text-txt-dim">Auj.</span>
-              <span className="h-2.5 w-2.5 rounded-full border border-dashed border-txt-dim bg-transparent" />
-            </div>
-          </div>
-          {/* rail de la frise */}
-          <div className="mt-1 h-px bg-line-2" />
+        {/* RETOURS-15 C2 (P16) — une rangée de Chip par millésime (lisible, sans troncature : flex-wrap),
+            le millésime actif en vert plein (Chip on). « Aujourd'hui » est la borne « après » verrouillée. */}
+        <div data-temps-frise className="mt-2 flex flex-wrap gap-1.5">
+          {TEMPS_MILLESIMES.map((m) => {
+            // libellé COURT : « 1950 », « 1980 », « 2000 »… ; les cartes anciennes (SCAN 50 / EduGéo)
+            // gardent leur année + « (carte) » pour ne pas se confondre avec l'ortho de la même décennie.
+            const carte = m.an.startsWith('scan') || m.an.startsWith('edugeo')
+            const court = m.an.replace('scan', '').replace('edugeo', '')
+            return (
+              <Chip key={m.key} data-cmp-left={m.key} on={cmpLeft === m.key} ton="vert"
+                aria-label={m.label} onClick={() => setCmpLeft(m.key)}>
+                {court}{carte ? ' (carte)' : ''}
+              </Chip>
+            )
+          })}
+          <Chip data-cmp-aujourdhui on disabled ton="vert" aria-label="Aujourd'hui (verrouillé)">Aujourd'hui</Chip>
         </div>
         <p className="mt-2 text-[11px] text-txt">
           <span className="text-mint">{TEMPS_MILLESIMES.find((m) => m.key === cmpLeft)?.label ?? '—'}</span>

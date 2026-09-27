@@ -52,7 +52,8 @@ describe('TEMPS — la frise (M08) + l\'épingle de la parcelle', () => {
     const boutons = document.querySelectorAll('[data-cmp-left]')
     expect(boutons.length).toBe(TEMPS_MILLESIMES.length)
     for (const an of ['1950', '2006', '2011', '2016', '2021']) expect(screen.getByText(an)).toBeTruthy()
-    expect(screen.getByText('Auj.')).toBeTruthy()   // l'« après » verrouillé, borne de droite
+    // RETOURS-15 C2 — millésimes en Chip ; l'« après » verrouillé = chip « Aujourd'hui » (borne de droite).
+    expect(document.querySelector('[data-cmp-aujourdhui]')?.textContent).toContain('Aujourd\'hui')
     // l'épingle est posée dans le store (consommée par TimeMachine sur les deux fonds)
     expect(useApp.getState().tempsPinIdu).toBe('97415000CW0658')
     // choisir un millésime récent met à jour le fond « avant »
