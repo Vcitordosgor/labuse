@@ -287,20 +287,12 @@ export function NumField({ field, ph, suffix }: { field: keyof Filters; ph: stri
 // logique déplacée (le filtre reste sdpMin/capaciteMin, saisie directe ci-dessous).
 export function CapaciteSection() {
   const { filters, setFilter } = useFiltre()
+  // KELFONCIER-FIX-2 (Lot C) — FAÇADE ALLÉGÉE : la Capacité ne garde que « Logements possibles ≥ N »
+  // et « Activité (destination) ». « SDP restante min/max » et « Déjà bâti » descendent dans la
+  // section repliée « Affiner la recherche » (AffinerRecherche). Aucun prédicat ne bouge : les champs
+  // lisent/écrivent les MÊMES clés (`sdpMin`/`sdpMax`/`renouvellement`), seul l'emplacement change.
   return (
     <div data-capacite-filtre className="gcard mt-2 flex flex-col gap-3 p-3">
-      <div>
-        <p className="label-caps text-txt-dim">SDP restante</p>
-        {/* SDP RÉSIDUELLE du run servi (parcel_residuel) — la même que la fiche. */}
-        <div className="mt-1 flex items-center gap-1.5"><NumField field="sdpMin" ph="min" /><span className="text-txt-dim">–</span><NumField field="sdpMax" ph="max" suffix="m²" /></div>
-        {/* DENSIFIER-PLI (Lot B) — l'outil « Densifier l'existant » est plié ici : « Déjà bâti » (bâti
-            existant BD TOPO) + « SDP restante ≥ X » = les parcelles occupées qui peuvent porter davantage.
-            Clé interne legacy `renouvellement` (hash rnv), conservée pour les vues enregistrées. */}
-        <Case data-filtre-deja-bati className="mt-2"
-          checked={filters.renouvellement}
-          onChange={(e) => setFilter('renouvellement', e.target.checked as never)}
-          label="Déjà bâti (extension · surélévation)" />
-      </div>
       <div>
         <p className="label-caps text-txt-dim">Logements possibles</p>
         <div className="mt-1 flex items-center gap-1.5">
@@ -322,19 +314,62 @@ export function CapaciteSection() {
 // — qui quittent la section « 2 · Le terrain » — et les Signaux de vie — qui quittaient la section « 4 ».
 // Chevron de la charte (ui/Chevron), titre au style des autres sections (label-caps text-txt-mut).
 function AffinerRecherche() {
-  const { filters } = useFiltre()
+  const { filters, setFilter } = useFiltre()
   const [ouvert, setOuvert] = useState(false)
   const nSig = filters.signaux.filter((s) => SIGNAUX_KEYS.includes(s)).length
+  // KELFONCIER-FIX-2 (Lot C) — la section repliée accueille désormais les filtres bâti/capacité
+  // descendus de la façade (copro, hauteur, emprise, SDP, déjà bâti). Le compteur du repli les
+  // recense (sinon, section fermée, un filtre actif serait invisible) — ce n'est PAS le badge
+  // « Filtres (N) » global (inchangé), juste l'indicateur local de cette section.
+  const nAffiner = nSig + (filters.horsCopro ? 1 : 0) + (filters.renouvellement ? 1 : 0)
+    + (filters.hauteurMin != null || filters.hauteurMax != null ? 1 : 0)
+    + (filters.empriseMin != null || filters.empriseMax != null ? 1 : 0)
+    + (filters.sdpMin != null || filters.sdpMax != null ? 1 : 0)
   return (
     <div data-affiner className="mt-4">
       <button data-affiner-toggle aria-expanded={ouvert} onClick={() => setOuvert((v) => !v)}
         className="group flex w-full items-center gap-1.5 text-left transition-colors duration-quick">
         <Chevron open={ouvert} />
         <span className="label-caps text-txt-mut group-hover:text-txt-hi">Affiner la recherche</span>
-        {nSig > 0 && <span className="ml-auto shrink-0 text-[10.5px] text-txt-dim">{`${nSig} signal${nSig > 1 ? 'x' : ''}`}</span>}
+        {nAffiner > 0 && <span className="ml-auto shrink-0 rounded-full bg-mint/20 px-1.5 py-0.5 text-[10px] font-medium text-mint tabular-nums">{nAffiner}</span>}
       </button>
       {ouvert && (
         <div className="gcard mt-2 flex flex-col gap-3 p-3">
+          {/* KELFONCIER-FIX-2 (Lot C) — filtres descendus de la façade (prédicats inchangés). */}
+          {/* KELFONCIER-FIX-1 (Lot E) — case « Sans copropriété » : écarte les parcelles en copropriété
+              (RNIC/DVF, s2.copro). Backend `hors_copro` (hash hc), compteur/veille/Mes vues/badge câblés. */}
+          <div>
+            <p className="label-caps text-txt-dim">Copropriété</p>
+            <Case data-filtre-hors-copro className="mt-1"
+              checked={filters.horsCopro}
+              onChange={(e) => setFilter('horsCopro', e.target.checked)}
+              label="Sans copropriété" />
+            <p className="mt-1 text-[10px] leading-snug text-txt-dim">Écarte les parcelles en copropriété (immatriculation RNIC ou copro DVF).</p>
+          </div>
+          {/* KELFONCIER-FIX-1 (Lot D) — FILTRES BÂTI : la MÊME donnée que la fiche §3 Bâti. Hauteur LiDAR
+              faîtage (batiment_hauteur_lidar, id registre le_bien.hauteur_bati_m) et emprise bâtie en %
+              (taux_emprise_pct du run servi, la colonne d'« État du sol »). Compteur SQL, ET avec le reste. */}
+          <div>
+            <p className="label-caps text-txt-dim">Hauteur du bâti (LiDAR)</p>
+            <div className="mt-1 flex items-center gap-1.5"><NumField field="hauteurMin" ph="min" /><span className="text-txt-dim">–</span><NumField field="hauteurMax" ph="max" suffix="m" /></div>
+            <p className="mt-1 text-[10px] leading-snug text-txt-dim">Faîtage mesuré au LiDAR HD (la hauteur de la fiche §Bâti) ; les parcelles au bâti non mesuré n’entrent pas dans une fourchette.</p>
+          </div>
+          <div>
+            <p className="label-caps text-txt-dim">Emprise bâtie</p>
+            <div className="mt-1 flex items-center gap-1.5"><NumField field="empriseMin" ph="min" /><span className="text-txt-dim">–</span><NumField field="empriseMax" ph="max" suffix="%" /></div>
+            <p className="mt-1 text-[10px] leading-snug text-txt-dim">Part de la parcelle déjà couverte par du bâti (run servi) — la même que « État du sol ».</p>
+          </div>
+          {/* KELFONCIER-FIX-2 (Lot C) — « SDP restante » et « Déjà bâti » descendus de la Capacité.
+              DENSIFIER-PLI (PISCINES-2 Lot B) — « Déjà bâti » + « SDP restante ≥ X » = les parcelles
+              occupées qui peuvent porter davantage (clé interne legacy `renouvellement`, hash rnv). */}
+          <div>
+            <p className="label-caps text-txt-dim">SDP restante</p>
+            <div className="mt-1 flex items-center gap-1.5"><NumField field="sdpMin" ph="min" /><span className="text-txt-dim">–</span><NumField field="sdpMax" ph="max" suffix="m²" /></div>
+            <Case data-filtre-deja-bati className="mt-2"
+              checked={filters.renouvellement}
+              onChange={(e) => setFilter('renouvellement', e.target.checked as never)}
+              label="Déjà bâti (extension · surélévation)" />
+          </div>
           {/* COUCHES-2 point 4 — filtre par STATUT ZFANG / FRR de la commune. SOURCE UNIQUE
               (territoire_fiscal) : le même statut peint la carte et s'affiche sur la fiche commune. */}
           <div>
@@ -784,32 +819,10 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
               emprise inconnue en base). La clause SQL ne bouge pas (partition complète et défendable). */}
           <p className="mt-1 text-[10px] leading-snug text-txt-dim">« Terrain nu » = aucune emprise bâtie ≥ 5 % détectée (bâti non mesuré compris) ; la fiabilité est précisée en fiche.</p>
         </div>
-        {/* KELFONCIER-FIX-1 (Lot E) — case « Sans copropriété » : ré-exposée dans le groupe terrain.
-            Écarte les parcelles en copropriété (RNIC/DVF, s2.copro). Backend `hors_copro` (hash hc),
-            compteur/veille/Mes vues/badge déjà câblés — même prédicat que la fiche §propriété. */}
-        <div>
-          <p className="label-caps text-txt-dim">Copropriété</p>
-          <Case data-filtre-hors-copro className="mt-1"
-            checked={filters.horsCopro}
-            onChange={(e) => setFilter('horsCopro', e.target.checked)}
-            label="Sans copropriété" />
-          <p className="mt-1 text-[10px] leading-snug text-txt-dim">Écarte les parcelles en copropriété (immatriculation RNIC ou copro DVF).</p>
-        </div>
-        {/* KELFONCIER-FIX-1 (Lot D) — FILTRES BÂTI : la MÊME donnée que la fiche §3 Bâti. Hauteur LiDAR
-            faîtage (batiment_hauteur_lidar, id registre le_bien.hauteur_bati_m) et emprise bâtie en %
-            (taux_emprise_pct du run servi, la colonne d'« État du sol »). Compteur SQL, ET avec le reste. */}
-        <div>
-          <p className="label-caps text-txt-dim">Hauteur du bâti (LiDAR)</p>
-          <div className="mt-1 flex items-center gap-1.5"><NumField field="hauteurMin" ph="min" /><span className="text-txt-dim">–</span><NumField field="hauteurMax" ph="max" suffix="m" /></div>
-          <p className="mt-1 text-[10px] leading-snug text-txt-dim">Faîtage mesuré au LiDAR HD (la hauteur de la fiche §Bâti) ; les parcelles au bâti non mesuré n’entrent pas dans une fourchette.</p>
-        </div>
-        <div>
-          <p className="label-caps text-txt-dim">Emprise bâtie</p>
-          <div className="mt-1 flex items-center gap-1.5"><NumField field="empriseMin" ph="min" /><span className="text-txt-dim">–</span><NumField field="empriseMax" ph="max" suffix="%" /></div>
-          <p className="mt-1 text-[10px] leading-snug text-txt-dim">Part de la parcelle déjà couverte par du bâti (run servi) — la même que « État du sol ».</p>
-        </div>
-        {/* RETOURS-14 P5 — ZFANG (zone franche) et FRR (ruralités) ont quitté « Le terrain » : ils vivent
-            désormais dans la section repliée « Affiner la recherche » (bas du panneau). */}
+        {/* KELFONCIER-FIX-2 (Lot C) — « Sans copropriété », « Hauteur du bâti (LiDAR) » et « Emprise bâtie »
+            (ex-KELFONCIER-FIX-1 Lot D/E) descendent dans « Affiner la recherche » (façade allégée). Les
+            prédicats (horsCopro, hauteurMin/Max, empriseMin/Max) sont inchangés — seul l'emplacement bouge.
+            RETOURS-14 P5 — ZFANG/FRR ont aussi quitté « Le terrain » vers « Affiner la recherche ». */}
       </div>
       {/* M55-D stage 7 (décision Vic) : « Contraintes de secteur » a QUITTÉ le panneau Filtres —
           les flags restent visibles en fiche et en couches. Les clés URL legacy (fl=) sont
