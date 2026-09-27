@@ -11,9 +11,16 @@
  */
 import type { Fiche } from '../../lib/types'
 import { useApp } from '../../store/useApp'
-import { IC, RefDrawer, MicroSegments, Line, PorteOutil, GroupLabel, Rappel } from './primitives'
+import { IC, RefDrawer, MicroSegments, Line, PorteOutil, GroupLabel, Rappel, FactNote } from './primitives'
 import { Badge } from '../ui/Badge'
 import { Trace } from '../../lib/trace'
+// KELFONCIER-FIX-2 (Lot H) — maquette v3 : Verdict en tête + aléas en Jauge3 (3 crans + % servi).
+import { Verdict, Jauge3 } from './formes'
+
+// niveau d'aléa (catégoriel servi) → cran 0..3 de la Jauge3 (présentation, aucun seuil inventé).
+const ALEA_CRAN: Record<string, 1 | 2 | 3> = { faible: 1, modéré: 2, modere: 2, moyen: 2, fort: 3, élevé: 3, eleve: 3 }
+const aleaCran = (niveau: string | null | undefined, redhibitoire: boolean): 0 | 1 | 2 | 3 =>
+  redhibitoire ? 3 : (niveau ? (ALEA_CRAN[niveau.toLowerCase()] ?? 1) : 0)
 
 export function RisquesSection({ f }: { f: Fiche; idu: string }) {
   const setModule = useApp((s) => s.setModule)
@@ -37,34 +44,35 @@ export function RisquesSection({ f }: { f: Fiche; idu: string }) {
         : <Badge ton="ambre">{vigilances.length} vigilance{vigilances.length > 1 ? 's' : ''}</Badge>}
       micro={<MicroSegments n={evaluees} label={`${evaluees} couches`} />}>
       <div className="flex flex-col gap-3">
-        {/* FICHE-1 lot 3 — ALÉAS EN DÉTAIL : nature · niveau · part de la parcelle · référence PPR.
-            Compte n_vigilances au-dessus (dans le value du tiroir). Dérivé de la cascade servie. */}
+        {/* KELFONCIER-FIX-2 (Lot H) — maquette v3 : Verdict en tête, réagence des faits déjà servis
+            (nombre de vigilances + nature des aléas), aucun niveau recalculé. */}
+        <Verdict ton={vigilances.length === 0 ? 'vert' : 'ambre'}
+          reponse={vigilances.length === 0 ? 'Rien à signaler'
+            : `${vigilances.length} vigilance${vigilances.length > 1 ? 's' : ''}`}
+          contexte={aleas.length > 0
+            ? aleas.map((a) => a.nature.replace(/^Aléa /, '').replace(/_/g, ' ')).join(', ')
+            : `${evaluees} couche${evaluees > 1 ? 's' : ''} évaluée${evaluees > 1 ? 's' : ''}`} />
+        {/* FICHE-1 lot 3 — ALÉAS : nature · niveau (Jauge3, 3 crans) · part de la parcelle · réf PPR.
+            Les aléas sans niveau (PPR — zone bleue) portent une pastille au lieu des crans. Références
+            PPR + sources consolidées en note (aucune donnée perdue). Compte n_vigilances au-dessus. */}
         {aleas.length > 0 && (
           <div data-aleas-detail>
             <GroupLabel>Aléas ({aleas.length})</GroupLabel>
-            <div className="flex flex-col gap-1.5">
-              {aleas.map((a, i) => (
-                <div key={i} className="flex items-start gap-2">
-                  <span aria-hidden className={`mt-2 shrink-0 ${a.redhibitoire ? 'text-st-ecartee' : 'text-st-creuser'}`}>▲</span>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-[13px]">
-                      <span className="font-semibold">{a.nature}</span>
-                      {a.niveau && <span className="text-txt-mut"> — niveau {a.niveau}</span>}
-                      {a.part_pct != null && <span className="text-txt-mut"> · {a.part_pct} % de la parcelle</span>}
-                      {a.redhibitoire && <Badge ton="ambre" className="ml-1.5">rédhibitoire</Badge>}
-                    </div>
-                    {a.ppr && a.ppr.length > 0 && (
-                      <div className="text-[11.5px] text-txt-mut">
-                        {a.ppr.map((p) => `${p.document}${p.approbation ? ` approuvé le ${p.approbation}` : ''}`).join(' · ')}
-                      </div>
-                    )}
-                    <div className="text-[11.5px] text-txt-dim">
-                      {a.source}{a.millesime ? ` · ${a.millesime}` : ''}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+            {aleas.map((a, i) => a.niveau != null || a.redhibitoire ? (
+              <Jauge3 key={i} niveau={aleaCran(a.niveau, a.redhibitoire)}
+                label={<>{a.nature}{a.niveau ? <small className="ml-1 text-txt-mut"> niveau {a.niveau}</small> : null}{a.redhibitoire && <Badge ton="ambre" className="ml-1.5">rédhibitoire</Badge>}</>}
+                pct={a.part_pct != null ? `${a.part_pct} %` : undefined} />
+            ) : (
+              <div key={i} className="flex items-center justify-between border-b border-line py-[5px] text-[12.5px]">
+                <span>{a.nature}</span>
+                <span className="flex items-center gap-2"><Badge ton="ambre">zone bleue</Badge><span className="font-mono text-[11px] text-txt-dim">{a.part_pct != null ? `${a.part_pct} %` : ''}</span></span>
+              </div>
+            ))}
+            <FactNote>
+              {[...new Set(aleas.flatMap((a) => (a.ppr ?? []).map((p) => `${p.document}${p.approbation ? ` (approuvé le ${p.approbation})` : ''}`)))].join(' · ')}
+              {aleas.some((a) => a.ppr && a.ppr.length) ? ' — ' : ''}
+              {[...new Set(aleas.map((a) => `${a.source}${a.millesime ? ` · ${a.millesime}` : ''}`))].join(' · ')}
+            </FactNote>
           </div>
         )}
         {/* SOURCES-1 lot 3 — SOLS (SIS / CASIAS) : live, mêmes règles que la cascade sol_pollue.

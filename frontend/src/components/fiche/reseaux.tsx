@@ -20,6 +20,9 @@ import { ViabilisationBlock, assainissementResume } from './ViabilisationBlock'
 import { GestionnairesBlock } from './GestionnairesBlock'
 import { IC, RefDrawer, Line, GroupLabel, FactRow, FactNote } from './primitives'
 import { Badge } from '../ui/Badge'
+// KELFONCIER-FIX-2 (Lot H) — maquette v3 : Verdict + CasesEtat (glance eau·élec / fibre / bus /
+// assainissement), le détail (accès, gestionnaires, viabilisation…) reste rendu en dessous.
+import { Verdict, CasesEtat, type CaseEtat } from './formes'
 
 // RETOURS-23 — les caractéristiques du terrain (piscine / pente) vivent SOUS un kicker « Terrain »
 // comme les autres faits : valeur chiffrée à droite en mono, source sous la ligne (pente en ambre
@@ -66,10 +69,23 @@ export function ReseauxSection({ f }: { f: Fiche; idu: string }) {
   // ① ACCÈS — le VERDICT vient du moteur `acces` (source unique). Plus de phrase codée en dur.
   const accesLignes = f.lines.filter((l) => l.layer === 'acces')
   const trans = f.proximites
+  // KELFONCIER-FIX-2 (Lot H) — glance CasesEtat, dérivé de faits DÉJÀ servis (aucun calcul de score).
+  const cases: CaseEtat[] = []
+  if (viabMot) cases.push({ etat: viabMot.ton === 'vert' ? 'ok' : 'q', label: 'Eau/élec', valeur: viabMot.mot })
+  if (f.fibre) cases.push({ etat: f.fibre.ftth ? 'ok' : (f.fibre.etat === 'servi' ? 'ko' : 'q'), label: 'Fibre',
+    valeur: f.fibre.ftth ? 'FttH' : (f.fibre.distance_m != null ? `${f.fibre.distance_m} m` : '—') })
+  if (trans?.arret) cases.push({ etat: 'ok', label: 'Bus', valeur: fmtDistanceM(trans.arret.distance_m) })
+  cases.push({ etat: assain.ton === 'vert' ? 'ok' : 'q', label: 'Assainis.', valeur: assain.court })
   return (
     <RefDrawer id="reseaux" icon={IC.viab} name="Réseaux et desserte" context={viabContext}
       value={viabBadge}>
       <div className="flex flex-col gap-3">
+        {/* KELFONCIER-FIX-2 (Lot H) — Verdict (viabilisation servie) + CasesEtat en glance. Le détail
+            (accès, transport, gestionnaires, viabilisation, axes…) reste rendu en dessous, inchangé. */}
+        <Verdict ton={viabMot?.ton === 'vert' ? 'vert' : viabMot?.ton === 'ambre' ? 'ambre' : 'gris'}
+          reponse={viabMot ? `Viabilisation eau/élec ${viabMot.mot}` : (f.gestionnaires ? 'Réseaux renseignés' : 'Réseaux non renseignés')}
+          contexte={(f.gestionnaires || f.viabilisation || f.anc) ? `assainissement ${assain.court}` : undefined} />
+        {cases.length > 0 && <CasesEtat cases={cases} />}
         {/* FICHE-RANGEMENT-2 Lot 1 — les caractéristiques du terrain (piscine, EquipementsBadges) sont
             relocalisées en §2 Terrain ; §6 Réseaux et desserte ne porte plus que réseaux/accès/desserte. */}
 
