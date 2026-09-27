@@ -43,6 +43,11 @@ interface Props {
   onPick?: (item: SuggestItem) => void
   /** V5 — miroir de la frappe pour l'appelant (bouton « Chercher », blocs d'exemples…). */
   onTextChange?: (text: string) => void
+  /** RETOURS-15 S1/S2 — l'appelant impose le texte du champ (parcelle résolue hors suggestion :
+   *  clic carte, désambiguïsation, parcelle d'un propriétaire, IDU normalisé). Ne relance PAS la
+   *  recherche. Les clics de suggestion recopient déjà leur libellé (pick) — seed sert aux AUTRES
+   *  chemins de résolution, pour que « l'adresse/l'IDU choisi » s'affiche en entier dans la barre. */
+  seed?: string
   'data-testid'?: string
 }
 
@@ -58,7 +63,7 @@ const DEFAUT: SuggestType[] = ['adresse', 'cadastre']
 
 export function AddressAutocomplete({
   onSelect, placeholder = 'Saisissez une adresse…', autoFocus, className,
-  onClear, onEnterRaw, grammaires = DEFAUT, onPick, onTextChange, ...rest
+  onClear, onEnterRaw, grammaires = DEFAUT, onPick, onTextChange, seed, ...rest
 }: Props) {
   const [text, setText] = useState('')
   const [items, setItems] = useState<SuggestItem[]>([])
@@ -124,6 +129,16 @@ export function AddressAutocomplete({
     window.addEventListener('mousedown', h)
     return () => window.removeEventListener('mousedown', h)
   }, [open])
+
+  // RETOURS-15 S1/S2 — l'appelant impose le texte (résolution hors suggestion). On saute la
+  // recherche que ce setText provoquerait, et on ferme toute liste ouverte.
+  useEffect(() => {
+    if (seed == null) return
+    skipSearchRef.current = true
+    setText(seed)
+    setItems([]); setOpen(false); setActive(-1); setNoResults(false)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seed])
 
   const pick = (it: SuggestItem) => {
     if (it.note) return   // RECHERCHE-2 Lot 3 (b) — ligne d'information : rien à ouvrir, on ne fait rien.
