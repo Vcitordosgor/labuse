@@ -62,7 +62,9 @@ def digest_notifications(evenements: list[dict], lien_desabo: str, *,
         detail = (e.get("detail") or "").strip()
         lignes.append(f"• {e.get('titre', '')}" + (f"\n  {detail}" if detail else "") + (f"\n  {lien}" if lien else ""))
     if n:
-        bloc = (f"Voici le point sur vos parcelles suivies, vos secteurs et vos critères pour {periode} "
+        # VEILLE-FIX-2 — « secteurs » RETIRÉ du texte (les secteurs sont archivés depuis VEILLE-2 Lot 4) :
+        # le digest ne porte que vos parcelles suivies et vos critères (Radar).
+        bloc = (f"Voici le point sur vos parcelles suivies et vos critères pour {periode} "
                 f"({n} événement{'s' if n > 1 else ''}) :\n\n" + "\n\n".join(lignes))
         if marche_txt:
             bloc += "\n\n— — —\n" + marche_txt
@@ -70,15 +72,14 @@ def digest_notifications(evenements: list[dict], lien_desabo: str, *,
         # Aucun événement personnel : le RÉSUMÉ MARCHÉ suffit à déclencher le digest (fin du
         # « digest vide à vie »). L'appelant a déjà vérifié qu'il y a du contenu.
         bloc = marche_txt
-    prefs_ligne = (f"Régler vos préférences (par type, cloche ou e-mail) :\n{lien_prefs}\n"
+    prefs_ligne = (f"Régler la fréquence et vos préférences (quotidien, hebdo, cloche seule ; par type) :\n{lien_prefs}\n"
                    if lien_prefs else "")
     corps = (
         "Bonjour,\n\n"
         + bloc
         + (("\n\n" + secteurs_ligne) if secteurs_ligne else "")   # M85 P3 — « depuis hier sur vos secteurs »
         + "\n\n— — —\n"
-        "Vous recevez cet e-mail parce que vous suivez des parcelles, surveillez des secteurs ou des critères, "
-        "ou êtes abonné au résumé de marché LABUSE.\n"
+        "Vous recevez cet e-mail parce que vous suivez des parcelles ou surveillez des critères Radar dans LABUSE.\n"
         + prefs_ligne
         + "Pour ne plus rien recevoir par e-mail :\n"
         f"{lien_desabo}"
@@ -116,6 +117,23 @@ def annonce_html(titre: str, corps: str, *, lien: str | None = None, lien_desabo
             f"<p style=\"margin:0 0 12px;color:{V};font-weight:600\">LABUSE — {titre}</p>"
             f"<div style=\"white-space:pre-line\">{corps.strip()}</div>{lien_html}"
             f"<p style=\"margin:22px 0 0;color:#888;font-size:12px\">{pied}</p></div></body></html>")
+
+
+# ── VEILLE-FIX-2 (Lot B) · MISE EN VENTE d'une parcelle SUIVIE — mail IMMÉDIAT, gabarit dédié.
+#    La seule notification instantanée de la grille (Vic 27/09) : une annonce Radar rattachée à une
+#    parcelle que le client suit vient de paraître. Sobre, un seul lien vers l'annonce. ──
+def mise_en_vente_email(idu_court: str, commune: str, type_label: str, prix: str, *,
+                        lien: str | None = None, lien_desabo: str = "", lien_prefs: str = "") -> tuple[str, str, str]:
+    """Retourne (sujet, texte, html). Envoi immédiat, une fois par annonce."""
+    sujet = f"LABUSE — votre parcelle {idu_court} est mise en vente"
+    corps = (f"Une annonce vient de paraître sur une parcelle que vous suivez : {idu_court} "
+             f"— {type_label} à {commune}, {prix}.")
+    # VEILLE-FIX-2 (Lot E) — annonce_email retourne (sujet, corps) : on garde le CORPS, pas le sujet.
+    _, txt = annonce_email(f"votre parcelle {idu_court} est mise en vente", corps,
+                           lien=lien, lien_desabo=lien_desabo, lien_prefs=lien_prefs)
+    html = annonce_html(f"votre parcelle {idu_court} est mise en vente", corps,
+                        lien=lien, lien_desabo=lien_desabo, lien_prefs=lien_prefs)
+    return sujet, txt, html
 
 
 # ── M85-B · maintenance (chaîne 3) — gabarit DISTINCT : dates et durée de coupure EN ÉVIDENCE,
@@ -187,6 +205,7 @@ def digest_html_email(evenements: list[dict], marche: dict | None, top_chaudes: 
             f"<p style=\"margin:0 0 14px;color:#666;font-size:13px\">LABUSE — votre point du jour</p>"
             f"{corps}{top}"
             f"<p style=\"margin:22px 0 0;color:#888;font-size:12px\">"
-            f"<a href=\"{lien_prefs}\" style=\"color:{V}\">Préférences</a> — choisir ce que vous recevez.<br>"
+            f"<a href=\"{lien_prefs}\" style=\"color:{V}\">Régler la fréquence et vos préférences</a> "
+            f"(quotidien, hebdo, cloche seule).<br>"
             f"<a href=\"{lien_desabo}\" style=\"color:#888\">Se désinscrire des e-mails</a>.</p>"
             f"</div></body></html>")

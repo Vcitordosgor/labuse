@@ -66,7 +66,8 @@ def test_dry_run_clef_absente_non_date(eng, monkeypatch):
                         _ko("Brevo non configuré (BREVO_API_KEY absente) — aucun envoi."))
     r = mailfile.envoyer_mail(eng, key="onboarding1", to="a@labuse.test",
                               params=_p("onboarding1"), compte_id=1, demandeur="vic")
-    assert r["etat"] == "en_attente"            # une tentative ratée ≠ échec définitif ≠ envoyé
+    # VEILLE-FIX-2 (Lot D) — une tentative ratée passe `a_rejouer` (rejeu programmé), ni échec ni envoyé.
+    assert r["etat"] == "a_rejouer"
     assert r["parti_at"] is None
     assert "absente" in (r["erreur"] or "")
 
@@ -75,7 +76,8 @@ def test_echec_brevo_trois_tentatives_puis_echec(eng, monkeypatch):
     monkeypatch.setattr("labuse.brevo.envoyer_template", _ko("Brevo a refusé l'envoi (HTTP 401)."))
     r = mailfile.envoyer_mail(eng, key="suspension", to="a@labuse.test",
                               params=_p("suspension"), compte_id=2, demandeur="vic")
-    assert r["etat"] == "en_attente" and r["tentatives"] == 1
+    # VEILLE-FIX-2 (Lot D) — 1er échec → a_rejouer (backoff), puis rejeux jusqu'à l'échec définitif.
+    assert r["etat"] == "a_rejouer" and r["tentatives"] == 1
     r = mailfile.rejouer(eng, r["id"], demandeur="vic")   # rejouer remet à zéro puis retente
     # après le rejeu on est reparti d'une tentative ; refaisons monter jusqu'à l'échec définitif
     mid = r["id"]
@@ -156,7 +158,8 @@ def test_garde_params_manquants_ne_part_jamais(eng, monkeypatch):
                               params={"PRENOM": "Vic", "EMAIL": "a@labuse.test"},
                               compte_id=9, demandeur="vic")
     assert appele["n"] == 0                       # transport jamais appelé
-    assert r["etat"] == "en_attente" and r["parti_at"] is None
+    # VEILLE-FIX-2 (Lot D) — refus (param manquant) = tentative ratée → a_rejouer (jamais parti).
+    assert r["etat"] == "a_rejouer" and r["parti_at"] is None
     assert "LIEN_INVITATION" in (r["erreur"] or "")
 
 

@@ -431,6 +431,17 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
               "part en UN digest quotidien, filtré par préférence, jamais vide, un par jour (dédup mail_queue). "
               "Passe par mail_queue. Sans événement la veille : pas de mail (dry-run si SMTP absent).",
        test="tests/test_veille_fix1.py::test_les_jobs_veille_existent"),
+    # VEILLE-FIX-2 (Lot D) — LE CONSOMMATEUR DE LA FILE. Toutes les 5 min, il fait partir ce qui est
+    # `en_attente` (immédiats différés, dont le digest ; programmés J+3/J+10) et rejoue les `a_rejouer`
+    # dont l'heure est venue (5 min → 1 h → 24 h). Sans lui, un mail programmé ne partait jamais et un
+    # échec Brevo n'était jamais rejoué (VEILLE-AUDIT-2 §2.2). envoie_mail=True → dry-run si SMTP absent.
+    _j("mail-queue-consommer", "File des mails — envoie les dûs + rejoue les échecs transitoires",
+       "5 min", "*/5 * * * *", "toutes les 5 min", touche="exploitation", timeout_s=300, envoie_mail=True,
+       raison="La file mail_queue ne part pas toute seule : ce worker (toutes les 5 min) envoie les mails "
+              "`en_attente` dûs (digest différé, programmés J+3/J+10) et rejoue les `a_rejouer` (échec "
+              "Brevo transitoire, backoff 5 min/1 h/24 h) ; au-delà de 3 rejeux → `echec` (ligne rouge "
+              "Comptes). Idempotent, jamais d'envoi en double.",
+       test="tests/test_veille_fix2_lot_d.py::test_worker_envoie_et_rejoue"),
     # COMMUNE-FIX-1 — RÉINSCRIT (le pied de la fiche commune promet « rafraîchis chaque nuit » : il faut
     # que la tâche existe VRAIMENT). Précalcule le contexte des 24 communes chaque nuit → ouverture < 500 ms
     # et date de précalcul honnête. Wrapper run-job.sh + verrou flock comme les autres (crontab dérivé du registre).

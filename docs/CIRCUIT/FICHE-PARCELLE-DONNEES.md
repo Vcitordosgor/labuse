@@ -33,6 +33,19 @@ Chaque section est un tiroir de la fiche. Pour chaque donnée : d'où elle vient
 | | | *la parcelle est-elle dans un périmètre de préemption publié (DPU simple/renforcé) — les communes sans DPU publié au GPU sont « non déterminée — non publié par la commune »* | | | | | |
 | `peb_zone` | classe — domaine : A, B, C, D, hors | Plan d'exposition au bruit (PEB) | peb_dgac (Roland-Garros B/C/D (GPU) ; Pierrefonds non publié) | passe-plat · src/labuse/api/app.py:_dispositifs_block (peb) — table lue : spatial_layers (kind=peb) | live | servie · non déterminée (la source ne dit pas) · non calculée | nulle part ailleurs |
 | | | *zone PEB de l'aérodrome (A/B/C/D) si la parcelle y est — Roland-Garros servi (annexes GPU) ; Pierrefonds non publié au GPU (couverture partielle dite)* | | | | | |
+| `scot_parcelle` | texte | SCOT (schéma de cohérence territoriale) | scot_gpu (GPU — périmètres SCOT (idurba CNIG par document)) | passe-plat · src/labuse/api/fiche_blocs3.py:scot — table lue : spatial_layers (kind=scot) | live | servie · non déterminée · non calculée | nulle part ailleurs |
+| | | *le SCOT qui couvre la parcelle (nom, statut, date d'approbation) — document supra-communal opposable au PLU* | | | | | |
+
+## Contraintes environnementales (APER / mesures compensatoires)
+
+*Robinet `fiche_parcelle_contraintes_env` — route `/parcels/{idu} (clés enr_exclue_toiture, mesures_compensatoires)`*
+
+| id | type | libellé | source(s) et millésime | chemin | portée | états | où ailleurs |
+|---|---|---|---|---|---|---|---|
+| `enr_exclue_parcelle` | texte | EnR au sol interdites (APER, sauf toiture) | enr_aper_ofb (OFB — zonages exclus des aires d'accélération EnR (loi APER)) | passe-plat · src/labuse/api/fiche_blocs3.py:enr_exclue_toiture — table lue : spatial_layers (kind=enr_exclue_hors_toiture) | live | servie · non déterminée · non calculée | nulle part ailleurs |
+| | | *la parcelle est-elle dans une zone où les EnR au SOL sont EXCLUES (loi APER) — le photovoltaïque/ombrière au sol y est exclu, la toiture n'est pas concernée* | | | | | |
+| `mesures_compensatoires_parcelle` | texte | Mesure compensatoire (GéoMCE) | geomce (GéoMCE — géoportail des mesures compensatoires (national)) | passe-plat · src/labuse/api/fiche_blocs3.py:mesures_compensatoires — table lue : spatial_layers (kind=mesures_compensatoires) | live | servie · non déterminée · non calculée | nulle part ailleurs |
+| | | *la parcelle recoupe-t-elle une mesure compensatoire environnementale (GéoMCE, MTE/OFB) — obligation de compensation liée à un projet, à instruire* | | | | | |
 
 ## Historique cadastral (filiation DFI)
 

@@ -52,3 +52,20 @@ donnees:
     absence_type: absente_ici
     statut_juridique: informatif
     pourquoi: "Inventaire historique informatif ; éclaire sans bloquer — replié."
+
+  # ── SOURCES-FIX-1 A1/A2 — contraintes environnementales à la parcelle (mêmes couches que la carte) ──
+  - quoi:  enr_exclue_parcelle
+    ou:    { rang: 60, etat: replie, section: "Pour information" }
+    comment: { libelle: "EnR au sol interdites (APER)", format: texte, i: "La parcelle est dans une zone où les énergies renouvelables au SOL sont exclues (loi APER) — photovoltaïque/ombrière au sol exclu, la toiture n'est pas concernée. Source : OFB/INPN (Géoplateforme)." }
+    absence: "EnR au sol interdites (APER) : la parcelle n'est dans aucune zone d'exclusion."
+    absence_type: absente_ici
+    statut_juridique: informatif
+    pourquoi: "Contrainte directe pour un projet photovoltaïque au sol ; même couche que la carte."
+
+  - quoi:  mesures_compensatoires_parcelle
+    ou:    { rang: 70, etat: replie, section: "Pour information" }
+    comment: { libelle: "Mesure compensatoire (GéoMCE)", format: texte, i: "La parcelle recoupe une mesure compensatoire environnementale (GéoMCE, MTE/OFB) liée à un projet — obligation de restauration/évitement à instruire." }
+    absence: "Mesure compensatoire (GéoMCE) : aucune mesure ne recoupe la parcelle."
+    absence_type: absente_ici
+    statut_juridique: informatif
+    pourquoi: "Servitude de fait sur le foncier ; même couche que la carte."

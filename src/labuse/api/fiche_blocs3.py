@@ -181,3 +181,76 @@ def anciennete_detention(db: Session, idu: str) -> dict:
                 "source": "DVF — dernière mutation actée (propriétaire non nommé)",
                 "millesime": "DVF"}
     return {"disponible": False, "source": "DGFiP (PM) / DVF (dernière mutation)", "millesime": None}
+
+
+# ── SOURCES-FIX-1 (A1/A2) — contraintes ENVIRONNEMENTALES à la parcelle (§Risques) ──────────────
+def enr_exclue_toiture(db: Session, idu: str) -> dict:
+    """SOURCES-FIX-1 — la parcelle est-elle dans une zone où les EnR au SOL sont EXCLUES (loi APER,
+    sauf toiture) ? Même couche que la carte (spatial_layers kind='enr_exclue_hors_toiture', source
+    OFB/INPN via Géoplateforme). Contrainte pour un projet photovoltaïque/ombrière au sol. « Sans
+    objet » si la parcelle n'intersecte aucune zone."""
+    if not _has(db, "spatial_layers"):
+        return {"disponible": False, "zones": [],
+                "source": "Zones exclues EnR sauf toiture (OFB/APER)", "millesime": "OFB / APER 2025"}
+    rows = db.execute(text(
+        "SELECT DISTINCT sl.attrs->>'zonage' AS zonage, sl.attrs->>'type_zone' AS type_zone, "
+        "       sl.attrs->>'nom_zone' AS nom_zone, sl.attrs->>'gestionnaire' AS gestionnaire, "
+        "       sl.attrs->>'source' AS source "
+        "FROM spatial_layers sl JOIN parcels p ON p.idu = :idu "
+        "WHERE sl.kind = 'enr_exclue_hors_toiture' AND ST_Intersects(sl.geom_2975, p.geom_2975)"),
+        {"idu": idu}).mappings().all()
+    return {
+        "disponible": bool(rows),
+        "zones": [{"libelle": r["type_zone"] or r["nom_zone"], "zonage": r["zonage"],
+                   "gestionnaire": r["gestionnaire"]} for r in rows],
+        "source": (rows[0]["source"] if rows and rows[0]["source"] else
+                   "OFB / INPN (loi APER) — zones exclues des aires d'accélération EnR (sauf toitures)"),
+        "millesime": "OFB / APER 2025",
+    }
+
+
+def mesures_compensatoires(db: Session, idu: str) -> dict:
+    """SOURCES-FIX-1 — la parcelle recoupe-t-elle une MESURE COMPENSATOIRE environnementale (GéoMCE,
+    MTE/OFB) ? Même couche que la carte (spatial_layers kind='mesures_compensatoires'). Servitude de
+    fait : le foncier porte une obligation de compensation (restauration/évitement) liée à un projet."""
+    if not _has(db, "spatial_layers"):
+        return {"disponible": False, "mesures": [],
+                "source": "GéoMCE — mesures compensatoires (MTE/OFB)", "millesime": "GéoMCE (national)"}
+    rows = db.execute(text(
+        "SELECT sl.attrs->>'type_mesure' AS type_mesure, sl.attrs->>'projet' AS projet, "
+        "       sl.attrs->>'classe' AS classe, sl.attrs->>'date_decision' AS date_decision, "
+        "       sl.attrs->>'source' AS source "
+        "FROM spatial_layers sl JOIN parcels p ON p.idu = :idu "
+        "WHERE sl.kind = 'mesures_compensatoires' AND ST_Intersects(sl.geom_2975, p.geom_2975)"),
+        {"idu": idu}).mappings().all()
+    return {
+        "disponible": bool(rows),
+        "mesures": [{"type_mesure": r["type_mesure"], "projet": r["projet"], "classe": r["classe"],
+                     "date_decision": r["date_decision"]} for r in rows],
+        "source": (rows[0]["source"] if rows and rows[0]["source"] else
+                   "GéoMCE (MTE/OFB) — géoportail des mesures compensatoires"),
+        "millesime": "GéoMCE (national)",
+    }
+
+
+# ── SOURCES-FIX-1 (A3) — SCOT de la parcelle (§Urbanisme) ────────────────────────────────────────
+def scot(db: Session, idu: str) -> dict:
+    """SOURCES-FIX-1 — le SCOT (schéma de cohérence territoriale) qui couvre la parcelle : nom + date
+    d'approbation. Même couche que la carte et la fiche commune (spatial_layers kind='scot', GPU).
+    Document supra-communal opposable aux PLU. « Sans objet » si la parcelle n'est couverte par aucun."""
+    if not _has(db, "spatial_layers"):
+        return {"disponible": False, "source": "SCOT (Géoportail de l'urbanisme)", "millesime": "GPU"}
+    r = db.execute(text(
+        "SELECT sl.attrs->>'title' AS title, sl.attrs->>'statut' AS statut, "
+        "       sl.attrs->>'date_approbation' AS date_approbation, sl.attrs->>'source' AS source "
+        "FROM spatial_layers sl JOIN parcels p ON p.idu = :idu "
+        "WHERE sl.kind = 'scot' AND ST_Intersects(sl.geom_2975, p.geom_2975) LIMIT 1"),
+        {"idu": idu}).mappings().first()
+    if not r:
+        return {"disponible": False, "source": "SCOT (Géoportail de l'urbanisme)", "millesime": "GPU"}
+    return {
+        "disponible": True, "nom": r["title"], "statut": r["statut"],
+        "date_approbation": r["date_approbation"],
+        "source": r["source"] or "SCOT — Géoportail de l'urbanisme (GPU)",
+        "millesime": (f"approuvé le {r['date_approbation']}" if r["date_approbation"] else "GPU"),
+    }
