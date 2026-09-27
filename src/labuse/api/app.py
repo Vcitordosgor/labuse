@@ -4693,6 +4693,50 @@ def _dpe_connu_block(db: Session, idu: str) -> dict | None:
     }
 
 
+#: KELFONCIER-FIX-1 (Lot F) — libellés des dispositifs de commune ANCT (source unique commune_ort).
+_ANCT_PROGRAMME_LIBELLE = {
+    "pvd": "Petites Villes de Demain (PVD)",
+    "acv": "Action Cœur de Ville (ACV)",
+}
+
+
+def _dispositif_commune_ort(db: Session, insee: str) -> dict | None:
+    """KELFONCIER-FIX-1 (Lot F) — un dispositif de COMMUNE (PVD / ACV / ORT signée) pour la fiche §7,
+    lu par la MÊME fonction que la fiche commune (`ingestion.ort.ort_commune`, table commune_ort,
+    DGALN/ANCT). None si la commune n'est dans aucun programme (ni PVD/ACV, ni ORT signée) → aucune
+    ligne. L'ORT signée porte en plus l'éligibilité Denormandie (déjà calculée par ort_commune)."""
+    try:
+        from ..ingestion.ort import ort_commune
+        o = ort_commune(db, insee)
+    except Exception:  # noqa: BLE001 — jamais de 500 sur la fiche
+        return None
+    if not o:
+        return None
+    statut = o.get("statut")
+    prog = _ANCT_PROGRAMME_LIBELLE.get(statut)
+    ort_signee = bool(o.get("ort_signee"))
+    if not prog and not ort_signee:
+        return None   # commune hors dispositif (statut 'autre'/'hors' sans ORT signée) → pas de ligne
+    titre = prog or "Opération de Revitalisation de Territoire (ORT)"
+    if prog and ort_signee:
+        titre += " · ORT signée"
+    parts = []
+    if statut == "pvd":
+        parts.append("La commune est lauréate du programme national « Petites Villes de Demain » "
+                     "(ANCT) — ingénierie et crédits dédiés à la revitalisation des centres-bourgs.")
+    elif statut == "acv":
+        parts.append("La commune est engagée dans « Action Cœur de Ville » (ANCT) — revitalisation "
+                     "du cœur de ville, financements ANAH/Banque des Territoires.")
+    if ort_signee:
+        parts.append("Convention ORT signée : " + str(o.get("denormandie")))
+    else:
+        parts.append(str(o.get("denormandie")))
+    date_sig = o.get("date_signature")
+    src = f"DGALN/ANCT — {o.get('millesime', 'table ORT')}"
+    return {"libelle": titre + (f" (signée le {date_sig})" if date_sig else ""),
+            "detail": " ".join(parts), "source": src}
+
+
 def _territoire_fiscal_block(db: Session, idu: str) -> dict | None:
     from ..territoire_fiscal import attributs_commune, frr_position, frr_libelle_partie
     base = attributs_commune(db, idu[:5])
@@ -4791,6 +4835,13 @@ def _territoire_fiscal_block(db: Session, idu: str) -> dict | None:
                    "régime exact dépend de l'opération.",
          "source": "CGI (TVA DOM, art. 296 et 278 sexies)"},
     ]
+    # KELFONCIER-FIX-1 (Lot F) — DISPOSITIFS DE LA COMMUNE : Petites Villes de Demain (PVD), à côté
+    # d'ORT et Action Cœur de Ville (ACV). MÊME fonction que la fiche commune (ort.ort_commune, source
+    # unique DGALN/ANCT). Ajouté à `dispositifs_dom` → rendu en fiche §7 ET, comme A/B/C et la TVA,
+    # miroir au Dossier. Aucune ligne si la commune n'est dans aucun programme (statut hors/autre sans ORT).
+    _ort_disp = _dispositif_commune_ort(db, idu[:5])
+    if _ort_disp:
+        dispositifs_dom.append(_ort_disp)
     if base is None and not perimetres:
         return {"perimetres": [], "dispositifs_dom": dispositifs_dom}
     return {**(base or {}), "perimetres": perimetres, "dispositifs_dom": dispositifs_dom}

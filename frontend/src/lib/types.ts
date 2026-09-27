@@ -717,7 +717,9 @@ export interface ZoneAcquisitionsPM {
   acquereurs: { siren: string; denomination: string | null; n_parcelles: number }[]
   n_parcelles: number; millesime_courant?: number; millesime_precedent?: number; source?: string
 }
-export interface ZoneCommuneContexte { commune: string; insee: string; echelle: string; loyer_median_eur_m2: number | null; millesime?: string }
+export interface ZoneCommuneContexte { commune: string; insee: string; echelle: string; loyer_median_eur_m2: number | null; millesime?: string;
+  // KELFONCIER-FIX-1 (Lot F) — dispositif de commune (PVD / ACV / ORT), à l'échelle de la commune.
+  dispositif_ort?: { libelle: string; ort_signee: boolean; date_signature: string | null; source: string } | null }
 export interface ZoneFibre { immeubles: number; ftth: number; pct_ftth: number; source: string }
 export interface EtudeZoneResult {
   statut: string

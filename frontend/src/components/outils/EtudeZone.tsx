@@ -542,9 +542,9 @@ export function EtudeZone() {
           )}
 
           {/* 7 · DYNAMIQUE — B7 : acquisitions PM récentes (signal daté) + loyer (commune) + fibre (zone) */}
-          {((res.acquisitions_pm && res.acquisitions_pm.n_parcelles > 0) || res.commune_contexte?.loyer_median_eur_m2 != null || res.fibre) && (
+          {((res.acquisitions_pm && res.acquisitions_pm.n_parcelles > 0) || res.commune_contexte?.loyer_median_eur_m2 != null || res.commune_contexte?.dispositif_ort || res.fibre) && (
             <Section id="dynamique" titre="Dynamique" openSecs={openSecs} setOpenSecs={setOpenSecs}
-              source="DGFiP (acquisitions PM) · OLL 2024 (loyers, commune) · Arcep (fibre, zone)">
+              source="DGFiP (acquisitions PM) · OLL 2024 (loyers, commune) · DGALN/ANCT (dispositifs) · Arcep (fibre, zone)">
               {res.acquisitions_pm && res.acquisitions_pm.n_parcelles > 0 && (
                 <div>
                   <SectionTitle>Acquisitions récentes (personnes morales)</SectionTitle>
@@ -569,6 +569,20 @@ export function EtudeZone() {
                     <span className="shrink-0 font-mono text-[11px] text-txt-hi">{res.commune_contexte.loyer_median_eur_m2} €/m²</span>
                   </div>
                   {res.commune_contexte.millesime && <p className="mt-1 text-[9px] leading-snug text-txt-dim">{res.commune_contexte.millesime}</p>}
+                </div>
+              )}
+              {/* KELFONCIER-FIX-1 (Lot F) — dispositif de commune (Petites Villes de Demain / ACV / ORT),
+                  à l'échelle de la commune, même source que la fiche §7 et la fiche commune (DGALN/ANCT). */}
+              {res.commune_contexte?.dispositif_ort && (
+                <div data-zone-dispositif-commune>
+                  <SectionTitle>Dispositif de la commune</SectionTitle>
+                  <div className="mt-1 flex items-center justify-between gap-2 text-[11.5px]">
+                    <span className="text-txt">{res.commune_contexte.dispositif_ort.libelle}{res.commune_contexte.dispositif_ort.ort_signee ? ' · ORT signée' : ''}</span>
+                    {res.commune_contexte.dispositif_ort.date_signature && (
+                      <span className="shrink-0 font-mono text-[10px] text-txt-dim">{res.commune_contexte.dispositif_ort.date_signature}</span>
+                    )}
+                  </div>
+                  <p className="mt-1 text-[9px] leading-snug text-txt-dim">{res.commune_contexte.dispositif_ort.source}</p>
                 </div>
               )}
               {res.fibre && (
