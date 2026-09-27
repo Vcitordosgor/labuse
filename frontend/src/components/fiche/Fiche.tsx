@@ -31,10 +31,10 @@ import { IC, FicheAccordionCtx, RefDrawer, GroupLabel, MicroJauge, MicroPastille
 // sections « fourre-tout » ConstructibiliteSection / LeBienSection sont dissoutes ; les quatre
 // sections encore mono-nature (Risques, Réseaux, Marché, Quartier) restent des composants réutilisés.
 // Fiche ré-exporte Calculette + FaisabiliteTab (consommés par CalculetteFonciere / M22Programme).
-import { TransformationBlock, FaisabiliteTab, BilanTab, TaxeAmenagementBlock, FiscalLeviersBlock, RtaaFromBilan, DispositifsBody, ModeBBody } from './constructibilite'
+import { TransformationBlock, FaisabiliteTab, BilanTab, TaxeAmenagementBlock, RtaaFromBilan, DispositifsBody, ModeBBody } from './constructibilite'
 import { BatiBlock, FiliationBlock } from './leBien'
 // KELFONCIER-FIX-2 (Partie B) — les formes de la maquette v3 (Verdict · Tuiles · BarreEmpilée…).
-import { Verdict, Tuiles, type Tuile, BarreEmpilee, type Part, Lignes, Ligne, Pastilles, type Pastille, OutilsSection, type OutilSection, InfoI } from './formes'
+import { Verdict, Tuiles, type Tuile, BarreEmpilee, type Part, Lignes, Ligne, Pastilles, type Pastille, OutilsSection, type OutilSection, InfoI, Repli } from './formes'
 import { RisquesSection } from './risques'
 import { MarcheSection, DerniereVenteBlock } from './marche'
 import { ReseauxSection, EquipementsBadges } from './reseaux'
@@ -1700,77 +1700,84 @@ export function Fiche({ idu }: { idu: string }) {
                 {/* KELFONCIER-FIX-2 (Lot I) — maquette v3 : Verdict + Tuiles (taxe foncière · taxe
                     d'aménagement) + Pastilles des dispositifs de la commune. Taux et dispositifs sont
                     servis (REI DGFiP · CGI · DHUP) ; aucun taux recalculé. Détail conservé en dessous. */}
+                {/* FICHE-FIX-4 (Lot I) — 4 tuiles (taxe foncière · taxe d'aménagement · zonage A/B/C ·
+                    TVA), Pastilles allumées ET éteintes (ZFANG/FRR/ORT/QPV/PVD/Cœur de ville), les
+                    4 paragraphes de dispositifs dans un Repli, disclaimer en source. Aucun taux recalculé. */}
                 {(() => {
                   const terf = f.territoire_fiscal
                   const ta = f.taxe_amenagement
-                  const zonageLib = terf?.dispositifs_dom?.find((d) => /zonage/i.test(d.libelle))?.libelle
-                  const disp: Pastille[] = []
-                  if (terf?.zfang) disp.push({ label: 'ZFANG', on: true })
-                  if (terf?.frr) disp.push({ label: 'FRR', on: true })
-                  ;(terf?.perimetres ?? []).forEach((p) => disp.push({ label: p.libelle, on: true }))
+                  const dom = terf?.dispositifs_dom ?? []
+                  const zonageVal = dom.find((d) => /zonage/i.test(d.libelle))?.libelle.split(':').pop()?.trim()
+                  const tvaM = dom.find((d) => /tva/i.test(d.libelle))?.libelle.match(/(\d+[,.]?\d*)\s*%/)
+                  const allTxt = [...(terf?.perimetres ?? []).map((p) => p.libelle), ...dom.map((d) => d.libelle)].join(' | ').toLowerCase()
+                  const has = (re: RegExp) => re.test(allTxt)
+                  const ortDate = dom.find((d) => /revitalisation|\bort\b/i.test(d.libelle))?.libelle.match(/(\d{4}-\d{2}-\d{2})/)?.[1]
+                  const disp: Pastille[] = [
+                    { label: 'ZFANG', on: !!terf?.zfang },
+                    { label: 'FRR', on: !!terf?.frr },
+                    { label: 'ORT', on: has(/\bort\b|revitalisation/), date: ortDate ? fmtDateNum(ortDate) : undefined },
+                    { label: 'QPV', on: has(/\bqpv\b|quartier prioritaire/) },
+                    { label: 'PVD', on: has(/petites villes/) },
+                    { label: 'Cœur de ville', on: has(/c[œo]eur de ville/) },
+                  ]
                   const tuiles: Tuile[] = []
                   if (tfpb != null) tuiles.push({ label: 'Taxe foncière', valeur: <>{nf(tfpb)} <small>%</small></>, sous: 'part communale' })
                   if (ta && (ta.taux_communal_pct != null || ta.taux_departemental_pct != null))
-                    tuiles.push({ label: "Taxe d'aménagement", valeur: <>{ta.taux_communal_pct ?? '—'} + {ta.taux_departemental_pct ?? '—'} <small>%</small></>, sous: 'commune · département' })
+                    tuiles.push({ label: "Taxe d'aménagement", valeur: <>{ta.taux_communal_pct ?? '—'} + {ta.taux_departemental_pct ?? '—'} <small>%</small></>, sous: 'commune · dépt' })
+                  if (zonageVal) tuiles.push({ label: 'Zonage A/B/C', valeur: zonageVal, sous: 'PTZ · loyers' })
+                  if (tvaM) tuiles.push({ label: 'TVA', valeur: `${tvaM[1]} %`, sous: 'DOM · 2,1 % LLS' })
                   return (
                     <>
-                      {(terf?.zfang || terf?.frr || zonageLib) && (
+                      {(terf?.zfang || terf?.frr || zonageVal) && (
                         <Verdict ton="vert"
-                          reponse={[terf?.zfang ? 'Zone franche (ZFANG)' : null, terf?.frr ? 'France Ruralités (FRR)' : null].filter(Boolean).join(', ') || 'Dispositifs fiscaux'}
-                          contexte={zonageLib || undefined} />
+                          reponse={[terf?.zfang ? 'Zone franche (ZFANG)' : null, terf?.frr ? 'France Ruralités (FRR)' : null, disp[2].on ? 'ORT signée' : null].filter(Boolean).join(', ') || 'Dispositifs fiscaux'}
+                          contexte={[zonageVal ? `zone ${zonageVal} (PTZ/loyers)` : null, tvaM ? `TVA ${tvaM[1]} %` : null].filter(Boolean).join(' · ') || undefined} />
                       )}
                       {tuiles.length > 0 && <Tuiles items={tuiles} />}
-                      {disp.length > 0 && (<><GroupLabel>Dispositifs de la commune</GroupLabel><Pastilles items={disp} /></>)}
+                      <GroupLabel>Dispositifs de la commune</GroupLabel>
+                      <Pastilles items={disp} />
+                      {/* FICHE-1 lot 5 — taxe d'aménagement en BOUTON (change les hypothèses). */}
+                      {f.taxe_amenagement && (
+                        <OutilsSection outils={[{ label: "Calculer la taxe d'aménagement", principal: true, full: true, data: 'taxe-amenagement-outil',
+                          onClick: () => { setParcelPrefill(idu); setModule('taxe-amenagement') } }]} />
+                      )}
+                      {/* détail des dispositifs (les 4 paragraphes) + calcul de taxe (RAP, exonérations) → Repli. */}
+                      {(f.taxe_amenagement || terf) && (
+                        <Repli label="détail des dispositifs">
+                          {f.taxe_amenagement && <TaxeAmenagementBlock t={f.taxe_amenagement} />}
+                          {terf && (
+                            <div className="flex flex-col gap-2.5" data-territoire-fiscal>
+                              {(terf.perimetres ?? []).map((p) => (
+                                <div key={p.libelle} data-fiche-perimetre className="border-l-2 border-mint pl-3">
+                                  <p className="text-[12px] font-semibold text-txt-hi">{p.libelle}{p.derive && <span className="ml-1.5 rounded bg-surface-2 px-1 py-px text-[9px] uppercase tracking-wide text-txt-dim">estimé</span>}</p>
+                                  <p className="mt-0.5 text-[11.5px] leading-snug text-txt">{p.detail}</p>
+                                  <FactNote>{p.source}</FactNote>
+                                </div>
+                              ))}
+                              {([['ZFANG — zone franche d’activité', terf.zfang],
+                                 ['FRR — France Ruralités Revitalisation (ex-ZRR)', terf.frr]] as const)
+                                .filter(([, a]) => !!a).map(([titre, a]) => (
+                                <div key={titre}>
+                                  <p className="text-[12px] font-semibold text-txt-hi">{titre}</p>
+                                  <p className="mt-0.5 text-[11.5px] leading-snug text-txt">{a!.libelle}</p>
+                                  <FactNote>{a!.source_ref} · <a href={a!.lien} target="_blank" rel="noreferrer" className="underline hover:text-mint">voir le texte</a></FactNote>
+                                </div>
+                              ))}
+                              {(terf.dispositifs_dom ?? []).map((d) => (
+                                <div key={d.libelle} data-dispositif-dom>
+                                  <p className="text-[12px] font-semibold text-txt-hi">{d.libelle}</p>
+                                  <p className="mt-0.5 text-[11.5px] leading-snug text-txt">{d.detail}</p>
+                                  <FactNote>{d.source}</FactNote>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </Repli>
+                      )}
+                      {f.territoire_fiscal?.avertissement && <FactNote>{f.territoire_fiscal.avertissement}</FactNote>}
                     </>
                   )
                 })()}
-                {/* Fiscal & leviers (QPV / TVA / note taxe) — levier fiscal du bilan (§7). */}
-                <FiscalLeviersBlock idu={idu} />
-                {/* FICHE-1 lot 5 — taxe d'aménagement estimée + porte pour changer les hypothèses (§7). */}
-                {f.taxe_amenagement && <TaxeAmenagementBlock t={f.taxe_amenagement} />}
-                {f.taxe_amenagement && (
-                  <PorteOutil ico="€" data="taxe-amenagement-outil" titre="Taxe d'aménagement"
-                    sous="Changer les hypothèses (résidence principale, logement aidé, piscine, taux communal)"
-                    onClick={() => { setParcelPrefill(idu); setModule('taxe-amenagement') }} />
-                )}
-                {/* M106 P3 — DISPOSITIFS TERRITORIAUX (ZFANG / FRR ex-ZRR) relocalisés §7 : attribut de
-                    COMMUNE, états sourcés + lien texte. JAMAIS un chiffre fiscal (le fiscaliste tranche). */}
-                {f.territoire_fiscal && (
-                  <div className="flex flex-col gap-2.5" data-territoire-fiscal>
-                    <GroupLabel>Dispositifs territoriaux</GroupLabel>
-                    {/* RETOURS-23 Z3 — chaque dispositif est un fait à plat (titre · détail · source en
-                        note). Le périmètre fin qui touche LA parcelle (QPV / bande TVA 500 m) garde un
-                        filet gauche mint (marqueur, pas un cadre). Données/libellés/sources inchangés. */}
-                    {(f.territoire_fiscal.perimetres ?? []).map((p) => (
-                      <div key={p.libelle} data-fiche-perimetre className="border-l-2 border-mint pl-3">
-                        <p className="text-[12px] font-semibold text-txt-hi">{p.libelle}{p.derive && <span className="ml-1.5 rounded bg-surface-2 px-1 py-px text-[9px] uppercase tracking-wide text-txt-dim">estimé</span>}</p>
-                        <p className="mt-0.5 text-[11.5px] leading-snug text-txt">{p.detail}</p>
-                        <FactNote>{p.source}</FactNote>
-                      </div>
-                    ))}
-                    {([['ZFANG — zone franche d’activité', f.territoire_fiscal.zfang],
-                       ['FRR — France Ruralités Revitalisation (ex-ZRR)', f.territoire_fiscal.frr]] as const)
-                      .filter(([, a]) => !!a).map(([titre, a]) => (
-                      <div key={titre}>
-                        <p className="text-[12px] font-semibold text-txt-hi">{titre}</p>
-                        <p className="mt-0.5 text-[11.5px] leading-snug text-txt">{a!.libelle}</p>
-                        <FactNote>{a!.source_ref} · <a href={a!.lien} target="_blank" rel="noreferrer" className="underline hover:text-mint">voir le texte</a></FactNote>
-                      </div>
-                    ))}
-                    {/* RETOURS-11F3 F10 — dispositifs valables sur TOUTE La Réunion (zonage B1, TVA DOM
-                        8,5 % / 2,1 % LLS). Repères, jamais un calcul fiscal. */}
-                    {(f.territoire_fiscal.dispositifs_dom ?? []).map((d) => (
-                      <div key={d.libelle} data-dispositif-dom>
-                        <p className="text-[12px] font-semibold text-txt-hi">{d.libelle}</p>
-                        <p className="mt-0.5 text-[11.5px] leading-snug text-txt">{d.detail}</p>
-                        <FactNote>{d.source}</FactNote>
-                      </div>
-                    ))}
-                    {f.territoire_fiscal.avertissement && (
-                      <FactNote>{f.territoire_fiscal.avertissement}</FactNote>
-                    )}
-                  </div>
-                )}
               </div>
             </RefDrawer>
 
