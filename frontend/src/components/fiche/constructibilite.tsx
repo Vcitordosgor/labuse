@@ -5,9 +5,9 @@
  * Cycle-free : n'importe QUE des primitives + blocs feuilles, jamais Fiche.tsx.
  * Fiche.tsx ré-exporte Calculette + FaisabiliteTab (consommés par CalculetteFonciere / M22Programme).
  */
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { getCalculetteDefaults, getFaisabilite, getModeB, getPipelineForParcel, patchPipeline, postChargeFonciere, postFaisabiliteRecalcul, type CalculetteDefaults } from '../../lib/api'
+import { getCalculetteDefaults, getFaisabilite, getModeB, getPipelineForParcel, patchPipeline, postChargeFonciere, postFaisabiliteScenario, type CalculetteDefaults } from '../../lib/api'
 import { fmtEurCompact, fmtInt, fmtM2 } from '../../lib/format'
 import { PERIM_POTENTIEL_COURT } from '../../lib/perimetres'
 import { Squelette } from '../Loading'
@@ -379,124 +379,204 @@ function CalculetteBody({ idu, defauts, hideSource = false, prixDemandeExterne, 
 // Badges ÉQUIPEMENTS (mandat wave-ortho Lot 6) : piscine / PV / CES / pente — dans la
 // synthèse, sourcés « ortho IGN 2025, fiabilité statistique, non contractuelle ».
 
-// OUTILS-FIX-3 Lot F / RETOURS-13 P2 — `embedded` : FaisabiliteTab est partagé entre la FICHE et
-// l'OUTIL Faisabilité (M22, mode « par parcelle »). Le bouton IA « Expliquer ce calcul en clair »
-// (faisabiliteExplain) a été RETIRÉ des deux (RETOURS-13 P2 : un bloc, un rendu ; le Copilote reste
-// par « Poser une question »). `embedded` ne cantonne plus d'IA ici ; le calcul tracé, la capacité
-// et la charge foncière restent identiques en fiche comme dans l'outil.
+// FAISABILITE-3 (Vic 27/09/2026) — LE panneau de la maquette validée, une seule implémentation
+// partagée par l'outil Faisabilité (M22) et l'onglet Faisabilité de la fiche parcelle. RÈGLE
+// ABSOLUE : aucun calcul dans le front. Chaque chiffre (verdict, « ce qui limite », les 8 étapes,
+// la section PLU, le test d'un projet) vient d'UN SEUL appel au moteur (postFaisabiliteScenario →
+// faisabilite_scenario) ; le front ne fait que rendre et renvoyer le scénario + les hypothèses.
+// Le scénario est mémorisé dans la SESSION (Map ci-dessous) et, en projet, dans l'entrée pipeline
+// (prospection.faisa_scenario/faisa_overrides — doctrine 09/09), jamais en base hors projet.
+const _sessionScenario = new Map<string, 'terrain_libere' | 'bati_garde'>()
+type Sc = 'terrain_libere' | 'bati_garde'
+
+function SuiteChip({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button type="button" onClick={onClick}
+      className="rounded-lg border border-line-2 px-2.5 py-1.5 text-[11.5px] text-mint transition-colors duration-quick hover:border-mint hover:bg-mint/[0.06]">
+      {label} →
+    </button>
+  )
+}
+
 export function FaisabiliteTab({ idu }: { idu: string; embedded?: boolean }) {
-  const { data: b, isLoading, isError, refetch } = useQuery({ queryKey: ['bilan', idu], queryFn: () => getFaisabilite(idu) })
-  // §1e — le calcul étape par étape est OUVERT par défaut (on passait à côté quand il était replié) ;
-  // mis en valeur dans un encadré dédié « Le calcul, étape par étape » plutôt qu'un accordéon discret.
-  const [showSteps, setShowSteps] = useState(true)
-  // FAISABILITE-1 (lot D) — HYPOTHÈSES MODIFIABLES : les lignes Estimé/Dérivé sont éditables → recalcul
-  // immédiat de TOUT ce qui suit par le MOTEUR (endpoint /recalcul, aucune reimplémentation). Les valeurs
-  // se GARDENT DANS LE PROJET (prospection.faisa_overrides de l'entrée pipeline — jamais en base hors
-  // projet, jamais resservies sur une autre parcelle, doctrine 09/09). Bloc partagé fiche + outil (M22).
+  const { setModule, setParcelPrefill, chercherParCapacite } = useApp()
+  const [scenario, setScenario] = useState<Sc>(_sessionScenario.get(idu) ?? 'terrain_libere')
   const [overrides, setOverrides] = useState<Record<string, number>>({})
-  const [ovCharges, setOvCharges] = useState(false)
+  const [nLog, setNLog] = useState<number | null>(null)
+  const [surfLog, setSurfLog] = useState<number | null>(null)
+  const [showSteps, setShowSteps] = useState(false)   // « replié par défaut dans l'app » (maquette)
+  const [loaded, setLoaded] = useState(false)
+
+  // Projet : charge scénario + hypothèses gardés (une fois), persiste au fil des changements.
   const pipeQ = useQuery({ queryKey: ['pipe-faisa', idu], queryFn: () => getPipelineForParcel(idu) })
   const entryId = pipeQ.data?.entry?.id ?? null
   useEffect(() => {
-    if (!pipeQ.data || ovCharges) return
-    const ov = (pipeQ.data.entry?.prospection as Record<string, unknown> | undefined)?.faisa_overrides
+    if (!pipeQ.data || loaded) return
+    const pros = (pipeQ.data.entry?.prospection as Record<string, unknown> | undefined) ?? {}
+    const ov = pros.faisa_overrides
     if (ov && typeof ov === 'object') setOverrides(ov as Record<string, number>)
-    setOvCharges(true)
-  }, [pipeQ.data, ovCharges])
-  const recalc = useMutation({ mutationFn: (ov: Record<string, number>) => postFaisabiliteRecalcul(idu, ov) })
-  const recalcMutate = recalc.mutate
-  const nOv = Object.keys(overrides).length
+    const sc = pros.faisa_scenario
+    if (sc === 'terrain_libere' || sc === 'bati_garde') setScenario(sc)
+    setLoaded(true)
+  }, [pipeQ.data, loaded])
+
+  // Débounce des hypothèses + du test (le scénario, lui, bascule tout de suite).
+  const [deb, setDeb] = useState<{ ov: Record<string, number>; test: { n_logements: number | null; surface_par_logement: number | null } | null }>({ ov: {}, test: null })
   useEffect(() => {
-    if (!ovCharges) return
+    const t = window.setTimeout(() => setDeb({
+      ov: overrides,
+      test: nLog != null || surfLog != null ? { n_logements: nLog, surface_par_logement: surfLog } : null,
+    }), 350)
+    return () => window.clearTimeout(t)
+  }, [overrides, nLog, surfLog])
+
+  const q = useQuery({
+    queryKey: ['faisa-scenario', idu, scenario, JSON.stringify(deb.ov), JSON.stringify(deb.test)],
+    queryFn: () => postFaisabiliteScenario(idu, { scenario, overrides: deb.ov, test: deb.test }),
+    placeholderData: (prev) => prev,   // pas de flash au recalcul
+  })
+  const pan = q.data?.scenario ?? null
+
+  // Persiste scénario + hypothèses dans le projet (jamais bloquant).
+  useEffect(() => {
+    _sessionScenario.set(idu, scenario)
+    if (!loaded || entryId == null) return
     const t = window.setTimeout(() => {
-      if (nOv > 0) recalcMutate(overrides)                 // recalcul par le moteur
-      if (entryId != null) patchPipeline(entryId, { prospection: { faisa_overrides: overrides } }).catch(() => { /* projet non bloquant */ })
+      patchPipeline(entryId, { prospection: { faisa_overrides: overrides, faisa_scenario: scenario } })
+        .catch(() => { /* projet non bloquant */ })
     }, 350)
     return () => window.clearTimeout(t)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [overrides, ovCharges, entryId])
-  if (isLoading) return <Squelette lignes={4} />
-  if (isError || !b) return <ErrorState message="Faisabilité indisponible." retry={() => refetch()} />
+  }, [idu, scenario, overrides, loaded, entryId])
 
-  // capacité EFFECTIVE : le recalcul moteur (si des hypothèses sont modifiées) prime sur le servi.
-  const cap = (nOv > 0 && recalc.data?.capacite) ? recalc.data.capacite : b.capacite
-  const hypModif: { key: string; label: string; valeur: number; unite: string; min: number; max: number }[] =
-    cap?.hypotheses_modifiables ?? b.capacite?.hypotheses_modifiables ?? []
+  const chooseSc = (s: Sc) => { setScenario(s); _sessionScenario.set(idu, s) }
   const setOv = (key: string, v: number | null) => setOverrides((o) => {
     const n = { ...o }; if (v == null) delete n[key]; else n[key] = v; return n
   })
-  const fo = cap?.fourchette ?? {}
-  const steps: { label: string; valeur: string; source: string; prov: string }[] = cap?.steps ?? []
-  // FAISABILITE (mandat) — ÉTAPE MANQUANTE tracée : le saut « SHAB brute ~175 m² » (une étape) →
-  // « SHAB vendable ~123 m² » (en-tête) n'était pas dans la trace. Le vendable est calculé par le
-  // moteur (engine.py: shab_vendable_m2 = sol_central × logt_moyen) : c'est le nombre de logements
-  // RETENUS au sol (après plafond de densité ∩ stationnement ∩ modulation réunionnaise) reconverti en
-  // surface habitable (~72,5 m²/logt) — PAS un simple plafond appliqué à la SHAB brute. On expose la
-  // valeur SERVIE (fo.shab_vendable_m2), avec la vraie raison. Provenance « Dérivé » (cohérente moteur).
-  const stepsAff = steps.length > 0 && fo.shab_vendable_m2 != null
-    ? [...steps, {
-        label: 'SHAB vendable retenue',
-        valeur: `~${fmtM2(fo.shab_vendable_m2)}`,
-        source: 'logements retenus au sol × surface moyenne/logement — base du CA (la SHAB brute est théorique)',
-        prov: 'derive',   // LOT2 — la clé StepProv est 'derive' (sans accent) ; 'dérivé' retombait sur « — »
-      }]
-    : steps
-  // M58-P1 (c) : « un zéro n'est pas une absence ». Capacité réelle = fourchette logements > 0.
-  const logAuSol = Array.isArray(fo.logements_au_sol) ? fo.logements_au_sol : null
-  const logMax = logAuSol ? Math.max(logAuSol[0] ?? 0, logAuSol[1] ?? 0) : null
-  const capaciteReelle = logMax != null && logMax > 0
+  const goOutil = (key: string) => { setParcelPrefill(idu); setModule(key) }
+
+  if (q.isLoading && !pan) return <Squelette lignes={5} />
+  if (q.isError) return <ErrorState message="Faisabilité indisponible." retry={() => q.refetch()} />
+  if (!pan) return <p className="text-[11px] text-txt-mut">Zone PLU non résolue pour cette parcelle — capacité non calculable (honnête).</p>
+
+  const badges = pan.badges ?? {}
+  const test = pan.test as Record<string, any> | null
+  const rv: Record<string, any>[] = pan.plu?.regles_valeurs ?? []
+  const nOv = Object.keys(overrides).length
+  const hypModif: { key: string; label: string; valeur: number; unite: string; min: number; max: number }[] = pan.hypotheses_modifiables ?? []
+  const etapes: { n: number; label: string; valeur: string; source: string; prov: string }[] = pan.etapes ?? []
+
   return (
-    <div className="flex flex-col gap-3">
-      {/* ── LE RÉSULTAT (bloc capacité UNIQUE — M58-P1 b) ── */}
-      {/* RETOURS-20 Z3 — plus de boîte bordée mint : kicker « Capacité constructible » (verdict à
-          droite) + les 4 tuiles de stat (autorisées par la maquette). La phrase de méthode passe en
-          FactNote ; la zone non calibrée en Vigilance. */}
-      {cap ? (
-        <div>
-          <GroupLabel right={<span className="text-[13px] font-medium text-txt-hi normal-case">{cap.verdict}</span>}>Capacité constructible</GroupLabel>
-          {/* M58-P1 (c) : jamais « 0–0 » / « ( m) » / « ~— » — on n'affiche la grille que si la
-              capacité est réelle ; chaque champ retombe sur « — » plutôt qu'un zéro/vide trompeur. */}
-          {capaciteReelle ? (
-            <>
-              <div className="mt-1.5 grid grid-cols-2 gap-x-4 gap-y-1 text-[11px] text-txt-mut">
-                <div>Gabarit : <b className="text-txt">{fo.niveaux && fo.hauteur_m != null ? `${fo.niveaux} (${fo.hauteur_m} m)` : '—'}</b></div>
-                <div>SDP : <b className="text-txt">{fo.surface_plancher_m2 ? fmtM2(fo.surface_plancher_m2) : '—'}</b></div>
-                {/* RETOURS-11 F5 — fourchette bornes égales → un seul nombre (« 2 », plus jamais « 2–2 »). */}
-                <div>Logements : <b className="text-txt">{logAuSol![0] === logAuSol![1] ? `${logAuSol![0]}` : `${logAuSol![0]}–${logAuSol![1]}`}</b></div>
-                <div>SHAB vendable <span className="text-txt-dim">({PERIM_POTENTIEL_COURT})</span> : <b className="text-txt">{fo.shab_vendable_m2 ? `~${fmtM2(fo.shab_vendable_m2)}` : '—'}</b></div>
-              </div>
-              {/* FAISABILITE (mandat) : dire pourquoi la SHAB vendable (~123) < SHAB brute — c'est le
-                  nombre de logements RETENUS reconverti en surface, pas un plafond sur la brute (théorique). */}
-              <FactNote>SHAB vendable = logements retenus au sol × surface moyenne/logement (fourchette après plafond de densité). La SHAB brute est théorique, hors bâti existant.</FactNote>
-            </>
-          ) : (
-            <div className="mt-1.5 text-[11px] text-txt-faint">Capacité logements non calculable pour cette parcelle.</div>
-          )}
-          {!cap.calibree && <div className="mt-1 text-[11px] text-st-creuser">▲ estimation générique (zone non calibrée)</div>}
-          <FactNote>{cap.bandeau}</FactNote>
+    <div data-faisa-panneau className="flex flex-col gap-3">
+      {/* 1 · SCÉNARIO — deux cartes (« En gardant le bâti » visible seulement si bati_present) */}
+      <div data-faisa-scenarios className="flex gap-2">
+        <button data-sc="terrain_libere" onClick={() => chooseSc('terrain_libere')}
+          className={`flex-1 rounded-lg border px-2.5 py-2 text-left transition-colors duration-quick ${pan.scenario === 'terrain_libere' ? 'border-2 border-mint bg-mint/[0.08]' : 'border-line-2 hover:border-mint/50'}`}>
+          <div className={`text-[12.5px] font-medium ${pan.scenario === 'terrain_libere' ? 'text-mint' : 'text-txt'}`}>Terrain libéré</div>
+          <div className="text-[10.5px] text-txt-dim">l'enveloppe du terrain, bâti rasé</div>
+        </button>
+        {pan.bati_present && (
+          <button data-sc="bati_garde" onClick={() => chooseSc('bati_garde')}
+            className={`flex-1 rounded-lg border px-2.5 py-2 text-left transition-colors duration-quick ${pan.scenario === 'bati_garde' ? 'border-2 border-mint bg-mint/[0.08]' : 'border-line-2 hover:border-mint/50'}`}>
+            <div className={`text-[12.5px] font-medium ${pan.scenario === 'bati_garde' ? 'text-mint' : 'text-txt'}`}>En gardant le bâti</div>
+            <div className="text-[10.5px] text-txt-dim">{pan.bati_libelle ?? 'bâti existant conservé'}</div>
+          </button>
+        )}
+      </div>
+
+      {/* 2 · VERDICT (bloc surligné) */}
+      <div data-faisa-verdict className="rounded-xl border-2 border-mint/70 bg-mint/[0.05] px-3 py-2.5">
+        <div className="text-[10.5px] uppercase tracking-wide text-txt-dim">
+          Verdict · zone {pan.zone}{pan.a_cheval && pan.portion_zone ? ` (à cheval)` : ''} · {fmtM2(pan.surface_m2)}
+          {q.isFetching && <span className="ml-2 animate-pulse text-mint">recalcul…</span>}
         </div>
-      ) : (
-        <p className="text-[11px] text-txt-mut">
-          Zone PLU non résolue pour cette parcelle — capacité non calculable (honnête).
-        </p>
+        <div data-faisa-verdict-phrase className="mt-1 text-[15px] font-medium leading-snug text-txt-hi">{pan.verdict}</div>
+        {pan.ce_qui_limite && (
+          <div className="mt-2 flex items-baseline gap-2 text-[12px]">
+            <Badge ton="ambre">Ce qui limite</Badge>
+            <span className="text-txt-mut">{pan.ce_qui_limite}</span>
+          </div>
+        )}
+        <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px]">
+          {badges.regles_sourcees && <Badge ton="vert">Règles sourcées</Badge>}
+          {badges.plancher_estime && <Badge ton="ambre">Plancher estimé</Badge>}
+          {badges.plu_approuve_le && <span className="truncate text-txt-dim" title={String(badges.plu_approuve_le)}>PLU — {String(badges.plu_approuve_le)}</span>}
+        </div>
+      </div>
+
+      {/* 3 · TESTER UN PROJET — deux champs libres, pas de projet pré-rempli */}
+      <div data-faisa-test>
+        <GroupLabel>Tester un projet · vos chiffres</GroupLabel>
+        <div className="mt-1 grid grid-cols-2 gap-x-3 gap-y-2">
+          <HypInput label="Nombre de logements" suffix="" value={nLog} placeholder="—" onChange={setNLog} />
+          <HypInput label="Surface de plancher / logement" suffix="m²" value={surfLog} placeholder="—" onChange={setSurfLog} />
+        </div>
+        {test && (
+          <div data-faisa-test-result className="mt-2 text-[12px]">
+            {test.statut === 'a_completer' && (<><Badge ton="neutre">À compléter</Badge> <span className="text-txt-dim">{test.message}</span></>)}
+            {test.statut === 'non_autorise' && (<><Badge ton="ambre">Logement non autorisé</Badge> <span className="text-txt-mut">{test.message}</span></>)}
+            {test.statut === 'tient' && (
+              <><Badge ton="vert">Tient</Badge> <span className="text-txt-mut">{fmtM2(test.besoin_m2)} sur {fmtM2(test.possible_m2)} possibles{test.places != null ? ` · ${test.places} place(s)` : ''}{test.demolition_m2 ? ` · démolition de ${fmtM2(test.demolition_m2)} à chiffrer` : ''}</span></>
+            )}
+            {test.statut === 'ne_tient_pas' && (
+              <><Badge ton="ambre">Ne tient pas</Badge> <span className="text-txt-mut">il manque {fmtM2(test.manque_m2)} de plancher ({fmtM2(test.besoin_m2)} demandés pour {fmtM2(test.possible_m2)} possibles)</span></>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* 4 · CE QUE LE PLU PERMET — chaque ligne : valeur + article/page cliquable (annuaire PLU) */}
+      {rv.length > 0 && (
+        <div data-faisa-plu>
+          <GroupLabel>Ce que le PLU permet · règlement {pan.zone}</GroupLabel>
+          <div className="mt-0.5">
+            {rv.map((r) => (
+              <div key={r.cle} className="flex items-baseline justify-between gap-2 border-b border-line/60 py-1 text-[12px] last:border-0">
+                <span className="text-txt-mut">{r.libelle}</span>
+                <span className="flex items-baseline gap-1.5 text-right">
+                  <span className={r.etat === 'non_modelisee' || r.etat === 'absent' ? 'text-txt-dim' : 'text-txt'}>{r.valeur}</span>
+                  {r.reference && <RefLink href={r.url}>{r.reference}</RefLink>}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
-      {/* ── LE CALCUL, ÉTAPE PAR ÉTAPE (déterministe) — §1e : ouvert par défaut ── */}
-      {/* RETOURS-20 Z3 — plus de boîte bordée mint autour : le bouton de repli sert d'en-tête, la
-          liste d'étapes (ol.steps + StepProv) garde sa structure (rule 7, conforme maquette). */}
-      {stepsAff.length > 0 && (
-        <div>
+      {/* 5 · NOS HYPOTHÈSES (3 seulement) — tout se recalcule au moteur */}
+      {hypModif.length > 0 && (
+        <div data-faisa-hypotheses>
+          <div className="mb-1 flex items-center justify-between gap-2">
+            <span className="text-[11px] font-semibold uppercase tracking-wide text-mint">Nos hypothèses · modifiables</span>
+            {nOv > 0 && (
+              <button data-faisa-hyp-reset onClick={() => setOverrides({})}
+                className="shrink-0 text-[10.5px] text-txt-dim underline decoration-txt-dim/40 underline-offset-2 transition-colors duration-quick hover:text-mint">
+                ↻ Revenir aux valeurs LABUSE
+              </button>
+            )}
+          </div>
+          <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+            {hypModif.map((h) => (
+              <HypInput key={h.key} label={h.label} suffix={h.unite} hint={overrides[h.key] != null}
+                value={overrides[h.key] ?? null} placeholder={String(h.valeur)}
+                onChange={(v) => setOv(h.key, v)} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 6 · LE CALCUL, ÉTAPE PAR ÉTAPE (8 étapes, replié par défaut) */}
+      {etapes.length > 0 && (
+        <div data-faisa-steps-wrap>
           <button onClick={() => setShowSteps((s) => !s)} className="mb-1 flex w-full items-center justify-between text-[11px] font-semibold uppercase tracking-wide text-mint transition-colors duration-quick hover:text-txt-hi">
-            <span>▾ Le calcul, étape par étape ({stepsAff.length})</span>
+            <span>▾ Le calcul, étape par étape ({etapes.length})</span>
             <span>{showSteps ? '−' : '+'}</span>
           </button>
           {showSteps && (
-            // RETOURS-23 Z3 — plus de boîte striée (card-elev + bg alternés) : filets entre étapes,
-            // valeur mono alignée à droite, badge de provenance sous la ligne (grammaire de la maquette).
             <ol data-faisa-steps>
-              {stepsAff.map((s, i) => (
-                <li key={i} className="flex items-start gap-2 border-b border-line/60 py-1.5 text-[11px] last:border-0">
-                  <span className="shrink-0 font-mono text-[9px] text-txt-dim">{i + 1}</span>
+              {etapes.map((s) => (
+                <li key={s.n} className="flex items-start gap-2 border-b border-line/60 py-1.5 text-[11px] last:border-0">
+                  <span className="shrink-0 font-mono text-[9px] text-txt-dim">{s.n}</span>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-baseline justify-between gap-2">
                       <span className="text-txt">{s.label}</span>
@@ -514,42 +594,17 @@ export function FaisabiliteTab({ idu }: { idu: string; embedded?: boolean }) {
         </div>
       )}
 
-      {/* ── HYPOTHÈSES MODIFIABLES (FAISABILITE-1 lot D) — les lignes Estimé du calcul, éditables ;
-          recalcul immédiat par le moteur ; « Revenir aux hypothèses LABUSE » ; gardées dans le projet. ── */}
-      {cap && hypModif.length > 0 && (
-        <div data-faisa-hypotheses>
-          <div className="mb-1 flex items-center justify-between gap-2">
-            <span className="text-[11px] font-semibold uppercase tracking-wide text-mint">Hypothèses (modifiables)</span>
-            {nOv > 0 && (
-              <button data-faisa-hyp-reset onClick={() => setOverrides({})}
-                className="shrink-0 text-[10.5px] text-txt-dim underline decoration-txt-dim/40 underline-offset-2 transition-colors duration-quick hover:text-mint">
-                Revenir aux hypothèses LABUSE
-              </button>
-            )}
-          </div>
-          <div className="grid grid-cols-2 gap-x-3 gap-y-2">
-            {hypModif.map((h) => (
-              <HypInput key={h.key} label={h.label} suffix={h.unite} hint={overrides[h.key] != null}
-                value={overrides[h.key] ?? null} placeholder={String(h.valeur)}
-                onChange={(v) => setOv(h.key, v)} />
-            ))}
-          </div>
-          <p className="mt-1.5 text-[9.5px] leading-snug text-txt-dim">
-            Les lignes <b className="text-txt-mut">Sourcé</b> (règle PLU) sont verrouillées ; modifier une hypothèse recalcule tout ce qui suit.
-            {entryId != null ? ' Vos valeurs sont gardées dans le projet.' : ' Ajoutez la parcelle à un projet pour garder vos valeurs.'}
-            {recalc.isPending && <span className="text-mint"> · recalcul…</span>}
-          </p>
-        </div>
-      )}
-
-      {/* RETOURS-13 P2 — le bouton violet « Expliquer ce calcul en clair » (faisabiliteExplain) et
-          son encart AvisIA sont RETIRÉS du tiroir Potentiel. Bloc partagé fiche + outil Faisabilité :
-          un bloc, un rendu → il part des deux. Le Copilote reste accessible par « Poser une question »
-          (en-tête de fiche). Le calcul étape par étape, la capacité et la charge foncière restent. */}
-
-      {/* M60 P1a — la CALCULETTE interactive a quitté la fiche : elle vit dans l'outil « Calculette
-          foncière » (moteur unique). La fiche garde le bilan en LECTURE (capacité/gabarit/SDP ci-dessus)
-          + une PORTE pré-remplie posée au pied du tiroir Constructibilité (voir Fiche, RefDrawer faisabilite). */}
+      {/* 7 · SUITES — pas de deuxième porte ; le lien capacité reste discret sous le tout */}
+      <div data-faisa-suites className="flex flex-wrap gap-1.5">
+        <SuiteChip label="Voir en 3D" onClick={() => goOutil('gabarit')} />
+        <SuiteChip label="Taxe d'aménagement" onClick={() => goOutil('taxe-amenagement')} />
+        <SuiteChip label="Comparer" onClick={() => goOutil('comparer')} />
+        <SuiteChip label="Écrire au propriétaire" onClick={() => goOutil('courriers')} />
+      </div>
+      <div className="text-[10.5px] leading-snug text-txt-dim">
+        <button onClick={() => chercherParCapacite()} className="underline decoration-txt-dim/40 underline-offset-2 transition-colors duration-quick hover:text-mint">Chercher des parcelles par capacité →</button>
+        {' · '}{pan.bandeau ?? 'Pré-faisabilité sur règlement public, pas un certificat d’urbanisme.'}
+      </div>
     </div>
   )
 }

@@ -1,0 +1,76 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Maquette FAISABILITE-3 — validée par Vic le 27/09/2026</title>
+<style>
+:root{--bg:#0f1512;--card:#151d18;--line:#26332b;--txt:#e8ede9;--mut:#8c9a91;--green:#7ee0a0;--greenbg:#173a26;--amber:#f0c060;--amberbg:#3a2f12;--red:#f08a7a;--redbg:#3a1c17}
+body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.5 -apple-system,Inter,Helvetica,Arial,sans-serif}
+.wrap{max-width:440px;margin:0 auto;padding:20px 16px}
+.b{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:0 0 10px;background:var(--card)}
+.h{font-size:12px;color:var(--mut);margin:0 0 8px}
+.r{display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:5px 0;border-top:1px solid var(--line);gap:8px}
+.r:first-of-type{border-top:none}
+.tg{font-size:11px;padding:2px 7px;border-radius:4px;white-space:nowrap}
+.s{background:var(--greenbg);color:var(--green)}.e{background:var(--amberbg);color:var(--amber)}.d{background:var(--redbg);color:var(--red)}.n2{background:#20281f;color:var(--mut)}
+.m{color:var(--mut);font-size:11px}
+.sc{flex:1;padding:8px 10px;border:1px solid var(--line);border-radius:8px;cursor:pointer;background:transparent;color:var(--txt);text-align:left;font-size:13px}
+.sc.on{border:2px solid var(--green);background:var(--greenbg);color:var(--green)}
+input{background:#0c110e;border:1px solid var(--line);border-radius:6px;color:var(--txt);height:30px;padding:0 8px;font-size:13px}
+input.n{width:62px;text-align:right}
+.a{font-size:12px;color:var(--green);padding:6px 10px;border:1px solid var(--line);border-radius:8px}
+a{color:var(--mut)}
+.note{font-size:12px;color:var(--mut);border:1px dashed var(--line);border-radius:8px;padding:8px 10px;margin-bottom:12px}
+</style></head><body><div class="wrap">
+<div class="note">Maquette de référence FAISABILITE-3 (validée 27/09/2026). Les chiffres sont ceux de BZ1065 ; dans l'app, ils viennent TOUS du moteur (aucun calcul dans le front). Le JS ci-dessous n'existe que pour montrer le comportement attendu.</div>
+<div style="font-size:18px;font-weight:500">Faisabilité</div>
+<div style="font-size:13px;color:var(--mut);margin:2px 0 10px">Ce que le PLU laisse construire sur cette parcelle.</div>
+<input type="text" value="3 Chemin de la Citerne, Saint-Denis · BZ1065" style="width:100%;box-sizing:border-box;margin-bottom:12px"/>
+<div style="display:flex;gap:8px;margin-bottom:10px">
+<button class="sc on" data-s="l"><div style="font-weight:500">Terrain libéré</div><div class="m">l'enveloppe du terrain, bâti rasé</div></button>
+<button class="sc" data-s="g"><div style="font-weight:500">En gardant le bâti</div><div class="m">maison 193 m² · 10,3 m</div></button>
+</div>
+<div class="b" style="border:2px solid var(--green)">
+<div class="h">Verdict · zone Uh · 1 625 m²</div>
+<div id="v1" style="font-size:17px;font-weight:500;line-height:1.35"></div>
+<div id="lim" style="margin-top:8px;font-size:13px"></div>
+<div style="margin-top:8px;display:flex;gap:6px;font-size:12px"><span class="tg s">Règles sourcées</span><span class="tg e">Plancher estimé</span><span class="m">PLU approuvé le 05/08/2026</span></div>
+</div>
+<div class="b"><div class="h">Tester un projet · vos chiffres</div>
+<div class="r"><span>Nombre de logements</span><span><input class="n" id="pn" type="number" value="2" min="1" step="1"/></span></div>
+<div class="r"><span>Surface de plancher par logement</span><span><input class="n" id="ps" type="number" value="90" min="10" step="5"/> m²</span></div>
+<div id="vd" style="font-size:14px;font-weight:500;margin-top:8px"></div><div id="vx" class="m" style="margin-top:4px"></div></div>
+<div class="b"><div class="h">Ce que le PLU permet · règlement Uh</div>
+<div class="r"><span>Hauteur</span><span>7 m faîtage · 4,5 m égout <a class="m" href="#">Uh.10 p.73</a></span></div>
+<div class="r"><span>Emprise au sol</span><span>30 % <a class="m" href="#">Uh.9</a></span></div>
+<div class="r"><span>Reculs voie · limites</span><span>3 m · 4 m <a class="m" href="#">Uh.6-7</a></span></div>
+<div class="r"><span>Stationnement</span><span>1 place / logement <a class="m" href="#">art. XVII</a></span></div>
+<div class="r"><span>Mixité sociale</span><span>15 % dès 30 logts <a class="m" href="#">Uh.2</a></span></div></div>
+<div class="b"><div class="h">Nos hypothèses · modifiables, tout se recalcule</div>
+<div class="r"><span>Occupation du gabarit</span><span><input class="n" id="occ" type="number" value="50" min="10" max="100" step="5"/> %</span></div>
+<div class="r"><span>Surface moyenne par logement</span><span><input class="n" id="sl" type="number" value="70" min="20" step="5"/> m²</span></div>
+<div class="r"><span>Plancher → habitable</span><span><input class="n" id="rd" type="number" value="80" min="50" max="100" step="5"/> %</span></div>
+<div style="font-size:12px;color:var(--green);margin-top:8px;cursor:pointer" id="rs">↻ Revenir aux valeurs LABUSE</div></div>
+<div class="b"><div class="h">Le calcul, étape par étape (replié par défaut dans l'app)</div>
+<div class="r"><span>1 · Zone d'implantation après reculs</span><span>927 m² <span class="tg s">Sourcé</span></span></div>
+<div class="r"><span>2 · Emprise au sol max (30 %)</span><span>488 m² <span class="tg s">Sourcé</span></span></div>
+<div class="r"><span>3 · Niveaux (égout 4,5 m)</span><span>1 · R+0 <span class="tg s">Sourcé</span></span></div>
+<div class="r"><span>4 · Plancher max (× occupation)</span><span><span id="e4"></span> <span class="tg e">Estimé</span></span></div>
+<div class="r"><span>5 · Bâti existant (LiDAR)</span><span><span id="e5"></span> <span class="tg s">Sourcé</span></span></div>
+<div class="r"><span>6 · Plancher possible</span><span><span id="e6"></span> <span class="tg n2">Dérivé</span></span></div>
+<div class="r"><span>7 · Logements (rendement, surface)</span><span><span id="e7"></span> <span class="tg e">Estimé</span></span></div>
+<div class="r"><span>8 · Stationnement (1 / logement)</span><span><span id="e8"></span> <span class="tg s">Sourcé</span></span></div></div>
+<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px"><span class="a">Voir en 3D →</span><span class="a">Taxe d'aménagement →</span><span class="a">Comparer →</span><span class="a">Écrire au propriétaire →</span></div>
+<div class="m" style="margin-top:10px">Chercher des parcelles par capacité → · Pré-faisabilité sur règlement public, pas un certificat d'urbanisme.</div>
+</div>
+<script>
+const g=id=>document.getElementById(id);let S='l';
+function calc(){const occ=+g('occ').value||0,sl=+g('sl').value||1,rd=+g('rd').value||0;const e4=Math.round(488*occ/100);const e5=S==='g'?219:0;const e6=Math.max(0,e4-e5);const hab=e6*rd/100;const a=Math.floor(hab/sl),b=Math.ceil(hab/sl);const lg=a===b?String(a):a+' à '+b;
+g('e4').textContent=e4+' m²';g('e5').textContent=S==='g'?'219 m² conservés':'0 m² (démolition de 193 m²)';g('e6').textContent=e6+' m²';g('e7').textContent=lg;g('e8').textContent=lg+' place(s)';
+if(S==='l'){g('v1').textContent="Jusqu'à "+e6+" m² de plancher · "+lg+" logement(s)";g('lim').innerHTML='<span class="tg d">Ce qui limite</span> &nbsp;emprise au sol 30 % et hauteur 7 m (R+0 sur l\'égout)';}
+else{g('v1').textContent=(e6<=30?'Presque saturée : ':'')+e6+' m² de plancher encore possibles';g('lim').innerHTML='<span class="tg d">Ce qui limite</span> &nbsp;hauteur 7 m au faîtage, le bâti mesure 10,3 m — pas de surélévation';}
+const n=+g('pn').value||0,s=+g('ps').value||0,need=n*s;
+if(!n||!s){g('vd').innerHTML='<span class="tg n2">À compléter</span> &nbsp;indiquez un nombre et une surface';g('vx').textContent='';return;}
+if(need<=e6){g('vd').innerHTML='<span class="tg s">Tient</span> &nbsp;'+need+' m² sur '+e6+' m² possibles';g('vx').textContent=n+' place(s) de stationnement'+(S==='l'?' · démolition de 193 m² à chiffrer':'');}
+else{g('vd').innerHTML='<span class="tg d">Ne tient pas</span> &nbsp;il manque '+(need-e6)+' m² de plancher';g('vx').textContent=e6+' m² possibles pour '+need+' m² demandés';}}
+['occ','sl','rd','pn','ps'].forEach(i=>g(i).addEventListener('input',calc));
+g('rs').addEventListener('click',()=>{g('occ').value=50;g('sl').value=70;g('rd').value=80;calc();});
+document.querySelectorAll('.sc').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.sc').forEach(x=>x.classList.remove('on'));b.classList.add('on');S=b.dataset.s;calc();}));
+calc();
+</script></body></html>
