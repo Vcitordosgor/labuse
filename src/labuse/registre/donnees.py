@@ -1175,6 +1175,13 @@ DONNEES: dict[str, Donnee] = {
     # d'époque (RETOURS-14, cadastre_historique JOIN → sitadel_permits.geom) : cadastre_epoque
     # est donc un réservoir des permis (lecteur déclaré).
     reservoirs=("sitadel", "cadastre_epoque",), portee="live", type="liste", table="sitadel_permits"),
+ "etablissements_parcelle_liste": C("Établissements sur la parcelle", "liste", "parcelle",
+    "établissements SIRENE rattachés à la parcelle par l'adresse BAN (précision « adresse » seulement) "
+    "— nom, NAF fin, tranche d'effectif, état + régime collectif BODACC ; nom masqué si non diffusible",
+    moteur="sirene_etablissements", calcul="moteur",
+    fonction="src/labuse/api/app.py:_etablissements_block",
+    reservoirs=("sirene_etablissements", "ban", "bodacc",), portee="live", type="liste",
+    table="etablissement_parcelle + sirene_etablissements"),
  "voisinage_100m_liste": C("Autour, à moins de 100 m", "liste", "parcelle",
     "ventes DVF + permis récents (36 mois) dans le buffer 100 m, site exclu (doctrine M38)",
     moteur="marche_service", calcul="moteur",

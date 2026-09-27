@@ -348,8 +348,11 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
                   onChange={() => setSel((s) => { const n = new Set(s); n.has(idu) ? n.delete(idu) : n.add(idu); return n })} />
                 <div className="min-w-0 flex-1">
                 {/* RECETTE-1 R8 — pastille de palier (scoring q_v14) retirée du Scan patrimoine. */}
+                {/* KELFONCIER-FIX-1 (Lot H) — « occupé par N établissements » (SIRENE rattaché par
+                    l'adresse BAN, même source que la fiche §3). Silencieux si 0. */}
                 <Row idu={idu} hoverFull
-                  sub={`${i['commune']} · ${fmt(i['surface_m2'] as number)} m² · SDP ${fmt(i['sdp'] as number)}`}
+                  sub={`${i['commune']} · ${fmt(i['surface_m2'] as number)} m² · SDP ${fmt(i['sdp'] as number)}`
+                    + (Number(i['n_etablissements']) > 0 ? ` · occupé par ${fmt(i['n_etablissements'] as number)} établissement${Number(i['n_etablissements']) > 1 ? 's' : ''}` : '')}
                   fiche={[['Propriétaire', String(d['nom'])], ['SIREN', String(d['siren'])],
                     ['Patrimoine', `${d['n_parcelles']} parcelles · SDP résiduelle ${fmt(d['sdp_residuelle_m2'] as number)} m²`]]} />
                 </div>

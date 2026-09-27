@@ -4174,6 +4174,8 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
         "historique_site": _historique_site(db, idu),      # M42 — « Sur cette parcelle » (permis + caduc)
         "voisinage_proche": _voisinage_proche(db, idu),    # M42 — « Autour, à moins de 100 m »
         "potentiel_transformation": _potentiel_transformation_block(db, idu),
+        # KELFONCIER-FIX-1 (Lot H) — « Établissements sur la parcelle » (§3 Bâti), rattachement BAN.
+        "etablissements": _etablissements_block(db, idu),
         "completeness_score": head["completeness_score"],  # M129-B : a_completude (matrice) retiré
         "coords": [round(head["lon"], 6), round(head["lat"], 6)],
         # KELFONCIER-FIX-1 (Lot G) — Street View (§1 Identité) : URL d'embed centrée sur le centroïde,
@@ -5366,6 +5368,69 @@ def _pm_identite(db: Session, siren: str | None) -> dict | None:
         "annuaire_url": f"https://annuaire-entreprises.data.gouv.fr/entreprise/{siren}",
         "source": "SIRENE (INSEE, open data)",
     }
+
+
+# KELFONCIER-FIX-1 (Lot H) — libellés INSEE des tranches d'effectif salarié (jamais l'effectif exact).
+_TRANCHE_EFFECTIF = {
+    "00": "0 salarié", "01": "1 à 2 salariés", "02": "3 à 5 salariés", "03": "6 à 9 salariés",
+    "11": "10 à 19 salariés", "12": "20 à 49 salariés", "21": "50 à 99 salariés",
+    "22": "100 à 199 salariés", "31": "200 à 249 salariés", "32": "250 à 499 salariés",
+    "41": "500 à 999 salariés", "42": "1 000 à 1 999 salariés", "51": "2 000 à 4 999 salariés",
+    "52": "5 000 à 9 999 salariés", "53": "10 000 salariés et plus",
+}
+_ETAB_FICHE_CAP = 25   # plafond d'affichage (une adresse partagée peut porter des centaines d'établissements)
+
+
+def _etablissements_block(db: Session, idu: str) -> dict | None:
+    """KELFONCIER-FIX-1 (Lot H) — « Établissements sur la parcelle » (fiche §3 Bâti). Lit la table
+    matérialisée `etablissement_parcelle` (rattachement BAN, précision « adresse » seulement) jointe à
+    SIRENE : nom · NAF fin · tranche d'effectif · état, plus le régime collectif BODACC (même lecture
+    que Scan patrimoine / fiche §1). Nom MASQUÉ si `diffusible=false` (RGPD). None si aucun établissement."""
+    if db.execute(text("SELECT to_regclass('etablissement_parcelle') IS NULL")).scalar():
+        return None
+    total = db.execute(text("SELECT count(*) FROM etablissement_parcelle WHERE idu = :i"),
+                       {"i": idu}).scalar() or 0
+    if not total:
+        return None
+    rows = db.execute(text(
+        """SELECT s.siret, s.siren, s.denomination, s.enseigne, s.naf, s.tranche_effectif,
+                  s.actif, s.diffusible, ep.precision
+             FROM etablissement_parcelle ep
+             JOIN sirene_etablissements s ON s.siret = ep.siret
+            WHERE ep.idu = :i
+            ORDER BY s.tranche_effectif DESC NULLS LAST, s.denomination NULLS LAST
+            LIMIT :lim"""), {"i": idu, "lim": _ETAB_FICHE_CAP}).mappings().all()
+    from ..naf_labels import label as _naf_label
+    # régime collectif BODACC (radiation / procédure collective) par SIREN — une seule requête groupée.
+    sirens = sorted({r["siren"] for r in rows if r["siren"]})
+    regime: dict[str, dict] = {}
+    if sirens:
+        for b in db.execute(text(
+            "SELECT siren, famille, max(date_annonce)::text AS d FROM bodacc_annonces_owner "
+            "WHERE siren = ANY(:s) AND famille IN ('radiation','pcl') GROUP BY siren, famille"),
+                {"s": sirens}).mappings().all():
+            lib = (f"radiée le {b['d']}" if b["famille"] == "radiation"
+                   else f"procédure collective (annonce {b['d']})")
+            regime[b["siren"]] = {"type": "radiée" if b["famille"] == "radiation" else "procédure collective",
+                                  "libelle": lib, "source": "BODACC"}
+    liste = []
+    for r in rows:
+        diffusible = bool(r["diffusible"])
+        nom = (r["denomination"] or r["enseigne"]) if diffusible else None
+        liste.append({
+            "siret": r["siret"],
+            "nom": nom or "Nom non diffusible (RGPD)",
+            "nom_masque": not diffusible,
+            "naf": r["naf"], "naf_label": _naf_label(r["naf"]) if r["naf"] else None,
+            "tranche_effectif": _TRANCHE_EFFECTIF.get(r["tranche_effectif"] or "", None),
+            "actif": bool(r["actif"]),
+            "precision": r["precision"],   # qualite_xy INSEE (11/12), dit au client
+            "regime_collectif": regime.get(r["siren"]),
+        })
+    return {"n": int(total), "affiches": len(liste), "liste": liste,
+            "note": ("Rattachement par l'adresse BAN (précision « adresse » seulement — « voie » et "
+                     "« commune » ne sont pas rattachés). Nom masqué si l'unité est non diffusible."),
+            "source": "INSEE SIRENE (établissements actifs) · BAN (rattachement) · BODACC (régime collectif)"}
 
 
 def _historique_site(db: Session, idu: str) -> dict | None:

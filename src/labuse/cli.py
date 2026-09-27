@@ -1565,6 +1565,18 @@ def ingest_taxe_amenagement_cmd() -> None:
     _jouer_filtre_apres_ingestion("taxe_amenagement", "ingest-taxe-amenagement")
 
 
+@app.command("build-etablissement-parcelle")
+def build_etablissement_parcelle_cmd() -> None:
+    """KELFONCIER-FIX-1 (Lot H) — (re)construit le rattachement établissement→parcelle par l'adresse BAN
+    (`etablissement_parcelle`). Aussi joué automatiquement à la suite du job mensuel SIRENE."""
+    from .ingestion.etablissement_parcelle import build_etablissement_parcelle, ensure_tables
+    ensure_tables(engine())
+    with session_scope() as s:
+        res = build_etablissement_parcelle(s)
+    typer.echo(f"✓ etablissement_parcelle : {res['rattaches']} rattachés / {res['n_etab_adresse']} "
+               f"(précision adresse) — {res['non_rattaches']} hors rayon (non rattachés).")
+
+
 @app.command("ingest-ort")
 def ingest_ort_cmd() -> None:
     """SOURCES-1 lot 5 — ACV/PVD/ORT (DGALN, table grist complète). Table commune_ort,

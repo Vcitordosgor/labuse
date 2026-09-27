@@ -359,6 +359,13 @@ export interface Fiche {
     veille_au?: string | null
   } | null
   // M42 : « Sur cette parcelle » (historique permis + caducité) — contexte, 0 tier.
+  // KELFONCIER-FIX-1 (Lot H) — établissements SIRENE rattachés à la parcelle par l'adresse BAN (§3 Bâti).
+  etablissements?: {
+    n: number; affiches: number; note: string; source: string
+    liste: { siret: string; nom: string; nom_masque: boolean; naf: string | null; naf_label: string | null;
+             tranche_effectif: string | null; actif: boolean; precision: string | null;
+             regime_collectif: { type: string; libelle: string; source: string } | null }[]
+  } | null
   historique_site?: {
     indisponible?: boolean; raison?: string   // M125 — état PANNE (≠ absence)
     titre: string; n_permis: number; source: string; honnetete: string

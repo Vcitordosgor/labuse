@@ -143,6 +143,26 @@ export function BatiBlock({ f }: { f: Fiche }) {
             src={b.adresses_bati.source} />
         </div>
       )}
+      {/* KELFONCIER-FIX-1 (Lot H) — ÉTABLISSEMENTS sur la parcelle (SIRENE, rattachés par l'adresse BAN).
+          Nom · NAF fin · tranche d'effectif · état + régime collectif BODACC. Nom masqué si non diffusible. */}
+      {f.etablissements && f.etablissements.n > 0 && (
+        <div data-etablissements>
+          <div className="mt-2 mb-1 text-[11px] uppercase tracking-wide opacity-60">
+            Établissements sur la parcelle{f.etablissements.n > f.etablissements.affiches
+              ? ` (${f.etablissements.affiches} affichés sur ${f.etablissements.n})` : ` (${f.etablissements.n})`}
+          </div>
+          {f.etablissements.liste.map((e) => (
+            <FactRow key={e.siret}
+              label={<span className={e.nom_masque ? 'italic opacity-70' : ''}>{e.nom}</span>}
+              value={<>{e.naf_label ?? e.naf ?? '—'}
+                {e.tranche_effectif ? <> <small>· {e.tranche_effectif}</small></> : null}
+                {!e.actif ? <> <small className="text-txt-dim">· fermé</small></> : null}
+                {e.regime_collectif ? <> <small className="text-st-ecartee">· {e.regime_collectif.libelle}</small></> : null}</>}
+              src={e.naf ? `SIRENE${e.precision ? ` · position ${e.precision}` : ''}` : undefined} />
+          ))}
+          <FactNote>{f.etablissements.note}</FactNote>
+        </div>
+      )}
       <FactNote>Bâti existant — {b.source_bati}. Information de fiche, jamais un signal de classement.</FactNote>
     </div>
   )
