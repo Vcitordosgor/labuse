@@ -6,7 +6,7 @@
  * Fiche.tsx ré-exporte Calculette + FaisabiliteTab (consommés par CalculetteFonciere / M22Programme).
  */
 import { useQuery } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { getCalculetteDefaults, getFaisabilite, getModeB, getPipelineForParcel, patchPipeline, postChargeFonciere, postFaisabiliteScenario, type CalculetteDefaults } from '../../lib/api'
 import { fmtEurCompact, fmtInt, fmtM2 } from '../../lib/format'
 import { PERIM_POTENTIEL_COURT } from '../../lib/perimetres'
@@ -17,6 +17,8 @@ import type { Fiche, PotentielTransformation } from '../../lib/types'
 import { useApp } from '../../store/useApp'
 import { IC, RefDrawer, MicroTriple, PorteOutil, StepProv, HypInput, GroupLabel, FactRow, FactNote, RefLink, Vigilance } from './primitives'
 import { Badge } from '../ui/Badge'
+import { GrilleOutils, OutilCase } from '../shared/GrilleOutils'   // FAISABILITE-POLISH-1 — tuiles « Étudier ce bien »
+import { Tip } from '../Tip'
 
 const PT_COLORS: Record<string, string> = { fort: '#4ADE96', modere: '#F5C244', faible: '#9AA6A0', nul: '#6B7280', indetermine: '#6B7280' }
 export function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
@@ -389,14 +391,17 @@ function CalculetteBody({ idu, defauts, hideSource = false, prixDemandeExterne, 
 const _sessionScenario = new Map<string, 'terrain_libere' | 'bati_garde'>()
 type Sc = 'terrain_libere' | 'bati_garde'
 
-function SuiteChip({ label, onClick }: { label: string; onClick: () => void }) {
-  return (
-    <button type="button" onClick={onClick}
-      className="rounded-lg border border-line-2 px-2.5 py-1.5 text-[11.5px] text-mint transition-colors duration-quick hover:border-mint hover:bg-mint/[0.06]">
-      {label} →
-    </button>
-  )
-}
+// FAISABILITE-POLISH-1 — les 4 suites deviennent des TUILES « Étudier ce bien » (icône + titre,
+// GrilleOutils/OutilCase partagé de la fiche parcelle), 2 × 2, sans « → ». Tracés SVG 15 px « line »,
+// même idiome que les tuiles d'export de la fiche.
+const svg15 = (path: ReactNode) =>
+  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">{path}</svg>
+const SUITE_ICO = {
+  gabarit: svg15(<><path d="M21 7.5 12 3 3 7.5v9L12 21l9-4.5z" /><path d="m3 7.5 9 4.5 9-4.5" /><path d="M12 12v9" /></>),
+  taxe: svg15(<><line x1="19" y1="5" x2="5" y2="19" /><circle cx="6.5" cy="6.5" r="2.5" /><circle cx="17.5" cy="17.5" r="2.5" /></>),
+  comparer: svg15(<><path d="M3 17h6" /><path d="m6 14 3 3-3 3" /><path d="M21 7h-6" /><path d="m18 10-3-3 3-3" /></>),
+  courrier: svg15(<><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></>),
+} as const
 
 export function FaisabiliteTab({ idu }: { idu: string; embedded?: boolean }) {
   const { setModule, setParcelPrefill, chercherParCapacite } = useApp()
@@ -466,53 +471,66 @@ export function FaisabiliteTab({ idu }: { idu: string; embedded?: boolean }) {
   const hypModif: { key: string; label: string; valeur: number; unite: string; min: number; max: number }[] = pan.hypotheses_modifiables ?? []
   const etapes: { n: number; label: string; valeur: string; source: string; prov: string }[] = pan.etapes ?? []
 
+  // FAISABILITE-POLISH-1 — chip d'état pour une règle PLU (source line) : Sourcé (vert) quand la
+  // règle est chiffrée avec un article ; sinon on reflète l'état SANS l'inventer (jamais « Sourcé »
+  // sur une règle non modélisée). Le texte de fond (valeur) n'est pas touché.
+  const regleBadge = (r: Record<string, any>) => {
+    if (r.etat === 'non_modelisee') return <Badge ton="neutre">Non modélisée</Badge>
+    if (r.etat === 'absent') return <Badge ton="neutre">Pas de règle PLU</Badge>
+    if (r.etat === 'prospect') return <Badge ton="neutre">Selon la voie</Badge>
+    if (r.etat === 'a_verifier') return <Badge ton="ambre">À vérifier</Badge>
+    return <Badge ton="vert">Sourcé</Badge>
+  }
+  const pluDoc = pan.plu?.document as string | undefined
+
   return (
-    <div data-faisa-panneau className="flex flex-col gap-3">
+    // Grille du panneau : UN seul rythme — 24 px entre sections (gap-6), aucune section ne rajoute
+    // de padding horizontal (le gutter de 16 px vient du conteneur), les titres passent tous par
+    // GroupLabel (capitales espacées, comme la fiche parcelle).
+    <div data-faisa-panneau className="flex flex-col gap-6">
       {/* 1 · SCÉNARIO — deux cartes (« En gardant le bâti » visible seulement si bati_present) */}
       <div data-faisa-scenarios className="flex gap-2">
         <button data-sc="terrain_libere" onClick={() => chooseSc('terrain_libere')}
-          className={`flex-1 rounded-lg border px-2.5 py-2 text-left transition-colors duration-quick ${pan.scenario === 'terrain_libere' ? 'border-2 border-mint bg-mint/[0.08]' : 'border-line-2 hover:border-mint/50'}`}>
+          className={`min-w-0 flex-1 rounded-md border px-3 py-2 text-left transition-colors duration-quick ${pan.scenario === 'terrain_libere' ? 'border-2 border-mint bg-mint/[0.08]' : 'border-line-2 hover:border-mint/50'}`}>
           <div className={`text-[12.5px] font-medium ${pan.scenario === 'terrain_libere' ? 'text-mint' : 'text-txt'}`}>Terrain libéré</div>
-          <div className="text-[10.5px] text-txt-dim">l'enveloppe du terrain, bâti rasé</div>
+          <div className="text-[10.5px] leading-snug text-txt-dim">l'enveloppe du terrain, bâti rasé</div>
         </button>
         {pan.bati_present && (
           <button data-sc="bati_garde" onClick={() => chooseSc('bati_garde')}
-            className={`flex-1 rounded-lg border px-2.5 py-2 text-left transition-colors duration-quick ${pan.scenario === 'bati_garde' ? 'border-2 border-mint bg-mint/[0.08]' : 'border-line-2 hover:border-mint/50'}`}>
+            className={`min-w-0 flex-1 rounded-md border px-3 py-2 text-left transition-colors duration-quick ${pan.scenario === 'bati_garde' ? 'border-2 border-mint bg-mint/[0.08]' : 'border-line-2 hover:border-mint/50'}`}>
             <div className={`text-[12.5px] font-medium ${pan.scenario === 'bati_garde' ? 'text-mint' : 'text-txt'}`}>En gardant le bâti</div>
-            <div className="text-[10.5px] text-txt-dim">{pan.bati_libelle ?? 'bâti existant conservé'}</div>
+            <div className="text-[10.5px] leading-snug text-txt-dim">{pan.bati_libelle ?? 'bâti existant conservé'}</div>
           </button>
         )}
       </div>
 
-      {/* 2 · VERDICT (bloc surligné) */}
-      <div data-faisa-verdict className="rounded-xl border-2 border-mint/70 bg-mint/[0.05] px-3 py-2.5">
-        <div className="text-[10.5px] uppercase tracking-wide text-txt-dim">
-          Verdict · zone {pan.zone}{pan.a_cheval && pan.portion_zone ? ` (à cheval)` : ''} · {fmtM2(pan.surface_m2)}
-          {q.isFetching && <span className="ml-2 animate-pulse text-mint">recalcul…</span>}
+      {/* 2 · VERDICT (bloc surligné) — QUATRE lignes empilées, jamais mêlées :
+          (a) la phrase seule, taille titre ; (b) une rangée de chips ; (c) une ligne de texte gris
+          (ce qui limite) ; (d) la source PLU en petit. L'en-tête « zone · surface » reste le titre. */}
+      <div data-faisa-verdict className="rounded-md border-2 border-mint/70 bg-mint/[0.05] px-4 py-3">
+        <div className="text-[10.5px] uppercase tracking-[0.12em] text-txt-dim">
+          Verdict · zone {pan.zone}{pan.a_cheval && pan.portion_zone ? ` (à cheval)` : ''} · <span className="whitespace-nowrap">{fmtM2(pan.surface_m2)}</span>
+          {q.isFetching && <span className="ml-2 animate-pulse normal-case tracking-normal text-mint">recalcul…</span>}
         </div>
-        <div data-faisa-verdict-phrase className="mt-1 text-[15px] font-medium leading-snug text-txt-hi">{pan.verdict}</div>
-        {pan.ce_qui_limite && (
-          <div className="mt-2 flex items-baseline gap-2 text-[12px]">
-            <Badge ton="ambre">Ce qui limite</Badge>
-            <span className="text-txt-mut">{pan.ce_qui_limite}</span>
-          </div>
-        )}
-        <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px]">
+        <div data-faisa-verdict-phrase className="mt-2 text-[15px] font-medium leading-snug text-txt-hi">{pan.verdict}</div>
+        <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+          {pan.ce_qui_limite && <Badge ton="ambre">Ce qui limite</Badge>}
           {badges.regles_sourcees && <Badge ton="vert">Règles sourcées</Badge>}
           {badges.plancher_estime && <Badge ton="ambre">Plancher estimé</Badge>}
-          {badges.plu_approuve_le && <span className="truncate text-txt-dim" title={String(badges.plu_approuve_le)}>PLU — {String(badges.plu_approuve_le)}</span>}
         </div>
+        {pan.ce_qui_limite && <p className="mt-2 text-[12px] leading-snug text-txt-mut">{pan.ce_qui_limite}</p>}
+        {badges.plu_approuve_le && <p className="mt-2 text-[10.5px] text-txt-dim">PLU — {String(badges.plu_approuve_le)}</p>}
       </div>
 
-      {/* 3 · TESTER UN PROJET — deux champs libres, pas de projet pré-rempli */}
+      {/* 3 · TESTER UN PROJET — deux champs EMPILÉS pleine largeur, unité dans le champ, libellé dessus */}
       <div data-faisa-test>
         <GroupLabel>Tester un projet · vos chiffres</GroupLabel>
-        <div className="mt-1 grid grid-cols-2 gap-x-3 gap-y-2">
-          <HypInput label="Nombre de logements" suffix="" value={nLog} placeholder="—" onChange={setNLog} />
-          <HypInput label="Surface de plancher / logement" suffix="m²" value={surfLog} placeholder="—" onChange={setSurfLog} />
+        <div className="flex flex-col gap-3">
+          <HypInput label="Nombre de logements" suffix="logements" value={nLog} placeholder="—" onChange={setNLog} />
+          <HypInput label="Surface de plancher par logement" suffix="m²" value={surfLog} placeholder="—" onChange={setSurfLog} />
         </div>
         {test && (
-          <div data-faisa-test-result className="mt-2 text-[12px]">
+          <div data-faisa-test-result className="mt-3 text-[12px] leading-snug">
             {test.statut === 'a_completer' && (<><Badge ton="neutre">À compléter</Badge> <span className="text-txt-dim">{test.message}</span></>)}
             {test.statut === 'non_autorise' && (<><Badge ton="ambre">Logement non autorisé</Badge> <span className="text-txt-mut">{test.message}</span></>)}
             {test.statut === 'tient' && (
@@ -525,16 +543,23 @@ export function FaisabiliteTab({ idu }: { idu: string; embedded?: boolean }) {
         )}
       </div>
 
-      {/* 4 · CE QUE LE PLU PERMET — chaque ligne : valeur + article/page cliquable (annuaire PLU) */}
+      {/* 4 · CE QUE LE PLU PERMET — chaque règle = TROIS lignes empilées : libellé en petites
+          capitales grises · valeur en clair pleine largeur · ligne source (chip + article/page).
+          Le nom du PLU vit dans l'info « i » du titre, pas dans la ligne. Un filet fin entre règles. */}
       {rv.length > 0 && (
         <div data-faisa-plu>
-          <GroupLabel>Ce que le PLU permet · règlement {pan.zone}</GroupLabel>
-          <div className="mt-0.5">
+          <GroupLabel right={pluDoc ? (
+            <Tip garder tip={<>Règlement : {pluDoc}{badges.plu_approuve_le ? ` · approuvé le ${String(badges.plu_approuve_le)}` : ''}</>}>
+              <span data-faisa-plu-info tabIndex={0} className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-line-2 text-[9px] text-txt-dim">i</span>
+            </Tip>
+          ) : undefined}>Ce que le PLU permet · règlement {pan.zone}</GroupLabel>
+          <div>
             {rv.map((r) => (
-              <div key={r.cle} className="flex items-baseline justify-between gap-2 border-b border-line/60 py-1 text-[12px] last:border-0">
-                <span className="text-txt-mut">{r.libelle}</span>
-                <span className="flex items-baseline gap-1.5 text-right">
-                  <span className={r.etat === 'non_modelisee' || r.etat === 'absent' ? 'text-txt-dim' : 'text-txt'}>{r.valeur}</span>
+              <div key={r.cle} className="flex flex-col gap-1 border-b border-line/60 py-2.5 last:border-0">
+                <span className="text-[10px] font-medium uppercase tracking-[0.11em] text-txt-dim">{r.libelle}</span>
+                <span className={`text-[12.5px] leading-snug ${r.etat === 'non_modelisee' || r.etat === 'absent' ? 'text-txt-dim' : 'text-txt'}`}>{r.valeur}</span>
+                <span className="flex items-center gap-2 text-[11px]">
+                  {regleBadge(r)}
                   {r.reference && <RefLink href={r.url}>{r.reference}</RefLink>}
                 </span>
               </div>
@@ -543,46 +568,47 @@ export function FaisabiliteTab({ idu }: { idu: string; embedded?: boolean }) {
         </div>
       )}
 
-      {/* 5 · NOS HYPOTHÈSES (3 seulement) — tout se recalcule au moteur */}
+      {/* 5 · NOS HYPOTHÈSES (3 seulement) — champs EMPILÉS pleine largeur ; « Revenir aux valeurs
+          LABUSE » en Bouton lien SOUS les champs (jamais dans le titre). Tout se recalcule au moteur. */}
       {hypModif.length > 0 && (
         <div data-faisa-hypotheses>
-          <div className="mb-1 flex items-center justify-between gap-2">
-            <span className="text-[11px] font-semibold uppercase tracking-wide text-mint">Nos hypothèses · modifiables</span>
-            {nOv > 0 && (
-              <button data-faisa-hyp-reset onClick={() => setOverrides({})}
-                className="shrink-0 text-[10.5px] text-txt-dim underline decoration-txt-dim/40 underline-offset-2 transition-colors duration-quick hover:text-mint">
-                ↻ Revenir aux valeurs LABUSE
-              </button>
-            )}
-          </div>
-          <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+          <GroupLabel>Nos hypothèses · modifiables</GroupLabel>
+          <div className="flex flex-col gap-3">
             {hypModif.map((h) => (
               <HypInput key={h.key} label={h.label} suffix={h.unite} hint={overrides[h.key] != null}
                 value={overrides[h.key] ?? null} placeholder={String(h.valeur)}
                 onChange={(v) => setOv(h.key, v)} />
             ))}
           </div>
+          {nOv > 0 && (
+            <button data-faisa-hyp-reset onClick={() => setOverrides({})}
+              className="mt-2.5 text-[11px] text-mint underline decoration-mint/40 underline-offset-2 transition-colors duration-quick hover:decoration-mint">
+              ↻ Revenir aux valeurs LABUSE
+            </button>
+          )}
         </div>
       )}
 
-      {/* 6 · LE CALCUL, ÉTAPE PAR ÉTAPE (8 étapes, replié par défaut) */}
+      {/* 6 · LE CALCUL, ÉTAPE PAR ÉTAPE — accordéon (chevron de la charte : ◀ fermé / ▼ ouvert,
+          chevron vert), replié par défaut. */}
       {etapes.length > 0 && (
         <div data-faisa-steps-wrap>
-          <button onClick={() => setShowSteps((s) => !s)} className="mb-1 flex w-full items-center justify-between text-[11px] font-semibold uppercase tracking-wide text-mint transition-colors duration-quick hover:text-txt-hi">
-            <span>▾ Le calcul, étape par étape ({etapes.length})</span>
-            <span>{showSteps ? '−' : '+'}</span>
+          <button onClick={() => setShowSteps((s) => !s)} aria-expanded={showSteps}
+            className="flex w-full items-center justify-between gap-2 text-[11px] font-medium uppercase tracking-[0.12em] text-lab transition-colors duration-quick hover:text-txt-hi">
+            <span>Le calcul, étape par étape ({etapes.length})</span>
+            <span className="text-mint">{showSteps ? '▼' : '◀'}</span>
           </button>
           {showSteps && (
-            <ol data-faisa-steps>
+            <ol data-faisa-steps className="mt-1.5">
               {etapes.map((s) => (
-                <li key={s.n} className="flex items-start gap-2 border-b border-line/60 py-1.5 text-[11px] last:border-0">
+                <li key={s.n} className="flex items-start gap-2 border-b border-line/60 py-2 text-[11px] last:border-0">
                   <span className="shrink-0 font-mono text-[9px] text-txt-dim">{s.n}</span>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-baseline justify-between gap-2">
-                      <span className="text-txt">{s.label}</span>
-                      <b className="shrink-0 font-mono font-medium tnum text-txt-hi">{s.valeur}</b>
+                      <span className="min-w-0 text-txt">{s.label}</span>
+                      <b className="shrink-0 whitespace-nowrap font-mono font-medium tnum text-txt-hi">{s.valeur}</b>
                     </div>
-                    <div className="mt-0.5 flex items-center gap-1.5">
+                    <div className="mt-1 flex items-center gap-1.5">
                       <StepProv prov={s.prov} />
                       <span className="truncate text-[9.5px] text-txt-dim">{s.source}</span>
                     </div>
@@ -594,16 +620,19 @@ export function FaisabiliteTab({ idu }: { idu: string; embedded?: boolean }) {
         </div>
       )}
 
-      {/* 7 · SUITES — pas de deuxième porte ; le lien capacité reste discret sous le tout */}
-      <div data-faisa-suites className="flex flex-wrap gap-1.5">
-        <SuiteChip label="Voir en 3D" onClick={() => goOutil('gabarit')} />
-        <SuiteChip label="Taxe d'aménagement" onClick={() => goOutil('taxe-amenagement')} />
-        <SuiteChip label="Comparer" onClick={() => goOutil('comparer')} />
-        <SuiteChip label="Écrire au propriétaire" onClick={() => goOutil('courriers')} />
-      </div>
-      <div className="text-[10.5px] leading-snug text-txt-dim">
-        <button onClick={() => chercherParCapacite()} className="underline decoration-txt-dim/40 underline-offset-2 transition-colors duration-quick hover:text-mint">Chercher des parcelles par capacité →</button>
-        {' · '}{pan.bandeau ?? 'Pré-faisabilité sur règlement public, pas un certificat d’urbanisme.'}
+      {/* 7 · ACTIONS DU BAS — 4 tuiles « Étudier ce bien » (icône + titre), 2 × 2 à largeurs
+          égales, sans « → ». Le texte « Pré-faisabilité indicative… » reste en dernier, en petit. */}
+      <div data-faisa-suites className="flex flex-col gap-2.5">
+        <GrilleOutils cols={2}>
+          <OutilCase data-suite="gabarit" nom="Voir en 3D" ic={SUITE_ICO.gabarit} onClick={() => goOutil('gabarit')} />
+          <OutilCase data-suite="taxe" nom="Taxe d'aménagement" ic={SUITE_ICO.taxe} onClick={() => goOutil('taxe-amenagement')} />
+          <OutilCase data-suite="comparer" nom="Comparer" ic={SUITE_ICO.comparer} onClick={() => goOutil('comparer')} />
+          <OutilCase data-suite="courrier" nom="Écrire au propriétaire" ic={SUITE_ICO.courrier} onClick={() => goOutil('courriers')} />
+        </GrilleOutils>
+        <div className="text-[10.5px] leading-snug text-txt-dim">
+          <button onClick={() => chercherParCapacite()} className="underline decoration-txt-dim/40 underline-offset-2 transition-colors duration-quick hover:text-mint">Chercher des parcelles par capacité →</button>
+          {' · '}{pan.bandeau ?? 'Pré-faisabilité sur règlement public, pas un certificat d’urbanisme.'}
+        </div>
       </div>
     </div>
   )
