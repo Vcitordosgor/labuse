@@ -282,12 +282,29 @@ def permis_bloc(db: Session, commune: str) -> dict:
     # mort (651) sous le même mot « dormants » — un seul id, un seul chiffre désormais (cœur OUTILS-FIX-5).
     point_mort = permis_point_mort(db, commune, months=36, run=runs.cascade())
     cmp = comparable(db, commune) or {}
+    # KELFONCIER-FIX-1 (Lot C) — compteurs PC / PA / DP (+ PD) et ANNULÉS sur 12 mois, à la maille
+    # commune (Sitadel). L'état ANNULÉ (ETAT_DAU=4) est SÉPARÉ des autorisés (avant, il les gonflait).
+    # Purement descriptif : ne touche NI le point mort (Signal) NI les variables pc_*.
+    type_rows = db.execute(text(
+        """SELECT type,
+                  count(*) FILTER (WHERE raw->>'etat' IS DISTINCT FROM '4') AS n,
+                  count(*) FILTER (WHERE raw->>'etat' = '4')                 AS n_annules
+             FROM sitadel_permits
+            WHERE (CAST(:c AS text) IS NULL OR commune = :c)
+              AND date >= (CURRENT_DATE - interval '12 months')
+            GROUP BY type"""), {"c": commune}).mappings().all()
+    par_type = {r["type"]: int(r["n"] or 0) for r in type_rows if int(r["n"] or 0)}
+    annules_12m = sum(int(r["n_annules"] or 0) for r in type_rows)
     return {
         "permis_12m": (offre.get("valeurs") or {}).get("permis_12m") or 0,
         "permis_5a": cmp.get("permis_5a"),
         "logements_12m": (offre.get("valeurs") or {}).get("logements_12m"),
         "delai_median_mois": cmp.get("delai_median_mois"),
         "point_mort": int(point_mort),
+        # KELFONCIER-FIX-1 (Lot C) — ventilation PC/PA/DP/PD (autorisés, 12 mois) + annulés, servie à
+        # la carte « Permis et rythme ». Chaque clé = type Sitadel ; libellés = ingestion.permits._TYPE_LABEL.
+        "permis_type_12m": par_type,
+        "permis_annules_12m": annules_12m,
         "source": "SITADEL (autorisations) · SITADEL — délais d'instruction · permis au point mort (36 mois sans DAACT, run servi).",
     }
 

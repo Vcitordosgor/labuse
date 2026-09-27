@@ -654,12 +654,16 @@ def permis_par_type_zone(session: Session, geom_geojson: dict) -> dict:
     if session.execute(text("SELECT to_regclass('sitadel_permits')")).scalar() is None:
         return {"types": []}
     z = _zone2975()
+    # KELFONCIER-FIX-1 (Lot C) — les permis ANNULÉS (ETAT_DAU=4) ne gonflent plus les comptes
+    # « autorisés par type » : ils sont EXCLUS des types et comptés à part (`n_annules`). L'état vit
+    # dans `raw->>'etat'` (source unique ingestion.permits).
     r = session.execute(text(
         f"""SELECT
-              count(*) FILTER (WHERE raw->>'famille'='logements')                 AS n_log,
-              coalesce(sum((raw->>'nb_lgt')::int) FILTER (WHERE raw->>'famille'='logements'), 0) AS lgt,
-              count(*) FILTER (WHERE raw->>'famille'='locaux')                     AS n_loc,
-              count(*) FILTER (WHERE raw->>'famille' IN ('pa','pd'))               AS n_amng
+              count(*) FILTER (WHERE raw->>'famille'='logements' AND raw->>'etat' IS DISTINCT FROM '4') AS n_log,
+              coalesce(sum((raw->>'nb_lgt')::int) FILTER (WHERE raw->>'famille'='logements' AND raw->>'etat' IS DISTINCT FROM '4'), 0) AS lgt,
+              count(*) FILTER (WHERE raw->>'famille'='locaux' AND raw->>'etat' IS DISTINCT FROM '4')     AS n_loc,
+              count(*) FILTER (WHERE raw->>'famille' IN ('pa','pd') AND raw->>'etat' IS DISTINCT FROM '4') AS n_amng,
+              count(*) FILTER (WHERE raw->>'etat' = '4')                            AS n_annules
             FROM sitadel_permits
             WHERE geom IS NOT NULL AND date >= (now() - interval '36 months')
               AND ST_Contains({z}, ST_Transform(geom, 2975))"""),
@@ -671,8 +675,10 @@ def permis_par_type_zone(session: Session, geom_geojson: dict) -> dict:
         types.append({"type": "amenagement", "label": "Aménager / démolir",
                       "n": int(r["n_amng"]), "detail": None})
     return {"types": types,
-            "note": "Type = famille Sitadel (logements / locaux d'activité). Le détail commerce vs "
-                    "activité (code destination SDES) n'est pas décodé en base — non deviné.",
+            "n_annules": int(r["n_annules"] or 0),   # KELFONCIER-FIX-1 (Lot C) — annulés, hors des types
+            "note": "Type = famille Sitadel (logements / locaux d'activité) ; les permis ANNULÉS sont "
+                    "exclus des comptes et affichés à part. Le détail commerce vs activité (code "
+                    "destination SDES) n'est pas décodé en base — non deviné.",
             "millesime": "Sitadel (SDES) — autorisations 36 mois"}
 
 
