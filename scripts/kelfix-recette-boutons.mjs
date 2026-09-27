@@ -5,7 +5,7 @@ const { chromium } = pkg
 const BASE = 'http://localhost:5745/socle/'
 const IDU = process.argv[2] || '97415000AB0134'
 
-// (section tiroir, data-porte, attendu lisible)
+// (section tiroir, data-porte, attendu lisible) — FICHE-FIX-5 : boutons mis à jour.
 const BTNS = [
   ['identite', 'patrimoine', 'module=patrimoine'],
   ['identite', 'spf-letter', 'module=courriers'],
@@ -14,10 +14,9 @@ const BTNS = [
   ['urbanisme', 'simuler-ouverture', 'module=plu'],
   ['risques', 'risques', 'module=risques'],
   ['fiscalite', 'taxe-amenagement-outil', 'module=taxe-amenagement'],
-  ['marche', 'marche', 'contexteCommune set'],
-  ['marche', 'secteur-opp', 'filters/commune set'],
-  ['marche', 'comparer', 'compareOpen=true'],
-  ['marche', 'temps', 'module=temps'],
+  ['marche', 'communes', 'module=communes'],
+  ['quartier', 'etude-chalandise', 'module=etude-zone'],
+  ['quartier', 'etude-particulier', 'module=etude-zone'],
   ['quartier', 'permis', 'module=permis'],
   ['quartier', 'fiche-commune', 'contexteCommune set'],
   ['potentiel', 'densifier-filtre', 'filtres ouverts'],
