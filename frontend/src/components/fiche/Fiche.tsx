@@ -25,7 +25,7 @@ import { ProprietaireHistorique } from './ProprietaireHistorique'
 import type { Onglet } from '../../lib/types'
 import { useApp } from '../../store/useApp'
 import { GrilleOutils, OutilCase } from '../shared/GrilleOutils'   // PROJETS-V5 (E9) — grille d'outils partagée
-import { IC, FicheAccordionCtx, RefDrawer, GroupLabel, MicroJauge, MicroPastilles, RateLimit429, Line, EligibiliteReplie, PorteOutil, FactRow, FactNote, Vigilance } from './primitives'
+import { IC, FicheAccordionCtx, RefDrawer, GroupLabel, MicroPastilles, RateLimit429, Line, EligibiliteReplie, PorteOutil, FactRow, FactNote, Vigilance } from './primitives'
 // FICHE-RANGEMENT-2 Lot 1 — LE BASCULEMENT : la fiche est recomposée en 11 sections PAR NATURE,
 // chacune un RefDrawer inline qui COMPOSE les blocs feuilles (extraits aux étapes 3a-3c). Les
 // sections « fourre-tout » ConstructibiliteSection / LeBienSection sont dissoutes ; les quatre
@@ -1490,12 +1490,11 @@ export function Fiche({ idu }: { idu: string }) {
             {/* FICHE-RANGEMENT-3 Lot 2 — « N % SDP consommée » n'apparaît plus DANS le sous-titre :
                 la micro-jauge (première ligne du tiroir ouvert) le porte déjà. Le sous-titre ne garde
                 que l'article/zone non publiée (rien quand la zone est connue → la jauge suffit). */}
+            {/* FICHE-FIX-5 (Lot E) — la jauge « N % SDP consommée » ne FLOTTE plus en tête (micro
+                retiré) : elle descend en Ligne dans le corps (voir plus bas). */}
             <RefDrawer id="urbanisme" icon={IC.regles} name="Urbanisme"
               value={reglesGabarit}
-              context={reglesZone ? undefined : (reglesArticle ? `art. ${reglesArticle}` : 'zone non publiée au GPU')}
-              micro={pctConsomme != null
-                ? <MicroJauge pct={pctConsomme} label={CLIENT.fiche.sdpConsommee(pctConsomme)} tip={CLIENT.fiche.sdpConsommeeTip(reglesSdp ?? null)} />
-                : <MicroJauge pct={0} label={[reglesArticle ? `art. ${reglesArticle}` : null].filter(Boolean).join(' · ') || 'PLU'} />}>
+              context={reglesZone ? undefined : (reglesArticle ? `art. ${reglesArticle}` : 'zone non publiée au GPU')}>
               <div className="flex flex-col gap-3">
                 {/* FICHE-FIX-4 (Lot F) — VERDICT COMPLET pour TOUTES les zones (calibrées ou non) :
                     zone + nature + « N destinations interdites · N sous condition » (comptes servis
@@ -1516,6 +1515,14 @@ export function Fiche({ idu }: { idu: string }) {
                   )
                 })()}
                 <ChiffreDissous l="Zone" t={tuileZone} />
+                {/* FICHE-FIX-5 (Lot E) — SDP consommée en Ligne (plus flottante), méthode en « i ». */}
+                {pctConsomme != null && (
+                  <Lignes>
+                    <Ligne label={<>SDP consommée<InfoI aria="Sur la SDP consommée" tip={CLIENT.fiche.sdpConsommeeTip(reglesSdp ?? null)} /></>}
+                      ton={pctConsomme >= 100 ? 'ambre' : undefined}
+                      valeur={`${Math.round(pctConsomme)} %`} />
+                  </Lignes>
+                )}
                 {/* M75 — obligation APER (ombrières PV, grand parking > 1 500 m²) : contrainte
                     réglementaire portant sur le terrain, INFORMATION. Libellé backend (mêmes mots
                     que les exports). « potentiellement concerné », jamais « soumis à ». */}

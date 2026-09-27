@@ -20,13 +20,33 @@ import { Tuiles, type Tuile } from './formes'
 // FICHE-FIX-4 (Lot F) — les 6 dimensions de règle, en gris « non calibré », pour les zones dont le
 // règlement n'est pas indexé à la lettre dans LABUSE (même gabarit que les zones calibrées).
 const REGLES_NON_CALIBRE: Tuile[] = [
-  { label: 'Hauteur max', valeur: '—', sous: 'non calibré', ton: 'gris' },
+  { label: 'Hauteur', valeur: '—', sous: 'non calibré', ton: 'gris' },
   { label: 'Emprise', valeur: '—', sous: 'non calibré', ton: 'gris' },
   { label: 'Recul voie', valeur: '—', sous: 'non calibré', ton: 'gris' },
   { label: 'Recul limites', valeur: '—', sous: 'non calibré', ton: 'gris' },
   { label: 'Pleine terre', valeur: '—', sous: 'non calibré', ton: 'gris' },
   { label: 'Stationnement', valeur: '—', sous: 'non calibré', ton: 'gris' },
 ]
+
+// FICHE-FIX-5 (Lot E) — libellé de règle en forme COURTE (la tuile ne tronque plus).
+function shortReglLabel(l: string): string {
+  const s = l.toLowerCase()
+  if (/hauteur/.test(s)) return 'Hauteur'
+  if (/emprise/.test(s)) return 'Emprise'
+  if (/recul/.test(s) && /voie/.test(s)) return 'Recul voie'
+  if (/recul/.test(s) && /(limite|s[ée]par)/.test(s)) return 'Recul limites'
+  if (/pleine.?terre|espace.?vert|v[ée]g[ée]tal/.test(s)) return 'Pleine terre'
+  if (/stationnement|parking/.test(s)) return 'Stationnement'
+  return l
+}
+// Valeur COURTE : « 18 m au faîtage » → « 18 m » ; « 1 place / logement » → « 1 / logt ».
+function shortReglValeur(v: string): string {
+  // « 18 m au faîtage » → « 18 m » (l'unité est déjà là) ; « R+2 au faîtage » → « R+2 ».
+  const s = v.trim().replace(/\s+au\s+fa[iî]t\w*.*/i, '').replace(/\s+à\s+l['’]égout.*/i, '')
+  const place = s.match(/(\d[\d.,]*)\s*place/i)
+  if (place && /logement|logt|lgt/i.test(s)) return `${place[1].replace('.', ',')} / logt`
+  return s.replace(/\.(\d)/, ',$1')
+}
 
 // ── M9 lot 4 — ligne « Destinations » de la zone (résumé + dépliable) ──
 export function ZoneDestinationsLigne({ d }: { d: FicheZoneDestinations }) {
@@ -107,10 +127,13 @@ export function ReglementPluBlock({ rp }: { rp: ReglementPlu }) {
             Règlement — zone <Trace id="zone_plu_famille"><span>{z.zone}</span></Trace>{aCheval && pct(z.part) ? <span className="text-txt-dim"> · {pct(z.part)} de la parcelle</span> : null}
           </GroupLabel>
           {z.regles_valeurs && z.regles_valeurs.length > 0 ? (
+            // FICHE-FIX-5 (Lot E) — tuiles SANS troncature : libellé court (Hauteur · Emprise · Recul
+            // voie · Recul limites · Pleine terre · Stationnement), valeur courte (« 10 m », « 50 % »,
+            // « 1 / logt »), l'article en sous-ligne. Aucune donnée perdue (valeur pleine en `title`).
             <Tuiles cols={z.regles_valeurs.length >= 5 ? 3 : 2}
               items={z.regles_valeurs.map((rv): Tuile => ({
-                label: rv.libelle,
-                valeur: rv.valeur,
+                label: shortReglLabel(rv.libelle),
+                valeur: (rv.etat === 'chiffre' || rv.etat === 'texte') && rv.valeur ? shortReglValeur(rv.valeur) : '—',
                 sous: rv.reference ? (rv.reference.split(',')[0].replace(/^Zone \S+ /, '').trim() || undefined) : undefined,
                 ton: rv.etat === 'chiffre' || rv.etat === 'texte' ? undefined : 'gris',
               }))} />
