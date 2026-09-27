@@ -1170,7 +1170,8 @@ DONNEES: dict[str, Donnee] = {
  "au_ouverture_statut": C("Statut d'ouverture de la zone AU", "classe", "parcelle",
     "statut d'ouverture de la zone À Urbaniser (ouverte / sous condition d'opération d'ensemble / "
     "fermée) — moteur d'ouverture AU (règlement PLU calibré), motif cité",
-    moteur="au_ouverture", calcul="moteur",
+    # passe-plat : lit la table PRÉ-CALCULÉE parcel_au_statut (peuplée par le moteur d'ouverture AU, hors fiche).
+    moteur=None, calcul="passe_plat",
     fonction="src/labuse/api/app.py:_au_ouverture_block",
     reservoirs=("gpu_plu_api_carto",), portee="live", type="classe",
     domaine=("conditionnelle_operation", "au_sous_plancher", "declasse_au_fermee",
@@ -1188,7 +1189,8 @@ DONNEES: dict[str, Donnee] = {
  "etablissements_parcelle_liste": C("Établissements sur la parcelle", "liste", "parcelle",
     "établissements SIRENE rattachés à la parcelle par l'adresse BAN (précision « adresse » seulement) "
     "— nom, NAF fin, tranche d'effectif, état + régime collectif BODACC ; nom masqué si non diffusible",
-    moteur="sirene_etablissements", calcul="moteur",
+    # passe-plat : lit la table matérialisée etablissement_parcelle (rattachement BAN, build hors fiche).
+    moteur=None, calcul="passe_plat",
     fonction="src/labuse/api/app.py:_etablissements_block",
     reservoirs=("sirene_etablissements", "ban", "bodacc",), portee="live", type="liste",
     table="etablissement_parcelle + sirene_etablissements"),

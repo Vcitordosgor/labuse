@@ -1922,8 +1922,8 @@ class FiltreCriteres:
                 self.signaux, self.droits_residuels,
                 self.pm_denom, self.pm_siren, self.pm_forme, self.pm_ape,
                 self.pm_dirig_min, self.pm_dirig_max, self.pm_age, self.zfang, self.frr,
-                self.destination,   # FAISABILITE-1 lot B — la destination entre dans le memo (compteur exact)
-                self.hauteur_min, self.hauteur_max, self.emprise_min, self.emprise_max)   # KELFONCIER-FIX-1 Lot D
+                self.hauteur_min, self.hauteur_max, self.emprise_min, self.emprise_max,   # KELFONCIER-FIX-1 Lot D
+                self.destination)   # FAISABILITE-1 lot B — la destination reste le DERNIER élément de la clé (test faisabilite1_capacite)
 
 
 @app.get("/parcels")

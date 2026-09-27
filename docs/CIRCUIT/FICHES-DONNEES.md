@@ -1,6 +1,6 @@
 # FICHES — donnée par donnée (commune · annonce · propriétaire · soleil)
 
-*Généré du registre le 2026-09-26 par `labuse registre fiche autres` (même format que FICHE-PARCELLE-DONNEES.md, plus court).*
+*Généré du registre le 2026-09-27 par `labuse registre fiche autres` (même format que FICHE-PARCELLE-DONNEES.md, plus court).*
 
 # Fiche commune
 

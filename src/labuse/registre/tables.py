@@ -403,6 +403,9 @@ TABLES_FABRIQUEES: dict[str, str] = {
     "parcel_blocs": "blocs fonciers (blocs-build)",
     "parcel_bloc_membres": "blocs fonciers — membres (blocs-build)",
     "parcel_au_statut": "statut AU (builder)",
+    # KELFONCIER-FIX-1 (Lot H) — rattachement établissement→parcelle par l'adresse BAN (build
+    # etablissement_parcelle, rejoué au job mensuel SIRENE) : artefact fabriqué, lu par la fiche §3.
+    "etablissement_parcelle": "rattachement établissement→parcelle par la BAN (build-etablissement-parcelle)",
     "parcel_zone_plu": "zonage parcelle (builder GPU)",
     "parcel_couche_intersection": "intersections parcelle × couche précalculées (VITESSE-FIX-1 : fiche servitudes + Gabarit zone)",
     "parcel_couche_intersection_meta": "version des sources de parcel_couche_intersection (fraîcheur)",
