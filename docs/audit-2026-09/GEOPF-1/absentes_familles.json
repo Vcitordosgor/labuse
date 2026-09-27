@@ -1,0 +1,310 @@
+{
+ "familles": [
+  {
+   "theme": "LANDCOVER",
+   "famille": "CORINE Land Cover",
+   "n_couches": 55,
+   "exemples": [
+    "LANDCOVER.CHA06",
+    "LANDCOVER.CHA06_DOM",
+    "LANDCOVER.CHA12_DOM"
+   ]
+  },
+  {
+   "theme": "POI",
+   "famille": "Points d'intérêt / équipements (POI IGN)",
+   "n_couches": 28,
+   "exemples": [
+    "IGNF_POI-ADMINISTRATION-LOCALE",
+    "IGNF_POI-ASSOCIATIONS-CULTURE-JEUNESSE",
+    "IGNF_POI-DROIT-JUSTICE"
+   ]
+  },
+  {
+   "theme": "BACKDROP",
+   "famille": "Fonds de carte / habillage (SCAN, pentes, littorale…)",
+   "n_couches": 16,
+   "exemples": [
+    "CARTES.NATURALEARTH",
+    "GEOGRAPHICALGRIDSYSTEMS.COASTALMAPS",
+    "GEOGRAPHICALGRIDSYSTEMS.EDUGEO.LA-REUNION1980"
+   ]
+  },
+  {
+   "theme": "GEODESIE",
+   "famille": "Réseaux géodésiques IGN",
+   "n_couches": 8,
+   "exemples": [
+    "GEODESIE_DATA",
+    "IGNF_GEODESIE-RDF",
+    "IGNF_GEODESIE-RGP"
+   ]
+  },
+  {
+   "theme": "TEST",
+   "famille": "Couches de test / hors-sujet",
+   "n_couches": 8,
+   "exemples": [
+    "communication",
+    "festivals_par_departement_gpkg_02-04-2026_wmsv",
+    "telecommunication"
+   ]
+  },
+  {
+   "theme": "TOURISME",
+   "famille": "Labels tourisme (stations classées/vertes, Pavillon bleu, Clef verte)",
+   "n_couches": 5,
+   "exemples": [
+    "CLEFVERTE",
+    "TERAGIR:clef_verte",
+    "TERAGIR:pavillon_bleu"
+   ]
+  },
+  {
+   "theme": "ENV",
+   "famille": "Mesures compensatoires biodiversité",
+   "n_couches": 5,
+   "exemples": [
+    "MESURES_COMPENSATOIRES",
+    "MESURES_COMPENSATOIRES:emprises_commune",
+    "MESURES_COMPENSATOIRES:emprises_lineaires"
+   ]
+  },
+  {
+   "theme": "ENR",
+   "famille": "Potentiel EnR (éolien/PV « clé en main »)",
+   "n_couches": 4,
+   "exemples": [
+    "POTENTIEL.EOLIEN.REGLEMENTAIRE",
+    "POTENTIEL.EOLIEN.REGLEMENTAIRE:cartepotentieleolien_2023_enjeu_0_metropole_drom_wgs84",
+    "POTENTIEL.EOLIEN.REGLEMENTAIRE:cartepotentieleolien_2023_enjeu_1_metropole_drom_wgs84"
+   ]
+  },
+  {
+   "theme": "PATRIMOINE",
+   "famille": "Atlas des patrimoines (architectural/culturel/naturel)",
+   "n_couches": 4,
+   "exemples": [
+    "conservation_du_patrimoine",
+    "patrimoine_architectural",
+    "patrimoine_culturel"
+   ]
+  },
+  {
+   "theme": "PATRIMOINE",
+   "famille": "Atlas des patrimoines — autres thèmes",
+   "n_couches": 3,
+   "exemples": [
+    "ressources_equipement",
+    "salubrite_securite_publique",
+    "securite_publique"
+   ]
+  },
+  {
+   "theme": "ENV",
+   "famille": "CarHab — habitats naturels Réunion",
+   "n_couches": 2,
+   "exemples": [
+    "Carhab_Reunion_PYRAMIDE",
+    "Habitats_Carhab_Reunion"
+   ]
+  },
+  {
+   "theme": "TOPO",
+   "famille": "Toponymes / noms géographiques",
+   "n_couches": 2,
+   "exemples": [
+    "GEOGRAPHICALNAMES.NAMES",
+    "IGNF_GEOGRAPHICNAMES.NAMES"
+   ]
+  },
+  {
+   "theme": "ENV",
+   "famille": "OFB — zones avis gestionnaire",
+   "n_couches": 2,
+   "exemples": [
+    "OFB.ZONES.NECESSITANT.AVIS.GESTIONNAIRE",
+    "OFB.ZONES.NECESSITANT.AVIS.GESTIONNAIRE:zones_necessitant_avis_gestionnaire_terrestre"
+   ]
+  },
+  {
+   "theme": "AERO",
+   "famille": "Zones interdites à la captation aérienne",
+   "n_couches": 2,
+   "exemples": [
+    "ORTHOIMAGERY.ORTHOPHOS.RESTRICTEDAREAS",
+    "ORTHOIMAGERY.ORTHOPHOS.RESTRICTEDAREAS:arrete"
+   ]
+  },
+  {
+   "theme": "POTENTIEL",
+   "famille": "Unités foncières contenant des surfaces de stati",
+   "n_couches": 2,
+   "exemples": [
+    "POTENTIEL.SOLAIRE.PARKING500",
+    "POTENTIEL.SOLAIRE.PARKING500.MULTI"
+   ]
+  },
+  {
+   "theme": "URBA",
+   "famille": "SCOT — schéma de cohérence territoriale",
+   "n_couches": 2,
+   "exemples": [
+    "scot",
+    "wfs_scot:perimetre_scot"
+   ]
+  },
+  {
+   "theme": "ENERGIE",
+   "famille": "Consommation d'électricité par commune",
+   "n_couches": 1,
+   "exemples": [
+    "CONSO.ELEC.COMMUNE"
+   ]
+  },
+  {
+   "theme": "RELIEF",
+   "famille": "Estompage du relief",
+   "n_couches": 1,
+   "exemples": [
+    "ELEVATION.ELEVATIONGRIDCOVERAGE.SHADOW"
+   ]
+  },
+  {
+   "theme": "ENR",
+   "famille": "Contraintes réglementaires EnR / habitations",
+   "n_couches": 1,
+   "exemples": [
+    "ENR.PERIMETRE.HABITATION"
+   ]
+  },
+  {
+   "theme": "IGNF_NATURE-EN-VILLE_2017-2020",
+   "famille": "Nature en Ville 2021-2023",
+   "n_couches": 1,
+   "exemples": [
+    "IGNF_NATURE-EN-VILLE_2017-2020"
+   ]
+  },
+  {
+   "theme": "ENV",
+   "famille": "Inventaire national des plans d'eau (INPE)",
+   "n_couches": 1,
+   "exemples": [
+    "INPE"
+   ]
+  },
+  {
+   "theme": "ORTHO",
+   "famille": "Images satellite (Pléiades / SPOT)",
+   "n_couches": 1,
+   "exemples": [
+    "ORTHOIMAGERY.ORTHO-SAT.PLEIADES.2012"
+   ]
+  },
+  {
+   "theme": "PARKING",
+   "famille": "Parkings de plus de 500m²",
+   "n_couches": 1,
+   "exemples": [
+    "PARKING.SUP.500"
+   ]
+  },
+  {
+   "theme": "ACADEMIES",
+   "famille": "Académies",
+   "n_couches": 1,
+   "exemples": [
+    "ACADEMIES.2015"
+   ]
+  },
+  {
+   "theme": "REGIONS",
+   "famille": "Régions 2017",
+   "n_couches": 1,
+   "exemples": [
+    "REGIONS.2017"
+   ]
+  },
+  {
+   "theme": "MER",
+   "famille": "Prédictions de marée (SHOM)",
+   "n_couches": 1,
+   "exemples": [
+    "SHOM-MAREE_BDD-POI_WLD_WM"
+   ]
+  },
+  {
+   "theme": "AERO",
+   "famille": "Restrictions aériennes / drones (UAS)",
+   "n_couches": 1,
+   "exemples": [
+    "circulation_aerienne"
+   ]
+  },
+  {
+   "theme": "ZONE_SECTEUR",
+   "famille": "Zonages",
+   "n_couches": 1,
+   "exemples": [
+    "zone_secteur"
+   ]
+  },
+  {
+   "theme": "_VOIRIE-RETENUE-DEPARTEMENTS",
+   "famille": "DGCL- DGF 2026 (DFM) : Voirie retenue pour les d",
+   "n_couches": 1,
+   "exemples": [
+    "DGF_2025_:_voirie-retenue-departements"
+   ]
+  },
+  {
+   "theme": "AGRI",
+   "famille": "Prairies permanentes / zones humides BCAE (PAC)",
+   "n_couches": 1,
+   "exemples": [
+    "TOURBIERES_ZONES-HUMIDES.BCAE:bcae"
+   ]
+  },
+  {
+   "theme": "PARCELLES_GRAPHIQUES",
+   "famille": "RPG - Metropole de Lyon",
+   "n_couches": 1,
+   "exemples": [
+    "LANDUSE.AGRICULTURE2025:parcelles_graphiques"
+   ]
+  },
+  {
+   "theme": "ENV",
+   "famille": "Régions écologiques",
+   "n_couches": 1,
+   "exemples": [
+    "ecoregions:regions_ecologiques"
+   ]
+  },
+  {
+   "theme": "STE_REUNION",
+   "famille": "Sites et territoires d'exception de la Réunion",
+   "n_couches": 1,
+   "exemples": [
+    "sites_reunion_gpkg_26-01-2026_wfs:STE_Reunion"
+   ]
+  },
+  {
+   "theme": "ENV",
+   "famille": "Stations qualité de l'air",
+   "n_couches": 1,
+   "exemples": [
+    "fr_qa_stations:stations_qualite_air"
+   ]
+  },
+  {
+   "theme": "DGAC_PSA_ARRETE",
+   "famille": "dgac_psa_arrete_wfs",
+   "n_couches": 1,
+   "exemples": [
+    "dgac_psa_arrete_wfs:dgac_psa_arrete"
+   ]
+  }
+ ]
+}
