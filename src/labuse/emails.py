@@ -70,7 +70,7 @@ def digest_notifications(evenements: list[dict], lien_desabo: str, *,
         # Aucun événement personnel : le RÉSUMÉ MARCHÉ suffit à déclencher le digest (fin du
         # « digest vide à vie »). L'appelant a déjà vérifié qu'il y a du contenu.
         bloc = marche_txt
-    prefs_ligne = (f"Régler vos préférences (par type, cloche ou e-mail) :\n{lien_prefs}\n"
+    prefs_ligne = (f"Régler la fréquence et vos préférences (quotidien, hebdo, cloche seule ; par type) :\n{lien_prefs}\n"
                    if lien_prefs else "")
     corps = (
         "Bonjour,\n\n"
@@ -203,6 +203,7 @@ def digest_html_email(evenements: list[dict], marche: dict | None, top_chaudes: 
             f"<p style=\"margin:0 0 14px;color:#666;font-size:13px\">LABUSE — votre point du jour</p>"
             f"{corps}{top}"
             f"<p style=\"margin:22px 0 0;color:#888;font-size:12px\">"
-            f"<a href=\"{lien_prefs}\" style=\"color:{V}\">Préférences</a> — choisir ce que vous recevez.<br>"
+            f"<a href=\"{lien_prefs}\" style=\"color:{V}\">Régler la fréquence et vos préférences</a> "
+            f"(quotidien, hebdo, cloche seule).<br>"
             f"<a href=\"{lien_desabo}\" style=\"color:#888\">Se désinscrire des e-mails</a>.</p>"
             f"</div></body></html>")

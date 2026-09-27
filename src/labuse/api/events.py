@@ -100,7 +100,7 @@ CREATE TABLE IF NOT EXISTS notif_prefs (
   compte_id integer PRIMARY KEY,
   unsubscribed boolean DEFAULT false,   -- opt-out du digest e-mail (jamais d'envoi sans arrêt possible)
   token varchar(48),                    -- jeton de désinscription en 1 clic (lien + List-Unsubscribe)
-  digest_freq varchar(12) DEFAULT 'hebdo',   -- hebdo | quotidien (réglable)
+  digest_freq varchar(12) DEFAULT 'quotidien',   -- VEILLE-FIX-2 : quotidien | hebdo | cloche_seule (réglable)
   last_digest_at timestamptz
 );
 -- M85 — event_log DEVIENT le centre unifié de notifications. Trois objets distincts (démêlés en M85) :
@@ -142,6 +142,16 @@ def ensure_tables(engine) -> None:
         for stmt in sql_statements(DDL):
             if stmt.strip():
                 c.execute(text(stmt))
+        # VEILLE-FIX-2 (Lot C) — la fréquence devient RÉGLABLE ; le défaut GRILLE est QUOTIDIEN. Le défaut
+        # HISTORIQUE 'hebdo' n'a JAMAIS été choisi par un client (champ jamais réglable) → normalisation
+        # UNE FOIS : convertir les 'hebdo'/NULL spurieux en 'quotidien' et poser le défaut à 'quotidien'.
+        # Gardé par le défaut ACTUEL de la colonne → ne s'exécute qu'au 1er boot post-migration.
+        defc = c.execute(text("SELECT column_default FROM information_schema.columns "
+                              "WHERE table_name='notif_prefs' AND column_name='digest_freq'")).scalar()
+        if defc and "hebdo" in defc:
+            c.execute(text("UPDATE notif_prefs SET digest_freq='quotidien' "
+                           "WHERE digest_freq='hebdo' OR digest_freq IS NULL"))
+            c.execute(text("ALTER TABLE notif_prefs ALTER COLUMN digest_freq SET DEFAULT 'quotidien'"))
 
 
 def _ensure_cols(db: Session) -> None:
@@ -340,6 +350,21 @@ def set_pref(db: Session, cid: int, pref_type: str, *, cloche: bool, email: bool
         "INSERT INTO notif_canaux (compte_id, pref_type, cloche, email, brief) VALUES (:c,:p,:cl,:em,:br) "
         "ON CONFLICT (compte_id, pref_type) DO UPDATE SET cloche=:cl, email=:em, brief=:br"),
         {"c": cid, "p": pref_type, "cl": cloche, "em": email, "br": brief})
+
+
+def get_digest_freq(db: Session, cid: int | None) -> str:
+    """VEILLE-FIX-2 (Lot C) — la fréquence de mail du compte (grille-normalisée : défaut quotidien)."""
+    v = db.execute(text("SELECT digest_freq FROM notif_prefs WHERE compte_id=:c"), {"c": cid}).scalar()
+    return veille_grille.frequence_valide(v)
+
+
+def set_digest_freq(db: Session, cid: int, freq: str) -> str:
+    """Règle la fréquence du digest (quotidien/hebdo/cloche_seule). Valeur inconnue → défaut. Retourne
+    la valeur appliquée. Crée la ligne notif_prefs au besoin (upsert)."""
+    val = veille_grille.frequence_valide(freq)
+    db.execute(text("INSERT INTO notif_prefs (compte_id, digest_freq) VALUES (:c,:f) "
+                    "ON CONFLICT (compte_id) DO UPDATE SET digest_freq=:f"), {"c": cid, "f": val})
+    return val
 
 
 def desabonner_email(db: Session, cid: int) -> None:
@@ -1245,29 +1270,54 @@ def _adresse_placeholder(email: str | None) -> bool:
     return (not dom) or dom in _DOMAINES_PLACEHOLDER or e.startswith("ton-email@")
 
 
-def envoyer_digests(db: Session, *, base_url: str = "", freq: str = "quotidien", force: bool = False,
+def _cadence_digest(freq: str, jour_semaine: int, last, now, *, force: bool = False) -> tuple[bool, str]:
+    """VEILLE-FIX-2 (Lot C) — décide si un compte de fréquence `freq` reçoit le digest AUJOURD'HUI.
+    PURE (aucun now() interne) → testable sur 7 jours simulés. Retourne (envoyer, motif).
+      · cloche_seule → JAMAIS de mail (tout reste à la cloche) ;
+      · hebdo        → seulement le jour hebdo (lundi), une fois par semaine ;
+      · quotidien    → chaque jour, anti-double-envoi 20 h.
+    `force` court-circuite le jour et l'anti-double (tests / envoi manuel)."""
+    freq = veille_grille.frequence_valide(freq)
+    if freq == "cloche_seule":
+        return False, "fréquence « cloche seulement » — jamais de mail (tout reste à la cloche)"
+    if freq == "hebdo":
+        if not force and jour_semaine != veille_grille.hebdo_jour():
+            return False, "fréquence hebdomadaire — le digest part le lundi"
+        if not force and last and (now - last) < timedelta(days=6):
+            return False, f"hebdomadaire déjà envoyé cette semaine ({last.astimezone(REUNION_TZ):%Y-%m-%d %H:%M} h. Réunion)"
+        return True, ""
+    # quotidien
+    if not force and last and (now - last) < timedelta(hours=20):
+        return False, f"anti-double-envoi (dernier digest {last.astimezone(REUNION_TZ):%Y-%m-%d %H:%M} heure Réunion)"
+    return True, ""
+
+
+def envoyer_digests(db: Session, *, base_url: str = "", freq: str | None = None, force: bool = False,
                     dry_run: bool = False) -> dict:
-    """Envoie le digest aux comptes actifs, FILTRÉ par préférence e-mail (par type/canal). Garanties :
-    anti-double-envoi (last_digest_at + intervalle mini), un digest VIDE ne part pas, désinscription +
-    préférences dans chaque e-mail (légal), statut d'envoi tracé (jamais silencieux — motif M84).
-    Fuseau explicite UTC+4 pour la fenêtre quotidienne (jamais hérité de la machine)."""
+    """Envoie le digest aux comptes actifs, à la CADENCE DE CHAQUE COMPTE (VEILLE-FIX-2 Lot C :
+    `notif_prefs.digest_freq` — quotidien/hebdo/cloche_seule), FILTRÉ par préférence e-mail (type/canal).
+    Garanties : anti-double-envoi (last_digest_at), un digest VIDE ne part pas, désinscription +
+    préférences + lien « régler la fréquence » dans chaque e-mail, statut tracé (jamais silencieux).
+    Fuseau explicite UTC+4. `freq` (optionnel) FORCE la cadence de TOUS les comptes (compat/tests) ;
+    None = cadence par compte."""
     from ..emails import digest_html_email, digest_notifications
     from ..mailfile import ensure_tables as _mq_ensure
     from ..db import engine as _mq_engine
     _mq_ensure(_mq_engine())   # VEILLE-FIX-1 (lot 5) — mail_queue disponible (idempotent)
 
-    interval_h = 20 if freq == "quotidien" else 24 * 6   # quotidien ≈ 20 h ; hebdo ≈ 6 j
-    fenetre_jours = 1 if freq == "quotidien" else 7      # M85-B — J-1 pour le digest du matin
     now = datetime.now(timezone.utc)
-    periode = "hier" if freq == "quotidien" else "cette semaine"
+    jour_semaine = now.astimezone(REUNION_TZ).weekday()   # 0 = lundi (heure Réunion)
     # LEFT JOIN (pas INNER) : un compte actif SANS utilisateur titulaire n'est plus SILENCIEUSEMENT
     # exclu — il apparaît avec email=NULL et un motif « pas d'adresse ». Le silence est le défaut qu'on
     # ferme partout : chaque compte reçoit un STATUT + un MOTIF explicites (Vic, M85).
     # VEILLE-FIX-1 (lot 3) — un ESSAI EXPIRÉ (`essai_expire_at` passé) est exclu de tout envoi, même
     # resté `actif` : la coupure ne dépend plus d'une bascule de statut par la facturation.
+    # VEILLE-FIX-2 (Lot C) — la fréquence par compte (np.digest_freq) est lue ICI.
     recipients = db.execute(text(
-        "SELECT c.id AS cid, min(u.email) FILTER (WHERE u.role='titulaire') AS email "
+        "SELECT c.id AS cid, min(u.email) FILTER (WHERE u.role='titulaire') AS email, "
+        " min(np.digest_freq) AS freq "
         "FROM comptes c LEFT JOIN utilisateurs u ON u.compte_id = c.id "
+        "LEFT JOIN notif_prefs np ON np.compte_id = c.id "
         "WHERE c.statut = 'actif' AND (c.essai_expire_at IS NULL OR c.essai_expire_at > now()) "
         "GROUP BY c.id ORDER BY c.id")).mappings().all()
     envoyes = ignores = echecs = simules = 0
@@ -1281,6 +1331,7 @@ def envoyer_digests(db: Session, *, base_url: str = "", freq: str = "quotidien",
 
     for r in recipients:
         cid, email = r["cid"], r["email"]
+        freq_compte = veille_grille.frequence_valide(freq or r["freq"])
         if not email or not str(email).strip():
             ignores += 1
             _note(cid, email, "ignoré", "pas d'adresse (aucun utilisateur titulaire avec e-mail)")
@@ -1298,14 +1349,14 @@ def envoyer_digests(db: Session, *, base_url: str = "", freq: str = "quotidien",
             continue
         last = db.execute(text("SELECT last_digest_at FROM notif_prefs WHERE compte_id=:c"),
                           {"c": cid}).scalar()
-        if not force and last and (now - last) < timedelta(hours=interval_h):
+        cadence_ok, motif_cadence = _cadence_digest(freq_compte, jour_semaine, last, now, force=force)
+        if not cadence_ok:
             ignores += 1
-            # GB-020 — `last` (timestamptz) était libellé « UTC » mais rendu en +04 par le driver (4 h
-            # d'écart dans le texte). On l'exprime EXPLICITEMENT en heure Réunion (doctrine M85, REUNION_TZ).
-            _note(cid, email, "ignoré",
-                  f"anti-double-envoi (dernier digest {last.astimezone(REUNION_TZ):%Y-%m-%d %H:%M} heure Réunion)")
+            _note(cid, email, "ignoré", motif_cadence)
             continue
-        data = _digest_data(db, cid, jours=fenetre_jours)   # M85-B — fenêtre J-1 pour le quotidien
+        fenetre_jours = 7 if freq_compte == "hebdo" else 1
+        periode = "cette semaine" if freq_compte == "hebdo" else "hier"
+        data = _digest_data(db, cid, jours=fenetre_jours)   # M85-B — fenêtre J-1 (quotidien) / 7 j (hebdo)
         # FILTRE par préférence e-mail PAR TYPE (registre) : un type dont l'e-mail est coupé n'entre pas.
         evs = [e for e in data["evenements"]
                if not e.get("demo") and prefs.get(_pref_type(e["kind"]), {}).get("email")]
@@ -1501,12 +1552,22 @@ def _page_preferences(db: Session, c: int, t: str, sauve: bool = False) -> str:
             f"<td style='text-align:center;padding:10px 8px'>{em_cell}</td></tr>")
     ok = ("<p style='background:#e8f7ee;color:#1E9E58;padding:8px 12px;border-radius:8px;"
           "font:13px sans-serif'>✓ Préférences enregistrées.</p>" if sauve else "")
+    # VEILLE-FIX-2 (Lot C) — le réglage de FRÉQUENCE des mails, cible du lien « régler la fréquence ».
+    freq_actuelle = get_digest_freq(db, c)
+    _FREQ_LABELS = {"quotidien": "Quotidien", "hebdo": "Hebdomadaire (lundi)", "cloche_seule": "Cloche seulement"}
+    freq_radios = "".join(
+        f"<label style='display:inline-flex;align-items:center;gap:6px;margin-right:16px'>"
+        f"<input type='radio' name='frequence' value='{f}'{' checked' if f == freq_actuelle else ''}>"
+        f"{_FREQ_LABELS.get(f, f)}</label>"
+        for f in veille_grille.frequences())
     return (f"<!doctype html><meta charset=utf-8><body style='font:15px sans-serif;padding:32px;"
             f"max-width:560px;margin:auto'>"
             f"<h1 style='color:#1E9E58;font-size:20px'>Vos préférences de notification</h1>"
             f"<p style='color:#555'>Pour chaque type, choisissez la <b>cloche</b> (dans l'application) "
-            f"et/ou l'<b>e-mail</b> (le résumé quotidien). Décochez tout pour ne rien recevoir.</p>{ok}"
+            f"et/ou l'<b>e-mail</b> (le résumé). Décochez tout pour ne rien recevoir.</p>{ok}"
             f"<form method='post' action='/events/preferences?c={c}&t={t}'>"
+            f"<fieldset style='border:1px solid #e5e5e5;border-radius:8px;margin:16px 0;padding:12px 14px'>"
+            f"<legend style='padding:0 6px;color:#555'>Fréquence des mails</legend>{freq_radios}</fieldset>"
             f"<table style='width:100%;border-collapse:collapse;margin:16px 0'>"
             f"<tr style='border-bottom:2px solid #1E9E58'><th style='text-align:left;padding:8px'>Type</th>"
             f"<th style='padding:8px'>Cloche</th><th style='padding:8px'>E-mail</th></tr>{lignes}</table>"
@@ -1531,6 +1592,8 @@ async def preferences_save(c: int, t: str, request: Request, db: Session = Depen
     form = await request.form()
     for k in TYPES_CLIENT:                               # maintenance : set_pref force l'e-mail (verrou)
         set_pref(db, c, k, cloche=f"{k}_cloche" in form, email=f"{k}_email" in form)
+    if form.get("frequence"):                            # VEILLE-FIX-2 (Lot C) — la fréquence des mails
+        set_digest_freq(db, c, str(form.get("frequence")))
     db.commit()
     return _page_preferences(db, c, t, sauve=True)
 
@@ -1551,7 +1614,27 @@ def prefs_get(request: Request, db: Session = Depends(get_db)) -> dict:
     cid = current_compte(request)
     from ..notif_registry import TYPES_CLIENT
     p = prefs_compte(db, cid)
-    return {"types": [{"key": k, **p[k]} for k in TYPES_CLIENT]}
+    return {"types": [{"key": k, **p[k]} for k in TYPES_CLIENT],
+            # VEILLE-FIX-2 (Lot C) — la fréquence des mails, réglable (quotidien/hebdo/cloche_seule).
+            "frequence": get_digest_freq(db, cid),
+            "frequences": veille_grille.frequences()}
+
+
+class FreqIn(BaseModel):
+    frequence: str   # quotidien | hebdo | cloche_seule
+
+
+@router.patch("/prefs/frequence")
+def prefs_frequence(body: FreqIn, request: Request, db: Session = Depends(get_db)) -> dict:
+    """VEILLE-FIX-2 (Lot C) — règle la FRÉQUENCE des mails du compte courant. Le pilote (compte NULL) ne
+    persiste pas (défauts servis)."""
+    from .tenant import current_compte
+    cid = current_compte(request)
+    if cid is None:
+        return {"ok": False, "motif": "session pilote — préférences non persistées"}
+    val = set_digest_freq(db, cid, body.frequence)
+    db.commit()
+    return {"ok": True, "frequence": val}
 
 
 class PrefIn(BaseModel):

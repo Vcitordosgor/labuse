@@ -246,7 +246,8 @@ def digest(ctx: JobContext) -> None:
     from .db import engine
     ensure_tables(engine())
     base = get_settings().public_base_url or ""
-    r = envoyer_digests(ctx.db, base_url=base, freq="quotidien", dry_run=ctx.dry_run)
+    # VEILLE-FIX-2 (Lot C) — freq=None : chaque compte reçoit à SA cadence (quotidien/hebdo/cloche_seule).
+    r = envoyer_digests(ctx.db, base_url=base, dry_run=ctx.dry_run)
     ctx.compte(**{k: r.get(k) for k in ("envoyes", "ignores", "echecs", "simules")})
 
 
