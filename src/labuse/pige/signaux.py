@@ -214,24 +214,34 @@ def _dvf_bati_type(db: Session, commune: str | None, type_bien: str | None) -> d
     cw = "commune = :c AND " if commune else ""
     cp = {"c": commune} if commune else {}
     tl = {"maison": "Maison", "appartement": "Appartement", "immeuble": "Maison"}.get(type_bien or "")
+    # RADAR-2 (retouches 2) — le baromètre `_BAROMETRE_RETENUE` n'a PAS de fenêtre glissante : il retient
+    # TOUT l'historique DVF disponible. On porte donc la VRAIE période des ventes (année min–max) pour que
+    # l'affichage le dise (« 2021–2025 »), plus jamais un « 12 mois » faux.
+    cols = ("count(*) n, "
+            "percentile_cont(0.5) WITHIN GROUP (ORDER BY valeur_fonciere / NULLIF(surface_reelle_bati,0)) m, "
+            "to_char(min(date_mutation), 'YYYY') AS annee_min, to_char(max(date_mutation), 'YYYY') AS millesime")
     if tl:
         r = db.execute(text(
-            f"SELECT count(*) n, "
-            f"  percentile_cont(0.5) WITHIN GROUP (ORDER BY valeur_fonciere / NULLIF(surface_reelle_bati,0)) m, "
-            f"  to_char(max(date_mutation), 'YYYY') AS millesime "
-            f"FROM dvf_mutations WHERE {cw}type_local = :t AND {_BAROMETRE_RETENUE}"),
+            f"SELECT {cols} FROM dvf_mutations WHERE {cw}type_local = :t AND {_BAROMETRE_RETENUE}"),
             {**cp, "t": tl}).mappings().first()
         if r and r["m"] and int(r["n"]) >= SEUIL_REF_TYPE:
             return {"eur_m2": float(r["m"]), "n": int(r["n"]), "millesime": r["millesime"],
+                    "periode": _periode_annees(r["annee_min"], r["millesime"]),
                     "perimetre": "maisons" if tl == "Maison" else "appartements", "meme_type": True}
     r2 = db.execute(text(
-        f"SELECT count(*) n, "
-        f"  percentile_cont(0.5) WITHIN GROUP (ORDER BY valeur_fonciere / NULLIF(surface_reelle_bati,0)) m, "
-        f"  to_char(max(date_mutation), 'YYYY') AS millesime "
-        f"FROM dvf_mutations WHERE {cw}type_local IN ('Maison','Appartement') AND {_BAROMETRE_RETENUE}"),
+        f"SELECT {cols} FROM dvf_mutations WHERE {cw}type_local IN ('Maison','Appartement') AND {_BAROMETRE_RETENUE}"),
         cp).mappings().first()
     return {"eur_m2": float(r2["m"]) if r2 and r2["m"] else None, "n": int(r2["n"]) if r2 else 0,
-            "millesime": (r2 or {}).get("millesime"), "perimetre": PERIMETRE_BATI, "meme_type": False}
+            "millesime": (r2 or {}).get("millesime"),
+            "periode": _periode_annees((r2 or {}).get("annee_min"), (r2 or {}).get("millesime")),
+            "perimetre": PERIMETRE_BATI, "meme_type": False}
+
+
+def _periode_annees(annee_min: str | None, annee_max: str | None) -> str | None:
+    """Étiquette de période DVF : « 2025 » si une seule année, « 2021–2025 » sur plusieurs, None si vide."""
+    if not annee_max:
+        return None
+    return annee_max if (not annee_min or annee_min == annee_max) else f"{annee_min}–{annee_max}"
 
 
 def _referentiel(db: Session, commune: str, type_bien: str | None, idu: str | None = None) -> dict:

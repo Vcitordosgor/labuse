@@ -180,7 +180,7 @@ def tableau(db: Session, commune: str | None = None) -> dict:
         e = None
         if dv and av and dn >= SEUIL_ECART and an >= SEUIL_ECART:
             e = round(100.0 * (dv - av) / av, 1)
-        return {"dv": dv, "dn": dn, "av": av, "an": an, "ecart": e}
+        return {"dv": dv, "dn": dn, "av": av, "an": an, "ecart": e, "aperiode": acte.get("periode")}
 
     def _type_ligne(t: str) -> dict:
         m = _demande_acte(t)
@@ -242,8 +242,10 @@ def tableau(db: Session, commune: str | None = None) -> dict:
         "scope": commune or "Toute l'île", "commune": commune,
         "prix_demande_median_eur_m2": _chiffre(dem_v, dem_n),
         # l'acté DVF (baromètre commune) n'est pas gardé par le seuil Radar : il est servi dès qu'il existe.
+        # `periode` = la VRAIE fenêtre des ventes retenues (année min–max), pas une fenêtre glissante.
         "prix_acte_median_eur_m2": {"valeur": round(float(acte_v)) if acte_v else None,
-                                    "n": int(acte_n), "sous_seuil": acte_v is None},
+                                    "n": int(acte_n), "sous_seuil": acte_v is None,
+                                    "periode": hm.get("aperiode")},
         "ecart_demande_acte_pct": ecart, "ecart_sous_seuil": ecart is None,
         "biens_en_vente": biens_en_vente, "biens_sup_90j": biens_sup_90j,
         "par_type": par_type,

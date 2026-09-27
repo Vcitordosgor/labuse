@@ -100,7 +100,7 @@ export function RadarMarcheColonne({ commune, bienId, onCloseBien }: {
             <Chiffre surtitre="Prix demandé · maisons" chiffre={data.prix_demande_median_eur_m2} unite="€/m²"
               sous={`médiane · ${data.prix_demande_median_eur_m2.n} annonce${data.prix_demande_median_eur_m2.n > 1 ? 's' : ''}`} />
             <Chiffre surtitre="Prix acté · maisons" chiffre={data.prix_acte_median_eur_m2} unite="€/m²"
-              sous={`médiane DVF · 12 mois · ${data.prix_acte_median_eur_m2.n} vente${data.prix_acte_median_eur_m2.n > 1 ? 's' : ''}`} />
+              sous={`médiane DVF${data.prix_acte_median_eur_m2.periode ? ` · ${data.prix_acte_median_eur_m2.periode}` : ''} · ${data.prix_acte_median_eur_m2.n} vente${data.prix_acte_median_eur_m2.n > 1 ? 's' : ''}`} />
             <div className="rounded-lg border border-line-2 bg-surface-2 px-4 py-3.5">
               <div className="font-mono text-[9.5px] uppercase tracking-[0.12em] text-txt-mut">Écart demandé / acté</div>
               <div className="mt-1.5 text-[24px] font-bold tabular-nums">

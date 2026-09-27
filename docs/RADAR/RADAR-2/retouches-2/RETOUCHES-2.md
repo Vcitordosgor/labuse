@@ -31,6 +31,16 @@ n'était calculé **que `if commune`**. Pour « Toute l'île » (`commune is Non
 
 Avant le correctif, l'île renvoyait `{valeur: None, n: 0}` ; après, `{valeur: 2623, n: 15091}`.
 
+### 1 bis. Fenêtre de l'acté = son libellé (« 12 mois » était faux)
+
+Le libellé disait « médiane DVF · 12 mois » alors que `_BAROMETRE_RETENUE` **n'a aucune fenêtre
+glissante** : il retient TOUT l'historique DVF. Les 15 091 ventes couvrent **2021–2025** (~2 500–3 500/
+an), pas 12 mois — un vrai 12 mois glissant ne fait que ~2 721 ventes (2025). Conforme à la doctrine
+EXPORTS-1 (« dire la vraie borne, jamais une fenêtre fixe »), on **corrige le libellé** (pas la fenêtre,
+qui est le baromètre partagé du prix ancien — la changer romprait les badges par annonce et ferait
+tomber des communes sous le seuil). `_dvf_bati_type` porte désormais `periode` (année min–max) ; la carte
+affiche « médiane DVF · **2021–2025** · 15 091 ventes ». Libellé et calcul disent la même chose.
+
 ## 2. Une seule vue — bloc « Ce bien » en tête de la colonne marché
 
 L'écran séparé « Ce bien face à son marché » disparaît. La colonne de droite reste **toujours** le

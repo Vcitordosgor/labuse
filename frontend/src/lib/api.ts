@@ -2370,7 +2370,7 @@ export const pauseRadarVeille = (id: number, en_pause: boolean) =>
   j<{ ok: boolean; en_pause: boolean }>(`/radar/veille/${id}/pause`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ en_pause }) })
 
 // ── RADAR-2 (Lot 3) — le marché (colonne de droite) : 4 chiffres + table par type + 30 j + écart/commune ──
-export interface RadarMarcheChiffre { valeur: number | null; n: number; sous_seuil: boolean }
+export interface RadarMarcheChiffre { valeur: number | null; n: number; sous_seuil: boolean; periode?: string | null }
 export interface RadarMarcheTypeLigne {
   type: 'terrain' | 'maison' | 'appartement'; en_vente: number
   demande_eur_m2: number | null; acte_eur_m2: number | null
