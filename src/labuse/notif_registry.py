@@ -69,6 +69,11 @@ _KIND_VERS_TYPE = {
     # VEILLE-2 — le Radar (un match de veille annonce) et les nouveautés de l'app (nouvelle source)
     # partagent la préférence « Annonces LABUSE (nouveautés, sources) ».
     "radar": "annonce_produit", "nouveaute": "annonce_produit",
+    # VEILLE-FIX-2 — baisse de prix / retrait d'une annonce qui matche : même préférence que le Radar.
+    "radar_baisse": "annonce_produit", "radar_retrait": "annonce_produit",
+    # VEILLE-FIX-2 — mise en vente d'une parcelle SUIVIE : même préférence que le suivi de parcelle
+    # (mais canal IMMÉDIAT, décidé par la grille, pas par le registre).
+    "parcelle_en_vente": "parcelle_suivie",
 }
 
 

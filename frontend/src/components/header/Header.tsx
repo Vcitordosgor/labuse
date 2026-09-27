@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Fragment, useEffect, useState } from 'react'
-import { banAutocomplete, deleteLogo, getCommunes, getEnteteCloche, getEvents, getMarque, getMoi, getNotifPrefs, getParcelsGeojson, markAllEventsRead, markEventRead, modPatrimoineSearch, parcelAt, patchNotifPref, postLogo, postMarque, postRetour, searchParcels, type LabuseEvent } from '../../lib/api'
+import { banAutocomplete, deleteLogo, getCommunes, getEnteteCloche, getEvents, getMarque, getMoi, getNotifPrefs, getParcelsGeojson, markAllEventsRead, markEventRead, modPatrimoineSearch, parcelAt, patchDigestFrequence, patchNotifPref, postLogo, postMarque, postRetour, searchParcels, type LabuseEvent } from '../../lib/api'
 import { estIdu, estSectionNumero, iduComplet, normSectionNumero } from '../../lib/format'
 
 // M87 P5.1 — REGROUPER les notifications : une ligne par commune quand plusieurs événements de même
@@ -416,6 +416,8 @@ function NotifBell() {
   const [ouverts, setOuverts] = useState<Set<string>>(() => new Set())   // M87 P5.1 — groupes dépliés
   const notifPrefs = useQuery({ queryKey: ['notif-prefs'], queryFn: getNotifPrefs, enabled: open && prefsOpen })
   const setPref = useMutation({ mutationFn: patchNotifPref, onSuccess: () => { invalidate(); qc.invalidateQueries({ queryKey: ['notif-prefs'] }) } })
+  // VEILLE-FIX-2 (Lot C) — la FRÉQUENCE des mails (quotidien / hebdo / cloche seule), réglable ici.
+  const setFreq = useMutation({ mutationFn: patchDigestFrequence, onSuccess: () => qc.invalidateQueries({ queryKey: ['notif-prefs'] }) })
   const unread = ev.data?.unread ?? 0
   // GB-004 : Escape ferme le dropdown Notifications (il n'avait aucun handler clavier — seul le clic sur
   // le backdrop fermait). Aligné sur le patron des overlays. Listener actif uniquement quand ouvert.
@@ -495,7 +497,25 @@ function NotifBell() {
                     </Fragment>
                   ))}
                 </div>
-                <p className="mt-2 text-[10px] leading-snug text-txt-dim">La cloche est instantanée · le brief est le résumé du matin (Copilote) · l'e-mail est un résumé quotidien (7h, heure Réunion). Tout décocher = ne rien recevoir.</p>
+                {/* VEILLE-FIX-2 (Lot C) — Fréquence des mails : quotidien · hebdo (lundi) · cloche seule. */}
+                <div data-freq-mails className="mt-3 border-t border-line pt-3">
+                  <p className="mb-1.5 text-[11px] font-medium text-txt">Fréquence des mails</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {([['quotidien', 'Quotidien'], ['hebdo', 'Hebdomadaire'], ['cloche_seule', 'Cloche seulement']] as const)
+                      .filter(([v]) => (notifPrefs.data?.frequences ?? ['quotidien', 'hebdo', 'cloche_seule']).includes(v))
+                      .map(([v, lbl]) => {
+                        const actif = (notifPrefs.data?.frequence ?? 'quotidien') === v
+                        return (
+                          <button key={v} data-freq={v} aria-pressed={actif} disabled={setFreq.isPending}
+                            onClick={() => setFreq.mutate(v)}
+                            className={`rounded-full border px-2.5 py-1 text-[11px] transition ${actif ? 'border-mint bg-mint text-bg' : 'border-line-2 text-txt-mut hover:text-txt'}`}>
+                            {lbl}
+                          </button>
+                        )
+                      })}
+                  </div>
+                </div>
+                <p className="mt-2 text-[10px] leading-snug text-txt-dim">La cloche est instantanée · le brief est le résumé du matin (Copilote) · l'e-mail est un résumé (7h, heure Réunion) : quotidien, hebdomadaire (lundi), ou aucun (cloche seulement). Tout décocher = ne rien recevoir.</p>
               </div>
             ) : (
             /* M87 P5 : intro DÉRIVÉE du registre (libelles_entete_cloche) — maille SUR la parcelle,

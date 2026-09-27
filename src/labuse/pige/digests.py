@@ -58,11 +58,18 @@ def _lien_radar(base_url: str) -> str:
 
 # ── données ──────────────────────────────────────────────────────────────────────────────
 
-def _biens_du_jour(db: Session) -> list[dict]:
-    """Biens VALIDÉS saisis AUJOURD'HUI (heure Réunion), statuts vivants, enrichis pour la carte :
-    portail + lien + date de relevé (dernière annonce), baisse de prix (dernier constat à la baisse)."""
+def _biens_du_jour(db: Session, depuis=None) -> list[dict]:
+    """Biens VALIDÉS saisis DEPUIS `depuis` (timestamptz), statuts vivants, enrichis pour la carte :
+    portail + lien + date de relevé (dernière annonce), baisse de prix (dernier constat à la baisse).
+
+    VEILLE-FIX-2 (Lot A) — `depuis=None` garde le comportement historique « du jour » (début de journée
+    Réunion). `radar-cloche` passe désormais le HORODATAGE DU DERNIER PASSAGE du job : une annonce
+    déposée à 21 h–minuit (capture du soir) est ainsi vue le lendemain matin, alors qu'elle échappait à
+    la fenêtre « aujourd'hui »."""
+    borne = ("((now() AT TIME ZONE 'Indian/Reunion')::date AT TIME ZONE 'Indian/Reunion')"
+             if depuis is None else ":depuis")
     rows = db.execute(text(
-        """SELECT b.bien_id, b.commune, b.type_bien, b.est_copro, b.idu,
+        f"""SELECT b.bien_id, b.commune, b.type_bien, b.est_copro, b.idu,
                   f.prix, f.surface_hab, f.surface_terrain, f.particulier_pro,
                   a.portail, a.url_sortante, coalesce(a.date_saisie, b.date_premiere_saisie) AS date_releve,
                   ph.ancien_prix, ph.nouveau_prix
@@ -79,9 +86,9 @@ def _biens_du_jour(db: Session) -> list[dict]:
              -- RADAR-DEPOT-2 D5 — les copropriétés (appartements) sont embasées mais JAMAIS servies comme
              -- annonces : absentes des digests ET des alertes de veille (matche() lit cette même liste).
              AND b.est_copro = false
-             AND b.date_premiere_saisie AT TIME ZONE 'Indian/Reunion'
-                 >= (now() AT TIME ZONE 'Indian/Reunion')::date
-           ORDER BY b.bien_id DESC""")).mappings().all()
+             AND b.date_premiere_saisie >= {borne}
+           ORDER BY b.bien_id DESC"""),
+        ({"depuis": depuis} if depuis is not None else {})).mappings().all()
     # `faits` (sous-dict) pour `veille.matche` (contrat partagé) + champs plats pour la carte.
     out = []
     for r in rows:
@@ -289,29 +296,195 @@ def _clients_actifs(db: Session) -> list[dict]:
         "GROUP BY c.id, c.nom ORDER BY c.id")).mappings()]
 
 
-def evaluer_radar_cloche(db: Session) -> dict:
-    """VEILLE-2 (Lot 3) — pose à la CLOCHE du haut (compte-scopé, kind `radar`) chaque annonce du jour
-    qui matche une veille du client → clic vers l'ANNONCE (pas la fiche : `idu=None`, `lien=url`). C'est
-    le producteur des événements Radar que le digest du matin (Lot 5) reprend. Zéro mail ici. Idempotent
-    (dédup compte+bien+jour). Un ESSAI EXPIRÉ ne reçoit rien (`_clients_actifs` filtre déjà)."""
-    from ..api.events import creer_notification
-    jour = today_reunion()
-    biens = _biens_du_jour(db)
+# VEILLE-FIX-2 (Lot A) — HORODATAGE du dernier passage de `radar-cloche`, persistant. La fenêtre du job
+# n'est plus « aujourd'hui » mais « depuis le dernier passage » (repli J-1 au premier passage) : la
+# capture du soir (21 h–minuit) est vue le lendemain matin.
+_WATERMARK_RADAR = "radar-cloche"
+
+
+def _ensure_watermark(db: Session) -> None:
+    db.execute(text("CREATE TABLE IF NOT EXISTS pige_watermark ("
+                    " nom text PRIMARY KEY, ts timestamptz NOT NULL)"))
+
+
+def _watermark_get(db: Session, nom: str):
+    return db.execute(text("SELECT ts FROM pige_watermark WHERE nom = :n"), {"n": nom}).scalar()
+
+
+def _watermark_set(db: Session, nom: str, ts) -> None:
+    db.execute(text("INSERT INTO pige_watermark (nom, ts) VALUES (:n, :t) "
+                    "ON CONFLICT (nom) DO UPDATE SET ts = EXCLUDED.ts"), {"n": nom, "t": ts})
+
+
+def _avec_faits(r: dict) -> dict:
+    """Attache le sous-dict `faits` (contrat de `veille.matche`) à une ligne de bien."""
+    d = dict(r)
+    d["faits"] = {"prix": r.get("prix"),
+                  "surface_hab": float(r["surface_hab"]) if r.get("surface_hab") is not None else None,
+                  "surface_terrain": float(r["surface_terrain"]) if r.get("surface_terrain") is not None else None,
+                  "particulier_pro": r.get("particulier_pro")}
+    return d
+
+
+def _biens_baisses_depuis(db: Session, depuis) -> list[dict]:
+    """VEILLE-FIX-2 (Lot B) — biens vivants dont une BAISSE de prix (constat le plus récent) tombe DEPUIS
+    `depuis`. Matchables (mêmes filtres que _biens_du_jour). Porte ancien/nouveau prix."""
+    rows = db.execute(text(
+        """SELECT b.bien_id, b.commune, b.type_bien, b.idu,
+                  f.prix, f.surface_hab, f.surface_terrain, f.particulier_pro,
+                  a.url_sortante, ph.ancien_prix, ph.nouveau_prix
+           FROM pige_biens b JOIN pige_faits f ON f.bien_id = b.bien_id
+           JOIN LATERAL (SELECT ancien_prix, nouveau_prix, date_constat FROM pige_prix_historique
+                         WHERE bien_id = b.bien_id AND nouveau_prix < ancien_prix
+                         ORDER BY date_constat DESC LIMIT 1) ph ON true
+           LEFT JOIN LATERAL (SELECT url_sortante FROM pige_annonces WHERE bien_id = b.bien_id
+                              ORDER BY date_saisie DESC LIMIT 1) a ON true
+           WHERE f.valide_at IS NOT NULL AND b.statut IN ('active','en_vente_longue')
+             AND b.a_qualifier = false AND b.est_copro = false AND ph.date_constat >= :depuis
+           ORDER BY b.bien_id DESC"""), {"depuis": depuis}).mappings().all()
+    return [_avec_faits(r) for r in rows]
+
+
+def _biens_retires_depuis(db: Session, depuis) -> list[dict]:
+    """VEILLE-FIX-2 (Lot B) — biens RETIRÉS (retrait confirmé) depuis `depuis`, restés matchables (faits
+    présents). Un retrait confirmé = statut `retiree`/`retiree_sans_vente` avec `retiree_le` renseigné."""
+    rows = db.execute(text(
+        """SELECT b.bien_id, b.commune, b.type_bien, b.idu, b.retiree_le,
+                  f.prix, f.surface_hab, f.surface_terrain, f.particulier_pro, a.url_sortante
+           FROM pige_biens b JOIN pige_faits f ON f.bien_id = b.bien_id
+           LEFT JOIN LATERAL (SELECT url_sortante FROM pige_annonces WHERE bien_id = b.bien_id
+                              ORDER BY date_saisie DESC LIMIT 1) a ON true
+           WHERE f.valide_at IS NOT NULL AND b.statut IN ('retiree','retiree_sans_vente')
+             AND b.a_qualifier = false AND b.est_copro = false
+             AND b.retiree_le IS NOT NULL AND b.retiree_le >= :depuis
+           ORDER BY b.bien_id DESC"""), {"depuis": depuis}).mappings().all()
+    return [_avec_faits(r) for r in rows]
+
+
+def _idus_suivis(db: Session) -> dict:
+    """{idu: [compte_id, …]} des parcelles SUIVIES par un compte ACTIF (essai non expiré). Les suivis
+    « pilote » (compte_id NULL) sont exclus (le JOIN comptes les écarte)."""
+    rows = db.execute(text(
+        "SELECT w.idu, w.compte_id FROM watched_parcels w JOIN comptes c ON c.id = w.compte_id "
+        "WHERE w.idu IS NOT NULL AND c.statut = 'actif' "
+        "AND (c.essai_expire_at IS NULL OR c.essai_expire_at > now())")).all()
+    out: dict[str, list[int]] = {}
+    for idu, cid in rows:
+        out.setdefault(idu, []).append(cid)
+    return out
+
+
+def _mises_en_vente(db: Session, biens: list[dict], suivis: dict, jour) -> int:
+    """VEILLE-FIX-2 (Lot B) — MISE EN VENTE d'une parcelle SUIVIE. Règle retenue : rattachement STRICT
+    par `idu` (jamais « quartier » : sur un point flouté, trop de faux positifs). Une nouvelle annonce
+    dont l'idu correspond à une parcelle suivie → événement PRIORITAIRE (kind `parcelle_en_vente`, cloche
+    en tête) + MAIL IMMÉDIAT (grille), UNE FOIS par annonce/compte (dédup sur l'événement ET sur le mail)."""
+    if not suivis:
+        return 0
+    from .. import config, emails, mail, mailfile
+    from ..api.events import _notif_token, creer_notification
+    base_url = config.get_settings().public_base_url or ""
+    dry = not mail.mail_configured()
     n = 0
+    for b in biens:
+        idu = b.get("idu")
+        if not idu or idu not in suivis:
+            continue
+        court = idu[8:] if len(idu) > 8 else idu
+        type_label = (b.get("type_bien") or "bien").capitalize()
+        prix = _fmt_prix(b["faits"].get("prix")) or "—"
+        url = b.get("url_sortante") or _lien_radar(base_url)
+        for cid in suivis[idu]:
+            cree = creer_notification(
+                db, kind="parcelle_en_vente", compte_id=cid, source="Radar", idu=idu,
+                titre=f"Votre parcelle {court} est mise en vente",
+                detail=f"{type_label} à {b['commune']} · {prix}", lien=url,
+                dedup=f"parcelle_en_vente:{cid}:{b['bien_id']}", permanent=True)
+            if not cree:
+                continue                                    # déjà notifié → pas de 2ᵉ mail
+        n += 1
+        # mail IMMÉDIAT par compte suiveur (une fois par annonce/compte — dédup mail_queue)
+        for cid in suivis[idu]:
+            email = db.execute(text(
+                "SELECT min(email) FILTER (WHERE role='titulaire') FROM utilisateurs WHERE compte_id=:c"),
+                {"c": cid}).scalar()
+            if not email:
+                continue
+            tok = _notif_token(db, cid)
+            ld = f"{base_url}/events/desabonner?c={cid}&t={tok}"
+            lp = f"{base_url}/events/preferences?c={cid}&t={tok}"
+            sujet, txt, html = emails.mise_en_vente_email(court, b["commune"], type_label, prix,
+                                                          lien=url, lien_desabo=ld, lien_prefs=lp)
+            raw = {"sujet": sujet, "texte": txt, "html": html, "nom": "Mise en vente"}
+            mailfile.envoyer_mail(db.get_bind(), key="mise_en_vente", to=email, params={"__raw": raw},
+                                  compte_id=cid, demandeur="job:radar-cloche",
+                                  dedup=f"mise_en_vente:{cid}:{b['bien_id']}",
+                                  fenetre_doublon_s=90 * 24 * 3600, dry_run=dry)
+    return n
+
+
+def evaluer_radar_cloche(db: Session) -> dict:
+    """VEILLE-2 (Lot 3) / VEILLE-FIX-2 (Lots A+B) — pose à la CLOCHE (compte-scopé) les événements Radar
+    des annonces vues DEPUIS LE DERNIER PASSAGE qui matchent une veille du client :
+      · `radar`             — nouvelle annonce → clic vers l'annonce ;
+      · `radar_baisse`      — baisse de prix (ancien → nouveau) sur une annonce qui matche ;
+      · `radar_retrait`     — annonce retirée (confirmée) qui matchait ;
+      · `parcelle_en_vente` — mise en vente d'une parcelle SUIVIE (prioritaire + MAIL IMMÉDIAT).
+    Producteur des événements Radar que le digest du matin reprend (nouvelle/baisse/retrait) ; la mise en
+    vente part EN PLUS tout de suite (grille : `mail: immediat`). Zéro mail de digest ici. Idempotent
+    (dédup). Un ESSAI EXPIRÉ ne reçoit rien (`_clients_actifs` filtre déjà).
+
+    VEILLE-FIX-2 (Lot A) — fenêtre « depuis le dernier passage » (watermark, repli début d'hier)."""
+    from datetime import datetime, time, timedelta, timezone
+
+    from ..api.events import creer_notification
+    _ensure_watermark(db)
+    debut = datetime.now(timezone.utc)
+    jour = today_reunion()
+    # repli au 1er passage = DÉBUT D'HIER (00:00 heure Réunion) — robuste : capte tout le dépôt du soir,
+    # jamais un « now − 24 h » glissant qui raterait une annonce déposée à 22 h la veille.
+    repli = datetime.combine(jour - timedelta(days=1), time(0, 0), tzinfo=timezone(timedelta(hours=4)))
+    depuis = _watermark_get(db, _WATERMARK_RADAR) or repli
+    biens = _biens_du_jour(db, depuis)
+    baisses = _biens_baisses_depuis(db, depuis)
+    retraits = _biens_retires_depuis(db, depuis)
+    suivis = _idus_suivis(db)
+    out = {"radar": 0, "radar_baisse": 0, "radar_retrait": 0, "parcelle_en_vente": 0}
     for c in _clients_actifs(db):
         for v in veille_mod.lister(db, c["compte_id"]):
             cr = v.get("criteria") or {}
             for b in (x for x in biens if veille_mod.matche(cr, x)):
                 type_label = (b.get("type_bien") or "bien").capitalize()
                 prix = _fmt_prix(b["faits"].get("prix")) or "—"
-                n += 1 if creer_notification(
+                out["radar"] += 1 if creer_notification(
                     db, kind="radar", compte_id=c["compte_id"], source="Radar", idu=None,
                     titre=f"Nouvelle annonce pour votre veille — {type_label} à {b['commune']}",
                     detail=f"{prix} · {_libelle_veille(v)}",
                     lien=b.get("url_sortante") or _lien_radar(""),
                     dedup=f"radar:{c['compte_id']}:{b['bien_id']}:{jour.isoformat()}") else 0
+            for b in (x for x in baisses if veille_mod.matche(cr, x)):
+                type_label = (b.get("type_bien") or "bien").capitalize()
+                anc, nouv = _fmt_prix(b.get("ancien_prix")), _fmt_prix(b.get("nouveau_prix"))
+                out["radar_baisse"] += 1 if creer_notification(
+                    db, kind="radar_baisse", compte_id=c["compte_id"], source="Radar", idu=None,
+                    titre=f"Baisse de prix — {type_label} à {b['commune']}",
+                    detail=f"{anc} → {nouv} · {_libelle_veille(v)}",
+                    lien=b.get("url_sortante") or _lien_radar(""),
+                    dedup=f"radar_baisse:{c['compte_id']}:{b['bien_id']}:{b.get('nouveau_prix')}",
+                    permanent=True) else 0
+            for b in (x for x in retraits if veille_mod.matche(cr, x)):
+                type_label = (b.get("type_bien") or "bien").capitalize()
+                quand = _fmt_date_fr(b["retiree_le"].date()) if b.get("retiree_le") else "récemment"
+                out["radar_retrait"] += 1 if creer_notification(
+                    db, kind="radar_retrait", compte_id=c["compte_id"], source="Radar", idu=None,
+                    titre=f"Annonce retirée — {type_label} à {b['commune']}",
+                    detail=f"retirée le {quand} · {_libelle_veille(v)}",
+                    lien=b.get("url_sortante") or _lien_radar(""),
+                    dedup=f"radar_retrait:{c['compte_id']}:{b['bien_id']}", permanent=True) else 0
+    out["parcelle_en_vente"] = _mises_en_vente(db, biens, suivis, jour)
+    _watermark_set(db, _WATERMARK_RADAR, debut)             # borne haute = début du passage (aucun trou)
     db.commit()
-    return {"radar": n}
+    return out
 
 
 def envoyer(db: Session, *, base_url: str = "", dry_run: bool = False,

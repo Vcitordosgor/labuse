@@ -246,8 +246,23 @@ def digest(ctx: JobContext) -> None:
     from .db import engine
     ensure_tables(engine())
     base = get_settings().public_base_url or ""
-    r = envoyer_digests(ctx.db, base_url=base, freq="quotidien", dry_run=ctx.dry_run)
+    # VEILLE-FIX-2 (Lot C) — freq=None : chaque compte reçoit à SA cadence (quotidien/hebdo/cloche_seule).
+    r = envoyer_digests(ctx.db, base_url=base, dry_run=ctx.dry_run)
     ctx.compte(**{k: r.get(k) for k in ("envoyes", "ignores", "echecs", "simules")})
+
+
+def mail_queue_consommer(ctx: JobContext) -> None:
+    """VEILLE-FIX-2 (Lot D) — LE CONSOMMATEUR DE LA FILE (cron 5 min). Envoie les mails `en_attente` dûs
+    (digest différé, programmés J+3/J+10) et rejoue les `a_rejouer` dont l'heure est venue. En dry-run
+    (SMTP absent) : ne fait rien partir (les tentatives échoueraient → on n'appelle pas le worker)."""
+    from .mailfile import consommer, ensure_tables
+    from .db import engine
+    ensure_tables(engine())
+    if ctx.dry_run:
+        ctx.compte(traites=0, note="dry-run (SMTP absent) — worker non lancé")
+        return
+    r = consommer(engine())
+    ctx.compte(**r)
 
 
 def copilote_purge(ctx: JobContext) -> None:

@@ -633,6 +633,9 @@ def admin_licences(request: Request) -> dict:
     with session_scope() as _s:
         partage = {p["compte_id"]: p for p in sessions_actives_par_compte(_s)}
     from ..comptes import compte_est_test, licences_actives as _licences_actives
+    from .. import mailfile
+    # VEILLE-FIX-2 (Lot D) — la LIGNE ROUGE : nb de mails en ÉCHEC définitif par compte (rejeux épuisés).
+    mail_echecs = mailfile.echecs_par_compte(engine())
     out = []
     for k in comptes:
         mails = mails_par_compte.get(k["id"], {})
@@ -645,6 +648,7 @@ def admin_licences(request: Request) -> dict:
             "essai_expire_at": k["essai_expire_at"].isoformat() if k["essai_expire_at"] else None,
             "stripe": abos_par_cust.get(k["stripe_customer_id"]),
             "mails": mails,
+            "mail_echecs": mail_echecs.get(k["id"], 0),   # VEILLE-FIX-2 (Lot D) — ligne rouge si > 0
             "rappels": _rappels_onboarding(k["created_at"], mails),
             # A5 — sessions simultanées : purement informatif (jamais de blocage/déconnexion)
             "partage": {"sessions": int(pg["sessions"]), "ips": int(pg["ips"] or 0),

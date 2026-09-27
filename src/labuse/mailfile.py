@@ -36,10 +36,17 @@ TENTATIVES_MAX = 3
 #: fenêtre anti-doublon par défaut (double-clic) : deux enfilages identiques sous ce délai = un seul.
 FENETRE_DOUBLON_S = 30
 
+# VEILLE-FIX-2 (Lot D) — REJEU espacé : après un échec Brevo, l'entrée passe `a_rejouer` avec une date de
+# prochaine tentative (5 min, puis 1 h, puis 24 h). Le worker `mail-queue-consommer` (cron 5 min) la
+# reprend quand l'heure est venue. Au-delà des 3 rejeux → `echec` définitif (ligne rouge, rejeu manuel).
+from datetime import timedelta as _td
+DELAIS_REJEU = (_td(minutes=5), _td(hours=1), _td(hours=24))
+
 # vocabulaire d'état UNIQUE (mandat). `annule` = un programmé décommandé avant départ (jamais supprimé).
-ETATS = ("en_attente", "parti", "recu", "echec", "annule")
+# `a_rejouer` (VEILLE-FIX-2) = échec transitoire Brevo, une nouvelle tentative est programmée (prevu_at).
+ETATS = ("en_attente", "a_rejouer", "parti", "recu", "echec", "annule")
 LIBELLES_ETAT = {
-    "en_attente": "En attente", "parti": "Parti", "recu": "Reçu par Brevo",
+    "en_attente": "En attente", "a_rejouer": "À rejouer", "parti": "Parti", "recu": "Reçu par Brevo",
     "echec": "Échec", "annule": "Annulé",
 }
 
@@ -57,7 +64,7 @@ def ensure_tables(engine) -> None:
                 destinataire text NOT NULL,
                 params       jsonb NOT NULL DEFAULT '{}'::jsonb,
                 etat         varchar(12) NOT NULL DEFAULT 'en_attente'
-                             CHECK (etat IN ('en_attente','parti','recu','echec','annule')),
+                             CHECK (etat IN ('en_attente','a_rejouer','parti','recu','echec','annule')),
                 demandeur    varchar(64) NOT NULL DEFAULT 'systeme',  -- QUI : vic / job:<nom> / client
                 dedup        varchar(96),            -- anti-doublon (compte:key), fenêtre courte
                 tentatives   integer NOT NULL DEFAULT 0,
@@ -82,6 +89,11 @@ def ensure_tables(engine) -> None:
         c.execute(text("CREATE INDEX IF NOT EXISTS ix_mail_queue_etat_cree ON mail_queue(etat, cree_at DESC)"))
         c.execute(text("CREATE INDEX IF NOT EXISTS ix_mail_queue_compte ON mail_queue(compte_id, cree_at DESC)"))
         c.execute(text("CREATE INDEX IF NOT EXISTS ix_mail_queue_dedup ON mail_queue(dedup, cree_at DESC)"))
+        # VEILLE-FIX-2 (Lot D) — la contrainte CHECK d'une table EXISTANTE ne connaît pas `a_rejouer` :
+        # on la remplace (idempotent : DROP IF EXISTS puis ADD). Nom de contrainte auto = mail_queue_etat_check.
+        c.execute(text("ALTER TABLE mail_queue DROP CONSTRAINT IF EXISTS mail_queue_etat_check"))
+        c.execute(text("ALTER TABLE mail_queue ADD CONSTRAINT mail_queue_etat_check "
+                       "CHECK (etat IN ('en_attente','a_rejouer','parti','recu','echec','annule'))"))
 
 
 def _now() -> datetime:
@@ -190,35 +202,49 @@ def _tenter_depart(engine, mail_id: int) -> dict:
         _journal(engine, mail_id, "recu", demandeur, compte_id,
                  detail=f"{key} → {to} (message-id {res.get('message_id') or '?'})")
         return _ligne(row)
-    # échec : incrémente, bascule en 'echec' au bout de TENTATIVES_MAX, sinon reste 'en_attente'
+    # VEILLE-FIX-2 (Lot D) — échec Brevo : REJEU ESPACÉ. On incrémente le compteur ; tant qu'il reste des
+    # délais (5 min, 1 h, 24 h), l'entrée passe `a_rejouer` avec la date de la prochaine tentative (le
+    # worker la reprendra). Au-delà → `echec` définitif (ligne rouge, rejeu manuel). Jamais d'envoi en
+    # double : le SELECT ... FOR UPDATE ci-dessus sérialise, et un `recu` n'est jamais retenté.
     raison = res.get("raison") or "échec inconnu"
     with engine.begin() as c:
-        row = c.execute(text(
-            "UPDATE mail_queue SET tentatives = tentatives + 1, erreur = :err,"
-            " etat = CASE WHEN tentatives + 1 >= :max THEN 'echec' ELSE 'en_attente' END"
-            " WHERE id = :i RETURNING *"),
-            {"err": raison, "max": TENTATIVES_MAX, "i": mail_id}).mappings().first()
+        cur = c.execute(text("SELECT tentatives FROM mail_queue WHERE id = :i FOR UPDATE"),
+                        {"i": mail_id}).scalar() or 0
+        nouv = cur + 1
+        if nouv <= len(DELAIS_REJEU):
+            prochain = _now() + DELAIS_REJEU[nouv - 1]
+            row = c.execute(text(
+                "UPDATE mail_queue SET tentatives = :n, erreur = :err, etat = 'a_rejouer', prevu_at = :p"
+                " WHERE id = :i RETURNING *"),
+                {"n": nouv, "err": raison, "p": prochain, "i": mail_id}).mappings().first()
+        else:
+            row = c.execute(text(
+                "UPDATE mail_queue SET tentatives = :n, erreur = :err, etat = 'echec' WHERE id = :i RETURNING *"),
+                {"n": nouv, "err": raison, "i": mail_id}).mappings().first()
+    suite = (f" — rejeu prévu {row['prevu_at'].astimezone().isoformat(timespec='minutes')}"
+             if row["etat"] == "a_rejouer" and row["prevu_at"] else " — ÉCHEC définitif (rejeu manuel)")
     _journal(engine, mail_id, row["etat"], demandeur, compte_id,
-             detail=f"{key} → {to} — tentative {row['tentatives']}/{TENTATIVES_MAX} : {raison}")
+             detail=f"{key} → {to} — tentative {row['tentatives']} : {raison}{suite}")
     return _ligne(row)
 
 
 def envoyer_mail(engine, *, key: str, to: str, params: dict | None = None,
                  compte_id: int | None = None, demandeur: str = "systeme",
                  prevu_at: datetime | None = None, dedup: str | None = None,
-                 fenetre_doublon_s: int = FENETRE_DOUBLON_S, dry_run: bool = False) -> dict:
+                 fenetre_doublon_s: int = FENETRE_DOUBLON_S, dry_run: bool = False,
+                 differe: bool = False) -> dict:
     """POINT D'ENVOI UNIQUE (façade `mail.envoyer_mail`) : enfile, puis — si l'envoi est immédiat
-    (`prevu_at` absent ou déjà passé) — déclenche le départ tout de suite. Un programmé (J+3, J+10,
-    digest) reste `en_attente` avec sa date prévue ; un worker/clic le fera partir. Renvoie la ligne.
-    `fenetre_doublon_s` : fenêtre anti-doublon (ex. relance carte = plusieurs jours, Stripe rejoue).
+    (`prevu_at` absent ou déjà passé) — déclenche le départ tout de suite. Un programmé (J+3, J+10)
+    reste `en_attente` avec sa date prévue ; le worker `mail-queue-consommer` le fera partir. Renvoie la
+    ligne. `fenetre_doublon_s` : fenêtre anti-doublon (ex. relance carte = plusieurs jours, Stripe rejoue).
 
     VEILLE-FIX-1 (lot 5) — `dry_run` : on ÉCRIT la ligne (trace) mais on NE DÉCLENCHE PAS le départ.
-    La ligne reste `en_attente` SANS `prevu_at` → le worker `depart_des_programmes` (qui ne prend que
-    les programmés) ne la fera jamais partir. « Dry-run = une ligne écrite, rien envoyé »."""
+    VEILLE-FIX-2 (Lot D) — `differe` : on enfile `en_attente` SANS déclencher le départ synchrone (le
+    worker s'en charge dans les 5 min) → le mail bénéficie du REJEU. Le digest passe par ce chemin."""
     ligne = enfiler(engine, key=key, to=to, params=params, compte_id=compte_id,
                     demandeur=demandeur, prevu_at=prevu_at, dedup=dedup,
                     fenetre_doublon_s=fenetre_doublon_s)
-    if ligne.get("doublon") or dry_run:
+    if ligne.get("doublon") or dry_run or differe:
         return ligne
     immediate = prevu_at is None or prevu_at <= _now()
     if immediate and ligne["etat"] == "en_attente":
@@ -258,15 +284,33 @@ def annuler(engine, mail_id: int, demandeur: str = "systeme") -> dict:
     return _ligne(row)
 
 
-def depart_des_programmes(engine, demandeur: str = "job:mail-queue") -> int:
-    """Worker : fait partir les programmés dont l'heure est venue (prevu_at ≤ now, encore en attente)."""
+def consommer(engine, demandeur: str = "job:mail-queue-consommer", limite: int = 200) -> dict:
+    """VEILLE-FIX-2 (Lot D) — LE WORKER DE LA FILE (cron 5 min). Fait partir tout ce qui est DÛ :
+      · `en_attente` sans `prevu_at` (immédiats différés, ex. digest) OU `prevu_at ≤ now` (programmés
+        J+3 / J+10) ;
+      · `a_rejouer` dont l'heure de rejeu est venue (`prevu_at ≤ now`).
+    Idempotent, jamais d'envoi en double (`_tenter_depart` verrouille FOR UPDATE et ne retente pas un
+    `recu`). Retourne un compte-rendu {traites, envoyes, a_rejouer, echecs}."""
     with engine.begin() as c:
         ids = [r[0] for r in c.execute(text(
-            "SELECT id FROM mail_queue WHERE etat = 'en_attente' AND prevu_at IS NOT NULL"
-            " AND prevu_at <= now() ORDER BY prevu_at")).all()]
+            "SELECT id FROM mail_queue WHERE etat IN ('en_attente','a_rejouer') "
+            "AND (prevu_at IS NULL OR prevu_at <= now()) "
+            "ORDER BY prevu_at NULLS FIRST, id LIMIT :l"), {"l": int(limite)}).all()]
+    envoyes = rejeu = echecs = 0
     for mid in ids:
-        _tenter_depart(engine, mid)
-    return len(ids)
+        r = _tenter_depart(engine, mid)
+        if r["etat"] == "recu":
+            envoyes += 1
+        elif r["etat"] == "a_rejouer":
+            rejeu += 1
+        elif r["etat"] == "echec":
+            echecs += 1
+    return {"traites": len(ids), "envoyes": envoyes, "a_rejouer": rejeu, "echecs": echecs}
+
+
+def depart_des_programmes(engine, demandeur: str = "job:mail-queue") -> int:
+    """Compat — délègue au worker unifié `consommer` (retourne le nombre d'entrées traitées)."""
+    return consommer(engine, demandeur=demandeur)["traites"]
 
 
 # ───────────────────────── lecture (écrans) ─────────────────────────
@@ -309,6 +353,15 @@ def compteurs(engine) -> dict:
 
 def echecs_du_jour(engine) -> int:
     return compteurs(engine)["echecs_jour"]
+
+
+def echecs_par_compte(engine) -> dict:
+    """VEILLE-FIX-2 (Lot D) — {compte_id: nb de mails en ÉCHEC définitif}. Alimente la LIGNE ROUGE du
+    dashboard Comptes : un compte dont un mail a épuisé ses rejeux est signalé."""
+    with engine.begin() as c:
+        rows = c.execute(text("SELECT compte_id, count(*) FROM mail_queue "
+                              "WHERE etat = 'echec' AND compte_id IS NOT NULL GROUP BY compte_id")).all()
+    return {int(r[0]): int(r[1]) for r in rows}
 
 
 # ───────────────────────── journal (« qui ») ─────────────────────────
