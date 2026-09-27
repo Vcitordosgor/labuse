@@ -440,6 +440,8 @@ export function Fiche({ idu }: { idu: string }) {
   // CONTENU de la fiche (toutes les lignes tracées, tous onglets), pas le dashboard.
   const [ficheSearchOpen, setFicheSearchOpen] = useState(false)
   const [ficheQuery, setFicheQuery] = useState('')
+  // KELFONCIER-FIX-1 (Lot G) — panneau Street View (jamais en pleine page) ; ouvert au clic « Voir la rue ».
+  const [streetViewOpen, setStreetViewOpen] = useState(false)
   // RETOURS-8 (R7) — la fiche en ONGLETS : Analyse (la fiche détaillée), Autour (le voisinage isochrone),
   // Actions (CRM · Projet · Courrier · exports) — accès direct aux actions sans faire défiler l'analyse.
   // RETOURS-9 (Q8.1) — onglets de fiche retirés : plus d'état d'onglet, la fiche défile d'un tenant.
@@ -756,6 +758,18 @@ export function Fiche({ idu }: { idu: string }) {
                         <LogoGoogleMaps />
                       </a>
                     )}
+                    {/* KELFONCIER-FIX-1 (Lot G) — « Voir la rue » : n'apparaît QUE si le serveur sert
+                        un embed Street View (clé GOOGLE_MAPS_EMBED_KEY posée) ; sinon masqué, sans erreur.
+                        Ouvre un panneau (jamais en pleine page), centré sur le centroïde de la parcelle. */}
+                    {f.street_view?.embed_url && (
+                      <button data-street-view-btn className="hbtn" onClick={() => setStreetViewOpen((o) => !o)}
+                        style={streetViewOpen ? { borderColor: 'var(--mint)', color: 'var(--mint)' } : undefined}
+                        aria-label="Voir la rue (Street View)" title="Voir la rue">
+                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="12" cy="8" r="3" /><path d="M6 20c0-3 3-5 6-5s6 2 6 5" /><path d="M3 12h2M19 12h2" />
+                        </svg>
+                      </button>
+                    )}
                   </>
                 )
               })()}
@@ -770,6 +784,24 @@ export function Fiche({ idu }: { idu: string }) {
               </button>
             </div>
           </div>
+
+          {/* KELFONCIER-FIX-1 (Lot G) — panneau Street View INLINE (jamais en pleine page) : l'embed
+              Google Maps (mode panorama) centré sur le centroïde de la parcelle. Rendu seulement quand
+              ouvert ET que le serveur a servi une URL (clé posée). */}
+          {streetViewOpen && f?.street_view?.embed_url && (
+            <div data-street-view-panel className="mt-2 overflow-hidden rounded-lg border border-line-2 bg-surface-2">
+              <div className="flex items-center justify-between px-3 py-1.5">
+                <span className="label-caps text-txt-mut">Vue de la rue</span>
+                <button className="hbtn" onClick={() => setStreetViewOpen(false)} aria-label="Fermer la vue de la rue">
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+                </button>
+              </div>
+              <iframe data-street-view-iframe title="Vue de la rue (Google Street View)"
+                src={f.street_view.embed_url} loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade" allowFullScreen
+                className="block h-[220px] w-full border-0" />
+            </div>
+          )}
 
           {/* RETOURS-15 U7 — ADRESSE en rangée PLEINE LARGEUR (moins l'icône copier) : une ligne
               tant que ça tient, ellipse avec l'adresse complète au survol (title) sinon. Elle ne

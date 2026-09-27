@@ -314,6 +314,9 @@ async def _security_headers(request, call_next):
         "img-src 'self' data: blob: https://data.geopf.fr https://s3.amazonaws.com; "
         "connect-src 'self' https://data.geopf.fr https://s3.amazonaws.com; "
         "worker-src 'self' blob:; "
+        # KELFONCIER-FIX-1 (Lot G) — Street View : l'embed Google Maps (mode panorama) est un iframe
+        # servi par www.google.com → l'autoriser en frame-src (sans cela, default-src 'self' le bloque).
+        "frame-src https://www.google.com; "
         "frame-ancestors 'none'; base-uri 'self'; object-src 'none'")
     # P1 : HSTS quand la requête est en HTTPS (derrière Caddy, uvicorn --proxy-headers lit
     # X-Forwarded-Proto). JAMAIS en clair : un HSTS posé sur du http local bloquerait l'accès
@@ -3801,6 +3804,20 @@ def _relabel_dvf_terrain(layer: str, detail: str | None) -> str | None:
     return detail
 
 
+def _street_view_block(lat: float | None, lon: float | None) -> dict | None:
+    """KELFONCIER-FIX-1 (Lot G) — Street View de la fiche §1. Renvoie l'URL d'embed Google Maps
+    (mode panorama, centré sur le CENTROÏDE de la parcelle) UNIQUEMENT si la clé `GOOGLE_MAPS_EMBED_KEY`
+    est posée (env, /etc/labuse/labuse.env). Absente → None → le bouton « Voir la rue » est MASQUÉ,
+    aucune erreur. L'Embed API (mode Street View) est gratuite et sans limite ; la clé est restreinte
+    par référent HTTP côté console Google. Le centroïde vient de la fiche (head lat/lon)."""
+    key = os.environ.get("GOOGLE_MAPS_EMBED_KEY")
+    if not key or lat is None or lon is None:
+        return None
+    from urllib.parse import urlencode
+    q = urlencode({"key": key, "location": f"{lat:.6f},{lon:.6f}"})
+    return {"embed_url": f"https://www.google.com/maps/embed/v1/streetview?{q}"}
+
+
 def _secteur_opportunites(db: Session, idu: str) -> dict:
     """fiche-secteur — le compte d'opportunités de la SECTION cadastrale (`left(idu,10)`, la même que
     l'ex-carnet). Opportunités = parcelles des tiers `brulante` (chip « Priorité ») + `chaude` (chip
@@ -4159,6 +4176,9 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
         "potentiel_transformation": _potentiel_transformation_block(db, idu),
         "completeness_score": head["completeness_score"],  # M129-B : a_completude (matrice) retiré
         "coords": [round(head["lon"], 6), round(head["lat"], 6)],
+        # KELFONCIER-FIX-1 (Lot G) — Street View (§1 Identité) : URL d'embed centrée sur le centroïde,
+        # servie SEULEMENT si la clé GOOGLE_MAPS_EMBED_KEY est posée (sinon None → bouton masqué).
+        "street_view": _street_view_block(head["lat"], head["lon"]),
         "evenement": "rouge" if evenement_detail else None, "evenement_detail": evenement_detail,
         "lines": lines, "flags": flags,
         "score_v": score_v,

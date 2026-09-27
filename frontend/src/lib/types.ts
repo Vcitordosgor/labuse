@@ -311,6 +311,9 @@ export interface Fiche {
   a_score: number
   completeness_score: number
   coords: [number, number]
+  // KELFONCIER-FIX-1 (Lot G) — Street View (§1) : URL d'embed centrée sur le centroïde, servie
+  // seulement si la clé GOOGLE_MAPS_EMBED_KEY est posée côté serveur (sinon null → bouton masqué).
+  street_view?: { embed_url: string } | null
   evenement: string | null
   evenement_detail: string | null
   lines: FicheLine[]
