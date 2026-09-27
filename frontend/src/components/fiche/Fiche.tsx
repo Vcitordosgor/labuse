@@ -1814,9 +1814,13 @@ export function Fiche({ idu }: { idu: string }) {
                     quand même ». Sinon : panneau ouvert. On ne modifie PAS FaisabiliteTab/GabaritLine. */}
                 {(() => {
                   const inconstructible = !!f.au_ouverture?.bloquant || (!!reglesZone && /^(A|N)/i.test(reglesZone))
+                  // FICHE-FIX-5 (Lot J) — le panneau se replie dès que la SDP résiduelle est 0, QUELLE
+                  // QUE SOIT la cause (destination interdite, terrain exigu, densité atteinte…).
+                  const sdpNulle = !(reglesSdp != null && reglesSdp > 0)
                   const pourquoi = f.au_ouverture?.motif
                     || (reglesZone && /^A/i.test(reglesZone) ? 'Zone agricole — construction de logements non autorisée.'
-                      : reglesZone && /^N/i.test(reglesZone) ? 'Zone naturelle — construction non autorisée.' : null)
+                      : reglesZone && /^N/i.test(reglesZone) ? 'Zone naturelle — construction non autorisée.'
+                      : sdpNulle ? 'Aucune SDP résiduelle exploitable sur cette parcelle — le détail du calcul (terrain libéré, hypothèses, gabarit) est dans « Étudier quand même ».' : null)
                   const outils: OutilSection[] = []
                   if (f.commune) outils.push({ label: "Densifier l'existant", data: 'densifier-filtre',
                     onClick: () => { const st = useApp.getState(); st.setCommunesFilter([f.commune!]); st.setFilter('renouvellement', true); st.setFilter('sdpMin', 200); st.openFiltres() } })
@@ -1837,10 +1841,10 @@ export function Fiche({ idu }: { idu: string }) {
                           : (reglesSdp != null && reglesSdp > 0 ? `${fmtInt(reglesSdp)} m² de SDP résiduelle` : 'Pas de SDP résiduelle exploitable')}
                         contexte={!inconstructible && fo?.niveaux ? `capacité ${fo.niveaux}` : undefined} />
                       <ChiffreDissous l="SDP restante" t={tuileSdp} />
-                      {inconstructible && pourquoi && <p className="text-[11.5px] leading-snug text-txt-mut" data-potentiel-pourquoi>{pourquoi}</p>}
+                      {sdpNulle && pourquoi && <p className="text-[11.5px] leading-snug text-txt-mut" data-potentiel-pourquoi>{pourquoi}</p>}
                       {faisa.data?.delaisse && <div data-delaisse><Vigilance title={faisa.data.delaisse.libelle} /></div>}
                       <OutilsSection outils={outils} />
-                      {inconstructible
+                      {sdpNulle
                         ? <Repli label="Étudier quand même">{panneau}</Repli>
                         : panneau}
                     </>
