@@ -172,10 +172,10 @@ def tableau(db: Session, commune: str | None = None) -> dict:
         4 chiffres du haut (maisons) disent la même chose (recette : cohérence des chiffres)."""
         st = radar_stats(db, commune, t)["prix_m2_median_demande"]
         dv, dn = st.get("valeur"), int(st.get("n") or 0)
-        av, an = None, 0
-        if commune:
-            acte = _dvf_terrain(db, commune) if t == "terrain" else _dvf_bati_type(db, commune, t)
-            av, an = acte.get("eur_m2"), int(acte.get("n") or 0)
+        # RADAR-2 (retouches 2) — l'acté DVF est servi POUR CHAQUE TYPE, île ET commune (le garde
+        # `if commune` masquait « Toute l'île » → maisons « 0 vente ». `_dvf_*` acceptent commune=None).
+        acte = _dvf_terrain(db, commune) if t == "terrain" else _dvf_bati_type(db, commune, t)
+        av, an = acte.get("eur_m2"), int(acte.get("n") or 0)
         # écart servi seulement si LES DEUX côtés tiennent le seuil (30), sinon « sous le seuil ».
         e = None
         if dv and av and dn >= SEUIL_ECART and an >= SEUIL_ECART:

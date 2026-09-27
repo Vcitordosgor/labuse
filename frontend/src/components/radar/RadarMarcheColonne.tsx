@@ -3,15 +3,14 @@
 // l'écart demandé/acté par commune (barres). Le prix acté vient du moteur DVF de la fiche commune (jamais
 // recalculé à part) ; sous 30 annonces l'écart s'écrit « sous le seuil » (même règle que la fiche commune).
 import { useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   getRadarBienVsMarche, getRadarMarcheTableau, radarClic,
-  type RadarBienCmp, type RadarMarcheChiffre, type RadarMarcheTypeLigne,
+  type RadarBienCmp, type RadarBienVsMarche, type RadarMarcheChiffre, type RadarMarcheTypeLigne,
 } from '../../lib/api'
 import { fmtCapture } from './RadarHub'
 import { Squelette } from '../Loading'
 import { ErrorState } from '../States'
-import { Retour } from '../ui/Retour'
 
 const fmt = (v: number | null | undefined) => (v == null ? '—' : v.toLocaleString('fr-FR'))
 const pct = (v: number | null | undefined) => (v == null ? null : `${v > 0 ? '+' : ''}${v} %`)
@@ -52,16 +51,31 @@ function LigneType({ l }: { l: RadarMarcheTypeLigne }) {
   )
 }
 
-export function RadarMarcheColonne({ commune }: { commune: string | null }) {
-  // portée du marché : la commune du filtre, ou toute l'île (bascule locale).
+export function RadarMarcheColonne({ commune, bienId, onCloseBien }: {
+  commune: string | null; bienId?: number | null; onCloseBien?: () => void
+}) {
   const [ile, setIle] = useState(false)
-  const scope = commune && !ile ? commune : null
+  // RADAR-2 (retouches 2) — une seule vue : quand une annonce est sélectionnée, on récupère d'abord son
+  // marché (pour connaître SA commune) ; le marché de la colonne bascule alors sur cette commune.
+  const bien = useQuery({
+    queryKey: ['radar-bien-vs-marche', bienId], queryFn: () => getRadarBienVsMarche(bienId!),
+    enabled: bienId != null,
+  })
+  const bienData = bienId != null && bien.data && !bien.data.introuvable ? bien.data : null
+  useEffect(() => { if (bienId != null) setIle(false) }, [bienId])
+
+  // portée du marché : SA commune si une annonce est sélectionnée, sinon la commune du filtre (bascule île).
+  const scopeCommune = bienData?.commune ?? commune
+  const scope = scopeCommune && !ile ? scopeCommune : null
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['radar-marche-tableau', scope], queryFn: () => getRadarMarcheTableau(scope || undefined),
   })
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-7 py-6">
+      {/* ── CE BIEN — inséré en tête de colonne, au-dessus des 4 chiffres, quand une annonce est choisie ── */}
+      {bienId != null && <CeBienBloc loading={bien.isLoading} error={bien.isError} bien={bienData} onClose={onCloseBien} />}
+
       <div className="mb-5 flex items-start justify-between gap-4">
         <div>
           <div className="font-mono text-[10.5px] tracking-[0.2em] text-txt-mut">LE MARCHÉ</div>
@@ -69,9 +83,9 @@ export function RadarMarcheColonne({ commune }: { commune: string | null }) {
             {scope ?? 'Toute l’île'} · ce qui est demandé, ce qui se vend
           </h2>
         </div>
-        {commune && (
+        {scopeCommune && (
           <div className="flex shrink-0 overflow-hidden rounded-full border border-line-2">
-            <button data-marche-scope-commune onClick={() => setIle(false)} className={`px-3 py-1 text-[12px] ${!ile ? 'bg-mint text-mint-on font-medium' : 'text-txt-mut hover:text-txt'}`}>{commune}</button>
+            <button data-marche-scope-commune onClick={() => setIle(false)} className={`px-3 py-1 text-[12px] ${!ile ? 'bg-mint text-mint-on font-medium' : 'text-txt-mut hover:text-txt'}`}>{scopeCommune}</button>
             <button data-marche-scope-ile onClick={() => setIle(true)} className={`px-3 py-1 text-[12px] ${ile ? 'bg-mint text-mint-on font-medium' : 'text-txt-mut hover:text-txt'}`}>Toute l’île</button>
           </div>
         )}
@@ -169,88 +183,64 @@ export function RadarMarcheColonne({ commune }: { commune: string | null }) {
   )
 }
 
-// ══════════════ CE BIEN FACE À SON MARCHÉ (colonne de droite quand une annonce est sélectionnée) ══════════════
+// ══════════════ CE BIEN (bloc compact, en tête de la colonne marché quand une annonce est choisie) ══════════════
 const TYPE_MOT: Record<string, string> = { terrain: 'terrains', maison: 'maisons', appartement: 'appartements' }
 
-// une ligne de comparaison : la médiane (demandée/actée) + l'écart du bien, ou « sous le seuil ».
-function LigneCmp({ titre, cmp }: { titre: string; cmp: RadarBienCmp }) {
+// un écart du bien vs une médiane (demandée/actée), sur une ligne : « +12 % » / « sous le seuil ».
+function EcartInline({ label, cmp }: { label: string; cmp: RadarBienCmp }) {
   return (
-    <div className="flex items-center justify-between border-b border-line-2 py-2 last:border-0">
-      <span className="text-[12px] text-txt-mut">{titre}</span>
-      {cmp.sous_seuil || cmp.median == null ? (
-        <span className="text-[11.5px] text-txt-dim">sous le seuil ({cmp.n})</span>
-      ) : (
-        <span className="text-[12.5px] tabular-nums text-txt">
-          {fmt(cmp.median)} €/m²
-          {cmp.ecart_pct != null && (
-            <span className={`ml-2 font-medium ${cmp.ecart_pct > 0 ? 'text-amber' : 'text-mint'}`}>{pct(cmp.ecart_pct)}</span>
-          )}
-        </span>
-      )}
-    </div>
+    <span className="text-txt-mut">
+      {label}{' '}
+      {cmp.sous_seuil || cmp.median == null
+        ? <span className="text-txt-dim">sous le seuil</span>
+        : cmp.ecart_pct == null
+          ? <span className="tabular-nums text-txt">{fmt(cmp.median)} €/m²</span>
+          : <span className={`font-medium ${cmp.ecart_pct > 0 ? 'text-amber' : 'text-mint'}`}>{pct(cmp.ecart_pct)}</span>}
+    </span>
   )
 }
 
-export function BienVsMarche({ bienId, onBack }: { bienId: number; onBack: () => void }) {
-  const { data, isLoading, isError, refetch } = useQuery({ queryKey: ['radar-bien-vs-marche', bienId], queryFn: () => getRadarBienVsMarche(bienId) })
-  const baisses = (data?.historique_prix ?? []).filter((h) => (h.nouveau ?? 0) < (h.ancien ?? 0))
+// le bloc « Ce bien » : €/m², prix, écart vs demandé/acté (commune + type), ancienneté, historique en une
+// ligne, « Voir l'annonce ↗ », croix pour fermer. Compact : il coiffe la colonne, ne la remplace pas.
+function CeBienBloc({ loading, error, bien, onClose }: {
+  loading: boolean; error: boolean; bien: RadarBienVsMarche | null; onClose?: () => void
+}) {
+  const baisses = (bien?.historique_prix ?? []).filter((h) => (h.nouveau ?? 0) < (h.ancien ?? 0))
+  const der = baisses[baisses.length - 1]
+  const histLigne = baisses.length === 0
+    ? 'aucune baisse enregistrée'
+    : `${baisses.length} baisse${baisses.length > 1 ? 's' : ''}${der ? ` · ${fmt(der.ancien ?? 0)} → ${fmt(der.nouveau ?? 0)} €` : ''}`
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-7 py-6">
-      <div className="mb-4">
-        <Retour label={data?.commune ? `Le marché de ${data.commune}` : 'Le marché'} data-bien-retour onClick={onBack} />
+    <div data-ce-bien className="mb-4 rounded-lg border border-mint/40 bg-mint/[0.05] px-4 py-3.5">
+      <div className="flex items-start justify-between gap-3">
+        <div className="font-mono text-[9.5px] uppercase tracking-[0.14em] text-mint">Ce bien</div>
+        <button data-ce-bien-fermer aria-label="Fermer" onClick={onClose}
+          className="-mr-1 -mt-1 grid h-6 w-6 place-items-center rounded text-txt-dim hover:text-txt">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M5 5l14 14M19 5L5 19" /></svg>
+        </button>
       </div>
-      <div className="font-mono text-[10.5px] tracking-[0.2em] text-txt-mut">RADAR › CE BIEN</div>
-      <h2 className="mt-1 text-[20px] font-semibold text-txt-hi">Ce bien face à son marché</h2>
-
-      {isLoading && <div className="mt-4"><Squelette lignes={6} /></div>}
-      {isError && <div className="mt-4"><ErrorState message="Comparaison indisponible." retry={() => refetch()} /></div>}
-      {data && data.introuvable && <p className="mt-4 text-[12px] text-txt-dim">Ce bien n’est plus servi.</p>}
-      {data && !data.introuvable && (
+      {loading && <div className="mt-2"><Squelette lignes={2} /></div>}
+      {error && <p className="mt-2 text-[11.5px] text-txt-dim">Comparaison indisponible.</p>}
+      {!loading && !error && bien == null && <p className="mt-2 text-[11.5px] text-txt-dim">Ce bien n’est plus servi.</p>}
+      {bien && (
         <>
-          <div className="mt-4 flex items-end gap-3">
-            <div className="text-[26px] font-bold tabular-nums text-txt-hi">{data.eur_m2 != null ? `${fmt(data.eur_m2)} €/m²` : '—'}</div>
-            <div className="pb-1 text-[12.5px] text-txt-mut">{data.prix != null ? `${fmt(data.prix)} €` : ''}{data.type_bien ? ` · ${data.type_bien}` : ''}</div>
+          <div className="mt-1 flex flex-wrap items-end gap-x-2">
+            <span className="text-[22px] font-bold tabular-nums text-txt-hi">{bien.eur_m2 != null ? `${fmt(bien.eur_m2)} €/m²` : '—'}</span>
+            <span className="pb-0.5 text-[12px] text-txt-mut">{bien.prix != null ? `${fmt(bien.prix)} €` : ''}{bien.type_bien ? ` · ${TYPE_LABEL[bien.type_bien] ?? bien.type_bien}` : ''}</span>
           </div>
-
-          <div className="mt-4 rounded-lg border border-line-2 bg-surface-2 px-4 py-3">
-            <div className="mb-1 label-caps">Son €/m² face au marché · {data.commune} · {TYPE_MOT[data.type_bien ?? ''] ?? 'même type'}</div>
-            <LigneCmp titre="Médiane demandée (Radar)" cmp={data.demande} />
-            <LigneCmp titre="Médiane actée (DVF)" cmp={data.acte} />
+          <div className="mt-2 text-[9.5px] uppercase tracking-wide text-txt-dim">Écart · {bien.commune} · {TYPE_MOT[bien.type_bien ?? ''] ?? 'même type'}</div>
+          <div className="mt-0.5 flex flex-wrap gap-x-4 gap-y-1 text-[11.5px]">
+            <EcartInline label="vs demandé" cmp={bien.demande} />
+            <EcartInline label="vs acté" cmp={bien.acte} />
           </div>
-
-          <div className="mt-4 rounded-lg border border-line-2 bg-surface-2 px-4 py-3">
-            <div className="mb-1 label-caps">Ancienneté</div>
-            <div className="flex items-center justify-between py-1">
-              <span className="text-[12px] text-txt-mut">En vente depuis</span>
-              <span className="text-[12.5px] tabular-nums text-txt">{data.anciennete_j != null ? `${data.anciennete_j} j` : '—'}</span>
-            </div>
-            <div className="flex items-center justify-between py-1">
-              <span className="text-[12px] text-txt-mut">Médiane de la commune</span>
-              {data.anciennete_sous_seuil || data.anciennete_mediane_j == null
-                ? <span className="text-[11.5px] text-txt-dim">sous le seuil ({data.anciennete_n})</span>
-                : <span className="text-[12.5px] tabular-nums text-txt">{data.anciennete_mediane_j} j</span>}
-            </div>
+          <div className="mt-1.5 text-[11px] leading-snug text-txt-dim">
+            {bien.anciennete_j != null ? `En vente depuis ${bien.anciennete_j} j` : 'Ancienneté inconnue'}
+            {bien.anciennete_mediane_j != null && !bien.anciennete_sous_seuil ? ` · médiane commune ${bien.anciennete_mediane_j} j` : ''}
+            {' · '}{histLigne}
           </div>
-
-          <div className="mt-4 rounded-lg border border-line-2 bg-surface-2 px-4 py-3">
-            <div className="mb-1 label-caps">Historique des prix</div>
-            {baisses.length === 0 ? (
-              <p className="text-[11.5px] text-txt-dim">Aucune baisse ni retour enregistré.</p>
-            ) : (
-              <div className="flex flex-col gap-1.5">
-                {baisses.map((h, i) => (
-                  <div key={i} className="flex items-center justify-between text-[12px]">
-                    <span className="text-txt-mut">{h.date ? new Date(h.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '—'}</span>
-                    <span className="tabular-nums text-txt"><span className="text-txt-dim line-through">{fmt(h.ancien ?? 0)} €</span> → {fmt(h.nouveau ?? 0)} €</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <a onClick={(e) => { e.preventDefault(); radarClic(bienId).catch(() => {}); window.open(data.url_sortante, '_blank', 'noopener,noreferrer') }}
-            href={data.url_sortante} target="_blank" rel="noopener noreferrer"
-            data-bien-portail className="mt-4 inline-flex text-[13px] font-medium text-[#E7B008] underline decoration-[#E7B008]/40 underline-offset-2 hover:decoration-[#E7B008]">
+          <a onClick={(e) => { e.preventDefault(); radarClic(bien.bien_id).catch(() => {}); window.open(bien.url_sortante, '_blank', 'noopener,noreferrer') }}
+            href={bien.url_sortante} target="_blank" rel="noopener noreferrer"
+            data-ce-bien-portail className="mt-2 inline-flex text-[12px] font-medium text-[#E7B008] underline decoration-[#E7B008]/40 underline-offset-2 hover:decoration-[#E7B008]">
             Voir l’annonce ↗
           </a>
         </>

@@ -1,20 +1,19 @@
-// RADAR-2 (Lot 2/3 + recette) — L'ÉCRAN RADAR : liste des biens en vente (560 px, à gauche) + le marché
-// (colonne de droite). PLUS DE CARTE. Recette : en-tête léger (Retour + « N biens » + tri), filtres dans
-// un accordéon (résumé sur une ligne fermé), « M'alerter » sous l'accordéon, PLUS d'encart « Mes alertes »
-// (les alertes vivent dans Veille). Cliquer une annonce la sélectionne : la colonne de droite devient
-// « Ce bien face à son marché ». Doctrine intacte : des FAITS et un LIEN, jamais le contenu de l'annonce.
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+// RADAR-2 (Lot 2/3 + retouches 2) — L'ÉCRAN RADAR : liste des biens en vente (560 px, à gauche) + le
+// marché (colonne de droite). PLUS DE CARTE. En-tête léger (Retour + « N biens » + tri), filtres dans un
+// accordéon (résumé sur une ligne fermé). PLUS de « M'alerter » ici (créer une alerte se fait dans Veille ·
+// les annonces). Cliquer une annonce la sélectionne : un bloc « Ce bien » se glisse EN TÊTE de la colonne
+// marché (qui bascule sur la commune de l'annonce) — une seule vue. FAITS et un LIEN, jamais le contenu.
+import { useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
-import { creerRadarVeille, getRadarBiens, radarClic, type RadarBienClient, type RadarFiltres } from '../../lib/api'
+import { getRadarBiens, radarClic, type RadarBienClient, type RadarFiltres } from '../../lib/api'
 import { CP_COMMUNES } from '../panel/FiltreLabuse'
 import { trierCommunes } from '../../lib/communes'
 import { useApp } from '../../store/useApp'
 import { Squelette } from '../Loading'
 import { EmptyState, ErrorState } from '../States'
-import { Bouton } from '../ui/Bouton'
 import { Chevron } from '../ui/Chevron'
 import { Retour } from '../ui/Retour'
-import { BienVsMarche, RadarMarcheColonne } from './RadarMarcheColonne'
+import { RadarMarcheColonne } from './RadarMarcheColonne'
 
 const COMMUNES_24 = trierCommunes(CP_COMMUNES.map(([, nom]) => nom), (n) => n)
 const TYPES = [['', 'Tous'], ['terrain', 'Terrain'], ['maison', 'Maison']] as const
@@ -95,12 +94,10 @@ export function RadarEcran() {
   const setRadarEcran = useApp((s) => s.setRadarEcran)
   const radarPrefill = useApp((s) => s.radarPrefill)
   const setRadarPrefill = useApp((s) => s.setRadarPrefill)
-  const qc = useQueryClient()
   const [f, setF] = useState<RadarFiltres>({})
   const [tri, setTri] = useState('recentes')
   const [filtresOpen, setFiltresOpen] = useState(false)
   const [selBien, setSelBien] = useState<number | null>(null)
-  const [msg, setMsg] = useState<string | null>(null)
 
   useEffect(() => {
     if (radarPrefill) { setF(radarPrefill as RadarFiltres); setRadarPrefill(null) }
@@ -109,17 +106,6 @@ export function RadarEcran() {
 
   const { data, isLoading, isError, refetch } = useQuery({ queryKey: ['radar-biens', f, tri], queryFn: () => getRadarBiens(f, tri) })
   const biens = useMemo(() => data?.biens ?? [], [data])
-
-  const alerter = useMutation({
-    mutationFn: () => creerRadarVeille({
-      commune: f.commune || undefined, type_bien: f.type_bien || undefined,
-      prix_max: f.prix_max ?? undefined, prix_min: f.prix_min ?? undefined,
-      surface_min: f.surface_terrain_min ?? undefined,
-      particulier_only: f.particulier_pro === 'particulier' || undefined,
-    }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['radar-alertes'] }); qc.invalidateQueries({ queryKey: ['radar-apercu'] }); setMsg('✓ Alerte créée — retrouvez-la dans Veille · les annonces.') },
-    onError: () => setMsg('Impossible de créer l’alerte.'),
-  })
 
   const setNum = (k: keyof RadarFiltres, v: string) => setF((p) => ({ ...p, [k]: v === '' ? undefined : Number(v) }))
   const nTotal = data?.n_total ?? 0
@@ -167,16 +153,6 @@ export function RadarEcran() {
               </div>
             </div>
           )}
-          {/* « M'alerter » reste visible sous l'accordéon */}
-          <div className="mt-2.5">
-            <Bouton niveau="secondaire" ton="vert" data-radar-alerter disabled={alerter.isPending} onClick={() => alerter.mutate()}>
-              <span className="inline-flex items-center gap-1.5">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinejoin="round"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6z" /><path d="M10 20a2 2 0 0 0 4 0" strokeLinecap="round" /></svg>
-                M’alerter sur ces critères
-              </span>
-            </Bouton>
-            {msg && <p className="mt-1.5 text-[10.5px] text-txt-mut">{msg}</p>}
-          </div>
         </div>
 
         {/* liste */}
@@ -190,10 +166,9 @@ export function RadarEcran() {
         </div>
       </aside>
 
-      {/* ── colonne de droite : le marché de la commune, OU le bien sélectionné face à son marché ── */}
-      {selBien != null
-        ? <BienVsMarche bienId={selBien} onBack={() => setSelBien(null)} />
-        : <RadarMarcheColonne commune={f.commune ?? null} />}
+      {/* ── colonne de droite : TOUJOURS le marché (de la commune du filtre, ou de la commune de l'annonce
+          sélectionnée) ; quand une annonce est sélectionnée, un bloc « Ce bien » s'insère en tête. ── */}
+      <RadarMarcheColonne commune={f.commune ?? null} bienId={selBien} onCloseBien={() => setSelBien(null)} />
     </div>
   )
 }

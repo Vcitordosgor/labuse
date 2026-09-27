@@ -761,11 +761,16 @@ class VeilleIn(BaseModel):
 @router.post("/radar/veille")
 def radar_veille_creer(body: VeilleIn, request: Request) -> dict:
     """Le client crée une veille Radar (ses critères). Alimente l'ALERTE veille de fin de journée."""
+    from fastapi import HTTPException
     from ..api.tenant import current_compte
     from . import veille
     crit = {k: v for k, v in body.model_dump().items() if v not in (None, [], False)}
+    cid = current_compte(request)
     with session_scope() as db:
-        vid = veille.creer(db, compte_id=current_compte(request), criteria=crit)
+        # RADAR-2 (retouches 2) — une alerte IDENTIQUE à une existante est refusée (409), pas dupliquée.
+        if veille.existe_identique(db, cid, crit):
+            raise HTTPException(409, "Vous avez déjà une alerte avec ces critères.")
+        vid = veille.creer(db, compte_id=cid, criteria=crit)
         db.commit()
     return {"ok": True, "veille_id": vid}
 

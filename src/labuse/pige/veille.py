@@ -46,6 +46,27 @@ def creer(db: Session, *, compte_id: int | None, criteria: dict) -> int:
         {"c": compte_id, "t": TYPE_RADAR, "comm": commune, "cr": json.dumps(criteria)}).scalar()
 
 
+def _norme(criteria: dict) -> dict:
+    """Forme CANONIQUE d'un jeu de critères, pour comparer deux alertes : valeurs vides retirées,
+    `commune` seule fondue dans `communes`, communes triées/dédupliquées. Deux alertes qui ciblent la
+    même chose ont la même forme, quel que soit l'ordre de saisie."""
+    c = {k: v for k, v in (criteria or {}).items() if v not in (None, [], False, "")}
+    communes = list(c.pop("communes", []) or [])
+    if c.pop("commune", None):
+        communes.append(criteria["commune"])
+    if communes:
+        c["communes"] = sorted(set(communes))
+    return c
+
+
+def existe_identique(db: Session, compte_id: int | None, criteria: dict) -> bool:
+    """RADAR-2 (retouches 2) — une alerte AUX MÊMES critères existe-t-elle déjà (compte-scopé, actives) ?
+    Comparaison sur la forme canonique (`_norme`) → l'ordre des communes ou une commune seule vs liste
+    d'une n'échappe pas au doublon."""
+    cible = _norme(criteria)
+    return any(_norme(v["criteria"]) == cible for v in lister(db, compte_id))
+
+
 def lister(db: Session, compte_id: int | None) -> list[dict]:
     _ensure_pause(db)
     rows = db.execute(text(

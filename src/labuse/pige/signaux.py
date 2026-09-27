@@ -81,8 +81,35 @@ def _radar_medianes(db: Session, commune: str) -> dict:
     return dict(r)
 
 
-def _dvf_terrain(db: Session, commune: str) -> dict:
-    """DVF acté terrain nu (référentiel UNIQUE) — médiane commune = zone U de préférence sinon AU."""
+_SQL_TERRAIN_ILE = """
+    WITH parc AS (
+      SELECT DISTINCT m.id_mutation, m.id_parcelle, m.valeur_fonciere AS val, m.millesime AS mill,
+             max(COALESCE(m.surface_terrain,0)) OVER (PARTITION BY m.id_mutation, m.id_parcelle) AS terr_parc
+      FROM dvf_mutations_parcelle m
+      JOIN parcel_zone_plu z ON z.idu = m.id_parcelle
+      WHERE m.nature_mutation = 'Vente' AND COALESCE(m.surface_reelle_bati,0) = 0
+        AND m.surface_terrain > 0 AND z.zone_fam IN ('U','AU')),
+    tot AS (SELECT id_mutation, sum(terr_parc) AS terr_tot, max(val) AS val, max(mill) AS mill
+            FROM parc GROUP BY id_mutation)
+    SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY val / NULLIF(terr_tot,0)) AS med,
+           count(*) AS n, max(mill) AS mill
+    FROM tot WHERE terr_tot > 0"""
+
+
+def _dvf_terrain(db: Session, commune: str | None) -> dict:
+    """DVF acté terrain nu (référentiel UNIQUE) — médiane commune = zone U de préférence sinon AU.
+    RADAR-2 (retouches 2) — `commune=None` → médiane ÎLE ENTIÈRE du terrain nu en zones U/AU (même dédup
+    par mutation que `ligne2_terrain_zone`, sans le filtre commune) pour que « Toute l'île » serve un acté."""
+    if commune is None:
+        try:
+            r = db.execute(text(_SQL_TERRAIN_ILE)).mappings().first() or {}
+        except Exception:  # noqa: BLE001
+            return {"eur_m2": None, "n": 0, "millesime": None}
+        med, n = r.get("med"), int(r.get("n") or 0)
+        mill = f"DVF terrain {r['mill']}" if r.get("mill") else None
+        if med and n >= SEUIL_REF_TYPE:
+            return {"eur_m2": float(med), "n": n, "millesime": mill, "zone": "U/AU"}
+        return {"eur_m2": None, "n": n, "millesime": mill}
     try:
         from ..faisabilite.marche_commune import ligne2_terrain_zone
         l = ligne2_terrain_zone(db, commune)
@@ -177,19 +204,23 @@ def annonce_vs_referentiel(db: Session, bien_id: int) -> dict | None:
 
 # ════════════════════════ D4 — badge « SOUS LE MARCHÉ » (par annonce, terrain ET bâti) ════════════════════════
 
-def _dvf_bati_type(db: Session, commune: str, type_bien: str | None) -> dict:
+def _dvf_bati_type(db: Session, commune: str | None, type_bien: str | None) -> dict:
     """R2a — référence DVF actée du MÊME TYPE (maison → médiane maisons, appartement → médiane appts),
     servie dès `SEUIL_REF_TYPE` ventes ; sinon repli sur la médiane bâti MIXTE (périmètre écrit tel quel).
-    Même filtre de retenue que le baromètre `prix_ancien` — un seul moteur de prix acté."""
+    Même filtre de retenue que le baromètre `prix_ancien` — un seul moteur de prix acté.
+    RADAR-2 (retouches 2) — `commune=None` → médiane ÎLE ENTIÈRE (filtre commune retiré), pour que
+    « Toute l'île » serve un acté par type au lieu d'un « 0 vente »."""
     from ..api.moteurs import _BAROMETRE_RETENUE
+    cw = "commune = :c AND " if commune else ""
+    cp = {"c": commune} if commune else {}
     tl = {"maison": "Maison", "appartement": "Appartement", "immeuble": "Maison"}.get(type_bien or "")
     if tl:
         r = db.execute(text(
             f"SELECT count(*) n, "
             f"  percentile_cont(0.5) WITHIN GROUP (ORDER BY valeur_fonciere / NULLIF(surface_reelle_bati,0)) m, "
             f"  to_char(max(date_mutation), 'YYYY') AS millesime "
-            f"FROM dvf_mutations WHERE commune = :c AND type_local = :t AND {_BAROMETRE_RETENUE}"),
-            {"c": commune, "t": tl}).mappings().first()
+            f"FROM dvf_mutations WHERE {cw}type_local = :t AND {_BAROMETRE_RETENUE}"),
+            {**cp, "t": tl}).mappings().first()
         if r and r["m"] and int(r["n"]) >= SEUIL_REF_TYPE:
             return {"eur_m2": float(r["m"]), "n": int(r["n"]), "millesime": r["millesime"],
                     "perimetre": "maisons" if tl == "Maison" else "appartements", "meme_type": True}
@@ -197,8 +228,8 @@ def _dvf_bati_type(db: Session, commune: str, type_bien: str | None) -> dict:
         f"SELECT count(*) n, "
         f"  percentile_cont(0.5) WITHIN GROUP (ORDER BY valeur_fonciere / NULLIF(surface_reelle_bati,0)) m, "
         f"  to_char(max(date_mutation), 'YYYY') AS millesime "
-        f"FROM dvf_mutations WHERE commune = :c AND type_local IN ('Maison','Appartement') AND {_BAROMETRE_RETENUE}"),
-        {"c": commune}).mappings().first()
+        f"FROM dvf_mutations WHERE {cw}type_local IN ('Maison','Appartement') AND {_BAROMETRE_RETENUE}"),
+        cp).mappings().first()
     return {"eur_m2": float(r2["m"]) if r2 and r2["m"] else None, "n": int(r2["n"]) if r2 else 0,
             "millesime": (r2 or {}).get("millesime"), "perimetre": PERIMETRE_BATI, "meme_type": False}
 

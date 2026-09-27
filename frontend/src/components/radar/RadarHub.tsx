@@ -79,17 +79,19 @@ function PortesRadar() {
   const suivis = data?.suivis_n ?? 0
   const alertes = data?.alertes_n ?? 0
   return (
-    <div className="mx-auto w-full max-w-[1060px] px-8 py-10">
-      <EcranTete surtitre="RADAR" titre="Le marché en vente, et ce que vous surveillez" sous="Deux chemins." />
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-        <PorteCard data="radar-porte-radar" ic={<IcoRadar />} titre="Radar"
-          desc="Les biens en vente sur les portails, et le marché de chaque commune : ce qui est demandé, ce qui se vend vraiment."
-          resume={isLoading ? '…' : <>{biens} bien{biens > 1 ? 's' : ''} en vente · dernière capture {fmtCapture(data?.derniere_capture_at ?? null)}</>}
-          onClick={() => setRadarEcran('radar')} />
-        <PorteCard data="radar-porte-veille" ic={<IcoCloche />} titre="Veille"
-          desc="Vos parcelles suivies et vos alertes sur les annonces. Soyez prévenu quand quelque chose bouge."
-          resume={isLoading ? '…' : <>{suivis} parcelle{suivis > 1 ? 's' : ''} suivie{suivis > 1 ? 's' : ''} · {alertes} alerte{alertes > 1 ? 's' : ''}</>}
-          onClick={() => setRadarEcran('veille')} />
+    <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="mx-auto w-full max-w-[1060px] px-8 py-10">
+        <EcranTete surtitre="RADAR" titre="Le marché en vente, et ce que vous surveillez" sous="Deux chemins." />
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+          <PorteCard data="radar-porte-radar" ic={<IcoRadar />} titre="Radar"
+            desc="Les biens en vente sur les portails, et le marché de chaque commune : ce qui est demandé, ce qui se vend vraiment."
+            resume={isLoading ? '…' : <>{biens} bien{biens > 1 ? 's' : ''} en vente · dernière capture {fmtCapture(data?.derniere_capture_at ?? null)}</>}
+            onClick={() => setRadarEcran('radar')} />
+          <PorteCard data="radar-porte-veille" ic={<IcoCloche />} titre="Veille"
+            desc="Vos parcelles suivies et vos alertes sur les annonces. Soyez prévenu quand quelque chose bouge."
+            resume={isLoading ? '…' : <>{suivis} parcelle{suivis > 1 ? 's' : ''} suivie{suivis > 1 ? 's' : ''} · {alertes} alerte{alertes > 1 ? 's' : ''}</>}
+            onClick={() => setRadarEcran('veille')} />
+        </div>
       </div>
     </div>
   )
