@@ -1801,35 +1801,45 @@ export function Fiche({ idu }: { idu: string }) {
                 {/* KELFONCIER-FIX-2 (Lot J) — maquette v3 : Verdict en tête (rouge quand la construction
                     neuve n'est pas autorisée : zone AU non ouverte ou zone A/N). Réagence des faits
                     déjà servis (au_ouverture, zone, SDP résiduelle), aucun calcul de capacité refait. */}
+                {/* FICHE-FIX-4 (Lot L) — UNE seule phrase de verdict (avant, écrite 3× : ici + dans
+                    FaisabiliteTab + GabaritLine). Quand la construction neuve n'est pas autorisée :
+                    verdict ROUGE + tuile SDP + ligne « pourquoi » + boutons ; le panneau Faisabilité
+                    (Terrain libéré, Tester un projet, hypothèses, gabarit) est REPLIÉ sous « Étudier
+                    quand même ». Sinon : panneau ouvert. On ne modifie PAS FaisabiliteTab/GabaritLine. */}
                 {(() => {
                   const inconstructible = !!f.au_ouverture?.bloquant || (!!reglesZone && /^(A|N)/i.test(reglesZone))
+                  const pourquoi = f.au_ouverture?.motif
+                    || (reglesZone && /^A/i.test(reglesZone) ? 'Zone agricole — construction de logements non autorisée.'
+                      : reglesZone && /^N/i.test(reglesZone) ? 'Zone naturelle — construction non autorisée.' : null)
+                  const outils: OutilSection[] = []
+                  if (f.commune) outils.push({ label: "Densifier l'existant", data: 'densifier-filtre',
+                    onClick: () => { const st = useApp.getState(); st.setCommunesFilter([f.commune!]); st.setFilter('renouvellement', true); st.setFilter('sdpMin', 200); st.openFiltres() } })
+                  outils.push({ label: 'Ouvrir le Gabarit', principal: true, data: 'gabarit',
+                    onClick: () => { setParcelPrefill(idu); setModule('programme') } })
+                  const panneau = (
+                    <div className="flex flex-col gap-3">
+                      {f.potentiel_transformation && <TransformationBlock pt={f.potentiel_transformation} />}
+                      <FaisabiliteTab idu={idu} />
+                      <GabaritLine idu={idu} />
+                    </div>
+                  )
                   return (
-                    <Verdict ton={inconstructible ? 'rouge' : (reglesSdp != null && reglesSdp > 0 ? 'vert' : 'ambre')}
-                      reponse={inconstructible
-                        ? `Construction neuve non autorisée${reglesZone ? ` en ${reglesZone}` : ''}`
-                        : (reglesSdp != null && reglesSdp > 0 ? `${fmtInt(reglesSdp)} m² de SDP résiduelle` : 'Pas de SDP résiduelle exploitable')}
-                      contexte={inconstructible
-                        ? (f.au_ouverture?.bloquant ? "SDP restante non calculable tant que la zone n'est pas ouverte" : 'zone non constructible')
-                        : (fo?.niveaux ? `capacité ${fo.niveaux}` : undefined)} />
+                    <>
+                      <Verdict ton={inconstructible ? 'rouge' : (reglesSdp != null && reglesSdp > 0 ? 'vert' : 'ambre')}
+                        reponse={inconstructible
+                          ? `Construction neuve non autorisée${reglesZone ? ` en ${reglesZone}` : ''}`
+                          : (reglesSdp != null && reglesSdp > 0 ? `${fmtInt(reglesSdp)} m² de SDP résiduelle` : 'Pas de SDP résiduelle exploitable')}
+                        contexte={!inconstructible && fo?.niveaux ? `capacité ${fo.niveaux}` : undefined} />
+                      <ChiffreDissous l="SDP restante" t={tuileSdp} />
+                      {inconstructible && pourquoi && <p className="text-[11.5px] leading-snug text-txt-mut" data-potentiel-pourquoi>{pourquoi}</p>}
+                      {faisa.data?.delaisse && <div data-delaisse><Vigilance title={faisa.data.delaisse.libelle} /></div>}
+                      <OutilsSection outils={outils} />
+                      {inconstructible
+                        ? <Repli label="Étudier quand même">{panneau}</Repli>
+                        : panneau}
+                    </>
                   )
                 })()}
-                <ChiffreDissous l="SDP restante" t={tuileSdp} />
-                {/* RETOURS-20 Z5 — l'alerte « délaissé » = une Vigilance (filet ambre). */}
-                {faisa.data?.delaisse && <div data-delaisse><Vigilance title={faisa.data.delaisse.libelle} /></div>}
-                {f.potentiel_transformation && <TransformationBlock pt={f.potentiel_transformation} />}
-                {/* DENSIFIER-PLI (PISCINES-2 Lot B) — l'outil « Densifier l'existant » est plié dans les
-                    filtres : la porte ouvre désormais le panneau Filtre (groupe Capacité) avec « Déjà bâti »
-                    coché et « SDP restante ≥ 200 m² » pré-rempli, scopé sur la commune de la parcelle.
-                    Plus de précalcul figé : la SDP lue est celle du run servi (parcel_residuel), == fiche. */}
-                {f.commune && (
-                  <PorteOutil ico="◫" data="densifier-filtre" titre="Densifier l'existant"
-                    sous={`Le bâti déjà construit de ${f.commune} qui peut porter davantage`}
-                    onClick={() => { const st = useApp.getState(); st.setCommunesFilter([f.commune!]); st.setFilter('renouvellement', true); st.setFilter('sdpMin', 200); st.openFiltres() }} />
-                )}
-                <FaisabiliteTab idu={idu} />
-                {/* GABARIT-2 — ligne « Gabarit réglementaire » : zone d'implantation / plafond /
-                    hauteur (citée de §4) + mini-plan 2D, ou « Calcul incomplet » + motif. */}
-                <GabaritLine idu={idu} />
               </div>
             </RefDrawer>
 
@@ -1842,12 +1852,12 @@ export function Fiche({ idu }: { idu: string }) {
               <div className="flex flex-col gap-3">
                 {/* KELFONCIER-FIX-2 (Lot J) — maquette v3 : Verdict prix de sortie (servi, base du
                     bilan) + OutilsSection en pied (Faisabilité · Calculette · Assemblage). */}
+                {/* FICHE-FIX-4 (Lot L) — le paragraphe explicatif passe derrière le « i » ; les 3 boutons restent. */}
                 {(() => {
                   const prix = faisa.data?.marche?.median
                   return (
                     <Verdict ton="vert"
-                      reponse={prix != null ? `Prix de sortie retenu ${fmtInt(Number(prix))} €/m²` : 'Simulation de charge foncière'}
-                      contexte={prix != null ? 'le prix affiché dans « Marché », base du bilan' : undefined} />
+                      reponse={<>Prix de sortie retenu {prix != null ? `${fmtInt(Number(prix))} €/m²` : '—'}<InfoI aria="Sur le prix de sortie" tip="C'est le prix affiché dans « Marché » (prix de sortie bâti secteur) — il sert de base au bilan de charge foncière ci-dessous." /></>} />
                   )
                 })()}
                 <BilanTab idu={idu} />
