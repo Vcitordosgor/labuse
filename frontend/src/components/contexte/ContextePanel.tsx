@@ -536,6 +536,19 @@ export function ContextePanel() {
                 val={d.permis_bloc.delai_median_mois != null ? `${fmtDec(d.permis_bloc.delai_median_mois)} mois` : null}>
                 <div className="flex flex-col gap-0.5 text-[12px]">
                   <RowT lbl="Permis autorisés (12 mois)" val={`${fmt(d.permis_bloc.permis_12m)}${d.permis_bloc.permis_5a != null ? ` · ${fmt(d.permis_bloc.permis_5a)} sur 5 ans` : ''}`} strong />
+                  {/* KELFONCIER-FIX-2 (Lot D) — ventilation PC / PA / DP (+ PD) sur 12 mois, à côté du chiffre
+                      existant. Servie par le back (permis_type_12m, KELFONCIER-FIX-1 Lot C), même source SITADEL.
+                      Ordre stable PC · PA · DP · PD ; seuls les types présents s'affichent. */}
+                  {d.permis_bloc.permis_type_12m && Object.keys(d.permis_bloc.permis_type_12m).length > 0 && (
+                    <RowT lbl="Dont, par type (12 mois)"
+                      val={(['PC', 'PA', 'DP', 'PD'] as const)
+                        .filter((t) => (d.permis_bloc.permis_type_12m?.[t] ?? 0) > 0)
+                        .map((t) => `${t} ${fmt(d.permis_bloc.permis_type_12m![t])}`).join(' · ') || '—'} />
+                  )}
+                  {/* Annulés (ETAT_DAU=4) — séparés des autorisés, même fenêtre 12 mois. Silencieux si 0. */}
+                  {(d.permis_bloc.permis_annules_12m ?? 0) > 0 && (
+                    <RowT lbl="Annulés (12 mois)" val={fmt(d.permis_bloc.permis_annules_12m!)} />
+                  )}
                   {d.permis_bloc.delai_median_mois != null && <RowT lbl="Délai d'instruction médian" val={`${fmtDec(d.permis_bloc.delai_median_mois)} mois`} />}
                   {d.permis_bloc.logements_12m != null && <RowT lbl="Offre engagée" val={`${fmt(d.permis_bloc.logements_12m)} logts / 12 mois`} />}
                   {/* OUTILS-FIX-5 L5 — « Permis dormants » : d.permis_bloc.point_mort sert désormais

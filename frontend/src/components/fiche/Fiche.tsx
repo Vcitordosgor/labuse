@@ -440,6 +440,8 @@ export function Fiche({ idu }: { idu: string }) {
   // CONTENU de la fiche (toutes les lignes tracées, tous onglets), pas le dashboard.
   const [ficheSearchOpen, setFicheSearchOpen] = useState(false)
   const [ficheQuery, setFicheQuery] = useState('')
+  // KELFONCIER-FIX-1 (Lot G) — panneau Street View (jamais en pleine page) ; ouvert au clic « Voir la rue ».
+  const [streetViewOpen, setStreetViewOpen] = useState(false)
   // RETOURS-8 (R7) — la fiche en ONGLETS : Analyse (la fiche détaillée), Autour (le voisinage isochrone),
   // Actions (CRM · Projet · Courrier · exports) — accès direct aux actions sans faire défiler l'analyse.
   // RETOURS-9 (Q8.1) — onglets de fiche retirés : plus d'état d'onglet, la fiche défile d'un tenant.
@@ -756,6 +758,18 @@ export function Fiche({ idu }: { idu: string }) {
                         <LogoGoogleMaps />
                       </a>
                     )}
+                    {/* KELFONCIER-FIX-1 (Lot G) — « Voir la rue » : n'apparaît QUE si le serveur sert
+                        un embed Street View (clé GOOGLE_MAPS_EMBED_KEY posée) ; sinon masqué, sans erreur.
+                        Ouvre un panneau (jamais en pleine page), centré sur le centroïde de la parcelle. */}
+                    {f.street_view?.embed_url && (
+                      <button data-street-view-btn className="hbtn" onClick={() => setStreetViewOpen((o) => !o)}
+                        style={streetViewOpen ? { borderColor: 'var(--mint)', color: 'var(--mint)' } : undefined}
+                        aria-label="Voir la rue (Street View)" title="Voir la rue">
+                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="12" cy="8" r="3" /><path d="M6 20c0-3 3-5 6-5s6 2 6 5" /><path d="M3 12h2M19 12h2" />
+                        </svg>
+                      </button>
+                    )}
                   </>
                 )
               })()}
@@ -771,10 +785,28 @@ export function Fiche({ idu }: { idu: string }) {
             </div>
           </div>
 
+          {/* KELFONCIER-FIX-1 (Lot G) — panneau Street View INLINE (jamais en pleine page) : l'embed
+              Google Maps (mode panorama) centré sur le centroïde de la parcelle. Rendu seulement quand
+              ouvert ET que le serveur a servi une URL (clé posée). */}
+          {streetViewOpen && f?.street_view?.embed_url && (
+            <div data-street-view-panel className="mt-2 overflow-hidden rounded-lg border border-line-2 bg-surface-2">
+              <div className="flex items-center justify-between px-3 py-1.5">
+                <span className="label-caps text-txt-mut">Vue de la rue</span>
+                <button className="hbtn" onClick={() => setStreetViewOpen(false)} aria-label="Fermer la vue de la rue">
+                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+                </button>
+              </div>
+              <iframe data-street-view-iframe title="Vue de la rue (Google Street View)"
+                src={f.street_view.embed_url} loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade" allowFullScreen
+                className="block h-[220px] w-full border-0" />
+            </div>
+          )}
+
           {/* RETOURS-15 U7 — ADRESSE en rangée PLEINE LARGEUR (moins l'icône copier) : une ligne
               tant que ça tient, ellipse avec l'adresse complète au survol (title) sinon. Elle ne
               partage plus sa largeur avec les logos/cloche. M61 P5 — copiable (user-select). */}
-          <div className="addr addr-row" data-fiche-adresse>
+          <div className={`addr addr-row${f?.secteur ? ' has-sect' : ''}`} data-fiche-adresse>
             <span style={{ userSelect: 'text', minWidth: 0 }}>{f?.adresse ?? CLIENT.fiche.adresseAbsente}</span>
             {f?.adresse && <CopyIdu value={f.adresse} aria="Copier l’adresse" titre="Copier l’adresse" okTitre="Adresse copiée" dataAttr="adresse" />}
             {!f?.adresse && (
@@ -785,10 +817,13 @@ export function Fiche({ idu }: { idu: string }) {
               </Tip>
             )}
           </div>
-          {/* GEOPF-3 — SECTEUR : lieu-dit BD NYME le plus proche (rayon borné), sous l'adresse. Rien si aucun. */}
+          {/* GEOPF-3 — SECTEUR : lieu-dit BD NYME le plus proche (rayon borné), sous l'adresse. Rien si aucun.
+              KELFONCIER-FIX-2 (Lot A) — RENTRÉ DANS LA CARTE : même padding horizontal (14px) que l'adresse
+              via `.sect-line` (avant : `.addr` nu, sans padding → la ligne débordait à gauche, hors carte).
+              Libellé gris (--txt-dim = maquette --mut), nom en clair (--txt-hi = maquette --txt), comme .sect. */}
           {f?.secteur && (
-            <div className="addr" data-fiche-secteur style={{ fontSize: 11, color: 'var(--txt-dim)', marginTop: 1 }}>
-              Secteur : <span style={{ color: 'var(--txt-mut)' }}>{f.secteur}</span>
+            <div className="sect-line" data-fiche-secteur>
+              Secteur : <b>{f.secteur}</b>
             </div>
           )}
       </div>{/* /.tete-collee — RETOURS-13 P7 : bloc identité COLLÉ (les 6 tuiles ne collent pas) */}
@@ -1498,6 +1533,23 @@ export function Fiche({ idu }: { idu: string }) {
                     ailleurs : App, Kanban, MapView, filtres…) — seul l'affichage fiche disparaît. */}
                 {/* FINITIONS-1 (P13) — l'encart « Demander à l'IA de traduire le PLU » est RETIRÉ. */}
                 {f.reglement_plu && <ReglementPluBlock rp={f.reglement_plu} />}
+                {/* KELFONCIER-FIX-1 (Lot A) — STATUT D'OUVERTURE de la zone AU, sous la zone. Une zone
+                    AU n'est constructible que si son règlement l'a ouverte ; « fermée »/« sous condition »
+                    en ambre, avec le motif cité du règlement. Rien si la parcelle n'est pas en AU marquée. */}
+                {f.au_ouverture && (
+                  <div data-au-ouverture className="mt-1">
+                    <FactRow label={`Zone AU${f.au_ouverture.zone_lib ? ` (${f.au_ouverture.zone_lib})` : ''}`}
+                      value={<span className={f.au_ouverture.bloquant ? 'text-amber' : undefined}>{f.au_ouverture.statut}</span>}
+                      tone={f.au_ouverture.bloquant ? 'warn' : undefined}
+                      src={f.au_ouverture.source} />
+                    {f.au_ouverture.motif && <FactNote>{f.au_ouverture.motif}</FactNote>}
+                    {/* KELFONCIER-FIX-1 (Lot A) — PONT depuis la ligne vers l'outil PLU « Procédure &
+                        changement », qui simule la bascule d'une zone AU en U (« Simuler l'ouverture »). */}
+                    <PorteOutil ico="⇢" data="simuler-ouverture" titre="Simuler l'ouverture de la zone AU"
+                      sous={f.au_ouverture.zone_lib ? `Ce que la bascule ${f.au_ouverture.zone_lib} → U changerait` : 'Ce que la bascule AU → U changerait'}
+                      onClick={() => { setPluVueF('changement'); setModule('plu') }} />
+                  </div>
+                )}
                 {/* M55-O phase 2.1c : le potentiel de transformation (SDP consommée/résiduelle/
                     surélévation) DÉMÉNAGE vers « Constructibilité » — il relève de la capacité, pas
                     du droit du sol pur. */}

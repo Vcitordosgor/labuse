@@ -34,6 +34,15 @@ donnees:
     absence_type: absente_ici
     pourquoi: "La hauteur mesurée commande le potentiel de surélévation ; en tête."
 
+  # KELFONCIER-FIX-1 (Lot H) — les établissements SIRENE rattachés à la parcelle par l'adresse BAN
+  # (précision « adresse » seulement). Repliés sous le bâti (liste, nom·NAF·effectif·état). Miroir Dossier.
+  - quoi:  etablissements_parcelle_liste
+    ou:    { rang: 35, etat: replie, section: "Ce qu'il y a dessus" }
+    comment: { libelle: "Établissements sur la parcelle", format: liste, i: "Établissements SIRENE rattachés à la parcelle par l'adresse BAN (précision « adresse » seulement — « voie »/« commune » non rattachés) : nom, NAF fin, tranche d'effectif, état + régime collectif BODACC. Nom masqué si l'unité est non diffusible." }
+    absence: "Établissements : aucun établissement SIRENE rattaché à cette parcelle (par l'adresse BAN)."
+    absence_type: absente_ici
+    pourquoi: "Qui occupe la parcelle (occupation économique) ; replié sous le bâti."
+
   - quoi:  surface_libre_sol_m2
     ou:    { rang: 40, etat: en_tete, section: "Ce qu'il reste à bâtir" , fiche_section: terrain }
     comment: { libelle: "Surface au sol libre", unite: "m²", format: entier_m2, i: "Surface de la parcelle non couverte par du bâti (parcelle − emprise bâtie)." }

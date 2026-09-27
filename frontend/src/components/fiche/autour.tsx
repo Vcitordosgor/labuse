@@ -38,7 +38,11 @@ export function HistoriqueSiteBlock({ f }: { f: Fiche }) {
           // (au-delà d'1 mois = modificatif/transféré probable ; sous 1 mois = incohérence). Voir permis.ts.
           const note = permisIncoherenceNote(pm.date_depot, pm.date_autorisation)
           return (
-            <li key={i}>{pm.type ?? 'permis'} — déposé {pm.date_depot ?? pm.date_autorisation ?? '?'}{pm.date_autorisation ? `, autorisé ${pm.date_autorisation}` : ''}
+            // KELFONCIER-FIX-1 (Lot C) — le TYPE libellé (Permis d'aménager / Déclaration préalable…) et
+            // l'ÉTAT sont servis ; un permis ANNULÉ le DIT (rouge), plus jamais confondu avec une autorisation.
+            <li key={i}>{pm.type_label ?? pm.type ?? 'permis'} — déposé {pm.date_depot ?? pm.date_autorisation ?? '?'}{pm.date_autorisation ? `, autorisé ${pm.date_autorisation}` : ''}
+              {pm.annule ? <span className="font-medium text-st-ecartee"> · annulé</span>
+                : pm.etat_libelle && pm.etat_libelle !== 'autorisé' && <span className="text-txt-dim"> · {pm.etat_libelle}</span>}
               {note && <span className="text-st-ecartee"> · {note}</span>}
             </li>
           )

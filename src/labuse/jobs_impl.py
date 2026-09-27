@@ -429,8 +429,15 @@ def _ingest_via_cli(ctx: JobContext, *args: str) -> None:
 
 
 def ingest_sirene(ctx: JobContext) -> None:
-    """SIRENE mensuel (câblage OUTILS-2/4 : date_creation + date_dernier_traitement, refresh concurrents)."""
+    """SIRENE mensuel (câblage OUTILS-2/4 : date_creation + date_dernier_traitement, refresh concurrents).
+    KELFONCIER-FIX-1 (Lot H) — PUIS reconstruit le rattachement établissement→parcelle par l'adresse BAN
+    (`etablissement_parcelle`), au registre CRON UNIQUE (pas de nouveau cron : le rattachement dépend du
+    refresh SIRENE, il en est la suite naturelle)."""
     _ingest_via_cli(ctx, "ingest-sirene-etab")
+    from .ingestion.etablissement_parcelle import build_etablissement_parcelle
+    r = build_etablissement_parcelle(ctx.db)
+    log.info("etablissement_parcelle reconstruit : %s rattachés / %s (adresse) — %s non rattachés",
+             r["rattaches"], r["n_etab_adresse"], r["non_rattaches"])
 
 
 def ingest_sitadel(ctx: JobContext) -> None:

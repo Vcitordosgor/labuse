@@ -654,12 +654,16 @@ def permis_par_type_zone(session: Session, geom_geojson: dict) -> dict:
     if session.execute(text("SELECT to_regclass('sitadel_permits')")).scalar() is None:
         return {"types": []}
     z = _zone2975()
+    # KELFONCIER-FIX-1 (Lot C) — les permis ANNULÉS (ETAT_DAU=4) ne gonflent plus les comptes
+    # « autorisés par type » : ils sont EXCLUS des types et comptés à part (`n_annules`). L'état vit
+    # dans `raw->>'etat'` (source unique ingestion.permits).
     r = session.execute(text(
         f"""SELECT
-              count(*) FILTER (WHERE raw->>'famille'='logements')                 AS n_log,
-              coalesce(sum((raw->>'nb_lgt')::int) FILTER (WHERE raw->>'famille'='logements'), 0) AS lgt,
-              count(*) FILTER (WHERE raw->>'famille'='locaux')                     AS n_loc,
-              count(*) FILTER (WHERE raw->>'famille' IN ('pa','pd'))               AS n_amng
+              count(*) FILTER (WHERE raw->>'famille'='logements' AND raw->>'etat' IS DISTINCT FROM '4') AS n_log,
+              coalesce(sum((raw->>'nb_lgt')::int) FILTER (WHERE raw->>'famille'='logements' AND raw->>'etat' IS DISTINCT FROM '4'), 0) AS lgt,
+              count(*) FILTER (WHERE raw->>'famille'='locaux' AND raw->>'etat' IS DISTINCT FROM '4')     AS n_loc,
+              count(*) FILTER (WHERE raw->>'famille' IN ('pa','pd') AND raw->>'etat' IS DISTINCT FROM '4') AS n_amng,
+              count(*) FILTER (WHERE raw->>'etat' = '4')                            AS n_annules
             FROM sitadel_permits
             WHERE geom IS NOT NULL AND date >= (now() - interval '36 months')
               AND ST_Contains({z}, ST_Transform(geom, 2975))"""),
@@ -671,8 +675,10 @@ def permis_par_type_zone(session: Session, geom_geojson: dict) -> dict:
         types.append({"type": "amenagement", "label": "Aménager / démolir",
                       "n": int(r["n_amng"]), "detail": None})
     return {"types": types,
-            "note": "Type = famille Sitadel (logements / locaux d'activité). Le détail commerce vs "
-                    "activité (code destination SDES) n'est pas décodé en base — non deviné.",
+            "n_annules": int(r["n_annules"] or 0),   # KELFONCIER-FIX-1 (Lot C) — annulés, hors des types
+            "note": "Type = famille Sitadel (logements / locaux d'activité) ; les permis ANNULÉS sont "
+                    "exclus des comptes et affichés à part. Le détail commerce vs activité (code "
+                    "destination SDES) n'est pas décodé en base — non deviné.",
             "millesime": "Sitadel (SDES) — autorisations 36 mois"}
 
 
@@ -887,10 +893,28 @@ def commune_contexte_zone(session: Session, geom_geojson: dict) -> dict | None:
             """SELECT l.loyer_median FROM oll_zonage z JOIN oll_loyers l ON l.zone = z.zone AND l.annee = z.annee
                WHERE z.insee = :insee AND l.type_habitat = 'tous' AND l.pieces = 'tous'
                ORDER BY z.annee DESC LIMIT 1"""), {"insee": insee}).scalar()
-    if loyer is None:
+    # KELFONCIER-FIX-1 (Lot F) — dispositif de commune (Petites Villes de Demain / ACV / ORT),
+    # à l'échelle de la commune, lu par la MÊME fonction que la fiche §7 et la fiche commune
+    # (ingestion.ort.ort_commune). None si la commune n'est dans aucun programme.
+    dispositif_ort = None
+    try:
+        from .ingestion.ort import ort_commune
+        o = ort_commune(session, insee)
+        if o:
+            _lib = {"pvd": "Petites Villes de Demain (PVD)", "acv": "Action Cœur de Ville (ACV)"}.get(o.get("statut"))
+            if _lib or o.get("ort_signee"):
+                dispositif_ort = {
+                    "libelle": _lib or "Opération de Revitalisation de Territoire (ORT)",
+                    "ort_signee": bool(o.get("ort_signee")),
+                    "date_signature": o.get("date_signature"),
+                    "source": f"DGALN/ANCT — {o.get('millesime', 'table ORT')}"}
+    except Exception:  # noqa: BLE001 — jamais casser l'Étude de zone
+        dispositif_ort = None
+    if loyer is None and dispositif_ort is None:
         return None
     return {"commune": commune, "insee": insee, "echelle": "commune",
-            "loyer_median_eur_m2": float(loyer),
+            "loyer_median_eur_m2": float(loyer) if loyer is not None else None,
+            "dispositif_ort": dispositif_ort,
             "millesime": "OLL 2024 — loyer médian €/m² (tous logements, secteur OLL) — à l'échelle de la commune"}
 
 

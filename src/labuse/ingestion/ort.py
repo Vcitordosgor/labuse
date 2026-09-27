@@ -109,7 +109,12 @@ def ingest_ort(session: Session, *, url: str = URL_CSV, csv_text: str | None = N
 
 def ort_commune(session: Session, insee: str) -> dict | None:
     """Statut ACV/PVD/ORT d'une commune + éligibilité Denormandie (condition communale),
-    sourcé + daté. None si non ingéré."""
+    sourcé + daté. None si non ingéré.
+    KELFONCIER-FIX-1 — garde d'existence de la table AVANT toute requête : sur une base sans
+    `commune_ort` (schéma de test), interroger la table poisonnait la transaction de l'appelant
+    (fiche §7, Étude de zone). `to_regclass` renvoie NULL pour une table absente, sans échec SQL."""
+    if session.execute(text("SELECT to_regclass('commune_ort')")).scalar() is None:
+        return None
     row = session.execute(text(
         "SELECT insee, commune, statut, ort_signee, date_signature, millesime "
         "FROM commune_ort WHERE insee = :i"), {"i": insee}).mappings().first()

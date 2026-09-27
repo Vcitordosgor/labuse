@@ -24,6 +24,11 @@ from pydantic import BaseModel, Field
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+# KELFONCIER-FIX-2 (Lot D) — l'état administratif d'un permis (autorisé / travaux commencés / achevés /
+# annulé) est décodé par UNE seule fonction, celle de la fiche : ingestion/permits.py. L'outil Permis
+# et le drawer s'y adossent (fin de la divergence avec le `_ETAT_LABELS` local, où 4 = « Chantier ouvert »).
+from ..ingestion.permits import est_annule, etat_libelle
+
 router = APIRouter(prefix="/modules", tags=["modules"])
 
 
@@ -455,6 +460,13 @@ def patrimoine(siren: str, fmt: str = "json",
     geoms = {r[0]: r[1] for r in db.execute(text(
         "SELECT idu, ST_AsGeoJSON(ST_Transform(geom_2975, 4326)) FROM parcels WHERE idu = ANY(:i)"),
         {"i": [r["idu"] for r in page]}).all()} if page else {}
+    # KELFONCIER-FIX-1 (Lot H) — « occupé par N établissements » : compte SIRENE rattaché par l'adresse
+    # BAN (etablissement_parcelle), la MÊME source que la fiche §3 (jamais un second calcul). 0 si aucun.
+    etab_count: dict[str, int] = {}
+    if page and db.execute(text("SELECT to_regclass('etablissement_parcelle') IS NOT NULL")).scalar():
+        etab_count = {r[0]: int(r[1]) for r in db.execute(text(
+            "SELECT idu, count(*) FROM etablissement_parcelle WHERE idu = ANY(:i) GROUP BY idu"),
+            {"i": [r["idu"] for r in page]}).all()}
     return {
         "siren": siren, "nom": nom, "n_parcelles": len(rows),
         "millesime_majic": millesime_majic,   # OUTILS-FIX-4 A1 — fraîcheur des fichiers fonciers servis
@@ -480,6 +492,7 @@ def patrimoine(siren: str, fmt: str = "json",
         "items": [{"idu": r["idu"], "commune": r["commune"],
                    "tier_v2": r["tier_v2"], "rang_v2": r["rang_v2"], "etage0": bool(r["etage0"]),
                    "surface_m2": round(r["surface_m2"] or 0), "sdp": r["sdp_residuelle_m2"],
+                   "n_etablissements": etab_count.get(r["idu"], 0),   # KELFONCIER-FIX-1 (Lot H)
                    "geom": json.loads(geoms[r["idu"]]) if geoms.get(r["idu"]) else None} for r in page],
     }
 
@@ -554,7 +567,8 @@ def permis(commune: str | None = None, months: int = 24, nature: str | None = No
     # LISTE paginée (plafond levé côté client par « voir plus » — offset).
     rows = db.execute(text(f"""
         SELECT s.permit_id, s.type, s.date::date::text AS date, s.commune,
-               s.raw->>'etat' AS etat, s.raw->>'nb_lgt' AS nb_lgt, s.raw->>'surf_hab' AS surf_hab,
+               s.raw->>'etat' AS etat, s.raw->>'daact' AS daact,
+               s.raw->>'nb_lgt' AS nb_lgt, s.raw->>'surf_hab' AS surf_hab,
                s.raw->>'geoloc' AS geoloc,   -- RETOURS-14 S5.1 : la liste DIT la localisation approximative
                d.date_depot::text AS depot, CASE WHEN d.valide THEN d.delai_mois END AS delai_mois,
                CASE WHEN s.geom IS NOT NULL THEN ST_AsGeoJSON(s.geom) END AS g
@@ -608,16 +622,15 @@ def permis(commune: str | None = None, months: int = 24, nature: str | None = No
         "geocodes": geocodes_total, "sans_localisation": max(0, true_total - geocodes_total),
         "pct_geocode": round(100 * geocodes_total / true_total) if true_total else 0,
         "carte": carte,
-        # LOT11 (OUTILS-FINALE) — `etat_label` servi ici (source unique `_ETAT_LABELS`, comme la fiche) :
-        # le front affichait le CODE Sitadel brut (« 2 ») orphelin en 2e ligne. Plus jamais un code nu.
-        # RETOURS-16 V2 — l'état « 2 » (Autorisé) est MUET en liste : Sitadel 974 ne publie que des
-        # permis autorisés, l'information est constante — elle vit dans la phrase d'explication de
-        # l'outil ; la FICHE permis (permis_fiche) garde l'état complet. Les états 4/5/6 (chantier
-        # ouvert, en cours, achevés), eux, varient : ils restent servis.
+        # KELFONCIER-FIX-2 (Lot D) — l'état administratif de chaque permis est servi par la MÊME
+        # fonction que la fiche (`etat_libelle`/`est_annule`, ingestion/permits.py — source unique), pas
+        # par le `_ETAT_LABELS` local qui DIVERGEAIT (il rendait l'état 4 « Chantier ouvert » alors que
+        # 4 = ANNULÉ ; KELFONCIER-FIX-1 Lot C avait déjà corrigé la fiche). Le front en fait une pastille
+        # 3 tons : autorisé / travaux commencés / achevés → vert, annulé → rouge. `etat` (code) reste servi.
         "items": [{**{k: r[k] for k in ("permit_id", "type", "date", "depot", "delai_mois",
                                         "etat", "nb_lgt", "surf_hab", "geoloc")},
-                   "etat_label": (_ETAT_LABELS.get(r["etat"], f"état {r['etat']}")
-                                  if r["etat"] and r["etat"] != "2" else None),
+                   "etat_libelle": etat_libelle({"etat": r["etat"], "daact": r["daact"]}),
+                   "annule": est_annule({"etat": r["etat"], "daact": r["daact"]}),
                    "geom": json.loads(r["g"]) if r["g"] else None} for r in rows],
     }
 
@@ -631,8 +644,9 @@ _DESTINATION_LABELS = {"1": "habitation", "2": "hôtels", "3": "bureaux", "4": "
                        "9": "service public ou d'intérêt collectif"}
 _NATURE_LABELS = {"PC": "Permis de construire", "DP": "Déclaration préalable",
                   "PA": "Permis d'aménager", "PD": "Permis de démolir"}
-_ETAT_LABELS = {"2": "Autorisé", "4": "Chantier ouvert", "5": "En cours",
-                "6": "Travaux achevés (DAACT)"}
+# KELFONCIER-FIX-2 (Lot D) — `_ETAT_LABELS` local RETIRÉ : il divergeait de la fiche (état 4 rendu
+# « Chantier ouvert » au lieu d'ANNULÉ). L'état administratif passe par ingestion/permits.etat_libelle
+# (source unique), servi par /permis et /permis/{id}.
 
 
 @router.get("/permis/{permit_id}")
@@ -668,7 +682,10 @@ def permis_fiche(permit_id: str, db: Session = Depends(get_db)) -> dict:
         "date_depot": r["date_depot"], "date_autorisation": r["date_autorisation"],
         "date_achevement": r["date_achevement"] or r["daact"],
         "delai_instruction": delai,
-        "statut": _ETAT_LABELS.get(r["etat"], f"état {r['etat']}"), "etat_code": r["etat"],
+        # KELFONCIER-FIX-2 (Lot D) — statut par la fonction PARTAGÉE de la fiche (ingestion/permits.py) :
+        # l'annulé (état 4) est dit « annulé », plus « Chantier ouvert » (divergence de l'ancien _ETAT_LABELS).
+        "statut": etat_libelle({"etat": r["etat"], "daact": r["daact"]}),
+        "annule": est_annule({"etat": r["etat"], "daact": r["daact"]}), "etat_code": r["etat"],
         # R30 — la destination est SERVIE avec son libellé (hôtels, bureaux, commerce…) : le
         # filtre implicite « logements » n'existe plus, toutes les destinations sont dites.
         "destination": r["destination"],

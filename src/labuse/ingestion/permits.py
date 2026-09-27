@@ -87,6 +87,30 @@ def ingest_permits(session: Session, insee: str, commune: str, run_id: int | Non
 _TYPE_LABEL = {"PC": "Permis de construire", "PA": "Permis d'aménager",
                "DP": "Déclaration préalable", "PD": "Permis de démolir"}
 
+# KELFONCIER-FIX-1 (Lot C) — LE point unique qui décode l'état administratif Sitadel3 (ETAT_DAU,
+# `raw->>'etat'`) en libellé humain. Le code le supposait déjà (`_ETAT_LABELS` invoqué par la frise,
+# jamais défini) : on le crée ici, une seule fois, et tous les lecteurs de permis s'y adossent
+# (fiche §4, outil Permis, frise, séries commune/zone). Codes RÉELLEMENT présents pour le 974 :
+# 2 autorisé · 4 ANNULÉ (4 324, jamais montré jusqu'ici) · 5 travaux commencés · 6 travaux achevés.
+# Refusé (3) / sans suite (7) absents du flux 974 — non mappés (jamais inventés). L'achèvement peut
+# aussi venir de la DAACT (doctrine du dépôt), qui prime. Ne touche PAS aux variables du Signal (pc_*).
+ETAT_LABELS = {"2": "autorisé", "4": "annulé", "5": "travaux commencés", "6": "travaux achevés"}
+
+
+def etat_libelle(raw: dict | None) -> str:
+    """État administratif LISIBLE d'un permis (Sitadel3). DAACT présente ⇒ « travaux achevés »
+    (prime, doctrine du dépôt) ; sinon le code ETAT_DAU décodé ; défaut « autorisé » (ces flux ne
+    portent que des autorisations, jamais un refus inventé)."""
+    raw = raw or {}
+    if (raw.get("daact") or "").strip():
+        return "travaux achevés"
+    return ETAT_LABELS.get(str(raw.get("etat") or ""), "autorisé")
+
+
+def est_annule(raw: dict | None) -> bool:
+    """True si le permis est ANNULÉ (ETAT_DAU=4) — jamais confondu avec une autorisation valide."""
+    return str((raw or {}).get("etat") or "") == "4"
+
 # M38 — fenêtre glissante du bloc « activité de dépôt » de la fiche. Paramètre NOMMÉ (arbitrage
 # Vic Phase 0 §2), jamais un littéral disséminé : un seul point à changer ici.
 DEPOTS_FENETRE_MOIS = 36
@@ -181,10 +205,17 @@ def _nature(raw: dict | None) -> str:
 
 
 def _statut(raw: dict | None, date) -> str:
-    """Statut : ces flux ne contiennent que des AUTORISATIONS (jamais de refus inventé)."""
+    """Statut LISIBLE, état ANNULÉ compris (KELFONCIER-FIX-1 Lot C — avant, tout était ramené à
+    « autorisé », l'annulé passait pour une autorisation valide). Un permis annulé (ETAT_DAU=4) le
+    DIT ; sinon « autorisé le … » (+ travaux commencés/achevés). Adossé à `etat_libelle` (source unique)."""
     raw = raw or {}
     d = date.date().isoformat() if date else "—"
-    return f"autorisé le {d}" + (" · travaux achevés" if raw.get("daact") else "")
+    if est_annule(raw):
+        return f"annulé (déposé le {d})"
+    lib = etat_libelle(raw)
+    if lib == "autorisé":
+        return f"autorisé le {d}"
+    return f"autorisé le {d} · {lib}"
 
 
 def geocode_permits_via_cadastre(session, insee: str | None = None) -> dict:
@@ -267,6 +298,9 @@ def nearby_permits(session, parcel_id: int, radius_m: float = 300.0, limit: int 
               # SIGNIFICATIVITÉ (logements, récence), plus par simple proximité.
               "nb_lgt": (int(r["raw"].get("nb_lgt")) if isinstance(r["raw"], dict)
                          and str(r["raw"].get("nb_lgt") or "").isdigit() else None),
+              # KELFONCIER-FIX-1 (Lot C) — état administratif SERVI (annulé compris), source unique.
+              "etat_libelle": etat_libelle(r["raw"] if isinstance(r["raw"], dict) else None),
+              "annule": est_annule(r["raw"] if isinstance(r["raw"], dict) else None),
               "nature": _nature(r["raw"]), "statut": _statut(r["raw"], r["date"])}
              for r in rows]
 

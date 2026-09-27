@@ -406,9 +406,13 @@ def histoire_parcelle(idu: str, db: Session = Depends(get_db)) -> dict:
         })
 
     # ── 2. PERMIS — un fait PAR ÉVÉNEMENT DATÉ du permis (dépôt / autorisation / DAACT), chacun à
-    # sa maille réelle. Libellés d'état : les mêmes que l'outil Permis (_ETAT_LABELS, jamais le code brut).
+    # sa maille réelle. KELFONCIER-FIX-1 (Lot C) — l'état ANNULÉ (ETAT_DAU=4) est enfin DIT (avant,
+    # l'événement d'autorisation d'un permis annulé s'affichait « autorisé » à l'identique). Source
+    # unique : ingestion.permits.est_annule (jamais le code brut).
+    from ..ingestion.permits import est_annule as _permis_annule
     for r in db.execute(text("""
         SELECT permit_id, type, date::date AS d_autorisation, date_depot,
+               raw->>'etat' AS etat,
                NULLIF(raw->>'daact', '')::date AS d_daact,
                NULLIF(raw->>'nb_lgt', '') AS nb_lgt, NULLIF(raw->>'surf_hab', '') AS surf_hab
         FROM sitadel_permits WHERE idu_codes ? :i ORDER BY date"""),
@@ -418,6 +422,7 @@ def histoire_parcelle(idu: str, db: Session = Depends(get_db)) -> dict:
             "surf_hab_m2": round(float(r["surf_hab"])) if r["surf_hab"] else None,
             "statut": "Sourcé",
         }
+        annule = _permis_annule({"etat": r["etat"]})
         commun = {"famille": "permis", "permit_id": r["permit_id"], "type_permis": r["type"],
                   "chiffres": chiffres, "source": _HISTOIRE_SOURCES["permis"]}
         if r["date_depot"]:
@@ -427,7 +432,7 @@ def histoire_parcelle(idu: str, db: Session = Depends(get_db)) -> dict:
         if r["d_autorisation"]:
             date, maille, annee = _histoire_date(r["d_autorisation"])
             faits.append({**commun, "date": date, "maille": maille, "annee": annee,
-                          "libelle": f"Permis {r['type']} autorisé"})
+                          "libelle": f"Permis {r['type']} {'annulé' if annule else 'autorisé'}"})
         if r["d_daact"]:
             date, maille, annee = _histoire_date(r["d_daact"])
             faits.append({**commun, "date": date, "maille": maille, "annee": annee,

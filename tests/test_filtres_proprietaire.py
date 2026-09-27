@@ -106,3 +106,47 @@ def test_where_construit_les_filtres_pm():
 def test_age_dirigeant_ferme_par_defaut():
     from labuse.config import get_settings
     assert get_settings().filtre_age_dirigeant is False
+
+
+# ── KELFONCIER-FIX-1 (Lot B) — remontage UI + TRANCHE d'âge du dirigeant + « Particulier » ──
+
+def test_where_pm_age_tranche_construit_les_buckets():
+    """La TRANCHE d'âge (jamais l'âge exact) construit un EXISTS sur v_pm_propension_vendre.age_max_dirigeant
+    avec les bons seuils. Multi-tranches = OU. Le contrôle exact-âge (FORBIDDEN_FLAGS_RGPD) reste intact."""
+    from labuse.api.app import _q_v2_where
+    w, _ = _q_v2_where("q_v11_m137", None, None, None, False, None, pm_age="50_69,70plus")
+    assert "v_pm_propension_vendre" in w and "age_max_dirigeant" in w
+    assert "BETWEEN 50 AND 69" in w and ">= 70" in w
+    # une tranche seule
+    w2, _ = _q_v2_where("q_v11_m137", None, None, None, False, None, pm_age="moins50")
+    assert "age_max_dirigeant < 50" in w2 and "BETWEEN" not in w2
+    # valeur inconnue → aucune clause d'âge (jamais un filtre muet)
+    w3, _ = _q_v2_where("q_v11_m137", None, None, None, False, None, pm_age="bidon")
+    assert "age_max_dirigeant" not in w3
+
+
+def test_where_particulier_est_absence_de_pm():
+    """« Particulier » = aucune personne morale connue sur la parcelle (proprietaire_type 'pp')."""
+    from labuse.api.app import _q_v2_where
+    w, _ = _q_v2_where("q_v11_m137", None, None, None, False, None, proprietaire_type="pp")
+    assert "NOT EXISTS" in w and "parcelle_personne_morale" in w
+
+
+def test_age_exact_flag_reste_ferme_et_flag_refuse(client, seed):
+    """La TRANCHE n'ouvre PAS l'âge exact : le drapeau facette reste fermé et la couche personne
+    physique `age_dirigeant` reste refusée en flags (garde RGPD CODE inchangée)."""
+    from labuse.scoring.score_v_constants import Q_A_RUN_LABEL
+    f = client.get(f"/proprietaires/facettes?commune={COMMUNE}").json()
+    assert f["age_dirigeant_actif"] is False                                   # exact-âge toujours fermé
+    assert client.get("/filtre", params={"source": Q_A_RUN_LABEL, "flags": "age_dirigeant"}).status_code == 400
+
+
+@pytest.mark.db
+def test_temoin_age_tranche_bucket(client, seed, db_session):
+    """La SCI témoin (dirigeant né 1970-05) tombe dans la tranche 50-69 (âge ~55 en 2026), pas
+    dans < 50 ni ≥ 70 — la donnée est calculée par v_pm_propension_vendre (source unique)."""
+    from sqlalchemy import text
+    band = db_session.execute(text(
+        "SELECT age_max_dirigeant FROM v_pm_propension_vendre WHERE siren = :s"),
+        {"s": seed["sci_siren"]}).scalar()
+    assert band is not None and 50 <= band <= 69

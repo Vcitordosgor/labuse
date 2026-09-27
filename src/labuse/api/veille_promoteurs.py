@@ -126,6 +126,12 @@ def _operations(db: Session, groupes: list[int], commune: str | None, depuis: st
             # l'app affirme déjà — « achevé » (DAACT présente ou etat_dau=6) sinon « autorisé » — jamais un mot
             # inventé pour les codes 2/4/5 (dont la nomenclature n'est pas dans le dépôt).
             acheve = any((m.get("daact") or "").strip() or str(m.get("etat") or "") == "6" for m in membres)
+            # KELFONCIER-FIX-1 (Lot C) — l'état de l'opération est décodé par la source UNIQUE
+            # (ingestion.permits.etat_libelle), état ANNULÉ compris : avant, il était réduit au binaire
+            # autorisé/achevé et l'annulé passait pour une autorisation valide. L'achèvement (DAACT ou
+            # etat=6 sur TOUT membre) prime ; sinon on décode l'état du permis le plus récent.
+            from ..ingestion.permits import etat_libelle as _permis_etat_lib
+            _etat_op = "travaux achevés" if acheve else _permis_etat_lib({"etat": recent["etat"]})
             operations.append({
                 "siren": siren, "denomination": membres[0]["denomination"],
                 "categorie": _GROUPE_CAT.get(membres[0]["groupe"], "promoteur"),
@@ -133,7 +139,8 @@ def _operations(db: Session, groupes: list[int], commune: str | None, depuis: st
                 "date_min": min(dates).isoformat() if dates else None,
                 "date_max": max(dates).isoformat() if dates else None,
                 "annee": annee, "etat": recent["etat"],
-                "etat_libelle": "achevé" if acheve else "autorisé",   # OUTILS-FIX-4 A4
+                "annule": str(recent.get("etat") or "") == "4",   # KELFONCIER-FIX-1 (Lot C)
+                "etat_libelle": _etat_op,
                 "lon": round(sum(lons) / len(lons), 6) if lons else None,
                 "lat": round(sum(lats) / len(lats), 6) if lats else None,
                 "idus": idus,

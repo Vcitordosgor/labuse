@@ -1,6 +1,6 @@
 # FICHE PARCELLE — donnée par donnée
 
-*Généré du registre le 2026-09-26 par `labuse registre fiche parcelle` (le code est la vérité — ne pas éditer à la main ; relu avant commit).*
+*Généré du registre le 2026-09-27 par `labuse registre fiche parcelle` (le code est la vérité — ne pas éditer à la main ; relu avant commit).*
 
 Chaque section est un tiroir de la fiche. Pour chaque donnée : d'où elle vient (source et millésime servis), par quel chemin (moteur nommé ou passe-plat), sa portée (`run` = change à la bascule · `live` = à l'injection · `projet` = saisie du client), ses états possibles, et où ailleurs elle s'affiche.
 
@@ -86,6 +86,8 @@ Chaque section est un tiroir de la fiche. Pour chaque donnée : d'où elle vient
 | | | *zones PLU de la parcelle + extraits de règlement calibrés (corpus) — chaque extrait cite son document* | | | | | |
 | `zone_plu_famille` | classe — domaine : U, AU, A, N | Zonage PLU (par type) | gpu_plu_api_carto (GPU/PLU par commune (révisions — détail en fiche)) | moteur `zone_servie` · src/labuse/faisabilite/zone_servie.py:zone_dominante | live | servie · non déterminée (la source ne dit pas) · non calculée | couche « Zonage PLU (par type) » · PDF « Pré-dossier PC (ZIP CERFA 13406*17) » · PDF « Lettre de zonage » |
 | | | *famille (U/AU/A/N) de la zone DOMINANTE par surface de la parcelle (drapeau a_cheval, zone_parts servies) — moteur zone_servie (ZONE-1) ; ≠ zonage_commune (parts d'une commune)* | | | | | |
+| `au_ouverture_statut` | classe — domaine : conditionnelle_operation, au_sous_plancher, declasse_au_fermee, declasse_au_statut_inconnu, générique | Statut d'ouverture de la zone AU | gpu_plu_api_carto (GPU/PLU par commune (révisions — détail en fiche)) | passe-plat · src/labuse/api/app.py:_au_ouverture_block — table lue : parcel_au_statut | live | servie · non déterminée (la source ne dit pas) · non calculée | nulle part ailleurs |
+| | | *statut d'ouverture de la zone À Urbaniser (ouverte / sous condition d'opération d'ensemble / fermée) — moteur d'ouverture AU (règlement PLU calibré), motif cité* | | | | | |
 
 ## Dispositifs et périmètres (QPV, ANRU, ZFANG, FRR)
 
@@ -172,6 +174,8 @@ Chaque section est un tiroir de la fiche. Pour chaque donnée : d'où elle vient
 | | | *part de la parcelle en végétation vivante (feuillu, conifère, broussaille, pelouse, culture, vigne) mesurée par CoSIA à 20 cm, Σ surface de ces classes / contenance — donnée de parcelle, aucune ligne OCS GE affichée ne la donne ; hors score* | | | | | |
 | `part_sol_nu_cosia_pct` | nombre | Part sol nu (CoSIA) | cosia (CoSIA 2025 (PVA juil.-août 2025, 20 cm)) | passe-plat · src/labuse/bati.py:le_bien_block (_cosia_couverture — part_sol_nu_pct) — table lue : parcel_cosia_couverture | live | servie · non couverte (n sous seuil, dit) · non calculée | nulle part ailleurs |
 | | | *part de la parcelle en terre nue (sol nu, terre labourée) mesurée par CoSIA à 20 cm, Σ surface de ces classes / contenance — donnée de parcelle, aucune ligne OCS GE affichée ne la donne ; hors score* | | | | | |
+| `etablissements_parcelle_liste` | liste | Établissements sur la parcelle | sirene_etablissements (SIRENE géolocalisé — publication mensuelle INSEE), ban (2026), bodacc (2026) | passe-plat · src/labuse/api/app.py:_etablissements_block — table lue : etablissement_parcelle + sirene_etablissements | live | servie (possiblement vide, dit) · non calculée | nulle part ailleurs |
+| | | *établissements SIRENE rattachés à la parcelle par l'adresse BAN (précision « adresse » seulement) — nom, NAF fin, tranche d'effectif, état + régime collectif BODACC ; nom masqué si non diffusible* | | | | | |
 
 ## Risques et protections
 

@@ -11,7 +11,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 
-import { getFiltre, getFiltreCount, getZonageZones } from '../../lib/api'
+import { getFiltre, getFiltreCount, getProprietairesAutocomplete, getProprietairesFacettes, getZonageZones } from '../../lib/api'
 import { countActiveFilters, resumeCriteres } from '../../lib/filters'
 import { BANDE_META, BANDE_ORDER } from '../../lib/status'
 import { CLIENT } from '../../lib/strings'
@@ -287,20 +287,12 @@ export function NumField({ field, ph, suffix }: { field: keyof Filters; ph: stri
 // logique déplacée (le filtre reste sdpMin/capaciteMin, saisie directe ci-dessous).
 export function CapaciteSection() {
   const { filters, setFilter } = useFiltre()
+  // KELFONCIER-FIX-2 (Lot C) — FAÇADE ALLÉGÉE : la Capacité ne garde que « Logements possibles ≥ N »
+  // et « Activité (destination) ». « SDP restante min/max » et « Déjà bâti » descendent dans la
+  // section repliée « Affiner la recherche » (AffinerRecherche). Aucun prédicat ne bouge : les champs
+  // lisent/écrivent les MÊMES clés (`sdpMin`/`sdpMax`/`renouvellement`), seul l'emplacement change.
   return (
     <div data-capacite-filtre className="gcard mt-2 flex flex-col gap-3 p-3">
-      <div>
-        <p className="label-caps text-txt-dim">SDP restante</p>
-        {/* SDP RÉSIDUELLE du run servi (parcel_residuel) — la même que la fiche. */}
-        <div className="mt-1 flex items-center gap-1.5"><NumField field="sdpMin" ph="min" /><span className="text-txt-dim">–</span><NumField field="sdpMax" ph="max" suffix="m²" /></div>
-        {/* DENSIFIER-PLI (Lot B) — l'outil « Densifier l'existant » est plié ici : « Déjà bâti » (bâti
-            existant BD TOPO) + « SDP restante ≥ X » = les parcelles occupées qui peuvent porter davantage.
-            Clé interne legacy `renouvellement` (hash rnv), conservée pour les vues enregistrées. */}
-        <Case data-filtre-deja-bati className="mt-2"
-          checked={filters.renouvellement}
-          onChange={(e) => setFilter('renouvellement', e.target.checked as never)}
-          label="Déjà bâti (extension · surélévation)" />
-      </div>
       <div>
         <p className="label-caps text-txt-dim">Logements possibles</p>
         <div className="mt-1 flex items-center gap-1.5">
@@ -322,19 +314,62 @@ export function CapaciteSection() {
 // — qui quittent la section « 2 · Le terrain » — et les Signaux de vie — qui quittaient la section « 4 ».
 // Chevron de la charte (ui/Chevron), titre au style des autres sections (label-caps text-txt-mut).
 function AffinerRecherche() {
-  const { filters } = useFiltre()
+  const { filters, setFilter } = useFiltre()
   const [ouvert, setOuvert] = useState(false)
   const nSig = filters.signaux.filter((s) => SIGNAUX_KEYS.includes(s)).length
+  // KELFONCIER-FIX-2 (Lot C) — la section repliée accueille désormais les filtres bâti/capacité
+  // descendus de la façade (copro, hauteur, emprise, SDP, déjà bâti). Le compteur du repli les
+  // recense (sinon, section fermée, un filtre actif serait invisible) — ce n'est PAS le badge
+  // « Filtres (N) » global (inchangé), juste l'indicateur local de cette section.
+  const nAffiner = nSig + (filters.horsCopro ? 1 : 0) + (filters.renouvellement ? 1 : 0)
+    + (filters.hauteurMin != null || filters.hauteurMax != null ? 1 : 0)
+    + (filters.empriseMin != null || filters.empriseMax != null ? 1 : 0)
+    + (filters.sdpMin != null || filters.sdpMax != null ? 1 : 0)
   return (
     <div data-affiner className="mt-4">
       <button data-affiner-toggle aria-expanded={ouvert} onClick={() => setOuvert((v) => !v)}
         className="group flex w-full items-center gap-1.5 text-left transition-colors duration-quick">
         <Chevron open={ouvert} />
         <span className="label-caps text-txt-mut group-hover:text-txt-hi">Affiner la recherche</span>
-        {nSig > 0 && <span className="ml-auto shrink-0 text-[10.5px] text-txt-dim">{`${nSig} signal${nSig > 1 ? 'x' : ''}`}</span>}
+        {nAffiner > 0 && <span className="ml-auto shrink-0 rounded-full bg-mint/20 px-1.5 py-0.5 text-[10px] font-medium text-mint tabular-nums">{nAffiner}</span>}
       </button>
       {ouvert && (
         <div className="gcard mt-2 flex flex-col gap-3 p-3">
+          {/* KELFONCIER-FIX-2 (Lot C) — filtres descendus de la façade (prédicats inchangés). */}
+          {/* KELFONCIER-FIX-1 (Lot E) — case « Sans copropriété » : écarte les parcelles en copropriété
+              (RNIC/DVF, s2.copro). Backend `hors_copro` (hash hc), compteur/veille/Mes vues/badge câblés. */}
+          <div>
+            <p className="label-caps text-txt-dim">Copropriété</p>
+            <Case data-filtre-hors-copro className="mt-1"
+              checked={filters.horsCopro}
+              onChange={(e) => setFilter('horsCopro', e.target.checked)}
+              label="Sans copropriété" />
+            <p className="mt-1 text-[10px] leading-snug text-txt-dim">Écarte les parcelles en copropriété (immatriculation RNIC ou copro DVF).</p>
+          </div>
+          {/* KELFONCIER-FIX-1 (Lot D) — FILTRES BÂTI : la MÊME donnée que la fiche §3 Bâti. Hauteur LiDAR
+              faîtage (batiment_hauteur_lidar, id registre le_bien.hauteur_bati_m) et emprise bâtie en %
+              (taux_emprise_pct du run servi, la colonne d'« État du sol »). Compteur SQL, ET avec le reste. */}
+          <div>
+            <p className="label-caps text-txt-dim">Hauteur du bâti (LiDAR)</p>
+            <div className="mt-1 flex items-center gap-1.5"><NumField field="hauteurMin" ph="min" /><span className="text-txt-dim">–</span><NumField field="hauteurMax" ph="max" suffix="m" /></div>
+            <p className="mt-1 text-[10px] leading-snug text-txt-dim">Faîtage mesuré au LiDAR HD (la hauteur de la fiche §Bâti) ; les parcelles au bâti non mesuré n’entrent pas dans une fourchette.</p>
+          </div>
+          <div>
+            <p className="label-caps text-txt-dim">Emprise bâtie</p>
+            <div className="mt-1 flex items-center gap-1.5"><NumField field="empriseMin" ph="min" /><span className="text-txt-dim">–</span><NumField field="empriseMax" ph="max" suffix="%" /></div>
+            <p className="mt-1 text-[10px] leading-snug text-txt-dim">Part de la parcelle déjà couverte par du bâti (run servi) — la même que « État du sol ».</p>
+          </div>
+          {/* KELFONCIER-FIX-2 (Lot C) — « SDP restante » et « Déjà bâti » descendus de la Capacité.
+              DENSIFIER-PLI (PISCINES-2 Lot B) — « Déjà bâti » + « SDP restante ≥ X » = les parcelles
+              occupées qui peuvent porter davantage (clé interne legacy `renouvellement`, hash rnv). */}
+          <div>
+            <p className="label-caps text-txt-dim">SDP restante</p>
+            <div className="mt-1 flex items-center gap-1.5"><NumField field="sdpMin" ph="min" /><span className="text-txt-dim">–</span><NumField field="sdpMax" ph="max" suffix="m²" /></div>
+            <Case data-filtre-deja-bati className="mt-2"
+              checked={filters.renouvellement}
+              onChange={(e) => setFilter('renouvellement', e.target.checked as never)}
+              label="Déjà bâti (extension · surélévation)" />
+          </div>
           {/* COUCHES-2 point 4 — filtre par STATUT ZFANG / FRR de la commune. SOURCE UNIQUE
               (territoire_fiscal) : le même statut peint la carte et s'affiche sur la fiche commune. */}
           <div>
@@ -364,11 +399,217 @@ function AffinerRecherche() {
 // contenu de l'état allumé (0-caller ici ; le curseur mode B de SESSION reste porté par le
 // store — la fiche continue de le lire).
 
-// ═══════ KF1 — SECTION « PROPRIÉTAIRE » : RETIRÉE DU FRONT (RETOURS-1 R2, Vic 28/08/2026) ═══════
-// SectionProprietaire (personne morale, dénomination+autocomplétion, SIREN, forme juridique, APE,
-// dirigeants) ne s'affiche plus. FRONT SEULEMENT : les endpoints /proprietaires/*, les filtres pm_*
-// du store/back (_q_v2_where) et leurs tests restent intacts — réversible en remontant le composant
-// (historique git : commit KF1, fichier à ce chemin).
+// ═══════ KELFONCIER-FIX-1 (Lot B) — SECTION « PROPRIÉTAIRE » REMONTÉE ═══════
+// Ré-expose la section propriétaire retirée le 28/08/2026 (commit 79523a24) dans « Plus de filtres ».
+// Branchée sur les facettes DGFiP RÉELLES (millésime 2025, comptes vivants, jamais de valeur en dur).
+// La portée facettes = la commune active du filtre quand une SEULE est cochée (sinon portée par défaut
+// du back). NOUVEAUTÉS KELFONCIER : (1) chip « Particulier » = aucune PM connue sur la parcelle
+// (proprietaireType 'pp', 349 597 parcelles, prédicat SQL de l'audit) ; (2) TRANCHE d'âge du dirigeant
+// (< 50 / 50-69 / ≥ 70, JAMAIS l'âge exact) sur `v_pm_propension_vendre.age_max_dirigeant` (pmAge).
+// DA : vert #4ADE80 (mint), composants de la charte, jamais de mauve.
+
+// Un débounce court sur la dénomination : on interroge l'autocomplétion au fil de la frappe (250 ms).
+function useDebounced<T>(value: T, ms: number): T {
+  const [v, setV] = useState(value)
+  useEffect(() => {
+    const t = window.setTimeout(() => setV(value), ms)
+    return () => window.clearTimeout(t)
+  }, [value, ms])
+  return v
+}
+
+// Puce multi-sélection alimentée par les facettes (label + compte n) ; la valeur portée = le code.
+function FacetteChip({ code, label, n, on, onToggle, disabled }:
+  { code: string; label: string; n: number; on: boolean; onToggle: (code: string) => void; disabled?: boolean }) {
+  return (
+    <button type="button" disabled={disabled} onClick={() => onToggle(code)}
+      className={`flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] transition-colors duration-quick disabled:opacity-40 ${
+        on ? 'border-mint bg-mint/20 font-medium text-txt-hi'
+          : 'border-line-2 bg-surface-3 text-txt-mut hover:border-mint/50 hover:text-txt'}`}>
+      <span>{label}</span>
+      <span className="tabular-nums text-txt-dim">{nf.format(n)}</span>
+    </button>
+  )
+}
+
+// KELFONCIER-FIX-1 (Lot B) — les trois TRANCHES d'âge du dirigeant (jamais l'âge exact).
+const PM_AGE_TRANCHES = [
+  { k: 'moins50', l: '< 50 ans' },
+  { k: '50_69', l: '50–69 ans' },
+  { k: '70plus', l: '≥ 70 ans' },
+]
+
+export function SectionProprietaire() {
+  const { filters, setFilter } = useFiltre()
+  const [open, setOpen] = useState(false)
+  // Portée facettes : une commune SEULE cochée → cette commune ; sinon portée par défaut du back.
+  const commune = filters.communes.length === 1 ? filters.communes[0] : undefined
+  const fq = useQuery({
+    queryKey: ['prop-facettes', commune ?? '__ile__'],
+    queryFn: () => getProprietairesFacettes(commune),
+    staleTime: 300_000,
+  })
+  const fac = fq.data
+  const couvert = fac ? fac.couverture.couvert : true   // avant chargement : on ne grise pas
+  const dis = !couvert
+
+  // ── Dénomination + autocomplétion (débounce 250 ms) ──
+  const [denomInput, setDenomInput] = useState(filters.pmDenom ?? '')
+  const [showSug, setShowSug] = useState(false)
+  const debDenom = useDebounced(denomInput.trim(), 250)
+  const aq = useQuery({
+    queryKey: ['prop-autocomplete', debDenom, commune ?? '__ile__'],
+    queryFn: () => getProprietairesAutocomplete(debDenom, commune),
+    enabled: !dis && debDenom.length >= 2,
+    staleTime: 60_000,
+  })
+
+  // ── multi-sélections (formes / apes / tranche d'âge) ──
+  const toggleForme = (code: string) => setFilter('pmForme',
+    filters.pmForme.includes(code) ? filters.pmForme.filter((x) => x !== code) : [...filters.pmForme, code])
+  const toggleApe = (code: string) => setFilter('pmApe',
+    filters.pmApe.includes(code) ? filters.pmApe.filter((x) => x !== code) : [...filters.pmApe, code])
+  const toggleAge = (code: string) => setFilter('pmAge',
+    filters.pmAge.includes(code) ? filters.pmAge.filter((x) => x !== code) : [...filters.pmAge, code])
+
+  // Personne morale (oui / indifférent) ET « Particulier » (aucune PM connue) sont MUTUELLEMENT
+  // exclusifs : proprietaireType 'pp' ⇒ pas de PM, donc « Oui » les vide, et « Particulier » vide
+  // les critères PM (qui n'auraient aucun sens sur une parcelle sans PM).
+  const pmOui = filters.personneMorale === true
+  const particulier = filters.proprietaireType.includes('pp')
+  const setParticulier = (on: boolean) => {
+    if (on) { setFilter('proprietaireType', ['pp']); setFilter('personneMorale', false) }
+    else setFilter('proprietaireType', filters.proprietaireType.filter((x) => x !== 'pp'))
+  }
+
+  const nActifsProp = (filters.personneMorale ? 1 : 0) + (particulier ? 1 : 0) + (filters.pmDenom ? 1 : 0)
+    + (filters.pmSiren ? 1 : 0) + filters.pmForme.length + filters.pmApe.length + filters.pmAge.length
+    + (filters.pmDirigMin != null ? 1 : 0) + (filters.pmDirigMax != null ? 1 : 0)
+
+  return (
+    <div data-section-proprietaire className="mt-4">
+      <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open}
+        className="group flex w-full items-center gap-2 text-left">
+        <Chevron open={open} />
+        <span className="label-caps text-txt-mut group-hover:text-txt-hi">Propriétaire</span>
+        {nActifsProp > 0 && (
+          <span className="ml-auto rounded-full bg-mint/20 px-1.5 py-0.5 text-[10px] font-medium text-mint tabular-nums">{nActifsProp}</span>
+        )}
+      </button>
+
+      {open && (
+        <div className="gcard mt-2 flex flex-col gap-3 p-3">
+          {/* En-tête : source + millésime, et l'état de couverture (jamais un zéro muet). */}
+          <p className="text-[10.5px] leading-snug text-txt-dim">
+            {fq.isLoading ? 'Chargement…'
+              : fac ? <>Source DGFiP · millésime {fac.millesime}</> : 'Données propriétaire indisponibles.'}
+          </p>
+          {fac && !couvert && (
+            <p data-prop-non-couvert className="rounded-md bg-surface-2/80 px-2 py-1 text-[10.5px] text-st-creuser">
+              Non couvert pour cette commune — les critères propriétaire sont indisponibles ici.
+            </p>
+          )}
+
+          {/* ── Qui détient : Particulier / Société (personne morale) / Indifférent ──
+              « Particulier » = aucune personne morale connue sur la parcelle (349 597, prédicat de l'audit). */}
+          <div>
+            <p className="label-caps text-txt-dim">Qui détient</p>
+            <div className="mt-1 flex flex-wrap gap-1.5">
+              <Chip on={particulier} onClick={() => setParticulier(!particulier)}>Particulier</Chip>
+              <Chip on={pmOui} onClick={() => { setFilter('personneMorale', true); setParticulier(false) }}>Société</Chip>
+              <Chip on={!pmOui && !particulier} onClick={() => { setFilter('personneMorale', false); setParticulier(false) }}>Indifférent</Chip>
+            </div>
+            <p className="mt-1 text-[10px] leading-snug text-txt-dim">« Particulier » = aucune société connue sur la parcelle ; « Société » = détenue par une personne morale (SCI, SA…).</p>
+          </div>
+
+          {/* Les critères FINS ne valent que sur des personnes morales — grisés si « Particulier ». */}
+          <fieldset disabled={dis || particulier} className={(dis || particulier) ? 'pointer-events-none opacity-50' : ''}>
+          <div className="flex flex-col gap-3">
+            {/* ── Dénomination + autocomplétion ── */}
+            <div className="relative">
+              <p className="label-caps text-txt-dim">Dénomination</p>
+              <input type="text" value={denomInput} placeholder="Ex. SCI du Littoral"
+                onChange={(e) => { setDenomInput(e.target.value); setShowSug(true); if (e.target.value.trim() === '') setFilter('pmDenom', null) }}
+                onFocus={() => setShowSug(true)}
+                onBlur={() => window.setTimeout(() => setShowSug(false), 150)}
+                className="mt-1 w-full rounded-md border border-line-2 bg-transparent px-2 py-1 text-[11px] text-txt-hi placeholder:text-txt-dim focus:border-mint focus:outline-none" />
+              {showSug && debDenom.length >= 2 && aq.data && aq.data.suggestions.length > 0 && (
+                <ul data-prop-suggestions className="absolute z-20 mt-1 max-h-44 w-full overflow-y-auto rounded-md border border-line-2 bg-surface-2 py-1 shadow-lg">
+                  {aq.data.suggestions.map((s) => (
+                    <li key={s.siren || s.denomination}>
+                      <button type="button"
+                        onMouseDown={(e) => { e.preventDefault(); setDenomInput(s.denomination); setFilter('pmDenom', s.denomination); setShowSug(false) }}
+                        className="flex w-full items-center gap-2 px-2 py-1 text-left text-[11px] text-txt transition-colors duration-quick hover:bg-surface-3 hover:text-txt-hi">
+                        <span className="flex-1 truncate">{s.denomination}</span>
+                        <span className="shrink-0 tabular-nums text-[10px] text-txt-dim">{nf.format(s.n)} parc.</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            {/* ── SIREN (un ou plusieurs, séparés par virgule) ── */}
+            <div>
+              <p className="label-caps text-txt-dim">SIREN</p>
+              <input type="text" value={filters.pmSiren ?? ''} placeholder="Un ou plusieurs, séparés par une virgule"
+                onChange={(e) => setFilter('pmSiren', e.target.value.trim() === '' ? null : e.target.value)}
+                className="mt-1 w-full rounded-md border border-line-2 bg-transparent px-2 py-1 text-[11px] text-txt-hi placeholder:text-txt-dim focus:border-mint focus:outline-none" />
+            </div>
+
+            {/* ── Forme juridique (facettes réelles : label + compte, valeur = code) ── */}
+            <div>
+              <p className="label-caps text-txt-dim">Forme juridique</p>
+              {fac && fac.formes.length > 0 ? (
+                <div className="mt-1 flex flex-wrap gap-1.5">
+                  {fac.formes.map((o) => (
+                    <FacetteChip key={o.code} code={o.code} label={o.label} n={o.n}
+                      on={filters.pmForme.includes(o.code)} onToggle={toggleForme} disabled={dis} />
+                  ))}
+                </div>
+              ) : <p className="mt-1 text-[10px] text-txt-dim">{fq.isLoading ? '…' : 'Aucune forme dans la portée courante.'}</p>}
+            </div>
+
+            {/* ── Code APE / activité (facettes réelles) ── */}
+            <div>
+              <p className="label-caps text-txt-dim">Code APE / activité</p>
+              {fac && fac.apes.length > 0 ? (
+                <div className="mt-1 flex flex-wrap gap-1.5">
+                  {fac.apes.map((o) => (
+                    <FacetteChip key={o.code} code={o.code} label={o.label} n={o.n}
+                      on={filters.pmApe.includes(o.code)} onToggle={toggleApe} disabled={dis} />
+                  ))}
+                </div>
+              ) : <p className="mt-1 text-[10px] text-txt-dim">{fq.isLoading ? '…' : 'Aucune activité dans la portée courante.'}</p>}
+            </div>
+
+            {/* ── Nombre de dirigeants (min / max) ── */}
+            <div>
+              <p className="label-caps text-txt-dim">Nombre de dirigeants</p>
+              <div className="mt-1 flex items-center gap-1.5">
+                <NumField field="pmDirigMin" ph="min" /><span className="text-txt-dim">–</span><NumField field="pmDirigMax" ph="max" />
+              </div>
+            </div>
+
+            {/* ── KELFONCIER-FIX-1 (Lot B) — TRANCHE d'âge du dirigeant : < 50 / 50-69 / ≥ 70, JAMAIS l'âge
+                exact. Filtre sur l'âge MAX des dirigeants (v_pm_propension_vendre), déjà calculé en base.
+                OU entre tranches. ── */}
+            <div data-prop-age-tranche>
+              <p className="label-caps text-txt-dim">Âge du dirigeant (tranche)</p>
+              <div className="mt-1 flex flex-wrap gap-1.5">
+                {PM_AGE_TRANCHES.map((t) => (
+                  <Chip key={t.k} on={filters.pmAge.includes(t.k)} onClick={() => toggleAge(t.k)}>{t.l}</Chip>
+                ))}
+              </div>
+              <p className="mt-1 text-[10px] leading-snug text-txt-dim">Tranche du dirigeant le plus âgé (INPI/RNE) — jamais l'âge exact. Un signal de succession possible.</p>
+            </div>
+          </div>
+          </fieldset>
+        </div>
+      )}
+    </div>
+  )
+}
 
 // VEILLE-2 (Lot 4) — la CRÉATION d'une veille de recherche depuis les filtres est RETIRÉE (plus de bouton
 // « Créer une veille ») ; `enVeille` ne sert plus qu'à masquer le rituel « regard LABUSE » là où ce même
@@ -578,8 +819,10 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
               emprise inconnue en base). La clause SQL ne bouge pas (partition complète et défendable). */}
           <p className="mt-1 text-[10px] leading-snug text-txt-dim">« Terrain nu » = aucune emprise bâtie ≥ 5 % détectée (bâti non mesuré compris) ; la fiabilité est précisée en fiche.</p>
         </div>
-        {/* RETOURS-14 P5 — ZFANG (zone franche) et FRR (ruralités) ont quitté « Le terrain » : ils vivent
-            désormais dans la section repliée « Affiner la recherche » (bas du panneau). */}
+        {/* KELFONCIER-FIX-2 (Lot C) — « Sans copropriété », « Hauteur du bâti (LiDAR) » et « Emprise bâtie »
+            (ex-KELFONCIER-FIX-1 Lot D/E) descendent dans « Affiner la recherche » (façade allégée). Les
+            prédicats (horsCopro, hauteurMin/Max, empriseMin/Max) sont inchangés — seul l'emplacement bouge.
+            RETOURS-14 P5 — ZFANG/FRR ont aussi quitté « Le terrain » vers « Affiner la recherche ». */}
       </div>
       {/* M55-D stage 7 (décision Vic) : « Contraintes de secteur » a QUITTÉ le panneau Filtres —
           les flags restent visibles en fiche et en couches. Les clés URL legacy (fl=) sont
@@ -596,9 +839,10 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
           ZFANG, FRR et Signaux de vie y sont regroupés (aucun filtre supprimé). ═══════ */}
       <AffinerRecherche />
 
-      {/* ═══════ SECTION « PROPRIÉTAIRE » (KF1) RETIRÉE DU PANNEAU (RETOURS-1 R2, Vic 28/08/2026) ═══════
-          FRONT SEULEMENT : les endpoints /proprietaires/facettes + /proprietaires/autocomplete, les
-          filtres pm_* du back et leurs tests restent en place — réversible. */}
+      {/* ═══════ KELFONCIER-FIX-1 (Lot B) — SECTION « PROPRIÉTAIRE » REMONTÉE dans « Plus de filtres » ═══════
+          Facettes DGFiP réelles (forme juridique · APE) + dénomination/SIREN (omnibox) + nb dirigeants
+          + tranche d'âge du dirigeant + Particulier. Compteur/veille/Mes vues/badge déjà câblés. */}
+      <SectionProprietaire />
 
       {/* ═══════ SECTION « LE BIEN » RETIRÉE DU PANNEAU (FILTRE, Vic 23/08/2026) ═══════
           Les 4 facettes M137 (« On peut encore construire » / « Construite au maximum » = droitsResiduels ;

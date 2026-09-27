@@ -254,7 +254,7 @@ ROBINETS: dict[str, Robinet] = {
     # RETOUCHES-1 (lot A) — `secteur_lieu_dit` (BD NYME) servi sous l'adresse (« Secteur : … »).
     chiffres=("adresse_ban", "parcelle_geometrie", "exposition_versant", "secteur_lieu_dit",)),
  "fiche_parcelle_urbanisme": _r("fiche", "Règlement d'urbanisme (zones + extraits)", "fiche_parcelle",
-    "/parcels/{idu}", "json_puis_js", chiffres=("reglement_plu_bloc", "zone_plu_famille",)),
+    "/parcels/{idu}", "json_puis_js", chiffres=("reglement_plu_bloc", "zone_plu_famille", "au_ouverture_statut",)),
  "fiche_parcelle_dispositifs": _r("fiche", "Dispositifs et périmètres (QPV, ANRU, ZFANG, FRR)", "fiche_parcelle",
     "/parcels/{idu}", "json_puis_js", chiffres=("perimetres_dispositifs_liste",)),
  "fiche_parcelle_score": _r("fiche", "Score d'opportunité (tier)", "fiche_parcelle",
@@ -266,7 +266,7 @@ ROBINETS: dict[str, Robinet] = {
  # FICHE-RANGEMENT-1 Lot 3 — + cosia_detecte_m2 : le tiroir « Le bien » sert le bâti CoSIA hors
  # BD TOPO (orpheline du registre déclarée).
  "fiche_parcelle_le_bien": _r("fiche", "Le bien", "fiche_parcelle",
-    "/parcels/{idu}", "json_puis_js", chiffres=("emprise_batie_m2", "hauteur_bati_m", "n_batiments", "surface_libre_sol_m2", "nature_toit", "pente_toit_deg", "dpe_connu", "rnb_batiments_liste", "ban_plus_adresses_bati", "part_artificialisee_pct", "usage_sol_dominant", "cosia_detecte_m2", "part_impermeabilisee_cosia_pct", "part_vegetalisee_cosia_pct", "part_sol_nu_cosia_pct",)),
+    "/parcels/{idu}", "json_puis_js", chiffres=("emprise_batie_m2", "hauteur_bati_m", "n_batiments", "surface_libre_sol_m2", "nature_toit", "pente_toit_deg", "dpe_connu", "rnb_batiments_liste", "ban_plus_adresses_bati", "part_artificialisee_pct", "usage_sol_dominant", "cosia_detecte_m2", "part_impermeabilisee_cosia_pct", "part_vegetalisee_cosia_pct", "part_sol_nu_cosia_pct", "etablissements_parcelle_liste",)),
  # FICHE-RANGEMENT-1 Lot 3 — + endiguement_zone_protegee : la cascade risques sert le système
  # d'endiguement (orpheline du registre déclarée).
  "fiche_parcelle_risques": _r("fiche", "Risques et protections", "fiche_parcelle",

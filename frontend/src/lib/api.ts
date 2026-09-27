@@ -117,6 +117,12 @@ export const filterParams = (f: Filters): Record<string, string | number> => ({
   ...(f.pmApe?.length ? { pm_ape: f.pmApe.join(',') } : {}),
   ...(f.pmDirigMin != null ? { pm_dirig_min: f.pmDirigMin } : {}),
   ...(f.pmDirigMax != null ? { pm_dirig_max: f.pmDirigMax } : {}),
+  ...(f.pmAge?.length ? { pm_age: f.pmAge.join(',') } : {}),   // KELFONCIER-FIX-1 (Lot B) — tranche d'âge dirigeant
+  // KELFONCIER-FIX-1 (Lot D) — filtres bâti : hauteur LiDAR faîtage (m) + emprise bâtie (%).
+  ...(f.hauteurMin != null ? { hauteur_min: f.hauteurMin } : {}),
+  ...(f.hauteurMax != null ? { hauteur_max: f.hauteurMax } : {}),
+  ...(f.empriseMin != null ? { emprise_min: f.empriseMin } : {}),
+  ...(f.empriseMax != null ? { emprise_max: f.empriseMax } : {}),
   ...(f.caMin != null ? { ca_min: f.caMin } : {}),
   // mode B rentable : porte AUSSI les paramètres du curseur SESSION partagé (L2)
   ...(f.modeBRentable ? {
@@ -292,6 +298,9 @@ export interface ContexteCommune {
   permis_bloc: {
     permis_12m: number; permis_5a: number | null; logements_12m: number | null
     delai_median_mois: number | null; point_mort: number; source: string
+    // KELFONCIER-FIX-1 (Lot C) servis, KELFONCIER-FIX-2 (Lot D) affichés : ventilation PC/PA/DP/PD
+    // (autorisés, 12 mois) + annulés (12 mois), même source SITADEL que le chiffre existant.
+    permis_type_12m?: Record<string, number>; permis_annules_12m?: number
   }
   densifiables: { parcelles: number | null; sdp_residuelle_m2: number | null; source: string | null } | null
   loyer: { median_eur_m2: number; type: string | null; source: string } | null

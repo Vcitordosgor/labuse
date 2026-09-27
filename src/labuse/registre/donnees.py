@@ -1167,6 +1167,17 @@ DONNEES: dict[str, Donnee] = {
     fonction="src/labuse/api/app.py:_reglement_plu_block",
     reservoirs=("gpu_plu_api_carto", "sudocuh",), portee="live", type="liste",
     table="parcel_zone_plu + corpus règlements"),
+ "au_ouverture_statut": C("Statut d'ouverture de la zone AU", "classe", "parcelle",
+    "statut d'ouverture de la zone À Urbaniser (ouverte / sous condition d'opération d'ensemble / "
+    "fermée) — moteur d'ouverture AU (règlement PLU calibré), motif cité",
+    # passe-plat : lit la table PRÉ-CALCULÉE parcel_au_statut (peuplée par le moteur d'ouverture AU, hors fiche).
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/api/app.py:_au_ouverture_block",
+    reservoirs=("gpu_plu_api_carto",), portee="live", type="classe",
+    domaine=("conditionnelle_operation", "au_sous_plancher", "declasse_au_fermee",
+             "declasse_au_statut_inconnu", "générique"),
+    domaine_source="classes du moteur d'ouverture AU (faisabilite/au_statut.py)",
+    table="parcel_au_statut"),
  "historique_permis_liste": C("Sur cette parcelle (permis)", "liste", "parcelle",
     "permis déposés/autorisés sur la parcelle (Sitadel) + caducité — chaque ligne datée",
     moteur="marche_service", calcul="moteur",
@@ -1175,6 +1186,14 @@ DONNEES: dict[str, Donnee] = {
     # d'époque (RETOURS-14, cadastre_historique JOIN → sitadel_permits.geom) : cadastre_epoque
     # est donc un réservoir des permis (lecteur déclaré).
     reservoirs=("sitadel", "cadastre_epoque",), portee="live", type="liste", table="sitadel_permits"),
+ "etablissements_parcelle_liste": C("Établissements sur la parcelle", "liste", "parcelle",
+    "établissements SIRENE rattachés à la parcelle par l'adresse BAN (précision « adresse » seulement) "
+    "— nom, NAF fin, tranche d'effectif, état + régime collectif BODACC ; nom masqué si non diffusible",
+    # passe-plat : lit la table matérialisée etablissement_parcelle (rattachement BAN, build hors fiche).
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/api/app.py:_etablissements_block",
+    reservoirs=("sirene_etablissements", "ban", "bodacc",), portee="live", type="liste",
+    table="etablissement_parcelle + sirene_etablissements"),
  "voisinage_100m_liste": C("Autour, à moins de 100 m", "liste", "parcelle",
     "ventes DVF + permis récents (36 mois) dans le buffer 100 m, site exclu (doctrine M38)",
     moteur="marche_service", calcul="moteur",
