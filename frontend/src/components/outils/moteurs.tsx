@@ -561,8 +561,6 @@ function M18Tableau({ d }: { d: Record<string, any> }) {
   const partiel = new Set(ancien.filter((r) => r.partiel).map((r) => r.trimestre))
   const ancByT = Object.fromEntries(ancien.map((r) => [r.trimestre, r]))
   const th = 'sticky top-0 z-10 bg-bg-3 px-2 py-1.5 text-right font-medium text-txt-dim first:text-left'
-  const tendance = (pct: number | null | undefined) => pct == null ? null :
-    <span className={`font-medium ${pct >= 0 ? 'text-mint' : 'text-st-ecartee'}`}>{pct >= 0 ? '+' : ''}{pct} %/an</span>
   return (
     <div className="flex min-h-0 flex-col">
       {/* DA-FIX-4 Lot 4 (DA-030) — plein écran (overlay 1240px) + 4 colonnes : aucune barre horizontale. */}
@@ -592,11 +590,10 @@ function M18Tableau({ d }: { d: Record<string, any> }) {
           </tbody>
         </table>
       </div>
-      {/* LÉGENDE sous le tableau : tendances /an + méthode (T4/O10). */}
-      <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] text-txt-dim">
-        <span className="flex items-center gap-1">Ancien bâti {tendance(d.tendance_ancien_pct)}</span>
-        <span className="flex items-center gap-1">Terrain nu {tendance(d.tendance_terrain_pct)}</span>
-        <span className="flex items-center gap-1">Permis {tendance(d.tendance_permis_pct)}</span>
+      {/* RETOURS-15 B3 (P6) — la ligne de pied « Ancien bâti +N %/an · Terrain nu +N %/an ·
+          Permis −N %/an » est RETIRÉE (demande Vic). On garde la méthode en note discrète. */}
+      <div className="mt-1.5 flex flex-wrap items-center gap-1 text-[10px] text-txt-dim">
+        Méthode
         <Tip garder tip="Ancien : médiane €/m² bâti, ventes strictes DVF (VEFA exclu). Terrain : médiane €/m² terrain nu (bâti=0). Permis : autorisés/trimestre (Sitadel). Volume (n) entre parenthèses."><span className="cursor-help rounded-full border border-line-2 px-1 text-[8px]">i</span></Tip>
       </div>
       {tris.some((t) => partiel.has(t)) && <p className="mt-0.5 text-[9.5px] text-st-creuser">· dernier trimestre partiel (délai de publication DVF) — grisé, hors tendance.</p>}
