@@ -32,7 +32,9 @@ export function OutilCase({ ic, nom, chiffre, onClick, href, disabled, title: _t
 }
 
 /** La GRILLE qui contient les cases. 4 colonnes par défaut ; RETOURS-9 (Q8.3) — la fiche parcelle
- *  passe ses exports sur 3 colonnes (deux lignes de trois). */
-export function GrilleOutils({ children, cols = 4 }: { children: ReactNode; cols?: 3 | 4 }) {
-  return <div data-outils-grille className={`grid gap-1.5 ${cols === 3 ? 'grid-cols-3' : 'grid-cols-4'}`}>{children}</div>
+ *  passe ses exports sur 3 colonnes (deux lignes de trois). FAISABILITE-POLISH-1 — 2 colonnes
+ *  (2 × 2 à largeurs égales) pour les suites de la Faisabilité. */
+export function GrilleOutils({ children, cols = 4 }: { children: ReactNode; cols?: 2 | 3 | 4 }) {
+  const colClass = cols === 2 ? 'grid-cols-2' : cols === 3 ? 'grid-cols-3' : 'grid-cols-4'
+  return <div data-outils-grille className={`grid gap-1.5 ${colClass}`}>{children}</div>
 }
