@@ -34,7 +34,7 @@ import { IC, FicheAccordionCtx, RefDrawer, GroupLabel, MicroJauge, MicroPastille
 import { TransformationBlock, FaisabiliteTab, BilanTab, TaxeAmenagementBlock, FiscalLeviersBlock, RtaaFromBilan, DispositifsBody, ModeBBody } from './constructibilite'
 import { BatiBlock, FiliationBlock } from './leBien'
 // KELFONCIER-FIX-2 (Partie B) — les formes de la maquette v3 (Verdict · Tuiles · BarreEmpilée…).
-import { Verdict, Tuiles, type Tuile, BarreEmpilee, type Part, Lignes, Ligne, Pastilles, type Pastille } from './formes'
+import { Verdict, Tuiles, type Tuile, BarreEmpilee, type Part, Lignes, Ligne, Pastilles, type Pastille, OutilsSection, type OutilSection } from './formes'
 import { RisquesSection } from './risques'
 import { MarcheSection, DerniereVenteBlock } from './marche'
 import { ReseauxSection, EquipementsBadges } from './reseaux'
@@ -1787,6 +1787,21 @@ export function Fiche({ idu }: { idu: string }) {
               context={fo?.niveaux ? `${fo.niveaux} · calcul tracé` : 'calcul tracé'}
               value={reglesSdp != null && reglesSdp > 0 ? `${fmtInt(reglesSdp)} m² SDP` : undefined}>
               <div className="flex flex-col gap-3">
+                {/* KELFONCIER-FIX-2 (Lot J) — maquette v3 : Verdict en tête (rouge quand la construction
+                    neuve n'est pas autorisée : zone AU non ouverte ou zone A/N). Réagence des faits
+                    déjà servis (au_ouverture, zone, SDP résiduelle), aucun calcul de capacité refait. */}
+                {(() => {
+                  const inconstructible = !!f.au_ouverture?.bloquant || (!!reglesZone && /^(A|N)/i.test(reglesZone))
+                  return (
+                    <Verdict ton={inconstructible ? 'rouge' : (reglesSdp != null && reglesSdp > 0 ? 'vert' : 'ambre')}
+                      reponse={inconstructible
+                        ? `Construction neuve non autorisée${reglesZone ? ` en ${reglesZone}` : ''}`
+                        : (reglesSdp != null && reglesSdp > 0 ? `${fmtInt(reglesSdp)} m² de SDP résiduelle` : 'Pas de SDP résiduelle exploitable')}
+                      contexte={inconstructible
+                        ? (f.au_ouverture?.bloquant ? "SDP restante non calculable tant que la zone n'est pas ouverte" : 'zone non constructible')
+                        : (fo?.niveaux ? `capacité ${fo.niveaux}` : undefined)} />
+                  )
+                })()}
                 <ChiffreDissous l="SDP restante" t={tuileSdp} />
                 {/* RETOURS-20 Z5 — l'alerte « délaissé » = une Vigilance (filet ambre). */}
                 {faisa.data?.delaisse && <div data-delaisse><Vigilance title={faisa.data.delaisse.libelle} /></div>}
@@ -1814,20 +1829,29 @@ export function Fiche({ idu }: { idu: string }) {
               context="charge foncière · réhabilitation · outils projet"
               value={<Badge ton="vert">bilan</Badge>}>
               <div className="flex flex-col gap-3">
+                {/* KELFONCIER-FIX-2 (Lot J) — maquette v3 : Verdict prix de sortie (servi, base du
+                    bilan) + OutilsSection en pied (Faisabilité · Calculette · Assemblage). */}
+                {(() => {
+                  const prix = faisa.data?.marche?.median
+                  return (
+                    <Verdict ton="vert"
+                      reponse={prix != null ? `Prix de sortie retenu ${fmtInt(Number(prix))} €/m²` : 'Simulation de charge foncière'}
+                      contexte={prix != null ? 'le prix affiché dans « Marché », base du bilan' : undefined} />
+                  )
+                })()}
                 <BilanTab idu={idu} />
                 {/* Réhabilitation (Mode B) — bloc inline (ModeBBody), plus un tiroir séparé. */}
                 {f.mode_b?.indisponible
                   ? <BlocIndisponible titre="Réhabilitation (Mode B)" />
                   : f.mode_b?.disponible && <ModeBBody idu={idu} initial={f.mode_b} />}
-                <PorteOutil ico="◱" data="faisabilite-outil" titre="Faisabilité"
-                  sous={`La capacité constructible de ces ${fmtM2(f.surface_m2)} : SDP, hauteur PLU, calcul tracé`}
-                  onClick={() => { setParcelPrefill(idu); setModule('programme') }} />
-                <PorteOutil ico="▦" data="calculette" titre="Calculette foncière"
-                  sous={`Ce terrain de ${fmtM2(f.surface_m2)} : SDP, prix de sortie, votre coût et marge`}
-                  onClick={() => { setCalcPrefill(idu); setModule('calculette-fonciere') }} />
-                <PorteOutil ico="⧉" data="assemblage-outil" titre="Assemblage"
-                  sous={`Partir de ces ${fmtM2(f.surface_m2)} et agréger les parcelles contiguës`}
-                  onClick={() => { setParcelPrefill(idu); setModule('assemblage') }} />
+                <OutilsSection outils={[
+                  { label: 'Faisabilité', principal: true, data: 'faisabilite-outil',
+                    onClick: () => { setParcelPrefill(idu); setModule('programme') } },
+                  { label: 'Calculette foncière', data: 'calculette',
+                    onClick: () => { setCalcPrefill(idu); setModule('calculette-fonciere') } },
+                  { label: 'Assemblage', full: true, data: 'assemblage-outil',
+                    onClick: () => { setParcelPrefill(idu); setModule('assemblage') } },
+                ] satisfies OutilSection[]} />
               </div>
             </RefDrawer>
 
