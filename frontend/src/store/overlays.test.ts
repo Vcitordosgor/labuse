@@ -113,6 +113,32 @@ describe('OUTILS-FIX-3 Lot D — fil de retour entre outils', () => {
   })
 })
 
+describe('RETOURS-15 S3 — focusParcelle(idu,{fiche}) : zoom + contour + fiche à la demande', () => {
+  beforeEach(() => useApp.setState({ focusIdu: null, selectedIdu: null, focusNonce: 0, contexteCommune: null }))
+
+  it('sans fiche : zoom (focusIdu + nonce) et contour (cible = focusIdu), pas de fiche', () => {
+    const n0 = st().focusNonce
+    st().focusParcelle('97411000BZ1065')
+    expect(st().focusIdu).toBe('97411000BZ1065')   // pilote le zoom et le contour (cible)
+    expect(st().focusNonce).toBe(n0 + 1)            // ré-déclenche l'effet carte
+    expect(st().selectedIdu).toBeNull()             // la fiche NE s'ouvre PAS
+  })
+
+  it('fiche:true : ouvre la fiche (selectedIdu) en plus du zoom + contour', () => {
+    useApp.setState({ contexteCommune: { code: '97411' } as never })
+    st().focusParcelle('97411000BZ1065', { fiche: true })
+    expect(st().focusIdu).toBe('97411000BZ1065')
+    expect(st().selectedIdu).toBe('97411000BZ1065') // la fiche s'ouvre
+    expect(st().contexteCommune).toBeNull()         // fiche commune fermée (pas de coexistence)
+  })
+
+  it('idu vide / « undefined » ne fabrique jamais une sélection fantôme', () => {
+    st().focusParcelle('undefined', { fiche: true })
+    expect(st().focusIdu).toBeNull()
+    expect(st().selectedIdu).toBeNull()
+  })
+})
+
 describe('TTL 15 min de la sélection de comparaison', () => {
   it('retrouve la sélection quand on revient sous 15 min', () => {
     const t0 = 1_700_000_000_000
