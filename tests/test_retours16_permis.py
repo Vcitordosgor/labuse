@@ -41,17 +41,22 @@ def client(engine):
             c.execute(text("DELETE FROM sitadel_permits WHERE permit_id LIKE 'R16A%'"))
 
 
-def test_v2_etat_autorise_muet_en_liste(client):
-    """Aucune ligne de /modules/permis ne porte l'étiquette « Autorisé » (état 2 → None) ;
-    les états qui VARIENT (chantier ouvert…) restent servis par le même mapping."""
+def test_v2_etat_permis_par_fonction_partagee(client):
+    """KELFONCIER-FIX-2 (Lot D) — chaque ligne de /modules/permis porte l'état administratif servi
+    par la MÊME fonction que la fiche (`etat_libelle`/`est_annule`, ingestion/permits) : l'état 2 est
+    « autorisé » (plus muet), l'état 4 est « annulé » (plus « Chantier ouvert » — le libellé local qui
+    divergeait est supprimé). Le front en fait une pastille verte (autorisé) / rouge (annulé)."""
     r = client.get("/modules/permis?months=240&limit=500")
     assert r.status_code == 200, r.text[:300]
     items = r.json()["items"]
     par_id = {it["permit_id"]: it for it in items}
-    assert par_id["R16A0001"]["etat_label"] is None            # « Autorisé » : muet en liste
-    assert par_id["R16A0002"]["etat_label"] == "Chantier ouvert"   # un état qui varie : servi
-    from labuse.api.modules import _ETAT_LABELS
-    assert _ETAT_LABELS["2"] == "Autorisé"   # la FICHE, elle, garde le libellé complet
+    assert par_id["R16A0001"]["etat_libelle"] == "autorisé"        # état 2 : servi (pastille verte)
+    assert par_id["R16A0001"]["annule"] is False
+    assert par_id["R16A0002"]["etat_libelle"] == "annulé"          # état 4 : ANNULÉ (pastille rouge)
+    assert par_id["R16A0002"]["annule"] is True
+    # la fonction est bien la partagée (source unique), plus le _ETAT_LABELS local (retiré)
+    from labuse.ingestion.permits import etat_libelle
+    assert etat_libelle({"etat": "4"}) == "annulé"
 
 
 def test_v2_puce_localisation_avant_les_autres_chips():

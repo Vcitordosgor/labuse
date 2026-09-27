@@ -52,6 +52,7 @@ import { Blocs } from './Blocs'   // OUTILS-MUSCLER-3 — assiettes contiguës d
 import { TierBadge } from './TierBadge'
 import { ListPaginationFooter, PAGE_SIZE } from '../ListPagination'
 import { Bouton } from '../ui/Bouton'
+import { Badge } from '../ui/Badge'   // KELFONCIER-FIX-2 (Lot D) — pastille d'état de permis (vert/rouge)
 import { Retour } from '../ui/Retour'
 import { Chevron } from '../ui/Chevron'
 import { Chip } from '../ui/Chip'
@@ -428,7 +429,9 @@ export function PermitDrawer({ permitId, onClose }: { permitId: string; onClose:
               </div>
               <button onClick={onClose} aria-label="Fermer" className="flex h-7 w-7 items-center justify-center rounded-full border border-line-2 text-[11px] text-txt-mut transition-colors duration-quick hover:text-txt">✕</button>
             </div>
-            <F label="Statut" value={d['statut']} />
+            {/* KELFONCIER-FIX-2 (Lot D) — statut en pastille (rouge si annulé, vert sinon), même
+                fonction que la fiche (etat_libelle/annule servis par /permis/{id}). */}
+            <F label="Statut" value={d['statut'] ? <Badge ton={d['annule'] ? 'rouge' : 'vert'}>{String(d['statut'])}</Badge> : null} />
             {/* RETOURS-13 R30 — la DESTINATION est dite (hôtels, bureaux, commerce…) ; une position
                 estimée par l'adresse (parcelle du permis disparue du cadastre) est signalée. */}
             <F label="Destination" value={d['destination_libelle']} />
@@ -931,9 +934,10 @@ export function M03() {
                 aligné À DROITE de la MÊME ligne (avant : le badge décrochait sur une 2ᵉ ligne). */}
             {/* RETOURS-17 W3 — pastille = couleur d'état (source unique) ; sa définition tient dans l'infobulle. */}
             <span className="h-[7px] w-[7px] shrink-0 rounded-full" style={{ background: etatColor(et) }} aria-label={etTitre} />
-            {/* RETOURS-16 V2.3 — chip type masqué en mode Dormant : l'endpoint ne sert QUE des PC
-                (WHERE type='PC'), la valeur ne varie jamais — une constante n'est pas une information. */}
-            {!pointMort && <span className="shrink-0 rounded border border-line-2 px-1.5 py-0.5 font-mono text-[10px] text-txt-hi">{i['type'] as string}</span>}
+            {/* KELFONCIER-FIX-2 (Lot D) — le TYPE (PC / PA / DP) est TOUJOURS dans le libellé (même en
+                mode Dormant, où il vaut « PC ») : le mandat le demande explicitement, et c'est cohérent
+                avec la pastille d'état à droite. */}
+            <span className="shrink-0 rounded border border-line-2 px-1.5 py-0.5 font-mono text-[10px] text-txt-hi">{i['type'] as string}</span>
             {/* O17 (h) — DATE = date réelle d'autorisation du permis (par ligne), PAS la date du fichier. */}
             <span className="shrink-0 font-mono text-txt-mut">{i['date'] as string}</span>
             {i['nb_lgt'] != null && <b className="shrink-0 tnum text-txt">{String(i['nb_lgt'])} lgt{Number(i['nb_lgt']) > 1 ? 's' : ''}</b>}
@@ -952,7 +956,10 @@ export function M03() {
               {!pointMort && i['delai_mois'] != null && <span style={{ color: VIOLET }}>{String(i['delai_mois'])} m</span>}
               {pointMort
                 ? <span data-permis-badge-mort className="whitespace-nowrap rounded-full bg-st-ecartee/15 px-1.5 py-0.5 text-[9px] font-medium text-st-ecartee">Sans DAACT{ans != null ? ` · ${ans} an${ans > 1 ? 's' : ''}` : ''}</span>
-                : i['etat_label'] && <span data-permis-etat className="whitespace-nowrap rounded-full bg-surface-2 px-1.5 py-0.5 text-[9px] font-medium text-txt-mut">{i['etat_label'] as string}</span>}
+                /* KELFONCIER-FIX-2 (Lot D) — pastille d'état par la MÊME fonction que la fiche
+                   (etat_libelle/annule servis par /permis) : annulé → rouge, autorisé / travaux
+                   commencés / achevés → vert. Absent (dormant / non servi) : pas de pastille. */
+                : i['etat_libelle'] && <Badge data-permis-etat ton={i['annule'] ? 'rouge' : 'vert'}>{i['etat_libelle'] as string}</Badge>}
             </span>
           </button>
           )

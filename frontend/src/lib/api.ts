@@ -298,6 +298,9 @@ export interface ContexteCommune {
   permis_bloc: {
     permis_12m: number; permis_5a: number | null; logements_12m: number | null
     delai_median_mois: number | null; point_mort: number; source: string
+    // KELFONCIER-FIX-1 (Lot C) servis, KELFONCIER-FIX-2 (Lot D) affichés : ventilation PC/PA/DP/PD
+    // (autorisés, 12 mois) + annulés (12 mois), même source SITADEL que le chiffre existant.
+    permis_type_12m?: Record<string, number>; permis_annules_12m?: number
   }
   densifiables: { parcelles: number | null; sdp_residuelle_m2: number | null; source: string | null } | null
   loyer: { median_eur_m2: number; type: string | null; source: string } | null

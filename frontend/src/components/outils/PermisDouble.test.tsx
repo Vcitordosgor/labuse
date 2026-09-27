@@ -11,8 +11,9 @@ const RADAR = {
   total: 5613, geocodes: 5037, sans_localisation: 576, pct_geocode: 90, donnees_jusqu_au: '2026-06-30',
   has_more: false, carte: [{ permit_id: 'PC1', type: 'PC', date: '2026-06-30', geom: GEOM }],
   items: [
-    { permit_id: 'PC1', type: 'PC', date: '2026-06-30', commune: 'Saint-Denis', etat: 'en cours', nb_lgt: 68, delai_mois: 5, geom: GEOM },
-    { permit_id: 'PC2', type: 'PC', date: '2026-06-29', commune: 'Sainte-Marie', etat: 'en cours', nb_lgt: 2, delai_mois: null, geom: null },
+    // KELFONCIER-FIX-2 (Lot D) — l'état administratif servi par la fonction partagée : autorisé (vert) / annulé (rouge).
+    { permit_id: 'PC1', type: 'PC', date: '2026-06-30', commune: 'Saint-Denis', etat: '2', etat_libelle: 'autorisé', annule: false, nb_lgt: 68, delai_mois: 5, geom: GEOM },
+    { permit_id: 'PC2', type: 'PC', date: '2026-06-29', commune: 'Sainte-Marie', etat: '4', etat_libelle: 'annulé', annule: true, nb_lgt: 2, delai_mois: null, geom: null },
   ],
 }
 const PROMESSES = {
@@ -66,6 +67,24 @@ describe('PERMIS — double entrée + densité', () => {
     expect(document.querySelectorAll('[data-permis-row]').length).toBe(0)
     ouvrirListe()
     await waitFor(() => expect(document.querySelectorAll('[data-permis-row]').length).toBe(2))
+  })
+
+  it('KELFONCIER-FIX-2 Lot D — pastille d\'état (annulé rouge) + type PC/PA/DP sur chaque ligne', async () => {
+    const { container } = renderM03()
+    ouvrirListe()
+    await waitFor(() => expect(document.querySelectorAll('[data-permis-row]').length).toBe(2))
+    const badges = container.querySelectorAll('[data-permis-etat]')
+    expect(badges.length).toBe(2)                                   // une pastille d'état par ligne
+    const txt = Array.from(badges).map((b) => b.textContent).join('|')
+    expect(txt).toContain('autorisé')
+    expect(txt).toContain('annulé')
+    // l'annulé porte le ton rouge (st-ecartee) ; l'autorisé le ton vert (mint)
+    const annule = Array.from(badges).find((b) => b.textContent?.includes('annulé'))!
+    expect(annule.className).toContain('st-ecartee')
+    const autorise = Array.from(badges).find((b) => b.textContent?.includes('autorisé'))!
+    expect(autorise.className).toContain('mint')
+    // le type PC est dans le libellé de chaque ligne (toujours visible)
+    expect(container.textContent).toContain('PC')
   })
 
   it('survol d\'une ligne allume le point (permitHover), sortie l\'éteint', async () => {
