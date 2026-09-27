@@ -20,7 +20,7 @@ import json
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from . import coherence, html_next, portails, rattachement_html
+from . import coherence, html_next, portails  # RADAR-2 (Lot 2) — plus de rattachement auto à l'ingestion
 from .intake import resoudre_commune
 from .tables import (EV_A_QUALIFIER, EV_BAISSE_PRIX, EV_DEPOT_HTML, EV_HAUSSE_PRIX, EV_NOUVELLE, depots_dir,
                      depots_dir_writable, enregistrer_fraicheur, journaliser)
@@ -320,16 +320,15 @@ def _ecrire_bien(db: Session, bien_id: int, rec: dict, ratt: dict, motifs: list[
 
 
 def _rattacher(db: Session, rec: dict, motifs: list[str]) -> dict:
-    """Calcule le rattachement d'un enregistrement. RADAR-DEPOT-2 D1 — un enregistrement DÉGRADÉ (variante
-    B, sans position) n'est JAMAIS rattaché et ne tente RIEN. Un bien INCOHÉRENT non plus (la surface, base
-    du rattachement, est la valeur suspecte — cas 5086)."""
-    if rec.get("provenance") == html_next.PROV_DEGRADE:
-        return {"etat": "non_rattachee", "niveau": "absent", "idu": None, "confiance": None,
-                "pistes": [], "criteres": [], "motif": "annonce dégradée (variante B) — position au quartier, pas de rattachement"}
-    if motifs:
-        return {"etat": "non_rattachee", "niveau": "absent", "idu": None, "confiance": None,
-                "pistes": [], "criteres": [], "motif": "bien à qualifier — rattachement suspendu (surface suspecte)"}
-    return rattachement_html.rattacher(db, rec)
+    """RADAR-2 (Lot 2) — le RATTACHEMENT AUTOMATIQUE est RETIRÉ : l'ingestion ne rattache plus AUCUNE
+    annonce à une parcelle. Toute annonce entre `non_rattachee`. Le seul rattachement possible est le
+    geste ADMIN « C'est cette parcelle » (rattachement_humain=true), que `_ecrire_bien` ne touche jamais
+    (son UPDATE est gardé `rattachement_humain = false`). Un rattachement erroné servi à tous n'existe
+    donc plus. (Les motifs dégradé/à-qualifier donnaient déjà `non_rattachee` — désormais c'est la règle
+    unique.) Le module `rattachement_html.rattacher` reste en place pour le calcul de PISTES de l'écran
+    d'instruction admin (endpoint `/admin/radar/instruire`), il n'est simplement plus appelé ici."""
+    return {"etat": "non_rattachee", "niveau": "absent", "idu": None, "confiance": None,
+            "pistes": [], "criteres": [], "motif": "rattachement automatique retiré (RADAR-2) — instruction manuelle en admin"}
 
 
 def _confirmer_bien_existant(db: Session, bien_id: int, rec: dict, commune: str, list_id) -> None:

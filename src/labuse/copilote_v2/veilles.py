@@ -43,6 +43,10 @@ CREATE TABLE IF NOT EXISTS veilles (
 CREATE INDEX IF NOT EXISTS ix_veilles_compte ON veilles (compte_id, actif);
 ALTER TABLE veilles ADD COLUMN IF NOT EXISTS criteria jsonb DEFAULT '{}'::jsonb;
 ALTER TABLE veilles ADD COLUMN IF NOT EXISTS nom varchar(120);
+-- RADAR-2 (Lot 4) — une alerte peut être MISE EN PAUSE (distinct du soft-delete `actif=false`) : une
+-- alerte en pause reste listée (« En pause ») mais ne notifie plus et ne compte plus de nouveaux.
+ALTER TABLE veilles ADD COLUMN IF NOT EXISTS en_pause boolean DEFAULT false;
+ALTER TABLE veilles ADD COLUMN IF NOT EXISTS paused_at timestamptz;
 """
 
 

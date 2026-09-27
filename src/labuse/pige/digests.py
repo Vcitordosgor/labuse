@@ -423,6 +423,25 @@ def _mises_en_vente(db: Session, biens: list[dict], suivis: dict, jour) -> int:
     return n
 
 
+def mise_en_vente_immediate(db: Session, bien_id: int) -> int:
+    """RADAR-2 (Lot 2) — un rattachement MANUEL (« C'est cette parcelle », admin) vers une parcelle SUIVIE
+    déclenche TOUT DE SUITE le mail « parcelle suivie mise en vente », par le MÊME chemin que le digest
+    (`_mises_en_vente`) et sa dédup — jamais un doublon avec la cloche du soir. Renvoie le nombre de
+    parcelles-suivies notifiées (0 si le bien n'a pas d'idu, n'est pas vivant, ou n'est suivi par personne)."""
+    row = db.execute(text(
+        "SELECT b.bien_id, b.commune, b.type_bien, b.idu, "
+        "       f.prix, f.surface_hab, f.surface_terrain, f.particulier_pro, "
+        "       a.portail, a.url_sortante "
+        "FROM pige_biens b JOIN pige_faits f ON f.bien_id = b.bien_id "
+        "LEFT JOIN LATERAL (SELECT portail, url_sortante FROM pige_annonces WHERE bien_id = b.bien_id "
+        "                   ORDER BY date_saisie DESC LIMIT 1) a ON true "
+        "WHERE b.bien_id = :b AND f.valide_at IS NOT NULL AND b.a_qualifier = false "
+        "  AND b.statut IN ('active','en_vente_longue')"), {"b": bien_id}).mappings().first()
+    if not row or not row["idu"]:
+        return 0
+    return _mises_en_vente(db, [_avec_faits(row)], _idus_suivis(db), None)
+
+
 def evaluer_radar_cloche(db: Session) -> dict:
     """VEILLE-2 (Lot 3) / VEILLE-FIX-2 (Lots A+B) — pose à la CLOCHE (compte-scopé) les événements Radar
     des annonces vues DEPUIS LE DERNIER PASSAGE qui matchent une veille du client :

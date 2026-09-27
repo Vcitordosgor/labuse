@@ -1456,7 +1456,9 @@ export interface BriefMatin {
 }
 export const getBrief = () => j<BriefMatin>('/events/brief')
 // M85-B — les parcelles suivies + date du dernier changement (null = jamais bougé).
-export interface SuiviItem { idu: string; depuis: string; commune: string | null; dernier_changement: string | null }
+export interface SuiviItem { idu: string; depuis: string; commune: string | null; dernier_changement: string | null
+  // RADAR-2 (Lot 4) — enrichissements de l'écran Veille · le foncier.
+  secteur?: string | null; dernier_evenement?: string | null; nouveau?: boolean }
 export const getSuivis = () => j<{ suivis: SuiviItem[]; plafond: number }>('/events/suivis')
 // M85 / M85-B — préférences par type (registre) et par canal (cloche / e-mail). `verrou` = non
 // désactivable (maintenance : e-mail toujours actif, conséquences réelles).
@@ -2237,6 +2239,9 @@ export interface RadarBienClient {
   etiquettes: Record<string, string>; fraicheur_source: string | null
   date_publication: string | null; date_saisie: string | null; date_derniere_confirmation: string | null
   portail: string; url_sortante: string; annonce_id: number | null; baisse: boolean
+  // RADAR-2 (Lot 2) — pastilles de la liste : ancien prix (barré) + % de la dernière baisse ; « de retour »
+  // (annonce ré-activée après un retrait sans vente). Servis à plat par le back (jamais recalculés au front).
+  ancien_prix: number | null; baisse_pct: number | null; de_retour: boolean
   // RADAR-DEPOT-2 D2 — faits DÉCLARÉS par le vendeur (zone PLU, drapeaux), « déclaré dans l'annonce ».
   declaratif: RadarDeclaratif | null; provenance: string | null
   // RADAR-DEPOT-2 D4 — badge « sous le marché » (null si non applicable/au-dessus du seuil).
@@ -2349,6 +2354,53 @@ export const supprimerRadarVeille = (id: number) =>
 // RETOURS-11 A7 — renommer une veille Radar (nom vide = retour au résumé des critères).
 export const renommerRadarVeille = (id: number, nom: string) =>
   j<{ ok: boolean }>(`/radar/veille/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nom }) })
+
+// ── RADAR-2 — le hub (deux portes) + les alertes (pause / nouveaux depuis hier) ──
+export interface RadarApercu {
+  biens_en_vente: number; derniere_capture_at: string | null
+  suivis_n: number; alertes_n: number; nouveaux_total: number
+}
+export const getRadarApercu = () => j<RadarApercu>('/radar/apercu')
+export interface RadarAlerte {
+  id: number; nom: string | null; commune: string | null; criteria: Record<string, unknown>
+  created_at: string | null; en_pause: boolean; paused_at: string | null; nouveaux: number
+}
+export const getRadarAlertes = () => j<{ alertes: RadarAlerte[]; nouveaux_total: number }>('/radar/alertes')
+export const pauseRadarVeille = (id: number, en_pause: boolean) =>
+  j<{ ok: boolean; en_pause: boolean }>(`/radar/veille/${id}/pause`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ en_pause }) })
+
+// ── RADAR-2 (Lot 3) — le marché (colonne de droite) : 4 chiffres + table par type + 30 j + écart/commune ──
+export interface RadarMarcheChiffre { valeur: number | null; n: number; sous_seuil: boolean; periode?: string | null }
+export interface RadarMarcheTypeLigne {
+  type: 'terrain' | 'maison' | 'appartement'; en_vente: number
+  demande_eur_m2: number | null; acte_eur_m2: number | null
+  ecart_pct: number | null; ecart_sous_seuil: boolean; sup_90j: number; baisses_30j: number
+}
+export interface RadarMarcheEcartCommune { commune: string; ecart_pct: number }
+export interface RadarMarcheTableau {
+  scope: string; commune: string | null
+  prix_demande_median_eur_m2: RadarMarcheChiffre      // maisons
+  prix_acte_median_eur_m2: RadarMarcheChiffre         // maisons, DVF (moteur fiche commune)
+  ecart_demande_acte_pct: number | null; ecart_sous_seuil: boolean
+  biens_en_vente: number; biens_sup_90j: number
+  par_type: RadarMarcheTypeLigne[]
+  bouge_30j: { nouvelles: number; baisses: number; retirees: number; de_retour: number }
+  ecart_par_commune: RadarMarcheEcartCommune[]
+  seuil_ecart_n: number; millesime_dvf: string | null; derniere_capture_at: string | null
+}
+export const getRadarMarcheTableau = (commune?: string) =>
+  j<RadarMarcheTableau>(`/radar/marche-tableau${commune ? `?commune=${encodeURIComponent(commune)}` : ''}`)
+
+// RADAR-2 (recette) — « Ce bien face à son marché » (colonne de droite quand une annonce est sélectionnée)
+export interface RadarBienCmp { median: number | null; n: number; ecart_pct: number | null; sous_seuil: boolean }
+export interface RadarBienVsMarche {
+  bien_id: number; commune: string; type_bien: string | null; prix: number | null; eur_m2: number | null
+  demande: RadarBienCmp; acte: RadarBienCmp
+  anciennete_j: number | null; anciennete_mediane_j: number | null; anciennete_n: number; anciennete_sous_seuil: boolean
+  historique_prix: { date: string | null; ancien: number | null; nouveau: number | null }[]
+  url_sortante: string; portail: string; seuil_n: number; introuvable?: boolean
+}
+export const getRadarBienVsMarche = (bienId: number) => j<RadarBienVsMarche>(`/radar/biens/${bienId}/vs-marche`)
 
 // CRON-2 (K7) — la page CRON de l'admin (état des jobs planifiés)
 export interface CronJob {

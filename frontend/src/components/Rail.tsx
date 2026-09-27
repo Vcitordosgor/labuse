@@ -86,8 +86,8 @@ const RAIL: { key: RailKey; label: string; ia?: boolean }[] = [
   { key: 'cartes', label: 'Carte' },
   { key: 'outils', label: 'Outils' },
   { key: 'copilote', label: 'Copilote', ia: true },
+  // RADAR-2 (Lot 1) — « Veille » QUITTE le rail : on l'atteint par la porte « Veille » du hub Radar.
   { key: 'radar', label: 'Radar' },
-  { key: 'veille', label: 'Veille' },
   { key: 'projets', label: 'Projets' },
   { key: 'crm', label: 'CRM' },
 ]
@@ -145,7 +145,7 @@ function AdminRailEntry() {
 }
 
 export function Rail() {
-  const { view, setView, outilsOpen, toggleOutils, openSources, setModule, toggleSurveillance } = useApp()
+  const { view, setView, outilsOpen, toggleOutils, openSources, setModule, openRadar } = useApp()
   // M104 — UNE seule entrée « Surveillance » (fusion Suivis + Secteurs + Critères, arbitrage
   // 17/08). Les notifications restent à la CLOCHE (chrome global) : la section configure et
   // liste ce qu'on surveille, la cloche affiche ce qui en sort.
@@ -184,11 +184,12 @@ export function Rail() {
             const on = key === 'outils' ? outilsOpen : view === key && !outilsOpen
             const act = () => {
               if (key === 'outils') return toggleOutils()
-              if (key === 'veille') return toggleSurveillance()
+              // RADAR-2 (Lot 1) — le hub Radar plein écran repart toujours de ses deux portes.
+              if (key === 'radar') return openRadar()
               setView(key as View)
             }
             return (
-              <button key={key} data-rail={key} {...(key === 'veille' ? { 'data-rail-surveillance': true } : {})}
+              <button key={key} data-rail={key}
                 onClick={act} aria-current={on ? 'page' : undefined}
                 className={`rail-item ${on ? 'active' : ''} ${ia ? 'ia' : ''}`}
                 {...(RAIL_TITLE[key] ? { title: RAIL_TITLE[key] } : {})}>

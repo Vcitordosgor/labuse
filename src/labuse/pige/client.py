@@ -37,7 +37,9 @@ def _where(filtres: dict) -> tuple[str, dict]:
     from .. import reglages
     if not reglages.depot_agence_actif():
         conds.append("NOT b.depose_par_agence")
-    p: dict = {}
+    # RADAR-2 (Lot 2) — préfixe/suffixe du dedup 'pige:statut:{bien_id}:retiree' passés en BIND (jamais en
+    # littéral : SQLAlchemy prendrait `:retiree` pour un paramètre). Utilisés par le calcul « de retour ».
+    p: dict = {"ddp": "pige:statut:", "dds": ":retiree"}
     statuts = filtres.get("statuts") or list(STATUTS_DEFAUT)
     conds.append("b.statut = ANY(:statuts)")
     p["statuts"] = list(statuts)
@@ -99,6 +101,11 @@ SELECT b.bien_id, b.commune, b.type_bien, b.est_copro, b.statut, b.idu,
        a.portail, a.url_sortante, a.annonce_id,
        EXISTS (SELECT 1 FROM pige_prix_historique h
                WHERE h.bien_id = b.bien_id AND h.nouveau_prix < h.ancien_prix) AS baisse,
+       -- RADAR-2 (Lot 2) — la DERNIÈRE baisse : l'ancien prix (barré) et le % ; « de retour » = une
+       -- annonce ré-activée après un retrait (statut_change 'retiree' journalisé), à nouveau en vente.
+       bp.ancien_prix AS ancien_prix,
+       (EXISTS (SELECT 1 FROM event_log e WHERE e.dedup = :ddp || b.bien_id || :dds)
+        AND b.statut IN ('active','en_vente_longue')) AS de_retour,
        ST_X(p.centroid) AS lon, ST_Y(p.centroid) AS lat,
        -- RADAR-AUTO-1 (recette) — position de QUARTIER portée par le bien lui-même (portail, floutée),
        -- servie quand le bien n'est pas rattaché à une parcelle : la carte l'affiche en marqueur distinct.
@@ -107,6 +114,9 @@ FROM pige_biens b
 JOIN pige_faits f ON f.bien_id = b.bien_id
 LEFT JOIN LATERAL (SELECT portail, url_sortante, annonce_id FROM pige_annonces
                    WHERE bien_id = b.bien_id ORDER BY date_saisie DESC LIMIT 1) a ON true
+LEFT JOIN LATERAL (SELECT ancien_prix, nouveau_prix FROM pige_prix_historique
+                   WHERE bien_id = b.bien_id AND nouveau_prix < ancien_prix
+                   ORDER BY date_constat DESC LIMIT 1) bp ON true
 LEFT JOIN parcels p ON p.idu = b.idu
 """
 
@@ -144,6 +154,12 @@ def _bien_row(r: dict) -> dict:
         "date_derniere_confirmation": r["date_derniere_confirmation"].isoformat() if r["date_derniere_confirmation"] else None,
         "portail": r["portail"], "url_sortante": r["url_sortante"], "annonce_id": r["annonce_id"],
         "baisse": bool(r["baisse"]),
+        # RADAR-2 (Lot 2) — l'ancien prix (barré) + le % de la dernière baisse (calculé contre le prix
+        # courant `f.prix`), et « de retour ». Servis à plat : la liste ne recalcule rien au front.
+        "ancien_prix": r.get("ancien_prix"),
+        "baisse_pct": (round(100.0 * (float(r["ancien_prix"]) - float(r["prix"])) / float(r["ancien_prix"]))
+                       if r.get("ancien_prix") and r.get("prix") and float(r["ancien_prix"]) > float(r["prix"]) else None),
+        "de_retour": bool(r.get("de_retour")),
         # RADAR-VEILLE-1 (R3) — annonce DÉPOSÉE par une agence : contenu confié (photos + texte + adresse
         # abonnés-seuls) AFFICHÉ ; le collecté a photos=[] / description=NULL (jamais peuplés) → rien à
         # montrer, la doctrine « faits + lien » reste entière pour lui.
@@ -242,11 +258,28 @@ def lister(db: Session, *, filtres: dict, tri: str = "recentes", page: int = 1, 
             "plafond": PLAFOND_PAGE, "tronquee": (offset + len(biens)) < n_total, "tri": tri}
 
 
+def compter(db: Session, commune: str | None = None, *, sup90: bool = False) -> int:
+    """RADAR-2 (recette) — LE nombre canonique de « biens en vente », servi À L'IDENTIQUE à la porte, au
+    marché et à la liste : MÊME prédicat que `lister` (validé, hors copro = hors appartements, statuts
+    active + en_vente_longue, dépôt agence exclu drapeau fermé). `sup90` restreint à en_vente_longue
+    (les biens en vente depuis plus de 90 j). Aucune divergence possible : un seul WHERE (`_where`)."""
+    filtres: dict = {}
+    if commune:
+        filtres["commune"] = commune
+    if sup90:
+        filtres["statuts"] = ["en_vente_longue"]
+    where, p = _where(filtres)
+    return int(db.execute(text(
+        f"SELECT count(*) FROM pige_biens b JOIN pige_faits f ON f.bien_id = b.bien_id WHERE {where}"),
+        p).scalar() or 0)
+
+
 def detail(db: Session, bien_id: int) -> dict | None:
     """Détail d'un bien VALIDÉ : faits + historique de prix + candidates (si Estimé). None sinon."""
     # RADAR-DEPOT-2 D5 — une copro n'est jamais servie au client, même par accès direct à son id.
     r = db.execute(text(f"{_SELECT} WHERE b.bien_id = :b AND f.valide_at IS NOT NULL "
-                        "AND b.est_copro = false"), {"b": bien_id}).mappings().first()
+                        "AND b.est_copro = false"),
+                   {"b": bien_id, "ddp": "pige:statut:", "dds": ":retiree"}).mappings().first()
     if not r:
         return None
     row = dict(r)

@@ -901,20 +901,41 @@ def watch_toggle(idu: str, request: Request, db: Session = Depends(get_db)) -> d
 
 @router.get("/suivis")
 def suivis_liste(request: Request, db: Session = Depends(get_db)) -> dict:
-    """M85-B — les parcelles SUIVIES du compte + la date du DERNIER changement détecté. Une parcelle
-    qui n'a jamais bougé le DIT (dernier_changement = null) — c'est une information, pas un vide."""
+    """M85-B / RADAR-2 (Lot 4) — les parcelles SUIVIES du compte, enrichies pour l'écran Veille · le
+    foncier : le SECTEUR (lieu-dit le plus proche), le DERNIER ÉVÉNEMENT typé (vente/permis/changement de
+    propriétaire/mise en vente) avec sa date, et un drapeau `nouveau` (événement des 7 derniers jours).
+    Une parcelle qui n'a jamais bougé le DIT (dernier_evenement = null)."""
     from .tenant import current_compte
     cid = current_compte(request)
     rows = db.execute(text("""
         SELECT w.idu, w.created_at::date::text AS depuis, p.commune,
-               (SELECT max(e.ts)::date::text FROM event_log e
-                 WHERE e.idu = w.idu AND e.kind = 'parcelle_suivie'
-                   AND e.compte_id IS NOT DISTINCT FROM :cid) AS dernier_changement
+               ev.titre AS ev_titre, ev.kind AS ev_kind,
+               ev.ts::date::text AS ev_date,
+               (ev.ts IS NOT NULL AND ev.ts >= now() - interval '7 days') AS ev_nouveau
         FROM watched_parcels w LEFT JOIN parcels p ON p.idu = w.idu
+        LEFT JOIN LATERAL (
+            SELECT e.titre, e.kind, e.ts FROM event_log e
+            WHERE e.idu = w.idu AND e.kind IN ('parcelle_suivie','parcelle_en_vente')
+              AND e.compte_id IS NOT DISTINCT FROM :cid
+            ORDER BY e.ts DESC LIMIT 1) ev ON true
         WHERE w.compte_id IS NOT DISTINCT FROM :cid
-        ORDER BY dernier_changement DESC NULLS LAST, w.created_at DESC"""),
+        ORDER BY ev.ts DESC NULLS LAST, w.created_at DESC"""),
         {"cid": cid}).mappings().all()
-    return {"suivis": [dict(r) for r in rows], "plafond": SUIVIS_MAX}
+    from ..api import app as _app   # helpers de secteur (lieu-dit) / adresse BAN — lazy (évite le circulaire)
+    out = []
+    for r in rows:
+        try:
+            secteur = _app._secteur_lieudit(db, r["idu"]) or _app._ban_adresse(db, r["idu"])
+        except Exception:  # noqa: BLE001 — sources de secteur absentes = pas de secteur, jamais un 500
+            secteur = None
+        label = ("Mise en vente sur un portail" if r["ev_kind"] == "parcelle_en_vente"
+                 else (r["ev_titre"] or None))
+        out.append({
+            "idu": r["idu"], "depuis": r["depuis"], "commune": r["commune"], "secteur": secteur,
+            "dernier_evenement": label, "dernier_changement": r["ev_date"],
+            "nouveau": bool(r["ev_nouveau"]),
+        })
+    return {"suivis": out, "plafond": SUIVIS_MAX}
 
 
 # ── M11 — veilles (recherches sauvegardées) ──

@@ -13,6 +13,10 @@ import type { FilterTier } from '../lib/status'
 // catégorie plein écran à GAUCHE (patron Radar), avec ses deux portes (Le foncier / Les annonces).
 export type View = 'cartes' | 'crm' | 'sources' | 'projets' | 'copilote' | 'admin' | 'radar' | 'veille'
 
+// RADAR-2 (Lot 1) — les écrans du hub Radar plein écran (SANS carte). La Veille n'est plus une entrée
+// du rail : on l'atteint par la porte « Veille » du hub Radar (view:'radar'). 'veille' = ses deux portes.
+export type RadarEcran = 'portes' | 'radar' | 'veille' | 'veille-foncier' | 'veille-annonces'
+
 // FIX-FILTRES F6 (choix assumé, non un bug) : ces couches sont du CONTEXTE — elles s'affichent
 // ENTIÈRES, DÉCOUPLÉES des filtres du panneau (qui, eux, ne pilotent que la couche Parcelles).
 // Restreindre les parcelles ne restreint pas les équipements/zonages/dispositifs affichés.
@@ -334,6 +338,15 @@ interface AppState {
   // les autres vues de premier niveau. Ferme la Veille et les overlays (bug « deux catégories
   // ouvertes » de RETOURS-1 R8 : une seule catégorie du rail à la fois).
   openRadar: () => void
+  // RADAR-2 (Lot 1) — le hub Radar plein écran (SANS carte) est un petit automate d'écrans : deux
+  // portes (Radar / Veille), l'écran Radar (liste + marché), et les trois écrans Veille (deux portes,
+  // le foncier, les annonces). Un SEUL état pilote l'écran courant ; `openRadar` repart des portes.
+  radarEcran: RadarEcran
+  setRadarEcran: (e: RadarEcran) => void
+  // RADAR-2 (Lot 2/4) — critères transportés dans l'écran Radar : « M'alerter » lit les filtres du
+  // moment, « Voir dans Radar » (depuis une alerte) applique ses critères à la liste. null = liste nue.
+  radarPrefill: Record<string, unknown> | null
+  setRadarPrefill: (f: Record<string, unknown> | null) => void
   // F2 (M12) : « + Décrire un projet » ouvre l'entretien « Votre projet » DIRECTEMENT (pas l'écran
   // à deux portes). La valeur = amorce de l'entretien ; consommée (remise à null) par le copilote
   // à l'ouverture de l'entretien. null = accès normal au copilote (deux portes).
@@ -824,9 +837,14 @@ export const useApp = create<AppState>((set, get) => ({
     parcours: null, openProjet: null, surveillanceOpen: false, ...CLOSE_OVERLAYS }),
   // RADAR-CATÉGORIE (T1) — ouvrir la catégorie Radar : nettoyage exclusif identique. La fiche du bien
   // vit dans le panneau Radar (état local), pas dans selectedIdu — mais on repart propre (null).
-  openRadar: () => set({ view: 'radar', outilsOpen: false, selectedIdu: null, module: null,
+  openRadar: () => set({ view: 'radar', radarEcran: 'portes', outilsOpen: false, selectedIdu: null, module: null,
     contexteCommune: null, iaRestitution: null, parcours: null, openProjet: null,
     surveillanceOpen: false, ...CLOSE_OVERLAYS }),
+  // RADAR-2 (Lot 1) — écran courant du hub Radar (deux portes / Radar / Veille×3).
+  radarEcran: 'portes',
+  setRadarEcran: (e) => set({ radarEcran: e }),
+  radarPrefill: null,
+  setRadarPrefill: (f) => set({ radarPrefill: f }),
   // M104 — Surveillance : une entrée, trois volets (parcelles / secteurs / critères).
   // RETOURS-1 R8 (Vic) : ouvrir la Veille ferme le tiroir Outils (réciproque de toggleOutils).
   surveillanceOpen: false,
@@ -840,19 +858,22 @@ export const useApp = create<AppState>((set, get) => ({
   // RV2-V3 — la Veille est désormais une VUE plein écran (view:'veille'), plus un overlay. Le volet
   // 'secteurs' a été RETIRÉ (l'outil secteur n'existe plus) : toute demande 'secteurs' retombe sur
   // 'parcelles'. `surveillanceOpen` reste true tant que la vue est ouverte (compat des consommateurs).
-  openSurveillance: (volet) => set((s) => ({ surveillanceOpen: true, view: 'veille', surveillancePorte: 'interne',
+  // RADAR-2 (Lot 1) — la Veille vit désormais DANS le hub Radar (view:'radar'). Les deep-links de notif
+  // ('parcelles' → le foncier, 'criteres' → les annonces) atterrissent directement sur le bon écran Veille.
+  openSurveillance: (volet) => set((s) => ({ surveillanceOpen: true, view: 'radar',
+    radarEcran: volet === 'criteres' ? 'veille-annonces' : 'veille-foncier', surveillancePorte: 'interne',
     outilsOpen: false, surveillanceVolet: (volet === 'secteurs' ? 'parcelles' : volet) ?? (s.surveillanceVolet === 'secteurs' ? 'parcelles' : s.surveillanceVolet),
     selectedIdu: null, module: null, ...CLOSE_OVERLAYS })),
-  setSurveillanceOpen: (v) => set(v ? { surveillanceOpen: true, view: 'veille' } : { surveillanceOpen: false, view: 'cartes' }),
-  toggleSurveillance: () => set((s) => (s.view === 'veille'
+  setSurveillanceOpen: (v) => set(v ? { surveillanceOpen: true, view: 'radar', radarEcran: 'veille' } : { surveillanceOpen: false, view: 'cartes' }),
+  toggleSurveillance: () => set((s) => (s.view === 'radar' && s.radarEcran.startsWith('veille')
     ? { surveillanceOpen: false, view: 'cartes', module: null, selectedIdu: null, ...CLOSE_OVERLAYS }
-    : { surveillanceOpen: true, view: 'veille', surveillancePorte: 'accueil', outilsOpen: false,
+    : { surveillanceOpen: true, view: 'radar', radarEcran: 'veille', surveillancePorte: 'accueil', outilsOpen: false,
         selectedIdu: null, module: null, ...CLOSE_OVERLAYS })),
-  // anciennes entrées : elles REDIRIGENT vers la Veille, porte interne, volet correspondant.
-  toggleVeilles: () => set({ surveillanceOpen: true, surveillanceVolet: 'parcelles', view: 'veille',
-    surveillancePorte: 'interne', outilsOpen: false, selectedIdu: null, module: null, ...CLOSE_OVERLAYS }),
-  toggleSuivis: () => set({ surveillanceOpen: true, surveillanceVolet: 'parcelles', view: 'veille',
-    surveillancePorte: 'interne', outilsOpen: false, ...CLOSE_OVERLAYS }),
+  // anciennes entrées : elles REDIRIGENT vers la Veille (hub Radar), le foncier.
+  toggleVeilles: () => set({ surveillanceOpen: true, surveillanceVolet: 'parcelles', view: 'radar',
+    radarEcran: 'veille-foncier', surveillancePorte: 'interne', outilsOpen: false, selectedIdu: null, module: null, ...CLOSE_OVERLAYS }),
+  toggleSuivis: () => set({ surveillanceOpen: true, surveillanceVolet: 'parcelles', view: 'radar',
+    radarEcran: 'veille-foncier', surveillancePorte: 'interne', outilsOpen: false, ...CLOSE_OVERLAYS }),
   compareIdus: [],
   compareOpen: false,
   compareTouchedAt: null,

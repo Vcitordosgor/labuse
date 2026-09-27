@@ -131,6 +131,193 @@ def radar_stats(db: Session, commune: str | None = None, type_bien: str | None =
     }
 
 
+def tableau(db: Session, commune: str | None = None) -> dict:
+    """RADAR-2 (Lot 3) — LE MARCHÉ (colonne de droite du Radar) pour une commune ou toute l'île. Rien de
+    neuf n'est calculé : le prix ACTÉ vient du MÊME moteur que la fiche commune (baromètre DVF commune
+    entière, `comparateur.raw_rows` → `prix_ancien`) pour les chiffres MAISONS et l'écart par commune ;
+    les 4 chiffres MAISONS du haut = EXACTEMENT la ligne « maison » du tableau (même `_demande_acte`) ;
+    l'écart par commune reste le moteur fiche commune (`raw_rows` → `prix_ancien`). L'ÉCART n'est servi
+    qu'au-delà de `SEUIL_ECART` annonces (30), des DEUX côtés — sinon « sous le seuil »."""
+    from ..api.comparateur import raw_rows
+    from . import client
+    from .signaux import _dvf_bati_type, _dvf_terrain
+    from ..pige.signaux import SEUIL_REF_TYPE as SEUIL_ECART
+
+    srows = stats(db)
+    by_commune = {r["commune"]: r for r in srows["communes"]}
+    acte_map = raw_rows(db)                      # {commune: {prix_ancien, prix_ancien_n, …}}, memo 1 h
+    scope_where = "b.commune = :c" if commune else "TRUE"
+    params: dict = {"c": commune} if commune else {}
+
+    def _chiffre(valeur, n) -> dict:
+        return {"valeur": round(float(valeur)) if valeur is not None else None,
+                "n": int(n or 0), "sous_seuil": (n or 0) < SEUIL_ECART}
+
+    # ── comptes par type (en vente, > 90 j, baisses 30 j) ──
+    baisse_30j = ("EXISTS (SELECT 1 FROM pige_prix_historique h WHERE h.bien_id = b.bien_id "
+                  "AND h.nouveau_prix < h.ancien_prix "
+                  "AND h.date_constat >= (now() AT TIME ZONE 'Indian/Reunion')::date - 30)")
+    crows = {r["type_bien"]: r for r in db.execute(text(f"""
+        SELECT b.type_bien,
+          count(*) FILTER (WHERE b.statut IN ('active','en_vente_longue'))          AS en_vente,
+          count(*) FILTER (WHERE b.statut = 'en_vente_longue')                      AS sup90,
+          count(*) FILTER (WHERE b.statut IN ('active','en_vente_longue') AND {baisse_30j}) AS baisses30
+        FROM pige_biens b JOIN pige_faits f ON f.bien_id = b.bien_id
+        WHERE f.valide_at IS NOT NULL AND b.a_qualifier = false AND {scope_where}
+        GROUP BY b.type_bien"""), params).mappings()}
+
+    def _demande_acte(t: str):
+        """Demandé (Radar) et acté (DVF) d'un type, AU MÊME PÉRIMÈTRE partout : la médiane demandée du
+        type et sa référence DVF du même type. Un seul point de calcul → le tableau par type ET les
+        4 chiffres du haut (maisons) disent la même chose (recette : cohérence des chiffres)."""
+        st = radar_stats(db, commune, t)["prix_m2_median_demande"]
+        dv, dn = st.get("valeur"), int(st.get("n") or 0)
+        # RADAR-2 (retouches 2) — l'acté DVF est servi POUR CHAQUE TYPE, île ET commune (le garde
+        # `if commune` masquait « Toute l'île » → maisons « 0 vente ». `_dvf_*` acceptent commune=None).
+        acte = _dvf_terrain(db, commune) if t == "terrain" else _dvf_bati_type(db, commune, t)
+        av, an = acte.get("eur_m2"), int(acte.get("n") or 0)
+        # écart servi seulement si LES DEUX côtés tiennent le seuil (30), sinon « sous le seuil ».
+        e = None
+        if dv and av and dn >= SEUIL_ECART and an >= SEUIL_ECART:
+            e = round(100.0 * (dv - av) / av, 1)
+        return {"dv": dv, "dn": dn, "av": av, "an": an, "ecart": e, "aperiode": acte.get("periode")}
+
+    def _type_ligne(t: str) -> dict:
+        m = _demande_acte(t)
+        c = crows.get(t, {})
+        return {"type": t, "en_vente": int(c.get("en_vente") or 0),
+                "demande_eur_m2": round(float(m["dv"])) if m["dv"] else None,
+                "acte_eur_m2": round(float(m["av"])) if m["av"] else None,
+                "ecart_pct": m["ecart"], "ecart_sous_seuil": m["ecart"] is None,
+                "sup_90j": int(c.get("sup90") or 0), "baisses_30j": int(c.get("baisses30") or 0)}
+
+    par_type = [_type_ligne("terrain"), _type_ligne("maison"), _type_ligne("appartement")]
+    # RADAR-2 (recette 4b) — les 4 chiffres du haut « maisons » = EXACTEMENT la ligne « maison » du tableau
+    # (même appel `_demande_acte`), donc même prix acté, même écart, même seuil. Plus de divergence.
+    hm = _demande_acte("maison")
+    dem_v, dem_n, acte_v, acte_n, ecart = hm["dv"], hm["dn"], hm["av"], hm["an"], hm["ecart"]
+    # RADAR-2 (recette 4a) — nombre canonique de biens en vente (= porte = liste), HORS appartements (copro).
+    biens_en_vente = client.compter(db, commune)
+    biens_sup_90j = client.compter(db, commune, sup90=True)
+
+    # ── ce qui a bougé · 30 jours ──
+    b30 = db.execute(text(f"""
+        SELECT
+          count(*) FILTER (WHERE b.statut IN ('active','en_vente_longue')
+                           AND b.date_premiere_saisie >= (now() AT TIME ZONE 'Indian/Reunion')::date - 30) AS nouvelles,
+          count(*) FILTER (WHERE b.statut IN ('active','en_vente_longue') AND {baisse_30j})                AS baisses,
+          -- RADAR-2 (recette 4c) — RETIRÉES = uniquement les retraits CONFIRMÉS PAR L'OUVERTURE DU LIEN
+          -- (radar_confirmation « supprimee » → event_log dedup 'pige:retiree:{id}', « confirmée par le
+          -- lien »). On NE compte PLUS les expirations de portail ni les retiree_sans_vente (cycle mensuel).
+          count(*) FILTER (WHERE EXISTS (SELECT 1 FROM event_log e
+                           WHERE e.dedup = :rp || b.bien_id AND e.ts >= now() - interval '30 days')) AS retirees,
+          count(*) FILTER (WHERE b.statut IN ('active','en_vente_longue')
+                           AND b.last_seen_at >= now() - interval '30 days'
+                           AND EXISTS (SELECT 1 FROM event_log e WHERE e.dedup = :ddp || b.bien_id || :dds)) AS de_retour
+        FROM pige_biens b JOIN pige_faits f ON f.bien_id = b.bien_id
+        WHERE f.valide_at IS NOT NULL AND b.a_qualifier = false AND {scope_where}"""),
+        {**params, "ddp": "pige:statut:", "dds": ":retiree", "rp": "pige:retiree:"}).mappings().first() or {}
+
+    # ── écart demandé / acté par commune (maisons = bâti, moteur fiche commune) ──
+    ecart_par_commune = []
+    for c, r in by_commune.items():
+        d = (r.get("prix_m2_bati") or {})
+        dvv, dvn = d.get("valeur"), int(d.get("n") or 0)
+        av = (acte_map.get(c) or {}).get("prix_ancien")
+        if dvv is not None and av and dvn >= SEUIL_ECART:
+            ecart_par_commune.append({"commune": c, "ecart_pct": round(100.0 * (dvv - av) / av, 1)})
+    ecart_par_commune.sort(key=lambda x: x["ecart_pct"], reverse=True)
+
+    # millésime DVF (pied de colonne) — du moteur commune, sinon d'une commune représentative.
+    from ..faisabilite.marche_commune import _dvf_millesime
+    try:
+        mill = _dvf_millesime(db, commune) if commune else None
+    except Exception:  # noqa: BLE001
+        mill = None
+    capture = db.execute(text("SELECT max(captured_at) FROM pige_passes")).scalar()
+    if capture is None:
+        capture = db.execute(text("SELECT max(last_seen_at) FROM pige_biens")).scalar()
+
+    return {
+        "scope": commune or "Toute l'île", "commune": commune,
+        "prix_demande_median_eur_m2": _chiffre(dem_v, dem_n),
+        # l'acté DVF (baromètre commune) n'est pas gardé par le seuil Radar : il est servi dès qu'il existe.
+        # `periode` = la VRAIE fenêtre des ventes retenues (année min–max), pas une fenêtre glissante.
+        "prix_acte_median_eur_m2": {"valeur": round(float(acte_v)) if acte_v else None,
+                                    "n": int(acte_n), "sous_seuil": acte_v is None,
+                                    "periode": hm.get("aperiode")},
+        "ecart_demande_acte_pct": ecart, "ecart_sous_seuil": ecart is None,
+        "biens_en_vente": biens_en_vente, "biens_sup_90j": biens_sup_90j,
+        "par_type": par_type,
+        "bouge_30j": {"nouvelles": int(b30.get("nouvelles") or 0), "baisses": int(b30.get("baisses") or 0),
+                      "retirees": int(b30.get("retirees") or 0), "de_retour": int(b30.get("de_retour") or 0)},
+        "ecart_par_commune": ecart_par_commune,
+        "seuil_ecart_n": SEUIL_ECART, "millesime_dvf": mill,
+        "derniere_capture_at": capture.isoformat() if capture else None,
+    }
+
+
+def bien_vs_marche(db: Session, bien_id: int) -> dict | None:
+    """RADAR-2 (recette) — CE BIEN FACE À SON MARCHÉ : son €/m² contre la médiane DEMANDÉE (Radar) et la
+    médiane ACTÉE (DVF) de SA commune et de SON type (avec l'écart %), son ancienneté contre la médiane
+    d'ancienneté de la commune (même type), et l'historique de ses prix. Réutilise les mêmes moteurs que
+    le marché (`radar_stats`, `signaux._dvf_*`). Sous le seuil (30), chaque comparaison dit « sous le
+    seuil ». None si le bien n'existe pas / n'est pas servi."""
+    from .signaux import _dvf_bati_type, _dvf_terrain
+    from ..pige.signaux import SEUIL_REF_TYPE as SEUIL_ECART
+    r = db.execute(text("""
+        SELECT b.bien_id, b.commune, b.type_bien, f.prix, f.surface_hab, f.surface_terrain,
+               a.url_sortante, a.portail,
+               ((now() AT TIME ZONE 'Indian/Reunion')::date
+                - COALESCE(b.date_publication, b.date_premiere_saisie::date)) AS anciennete_j
+        FROM pige_biens b JOIN pige_faits f ON f.bien_id = b.bien_id
+        LEFT JOIN LATERAL (SELECT url_sortante, portail FROM pige_annonces WHERE bien_id = b.bien_id
+                           ORDER BY date_saisie DESC LIMIT 1) a ON true
+        WHERE b.bien_id = :b AND f.valide_at IS NOT NULL AND b.est_copro = false"""),
+        {"b": bien_id}).mappings().first()
+    if not r:
+        return None
+    t, commune = r["type_bien"], r["commune"]
+    surf = r["surface_terrain"] if t == "terrain" else (r["surface_hab"] or r["surface_terrain"])
+    bien_m2 = round(float(r["prix"]) / float(surf)) if r["prix"] and surf and float(surf) > 0 else None
+
+    dm = radar_stats(db, commune, t)["prix_m2_median_demande"]
+    dem_v, dem_n = dm.get("valeur"), int(dm.get("n") or 0)
+    acte = _dvf_terrain(db, commune) if t == "terrain" else _dvf_bati_type(db, commune, t)
+    acte_v, acte_n = acte.get("eur_m2"), int(acte.get("n") or 0)
+
+    def _cmp(ref, n):
+        ok = bien_m2 is not None and ref and n >= SEUIL_ECART
+        return {"median": round(float(ref)) if ref else None, "n": int(n),
+                "ecart_pct": round(100.0 * (bien_m2 - ref) / ref, 1) if ok else None,
+                "sous_seuil": not ok}
+
+    anc = db.execute(text("""
+        SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY
+                 ((now() AT TIME ZONE 'Indian/Reunion')::date
+                  - COALESCE(b.date_publication, b.date_premiere_saisie::date))) AS med,
+               count(*) AS n
+        FROM pige_biens b JOIN pige_faits f ON f.bien_id = b.bien_id
+        WHERE f.valide_at IS NOT NULL AND b.a_qualifier = false AND b.est_copro = false
+          AND b.statut IN ('active','en_vente_longue') AND b.commune = :c AND b.type_bien = :t"""),
+        {"c": commune, "t": t}).mappings().first() or {}
+    anc_n = int(anc.get("n") or 0)
+    hist = [{"date": h["date_constat"].isoformat() if h["date_constat"] else None,
+             "ancien": h["ancien_prix"], "nouveau": h["nouveau_prix"]}
+            for h in db.execute(text(
+                "SELECT date_constat, ancien_prix, nouveau_prix FROM pige_prix_historique "
+                "WHERE bien_id = :b ORDER BY date_constat, id"), {"b": bien_id}).mappings()]
+    return {
+        "bien_id": bien_id, "commune": commune, "type_bien": t, "prix": r["prix"], "eur_m2": bien_m2,
+        "demande": _cmp(dem_v, dem_n), "acte": _cmp(acte_v, acte_n),
+        "anciennete_j": int(r["anciennete_j"]) if r["anciennete_j"] is not None else None,
+        "anciennete_mediane_j": round(float(anc["med"])) if anc.get("med") is not None and anc_n >= SEUIL_ECART else None,
+        "anciennete_n": anc_n, "anciennete_sous_seuil": anc_n < SEUIL_ECART,
+        "historique_prix": hist, "url_sortante": r["url_sortante"], "portail": r["portail"],
+        "seuil_n": SEUIL_ECART,
+    }
+
+
 def stats(db: Session) -> dict:
     """Les 24 communes (même vides) + le total ÎLE. Chaque mesure porte son n ; < 5 = insuffisant."""
     # CONNEXIONS-2 Lot 7 (#12/H5) — drapeau dépôt agence fermé ⇒ les dépôts agence sortent des STATS
