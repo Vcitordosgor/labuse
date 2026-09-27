@@ -9,6 +9,7 @@ import { Squelette } from '../Loading'
 import { EmptyState, ErrorState } from '../States'
 import { Tip } from '../Tip'
 import { Retour } from '../ui/Retour'   // DA-FIX-5 P6 — retour unique (haut gauche)
+import { Chevron } from '../ui/Chevron'   // RETOURS-15 D6 — accordéon « Méthode et limites » de la charte
 
 const jfetch = async <T,>(url: string): Promise<T> => {
   const r = await fetch(url)
@@ -35,6 +36,7 @@ type Servitudes = {
 export function O5Servitudes() {
   const { selectedIdu, select, focusParcelle } = useApp()
   const [idu, setIdu] = useState(selectedIdu ?? '')
+  const [methodeOuverte, setMethodeOuverte] = useState(false)   // RETOURS-15 D6 — accordéon charte, fermé par défaut
   useEffect(() => { if (selectedIdu) setIdu(selectedIdu) }, [selectedIdu])
   // PIEGES-RISQUES-1 pt2 — la saisie (adresse/IDU/réf courte) doit AMENER SUR la parcelle : zoom +
   // surbrillance de son contour, sans ouvrir la fiche (ça fermerait l'outil). Même geste que Permis
@@ -57,8 +59,9 @@ export function O5Servitudes() {
       {/* PATRON OMNIBOX (M137) — adresse OU IDU dans le même champ (ParcelInput partagé). RETOURS-15 B8
           — withCarte=false : le clic carte est capté par l'effet selectedIdu ci-dessus (il analyse ET
           ouvre la fiche) ; on ne laisse pas l'auto-consommation du socle rappeler `allerA` (qui ferait
-          select(null) et refermerait la fiche). Plus de bouton/invite carte ici. */}
-      <ParcelInput dataAttr="o5-idu" withCarte={false} placeholder="Adresse, IDU ou référence (BW0917)" onPick={allerA} />
+          select(null) et refermerait la fiche). RETOURS-15 D2 — `inviteCarte` réaffiche l'invite
+          « ou cliquez une parcelle sur la carte » (le second geste existe, il doit se voir). */}
+      <ParcelInput dataAttr="o5-idu" withCarte={false} inviteCarte placeholder="Adresse, IDU ou référence (BW0917)" onPick={allerA} />
       {q.isLoading && <Squelette lignes={4} />}
       {q.isError && <ErrorState className="py-6" message="Servitudes indisponibles." retry={() => q.refetch()} />}
       {d && (
@@ -87,11 +90,14 @@ export function O5Servitudes() {
               vit ICI, dans une MÉTHODE repliée. Les procédures PLU renvoient discrètement à l'outil
               PLU ; les 417 SUP décodées sont rappelées comme une réserve courte, pas une alarme. */}
           {d.non_couvert?.length > 0 && (
-            <details data-o5-methode className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2">
-              <summary className="cursor-pointer list-none text-[10.5px] text-txt-dim hover:text-txt">
-                Méthode &amp; limites — ce que la base ne voit pas <span className="text-txt-mut">(déplier)</span>
+            <details data-o5-methode open={methodeOuverte}
+              onToggle={(e) => setMethodeOuverte((e.target as HTMLDetailsElement).open)}
+              className="group rounded-lg border border-line-2 bg-surface-2">
+              <summary className="hover-fill flex cursor-pointer list-none items-center gap-1.5 rounded-lg px-3 py-2 text-[10.5px] text-txt-dim">
+                <Chevron open={methodeOuverte} />
+                <b className="text-txt-mut">Méthode et limites</b>
               </summary>
-              <div className="mt-1.5 space-y-0.5 border-t border-line pt-1.5">
+              <div className="space-y-0.5 border-t border-line px-3 pb-2 pt-1.5">
                 {d.non_couvert.map((n, i) => <p key={i} className="text-[10.5px] leading-snug text-txt-mut">· {n}</p>)}
                 <p className="mt-1 text-[9.5px] leading-snug text-txt-dim">Une servitude non publiée au Géoportail de l'urbanisme n'est pas vue — le certificat d'urbanisme reste la référence. Les procédures PLU en cours sont servies par l'outil « PLU ».</p>
               </div>
