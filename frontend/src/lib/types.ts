@@ -570,6 +570,10 @@ export interface Fiche {
   catnat?: { disponible: boolean; total: number; arretes: { peril: string | null; date_arrete: string | null; debut: string | null; fin: string | null }[]; source: string; millesime: string } | null
   pm_voisines?: { disponible: boolean; rayon_m: number; mois: number; acquereurs: { denomination: string | null; siren: string | null; date: string | null }[]; source: string; millesime: string } | null
   anciennete_detention?: { disponible: boolean; type?: string; denomination?: string | null; siren?: string | null; depuis_annee?: number; depuis_ans?: number; source: string; millesime: string | null } | null
+  // SOURCES-FIX-1 (A1/A2/A3) — 3 contraintes de zonage servies à la parcelle (mêmes couches que la carte).
+  enr_exclue_toiture?: { disponible: boolean; zones: { libelle: string | null; zonage: string | null; gestionnaire: string | null }[]; source: string; millesime: string } | null
+  mesures_compensatoires?: { disponible: boolean; mesures: { type_mesure: string | null; projet: string | null; classe: string | null; date_decision: string | null }[]; source: string; millesime: string } | null
+  scot?: { disponible: boolean; nom?: string | null; statut?: string | null; date_approbation?: string | null; source: string; millesime: string } | null
 }
 
 // FICHE-1 lot 1 — bloc « Le bien » (producteur bati.le_bien_block).

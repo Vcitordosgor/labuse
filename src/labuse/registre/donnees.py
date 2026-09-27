@@ -1779,6 +1779,29 @@ DONNEES: dict[str, Donnee] = {
     table="spatial_layers (kind=endiguement)",
     domaine=("dans", "hors"),
     domaine_source="systèmes d'endiguement DEAL Réunion (Lizmap)"),
+ # SOURCES-FIX-1 (A1/A2/A3) — trois contraintes qui touchent la parcelle et manquaient à la fiche/PDF.
+ # Mêmes couches que la carte (spatial_layers), intersection LIVE, même libellé — producteur fiche_blocs3.
+ "enr_exclue_parcelle": C("EnR au sol interdites (APER, sauf toiture)", "texte", "parcelle",
+    "la parcelle est-elle dans une zone où les EnR au SOL sont EXCLUES (loi APER) — le "
+    "photovoltaïque/ombrière au sol y est exclu, la toiture n'est pas concernée",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/api/fiche_blocs3.py:enr_exclue_toiture",
+    reservoirs=("enr_aper_ofb",), portee="live", type="texte",
+    table="spatial_layers (kind=enr_exclue_hors_toiture)"),
+ "mesures_compensatoires_parcelle": C("Mesure compensatoire (GéoMCE)", "texte", "parcelle",
+    "la parcelle recoupe-t-elle une mesure compensatoire environnementale (GéoMCE, MTE/OFB) — "
+    "obligation de compensation liée à un projet, à instruire",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/api/fiche_blocs3.py:mesures_compensatoires",
+    reservoirs=("geomce",), portee="live", type="texte",
+    table="spatial_layers (kind=mesures_compensatoires)"),
+ "scot_parcelle": C("SCOT (schéma de cohérence territoriale)", "texte", "parcelle",
+    "le SCOT qui couvre la parcelle (nom, statut, date d'approbation) — document supra-communal "
+    "opposable au PLU",
+    moteur=None, calcul="passe_plat",
+    fonction="src/labuse/api/fiche_blocs3.py:scot",
+    reservoirs=("scot_gpu",), portee="live", type="texte",
+    table="spatial_layers (kind=scot)"),
  "sis_couche": C("Secteurs d'information sur les sols (couche)", "couche", "commune",
     "périmètres SIS réglementaires (4 au 974 : Le Port, Saint-Benoît, Saint-Louis, "
     "Sainte-Marie)",
