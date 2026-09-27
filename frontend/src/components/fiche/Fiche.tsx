@@ -1530,6 +1530,23 @@ export function Fiche({ idu }: { idu: string }) {
                     ailleurs : App, Kanban, MapView, filtres…) — seul l'affichage fiche disparaît. */}
                 {/* FINITIONS-1 (P13) — l'encart « Demander à l'IA de traduire le PLU » est RETIRÉ. */}
                 {f.reglement_plu && <ReglementPluBlock rp={f.reglement_plu} />}
+                {/* KELFONCIER-FIX-1 (Lot A) — STATUT D'OUVERTURE de la zone AU, sous la zone. Une zone
+                    AU n'est constructible que si son règlement l'a ouverte ; « fermée »/« sous condition »
+                    en ambre, avec le motif cité du règlement. Rien si la parcelle n'est pas en AU marquée. */}
+                {f.au_ouverture && (
+                  <div data-au-ouverture className="mt-1">
+                    <FactRow label={`Zone AU${f.au_ouverture.zone_lib ? ` (${f.au_ouverture.zone_lib})` : ''}`}
+                      value={<span className={f.au_ouverture.bloquant ? 'text-amber' : undefined}>{f.au_ouverture.statut}</span>}
+                      tone={f.au_ouverture.bloquant ? 'warn' : undefined}
+                      src={f.au_ouverture.source} />
+                    {f.au_ouverture.motif && <FactNote>{f.au_ouverture.motif}</FactNote>}
+                    {/* KELFONCIER-FIX-1 (Lot A) — PONT depuis la ligne vers l'outil PLU « Procédure &
+                        changement », qui simule la bascule d'une zone AU en U (« Simuler l'ouverture »). */}
+                    <PorteOutil ico="⇢" data="simuler-ouverture" titre="Simuler l'ouverture de la zone AU"
+                      sous={f.au_ouverture.zone_lib ? `Ce que la bascule ${f.au_ouverture.zone_lib} → U changerait` : 'Ce que la bascule AU → U changerait'}
+                      onClick={() => { setPluVueF('changement'); setModule('plu') }} />
+                  </div>
+                )}
                 {/* M55-O phase 2.1c : le potentiel de transformation (SDP consommée/résiduelle/
                     surélévation) DÉMÉNAGE vers « Constructibilité » — il relève de la capacité, pas
                     du droit du sol pur. */}

@@ -4169,6 +4169,8 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
         "qualite_commune": _qualite_commune(idu[:5] if idu else None),     # M52 L4 — qualité commune DITE
         "icd": icd_block,
         "reglement_plu": _reglement_plu_block(db, idu, head["commune"]),
+        # KELFONCIER-FIX-1 (Lot A) — statut d'ouverture de la zone AU (§4 Urbanisme + cause §10).
+        "au_ouverture": _au_ouverture_block(db, idu),
         "plu_fraicheur": _plu_fraicheur(idu),   # M32 §2 : fraîcheur GPU-vs-mairie du zonage
         "radar_procedure": _radar_proc(idu, (score_v2 or {}).get("tier")),   # M41 — radar procédures PLU
         "historique_site": _historique_site(db, idu),      # M42 — « Sur cette parcelle » (permis + caduc)
@@ -5453,6 +5455,40 @@ def _voisinage_proche(db: Session, idu: str) -> dict | None:
             return marche_service.marche_dvf(db, idu, profil=marche_service.DVF_VOISINAGE_100M)
     except Exception:  # noqa: BLE001
         return _bloc_indisponible("voisinage_proche")   # M125 — panne ≠ absence
+
+
+# KELFONCIER-FIX-1 (Lot A) — libellé LISIBLE du statut d'ouverture d'une zone AU (parcel_au_statut).
+# « ouverte » n'est jamais marqué (les zones documentées-ouvertes ne sont pas dans la table) : la table
+# ne porte QUE les cas à risque. On rend donc le statut réel de chaque classe, en clair.
+_AU_STATUT_LIBELLE = {
+    "conditionnelle_operation": "constructible sous condition d'une opération d'aménagement d'ensemble",
+    "au_sous_plancher": "ouverture sous condition (phasage / plancher) — à confirmer",
+    "declasse_au_fermee": "fermée — une modification du PLU est requise pour ouvrir la zone",
+    "declasse_au_statut_inconnu": "statut d'ouverture non déterminé (phasage 2AU → 1AU à confirmer)",
+    "générique": "statut d'ouverture non déterminé (zone non calibrée)",
+}
+#: classes qui EMPÊCHENT de construire tant que la zone n'est pas ouverte (cause de SDP résiduelle 0).
+_AU_CLASSES_BLOQUANTES = frozenset({"declasse_au_fermee", "declasse_au_statut_inconnu", "générique"})
+
+
+def _au_ouverture_block(db: Session, idu: str) -> dict | None:
+    """KELFONCIER-FIX-1 (Lot A) — statut d'OUVERTURE de la zone AU de la parcelle (moteur
+    `parcel_au_statut`, déjà peuplé mais jamais exposé en clair). Renvoie {classe, statut, zone_lib,
+    motif (citation du règlement), bloquant}. None si la parcelle n'est pas en zone AU marquée."""
+    r = db.execute(text(
+        "SELECT classe, zone_lib, motif FROM parcel_au_statut WHERE idu = :i"),
+        {"i": idu}).mappings().first()
+    if not r:
+        return None
+    classe = r["classe"]
+    return {
+        "classe": classe,
+        "statut": _AU_STATUT_LIBELLE.get(classe, "statut d'ouverture à confirmer"),
+        "zone_lib": r["zone_lib"],
+        "motif": r["motif"],   # citation du règlement (au_ouverture.py), servie telle quelle
+        "bloquant": classe in _AU_CLASSES_BLOQUANTES,
+        "source": "LABUSE — moteur d'ouverture AU (règlement PLU calibré)",
+    }
 
 
 def _reglement_plu_block(db: Session, idu: str, commune: str) -> dict | None:

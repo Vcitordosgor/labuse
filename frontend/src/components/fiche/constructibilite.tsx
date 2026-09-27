@@ -938,6 +938,15 @@ export function ConstructibiliteSection({ f, idu }: { f: Fiche; idu: string }) {
           ? [`surface ${delaisse.surface_m2} m²`, `seuil délaissé ${delaisse.seuil_m2} m²`, 'bilan non servi']
           : [fo?.niveaux ?? 'gabarit', <>SDP <span style={{ color: 'var(--txt-dim)' }}>{fo?.surface_plancher_m2 ?? reglesSdp ?? '—'} m²</span></>, 'calcul tracé']} />}>
         <div className="flex flex-col gap-3">
+          {/* KELFONCIER-FIX-1 (Lot A) — CAUSE §10 : une zone AU FERMÉE (ou au statut non déterminé)
+              explique un potentiel nul — la parcelle n'est pas constructible tant que le PLU n'a pas
+              ouvert la zone. Le motif cité vient du règlement (moteur d'ouverture AU). */}
+          {f.au_ouverture?.bloquant && (
+            <div data-au-ouverture-cause>
+              <Vigilance title={`Zone AU${f.au_ouverture.zone_lib ? ` (${f.au_ouverture.zone_lib})` : ''} — ${f.au_ouverture.statut}.`} />
+              {f.au_ouverture.motif && <FactNote>{f.au_ouverture.motif}</FactNote>}
+            </div>
+          )}
           {/* RETOURS-20 Z5 — l'alerte « délaissé » (boîte bordée creuser) devient une Vigilance
               (filet ambre à gauche, sans boîte). Libellé inchangé. */}
           {delaisse && (

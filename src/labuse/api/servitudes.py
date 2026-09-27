@@ -328,6 +328,23 @@ def contraintes_parcelle(db: Session, idu: str) -> list[dict]:
     for al in aleas_parcelle(db, idu):
         items.append({"categorie": _CAT_RISQUE, "effet": al["libelle"],
                       "source": al["source"], "date": al["millesime"]})
+    # KELFONCIER-FIX-1 (Lot A) — une zone AU FERMÉE (ou au statut d'ouverture non déterminé) est une
+    # contrainte foncière DORMANTE : la parcelle n'est pas constructible tant que le PLU n'a pas ouvert la
+    # zone. Ajoutée au crible partagé → visible en mode « une parcelle », en mode « un lot » (N/M) ET en
+    # fiche §Pièges & risques. Source unique : parcel_au_statut (moteur d'ouverture AU).
+    if db.execute(text("SELECT to_regclass('parcel_au_statut')")).scalar() is not None:
+        au = db.execute(text("SELECT classe, zone_lib FROM parcel_au_statut WHERE idu = :i"),
+                        {"i": idu}).mappings().first()
+        if au and au["classe"] in ("declasse_au_fermee", "declasse_au_statut_inconnu", "générique"):
+            ferme = au["classe"] == "declasse_au_fermee"
+            zl = f" {au['zone_lib']}" if au["zone_lib"] else ""
+            items.append({
+                "categorie": "Zone à urbaniser (AU)",
+                "effet": (f"Zone AU{zl} FERMÉE — une modification du PLU est requise pour ouvrir la zone "
+                          "à l'urbanisation (non constructible en l'état)." if ferme else
+                          f"Zone AU{zl} au statut d'ouverture NON DÉTERMINÉ — constructibilité à confirmer "
+                          "auprès de la commune (phasage 2AU → 1AU)."),
+                "source": "LABUSE — moteur d'ouverture AU (règlement PLU calibré)", "date": None})
     items.sort(key=lambda x: x["categorie"])
     return items
 

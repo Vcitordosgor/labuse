@@ -341,6 +341,8 @@ export interface Fiche {
   icd?: IcdBlock | null
   // M9 lot 2 : lien règlement PLU par zone (article/page ou document + repli GPU).
   reglement_plu?: ReglementPlu | null
+  // KELFONCIER-FIX-1 (Lot A) — statut d'ouverture de la zone AU (§4 Urbanisme + cause §10).
+  au_ouverture?: { classe: string; statut: string; zone_lib: string | null; motif: string | null; bloquant: boolean; source: string } | null
   // M32 §2 : fraîcheur GPU-vs-mairie du zonage (horizon = date mairie ; statut = écart exposé).
   plu_fraicheur?: {
     idurba: string | null; horizon: string | null

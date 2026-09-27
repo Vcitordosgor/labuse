@@ -254,7 +254,7 @@ ROBINETS: dict[str, Robinet] = {
     # RETOUCHES-1 (lot A) — `secteur_lieu_dit` (BD NYME) servi sous l'adresse (« Secteur : … »).
     chiffres=("adresse_ban", "parcelle_geometrie", "exposition_versant", "secteur_lieu_dit",)),
  "fiche_parcelle_urbanisme": _r("fiche", "Règlement d'urbanisme (zones + extraits)", "fiche_parcelle",
-    "/parcels/{idu}", "json_puis_js", chiffres=("reglement_plu_bloc", "zone_plu_famille",)),
+    "/parcels/{idu}", "json_puis_js", chiffres=("reglement_plu_bloc", "zone_plu_famille", "au_ouverture_statut",)),
  "fiche_parcelle_dispositifs": _r("fiche", "Dispositifs et périmètres (QPV, ANRU, ZFANG, FRR)", "fiche_parcelle",
     "/parcels/{idu}", "json_puis_js", chiffres=("perimetres_dispositifs_liste",)),
  "fiche_parcelle_score": _r("fiche", "Score d'opportunité (tier)", "fiche_parcelle",
