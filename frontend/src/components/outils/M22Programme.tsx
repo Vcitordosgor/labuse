@@ -32,8 +32,10 @@ export function M22() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [picked])
 
+  // RETOURS-15 D1 — le panneau ne défile JAMAIS de côté : overflow-x masqué + largeur contrainte
+  // (min-w-0) ; le verdict et les chips qui débordaient vont désormais à la ligne.
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-0.5">
+    <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col gap-2 overflow-y-auto overflow-x-hidden pr-0.5">
       {/* Sous-titre : la promesse de l'outil, une parcelle à la fois. */}
       <p className="text-[11px] leading-relaxed text-txt-mut">
         Ce que le PLU laisse construire sur cette parcelle.
@@ -44,7 +46,7 @@ export function M22() {
       {picked ? (
         /* OUTILS-FIX-3 A1 — FaisabiliteTab rendu dans le MÊME contexte `.fiche-v6` que la fiche.
            `embedded` cantonne l'IA (explication du calcul) à la fiche parcelle. */
-        <div data-faisa-parcelle className="fiche-v6 pr-0.5">
+        <div data-faisa-parcelle className="fiche-v6 w-full min-w-0 overflow-x-hidden break-words pr-0.5">
           <FaisabiliteTab idu={picked} embedded />
         </div>
       ) : (
