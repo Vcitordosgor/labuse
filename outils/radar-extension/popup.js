@@ -35,4 +35,20 @@ optsLink.addEventListener("click", (e) => {
   chrome.runtime.openOptionsPage();
 });
 
+// RADAR-FIX-1 (3) — recette : forcer l'alarme à +2 min et vérifier que la capture part TOUTE SEULE.
+const testAlarmLink = document.getElementById("testalarm");
+if (testAlarmLink) {
+  testAlarmLink.addEventListener("click", async (e) => {
+    e.preventDefault();
+    try {
+      const res = await chrome.runtime.sendMessage({ type: "test-alarm" });
+      statusEl.textContent = res && res.ok
+        ? "Alarme programmée dans 2 min — laissez Chrome ouvert, la capture partira seule."
+        : "Erreur : " + (res && res.error ? res.error : "inconnue");
+    } catch (err) {
+      statusEl.textContent = "Erreur : " + String(err);
+    }
+  });
+}
+
 refreshStatus();

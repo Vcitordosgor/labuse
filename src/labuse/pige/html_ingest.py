@@ -87,6 +87,170 @@ def _maj_prix(db: Session, bien_id: int, ancien, nouveau) -> None:
                     detail=f"{ancien} € → {nouveau} €", dedup=f"pige:hausse:{bien_id}:{nouveau}")
 
 
+# ── RADAR-FIX-1 (1) — « MÊME BIEN, NOUVEAU NUMÉRO » ────────────────────────────────────────────────
+# Deux annonces sont le MÊME bien physique — donc le nouveau numéro (list_id) rejoint le bien existant au
+# lieu de créer un doublon — si :
+#   A. même commune ∧ même type ∧ surface pertinente à ±2 % ∧ prix à ±3 % ; OU
+#   B. même position de QUARTIER (source 'city' + même district) ∧ même surface EXACTE (prix libre : une
+#      re-publication à prix changé garde son identité).
+# La règle est écrite UNE fois (`_est_meme_bien`) et servie à l'ingestion ET au rejeu sur base.
+TOL_PRIX_FUSION = 0.03        # ±3 % sur le prix (règle A)
+TOL_SURFACE_FUSION = 0.02     # ±2 % sur la surface pertinente (règle A)
+
+
+def _surface_pertinente(type_bien, surface_hab, surface_terrain):
+    """La surface qui identifie le bien : terrain pour un terrain, habitable sinon (à défaut, la seule
+    renseignée) — même choix que `veille._surface_pertinente`."""
+    if type_bien == "terrain":
+        return surface_terrain
+    return surface_hab if surface_hab is not None else surface_terrain
+
+
+def _f(x):
+    """Coercition sûre en float (les surfaces sortent en Decimal, le prix en int)."""
+    return None if x is None else float(x)
+
+
+def _est_meme_bien(cand: dict, *, type_bien, prix, surface_hab, surface_terrain, source_position,
+                   district) -> bool:
+    """`cand` (bien existant : type_bien, prix, surface_hab, surface_terrain, source_position, district)
+    est-il le MÊME bien physique que l'annonce décrite ? La commune est déjà garantie identique par
+    l'appelant. Il faut TOUJOURS le même type et une surface pertinente des DEUX côtés.
+
+    La règle du mandat (surface ±2 %, prix ±3 % ; ou quartier + surface exacte) est HARDENÉE contre le
+    sur-dédoublonnage des petits copropriétés — deux F2 de ~53 m² à ~150 k€ dans des quartiers différents
+    ne sont PAS le même bien (mesuré : 3 faux positifs sur la base). Donc :
+      · valeurs EXACTES (prix ET surface) → même bien, où qu'il soit (signal le plus fort) ;
+      · sinon, la TOLÉRANCE ±2 %/±3 % n'est accordée QUE si le QUARTIER corrobore (même `district`) ;
+      · règle B du mandat : même quartier (position 'city' + même district) ∧ surface EXACTE (prix libre).
+    Une position 'city' de leboncoin est fortement bruitée (points d'un même bien à plusieurs km) — on ne
+    s'appuie donc PAS sur la distance lat/lng, mais sur le libellé de quartier."""
+    if type_bien is None or cand.get("type_bien") != type_bien:
+        return False
+    surf = _f(_surface_pertinente(type_bien, surface_hab, surface_terrain))
+    csurf = _f(_surface_pertinente(cand.get("type_bien"), cand.get("surface_hab"), cand.get("surface_terrain")))
+    if surf is None or csurf is None:
+        return False                                   # sans surface des deux côtés, on n'identifie rien
+    prix, cprix = _f(prix), _f(cand.get("prix"))
+    dist = (district or "").strip()
+    cdist = (cand.get("district") or "").strip()
+    meme_quartier = bool(dist) and dist == cdist
+    exact_surf = surf == csurf
+    exact_prix = prix is not None and cprix is not None and prix == cprix
+    # valeurs exactes → même bien (position non requise)
+    if exact_surf and exact_prix:
+        return True
+    # tolérance ±2 %/±3 % — SEULEMENT si le quartier corrobore (garde anti-faux-positif)
+    if (meme_quartier and prix is not None and cprix and csurf
+            and abs(csurf - surf) <= TOL_SURFACE_FUSION * csurf
+            and abs(cprix - prix) <= TOL_PRIX_FUSION * cprix):
+        return True
+    # règle B — même quartier (position 'city') ∧ surface EXACTE, le prix a pu changer
+    if source_position == "city" and cand.get("source_position") == "city" and meme_quartier and exact_surf:
+        return True
+    return False
+
+
+def bien_meme_physique(db: Session, commune: str, rec: dict) -> int | None:
+    """Cherche dans la commune un bien existant qui EST le même bien physique que `rec` (cf.
+    `_est_meme_bien`). Retourne le bien le plus ANCIEN (date de 1ʳᵉ publication), ou None. Corpus Radar
+    petit → filtrage en Python, une seule implémentation de la règle."""
+    cands = db.execute(text(
+        "SELECT b.bien_id, b.type_bien, b.source_position, b.district, f.prix, f.surface_hab, "
+        "       f.surface_terrain "
+        "FROM pige_biens b JOIN pige_faits f ON f.bien_id = b.bien_id "
+        "WHERE b.commune = :c "
+        "ORDER BY b.date_premiere_saisie ASC NULLS LAST, b.bien_id ASC"), {"c": commune}).mappings().all()
+    for cand in cands:
+        if _est_meme_bien(dict(cand), type_bien=rec.get("type"), prix=rec.get("prix"),
+                          surface_hab=rec.get("surface_hab"), surface_terrain=rec.get("surface_terrain"),
+                          source_position=rec.get("source_position"), district=rec.get("district")):
+            return cand["bien_id"]
+    return None
+
+
+def _absorber(db: Session, survivant: int, absorbe: int) -> None:
+    """Fusionne le bien `absorbe` dans `survivant` (le plus ancien) : ses NUMÉROS, prix, captures, clics
+    et intérêts d'agence le rejoignent ; les trous de faits sont comblés ; si l'absorbé a été VU plus
+    récemment, sa face vivante (statut, dates de re-vue, position, rattachement non-humain) et son prix
+    courant l'emportent (prix précédent conservé dans l'historique). Le survivant garde toujours sa date
+    de 1ʳᵉ publication. Puis l'absorbé est supprimé (ses faits partent en cascade)."""
+    for tbl in ("pige_annonces", "pige_prix_historique", "pige_captures", "pige_clics",
+                "pige_interets_agence"):
+        db.execute(text(f"UPDATE {tbl} SET bien_id = :s WHERE bien_id = :a"), {"s": survivant, "a": absorbe})
+    surv = db.execute(text(
+        "SELECT b.statut, b.last_seen_at, b.rattachement_humain, f.prix "
+        "FROM pige_biens b JOIN pige_faits f ON f.bien_id = b.bien_id WHERE b.bien_id = :b"),
+        {"b": survivant}).mappings().first()
+    lose = db.execute(text(
+        "SELECT b.statut, b.last_seen_at, b.date_derniere_confirmation, b.source_position, b.lat, b.lng, "
+        "       b.zipcode, b.district, b.idu, b.rattachement_niveau, b.rattachement_confiance, "
+        "       b.rattachement_etat, b.rattachement_pistes, b.rattachement_criteres, f.prix "
+        "FROM pige_biens b JOIN pige_faits f ON f.bien_id = b.bien_id WHERE b.bien_id = :b"),
+        {"b": absorbe}).mappings().first()
+    # combler les trous de faits du survivant avec les valeurs de l'absorbé (jamais écraser une valeur).
+    champs = list(_FAITS_MAP)
+    db.execute(text(
+        f"UPDATE pige_faits s SET {', '.join(f'{c} = COALESCE(s.{c}, l.{c})' for c in champs)} "
+        f"FROM pige_faits l WHERE s.bien_id = :s AND l.bien_id = :a"), {"s": survivant, "a": absorbe})
+    # l'absorbé a-t-il été vu plus récemment ? Alors sa face vivante fait foi (le survivant garde sa date
+    # de 1ʳᵉ publication, mais pas un statut/prix périmé).
+    def _seen(r):
+        return r.get("last_seen_at") or r.get("date_derniere_confirmation")
+    if lose and surv and _seen(lose) is not None and (_seen(surv) is None or _seen(lose) > _seen(surv)):
+        if (surv.get("prix") is not None and lose.get("prix") is not None
+                and surv["prix"] != lose["prix"]):
+            _maj_prix(db, survivant, surv["prix"], lose["prix"])  # prix précédent conservé (historique)
+        db.execute(text(
+            "UPDATE pige_biens SET statut = :st, last_seen_at = :ls, "
+            " date_derniere_confirmation = COALESCE(:ddc, date_derniere_confirmation), "
+            " source_position = COALESCE(:sp, source_position), lat = COALESCE(:lat, lat), "
+            " lng = COALESCE(:lng, lng), zipcode = COALESCE(:zip, zipcode), "
+            " district = COALESCE(:dist, district) WHERE bien_id = :b"),
+            {"st": lose["statut"], "ls": lose["last_seen_at"], "ddc": lose["date_derniere_confirmation"],
+             "sp": lose["source_position"], "lat": lose["lat"], "lng": lose["lng"],
+             "zip": lose["zipcode"], "dist": lose["district"], "b": survivant})
+        if not surv.get("rattachement_humain"):
+            db.execute(text(
+                "UPDATE pige_biens SET idu = :idu, rattachement_niveau = :niv, "
+                " rattachement_confiance = :conf, rattachement_etat = :etat, "
+                " rattachement_pistes = CAST(:pistes AS jsonb), "
+                " rattachement_criteres = CAST(:crit AS jsonb) WHERE bien_id = :b"),
+                {"idu": lose["idu"], "niv": lose["rattachement_niveau"], "conf": lose["rattachement_confiance"],
+                 "etat": lose["rattachement_etat"],
+                 "pistes": json.dumps(lose["rattachement_pistes"] or []),
+                 "crit": json.dumps(lose["rattachement_criteres"] or []), "b": survivant})
+    db.execute(text("DELETE FROM pige_biens WHERE bien_id = :a"), {"a": absorbe})
+
+
+def fusionner_doublons_existants(db: Session, *, dry_run: bool = False) -> dict:
+    """Rejoue la règle « même bien, nouveau numéro » sur TOUTE la base : les biens qui sont le même bien
+    physique sont fusionnés (le plus ancien survit). Retourne {groupes, biens_fusionnes, paires}. En
+    dry-run : calcule et rend le plan, n'écrit rien."""
+    biens = db.execute(text(
+        "SELECT b.bien_id, b.commune, b.type_bien, b.source_position, b.district, "
+        "       f.prix, f.surface_hab, f.surface_terrain "
+        "FROM pige_biens b JOIN pige_faits f ON f.bien_id = b.bien_id "
+        "ORDER BY b.date_premiere_saisie ASC NULLS LAST, b.bien_id ASC")).mappings().all()
+    survivants: list[dict] = []
+    paires: list[tuple[int, int]] = []
+    for b in biens:
+        bd = dict(b)
+        match = next((s for s in survivants if s["commune"] == bd["commune"] and _est_meme_bien(
+            s, type_bien=bd["type_bien"], prix=bd["prix"], surface_hab=bd["surface_hab"],
+            surface_terrain=bd["surface_terrain"], source_position=bd["source_position"],
+            district=bd["district"])), None)
+        if match:
+            paires.append((match["bien_id"], bd["bien_id"]))
+        else:
+            survivants.append(bd)
+    if not dry_run:
+        for survivant, absorbe in paires:
+            _absorber(db, survivant, absorbe)
+        db.commit()
+    return {"groupes": len({s for s, _ in paires}), "biens_fusionnes": len(paires), "paires": paires}
+
+
 def _ecrire_faits(db: Session, bien_id: int, rec: dict, *, insert: bool, combler: bool = False) -> None:
     # RADAR-RECETTE-1 D1a/D1b — `a_verifier` (champs IA « à vérifier », concept du chemin VISION) reste
     # NULL pour le chemin HTML : la donnée est structurée, aucun champ n'est incertain, et un champ
@@ -168,8 +332,36 @@ def _rattacher(db: Session, rec: dict, motifs: list[str]) -> dict:
     return rattachement_html.rattacher(db, rec)
 
 
+def _confirmer_bien_existant(db: Session, bien_id: int, rec: dict, commune: str, list_id) -> None:
+    """Re-vue PLEINE d'un bien existant (même list_id qu'avant, OU nouveau numéro d'un bien déjà connu) :
+    cohérence, baisse/hausse de prix (prix précédent conservé), faits, face bien, confirmation. Le bien
+    GARDE son statut (jamais retiree/vendue → active) et sa date de 1ʳᵉ publication (jamais réécrite)."""
+    motifs = coherence.evaluer(rec, db)
+    ratt = _rattacher(db, rec, motifs)
+    ancien = db.execute(text("SELECT prix FROM pige_faits WHERE bien_id = :b"), {"b": bien_id}).scalar()
+    _maj_prix(db, bien_id, ancien, rec.get("prix"))
+    # dates portail en COALESCE : un dépôt DÉGRADÉ (valeurs NULL) ne nulle jamais des dates riches acquises.
+    db.execute(text(
+        "UPDATE pige_annonces SET index_date = COALESCE(CAST(:idx AS timestamptz), index_date), "
+        " expiration_date = COALESCE(CAST(:exp AS timestamptz), expiration_date), "
+        " statut_portail = COALESCE(:sp, statut_portail), date_saisie = now() WHERE list_id = :l"),
+        {"idx": rec.get("index_date"), "exp": rec.get("expiration_date"),
+         "sp": rec.get("statut_portail"), "l": list_id})
+    _ecrire_faits(db, bien_id, rec, insert=False)
+    _ecrire_bien(db, bien_id, rec, ratt, motifs)
+    # republication = confirmation « toujours en vente » : repousse a_reverifier, statut redevient active
+    # (jamais retiree/vendue — celles-ci ne se déduisent pas d'une republication).
+    db.execute(text(
+        "UPDATE pige_biens SET date_derniere_confirmation = now(), last_seen_at = now(), "
+        " statut = CASE WHEN statut IN ('a_reverifier','en_vente_longue') THEN 'active' ELSE statut END "
+        "WHERE bien_id = :b AND statut NOT IN ('retiree','vendue','retiree_sans_vente')"), {"b": bien_id})
+    _badge_baisse(db, bien_id, rec, commune)
+
+
 def _ingester_annonce(db: Session, rec: dict) -> str:
-    """Upsert d'UNE annonce par list_id. Retourne 'nouvelle' | 'maj' | 'hors_perimetre'."""
+    """Upsert d'UNE annonce. Retourne 'nouvelle' | 'maj' | 'fusion' | 'hors_perimetre'. La dédup se fait
+    d'abord par list_id (idempotence) ; à défaut, par bien PHYSIQUE (RADAR-FIX-1 : même bien, nouveau
+    numéro) — sinon seulement, création."""
     resolu = resoudre_commune(rec.get("commune"))
     if not resolu:
         return "hors_perimetre"                     # hors des 24 communes → rien en base
@@ -184,6 +376,23 @@ def _ingester_annonce(db: Session, rec: dict) -> str:
 
     if existing is None:
         motifs = coherence.evaluer(rec, db)
+        # RADAR-FIX-1 (1) — MÊME BIEN, NOUVEAU NUMÉRO : avant de créer, chercher un bien PHYSIQUE identique
+        # déjà connu (cf. bien_meme_physique). On ne fusionne QUE des annonces RICHES et COHÉRENTES : une
+        # variante dégradée (position au quartier non fiable) ou une annonce à qualifier reste isolée.
+        if not degrade and not motifs:
+            meme = bien_meme_physique(db, commune, rec)
+            if meme is not None:
+                db.execute(text(
+                    "INSERT INTO pige_annonces (bien_id, portail, url_sortante, list_id, "
+                    " first_publication_date, index_date, expiration_date, statut_portail) "
+                    "VALUES (:b, :p, :u, :l, CAST(:fpd AS timestamptz), CAST(:idx AS timestamptz), "
+                    " CAST(:exp AS timestamptz), :sp)"),
+                    {"b": meme, "p": portails.slug_pour_url(rec.get("url") or ""),
+                     "u": rec.get("url"), "l": list_id, "fpd": rec.get("first_publication_date"),
+                     "idx": rec.get("index_date"), "exp": rec.get("expiration_date"),
+                     "sp": rec.get("statut_portail")})
+                _confirmer_bien_existant(db, meme, rec, commune, list_id)
+                return "fusion"
         ratt = _rattacher(db, rec, motifs)
         bien_id = db.execute(text(
             "INSERT INTO pige_biens (commune, statut, date_publication, last_seen_at) VALUES (:c, 'active', "
@@ -231,26 +440,7 @@ def _ingester_annonce(db: Session, rec: dict) -> str:
     # riche-sur-tout, ou dégradé-sur-dégradé : mise à jour pleine (Lot 5 : republication = CONFIRMATION).
     # ENRICHISSEMENT B→A : un dépôt RICHE sur un bien dégradé remplit tout et le fait passer riche
     # (`_ecrire_faits` pose provenance=json_riche), et rejoue la cascade (il a désormais une position).
-    motifs = coherence.evaluer(rec, db)
-    ratt = _rattacher(db, rec, motifs)
-    ancien = db.execute(text("SELECT prix FROM pige_faits WHERE bien_id = :b"), {"b": bien_id}).scalar()
-    _maj_prix(db, bien_id, ancien, rec.get("prix"))
-    # dates portail en COALESCE : un dépôt DÉGRADÉ (valeurs NULL) ne nulle jamais des dates riches acquises.
-    db.execute(text(
-        "UPDATE pige_annonces SET index_date = COALESCE(CAST(:idx AS timestamptz), index_date), "
-        " expiration_date = COALESCE(CAST(:exp AS timestamptz), expiration_date), "
-        " statut_portail = COALESCE(:sp, statut_portail), date_saisie = now() WHERE list_id = :l"),
-        {"idx": rec.get("index_date"), "exp": rec.get("expiration_date"),
-         "sp": rec.get("statut_portail"), "l": list_id})
-    _ecrire_faits(db, bien_id, rec, insert=False)
-    _ecrire_bien(db, bien_id, rec, ratt, motifs)
-    # republication = confirmation « toujours en vente » : repousse a_reverifier, statut redevient active
-    # (jamais retiree/vendue — celles-ci ne se déduisent pas d'une republication).
-    db.execute(text(
-        "UPDATE pige_biens SET date_derniere_confirmation = now(), last_seen_at = now(), "
-        " statut = CASE WHEN statut IN ('a_reverifier','en_vente_longue') THEN 'active' ELSE statut END "
-        "WHERE bien_id = :b AND statut NOT IN ('retiree','vendue','retiree_sans_vente')"), {"b": bien_id})
-    _badge_baisse(db, bien_id, rec, commune)
+    _confirmer_bien_existant(db, bien_id, rec, commune, list_id)
     return "maj"
 
 
@@ -292,18 +482,25 @@ def ingester(db: Session, html: str, nom_fichier: str | None = None, *, archiver
     degrade_lbl = "dégradée (variante B)" if provenance == html_next.PROV_DEGRADE else \
         ("page d'annonce" if mode == "annonce" else "riche (variante A)")
 
+    # RADAR-FIX-1 (1) — une FUSION (nouveau numéro d'un bien déjà connu) n'est PAS un bien neuf : elle
+    # compte comme une MAJ pour le dépôt (nb_nouvelles ne compte que les vrais biens neufs), et est
+    # exposée à part pour l'écran d'ingestion.
+    nb_fusion = compte.get("fusion", 0)
     depot_id = db.execute(text(
         "INSERT INTO pige_depots (nom_fichier, hash, chemin_archive, nb_annonces, nb_nouvelles, "
         " nb_maj, nb_a_qualifier) VALUES (:nf, :h, :c, :na, :nn, :nm, :aq) RETURNING id"),
         {"nf": nom_fichier, "h": h, "c": chemin, "na": len(records),
-         "nn": compte["nouvelle"], "nm": compte["maj"], "aq": nb_aq}).scalar()
+         "nn": compte["nouvelle"], "nm": compte["maj"] + nb_fusion, "aq": nb_aq}).scalar()
     enregistrer_fraicheur(db)
     journaliser(db, EV_DEPOT_HTML, f"Dépôt Radar HTML — {len(records)} annonces [{degrade_lbl}]",
-                detail=f"{compte['nouvelle']} nouvelles, {compte['maj']} MAJ, {nb_aq} à qualifier"
+                detail=f"{compte['nouvelle']} nouvelles, {compte['maj']} MAJ"
+                       + (f", {nb_fusion} numéro(s) rattaché(s) à un bien connu" if nb_fusion else "")
+                       + f", {nb_aq} à qualifier"
                        + (f", {compte['hors_perimetre']} hors périmètre" if compte["hors_perimetre"] else ""),
                 dedup=f"pige:depot:{h[:16]}")
     db.commit()
     return {"depot_id": depot_id, "nb_annonces": len(records),
-            "nb_nouvelles": compte["nouvelle"], "nb_maj": compte["maj"],
+            "nb_nouvelles": compte["nouvelle"], "nb_maj": compte["maj"] + nb_fusion,
+            "nb_fusion": nb_fusion,
             "nb_hors_perimetre": compte["hors_perimetre"], "nb_a_qualifier": nb_aq,
             "etats": etats, "archive": chemin, "provenance": provenance, "mode": mode}

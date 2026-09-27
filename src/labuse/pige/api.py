@@ -411,6 +411,12 @@ def radar_check(request: Request) -> dict:
             "nom_fichier": dep["nom_fichier"], "nb_annonces": dep["nb_annonces"],
             "nb_nouvelles": dep["nb_nouvelles"], "nb_maj": dep["nb_maj"], "nb_a_qualifier": dep["nb_a_qualifier"],
         }
+        # RADAR-FIX-1 (3) — DERNIÈRE CAPTURE AUTOMATIQUE (l'extension) : `pige_passes` n'est alimentée QUE
+        # par /admin/radar/capture (jamais un dépôt manuel), donc c'est bien la trace de l'AUTOMATE. On
+        # agrège la dernière soirée (un `captured_at`) : pages + annonces (nouvelles + MAJ).
+        cap = c.execute(text(
+            "SELECT captured_at, sum(n_pages) AS pages, sum(n_nouvelles) AS nouv, sum(n_maj) AS maj "
+            "FROM pige_passes GROUP BY captured_at ORDER BY captured_at DESC LIMIT 1")).mappings().first()
         # DASHBOARD-2 (Lot 4) — « Le flux » : rattachées / total biens / paires DVF / copros non servies.
         # rattachées & paires lisent la MÊME source que Pilotage/Circuit (pige_biens) — compteur unique.
         biens = q("SELECT count(*) FROM pige_biens")
@@ -423,6 +429,15 @@ def radar_check(request: Request) -> dict:
         }
     from datetime import datetime, timedelta, timezone
     vide_48h = derniere is None or derniere < datetime.now(tz=timezone.utc) - timedelta(hours=48)
+    # RADAR-FIX-1 (3) — « aucune capture automatique depuis 26 h » → la tâche « Déposer Radar » (le Mac de
+    # Vic était éteint, ou l'extension bloquée). 26 h = un jour + la marge du jitter du soir (0-3 h).
+    # « nombre d'annonces » = les NOUVELLES de la soirée (les MAJ d'une relecture re-voient les mêmes
+    # biens page après page → les sommer gonflerait le chiffre) ; le nombre de pages dit l'ampleur.
+    capture_auto = None if not cap else {
+        "captured_at": cap["captured_at"].isoformat() if cap["captured_at"] else None,
+        "pages": int(cap["pages"] or 0), "nouvelles": int(cap["nouv"] or 0),
+    }
+    capture_auto_en_retard = cap is None or cap["captured_at"] < datetime.now(tz=timezone.utc) - timedelta(hours=26)
     # RV2-V1 — état du répertoire de captures (écriture) exposé à l'admin : le défaut prod se voit
     # AVANT le premier dépôt, avec le chemin fautif nommé.
     from .tables import captures_dir_writable
@@ -444,6 +459,9 @@ def radar_check(request: Request) -> dict:
         # DASHBOARD-2 (Lot 4) — bilan du dernier dépôt + « Le flux ».
         "dernier_depot": dernier_depot,
         "flux": flux,
+        # RADAR-FIX-1 (3) — dernière capture AUTOMATIQUE (extension) + drapeau « À faire : Déposer Radar ».
+        "capture_auto": capture_auto,
+        "capture_auto_en_retard": bool(capture_auto_en_retard),
     }
 
 # ══════════════ RADAR P3 · C1 — endpoints CLIENT (lecture : faits + lien, jamais le contenu) ══════════════

@@ -464,8 +464,25 @@ async function scheduleDaily() {
   await chrome.alarms.create(ALARM_NAME, { when: target.getTime() });
 }
 
-chrome.runtime.onInstalled.addListener(() => { scheduleDaily(); });
-chrome.runtime.onStartup.addListener(() => { scheduleDaily(); });
+// Auto-réarme (RADAR-FIX-1 · 3). En MV3 le service worker est ÉPHÉMÈRE : Chrome le décharge après
+// ~30 s d'inactivité et le réveille pour délivrer un événement (alarme, message du popup…). Les
+// `chrome.alarms` SURVIVENT à ce déchargement ET à la fermeture du popup (elles vivent dans le
+// navigateur, pas dans le worker ni dans la page popup). Mais si l'alarme a été PERDUE (crash, mise à
+// jour, profil réinitialisé), plus rien ne la recrée entre deux démarrages de Chrome. Donc à CHAQUE
+// réveil du worker on vérifie qu'elle existe et on la recrée SI ELLE MANQUE (jamais sinon : on ne
+// repousse pas l'heure du soir à chaque réveil).
+async function ensureAlarm() {
+  try {
+    const a = await chrome.alarms.get(ALARM_NAME);
+    if (!a) await scheduleDaily();
+  } catch (_) { /* API alarms indisponible : rien à faire */ }
+}
+
+// Au CHARGEMENT du service worker (démarrage de Chrome, réveil, ou reprise après déchargement).
+ensureAlarm();
+
+chrome.runtime.onInstalled.addListener(() => { scheduleDaily(); });   // installation / mise à jour
+chrome.runtime.onStartup.addListener(() => { scheduleDaily(); });     // démarrage de Chrome (nouveau jitter du jour)
 
 chrome.alarms.onAlarm.addListener(async (alarm) => {
   if (alarm.name !== ALARM_NAME) return;
@@ -485,6 +502,15 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg && msg.type === "reschedule") {
     scheduleDaily().then(() => sendResponse({ ok: true }));
     return true;
+  }
+  // RADAR-FIX-1 (3) — RECETTE : forcer l'alarme à +2 min pour VOIR la capture partir par le chemin
+  // ALARME (pas seulement « Capturer maintenant »). Prouve que l'alarme déclenche bien runEvening.
+  if (msg && msg.type === "test-alarm") {
+    const when = Date.now() + 2 * 60 * 1000;
+    Promise.resolve(chrome.alarms.create(ALARM_NAME, { when }))
+      .then(() => sendResponse({ ok: true, when: new Date(when).toISOString() }))
+      .catch((e) => sendResponse({ ok: false, error: String(e) }));
+    return true; // réponse asynchrone
   }
   return false;
 });
