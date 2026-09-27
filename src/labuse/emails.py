@@ -62,7 +62,9 @@ def digest_notifications(evenements: list[dict], lien_desabo: str, *,
         detail = (e.get("detail") or "").strip()
         lignes.append(f"• {e.get('titre', '')}" + (f"\n  {detail}" if detail else "") + (f"\n  {lien}" if lien else ""))
     if n:
-        bloc = (f"Voici le point sur vos parcelles suivies, vos secteurs et vos critères pour {periode} "
+        # VEILLE-FIX-2 — « secteurs » RETIRÉ du texte (les secteurs sont archivés depuis VEILLE-2 Lot 4) :
+        # le digest ne porte que vos parcelles suivies et vos critères (Radar).
+        bloc = (f"Voici le point sur vos parcelles suivies et vos critères pour {periode} "
                 f"({n} événement{'s' if n > 1 else ''}) :\n\n" + "\n\n".join(lignes))
         if marche_txt:
             bloc += "\n\n— — —\n" + marche_txt
@@ -77,8 +79,7 @@ def digest_notifications(evenements: list[dict], lien_desabo: str, *,
         + bloc
         + (("\n\n" + secteurs_ligne) if secteurs_ligne else "")   # M85 P3 — « depuis hier sur vos secteurs »
         + "\n\n— — —\n"
-        "Vous recevez cet e-mail parce que vous suivez des parcelles, surveillez des secteurs ou des critères, "
-        "ou êtes abonné au résumé de marché LABUSE.\n"
+        "Vous recevez cet e-mail parce que vous suivez des parcelles ou surveillez des critères Radar dans LABUSE.\n"
         + prefs_ligne
         + "Pour ne plus rien recevoir par e-mail :\n"
         f"{lien_desabo}"
@@ -127,7 +128,8 @@ def mise_en_vente_email(idu_court: str, commune: str, type_label: str, prix: str
     sujet = f"LABUSE — votre parcelle {idu_court} est mise en vente"
     corps = (f"Une annonce vient de paraître sur une parcelle que vous suivez : {idu_court} "
              f"— {type_label} à {commune}, {prix}.")
-    txt, _ = annonce_email(f"votre parcelle {idu_court} est mise en vente", corps,
+    # VEILLE-FIX-2 (Lot E) — annonce_email retourne (sujet, corps) : on garde le CORPS, pas le sujet.
+    _, txt = annonce_email(f"votre parcelle {idu_court} est mise en vente", corps,
                            lien=lien, lien_desabo=lien_desabo, lien_prefs=lien_prefs)
     html = annonce_html(f"votre parcelle {idu_court} est mise en vente", corps,
                         lien=lien, lien_desabo=lien_desabo, lien_prefs=lien_prefs)

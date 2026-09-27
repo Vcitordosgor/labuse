@@ -1107,8 +1107,11 @@ def _digest_data(db: Session, cid: int | None = None, jours: int = 7) -> dict:
         WHERE e.ts >= now() - make_interval(days => :jours)
           AND e.envoi_statut IS DISTINCT FROM 'rattrapage'   -- M137-M : le rattrapage vit à la cloche, jamais au digest/mail
           AND e.compte_id IS NOT DISTINCT FROM :cid AND e.kind = ANY(:digest)
-        ORDER BY (e.source = 'Mutation') DESC, (e.kind = 'parcelle_suivie') DESC,
-                 e.ts DESC NULLS LAST LIMIT 20"""),
+        -- VEILLE-FIX-2 (Lot E) — ORDRE de la grille : parcelles suivies (la MUTATION d'abord), puis
+        -- Radar dans l'ordre nouvelles → baisses → retraits. Un ordre stable et lisible dans le mail.
+        ORDER BY CASE e.kind WHEN 'parcelle_suivie' THEN 0 WHEN 'radar' THEN 1
+                             WHEN 'radar_baisse' THEN 2 WHEN 'radar_retrait' THEN 3 ELSE 4 END,
+                 (e.source = 'Mutation') DESC, e.ts DESC NULLS LAST LIMIT 20"""),
         {"run": runs.cascade(), "cid": cid, "digest": list(_DIGEST_KINDS), "jours": jours}).mappings().all()  # C1 cascade
     # MARCHÉ : RÉSUMÉ BORNÉ (jamais la liste). « N au total, dont M dans vos communes » ; si le
     # compte n'a pas de parcelles suivies (communes vides) → total seul (`dans_vos_communes=None`).
