@@ -1833,6 +1833,32 @@ def faisabilite_recalcul(idu: str, body: RecalculIn, db: Session = Depends(get_d
     }, "overrides_retenus": retenus}
 
 
+class ScenarioIn(BaseModel):
+    # FAISABILITE-3 (Vic 27/09) — le panneau pilote TOUT par ce corps : scénario choisi, hypothèses
+    # surchargées (« et si… », clés blanches HYP_EDITABLES seulement) et, optionnellement, le projet
+    # à tester (nombre de logements + surface de plancher par logement). Aucun calcul dans le front :
+    # verdict, « ce qui limite », 8 étapes, section PLU et résultat du test viennent tous du moteur.
+    scenario: str = Field("terrain_libere", pattern="^(terrain_libere|bati_garde)$")
+    overrides: dict[str, float] = Field(default_factory=dict)
+    test: dict | None = None
+
+
+@router.post("/faisabilite/{idu}/scenario")
+def faisabilite_scenario_route(idu: str, body: ScenarioIn, db: Session = Depends(get_db)) -> dict:
+    """FAISABILITE-3 — UN SEUL appel sert le panneau (maquette validée). UN SEUL moteur :
+    `faisabilite_scenario` (parcel_faisabilite + compute_residuel, aucune reimplémentation). None
+    si la parcelle est hors PLU → `{scenario: None}` (le front dit « capacité non calculable »)."""
+    _check_idu(idu)
+    from ..faisabilite.scenarios import faisabilite_scenario
+
+    row = db.execute(text("SELECT id FROM parcels WHERE idu = :i"), {"i": idu}).mappings().first()
+    if not row:
+        raise HTTPException(404, "Parcelle inconnue")
+    pan = faisabilite_scenario(db, row["id"], body.scenario, hyp_overrides=body.overrides,
+                               test=body.test)
+    return {"idu": idu, "scenario": pan}
+
+
 class ChargeIn(BaseModel):
     # hypothèses métier SAISIES (jamais estimées par LABUSE) — défauts « à ajuster »,
     # DÉRIVÉS de la source unique (mandat hypothèses bilan : plus de 2500 gravé ici).

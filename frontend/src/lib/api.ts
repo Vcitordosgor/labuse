@@ -1945,6 +1945,20 @@ export const postFaisabiliteRecalcul = (idu: string, overrides: Record<string, n
   j<Record<string, any>>(`/modules/faisabilite/${idu}/recalcul`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ overrides }),
   })
+// FAISABILITE-3 (Vic 27/09) — UN SEUL appel sert le panneau (maquette validée) : scénario choisi
+// (terrain_libere/bati_garde), hypothèses surchargées et projet à tester y entrent, verdict/étapes/
+// section PLU/test en sortent. Aucun calcul dans le front — le moteur (parcel_faisabilite +
+// compute_residuel) fait tout. `scenario` = null quand la parcelle est hors PLU.
+export interface FaisaTest { n_logements?: number | null; surface_par_logement?: number | null }
+export const postFaisabiliteScenario = (
+  idu: string,
+  body: { scenario: 'terrain_libere' | 'bati_garde'; overrides?: Record<string, number>; test?: FaisaTest | null },
+) =>
+  j<{ idu: string; scenario: Record<string, any> | null }>(`/modules/faisabilite/${idu}/scenario`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ scenario: body.scenario, overrides: body.overrides ?? {}, test: body.test ?? null }),
+  })
+
 // M11 Surface C : explication IA de la dérivation du chiffrage (ancrée sur les steps, sur clic).
 export const faisabiliteExplain = (idu: string) =>
   j<{ disponible: boolean; rejected?: boolean; degraded?: boolean; texte?: string; message?: string;
