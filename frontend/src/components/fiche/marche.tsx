@@ -11,12 +11,13 @@
  */
 import { useQuery } from '@tanstack/react-query'
 import { getFaisabilite, getMonSecteur, radarClic, type LocalMed } from '../../lib/api'
-import { fmtInt } from '../../lib/format'
+import { fmtInt, fmtDateNum } from '../../lib/format'
 import type { Fiche } from '../../lib/types'
 import { EMPTY_FILTERS, useApp } from '../../store/useApp'
-import { IC, RefDrawer, MicroSpark, Line, PorteOutil, GroupLabel, FactRow, FactNote } from './primitives'
+import { IC, RefDrawer, MicroSpark, Line, GroupLabel, FactRow, FactNote } from './primitives'
 // KELFONCIER-FIX-2 (Lot I) — maquette v3 : Verdict + Tuiles c3 (prix par type) + Réglette (secteur↔commune).
-import { Verdict, Tuiles, type Tuile, Reglette } from './formes'
+// FICHE-FIX-4 (Lot J) — prix de sortie / valeur / loyers / acquéreur PM en Ligne, méthode en « i ».
+import { Verdict, Tuiles, type Tuile, Reglette, Lignes, Ligne, InfoI, OutilsSection, type OutilSection } from './formes'
 
 // FICHE-RANGEMENT-2 Lot 1 — §1 Identité : la DERNIÈRE VENTE / mutation DVF de la parcelle (fait
 // d'identité du bien), extraite pour la future section. C4 : une mutation multi-parcelles porte le
@@ -47,7 +48,6 @@ export function DerniereVenteBlock({ f }: { f: Fiche }) {
 export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
   const setModule = useApp((s) => s.setModule)
   const setParcelPrefill = useApp((s) => s.setParcelPrefill)
-  const setM02Prefill = useApp((s) => s.setM02Prefill)   // RETOUCHES-1 C.13 — Scan patrimoine (SIREN voisin)
   const setFlyTo = useApp((s) => s.setFlyTo)
   const select = useApp((s) => s.select)
   const setRadarToOpen = useApp((s) => s.setRadarToOpen)
@@ -85,17 +85,18 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
       {/* KELFONCIER-FIX-2 (Lot I) — Verdict + Tuiles c3 (médiane par type, servie) + Réglette
           (écart secteur ↔ commune, servi). Aucun prix recalculé. */}
       {(() => {
-        const bati = mb?.median != null ? `bâti ${fmtInt(Number(mb.median))} €/m²` : null
+        // FICHE-FIX-4 (Lot J) — Tuiles UNIQUEMENT pour les types servis (rayon ajouté à la sous-ligne) ;
+        // le Verdict ne cite QUE des valeurs présentes dans les tuiles (plus de « terrain nu X » sans tuile).
         const typeTuiles: Tuile[] = []
-        if (parTypeTerrain) typeTuiles.push({ label: 'Terrain nu', valeur: fmtInt(parTypeTerrain.mediane_prix_m2!), sous: `€/m² · ${parTypeTerrain.n_ventes} ventes` })
-        if (parTypeMaison) typeTuiles.push({ label: 'Maison', valeur: fmtInt(parTypeMaison.eur_m2), sous: `€/m² · ${parTypeMaison.n} ventes` })
-        if (parTypeAppart) typeTuiles.push({ label: 'Appartement', valeur: fmtInt(parTypeAppart.eur_m2), sous: `€/m² · ${parTypeAppart.n} ventes` })
+        const cite: string[] = []
+        if (parTypeTerrain) { typeTuiles.push({ label: 'Terrain nu', valeur: fmtInt(parTypeTerrain.mediane_prix_m2!), sous: `€/m² · ${parTypeTerrain.n_ventes} ventes` }); cite.push(`terrain nu ${fmtInt(parTypeTerrain.mediane_prix_m2!)} €/m²`) }
+        if (parTypeMaison) { typeTuiles.push({ label: 'Maison', valeur: fmtInt(parTypeMaison.eur_m2), sous: `€/m² · ${parTypeMaison.n} ventes${parTypeMaison.rayon_m != null ? ` · ${fmtInt(parTypeMaison.rayon_m)} m` : ''}` }); cite.push(`maison ${fmtInt(parTypeMaison.eur_m2)} €/m²`) }
+        if (parTypeAppart) { typeTuiles.push({ label: 'Appartement', valeur: fmtInt(parTypeAppart.eur_m2), sous: `€/m² · ${parTypeAppart.n} ventes${parTypeAppart.rayon_m != null ? ` · ${fmtInt(parTypeAppart.rayon_m)} m` : ''}` }); cite.push(`appartement ${fmtInt(parTypeAppart.eur_m2)} €/m²`) }
+        const rep = cite.length ? cite.slice(0, 2).join(', ') : 'Marché de secteur'
         return (
           <>
             <Verdict ton="vert"
-              reponse={dvfSecteur?.mediane_prix_m2 != null
-                ? `Terrain nu ${fmtInt(dvfSecteur.mediane_prix_m2)} €/m²${bati ? `, ${bati}` : ''}`
-                : (bati ? bati.charAt(0).toUpperCase() + bati.slice(1) : 'Marché de secteur')}
+              reponse={rep.charAt(0).toUpperCase() + rep.slice(1)}
               contexte={ec?.ecart_pct != null
                 ? `secteur ${ec.ecart_pct > 0 ? '+' : ''}${ec.ecart_pct} % vs commune${mb?.tendance ? `, tendance ${mb.tendance}` : ''}`
                 : (mb?.tendance ? `tendance ${mb.tendance}` : undefined)} />
@@ -119,22 +120,18 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
       {/* RETOURS-11F4 F7/F0 — PRIX DE SORTIE bâti secteur : le fait vit ICI (la Constructibilité y renvoie).
           Même moteur que le bilan (`marche.median`). Sous le seuil : dit tel quel, jamais un chiffre inventé.
           RETOURS-20 Z1·03 — plus de boîte : FactRow (valeur mono à droite), méthode en FactNote. */}
-      {mb?.median != null && (
-        <div data-prix-sortie>
-          <FactRow label="Prix de sortie — bâti secteur" value={<>{fmtInt(Number(mb.median))} <small>€/m²</small></>} />
-          <FactNote>{mb.type_prix}, {mb.n} ventes ≤ {Math.round(mb.radius_m)} m (rayon adaptatif) · fiabilité {mb.fiabilite}{mb.tendance ? ` · tendance ${mb.tendance}` : ''}{horizon ? ` · DVF — ${horizon}` : ''}</FactNote>
-        </div>
-      )}
-      {/* ETUDIER-BIEN-2 Lot A (1/3) — l'ÉCART secteur ↔ commune entière est désormais porté par la
-          Réglette en tête de section (KELFONCIER-FIX-2 Lot I), plus haut. */}
-      {/* RECETTE-6 (C2) — « Valeur au prix du secteur » RAPATRIÉE ici depuis « Le reste des faits »
-          (supprimé) : c'est le SEUL fait de cet accordéon sans autre foyer dans la fiche. Contenance ×
-          prix médian du terrain nu au m² du secteur — ESTIMÉ, jamais une valeur vénale. */}
-      {f.surface_m2 != null && dvfSecteur?.mediane_prix_m2 != null && dvfSecteur.mediane_prix_m2 > 0 && (
-        <div data-valeur-secteur>
-          <FactRow label="Valeur au prix du secteur" value={<>≈ {fmtInt(Math.round(f.surface_m2 * dvfSecteur.mediane_prix_m2))} <small>€</small></>} />
-          <FactNote>contenance × prix médian du terrain nu au m² du secteur — estimé, pas une valeur vénale.</FactNote>
-        </div>
+      {/* FICHE-FIX-4 (Lot J) — prix de sortie + valeur au prix du secteur en Lignes, méthode en « i ». */}
+      {(mb?.median != null || (f.surface_m2 != null && dvfSecteur?.mediane_prix_m2 != null && dvfSecteur.mediane_prix_m2 > 0)) && (
+        <Lignes>
+          {mb?.median != null && (
+            <Ligne label={<>Prix de sortie — bâti secteur<InfoI aria="Méthode du prix de sortie" tip={`${mb.type_prix}, ${mb.n} ventes ≤ ${Math.round(mb.radius_m)} m (rayon adaptatif) · fiabilité ${mb.fiabilite}${mb.tendance ? ` · tendance ${mb.tendance}` : ''}${horizon ? ` · DVF — ${horizon}` : ''}`} /></>}
+              valeur={<>{fmtInt(Number(mb.median))} <small>€/m²</small></>} />
+          )}
+          {f.surface_m2 != null && dvfSecteur?.mediane_prix_m2 != null && dvfSecteur.mediane_prix_m2 > 0 && (
+            <Ligne label={<>Valeur au prix du secteur<InfoI aria="Méthode de la valeur" tip="Contenance × prix médian du terrain nu au m² du secteur — estimé, pas une valeur vénale." /></>}
+              valeur={<>≈ {fmtInt(Math.round(f.surface_m2 * dvfSecteur.mediane_prix_m2))} <small>€</small></>} />
+          )}
+        </Lignes>
       )}
       {/* NEUF (VEFA) commune — grandeur nommée, effectif, fenêtre ; sous le seuil : « échantillon insuffisant ». */}
       {(() => { const nv = f.dvf_parcelle?.neuf_vefa
@@ -240,84 +237,33 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
           <FactNote>Annonces actives dans un rayon de 1,5 km autour de la parcelle (Radar) — distinctes des annonces rattachées à cette parcelle ci-dessus. Prix demandés.</FactNote>
         </div>
       )}
-      {/* PORTES — Voir marché commune, Taxe, secteur opportunités, Comparer, Remonter le temps. */}
-      {f.commune && (
-        <PorteOutil ico="↗" data="marche" titre={`Voir le marché de ${f.commune}`}
-          sous="La fiche commune complète — marché (9 lignes sourcées), rareté et horizon ZAN, rythme d’instruction"
-          onClick={() => { const st = useApp.getState(); st.setCommune(f.commune!); st.setContexteCommune(f.commune!) }} />
-      )}
-      {/* FICHE-PORTES-1 Lot 1 — la porte « Taxe d'aménagement » est RETIRÉE de §8 Marché (la taxe
-          est un levier fiscal/projet, pas du marché) : une seule porte vers cet outil, en §7
-          Fiscalité (son foyer). Comparer + Remonter le temps restent (ils portent sur le marché). */}
-      {f.secteur_opportunites && f.secteur_opportunites.n > 0 && f.commune && (
-        <button data-secteur-opp
-          onClick={() => {
-            const st = useApp.getState()
-            // PALIERS-1 — les DEUX vocabulaires (servi + q_v14) : Priorité + À suivre du secteur
-            st.setFilters({ ...EMPTY_FILTERS, communes: [f.commune!], tiers: ['brulante', 'chaude', 'priorite', 'a_suivre'] })
-            st.setCommune(f.commune!)
-            if (f.coords) st.setFlyTo({ center: f.coords, zoom: 16 })
-            st.setView('cartes'); select(null)
-          }}
-          className="porte-outil">
-          <span className="po-ico">◈</span>
-          <span style={{ minWidth: 0 }}>
-            <span className="po-t block">
-              {/* FICHE-FIX-2 P6 — le compteur additionne 4 tiers (brûlante/chaude/priorité/à suivre) ;
-                  le libellé n'en nommait qu'un (« À suivre »), sous-évaluant le sens (§1.9). */}
-              <b className="tnum text-mint">{f.secteur_opportunites.n}</b> parcelle{f.secteur_opportunites.n > 1 ? 's' : ''}{' '}
-              <b>Priorité ou À suivre</b> dans cette section
-              <span className="text-txt-dim"> (n° {f.secteur_opportunites.section.slice(8)})</span></span>
-          </span>
-          <span className="po-arrow">→</span>
-        </button>
-      )}
-      {/* RETOUCHES-1 lot C.10 — Loyers OLL (observatoire local des loyers) de la zone de la parcelle. */}
-      {f.loyers_oll && (
-        <div data-loyers-oll>
-          <GroupLabel>Loyers (OLL)</GroupLabel>
-          {f.loyers_oll.disponible ? (
-            <div className="text-[12px] text-txt">
-              Loyer médian <b className="text-txt-hi">{f.loyers_oll.loyer_median_eur_m2} €/m²/mois</b> (zone {f.loyers_oll.zone})
-              {f.loyers_oll.par_type && (f.loyers_oll.par_type.maison != null || f.loyers_oll.par_type.appartement != null) && (
-                <span className="text-txt-mut"> — maison {f.loyers_oll.par_type.maison ?? '—'} · appart. {f.loyers_oll.par_type.appartement ?? '—'} €/m²</span>
-              )}
-              <div className="text-[11px] text-txt-dim">{f.loyers_oll.source} · {f.loyers_oll.millesime}</div>
-            </div>
-          ) : (
-            <div className="text-[12px] text-txt-dim"><span className="text-mint">✓</span> Sans objet — zone OLL non couverte. <span className="text-txt-dim">({f.loyers_oll.millesime})</span></div>
+      {/* FICHE-FIX-4 (Lot J) — loyers OLL + acquéreur PM voisin en Lignes, méthode en « i ». */}
+      {(f.loyers_oll || (f.pm_voisines?.disponible && f.pm_voisines.acquereurs.length > 0)) && (
+        <Lignes>
+          {f.loyers_oll?.disponible ? (
+            <Ligne label={<>Loyers (OLL)<InfoI aria="Sur les loyers OLL" tip={`${f.loyers_oll.par_type && (f.loyers_oll.par_type.maison != null || f.loyers_oll.par_type.appartement != null) ? `Maison ${f.loyers_oll.par_type.maison ?? '—'} · appart. ${f.loyers_oll.par_type.appartement ?? '—'} €/m². ` : ''}${f.loyers_oll.source} · ${f.loyers_oll.millesime}`} /></>}
+              valeur={<>{f.loyers_oll.loyer_median_eur_m2} <small>€/m²/mois · zone {f.loyers_oll.zone}</small></>} />
+          ) : f.loyers_oll ? (
+            <Ligne label="Loyers (OLL)" ton="gris" valeur="zone non couverte" />
+          ) : null}
+          {f.pm_voisines?.disponible && f.pm_voisines.acquereurs.length > 0 && (
+            <Ligne title={f.pm_voisines.acquereurs[0].denomination ?? undefined}
+              label={<>Acquéreur PM voisin{f.pm_voisines.acquereurs.length > 1 ? ` (${f.pm_voisines.acquereurs.length})` : ''}<InfoI aria="Sur les acquéreurs PM voisins" tip={`PM ayant acquis dans ${f.pm_voisines.rayon_m} m sur ${f.pm_voisines.mois} mois · ${f.pm_voisines.source}`} /></>}
+              valeur={<>{f.pm_voisines.acquereurs[0].denomination}{f.pm_voisines.acquereurs[0].date ? <small> · {fmtDateNum(f.pm_voisines.acquereurs[0].date)}</small> : null}</>} />
           )}
-        </div>
+        </Lignes>
       )}
-      {/* RETOUCHES-1 lot C.13 — Acquisitions de PERSONNES MORALES voisines (300 m / 36 mois, DVF×DGFiP). */}
-      {f.pm_voisines?.disponible && f.pm_voisines.acquereurs.length > 0 && (
-        <div data-pm-voisines>
-          <GroupLabel>Acquéreurs PM voisins ({f.pm_voisines.acquereurs.length})</GroupLabel>
-          <div className="flex flex-col gap-0.5 text-[12px]">
-            {f.pm_voisines.acquereurs.slice(0, 8).map((a, i) => (
-              <div key={i}>
-                <span className="font-medium text-txt">{a.denomination}</span>
-                {a.siren && <span className="font-mono text-txt-dim"> · SIREN {a.siren}</span>}
-                {a.date && <span className="text-txt-mut"> · {a.date.split('-').reverse().join('/')}</span>}
-              </div>
-            ))}
-            <div className="text-[11px] text-txt-dim">PM ayant acquis dans {f.pm_voisines.rayon_m} m sur {f.pm_voisines.mois} mois · {f.pm_voisines.source}</div>
-          </div>
-          {f.pm_voisines.acquereurs[0]?.siren && (
-            <PorteOutil ico="⌂" data="patrimoine-voisin" titre="Scan patrimoine d'un acquéreur voisin"
-              sous={`Ouvrir le Scan sur ${f.pm_voisines.acquereurs[0].denomination ?? 'ce SIREN'}`}
-              onClick={() => { const s0 = f.pm_voisines!.acquereurs[0]; if (s0?.siren) { setM02Prefill(s0.siren); setModule('patrimoine') } }} />
-          )}
-        </div>
-      )}
-      <PorteOutil ico="⇄" data="comparer" titre="Comparer des parcelles"
-        sous="Cette parcelle chargée — ajoutez-en d'autres à comparer"
-        onClick={() => { const st = useApp.getState(); st.openCompare(); st.addToCompare(idu) }} />
-      {f.coords && (
-        <PorteOutil ico="◷" data="temps" titre="Remonter le temps"
-          sous="Ce terrain de 1950 à aujourd'hui (curseur avant/après)"
-          onClick={() => { setParcelPrefill(idu); setFlyTo({ center: f.coords, zoom: 18 }); setModule('temps') }} />
-      )}
+      {/* FICHE-FIX-4 (Lot J) — outils 2×2 : Marché de la commune · Priorité · section · Comparer ·
+          Remonter le temps (plus de grandes cartes PorteOutil). */}
+      <OutilsSection outils={[
+        ...(f.commune ? [{ label: `Marché de ${f.commune}`, principal: true, data: 'marche',
+          onClick: () => { const st = useApp.getState(); st.setCommune(f.commune!); st.setContexteCommune(f.commune!) } } as OutilSection] : []),
+        ...(f.secteur_opportunites && f.secteur_opportunites.n > 0 && f.commune ? [{ label: `${f.secteur_opportunites.n} Priorité · section ${f.secteur_opportunites.section.slice(8)}`, data: 'secteur-opp',
+          onClick: () => { const st = useApp.getState(); st.setFilters({ ...EMPTY_FILTERS, communes: [f.commune!], tiers: ['brulante', 'chaude', 'priorite', 'a_suivre'] }); st.setCommune(f.commune!); if (f.coords) st.setFlyTo({ center: f.coords, zoom: 16 }); st.setView('cartes'); select(null) } } as OutilSection] : []),
+        { label: 'Comparer', data: 'comparer', onClick: () => { const st = useApp.getState(); st.openCompare(); st.addToCompare(idu) } },
+        ...(f.coords ? [{ label: 'Remonter le temps', data: 'temps',
+          onClick: () => { setParcelPrefill(idu); setFlyTo({ center: f.coords!, zoom: 18 }); setModule('temps') } } as OutilSection] : []),
+      ]} />
     </RefDrawer>
   )
 }
