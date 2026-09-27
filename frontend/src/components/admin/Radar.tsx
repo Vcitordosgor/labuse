@@ -95,6 +95,21 @@ function DernierDepot({ dep }: { dep: RadarCheck['dernier_depot'] }) {
   )
 }
 
+// ── RADAR-FIX-1 (3) — dernière capture AUTOMATIQUE de l'extension (pige_passes, jamais un dépôt manuel).
+//    Rend visible que l'automate tourne ; en retard (> 26 h) → bandeau « Déposer Radar ». ──
+function CaptureAuto({ cap, enRetard }: { cap: RadarCheck['capture_auto']; enRetard: boolean }) {
+  return (
+    <div data-radar-capture-auto
+      className={`flex flex-wrap items-center gap-2 rounded-lg border px-3.5 py-2 text-[12px] ${enRetard ? 'border-st-attention/50 bg-st-attention/10' : 'border-line bg-surface-2'}`}>
+      <span className="font-mono text-[10px] uppercase tracking-wider text-txt-dim">Dernière capture automatique</span>
+      {cap?.captured_at
+        ? <span className="text-txt">{fmtReu(cap.captured_at)} · <b className="font-medium">{cap.pages}</b> page{cap.pages > 1 ? 's' : ''} · {cap.nouvelles} nouvelle{cap.nouvelles > 1 ? 's' : ''}</span>
+        : <span className="text-txt-mut">aucune capture automatique encore reçue de l’extension</span>}
+      {enRetard && <span data-radar-capture-retard className="ml-auto font-medium text-st-attention">⚠ rien depuis plus de 26 h — Déposer Radar</span>}
+    </div>
+  )
+}
+
 // ── À valider : fiche pré-remplie, champs à vérifier en mauve, Valider ──
 function Champ({ nom, valeur, aVerifier }: { nom: string; valeur: React.ReactNode; aVerifier: boolean }) {
   return (
@@ -274,10 +289,19 @@ export function RadarSection() {
         <DernierDepot dep={d?.dernier_depot ?? null} />
       </div>
 
+      {/* RADAR-FIX-1 (3) — l'automate tourne-t-il ? Dernière capture automatique + retard éventuel. */}
+      <CaptureAuto cap={d?.capture_auto ?? null} enRetard={!!d?.capture_auto_en_retard} />
+
       {/* Section 2 — À faire (à valider · à re-vérifier), listes dépliables */}
       <div>
         <h2 className="mb-2 mt-2 font-mono text-[11px] uppercase tracking-[0.18em] text-txt-dim">À faire</h2>
         <div className="flex flex-col gap-1.5">
+          {d?.capture_auto_en_retard && (
+            <div data-radar-deposer-afaire className="flex items-center gap-2 rounded-lg border border-st-attention/50 bg-st-attention/10 px-3.5 py-2.5 text-[12.5px] text-st-attention">
+              <b className="font-medium">Déposer Radar</b>
+              <span className="text-txt-mut">— aucune capture automatique depuis plus de 26 h (Mac éteint ou extension bloquée) : déposer la page du jour à la main ci-dessus (⌘S).</span>
+            </div>
+          )}
           <AFaire n={aValider} titre="annonces à valider (extraction)"
             ouvert={ouvert === 'valider'} onToggle={() => setOuvert((o) => o === 'valider' ? null : 'valider')}>
             <Extraction />

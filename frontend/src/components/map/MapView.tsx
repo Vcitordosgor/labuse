@@ -1516,9 +1516,17 @@ export function MapView() {
       {/* RADAR-CATÉGORIE (T2) — la carte porte la LÉGENDE des couleurs de pins. RETOURS-8 (R8) : la
           pastille-hint « Bien rattaché… / non localisé… » est RETIRÉE (le comportement reste, sans texte). */}
       {view === 'radar' && (
-        <div data-radar-maplegend className="pointer-events-none absolute bottom-4 left-4 z-10 flex gap-4 whitespace-nowrap rounded-lg border border-line-2 bg-surface-2/92 px-3 py-2.5 text-[11.5px] text-txt-mut">
-          <b className="flex items-center gap-1.5 font-medium"><span className="h-2 w-2 rounded-full bg-mint" /> En vente</b>
-          <b className="flex items-center gap-1.5 font-medium"><span className="h-2 w-2 rounded-full bg-amber" /> En vente longue</b>
+        <div data-radar-maplegend className="pointer-events-none absolute bottom-4 left-4 z-10 flex flex-col gap-1.5 whitespace-nowrap rounded-lg border border-line-2 bg-surface-2/92 px-3 py-2.5 text-[11.5px] text-txt-mut">
+          <div className="flex gap-4">
+            <b className="flex items-center gap-1.5 font-medium"><span className="h-2 w-2 rounded-full bg-mint" /> En vente</b>
+            <b className="flex items-center gap-1.5 font-medium"><span className="h-2 w-2 rounded-full bg-amber" /> En vente longue</b>
+          </div>
+          {/* RADAR-FIX-1 (2) — les DEUX formes de marqueur enfin expliquées : plein = rattaché à une
+              parcelle, creux = position au quartier (leboncoin ne donne pas l'adresse exacte). */}
+          <div className="flex gap-4">
+            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-txt-mut" /> Annonce rattachée à une parcelle</span>
+            <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full border-[1.5px] border-txt-mut" /> Annonce placée au quartier <span className="text-txt-dim">(adresse non fournie par le portail)</span></span>
+          </div>
         </div>
       )}
       {/* FIX-FONDS B4 — légende « zones noires » réutilisée du mandat TEMPS (même markup data-temps-legende),

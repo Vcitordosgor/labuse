@@ -2128,6 +2128,9 @@ export interface RadarCheck {
   dernier_depot: { date_depot: string | null; nom_fichier: string | null; nb_annonces: number | null
     nb_nouvelles: number | null; nb_maj: number | null; nb_a_qualifier: number | null } | null
   flux: { en_vie: number; biens: number; rattachees: number; paires: number; copros_non_servies: number }
+  // RADAR-FIX-1 (3) — dernière capture AUTOMATIQUE de l'extension + drapeau « Déposer Radar » (> 26 h).
+  capture_auto: { captured_at: string | null; pages: number; nouvelles: number } | null
+  capture_auto_en_retard: boolean
 }
 export const radarDeposer = (lien: string, image_b64: string, media_type: string) =>
   j<RadarProposition>('/admin/radar/deposer', {

@@ -3818,6 +3818,21 @@ def radar_depot_html_cmd(
                f"(rattachement : {r['etats']}) · archive {r['archive']}")
 
 
+@app.command("radar-fusion")
+def radar_fusion_cmd(
+    dry_run: bool = typer.Option(False, "--dry-run", help="calcule le plan de fusion sans rien écrire"),
+) -> None:
+    """RADAR-FIX-1 (1) — rejoue « même bien, nouveau numéro » sur toute la base : fusionne les biens qui
+    sont le même bien physique (le plus ancien survit, garde sa date de 1ʳᵉ publication). Idempotent."""
+    from .pige import html_ingest
+    with session_scope() as s:
+        r = html_ingest.fusionner_doublons_existants(s, dry_run=dry_run)
+    prefixe = "PLAN (dry-run) — " if dry_run else "✓ "
+    typer.echo(f"{prefixe}{r['biens_fusionnes']} bien(s) fusionné(s) dans {r['groupes']} bien(s) survivant(s)")
+    for survivant, absorbe in r["paires"]:
+        typer.echo(f"   bien #{absorbe} → rejoint bien #{survivant}")
+
+
 @app.command("radar-cycle-quotidien")
 def radar_cycle_quotidien_cmd() -> None:
     """RADAR P5 — cycle de vie QUOTIDIEN (heure Réunion) : en_vente_longue (> 90 j publication) +
