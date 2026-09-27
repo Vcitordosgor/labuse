@@ -155,6 +155,7 @@ function Num({ label, value, unit, accent, statusLabel, sub }: {
 
 export function Gabarit() {
   const selectedIdu = useApp((s) => s.selectedIdu)
+  const focusParcelle = useApp((s) => s.focusParcelle)   // RETOURS-15 C4 — zoom + contour à la résolution
   const terrain3d = useApp((s) => s.terrain3d)
   const batiVisible = useApp((s) => s.batiVisible)   // RETOURS-13 P4 — chip « Bâtiments » (session)
   const [idu, setIdu] = useState<string | null>(selectedIdu)
@@ -212,7 +213,7 @@ export function Gabarit() {
       </p>
 
       <ParcelInput dataAttr="gabarit-parcelle"
-        onPick={(i: string) => setIdu(i)}
+        onPick={(i: string) => { setIdu(i); focusParcelle(i) }}
         placeholder="Adresse, IDU ou référence (BW0917)" />
 
       {!target && (

@@ -14,7 +14,6 @@ import { Tip } from '../Tip'
 import { CP_COMMUNES } from '../panel/FiltreLabuse'   // RETOURS-11 T6 — source unique des 24 communes
 import { trierCommunes } from '../../lib/communes'
 import { Bouton } from '../ui/Bouton'
-import { Case } from '../ui/Case'
 
 const fmt = fmtInt
 
@@ -141,7 +140,7 @@ export function M16() {
     setMsel(msel.includes(i) ? msel : [...msel, i])
     setRings((r) => (r.includes(i) ? r : [i]))
   }
-  const etendreRing = (idu: string) => setRings((r) => (r.includes(idu) ? r : [...r, idu]))
+  // RETOURS-15 B6 — « ses voisines → » retiré : plus d'extension d'anneau depuis une voisine.
   const ringQs = useQueries({ queries: rings.map((r) => ({
     queryKey: ['asm-voisines', r], queryFn: () => getAssemblageVoisines(r), staleTime: 60_000, retry: false })) })
   // M-ENTREE — porte fiche → Assemblage : la parcelle devient la 1ʳᵉ du lot (motif parcelPrefill
@@ -234,13 +233,17 @@ export function M16() {
                 {rd.items.map((v) => {
                   const coche = msel.includes(v.idu)
                   const pr = v.proprio
+                  // RETOURS-15 B6 (P12) — la liste des voisines reste EN LECTURE : plus de case à
+                  // cocher, plus de « ses voisines → ». On AJOUTE une voisine en la cliquant sur la
+                  // CARTE (socle S4 : clic carte = ajout direct à l'assiette). Une pastille dit
+                  // « dans l'assiette » quand elle y est déjà.
                   return (
                     <div key={v.idu} data-asm-voisine={v.idu} className="rounded-lg border border-line-2 bg-surface-3 px-2.5 py-1.5">
                       <div className="flex items-center gap-2">
-                        {/* B3 — cocher = entrer dans l'assemblage (recalcul au geste « Analyser », comme aujourd'hui) */}
-                        <Case data-asm-voisine-sel checked={coche}
-                          onChange={() => setMsel(coche ? msel.filter((x) => x !== v.idu) : [...msel, v.idu])} />
                         <span className="font-mono text-[11px] text-txt-hi">{v.idu.slice(8)}</span>
+                        {coche && (
+                          <span data-asm-voisine-dans className="rounded-full bg-mint/15 px-1.5 py-0.5 text-[9px] font-medium text-mint">dans l'assiette</span>
+                        )}
                         {v.meme_proprietaire && (
                           <span className="rounded-full bg-mint/10 px-1.5 py-0.5 text-[9px] font-medium text-mint">même propriétaire</span>
                         )}
@@ -256,11 +259,6 @@ export function M16() {
                             ? <span className="text-txt">{pr.denomination}</span>
                             : <span className="italic text-txt-dim">particulier — non nommé</span>}
                         </span>
-                        {/* B4 — sur une voisine COCHÉE : étendre la proposition d'un anneau depuis elle */}
-                        {coche && (
-                          <Bouton niveau="lien" data-asm-ses-voisines onClick={() => etendreRing(v.idu)}
-                            className="shrink-0">ses voisines →</Bouton>
-                        )}
                         {/* B5 — pont Scan patrimoine sur une voisine PM (le retour restaure la sélection) */}
                         {pr.type === 'personne_morale' && pr.siren && (
                           <Bouton niveau="lien" data-asm-voisine-scan
@@ -561,8 +559,6 @@ function M18Tableau({ d }: { d: Record<string, any> }) {
   const partiel = new Set(ancien.filter((r) => r.partiel).map((r) => r.trimestre))
   const ancByT = Object.fromEntries(ancien.map((r) => [r.trimestre, r]))
   const th = 'sticky top-0 z-10 bg-bg-3 px-2 py-1.5 text-right font-medium text-txt-dim first:text-left'
-  const tendance = (pct: number | null | undefined) => pct == null ? null :
-    <span className={`font-medium ${pct >= 0 ? 'text-mint' : 'text-st-ecartee'}`}>{pct >= 0 ? '+' : ''}{pct} %/an</span>
   return (
     <div className="flex min-h-0 flex-col">
       {/* DA-FIX-4 Lot 4 (DA-030) — plein écran (overlay 1240px) + 4 colonnes : aucune barre horizontale. */}
@@ -592,11 +588,10 @@ function M18Tableau({ d }: { d: Record<string, any> }) {
           </tbody>
         </table>
       </div>
-      {/* LÉGENDE sous le tableau : tendances /an + méthode (T4/O10). */}
-      <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] text-txt-dim">
-        <span className="flex items-center gap-1">Ancien bâti {tendance(d.tendance_ancien_pct)}</span>
-        <span className="flex items-center gap-1">Terrain nu {tendance(d.tendance_terrain_pct)}</span>
-        <span className="flex items-center gap-1">Permis {tendance(d.tendance_permis_pct)}</span>
+      {/* RETOURS-15 B3 (P6) — la ligne de pied « Ancien bâti +N %/an · Terrain nu +N %/an ·
+          Permis −N %/an » est RETIRÉE (demande Vic). On garde la méthode en note discrète. */}
+      <div className="mt-1.5 flex flex-wrap items-center gap-1 text-[10px] text-txt-dim">
+        Méthode
         <Tip garder tip="Ancien : médiane €/m² bâti, ventes strictes DVF (VEFA exclu). Terrain : médiane €/m² terrain nu (bâti=0). Permis : autorisés/trimestre (Sitadel). Volume (n) entre parenthèses."><span className="cursor-help rounded-full border border-line-2 px-1 text-[8px]">i</span></Tip>
       </div>
       {tris.some((t) => partiel.has(t)) && <p className="mt-0.5 text-[9.5px] text-st-creuser">· dernier trimestre partiel (délai de publication DVF) — grisé, hors tendance.</p>}

@@ -820,9 +820,24 @@ def _barometre_data(db: Session, insee: str | None = None) -> dict:
           AND date_trunc('quarter', date_mutation) < date_trunc('quarter', CURRENT_DATE)
           AND (CAST(:nom AS text) IS NULL OR commune = :nom)
         GROUP BY 1 ORDER BY 1 DESC LIMIT 8"""), par).mappings().all()
+    # RETOURS-15 B3 (P5) — CAUSE des « — » en permis sur 2024T1/T2 : les séries DVF et permis
+    # prenaient CHACUNE leurs 8 trimestres les plus récents indépendamment. Le flux Sitadel est EN
+    # AVANCE sur DVF (permis jusqu'à 2026T2, DVF publié jusqu'à 2025T4) → la fenêtre permis était
+    # 2024T3..2026T2 alors que la fenêtre DVF (axe de référence du tableau) était 2024T1..2025T4 :
+    # l'union affichait 2024T1/T2 avec un permis vide (hors fenêtre permis). CORRECTIF : on borne la
+    # série permis au DERNIER trimestre DVF (axe commun) → les DEUX séries couvrent les MÊMES 8
+    # trimestres pleins (Sitadel a bien 710 et 626 permis en 2024T1/T2).
     permis = db.execute(text("""
+        WITH ref AS (
+          SELECT max(date_trunc('quarter', date_mutation)) AS q_max
+          FROM dvf_mutations
+          WHERE date_mutation IS NOT NULL
+            AND date_trunc('quarter', date_mutation) < date_trunc('quarter', CURRENT_DATE)
+            AND (CAST(:nom AS text) IS NULL OR commune = :nom))
         SELECT to_char(date_trunc('quarter', date), 'YYYY"T"Q') AS trimestre, count(*) AS permis
-        FROM sitadel_permits WHERE date_trunc('quarter', date) < date_trunc('quarter', CURRENT_DATE)
+        FROM sitadel_permits, ref
+        WHERE date_trunc('quarter', date) < date_trunc('quarter', CURRENT_DATE)
+          AND date_trunc('quarter', date) <= ref.q_max
           AND (CAST(:nom AS text) IS NULL OR commune = :nom)
         GROUP BY 1 ORDER BY 1 DESC LIMIT 8"""), par).mappings().all()
     # §2 — SÉRIE TERRAIN NU par trimestre (dvf_mutations_parcelle, ventes terrain, €/m² dédupliqué

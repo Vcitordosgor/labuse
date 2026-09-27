@@ -18,8 +18,13 @@ import { estIdu, iduComplet } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 import { M02 } from './ModulePanel'
 import { VeillePromoteurs } from './VeillePromoteurs'
+import { Retour } from '../ui/Retour'
 
 type Tab = 'possede' | 'construit'
+// RETOURS-15 B5 (P11) — l'outil s'ouvre sur DEUX PORTES : « Un propriétaire » (la recherche puis ses
+// onglets Possession/Construction) · « Toutes les opérations de l'île » (l'exploration générale, ex-
+// « Explorer toutes les opérations → » qui quittait l'onglet). `null` = l'écran d'accueil des portes.
+type Porte = 'proprietaire' | 'operations'
 
 // U1.4 — EXEMPLES : montrent ce que le champ accepte, un par nature. Nom réel (CBO TERRITORIA), un SIREN,
 // un IDU et une adresse du 974 ; le clic lance la recherche (résolution commune avec la barre).
@@ -36,6 +41,7 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
   const [owner, setOwner] = useState<string | null>(null)   // le SIREN partagé entre les deux onglets
   const [ownerLabel, setOwnerLabel] = useState<string | null>(null)  // raison sociale connue à la sélection (sinon résolue)
   const [tab, setTab] = useState<Tab>(defaultTab)
+  const [porte, setPorte] = useState<Porte | null>(null)   // RETOURS-15 B5 — accueil = deux portes
   // LOT S1 — compteur réel de l'onglet « Ce qu'ils construisent », remonté par VeillePromoteurs
   // (opérations + programmes collectés). null tant qu'inconnu → l'onglet reste sans nombre (rien d'inventé).
   const [nConstruit, setNConstruit] = useState<number | null>(null)
@@ -52,8 +58,9 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
   // partagée + bon onglet. Consommés ICI (M02/VeillePromoteurs embarqués ne lisent plus le store → 0 course).
   const m02Prefill = useApp((s) => s.m02Prefill); const setM02Prefill = useApp((s) => s.setM02Prefill)
   const veilleFocusSiren = useApp((s) => s.veilleFocusSiren); const setVeilleFocusSiren = useApp((s) => s.setVeilleFocusSiren)
-  useEffect(() => { if (m02Prefill) { setOwner(m02Prefill); setOwnerLabel(null); setTab('possede'); setM02Prefill(null) } }, [m02Prefill, setM02Prefill])
-  useEffect(() => { if (veilleFocusSiren) { setOwner(veilleFocusSiren); setOwnerLabel(null); setTab('construit'); setVeilleFocusSiren(null) } }, [veilleFocusSiren, setVeilleFocusSiren])
+  // un pont externe (popup carte, porte de fiche, deep-link) ouvre directement la porte « propriétaire ».
+  useEffect(() => { if (m02Prefill) { setOwner(m02Prefill); setOwnerLabel(null); setTab('possede'); setPorte('proprietaire'); setM02Prefill(null) } }, [m02Prefill, setM02Prefill])
+  useEffect(() => { if (veilleFocusSiren) { setOwner(veilleFocusSiren); setOwnerLabel(null); setTab('construit'); setPorte('proprietaire'); setVeilleFocusSiren(null) } }, [veilleFocusSiren, setVeilleFocusSiren])
 
   // U1.5 — encart propriétaire (état 2) : raison sociale + SIREN. Partage la CLÉ react-query de M02
   // (['m02', siren]) → aucune requête en double. Le payload patrimoine n'expose PAS de « qualité »
@@ -128,9 +135,28 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
         <p className="mt-0.5 text-[11.5px] text-txt-mut">Ce qu'un propriétaire possède, et ce qu'il construit.</p>
       </div>
 
-      {!owner ? (
+      {porte === null && !owner ? (
+        /* ───────── ACCUEIL — DEUX PORTES (B5). ───────── */
+        <>
+          <button data-scan-porte="proprietaire" onClick={() => setPorte('proprietaire')} className="door door-hot hover-fill w-full text-left">
+            <div className="text-[12.5px] font-medium text-txt">Un propriétaire</div>
+            <div className="mt-0.5 text-[10.5px] leading-snug text-txt-dim">Ce qu'une société possède et construit — par nom, SIREN, adresse ou IDU.</div>
+          </button>
+          <button data-scan-porte="operations" onClick={() => setPorte('operations')} className="door door-hot hover-fill w-full text-left">
+            <div className="text-[12.5px] font-medium text-txt">Toutes les opérations de l'île</div>
+            <div className="mt-0.5 text-[10.5px] leading-snug text-txt-dim">Ce que les promoteurs, bailleurs et SEM construisent — filtrable par commune et période.</div>
+          </button>
+        </>
+      ) : porte === 'operations' ? (
+        /* ───────── PORTE « TOUTES LES OPÉRATIONS » — l'exploration générale. ───────── */
+        <>
+          <Retour data-scan-retour-portes label="Scan patrimoine" onClick={() => setPorte(null)} />
+          <VeillePromoteurs embedded />
+        </>
+      ) : !owner ? (
         /* ───────── ÉTAT 1 — aucun propriétaire : la recherche SEULE, pas d'onglets. ───────── */
         <>
+          <Retour data-scan-retour-portes label="Scan patrimoine" onClick={() => setPorte(null)} />
           {/* DA-FIX-4 verif (task 1) — ENTRÉE CANONIQUE : ParcelInput (omnibox 40 px + séparateur « ou »
               + Bouton « Cliquez une parcelle sur la carte »). Le clic-carte et l'IDU/adresse résolvent le
               PROPRIÉTAIRE de la parcelle (onPick → resoudre → ownerDeIdu). RECHERCHE-2 Lot 1 — une

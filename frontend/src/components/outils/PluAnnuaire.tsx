@@ -159,13 +159,11 @@ export function PluAnnuaire() {
       {insee && servable && mode === 'recherche' && (
         <>
           <div className="flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2 p-3">
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-[10.5px] leading-snug text-txt-mut">
-                Cherchez dans le règlement de <b className="text-txt">{nomInsee(insee)}</b> — verbatim
-                sourcé (article, page, lien), jamais un résumé.
-              </p>
-              <Retour label="Voies" onClick={() => { setMode('choix'); setQ(''); m.reset() }} className="shrink-0" />
-            </div>
+            {/* RETOURS-15 C1 (P1) — le bouton « ← Voies » est retiré de l'annuaire (demande Vic). */}
+            <p className="text-[10.5px] leading-snug text-txt-mut">
+              Cherchez dans le règlement de <b className="text-txt">{nomInsee(insee)}</b> — verbatim
+              sourcé (article, page, lien), jamais un résumé.
+            </p>
             <div className="flex gap-2">
               {/* RETOURS-5 T6 — plus d'autoFocus (même correction que « Étudier un bien ») : bord neutre au repos. */}
               <input data-plu-q value={q} onChange={(e) => setQ(e.target.value)}

@@ -32,10 +32,28 @@ function renderScan() {
   return render(<QueryClientProvider client={qc}><ScanPatrimoine /></QueryClientProvider>)
 }
 function chercher(container: HTMLElement, texte: string) {
+  // RETOURS-15 B5 — l'outil s'ouvre sur deux portes : on entre par « Un propriétaire » avant de chercher.
+  const porte = container.querySelector('[data-scan-porte="proprietaire"]') as HTMLElement | null
+  if (porte) fireEvent.click(porte)
   const input = container.querySelector('[data-scan-search]') as HTMLInputElement
   fireEvent.change(input, { target: { value: texte } })
   fireEvent.keyDown(input, { key: 'Enter' })
 }
+
+describe('RETOURS-15 B5 — deux portes à l’accueil', () => {
+  beforeEach(() => { useApp.setState({ m02Prefill: null, veilleFocusSiren: null }) })
+  afterEach(() => { vi.restoreAllMocks() })
+
+  it('ouvre sur deux portes ; la recherche n’apparaît qu’après « Un propriétaire »', () => {
+    mockFetch(UNE)
+    const { container } = renderScan()
+    expect(container.querySelector('[data-scan-porte="proprietaire"]')).not.toBeNull()
+    expect(container.querySelector('[data-scan-porte="operations"]')).not.toBeNull()
+    expect(container.querySelector('[data-scan-search]')).toBeNull()   // pas de barre avant la porte
+    fireEvent.click(container.querySelector('[data-scan-porte="proprietaire"]') as HTMLElement)
+    expect(container.querySelector('[data-scan-search]')).not.toBeNull()
+  })
+})
 
 describe('SCAN-PATRIMOINE-1 — choix quand plusieurs sociétés matchent', () => {
   beforeEach(() => { useApp.setState({ m02Prefill: null, veilleFocusSiren: null }) })

@@ -1,11 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { estIdu, estSectionNumero, iduComplet, iduCourt, normSectionNumero } from '../lib/format'
 import { fmtM2 } from '../lib/format'
 import { searchParcels, type SuggestItem, type SuggestType } from '../lib/api'
 import { useApp } from '../store/useApp'
 import { AddressAutocomplete } from './AddressAutocomplete'
 import { OwnerParcelles } from './OwnerParcelles'
-import { Bouton } from './ui/Bouton'
 
 // PATRON OMNIBOX (M137) — UN SEUL champ pour désigner une parcelle : adresse (autocomplétion BAN)
 // ET IDU cadastral (reconnu par `estIdu` → on n'interroge pas la BAN dessus), comme l'omnibox de la
@@ -58,9 +57,42 @@ export function ParcelInput({ onPick, onAddress, onProprietaire, placeholder, au
   const [ref, setRef] = useState<string>('')      // la référence courte cherchée (pour le message)
   // RECHERCHE-2 Lot 1 — un pick propriétaire ouvre le sous-panneau PARTAGÉ « ses parcelles » (OwnerParcelles).
   const [owner, setOwner] = useState<{ siren: string; nom: string } | null>(null)
+  // RETOURS-15 S2 — une parcelle est-elle RÉSOLUE par la barre (adresse, IDU, réf, parcelle d'un
+  // propriétaire, ou clic carte consommé) ? Si oui, l'invite « Cliquez une parcelle sur la carte »
+  // DISPARAÎT (elle réapparaît quand le champ est vidé). `seed` impose le libellé affiché (S1).
+  const [resolu, setResolu] = useState(false)
+  const [seed, setSeed] = useState<string | undefined>(undefined)
   const attr = dataAttr ? { [`data-${dataAttr}`]: '' } : {}
 
   const clearRepliques = () => { setMsg(null); setCandidats(null); setOwner(null) }
+  const oublier = () => { clearRepliques(); setResolu(false) }   // champ vidé → tout retombe
+
+  // RETOURS-15 S2/S4 — chemin de résolution UNIQUE : marque « résolu », affiche le libellé, remonte
+  // l'IDU. `seedText` alimente le champ pour les chemins HORS suggestion (le clic de suggestion
+  // recopie déjà son libellé) ; sans lui on laisse le texte tel quel (IDU/adresse déjà saisi).
+  const resoudre = (idu: string, seedText?: string) => {
+    clearRepliques()
+    setResolu(true)
+    if (seedText != null) setSeed(seedText)
+    onPick(idu)
+  }
+
+  // RETOURS-15 S4 — le CLIC CARTE agit directement : plus de bouton « Utiliser la parcelle
+  // sélectionnée ». Quand cette barre accepte le clic carte (`withCarte`), une NOUVELLE sélection
+  // sur la carte est consommée comme un pick. On n'agit que sur un CHANGEMENT postérieur au montage
+  // (ref initialisée à la sélection courante) : ni Assemblage (setMsel, `selectedIdu` inchangé) ni
+  // Comparer (withCarte=false) ne passent par ici.
+  const dernierClic = useRef<string | null>(selectedIdu)
+  useEffect(() => {
+    if (!withCarte) return
+    if (selectedIdu && selectedIdu !== dernierClic.current) {
+      dernierClic.current = selectedIdu
+      resoudre(selectedIdu, iduComplet(selectedIdu))
+    } else if (!selectedIdu) {
+      dernierClic.current = null
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedIdu, withCarte])
 
   // Résout une référence courte (section+numéro) via /parcels/search. Présélectionne la commune
   // du contexte en tête. 0 → message honnête ; 1 → onPick direct ; N → liste de désambiguïsation.
@@ -75,7 +107,7 @@ export function ParcelInput({ onPick, onAddress, onProprietaire, placeholder, au
         setMsg(`Aucune parcelle « ${raw.trim().toUpperCase()} » (référence section + numéro) sur l'île.`)
         return
       }
-      if (exacts.length === 1) { setMsg(null); onPick(iduComplet(exacts[0].idu)); return }
+      if (exacts.length === 1) { resoudre(iduComplet(exacts[0].idu), iduCourt(exacts[0].idu)); return }
       // désambiguïsation : commune du contexte d'abord, puis les autres
       const tri = [...exacts].sort((a, b) =>
         (b.commune === commune ? 1 : 0) - (a.commune === commune ? 1 : 0) || a.commune.localeCompare(b.commune))
@@ -93,7 +125,8 @@ export function ParcelInput({ onPick, onAddress, onProprietaire, placeholder, au
         autoFocus={autoFocus}
         placeholder={placeholder ?? 'Propriétaire, adresse, IDU ou référence (BW0917)'}
         grammaires={grammaires}
-        onClear={clearRepliques}
+        seed={seed}
+        onClear={oublier}
         // Un pick PROPRIÉTAIRE / SIREN (type ≠ adresse/cadastre → onPick d'AddressAutocomplete) :
         // remonté à onProprietaire s'il existe (outil propriétaire), sinon sous-panneau de ses parcelles.
         onPick={(it: SuggestItem) => {
@@ -104,14 +137,14 @@ export function ParcelInput({ onPick, onAddress, onProprietaire, placeholder, au
           }
         }}
         onSelect={(sel) => {
-          clearRepliques()
-          if (sel.idu) onPick(iduComplet(sel.idu))
-          else if (onAddress) onAddress(sel.label)
-          else setMsg("Adresse trouvée, mais aucune parcelle cadastrale rattachée — saisissez l'IDU.")
+          // le clic de suggestion a déjà recopié le libellé (S1) → pas de seed ici.
+          if (sel.idu) resoudre(iduComplet(sel.idu))
+          else if (onAddress) { clearRepliques(); onAddress(sel.label) }
+          else { clearRepliques(); setMsg("Adresse trouvée, mais aucune parcelle cadastrale rattachée — saisissez l'IDU.") }
         }}
         onEnterRaw={(raw) => {
           const qn = iduComplet(raw).toUpperCase()
-          if (estIdu(qn)) { clearRepliques(); onPick(qn) }
+          if (estIdu(qn)) { resoudre(qn, qn) }
           // RETOURS-12 T1 — référence courte reconnue AVANT le repli adresse (sinon la BAN
           // répondrait « aucune adresse » à tort et l'utilisateur resterait dans le vide).
           else if (estSectionNumero(raw)) { setOwner(null); void resoudreRef(raw) }
@@ -127,7 +160,7 @@ export function ParcelInput({ onPick, onAddress, onProprietaire, placeholder, au
           </p>
           {candidats.map((c) => (
             <button key={c.idu} data-parcelinput-candidat
-              onClick={() => { setCandidats(null); setMsg(null); onPick(c.idu) }}
+              onClick={() => resoudre(c.idu, iduCourt(c.idu))}
               className="hover-fill flex items-baseline justify-between gap-2 rounded px-2 py-1 text-left text-[11px] text-txt transition-colors duration-quick">
               <span className="font-medium text-txt-hi">{c.commune}</span>
               <span className="flex items-baseline gap-2 text-[10px] text-txt-dim">
@@ -142,22 +175,16 @@ export function ParcelInput({ onPick, onAddress, onProprietaire, placeholder, au
           (→ onPick, comme un clic carte) ; « voir N de plus » au-delà de 200 ; « changer » ferme. */}
       {owner && (
         <OwnerParcelles siren={owner.siren} nom={owner.nom}
-          onPick={(idu) => { clearRepliques(); onPick(idu) }}
+          onPick={(idu) => resoudre(idu, iduCourt(idu))}
           onChanger={clearRepliques} />
       )}
-      {/* DA-FIX-2 Lot 2 (DA-002) — LE clic-carte, un seul rendu partout : séparateur « ou » +
-          Bouton secondaire. Toujours offert (les deux gestes). Une parcelle déjà cliquée sur la
-          carte s'utilise d'un clic ; sinon le libellé invite au geste. Plus de phrase texte. */}
-      {withCarte && (
-        <>
-          <div className="flex items-center gap-2 text-[10px] text-txt-dim" aria-hidden="true">
-            <span className="h-px flex-1 bg-line-2" />ou<span className="h-px flex-1 bg-line-2" />
-          </div>
-          <Bouton data-parcelinput-carte niveau="secondaire" ton="vert" className="w-full"
-            onClick={() => { if (selectedIdu) { clearRepliques(); onPick(selectedIdu) } }}>
-            {selectedIdu ? `Utiliser la parcelle sélectionnée (${selectedIdu.slice(8)})` : 'Cliquez une parcelle sur la carte'}
-          </Bouton>
-        </>
+      {/* RETOURS-15 S2/S4 — plus de bouton « Utiliser la parcelle sélectionnée » : le clic carte agit
+          directement (l'effet ci-dessus le consomme). Il ne reste qu'une INVITE discrète au second
+          geste ; elle DISPARAÎT dès qu'une parcelle est résolue par la barre (réapparaît si vidé). */}
+      {withCarte && !resolu && (
+        <div data-parcelinput-carte className="flex items-center gap-2 rounded-md border border-dashed border-line-2 bg-surface-2/40 px-3 py-2 text-[11px] text-txt-dim">
+          <span aria-hidden="true">◎</span> ou cliquez une parcelle sur la carte
+        </div>
       )}
     </div>
   )

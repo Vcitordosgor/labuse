@@ -5,7 +5,8 @@ import { getParcelGeojson, getParcelsGeojson, getParcellaireEpoque, parcelAt } f
 import { useApp } from '../../store/useApp'
 import { BASEMAP_SOURCES, basemapLabel, TEMPS_MILLESIMES, type BasemapDef } from '../map/basemaps'
 import { Chip } from '../ui/Chip'
-import { HistoireFrise } from './HistoireFrise'
+// RETOURS-15 C2 — la frise du bas (ventes/permis/propriétaire/découpe) est retirée : HistoireFrise n'est
+// plus rendue par le comparateur.
 
 const SP_BOUNDS: [number, number, number, number] = [55.21, -21.14, 55.35, -20.97]
 
@@ -30,7 +31,9 @@ function applyBasemap(m: maplibregl.Map, def: BasemapDef) {
     if (m.getLayer('bm')) m.removeLayer('bm')
     if (m.getSource('bm')) m.removeSource('bm')
     m.addSource('bm', { type: 'raster', tiles: def.tiles, tileSize: 256, attribution: def.attribution, maxzoom: def.maxzoom ?? 19 })
-    m.addLayer({ id: 'bm', type: 'raster', source: 'bm' }, m.getLayer('p') ? 'p' : undefined)
+    // RETOURS-15 C2 — le raster ortho reste SOUS le parcellaire (contours au-dessus), puis sous 'p'.
+    const below = m.getLayer('parcellaire') ? 'parcellaire' : m.getLayer('p') ? 'p' : undefined
+    m.addLayer({ id: 'bm', type: 'raster', source: 'bm' }, below)
   }
   if (m.isStyleLoaded()) add()
   else m.once('load', add)
@@ -117,6 +120,13 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
     }
     past.on('click', onPick); now.on('click', onPick)
     const addParcels = (m: maplibregl.Map) => m.on('load', () => {
+      // RETOURS-15 C2 — LE PARCELLAIRE ET SES CONTOURS comme dans la vue Ortho de l'accueil : mêmes
+      // tuiles vectorielles (`parcels-ile`, /map/tiles), même contour discret sur l'ortho. Rendu sous
+      // le contour blanc de la parcelle étudiée. Fonctionne sans commune (tuiles île, pas de GeoJSON).
+      m.addSource('parcels-ile', { type: 'vector', minzoom: 9, maxzoom: 15,
+        tiles: [`${window.location.origin}/map/tiles/{z}/{x}/{y}.pbf`] })
+      m.addLayer({ id: 'parcellaire', type: 'line', source: 'parcels-ile', 'source-layer': 'parcels',
+        paint: { 'line-color': '#ECF5EF', 'line-width': 0.5, 'line-opacity': 0.4 } })
       m.addSource('p', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } as never })
       m.addLayer({ id: 'p', type: 'line', source: 'p',
         filter: ['in', ['get', 'status'], ['literal', ['chaude', 'a_surveiller', 'a_creuser']]],
@@ -305,7 +315,6 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
         </div>
       )}
     </div>
-    {pinIdu && <HistoireFrise idu={pinIdu} />}
     </div>
   )
 }

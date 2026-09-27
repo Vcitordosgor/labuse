@@ -10,7 +10,7 @@ import {
 import { AddressAutocomplete } from '../AddressAutocomplete'
 import { ParcelInput } from '../ParcelInput'
 import { TEMPS_MILLESIMES } from '../map/basemaps'
-import { fmtEurCompact, fmtInt } from '../../lib/format'
+import { fmtInt } from '../../lib/format'
 import { iduComplet, iduCourt, estIdu } from '../../lib/format'
 import { permisIncoherenceNote } from '../../lib/permis'
 import { pointInPolygon } from '../../lib/geo'
@@ -54,6 +54,8 @@ import { ListPaginationFooter, PAGE_SIZE } from '../ListPagination'
 import { Bouton } from '../ui/Bouton'
 import { Case } from '../ui/Case'
 import { Retour } from '../ui/Retour'
+import { Chevron } from '../ui/Chevron'
+import { Chip } from '../ui/Chip'
 
 /* ───────── primitives partagées (doctrine module : violet, bandeau honnête, liste→fiche) ───────── */
 
@@ -269,43 +271,46 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
           ) : (
             <>
               <div className="truncate text-xs font-medium text-txt-hi">{d['nom'] as string}</div>
-              {/* RETOURS-5 T4.1 — les chiffres qui comptent, en grille de cartes. Rien d'autre au 1er niveau.
-                  OUTILS-FIX-4 A2 — la VALORISATION du foncier nu (valorisation_nu_eur, calculée par le moteur)
-                  n'était servie que dans le tiroir « Détail » : on la remonte dans le bloc de synthèse, À CÔTÉ
-                  de « m² SDP résiduelle », avec son statut (Estimé). 3 cartes si pas de valorisation (hors
-                  U/AU ou sans marché), 4 si présente — jamais un « 0 € » trompeur (la carte disparaît). */}
-              <div className={`grid gap-2 ${d['valorisation_nu_eur'] != null ? 'grid-cols-2' : 'grid-cols-3'}`}>
+              {/* RETOURS-15 B5 (P10) — 4 chiffres FACTUELS et sourcés pour notaires / agences / apporteurs /
+                  architectes (plus « actionnables » ni « valorisation », qui parlaient au promoteur). La SDP
+                  résiduelle n'est plus un chiffre-titre : elle reste visible parcelle par parcelle dans la liste. */}
+              <div className="grid grid-cols-2 gap-2">
                 {[
                   { v: fmt(d['n_parcelles'] as number), lbl: 'parcelles' },
-                  { v: fmt(d['n_actionnables'] as number), lbl: 'actionnables' },
-                  { v: fmt(d['sdp_residuelle_m2'] as number), lbl: 'm² SDP résiduelle' },
-                  ...(d['valorisation_nu_eur'] != null
-                    ? [{ v: fmtEurCompact(d['valorisation_nu_eur'] as number), lbl: 'valorisation foncier nu', estime: true }]
-                    : []),
+                  { v: `${(((d['surface_totale_m2'] as number) ?? 0) / 1e4).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} ha`, lbl: 'surface totale' },
+                  { v: `${fmt(d['n_terrains_nus'] as number)} / ${fmt(d['n_terrains_batis'] as number)}`, lbl: 'terrains nus / bâtis' },
+                  { v: fmt(d['n_constructible_u_au'] as number), lbl: 'en zone U ou AU' },
                 ].map((c) => (
                   <div key={c.lbl} data-m02-kpi className="min-w-0 rounded-lg border border-line-2 bg-surface-2 px-2.5 py-2.5">
                     <div className="num-key whitespace-nowrap text-[16px] tabular-nums text-mint">{c.v}</div>
-                    <div className="mt-0.5 flex items-baseline gap-1 text-[10px] leading-tight text-txt-mut">
-                      <span>{c.lbl}</span>
-                      {c.estime && <span data-m02-valo-estime className="shrink-0 rounded-sm border border-st-creuser/40 bg-st-creuser/10 px-1 text-[8.5px] font-medium text-st-creuser">Estimé</span>}
-                    </div>
+                    <div className="mt-0.5 text-[10px] leading-tight text-txt-mut">{c.lbl}</div>
                   </div>
                 ))}
               </div>
-              {/* RETOURS-5 T4.2 — le reste REPLIÉ : détail des actionnables, périmètre, nature (la valorisation
-                  a rejoint le bloc de synthèse ci-dessus, OUTILS-FIX-4 A2 — on ne la répète pas ici). */}
-              <details className="text-xs">
-                <summary className="cursor-pointer list-none py-1.5 text-[11.5px] text-txt-dim marker:hidden hover:text-mint">Détail et méthode ▾</summary>
-                <div className="flex flex-col">
-                  {/* CONNEXIONS-2 Lot 4 (KO-10) — « hors écartées par vous » SEULEMENT si ce compte a écarté
-                      des parcelles (projets/pistes). Sinon « actionnables » sans mention (pas de faux ami). */}
-                  <div className="flex justify-between gap-3 py-1 text-[11.5px] text-txt-mut"><span>Actionnables</span><span><b className="text-txt">{fmt(d['n_actionnables'] as number)}</b>{d['hors_ecartees_par_vous'] ? ` hors ${fmt(d['n_ecartees_par_vous'] as number)} écartée(s) par vous` : ''}</span></div>
-                  <div className="flex justify-between gap-3 py-1 text-[11.5px] text-txt-mut"><span>Périmètre valorisation</span><span className="text-txt-dim">zones U/AU · DVF terrains</span></div>
-                  <div className="flex justify-between gap-3 py-1 text-[11.5px] text-txt-mut"><span>Nature</span><span className="text-txt-dim">estimation indicative</span></div>
-                </div>
-              </details>
             </>
           )}
+          {/* RETOURS-15 C9 — pont Blocs fonciers : les GROUPES de parcelles contiguës du propriétaire
+              (même moteur que l'outil Blocs, table parcel_blocs). Ligne « Blocs contigus : N » + les
+              groupes cliquables (→ fiche de leur parcelle représentative). */}
+          {(() => {
+            const bc = d['blocs_contigus'] as { n: number; items: { bloc_id: number; n_parcelles: number; surface_m2: number; communes: string[]; sdp_residuelle_m2: number; idu_repr: string | null }[] } | undefined
+            if (!bc || bc.n === 0) return null
+            return (
+              <div data-m02-blocs className="rounded-lg border border-line-2 bg-surface-2 px-2.5 py-1.5">
+                <div className="text-[11px] font-medium text-txt-mut">Blocs contigus : <b className="text-txt">{fmt(bc.n)}</b></div>
+                <div className="mt-1 flex flex-col gap-0.5">
+                  {bc.items.map((bl) => (
+                    <button key={bl.bloc_id} data-m02-bloc
+                      onClick={() => bl.idu_repr && useApp.getState().focusParcelle(bl.idu_repr, { fiche: true })}
+                      className="hover-fill flex items-baseline justify-between gap-2 rounded px-1.5 py-0.5 text-left text-[10.5px] text-txt-mut transition-colors duration-quick">
+                      <span><b className="text-txt">{fmt(bl.n_parcelles)}</b> parcelles · {(bl.communes ?? []).join(', ')}</span>
+                      <span className="tnum shrink-0 text-txt-dim">{fmt(bl.surface_m2)} m²</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )
+          })()}
           {/* RETOURS-12 O5 — en fusion (ScanPatrimoine), « Voir ses parcelles → » REPLIE le bandeau pour
               ouvrir la liste (les opérations restent dans l'onglet « Construction »). Hors fusion (M02
               seul), le pont historique « Voir ses opérations → » vers Veille promoteurs est conservé. */}
@@ -624,6 +629,8 @@ export function M03() {
   // permis ouvrait d'office le 1er permis (l'utilisateur ne voyait pas le compte). Désormais on affiche
   // TOUJOURS une phrase de résultat (0 / X permis) et on laisse le client cliquer les points sur la carte.
   const [parcelIdu, setParcelIdu] = useState<string | null>(null)
+  // RETOURS-15 B1 — le bloc « N permis à moins de 200 m… » est un ACCORDÉON repliable, ouvert par défaut.
+  const [resProximiteOuvert, setResProximiteOuvert] = useState(true)
   // RECHERCHE-2 Lot 2 — propriétaire choisi dans la barre permis → sous-panneau de ses parcelles.
   const [permisOwner, setPermisOwner] = useState<{ siren: string; nom: string } | null>(null)
   const qParcelPermis = useQuery({ queryKey: ['parcelle-permis-search', parcelIdu],
@@ -735,6 +742,9 @@ export function M03() {
           // le focus B demandé ici → la carte ne bougeait pas (constat Vic). On lève la sélection stale pour
           // que la barre RECENTRE TOUJOURS sur la parcelle choisie, qu'une fiche soit ouverte ou non.
           onSelect={(sel) => { if (sel.idu) { const c = iduComplet(sel.idu); select(null); focusParcelle(c); setParcelIdu(c) } else setFlyTo({ center: [sel.lon, sel.lat], zoom: 15 }) }}
+          // RETOURS-15 B1 — « le mot effacer disparaît ; vider le champ suffit » : vider la barre lève la
+          // parcelle ciblée (et donc le bloc de proximité et les points de la carte).
+          onClear={() => setParcelIdu(null)}
           onEnterRaw={(t) => {
             const v = iduComplet(t)
             // RETOURS-12 O12.2 — IDU cadastral complet (14 car.) → la carte ZOOME et DÉLIMITE la parcelle
@@ -769,17 +779,33 @@ export function M03() {
           const nonLoc = items.length - loc
           const nonLocTxt = nonLoc > 0 ? ` (${fmt(nonLoc)} non localisé${nonLoc > 1 ? 's' : ''}, sans point sur la carte)` : ''
           const vide = items.length === 0
+          const ton = loc === 0 ? 'border-st-creuser/40 bg-st-creuser/10 text-st-creuser' : 'border-mint/50 bg-mint/10 text-mint'
+          // RETOURS-15 B1 — ACCORDÉON (Chevron de la charte), ouvert par défaut, repliable. En-tête =
+          // le compte (toujours visible) ; corps repliable = le détail « cliquez les points ». Plus de
+          // lien « effacer » (vider le champ suffit → onClear).
+          const titre = vide
+            ? <>Aucun permis à moins de 200 m de <span className="font-mono">{iduCourt(parcelIdu)}</span></>
+            : loc === 0
+              ? <><b className="tnum">{fmt(nonLoc)}</b> permis à moins de 200 m de <span className="font-mono">{iduCourt(parcelIdu)}</span>, non localisés</>
+              : <><b className="tnum">{fmt(loc)}</b> permis à moins de 200 m de <span className="font-mono">{iduCourt(parcelIdu)}</span></>
           return (
-            <p data-permis-parcelle-resultat {...(loc === 0 ? { 'data-permis-parcelle-vide': '1' } : {})}
-              className={`mt-1 rounded-lg border px-3 py-2 text-[11px] leading-snug ${loc === 0
-                ? 'border-st-creuser/40 bg-st-creuser/10 text-st-creuser' : 'border-mint/50 bg-mint/10 text-mint'}`}>
-              {vide
-                ? <>Aucun permis à moins de 200 m de cette parcelle <span className="font-mono">{iduCourt(parcelIdu)}</span> sur les {Math.max(...MONTHS_RADAR)} derniers mois{donneesJusquAu ? ` (Sitadel au ${donneesJusquAu})` : ''}.</>
-                : loc === 0
-                  ? <><b className="tnum">{fmt(nonLoc)}</b> permis à moins de 200 m de cette parcelle <span className="font-mono">{iduCourt(parcelIdu)}</span>, non localisés — aucun point à afficher.</>
-                  : <><b className="tnum">{fmt(loc)}</b> permis à moins de 200 m de cette parcelle <span className="font-mono">{iduCourt(parcelIdu)}</span> — cliquez les points sur la carte{nonLocTxt}.</>}
-              <Bouton niveau="lien" onClick={() => setParcelIdu(null)} className="ml-2">effacer</Bouton>
-            </p>
+            <div data-permis-parcelle-resultat {...(loc === 0 ? { 'data-permis-parcelle-vide': '1' } : {})}
+              className={`mt-1 rounded-lg border text-[11px] leading-snug ${ton}`}>
+              <button type="button" data-permis-proximite-toggle onClick={() => setResProximiteOuvert((o) => !o)}
+                className="flex w-full items-center gap-2 px-3 py-2 text-left">
+                <Chevron open={resProximiteOuvert} />
+                <span className="min-w-0 flex-1">{titre}</span>
+              </button>
+              {resProximiteOuvert && (
+                <div className="-mt-0.5 px-3 pb-2 pl-[30px]">
+                  {vide
+                    ? <>sur les {Math.max(...MONTHS_RADAR)} derniers mois{donneesJusquAu ? ` (Sitadel au ${donneesJusquAu})` : ''}.</>
+                    : loc === 0
+                      ? <>aucun point à afficher.</>
+                      : <>cliquez les points sur la carte{nonLocTxt}.</>}
+                </div>
+              )}
+            </div>
           )
         })()}
       </div>
@@ -1177,30 +1203,22 @@ export function M08() {
       ) : (
       <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
         <p className="label-caps text-[9.5px]">L'année à revoir (avant)</p>
-        {/* FRISE des millésimes — l'« avant » se choisit le long d'une frise chronologique ; l'« après »
-            est épinglé à droite sur aujourd'hui (verrouillé). Seuls les millésimes servant réellement
-            des dalles sur le 974 y figurent (TEMPS_MILLESIMES, vérifiés par GetTile). */}
-        <div data-temps-frise className="mt-2">
-          <div className="flex items-end gap-0.5">
-            {TEMPS_MILLESIMES.map((m) => {
-              const on = cmpLeft === m.key
-              return (
-                <button key={m.key} data-cmp-left={m.key} onClick={() => setCmpLeft(m.key)}
-                  aria-pressed={on}
-                  className="group flex flex-1 flex-col items-center gap-1 pt-0.5">
-                  <span className={`font-mono text-[10px] leading-none ${on ? 'text-mint' : 'text-txt-dim group-hover:text-txt'}`}>{m.an}</span>
-                  <span className={`h-2.5 w-2.5 rounded-full border ${on ? 'border-mint bg-mint' : 'border-line-2 bg-transparent group-hover:border-txt-mut'}`} />
-                </button>
-              )
-            })}
-            {/* borne « après » = aujourd'hui, verrouillée */}
-            <div className="flex flex-1 flex-col items-center gap-1 pt-0.5">
-              <span className="font-mono text-[10px] leading-none text-txt-dim">Auj.</span>
-              <span className="h-2.5 w-2.5 rounded-full border border-dashed border-txt-dim bg-transparent" />
-            </div>
-          </div>
-          {/* rail de la frise */}
-          <div className="mt-1 h-px bg-line-2" />
+        {/* RETOURS-15 C2 (P16) — une rangée de Chip par millésime (lisible, sans troncature : flex-wrap),
+            le millésime actif en vert plein (Chip on). « Aujourd'hui » est la borne « après » verrouillée. */}
+        <div data-temps-frise className="mt-2 flex flex-wrap gap-1.5">
+          {TEMPS_MILLESIMES.map((m) => {
+            // libellé COURT : « 1950 », « 1980 », « 2000 »… ; les cartes anciennes (SCAN 50 / EduGéo)
+            // gardent leur année + « (carte) » pour ne pas se confondre avec l'ortho de la même décennie.
+            const carte = m.an.startsWith('scan') || m.an.startsWith('edugeo')
+            const court = m.an.replace('scan', '').replace('edugeo', '')
+            return (
+              <Chip key={m.key} data-cmp-left={m.key} on={cmpLeft === m.key} ton="vert"
+                aria-label={m.label} onClick={() => setCmpLeft(m.key)}>
+                {court}{carte ? ' (carte)' : ''}
+              </Chip>
+            )
+          })}
+          <Chip data-cmp-aujourdhui on disabled ton="vert" aria-label="Aujourd'hui (verrouillé)">Aujourd'hui</Chip>
         </div>
         <p className="mt-2 text-[11px] text-txt">
           <span className="text-mint">{TEMPS_MILLESIMES.find((m) => m.key === cmpLeft)?.label ?? '—'}</span>
@@ -1709,23 +1727,10 @@ export function M10() {
    Le nom ne promet pas l'exhaustivité (pas de « contrôle complet » / « due diligence »). */
 function Risques() {
   const selectedIdu = useApp((s) => s.selectedIdu)
-  // depuis une fiche (parcelle sélectionnée) → entrée détail ; sinon libre choix, détail par défaut.
-  const [entree, setEntree] = useState<'parcelle' | 'lot'>('parcelle')
-  return (
-    <>
-      <div data-risques-entrees className="flex gap-1">
-        {([['parcelle', 'Une parcelle'], ['lot', 'Un lot']] as const).map(([k, lbl]) => (
-          <button key={k} data-risques-entree={k} onClick={() => setEntree(k)}
-            className={`flex-1 rounded-lg border px-2 py-1 text-[11px] font-medium transition-colors duration-quick ${
-              entree === k ? 'border-mint/60 bg-mint/10 text-mint' : 'border-line-2 text-txt-mut hover:text-txt'}`}>
-            {lbl}
-          </button>
-        ))}
-      </div>
-      {/* parcelle : servitudes détail + NON COUVERT ; lot : risque + checklist + NON COUVERT reporté */}
-      {entree === 'parcelle' ? <O5Servitudes key={selectedIdu ?? 'o5'} /> : <M10 />}
-    </>
-  )
+  // RETOURS-15 B8 (P14) — le mode « Un lot » est RETIRÉ : l'outil ne fait plus que « Une parcelle »
+  // (plus de bascule d'entrée). M10 (le flux lot) reste exporté pour son test unitaire, mais n'est
+  // plus câblé à l'outil.
+  return <O5Servitudes key={selectedIdu ?? 'o5'} />
 }
 
 

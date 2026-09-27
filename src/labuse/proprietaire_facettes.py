@@ -102,7 +102,12 @@ def autocomplete(db: Session, q: str, commune: str | None = None, limit: int = 1
     q = (q or "").strip()
     if len(q) < 2:
         return []
-    join = " JOIN parcels p ON p.idu = pm.idu AND p.commune = :com" if commune else ""
+    # RETOURS-15 B5 (P10) — le compte DOIT être le MÊME que l'outil Scan patrimoine et
+    # /patrimoine/search (GB-007) : JOIN parcels TOUJOURS. Sans lui, l'autocomplétion comptait les
+    # lignes MAJIC dont l'IDU n'a plus de parcelle (CBO TERRITORIA : 1871 en base, 1833 sur la trame
+    # cadastrale) → la suggestion disait « 1871 » et l'outil « 1833 ». Un seul chiffre : 1833.
+    join = (" JOIN parcels p ON p.idu = pm.idu AND p.commune = :com" if commune
+            else " JOIN parcels p ON p.idu = pm.idu")
     prm = {"q": f"%{q}%", "lim": limit}
     if commune:
         prm["com"] = commune

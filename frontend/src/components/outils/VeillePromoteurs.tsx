@@ -16,7 +16,6 @@ import { AddressAutocomplete } from '../AddressAutocomplete'   // RETOURS-3 R4.2
 import { OwnerParcelles } from '../OwnerParcelles'   // RECHERCHE-2 Lot 2 — propriétaire → ses parcelles
 import { CollecteProgrammes } from '../admin/Programmes'   // LOT S1 — geste admin discret réutilisant la collecte
 import { Bouton } from '../ui/Bouton'
-import { Retour } from '../ui/Retour'   // DA-FIX-5 P6 — retour unique
 import { Chevron } from '../ui/Chevron'
 
 const CAT_LABEL: Record<string, string> = { promoteur: 'Promoteur', bailleur: 'Bailleur social', sem: 'SEM' }
@@ -97,9 +96,9 @@ export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine, onCou
   const [veilleOwner, setVeilleOwner] = useState<{ siren: string; nom: string } | null>(null)
   // ADMIN-1 (AD3) — MODE STRICT : quand un propriétaire est choisi (Scan patrimoine embarqué + focusSiren),
   // on ne montre QUE ses opérations — aucun filtre commune/catégorie, aucun total de l'île, pas de champ
-  // « se positionner ». L'exploration générale reste accessible via « Explorer toutes les opérations → ».
-  const [explorer, setExplorer] = useState(false)
-  const strict = !!(embedded && focusSiren) && !explorer
+  // « se positionner ». RETOURS-15 B5 — l'exploration générale n'est plus un lien in-onglet (« Explorer
+  // toutes les opérations → », retiré) : c'est la seconde PORTE de l'accueil de Scan patrimoine.
+  const strict = !!(embedded && focusSiren)
   // pont entrant : ouvrir la frise du SIREN ciblé. Embarqué → `focusSiren` (fusion) ; autonome → store (consommé).
   const effFocus = embedded ? (focusSiren ?? null) : storeFocus
   useEffect(() => {
@@ -127,15 +126,15 @@ export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine, onCou
     enabled: !!ownerSiren,
   })
 
-  // LOT S1 (compteur d'onglet réel) — le parent (Scan patrimoine) affiche « Ce qu'ils construisent (N) ».
-  // N = opérations servies + programmes publiés collectés pour ce propriétaire. Remonté SEULEMENT quand
-  // les deux chiffres sont connus (sinon null → le parent n'affiche pas de compteur, aucun chiffre inventé).
+  // RETOURS-15 B5 (P11) — le compteur de l'onglet « Construction » = le nombre d'OPÉRATIONS servies,
+  // celui-là même que l'onglet AFFICHE (« N opérations »). Avant : opérations + programmes publiés →
+  // un « (30) » qui ne correspondait ni aux 21 opérations listées ni aux permis (constat Vic). Un
+  // seul chiffre, cohérent avec ce qu'on voit ; les programmes restent listés, sans gonfler le badge.
   const nOperations = d?.n_total ?? null
-  const nProgrammes = progs.data?.n ?? (ownerSiren ? null : 0)
   useEffect(() => {
     if (!onCount) return
-    onCount(nOperations == null || nProgrammes == null ? null : nOperations + nProgrammes)
-  }, [onCount, nOperations, nProgrammes])
+    onCount(nOperations)
+  }, [onCount, nOperations])
 
   // ADMIN-1 (AD3) — sous-titre du mode strict : période RÉELLE des permis (plus ancienne année vue) +
   // millésime Sitadel. Aucun chiffre inventé : dérivé des opérations servies.
@@ -243,13 +242,6 @@ export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine, onCou
           </div>
         </>
       )}
-      {/* mode STRICT actif → lien vers l'exploration générale ; mode exploration (depuis un proprio) → retour. */}
-      {embedded && focusSiren && (
-        strict
-          ? <Bouton niveau="lien" data-vp-explorer onClick={() => setExplorer(true)} className="w-fit">Explorer toutes les opérations de l'île →</Bouton>
-          : <Retour data-vp-retour-proprio label="revenir à ce propriétaire" onClick={() => setExplorer(false)} />   /* DA-FIX-5 P6 — retour unifié */
-      )}
-
       {q.isLoading && <Squelette lignes={6} className="mt-4" />}
       {d && (
         <>

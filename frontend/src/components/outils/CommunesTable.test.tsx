@@ -58,11 +58,12 @@ describe('COMMUNES — O6Comparateur (table des 24 communes)', () => {
     for (const el of screen.getAllByText('Fiche →')) expect(el.className).toContain('hover-jaune')
   })
 
-  it('meilleure valeur en vert : stock MAX (318) et instruction MIN (8)', async () => {
+  it('meilleure valeur en vert : instruction MIN (8) ; colonne « Parcelles à potentiel » retirée (B2)', async () => {
     const { container } = renderO6()
     await screen.findByText('Saint-Paul')
-    const bestStock = [...container.querySelectorAll('[data-o6-cell="stock"]')].find((el) => el.textContent === '318')
-    expect(bestStock?.className).toContain('text-mint')
+    // RETOURS-15 B2 — la colonne « Parcelles à potentiel » (stock) est retirée du comparateur.
+    expect(container.querySelectorAll('[data-o6-cell="stock"]').length).toBe(0)
+    expect(container.querySelector('[data-o6-tri="stock"]')).toBeNull()
     const bestInstr = [...container.querySelectorAll('[data-o6-cell="velocite"]')].find((el) => el.textContent === '8')
     expect(bestInstr?.className).toContain('text-mint')
     // les prix restent NEUTRES (pas de faux signal bon/mauvais)

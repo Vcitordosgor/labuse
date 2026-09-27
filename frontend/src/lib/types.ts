@@ -737,7 +737,8 @@ export interface EtudeZoneResult {
   detail?: string
   minutes: number
   mode: 'pied' | 'voiture'
-  entree?: 'point' | 'polygone'
+  entree?: 'point' | 'polygone' | 'rayon'   // RETOURS-15 B9 — ampleur par rayon (défaut)
+  rayon_km?: number | null
   surface_ha?: number | null
   adresse?: string | null
   geom?: { type: 'Polygon' | 'MultiPolygon'; coordinates: number[][][] | number[][][][] }

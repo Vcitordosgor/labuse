@@ -49,7 +49,7 @@ const ROWS: Row[] = [
       if (!bm) return <span className="text-txt-dim">—</span>
       const sm = signalMeta(r.signal_niveau)
       return (
-        <span className="inline-flex flex-wrap items-center gap-1.5">
+        <span className="inline-flex flex-nowrap items-center gap-1.5">
           <span className="rounded px-1.5 py-0.5 text-[10px] font-semibold" style={{ backgroundColor: `${bm.color}22`, color: bm.color }}>{bm.label}</span>
           {sm && <span className="rounded px-1 py-0.5 text-[9px] font-medium" style={{ backgroundColor: `${sm.color}1F`, color: sm.color }}>{sm.label}</span>}
         </span>
@@ -213,7 +213,9 @@ export function ComparePanel() {
 
   return (
     <div data-compare-panel className="absolute inset-0 z-40 flex items-center justify-center bg-black/50 p-6">
-      <div className="floating flex max-h-full w-full max-w-[880px] flex-col overflow-hidden">
+      {/* RETOURS-15 B7 (P13) — le tableau s'élargit à la largeur disponible (880 → 1240 px) pour que
+          chaque libellé et chaque valeur tiennent sur UNE ligne à 1440 px (whitespace-nowrap plus bas). */}
+      <div className="floating flex max-h-full w-full max-w-[1240px] flex-col overflow-hidden">
         <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
           <p className="label-caps">Comparer les parcelles ({compareIdus.length}/3)</p>
           <div className="flex items-center gap-3 text-[11px]">
@@ -237,7 +239,7 @@ export function ComparePanel() {
             <table className="w-full border-collapse text-[12px]">
               <thead>
                 <tr>
-                  <th className="w-[150px] p-2" />
+                  <th className="w-[220px] p-2" />
                   {parcels.map((r) => {
                     return (
                       <th key={r.idu} data-compare-col className="border-l border-line p-2 align-top">
@@ -269,7 +271,7 @@ export function ComparePanel() {
                   const winners = bestIdx(row, parcels)   // O9(d) — cellules gagnantes de la ligne
                   return (
                     <tr key={row.label} className="border-t border-line">
-                      <td className="p-2 text-[10.5px] uppercase tracking-wide text-txt-dim">
+                      <td className="whitespace-nowrap p-2 text-[10.5px] uppercase tracking-wide text-txt-dim">
                         {row.title
                           ? <span className="cursor-help border-b border-dotted border-line-2">{row.label}</span>
                           : row.label}
@@ -278,7 +280,7 @@ export function ComparePanel() {
                       {parcels.map((r, i) => {
                         const win = winners.has(i)   // vert = meilleure valeur (comme la table Communes)
                         return (
-                          <td key={r.idu} className={`border-l border-line p-2 ${win ? 'font-semibold text-mint' : 'text-txt'}`}>
+                          <td key={r.idu} className={`whitespace-nowrap border-l border-line p-2 ${win ? 'font-semibold text-mint' : 'text-txt'}`}>
                             {row.render ? row.render(r) : row.val(r)}
                           </td>
                         )

@@ -344,12 +344,16 @@ interface AppState {
   toggleOutils: () => void
   selectedIdu: string | null
   select: (idu: string | null) => void
-  // RETOURS-12 O1/O12/J1 — FOCUS PARCELLE : zoome + met en surbrillance la parcelle sur la carte
-  // SANS ouvrir la fiche (contrairement à `select`). Geste commun réutilisé par « Étudier un bien »,
-  // « Permis » et l'œil ambre des Projets. `ortho` : bascule le fond en orthophoto (J1).
+  // RETOURS-12 O1/O12/J1 — FOCUS PARCELLE : zoome + met en surbrillance la parcelle sur la carte.
+  // Geste commun réutilisé par « Étudier un bien », « Permis » et l'œil ambre des Projets. `ortho` :
+  // bascule le fond en orthophoto (J1).
+  // RETOURS-15 S3 — LA fonction unique « aller à une parcelle » : zoom + contour surligné (liseré de
+  // la vue Ortho, via `cible = selectedIdu ?? focusIdu`) + ouverture de la fiche quand `fiche:true`
+  // (clic d'un IDU dans une liste, résolution d'adresse d'un outil qui veut la fiche). `fiche:false`
+  // (défaut) = zoom + contour SANS fiche (résolution dans Gabarit/Taxe…, point Permis).
   focusIdu: string | null
   focusNonce: number                    // ré-déclenche le zoom même si l'idu est identique
-  focusParcelle: (idu: string | null, opts?: { ortho?: boolean }) => void
+  focusParcelle: (idu: string | null, opts?: { ortho?: boolean; fiche?: boolean }) => void
   // M55-L point 5 — verdict À LA DEMANDE : la fiche s'ouvre sur un bouton « Demander l'analyse
   // LABUSE » ; au clic, le bloc verdict se déploie. Choix MÉMORISÉ PAR PARCELLE pour la SESSION
   // (jamais persisté) : rouvrir la même fiche ne redemande pas le clic ; nouvelle session = retour
@@ -748,13 +752,19 @@ export const useApp = create<AppState>((set, get) => ({
   // sur 'cartes' pour que la carte soit visible ; option ortho (J1). `focusIdu` réamorcé même valeur.
   focusIdu: null,
   focusNonce: 0,
-  focusParcelle: (idu, opts) => set((s) => ({
-    focusIdu: idu === '' || idu === 'undefined' ? null : idu,
-    view: 'cartes', outilsOpen: false,
-    ...(opts?.ortho ? { basemap: 'ortho' as const } : {}),
-    // ré-déclencher l'effet carte même si l'idu est identique : un compteur nonce.
-    focusNonce: (s.focusNonce ?? 0) + 1,
-  })),
+  focusParcelle: (idu, opts) => set((s) => {
+    const clean = idu === '' || idu === 'undefined' ? null : idu
+    return {
+      focusIdu: clean,
+      view: 'cartes', outilsOpen: false,
+      ...(opts?.ortho ? { basemap: 'ortho' as const } : {}),
+      // RETOURS-15 S3 — `fiche:true` ouvre la fiche (select) : selectedIdu pilote le contour (cible)
+      // ET le rendu de l'overlay Fiche ; fermer la fiche commune pour ne pas coexister (cf. `select`).
+      ...(opts?.fiche ? { selectedIdu: clean, contexteCommune: null } : {}),
+      // ré-déclencher l'effet carte même si l'idu est identique : un compteur nonce.
+      focusNonce: (s.focusNonce ?? 0) + 1,
+    }
+  }),
   verdictRevele: {},
   revelerVerdict: (idu) => set((s) => ({ verdictRevele: { ...s.verdictRevele, [idu]: true } })),
   analyseReplie: {},

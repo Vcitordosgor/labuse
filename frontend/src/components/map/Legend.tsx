@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useState, type ReactNode } from 'react'
 import { LEGEND_ORDER, LEGEND_V2_ORDER, STATUT_META, TIER_V2_META, ZONE_FAM_META, ZONE_FAM_ORDER } from '../../lib/status'
-import { PERMIS_LEGENDE } from '../../lib/permisEtats'
 import { useApp } from '../../store/useApp'
 import { Tip } from '../Tip'
 import { ChevronSection } from '../panel/ChevronSection'
@@ -54,7 +53,6 @@ export function Legend({ inline = false }: { inline?: boolean }) {
   const verdict = useApp((s) => s.verdict)
   const analyse = useApp((s) => s.filters.analyseLabuse)
   const peint = useApp((s) => s.mapPeint)
-  const moduleActif = useApp((s) => s.module)
   const v2 = useV2Actif()
   const [leg, setLeg] = useState(readLeg)
   const set = (v: typeof leg) => { setLeg(v); writeLeg(v) }
@@ -70,18 +68,8 @@ export function Legend({ inline = false }: { inline?: boolean }) {
 
   // SECTEUR-1 (S4) — les GROUPES actifs, dans l'ordre. Seuls ceux réellement peints apparaissent.
   const groupes: { id: string; titre: ReactNode; note?: string; body: ReactNode }[] = []
-  // RETOURS-17 W3 — l'outil Permis peint des points colorés PAR ÉTAT : la légende dit les trois couleurs
-  // (Récent vert · Dormant corail · Achevé/Autre gris), MÊME source que les pastilles du panneau.
-  if (moduleActif === 'permis' || moduleActif === 'promesses') groupes.push({
-    id: 'permis', titre: 'Permis (par état)',
-    note: 'Achevé et Autre partagent le même gris ; le panneau les distingue par leur compte.',
-    body: <div className="flex flex-col gap-1.5">{PERMIS_LEGENDE.map((e) => (
-      <div key={e.key} data-legend-permis={e.key} className="flex items-center gap-2">
-        <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: e.color }} />
-        <span className="text-[11px] text-txt">{e.label}</span>
-      </div>
-    ))}</div>,
-  })
+  // RETOURS-15 B1 (P2) — la légende « Permis (par état) » est RETIRÉE de la carte (demande Vic).
+  // Les points restent colorés par état ; le panneau « Filtrer par état » porte déjà les couleurs.
   if (verdictPeint) groupes.push({
     id: 'verdict',
     titre: v2 ? 'Verdict · Classement servi' : 'Verdict · Classement historique',

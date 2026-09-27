@@ -31,6 +31,8 @@ import { Bouton } from '../ui/Bouton'
 import { Chevron } from '../ui/Chevron'
 
 const TEMPS = [5, 10, 15]
+// RETOURS-15 B9 — l'AMPLEUR par défaut : un rayon en km (cercle exact tracé sur la carte).
+const RAYONS = [0.5, 1, 2, 5]
 
 function nb(n: number | null | undefined): string {
   return n == null ? '—' : n.toLocaleString('fr-FR')
@@ -60,6 +62,9 @@ export function EtudeZone() {
   const [cible, setCible] = useState<{ idu: string; label: string } | null>(null)
   const [mode, setMode] = useState<'voiture' | 'pied'>('voiture')
   const [minutes, setMinutes] = useState(10)
+  // RETOURS-15 B9 — l'ampleur : RAYON en km par défaut ; « temps de trajet » en option secondaire.
+  const [ampleur, setAmpleur] = useState<'rayon' | 'temps'>('rayon')
+  const [rayonKm, setRayonKm] = useState(1)
   // DESTINATIONS-1 (X4.1) — sous-destination R151-28 choisie (facultative) : verdict par zone PLU.
   const [sousDest, setSousDest] = useState<string | null>(null)
 
@@ -104,7 +109,7 @@ export function EtudeZone() {
     mutationFn: () => {
       const body: EtudeZoneInput = { minutes, mode, naf: naf?.code ?? null, sous_destination: sousDest }
       if (entree === 'polygone' && geomFromDrawn) { body.geom = geomFromDrawn; body.titre = 'Zone dessinée' }
-      else if (cible) { body.idu = cible.idu; body.titre = cible.label }
+      else if (cible) { body.idu = cible.idu; body.titre = cible.label; if (ampleur === 'rayon') body.rayon_km = rayonKm }
       return etudeZone(body)
     },
   })
@@ -116,11 +121,11 @@ export function EtudeZone() {
   const entBody = (): EtudeZoneInput => {
     const b: EtudeZoneInput = { minutes, mode }
     if (entree === 'polygone' && geomFromDrawn) b.geom = geomFromDrawn
-    else if (cible) b.idu = cible.idu
+    else if (cible) { b.idu = cible.idu; if (ampleur === 'rayon') b.rayon_km = rayonKm }
     return b
   }
   const entQ = useQuery({
-    queryKey: ['zone-entreprises', entree, cible?.idu, minutes, mode, !!geomFromDrawn],
+    queryKey: ['zone-entreprises', entree, cible?.idu, minutes, mode, ampleur, rayonKm, !!geomFromDrawn],
     queryFn: () => etudeZoneEntreprises(entBody()), enabled: entOpen && !!res?.zone_disponible,
   })
 
@@ -131,7 +136,7 @@ export function EtudeZone() {
     // DESTINATIONS-1 (X4.1) — sousDest fait partie de la LECTURE de zone (étape 1/2, payload principal) :
     // le changer réarme « Lire la zone ». naf reste HORS deps (RETOURS-11 O19 : l'activité est la lentille
     // additive de l'étape 3, appliquée par son propre bouton — elle n'efface pas la lecture).
-    [entree, cible, sousDest, minutes, mode, geomFromDrawn])
+    [entree, cible, sousDest, minutes, mode, ampleur, rayonKm, geomFromDrawn])
 
   // basculer d'onglet efface le périmètre de l'AUTRE entrée
   const choisirEntree = (e: 'point' | 'polygone') => {
@@ -183,7 +188,9 @@ export function EtudeZone() {
   const enTete = res?.zone_disponible
     ? (res.entree === 'polygone'
         ? `La zone dessinée — ${nb(res.surface_ha)} ha`
-        : `La zone à ${res.minutes} min ${res.mode === 'voiture' ? 'en voiture' : 'à pied'}${res.adresse ? ` — depuis ${res.adresse}` : ''}`)
+        : res.entree === 'rayon'
+          ? `Dans un rayon de ${String(res.rayon_km).replace('.', ',')} km${res.adresse ? ` — autour de ${res.adresse}` : ''}`
+          : `La zone à ${res.minutes} min ${res.mode === 'voiture' ? 'en voiture' : 'à pied'}${res.adresse ? ` — depuis ${res.adresse}` : ''}`)
     : ''
 
   if (porteZone === null) {
@@ -226,19 +233,35 @@ export function EtudeZone() {
           <ParcelInput dataAttr="zone-point" placeholder="Adresse, IDU ou référence (BW0917)"
             withCarte onPick={(idu) => setCible({ idu, label: iduCourt(idu) })} />
           {cible && <div className="text-[10.5px] text-txt-mut">Point : {cible.label}</div>}
-          {/* TEMPS + MODE (n'ont de sens QUE sur un point) */}
-          <div className="flex gap-1 rounded-lg border border-line-2 bg-surface-2 p-0.5">
-            {TEMPS.map((t) => (
-              <button key={t} onClick={() => setMinutes(t)}
-                className={`flex-1 rounded-md px-2 py-1 text-[11px] font-medium ${minutes === t ? 'bg-mint/15 text-txt-hi' : 'text-txt-mut hover:text-txt'}`}>{t} min</button>
+          {/* RETOURS-15 B9 — AMPLEUR : rayon en km PAR DÉFAUT (cercle tracé sur la carte). L'option
+              secondaire « ou en temps de trajet » déplie les 5/10/15 min à pied/en voiture. */}
+          <StepHead n={3} titre="Ampleur" sous="rayon en km (par défaut) ou temps de trajet" />
+          <div data-zone-rayons className="flex gap-1 rounded-lg border border-line-2 bg-surface-2 p-0.5">
+            {RAYONS.map((r) => (
+              <button key={r} data-zone-rayon={r} onClick={() => { setAmpleur('rayon'); setRayonKm(r) }}
+                className={`flex-1 rounded-md px-2 py-1 text-[11px] font-medium ${ampleur === 'rayon' && rayonKm === r ? 'bg-mint/15 text-txt-hi' : 'text-txt-mut hover:text-txt'}`}>
+                {String(r).replace('.', ',')} km</button>
             ))}
           </div>
-          <div className="flex gap-1 rounded-lg border border-line-2 bg-surface-2 p-0.5">
-            {(['voiture', 'pied'] as const).map((mo) => (
-              <button key={mo} onClick={() => setMode(mo)}
-                className={`flex-1 rounded-md px-2 py-1 text-[11px] font-medium ${mode === mo ? 'bg-mint/15 text-txt-hi' : 'text-txt-mut hover:text-txt'}`}>{mo === 'voiture' ? 'Voiture' : 'À pied'}</button>
-            ))}
-          </div>
+          {ampleur === 'rayon'
+            ? <button data-zone-vers-temps onClick={() => setAmpleur('temps')} className="self-start text-[10.5px] text-mint hover:underline">ou en temps de trajet →</button>
+            : (
+              <>
+                <button data-zone-vers-rayon onClick={() => setAmpleur('rayon')} className="self-start text-[10.5px] text-mint hover:underline">← revenir au rayon</button>
+                <div className="flex gap-1 rounded-lg border border-line-2 bg-surface-2 p-0.5">
+                  {TEMPS.map((t) => (
+                    <button key={t} onClick={() => setMinutes(t)}
+                      className={`flex-1 rounded-md px-2 py-1 text-[11px] font-medium ${minutes === t ? 'bg-mint/15 text-txt-hi' : 'text-txt-mut hover:text-txt'}`}>{t} min</button>
+                  ))}
+                </div>
+                <div className="flex gap-1 rounded-lg border border-line-2 bg-surface-2 p-0.5">
+                  {(['voiture', 'pied'] as const).map((mo) => (
+                    <button key={mo} onClick={() => setMode(mo)}
+                      className={`flex-1 rounded-md px-2 py-1 text-[11px] font-medium ${mode === mo ? 'bg-mint/15 text-txt-hi' : 'text-txt-mut hover:text-txt'}`}>{mo === 'voiture' ? 'Voiture' : 'À pied'}</button>
+                  ))}
+                </div>
+              </>
+            )}
         </>
       ) : (
         <>

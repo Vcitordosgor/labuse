@@ -27,16 +27,6 @@ import { CommuneScope } from './ModulePanel'
 
 const fmtM2 = (v: number | null | undefined) => (v == null ? '—' : `${fmtInt(v)} m²`)
 
-// Filtre « résiduel minimum » (m² SDP) — paliers fixes (un select tient dans les 320 px ; le tri
-// serveur reste résiduel décroissant, le seuil ne fait qu'écrémer la queue).
-const SDP_MIN = [
-  { v: 0, label: 'peu importe' },
-  { v: 100, label: '≥ 100 m²' },
-  { v: 200, label: '≥ 200 m²' },
-  { v: 500, label: '≥ 500 m²' },
-  { v: 1000, label: '≥ 1 000 m²' },
-]
-
 // Contenu de la méthode — déplacé du pied vers le « i » de l'en-tête (OUTILS-S2 Lot A). Le texte ne
 // disparaît pas, il se replie dans l'infobulle : ce qu'est le signal, ce qu'il n'est pas, les chiffres.
 function methodeTip(maj?: string | null, rne?: string | null): string {
@@ -58,14 +48,13 @@ function methodeTip(maj?: string | null, rne?: string | null): string {
 }
 
 export function Successions() {
-  const select = useApp((s) => s.select)
+  const focusParcelle = useApp((s) => s.focusParcelle)   // RETOURS-15 C8 — clic ligne → zoom + contour + fiche
 
   const [commune, setCommune] = useState<string | null>(null)   // Toute l'île par défaut
-  const [sdpMin, setSdpMin] = useState(0)
 
   const q = useInfiniteQuery({
-    queryKey: ['successions', commune, sdpMin],
-    queryFn: ({ pageParam }) => getSuccessions(commune, sdpMin, pageParam),
+    queryKey: ['successions', commune],
+    queryFn: ({ pageParam }) => getSuccessions(commune, 0, pageParam),
     initialPageParam: 0,
     getNextPageParam: (last, pages) => { const n = pages.reduce((s, p) => s + p.items.length, 0); return n < last.total ? n : undefined },
   })
@@ -87,17 +76,9 @@ export function Successions() {
         </Tip>
       </div>
 
-      {/* entrée : périmètre EXPLICITE (Toute l'île par défaut) + filtre résiduel minimum */}
+      {/* entrée : périmètre EXPLICITE (Toute l'île par défaut). RETOURS-15 C8 — le filtre « Résiduel
+          minimum (SDP) » est retiré (le tri serveur reste résiduel décroissant). */}
       <CommuneScope commune={commune} noteFiltre={false} onChange={(c) => setCommune(c)} />
-      <label className="flex items-center gap-2 text-[11px] text-txt-mut">
-        Résiduel minimum
-        <select data-successions-sdp-min value={sdpMin}
-          onChange={(e) => setSdpMin(Number(e.target.value))}
-          className="h-8 rounded-md border border-line-2 bg-surface-3 px-2 text-txt focus:border-mint focus:outline-none">
-          {SDP_MIN.map((o) => <option key={o.v} value={o.v}>{o.label}</option>)}
-        </select>
-        <span className="text-[10px] text-txt-dim">m² SDP</span>
-      </label>
 
       {q.isLoading && <Squelette lignes={6} />}
       {q.isError && <ErrorState message="Signal momentanément indisponible — réessayez." retry={() => q.refetch()} />}
@@ -106,7 +87,7 @@ export function Successions() {
         <p data-successions-vide className="rounded-lg bg-surface-2 px-3 py-2 text-[11px] leading-snug text-txt-mut">
           Aucune parcelle au signal de succession probable
           {commune ? <> à <b className="text-txt">{commune}</b></> : ' sur l’île'}
-          {sdpMin ? ` (résiduel ≥ ${fmtInt(sdpMin)} m²)` : ''}{meta.maj ? ` au ${meta.maj}` : ''}.
+          {meta.maj ? ` au ${meta.maj}` : ''}.
         </p>
       )}
       {meta && total > 0 && (
@@ -120,7 +101,7 @@ export function Successions() {
 
           <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
             {items.map((it) => (
-              <Carte key={it.idu} it={it} onOpen={() => select(it.idu)} />
+              <Carte key={it.idu} it={it} onOpen={() => focusParcelle(it.idu, { fiche: true })} />
             ))}
           </div>
           <ListPaginationFooter shown={items.length} total={total} step={SUCCESSIONS_PAGE} onMore={() => q.fetchNextPage()}>

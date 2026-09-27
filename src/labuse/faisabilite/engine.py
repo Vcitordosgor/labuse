@@ -164,6 +164,11 @@ class Hypotheses:
 # Hypotheses ciblé(s), unité, bornes de vraisemblance (hors bornes = ignoré, jamais un calcul détourné),
 # et `pct` (valeur stockée en fraction 0-1, affichée/saisie en %). L'override N'EST JAMAIS persisté en
 # base : il vit dans le projet (doctrine 09/09), ne resservira pas sur une autre parcelle.
+# RETOURS-15 C3 (P17) — SEULES trois VRAIES hypothèses de modélisation restent éditables : occupation
+# du gabarit, rendement SDP → habitable, surface moyenne par logement. Les valeurs FIXÉES PAR LE PLU
+# (hauteur d'un niveau, densité logts/ha/niveau, surface d'une place de stationnement) ne sont JAMAIS
+# des hypothèses (décision Vic) — elles sont retirées des champs modifiables (elles restent servies par
+# le moteur, non éditables). Un override sur une clé retirée est ignoré (clé blanche seulement).
 HYP_EDITABLES = [
     {"key": "coef_occupation", "label": "Occupation du gabarit", "champs": ["coef_occupation"],
      "unite": "%", "pct": True, "min": 10.0, "max": 100.0},
@@ -171,12 +176,6 @@ HYP_EDITABLES = [
      "unite": "%", "pct": True, "min": 50.0, "max": 100.0},
     {"key": "logement_m2", "label": "Surface moyenne / logement", "champs": ["logement_m2_bas", "logement_m2_haut"],
      "unite": "m²", "pct": False, "min": 20.0, "max": 200.0},
-    {"key": "densite_logts_ha_par_niveau", "label": "Densité (logts/ha/niveau)", "champs": ["densite_logts_ha_par_niveau"],
-     "unite": "logts/ha", "pct": False, "min": 1.0, "max": 200.0},
-    {"key": "place_m2", "label": "Surface d'une place de stationnement", "champs": ["place_m2"],
-     "unite": "m²", "pct": False, "min": 10.0, "max": 60.0},
-    {"key": "etage_m", "label": "Hauteur d'un niveau", "champs": ["etage_m"],
-     "unite": "m", "pct": False, "min": 2.0, "max": 6.0},
 ]
 _HYP_EDIT_BY_KEY = {e["key"]: e for e in HYP_EDITABLES}
 
@@ -435,6 +434,12 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
         steps.append(Step("Emprise au sol — reculs (modèle carré)",
                           f"(√{surface_m2:.0f}−{recul_v:g}−{recul_l:g})×(√{surface_m2:.0f}−2×{recul_l:g})",
                           f"~{emprise:.0f} m²", f"{rv_src} ; {rl_src}", prov=_prov_recul))
+
+    # FAISABILITE-3 (Vic 27/09) — la ZONE D'IMPLANTATION (assiette après reculs, AVANT le plafond
+    # d'emprise au sol) : c'est l'étape 1 de la maquette (« Zone d'implantation après reculs »),
+    # distincte de l'étape 2 (« Emprise au sol max »). Snapshot AVANT la réassignation par le CES /
+    # la pleine terre — n'altère aucun calcul (lecture seule pour l'affichage du panneau).
+    _zone_impl_m2 = emprise
 
     # emprise % réglementée (ex. Usdu)
     if _is_num(rules.emprise_sol_pct):
@@ -702,6 +707,12 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
               # 3.D — hauteur du gabarit (niveaux × hauteur d'étage), pour l'extrusion 3D.
               "hauteur_m": round(niveaux * hyp.etage_m, 1),
               "hauteur_etage_m": hyp.etage_m,
+              # FAISABILITE-3 — étape 1 (zone d'implantation après reculs, avant plafond CES) et
+              # étape 2 (emprise au sol MAX réglementée = surface × CES % ; None si non réglementée →
+              # le panneau dit « bornée par les reculs »). Affichage seul — aucun calcul n'en dépend.
+              "zone_implantation_m2": round(_zone_impl_m2),
+              "emprise_sol_max_m2": (round(surface_m2 * float(rules.emprise_sol_pct) / 100)
+                                     if _is_num(rules.emprise_sol_pct) else None),
               # Potentiel résiduel (Lot B) : emprise constructible au sol et emprise bâtie MAX
               # (post-occupation), pour croiser avec le bâti existant.
               "emprise_constructible_m2": round(emprise),
