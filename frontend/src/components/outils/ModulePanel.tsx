@@ -10,7 +10,7 @@ import {
 import { AddressAutocomplete } from '../AddressAutocomplete'
 import { ParcelInput } from '../ParcelInput'
 import { TEMPS_MILLESIMES } from '../map/basemaps'
-import { fmtEurCompact, fmtInt } from '../../lib/format'
+import { fmtInt } from '../../lib/format'
 import { iduComplet, iduCourt, estIdu } from '../../lib/format'
 import { permisIncoherenceNote } from '../../lib/permis'
 import { pointInPolygon } from '../../lib/geo'
@@ -270,41 +270,22 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
           ) : (
             <>
               <div className="truncate text-xs font-medium text-txt-hi">{d['nom'] as string}</div>
-              {/* RETOURS-5 T4.1 — les chiffres qui comptent, en grille de cartes. Rien d'autre au 1er niveau.
-                  OUTILS-FIX-4 A2 — la VALORISATION du foncier nu (valorisation_nu_eur, calculée par le moteur)
-                  n'était servie que dans le tiroir « Détail » : on la remonte dans le bloc de synthèse, À CÔTÉ
-                  de « m² SDP résiduelle », avec son statut (Estimé). 3 cartes si pas de valorisation (hors
-                  U/AU ou sans marché), 4 si présente — jamais un « 0 € » trompeur (la carte disparaît). */}
-              <div className={`grid gap-2 ${d['valorisation_nu_eur'] != null ? 'grid-cols-2' : 'grid-cols-3'}`}>
+              {/* RETOURS-15 B5 (P10) — 4 chiffres FACTUELS et sourcés pour notaires / agences / apporteurs /
+                  architectes (plus « actionnables » ni « valorisation », qui parlaient au promoteur). La SDP
+                  résiduelle n'est plus un chiffre-titre : elle reste visible parcelle par parcelle dans la liste. */}
+              <div className="grid grid-cols-2 gap-2">
                 {[
                   { v: fmt(d['n_parcelles'] as number), lbl: 'parcelles' },
-                  { v: fmt(d['n_actionnables'] as number), lbl: 'actionnables' },
-                  { v: fmt(d['sdp_residuelle_m2'] as number), lbl: 'm² SDP résiduelle' },
-                  ...(d['valorisation_nu_eur'] != null
-                    ? [{ v: fmtEurCompact(d['valorisation_nu_eur'] as number), lbl: 'valorisation foncier nu', estime: true }]
-                    : []),
+                  { v: `${(((d['surface_totale_m2'] as number) ?? 0) / 1e4).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} ha`, lbl: 'surface totale' },
+                  { v: `${fmt(d['n_terrains_nus'] as number)} / ${fmt(d['n_terrains_batis'] as number)}`, lbl: 'terrains nus / bâtis' },
+                  { v: fmt(d['n_constructible_u_au'] as number), lbl: 'en zone U ou AU' },
                 ].map((c) => (
                   <div key={c.lbl} data-m02-kpi className="min-w-0 rounded-lg border border-line-2 bg-surface-2 px-2.5 py-2.5">
                     <div className="num-key whitespace-nowrap text-[16px] tabular-nums text-mint">{c.v}</div>
-                    <div className="mt-0.5 flex items-baseline gap-1 text-[10px] leading-tight text-txt-mut">
-                      <span>{c.lbl}</span>
-                      {c.estime && <span data-m02-valo-estime className="shrink-0 rounded-sm border border-st-creuser/40 bg-st-creuser/10 px-1 text-[8.5px] font-medium text-st-creuser">Estimé</span>}
-                    </div>
+                    <div className="mt-0.5 text-[10px] leading-tight text-txt-mut">{c.lbl}</div>
                   </div>
                 ))}
               </div>
-              {/* RETOURS-5 T4.2 — le reste REPLIÉ : détail des actionnables, périmètre, nature (la valorisation
-                  a rejoint le bloc de synthèse ci-dessus, OUTILS-FIX-4 A2 — on ne la répète pas ici). */}
-              <details className="text-xs">
-                <summary className="cursor-pointer list-none py-1.5 text-[11.5px] text-txt-dim marker:hidden hover:text-mint">Détail et méthode ▾</summary>
-                <div className="flex flex-col">
-                  {/* CONNEXIONS-2 Lot 4 (KO-10) — « hors écartées par vous » SEULEMENT si ce compte a écarté
-                      des parcelles (projets/pistes). Sinon « actionnables » sans mention (pas de faux ami). */}
-                  <div className="flex justify-between gap-3 py-1 text-[11.5px] text-txt-mut"><span>Actionnables</span><span><b className="text-txt">{fmt(d['n_actionnables'] as number)}</b>{d['hors_ecartees_par_vous'] ? ` hors ${fmt(d['n_ecartees_par_vous'] as number)} écartée(s) par vous` : ''}</span></div>
-                  <div className="flex justify-between gap-3 py-1 text-[11.5px] text-txt-mut"><span>Périmètre valorisation</span><span className="text-txt-dim">zones U/AU · DVF terrains</span></div>
-                  <div className="flex justify-between gap-3 py-1 text-[11.5px] text-txt-mut"><span>Nature</span><span className="text-txt-dim">estimation indicative</span></div>
-                </div>
-              </details>
             </>
           )}
           {/* RETOURS-12 O5 — en fusion (ScanPatrimoine), « Voir ses parcelles → » REPLIE le bandeau pour

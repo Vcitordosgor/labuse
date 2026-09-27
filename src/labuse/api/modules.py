@@ -290,6 +290,7 @@ def patrimoine(siren: str, fmt: str = "json",
     rows = db.execute(text("""
         SELECT p.id, p.idu, p.commune, p.surface_m2, z.zone_fam, r.sdp_residuelle_m2,
                s2.tier AS tier_v2, s2.rang AS rang_v2,
+               COALESCE(pb.emprise_bati_m2, 0) AS emprise_bati,   -- RETOURS-15 B5 : bâti / nu
                (d.status IN ('exclue', 'faux_positif_probable')) AS etage0
         FROM parcelle_personne_morale pm
         JOIN parcels p ON p.idu = pm.idu
@@ -297,6 +298,7 @@ def patrimoine(siren: str, fmt: str = "json",
         LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
         LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
         LEFT JOIN parcel_zone_plu z ON z.idu = p.idu
+        LEFT JOIN p_model_bati pb ON pb.idu = p.idu
         WHERE pm.siren = :s ORDER BY s2.rang ASC NULLS LAST"""),
         {"s": siren, "run": runs.cascade(), "v2run": _score_v2_run_id(db)}).mappings().all()
     bodacc = db.execute(text(
@@ -357,6 +359,14 @@ def patrimoine(siren: str, fmt: str = "json",
     n_actionnables = sum(1 for r in rows if r["tier_v2"] in _TIERS_ACTIONNABLES
                          and not r["etage0"] and r["idu"] not in ecartees_par_vous)
     sdp_residuelle = round(sum(r["sdp_residuelle_m2"] or 0 for r in rows))
+    # RETOURS-15 B5 (P10) — chiffres FACTUELS de l'onglet Possession (clients notaires / agences /
+    # apporteurs, pas promoteurs) : surface totale détenue, terrains nus vs bâtis (emprise bâtie DGFiP
+    # p_model_bati), et parcelles en zone constructible U ou AU (zone_fam servi). Remplacent
+    # « actionnables » et « valorisation » (langage promoteur) en TITRE — sans nouvelle donnée lourde.
+    surface_totale_m2 = round(sum(r["surface_m2"] or 0 for r in rows))
+    n_terrains_batis = sum(1 for r in rows if (r["emprise_bati"] or 0) > 0)
+    n_terrains_nus = len(rows) - n_terrains_batis
+    n_constructible_u_au = sum(1 for r in rows if r["zone_fam"] in ("U", "AU"))
     # #3 VALORISATION indicative du foncier nu (zones U/AU) au RÉFÉRENTIEL UNIQUE prix terrain de zone
     # (ligne2_terrain_zone, une fois par commune). Indicative — seules les zones U/AU ont un prix marché.
     prix_zone: dict[tuple[str, str], float] = {}
@@ -434,6 +444,11 @@ def patrimoine(siren: str, fmt: str = "json",
     return {
         "siren": siren, "nom": nom, "n_parcelles": len(rows),
         "millesime_majic": millesime_majic,   # OUTILS-FIX-4 A1 — fraîcheur des fichiers fonciers servis
+        # RETOURS-15 B5 — chiffres factuels de l'onglet Possession (voir plus haut).
+        "surface_totale_m2": surface_totale_m2,
+        "n_terrains_nus": n_terrains_nus,
+        "n_terrains_batis": n_terrains_batis,
+        "n_constructible_u_au": n_constructible_u_au,
         "n_actionnables": n_actionnables,
         # KO-10 — le libellé front dit « hors écartées par vous » SI ce compte a écarté des parcelles.
         "hors_ecartees_par_vous": bool(ecartees_par_vous),
