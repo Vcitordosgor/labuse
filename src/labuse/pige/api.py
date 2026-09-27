@@ -835,13 +835,10 @@ def radar_apercu(request: Request) -> dict:
     neuf : biens = même filtre que le flux client, capture = pige_passes, suivis = watched_parcels,
     alertes = `veille.apercu`."""
     from ..api.tenant import current_compte
-    from . import veille
+    from . import client, veille
     cid = current_compte(request)
     with session_scope() as db:
-        biens = db.execute(text(
-            "SELECT count(*) FROM pige_biens b JOIN pige_faits f ON f.bien_id = b.bien_id "
-            "WHERE f.valide_at IS NOT NULL AND b.est_copro = false AND b.a_qualifier = false "
-            "AND b.statut IN ('active','en_vente_longue')")).scalar() or 0
+        biens = client.compter(db)   # RADAR-2 (recette) — nombre canonique (= porte = marché = liste)
         capture = db.execute(text("SELECT max(captured_at) FROM pige_passes")).scalar()
         if capture is None:
             capture = db.execute(text("SELECT max(last_seen_at) FROM pige_biens")).scalar()
@@ -871,6 +868,15 @@ def radar_marche_tableau(request: Request, commune: str | None = None) -> dict:
     from . import marche
     with session_scope() as db:
         return marche.tableau(db, commune=commune or None)
+
+
+@router.get("/radar/biens/{bien_id}/vs-marche")
+def radar_bien_vs_marche(bien_id: int, request: Request) -> dict:
+    """RADAR-2 (recette) — « Ce bien face à son marché » : €/m² du bien vs médianes demandée/actée de sa
+    commune et son type, ancienneté vs médiane, historique de prix. Sous 30 → « sous le seuil »."""
+    from . import marche
+    with session_scope() as db:
+        return marche.bien_vs_marche(db, bien_id) or {"bien_id": bien_id, "introuvable": True}
 
 
 @router.get("/radar/stats")

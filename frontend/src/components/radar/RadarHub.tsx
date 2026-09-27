@@ -46,8 +46,8 @@ export function PorteCard({ ic, titre, desc, resume, onClick, data }: {
 }) {
   return (
     <button {...(data ? { [`data-${data}`]: true } : {})} onClick={onClick}
-      className="hover-fill group flex min-h-[220px] w-full flex-col rounded-lg border border-line-2 bg-surface-2 p-7 text-left transition-colors duration-quick">
-      <span className="mb-6 grid h-11 w-11 place-items-center rounded-md border border-mint/40 text-mint">{ic}</span>
+      className="porte group flex min-h-[220px] w-full flex-col rounded-lg border border-line-2 bg-surface-2 p-7 text-left">
+      <span className="porte-ic mb-6 grid h-11 w-11 place-items-center rounded-md border border-mint/40 text-mint">{ic}</span>
       <div className="text-[20px] font-semibold text-txt-hi">{titre}</div>
       <p className="mt-2 text-[13px] leading-relaxed text-txt-mut">{desc}</p>
       <div className="mt-auto flex items-center justify-between pt-6 text-[12.5px]">

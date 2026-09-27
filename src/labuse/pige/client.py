@@ -258,6 +258,22 @@ def lister(db: Session, *, filtres: dict, tri: str = "recentes", page: int = 1, 
             "plafond": PLAFOND_PAGE, "tronquee": (offset + len(biens)) < n_total, "tri": tri}
 
 
+def compter(db: Session, commune: str | None = None, *, sup90: bool = False) -> int:
+    """RADAR-2 (recette) — LE nombre canonique de « biens en vente », servi À L'IDENTIQUE à la porte, au
+    marché et à la liste : MÊME prédicat que `lister` (validé, hors copro = hors appartements, statuts
+    active + en_vente_longue, dépôt agence exclu drapeau fermé). `sup90` restreint à en_vente_longue
+    (les biens en vente depuis plus de 90 j). Aucune divergence possible : un seul WHERE (`_where`)."""
+    filtres: dict = {}
+    if commune:
+        filtres["commune"] = commune
+    if sup90:
+        filtres["statuts"] = ["en_vente_longue"]
+    where, p = _where(filtres)
+    return int(db.execute(text(
+        f"SELECT count(*) FROM pige_biens b JOIN pige_faits f ON f.bien_id = b.bien_id WHERE {where}"),
+        p).scalar() or 0)
+
+
 def detail(db: Session, bien_id: int) -> dict | None:
     """Détail d'un bien VALIDÉ : faits + historique de prix + candidates (si Estimé). None sinon."""
     # RADAR-DEPOT-2 D5 — une copro n'est jamais servie au client, même par accès direct à son id.

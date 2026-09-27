@@ -4,10 +4,14 @@
 // recalculé à part) ; sous 30 annonces l'écart s'écrit « sous le seuil » (même règle que la fiche commune).
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
-import { getRadarMarcheTableau, type RadarMarcheChiffre, type RadarMarcheTypeLigne } from '../../lib/api'
+import {
+  getRadarBienVsMarche, getRadarMarcheTableau, radarClic,
+  type RadarBienCmp, type RadarMarcheChiffre, type RadarMarcheTypeLigne,
+} from '../../lib/api'
 import { fmtCapture } from './RadarHub'
 import { Squelette } from '../Loading'
 import { ErrorState } from '../States'
+import { Retour } from '../ui/Retour'
 
 const fmt = (v: number | null | undefined) => (v == null ? '—' : v.toLocaleString('fr-FR'))
 const pct = (v: number | null | undefined) => (v == null ? null : `${v > 0 ? '+' : ''}${v} %`)
@@ -159,6 +163,96 @@ export function RadarMarcheColonne({ commune }: { commune: string | null }) {
             Prix actés : DVF (DGFiP){data.millesime_dvf ? ` — ${data.millesime_dvf}` : ''}. Sous {data.seuil_ecart_n} biens,
             l’écart n’est pas calculé. Les appartements comptent dans les chiffres mais ne sont pas listés.
           </p>
+        </>
+      )}
+    </div>
+  )
+}
+
+// ══════════════ CE BIEN FACE À SON MARCHÉ (colonne de droite quand une annonce est sélectionnée) ══════════════
+const TYPE_MOT: Record<string, string> = { terrain: 'terrains', maison: 'maisons', appartement: 'appartements' }
+
+// une ligne de comparaison : la médiane (demandée/actée) + l'écart du bien, ou « sous le seuil ».
+function LigneCmp({ titre, cmp }: { titre: string; cmp: RadarBienCmp }) {
+  return (
+    <div className="flex items-center justify-between border-b border-line-2 py-2 last:border-0">
+      <span className="text-[12px] text-txt-mut">{titre}</span>
+      {cmp.sous_seuil || cmp.median == null ? (
+        <span className="text-[11.5px] text-txt-dim">sous le seuil ({cmp.n})</span>
+      ) : (
+        <span className="text-[12.5px] tabular-nums text-txt">
+          {fmt(cmp.median)} €/m²
+          {cmp.ecart_pct != null && (
+            <span className={`ml-2 font-medium ${cmp.ecart_pct > 0 ? 'text-amber' : 'text-mint'}`}>{pct(cmp.ecart_pct)}</span>
+          )}
+        </span>
+      )}
+    </div>
+  )
+}
+
+export function BienVsMarche({ bienId, onBack }: { bienId: number; onBack: () => void }) {
+  const { data, isLoading, isError, refetch } = useQuery({ queryKey: ['radar-bien-vs-marche', bienId], queryFn: () => getRadarBienVsMarche(bienId) })
+  const baisses = (data?.historique_prix ?? []).filter((h) => (h.nouveau ?? 0) < (h.ancien ?? 0))
+  return (
+    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-7 py-6">
+      <div className="mb-4">
+        <Retour label={data?.commune ? `Le marché de ${data.commune}` : 'Le marché'} data-bien-retour onClick={onBack} />
+      </div>
+      <div className="font-mono text-[10.5px] tracking-[0.2em] text-txt-mut">RADAR › CE BIEN</div>
+      <h2 className="mt-1 text-[20px] font-semibold text-txt-hi">Ce bien face à son marché</h2>
+
+      {isLoading && <div className="mt-4"><Squelette lignes={6} /></div>}
+      {isError && <div className="mt-4"><ErrorState message="Comparaison indisponible." retry={() => refetch()} /></div>}
+      {data && data.introuvable && <p className="mt-4 text-[12px] text-txt-dim">Ce bien n’est plus servi.</p>}
+      {data && !data.introuvable && (
+        <>
+          <div className="mt-4 flex items-end gap-3">
+            <div className="text-[26px] font-bold tabular-nums text-txt-hi">{data.eur_m2 != null ? `${fmt(data.eur_m2)} €/m²` : '—'}</div>
+            <div className="pb-1 text-[12.5px] text-txt-mut">{data.prix != null ? `${fmt(data.prix)} €` : ''}{data.type_bien ? ` · ${data.type_bien}` : ''}</div>
+          </div>
+
+          <div className="mt-4 rounded-lg border border-line-2 bg-surface-2 px-4 py-3">
+            <div className="mb-1 label-caps">Son €/m² face au marché · {data.commune} · {TYPE_MOT[data.type_bien ?? ''] ?? 'même type'}</div>
+            <LigneCmp titre="Médiane demandée (Radar)" cmp={data.demande} />
+            <LigneCmp titre="Médiane actée (DVF)" cmp={data.acte} />
+          </div>
+
+          <div className="mt-4 rounded-lg border border-line-2 bg-surface-2 px-4 py-3">
+            <div className="mb-1 label-caps">Ancienneté</div>
+            <div className="flex items-center justify-between py-1">
+              <span className="text-[12px] text-txt-mut">En vente depuis</span>
+              <span className="text-[12.5px] tabular-nums text-txt">{data.anciennete_j != null ? `${data.anciennete_j} j` : '—'}</span>
+            </div>
+            <div className="flex items-center justify-between py-1">
+              <span className="text-[12px] text-txt-mut">Médiane de la commune</span>
+              {data.anciennete_sous_seuil || data.anciennete_mediane_j == null
+                ? <span className="text-[11.5px] text-txt-dim">sous le seuil ({data.anciennete_n})</span>
+                : <span className="text-[12.5px] tabular-nums text-txt">{data.anciennete_mediane_j} j</span>}
+            </div>
+          </div>
+
+          <div className="mt-4 rounded-lg border border-line-2 bg-surface-2 px-4 py-3">
+            <div className="mb-1 label-caps">Historique des prix</div>
+            {baisses.length === 0 ? (
+              <p className="text-[11.5px] text-txt-dim">Aucune baisse ni retour enregistré.</p>
+            ) : (
+              <div className="flex flex-col gap-1.5">
+                {baisses.map((h, i) => (
+                  <div key={i} className="flex items-center justify-between text-[12px]">
+                    <span className="text-txt-mut">{h.date ? new Date(h.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '—'}</span>
+                    <span className="tabular-nums text-txt"><span className="text-txt-dim line-through">{fmt(h.ancien ?? 0)} €</span> → {fmt(h.nouveau ?? 0)} €</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <a onClick={(e) => { e.preventDefault(); radarClic(bienId).catch(() => {}); window.open(data.url_sortante, '_blank', 'noopener,noreferrer') }}
+            href={data.url_sortante} target="_blank" rel="noopener noreferrer"
+            data-bien-portail className="mt-4 inline-flex text-[13px] font-medium text-[#E7B008] underline decoration-[#E7B008]/40 underline-offset-2 hover:decoration-[#E7B008]">
+            Voir l’annonce ↗
+          </a>
         </>
       )}
     </div>

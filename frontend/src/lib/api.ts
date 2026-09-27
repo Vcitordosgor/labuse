@@ -2391,6 +2391,17 @@ export interface RadarMarcheTableau {
 export const getRadarMarcheTableau = (commune?: string) =>
   j<RadarMarcheTableau>(`/radar/marche-tableau${commune ? `?commune=${encodeURIComponent(commune)}` : ''}`)
 
+// RADAR-2 (recette) — « Ce bien face à son marché » (colonne de droite quand une annonce est sélectionnée)
+export interface RadarBienCmp { median: number | null; n: number; ecart_pct: number | null; sous_seuil: boolean }
+export interface RadarBienVsMarche {
+  bien_id: number; commune: string; type_bien: string | null; prix: number | null; eur_m2: number | null
+  demande: RadarBienCmp; acte: RadarBienCmp
+  anciennete_j: number | null; anciennete_mediane_j: number | null; anciennete_n: number; anciennete_sous_seuil: boolean
+  historique_prix: { date: string | null; ancien: number | null; nouveau: number | null }[]
+  url_sortante: string; portail: string; seuil_n: number; introuvable?: boolean
+}
+export const getRadarBienVsMarche = (bienId: number) => j<RadarBienVsMarche>(`/radar/biens/${bienId}/vs-marche`)
+
 // CRON-2 (K7) — la page CRON de l'admin (état des jobs planifiés)
 export interface CronJob {
   nom: string; titre: string; cadence: string; cron_utc: string; heure_reunion: string
