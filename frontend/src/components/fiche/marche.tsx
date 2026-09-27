@@ -13,11 +13,11 @@ import { useQuery } from '@tanstack/react-query'
 import { getFaisabilite, getMonSecteur, radarClic, type LocalMed } from '../../lib/api'
 import { fmtInt, fmtDateNum } from '../../lib/format'
 import type { Fiche } from '../../lib/types'
-import { EMPTY_FILTERS, useApp } from '../../store/useApp'
+import { useApp } from '../../store/useApp'
 import { IC, RefDrawer, MicroSpark, Line, GroupLabel, FactRow, FactNote } from './primitives'
 // KELFONCIER-FIX-2 (Lot I) — maquette v3 : Verdict + Tuiles c3 (prix par type) + Réglette (secteur↔commune).
 // FICHE-FIX-4 (Lot J) — prix de sortie / valeur / loyers / acquéreur PM en Ligne, méthode en « i ».
-import { Verdict, Tuiles, type Tuile, Reglette, Lignes, Ligne, InfoI, OutilsSection, type OutilSection } from './formes'
+import { Verdict, Tuiles, type Tuile, Reglette, Lignes, Ligne, InfoI, OutilsSection } from './formes'
 
 // FICHE-RANGEMENT-2 Lot 1 — §1 Identité : la DERNIÈRE VENTE / mutation DVF de la parcelle (fait
 // d'identité du bien), extraite pour la future section. C4 : une mutation multi-parcelles porte le
@@ -46,10 +46,6 @@ export function DerniereVenteBlock({ f }: { f: Fiche }) {
 }
 
 export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
-  const setModule = useApp((s) => s.setModule)
-  const setParcelPrefill = useApp((s) => s.setParcelPrefill)
-  const setFlyTo = useApp((s) => s.setFlyTo)
-  const select = useApp((s) => s.select)
   const setRadarToOpen = useApp((s) => s.setRadarToOpen)
   const openRadar = useApp((s) => s.openRadar)
   const annonces = f.radar_annonces?.liste ?? []
@@ -102,10 +98,11 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
                 : (mb?.tendance ? `tendance ${mb.tendance}` : undefined)} />
             {typeTuiles.length > 0 && <Tuiles cols={typeTuiles.length >= 3 ? 3 : 2} items={typeTuiles} />}
             {ec?.ecart_pct != null && (
+              /* FICHE-FIX-5 (Lot H) — la phrase « secteur vs commune » passe derrière le « i » de la droite. */
               <div data-secteur-ecart-commune>
                 <Reglette secteurPct={Math.max(4, Math.min(96, 50 + ec.ecart_pct))}
-                  gauche="commune" droite={`secteur ${ec.ecart_pct > 0 ? '+' : ''}${ec.ecart_pct} %`} />
-                <FactNote>{ec.phrase}{ec.ecart_pct != null ? ` — le secteur est ${ec.ecart_pct < 0 ? 'sous' : 'au-dessus de'} la commune` : ''}.</FactNote>
+                  gauche="commune"
+                  droite={<>secteur {ec.ecart_pct > 0 ? '+' : ''}{ec.ecart_pct} %<InfoI aria="Sur l'écart secteur/commune" tip={`${ec.phrase} — le secteur est ${ec.ecart_pct < 0 ? 'sous' : 'au-dessus de'} la commune.`} /></>} />
               </div>
             )}
           </>
@@ -168,17 +165,18 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
         ) : null })()}
       {/* Ventes < 100 m (proximité) — RETOURS-11F4 F7/F0 : le NOMBRE DE PERMIS est retiré ici (les permis
           à proximité vivent dans « Autour », un seul tableau). Marché ne garde que les VENTES. */}
+      {/* FICHE-FIX-5 (Lot H) — Ventes < 100 m en deux Lignes (nombre · prix médian). */}
       {f.voisinage_proche && !f.voisinage_proche.indisponible && f.voisinage_proche.ventes_dvf > 0 && (
         <div data-voisinage-proche>
-          <GroupLabel>📍 Ventes à moins de 100 m</GroupLabel>
-          <FactRow label={<>Ventes <span className="text-txt-dim">(&lt; 100 m, 36 mois)</span></>}
-            value={<>{f.voisinage_proche.ventes_dvf} <small>vente(s)</small></>}
-            src={f.voisinage_proche.honnetete} />
-          {(f.voisinage_proche.prix_median_eur || f.voisinage_proche.prix_note) && (
-            <FactRow label="Prix médian"
-              value={f.voisinage_proche.prix_median_eur ? <>~{Math.round(f.voisinage_proche.prix_median_eur / 1000)} <small>k€</small></> : f.voisinage_proche.prix_note}
-              tone={f.voisinage_proche.prix_median_eur ? undefined : 'mute'} />
-          )}
+          <GroupLabel>Ventes à moins de 100 m</GroupLabel>
+          <Lignes>
+            <Ligne label={<>Ventes <small className="text-txt-dim">(&lt; 100 m · 36 mois)</small><InfoI aria="Sur les ventes proches" tip={f.voisinage_proche.honnetete} /></>}
+              valeur={<>{f.voisinage_proche.ventes_dvf} <small>vente{f.voisinage_proche.ventes_dvf > 1 ? 's' : ''}</small></>} />
+            {(f.voisinage_proche.prix_median_eur || f.voisinage_proche.prix_note) && (
+              <Ligne label="Prix médian" ton={f.voisinage_proche.prix_median_eur ? undefined : 'gris'}
+                valeur={f.voisinage_proche.prix_median_eur ? <>~{Math.round(f.voisinage_proche.prix_median_eur / 1000)} <small>k€</small></> : f.voisinage_proche.prix_note} />
+            )}
+          </Lignes>
         </div>
       )}
       {/* FICHE-1 lot 6 — ANNONCES RADAR rattachées à la parcelle : datées, prix demandé, statut,
@@ -253,17 +251,13 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
           )}
         </Lignes>
       )}
-      {/* FICHE-FIX-4 (Lot J) — outils 2×2 : Marché de la commune · Priorité · section · Comparer ·
-          Remonter le temps (plus de grandes cartes PorteOutil). */}
-      <OutilsSection outils={[
-        ...(f.commune ? [{ label: `Marché de ${f.commune}`, principal: true, data: 'marche',
-          onClick: () => { const st = useApp.getState(); st.setCommune(f.commune!); st.setContexteCommune(f.commune!) } } as OutilSection] : []),
-        ...(f.secteur_opportunites && f.secteur_opportunites.n > 0 && f.commune ? [{ label: `${f.secteur_opportunites.n} Priorité · section ${f.secteur_opportunites.section.slice(8)}`, data: 'secteur-opp',
-          onClick: () => { const st = useApp.getState(); st.setFilters({ ...EMPTY_FILTERS, communes: [f.commune!], tiers: ['brulante', 'chaude', 'priorite', 'a_suivre'] }); st.setCommune(f.commune!); if (f.coords) st.setFlyTo({ center: f.coords, zoom: 16 }); st.setView('cartes'); select(null) } } as OutilSection] : []),
-        { label: 'Comparer', data: 'comparer', onClick: () => { const st = useApp.getState(); st.openCompare(); st.addToCompare(idu) } },
-        ...(f.coords ? [{ label: 'Remonter le temps', data: 'temps',
-          onClick: () => { setParcelPrefill(idu); setFlyTo({ center: f.coords!, zoom: 18 }); setModule('temps') } } as OutilSection] : []),
-      ]} />
+      {/* FICHE-FIX-5 (Lot H) — un SEUL outil : « Outil Communes » (le hub qui a absorbé Marché ·
+          Comparateur · Vélocité · Rareté), ouvert sur la commune de la parcelle. Comparer et Remonter
+          le temps sont retirés d'ici (même décision que Scan/Écrire au propriétaire). */}
+      {f.commune && (
+        <OutilsSection outils={[{ label: `Outil Communes — ${f.commune}`, principal: true, full: true, data: 'communes',
+          onClick: () => { const st = useApp.getState(); st.setCommune(f.commune!); st.setModule('communes') } }]} />
+      )}
     </RefDrawer>
   )
 }
