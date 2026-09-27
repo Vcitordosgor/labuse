@@ -72,9 +72,17 @@ export function AutourSection({ f, idu }: { f: Fiche; idu: string }) {
     filo?.taux_pauvrete_pct != null ? `${filo.taux_pauvrete_pct} % sous le seuil de pauvreté` : null,
     commerce ? `commerces à ${fmtDist(commerce.distance_m)}` : null,
   ].filter(Boolean).join(', ') || undefined
-  const outils: OutilSection[] = []
+  // FICHE-FIX-5 (Lot I) — outils alignés sur l'outil ÉTUDE DE ZONE (ouvert SUR LA PARCELLE, ses deux
+  // portes) + Permis / Fiche commune.
+  const zPref = { idu, commune: f.commune ?? null, zone: null }
+  const outils: OutilSection[] = [
+    { label: 'Étude de zone · Chalandise', data: 'etude-chalandise', principal: true,
+      onClick: () => { const st = useApp.getState(); st.setEtudeZonePrefill({ ...zPref, sous_destination: 'Commerce de détail' }); st.setModule('etude-zone') } },
+    { label: 'Étude de zone · Particulier', data: 'etude-particulier',
+      onClick: () => { const st = useApp.getState(); st.setEtudeZonePrefill({ ...zPref, sous_destination: '' }); st.setModule('etude-zone') } },
+  ]
   if (f.commune) {
-    outils.push({ label: 'Permis commune', data: 'permis', principal: true,
+    outils.push({ label: 'Permis commune', data: 'permis',
       onClick: () => { const st = useApp.getState(); st.setCommune(f.commune!); st.setCommunesFilter([f.commune!]); st.setModule('permis') } })
     outils.push({ label: 'Fiche commune', data: 'fiche-commune',
       onClick: () => { const st = useApp.getState(); st.setCommune(f.commune!); st.setContexteCommune(f.commune!) } })
