@@ -8,7 +8,8 @@ declarer(FicheRegle(
         "TOPO) × surface, emprise_cosia_m2 révélée) et niveaux_existants = étages BD TOPO, sinon "
         "⌈hauteur ÷ 3⌉, sinon hypothèse 1,0 (le résultat est alors marqué « estimé »). "
         "SDP_résiduelle = max(0 ; SDP_max − SDP_existante), SDP_max venant du moteur commun (fiche "
-        "surface_plancher_m2). taux_emprise = 100 × emprise_bâtie ÷ emprise_max (plafonné 999) ; "
+        "surface_plancher_m2). taux_emprise = 100 × emprise_bâtie ÷ emprise_max (non plafonné — "
+        "affiché « > 300 % » au-delà de 300, COHERENCE-FIX-1 lot B ; absent → NULL, jamais 0) ; "
         "sous_densite = taux_emprise < 40 % (seuil hypothèses). Non constructible → SDP écrite 0 "
         "avec cause structurée ; hors PLU → NULL (réellement inconnaissable)."),
     entrees=("spatial_layers kind=batiment (BD TOPO : etages, hauteur)", "parcel_bati_revele (CoSIA)",

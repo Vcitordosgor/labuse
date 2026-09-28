@@ -203,15 +203,22 @@ def compute_residuel(session: Session, parcel_id: int,
     sdp_existante = emprise_batie * niveaux_exist * hyp.coef_sdp_existante
     sdp_residuelle = max(0.0, sdp_max - sdp_existante)
 
-    taux_emprise = min(999.0, 100.0 * emprise_batie / emprise_max) if emprise_max else 0.0
-    pct_potentiel = min(999.0, 100.0 * sdp_existante / sdp_max) if sdp_max else 0.0
+    # COHERENCE-FIX-1 (lot B) — PLUS DE PLAFOND 999, PLUS DE 0-POUR-ABSENCE. L'ancien
+    # `min(999, …) if … else 0.0` servait un « 999 % » (plafond technique lu comme un vrai
+    # pourcentage — 2 304 parcelles) et un « 0 % consommé » quand le dénominateur manquait
+    # (un zéro à la place d'une absence). La valeur est désormais servie TELLE QUELLE ;
+    # au-delà de 300 % les LECTEURS affichent « > 300 % » (seuil produit, cf. rapport) —
+    # jamais le moteur qui ment. Dénominateur manquant → None (la garde emprise_max/sdp_max
+    # > 0 plus haut rend ce cas théorique — on le dit au lieu de servir 0).
+    taux_emprise = (100.0 * emprise_batie / emprise_max) if emprise_max else None
+    pct_potentiel = (100.0 * sdp_existante / sdp_max) if sdp_max else None
     seuil = float(hyp.sous_densite_seuil_pct)
-    sous_densite = taux_emprise < seuil
+    sous_densite = (taux_emprise < seuil) if taux_emprise is not None else None
 
     return {
         "disponible": True,
-        "taux_emprise_pct": round(taux_emprise),
-        "pct_potentiel": round(pct_potentiel),
+        "taux_emprise_pct": round(taux_emprise) if taux_emprise is not None else None,
+        "pct_potentiel": round(pct_potentiel) if pct_potentiel is not None else None,
         "sous_densite": sous_densite,
         "sous_densite_seuil_pct": round(seuil),
         "emprise_batie_m2": round(emprise_batie),
@@ -324,12 +331,30 @@ def compare_residuel_servi(session: Session, parcel_ids: list[int]) -> list[dict
     return ecarts
 
 
-def _libelle(taux: float, sdp_res: float, niveaux_reels: bool) -> str:
+#: COHERENCE-FIX-1 (lot B) — seuil d'AFFICHAGE partagé (fiche, Comparer, Dossier, Copilote —
+#: miroir front : format.ts PCT_CONSOMME_SEUIL) : au-delà, le chiffre exact n'apporte rien.
+SEUIL_PCT_AFFICHAGE = 300
+
+
+def fmt_pct_consomme(pct: float | int | None) -> str | None:
+    """La PARTIE NOMBRE affichée d'un % de densité consommée : exacte jusqu'à 300, « > 300 »
+    au-delà, None si absente (l'appelant écrit l'absence — jamais un 0)."""
+    if pct is None:
+        return None
+    return "> 300" if float(pct) > SEUIL_PCT_AFFICHAGE else str(round(float(pct)))
+
+
+def _libelle(taux: float | None, sdp_res: float, niveaux_reels: bool) -> str:
     # M36 Lot C (Q1, arbitrage Vic) : au-delà de 100 % on ne plafonne PAS et on ne déduit
     # RIEN (pas d'« antériorité probable ») — libellé factuel seul.
-    if taux > 100:
+    # COHERENCE-FIX-1 (lot B) : taux None (dénominateur manquant) → on le DIT, jamais « 0 % ».
+    if taux is None:
+        etat = "taux d'emprise non calculable (emprise constructible inconnue)"
+    elif taux > 100:
+        # COHERENCE-FIX-1 (lot B) : au-delà de 300 %, le chiffre exact n'apporte rien au client
+        # (bâti très au-delà du plafond de zone) — même règle d'affichage que la fiche.
         etat = (f"bâti existant supérieur à l'emprise constructible actuelle "
-                f"(~{round(taux)} % — à vérifier)")
+                f"({'> 300' if taux > 300 else f'~{round(taux)}'} % — à vérifier)")
     elif taux < 2:
         etat = "terrain nu — potentiel quasi intégral"
     else:

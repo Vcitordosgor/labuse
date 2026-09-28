@@ -20,6 +20,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from ..ai import core
+from ..faisabilite.residuel import fmt_pct_consomme as _fmt_pct
 from .. import runs
 
 router = APIRouter(tags=["ia"])
@@ -175,7 +176,9 @@ def _ask_context(db: Session, idu: str) -> tuple[dict, dict]:
         # ── potentiel de transformation (ESTIMÉ) ──
         "potentiel_niveau": _F(pot.get("niveau"), "ESTIME"),
         "sdp_residuelle_m2": _F(pot.get("sdp_residuelle_m2") or pot.get("sdp_residuelle"), "ESTIME"),
-        "pct_consomme": _F(pot.get("pct_consomme"), "ESTIME"),
+        # COHERENCE-FIX-1 (lot B) — le Copilote cite ce que le client VOIT : > 300 → « > 300 »
+        # (même règle que fiche/Dossier), jamais le 999 historique ni un exact trompeur.
+        "pct_consomme": _F(_fmt_pct(pot.get("pct_consomme")), "ESTIME"),
         "sous_densite": _F(pot.get("sous_densite"), "ESTIME"),
         # ── ICD / score P (SOURCÉ, lecture seule) ──
         "icd_bande": _F(icd.get("bande") or icd.get("libelle")),

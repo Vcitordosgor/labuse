@@ -5,7 +5,7 @@
 import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getCompare, type CompareRow } from '../../lib/api'
-import { fmtEurCompact, fmtInt, iduCourt } from '../../lib/format'
+import { fmtEurCompact, fmtInt, fmtPctConsomme, iduCourt } from '../../lib/format'
 import { PERIM_POTENTIEL_COURT, PERIM_RESIDUEL_COURT } from '../../lib/perimetres'
 import { bandeMeta, signalMeta } from '../../lib/status'   // COMPARER-2 §4 — bande + Signal (comme l'Analyse)
 import { useApp } from '../../store/useApp'
@@ -65,7 +65,8 @@ const ROWS: Row[] = [
   { label: 'Emprise au sol max (PLU)', prov: 'source', val: (r) => r.emprise_ces_pct != null ? `${fmtInt(r.emprise_ces_pct)} %` : 'non réglementée', num: (r) => r.emprise_ces_pct ?? null, best: 'hi', title: 'Emprise au sol maximale fixée par le règlement de la zone (CES) — « non réglementée » si le PLU n\'en fixe pas.' },
   // COMPARER-2 §1 — l'ancienne ligne « Emprise au sol max » servait CE ratio (bâti ÷ emprise constructible),
   // pas une règle PLU → renommée « Taux d'occupation du gabarit », badge Estimé (un dérivé, pas un fait).
-  { label: 'Taux d\'occupation du gabarit', prov: 'estime', val: (r) => r.taux_emprise_pct != null ? `${fmtInt(r.taux_emprise_pct)} %` : '—', num: (r) => r.taux_emprise_pct ?? null, best: 'lo', title: 'Bâti existant ÷ emprise constructible : part du gabarit déjà occupée (plus bas = plus de marge à bâtir).' },
+  // COHERENCE-FIX-1 (lot B) — au-delà de 300 % : « > 300 % » (fmtPctConsomme), jamais un 999 brut.
+  { label: 'Taux d\'occupation du gabarit', prov: 'estime', val: (r) => r.taux_emprise_pct != null ? `${fmtPctConsomme(r.taux_emprise_pct)} %` : '—', num: (r) => r.taux_emprise_pct ?? null, best: 'lo', title: 'Bâti existant ÷ emprise constructible : part du gabarit déjà occupée (plus bas = plus de marge à bâtir).' },
   { label: 'Sous-densité', prov: 'estime', val: (r) => r.sous_densite == null ? '—' : r.sous_densite ? 'oui' : 'non', title: 'Le bâti existant est nettement en-dessous de ce que le PLU permet : il reste un potentiel à construire.' },
   // COMPARER-2 §2 — la valeur est par m² de TERRAIN (charge_fonciere.par_m2_terrain), pas de plancher.
   { label: 'Charge foncière /m² terrain', prov: 'estime', val: (r) => r.charge_fonciere_m2 != null ? `${fmtEurCompact(r.charge_fonciere_m2)}/m²` : '—', num: (r) => r.charge_fonciere_m2 ?? null, best: 'hi', title: 'Charge foncière supportable ramenée au m² de terrain — plus haut = plus intéressant (négatif = l\'opération ne dégage rien pour le foncier).' },

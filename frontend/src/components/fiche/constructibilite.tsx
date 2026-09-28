@@ -8,7 +8,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState, type ReactNode } from 'react'
 import { getCalculetteDefaults, getFaisabilite, getModeB, getPipelineForParcel, patchPipeline, postChargeFonciere, postFaisabiliteScenario, type CalculetteDefaults } from '../../lib/api'
-import { fmtEurCompact, fmtInt, fmtM2 } from '../../lib/format'
+import { fmtEurCompact, fmtInt, fmtM2, fmtPctConsomme } from '../../lib/format'
 import { PERIM_POTENTIEL_COURT } from '../../lib/perimetres'
 import { Squelette } from '../Loading'
 import { ErrorState } from '../States'
@@ -40,9 +40,11 @@ export function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
         <span className="rounded-full px-2 py-0.5 text-[10.5px] font-medium capitalize" style={{ background: `${color}22`, color }}>{pt.niveau}</span>
       }>Potentiel de transformation</GroupLabel>
       <Lignes>
+        {/* COHERENCE-FIX-1 (lot B) — plus jamais « 999 % » : au-delà de 300, « > 300 % » (l'« i »
+            porte le libellé moteur qui explique) ; une valeur absente est « — », jamais 0. */}
         {pt.pct_consomme != null && (
           <Ligne label={<>SDP consommée / autorisée{pt.libelle ? <InfoI aria="Sur le potentiel de transformation" tip={pt.libelle} /> : null}</>}
-            valeur={<>{pt.pct_consomme} <small>%</small></>} />
+            valeur={<>{fmtPctConsomme(pt.pct_consomme)} <small>%</small></>} />
         )}
         {pt.hauteur_marge_m != null && (
           <Ligne ton={pt.hauteur_discordante ? 'ambre' : undefined}
