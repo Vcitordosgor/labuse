@@ -78,7 +78,14 @@ def verdict_potentiel(valeurs: dict[str, Valeur]) -> Verdict | None:
                 f"consommée{pct_txt}. La valeur est dans la réhabilitation du bâti ou dans sa "
                 f"reconstruction.", "warn", "")
     if libelle:
-        return (f"Potentiel de construction : {libelle}.", "", "")
+        # EXPORTS-FIX-1 B1 — la « SDP restante » de la page de garde (sdp_residuelle_m2) est aussi
+        # dite au §10, MÊME valeur, avec ce qu'elle mesure : une surface de PLANCHER résiduelle
+        # (droits à bâtir non consommés), distincte de la « surface de plancher créée (table rase) ».
+        extra = ""
+        if sdp is not None and float(sdp) > 0:
+            from .registre_fmt import fmt_m2
+            extra = f" — SDP résiduelle (droits à bâtir non consommés) ≈ {fmt_m2(float(sdp))}"
+        return (f"Potentiel de construction : {libelle}{extra}.", "", "")
     return None
 
 

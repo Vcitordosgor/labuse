@@ -97,11 +97,32 @@ def _nature_alea(nat: str) -> str:
 #: fait est conservé ; seul le vocabulaire client change — la valeur du registre n'est pas modifiée).
 _ABSENCE_CLAIR = {
     "cosia_detecte_m2": "Bâti détecté par IA (CoSIA) : cohérent avec la cartographie IGN, rien à signaler.",
+    # EXPORTS-FIX-1 B5 — `dispositifs_parcelle` = les SERVITUDES d'utilité publique (SUP) seules ;
+    # ER/EBC/DPU/PEB sont des lignes distinctes avec leur propre absence. La phrase ne doit donc
+    # PAS revendiquer « aucune prescription (ER/EBC/DPU/PEB) » quand un DPU, lui, est présent.
+    "dispositifs_parcelle": "Aucune servitude d'utilité publique (SUP) intersectant la parcelle.",
 }
 
 
 def _absence_clair(quoi: str, phrase: str) -> str:
     return _ABSENCE_CLAIR.get(quoi, phrase)
+
+
+#: EXPORTS-FIX-1 B2 — une piscine détectée (FLAIR ∪ CoSIA) n'est ni un dispositif fiscal ni un
+#: périmètre : elle est un élément du terrain (§2), jamais compté au §7. On la repère et la retire.
+def _is_piscine(per: dict) -> bool:
+    return isinstance(per, dict) and "piscine" in (per.get("libelle") or "").lower()
+
+
+def _perimetres_hors_piscine(v: dict) -> list:
+    return [p for p in (v.get("perimetres") or []) if not _is_piscine(p)]
+
+
+def _piscine_dispositif(v: dict) -> dict | None:
+    for p in (v.get("perimetres") or []):
+        if _is_piscine(p):
+            return p
+    return None
 
 
 # ── la structure : sections + lignes, depuis les déclarations ────────────────────────────────
@@ -274,6 +295,19 @@ def _r_usage_sol(v):
     return esc(_ocs_ge_libelle(v))
 
 
+def _r_vigilances(v):
+    # EXPORTS-FIX-1 B3 — le compteur n_vigilances = couches de la cascade au verdict SOFT_FLAG /
+    # HARD_EXCLUDE (11 sur P1) ; il ne s'agit PAS du nombre de lignes détaillées (2 aléas). Le
+    # libellé dit désormais ce qu'il compte, pour lever la lecture « 11 pour 2 lignes ».
+    n = v.get("n") if isinstance(v, dict) else v
+    try:
+        n = int(n)
+    except (TypeError, ValueError):
+        return esc(v)
+    return esc(f"{groupe(n)} couche{'s' if n > 1 else ''} de risque relevée{'s' if n > 1 else ''} "
+               "par la cascade (détail des aléas ci-dessous)")
+
+
 def _r_gabarit_motif(v):
     # EXPORTS-FIX-1 A8 — motif interne « PLU non calibré pour la zone A (estimation générique) »
     # dit en clair, sans jargon de calibration.
@@ -335,8 +369,12 @@ def _r_tcsp(v):
     lib = "Station de transport en site propre"
     if d is not None:
         lib += f" à {groupe(d)} m"
+    # EXPORTS-FIX-1 B8 — le seuil L151-36 est 800 m : au-delà, on le DIT (« hors rayon »), jamais
+    # « stationnement allégé » ; la distance imprimée est bien celle du test (à vol d'oiseau).
     if v.get("sous_800m"):
         lib += " — stationnement allégé possible (L151-36, < 800 m)"
+    elif d is not None:
+        lib += " — hors rayon de 800 m (pas d'allègement L151-36)"
     return esc(lib)
 
 
@@ -369,18 +407,34 @@ def _r_n(v):
     return esc(groupe(v["n"])) if isinstance(v, dict) and v.get("n") is not None else esc(v)
 
 
+def _r_permis_proximite(v):
+    # EXPORTS-FIX-1 B7 — le compte de permis « à proximité » dit son rayon ET sa fenêtre (définition
+    # client 500 m · 24 mois, arbitrage Q7 du 05/09), jamais un « 15 » nu.
+    if not isinstance(v, dict) or v.get("n") is None:
+        return _r_n(v)
+    n, r, fen = v.get("n"), v.get("rayon_m"), v.get("fenetre_mois")
+    suff = f" (< {groupe(r)} m, {fen} mois)" if r and fen else ""
+    return esc(f"{groupe(n)} permis{suff}")
+
+
 def _r_dvf_liste(v, val: Valeur):
+    from ..dvf_mediane import SEUIL_N     # EXPORTS-FIX-1 B6 — LE seuil d'échantillon déjà en place (5)
     rows = []
     for r in v[:6]:
+        n = r.get("n_ventes")
+        # EXPORTS-FIX-1 B6 — MÊME seuil pour tous les types (terrain, maison, appartement…) : sous 5
+        # ventes, pas de médiane servie (l'appartement à 2 ventes est omis, comme le terrain nu l'était).
+        if n is not None and n < SEUIL_N:
+            continue
         tb = esc(str(r.get("type_bien") or "").capitalize())
         px = fmt_eur_m2(r["mediane_prix_m2"]) if r.get("mediane_prix_m2") else \
             (fmt_eur(r["mediane_valeur"]) if r.get("mediane_valeur") else "")
-        det = f"{px} — {groupe(r['n_ventes'])} ventes" if r.get("n_ventes") else px
-        if r.get("fenetre"):
-            det += f", {r['fenetre']}"
+        # EXPORTS-FIX-1 B6 — chaque prix dit son PÉRIMÈTRE (secteur cadastral) ET sa fenêtre.
+        det = f"{px} — {groupe(n)} ventes" if n else px
+        det += " · secteur cadastral" + (f", {r['fenetre']}" if r.get("fenetre") else "")
         rows.append(f'<tr data-quoi="dvf_parcelle_liste"><td class="k">{tb}</td>'
                     f'<td>{esc(det)}</td><td class="n">{chip(val)}</td></tr>')
-    return '<table class="kv">' + "".join(rows) + "</table>"
+    return ('<table class="kv">' + "".join(rows) + "</table>") if rows else ""
 
 
 def _r_radar(v):
@@ -392,10 +446,9 @@ def _r_voisinage(v):
     bits = []
     if v.get("ventes_dvf") is not None:
         bits.append(f"{groupe(v['ventes_dvf'])} vente{'s' if v['ventes_dvf'] > 1 else ''} DVF")
-    if v.get("prix_median_eur"):
-        bits.append(f"médiane {fmt_eur(v['prix_median_eur'])}")
-    elif v.get("prix_note"):
-        bits.append(str(v["prix_note"]))
+    # EXPORTS-FIX-1 B6 — la médiane « à 100 m » mélange TOUS les types (terrain, maison, appart) sur
+    # un très petit échantillon (« 15 000 € ») : trompeuse. On la retire (une médiane par type vit
+    # déjà au §8, avec sa fenêtre) ; la ligne à 100 m ne garde que le compte de ventes et de permis.
     if v.get("permis") is not None:
         bits.append(f"{groupe(v['permis'])} permis")
     r, fen = v.get("rayon_m"), v.get("fenetre_mois")
@@ -502,7 +555,7 @@ def _r_territoire(v, val: Valeur):
         _row("ZFANG", v["zfang"]["libelle"])
     if (v.get("frr") or {}).get("libelle"):
         _row("FRR (ex-ZRR)", v["frr"]["libelle"])
-    for per in (v.get("perimetres") or []):
+    for per in _perimetres_hors_piscine(v):   # EXPORTS-FIX-1 B2 — la piscine sort du §7 (elle est au §2)
         if per.get("libelle"):
             # EXPORTS-FIX-1 A9 — la bande QPV est nommée, jamais « Périmètre » nu.
             lib = (per.get("libelle") or "").lower()
@@ -540,15 +593,15 @@ _RENDEURS: dict[str, Any] = {
     "tcsp_stationnement_allege": _r_tcsp, "part_logements_egout_pct": _r_anc,
     "fibre_parcelle": _r_fibre, "prix_sortie_bati_eur_m2": _r_prix_ancien,
     "prix_terrain_secteur_eur_m2": _r_terrain_nu, "ventes_retenues_n": _r_n,
-    "ventes_ecartees_n": _r_n, "n_permis_proximite": _r_n, "radar_annonces_liste": _r_radar,
+    "ventes_ecartees_n": _r_n, "n_permis_proximite": _r_permis_proximite, "radar_annonces_liste": _r_radar,
     "ventes_100m_n": _r_voisinage, "voisinage_100m_liste": _r_voisinage,
     "equipements_proximite_liste": _r_equipements, "potentiel_verdict": _r_potentiel,
     "dpe_connu": _r_dpe, "rnb_batiments_liste": _r_rnb, "tfpb_taux_pct": _r_tfpb,
     "taxe_amenagement_estimee_eur": _r_taxe, "rang_tier": _r_rang,
     "filiation_parcelle": _r_filiation,
-    # EXPORTS-FIX-1 A4/A6/A7/A8
+    # EXPORTS-FIX-1 A4/A6/A7/A8/B3
     "scot_parcelle": _r_scot, "usage_sol_dominant": _r_usage_sol,
-    "gabarit_motif_blocage": _r_gabarit_motif,
+    "gabarit_motif_blocage": _r_gabarit_motif, "n_vigilances": _r_vigilances,
 }
 def _r_gabarit_plan(brute, val=None):
     """Le plan 2D du gabarit (SVG) — fragment pleine largeur, figure de la ligne « zone
@@ -585,6 +638,35 @@ def _pied_noms(vals: list[Valeur]) -> str:
     (doctrine PAGE-SOURCES-1 du 18/09)."""
     noms = [nom for nom, _mill in sources_lues(vals)]
     return note("Sources : " + " · ".join(noms)) if noms else ""
+
+
+#: EXPORTS-FIX-1 B9 — l'étiquette de nature d'un fait, corrigée au rendu (présentation, jamais la
+#: valeur du registre) : un même fait porte la MÊME étiquette partout.
+#:  · sol libre = une soustraction (parcelle − bâti − …) → dérivé (et non sourcé) ;
+#:  · viabilisation = un faisceau d'indices (un score) → jamais sourcé → estimé ;
+#:  · taxe d'aménagement (taux) = lue au barème public DELTA → sourcé (la ligne n'existe que si lu).
+_IDS_DERIVE = {"surface_libre_sol_m2"}
+_IDS_ESTIME = {"viabilisation_verdict"}
+_IDS_SOURCE = {"taxe_amenagement_estimee_eur"}
+
+
+def _chip_fixe(nat: str) -> str:
+    from .nature import CLASSE, LIBELLE
+    return f'<span class="chip {CLASSE[nat]}">{LIBELLE[nat]}</span>'
+
+
+def _chip_de(quoi: str, v: Valeur) -> str:
+    if quoi in _IDS_DERIVE:
+        return chip(v, derive=True)
+    if quoi in _IDS_ESTIME:
+        return _chip_fixe("estime")
+    if quoi in _IDS_SOURCE:
+        return _chip_fixe("source")
+    # EXPORTS-FIX-1 B9 — « emprise non réglementé » : MÊME étiquette qu'au §4 (blocs/zonage._chip_regle
+    # rend « estimé » pour une absence de règle non référencée). Un plafond chiffré reste sourcé.
+    if quoi == "gabarit_emprise_plafond_m2" and str(v.valeur).strip().lower().startswith("non"):
+        return _chip_fixe("estime")
+    return chip(v)
 
 
 def _ligne_tr(cid: str, cle: str, valeur_html: str, chip_html: str) -> str:
@@ -672,8 +754,9 @@ def _verdict_factuel(sec_id: str, valeurs: dict[str, Valeur]) -> tuple[str, str,
             z = dom.get("libelle") or ""
             # KELFONCIER-FIX-1 (Lot F) — le résumé compte AUSSI les dispositifs de commune au-delà du
             # zonage (TVA DOM, Petites Villes de Demain/ACV/ORT), plus seulement zfang/frr/périmètres.
+            # EXPORTS-FIX-1 B2 — la piscine n'est pas un dispositif : hors du compte des dispositifs.
             n_disp = sum(1 for k in ("zfang", "frr") if (tf.get(k) or {}).get("libelle")) \
-                + len(tf.get("perimetres") or []) + max(0, len(_doms) - 1)
+                + len(_perimetres_hors_piscine(tf)) + max(0, len(_doms) - 1)
             t = esc(z) if z else "Régime fiscal de droit commun"
             if n_disp:
                 t += f" · {n_disp} dispositif{'s' if n_disp > 1 else ''} territ{'oriaux' if n_disp > 1 else 'orial'}"
@@ -837,9 +920,27 @@ def rendu_sections(valeurs: dict[str, Valeur], fiche: dict, *, plan_html: str = 
         absents: list[tuple[str, str]] = []          # (quoi, phrase d'absence déclarée)
         vals_lus: list[Valeur] = []
         from .robinet_fiche import EXTRACTEURS
+        # EXPORTS-FIX-1 B2 — la piscine détectée (FLAIR ∪ CoSIA, confirmée sur l'orthophoto) est
+        # servie côté fiche dans les périmètres ; au Dossier elle est UN ÉLÉMENT DU TERRAIN (§2),
+        # jamais un dispositif fiscal. On la présente ici quand la mesure BD ORTHO (piscine_m2) manque.
+        _pdl = valeurs.get("perimetres_dispositifs_liste")
+        _pisc = _piscine_dispositif((_pdl.valeur if _pdl else {}) or {}) if _pdl else None
         for s, l in sec["lignes"]:
+            # EXPORTS-FIX-1 B6 — la ligne « à 100 m » ne s'imprime qu'UNE fois, au §8 (ventes_100m_n) ;
+            # le doublon du §9 (voisinage_100m_liste) est omis.
+            if l.quoi == "voisinage_100m_liste":
+                continue
             v = valeurs.get(l.quoi)
             if v is None:
+                if l.quoi == "piscine_m2" and _pisc:
+                    # la valeur ne répète pas le libellé « Piscine détectée » de la ligne (cf. A6).
+                    _pv = _re.sub(r"^\s*Piscine détectée\s*[—-]\s*", "",
+                                  _pisc.get("libelle") or "1 bassin")
+                    val_txt = (esc(_pv) + " — détection FLAIR ∪ CoSIA (orthophoto 20 cm), "
+                               "à confirmer sur place")
+                    groupes.setdefault("", []).append(
+                        _ligne_tr("piscine_m2", "Piscine détectée", val_txt, chip(_pdl, derive=True)))
+                    continue
                 # DONNEES-1 lot 2 — `masquer_si_absent` : la ligne disparaît, aucune phrase d'absence.
                 if l.quoi in EXTRACTEURS and l.absence and not l.masquer_si_absent:
                     absents.append((l.quoi, l.absence))
@@ -856,7 +957,7 @@ def rendu_sections(valeurs: dict[str, Valeur], fiche: dict, *, plan_html: str = 
                 continue
             lib = (l.comment or {}).get("libelle") or l.quoi
             grp = l.section if (l.section and l.section != sec["titre"]) else ""
-            groupes.setdefault(grp, []).append(_ligne_tr(l.quoi, lib, html, chip(v)))
+            groupes.setdefault(grp, []).append(_ligne_tr(l.quoi, lib, html, _chip_de(l.quoi, v)))  # B9
         rows: list[str] = []
         for grp, lignes_grp in groupes.items():      # un en-tête de groupe UNE fois, jamais vide
             # EXPORTS-FIX-1 A8 — « Bilan indicatif » est un intitulé interne : ses lignes se rangent
