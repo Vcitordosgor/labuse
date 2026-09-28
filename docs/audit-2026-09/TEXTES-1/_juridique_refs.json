@@ -1,0 +1,520 @@
+{
+ "L125-6": {
+  "ref": "L125-6",
+  "claims": [
+   {
+    "id": "DECL-001",
+    "zone": "declarations",
+    "ou": "bulle i ligne « Sols pollués (SIS) » section Risques fiche parcelle",
+    "texte": "La parcelle est dans un Secteur d'Information sur les Sols (Géorisques) — servitude OPPOSABLE aux autorisations d'urbanisme (art. L125-6 c. env.).",
+    "note": "art. L125-6 code de l'environnement"
+   }
+  ]
+ },
+ "L151-36": {
+  "ref": "L151-36",
+  "claims": [
+   {
+    "id": "DECL-034",
+    "zone": "declarations",
+    "ou": "libellé ligne « Stationnement allégé (TCSP, L151-36) » section Accès fiche parcelle",
+    "texte": "Stationnement allégé (TCSP, L151-36)",
+    "note": "article L151-36 code de l'urbanisme"
+   },
+   {
+    "id": "DECL-035",
+    "zone": "declarations",
+    "ou": "bulle i ligne « Stationnement allégé (TCSP, L151-36) » section Accès fiche parcelle",
+    "texte": "La parcelle est-elle à moins de 800 m d'une station de transport en site propre (plafond de stationnement L151-36).",
+    "note": "art. L151-36 c. urb. + seuil 800 m en dur"
+   },
+   {
+    "id": "DECL-126",
+    "zone": "declarations",
+    "ou": "bulle i couche TCSP / stationnement allégé (panneau couches carte)",
+    "texte": "Transport en commun en site propre : voies en site propre (OSM) + stations + zone des 800 m (L151-36, parcelles couvertes teintées où le stationnement peut être allégé). UNE couche, 3 kinds unis.",
+    "note": "art. L151-36 c. urb. + zone 800 m en dur"
+   },
+   {
+    "id": "DOC-010",
+    "zone": "documents_pdf",
+    "ou": "liste blanche provenance (référence de droit citée)",
+    "texte": "seuil légal L151-36 (800 m) cité en clair — référence de droit, pas une mesure",
+    "note": "art. L151-36 code urba, 800 m en dur — référence de droit"
+   },
+   {
+    "id": "DOC-082",
+    "zone": "documents_pdf",
+    "ou": "PDF Dossier (miroir), TCSP",
+    "texte": "Station de transport en site propre à {d} m — stationnement allégé possible (L151-36, < 800 m) / hors rayon de 800 m (pas d'allègement L151-36)",
+    "note": "L151-36 ; 800 m en dur"
+   },
+   {
+    "id": "PY-088",
+    "zone": "verdicts_py",
+    "ou": "article fiche stationnement",
+    "texte": "art. L151-36 (mod. loi n° 2025-1129 du 26/11/2025, art. 20) ; art. L151-35 (0,5 aire)",
+    "note": "cite L151-36/L151-35 + loi 2025-1129 + 0,5 aire"
+   }
+  ]
+ },
+ "ARRÊTÉDU23/06/2026": {
+  "ref": "arrêté du 23/06/2026",
+  "claims": [
+   {
+    "id": "DECL-065",
+    "zone": "declarations",
+    "ou": "bulle i ligne « Zonage A/B/C (logement) » carte Fiscalité fiche commune",
+    "texte": "zone A/B/C du dispositif d'investissement locatif pour la commune (arrêté du 23/06/2026, en vigueur 26/06/2026 — passe-plat, jamais recalculé)",
+    "note": "arrêté du 23/06/2026 en vigueur 26/06/2026 (dates en dur)"
+   }
+  ]
+ },
+ "L113-1": {
+  "ref": "L113-1",
+  "claims": [
+   {
+    "id": "DECL-104",
+    "zone": "declarations",
+    "ou": "bulle i couche Espaces boisés classés (EBC) (panneau couches carte)",
+    "texte": "Espaces boisés classés du PLU — protection stricte du boisement, tout défrichement interdit (art. L113-1).",
+    "note": "art. L113-1 code de l'urbanisme (défrichement interdit)"
+   },
+   {
+    "id": "DOC-020",
+    "zone": "documents_pdf",
+    "ou": "PDF Dossier §2, ligne dispositif",
+    "texte": "Espace boisé classé",
+    "note": "EBC — protection L113-1 code urba"
+   },
+   {
+    "id": "FRT-007",
+    "zone": "front",
+    "ou": "tooltip EBC fiche parcelle",
+    "texte": "Construction interdite sur l'emprise boisée (art. L113-1 CU) — part soustraite de l'assiette. Source : GPU.",
+    "note": "Affirmation d'interdiction + article L113-1 CU."
+   },
+   {
+    "id": "APIDOC-004",
+    "zone": "api_documents",
+    "ou": "pré-dossier PC, encart servitudes",
+    "texte": "Espace boisé classé : {libelle} — {part_pct} % de la parcelle (construction interdite sur l'emprise boisée, art. L113-1 CU)",
+    "note": "EBC : art. L113-1 code de l'urbanisme, construction interdite"
+   }
+  ]
+ },
+ "L111-6": {
+  "ref": "L.111-6",
+  "claims": [
+   {
+    "id": "DOC-027",
+    "zone": "documents_pdf",
+    "ou": "PDF Dossier §6, ligne axe structurant",
+    "texte": "{nom} à {d} m — desserte rapide et nuisances ; recul le long des axes classés à vérifier (L.111-6)",
+    "note": "recul axes classés art. L111-6 code urba"
+   },
+   {
+    "id": "DOC-027",
+    "zone": "documents_pdf",
+    "ou": "PDF Dossier §6, ligne axe structurant",
+    "texte": "{nom} à {d} m — desserte rapide et nuisances ; recul le long des axes classés à vérifier (L.111-6)",
+    "note": "recul axes classés art. L111-6 code urba"
+   }
+  ]
+ },
+ "DÉCRETN°78-690": {
+  "ref": "décret n° 78-690",
+  "claims": [
+   {
+    "id": "DOC-072",
+    "zone": "documents_pdf",
+    "ou": "PDF Dossier §2 (miroir), FRR",
+    "texte": "Commune classée FRR en partie — zone spéciale d'action rurale des Hauts (décret 1978) ; position de cette parcelle dans le périmètre non vérifiée géométriquement",
+    "note": "zone spéciale action rurale, décret n° 78-690 du 23/06/1978"
+   },
+   {
+    "id": "PY-017",
+    "zone": "verdicts_py",
+    "ou": "libellé FRR totalité",
+    "texte": "Commune classée en totalité (zone spéciale d'action rurale — décret n° 78-690 ; FRR depuis le 1er juillet 2024).",
+    "note": "cite décret 78-690 + date d'effet 01/07/2024"
+   }
+  ]
+ },
+ "1635QUATERH": {
+  "ref": "1635 quater H",
+  "claims": [
+   {
+    "id": "DOC-093",
+    "zone": "documents_pdf",
+    "ou": "PDF Financier, source taxe (pré-remplissage)",
+    "texte": "taxe d'aménagement sur la surface taxable (≈ SDP du projet {X} m², garages/annexes non modélisés) au taux communal — config datée, service-public.gouv.fr",
+    "note": "surface taxable close et couverte, CGI 1635 quater H (cf. commentaire)"
+   },
+   {
+    "id": "PY-083",
+    "zone": "verdicts_py",
+    "ou": "article fiche règle taxe",
+    "texte": "art. 1635 quater H (valeurs forfaitaires) et 1635 quater I (abattement 50 %)",
+    "note": "cite CGI art. 1635 quater H et I + 50 %"
+   },
+   {
+    "id": "FRT-002",
+    "zone": "front",
+    "ou": "note bloc Taxe d'aménagement fiche parcelle",
+    "texte": "Se calcule sur la surface taxable de votre projet (close et couverte > 1,80 m, garages et annexes inclus — ≠ SDP)",
+    "note": "1,80 m en dur = définition légale surface taxable (CGI art. 1635 quater H)."
+   },
+   {
+    "id": "FRT-013",
+    "zone": "front",
+    "ou": "hint champ surface taxable outil Taxe",
+    "texte": "Surface close et couverte > 1,80 m, garages et annexes INCLUS (CGI 1635 quater H) — ≠ SDP.",
+    "note": "1,80 m en dur + article CGI 1635 quater H."
+   }
+  ]
+ },
+ "R111-22": {
+  "ref": "R.111-22",
+  "claims": [
+   {
+    "id": "COP-006",
+    "zone": "copilote",
+    "ou": "prompt système voie b (GENERAL_SYSTEM) — met dans la bouche du copilote les définitions juridiques SDP/SHAB/charge foncière",
+    "texte": "SDP = surface de plancher (la surface construite au sens du code de l'urbanisme) ; SHAB = surface habitable (plus petite, hors murs/circulations) ; charge foncière = le prix maximal au m² de plancher qu'une opération peut payer pour le terrain en restant à l'équilibre.",
+    "note": "Prompt système mais impose au copilote une définition juridique de notions du code de l'urbanisme, servie au client. Vérifier exactitude des définitions (SDP au sens R.111-22 code urba, SHAB loi Carrez/Boutin)."
+   }
+  ]
+ },
+ "1635QUATERD": {
+  "ref": "1635 quater D",
+  "claims": [
+   {
+    "id": "PY-005",
+    "zone": "verdicts_py",
+    "ou": "ligne détail taxe aménagement",
+    "texte": "{surf:g} m² < {seuil_exo:g} m² — exonérée (CGI 1635 quater D, 10°)",
+    "note": "cite CGI art. 1635 quater D 10° (petites surfaces <5m²) ; chiffres via variable"
+   },
+   {
+    "id": "PY-007",
+    "zone": "verdicts_py",
+    "ou": "ligne détail taxe exonérée",
+    "texte": "{surf_exo:g} m² × {vf:g} €/m² — exonérée de plein droit ({_art})",
+    "note": "exonération de plein droit CGI 1635 quater D ; article via variable"
+   },
+   {
+    "id": "PY-008",
+    "zone": "verdicts_py",
+    "ou": "libellés motifs exonération taxe",
+    "texte": "Locaux agricoles (CGI art. 1635 quater D, 3°) ; Logements locatifs très sociaux (PLAI) (CGI art. 1635 quater D, 2°) ; Reconstruction à l'identique après sinistre (< 10 ans) (CGI art. 1635 quater D, 9°)",
+    "note": "dict _MOTIFS_EXONERATION : 3 exonérations CGI 1635 quater D + délai '< 10 ans' en dur"
+   },
+   {
+    "id": "FRT-014",
+    "zone": "front",
+    "ou": "hint locaux agricoles outil Taxe",
+    "texte": "Serres, bâtiments d'exploitation, stockage de récoltes, abris d'animaux — exonérés (CGI 1635 quater D, 3°).",
+    "note": "Exonération de plein droit + article CGI 1635 quater D 3°."
+   },
+   {
+    "id": "FRT-015",
+    "zone": "front",
+    "ou": "hint PLAI outil Taxe",
+    "texte": "Prêt locatif aidé d'intégration — exonérés de plein droit (CGI 1635 quater D, 2°). Pour du PLUS/PLS, cocher plutôt « Logement aidé ».",
+    "note": "Exonération de plein droit + article CGI 1635 quater D 2°."
+   },
+   {
+    "id": "FRT-016",
+    "zone": "front",
+    "ou": "hint reconstruction outil Taxe",
+    "texte": "Reconstruction à l'identique d'un bâtiment détruit ou démoli depuis moins de 10 ans, après sinistre (CGI 1635 quater D, 9°).",
+    "note": "Délai 10 ans en dur + article CGI 1635 quater D 9°."
+   }
+  ]
+ },
+ "L524-7": {
+  "ref": "L524-7",
+  "claims": [
+   {
+    "id": "PY-009",
+    "zone": "verdicts_py",
+    "ou": "source redevance archéologie",
+    "texte": "code du patrimoine art. L524-7 (0,40 % de l'assiette de la taxe d'aménagement)",
+    "note": "cite art. L524-7 code patrimoine + taux 0,40% en dur"
+   },
+   {
+    "id": "APIDOC-015",
+    "zone": "api_documents",
+    "ou": "pré-dossier PC, section Fiscalité",
+    "texte": "Redevance d'archéologie préventive 0,68 €/m² de surface créée (art. L524-7 du Code du patrimoine) — chiffrée sur la SDP du projet",
+    "note": "tarif 0,68 €/m² en dur ; art. L524-7 code du patrimoine"
+   }
+  ]
+ },
+ "1635QUATERE": {
+  "ref": "1635 quater E",
+  "claims": [
+   {
+    "id": "PY-013",
+    "zone": "verdicts_py",
+    "ou": "millésime secteur majoré",
+    "texte": "Secteur à taux majoré en vigueur depuis le {depuis} (délibération communale)",
+    "note": "secteur à taux majoré (CGI art. 1635 quater E/F) ; date via variable"
+   }
+  ]
+ },
+ "DÉCRETN°2026-421": {
+  "ref": "décret n° 2026-421",
+  "claims": [
+   {
+    "id": "PY-015",
+    "zone": "verdicts_py",
+    "ou": "libellé ZFANG renforcé",
+    "texte": "Régime renforcé (commune de l'Est, décret n° 2026-421 du 29 mai 2026) — abattements majorés : 80 % sur les bénéfices et la taxe foncière bâtie, 100 % sur la CFE, jusqu'en 2030.",
+    "note": "cite décret 2026-421 + taux légaux 80%/100% en dur + échéance 2030"
+   }
+  ]
+ },
+ "L424-1": {
+  "ref": "L.424-1",
+  "claims": [
+   {
+    "id": "PY-070",
+    "zone": "verdicts_py",
+    "ou": "mention base légale sursis",
+    "texte": "Code de l'urbanisme, art. L.153-11 (sursis possible dès le débat sur le PADD) et L.424-1 (durée max 2 ans). Applicable aux procédures de révision/élaboration ; une modification n'ouvre pas ce sursis. Décision motivée, contrôlée par le juge.",
+    "note": "cite art. L.153-11 et L.424-1 code urbanisme + durée max 2 ans"
+   },
+   {
+    "id": "FRT-024",
+    "zone": "front",
+    "ou": "bloc sursis outil VerifProcedure",
+    "texte": "Sursis à statuer",
+    "note": "Concept légal d'urbanisme (art. L424-1 CU). Vérifier contexte texte complet."
+   }
+  ]
+ },
+ "L153-11": {
+  "ref": "L.153-11",
+  "claims": [
+   {
+    "id": "PY-070",
+    "zone": "verdicts_py",
+    "ou": "mention base légale sursis",
+    "texte": "Code de l'urbanisme, art. L.153-11 (sursis possible dès le débat sur le PADD) et L.424-1 (durée max 2 ans). Applicable aux procédures de révision/élaboration ; une modification n'ouvre pas ce sursis. Décision motivée, contrôlée par le juge.",
+    "note": "cite art. L.153-11 et L.424-1 code urbanisme + durée max 2 ans"
+   }
+  ]
+ },
+ "L752-1": {
+  "ref": "L752-1",
+  "claims": [
+   {
+    "id": "PY-071",
+    "zone": "verdicts_py",
+    "ou": "note vigilance zone",
+    "texte": "Au-delà de 1 000 m² de surface de vente, une autorisation d'exploitation commerciale (CDAC) peut être requise — point de vigilance à instruire, non instruit ici.",
+    "note": "seuil 1 000 m² + CDAC (art. L752-1 code commerce)"
+   },
+   {
+    "id": "PY-081",
+    "zone": "verdicts_py",
+    "ou": "mention CDAC destinations",
+    "texte": "art. L752-1 du code de commerce : autorisation d'exploitation commerciale obligatoire au-delà de 1 000 m² de surface de vente",
+    "note": "cite art. L752-1 code commerce + seuil 1 000 m²"
+   },
+   {
+    "id": "PY-086",
+    "zone": "verdicts_py",
+    "ou": "article fiche destination",
+    "texte": "art. L752-1, 1° et 2°",
+    "note": "cite art. L752-1 code commerce"
+   }
+  ]
+ },
+ "R151-28": {
+  "ref": "R151-28",
+  "claims": [
+   {
+    "id": "PY-080",
+    "zone": "verdicts_py",
+    "ou": "référentiel destinations PLU",
+    "texte": "art. R151-27 et R151-28 du code de l'urbanisme, version en vigueur depuis le 01/07/2023 (décret n° 2023-195 du 22/03/2023)",
+    "note": "cite R151-27/R151-28 code urbanisme + décret 2023-195 + date 01/07/2023"
+   }
+  ]
+ },
+ "DÉCRETN°2023-195": {
+  "ref": "décret n° 2023-195",
+  "claims": [
+   {
+    "id": "PY-080",
+    "zone": "verdicts_py",
+    "ou": "référentiel destinations PLU",
+    "texte": "art. R151-27 et R151-28 du code de l'urbanisme, version en vigueur depuis le 01/07/2023 (décret n° 2023-195 du 22/03/2023)",
+    "note": "cite R151-27/R151-28 code urbanisme + décret 2023-195 + date 01/07/2023"
+   }
+  ]
+ },
+ "R151-27": {
+  "ref": "R151-27",
+  "claims": [
+   {
+    "id": "PY-080",
+    "zone": "verdicts_py",
+    "ou": "référentiel destinations PLU",
+    "texte": "art. R151-27 et R151-28 du code de l'urbanisme, version en vigueur depuis le 01/07/2023 (décret n° 2023-195 du 22/03/2023)",
+    "note": "cite R151-27/R151-28 code urbanisme + décret 2023-195 + date 01/07/2023"
+   }
+  ]
+ },
+ "1635QUATERI": {
+  "ref": "1635 quater I",
+  "claims": [
+   {
+    "id": "PY-083",
+    "zone": "verdicts_py",
+    "ou": "article fiche règle taxe",
+    "texte": "art. 1635 quater H (valeurs forfaitaires) et 1635 quater I (abattement 50 %)",
+    "note": "cite CGI art. 1635 quater H et I + 50 %"
+   }
+  ]
+ },
+ "LOIN°2025-1129": {
+  "ref": "loi n° 2025-1129",
+  "claims": [
+   {
+    "id": "PY-088",
+    "zone": "verdicts_py",
+    "ou": "article fiche stationnement",
+    "texte": "art. L151-36 (mod. loi n° 2025-1129 du 26/11/2025, art. 20) ; art. L151-35 (0,5 aire)",
+    "note": "cite L151-36/L151-35 + loi 2025-1129 + 0,5 aire"
+   }
+  ]
+ },
+ "L151-35": {
+  "ref": "L151-35",
+  "claims": [
+   {
+    "id": "PY-088",
+    "zone": "verdicts_py",
+    "ou": "article fiche stationnement",
+    "texte": "art. L151-36 (mod. loi n° 2025-1129 du 26/11/2025, art. 20) ; art. L151-35 (0,5 aire)",
+    "note": "cite L151-36/L151-35 + loi 2025-1129 + 0,5 aire"
+   }
+  ]
+ },
+ "L112-10": {
+  "ref": "L112-10",
+  "claims": [
+   {
+    "id": "FRT-003",
+    "zone": "front",
+    "ou": "libellé PEB zone A fiche parcelle",
+    "texte": "constructions d'habitation interdites (art. L112-10 CU)",
+    "note": "Affirmation de règle + citation article L112-10 code urbanisme."
+   },
+   {
+    "id": "FRT-004",
+    "zone": "front",
+    "ou": "libellé PEB zone B fiche parcelle",
+    "texte": "constructions d'habitation interdites (art. L112-10 CU)",
+    "note": "Citation article L112-10 CU."
+   },
+   {
+    "id": "FRT-005",
+    "zone": "front",
+    "ou": "libellé PEB zone C fiche parcelle",
+    "texte": "isolement acoustique renforcé obligatoire (art. L112-10 CU)",
+    "note": "Obligation + article L112-10 CU."
+   },
+   {
+    "id": "FRT-006",
+    "zone": "front",
+    "ou": "libellé PEB zone D fiche parcelle",
+    "texte": "zone d'information sur le bruit (art. L112-10 CU)",
+    "note": "Citation article L112-10 CU."
+   },
+   {
+    "id": "APIDOC-011",
+    "zone": "api_documents",
+    "ou": "pré-dossier PC, encart servitudes",
+    "texte": "Plan d'exposition au bruit — zone {zone} : {effet} (art. L112-10 CU)",
+    "note": "PEB : art. L112-10 code de l'urbanisme"
+   }
+  ]
+ },
+ "L125-7": {
+  "ref": "L125-7",
+  "claims": [
+   {
+    "id": "FRT-010",
+    "zone": "front",
+    "ou": "tooltip SIS fiche parcelle",
+    "texte": "Étude de sols obligatoire au changement d'usage (L556-2) · information écrite de l'acheteur/locataire obligatoire à la vente ou location (L125-7).",
+    "note": "Deux obligations légales + articles L556-2 et L125-7 (code environnement)."
+   }
+  ]
+ },
+ "L556-2": {
+  "ref": "L556-2",
+  "claims": [
+   {
+    "id": "FRT-010",
+    "zone": "front",
+    "ou": "tooltip SIS fiche parcelle",
+    "texte": "Étude de sols obligatoire au changement d'usage (L556-2) · information écrite de l'acheteur/locataire obligatoire à la vente ou location (L125-7).",
+    "note": "Deux obligations légales + articles L556-2 et L125-7 (code environnement)."
+   }
+  ]
+ },
+ "1635QUATERA": {
+  "ref": "1635 quater A",
+  "claims": [
+   {
+    "id": "FRT-012",
+    "zone": "front",
+    "ou": "tooltip outil Taxe d'aménagement",
+    "texte": "Estimez la taxe d'aménagement de votre projet avant le dépôt du permis. Valeurs {annee} (arrêté officiel, base CGI art. 1635 quater A et suivants) ; à La Réunion, c'est la valeur forfaitaire hors Île-de-France qui s'applique. Le montant définitif est fixé par l'administration après le permis.",
+    "note": "Base légale CGI 1635 quater A + affirmation compétence administration."
+   }
+  ]
+ },
+ "R111-1": {
+  "ref": "R111-1",
+  "claims": [
+   {
+    "id": "FRT-020",
+    "zone": "front",
+    "ou": "lien RNU outil PLU",
+    "texte": "Lire le règlement national d'urbanisme (art. R111-1 s., Légifrance)",
+    "note": "Citation articles R111-1 et suivants code urbanisme."
+   }
+  ]
+ },
+ "L302-9-1": {
+  "ref": "L302-9-1",
+  "claims": [
+   {
+    "id": "FRT-026",
+    "zone": "front",
+    "ou": "description SRU carence contexte commune",
+    "texte": "Commune en carence SRU : forte pression de production de logement social — les programmes avec part LLS y sont attendus (et souvent facilités).",
+    "note": "Affirmation de portée d'un régime légal (carence art. L302-9-1 CCH)."
+   }
+  ]
+ },
+ "R571-32": {
+  "ref": "R.571-32",
+  "claims": [
+   {
+    "id": "APIDOC-020",
+    "zone": "api_documents",
+    "ou": "pré-dossier PC, PCMI4 notice, ligne Bruit",
+    "texte": "Isolement acoustique renforcé obligatoire en catégorie élevée (art. R.571-32 du Code de l'environnement).",
+    "note": "art. R.571-32 code de l'environnement ; obligation isolement acoustique"
+   }
+  ]
+ }
+}

@@ -1,0 +1,2778 @@
+[
+ {
+  "id": "DECL-002",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/fiche/risques.yaml:26",
+  "ou": "bulle i ligne « Aléas » section Risques fiche parcelle",
+  "texte": "Aléas touchant la parcelle (mêmes que « Pièges et risques »), triés rédhibitoire puis niveau. Chaque aléa porte son statut : un PPR est OPPOSABLE, une carte d'aléa Géorisques nue est INFORMATIVE.",
+  "note": "opposabilité PPR vs carte d'aléa informative"
+ },
+ {
+  "id": "DECL-003",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/fiche/risques.yaml:42",
+  "ou": "bulle i ligne « Système d'endiguement » section Risques fiche parcelle",
+  "texte": "La parcelle est dans une zone déclarée protégée par un système d'endiguement (DEAL). ⚠ La source ne fournit NI la classe d'ouvrage NI le niveau de protection : la présence d'une digue ne garantit aucun niveau de sécurité.",
+  "note": "statut informatif digue - pas de garantie de sécurité"
+ },
+ {
+  "id": "DECL-004",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/fiche/risques.yaml:50",
+  "ou": "bulle i ligne « Anciens sites industriels (CASIAS) » section Risques fiche parcelle",
+  "texte": "Ancien site industriel/de service recensé sur ou près de la parcelle (Géorisques CASIAS) — inventaire historique, INFORMATIF (n'est pas une servitude opposable).",
+  "note": "statut informatif - pas servitude opposable"
+ },
+ {
+  "id": "DECL-005",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/fiche/risques.yaml:59",
+  "ou": "bulle i ligne « EnR au sol interdites (APER) » section Risques fiche parcelle",
+  "texte": "La parcelle est dans une zone où les énergies renouvelables au SOL sont exclues (loi APER) — photovoltaïque/ombrière au sol exclu, la toiture n'est pas concernée. Source : OFB/INPN (Géoplateforme).",
+  "note": "loi APER (exclusion EnR au sol)"
+ },
+ {
+  "id": "DECL-006",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/fiche/risques.yaml:67",
+  "ou": "bulle i ligne « Mesure compensatoire (GéoMCE) » section Risques fiche parcelle",
+  "texte": "La parcelle recoupe une mesure compensatoire environnementale (GéoMCE, MTE/OFB) liée à un projet — obligation de restauration/évitement à instruire.",
+  "note": "obligation ERC (restauration/évitement)"
+ },
+ {
+  "id": "DECL-007",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/fiche/le_bien.yaml:41",
+  "ou": "bulle i ligne « Établissements sur la parcelle » section Le bien fiche parcelle",
+  "texte": "Établissements SIRENE rattachés à la parcelle par l'adresse BAN (précision « adresse » seulement — « voie »/« commune » non rattachés) : nom, NAF fin, tranche d'effectif, état + régime collectif BODACC. Nom masqué si l'unité est non diffusible.",
+  "note": "masquage unité non diffusible (INSEE/RGPD) - doute périmètre"
+ },
+ {
+  "id": "DECL-009",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/fiche/le_bien.yaml:118",
+  "ou": "pourquoi/note affichée ? ligne « DPE connu » — doute (champ pourquoi interne)",
+  "texte": "le DPE n'est PAS obligatoire dans les DROM et la couverture est d'environ 0,3 %",
+  "note": "champ pourquoi (interne) - EXCLU normalement ; 0"
+ },
+ {
+  "id": "DECL-010",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/fiche/sections_restantes.yaml:33",
+  "ou": "bulle i ligne « Taxe d'aménagement — taux communal » section Fiscalité fiche parcelle",
+  "texte": "Taux communal de la taxe d'aménagement. Sans projet, SEUL le taux est servi : le montant en euros se calcule sur la surface de plancher CRÉÉE par un projet (art. L331 c. urb.), chiffré au Financier.",
+  "note": "art. L331 code de l'urbanisme"
+ },
+ {
+  "id": "DECL-011",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/fiche/sections_restantes.yaml:41",
+  "ou": "bulle i ligne « Rappel RTAA DOM » section Bilan fiche parcelle",
+  "texte": "Exigences réglementaires de conception DOM (aération, protection solaire, eau chaude solaire) — rappel au stade faisabilité, hors scoring. Règles versionnées config/rtaa_dom.yaml, vérifiées sur Légifrance.",
+  "note": "RTAA DOM (réglementation thermique DOM) vérifiée Légifrance"
+ },
+ {
+  "id": "DECL-012",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/fiche/sections_restantes.yaml:134",
+  "ou": "bulle i ligne « Taxe foncière (TFPB) » section Fiscalité fiche parcelle",
+  "texte": "Taux de taxe foncière (part communale, EPCI, TEOM) — fichier REI (DGFiP).",
+  "note": "composition taux TFPB (communale/EPCI/TEOM)"
+ },
+ {
+  "id": "DECL-013",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/fiche/sections_restantes.yaml:146",
+  "ou": "bulle i ligne « Prescriptions du droit des sols » section Droit des sols fiche parcelle",
+  "texte": "Emplacements réservés, espaces boisés classés, droit de préemption, plan d'exposition au bruit intersectant la parcelle.",
+  "note": "ER/EBC/DPU/PEB - prescriptions opposables du droit des sols"
+ },
+ {
+  "id": "DECL-014",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/fiche/sections_restantes.yaml:154",
+  "ou": "bulle i ligne « SCOT » section Droit des sols fiche parcelle",
+  "texte": "Schéma de cohérence territoriale couvrant la parcelle (nom, date d'approbation) — document supra-communal opposable au PLU. Source : Géoportail de l'urbanisme (GPU).",
+  "note": "SCOT opposable au PLU"
+ },
+ {
+  "id": "DECL-015",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/fiche/sections_restantes.yaml:214",
+  "ou": "bulle i ligne « Ouverture de la zone AU » section Règlement fiche parcelle",
+  "texte": "Statut d'ouverture d'une zone À Urbaniser : ouverte, constructible sous condition d'une opération d'aménagement d'ensemble, ou fermée (modification du PLU requise). Le motif cite l'article du règlement.",
+  "note": "régime zone AU (ouverture/fermeture PLU)"
+ },
+ {
+  "id": "DECL-016",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/fiche/sections_restantes.yaml:217",
+  "ou": "pourquoi ligne « Ouverture de la zone AU » — doute (champ pourquoi)",
+  "texte": "Une zone AU n'est constructible que si son règlement l'a ouverte ; sous la zone.",
+  "note": "champ pourquoi (interne) - EXCLU normalement ; règle de droit ; noté par doute"
+ },
+ {
+  "id": "DECL-017",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/fiche/sections_restantes.yaml:243",
+  "ou": "bulle i ligne « Zone d'implantation » section Gabarit fiche parcelle",
+  "texte": "Surface où une construction peut s'implanter = parcelle − reculs (voie / séparatives) − exclusions (PPR rouge). Calcul géospatial pur, jamais estimé.",
+  "note": "règle de calcul de l'enveloppe constructible (reculs"
+ },
+ {
+  "id": "DECL-018",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/fiche/sections_restantes.yaml:259",
+  "ou": "bulle i ligne « Plafond d'emprise » section Gabarit fiche parcelle",
+  "texte": "Plafond réglementaire d'emprise au sol = surface × CES / 100, calculé À PART de la zone d'implantation. « Non réglementé » quand le PLU ne fixe pas de CES (silence prouvé).",
+  "note": "formule CES (coefficient emprise au sol)"
+ },
+ {
+  "id": "DECL-019",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/fiche/sections_restantes.yaml:267",
+  "ou": "bulle i ligne « Hauteur réglementaire » section Gabarit fiche parcelle",
+  "texte": "Hauteur réglementaire citée du §4 Urbanisme (elle y vit ; le tiroir ne la redéclare pas). « Non chiffrée » quand la règle est en prospect (L ≥ H) : forme validée, non numérique.",
+  "note": "règle de prospect L ≥ H"
+ },
+ {
+  "id": "DECL-021",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/fiche/sections_restantes.yaml:283",
+  "ou": "bulle i ligne « Gabarit — calcul incomplet » section Gabarit fiche parcelle",
+  "texte": "Motif métier quand le gabarit n'est pas calculable (limite non qualifiée, voie privée sans recul réglé, zone non calibrée, ≥ 2 zones constructibles…). Silence sourcé, jamais estimatif.",
+  "note": "motifs de non-calculabilité réglementaire"
+ },
+ {
+  "id": "DECL-022",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/fiche/sections.yaml:18",
+  "ou": "titre section fiche/Dossier",
+  "texte": "Fiscalité et dispositifs",
+  "note": "libellé de section - doute (titre seul) ; noté par doute"
+ },
+ {
+  "id": "DECL-025",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/fiche/reste_a_declarer.yaml:82",
+  "ou": "bulle i ligne « Emplacement réservé (ER) » section Droit des sols fiche parcelle",
+  "texte": "La parcelle est-elle grevée d'un emplacement réservé du PLU (destination, part de la parcelle).",
+  "note": "emplacement réservé PLU (opposable)"
+ },
+ {
+  "id": "DECL-026",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/fiche/reste_a_declarer.yaml:88",
+  "ou": "bulle i ligne « Espace boisé classé (EBC) » section Droit des sols fiche parcelle",
+  "texte": "La parcelle intersecte-t-elle un espace boisé classé du PLU (part soustraite de l'assiette).",
+  "note": "EBC PLU (opposable)"
+ },
+ {
+  "id": "DECL-027",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/fiche/reste_a_declarer.yaml:98",
+  "ou": "bulle i ligne « Droit de préemption urbain (DPU) » section Droit des sols fiche parcelle",
+  "texte": "La parcelle est-elle dans un périmètre de préemption publié (DPU simple/renforcé).",
+  "note": "DPU simple/renforcé (opposable)"
+ },
+ {
+  "id": "DECL-028",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/fiche/reste_a_declarer.yaml:103",
+  "ou": "pourquoi ligne DPU — doute (champ pourquoi)",
+  "texte": "Le DPU commande la transaction (DIA) ; à connaître avant d'acheter.",
+  "note": "champ pourquoi (interne) - EXCLU normalement ; DIA/transaction ; noté par doute"
+ },
+ {
+  "id": "DECL-029",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/fiche/reste_a_declarer.yaml:108",
+  "ou": "bulle i ligne « Plan d'exposition au bruit (PEB) » section Droit des sols fiche parcelle",
+  "texte": "Zone PEB de l'aérodrome (A/B/C/D) si la parcelle y est (annexes GPU).",
+  "note": "zones PEB A/B/C/D (opposable)"
+ },
+ {
+  "id": "DECL-030",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/fiche/reste_a_declarer.yaml:113",
+  "ou": "pourquoi ligne PEB — doute (champ pourquoi)",
+  "texte": "Le PEB limite ou interdit l'habitation ; contrainte réglementaire majeure.",
+  "note": "champ pourquoi (interne) - EXCLU normalement ; limitation habitation ; noté par doute"
+ },
+ {
+  "id": "DECL-031",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/fiche/reste_a_declarer.yaml:119",
+  "ou": "bulle i ligne « Mixité sociale (clause) » section Mixité fiche parcelle",
+  "texte": "Déclenchement de la clause de mixité (SDP/logements/terrain ≥ seuil de la zone).",
+  "note": "clause de mixité sociale (seuil de zone)"
+ },
+ {
+  "id": "DECL-032",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/fiche/reste_a_declarer.yaml:123",
+  "ou": "pourquoi ligne Mixité — doute (champ pourquoi)",
+  "texte": "La clause de mixité impose un quota de logements sociaux ; change le programme.",
+  "note": "champ pourquoi (interne) - EXCLU normalement ; quota LLS ; noté par doute"
+ },
+ {
+  "id": "DECL-033",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/fiche/reste_a_declarer.yaml:129",
+  "ou": "bulle i ligne « Divergence SAR » section fiche parcelle",
+  "texte": "Zone PLU U/AU croisant une vocation naturelle/agricole du proxy Région — indication non opposable.",
+  "note": "SAR indication NON opposable"
+ },
+ {
+  "id": "DECL-037",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/fiche/reste_a_declarer.yaml:205",
+  "ou": "pourquoi ligne TCSP — doute (champ pourquoi)",
+  "texte": "Le plafond de stationnement s'impose au PLU ; il change la faisabilité.",
+  "note": "champ pourquoi (interne) - EXCLU normalement ; plafond stationnement opposable ; noté par doute"
+ },
+ {
+  "id": "DECL-039",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/fiche/reste_a_declarer.yaml:226",
+  "ou": "pourquoi ligne Sols — doute (champ pourquoi)",
+  "texte": "Un SIS impose une étude de sols au changement d'usage ; à connaître avant d'acheter.",
+  "note": "champ pourquoi (interne) - EXCLU normalement ; obligation étude de sols SIS ; noté par doute"
+ },
+ {
+  "id": "DECL-045",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/fiche/entete_tuiles.yaml:31",
+  "ou": "bulle i tuile « Zone » en-tête fiche parcelle",
+  "texte": "Zone du PLU au point de la parcelle (règlement communal, archive GPU). « Non publié au GPU » : la commune n'a pas déposé de document opposable.",
+  "note": "zone PLU / document opposable GPU"
+ },
+ {
+  "id": "DECL-046",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/fiche/entete_tuiles.yaml:66",
+  "ou": "bulle i tuile « Taxe foncière » en-tête fiche parcelle",
+  "texte": "Taux de taxe foncière (TFPB) voté par la commune — fichier REI (DGFiP). C'est la charge annuelle, que le bien soit gardé, loué ou porté.",
+  "note": "taux TFPB voté par la commune"
+ },
+ {
+  "id": "DECL-047",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/fiche/petites_sections.yaml:15",
+  "ou": "bulle i ligne « Fibre (FTTH) » section Fibre fiche parcelle",
+  "texte": "Éligibilité fibre à l'adresse (Arcep) — état de déploiement et FTTH.",
+  "note": "source Arcep - doute (peu juridique) ; noté par doute"
+ },
+ {
+  "id": "DECL-060",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/commune/regles.yaml:48",
+  "ou": "bulle i ligne « Objectif logements/an » carte Règles fiche commune",
+  "texte": "objectif PLH, chaque chiffre porte sa référence doc+page",
+  "note": "objectif PLH (programme local de l'habitat)"
+ },
+ {
+  "id": "DECL-061",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/commune/regles.yaml:54",
+  "ou": "bulle i ligne « SCOT (nom + approbation) » carte Règles fiche commune",
+  "texte": "Schéma de Cohérence Territoriale couvrant la commune (GPU) : nom + date d'approbation. Passe-plat, jamais recalculé.",
+  "note": "SCOT supra-communal"
+ },
+ {
+  "id": "DECL-062",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/commune/regles.yaml:60",
+  "ou": "bulle i ligne « Taxe foncière (taux TFPB) » carte Fiscalité fiche commune",
+  "texte": "taux de TFPB appliqué sur la commune (E12 du REI) + part EPCI (E32) + TEOM (F22) — impositions primitives, passe-plat du fichier DGFiP",
+  "note": "composition TFPB (REI E12/E32/F22 DGFiP)"
+ },
+ {
+  "id": "DECL-063",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/commune/regles.yaml:66",
+  "ou": "bulle i ligne « Taxe foncière non bâti (taux TFPNB) » carte Fiscalité fiche commune",
+  "texte": "taux de TFPNB appliqué sur la commune (B12 du REI) + part EPCI (B32) — impositions primitives, passe-plat du fichier DGFiP (foncier non bâti = terrain)",
+  "note": "composition TFPNB (REI B12/B32 DGFiP)"
+ },
+ {
+  "id": "DECL-064",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/commune/regles.yaml:72",
+  "ou": "bulle i ligne « Taxe d'aménagement (part communale) » carte Fiscalité fiche commune",
+  "texte": "taux de la part communale de la taxe d'aménagement (délibération communale) — même source que l'outil Taxe (taxe_amenagement_taux, DGFiP/DELTA) ; pas de taux sectoriel à La Réunion dans la source",
+  "note": "taxe d'aménagement part communale (délibération)"
+ },
+ {
+  "id": "DECL-066",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/commune/regles.yaml:84",
+  "ou": "bulle i ligne « ZFANG — régime de la commune » carte Fiscalité fiche commune",
+  "texte": "régime ZFANG de la commune (standard | renforcé) — passe-plat depuis territoire_fiscal_commune, la même source qui peint la carte des dispositifs et filtre les parcelles ; jamais r",
+  "note": "régime ZFANG (zone franche activités)"
+ },
+ {
+  "id": "DECL-067",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/commune/regles.yaml:90",
+  "ou": "bulle i ligne « FRR — classement de la commune » carte Fiscalité fiche commune",
+  "texte": "classement France Ruralités Revitalisation de la commune (totalité | partie (les Hauts) | hors) — passe-plat depuis territoire_fiscal_commune ; jamais recalculé",
+  "note": "FRR (ex-ZRR) revitalisation rurale"
+ },
+ {
+  "id": "DECL-068",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/commune/regles.yaml:96",
+  "ou": "bulle i ligne « ACV / PVD / ORT » carte Fiscalité fiche commune",
+  "texte": "statut du dispositif de revitalisation de la commune (table DGALN) + convention ORT signée (date) + condition communale Denormandie DITE (le périmètre conventionné n'est pas publié",
+  "note": "ACV/PVD/ORT + condition Denormandie"
+ },
+ {
+  "id": "DECL-069",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/commune/regles.yaml:12",
+  "ou": "bulle i ligne « Règles d'urbanisme (statut) » carte Urbanisme fiche commune",
+  "texte": "RNU (registre) l'emporte ; sinon statut du registre veille_plu",
+  "note": "RNU l'emporte (règlement national d'urbanisme)"
+ },
+ {
+  "id": "DECL-073",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/commune/territoire.yaml:54",
+  "ou": "bulle i ligne « Taux LLS » carte Population fiche commune",
+  "texte": "taux LLS de l'inventaire SRU",
+  "note": "taux LLS inventaire SRU (loi SRU)"
+ },
+ {
+  "id": "DECL-074",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/commune/territoire.yaml:60",
+  "ou": "bulle i ligne « Déficit SRU » carte Population fiche commune",
+  "texte": "greatest(objectif_pct − taux_lls, 0) depuis commune_contexte_sru",
+  "note": "déficit SRU (objectif - taux LLS)"
+ },
+ {
+  "id": "DECL-075",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/commune/territoire.yaml:53",
+  "ou": "libellé ligne « Déficit SRU (objectif − taux LLS, points) » carte Population fiche commune",
+  "texte": "Déficit SRU (objectif − taux LLS, points)",
+  "note": "obligation SRU"
+ },
+ {
+  "id": "DECL-076",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/commune/territoire.yaml:66",
+  "ou": "bulle i ligne « Logements sociaux (inventaire SRU) » carte Population fiche commune",
+  "texte": "nombre de logements locatifs sociaux de l'inventaire SRU (effectif brut, detail->nb_lls)",
+  "note": "inventaire SRU"
+ },
+ {
+  "id": "DECL-077",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_dispositifs.yaml:23",
+  "ou": "bulle i couche ZFANG (panneau couches carte)",
+  "texte": "Zone Franche d'Activité Nouvelle Génération — exonérations fiscales pour les entreprises. Deux régimes : renforcée (avantage majoré) et standard.",
+  "note": "ZFANG exonérations fiscales"
+ },
+ {
+  "id": "DECL-078",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_dispositifs.yaml:38",
+  "ou": "bulle i couche FRR (panneau couches carte)",
+  "texte": "France Ruralités Revitalisation (ex-ZRR) — exonérations fiscales et sociales en zone rurale. La commune peut être classée en totalité ou en partie.",
+  "note": "FRR ex-ZRR exonérations fiscales et sociales"
+ },
+ {
+  "id": "DECL-079",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_dispositifs.yaml:53",
+  "ou": "bulle i couche TVA réduite primo-accédant (panneau couches carte)",
+  "texte": "Périmètre de TVA à taux réduit (5,5 %) pour l'accession sociale — buffer 500 m DÉRIVÉ des QPV (ANRU / quartiers prioritaires).",
+  "note": "TVA 5"
+ },
+ {
+  "id": "DECL-080",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_dispositifs.yaml:55",
+  "ou": "légende couche TVA primo (carte)",
+  "texte": "TVA réduite 5,5 % (buffer 500 m des QPV)",
+  "note": "TVA 5"
+ },
+ {
+  "id": "DECL-081",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_dispositifs.yaml:69",
+  "ou": "bulle i couche QPV (panneau couches carte)",
+  "texte": "Quartiers Prioritaires de la politique de la Ville (2024) — abattement TFPB, exonérations, priorités de rénovation.",
+  "note": "QPV 2024 abattement TFPB / exonérations"
+ },
+ {
+  "id": "DECL-082",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_dispositifs.yaml:70",
+  "ou": "légende couche QPV (carte)",
+  "texte": "Quartier prioritaire de la Ville (QPV 2024)",
+  "note": "QPV 2024"
+ },
+ {
+  "id": "DECL-083",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_dispositifs.yaml:84",
+  "ou": "bulle i couche ANRU (panneau couches carte)",
+  "texte": "Périmètres NPNRU / ANRU (nouveau programme national de renouvellement urbain) — quartiers en rénovation.",
+  "note": "ANRU/NPNRU"
+ },
+ {
+  "id": "DECL-084",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_risques.yaml:15",
+  "ou": "bulle i couche PPR multirisque (panneau couches carte)",
+  "texte": "Plan de Prévention des Risques (document multirisque, opposable).",
+  "note": "PPR opposable"
+ },
+ {
+  "id": "DECL-085",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_risques.yaml:33",
+  "ou": "bulle i couche Ravines et reculs (DPF) (panneau couches carte)",
+  "texte": "Ravines du domaine public fluvial (DEAL) et leurs reculs — inconstructibilité de berge. (Absorbe la couche ravine, fusion recette.)",
+  "note": "inconstructibilité de berge (recul DPF)"
+ },
+ {
+  "id": "DECL-086",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_risques.yaml:34",
+  "ou": "légende couche DPF (carte)",
+  "texte": "Ravine DPF (recul inconstructible)",
+  "note": "recul inconstructible opposable"
+ },
+ {
+  "id": "DECL-087",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_risques.yaml:49",
+  "ou": "bulle i couche Systèmes d'endiguement (panneau couches carte)",
+  "texte": "Digues et zones protégées (DEAL). ⚠ Ni classe ni niveau de protection fournis — une digue ne garantit aucun niveau de sécurité.",
+  "note": "pas de garantie de sécurité"
+ },
+ {
+  "id": "DECL-088",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_risques.yaml:69",
+  "ou": "bulle i couche PEB (panneau couches carte)",
+  "texte": "Plan d'Exposition au Bruit aérien : zones A (fort) à D — opposable (constructibilité limitée).",
+  "note": "PEB opposable (constructibilité limitée)"
+ },
+ {
+  "id": "DECL-089",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_risques.yaml:87",
+  "ou": "bulle i couche Classement sonore (panneau couches carte)",
+  "texte": "Classement sonore des voies (catégories 1 à 5) — isolement acoustique requis.",
+  "note": "catégories 1 à 5 + obligation isolement acoustique"
+ },
+ {
+  "id": "DECL-090",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_risques.yaml:154",
+  "ou": "bulle i couche Sols pollués (SIS) (panneau couches carte)",
+  "texte": "Secteurs d'Information sur les Sols (Géorisques) — servitude opposable aux autorisations d'urbanisme.",
+  "note": "SIS servitude opposable"
+ },
+ {
+  "id": "DECL-091",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_risques.yaml:157",
+  "ou": "légende couche SIS (carte)",
+  "texte": "SIS — secteur d'information sur les sols (opposable)",
+  "note": "SIS opposable"
+ },
+ {
+  "id": "DECL-092",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_risques.yaml:172",
+  "ou": "bulle i couche CASIAS (panneau couches carte)",
+  "texte": "Inventaire historique des sites industriels/de service (Géorisques CASIAS + sites en instruction) — informatif.",
+  "note": "CASIAS informatif"
+ },
+ {
+  "id": "DECL-093",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_risques.yaml:140",
+  "ou": "note couche Aléa mouvement de terrain (carte)",
+  "texte": "Pas de donnée publiée pour : Saint-Denis (aléa mouvement de terrain non cartographié). Couverture partielle ailleurs — l'absence n'est pas une preuve d'absence de risque.",
+  "note": "absence n'est pas preuve d'absence - doute ; noté par doute"
+ },
+ {
+  "id": "DECL-094",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_urbanisme.yaml:18",
+  "ou": "bulle i couche Limites officielles du PLU (GPU) (panneau couches carte)",
+  "texte": "Zones du PLU telles que publiées au Géoportail de l'Urbanisme (GPU). Deux teintes : U (urbaine, en vert) / le reste A·AU·N (brun). Pour l'étiquette de zone parcelle par parcelle, voir « Zonage PLU par parcelle (calibré) ».",
+  "note": "zonage PLU GPU (opposable)"
+ },
+ {
+  "id": "DECL-095",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_urbanisme.yaml:34",
+  "ou": "bulle i couche 50 pas géométriques (panneau couches carte)",
+  "texte": "Réserve des 50 pas géométriques (bande littorale du domaine public, ~81,20 m) — inconstructibilité de principe, gestion État.",
+  "note": "50 pas géométriques ~81"
+ },
+ {
+  "id": "DECL-096",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_urbanisme.yaml:36",
+  "ou": "légende couche 50 pas (carte)",
+  "texte": "Réserve des 50 pas géométriques (littoral)",
+  "note": "50 pas géométriques domaine public littoral"
+ },
+ {
+  "id": "DECL-097",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_urbanisme.yaml:50",
+  "ou": "bulle i couche Artificialisation (OCS GE) (panneau couches carte)",
+  "texte": "Occupation du sol OCS GE : sols artificialisés 2022 + évolution renaturée 2017→2022 (matrice décret 2023-1096, suivi ZAN).",
+  "note": "décret 2023-1096 (matrice ZAN) + millésimes 2017/2022"
+ },
+ {
+  "id": "DECL-098",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_urbanisme.yaml:65",
+  "ou": "bulle i couche Droit de préemption urbain (DPU) (panneau couches carte)",
+  "texte": "Périmètres de DPU (simple / renforcé) — la commune peut se substituer à l'acquéreur lors d'une vente.",
+  "note": "DPU (substitution à l'acquéreur)"
+ },
+ {
+  "id": "DECL-099",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_urbanisme.yaml:83",
+  "ou": "bulle i couche Servitudes d'utilité publique (SUP) (panneau couches carte)",
+  "texte": "Servitudes d'utilité publique, opposables au PLU. Colorées PAR FAMILLE : AC monuments/sites/réserves/SPR, PM plans de prévention des risques, EL littoral/domaine public. Le code et le libellé exact au clic.",
+  "note": "SUP opposables au PLU"
+ },
+ {
+  "id": "DECL-100",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_urbanisme.yaml:89",
+  "ou": "légende niveaux couche SUP (carte)",
+  "texte": "PM1 — PPR naturels (inondation, mouvement de terrain…)",
+  "note": "SUP PM1 PPR naturels"
+ },
+ {
+  "id": "DECL-101",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_urbanisme.yaml:89",
+  "ou": "légende niveaux couche SUP (carte)",
+  "texte": "AC1 — abords de monuments historiques",
+  "note": "SUP AC1 abords MH"
+ },
+ {
+  "id": "DECL-102",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_urbanisme.yaml:89",
+  "ou": "légende niveaux couche SUP (carte)",
+  "texte": "AC4 — sites patrimoniaux remarquables (SPR)",
+  "note": "SUP AC4 SPR"
+ },
+ {
+  "id": "DECL-103",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_urbanisme.yaml:104",
+  "ou": "bulle i couche Emplacements réservés (ER) (panneau couches carte)",
+  "texte": "Emplacements réservés du PLU (voirie, équipement, espace vert) — l'emprise est grevée au bénéfice d'une collectivité.",
+  "note": "ER PLU (emprise grevée)"
+ },
+ {
+  "id": "DECL-105",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_urbanisme.yaml:121",
+  "ou": "légende couche EBC (carte)",
+  "texte": "Espace boisé classé (défrichement interdit)",
+  "note": "EBC défrichement interdit"
+ },
+ {
+  "id": "DECL-106",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_urbanisme.yaml:136",
+  "ou": "bulle i couche SCOT (périmètre) (panneau couches carte)",
+  "texte": "Schéma de Cohérence Territoriale (GPU) : le document de planification au-dessus du PLU (échelle intercommunale). 974 : SCOT TCO (Ouest), CINOR (Nord), Grand Sud (en projet). Distinct du SAR (régional). La fiche commune donne le nom + la date d'approbation.",
+  "note": "SCOT au-dessus du PLU"
+ },
+ {
+  "id": "DECL-107",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_energie.yaml:13",
+  "ou": "bulle i couche EnR interdites hors toiture (APER) (panneau couches carte)",
+  "texte": "Zones exclues des aires d'accélération des énergies renouvelables terrestres AU SOL (loi APER, OFB/INPN) : Parc national, réserves naturelles. Un projet solaire AU SOL y est exclu ; le solaire EN TOITURE y reste possible.",
+  "note": "loi APER (exclusion EnR au sol)"
+ },
+ {
+  "id": "DECL-108",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_nature.yaml:32",
+  "ou": "bulle i couche Espaces naturels protégés (panneau couches carte)",
+  "texte": "ENP par type (réserves naturelles dont marine, APB, conservatoire du littoral, réserves biologiques, Ramsar, sites classés/inscrits) — INPN + compléments DEAL Carmen. Protection réglementaire, souvent rédhibitoire.",
+  "note": "ENP protection réglementaire (rédhibitoire)"
+ },
+ {
+  "id": "DECL-109",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_nature.yaml:48",
+  "ou": "bulle i couche ZNIEFF (I / II) (panneau couches carte)",
+  "texte": "Inventaire du patrimoine naturel (INPN/MNHN PatriNat, maj 2025). Type I : secteur de fort intérêt biologique, plus restreint et sensible ; type II : grand ensemble naturel peu modifié. PAS une interdiction — un signal fort (étude d'impact renforcée, recours plus probable). ZNIEFF marines non affichées.",
+  "note": "ZNIEFF PAS une interdiction (signal)"
+ },
+ {
+  "id": "DECL-110",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_nature.yaml:66",
+  "ou": "bulle i couche Parc national (panneau couches carte)",
+  "texte": "Périmètre du Parc national de La Réunion. Deux assiettes : le CŒUR (~40 % de l'île, inconstructible) et l'AIRE D'ADHÉSION (réglementée mais constructible). Urbanisation très restreinte.",
+  "note": "cœur inconstructible ~40 % de l'île + aire d'adhésion réglementée"
+ },
+ {
+  "id": "DECL-111",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_nature.yaml:70",
+  "ou": "légende niveaux couche Parc national (carte)",
+  "texte": "Cœur — inconstructible (~40 % de l'île)",
+  "note": "cœur inconstructible ~40 % en dur"
+ },
+ {
+  "id": "DECL-112",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_nature.yaml:85",
+  "ou": "bulle i couche Mesures compensatoires (ERC) (panneau couches carte)",
+  "texte": "Emprises des mesures de compensation écologique (GéoMCE, MTE/OFB) imposées à un maître d'ouvrage au titre de la séquence Éviter-Réduire-Compenser. Sur une parcelle : obligation écologique dormante (gestion imposée) — remonte aussi dans « Pièges et risques ».",
+  "note": "séquence ERC obligation écologique"
+ },
+ {
+  "id": "DECL-122",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_transport.yaml:100",
+  "ou": "bulle i couche Lignes haute tension (HTB) (panneau couches carte)",
+  "texte": "Réseau de transport 63/90 kV (BD TOPO, aérien) — servitude de voisinage, champ électromagnétique.",
+  "note": "63/90 kV en dur + servitude de voisinage"
+ },
+ {
+  "id": "DECL-124",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_transport.yaml:115",
+  "ou": "bulle i couche Lignes moyenne tension (HTA) (panneau couches carte)",
+  "texte": "Réseau HTA 15-20 kV EDF (aérien + souterrain) — tracé indicatif (sécurité publique), ne remplace pas une DT-DICT. Distinct de la HTB.",
+  "note": "15-20 kV en dur + ne remplace pas une DT-DICT"
+ },
+ {
+  "id": "DECL-129",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/couches_sans_toggle.yaml:22",
+  "ou": "légende couche ICPE (carte)",
+  "texte": "Installation classée (autorisation / enregistrement / déclaration)",
+  "note": "régimes ICPE (autorisation/enregistrement/déclaration)"
+ },
+ {
+  "id": "DECL-130",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/couches_sans_toggle.yaml:115",
+  "ou": "bulle i couche Périmètres ABF (panneau couches carte)",
+  "texte": "Périmètres ABF / monuments (arrêtés).",
+  "note": "périmètres ABF (avis conforme)"
+ },
+ {
+  "id": "DECL-131",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/couches_sans_toggle.yaml:116",
+  "ou": "légende couche ABF (carte)",
+  "texte": "Périmètre ABF — avis conforme requis",
+  "note": "avis conforme ABF requis"
+ },
+ {
+  "id": "DECL-132",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/couches_sans_toggle.yaml:135",
+  "ou": "bulle i couche SAR (panneau couches carte)",
+  "texte": "PROXY : géométrie du « potentiel foncier Région » (data.regionreunion.com), vocations INDICATIVES. Le règlement du Schéma d'Aménagement Régional (couche SIG officielle) n'est PAS diffusé en vecteur (07/09/2026), donc non ingéré. Indicatif, jamais opposable, jamais une interdiction.",
+  "note": "SAR proxy jamais opposable"
+ },
+ {
+  "id": "DECL-133",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/couches_sans_toggle.yaml:156",
+  "ou": "légende couche Forêts publiques (carte)",
+  "texte": "Forêt publique (domaniale / publique) — régime forestier",
+  "note": "régime forestier (inconstructible)"
+ },
+ {
+  "id": "DECL-134",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/couches_sans_toggle.yaml:160",
+  "ou": "pourquoi couche Forêts publiques — doute (champ pourquoi)",
+  "texte": "Régime forestier inconstructible — opposable ; légende domaniale/publique.",
+  "note": "champ pourquoi (interne) - EXCLU normalement ; régime forestier inconstructible opposable ; noté par doute"
+ },
+ {
+  "id": "DECL-135",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/couches_sans_toggle.yaml:189",
+  "ou": "bulle i couche Cimetières (panneau couches carte)",
+  "texte": "Cimetières (BD TOPO) — servitude de voisinage (100 m).",
+  "note": "servitude de voisinage 100 m en dur"
+ },
+ {
+  "id": "DECL-136",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/couches_sans_toggle.yaml:192",
+  "ou": "légende couche Cimetières (carte)",
+  "texte": "Cimetière (servitude de voisinage 100 m)",
+  "note": "servitude de voisinage 100 m en dur"
+ },
+ {
+  "id": "DECL-137",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/couches_sans_toggle.yaml:208",
+  "ou": "bulle i couche Foncier agricole (RPG / SAFER) (panneau couches carte)",
+  "texte": "Parcelles agricoles déclarées (RPG) — même géométrie que le périmètre de préemption SAFER. UNE SEULE couche (le recensement a montré des lignes identiques : ma séparation de la veille était fausse).",
+  "note": "préemption SAFER (foncier agricole)"
+ },
+ {
+  "id": "DECL-138",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/couches_sans_toggle.yaml:211",
+  "ou": "légende couche SAFER (carte)",
+  "texte": "Foncier agricole déclaré (RPG) / préemption SAFER",
+  "note": "préemption SAFER"
+ },
+ {
+  "id": "DECL-140",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/couches_sans_toggle.yaml:73",
+  "ou": "bulle i couche Recul du trait de côte (panneau couches carte)",
+  "texte": "Recul du trait de côte (Cerema/GéoLittoral).",
+  "note": "recul du trait de côte (loi Climat) - doute ; noté par doute"
+ },
+ {
+  "id": "DECL-141",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/tuyau_hors_registre.yaml:27",
+  "ou": "bulle i couche Zonage PLU par parcelle (calibré) (panneau couches carte)",
+  "texte": "Zone du PLU CALIBRÉE parcelle par parcelle (famille U urbaine / AU à urbaniser / A agricole / N naturelle). L'étiquette de zone (Ncu, U1b…) apparaît dès le zoom commune.",
+  "note": "familles de zone PLU"
+ },
+ {
+  "id": "DECL-144",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/generiques.yaml:9",
+  "ou": "règle surface Copilote (chat client)",
+  "texte": "Chaque chiffre d'une réponse porte son identifiant de registre, sinon la réponse est refusée avant d'être servie (verrou du chat, lot 5 — même verrou que les PDF).",
+  "note": "règle interne d'affichage - doute (méta) ; noté par doute"
+ },
+ {
+  "id": "DECL-146",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/_exemples/outils/taxe_amenagement.yaml:17",
+  "ou": "bulle i résultat outil Taxe d'aménagement",
+  "texte": "Calcul ligne-à-ligne (art. L331 c. urb.) : valeur forfaitaire × surface taxable × taux communal + part départementale. Le taux communal SAISI est obligatoire — jamais un défaut.",
+  "note": "art. L331 code de l'urbanisme (formule taxe d'aménagement)"
+ },
+ {
+  "id": "DECL-147",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/_exemples/outils/taxe_amenagement.yaml:18",
+  "ou": "absence résultat outil Taxe d'aménagement",
+  "texte": "Taxe d'aménagement : taux communal non disponible pour cette commune — le montant n'est pas calculé (jamais estimé par défaut).",
+  "note": "taux communal obligatoire (jamais estimé)"
+ },
+ {
+  "id": "DECL-148",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/fiche/marche.yaml:24",
+  "ou": "bulle i ligne « Ancien bâti — secteur » section Marché fiche parcelle",
+  "texte": "Prix médian de l'ancien bâti (DVF), rayon adaptatif — sert de prix de sortie au bilan. Porté avec n ventes, rayon, période.",
+  "note": "doute - explicatif sans chiffre en dur ; noté par doute (EXCLU si pas retenu)"
+ },
+ {
+  "id": "DOC-001",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/verdicts.py:16",
+  "ou": "PDF Dossier, verdict de zonage §2",
+  "texte": "non constructibles (drapeau warn) — la boussole « jamais un faux constructible »",
+  "note": "portée zonage A=agricole/N=naturelle ; règle de droit des sols"
+ },
+ {
+  "id": "DOC-002",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/verdicts.py:54",
+  "ou": "PDF Dossier, verdict de zonage §2",
+  "texte": "{lib} — {agricole/naturelle}, non constructible pour un projet d'habitat courant. Seules les destinations liées à la vocation {…} sont admises, et sous conditions (voir la liste des destinations ci-dessous).",
+  "note": "portée réglementaire d'une zone A/N — destinations admises sous conditions"
+ },
+ {
+  "id": "DOC-003",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/verdicts.py:59",
+  "ou": "PDF Dossier, verdict de zonage §2",
+  "texte": "{lib} — {urbaine, constructible / à urbaniser (ouverture sous conditions)}. Le document opposable du Géoportail de l'urbanisme fait foi ; les valeurs de règle ci-dessous sont une aide à la lecture.",
+  "note": "opposabilité GPU ; AU = ouverture sous conditions"
+ },
+ {
+  "id": "DOC-004",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/verdicts.py:78",
+  "ou": "PDF Dossier, verdict potentiel §3",
+  "texte": "Terrain non constructible{ (zone {fam})} : le potentiel de construction est nul par la règle de zonage.",
+  "note": "non-constructibilité par la règle de zonage"
+ },
+ {
+  "id": "DOC-005",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/verdicts.py:85",
+  "ou": "PDF Dossier, verdict potentiel §3",
+  "texte": "Parcelle bâtie et saturée : la surface de plancher autorisée est déjà consommée{ (X %)}. La valeur est dans la réhabilitation du bâti ou dans sa reconstruction.",
+  "note": "droits à bâtir consommés (SDP autorisée)"
+ },
+ {
+  "id": "DOC-006",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/verdicts.py:110",
+  "ou": "PDF Dossier, verdict réseaux §6",
+  "texte": "le tracé et la capacité exacts des réseaux ne sont pas relevés à cette échelle : à confirmer auprès des gestionnaires par une DT-DICT",
+  "note": "obligation DT-DICT (déclaration de travaux)"
+ },
+ {
+  "id": "DOC-007",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/verdicts.py:112",
+  "ou": "PDF Dossier, verdict réseaux §6",
+  "texte": "aucun raccordement n'est établi par les indices : réseaux à vérifier auprès des gestionnaires par une DT-DICT",
+  "note": "DT-DICT"
+ },
+ {
+  "id": "DOC-008",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/pieds.py:38",
+  "ou": "PDF Dossier, pied de source (nom réservoir)",
+  "texte": "Taxe d'aménagement — barème public (DGFiP/DELTA)",
+  "note": "barème taxe d'aménagement DGFiP/DELTA"
+ },
+ {
+  "id": "DOC-009",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/pieds.py:42",
+  "ou": "PDF Dossier, pied de source",
+  "texte": "SCOT (GPU)",
+  "note": "SCOT"
+ },
+ {
+  "id": "DOC-011",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/provenance.py:178",
+  "ou": "liste blanche provenance (part départementale taxe)",
+  "texte": "plafond légal de la part départementale de la taxe (2,5 %) — référence de droit",
+  "note": "plafond 2,5 % en dur — référence de droit"
+ },
+ {
+  "id": "DOC-012",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/provenance.py:180",
+  "ou": "liste blanche provenance (TVA)",
+  "texte": "taux légal de TVA sur le logement neuf à La Réunion (8,5 %) — référence de droit",
+  "note": "8,5 % en dur — référence de droit fiscal"
+ },
+ {
+  "id": "DOC-013",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/provenance.py:181",
+  "ou": "liste blanche provenance (TVA locatif)",
+  "texte": "taux légal de TVA réduit locatif à La Réunion (2,1 %) — référence de droit",
+  "note": "2,1 % en dur — référence de droit fiscal"
+ },
+ {
+  "id": "DOC-017",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/zonage.py:2",
+  "ou": "PDF Dossier §2, docstring section",
+  "texte": "Verdict déterministe (famille de zone), règles calibrées, destinations + verrou CDAC, dispositifs (ER/EBC/DPU/PEB)",
+  "note": "ER/EBC/DPU/PEB/CDAC — dispositifs de droit des sols (contexte)"
+ },
+ {
+  "id": "DOC-018",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/zonage.py:60",
+  "ou": "PDF Dossier §2, ligne « Surface commerciale »",
+  "texte": "Au-delà de {seuil} m² de surface de vente : autorisation d'exploitation commerciale (CDAC)",
+  "note": "seuil CDAC servi depuis données (pas en dur) ; obligation autorisation CDAC"
+ },
+ {
+  "id": "DOC-019",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/zonage.py:68",
+  "ou": "PDF Dossier §2, ligne dispositif",
+  "texte": "Emplacement réservé",
+  "note": "emplacement réservé (servitude urba)"
+ },
+ {
+  "id": "DOC-021",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/zonage.py:74",
+  "ou": "PDF Dossier §2, ligne DPU",
+  "texte": "La parcelle est dans un périmètre de préemption — {libellé}",
+  "note": "droit de préemption urbain"
+ },
+ {
+  "id": "DOC-022",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/zonage.py:79",
+  "ou": "PDF Dossier §2, ligne PEB",
+  "texte": "Zone {z}",
+  "note": "plan d'exposition au bruit"
+ },
+ {
+  "id": "DOC-023",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/zonage.py:91",
+  "ou": "PDF Dossier §2, encart prescriptions",
+  "texte": "Prescriptions non vérifiables sur cette commune — {motif}. Un emplacement réservé ou une servitude peut exister sans être publié : à vérifier en mairie.",
+  "note": "silence ≠ absence ; ER/servitude"
+ },
+ {
+  "id": "DOC-024",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/zonage.py:95",
+  "ou": "PDF Dossier §2, note règlement",
+  "texte": "Règlement complet : {idurba} sur le Géoportail de l'urbanisme. Les valeurs ci-dessus sont une aide à la lecture ; le règlement fait foi.",
+  "note": "le règlement fait foi (opposabilité)"
+ },
+ {
+  "id": "DOC-025",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/risques.py:29",
+  "ou": "PDF Dossier §4, ligne aléa",
+  "texte": "{libellé} — aléa de niveau {niveau}",
+  "note": "aléa/servitude relevé"
+ },
+ {
+  "id": "DOC-026",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/risques.py:33",
+  "ou": "PDF Dossier §4, note",
+  "texte": "Aléas et servitudes vérifiés via la DEAL et Géorisques ; seuls les signaux relevés sur la parcelle sont listés.",
+  "note": "servitudes DEAL/Géorisques"
+ },
+ {
+  "id": "DOC-029",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/reseaux.py:53",
+  "ou": "PDF Dossier §6, ligne quartier ANC",
+  "texte": "{taux} % des logements en assainissement non collectif (INSEE {millésime})",
+  "note": "assainissement non collectif ; taux servi INSEE"
+ },
+ {
+  "id": "DOC-031",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/potentiel.py:85",
+  "ou": "PDF Dossier §3, scénario en hauteur",
+  "texte": "{Base} {mesure} mesuré (règle {regle}, marge {marge}) — contrainte qui mord : {l'égout/le faîtage}",
+  "note": "règle de hauteur égout/faîtage (LiDAR) servie"
+ },
+ {
+  "id": "DOC-032",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/potentiel.py:97",
+  "ou": "PDF Dossier §3, scénario en hauteur (BD TOPO)",
+  "texte": "{marge} {estimés }sous la hauteur {au faîtage} — {regle} réglementaires contre {bati} bâtis (faîtage BD TOPO)",
+  "note": "hauteur réglementaire vs bâti ; valeurs servies"
+ },
+ {
+  "id": "DOC-033",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/potentiel.py:99",
+  "ou": "PDF Dossier §3, scénario en hauteur",
+  "texte": "; à vérifier au règlement (la zone ne fixe qu'une hauteur d'égout)",
+  "note": "la zone ne fixe qu'une hauteur d'égout"
+ },
+ {
+  "id": "DOC-034",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/potentiel.py:120",
+  "ou": "PDF Dossier §3, note",
+  "texte": "Pré-faisabilité sur règlement public. Une étude réglementaire par un professionnel peut modifier ces valeurs.",
+  "note": "réserve réglementaire"
+ },
+ {
+  "id": "DOC-035",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/financier.py:25",
+  "ou": "PDF Financier, libellé poste bilan",
+  "texte": "Redevance d'archéologie préventive (0,40 %)",
+  "note": "RAP 0,40 % en dur dans le libellé ; taxe légale (CGI)"
+ },
+ {
+  "id": "DOC-036",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/financier.py:24",
+  "ou": "PDF Financier, libellé poste bilan",
+  "texte": "Taxe d'aménagement",
+  "note": "taxe d'aménagement (poste bilan)"
+ },
+ {
+  "id": "DOC-037",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/financier.py:114",
+  "ou": "PDF Financier, section « Ce que ce document n'établit pas »",
+  "texte": "Constructibilité définitive → Certificat d'urbanisme",
+  "note": "certificat d'urbanisme"
+ },
+ {
+  "id": "DOC-038",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/financier.py:136",
+  "ou": "PDF Financier, verdict charge foncière",
+  "texte": "Dans ces hypothèses, l'opération ne peut supporter aucun achat de terrain : il lui manque {X €} pour seulement atteindre l'équilibre à un prix de terrain nul.",
+  "note": "charge foncière supportable (montant servi)"
+ },
+ {
+  "id": "DOC-039",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/financier.py:329",
+  "ou": "PDF Financier, note fiscalité locale",
+  "texte": "Pendant {les X mois de portage}, le porteur acquitte la taxe foncière sur le bien. Elle se calcule sur la valeur locative cadastrale du bien × le taux communal ({X %}, part départementale et TEOM en sus). LABUSE n'invente pas de valeur locative : reportez-la de l'avis de taxe foncière du bien pour la chiffrer.",
+  "note": "TFPB assiette valeur locative cadastrale ; taux/durée servis"
+ },
+ {
+  "id": "DOC-040",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/financier.py:332",
+  "ou": "PDF Financier, note zonage A/B/C",
+  "texte": "Zone {zone} (DHUP) : elle fixe l'éligibilité au PTZ dans le neuf, les plafonds de loyer et de ressources des dispositifs, et le prix de vente au bailleur social. À La Réunion, la TVA du logement neuf est de 8,5 % (2,1 % en locatif social).",
+  "note": "8,5 % / 2,1 % en dur ; PTZ/plafonds loyer/ressources ; zonage DHUP"
+ },
+ {
+  "id": "DOC-041",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/financier.py:304",
+  "ou": "PDF Financier, ligne fiscalité",
+  "texte": "Taxe foncière (TFPB) — part communale",
+  "note": "TFPB part communale (taux servi)"
+ },
+ {
+  "id": "DOC-042",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/financier.py:308",
+  "ou": "PDF Financier, ligne fiscalité",
+  "texte": "Part intercommunale (EPCI)",
+  "note": "TFPB EPCI (taux servi)"
+ },
+ {
+  "id": "DOC-043",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/financier.py:312",
+  "ou": "PDF Financier, ligne fiscalité",
+  "texte": "Ordures ménagères (TEOM, taux plein)",
+  "note": "TEOM (taux servi)"
+ },
+ {
+  "id": "DOC-044",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/financier.py:317",
+  "ou": "PDF Financier, ligne fiscalité",
+  "texte": "Zone d'investissement (A/B/C)",
+  "note": "zonage A/B/C DHUP"
+ },
+ {
+  "id": "DOC-047",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/financier.py:438",
+  "ou": "PDF Financier, encart régime TVA",
+  "texte": "Régime de TVA retenu : {label}. Le bilan travaille HT (prix de sortie ramené HT au taux du régime). À confirmer avec votre expert-comptable.",
+  "note": "régime TVA (HT/TTC)"
+ },
+ {
+  "id": "DOC-052",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/apporteur.py:276",
+  "ou": "PDF Apporteur, bandeau confidentiel",
+  "texte": "Confidentiel, et sans mandat. Ne transmettez ce document ni au propriétaire ni à des tiers. Vous n'êtes pas habilité à négocier, à faire une offre, ni à engager qui que ce soit.",
+  "note": "absence de mandat / habilitation à négocier"
+ },
+ {
+  "id": "DOC-054",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/apporteur.py:147",
+  "ou": "PDF Apporteur, ligne « Ce qui gêne »",
+  "texte": "bruit d'aéroport (PEB {zone})",
+  "note": "PEB"
+ },
+ {
+  "id": "DOC-055",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/apporteur.py:139",
+  "ou": "PDF Apporteur, ligne « Ce qui gêne »",
+  "texte": "préemption (DPU) / emplacement réservé / espace boisé classé",
+  "note": "DPU/ER/EBC — servitudes urba"
+ },
+ {
+  "id": "DOC-056",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/apporteur.py:314",
+  "ou": "PDF Apporteur, §3 aide personne morale",
+  "texte": "Une société ne « décède » pas et ne se partage pas en indivision : ce qui bloque une vente, c'est l'organe qui doit l'autoriser et le nombre de signatures.",
+  "note": "organe/quorum/signataires (droit des sociétés)"
+ },
+ {
+  "id": "DOC-057",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/apporteur.py:323",
+  "ou": "PDF Apporteur, §3 aide personne physique",
+  "texte": "Une parcelle en indivision, ce sont autant de signatures que d'héritiers — la première chose qui fait échouer une vente.",
+  "note": "indivision/succession"
+ },
+ {
+  "id": "DOC-058",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/apporteur.py:350",
+  "ou": "PDF Apporteur, §5 aide bail",
+  "texte": "Un bail commercial en cours peut geler l'opération plusieurs années.",
+  "note": "bail commercial"
+ },
+ {
+  "id": "DOC-059",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/commune.py:26",
+  "ou": "PDF Dossier §8, ligne taxe d'aménagement",
+  "texte": "Se calcule sur la surface de plancher créée par le projet (taxe due une fois un projet déposé). Pour en obtenir le montant : ouvrez le Dossier financier et décrivez le programme…",
+  "note": "assiette SDP créée (art. L331) ; taxe due au dépôt"
+ },
+ {
+  "id": "DOC-060",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/commune.py:31",
+  "ou": "PDF Dossier §8, taxe d'aménagement",
+  "texte": "{base} Taux communal non renseigné pour cette commune.",
+  "note": "taux communal absent dit honnêtement"
+ },
+ {
+  "id": "DOC-061",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/commune.py:36",
+  "ou": "PDF Dossier §8, taxe d'aménagement",
+  "texte": "Taux communal {taux}{ — millésime}. {base}",
+  "note": "taux communal servi (public)"
+ },
+ {
+  "id": "DOC-062",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/commune.py:47",
+  "ou": "PDF Dossier §8, ligne ZFANG",
+  "texte": "ZFANG",
+  "note": "zone franche activité nouvelle génération (dispositif fiscal DOM)"
+ },
+ {
+  "id": "DOC-063",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/commune.py:49",
+  "ou": "PDF Dossier §8, ligne FRR",
+  "texte": "FRR (ex-ZRR)",
+  "note": "France Ruralités Revitalisation (ex-ZRR)"
+ },
+ {
+  "id": "DOC-064",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/commune.py:45",
+  "ou": "PDF Dossier §8, ligne zonage logement",
+  "texte": "Zonage du logement",
+  "note": "zonage A/B/C logement"
+ },
+ {
+  "id": "DOC-065",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/commune.py:55",
+  "ou": "PDF Dossier §8, ligne périmètre fiscal",
+  "texte": "Périmètre fiscal",
+  "note": "ANRU/QPV — périmètres fiscaux"
+ },
+ {
+  "id": "DOC-068",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/sources.py:18",
+  "ou": "PDF Dossier §10/§12, limites",
+  "texte": "Constructibilité définitive → Certificat d'urbanisme — mairie, service instructeur",
+  "note": "certificat d'urbanisme"
+ },
+ {
+  "id": "DOC-069",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/sources.py:22",
+  "ou": "PDF Dossier §10/§12, limites",
+  "texte": "Réseaux et raccordements chiffrés → Gestionnaires, DT-DICT",
+  "note": "DT-DICT"
+ },
+ {
+  "id": "DOC-070",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/sources.py:64",
+  "ou": "PDF Dossier §10/§12, mentions légales",
+  "texte": "Document d'information établi à partir de données publiques. Il ne constitue ni un document d'urbanisme opposable, ni une étude de faisabilité réglementaire, ni un conseil juridique, et ne remplace pas un certificat d'urbanisme. Fonds cartographiques : © IGN, © contributeurs OpenStreetMap (ODbL).",
+  "note": "non-opposabilité / non-conseil juridique"
+ },
+ {
+  "id": "DOC-073",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/miroir.py:100",
+  "ou": "PDF Dossier §2 (miroir), FRR",
+  "texte": "À La Réunion, ce classement n'ouvre que les mesures NON FISCALES (FAQ FRR DGCL, juillet 2025) : l'exonération d'impôt de l'art. 44 quindecies A CGI ne s'y applique pas — à confirmer par un fiscaliste.",
+  "note": "art. 44 quindecies A CGI ; exonération inapplicable DOM"
+ },
+ {
+  "id": "DOC-074",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/miroir.py:71",
+  "ou": "PDF Dossier (miroir), libellés servitudes SUP",
+  "texte": "PM1 plan de prévention des risques naturels (PPR) … PM2 PPRT … AC1 abords monuments historiques … AS1 protection des eaux (captage) … I4 lignes électriques …",
+  "note": "catégories CNIG de servitudes d'utilité publique"
+ },
+ {
+  "id": "DOC-075",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/miroir.py:127",
+  "ou": "PDF Dossier §5 (miroir), absence SUP",
+  "texte": "Aucune servitude d'utilité publique (SUP) intersectant la parcelle.",
+  "note": "SUP"
+ },
+ {
+  "id": "DOC-076",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/miroir.py:129",
+  "ou": "PDF Dossier §4 (miroir), RTAA DOM",
+  "texte": "RTAA DOM : conception réglementée pour tout logement neuf (aération traversante, protection solaire, eau chaude solaire) — à intégrer au projet.",
+  "note": "réglementation thermique/acoustique/aération DOM"
+ },
+ {
+  "id": "DOC-078",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/miroir.py:347",
+  "ou": "PDF Dossier §2 (miroir), DPU",
+  "texte": "Parcelle dans le périmètre du droit de préemption urbain (DPU) : la commune peut préempter à la vente",
+  "note": "DPU — préemption commune"
+ },
+ {
+  "id": "DOC-079",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/miroir.py:353",
+  "ou": "PDF Dossier §2 (miroir), PEB",
+  "texte": "Zone {z} du plan d'exposition au bruit",
+  "note": "PEB"
+ },
+ {
+  "id": "DOC-080",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/miroir.py:384",
+  "ou": "PDF Dossier §2 (miroir), statut PLU",
+  "texte": "PLU approuvé le {date} — dernière évolution engagée le {date} — version publiée au Géoportail de l'urbanisme le {date} (document opposable).",
+  "note": "opposabilité GPU ; dates servies Sudocuh"
+ },
+ {
+  "id": "DOC-081",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/miroir.py:412",
+  "ou": "PDF Dossier (miroir), gabarit motif",
+  "texte": "Règles de la zone {zone} non détaillées dans LABUSE — gabarit non chiffré ici.",
+  "note": "règles de zone"
+ },
+ {
+  "id": "DOC-083",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/miroir.py:649",
+  "ou": "PDF Dossier (miroir), taxe d'aménagement",
+  "texte": "Taux communal {taux} — {millésime}. Se calcule sur la surface de plancher créée par le projet — montant chiffré dans le document Financier.",
+  "note": "assiette SDP créée"
+ },
+ {
+  "id": "DOC-084",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/miroir.py:668",
+  "ou": "PDF Dossier §8 (miroir), clés dispositifs",
+  "texte": "TVA outre-mer / Opération de revitalisation (ORT) / Action Cœur de Ville (ACV) / Petites Villes de Demain (PVD)",
+  "note": "dispositifs territoriaux"
+ },
+ {
+  "id": "DOC-085",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/miroir.py:691",
+  "ou": "PDF Dossier (miroir), clés QPV/NPNRU",
+  "texte": "Quartier prioritaire (QPV) / Renouvellement urbain (NPNRU)",
+  "note": "QPV/NPNRU"
+ },
+ {
+  "id": "DOC-087",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/miroir.py:1013",
+  "ou": "PDF Dossier, page de garde tuile SDP",
+  "texte": "0 m² — zone {A/N}",
+  "note": "0 m² en dur pour zone A/N (non constructible)"
+ },
+ {
+  "id": "DOC-088",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/miroir.py:964",
+  "ou": "PDF Dossier (miroir), encart prescriptions",
+  "texte": "Prescriptions non vérifiables sur cette commune — {motif}. Un emplacement réservé ou une servitude peut exister sans être publié : à vérifier en mairie.",
+  "note": "ER/servitude non publiés"
+ },
+ {
+  "id": "DOC-089",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/miroir.py:1182",
+  "ou": "PDF Dossier (miroir), capacité",
+  "texte": "Capacité en logements : non chiffrée ici — le potentiel relève des droits à bâtir résiduels (la SDP ci-dessus), pas un programme de logements.",
+  "note": "droits à bâtir résiduels"
+ },
+ {
+  "id": "DOC-090",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/builder.py:48",
+  "ou": "PDF Dossier/Flash, pied de page (@page)",
+  "texte": "Document d'information établi à partir de données publiques. Ne remplace ni un certificat d'urbanisme, ni une étude de faisabilité réglementaire, ni un conseil juridique. Données LABUSE au {au}.",
+  "note": "non-conseil / certificat d'urbanisme"
+ },
+ {
+  "id": "DOC-091",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/builder.py:53",
+  "ou": "PDF Financier, pied de page (@page)",
+  "texte": "Bilan indicatif établi sur des données publiques et sur les hypothèses saisies par le porteur (en ambre). Ni un prix, ni une promesse, ni un conseil. Il ne remplace pas un bilan promoteur professionnel. Données LABUSE au {au}.",
+  "note": "ni prix ni conseil ni promesse"
+ },
+ {
+  "id": "DOC-092",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/builder.py:56",
+  "ou": "PDF Apporteur, pied de page (@page)",
+  "texte": "Document confidentiel remis par l'émetteur à son apporteur d'affaires. Ne pas transmettre au propriétaire. Ne vaut pas mandat. Données publiques LABUSE au {au}.",
+  "note": "ne vaut pas mandat"
+ },
+ {
+  "id": "DOC-097",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/robinet_fiche.py:472",
+  "ou": "(robinet) endiguement",
+  "texte": "layer == 'endiguement'",
+  "note": "zone protégée par endiguement (digue) — droit des sols"
+ },
+ {
+  "id": "DOC-098",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/financier_bilan.py:30",
+  "ou": "(moteur bilan Financier) constante TVA",
+  "texte": "TAUX_TVA_DEFAUT = 0.085 — La Réunion, logement neuf",
+  "note": "8,5 % en dur — taux légal TVA neuf DOM"
+ },
+ {
+  "id": "DOC-099",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/financier_bilan.py:18",
+  "ou": "(moteur bilan Financier) RAP docstring/commentaire",
+  "texte": "RAP = redevance d'archéologie préventive (0,40 % de l'assiette TA)",
+  "note": "0,40 % en dur ; taxe légale — commentaire (chiffre remonte au libellé DOC-035)"
+ },
+ {
+  "id": "DOC-104",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/flash/carte.py:24",
+  "ou": "PDF Flash, attribution carte",
+  "texte": "© OpenStreetMap contributors (ODbL)",
+  "note": "licence ODbL — attribution obligatoire"
+ },
+ {
+  "id": "DOC-105",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/flash/carte.py:70",
+  "ou": "PDF Flash, attribution carte ortho",
+  "texte": "© IGN — BD ORTHO",
+  "note": "attribution IGN"
+ },
+ {
+  "id": "DOC-106",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/flash/templates/rapport.html.j2:24",
+  "ou": "PDF Flash, page de garde",
+  "texte": "Étude de faisabilité indicative d'une parcelle",
+  "note": "indicative — non réglementaire"
+ },
+ {
+  "id": "DOC-107",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/flash/templates/rapport.html.j2:63",
+  "ou": "PDF Flash §01, zonage PLU (RNU)",
+  "texte": "non applicable — RNU",
+  "note": "RNU — règlement national d'urbanisme (commune sans PLU)"
+ },
+ {
+  "id": "DOC-108",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/flash/templates/rapport.html.j2:121",
+  "ou": "PDF Flash §01, note règles calibrées",
+  "texte": "Règles issues du calibrage fin des règlements PLU par LABUSE. Les règles complètes du règlement (retraits, prospects, servitudes) peuvent modifier ces valeurs.",
+  "note": "réserve réglementaire ; retraits/prospects/servitudes"
+ },
+ {
+  "id": "DOC-109",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/flash/templates/rapport.html.j2:129",
+  "ou": "PDF Flash §01, prescriptions non vérifiables",
+  "texte": "Prescriptions non vérifiables sur cette commune — {motif}. Emplacements réservés, espaces boisés classés et autres servitudes graphiques sont à vérifier au règlement papier (mairie).",
+  "note": "ER/EBC/servitudes graphiques"
+ },
+ {
+  "id": "DOC-110",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/flash/templates/rapport.html.j2:180",
+  "ou": "PDF Flash §02, titre potentiel AU",
+  "texte": "Potentiel constructible sous réserve de l'ouverture à l'urbanisation — scénario retenu",
+  "note": "ouverture à l'urbanisation zone AU"
+ },
+ {
+  "id": "DOC-111",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/flash/templates/rapport.html.j2:185",
+  "ou": "PDF Flash §02, avert. ouverture AU",
+  "texte": "⚠ Ouverture à l'urbanisation non vérifiée — {motif} Le potentiel ci-dessous est conditionné à cette ouverture : il ne se lit pas comme un droit acquis.",
+  "note": "ouverture zone AU non vérifiée ; pas un droit acquis"
+ },
+ {
+  "id": "DOC-113",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/flash/templates/rapport.html.j2:214",
+  "ou": "PDF Flash §02, RNU",
+  "texte": "⚠ {rnu_ligne}",
+  "note": "étiquetage RNU"
+ },
+ {
+  "id": "DOC-114",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/flash/templates/rapport.html.j2:232",
+  "ou": "PDF Flash §03, aucun aléa",
+  "texte": "✓ Aucun aléa, PPR, site pollué ou ICPE identifié sur la parcelle ou à proximité (500 m) dans les couches analysées.",
+  "note": "500 m en dur ; PPR/ICPE"
+ },
+ {
+  "id": "DOC-115",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/flash/templates/rapport.html.j2:255",
+  "ou": "PDF Flash §03, sources risques",
+  "texte": "Sources : Géorisques (BRGM), PPR DEAL Réunion, classement sonore Cerema. L'absence d'une couche dans ce tableau signifie qu'aucune emprise n'intersecte la parcelle dans les données disponibles.",
+  "note": "PPR DEAL ; classement sonore"
+ },
+ {
+  "id": "DOC-116",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/flash/templates/rapport.html.j2:267",
+  "ou": "PDF Flash §04, aucun périmètre patrimonial",
+  "texte": "✓ La parcelle n'est concernée par aucun périmètre patrimonial ou environnemental des couches analysées (ABF/Mérimée, Espaces protégés (INPN), QPV, Cartofriches, Parc national, forêts publiques).",
+  "note": "ABF/périmètres patrimoniaux"
+ },
+ {
+  "id": "DOC-117",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/flash/templates/rapport.html.j2:282",
+  "ou": "PDF Flash §04, note ABF",
+  "texte": "Dans les abords d'un monument historique, l'avis de l'Architecte des Bâtiments de France peut être requis.",
+  "note": "avis ABF requis"
+ },
+ {
+  "id": "DOC-123",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/flash/templates/rapport.html.j2:398",
+  "ou": "PDF Flash §07, délai médian instruction",
+  "texte": "Délai médian d'instruction (dépôt → autorisation)",
+  "note": "délai instruction permis (Sitadel)"
+ },
+ {
+  "id": "DOC-125",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/flash/templates/rapport.html.j2:415",
+  "ou": "PDF Flash §07, SRU",
+  "texte": "SRU : commune {statut} — {taux} % de logements sociaux pour un objectif de {objectif} % · besoin estimé ~{deficit} logements sociaux.",
+  "note": "loi SRU ; taux/objectif servis (déficit dérivé)"
+ },
+ {
+  "id": "DOC-126",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/flash/templates/rapport.html.j2:420",
+  "ou": "PDF Flash §07, QPV leviers",
+  "texte": "Quartier prioritaire (QPV) Leviers bailleur : TVA 2,1 % (au lieu de 8,5 % DOM), abattement TFPB 30 %, éligibilité LLS/LLTS renforcée.",
+  "note": "TVA 2,1 %/8,5 % + abattement TFPB 30 % en dur — dispositifs fiscaux QPV"
+ },
+ {
+  "id": "DOC-127",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/flash/templates/rapport.html.j2:435",
+  "ou": "PDF Flash §07, note ENAF/ZAN",
+  "texte": "Signal de pression foncière (rythme observé). Le budget et l'horizon ZAN ne sont pas indiqués : l'enveloppe n'est pas encore territorialisée (Schéma d'Aménagement Régional [SAR] / PLUi, loi TRACE) — à confirmer auprès des documents d'urbanisme locaux.",
+  "note": "ZAN / loi TRACE / SAR / PLUi"
+ },
+ {
+  "id": "DOC-130",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/flash/templates/rapport.html.j2:477",
+  "ou": "PDF Flash §08, réseaux viabilisation",
+  "texte": "{libelle} — probabilité par faisceau d'indices, jamais une certitude ; aucun tracé réseau relevé.",
+  "note": "faisceau d'indices, pas un raccordement établi"
+ },
+ {
+  "id": "DOC-133",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/flash/templates/rapport.html.j2:590",
+  "ou": "PDF Flash §10, mentions",
+  "texte": "Document d'information établi à partir de données publiques. Ne constitue ni un document d'urbanisme opposable, ni une étude de faisabilité réglementaire, ni un conseil juridique. Ces informations ne remplacent pas un certificat d'urbanisme. Les règles complètes du PLU peuvent modifier les potentiels indiqués.",
+  "note": "non-opposabilité / non-conseil juridique / certificat urba"
+ },
+ {
+  "id": "DOC-134",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/flash/templates/rapport.html.j2:605",
+  "ou": "PDF Flash §11, limites",
+  "texte": "Ce que le dossier n'établit pas … Où le vérifier",
+  "note": "renvois tiers compétents (source api.export_commun.limites_document)"
+ },
+ {
+  "id": "DOC-135",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/flash/data.py:324",
+  "ou": "PDF Flash §02, renouvellement",
+  "texte": "Parcelle occupée — potentiel de renouvellement urbain (reconstruction ou densification sur le bâti existant).",
+  "note": "renouvellement urbain"
+ },
+ {
+  "id": "DOC-136",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/flash/data.py:335",
+  "ou": "PDF Flash §02, RNU ligne",
+  "texte": "{libelle}. {detail} Parcelle DANS/HORS l'enveloppe urbanisée estimée. {avertissement} (statut vérifié le {date}).",
+  "note": "RNU ; enveloppe urbanisée / PAU"
+ },
+ {
+  "id": "DOC-138",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/flash/data.py:305",
+  "ou": "PDF Flash §07 (source data), abattement TFPB",
+  "texte": "(TVA 2,1 %, abattement TFPB — voir template)",
+  "note": "cf. DOC-126 (le littéral fiscal QPV est dans le template)"
+ },
+ {
+  "id": "DOC-139",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/financier_questionnaire.py:229",
+  "ou": "Questionnaire Financier (écran), aide régime TVA",
+  "texte": "Le régime de TVA décide si le bilan travaille HT ou TTC. À La Réunion la TVA sur le logement neuf est de 8,5 %. Le régime réel dépend du montage (TVA sur marge à l'acquisition, récupération sur les coûts, taux réduit en accession sociale) : à confirmer avec votre expert-comptable.",
+  "note": "8,5 % en dur — taux légal TVA neuf DOM"
+ },
+ {
+  "id": "DOC-146",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/financier_questionnaire.py:168",
+  "ou": "Questionnaire Financier, aide régime TVA (i)",
+  "texte": "INDISPENSABLE — le régime de TVA (assujetti avec récupération / TVA sur marge / autre). Il décide si le bilan travaille HT ou TTC.",
+  "note": "régime TVA HT/TTC"
+ },
+ {
+  "id": "COP-001",
+  "zone": "copilote",
+  "fichier_ligne": "src/labuse/copilote_v2/answering.py:106",
+  "ou": "réponse Copilote fiche, refus identité propriétaire personne physique (REFUS_PP)",
+  "texte": "L'identité des propriétaires personnes physiques n'est pas une donnée ouverte en France. Elle s'obtient par une demande au service de la publicité foncière (SPF) — je peux vous préparer le courrier.",
+  "note": "Affirme le régime juridique de l'accès à l'identité des propriétaires (SPF). Vérifier : donnée cadastrale nominative bien non ouverte au public, voie SPF exacte."
+ },
+ {
+  "id": "COP-002",
+  "zone": "copilote",
+  "fichier_ligne": "src/labuse/copilote_v2/answering.py:109",
+  "ou": "réponse Copilote fiche, refus projection de valeur future (REFUS_PROJECTION)",
+  "texte": "LABUSE ne projette pas de valeur future. Je peux vous donner le marché CONSTATÉ — médiane, tendance sur 12 mois, volume de ventes.",
+  "note": "DOUTE : mi-juridique (posture de non-conseil) mi-chiffré (« 12 mois » en dur mais descriptif). Inclus par prudence."
+ },
+ {
+  "id": "COP-003",
+  "zone": "copilote",
+  "fichier_ligne": "src/labuse/copilote_v2/answering.py:1179-1186",
+  "ou": "réponse Copilote fiche, gabarit capacités/limites (_CAPACITE_TXT)",
+  "texte": "Je n'ai AUCUN accès à vos e-mails, vos messages, votre compte bancaire, ni à l'identité des propriétaires personnes physiques (donnée non ouverte en France).",
+  "note": "Affirme un régime juridique (donnée non ouverte en France). Même notion que COP-001, à vérifier."
+ },
+ {
+  "id": "COP-004",
+  "zone": "copilote",
+  "fichier_ligne": "src/labuse/copilote_v2/answering.py:1808-1811",
+  "ou": "réponse Copilote fiche, gabarit division en zone A/N (_division)",
+  "texte": "En zone {zone} (à vocation {voc}), la construction nouvelle n'est en principe pas autorisée : détacher un lot à bâtir n'a pas d'objet ici. Cette parcelle mesure {surface} m² à {commune}.",
+  "note": "Affirme une règle d'urbanisme (inconstructibilité de principe en zone agricole/naturelle). zone/surface/commune injectés ; l'affirmation de droit est en dur. Vérifier le « en principe pas autorisée » (dérogations A/N possibles)."
+ },
+ {
+  "id": "COP-005",
+  "zone": "copilote",
+  "fichier_ligne": "src/labuse/copilote_v2/answering.py:1812-1813",
+  "ou": "réponse Copilote fiche, gabarit division (refus de trancher divisibilité)",
+  "texte": "Je ne tranche pas la divisibilité réglementaire d'une parcelle : elle dépend d'abord du règlement de la zone — surface minimale de terrain, accès, emprise au sol.",
+  "note": "Énonce les critères réglementaires de divisibilité. Pas de chiffre. Vérifier que la liste (surface min / accès / emprise) est juste et non trompeuse."
+ },
+ {
+  "id": "COP-013",
+  "zone": "copilote",
+  "fichier_ligne": "src/labuse/copilote_v2/missions_lourdes.py:107-109",
+  "ou": "réponse Copilote fiche, mission vérification — réserve de méthode (avis prix)",
+  "texte": "Réserve de méthode : ce calcul ne tient compte ni de la configuration du terrain, ni de son accès, ni de la topographie, ni de l'état du sol ou du bâti — tout ce qui fait qu'une parcelle vaut moins que la médiane de sa zone.",
+  "note": "DOUTE : posture de non-évaluation (pas strictement une règle de droit). Accompagne l'avis prix ; inclus par prudence car cadre la portée de l'avis servi."
+ },
+ {
+  "id": "COP-014",
+  "zone": "copilote",
+  "fichier_ligne": "src/labuse/copilote_v2/missions_lourdes.py:92-93",
+  "ou": "réponse Copilote fiche, mission vérification — mention projection arithmétique",
+  "texte": "{m2} représenteraient {eur} — une projection arithmétique, PAS une valeur vénale.",
+  "note": "Affirmation de portée (non-valeur vénale). Chiffres injectés (variables). Retenu pour l'affirmation juridique/posture, pas pour un chiffre en dur."
+ },
+ {
+  "id": "COP-015",
+  "zone": "copilote",
+  "fichier_ligne": "src/labuse/copilote_v2/outils.py:459-463",
+  "ou": "prompt système web (WEB_SYSTEM) — exemple imposé mettant une affirmation factuelle dans la bouche du copilote",
+  "texte": "Exemple attendu, à imiter EXACTEMENT : « Le maire de Saint-Denis est Ericka Bareigts. »",
+  "note": "DOUTE : exemple dans un prompt système, mais fournit une affirmation nominative (nom d'élu) susceptible d'être servie/périmée. Ni chiffre ni règle de droit stricto sensu. Inclus par prudence — signale un fait daté en dur."
+ },
+ {
+  "id": "COP-016",
+  "zone": "copilote",
+  "fichier_ligne": "src/labuse/ai/agent.py:39",
+  "ou": "analyse IA fiche (StubProvider), reunion_specific_flags servis au client",
+  "texte": "Parcelle déclarée agricole (RPG) — usage à vérifier au PLU.",
+  "note": "Flag client-facing affirmant une obligation de vérification urbanisme (PLU) sur base RPG. Vérifier que le RPG est bien déclaratif/indicatif."
+ },
+ {
+  "id": "COP-017",
+  "zone": "copilote",
+  "fichier_ligne": "src/labuse/ai/agent.py:40",
+  "ou": "analyse IA fiche (StubProvider), reunion_specific_flags servis au client",
+  "texte": "Parc National (cœur exclu / adhésion contrainte).",
+  "note": "Affirme un statut réglementaire (cœur de Parc National exclu de constructibilité, adhésion contrainte). À vérifier (régime cœur/aire d'adhésion)."
+ },
+ {
+  "id": "COP-018",
+  "zone": "copilote",
+  "fichier_ligne": "src/labuse/ai/agent.py:85",
+  "ou": "analyse IA fiche (StubProvider), must_check_before_showing_developer servis au client",
+  "texte": "Vérifier les règles détaillées au règlement PLU (PDF).",
+  "note": "Renvoie au règlement PLU comme source de droit opposable. Pas de chiffre. À confirmer."
+ },
+ {
+  "id": "COP-019",
+  "zone": "copilote",
+  "fichier_ligne": "src/labuse/ai/agent.py:86",
+  "ou": "analyse IA fiche (StubProvider), must_check servis au client",
+  "texte": "Vérifier l'assainissement (collectif/SPANC) auprès de l'EPCI.",
+  "note": "Affirme la compétence assainissement (SPANC/EPCI). Vérifier que l'EPCI est bien l'autorité compétente à La Réunion."
+ },
+ {
+  "id": "COP-020",
+  "zone": "copilote",
+  "fichier_ligne": "src/labuse/ai/agent.py:83",
+  "ou": "analyse IA fiche (StubProvider), must_check servis au client",
+  "texte": "Confirmer le propriétaire et l'indivision via les Fichiers fonciers (sous convention).",
+  "note": "Affirme le régime d'accès aux Fichiers fonciers (sous convention). Cohérent avec COP-001. À vérifier."
+ },
+ {
+  "id": "COP-021",
+  "zone": "copilote",
+  "fichier_ligne": "src/labuse/ai/prompt.py:67",
+  "ou": "analyse IA fiche (payload_from_outcome), disclaimer servi au client",
+  "texte": "Données publiques + hypothèses signalées. Constructibilité/propriété/rentabilité jamais garanties.",
+  "note": "Disclaimer juridique (limitation de responsabilité / non-garantie). Pas de chiffre. Retenu comme affirmation de portée juridique."
+ },
+ {
+  "id": "COP-022",
+  "zone": "copilote",
+  "fichier_ligne": "src/labuse/ai/prompt.py:24-26",
+  "ou": "prompt système IA fiche (SYSTEM_PROMPT) — met dans la bouche de l'IA des règles juridiques réunionnaises",
+  "texte": "cœur de Parc National exclu, aléas de cirque et érosion côtière ... vocation agricole indiquée par le RPG (déclarations PAC, indicatif), indivision successorale (bloqueur fréquent)",
+  "note": "DOUTE : prompt système instruisant l'IA, mais impose des affirmations réglementaires (cœur PN exclu, RPG indicatif) reprises dans les flags servis (COP-016/017). Inclus car source des affirmations client."
+ },
+ {
+  "id": "MAIL-002",
+  "zone": "mails",
+  "fichier_ligne": "src/labuse/courrier_compose.py:32-35",
+  "ou": "lettre au propriétaire (recto), paragraphe offre — gratuité de l'analyse",
+  "texte": "Si vous souhaitez aller plus loin, nous pouvons vous adresser gratuitement une analyse plus complète de votre terrain : règles d'urbanisme identifiées, contraintes connues, caractéristiques de la parcelle et données immobilières disponibles autour de celle-ci. Il suffit de la demander à contact@labuse.immo.",
+  "note": "engagement de gratuité affiché au propriétaire ; texte fixe Vic, non reformulable"
+ },
+ {
+  "id": "MAIL-003",
+  "zone": "mails",
+  "fichier_ligne": "src/labuse/courrier_compose.py:38-41",
+  "ou": "lettre au propriétaire (pied), mention légale de non-engagement",
+  "texte": "Analyse réalisée avec LABUSE, plateforme d'intelligence foncière spécialisée sur La Réunion, pour le compte de {societe}. Les informations présentées sont issues des données disponibles au moment de l'analyse et ne constituent ni une autorisation d'urbanisme, ni une offre d'achat, ni un mandat, ni un conseil juridique.",
+  "note": "disclaimer juridique en pied de lettre ; vérifier exactitude de la formulation (autorisation urbanisme / offre / mandat / conseil)"
+ },
+ {
+  "id": "MAIL-004",
+  "zone": "mails",
+  "fichier_ligne": "src/labuse/courrier_compose.py:42-43",
+  "ou": "lettre au propriétaire (pied), droit d'opposition au courrier",
+  "texte": "Vous ne souhaitez plus recevoir de courrier de notre part : écrivez à stop@labuse.immo en indiquant la référence cadastrale {reference}.",
+  "note": "mention d'opposition (démarchage postal) ; vérifier conformité RGPD / opt-out"
+ },
+ {
+  "id": "MAIL-005",
+  "zone": "mails",
+  "fichier_ligne": "src/labuse/courrier_compose.py:27-28",
+  "ou": "lettre au propriétaire (phrase occupant), transmission au propriétaire",
+  "texte": "Ce courrier est destiné au propriétaire de la parcelle {reference}. Si vous n'en êtes pas le propriétaire, nous vous remercions de bien vouloir le lui transmettre.",
+  "note": "pli non nominatif « à l'occupant » — vérifier légitimité de l'adressage"
+ },
+ {
+  "id": "MAIL-006",
+  "zone": "mails",
+  "fichier_ligne": "src/labuse/courrier_compose.py:46-48",
+  "ou": "lettre au propriétaire (ouverture A), zonage PLU de la parcelle",
+  "texte": "La parcelle {situee}, d'une surface cadastrale de {surface} m², est actuellement identifiée comme non bâtie dans les données disponibles. Elle se situe en zone {zone} du document d'urbanisme actuellement intégré par LABUSE.",
+  "note": "affirme le zonage PLU au propriétaire ; zone injectée depuis la donnée parcelle (vérifier source zone_lib)"
+ },
+ {
+  "id": "MAIL-007",
+  "zone": "mails",
+  "fichier_ligne": "src/labuse/courrier_compose.py:49-50",
+  "ou": "lettre au propriétaire (ouverture B), possibilités d'évolution en zone calibrée",
+  "texte": "La parcelle {situee} est déjà bâtie. Les données réglementaires actuellement intégrées par LABUSE indiquent qu'elle mérite néanmoins une analyse complémentaire de ses possibilités d'évolution.",
+  "note": "affirmation réglementaire sur bâtie zone calibrée"
+ },
+ {
+  "id": "MAIL-008",
+  "zone": "mails",
+  "fichier_ligne": "src/labuse/courrier_compose.py:51-53",
+  "ou": "lettre au propriétaire (ouverture C), mutations DVF du secteur",
+  "texte": "Plusieurs mutations immobilières ont été publiées récemment autour de la parcelle {situee}. Elles permettent de disposer de repères récents sur l'activité immobilière du secteur : {n} mutations publiées dans le périmètre analysé sur les {x} dernières années.",
+  "note": "n et x injectés (n_mutations, x_annees=3) ; phrase affirme un fait DVF — vérifier périmètre 500 m / 3 ans"
+ },
+ {
+  "id": "MAIL-009",
+  "zone": "mails",
+  "fichier_ligne": "src/labuse/courrier_compose.py:54-55",
+  "ou": "lettre au propriétaire (ouverture D), zonage PLU neutre",
+  "texte": "La parcelle {situee}, à {commune}, fait partie des biens analysés par LABUSE dans votre secteur. Elle se situe en zone {zone} du document d'urbanisme actuellement intégré.",
+  "note": "affirme le zonage PLU ; zone injectée"
+ },
+ {
+  "id": "MAIL-010",
+  "zone": "mails",
+  "fichier_ligne": "src/labuse/courrier_compose.py:196-198",
+  "ou": "lettre au propriétaire (verso synthèse), zone d'urbanisme calibrée",
+  "texte": "Zone d'urbanisme : {zone}{doc_txt} (règles calibrées)",
+  "note": "mention « règles calibrées » — vérifier ce que garantit la calibration"
+ },
+ {
+  "id": "MAIL-011",
+  "zone": "mails",
+  "fichier_ligne": "src/labuse/courrier_compose.py:199-200",
+  "ou": "lettre au propriétaire (verso synthèse), contraintes / aléas",
+  "texte": "Contraintes connues : {risques}",
+  "note": "liste des risques HARD_EXCLUDE (risques/ravine/trait_de_cote) affichée au propriétaire — vérifier exactitude"
+ },
+ {
+  "id": "MAIL-013",
+  "zone": "mails",
+  "fichier_ligne": "src/labuse/courrier_compose.py:158-159",
+  "ou": "lettre au propriétaire (signature), non-engagement du destinataire",
+  "texte": "Cette démarche ne vous engage à rien.",
+  "note": "clause de non-engagement en signature"
+ },
+ {
+  "id": "MAIL-014",
+  "zone": "mails",
+  "fichier_ligne": "src/labuse/courrier.py:646-647",
+  "ou": "garde d'envoi courrier, responsabilité du contenu (message d'erreur / case à cocher)",
+  "texte": "Le contenu du courrier est de la responsabilité de l'émetteur — case « j'assume le contenu de ce courrier » obligatoire.",
+  "note": "clause de responsabilité de l'émetteur ; case obligatoire avant tout envoi"
+ },
+ {
+  "id": "MAIL-015",
+  "zone": "mails",
+  "fichier_ligne": "src/labuse/courrier_adressage.py:87",
+  "ou": "lettre PM (destinataire), envoi au siège social SIRENE",
+  "texte": "{denomination} — au siège social déclaré",
+  "note": "pli nominatif à la raison sociale au siège SIRENE"
+ },
+ {
+  "id": "MAIL-016",
+  "zone": "mails",
+  "fichier_ligne": "src/labuse/courrier_adressage.py:21",
+  "ou": "écran/adressage courrier, motif de blocage terrain nu",
+  "texte": "Parcelle non bâtie : aucun destinataire à l'adresse",
+  "note": "motif de refus affiché ; terrain nu = pas d'occupant joignable"
+ },
+ {
+  "id": "MAIL-017",
+  "zone": "mails",
+  "fichier_ligne": "frontend/src/components/outils/ModulePanel.tsx:1393-1395",
+  "ou": "outil Courrier, bandeau d'entête (service d'envoi, pas d'identité particulier)",
+  "texte": "Un service d'envoi : vous préparez vos courriers (destinataires + rédaction), LABUSE les imprime, les affranchit et les poste. Adressage générique (SPF/CERFA) — aucune identité de propriétaire particulier.",
+  "note": "affirme qu'aucune identité de propriétaire particulier n'est utilisée — vérifier vs adressage réel"
+ },
+ {
+  "id": "MAIL-018",
+  "zone": "mails",
+  "fichier_ligne": "frontend/src/components/outils/ModulePanel.tsx:1450",
+  "ou": "outil Courrier, renvoi Courrier SPF pour identifier le propriétaire",
+  "texte": "passez par le Courrier SPF pour identifier le propriétaire.",
+  "note": "renvoi au dispositif Courrier SPF (demande au Service de publicité foncière)"
+ },
+ {
+  "id": "PY-001",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/rnu.py:28",
+  "ou": "étiquette RNU fiche/exports",
+  "texte": "Commune au règlement national d'urbanisme — pas de PLU local",
+  "note": "règle de droit : commune sans PLU relève du RNU"
+ },
+ {
+  "id": "PY-002",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/rnu.py:31",
+  "ou": "détail RNU fiche",
+  "texte": "Aucun document local approuvé : les règles nationales s'appliquent (constructibilité limitée aux parties actuellement urbanisées — analyse au cas par cas, non couverte par le zonage LABUSE).",
+  "note": "affirme portée juridique du RNU : constructibilité limitée aux PAU"
+ },
+ {
+  "id": "PY-003",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/rnu.py:36",
+  "ou": "avertissement PAU fiche/exports",
+  "texte": "Enveloppe urbanisée estimée par LABUSE — la délimitation des parties actuellement urbanisées relève de l'appréciation du service instructeur.",
+  "note": "portée juridique : délimitation PAU relève du service instructeur"
+ },
+ {
+  "id": "PY-004",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/rnu.py:41",
+  "ou": "mention export RNU",
+  "texte": "non applicable — RNU",
+  "note": "règles de capacité non applicables au RNU"
+ },
+ {
+  "id": "PY-006",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/taxe_amenagement.py:264",
+  "ou": "ligne détail taxe exonérée",
+  "texte": "Surface exonérée — {_label}",
+  "note": "exonération de plein droit ; label depuis _MOTIFS_EXONERATION"
+ },
+ {
+  "id": "PY-011",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/taxe_amenagement.py:342",
+  "ou": "message taux communal manquant",
+  "texte": "Taux communal non renseigné pour cette commune — saisissez-le (il figure dans la délibération de la commune ; l'outil n'invente aucun taux).",
+  "note": "renvoie à la délibération communale (fait de droit)"
+ },
+ {
+  "id": "PY-012",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/taxe_amenagement.py:114",
+  "ou": "millésime taux communal",
+  "texte": "Taux communal en vigueur depuis le {depuis} (délibération communale)",
+  "note": "délibération communale ; date via variable"
+ },
+ {
+  "id": "PY-014",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/territoire_fiscal.py:40",
+  "ou": "avertissement dispositif fiscal territorial",
+  "texte": "Fait territorial sourcé et daté. Les taux cités sont les taux LÉGAUX du dispositif (décret / CGI), pas un calcul de votre avantage : l'éligibilité et l'effet réel relèvent de votre expert-comptable ou avocat fiscaliste.",
+  "note": "garde fiscale : taux légaux du décret/CGI"
+ },
+ {
+  "id": "PY-016",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/territoire_fiscal.py:50",
+  "ou": "libellé ZFANG standard",
+  "texte": "Régime standard — dispositif de plein droit dans les DOM (art. 44 quaterdecies CGI) : abattement d'environ 50 % sur les bénéfices.",
+  "note": "cite CGI art. 44 quaterdecies + taux ~50% en dur"
+ },
+ {
+  "id": "PY-018",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/territoire_fiscal.py:55",
+  "ou": "libellé FRR partie",
+  "texte": "Commune classée en partie seulement — la zone spéciale d'action rurale (les Hauts) est infra-communale : la situation dépend de la localisation exacte du terrain.",
+  "note": "portée du classement FRR infra-communal"
+ },
+ {
+  "id": "PY-019",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/territoire_fiscal.py:57",
+  "ou": "libellé FRR hors",
+  "texte": "Commune hors zone (non classée).",
+  "note": "classement FRR : hors zone"
+ },
+ {
+  "id": "PY-020",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/territoire_fiscal.py:64",
+  "ou": "libellé FRR parcelle dans",
+  "texte": "Parcelle DANS la zone spéciale d'action rurale (les Hauts) — commune classée FRR en partie (art. 44 quindecies A CGI, en vigueur 01/07/2024). L'éligibilité effective reste à confirmer par un fiscaliste.",
+  "note": "cite CGI art. 44 quindecies A + date 01/07/2024"
+ },
+ {
+  "id": "PY-021",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/territoire_fiscal.py:67",
+  "ou": "libellé FRR parcelle hors",
+  "texte": "Parcelle HORS de la zone spéciale d'action rurale (les Hauts) — la commune n'est classée FRR qu'en partie, et cette parcelle n'est pas dans le périmètre classé.",
+  "note": "portée classement FRR à la parcelle"
+ },
+ {
+  "id": "PY-022",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/territoire_fiscal.py:69",
+  "ou": "libellé FRR parcelle non déterminé",
+  "texte": "Commune classée FRR en partie seulement (les Hauts, délimitation infra-communale) — position de la parcelle non déterminée (périmètre non disponible).",
+  "note": "classement FRR non déterminé"
+ },
+ {
+  "id": "PY-023",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/faisabilite/defisc.py:107",
+  "ou": "étiquette loyer plafond défisc",
+  "texte": "plafond réglementaire du dispositif — n'est pas un loyer de marché observé",
+  "note": "plafond réglementaire (BOFiP) — nature du chiffre"
+ },
+ {
+  "id": "PY-024",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/faisabilite/defisc.py:136",
+  "ou": "message bilan locatif négatif",
+  "texte": "bilan locatif négatif au rendement cible et coût travaux courants — le loyer plafonné n'absorbe pas l'investissement",
+  "note": "loyer plafonné réglementaire"
+ },
+ {
+  "id": "PY-027",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/faisabilite/engine.py:299",
+  "ou": "avertissement faisabilité",
+  "texte": "Capacité ESTIMÉE — zone non calibrée finement : hypothèses génériques prudentes (reculs et hauteurs par défaut).",
+  "note": "affirme hypothèses réglementaires par défaut"
+ },
+ {
+  "id": "PY-028",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/faisabilite/engine.py:311",
+  "ou": "verdict faisabilité",
+  "texte": "Capacité non calculable — règle(s) PLU non validée(s) en zone {rules.code} : {rules.regle_non_validee} (feuille « propose », sans citation retenue au règlement). Aucune valeur par défaut appliquée.",
+  "note": "règle PLU non validée ; code/règle via variable"
+ },
+ {
+  "id": "PY-029",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/faisabilite/engine.py:325",
+  "ou": "verdict faisabilité",
+  "texte": "Construction neuve non autorisée en zone {rules.code}.",
+  "note": "interdiction construction neuve (zones fermées AU*st) ; code via variable"
+ },
+ {
+  "id": "PY-030",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/faisabilite/engine.py:332",
+  "ou": "verdict faisabilité",
+  "texte": "Habitat interdit au règlement — zone à vocation économique/activités (seules exceptions : gardiennage/logement de fonction). Aucune capacité logement calculée.",
+  "note": "interdiction habitat en zone économique (règlement PLU)"
+ },
+ {
+  "id": "PY-035",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/faisabilite/engine.py:463",
+  "ou": "étape faisabilité",
+  "texte": "non réglementée (Art. 9 « il n'est pas fixé de règle ») → bornée par les reculs",
+  "note": "cite Art. 9 (CES) du règlement PLU"
+ },
+ {
+  "id": "PY-036",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/faisabilite/engine.py:485",
+  "ou": "avertissement faisabilité",
+  "texte": "% pleine terre non calibré pour la zone {rules.code} → non appliqué (Art. 13).",
+  "note": "cite Art. 13 du règlement PLU"
+ },
+ {
+  "id": "PY-038",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/faisabilite/engine.py:522",
+  "ou": "verdict faisabilité",
+  "texte": "Hauteur de zone non calibrée — capacité non calculable.",
+  "note": "règle de hauteur PLU non calibrée"
+ },
+ {
+  "id": "PY-039",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/faisabilite/engine.py:620",
+  "ou": "avertissement faisabilité",
+  "texte": "Stationnement non réglementé pour {rules.code} (exemptée, Art. 12) → capacité non bornée par le stationnement.",
+  "note": "cite Art. 12 du règlement PLU"
+ },
+ {
+  "id": "PY-040",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/faisabilite/engine.py:625",
+  "ou": "avertissement faisabilité",
+  "texte": "Stationnement non calibré pour la zone {rules.code} → garde-fou non appliqué (Art. 12).",
+  "note": "cite Art. 12 du règlement PLU"
+ },
+ {
+  "id": "PY-041",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/faisabilite/engine.py:630",
+  "ou": "avertissement faisabilité",
+  "texte": "Norme de stationnement présente mais NON MODÉLISABLE pour {rules.code} (exprimée par m² de plancher, par chambre ou en %, pas par logement — Art. 12) : capacité au sol non bornée, aucune valeur inventée.",
+  "note": "cite Art. 12 du règlement PLU"
+ },
+ {
+  "id": "PY-042",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/faisabilite/engine.py:635",
+  "ou": "avertissement faisabilité",
+  "texte": "Norme de stationnement non renseignée pour {rules.code} (absente du règlement extrait) → garde-fou au sol non appliqué (Art. 12).",
+  "note": "cite Art. 12 du règlement PLU"
+ },
+ {
+  "id": "PY-043",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/faisabilite/engine.py:738",
+  "ou": "verdict faisabilité",
+  "texte": "Non constructible en l'état malgré le zonage ({rp} théorique) — contrainte rédhibitoire (voir modulation).",
+  "note": "portée : contrainte rédhibitoire (modulation) ; rp via variable"
+ },
+ {
+  "id": "PY-044",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/faisabilite/au_statut.py:95",
+  "ou": "motif fiche AU",
+  "texte": "Zone AU fermée à l'urbanisation au règlement (secteur de transition / réserve, ex. AU*st ou phasage 2AU/3AU). Son ouverture exige une procédure de modification ou de révision du PLU — non constructible en l'état.",
+  "note": "règle de droit : ouverture AU exige modification/révision PLU"
+ },
+ {
+  "id": "PY-045",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/faisabilite/au_statut.py:100",
+  "ou": "motif fiche AU",
+  "texte": "Zone à urbaniser — ouverture à l'urbanisation NON VÉRIFIÉE, statut inconnu. Le règlement de cette zone n'a pas été lu. Déclassement TEMPORAIRE jusqu'à vérification de l'article d'ouverture.",
+  "note": "portée zonage AU non vérifiée"
+ },
+ {
+  "id": "PY-046",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/faisabilite/au_statut.py:105",
+  "ou": "mention fiche AU",
+  "texte": "Zone à urbaniser — ouverture non vérifiée. Le règlement fixe des règles de construction pour cette zone, mais son ouverture à l'urbanisation n'a pas été confirmée. Vérifiez auprès de la commune avant tout engagement.",
+  "note": "vérification préalable requise (droit)"
+ },
+ {
+  "id": "PY-047",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/faisabilite/au_ouverture.py:32",
+  "ou": "motif fiche AU",
+  "texte": "Zone AU fermée à l'urbanisation (réserve). Son ouverture est subordonnée à une procédure de modification ou de révision du PLU — source règlement (voir calibration de la commune).",
+  "note": "règle de droit : ouverture subordonnée à procédure PLU"
+ },
+ {
+  "id": "PY-048",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/faisabilite/au_ouverture.py:35",
+  "ou": "mention fiche AU",
+  "texte": "Zone à urbaniser — ouverture conditionnée à une opération d'aménagement d'ensemble et/ou à une modification du PLU. Constructibilité à confirmer auprès de la commune avant tout engagement.",
+  "note": "règle de droit : ouverture conditionnée"
+ },
+ {
+  "id": "PY-049",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/faisabilite/au_ouverture.py:38",
+  "ou": "motif fiche AU",
+  "texte": "Zone à urbaniser dont l'ouverture DÉPEND de l'aménagement préalable d'AUTRES zones AU (phasage 2AU→1AU). Statut non déductible du règlement seul — à vérifier, jamais supposée ouverte.",
+  "note": "règle de droit : subordination de l'ouverture (phasage)"
+ },
+ {
+  "id": "PY-050",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/faisabilite/au_ouverture.py:48",
+  "ou": "mention fiche AU (assemblage)",
+  "texte": "Cette parcelle ({round(surface_m2)} m²) est trop petite pour l'opération d'ensemble minimale imposée par le règlement ({min_log} logements à {densite:g} log/ha, soit {round(min_surf_m2)} m² minimum). Il manque {manquant} m². Elle n'est pas constructible SEULE, mais peut l'être en assemblage avec une ou plusieurs parcelles voisines.",
+  "note": "règle PLU (opération d'ensemble mini) ; chiffres via variables"
+ },
+ {
+  "id": "PY-051",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/faisabilite/constructibilite.py:70",
+  "ou": "motif fiche",
+  "texte": "Constructibilité non vérifiable — PLU non calibré sur cette commune.",
+  "note": "état calibrage PLU"
+ },
+ {
+  "id": "PY-052",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/faisabilite/constructibilite.py:76",
+  "ou": "motif fiche",
+  "texte": "Zone fermée à l'urbanisation — non constructible en l'état{ref}.",
+  "note": "portée zonage (ref via variable)"
+ },
+ {
+  "id": "PY-053",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/faisabilite/constructibilite.py:79",
+  "ou": "motif fiche",
+  "texte": "Parcelle non constructible — surface ou reculs insuffisants.",
+  "note": "non constructibilité géométrique"
+ },
+ {
+  "id": "PY-057",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/gabarit/builder.py:211",
+  "ou": "message bloquant gabarit",
+  "texte": "parcelle entièrement en zone non constructible (A/N)",
+  "note": "portée zonage A/N"
+ },
+ {
+  "id": "PY-058",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/gabarit/builder.py:214",
+  "ou": "message bloquant gabarit",
+  "texte": "parcelle sur ≥ 2 zones constructibles distinctes (...) : découpage multi-CES non servi",
+  "note": "règle CES multi-zones"
+ },
+ {
+  "id": "PY-059",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/gabarit/builder.py:230",
+  "ou": "message bloquant gabarit",
+  "texte": "zone PLU indéterminée",
+  "note": "zonage indéterminé"
+ },
+ {
+  "id": "PY-060",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/gabarit/builder.py:236",
+  "ou": "message bloquant gabarit",
+  "texte": "zone {work_zone} hors calibrage PLU",
+  "note": "zone via variable"
+ },
+ {
+  "id": "PY-061",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/gabarit/builder.py:238",
+  "ou": "message bloquant gabarit",
+  "texte": "règle PLU non validée (propose) : {zr.regle_non_validee}",
+  "note": "feuille propose non validée ; règle via variable"
+ },
+ {
+  "id": "PY-062",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/gabarit/builder.py:240",
+  "ou": "message bloquant gabarit",
+  "texte": "PLU non calibré pour la zone {work_zone} (estimation générique)",
+  "note": "zone via variable"
+ },
+ {
+  "id": "PY-063",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/gabarit/builder.py:266",
+  "ou": "message bloquant gabarit",
+  "texte": "zone {work_zone} sans règles d'implantation propres : le règlement ne fixe ni recul, ni hauteur, ni emprise (renvoi non résolu ou silence total)",
+  "note": "silence du règlement PLU"
+ },
+ {
+  "id": "PY-064",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/gabarit/builder.py:282",
+  "ou": "étape applicable gabarit",
+  "texte": "non réglementée — PLU {commune} zone {work_zone} : silence du règlement",
+  "note": "silence du règlement ; commune/zone via variables"
+ },
+ {
+  "id": "PY-067",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/plans.py:49",
+  "ou": "refus accès feature",
+  "texte": "réservé au plan Intégral",
+  "note": "restriction contractuelle plan payant"
+ },
+ {
+  "id": "PY-068",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/facturation.py:52",
+  "ou": "description produit Stripe",
+  "texte": "Abonnement LABUSE Intégral — 1 licence = 1 accès complet. Pré-analyse sur données publiques ; ne remplace ni certificat d'urbanisme ni conseil notarial.",
+  "note": "1 licence=1 accès (condition) + avertissement légal (certificat d'urbanisme/conseil notarial)"
+ },
+ {
+  "id": "PY-069",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/facturation.py:64",
+  "ou": "description produit Stripe",
+  "texte": "Rapport Flash — UNE parcelle, un PDF sourcé, paiement unique. Pré-analyse sur données publiques ; ne remplace ni certificat d'urbanisme ni conseil notarial.",
+  "note": "paiement unique + avertissement légal certificat urbanisme/conseil notarial ; UNE parcelle"
+ },
+ {
+  "id": "PY-072",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/zone.py:519",
+  "ou": "note zones PLU",
+  "texte": "Zones PLU recouvertes par la zone (part de surface). Le libellé de zone indique où le commerce est admis ; la règle fine par activité se lit au règlement du document. Commune en RNU ou non calibrée : « non calibré », jamais une absence de contrainte.",
+  "note": "portée zonage PLU + RNU"
+ },
+ {
+  "id": "PY-073",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/zone.py:490",
+  "ou": "libellé zone",
+  "texte": "PLU non disponible.",
+  "note": "état PLU"
+ },
+ {
+  "id": "PY-074",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/zone.py:771",
+  "ou": "libellé zonage",
+  "texte": "QPV (quartier prioritaire)",
+  "note": "zonage prioritaire de la ville"
+ },
+ {
+  "id": "PY-075",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/zone.py:897",
+  "ou": "libellé dispositif",
+  "texte": "Opération de Revitalisation de Territoire (ORT)",
+  "note": "dispositif ORT (droit)"
+ },
+ {
+  "id": "PY-076",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/zone.py:553",
+  "ou": "note signal AU",
+  "texte": "Sitadel (autorisations) · PLU/GPU (zones AU) — signal daté, pas une projection",
+  "note": "zones d'urbanisation future (PLU)"
+ },
+ {
+  "id": "PY-077",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/plu_reglement.py:173",
+  "ou": "disclaimer PLU fiche",
+  "texte": "Le règlement PLU fait foi ; les valeurs affichées sont une aide à la lecture, non un certificat d'urbanisme.",
+  "note": "disclaimer juridique PLU"
+ },
+ {
+  "id": "PY-078",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/plu_reglement.py:144",
+  "ou": "note zones A/N",
+  "texte": "Le règlement des zones agricoles et naturelles n'est pas indexé article par article dans LABUSE. Consultez le document complet.",
+  "note": "portée couverture réglementaire A/N"
+ },
+ {
+  "id": "PY-079",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/plu_reglement.py:98",
+  "ou": "repli commune non calibrée",
+  "texte": "Règlement PLU non outillé pour cette commune — consultez le Géoportail de l'Urbanisme (recherche par commune).",
+  "note": "repli GPU (droit)"
+ },
+ {
+  "id": "PY-085",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/regles/dispositifs_droit_sols.py:23",
+  "ou": "résumé fiche règle droit des sols",
+  "texte": "Mandat SOURCES-1 (06/09/2026) : « ER → VIGILANCE, RÉDHIBITOIRE au-delà de 50 % de la parcelle ; EBC → VIGILANCE dès non nul, RÉDHIBITOIRE au-delà de 80 % ; la part EBC est soustraite de l'assiette du bloc potentiel ; DPU → VIGILANCE ».",
+  "note": "seuils 50 % (ER) et 80 % (EBC) en dur ; notions ER/EBC/DPU (droit)"
+ },
+ {
+  "id": "FRT-008",
+  "zone": "front",
+  "fichier_ligne": "frontend/src/components/fiche/constructibilite.tsx:944",
+  "ou": "bloc Préemption (DPU) fiche parcelle",
+  "texte": "la commune peut préempter à la vente (DIA, ~2 mois).",
+  "note": "Affirmation droit de préemption + délai ~2 mois en dur (délai légal instruction DIA)."
+ },
+ {
+  "id": "FRT-019",
+  "zone": "front",
+  "fichier_ligne": "frontend/src/components/outils/PluAnnuaire.tsx:18",
+  "ou": "statut commune sans PLU annuaire",
+  "texte": "RNU — pas de règlement communal",
+  "note": "Affirmation régime : commune sans PLU relève du RNU."
+ },
+ {
+  "id": "FRT-023",
+  "zone": "front",
+  "fichier_ligne": "frontend/src/components/outils/Successions.tsx:37",
+  "ou": "tip méthode outil Successions",
+  "texte": "Formes retenues pour l'âge : sociétés civiles, familiales et agricoles (SCI, SC, SARL, SNC, GFA, SCEA, EARL, SCM)",
+  "note": "Liste de formes juridiques retenues pour le signal (règle de gestion affirmée)."
+ },
+ {
+  "id": "FRT-025",
+  "zone": "front",
+  "fichier_ligne": "frontend/src/components/outils/Gabarit.tsx:267",
+  "ou": "hint hauteur outil Gabarit",
+  "texte": "prospect L ≥ H (non intégré)",
+  "note": "Affirmation d'une règle de prospect (formule L≥H) — signalée non intégrée."
+ },
+ {
+  "id": "FRT-027",
+  "zone": "front",
+  "fichier_ligne": "frontend/src/components/contexte/ContextePanel.tsx:30",
+  "ou": "description SRU déficitaire contexte commune",
+  "texte": "Sous l'objectif légal : la commune doit produire du logement social — un programme mixte y répond à une obligation réelle.",
+  "note": "Affirmation d'obligation légale de production sociale (SRU)."
+ },
+ {
+  "id": "FRT-028",
+  "zone": "front",
+  "fichier_ligne": "frontend/src/components/contexte/ContextePanel.tsx:32",
+  "ou": "description SRU exemptée contexte commune",
+  "texte": "Soumise SRU mais exemptée d'obligations sur la période (décret) — pression de production sociale suspendue.",
+  "note": "Affirmation de suspension d'obligation par décret."
+ },
+ {
+  "id": "FRT-029",
+  "zone": "front",
+  "fichier_ligne": "frontend/src/components/contexte/ContextePanel.tsx:34",
+  "ou": "description SRU conforme contexte commune",
+  "texte": "Objectif SRU atteint — pas de pression réglementaire de rattrapage social.",
+  "note": "Affirmation d'atteinte de l'obligation légale SRU."
+ },
+ {
+  "id": "FRT-030",
+  "zone": "front",
+  "fichier_ligne": "frontend/src/components/contexte/ContextePanel.tsx:454",
+  "ou": "bloc SRU contexte commune",
+  "texte": "Le taux de {taux} % rapporte ces LLS aux résidences principales retenues pour la SRU (≈ {fmt(baseSru)}) — base différente des ménages ci-dessus.",
+  "note": "Explication du calcul légal SRU (résidences principales). Taux servi par variable."
+ },
+ {
+  "id": "FRT-031",
+  "zone": "front",
+  "fichier_ligne": "frontend/src/components/contexte/ContextePanel.tsx:601",
+  "ou": "bloc régime PLU contexte commune",
+  "texte": "Pas de PLU opposable : c'est le Règlement National d'Urbanisme qui s'applique.",
+  "note": "Affirmation de régime (RNU en l'absence de PLU opposable)."
+ },
+ {
+  "id": "FRT-032",
+  "zone": "front",
+  "fichier_ligne": "frontend/src/components/contexte/ContextePanel.tsx:602",
+  "ou": "bloc régime PLU contexte commune",
+  "texte": "Le PLU est opposable{...}.",
+  "note": "Affirmation d'effet juridique (opposabilité du PLU)."
+ },
+ {
+  "id": "FRT-033",
+  "zone": "front",
+  "fichier_ligne": "frontend/src/components/contexte/ContextePanel.tsx:667",
+  "ou": "cartouche taxe contexte commune",
+  "texte": "Taxe d'aménagement (part communale)",
+  "note": "Libellé d'impôt d'urbanisme (part communale)."
+ },
+ {
+  "id": "FRT-034",
+  "zone": "front",
+  "fichier_ligne": "frontend/src/components/contexte/ContextePanel.tsx:673",
+  "ou": "cartouche zonage ABC contexte commune",
+  "texte": "Classe de la commune · zone {zone}",
+  "note": "Classification fiscale (dispositifs d'investissement locatif). Zone servie par variable."
+ },
+ {
+  "id": "FRT-035",
+  "zone": "front",
+  "fichier_ligne": "frontend/src/components/contexte/ContextePanel.tsx:681",
+  "ou": "cartouche dispositif contexte commune",
+  "texte": "Aucune ORT / Action Cœur de Ville / Petites Villes de Demain / ORT commune signataire / ORT dans EPCI",
+  "note": "Énumération de dispositifs légaux de revitalisation urbaine."
+ },
+ {
+  "id": "FRT-036",
+  "zone": "front",
+  "fichier_ligne": "frontend/src/components/map/CouchesTuyau.tsx:96",
+  "ou": "légende couche EnR carte",
+  "texte": "Contraintes réglementaires EnR liées aux habitations (loi APER)",
+  "note": "Description réglementaire de couche (loi APER)."
+ },
+ {
+  "id": "APIDOC-001",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/pre_dossier.py:94",
+  "ou": "pré-dossier PC, bandeau/tampon de chaque page + LISEZMOI",
+  "texte": "Document préparatoire établi à partir de données publiques — ne constitue pas un dossier de demande de permis. À compléter et vérifier par le pétitionnaire ou son architecte.",
+  "note": "affirmation juridique : le pack n'est pas un dossier de demande de permis"
+ },
+ {
+  "id": "APIDOC-002",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/pre_dossier.py:291",
+  "ou": "pré-dossier PC, encart servitudes (règles zonage)",
+  "texte": "Abords de Monument historique (~500 m) — avis ABF probable",
+  "note": "buffer 500 m en dur ; abords monument historique / avis ABF"
+ },
+ {
+  "id": "APIDOC-003",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/pre_dossier.py:307",
+  "ou": "pré-dossier PC, encart servitudes",
+  "texte": "Emplacement réservé : {libelle} — {part_pct} % de la parcelle (surface déduite de l'emprise constructible)",
+  "note": "emplacement réservé : effet sur l'emprise constructible (pct servi par variable)"
+ },
+ {
+  "id": "APIDOC-005",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/pre_dossier.py:316",
+  "ou": "pré-dossier PC, encart servitudes",
+  "texte": "Droit de préemption urbain renforcé",
+  "note": "DPU renforcé (statut zonage)"
+ },
+ {
+  "id": "APIDOC-006",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/pre_dossier.py:317",
+  "ou": "pré-dossier PC, encart servitudes",
+  "texte": "Droit de préemption urbain",
+  "note": "DPU"
+ },
+ {
+  "id": "APIDOC-007",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/pre_dossier.py:318",
+  "ou": "pré-dossier PC, encart servitudes",
+  "texte": "— la commune peut préempter à la vente (DIA, ~2 mois)",
+  "note": "DPU/DIA : délai ~2 mois en dur ; droit de préempter à la vente"
+ },
+ {
+  "id": "APIDOC-008",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/pre_dossier.py:323",
+  "ou": "pré-dossier PC, encart servitudes (PEB zone A/B)",
+  "texte": "constructions d'habitation interdites",
+  "note": "PEB zones A/B : habitat interdit"
+ },
+ {
+  "id": "APIDOC-009",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/pre_dossier.py:324",
+  "ou": "pré-dossier PC, encart servitudes (PEB zone C)",
+  "texte": "isolement acoustique renforcé obligatoire",
+  "note": "PEB zone C"
+ },
+ {
+  "id": "APIDOC-010",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/pre_dossier.py:325",
+  "ou": "pré-dossier PC, encart servitudes (PEB zone D)",
+  "texte": "zone d'information sur le bruit",
+  "note": "PEB zone D"
+ },
+ {
+  "id": "APIDOC-012",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/pre_dossier.py:345",
+  "ou": "pré-dossier PC, section Destinations autorisées",
+  "texte": "CDAC au-delà de {seuil_m2} m² de surface de vente.",
+  "note": "CDAC : obligation au-delà d'un seuil de surface de vente (seuil servi par variable)"
+ },
+ {
+  "id": "APIDOC-013",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/pre_dossier.py:357",
+  "ou": "pré-dossier PC, section Fiscalité de l'opération",
+  "texte": "Taxe d'aménagement",
+  "note": "taxe d'aménagement (taux servi par variable)"
+ },
+ {
+  "id": "APIDOC-014",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/pre_dossier.py:358",
+  "ou": "pré-dossier PC, section Fiscalité",
+  "texte": "se calcule sur la surface de plancher créée par le projet (chiffrée au Dossier financier)",
+  "note": "assiette TA = surface de plancher créée"
+ },
+ {
+  "id": "APIDOC-016",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/pre_dossier.py:380",
+  "ou": "pré-dossier PC, section Capacité constructible",
+  "texte": "Pré-faisabilité sur règlement public, pas un certificat d'urbanisme.",
+  "note": "n'est pas un certificat d'urbanisme"
+ },
+ {
+  "id": "APIDOC-017",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/pre_dossier.py:382",
+  "ou": "pré-dossier PC, section Capacité constructible",
+  "texte": "Logement non autorisé dans cette zone (habitat interdit au règlement).",
+  "note": "destination habitat interdite au règlement de zone"
+ },
+ {
+  "id": "APIDOC-018",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/pre_dossier.py:391",
+  "ou": "pré-dossier PC, note règles calibrées",
+  "texte": "Les règles complètes du règlement (retraits, prospects, servitudes) peuvent modifier ces valeurs.",
+  "note": "portée du règlement PLU (retraits/prospects/servitudes)"
+ },
+ {
+  "id": "APIDOC-019",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/pre_dossier.py:398",
+  "ou": "pré-dossier PC, section pièces (collectif)",
+  "texte": "Scénario retenu : collectif → dépôt sur CERFA 13409 (pièces PC1 à PC8), à récupérer sur service-public.gouv.fr.",
+  "note": "CERFA 13409 en dur ; pièces PC1 à PC8 ; dépôt collectif"
+ },
+ {
+  "id": "APIDOC-021",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/pre_dossier.py:831",
+  "ou": "pré-dossier PC, PCMI4 notice, ligne Risque naturel (PPR)",
+  "texte": "Les prescriptions du règlement PPR (niveau de plancher, fondations) sont à intégrer au projet.",
+  "note": "prescriptions PPR (niveau plancher, fondations)"
+ },
+ {
+  "id": "APIDOC-022",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/pre_dossier.py:842",
+  "ou": "pré-dossier PC, PCMI4 notice, ligne ABF",
+  "texte": "Avis de l'architecte des Bâtiments de France probable, délai d'instruction majoré.",
+  "note": "abords monument : avis ABF, délai d'instruction majoré"
+ },
+ {
+  "id": "APIDOC-023",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/pre_dossier.py:825",
+  "ou": "pré-dossier PC, PCMI4 notice, ligne Adresse",
+  "texte": "rattachement automatique BAN, à vérifier par le pétitionnaire",
+  "note": "rattachement BAN indicatif — à vérifier (doute : mise en garde procédurale, inclus)"
+ },
+ {
+  "id": "APIDOC-024",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/pre_dossier.py:100",
+  "ou": "pré-dossier PC, PCMI1 (liste des pièces)",
+  "texte": "Plan de situation du terrain",
+  "note": "pièce PCMI1 exigée au dossier PC (doute : libellé de pièce réglementaire, inclus)"
+ },
+ {
+  "id": "APIDOC-025",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/pre_dossier.py:103",
+  "ou": "pré-dossier PC, liste des pièces",
+  "texte": "Plan de masse",
+  "note": "pièce PCMI2 exigée (doute : libellé pièce réglementaire, inclus)"
+ },
+ {
+  "id": "APIDOC-026",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/pre_dossier.py:105",
+  "ou": "pré-dossier PC, liste des pièces",
+  "texte": "Plan en coupe du terrain et de la construction",
+  "note": "pièce PCMI3 exigée (doute)"
+ },
+ {
+  "id": "APIDOC-027",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/pre_dossier.py:107",
+  "ou": "pré-dossier PC, liste des pièces",
+  "texte": "Notice décrivant le terrain et le projet",
+  "note": "pièce PCMI4 exigée (doute)"
+ },
+ {
+  "id": "APIDOC-028",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/pre_dossier.py:109",
+  "ou": "pré-dossier PC, liste des pièces",
+  "texte": "Plan des façades et des toitures",
+  "note": "pièce PCMI5 exigée (doute)"
+ },
+ {
+  "id": "APIDOC-029",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/pre_dossier.py:110",
+  "ou": "pré-dossier PC, liste des pièces",
+  "texte": "Document graphique d'insertion",
+  "note": "pièce PCMI6 exigée (doute)"
+ },
+ {
+  "id": "APIDOC-030",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/pre_dossier.py:111",
+  "ou": "pré-dossier PC, liste des pièces",
+  "texte": "Photographie — environnement proche",
+  "note": "pièce PCMI7 exigée (doute)"
+ },
+ {
+  "id": "APIDOC-031",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/pre_dossier.py:113",
+  "ou": "pré-dossier PC, liste des pièces",
+  "texte": "Photographie — paysage lointain",
+  "note": "pièce PCMI8 exigée (doute)"
+ },
+ {
+  "id": "APIDOC-032",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/pre_dossier.py:426",
+  "ou": "pré-dossier PC, enveloppe réglementaire, ligne Hauteur",
+  "texte": "Non chiffrée (prospect L ≥ H)",
+  "note": "règle de prospect L≥H (formule réglementaire)"
+ },
+ {
+  "id": "APIDOC-033",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/pre_dossier.py:1094",
+  "ou": "pré-dossier PC, LISEZMOI, ligne CERFA",
+  "texte": "CERFA {version} — version vérifiée le {CERFA_VERIFIE_LE} sur service-public.gouv.fr (fiche R11637). Seuls les champs TERRAIN du cadre 2 sont pré-remplis (adresse du terrain + références cadastrales préfixe/section/numéro + commune).",
+  "note": "CERFA fiche R11637 ; version et date servies par variable (CERFA_VERSION=13406*17, CERFA_VERIFIE_LE=21/08/2026)"
+ },
+ {
+  "id": "APIDOC-034",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/pre_dossier.py:1112",
+  "ou": "pré-dossier PC, LISEZMOI, scénario collectif",
+  "texte": "Un collectif relève du CERFA 13409 (pièces PC1 à PC8), à récupérer sur service-public.gouv.fr. Le CERFA 13406 fourni ci-dessus NE VAUT QUE pour une maison individuelle",
+  "note": "CERFA 13409 / 13406 en dur ; pièces PC1 à PC8 ; distinction collectif/maison"
+ },
+ {
+  "id": "APIDOC-035",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/pre_dossier.py:1122",
+  "ou": "pré-dossier PC, LISEZMOI, section Superficie",
+  "texte": "La superficie du terrain n'est PAS pré-remplie : le CERFA fait CERTIFIER cette valeur par le déposant, et l'aire géométrique calculée par LABUSE n'est pas la contenance cadastrale officielle. Relevez la contenance sur votre relevé de propriété ou sur cadastre.gouv.fr.",
+  "note": "contenance cadastrale à certifier par le déposant ; aire calculée ≠ contenance officielle"
+ },
+ {
+  "id": "APIDOC-037",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/pre_dossier.py:876",
+  "ou": "pré-dossier PC, PCMI4 note prises de vue",
+  "texte": "Positions RECOMMANDÉES (pas une prescription), calées sur l'axe de la voie la plus proche (BD TOPO IGN) — chemin ou route selon le lieu, à confirmer accessible et à ajuster sur le terrain.",
+  "note": "doute : dit que ce n'est pas une prescription réglementaire — inclus"
+ },
+ {
+  "id": "APIDOC-038",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/fiche_blocs3.py:313",
+  "ou": "fiche parcelle, bloc EnR exclue (§Risques)",
+  "texte": "zone où les EnR au SOL sont EXCLUES (loi APER, sauf toiture)",
+  "note": "loi APER : exclusion EnR au sol sauf toiture (verbatim docstring — vérifier surface client-facing)"
+ },
+ {
+  "id": "APIDOC-039",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/fiche_blocs3.py:222",
+  "ou": "fiche parcelle, bloc mesures compensatoires (§Risques)",
+  "texte": "Servitude de fait : le foncier porte une obligation de compensation (restauration/évitement) liée à un projet.",
+  "note": "obligation de compensation environnementale (verbatim docstring — vérifier surface client-facing)"
+ },
+ {
+  "id": "APIDOC-040",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/fiche_blocs3.py:247",
+  "ou": "fiche parcelle, bloc SCOT (§Urbanisme)",
+  "texte": "Document supra-communal opposable aux PLU.",
+  "note": "SCOT opposable aux PLU (verbatim docstring — vérifier surface client-facing)"
+ },
+ {
+  "id": "APIDOC-044",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/blocs_documents.py:85",
+  "ou": "document (dossier/banquier/argumentaire), bloc Réhabilitation",
+  "texte": "Donnée indisponible — erreur technique. Le calcul n'a pas abouti (incident) ; ce n'est pas une absence de donnée.",
+  "note": "doute : phrase d'état, pas de droit ni chiffre engageant — inclus par prudence, probablement écartable"
+ },
+ {
+  "id": "APIDOC-049",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/export_commun.py:19",
+  "ou": "tous documents client + CGU, disclaimer",
+  "texte": "Ces informations ne remplacent pas un certificat d'urbanisme.",
+  "note": "disclaimer réglementaire au mot près (certificat d'urbanisme)"
+ },
+ {
+  "id": "APIDOC-050",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/export_commun.py:22",
+  "ou": "tous documents client, non-garantie",
+  "texte": "Estimations indicatives issues de données publiques — ne valent ni conseil juridique/notarial ni garantie de constructibilité.",
+  "note": "non-garantie juridique/constructibilité"
+ },
+ {
+  "id": "APIDOC-051",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/export_commun.py:32",
+  "ou": "tous documents, attribution sources",
+  "texte": "© IGN — BD TOPO, BD ORTHO, RGE ALTI (Licence Ouverte 2.0)",
+  "note": "attribution licence Licence Ouverte 2.0 (doute : mention licence, inclus)"
+ },
+ {
+  "id": "APIDOC-052",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/export_commun.py:39",
+  "ou": "tous documents, attribution sources",
+  "texte": "© les contributeurs d'OpenStreetMap — ODbL (openstreetmap.org/copyright)",
+  "note": "attribution licence ODbL (doute : mention licence, inclus)"
+ },
+ {
+  "id": "APIDOC-053",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/export_commun.py:175",
+  "ou": "tous PDF fpdf2 (pied de page), non-garantie",
+  "texte": "Estimations indicatives issues de données publiques — ne valent ni conseil juridique/notarial ni garantie de constructibilité. Ces informations ne remplacent pas un certificat d'urbanisme. À vérifier au règlement et auprès des services.",
+  "note": "pied de page : disclaimer CU + renvoi règlement/services (composition NON_GARANTIE+DISCLAIMER_CU)"
+ },
+ {
+  "id": "APIDOC-054",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/export_commun.py:193",
+  "ou": "tous documents, section « Ce que ce document ne peut pas dire »",
+  "texte": "Constructibilité définitive / certificat d'urbanisme (mairie / service instructeur)",
+  "note": "constructibilité définitive relève du certificat d'urbanisme"
+ },
+ {
+  "id": "APIDOC-055",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/export_commun.py:196",
+  "ou": "tous documents, section limites",
+  "texte": "Prix de marché fin / DVF détaillé + agent local",
+  "note": "renvoi DVF (doute : renvoi source, faiblement juridique — inclus)"
+ },
+ {
+  "id": "APIDOC-056",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/export_commun.py:151",
+  "ou": "tous documents (read-time nettoyage libellé cascade)",
+  "texte": "quota de logements aidés CONDITIONNEL — déclenché seulement si le programme franchit les seuils du règlement (voir le bilan ; pas d'effet sur la constructibilité)",
+  "note": "quota logements aidés conditionnel au franchissement des seuils du règlement (mixité sociale / SRU)"
+ },
+ {
+  "id": "APIDOC-057",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/export_commun.py:87",
+  "ou": "tous documents (read-time nettoyage libellé)",
+  "texte": "préemption SAFER → usage agricole (RPG)",
+  "note": "remplacement d'un faux constat de préemption SAFER (doute : correction de proxy, inclus car cite préemption/SAFER)"
+ },
+ {
+  "id": "APIDOC-058",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/dossier.py:8",
+  "ou": "Dossier parcelle PDF, mention marque",
+  "texte": "Généré via LABUSE pour [raison sociale]",
+  "note": "doute : mention d'attribution marque blanche, pas de droit/chiffre — inclus par prudence, probablement écartable"
+ },
+ {
+  "id": "APIDOC-060",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/documents.py:55",
+  "ou": "documents (422), message manques",
+  "texte": "Ce document ne peut pas être établi : il manque des éléments indispensables.",
+  "note": "doute : message d'état de génération, pas de droit ni chiffre — inclus par prudence, probablement écartable"
+ }
+]
