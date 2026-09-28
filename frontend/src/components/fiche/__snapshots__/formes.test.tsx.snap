@@ -494,10 +494,14 @@ exports[`formes de la fiche (maquette v3) — 12 composants > Tuiles 1`] = `
     style="border: 1px solid var(--line); border-radius: 6px; background: var(--bg-3); padding: 7px 8px 6px; min-width: 0px;"
   >
     <div
-      style="color: var(--txt-dim); font-size: 10.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
-      title="Hauteur max"
+      style="color: var(--txt-dim); font-size: 10.5px; display: flex; align-items: center; gap: 3px; min-width: 0px;"
     >
-      Hauteur max
+      <span
+        style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0px;"
+        title="Hauteur max"
+      >
+        Hauteur max
+      </span>
     </div>
     <div
       style="font-family: var(--mono, ui-monospace, Menlo, monospace); font-variant-numeric: tabular-nums; font-size: 14px; font-weight: 500; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--txt-hi);"
@@ -515,10 +519,14 @@ exports[`formes de la fiche (maquette v3) — 12 composants > Tuiles 1`] = `
     style="border: 1px solid var(--line); border-radius: 6px; background: var(--bg-3); padding: 7px 8px 6px; min-width: 0px;"
   >
     <div
-      style="color: var(--txt-dim); font-size: 10.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
-      title="Emprise"
+      style="color: var(--txt-dim); font-size: 10.5px; display: flex; align-items: center; gap: 3px; min-width: 0px;"
     >
-      Emprise
+      <span
+        style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0px;"
+        title="Emprise"
+      >
+        Emprise
+      </span>
     </div>
     <div
       style="font-family: var(--mono, ui-monospace, Menlo, monospace); font-variant-numeric: tabular-nums; font-size: 14px; font-weight: 500; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--txt-dim);"
@@ -536,10 +544,14 @@ exports[`formes de la fiche (maquette v3) — 12 composants > Tuiles 1`] = `
     style="border: 1px solid var(--line); border-radius: 6px; background: var(--bg-3); padding: 7px 8px 6px; min-width: 0px;"
   >
     <div
-      style="color: var(--txt-dim); font-size: 10.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
-      title="Destinations"
+      style="color: var(--txt-dim); font-size: 10.5px; display: flex; align-items: center; gap: 3px; min-width: 0px;"
     >
-      Destinations
+      <span
+        style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0px;"
+        title="Destinations"
+      >
+        Destinations
+      </span>
     </div>
     <div
       style="font-family: var(--mono, ui-monospace, Menlo, monospace); font-variant-numeric: tabular-nums; font-size: 14px; font-weight: 500; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--amber);"

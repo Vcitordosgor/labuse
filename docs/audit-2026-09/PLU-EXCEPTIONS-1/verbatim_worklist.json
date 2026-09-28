@@ -1,0 +1,1357 @@
+{
+ "97401": [
+  {
+   "zone": "AUa",
+   "regle": "retraits.voie",
+   "valeur_regle": "4.0 m",
+   "article": "U 6.2",
+   "page": "10",
+   "exception_resume": "Article U 6.3 : aucune marge de recul n'est imposee pour les saillies (<3,50 m de hauteur, debord 0,20 m ; >3,50 m debord 0,80 m), les saillies en retrait (debord 1 m), les piscines, les extensions de constructions existantes non conformes, la mise en valeur d'un element bati protege (L.151-19), les",
+   "preuve": "6.2 Regle generale : Les constructions doivent etre implantees en recul de la voie [...] au moins egale a 4 metres. 6.3 Exception : Dans les cas suivants, aucune marge de recul par rapport a la voie n'est imposee : [...] pour les piscines [...]"
+  },
+  {
+   "zone": "AUc",
+   "regle": "retraits.voie",
+   "valeur_regle": "4.0 m",
+   "article": "U 6.2",
+   "page": "10",
+   "exception_resume": "Article U 6.3 : aucune marge de recul n'est imposee pour les saillies, les piscines, les extensions de constructions existantes non conformes, la mise en valeur d'un element bati protege (L.151-19), les equipements techniques et les services publics/equipements d'interet collectif.",
+   "preuve": "6.2 Regle generale : [...] au moins egale a 4 metres. 6.3 Exception : Dans les cas suivants, aucune marge de recul par rapport a la voie n'est imposee : [...]"
+  },
+  {
+   "zone": "AUd",
+   "regle": "retraits.voie",
+   "valeur_regle": "4.0 m",
+   "article": "U 6.2",
+   "page": "10",
+   "exception_resume": "Article U 6.3 : aucune marge de recul n'est imposee pour les saillies, les piscines, les extensions de constructions existantes non conformes, la mise en valeur d'un element bati protege (L.151-19), les equipements techniques et les services publics/equipements d'interet collectif.",
+   "preuve": "6.2 Regle generale : [...] au moins egale a 4 metres. 6.3 Exception : Dans les cas suivants, aucune marge de recul par rapport a la voie n'est imposee : [...]"
+  },
+  {
+   "zone": "Ua",
+   "regle": "retraits.voie",
+   "valeur_regle": "4.0 m",
+   "article": "U 6.2",
+   "page": "10",
+   "exception_resume": "Article U 6.3 : aucune marge de recul n'est imposee pour les saillies, les piscines, les extensions de constructions existantes non conformes, la mise en valeur d'un element bati protege (L.151-19), les equipements techniques et les services publics/equipements d'interet collectif.",
+   "preuve": "6.2 Regle generale : [...] au moins egale a 4 metres. 6.3 Exception : Dans les cas suivants, aucune marge de recul par rapport a la voie n'est imposee : [...]"
+  },
+  {
+   "zone": "Ub",
+   "regle": "retraits.voie",
+   "valeur_regle": "4.0 m",
+   "article": "U 6.2",
+   "page": "10",
+   "exception_resume": "Article U 6.3 : aucune marge de recul n'est imposee pour les saillies, les piscines, les extensions de constructions existantes non conformes, la mise en valeur d'un element bati protege (L.151-19), les equipements techniques et les services publics/equipements d'interet collectif.",
+   "preuve": "6.2 Regle generale : [...] au moins egale a 4 metres. 6.3 Exception : Dans les cas suivants, aucune marge de recul par rapport a la voie n'est imposee : [...]"
+  },
+  {
+   "zone": "Ub1",
+   "regle": "retraits.voie",
+   "valeur_regle": "4.0 m",
+   "article": "U 6.2",
+   "page": "10",
+   "exception_resume": "Article U 6.3 : aucune marge de recul n'est imposee pour les saillies, les piscines, les extensions de constructions existantes non conformes, la mise en valeur d'un element bati protege (L.151-19), les equipements techniques et les services publics/equipements d'interet collectif.",
+   "preuve": "6.2 Regle generale : [...] au moins egale a 4 metres. 6.3 Exception : Dans les cas suivants, aucune marge de recul par rapport a la voie n'est imposee : [...]"
+  },
+  {
+   "zone": "Ub2",
+   "regle": "retraits.voie",
+   "valeur_regle": "4.0 m",
+   "article": "U 6.2",
+   "page": "10",
+   "exception_resume": "Article U 6.3 : aucune marge de recul n'est imposee pour les saillies, les piscines, les extensions de constructions existantes non conformes, la mise en valeur d'un element bati protege (L.151-19), les equipements techniques et les services publics/equipements d'interet collectif.",
+   "preuve": "6.2 Regle generale : [...] au moins egale a 4 metres. 6.3 Exception : Dans les cas suivants, aucune marge de recul par rapport a la voie n'est imposee : [...]"
+  },
+  {
+   "zone": "Ub3",
+   "regle": "retraits.voie",
+   "valeur_regle": "4.0 m",
+   "article": "U 6.2",
+   "page": "10",
+   "exception_resume": "Article U 6.3 : aucune marge de recul n'est imposee pour les saillies, les piscines, les extensions de constructions existantes non conformes, la mise en valeur d'un element bati protege (L.151-19), les equipements techniques et les services publics/equipements d'interet collectif.",
+   "preuve": "6.2 Regle generale : [...] au moins egale a 4 metres. 6.3 Exception : Dans les cas suivants, aucune marge de recul par rapport a la voie n'est imposee : [...]"
+  },
+  {
+   "zone": "Ub4",
+   "regle": "retraits.voie",
+   "valeur_regle": "4.0 m",
+   "article": "U 6.2",
+   "page": "10",
+   "exception_resume": "Article U 6.3 : aucune marge de recul n'est imposee pour les saillies, les piscines, les extensions de constructions existantes non conformes, la mise en valeur d'un element bati protege (L.151-19), les equipements techniques et les services publics/equipements d'interet collectif.",
+   "preuve": "6.2 Regle generale : [...] au moins egale a 4 metres. 6.3 Exception : Dans les cas suivants, aucune marge de recul par rapport a la voie n'est imposee : [...]"
+  },
+  {
+   "zone": "Uc",
+   "regle": "retraits.voie",
+   "valeur_regle": "4.0 m",
+   "article": "U 6.2",
+   "page": "10",
+   "exception_resume": "Article U 6.3 : aucune marge de recul n'est imposee pour les saillies, les piscines, les extensions de constructions existantes non conformes, la mise en valeur d'un element bati protege (L.151-19), les equipements techniques et les services publics/equipements d'interet collectif.",
+   "preuve": "6.2 Regle generale : [...] au moins egale a 4 metres. 6.3 Exception : Dans les cas suivants, aucune marge de recul par rapport a la voie n'est imposee : [...]"
+  },
+  {
+   "zone": "Uc1",
+   "regle": "retraits.voie",
+   "valeur_regle": "4.0 m",
+   "article": "U 6.2",
+   "page": "10",
+   "exception_resume": "Article U 6.3 : aucune marge de recul n'est imposee pour les saillies, les piscines, les extensions de constructions existantes non conformes, la mise en valeur d'un element bati protege (L.151-19), les equipements techniques et les services publics/equipements d'interet collectif.",
+   "preuve": "6.2 Regle generale : [...] au moins egale a 4 metres. 6.3 Exception : Dans les cas suivants, aucune marge de recul par rapport a la voie n'est imposee : [...]"
+  },
+  {
+   "zone": "Uc3",
+   "regle": "retraits.voie",
+   "valeur_regle": "4.0 m",
+   "article": "U 6.2",
+   "page": "10",
+   "exception_resume": "Article U 6.3 : aucune marge de recul n'est imposee pour les saillies, les piscines, les extensions de constructions existantes non conformes, la mise en valeur d'un element bati protege (L.151-19), les equipements techniques et les services publics/equipements d'interet collectif.",
+   "preuve": "6.2 Regle generale : [...] au moins egale a 4 metres. 6.3 Exception : Dans les cas suivants, aucune marge de recul par rapport a la voie n'est imposee : [...]"
+  },
+  {
+   "zone": "Ud",
+   "regle": "retraits.voie",
+   "valeur_regle": "4.0 m",
+   "article": "U 6.2",
+   "page": "10",
+   "exception_resume": "Article U 6.3 : aucune marge de recul n'est imposee pour les saillies, les piscines, les extensions de constructions existantes non conformes, la mise en valeur d'un element bati protege (L.151-19), les equipements techniques et les services publics/equipements d'interet collectif.",
+   "preuve": "6.2 Regle generale : [...] au moins egale a 4 metres. 6.3 Exception : Dans les cas suivants, aucune marge de recul par rapport a la voie n'est imposee : [...]"
+  },
+  {
+   "zone": "Ud1",
+   "regle": "retraits.voie",
+   "valeur_regle": "4.0 m",
+   "article": "U 6.2",
+   "page": "10",
+   "exception_resume": "Article U 6.3 : aucune marge de recul n'est imposee pour les saillies, les piscines, les extensions de constructions existantes non conformes, la mise en valeur d'un element bati protege (L.151-19), les equipements techniques et les services publics/equipements d'interet collectif.",
+   "preuve": "6.2 Regle generale : [...] au moins egale a 4 metres. 6.3 Exception : Dans les cas suivants, aucune marge de recul par rapport a la voie n'est imposee : [...]"
+  },
+  {
+   "zone": "Ud2",
+   "regle": "retraits.voie",
+   "valeur_regle": "4.0 m",
+   "article": "U 6.2",
+   "page": "10",
+   "exception_resume": "Article U 6.3 : aucune marge de recul n'est imposee pour les saillies, les piscines, les extensions de constructions existantes non conformes, la mise en valeur d'un element bati protege (L.151-19), les equipements techniques et les services publics/equipements d'interet collectif.",
+   "preuve": "6.2 Regle generale : [...] au moins egale a 4 metres. 6.3 Exception : Dans les cas suivants, aucune marge de recul par rapport a la voie n'est imposee : [...]"
+  },
+  {
+   "zone": "Ud3",
+   "regle": "retraits.voie",
+   "valeur_regle": "4.0 m",
+   "article": "U 6.2",
+   "page": "10",
+   "exception_resume": "Article U 6.3 : aucune marge de recul n'est imposee pour les saillies, les piscines, les extensions de constructions existantes non conformes, la mise en valeur d'un element bati protege (L.151-19), les equipements techniques et les services publics/equipements d'interet collectif.",
+   "preuve": "6.2 Regle generale : [...] au moins egale a 4 metres. 6.3 Exception : Dans les cas suivants, aucune marge de recul par rapport a la voie n'est imposee : [...]"
+  }
+ ],
+ "97402": [
+  {
+   "zone": "1AUb",
+   "regle": "hauteur.egout",
+   "valeur_regle": "8.0 m",
+   "article": "UB 10.2",
+   "page": "31",
+   "exception_resume": "Zone 1AUb : AUINDICEE 10 renvoie au règlement de la zone U d'indice 'b' (=Ub), dont UB 10.2 fixe 8 m égout. Renvoi correctement résolu vers l'article U réel (page 31). Exceptions non dites : (a) pour les projets d'aménagement sur terrain >=2000 m² la hauteur peut monter à 10 m à l'égout ; (b) terrai",
+   "preuve": "ARTICLE AUINDICEE 10 [...] Se reporter au règlement de la zone U indiquée en indice [...] | A l'exception du secteur Uba, pour les projets [...] au moins égale à 2 000 m², [...] 10 mètres à l'égout"
+  },
+  {
+   "zone": "1AUb",
+   "regle": "hauteur.faitage",
+   "valeur_regle": "11.0 m",
+   "article": "UB 10.2",
+   "page": "31",
+   "exception_resume": "Zone 1AUb : AUINDICEE 10 renvoie à la zone U d'indice 'b' (=Ub), UB 10.2 = 11 m au faîtage. Exceptions non dites : (a) projets sur terrain >=2000 m² -> 13 m au faîtage ; (b) rue des Limites (règle exprimée à l'égout uniquement) ; (c) annexes 3,50 m.",
+   "preuve": "les constructions peuvent avoir une hauteur maximale de 10 mètres à l'égout [...] et 13 mètres au faîtage"
+  },
+  {
+   "zone": "Ub",
+   "regle": "hauteur.egout",
+   "valeur_regle": "8.0 m",
+   "article": "UB 10.2",
+   "page": "31",
+   "exception_resume": "Base UB 10.2 = 8 m égout, s'applique bien à Ub. Exceptions non dites : (a) projets d'aménagement sur terrain >=2000 m² -> 10 m à l'égout (Ub n'est pas Uba, donc éligible) ; (b) terrains desservis par la rue des Limites = 6 m à l'égout (9 m si recul >=8 m) ; (c) annexes 3,50 m.",
+   "preuve": "La hauteur maximale des constructions est fixée à : - 8 mètres à l'égout du toit [...] A l'exception du secteur Uba, pour les projets [...] au moins égale à 2 000 m², [...] 10 mètres à l'égout"
+  },
+  {
+   "zone": "Ub",
+   "regle": "hauteur.faitage",
+   "valeur_regle": "11.0 m",
+   "article": "UB 10.2",
+   "page": "31",
+   "exception_resume": "Base UB 10.2 = 11 m faîtage, s'applique à Ub. Exceptions non dites : (a) terrain >=2000 m² -> 13 m au faîtage ; (b) rue des Limites (règle à l'égout) ; (c) annexes 3,50 m.",
+   "preuve": "- 11 mètres au faîtage, A l'exception du secteur Uba, pour les projets [...] 2 000 m², [...] et 13 mètres au faîtage"
+  },
+  {
+   "zone": "Uba",
+   "regle": "hauteur.egout",
+   "valeur_regle": "8.0 m",
+   "article": "UB 10.2",
+   "page": "31",
+   "exception_resume": "Base UB 10.2 = 8 m égout ; s'applique bien à Uba (le texte porte littéralement '8 mètres à l'égout', la raison 'harmonisation ≠ texte' est infondée). Uba est EXPRESSEMENT EXCLU de la relaxation >=2000 m² (10 m) : la hauteur y reste plafonnée à 8 m. Exceptions restantes : rue des Limites = 6 m à l'ég",
+   "preuve": "8 mètres à l'égout du toit ou au sommet de l'acrotère [...] A l'exception du secteur Uba, pour les projets [...] 10 mètres à l'égout"
+  },
+  {
+   "zone": "Uba",
+   "regle": "hauteur.faitage",
+   "valeur_regle": "11.0 m",
+   "article": "UB 10.2",
+   "page": "31",
+   "exception_resume": "Base UB 10.2 = 11 m faîtage ; s'applique à Uba (texte littéral '11 mètres au faîtage'). Uba est EXCLU de la relaxation 13 m (>=2000 m²), plafond ferme 11 m. Exceptions restantes : annexes 3,50 m (rue des Limites exprimée à l'égout seul).",
+   "preuve": "11 mètres au faîtage, A l'exception du secteur Uba, pour les projets [...] 13 mètres au faîtage"
+  }
+ ],
+ "97405": [
+  {
+   "zone": "1AU",
+   "regle": "emprise_sol.ces",
+   "valeur_regle": "50.0 %",
+   "article": "1 AU.9",
+   "page": "93",
+   "exception_resume": "Ne s'applique pas aux équipements publics d'intérêt collectif.",
+   "preuve": "L'emprise au sol de l'ensemble des bâtiments ne pourra pas excéder 50 % de l'unité foncière (...) Cette disposition ne s'applique pas aux équipements publics d'intérêt collectif."
+  },
+  {
+   "zone": "1AU",
+   "regle": "stationnement.par_logement",
+   "valeur_regle": "1.0 place(s)",
+   "article": "1AU.12",
+   "page": "96",
+   "exception_resume": "Logement Locatif Très Social (LLTS) : aucune place de stationnement n'est demandée.",
+   "preuve": "a) pour les constructions : 1 place de stationnement par logement ; b) (...) à l'exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n'est demandée"
+  },
+  {
+   "zone": "1AUa",
+   "regle": "emprise_sol.ces",
+   "valeur_regle": "50.0 %",
+   "article": "1 AU.9",
+   "page": "93",
+   "exception_resume": "Ne s'applique pas aux équipements publics d'intérêt collectif. (1AUa est un secteur de 1AU, article 1AU.9 commun.)",
+   "preuve": "L'emprise au sol de l'ensemble des bâtiments ne pourra pas excéder 50 % de l'unité foncière (...) Cette disposition ne s'applique pas aux équipements publics d'intérêt collectif."
+  },
+  {
+   "zone": "1AUa",
+   "regle": "stationnement.par_logement",
+   "valeur_regle": "1.0 place(s)",
+   "article": "1AU.12",
+   "page": "96",
+   "exception_resume": "LLTS : aucune place demandée. (1AUa relève de l'article 1AU.12 commun.)",
+   "preuve": "a) pour les constructions : 1 place de stationnement par logement ; b) (...) à l'exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n'est demandée"
+  },
+  {
+   "zone": "1AUz",
+   "regle": "emprise_sol.ces",
+   "valeur_regle": "50.0 %",
+   "article": "1AUZ.9",
+   "page": "103",
+   "exception_resume": "Ne s'applique pas aux équipements publics d'intérêt collectif.",
+   "preuve": "L'emprise au sol de l'ensemble des bâtiments ne pourra pas excéder 50 % de l'unité foncière (...) Cette disposition ne s'applique pas aux équipements publics d'intérêt collectif."
+  },
+  {
+   "zone": "1AUz",
+   "regle": "stationnement.par_logement",
+   "valeur_regle": "1.0 place(s)",
+   "article": "1AUZ.12",
+   "page": "106",
+   "exception_resume": "LLTS : aucune place de stationnement n'est demandée.",
+   "preuve": "a) pour les constructions : 1 place de stationnement par logement ; b) (...) à l'exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n'est demandée"
+  },
+  {
+   "zone": "AUE",
+   "regle": "hauteur.egout",
+   "valeur_regle": "7.0 m",
+   "article": "AUE.10",
+   "page": "112",
+   "exception_resume": "Pour des installations dont les caractéristiques techniques l'imposent : hauteur maximale de 13 mètres à l'égout du toit.",
+   "preuve": "La hauteur maximale des constructions (...) est limitée à 7 mètres mesurée à l'égout du toit et 10 mètres au faîtage. Toutefois, il peut être admis (...) une hauteur maximale de 13 mètres à l'égout du toit."
+  },
+  {
+   "zone": "AUE",
+   "regle": "retraits.voie",
+   "valeur_regle": "5.0 m",
+   "article": "AUE.6",
+   "page": "111",
+   "exception_resume": "Recul de 20 mètres minimum par rapport à l'axe de la RN 2 (sauf installations de distribution de carburant).",
+   "preuve": "Les constructions doivent respecter un recul de 20 mètres minimum par rapport à l'axe de la RN 2. (...) Pour toutes les autres voies (...) un recul minimum de 5 mètres par rapport à l'alignement."
+  },
+  {
+   "zone": "UB",
+   "regle": "stationnement.par_logement",
+   "valeur_regle": "1.0 place(s)",
+   "article": "UB.12",
+   "page": "31",
+   "exception_resume": "LLTS : aucune place demandée. Mutualisation dans un rayon de 300 m (constructions/équipements publics) : -50 %. Équipements existants : pas d'exigence chiffrée.",
+   "preuve": "a) pour les constructions à usage d'habitation : 1 place de stationnement par logement ; (...) à l'exception du Logement Locatif Très Social (LLTS) où aucune place (...) En cas de mutualisation (...) peut être diminué de 50%."
+  },
+  {
+   "zone": "UC",
+   "regle": "emprise_sol.ces",
+   "valeur_regle": "50.0 %",
+   "article": "UC.9",
+   "page": "38",
+   "exception_resume": "Ne s'applique pas aux équipements publics d'intérêt collectif.",
+   "preuve": "L'emprise au sol de l'ensemble des bâtiments ne pourra pas excéder 50 % de l'unité foncière (...) Cette disposition ne s'applique pas aux équipements publics d'intérêt collectif."
+  },
+  {
+   "zone": "UC",
+   "regle": "stationnement.par_logement",
+   "valeur_regle": "1.0 place(s)",
+   "article": "UC.12",
+   "page": "40",
+   "exception_resume": "LLTS : aucune place demandée. Mutualisation dans 300 m (équipements publics) : -50 %. Équipements existants : pas d'exigence chiffrée.",
+   "preuve": "a) pour les constructions : 1 place de stationnement par logement ; (...) à l'exception du Logement Locatif Très Social (LLTS) où aucune place (...) En cas de mutualisation (...) diminué de 50%."
+  },
+  {
+   "zone": "UCe",
+   "regle": "emprise_sol.ces",
+   "valeur_regle": "50.0 %",
+   "article": "UC.9",
+   "page": "38",
+   "exception_resume": "Ne s'applique pas aux équipements publics d'intérêt collectif. (UC.9 commun, aucune règle d'emprise propre au secteur UCe.)",
+   "preuve": "L'emprise au sol de l'ensemble des bâtiments ne pourra pas excéder 50 % de l'unité foncière (...) Cette disposition ne s'applique pas aux équipements publics d'intérêt collectif."
+  },
+  {
+   "zone": "UCe",
+   "regle": "stationnement.par_logement",
+   "valeur_regle": "1.0 place(s)",
+   "article": "UC.12",
+   "page": "40",
+   "exception_resume": "LLTS : aucune place demandée. Mutualisation dans 300 m : -50 %. (UC.12 commun au secteur UCe.)",
+   "preuve": "a) pour les constructions : 1 place de stationnement par logement ; (...) à l'exception du Logement Locatif Très Social (LLTS) où aucune place (...)"
+  },
+  {
+   "zone": "UD",
+   "regle": "emprise_sol.ces",
+   "valeur_regle": "40.0 %",
+   "article": "UD.9",
+   "page": "48",
+   "exception_resume": "Ne s'applique pas aux ouvrages techniques de distribution d'énergie électrique ni aux ouvrages de stockage des eaux.",
+   "preuve": "L'emprise au sol de l'ensemble des bâtiments ne pourra pas excéder 40 % de l'unité foncière. Cette disposition ne s'applique pas aux ouvrages techniques (...) ni aux ouvrages de stockage des eaux."
+  },
+  {
+   "zone": "UD",
+   "regle": "stationnement.par_logement",
+   "valeur_regle": "1.0 place(s)",
+   "article": "UD.12",
+   "page": "50",
+   "exception_resume": "LLTS : aucune place de stationnement n'est demandée.",
+   "preuve": "a) pour les constructions à usage d'habitation : 1 place de stationnement par logement ; b) (...) à l'exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n'est demandée"
+  },
+  {
+   "zone": "UDe",
+   "regle": "emprise_sol.ces",
+   "valeur_regle": "40.0 %",
+   "article": "UD.9",
+   "page": "48",
+   "exception_resume": "Ne s'applique pas aux ouvrages techniques de distribution d'énergie électrique ni aux ouvrages de stockage des eaux. (UD.9 commun, pas de règle d'emprise propre au secteur UDe.)",
+   "preuve": "L'emprise au sol de l'ensemble des bâtiments ne pourra pas excéder 40 % de l'unité foncière. Cette disposition ne s'applique pas aux ouvrages techniques (...)"
+  },
+  {
+   "zone": "UDe",
+   "regle": "stationnement.par_logement",
+   "valeur_regle": "1.0 place(s)",
+   "article": "UD.12",
+   "page": "50",
+   "exception_resume": "LLTS : aucune place demandée. (UD.12 commun au secteur UDe.)",
+   "preuve": "a) pour les constructions à usage d'habitation : 1 place de stationnement par logement ; b) (...) à l'exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n'est demandée"
+  },
+  {
+   "zone": "UEa",
+   "regle": "hauteur.egout",
+   "valeur_regle": "7.0 m",
+   "article": "UEa.10",
+   "page": "62",
+   "exception_resume": "Pour des installations dont les caractéristiques techniques l'imposent : hauteur maximale de 13 mètres à l'égout du toit.",
+   "preuve": "La hauteur maximale des constructions (...) est limitée à 7 mètres mesurés à l'égout du toit et 10 mètres au faîtage. Toutefois, il peut être admis (...) une hauteur maximale de 13 mètres à l'égout du toit."
+  },
+  {
+   "zone": "UEa",
+   "regle": "retraits.voie",
+   "valeur_regle": "5.0 m",
+   "article": "UEa.6",
+   "page": "61",
+   "exception_resume": "Recul de 20 mètres minimum par rapport à l'axe de la RN 2 (sauf installations de distribution de carburant).",
+   "preuve": "Les constructions doivent respecter un recul de 20 mètres minimum par rapport à l'axe de la RN 2. (...) Pour toutes les autres voies (...) un recul minimum de 5 mètres par rapport à l'alignement."
+  },
+  {
+   "zone": "UZ",
+   "regle": "stationnement.par_logement",
+   "valeur_regle": "1.0 place(s)",
+   "article": "UZ.12",
+   "page": "85",
+   "exception_resume": "LLTS : aucune place de stationnement n'est demandée.",
+   "preuve": "a) pour les constructions à usage d'habitation : 1 place de stationnement par logement ; b) (...) à l'exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n'est demandée"
+  }
+ ],
+ "97406": [
+  {
+   "zone": "AUb",
+   "regle": "stationnement.par_logement",
+   "valeur_regle": "1.5 place(s)",
+   "article": "Ub 12.2",
+   "page": "33",
+   "exception_resume": "Le 12.2 renvoie a l'annexe (p.103) : 1,5 place/logement ne vaut que pour les logements de plus de 30 m² (arrondi a l'entier inferieur pour l'ensemble de l'operation) ; les logements de moins de 30 m² n'exigent que 1 place. AUb renvoie a Ub (p.75).",
+   "preuve": "logement de moins de 30 m² 1 place par logement / logement de plus de 30 m² 1,5 place par logement arrondi a l'entier inferieur pour l'ensemble de l'operation"
+  },
+  {
+   "zone": "AUc",
+   "regle": "retraits.voie",
+   "valeur_regle": "4.0 m",
+   "article": "Uc 6.2",
+   "page": "39",
+   "exception_resume": "Article Uc 6.3 (Exception) : implantations differentes possibles pour saillies (debord max 0,40 m), travaux sur construction existante non conforme, equipements techniques, constructions/installations d'interet collectif, piscines non couvertes. AUc renvoie a Uc (p.75 : 'se reporter au reglement des",
+   "preuve": "au point le plus proche de l'alignement, est de 4,00 metres minimum. 6.3 - Exception Des implantations differentes ... peuvent etre autorisees"
+  },
+  {
+   "zone": "AUc",
+   "regle": "stationnement.par_logement",
+   "valeur_regle": "1.5 place(s)",
+   "article": "Uc 12.2",
+   "page": "45",
+   "exception_resume": "Le 12.2 renvoie a l'annexe (p.103) : 1,5 place/logement ne vaut que pour les logements >30 m² ; les logements <30 m² n'exigent que 1 place. AUc renvoie a Uc (p.75).",
+   "preuve": "logement de moins de 30 m² 1 place par logement / logement de plus de 30 m² 1,5 place par logement arrondi a l'entier inferieur"
+  },
+  {
+   "zone": "AUe",
+   "regle": "retraits.limites_separatives",
+   "valeur_regle": "3.5 m",
+   "article": "Ue 7.2",
+   "page": "64",
+   "exception_resume": "Ue 7.2 : les constructions peuvent etre implantees au maximum sur deux limites separatives ; le 3,50 m ne s'applique qu'en cas de retrait. Ue 7.3 (Exception) : saillies (0,40 m), travaux sur existant non conforme, equipements techniques, installations d'interet collectif (retrait <3,50 m possible). ",
+   "preuve": "En cas de retrait, la distance ... au point le plus proche de la limite separative, doit etre au minimum de 3,50 metres. 7.3 - Exception"
+  },
+  {
+   "zone": "AUe",
+   "regle": "retraits.voie",
+   "valeur_regle": "3.0 m",
+   "article": "Ue 6.2",
+   "page": "63",
+   "exception_resume": "Ue 6.3 (Exception) : implantations differentes possibles pour saillies (debord max 0,40 m), travaux sur existant non conforme, equipements techniques, constructions/installations d'interet collectif (alignement ou retrait libre possibles). AUe renvoie a Ue (p.75).",
+   "preuve": "au point le plus proche de l'alignement, est de 3 metres minimum. 6.3 - Exception Des implantations differentes ... peuvent etre autorisees"
+  },
+  {
+   "zone": "AUr",
+   "regle": "retraits.limites_separatives",
+   "valeur_regle": "3.5 m",
+   "article": "Ur 7.2",
+   "page": "52",
+   "exception_resume": "Ur 7.3 (Exception) : saillies (0,40 m), travaux sur existant non conforme, equipements techniques, installations d'interet collectif (retrait <3,50 m possible), mise en valeur element bati protege, piscines non couvertes. AUr renvoie a Ur (p.75).",
+   "preuve": "au point le plus proche de la limite separative, doit etre au minimum de 3,50 metres. 7.3 - Exception"
+  },
+  {
+   "zone": "AUr",
+   "regle": "retraits.voie",
+   "valeur_regle": "5.0 m",
+   "article": "Ur 6.2",
+   "page": "51",
+   "exception_resume": "Ur 6.3 (Exception) : saillies (0,40 m), travaux sur existant non conforme, equipements techniques, installations d'interet collectif (alignement/retrait libre), mise en valeur element bati protege, piscines non couvertes. AUr renvoie a Ur (p.75).",
+   "preuve": "au point le plus proche de l'alignement, est de 5,00 metres minimum. 6.3 - Exception"
+  },
+  {
+   "zone": "AUr",
+   "regle": "stationnement.par_logement",
+   "valeur_regle": "1.5 place(s)",
+   "article": "Ur 12.2",
+   "page": "57",
+   "exception_resume": "Le 12.2 renvoie a l'annexe (p.103) : 1,5 place/logement ne vaut que pour les logements >30 m² ; les logements <30 m² n'exigent que 1 place. AUr renvoie a Ur (p.75).",
+   "preuve": "logement de moins de 30 m² 1 place par logement / logement de plus de 30 m² 1,5 place par logement arrondi a l'entier inferieur"
+  },
+  {
+   "zone": "Ua",
+   "regle": "retraits.limites_separatives",
+   "valeur_regle": "3.5 m",
+   "article": "Ua 7.2",
+   "page": "16",
+   "exception_resume": "Ua 7.2 : implantation au maximum sur deux limites separatives, le 3,50 m ne vaut qu'en cas de retrait ; regle particuliere si implantation en fond de parcelle (retrait 3,50 m par rapport aux angles). Ua 7.3 (Exception) : saillies (0,40 m), travaux sur existant, equipements techniques, etc.",
+   "preuve": "En cas de retrait, la distance ... au point le plus proche de la limite separative, doit etre au minimum de 3,50 metres."
+  },
+  {
+   "zone": "Ua",
+   "regle": "stationnement.par_logement",
+   "valeur_regle": "1.5 place(s)",
+   "article": "Ua 12.2",
+   "page": "21",
+   "exception_resume": "Le 12.2 renvoie a l'annexe (p.103) : 1,5 place/logement ne vaut que pour les logements >30 m² (arrondi entier inferieur) ; les logements <30 m² n'exigent que 1 place.",
+   "preuve": "logement de moins de 30 m² 1 place par logement / logement de plus de 30 m² 1,5 place par logement arrondi a l'entier inferieur"
+  },
+  {
+   "zone": "Ub",
+   "regle": "stationnement.par_logement",
+   "valeur_regle": "1.5 place(s)",
+   "article": "Ub 12.2",
+   "page": "33",
+   "exception_resume": "Le 12.2 renvoie a l'annexe (p.103) : 1,5 place/logement ne vaut que pour les logements >30 m² ; les logements <30 m² n'exigent que 1 place.",
+   "preuve": "logement de moins de 30 m² 1 place par logement / logement de plus de 30 m² 1,5 place par logement arrondi a l'entier inferieur"
+  },
+  {
+   "zone": "Uc",
+   "regle": "retraits.voie",
+   "valeur_regle": "4.0 m",
+   "article": "Uc 6.2",
+   "page": "39",
+   "exception_resume": "Uc 6.3 (Exception) : implantations differentes possibles pour saillies (debord max 0,40 m), travaux sur existant non conforme, equipements techniques, constructions/installations d'interet collectif.",
+   "preuve": "au point le plus proche de l'alignement, est de 4,00 metres minimum. 6.3 - Exception"
+  },
+  {
+   "zone": "Uc",
+   "regle": "stationnement.par_logement",
+   "valeur_regle": "1.5 place(s)",
+   "article": "Uc 12.2",
+   "page": "45",
+   "exception_resume": "Le 12.2 renvoie a l'annexe (p.103) : 1,5 place/logement ne vaut que pour les logements >30 m² ; les logements <30 m² n'exigent que 1 place.",
+   "preuve": "logement de moins de 30 m² 1 place par logement / logement de plus de 30 m² 1,5 place par logement arrondi a l'entier inferieur"
+  },
+  {
+   "zone": "Ue",
+   "regle": "retraits.limites_separatives",
+   "valeur_regle": "3.5 m",
+   "article": "Ue 7.2",
+   "page": "64",
+   "exception_resume": "Ue 7.2 : implantation au maximum sur deux limites separatives, le 3,50 m ne vaut qu'en cas de retrait. Ue 7.3 (Exception) : saillies (0,40 m), travaux sur existant, equipements techniques, installations d'interet collectif (retrait <3,50 m possible).",
+   "preuve": "En cas de retrait, la distance ... au point le plus proche de la limite separative, doit etre au minimum de 3,50 metres. 7.3 - Exception"
+  },
+  {
+   "zone": "Ue",
+   "regle": "retraits.voie",
+   "valeur_regle": "3.0 m",
+   "article": "Ue 6.2",
+   "page": "63",
+   "exception_resume": "Ue 6.3 (Exception) : implantations differentes possibles pour saillies (0,40 m), travaux sur existant non conforme, equipements techniques, constructions/installations d'interet collectif (alignement ou retrait libre possibles).",
+   "preuve": "au point le plus proche de l'alignement, est de 3 metres minimum. 6.3 - Exception"
+  },
+  {
+   "zone": "Ur",
+   "regle": "retraits.limites_separatives",
+   "valeur_regle": "3.5 m",
+   "article": "Ur 7.2",
+   "page": "52",
+   "exception_resume": "Ur 7.3 (Exception) : saillies (0,40 m), travaux sur existant non conforme, equipements techniques, installations d'interet collectif (retrait <3,50 m possible), mise en valeur element bati protege, piscines non couvertes.",
+   "preuve": "au point le plus proche de la limite separative, doit etre au minimum de 3,50 metres. 7.3 - Exception"
+  },
+  {
+   "zone": "Ur",
+   "regle": "retraits.voie",
+   "valeur_regle": "5.0 m",
+   "article": "Ur 6.2",
+   "page": "51",
+   "exception_resume": "Ur 6.3 (Exception) : saillies (0,40 m), travaux sur existant non conforme, equipements techniques, installations d'interet collectif (alignement/retrait libre), mise en valeur element bati protege, piscines non couvertes.",
+   "preuve": "au point le plus proche de l'alignement, est de 5,00 metres minimum. 6.3 - Exception"
+  },
+  {
+   "zone": "Ur",
+   "regle": "stationnement.par_logement",
+   "valeur_regle": "1.5 place(s)",
+   "article": "Ur 12.2",
+   "page": "57",
+   "exception_resume": "Le 12.2 renvoie a l'annexe (p.103) : 1,5 place/logement ne vaut que pour les logements >30 m² ; les logements <30 m² n'exigent que 1 place.",
+   "preuve": "logement de moins de 30 m² 1 place par logement / logement de plus de 30 m² 1,5 place par logement arrondi a l'entier inferieur"
+  }
+ ],
+ "97407": [
+  {
+   "zone": "Uc",
+   "regle": "emprise_sol.ces",
+   "valeur_regle": "80.0 %",
+   "article": "Uc 7",
+   "page": "55",
+   "exception_resume": "60 % en OAP Mascareignes, secteur Uca et ZAC « Rivière des Galets ».",
+   "preuve": "Uc 7 (p.55) : « ... ne doit pas excéder 80% ... Dans les secteurs suivants ... 60% : OAP Mascareignes ; Uca ; ZAC Rivière des Galets »."
+  },
+  {
+   "zone": "Uem",
+   "regle": "retraits.voie",
+   "valeur_regle": "5.0 m",
+   "article": "Ue 4",
+   "page": "81",
+   "exception_resume": "Retrait minimal 25 m par rapport à l'axe de la RN1001 et de la RN1 (périmètre projet, dérogation Loi Barnier). Règle alternative : débords ≤0,20 m, transformateurs, rampes PMR non pris en compte.",
+   "preuve": "Ue 4 (p.81) : « recul minimal de 5 mètres. En outre, il est exigé un retrait minimal de 25 mètres par rapport à l'axe de la RN1001 et à celui de la RN1 ... »."
+  },
+  {
+   "zone": "Us",
+   "regle": "retraits.voie",
+   "valeur_regle": "5.0 m",
+   "article": "Us 4",
+   "page": "121",
+   "exception_resume": "Retrait minimal 25 m par rapport à l'axe de la RN7 (périmètre projet, dérogation Loi Barnier). Règle alternative : débords ≤0,20 m, transformateurs, rampes PMR non pris en compte.",
+   "preuve": "Us 4 (p.121) : « recul minimal de 5 mètres. En outre, il est exigé un retrait minimal de 25 mètres ... par rapport à l'axe de la RN7 ... »."
+  }
+ ],
+ "97408": [
+  {
+   "zone": "AUB",
+   "regle": "hauteur.egout",
+   "valeur_regle": "9.0 m",
+   "article": "UB 10.2",
+   "page": "31",
+   "exception_resume": "Renvoi assumé : AUINDICEE 10 « Se reporter au règlement de la zone U indiquée en indice » → zone UB, art. UB 10.2 (9 m égout / 12 m faîtage). Exceptions non reprises par la fiche : secteurs UBa/UBb/UBc = 7 m égout / 10 m faîtage ; secteur UBpszc = 7 m ; en limite séparative = 7 m sur 3 m de profonde",
+   "preuve": "La hauteur maximale des constructions est fixée à : - 9 mètres à l'égout du toit ou au sommet de l'acrotère, - 12 mètres au faîtage. Dans les secteurs UBa, UBb et UBc [...] 7 mètres à l'égout [...] 10 mètres au faîtage. Dans le secteur UBpszc [...] 7 mètres."
+  },
+  {
+   "zone": "AUB",
+   "regle": "hauteur.faitage",
+   "valeur_regle": "12.0 m",
+   "article": "UB 10.2",
+   "page": "31",
+   "exception_resume": "Renvoi assumé AUINDICEE 10 → zone UB. Exceptions non reprises : UBa/UBb/UBc = 10 m au faîtage ; UBpszc = 7 m (hauteur unique) ; limite séparative = 7 m sur 3 m ; annexes = 3,50 m.",
+   "preuve": "La hauteur maximale des constructions est fixée à : [...] 12 mètres au faîtage. Dans les secteurs UBa, UBb et UBc [...] 10 mètres au faîtage. Dans le secteur UBpszc [...] 7 mètres."
+  },
+  {
+   "zone": "AUBpsfr2",
+   "regle": "hauteur.egout",
+   "valeur_regle": "9.0 m",
+   "article": "UB 10.2",
+   "page": "31",
+   "exception_resume": "Renvoi assumé AUINDICEE 10 → zone UB (indice psfr2 = servitude, pas un secteur à hauteur dérogée). Valeur générale 9 m confirmée. Exceptions non reprises : UBa/UBb/UBc = 7 m ; UBpszc = 7 m ; limite séparative = 7 m sur 3 m ; annexes = 3,50 m.",
+   "preuve": "La hauteur maximale des constructions est fixée à : - 9 mètres à l'égout du toit ou au sommet de l'acrotère, - 12 mètres au faîtage."
+  },
+  {
+   "zone": "AUBpsfr2",
+   "regle": "hauteur.faitage",
+   "valeur_regle": "12.0 m",
+   "article": "UB 10.2",
+   "page": "31",
+   "exception_resume": "Renvoi assumé AUINDICEE 10 → zone UB. Exceptions non reprises : UBa/UBb/UBc = 10 m au faîtage ; UBpszc = 7 m ; limite séparative = 7 m sur 3 m ; annexes = 3,50 m.",
+   "preuve": "La hauteur maximale des constructions est fixée à : [...] 12 mètres au faîtage."
+  },
+  {
+   "zone": "AUEm",
+   "regle": "stationnement.par_logement",
+   "valeur_regle": "(sans valeur)",
+   "article": "UEm 12",
+   "page": "54",
+   "exception_resume": "Renvoi assumé AUINDICEE 12 → zone UEm, art. UEM 12.2. L'abstention (« sans valeur ») est défendable : la norme n'est pas un chiffre unique par logement mais conditionnée à la SDP. La valeur EXISTE toutefois : 1 place (≤50 m²) / 2 places (>50 m²) par logement.",
+   "preuve": "Habitations | Logements ≤ à 50 m² de SDP | 1 place minimum par logement | Logements > à 50 m² de SDP | 2 places minimum par logement"
+  },
+  {
+   "zone": "UB",
+   "regle": "hauteur.egout",
+   "valeur_regle": "9.0 m",
+   "article": "UB 10.2",
+   "page": "31",
+   "exception_resume": "Valeur générale correcte. Exceptions non reprises par la fiche : secteurs UBa/UBb/UBc = 7 m à l'égout ; secteur UBpszc = 7 m ; en limite séparative = 7 m sur 3 m de profondeur ; constructions annexes = 3,50 m.",
+   "preuve": "La hauteur maximale des constructions est fixée à : - 9 mètres à l'égout du toit ou au sommet de l'acrotère [...]. Dans les secteurs UBa, UBb et UBc [...] 7 mètres à l'égout [...]. Dans le secteur UBpszc [...] 7 mètres. En cas d'implantation en limite séparative [...] 7 mètres sur une profondeur de "
+  },
+  {
+   "zone": "UB",
+   "regle": "hauteur.faitage",
+   "valeur_regle": "12.0 m",
+   "article": "UB 10.2",
+   "page": "31",
+   "exception_resume": "Valeur générale correcte. Exceptions non reprises : UBa/UBb/UBc = 10 m au faîtage ; UBpszc = 7 m (hauteur unique) ; limite séparative = 7 m sur 3 m ; annexes = 3,50 m.",
+   "preuve": "[...] 12 mètres au faîtage. Dans les secteurs UBa, UBb et UBc [...] 10 mètres au faîtage. Dans le secteur UBpszc [...] 7 mètres."
+  },
+  {
+   "zone": "UBpsfr2",
+   "regle": "hauteur.egout",
+   "valeur_regle": "9.0 m",
+   "article": "UB 10.2",
+   "page": "31",
+   "exception_resume": "L'indice psfr2 est une servitude (pas un secteur à hauteur dérogée) : la règle générale UB 9 m s'applique. Exceptions non reprises : UBa/UBb/UBc = 7 m ; UBpszc = 7 m ; limite séparative = 7 m sur 3 m ; annexes = 3,50 m.",
+   "preuve": "La hauteur maximale des constructions est fixée à : - 9 mètres à l'égout du toit ou au sommet de l'acrotère, - 12 mètres au faîtage."
+  },
+  {
+   "zone": "UBpsfr2",
+   "regle": "hauteur.faitage",
+   "valeur_regle": "12.0 m",
+   "article": "UB 10.2",
+   "page": "31",
+   "exception_resume": "Règle générale UB 12 m au faîtage applicable. Exceptions non reprises : UBa/UBb/UBc = 10 m ; UBpszc = 7 m ; limite séparative = 7 m sur 3 m ; annexes = 3,50 m.",
+   "preuve": "[...] 12 mètres au faîtage."
+  },
+  {
+   "zone": "UEm",
+   "regle": "stationnement.par_logement",
+   "valeur_regle": "(sans valeur)",
+   "article": "UEm 12",
+   "page": "54",
+   "exception_resume": "Art. UEM 12.2, tableau « Habitations ». L'abstention (« sans valeur ») est défendable : la norme est conditionnée à la SDP, pas un chiffre unique. Valeurs réelles : 1 place (≤50 m²) / 2 places (>50 m²) par logement. À noter aussi : superficie min d'une place 25 m² (indicatif) et 1 emplacement deux-r",
+   "preuve": "Habitations | Logements ≤ à 50 m² de SDP | 1 place minimum par logement | Logements > à 50 m² de SDP | 2 places minimum par logement"
+  }
+ ],
+ "97411": [
+  {
+   "zone": "Ud",
+   "regle": "emprise_sol.ces",
+   "valeur_regle": "80 %",
+   "article": "Article Ud.9",
+   "page": "43",
+   "exception_resume": "Sous-secteurs : Udo non reglemente ; Udop/Udp limites a 70 % (dont 30 % ...). Le 80 % ne vaut que pour le secteur Ud de base.",
+   "preuve": "En secteur Ud : L'emprise au sol des constructions est limitee a 80 % ... En secteur Udo : non reglementee ... En secteur Udop, Udp : limitee a 70 %."
+  },
+  {
+   "zone": "Ud",
+   "regle": "retraits.voie",
+   "valeur_regle": "3 m +formule",
+   "article": "Article Ud.6",
+   "page": "40",
+   "exception_resume": "Le 3 m ne vaut que pour les voies de moins de 3,50 m ; cas general = 4 m (voie < 12 m) ou alignement/4 m (voie >= 12 m). Retraits specifiques par axe en Udp.",
+   "preuve": "Voies et emprises publiques de moins de 3,50 m : les constructions seront implantees a 3 m minimum de l'alignement ; ... moins de 12 m : 4 m minimum."
+  },
+  {
+   "zone": "Udop",
+   "regle": "hauteur.niveaux",
+   "valeur_regle": "R+5",
+   "article": "Ud.10",
+   "page": "44",
+   "exception_resume": "R+8 (27 m) sur Bld Lancastel et rue L. Rambaud ; R+3 (12 m) sur certaines rues.",
+   "preuve": "En secteur Udop : Hauteur maximale R+5, soit 18m ... generalise sauf ... R+8 Bld Lancastel et rue L. Rambaud, soit 27 m ... R+3, soit 12 m, sur les rues suivantes."
+  },
+  {
+   "zone": "Udp",
+   "regle": "hauteur.niveaux",
+   "valeur_regle": "R+5",
+   "article": "Ud.10",
+   "page": "44",
+   "exception_resume": "R+8 (27 m) sur Blvd Jean Jaures, Bld Lancastel et rue L. Rambaud ; R+3 (12 m) sur certaines rues.",
+   "preuve": "En secteur Udp : Hauteur maximale R+5, soit 18 m ... generalise sauf ... R+8 Blvd Jean Jaures, Bld Lancatel et rue L. Rambaud, soit 27 m ... R+3, soit 12 m."
+  },
+  {
+   "zone": "Ui",
+   "regle": "emprise_sol.ces",
+   "valeur_regle": "60 %",
+   "article": "Article Ui.9",
+   "page": "56",
+   "exception_resume": "Sous-secteurs : Uicm 40 % ; Uip 60 % (40 % ...). Le 60 % ne vaut que pour le secteur Ui de base.",
+   "preuve": "En secteur Ui : L'emprise au sol des constructions est limitee a 60 % ... En secteur Uicm : limitee a 40 % ... En secteur Uip : limitee a 60 %, 40% ..."
+  },
+  {
+   "zone": "Ui",
+   "regle": "retraits.voie",
+   "valeur_regle": "3 m +formule",
+   "article": "Article Ui.6",
+   "page": "54",
+   "exception_resume": "Le 3 m ne vaut que pour les voies de moins de 3,50 m ; cas general = 4 m. Uicm recul 5 m, Uip 6 m (rue Gal de Gaulle 4 m).",
+   "preuve": "Voies d'une emprise de moins de 3,50 m : les constructions seront implantees a 3 m minimum de l'alignement ; ... moins de 12 m : 4 m minimum."
+  },
+  {
+   "zone": "Up",
+   "regle": "retraits.limites_separatives",
+   "valeur_regle": "3 m +formule",
+   "article": "Article Up.7",
+   "page": "33",
+   "exception_resume": "Dans le secteur Upr : recul de 6 m par rapport au pied de la falaise reperee au plan N 3 annexe (en sus).",
+   "preuve": "de 3 m minimum pour les batiments <= RDC+1 etage droit+ Comble ou attique / de 4 m minimum pour les batiments > RDC+1 ... par rapport a la limite separative."
+  }
+ ],
+ "97412": [
+  {
+   "zone": "1AU3",
+   "regle": "hauteur.egout",
+   "valeur_regle": "11 m",
+   "article": "U3 10.2",
+   "page": "51",
+   "exception_resume": "Zone 1AU indicee : renvoi assume au reglement U3 (p.7 et p.106 : « se reporter au reglement des zones urbaines correspondantes »). L'egout U3 10.2 est fixe par tranches de profondeur : 8 m (0-6 m), 10 m (6-12 m), 11 m (>12 m) ; porte a 13 m au-dela de 12 m si RDC commerce/services ou Residence Perso",
+   "preuve": "La hauteur maximale des constructions implantees dans une profondeur de 6 metres [...] 8 metres a l'egout [...] Dans le cas [...] au-dela [...] 12 metres [...] 11 metres a l'egout du toit"
+  },
+  {
+   "zone": "1AU3",
+   "regle": "hauteur.faitage",
+   "valeur_regle": "13 m",
+   "article": "U3 10.2",
+   "page": "51",
+   "exception_resume": "1AU3 renvoie a U3 (p.7/106). Faitage U3 10.2 par tranches : 10 m (0-6 m), 12 m (6-12 m), 13 m (>12 m) ; 15 m au-dela de 12 m si commerce/services/RPA ; secteur U3a 9 m (12 m si commerce >6 m). LABUSE ne retient que 13 m.",
+   "preuve": "au-dela d'une profondeur de 12 metres [...] la hauteur maximale ne peut exceder : - 11 metres a l'egout [...] - 13 metres au faitage."
+  },
+  {
+   "zone": "1AU5",
+   "regle": "emprise_sol.ces",
+   "valeur_regle": "50 %",
+   "article": "U5 9.2",
+   "page": "80",
+   "exception_resume": "1AU5 renvoie a U5 (p.7). U5 9.2 : 50 % general MAIS U5cvd 75 %, U5cv 60 %, U5ma/U5ru/U5vi 40 %. LABUSE ne dit que 50 %.",
+   "preuve": "L'emprise au sol [...] ne doit pas exceder 50% [...] Dans le secteur U5cvd, ce seuil est porte a 75% et en U5cv a 60%, tandis que dans les secteurs U5ma, U5ru et U5vi ce seuil est limite a 40%."
+  },
+  {
+   "zone": "1AU6",
+   "regle": "hauteur.egout",
+   "valeur_regle": "12 m",
+   "article": "U6 10.2",
+   "page": "95",
+   "exception_resume": "1AU6 renvoie a U6 (p.7). U6 10.2 : 12 m general MAIS secteur U6c 15 m, secteur U6ch et ZA de Vincendo 10 m. LABUSE ne dit que 12 m.",
+   "preuve": "La hauteur maximale [...] est fixee a : - 12 metres a l'egout du toit [...] Dans le secteur U6c, ces seuils sont portes a : - 15 metres [...] Dans le secteur U6ch et la zone d'activites de Vincendo [...] 10 metres"
+  },
+  {
+   "zone": "1AU6",
+   "regle": "hauteur.faitage",
+   "valeur_regle": "15 m",
+   "article": "U6 10.2",
+   "page": "95",
+   "exception_resume": "1AU6 renvoie a U6 (p.7). Faitage U6 10.2 : 15 m general MAIS U6c 18 m, U6ch et ZA Vincendo 13 m. LABUSE ne dit que 15 m.",
+   "preuve": "- 15 metres au faitage ou au sommet de l'acrotere. Dans le secteur U6c, ces seuils sont portes a : [...] - 18 metres au faitage [...] Dans le secteur U6ch et la zone d'activites de Vincendo [...] - 13 metres au faitage"
+  },
+  {
+   "zone": "U1",
+   "regle": "retraits.limites_separatives",
+   "valeur_regle": "3.0 m",
+   "article": "U1 7.2",
+   "page": "19",
+   "exception_resume": "U1 7.2 : si le lineaire de l'unite fonciere contigu a la voie est inferieur a 12 m, les constructions doivent etre implantees sur les DEUX limites laterales (retrait interdit) ; sinon retrait mini 3 m. LABUSE ne signale pas ce cas <12 m.",
+   "preuve": "Dans le cas d'une unite fonciere ayant un lineaire contigu a la voie inferieur a 12 metres, les constructions doivent etre implantees sur les deux limites laterales. Dans le cas contraire [...] au minimum egale a 3 metres."
+  },
+  {
+   "zone": "U3",
+   "regle": "hauteur.egout",
+   "valeur_regle": "11.0 m",
+   "article": "U3 10.2",
+   "page": "51",
+   "exception_resume": "U3 10.2 par tranches de profondeur : 8 m (0-6 m), 10 m (6-12 m), 11 m (>12 m) ; 13 m au-dela de 12 m si RDC commerce/services/RPA ; secteur U3a 8 m (10 m si commerce >6 m). LABUSE retient la tranche la plus haute (11 m) sans dire les tranches ni les exceptions.",
+   "preuve": "La hauteur maximale des constructions implantees dans une profondeur de 6 metres [...] 8 metres [...] entre 6 metres et 12 metres [...] 10 metres [...] au-dela [...] 12 metres [...] 11 metres a l'egout"
+  },
+  {
+   "zone": "U3",
+   "regle": "hauteur.faitage",
+   "valeur_regle": "13.0 m",
+   "article": "U3 10.2",
+   "page": "51",
+   "exception_resume": "U3 10.2 faitage par tranches : 10 m (0-6 m), 12 m (6-12 m), 13 m (>12 m) ; 15 m au-dela de 12 m si commerce/services/RPA ; U3a 9 m (12 m si commerce). LABUSE ne retient que 13 m.",
+   "preuve": "au-dela d'une profondeur de 12 metres [...] - 11 metres a l'egout du toit [...] - 13 metres au faitage."
+  },
+  {
+   "zone": "U4",
+   "regle": "hauteur.egout",
+   "valeur_regle": "6.0 m",
+   "article": "U4 10.2",
+   "page": "65",
+   "exception_resume": "U4 10.2 : 6 m general MAIS 7 m si la construction comporte des locaux commerciaux, de services ou de bureaux. LABUSE ne dit que 6 m.",
+   "preuve": "La hauteur maximale des constructions ne peut exceder : - 6 metres a l'egout [...] Toutefois, lorsque la construction comporte des locaux commerciaux, de services ou de bureaux, la hauteur maximale est portee a : - 7 metres a l'egout"
+  },
+  {
+   "zone": "U4",
+   "regle": "hauteur.faitage",
+   "valeur_regle": "9.0 m",
+   "article": "U4 10.2",
+   "page": "65",
+   "exception_resume": "U4 10.2 : 9 m general MAIS 10 m si locaux commerciaux/services/bureaux. LABUSE ne dit que 9 m.",
+   "preuve": "- 9 metres au faitage. Toutefois, lorsque la construction comporte des locaux commerciaux, de services ou de bureaux, la hauteur maximale est portee a : [...] - 10 metres au faitage."
+  },
+  {
+   "zone": "U5",
+   "regle": "emprise_sol.ces",
+   "valeur_regle": "50.0 %",
+   "article": "U5 9.2",
+   "page": "80",
+   "exception_resume": "U5 9.2 : 50 % general MAIS U5cvd 75 %, U5cv 60 %, U5ma/U5ru/U5vi 40 %. LABUSE ne dit que 50 %.",
+   "preuve": "ne doit pas exceder 50% [...] Dans le secteur U5cvd, ce seuil est porte a 75% et en U5cv a 60%, tandis que dans les secteurs U5ma, U5ru et U5vi ce seuil est limite a 40%."
+  },
+  {
+   "zone": "U5ma",
+   "regle": "retraits.voie",
+   "valeur_regle": "4.0 m",
+   "article": "U5 6.2",
+   "page": "77",
+   "exception_resume": "U5 6.2 : dans le secteur U5ma, un retrait de 1,5 m est autorise pour les constructions a usage commercial et touristique (restauration/hebergement) sur terrasses ouvertes, la bande de 1,5 m devant etre plantee. LABUSE ne dit que 4 m.",
+   "preuve": "Dans le secteur U5ma : un retrait de 1,5 metres est autorise pour les constructions a usage commercial et touristique [...] La bande de recul de 1,5 metres doit obligatoirement etre plantee."
+  },
+  {
+   "zone": "U6",
+   "regle": "hauteur.egout",
+   "valeur_regle": "12.0 m",
+   "article": "U6 10.2",
+   "page": "95",
+   "exception_resume": "U6 10.2 : 12 m general MAIS secteur U6c 15 m, secteur U6ch et ZA de Vincendo 10 m. LABUSE ne dit que 12 m.",
+   "preuve": "La hauteur maximale [...] est fixee a : - 12 metres a l'egout [...] Dans le secteur U6c, ces seuils sont portes a : - 15 metres [...] Dans le secteur U6ch et la zone d'activites de Vincendo [...] 10 metres a l'egout"
+  },
+  {
+   "zone": "U6",
+   "regle": "hauteur.faitage",
+   "valeur_regle": "15.0 m",
+   "article": "U6 10.2",
+   "page": "95",
+   "exception_resume": "U6 10.2 : 15 m general MAIS U6c 18 m, U6ch et ZA de Vincendo 13 m. LABUSE ne dit que 15 m.",
+   "preuve": "- 15 metres au faitage ou au sommet de l'acrotere. Dans le secteur U6c [...] - 18 metres au faitage [...] Dans le secteur U6ch et la zone d'activites de Vincendo [...] - 13 metres au faitage"
+  }
+ ],
+ "97413": [
+  {
+   "zone": "UAt",
+   "regle": "hauteur.faitage",
+   "valeur_regle": "13.0 m",
+   "article": "UA 10.2",
+   "page": "24",
+   "exception_resume": "Il est toléré 1,50m de plus sur les parties avales du bâtiment au faîtage, à l'égout du toit ou au sommet de l'acrotère ; +1,00m ajouté en zone à risque moyen d'inondation.",
+   "preuve": "12,00m au faîtage ou 13,00m pour les constructions comportant un rez-de-chaussée commercial et pour le secteur UAt [...] Il est toléré 1,50m de plus sur les parties avales du bâtiment au faîtage"
+  }
+ ],
+ "97414": [
+  {
+   "zone": "UC",
+   "regle": "retraits.limites_separatives",
+   "valeur_regle": "3.0 m",
+   "article": "UC 7.2",
+   "page": "46",
+   "exception_resume": "En secteur UC1, le retrait (L) est obligatoire = moitie de la hauteur a l'egout (ou faîtage a defaut) sans etre inferieur a 3,00 m (L=H1/2).",
+   "preuve": "UC 7.2 (PDF p.46) : « au moins égale 3 mètres. Toutefois, en secteur UC1, le retrait (L) (...) sans être inférieur à 3,00 mètres, soit : L = H1/2 »"
+  },
+  {
+   "zone": "UZ",
+   "regle": "hauteur.egout",
+   "valeur_regle": "9.0 m",
+   "article": "UZ 10.2",
+   "page": "99",
+   "exception_resume": "UZ 10.2 plafonne par affectation : collectifs 17 m, tertiaires 12 m ; hors tout aucune construction ne depasse la cote NGR 42 m. Le 9 m ne vaut que pour les affectations « individuels ». La regle est une hauteur « en tout point », pas un egout.",
+   "preuve": "UZ 10.2 (PDF p.99) : « légendés en « individuels », la hauteur maximale de tout point des constructions (...) ne doit pas dépasser 9 mètres. »"
+  },
+  {
+   "zone": "UZ",
+   "regle": "hauteur.faitage",
+   "valeur_regle": "9.0 m",
+   "article": "UZ 10.2",
+   "page": "99",
+   "exception_resume": "La regle UZ ne distingue pas egout/faîtage : c'est une hauteur maximale « en tout point » (donc egout=faîtage=9 m pour les individuels). Collectifs 17 m, tertiaires 12 m, hors tout NGR 42 m.",
+   "preuve": "UZ 10.2 (PDF p.99) : « la hauteur maximale de tout point des constructions (...) « individuels » (...) ne doit pas dépasser 9 mètres. »"
+  }
+ ],
+ "97415": [
+  {
+   "zone": "U1a",
+   "regle": "pleine_terre.pct",
+   "valeur_regle": "10.0 %",
+   "article": "13.1",
+   "page": "35",
+   "exception_resume": "En aléa fort du PPRI, le pourcentage minimal sera de 50 %. En cas de parking en sous-sol, 10 % au moins plantés sur dalle (terre >=0,8 m). Non exigé en surélévation/changement de destination.",
+   "preuve": "en zone U1a Le pourcentage minimal d'espaces libres permeables sera de 10 % ... En alea fort du PPRI, le pourcentage minimal ... sera de 50 %"
+  },
+  {
+   "zone": "U3a",
+   "regle": "pleine_terre.pct",
+   "valeur_regle": "20.0 %",
+   "article": "13.1",
+   "page": "124",
+   "exception_resume": "En alea fort du PPRI, le pourcentage minimal sera de 50 %. En cas de parking en sous-sol sur toute la parcelle, 20 % au moins plantes sur dalle (terre 80 cm). Non exige en surelevation/changement de destination.",
+   "preuve": "en zone U3a Le pourcentage minimal d'espaces libres permeables sera de 20% ... En alea fort du PPRI, le pourcentage minimal ... sera de 50%"
+  },
+  {
+   "zone": "U4b",
+   "regle": "retraits.voie",
+   "valeur_regle": "3.0 m",
+   "article": "6",
+   "page": "172",
+   "exception_resume": "Les commerces situes en rez-de-chaussee pourront s'implanter a l'alignement.",
+   "preuve": "en zone U4b Les constructions devront etre implantees en retrait de 3 m minimum de la voie ... Les commerces situes en rez-de-chaussee pourront s'implanter a l'alignement."
+  }
+ ],
+ "97416": [
+  {
+   "zone": "AUazc",
+   "regle": "pleine_terre.pct",
+   "valeur_regle": "20.0 %",
+   "article": "Ua5.1",
+   "page": "182",
+   "exception_resume": "Un coefficient de biotope de surface différent pourra être accepté lorsque l'application du CBS porte atteinte a la protection du patrimoine au titre des monuments historiques.",
+   "preuve": "Le coefficient de Biotope est de 30 % minimum avec au moins 20% de la superficie de l'unite fonciere en espace plante de pleine terre."
+  },
+  {
+   "zone": "AUazc",
+   "regle": "retraits.limites_separatives",
+   "valeur_regle": "3.0 m",
+   "article": "Ua3.2",
+   "page": "177",
+   "exception_resume": "Retrait porte a 5 m dans Uazi/AUazi et Uazp/Uazpc ; pour les transformateurs EDF, en cas de retrait, celui-ci pourra etre reduit a 1 metre.",
+   "preuve": "Soit en limites separatives, sur deux limites au maximum, Soit en retrait de 3 m minimum."
+  },
+  {
+   "zone": "AUazi",
+   "regle": "hauteur.egout",
+   "valeur_regle": "16.0 m",
+   "article": "Ua3.5",
+   "page": "177",
+   "exception_resume": "Dans Uazi/AUazi de la ZI N4 : pas de regle pour l'extraction ; parcelles 1,9,11,21,22,23,24 : 8 m dans une bande de 15 m le long de la Ravine des Cabris.",
+   "preuve": "La hauteur maximale des constructions nouvelles est fixee a 16 m a l'egout du toit ou au sommet de l'acrotere et a 21 m au faitage."
+  },
+  {
+   "zone": "AUazi",
+   "regle": "hauteur.faitage",
+   "valeur_regle": "21.0 m",
+   "article": "Ua3.5",
+   "page": "177",
+   "exception_resume": "Dans Uazi/AUazi de la ZI N4 : pas de regle pour l'extraction ; parcelles 1,9,11,21,22,23,24 : 8 m dans une bande de 15 m le long de la Ravine des Cabris.",
+   "preuve": "La hauteur maximale des constructions nouvelles est fixee a 16 m a l'egout du toit ou au sommet de l'acrotere et a 21 m au faitage."
+  },
+  {
+   "zone": "AUazi",
+   "regle": "pleine_terre.pct",
+   "valeur_regle": "20.0 %",
+   "article": "Ua5.1",
+   "page": "182",
+   "exception_resume": "Un CBS different pourra etre accepte lorsque son application porte atteinte a la protection du patrimoine au titre des monuments historiques.",
+   "preuve": "Le coefficient de Biotope est de 30 % minimum avec au moins 20% de la superficie de l'unite fonciere en espace plante de pleine terre."
+  },
+  {
+   "zone": "AUf",
+   "regle": "hauteur.egout",
+   "valeur_regle": "6.0 m",
+   "article": "Uf3.5",
+   "page": "119",
+   "exception_resume": "Secteur UfCa : 6 m egout / 7,5 m faitage ; secteur AUfGB : 5,5 m au faitage ; equipements publics : 8 m egout / 13 m faitage.",
+   "preuve": "La hauteur maximale des constructions nouvelles est fixee a 6 m a l'egout du toit ou au sommet de l'acrotere et a 11 m au faitage."
+  },
+  {
+   "zone": "AUf",
+   "regle": "hauteur.faitage",
+   "valeur_regle": "11.0 m",
+   "article": "Uf3.5",
+   "page": "119",
+   "exception_resume": "Secteur UfCa : 7,5 m au faitage ; secteur AUfGB : 5,5 m au faitage ; equipements publics : 13 m au faitage.",
+   "preuve": "La hauteur maximale des constructions nouvelles est fixee a 6 m a l'egout du toit ou au sommet de l'acrotere et a 11 m au faitage."
+  },
+  {
+   "zone": "AUg",
+   "regle": "retraits.limites_separatives",
+   "valeur_regle": "3.0 m",
+   "article": "Ug3.2",
+   "page": "101",
+   "exception_resume": "Implantation en limite max sur 70% du lineaire de chaque limite ; pour les transformateurs EDF, en cas de retrait, celui-ci pourra etre reduit a 1 metre.",
+   "preuve": "Soit en retrait de 3 metres."
+  },
+  {
+   "zone": "Uaza",
+   "regle": "hauteur.egout",
+   "valeur_regle": "16.0 m",
+   "article": "Ua3.5",
+   "page": "177",
+   "exception_resume": "Dans le secteur Uaza, la hauteur maximale des constructions est fixee a 14 m au faitage (contrainte de volumetrie propre au secteur, non reprise par la fiche).",
+   "preuve": "Dans le secteur Uaza, la hauteur maximale des constructions est fixee a 14 m au faitage."
+  },
+  {
+   "zone": "Uaza",
+   "regle": "pleine_terre.pct",
+   "valeur_regle": "20.0 %",
+   "article": "Ua5.1",
+   "page": "182",
+   "exception_resume": "Un CBS different pourra etre accepte lorsque son application porte atteinte a la protection du patrimoine au titre des monuments historiques.",
+   "preuve": "Le coefficient de Biotope est de 30 % minimum avec au moins 20% de la superficie de l'unite fonciere en espace plante de pleine terre."
+  },
+  {
+   "zone": "Uaza",
+   "regle": "retraits.limites_separatives",
+   "valeur_regle": "3.0 m",
+   "article": "Ua3.2",
+   "page": "177",
+   "exception_resume": "Pour les transformateurs EDF, en cas de retrait, celui-ci pourra etre reduit a 1 metre.",
+   "preuve": "Soit en limites separatives, sur deux limites au maximum, Soit en retrait de 3 m minimum."
+  },
+  {
+   "zone": "Uazc",
+   "regle": "pleine_terre.pct",
+   "valeur_regle": "20.0 %",
+   "article": "Ua5.1",
+   "page": "182",
+   "exception_resume": "Un CBS different pourra etre accepte lorsque son application porte atteinte a la protection du patrimoine au titre des monuments historiques.",
+   "preuve": "Le coefficient de Biotope est de 30 % minimum avec au moins 20% de la superficie de l'unite fonciere en espace plante de pleine terre."
+  },
+  {
+   "zone": "Uazc",
+   "regle": "retraits.limites_separatives",
+   "valeur_regle": "3.0 m",
+   "article": "Ua3.2",
+   "page": "177",
+   "exception_resume": "Pour les transformateurs EDF, en cas de retrait, celui-ci pourra etre reduit a 1 metre.",
+   "preuve": "Soit en limites separatives, sur deux limites au maximum, Soit en retrait de 3 m minimum."
+  },
+  {
+   "zone": "Uazi",
+   "regle": "hauteur.egout",
+   "valeur_regle": "16.0 m",
+   "article": "Ua3.5",
+   "page": "177",
+   "exception_resume": "Dans Uazi/AUazi de la ZI N4 : pas de regle pour l'extraction ; parcelles 1,9,11,21,22,23,24 : 8 m dans une bande de 15 m le long de la Ravine des Cabris.",
+   "preuve": "La hauteur maximale des constructions nouvelles est fixee a 16 m a l'egout du toit ou au sommet de l'acrotere et a 21 m au faitage."
+  },
+  {
+   "zone": "Uazi",
+   "regle": "hauteur.faitage",
+   "valeur_regle": "21.0 m",
+   "article": "Ua3.5",
+   "page": "177",
+   "exception_resume": "Dans Uazi/AUazi de la ZI N4 : pas de regle pour l'extraction ; parcelles 1,9,11,21,22,23,24 : 8 m dans une bande de 15 m le long de la Ravine des Cabris.",
+   "preuve": "La hauteur maximale des constructions nouvelles est fixee a 16 m a l'egout du toit ou au sommet de l'acrotere et a 21 m au faitage."
+  },
+  {
+   "zone": "Uazi",
+   "regle": "pleine_terre.pct",
+   "valeur_regle": "20.0 %",
+   "article": "Ua5.1",
+   "page": "182",
+   "exception_resume": "Un CBS different pourra etre accepte lorsque son application porte atteinte a la protection du patrimoine au titre des monuments historiques.",
+   "preuve": "Le coefficient de Biotope est de 30 % minimum avec au moins 20% de la superficie de l'unite fonciere en espace plante de pleine terre."
+  },
+  {
+   "zone": "Uazp",
+   "regle": "pleine_terre.pct",
+   "valeur_regle": "20.0 %",
+   "article": "Ua5.1",
+   "page": "182",
+   "exception_resume": "Un CBS different pourra etre accepte lorsque son application porte atteinte a la protection du patrimoine au titre des monuments historiques.",
+   "preuve": "Le coefficient de Biotope est de 30 % minimum avec au moins 20% de la superficie de l'unite fonciere en espace plante de pleine terre."
+  },
+  {
+   "zone": "Uazpc",
+   "regle": "pleine_terre.pct",
+   "valeur_regle": "20.0 %",
+   "article": "Ua5.1",
+   "page": "182",
+   "exception_resume": "Un CBS different pourra etre accepte lorsque son application porte atteinte a la protection du patrimoine au titre des monuments historiques.",
+   "preuve": "Le coefficient de Biotope est de 30 % minimum avec au moins 20% de la superficie de l'unite fonciere en espace plante de pleine terre."
+  },
+  {
+   "zone": "Ue",
+   "regle": "hauteur.egout",
+   "valeur_regle": "16.0 m",
+   "article": "Ue3.5",
+   "page": "193",
+   "exception_resume": "Dans le secteur Uea : 9 m egout / 15 m faitage ; sur limites separatives la hauteur n'excedera pas 6 m puis gabarit a 100% sur 3 m ; abords aerodrome Pierrefonds : Plan de Servitude Aeronautique.",
+   "preuve": "La hauteur maximale des constructions nouvelle est fixee a 16 m a l'egout du toit ou au sommet de l'acrotere et a 21 m au faitage."
+  },
+  {
+   "zone": "Ue",
+   "regle": "hauteur.faitage",
+   "valeur_regle": "21.0 m",
+   "article": "Ue3.5",
+   "page": "193",
+   "exception_resume": "Dans le secteur Uea : 15 m au faitage ; abords aerodrome Pierrefonds : Plan de Servitude Aeronautique.",
+   "preuve": "La hauteur maximale des constructions nouvelle est fixee a 16 m a l'egout du toit ou au sommet de l'acrotere et a 21 m au faitage."
+  },
+  {
+   "zone": "Ue",
+   "regle": "retraits.limites_separatives",
+   "valeur_regle": "3.0 m",
+   "article": "Ue3.2",
+   "page": "192",
+   "exception_resume": "1 m minimum pour les transformateurs EDF (regle generale : implantation possible sur une ou plusieurs limites, ou en retrait).",
+   "preuve": "En cas de retrait, la distance ... est de 3 m minimum et de 1 m minimum pour les transformateurs EDF."
+  },
+  {
+   "zone": "Uea",
+   "regle": "retraits.limites_separatives",
+   "valeur_regle": "3.0 m",
+   "article": "Ue3.2",
+   "page": "192",
+   "exception_resume": "1 m minimum pour les transformateurs EDF.",
+   "preuve": "En cas de retrait, la distance ... est de 3 m minimum et de 1 m minimum pour les transformateurs EDF."
+  },
+  {
+   "zone": "Uemi",
+   "regle": "hauteur.egout",
+   "valeur_regle": "16.0 m",
+   "article": "Ue3.5",
+   "page": "193",
+   "exception_resume": "Sur limites separatives la hauteur n'excedera pas 6 m puis gabarit a 100% sur 3 m ; abords aerodrome Pierrefonds : Plan de Servitude Aeronautique.",
+   "preuve": "La hauteur maximale des constructions nouvelle est fixee a 16 m a l'egout du toit ou au sommet de l'acrotere et a 21 m au faitage."
+  },
+  {
+   "zone": "Uemi",
+   "regle": "hauteur.faitage",
+   "valeur_regle": "21.0 m",
+   "article": "Ue3.5",
+   "page": "193",
+   "exception_resume": "Abords aerodrome Pierrefonds : hauteur limitee au Plan de Servitude Aeronautique.",
+   "preuve": "La hauteur maximale des constructions nouvelle est fixee a 16 m a l'egout du toit ou au sommet de l'acrotere et a 21 m au faitage."
+  },
+  {
+   "zone": "Uemi",
+   "regle": "retraits.limites_separatives",
+   "valeur_regle": "3.0 m",
+   "article": "Ue3.2",
+   "page": "192",
+   "exception_resume": "1 m minimum pour les transformateurs EDF.",
+   "preuve": "En cas de retrait, la distance ... est de 3 m minimum et de 1 m minimum pour les transformateurs EDF."
+  },
+  {
+   "zone": "Uep",
+   "regle": "hauteur.egout",
+   "valeur_regle": "16.0 m",
+   "article": "Ue3.5",
+   "page": "193",
+   "exception_resume": "Sur limites separatives la hauteur n'excedera pas 6 m puis gabarit a 100% sur 3 m ; abords aerodrome Pierrefonds : Plan de Servitude Aeronautique.",
+   "preuve": "La hauteur maximale des constructions nouvelle est fixee a 16 m a l'egout du toit ou au sommet de l'acrotere et a 21 m au faitage."
+  },
+  {
+   "zone": "Uep",
+   "regle": "hauteur.faitage",
+   "valeur_regle": "21.0 m",
+   "article": "Ue3.5",
+   "page": "193",
+   "exception_resume": "Abords aerodrome Pierrefonds : hauteur limitee au Plan de Servitude Aeronautique.",
+   "preuve": "La hauteur maximale des constructions nouvelle est fixee a 16 m a l'egout du toit ou au sommet de l'acrotere et a 21 m au faitage."
+  },
+  {
+   "zone": "Uep",
+   "regle": "retraits.limites_separatives",
+   "valeur_regle": "3.0 m",
+   "article": "Ue3.2",
+   "page": "192",
+   "exception_resume": "1 m minimum pour les transformateurs EDF.",
+   "preuve": "En cas de retrait, la distance ... est de 3 m minimum et de 1 m minimum pour les transformateurs EDF."
+  },
+  {
+   "zone": "Uf",
+   "regle": "hauteur.egout",
+   "valeur_regle": "6.0 m",
+   "article": "Uf3.5",
+   "page": "119",
+   "exception_resume": "Secteur UfCa : 6 m egout / 7,5 m faitage ; equipements publics : 8 m egout / 13 m faitage ; sur limites separatives 4 m puis gabarit a 100% sur 3 m.",
+   "preuve": "La hauteur maximale des constructions nouvelles est fixee a 6 m a l'egout du toit ou au sommet de l'acrotere et a 11 m au faitage."
+  },
+  {
+   "zone": "Uf",
+   "regle": "hauteur.faitage",
+   "valeur_regle": "11.0 m",
+   "article": "Uf3.5",
+   "page": "119",
+   "exception_resume": "Secteur UfCa : 7,5 m au faitage ; secteur AUfGB : 5,5 m au faitage ; equipements publics : 13 m au faitage.",
+   "preuve": "La hauteur maximale des constructions nouvelles est fixee a 6 m a l'egout du toit ou au sommet de l'acrotere et a 11 m au faitage."
+  },
+  {
+   "zone": "Ug",
+   "regle": "retraits.limites_separatives",
+   "valeur_regle": "3.0 m",
+   "article": "Ug3.2",
+   "page": "101",
+   "exception_resume": "Implantation en limite max sur 70% du lineaire de chaque limite ; pour les transformateurs EDF, en cas de retrait, celui-ci pourra etre reduit a 1 metre.",
+   "preuve": "Soit en retrait de 3 metres."
+  }
+ ],
+ "97421": [
+  {
+   "zone": "UA",
+   "regle": "hauteur.egout",
+   "valeur_regle": "12.0 m",
+   "article": "U 10.2",
+   "page": "15",
+   "exception_resume": "Sous-secteur UA1 : hauteur limitée à 7 mètres à l'égout du toit ou au sommet de l'acrotère, sans dépasser R+1.",
+   "preuve": "En zones UA et UB, la hauteur maximale des constructions est fixée à 12 mètres a l'égout du toit ou au sommet de l'acrotère. Dans le secteur UA1, la hauteur maximale des constructions est limitée à 7 mètres... sans dépasser R+1."
+  }
+ ],
+ "97422": [
+  {
+   "zone": "1AUa",
+   "regle": "hauteur.egout",
+   "valeur_regle": "21.0 m",
+   "article": "Ua10.2",
+   "page": "18",
+   "exception_resume": "Dans le secteur Uav le seuil est de 16 m à l'égout/acrotère (20 m au faîtage) ; et une règle particulière (10.3) limite à 18 m à l'égout sur tout point mitoyen dans une marge de 3,60 m de la limite séparative (13 m en Uav). La zone AU renvoie au règlement Ua.",
+   "preuve": "La hauteur maximale des constructions est limitée à 21 mètres à l'égout du toit ou au sommet de l'acrotère et 25 mètres au faîtage. Dans le secteur Uav, ce seuil est limité à 16 mètres"
+  },
+  {
+   "zone": "1AUa",
+   "regle": "hauteur.faitage",
+   "valeur_regle": "25.0 m",
+   "article": "Ua10.2",
+   "page": "18",
+   "exception_resume": "Dans le secteur Uav le faîtage est limité à 20 m. Règle particulière limites séparatives (10.3) : 18 m d'égout (13 m en Uav) dans marge de 3,60 m. La zone AU renvoie au règlement Ua.",
+   "preuve": "limitée à 21 mètres à l'égout du toit ou au sommet de l'acrotère et 25 mètres au faîtage. Dans le secteur Uav, ce seuil est limité à 16 mètres à l'égout du toit ou au sommet de l'acrotère et 20 mètres au faîtage"
+  },
+  {
+   "zone": "1AUa",
+   "regle": "retraits.voie",
+   "valeur_regle": "4.0 m",
+   "article": "Ua6.2",
+   "page": "15",
+   "exception_resume": "Alternative implantation à l'alignement ; le long de la RD3 entre la RN3 et la Ravine Blanche recul de 10,50 m par rapport à l'axe ; hors agglomération (L.111-6) retrait de 75 m minimum par rapport à l'axe. La zone AU renvoie au règlement Ua.",
+   "preuve": "Les constructions peuvent s'implanter soit à l'alignement, soit à 4 mètres minimum de l'emprise de la voie... Toutefois, le long de la RD3, entre la RN3 et la Ravine Blanche... recul minimal de 10,50 mètres"
+  },
+  {
+   "zone": "2AUa",
+   "regle": "hauteur.egout",
+   "valeur_regle": "21.0 m",
+   "article": "Ua10.2",
+   "page": "18",
+   "exception_resume": "Secteur Uav : 16 m à l'égout/acrotère. Règle particulière limites séparatives (10.3) : 18 m d'égout (13 m en Uav) dans marge de 3,60 m. La zone AU renvoie au règlement Ua.",
+   "preuve": "La hauteur maximale des constructions est limitée à 21 mètres à l'égout du toit ou au sommet de l'acrotère et 25 mètres au faîtage. Dans le secteur Uav, ce seuil est limité à 16 mètres"
+  },
+  {
+   "zone": "2AUa",
+   "regle": "hauteur.faitage",
+   "valeur_regle": "25.0 m",
+   "article": "Ua10.2",
+   "page": "18",
+   "exception_resume": "Secteur Uav : 20 m au faîtage. Règle particulière limites séparatives (10.3). La zone AU renvoie au règlement Ua.",
+   "preuve": "limitée à 21 mètres à l'égout du toit ou au sommet de l'acrotère et 25 mètres au faîtage. Dans le secteur Uav, ce seuil est limité à 16 mètres... et 20 mètres au faîtage"
+  },
+  {
+   "zone": "Ua",
+   "regle": "hauteur.egout",
+   "valeur_regle": "21.0 m",
+   "article": "Ua10.2",
+   "page": "18",
+   "exception_resume": "Règle particulière limites séparatives (10.3) : 18 m d'égout maximum sur tout point mitoyen dans une marge de 3,60 m de profondeur. Le secteur Uav (16 m) est distinct de Ua.",
+   "preuve": "La hauteur maximale des constructions est limitée à 21 mètres à l'égout du toit ou au sommet de l'acrotère et 25 mètres au faîtage."
+  },
+  {
+   "zone": "Ua",
+   "regle": "hauteur.faitage",
+   "valeur_regle": "25.0 m",
+   "article": "Ua10.2",
+   "page": "18",
+   "exception_resume": "Règle particulière limites séparatives (10.3) : 18 m d'égout dans marge de 3,60 m. Le secteur Uav (20 m au faîtage) est distinct de Ua.",
+   "preuve": "limitée à 21 mètres à l'égout du toit ou au sommet de l'acrotère et 25 mètres au faîtage."
+  },
+  {
+   "zone": "Ua",
+   "regle": "retraits.voie",
+   "valeur_regle": "4.0 m",
+   "article": "Ua6.2",
+   "page": "15",
+   "exception_resume": "Alternative implantation à l'alignement ; le long de la RD3 entre la RN3 et la Ravine Blanche recul de 10,50 m par rapport à l'axe ; hors agglomération (L.111-6) retrait de 75 m minimum par rapport à l'axe.",
+   "preuve": "Les constructions peuvent s'implanter soit à l'alignement, soit à 4 mètres minimum de l'emprise de la voie... Toutefois, le long de la RD3... recul minimal de 10,50 mètres par rapport à l'axe de la voie."
+  },
+  {
+   "zone": "Uav",
+   "regle": "retraits.voie",
+   "valeur_regle": "4.0 m",
+   "article": "Ua6.2",
+   "page": "15",
+   "exception_resume": "L'article Ua6.2 s'applique à toutes les zones Ua (dont le secteur Uav) sans valeur d'implantation propre à Uav pour les voies : 4 m ou à l'alignement. Exceptions : RD3 (10,50 m par rapport à l'axe entre RN3 et Ravine Blanche) ; hors agglomération 75 m (L.111-6). (Uav n'a une hauteur réduite qu'à l'a",
+   "preuve": "Les constructions peuvent s'implanter soit à l'alignement, soit à 4 mètres minimum de l'emprise de la voie ou de la limite d'emprise de l'emplacement réservé figurant au document graphique."
+  }
+ ],
+ "97423": [
+  {
+   "zone": "Ua",
+   "regle": "hauteur.egout",
+   "valeur_regle": "10.0 m",
+   "article": "Ua 10.2",
+   "page": "18",
+   "exception_resume": "Secteur Uaa : 12 m a l'egout / 16 m au faitage (valeur differente, non dite par la fiche zone Ua). Ua 10.3 : majoree de 40% pour services publics ; +1 m en zone inondation moyenne ; +0,80 m sur vide sanitaire au-dessus de 400 m.",
+   "preuve": "Ua 10.2 p.18 : « La hauteur maximale... 10 metres a l'egout du toit... Dans le secteur Uaa... 12 metres a l'egout du toit... 16 metres au faitage »"
+  },
+  {
+   "zone": "Ua",
+   "regle": "hauteur.faitage",
+   "valeur_regle": "14.0 m",
+   "article": "Ua 10.2",
+   "page": "18",
+   "exception_resume": "Secteur Uaa : 16 m au faitage (12 m a l'egout), valeur differente non dite par la fiche zone Ua. Ua 10.3 : majoree de 40% pour services publics ; +1 m en zone inondation moyenne ; +0,80 m sur vide sanitaire au-dessus de 400 m.",
+   "preuve": "Ua 10.2 p.18 : « ...14 metres au faitage. Dans le secteur Uaa... 16 metres au faitage »"
+  }
+ ],
+ "97424": [
+  {
+   "zone": "AUb",
+   "regle": "retraits.limites_separatives",
+   "valeur_regle": "3.0 m",
+   "article": "Ub 7.2/7.3",
+   "page": "35",
+   "exception_resume": "Ub 7.4 : implantations differentes autorisees pour extensions de construction existante non conforme, mise en valeur d'element bati protege (L.123-1 7deg), constructions annexes/equipements techniques (securite, service public, eau, energie, stockage OM), et equipements publics d'interet collectif s",
+   "preuve": "En cas de retrait, la distance comptee horizontalement et perpendiculairement de tout point de la facade de la construction au point le plus proche de la limite separative, doit etre au minimum de 3 metres."
+  },
+  {
+   "zone": "AUb1",
+   "regle": "retraits.limites_separatives",
+   "valeur_regle": "3.0 m",
+   "article": "Ub 7.2/7.3",
+   "page": "35",
+   "exception_resume": "Renvoi assume : ARTICLE AUindicee 7 dit 'Se reporter au reglement de la zone U indiquee en indice' (Ub pour AUb) ; AUb1 est un secteur de AUb (ZAC Roland Garros) ; le reglement AU ne prevoit d'override pour AUb1 que sur les articles 9 (emprise), 10 (hauteur 9m/12m), 12 (stationnement), PAS sur l'art",
+   "preuve": "ARTICLE AUINDICEE 7 - IMPLANTATION DES CONSTRUCTIONS PAR RAPPORT AUX LIMITES SEPARATIVES / Se reporter au reglement de la zone U indiquee en indice."
+  },
+  {
+   "zone": "AUb2",
+   "regle": "retraits.limites_separatives",
+   "valeur_regle": "3.0 m",
+   "article": "Ub 7.2/7.3",
+   "page": "35",
+   "exception_resume": "Renvoi assume : ARTICLE AUindicee 7 'Se reporter au reglement de la zone U indiquee en indice' (Ub) ; AUb2 est un secteur de AUb, override AU seulement sur articles 9/10 (hauteur 7m/11m, 14m equipements sportifs)/12, PAS article 7. Exception Ub 7.4 : extensions non conformes, element bati protege, a",
+   "preuve": "ARTICLE AUINDICEE 7 - ... LIMITES SEPARATIVES / Se reporter au reglement de la zone U indiquee en indice. [Ub 7.2] au minimum de 3 metres."
+  }
+ ]
+}

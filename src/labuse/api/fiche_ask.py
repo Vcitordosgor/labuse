@@ -117,6 +117,15 @@ def _ask_context(db: Session, idu: str) -> tuple[dict, dict]:
     regles_zones = [{"zone": z.get("zone"), "regle": a.get("regle"), "reference": a.get("reference")}
                     for z in zones for a in (z.get("articles") or [])
                     if a.get("regle") or a.get("reference")] or None
+    # PLU-EXCEPTIONS-1 — les exceptions au règlement (verbatim + article/page), par zone et par règle.
+    # Servies au copilote pour qu'il CITE l'exception quand il cite la règle correspondante.
+    reglement_exceptions = [
+        {"zone": z.get("zone"), "regle": rv.get("libelle") or rv.get("cle"),
+         "texte": e.get("texte"),
+         "reference": " · ".join(x for x in [e.get("article"),
+                                             (f"p.{e.get('page_pdf')}" if e.get("page_pdf") else None)] if x)}
+        for z in zones for rv in (z.get("regles_valeurs") or []) for e in (rv.get("exceptions") or [])
+        if (e.get("texte") or "").strip()] or None
     reglement_url = None
     for z in zones:                                            # deep-link VÉRIFIÉ mécaniquement, jamais mort
         for a in (z.get("articles") or []):
@@ -165,6 +174,7 @@ def _ask_context(db: Session, idu: str) -> tuple[dict, dict]:
         "rang_classement": _F(vs.get("rang")),
         "zone_plu": _F(zone_str),                     # toutes les zones jointes (« U4b + UD » si bizone)
         "reglement_regles": _F(regles_zones),         # règles + références par zone
+        "reglement_exceptions": _F(reglement_exceptions),  # PLU-EXCEPTIONS-1 — exceptions verbatim par règle
         # ── viabilisation M-VIA (SOURCÉ) ──
         "viabilisation_indice": _F(via.get("band") or via.get("score")),
         "viabilisation_eau": _F((via.get("contributions") or {}).get("eau") if isinstance(via.get("contributions"), dict) else None),
@@ -226,6 +236,9 @@ _SYSTEM = (
     "- Un champ de provenance ABSENT (valeur nulle) = donnée NON disponible : réponds explicitement « cette "
     "information n'est pas disponible pour cette parcelle », ne DÉDUIS jamais une valeur.\n"
     "- Distingue SOURCÉ (donnée réelle) et ESTIMÉ (capacité/SDP/bilan — dis « estimé »).\n"
+    "- EXCEPTIONS AU RÈGLEMENT : si tu cites une règle chiffrée (hauteur, emprise, recul, pleine terre, "
+    "stationnement) qui figure dans `reglement_exceptions`, tu DOIS mentionner l'exception correspondante "
+    "(la règle générale reste la règle ; l'exception se lit à côté), avec sa source ⟨src:reglement_exceptions⟩.\n"
     "- Si la question sort du périmètre de la fiche (ex. amiante, diagnostic non couvert), dis-le franchement : "
     "« cette information n'est pas disponible pour cette parcelle ».\n"
     "- FORME : réponds en phrases simples, SANS titres (##), SANS listes (-), SANS citations (>). "

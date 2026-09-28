@@ -221,6 +221,14 @@ def _identite(db: Session, idu: str, avail: set[str]) -> dict:
             if isinstance(_hf, (int, float)):
                 out["regles"]["hauteur_faitage_m"] = float(_hf)
             out["regles"]["hauteur_source"] = (getattr(_zr, "sources", None) or {}).get("hauteur")
+            # PLU-EXCEPTIONS-1 — le miroir registre porte les exceptions au règlement (verbatim +
+            # article + page), servies SOUS la règle en note. N'entrent dans aucun calcul (Lot C).
+            _exc = getattr(_zr, "exceptions", None) or {}
+            if _exc:
+                out["regles"]["exceptions"] = [
+                    {"regle": cle, "texte": e.get("texte"), "article": e.get("article"),
+                     "page_pdf": e.get("page_pdf"), "porte": e.get("porte")}
+                    for cle, lst in _exc.items() for e in lst if (e.get("texte") or "").strip()]
     return out
 
 

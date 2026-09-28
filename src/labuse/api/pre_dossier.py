@@ -285,6 +285,15 @@ def _regles_et_pieces(db: Session, idu: str, scen: dict | None = None) -> bytes:
             regles += f"<tr><td>Hauteur d'égout (PLU calibré)</td><td>{r['hauteur_egout_m']:g} m</td></tr>"
         if r.get("hauteur_faitage_m"):
             regles += f"<tr><td>Hauteur au faîtage (PLU calibré)</td><td>{r['hauteur_faitage_m']:g} m</td></tr>"
+        # PLU-EXCEPTIONS-1 — exceptions au règlement sous la règle, en note (verbatim + article/page).
+        # Aide à la lecture : n'entre dans aucun calcul (Lot C).
+        import html as _html
+        for e in (r.get("exceptions") or []):
+            _ref = " · ".join(x for x in [e.get("article"),
+                                          (f"p. {e['page_pdf']}" if e.get("page_pdf") else None)] if x)
+            regles += (f"<tr><td>Exception au règlement</td><td><em>« "
+                       f"{_html.escape(e.get('texte') or '')} »</em>"
+                       + (f"<br><small>{_html.escape(_ref)}</small>" if _ref else "") + "</td></tr>")
     presc = "".join(f"<li>{p['libelle']}</li>" for p in ident["prescriptions"])
     servitudes = []
     if pat and pat.get("abf"):

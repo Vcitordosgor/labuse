@@ -1,0 +1,35 @@
+[
+ {
+  "zone": "AUb",
+  "regle": "retraits.limites_separatives",
+  "valeur_regle": "3.0 m",
+  "article": "Ub 7.4",
+  "page_pdf": 35,
+  "texte": "7.4 - Exception / Des implantations différentes de celles définies ci-dessus peuvent être autorisées : dans le cas de travaux d'extension réalisés sur une construction existante qui ne respecte pas les dispositions précédentes, pour conserver une harmonie d'ensemble du bâti,",
+  "porte": "exclusion_generique",
+  "modifie_calcul": false,
+  "note": "Exception Ub 7.4 (chapeau + 1er tiret p.PDF35 ; tirets suivants p.PDF36 : élément bâti protégé L.123-1 7°, annexes/équipements techniques, équipements publics d'intérêt collectif). Verbatim tronqué au tiret porteur pour tenir sous 400 car. Carve-outs standards, ne change pas l'enveloppe d'une parcelle ordinaire."
+ },
+ {
+  "zone": "AUb1",
+  "regle": "retraits.limites_separatives",
+  "valeur_regle": "3.0 m",
+  "article": "Ub 7.4",
+  "page_pdf": 35,
+  "texte": "7.4 - Exception / Des implantations différentes de celles définies ci-dessus peuvent être autorisées : dans le cas de travaux d'extension réalisés sur une construction existante qui ne respecte pas les dispositions précédentes, pour conserver une harmonie d'ensemble du bâti,",
+  "porte": "exclusion_generique",
+  "modifie_calcul": false,
+  "note": "AUb1 (secteur ZAC de AUb) renvoie via ARTICLE AUindicée 7 au règlement Ub ; l'override AU pour AUb1 ne porte que sur art. 9/10/12, pas l'art. 7. Seule exception applicable à l'art. 7 = carve-out générique Ub 7.4 (tirets suivants p.PDF36). Ne change pas l'enveloppe ordinaire."
+ },
+ {
+  "zone": "AUb2",
+  "regle": "retraits.limites_separatives",
+  "valeur_regle": "3.0 m",
+  "article": "Ub 7.4",
+  "page_pdf": 35,
+  "texte": "7.4 - Exception / Des implantations différentes de celles définies ci-dessus peuvent être autorisées : dans le cas de travaux d'extension réalisés sur une construction existante qui ne respecte pas les dispositions précédentes, pour conserver une harmonie d'ensemble du bâti,",
+  "porte": "exclusion_generique",
+  "modifie_calcul": false,
+  "note": "AUb2 (secteur de AUb) renvoie via ARTICLE AUindicée 7 au règlement Ub ; l'override AU pour AUb2 ne porte que sur art. 9/10/12, pas l'art. 7. Seule exception applicable à l'art. 7 = carve-out générique Ub 7.4 (tirets suivants p.PDF36). Ne change pas l'enveloppe ordinaire."
+ }
+]

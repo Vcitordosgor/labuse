@@ -1,0 +1,35 @@
+[
+ {
+  "zone": "Uc",
+  "regle": "emprise_sol.ces",
+  "valeur_regle": "80.0 %",
+  "article": "Uc 7",
+  "page_pdf": 55,
+  "texte": "L'emprise au sol des constructions ne doit pas excéder 80% de la superficie de l'unité foncière. Dans les secteurs ou périmètres suivants, l'emprise au sol des constructions ne doit pas excéder 60% de la superficie de l'unité foncière : OAP Mascareignes ; Uca ; ZAC « Rivière des Galets ».",
+  "porte": "sous_secteur",
+  "modifie_calcul": true,
+  "note": null
+ },
+ {
+  "zone": "Uem",
+  "regle": "retraits.voie",
+  "valeur_regle": "5.0 m",
+  "article": "Ue 4",
+  "page_pdf": 81,
+  "texte": "Les constructions doivent être implantées en retrait par rapport aux voies et emprises publiques avec un recul minimal de 5 mètres. En outre, il est exigé un retrait minimal de 25 mètres par rapport à l'axe de la RN1001 et à celui de la RN1 (uniquement au niveau du périmètre de projet concerné par le tome n°4 du rapport de présentation du PLU - Etude de dérogation « Loi Barnier »…).",
+  "porte": "voie_specifique",
+  "modifie_calcul": true,
+  "note": null
+ },
+ {
+  "zone": "Us",
+  "regle": "retraits.voie",
+  "valeur_regle": "5.0 m",
+  "article": "Us 4",
+  "page_pdf": 121,
+  "texte": "Les constructions doivent être implantées en retrait par rapport aux voies et emprises publiques avec un recul minimal de 5 mètres. En outre, il est exigé un retrait minimal de 25 mètres doit être observé par rapport à l'axe de la RN7 (uniquement au niveau du périmètre de projet concerné par le tome n°4 du rapport de présentation du PLU - Etude de dérogation « Loi Barnier »…).",
+  "porte": "voie_specifique",
+  "modifie_calcul": true,
+  "note": null
+ }
+]

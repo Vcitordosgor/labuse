@@ -49,6 +49,13 @@ def _regles_valeurs(rules, base_url: str | None, offset: int) -> list[dict]:
         return f"{base_url}#page={pi + offset}" if base_url and pi else base_url
 
     src = rules.sources or {}
+    exc_all = getattr(rules, "exceptions", None) or {}
+
+    def _exc(cle: str) -> list[dict]:
+        # PLU-EXCEPTIONS-1 — les exceptions de la règle, servies AVEC elle (id `<cle>.exception`),
+        # relayées telles quelles (texte verbatim + article + page + porte). Jamais recomposé.
+        return [{"id": f"{cle}.exception", **e} for e in (exc_all.get(cle) or [])]
+
     out: list[dict] = []
     # Hauteur — faîtage prioritaire, égout en complément (le règlement raisonne au faîtage par défaut).
     htxt, hetat = None, "absent"
@@ -65,7 +72,7 @@ def _regles_valeurs(rules, base_url: str | None, offset: int) -> list[dict]:
         htxt, hetat = "non réglementé", "absent"
     ref_h = src.get("hauteur")
     out.append({"cle": "hauteur", "libelle": "Hauteur max", "valeur": htxt, "etat": hetat,
-                "reference": ref_h, "url": _url(ref_h)})
+                "reference": ref_h, "url": _url(ref_h), "exceptions": _exc("hauteur")})
     for cle, libelle, val, unite, skey in (
         ("emprise", "Emprise au sol max", rules.emprise_sol_pct, "%", "emprise"),
         ("recul_voirie", "Recul sur voie", rules.recul_voirie_m, "m", "recul_voirie"),
@@ -76,7 +83,7 @@ def _regles_valeurs(rules, base_url: str | None, offset: int) -> list[dict]:
         txt, etat = _fmt_valeur(val, unite)
         ref = src.get(skey)
         out.append({"cle": cle, "libelle": libelle, "valeur": txt, "etat": etat,
-                    "reference": ref, "url": _url(ref)})
+                    "reference": ref, "url": _url(ref), "exceptions": _exc(cle)})
     return out
 
 

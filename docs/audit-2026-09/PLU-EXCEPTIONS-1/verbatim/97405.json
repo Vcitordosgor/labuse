@@ -1,0 +1,222 @@
+[
+ {
+  "zone": "1AU",
+  "regle": "emprise_sol.ces",
+  "valeur_regle": "50.0 %",
+  "article": "1 AU.9",
+  "page_pdf": 93,
+  "texte": "L’emprise au sol de l’ensemble des bâtiments ne pourra pas excéder 50 % de l’unité foncière sous réserve du respect des dispositions de l’article 1 AU.4 concernant l’assainissement des eaux usées et de l’article 1AU.13 concernant la perméabilité. Cette disposition ne s’applique pas aux équipements publics d’intérêt collectif.",
+  "porte": "exclusion_generique",
+  "modifie_calcul": false,
+  "note": null
+ },
+ {
+  "zone": "1AU",
+  "regle": "stationnement.par_logement",
+  "valeur_regle": "1.0 place(s)",
+  "article": "1AU.12",
+  "page_pdf": 96,
+  "texte": "b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée ;",
+  "porte": "destination",
+  "modifie_calcul": false,
+  "note": "L’exception vise le LLTS (logement locatif très social) : dépend de la destination/nature du logement."
+ },
+ {
+  "zone": "1AUa",
+  "regle": "emprise_sol.ces",
+  "valeur_regle": "50.0 %",
+  "article": "1 AU.9",
+  "page_pdf": 93,
+  "texte": "L’emprise au sol de l’ensemble des bâtiments ne pourra pas excéder 50 % de l’unité foncière sous réserve du respect des dispositions de l’article 1 AU.4 concernant l’assainissement des eaux usées et de l’article 1AU.13 concernant la perméabilité. Cette disposition ne s’applique pas aux équipements publics d’intérêt collectif.",
+  "porte": "exclusion_generique",
+  "modifie_calcul": false,
+  "note": "1AUa est un secteur de 1AU ; article 1 AU.9 commun."
+ },
+ {
+  "zone": "1AUa",
+  "regle": "stationnement.par_logement",
+  "valeur_regle": "1.0 place(s)",
+  "article": "1AU.12",
+  "page_pdf": 96,
+  "texte": "b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée ;",
+  "porte": "destination",
+  "modifie_calcul": false,
+  "note": "1AUa relève de l’article 1AU.12 commun ; exception LLTS liée à la destination."
+ },
+ {
+  "zone": "1AUz",
+  "regle": "emprise_sol.ces",
+  "valeur_regle": "50.0 %",
+  "article": "1AUZ.9",
+  "page_pdf": 103,
+  "texte": "L’emprise au sol de l’ensemble des bâtiments ne pourra pas excéder 50 % de l’unité foncière sous réserve du respect des dispositions de l’article 1 AU.4 concernant l’assainissement des eaux usées et de l’article 1AU.13 concernant la perméabilité. Cette disposition ne s’applique pas aux équipements publics d’intérêt collectif.",
+  "porte": "exclusion_generique",
+  "modifie_calcul": false,
+  "note": null
+ },
+ {
+  "zone": "1AUz",
+  "regle": "stationnement.par_logement",
+  "valeur_regle": "1.0 place(s)",
+  "article": "1AUZ.12",
+  "page_pdf": 106,
+  "texte": "b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée ;",
+  "porte": "destination",
+  "modifie_calcul": false,
+  "note": "Exception LLTS liée à la destination/nature du logement."
+ },
+ {
+  "zone": "AUE",
+  "regle": "hauteur.egout",
+  "valeur_regle": "7.0 m",
+  "article": "AUE.10",
+  "page_pdf": 112,
+  "texte": "La hauteur maximale des constructions par rapport au terrain est limitée à 7 mètres mesurée à l’égout du toit et 10 mètres au faîtage. Toutefois, il peut être admis, pour des installations dont les caractéristiques techniques l’imposent, une hauteur maximale de 13 mètres à l’égout du toit.",
+  "porte": "hauteur_alternative",
+  "modifie_calcul": false,
+  "note": "Hauteur portée à 13 m à l’égout réservée aux installations dont les caractéristiques techniques l’imposent ; ne concerne pas une parcelle ordinaire."
+ },
+ {
+  "zone": "AUE",
+  "regle": "retraits.voie",
+  "valeur_regle": "5.0 m",
+  "article": "AUE.6",
+  "page_pdf": 111,
+  "texte": "Les constructions doivent respecter un recul de 20 mètres minimum par rapport à l’axe de la RN 2. Cette règle ne s’applique pas aux installations liées à la distribution de carburant sous réserve de l’avis favorable de la DDT en matière de sécurité routière. Pour toutes les autres voies, les constructions doivent respecter un recul minimum de 5 mètres par rapport à l’alignement.",
+  "porte": "voie_specifique",
+  "modifie_calcul": true,
+  "note": "Recul renforcé de 20 m à l’axe de la RN 2 (vs 5 m pour les autres voies) ; change l’enveloppe des parcelles bordant la RN 2."
+ },
+ {
+  "zone": "UB",
+  "regle": "stationnement.par_logement",
+  "valeur_regle": "1.0 place(s)",
+  "article": "UB.12",
+  "page_pdf": 31,
+  "texte": "b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée … En cas de mutualisation possible dans un rayon de 300 mètres pour les constructions et équipements publics, le nombre de places requises peut être diminué de 50%.",
+  "porte": "destination",
+  "modifie_calcul": false,
+  "note": "Trois carve-outs cumulés : LLTS (aucune place, destination), mutualisation dans 300 m −50 % (constructions et équipements publics), équipements existants sans exigence chiffrée ; aucun ne modifie l’enveloppe bâtie d’une parcelle ordinaire."
+ },
+ {
+  "zone": "UC",
+  "regle": "emprise_sol.ces",
+  "valeur_regle": "50.0 %",
+  "article": "UC.9",
+  "page_pdf": 38,
+  "texte": "L’emprise au sol de l’ensemble des bâtiments ne pourra pas excéder 50 % de l’unité foncière sous réserve du respect des dispositions de l’article UC.4 concernant l’assainissement des eaux usées et de l’article UC.13 concernant la perméabilité. Cette disposition ne s’applique pas aux équipements publics d’intérêt collectif.",
+  "porte": "exclusion_generique",
+  "modifie_calcul": false,
+  "note": null
+ },
+ {
+  "zone": "UC",
+  "regle": "stationnement.par_logement",
+  "valeur_regle": "1.0 place(s)",
+  "article": "UC.12",
+  "page_pdf": 40,
+  "texte": "b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée … En cas de mutualisation possible dans un rayon de 300 mètres pour les constructions et équipements publics, le nombre de places requises peut être diminué de 50%.",
+  "porte": "destination",
+  "modifie_calcul": false,
+  "note": "LLTS (destination), mutualisation −50 % dans 300 m et équipements existants sans exigence chiffrée (partie a-f à l’article UC.12 p.40, suite mutualisation et équipements existants p.41)."
+ },
+ {
+  "zone": "UCe",
+  "regle": "emprise_sol.ces",
+  "valeur_regle": "50.0 %",
+  "article": "UC.9",
+  "page_pdf": 38,
+  "texte": "L’emprise au sol de l’ensemble des bâtiments ne pourra pas excéder 50 % de l’unité foncière sous réserve du respect des dispositions de l’article UC.4 concernant l’assainissement des eaux usées et de l’article UC.13 concernant la perméabilité. Cette disposition ne s’applique pas aux équipements publics d’intérêt collectif.",
+  "porte": "exclusion_generique",
+  "modifie_calcul": false,
+  "note": "UC.9 commun ; aucune règle d’emprise propre au secteur UCe."
+ },
+ {
+  "zone": "UCe",
+  "regle": "stationnement.par_logement",
+  "valeur_regle": "1.0 place(s)",
+  "article": "UC.12",
+  "page_pdf": 40,
+  "texte": "b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée … En cas de mutualisation possible dans un rayon de 300 mètres pour les constructions et équipements publics, le nombre de places requises peut être diminué de 50%.",
+  "porte": "destination",
+  "modifie_calcul": false,
+  "note": "UC.12 commun au secteur UCe ; exception LLTS (destination) et mutualisation −50 %."
+ },
+ {
+  "zone": "UD",
+  "regle": "emprise_sol.ces",
+  "valeur_regle": "40.0 %",
+  "article": "UD.9",
+  "page_pdf": 48,
+  "texte": "L’emprise au sol de l’ensemble des bâtiments ne pourra pas excéder 40 % de l’unité foncière. Cette disposition ne s’applique pas aux ouvrages techniques de distribution d’énergie électrique ainsi qu’aux ouvrages de stockage des eaux.",
+  "porte": "exclusion_generique",
+  "modifie_calcul": false,
+  "note": null
+ },
+ {
+  "zone": "UD",
+  "regle": "stationnement.par_logement",
+  "valeur_regle": "1.0 place(s)",
+  "article": "UD.12",
+  "page_pdf": 50,
+  "texte": "b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée ;",
+  "porte": "destination",
+  "modifie_calcul": false,
+  "note": "Exception LLTS liée à la destination/nature du logement."
+ },
+ {
+  "zone": "UDe",
+  "regle": "emprise_sol.ces",
+  "valeur_regle": "40.0 %",
+  "article": "UD.9",
+  "page_pdf": 48,
+  "texte": "L’emprise au sol de l’ensemble des bâtiments ne pourra pas excéder 40 % de l’unité foncière. Cette disposition ne s’applique pas aux ouvrages techniques de distribution d’énergie électrique ainsi qu’aux ouvrages de stockage des eaux.",
+  "porte": "exclusion_generique",
+  "modifie_calcul": false,
+  "note": "UD.9 commun ; pas de règle d’emprise propre au secteur UDe."
+ },
+ {
+  "zone": "UDe",
+  "regle": "stationnement.par_logement",
+  "valeur_regle": "1.0 place(s)",
+  "article": "UD.12",
+  "page_pdf": 50,
+  "texte": "b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée ;",
+  "porte": "destination",
+  "modifie_calcul": false,
+  "note": "UD.12 commun au secteur UDe ; exception LLTS liée à la destination."
+ },
+ {
+  "zone": "UEa",
+  "regle": "hauteur.egout",
+  "valeur_regle": "7.0 m",
+  "article": "UEa.10",
+  "page_pdf": 62,
+  "texte": "La hauteur maximale des constructions par rapport au terrain est limitée à 7 mètres mesurés à l’égout du toit et 10 mètres au faîtage. Toutefois, il peut être admis, pour des installations dont les caractéristiques techniques l’imposent, une hauteur maximale de 13 mètres à l’égout du toit.",
+  "porte": "hauteur_alternative",
+  "modifie_calcul": false,
+  "note": "Hauteur portée à 13 m à l’égout réservée aux installations dont les caractéristiques techniques l’imposent."
+ },
+ {
+  "zone": "UEa",
+  "regle": "retraits.voie",
+  "valeur_regle": "5.0 m",
+  "article": "UEa.6",
+  "page_pdf": 61,
+  "texte": "Les constructions doivent respecter un recul de 20 mètres minimum par rapport à l’axe de la RN 2. Cette règle ne s’applique pas aux installations liées à la distribution de carburant sous réserve de l’avis favorable de la DDT en matière de sécurité routière. Pour toutes les autres voies, les constructions doivent respecter un recul minimum de 5 mètres par rapport à l’alignement.",
+  "porte": "voie_specifique",
+  "modifie_calcul": true,
+  "note": "Recul renforcé de 20 m à l’axe de la RN 2 (vs 5 m pour les autres voies) ; change l’enveloppe des parcelles bordant la RN 2."
+ },
+ {
+  "zone": "UZ",
+  "regle": "stationnement.par_logement",
+  "valeur_regle": "1.0 place(s)",
+  "article": "UZ.12",
+  "page_pdf": 85,
+  "texte": "b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée ;",
+  "porte": "destination",
+  "modifie_calcul": false,
+  "note": "Exception LLTS liée à la destination/nature du logement."
+ }
+]

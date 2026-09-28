@@ -1,0 +1,79 @@
+[
+ {
+  "zone": "Ud",
+  "regle": "emprise_sol.ces",
+  "valeur_regle": "80 %",
+  "article": "Article Ud.9",
+  "page_pdf": 44,
+  "texte": "En secteur Udo : L'emprise au sol des constructions n'est pas réglementée. En secteur Udop, Udp : L'emprise au sol des constructions est limitée à 70 % de la superficie de l'unité foncière, 30% minimum de la parcelle doit être en pleine terre",
+  "porte": "sous_secteur",
+  "modifie_calcul": true,
+  "note": null
+ },
+ {
+  "zone": "Ud",
+  "regle": "retraits.voie",
+  "valeur_regle": "3 m +formule",
+  "article": "Article Ud.6",
+  "page_pdf": 40,
+  "texte": "Voies et emprises publiques de moins de 12 m : les constructions seront implantées à 4 m minimum de l'alignement. Voies et emprises publiques de moins de 3,50 m : les constructions seront implantées à 3 m minimum de l'alignement.",
+  "porte": "autre",
+  "modifie_calcul": true,
+  "note": "Le retrait de 3 m ne vaut que pour les voies de moins de 3,50 m ; le cas général de la zone Ud est 4 m (voie < 12 m) ou alignement/4 m (voie >= 12 m). Le recul dépend de la largeur de la voie, pas d'un sous-secteur ni d'une bande depuis limite."
+ },
+ {
+  "zone": "Udop",
+  "regle": "hauteur.niveaux",
+  "valeur_regle": "R+5",
+  "article": "Article Ud.10",
+  "page_pdf": 44,
+  "texte": "En secteur Udop : Hauteur maximale R+5, soit 18m, au faîtage ou à l'acrotère, généralisé sauf sur les rues suivantes : Hauteur maximale R+8 Bld Lancastel et rue L. Rambaud, soit 27 m au faîtage ou à l'acrotère … Hauteur maximale R+3, soit 12 m, au faîtage ou à l'acrotère, sur les rues suivantes : ruelle Sanisal, rue Mérancienne",
+  "porte": "voie_specifique",
+  "modifie_calcul": true,
+  "note": null
+ },
+ {
+  "zone": "Udp",
+  "regle": "hauteur.niveaux",
+  "valeur_regle": "R+5",
+  "article": "Article Ud.10",
+  "page_pdf": 44,
+  "texte": "En secteur Udp : Hauteur maximale R+5, soit 18 m, au faîtage ou à l'acrotère, généralisé sauf sur les rues suivantes : Hauteur maximale R+8 Blvd Jean Jaurès, Bld Lancatel et rue L. Rambaud, soit 27 m au faîtage ou à l'acrotère … Hauteur maximale R+3, soit 12 m, au faîtage ou à l'acrotère, sur les rues suivantes : ruelles Tadar, Beauvillain, Magnan, Turpin, Nicaise, rues Marcadet et Magnan et allée de la cité Ah Soune",
+  "porte": "voie_specifique",
+  "modifie_calcul": true,
+  "note": null
+ },
+ {
+  "zone": "Ui",
+  "regle": "emprise_sol.ces",
+  "valeur_regle": "60 %",
+  "article": "Article Ui.9",
+  "page_pdf": 56,
+  "texte": "En secteur Uicm : L'emprise au sol des constructions est limitée à 40 % de la superficie de l'unité foncière. … En secteur Uip : L'emprise au sol des constructions est limitée à 60 % de la superficie de l'unité foncière, 40% minimum de la parcelle doit être en pleine terre.",
+  "porte": "sous_secteur",
+  "modifie_calcul": true,
+  "note": null
+ },
+ {
+  "zone": "Ui",
+  "regle": "retraits.voie",
+  "valeur_regle": "3 m +formule",
+  "article": "Article Ui.6",
+  "page_pdf": 54,
+  "texte": "Voies d'une emprise de moins de 12 m : les constructions seront implantées à 4 m minimum de l'alignement. Voies d'une emprise de moins de 3,50 m : les constructions seront implantées à 3 m minimum de l'alignement.",
+  "porte": "autre",
+  "modifie_calcul": true,
+  "note": "Le retrait de 3 m ne vaut que pour les voies de moins de 3,50 m ; le cas général de la zone Ui est 4 m. Le recul dépend de la largeur de la voie, pas d'un sous-secteur ni d'une bande depuis limite (Uicm 5 m, Uip 6 m sont des sous-secteurs distincts)."
+ },
+ {
+  "zone": "Up",
+  "regle": "retraits.limites_separatives",
+  "valeur_regle": "3 m +formule",
+  "article": "Article Up.7",
+  "page_pdf": 33,
+  "texte": "Dans le secteur Upr ; Sans préjudice du paragraphe précédent, les constructions seront implantées avec un recul de 6 m par rapport au pied de la falaise repérée sur le plan N°3 annexé.",
+  "porte": "autre",
+  "modifie_calcul": true,
+  "note": "Recul de 6 m mesuré par rapport au pied d'une falaise repérée au plan (contrainte de risque), en sus du recul de base par rapport à la limite séparative ; ne dépend ni d'une voie nommée ni d'un sous-secteur à valeur de retrait différente."
+ }
+]

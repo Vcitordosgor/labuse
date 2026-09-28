@@ -198,6 +198,25 @@ export function PluAnnuaire() {
               <div className="text-[11px] text-txt-mut">
                 {d.n} extrait{d.n > 1 ? 's' : ''} — {nomInsee(insee)}
               </div>
+              {/* PLU-EXCEPTIONS-1 — exceptions calibrées de la zone filtrée, sous l'article : le texte
+                  verbatim du règlement + son article/page. Aide à la lecture (aucun calcul). */}
+              {d.exceptions_zone && d.exceptions_zone.length > 0 && (
+                <div data-plu-exceptions className="rounded-lg border border-amber/40 bg-amber/10 px-3 py-2">
+                  <div className="mb-1 text-[11px] font-medium text-amber">
+                    Exception{d.exceptions_zone.length > 1 ? 's' : ''} au règlement — zone {zone}
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    {d.exceptions_zone.map((e, i) => (
+                      <div key={i} className="text-[11px] leading-snug text-txt">
+                        <em>« {e.texte} »</em>
+                        {(e.article || e.page_pdf != null) && (
+                          <span className="text-txt-mut"> — {[e.article, e.page_pdf != null ? `p. ${e.page_pdf}` : null].filter(Boolean).join(' · ')}</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
               {/* O7(c) — chaque extrait : titre d'article en tête, un aperçu court (≈ 4 lignes) du
                   verbatim opposable, dépliable « voir l'article entier », puis les sources (page PDF,
                   archive GPU). Le champ « titre d'article » n'existe pas dans le payload → on affiche

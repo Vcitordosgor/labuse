@@ -826,6 +826,17 @@ export interface IcdBlock {
   cloisonnement: string
 }
 
+// PLU-EXCEPTIONS-1 — une exception au règlement, servie AVEC sa règle (id `<cle>.exception`).
+// `texte` = verbatim du règlement (jamais reformulé) ; `porte` = à quoi elle s'applique.
+export interface PluException {
+  id?: string
+  texte: string
+  article: string | null
+  page_pdf: number | null
+  porte: string | null
+  modifie_calcul?: boolean
+}
+
 export interface ReglementZone {
   zone: string
   calibree: boolean
@@ -842,7 +853,10 @@ export interface ReglementZone {
   articles: { regle: string; reference: string; page_imprimee: number | null; url: string | null }[]
   // RETOURS-11F3 F4 — les règles clés de la zone AVEC leurs valeurs (hauteur, emprise, reculs,
   // pleine terre, stationnement). etat : chiffre | texte | absent (« non réglementé ») | a_verifier.
-  regles_valeurs?: { cle: string; libelle: string; valeur: string | null; etat: string; reference: string | null; url: string | null }[]
+  // PLU-EXCEPTIONS-1 — exception au règlement d'une règle (cf. PluException plus bas).
+  regles_valeurs?: { cle: string; libelle: string; valeur: string | null; etat: string; reference: string | null; url: string | null
+    // PLU-EXCEPTIONS-1 — exceptions au règlement de la règle (texte verbatim + article + page + porte).
+    exceptions?: PluException[] }[]
   annuaire?: { insee: string | null; zone: string | null } | null   // M51 — deep-link outil O13
   note: string | null
   // DESTINATIONS-1 (X4.2) — ligne « Destinations » de la zone : résumé + dépliable 23 sous-destinations
@@ -880,6 +894,9 @@ export interface ReglementPlu extends Indisponible { zones: ReglementZone[]; dis
 export interface PotentielTransformation extends Indisponible {
   niveau: 'fort' | 'modere' | 'faible' | 'nul' | 'indetermine'
   libelle: string
+  // PLU-EXCEPTIONS-1 — exceptions du règlement qui POURRAIENT changer le calcul (à vérifier). Ne
+  // sont PAS appliquées ; renvoient vers §Urbanisme.
+  exceptions_calcul?: { regle: string; porte: string | null; article: string | null; page_pdf: number | null }[]
   pct_consomme: number | null
   pct_residuel: number | null
   sdp_residuelle_m2: number | null

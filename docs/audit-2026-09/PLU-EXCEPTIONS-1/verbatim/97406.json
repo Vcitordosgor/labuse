@@ -1,0 +1,200 @@
+[
+ {
+  "zone": "AUb",
+  "regle": "stationnement.par_logement",
+  "valeur_regle": "1.5 place(s)",
+  "article": "Ub 12.2 (renvoi annexe)",
+  "page_pdf": 103,
+  "texte": "- logement de moins de 30 m² : 1 place par logement … - logement de plus de 30 m² : 1,5 place par logement arrondi à l’entier inférieur pour l’ensemble de l’opération",
+  "porte": "majoration_conditionnelle",
+  "modifie_calcul": true,
+  "note": "AUb renvoie au règlement Ub (p.75 « se reporter au règlement de la zone U indiquée en indice »). Ub 12.2 (p.33) renvoie à l'annexe « NORMES DE STATIONNEMENT » (p.103) : la norme 1,5 place ne s'applique qu'aux logements > 30 m² ; les logements < 30 m² n'exigent qu'1 place."
+ },
+ {
+  "zone": "AUc",
+  "regle": "retraits.voie",
+  "valeur_regle": "4.0 m",
+  "article": "Uc 6.3",
+  "page_pdf": 39,
+  "texte": "6.3 - Exception Des implantations différentes de celles définies ci-dessus peuvent être autorisées : - pour les saillies (balcons, éléments de modénature, débords de toiture, descente d’eaux pluviales et autres aménagements de façade à l’exception des emmarchements) dans la marge d’isolement par rapport au nu des façades et des toitures sur un débord maximum de 0,40 mètre.",
+  "porte": "exclusion_generique",
+  "modifie_calcul": false,
+  "note": "AUc renvoie au règlement Uc (p.75). Exception Uc 6.3 (p.39-40) : carve-outs standard (saillies 0,40 m, travaux sur existant non conforme, équipements techniques, services publics/intérêt collectif alignement ou retrait libre, élément bâti protégé, piscines non couvertes)."
+ },
+ {
+  "zone": "AUc",
+  "regle": "stationnement.par_logement",
+  "valeur_regle": "1.5 place(s)",
+  "article": "Uc 12.2 (renvoi annexe)",
+  "page_pdf": 103,
+  "texte": "- logement de moins de 30 m² : 1 place par logement … - logement de plus de 30 m² : 1,5 place par logement arrondi à l’entier inférieur pour l’ensemble de l’opération",
+  "porte": "majoration_conditionnelle",
+  "modifie_calcul": true,
+  "note": "AUc renvoie au règlement Uc (p.75). Uc 12.2 (p.45) renvoie à l'annexe « NORMES DE STATIONNEMENT » (p.103) : la norme 1,5 place ne s'applique qu'aux logements > 30 m² ; les logements < 30 m² n'exigent qu'1 place."
+ },
+ {
+  "zone": "AUe",
+  "regle": "retraits.limites_separatives",
+  "valeur_regle": "3.5 m",
+  "article": "Ue 7.3",
+  "page_pdf": 64,
+  "texte": "7.3 - Exception Des implantations différentes de celles définies ci-dessus peuvent être autorisées : - pour les saillies (balcons, éléments de modénature, débords de toiture, descente d’eaux pluviales et autres aménagements de façade à l’exception des emmarchements) dans la marge d’isolement par rapport au nu des façades et des toitures sur un débord maximum de 0,40 mètre.",
+  "porte": "exclusion_generique",
+  "modifie_calcul": false,
+  "note": "AUe renvoie au règlement Ue (p.75). Exception Ue 7.3 (p.64) : carve-outs standard (saillies 0,40 m, travaux sur existant non conforme, équipements techniques, services publics/intérêt collectif retrait < 3,50 m). La règle 7.2 admet aussi l'implantation « au maximum sur deux limites séparatives », le 3,50 m ne valant qu'en cas de retrait."
+ },
+ {
+  "zone": "AUe",
+  "regle": "retraits.voie",
+  "valeur_regle": "3.0 m",
+  "article": "Ue 6.3",
+  "page_pdf": 63,
+  "texte": "6.3 - Exception Des implantations différentes de celles définies ci-dessus peuvent être autorisées : - pour les saillies (balcons, éléments de modénature, débords de toiture, descente d’eaux pluviales et autres aménagements de façade à l’exception des emmarchements) dans la marge d’isolement par rapport au nu des façades et des toitures sur un débord maximum de 0,40 mètre.",
+  "porte": "exclusion_generique",
+  "modifie_calcul": false,
+  "note": "AUe renvoie au règlement Ue (p.75). Exception Ue 6.3 (p.63-64) : carve-outs standard (saillies 0,40 m, travaux sur existant non conforme, équipements techniques, services publics/intérêt collectif alignement ou retrait libre)."
+ },
+ {
+  "zone": "AUr",
+  "regle": "retraits.limites_separatives",
+  "valeur_regle": "3.5 m",
+  "article": "Ur 7.3",
+  "page_pdf": 52,
+  "texte": "7.3 - Exception Des implantations différentes de celles définies ci-dessus peuvent être autorisées : - pour les saillies (balcons, éléments de modénature, débords de toiture, descente d’eaux pluviales et autres aménagements de façade à l’exception des emmarchements) dans la marge d’isolement par rapport au nu des façades et des toitures sur un débord maximum de 0,40 mètre,",
+  "porte": "exclusion_generique",
+  "modifie_calcul": false,
+  "note": "AUr renvoie au règlement Ur (p.75). Exception Ur 7.3 (p.52) : carve-outs standard (saillies 0,40 m, travaux sur existant non conforme, équipements techniques, services publics/intérêt collectif retrait < 3,50 m, élément bâti protégé, piscines non couvertes)."
+ },
+ {
+  "zone": "AUr",
+  "regle": "retraits.voie",
+  "valeur_regle": "5.0 m",
+  "article": "Ur 6.3",
+  "page_pdf": 51,
+  "texte": "6.3 - Exception Des implantations différentes de celles définies ci-dessus peuvent être autorisées : - pour les saillies (balcons, éléments de modénature, débords de toiture, descente d’eaux pluviales et autres aménagements de façade à l’exception des emmarchements) dans la marge d’isolement par rapport au nu des façades et des toitures sur un débord maximum de 0,40 mètre.",
+  "porte": "exclusion_generique",
+  "modifie_calcul": false,
+  "note": "AUr renvoie au règlement Ur (p.75). Exception Ur 6.3 (p.51-52) : carve-outs standard (saillies 0,40 m, travaux sur existant non conforme, équipements techniques, services publics/intérêt collectif alignement ou retrait libre, élément bâti protégé, piscines non couvertes)."
+ },
+ {
+  "zone": "AUr",
+  "regle": "stationnement.par_logement",
+  "valeur_regle": "1.5 place(s)",
+  "article": "Ur 12.2 (renvoi annexe)",
+  "page_pdf": 103,
+  "texte": "- logement de moins de 30 m² : 1 place par logement … - logement de plus de 30 m² : 1,5 place par logement arrondi à l’entier inférieur pour l’ensemble de l’opération",
+  "porte": "majoration_conditionnelle",
+  "modifie_calcul": true,
+  "note": "AUr renvoie au règlement Ur (p.75). Ur 12.2 (p.57) renvoie à l'annexe « NORMES DE STATIONNEMENT » (p.103) : la norme 1,5 place ne s'applique qu'aux logements > 30 m² ; les logements < 30 m² n'exigent qu'1 place."
+ },
+ {
+  "zone": "Ua",
+  "regle": "retraits.limites_separatives",
+  "valeur_regle": "3.5 m",
+  "article": "Ua 7.2",
+  "page_pdf": 16,
+  "texte": "Les constructions peuvent être implantées au maximum sur deux limites séparatives. Toutefois, en cas d’implantation sur la limite de fond de parcelle, la construction ne peut être implantée que sur une seule limite séparative latérale et elle doit respecter un retrait minimal de 3,50 mètres par rapport aux angles du terrain joignant les limites séparatives latérales.",
+  "porte": "autre",
+  "modifie_calcul": true,
+  "note": "porte:autre — la règle Ua 7.2 (p.16) autorise l'implantation en limite (jusqu'à deux limites), le 3,50 m ne s'appliquant qu'en cas de retrait ; règle particulière de retrait 3,50 m « par rapport aux angles » en cas d'implantation en fond de parcelle. Ne relève pas d'un simple carve-out : modifie la géométrie de l'enveloppe d'une parcelle ordinaire. (Ua 7.3 p.16-17 ajoute par ailleurs les carve-outs standard saillies/travaux/équipements/intérêt collectif/piscines.)"
+ },
+ {
+  "zone": "Ua",
+  "regle": "stationnement.par_logement",
+  "valeur_regle": "1.5 place(s)",
+  "article": "Ua 12.2 (renvoi annexe)",
+  "page_pdf": 103,
+  "texte": "- logement de moins de 30 m² : 1 place par logement … - logement de plus de 30 m² : 1,5 place par logement arrondi à l’entier inférieur pour l’ensemble de l’opération",
+  "porte": "majoration_conditionnelle",
+  "modifie_calcul": true,
+  "note": "Ua 12.2 (p.21) renvoie à l'annexe « NORMES DE STATIONNEMENT » (p.103) : la norme 1,5 place ne s'applique qu'aux logements > 30 m² ; les logements < 30 m² n'exigent qu'1 place."
+ },
+ {
+  "zone": "Ub",
+  "regle": "stationnement.par_logement",
+  "valeur_regle": "1.5 place(s)",
+  "article": "Ub 12.2 (renvoi annexe)",
+  "page_pdf": 103,
+  "texte": "- logement de moins de 30 m² : 1 place par logement … - logement de plus de 30 m² : 1,5 place par logement arrondi à l’entier inférieur pour l’ensemble de l’opération",
+  "porte": "majoration_conditionnelle",
+  "modifie_calcul": true,
+  "note": "Ub 12.2 (p.33) renvoie à l'annexe « NORMES DE STATIONNEMENT » (p.103) : la norme 1,5 place ne s'applique qu'aux logements > 30 m² ; les logements < 30 m² n'exigent qu'1 place."
+ },
+ {
+  "zone": "Uc",
+  "regle": "retraits.voie",
+  "valeur_regle": "4.0 m",
+  "article": "Uc 6.3",
+  "page_pdf": 39,
+  "texte": "6.3 - Exception Des implantations différentes de celles définies ci-dessus peuvent être autorisées : - pour les saillies (balcons, éléments de modénature, débords de toiture, descente d’eaux pluviales et autres aménagements de façade à l’exception des emmarchements) dans la marge d’isolement par rapport au nu des façades et des toitures sur un débord maximum de 0,40 mètre.",
+  "porte": "exclusion_generique",
+  "modifie_calcul": false,
+  "note": "Exception Uc 6.3 (p.39-40) : carve-outs standard (saillies 0,40 m, travaux sur existant non conforme, équipements techniques, services publics/intérêt collectif alignement ou retrait libre, élément bâti protégé, piscines non couvertes)."
+ },
+ {
+  "zone": "Uc",
+  "regle": "stationnement.par_logement",
+  "valeur_regle": "1.5 place(s)",
+  "article": "Uc 12.2 (renvoi annexe)",
+  "page_pdf": 103,
+  "texte": "- logement de moins de 30 m² : 1 place par logement … - logement de plus de 30 m² : 1,5 place par logement arrondi à l’entier inférieur pour l’ensemble de l’opération",
+  "porte": "majoration_conditionnelle",
+  "modifie_calcul": true,
+  "note": "Uc 12.2 (p.45) renvoie à l'annexe « NORMES DE STATIONNEMENT » (p.103) : la norme 1,5 place ne s'applique qu'aux logements > 30 m² ; les logements < 30 m² n'exigent qu'1 place."
+ },
+ {
+  "zone": "Ue",
+  "regle": "retraits.limites_separatives",
+  "valeur_regle": "3.5 m",
+  "article": "Ue 7.3",
+  "page_pdf": 64,
+  "texte": "7.3 - Exception Des implantations différentes de celles définies ci-dessus peuvent être autorisées : - pour les saillies (balcons, éléments de modénature, débords de toiture, descente d’eaux pluviales et autres aménagements de façade à l’exception des emmarchements) dans la marge d’isolement par rapport au nu des façades et des toitures sur un débord maximum de 0,40 mètre.",
+  "porte": "exclusion_generique",
+  "modifie_calcul": false,
+  "note": "Exception Ue 7.3 (p.64) : carve-outs standard (saillies 0,40 m, travaux sur existant non conforme, équipements techniques, services publics/intérêt collectif retrait < 3,50 m). La règle 7.2 admet aussi l'implantation « au maximum sur deux limites séparatives », le 3,50 m ne valant qu'en cas de retrait."
+ },
+ {
+  "zone": "Ue",
+  "regle": "retraits.voie",
+  "valeur_regle": "3.0 m",
+  "article": "Ue 6.3",
+  "page_pdf": 63,
+  "texte": "6.3 - Exception Des implantations différentes de celles définies ci-dessus peuvent être autorisées : - pour les saillies (balcons, éléments de modénature, débords de toiture, descente d’eaux pluviales et autres aménagements de façade à l’exception des emmarchements) dans la marge d’isolement par rapport au nu des façades et des toitures sur un débord maximum de 0,40 mètre.",
+  "porte": "exclusion_generique",
+  "modifie_calcul": false,
+  "note": "Exception Ue 6.3 (p.63) : carve-outs standard (saillies 0,40 m, travaux sur existant non conforme, équipements techniques, services publics/intérêt collectif alignement ou retrait libre)."
+ },
+ {
+  "zone": "Ur",
+  "regle": "retraits.limites_separatives",
+  "valeur_regle": "3.5 m",
+  "article": "Ur 7.3",
+  "page_pdf": 52,
+  "texte": "7.3 - Exception Des implantations différentes de celles définies ci-dessus peuvent être autorisées : - pour les saillies (balcons, éléments de modénature, débords de toiture, descente d’eaux pluviales et autres aménagements de façade à l’exception des emmarchements) dans la marge d’isolement par rapport au nu des façades et des toitures sur un débord maximum de 0,40 mètre,",
+  "porte": "exclusion_generique",
+  "modifie_calcul": false,
+  "note": "Exception Ur 7.3 (p.52) : carve-outs standard (saillies 0,40 m, travaux sur existant non conforme, équipements techniques, services publics/intérêt collectif retrait < 3,50 m, élément bâti protégé, piscines non couvertes)."
+ },
+ {
+  "zone": "Ur",
+  "regle": "retraits.voie",
+  "valeur_regle": "5.0 m",
+  "article": "Ur 6.3",
+  "page_pdf": 51,
+  "texte": "6.3 - Exception Des implantations différentes de celles définies ci-dessus peuvent être autorisées : - pour les saillies (balcons, éléments de modénature, débords de toiture, descente d’eaux pluviales et autres aménagements de façade à l’exception des emmarchements) dans la marge d’isolement par rapport au nu des façades et des toitures sur un débord maximum de 0,40 mètre.",
+  "porte": "exclusion_generique",
+  "modifie_calcul": false,
+  "note": "Exception Ur 6.3 (p.51-52) : carve-outs standard (saillies 0,40 m, travaux sur existant non conforme, équipements techniques, services publics/intérêt collectif alignement ou retrait libre, élément bâti protégé, piscines non couvertes)."
+ },
+ {
+  "zone": "Ur",
+  "regle": "stationnement.par_logement",
+  "valeur_regle": "1.5 place(s)",
+  "article": "Ur 12.2 (renvoi annexe)",
+  "page_pdf": 103,
+  "texte": "- logement de moins de 30 m² : 1 place par logement … - logement de plus de 30 m² : 1,5 place par logement arrondi à l’entier inférieur pour l’ensemble de l’opération",
+  "porte": "majoration_conditionnelle",
+  "modifie_calcul": true,
+  "note": "Ur 12.2 (p.57) renvoie à l'annexe « NORMES DE STATIONNEMENT » (p.103) : la norme 1,5 place ne s'applique qu'aux logements > 30 m² ; les logements < 30 m² n'exigent qu'1 place."
+ }
+]

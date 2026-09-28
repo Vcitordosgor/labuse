@@ -1,0 +1,13 @@
+[
+ {
+  "zone": "UA",
+  "regle": "hauteur.egout",
+  "valeur_regle": "12.0 m",
+  "article": "U 10.2",
+  "page_pdf": 15,
+  "texte": "Dans le secteur UA1, la hauteur maximale des constructions est limitée à 7 mètres à l’égout du toit ou au sommet de l’acrotère, sans dépasser R+1.",
+  "porte": "sous_secteur",
+  "modifie_calcul": true,
+  "note": null
+ }
+]
