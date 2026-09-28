@@ -310,7 +310,7 @@ def _regles_et_pieces(db: Session, idu: str, scen: dict | None = None) -> bytes:
         for e in (dispo.get("ebc") or []):
             servitudes.append(f"Espace boisé classé : {e.get('libelle') or 'EBC'} — "
                               f"{e.get('part_pct')} % de la parcelle (construction interdite "
-                              "sur l'emprise boisée, art. L113-1 CU)")
+                              "sur l'emprise boisée classée, art. L113-1 et L113-2 CU)")
         dpu = dispo.get("dpu") or {}
         if dpu.get("etat") == "servi":
             servitudes.append(("Droit de préemption urbain renforcé" if dpu.get("statut") == "renforce"
@@ -357,8 +357,9 @@ def _regles_et_pieces(db: Session, idu: str, scen: dict | None = None) -> bytes:
             extra += (f"<h2>Fiscalité de l'opération</h2><table>"
                       f"<tr><td>Taxe d'aménagement</td><td>{ta_txt} — se calcule sur la surface de "
                       f"plancher créée par le projet (chiffrée au Dossier financier)</td></tr>"
-                      f"<tr><td>Redevance d'archéologie préventive</td><td>0,68 €/m² de surface "
-                      f"créée (art. L524-7 du Code du patrimoine) — chiffrée sur la SDP du projet</td></tr></table>")
+                      f"<tr><td>Redevance d'archéologie préventive</td><td>0,40 % de l'assiette de "
+                      f"la taxe d'aménagement pour les travaux soumis à permis (CGI, gestion DGFiP "
+                      f"depuis l'ordonnance 2022-883) — chiffrée sur la SDP du projet, au Dossier financier</td></tr></table>")
     except Exception:  # noqa: BLE001 — enrichissement optionnel, ne casse pas la fiche
         pass
     # FAISABILITE-3 (Lot C) — le pré-dossier PC lit LE MÊME appel de faisabilité (faisabilite_scenario)
@@ -833,8 +834,10 @@ def _pcmi4(db: Session, idu: str, parcelle: dict, adr: dict | None = None,
                            "intégrer au projet.", "DEAL Réunion — PPR (Géorisques)"))
         elif any(k in lab for k in ("bruit", "sonore")):
             lignes.append(("Bruit",
-                           f"{it['label']} : {it.get('detail') or ''} Isolement acoustique renforcé "
-                           "obligatoire en catégorie élevée (art. R.571-32 du Code de l'environnement).",
+                           f"{it['label']} : {it.get('detail') or ''} Isolement acoustique minimal "
+                           "réglementaire obligatoire pour tout bâtiment situé dans un secteur affecté "
+                           "par le bruit (art. R.571-43 du Code de l'environnement et arrêté du 30 mai "
+                           "1996) ; le niveau requis dépend de la catégorie de classement de l'infrastructure.",
                            "Cerema — classement sonore des infrastructures"))
     if (data.get("patrimoine") or {}).get("abf"):
         noms = ", ".join(m.get("name") or "monument" for m in data["patrimoine"]["abf"])
