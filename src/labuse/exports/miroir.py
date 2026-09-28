@@ -934,12 +934,17 @@ def cover_dossier(idu: str, fiche: dict, numero: str, jour, valeurs: dict[str, V
     tuiles_html = []
     _zone = valeurs.get("zone_plu_famille")
     _zone_v = str(_zone.valeur).upper() if _zone is not None and _zone.valeur is not None else ""
+    # EXPORTS-FIX-1 F2 — le CODE COMPLET de zone (« U5b »), comme au §4, jamais la famille tronquée « U ».
+    _reg = valeurs.get("reglement_plu_bloc")
+    _zone_code = (_reg.valeur.get("zone") if _reg is not None and isinstance(_reg.valeur, dict) else None)
     for cid, lib, fmt in _COVER_TUILES:
         v = valeurs.get(cid)
         try:
             aff = fmt(v.valeur) if v is not None and v.valeur is not None else None
         except (TypeError, ValueError, KeyError):
             aff = None
+        if cid == "zone_plu_famille" and _zone_code:
+            aff = esc(_zone_code)
         # EXPORTS-FIX-1 C7 — SDP en zone A/N : « 0 m² — zone A » (arbitrage Q6), jamais « — ».
         if aff is None and cid == "sdp_residuelle_m2" and _zone_v in ("A", "N"):
             aff = f'0 m² — zone {esc(_zone_v)}'
@@ -966,7 +971,9 @@ def cover_dossier(idu: str, fiche: dict, numero: str, jour, valeurs: dict[str, V
     return (
         '<div class="cover">'
         '<div class="kicker">Dossier parcelle</div>'
-        f'<h1>{esc(idu)}</h1>'
+        # EXPORTS-FIX-1 F4 — l'IDU en police MONO (chiffre 0 pointé, distinct du O), jamais en
+        # SpaceGrotesk où « EO0796 » se lit « E00796 ».
+        f'<h1 class="idu-code">{esc(idu)}</h1>'
         + (f'<p class="address">{esc_noms(adresse)}</p>' if adresse else "")
         + f'<p class="idu">{esc(commune)}</p>'
         '<div class="gm-meta">'

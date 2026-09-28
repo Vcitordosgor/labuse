@@ -22,7 +22,9 @@
 
 @page {
   size: A4;
-  margin: 17mm 16mm 19mm 16mm;
+  /* EXPORTS-FIX-1 F1 — marge basse portée à 24 mm (au lieu de 19) : bande réservée pour la mention
+     d'attribution fixe (bottom:8 mm), le corps s'arrête plus haut → plus de chevauchement (p.2, p.5…). */
+  margin: 17mm 16mm 24mm 16mm;
   @top-left { content: string(doc-title); font: 8pt "Inter", "Inter", "DejaVu Sans", sans-serif; color: #6B746E; }
   @top-right { content: string(doc-ref); font: 8pt "IBM Plex Mono", "DejaVu Sans Mono", monospace; color: #6B746E; }
   @bottom-left { content: string(doc-foot); font: 7.2pt "Inter", "DejaVu Sans", sans-serif; color: #6B746E; width: 150mm; }
@@ -62,6 +64,10 @@ h1 { font-size: 24pt; line-height: 1.15; font-weight: 700; margin: 0 0 4pt; lett
    (24 pt cassait « …97417 / Saint-Denis » au milieu) ; elle tient sur une ligne pour une adresse
    réunionnaise courante, le code postal restant lié à la commune (U+00A0, builder). */
 h1.addr-compacte { font-size: 15pt; line-height: 1.2; }
+/* EXPORTS-FIX-1 F4 — l'IDU en tête de garde : police MONO (chiffre 0 pointé de JetBrains Mono,
+   distinct du O), sans crénage négatif, pour que « 97415000EO0796 » ne se lise pas « …E00796 ». */
+h1.idu-code { font-family: "IBM Plex Mono", "DejaVu Sans Mono", monospace; font-size: 20pt;
+              letter-spacing: 0; font-feature-settings: "zero" 1; }
 .subtitle { font-size: 11pt; color: var(--muted); margin: 0 0 18pt; }
 .address { font-size: 14pt; margin: 0 0 2pt; }
 .idu { font-family: "IBM Plex Mono", "DejaVu Sans Mono", monospace; font-size: 9.5pt; color: var(--muted); margin-bottom: 16pt; }

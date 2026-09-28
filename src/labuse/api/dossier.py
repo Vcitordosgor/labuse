@@ -96,8 +96,14 @@ def dossier_pdf(idu: str, request: Request, carte: bool = True,
         raise HTTPException(404, str(exc))
     res = builder.construire(db, idu, "dossier", fiche=fiche, compte_id=current_compte(request))
     _pour = "" if (s.raison_sociale or "").strip() in ("", "Pilote LABUSE") else f" pour {s.raison_sociale}"
-    mention = (f'<div style="position:fixed;bottom:2mm;right:0;font-size:7pt;color:#5F6C65;'
-               f'font-family:Inter,sans-serif;">Généré via LABUSE{_pour}</div>')
+    # EXPORTS-FIX-1 F1 — la mention d'attribution CHEVAUCHAIT la dernière ligne du corps sur les
+    # pages pleines (p.2, p.5…). Dans ce WeasyPrint, seuls les <div position:fixed> et le compteur de
+    # page se rendent (les blocs de marge `string()`/`element()` sont inertes). On garde donc le div
+    # fixe MAIS la marge basse @page est agrandie (theme.css : 19 → 24 mm) : le corps s'arrête plus
+    # haut, la mention vit dans la bande réservée du bas, sans recouvrement possible.
+    from ..exports.rendu import esc as _esc
+    mention = ('<div style="position:fixed;bottom:8mm;right:0;font-size:7pt;color:#5F6C65;'
+               f'font-family:Inter,sans-serif;">Généré via LABUSE{_esc(_pour)}</div>')
     pdf = render_pdf(res.html.replace("</body>", mention + "</body>"))
 
     from .protection import _aujourdhui

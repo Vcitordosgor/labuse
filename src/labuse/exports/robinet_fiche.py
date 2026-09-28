@@ -661,6 +661,15 @@ def _gabarit(db, idu: str) -> dict:
             per[idu] = out
             return out
         res = compute_gabarit(build.input)
+        # EXPORTS-FIX-1 F5 — le bâti EXISTANT (fait contextuel BD TOPO, GABARIT-6 P4) n'est peuplé que
+        # par l'endpoint outil ; on l'attache ici aussi pour que le schéma du Dossier le montre (comme
+        # l'outil), plutôt qu'une parcelle nue. Best-effort : jamais un bloqueur du document.
+        try:
+            from ..api.gabarit import _bati_existant
+            if res.status == "ok" and res.batiExistantGeoJSON is None:
+                res.batiExistantGeoJSON = _bati_existant(db, idu)
+        except Exception:  # noqa: BLE001
+            pass
         if res.status != "ok":
             errs = res.validationErrors or ([res.message] if res.message else [])
             out["motif"] = errs[0] if errs else None

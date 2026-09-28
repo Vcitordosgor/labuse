@@ -74,7 +74,7 @@ def build_situation_map(parcel_geojson: str, cache_dir: Path, timeout_s: float =
                         tile_url: str = TILE_URL, tile_mime: str = "image/png",
                         cache_prefix: str = "osm", attribution: str = ATTRIBUTION,
                         zoom_delta: int = 0, extra_geojson: str | None = None,
-                        focus_points: list | None = None) -> dict | None:
+                        focus_points: list | None = None, zoom_max: int | None = None) -> dict | None:
     """Prépare la carte de situation : tuiles positionnées + tracé SVG de la parcelle.
 
     Retourne un dict prêt pour le template (tiles, polygones en px, dimensions,
@@ -96,14 +96,18 @@ def build_situation_map(parcel_geojson: str, cache_dir: Path, timeout_s: float =
         bbox = (min(lons), min(lats), max(lons), max(lats))
 
         # Zoom le plus serré où la parcelle tient dans ~55 % de la vue (contexte autour).
+        # EXPORTS-FIX-1 F3 — `zoom_max` (par défaut ZOOM_MAX=18) : les documents parcelle (Dossier /
+        # Apporteur) l'élèvent à 19 (max servi par l'ortho IGN) pour qu'une PETITE parcelle (479 m²)
+        # ne reste pas « un point » — le zoom se cale sur la parcelle, quelle que soit sa taille.
+        _zmax = ZOOM_MAX if zoom_max is None else min(ZOOM_MAX + 2, zoom_max)
         zoom = ZOOM_MIN
-        for z in range(ZOOM_MAX, ZOOM_MIN - 1, -1):
+        for z in range(_zmax, ZOOM_MIN - 1, -1):
             x0, y1 = _lonlat_to_px(bbox[0], bbox[1], z)
             x1, y0 = _lonlat_to_px(bbox[2], bbox[3], z)
             if (x1 - x0) <= VIEW_W * 0.55 and (y1 - y0) <= VIEW_H * 0.55:
                 zoom = z
                 break
-        zoom = max(ZOOM_MIN, min(ZOOM_MAX, zoom + zoom_delta))    # M129 : décalage ensemble/rapprochée
+        zoom = max(ZOOM_MIN, min(_zmax, zoom + zoom_delta))    # M129 : décalage ensemble/rapprochée
 
         cx, cy = _lonlat_to_px((bbox[0] + bbox[2]) / 2, (bbox[1] + bbox[3]) / 2, zoom)
         left, top = cx - VIEW_W / 2, cy - VIEW_H / 2

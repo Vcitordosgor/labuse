@@ -376,7 +376,11 @@ def _apporteur_plan(db, idu: str, voisines: dict) -> dict | None:
     try:
         from ..api.plan_situation import plan_ortho
         from ..flash.report import storage_dir
-        res = plan_ortho(gj, cache_dir=storage_dir() / "tiles", extra_geojson=extra, zoom_delta=-1)
+        # EXPORTS-FIX-1 F3 — le plan se CALE sur la parcelle : zoom auto (plus de « −1 » qui la
+        # rétrécissait) et plafond relevé à 19 (max ortho IGN) pour qu'une petite parcelle (479 m²)
+        # ne reste pas un point. Même appel pour le Dossier (§1) et l'Apporteur.
+        res = plan_ortho(gj, cache_dir=storage_dir() / "tiles", extra_geojson=extra,
+                         zoom_delta=0, zoom_max=19)
     except Exception:  # noqa: BLE001 — la carte est un plus, jamais un bloqueur du document
         return None
     if not res.get("ok"):
