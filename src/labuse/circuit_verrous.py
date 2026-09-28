@@ -893,11 +893,26 @@ def verrou_coherence_banc(db=None) -> ResultatVerrou:
             golden_note = " · golden non posé (labuse coherence --accepter)"
     except Exception as e:  # noqa: BLE001
         pbs.append(f"golden injouable : {type(e).__name__}: {e}")
+    # 5. PRE-DEPLOY-1 (lot C) — LE MANIFESTE NE MENT PAS : `config/served_manifest.json` reflète le
+    # servi en base (résiduel is_served, scoring = served_run.txt). C'est le contrôle qui aurait
+    # attrapé « manifeste run 8 ↔ is_served run 10 » (7ae2c2b7). Même prédicat que /sante/fraicheur.
+    manifeste_note = ""
+    try:
+        from .db import session_scope
+        from .fraicheur_caches import _etat_manifeste
+        with session_scope() as _s:
+            em = _etat_manifeste(_s)
+        if em.get("perime"):
+            pbs.append(f"manifeste servi menteur : {em.get('detail')}")
+        else:
+            manifeste_note = " · manifeste = servi en base"
+    except Exception as e:  # noqa: BLE001
+        pbs.append(f"contrôle manifeste injouable : {type(e).__name__}: {e}")
     if pbs:
         return ResultatVerrou("V6b", PHRASES["V6b"], "casse", f"{len(pbs)} problème(s)", pbs[:40])
     return ResultatVerrou("V6b", PHRASES["V6b"], "ok",
                           f"{len(CHECKS_P)} checks parcelle + {len(CHECKS_C)} commune bien formés, "
-                          f"vocabulaire d'absence 5 formes, registre couvert{golden_note}")
+                          f"vocabulaire d'absence 5 formes, registre couvert{golden_note}{manifeste_note}")
 
 
 def verrou_regles_citations(db=None) -> ResultatVerrou:

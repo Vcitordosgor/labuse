@@ -213,12 +213,109 @@ def _etat_ia_cache(db, courte: str) -> dict:
             "remede": "aucun (auto-clé)"}
 
 
+def _etat_manifeste(db) -> dict:
+    """PRE-DEPLOY-1 (lot C) — LE MANIFESTE NE PEUT PLUS MENTIR. `config/served_manifest.json` (le
+    fichier COMMITÉ) doit refléter CE QUI EST RÉELLEMENT SERVI en base. On confronte :
+      · résiduel : `residuel_run_seq` (miroir du manifeste) vs `residuel_runs.is_served` (LA vérité,
+        ALGO-FIX-1 point 1) — c'est le bug fondateur « manifeste run 8 ↔ is_served run 10 » (7ae2c2b7) ;
+      · scoring : `scoring_run` (manifeste) vs sa vue dérivée `config/served_run.txt` (write partiel).
+    Un écart = PÉRIMÉ (rouge page Données, échec `rebuild --dry-run` = fumée du déploiement, échec V6b).
+
+    GARDE base de test : on ne crie au loup QUE si le run résiduel du manifeste EXISTE dans cette base
+    (sur un poste de test, le manifeste pointe des runs de prod absents → on n'est pas sur la base
+    servie, rien à comparer). Le bug réel (8 ↔ 10) a les DEUX runs présents → attrapé."""
+    from . import manifeste as _manifeste
+    from .bascule_flux import _residuel_seq_servi
+    ecarts: list[str] = []
+    m = _manifeste.lire()
+    if m is None:
+        return {"cache": "served_manifest.json (pointeur servi)", "perime": True,
+                "porte_sur": "aucun manifeste", "cle_attendue": "présent", "cle_reelle": "absent",
+                "detail": "manifeste absent (jamais posé) — le run servi n'est pas traçable",
+                "remede": "labuse golden promote <run> (ou residuel-serve) pose le manifeste"}
+    seq_manifeste = m.get("residuel_run_seq")
+    seq_servi = _residuel_seq_servi(db)
+    # le run du manifeste existe-t-il dans CETTE base ? (sinon : base de test/dev, pas la servie)
+    manifeste_ici = False
+    if seq_manifeste is not None:
+        try:
+            manifeste_ici = bool(db.execute(text(
+                "SELECT 1 FROM residuel_runs WHERE run_seq = :s"), {"s": seq_manifeste}).scalar())
+        except Exception:  # noqa: BLE001 — table absente (base nue) : rien à comparer
+            manifeste_ici = False
+    if seq_servi is not None and manifeste_ici and seq_manifeste != seq_servi:
+        ecarts.append(f"résiduel : manifeste seq {seq_manifeste} ≠ is_served seq {seq_servi} (base)")
+    # scoring : le manifeste et sa vue dérivée served_run.txt doivent coïncider (write atomique).
+    try:
+        from . import runs as _runs
+        fichier_scoring = _runs._lire_fichier()
+        if m.get("scoring_run") and m["scoring_run"] != fichier_scoring:
+            ecarts.append(f"scoring : manifeste « {m['scoring_run']} » ≠ served_run.txt « {fichier_scoring} »")
+    except Exception:  # noqa: BLE001 — served_run.txt illisible : non bloquant ici
+        pass
+    perime = bool(ecarts)
+    return {"cache": "served_manifest.json (pointeur servi)",
+            "porte_sur": f"scoring={m.get('scoring_run')}, résiduel seq{seq_manifeste}",
+            "cle_attendue": f"is_served seq{seq_servi} · served_run.txt",
+            "cle_reelle": " ; ".join(ecarts) if perime else "aligné sur le servi en base",
+            "perime": perime,
+            "detail": (" ; ".join(ecarts)) if perime else "manifeste = servi en base (aligné)",
+            "remede": "réécrire config/served_manifest.json (residuel-serve/golden promote le font) "
+                      "puis committer le fichier"}
+
+
+def _etat_intersections(db) -> dict:
+    """PRE-DEPLOY-1 (lot D) — `parcel_couche_intersection` (servitudes matérialisées, VITESSE-FIX-1) :
+    complète / partielle / vide / absente + nombre de lignes, couches, parcelles, date de build.
+
+    NON bloquant (`perime` False) : un manque n'est PAS une erreur — les lecteurs (fiche, Gabarit)
+    REPASSENT au calcul au vol, à résultat IDENTIQUE, juste plus lent (`couche_intersection.fraiche`).
+    Mais on le DIT (page Données, fumée du déploiement) pour qu'une table incomplète ne passe jamais
+    inaperçue. Reconstruite par `labuse build-intersections` (geste de Vic) ou `labuse rebuild`."""
+    from . import couche_intersection as _ci
+    statut, n, n_couches, n_parcelles, date = "absente", 0, 0, 0, None
+    try:
+        if db.execute(text(f"SELECT to_regclass('{_ci.TABLE}')")).scalar():
+            row = db.execute(text(
+                f"SELECT count(*), count(DISTINCT layer_id), count(DISTINCT parcel_id) "
+                f"FROM {_ci.TABLE}")).first()
+            n, n_couches, n_parcelles = int(row[0]), int(row[1]), int(row[2])
+            if db.execute(text(f"SELECT to_regclass('{_ci._META}')")).scalar():
+                date = db.execute(text(
+                    f"SELECT to_char(max(updated_at),'YYYY-MM-DD HH24:MI') FROM {_ci._META}")).scalar()
+            if n and _ci.fraiche(db):
+                statut = "complète"
+            elif n:
+                statut = "partielle"      # présente mais sources changées (périmée vs fraîcheur)
+            else:
+                statut = "vide"
+    except Exception as e:  # noqa: BLE001
+        try:
+            db.rollback()
+        except Exception:  # noqa: BLE001
+            pass
+        return {"cache": "parcel_couche_intersection (servitudes)", "perime": False,
+                "statut": "erreur", "detail": str(e)[:120],
+                "remede": "labuse build-intersections"}
+    detail = {"complète": f"{n} intersections · {n_couches} couches · {n_parcelles} parcelles · le {date or '?'}",
+              "partielle": f"{n} lignes mais sources SERVITUDES changées (calcul au vol) · le {date or '?'}",
+              "vide": "table présente mais VIDE (calcul au vol)",
+              "absente": "table absente — jamais construite (calcul au vol, correct mais lent)"}[statut]
+    return {"cache": "parcel_couche_intersection (servitudes)",
+            "porte_sur": f"{n} intersections · {n_couches} couches · {n_parcelles} parcelles",
+            "cle_attendue": "servitudes alignées (fraiche)", "cle_reelle": statut,
+            "perime": False, "statut": statut, "date": date, "n": n,
+            "n_couches": n_couches, "n_parcelles": n_parcelles, "detail": detail,
+            "remede": "labuse build-intersections (geste de Vic) ou labuse rebuild — calcul au vol si absente"}
+
+
 def etat(db) -> dict:
     """L'ÉTAT DE FRAÎCHEUR de chaque cache : clé attendue / clé réelle / périmé. Servi par
     `/sante/fraicheur`, affiché page Données, joué par `labuse rebuild --dry-run` (fumée)."""
     attendue = empreinte_attendue(db)
-    caches = [_etat_commune_cache(db, attendue), _etat_tuiles(db), _etat_tile_cache(db),
-              _etat_spatial_sub(db), _etat_ia_cache(db, empreinte_courte(db))]
+    caches = [_etat_manifeste(db), _etat_commune_cache(db, attendue), _etat_tuiles(db),
+              _etat_tile_cache(db), _etat_spatial_sub(db), _etat_ia_cache(db, empreinte_courte(db)),
+              _etat_intersections(db)]
     return {"empreinte_attendue": attendue,
             "perimes": [c["cache"] for c in caches if c.get("perime")],
             "caches": caches}

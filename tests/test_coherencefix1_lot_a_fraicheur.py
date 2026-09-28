@@ -139,6 +139,78 @@ def test_etat_liste_les_perimes(monkeypatch):
                         lambda db: {"cache": "spatial_layers_sub", "perime": False})
     monkeypatch.setattr(fraicheur_caches, "_etat_ia_cache",
                         lambda db, c: {"cache": "ia_cache", "perime": False})
+    # PRE-DEPLOY-1 (lot C/D) — deux contrôles ajoutés : manifeste (bloquant si menteur) + intersections
+    # (informatif, jamais bloquant). Ici les deux sont « à jour » : la liste des périmés ne change pas.
+    monkeypatch.setattr(fraicheur_caches, "_etat_manifeste",
+                        lambda db: {"cache": "served_manifest.json (pointeur servi)", "perime": False})
+    monkeypatch.setattr(fraicheur_caches, "_etat_intersections",
+                        lambda db: {"cache": "parcel_couche_intersection (servitudes)", "perime": False})
     e = fraicheur_caches.etat(None)
     assert e["perimes"] == ["commune_contexte_cache"]
-    assert len(e["caches"]) == 5
+    assert len(e["caches"]) == 7
+
+
+# ── PRE-DEPLOY-1 (lot C) — le manifeste ne peut plus mentir ──────────────────────────────────
+
+class _DBManifeste:
+    """Assez de SQLAlchemy pour _etat_manifeste : is_served + existence d'un run_seq."""
+
+    def __init__(self, is_served, runs_presents):
+        self.is_served = is_served          # seq servi (residuel_runs.is_served)
+        self.runs_presents = set(runs_presents)
+        self._params = None
+
+    def execute(self, clause, params=None):
+        self._sql, self._params = str(clause), params or {}
+        return self
+
+    def scalar(self):
+        if "is_served" in self._sql:
+            return self.is_served
+        if "run_seq = :s" in self._sql:
+            return 1 if self._params.get("s") in self.runs_presents else None
+        return None
+
+
+def test_manifeste_menteur_est_perime(monkeypatch):
+    """Le bug fondateur (7ae2c2b7) : manifeste seq 8 alors que is_served = 10, LES DEUX présents en
+    base → PÉRIMÉ (rouge page Données, échec `rebuild --dry-run`, échec V6b)."""
+    from labuse import manifeste
+    monkeypatch.setattr(manifeste, "lire", lambda: {
+        "scoring_run": "q_v11_m137", "residuel_run_seq": 8,
+        "mvt_run": "q_v11_m137", "division_run": "q_v11_m137"})
+    monkeypatch.setattr(runs, "_lire_fichier", lambda: "q_v11_m137")   # scoring aligné
+    r = fraicheur_caches._etat_manifeste(_DBManifeste(is_served=10, runs_presents={8, 10}))
+    assert r["perime"], "manifeste seq 8 ≠ is_served 10 doit être périmé"
+    assert "8" in r["detail"] and "10" in r["detail"]
+
+
+def test_manifeste_aligne_nest_pas_perime(monkeypatch):
+    """Manifeste = servi en base (seq 10 == is_served 10, scoring == served_run.txt) → à jour."""
+    from labuse import manifeste
+    monkeypatch.setattr(manifeste, "lire", lambda: {
+        "scoring_run": "q_v11_m137", "residuel_run_seq": 10,
+        "mvt_run": "q_v11_m137", "division_run": "q_v11_m137"})
+    monkeypatch.setattr(runs, "_lire_fichier", lambda: "q_v11_m137")
+    r = fraicheur_caches._etat_manifeste(_DBManifeste(is_served=10, runs_presents={8, 10}))
+    assert not r["perime"]
+
+
+def test_manifeste_run_absent_ne_crie_pas(monkeypatch):
+    """Base de test/dev : le manifeste pointe un run de prod absent de cette base → on ne compare
+    pas (rien à comparer), jamais un faux positif qui casserait la suite sur une petite base."""
+    from labuse import manifeste
+    monkeypatch.setattr(manifeste, "lire", lambda: {
+        "scoring_run": "q_v11_m137", "residuel_run_seq": 999,
+        "mvt_run": "q_v11_m137", "division_run": "q_v11_m137"})
+    monkeypatch.setattr(runs, "_lire_fichier", lambda: "q_v11_m137")
+    r = fraicheur_caches._etat_manifeste(_DBManifeste(is_served=1, runs_presents={1, 2}))
+    assert not r["perime"]
+
+
+def test_manifeste_absent_est_perime(monkeypatch):
+    """Aucun manifeste posé = le run servi n'est pas traçable → périmé (fumée du déploiement)."""
+    from labuse import manifeste
+    monkeypatch.setattr(manifeste, "lire", lambda: None)
+    r = fraicheur_caches._etat_manifeste(_DBManifeste(is_served=10, runs_presents={10}))
+    assert r["perime"] and "absent" in r["detail"].lower()
