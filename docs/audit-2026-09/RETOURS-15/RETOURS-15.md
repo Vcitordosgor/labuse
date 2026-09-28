@@ -232,3 +232,46 @@ Signal 6 099 parcelles, calculé le **09/08/2026**, RNE INPI lu au 06/07/2026. �
 - **C2** — les millésimes « carte » (SCAN 50, EduGéo) sont étiquetés « 1950 (carte) » / « 1980 (carte) » pour
   ne pas se confondre avec l'ortho de la même décennie (Vic listait un seul 1950 et un seul 1980).
 - **B8** — le composant M10 (flux « Un lot ») reste EXPORTÉ pour son test unitaire mais n'est plus câblé à l'outil.
+
+---
+
+## C3 refonte + merge origin/main (fin de mandat)
+
+**C3 refonte livrée d'abord sur la base retours-15** (commit `89fd5625`) : `FaisabiliteTab` réécrit en 5 blocs
+(verdict-ligne à badges Sourcé/Estimé · « Ce que le PLU permet » Sourcé article+page · « Ce que ça donne »
+Estimé + 3 hypothèses inline · « Tester un projet » replié · « Le calcul » replié, stationnement fusionné) ;
+2 portes dans M22 ; back `capacite.regles_plu` réutilisant `_reglement_plu_block`. tsc0/vitest200/pytest faisa 26.
+
+**Puis `git fetch origin && git merge origin/main`** (commit de merge `290aea12`). `main` avait avancé de
+**102 commits** (FAISABILITE-3, FAISABILITE-POLISH-1, FICHE-FIX-3/4/5) qui ont **réécrit `FaisabiliteTab`/
+`BilanTab` et la fiche** — le panneau lit désormais `POST /modules/faisabilite/{idu}/scenario` (`pan`), pas
+l'ancien `GET …/{idu}` (`capacite`). **Règle appliquée : `main` gagne partout ; retours-15 ne réapplique que
+ce qu'il apporte en propre (m² jamais en hectares ; la grammaire POLISH là où main ne l'a pas).**
+
+### Rappel des lots retours-15
+Socle **S1–S5** · outils **B1–B9** · outils **C1–C10** · recette **D1–D8**. Tous committés avant le merge
+(`3cd2a04e`→`5bde66dd`, C3 `89fd5625`).
+
+### Conflits de merge et côté retenu
+| Fichier | Côté gardé | Ce que retours-15 réapplique par-dessus |
+|---|---|---|
+| `frontend/.../fiche/constructibilite.tsx` (`FaisabiliteTab`/`BilanTab`) | **main** (refonte FICHE-FIX-5 + POLISH-1) | **m² pour le plancher** dans « Tester un projet » (`fmtPlancherM2`, fmtM2 basculait en ha ≥ 10 000 m²). Le verdict serveur (`scenarios._fmt_m2`) est **déjà** en m². POLISH **déjà** dans main → rien à réappliquer. Les surfaces de **terrain** restent `fmtM2` (ha admis). |
+| `frontend/.../outils/Faisabilite.test.tsx` | **main** (teste le panneau scénario + M22 mono-mode) | — |
+| `frontend/.../outils/M22Programme.tsx` (auto-mergé vers mes 2 portes) | **reverté vers main** (mono-mode) | — (les 2 portes ne sont ni m² ni POLISH → main gagne) |
+| `src/labuse/api/modules.py` (auto-mergé, mon `regles_plu` survivait) | **main** — `regles_plu` **retiré** | — (le panneau scénario de main ne lit pas ce champ) |
+
+**Rien de ce que main a retiré n'est revenu** : « Comparer » / « Écrire au propriétaire » n'apparaissent plus
+qu'en commentaires « RETIRÉS » (FICHE-FIX-5) ; « Ce que le PLU permet » vit derrière le repli « Règles du PLU » ;
+les paragraphes gris de la fiche sont passés en Lignes/« i » (FICHE-FIX-5). Les autres lots retours-15 ont
+fusionné proprement — vérifiés présents : **D5** adresse complète (`libelleComplet`), **D2** `inviteCarte`,
+**D8** « Source : IGN FLAIR et CoSIA, 2025 ».
+
+### Vérifications post-merge
+- `tsc` **0** · `vitest` **225 passed** (50 fichiers) · `pytest` complet **3449 passed / 16 failed / 68 skipped**.
+  Les **16 échecs sont pré-existants et hors périmètre** (verrous/garanties + lot1_tables, front_reliquats,
+  circuit2_lot5, oracle_dossier, pige_socle, reparations1_lot2, retours11f4, retours17_permis, veille2_lot5) —
+  **aucun** dans faisabilité/scénario/modules ; mon aire ciblée (faisab|scenario|taxe|gabarit|piscine) = **195 passed**.
+- Captures (script node playwright direct, MCP expirant sur ce panneau) : `captures/C3-faisa-EM0174.png`
+  (terrain exigu, 0 débordement horizontal) et `captures/C3-faisa-constructible-BC0343.png` — verdict
+  **« Jusqu'à 14 156 m² de plancher · 56–63 logements (sur les 26 215 m² en U4c) »** : **m² partout, aucun
+  hectare, aucun défilement horizontal** (D1, garanti par la grammaire POLISH 320 px de main).
