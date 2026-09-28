@@ -2308,11 +2308,22 @@ def residuel_runs_cmd() -> None:
 
 @app.command("residuel-serve")
 def residuel_serve_cmd(run_seq: int = typer.Argument(..., help="run_seq à SERVIR (bascule).")) -> None:
-    """M135 — BASCULE le service sur `run_seq` (geste de Vic). Réversible : rappeler avec l'ancien."""
+    """M135 — BASCULE le service sur `run_seq` (geste de Vic). Réversible : rappeler avec l'ancien.
+
+    ALGO-FIX-1 (point 1) — `residuel_runs.is_served` est la SEULE vérité du résiduel servi ; cette
+    commande l'écrit (le point de bascule du résiduel). Elle FAIT SUIVRE le miroir `residuel_run_seq`
+    du manifeste, pour qu'il ne mente plus jamais (E6 : manifeste 8 ↔ is_served 10)."""
     from .faisabilite.residuel_runs import served_run_seq, set_served
     with engine().begin() as c:
         avant = served_run_seq(c)
         set_served(c, run_seq)
+    # le manifeste ne PILOTE plus le résiduel (bascule_flux ne rejoue plus set_served) : il en est un
+    # simple MIROIR. On le réaligne ici pour que is_served == manifeste.residuel_run_seq reste vrai.
+    from . import manifeste as _manifeste
+    m = _manifeste.lire()
+    if m is not None:
+        m = {**m, "residuel_run_seq": int(run_seq)}
+        _manifeste.ecrire(m)
     typer.echo(f"✓ bascule : run servi {avant} → {run_seq} (retour : residuel-serve {avant})")
 
 
