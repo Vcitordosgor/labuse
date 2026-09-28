@@ -278,6 +278,10 @@ _ajout(_f(
 # ─────────────────────────────── FLAIR (occupation du sol IGN) ───────────────────────────────
 # FLAIR sert de JUGE aux détections ortho (colonne juge_flair) plutôt qu'une couche servie propre :
 # le filtre porte sur la présence du signal FLAIR sur les détections. Contrôle propre léger.
+# SOURCES-FIX-2 lot E (ANOMALIES row 44) — TRAÇABILITÉ : « FLAIR » (occupation du sol par IA, IGN)
+# est un JUGE INTERNE de qualité des détections issues de la BD ORTHO (data_sources id 61) ; aucun
+# chiffre « FLAIR » n'est servi au client (le source_motif « FLAIR% » ne matche donc aucune ligne
+# data_sources, sans effet — contrôle QA interne, pas une source d'affichage à cataloguer).
 _ajout(_f(
     source="flair", libelle="FLAIR (occupation du sol IA, IGN)", table="ortho_detections",
     source_motif="FLAIR%", portee_run=False,
