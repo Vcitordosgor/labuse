@@ -22,6 +22,7 @@ zones:
             sommet de l’acrotère, 14 mètres au faîtage.'
           statut: valide
           raison: attribution douteuse (citation sous secteur None)
+          note: "PLU-VERIF-1 (exception à afficher) : Secteur Uaa : 16 m au faitage (12 m a l'egout), valeur differente non dite par la fiche zone Ua. Ua 10.3 : majoree de 40% pour services publics ; +1 m en zone inondation moyenne ; +0,80 m sur vide sanitaire au-dessus de 400 m."
         egout:
           m: 10.0
           article: Ua 10.2
@@ -30,6 +31,7 @@ zones:
             sommet de l’acrotère, 14 mètres au faîtage.'
           statut: valide
           raison: attribution douteuse (citation sous secteur None)
+          note: "PLU-VERIF-1 (exception à afficher) : Secteur Uaa : 12 m a l'egout / 16 m au faitage (valeur differente, non dite par la fiche zone Ua). Ua 10.3 : majoree de 40% pour services publics ; +1 m en zone inondation moyenne ; +0,80 m sur vide sanitaire au-dessus de 400 m."
       emprise_sol:
         ces:
           pct: 60.0
@@ -530,40 +532,44 @@ zones:
         faitage:
           m: 16.0
           article: Ua 10.2
-          page_pdf: 69
+          page_pdf: 18
           citation: 'Pour la zone Aua, se reporter au règlement de la zone Uaa. (Modification approuvée par
             délibération du conseil municipal du 02 juin 2022) [renvoi -> Ua 10.2 Uaa p.18 : « Dans le secteur
             Uaa, la hauteur maximale des constructions est fixée à : 12 mètres à l’égout du toit ou au sommet
             de l’acrotère, 16 mètres au faîtage. »]'
           statut: valide
+          note: "PLU-VERIF-1 : page corrigée 69→18 (art. Ua 10.2 (secteur Uaa))."
         egout:
           m: 12.0
           article: Ua 10.2
-          page_pdf: 69
+          page_pdf: 18
           citation: 'Pour la zone Aua, se reporter au règlement de la zone Uaa. (Modification approuvée par
             délibération du conseil municipal du 02 juin 2022) [renvoi -> Ua 10.2 Uaa p.18 : « Dans le secteur
             Uaa, la hauteur maximale des constructions est fixée à : 12 mètres à l’égout du toit ou au sommet
             de l’acrotère, 16 mètres au faîtage. »]'
           statut: valide
+          note: "PLU-VERIF-1 : page corrigée 69→18 (art. Ua 10.2 (secteur Uaa))."
       emprise_sol:
         ces:
           pct: 60.0
           article: Ua 9.2
-          page_pdf: 68
+          page_pdf: 17
           citation: 'Pour les autres zones, se reporter au règlement de la zone U indiquée en indice ainsi
             qu’aux orientations d’aménagement et de programmation lorsqu’elles existent. [renvoi -> Ua 9.2
             p.17 : « L''emprise au sol des constructions ne doit pas excéder 60% de la superficie de l''unité
             foncière, »]'
           statut: valide
+          note: "PLU-VERIF-1 : page corrigée 68→17 (art. Ua 9.2)."
       retraits:
         voie:
           min_m: 4.0
           article: Ua 6.2
-          page_pdf: 66
+          page_pdf: 14
           citation: 'Pour les autres zones, se reporter au règlement de la zone U indiquée en indice ainsi
             qu’aux orientations d’aménagement et de programmation lorsqu’elles existent. [renvoi -> Ua 6.2
             p.14 : retrait « au minimum égal à 4,00 mètres. »]'
           statut: valide
+          note: "PLU-VERIF-1 : page corrigée 66→14 (art. Ua 6.2)."
         limites_separatives:
           min_m: 3.0
           article: AUINDICEE 7.2-7.3
@@ -576,22 +582,24 @@ zones:
         par_logement:
           places: 1.5
           article: Ua 12.2
-          page_pdf: 67
+          page_pdf: 22
           citation: 'Pour les autres zones, se reporter au règlement de la zone U indiquée en indice ainsi
             qu’aux orientations d’aménagement et de programmation lorsqu’elles existent. [renvoi -> Ua 12.2
             p.22 : « Pour les constructions à destination d’habitation : 1,5 place de stationnement par logement,
             arrondi à l’entier inférieur. »]'
           statut: valide
+          note: "PLU-VERIF-1 : page corrigée 67→22 (art. Ua 12.2)."
       pleine_terre:
         pct:
           pct: 20.0
           article: Ua 13.1
-          page_pdf: 67
+          page_pdf: 23
           citation: 'Pour les autres zones, se reporter au règlement de la zone U indiquée en indice ainsi
             qu’aux orientations d’aménagement et de programmation lorsqu’elles existent. [renvoi -> Ua 13.1
             p.23 : « Au minimum 20% de la superficie totale de l’unité foncière doit être traité en espace
             vert et perméable... »]'
           statut: valide
+          note: "PLU-VERIF-1 : page corrigée 67→23 (art. Ua 13.1)."
     silence: autorise
     silence_src: 'Art. AU indicée 2.2, p. 65 : « Pour les autres zones : Sont admises toutes les occupations et
       utilisations du sol non citées à l''article 1.2, ainsi, que celles ci-après dès lors qu''elles respectent
@@ -642,40 +650,44 @@ zones:
         faitage:
           m: 12.0
           article: Ub 10.2
-          page_pdf: 67
+          page_pdf: 33
           citation: 'Pour les autres zones, se reporter au règlement de la zone U indiquée en indice ainsi
             qu’aux orientations d’aménagement et de programmation lorsqu’elles existent. [renvoi -> Ub 10.2
             p.33 : « La hauteur maximale des constructions est fixée à : 8 mètres à l’égout du toit ou au
             sommet de l’acrotère, 12 mètres au faîtage. »]'
           statut: valide
+          note: "PLU-VERIF-1 : page corrigée 67→33 (art. Ub 10.2)."
         egout:
           m: 8.0
           article: Ub 10.2
-          page_pdf: 67
+          page_pdf: 33
           citation: 'Pour les autres zones, se reporter au règlement de la zone U indiquée en indice ainsi
             qu’aux orientations d’aménagement et de programmation lorsqu’elles existent. [renvoi -> Ub 10.2
             p.33 : « La hauteur maximale des constructions est fixée à : 8 mètres à l’égout du toit ou au
             sommet de l’acrotère, 12 mètres au faîtage. »]'
           statut: valide
+          note: "PLU-VERIF-1 : page corrigée 67→33 (art. Ub 10.2)."
       emprise_sol:
         ces:
           pct: 50.0
           article: Ub 9.2
-          page_pdf: 68
+          page_pdf: 32
           citation: 'Pour les autres zones, se reporter au règlement de la zone U indiquée en indice ainsi
             qu’aux orientations d’aménagement et de programmation lorsqu’elles existent. [renvoi -> Ub 9.2
             p.32 : « L''emprise au sol des constructions ne doit pas excéder 50% de la superficie de l''unité
             foncière, »]'
           statut: valide
+          note: "PLU-VERIF-1 : page corrigée 68→32 (art. Ub 9.2)."
       retraits:
         voie:
           min_m: 4.0
           article: Ub 6.2
-          page_pdf: 66
+          page_pdf: 29
           citation: 'Pour les autres zones, se reporter au règlement de la zone U indiquée en indice ainsi
             qu’aux orientations d’aménagement et de programmation lorsqu’elles existent. [renvoi -> Ub 6.2
             p.29 : retrait « au minimum égal à 4,00 mètres. »]'
           statut: valide
+          note: "PLU-VERIF-1 : page corrigée 66→29 (art. Ub 6.2)."
         limites_separatives:
           min_m: 3.0
           article: AUINDICEE 7.2-7.3
@@ -688,22 +700,24 @@ zones:
         par_logement:
           places: 1.5
           article: Ub 12.2
-          page_pdf: 67
+          page_pdf: 36
           citation: 'Pour les autres zones, se reporter au règlement de la zone U indiquée en indice ainsi
             qu’aux orientations d’aménagement et de programmation lorsqu’elles existent. [renvoi -> Ub 12.2
             p.36 : « Pour les constructions à destination d’habitation : 1,5 place de stationnement par logement,
             arrondi à l’entier inférieur. »]'
           statut: valide
+          note: "PLU-VERIF-1 : page corrigée 67→36 (art. Ub 12.2)."
       pleine_terre:
         pct:
           pct: 30.0
           article: Ub 13.1
-          page_pdf: 67
+          page_pdf: 38
           citation: 'Pour les autres zones, se reporter au règlement de la zone U indiquée en indice ainsi
             qu’aux orientations d’aménagement et de programmation lorsqu’elles existent. [renvoi -> Ub 13.1
             p.38 : « Au minimum 30% de la superficie totale de l’unité foncière doit être traité en espace
             vert et perméable... »]'
           statut: valide
+          note: "PLU-VERIF-1 : page corrigée 67→38 (art. Ub 13.1)."
     silence: autorise
     silence_src: 'Art. AU indicée 2.2, p. 65 : « Pour les autres zones : Sont admises toutes les occupations et
       utilisations du sol non citées à l''article 1.2 … » — liste fermée d''interdictions (art. AU indicée 1.2 «
@@ -751,40 +765,44 @@ zones:
         faitage:
           m: 8.5
           article: Uc 10.2
-          page_pdf: 66
+          page_pdf: 47
           citation: 'Pour les autres zones, se reporter au règlement de la zone U indiquée en indice ainsi
             qu’aux orientations d’aménagement et de programmation lorsqu’elles existent. [renvoi -> Uc 10.2
             p.46-47 : « 5,50 mètres à l’égout du toit ou au sommet de l’acrotère » / « 8,50 mètres au faîtage
             »]'
           statut: valide
+          note: "PLU-VERIF-1 : page corrigée 66→47 (art. Uc 10.2)."
         egout:
           m: 5.5
           article: Uc 10.2
-          page_pdf: 66
+          page_pdf: 46
           citation: 'Pour les autres zones, se reporter au règlement de la zone U indiquée en indice ainsi
             qu’aux orientations d’aménagement et de programmation lorsqu’elles existent. [renvoi -> Uc 10.2
             p.46-47 : « 5,50 mètres à l’égout du toit ou au sommet de l’acrotère » / « 8,50 mètres au faîtage
             »]'
           statut: valide
+          note: "PLU-VERIF-1 : page corrigée 66→46 (art. Uc 10.2)."
       emprise_sol:
         ces:
           pct: 40.0
           article: Uc 9.2
-          page_pdf: 68
+          page_pdf: 46
           citation: 'Pour les autres zones, se reporter au règlement de la zone U indiquée en indice ainsi
             qu’aux orientations d’aménagement et de programmation lorsqu’elles existent. [renvoi -> Uc 9.2
             p.46 : « L''emprise au sol des constructions ne doit pas excéder 40% de la superficie de l''unité
             foncière, »]'
           statut: valide
+          note: "PLU-VERIF-1 : page corrigée 68→46 (art. Uc 9.2)."
       retraits:
         voie:
           min_m: 4.0
           article: Uc 6.2
-          page_pdf: 66
+          page_pdf: 43
           citation: 'Pour les autres zones, se reporter au règlement de la zone U indiquée en indice ainsi
             qu’aux orientations d’aménagement et de programmation lorsqu’elles existent. [renvoi -> Uc 6.2
             p.43 : retrait « au minimum égal à 4,00 mètres. »]'
           statut: valide
+          note: "PLU-VERIF-1 : page corrigée 66→43 (art. Uc 6.2)."
         limites_separatives:
           min_m: 3.0
           article: AUINDICEE 7.2-7.3
@@ -797,12 +815,13 @@ zones:
         par_logement:
           places: 1.5
           article: Uc 12.2
-          page_pdf: 67
+          page_pdf: 50
           citation: 'Pour les autres zones, se reporter au règlement de la zone U indiquée en indice ainsi
             qu’aux orientations d’aménagement et de programmation lorsqu’elles existent. [renvoi -> Uc 12.2
             p.50 : « Pour les constructions à destination d’habitation : 1,5 place de stationnement par logement,
             arrondi à l’entier inférieur. »]'
           statut: valide
+          note: "PLU-VERIF-1 : page corrigée 67→50 (art. Uc 12.2)."
       pleine_terre:
         pct:
           pct: 40.0
@@ -924,36 +943,40 @@ zones:
         ces:
           pct: 50.0
           article: Ub 9.2
-          page_pdf: 67
+          page_pdf: 32
           citation: 'Pour la zone AUt, se reporter au règlement de la zone Ub. [renvoi -> Ub 9.2 p.32 : «
             L''emprise au sol des constructions ne doit pas excéder 50% de la superficie de l''unité foncière,
             »]'
           statut: valide
+          note: "PLU-VERIF-1 : page corrigée 67→32 (art. Ub 9.2)."
       retraits:
         voie:
           min_m: 4.0
           article: Ub 6.2
-          page_pdf: 64
+          page_pdf: 29
           citation: 'Pour la zone AUt, se reporter au règlement de la zone Ub. [renvoi -> Ub 6.2 p.29 : retrait
             « au minimum égal à 4,00 mètres. »]'
           statut: valide
+          note: "PLU-VERIF-1 : page corrigée 64→29 (art. Ub 6.2)."
         limites_separatives:
           min_m: 3.0
           article: Ub 7.2-7.3
-          page_pdf: 67
+          page_pdf: 30
           citation: 'Pour la zone AUt, se reporter au règlement de la zone Ub. [renvoi -> Ub 7.2 p.30 : «
             En cas de retrait, la distance... doit être au minimum de 3 mètres. »]'
           statut: valide
+          note: "PLU-VERIF-1 : page corrigée 67→30 (art. Ub 7.2-7.3)."
       pleine_terre:
         pct:
           pct: 30.0
           article: Ub 13.1
-          page_pdf: 69
+          page_pdf: 38
           citation: 'Pour la zone AUt, se reporter au règlement de la zone Ub. [renvoi -> Ub 13.1 p.38 : «
             Au minimum 30% de la superficie totale de l’unité foncière doit être traité en espace vert et
             perméable... »]'
           statut: valide
           raison: citation non retrouvée autour de p.69 (recouvrement 41%)
+          note: "PLU-VERIF-1 : page corrigée 69→38 (art. Ub 13.1)."
     silence: interdit
     silence_src: 'Art. AU indicée 1.2, p. 64 : « En zone AUt : 1. Les constructions, ouvrages et travaux non cités
       à l''article AU2.2. » [sont interdits] — liste fermée d''autorisations : tout ce qui n''est pas cité à l''art.
