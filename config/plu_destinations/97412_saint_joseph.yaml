@@ -57,6 +57,7 @@ zones:
           citation: En cas de retrait de la construction, la distance comptée horizontalement de tout point
             de la façade au point le plus proche de la limite séparative, doit être au minimum égale à 3 mètres.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : U1 7.2 : si le lineaire de l'unite fonciere contigu a la voie est inferieur a 12 m, les constructions doivent etre implantees sur les DEUX limites laterales (retrait interdit) ; sinon retrait mini 3 m. LABUSE ne signale pas ce cas <12 m."
       stationnement:
         par_logement:
           places: 1.0
@@ -313,6 +314,7 @@ zones:
             comptés depuis la limite de l’alignement de la voie ou de l’emprise publique, la hauteur maximale
             ne peut excéder : - 11 mètres à l’égout du toit ou au sommet de l’acrotère, - 13 mètres au faîtage.'
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : U3 10.2 faitage par tranches : 10 m (0-6 m), 12 m (6-12 m), 13 m (>12 m) ; 15 m au-dela de 12 m si commerce/services/RPA ; U3a 9 m (12 m si commerce). LABUSE ne retient que 13 m."
         egout:
           m: 11.0
           article: U3 10.2
@@ -321,6 +323,7 @@ zones:
             comptés depuis la limite de l’alignement de la voie ou de l’emprise publique, la hauteur maximale
             ne peut excéder : - 11 mètres à l’égout du toit ou au sommet de l’acrotère, - 13 mètres au faîtage.'
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : U3 10.2 par tranches de profondeur : 8 m (0-6 m), 10 m (6-12 m), 11 m (>12 m) ; 13 m au-dela de 12 m si RDC commerce/services/RPA ; secteur U3a 8 m (10 m si commerce >6 m). LABUSE retient la tranche la plus haute (11 m) sans dire les tranches ni les exceptions."
       emprise_sol:
         ces:
           pct: 70.0
@@ -578,6 +581,7 @@ zones:
           citation: 'La hauteur maximale des constructions ne peut excéder : - 6 mètres à l’égout du toit
             ou au sommet de l’acrotère, - 9 mètres au faîtage.'
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : U4 10.2 : 9 m general MAIS 10 m si locaux commerciaux/services/bureaux. LABUSE ne dit que 9 m."
         egout:
           m: 6.0
           article: U4 10.2
@@ -585,6 +589,7 @@ zones:
           citation: 'La hauteur maximale des constructions ne peut excéder : - 6 mètres à l’égout du toit
             ou au sommet de l’acrotère, - 9 mètres au faîtage.'
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : U4 10.2 : 6 m general MAIS 7 m si la construction comporte des locaux commerciaux, de services ou de bureaux. LABUSE ne dit que 6 m."
       emprise_sol:
         ces:
           pct: 80.0
@@ -698,6 +703,7 @@ zones:
           citation: L'emprise au sol des constructions ne doit pas excéder 50% de la superficie de l'unité
             foncière.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : U5 9.2 : 50 % general MAIS U5cvd 75 %, U5cv 60 %, U5ma/U5ru/U5vi 40 %. LABUSE ne dit que 50 %."
       retraits:
         voie:
           min_m: 4.0
@@ -903,7 +909,8 @@ zones:
             séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout
             point de la façade au point le plus proche de la limite séparative, doit être au moins égale à
             la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.
-          statut: valide
+          statut: propose
+          note: "PLU-VERIF-1 : valeur passée en propose (non servie) — lue au PDF : 3 m (minimum, ou moitie de la hauteur H de la facade). Dans les secteurs U5cv et U5cvd, les constructions peuvent etre implantees sur deux limites separatives. En cas de retrait [...] au moins egale a la moitie de la hauteur (H) [...] avec un minimum de 3 metres."
       stationnement:
         par_logement:
           places: 2.0
@@ -975,6 +982,7 @@ zones:
             horizontalement de tout point de la façade au point le plus proche de la voie, au moins égale
             à 4 mètres.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : U5 6.2 : dans le secteur U5ma, un retrait de 1,5 m est autorise pour les constructions a usage commercial et touristique (restauration/hebergement) sur terrasses ouvertes, la bande de 1,5 m devant etre plantee. LABUSE ne dit que 4 m."
         limites_separatives:
           min_m: 3
           article: U5 7.2
@@ -1225,6 +1233,7 @@ zones:
           citation: 'La hauteur maximale des constructions est fixée à : - 12 mètres à l’égout du toit, -
             15 mètres au faîtage ou au sommet de l’acrotère.'
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : U6 10.2 : 15 m general MAIS U6c 18 m, U6ch et ZA de Vincendo 13 m. LABUSE ne dit que 15 m."
         egout:
           m: 12.0
           article: U6 10.2
@@ -1232,6 +1241,7 @@ zones:
           citation: 'La hauteur maximale des constructions est fixée à : - 12 mètres à l’égout du toit, -
             15 mètres au faîtage ou au sommet de l’acrotère.'
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : U6 10.2 : 12 m general MAIS secteur U6c 15 m, secteur U6ch et ZA de Vincendo 10 m. LABUSE ne dit que 12 m."
       emprise_sol:
         ces:
           pct: 50.0
@@ -1522,6 +1532,7 @@ zones:
             comptés depuis la limite de l’alignement de la voie ou de l’emprise publique, la hauteur maximale
             ne peut excéder : - 11 mètres à l’égout du toit ou au sommet de l’acrotère, - 13 mètres au faîtage.'
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : 1AU3 renvoie a U3 (p.7/106). Faitage U3 10.2 par tranches : 10 m (0-6 m), 12 m (6-12 m), 13 m (>12 m) ; 15 m au-dela de 12 m si commerce/services/RPA ; secteur U3a 9 m (12 m si commerce >6 m). LABUSE ne retient que 13 m."
         egout:
           m: 11
           article: U3 10.2
@@ -1530,6 +1541,7 @@ zones:
             comptés depuis la limite de l’alignement de la voie ou de l’emprise publique, la hauteur maximale
             ne peut excéder : - 11 mètres à l’égout du toit ou au sommet de l’acrotère,'
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Zone 1AU indicee : renvoi assume au reglement U3 (p.7 et p.106 : « se reporter au reglement des zones urbaines correspondantes »). L'egout U3 10.2 est fixe par tranches de profondeur : 8 m (0-6 m), 10 m (6-12 m), 11 m (>12 m) ; porte a 13 m au-dela de 12 m si RDC commerce/services ou Residence Personnes Agees ; secteur U3a limite a 8 m (10 m si commerce >6 m). LABUSE retient la tranche la plus haute (11 m) sans dire les tranches ni les exceptions."
       emprise_sol:
         ces:
           pct: 70
@@ -1664,6 +1676,7 @@ zones:
           citation: L'emprise au sol des constructions ne doit pas excéder 50% de la superficie de l'unité
             foncière.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : 1AU5 renvoie a U5 (p.7). U5 9.2 : 50 % general MAIS U5cvd 75 %, U5cv 60 %, U5ma/U5ru/U5vi 40 %. LABUSE ne dit que 50 %."
       retraits:
         voie:
           min_m: 4
@@ -1835,6 +1848,7 @@ zones:
 
             - 15 mètres au faîtage ou au sommet de l’acrotère.'
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : 1AU6 renvoie a U6 (p.7). Faitage U6 10.2 : 15 m general MAIS U6c 18 m, U6ch et ZA Vincendo 13 m. LABUSE ne dit que 15 m."
         egout:
           m: 12
           article: U6 10.2
@@ -1843,6 +1857,7 @@ zones:
 
             - 12 mètres à l’égout du toit,'
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : 1AU6 renvoie a U6 (p.7). U6 10.2 : 12 m general MAIS secteur U6c 15 m, secteur U6ch et ZA de Vincendo 10 m. LABUSE ne dit que 12 m."
       emprise_sol:
         ces:
           pct: 50
