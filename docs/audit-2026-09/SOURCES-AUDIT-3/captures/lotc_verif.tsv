@@ -1,0 +1,43 @@
+temoin	consommateur	ligne_source_affichée_à_l_écran	valeur_vue	concorde_avec_BRANCHEMENT?
+T1 EM0174	fiche §bandeau-identite	(PCI cadastre — surface/commune ; BAN adresse « 130 Allée des Topazes, 97400 Saint-Denis » ; Secteur BD NYME « le Domaine des Quartz »)	1 825 m² · Um · Saint-Denis	oui
+T1 EM0174	fiche §LeBien-bati	BD TOPO IGN ; Faîtage (LiDAR) ; « Bâti existant — BD TOPO® V3 (IGN) + CoSIA 2025 »	emprise 487 m² · faîtage 8,6 m · 6 bât.	oui
+T1 EM0174	fiche §terrain	« Source RGE ALTI 5 m (IGN) » ; OCS GE 2022 ; CoSIA 20 cm	pente 12,2° · versant Nord · profil 65 m	oui
+T1 EM0174	fiche §urbanisme	« Urbanisme PLU/GPU (API Carto) · GPU/PLU par commune » ; PLU approuvé 05/08/2026 ; SUP « PM1_PPR_i_mvt_SAINT_DENIS » ; SCOT DE LA CINOR ; Cartofriches (Cerema)	Um constructible · hauteur 10 m	oui
+T1 EM0174	fiche §risques	« PPR (approuvé 2012-10-17) — DEAL Réunion » ; CatNat ; EnR APER ; GéoMCE ; Géorisques (cavités/ICPE/mvt/sols) ; INPN espaces protégés	zone bleue PPR 100% · 21 CatNat	oui
+T1 EM0174	fiche §risques (Cartofriches)	« Sans objet — friche (AGORAH 2025) »	AGORAH 2025	non — BRANCHEMENT attend 35:cartofriches (Cerema) ; écran affiche « AGORAH »
+T1 EM0174	fiche §reseaux	Fibre (Arcep) FttH ; Arrêt de bus Topazes/Citalis ; « Solaire ~1510 kWh/kWc SARAH3 » ; gestionnaires CINOR/Dionéo/EDF SEI (annuaire)	eau/élec confirmée · fibre FttH	oui
+T1 EM0174	fiche §fiscalite	Taxe foncière 36,73% (REI) ; Taxe aménagement 3+2,5% (DELTA) ; Zonage A/B/C B1 (DHUP) ; ZFANG/FRR ; QPV/PVD/ORT	TFPB 36,73% · TA 3+2,5% · zone B1	oui
+T1 EM0174	fiche §marche	« géo-DVF Etalab 2021–2025 + archives DGFiP 2014–2020 » ; Loyers (OLL) ; Acquéreur PM (DGFiP PM)	maison 5058 €/m² · appt 2981 €/m²	oui
+T1 EM0174	fiche §quartier-autour	Filosofi 2021 (INSEE carreaux 200m) ; RPLS 01/01/2025 ; INSEE RP2022 IRIS ; BPE ; SITADEL (permis <200m)	niveau vie 33 385 € · IRIS Hauts de Bellepierre	oui
+T1 EM0174	fiche §identite-proprietaire	Filiation cadastrale « DGFiP — documents de filiation » ; INPI RNE ; BODACC ; SIRENE	Propriétaire non identifié (PP)	oui
+T1 EM0174	outil PLU	(landing 2 sous-outils : Annuaire PLU ; Procédure & changement — source GPU/Sudocuh au niveau sous-outil)	Um constructible	oui (na au niveau landing)
+T1 EM0174	outil Permis	« Sitadel : les permis autorisés, pas l'instruction en cours »	50 544 permis en base	oui
+T1 EM0174	outil Communes	« indicateurs sourcés » ; « DVF ancien bâti, DVF terrain nu et permis Sitadel » ; Radar ; DGFiP	24 communes	oui
+T1 EM0174	outil Scan patrimoine	(landing — DGFiP PM / SIRENE au niveau requête)	—	na (landing)
+T1 EM0174	outil Assemblage	(pas de ligne source au landing ; droits à bâtir cumulés = gabarit)	0 parcelle sél.	na (landing)
+T1 EM0174	outil Comparer	« aux mêmes points de calcul que la fiche »	0/3	oui
+T1 EM0174	outil Pièges/Risques	Classement sonore ITT (Cerema) 2026-09-14 ; GPU DPU (info-surf) 2026-09-07 ; DEAL PPR/aléas 2026-09-13 ; SUP assiettes GPU (API Carto) 2026-09-14	4 servitudes	oui
+T1 EM0174	outil Étude de zone	(landing 2 modes ; Filosofi/BPE/isochrones IGN au niveau résultats)	—	na (landing)
+T1 EM0174	outil Remonter le temps	(landing — orthos historiques IGN au niveau parcelle/année)	—	na (landing)
+T1 EM0174	outil Faisabilité (programme)	(landing demande une parcelle ; ne charge pas EM0174 auto)	—	na (landing — n'a pas auto-chargé)
+T1 EM0174	outil Gabarit	Reculs « BD TOPO® V3 (IGN) » ; Emprise/Hauteur « PLU — Saint-Denis — Um » ; SUP	emprise 912 m² · hauteur 10 m	oui
+T1 EM0174	outil Taxe d'aménagement	« Valeur forfaitaire 892 €/m² (CGI 1635 quater H) » ; « Taux communal 3% délibération 01/01/2022 » ; départemental 2,5%	892 €/m² · 3%+2,5%	oui
+T1 EM0174	outil Prospection solaire	« Détection FLAIR sur ortho · PVGIS v5.3 SARAH3 · RGE ALTI »	2 métiers	oui
+T1 EM0174	outil Blocs fonciers	(filtres ; DGFiP PM SIREN + résiduel au niveau résultats)	—	na (landing)
+T1 EM0174	outil Successions	« 6 099 parcelles · signal RNE INPI au 09/08/2026 »	6 099 parc.	oui
+T1 EM0174	outil Courrier propriétaire	« Adressage générique (SPF/CERFA) — aucune identité de propriétaire »	—	oui
+T1 EM0174	commune §bandeau (Habitants)	badge « INSEE » ; détail « Population municipale légale INSEE · millésime 31/12/2024 (via Sudocuh) »	154 765 hab.	oui (badge dit INSEE ; source détaillée cite Sudocuh — conforme 62:sudocuh)
+T1 EM0174	commune §Population	« INSEE RP (ménages, logements) · Filosofi · RPLS (SDES) · Inventaire SRU (DHUP) »	68 726 ménages · SRU 38,62%	oui
+T1 EM0174	commune §Prix	« DVF — médiane commune entière · terrain nu par zone PLU · DHUP 2025 (loyers) »	ancien 2 469 · neuf 5 000 €/m²	oui
+T1 EM0174	commune §Foncier	« Cadastre DGFiP · Analyse LABUSE · Consommation ENAF Cerema »	ZAN 1,1 ans	oui
+T1 EM0174	commune §Fiscalité	« DGFiP REI · DHUP (A/B/C) · territoire_fiscal (ZFANG/FRR) · DGALN (ORT) · ANCT (QPV/NPNRU) »	TFPB 36,7% · zone B1	oui
+T2 AB0134	fiche §urbanisme	« LABUSE — moteur d'ouverture AU (règlement PLU calibré) » ; PLU approuvé 17/12/2025	AU1est à urbaniser · hauteur 4 m	oui
+T2 AB0134	fiche §marche	« géo-DVF Etalab 2021–2025 + archives DGFiP » ; Potentiel foncier Région	terrain nu 272 €/m² · 19 ventes	oui
+T2 AB0134	fiche §identite-proprietaire	SIRENE ; BODACC ; DGFiP PM millésimes 2019→2025 ; Filiation cadastrale DGFiP	EPFR SIREN 444704977	oui
+T2 AB0134	fiche §risques	« PPR (2016-10-26) · PPRL (2018-12-19) — DEAL Réunion » ; Cartofriches « AGORAH 2025 »	inondation faible 100% · 24 CatNat	non (Cartofriches libellé AGORAH vs Cerema attendu)
+T2 AB0134	commune Saint-Paul	mêmes lignes source que T1 (INSEE/Sudocuh, DVF, SITADEL, RPLS…)	105 240 hab. · SRU 18,3% déficitaire	oui
+T3 BZ1065	fiche §LeBien-bati	BD TOPO IGN ; Faîtage (LiDAR) ; « BD TOPO® V3 (IGN) + CoSIA 2025 » ; SIRENE via BAN	emprise 193 m² · faîtage 10,3 m	oui
+T3 BZ1065	fiche §terrain	« Source RGE ALTI 5 m (IGN) » ; OCS GE 2022 ; CoSIA 20 cm	versant NO 301,3° · pente 13,8°	oui
+T3 BZ1065	fiche §potentiel	« règles PLU calibrées × bâti LiDAR HD, hauteur à l'égout MESURÉE » ; « PLU Modif. simplifiée n°8, doc GPU 97411_PLU_20260805 »	SDP restante 26 m² · terrain exigu	oui
+T3 BZ1065	fiche §reseaux	Fibre (Arcep) ; Arrêt bus Vigie/Citalis ; gestionnaires CINOR/Dionéo (annuaire)	eau/élec confirmée · ANC	oui
+T3 BZ1065	commune Saint-Denis	mêmes lignes source que T1	154 765 hab.	oui
