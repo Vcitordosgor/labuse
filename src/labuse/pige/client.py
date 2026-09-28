@@ -79,12 +79,16 @@ def _where(filtres: dict) -> tuple[str, dict]:
     if filtres.get("sous_marche") == "oui":
         conds.append("f.prix IS NOT NULL AND b.a_qualifier = false AND "
                      "COALESCE(f.surface_terrain, f.surface_hab) > 0")
-    # RADAR-RECETTE-1 D2/D1c — filtre à-qualifier ('oui'|'non') : permet de lister les biens marqués
-    # (ou de les exclure). Ils restent VISIBLES par défaut dans le flux, mais avec leur mention.
+    # RADAR-FIX-3 — UN SEUL périmètre « en vente » : les biens À QUALIFIER (champs contradictoires) n'y
+    # entrent JAMAIS (comme les retirées). Le flux client les EXCLUT par défaut, donc le compteur de la
+    # liste = les 4 chiffres = le tableau = la porte = le n de la médiane demandée. Escapes explicites :
+    # `a_qualifier=oui` (ne montrer QUE les marqués, écran admin), `a_qualifier=tous` (les deux).
     aq = filtres.get("a_qualifier")
     if aq == "oui":
         conds.append("b.a_qualifier = true")
-    elif aq == "non":
+    elif aq == "tous":
+        pass
+    else:                                     # défaut (et 'non') : à-qualifier hors flux « en vente »
         conds.append("b.a_qualifier = false")
     return " AND ".join(conds), p
 
@@ -258,17 +262,23 @@ def lister(db: Session, *, filtres: dict, tri: str = "recentes", page: int = 1, 
             "plafond": PLAFOND_PAGE, "tronquee": (offset + len(biens)) < n_total, "tri": tri}
 
 
+SUP90_SQL = ("COALESCE(b.date_publication, b.date_premiere_saisie::date) "
+             "< (now() AT TIME ZONE 'Indian/Reunion')::date - 90")   # RADAR-FIX-3 — « > 90 j » = par DATE
+
+
 def compter(db: Session, commune: str | None = None, *, sup90: bool = False) -> int:
     """RADAR-2 (recette) — LE nombre canonique de « biens en vente », servi À L'IDENTIQUE à la porte, au
     marché et à la liste : MÊME prédicat que `lister` (validé, hors copro = hors appartements, statuts
-    active + en_vente_longue, dépôt agence exclu drapeau fermé). `sup90` restreint à en_vente_longue
-    (les biens en vente depuis plus de 90 j). Aucune divergence possible : un seul WHERE (`_where`)."""
+    active + en_vente_longue, à-qualifier EXCLUS, dépôt agence exclu drapeau fermé). Aucune divergence
+    possible : un seul WHERE (`_where`). RADAR-FIX-3 — `sup90` = « en vente depuis + de 90 j » calculé
+    sur la DATE de première publication (comme le badge de la liste), plus sur le statut `en_vente_longue`
+    (qui n'est jamais posé tant que le cycle ne tourne pas → colonne morte)."""
     filtres: dict = {}
     if commune:
         filtres["commune"] = commune
-    if sup90:
-        filtres["statuts"] = ["en_vente_longue"]
     where, p = _where(filtres)
+    if sup90:
+        where += f" AND {SUP90_SQL}"
     return int(db.execute(text(
         f"SELECT count(*) FROM pige_biens b JOIN pige_faits f ON f.bien_id = b.bien_id WHERE {where}"),
         p).scalar() or 0)

@@ -4,7 +4,7 @@
 // les annonces). Cliquer une annonce la sélectionne : un bloc « Ce bien » se glisse EN TÊTE de la colonne
 // marché (qui bascule sur la commune de l'annonce) — une seule vue. FAITS et un LIEN, jamais le contenu.
 import { useQuery } from '@tanstack/react-query'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { getRadarBiens, radarClic, type RadarBienClient, type RadarFiltres } from '../../lib/api'
 import { CP_COMMUNES } from '../panel/FiltreLabuse'
 import { trierCommunes } from '../../lib/communes'
@@ -54,38 +54,43 @@ function resumeFiltres(f: RadarFiltres): string {
   return b.length ? b.join(' · ') : 'Tous les biens'
 }
 
-function CarteBien({ b, sel, onClick }: { b: RadarBienClient; sel: boolean; onClick: () => void }) {
+function CarteBien({ b, sel, onClick, selRef }: {
+  b: RadarBienClient; sel: boolean; onClick: () => void; selRef: React.RefObject<HTMLButtonElement>
+}) {
   const j = joursDepuis(b.date_publication || b.date_saisie)
   const nouveau = j != null && j < 2
   const vendeur = b.faits.particulier_pro === 'pro' ? 'Pro' : b.faits.particulier_pro === 'particulier' ? 'Particulier' : b.portail
   const ouvrir = () => { radarClic(b.bien_id, b.annonce_id).catch(() => {}); window.open(b.url_sortante, '_blank', 'noopener,noreferrer') }
+  // RADAR-FIX-3 — l'annonce ouverte dans « Ce bien » porte l'ÉTAT ACTIF de la charte (fond vert, encre
+  // sombre `mint-on`) ; les puces et l'encre secondaire basculent aussi en sombre pour rester lisibles.
+  const puce = sel ? 'bg-mint-on/15 text-mint-on' : ''
   return (
-    <button data-radar-bien={b.bien_id} onClick={onClick}
+    <button ref={sel ? selRef : undefined} data-radar-bien={b.bien_id} data-radar-bien-actif={sel || undefined} onClick={onClick}
       className={`w-full rounded-lg border px-4 py-3 text-left transition-colors duration-quick ${
-        sel ? 'border-mint bg-mint/[0.06]' : 'border-line-2 bg-surface-2 hover:border-line-3'}`}>
+        sel ? 'border-mint bg-mint text-mint-on' : 'border-line-2 bg-surface-2 hover:border-line-3'}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 font-mono text-[11px] tracking-[0.04em]">
-          <span className="font-bold text-mint">{(b.type_bien ?? '—').toUpperCase()}</span>
-          <span className="text-txt-mut"> · {b.commune}{b.quartier ? ` · ${b.quartier}` : ''}</span>
+          <span className={`font-bold ${sel ? 'text-mint-on' : 'text-mint'}`}>{(b.type_bien ?? '—').toUpperCase()}</span>
+          <span className={sel ? 'text-mint-on/70' : 'text-txt-mut'}> · {b.commune}{b.quartier ? ` · ${b.quartier}` : ''}</span>
         </div>
-        <div className="shrink-0 whitespace-nowrap text-[16.5px] font-bold tabular-nums text-txt-hi">{fmtEur(b.faits.prix)}</div>
+        <div className={`shrink-0 whitespace-nowrap text-[16.5px] font-bold tabular-nums ${sel ? 'text-mint-on' : 'text-txt-hi'}`}>{fmtEur(b.faits.prix)}</div>
       </div>
-      <div className="mt-1.5 text-[12.5px] leading-snug text-txt-mut">{specsBien(b)}</div>
+      <div className={`mt-1.5 text-[12.5px] leading-snug ${sel ? 'text-mint-on/80' : 'text-txt-mut'}`}>{specsBien(b)}</div>
       <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-        {nouveau && <span className="rounded-full bg-mint/12 px-2 py-0.5 text-[10.5px] font-medium text-mint">Nouveau</span>}
+        {nouveau && <span className={`rounded-full px-2 py-0.5 text-[10.5px] font-medium ${sel ? puce : 'bg-mint/12 text-mint'}`}>Nouveau</span>}
         {b.baisse && b.baisse_pct != null && (
-          <span className="rounded-full bg-mint/12 px-2 py-0.5 text-[10.5px] font-medium text-mint">
-            Baisse −{b.baisse_pct} %{b.ancien_prix != null && <span className="ml-1 text-txt-dim line-through">{fmtEur(b.ancien_prix)}</span>}
+          <span className={`rounded-full px-2 py-0.5 text-[10.5px] font-medium ${sel ? puce : 'bg-mint/12 text-mint'}`}>
+            Baisse −{b.baisse_pct} %{b.ancien_prix != null && <span className={`ml-1 line-through ${sel ? 'text-mint-on/60' : 'text-txt-dim'}`}>{fmtEur(b.ancien_prix)}</span>}
           </span>
         )}
-        {j != null && j > 90 && <span className="rounded-full bg-amber/12 px-2 py-0.5 text-[10.5px] font-medium text-amber">En vente depuis {j} j</span>}
-        {b.de_retour && <span className="rounded-full bg-amber/12 px-2 py-0.5 text-[10.5px] font-medium text-amber">De retour</span>}
+        {j != null && j > 90 && <span className={`rounded-full px-2 py-0.5 text-[10.5px] font-medium ${sel ? puce : 'bg-amber/12 text-amber'}`}>En vente depuis {j} j</span>}
+        {b.de_retour && <span className={`rounded-full px-2 py-0.5 text-[10.5px] font-medium ${sel ? puce : 'bg-amber/12 text-amber'}`}>De retour</span>}
         <a onClick={(e) => { e.stopPropagation(); e.preventDefault(); ouvrir() }} href={b.url_sortante} target="_blank" rel="noopener noreferrer"
-          data-radar-portail className="ml-auto text-[12px] font-medium text-[#E7B008] underline decoration-[#E7B008]/40 underline-offset-2 hover:decoration-[#E7B008]">
+          data-radar-portail className={`ml-auto text-[12px] font-medium underline underline-offset-2 ${sel ? 'text-mint-on decoration-mint-on/50 hover:decoration-mint-on' : 'text-[#E7B008] decoration-[#E7B008]/40 hover:decoration-[#E7B008]'}`}>
           Voir l’annonce ↗
         </a>
       </div>
-      <div className="mt-1 text-right text-[11px] text-txt-dim">{vendeur}{j != null ? ` · ${j} j` : ''}</div>
+      <div className={`mt-1 text-right text-[11px] ${sel ? 'text-mint-on/70' : 'text-txt-dim'}`}>{vendeur}{j != null ? ` · ${j} j` : ''}</div>
     </button>
   )
 }
@@ -98,11 +103,17 @@ export function RadarEcran() {
   const [tri, setTri] = useState('recentes')
   const [filtresOpen, setFiltresOpen] = useState(false)
   const [selBien, setSelBien] = useState<number | null>(null)
+  // RADAR-FIX-3 — la liste défile jusqu'à l'annonce ouverte dans « Ce bien » (sélection toujours visible).
+  const selRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
     if (radarPrefill) { setF(radarPrefill as RadarFiltres); setRadarPrefill(null) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  useEffect(() => {
+    if (selBien != null) selRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+  }, [selBien])
 
   const { data, isLoading, isError, refetch } = useQuery({ queryKey: ['radar-biens', f, tri], queryFn: () => getRadarBiens(f, tri) })
   const biens = useMemo(() => data?.biens ?? [], [data])
@@ -162,7 +173,7 @@ export function RadarEcran() {
           {!isLoading && !isError && biens.length === 0 && (
             <EmptyState title="Aucun bien ne correspond à ces filtres." hint="Élargissez la recherche." />
           )}
-          {biens.map((b) => <CarteBien key={b.bien_id} b={b} sel={selBien === b.bien_id} onClick={() => setSelBien((s) => (s === b.bien_id ? null : b.bien_id))} />)}
+          {biens.map((b) => <CarteBien key={b.bien_id} b={b} sel={selBien === b.bien_id} selRef={selRef} onClick={() => setSelBien((s) => (s === b.bien_id ? null : b.bien_id))} />)}
         </div>
       </aside>
 

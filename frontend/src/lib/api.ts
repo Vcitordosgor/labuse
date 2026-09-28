@@ -2371,28 +2371,31 @@ export const pauseRadarVeille = (id: number, en_pause: boolean) =>
 
 // ── RADAR-2 (Lot 3) — le marché (colonne de droite) : 4 chiffres + table par type + 30 j + écart/commune ──
 export interface RadarMarcheChiffre { valeur: number | null; n: number; sous_seuil: boolean; periode?: string | null }
+// RADAR-FIX-3 — palier d'un écart : 'normal' ≥30 annonces · 'indicatif' 5–29 (gris) · 'insuffisant' <5.
+export type EcartNiveau = 'normal' | 'indicatif' | 'insuffisant'
 export interface RadarMarcheTypeLigne {
   type: 'terrain' | 'maison' | 'appartement'; en_vente: number
   demande_eur_m2: number | null; acte_eur_m2: number | null
-  ecart_pct: number | null; ecart_sous_seuil: boolean; sup_90j: number; baisses_30j: number
+  ecart_pct: number | null; ecart_niveau: EcartNiveau; ecart_sous_seuil: boolean; ecart_n: number
+  sup_90j: number; baisses_30j: number
 }
-export interface RadarMarcheEcartCommune { commune: string; ecart_pct: number }
+export interface RadarMarcheEcartCommune { commune: string; ecart_pct: number; niveau: EcartNiveau; n: number }
 export interface RadarMarcheTableau {
   scope: string; commune: string | null
   prix_demande_median_eur_m2: RadarMarcheChiffre      // maisons
   prix_acte_median_eur_m2: RadarMarcheChiffre         // maisons, DVF (moteur fiche commune)
-  ecart_demande_acte_pct: number | null; ecart_sous_seuil: boolean
+  ecart_demande_acte_pct: number | null; ecart_sous_seuil: boolean; ecart_niveau: EcartNiveau; ecart_n: number
   biens_en_vente: number; biens_sup_90j: number
   par_type: RadarMarcheTypeLigne[]
   bouge_30j: { nouvelles: number; baisses: number; retirees: number; de_retour: number }
   ecart_par_commune: RadarMarcheEcartCommune[]
-  seuil_ecart_n: number; millesime_dvf: string | null; derniere_capture_at: string | null
+  seuil_ecart_n: number; seuil_indicatif_n: number; millesime_dvf: string | null; derniere_capture_at: string | null
 }
 export const getRadarMarcheTableau = (commune?: string) =>
   j<RadarMarcheTableau>(`/radar/marche-tableau${commune ? `?commune=${encodeURIComponent(commune)}` : ''}`)
 
 // RADAR-2 (recette) — « Ce bien face à son marché » (colonne de droite quand une annonce est sélectionnée)
-export interface RadarBienCmp { median: number | null; n: number; ecart_pct: number | null; sous_seuil: boolean }
+export interface RadarBienCmp { median: number | null; n: number; ecart_pct: number | null; niveau: EcartNiveau; sous_seuil: boolean }
 export interface RadarBienVsMarche {
   bien_id: number; commune: string; type_bien: string | null; prix: number | null; eur_m2: number | null
   demande: RadarBienCmp; acte: RadarBienCmp
