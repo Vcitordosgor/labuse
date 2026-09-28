@@ -415,7 +415,12 @@ zones:
           citation: En cas de retrait, la distance comptée [...] au point le plus proche de la limite séparative,
             doit être au minimum de 3 mètres. [via renvoi Ub pour AUb]
           statut: valide
-          note: "PLU-VERIF-1 (exception à afficher) : Ub 7.4 : implantations differentes autorisees pour extensions de construction existante non conforme, mise en valeur d'element bati protege (L.123-1 7deg), constructions annexes/equipements techniques (securite, service public, eau, energie, stockage OM), et equipements publics d'interet collectif si les conditions de fonctionnement ou normes de securite l'imposent."
+          exceptions:
+          - texte: "7.4 - Exception / Des implantations différentes de celles définies ci-dessus peuvent être autorisées : dans le cas de travaux d'extension réalisés sur une construction existante qui ne respecte pas les dispositions précédentes, pour conserver une harmonie d'ensemble du bâti,"
+            article: "Ub 7.4"
+            page_pdf: 35
+            porte: "exclusion_generique"
+            modifie_calcul: false
       stationnement:
         par_logement:
           places: 1.5
@@ -481,7 +486,12 @@ zones:
           citation: En cas de retrait, la distance comptée [...] au point le plus proche de la limite séparative,
             doit être au minimum de 3 mètres. [via renvoi Ub pour AUb1]
           statut: valide
-          note: "PLU-VERIF-1 (exception à afficher) : Renvoi assume : ARTICLE AUindicee 7 dit 'Se reporter au reglement de la zone U indiquee en indice' (Ub pour AUb) ; AUb1 est un secteur de AUb (ZAC Roland Garros) ; le reglement AU ne prevoit d'override pour AUb1 que sur les articles 9 (emprise), 10 (hauteur 9m/12m), 12 (stationnement), PAS sur l'article 7. Exception Ub 7.4 : extensions non conformes, element bati protege, annexes/equipements techniques, equipements publics d'interet collectif."
+          exceptions:
+          - texte: "7.4 - Exception / Des implantations différentes de celles définies ci-dessus peuvent être autorisées : dans le cas de travaux d'extension réalisés sur une construction existante qui ne respecte pas les dispositions précédentes, pour conserver une harmonie d'ensemble du bâti,"
+            article: "Ub 7.4"
+            page_pdf: 35
+            porte: "exclusion_generique"
+            modifie_calcul: false
       stationnement:
         par_logement:
           places: 1.5
@@ -547,7 +557,12 @@ zones:
           citation: En cas de retrait, la distance comptée [...] au point le plus proche de la limite séparative,
             doit être au minimum de 3 mètres. [via renvoi Ub pour AUb2]
           statut: valide
-          note: "PLU-VERIF-1 (exception à afficher) : Renvoi assume : ARTICLE AUindicee 7 'Se reporter au reglement de la zone U indiquee en indice' (Ub) ; AUb2 est un secteur de AUb, override AU seulement sur articles 9/10 (hauteur 7m/11m, 14m equipements sportifs)/12, PAS article 7. Exception Ub 7.4 : extensions non conformes, element bati protege, annexes/equipements techniques, equipements publics d'interet collectif."
+          exceptions:
+          - texte: "7.4 - Exception / Des implantations différentes de celles définies ci-dessus peuvent être autorisées : dans le cas de travaux d'extension réalisés sur une construction existante qui ne respecte pas les dispositions précédentes, pour conserver une harmonie d'ensemble du bâti,"
+            article: "Ub 7.4"
+            page_pdf: 35
+            porte: "exclusion_generique"
+            modifie_calcul: false
       stationnement:
         par_logement:
           places: 1.5
