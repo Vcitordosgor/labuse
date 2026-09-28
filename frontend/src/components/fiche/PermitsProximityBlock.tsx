@@ -14,10 +14,13 @@ import { GroupLabel, FactNote } from './primitives'
 
 export function PermitsProximityBlock({ idu }: { idu: string }) {
   const [open, setOpen] = useState<string | null>(null)
+  // FICHE-FIX-5 (Lot I) — permis repliés après 5 (« + N »).
+  const [tous, setTous] = useState(false)
   const q = useQuery({ queryKey: ['parcelle-permis', idu], queryFn: () => modParcellePermis(idu) })
   const d = q.data as Record<string, any> | undefined
   const items = (d?.['items'] ?? []) as Record<string, any>[]
   if (!d || items.length === 0) return null
+  const visibles = tous ? items.slice(0, 12) : items.slice(0, 5)
   return (
     <div data-permis-proximite>
       {/* Z1·02 / Z3 — le titre encadré (card-elev) devient un KICKER avec le compte à droite ;
@@ -30,7 +33,7 @@ export function PermitsProximityBlock({ idu }: { idu: string }) {
       }>Permis à proximité</GroupLabel>
       <FactNote>{d['note']} Cliquez pour la fiche.</FactNote>
       <div className="mt-2 flex flex-col gap-1">
-        {items.slice(0, 12).map((i, k) => (
+        {visibles.map((i, k) => (
           <button key={k} onClick={() => setOpen(i['permit_id'] as string)}
             className="flex items-center gap-2 px-0 py-1.5 text-left text-[11px] border-b border-line/60 last:border-0">
             <span className="font-mono text-txt">{i['nature'] as string}</span>
@@ -41,6 +44,12 @@ export function PermitsProximityBlock({ idu }: { idu: string }) {
             </span>
           </button>
         ))}
+        {!tous && items.length > 5 && (
+          <button type="button" onClick={() => setTous(true)}
+            className="mt-0.5 self-start text-[11px] text-mint hover:underline">
+            ◀ + {Math.min(items.length, 12) - 5} autres permis
+          </button>
+        )}
       </div>
       {open && <PermitDrawer permitId={open} onClose={() => setOpen(null)} />}
     </div>

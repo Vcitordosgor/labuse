@@ -12,8 +12,41 @@ import { fmtInt } from '../../lib/format'
 import type { FicheZoneDestinations, ReglementPlu } from '../../lib/types'
 import { BlocIndisponible } from './BlocIndisponible'
 import { DestinationBadge } from '../outils/DestinationSelect'   // DESTINATIONS-1 (X4.2) — pastille contour partagée
-import { GroupLabel, FactRow, RefLink, FactNote } from './primitives'
+import { GroupLabel, FactNote } from './primitives'
 import { Chevron } from '../ui/Chevron'
+// KELFONCIER-FIX-2 (Lot G) — les règles-valeurs de la zone passent en Tuiles de la maquette v3.
+import { Tuiles, type Tuile } from './formes'
+
+// FICHE-FIX-4 (Lot F) — les 6 dimensions de règle, en gris « non calibré », pour les zones dont le
+// règlement n'est pas indexé à la lettre dans LABUSE (même gabarit que les zones calibrées).
+const REGLES_NON_CALIBRE: Tuile[] = [
+  { label: 'Hauteur', valeur: '—', sous: 'non calibré', ton: 'gris' },
+  { label: 'Emprise', valeur: '—', sous: 'non calibré', ton: 'gris' },
+  { label: 'Recul voie', valeur: '—', sous: 'non calibré', ton: 'gris' },
+  { label: 'Recul limites', valeur: '—', sous: 'non calibré', ton: 'gris' },
+  { label: 'Pleine terre', valeur: '—', sous: 'non calibré', ton: 'gris' },
+  { label: 'Stationnement', valeur: '—', sous: 'non calibré', ton: 'gris' },
+]
+
+// FICHE-FIX-5 (Lot E) — libellé de règle en forme COURTE (la tuile ne tronque plus).
+function shortReglLabel(l: string): string {
+  const s = l.toLowerCase()
+  if (/hauteur/.test(s)) return 'Hauteur'
+  if (/emprise/.test(s)) return 'Emprise'
+  if (/recul/.test(s) && /voie/.test(s)) return 'Recul voie'
+  if (/recul/.test(s) && /(limite|s[ée]par)/.test(s)) return 'Recul limites'
+  if (/pleine.?terre|espace.?vert|v[ée]g[ée]tal/.test(s)) return 'Pleine terre'
+  if (/stationnement|parking/.test(s)) return 'Stationnement'
+  return l
+}
+// Valeur COURTE : « 18 m au faîtage » → « 18 m » ; « 1 place / logement » → « 1 / logt ».
+function shortReglValeur(v: string): string {
+  // « 18 m au faîtage » → « 18 m » (l'unité est déjà là) ; « R+2 au faîtage » → « R+2 ».
+  const s = v.trim().replace(/\s+au\s+fa[iî]t\w*.*/i, '').replace(/\s+à\s+l['’]égout.*/i, '')
+  const place = s.match(/(\d[\d.,]*)\s*place/i)
+  if (place && /logement|logt|lgt/i.test(s)) return `${place[1].replace('.', ',')} / logt`
+  return s.replace(/\.(\d)/, ',$1')
+}
 
 // ── M9 lot 4 — ligne « Destinations » de la zone (résumé + dépliable) ──
 export function ZoneDestinationsLigne({ d }: { d: FicheZoneDestinations }) {
@@ -94,23 +127,32 @@ export function ReglementPluBlock({ rp }: { rp: ReglementPlu }) {
             Règlement — zone <Trace id="zone_plu_famille"><span>{z.zone}</span></Trace>{aCheval && pct(z.part) ? <span className="text-txt-dim"> · {pct(z.part)} de la parcelle</span> : null}
           </GroupLabel>
           {z.regles_valeurs && z.regles_valeurs.length > 0 ? (
-            <div>
-              {z.regles_valeurs.map((rv, j) => (
-                <FactRow key={j} label={rv.libelle} value={rv.valeur}
-                  tone={rv.etat === 'chiffre' || rv.etat === 'texte' ? undefined : 'mute'}
-                  src={rv.reference
-                    ? <RefLink href={rv.url} title={rv.reference}>{rv.reference.split(',')[0].replace(/^Zone \S+ /, '').trim() || 'source'}</RefLink>
-                    : undefined} />
-              ))}
-            </div>
-          ) : z.articles.length > 0 && (
-            <ul className="mt-1 flex flex-col gap-0.5">
-              {z.articles.slice(0, 6).map((a, j) => (
-                <li key={j} className="text-[11.5px]">
-                  <a className="f-ref" href={a.url ?? z.url ?? '#'} target="_blank" rel="noreferrer">{a.reference}</a>
-                </li>
-              ))}
-            </ul>
+            // FICHE-FIX-5 (Lot E) — tuiles SANS troncature : libellé court (Hauteur · Emprise · Recul
+            // voie · Recul limites · Pleine terre · Stationnement), valeur courte (« 10 m », « 50 % »,
+            // « 1 / logt »), l'article en sous-ligne. Aucune donnée perdue (valeur pleine en `title`).
+            <Tuiles cols={z.regles_valeurs.length >= 5 ? 3 : 2}
+              items={z.regles_valeurs.map((rv): Tuile => ({
+                label: shortReglLabel(rv.libelle),
+                valeur: (rv.etat === 'chiffre' || rv.etat === 'texte') && rv.valeur ? shortReglValeur(rv.valeur) : '—',
+                sous: rv.reference ? (rv.reference.split(',')[0].replace(/^Zone \S+ /, '').trim() || undefined) : undefined,
+                ton: rv.etat === 'chiffre' || rv.etat === 'texte' ? undefined : 'gris',
+              }))} />
+          ) : (
+            // FICHE-FIX-4 (Lot F) — MÊME GABARIT pour les zones non indexées : les 6 tuiles de règles
+            // en gris « non calibré » (au lieu d'un paragraphe gris), le règlement écrit reste lié
+            // (en-tête « voir le règlement ») et les articles éventuels listés sous les tuiles.
+            <>
+              <Tuiles cols={3} items={REGLES_NON_CALIBRE} />
+              {z.articles.length > 0 && (
+                <ul className="mt-1 flex flex-col gap-0.5">
+                  {z.articles.slice(0, 6).map((a, j) => (
+                    <li key={j} className="text-[11.5px]">
+                      <a className="f-ref" href={a.url ?? z.url ?? '#'} target="_blank" rel="noreferrer">{a.reference}</a>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </>
           )}
           {/* DESTINATIONS-1 (X4.2) — la ligne « Destinations » de la zone (résumé + dépliable). */}
           {z.destinations && <ZoneDestinationsLigne d={z.destinations} />}

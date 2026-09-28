@@ -433,6 +433,9 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
    RETOURS-14 P3 — l'en-tête est OPAQUE JUSQU'AU BORD HAUT du panneau : coins hauts CARRÉS (les coins
    arrondis laissaient voir le contenu défiler dans les arcs au ras du bord) + le conteneur défilant n'a
    plus de padding-haut (Fiche.tsx) qui décalait le sticky. Coins bas arrondis conservés (séparation). */
+/* FICHE-FIX-5 (Lot B) — l'en-tête collant est OPAQUE jusqu'au bord haut du panneau (aucune marge
+   au-dessus) : coins hauts CARRÉS, pas de bordure haute → le fond plein --bg-2 couvre tout le bord,
+   on ne voit plus les boutons de carte derrière. (Annule la carte flottante de FIX-4 A1.) */
 .fiche-v6 .tete-collee { position:sticky; top:0; z-index:20; background:var(--bg-2);
   border:0.5px solid var(--f-linehead); border-top:0; border-radius:0 0 6px 6px;
   box-shadow:0 3px 10px -6px rgba(0,0,0,.55); }

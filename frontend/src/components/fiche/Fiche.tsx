@@ -2,12 +2,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Tip } from '../Tip'
 import { Bouton } from '../ui/Bouton'
 import { Badge } from '../ui/Badge'
-import { Siren } from '../shared/Siren'   // RETOURS-12 T2 — SIREN cliquable Pappers
 import { useEffect, useMemo, useState, useRef, type ReactNode } from 'react'
 import { addToPipeline, ajouterParcelle, ApiError, archivePipeline, createProjet, getDossierStatut, getFaisabilite, getFiche, getGabarit, getMoi, getParcelExposition, getPipelineForParcel, getPipelineMeta, getProjets, getWatch, is429, patchPipeline, postSignalement, preDossierUrl, projetsPourParcelle, SOURCE, toggleWatch } from '../../lib/api'
 import { verdictMeta } from '../../lib/status'
 import { AnalyseLabuseCard } from './AnalyseLabuseCard'   // RETOURS-14 P1 — carte « Analyse LABUSE » extraite (testable), affiche la version servie
-import { fmtInt, fmtM2, fmtLibelleBrut, iduComplet } from '../../lib/format'
+import { fmtInt, fmtM2, fmtDateNum, fmtLibelleBrut, iduComplet } from '../../lib/format'
 import { layerLabel } from '../../lib/layers'
 import { CLIENT } from '../../lib/strings'
 import { Squelette } from '../Loading'
@@ -26,14 +25,16 @@ import { ProprietaireHistorique } from './ProprietaireHistorique'
 import type { Onglet } from '../../lib/types'
 import { useApp } from '../../store/useApp'
 import { GrilleOutils, OutilCase } from '../shared/GrilleOutils'   // PROJETS-V5 (E9) — grille d'outils partagée
-import { IC, FicheAccordionCtx, RefDrawer, GroupLabel, MicroJauge, MicroPastilles, RateLimit429, Line, EligibiliteReplie, PorteOutil, FactRow, FactNote, Vigilance } from './primitives'
+import { IC, FicheAccordionCtx, RefDrawer, GroupLabel, MicroPastilles, RateLimit429, Line, EligibiliteReplie, PorteOutil, FactRow, FactNote, Vigilance } from './primitives'
 // FICHE-RANGEMENT-2 Lot 1 — LE BASCULEMENT : la fiche est recomposée en 11 sections PAR NATURE,
 // chacune un RefDrawer inline qui COMPOSE les blocs feuilles (extraits aux étapes 3a-3c). Les
 // sections « fourre-tout » ConstructibiliteSection / LeBienSection sont dissoutes ; les quatre
 // sections encore mono-nature (Risques, Réseaux, Marché, Quartier) restent des composants réutilisés.
 // Fiche ré-exporte Calculette + FaisabiliteTab (consommés par CalculetteFonciere / M22Programme).
-import { TransformationBlock, FaisabiliteTab, BilanTab, TaxeAmenagementBlock, FiscalLeviersBlock, RtaaFromBilan, DispositifsBody, ModeBBody } from './constructibilite'
-import { BatiBlock, TerrainDuBienBlock, FiliationBlock } from './leBien'
+import { TransformationBlock, FaisabiliteTab, BilanTab, TaxeAmenagementBlock, RtaaFromBilan, DispositifsBody, ModeBBody } from './constructibilite'
+import { BatiBlock, FiliationBlock } from './leBien'
+// KELFONCIER-FIX-2 (Partie B) — les formes de la maquette v3 (Verdict · Tuiles · BarreEmpilée…).
+import { Verdict, Tuiles, type Tuile, BarreEmpilee, type Part, Lignes, Ligne, Pastilles, type Pastille, OutilsSection, type OutilSection, InfoI, Repli } from './formes'
 import { RisquesSection } from './risques'
 import { MarcheSection, DerniereVenteBlock } from './marche'
 import { ReseauxSection, EquipementsBadges } from './reseaux'
@@ -709,6 +710,9 @@ export function Fiche({ idu }: { idu: string }) {
           (sticky top:0 se cale au bord du padding), laissant un liseré de 4px au-dessus par lequel le
           contenu défilait. Sans padding-haut, l'en-tête colle au BORD du panneau (voir .tete-collee, coins
           hauts carrés = fond plein jusqu'au bord). L'espacement des tuiles reste porté par gap-3. */}
+      {/* FICHE-FIX-5 (Lot B) — AUCUNE marge au-dessus de l'en-tête : le bloc collant est opaque
+          (--bg-2) jusqu'au bord HAUT du panneau (lui-même --bg-0 opaque), plus de trou par lequel on
+          voyait les boutons de carte derrière. (Annule le pt-2.5 flottant de FIX-4 A1.) */}
       <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overflow-x-clip px-[14px] pb-4">
       {/* RETOURS-13 P7 — EN-TÊTE COLLÉ. SEUL le bloc identité (PARCELLE·commune, IDU, adresse, icônes,
           croix de fermeture) reste collé en haut au défilement — un client ferme la fiche sans remonter.
@@ -1207,9 +1211,8 @@ export function Fiche({ idu }: { idu: string }) {
           // FICHE-RANGEMENT-2 Lot 1 — les 6 tuiles d'en-tête sont DISSOUTES : chaque valeur (et son
           // « i » de source) est reportée VERBATIM dans le RefDrawer de sa section (RECETTE-5..8).
           const nf = (n: number) => n.toLocaleString('fr-FR')
-          // Surface → §1 Identité (contenance cadastrale DGFiP).
-          const tuileSurface = { v: f.surface_m2 != null ? fmtM2(f.surface_m2) : '—', vide: f.surface_m2 == null,
-            i: 'Contenance cadastrale de la parcelle (DGFiP).' }
+          // Surface → bandeau de tête (le bloc `data-fiche-tuiles`) UNIQUEMENT ; retirée d'Identité
+          // (KELFONCIER-FIX-2 Lot G, maquette v3 : la contenance ne se répète pas dans la section).
           // Zone → §4 Urbanisme (zone PLU au point de la parcelle) + son sous-titre lisible.
           const zUp = (reglesZone ?? '').toUpperCase()
           const zoneSous = !zUp ? undefined
@@ -1233,13 +1236,11 @@ export function Fiche({ idu }: { idu: string }) {
             v: expo.isLoading ? '…' : (expoOrient && expoOrient !== 'plat' ? expoOrient : expoOrient === 'plat' ? 'Plat' : '—'),
             s: expoOrient === 'plat' ? 'terrain quasi plat'
               : expo.isLoading ? 'calcul en cours'
-              : !expoOrient ? 'relief non disponible' : 'versant (RGE ALTI, fenêtre 200 m)',
+              : !expoOrient ? 'relief non disponible' : 'versant · RGE ALTI',
             vide: !expoOrient,
             i: 'Orientation du versant de la parcelle (Nord, Sud-Est…), calculée sur le modèle d’altitude RGE ALTI (IGN) dans une fenêtre de 200 m autour du centroïde. La pente affichée est celle de l’emprise (tuile « Pente ») ; l’exposition n’en affiche pas une seconde. « — » : relief non disponible sur la parcelle.' }
-          // Taxe foncière → §7 Fiscalité (TFPB part communale, REI DGFiP).
+          // Taxe foncière → §7 Fiscalité (TFPB part communale, REI DGFiP) — désormais en Tuile (Lot I).
           const tfpb = f.fiscalite?.tfpb_commune_pct
-          const tuileTaxe = { v: tfpb != null ? `${nf(tfpb)} %` : '—', s: tfpb != null ? 'part communale' : 'taux non ingéré', vide: tfpb == null,
-            i: 'Taux de taxe foncière (TFPB) voté par la commune — fichier REI (DGFiP). C’est la charge annuelle, que le bien soit gardé, loué ou porté. « — » : taux non ingéré pour cette commune.' }
           // SDP restante → §10 Potentiel (potentiel résiduel autorisé par le PLU).
           const tuileSdp = { v: reglesSdp != null && reglesSdp > 0 ? `${fmtInt(reglesSdp)} m²` : '—',
             s: reglesSdp != null && reglesSdp > 0 ? undefined : (reglesZone && /^(A|N)/i.test(reglesZone) ? 'zone non constructible' : 'pas de potentiel résiduel'),
@@ -1302,92 +1303,87 @@ export function Fiche({ idu }: { idu: string }) {
                 l'en-tête « PARCELLE · <COMMUNE> ») : le sous-titre ne porte que le signal propriétaire. */}
             <RefDrawer id="identite" icon={IC.proprio} name="Identité" accent={proprioAccent}
               context={proprioSignal ? (f.proprietaire_moral ? proprioType : 'personne physique') : undefined}
-              value={proprioSignal ? shorten(proprioSignal.detail).slice(0, 20) : (f.proprietaire_moral ? proprioType.slice(0, 18) : (f.surface_m2 != null ? fmtM2(f.surface_m2) : 'privé'))}
+              value={proprioSignal ? shorten(proprioSignal.detail).slice(0, 20) : (f.proprietaire_moral ? proprioType.slice(0, 18) : 'Particulier')}
               micro={proprioPastilles.length ? <MicroPastilles items={proprioPastilles} /> : undefined}>
               <div className="flex flex-col gap-3">
-                <ChiffreDissous l="Surface" t={tuileSurface} />
+                {/* KELFONCIER-FIX-2 (Lot G) — maquette v3 : Verdict + Tuiles×4 (SIREN · Créée·état ·
+                    Activité · BODACC). Surface retirée d'ici (elle vit dans le bandeau de tête, doublon
+                    assumé §sommaire). Aucune donnée recalculée : SIREN, activité, état, procédure sont
+                    servis (SIRENE / DGFiP) et réagencés tels quels. */}
                 {/* ⑤ PROPRIÉTÉ (relocalisée §1) — société (M43) + signaux vendeur. */}
                 <div className="flex flex-col gap-2">
-                {f.proprietaire_moral ? (
-                  <div>
-                    {/* RETOURS-23 Z3 — plus de card-elev : kicker + fait à plat. */}
-                    <GroupLabel>Propriétaire (DGFiP)</GroupLabel>
-                    <div className="mt-1 text-xs font-medium text-txt-hi">{f.proprietaire_moral.denomination ?? '—'}</div>
-                    <div className="mt-0.5 flex items-center gap-3 text-[10.5px] text-txt-mut">
-                      {f.proprietaire_moral.siren && <span className="font-mono">SIREN <Siren value={f.proprietaire_moral.siren} className="font-mono text-txt-mut" /></span>}
-                      {f.proprietaire_moral.groupe_label && <span>{f.proprietaire_moral.groupe_label}</span>}
+                {f.proprietaire_moral ? (() => {
+                  const pm = f.proprietaire_moral
+                  const id = pm.identite
+                  const anc = f.anciennete_detention
+                  const proc = pm.etat_societe
+                  const tuiles: Tuile[] = [
+                    { label: 'SIREN',
+                      valeur: pm.siren
+                        ? <a data-annuaire-entreprises href={id?.annuaire_url ?? `https://annuaire-entreprises.data.gouv.fr/entreprise/${pm.siren}`}
+                            target="_blank" rel="noreferrer noopener" className="font-mono text-mint hover:underline">{pm.siren}</a>
+                        : '—',
+                      sous: pm.siren ? 'annuaire des entreprises ↗' : undefined, ton: pm.siren ? undefined : 'gris' },
+                    { label: 'Créée · état',
+                      valeur: <>{id?.date_creation ? id.date_creation.slice(0, 4) : '—'}{id?.actif != null ? <small style={{ marginLeft: 4, color: id.actif ? 'var(--mint)' : 'var(--st-ecartee)' }}>{id.actif ? 'active' : 'cessée'}</small> : null}</>,
+                      sous: id?.source ? 'SIRENE' : undefined, ton: id?.date_creation ? undefined : 'gris' },
+                    { label: 'Activité', valeur: <span style={{ fontSize: 12 }}>{id?.activite ?? '—'}</span>,
+                      sous: id?.ape ?? undefined, ton: id?.activite ? undefined : 'gris' },
+                    { label: 'BODACC', valeur: <span style={{ fontSize: 12 }}>{proc ? proc.libelle : 'aucune procédure'}</span>,
+                      sous: proc ? 'procédure collective' : 'DGFiP / BODACC', ton: proc ? 'ambre' : 'vert' },
+                  ]
+                  return (
+                    <div>
+                      <Verdict ton="vert" reponse={pm.denomination ?? 'Propriétaire (personne morale)'}
+                        contexte={[anc?.disponible && anc.depuis_annee ? `propriétaire depuis ${anc.depuis_annee}` : null,
+                          proc ? proc.libelle : 'aucune procédure collective'].filter(Boolean).join(' — ') || undefined} />
+                      <Tuiles items={tuiles} />
+                      {(id?.siege || pm.groupe_label) && (
+                        <Lignes>
+                          {id?.siege && <Ligne label="Siège" valeur={<>{id.siege}{id.siege_commune ? <small> · {id.siege_commune}</small> : null}</>} />}
+                          {pm.groupe_label && <Ligne label="Groupe" valeur={pm.groupe_label} />}
+                        </Lignes>
+                      )}
+                      {proc && (
+                        <FactNote>{proc.libelle} (Sourcé {proc.etats.map((e) => e.source).filter((s, i, a) => a.indexOf(s) === i).join(' / ')}) — {proc.note}</FactNote>
+                      )}
                     </div>
-                    {/* RETOURS-11F3 F11 — carte d'identité publique (SIRENE) : activité, siège, création,
-                        état actif — faits publics d'entreprise, jamais une personne. */}
-                    {f.proprietaire_moral.identite && (
-                      <div data-proprio-identite className="mt-1.5 flex flex-col gap-0.5 border-t border-bd/60 pt-1.5 text-[10.5px] text-txt-mut">
-                        {f.proprietaire_moral.identite.activite && <div><span className="text-txt-dim">Activité </span><span className="text-txt">{f.proprietaire_moral.identite.activite}</span>{f.proprietaire_moral.identite.ape && <span className="ml-1 font-mono text-txt-dim">({f.proprietaire_moral.identite.ape})</span>}</div>}
-                        {f.proprietaire_moral.identite.siege && <div><span className="text-txt-dim">Siège </span><span className="text-txt">{f.proprietaire_moral.identite.siege}</span></div>}
-                        <div className="flex gap-3">
-                          {f.proprietaire_moral.identite.date_creation && <span><span className="text-txt-dim">Créée </span>{f.proprietaire_moral.identite.date_creation}</span>}
-                          {f.proprietaire_moral.identite.actif != null && <span className={f.proprietaire_moral.identite.actif ? 'text-mint' : 'text-st-ecartee'}>{f.proprietaire_moral.identite.actif ? 'active' : 'cessée'}</span>}
-                        </div>
-                        <div className="text-[9.5px] text-txt-dim italic">{f.proprietaire_moral.identite.source}</div>
-                      </div>
-                    )}
-                    {/* RETOURS-11 F11 — lien vers l'Annuaire des entreprises (fiche INPI/INSEE publique). */}
-                    {f.proprietaire_moral.siren && (
-                      <a data-annuaire-entreprises target="_blank" rel="noreferrer noopener"
-                        href={`https://annuaire-entreprises.data.gouv.fr/entreprise/${f.proprietaire_moral.siren}`}
-                        className="mt-1 inline-block text-[10.5px] text-mint underline decoration-dotted">
-                        Annuaire des entreprises ↗
-                      </a>
-                    )}
-                    {f.proprietaire_moral.etat_societe && (
-                      // M43 — fait public d'entreprise (état société) : on le DIT, on n'en déduit RIEN
-                      // (pas de vigilance, pas de badge, pas de filtre). PM only ; jamais la personne.
-                      <div className="mt-2 border-t border-bd/60 pt-1.5 text-[10.5px] text-txt-mut">
-                        <span className="text-txt-hi">{f.proprietaire_moral.etat_societe.libelle}</span>
-                        <span className="ml-1 text-txt-dim">
-                          (Sourcé {f.proprietaire_moral.etat_societe.etats.map((e) => e.source).filter((s, i, a) => a.indexOf(s) === i).join(' / ')})
-                        </span>
-                        <div className="mt-0.5 text-[9.5px] text-txt-dim italic">{f.proprietaire_moral.etat_societe.note}</div>
-                      </div>
-                    )}
-                    {/* M60 P1c — lien inline « voir le patrimoine » retiré : une seule entrée par outil,
-                        la PORTE Scan patrimoine est au pied du tiroir (voir plus bas). */}
-                  </div>
-                ) : (
-                  <FactNote>
-                    Propriétaire : personne physique ou non recensé au fichier des personnes morales
-                    (identité nominative : workflow SPF/CERFA, jamais automatisée).
-                    {/* M70 point 7a — le lien texte SPF devient une PORTE-OUTIL en pied de tiroir
-                        (voir plus bas). L'outil courrier (M09, pré-rempli sur la parcelle) est inchangé. */}
-                  </FactNote>
+                  )
+                })() : (
+                  /* FICHE-FIX-5 (Lot C) — personne physique : Verdict clair, le paragraphe SPF/CERFA
+                     derrière le « i » (plus de paragraphe gris dans le flux). Le bouton « Courrier SPF »
+                     reste en pied (OutilsSection, plus bas). */
+                  <Verdict ton="gris" reponse="Propriétaire non identifié"
+                    contexte={<>personne physique ou hors fichier des personnes morales<InfoI aria="Comment identifier le propriétaire" tip="L'identité nominative d'une personne physique n'est pas automatisée : elle passe par une demande au Service de la publicité foncière (SPF), courrier CERFA. Le bouton « Courrier SPF » ci-dessous le pré-remplit sur la parcelle." /></>} />
                 )}
-                {proprioLines.length > 0 && <div className="flex flex-col gap-1">{proprioLines.map((l, i) => <Line key={i} line={l} hideWeight hideDate />)}</div>}
+                {/* FICHE-FIX-4 (Lot C) — la liste brute des lignes « proprio » (BODACC, « personne
+                    morale »…) FAISAIT DOUBLON avec les Tuiles/Verdict ci-dessus (maquette : aucune
+                    liste grise ici). Les signaux vendeur restent portés par les pastilles de l'en-tête
+                    du tiroir (proprioPastilles) ; `proprioLines` reste calculé pour elles. */}
                 {/* L1 (KF-2) — historique du propriétaire moral par millésime + diff constaté (hors
                     scoring). R6 : `pm` dit au composant si la parcelle a un propriétaire moral —
                     absence de timeline = ligne honnête (PM) ou silence justifié (PP). */}
                 <ProprietaireHistorique h={f.proprietaire_historique} pm={!!f.proprietaire_moral} />
-                {/* RETOUCHES-1 lot C.14 — ancienneté de détention : PM = millésimes DGFiP (1ʳᵉ apparition
-                    du SIREN) ; PP = dernière mutation DVF (jamais nommée). « sans objet » si inconnue. */}
+                {/* FICHE-FIX-4 (Lot C) — ancienneté de détention en une Ligne « Détention ≥ N ans
+                    (depuis AAAA) », source derrière le « i ». RETOUCHES-1 C.14 : PM = millésimes DGFiP
+                    (1ʳᵉ apparition du SIREN) ; PP = dernière mutation DVF (jamais nommée). */}
                 {f.anciennete_detention?.disponible && (
-                  <div data-anciennete className="text-[11.5px] text-txt-mut">
-                    Propriétaire actuel depuis <b className="text-txt">≥ {f.anciennete_detention.depuis_ans} an{(f.anciennete_detention.depuis_ans ?? 0) > 1 ? 's' : ''}</b>
-                    {f.anciennete_detention.depuis_annee ? <span> (depuis {f.anciennete_detention.depuis_annee})</span> : null}
-                    <span className="text-txt-dim"> — {f.anciennete_detention.source}{f.anciennete_detention.millesime ? ` · ${f.anciennete_detention.millesime}` : ''}</span>
-                  </div>
+                  <div data-anciennete><Lignes>
+                    <Ligne label={<>Détention<InfoI tip={`${f.anciennete_detention.source}${f.anciennete_detention.millesime ? ` · ${f.anciennete_detention.millesime}` : ''}`} aria="Source de l'ancienneté de détention" /></>}
+                      valeur={<>≥ {f.anciennete_detention.depuis_ans} an{(f.anciennete_detention.depuis_ans ?? 0) > 1 ? 's' : ''}{f.anciennete_detention.depuis_annee ? ` (depuis ${f.anciennete_detention.depuis_annee})` : ''}</>} />
+                  </Lignes></div>
                 )}
                 {/* M125-2 — copropriété(s) RNIC rattachées (donnée réelle, cible bailleur/copro) */}
                 {f.coproprietes && f.coproprietes.length > 0 && <CoproprietesBlock copros={f.coproprietes} />}
-                {/* M60 P1c — PORTE en pied : Scan patrimoine PRÉ-REMPLI (SIREN du propriétaire). */}
-                {f.proprietaire_moral?.siren && (
-                  <PorteOutil ico="⌂" data="patrimoine" titre="Scan patrimoine du propriétaire"
-                    sous={`Tout le foncier de ${f.proprietaire_moral.denomination ?? 'ce propriétaire'} · SIREN ${f.proprietaire_moral.siren}`}
-                    onClick={() => { setM02Prefill(f.proprietaire_moral!.siren!); setModule('patrimoine') }} />
-                )}
-                {/* M70 point 7a — PORTE en pied : Courrier SPF (personne physique / non recensée). */}
-                {!f.proprietaire_moral && (
-                  <PorteOutil ico="✉" data="spf-letter" titre={CLIENT.fiche.export.spf}
-                    sous="Courrier pré-rempli à envoyer au SPF pour identifier le propriétaire."
-                    onClick={() => { setCourrierPrefill(idu); setModule('courriers') }} />
-                )}
+                {/* FICHE-FIX-4 (Lot C) — outil en pied : Scan patrimoine (PM) OU Courrier SPF (PP), en
+                    bouton OutilsSection au lieu d'une grande carte PorteOutil. */}
+                {f.proprietaire_moral?.siren ? (
+                  <OutilsSection outils={[{ label: 'Scan patrimoine du propriétaire', principal: true, full: true, data: 'patrimoine',
+                    onClick: () => { setM02Prefill(f.proprietaire_moral!.siren!); setModule('patrimoine') } }]} />
+                ) : !f.proprietaire_moral ? (
+                  <OutilsSection outils={[{ label: CLIENT.fiche.export.spf, principal: true, full: true, data: 'spf-letter',
+                    onClick: () => { setCourrierPrefill(idu); setModule('courriers') } }]} />
+                ) : null}
                 </div>
                 {/* DERNIÈRE VENTE (DVF) — fait d'identité, relocalisé de Marché (§8→§1). */}
                 <DerniereVenteBlock f={f} />
@@ -1417,22 +1413,58 @@ export function Fiche({ idu }: { idu: string }) {
               context={[penteSous ? `pente ${penteSous}` : null, expoOrient && expoOrient !== 'plat' ? String(expoOrient) : null].filter(Boolean).join(' · ') || undefined}
               value={penteDeg != null ? `${nf(penteDeg)} °` : (expoOrient && expoOrient !== 'plat' ? String(expoOrient) : undefined)}>
               <div className="flex flex-col gap-3">
-                <ChiffreDissous l="Pente" t={tuilePente} />
-                <ChiffreDissous l="Exposition" t={tuileExpo} />
+                {/* KELFONCIER-FIX-2 (Lot F) — maquette v3 : Verdict + Tuiles (pente·expo·surface
+                    libre·sol artificialisé) + BarreEmpilée CoSIA. Toutes les valeurs sont servies
+                    (aucun recalcul) ; le verdict réagence des faits déjà servis. */}
+                {(() => {
+                  const lb = f.le_bien
+                  const cos = lb?.cosia_couverture
+                  const artif = lb?.ocsge?.part_artif_pct
+                  const vRep = expoOrient === 'plat' ? 'Terrain plat'
+                    : expoOrient ? `Versant ${expoOrient}`
+                    : (penteSous ? `Terrain ${penteSous}` : 'Terrain')
+                  const vCtx = [
+                    penteDeg != null ? `${nf(penteDeg)} °` : null,
+                    lb?.surface_libre_m2 != null ? `${fmtInt(lb.surface_libre_m2)} m² au sol libre` : null,
+                    artif != null ? `${artif.toLocaleString('fr-FR')} % artificialisé (OCS GE)` : null,
+                  ].filter(Boolean).join(' · ')
+                  const tuiles: Tuile[] = [
+                    { label: 'Pente', valeur: <>{tuilePente.v}{tuilePente.s ? <small> {tuilePente.s}</small> : null}</>, ton: tuilePente.vide ? 'gris' : undefined },
+                    { label: 'Exposition', valeur: tuileExpo.v, sous: tuileExpo.s, ton: tuileExpo.vide ? 'gris' : undefined },
+                  ]
+                  if (lb?.surface_libre_m2 != null) tuiles.push({ label: 'Surface au sol libre', valeur: <>{fmtInt(lb.surface_libre_m2)} <small>m²</small></> })
+                  if (artif != null) tuiles.push({ label: 'Sol artificialisé', valeur: <>{artif.toLocaleString('fr-FR')} <small>%</small></>, sous: `OCS GE ${lb!.ocsge!.millesime}` })
+                  const parts = ([
+                    cos?.part_impermeabilisee_pct != null ? { pct: cos.part_impermeabilisee_pct, color: '#6b7280', label: `Imperméabilisé ${cos.part_impermeabilisee_pct.toLocaleString('fr-FR')} %` } : null,
+                    cos?.part_vegetalisee_boisee_pct != null ? { pct: cos.part_vegetalisee_boisee_pct, color: 'var(--mint)', label: `Végétalisé ${cos.part_vegetalisee_boisee_pct.toLocaleString('fr-FR')} %` } : null,
+                    cos?.part_sol_nu_pct != null ? { pct: cos.part_sol_nu_pct, color: 'var(--line-2)', label: `Sol nu ${cos.part_sol_nu_pct.toLocaleString('fr-FR')} %` } : null,
+                  ].filter(Boolean) as Part[])
+                  return (
+                    <>
+                      <Verdict ton="vert" reponse={vRep} contexte={vCtx || undefined} />
+                      <Tuiles items={tuiles} />
+                      {parts.length > 0 && (
+                        <div data-le-bien-terrain>
+                          <GroupLabel>Couverture du sol · CoSIA 20 cm</GroupLabel>
+                          <BarreEmpilee parts={parts} />
+                        </div>
+                      )}
+                    </>
+                  )
+                })()}
                 {/* FICHE-RANGEMENT-3 Lot 5 — AZIMUT du versant (aspect_deg, MNT RGE ALTI) : le cap
                     précis derrière l'orientation lisible (0° = Nord, sens horaire). */}
                 {expoData?.aspect_deg != null && (
                   <div data-terrain-azimut>
-                    <FactRow label="Azimut du versant"
-                      value={<>{nf(expoData.aspect_deg)} <small>° (0 = Nord, sens horaire)</small></>}
-                      src="RGE ALTI (IGN) — MNT" />
+                    <Ligne label="Azimut du versant"
+                      valeur={<>{nf(expoData.aspect_deg)} <small>° (0 = Nord, sens horaire)</small></>} />
                   </div>
                 )}
-                <TerrainDuBienBlock f={f} />
                 <EquipementsBadges idu={idu} />
                 {/* RETOURS-13 P6 — coupe altimétrique (repliable) le long du plus grand axe, ou d'une
                     ligne dessinée. Lue LIVE dans le RGE ALTI (le même relief que la pente ci-dessus). */}
                 <ProfilAltimetrique idu={idu} />
+                <FactNote>OCS GE (IGN, donnée d’îlot, décret 2023-1096) · CoSIA (IGN, détection IA, mesure de la parcelle) · pente et exposition RGE ALTI (IGN).</FactNote>
               </div>
             </RefDrawer>
 
@@ -1458,14 +1490,39 @@ export function Fiche({ idu }: { idu: string }) {
             {/* FICHE-RANGEMENT-3 Lot 2 — « N % SDP consommée » n'apparaît plus DANS le sous-titre :
                 la micro-jauge (première ligne du tiroir ouvert) le porte déjà. Le sous-titre ne garde
                 que l'article/zone non publiée (rien quand la zone est connue → la jauge suffit). */}
+            {/* FICHE-FIX-5 (Lot E) — la jauge « N % SDP consommée » ne FLOTTE plus en tête (micro
+                retiré) : elle descend en Ligne dans le corps (voir plus bas). */}
             <RefDrawer id="urbanisme" icon={IC.regles} name="Urbanisme"
               value={reglesGabarit}
-              context={reglesZone ? undefined : (reglesArticle ? `art. ${reglesArticle}` : 'zone non publiée au GPU')}
-              micro={pctConsomme != null
-                ? <MicroJauge pct={pctConsomme} label={CLIENT.fiche.sdpConsommee(pctConsomme)} tip={CLIENT.fiche.sdpConsommeeTip(reglesSdp ?? null)} />
-                : <MicroJauge pct={0} label={[reglesArticle ? `art. ${reglesArticle}` : null].filter(Boolean).join(' · ') || 'PLU'} />}>
+              context={reglesZone ? undefined : (reglesArticle ? `art. ${reglesArticle}` : 'zone non publiée au GPU')}>
               <div className="flex flex-col gap-3">
+                {/* FICHE-FIX-4 (Lot F) — VERDICT COMPLET pour TOUTES les zones (calibrées ou non) :
+                    zone + nature + « N destinations interdites · N sous condition » (comptes servis
+                    reglement_plu.zones[].destinations). Aucun nombre recalculé. */}
+                {(reglesZone || f.au_ouverture) && (() => {
+                  const dst = (f.reglement_plu?.zones ?? []).reduce((a, z) => ({
+                    int: a.int + (z.destinations?.interdites?.length ?? 0),
+                    sc: a.sc + (z.destinations?.sous_conditions?.length ?? 0),
+                  }), { int: 0, sc: 0 })
+                  const destTxt = [dst.int > 0 ? `${dst.int} destination${dst.int > 1 ? 's' : ''} interdite${dst.int > 1 ? 's' : ''}` : null,
+                    dst.sc > 0 ? `${dst.sc} sous condition` : null].filter(Boolean).join(' · ') || null
+                  return (
+                    <Verdict ton={f.au_ouverture?.bloquant ? 'ambre' : 'vert'}
+                      reponse={reglesZone
+                        ? <>{reglesZone}{zoneSous ? `, ${zoneSous}` : ''}{f.au_ouverture ? ` : ${f.au_ouverture.statut}` : ''}</>
+                        : 'Zone non publiée au GPU'}
+                      contexte={f.au_ouverture?.motif || destTxt || undefined} />
+                  )
+                })()}
                 <ChiffreDissous l="Zone" t={tuileZone} />
+                {/* FICHE-FIX-5 (Lot E) — SDP consommée en Ligne (plus flottante), méthode en « i ». */}
+                {pctConsomme != null && (
+                  <Lignes>
+                    <Ligne label={<>SDP consommée<InfoI aria="Sur la SDP consommée" tip={CLIENT.fiche.sdpConsommeeTip(reglesSdp ?? null)} /></>}
+                      ton={pctConsomme >= 100 ? 'ambre' : undefined}
+                      valeur={`${Math.round(pctConsomme)} %`} />
+                  </Lignes>
+                )}
                 {/* M75 — obligation APER (ombrières PV, grand parking > 1 500 m²) : contrainte
                     réglementaire portant sur le terrain, INFORMATION. Libellé backend (mêmes mots
                     que les exports). « potentiellement concerné », jamais « soumis à ». */}
@@ -1480,34 +1537,20 @@ export function Fiche({ idu }: { idu: string }) {
                     </Vigilance>
                   </div>
                 )}
-                {f.plu_fraicheur?.libelle && (
-                  <div data-plu-fraicheur={f.plu_fraicheur.statut}>
-                    <Vigilance tone={f.plu_fraicheur.statut === 'a_jour' ? 'mint' : 'creuser'}
-                      title={<><span className="mr-1">{f.plu_fraicheur.statut === 'a_jour' ? '🕓' : '▲'}</span>{f.plu_fraicheur.document_servi || f.plu_fraicheur.libelle}</>}>
-                      {f.plu_fraicheur.document_servi ? (
-                        <>
-                          {f.plu_fraicheur.fait_foi && (
-                            <span className="block text-[10px] text-txt-dim">✓ {f.plu_fraicheur.fait_foi}</span>
-                          )}
-                          {f.plu_fraicheur.en_cours && (
-                            /* M57-P1 (d) : a_jour → avertissement NEUTRE ; les autres statuts portent une
-                               procédure RÉELLE → « En cours (non servi) » conservé. */
-                            f.plu_fraicheur.statut === 'a_jour'
-                              ? <span className="block text-[10px] text-txt-dim">{f.plu_fraicheur.en_cours}</span>
-                              : <span className="block text-[10px] text-st-creuser">⏳ En cours (non servi) : {f.plu_fraicheur.en_cours}</span>
-                          )}
-                          {f.plu_fraicheur.action && (
-                            <span className="block text-[10px] text-txt-mut">→ {f.plu_fraicheur.action}</span>
-                          )}
-                        </>
-                      ) : (
-                        f.plu_fraicheur.note && f.plu_fraicheur.statut !== 'a_jour'
-                          ? <span className="block text-[10px] text-txt-dim">{f.plu_fraicheur.note}</span>
-                          : null
-                      )}
-                    </Vigilance>
-                  </div>
-                )}
+                {/* FICHE-FIX-4 (Lot F) — PLU en une Ligne : « approuvé le JJ/MM/AAAA » + badge document
+                    (opposable / procédure). Le détail (fait foi, procédure en cours, action) derrière le « i ». */}
+                {f.plu_fraicheur?.libelle && (() => {
+                  const pf = f.plu_fraicheur!
+                  const paras = [pf.fait_foi ? `✓ ${pf.fait_foi}` : null,
+                    pf.en_cours ? (pf.statut === 'a_jour' ? pf.en_cours : `En cours (non servi) : ${pf.en_cours}`) : null,
+                    pf.action ? `→ ${pf.action}` : null, pf.note].filter(Boolean) as string[]
+                  return (
+                    <div data-plu-fraicheur={pf.statut}><Lignes>
+                      <Ligne label={<>PLU{paras.length > 0 ? <InfoI tip={<div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>{paras.map((s, i) => <span key={i}>{s}</span>)}</div>} aria="Sur le document PLU" /> : null}</>}
+                        valeur={<span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>{pf.horizon ? `approuvé le ${fmtDateNum(pf.horizon)}` : (pf.document_servi || 'document')}{pf.statut === 'a_jour' && <Badge ton="vert">document</Badge>}</span>} />
+                    </Lignes></div>
+                  )
+                })()}
                 {/* M41 — Radar procédures PLU : stade + conséquences parcellaires servables. */}
                 {f.radar_procedure?.indisponible && <BlocIndisponible titre="Radar procédures PLU" />}
                 {f.radar_procedure?.synthese?.etat && (
@@ -1565,42 +1608,30 @@ export function Fiche({ idu }: { idu: string }) {
                     N bâtiments » (layer bati) répète §3 Bâti (nb_batiments) → retirée. */}
                 {(() => { const rl = reglesLines.filter((l) => l.result !== 'PASS' && l.layer !== 'zonage_plu_gpu' && l.layer !== 'bati'); return rl.length > 0
                   ? <div><GroupLabel>Situation</GroupLabel><div className="flex flex-col gap-1">{rl.map((l, i) => <Line key={i} line={l} hideWeight hideDate />)}</div></div> : null })()}
-                {/* M60 P1c — PORTES en pied d'Urbanisme : les liens Annuaire PLU + lettre de zonage
-                    REPRIS en forme porte (.porte-outil), accroches contextualisées (zone PLU). */}
-                {/* M137-P — les 3 outils PLU fusionnés dans le hub « plu » : la porte Annuaire ouvre le
-                    hub PRÉ-REMPLI sur l'Annuaire (pluPrefill : commune + zone servie). */}
-                <PorteOutil ico="§" data="annuaire" titre="Annuaire PLU de la commune"
-                  sous={reglesZone ? `Le règlement de la zone ${reglesZone} — articles, prescriptions` : 'Le règlement PLU de la commune'}
-                  onClick={() => { setPluPrefillF({ insee: idu.slice(0, 5), zone: reglesZone ?? null }); setModule('plu') }} />
-                {/* EXPORTS-2 lot 8 — « Lettre de vérification de zonage » supprimée (décision Vic
-                    07/09) : la section 2 du Dossier couvre le zonage entièrement. */}
-                {/* M70 déc. 9 — PORTE Vérif procédure PLU dans Urbanisme (grille terminale supprimée).
-                    L'outil lit selectedIdu (préservé par setModule) → pré-rempli sur la parcelle. */}
-                <PorteOutil ico="⚖" data="verif-procedure" titre="Vérif procédure PLU"
-                  sous={reglesZone ? `Commune en procédure ? (zone ${reglesZone})` : 'La commune est-elle en procédure PLU ?'}
-                  onClick={() => { setPluVueF('procedure'); setModule('plu') }} />
+                {/* FICHE-FIX-4 (Lot F) — les 2 outils PLU (Annuaire · Vérif procédure) en boutons
+                    OutilsSection au lieu de grandes cartes PorteOutil. M137-P : Annuaire ouvre le hub
+                    pré-rempli (commune + zone servie) ; Vérif procédure lit selectedIdu. */}
+                <OutilsSection outils={[
+                  { label: 'Annuaire PLU', principal: true, data: 'annuaire',
+                    onClick: () => { setPluPrefillF({ insee: idu.slice(0, 5), zone: reglesZone ?? null }); setModule('plu') } },
+                  { label: 'Vérif procédure', data: 'verif-procedure',
+                    onClick: () => { setPluVueF('procedure'); setModule('plu') } },
+                ]} />
                 {/* RTAA DOM (§4) — rappel réglementaire de conception, servi par le bilan (b.rtaa). */}
                 <RtaaFromBilan idu={idu} />
                 {/* Dispositifs et périmètres (§4) — ER / EBC / doc urba / DPU / PEB / SUP (SOURCES-1 lot 1). */}
                 {f.dispositifs && <DispositifsBody d={f.dispositifs} />}
-                {/* SOURCES-FIX-1 A3 — SCOT (document supra-communal opposable au PLU) : nom + date
-                    d'approbation, même couche que la carte et la fiche commune (spatial_layers kind=scot). */}
+                {/* SOURCES-FIX-1 A3 — SCOT (document supra-communal opposable au PLU). FICHE-FIX-4
+                    (Lot F) : en Ligne comme les autres, source derrière le « i ». */}
                 {f.scot && (
-                  <div data-scot className="text-[12.5px]">
-                    <GroupLabel>SCOT (schéma de cohérence territoriale)</GroupLabel>
-                    {f.scot.disponible ? (
-                      <div className="flex flex-col gap-0.5">
-                        <div>
-                          <span className="font-semibold">{f.scot.nom ?? 'SCOT'}</span>
-                          {f.scot.statut && <span className="text-txt-mut"> — {f.scot.statut}</span>}
-                          {f.scot.date_approbation && <span className="text-txt-mut"> · approuvé le {f.scot.date_approbation.split('-').reverse().join('/')}</span>}
-                        </div>
-                        <div className="text-[11px] text-txt-dim">{f.scot.source}</div>
-                      </div>
-                    ) : (
-                      <div className="text-[12px] text-txt-dim"><span className="text-mint">✓</span> Sans objet — parcelle hors périmètre SCOT. <span className="text-txt-dim">({f.scot.source})</span></div>
-                    )}
-                  </div>
+                  <div data-scot><Lignes>
+                    <Ligne label={<>SCOT<InfoI tip={<>Schéma de cohérence territoriale — document supra-communal opposable au PLU. {f.scot.source}</>} aria="Sur le SCOT" /></>}
+                      valeur={f.scot.disponible
+                        ? <>{f.scot.nom ?? 'SCOT'}{f.scot.date_approbation ? <small> · approuvé le {fmtDateNum(f.scot.date_approbation)}</small> : (f.scot.statut ? <small> · {f.scot.statut}</small> : null)}</>
+                        : 'hors périmètre'}
+                      ton={f.scot.disponible ? undefined : 'gris'}
+                      title={f.scot.disponible ? (f.scot.nom ?? undefined) : undefined} />
+                  </Lignes></div>
                 )}
                 {/* FICHE-FIX-2 P4 — mixité sociale (LLS) branchée sur la règle VALIDÉE de la zone
                     (reglement_plu.mixite, lue des regles calibrées). Validée → seuil + quota + citation
@@ -1672,54 +1703,87 @@ export function Fiche({ idu }: { idu: string }) {
                 ? <Badge ton="vert">ZFANG renforcé</Badge>
                 : tfpb != null ? `${nf(tfpb)} %` : undefined}>
               <div className="flex flex-col gap-3">
-                <ChiffreDissous l="Taxe foncière" t={tuileTaxe} />
-                {/* Fiscal & leviers (QPV / TVA / note taxe) — levier fiscal du bilan (§7). */}
-                <FiscalLeviersBlock idu={idu} />
-                {/* FICHE-1 lot 5 — taxe d'aménagement estimée + porte pour changer les hypothèses (§7). */}
-                {f.taxe_amenagement && <TaxeAmenagementBlock t={f.taxe_amenagement} />}
-                {f.taxe_amenagement && (
-                  <PorteOutil ico="€" data="taxe-amenagement-outil" titre="Taxe d'aménagement"
-                    sous="Changer les hypothèses (résidence principale, logement aidé, piscine, taux communal)"
-                    onClick={() => { setParcelPrefill(idu); setModule('taxe-amenagement') }} />
-                )}
-                {/* M106 P3 — DISPOSITIFS TERRITORIAUX (ZFANG / FRR ex-ZRR) relocalisés §7 : attribut de
-                    COMMUNE, états sourcés + lien texte. JAMAIS un chiffre fiscal (le fiscaliste tranche). */}
-                {f.territoire_fiscal && (
-                  <div className="flex flex-col gap-2.5" data-territoire-fiscal>
-                    <GroupLabel>Dispositifs territoriaux</GroupLabel>
-                    {/* RETOURS-23 Z3 — chaque dispositif est un fait à plat (titre · détail · source en
-                        note). Le périmètre fin qui touche LA parcelle (QPV / bande TVA 500 m) garde un
-                        filet gauche mint (marqueur, pas un cadre). Données/libellés/sources inchangés. */}
-                    {(f.territoire_fiscal.perimetres ?? []).map((p) => (
-                      <div key={p.libelle} data-fiche-perimetre className="border-l-2 border-mint pl-3">
-                        <p className="text-[12px] font-semibold text-txt-hi">{p.libelle}{p.derive && <span className="ml-1.5 rounded bg-surface-2 px-1 py-px text-[9px] uppercase tracking-wide text-txt-dim">estimé</span>}</p>
-                        <p className="mt-0.5 text-[11.5px] leading-snug text-txt">{p.detail}</p>
-                        <FactNote>{p.source}</FactNote>
-                      </div>
-                    ))}
-                    {([['ZFANG — zone franche d’activité', f.territoire_fiscal.zfang],
-                       ['FRR — France Ruralités Revitalisation (ex-ZRR)', f.territoire_fiscal.frr]] as const)
-                      .filter(([, a]) => !!a).map(([titre, a]) => (
-                      <div key={titre}>
-                        <p className="text-[12px] font-semibold text-txt-hi">{titre}</p>
-                        <p className="mt-0.5 text-[11.5px] leading-snug text-txt">{a!.libelle}</p>
-                        <FactNote>{a!.source_ref} · <a href={a!.lien} target="_blank" rel="noreferrer" className="underline hover:text-mint">voir le texte</a></FactNote>
-                      </div>
-                    ))}
-                    {/* RETOURS-11F3 F10 — dispositifs valables sur TOUTE La Réunion (zonage B1, TVA DOM
-                        8,5 % / 2,1 % LLS). Repères, jamais un calcul fiscal. */}
-                    {(f.territoire_fiscal.dispositifs_dom ?? []).map((d) => (
-                      <div key={d.libelle} data-dispositif-dom>
-                        <p className="text-[12px] font-semibold text-txt-hi">{d.libelle}</p>
-                        <p className="mt-0.5 text-[11.5px] leading-snug text-txt">{d.detail}</p>
-                        <FactNote>{d.source}</FactNote>
-                      </div>
-                    ))}
-                    {f.territoire_fiscal.avertissement && (
-                      <FactNote>{f.territoire_fiscal.avertissement}</FactNote>
-                    )}
-                  </div>
-                )}
+                {/* KELFONCIER-FIX-2 (Lot I) — maquette v3 : Verdict + Tuiles (taxe foncière · taxe
+                    d'aménagement) + Pastilles des dispositifs de la commune. Taux et dispositifs sont
+                    servis (REI DGFiP · CGI · DHUP) ; aucun taux recalculé. Détail conservé en dessous. */}
+                {/* FICHE-FIX-4 (Lot I) — 4 tuiles (taxe foncière · taxe d'aménagement · zonage A/B/C ·
+                    TVA), Pastilles allumées ET éteintes (ZFANG/FRR/ORT/QPV/PVD/Cœur de ville), les
+                    4 paragraphes de dispositifs dans un Repli, disclaimer en source. Aucun taux recalculé. */}
+                {(() => {
+                  const terf = f.territoire_fiscal
+                  const ta = f.taxe_amenagement
+                  const dom = terf?.dispositifs_dom ?? []
+                  const zonageVal = dom.find((d) => /zonage/i.test(d.libelle))?.libelle.split(':').pop()?.trim()
+                  const tvaM = dom.find((d) => /tva/i.test(d.libelle))?.libelle.match(/(\d+[,.]?\d*)\s*%/)
+                  const allTxt = [...(terf?.perimetres ?? []).map((p) => p.libelle), ...dom.map((d) => d.libelle)].join(' | ').toLowerCase()
+                  const has = (re: RegExp) => re.test(allTxt)
+                  const ortDate = dom.find((d) => /revitalisation|\bort\b/i.test(d.libelle))?.libelle.match(/(\d{4}-\d{2}-\d{2})/)?.[1]
+                  const disp: Pastille[] = [
+                    { label: 'ZFANG', on: !!terf?.zfang },
+                    { label: 'FRR', on: !!terf?.frr },
+                    { label: 'ORT', on: has(/\bort\b|revitalisation/), date: ortDate ? fmtDateNum(ortDate) : undefined },
+                    { label: 'QPV', on: has(/\bqpv\b|quartier prioritaire/) },
+                    { label: 'PVD', on: has(/petites villes/) },
+                    { label: 'Cœur de ville', on: has(/c[œo]eur de ville/) },
+                  ]
+                  const tuiles: Tuile[] = []
+                  if (tfpb != null) tuiles.push({ label: 'Taxe foncière', valeur: <>{nf(tfpb)} <small>%</small></>, sous: 'part communale' })
+                  if (ta && (ta.taux_communal_pct != null || ta.taux_departemental_pct != null))
+                    tuiles.push({ label: "Taxe d'aménagement", valeur: <>{ta.taux_communal_pct ?? '—'} + {ta.taux_departemental_pct ?? '—'} <small>%</small></>, sous: 'commune · dépt' })
+                  if (zonageVal) tuiles.push({ label: 'Zonage A/B/C', valeur: zonageVal, sous: 'PTZ · loyers' })
+                  if (tvaM) tuiles.push({ label: 'TVA', valeur: `${tvaM[1]} %`, sous: 'DOM · 2,1 % LLS' })
+                  return (
+                    <>
+                      {(terf?.zfang || terf?.frr || zonageVal) && (
+                        <Verdict ton="vert"
+                          reponse={[terf?.zfang ? 'Zone franche (ZFANG)' : null, terf?.frr ? 'France Ruralités (FRR)' : null, disp[2].on ? 'ORT signée' : null].filter(Boolean).join(', ') || 'Dispositifs fiscaux'}
+                          contexte={[zonageVal ? `zone ${zonageVal} (PTZ/loyers)` : null, tvaM ? `TVA ${tvaM[1]} %` : null].filter(Boolean).join(' · ') || undefined} />
+                      )}
+                      {tuiles.length > 0 && <Tuiles items={tuiles} />}
+                      <GroupLabel>Dispositifs de la commune</GroupLabel>
+                      <Pastilles items={disp} />
+                      {/* FICHE-1 lot 5 — taxe d'aménagement en BOUTON (change les hypothèses). */}
+                      {f.taxe_amenagement && (
+                        <OutilsSection outils={[{ label: "Calculer la taxe d'aménagement", principal: true, full: true, data: 'taxe-amenagement-outil',
+                          onClick: () => { setParcelPrefill(idu); setModule('taxe-amenagement') } }]} />
+                      )}
+                      {/* détail des dispositifs (les 4 paragraphes) + calcul de taxe (RAP, exonérations) → Repli. */}
+                      {(f.taxe_amenagement || terf) && (
+                        <Repli label="détail des dispositifs">
+                          {f.taxe_amenagement && <TaxeAmenagementBlock t={f.taxe_amenagement} />}
+                          {terf && (
+                            <div className="flex flex-col gap-2.5" data-territoire-fiscal>
+                              {(terf.perimetres ?? []).map((p) => (
+                                <div key={p.libelle} data-fiche-perimetre className="border-l-2 border-mint pl-3">
+                                  <p className="text-[12px] font-semibold text-txt-hi">{p.libelle}{p.derive && <span className="ml-1.5 rounded bg-surface-2 px-1 py-px text-[9px] uppercase tracking-wide text-txt-dim">estimé</span>}</p>
+                                  <p className="mt-0.5 text-[11.5px] leading-snug text-txt">{p.detail}</p>
+                                  <FactNote>{p.source}</FactNote>
+                                </div>
+                              ))}
+                              {([['ZFANG — zone franche d’activité', terf.zfang],
+                                 ['FRR — France Ruralités Revitalisation (ex-ZRR)', terf.frr]] as const)
+                                .filter(([, a]) => !!a).map(([titre, a]) => (
+                                <div key={titre}>
+                                  <p className="text-[12px] font-semibold text-txt-hi">{titre}</p>
+                                  <p className="mt-0.5 text-[11.5px] leading-snug text-txt">{a!.libelle}</p>
+                                  <FactNote>{a!.source_ref} · <a href={a!.lien} target="_blank" rel="noreferrer" className="underline hover:text-mint">voir le texte</a></FactNote>
+                                </div>
+                              ))}
+                              {(terf.dispositifs_dom ?? []).map((d) => (
+                                <div key={d.libelle} data-dispositif-dom>
+                                  <p className="text-[12px] font-semibold text-txt-hi">{d.libelle}</p>
+                                  <p className="mt-0.5 text-[11.5px] leading-snug text-txt">{d.detail}</p>
+                                  <FactNote>{d.source}</FactNote>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </Repli>
+                      )}
+                      {f.territoire_fiscal?.avertissement && <FactNote>{f.territoire_fiscal.avertissement}</FactNote>}
+                    </>
+                  )
+                })()}
               </div>
             </RefDrawer>
 
@@ -1740,23 +1804,52 @@ export function Fiche({ idu }: { idu: string }) {
               context={fo?.niveaux ? `${fo.niveaux} · calcul tracé` : 'calcul tracé'}
               value={reglesSdp != null && reglesSdp > 0 ? `${fmtInt(reglesSdp)} m² SDP` : undefined}>
               <div className="flex flex-col gap-3">
-                <ChiffreDissous l="SDP restante" t={tuileSdp} />
-                {/* RETOURS-20 Z5 — l'alerte « délaissé » = une Vigilance (filet ambre). */}
-                {faisa.data?.delaisse && <div data-delaisse><Vigilance title={faisa.data.delaisse.libelle} /></div>}
-                {f.potentiel_transformation && <TransformationBlock pt={f.potentiel_transformation} />}
-                {/* DENSIFIER-PLI (PISCINES-2 Lot B) — l'outil « Densifier l'existant » est plié dans les
-                    filtres : la porte ouvre désormais le panneau Filtre (groupe Capacité) avec « Déjà bâti »
-                    coché et « SDP restante ≥ 200 m² » pré-rempli, scopé sur la commune de la parcelle.
-                    Plus de précalcul figé : la SDP lue est celle du run servi (parcel_residuel), == fiche. */}
-                {f.commune && (
-                  <PorteOutil ico="◫" data="densifier-filtre" titre="Densifier l'existant"
-                    sous={`Le bâti déjà construit de ${f.commune} qui peut porter davantage`}
-                    onClick={() => { const st = useApp.getState(); st.setCommunesFilter([f.commune!]); st.setFilter('renouvellement', true); st.setFilter('sdpMin', 200); st.openFiltres() }} />
-                )}
-                <FaisabiliteTab idu={idu} />
-                {/* GABARIT-2 — ligne « Gabarit réglementaire » : zone d'implantation / plafond /
-                    hauteur (citée de §4) + mini-plan 2D, ou « Calcul incomplet » + motif. */}
-                <GabaritLine idu={idu} />
+                {/* KELFONCIER-FIX-2 (Lot J) — maquette v3 : Verdict en tête (rouge quand la construction
+                    neuve n'est pas autorisée : zone AU non ouverte ou zone A/N). Réagence des faits
+                    déjà servis (au_ouverture, zone, SDP résiduelle), aucun calcul de capacité refait. */}
+                {/* FICHE-FIX-4 (Lot L) — UNE seule phrase de verdict (avant, écrite 3× : ici + dans
+                    FaisabiliteTab + GabaritLine). Quand la construction neuve n'est pas autorisée :
+                    verdict ROUGE + tuile SDP + ligne « pourquoi » + boutons ; le panneau Faisabilité
+                    (Terrain libéré, Tester un projet, hypothèses, gabarit) est REPLIÉ sous « Étudier
+                    quand même ». Sinon : panneau ouvert. On ne modifie PAS FaisabiliteTab/GabaritLine. */}
+                {(() => {
+                  const inconstructible = !!f.au_ouverture?.bloquant || (!!reglesZone && /^(A|N)/i.test(reglesZone))
+                  // FICHE-FIX-5 (Lot J) — le panneau se replie dès que la SDP résiduelle est 0, QUELLE
+                  // QUE SOIT la cause (destination interdite, terrain exigu, densité atteinte…).
+                  const sdpNulle = !(reglesSdp != null && reglesSdp > 0)
+                  const pourquoi = f.au_ouverture?.motif
+                    || (reglesZone && /^A/i.test(reglesZone) ? 'Zone agricole — construction de logements non autorisée.'
+                      : reglesZone && /^N/i.test(reglesZone) ? 'Zone naturelle — construction non autorisée.'
+                      : sdpNulle ? 'Aucune SDP résiduelle exploitable sur cette parcelle — le détail du calcul (terrain libéré, hypothèses, gabarit) est dans « Étudier quand même ».' : null)
+                  const outils: OutilSection[] = []
+                  if (f.commune) outils.push({ label: "Densifier l'existant", data: 'densifier-filtre',
+                    onClick: () => { const st = useApp.getState(); st.setCommunesFilter([f.commune!]); st.setFilter('renouvellement', true); st.setFilter('sdpMin', 200); st.openFiltres() } })
+                  outils.push({ label: 'Ouvrir le Gabarit', principal: true, data: 'gabarit',
+                    onClick: () => { setParcelPrefill(idu); setModule('programme') } })
+                  const panneau = (
+                    <div className="flex flex-col gap-3">
+                      {f.potentiel_transformation && <TransformationBlock pt={f.potentiel_transformation} />}
+                      <FaisabiliteTab idu={idu} />
+                      <GabaritLine idu={idu} />
+                    </div>
+                  )
+                  return (
+                    <>
+                      <Verdict ton={inconstructible ? 'rouge' : (reglesSdp != null && reglesSdp > 0 ? 'vert' : 'ambre')}
+                        reponse={inconstructible
+                          ? `Construction neuve non autorisée${reglesZone ? ` en ${reglesZone}` : ''}`
+                          : (reglesSdp != null && reglesSdp > 0 ? `${fmtInt(reglesSdp)} m² de SDP résiduelle` : 'Pas de SDP résiduelle exploitable')}
+                        contexte={!inconstructible && fo?.niveaux ? `capacité ${fo.niveaux}` : undefined} />
+                      <ChiffreDissous l="SDP restante" t={tuileSdp} />
+                      {sdpNulle && pourquoi && <p className="text-[11.5px] leading-snug text-txt-mut" data-potentiel-pourquoi>{pourquoi}</p>}
+                      {faisa.data?.delaisse && <div data-delaisse><Vigilance title={faisa.data.delaisse.libelle} /></div>}
+                      <OutilsSection outils={outils} />
+                      {sdpNulle
+                        ? <Repli label="Étudier quand même">{panneau}</Repli>
+                        : panneau}
+                    </>
+                  )
+                })()}
               </div>
             </RefDrawer>
 
@@ -1767,20 +1860,29 @@ export function Fiche({ idu }: { idu: string }) {
               context="charge foncière · réhabilitation · outils projet"
               value={<Badge ton="vert">bilan</Badge>}>
               <div className="flex flex-col gap-3">
+                {/* KELFONCIER-FIX-2 (Lot J) — maquette v3 : Verdict prix de sortie (servi, base du
+                    bilan) + OutilsSection en pied (Faisabilité · Calculette · Assemblage). */}
+                {/* FICHE-FIX-4 (Lot L) — le paragraphe explicatif passe derrière le « i » ; les 3 boutons restent. */}
+                {(() => {
+                  const prix = faisa.data?.marche?.median
+                  return (
+                    <Verdict ton="vert"
+                      reponse={<>Prix de sortie retenu {prix != null ? `${fmtInt(Number(prix))} €/m²` : '—'}<InfoI aria="Sur le prix de sortie" tip="C'est le prix affiché dans « Marché » (prix de sortie bâti secteur) — il sert de base au bilan de charge foncière ci-dessous." /></>} />
+                  )
+                })()}
                 <BilanTab idu={idu} />
                 {/* Réhabilitation (Mode B) — bloc inline (ModeBBody), plus un tiroir séparé. */}
                 {f.mode_b?.indisponible
                   ? <BlocIndisponible titre="Réhabilitation (Mode B)" />
                   : f.mode_b?.disponible && <ModeBBody idu={idu} initial={f.mode_b} />}
-                <PorteOutil ico="◱" data="faisabilite-outil" titre="Faisabilité"
-                  sous={`La capacité constructible de ces ${fmtM2(f.surface_m2)} : SDP, hauteur PLU, calcul tracé`}
-                  onClick={() => { setParcelPrefill(idu); setModule('programme') }} />
-                <PorteOutil ico="▦" data="calculette" titre="Calculette foncière"
-                  sous={`Ce terrain de ${fmtM2(f.surface_m2)} : SDP, prix de sortie, votre coût et marge`}
-                  onClick={() => { setCalcPrefill(idu); setModule('calculette-fonciere') }} />
-                <PorteOutil ico="⧉" data="assemblage-outil" titre="Assemblage"
-                  sous={`Partir de ces ${fmtM2(f.surface_m2)} et agréger les parcelles contiguës`}
-                  onClick={() => { setParcelPrefill(idu); setModule('assemblage') }} />
+                <OutilsSection outils={[
+                  { label: 'Faisabilité', principal: true, data: 'faisabilite-outil',
+                    onClick: () => { setParcelPrefill(idu); setModule('programme') } },
+                  { label: 'Calculette foncière', data: 'calculette',
+                    onClick: () => { setCalcPrefill(idu); setModule('calculette-fonciere') } },
+                  { label: 'Assemblage', full: true, data: 'assemblage-outil',
+                    onClick: () => { setParcelPrefill(idu); setModule('assemblage') } },
+                ] satisfies OutilSection[]} />
               </div>
             </RefDrawer>
 

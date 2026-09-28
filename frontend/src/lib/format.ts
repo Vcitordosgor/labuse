@@ -62,6 +62,23 @@ export const fmtDateSitadel = (d: string | Date | null | undefined): string => {
   return dt.getMonth() === 0 && dt.getDate() === 1 ? String(dt.getFullYear()) : dt.toLocaleDateString('fr-FR')
 }
 
+/** FICHE-FIX-4 (Lot B) — Date SIRENE : la valeur « 1900 » (souvent 1900-01-01) = date de création
+ *  INCONNUE chez l'INSEE, pas une vraie création → « n.c. ». Sinon JJ/MM/AAAA. Présentation pure. */
+export const fmtDateSirene = (d: string | Date | null | undefined): string => {
+  if (!d) return 'n.c.'
+  const dt = typeof d === 'string' ? new Date(d) : d
+  if (Number.isNaN(dt.getTime()) || dt.getFullYear() <= 1901) return 'n.c.'
+  return dt.toLocaleDateString('fr-FR')
+}
+
+/** FICHE-FIX-4 (Lot B) — ANNÉE de création SIRENE (tuile « Créée · état ») : « 2005 », ou « n.c. »
+ *  quand la source ne connaît que 1900 (année sentinelle). Accepte une date ISO ou une année. */
+export const anneeSirene = (d: string | number | null | undefined): string => {
+  if (d == null || d === '') return 'n.c.'
+  const an = typeof d === 'number' ? d : parseInt(String(d).slice(0, 4), 10)
+  return !Number.isFinite(an) || an <= 1901 ? 'n.c.' : String(an)
+}
+
 /** Date relative FR courte : « à l'instant », « il y a 5 min », « il y a 2 h », « il y a 3 j »,
  *  au-delà d'une semaine la date. Pour l'historique du Copilote (M78-quater #2). */
 export const ilYA = (d: string | Date | null | undefined): string => {

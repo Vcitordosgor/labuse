@@ -11,6 +11,19 @@
 import { useState, type CSSProperties, type ReactNode } from 'react'
 import { Bouton } from '../ui/Bouton'
 import { Chip } from '../ui/Chip'
+import { Tip } from '../Tip'
+
+// ── « i » PARTAGÉ (FICHE-FIX-4) ─────────────────────────────────────────────
+// Le point « i » qui porte un texte d'explication : jamais un paragraphe dans le flux, toujours
+// derrière ce déclencheur (clic/tap/focus, cf. Tip `garder`). Utilisable en `info` de <Ligne> ou seul.
+export function InfoI({ tip, aria = 'Détails' }: { tip: ReactNode; aria?: string }) {
+  return (
+    <Tip tip={tip} garder side="bottom">
+      <span role="button" tabIndex={0} aria-label={aria}
+        style={{ marginLeft: 3, display: 'inline-flex', width: 12, height: 12, flex: 'none', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', border: '1px solid var(--line-2)', fontSize: 8, fontWeight: 700, lineHeight: 1, color: 'var(--txt-dim)', cursor: 'pointer', verticalAlign: 'middle' }}>i</span>
+    </Tip>
+  )
+}
 
 // Maquette v3 → tokens de l'app. Le vert redevient un SIGNAL (mint), l'ambre = attention, le rouge =
 // blocage, le gris = neutre/absent. « txt » = clair (--txt-hi), « mut » = gris libellé, « dim » = discret.
@@ -45,10 +58,12 @@ export function Tuiles({ cols = 2, items }: { cols?: 2 | 3; items: Tuile[] }) {
   return (
     <div data-forme="tuiles" style={{ display: 'grid', gridTemplateColumns: `repeat(${cols},1fr)`, gap: 6 }}>
       {items.map((t, i) => (
+        // FICHE-FIX-4 (Lot B) — libellé et sous-ligne tronqués en « … » avec le texte complet en `title`
+        // (ex. Terrain › Exposition « versant (RGE ALTI, fenêtre 200 m) ») ; la valeur ne se coupe jamais.
         <div key={i} style={{ border: '1px solid var(--line)', borderRadius: 6, background: 'var(--bg-3)', padding: '7px 8px 6px', minWidth: 0 }}>
-          <div style={{ color: 'var(--txt-dim)', fontSize: 10.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.label}</div>
-          <div style={{ ...mono, fontSize: 14, fontWeight: 500, marginTop: 2, whiteSpace: 'nowrap', color: (t.ton && VAL_COLOR[t.ton]) || 'var(--txt-hi)' }}>{t.valeur}</div>
-          {t.sous != null && <div style={{ fontSize: 10.5, color: 'var(--txt-off)', marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.sous}</div>}
+          <div title={typeof t.label === 'string' ? t.label : undefined} style={{ color: 'var(--txt-dim)', fontSize: 10.5, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.label}</div>
+          <div style={{ ...mono, fontSize: 14, fontWeight: 500, marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: (t.ton && VAL_COLOR[t.ton]) || 'var(--txt-hi)' }}>{t.valeur}</div>
+          {t.sous != null && <div title={typeof t.sous === 'string' ? t.sous : undefined} style={{ fontSize: 10.5, color: 'var(--txt-off)', marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.sous}</div>}
         </div>
       ))}
     </div>
@@ -60,13 +75,17 @@ export function Tuiles({ cols = 2, items }: { cols?: 2 | 3; items: Tuile[] }) {
 export function Lignes({ children }: { children: ReactNode }) {
   return <div data-forme="lignes" style={{ marginTop: 8 }}>{children}</div>
 }
-export function Ligne({ label, valeur, ton, info }: {
-  label: ReactNode; valeur: ReactNode; ton?: FormeTon; info?: ReactNode
+// FICHE-FIX-4 (Lot B) — la VALEUR ne se coupe JAMAIS en son milieu (nowrap : plus de « 17 515 € »
+// rendu caractère par caractère) ; le seul retour à la ligne autorisé est ENTRE le libellé et la
+// valeur (flex-wrap sur la ligne → la valeur descend en bloc si elle ne tient pas). `title` porte le
+// texte complet quand la valeur est tronquée.
+export function Ligne({ label, valeur, ton, info, title }: {
+  label: ReactNode; valeur: ReactNode; ton?: FormeTon; info?: ReactNode; title?: string
 }) {
   return (
-    <div data-forme="ligne" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 10, padding: '5px 0', borderBottom: '1px solid var(--line)', fontSize: 12.5 }}>
+    <div data-forme="ligne" style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'baseline', gap: '2px 10px', padding: '5px 0', borderBottom: '1px solid var(--line)', fontSize: 12.5 }}>
       <span style={{ color: 'var(--txt-hi)', display: 'flex', alignItems: 'baseline', gap: 5, minWidth: 0 }}>{label}{info}</span>
-      <span style={{ ...mono, textAlign: 'right', flex: 'none', maxWidth: '58%', whiteSpace: 'normal', color: (ton && VAL_COLOR[ton]) || 'var(--txt-hi)' }}>{valeur}</span>
+      <span title={title} style={{ ...mono, textAlign: 'right', flex: 'none', marginLeft: 'auto', minWidth: 0, maxWidth: '100%', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: (ton && VAL_COLOR[ton]) || 'var(--txt-hi)' }}>{valeur}</span>
     </div>
   )
 }

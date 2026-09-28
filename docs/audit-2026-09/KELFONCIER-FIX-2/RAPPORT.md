@@ -9,14 +9,31 @@
 ## 0. État de session — à lire d'abord (honnêteté)
 
 - **Partie A (recette) — TERMINÉE** : les 5 lots A à E sont faits, testés, commités (un commit par lot).
-- **Partie B (intérieur des sections) — SOCLE FAIT, CÂBLAGE EN ATTENTE** :
-  - **Fait** : les **12 formes** (`components/fiche/formes.tsx`) sont créées et **verrouillées par snapshots** (`formes.test.tsx`, 12 tests verts). C'est le socle réutilisable que le mandat énumère.
-  - **Non fait** : le **câblage section par section** sur la maquette (Terrain/Bâti pour finir F, puis G/H/I/J). Deux raisons, dites franchement :
-    1. Le mandat impose des **captures avant/après des 3 témoins (AB0134, BZ1065, AB1117), chaque section ouverte, côte à côte avec la maquette**. Le **serveur MCP navigateur (Playwright) s'est déconnecté** en cours de session → aucune capture live n'a pu être produite. Sans elle, un lot Partie B ne peut pas être livré à sa définition de « fait ».
-    2. Recomposer l'intérieur des 11 sections touche `Fiche.tsx` (1 915 lignes) + 7 fichiers de section (~2 500 lignes) **à l'aveugle** (sans vérification visuelle), sur la pièce maîtresse du produit. Le faire sans pouvoir constater le rendu aurait été un risque de régression non maîtrisé — contraire à la prudence attendue sur une action difficile à vérifier.
-  - Le socle + le plan de câblage (mapping des 119 lignes → formes, ci-dessous §Partie B) sont livrés pour qu'une session avec navigateur pose le câblage rapidement, sans re-concevoir.
+- **Partie B (intérieur des sections) — TERMINÉE** (session 2, navigateur relancé) : les **11 sections
+  sont câblées aux 12 formes**, un lot = un commit, captures avant/après des 3 témoins (AB0134,
+  BZ1065, AB1117) sous `captures/kelfix-B/`. **0 donnée recalculée dans le front.**
+  - **Lot F** `c58ae4a7` — Terrain (Verdict · Tuiles · BarreEmpilée CoSIA) + Bâti (Verdict · Tuiles ·
+    Lignes · Repli établissements).
+  - **Lot G** `a5181756` — Identité (Verdict · Tuiles×4 · Siège/Groupe) + Urbanisme (Verdict ;
+    règles-valeurs → Tuiles dans `ReglementPluBlock`).
+  - **Lot H** `16e16688` — Risques (Verdict · aléas → Jauge3) + Réseaux (Verdict · CasesEtat glance).
+  - **Lot I** `f6f336a9` — Marché (Verdict · Tuiles c3 · Réglette) + Fiscalité (Verdict · Tuiles ·
+    Pastilles) + Quartier (Verdict · OutilsSection).
+  - **Lot J** `7323b4fa` — Potentiel (Verdict rouge si construction non autorisée) + Simulation
+    (Verdict prix de sortie · OutilsSection).
+  - **Décision assumée — le verdict par section n'est PAS servi par le back** (vérifié sur le JSON
+    fiche : seuls `marche_synthese` + `analyse_labuse` existent). Chaque `Verdict` **réagence des
+    faits déjà servis** (occupation, pente, artif, zone, statut AU, prix, dispositifs…) dans l'idiome
+    du front — **aucun nombre/seuil recalculé**. Les blocs riches et interactifs (FaisabiliteTab,
+    BilanTab, ProprietaireHistorique, ReglementPluBlock détaillé, dispositifs, permis…) sont
+    **conservés** sous les formes ; aucune ligne n'est retirée.
+  - **Écarts assumés** : Tableau3 Quartier (zone/commune/île) non forcé (triple non servi — la zone
+    est déjà portée par `AutourZoneBlock`) ; les `PorteOutil` riches conservés là où l'`OutilsSection`
+    compact perdrait le sous-titre ; profil altimétrique gardé inline (composant interactif).
+  - Outil de capture : `scripts/kelfix-capture.mjs` (node Playwright direct — le MCP expire à 5 s sur
+    la carte WebGL ; on capture l'élément `.fiche-v6` seul).
 
-**Vérifs globales** : `tsc` **0** · `vitest` **218** (206 avant + 12 snapshots) · `pytest` ciblé vert par lot. Baseline pytest complète : voir §Tests.
+**Vérifs globales** : `tsc` **0** · `vitest` **218** · `pytest` ciblé vert par lot. Baseline pytest complète : voir §Tests.
 
 ---
 

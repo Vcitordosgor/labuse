@@ -1,12 +1,11 @@
 // RETOURS-13 P6 — PROFIL ALTIMÉTRIQUE (tiroir Terrain). Coupe le long du plus grand axe de la
-// parcelle (défaut), ou d'une ligne DESSINÉE sur la carte (« Tracer un autre profil »). Lu LIVE dans
-// le RGE ALTI (endpoint /parcels/{idu}/profil-altimetrique). Graphique SVG (DA) + chiffres au
-// vocabulaire cartes.gouv (distance, dénivelé +/-, pente moyenne, plus forte pente).
-import { useEffect } from 'react'
-import { useMutation, useQuery } from '@tanstack/react-query'
-import { getProfilParcelle, postProfilLigne, type ProfilAltimetrique as Profil } from '../../lib/api'
-import { useApp } from '../../store/useApp'
-import { Bouton } from '../ui/Bouton'
+// parcelle, lue LIVE dans le RGE ALTI (endpoint /parcels/{idu}/profil-altimetrique). Graphique SVG
+// (DA) + chiffres au vocabulaire cartes.gouv (distance, dénivelé +/-, pente moyenne, plus forte pente).
+// FICHE-FIX-4 (Lot D) — OUVERT PAR DÉFAUT (plus de <details>), sur la parcelle seule ; la mesure
+// libre (« Tracer un autre profil ») est RETIRÉE : elle n'a pas sa place dans la fiche.
+import { useQuery } from '@tanstack/react-query'
+import { getProfilParcelle, type ProfilAltimetrique as Profil } from '../../lib/api'
+import { GroupLabel } from './primitives'
 
 const nf = (n: number) => n.toLocaleString('fr-FR', { maximumFractionDigits: 0 })
 const nf1 = (n: number) => n.toLocaleString('fr-FR', { maximumFractionDigits: 1 })
@@ -84,45 +83,19 @@ function Corps({ p }: { p: Profil }) {
 }
 
 export function ProfilAltimetrique({ idu }: { idu: string }) {
-  const profilLigne = useApp((s) => s.profilLigne)
-  const setProfilLigne = useApp((s) => s.setProfilLigne)
-  const setTool = useApp((s) => s.setTool)
-
-  // coupe par défaut : le plus grand axe de la parcelle (chargée à l'ouverture du <details>).
+  // coupe le long du plus grand axe de la parcelle (RGE ALTI), OUVERTE par défaut (Lot D).
   const axeQ = useQuery({ queryKey: ['profil', idu], queryFn: () => getProfilParcelle(idu), retry: false, staleTime: 5 * 60 * 1000 })
-  // coupe le long d'une ligne dessinée sur la carte.
-  const ligneM = useMutation({ mutationFn: (coords: [number, number][]) => postProfilLigne(coords) })
-  const ligneMutate = ligneM.mutate
-
-  // une nouvelle parcelle repart d'un profil d'axe (efface le tracé précédent).
-  useEffect(() => { setProfilLigne(null); ligneM.reset() }, [idu])   // eslint-disable-line react-hooks/exhaustive-deps
-  // une ligne validée sur la carte déclenche le recalcul.
-  useEffect(() => { if (profilLigne && profilLigne.length >= 2) ligneMutate(profilLigne) }, [profilLigne, ligneMutate])
-
-  const surTrace = !!(profilLigne && profilLigne.length >= 2)
-  const data = surTrace ? ligneM.data : axeQ.data
-  const enCours = surTrace ? ligneM.isPending : axeQ.isLoading
-
-  const tracer = () => { setProfilLigne(null); ligneM.reset(); setTool('profil') }
-
+  const data = axeQ.data
   return (
-    <details data-profil-altimetrique className="border-t border-line-2 pt-2">
-      <summary className="cursor-pointer list-none text-[12px] font-medium text-txt-mut marker:hidden hover:text-mint">
-        Profil altimétrique <span className="text-txt-dim">▾</span>
-      </summary>
+    <div data-profil-altimetrique className="border-t border-line-2 pt-2">
+      <GroupLabel>Profil altimétrique</GroupLabel>
       <div className="mt-2 flex flex-col gap-2">
-        {enCours && <p className="py-1 text-[11px] text-txt-mut">Lecture du relief (RGE ALTI)…</p>}
-        {!enCours && (surTrace ? ligneM.isError : axeQ.isError) && (
+        {axeQ.isLoading && <p className="py-1 text-[11px] text-txt-mut">Lecture du relief (RGE ALTI)…</p>}
+        {!axeQ.isLoading && axeQ.isError && (
           <p className="py-1 text-[11px] text-st-ecartee">Profil indisponible — réessayez.</p>
         )}
-        {!enCours && data && <Corps p={data} />}
-        <div className="flex items-center gap-2">
-          <Bouton niveau="secondaire" ton="vert" data-profil-tracer onClick={tracer}>Tracer un autre profil</Bouton>
-          {surTrace && (
-            <Bouton niveau="lien" ton="vert" data-profil-parcelle onClick={() => setProfilLigne(null)}>← Axe de la parcelle</Bouton>
-          )}
-        </div>
+        {!axeQ.isLoading && data && <Corps p={data} />}
       </div>
-    </details>
+    </div>
   )
 }
