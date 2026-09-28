@@ -39,23 +39,32 @@ def _fr_dates(s: str) -> str:
     return _re.sub(r"\b(\d{4})-(\d{2})-(\d{2})\b", lambda m: f"{m.group(3)}/{m.group(2)}/{m.group(1)}", str(s))
 
 
-#: EXPORTS-FIX-1 A4 — nomenclature OCS GE (usage du sol, IGN v2.0) : un code US* ne s'imprime
-#: jamais nu. Repli : le code seul si la classe n'est pas au catalogue (jamais inventé).
+#: EXPORTS-FIX-1-BIS point 1 — nomenclature d'USAGE du sol OCS GE (dimension US, IGN v2.0), reprise
+#: CODE PAR CODE de la nomenclature officielle (portail de l'artificialisation / IGN ; cf.
+#: src/labuse/ingestion/ocsge.py). L'ancienne table inversait US1.1 (agriculture, pas résidentiel) et
+#: US5 (résidentiel, pas « sans usage »). Repli : le code seul si la classe n'est pas au catalogue.
 _OCS_GE_US = {
-    "US1.1": "zones à usage résidentiel", "US1.2": "zones à usage agricole",
-    "US1.3": "zones d'extraction de matériaux", "US1.4": "zones de pêche et d'aquaculture",
-    "US1.5": "zones de production de sel", "US2": "zones à usage secondaire (industrie)",
-    "US3": "zones à usage tertiaire", "US235": "zones à usage secondaire et tertiaire",
-    "US4.1.1": "zones de transport routier", "US4.1.2": "zones de transport ferré",
-    "US4.1.3": "zones de transport aérien", "US4.2": "zones de services (eau, énergie, télécom)",
-    "US4.3": "zones logistiques et de transport", "US5": "zones sans usage caractérisé",
-    "US6.1": "zones en cours d'aménagement", "US6.2": "zones abandonnées",
+    "US1.1": "Agriculture",
+    "US1.2": "Sylviculture",
+    "US1.3": "Activités d'extraction",
+    "US1.4": "Pêche et aquaculture",
+    "US1.5": "Production de sel",
+    "US2": "Production secondaire (industrie)",
+    "US3": "Production tertiaire",
+    "US235": "Production et usage résidentiel (secondaire, tertiaire, résidentiel)",
+    "US4.1.1": "Réseau routier",
+    "US4.1.2": "Réseau ferré",
+    "US4.1.3": "Transport aérien",
+    "US4.2": "Réseaux d'utilité publique (eau, énergie, télécom)",
+    "US4.3": "Logistique et stockage",
+    "US5": "Usage résidentiel",
+    "US6.1": "Zones en transition",
+    "US6.2": "Zones abandonnées",
 }
 
 
 def _ocs_ge_libelle(code: str) -> str:
-    lib = _OCS_GE_US.get(str(code).strip())
-    return lib.capitalize() if lib else str(code)
+    return _OCS_GE_US.get(str(code).strip(), str(code))
 
 
 #: EXPORTS-FIX-1 A5 — libellés des catégories de servitudes d'utilité publique (code CNIG → clair).
