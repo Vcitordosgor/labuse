@@ -43,9 +43,16 @@ UA = {"User-Agent": "LABUSE-coherence-1 (audit interne)"}
 
 
 def _get(url, timeout=30):
-    req = urllib.request.Request(url, headers=UA)
-    with urllib.request.urlopen(req, timeout=timeout) as r:
-        return r.read()
+    if url.startswith(API):
+        req = urllib.request.Request(url, headers=UA)
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            return r.read()
+    # externe : curl (urllib de ce poste échoue en CERTIFICATE_VERIFY_FAILED — certifi absent)
+    out = subprocess.run(["curl", "-sL", "-m", str(timeout), "-A", UA["User-Agent"], url],
+                         capture_output=True, timeout=timeout + 10)
+    if out.returncode != 0 or not out.stdout:
+        raise RuntimeError(f"curl {out.returncode} sur {url[:80]}")
+    return out.stdout
 
 
 def _json(url, timeout=30):
@@ -190,23 +197,30 @@ def oracle_dvf(v, conn, insee="97411", annee="2024"):
 
 
 def oracle_alti(v, conn, temoins):
-    """Altitude du centroïde : service IGN vs premier point du profil altimétrique servi."""
+    """Altitude : le profil servi (RGE ALTI en base) encadré par le service IGN au
+    centroïde — le centroïde est DANS la parcelle, son altitude IGN doit tomber dans
+    [altitude_min ; altitude_max] du profil (à 5 m près, résolution du raster)."""
     for idu in temoins:
         try:
             prof = _json(f"{API}/parcels/{idu}/profil-altimetrique", timeout=120)
-            pts = prof.get("points") or []
-            if not pts:
-                v.skip(f"altitude[{idu}]", "profil sans points")
+            amin, amax = prof.get("altitude_min_m"), prof.get("altitude_max_m")
+            if amin is None or amax is None:
+                v.skip(f"altitude[{idu}]", f"profil sans altitudes ({prof.get('motif')})")
                 continue
-            p0 = pts[0]
-            lon, lat, z_labuse = p0.get("lon"), p0.get("lat"), p0.get("z")
-            if lon is None or lat is None:
-                v.skip(f"altitude[{idu}]", f"point sans lon/lat : {list(p0)[:6]}")
-                continue
+            with conn.cursor() as cur:
+                cur.execute("SELECT ST_X(ST_Transform(centroid,4326)), "
+                            "ST_Y(ST_Transform(centroid,4326)) FROM parcels WHERE idu=%s", (idu,))
+                lon, lat = cur.fetchone()
             o = _json("https://data.geopf.fr/altimetrie/1.0/calcul/alti/rest/elevation.json?"
                       f"lon={lon}&lat={lat}&resource=ign_rge_alti_wld")
             z_ign = o["elevations"][0]["z"]
-            v.note("altitude_m", idu, z_labuse, z_ign, "IGN service alti (RGE ALTI)", 0.05)
+            ok = (amin - 5) <= z_ign <= (amax + 5)
+            v.lignes.append({"notion": "altitude_m", "objet": idu,
+                             "valeur_labuse": f"[{amin};{amax}] (profil)",
+                             "valeur_oracle": z_ign,
+                             "source_oracle": "IGN service alti (RGE ALTI) au centroïde",
+                             "ecart": "" if ok else "centroïde hors de la plage du profil ±5 m",
+                             "verdict": "VRAI" if ok else "FAUX"})
         except Exception as e:  # noqa: BLE001
             v.skip(f"altitude[{idu}]", str(e)[:80])
         time.sleep(0.3)

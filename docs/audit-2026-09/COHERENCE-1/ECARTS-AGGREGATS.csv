@@ -1,0 +1,14 @@
+verification,a,b,verdict
+compteurs[commune=Saint-Paul],filtre.compte=51005 idus=None (tronqué) stats.total=51129,sql=51129,ÉCART
+compteurs[commune+surface>=1000],filtre.compte=8500 idus=8500 stats.total=8500,sql=8492,ÉCART
+compteurs[tiers=brulante],filtre.compte=111 idus=111 stats.total=111,sql=111,OK
+"compteurs[tiers=brulante,chaude]",filtre.compte=1478 idus=1478 stats.total=1478,sql=1478,OK
+compteurs[zonage=U (St-Pierre)],filtre.compte=34682 idus=None (tronqué) stats.total=34796,sql=non réécrit (dit),ÉCART
+compteurs[surface 500-2000 (Le Tampon)],filtre.compte=18465 idus=18465 stats.total=18465,sql=18450,ÉCART
+compteurs[flags=ravine (île)],filtre.compte=13970 idus=13972 stats.total=13972,sql=13972,ÉCART
+compteurs[hors_copro (St-Denis)],filtre.compte=36869 idus=None (tronqué) stats.total=36981,sql=non réécrit (dit),ÉCART
+compteurs[sdp_min=500 (St-Paul)],filtre.compte=4456 idus=4456 stats.total=4456,sql=non réécrit (dit),OK
+compteurs[personne_morale (île)],filtre.compte=81700 idus=None (tronqué) stats.total=82066,sql=non réécrit (dit),ÉCART
+"predicat=fiche (commune+surface, 20 ouvertes)",toutes conformes,0 non conformes,OK
+bande liste=fiche (15 comparées),identiques,0 divergentes,OK
+etude_zone équipements BPE (même géométrie) [97411000BZ1065],servi=3,sql=21,ÉCART

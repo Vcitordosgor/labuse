@@ -1,0 +1,36 @@
+canal,objet,notion,valeur_fiche,constat,verdict
+pdf:dossier,97411000EM0174,surface_m2,1825,présent dans le PDF,OK
+pdf:dossier,97411000EM0174,pente_moy_deg,12.2,présent dans le PDF,OK
+pdf:dossier,97411000EM0174,sdp_residuelle_m2,0,présent dans le PDF,OK
+pdf:financier,97411000EM0174,—,,HTTP Error 422: Unprocessable Entity,NON VÉRIFIÉ (dit)
+pdf:apporteur,97411000EM0174,surface_m2,1825,présent dans le PDF,OK
+pdf:dossier,97415000AB0134,surface_m2,20357,présent dans le PDF,OK
+pdf:dossier,97415000AB0134,pente_moy_deg,1.6,présent dans le PDF,OK
+pdf:financier,97415000AB0134,—,,HTTP Error 422: Unprocessable Entity,NON VÉRIFIÉ (dit)
+pdf:apporteur,97415000AB0134,surface_m2,20357,présent dans le PDF,OK
+pdf:dossier,97402000AB1117,surface_m2,4097,présent dans le PDF,OK
+pdf:dossier,97402000AB1117,pente_moy_deg,7.4,présent dans le PDF,OK
+pdf:dossier,97402000AB1117,sdp_residuelle_m2,27,présent dans le PDF,OK
+pdf:financier,97402000AB1117,—,,HTTP Error 422: Unprocessable Entity,NON VÉRIFIÉ (dit)
+pdf:apporteur,97402000AB1117,surface_m2,4097,présent dans le PDF,OK
+pdf:dossier,97411000DE0231,surface_m2,388,présent dans le PDF,OK
+pdf:dossier,97411000DE0231,pente_moy_deg,4.0,présent dans le PDF,OK
+pdf:dossier,97411000DE0231,sdp_residuelle_m2,0,présent dans le PDF,OK
+pdf:financier,97411000DE0231,—,,HTTP Error 422: Unprocessable Entity,NON VÉRIFIÉ (dit)
+pdf:apporteur,97411000DE0231,surface_m2,388,présent dans le PDF,OK
+pdf:dossier,97411000BZ1065,surface_m2,1625,présent dans le PDF,OK
+pdf:dossier,97411000BZ1065,pente_moy_deg,13.8,présent dans le PDF,OK
+pdf:dossier,97411000BZ1065,sdp_residuelle_m2,26,présent dans le PDF,OK
+pdf:financier,97411000BZ1065,—,,HTTP Error 422: Unprocessable Entity,NON VÉRIFIÉ (dit)
+pdf:apporteur,97411000BZ1065,surface_m2,1625,présent dans le PDF,OK
+pdf:dossier,97418000AC0198,surface_m2,2441,présent dans le PDF,OK
+pdf:dossier,97418000AC0198,pente_moy_deg,3.0,présent dans le PDF,OK
+pdf:financier,97418000AC0198,—,,HTTP Error 422: Unprocessable Entity,NON VÉRIFIÉ (dit)
+pdf:apporteur,97418000AC0198,surface_m2,2441,présent dans le PDF,OK
+pdf:dossier,97415000CK0678,surface_m2,413,présent dans le PDF,OK
+pdf:dossier,97415000CK0678,pente_moy_deg,12.9,présent dans le PDF,OK
+pdf:dossier,97415000CK0678,sdp_residuelle_m2,183,présent dans le PDF,OK
+pdf:financier,97415000CK0678,—,,HTTP Error 422: Unprocessable Entity,NON VÉRIFIÉ (dit)
+pdf:apporteur,97415000CK0678,surface_m2,413,présent dans le PDF,OK
+digest:veille,—,—,,cannot import name 'SessionLocal' from 'labuse.db' (/Users/openclaw/Desktop/labuse-coherence/src/labuse/db.py),ERREUR
+copilote:FICHE,—,—,,coût LLM — lancé avec --copilote seulement,NON VÉRIFIÉ (dit)

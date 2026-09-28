@@ -1,0 +1,56 @@
+calcul,objet,affiche,recompose,entrees,verdict
+pct_residuel=100-pct_consomme,97402000AB1117,100,100,pct_consomme=0,OK
+part_alea=aire(inter)/aire(parcelle),97402000AB1117 [PPR — zone rouge],79,79.0,géométries 2975 (ppr INTERDICTION),OK
+part_alea=aire(inter)/aire(parcelle),97402000AB1117 [PPR — zone bleue],14,14.0,géométries 2975 (ppr PRESCRIPTION),OK
+pct_residuel=100-pct_consomme,97411000BZ1065,12,12,pct_consomme=88,OK
+marge_surelevation=h_regle-h_bati,97411000BZ1065,-3.3,-3.3,règle=7.0 bâti=10.3,OK
+part_alea=aire(inter)/aire(parcelle),97411000BZ1065 [PPR — zone bleue],100,100.0,géométries 2975 (ppr PRESCRIPTION),OK
+pct_residuel=100-pct_consomme,97411000DE0231,0,0,pct_consomme=546,OK
+marge_surelevation=h_regle-h_bati,97411000DE0231,-0.5,-0.5,règle=18.0 bâti=18.5,OK
+part_alea=aire(inter)/aire(parcelle),97411000DE0231 [PPR — zone bleue],100,100.0,géométries 2975 (ppr PRESCRIPTION),OK
+pct_residuel=100-pct_consomme,97411000EM0174,0,0,pct_consomme=237,OK
+marge_surelevation=h_regle-h_bati,97411000EM0174,1.4,1.4,règle=10.0 bâti=8.6,OK
+part_alea=aire(inter)/aire(parcelle),97411000EM0174 [PPR — zone bleue],100,100.0,géométries 2975 (ppr PRESCRIPTION),OK
+part_alea=aire(inter)/aire(parcelle),97415000AB0134 [PPR — zone bleue],100,100.0,géométries 2975 (ppr PRESCRIPTION),OK
+pct_residuel=100-pct_consomme,97415000CK0678,100,100,pct_consomme=0,OK
+part_alea=aire(inter)/aire(parcelle),97401000AN0259 [PPR — zone rouge],100,100.0,géométries 2975 (ppr INTERDICTION),OK
+pct_residuel=100-pct_consomme,97401000AP0282,100,100,pct_consomme=0,OK
+part_alea=aire(inter)/aire(parcelle),97401000AP0282 [PPR — zone bleue],36,36.0,géométries 2975 (ppr PRESCRIPTION),OK
+marge_surelevation=h_regle-h_bati,97402000AD0527,5.0,5.0,règle=8.0 bâti=3.0,OK
+pct_residuel=100-pct_consomme,97402000AK0252,0,0,pct_consomme=311,OK
+marge_surelevation=h_regle-h_bati,97402000AK0252,4.1,4.1,règle=11.0 bâti=6.9,OK
+part_alea=aire(inter)/aire(parcelle),97402000AO0010 [PPR — zone rouge],100,100.0,géométries 2975 (ppr INTERDICTION),OK
+part_alea=aire(inter)/aire(parcelle),97403000AL0256 [PPR — zone rouge],100,100.0,géométries 2975 (ppr INTERDICTION),OK
+part_alea=aire(inter)/aire(parcelle),97403000AM0515 [PPR — zone rouge],96,96.0,géométries 2975 (ppr INTERDICTION),OK
+pct_residuel=100-pct_consomme,97404000AI2280,53,53,pct_consomme=47,OK
+marge_surelevation=h_regle-h_bati,97404000AI2280,0.7,0.7,règle=9.0 bâti=8.3,OK
+part_alea=aire(inter)/aire(parcelle),97405000BC0309 [PPR — zone rouge],100,100.0,géométries 2975 (ppr INTERDICTION),OK
+part_alea=aire(inter)/aire(parcelle),97405000BD0077 [PPR — zone rouge],100,100.0,géométries 2975 (ppr INTERDICTION),OK
+part_alea=aire(inter)/aire(parcelle),97406000AT0250 [PPR — zone bleue],100,100.0,géométries 2975 (ppr PRESCRIPTION),OK
+part_alea=aire(inter)/aire(parcelle),97406000AV0152 [PPR — zone rouge],100,100.0,géométries 2975 (ppr INTERDICTION),OK
+pct_residuel=100-pct_consomme,97407000AI0054,21,21,pct_consomme=79,OK
+marge_surelevation=h_regle-h_bati,97407000AI0054,11.6,11.6,règle=16.0 bâti=4.4,OK
+part_alea=aire(inter)/aire(parcelle),97407000AX0215 [PPR — zone bleue],100,100.0,géométries 2975 (ppr PRESCRIPTION),OK
+pct_residuel=100-pct_consomme,97408000AO1003,13,13,pct_consomme=87,OK
+marge_surelevation=h_regle-h_bati,97408000AO1003,4.9,4.9,règle=9.0 bâti=4.1,OK
+part_alea=aire(inter)/aire(parcelle),97408000AZ0066 [PPR — zone rouge],27,27.0,géométries 2975 (ppr INTERDICTION),OK
+pct_residuel=100-pct_consomme,97409000AH0155,0,0,pct_consomme=150,OK
+marge_surelevation=h_regle-h_bati,97409000AH0155,-0.6,-0.6,règle=12.0 bâti=12.6,OK
+part_alea=aire(inter)/aire(parcelle),97409000AH0155 [PPR — zone bleue],100,100.0,géométries 2975 (ppr PRESCRIPTION),OK
+pct_residuel=100-pct_consomme,97409000AR2385,45,45,pct_consomme=55,OK
+marge_surelevation=h_regle-h_bati,97409000AR2385,5.8,5.8,règle=9.0 bâti=3.2,OK
+part_alea=aire(inter)/aire(parcelle),97409000AR2385 [PPR — zone bleue],100,100.0,géométries 2975 (ppr PRESCRIPTION),OK
+pct_residuel=100-pct_consomme,97409000AY1442,71,71,pct_consomme=29,OK
+marge_surelevation=h_regle-h_bati,97409000AY1442,5.7,5.7,règle=9.0 bâti=3.3,OK
+part_alea=aire(inter)/aire(parcelle),97409000AY1442 [PPR — zone bleue],100,100.0,géométries 2975 (ppr PRESCRIPTION),OK
+pct_residuel=100-pct_consomme,97409000AZ1040,36,36,pct_consomme=64,OK
+marge_surelevation=h_regle-h_bati,97409000AZ1040,2.9,2.9,règle=12.0 bâti=9.1,OK
+part_alea=aire(inter)/aire(parcelle),97409000AZ1040 [PPR — zone bleue],100,100.0,géométries 2975 (ppr PRESCRIPTION),OK
+pct_residuel=100-pct_consomme,97409000BD0958,0,0,pct_consomme=193,OK
+marge_surelevation=h_regle-h_bati,97409000BD0958,9.2,9.2,règle=12.0 bâti=2.8,OK
+part_alea=aire(inter)/aire(parcelle),97409000BD0958 [PPR — zone bleue],100,100.0,géométries 2975 (ppr PRESCRIPTION),OK
+taxe_amenagement,config,"{""meta"": {""annee"": 2026, ""source"": ""service-public.gouv.fr \u2014 Taxe d'am\u00e",,barème non exposé par /config — dit,NON VÉRIFIÉ (dit)
+valeur_creee=sdp×prix_secteur (île),run servi,colonnes valeur_creee/potentiel_sdp/prix_secteur NULLES,,parcel_p_score_v2,NON VÉRIFIÉ (dit)
+"deficit_sru=max(0,objectif-taux)",Saint-Paul,6.7,6.67,objectif=25.0 taux=18.33,OK
+"deficit_sru=max(0,objectif-taux)",Saint-Denis,0.0,0.0,objectif=20.0 taux=38.62,OK
+"deficit_sru=max(0,objectif-taux)",Le Tampon,8.2,8.23,objectif=25.0 taux=16.77,OK
