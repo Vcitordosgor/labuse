@@ -73,3 +73,31 @@ def plu_revue_cmd(
     rubrique — [v]alider / [c]orriger / [r]ejeter. Écrit `valide` dans le YAML (verrou V6a)."""
     from . import revue
     revue.revue_interactive(insee, zones=list(zone) or None, apercu=apercu)
+
+
+@plu_app.command("verif")
+def plu_verif_cmd(
+    csv_out: str = typer.Option("", "--csv", help="Écrit le détail (une ligne par règle) dans ce CSV."),
+    faux_only: bool = typer.Option(False, "--faux", help="N'affiche que les verdicts non-TROUVE."),
+) -> None:
+    """PLU-VERIF-1 (Lot D) — relit chaque règle chiffrée calibrée sur la page du PDF du
+    règlement servi, cherche l'article + la valeur (dans ses formes), et rend un verdict
+    TROUVE / AMBIGU / ABSENT / ILLISIBLE. Rejoué à chaque règle validée ou nouveau millésime
+    (sentinelle du Circuit). Le détail alimente l'onglet Cohérence de la page Données."""
+    from pathlib import Path
+
+    from . import verif
+    rows, counts = verif.verifier()
+    tot = sum(counts.values())
+    typer.echo(f"— {tot} règles relues sur {len({r['insee'] for r in rows})} communes "
+               f"(PDF : {verif.pdf_dir()})")
+    for k in ("TROUVE", "AMBIGU", "ABSENT", "ILLISIBLE"):
+        typer.echo(f"   {k:9} : {counts[k]:5}")
+    if csv_out:
+        verif.ecrire_csv(rows, Path(csv_out))
+        typer.echo(f"— détail écrit : {csv_out}")
+    if faux_only:
+        for r in rows:
+            if r["verdict"] != "TROUVE":
+                typer.echo(f"   {r['verdict']:9} {r['insee']} {r['zone']:10} {r['regle']:28} "
+                           f"{r['valeur_labuse']:12} p{r['page']} {r['article']}")

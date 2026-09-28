@@ -881,6 +881,7 @@ zones:
             au maximum sur 2 limites séparatives que ces limites séparatives soient latérales ou de fond de
             parcelle, Soit en retrait de 3 mètres.'
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Implantation en limite max sur 70% du lineaire de chaque limite ; pour les transformateurs EDF, en cas de retrait, celui-ci pourra etre reduit a 1 metre."
       stationnement:
         par_logement:
           places: 1.5
@@ -1074,6 +1075,7 @@ zones:
             au maximum sur 2 limites séparatives que ces limites séparatives soient latérales ou de fond de
             parcelle, Soit en retrait de 3 mètres.'
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Implantation en limite max sur 70% du lineaire de chaque limite ; pour les transformateurs EDF, en cas de retrait, celui-ci pourra etre reduit a 1 metre."
       stationnement:
         par_logement:
           places: 1.5
@@ -1104,6 +1106,7 @@ zones:
           citation: La hauteur maximale des constructions nouvelles est fixée à 6 m à l’égout du toit ou au
             sommet de l’acrotère et à 11 m au faîtage.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Secteur UfCa : 7,5 m au faitage ; secteur AUfGB : 5,5 m au faitage ; equipements publics : 13 m au faitage."
         egout:
           m: 6.0
           article: Uf3.5
@@ -1111,6 +1114,7 @@ zones:
           citation: La hauteur maximale des constructions nouvelles est fixée à 6 m à l’égout du toit ou au
             sommet de l’acrotère et à 11 m au faîtage.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Secteur UfCa : 6 m egout / 7,5 m faitage ; equipements publics : 8 m egout / 13 m faitage ; sur limites separatives 4 m puis gabarit a 100% sur 3 m."
       emprise_sol:
         ces:
           pct: 50.0
@@ -1362,6 +1366,7 @@ zones:
             sommet de l’acrotère et à 11 m au faîtage.
           statut: valide
           raison: attribution douteuse (citation sous secteur None)
+          note: "PLU-VERIF-1 (exception à afficher) : Secteur UfCa : 7,5 m au faitage ; secteur AUfGB : 5,5 m au faitage ; equipements publics : 13 m au faitage."
         egout:
           m: 6.0
           article: Uf3.5
@@ -1370,6 +1375,7 @@ zones:
             sommet de l’acrotère et à 11 m au faîtage.
           statut: valide
           raison: attribution douteuse (citation sous secteur None)
+          note: "PLU-VERIF-1 (exception à afficher) : Secteur UfCa : 6 m egout / 7,5 m faitage ; secteur AUfGB : 5,5 m au faitage ; equipements publics : 8 m egout / 13 m faitage."
       emprise_sol:
         ces:
           pct: 50.0
@@ -2400,6 +2406,7 @@ zones:
           citation: Le coefficient de Biotope est de 30 % minimum avec au moins 20% de la superficie de l’unité
             foncière en espace planté de pleine terre.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Un CBS different pourra etre accepte lorsque son application porte atteinte a la protection du patrimoine au titre des monuments historiques."
     silence: autorise
     silence_src: 'Art. Ua1, p. 173 : « Tous les usages et affectations des sols, types d''activités et catégories
       de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. » (chapitre commun
@@ -2587,6 +2594,7 @@ zones:
           citation: Le coefficient de Biotope est de 30 % minimum avec au moins 20% de la superficie de l’unité
             foncière en espace planté de pleine terre.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Un CBS different pourra etre accepte lorsque son application porte atteinte a la protection du patrimoine au titre des monuments historiques."
     silence: autorise
     silence_src: 'Art. Ua1, p. 173 : « Tous les usages et affectations des sols, types d''activités et catégories
       de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. » (chapitre commun
@@ -2730,6 +2738,7 @@ zones:
             au sommet de l’acrotère et à 21 m au faîtage.
           statut: valide
           raison: attribution douteuse (citation sous secteur None)
+          note: "PLU-VERIF-1 (exception à afficher) : Dans le secteur Uaza, la hauteur maximale des constructions est fixee a 14 m au faitage (contrainte de volumetrie propre au secteur, non reprise par la fiche)."
       emprise_sol:
         ces:
           pct: 75.0
@@ -2753,6 +2762,7 @@ zones:
           page_pdf: 177
           citation: Soit en limites séparatives, sur deux limites au maximum, Soit en retrait de 3 m minimum.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Pour les transformateurs EDF, en cas de retrait, celui-ci pourra etre reduit a 1 metre."
       pleine_terre:
         pct:
           pct: 20.0
@@ -2761,6 +2771,7 @@ zones:
           citation: Le coefficient de Biotope est de 30 % minimum avec au moins 20% de la superficie de l’unité
             foncière en espace planté de pleine terre.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Un CBS different pourra etre accepte lorsque son application porte atteinte a la protection du patrimoine au titre des monuments historiques."
     silence: autorise
     silence_src: 'Art. Ua1, p. 173 : « Tous les usages et affectations des sols, types d''activités et catégories
       de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. » (chapitre commun
@@ -2943,6 +2954,7 @@ zones:
           page_pdf: 177
           citation: Soit en limites séparatives, sur deux limites au maximum, Soit en retrait de 3 m minimum.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Pour les transformateurs EDF, en cas de retrait, celui-ci pourra etre reduit a 1 metre."
       pleine_terre:
         pct:
           pct: 20.0
@@ -2951,6 +2963,7 @@ zones:
           citation: Le coefficient de Biotope est de 30 % minimum avec au moins 20% de la superficie de l’unité
             foncière en espace planté de pleine terre.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Un CBS different pourra etre accepte lorsque son application porte atteinte a la protection du patrimoine au titre des monuments historiques."
     silence: autorise
     silence_src: 'Art. Ua1, p. 173 : « Tous les usages et affectations des sols, types d''activités et catégories
       de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. » (chapitre commun
@@ -3117,6 +3130,7 @@ zones:
           page_pdf: 177
           citation: Soit en limites séparatives, sur deux limites au maximum, Soit en retrait de 3 m minimum.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Retrait porte a 5 m dans Uazi/AUazi et Uazp/Uazpc ; pour les transformateurs EDF, en cas de retrait, celui-ci pourra etre reduit a 1 metre."
       pleine_terre:
         pct:
           pct: 20.0
@@ -3125,6 +3139,7 @@ zones:
           citation: Le coefficient de Biotope est de 30 % minimum avec au moins 20% de la superficie de l’unité
             foncière en espace planté de pleine terre.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Un coefficient de biotope de surface différent pourra être accepté lorsque l'application du CBS porte atteinte a la protection du patrimoine au titre des monuments historiques."
     renvoi: Uazc
     renvoi_src: 'Art. Ua1, tableau p. 173 : colonne unique intitulée « Uazc / AUazc » (mêmes lignes et conditions
       pour les deux secteurs) ; préambule p. 171 : « Uazc et AUazc sont créés pour n''autoriser que les activités
@@ -3140,6 +3155,7 @@ zones:
             au sommet de l’acrotère et à 21 m au faîtage.
           statut: valide
           raison: attribution douteuse (citation sous secteur None)
+          note: "PLU-VERIF-1 (exception à afficher) : Dans Uazi/AUazi de la ZI N4 : pas de regle pour l'extraction ; parcelles 1,9,11,21,22,23,24 : 8 m dans une bande de 15 m le long de la Ravine des Cabris."
         egout:
           m: 16.0
           article: Ua3.5
@@ -3148,6 +3164,7 @@ zones:
             au sommet de l’acrotère et à 21 m au faîtage.
           statut: valide
           raison: attribution douteuse (citation sous secteur None)
+          note: "PLU-VERIF-1 (exception à afficher) : Dans Uazi/AUazi de la ZI N4 : pas de regle pour l'extraction ; parcelles 1,9,11,21,22,23,24 : 8 m dans une bande de 15 m le long de la Ravine des Cabris."
       emprise_sol:
         ces:
           pct: 75.0
@@ -3180,6 +3197,7 @@ zones:
           citation: Le coefficient de Biotope est de 30 % minimum avec au moins 20% de la superficie de l’unité
             foncière en espace planté de pleine terre.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Un CBS different pourra etre accepte lorsque son application porte atteinte a la protection du patrimoine au titre des monuments historiques."
     silence: autorise
     silence_src: 'Art. Ua1, p. 173 : « Tous les usages et affectations des sols, types d''activités et catégories
       de constructions qui ne sont pas "interdits" ou "autorisés sous conditions" sont autorisés. » (chapitre commun
@@ -3338,6 +3356,7 @@ zones:
             au sommet de l’acrotère et à 21 m au faîtage.
           statut: valide
           raison: attribution douteuse (citation sous secteur None)
+          note: "PLU-VERIF-1 (exception à afficher) : Dans Uazi/AUazi de la ZI N4 : pas de regle pour l'extraction ; parcelles 1,9,11,21,22,23,24 : 8 m dans une bande de 15 m le long de la Ravine des Cabris."
         egout:
           m: 16.0
           article: Ua3.5
@@ -3346,6 +3365,7 @@ zones:
             au sommet de l’acrotère et à 21 m au faîtage.
           statut: valide
           raison: attribution douteuse (citation sous secteur None)
+          note: "PLU-VERIF-1 (exception à afficher) : Dans Uazi/AUazi de la ZI N4 : pas de regle pour l'extraction ; parcelles 1,9,11,21,22,23,24 : 8 m dans une bande de 15 m le long de la Ravine des Cabris."
       emprise_sol:
         ces:
           pct: 75.0
@@ -3378,6 +3398,7 @@ zones:
           citation: Le coefficient de Biotope est de 30 % minimum avec au moins 20% de la superficie de l’unité
             foncière en espace planté de pleine terre.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Un CBS different pourra etre accepte lorsque son application porte atteinte a la protection du patrimoine au titre des monuments historiques."
     renvoi: Uazi
     renvoi_src: 'Art. Ua1, tableau p. 173 : colonne unique intitulée « Uazi / AUazi » (mêmes lignes et conditions
       pour les deux secteurs) ; préambule p. 171 : « AUazi et Uazi destinés à l''accueil d''activités industrielles
@@ -3394,6 +3415,7 @@ zones:
             sommet de l’acrotère et à 21 m au faîtage.
           statut: valide
           raison: attribution douteuse (citation sous secteur None)
+          note: "PLU-VERIF-1 (exception à afficher) : Dans le secteur Uea : 15 m au faitage ; abords aerodrome Pierrefonds : Plan de Servitude Aeronautique."
         egout:
           m: 16.0
           article: Ue3.5
@@ -3402,6 +3424,7 @@ zones:
             sommet de l’acrotère et à 21 m au faîtage.
           statut: valide
           raison: attribution douteuse (citation sous secteur None)
+          note: "PLU-VERIF-1 (exception à afficher) : Dans le secteur Uea : 9 m egout / 15 m faitage ; sur limites separatives la hauteur n'excedera pas 6 m puis gabarit a 100% sur 3 m ; abords aerodrome Pierrefonds : Plan de Servitude Aeronautique."
       emprise_sol:
         ces:
           pct: 75.0
@@ -3426,6 +3449,7 @@ zones:
             point de la façade de la construction au point le plus proche de la limite séparative, est de
             3 m minimum et de 1 m minimum pour les transformateurs EDF.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : 1 m minimum pour les transformateurs EDF (regle generale : implantation possible sur une ou plusieurs limites, ou en retrait)."
       pleine_terre:
         pct:
           pct: 20.0
@@ -3622,6 +3646,7 @@ zones:
             point de la façade de la construction au point le plus proche de la limite séparative, est de
             3 m minimum et de 1 m minimum pour les transformateurs EDF.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : 1 m minimum pour les transformateurs EDF."
       pleine_terre:
         pct:
           pct: 20.0
@@ -3806,6 +3831,7 @@ zones:
             sommet de l’acrotère et à 21 m au faîtage.
           statut: valide
           raison: attribution douteuse (citation sous secteur None)
+          note: "PLU-VERIF-1 (exception à afficher) : Abords aerodrome Pierrefonds : hauteur limitee au Plan de Servitude Aeronautique."
         egout:
           m: 16.0
           article: Ue3.5
@@ -3814,6 +3840,7 @@ zones:
             sommet de l’acrotère et à 21 m au faîtage.
           statut: valide
           raison: attribution douteuse (citation sous secteur None)
+          note: "PLU-VERIF-1 (exception à afficher) : Sur limites separatives la hauteur n'excedera pas 6 m puis gabarit a 100% sur 3 m ; abords aerodrome Pierrefonds : Plan de Servitude Aeronautique."
       emprise_sol:
         ces:
           pct: 75.0
@@ -3838,6 +3865,7 @@ zones:
             point de la façade de la construction au point le plus proche de la limite séparative, est de
             3 m minimum et de 1 m minimum pour les transformateurs EDF.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : 1 m minimum pour les transformateurs EDF."
       pleine_terre:
         pct:
           pct: 20.0
@@ -4022,6 +4050,7 @@ zones:
             sommet de l’acrotère et à 21 m au faîtage.
           statut: valide
           raison: attribution douteuse (citation sous secteur None)
+          note: "PLU-VERIF-1 (exception à afficher) : Abords aerodrome Pierrefonds : hauteur limitee au Plan de Servitude Aeronautique."
         egout:
           m: 16.0
           article: Ue3.5
@@ -4030,6 +4059,7 @@ zones:
             sommet de l’acrotère et à 21 m au faîtage.
           statut: valide
           raison: attribution douteuse (citation sous secteur None)
+          note: "PLU-VERIF-1 (exception à afficher) : Sur limites separatives la hauteur n'excedera pas 6 m puis gabarit a 100% sur 3 m ; abords aerodrome Pierrefonds : Plan de Servitude Aeronautique."
       emprise_sol:
         ces:
           pct: 0.2
@@ -4055,6 +4085,7 @@ zones:
             point de la façade de la construction au point le plus proche de la limite séparative, est de
             3 m minimum et de 1 m minimum pour les transformateurs EDF.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : 1 m minimum pour les transformateurs EDF."
       pleine_terre:
         pct:
           pct: 20.0

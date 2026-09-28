@@ -116,10 +116,11 @@ zones:
         faitage:
           m: 19.0
           article: UA 10.2
-          page_pdf: 17
+          page_pdf: 20
           citation: (...) 19 mètres au faîtage [zone UA, aucune règle propre au secteur UA1]
           statut: valide
           raison: citation non retrouvée autour de p.17 (recouvrement 29%)
+          note: "PLU-VERIF-1 : page corrigée 17→20 (art. UA 10.2)."
         egout:
           m: 15.0
           article: UA 10.2
@@ -253,9 +254,10 @@ zones:
         faitage:
           m: 11.0
           article: UC 10.2
-          page_pdf: 46
+          page_pdf: 49
           citation: (...) 11 mètres au faîtage,
           statut: valide
+          note: "PLU-VERIF-1 : page corrigée 46→49 (art. UC 10.2)."
         egout:
           m: 7.0
           article: UC 10.2
@@ -285,6 +287,7 @@ zones:
           page_pdf: 46
           citation: En cas de retrait de la construction, la distance (...) doit être au moins égale 3 mètres.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : En secteur UC1, le retrait (L) est obligatoire = moitie de la hauteur a l'egout (ou faîtage a defaut) sans etre inferieur a 3,00 m (L=H1/2)."
       stationnement:
         par_logement:
           places: 2.0
@@ -575,18 +578,20 @@ zones:
         faitage:
           m: 10.0
           article: UD 10.2
-          page_pdf: 59
+          page_pdf: 62
           citation: (...) 10 mètres au faîtage [règle UD, aucune règle propre au secteur UD1]
           statut: valide
           raison: citation non retrouvée autour de p.59 (recouvrement 43%)
+          note: "PLU-VERIF-1 : page corrigée 59→62 (art. UD 10.2)."
         egout:
           m: 6.0
           article: UD 10.2
-          page_pdf: 60
+          page_pdf: 62
           citation: La hauteur maximale (...) 6 mètres à l'égout [règle UD, aucune règle propre au secteur
             UD1]
           statut: valide
           raison: citation non retrouvée autour de p.60 (recouvrement 44%)
+          note: "PLU-VERIF-1 : page corrigée 60→62 (art. UD 10.2)."
       emprise_sol:
         ces:
           pct: 40.0
@@ -665,12 +670,13 @@ zones:
         limites_separatives:
           min_m: 4.0
           article: UE 7.2
-          page_pdf: 73
+          page_pdf: 74
           citation: 'En cas de retrait de la construction, la distance (D) (...) au moins égale à la moitié
             de la hauteur (H) (...) avec un minimum de 4 mètres. (fond : au moins égale à 4 mètres)'
           statut: valide
           raison: valeur 6 absente de la citation (harmonisation ≠ texte)
           formule: H/2, minimum 4 m
+          note: "PLU-VERIF-1 : page corrigée 73→74 (art. UE 7.2)."
       pleine_terre:
         pct:
           pct: 15.0
@@ -773,12 +779,13 @@ zones:
         limites_separatives:
           min_m: 4.0
           article: US 7.2
-          page_pdf: 85
+          page_pdf: 86
           citation: 'En cas de retrait de la construction, la distance (D) (...) au moins égale à la moitié
             de la hauteur (H) (...) avec un minimum de 4 mètres. (fond : au moins égale à 4 mètres)'
           statut: valide
           raison: valeur 6 absente de la citation (harmonisation ≠ texte)
           formule: H/2, minimum 4 m
+          note: "PLU-VERIF-1 : page corrigée 85→86 (art. US 7.2)."
       pleine_terre:
         pct:
           pct: 15.0
@@ -838,6 +845,7 @@ zones:
           citation: la hauteur maximale de tout point des constructions (...) « individuels » (...) ne doit
             pas dépasser 9 mètres. [plafond en tout point => he=hf]
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : La regle UZ ne distingue pas egout/faîtage : c'est une hauteur maximale « en tout point » (donc egout=faîtage=9 m pour les individuels). Collectifs 17 m, tertiaires 12 m, hors tout NGR 42 m."
         egout:
           m: 9.0
           article: UZ 10.2
@@ -846,6 +854,7 @@ zones:
             (...) ne doit pas dépasser 9 mètres. [collectifs 17 m ; tertiaires 12 m ; hors tout : cote NGR
             42 m]'
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : UZ 10.2 plafonne par affectation : collectifs 17 m, tertiaires 12 m ; hors tout aucune construction ne depasse la cote NGR 42 m. Le 9 m ne vaut que pour les affectations « individuels ». La regle est une hauteur « en tout point », pas un egout."
       emprise_sol:
         ces:
           pct: 60.0
@@ -1068,11 +1077,12 @@ zones:
         faitage:
           m: 11.0
           article: UC 10.2
-          page_pdf: 46
+          page_pdf: 49
           citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
             reporter en fon => règle UC : (...) 11 mètres au faîtage,'
           statut: valide
           raison: citation non retrouvée autour de p.46 (recouvrement 25%)
+          note: "PLU-VERIF-1 : page corrigée 46→49 (art. UC 10.2)."
         egout:
           m: 7.0
           article: UC 10.2
@@ -1293,11 +1303,12 @@ zones:
         faitage:
           m: 10.0
           article: UD 10.2
-          page_pdf: 59
+          page_pdf: 62
           citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
             reporter en fon => règle UD : (...) 10 mètres au faîtage.'
           statut: valide
           raison: citation non retrouvée autour de p.59 (recouvrement 25%)
+          note: "PLU-VERIF-1 : page corrigée 59→62 (art. UD 10.2)."
         egout:
           m: 6.0
           article: UD 10.2
@@ -1362,21 +1373,23 @@ zones:
         faitage:
           m: 10.0
           article: UD 10.2
-          page_pdf: 59
+          page_pdf: 62
           citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
             reporter en fon => règle UD1 : (...) 10 mètres au faîtage [règle UD, aucune règle propre au secteur
             UD1]'
           statut: valide
           raison: citation non retrouvée autour de p.59 (recouvrement 29%)
+          note: "PLU-VERIF-1 : page corrigée 59→62 (art. UD 10.2)."
         egout:
           m: 6.0
           article: UD 10.2
-          page_pdf: 60
+          page_pdf: 62
           citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
             reporter en fon => règle UD1 : La hauteur maximale (...) 6 mètres à l''égout [règle UD, aucune
             règle propre au secteur UD1]'
           statut: valide
           raison: citation non retrouvée autour de p.60 (recouvrement 32%)
+          note: "PLU-VERIF-1 : page corrigée 60→62 (art. UD 10.2)."
       emprise_sol:
         ces:
           pct: 40.0
@@ -1470,7 +1483,7 @@ zones:
         limites_separatives:
           min_m: 4.0
           article: UE 7.2
-          page_pdf: 73
+          page_pdf: 74
           citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
             reporter en fon => règle UE : En cas de retrait de la construction, la distance (D) (...) au moins
             égale à la moitié de la hauteur (H) (...) avec un minimum de 4 mètres. (fond : au moins égale
@@ -1478,6 +1491,7 @@ zones:
           statut: valide
           raison: valeur 6 absente de la citation (harmonisation ≠ texte)
           formule: H/2, minimum 4 m
+          note: "PLU-VERIF-1 : page corrigée 73→74 (art. UE 7.2)."
       pleine_terre:
         pct:
           pct: 15.0

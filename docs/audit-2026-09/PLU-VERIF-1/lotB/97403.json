@@ -1,0 +1,28 @@
+[
+ {
+  "zone": "AUb",
+  "regle": "hauteur.egout",
+  "valeur_labuse": "9.0 m",
+  "page": "29",
+  "article": "U7.2",
+  "verdict_final": "MAUVAISE_REFERENCE",
+  "valeur_lue": "9 mètres à l'égout du toit ou au sommet de l'acrotère (zones Ub et Ue)",
+  "page_correcte": "21",
+  "article_correct": "U7.2 (via renvoi AU7 : AUb -> zone Ub)",
+  "exception": "Article 7.3 : hauteurs différentes admises pour ouvrages techniques (antennes, cheminées, pylônes, silos, ENR), extensions de constructions existantes non conformes, mise en valeur d'un élément bâti L.151-19, rampes d'accès en mitoyenneté, services publics/équipements d'intérêt collectif. Note : secteur Ub2 = 4,50 m à l'égout / 7 m au faitage (sous-secteur distinct).",
+  "preuve": "Article AU7 (p.29) : « Se reporter au règlement de la zone U indiquée en indice ». Article U7.2 (p.21) : « En zones Ub et Ue, la hauteur maximale des constructions est fixée à : - 9 mètres à l'égout du toit ou au sommet de l'acrotère ; - 13 mètres au faitage. »"
+ },
+ {
+  "zone": "AUb",
+  "regle": "hauteur.faitage",
+  "valeur_labuse": "13.0 m",
+  "page": "29",
+  "article": "U7.2",
+  "verdict_final": "MAUVAISE_REFERENCE",
+  "valeur_lue": "13 mètres au faitage (zones Ub et Ue)",
+  "page_correcte": "21",
+  "article_correct": "U7.2 (via renvoi AU7 : AUb -> zone Ub)",
+  "exception": "Article 7.3 : hauteurs différentes admises pour ouvrages techniques (antennes, cheminées, pylônes, silos, ENR), extensions de constructions existantes non conformes, mise en valeur d'un élément bâti L.151-19, rampes d'accès en mitoyenneté, services publics/équipements d'intérêt collectif. Note : secteur Ub2 = 4,50 m à l'égout / 7 m au faitage (sous-secteur distinct).",
+  "preuve": "Article AU7 (p.29) : « Se reporter au règlement de la zone U indiquée en indice ». Article U7.2 (p.21) : « En zones Ub et Ue, la hauteur maximale des constructions est fixée à : - 9 mètres à l'égout du toit ou au sommet de l'acrotère ; - 13 mètres au faitage. »"
+ }
+]

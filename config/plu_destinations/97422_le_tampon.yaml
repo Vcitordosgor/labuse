@@ -27,6 +27,7 @@ zones:
           citation: La hauteur maximale des constructions est limitée à 21 mètres à l’égout du toit ou au
             sommet de l’acrotère et 25 mètres au faîtage.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Règle particulière limites séparatives (10.3) : 18 m d'égout dans marge de 3,60 m. Le secteur Uav (20 m au faîtage) est distinct de Ua."
         egout:
           m: 21.0
           article: Ua10.2
@@ -34,6 +35,7 @@ zones:
           citation: La hauteur maximale des constructions est limitée à 21 mètres à l’égout du toit ou au
             sommet de l’acrotère et 25 mètres au faîtage.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Règle particulière limites séparatives (10.3) : 18 m d'égout maximum sur tout point mitoyen dans une marge de 3,60 m de profondeur. Le secteur Uav (16 m) est distinct de Ua."
       retraits:
         voie:
           min_m: 4.0
@@ -42,6 +44,7 @@ zones:
           citation: Les constructions peuvent s’implanter soit à l’alignement, soit à 4 mètres minimum de
             l'emprise de la voie ou de la limite d’emprise de l’emplacement réservé figurant au document graphique.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Alternative implantation à l'alignement ; le long de la RD3 entre la RN3 et la Ravine Blanche recul de 10,50 m par rapport à l'axe ; hors agglomération (L.111-6) retrait de 75 m minimum par rapport à l'axe."
         limites_separatives:
           min_m: 3.0
           article: Ua7.1
@@ -308,6 +311,7 @@ zones:
           citation: Les constructions peuvent s’implanter soit à l’alignement, soit à 4 mètres minimum de
             l'emprise de la voie ou de la limite d’emprise de l’emplacement réservé figurant au document graphique.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : L'article Ua6.2 s'applique à toutes les zones Ua (dont le secteur Uav) sans valeur d'implantation propre à Uav pour les voies : 4 m ou à l'alignement. Exceptions : RD3 (10,50 m par rapport à l'axe entre RN3 et Ravine Blanche) ; hors agglomération 75 m (L.111-6). (Uav n'a une hauteur réduite qu'à l'article Ua10, pas à Ua6.)"
         limites_separatives:
           min_m: 3.0
           article: Ua7.1
@@ -1398,6 +1402,7 @@ zones:
           citation: La hauteur maximale des constructions est limitée à 21 mètres à l’égout du toit ou au
             sommet de l’acrotère et 25 mètres au faîtage.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Dans le secteur Uav le faîtage est limité à 20 m. Règle particulière limites séparatives (10.3) : 18 m d'égout (13 m en Uav) dans marge de 3,60 m. La zone AU renvoie au règlement Ua."
         egout:
           m: 21.0
           article: Ua10.2
@@ -1405,6 +1410,7 @@ zones:
           citation: La hauteur maximale des constructions est limitée à 21 mètres à l’égout du toit ou au
             sommet de l’acrotère et 25 mètres au faîtage.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Dans le secteur Uav le seuil est de 16 m à l'égout/acrotère (20 m au faîtage) ; et une règle particulière (10.3) limite à 18 m à l'égout sur tout point mitoyen dans une marge de 3,60 m de la limite séparative (13 m en Uav). La zone AU renvoie au règlement Ua."
       retraits:
         voie:
           min_m: 4.0
@@ -1413,6 +1419,7 @@ zones:
           citation: Les constructions peuvent s’implanter soit à l’alignement, soit à 4 mètres minimum de
             l'emprise de la voie ou de la limite d’emprise de l’emplacement réservé figurant au document graphique.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Alternative implantation à l'alignement ; le long de la RD3 entre la RN3 et la Ravine Blanche recul de 10,50 m par rapport à l'axe ; hors agglomération (L.111-6) retrait de 75 m minimum par rapport à l'axe. La zone AU renvoie au règlement Ua."
         limites_separatives:
           min_m: 3.0
           article: Ua7.1
@@ -1676,6 +1683,7 @@ zones:
           citation: La hauteur maximale des constructions est limitée à 21 mètres à l’égout du toit ou au
             sommet de l’acrotère et 25 mètres au faîtage.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Secteur Uav : 20 m au faîtage. Règle particulière limites séparatives (10.3). La zone AU renvoie au règlement Ua."
         egout:
           m: 21.0
           article: Ua10.2
@@ -1683,6 +1691,7 @@ zones:
           citation: La hauteur maximale des constructions est limitée à 21 mètres à l’égout du toit ou au
             sommet de l’acrotère et 25 mètres au faîtage.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Secteur Uav : 16 m à l'égout/acrotère. Règle particulière limites séparatives (10.3) : 18 m d'égout (13 m en Uav) dans marge de 3,60 m. La zone AU renvoie au règlement Ua."
     renvoi: Ua
     renvoi_src: 'Art. AUindicée 1.2, p. 86 : « Se reporter au règlement de la zone U indiquée en indice ainsi qu''aux
       Orientations d''Aménagement et de Programmation lorsqu''elles existent. »'

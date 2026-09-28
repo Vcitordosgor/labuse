@@ -124,6 +124,7 @@ zones:
           citation: de 3 m minimum pour les bâtiments ≤ RDC+1 étage droit+ Comble ou attique de 4 m minimum
             pour les bâtiments > RDC+1 étage droit+ Comble ou attique par rapport à la limite séparative.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Dans le secteur Upr : recul de 6 m par rapport au pied de la falaise reperee au plan N 3 annexe (en sus)."
       stationnement:
         par_logement:
           places: 1
@@ -333,6 +334,7 @@ zones:
           citation: 'En secteur Ud : L''emprise au sol des constructions est limitée à 80 % de la superficie
             de l''unité foncière.'
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Sous-secteurs : Udo non reglemente ; Udop/Udp limites a 70 % (dont 30 % ...). Le 80 % ne vaut que pour le secteur Ud de base."
       retraits:
         voie:
           formule: 'Voies et emprises publiques de 12 m ou plus : les constructions seront implantées soit
@@ -345,6 +347,7 @@ zones:
           citation: 'Voies et emprises publiques de moins de 3,50 m : les constructions seront implantées
             à 3 m minimum de l''alignement.'
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Le 3 m ne vaut que pour les voies de moins de 3,50 m ; cas general = 4 m (voie < 12 m) ou alignement/4 m (voie >= 12 m). Retraits specifiques par axe en Udp."
         limites_separatives:
           formule: Chaque construction pourra s'implanter sur 1 ou 2 limites séparatives sur une hauteur maximale
             de 18 m par limite. Au-delà de cette hauteur, les constructions seront implantées en tout point
@@ -439,6 +442,7 @@ zones:
           citation: 'En secteur Udop : Hauteur maximale R+5, soit 18m, au faîtage ou à l''acrotère, généralisé
             (R+8 sur Bld Lancastel/rue L. Rambaud, R+3 sur ruelle Sanisal/rue Mérancienne).'
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : R+8 (27 m) sur Bld Lancastel et rue L. Rambaud ; R+3 (12 m) sur certaines rues."
       retraits:
         voie:
           min_m: 4.0
@@ -528,6 +532,7 @@ zones:
           page_pdf: 44
           citation: 'En secteur Udp : Hauteur maximale R+5, soit 18 m, au faîtage ou à l''acrotère, généralisé.'
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : R+8 (27 m) sur Blvd Jean Jaures, Bld Lancastel et rue L. Rambaud ; R+3 (12 m) sur certaines rues."
       retraits:
         voie:
           min_m: 4.0
@@ -683,6 +688,7 @@ zones:
           citation: 'En secteur Ui : L’emprise au sol des constructions est limitée à 60 % de la superficie
             de l’unité foncière.'
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Sous-secteurs : Uicm 40 % ; Uip 60 % (40 % ...). Le 60 % ne vaut que pour le secteur Ui de base."
       retraits:
         voie:
           formule: 'Voies d’une emprise de 12 m ou plus : les constructions seront implantées soit à l’alignement,
@@ -695,6 +701,7 @@ zones:
           citation: 'Voies d’une emprise de moins de 3,50 m : les constructions seront implantées à 3 m minimum
             de l''alignement.'
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Le 3 m ne vaut que pour les voies de moins de 3,50 m ; cas general = 4 m. Uicm recul 5 m, Uip 6 m (rue Gal de Gaulle 4 m)."
         limites_separatives:
           formule: 'En secteur Ui : Chaque construction pourra s''implanter sur 1 ou 2 limites séparatives
             sur une longueur maximale de 18 mètres par limite. ... 4m ≤ L ≥ h/2.'

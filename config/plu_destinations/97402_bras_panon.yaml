@@ -140,6 +140,7 @@ zones:
             sommet de l’acrotère, - 11 mètres au faîtage,'
           statut: valide
           raison: attribution douteuse (citation sous secteur None)
+          note: "PLU-VERIF-1 (exception à afficher) : Base UB 10.2 = 11 m faîtage, s'applique à Ub. Exceptions non dites : (a) terrain >=2000 m² -> 13 m au faîtage ; (b) rue des Limites (règle à l'égout) ; (c) annexes 3,50 m."
         egout:
           m: 8.0
           article: UB 10.2
@@ -148,6 +149,7 @@ zones:
             sommet de l’acrotère, - 11 mètres au faîtage,'
           statut: valide
           raison: attribution douteuse (citation sous secteur None)
+          note: "PLU-VERIF-1 (exception à afficher) : Base UB 10.2 = 8 m égout, s'applique bien à Ub. Exceptions non dites : (a) projets d'aménagement sur terrain >=2000 m² -> 10 m à l'égout (Ub n'est pas Uba, donc éligible) ; (b) terrains desservis par la rue des Limites = 6 m à l'égout (9 m si recul >=8 m) ; (c) annexes 3,50 m."
       emprise_sol:
         ces:
           pct: 60.0
@@ -260,6 +262,7 @@ zones:
           citation: 11 mètres au faîtage
           statut: valide
           raison: valeur 11 absente de la citation (harmonisation ≠ texte)
+          note: "PLU-VERIF-1 (exception à afficher) : Base UB 10.2 = 11 m faîtage ; s'applique à Uba (texte littéral '11 mètres au faîtage'). Uba est EXCLU de la relaxation 13 m (>=2000 m²), plafond ferme 11 m. Exceptions restantes : annexes 3,50 m (rue des Limites exprimée à l'égout seul)."
         egout:
           m: 8.0
           article: UB 10.2
@@ -267,6 +270,7 @@ zones:
           citation: 8 mètres à l’égout du toit ou au sommet de l’acrotère
           statut: valide
           raison: valeur 8 absente de la citation (harmonisation ≠ texte)
+          note: "PLU-VERIF-1 (exception à afficher) : Base UB 10.2 = 8 m égout ; s'applique bien à Uba (le texte porte littéralement '8 mètres à l'égout', la raison 'harmonisation ≠ texte' est infondée). Uba est EXPRESSEMENT EXCLU de la relaxation >=2000 m² (10 m) : la hauteur y reste plafonnée à 8 m. Exceptions restantes : rue des Limites = 6 m à l'égout (9 m si recul >=8 m) ; annexes 3,50 m."
       emprise_sol:
         ces:
           pct: 60.0
@@ -865,6 +869,7 @@ zones:
             sommet de l’acrotère, - 11 mètres au faîtage,'
           statut: valide
           raison: attribution douteuse (citation sous secteur None)
+          note: "PLU-VERIF-1 (exception à afficher) : Zone 1AUb : AUINDICEE 10 renvoie à la zone U d'indice 'b' (=Ub), UB 10.2 = 11 m au faîtage. Exceptions non dites : (a) projets sur terrain >=2000 m² -> 13 m au faîtage ; (b) rue des Limites (règle exprimée à l'égout uniquement) ; (c) annexes 3,50 m."
         egout:
           m: 8.0
           article: UB 10.2
@@ -873,6 +878,7 @@ zones:
             sommet de l’acrotère, - 11 mètres au faîtage,'
           statut: valide
           raison: attribution douteuse (citation sous secteur None)
+          note: "PLU-VERIF-1 (exception à afficher) : Zone 1AUb : AUINDICEE 10 renvoie au règlement de la zone U d'indice 'b' (=Ub), dont UB 10.2 fixe 8 m égout. Renvoi correctement résolu vers l'article U réel (page 31). Exceptions non dites : (a) pour les projets d'aménagement sur terrain >=2000 m² la hauteur peut monter à 10 m à l'égout ; (b) terrains desservis par la rue des Limites = 6 m à l'égout (9 m si recul >=8 m) ; (c) annexes limitées à 3,50 m."
       emprise_sol:
         ces:
           pct: 60.0

@@ -996,9 +996,10 @@ zones:
         faitage:
           m: 14.0
           article: Art. U8.2 « activités »
-          page_pdf: 32
+          page_pdf: 35
           citation: 'Zone UEc : 14 mètres'
           statut: valide
+          note: "PLU-VERIF-1 : page corrigée 32→35 (art. Art. U8.2 « activités »)."
       emprise_sol:
         ces:
           pct: 70.0
@@ -1119,9 +1120,10 @@ zones:
         faitage:
           m: 16.0
           article: Art. U8.2 « activités »
-          page_pdf: 32
+          page_pdf: 35
           citation: 'Zones UEm et UEp : 16 m'
           statut: valide
+          note: "PLU-VERIF-1 : page corrigée 32→35 (art. Art. U8.2 « activités »)."
       emprise_sol:
         ces:
           pct: 75.0
@@ -1258,9 +1260,10 @@ zones:
         faitage:
           m: 16.0
           article: Art. U8.2 « activités »
-          page_pdf: 32
+          page_pdf: 35
           citation: 'Zones UEm et UEp : 16 m'
           statut: valide
+          note: "PLU-VERIF-1 : page corrigée 32→35 (art. Art. U8.2 « activités »)."
       emprise_sol:
         ces:
           pct: 75.0
@@ -1401,9 +1404,10 @@ zones:
         faitage:
           m: 24.0
           article: Art. U8.2 « activités »
-          page_pdf: 32
+          page_pdf: 35
           citation: 'Zone UR : 24 mètres'
           statut: valide
+          note: "PLU-VERIF-1 : page corrigée 32→35 (art. Art. U8.2 « activités »)."
       emprise_sol:
         ces:
           pct: 75.0
@@ -1560,9 +1564,10 @@ zones:
         faitage:
           m: 11.0
           article: Art. U8.2 « activités »
-          page_pdf: 32
+          page_pdf: 35
           citation: 'Zone UT : 11 mètres'
           statut: valide
+          note: "PLU-VERIF-1 : page corrigée 32→35 (art. Art. U8.2 « activités »)."
       emprise_sol:
         ces:
           pct: 30.0
@@ -1615,9 +1620,10 @@ zones:
         faitage:
           m: 11.0
           article: Art. U8.2 « activités »
-          page_pdf: 32
+          page_pdf: 35
           citation: 'Zone UT : 11 mètres'
           statut: valide
+          note: "PLU-VERIF-1 : page corrigée 32→35 (art. Art. U8.2 « activités »)."
       emprise_sol:
         ces:
           pct: 30.0
