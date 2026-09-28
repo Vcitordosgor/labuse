@@ -416,7 +416,13 @@ const SUITE_ICO = {
 
 export function FaisabiliteTab({ idu }: { idu: string; embedded?: boolean }) {
   const { setModule, setParcelPrefill, chercherParCapacite } = useApp()
-  const [scenario, setScenario] = useState<Sc>(_sessionScenario.get(idu) ?? 'terrain_libere')
+  // ALGO-FIX-1 (point 3, suite autorisée) — l'onglet s'ouvre par DÉFAUT sur « bâti gardé » : pour une
+  // parcelle BÂTIE, la première capacité montrée est le RÉSIDUEL SERVI (parcel_residuel, ex. EO0796
+  // 179 m²), la MÊME que la fiche §Potentiel et le Dossier — plus l'enveloppe démolition (338, une
+  // grandeur distincte) en tête. Pour une parcelle NUE, le backend rétrograde bati_garde→terrain_libere
+  // (scenarios.py) et l'UI suit `pan.scenario` : rien à masquer. Un choix explicite (session/projet)
+  // reste prioritaire (le `??` ne s'applique qu'à l'ouverture initiale).
+  const [scenario, setScenario] = useState<Sc>(_sessionScenario.get(idu) ?? 'bati_garde')
   const [overrides, setOverrides] = useState<Record<string, number>>({})
   const [nLog, setNLog] = useState<number | null>(null)
   const [surfLog, setSurfLog] = useState<number | null>(null)

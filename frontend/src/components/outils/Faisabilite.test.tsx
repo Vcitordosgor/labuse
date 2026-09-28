@@ -90,10 +90,12 @@ describe('FAISABILITE-3 — le panneau (verdict, PLU, hypothèses, étapes)', ()
   beforeEach(mockFetch)
   afterEach(() => vi.restoreAllMocks())
 
-  it('rend le verdict, « ce qui limite » et les badges', async () => {
+  it('ouvre par défaut sur « bâti gardé » (résiduel servi) : verdict, « ce qui limite », badges', async () => {
+    // ALGO-FIX-1 (point 3, suite) — parcelle BÂTIE : l'onglet s'ouvre sur bati_garde = le résiduel
+    // servi (26 dans le mock), plus l'enveloppe démolition (245). Même chiffre que fiche/Dossier.
     renderTab()
     const v = await waitFor(() => { const e = document.querySelector('[data-faisa-verdict-phrase]'); if (!e) throw new Error('no verdict'); return e as HTMLElement })
-    expect(v.textContent).toContain('245')
+    expect(v.textContent).toContain('26')
     expect(screen.getByText('Ce qui limite')).toBeTruthy()
     expect(screen.getByText('Règles sourcées')).toBeTruthy()
     expect(screen.getByText('Plancher estimé')).toBeTruthy()
@@ -137,11 +139,13 @@ describe('FAISABILITE-3 — le panneau (verdict, PLU, hypothèses, étapes)', ()
     expect(ol.querySelectorAll('li').length).toBe(8)
   })
 
-  it('bascule de scénario : cliquer « En gardant le bâti » recharge le verdict bâti gardé', async () => {
+  it('bascule de scénario : défaut « bâti gardé » (26), cliquer « Terrain libéré » → enveloppe pleine (245)', async () => {
     renderTab()
-    await waitFor(() => { if (!document.querySelector('[data-sc="bati_garde"]')) throw new Error('no card') })
-    fireEvent.click(document.querySelector('[data-sc="bati_garde"]') as HTMLElement)
+    // défaut = bâti gardé = résiduel servi (ALGO-FIX-1)
     await waitFor(() => expect(document.querySelector('[data-faisa-verdict-phrase]')!.textContent).toContain('26'))
+    await waitFor(() => { if (!document.querySelector('[data-sc="terrain_libere"]')) throw new Error('no card') })
+    fireEvent.click(document.querySelector('[data-sc="terrain_libere"]') as HTMLElement)
+    await waitFor(() => expect(document.querySelector('[data-faisa-verdict-phrase]')!.textContent).toContain('245'))
   })
 
   it('tester un projet : champs remplis → « Ne tient pas » par le moteur', async () => {

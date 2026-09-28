@@ -1,0 +1,13 @@
+ALGO-FIX-1 point 3 (suite autorisée) — onglet Faisabilité, défaut d'ouverture sur EO0796 (parcelle BÂTIE)
+Vérité servie parcel_residuel EO0796 = 179 m² (= fiche §Potentiel = Dossier garde + §10)
+
+AVANT — l'onglet s'ouvrait sur le défaut « terrain_libere » (constructibilite.tsx:419) :
+  scénario effectif = terrain_libere | sdp_possible_m2 = 338
+  verdict = Jusqu'à 338 m² de plancher · 2–3 logement(s).
+  → l'utilisateur voyait d'abord 338 m² (enveloppe démolition), ≠ 179 servi de la fiche/Dossier.
+
+APRÈS — l'onglet s'ouvre sur « bati_garde » (défaut pour parcelle bâtie) :
+  scénario effectif = bati_garde | sdp_possible_m2 = 179
+  verdict = Encore 179 m² de plancher · 1–2 logement(s), bâti conservé.
+  → l'utilisateur voit d'abord 179 m² = le résiduel SERVI, cohérent avec fiche/Dossier.
+  (« Terrain libéré » reste 1 clic pour l'enveloppe démolition 338 ; parcelle NUE : défaut rétrogradé terrain_libere par le backend.)
