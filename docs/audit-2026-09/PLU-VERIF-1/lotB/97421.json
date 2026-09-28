@@ -1,0 +1,67 @@
+[
+ {
+  "zone": "AUb",
+  "regle": "hauteur.egout",
+  "valeur_labuse": "12.0 m",
+  "page": "15",
+  "article": "U 10.2",
+  "verdict_final": "JUSTE",
+  "valeur_lue": "12 mètres",
+  "page_correcte": null,
+  "article_correct": null,
+  "exception": null,
+  "preuve": "ARTICLE AUINDICEE 10 - HAUTEUR MAXIMALE : Se reporter au règlement de la zone U indiquée en indice. UB (p.15, U 10.2) : En zones UA et UB, la hauteur maximale des constructions est fixée à 12 mètres à l'égout du toit."
+ },
+ {
+  "zone": "AUc",
+  "regle": "hauteur.egout",
+  "valeur_labuse": "9.0 m",
+  "page": "15",
+  "article": "U 10.2",
+  "verdict_final": "JUSTE",
+  "valeur_lue": "9 mètres",
+  "page_correcte": null,
+  "article_correct": null,
+  "exception": null,
+  "preuve": "ARTICLE AUINDICEE 10 : Se reporter au règlement de la zone U indiquée en indice. UC (p.15, U 10.2) : En zone UC, la hauteur maximale des constructions est fixée à 9 mètres à l'égout du toit ou au sommet de l'acrotère."
+ },
+ {
+  "zone": "UA",
+  "regle": "hauteur.egout",
+  "valeur_labuse": "12.0 m",
+  "page": "15",
+  "article": "U 10.2",
+  "verdict_final": "JUSTE+exception",
+  "valeur_lue": "12 mètres",
+  "page_correcte": null,
+  "article_correct": null,
+  "exception": "Sous-secteur UA1 : hauteur limitée à 7 mètres à l'égout du toit ou au sommet de l'acrotère, sans dépasser R+1.",
+  "preuve": "En zones UA et UB, la hauteur maximale des constructions est fixée à 12 mètres a l'égout du toit ou au sommet de l'acrotère. Dans le secteur UA1, la hauteur maximale des constructions est limitée à 7 mètres... sans dépasser R+1."
+ },
+ {
+  "zone": "UB",
+  "regle": "hauteur.egout",
+  "valeur_labuse": "12.0 m",
+  "page": "15",
+  "article": "U 10.2",
+  "verdict_final": "JUSTE",
+  "valeur_lue": "12 mètres",
+  "page_correcte": null,
+  "article_correct": null,
+  "exception": null,
+  "preuve": "En zones UA et UB, la hauteur maximale des constructions est fixée à 12 mètres à l'égout du toit ou au sommet de l'acrotère."
+ },
+ {
+  "zone": "UC",
+  "regle": "hauteur.egout",
+  "valeur_labuse": "9.0 m",
+  "page": "15",
+  "article": "U 10.2",
+  "verdict_final": "JUSTE",
+  "valeur_lue": "9 mètres",
+  "page_correcte": null,
+  "article_correct": null,
+  "exception": null,
+  "preuve": "En zone UC, la hauteur maximale des constructions est fixée à 9 mètres à l'égout du toit ou au sommet de l'acrotère."
+ }
+]

@@ -1,0 +1,67 @@
+[
+ {
+  "zone": "Ua",
+  "regle": "emprise_sol.ces",
+  "valeur_labuse": "80.0 %",
+  "page": "10",
+  "article": "U 5",
+  "verdict_final": "JUSTE",
+  "valeur_lue": "80 %",
+  "page_correcte": null,
+  "article_correct": null,
+  "exception": null,
+  "preuve": "Article U – 5. Emprise au sol des constructions : L'emprise au sol des constructions ne peut excéder 80 % du terrain. (chapitre U commun à toutes les zones U)"
+ },
+ {
+  "zone": "Ub",
+  "regle": "emprise_sol.ces",
+  "valeur_labuse": "80.0 %",
+  "page": "10",
+  "article": "U 5",
+  "verdict_final": "JUSTE",
+  "valeur_lue": "80 %",
+  "page_correcte": null,
+  "article_correct": null,
+  "exception": null,
+  "preuve": "Article U – 5. Emprise au sol des constructions : L'emprise au sol des constructions ne peut excéder 80 % du terrain. (chapitre U commun à toutes les zones U)"
+ },
+ {
+  "zone": "Ue",
+  "regle": "emprise_sol.ces",
+  "valeur_labuse": "80.0 %",
+  "page": "10",
+  "article": "U 5",
+  "verdict_final": "JUSTE",
+  "valeur_lue": "80 %",
+  "page_correcte": null,
+  "article_correct": null,
+  "exception": null,
+  "preuve": "Article U – 5. Emprise au sol des constructions : L'emprise au sol des constructions ne peut excéder 80 % du terrain. (chapitre U commun ; loupes L1/L2 renvoient à annexes pour occupation, pas pour le CES)"
+ },
+ {
+  "zone": "Up",
+  "regle": "emprise_sol.ces",
+  "valeur_labuse": "80.0 %",
+  "page": "10",
+  "article": "U 5",
+  "verdict_final": "JUSTE",
+  "valeur_lue": "80 %",
+  "page_correcte": null,
+  "article_correct": null,
+  "exception": null,
+  "preuve": "Article U – 5. Emprise au sol des constructions : L'emprise au sol des constructions ne peut excéder 80 % du terrain. (chapitre U commun à toutes les zones U)"
+ },
+ {
+  "zone": "Ut",
+  "regle": "emprise_sol.ces",
+  "valeur_labuse": "80.0 %",
+  "page": "10",
+  "article": "U 5",
+  "verdict_final": "JUSTE",
+  "valeur_lue": "80 %",
+  "page_correcte": null,
+  "article_correct": null,
+  "exception": null,
+  "preuve": "Article U – 5. Emprise au sol des constructions : L'emprise au sol des constructions ne peut excéder 80 % du terrain. (chapitre U commun à toutes les zones U)"
+ }
+]

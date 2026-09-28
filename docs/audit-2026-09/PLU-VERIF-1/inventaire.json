@@ -1,0 +1,296 @@
+{
+  "par_commune": {
+    "97401": {
+      "insee": "97401",
+      "fichier": "97401_les_avirons.yaml",
+      "n": 120,
+      "valide": 120,
+      "propose": 0,
+      "autre": 0,
+      "absent": 0,
+      "sans_page": 0,
+      "sans_article": 0
+    },
+    "97402": {
+      "insee": "97402",
+      "fichier": "97402_bras_panon.yaml",
+      "n": 93,
+      "valide": 93,
+      "propose": 0,
+      "autre": 0,
+      "absent": 0,
+      "sans_page": 0,
+      "sans_article": 0
+    },
+    "97403": {
+      "insee": "97403",
+      "fichier": "97403_entre_deux.yaml",
+      "n": 31,
+      "valide": 31,
+      "propose": 0,
+      "autre": 0,
+      "absent": 0,
+      "sans_page": 0,
+      "sans_article": 0
+    },
+    "97404": {
+      "insee": "97404",
+      "fichier": "97404_l_etang_sale.yaml",
+      "n": 79,
+      "valide": 71,
+      "propose": 8,
+      "autre": 0,
+      "absent": 0,
+      "sans_page": 0,
+      "sans_article": 0
+    },
+    "97405": {
+      "insee": "97405",
+      "fichier": "97405_petite_ile.yaml",
+      "n": 94,
+      "valide": 94,
+      "propose": 0,
+      "autre": 0,
+      "absent": 0,
+      "sans_page": 0,
+      "sans_article": 0
+    },
+    "97406": {
+      "insee": "97406",
+      "fichier": "97406_la_plaine_des_palmistes.yaml",
+      "n": 59,
+      "valide": 59,
+      "propose": 0,
+      "autre": 0,
+      "absent": 0,
+      "sans_page": 0,
+      "sans_article": 0
+    },
+    "97407": {
+      "insee": "97407",
+      "fichier": "97407_le_port.yaml",
+      "n": 81,
+      "valide": 80,
+      "propose": 1,
+      "autre": 0,
+      "absent": 3,
+      "sans_page": 0,
+      "sans_article": 0
+    },
+    "97408": {
+      "insee": "97408",
+      "fichier": "97408_la_possession.yaml",
+      "n": 120,
+      "valide": 111,
+      "propose": 9,
+      "autre": 0,
+      "absent": 5,
+      "sans_page": 0,
+      "sans_article": 0
+    },
+    "97409": {
+      "insee": "97409",
+      "fichier": "97409_saint_andre.yaml",
+      "n": 42,
+      "valide": 35,
+      "propose": 7,
+      "autre": 0,
+      "absent": 0,
+      "sans_page": 0,
+      "sans_article": 0
+    },
+    "97410": {
+      "insee": "97410",
+      "fichier": "97410_saint_benoit.yaml",
+      "n": 30,
+      "valide": 25,
+      "propose": 5,
+      "autre": 0,
+      "absent": 5,
+      "sans_page": 0,
+      "sans_article": 0
+    },
+    "97411": {
+      "insee": "97411",
+      "fichier": "97411_saint_denis.yaml",
+      "n": 90,
+      "valide": 90,
+      "propose": 0,
+      "autre": 0,
+      "absent": 4,
+      "sans_page": 0,
+      "sans_article": 0
+    },
+    "97412": {
+      "insee": "97412",
+      "fichier": "97412_saint_joseph.yaml",
+      "n": 162,
+      "valide": 160,
+      "propose": 2,
+      "autre": 0,
+      "absent": 0,
+      "sans_page": 0,
+      "sans_article": 0
+    },
+    "97413": {
+      "insee": "97413",
+      "fichier": "97413_saint_leu.yaml",
+      "n": 73,
+      "valide": 73,
+      "propose": 0,
+      "autre": 0,
+      "absent": 0,
+      "sans_page": 0,
+      "sans_article": 0
+    },
+    "97414": {
+      "insee": "97414",
+      "fichier": "97414_saint_louis.yaml",
+      "n": 120,
+      "valide": 120,
+      "propose": 0,
+      "autre": 0,
+      "absent": 0,
+      "sans_page": 0,
+      "sans_article": 0
+    },
+    "97415": {
+      "insee": "97415",
+      "fichier": "97415_saint_paul.yaml",
+      "n": 183,
+      "valide": 172,
+      "propose": 11,
+      "autre": 0,
+      "absent": 3,
+      "sans_page": 0,
+      "sans_article": 3
+    },
+    "97416": {
+      "insee": "97416",
+      "fichier": "97416_saint_pierre.yaml",
+      "n": 163,
+      "valide": 157,
+      "propose": 6,
+      "autre": 0,
+      "absent": 6,
+      "sans_page": 0,
+      "sans_article": 0
+    },
+    "97418": {
+      "insee": "97418",
+      "fichier": "97418_sainte_marie.yaml",
+      "n": 114,
+      "valide": 112,
+      "propose": 2,
+      "autre": 0,
+      "absent": 0,
+      "sans_page": 0,
+      "sans_article": 0
+    },
+    "97419": {
+      "insee": "97419",
+      "fichier": "97419_sainte_rose.yaml",
+      "n": 58,
+      "valide": 58,
+      "propose": 0,
+      "autre": 0,
+      "absent": 0,
+      "sans_page": 0,
+      "sans_article": 0
+    },
+    "97420": {
+      "insee": "97420",
+      "fichier": "97420_sainte_suzanne.yaml",
+      "n": 68,
+      "valide": 68,
+      "propose": 0,
+      "autre": 0,
+      "absent": 0,
+      "sans_page": 0,
+      "sans_article": 0
+    },
+    "97421": {
+      "insee": "97421",
+      "fichier": "97421_salazie.yaml",
+      "n": 47,
+      "valide": 47,
+      "propose": 0,
+      "autre": 0,
+      "absent": 0,
+      "sans_page": 0,
+      "sans_article": 0
+    },
+    "97422": {
+      "insee": "97422",
+      "fichier": "97422_le_tampon.yaml",
+      "n": 89,
+      "valide": 89,
+      "propose": 0,
+      "autre": 0,
+      "absent": 0,
+      "sans_page": 0,
+      "sans_article": 0
+    },
+    "97423": {
+      "insee": "97423",
+      "fichier": "97423_les_trois_bassins.yaml",
+      "n": 61,
+      "valide": 61,
+      "propose": 0,
+      "autre": 0,
+      "absent": 0,
+      "sans_page": 0,
+      "sans_article": 0
+    },
+    "97424": {
+      "insee": "97424",
+      "fichier": "97424_cilaos.yaml",
+      "n": 54,
+      "valide": 54,
+      "propose": 0,
+      "autre": 0,
+      "absent": 0,
+      "sans_page": 0,
+      "sans_article": 0
+    }
+  },
+  "sans_ref": [
+    {
+      "insee": "97415",
+      "zone": "U2e",
+      "chemin": "stationnement.par_logement",
+      "article": null,
+      "page_pdf": 97,
+      "statut": "propose",
+      "absent": null
+    },
+    {
+      "insee": "97415",
+      "zone": "U3e",
+      "chemin": "stationnement.par_logement",
+      "article": null,
+      "page_pdf": 154,
+      "statut": "propose",
+      "absent": null
+    },
+    {
+      "insee": "97415",
+      "zone": "AU5e",
+      "chemin": "stationnement.par_logement",
+      "article": null,
+      "page_pdf": 263,
+      "statut": "propose",
+      "absent": null
+    }
+  ],
+  "total": {
+    "n": 2031,
+    "valide": 1980,
+    "propose": 51,
+    "autre": 0,
+    "absent": 26,
+    "sans_page": 0,
+    "sans_article": 3
+  },
+  "n_communes": 23
+}

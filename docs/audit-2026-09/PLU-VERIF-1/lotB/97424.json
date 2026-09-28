@@ -1,0 +1,41 @@
+[
+ {
+  "zone": "AUb",
+  "regle": "retraits.limites_separatives",
+  "valeur_labuse": "3.0 m",
+  "page": "35",
+  "article": "Ub 7.2/7.3",
+  "verdict_final": "JUSTE+exception",
+  "valeur_lue": "3 mètres",
+  "page_correcte": null,
+  "article_correct": null,
+  "exception": "Ub 7.4 : implantations differentes autorisees pour extensions de construction existante non conforme, mise en valeur d'element bati protege (L.123-1 7deg), constructions annexes/equipements techniques (securite, service public, eau, energie, stockage OM), et equipements publics d'interet collectif si les conditions de fonctionnement ou normes de securite l'imposent.",
+  "preuve": "En cas de retrait, la distance comptee horizontalement et perpendiculairement de tout point de la facade de la construction au point le plus proche de la limite separative, doit etre au minimum de 3 metres."
+ },
+ {
+  "zone": "AUb1",
+  "regle": "retraits.limites_separatives",
+  "valeur_labuse": "3.0 m",
+  "page": "35",
+  "article": "Ub 7.2/7.3",
+  "verdict_final": "JUSTE+exception",
+  "valeur_lue": "3 mètres",
+  "page_correcte": null,
+  "article_correct": null,
+  "exception": "Renvoi assume : ARTICLE AUindicee 7 dit 'Se reporter au reglement de la zone U indiquee en indice' (Ub pour AUb) ; AUb1 est un secteur de AUb (ZAC Roland Garros) ; le reglement AU ne prevoit d'override pour AUb1 que sur les articles 9 (emprise), 10 (hauteur 9m/12m), 12 (stationnement), PAS sur l'article 7. Exception Ub 7.4 : extensions non conformes, element bati protege, annexes/equipements techniques, equipements publics d'interet collectif.",
+  "preuve": "ARTICLE AUINDICEE 7 - IMPLANTATION DES CONSTRUCTIONS PAR RAPPORT AUX LIMITES SEPARATIVES / Se reporter au reglement de la zone U indiquee en indice."
+ },
+ {
+  "zone": "AUb2",
+  "regle": "retraits.limites_separatives",
+  "valeur_labuse": "3.0 m",
+  "page": "35",
+  "article": "Ub 7.2/7.3",
+  "verdict_final": "JUSTE+exception",
+  "valeur_lue": "3 mètres",
+  "page_correcte": null,
+  "article_correct": null,
+  "exception": "Renvoi assume : ARTICLE AUindicee 7 'Se reporter au reglement de la zone U indiquee en indice' (Ub) ; AUb2 est un secteur de AUb, override AU seulement sur articles 9/10 (hauteur 7m/11m, 14m equipements sportifs)/12, PAS article 7. Exception Ub 7.4 : extensions non conformes, element bati protege, annexes/equipements techniques, equipements publics d'interet collectif.",
+  "preuve": "ARTICLE AUINDICEE 7 - ... LIMITES SEPARATIVES / Se reporter au reglement de la zone U indiquee en indice. [Ub 7.2] au minimum de 3 metres."
+ }
+]
