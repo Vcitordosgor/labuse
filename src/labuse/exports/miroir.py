@@ -145,13 +145,26 @@ def _est_non_dispo(phrase: str) -> bool:
     return any(m in p for m in _MARQUEURS_NON_DISPO)
 
 
-def _absence_une_raison(phrase: str, zone) -> str:
-    # EXPORTS-FIX-1 C6 — jamais « A ou B » : on tranche « (zone non constructible ou X) » selon la
-    # zone servie (A/N → non constructible ; sinon → l'autre motif).
+def _absence_une_raison(phrase: str, zone, *, gabarit_bloque: bool = False) -> str:
+    # EXPORTS-FIX-1 C6 / BIS point 11 — jamais « A ou B » : on tranche selon le contexte réel.
+    #  · « (zone non constructible ou X) » → selon la zone (A/N → non constructible) ;
+    #  · « (hauteur de règle ou bâti non déterminés) » → si le gabarit est bloqué, c'est la hauteur
+    #    de règle (pas le bâti) ; sinon on garde le bâti.
     non_constructible = str(zone or "").upper() in ("A", "N")
-    return _re.sub(r"\(zone non constructible ou ([^)]+)\)",
-                   lambda m: "(zone non constructible)" if non_constructible else f"({m.group(1)})",
-                   str(phrase))
+    p = _re.sub(r"\(zone non constructible ou ([^)]+)\)",
+                lambda m: "(zone non constructible)" if non_constructible else f"({m.group(1)})",
+                str(phrase))
+    p = _re.sub(r"\(hauteur de règle ou bâti non déterminés\)",
+                "(hauteur de règle non déterminée)" if gabarit_bloque else "(bâti non déterminé)", p)
+    return p
+
+
+def _n_aleas(valeurs: dict) -> int | None:
+    """EXPORTS-FIX-1-BIS point 6 — le nombre d'aléas IMPRIMÉS au §5 (aleas_parcelle_liste), qui doit
+    valoir le chiffre de la garde et du §5 (au lieu de n_vigilances, un compteur de couches interne)."""
+    v = valeurs.get("aleas_parcelle_liste")
+    aleas = v.valeur if v is not None else None
+    return len(aleas) if isinstance(aleas, list) else None
 
 
 def _absence_clair(quoi: str, phrase: str) -> str:
@@ -361,19 +374,6 @@ def _r_usage_sol(v):
     return esc(_ocs_ge_libelle(v))
 
 
-def _r_vigilances(v):
-    # EXPORTS-FIX-1 B3 — le compteur n_vigilances = couches de la cascade au verdict SOFT_FLAG /
-    # HARD_EXCLUDE (11 sur P1) ; il ne s'agit PAS du nombre de lignes détaillées (2 aléas). Le
-    # libellé dit désormais ce qu'il compte, pour lever la lecture « 11 pour 2 lignes ».
-    n = v.get("n") if isinstance(v, dict) else v
-    try:
-        n = int(n)
-    except (TypeError, ValueError):
-        return esc(v)
-    return esc(f"{groupe(n)} couche{'s' if n > 1 else ''} de risque relevée{'s' if n > 1 else ''} "
-               "par la cascade (détail des aléas ci-dessous)")
-
-
 def _r_gabarit_motif(v):
     # EXPORTS-FIX-1 A8 — motif interne « PLU non calibré pour la zone A (estimation générique) »
     # dit en clair, sans jargon de calibration.
@@ -407,8 +407,10 @@ def _r_sols(v):
 
 
 def _r_viab(v):
-    # EXPORTS-FIX-1 A8 — « confirmée par les faits » (langage interne) → « confirmée ».
-    lib = (v.get("libelle") or v.get("verdict") or "").replace(" confirmée par les faits", " confirmée")
+    # EXPORTS-FIX-1 A8 / BIS point 11 — la viabilisation est un score (étiqueté « estimé ») : le mot
+    # suit l'étiquette → « probable », jamais « confirmée ».
+    lib = ((v.get("libelle") or v.get("verdict") or "")
+           .replace(" confirmée par les faits", " probable").replace(" confirmée", " probable"))
     ind = v.get("indices") or []
     if ind:
         lib += " — indices : " + " · ".join(str(i) for i in ind[:4])
@@ -696,7 +698,9 @@ _RENDEURS: dict[str, Any] = {
     "filiation_parcelle": _r_filiation,
     # EXPORTS-FIX-1 A4/A6/A7/A8/B3
     "scot_parcelle": _r_scot, "usage_sol_dominant": _r_usage_sol,
-    "gabarit_motif_blocage": _r_gabarit_motif, "n_vigilances": _r_vigilances,
+    "gabarit_motif_blocage": _r_gabarit_motif,
+    # EXPORTS-FIX-1-BIS point 6 — n_vigilances est rendu spécialement (nombre d'aléas imprimés),
+    # plus de rendeur « couches … cascade ».
 }
 def _r_gabarit_plan(brute, val=None):
     """Le plan 2D du gabarit (SVG) — fragment pleine largeur, figure de la ligne « zone
@@ -965,6 +969,11 @@ def cover_dossier(idu: str, fiche: dict, numero: str, jour, valeurs: dict[str, V
             aff = None
         if cid == "zone_plu_famille" and _zone_code:
             aff = esc(_zone_code)
+        # EXPORTS-FIX-1-BIS point 6 — la tuile « Risques » compte les aléas IMPRIMÉS au §5 (le même
+        # chiffre que le §5), pas n_vigilances (couches internes).
+        if cid == "n_vigilances":
+            _na = _n_aleas(valeurs)
+            aff = esc(f"{groupe(_na)} relevé{'s' if _na and _na > 1 else ''}") if _na is not None else None
         # EXPORTS-FIX-1 C7 — SDP en zone A/N : « 0 m² — zone A » (arbitrage Q6), jamais « — ».
         if aff is None and cid == "sdp_residuelle_m2" and _zone_v in ("A", "N"):
             aff = f'0 m² — zone {esc(_zone_v)}'
@@ -1058,6 +1067,15 @@ def rendu_sections(valeurs: dict[str, Valeur], fiche: dict, *, plan_html: str = 
                         and l.quoi not in _ABSENCE_MASQUEE):
                     absents.append((l.quoi, l.absence))
                 continue                              # sans extracteur : omis (non_cables le compte)
+            # EXPORTS-FIX-1-BIS point 11 — un gabarit NON CHIFFRÉ (motif de blocage servi) est un
+            # non-calcul : il va dans « Non disponible ici » SANS étiquette, jamais une ligne « sourcé ».
+            if l.quoi == "gabarit_motif_blocage":
+                _s = str(v.valeur or "")
+                _m = _re.match(r"PLU non calibré pour la zone (\S+)", _s)
+                _ph = (f"Gabarit réglementaire : règles de la zone {_m.group(1)} non détaillées dans "
+                       "LABUSE — non chiffré ici.") if _m else f"Gabarit réglementaire : {_s} — non chiffré ici."
+                absents.append(("gabarit_motif_blocage", _ph))
+                continue
             vals_lus.append(v)
             if l.quoi == "reglement_plu_bloc":
                 blocs_pleins.append(f'<div data-quoi="reglement_plu_bloc">{_bloc_reglement(valeurs)}</div>')
@@ -1068,7 +1086,13 @@ def rendu_sections(valeurs: dict[str, Valeur], fiche: dict, *, plan_html: str = 
                 else:
                     blocs_pleins.append(_RENDEURS_BLOC[l.quoi](v.valeur, v))
                 continue
-            html = _valeur_html(l.quoi, l, v.valeur, v)
+            if l.quoi == "n_vigilances":
+                # EXPORTS-FIX-1-BIS point 6 — le compteur affiche le nombre d'aléas IMPRIMÉS au §5,
+                # pas n_vigilances (couches internes) ; le mot « cascade » n'apparaît plus.
+                na = _n_aleas(valeurs)
+                html = esc(groupe(na)) if na is not None else ""
+            else:
+                html = _valeur_html(l.quoi, l, v.valeur, v)
             if not html:
                 continue
             lib = (l.comment or {}).get("libelle") or l.quoi
@@ -1093,10 +1117,21 @@ def rendu_sections(valeurs: dict[str, Valeur], fiche: dict, *, plan_html: str = 
             # trouvé) et « Non disponible ici » (donnée non calculée/déterminée), avec LA raison —
             # jamais « A ou B » (résolu selon la zone).
             _zone = _v(valeurs, "zone_plu_famille")
+            _gab_bloque = valeurs.get("gabarit_motif_blocage") is not None
+            # EXPORTS-FIX-1-BIS point 2 — quand une SDP RÉSIDUELLE est servie (droits à bâtir non
+            # consommés), aucune ligne ne doit la contredire : on retire « surface de plancher non
+            # calculable (capacité nulle) » et on dit la vraie raison de la capacité (pas « capacité nulle »).
+            _sdp = _v(valeurs, "sdp_residuelle_m2")
+            _has_sdp = isinstance(_sdp, (int, float)) and not isinstance(_sdp, bool) and _sdp > 0
             verifie: list[str] = []
             nondispo: list[str] = []
             for q, ph in absents:
-                phc = _absence_une_raison(_absence_clair(q, ph), _zone)
+                if _has_sdp and q == "surface_plancher_m2":
+                    continue
+                if _has_sdp and q == "capacite_logements":
+                    ph = ("Capacité en logements : non chiffrée ici — le potentiel relève des droits "
+                          "à bâtir résiduels (la SDP ci-dessus), pas un programme de logements.")
+                phc = _absence_une_raison(_absence_clair(q, ph), _zone, gabarit_bloque=_gab_bloque)
                 li = f'<li data-quoi="{esc(q)}">{esc(phc)}</li>'
                 (nondispo if _est_non_dispo(phc) else verifie).append(li)
             if verifie:

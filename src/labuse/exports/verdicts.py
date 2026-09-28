@@ -108,8 +108,11 @@ def verdict_reseaux(valeurs: dict[str, Valeur]) -> Verdict | None:
              "confirmer auprès des gestionnaires par une DT-DICT" if confirmee else
              "aucun raccordement n'est établi par les indices : réseaux à vérifier auprès des "
              "gestionnaires par une DT-DICT")
-    # EXPORTS-FIX-1 A8 — « confirmée par les faits » (langage interne du faisceau) → « confirmée ».
-    lib = str(v['libelle']).replace(" confirmée par les faits", " confirmée")
+    # EXPORTS-FIX-1 A8 / BIS point 11 — la viabilisation est un FAISCEAU d'indices (un score, étiqueté
+    # « estimé ») : le mot suit l'étiquette → « probable », jamais « confirmée » (un score ne confirme
+    # rien). On retire aussi le langage interne « par les faits ».
+    lib = (str(v['libelle']).replace(" confirmée par les faits", " probable")
+           .replace(" confirmée", " probable"))
     return (f"{lib} — {suite}.", ton, "")
 
 
