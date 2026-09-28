@@ -7,8 +7,10 @@ import { useQuery } from '@tanstack/react-query'
 import { getProfilParcelle, type ProfilAltimetrique as Profil } from '../../lib/api'
 import { GroupLabel } from './primitives'
 
-const nf = (n: number) => n.toLocaleString('fr-FR', { maximumFractionDigits: 0 })
-const nf1 = (n: number) => n.toLocaleString('fr-FR', { maximumFractionDigits: 1 })
+// FRONT-CHIFFRES-1 — null → « — » (jamais un 0 fabriqué pour une absence) ; un vrai 0
+// (terrain plat, dénivelé nul) reste « 0 ». Le bloc est déjà gardé par `p.disponible`.
+const nf = (n: number | null | undefined) => (n == null ? '—' : n.toLocaleString('fr-FR', { maximumFractionDigits: 0 }))
+const nf1 = (n: number | null | undefined) => (n == null ? '—' : n.toLocaleString('fr-FR', { maximumFractionDigits: 1 }))
 
 // le tracé SVG : altitude (y, inversé) vs distance (x). Points no-data (alt null) coupent le trait.
 function Graphe({ p }: { p: Profil }) {
@@ -69,6 +71,9 @@ function Corps({ p }: { p: Profil }) {
       {/* COHERENCE-FIX-1 (lot D) — une mesure absente s'affiche « — », jamais « 0 m » / « 0 % »
           (les `?? 0` servaient un faux zéro quand le profil ne portait pas la mesure). */}
       <div className="grid grid-cols-3 gap-x-3 gap-y-2">
+        {/* fusion COHERENCE-FIX-1 × FRONT-CHIFFRES-1 : les deux côtés tuaient le même faux zéro —
+            on garde la garde PAR CHAMP (« — » sec, jamais « — m » que donnerait nf(null) + unité),
+            et le nf/nf1 null-safe de main sert le graphe. */}
         <Chiffre l="Distance" v={p.distance_m != null ? `${nf(p.distance_m)} m` : '—'} />
         <Chiffre l="Dénivelé +" v={p.denivele_positif_m != null ? `+${nf(p.denivele_positif_m)} m` : '—'} tone="up" />
         <Chiffre l="Dénivelé −" v={p.denivele_negatif_m != null ? `−${nf(p.denivele_negatif_m)} m` : '—'} tone="down" />

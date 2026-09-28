@@ -237,7 +237,7 @@ function CeBienBloc({ loading, error, bien, onClose }: {
   const der = baisses[baisses.length - 1]
   const histLigne = baisses.length === 0
     ? 'aucune baisse enregistrée'
-    : `${baisses.length} baisse${baisses.length > 1 ? 's' : ''}${der ? ` · ${fmt(der.ancien ?? 0)} → ${fmt(der.nouveau ?? 0)} €` : ''}`
+    : `${baisses.length} baisse${baisses.length > 1 ? 's' : ''}${der ? ` · ${fmt(der.ancien)} → ${fmt(der.nouveau)} €` : ''}`
   return (
     <div data-ce-bien className="mb-4 rounded-lg border border-mint/40 bg-mint/[0.05] px-4 py-3.5">
       <div className="flex items-start justify-between gap-3">

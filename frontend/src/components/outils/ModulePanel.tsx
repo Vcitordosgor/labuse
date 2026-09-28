@@ -10,7 +10,7 @@ import {
 import { AddressAutocomplete } from '../AddressAutocomplete'
 import { ParcelInput } from '../ParcelInput'
 import { TEMPS_MILLESIMES } from '../map/basemaps'
-import { fmtInt } from '../../lib/format'
+import { fmtInt, fmtM2 } from '../../lib/format'
 import { iduComplet, iduCourt, estIdu } from '../../lib/format'
 import { permisIncoherenceNote } from '../../lib/permis'
 import { pointInPolygon } from '../../lib/geo'
@@ -274,7 +274,7 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
               <div className="grid grid-cols-2 gap-2">
                 {[
                   { v: fmt(d['n_parcelles'] as number), lbl: 'parcelles' },
-                  { v: `${(((d['surface_totale_m2'] as number) ?? 0) / 1e4).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} ha`, lbl: 'surface totale' },
+                  { v: fmtM2(d['surface_totale_m2'] as number | null), lbl: 'surface totale' },
                   { v: `${fmt(d['n_terrains_nus'] as number)} / ${fmt(d['n_terrains_batis'] as number)}`, lbl: 'terrains nus / bâtis' },
                   { v: fmt(d['n_constructible_u_au'] as number), lbl: 'en zone U ou AU' },
                 ].map((c) => (
