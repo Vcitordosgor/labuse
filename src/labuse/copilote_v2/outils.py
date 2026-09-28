@@ -20,9 +20,11 @@ from .. import runs  # S3 : run servi relu à la requête
 
 # M78-quater #4 — la SOURCE affichée au client ne cite JAMAIS un nom de moteur, de table ou de run
 # (« run servi », « recherche à facettes »… = interne). Les parcelles viennent du cadastre ; son
-# millésime réel est celui de l'ingestion (cf. api.app — « cadastre Etalab 2026-06 »). Le run interne
-# (runs.current()) reste l'argument des points de calcul, il n'apparaît pas dans la source.
-CADASTRE_MILLESIME = "Etalab 2026-06"
+# millésime réel est « latest » ingérée (data_sources id 1/2 = « … latest ingérée »), pas une date
+# figée. SOURCES-FIX-2 lot F (ANOMALIES row 85/86) : l'ancien littéral « Etalab 2026-06 » était
+# décorrélé du catalogue — on affiche la valeur nettoyée par le producteur unique (composer →
+# « édition courante »). Le run interne (runs.current()) reste l'argument des points de calcul.
+CADASTRE_MILLESIME = "cadastre Etalab — édition courante"
 
 
 @dataclass

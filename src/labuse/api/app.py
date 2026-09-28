@@ -40,6 +40,7 @@ from .. import rnu as _rnu
 from ..db import session_scope
 from ..enums import FeedbackVerdict
 from .. import runs  # S3 : run servi relu à la requête (bascule à chaud)
+from ..millesime_source import composer as _compose_millesime  # SOURCES-FIX-2 lot D — millésime unique
 from ..scoring.score_v_constants import V_BAND_LABELS  # GB-012 : V_BRULANTE_THRESHOLD retiré (import mort)
 from ..scoring.fraction_client import fraction_humaine as _fh, fraction_sql_case as _fraction_sql_case  # M135 P2
 from ..scoring.p_v2.libelles_client import raison_dominante as _raison_dom   # M135 P3 — chip raison
@@ -1046,7 +1047,13 @@ def list_sources(db: Session = Depends(get_db)) -> list[dict]:
             **_source_licence(s.legal_notes),
             # M86 — millésime amont CENTRALISÉ (data_sources.source_millesime, écrit par persist_millesime
             # ou seed) : le front le LIT au lieu de coder des dates en dur (correction factuelle M86).
-            "source_millesime": s.source_millesime,
+            # SOURCES-FIX-2 lot D (row 97) — servi via le PRODUCTEUR UNIQUE `millesime_source.composer`
+            # (le même que la fiche §Sources et l'admin), plus le millésime BRUT : les notes internes
+            # (« édition non enregistrée », « latest ingérée », « proxy », dates sentinelle) sont nettoyées
+            # une seule et même façon partout — plus de magasin/format divergent.
+            "source_millesime": _compose_millesime(s.source_millesime,
+                                                    source_horizon_at=s.source_horizon_at,
+                                                    last_sync_at=s.last_sync_at),
             # M74 C bis — NOTE DE NATURE visible (proxy / servi par proxys) : une source proxy ne
             # doit JAMAIS être présentée comme la source officielle (doctrine anti-faux-positif).
             "nature": _source_nature(s.name, s.technical_notes),
@@ -3211,10 +3218,16 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str |
 #: 'v' (vendabilité) accepté mais deprecated (disparu du sélecteur). Deux formes : sur les
 #: alias de la requête de page (p/d/s2/ev/vs) et sur la page matérialisée (pg).
 # ── ANALYSE-1 — le NOUVEAU moteur (Score LABUSE + Signal de mutation) lu par l'écran Analyse ──
-# Le scoring SERVI reste q_v11_m137 (carte, run servi) ; l'Analyse lit la table `score_labuse` du run
-# CANDIDAT — bande (Excellente/Bonne/À étudier/Faible/Sans potentiel/Analyse incomplète), Signal de
-# mutation (fort/moyen/faible) et contributions FR, telles quelles (aucun quota/rang/percentile côté écran).
-SCORE_LABUSE_RUN = os.environ.get("LABUSE_SCORE_RUN", "q_v15")
+# SOURCES-FIX-2 lot B — POINTEUR UNIQUE : le Score LABUSE (bande + Signal) suit le RUN SERVI
+# (`runs.current()` = point de vérité unique config/served_manifest.json / served_run.txt), la MÊME
+# source que la carte, la fiche, les filtres, la page Données et le Dossier. Il n'est PLUS figé sur le
+# run CANDIDAT « q_v15 » : deux « Classement LABUSE » de deux runs ne coexistent plus dans le produit.
+# Le candidat ne se lit QUE depuis l'admin — la bascule (page Données) le promeut sous son nom, ou
+# l'override explicite `LABUSE_SCORE_RUN=q_v15` le nomme pour un contrôle admin. Tant que le run servi
+# n'a pas de lignes dans `score_labuse` (cas actuel : q_v11_m137 absent de la table), le Score LABUSE
+# reste NULL partout (fiche/Analyse/Comparer) — cohérent avec la carte ; la bascule le rend visible d'un
+# coup. Aucune recette de bascule ici : on fixe le pointeur sur ce qui est servi aujourd'hui.
+SCORE_LABUSE_RUN = os.environ.get("LABUSE_SCORE_RUN") or runs.current()
 # Le CLASSEMENT LEXICOGRAPHIQUE (décision Vic, V3) : bande de Score d'abord (A>B>C>D), puis « Analyse
 # incomplète » (NC) — JAMAIS tout en bas comme si elle était mauvaise —, puis « Sans potentiel
 # constructible » (bande 0) en toute fin. Le Signal départage DANS la bande (signal_p décroissant).
@@ -3320,7 +3333,7 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
     base = "" if ("f_tiers" in xp
                   or "s2.tier" in extra_where or _ETAGE0_SQL in extra_where) \
         else f"AND NOT {_ETAGE0_SQL}"
-    # ANALYSE-1 — filtres PROPRES à l'Analyse, lus sur le run candidat (score_labuse `sl`) : le Signal
+    # ANALYSE-1 — filtres PROPRES à l'Analyse, lus sur le run SERVI (score_labuse `sl`, SCORE_LABUSE_RUN) : le Signal
     # de mutation (fort/moyen/faible) et le groupe de bande (qualité A-D / incomplète NC / sans potentiel
     # 0). Un groupe de bande demandé pilote SEUL le périmètre (« Sans potentiel » n'est jamais masqué) :
     # il LÈVE l'exclusion étage 0 du run servi, sinon les 145 k écartées disparaîtraient de l'Analyse.
@@ -3738,7 +3751,7 @@ def _q_v2_stats(db: Session, commune: str | None, run_label: str | None = None,
         """), params).mappings().one()
     out["segments"] = {"permis_pro": int(seg["s_permis_pro"] or 0), "terrain_nu": int(seg["s_nu"] or 0),
                        "bati_densifier": int(seg["s_densif"] or 0), "reste": int(seg["s_reste"] or 0)}
-    # ANALYSE-1 — la ventilation par BANDE du run candidat (score_labuse) : Excellente (A) / Bonne (B) /
+    # ANALYSE-1 — la ventilation par BANDE du run SERVI (score_labuse, SCORE_LABUSE_RUN) : Excellente (A) / Bonne (B) /
     # À étudier (C) / Faible (D) / Sans potentiel constructible (0) / Analyse incomplète (NC). Sur MÊME
     # périmètre (mêmes filtres globaux) mais SANS l'exclusion étage 0 du run servi — le récapitulatif
     # « LABUSE a analysé les N parcelles » compte TOUTE la trame du candidat (rien n'est masqué). Comptes
@@ -7491,10 +7504,11 @@ def compare(idus: str = Query(..., description="2 à 3 IDU séparés par des vir
         row["emprise_ces_pct"] = float(ces) if isinstance(ces, (int, float)) else None
         row["emprise_ces_source"] = ((zr.sources or {}).get("emprise")
                                      if zr and row["emprise_ces_pct"] is not None else None)
-        # COMPARER-2 §4 — Classement LABUSE (bande + Signal de mutation) du run CANDIDAT q_v15, la MÊME
-        # source que l'écran Analyse (score_labuse). Servi tel quel ; NULL tant que q_v15 n'est pas la
-        # table servie — la bascule rendra tout cohérent (cf. rapport). Le score ne s'affiche QUE sur
-        # la fiche, l'Analyse, et cet outil de comparaison — jamais la carte (doctrine M120).
+        # COMPARER-2 §4 / SOURCES-FIX-2 lot B — Classement LABUSE (bande + Signal de mutation) du RUN
+        # SERVI (SCORE_LABUSE_RUN = runs.current()), la MÊME source que l'écran Analyse et la fiche
+        # (score_labuse). NULL tant que le run servi n'est pas peuplé dans score_labuse — la bascule
+        # (page Données) rend tout cohérent d'un coup. Le score ne s'affiche QUE sur la fiche, l'Analyse
+        # et cet outil de comparaison — jamais la carte (doctrine M120).
         if sl_ready:
             sl = db.execute(text(
                 """SELECT bande, signal_niveau, non_calculable FROM score_labuse

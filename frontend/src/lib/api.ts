@@ -1189,7 +1189,7 @@ export interface CompareRow {
   // COMPARER-2 §1 — CES PLU réelle (validée dans plu_destinations) ; null = zone sans CES → « non réglementée »
   emprise_ces_pct?: number | null; emprise_ces_source?: string | null
   charge_fonciere_m2?: number | null
-  // COMPARER-2 §4 — Classement LABUSE du run candidat q_v15 (même source que l'Analyse) : bande + Signal
+  // COMPARER-2 §4 / SOURCES-FIX-2 lot B — Classement LABUSE du RUN SERVI (même source que l'Analyse et la fiche) : bande + Signal
   bande?: string | null; signal_niveau?: string | null
   terrain_zone_eur_m2?: number | null; contrainte_majeure?: string | null   // M82
   n_contraintes?: number; contraintes?: string[]

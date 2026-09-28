@@ -25,11 +25,19 @@ def _has(db: Session, *tables: str) -> bool:
 
 
 # ── C.9 — Cartofriches (§Risques et environnement) ─────────────────────────────────────────────
+# SOURCES-FIX-2 lot E — étiquette Cartofriches CORRIGÉE : le PRODUCTEUR est le Cerema / DGALN
+# (source data_sources id 35, « Cartofriches (Cerema) »), pas l'opérateur local AGORAH ; et il n'y a
+# PAS de millésime versionné (inventaire à MAJ trimestrielle, source_millesime vide au catalogue) —
+# l'ancien littéral « AGORAH 2025 » était fabriqué. Un seul libellé, partout où la friche s'affiche.
+_CARTOFRICHES_SOURCE = "Cartofriches (Cerema / DGALN)"
+_CARTOFRICHES_MILLESIME = "édition courante (Cerema, mise à jour trimestrielle)"
+
+
 def cartofriches(db: Session, idu: str) -> dict:
-    """La parcelle recoupe-t-elle une friche recensée (AGORAH/Cerema) ? statut, type, surface."""
+    """La parcelle recoupe-t-elle une friche recensée (Cerema — Cartofriches) ? statut, type, surface."""
     if not _has(db, "spatial_layers"):
         return {"disponible": False, "friches": [],
-                "source": "Cartofriches (Cerema) / AGORAH", "millesime": "AGORAH 2025"}
+                "source": _CARTOFRICHES_SOURCE, "millesime": _CARTOFRICHES_MILLESIME}
     rows = db.execute(text(
         "SELECT sl.attrs->>'site_nom' AS nom, sl.attrs->>'site_statut' AS statut, "
         "       sl.attrs->>'site_type' AS type, sl.attrs#>>'{detail,bati_etat}' AS etat, "
@@ -42,9 +50,8 @@ def cartofriches(db: Session, idu: str) -> dict:
         "disponible": bool(rows),
         "friches": [{"nom": r["nom"], "statut": r["statut"], "type": r["type"], "etat": r["etat"],
                      "surface_m2": round(r["surface"]) if r["surface"] else None} for r in rows],
-        "source": (rows[0]["source"] if rows and rows[0]["source"] else
-                   "Cartofriches (Cerema) — recensement AGORAH des friches urbaines"),
-        "millesime": "AGORAH 2025",
+        "source": _CARTOFRICHES_SOURCE,
+        "millesime": _CARTOFRICHES_MILLESIME,
     }
 
 

@@ -172,8 +172,10 @@ _ajout(_f(
 
 
 # ─────────────────────────────── DPE ADEME ───────────────────────────────
-# Mesures 05/09 (base LOCALE, DPE partielle) : 17 enregistrements · 7 communes · 0 classe hors A-G.
-# La rareté locale est l'état SERVI localement (le filtre l'avertit honnêtement, communes 7/24).
+# SOURCES-FIX-2 lot F (ANOMALIES row 49) — chiffre de mesure RAFRAÎCHI : base LOCALE = 1 123
+# enregistrements · 20 communes · 0 classe hors A-G (l'ancien « 17 · 7 communes » du 05/09 était
+# périmé). Le filtre avertit honnêtement de la couverture partielle ; le contrôle de domaine (A-G)
+# ne dépend pas du volume.
 _ajout(_f(
     source="dpe", libelle="DPE ADEME (logements existants)", table="dpe_records",
     cle=("numero_dpe",), insee_col="code_insee", date_cols=("date_etablissement",),
@@ -278,6 +280,10 @@ _ajout(_f(
 # ─────────────────────────────── FLAIR (occupation du sol IGN) ───────────────────────────────
 # FLAIR sert de JUGE aux détections ortho (colonne juge_flair) plutôt qu'une couche servie propre :
 # le filtre porte sur la présence du signal FLAIR sur les détections. Contrôle propre léger.
+# SOURCES-FIX-2 lot E (ANOMALIES row 44) — TRAÇABILITÉ : « FLAIR » (occupation du sol par IA, IGN)
+# est un JUGE INTERNE de qualité des détections issues de la BD ORTHO (data_sources id 61) ; aucun
+# chiffre « FLAIR » n'est servi au client (le source_motif « FLAIR% » ne matche donc aucune ligne
+# data_sources, sans effet — contrôle QA interne, pas une source d'affichage à cataloguer).
 _ajout(_f(
     source="flair", libelle="FLAIR (occupation du sol IA, IGN)", table="ortho_detections",
     source_motif="FLAIR%", portee_run=False,

@@ -121,7 +121,7 @@ donnees:
 # POURRAIT offrir : un drapeau « dans un périmètre ABF » en fiche.
 ---
 surface:   couche_sar
-nom:       "SAR — vocations / potentiel foncier Région"
+nom:       "SAR — proxy potentiel foncier Région (règlement SAR non ingéré)"
 categorie: couche
 parent:    null
 route:     "/map/tiles/sar/{z}/{x}/{y}.pbf"
@@ -129,14 +129,17 @@ rendu:     carte
 donnees:
   - quoi:  sar_couche
     ou:    { rang: 10, etat: en_tete, section: "Aménagement régional" }
-    comment: { libelle: "SAR — vocations", format: liste, i: "Schéma d'Aménagement Régional — vocations. C'est aussi le « potentiel foncier Région » indicatif (même géométrie, un seul nom désormais)." }
+    # SOURCES-FIX-2 lot C — la couche « SAR » est un PROXY (géométrie du potentiel foncier Région,
+    # data.regionreunion.com), pas le règlement du Schéma d'Aménagement Régional : le caveat existait
+    # sur le chiffre `sar_divergence` mais PAS sur la couche carte. Il est ajouté ici (légende + « i »).
+    comment: { libelle: "SAR — proxy potentiel foncier (Région)", format: liste, i: "PROXY : géométrie du « potentiel foncier Région » (data.regionreunion.com), vocations INDICATIVES. Le règlement du Schéma d'Aménagement Régional (couche SIG officielle) n'est PAS diffusé en vecteur (07/09/2026), donc non ingéré. Indicatif, jamais opposable, jamais une interdiction." }
     # COUCHES-RECETTE-1 (Lot B) : la donnée PORTE une vocation (subtype) → légende PAR VOCATION,
     # couleurs distinctes (avant : une seule teinte verte). 7 vocations servies en base.
-    carte: { kind: sar, agregat: false, famille: foncier, geometrie: polygone, zoom_min: 0, rang_carte: 20, style: { couleur_propriete: subtype, couleur: "#6BA368", opacite: 0.30, trait: "#2f4f2c" }, niveaux: [ { id: urbaine, propriete: subtype, valeur: vocation_urbaine, couleur: "#E5623C", legende: "Urbaine" }, { id: agricole, propriete: subtype, valeur: vocation_agricole, couleur: "#E8B23A", legende: "Agricole" }, { id: naturelle, propriete: subtype, valeur: vocation_naturelle, couleur: "#3FB56A", legende: "Naturelle" }, { id: rurale, propriete: subtype, valeur: vocation_rurale, couleur: "#A8C24A", legende: "Rurale" }, { id: continuite, propriete: subtype, valeur: vocation_continuite, couleur: "#4FA8E0", legende: "Continuité écologique" }, { id: coupure, propriete: subtype, valeur: vocation_coupure, couleur: "#9B6BE0", legende: "Coupure d'urbanisation" }, { id: mixte, propriete: subtype, valeur: vocation_mixte, couleur: "#8A94A6", legende: "Mixte" } ], popup: [ { champ: vocation, libelle: "Vocation SAR" }, { champ: statut, libelle: "Statut" } ], legende: "SAR — par vocation (urbaine / agricole / naturelle / rurale / continuité / coupure / mixte)" }
+    carte: { kind: sar, agregat: false, famille: foncier, geometrie: polygone, zoom_min: 0, rang_carte: 20, style: { couleur_propriete: subtype, couleur: "#6BA368", opacite: 0.30, trait: "#2f4f2c" }, niveaux: [ { id: urbaine, propriete: subtype, valeur: vocation_urbaine, couleur: "#E5623C", legende: "Urbaine" }, { id: agricole, propriete: subtype, valeur: vocation_agricole, couleur: "#E8B23A", legende: "Agricole" }, { id: naturelle, propriete: subtype, valeur: vocation_naturelle, couleur: "#3FB56A", legende: "Naturelle" }, { id: rurale, propriete: subtype, valeur: vocation_rurale, couleur: "#A8C24A", legende: "Rurale" }, { id: continuite, propriete: subtype, valeur: vocation_continuite, couleur: "#4FA8E0", legende: "Continuité écologique" }, { id: coupure, propriete: subtype, valeur: vocation_coupure, couleur: "#9B6BE0", legende: "Coupure d'urbanisation" }, { id: mixte, propriete: subtype, valeur: vocation_mixte, couleur: "#8A94A6", legende: "Mixte" } ], popup: [ { champ: vocation, libelle: "Vocation (proxy)" }, { champ: statut, libelle: "Statut" } ], legende: "SAR — proxy potentiel foncier Région (règlement SAR non ingéré) · vocations indicatives : urbaine / agricole / naturelle / rurale / continuité / coupure / mixte" }
     absence: "SAR : vocation non renseignée sur l'emprise visible."
     absence_type: absente_ici
-    statut_juridique: opposable
-    pourquoi: "SAR opposable aux PLU ; nom unifié avec « potentiel foncier Région » (finding recensement)."
+    statut_juridique: informatif
+    pourquoi: "PROXY indicatif (potentiel foncier Région) ; le règlement SAR officiel n'est PAS diffusé en vecteur (source 118 partenariat_requis, NON OPPOSABLE) — jamais présenté comme opposable (finding recensement + doctrine sar_indication)."
 # POURRAIT offrir : la divergence SAR ↔ zonage PLU (sar_divergence existe déjà).
 # couche_ravine RETIRÉ (recette Vic — doublon mesuré 9 010/12 716 ∩ dpf ; dpf legacy opposable fait foi).
 ---

@@ -42,6 +42,13 @@ MER_HEX = "#0A3B59"
 
 #: couches servies — slug public → (couche IGN, format WMTS). Liste FERMÉE : le proxy ne relaie
 #: jamais une couche arbitraire. Toutes les sources ortho de basemaps.ts sont ici (V1 pt 1).
+#: SOURCES-FIX-2 lot E (ANOMALIES row 37) — TRAÇABILITÉ : ces mosaïques (ortho-express 2025 +
+#: 6 millésimes historiques 1950-1965 → 2021-2023) sont relayées EN DIRECT depuis l'IGN
+#: Géoplateforme (data.geopf.fr) ; elles n'ont pas de ligne data_sources individuelle — elles
+#: relèvent du HUB « Géoplateforme (IGN) » (data_sources id 14) qui englobe les flux WMTS/WMS IGN
+#: servis en direct sans ingestion. La seule ortho INGÉRÉE (table locale ortho_detections/tiles)
+#: est BD ORTHO 20 cm 2025 (id 61) ; SCAN50 1950 (id 155) et EduGéo (id 156) ont leurs lignes
+#: propres. Aucune donnée servie hors liste : le fond est un flux hub, pas une mesure inventée.
 _COUCHES: dict[str, tuple[str, str]] = {
     "monde":   ("ORTHOIMAGERY.ORTHOPHOTOS", "image/jpeg"),
     "express": ("ORTHOIMAGERY.ORTHOPHOTOS.ORTHO-EXPRESS.2025", "image/jpeg"),

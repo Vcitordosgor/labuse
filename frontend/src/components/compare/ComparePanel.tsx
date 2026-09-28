@@ -40,7 +40,7 @@ type Row = {
 const ROWS: Row[] = [
   { label: 'Surface', prov: 'source', val: (r) => r.surface_m2 != null ? `${fmtInt(r.surface_m2)} m²` : '—', num: (r) => r.surface_m2 ?? null, best: 'hi' },
   { label: 'Zone PLU', prov: 'source', val: (r) => r.zone || '—' },
-  // COMPARER-2 §4 — Classement LABUSE (bande du moteur candidat q_v15) + Signal de mutation en badge,
+  // COMPARER-2 §4 / SOURCES-FIX-2 lot B — Classement LABUSE (bande du RUN SERVI) + Signal de mutation en badge,
   // MÊME source et MÊMES couleurs que l'écran Analyse (score_labuse). 2e ligne, sous la zone PLU.
   { label: 'Classement LABUSE', prov: 'estime', noBadge: true,
     val: (r) => bandeMeta(r.bande)?.label ?? '—',

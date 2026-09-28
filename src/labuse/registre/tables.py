@@ -167,9 +167,17 @@ RESERVOIR_TABLES: dict[str, ReservoirTables] = {
                                 "— la table taxe_amenagement_taux est remplie (24/24, jeu ouvert "
                                 "delta_deliberation_tam, `labuse ingest-taxe-amenagement`)."),
     # ── risques / environnement ─────────────────────────────────────────────────────
-    "georisques_api": Rt(("spatial_layers",), couches=("georisque_alea",)),
+    # SOURCES-FIX-2 lot A — la couche `georisque_alea` (aléa zoné inondation/mouvement de terrain)
+    # est ingérée du WFS DEAL Réunion (layers_ingest.KIND_SOURCE) et ses lignes portent
+    # data_source_id=30 (DEAL — PPR / aléas). Elle appartient donc au réservoir `deal_ppr` (source 30,
+    # réglementaire, millésimée), PAS à `georisques_api` (source 4, catch-all sans millésime). Le
+    # réservoir `georisques_api` ne porte plus aucune couche servie (hub parent Géorisques).
+    "georisques_api": Rt(("spatial_layers",), couches=(),
+                         note="hub parent Géorisques (source 4, catch-all) — aucune couche servie ne "
+                              "lui est propre : l'aléa zoné vient de DEAL (deal_ppr), les cavités/ICPE/"
+                              "SIS/CASIAS/MVT de leurs réservoirs Géorisques dédiés."),
     "catnat_gaspar": Rt(("catnat_arretes",), millesime="GASPAR — 426 arrêtés sur 24 communes"),
-    "deal_ppr": Rt(("spatial_layers",), couches=("ppr",),
+    "deal_ppr": Rt(("spatial_layers",), couches=("ppr", "georisque_alea"),
                    millesime="PPR/PPRL approuvés 2011–2026 (arrêtés, DEAL Lizmap)"),
     "georisques_ssp": Rt(("spatial_layers",), couches=("sol_pollue",)),
     "georisques_cavites": Rt(("spatial_layers",), couches=("cavite",)),
