@@ -37,7 +37,10 @@ _JETONS_ARBITRAGE = ("DOUBLON", "ARBITRAGE", "LOGIQUE", "canonique", "échantill
 #: (typename WFS, requête Overpass, couche Carmen, catégorie GPU). Partager cette URL n'est
 #: PAS un doublon — la détection par endpoint les ignore (les règles table/kind/concept restent).
 PASSERELLES_MUTUALISEES = (
-    "data.geopf.fr/wfs", "data.geopf.fr/wms", "overpass-api.de",
+    # data.geopf.fr/wmts = passerelle de TUILES IGN (N couches par paramètre LAYER : SCAN 50, EduGéo,
+    # contraintes EnR…) — mutualisée au même titre que /wfs et /wms (TESTS-FIX-1) ; partager cet
+    # endpoint n'est pas un doublon.
+    "data.geopf.fr/wfs", "data.geopf.fr/wms", "data.geopf.fr/wmts", "overpass-api.de",
     "ws.carmen.developpement-durable.gouv.fr", "apicarto.ign.fr/api/gpu",
     "georisques.gouv.fr/api",
     # SOURCES-2 lot 1 — le Lizmap DEAL remplace Carmen : même hub, N couches par
