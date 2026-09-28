@@ -21,6 +21,7 @@ zones:
           citation: En zones UA et UB, la hauteur maximale des constructions est fixée à 12 mètres à l'égout
             du toit ou au sommet de l'acrotère.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Sous-secteur UA1 : hauteur limitée à 7 mètres à l'égout du toit ou au sommet de l'acrotère, sans dépasser R+1."
       retraits:
         voie:
           min_m: 3.0
