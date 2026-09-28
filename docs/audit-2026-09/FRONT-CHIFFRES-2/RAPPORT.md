@@ -83,6 +83,39 @@ chaque famille doit garder ce nombre ≤ 188 (0 écart nouveau).
 
 **Reste : 413 lignes actionnables (voir `INVENTAIRE.csv` colonne `etat`).**
 
+### Session 2 (lot P1 — seuils)
+Cadence adoptée (décision Vic) : **une session = un lot d'une même priorité**, un commit par
+famille, un seul compte rendu en fin de session. Garde-fous de fin : banc ≤ 188 / 0 FAUX-CLIENT,
+V6b + verrou front verts, tsc 0, vitest vert, `CHANGEMENTS.csv` à jour.
+
+**10 familles P1 traitées :**
+
+*Remonters (le seuil passe au back, servi sous une constante, le front lit) :*
+- **F14 — badges Radar « Nouveau » / « En vente longue »** (`RadarEcran`). `j<2` / `j>90` étaient
+  recalculés au front (fuseau/dates ≠ back → divergence liste vs marché). Back : `SEUIL_NOUVEAU_J=2`
+  (à côté de `SEUIL_VENTE_LONGUE_J=90`), `pige/client` sert `nouveau` à plat (base Réunion), le badge
+  « en vente longue » lit le `statut` du cycle. **CHANGEMENTS.csv ×2** (décisions désormais canoniques).
+- **F25 — bandeau « corpus jeune »** (`RadarMarche`). `corpus_total < 40` → back `SEUIL_CORPUS_JEUNE=40`,
+  `/radar/marche` sert le flag `corpus_jeune`. 0 valeur changée.
+- **F31 — ligne ZAN** (`blocB`). `(horizon ?? 99) < 5` fabriquait un horizon de 99 ans pour une
+  absence → supprimé (absent = ton neutre) ; le palier de couleur `< 5 ans` reste présentation. 0 valeur changée.
+- *(F04 déjà fait en session 1.)*
+
+*Reclassements « présentation pure » (couleur/cran d'une valeur servie — aucun chiffre/libellé décidé,
+cf. `RECLASSEMENT.md`) :* **F11** (aléa→cran), **F15** (couleur d'écart), **F17** (teinte dépense/budget),
+**F22** (couleur de jauge). → `legitime`.
+
+*Arrêté pour décision de Vic (touche l'affichage du scoring) :* **F13** (pastille tier), **F29** (badge tier).
+
+**Garde-fous fin de session :** tsc 0 · vitest 225/225 · V6b + verrou front + gardes FC-2 8/8 ·
+194 tests back des modules touchés (7 skips base-data pré-existants) · banc `--echantillon`
+→ `**3161 comparaisons · 188 écarts (166 INCOHERENT / 22 TOLERABLE) — inchangé vs baseline, 0 écart nouveau, 0 FAUX-CLIENT** (les familles touchées — badges radar, corpus, ZAN, questionnaire — ne sont pas des notions comparées par le banc ; le garde-fou tient par construction).`.
+
+**Reste P1 : 22 familles** (dont les grosses F01 `Fiche` 15 seuils, F02 `constructibilite` 9, F03
+`ModulePanel` 8 — zonage A/N, pente 5/15/30°, SDP, ER 50 %, fenêtres 24/36 mois — vraies règles
+réglementaires/métier à remonter ; + admin F05/F09, + F07(SRU_META)/F10/F16/F19/F20/F23/F24/F27/F28/
+F30/F32/F06/F08/F12/F21/F26). Prochaine session P1 : reprendre par F01.
+
 <!-- PROGRESSION -->
 
 ---
