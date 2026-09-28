@@ -155,10 +155,17 @@ def oracle_communes(v, communes):
         except Exception as e:  # noqa: BLE001
             v.skip(f"habitants_n[{com}]", str(e)[:80])
         try:
+            # COHERENCE-FIX-1 (lot F) — l'oracle compte les ARRÊTÉS DISTINCTS (code national JO),
+            # pas les lignes de l'API : GASPAR sert parfois le même arrêté en double (constaté :
+            # INTE1401216A à Saint-Joseph, deux lignes qui ne diffèrent que par date_fin_evt) —
+            # `results` brut surestimait de 1, LABUSE (upsert dédoublonné) était juste.
             cat = _json("https://www.georisques.gouv.fr/api/v1/gaspar/catnat?"
-                        f"code_insee={insee}&page=1&page_size=1")
+                        f"code_insee={insee}&page=1&page_size=200")
+            codes = {(r.get("code_national_catnat"), r.get("libelle_risque_jo"),
+                      r.get("date_publication_arrete")) for r in cat.get("data") or []}
             v.note("catnat_n", com, (ctx.get("risques") or {}).get("catnat_arretes"),
-                   cat.get("results"), "Géorisques GASPAR catnat")
+                   len(codes) if codes else cat.get("results"),
+                   "Géorisques GASPAR catnat (arrêtés distincts)")
         except Exception as e:  # noqa: BLE001
             v.skip(f"catnat_n[{com}]", str(e)[:80])
         time.sleep(0.3)
