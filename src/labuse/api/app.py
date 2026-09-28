@@ -2729,16 +2729,19 @@ def filtre(c: FiltreCriteres = Depends(),
         "page": page, "limit": limit, "offset": offset, "sort": sort or "rang",
     }
     if idus:
+        # COHERENCE-FIX-1 (lot C) — MÊME périmètre que le compteur : le masque des slivers < 2 m²
+        # manquait ICI seul → 13 972 idus contre compte 13 970 DANS LA MÊME réponse (audit).
         rows = db.execute(text(
             f"""
             SELECT p.idu
             FROM dryrun_parcel_evaluations d JOIN parcels p ON p.id = d.parcel_id
             LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
             WHERE d.run_label = :run AND (CAST(:c AS text) IS NULL OR p.commune = :c)
+              AND (p.surface_m2 IS NULL OR p.surface_m2 >= :minsurf)
               {extra}
             LIMIT {_FILTRE_IDUS_CAP + 1}
             """), {"c": c.commune, "run": c.source, "v2run": _score_v2_run_id(db),
-                   **extra_params}).scalars().all()
+                   "minsurf": MIN_DISPLAY_SURFACE_M2, **extra_params}).scalars().all()
         tronque = len(rows) > _FILTRE_IDUS_CAP
         out["idus"] = None if tronque else list(rows)
         out["idus_tronque"] = tronque
@@ -3697,7 +3700,7 @@ def parcelles_matchant_hash(db: Session, hash_str: str, run_label: str,
 
 def _q_v2_stats(db: Session, commune: str | None, run_label: str | None = None,
                 extra_where: str = "", extra_params: dict | None = None,
-                legacy: bool = False, exclure_slivers: bool = False) -> dict:
+                legacy: bool = False, exclure_slivers: bool = True) -> dict:
     """Comptes par TIER v2 EFFECTIF (M5.1) — l'étage 0 du run servi prime : une parcelle
     en étage 0 compte « écartée » quel que soit son tier. « Opportunités » = brûlantes v2
     + chaudes v2 (définition produit, tooltip « pourquoi ? »). `legacy=True` (deprecated)
@@ -3709,17 +3712,24 @@ def _q_v2_stats(db: Session, commune: str | None, run_label: str | None = None,
     run_label = _cascade_run(db, run_label)   # C1 : résout la cascade (empruntée si étage 0 réutilisé)
     params = {"c": commune, "run": run_label, "v2run": _score_v2_run_id(db),
               **(extra_params or {})}
-    # FIX-FILTRES F2 — quand demandé (compteur du panneau /filtre), on ALIGNE le COMPTE sur la LISTE :
-    # même plancher d'affichage que _q_v2_list (les slivers cadastraux < 2 m² masqués de la liste ET
-    # de la carte l'étaient PAS du compteur → « N correspondent » > visible). Rétablit l'invariant
-    # M45-B L3 (compteur = liste). /stats global NE le passe PAS : sa volumétrie garde les slivers.
+    # FIX-FILTRES F2 + COHERENCE-FIX-1 (lot C) — UNE SEULE définition du « nombre de parcelles »
+    # partout : les slivers cadastraux < 2 m² (masqués de la liste, de la carte et du compteur du
+    # panneau depuis F2) sont exclus PAR DÉFAUT, /stats et l'entonnoir compris. L'audit COHERENCE-1
+    # (FAUX-CLIENT n° 4) mesurait Saint-Paul 51 005 au panneau contre 51 129 à la page Stats — deux
+    # périmètres pour le même mot. La définition servie est « parcelles filtrables » (RETOURS-14 P6,
+    # note Sources) ; `exclure_slivers=False` reste possible pour un usage interne explicite.
     sliver = ""
     if exclure_slivers:
         sliver = "AND (p.surface_m2 IS NULL OR p.surface_m2 >= :minsurf)"
         params["minsurf"] = MIN_DISPLAY_SURFACE_M2
     join_v2 = ("LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu"
                " AND s2.run_id = :v2run")
-    eff = f"(CASE WHEN {_ETAGE0_SQL} THEN 'ecartee' ELSE COALESCE(s2.tier, 'ecartee') END)"
+    # COHERENCE-FIX-1 (lot C) — les tiers `declasse_*` se replient dans « écartée » (c'est leur
+    # sens produit) : la ventilation par tiers SOMME au total (l'audit mesurait 40 405 ≠ total,
+    # les déclassées ne tombant dans aucun compteur).
+    eff = (f"(CASE WHEN {_ETAGE0_SQL} THEN 'ecartee' "
+           f"WHEN COALESCE(s2.tier, 'ecartee') LIKE 'declasse_%' THEN 'ecartee' "
+           f"ELSE COALESCE(s2.tier, 'ecartee') END)")
     row = db.execute(text(
         f"""
         SELECT count(*) AS total,
