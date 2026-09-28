@@ -66,6 +66,7 @@ zones:
           citation: en zone U1a — Le pourcentage minimal d'espaces libres perméables sera de 10 % de la surface
             totale du terrain d'assiette du projet.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : En aléa fort du PPRI, le pourcentage minimal sera de 50 %. En cas de parking en sous-sol, 10 % au moins plantés sur dalle (terre >=0,8 m). Non exigé en surélévation/changement de destination."
     silence: autorise
     silence_src: Art. 1, § 1.2 "Sont interdits" = liste fermée de 3 occupations (entrepôt exclusif, agricole, campeurs/caravanes),
       p. 14 ; tout le reste n'est ni interdit ni conditionné par les articles 1 et 2.
@@ -365,7 +366,8 @@ zones:
           page_pdf: 21
           citation: en zone U1pru — ... En cas de retrait, celui-ci ne pourra excéder 5 mètres (recul <=3
             m INTROUVABLE tel quel).
-          statut: valide
+          statut: propose
+          note: "PLU-VERIF-1 : valeur passée en propose (non servie) — lue au PDF : recul <= 5 m (maximum), et non 3 m minimum. en zone U1pru Chaque construction pourra s'implanter sur une limite separative sans limitation de longueur. En cas de retrait, celui-ci ne pourra exceder 5 metres"
       stationnement:
         par_logement:
           places: null
@@ -1130,10 +1132,11 @@ zones:
         par_logement:
           places: null
           article: '12.2'
-          page_pdf: 76
+          page_pdf: 81
           citation: INTROUVABLE
           statut: propose
           raison: stationnement non chiffrable par logement ('a_verifier')
+          note: "PLU-VERIF-1 : page corrigée 76→81 (art. 12.2)."
       pleine_terre:
         pct:
           pct: 40.0
@@ -1357,6 +1360,7 @@ zones:
           citation: Le pourcentage minimal d'espaces libres perméables sera de 20% de la surface totale du
             terrain d'assiette du projet.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : En alea fort du PPRI, le pourcentage minimal sera de 50 %. En cas de parking en sous-sol sur toute la parcelle, 20 % au moins plantes sur dalle (terre 80 cm). Non exige en surelevation/changement de destination."
     silence: autorise
     silence_src: Zones U3a-U3b-U3c-U3h, Art. 1.2 « Sont interdits » = liste fermée de 3 interdictions (entrepôt
       exclusif, destination agricole, camping/caravanes), p. 106 ; ce qui n'y figure pas relève de l'art. 2 ou demeure
@@ -1889,6 +1893,7 @@ zones:
           citation: en zone U4b Les constructions devront être implantées en retrait de 3 m minimum de la
             voie ou de l'emprise publique.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Les commerces situes en rez-de-chaussee pourront s'implanter a l'alignement."
         limites_separatives:
           min_m: 3.0
           article: '7.2'
