@@ -36,6 +36,14 @@ export const fmtEurCompact = (n: number | null | undefined): string => {
 export const fmtPct = (n: number | null | undefined, _chiffreId?: string): string =>
   n == null ? '—' : `${Math.round(n)} %`
 
+/** COHERENCE-FIX-1 (lot B) — % de densité consommée (SDP ou emprise) : exact jusqu'à 300,
+ *  « > 300 » au-delà (bâti très au-delà du plafond de zone — le chiffre exact n'apporte rien
+ *  au client, l'« i » porte le détail), « — » si absent (jamais un 0 à la place d'une absence).
+ *  Rend la PARTIE NOMBRE seule (l'appelant pose l'unité %) pour garder les <small>%</small>. */
+export const PCT_CONSOMME_SEUIL = 300
+export const fmtPctConsomme = (n: number | null | undefined): string =>
+  n == null ? '—' : n > PCT_CONSOMME_SEUIL ? '> 300' : String(Math.round(n))
+
 /** date courte lisible : 12 juil. 2026 (jamais un ISO brut à l'écran) */
 export const fmtDate = (d: string | Date | null | undefined): string => {
   if (!d) return '—'

@@ -83,6 +83,9 @@ const apiPaths = ['/map', '/parcels', '/stats', '/sources', '/filters', '/filtre
   // de charger le questionnaire »). MÊME famille que /dossier, /pre-dossier (M70), /argumentaire.
   // Prod OK (FastAPI même origine). ⚠ TRAIN 8 Caddy : à router aussi.
   '/apporteur', '/financier',   // RECETTE-3 (T2) : '/resume' retiré (document Résumé supprimé)
+  // COHERENCE-FIX-1 (lot A) : /sante/fraicheur (page Données — état des caches) — même famille
+  // de trous de proxy dev que /outils, /bilan… Prod OK (même origine).
+  '/sante',
   '/api']   // M26-B : /api/copilote (runs + SSE)
 
 export default defineConfig({

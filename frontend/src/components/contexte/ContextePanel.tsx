@@ -307,7 +307,9 @@ export function ContextePanel() {
               <div data-bandeau-chiffres className="grid grid-cols-3 gap-2">
                 {[
                   { v: `${fmt(d.foncier?.n_parcelles)}`, n: 'Parcelles', s: 'Cadastre' },
-                  { v: d.population?.habitants != null ? `${fmt(d.population.habitants)}` : '—', n: 'Habitants', s: 'INSEE' },
+                  // COHERENCE-FIX-1 (lot E) — l'année de la population légale au client, partout.
+                  { v: d.population?.habitants != null ? `${fmt(d.population.habitants)}` : '—', n: 'Habitants',
+                    s: d.population?.habitants_millesime ? `INSEE ${d.population.habitants_millesime}` : 'INSEE' },
                   { v: `${fmt(d.permis_bloc?.permis_12m)}`, n: 'Permis / an', s: 'SITADEL' },
                   { v: d.comparable?.ancien_median_eur_m2 != null ? `${fmt(d.comparable.ancien_median_eur_m2)} €/m²` : '—', n: 'Prix ancien', s: 'DVF' },
                   { v: tendPct != null ? `${Number(tendPct) > 0 ? '+' : ''}${fmtDec(tendPct)} %` : '—', n: 'Tendance 12 m', s: 'DVF' },
@@ -403,7 +405,9 @@ export function ContextePanel() {
                       Filosofi qui sous-estimait ; ménages = résidences principales (RP). Filosofi ne sert
                       plus QUE le niveau de vie. */}
                   {d.population.habitants != null && <RowT lbl="Habitants (population municipale)" val={fmt(d.population.habitants)} strong />}
-                  {d.population.habitants_millesime && <p className="-mt-0.5 mb-0.5 text-[10.5px] text-txt-dim">Population municipale légale INSEE · millésime {d.population.habitants_millesime}{d.population.habitants_pop_totale != null ? ` · population totale ${fmt(d.population.habitants_pop_totale)}` : ''}</p>}
+                  {/* COHERENCE-FIX-1 (lot E) — l'étiquette du back (« Population légale 2023 (INSEE) ») :
+                      la source et SON année, jamais un chiffre daté sans date. */}
+                  {(d.population.habitants_etiquette || d.population.habitants_millesime) && <p className="-mt-0.5 mb-0.5 text-[10.5px] text-txt-dim">{d.population.habitants_etiquette ?? `Population municipale légale INSEE · millésime ${d.population.habitants_millesime}`}{d.population.habitants_pop_totale != null ? ` · population totale ${fmt(d.population.habitants_pop_totale)}` : ''}</p>}
                   {d.population.menages != null && <RowT lbl="Ménages (résidences principales)" val={fmt(d.population.menages)} />}
                   {d.population.niveau_vie_moyen_eur != null && <RowT lbl="Niveau de vie moyen (Filosofi)" val={`${fmt(d.population.niveau_vie_moyen_eur)} €/an`} />}
                   {d.population.logements != null && <RowT lbl="Logements" val={`${fmt(d.population.logements)}${d.population.vacants != null ? ` · ${fmt(d.population.vacants)} vacants (${fmtDec(d.population.vacance_pct)} %)` : ''}`} />}

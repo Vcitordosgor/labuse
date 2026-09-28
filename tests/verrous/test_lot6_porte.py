@@ -85,7 +85,7 @@ def test_la_commande_couvre_tous_les_lots():
     """`labuse circuit verrous` joue chaque verrou des lots 1 à 5 (définition de fini)."""
     lots = {v.lot for v in CV.VERROUS}
     assert lots == {1, 2, 3, 4, 5, 6, 7, 8}  # COUCHES-TUYAU-1 : + lot 7 (V7a) ; VEILLE-FIX-1 : + lot 8 (V8a)
-    assert len(CV.VERROUS) == 23  # + V4e + V5d + V5e + V5f + V6a + V7a + V8a (VEILLE-FIX-1)
+    assert len(CV.VERROUS) == 24  # + V4e + V5d + V5e + V5f + V6a + V7a + V8a + V6b (COHERENCE-FIX-1)
     # un verrou = une phrase en français (règle 1 : sans phrase, pas un verrou)
     for v in CV.VERROUS:
         assert v.phrase and v.phrase == CV.PHRASES[v.id]

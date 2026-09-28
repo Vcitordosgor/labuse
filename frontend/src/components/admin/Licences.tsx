@@ -24,7 +24,8 @@ const fmtReu = (iso?: string | null, avecHeure = false) => {
   } catch { return '—' }
 }
 const fmtDuree = (min: number) => (min >= 60 ? `${(min / 60).toFixed(1).replace('.', ',')} h` : `${min} min`)
-const fmtEur = (v?: number | null) => `${(v ?? 0).toFixed(2).replace('.', ',')} €`
+// COHERENCE-FIX-1 (lot D) — montant absent → « — », jamais « 0,00 € » (zéro-pour-absence).
+const fmtEur = (v?: number | null) => (v == null ? '—' : `${v.toFixed(2).replace('.', ',')} €`)
 const essaiHeuresRestantes = (l: AdminLicence) =>
   l.essai_expire_at ? Math.round((new Date(l.essai_expire_at).getTime() - Date.now()) / 3_600_000) : null
 

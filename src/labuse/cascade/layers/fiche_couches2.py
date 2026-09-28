@@ -24,8 +24,12 @@ def _trace(v: Verdict, source_id) -> Verdict:
     return v
 
 
-def _pct(coverage: float) -> str:
-    p = round((coverage or 0.0) * 100)
+def _pct(coverage: float | None) -> str:
+    # COHERENCE-FIX-1 (lot D) — recouvrement non mesuré → « part non mesurée », jamais « < 1 % »
+    # (l'ancien `coverage or 0.0` transformait une absence en petit pourcentage plausible).
+    if coverage is None:
+        return "part non mesurée"
+    p = round(coverage * 100)
     return f"{p} %" if p >= 1 else "< 1 %"
 
 

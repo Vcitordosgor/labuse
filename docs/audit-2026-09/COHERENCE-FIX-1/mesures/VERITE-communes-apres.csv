@@ -1,0 +1,49 @@
+notion,objet,valeur_labuse,valeur_oracle,source_oracle,ecart,verdict
+habitants_n,Bras-Panon,13012,13012,geo.api.gouv.fr (population municipale légale),,VRAI
+catnat_n,Bras-Panon,15,15,Géorisques GASPAR catnat (arrêtés distincts),,VRAI
+habitants_n,Cilaos,5040,5040,geo.api.gouv.fr (population municipale légale),,VRAI
+catnat_n,Cilaos,14,14,Géorisques GASPAR catnat (arrêtés distincts),,VRAI
+habitants_n,Entre-Deux,7176,7176,geo.api.gouv.fr (population municipale légale),,VRAI
+catnat_n,Entre-Deux,14,14,Géorisques GASPAR catnat (arrêtés distincts),,VRAI
+habitants_n,L'Étang-Salé,14464,14464,geo.api.gouv.fr (population municipale légale),,VRAI
+catnat_n,L'Étang-Salé,20,20,Géorisques GASPAR catnat (arrêtés distincts),,VRAI
+habitants_n,La Plaine-des-Palmistes,6936,6936,geo.api.gouv.fr (population municipale légale),,VRAI
+catnat_n,La Plaine-des-Palmistes,11,11,Géorisques GASPAR catnat (arrêtés distincts),,VRAI
+habitants_n,La Possession,36568,36568,geo.api.gouv.fr (population municipale légale),,VRAI
+catnat_n,La Possession,17,17,Géorisques GASPAR catnat (arrêtés distincts),,VRAI
+habitants_n,Le Port,33969,33969,geo.api.gouv.fr (population municipale légale),,VRAI
+catnat_n,Le Port,11,11,Géorisques GASPAR catnat (arrêtés distincts),,VRAI
+habitants_n,Le Tampon,82579,82579,geo.api.gouv.fr (population municipale légale),,VRAI
+catnat_n,Le Tampon,18,18,Géorisques GASPAR catnat (arrêtés distincts),,VRAI
+habitants_n,Les Avirons,11536,11536,geo.api.gouv.fr (population municipale légale),,VRAI
+catnat_n,Les Avirons,15,15,Géorisques GASPAR catnat (arrêtés distincts),,VRAI
+habitants_n,Les Trois-Bassins,7221,7221,geo.api.gouv.fr (population municipale légale),,VRAI
+catnat_n,Les Trois-Bassins,11,11,Géorisques GASPAR catnat (arrêtés distincts),,VRAI
+habitants_n,Petite-Île,13067,13067,geo.api.gouv.fr (population municipale légale),,VRAI
+catnat_n,Petite-Île,19,19,Géorisques GASPAR catnat (arrêtés distincts),,VRAI
+habitants_n,Saint-André,58885,58885,geo.api.gouv.fr (population municipale légale),,VRAI
+catnat_n,Saint-André,17,17,Géorisques GASPAR catnat (arrêtés distincts),,VRAI
+habitants_n,Saint-Benoît,38604,38604,geo.api.gouv.fr (population municipale légale),,VRAI
+catnat_n,Saint-Benoît,15,15,Géorisques GASPAR catnat (arrêtés distincts),,VRAI
+habitants_n,Saint-Denis,155634,155634,geo.api.gouv.fr (population municipale légale),,VRAI
+catnat_n,Saint-Denis,19,19,Géorisques GASPAR catnat (arrêtés distincts),,VRAI
+habitants_n,Saint-Joseph,39207,39207,geo.api.gouv.fr (population municipale légale),,VRAI
+catnat_n,Saint-Joseph,20,20,Géorisques GASPAR catnat (arrêtés distincts),,VRAI
+habitants_n,Saint-Leu,36163,36163,geo.api.gouv.fr (population municipale légale),,VRAI
+catnat_n,Saint-Leu,21,21,Géorisques GASPAR catnat (arrêtés distincts),,VRAI
+habitants_n,Saint-Louis,54941,54941,geo.api.gouv.fr (population municipale légale),,VRAI
+catnat_n,Saint-Louis,21,21,Géorisques GASPAR catnat (arrêtés distincts),,VRAI
+habitants_n,Saint-Paul,108088,108088,geo.api.gouv.fr (population municipale légale),,VRAI
+catnat_n,Saint-Paul,23,23,Géorisques GASPAR catnat (arrêtés distincts),,VRAI
+habitants_n,Saint-Philippe,5082,5082,geo.api.gouv.fr (population municipale légale),,VRAI
+catnat_n,Saint-Philippe,21,21,Géorisques GASPAR catnat (arrêtés distincts),,VRAI
+habitants_n,Saint-Pierre,85038,85038,geo.api.gouv.fr (population municipale légale),,VRAI
+catnat_n,Saint-Pierre,20,20,Géorisques GASPAR catnat (arrêtés distincts),,VRAI
+habitants_n,Sainte-Marie,37093,37093,geo.api.gouv.fr (population municipale légale),,VRAI
+catnat_n,Sainte-Marie,20,20,Géorisques GASPAR catnat (arrêtés distincts),,VRAI
+habitants_n,Sainte-Rose,6557,6557,geo.api.gouv.fr (population municipale légale),,VRAI
+catnat_n,Sainte-Rose,10,10,Géorisques GASPAR catnat (arrêtés distincts),,VRAI
+habitants_n,Sainte-Suzanne,25551,25551,geo.api.gouv.fr (population municipale légale),,VRAI
+catnat_n,Sainte-Suzanne,17,17,Géorisques GASPAR catnat (arrêtés distincts),,VRAI
+habitants_n,Salazie,7268,7268,geo.api.gouv.fr (population municipale légale),,VRAI
+catnat_n,Salazie,16,16,Géorisques GASPAR catnat (arrêtés distincts),,VRAI

@@ -295,6 +295,8 @@ export interface ContexteCommune {
     habitants: number | null; menages: number | null; niveau_vie_moyen_eur: number | null
     // COMMUNE-FIX-1 (A1) — population LÉGALE INSEE (municipale) : millésime + population totale
     habitants_millesime?: string | null; habitants_pop_totale?: number | null; menages_millesime?: string | null
+    // COHERENCE-FIX-1 (lot E) — étiquette prête (« Population légale 2023 (INSEE) »), année comprise.
+    habitants_etiquette?: string | null
     logements: number | null; vacants: number | null; vacance_pct: number | null; source: string
     // DONNEES-1 lot 2.4 — part du parc construit avant 1991 (RP2022 ACHL). null = non ingéré.
     parc_ancien_pct?: number | null
@@ -2474,6 +2476,15 @@ export const postAdminCronRun = (nom: string) =>
 
 // ── CIRCUIT-1 lot 5 — la page Circuit (un appel) + ses gestes ──────────────────────────────
 export const getAdminCircuit = () => j<any>('/admin/circuit')
+// COHERENCE-FIX-1 (lot A) — fraîcheur des caches (clé attendue / clé réelle / périmé), page Données.
+export interface CacheFraicheur {
+  cache: string; porte_sur?: string; cle_attendue?: string; cle_reelle?: string | null
+  perime: boolean; detail?: string; remede?: string; erreur?: string
+}
+export const getSanteFraicheur = () =>
+  j<{ empreinte_attendue: string; perimes: string[]; caches: CacheFraicheur[] }>('/sante/fraicheur')
+// COHERENCE-FIX-1 (lot G) — les passages du banc de cohérence (onglet Cohérence, page Données).
+export const getAdminCoherence = () => j<any>('/admin/coherence')
 export const postAdminCircuitVerifier = () => j<any>('/admin/circuit/verifier', { method: 'POST' })
 // CIRCUIT-P2 (lot 3.2/3.3) / CIRCUIT-P7 — tâches longues : lancer l'agent LLM (une source via
 // `sourceId`, ou une portée « sans_amont » (défaut) / « g8 » / « tous » depuis la carte Agents).

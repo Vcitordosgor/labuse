@@ -4,8 +4,9 @@
 // bouton SEULEMENT si une action existe. ⟳ sur les automatiques. Recherche. Segment Vitrine / Hors
 // vitrine : le hors-vitrine (alias, retirées, internes, hubs, à obtenir) avec statut, RAISON en
 // français et date de décision — rien n'y est masqué. Clic sur une ligne vitrine → page de détail.
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
+import { getSanteFraicheur } from '../../../lib/api'
 import type { Portee } from './Circuit'
 import type { CircuitData, Reservoir } from './types'
 
@@ -163,6 +164,61 @@ function Cartes({ data, tacheSonde, tacheAgents, onSonder, onAgents }: {
   )
 }
 
+// COHERENCE-FIX-1 (lot A) — LA FRAÎCHEUR DES CACHES en tête de Données : chaque cache (fiche
+// commune, tuiles carte, tuiles pré-générées, couches subdivisées, réponses IA) avec sa clé
+// attendue / réelle. Un cache périmé s'affiche « périmé » EN ROUGE (plus jamais en silence) ;
+// tout à jour → une seule ligne discrète. Source : /sante/fraicheur (même prédicat que
+// `labuse rebuild --dry-run`, la fumée du déploiement).
+function Fraicheur() {
+  // fetch direct (pas react-query) : le composant vit aussi dans des rendus de test sans
+  // QueryClientProvider ; un refetch toutes les 2 min suffit largement pour un état de cache.
+  const [data, setData] = useState<Awaited<ReturnType<typeof getSanteFraicheur>> | null>(null)
+  const [ouvert, setOuvert] = useState(false)
+  useEffect(() => {
+    let vivant = true
+    const lire = () => { getSanteFraicheur().then((d) => { if (vivant) setData(d) }).catch(() => {}) }
+    lire()
+    const t = setInterval(lire, 120_000)
+    return () => { vivant = false; clearInterval(t) }
+  }, [])
+  if (!data) return null
+  const perimes = data.caches.filter((c) => c.perime)
+  return (
+    <div className="fraicheur" style={{ margin: '10px 0 14px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        <b style={{ fontSize: 13 }}>Fraîcheur des caches</b>
+        {perimes.length === 0
+          ? <span style={{ color: 'var(--mint, #1a7f5a)', fontSize: 12 }}>tous à jour</span>
+          : <span style={{ color: 'var(--rouge, #c0392b)', fontSize: 12, fontWeight: 600 }}>
+              {perimes.length} périmé{perimes.length > 1 ? 's' : ''} — <code>labuse rebuild</code>
+            </span>}
+        <button className="btn" style={{ fontSize: 11, padding: '1px 8px' }}
+          onClick={() => setOuvert((o) => !o)}>{ouvert ? 'replier' : 'détail'}</button>
+      </div>
+      {(ouvert || perimes.length > 0) && (
+        <div style={{ marginTop: 6, display: 'grid', gap: 4 }}>
+          {(ouvert ? data.caches : perimes).map((c) => (
+            <div key={c.cache} style={{ fontSize: 12, display: 'flex', gap: 8, alignItems: 'baseline' }}>
+              <span style={{ minWidth: 90, fontWeight: 600,
+                color: c.perime ? 'var(--rouge, #c0392b)' : 'inherit' }}>
+                {c.perime ? 'périmé' : 'à jour'}
+              </span>
+              <span>
+                <b>{c.cache}</b> — {c.detail || c.erreur || ''}
+                {c.perime && c.cle_attendue && (
+                  <span className="muted" style={{ display: 'block' }}>
+                    attendu {c.cle_attendue} · réel {c.cle_reelle ?? '∅'}
+                  </span>
+                )}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function Sources({ data, onOpen, tacheSonde, tacheAgents, onSonder, onAgents }: {
   data: CircuitData; onOpen: (id: number) => void
   tacheSonde?: any; tacheAgents?: any
@@ -189,6 +245,7 @@ export function Sources({ data, onOpen, tacheSonde, tacheAgents, onSonder, onAge
         <Cartes data={data} tacheSonde={tacheSonde} tacheAgents={tacheAgents}
           onSonder={onSonder} onAgents={onAgents} />
       )}
+      <Fraicheur />
       <div className="src-bar">
         <input className="search" value={q} onChange={(e) => setQ(e.target.value)}
           placeholder="Chercher une source (cadastre, permis, PLU, LiDAR…)" />

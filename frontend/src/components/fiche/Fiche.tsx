@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState, useRef, type ReactNode } from 'react'
 import { addToPipeline, ajouterParcelle, ApiError, archivePipeline, createProjet, getDossierStatut, getFaisabilite, getFiche, getGabarit, getMoi, getParcelExposition, getPipelineForParcel, getPipelineMeta, getProjets, getWatch, is429, patchPipeline, postSignalement, preDossierUrl, projetsPourParcelle, SOURCE, toggleWatch } from '../../lib/api'
 import { verdictMeta } from '../../lib/status'
 import { AnalyseLabuseCard } from './AnalyseLabuseCard'   // RETOURS-14 P1 — carte « Analyse LABUSE » extraite (testable), affiche la version servie
-import { fmtInt, fmtM2, fmtDateNum, fmtLibelleBrut, iduComplet } from '../../lib/format'
+import { fmtInt, fmtM2, fmtDateNum, fmtLibelleBrut, fmtPctConsomme, iduComplet } from '../../lib/format'
 import { layerLabel } from '../../lib/layers'
 import { CLIENT } from '../../lib/strings'
 import { Squelette } from '../Loading'
@@ -1516,11 +1516,12 @@ export function Fiche({ idu }: { idu: string }) {
                 })()}
                 <ChiffreDissous l="Zone" t={tuileZone} />
                 {/* FICHE-FIX-5 (Lot E) — SDP consommée en Ligne (plus flottante), méthode en « i ». */}
+                {/* COHERENCE-FIX-1 (lot B) — au-delà de 300 : « > 300 % » (jamais un 999 servi tel quel). */}
                 {pctConsomme != null && (
                   <Lignes>
                     <Ligne label={<>SDP consommée<InfoI aria="Sur la SDP consommée" tip={CLIENT.fiche.sdpConsommeeTip(reglesSdp ?? null)} /></>}
                       ton={pctConsomme >= 100 ? 'ambre' : undefined}
-                      valeur={`${Math.round(pctConsomme)} %`} />
+                      valeur={`${fmtPctConsomme(pctConsomme)} %`} />
                   </Lignes>
                 )}
                 {/* M75 — obligation APER (ombrières PV, grand parking > 1 500 m²) : contrainte

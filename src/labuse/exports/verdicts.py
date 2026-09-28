@@ -78,7 +78,10 @@ def verdict_potentiel(valeurs: dict[str, Valeur]) -> Verdict | None:
         return (f"Terrain non constructible{z} : le potentiel de construction est nul par la règle "
                 f"de zonage.", "warn", "")
     if niveau == "nul" or (sdp is not None and float(sdp) <= 0):
-        pct_txt = f" ({pct} %)" if pct else ""
+        # COHERENCE-FIX-1 (lot B) — même règle d'affichage que la fiche : > 300 → « > 300 % ».
+        from ..faisabilite.residuel import fmt_pct_consomme
+        pct_aff = fmt_pct_consomme(pct)
+        pct_txt = f" ({pct_aff} %)" if pct_aff and pct_aff != "0" else ""
         return (f"Parcelle bâtie et saturée : la surface de plancher autorisée est déjà "
                 f"consommée{pct_txt}. La valeur est dans la réhabilitation du bâti ou dans sa "
                 f"reconstruction.", "warn", "")

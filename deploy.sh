@@ -104,3 +104,13 @@ if [ -n "$sha" ]; then
 else
   echo "  ⚠ git indisponible — marqueur inchangé (le Pilotage dira « déploiement inconnu »)"
 fi
+
+# ── COHERENCE-FIX-1 (lot A) — caches à clé de fraîcheur ────────────────────────────────────
+# Le sha vient de changer (marqueur ci-dessus) : les caches qui portent l'ancienne clé sont
+# périmés PAR DÉFINITION. `labuse rebuild` régénère ce qui doit l'être (geste unique — celui de
+# la bascule et de residuel-serve) ; le --dry-run qui suit est le TEST DE FUMÉE : un cache encore
+# périmé fait ÉCHOUER le déploiement — plus jamais un cache qui ment en silence (COHERENCE-1).
+echo "→ Régénération des caches périmés (labuse rebuild)…"
+labuse rebuild
+echo "→ Fumée fraîcheur (labuse rebuild --dry-run — échoue si un cache est périmé)…"
+labuse rebuild --dry-run

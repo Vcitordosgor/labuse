@@ -103,17 +103,20 @@ CHECKS: list[tuple] = [
     ("sdp_residuelle_m2", "1 %", [
         ("fiche:potentiel_transformation.sdp_residuelle_m2",
          _f("potentiel_transformation.sdp_residuelle_m2")),
+        # COHERENCE-FIX-1 — le lecteur SQL applique la règle M125 des lecteurs VIVANTS (cause IS
+        # NULL) : une ligne à cause (terrain_exigu…) porte un « 0 écrit » de dataset, pas une
+        # valeur servie — fiche et tuile la rendent ∅, le SQL doit lire pareil.
         ("sql:parcel_residuel.sdp_residuelle_m2",
-         _sql("SELECT r.sdp_residuelle_m2 FROM parcel_residuel r JOIN parcels p ON p.id=r.parcel_id "
-              "WHERE p.idu=%(idu)s")),
+         _sql("SELECT CASE WHEN r.cause IS NULL THEN r.sdp_residuelle_m2 END "
+              "FROM parcel_residuel r JOIN parcels p ON p.id=r.parcel_id WHERE p.idu=%(idu)s")),
         ("tuile:sdp_residuelle_m2", _tuile("sdp_residuelle_m2")),
     ], "run_different"),
 
     ("classe_residuel(sous_densite)", "0", [
         ("fiche:potentiel_transformation.sous_densite", _f("potentiel_transformation.sous_densite")),
         ("sql:parcel_residuel.sous_densite",
-         _sql("SELECT r.sous_densite FROM parcel_residuel r JOIN parcels p ON p.id=r.parcel_id "
-              "WHERE p.idu=%(idu)s")),
+         _sql("SELECT CASE WHEN r.cause IS NULL THEN r.sous_densite END "
+              "FROM parcel_residuel r JOIN parcels p ON p.id=r.parcel_id WHERE p.idu=%(idu)s")),
         ("tuile:sous_densite", _tuile("sous_densite")),
     ], "run_different"),
 

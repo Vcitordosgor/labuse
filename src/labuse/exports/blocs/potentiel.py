@@ -52,10 +52,12 @@ def _scenarios(valeurs) -> str:
     # au sol
     if a(valeurs, "sdp_residuelle_m2"):
         sdp = val(valeurs, "sdp_residuelle_m2")
-        pct = p.get("pct_consomme")
+        # COHERENCE-FIX-1 (lot B) — même règle d'affichage que la fiche : > 300 → « > 300 % ».
+        from ...faisabilite.residuel import fmt_pct_consomme
+        pct = fmt_pct_consomme(p.get("pct_consomme"))
         detail = f"<strong>{fmt_m2(sdp)} de surface de plancher résiduelle</strong>"
-        if pct:
-            detail += f" — {esc(str(pct))} % de la surface autorisée déjà consommés."
+        if pct and pct != "0":
+            detail += f" — {esc(pct)} % de la surface autorisée déjà consommés."
         lignes.append(ligne_kv(SCENARIO_AU_SOL, detail, ""))
     # en hauteur — RECETTE-7 (E1) : comparé au FAÎTAGE (le bâti BD TOPO est mesuré au faîtage) ;
     # omise si les hauteurs ne sont pas servies (parcelle non bâtie).

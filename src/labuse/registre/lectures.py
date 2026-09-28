@@ -307,6 +307,14 @@ LECTURES: tuple[Lecture, ...] = (
       "lit ST_AsGeoJSON(geom) pour dessiner le plan de situation des PDF — fond de carte ; les valeurs imprimées viennent de la fiche (collecte)"),
     L("parcels", "exports/robinet_fiche.py", None, None,
       "résolution idu→parcels.id ; les valeurs des PDF sont relues de la fiche /parcels/{idu} (doctrine écran = PDF)"),
+    # COHERENCE-FIX-1 (lot A) — l'état de fraîcheur compte les communes attendues (count DISTINCT
+    # commune) pour dire « N périmées / M manquantes » : contrôle interne, rien de servi au client.
+    L("parcels", "fraicheur_caches.py", None, None,
+      "compte des communes attendues (count DISTINCT commune) pour l'état de fraîcheur du cache fiche commune — contrôle interne"),
+    # EXPORTS-FIX-1-BIS (déclaration manquante, posée par COHERENCE-FIX-1) — le PDF lit la date
+    # d'approbation/exécutoire du DU (évolution PLU), même source Sudocuh que la fiche commune.
+    L("sudocuh_procedures", "exports/robinet_fiche.py", None, None,
+      "date d'approbation + caractère exécutoire du DU (évolution PLU du Dossier) — même source Sudocuh que la fiche commune"),
     L("parcels", "faisabilite/au_ouverture.py", None, None,
       "surface/geom des parcelles AU voisines pour instruire l'ouverture des zones AU et les délaissés — instruction interne, chiffre AU hors candidats"),
     L("parcels", "faisabilite/au_statut.py", None, None,

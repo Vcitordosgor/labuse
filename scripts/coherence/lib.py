@@ -30,9 +30,37 @@ import psycopg
 
 RACINE = pathlib.Path(__file__).resolve().parents[2]
 SORTIE = RACINE / "docs" / "audit-2026-09" / "COHERENCE-1"
-DSN = "postgresql://openclaw@localhost:5432/labuse"
-API = "http://127.0.0.1:8605"
-RUN = "q_v11_m137"
+
+
+def _dsn_defaut() -> str:
+    """COHERENCE-FIX-1 (lot G) — le DSN suit l'environnement : LABUSE_COHERENCE_DSN d'abord,
+    sinon LABUSE_DATABASE_URL (débarrassé du dialecte SQLAlchemy), sinon le poste de dev."""
+    import os
+    explicite = os.environ.get("LABUSE_COHERENCE_DSN")
+    if explicite:
+        return explicite
+    url = os.environ.get("LABUSE_DATABASE_URL", "")
+    if url:
+        return url.replace("postgresql+psycopg://", "postgresql://")
+    return "postgresql://openclaw@localhost:5432/labuse"
+
+
+def _run_defaut() -> str:
+    """Le run servi VIVANT (config/served_manifest.json via labuse.runs) — plus jamais un label
+    figé qui survivrait à une bascule. Repli sur l'ancien littéral si le paquet est introuvable."""
+    import sys
+    try:
+        sys.path.insert(0, str(RACINE / "src"))
+        from labuse import runs as _runs
+        return _runs.current()
+    except Exception:  # noqa: BLE001 — hors repo installé : dernier recours
+        return "q_v11_m137"
+
+
+import os as _os                                     # noqa: E402
+DSN = _dsn_defaut()
+API = _os.environ.get("LABUSE_COHERENCE_API") or "http://127.0.0.1:8605"
+RUN = _run_defaut()
 
 
 class Absent:
@@ -53,18 +81,27 @@ class Erreur:
 
 
 class Contexte:
-    """Caches par parcelle/commune : la fiche est UN appel, la tuile UN décodage."""
+    """Caches par parcelle/commune : la fiche est UN appel, la tuile UN décodage.
 
-    def __init__(self):
-        self.conn = psycopg.connect(DSN, options="-c statement_timeout=120000")
+    COHERENCE-FIX-1 (lot G) — `fetch` injectable : le verrou V6b joue les MÊMES lecteurs
+    en-process (TestClient FastAPI) sans serveur HTTP ; `dsn` injectable pour la base de test."""
+
+    def __init__(self, dsn: str | None = None, fetch=None):
+        self.conn = psycopg.connect(dsn or DSN, options="-c statement_timeout=120000")
         self.conn.autocommit = True     # lecture seule ; une requête qui casse ne doit pas
         # avorter la suite (psycopg ouvrirait sinon une transaction par curseur)
+        self._fetch = fetch             # fetch(path) -> objet JSON (None = HTTP urllib)
         self._fiches: dict[str, dict] = {}
         self._tuiles: dict[str, dict] = {}
         self._communes: dict[str, dict] = {}
         self._http: dict[str, object] = {}
 
     def http_json(self, path: str):
+        if self._fetch is not None and path not in self._http:
+            try:
+                self._http[path] = self._fetch(path)
+            except Exception as e:  # noqa: BLE001 — l'échec est une donnée du banc
+                self._http[path] = Erreur(e)
         if path not in self._http:
             derniere = None
             for attente in (0, 2, 5, 15):     # l'API limite le débit (429) — on ré-essaie
@@ -134,7 +171,12 @@ class Contexte:
             x = int((lon + 180) / 360 * n)
             y = int((1 - math.log(math.tan(math.radians(lat))
                                   + 1 / math.cos(math.radians(lat))) / math.pi) / 2 * n)
-            pbf = pathlib.Path(f"/tmp/coherence_tile_{z}_{x}_{y}.pbf")
+            # COHERENCE-FIX-1 — le fichier tuile est CLÉ PAR PROCESSUS (un run = des tuiles
+            # fraîches) : l'ancien cache disque nu (/tmp/coherence_tile_z_x_y.pbf) survivait à un
+            # rebuild des MVT et faisait mesurer au banc des tuiles PÉRIMÉES (constaté : AB1117
+            # tuile 0 vs table 27 après rebuild — la table était juste, le fichier datait du matin).
+            import os as _os
+            pbf = pathlib.Path(f"/tmp/coherence_tile_{_os.getpid()}_{z}_{x}_{y}.pbf")
             if not pbf.exists():
                 with urllib.request.urlopen(f"{API}/map/tiles/{z}/{x}/{y}.pbf", timeout=120) as r:
                     pbf.write_bytes(r.read())

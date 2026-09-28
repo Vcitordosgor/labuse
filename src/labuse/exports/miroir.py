@@ -571,7 +571,9 @@ def _r_voisinage(v):
 
 
 def _r_iris(v, val: Valeur):
-    t = tuiles([(groupe(v["habitants"]), f"habitants, {groupe(v.get('menages') or 0)} ménages"),
+    # COHERENCE-FIX-1 (lot D) — ménages absents → la mention SAUTE (jamais « 0 ménages »).
+    t = tuiles([(groupe(v["habitants"]),
+                 "habitants" + (f", {groupe(v['menages'])} ménages" if v.get("menages") is not None else "")),
                 (fmt_pct(v["part_60_plus_pct"]), "de 60 ans et plus")
                 if v.get("part_60_plus_pct") is not None else ("", ""),
                 (fmt_pct(v["part_locataires_pct"]), "de locataires")
@@ -902,7 +904,10 @@ def _verdict_factuel(sec_id: str, valeurs: dict[str, Valeur]) -> tuple[str, str,
         iq = _v(valeurs, "iris_quartier")
         if isinstance(iq, dict) and iq.get("habitants") is not None:
             nom = iq.get("nom") or "le quartier IRIS"
-            return (esc(f"{nom} — {groupe(iq['habitants'])} habitants") + ".", "neutral", "iris_quartier")
+            # COHERENCE-FIX-1 (lot E) — le millésime du recensement accompagne le chiffre (« vrai
+            # hier, faux aujourd'hui, sans date pour le dire » — plus jamais).
+            mil = f" ({iq['millesime']})" if iq.get("millesime") else ""
+            return (esc(f"{nom} — {groupe(iq['habitants'])} habitants{mil}") + ".", "neutral", "iris_quartier")
         return None
     return None
 

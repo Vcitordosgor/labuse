@@ -20,6 +20,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from ..ai import core
+from ..faisabilite.residuel import fmt_pct_consomme as _fmt_pct
 from .. import runs
 
 router = APIRouter(tags=["ia"])
@@ -175,7 +176,9 @@ def _ask_context(db: Session, idu: str) -> tuple[dict, dict]:
         # ── potentiel de transformation (ESTIMÉ) ──
         "potentiel_niveau": _F(pot.get("niveau"), "ESTIME"),
         "sdp_residuelle_m2": _F(pot.get("sdp_residuelle_m2") or pot.get("sdp_residuelle"), "ESTIME"),
-        "pct_consomme": _F(pot.get("pct_consomme"), "ESTIME"),
+        # COHERENCE-FIX-1 (lot B) — le Copilote cite ce que le client VOIT : > 300 → « > 300 »
+        # (même règle que fiche/Dossier), jamais le 999 historique ni un exact trompeur.
+        "pct_consomme": _F(_fmt_pct(pot.get("pct_consomme")), "ESTIME"),
         "sous_densite": _F(pot.get("sous_densite"), "ESTIME"),
         # ── ICD / score P (SOURCÉ, lecture seule) ──
         "icd_bande": _F(icd.get("bande") or icd.get("libelle")),
@@ -264,8 +267,13 @@ def parcel_ask(idu: str, body: AskIn, request: Request, db: Session = Depends(ge
     if not question:
         return {"error": "question vide"}
 
-    # 1. CACHE (ne décompte pas le quota) — clé (idu, run servi, question normalisée)
-    hit = core.cache_get(db, idu, runs.current(), question)
+    # 1. CACHE (ne décompte pas le quota) — clé (idu, run servi + EMPREINTE DE FRAÎCHEUR, question
+    # normalisée). COHERENCE-FIX-1 (lot A) : l'empreinte (résiduel servi, millésimes sources, code)
+    # entre dans la clé → une bascule/un millésime/un déploiement orpheline les réponses d'avant
+    # (jamais resservies), au lieu de resservir un chiffre calculé sur l'état d'hier.
+    from ..fraicheur_caches import empreinte_courte
+    cle_run = f"{runs.current()}+{empreinte_courte(db)}"
+    hit = core.cache_get(db, idu, cle_run, question)
     if hit is not None:
         return {**hit, "cached": True}
 
@@ -335,5 +343,5 @@ def parcel_ask(idu: str, body: AskIn, request: Request, db: Session = Depends(ge
                "model": res.model, "rejected": False, "cached": False}
 
     # cache déterministe (temp 0) : validé OU rejeté → une question répétée ne rappelle plus le modèle
-    core.cache_put(db, idu, runs.current(), question, out, kind="fiche_ask")
+    core.cache_put(db, idu, cle_run, question, out, kind="fiche_ask")
     return out

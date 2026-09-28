@@ -148,12 +148,20 @@ def population(db: Session, commune: str, insee: str | None) -> dict:
             "  AND ST_Intersects(p.geom_2975, ST_Centroid(f.geom)))"), {"c": commune}).mappings().first()
         return dict(r) if r else {}
     demo = _mem_cached(("fiche-pop", commune), 3600.0, _c)
-    # COMMUNE-FIX-1 (A1) — population LÉGALE INSEE (population municipale du recensement), servie par
-    # Sudocuh (fichier DGALN qui reporte les populations légales INSEE). pop_tot = population totale.
+    # COMMUNE-FIX-1 (A1) — population LÉGALE INSEE (population municipale du recensement).
+    # COHERENCE-FIX-1 (lot E) — le MILLÉSIME LE PLUS RÉCENT d'abord : `population_legale`
+    # (populations légales en vigueur, geo.api.gouv/INSEE, année affichée), repli Sudocuh
+    # (fichier DGALN, recensement plus ancien — 10 communes sur 24 servies 5-8 % sous la
+    # population en vigueur, FAUX-CLIENT n° 6 de l'audit) avec SON millésime affiché.
+    from ..ingestion.population_legale import lire as _pop_legale
+    pl = _pop_legale(db, insee) if insee else None
     poplegale = db.execute(text(
         "SELECT pop_mun, pop_tot, to_char(millesime_date, 'DD/MM/YYYY') AS millesime "
         "FROM sudocuh_procedures WHERE insee = :i"), {"i": insee}).mappings().first() if insee else None
-    habitants = int(poplegale["pop_mun"]) if poplegale and poplegale["pop_mun"] is not None else None
+    if pl is not None:
+        habitants = pl["pop_mun"]
+    else:
+        habitants = int(poplegale["pop_mun"]) if poplegale and poplegale["pop_mun"] is not None else None
     log = db.execute(text("SELECT logements, vacants, res_principales, millesime FROM commune_insee_logement "
                           "WHERE insee = :i"), {"i": insee}).mappings().first() if insee else None
     logements = int(log["logements"]) if log and log["logements"] is not None else None
@@ -174,8 +182,16 @@ def population(db: Session, commune: str, insee: str | None) -> dict:
     return {
         "quartiers": quartiers,
         "habitants": habitants,                       # COMMUNE-FIX-1 (A1) — population LÉGALE (municipale) INSEE
-        "habitants_pop_totale": int(poplegale["pop_tot"]) if poplegale and poplegale["pop_tot"] is not None else None,
-        "habitants_millesime": poplegale["millesime"] if poplegale else None,
+        # pop_totale : uniquement quand les habitants viennent de la MÊME source (Sudocuh) — jamais
+        # deux millésimes mélangés dans la même ligne.
+        "habitants_pop_totale": (int(poplegale["pop_tot"])
+                                 if (pl is None and poplegale and poplegale["pop_tot"] is not None) else None),
+        # COHERENCE-FIX-1 (lot E) — l'ANNÉE au client, partout : « Population légale 2023 (INSEE) ».
+        "habitants_millesime": (str(pl["millesime"]) if pl is not None
+                                else (poplegale["millesime"] if poplegale else None)),
+        "habitants_etiquette": (pl["etiquette"] if pl is not None
+                                else (f"Population municipale légale INSEE (Sudocuh, {poplegale['millesime']})"
+                                      if poplegale and poplegale["millesime"] else None)),
         "menages": menages,                           # COMMUNE-FIX-1 (A1) — résidences principales (RP), base légale
         "menages_millesime": (log or {}).get("millesime"),
         "niveau_vie_moyen_eur": int(demo["niveau_vie_moyen"]) if demo.get("niveau_vie_moyen") is not None else None,

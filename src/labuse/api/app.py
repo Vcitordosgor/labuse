@@ -427,6 +427,17 @@ def config_run() -> dict:
     return {"run": runs.current()}
 
 
+@app.get("/sante/fraicheur")
+def sante_fraicheur(request: Request, db: Session = Depends(get_db)) -> dict:
+    """COHERENCE-FIX-1 (lot A) — L'ÉTAT DE FRAÎCHEUR de chaque cache (admin) : clé attendue /
+    clé réelle / périmé, même prédicat que `labuse rebuild --dry-run` (fumée du déploiement) et
+    que la page Données. Un cache qui se périme ne peut plus se taire : il s'affiche en rouge."""
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from ..fraicheur_caches import etat
+    return etat(db)
+
+
 # ── 404 de NAVIGATION habillé (revue UI/UX S68 · O3 : porté au design system coffre_ui) :
 # une faute d'URL au navigateur ne montre plus du JSON brut sur fond blanc, et naît des mêmes
 # tokens que la porte/les pages légales (zéro hex local), ton sobre, toujours une sortie (LOI-2).
@@ -2108,6 +2119,12 @@ CREATE TABLE IF NOT EXISTS commune_contexte_cache (
 
 def _ensure_contexte_cache(db: Session) -> None:
     db.execute(text(_CONTEXTE_CACHE_DDL))
+    # COHERENCE-FIX-1 (lot A) — chaque ligne porte SA clé de fraîcheur (run servi + résiduel servi +
+    # millésimes sources + version du code). Clé ≠ attendue → l'entrée est INVALIDE : l'endpoint la
+    # recalcule à la lecture (et la re-stocke), `labuse rebuild` la régénère en lot. C'est le
+    # correctif RACINE du FAUX-CLIENT n° 1 (aléa mvt de terrain servi 5 mois périmé sans le dire).
+    db.execute(text(
+        "ALTER TABLE commune_contexte_cache ADD COLUMN IF NOT EXISTS cle_fraicheur text"))
 
 
 def _contexte_cache_json(payload: dict) -> str:
@@ -2130,12 +2147,14 @@ def rafraichir_contexte_cache(db: Session, commune: str) -> None:
     UNIQUE (job nocturne + « lançable à la main »). Idempotent (upsert), non destructif ailleurs."""
     _ensure_contexte_cache(db)
     payload = _compute_commune_contexte(db, commune)
+    from ..fraicheur_caches import empreinte_attendue
     db.execute(text(
-        "INSERT INTO commune_contexte_cache (commune, insee, payload, computed_at) "
-        "VALUES (:c, :i, CAST(:p AS jsonb), now()) "
+        "INSERT INTO commune_contexte_cache (commune, insee, payload, computed_at, cle_fraicheur) "
+        "VALUES (:c, :i, CAST(:p AS jsonb), now(), :k) "
         "ON CONFLICT (commune) DO UPDATE SET insee = EXCLUDED.insee, "
-        "payload = EXCLUDED.payload, computed_at = now()"),
-        {"c": commune, "i": payload.get("insee"), "p": _contexte_cache_json(payload)})
+        "payload = EXCLUDED.payload, computed_at = now(), cle_fraicheur = EXCLUDED.cle_fraicheur"),
+        {"c": commune, "i": payload.get("insee"), "p": _contexte_cache_json(payload),
+         "k": empreinte_attendue(db)})
 
 
 @app.get("/communes/{commune}/contexte")
@@ -2147,8 +2166,19 @@ def commune_contexte(commune: str, db: Session = Depends(get_db),
     zéro (`cache_calcule_le` = null → le front dit « calcul en direct »)."""
     _ensure_contexte_cache(db)
     hit = db.execute(text(
-        "SELECT payload, computed_at FROM commune_contexte_cache WHERE commune = :c"),
+        "SELECT payload, computed_at, cle_fraicheur FROM commune_contexte_cache WHERE commune = :c"),
         {"c": commune}).mappings().first()
+    # COHERENCE-FIX-1 (lot A) — CLÉ DE FRAÎCHEUR vérifiée À LA LECTURE : si une dépendance a bougé
+    # (bascule de run, residuel-serve, millésime de source, nouveau code), l'entrée est INVALIDE —
+    # on la recalcule et on la RE-STOCKE ici même (seul le premier lecteur paie, ~20 s), au lieu de
+    # servir des mois de retard en silence (FAUX-CLIENT n° 1 : aléa mvt 0,1 % au lieu de 100 %).
+    from ..fraicheur_caches import empreinte_attendue
+    if hit and hit["cle_fraicheur"] != empreinte_attendue(db):
+        rafraichir_contexte_cache(db, commune)
+        db.commit()
+        hit = db.execute(text(
+            "SELECT payload, computed_at, cle_fraicheur FROM commune_contexte_cache WHERE commune = :c"),
+            {"c": commune}).mappings().first()
     if hit:
         # RETOURS-12 O8 — les indicateurs PARTAGÉS avec le tableau des 24 communes (comparable :
         # permis 5 ans, prix neuf, prix ancien, vélocité, stock · + SRU) sont resservis LIVE depuis
@@ -2699,16 +2729,19 @@ def filtre(c: FiltreCriteres = Depends(),
         "page": page, "limit": limit, "offset": offset, "sort": sort or "rang",
     }
     if idus:
+        # COHERENCE-FIX-1 (lot C) — MÊME périmètre que le compteur : le masque des slivers < 2 m²
+        # manquait ICI seul → 13 972 idus contre compte 13 970 DANS LA MÊME réponse (audit).
         rows = db.execute(text(
             f"""
             SELECT p.idu
             FROM dryrun_parcel_evaluations d JOIN parcels p ON p.id = d.parcel_id
             LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
             WHERE d.run_label = :run AND (CAST(:c AS text) IS NULL OR p.commune = :c)
+              AND (p.surface_m2 IS NULL OR p.surface_m2 >= :minsurf)
               {extra}
             LIMIT {_FILTRE_IDUS_CAP + 1}
             """), {"c": c.commune, "run": c.source, "v2run": _score_v2_run_id(db),
-                   **extra_params}).scalars().all()
+                   "minsurf": MIN_DISPLAY_SURFACE_M2, **extra_params}).scalars().all()
         tronque = len(rows) > _FILTRE_IDUS_CAP
         out["idus"] = None if tronque else list(rows)
         out["idus_tronque"] = tronque
@@ -3667,7 +3700,7 @@ def parcelles_matchant_hash(db: Session, hash_str: str, run_label: str,
 
 def _q_v2_stats(db: Session, commune: str | None, run_label: str | None = None,
                 extra_where: str = "", extra_params: dict | None = None,
-                legacy: bool = False, exclure_slivers: bool = False) -> dict:
+                legacy: bool = False, exclure_slivers: bool = True) -> dict:
     """Comptes par TIER v2 EFFECTIF (M5.1) — l'étage 0 du run servi prime : une parcelle
     en étage 0 compte « écartée » quel que soit son tier. « Opportunités » = brûlantes v2
     + chaudes v2 (définition produit, tooltip « pourquoi ? »). `legacy=True` (deprecated)
@@ -3679,17 +3712,24 @@ def _q_v2_stats(db: Session, commune: str | None, run_label: str | None = None,
     run_label = _cascade_run(db, run_label)   # C1 : résout la cascade (empruntée si étage 0 réutilisé)
     params = {"c": commune, "run": run_label, "v2run": _score_v2_run_id(db),
               **(extra_params or {})}
-    # FIX-FILTRES F2 — quand demandé (compteur du panneau /filtre), on ALIGNE le COMPTE sur la LISTE :
-    # même plancher d'affichage que _q_v2_list (les slivers cadastraux < 2 m² masqués de la liste ET
-    # de la carte l'étaient PAS du compteur → « N correspondent » > visible). Rétablit l'invariant
-    # M45-B L3 (compteur = liste). /stats global NE le passe PAS : sa volumétrie garde les slivers.
+    # FIX-FILTRES F2 + COHERENCE-FIX-1 (lot C) — UNE SEULE définition du « nombre de parcelles »
+    # partout : les slivers cadastraux < 2 m² (masqués de la liste, de la carte et du compteur du
+    # panneau depuis F2) sont exclus PAR DÉFAUT, /stats et l'entonnoir compris. L'audit COHERENCE-1
+    # (FAUX-CLIENT n° 4) mesurait Saint-Paul 51 005 au panneau contre 51 129 à la page Stats — deux
+    # périmètres pour le même mot. La définition servie est « parcelles filtrables » (RETOURS-14 P6,
+    # note Sources) ; `exclure_slivers=False` reste possible pour un usage interne explicite.
     sliver = ""
     if exclure_slivers:
         sliver = "AND (p.surface_m2 IS NULL OR p.surface_m2 >= :minsurf)"
         params["minsurf"] = MIN_DISPLAY_SURFACE_M2
     join_v2 = ("LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu"
                " AND s2.run_id = :v2run")
-    eff = f"(CASE WHEN {_ETAGE0_SQL} THEN 'ecartee' ELSE COALESCE(s2.tier, 'ecartee') END)"
+    # COHERENCE-FIX-1 (lot C) — les tiers `declasse_*` se replient dans « écartée » (c'est leur
+    # sens produit) : la ventilation par tiers SOMME au total (l'audit mesurait 40 405 ≠ total,
+    # les déclassées ne tombant dans aucun compteur).
+    eff = (f"(CASE WHEN {_ETAGE0_SQL} THEN 'ecartee' "
+           f"WHEN COALESCE(s2.tier, 'ecartee') LIKE 'declasse_%' THEN 'ecartee' "
+           f"ELSE COALESCE(s2.tier, 'ecartee') END)")
     row = db.execute(text(
         f"""
         SELECT count(*) AS total,

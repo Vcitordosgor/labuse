@@ -105,7 +105,12 @@ def _somme(postes: dict) -> tuple[float, bool]:
 def _ca_ht(prog: dict, prix_sortie: float | None, prix_bailleur: float | None,
            part_sociale_pct: float, taux: float) -> tuple[float | None, float]:
     """CA HT total (part libre HT + part sociale au bailleur) et la surface libre (m²)."""
-    vend = _f(prog.get("surface_vendable")) or 0.0
+    # COHERENCE-FIX-1 (lot D) — surface vendable ABSENTE → CA None (« non chiffré »), jamais un
+    # CA de 0 € calculé sur 0 m² (zéro-pour-absence). `part_sociale_pct or 0` reste : une part
+    # sociale non déclarée EST une part nulle (sémantique, pas une absence).
+    vend = _f(prog.get("surface_vendable"))
+    if vend is None:
+        return None, 0.0
     part = max(0.0, min(100.0, part_sociale_pct or 0.0)) / 100.0
     s_sociale, s_libre = vend * part, vend * (1 - part)
     if prix_sortie is None:
@@ -119,10 +124,12 @@ def _ca_ht(prog: dict, prix_sortie: float | None, prix_bailleur: float | None,
 def _postes(prog: dict, h: dict, cout: float | None, ca: float | None) -> dict:
     """Les postes de coût (hors marge) pour un coût de construction et un CA donnés (sert bornes/
     sensibilité). Chaque poste : {montant|None, nature, ht_ttc}."""
-    plancher = _f(prog.get("surface_plancher")) or 0.0
-    terrain = _f(prog.get("surface_terrain")) or 0.0
-    logements = _f(prog.get("logements")) or 0.0
-    construction = (plancher * cout) if cout is not None else None
+    # COHERENCE-FIX-1 (lot D) — une surface/un compte ABSENT reste None : le poste devient
+    # « non chiffré » (le mécanisme _NON_CHIFFRE existe pour ça), jamais un « 0 € » calculé
+    # sur une grandeur qui manque (les anciens `or 0.0` fabriquaient des postes à zéro).
+    plancher = _f(prog.get("surface_plancher"))
+    logements = _f(prog.get("logements"))
+    construction = (plancher * cout) if (cout is not None and plancher is not None) else None
     hono = (construction * h["honoraires_pct"] / 100) if (construction is not None and h.get("honoraires_pct") is not None) else None
     # EXPORTS-REBRANCHEMENT-2 lot 2 (correction de fond, reco lot 5 de REBRANCHEMENT-1) — l'assiette
     # VRD est la SURFACE DE PLANCHER DU PROJET, plus le TERRAIN ENTIER : 90 €/m² × contenance cadastrale
@@ -130,7 +137,8 @@ def _postes(prog: dict, h: dict, cout: float | None, ca: float | None) -> dict:
     # avec la taille de parcelle qui pénalisait les grandes parcelles à potentiel. Un ratio d'aménagement
     # (€/m²) porte sur la surface aménagée/bâtie, pas sur toute la contenance.
     vrd = (plancher * h["vrd_m2"]) if (h.get("vrd_m2") is not None and plancher) else None
-    stat = (logements * h["cout_place"]) if h.get("cout_place") is not None else None
+    stat = (logements * h["cout_place"]) if (h.get("cout_place") is not None
+                                             and logements is not None) else None
     aleas = (construction * h["aleas_pct"] / 100) if (construction is not None and h.get("aleas_pct") is not None) else None
     # TAXE-FIX-1 point 2 — RAP = 0,40 % de l'assiette TA, chiffrée en amont (builder → calculer()),
     # passée telle quelle. Passe-plat, comme la taxe d'aménagement `h["taxe"]`.
@@ -204,8 +212,10 @@ def calculer_revente(hyp: dict) -> dict:
         "etablissable": True, "postes": postes,
         "cout_total": round(cout_total, 2), "marge": round(marge, 2),
         "taux_marge_pct": (round(marge / revente * 100, 1) if revente else None),
-        # sans coût de portage chiffré, la marge est SURESTIMÉE → dite « maximum » (jamais un faux exact).
-        "maximum": portage is None,
+        # COHERENCE-FIX-1 (lot D) — TOUT poste non chiffré (portage, frais d'acquisition, travaux)
+        # surestime la marge → « maximum » (l'ancien drapeau ne couvrait que le portage : un frais
+        # d'acquisition absent passait pour un vrai zéro).
+        "maximum": portage is None or frais_acq is None or travaux is None,
     }
 
 

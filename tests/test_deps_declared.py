@@ -74,7 +74,11 @@ def _third_party_imports() -> set[str]:
                         found.add(a.name.split(".")[0])
                 elif isinstance(n, ast.ImportFrom) and n.level == 0 and n.module:
                     found.add(n.module.split(".")[0])
-    return {m for m in found if m and m not in stdlib and m != "labuse" and m not in local}
+    # COHERENCE-FIX-1 (lot G) — `scripts` est une RACINE SCANNÉE (paquet du repo, jamais une
+    # distribution) : le banc (`scripts.coherence.*`) est importé par le verrou V6b et le CLI.
+    racines = {rel.split("/")[0] for rel in _SCANNED}
+    return {m for m in found
+            if m and m not in stdlib and m != "labuse" and m not in local and m not in racines}
 
 
 def _dist_for(mod: str) -> str:

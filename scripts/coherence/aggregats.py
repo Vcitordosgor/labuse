@@ -27,27 +27,35 @@ def _json(url):
         return json.loads(r.read())
 
 
-#: 10 combinaisons de filtres : (étiquette, querystring, SQL de recompte indépendant)
+#: 10 combinaisons de filtres : (étiquette, querystring, SQL de recompte indépendant).
+#: COHERENCE-FIX-1 (lot C) — le recompte suit la DÉFINITION DÉCLARÉE du « nombre de parcelles »
+#: (parcelles filtrables) : slivers < 2 m² exclus (MIN_DISPLAY_SURFACE_M2, note Sources) et bornes
+#: de surface sur l'ARRONDI (round(surface_m2), la valeur que la fiche affiche — même règle que
+#: `_q_v2_where`). Un oracle qui recompte une AUTRE définition ne mesure pas une incohérence.
+_SLIVER = "AND (p.surface_m2 IS NULL OR p.surface_m2 >= 2.0)"
 COMBINAISONS = [
     ("commune=Saint-Paul", "commune=Saint-Paul",
      "SELECT count(*) FROM parcel_p_score_v2 s JOIN parcels p ON p.idu=s.parcelle_id "
-     "WHERE s.run_id=%(run)s AND p.commune='Saint-Paul'"),
+     f"WHERE s.run_id=%(run)s AND p.commune='Saint-Paul' {_SLIVER}"),
     ("commune+surface>=1000", "commune=Saint-Denis&surface_min=1000",
      "SELECT count(*) FROM parcel_p_score_v2 s JOIN parcels p ON p.idu=s.parcelle_id "
-     "WHERE s.run_id=%(run)s AND p.commune='Saint-Denis' AND p.surface_m2>=1000"),
+     "WHERE s.run_id=%(run)s AND p.commune='Saint-Denis' "
+     f"AND round(p.surface_m2::numeric)>=1000 {_SLIVER}"),
     ("tiers=brulante", "tiers=brulante",
-     "SELECT count(*) FROM parcel_p_score_v2 s WHERE s.run_id=%(run)s AND s.tier='brulante'"),
+     "SELECT count(*) FROM parcel_p_score_v2 s JOIN parcels p ON p.idu=s.parcelle_id "
+     f"WHERE s.run_id=%(run)s AND s.tier='brulante' {_SLIVER}"),
     ("tiers=brulante,chaude", "tiers=brulante,chaude",
-     "SELECT count(*) FROM parcel_p_score_v2 s WHERE s.run_id=%(run)s "
-     "AND s.tier IN ('brulante','chaude')"),
+     "SELECT count(*) FROM parcel_p_score_v2 s JOIN parcels p ON p.idu=s.parcelle_id "
+     f"WHERE s.run_id=%(run)s AND s.tier IN ('brulante','chaude') {_SLIVER}"),
     ("zonage=U (St-Pierre)", "commune=Saint-Pierre&zonage=U",
      None),   # le prédicat zonage du filtre a sa propre grammaire — recompte non réécrit, dit
     ("surface 500-2000 (Le Tampon)", "commune=Le%20Tampon&surface_min=500&surface_max=2000",
      "SELECT count(*) FROM parcel_p_score_v2 s JOIN parcels p ON p.idu=s.parcelle_id "
-     "WHERE s.run_id=%(run)s AND p.commune='Le Tampon' AND p.surface_m2 BETWEEN 500 AND 2000"),
+     "WHERE s.run_id=%(run)s AND p.commune='Le Tampon' "
+     f"AND round(p.surface_m2::numeric) BETWEEN 500 AND 2000 {_SLIVER}"),
     ("flags=ravine (île)", "flags=ravine",
-     "SELECT count(DISTINCT f.parcel_id) FROM parcel_flags f "
-     "WHERE f.run_label=%(run)s AND f.layer_name='ravine'"),
+     "SELECT count(DISTINCT f.parcel_id) FROM parcel_flags f JOIN parcels p ON p.id=f.parcel_id "
+     f"WHERE f.run_label=%(run)s AND f.layer_name='ravine' {_SLIVER}"),
     ("hors_copro (St-Denis)", "commune=Saint-Denis&hors_copro=true", None),
     ("sdp_min=500 (St-Paul)", "commune=Saint-Paul&sdp_min=500", None),
     ("personne_morale (île)", "personne_morale=true", None),

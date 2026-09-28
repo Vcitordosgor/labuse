@@ -156,6 +156,32 @@ def fiche_commune_cache(ctx: JobContext) -> None:
         raise RuntimeError(f"fiche-commune-cache : {echecs} échecs sur {len(communes)}, 0 succès")
 
 
+def coherence_banc(ctx: JobContext) -> None:
+    """COHERENCE-FIX-1 (lot G) — joue le banc de cohérence (mode --ile) contre l'API locale,
+    journalise le passage (coherence_runs) et laisse la cloche sonner au premier FAUX-CLIENT
+    nouveau. L'API visée : LABUSE_COHERENCE_API (défaut prod http://127.0.0.1:8000)."""
+    import os
+    import subprocess
+    import sys
+    from pathlib import Path
+    racine = Path(__file__).resolve().parents[2]
+    env = {**os.environ,
+           "LABUSE_COHERENCE_API": os.environ.get("LABUSE_COHERENCE_API", "http://127.0.0.1:8000")}
+    r = subprocess.run([sys.executable, "-m", "scripts.coherence.banc", "--ile"],
+                       cwd=str(racine), env=env, capture_output=True, text=True, timeout=6600)
+    if r.returncode:
+        raise RuntimeError(f"banc en erreur (code {r.returncode}) : {(r.stderr or r.stdout)[-400:]}")
+    from .coherence_journal import journaliser_passage
+    res = journaliser_passage(ctx.db, mode="ile")
+    ctx.db.commit()
+    ctx.compte(**res)
+    # un banc qui n'a rien pu lire (API coupée → tout en « erreur lecteur ») est un ÉCHEC bruyant,
+    # jamais un passage vert par vacuité.
+    if res["ecarts"] == 0 and res["erreurs_lecteur"] > 100:
+        raise RuntimeError(f"banc illisible : {res['erreurs_lecteur']} lecteurs en erreur "
+                           "(API locale coupée ou limitée) — passage non probant.")
+
+
 def radar_cycle(ctx: JobContext) -> None:
     """RADAR-AUTO-1 (Lot C) — cycle de vie QUOTIDIEN des annonces, désormais PLANIFIÉ (la collecte
     automatique par l'extension le rend utile chaque nuit) : expirées (expiration_date portail) →

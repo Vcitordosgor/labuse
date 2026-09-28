@@ -3,8 +3,8 @@ surface_parcelle_m2,parcels.surface_m2,m²,431663,0.0,0.0,0.02700556865997928,28
 pente_moy_deg,parcel_terrain.pente_moy_deg,°,431663,0.0,0.0,0.0,69.4,7.400000095367432,0.99,
 pente_max_deg,parcel_terrain.pente_max_deg,°,431663,0.0,0.0,0.0,88.7,13.100000381469727,0.54,
 sdp_residuelle_m2,parcel_residuel.sdp_residuelle_m2,m²,431663,0.98,64.85,0,390529,0.0,65.49,
-taux_emprise_pct,parcel_residuel.taux_emprise_pct,%,431663,39.38,6.13,0,999,80.0,10.12,pct_hors_bornes
-pct_potentiel,parcel_residuel.pct_potentiel,%,431663,39.38,6.14,0,999,83.0,10.12,pct_hors_bornes
+taux_emprise_pct,parcel_residuel.taux_emprise_pct,%>100,431663,39.42,6.13,0,41374,80.0,10.12,
+pct_potentiel,parcel_residuel.pct_potentiel,%>100,431663,39.45,6.14,0,42878,83.0,10.13,
 emprise_bati_m2,p_model_bati.emprise_bati_m2,m²,329315,0.0,0.0,1.5604992359072312e-09,226025.80343008484,198.8049523884522,0.0,
 faitage_m,batiment_hauteur_lidar.faitage_m,m,303452,0.0,0.0,-11.6,53401.6,5.900000095367432,1.94,
 egout_m,batiment_hauteur_lidar.egout_m,m,303452,0.0,0.1,-15.7,39.2,3.0999999046325684,4.49,
@@ -14,5 +14,5 @@ valeur_fonciere_dvf,dvf_mutations.valeur_fonciere,€,29566,0.0,0.0,1.0,30000000
 taux_lls_pct,commune_contexte_sru.taux_lls,%,24,0.0,0.0,2.8,60.71,17.235,4.17,
 pop_mun,sudocuh_procedures.pop_mun,habitants,24,0.0,0.0,5074,154765,28814.5,4.17,
 rpls_nb_logements,rpls_commune.nb_logements,logements,24,0.0,0.0,62,25185,1942.5,4.17,
-cache_commune.mouvement_terrain_pct,commune_contexte_cache.payload,%,24,,,0.0,3.4,0.2,,
+cache_commune.mouvement_terrain_pct,commune_contexte_cache.payload,%,24,,,0.1,100.0,100.0,,
 cache_commune.ppr_pct,commune_contexte_cache.payload,%,24,,,8.2,100.0,38.75,,

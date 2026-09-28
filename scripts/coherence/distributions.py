@@ -29,8 +29,11 @@ COLONNES: list[tuple] = [
     ("pente_moy_deg", "parcel_terrain", "pente_moy_deg", "°", None),
     ("pente_max_deg", "parcel_terrain", "pente_max_deg", "°", None),
     ("sdp_residuelle_m2", "parcel_residuel", "sdp_residuelle_m2", "m²", None),
-    ("taux_emprise_pct", "parcel_residuel", "taux_emprise_pct", "%", None),
-    ("pct_potentiel", "parcel_residuel", "pct_potentiel", "%", None),
+    # COHERENCE-FIX-1 (lot B) — RATIOS À DÉPASSEMENT LÉGITIME (« %>100 » : bâti existant au-delà
+    # du plafond de zone — non plafonnés depuis le retrait du min(999), affichés « > 300 % ») :
+    # l'alarme pct_hors_bornes ne s'applique qu'aux % bornés [0;100].
+    ("taux_emprise_pct", "parcel_residuel", "taux_emprise_pct", "%>100", None),
+    ("pct_potentiel", "parcel_residuel", "pct_potentiel", "%>100", None),
     ("emprise_bati_m2", "p_model_bati", "emprise_bati_m2", "m²", None),
     ("faitage_m", "batiment_hauteur_lidar", "faitage_m", "m", None),
     ("egout_m", "batiment_hauteur_lidar", "egout_m", "m", None),
@@ -79,9 +82,13 @@ def _stats(conn, notion, table, col, unite, filtre):
     alarmes = []
     n_val = n - n_null
     if n_val:
+        # « %>100 » = ratio à dépassement légitime (déclaré, COHERENCE-FIX-1 lot B) : seule la
+        # borne basse alarme ; le 999-sentinelle qui motivait l'alarme n'existe plus.
         if unite == "%" and (vmin is not None and vmin < 0 or vmax is not None and vmax > 100):
             alarmes.append("pct_hors_bornes")
-        if unite == "%" and vmax is not None and vmax <= 1 and n_val > 10:
+        if unite == "%>100" and vmin is not None and vmin < 0:
+            alarmes.append("pct_hors_bornes")
+        if unite in ("%", "%>100") and vmax is not None and vmax <= 1 and n_val > 10:
             alarmes.append("fraction_deguisee")
         if unite == "m²" and vmin is not None and vmin < 0:
             alarmes.append("surface_negative")

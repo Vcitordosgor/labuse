@@ -14,21 +14,51 @@ from labuse.api import app as A
 
 @pytest.mark.db
 def test_contexte_servi_depuis_cache_sans_recalcul(db_session, monkeypatch):
+    # COHERENCE-FIX-1 (lot A) — le contrat du HIT exige désormais une ligne FRAÎCHE : la clé de
+    # fraîcheur de la ligne doit être la clé attendue (run servi + résiduel + millésimes + code).
+    # Une ligne sans clé (ou à clé périmée) est INVALIDE et se recalcule à la lecture — c'est le
+    # correctif racine du FAUX-CLIENT n° 1 de COHERENCE-1 (test dédié plus bas).
+    from labuse.fraicheur_caches import empreinte_attendue
     A._ensure_contexte_cache(db_session)
     db_session.execute(text(
-        "INSERT INTO commune_contexte_cache (commune, insee, payload, computed_at) "
-        "VALUES ('Testville', '97999', CAST(:p AS jsonb), TIMESTAMPTZ '2026-08-31 10:00:00+04') "
-        "ON CONFLICT (commune) DO UPDATE SET payload = EXCLUDED.payload, computed_at = EXCLUDED.computed_at"),
-        {"p": '{"commune":"Testville","foncier":{"n_parcelles":42}}'})
+        "INSERT INTO commune_contexte_cache (commune, insee, payload, computed_at, cle_fraicheur) "
+        "VALUES ('Testville', '97999', CAST(:p AS jsonb), TIMESTAMPTZ '2026-08-31 10:00:00+04', :k) "
+        "ON CONFLICT (commune) DO UPDATE SET payload = EXCLUDED.payload, "
+        "computed_at = EXCLUDED.computed_at, cle_fraicheur = EXCLUDED.cle_fraicheur"),
+        {"p": '{"commune":"Testville","foncier":{"n_parcelles":42}}',
+         "k": empreinte_attendue(db_session)})
     db_session.flush()
 
     def _boom(db, c):
-        raise AssertionError("le calcul lourd ne doit PAS être appelé sur un hit de cache")
+        raise AssertionError("le calcul lourd ne doit PAS être appelé sur un hit de cache FRAIS")
     monkeypatch.setattr(A, "_compute_commune_contexte", _boom)
 
     r = A.commune_contexte("Testville", db_session)
     assert r["foncier"]["n_parcelles"] == 42            # payload servi tel quel
     assert r["cache_calcule_le"].startswith("2026-08-31")   # date du calcul → pied de fiche
+
+
+@pytest.mark.db
+def test_contexte_cache_perime_se_regenere_a_la_lecture(db_session, monkeypatch):
+    """COHERENCE-FIX-1 (lot A) — une ligne à clé PÉRIMÉE (bascule, millésime, code) est recalculée
+    et RE-STOCKÉE à la lecture : plus jamais un cache qui ment des mois en silence."""
+    A._ensure_contexte_cache(db_session)
+    db_session.execute(text(
+        "INSERT INTO commune_contexte_cache (commune, insee, payload, computed_at, cle_fraicheur) "
+        "VALUES ('Testville2', '97998', CAST(:p AS jsonb), now(), 'run=q_mort|perime') "
+        "ON CONFLICT (commune) DO UPDATE SET payload = EXCLUDED.payload, "
+        "cle_fraicheur = EXCLUDED.cle_fraicheur"),
+        {"p": '{"commune":"Testville2","foncier":{"n_parcelles":1}}'})
+    db_session.flush()
+    monkeypatch.setattr(A, "_compute_commune_contexte",
+                        lambda db, c: {"commune": c, "insee": "97998",
+                                       "foncier": {"n_parcelles": 99}})
+    r = A.commune_contexte("Testville2", db_session)
+    assert r["foncier"]["n_parcelles"] == 99, "clé périmée → recalcul à la lecture"
+    from labuse.fraicheur_caches import empreinte_attendue
+    cle = db_session.execute(text(
+        "SELECT cle_fraicheur FROM commune_contexte_cache WHERE commune='Testville2'")).scalar()
+    assert cle == empreinte_attendue(db_session), "la ligne re-stockée porte la clé attendue"
 
 
 @pytest.mark.db
