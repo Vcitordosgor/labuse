@@ -3227,7 +3227,15 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str |
 # n'a pas de lignes dans `score_labuse` (cas actuel : q_v11_m137 absent de la table), le Score LABUSE
 # reste NULL partout (fiche/Analyse/Comparer) — cohérent avec la carte ; la bascule le rend visible d'un
 # coup. Aucune recette de bascule ici : on fixe le pointeur sur ce qui est servi aujourd'hui.
-SCORE_LABUSE_RUN = os.environ.get("LABUSE_SCORE_RUN") or runs.current()
+# ALGO-FIX-1 (point 2) — LU À CHAQUE REQUÊTE, plus figé à l'import (E7). Avant, `SCORE_LABUSE_RUN`
+# était une CONSTANTE évaluée une fois au chargement du module → une bascule à chaud (manifeste relu
+# par runs.current()) laissait l'Analyse et la fiche sur l'ANCIEN run Score LABUSE jusqu'au
+# redémarrage, alors que tout le reste du produit basculait. La fonction relit le pointeur vivant
+# (même doctrine que runs.current()) ; l'override admin `LABUSE_SCORE_RUN` reste prioritaire.
+def _score_labuse_run() -> str:
+    """Le run du Score LABUSE (bande + Signal), relu À LA REQUÊTE. `LABUSE_SCORE_RUN` (override admin)
+    prioritaire, sinon le run servi vivant (`runs.current()`) — jamais une constante figée à l'import."""
+    return os.environ.get("LABUSE_SCORE_RUN") or runs.current()
 # Le CLASSEMENT LEXICOGRAPHIQUE (décision Vic, V3) : bande de Score d'abord (A>B>C>D), puis « Analyse
 # incomplète » (NC) — JAMAIS tout en bas comme si elle était mauvaise —, puis « Sans potentiel
 # constructible » (bande 0) en toute fin. Le Signal départage DANS la bande (signal_p décroissant).
@@ -3527,7 +3535,7 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
         ORDER BY {(_TIER_GROUPE_PAGE_SQL + ', ') if groupes else ''}{_Q_V2_ORDERS_PAGE[sort_key or "rang"]}
         """), {"c": commune, "run": run_label, "lim": limit, "off": offset,
                "need": limit + offset, "minsurf": MIN_DISPLAY_SURFACE_M2,
-               "v2run": v2run, "sl_run": SCORE_LABUSE_RUN, "sig": signal_niveau, **xp}
+               "v2run": v2run, "sl_run": _score_labuse_run(), "sig": signal_niveau, **xp}
     ).mappings().all()
     return [{
         "idu": r["idu"], "commune": r["commune"], "surface_m2": round(r["surface_m2"]) if r["surface_m2"] else None,
@@ -3767,7 +3775,7 @@ def _q_v2_stats(db: Session, commune: str | None, run_label: str | None = None,
             WHERE d.run_label = :run AND (CAST(:c AS text) IS NULL OR p.commune = :c)
               {extra_where} {sliver}
             GROUP BY sl.bande
-            """), {**params, "sl_run": SCORE_LABUSE_RUN}).mappings().all()
+            """), {**params, "sl_run": _score_labuse_run()}).mappings().all()
         vb = {r["bande"]: int(r["n"]) for r in bandes}
     out["bandes"] = {k: vb.get(k, 0) for k in ("A", "B", "C", "D", "0", "NC")}
     out["bande_total"] = sum(out["bandes"].values())
@@ -3787,7 +3795,7 @@ def _q_v2_stats(db: Session, commune: str | None, run_label: str | None = None,
             WHERE d.run_label = :run AND (CAST(:c AS text) IS NULL OR p.commune = :c)
               {extra_where} {sliver}
             GROUP BY sl.bande, sl.signal_niveau
-            """), {**params, "sl_run": SCORE_LABUSE_RUN}).mappings().all()
+            """), {**params, "sl_run": _score_labuse_run()}).mappings().all()
         for r in cr:
             xtab.setdefault(r["bande"], {})[r["signal"] or "faible"] = int(r["n"])
     out["bandes_signal"] = {b: {s: xtab.get(b, {}).get(s, 0) for s in ("fort", "moyen", "faible")}
@@ -5716,7 +5724,7 @@ def parcel_fiche(idu: str, source: str | None = None, db: Session = Depends(get_
     sl = db.execute(text(
         """SELECT bande, signal_niveau, contributions, cause, non_calculable, sdp_residuelle_m2
            FROM score_labuse WHERE run_label = :r AND idu = :idu"""),
-        {"r": SCORE_LABUSE_RUN, "idu": idu}).mappings().first() if (db is not None and _score_labuse_ready(db)) else None
+        {"r": _score_labuse_run(), "idu": idu}).mappings().first() if (db is not None and _score_labuse_ready(db)) else None
     payload["analyse_labuse"] = dict(sl) if sl else None
     if trace:
         # CIRCUIT-1 lot 1.4 — MODE TRAÇAGE (admin seulement, 403 sinon) : le tampon de chaque
@@ -7513,7 +7521,7 @@ def compare(idus: str = Query(..., description="2 à 3 IDU séparés par des vir
             sl = db.execute(text(
                 """SELECT bande, signal_niveau, non_calculable FROM score_labuse
                    WHERE run_label = :r AND idu = :idu"""),
-                {"r": SCORE_LABUSE_RUN, "idu": idu}).mappings().first()
+                {"r": _score_labuse_run(), "idu": idu}).mappings().first()
             if sl:
                 row["bande"] = ("NC" if sl["non_calculable"] else sl["bande"])
                 row["signal_niveau"] = sl["signal_niveau"]

@@ -1,0 +1,10 @@
+ALGO-FIX-1 point 2 — hot-swap Score LABUSE sur PROCESS API VIVANT (PID 45683, port 8635)
+Témoin 97415000EO0796, aucun redémarrage entre les 3 mesures.
+
+AVANT   (manifeste scoring_run = q_v11_m137)  → analyse_labuse = None   (q_v11_m137 absent de score_labuse)
+APRÈS   (bascule à blanc scoring_run = q_v15)  → analyse_labuse = {bande: D, signal_niveau: faible}
+RESTAURÉ (scoring_run = q_v11_m137)            → analyse_labuse = None
+
+Même PID 45683 tout du long → le Score LABUSE suit la bascule SANS redémarrage.
+Avant le correctif, SCORE_LABUSE_RUN (constante figée à l'import app.py:3230) serait resté
+q_v11_m137 → None durant toute la vie du process. Config restaurée à l'identique (git clean).
