@@ -287,7 +287,12 @@ zones:
           page_pdf: 46
           citation: En cas de retrait de la construction, la distance (...) doit être au moins égale 3 mètres.
           statut: valide
-          note: "PLU-VERIF-1 (exception à afficher) : En secteur UC1, le retrait (L) est obligatoire = moitie de la hauteur a l'egout (ou faîtage a defaut) sans etre inferieur a 3,00 m (L=H1/2)."
+          exceptions:
+          - texte: "Toutefois, en secteur UC1, le retrait (L) est obligatoire et doit correspondre au minimum à la moitié de la hauteur à l’égout du toit (ou au faîtage en l’absence d’égout de toit) de la construction sans être inférieur à 3,00 mètres, soit : L = H1/2 (H1 étant la hauteur à l’égout) ou en l’absence de façade présentant un égout de toit : L = H2/2 (H2 étant la hauteur au faîtage)."
+            article: "UC 7.2"
+            page_pdf: 46
+            porte: "sous_secteur"
+            modifie_calcul: true
       stationnement:
         par_logement:
           places: 2.0
@@ -845,7 +850,12 @@ zones:
           citation: la hauteur maximale de tout point des constructions (...) « individuels » (...) ne doit
             pas dépasser 9 mètres. [plafond en tout point => he=hf]
           statut: valide
-          note: "PLU-VERIF-1 (exception à afficher) : La regle UZ ne distingue pas egout/faîtage : c'est une hauteur maximale « en tout point » (donc egout=faîtage=9 m pour les individuels). Collectifs 17 m, tertiaires 12 m, hors tout NGR 42 m."
+          exceptions:
+          - texte: "Pour les espaces indiqués au schéma joint en annexe sous la rubrique « affectations dominantes en habitat avec activités et services compatibles » et légendés en « individuels », la hauteur maximale de tout point des constructions mesurée par rapport au domaine public pris au droit de l’alignement ne doit pas dépasser 9 mètres."
+            article: "UZ 10.2"
+            page_pdf: 99
+            porte: "destination"
+            modifie_calcul: true
         egout:
           m: 9.0
           article: UZ 10.2
@@ -854,7 +864,12 @@ zones:
             (...) ne doit pas dépasser 9 mètres. [collectifs 17 m ; tertiaires 12 m ; hors tout : cote NGR
             42 m]'
           statut: valide
-          note: "PLU-VERIF-1 (exception à afficher) : UZ 10.2 plafonne par affectation : collectifs 17 m, tertiaires 12 m ; hors tout aucune construction ne depasse la cote NGR 42 m. Le 9 m ne vaut que pour les affectations « individuels ». La regle est une hauteur « en tout point », pas un egout."
+          exceptions:
+          - texte: "Pour les espaces indiqués au schéma joint en annexe sous la rubrique « affectations dominantes en habitat avec activités et services compatibles » et légendés en « individuels », la hauteur maximale de tout point des constructions mesurée par rapport au domaine public pris au droit de l’alignement ne doit pas dépasser 9 mètres."
+            article: "UZ 10.2"
+            page_pdf: 99
+            porte: "destination"
+            modifie_calcul: true
       emprise_sol:
         ces:
           pct: 60.0
