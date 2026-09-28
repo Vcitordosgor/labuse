@@ -15,7 +15,14 @@ from __future__ import annotations
 
 import re
 
-from .faisabilite.zonage import A_VERIFIER, est_outillee, reglement_source, resolve_zone
+# PRE-DEPLOY-1 (lot B) — on référence les fonctions VIA le module `zonage`, jamais par des noms
+# copiés (`from …zonage import resolve_zone`). Un `from x import y` fige une COPIE de la fonction à
+# l'import : si un test monkeypatche `zonage.resolve_zone` PUIS déclenche le 1ᵉʳ import de ce module,
+# la copie capturée reste le stub (monkeypatch ne restaure que `zonage.*`, pas la copie) → fuite
+# inter-fichiers (test_faisabilite3 empoisonnait test_retours11f3::f4). Via le module, tout patch et
+# toute restauration de `zonage.*` sont vus ici. A_VERIFIER est une constante (copie sans risque).
+from .faisabilite import zonage as _zonage
+from .faisabilite.zonage import A_VERIFIER
 
 _GPU_CONSULT = "https://www.geoportail-urbanisme.gouv.fr/"
 
@@ -85,7 +92,7 @@ def resolve_reglement(commune: str | None, zone_code: str | None,
     """Référence règlement d'UNE zone. None si code de zone vide."""
     if not zone_code:
         return None
-    if not est_outillee(commune):
+    if not _zonage.est_outillee(commune):
         # Commune non outillée : repli propre (pas de deep link fiable).
         return {
             "zone": zone_code,
@@ -100,10 +107,10 @@ def resolve_reglement(commune: str | None, zone_code: str | None,
                     + (f" Réf. document : {idurba}." if idurba else ""),
         }
 
-    src = reglement_source(commune) or {}
+    src = _zonage.reglement_source(commune) or {}
     base_url = src.get("url")
     offset = int(src.get("offset") or 0)      # regles portent page_pdf (page PDF réelle) → 0
-    rules = resolve_zone(zone_code, commune)
+    rules = _zonage.resolve_zone(zone_code, commune)
 
     articles = []
     if rules and rules.calibree and rules.sources:
