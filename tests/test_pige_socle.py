@@ -45,11 +45,53 @@ def _fichiers():
 
 
 def _est_commentaire(ligne: str, idx: int) -> bool:
-    """Le token à la position idx est-il dans un commentaire (mention, pas du code) ?"""
+    """Le token à la position idx est-il dans un commentaire MONO-LIGNE (mention, pas du code) ?"""
     avant = ligne[:idx]
     s = ligne.lstrip()
     return ("#" in avant or "//" in avant or s.startswith("*") or s.startswith("/*")
             or s.startswith("--"))
+
+
+def _lignes_bloc_commentaire(p: Path, lignes: list[str]) -> set[int]:
+    """TESTS-FIX-1 (fragile → stable) — les numéros de ligne (1-based) qui vivent DANS un commentaire
+    MULTI-LIGNES : docstring Python triple-guillemet, bloc ``/* … */`` (JSX ``{/* … */}`` compris).
+    `_est_commentaire` ne voit que le mono-ligne (# / //) ; or RADAR/pige citent nommément les
+    portails en docstring (`html_ingest.py`) et en commentaire JSX (`MapView.tsx`) — des MENTIONS
+    légitimes, pas du code. On suit l'état de bloc d'une ligne à l'autre pour ne pas les compter
+    comme des fautes (sans jamais blanchir une vraie chaîne de code : seuls les blocs commentaire)."""
+    is_py = p.suffix == ".py"
+    dedans: set[int] = set()
+    in_block = False
+    delim = ""
+    for n, ligne in enumerate(lignes, 1):
+        rest = ligne
+        while True:
+            if not in_block:
+                if is_py:
+                    cands = [x for x in (rest.find('"""'), rest.find("'''")) if x >= 0]
+                    m = min(cands) if cands else -1
+                    if m < 0:
+                        break
+                    delim = rest[m:m + 3]
+                else:
+                    m = rest.find("/*")
+                    if m < 0:
+                        break
+                    delim = "*/"
+                in_block = True
+                dedans.add(n)
+                rest = rest[m + (3 if is_py else 2):]
+            else:
+                e = rest.find(delim)
+                if e < 0:
+                    dedans.add(n)
+                    break
+                in_block = False
+                dedans.add(n)
+                rest = rest[e + len(delim):]
+        if in_block:
+            dedans.add(n)
+    return dedans
 
 
 def _allowliste(p: Path) -> bool:
@@ -63,16 +105,19 @@ def test_aucune_requete_portail_dans_le_depot():
     fautes_reseau: list[str] = []
     fautes_code: list[str] = []
     for p in _fichiers():
-        for n, ligne in enumerate(p.read_text(encoding="utf-8", errors="ignore").splitlines(), 1):
+        lignes = p.read_text(encoding="utf-8", errors="ignore").splitlines()
+        bloc = _lignes_bloc_commentaire(p, lignes)     # commentaires multi-lignes (docstring / /* */)
+        for n, ligne in enumerate(lignes, 1):
             bas = ligne.lower()
             for tok in _TOKENS:
                 idx = bas.find(tok)
                 if idx < 0:
                     continue
                 rel = f"{p.relative_to(_ROOT)}:{n}"
-                if _HTTP.search(ligne):                       # péché capital : requête + portail
+                en_commentaire = n in bloc or _est_commentaire(ligne, idx)
+                if _HTTP.search(ligne) and not en_commentaire:   # péché capital : requête + portail
                     fautes_reseau.append(f"{rel}  {ligne.strip()[:100]}")
-                elif not _est_commentaire(ligne, idx) and not _allowliste(p):
+                elif not en_commentaire and not _allowliste(p):
                     fautes_code.append(f"{rel}  {ligne.strip()[:100]}")
                 break
     assert not fautes_reseau, "APPEL RÉSEAU vers un portail détecté :\n" + "\n".join(fautes_reseau)
