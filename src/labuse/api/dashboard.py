@@ -2047,13 +2047,22 @@ def _assembler_reservoirs(c, only_id: int | None = None) -> list[dict]:
     if only_id is not None:
         params["only_id"] = only_id
     rows = c.execute(text(
-        "SELECT d.id, d.name, d.provider, d.category, d.source_millesime, d.last_sync_at,"
+        "SELECT d.id, d.name, d.provider, d.category, d.source_millesime, d.source_horizon_at,"
+        "       d.last_sync_at,"
         "       d.mode_remplissage, d.cadence_attendue_jours, d.cadence_statut,"
         "       v.methode, v.dernier_statut, v.dernier_passage_at, v.dernier_vu, v.actif,"
         "       v.echecs_consecutifs, v.dernier_message,"
         "       v.cadence_attendue_jours AS rappel_jours"
         f" FROM data_sources d LEFT JOIN source_veille v ON v.source_id = d.id"
         f" WHERE {where} ORDER BY COALESCE(d.category,'zzz'), d.name"), params).mappings().all()
+    # SOURCES-FIX-2 lot D — MAGASIN DE MILLÉSIME UNIQUE à l'admin. La vérité est
+    # data_sources.source_millesime (écrite par la sentinelle et le circuit), composée par le
+    # PRODUCTEUR UNIQUE `millesime_source.composer` (le même que la fiche et les pieds de section).
+    # RESERVOIR_TABLES[slug].millesime (registre) n'est plus un 2ᵉ magasin : il ne sert que de VUE DE
+    # COMPATIBILITÉ (repli quand la vérité est vide). Circuit ET compteur lisent ce champ « millesime »
+    # unique → un seul texte par source aux deux écrans.
+    from ..millesime_source import composer as _composer_mill
+    from ..registre import tables as _rt_mod
     _etats = _filtres.etats_servis(c)
     _reg = _filtres.FILTRES()
     # motif le plus LONG d'abord : « Géorisques — mouvements » l'emporte sur « Géorisques ».
@@ -2083,11 +2092,16 @@ def _assembler_reservoirs(c, only_id: int | None = None) -> list[dict]:
         _cad = r["cadence_attendue_jours"]
         a_verifier = bool(_cad) and mode not in ("en_direct", "absente", "sans_millesime") and (
             _dernier_controle is None or (_now - _dernier_controle).days > int(_cad))
+        # millésime AFFICHABLE unique : vérité (source_millesime, composée) → sinon repli registre (compat).
+        _mill_verite = _composer_mill(r["source_millesime"], source_horizon_at=r["source_horizon_at"],
+                                      dernier_vu=r["dernier_vu"], last_sync_at=r["last_sync_at"])
+        _rt = _rt_mod.RESERVOIR_TABLES.get(_cetats.slug_reservoir(r["name"]) or "")
+        _millesime = _mill_verite or ((_rt.millesime or None) if _rt else None)
         reservoirs.append({
             "a_verifier": a_verifier,
             "dernier_controle": _dernier_controle.isoformat() if _dernier_controle else None,
             "id": r["id"], "nom": r["name"], "producteur": r["provider"],
-            "famille": r["category"] or "aucune", "millesime": r["source_millesime"],
+            "famille": r["category"] or "aucune", "millesime": _millesime,
             "ingere_le": r["last_sync_at"].isoformat() if r["last_sync_at"] else None,
             "mode": mode, "cadence_jours": r["cadence_attendue_jours"],
             "cadence_statut": r["cadence_statut"],
@@ -3289,8 +3303,10 @@ def admin_circuit_compteur(request: Request) -> dict:
                             "producteur": row["provider"], "raison": raison})
     part = _etats.partition_reservoirs(reservoirs)
     # CIRCUIT-5 lot 6.2 — la CARTE table → réservoir (lot 1.1) se lit ICI, sur le détail du
-    # repère « 68 » : pour chaque réservoir servi, ses tables (et couches spatial_layers) et
-    # son millésime — la déclaration de registre/tables.py, jamais recalculée ailleurs.
+    # repère « 68 » : pour chaque réservoir servi, ses tables et couches spatial_layers.
+    # SOURCES-FIX-2 lot D — le millésime affiché est le MÊME magasin unique que la page Circuit
+    # (r["millesime"] = source_millesime composé, repli registre en compat), plus RESERVOIR_TABLES
+    # comme 2ᵉ vérité. `registre_note` garde la note descriptive du registre (tables/rôle), séparée.
     from ..registre import tables as _tables
     carte = []
     for r in sorted(reservoirs, key=lambda x: x["nom"]):
@@ -3300,7 +3316,7 @@ def admin_circuit_compteur(request: Request) -> dict:
             "id": r["id"], "nom": r["nom"], "slug": slug,
             "tables": list(rt.tables) if rt else [],
             "couches": list(rt.couches) if rt else [],
-            "millesime": (rt.millesime or None) if rt else None,
+            "millesime": r["millesime"],
             "note": (rt.note if rt else "ABSENT de la carte (registre/tables.py)"),
         })
 

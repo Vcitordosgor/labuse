@@ -40,6 +40,7 @@ from .. import rnu as _rnu
 from ..db import session_scope
 from ..enums import FeedbackVerdict
 from .. import runs  # S3 : run servi relu à la requête (bascule à chaud)
+from ..millesime_source import composer as _compose_millesime  # SOURCES-FIX-2 lot D — millésime unique
 from ..scoring.score_v_constants import V_BAND_LABELS  # GB-012 : V_BRULANTE_THRESHOLD retiré (import mort)
 from ..scoring.fraction_client import fraction_humaine as _fh, fraction_sql_case as _fraction_sql_case  # M135 P2
 from ..scoring.p_v2.libelles_client import raison_dominante as _raison_dom   # M135 P3 — chip raison
@@ -1046,7 +1047,13 @@ def list_sources(db: Session = Depends(get_db)) -> list[dict]:
             **_source_licence(s.legal_notes),
             # M86 — millésime amont CENTRALISÉ (data_sources.source_millesime, écrit par persist_millesime
             # ou seed) : le front le LIT au lieu de coder des dates en dur (correction factuelle M86).
-            "source_millesime": s.source_millesime,
+            # SOURCES-FIX-2 lot D (row 97) — servi via le PRODUCTEUR UNIQUE `millesime_source.composer`
+            # (le même que la fiche §Sources et l'admin), plus le millésime BRUT : les notes internes
+            # (« édition non enregistrée », « latest ingérée », « proxy », dates sentinelle) sont nettoyées
+            # une seule et même façon partout — plus de magasin/format divergent.
+            "source_millesime": _compose_millesime(s.source_millesime,
+                                                    source_horizon_at=s.source_horizon_at,
+                                                    last_sync_at=s.last_sync_at),
             # M74 C bis — NOTE DE NATURE visible (proxy / servi par proxys) : une source proxy ne
             # doit JAMAIS être présentée comme la source officielle (doctrine anti-faux-positif).
             "nature": _source_nature(s.name, s.technical_notes),
