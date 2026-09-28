@@ -33,8 +33,8 @@ SRC = Path(__file__).resolve().parents[1] / "frontend" / "src"
 BLANCHE_ZERO: dict[tuple[str, str], str] = {
     ("components/outils/moteurs.tsx", "active.surface_min ?? 0"):
         "récap des BORNES DE FILTRE saisies par l'utilisateur (0 = pas de minimum), pas une mesure servie",
-    ("components/admin/Licences.tsx", "(v ?? 0).toFixed(2)"):
-        "formateur € interne à l'ADMIN (KPI licences/MRR), hors parcours client",
+    # COHERENCE-FIX-1 (lot D, fusion) — l'entrée Licences.tsx « (v ?? 0).toFixed(2) » est RETIRÉE :
+    # le formateur est corrigé à la racine (montant absent → « — », plus de zéro fabriqué).
 }
 BLANCHE_TOTAL: dict[tuple[str, str], str] = {}
 
