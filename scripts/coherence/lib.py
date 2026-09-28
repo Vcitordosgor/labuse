@@ -63,6 +63,37 @@ API = _os.environ.get("LABUSE_COHERENCE_API") or "http://127.0.0.1:8605"
 RUN = _run_defaut()
 
 
+def client_en_process():
+    """PRE-DEPLOY-1 (lot A) — un lecteur EN-PROCESS : TestClient FastAPI, JAMAIS l'API publique.
+
+    Rend `(client, fetch)` où `fetch(path)` renvoie le JSON de la route, exactement comme un
+    client HTTP le verrait — mais sans serveur, sans socket, sans réseau. Trois conséquences,
+    voulues par le mandat :
+      · pas de HTTP vers l'API publique (le banc nocturne ne consomme plus le port servi) ;
+      · pas de quota anti-scraping (l'hôte réservé `HOTE_INTERNE` est exempté du rate-limit —
+        inatteignable depuis le réseau, cf. protection.HOTE_INTERNE) ;
+      · pas de `LABUSE_DEV_MODE` : l'auth reste ACTIVE (comme en prod), et le banc s'authentifie
+        proprement par une session pilote MINTÉE en interne (`auth.make_token()`, signée par la
+        vraie clé de l'app) — jamais un contournement d'auth.
+    """
+    import sys as _sys
+    _sys.path.insert(0, str(RACINE / "src"))
+    from fastapi.testclient import TestClient
+
+    from labuse.api import auth
+    from labuse.api.app import app
+    from labuse.api.protection import HOTE_INTERNE
+    client = TestClient(app, client=(HOTE_INTERNE, 0))
+    client.cookies.set(auth.COOKIE, auth.make_token())   # session pilote (auth active hors 'local')
+
+    def _fetch(path: str):
+        r = client.get(path)
+        r.raise_for_status()
+        return json.loads(r.content)
+
+    return client, _fetch
+
+
 class Absent:
     """Le lecteur ne porte pas la notion ici (≠ None = « pas de donnée » affiché)."""
     def __repr__(self):
@@ -86,11 +117,12 @@ class Contexte:
     COHERENCE-FIX-1 (lot G) — `fetch` injectable : le verrou V6b joue les MÊMES lecteurs
     en-process (TestClient FastAPI) sans serveur HTTP ; `dsn` injectable pour la base de test."""
 
-    def __init__(self, dsn: str | None = None, fetch=None):
+    def __init__(self, dsn: str | None = None, fetch=None, client=None):
         self.conn = psycopg.connect(dsn or DSN, options="-c statement_timeout=120000")
         self.conn.autocommit = True     # lecture seule ; une requête qui casse ne doit pas
         # avorter la suite (psycopg ouvrirait sinon une transaction par curseur)
         self._fetch = fetch             # fetch(path) -> objet JSON (None = HTTP urllib)
+        self._client = client           # TestClient en-process (octets bruts : tuiles PBF)
         self._fiches: dict[str, dict] = {}
         self._tuiles: dict[str, dict] = {}
         self._communes: dict[str, dict] = {}
@@ -178,8 +210,13 @@ class Contexte:
             import os as _os
             pbf = pathlib.Path(f"/tmp/coherence_tile_{_os.getpid()}_{z}_{x}_{y}.pbf")
             if not pbf.exists():
-                with urllib.request.urlopen(f"{API}/map/tiles/{z}/{x}/{y}.pbf", timeout=120) as r:
-                    pbf.write_bytes(r.read())
+                if self._client is not None:     # EN-PROCESS : octets bruts via TestClient (pas de réseau)
+                    resp = self._client.get(f"/map/tiles/{z}/{x}/{y}.pbf")
+                    resp.raise_for_status()
+                    pbf.write_bytes(resp.content)
+                else:
+                    with urllib.request.urlopen(f"{API}/map/tiles/{z}/{x}/{y}.pbf", timeout=120) as r:
+                        pbf.write_bytes(r.read())
             out = subprocess.run(
                 ["node", str(RACINE / "scripts/coherence/decode_tile.mjs"), str(pbf)],
                 capture_output=True, text=True, timeout=60)

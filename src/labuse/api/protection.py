@@ -157,6 +157,15 @@ PREFIXES_PROTEGES = ("/parcels", "/segments", "/discover", "/ia", "/moteurs", "/
 
 _FICHE_RE = re.compile(r"^/parcels/([0-9]{5}[0-9A-Z]{9})$")
 
+#: PRE-DEPLOY-1 (lot A) — hôte réservé du transport EN-PROCESS (TestClient). Le banc de cohérence
+#: nocturne (`coherence-banc`) rejoue les lecteurs de l'API SANS serveur HTTP ni réseau, via un
+#: TestClient FastAPI initialisé avec ce nom d'hôte. Le rate-limit et les quotas anti-scraping ne
+#: le concernent pas : c'est du trafic INTERNE, jamais du scraping. L'exemption est SÛRE — le pair
+#: (`request.client.host`) est posé par le transport ASGI, jamais par un en-tête : une vraie requête
+#: réseau arrive avec une IP (ou, derrière un proxy de confiance, l'IP extraite de X-Forwarded-For),
+#: JAMAIS ce littéral. Ce n'est donc PAS un second `dev_mode` (qui, lui, ouvrirait l'API publique).
+HOTE_INTERNE = "labuse-inproc"
+
 
 def _aujourdhui() -> str:
     # REVUE · R2 — jour métier en heure Réunion (les compteurs jour bornent quotas/gels ; leur
@@ -303,6 +312,12 @@ def _actif_sous_pytest() -> bool:
 async def garde_protection(request: Request, call_next):
     """Rate limiting + quota fiches — s'exécute APRÈS l'auth (trafic authentifié)."""
     path = request.url.path
+    # PRE-DEPLOY-1 (lot A) — trafic EN-PROCESS (banc de cohérence via TestClient) : jamais du
+    # scraping, exempté AVANT tout le reste. Sûr : `client.host` est posé par le transport ASGI,
+    # inatteignable depuis le réseau (cf. HOTE_INTERNE). Ce n'est PAS un dev_mode déguisé — il
+    # n'ouvre rien sur l'API publique (une vraie requête n'a jamais ce pair).
+    if getattr(getattr(request, "client", None), "host", None) == HOTE_INTERNE:
+        return await call_next(request)
     is_tuile = path.startswith("/map/tiles")   # tuiles : régime carto dédié (jamais le 60/min)
     if request.method == "OPTIONS" or not (path.startswith(PREFIXES_PROTEGES) or is_tuile) \
             or not _actif_sous_pytest():

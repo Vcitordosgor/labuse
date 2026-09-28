@@ -262,6 +262,9 @@ async def _lifespan(app: FastAPI):
     # M149 L2 (audit M148 F4) : garde SYMÉTRIQUE — une clé de signature posée en env='local' trahit
     # un déploiement laissé en dev (auth désactivée = routes ouvertes). Boot refusé, pas ouvert.
     auth.exiger_env_deploiement()
+    # PRE-DEPLOY-1 (lot A) : LABUSE_DEV_MODE=1 hors 'local' désactiverait tout l'anti-scraping sur
+    # une machine publique. Boot refusé (le banc nocturne tourne en-process, sans ce flag).
+    auth.exiger_pas_de_dev_mode_deploiement()
     if not s.secret_key:  # ici forcément 'local' : clé éphémère (sessions perdues au reboot)
         log.warning("LABUSE_SECRET_KEY absente (env=local) : clé de session éphémère "
                     "(les sessions ne survivront pas à un redémarrage).")
