@@ -257,7 +257,7 @@ def composer_a_faire(reservoirs: list[dict], *, residuel: dict | None, candidat:
                      fuites_robinets: list[dict] = (), ecarts: list[dict] = (),
                      etats_compte: dict | None = None, contexte: str | None = None,
                      dates: dict | None = None, derniere_bascule: str | None = None,
-                     calculer: dict | None = None) -> dict:
+                     calculer: dict | None = None, tuiles: dict | None = None) -> dict:
     """Compose l'onglet « À faire » (lot 2, invariant CIRCUIT-P7 lot 4). Ordre : ROUGE (verrou cassé →
     fuite → écart → sonde en panne), puis AMBRE (injecter → calculer → basculer → déposer). Chaque
     pastille non verte de Sources et du Circuit a SA ligne ici (fuite et écart du contrôle compris —
@@ -316,6 +316,27 @@ def composer_a_faire(reservoirs: list[dict], *, residuel: dict | None, candidat:
                 "Trois passages ratés d'affilée (hors SSL) : la sonde amont ne répond plus.",
                 {"label": "Décider", "action": "decider", "source": r["id"]},
                 cible={"type": "reservoir", "ids": [r["id"]]}))
+
+    # (R5) RECONSTRUIRE LES TUILES — ALGO-FIX-1 (point 4) : les tuiles matérialisées (mvt_parcels) sont
+    # PÉRIMÉES vs le run/résiduel servi (une bascule trop longue pour être enchaînée, ou un re-score
+    # hors geste). Ligne BLOQUANTE : tant qu'elle tient, la carte sert l'ANCIEN run — et le DIT
+    # (/map/tiles/meta.perime). « Reconstruire » relance le geste build-mvt.
+    tu = tuiles or {}
+    if tu.get("perime"):
+        est = tu.get("estimation_min")
+        run_carte = tu.get("run_carte")
+        carte_le = (tu.get("carte_le") or "")[:10]
+        if tu.get("motif") == "run" and run_carte:
+            pourquoi = f"Les tuiles de la carte sont bâties sur « {run_carte} » alors que l'app sert « {run_servi} »"
+        else:  # amont : même run mais résiduel/score recalculé depuis le build des tuiles
+            pourquoi = (f"Les tuiles de la carte datent du {carte_le or 'dernier build'} ; le résiduel/le score "
+                        f"servi a été recalculé depuis (run « {run_servi} »)")
+        lignes.append(_ligne_af(
+            "reconstruire", "rouge", "Reconstruire les tuiles de la carte",
+            (pourquoi + (f" — reconstruction estimée à ~{est} min." if est else " — à reconstruire.")
+             + " En attendant, la carte affiche l'ancien run et le signale."),
+            {"label": "Reconstruire", "action": "reconstruire"},
+            cible={"type": "compteur", "ids": []}))
 
     # ── AMBRE ensuite : verrou d'avertissement → injecter → calculer → basculer → déposer ─────
     # (A0) VERROU D'AVERTISSEMENT (G8) — cassé mais NON bloquant : le déploiement passe (deploy -w).

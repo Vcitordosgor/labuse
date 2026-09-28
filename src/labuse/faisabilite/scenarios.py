@@ -126,6 +126,8 @@ def faisabilite_scenario(session: Session, parcel_id: int, scenario: str | None 
     from .residuel import compute_residuel
     from .zonage import reglement_source, resolve_zone
 
+    from sqlalchemy import text
+
     scenario = _norm_scenario(scenario)
     res = parcel_faisabilite(session, parcel_id, hyp_overrides=hyp_overrides)
     if res is None:
@@ -133,6 +135,21 @@ def faisabilite_scenario(session: Session, parcel_id: int, scenario: str | None 
     ctx, f = res
     fr = f.fourchette or {}
     zone = f.zone
+
+    # ALGO-FIX-1 (point 3) — HORS SAISIE (aucun chiffre saisi par l'utilisateur), la SDP RÉSIDUELLE
+    # montrée au client vient du RUN SERVI (vue `parcel_residuel`), PAS du moteur live : une seule
+    # vérité, la MÊME que la fiche §Potentiel et le Dossier (garde + §10). Le moteur live ne recalcule
+    # QUE sur des chiffres SAISIS (overrides d'hypothèses ou test d'un projet). `sdp_servie` None =
+    # chaîne résiduel absente (base de test) → repli sur le calcul live, comme avant.
+    sans_saisie = not test and not hyp_overrides
+    sdp_servie = None
+    if sans_saisie:
+        try:
+            sdp_servie = session.execute(text(
+                "SELECT sdp_residuelle_m2 FROM parcel_residuel WHERE parcel_id = :p"),
+                {"p": parcel_id}).scalar()
+        except Exception:  # noqa: BLE001 — vue résiduel absente : on garde le calcul live
+            sdp_servie = None
 
     # hypothèses EFFECTIVES (après overrides) — pour dériver les logements du scénario bâti gardé
     # avec EXACTEMENT la même convention que le moteur (aucune divergence).
@@ -218,6 +235,10 @@ def faisabilite_scenario(session: Session, parcel_id: int, scenario: str | None 
 
     sdp_existante = residuel.get("sdp_existante_m2") if bati_present else None
     sdp_residuelle = residuel.get("sdp_residuelle_m2") if bati_present else None
+    # ALGO-FIX-1 (point 3) — hors saisie, la SDP résiduelle du scénario « bâti gardé » == la vue SERVIE
+    # `parcel_residuel` (Golden 55 restauré : le moteur live avait dérivé, ex. EO0796 187 ≠ 179 servi).
+    if sans_saisie and bati_present and sdp_servie is not None:
+        sdp_residuelle = float(sdp_servie)
 
     if scenario == "bati_garde":
         sdp_possible = round(sdp_residuelle or 0)
@@ -226,8 +247,16 @@ def faisabilite_scenario(session: Session, parcel_id: int, scenario: str | None 
         logements = [lo, hi]
         surface_a_demolir = None
     else:  # terrain_libere
-        sdp_possible = round(sdp_enveloppe)
-        logements = [int(log_enveloppe[0]), int(log_enveloppe[1])]
+        if sans_saisie and not bati_present and sdp_servie is not None:
+            # TERRAIN NU : « terrain libéré » EST le résiduel (rien à démolir) → la SDP SERVIE fait foi
+            # (ex. AX0990 1 642 live → 1 619 servi), pas l'enveloppe recalculée à la volée.
+            sdp_possible = round(float(sdp_servie))
+            lo, hi = _rng_bati_garde([int(log_enveloppe[0]), int(log_enveloppe[1])],
+                                     float(sdp_servie), float(sdp_enveloppe or 0))
+            logements = [lo, hi]
+        else:
+            sdp_possible = round(sdp_enveloppe)
+            logements = [int(log_enveloppe[0]), int(log_enveloppe[1])]
         surface_a_demolir = round(sdp_existante) if (bati_present and sdp_existante) else None
 
     log_max = max(logements) if logements else 0

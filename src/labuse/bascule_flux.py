@@ -256,10 +256,27 @@ def derniere_bascule(db: Session) -> dict | None:
             "caches_purges": r["caches_purges"] or []}
 
 
+def _residuel_seq_servi(db: Session) -> int | None:
+    """ALGO-FIX-1 (point 1) — LA VÉRITÉ du run résiduel servi : `residuel_runs.is_served` (jamais le
+    manifeste, jamais piloté par une bascule scoring). None si la chaîne résiduel est absente (base de
+    test / install neuve). Le manifeste RECOPIE cette valeur (miroir d'affichage) ; il ne la commande
+    plus — c'est ce qui empêchait un manifeste périmé (« 8 ») de faire reculer un is_served plus récent
+    (« 10 ») à la bascule suivante (bug E6)."""
+    try:
+        r = db.execute(text("SELECT run_seq FROM residuel_runs WHERE is_served LIMIT 1")).scalar()
+        return int(r) if r is not None else None
+    except Exception:  # noqa: BLE001 — table résiduel absente (base de test)
+        return None
+
+
 def basculer(db: Session, nouveau_run: str, par: str) -> dict:
     """LA BASCULE (F2.3). Refuse un run incomplet ; sinon promeut, fait suivre le précédent, purge les
     caches, journalise, et lance la garde de cohérence immédiatement (F4.3). `par` = qui (traçabilité).
-    Le retour arrière est cette même fonction appelée avec le run précédent."""
+    Le retour arrière est cette même fonction appelée avec le run précédent.
+
+    ALGO-FIX-1 (point 1) — la bascule SCORING ne lit ni n'écrit JAMAIS le résiduel : le manifeste
+    recopie `residuel_runs.is_served` (la seule vérité) au lieu de le piloter. Le résiduel se déplace
+    uniquement par `labuse residuel-serve`."""
     from . import runs
     from .golden_ops import promote
 
@@ -288,8 +305,13 @@ def basculer(db: Session, nouveau_run: str, par: str) -> dict:
     # residuel_runs.is_served (ci-dessous) sont désormais des VUES DÉRIVÉES de cet écrit.
     from . import manifeste as _manifeste
     m_avant = _manifeste.lire() or _manifeste.construire_depuis_pointeurs(db)
+    # ALGO-FIX-1 (point 1) — LE RÉSIDUEL A UNE SEULE VÉRITÉ : `residuel_runs.is_served`. On la LIT ici
+    # (jamais du manifeste) et on la RECOPIE dans le manifeste (miroir). La bascule scoring laisse donc
+    # le résiduel EXACTEMENT où il est, en avant comme en retour arrière — plus aucun set_served piloté
+    # par une valeur de manifeste qui pourrait mentir (E6 : manifeste 8 ↔ is_served 10).
+    residuel_seq_servi = _residuel_seq_servi(db)
     if nouveau_run == ancien_precedent and m_avant.get("precedent"):
-        cible = dict(m_avant["precedent"])            # retour arrière : le manifeste entier
+        cible = dict(m_avant["precedent"])            # retour arrière : le manifeste scoring entier
         cible.setdefault("cascade_run", cible.get("scoring_run"))  # compat manifeste pré-C1
     else:
         # COHÉRENCE-RUN-1 (C1) — le run de CASCADE servi est écrit EXPLICITEMENT (jamais deviné à
@@ -299,22 +321,20 @@ def basculer(db: Session, nouveau_run: str, par: str) -> dict:
         # cascade est absente (base de test).
         cascade_run, _ = resoudre_cascade_run(db, nouveau_run)
         cible = {"scoring_run": nouveau_run, "cascade_run": cascade_run or nouveau_run,
-                 "mvt_run": nouveau_run, "division_run": nouveau_run,
-                 "residuel_run_seq": m_avant.get("residuel_run_seq")}
+                 "mvt_run": nouveau_run, "division_run": nouveau_run}
+    # le résiduel (courant ET précédent) = la vérité is_served, jamais une valeur portée d'un ancien
+    # manifeste : une bascule scoring ne peut plus déplacer le résiduel dans un sens ou dans l'autre.
+    cible["residuel_run_seq"] = residuel_seq_servi
     from datetime import datetime as _dt, timezone as _tz
     nouveau_manifeste = {**cible,
                          "promoted_at": _dt.now(tz=_tz.utc).isoformat(), "par": par[:120],
                          "precedent": {**{k: m_avant.get(k) for k in
-                                       ("scoring_run", "residuel_run_seq", "mvt_run", "division_run")},
+                                       ("scoring_run", "mvt_run", "division_run")},
+                                       "residuel_run_seq": residuel_seq_servi,
                                        "cascade_run": m_avant.get("cascade_run") or m_avant.get("scoring_run")}}
     _manifeste.ecrire(nouveau_manifeste)
-    # vue dérivée résiduel : is_served suit le manifeste (jamais un autre chemin — lot 3.1).
-    if nouveau_manifeste.get("residuel_run_seq") is not None:
-        try:
-            from .faisabilite import residuel_runs as _rr
-            _rr.set_served(db, int(nouveau_manifeste["residuel_run_seq"]))
-        except Exception:  # noqa: BLE001 — chaîne résiduel absente (base de test) : la vue suit plus tard
-            pass
+    # ALGO-FIX-1 (point 1) — plus AUCUN `set_served` ici : la bascule scoring n'écrit jamais le
+    # résiduel. `residuel_runs.is_served` reste ce qu'il était (test « bascule à blanc → seq 10 »).
     runs.invalidate()                   # DONNEES-2 (B4) — servi ET précédent relus au prochain appel
 
     # BASCULE-1 (Lot B) — LA COMMANDE NE PEUT PLUS MENTIR : le manifeste (le point de vérité) vient

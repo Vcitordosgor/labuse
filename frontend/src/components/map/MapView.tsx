@@ -1510,6 +1510,17 @@ export function MapView() {
           contour violet = résultats de votre recherche
         </div>
       )}
+      {/* ALGO-FIX-1 (point 4) — la carte SIGNALE qu'elle n'est pas à jour : les tuiles matérialisées
+          (mvt_parcels) sont bâties sur un run/résiduel antérieur au servi (perime = /map/tiles/meta).
+          Après une bascule trop longue pour enchaîner le rebuild, la carte affiche encore l'ancien run —
+          elle ne le fait plus EN SILENCE. Reconstruction : onglet « À faire » (ligne bloquante). */}
+      {tilesMeta.data?.perime && (
+        <div data-carte-perimee role="status"
+          className="pointer-events-none absolute left-1/2 top-4 flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-amber/40 bg-amber-bg px-3.5 py-1.5 text-[11px] text-amber shadow-elev-2">
+          <span aria-hidden>▲</span>
+          Carte pas à jour — elle affiche encore l’ancien run (reconstruction des tuiles en attente)
+        </div>
+      )}
       {tool && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-mint bg-surface-2 px-4 py-1.5 text-xs text-mint shadow-elev-2">
           {readout ?? (tool === 'alti' ? 'Cliquez un point pour lire l’altitude'

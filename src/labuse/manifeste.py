@@ -2,15 +2,20 @@
 
 `config/served_manifest.json` = {scoring_run, residuel_run_seq, mvt_run, division_run,
 promoted_at, par, precedent: {…}} — écrit de façon ATOMIQUE (fichier temporaire puis
-os.replace). Une bascule déplace scoring, résiduel, mvt et division EN UN SEUL ÉCRIT ;
+os.replace). Une bascule déplace scoring, mvt et division EN UN SEUL ÉCRIT ;
 Revenir restaure le manifeste précédent ENTIER (décision Vic n° 5 : « une seule bascule
 déplace tout »).
 
-Pendant la transition, les quatre pointeurs historiques (`served_run.txt`,
-`run_precedent.txt`, `mvt_meta.run_label`, `residuel_runs.is_served`) deviennent des VUES
-DÉRIVÉES : écrites par `bascule_flux.basculer()` seul, jamais par un autre chemin — puis
-marqués obsolètes. `runs.current()` lit le manifeste d'abord (repli served_run.txt tant que
-le manifeste n'existe pas : aucun comportement ne change avant la première bascule).
+ALGO-FIX-1 (point 1) — LE RÉSIDUEL FAIT EXCEPTION : sa seule vérité est `residuel_runs.is_served`,
+il se déplace UNIQUEMENT par `labuse residuel-serve` — jamais par la bascule scoring. `residuel_run_seq`
+dans le manifeste n'est plus qu'un MIROIR de `is_served` (recopié par la bascule et par residuel-serve) ;
+il ne pilote plus rien. C'est ce qui empêche un manifeste périmé (« 8 ») de faire reculer un is_served
+plus récent (« 10 ») à la bascule suivante (bug E6).
+
+Pendant la transition, les pointeurs historiques `served_run.txt`, `run_precedent.txt` et
+`mvt_meta.run_label` deviennent des VUES DÉRIVÉES : écrites par `bascule_flux.basculer()` seul, jamais
+par un autre chemin — puis marqués obsolètes. `runs.current()` lit le manifeste d'abord (repli
+served_run.txt tant que le manifeste n'existe pas : aucun comportement ne change avant la première bascule).
 
 Bootstrap : `construire_depuis_pointeurs(db)` fabrique le premier manifeste depuis l'état
 réellement servi (migration sans bascule).

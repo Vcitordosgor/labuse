@@ -34,26 +34,32 @@ def test_served_run_fichier_est_la_source_unique():
         "pas le point de vérité versionné (ou un override LABUSE_SERVED_RUN traîne dans l'env de test)")
 
 
-def test_front_source_lit_le_run_injecte_sans_repli_code_en_dur():
-    """M-Q P2-70 : frontend/src/lib/api.ts — SOURCE lit VITE_RUN_LABEL (injecté au build depuis
-    config/served_run.txt par vite.config.ts) avec un repli VIDE. Plus de run codé en dur : un
-    littéral figé servirait SILENCIEUSEMENT l'ancien run après une bascule si l'injection manquait
-    (front sur l'ancien, backend sur le nouveau → listes vides, aucun message). La cohérence du run
-    RÉEL est vérifiée sur le BUNDLE (test_bundle_front_construit_sur_le_run_servi), et l'absence
-    d'injection déclenche une garde VISIBLE au démarrage (main.tsx) — pas un run muet."""
+def test_front_source_lit_le_run_a_l_execution_sans_repli_code_en_dur():
+    """M-Q P2-70 + ALGO-FIX-1 (point 4) : frontend/src/lib/api.ts — SOURCE vaut INITIALEMENT
+    VITE_RUN_LABEL (injecté au build) avec un repli VIDE (jamais un run codé en dur), MAIS n'est plus
+    figé : c'est un `let` réassigné AU DÉMARRAGE depuis le run servi VIVANT (`/config/run` via
+    `_setServedRun`), pour qu'après une bascule un simple rechargement suffise (plus de `npm run build`
+    obligatoire). La garde de démarrage (main.tsx, RunNonConfigure) reste : run vide ET backend
+    injoignable → écran franc plutôt qu'un run muet."""
     api_ts = (ROOT / "frontend" / "src" / "lib" / "api.ts").read_text(encoding="utf-8")
-    m = re.search(r"export const SOURCE = import\.meta\.env\.VITE_RUN_LABEL \?\? '([^']*)'", api_ts)
-    assert m, ("SOURCE doit valoir `import.meta.env.VITE_RUN_LABEL ?? '...'` "
-               "dans frontend/src/lib/api.ts")
+    m = re.search(r"export let SOURCE = import\.meta\.env\.VITE_RUN_LABEL \?\? '([^']*)'", api_ts)
+    assert m, ("SOURCE doit valoir `export let SOURCE = import.meta.env.VITE_RUN_LABEL ?? '...'` "
+               "dans frontend/src/lib/api.ts (let = lu à l'exécution, plus figé au build)")
     assert m.group(1) == "", (
-        f"repli SOURCE={m.group(1)!r} — attendu chaîne VIDE (M-Q P2-70). Un run codé en dur en repli "
-        "sert l'ancien run après une bascule si VITE_RUN_LABEL n'est pas injecté ; le repli vide + la "
-        "garde de démarrage rendent l'erreur franche au lieu de servir un mauvais run.")
-    # garde de démarrage : main.tsx refuse de booter sur un run vide (écran « run non configuré »)
+        f"repli SOURCE={m.group(1)!r} — attendu chaîne VIDE. Un run codé en dur en repli sert l'ancien "
+        "run après une bascule si VITE_RUN_LABEL n'est pas injecté ; le repli vide + la garde de "
+        "démarrage rendent l'erreur franche au lieu de servir un mauvais run.")
+    # le run est LU À L'EXÉCUTION : api.ts expose le fetch du run vivant + le setter appelé au boot
+    assert "fetchServedRun" in api_ts and "_setServedRun" in api_ts, (
+        "api.ts doit exposer fetchServedRun() (/config/run) et _setServedRun() — le run est aligné au "
+        "démarrage sur le servi vivant, plus figé au build (ALGO-FIX-1 point 4).")
+    # garde de démarrage : main.tsx lit le run vivant au boot ET garde RunNonConfigure si tout est vide
     main_tsx = (ROOT / "frontend" / "src" / "main.tsx").read_text(encoding="utf-8")
     assert "SOURCE" in main_tsx and "RunNonConfigure" in main_tsx, (
-        "main.tsx doit importer SOURCE et garder le démarrage (RunNonConfigure) si SOURCE est vide — "
-        "sinon un build sans injection démarrerait sur un run indéterminé sans le dire.")
+        "main.tsx doit importer SOURCE et garder le démarrage (RunNonConfigure) si SOURCE est vide.")
+    assert "fetchServedRun" in main_tsx and "_setServedRun" in main_tsx, (
+        "main.tsx doit fetcher le run servi vivant au démarrage (fetchServedRun → _setServedRun) — "
+        "run lu à l'exécution, plus figé au build.")
 
 
 def test_bundle_front_construit_sur_le_run_servi():

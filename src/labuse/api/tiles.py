@@ -313,6 +313,90 @@ def rebuild_mvt_servies(db: Session, run_label: str | None = None, log=lambda *_
             "unicite_pm": upm, "run_label": run_label, "tuiles_prechauffees": warm.get("tuiles", 0)}
 
 
+#: ALGO-FIX-1 (point 4) — seuil au-delà duquel la bascule N'ENCHAÎNE PAS le rebuild île (elle crée
+#: une ligne « À faire » bloquante à la place). 15 min = décision du mandat.
+SEUIL_RECONSTRUCTION_MIN = 15
+
+
+def mesurer_rebuild_commune(db: Session, commune: str | None = None,
+                            run_label: str | None = None) -> dict:
+    """ALGO-FIX-1 (point 4) — MESURE le coût d'un rebuild de tuiles sur UNE commune, dans une TABLE
+    TEMPORAIRE (jamais `mvt_parcels` servie), et EXTRAPOLE la durée de l'île entière au prorata du
+    nombre de parcelles. Aucune écriture servie : la table temp disparaît en fin de session. Sert à
+    la bascule pour décider d'ENCHAÎNER le rebuild (île < {SEUIL} min) ou de poser une ligne « À faire »
+    bloquante. `commune` None → la commune la PLUS PEUPLÉE (mesure stable, prorata linéaire)."""
+    import time as _t
+    if run_label is None:
+        run_label = runs.current()
+    from ..bascule_flux import resoudre_cascade_run
+    cascade_run, _ = resoudre_cascade_run(db, run_label)
+    cascade_run = cascade_run or run_label
+    v2run = db.execute(text(
+        "SELECT run_id FROM p_score_v2_runs WHERE run_id = :r"), {"r": run_label}).scalar()
+    if v2run is None:
+        return {"mesure_ok": False, "motif": f"run « {run_label} » absent de p_score_v2_runs"}
+    n_ile = db.execute(text("SELECT count(*) FROM parcels")).scalar() or 0
+    if commune is None:
+        commune = db.execute(text(
+            "SELECT commune FROM parcels WHERE commune IS NOT NULL "
+            "GROUP BY commune ORDER BY count(*) DESC LIMIT 1")).scalar()
+    n_commune = db.execute(text(
+        "SELECT count(*) FROM parcels WHERE commune = :c"), {"c": commune}).scalar() or 0
+    if not n_commune:
+        return {"mesure_ok": False, "motif": f"commune « {commune} » sans parcelle"}
+    t0 = _t.perf_counter()
+    # MÊME requête que build_mvt_table, SCOPÉE commune, dans une table TEMPORAIRE (ON COMMIT DROP :
+    # jamais persistée, jamais servie). On mesure le cœur (mvt_parcels), le poste dominant du rebuild.
+    db.execute(text("DROP TABLE IF EXISTS _algofix_mvt_mesure"))
+    db.execute(text("""
+        CREATE TEMPORARY TABLE _algofix_mvt_mesure ON COMMIT DROP AS
+        SELECT p.id, p.idu, p.commune, p.surface_m2,
+               ST_Transform(p.geom, 3857) AS geom_3857,
+               s2.tier AS tier_v2, s2.rang AS rang_v2,
+               (d.status IN ('exclue', 'faux_positif_probable'))::int AS etage0,
+               r.sdp_residuelle_m2
+        FROM parcels p
+        JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
+        LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
+        LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
+        WHERE p.commune = :c
+    """), {"run": cascade_run, "v2run": v2run, "c": commune})
+    n_mesure = db.execute(text("SELECT count(*) FROM _algofix_mvt_mesure")).scalar() or 0
+    duree_commune_s = _t.perf_counter() - t0
+    db.execute(text("DROP TABLE IF EXISTS _algofix_mvt_mesure"))
+    db.rollback()   # aucune trace : ni table temp, ni verrou — pur banc de mesure
+    par_parcelle = duree_commune_s / n_commune if n_commune else 0.0
+    estimation_ile_s = par_parcelle * n_ile
+    return {"mesure_ok": True, "commune": commune, "n_commune": int(n_commune),
+            "n_mesure": int(n_mesure), "n_ile": int(n_ile),
+            "duree_commune_s": round(duree_commune_s, 2),
+            "estimation_ile_s": round(estimation_ile_s, 1),
+            "estimation_ile_min": round(estimation_ile_s / 60.0, 1),
+            "tient_en_15min": estimation_ile_s <= SEUIL_RECONSTRUCTION_MIN * 60}
+
+
+def planifier_reconstruction_tuiles(db: Session, run_label: str | None = None) -> dict:
+    """ALGO-FIX-1 (point 4) — DÉCISION de la bascule pour les tuiles : mesure une commune (temp),
+    extrapole l'île ; si l'île tient en < {SEUIL} min → « enchainer » (la bascule lance le rebuild) ;
+    sinon → « bloquer » (ligne « À faire » bloquante + carte signalée périmée). Mesure impossible
+    (run non scoré, base de test) → « enchainer » prudent par défaut (jamais d'oubli silencieux de
+    rebuild) avec le motif."""
+    if run_label is None:
+        run_label = runs.current()
+    m = mesurer_rebuild_commune(db, run_label=run_label)
+    if not m.get("mesure_ok"):
+        return {"strategie": "enchainer", "mesure": m,
+                "raison": f"mesure impossible ({m.get('motif')}) — rebuild enchaîné par prudence."}
+    if m["tient_en_15min"]:
+        return {"strategie": "enchainer", "mesure": m,
+                "raison": f"île estimée à {m['estimation_ile_min']} min (< {SEUIL_RECONSTRUCTION_MIN}) "
+                          f"→ rebuild enchaîné par la bascule."}
+    return {"strategie": "bloquer", "mesure": m,
+            "raison": f"île estimée à {m['estimation_ile_min']} min (≥ {SEUIL_RECONSTRUCTION_MIN}) "
+                      f"→ ligne « À faire » bloquante + carte signalée non à jour.",
+            "duree_estimee_min": m["estimation_ile_min"]}
+
+
 # cache LRU en mémoire (les tuiles sont chères à générer et très re-demandées en navigation)
 # CARTE-VITESSE-2 lot C : le LRU mémorise (octets, ETag) pour ne pas recalculer le md5 à chaque
 # service d'une tuile chaude (l'ETag alimente la revalidation conditionnelle 304, cf. _tile_response).

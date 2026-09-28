@@ -1,0 +1,34 @@
+ALGO-FIX-1 point 3 — SDP résiduelle : le client lit le RUN SERVI (parcel_residuel)
+
+Vérité servie parcel_residuel : EO0796=179 · AX0990=1619 · AO1424=0
+
+Consommateurs (vérifiés) :
+  Fiche §Potentiel (potentiel_transformation.sdp_residuelle_m2) : LIT LE SERVI (parcel_residuel) — déjà OK
+  Dossier page de garde « SDP RESTANTE »                        : LIT LE SERVI — déjà OK (179)
+  Dossier §10 « Potentiel »                                     : LIT LE SERVI (robinet_fiche → parcel_residuel) — aligné par EXPORTS-FIX-1 (« SDP ci-dessus » = 179)
+  Copilote (fiche_ask → payload fiche)                          : LIT LE SERVI — déjà OK
+  Onglet Faisabilité (POST /modules/faisabilite/{idu}/scenario) : CORRIGÉ ci-dessous
+
+Faisabilité — AVANT / APRÈS (hors saisie) :
+  EO0796 (bâti présent) bati_garde : 187 (live) → 179 (servi)  ✓  [Golden 55 restauré]
+  EO0796 terrain_libere            : 338 (enveloppe démolition, live) — INCHANGÉ (grandeur distincte : « en rasant le bâti »)
+  AX0990 (terrain nu) terrain_libere : 1642 (live) → 1619 (servi) ✓
+  AX0990 bati_garde (repli nu)       : 1642 → 1619 ✓
+  AO1424 (non constructible)         : 0 → 0 ✓  (cause terrain_exigu)
+
+Chemin simulation (chiffres SAISIS = moteur live, prouvé) :
+  EO0796 bati_garde + override coef_occupation=0.9 → 187 (live, pas 179 servi)
+  AX0990 terrain_libere + test {5 logts × 60 m²}   → 1642 (live), test « tient »
+
+STOP (front de la fiche) :
+  Pour une parcelle AVEC bâti, l'onglet Faisabilité s'ouvre par défaut sur le scénario
+  « terrain_libere » (constructibilite.tsx:419) = l'enveloppe démolition-reconstruction (338),
+  grandeur DISTINCTE du résiduel servi (179). Le résiduel (179) est bien servi partout (fiche,
+  Dossier, Copilote, scénario bati_garde). Faire que l'onglet s'OUVRE sur le résiduel (bati_garde)
+  pour les parcelles bâties = 1 ligne de front (défaut de scénario) → STOP (mandat : ne pas toucher
+  le front de la fiche). Pour les parcelles NUES, le défaut terrain_libere lit déjà le servi (OK).
+
+NUANCE zonage (hors sujet SDP) :
+  AO1424 : fiche/servi = zone A (dominante 98,6 %) ; l'onglet Faisabilité étiquette la portion
+  constructible UA (0,0 %). La SDP est 0 des deux côtés. Résolution de zone (module zonage),
+  hors périmètre « SDP lit le servi » — non touchée (« rien d'autre »).
