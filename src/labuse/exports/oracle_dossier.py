@@ -123,9 +123,36 @@ def _peb_affiche(f: Any) -> Any:
     return z if z in ("A", "B", "C", "D") else None
 
 
+# SOURCES-FIX-1 (A1/A2/A3) a ajouté trois extracteurs (enr_exclue_parcelle, mesures_compensatoires_
+# parcelle, scot_parcelle) SANS les déclarer à l'oracle → le verrou de couverture (test_oracle_couvre_
+# chaque_ligne_du_dossier) cassait. Les trois lisent le payload `/parcels/{idu}` (risques.tsx :
+# f.enr_exclue_toiture, f.mesures_compensatoires ; Fiche.tsx data-scot : f.scot) et n'affichent une
+# VALEUR que si `disponible` (sinon une note « non concerné/indisponible », grise) — même cas
+# conditionnel que DPU/PEB. On réplique donc la condition d'affichage (ORACLE_FN), jamais un chemin nu.
+def _enr_exclue_affiche(f: Any) -> Any:
+    """React (risques.tsx) n'affiche les zones d'exclusion EnR que si `disponible` ; sinon note grise."""
+    d = f.get("enr_exclue_toiture") if isinstance(f, dict) else None
+    return (d.get("zones") or None) if isinstance(d, dict) and d.get("disponible") else None
+
+
+def _mesures_comp_affiche(f: Any) -> Any:
+    """React (risques.tsx) n'affiche les mesures compensatoires que si `disponible` ; sinon note grise."""
+    d = f.get("mesures_compensatoires") if isinstance(f, dict) else None
+    return (d.get("mesures") or None) if isinstance(d, dict) and d.get("disponible") else None
+
+
+def _scot_affiche(f: Any) -> Any:
+    """React (Fiche.tsx, data-scot) n'affiche le SCOT (nom/date) que si `disponible` ; sinon note grise."""
+    d = f.get("scot") if isinstance(f, dict) else None
+    return (d.get("nom") or "SCOT") if isinstance(d, dict) and d.get("disponible") else None
+
+
 #: données dont l'affichage React est CONDITIONNEL (une note ≠ une valeur) : l'oracle réplique la
 #: condition d'affichage pour ne pas confondre un sentinel (non_determinee/hors) avec une valeur.
-ORACLE_FN = {"dpu_perimetre": _dpu_affiche, "peb_zone": _peb_affiche}
+ORACLE_FN = {"dpu_perimetre": _dpu_affiche, "peb_zone": _peb_affiche,
+             "enr_exclue_parcelle": _enr_exclue_affiche,
+             "mesures_compensatoires_parcelle": _mesures_comp_affiche,
+             "scot_parcelle": _scot_affiche}
 
 
 def lire(payload: Any, chemin: str) -> Any:

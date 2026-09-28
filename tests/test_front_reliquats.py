@@ -79,9 +79,13 @@ def test_r2_couleurs_colonnes_kanban():
 
 
 def test_r2_sortie_distincte_des_decisions():
-    # Quitter : sobre (txt-mut), dans la barre haute — jamais confondu avec une décision
+    # Quitter : sobre, dans la barre haute — jamais confondu avec une décision.
+    # DA-FIX-1 Lot 4 (composant Bouton unique, ecaf8e2d) : ~99 boutons migrés vers <Bouton>. Le
+    # style sobre de la sortie n'est plus une classe locale `text-txt-mut` mais le NIVEAU « lien »
+    # du composant partagé — on vérifie ce niveau (≠ des décisions, qui sont primaire/plein).
     assert "data-parcours-quitter" in TINDER and "✕ Quitter" in TINDER
-    assert "text-txt-mut" in TINDER.split("data-parcours-quitter")[1][:300]
+    i = TINDER.find("data-parcours-quitter")
+    assert 'niveau="lien"' in TINDER[max(0, i - 60):i]        # sortie = lien sobre du design system
 
 
 def test_r2_pas_de_raccourcis_inventes():
@@ -125,9 +129,14 @@ def test_m135_echelle_action():
     assert "a_suivre: { label: 'À suivre'" in STATUS
     assert "sans_signal: { label: 'Sans signal'" in STATUS
     assert "ecartee: { label: 'Écartée'" in STATUS
+    # L'interdiction des anciens libellés porte sur le bloc PALIER_META (l'échelle d'ACTION) : elle
+    # scannait tout le fichier et heurtait BANDE_META D = { label: 'Faible' } — le libellé LÉGITIME de
+    # la BANDE de constructibilité (« vocabulaire client gravé », mandat §2), une AUTRE échelle. On
+    # borne donc la garde au bloc PALIER_META (comme test_m135_tiers_front_back_alignes le fait déjà).
+    palier_blk = STATUS.split("export const PALIER_META", 1)[1].split("export const", 1)[0]
     for mot in ("label: 'Long terme'", "label: 'Neutre'", "label: 'Faible'",
                 "label: 'Brûlante'", "label: 'Chaude'", "label: 'À creuser'"):
-        assert mot not in STATUS, f"ancien libellé servi : {mot}"
+        assert mot not in palier_blk, f"ancien libellé servi dans l'échelle d'action : {mot}"
 
 
 def test_r3_desambiguisation_cote_a_cote():
@@ -194,7 +203,12 @@ def test_marche_fiche_porte_les_3_faits_uniques():
     # Lot A — les 3 faits uniques de l'ex-outil vivent dans la §Marché de la fiche (via /outils/mon-secteur).
     assert "getMonSecteur" in MARCHE and "'mon-secteur'" in MARCHE
     assert "data-secteur-ecart-commune" in MARCHE                       # écart secteur ↔ commune
-    assert "data-secteur-par-type" in MARCHE                            # médiane par type
+    # KELFONCIER-FIX-2 (Lot I, maquette v3) : la MÉDIANE PAR TYPE n'est plus un FactRow
+    # `data-secteur-par-type` mais les Tuiles c3 en tête de section (mêmes données ms.par_type,
+    # /outils/mon-secteur). On vérifie la nouvelle forme (le fait unique reste servi), pas l'ancien marqueur.
+    assert "par_type" in MARCHE and "typeTuiles" in MARCHE and "<Tuiles" in MARCHE   # médiane par type
+    for lbl in ("'Terrain nu'", "'Maison'", "'Appartement'"):
+        assert lbl in MARCHE, f"tuile médiane par type manquante : {lbl}"
     assert "data-secteur-radar-rayon" in MARCHE                         # annonces Radar dans le rayon
     # Radar : les deux libellés RESTENT distincts (Lot B) — « cette parcelle » vs « autour (rayon) »
     assert "Annonces Radar — cette parcelle" in MARCHE and "Annonces Radar — autour" in MARCHE

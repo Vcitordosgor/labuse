@@ -109,7 +109,10 @@ def test_f8_reseaux_quatre_blocs_sans_permis():
     r = _read("reseaux.tsx")
     assert "PermitsProximityBlock" not in r        # permis → Autour
     assert "data-bloc-acces" in r                  # bloc Accès
-    assert "Axes et nuisances" in r
+    # FICHE-FIX-4 Lot H (c47fdcd3) — le 4e bloc « Axes et nuisances » est restructuré « tout en Ligne
+    # sous les cases-état » : plus de GroupLabel dédié (le titre ne survit qu'en commentaire d'en-tête),
+    # l'axe structurant et le trafic RN sont désormais des Lignes. On vérifie ces faits, pas le titre.
+    assert "Axe structurant" in r and "Trafic " in r
 
 
 # ── F9 Autour : permis + socio-éco réunis ici (un moteur, un tableau) ─────────────────────────────

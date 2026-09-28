@@ -85,7 +85,9 @@ def test_w2_cinq_lignes_etat_avec_definitions_sur_les_lignes():
     assert "ni récent, ni dormant, ni achevé" in MP
     # bloc total en tête + bandeau court
     assert "permis autorisés en base" in MP
-    assert "l'instruction déposée n'y figure pas" in MP
+    # FINITIONS-2 (title sweep, bb7d9281) a retiré l'attribut title « … l'instruction déposée n'y
+    # figure pas » ; la même vérité reste en TEXTE VISIBLE resserré sous le bandeau Sitadel.
+    assert "pas l'instruction en cours" in MP
 
 
 def test_w2_w3_source_unique_des_couleurs_aucune_teinte_nouvelle():
@@ -104,11 +106,15 @@ def test_w2_w3_source_unique_des_couleurs_aucune_teinte_nouvelle():
     assert "#6B7A72" not in MP and "#6B7A72" not in MV   # jamais en dur : passe par le token
 
 
-def test_w3_legende_trois_entrees_quand_permis_actif():
-    """La légende de carte montre les TROIS couleurs de permis quand l'outil est actif (W3)."""
-    assert "PERMIS_LEGENDE" in LG
-    assert "moduleActif === 'permis' || moduleActif === 'promesses'" in LG
-    # trois entrées dans la source unique (Achevé + Autre fondus en gris)
+def test_w3_couleurs_etat_sur_carte_et_panneau_sans_legende_carto():
+    """RETOURS-15 B1 (abc1ce6b) — la légende « Permis (par état) » AJOUTÉE à la carte est RETIRÉE :
+    les points restent colorés par état (MapView) et c'est le panneau « Filtrer par état » qui porte
+    les couleurs (pastilles via etatColor), depuis la source unique permisEtats. W3 tient donc sans
+    légende carto — on vérifie le nouveau partage (carte + panneau), pas l'ancienne légende."""
+    assert "PERMIS_LEGENDE" not in LG               # la carte ne porte plus la légende permis (B1)
+    assert "PERMIS_ETAT_COLOR" in MV                # …mais la carte peint toujours les points par état
+    assert "etatColor" in MP                        # …et le panneau porte les mêmes couleurs (pastilles)
+    # les trois couleurs de carte restent une source unique (Achevé + Autre fondus en gris)
     assert ET.count("label:") == 3 or ET.count("label:'") + ET.count("label: '") == 3
     assert "Récent (autorisé ≤ 24 mois)" in ET
     assert "Achevé ou autre" in ET

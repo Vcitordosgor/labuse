@@ -70,6 +70,15 @@ def test_un_seul_mail_par_jour_trois_comptes():
         assert "annonce" in (d[A].get("corps") or "").lower()
         assert _lignes_digest(db, A) == 1 and _lignes_digest(db, B) == 1 and _lignes_digest(db, C) == 0
 
+        # TESTS-FIX-1 — chaque passage du digest est SA propre transaction en production (le job
+        # envoyer_digests ouvre/valide un session_scope par run). Le test enchaînait deux appels dans
+        # UNE transaction non validée : le 1er run laisse des lignes mail_queue verrouillées (non
+        # commit), et `_mq_ensure` du 2ᵉ run (DDL « CREATE/ALTER mail_queue IF NOT EXISTS » sur une
+        # connexion SÉPARÉE du pool) attendait ce verrou → la connexion `db` restait idle-in-transaction
+        # et se faisait tuer (idle_in_transaction_session_timeout, ~600 s). On valide donc le 1er run
+        # avant le rejeu, comme en production — la dédup mail_queue (compte, jour) reste vérifiée.
+        db.commit()
+
         # rejeu le MÊME jour → dédup mail_queue : toujours une seule ligne par compte
         events.envoyer_digests(db, base_url="https://app.labuse.immo", dry_run=True)
         assert _lignes_digest(db, A) == 1 and _lignes_digest(db, B) == 1 and _lignes_digest(db, C) == 0

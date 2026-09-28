@@ -215,9 +215,12 @@ def test_g4_vert_et_vide_jamais_a_jour():
     with sessionmaker(bind=create_engine(url))() as s:
         r = CG.verrou_g4(s)
         assert r.verdict == "ok", (r.preuve, r.details[:5])
-        dpe = next(e for e in lister_etats(s) if "DPE" in e["name"])
-        assert dpe["etat"] == "vide" and dpe["etat_client"] == "pas_a_jour", \
-            "le DPE (vide mesurée) ne peut plus dire « à jour »"
+        # SOURCES-CORRECTION-1 a rempli le DPE (16 → 1123) : il n'est plus « vide » (cf. test_g2 déjà
+        # remis sur la valeur réelle). L'invariant G4 tient GÉNÉRIQUEMENT et non plus sur l'exemple DPE :
+        # toute source MESURÉE vide se projette « pas à jour » côté client, jamais « à jour ».
+        vides = [e for e in lister_etats(s) if e["etat"] == "vide"]
+        pas_conformes = [e["name"] for e in vides if e["etat_client"] != "pas_a_jour"]
+        assert not pas_conformes, f"source(s) vide(s) qui disent « à jour » : {pas_conformes}"
 
 
 # ── G5 — date du dernier contrôle ──────────────────────────────────────────────────────

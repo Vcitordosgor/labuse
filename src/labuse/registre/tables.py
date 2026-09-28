@@ -540,6 +540,9 @@ TABLES_EXPLOITATION: dict[str, str] = {
     "app_reglages": "réglages applicatifs",
     # CIRCUIT-6 (merge main) — trois tables applicatives de RECETTE-10/11/12 classées (V1c) :
     "mail_queue": "file d'envoi de mails (exploitation)",
+    # TESTS-FIX-1 — filigrane d'état du digest Radar (dernier dépôt vu par nom), créé au vol par
+    # pige/digests.py : état d'exploitation, pas une donnée servie ni une orpheline à purger (V1c).
+    "pige_watermark": "filigrane du dernier dépôt vu par le digest Radar (exploitation)",
     "prefs_carte": "préférences de carte par utilisateur",
     "questionnaire_financier": "questionnaire du Financier (saisies client)",
     "bilan_params": "paramètres de bilan",
