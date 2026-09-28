@@ -13,6 +13,7 @@ C_ZONE = "#36c99a"       # zone d'implantation
 C_RETRAIT = "#e0a44a"    # bandes de retrait
 C_EXCL = "#e8491d"       # exclusions (PPR rouge)
 C_CONTOUR = "#9aa0a6"    # contour cadastral
+C_BATI = "#7c828a"       # EXPORTS-FIX-1 F5 — bâti existant (GABARIT-6, comme l'outil Gabarit.tsx)
 
 
 def _rings(geom: Optional[dict]) -> Iterator[list]:
@@ -39,6 +40,7 @@ def gabarit_svg(result: Any, *, width: int = 340, height: int = 250) -> Optional
     zone = g("zoneImplantationGeoJSON")
     retrait = g("retraitsGeoJSON")
     excl = g("exclusionsGeoJSON")
+    bati = g("batiExistantGeoJSON")   # EXPORTS-FIX-1 F5 — bâti existant (fait contextuel, GABARIT-6 P4)
 
     PAD = 8
     LEG = 54  # bandeau de légende sous le dessin
@@ -46,7 +48,7 @@ def gabarit_svg(result: Any, *, width: int = 340, height: int = 250) -> Optional
     plot_h = H - LEG
     minx = miny = 1e18
     maxx = maxy = -1e18
-    for geom in (contour, zone, retrait, excl):
+    for geom in (contour, zone, retrait, excl, bati):
         for r in _rings(geom):
             for pt in r:
                 x, y = pt[0], pt[1]
@@ -81,13 +83,21 @@ def gabarit_svg(result: Any, *, width: int = 340, height: int = 250) -> Optional
     if zone:
         parts.append(f'<path d="{path(zone)}" fill="{C_ZONE}" fill-opacity="0.55" '
                      f'stroke="{C_ZONE}" stroke-width="0.8"/>')
+    # EXPORTS-FIX-1 F5 — bâti EXISTANT (emprise BD TOPO), aplat gris comme dans l'outil : le schéma
+    # montre ce qui est déjà là (côté « rue » lisible via le bâti et le contour), pas une parcelle nue.
+    if bati:
+        parts.append(f'<path d="{path(bati)}" fill="{C_BATI}" fill-opacity="0.38" '
+                     f'stroke="{C_BATI}" stroke-width="0.6"/>')
     if contour:
         parts.append(f'<path d="{path(contour)}" fill="none" stroke="{C_CONTOUR}" '
                      f'stroke-width="1" stroke-dasharray="4 2"/>')
-    # légende
+    # légende — EXPORTS-FIX-1 F5 : uniquement les éléments PRÉSENTS (plus de « PPR rouge » sur une
+    # parcelle qui n'a aucune exclusion).
     y0 = plot_h + 12
-    leg = [(C_ZONE, "Zone d'implantation"), (C_RETRAIT, "Retraits"),
-           (C_EXCL, "Exclusion (PPR rouge)"), (C_CONTOUR, "Contour cadastral")]
+    leg = [(c, l) for c, l, present in (
+        (C_ZONE, "Zone d'implantation", zone), (C_RETRAIT, "Retraits", retrait),
+        (C_BATI, "Bâti existant", bati), (C_EXCL, "Exclusion (PPR rouge)", excl),
+        (C_CONTOUR, "Contour cadastral", contour)) if present]
     parts.append(f'<text x="{PAD}" y="{plot_h + 2}" font-size="8" fill="#6b7075">'
                  f'Zone d\'implantation réglementaire (schéma — pas un plan de masse)</text>')
     for i, (col, lab) in enumerate(leg):

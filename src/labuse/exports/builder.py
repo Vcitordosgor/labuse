@@ -376,7 +376,11 @@ def _apporteur_plan(db, idu: str, voisines: dict) -> dict | None:
     try:
         from ..api.plan_situation import plan_ortho
         from ..flash.report import storage_dir
-        res = plan_ortho(gj, cache_dir=storage_dir() / "tiles", extra_geojson=extra, zoom_delta=-1)
+        # EXPORTS-FIX-1 F3 — le plan se CALE sur la parcelle : zoom auto (plus de « −1 » qui la
+        # rétrécissait) et plafond relevé à 19 (max ortho IGN) pour qu'une petite parcelle (479 m²)
+        # ne reste pas un point. Même appel pour le Dossier (§1) et l'Apporteur.
+        res = plan_ortho(gj, cache_dir=storage_dir() / "tiles", extra_geojson=extra,
+                         zoom_delta=0, zoom_max=19)
     except Exception:  # noqa: BLE001 — la carte est un plus, jamais un bloqueur du document
         return None
     if not res.get("ok"):
@@ -409,8 +413,12 @@ def _apporteur_contexte(db, idu: str, fiche: dict, jour: date, compte_id: int | 
     def _releve(layer: str) -> bool:
         return any(l.get("layer") == layer and l.get("result") not in (None, "PASS") for l in _lines)
     _aleas = (fiche.get("aleas") or {}).get("liste") or []
+    # EXPORTS-FIX-1 E3 — on regarde la nature ET le libellé (l'ancien « nature or libelle » s'arrêtait
+    # à la nature « PPR — zone bleue » et manquait « …inondation… » du libellé → P1, qui a un PPR
+    # inondation, n'avait pas la question d'eau et se retrouvait identique à P2).
     obs_eau = (_releve("ravine") or _releve("zone_humide") or _releve("tri_zone") or _releve("dpf")
-               or any(isinstance(a, dict) and any(k in (a.get("nature") or a.get("libelle") or "").lower()
+               or any(isinstance(a, dict) and any(
+                      k in ((a.get("nature") or "") + " " + (a.get("libelle") or "")).lower()
                       for k in ("inond", "submers", "ravine", "humide")) for a in _aleas))
     obs_pollution = industriel or _releve("sol_pollue") or _releve("casias")
     return {

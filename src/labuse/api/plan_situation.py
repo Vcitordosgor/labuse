@@ -48,7 +48,8 @@ def _lat_repr(geojson_str: str) -> float | None:
 def plan_ortho(geojson_str: str | None, cache_dir: Path, *, timeout_s: float = 10.0,
                zoom_delta: int = 0, extra_geojson: str | None = None,
                crop_margin_m: float | None = None, focus_points: list | None = None,
-               target_aspect: float | None = None, min_px: int | None = None) -> dict:
+               target_aspect: float | None = None, min_px: int | None = None,
+               zoom_max: int | None = None) -> dict:
     """Composite l'ortho + contour → PNG. Renvoie toujours un dict :
     - succès : {ok:True, jpeg, width, height, zoom, metres_par_px, attribution}
     - échec  : {ok:False, echec:"<raison explicite>"} (jamais un cadre vide, jamais masqué).
@@ -61,7 +62,7 @@ def plan_ortho(geojson_str: str | None, cache_dir: Path, *, timeout_s: float = 1
                             tile_url=IGN_ORTHO_URL, tile_mime="image/jpeg",
                             cache_prefix="ortho", attribution=IGN_ORTHO_ATTRIBUTION,
                             zoom_delta=zoom_delta, extra_geojson=extra_geojson,
-                            focus_points=focus_points)
+                            focus_points=focus_points, zoom_max=zoom_max)
     if m is None:
         return {"ok": False, "echec": "fond cartographique indisponible — service ortho ou réseau injoignable"}
     if not m.get("tiles"):

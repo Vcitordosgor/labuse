@@ -96,9 +96,14 @@ def dossier_pdf(idu: str, request: Request, carte: bool = True,
         raise HTTPException(404, str(exc))
     res = builder.construire(db, idu, "dossier", fiche=fiche, compte_id=current_compte(request))
     _pour = "" if (s.raison_sociale or "").strip() in ("", "Pilote LABUSE") else f" pour {s.raison_sociale}"
-    mention = (f'<div style="position:fixed;bottom:2mm;right:0;font-size:7pt;color:#5F6C65;'
-               f'font-family:Inter,sans-serif;">Généré via LABUSE{_pour}</div>')
-    pdf = render_pdf(res.html.replace("</body>", mention + "</body>"))
+    # EXPORTS-FIX-1-BIS point 7 — la mention d'attribution vit dans un BLOC DE MARGE @page
+    # (@bottom-center, contenu STATIQUE qui SE REND dans ce WeasyPrint, contrairement à
+    # string()/element()) : jamais dans le flux → aucun chevauchement possible (badge « sourcé »,
+    # titres). Le div `position:fixed` (F1) qui chevauchait encore est retiré.
+    _txt = ("Généré via LABUSE" + _pour).replace("\\", "").replace('"', "'")
+    style = ('<style>@page { @bottom-center { content: "' + _txt + '"; '
+             'font: 7pt "Inter","DejaVu Sans",sans-serif; color: #5F6C65; } }</style>')
+    pdf = render_pdf(res.html.replace("</head>", style + "</head>"))
 
     from .protection import _aujourdhui
     db.execute(text(

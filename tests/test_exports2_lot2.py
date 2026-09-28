@@ -138,9 +138,11 @@ def test_omission_quand_donnee_absente():
                               fiche={"surface_m2": 500, "commune": "X"}, jour=date(2026, 9, 5)).html
     assert "◌" not in html and "non chiffré" not in html
     # EXPORTS-REBRANCHEMENT-1 lot 1 — le miroir garde les 11 sections de la fiche et DIT les
-    # absences (« Vérifié, sans objet », phrases déclarées) au lieu d'omettre des sections.
+    # absences (phrases déclarées) au lieu d'omettre des sections.
+    # EXPORTS-FIX-1 C6 — l'encadré unique « Vérifié, sans objet » est scindé en deux : « Vérifié :
+    # rien » (contrôle tenu, rien trouvé) et « Non disponible ici » (donnée non calculée).
     assert "1. Identité" in html
-    assert "Vérifié, sans objet" in html
+    assert ("Vérifié : rien" in html) or ("Non disponible ici" in html)
 
 
 def test_archive_reproductible(tmp_path):

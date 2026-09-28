@@ -22,6 +22,8 @@
 
 @page {
   size: A4;
+  /* EXPORTS-FIX-1-BIS point 7 — la mention d'attribution est passée dans un bloc de marge @page
+     (@bottom-center, injecté par la route) : plus de div fixe dans le flux, marge basse ramenée à 19 mm. */
   margin: 17mm 16mm 19mm 16mm;
   @top-left { content: string(doc-title); font: 8pt "Inter", "Inter", "DejaVu Sans", sans-serif; color: #6B746E; }
   @top-right { content: string(doc-ref); font: 8pt "IBM Plex Mono", "DejaVu Sans Mono", monospace; color: #6B746E; }
@@ -62,6 +64,10 @@ h1 { font-size: 24pt; line-height: 1.15; font-weight: 700; margin: 0 0 4pt; lett
    (24 pt cassait « …97417 / Saint-Denis » au milieu) ; elle tient sur une ligne pour une adresse
    réunionnaise courante, le code postal restant lié à la commune (U+00A0, builder). */
 h1.addr-compacte { font-size: 15pt; line-height: 1.2; }
+/* EXPORTS-FIX-1 F4 — l'IDU en tête de garde : police MONO (chiffre 0 pointé de JetBrains Mono,
+   distinct du O), sans crénage négatif, pour que « 97415000EO0796 » ne se lise pas « …E00796 ». */
+h1.idu-code { font-family: "IBM Plex Mono", "DejaVu Sans Mono", monospace; font-size: 20pt;
+              letter-spacing: 0; font-feature-settings: "zero" 1; }
 .subtitle { font-size: 11pt; color: var(--muted); margin: 0 0 18pt; }
 .address { font-size: 14pt; margin: 0 0 2pt; }
 .idu { font-family: "IBM Plex Mono", "DejaVu Sans Mono", monospace; font-size: 9.5pt; color: var(--muted); margin-bottom: 16pt; }
@@ -106,8 +112,12 @@ table.grid3 th { background: var(--grey-bg); font-family: "Inter", sans-serif; f
 table.grid3 td.neg { color: var(--rose); }
 
 /* --- sections ---------------------------------------------------------- */
-h2 { font-size: 15pt; font-weight: 700; margin: 22pt 0 8pt; padding-left: 10pt; border-left: 4px solid var(--mint); page-break-after: avoid; }
-h3 { font-size: 10.5pt; font-weight: 600; margin: 14pt 0 5pt; page-break-after: avoid; }
+h2 { font-size: 15pt; font-weight: 700; margin: 22pt 0 8pt; padding-left: 10pt; border-left: 4px solid var(--mint); page-break-after: avoid; break-after: avoid; }
+h3 { font-size: 10.5pt; font-weight: 600; margin: 14pt 0 5pt; page-break-after: avoid; break-after: avoid; }
+/* EXPORTS-FIX-1-BIS point 7 — un en-tête de groupe (« Ce qui contraint », « Taxes »…) reste COLLÉ à
+   sa première ligne, jamais seul en bas de page. */
+tr.grp { page-break-after: avoid; break-after: avoid; }
+tr.grp td { padding-top: 4pt; }
 section { page-break-inside: auto; }
 .keep { page-break-inside: avoid; }
 p { margin: 0 0 6pt; }

@@ -89,7 +89,21 @@ def _c_pente(db, idu, f):
 @extracteur("exposition_versant")
 def _c_exposition(db, idu, f):
     t = f.get("terrain") or {}
-    return _nz(t.get("exposition") or t.get("exposition_versant"))
+    val = t.get("exposition") or t.get("exposition_versant")
+    # EXPORTS-FIX-1 C7 — l'exposition est un calcul PARESSEUX (MNT RGE ALTI + gdaldem) que la fiche
+    # récupère par un endpoint dédié ; il est absent du payload de base, d'où une garde « — » alors
+    # que la pente, elle, sort. On la calcule ici par LE MÊME moteur (aucune valeur inventée : si le
+    # calcul échoue faute de réseau/altimétrie, on rend None et la tuile est omise, jamais « — »).
+    if not val:
+        try:
+            from sqlalchemy import text as _text
+            from ..faisabilite.exposition import exposition_parcelle
+            pid = db.execute(_text("SELECT id FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
+            res = exposition_parcelle(db, pid) if pid else None
+            val = (res or {}).get("orientation")
+        except Exception:  # noqa: BLE001 — un calcul paresseux ne fait jamais échouer un document
+            val = None
+    return _nz(val)
 
 
 @extracteur("prix_achat_historique_eur")
@@ -181,7 +195,33 @@ def _c_dispositifs_sup(db, idu, f):
 
 @extracteur("statut_plu")
 def _c_plu_fraicheur(db, idu, f):
-    return _nz(f.get("plu_fraicheur"))
+    v = f.get("plu_fraicheur")
+    if not isinstance(v, dict):
+        return _nz(v)
+    # EXPORTS-FIX-1 C1 — « approuvé le 2025-12-17 » est en fait la date de PUBLICATION au Géoportail
+    # de l'urbanisme ; la VRAIE date d'approbation du PLU (et sa dernière évolution) vient de Sudocuh
+    # (approbation_opp / prescription_proc). Lecture seule, best-effort.
+    # EXPORTS-FIX-1-BIS point 5 — la « dernière évolution » ne peut être qu'une date d'APPROBATION,
+    # jamais une prescription (date de lancement d'une modification). Sudocuh (cette table) ne porte
+    # que l'approbation du DU opposable (`approbation_opp`) et une prescription en cours
+    # (`prescription_proc`) : il n'y a PAS de date d'approbation d'évolution distincte → on ne sert
+    # aucune « évolution » (la ligne ne s'imprimera pas). `executoire_du_vigueur` sert si un jour il
+    # porte l'exécutoire d'une modification approuvée.
+    try:
+        from sqlalchemy import text as _text
+        row = db.execute(_text("SELECT approbation_opp, executoire_du_vigueur FROM sudocuh_procedures "
+                               "WHERE insee = :i LIMIT 1"), {"i": (idu or "")[:5]}).mappings().first()
+        if row:
+            _appro = row["approbation_opp"]
+            _exe = row["executoire_du_vigueur"]
+            v = {**v,
+                 "approbation_sudocuh": (_appro.isoformat() if _appro else None),
+                 # une évolution n'est servie que si son EXÉCUTOIRE (approbation) diffère de l'approbation
+                 # initiale — jamais la prescription en cours.
+                 "evolution_sudocuh": (_exe.isoformat() if (_exe and _exe != _appro) else None)}
+    except Exception:  # noqa: BLE001 — table absente / base de test : on garde le bloc tel quel
+        db.rollback()
+    return _nz(v)
 
 
 # SOURCES-FIX-1 (A1/A2/A3) — les trois contraintes servies à la parcelle entrent au Dossier PDF
@@ -525,9 +565,22 @@ def _c_dvf_secteur(db, idu, f):
 
 @extracteur("prix_neuf_vefa_acte_eur_m2")
 def _c_vefa(db, idu, f):
-    ms = f.get("marche_secteur") or {}
-    v = ms.get("neuf_vefa") or ms.get("vefa")
-    return _nz(v)
+    # EXPORTS-FIX-1 C5 — CAUSE trouvée : l'ancien code lisait `marche_secteur.neuf_vefa`, une clé
+    # JAMAIS peuplée dans le payload → « échantillon VEFA insuffisant » systématique, alors que le
+    # registre (moteur `neuf_vefa_commune`, VEFA déclaré à l'acte, grain commune, fenêtre 5 ans) SERT
+    # bien la médiane : Saint-Paul n=299 (4 750 €/m²), La Possession n=86 — au-dessus du seuil (8).
+    # On lit désormais LA valeur du registre (fait foi), avec son effectif et sa fenêtre.
+    try:
+        from ..ingestion.dvf_marche import neuf_vefa_commune
+        from ..marche_service import neuf_vefa_seuil
+        r = neuf_vefa_commune(db, (idu or "")[:5])
+        seuil = neuf_vefa_seuil()
+    except Exception:  # noqa: BLE001 — table/moteur absent (base de test) : ligne omise, jamais un 500
+        db.rollback()
+        return None
+    if not r or r.get("mediane_prix_m2_bati") is None or (r.get("n") or 0) < seuil:
+        return None   # sous le seuil : ligne omise (absence « échantillon insuffisant »), comme la fiche
+    return {"prix_m2": r["mediane_prix_m2_bati"], "n": r.get("n"), "fenetre_ans": r.get("fenetre_ans")}
 
 
 @extracteur("radar_annonces_liste")
@@ -618,6 +671,15 @@ def _gabarit(db, idu: str) -> dict:
             per[idu] = out
             return out
         res = compute_gabarit(build.input)
+        # EXPORTS-FIX-1 F5 — le bâti EXISTANT (fait contextuel BD TOPO, GABARIT-6 P4) n'est peuplé que
+        # par l'endpoint outil ; on l'attache ici aussi pour que le schéma du Dossier le montre (comme
+        # l'outil), plutôt qu'une parcelle nue. Best-effort : jamais un bloqueur du document.
+        try:
+            from ..api.gabarit import _bati_existant
+            if res.status == "ok" and res.batiExistantGeoJSON is None:
+                res.batiExistantGeoJSON = _bati_existant(db, idu)
+        except Exception:  # noqa: BLE001
+            pass
         if res.status != "ok":
             errs = res.validationErrors or ([res.message] if res.message else [])
             out["motif"] = errs[0] if errs else None
@@ -626,13 +688,14 @@ def _gabarit(db, idu: str) -> dict:
         cov = res.coverage
         fam = [nom for ok, nom in ((cov and cov.reculs, "reculs"), (cov and cov.emprise, "emprise"),
                                    (cov and cov.hauteur, "hauteur"), (cov and cov.risques, "risques")) if ok]
-        txt = (f"{len(fam)} famille{'s' if len(fam) > 1 else ''} vérifiée{'s' if len(fam) > 1 else ''} "
-               f"sur 4 ({', '.join(fam)})") if fam else "aucune famille vérifiée"
+        # EXPORTS-FIX-1 A8 — plus de « 4 familles vérifiées sur 4 … non intégrée(s) » (jargon QA) :
+        # on dit en clair ce qui est vérifié et ce qui n'est pas modélisé.
+        txt = ("Vérifié : " + ", ".join(fam)) if fam else "Aucune règle vérifiée"
         # « PPR — analyse » est not_integrated quand il n'y a pas de zone rouge : la famille risques est
         # déjà comptée « vérifiée » → ne pas la relister comme non intégrée (lecture contradictoire).
         non_int = [r.label for r in (res.nonIntegratedRules or []) if r.label and r.id != "PPR"]
         if non_int:
-            txt += " — non intégrée(s) : " + ", ".join(non_int)
+            txt += " · non modélisé : " + ", ".join(non_int)
         out.update(served=True, zone_m2=res.zoneImplantationM2, couverture=txt,
                    plafond=("Non réglementé" if res.plafondEmpriseStatus == "absent" else res.plafondEmpriseM2),
                    hauteur=("Non chiffrée (prospect)" if res.hauteurStatus == "not_integrated"

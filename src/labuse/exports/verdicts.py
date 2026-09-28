@@ -48,8 +48,13 @@ def verdict_zonage(valeurs: dict[str, Valeur]) -> Verdict | None:
     # cités (« Art. Um.9 »), via le libellé PARTAGÉ avec l'Apporteur (une donnée, une réponse).
     lib = zone_libelle(valeurs) or f"Zone {fam}"
     if fam in _NON_CONSTRUCTIBLE:
-        return (f"{lib} — {_NON_CONSTRUCTIBLE[fam]}, <strong>non constructible</strong>. "
-                f"Le potentiel de construction est nul par cette règle de zonage.", "warn", "")
+        # EXPORTS-FIX-1 C8 — verdict COHÉRENT avec la liste des destinations : la zone A/N liste des
+        # destinations « sous conditions » (logement d'exploitant, etc.). On ne dit donc plus un
+        # « potentiel nul » sec qui contredit le tableau ; on dit la restriction réelle.
+        return (f"{lib} — {_NON_CONSTRUCTIBLE[fam]}, <strong>non constructible pour un projet "
+                f"d'habitat courant</strong>. Seules les destinations liées à la vocation "
+                f"{_NON_CONSTRUCTIBLE[fam]} sont admises, et sous conditions (voir la liste "
+                f"des destinations ci-dessous).", "warn", "")
     if fam in _CONSTRUCTIBLE:
         return (f"{lib} — {_CONSTRUCTIBLE[fam]}. Le document opposable du Géoportail de "
                 f"l'urbanisme fait foi ; les valeurs de règle ci-dessous sont une aide à la lecture.",
@@ -78,7 +83,14 @@ def verdict_potentiel(valeurs: dict[str, Valeur]) -> Verdict | None:
                 f"consommée{pct_txt}. La valeur est dans la réhabilitation du bâti ou dans sa "
                 f"reconstruction.", "warn", "")
     if libelle:
-        return (f"Potentiel de construction : {libelle}.", "", "")
+        # EXPORTS-FIX-1 B1 — la « SDP restante » de la page de garde (sdp_residuelle_m2) est aussi
+        # dite au §10, MÊME valeur, avec ce qu'elle mesure : une surface de PLANCHER résiduelle
+        # (droits à bâtir non consommés), distincte de la « surface de plancher créée (table rase) ».
+        extra = ""
+        if sdp is not None and float(sdp) > 0:
+            from .registre_fmt import fmt_m2
+            extra = f" — SDP résiduelle (droits à bâtir non consommés) ≈ {fmt_m2(float(sdp))}"
+        return (f"Potentiel de construction : {libelle}{extra}.", "", "")
     return None
 
 
@@ -96,7 +108,12 @@ def verdict_reseaux(valeurs: dict[str, Valeur]) -> Verdict | None:
              "confirmer auprès des gestionnaires par une DT-DICT" if confirmee else
              "aucun raccordement n'est établi par les indices : réseaux à vérifier auprès des "
              "gestionnaires par une DT-DICT")
-    return (f"{v['libelle']} — {suite}.", ton, "")
+    # EXPORTS-FIX-1 A8 / BIS point 11 — la viabilisation est un FAISCEAU d'indices (un score, étiqueté
+    # « estimé ») : le mot suit l'étiquette → « probable », jamais « confirmée » (un score ne confirme
+    # rien). On retire aussi le langage interne « par les faits ».
+    lib = (str(v['libelle']).replace(" confirmée par les faits", " probable")
+           .replace(" confirmée", " probable"))
+    return (f"{lib} — {suite}.", ton, "")
 
 
 def rendu_verdict(v: Verdict | None) -> str:
