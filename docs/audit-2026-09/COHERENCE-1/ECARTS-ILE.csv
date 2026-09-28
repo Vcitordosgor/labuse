@@ -1,0 +1,9 @@
+notion,lecteur_a,lecteur_b,n_compare,n_divergent,exemples,cause_presumee,duree_s
+surface_parcelle_m2,mvt_parcels.surface_m2,parcels.surface_m2,431663,0,,cache tuiles périmé,0.9
+surface_attribut_vs_geometrie,parcels.surface_m2,ST_Area(parcels.geom_2975),431663,0,,géométrie ou projection,0.3
+sdp_residuelle_m2,mvt_parcels.sdp_residuelle_m2,parcel_residuel.sdp_residuelle_m2,431663,98004,97401000AD0077 97401000AD0155 97401000AD0200 97401000AD0201 97401000AD0238,cache tuiles périmé / run différent,0.5
+sous_densite,mvt_parcels.sous_densite,parcel_residuel.sous_densite,431663,26016,97401000AD0016 97401000AD0061 97401000AD0146 97401000AD0147 97401000AD0155,cache tuiles périmé,0.3
+tier_opportunite,mvt_parcels.tier_v2,parcel_p_score_v2.tier (run servi),431663,0,,run différent / tuiles pas rebasculées,1.3
+zone_plu_famille,mvt_parcels.zone_fam,parcel_zone_plu.zone_fam,431663,0,,cache tuiles périmé,0.5
+zone_plu_lib,mvt_parcels.zone_lib,parcel_zone_plu.zone_lib,431663,0,,cache tuiles périmé,0.4
+vigilances(flags),mvt_parcels.flags,parcel_flags (run servi),431663,0,,tuiles pas rebasculées,1.9

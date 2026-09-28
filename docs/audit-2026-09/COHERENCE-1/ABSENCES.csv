@@ -1,0 +1,179 @@
+notion,surface,route,phrase_absence,absence_type,declaration
+adresse_ban,fiche_parcelle_identite_reste,/parcels/{idu},Adresse non disponible — parcelle non rattachée à une voie (BAN).,absente_ici,declarations/fiche/reste_a_declarer.yaml
+alea_inondation_couche,couche_alea_inondation,/map/tiles/alea_inondation/{z}/{x}/{y}.pbf,Aléa inondation : parcelle hors zone d'aléa cartographié.,absente_ici,declarations/couches/famille_risques.yaml
+alea_mvt_couche,couche_alea_mvt,/map/tiles/alea_mvt/{z}/{x}/{y}.pbf,Aléa mouvement de terrain : parcelle hors zone d'aléa cartographié.,absente_ici,declarations/couches/famille_risques.yaml
+aleas_parcelle_liste,fiche_parcelle_risques,/parcels/{idu},Aléas : aucun aléa réglementaire ne touche cette parcelle.,absente_ici,declarations/fiche/risques.yaml
+annonces_actives_n,fiche_commune_marche,/communes/{c}/contexte,Biens en vente : donnée non disponible sur cette commune.,absente_ici,declarations/commune/marche.yaml
+artificialisation_couche,couche_artificialisation,/map/tiles/artificialisation/{z}/{x}/{y}.pbf,Artificialisation : aucune emprise OCS GE dans l'emprise visible.,absente_ici,declarations/couches/famille_urbanisme.yaml
+au_ouverture_statut,fiche_parcelle_urbanisme,/parcels/{idu},Ouverture de la zone AU : sans objet (la parcelle n'est pas en zone à urbaniser marquée).,absente_ici,declarations/fiche/sections_restantes.yaml
+autres_loges_pct,fiche_commune_territoire,/communes/{c}/contexte,logés gratuitement : donnée non disponible sur cette commune.,absente_ici,declarations/commune/territoire.yaml
+axes_couche,couche_axe,/map/tiles/axe_structurant/{z}/{x}/{y}.pbf,Axes structurants : aucun axe majeur dans l'emprise visible.,absente_ici,declarations/couches/famille_transport.yaml
+axes_couche,couche_pole,/map/tiles/pole_echange/{z}/{x}/{y}.pbf,Pôles d'échange : aucun pôle dans l'emprise visible.,absente_ici,declarations/couches/famille_transport.yaml
+azi_tri_commune,fiche_commune_cadre_de_vie,/communes/{c}/contexte,AZI / TRI de la commune : donnée non disponible sur cette commune.,absente_ici,declarations/commune/cadre_de_vie.yaml
+ban_plus_adresses_bati,fiche_parcelle_le_bien,/parcels/{idu},Adresses BAN PLUS : aucun lien adresse↔bâtiment sur cette parcelle.,absente_ici,declarations/fiche/le_bien.yaml
+batiments_3d_couche,couche_batiments_3d,/map/batiments.geojson,Bâti 3D : aucun bâtiment avec hauteur dans la vue (zoom ≥ 15).,absente_ici,declarations/couches/famille_equipements.yaml
+bpe_couche,couche_amenite_bpe,/map/tiles/amenite_bpe/{z}/{x}/{y}.pbf,Équipements INSEE : aucun équipement BPE dans l'emprise visible (zoom ≥ 12).,absente_ici,declarations/couches/famille_equipements.yaml
+bruit_carte_couche,couche_bruit_carte,/map/tiles/bruit_carte/{z}/{x}/{y}.pbf,Cartes de bruit : aucun dépassement cartographié dans l'emprise visible.,absente_ici,declarations/couches/famille_risques.yaml
+bruit_couche,couche_bruit_route,/map/tiles/bruit_route/{z}/{x}/{y}.pbf,Classement sonore : parcelle hors secteur affecté par le bruit routier.,absente_ici,declarations/couches/famille_risques.yaml
+capacite_logements,fiche_parcelle_constructibilite,/parcels/{idu},Capacité (logements) : non estimable sur cette parcelle.,absente_ici,declarations/fiche/sections_restantes.yaml
+casias_couche,couche_casias,/map/tiles/casias/{z}/{x}/{y}.pbf,CASIAS : aucun ancien site industriel recensé dans l'emprise visible.,absente_ici,declarations/couches/famille_risques.yaml
+casias_statut,fiche_parcelle_risques,/parcels/{idu},Anciens sites industriels (CASIAS) : aucun site recensé sur ou près de la parcelle.,absente_ici,declarations/fiche/risques.yaml
+catnat_arretes_liste,fiche_commune_cadre_de_vie,/communes/{c}/contexte,Arrêtés CatNat (détail) : donnée non disponible sur cette commune.,absente_ici,declarations/commune/cadre_de_vie.yaml
+catnat_n,fiche_commune_cadre_de_vie,/communes/{c}/contexte,Arrêtés CatNat : donnée non disponible sur cette commune.,absente_ici,declarations/commune/cadre_de_vie.yaml
+charge_fonciere_eur,fiche_parcelle_constructibilite,/parcels/{idu},Charge foncière : bilan non calculable (prix de sortie ou SDP manquants).,absente_ici,declarations/fiche/sections_restantes.yaml
+cinquante_pas_couche,couche_cinquante_pas,/map/tiles/cinquante_pas/{z}/{x}/{y}.pbf,50 pas : parcelle hors bande littorale des 50 pas dans l'emprise visible.,absente_ici,declarations/couches/famille_urbanisme.yaml
+coproprietes_liste,fiche_parcelle_division,/parcels/{idu},Copropriétés : aucune copropriété immatriculée sur la parcelle.,absente_ici,declarations/fiche/sections_restantes.yaml
+cosia_detecte_m2,fiche_parcelle_le_bien,/parcels/{idu},Bâti CoSIA hors BD TOPO : aucune sur-détection (CoSIA et BD TOPO d'accord).,absente_ici,declarations/fiche/le_bien.yaml
+deficit_sru_pts,fiche_commune_territoire,/communes/{c}/contexte,"Déficit SRU (objectif − taux LLS, points) : donnée non disponible sur cette commune.",absente_ici,declarations/commune/territoire.yaml
+dispositifs_couche,couche_anru,/map/tiles/anru/{z}/{x}/{y}.pbf,ANRU : parcelle hors périmètre de rénovation urbaine dans l'emprise visible.,absente_ici,declarations/couches/famille_dispositifs.yaml
+dispositifs_couche,couche_frr,/map/tiles/frr/{z}/{x}/{y}.pbf,FRR : commune hors zone de revitalisation rurale dans l'emprise visible.,absente_ici,declarations/couches/famille_dispositifs.yaml
+dispositifs_couche,couche_qpv,/map/tiles/qpv/{z}/{x}/{y}.pbf,QPV : parcelle hors quartier prioritaire dans l'emprise visible.,absente_ici,declarations/couches/famille_dispositifs.yaml
+dispositifs_couche,couche_tva_primo,/map/tiles/tva_primo/{z}/{x}/{y}.pbf,TVA primo : parcelle hors périmètre de TVA réduite dans l'emprise visible.,absente_ici,declarations/couches/famille_dispositifs.yaml
+dispositifs_couche,couche_zfang,/map/tiles/zfang/{z}/{x}/{y}.pbf,ZFANG : commune hors zone franche d'activité dans l'emprise visible.,absente_ici,declarations/couches/famille_dispositifs.yaml
+dispositifs_parcelle,fiche_parcelle_dispositifs,/parcels/{idu},Droit des sols : aucune prescription (ER/EBC/DPU/PEB) sur la parcelle.,absente_ici,declarations/fiche/sections_restantes.yaml
+distance_arret_m,fiche_parcelle_reseaux,/parcels/{idu},Arrêt de transport : aucun arrêt à proximité mesurable.,absente_ici,declarations/fiche/reseaux.yaml
+divisible_classe,fiche_parcelle_division,/parcels/{idu},Divisibilité : non évaluée.,absente_ici,declarations/fiche/sections_restantes.yaml
+dpe_connu,fiche_parcelle_le_bien,/parcels/{idu},DPE connu : aucun diagnostic enregistré à cette adresse (ADEME).,absente_ici,declarations/fiche/le_bien.yaml
+dpf_couche,couche_dpf,/map/tiles/dpf/{z}/{x}/{y}.pbf,Ravines DPF : aucune ravine du domaine public fluvial dans l'emprise visible.,absente_ici,declarations/couches/famille_risques.yaml
+dpu_couche,couche_dpu,/map/tiles/dpu/{z}/{x}/{y}.pbf,DPU : parcelle hors périmètre de préemption dans l'emprise visible.,absente_ici,declarations/couches/famille_urbanisme.yaml
+dpu_perimetre,fiche_parcelle_urbanisme_reste,/parcels/{idu},Hors périmètre de préemption urbaine publié.,non_publiee,declarations/fiche/reste_a_declarer.yaml
+dvf_parcelle_liste,fiche_parcelle_marche,/parcels/{idu},Ventes de cette parcelle : aucune mutation DVF connue sur la parcelle.,absente_ici,declarations/fiche/marche.yaml
+ebc_classe,fiche_parcelle_urbanisme_reste,/parcels/{idu},Hors espace boisé classé du PLU.,absente_ici,declarations/fiche/reste_a_declarer.yaml
+ebc_couche,couche_ebc,/map/tiles/ebc/{z}/{x}/{y}.pbf,EBC : parcelle hors espace boisé classé dans l'emprise visible.,absente_ici,declarations/couches/famille_urbanisme.yaml
+ecart_demande_acte_pct,fiche_commune_marche,/communes/{c}/contexte,Écart demandé/acté : donnée non disponible sur cette commune.,absente_ici,declarations/commune/marche.yaml
+emprise_batie_m2,fiche_parcelle_le_bien,/parcels/{idu},Emprise bâtie : aucun bâti au sol détecté sur cette parcelle.,absente_ici,declarations/fiche/le_bien.yaml
+endiguement_zone_protegee,fiche_parcelle_risques,/parcels/{idu},Système d'endiguement : la parcelle n'est dans aucune zone protégée déclarée.,absente_ici,declarations/fiche/risques.yaml
+enp_couche,couche_enp,/map/tiles/enp/{z}/{x}/{y}.pbf,ENP : parcelle hors espace naturel protégé sur l'emprise visible.,absente_ici,declarations/couches/famille_nature.yaml
+enr_exclue_hors_toiture_couche,couche_enr_exclue_hors_toiture,/map/tiles/enr_exclue_hors_toiture/{z}/{x}/{y}.pbf,EnR hors toiture : parcelle hors d'une zone d'exclusion EnR au sol dans l'emprise visible.,absente_ici,declarations/couches/famille_energie.yaml
+enr_exclue_parcelle,fiche_parcelle_risques,/parcels/{idu},EnR au sol interdites (APER) : la parcelle n'est dans aucune zone d'exclusion.,absente_ici,declarations/fiche/risques.yaml
+equip_osm_couche,couche_amenite,/map/tiles/amenite/{z}/{x}/{y}.pbf,Équipements OSM : aucun équipement dans l'emprise visible (zoom ≥ 12).,absente_ici,declarations/couches/famille_equipements.yaml
+equipements_proximite_liste,fiche_parcelle_quartier_reste,/parcels/{idu},Équipements du quotidien non renseignés autour de cette parcelle.,absente_ici,declarations/fiche/reste_a_declarer.yaml
+er_couche,couche_er,/map/tiles/er/{z}/{x}/{y}.pbf,ER : parcelle hors emplacement réservé dans l'emprise visible.,absente_ici,declarations/couches/famille_urbanisme.yaml
+er_emplacement_reserve,fiche_parcelle_urbanisme_reste,/parcels/{idu},Hors emplacement réservé du PLU.,absente_ici,declarations/fiche/reste_a_declarer.yaml
+etablissements_parcelle_liste,fiche_parcelle_le_bien,/parcels/{idu},Établissements : aucun établissement SIRENE rattaché à cette parcelle (par l'adresse BAN).,absente_ici,declarations/fiche/le_bien.yaml
+exposition_versant,fiche_entete_tuiles,/parcels/{idu},Exposition : relief non disponible sur la parcelle.,absente_ici,declarations/fiche/entete_tuiles.yaml
+fibre_parcelle,fiche_parcelle_fibre,/parcels/{idu},Fibre : aucune information de déploiement à l'adresse.,absente_ici,declarations/fiche/petites_sections.yaml
+filiation_parcelle,fiche_parcelle_filiation,/parcels/{idu},Filiation cadastrale : aucune filiation connue (parcelle stable).,absente_ici,declarations/fiche/petites_sections.yaml
+frr_classement_commune,fiche_commune_regles,/communes/{c}/contexte,FRR — classement de la commune : donnée non disponible sur cette commune.,absente_ici,declarations/commune/regles.yaml
+gabarit_couverture_verdict,fiche_parcelle_gabarit,/outils/gabarit/{idu},Couverture réglementaire : non évaluée (gabarit non calculable).,absente_ici,declarations/fiche/sections_restantes.yaml
+gabarit_emprise_plafond_m2,fiche_parcelle_gabarit,/outils/gabarit/{idu},Plafond d'emprise : gabarit non calculable (voir le motif).,absente_ici,declarations/fiche/sections_restantes.yaml
+gabarit_hauteur_m,fiche_parcelle_gabarit,/outils/gabarit/{idu},Hauteur réglementaire : gabarit non calculable (voir le motif).,absente_ici,declarations/fiche/sections_restantes.yaml
+gabarit_implantation_m2,fiche_parcelle_gabarit,/outils/gabarit/{idu},Zone d'implantation : gabarit non calculable (voir le motif).,absente_ici,declarations/fiche/sections_restantes.yaml
+gabarit_motif_blocage,fiche_parcelle_gabarit,/outils/gabarit/{idu},Gabarit : calculé (aucun motif de blocage).,absente_ici,declarations/fiche/sections_restantes.yaml
+gabarit_plan_2d,fiche_parcelle_gabarit,/outils/gabarit/{idu},Plan 2D : non tracé (gabarit non calculable).,absente_ici,declarations/fiche/sections_restantes.yaml
+habitants_n,fiche_commune_territoire,/communes/{c}/contexte,Habitants : donnée non disponible sur cette commune.,absente_ici,declarations/commune/territoire.yaml
+hauteur_bati_m,fiche_parcelle_le_bien,/parcels/{idu},Hauteur du bâti : non mesurée (ni LiDAR ni hauteur BD TOPO sur ce bâti).,absente_ici,declarations/fiche/le_bien.yaml
+historique_permis_liste,fiche_parcelle_identite_reste,/parcels/{idu},Aucun permis recensé sur cette parcelle (Sitadel).,absente_ici,declarations/fiche/reste_a_declarer.yaml
+iris_commune_quartiers,fiche_commune_territoire,/communes/{c}/contexte,Quartiers de la commune (IRIS) : donnée non disponible sur cette commune.,absente_ici,declarations/commune/territoire.yaml
+iris_quartier,fiche_parcelle_autour,/parcels/{idu},Quartier (IRIS) : parcelle hors découpage IRIS connu.,absente_ici,declarations/fiche/sections_restantes.yaml
+lignes_ht_couche,couche_ligne_ht,/map/tiles/ligne_ht/{z}/{x}/{y}.pbf,Lignes HTB : aucune ligne haute tension dans l'emprise visible.,absente_ici,declarations/couches/famille_transport.yaml
+lls_inventaire_n,fiche_commune_territoire,/communes/{c}/contexte,Logements sociaux (inventaire SRU) : donnée non disponible sur cette commune.,absente_ici,declarations/commune/territoire.yaml
+loyer_median_eur_m2,fiche_commune_marche,/communes/{c}/contexte,Loyer médian : donnée non disponible sur cette commune.,absente_ici,declarations/commune/marche.yaml
+mairie_coordonnees,fiche_commune_territoire,/communes/{c}/contexte,Mairie & service urbanisme (coordonnées) : donnée non disponible sur cette commune.,absente_ici,declarations/commune/territoire.yaml
+marge_surelevation_m,fiche_parcelle_potentiel_reste,/parcels/{idu},Marge de surélévation non calculable (hauteur de règle ou bâti non déterminés).,absente_ici,declarations/fiche/reste_a_declarer.yaml
+mesures_compensatoires_couche,couche_mesures_compensatoires,/map/tiles/mesures_compensatoires/{z}/{x}/{y}.pbf,Mesures compensatoires : aucune mesure ERC dans l'emprise visible.,absente_ici,declarations/couches/famille_nature.yaml
+mesures_compensatoires_parcelle,fiche_parcelle_risques,/parcels/{idu},Mesure compensatoire (GéoMCE) : aucune mesure ne recoupe la parcelle.,absente_ici,declarations/fiche/risques.yaml
+mixite_clause,fiche_parcelle_urbanisme_reste,/parcels/{idu},Mixité sociale : seuils de la zone non renseignés à ce jour.,non_ingeree,declarations/fiche/reste_a_declarer.yaml
+mutations_12m_n,fiche_commune_marche,/communes/{c}/contexte,Mutations 12 mois : donnée non disponible sur cette commune.,absente_ici,declarations/commune/marche.yaml
+n_batiments,fiche_parcelle_le_bien,/parcels/{idu},Bâtiments : aucun bâtiment détecté (parcelle nue au bâti cartographié).,absente_ici,declarations/fiche/le_bien.yaml
+n_densifiables,fiche_commune_construction,/communes/{c}/contexte,Parcelles densifiables : donnée non disponible sur cette commune.,absente_ici,declarations/commune/construction.yaml
+n_parcelles_commune,fiche_commune_construction,/communes/{c}/contexte,N parcelles : donnée non disponible sur cette commune.,absente_ici,declarations/commune/construction.yaml
+n_permis_proximite,fiche_parcelle_autour,/parcels/{idu},Permis à proximité : aucun permis récent repéré.,absente_ici,declarations/fiche/sections_restantes.yaml
+n_vigilances,fiche_parcelle_risques,/parcels/{idu},Points de risque : non évalués (parcelle hors run servi).,absente_ici,declarations/fiche/risques.yaml
+nature_toit,fiche_parcelle_le_bien,/parcels/{idu},Forme du toit : non déterminée (pans non nets ou LiDAR indisponible).,absente_ici,declarations/fiche/le_bien.yaml
+ort_statut,fiche_commune_regles,/communes/{c}/contexte,ACV / PVD / ORT : donnée non disponible sur cette commune.,absente_ici,declarations/commune/regles.yaml
+parc_ancien_pct,fiche_commune_territoire,/communes/{c}/contexte,Parc construit avant 1991 : donnée non disponible sur cette commune.,absente_ici,declarations/commune/territoire.yaml
+parc_national_couche,couche_parc,/map/tiles/parc_national/{z}/{x}/{y}.pbf,Parc national : parcelle hors périmètre du Parc dans l'emprise visible.,absente_ici,declarations/couches/famille_nature.yaml
+parc_social_rpls_logements,fiche_commune_territoire,/communes/{c}/contexte,Parc social (logements RPLS) : donnée non disponible sur cette commune.,absente_ici,declarations/commune/territoire.yaml
+parcelle_geometrie,fiche_parcelle_identite_reste,/parcels/{idu},Géométrie de la parcelle non disponible pour cette référence.,absente_ici,declarations/fiche/reste_a_declarer.yaml
+part_artificialisee_pct,fiche_parcelle_le_bien,/parcels/{idu},Part artificialisée : hors couverture OCS GE pour cette parcelle.,absente_ici,declarations/fiche/le_bien.yaml
+part_impermeabilisee_cosia_pct,fiche_parcelle_le_bien,/parcels/{idu},Part imperméabilisée (CoSIA) : parcelle hors couverture CoSIA.,absente_ici,declarations/fiche/le_bien.yaml
+part_logements_egout_pct,fiche_parcelle_reseaux_reste,/parcels/{idu},Taux de raccordement à l'égout non disponible pour ce secteur.,absente_ici,declarations/fiche/reste_a_declarer.yaml
+part_sol_nu_cosia_pct,fiche_parcelle_le_bien,/parcels/{idu},Part sol nu (CoSIA) : parcelle hors couverture CoSIA.,absente_ici,declarations/fiche/le_bien.yaml
+part_vegetalisee_cosia_pct,fiche_parcelle_le_bien,/parcels/{idu},Part végétalisée/boisée (CoSIA) : parcelle hors couverture CoSIA.,absente_ici,declarations/fiche/le_bien.yaml
+part_zone_AU_pct,fiche_commune_regles,/communes/{c}/contexte,Zonage — AU : donnée non disponible sur cette commune.,absente_ici,declarations/commune/regles.yaml
+part_zone_A_pct,fiche_commune_regles,/communes/{c}/contexte,Zonage — A : donnée non disponible sur cette commune.,absente_ici,declarations/commune/regles.yaml
+part_zone_N_pct,fiche_commune_regles,/communes/{c}/contexte,Zonage — N : donnée non disponible sur cette commune.,absente_ici,declarations/commune/regles.yaml
+part_zone_U_pct,fiche_commune_regles,/communes/{c}/contexte,Zonage — U : donnée non disponible sur cette commune.,absente_ici,declarations/commune/regles.yaml
+peb_couche,couche_peb,/map/tiles/peb/{z}/{x}/{y}.pbf,PEB : parcelle hors plan d'exposition au bruit aérien.,absente_ici,declarations/couches/famille_risques.yaml
+peb_zone,fiche_parcelle_urbanisme_reste,/parcels/{idu},Hors zones du plan d'exposition au bruit.,non_publiee,declarations/fiche/reste_a_declarer.yaml
+pente_deg,fiche_entete_tuiles,/parcels/{idu},Pente : relief non disponible sur la parcelle.,absente_ici,declarations/fiche/entete_tuiles.yaml
+pente_toit_deg,fiche_parcelle_le_bien,/parcels/{idu},Pente du toit : non relevée (LiDAR toiture non calculé sur ce bâti).,absente_ici,declarations/fiche/le_bien.yaml
+perimetres_dispositifs_liste,fiche_parcelle_dispositifs,/parcels/{idu},Dispositifs : la parcelle n'est dans aucun dispositif territorial repéré.,absente_ici,declarations/fiche/sections_restantes.yaml
+permis_12m_n,fiche_commune_construction,/communes/{c}/contexte,Permis de la commune sur 12 mois : donnée non disponible sur cette commune.,absente_ici,declarations/commune/construction.yaml
+piscine_m2,fiche_parcelle_reseaux,/parcels/{idu},Piscine détectée : aucune piscine repérée sur la parcelle.,absente_ici,declarations/fiche/reseaux.yaml
+plh_objectif_logements_an,fiche_commune_regles,/communes/{c}/contexte,Objectif logements/an : donnée non disponible sur cette commune.,absente_ici,declarations/commune/regles.yaml
+plu_procedure_en_cours,fiche_commune_regles,/communes/{c}/contexte,Procédure PLU en cours (Sudocuh) : aucune procédure recensée au dernier relevé.,absente_ici,declarations/commune/regles.yaml
+point_mort_n,fiche_commune_construction,/communes/{c}/contexte,Permis au point mort : donnée non disponible sur cette commune.,absente_ici,declarations/commune/construction.yaml
+population_zone,fiche_parcelle_autour,/parcels/{idu},Population du secteur : non disponible.,absente_ici,declarations/fiche/sections_restantes.yaml
+poste_transformation_couche,couche_poste_transformation,/map/tiles/poste_transformation/{z}/{x}/{y}.pbf,Postes de transformation : aucun poste dans l'emprise visible.,absente_ici,declarations/couches/famille_transport.yaml
+potentiel_verdict,fiche_parcelle_constructibilite,/parcels/{idu},Potentiel : rien d'évaluable (zone non constructible ou données manquantes).,absente_ici,declarations/fiche/sections_restantes.yaml
+ppr_couche,couche_ppr,/map/tiles/ppr/{z}/{x}/{y}.pbf,PPR : parcelle hors périmètre PPR sur l'emprise visible.,absente_ici,declarations/couches/famille_risques.yaml
+ppr_pct,fiche_commune_cadre_de_vie,/communes/{c}/contexte,PPR (part des parcelles) : donnée non disponible sur cette commune.,absente_ici,declarations/commune/cadre_de_vie.yaml
+prix_achat_historique_eur,fiche_parcelle_identite_reste,/parcels/{idu},Dernière vente : aucune mutation DVF publiée sur cette parcelle (fenêtre 2014-2025).,absente_ici,declarations/fiche/reste_a_declarer.yaml
+prix_ancien_median_eur_m2,fiche_commune_marche,/communes/{c}/contexte,€/m² ancien : donnée non disponible sur cette commune.,absente_ici,declarations/commune/marche.yaml
+prix_demande_median_eur_m2,fiche_commune_marche,/communes/{c}/contexte,Prix demandé (médiane) : donnée non disponible sur cette commune.,absente_ici,declarations/commune/marche.yaml
+prix_neuf_observe_eur_m2,fiche_commune_marche,/communes/{c}/contexte,Prix du neuf — observé (€/m²) : donnée non disponible sur cette commune.,absente_ici,declarations/commune/marche.yaml
+prix_neuf_vefa_acte_eur_m2,fiche_commune_marche,/communes/{c}/contexte,Prix du neuf — VEFA à l'acte (€/m²) : donnée non disponible sur cette commune.,absente_ici,declarations/commune/marche.yaml
+prix_neuf_vefa_acte_eur_m2,fiche_parcelle_marche,/parcels/{idu},Neuf VEFA — commune : échantillon VEFA insuffisant pour une médiane servie.,absente_ici,declarations/fiche/marche.yaml
+prix_sortie_bati_eur_m2,fiche_parcelle_marche,/parcels/{idu},Ancien bâti — secteur : échantillon DVF insuffisant pour une médiane fiable.,absente_ici,declarations/fiche/marche.yaml
+prix_terrain_secteur_eur_m2,fiche_parcelle_marche,/parcels/{idu},Terrain nu — secteur : échantillon DVF insuffisant pour une médiane fiable.,absente_ici,declarations/fiche/marche.yaml
+prix_terrain_zone_eur_m2,fiche_commune_marche,/communes/{c}/contexte,Terrain nu (zone U / AU) : donnée non disponible sur cette commune.,absente_ici,declarations/commune/marche.yaml
+prod_spec_kwh_kwc,fiche_parcelle_solaire,/parcels/{idu},Productible solaire : non calculé sur cette toiture.,absente_ici,declarations/fiche/sections_restantes.yaml
+proprietaire_timeline_liste,fiche_parcelle_proprietaire,/parcels/{idu},Historique de détention : aucun millésime de détention connu.,absente_ici,declarations/fiche/sections_restantes.yaml
+pylone_couche,couche_pylone,/map/tiles/pylone/{z}/{x}/{y}.pbf,Pylônes : aucun pylône électrique dans l'emprise visible.,absente_ici,declarations/couches/famille_transport.yaml
+qpv_n,fiche_commune_regles,/communes/{c}/contexte,QPV : donnée non disponible sur cette commune.,absente_ici,declarations/commune/regles.yaml
+radar_annonces_liste,fiche_parcelle_marche,/parcels/{idu},Annonces en cours (Radar) : aucune annonce active repérée dans le secteur.,absente_ici,declarations/fiche/marche.yaml
+rang_tier,fiche_parcelle_score,/parcels/{idu},Rang : non calculé pour cette parcelle.,absente_ici,declarations/fiche/petites_sections.yaml
+reglement_plu_bloc,fiche_parcelle_urbanisme,/parcels/{idu},Règlement de la zone : extraits non disponibles pour cette zone.,absente_ici,declarations/fiche/sections_restantes.yaml
+rnb_batiments_liste,fiche_parcelle_le_bien,/parcels/{idu},Identifiants RNB : aucun bâtiment rattaché au RNB sur cette parcelle.,absente_ici,declarations/fiche/le_bien.yaml
+rtaa_exigences,fiche_parcelle_constructibilite,/parcels/{idu},RTAA DOM : aucune exigence de conception à rappeler ici.,absente_ici,declarations/fiche/sections_restantes.yaml
+sar_divergence,fiche_parcelle_urbanisme_reste,/parcels/{idu},Aucune divergence SAR indiquée.,absente_ici,declarations/fiche/reste_a_declarer.yaml
+scot_couche,couche_scot,/map/tiles/scot/{z}/{x}/{y}.pbf,SCOT : commune hors d'un périmètre de SCOT publié au GPU.,absente_ici,declarations/couches/famille_urbanisme.yaml
+scot_nom_date,fiche_commune_regles,/communes/{c}/contexte,SCOT (nom + approbation) : commune hors d'un périmètre de SCOT publié au GPU.,absente_ici,declarations/commune/regles.yaml
+scot_parcelle,fiche_parcelle_dispositifs,/parcels/{idu},SCOT : la parcelle n'est couverte par aucun schéma de cohérence territoriale.,absente_ici,declarations/fiche/sections_restantes.yaml
+sdp_residuelle_m2,fiche_entete_tuiles,/parcels/{idu},SDP restante : zone non constructible ou plus de potentiel résiduel.,absente_ici,declarations/fiche/entete_tuiles.yaml
+secteur_lieu_dit,fiche_parcelle_identite_reste,/parcels/{idu},Aucun lieu-dit BD NYME dans le rayon — secteur non nommé.,absente_ici,declarations/fiche/reste_a_declarer.yaml
+sis_classe,fiche_parcelle_risques,/parcels/{idu},Sols pollués (SIS) : la parcelle n'est dans aucun secteur d'information sur les sols.,absente_ici,declarations/fiche/risques.yaml
+sis_couche,couche_sis,/map/tiles/sis/{z}/{x}/{y}.pbf,SIS : la parcelle n'est dans aucun secteur d'information sur les sols.,absente_ici,declarations/couches/famille_risques.yaml
+sols_parcelle,fiche_parcelle_risques_reste,/parcels/{idu},Aucun secteur d'information sur les sols ni site CASIAS à proximité.,absente_ici,declarations/fiche/reste_a_declarer.yaml
+statut_plu,fiche_commune_regles,/communes/{c}/contexte,Règles d'urbanisme (statut) : donnée non disponible sur cette commune.,absente_ici,declarations/commune/regles.yaml
+statut_plu,fiche_parcelle_urbanisme,/parcels/{idu},PLU : document d'urbanisme non résolu pour cette commune.,non_publiee,declarations/fiche/sections_restantes.yaml
+stock_opportunites,fiche_commune_construction,/communes/{c}/contexte,Stock d'opportunités (brûlantes + chaudes) : donnée non disponible sur cette commune.,absente_ici,declarations/commune/construction.yaml
+sup_couche,couche_sup,/map/tiles/sup/{z}/{x}/{y}.pbf,SUP : parcelle hors servitude d'utilité publique dans l'emprise visible.,absente_ici,declarations/couches/famille_urbanisme.yaml
+surface_libre_sol_m2,fiche_parcelle_le_bien,/parcels/{idu},Surface au sol libre : non calculable (emprise ou surface parcelle manquante).,absente_ici,declarations/fiche/le_bien.yaml
+surface_parcelle_m2,fiche_entete_tuiles,/parcels/{idu},Surface : contenance cadastrale non disponible pour cette parcelle.,absente_ici,declarations/fiche/entete_tuiles.yaml
+surface_plancher_m2,fiche_parcelle_potentiel_reste,/parcels/{idu},Surface de plancher non calculable (zone non constructible ou capacité nulle).,absente_ici,declarations/fiche/reste_a_declarer.yaml
+surface_vendable_m2,fiche_parcelle_potentiel_reste,/parcels/{idu},Surface vendable non calculable pour cette parcelle.,absente_ici,declarations/fiche/reste_a_declarer.yaml
+taux_lls_pct,fiche_commune_territoire,/communes/{c}/contexte,Taux LLS : donnée non disponible sur cette commune.,absente_ici,declarations/commune/territoire.yaml
+taxe_amenagement_communale_pct,fiche_commune_regles,/communes/{c}/contexte,Taxe d'aménagement (part communale) : donnée non disponible sur cette commune.,absente_ici,declarations/commune/regles.yaml
+taxe_amenagement_estimee_eur,fiche_parcelle_constructibilite,/parcels/{idu},Taxe d'aménagement : taux communal non renseigné pour cette commune.,non_ingeree,declarations/fiche/sections_restantes.yaml
+tcsp_couche,couche_tcsp,/map/tiles/tcsp/{z}/{x}/{y}.pbf,TCSP : aucun transport en site propre dans l'emprise visible.,absente_ici,declarations/couches/famille_transport.yaml
+tcsp_stationnement_allege,fiche_parcelle_reseaux_reste,/parcels/{idu},Hors rayon de 800 m d'une station TCSP.,absente_ici,declarations/fiche/reste_a_declarer.yaml
+tfpb_taux_pct,fiche_commune_regles,/communes/{c}/contexte,Taxe foncière (taux TFPB) : donnée non disponible sur cette commune.,absente_ici,declarations/commune/regles.yaml
+tfpb_taux_pct,fiche_entete_tuiles,/parcels/{idu},Taxe foncière : taux non disponible pour cette commune.,non_ingeree,declarations/fiche/entete_tuiles.yaml
+tfpb_taux_pct,fiche_parcelle_dispositifs,/parcels/{idu},Taxe foncière : taux non disponible pour cette commune.,non_ingeree,declarations/fiche/sections_restantes.yaml
+tfpnb_taux_pct,fiche_commune_regles,/communes/{c}/contexte,Taxe foncière non bâti (taux TFPNB) : donnée non disponible sur cette commune.,absente_ici,declarations/commune/regles.yaml
+tier_opportunite,fiche_parcelle_score,/parcels/{idu},Classement : parcelle hors run servi.,absente_ici,declarations/fiche/petites_sections.yaml
+transport_couche,couche_telepherique,/map/tiles/telepherique/{z}/{x}/{y}.pbf,Téléphérique : hors emprise du réseau câblé.,absente_ici,declarations/couches/famille_transport.yaml
+transport_couche,couche_transport_arret,/map/tiles/transport_arret/{z}/{x}/{y}.pbf,Arrêts de bus : aucun arrêt dans l'emprise visible (zoom ≥ 11).,absente_ici,declarations/couches/famille_transport.yaml
+transport_couche,couche_transport_ligne,/map/tiles/transport_ligne/{z}/{x}/{y}.pbf,Lignes de bus : aucun tracé dans l'emprise visible.,absente_ici,declarations/couches/famille_transport.yaml
+type_proprietaire,fiche_parcelle_proprietaire,/parcels/{idu},Type de propriétaire : non déterminé.,absente_ici,declarations/fiche/sections_restantes.yaml
+usage_sol_dominant,fiche_parcelle_le_bien,/parcels/{idu},Usage du sol dominant : hors couverture OCS GE pour cette parcelle.,absente_ici,declarations/fiche/le_bien.yaml
+vacance_pct,fiche_commune_territoire,/communes/{c}/contexte,Vacance : donnée non disponible sur cette commune.,absente_ici,declarations/commune/territoire.yaml
+vefa_couche,couche_vefa_neuf,/map/tiles/vefa_neuf/{z}/{x}/{y}.pbf,Prix neuf VEFA : commune sans vente neuve enregistrée dans l'emprise visible.,absente_ici,declarations/couches/famille_marche.yaml
+velocite_delai_median_mois,fiche_commune_construction,/communes/{c}/contexte,"Vélocité admin (délai médian dépôt→autorisation, mois) : donnée non disponible sur cette commune.",absente_ici,declarations/commune/construction.yaml
+ventes_100m_n,fiche_parcelle_marche_reste,/parcels/{idu},Aucune vente DVF recensée à moins de 100 m sur 36 mois.,absente_ici,declarations/fiche/reste_a_declarer.yaml
+ventes_ecartees_n,fiche_parcelle_marche,/parcels/{idu},Ventes écartées : aucune vente écartée (toutes vraisemblables).,absente_ici,declarations/fiche/marche.yaml
+ventes_retenues_n,fiche_parcelle_marche,/parcels/{idu},Ventes retenues : aucune vente DVF exploitable dans le secteur.,absente_ici,declarations/fiche/marche.yaml
+verdict_icd,fiche_parcelle_confiance,/parcels/{idu},Indice de confiance : non calculé.,absente_ici,declarations/fiche/sections_restantes.yaml
+viabilisation_verdict,fiche_parcelle_reseaux,/parcels/{idu},Viabilisation : non évaluée sur cette parcelle.,absente_ici,declarations/fiche/reseaux.yaml
+voisinage_100m_liste,fiche_parcelle_autour,/parcels/{idu},Ventes voisines : aucune vente à moins de 100 m.,absente_ici,declarations/fiche/sections_restantes.yaml
+zan_evolution_commune,fiche_commune_construction,/communes/{c}/contexte,Artificialisation 2017→2022 (OCS GE) : donnée non disponible sur cette commune.,absente_ici,declarations/commune/construction.yaml
+zan_reste_ha,fiche_commune_construction,/communes/{c}/contexte,Enveloppe ZAN (reste) : donnée non disponible sur cette commune.,absente_ici,declarations/commune/construction.yaml
+zfang_regime_commune,fiche_commune_regles,/communes/{c}/contexte,ZFANG — régime de la commune : donnée non disponible sur cette commune.,absente_ici,declarations/commune/regles.yaml
+znieff_couche,couche_znieff,/map/tiles/znieff/{z}/{x}/{y}.pbf,ZNIEFF : parcelle hors zone d'inventaire dans l'emprise visible.,absente_ici,declarations/couches/famille_nature.yaml
+zonage_abc_logement,fiche_commune_regles,/communes/{c}/contexte,Zonage A/B/C (logement) : donnée non disponible sur cette commune.,absente_ici,declarations/commune/regles.yaml
+zonage_plu_couche,couche_zonage,/map/tiles/plu_gpu_zone/{z}/{x}/{y}.pbf,Zonage PLU : parcelle hors zone GPU dans l'emprise visible (Saint-Philippe : PLU non publié au GPU).,absente_ici,declarations/couches/famille_urbanisme.yaml
+zone_humide_couche,couche_zone_humide,/map/tiles/zone_humide/{z}/{x}/{y}.pbf,Zones humides : aucun secteur inventorié dans l'emprise visible (couverture partielle).,absente_ici,declarations/couches/famille_nature.yaml
+zone_plu_famille,fiche_entete_tuiles,/parcels/{idu},Zone : non publié au GPU pour cette commune.,non_publiee,declarations/fiche/entete_tuiles.yaml

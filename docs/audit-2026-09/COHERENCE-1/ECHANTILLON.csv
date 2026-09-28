@@ -1,0 +1,121 @@
+idu,strate,commune,surface_m2,zone_fam,zone_lib,batie
+97402000AB1117,temoin,Bras-Panon,4097.2,N,N,False
+97411000BZ1065,temoin,Saint-Denis,1625.0,U,Uh,True
+97411000DE0231,temoin,Saint-Denis,387.9,U,Ui,True
+97411000EM0174,temoin,Saint-Denis,1824.6,U,Um,True
+97415000AB0134,temoin,Saint-Paul,20356.5,AU,AU1est,False
+97415000CK0678,temoin,Saint-Paul,412.7,U,U6c,False
+97418000AC0198,temoin,Sainte-Marie,2440.7,A,Acu,False
+97401000AN0259,nue,Les Avirons,2403.7,A,A,False
+97401000AP0282,commune_base,Les Avirons,206.9,U,Uc,False
+97402000AD0527,commune_base,Bras-Panon,98.7,U,Uc,False
+97402000AK0252,cinquante_pas,Bras-Panon,889.2,U,Uba,True
+97402000AO0010,geante_10ha,Bras-Panon,696562.9,N,Npnr,False
+97403000AL0256,geante_10ha,Entre-Deux,224839.9,N,Nr,False
+97403000AM0515,commune_base,Entre-Deux,2225.9,N,N,True
+97404000AI2280,commune_base,L'Étang-Salé,434.2,U,UC,True
+97405000AL1258,zone_AU_fermee,Petite-Île,700.9,AU,2AU,True
+97405000AM0888,commune_base,Petite-Île,181.1,A,A,True
+97405000BC0309,zone_N,Petite-Île,150.7,N,Nce,False
+97405000BD0077,ppr_interdiction,Petite-Île,1054.0,N,N,False
+97406000AT0250,commune_base,La Plaine-des-Palmistes,10503.8,A,A,False
+97406000AV0152,ppr_interdiction,La Plaine-des-Palmistes,92.6,A,Aco,False
+97407000AI0054,commune_base,Le Port,300.9,U,Uc,True
+97407000AX0215,zone_AU_fermee,Le Port,6781.8,AU,2AUp,False
+97408000AO1003,commune_base,La Possession,384.6,U,UBpsfr2,True
+97408000AZ0066,bord_commune,La Possession,1386721.9,N,Npnr,True
+97409000AH0155,zone_U,Saint-André,1608.0,U,UC,True
+97409000AR2385,filiation_recente,Saint-André,413.7,U,UC,True
+97409000AY1442,filiation_recente,Saint-André,684.0,U,UC,True
+97409000AZ1040,commune_base,Saint-André,414.3,U,UC,True
+97409000BD0958,ppr_prescription,Saint-André,152.7,U,UB,True
+97410000AP0527,cinquante_pas,Saint-Benoît,364.6,U,Ub,True
+97410000AY0304,zone_A,Saint-Benoît,69770.8,A,A,True
+97410000BM1045,commune_base,Saint-Benoît,577.3,U,Ua,False
+97410000BX1873,nue,Saint-Benoît,431.2,U,Ub,False
+97410000BY0507,ppr_prescription,Saint-Benoît,4690.4,A,A,False
+97411000AN0416,copro,Saint-Denis,397.7,U,Ui,True
+97411000CE1095,a_cheval_2_zones,Saint-Denis,271398.3,N,N,True
+97411000CH0402,a_cheval_2_zones,Saint-Denis,2769.0,U,Uh,True
+97411000CH0711,a_cheval_2_zones,Saint-Denis,12425.6,A,A,False
+97411000CI0085,a_cheval_2_zones,Saint-Denis,42003.3,A,A,True
+97411000CP0367,ravine,Saint-Denis,11713.2,N,Ntc,True
+97411000DT0159,copro,Saint-Denis,1645.9,U,Uh,True
+97411000ET0054,commune_base,Saint-Denis,846.7,U,Um,True
+97411000EZ0299,a_cheval_2_zones,Saint-Denis,221.0,U,Um,True
+97411000HE0410,zone_U,Saint-Denis,653.6,U,Um,True
+97411000HM0161,copro,Saint-Denis,3032.5,U,Ui,True
+97411000IS0549,ppr_prescription,Saint-Denis,632.6,U,Um,True
+97411000KC0302,a_cheval_2_zones,Saint-Denis,730.2,U,Uj,False
+97412000AB0016,geante_10ha,Saint-Joseph,1775663.8,N,Npnr,False
+97412000AH0870,ppr_prescription,Saint-Joseph,337.1,U,U5vi,True
+97412000AN0542,commune_base,Saint-Joseph,2028.2,A,A,False
+97412000AN0751,filiation_recente,Saint-Joseph,1176.3,AU,2AU5,False
+97412000AO0394,ravine,Saint-Joseph,1501.1,A,A,True
+97412000BT0835,nue,Saint-Joseph,862.6,U,U2a,False
+97412000BX0076,zone_AU_fermee,Saint-Joseph,2119.8,AU,2AU6,True
+97412000BY0776,minuscule_50m2,Saint-Joseph,46.7,U,U5,False
+97412000CE0305,nue,Saint-Joseph,2728.6,A,A,False
+97412000CE0490,zone_A,Saint-Joseph,10727.0,A,A,True
+97412000CI0199,zone_AU_ouverte,Saint-Joseph,71.0,AU,1AU5ru,False
+97412000CI0219,ppr_interdiction,Saint-Joseph,2224.6,A,A,True
+97412000CK0440,batie,Saint-Joseph,779.0,U,U5ru,True
+97412000CY0532,batie,Saint-Joseph,598.6,U,U5ru,True
+97413000AV1535,cinquante_pas,Saint-Leu,213.5,U,UB,True
+97413000CD0739,filiation_recente,Saint-Leu,440.7,U,UC,True
+97413000CY1004,commune_base,Saint-Leu,15184.2,AU,AUB,False
+97413000DI0075,minuscule_50m2,Saint-Leu,45.4,U,UD,True
+97414000EN3358,zone_AU_ouverte,Saint-Louis,453.7,AU,1AUb1,False
+97414000EN3486,commune_base,Saint-Louis,767.8,U,UB,True
+97414000EN4035,zone_AU_ouverte,Saint-Louis,469.0,AU,1AUb2,True
+97414000EY0177,zone_U,Saint-Louis,235.6,U,UC,True
+97415000AL0041,geante_10ha,Saint-Paul,620897.6,N,N,False
+97415000AM0160,bord_commune,Saint-Paul,9262.9,N,N,False
+97415000AM0238,bord_commune,Saint-Paul,40311.9,N,N,False
+97415000BZ0280,ravine,Saint-Paul,15337.4,A,A,True
+97415000CL0181,zone_A,Saint-Paul,1342.8,A,A,False
+97415000CT1817,copro,Saint-Paul,946.2,U,U3c,True
+97415000DI0636,commune_base,Saint-Paul,715.2,U,U2d,True
+97415000EH0304,bord_commune,Saint-Paul,12609.5,A,A,True
+97415000EW1626,copro,Saint-Paul,2038.0,U,U2c,True
+97415000HI0411,personne_morale,Saint-Paul,281.6,U,U2c,False
+97416000DL0004,zone_N,Saint-Pierre,33.9,N,Np,True
+97416000DM0398,batie,Saint-Pierre,8082.9,N,Np,True
+97416000DY0117,copro,Saint-Pierre,3166.9,U,Ud,True
+97416000ES1484,ravine,Saint-Pierre,3488.1,N,N,True
+97416000ES2026,minuscule_50m2,Saint-Pierre,11.3,U,Ug,False
+97416000ET2142,nue,Saint-Pierre,334.4,U,UfCA,False
+97416000IA0340,ppr_interdiction,Saint-Pierre,883.5,N,N,True
+97416000IA0536,commune_base,Saint-Pierre,637.4,U,Uf,False
+97417000AY0130,commune_base,Saint-Philippe,486.0,,,True
+97418000AO1974,personne_morale,Sainte-Marie,544.9,U,UD1,False
+97418000AR2015,zone_U,Sainte-Marie,645.0,U,UB,True
+97418000AT2555,zone_N,Sainte-Marie,3181.7,N,N,False
+97418000BC0284,commune_base,Sainte-Marie,255.9,U,UR,False
+97418000BE0449,minuscule_50m2,Sainte-Marie,12.7,U,UC,False
+97419000AK0450,commune_base,Sainte-Rose,791.1,U,Ua,True
+97419000AL0891,cinquante_pas,Sainte-Rose,865.9,U,Ua,True
+97419000AL1101,zone_AU_ouverte,Sainte-Rose,100.0,AU,1AUa,True
+97420000AI0679,commune_base,Sainte-Suzanne,801.3,U,UA,True
+97420000AS0630,batie,Sainte-Suzanne,462.1,U,UB,True
+97420000BD0258,zone_AU_fermee,Sainte-Suzanne,464.2,AU,2AUa,True
+97421000AE0016,zone_N,Salazie,3360.6,N,Nr,False
+97421000AL0220,commune_base,Salazie,336.4,A,A,False
+97421000AN0470,personne_morale,Salazie,102.4,U,UB,False
+97421000AR0042,ppr_interdiction,Salazie,1158.3,A,A,False
+97421000BI0031,zone_N,Salazie,50860.3,N,Npnr,False
+97422000AP0755,nue,Le Tampon,576.6,U,Uc,False
+97422000AP1178,batie,Le Tampon,991.2,U,Uc,True
+97422000BD2705,zone_U,Le Tampon,350.1,U,Ub,True
+97422000BN0830,batie,Le Tampon,4875.0,U,Uc,True
+97422000CM0854,zone_AU_fermee,Le Tampon,2650.6,AU,2AUc,True
+97422000CS0560,zone_A,Le Tampon,1708.2,A,A,True
+97422000DH0881,zone_A,Le Tampon,1391.7,A,A,True
+97422000DM0761,filiation_recente,Le Tampon,1282.8,A,A,True
+97422000EL0314,commune_base,Le Tampon,201.2,U,Uav,False
+97423000AB1824,commune_base,Les Trois-Bassins,21.2,AU,1AUb,False
+97423000AH1567,personne_morale,Les Trois-Bassins,449.9,U,Ua,True
+97423000AI0696,ppr_prescription,Les Trois-Bassins,650.0,U,Ub,True
+97423000AK1884,zone_AU_ouverte,Les Trois-Bassins,419.5,AU,1AUb,True
+97424000AC0830,commune_base,Cilaos,464.9,U,Uc,True
+97424000AE1943,personne_morale,Cilaos,471.2,U,Ub,False
