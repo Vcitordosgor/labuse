@@ -308,9 +308,14 @@ async def garde_protection(request: Request, call_next):
             or not _actif_sous_pytest():
         return await call_next(request)
     s = config.get_settings()
-    if s.dev_mode:
+    if s.dev_mode or s.rate_limit_off:
         # Exemption DEV EXPLICITE (flag d'env, jamais une détection localhost — derrière
         # nginx tout arrive en 127.0.0.1). Quotas + rate-limit court-circuités.
+        # FRONT-CHIFFRES-2 — `rate_limit_off` (LABUSE_RATE_LIMIT_OFF=1) : MÊME court-circuit de la
+        # protection anti-scraping (compteur 60/min + gel + quotas de consultation), mais SANS les
+        # autres effets de dev_mode. But : rejouer le banc de cohérence pendant des redémarrages
+        # d'API sans dépendre de DEV_MODE (PRE-DEPLOY-1 : le banc ne doit JAMAIS en dépendre). Flag
+        # LOCAL dev/ops, off par défaut ; la prod ne le pose pas.
         return await call_next(request)
     # M7 — voie QA prod : IP explicitement allowlistée (golden/monitoring) → exemptée,
     # SANS toucher au régime des autres clients (jamais dev_mode sur une machine publique).
