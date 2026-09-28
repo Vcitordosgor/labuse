@@ -97,11 +97,14 @@ def _duo(nm: _Noms, label: str, *, cle: str = "", hint: str = "") -> str:
 def _boxes(nm: _Noms, label: str, options: list[str]) -> str:
     # EXPORTS-FIX-1 E1/E2 — choix UNIQUE = groupe RADIO (même nom pour le groupe, valeur distincte par
     # option) : cocher une case n'en coche qu'une. Cases ≥ 4 mm, SUR la ligne des libellés.
+    # EXPORTS-FIX-1-BIS point 10 — `display:inline-block` sur l'<input> : sans lui, WeasyPrint pose le
+    # rond AU-DESSUS de son libellé et empile les options ; avec, on obtient « ◯ Non ◯ Oui ◯ Ne sait
+    # pas » sur UNE ligne, le rond à côté de son libellé. Cases ≥ 4 mm.
     grp = nm.groupe()
     cases = "".join(
-        f'<label style="margin-right:14pt;font-size:9pt;white-space:nowrap">'
+        f'<label style="margin-right:16pt;font-size:9pt;white-space:nowrap">'
         f'<input type="radio" name="{grp}" value="{esc(o)}" '
-        f'style="appearance:auto;width:4mm;height:4mm;vertical-align:-1.5pt"> {esc(o)}</label>'
+        f'style="appearance:auto;display:inline-block;width:4mm;height:4mm;vertical-align:middle"> {esc(o)}</label>'
         for o in options)
     return f'<div class="q boxes-q"><span class="l">{esc(label)}</span> <span class="boxes">{cases}</span></div>'
 
@@ -290,7 +293,9 @@ def rendu(valeurs, ctx=None) -> str:
 
     # EXPORTS-FIX-1 E1 — noms de champ uniques (compteur par brief).
     nm = _Noms()
-    dest = esc(em.get("nom")) if em.get("nom") else "l'émetteur (en tête)"
+    # EXPORTS-FIX-1-BIS point 9 — si le compte n'a pas d'émetteur (aucun bloc en tête), on ne renvoie
+    # pas « à l'émetteur (en tête) » (qui n'existe pas) mais « à la personne qui vous a remis ce document ».
+    dest = esc(em.get("nom")) if em.get("nom") else "la personne qui vous a remis ce document"
 
     # ── §2 — Vous (l'apporteur d'abord — à qui renvoyer, quand, comment il connaît le vendeur) ──
     # EXPORTS-FIX-1 E8 — plus de saut de page FORCÉ entre sections (`<div class="pb">`) : les sections
