@@ -38,7 +38,6 @@ sdp_residuelle_m2,97408000AO1003,fiche:potentiel_transformation.sdp_residuelle_m
 emprise_batie_m2,97408000AO1003,fiche:le_bien.emprise_batie_m2,109,sql:p_model_bati.emprise_bati_m2,217.2187297700894,108.219,calcul_ou_source,INCOHERENT
 prix_median_maison_secteur,97408000AO1003,fiche:dvf_parcelle.secteur[maison].mediane_prix_m2,3598,api:/outils/mon-secteur.par_type.maison.eur_m2,4300,702,calcul_ou_source,INCOHERENT
 emprise_batie_m2,97408000AZ0066,fiche:le_bien.emprise_batie_m2,502,sql:p_model_bati.emprise_bati_m2,1506.0191738774213,1004.02,calcul_ou_source,INCOHERENT
-prix_median_maison_secteur,97408000AZ0066,fiche:dvf_parcelle.secteur[maison].mediane_prix_m2,ERREUR('Absent' object is not iterable),api:/outils/mon-secteur.par_type.maison.eur_m2,2300,erreur lecteur,erreur,INCOHERENT
 emprise_batie_m2,97409000AH0155,fiche:le_bien.emprise_batie_m2,653,sql:p_model_bati.emprise_bati_m2,687.0951644518046,34.0952,arrondi,TOLERABLE
 prix_median_maison_secteur,97409000AH0155,fiche:dvf_parcelle.secteur[maison].mediane_prix_m2,1768,api:/outils/mon-secteur.par_type.maison.eur_m2,1891,123,calcul_ou_source,INCOHERENT
 prix_median_maison_secteur,97409000AR2385,fiche:dvf_parcelle.secteur[maison].mediane_prix_m2,2120,api:/outils/mon-secteur.par_type.maison.eur_m2,2251,131,calcul_ou_source,INCOHERENT
@@ -230,35 +229,56 @@ emprise_batie_m2,97424000AC0830,fiche:le_bien.emprise_batie_m2,212,sql:p_model_b
 sdp_residuelle_m2,97424000AE1943,sql:parcel_residuel.sdp_residuelle_m2,0,tuile:sdp_residuelle_m2,212,212,calcul_ou_source,INCOHERENT
 classe_residuel(sous_densite),97424000AE1943,sql:parcel_residuel.sous_densite,∅ (pas de donnée),tuile:sous_densite,True,valeur contre absence,absence,INCOHERENT
 prix_median_maison_secteur,97424000AE1943,fiche:dvf_parcelle.secteur[maison].mediane_prix_m2,1495,api:/outils/mon-secteur.par_type.maison.eur_m2,1745,250,calcul_ou_source,INCOHERENT
-cache_fiche_commune_fraicheur,Bras-Panon,ctx:cache_calcule_le,2026-09-25T00:50:32.344086+04:00,attendu,rafraîchi chaque nuit,89 h,cache_perime,INCOHERENT
-cache_fiche_commune_fraicheur,Cilaos,ctx:cache_calcule_le,2026-09-25T00:50:40.232926+04:00,attendu,rafraîchi chaque nuit,89 h,cache_perime,INCOHERENT
-cache_fiche_commune_fraicheur,Entre-Deux,ctx:cache_calcule_le,2026-09-25T00:50:43.838264+04:00,attendu,rafraîchi chaque nuit,89 h,cache_perime,INCOHERENT
-cache_fiche_commune_fraicheur,L'Étang-Salé,ctx:cache_calcule_le,2026-09-25T00:50:46.972863+04:00,attendu,rafraîchi chaque nuit,89 h,cache_perime,INCOHERENT
-cache_fiche_commune_fraicheur,La Plaine-des-Palmistes,ctx:cache_calcule_le,2026-09-25T00:50:51.386268+04:00,attendu,rafraîchi chaque nuit,89 h,cache_perime,INCOHERENT
-cache_fiche_commune_fraicheur,La Possession,ctx:cache_calcule_le,2026-09-25T00:50:59.309764+04:00,attendu,rafraîchi chaque nuit,89 h,cache_perime,INCOHERENT
-cache_fiche_commune_fraicheur,Le Port,ctx:cache_calcule_le,2026-09-25T00:51:06.347895+04:00,attendu,rafraîchi chaque nuit,89 h,cache_perime,INCOHERENT
+alea_mvt_commune_pct,Bras-Panon,ctx:risques.mouvement_terrain_pct,0.1,recalc:georisque_alea[mouvement_terrain],100.0,99.9,calcul_ou_source,INCOHERENT
+cache_fiche_commune_fraicheur,Bras-Panon,ctx:cache_calcule_le,2026-09-25T00:50:32.344086+04:00,attendu,rafraîchi chaque nuit,90 h,cache_perime,INCOHERENT
+alea_mvt_commune_pct,Cilaos,ctx:risques.mouvement_terrain_pct,1.6,recalc:georisque_alea[mouvement_terrain],100.0,98.4,calcul_ou_source,INCOHERENT
+cache_fiche_commune_fraicheur,Cilaos,ctx:cache_calcule_le,2026-09-25T00:50:40.232926+04:00,attendu,rafraîchi chaque nuit,90 h,cache_perime,INCOHERENT
+alea_mvt_commune_pct,Entre-Deux,ctx:risques.mouvement_terrain_pct,0.9,recalc:georisque_alea[mouvement_terrain],100.0,99.1,calcul_ou_source,INCOHERENT
+cache_fiche_commune_fraicheur,Entre-Deux,ctx:cache_calcule_le,2026-09-25T00:50:43.838264+04:00,attendu,rafraîchi chaque nuit,90 h,cache_perime,INCOHERENT
+alea_mvt_commune_pct,L'Étang-Salé,ctx:risques.mouvement_terrain_pct,0.2,recalc:georisque_alea[mouvement_terrain],92.2,92,calcul_ou_source,INCOHERENT
+cache_fiche_commune_fraicheur,L'Étang-Salé,ctx:cache_calcule_le,2026-09-25T00:50:46.972863+04:00,attendu,rafraîchi chaque nuit,90 h,cache_perime,INCOHERENT
+alea_mvt_commune_pct,La Plaine-des-Palmistes,ctx:risques.mouvement_terrain_pct,0.1,recalc:georisque_alea[mouvement_terrain],100.0,99.9,calcul_ou_source,INCOHERENT
+cache_fiche_commune_fraicheur,La Plaine-des-Palmistes,ctx:cache_calcule_le,2026-09-25T00:50:51.386268+04:00,attendu,rafraîchi chaque nuit,90 h,cache_perime,INCOHERENT
+alea_mvt_commune_pct,La Possession,ctx:risques.mouvement_terrain_pct,0.5,recalc:georisque_alea[mouvement_terrain],91.3,90.8,calcul_ou_source,INCOHERENT
+cache_fiche_commune_fraicheur,La Possession,ctx:cache_calcule_le,2026-09-25T00:50:59.309764+04:00,attendu,rafraîchi chaque nuit,90 h,cache_perime,INCOHERENT
+alea_mvt_commune_pct,Le Port,ctx:risques.mouvement_terrain_pct,0.0,recalc:georisque_alea[mouvement_terrain],7.0,7,calcul_ou_source,INCOHERENT
+cache_fiche_commune_fraicheur,Le Port,ctx:cache_calcule_le,2026-09-25T00:51:06.347895+04:00,attendu,rafraîchi chaque nuit,90 h,cache_perime,INCOHERENT
+alea_mvt_commune_pct,Le Tampon,ctx:risques.mouvement_terrain_pct,0.1,recalc:georisque_alea[mouvement_terrain],100.0,99.9,calcul_ou_source,INCOHERENT
 prix_neuf_eur_m2,Le Tampon,ctx:comparable.neuf_eur_m2,4891,ctx:prix_neuf_observe.eur_m2,4318,573,calcul_ou_source,INCOHERENT
-cache_fiche_commune_fraicheur,Le Tampon,ctx:cache_calcule_le,2026-09-25T00:51:11.504433+04:00,attendu,rafraîchi chaque nuit,89 h,cache_perime,INCOHERENT
-cache_fiche_commune_fraicheur,Les Avirons,ctx:cache_calcule_le,2026-09-25T00:51:45.367663+04:00,attendu,rafraîchi chaque nuit,89 h,cache_perime,INCOHERENT
-cache_fiche_commune_fraicheur,Les Trois-Bassins,ctx:cache_calcule_le,2026-09-25T00:51:52.193049+04:00,attendu,rafraîchi chaque nuit,89 h,cache_perime,INCOHERENT
-cache_fiche_commune_fraicheur,Petite-Île,ctx:cache_calcule_le,2026-09-25T00:51:56.251361+04:00,attendu,rafraîchi chaque nuit,89 h,cache_perime,INCOHERENT
-cache_fiche_commune_fraicheur,Saint-André,ctx:cache_calcule_le,2026-09-25T00:52:01.946904+04:00,attendu,rafraîchi chaque nuit,89 h,cache_perime,INCOHERENT
+cache_fiche_commune_fraicheur,Le Tampon,ctx:cache_calcule_le,2026-09-25T00:51:11.504433+04:00,attendu,rafraîchi chaque nuit,90 h,cache_perime,INCOHERENT
+alea_mvt_commune_pct,Les Avirons,ctx:risques.mouvement_terrain_pct,0.2,recalc:georisque_alea[mouvement_terrain],100.0,99.8,calcul_ou_source,INCOHERENT
+cache_fiche_commune_fraicheur,Les Avirons,ctx:cache_calcule_le,2026-09-25T00:51:45.367663+04:00,attendu,rafraîchi chaque nuit,90 h,cache_perime,INCOHERENT
+alea_mvt_commune_pct,Les Trois-Bassins,ctx:risques.mouvement_terrain_pct,0.2,recalc:georisque_alea[mouvement_terrain],98.7,98.5,calcul_ou_source,INCOHERENT
+cache_fiche_commune_fraicheur,Les Trois-Bassins,ctx:cache_calcule_le,2026-09-25T00:51:52.193049+04:00,attendu,rafraîchi chaque nuit,90 h,cache_perime,INCOHERENT
+alea_mvt_commune_pct,Petite-Île,ctx:risques.mouvement_terrain_pct,0.2,recalc:georisque_alea[mouvement_terrain],100.0,99.8,calcul_ou_source,INCOHERENT
+cache_fiche_commune_fraicheur,Petite-Île,ctx:cache_calcule_le,2026-09-25T00:51:56.251361+04:00,attendu,rafraîchi chaque nuit,90 h,cache_perime,INCOHERENT
+alea_mvt_commune_pct,Saint-André,ctx:risques.mouvement_terrain_pct,0.3,recalc:georisque_alea[mouvement_terrain],100.0,99.7,calcul_ou_source,INCOHERENT
+cache_fiche_commune_fraicheur,Saint-André,ctx:cache_calcule_le,2026-09-25T00:52:01.946904+04:00,attendu,rafraîchi chaque nuit,90 h,cache_perime,INCOHERENT
 alea_mvt_commune_pct,Saint-Benoît,ctx:risques.mouvement_terrain_pct,0.1,recalc:georisque_alea[mouvement_terrain],100.0,99.9,calcul_ou_source,INCOHERENT
-cache_fiche_commune_fraicheur,Saint-Benoît,ctx:cache_calcule_le,2026-09-25T00:52:12.313489+04:00,attendu,rafraîchi chaque nuit,89 h,cache_perime,INCOHERENT
+cache_fiche_commune_fraicheur,Saint-Benoît,ctx:cache_calcule_le,2026-09-25T00:52:12.313489+04:00,attendu,rafraîchi chaque nuit,90 h,cache_perime,INCOHERENT
 prix_neuf_eur_m2,Saint-Denis,ctx:comparable.neuf_eur_m2,5000,ctx:prix_neuf_observe.eur_m2,4275,725,calcul_ou_source,INCOHERENT
-cache_fiche_commune_fraicheur,Saint-Denis,ctx:cache_calcule_le,2026-09-25T00:52:56.153905+04:00,attendu,rafraîchi chaque nuit,89 h,cache_perime,INCOHERENT
-cache_fiche_commune_fraicheur,Saint-Joseph,ctx:cache_calcule_le,2026-09-25T00:53:24.578932+04:00,attendu,rafraîchi chaque nuit,89 h,cache_perime,INCOHERENT
+cache_fiche_commune_fraicheur,Saint-Denis,ctx:cache_calcule_le,2026-09-25T00:52:56.153905+04:00,attendu,rafraîchi chaque nuit,90 h,cache_perime,INCOHERENT
+alea_mvt_commune_pct,Saint-Joseph,ctx:risques.mouvement_terrain_pct,0.2,recalc:georisque_alea[mouvement_terrain],100.0,99.8,calcul_ou_source,INCOHERENT
+cache_fiche_commune_fraicheur,Saint-Joseph,ctx:cache_calcule_le,2026-09-25T00:53:24.578932+04:00,attendu,rafraîchi chaque nuit,90 h,cache_perime,INCOHERENT
+alea_mvt_commune_pct,Saint-Leu,ctx:risques.mouvement_terrain_pct,0.3,recalc:georisque_alea[mouvement_terrain],98.3,98,calcul_ou_source,INCOHERENT
 prix_neuf_eur_m2,Saint-Leu,ctx:comparable.neuf_eur_m2,4794,ctx:prix_neuf_observe.eur_m2,4953,159,arrondi,TOLERABLE
-cache_fiche_commune_fraicheur,Saint-Leu,ctx:cache_calcule_le,2026-09-25T00:53:42.350586+04:00,attendu,rafraîchi chaque nuit,89 h,cache_perime,INCOHERENT
-cache_fiche_commune_fraicheur,Saint-Louis,ctx:cache_calcule_le,2026-09-25T00:54:05.329844+04:00,attendu,rafraîchi chaque nuit,89 h,cache_perime,INCOHERENT
+cache_fiche_commune_fraicheur,Saint-Leu,ctx:cache_calcule_le,2026-09-25T00:53:42.350586+04:00,attendu,rafraîchi chaque nuit,90 h,cache_perime,INCOHERENT
+alea_mvt_commune_pct,Saint-Louis,ctx:risques.mouvement_terrain_pct,0.2,recalc:georisque_alea[mouvement_terrain],87.9,87.7,calcul_ou_source,INCOHERENT
+cache_fiche_commune_fraicheur,Saint-Louis,ctx:cache_calcule_le,2026-09-25T00:54:05.329844+04:00,attendu,rafraîchi chaque nuit,90 h,cache_perime,INCOHERENT
 alea_mvt_commune_pct,Saint-Paul,ctx:risques.mouvement_terrain_pct,0.1,recalc:georisque_alea[mouvement_terrain],90.3,90.2,calcul_ou_source,INCOHERENT
-cache_fiche_commune_fraicheur,Saint-Paul,ctx:cache_calcule_le,2026-09-25T00:54:19.086082+04:00,attendu,rafraîchi chaque nuit,89 h,cache_perime,INCOHERENT
-cache_fiche_commune_fraicheur,Saint-Philippe,ctx:cache_calcule_le,2026-09-25T00:54:31.647232+04:00,attendu,rafraîchi chaque nuit,89 h,cache_perime,INCOHERENT
+cache_fiche_commune_fraicheur,Saint-Paul,ctx:cache_calcule_le,2026-09-25T00:54:19.086082+04:00,attendu,rafraîchi chaque nuit,90 h,cache_perime,INCOHERENT
+alea_mvt_commune_pct,Saint-Philippe,ctx:risques.mouvement_terrain_pct,0.0,recalc:georisque_alea[mouvement_terrain],100.0,100,calcul_ou_source,INCOHERENT
+cache_fiche_commune_fraicheur,Saint-Philippe,ctx:cache_calcule_le,2026-09-25T00:54:31.647232+04:00,attendu,rafraîchi chaque nuit,90 h,cache_perime,INCOHERENT
+alea_mvt_commune_pct,Saint-Pierre,ctx:risques.mouvement_terrain_pct,0.0,recalc:georisque_alea[mouvement_terrain],99.9,99.9,calcul_ou_source,INCOHERENT
 prix_neuf_eur_m2,Saint-Pierre,ctx:comparable.neuf_eur_m2,4945,ctx:prix_neuf_observe.eur_m2,4258,687,calcul_ou_source,INCOHERENT
-cache_fiche_commune_fraicheur,Saint-Pierre,ctx:cache_calcule_le,2026-09-25T00:54:33.981919+04:00,attendu,rafraîchi chaque nuit,89 h,cache_perime,INCOHERENT
-cache_fiche_commune_fraicheur,Sainte-Marie,ctx:cache_calcule_le,2026-09-25T00:54:53.343734+04:00,attendu,rafraîchi chaque nuit,89 h,cache_perime,INCOHERENT
-cache_fiche_commune_fraicheur,Sainte-Rose,ctx:cache_calcule_le,2026-09-25T00:55:01.558728+04:00,attendu,rafraîchi chaque nuit,89 h,cache_perime,INCOHERENT
-cache_fiche_commune_fraicheur,Sainte-Suzanne,ctx:cache_calcule_le,2026-09-25T00:55:05.879345+04:00,attendu,rafraîchi chaque nuit,89 h,cache_perime,INCOHERENT
-cache_fiche_commune_fraicheur,Salazie,ctx:cache_calcule_le,2026-09-25T00:55:11.766997+04:00,attendu,rafraîchi chaque nuit,89 h,cache_perime,INCOHERENT
+cache_fiche_commune_fraicheur,Saint-Pierre,ctx:cache_calcule_le,2026-09-25T00:54:33.981919+04:00,attendu,rafraîchi chaque nuit,90 h,cache_perime,INCOHERENT
+alea_mvt_commune_pct,Sainte-Marie,ctx:risques.mouvement_terrain_pct,0.2,recalc:georisque_alea[mouvement_terrain],100.0,99.8,calcul_ou_source,INCOHERENT
+cache_fiche_commune_fraicheur,Sainte-Marie,ctx:cache_calcule_le,2026-09-25T00:54:53.343734+04:00,attendu,rafraîchi chaque nuit,90 h,cache_perime,INCOHERENT
+alea_mvt_commune_pct,Sainte-Rose,ctx:risques.mouvement_terrain_pct,0.2,recalc:georisque_alea[mouvement_terrain],100.0,99.8,calcul_ou_source,INCOHERENT
+cache_fiche_commune_fraicheur,Sainte-Rose,ctx:cache_calcule_le,2026-09-25T00:55:01.558728+04:00,attendu,rafraîchi chaque nuit,90 h,cache_perime,INCOHERENT
+alea_mvt_commune_pct,Sainte-Suzanne,ctx:risques.mouvement_terrain_pct,0.2,recalc:georisque_alea[mouvement_terrain],96.2,96,calcul_ou_source,INCOHERENT
+cache_fiche_commune_fraicheur,Sainte-Suzanne,ctx:cache_calcule_le,2026-09-25T00:55:05.879345+04:00,attendu,rafraîchi chaque nuit,90 h,cache_perime,INCOHERENT
+alea_mvt_commune_pct,Salazie,ctx:risques.mouvement_terrain_pct,3.4,recalc:georisque_alea[mouvement_terrain],100.0,96.6,calcul_ou_source,INCOHERENT
+cache_fiche_commune_fraicheur,Salazie,ctx:cache_calcule_le,2026-09-25T00:55:11.766997+04:00,attendu,rafraîchi chaque nuit,90 h,cache_perime,INCOHERENT
 taxe_amenagement_taux_communal_pct,97423000AB1824↔Les Trois-Bassins,fiche:taxe_amenagement.taux_communal_pct (97423000AB1824),20.0,ctx:taxe_amenagement.part_communale_pct,3.0,17,calcul_ou_source,INCOHERENT
 taxe_amenagement_taux_communal_pct,97413000AV1535↔Saint-Leu,fiche:taxe_amenagement.taux_communal_pct (97413000AV1535),14.0,ctx:taxe_amenagement.part_communale_pct,5.0,9,calcul_ou_source,INCOHERENT

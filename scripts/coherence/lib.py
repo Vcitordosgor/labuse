@@ -21,6 +21,8 @@ import json
 import math
 import pathlib
 import subprocess
+import time
+import urllib.error
 import urllib.parse
 import urllib.request
 
@@ -64,11 +66,25 @@ class Contexte:
 
     def http_json(self, path: str):
         if path not in self._http:
-            try:
-                with urllib.request.urlopen(API + path, timeout=120) as r:
-                    self._http[path] = json.loads(r.read())
-            except Exception as e:  # noqa: BLE001 — l'échec est une donnée du banc
-                self._http[path] = Erreur(e)
+            derniere = None
+            for attente in (0, 2, 5, 15):     # l'API limite le débit (429) — on ré-essaie
+                if attente:
+                    time.sleep(attente)
+                try:
+                    with urllib.request.urlopen(API + path, timeout=120) as r:
+                        self._http[path] = json.loads(r.read())
+                    break
+                except urllib.error.HTTPError as e:
+                    derniere = e
+                    if e.code != 429:
+                        break
+                except Exception as e:  # noqa: BLE001 — l'échec est une donnée du banc
+                    derniere = e
+                    break
+            else:
+                pass
+            if path not in self._http:
+                self._http[path] = Erreur(derniere)
         return self._http[path]
 
     def fiche(self, idu: str):

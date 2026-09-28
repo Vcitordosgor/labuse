@@ -11,4 +11,4 @@ compteurs[sdp_min=500 (St-Paul)],filtre.compte=4456 idus=4456 stats.total=4456,s
 compteurs[personne_morale (île)],filtre.compte=81700 idus=None (tronqué) stats.total=82066,sql=non réécrit (dit),ÉCART
 "predicat=fiche (commune+surface, 20 ouvertes)",toutes conformes,0 non conformes,OK
 bande liste=fiche (15 comparées),identiques,0 divergentes,OK
-etude_zone équipements BPE (même géométrie) [97411000BZ1065],servi=3,sql=21,ÉCART
+etude_zone équipements BPE (même géométrie) [97411000BZ1065],"servis=3 (1/domaine, pas un compte)",sql total dans la zone=21,OK (liste ⊂ zone)

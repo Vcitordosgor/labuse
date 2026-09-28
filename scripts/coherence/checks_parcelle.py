@@ -65,6 +65,14 @@ def _sql_flag(layer):
     return get
 
 
+def _prix_maison_fiche(ctx, idu):
+    sect = chemin(ctx.fiche(idu), "dvf_parcelle.secteur")
+    if not isinstance(sect, list):
+        return sect if sect is None or sect is ABSENT else ABSENT
+    return next((s.get("mediane_prix_m2") for s in sect
+                 if isinstance(s, dict) and s.get("type_bien") == "maison"), ABSENT)
+
+
 def _copro_fiche(ctx, idu):
     v = chemin(ctx.fiche(idu), "coproprietes")
     if isinstance(v, list):
@@ -183,10 +191,7 @@ CHECKS: list[tuple] = [
     # l'outil Mon secteur (rayon 500/1000 m) doivent dire le même chiffre quand ils
     # parlent du même périmètre ; l'écart mesuré instruit le lot H (« secteur » nommé).
     ("prix_median_maison_secteur", "1 %", [
-        ("fiche:dvf_parcelle.secteur[maison].mediane_prix_m2",
-         lambda ctx, idu: next((s.get("mediane_prix_m2") for s in
-                                (chemin(ctx.fiche(idu), "dvf_parcelle.secteur") or [])
-                                if isinstance(s, dict) and s.get("type_bien") == "maison"), ABSENT)),
+        ("fiche:dvf_parcelle.secteur[maison].mediane_prix_m2", _prix_maison_fiche),
         ("api:/outils/mon-secteur.par_type.maison.eur_m2",
          _api("/outils/mon-secteur?idu={idu}", "par_type.maison.eur_m2")),
     ], "calcul_different(rayon/fenetre)"),

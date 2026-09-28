@@ -28,6 +28,7 @@ from __future__ import annotations
 import csv
 import hashlib
 import json
+import pathlib
 import re
 import subprocess
 import time
@@ -111,8 +112,12 @@ def oracle_zone_et_surface(v, conn, parcelles, n=40):
                 fam = z[0]
                 # GPU « AUc/AUs » ↔ famille AU ; « Ah/Nd… » portent la famille en tête
                 ok_fam = any(t and (t == fam or t.startswith(fam)) for t in types)
-                v.note("zone_plu_famille", idu, fam, "/".join(t or "∅" for t in types),
-                       "API Carto GPU zone-urba (centroïde)", 0 if not ok_fam else 1)
+                v.lignes.append({"notion": "zone_plu_famille", "objet": idu,
+                                 "valeur_labuse": fam,
+                                 "valeur_oracle": "/".join(t or "∅" for t in types),
+                                 "source_oracle": "API Carto GPU zone-urba (centroïde)",
+                                 "ecart": "" if ok_fam else "famille ≠ typezone GPU",
+                                 "verdict": "VRAI" if ok_fam else "FAUX"})
             elif z and not types:
                 v.note("zone_plu_famille", idu, z[0], "∅ (GPU sans zonage au point)",
                        "API Carto GPU zone-urba (centroïde)")
@@ -190,7 +195,7 @@ def oracle_dvf(v, conn, insee="97411", annee="2024"):
            f"{verifiees}/{len(muts)} en base", f"{len(muts)} mutations Etalab",
            "files.data.gouv.fr geo-dvf (brut)", 1)
     v.note("dvf_valeur_fonciere", f"{insee}/{annee}",
-           f"{valeurs_ko} valeurs ≠", "0 attendu", "files.data.gouv.fr geo-dvf (brut)")
+           valeurs_ko, 0, "files.data.gouv.fr geo-dvf (brut) — valeurs divergentes")
     if manquantes:
         v.lignes[-2]["ecart"] = f"{manquantes} mutations du fichier absentes de la base"
         v.lignes[-2]["verdict"] = "FAUX" if manquantes > len(muts) * 0.05 else "VRAI (≤5 %)"
@@ -295,41 +300,72 @@ def oracle_taxe(v):
             v.skip(f"taxe_amenagement[{com}]", str(e)[:80])
 
 
-def oracle_regles_plu(v, conn, n=30):
-    """30 règles calibrées tirées au sort (md5) : le PDF du règlement, ouvert à la page
-    citée, contient le verbatim déclaré (première phrase ≥ 12 caractères)."""
-    with conn.cursor() as cur:
-        cur.execute("""SELECT commune, zone, article_ref, page_pdf, texte_verbatim, source_url
-                       FROM plu_reglement_extrait
-                       WHERE source_url IS NOT NULL AND page_pdf IS NOT NULL
-                         AND length(coalesce(texte_verbatim,'')) > 20
-                       ORDER BY md5('coherence1'||commune||zone||article_ref) LIMIT %s""", (n,))
-        regles = cur.fetchall()
+def oracle_regles_plu(v, parcelles, n=30):
+    """30 règles calibrées tirées au sort (md5) parmi les `regles_valeurs` CHIFFRÉES que la
+    fiche cite elle-même (valeur + « Art. X · p.N » + lien profond …pdf#page=P) : le PDF du
+    règlement (URL directe des annexes GPU, pas le pack zip) est ouvert à la page citée et
+    chaque nombre de la valeur doit s'y lire (±1 page)."""
+    candidates: dict[str, dict] = {}
+    for row in parcelles:
+        fiche = _fiche_cache(row["idu"])
+        if not isinstance(fiche, dict):
+            continue
+        for zone in (fiche.get("reglement_plu") or {}).get("zones") or []:
+            for regle in zone.get("regles_valeurs") or []:
+                if regle.get("etat") != "chiffre" or not regle.get("url"):
+                    continue
+                cle = f"{fiche.get('commune')}|{zone.get('zone')}|{regle.get('cle')}"
+                candidates.setdefault(cle, {"commune": fiche.get("commune"),
+                                            "zone": zone.get("zone"), **regle})
+    tirage = sorted(candidates.values(),
+                    key=lambda r: hashlib.md5(
+                        f"coherence1{r['commune']}{r['zone']}{r['cle']}".encode()).hexdigest())[:n]
     cache: dict[str, str] = {}
-    for com, zone, art, page, verbatim, url in regles:
-        pdf_url = url.split("#")[0]
-        cle = f"{pdf_url}#p{page}"
+    for r in tirage:
+        url = r["url"]
+        pdf_url, _, frag = url.partition("#page=")
+        page = int(frag) if frag.isdigit() else None
+        objet = f"{r['commune']} {r['zone']} {r['cle']} ({r.get('reference','')[:36]})"
+        if page is None:
+            v.skip(f"regle_plu[{objet}]", "lien sans #page")
+            continue
         try:
-            if cle not in cache:
-                pdf = _get(pdf_url, timeout=90)
+            cle_pdf = f"{pdf_url}#p{page}"
+            if cle_pdf not in cache:
                 tmp = f"/tmp/coherence_plu_{hashlib.md5(pdf_url.encode()).hexdigest()[:10]}.pdf"
-                with open(tmp, "wb") as f:
-                    f.write(pdf)
-                out = subprocess.run(["pdftotext", "-f", str(max(1, int(page) - 1)),
-                                      "-l", str(int(page) + 1), tmp, "-"],
+                if not pathlib.Path(tmp).exists() or pathlib.Path(tmp).stat().st_size < 10_000:
+                    with open(tmp, "wb") as f:
+                        f.write(_get(pdf_url, timeout=180))
+                out = subprocess.run(["pdftotext", "-f", str(max(1, page - 1)),
+                                      "-l", str(page + 1), tmp, "-"],
                                      capture_output=True, text=True, timeout=60)
-                cache[cle] = out.stdout
-            texte = cache[cle]
-            morceau = re.sub(r"\s+", " ", verbatim).strip()[:60]
-            present = re.sub(r"\s+", " ", texte).find(morceau[:40]) >= 0
-            v.lignes.append({"notion": "regle_plu_calibree", "objet": f"{com} {zone} {art} p.{page}",
-                             "valeur_labuse": morceau, "valeur_oracle": "présent" if present else "ABSENT de la page",
+                cache[cle_pdf] = out.stdout
+            texte = cache[cle_pdf].replace(" ", " ").replace(",", ".")
+            nombres = re.findall(r"\d+(?:\.\d+)?", str(r.get("valeur", "")).replace(",", "."))
+            present = bool(nombres) and all(
+                re.search(rf"(?<![\d.]){re.escape(x)}(?![\d])", texte) for x in nombres)
+            v.lignes.append({"notion": "regle_plu_calibree", "objet": objet,
+                             "valeur_labuse": r.get("valeur"),
+                             "valeur_oracle": "nombres présents p.{}±1".format(page) if present
+                             else "au moins un nombre ABSENT de la page",
                              "source_oracle": pdf_url[:90],
-                             "ecart": "" if present else "verbatim introuvable à la page citée (±1)",
+                             "ecart": "" if present else f"valeur {r.get('valeur')!r} non lue p.{page}±1",
                              "verdict": "VRAI" if present else "FAUX"})
         except Exception as e:  # noqa: BLE001
-            v.skip(f"regle_plu[{com} {zone} {art}]", str(e)[:80])
+            v.skip(f"regle_plu[{objet}]", str(e)[:80])
         time.sleep(0.2)
+
+
+_FICHES: dict[str, object] = {}
+
+
+def _fiche_cache(idu):
+    if idu not in _FICHES:
+        try:
+            _FICHES[idu] = _fiche(idu)
+        except Exception:  # noqa: BLE001
+            _FICHES[idu] = None
+    return _FICHES[idu]
 
 
 def main() -> None:
@@ -353,7 +389,7 @@ def main() -> None:
         print("oracle taxe d'aménagement (délibérations)…")
         oracle_taxe(v)
         print("oracle règles PLU (30 tirées au sort)…")
-        oracle_regles_plu(v, conn)
+        oracle_regles_plu(v, parcelles)
     # skips de périmètre, dits une fois
     v.skip("ppr_alea", "pas d'oracle public requêtable stable (GetFeatureInfo DEAL) — couche comparée à sa table au lot B")
     v.skip("cosia_couverture", "raster brut CoSIA = téléchargement lourd, hors budget du banc v1")

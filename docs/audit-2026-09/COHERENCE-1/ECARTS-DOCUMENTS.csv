@@ -33,4 +33,13 @@ pdf:dossier,97415000CK0678,sdp_residuelle_m2,183,présent dans le PDF,OK
 pdf:financier,97415000CK0678,—,,HTTP Error 422: Unprocessable Entity,NON VÉRIFIÉ (dit)
 pdf:apporteur,97415000CK0678,surface_m2,413,présent dans le PDF,OK
 digest:veille,—,—,,cannot import name 'SessionLocal' from 'labuse.db' (/Users/openclaw/Desktop/labuse-coherence/src/labuse/db.py),ERREUR
-copilote:FICHE,—,—,,coût LLM — lancé avec --copilote seulement,NON VÉRIFIÉ (dit)
+copilote:FICHE,97411000EM0174,surface_m2,1825,Surface : 1 825 m² (surface_parcelle_m2).,OK
+copilote:FICHE,97411000EM0174,pente_moy_deg,12.2,"Pente : 12,2° (pente_deg).",OK
+copilote:FICHE,97411000EM0174,sdp_residuelle_m2,0.0,SDP résiduelle : 0 m² (sdp_residuelle_m2).,OK
+copilote:FICHE,97415000AB0134,surface_m2,20357,Surface : 20 357 m² (surface_parcelle_m2).,OK
+copilote:FICHE,97415000AB0134,pente_moy_deg,1.6,"Pente : 1,6° (pente_deg).",OK
+copilote:FICHE,97402000AB1117,surface_m2,4097,Surface : 4 097 m² (surface_parcelle_m2).,OK
+copilote:FICHE,97402000AB1117,pente_moy_deg,7.4,"Pente : 7,4° (pente_deg).",OK
+copilote:FICHE,97402000AB1117,sdp_residuelle_m2,27.0,SDP résiduelle : 27 m² (sdp_residuelle_m2).,OK
+copilote:FICHE,97411000DE0231,surface_m2,388,Surface : 388 m² (surface_parcelle_m2).,OK
+copilote:FICHE,97411000DE0231,pente_moy_deg,4.0,"Pente : 4,0° (pente_deg).",OK
