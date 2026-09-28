@@ -172,8 +172,10 @@ _ajout(_f(
 
 
 # ─────────────────────────────── DPE ADEME ───────────────────────────────
-# Mesures 05/09 (base LOCALE, DPE partielle) : 17 enregistrements · 7 communes · 0 classe hors A-G.
-# La rareté locale est l'état SERVI localement (le filtre l'avertit honnêtement, communes 7/24).
+# SOURCES-FIX-2 lot F (ANOMALIES row 49) — chiffre de mesure RAFRAÎCHI : base LOCALE = 1 123
+# enregistrements · 20 communes · 0 classe hors A-G (l'ancien « 17 · 7 communes » du 05/09 était
+# périmé). Le filtre avertit honnêtement de la couverture partielle ; le contrôle de domaine (A-G)
+# ne dépend pas du volume.
 _ajout(_f(
     source="dpe", libelle="DPE ADEME (logements existants)", table="dpe_records",
     cle=("numero_dpe",), insee_col="code_insee", date_cols=("date_etablissement",),

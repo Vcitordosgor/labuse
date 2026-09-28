@@ -27,7 +27,7 @@ export function ProprietaireHistorique({ h, pm }: { h: Histo | null | undefined;
     return (
       <p data-proprietaire-historique-absent className="text-[10.5px] leading-snug text-txt-dim">
         Anciens propriétaires : historique par millésime non disponible pour cette parcelle
-        (millésimes DGFiP 2019–2025, personnes morales).
+        (millésimes DGFiP 2019–2024, personnes morales).
       </p>
     )
   }
