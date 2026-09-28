@@ -2474,6 +2474,15 @@ export const postAdminCronRun = (nom: string) =>
 
 // ── CIRCUIT-1 lot 5 — la page Circuit (un appel) + ses gestes ──────────────────────────────
 export const getAdminCircuit = () => j<any>('/admin/circuit')
+// COHERENCE-FIX-1 (lot A) — fraîcheur des caches (clé attendue / clé réelle / périmé), page Données.
+export interface CacheFraicheur {
+  cache: string; porte_sur?: string; cle_attendue?: string; cle_reelle?: string | null
+  perime: boolean; detail?: string; remede?: string; erreur?: string
+}
+export const getSanteFraicheur = () =>
+  j<{ empreinte_attendue: string; perimes: string[]; caches: CacheFraicheur[] }>('/sante/fraicheur')
+// COHERENCE-FIX-1 (lot G) — les passages du banc de cohérence (onglet Cohérence, page Données).
+export const getAdminCoherence = () => j<any>('/admin/coherence')
 export const postAdminCircuitVerifier = () => j<any>('/admin/circuit/verifier', { method: 'POST' })
 // CIRCUIT-P2 (lot 3.2/3.3) / CIRCUIT-P7 — tâches longues : lancer l'agent LLM (une source via
 // `sourceId`, ou une portée « sans_amont » (défaut) / « g8 » / « tous » depuis la carte Agents).

@@ -2028,7 +2028,11 @@ def faisabilite_explain(idu: str, db: Session = Depends(get_db)) -> dict:
     from ..ai import core
     QUESTION = "explication_faisabilite"
 
-    hit = core.cache_get(db, idu, runs.current(), QUESTION)
+    # COHERENCE-FIX-1 (lot A) — même clé de fraîcheur que fiche_ask : run + empreinte (résiduel
+    # servi, millésimes, code). Une dépendance bouge → l'explication d'hier n'est plus resservie.
+    from ..fraicheur_caches import empreinte_courte
+    cle_run = f"{runs.current()}+{empreinte_courte(db)}"
+    hit = core.cache_get(db, idu, cle_run, QUESTION)
     if hit is not None:
         return {**hit, "cached": True}
     row = db.execute(text("SELECT id, round(surface_m2) AS s FROM parcels WHERE idu = :i"), {"i": idu}).mappings().first()
@@ -2051,7 +2055,7 @@ def faisabilite_explain(idu: str, db: Session = Depends(get_db)) -> dict:
     else:
         out = {"disponible": True, "rejected": False, "texte": res.text, "sources": res.sources,
                "provenance": {k: facts[k].provenance for k in res.sources if k in facts}}
-    core.cache_put(db, idu, runs.current(), QUESTION, out, kind="explain-faisa")
+    core.cache_put(db, idu, cle_run, QUESTION, out, kind="explain-faisa")
     return out
 
 

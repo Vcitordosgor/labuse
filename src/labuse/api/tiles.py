@@ -173,7 +173,13 @@ def build_mvt_table(db: Session, run_label: str | None = None) -> int:
                -- M129-B : q/a (matrice morte) retirés des tuiles
                s2.tier AS tier_v2, s2.rang AS rang_v2, s2.mult_base AS mult_v2,
                (d.status IN ('exclue', 'faux_positif_probable'))::int AS etage0,
-               d.completeness_score, r.sdp_residuelle_m2, r.sous_densite,
+               -- COHERENCE-FIX-1 (banc après) — MÊME règle M125 que la fiche (« les lecteurs
+               -- VIVANTS ne lisent que cause IS NULL ») : une ligne à cause (terrain_exigu,
+               -- zone non constructible…) ne bake plus son 0 dans la tuile pendant que la fiche
+               -- dit « non calculée » — 6 lignes FAUX-CLIENT « ∅ contre 0 » de l'audit.
+               d.completeness_score,
+               CASE WHEN r.cause IS NULL THEN r.sdp_residuelle_m2 END AS sdp_residuelle_m2,
+               CASE WHEN r.cause IS NULL THEN r.sous_densite END AS sous_densite,
                CASE WHEN ev.parcel_id IS NOT NULL THEN 'rouge' END AS evenement,
                COALESCE(fl.flags, '') AS flags,
                zp.zone_lib, zp.zone_fam
@@ -280,6 +286,14 @@ def rebuild_mvt_servies(db: Session, run_label: str | None = None, log=lambda *_
                        (key varchar(48) PRIMARY KEY, value varchar(64), updated_at timestamptz)"""))
     db.execute(text("""INSERT INTO mvt_meta (key, value, updated_at) VALUES ('run_label', :l, now())
                        ON CONFLICT (key) DO UPDATE SET value = :l, updated_at = now()"""), {"l": run_label})
+    # COHERENCE-FIX-1 (lot A) — les tuiles portent AUSSI le run RÉSIDUEL sur lequel elles sont bâties
+    # (clé de fraîcheur) : un `residuel-serve` vers un run aux computed_at ANCIENS ne serait pas vu
+    # par la seule comparaison de dates (amont < carte_le) — la clé, si.
+    from ..fraicheur_caches import residuel_seq_servi as _seq_servi
+    _seq = _seq_servi(db)
+    db.execute(text("""INSERT INTO mvt_meta (key, value, updated_at) VALUES ('residuel_seq', :s, now())
+                       ON CONFLICT (key) DO UPDATE SET value = :s, updated_at = now()"""),
+               {"s": str(_seq) if _seq is not None else ""})
     log(f"✓ mvt_parcels : {n} parcelles · {round(_t.perf_counter() - t0, 1)} s "
         f"(run {run_label}).")
     # M48 : garde de péremption DANS le point unique → CLI `build-mvt` ET bascules la voient (post-build
@@ -395,6 +409,52 @@ def planifier_reconstruction_tuiles(db: Session, run_label: str | None = None) -
             "raison": f"île estimée à {m['estimation_ile_min']} min (≥ {SEUIL_RECONSTRUCTION_MIN}) "
                       f"→ ligne « À faire » bloquante + carte signalée non à jour.",
             "duree_estimee_min": m["estimation_ile_min"]}
+
+
+def tuiles_etat(db: Session) -> dict:
+    """COHERENCE-FIX-1 (lot A) — LE prédicat UNIQUE de péremption des tuiles, partagé par
+    `/map/tiles/meta` (bandeau carte), l'onglet « À faire » (dashboard `_tuiles_af`) et
+    `/sante/fraicheur` + `labuse rebuild` — un seul mécanisme, jamais deux définitions.
+    Périmé si : (a) run carte ≠ run servi ; (b) run résiduel au build ≠ résiduel servi (clé
+    posée par rebuild_mvt_servies — attrape un `residuel-serve` vers un run plus ANCIEN que
+    les dates ne voient pas) ; (c) amont recalculé depuis le build (règle FIX-CARTE T1)."""
+    run_carte = carte_le = amont_le = seq_carte = None
+    if db.execute(text("SELECT to_regclass('mvt_meta')")).scalar():
+        row = db.execute(text(
+            "SELECT value, updated_at FROM mvt_meta WHERE key = 'run_label'")).mappings().first()
+        if row:
+            run_carte, carte_le = row["value"], row["updated_at"]
+        s = db.execute(text("SELECT value FROM mvt_meta WHERE key = 'residuel_seq'")).scalar()
+        seq_carte = int(s) if s not in (None, "") else None
+    run_servi = runs.current()
+    from ..fraicheur_caches import residuel_seq_servi as _seq_servi
+    seq_servi = _seq_servi(db)
+    perime, motif, motif_detail = False, None, None
+    if run_carte and carte_le is not None:
+        sc = db.execute(text(
+            "SELECT max(computed_at) FROM parcel_p_score_v2 WHERE run_id = :r"),
+            {"r": run_carte}).scalar()
+        rs = db.execute(text("SELECT max(computed_at) FROM parcel_residuel")).scalar()
+        amont = max([d for d in (sc, rs) if d is not None], default=None)
+        if amont is not None:
+            amont_le = amont
+        if run_carte != run_servi:
+            perime, motif = True, "run"
+            motif_detail = f"tuiles bâties sur « {run_carte} », l'app sert « {run_servi} »"
+        elif seq_carte is not None and seq_servi is not None and seq_carte != seq_servi:
+            perime, motif = True, "residuel"
+            motif_detail = f"tuiles bâties sur le résiduel seq {seq_carte}, servi = seq {seq_servi}"
+        elif amont is not None and amont > carte_le:
+            perime, motif = True, "amont"
+            motif_detail = "le résiduel/le score servi a été recalculé depuis le build des tuiles"
+    elif run_carte is None:
+        perime, motif, motif_detail = True, "absent", "mvt_parcels jamais bâtie"
+    return {"perime": perime, "motif": motif, "motif_detail": motif_detail,
+            "run_carte": run_carte, "run_servi": run_servi,
+            "carte_le": carte_le.isoformat() if carte_le else None,
+            "amont_le": amont_le.isoformat() if amont_le else None,
+            "cle_attendue": f"run={run_servi}|residuel=seq{seq_servi}",
+            "cle_reelle": f"run={run_carte}|residuel=seq{seq_carte}"}
 
 
 # cache LRU en mémoire (les tuiles sont chères à générer et très re-demandées en navigation)
@@ -618,21 +678,11 @@ def mvt_tiles_meta(db: Session = Depends(get_db)) -> dict:
     `perime` (FIX-CARTE T1). La péremption = tuiles bâties AVANT le dernier re-score/résiduel du
     run servi (la même règle que la garde de build check_peremption_tuiles) → visible au RUNTIME,
     pas seulement au build. Doctrine : la carte annonce la date de la donnée qu'elle peint."""
-    run = carte_le = amont_le = None
-    perime = False
-    if db.execute(text("SELECT to_regclass('mvt_meta')")).scalar():
-        row = db.execute(text(
-            "SELECT value, updated_at FROM mvt_meta WHERE key = 'run_label'")).mappings().first()
-        if row:
-            run, carte_le = row["value"], row["updated_at"]
-    if run and carte_le is not None:
-        sc = db.execute(text(
-            "SELECT max(computed_at) FROM parcel_p_score_v2 WHERE run_id = :r"), {"r": run}).scalar()
-        rs = db.execute(text("SELECT max(computed_at) FROM parcel_residuel")).scalar()
-        amont = max([d for d in (sc, rs) if d is not None], default=None)
-        if amont is not None:
-            amont_le = amont
-            perime = amont > carte_le
+    # COHERENCE-FIX-1 (lot A) — le prédicat de péremption est UNIQUE (`tuiles_etat`) : la carte,
+    # l'onglet « À faire » et /sante/fraicheur lisent la même règle (run ≠ servi, résiduel ≠ servi,
+    # amont recalculé). Ici on ne fait que la SERVIR.
+    et = tuiles_etat(db)
+    run, carte_le, amont_le, perime = (et["run_carte"], et["carte_le"], et["amont_le"], et["perime"])
     # CARTE-VITESSE-2 lot A : fraîcheur du cache de tuiles pré-générées (built_at + nombre servi).
     tuiles_le = tuiles_n = None
     if db.execute(text("SELECT to_regclass('mvt_tile_cache')")).scalar() and run is not None:
@@ -645,8 +695,7 @@ def mvt_tiles_meta(db: Session = Depends(get_db)) -> dict:
     return {"run_label": run,
             "zonage_parcelle": _mvt_has_zone(db)
             if db.execute(text("SELECT to_regclass('mvt_parcels')")).scalar() else False,
-            "carte_le": carte_le.isoformat() if carte_le else None,
-            "amont_le": amont_le.isoformat() if amont_le else None,
+            "carte_le": carte_le, "amont_le": amont_le,   # déjà isoformat (tuiles_etat)
             "perime": perime,
             "tuiles_prechauffees_le": tuiles_le, "tuiles_prechauffees_n": tuiles_n}
 

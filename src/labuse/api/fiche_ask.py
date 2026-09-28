@@ -264,8 +264,13 @@ def parcel_ask(idu: str, body: AskIn, request: Request, db: Session = Depends(ge
     if not question:
         return {"error": "question vide"}
 
-    # 1. CACHE (ne décompte pas le quota) — clé (idu, run servi, question normalisée)
-    hit = core.cache_get(db, idu, runs.current(), question)
+    # 1. CACHE (ne décompte pas le quota) — clé (idu, run servi + EMPREINTE DE FRAÎCHEUR, question
+    # normalisée). COHERENCE-FIX-1 (lot A) : l'empreinte (résiduel servi, millésimes sources, code)
+    # entre dans la clé → une bascule/un millésime/un déploiement orpheline les réponses d'avant
+    # (jamais resservies), au lieu de resservir un chiffre calculé sur l'état d'hier.
+    from ..fraicheur_caches import empreinte_courte
+    cle_run = f"{runs.current()}+{empreinte_courte(db)}"
+    hit = core.cache_get(db, idu, cle_run, question)
     if hit is not None:
         return {**hit, "cached": True}
 
@@ -335,5 +340,5 @@ def parcel_ask(idu: str, body: AskIn, request: Request, db: Session = Depends(ge
                "model": res.model, "rejected": False, "cached": False}
 
     # cache déterministe (temp 0) : validé OU rejeté → une question répétée ne rappelle plus le modèle
-    core.cache_put(db, idu, runs.current(), question, out, kind="fiche_ask")
+    core.cache_put(db, idu, cle_run, question, out, kind="fiche_ask")
     return out

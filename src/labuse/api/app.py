@@ -427,6 +427,17 @@ def config_run() -> dict:
     return {"run": runs.current()}
 
 
+@app.get("/sante/fraicheur")
+def sante_fraicheur(request: Request, db: Session = Depends(get_db)) -> dict:
+    """COHERENCE-FIX-1 (lot A) — L'ÉTAT DE FRAÎCHEUR de chaque cache (admin) : clé attendue /
+    clé réelle / périmé, même prédicat que `labuse rebuild --dry-run` (fumée du déploiement) et
+    que la page Données. Un cache qui se périme ne peut plus se taire : il s'affiche en rouge."""
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from ..fraicheur_caches import etat
+    return etat(db)
+
+
 # ── 404 de NAVIGATION habillé (revue UI/UX S68 · O3 : porté au design system coffre_ui) :
 # une faute d'URL au navigateur ne montre plus du JSON brut sur fond blanc, et naît des mêmes
 # tokens que la porte/les pages légales (zéro hex local), ton sobre, toujours une sortie (LOI-2).
@@ -2108,6 +2119,12 @@ CREATE TABLE IF NOT EXISTS commune_contexte_cache (
 
 def _ensure_contexte_cache(db: Session) -> None:
     db.execute(text(_CONTEXTE_CACHE_DDL))
+    # COHERENCE-FIX-1 (lot A) — chaque ligne porte SA clé de fraîcheur (run servi + résiduel servi +
+    # millésimes sources + version du code). Clé ≠ attendue → l'entrée est INVALIDE : l'endpoint la
+    # recalcule à la lecture (et la re-stocke), `labuse rebuild` la régénère en lot. C'est le
+    # correctif RACINE du FAUX-CLIENT n° 1 (aléa mvt de terrain servi 5 mois périmé sans le dire).
+    db.execute(text(
+        "ALTER TABLE commune_contexte_cache ADD COLUMN IF NOT EXISTS cle_fraicheur text"))
 
 
 def _contexte_cache_json(payload: dict) -> str:
@@ -2130,12 +2147,14 @@ def rafraichir_contexte_cache(db: Session, commune: str) -> None:
     UNIQUE (job nocturne + « lançable à la main »). Idempotent (upsert), non destructif ailleurs."""
     _ensure_contexte_cache(db)
     payload = _compute_commune_contexte(db, commune)
+    from ..fraicheur_caches import empreinte_attendue
     db.execute(text(
-        "INSERT INTO commune_contexte_cache (commune, insee, payload, computed_at) "
-        "VALUES (:c, :i, CAST(:p AS jsonb), now()) "
+        "INSERT INTO commune_contexte_cache (commune, insee, payload, computed_at, cle_fraicheur) "
+        "VALUES (:c, :i, CAST(:p AS jsonb), now(), :k) "
         "ON CONFLICT (commune) DO UPDATE SET insee = EXCLUDED.insee, "
-        "payload = EXCLUDED.payload, computed_at = now()"),
-        {"c": commune, "i": payload.get("insee"), "p": _contexte_cache_json(payload)})
+        "payload = EXCLUDED.payload, computed_at = now(), cle_fraicheur = EXCLUDED.cle_fraicheur"),
+        {"c": commune, "i": payload.get("insee"), "p": _contexte_cache_json(payload),
+         "k": empreinte_attendue(db)})
 
 
 @app.get("/communes/{commune}/contexte")
@@ -2147,8 +2166,19 @@ def commune_contexte(commune: str, db: Session = Depends(get_db),
     zéro (`cache_calcule_le` = null → le front dit « calcul en direct »)."""
     _ensure_contexte_cache(db)
     hit = db.execute(text(
-        "SELECT payload, computed_at FROM commune_contexte_cache WHERE commune = :c"),
+        "SELECT payload, computed_at, cle_fraicheur FROM commune_contexte_cache WHERE commune = :c"),
         {"c": commune}).mappings().first()
+    # COHERENCE-FIX-1 (lot A) — CLÉ DE FRAÎCHEUR vérifiée À LA LECTURE : si une dépendance a bougé
+    # (bascule de run, residuel-serve, millésime de source, nouveau code), l'entrée est INVALIDE —
+    # on la recalcule et on la RE-STOCKE ici même (seul le premier lecteur paie, ~20 s), au lieu de
+    # servir des mois de retard en silence (FAUX-CLIENT n° 1 : aléa mvt 0,1 % au lieu de 100 %).
+    from ..fraicheur_caches import empreinte_attendue
+    if hit and hit["cle_fraicheur"] != empreinte_attendue(db):
+        rafraichir_contexte_cache(db, commune)
+        db.commit()
+        hit = db.execute(text(
+            "SELECT payload, computed_at, cle_fraicheur FROM commune_contexte_cache WHERE commune = :c"),
+            {"c": commune}).mappings().first()
     if hit:
         # RETOURS-12 O8 — les indicateurs PARTAGÉS avec le tableau des 24 communes (comparable :
         # permis 5 ans, prix neuf, prix ancien, vélocité, stock · + SRU) sont resservis LIVE depuis

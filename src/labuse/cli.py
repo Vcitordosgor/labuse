@@ -1154,6 +1154,104 @@ def build_mvt_cmd(
             typer.echo(f"✓ parcel_couche_intersection : {_ni} intersections (servitudes).")
 
 
+@app.command("coherence")
+def coherence_cmd(
+    ile: bool = typer.Option(False, "--ile", help="Banc complet (+ recalculs géo 24 communes)."),
+    accepter: bool = typer.Option(False, "--accepter",
+        help="ACCEPTE l'état courant : régénère les golden des 7 témoins (motif dans le commit)."),
+    comparer: bool = typer.Option(False, "--comparer", help="Rejoue seulement les golden (dérives)."),
+) -> None:
+    """COHERENCE-FIX-1 (lot G) — LE BANC DE COHÉRENCE (alias de `python -m scripts.coherence.banc`) :
+    chaque notion, tous ses lecteurs (fiche, SQL, tuile MVT, outils), comparés à la tolérance près.
+    Écrit ECARTS.csv et journalise le passage (table coherence_runs — l'onglet Cohérence de la page
+    Données le lit). Nécessite l'API locale (LABUSE_COHERENCE_API, défaut :8605)."""
+    import subprocess
+    import sys as _sys
+    from pathlib import Path as _P
+    racine = _P(__file__).resolve().parents[2]
+    if str(racine) not in _sys.path:                        # scripts/ vit à la racine du repo
+        _sys.path.insert(0, str(racine))
+    if accepter or comparer:
+        from scripts.coherence import golden as _g          # noqa: PLC0415
+        if accepter:
+            fichiers = _g.ecrire()
+            typer.echo(f"✓ golden accepté : {len(fichiers)} témoins réécrits "
+                       f"(tests/golden/coherence/) — le motif va dans le commit.")
+            return
+        derives = _g.comparer_tous()
+        for d in derives[:40]:
+            typer.echo(f" · {d}")
+        typer.echo(f"{len(derives)} dérive(s) golden.")
+        raise typer.Exit(1 if derives else 0)
+    argv = [_sys.executable, "-m", "scripts.coherence.banc", "--ile" if ile else "--echantillon"]
+    r = subprocess.run(argv, cwd=str(racine))
+    # journalise le passage (résumé ECARTS.csv) — même mécanique que le job nocturne.
+    from .coherence_journal import journaliser_passage
+    with session_scope() as s:
+        res = journaliser_passage(s, mode="ile" if ile else "echantillon")
+    typer.echo(f"passage journalisé : {res}")
+    if r.returncode:
+        raise typer.Exit(r.returncode)
+
+
+@app.command("population-legale-sync")
+def population_legale_sync_cmd(
+    millesime: int = typer.Option(None, help="Année de référence (défaut : année en vigueur, N−3)."),
+) -> None:
+    """COHERENCE-FIX-1 (lot E) — (re)charge les populations LÉGALES INSEE des 24 communes
+    (geo.api.gouv), avec leur millésime — la fiche commune les sert « Population légale <année>
+    (INSEE) » (Sudocuh, plus ancien, devient le repli). ~2 s, idempotent."""
+    from .ingestion.population_legale import sync
+    with session_scope() as s:
+        res = sync(s, millesime=millesime)
+    typer.echo(f"✓ population légale : {res['communes']} communes, millésime {res['millesime']}.")
+
+
+@app.command("rebuild")
+def rebuild_cmd(
+    dry_run: bool = typer.Option(False, "--dry-run",
+        help="N'écrit RIEN : affiche l'état de fraîcheur de chaque cache et sort en erreur (code 1) "
+             "si l'un est périmé — c'est le test de fumée du déploiement."),
+    force: bool = typer.Option(False, help="Régénère TOUT, même à jour."),
+) -> None:
+    """COHERENCE-FIX-1 (lot A) — LE GESTE UNIQUE de régénération des caches à clé de fraîcheur :
+    spatial_layers_sub, tuiles carte (geste M48 : mvt_parcels + flags + renouvellement + score_e +
+    tiles-warm + servitudes), fiche commune (24). Ne régénère QUE ce qui est périmé (clé attendue ≠
+    clé réelle). Appelé automatiquement par la bascule scoring, `residuel-serve` et `deploy.sh` —
+    jamais à la main, jamais oublié."""
+    from .fraicheur_caches import etat, rebuild_tout
+    with session_scope() as s:
+        e = etat(s)
+    typer.echo(f"empreinte attendue : {e['empreinte_attendue']}")
+    for c in e["caches"]:
+        badge = "PÉRIMÉ" if c.get("perime") else "à jour"
+        typer.echo(f"  [{badge:7}] {c['cache']} — {c.get('detail', '')}")
+    if dry_run:
+        if e["perimes"]:
+            typer.echo(f"✗ {len(e['perimes'])} cache(s) périmé(s) : {', '.join(e['perimes'])} "
+                       f"— `labuse rebuild` pour régénérer.")
+            raise typer.Exit(1)
+        typer.echo("✓ tous les caches sont à jour.")
+        return
+    if not force and not e["perimes"]:
+        typer.echo("✓ tous les caches sont à jour — rien à régénérer (--force pour tout refaire).")
+        return
+    res = rebuild_tout(engine(), log=typer.echo, force=force)
+    # les intersections matérialisées suivent le même geste que build-mvt (garde fraiche() interne).
+    from .couche_intersection import build as _inter_build, fraiche as _inter_fraiche
+    with session_scope() as s:
+        if not _inter_fraiche(s):
+            typer.echo("… parcel_couche_intersection : sources servitudes changées → reconstruction…")
+            _inter_build(s, log=typer.echo, with_zone=False)
+    typer.echo(f"✓ rebuild terminé : {res}")
+    with session_scope() as s:
+        e2 = etat(s)
+    if e2["perimes"]:
+        typer.echo(f"⚠ encore périmé(s) après rebuild : {', '.join(e2['perimes'])}")
+        raise typer.Exit(1)
+    typer.echo("✓ fraîcheur : tous les caches portent la clé attendue.")
+
+
 @app.command("tiles-warm")
 def tiles_warm_cmd() -> None:
     """CARTE-VITESSE-2 lot A — pré-génère les tuiles `parcels` z9-z11 de l'île dans `mvt_tile_cache`
@@ -2325,6 +2423,23 @@ def residuel_serve_cmd(run_seq: int = typer.Argument(..., help="run_seq à SERVI
         m = {**m, "residuel_run_seq": int(run_seq)}
         _manifeste.ecrire(m)
     typer.echo(f"✓ bascule : run servi {avant} → {run_seq} (retour : residuel-serve {avant})")
+    # COHERENCE-FIX-1 (lot A) — le résiduel servi vient de changer : les caches qui en dérivent
+    # (tuiles mvt_parcels, fiche commune…) sont PÉRIMÉS à l'instant même (clé de fraîcheur). On
+    # lance `labuse rebuild` DÉTACHÉ (même geste unique que la bascule scoring) — c'est le
+    # correctif racine du FAUX-CLIENT n° 3 (25/09 : seq 10 servi, tuiles jamais reconstruites →
+    # 98 004 parcelles où la carte contredisait la fiche).
+    import subprocess as _sp
+    import sys as _sys
+    from pathlib import Path as _Path
+    rlog = f"/tmp/labuse-rebuild-residuel-seq{run_seq}.log"
+    try:
+        with open(rlog, "ab") as fh:
+            _sp.Popen([_sys.executable, "-m", "labuse.cli", "rebuild"],
+                      cwd=str(_Path(__file__).resolve().parents[2]),
+                      stdout=fh, stderr=fh, start_new_session=True)
+        typer.echo(f"… rebuild des caches lancé (détaché) — suivi : {rlog}")
+    except Exception as exc:  # noqa: BLE001 — la bascule reste faite ; la fumée du déploiement criera
+        typer.echo(f"⚠ rebuild non lancé ({exc}) — jouer `labuse rebuild` à la main.")
 
 
 @app.command("residuel-purge")

@@ -1780,14 +1780,21 @@ def admin_flux_bascule(request: Request, body: BasculeIn) -> dict:
         with session_scope() as sm:
             plan = planifier_reconstruction_tuiles(sm, run_label=res["nouveau"])
         if plan["strategie"] == "enchainer":
+            # COHERENCE-FIX-1 (lot A) — le geste détaché est `labuse rebuild` (le POINT D'ENTRÉE
+            # UNIQUE de régénération) : il enchaîne build-mvt + tiles-warm (mécanisme M48 inchangé)
+            # ET les autres caches à clé de fraîcheur (fiche commune, spatial_layers_sub) — la
+            # bascule ne peut plus laisser un cache derrière. Il lit le run servi VIVANT (le
+            # manifeste vient d'être écrit) : pas de --label à porter.
             racine = Path(__file__).resolve().parents[3]
-            rlog = f"/tmp/labuse-build-mvt-{res['nouveau']}.log"
-            argv = [sys.executable, "-m", "labuse.cli", "build-mvt", "--label", res["nouveau"]]
+            rlog = f"/tmp/labuse-rebuild-{res['nouveau']}.log"
+            argv = [sys.executable, "-m", "labuse.cli", "rebuild"]
             with open(rlog, "ab") as fh:
                 subprocess.Popen(argv, cwd=str(racine), stdout=fh, stderr=fh, start_new_session=True)
             reconstruction = {"lancee": True, "enchainee": True, "run": res["nouveau"], "log": rlog,
                               "estimation_min": plan["mesure"].get("estimation_ile_min"), "raison": plan["raison"]}
         else:  # bloquer — trop long pour enchaîner : ligne « À faire » bloquante + carte périmée
+            # (les caches légers — fiche commune — se régénèrent d'eux-mêmes à la lecture : clé
+            # de fraîcheur vérifiée par l'endpoint contexte ; seules les TUILES attendent le geste.)
             reconstruction = {"lancee": False, "enchainee": False, "bloquant": True, "run": res["nouveau"],
                               "estimation_min": plan.get("duree_estimee_min"), "raison": plan["raison"],
                               "a_faire": f"Reconstruire les tuiles (~{plan.get('duree_estimee_min')} min)"}
@@ -2525,22 +2532,15 @@ def admin_circuit(request: Request) -> dict:
     # ── ALGO-FIX-1 (point 4) — état des TUILES : périmées si bâties sur un autre run que le servi (ou
     #    avant le dernier re-score/résiduel). Alimente la ligne « À faire » BLOQUANTE « Reconstruire les
     #    tuiles » (composer), miroir de /map/tiles/meta.perime que lit la carte. ──
+    # COHERENCE-FIX-1 (lot A) — le prédicat est UNIQUE (`tiles.tuiles_etat`), partagé avec
+    # /map/tiles/meta et /sante/fraicheur : plus deux définitions de « périmé ».
     _tuiles_af = None
     try:
+        from .tiles import tuiles_etat as _tuiles_etat
         with session_scope() as _st:
-            if _st.execute(text("SELECT to_regclass('mvt_meta')")).scalar():
-                _mrow = _st.execute(text(
-                    "SELECT value, updated_at FROM mvt_meta WHERE key='run_label'")).mappings().first()
-                _run_carte = _mrow["value"] if _mrow else None
-                _carte_le = _mrow["updated_at"] if _mrow else None
-                _servi_run = runs.current()
-                _amont = _st.execute(text("SELECT max(computed_at) FROM parcel_residuel")).scalar()
-                _run_diff = bool(_run_carte and _run_carte != _servi_run)
-                _amont_neuf = bool(_carte_le is not None and _amont is not None and _amont > _carte_le)
-                if _run_diff or _amont_neuf:
-                    _tuiles_af = {"perime": True, "run_carte": _run_carte, "run_servi": _servi_run,
-                                  "motif": "run" if _run_diff else "amont",
-                                  "carte_le": _carte_le.isoformat() if _carte_le else None}
+            _te = _tuiles_etat(_st)
+        if _te.get("perime"):
+            _tuiles_af = {k: _te.get(k) for k in ("perime", "run_carte", "run_servi", "motif", "carte_le")}
     except Exception:  # noqa: BLE001 — pas de tuiles (base de test) : pas de ligne
         _tuiles_af = None
     a_faire = _resume.composer_a_faire(
