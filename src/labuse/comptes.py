@@ -749,6 +749,15 @@ def effacer_compte_rgpd(db: Session, email: str) -> bool:
     # anonymiser l'audit AVANT de perdre les id (on garde la trace de l'événement, pas l'identité)
     db.execute(text("UPDATE evenements_compte SET utilisateur_id = NULL, compte_id = NULL,"
                     " detail = '[efface RGPD]' WHERE compte_id = :c"), {"c": cid})
+    # CLOISONNEMENT-1 (Lot C) — `mail_queue` et `contact_etiquette_log` portent `compte_id` mais SANS
+    # FK cascade (le spool mail utilise `compte_id` comme TAG LIBRE — des inserts existent avec un
+    # compte_id sans compte réel ; une FK stricte casserait ce contrat). La cascade du DELETE comptes
+    # ne les emportait donc pas → la file de mails d'un compte effacé (destinataire + params) et le
+    # journal de retours terrain SURVIVAIENT (orphelins RGPD). On les efface EXPLICITEMENT ici, avant
+    # de perdre l'id. `contact_etiquette_log` n'était nettoyée ni par compte_id ni par son entry_id.
+    for t in ("mail_queue", "contact_etiquette_log"):
+        if db.execute(text("SELECT to_regclass(:t)"), {"t": t}).scalar():
+            db.execute(text(f"DELETE FROM {t} WHERE compte_id = :c"), {"c": cid})
     # DELETE du compte → cascade : utilisateurs, sessions_auth, projets, pipeline_entries,
     # saved_searches, saved_filters, signalements (toutes portent compte_id ON DELETE CASCADE).
     db.execute(text("DELETE FROM comptes WHERE id = :c"), {"c": cid})
