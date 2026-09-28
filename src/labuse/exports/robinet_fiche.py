@@ -89,7 +89,21 @@ def _c_pente(db, idu, f):
 @extracteur("exposition_versant")
 def _c_exposition(db, idu, f):
     t = f.get("terrain") or {}
-    return _nz(t.get("exposition") or t.get("exposition_versant"))
+    val = t.get("exposition") or t.get("exposition_versant")
+    # EXPORTS-FIX-1 C7 — l'exposition est un calcul PARESSEUX (MNT RGE ALTI + gdaldem) que la fiche
+    # récupère par un endpoint dédié ; il est absent du payload de base, d'où une garde « — » alors
+    # que la pente, elle, sort. On la calcule ici par LE MÊME moteur (aucune valeur inventée : si le
+    # calcul échoue faute de réseau/altimétrie, on rend None et la tuile est omise, jamais « — »).
+    if not val:
+        try:
+            from sqlalchemy import text as _text
+            from ..faisabilite.exposition import exposition_parcelle
+            pid = db.execute(_text("SELECT id FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
+            res = exposition_parcelle(db, pid) if pid else None
+            val = (res or {}).get("orientation")
+        except Exception:  # noqa: BLE001 — un calcul paresseux ne fait jamais échouer un document
+            val = None
+    return _nz(val)
 
 
 @extracteur("prix_achat_historique_eur")
@@ -181,7 +195,23 @@ def _c_dispositifs_sup(db, idu, f):
 
 @extracteur("statut_plu")
 def _c_plu_fraicheur(db, idu, f):
-    return _nz(f.get("plu_fraicheur"))
+    v = f.get("plu_fraicheur")
+    if not isinstance(v, dict):
+        return _nz(v)
+    # EXPORTS-FIX-1 C1 — « approuvé le 2025-12-17 » est en fait la date de PUBLICATION au Géoportail
+    # de l'urbanisme ; la VRAIE date d'approbation du PLU (et sa dernière évolution) vient de Sudocuh
+    # (approbation_opp / prescription_proc). Lecture seule, best-effort.
+    try:
+        from sqlalchemy import text as _text
+        row = db.execute(_text("SELECT approbation_opp, prescription_proc FROM sudocuh_procedures "
+                               "WHERE insee = :i LIMIT 1"), {"i": (idu or "")[:5]}).mappings().first()
+        if row:
+            v = {**v,
+                 "approbation_sudocuh": (row["approbation_opp"].isoformat() if row["approbation_opp"] else None),
+                 "evolution_sudocuh": (row["prescription_proc"].isoformat() if row["prescription_proc"] else None)}
+    except Exception:  # noqa: BLE001 — table absente / base de test : on garde le bloc tel quel
+        db.rollback()
+    return _nz(v)
 
 
 # SOURCES-FIX-1 (A1/A2/A3) — les trois contraintes servies à la parcelle entrent au Dossier PDF
@@ -525,9 +555,22 @@ def _c_dvf_secteur(db, idu, f):
 
 @extracteur("prix_neuf_vefa_acte_eur_m2")
 def _c_vefa(db, idu, f):
-    ms = f.get("marche_secteur") or {}
-    v = ms.get("neuf_vefa") or ms.get("vefa")
-    return _nz(v)
+    # EXPORTS-FIX-1 C5 — CAUSE trouvée : l'ancien code lisait `marche_secteur.neuf_vefa`, une clé
+    # JAMAIS peuplée dans le payload → « échantillon VEFA insuffisant » systématique, alors que le
+    # registre (moteur `neuf_vefa_commune`, VEFA déclaré à l'acte, grain commune, fenêtre 5 ans) SERT
+    # bien la médiane : Saint-Paul n=299 (4 750 €/m²), La Possession n=86 — au-dessus du seuil (8).
+    # On lit désormais LA valeur du registre (fait foi), avec son effectif et sa fenêtre.
+    try:
+        from ..ingestion.dvf_marche import neuf_vefa_commune
+        from ..marche_service import neuf_vefa_seuil
+        r = neuf_vefa_commune(db, (idu or "")[:5])
+        seuil = neuf_vefa_seuil()
+    except Exception:  # noqa: BLE001 — table/moteur absent (base de test) : ligne omise, jamais un 500
+        db.rollback()
+        return None
+    if not r or r.get("mediane_prix_m2_bati") is None or (r.get("n") or 0) < seuil:
+        return None   # sous le seuil : ligne omise (absence « échantillon insuffisant »), comme la fiche
+    return {"prix_m2": r["mediane_prix_m2_bati"], "n": r.get("n"), "fenetre_ans": r.get("fenetre_ans")}
 
 
 @extracteur("radar_annonces_liste")

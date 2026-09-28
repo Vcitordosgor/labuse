@@ -78,6 +78,21 @@ def _sup_libelle(cat: str) -> str:
     return f"{cat} — {lib}" if lib else str(cat)
 
 
+def _frr_libelle(frr: dict) -> str:
+    """EXPORTS-FIX-1 C2 — FRR à La Réunion, dit juste. La FAQ FRR de la DGCL (MAJ juillet 2025) est
+    explicite : seules les communes de la ZONE SPÉCIALE D'ACTION RURALE (les Hauts, décret n° 78-690
+    du 23/06/1978) sont classées FRR, et elles n'ouvrent QUE les mesures NON FISCALES — l'exonération
+    de l'art. 44 quindecies A CGI ne s'applique PAS dans les DOM. Sans test géométrique à la parcelle
+    (classement « partie » = commune classée en partie), on ne dit pas « Parcelle DANS »."""
+    partie = frr.get("classement") == "partie"
+    tete = ("Commune classée FRR en partie — zone spéciale d'action rurale des Hauts (décret 1978) ; "
+            "position de cette parcelle dans le périmètre non vérifiée géométriquement"
+            if partie else "Parcelle en zone FRR — zone spéciale d'action rurale des Hauts")
+    return (tete + ". À La Réunion, ce classement n'ouvre que les mesures NON FISCALES "
+            "(FAQ FRR DGCL, juillet 2025) : l'exonération d'impôt de l'art. 44 quindecies A CGI "
+            "ne s'y applique pas — à confirmer par un fiscaliste.")
+
+
 def _norm_ebc(lib: str) -> str:
     """EXPORTS-FIX-1 A1 — « EBC Espace Boisé Classé » → « Espace boisé classé »."""
     l = str(lib).strip()
@@ -101,7 +116,33 @@ _ABSENCE_CLAIR = {
     # ER/EBC/DPU/PEB sont des lignes distinctes avec leur propre absence. La phrase ne doit donc
     # PAS revendiquer « aucune prescription (ER/EBC/DPU/PEB) » quand un DPU, lui, est présent.
     "dispositifs_parcelle": "Aucune servitude d'utilité publique (SUP) intersectant la parcelle.",
+    # EXPORTS-FIX-1 C4 — la RTAA DOM s'applique à TOUT logement neuf : jamais « aucune exigence ».
+    "rtaa_exigences": ("RTAA DOM : conception réglementée pour tout logement neuf (aération "
+                       "traversante, protection solaire, eau chaude solaire) — à intégrer au projet."),
 }
+
+#: EXPORTS-FIX-1 C3 — le SAR n'est pas en base : la ligne « Aucune divergence SAR indiquée » ne
+#: doit pas s'imprimer (elle affirme un contrôle qui n'a pas eu lieu). Absence purement masquée.
+_ABSENCE_MASQUEE = {"sar_divergence"}
+
+#: EXPORTS-FIX-1 C6 — marqueurs d'une donnée NON DISPONIBLE (non calculée/déterminée), à distinguer
+#: d'un « vérifié : rien » (contrôle fait, rien trouvé). Deux encadrés distincts au rendu.
+_MARQUEURS_NON_DISPO = ("non calcul", "non détermin", "non estim", "non relev", "non renseign",
+                        "non évalu", "non dispon", "rien d'évalu", "non chiffr")
+
+
+def _est_non_dispo(phrase: str) -> bool:
+    p = str(phrase).lower()
+    return any(m in p for m in _MARQUEURS_NON_DISPO)
+
+
+def _absence_une_raison(phrase: str, zone) -> str:
+    # EXPORTS-FIX-1 C6 — jamais « A ou B » : on tranche « (zone non constructible ou X) » selon la
+    # zone servie (A/N → non constructible ; sinon → l'autre motif).
+    non_constructible = str(zone or "").upper() in ("A", "N")
+    return _re.sub(r"\(zone non constructible ou ([^)]+)\)",
+                   lambda m: "(zone non constructible)" if non_constructible else f"({m.group(1)})",
+                   str(phrase))
 
 
 def _absence_clair(quoi: str, phrase: str) -> str:
@@ -278,7 +319,23 @@ def _r_sup(v):
 
 
 def _r_statut_plu(v):
-    # EXPORTS-FIX-1 A7 — dates ISO servies → JJ/MM/AAAA.
+    # EXPORTS-FIX-1 C1 — date d'APPROBATION du PLU (Sudocuh) + dernière évolution ; la date GPU
+    # (« horizon », 2025-12-17) est dite comme une PUBLICATION, jamais comme une approbation.
+    #  · La Possession : approuvé le 12/06/2019 ; Saint-Paul : le 27/09/2012 (recette).
+    appro = v.get("approbation_sudocuh")
+    evol = v.get("evolution_sudocuh")
+    gpu = v.get("horizon")
+    if appro:
+        s = f"PLU approuvé le {_fr_dates(appro)}"
+        if evol and evol != appro:
+            s += f" — dernière évolution engagée le {_fr_dates(evol)}"
+        if gpu:
+            s += f" — version publiée au Géoportail de l'urbanisme le {_fr_dates(gpu)} (document opposable)"
+        return esc(s + ".")
+    if gpu:   # à défaut : dire que la date GPU est une publication, pas une approbation
+        return esc(f"PLU — version publiée au Géoportail de l'urbanisme le {_fr_dates(gpu)} "
+                   "(document opposable).")
+    # EXPORTS-FIX-1 A7 — repli : dates ISO servies → JJ/MM/AAAA.
     return esc(_fr_dates(v.get("libelle") or ""))
 
 
@@ -396,6 +453,17 @@ def _r_prix_ancien(v):
     return esc(lib)
 
 
+def _r_vefa_prix(v):
+    # EXPORTS-FIX-1 C5 — la médiane VEFA (neuf déclaré à l'acte) avec son effectif et sa fenêtre.
+    if not isinstance(v, dict) or v.get("prix_m2") is None:
+        return esc(v)
+    det = fmt_eur_m2(v["prix_m2"]) + " — VEFA déclaré à l'acte"
+    if v.get("n"):
+        det += f", {groupe(v['n'])} ventes"
+    det += f" (commune{', ' + str(v['fenetre_ans']) + ' ans' if v.get('fenetre_ans') else ''})"
+    return esc(det)
+
+
 def _r_terrain_nu(v):
     lib = fmt_eur_m2(v["prix_m2"])
     if v.get("n"):
@@ -417,8 +485,9 @@ def _r_permis_proximite(v):
     return esc(f"{groupe(n)} permis{suff}")
 
 
-def _r_dvf_liste(v, val: Valeur):
+def _r_dvf_liste(v, val: Valeur, zone=None):
     from ..dvf_mediane import SEUIL_N     # EXPORTS-FIX-1 B6 — LE seuil d'échantillon déjà en place (5)
+    agricole = str(zone or "").upper() in ("A", "N")
     rows = []
     for r in v[:6]:
         n = r.get("n_ventes")
@@ -426,12 +495,17 @@ def _r_dvf_liste(v, val: Valeur):
         # ventes, pas de médiane servie (l'appartement à 2 ventes est omis, comme le terrain nu l'était).
         if n is not None and n < SEUIL_N:
             continue
-        tb = esc(str(r.get("type_bien") or "").capitalize())
+        typ = str(r.get("type_bien") or "")
+        tb = esc(typ.capitalize())
         px = fmt_eur_m2(r["mediane_prix_m2"]) if r.get("mediane_prix_m2") else \
             (fmt_eur(r["mediane_valeur"]) if r.get("mediane_valeur") else "")
         # EXPORTS-FIX-1 B6 — chaque prix dit son PÉRIMÈTRE (secteur cadastral) ET sa fenêtre.
         det = f"{px} — {groupe(n)} ventes" if n else px
         det += " · secteur cadastral" + (f", {r['fenetre']}" if r.get("fenetre") else "")
+        # EXPORTS-FIX-1 C8 — en zone A/N, la médiane « Terrain » est un prix de terrain À BÂTIR :
+        # on le DIT, elle ne vaut pas pour une parcelle agricole ou naturelle.
+        if agricole and typ.lower() == "terrain":
+            det += " — terrain à bâtir, ne vaut pas pour une parcelle agricole ou naturelle"
         rows.append(f'<tr data-quoi="dvf_parcelle_liste"><td class="k">{tb}</td>'
                     f'<td>{esc(det)}</td><td class="n">{chip(val)}</td></tr>')
     return ('<table class="kv">' + "".join(rows) + "</table>") if rows else ""
@@ -554,7 +628,7 @@ def _r_territoire(v, val: Valeur):
     if (v.get("zfang") or {}).get("libelle"):
         _row("ZFANG", v["zfang"]["libelle"])
     if (v.get("frr") or {}).get("libelle"):
-        _row("FRR (ex-ZRR)", v["frr"]["libelle"])
+        _row("FRR (ex-ZRR)", _frr_libelle(v["frr"]))
     for per in _perimetres_hors_piscine(v):   # EXPORTS-FIX-1 B2 — la piscine sort du §7 (elle est au §2)
         if per.get("libelle"):
             # EXPORTS-FIX-1 A9 — la bande QPV est nommée, jamais « Périmètre » nu.
@@ -592,6 +666,7 @@ _RENDEURS: dict[str, Any] = {
     "sols_parcelle": _r_sols, "viabilisation_verdict": _r_viab, "distance_arret_m": _r_proximites,
     "tcsp_stationnement_allege": _r_tcsp, "part_logements_egout_pct": _r_anc,
     "fibre_parcelle": _r_fibre, "prix_sortie_bati_eur_m2": _r_prix_ancien,
+    "prix_neuf_vefa_acte_eur_m2": _r_vefa_prix,   # EXPORTS-FIX-1 C5
     "prix_terrain_secteur_eur_m2": _r_terrain_nu, "ventes_retenues_n": _r_n,
     "ventes_ecartees_n": _r_n, "n_permis_proximite": _r_permis_proximite, "radar_annonces_liste": _r_radar,
     "ventes_100m_n": _r_voisinage, "voisinage_100m_liste": _r_voisinage,
@@ -857,12 +932,20 @@ def cover_dossier(idu: str, fiche: dict, numero: str, jour, valeurs: dict[str, V
     adresse = fiche.get("adresse") or ""
     commune = fiche.get("commune") or ""
     tuiles_html = []
+    _zone = valeurs.get("zone_plu_famille")
+    _zone_v = str(_zone.valeur).upper() if _zone is not None and _zone.valeur is not None else ""
     for cid, lib, fmt in _COVER_TUILES:
         v = valeurs.get(cid)
         try:
-            aff = fmt(v.valeur) if v is not None and v.valeur is not None else '<span class="none">—</span>'
+            aff = fmt(v.valeur) if v is not None and v.valeur is not None else None
         except (TypeError, ValueError, KeyError):
-            aff = '<span class="none">—</span>'
+            aff = None
+        # EXPORTS-FIX-1 C7 — SDP en zone A/N : « 0 m² — zone A » (arbitrage Q6), jamais « — ».
+        if aff is None and cid == "sdp_residuelle_m2" and _zone_v in ("A", "N"):
+            aff = f'0 m² — zone {esc(_zone_v)}'
+        # EXPORTS-FIX-1 C7 — aucun champ vide imprimé : une tuile sans valeur est OMISE (pas de « — »).
+        if aff is None:
+            continue
         tuiles_html.append(f'<div class="tile" data-quoi="{esc(cid)}"><div class="v">{aff}</div>'
                            f'<div class="l">{esc(lib)}</div></div>')
     toc = []
@@ -942,7 +1025,10 @@ def rendu_sections(valeurs: dict[str, Valeur], fiche: dict, *, plan_html: str = 
                         _ligne_tr("piscine_m2", "Piscine détectée", val_txt, chip(_pdl, derive=True)))
                     continue
                 # DONNEES-1 lot 2 — `masquer_si_absent` : la ligne disparaît, aucune phrase d'absence.
-                if l.quoi in EXTRACTEURS and l.absence and not l.masquer_si_absent:
+                # EXPORTS-FIX-1 C3 — `_ABSENCE_MASQUEE` : idem pour une absence qui affirmerait un
+                # contrôle non tenu (SAR hors base).
+                if (l.quoi in EXTRACTEURS and l.absence and not l.masquer_si_absent
+                        and l.quoi not in _ABSENCE_MASQUEE):
                     absents.append((l.quoi, l.absence))
                 continue                              # sans extracteur : omis (non_cables le compte)
             vals_lus.append(v)
@@ -950,7 +1036,10 @@ def rendu_sections(valeurs: dict[str, Valeur], fiche: dict, *, plan_html: str = 
                 blocs_pleins.append(f'<div data-quoi="reglement_plu_bloc">{_bloc_reglement(valeurs)}</div>')
                 continue
             if l.quoi in _RENDEURS_BLOC:
-                blocs_pleins.append(_RENDEURS_BLOC[l.quoi](v.valeur, v))
+                if l.quoi == "dvf_parcelle_liste":   # EXPORTS-FIX-1 C8 — caveat Terrain en zone A/N
+                    blocs_pleins.append(_r_dvf_liste(v.valeur, v, zone=_v(valeurs, "zone_plu_famille")))
+                else:
+                    blocs_pleins.append(_RENDEURS_BLOC[l.quoi](v.valeur, v))
                 continue
             html = _valeur_html(l.quoi, l, v.valeur, v)
             if not html:
@@ -973,9 +1062,22 @@ def rendu_sections(valeurs: dict[str, Valeur], fiche: dict, *, plan_html: str = 
         if sec["id"] == "identite" and plan_html:
             frags.append(plan_html)
         if absents:
-            lis = "".join(f'<li data-quoi="{esc(q)}">{esc(_absence_clair(q, ph))}</li>' for q, ph in absents)
-            frags.append(f'<div class="sansobjet"><div class="t">Vérifié, sans objet</div>'
-                         f'<ul>{lis}</ul></div>')
+            # EXPORTS-FIX-1 C6 — deux encadrés distincts : « Vérifié : rien » (contrôle tenu, rien
+            # trouvé) et « Non disponible ici » (donnée non calculée/déterminée), avec LA raison —
+            # jamais « A ou B » (résolu selon la zone).
+            _zone = _v(valeurs, "zone_plu_famille")
+            verifie: list[str] = []
+            nondispo: list[str] = []
+            for q, ph in absents:
+                phc = _absence_une_raison(_absence_clair(q, ph), _zone)
+                li = f'<li data-quoi="{esc(q)}">{esc(phc)}</li>'
+                (nondispo if _est_non_dispo(phc) else verifie).append(li)
+            if verifie:
+                frags.append('<div class="sansobjet"><div class="t">Vérifié : rien</div>'
+                             f'<ul>{"".join(verifie)}</ul></div>')
+            if nondispo:
+                frags.append('<div class="sansobjet"><div class="t">Non disponible ici</div>'
+                             f'<ul>{"".join(nondispo)}</ul></div>')
         if vals_lus:
             frags.append(_pied_noms(vals_lus))
         corps.append(section(titre, "".join(x for x in frags if x)))

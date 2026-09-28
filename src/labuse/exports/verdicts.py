@@ -48,8 +48,13 @@ def verdict_zonage(valeurs: dict[str, Valeur]) -> Verdict | None:
     # cités (« Art. Um.9 »), via le libellé PARTAGÉ avec l'Apporteur (une donnée, une réponse).
     lib = zone_libelle(valeurs) or f"Zone {fam}"
     if fam in _NON_CONSTRUCTIBLE:
-        return (f"{lib} — {_NON_CONSTRUCTIBLE[fam]}, <strong>non constructible</strong>. "
-                f"Le potentiel de construction est nul par cette règle de zonage.", "warn", "")
+        # EXPORTS-FIX-1 C8 — verdict COHÉRENT avec la liste des destinations : la zone A/N liste des
+        # destinations « sous conditions » (logement d'exploitant, etc.). On ne dit donc plus un
+        # « potentiel nul » sec qui contredit le tableau ; on dit la restriction réelle.
+        return (f"{lib} — {_NON_CONSTRUCTIBLE[fam]}, <strong>non constructible pour un projet "
+                f"d'habitat courant</strong>. Seules les destinations liées à la vocation "
+                f"{_NON_CONSTRUCTIBLE[fam]} sont admises, et sous conditions (voir la liste "
+                f"des destinations ci-dessous).", "warn", "")
     if fam in _CONSTRUCTIBLE:
         return (f"{lib} — {_CONSTRUCTIBLE[fam]}. Le document opposable du Géoportail de "
                 f"l'urbanisme fait foi ; les valeurs de règle ci-dessous sont une aide à la lecture.",
