@@ -128,6 +128,11 @@ _ABSENCE_CLAIR = {
     # EXPORTS-FIX-1 C4 — la RTAA DOM s'applique à TOUT logement neuf : jamais « aucune exigence ».
     "rtaa_exigences": ("RTAA DOM : conception réglementée pour tout logement neuf (aération "
                        "traversante, protection solaire, eau chaude solaire) — à intégrer au projet."),
+    # EXPORTS-FIX-1-BIS point 3 — la ligne « insuffisant » du terrain nu nomme SON périmètre (rayon
+    # 500 m, le même que l'ancien bâti secteur), pas un « secteur » ambigu avec le « secteur cadastral »
+    # des médianes par type.
+    "prix_terrain_secteur_eur_m2": ("Terrain nu — à moins de 500 m : échantillon DVF insuffisant "
+                                    "pour une médiane fiable."),
 }
 
 #: EXPORTS-FIX-1 C3 — le SAR n'est pas en base : la ligne « Aucune divergence SAR indiquée » ne
@@ -157,6 +162,30 @@ def _absence_une_raison(phrase: str, zone, *, gabarit_bloque: bool = False) -> s
     p = _re.sub(r"\(hauteur de règle ou bâti non déterminés\)",
                 "(hauteur de règle non déterminée)" if gabarit_bloque else "(bâti non déterminé)", p)
     return p
+
+
+#: EXPORTS-FIX-1-BIS point 8 — sources citées au §5 (ABF, ICPE, cavités) qui n'avaient AUCUNE ligne :
+#: quand la cascade les a LUES (result PASS), on imprime leur « vérifié : rien » ; sinon elles sortent
+#: des listes (elles n'apparaissent alors ni au pied ni au §12, faute d'avoir été servies).
+_SOURCES_VERIFIE_RIEN = {
+    "abf": "ABF / Monuments historiques : hors périmètre de protection.",
+    "icpe": "ICPE : aucune installation classée relevée à proximité.",
+    "cavite": "Cavités souterraines : aucune recensée à proximité.",
+    "cavites": "Cavités souterraines : aucune recensée à proximité.",
+}
+
+
+def _lignes_verifie_rien(fiche: dict) -> list[tuple[str, str]]:
+    out: list[tuple[str, str]] = []
+    vus: set[str] = set()
+    for l in (fiche.get("lines") or []):
+        if not isinstance(l, dict):
+            continue
+        lay = l.get("layer")
+        if lay in _SOURCES_VERIFIE_RIEN and l.get("result") == "PASS" and lay not in vus:
+            vus.add(lay)
+            out.append((lay, _SOURCES_VERIFIE_RIEN[lay]))
+    return out
 
 
 def _n_aleas(valeurs: dict) -> int | None:
@@ -1051,6 +1080,16 @@ def rendu_sections(valeurs: dict[str, Valeur], fiche: dict, *, plan_html: str = 
                 continue
             v = valeurs.get(l.quoi)
             if v is None:
+                if l.quoi == "rtaa_exigences":
+                    # EXPORTS-FIX-1-BIS point 4 — la RTAA DOM est une RÈGLE APPLICABLE (tout logement
+                    # neuf), pas une absence : ligne normale du §4, hors de l'encadré « Vérifié : rien ».
+                    _grp = l.section if (l.section and l.section != sec["titre"]) else ""
+                    groupes.setdefault(_grp, []).append(_ligne_tr(
+                        "rtaa_exigences", (l.comment or {}).get("libelle") or "Rappel RTAA DOM",
+                        esc("Conception réglementée pour tout logement neuf (aération traversante, "
+                            "protection solaire, eau chaude solaire) — à intégrer au projet."),
+                        _chip_fixe("source")))
+                    continue
                 if l.quoi == "piscine_m2" and _pisc:
                     # la valeur ne répète pas le libellé « Piscine détectée » de la ligne (cf. A6).
                     _pv = _re.sub(r"^\s*Piscine détectée\s*[—-]\s*", "",
@@ -1098,6 +1137,11 @@ def rendu_sections(valeurs: dict[str, Valeur], fiche: dict, *, plan_html: str = 
             lib = (l.comment or {}).get("libelle") or l.quoi
             grp = l.section if (l.section and l.section != sec["titre"]) else ""
             groupes.setdefault(grp, []).append(_ligne_tr(l.quoi, lib, html, _chip_de(l.quoi, v)))  # B9
+        # EXPORTS-FIX-1-BIS point 8 — §5 : ABF / ICPE / cavités, citées en source mais sans ligne,
+        # impriment leur « vérifié : rien » quand la cascade les a lues (sinon elles ne sont pas
+        # servies et ne figurent ni au pied ni au §12).
+        if sec["id"] == "risques":
+            absents += _lignes_verifie_rien(fiche)
         rows: list[str] = []
         for grp, lignes_grp in groupes.items():      # un en-tête de groupe UNE fois, jamais vide
             # EXPORTS-FIX-1 A8 — « Bilan indicatif » est un intitulé interne : ses lignes se rangent

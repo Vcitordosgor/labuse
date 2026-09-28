@@ -201,14 +201,24 @@ def _c_plu_fraicheur(db, idu, f):
     # EXPORTS-FIX-1 C1 — « approuvé le 2025-12-17 » est en fait la date de PUBLICATION au Géoportail
     # de l'urbanisme ; la VRAIE date d'approbation du PLU (et sa dernière évolution) vient de Sudocuh
     # (approbation_opp / prescription_proc). Lecture seule, best-effort.
+    # EXPORTS-FIX-1-BIS point 5 — la « dernière évolution » ne peut être qu'une date d'APPROBATION,
+    # jamais une prescription (date de lancement d'une modification). Sudocuh (cette table) ne porte
+    # que l'approbation du DU opposable (`approbation_opp`) et une prescription en cours
+    # (`prescription_proc`) : il n'y a PAS de date d'approbation d'évolution distincte → on ne sert
+    # aucune « évolution » (la ligne ne s'imprimera pas). `executoire_du_vigueur` sert si un jour il
+    # porte l'exécutoire d'une modification approuvée.
     try:
         from sqlalchemy import text as _text
-        row = db.execute(_text("SELECT approbation_opp, prescription_proc FROM sudocuh_procedures "
+        row = db.execute(_text("SELECT approbation_opp, executoire_du_vigueur FROM sudocuh_procedures "
                                "WHERE insee = :i LIMIT 1"), {"i": (idu or "")[:5]}).mappings().first()
         if row:
+            _appro = row["approbation_opp"]
+            _exe = row["executoire_du_vigueur"]
             v = {**v,
-                 "approbation_sudocuh": (row["approbation_opp"].isoformat() if row["approbation_opp"] else None),
-                 "evolution_sudocuh": (row["prescription_proc"].isoformat() if row["prescription_proc"] else None)}
+                 "approbation_sudocuh": (_appro.isoformat() if _appro else None),
+                 # une évolution n'est servie que si son EXÉCUTOIRE (approbation) diffère de l'approbation
+                 # initiale — jamais la prescription en cours.
+                 "evolution_sudocuh": (_exe.isoformat() if (_exe and _exe != _appro) else None)}
     except Exception:  # noqa: BLE001 — table absente / base de test : on garde le bloc tel quel
         db.rollback()
     return _nz(v)
