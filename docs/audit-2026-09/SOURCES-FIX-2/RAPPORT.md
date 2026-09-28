@@ -7,6 +7,8 @@
 
 **Baseline `pytest tests/`** (avant tout changement, sur cette base) : **3449 passed · 17 failed · 67 skipped**. Les 17 échecs sont pré-existants (verrous/gardes cassés par des merges `main` : `test_garanties` g1/g4/g6/g7, `test_lot1_tables` V1c `pige_watermark`, `test_reparations1_lot2` graphe, `test_oracle_dossier`, `test_circuit2_lot5` traçage front, `test_front_reliquats`×3, `test_retours17_permis`×2, `test_rnic`, `test_pige_socle`, `test_veille2_lot5`, `test_retours11f4`). Aucun n'est dans le périmètre des lots.
 
+**Final `pytest tests/`** (après les 6 lots) : **3449 passed · 15 failed · 69 skipped** — **0 nouvel échec** (diff strict baseline↔final : l'ensemble des échecs finaux ⊆ baseline ; deux flaky liés à l'état DB, `test_rnic` et `test_garanties::g7`, sont même repassés au vert). `tsc` 0 · `vitest` 223 passed. Le graphe `circuit_garanties` reste sans arête discordante introduite (aucune entrée `georisque_alea`/`deal_ppr`/`mvt`/`sar`).
+
 ---
 
 ## Compte final des anomalies
