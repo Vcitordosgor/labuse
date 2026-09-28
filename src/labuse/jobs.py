@@ -452,6 +452,16 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
               "affiche une VRAIE date de calcul. Chaque commune est isolée (une ratée n'arrête pas le lot). "
               "Sans ce job, le cache fige et le pied « rafraîchis chaque nuit » ment.",
        test="tests/test_commune_fix1.py::test_a4_job_cache_nocturne_enregistre"),
+    # COHERENCE-FIX-1 (lot G) — le banc de cohérence tourne CHAQUE NUIT sur l'île : chaque notion,
+    # tous ses lecteurs, comparés à la tolérance près. Résultat dans coherence_runs (onglet
+    # « Cohérence » de la page Données) ; cloche admin au premier écart FAUX-CLIENT NOUVEAU.
+    _j("coherence-banc", "Banc de cohérence nocturne — chaque notion, tous ses lecteurs (île)",
+       "quotidien", "45 23 * * *", "03:45", touche="exploitation", timeout_s=7200,
+       raison="COHERENCE-1 a prouvé que deux caches périmés en silence faisaient mentir 70 % des "
+              "écrans concernés pendant des jours. Le banc rejoue chaque nuit les comparaisons "
+              "multi-lecteurs (fiche/SQL/tuiles/outils) sur l'échantillon gelé + les 24 communes ; "
+              "un FAUX-CLIENT nouveau sonne la cloche admin à J+1 — plus jamais des mois.",
+       test="tests/verrous/test_v6b_coherence.py::test_v6b_coherence_banc"),
     _j("restore-test", "Restaure le dernier dump dans une base jetable et vérifie (puis DROP)",
        "mensuel (1er)", "0 1 1 * *", "05:00 le 1er", touche="exploitation", timeout_s=3600,
        envoie_mail=True, besoin_db=False,

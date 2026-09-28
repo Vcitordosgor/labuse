@@ -811,6 +811,95 @@ def verrou_outils_registre(db=None) -> ResultatVerrou:
                           "servis, tous des ids du registre")
 
 
+def verrou_coherence_banc(db=None) -> ResultatVerrou:
+    """V6b — COHERENCE-FIX-1 (lot G) : le banc de cohérence est PERMANENT.
+
+    Quatre mâchoires, jouées sur la base COURANTE du process (en pytest : la base de test —
+    jamais la vraie base ; au deploy/`labuse circuit verrous` : la base servie) :
+      1. les tables de vérification sont bien formées (notion, tolérance non vide, ≥ 2 lecteurs) ;
+      2. le vocabulaire d'absence tient (5 formes, registre/absences.py) ;
+      3. la règle du registre : toute donnée du registre porte ≥ 1 lecteur dérivable et une
+         tolérance dérivable (le référentiel du banc est DÉRIVÉ — un chiffre nouveau sans
+         lecteur/tolérance casse ici, le banc le couvrira automatiquement) ;
+      4. le GOLDEN des 7 témoins (tests/golden/coherence/) rejoué via l'app EN-PROCESS
+         (TestClient — mêmes lecteurs que le banc) : toute dérive non acceptée
+         (`labuse coherence --accepter`) casse ; témoin absent de la base = DIT, pas cassé."""
+    import sys as _sys
+    pbs: list[str] = []
+    racine = Path(__file__).resolve().parents[2]
+    if str(racine) not in _sys.path:
+        _sys.path.insert(0, str(racine))
+    try:
+        from scripts.coherence.checks_commune import CHECKS as CHECKS_C, CROISEMENTS_PARCELLE
+        from scripts.coherence.checks_parcelle import CHECKS as CHECKS_P
+    except Exception as e:  # noqa: BLE001 — le banc fait partie du produit : introuvable = cassé
+        return ResultatVerrou("V6b", PHRASES["V6b"], "casse", f"banc introuvable : {e}")
+    # 1. tables bien formées — un check mono-lecteur n'est admis QUE s'il est croisé ailleurs
+    # (CROISEMENTS_PARCELLE compare le ctx commune à la fiche parcelle) : jamais un check mort.
+    croisees = {c[0] for c in CROISEMENTS_PARCELLE}
+    for notion, tol, lecteurs, cause in CHECKS_P:
+        if not str(tol).strip() or len(lecteurs) < 2:
+            pbs.append(f"check parcelle « {notion} » : tolérance vide ou < 2 lecteurs")
+    for notion, tol, lecteurs, cause, _geo in CHECKS_C:
+        base = notion.replace("(commune)", "")
+        if not str(tol).strip() or (len(lecteurs) < 2 and base not in croisees):
+            pbs.append(f"check commune « {notion} » : tolérance vide ou < 2 lecteurs (et non croisé)")
+    # 2. vocabulaire d'absence (5 formes)
+    from .registre.absences import hors_vocabulaire
+    for cle, phrase in hors_vocabulaire():
+        pbs.append(f"phrase d'absence hors vocabulaire ({cle}) : {phrase[:80]}")
+    # 3. règle du registre : toute donnée déclarée a une tolérance dérivable (referentiel.tolerance
+    # rend toujours une forme) et au moins un lecteur (déclaration/robinet). On dérive comme le
+    # référentiel : une donnée du registre absente de TOUTE déclaration/robinet = sans lecteur.
+    try:
+        from .registre import donnees as _don
+        from .registre import declarations as _dec
+        from . import registre as _reg
+        declarees: set[str] = set()
+        surfaces, generiques = _dec.charger()
+        for s in surfaces:
+            for l in s.donnees:
+                declarees.add(l.quoi)
+        for g in generiques:
+            declarees.update(getattr(g, "donnees", ()) or ())
+        for rid, rob in _reg.ROBINETS.items():
+            declarees.update(rob.chiffres)
+        # une donnée `en_attente` (chantier nommé) est déclarée SANS lecteur : dit, pas cassé.
+        sans_lecteur = [cid for cid, d in _don.DONNEES.items()
+                        if cid not in declarees and not getattr(d, "en_attente", "")]
+        for cid in sans_lecteur:
+            pbs.append(f"donnée du registre sans lecteur déclaré : {cid}")
+    except Exception as e:  # noqa: BLE001
+        pbs.append(f"règle du registre injouable : {type(e).__name__}: {e}")
+    # 4. golden des témoins — via l'app EN-PROCESS (mêmes lecteurs HTTP que le banc, sans serveur)
+    golden_note = ""
+    try:
+        from scripts.coherence import golden as _g
+        from scripts.coherence.lib import Contexte as _Ctx
+        if any((_g.GOLDEN_DIR / f"{idu}.json").exists() for idu in _g.TEMOINS):
+            import json as _json
+            from fastapi.testclient import TestClient
+            from .api.app import app as _app
+            client = TestClient(_app)
+            def _fetch(path):
+                r = client.get(path)
+                r.raise_for_status()
+                return _json.loads(r.content)
+            ctx = _Ctx(fetch=_fetch)
+            derives = _g.comparer_tous(ctx)
+            pbs.extend(f"golden : {d}" for d in derives)
+            golden_note = f" · golden {len(_g.TEMOINS)} témoins rejoués"
+        else:
+            golden_note = " · golden non posé (labuse coherence --accepter)"
+    except Exception as e:  # noqa: BLE001
+        pbs.append(f"golden injouable : {type(e).__name__}: {e}")
+    if pbs:
+        return ResultatVerrou("V6b", PHRASES["V6b"], "casse", f"{len(pbs)} problème(s)", pbs[:40])
+    return ResultatVerrou("V6b", PHRASES["V6b"], "ok",
+                          f"{len(CHECKS_P)} checks parcelle + {len(CHECKS_C)} commune bien formés, "
+                          f"vocabulaire d'absence 5 formes, registre couvert{golden_note}")
+
+
 def verrou_regles_citations(db=None) -> ResultatVerrou:
     """V6a — PLU-CALIBRAGE-1 : aucune règle chiffrée VALIDÉE sans sa source. Toute feuille de
     `regles` de la calibration PLU (lue par destinations.iter_regles_calibrees) au statut
@@ -925,6 +1014,7 @@ PHRASES: dict[str, str] = {
     "V5e": "Tout par déclaration (commune) : chaque donnée à la maille commune servie sur la fiche commune est déclarée avec sa carte — aucun câble muet.",
     "V5f": "Tout chiffre affiché par un outil porte un id du registre : chaque outil du menu a son robinet, et ce robinet ne sert que des chiffres déclarés — aucun outil ne lit la base hors registre.",
     "V6a": "Aucune règle chiffrée VALIDÉE sans sa source : article + page + citation, toujours — une valeur validée sans preuve n'existe pas.",
+    "V6b": "Le banc de cohérence est permanent : tables de vérification bien formées, vocabulaire d'absence à cinq formes, toute donnée du registre a un lecteur et une tolérance, et les 7 témoins golden n'ont pas dérivé sans acceptation explicite.",
     "V7a": "Chaque tuile servie reproduit la brute : même nombre d'objets, aucune partie perdue (GeometryCollections comprises), contour < 1 px, position exacte — décodage de la tuile RÉELLEMENT servie, aux zooms 10/13/16.",
     "V8a": "Toute veille et tout envoi a un job du registre : chaque fonction d'évaluation (suivis, secteurs, recherches, veilles, sentinelle) et d'envoi (digest, Radar) est portée par un job du crontab généré, qui l'appelle — retirer les crons legacy n'éteint plus rien.",
 }
@@ -953,6 +1043,7 @@ VERROUS: tuple[Verrou, ...] = (
     Verrou("V5e", 5, PHRASES["V5e"], verrou_fiche_commune_cartes),   # COMMUNE-RANGEMENT-2 lot 5
     Verrou("V5f", 5, PHRASES["V5f"], verrou_outils_registre),   # OUTILS-FIX-5 lot 7
     Verrou("V6a", 6, PHRASES["V6a"], verrou_regles_citations),   # PLU-CALIBRAGE-1 lot 4
+    Verrou("V6b", 6, PHRASES["V6b"], verrou_coherence_banc),   # COHERENCE-FIX-1 lot G
     Verrou("V7a", 7, PHRASES["V7a"], verrou_tuiles),   # COUCHES-TUYAU-1 lot 3
     Verrou("V8a", 8, PHRASES["V8a"], verrou_veille_a_un_job),   # VEILLE-FIX-1 lot 1
 )

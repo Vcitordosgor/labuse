@@ -1,0 +1,92 @@
+{
+ "classe_residuel(sous_densite)": {
+  "lecteur": "fiche:potentiel_transformation.sous_densite",
+  "tolerance": "0",
+  "valeur": true
+ },
+ "copro_presente": {
+  "lecteur": "fiche:coproprietes(non vide)",
+  "tolerance": "0",
+  "valeur": false
+ },
+ "emprise_batie_m2": {
+  "lecteur": "fiche:le_bien.emprise_batie_m2",
+  "tolerance": "1 %",
+  "valeur": 0
+ },
+ "filiation_mere": {
+  "lecteur": "fiche:filiation.meres.0.idu",
+  "tolerance": "0",
+  "valeur": "97415000CK0148"
+ },
+ "hauteur_faitage_m": {
+  "lecteur": "fiche:le_bien.hauteur_faitage_m",
+  "tolerance": "1 %",
+  "valeur": null
+ },
+ "pente_deg": {
+  "lecteur": "fiche:terrain.pente_moy_deg",
+  "tolerance": "0,5 point",
+  "valeur": 12.9
+ },
+ "pente_max_deg": {
+  "lecteur": "fiche:terrain.pente_max_deg",
+  "tolerance": "0,5 point",
+  "valeur": 23.3
+ },
+ "prix_median_maison_secteur": {
+  "lecteur": "fiche:dvf_parcelle.secteur[maison].mediane_prix_m2",
+  "tolerance": "1 %",
+  "valeur": 3598
+ },
+ "rang_score": {
+  "lecteur": "fiche:score_v2.rang",
+  "tolerance": "0",
+  "valeur": 242318
+ },
+ "sdp_residuelle_m2": {
+  "lecteur": "fiche:potentiel_transformation.sdp_residuelle_m2",
+  "tolerance": "1 %",
+  "valeur": 183.0
+ },
+ "surface_parcelle_m2": {
+  "lecteur": "fiche:surface_m2",
+  "tolerance": "1 %",
+  "valeur": 413
+ },
+ "taxe_amenagement_taux_communal_pct": {
+  "lecteur": "fiche:taxe_amenagement.taux_communal_pct",
+  "tolerance": "0",
+  "valeur": 5.0
+ },
+ "tier_opportunite": {
+  "lecteur": "fiche:score_v2.tier",
+  "tolerance": "0",
+  "valeur": "a_creuser"
+ },
+ "vigilance_cinquante_pas": {
+  "lecteur": "fiche:flags[cinquante_pas]",
+  "tolerance": "0",
+  "valeur": false
+ },
+ "vigilance_ppr": {
+  "lecteur": "fiche:flags[ppr]",
+  "tolerance": "0",
+  "valeur": false
+ },
+ "vigilance_ravine": {
+  "lecteur": "fiche:flags[ravine]",
+  "tolerance": "0",
+  "valeur": false
+ },
+ "zone_plu_famille": {
+  "lecteur": "sql:parcel_zone_plu.zone_fam",
+  "tolerance": "0",
+  "valeur": "U"
+ },
+ "zone_plu_lib": {
+  "lecteur": "fiche:reglement_plu.zones.0.zone",
+  "tolerance": "0",
+  "valeur": "U6c"
+ }
+}

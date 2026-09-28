@@ -2322,6 +2322,26 @@ def prochain_dimanche_quinzaine() -> str:
     return (base + _td(days=14)).isoformat()
 
 
+@router.get("/admin/coherence")
+def admin_coherence(request: Request) -> dict:
+    """COHERENCE-FIX-1 (lot G) — l'onglet « Cohérence » de la page Données : les derniers passages
+    du banc (nombre de notions comparées, écarts par gravité, erreurs lecteur), le dernier fichier
+    ECARTS.csv, et le nombre de témoins golden posés."""
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from pathlib import Path
+    from ..coherence_journal import derniers_passages, ECARTS_CSV
+    from ..db import session_scope as _ss
+    with _ss() as s:
+        passages = derniers_passages(s)
+    golden_dir = Path(__file__).resolve().parents[3] / "tests" / "golden" / "coherence"
+    n_golden = len(list(golden_dir.glob("*.json"))) if golden_dir.exists() else 0
+    return {"passages": passages,
+            "fichier_ecarts": str(ECARTS_CSV),
+            "golden_temoins": n_golden,
+            "commande": "labuse coherence [--ile] · accepter une dérive : labuse coherence --accepter"}
+
+
 @router.get("/admin/circuit")
 def admin_circuit(request: Request) -> dict:
     """CIRCUIT-1 (lot 5.1) — LA structure de la page Circuit, calculée EN DIRECT et en UN appel :

@@ -67,10 +67,12 @@ CHECKS: list[tuple] = [
     ], "cache_perime", True),
 
     # ── population ──
+    # COHERENCE-FIX-1 (lot E) — la définition SERVIE : population LÉGALE en vigueur
+    # (population_legale, millésime affiché), repli Sudocuh — le lecteur SQL lit pareil.
     ("habitants_n", "0 (entier)", [
         ("ctx:population.habitants", _c("population.habitants")),
-        ("sql:sudocuh_procedures.pop_mun",
-         _sql("SELECT pop_mun FROM sudocuh_procedures WHERE commune=%(commune)s")),
+        ("sql:population_legale.pop_mun",
+         _sql("SELECT pop_mun FROM population_legale WHERE commune=%(commune)s")),
     ], "source_differente", False),
 
     ("logements_n", "0 (entier)", [

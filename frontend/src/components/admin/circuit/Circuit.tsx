@@ -7,7 +7,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 
 import {
-  getAdminCircuit, getAdminCircuitTaches, getSourcesParElement, postAdminCircuitAgents,
+  getAdminCircuit, getAdminCircuitTaches, getAdminCoherence, getSourcesParElement, postAdminCircuitAgents,
   postAdminCircuitSonder, postAdminCircuitVerifier,
 } from '../../../lib/api'
 
@@ -22,7 +22,7 @@ import { Sources } from './Sources'
 import { CIRCUIT_CSS } from './style'
 import { focusDeCible, type AFaireLigne, type Cible, type CircuitData } from './types'
 
-type Onglet = 'todo' | 'sources' | 'circuit' | 'journal'
+type Onglet = 'todo' | 'sources' | 'circuit' | 'journal' | 'coherence'
 // CIRCUIT-P5 — « destinations » : le détail du calibrage PLU par commune (composant Destinations),
 // atteint depuis la page de détail de la source GPU (plus par un lien en bas de la page).
 type DetailType = 'reservoir' | 'robinet' | 'pompe' | 'compteur' | 'destinations'
@@ -163,6 +163,8 @@ export function CircuitSection() {
         <button className={onglet === 'journal' ? 'on' : ''} onClick={() => setOnglet('journal')}>
           Journal{nJour ? <span className="n neutre">{nJour}</span> : ''}
         </button>
+        {/* COHERENCE-FIX-1 (lot G) — le banc nocturne a sa fenêtre. */}
+        <button className={onglet === 'coherence' ? 'on' : ''} onClick={() => setOnglet('coherence')}>Cohérence</button>
       </div>
 
       {barre && (
@@ -214,6 +216,52 @@ export function CircuitSection() {
       <section className={`tab ${onglet === 'journal' ? 'on' : ''}`}>
         <Journal data={d} onOpen={ouvrirDetail} onAujourdhui={setNJour} />
       </section>
+
+      {/* COHERENCE-FIX-1 (lot G) — l'onglet Cohérence : les passages du banc nocturne. */}
+      <section className={`tab ${onglet === 'coherence' ? 'on' : ''}`}>
+        {onglet === 'coherence' && <Coherence />}
+      </section>
+    </div>
+  )
+}
+
+// COHERENCE-FIX-1 (lot G) — les derniers passages du banc de cohérence (job coherence-banc,
+// labuse coherence) : écarts par gravité, erreurs lecteur (banc illisible ≠ banc vert), golden.
+function Coherence() {
+  const q = useQuery({ queryKey: ['admin-coherence'], queryFn: getAdminCoherence })
+  if (q.isLoading) return <div className="muted">Cohérence — chargement…</div>
+  const d = q.data
+  if (!d) return <div className="muted">Cohérence indisponible.</div>
+  const passages: any[] = d.passages ?? []
+  return (
+    <div>
+      <p className="muted" style={{ margin: '6px 0 10px', fontSize: 12 }}>
+        Le banc rejoue chaque nuit chaque notion sur TOUS ses lecteurs (fiche, SQL, tuiles, outils)
+        et compare à la tolérance près. Golden posés : <b>{d.golden_temoins}</b> témoin{d.golden_temoins > 1 ? 's' : ''}.
+        {' '}Commande : <code>{d.commande}</code>
+      </p>
+      {passages.length === 0
+        ? <p className="muted">Aucun passage journalisé — le job « coherence-banc » tourne à 03:45, ou <code>labuse coherence</code> à la main.</p>
+        : (
+          <div className="svt">
+            <div className="svt-h" style={{ gridTemplateColumns: '1.2fr 0.7fr 0.7fr 0.9fr 0.9fr 0.9fr 0.9fr' }}>
+              <div>Passage</div><div>Mode</div><div>Écarts</div><div>Faux-client</div>
+              <div>Incohérent</div><div>Tolérable</div><div>Erreurs lecteur</div>
+            </div>
+            {passages.map((p, i) => (
+              <div className="svt-r" key={i} style={{ gridTemplateColumns: '1.2fr 0.7fr 0.7fr 0.9fr 0.9fr 0.9fr 0.9fr', cursor: 'default' }}>
+                <div>{new Date(p.ts).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</div>
+                <div>{p.mode}</div>
+                <div>{p.n_ecarts}</div>
+                <div style={{ color: p.faux_client ? 'var(--rouge, #c0392b)' : 'inherit', fontWeight: p.faux_client ? 600 : 400 }}>{p.faux_client}</div>
+                <div>{p.incoherent}</div>
+                <div>{p.tolerable}</div>
+                <div style={{ color: p.erreurs_lecteur > 100 ? 'var(--ambre, #b8860b)' : 'inherit' }}>{p.erreurs_lecteur}</div>
+              </div>
+            ))}
+          </div>
+        )}
+      <p className="muted" style={{ marginTop: 8, fontSize: 11 }}>Détail du dernier passage : <code>{d.fichier_ecarts}</code></p>
     </div>
   )
 }
