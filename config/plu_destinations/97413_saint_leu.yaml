@@ -132,6 +132,7 @@ zones:
             au faîtage ou 13,00m pour les constructions comportant un rez-de-chaussée commercial et pour le secteur
             UAt - R+2+combles'
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Il est toléré 1,50m de plus sur les parties avales du bâtiment au faîtage, à l'égout du toit ou au sommet de l'acrotère ; +1,00m ajouté en zone à risque moyen d'inondation."
         egout:
           m: 9.0
           article: UA 10.2
@@ -367,10 +368,11 @@ zones:
         par_logement:
           places: 2
           article: UB 12 renvoi Art. 11 dispositions générales
-          page_pdf: 10
+          page_pdf: 13
           citation: 12.2 - Normes de stationnement Cf. dispositions générales du présent règlement.
           statut: valide
           raison: citation non retrouvée (recouvrement 33%)
+          note: "PLU-VERIF-1 : page corrigée 10→13 (art. ARTICLE 11 - NORMES DE STATIONNEMENT (dispositions générales))."
       pleine_terre:
         pct:
           pct: 30.0
@@ -471,10 +473,11 @@ zones:
         par_logement:
           places: 2
           article: UC 12 renvoi Art. 11 dispositions générales
-          page_pdf: 10
+          page_pdf: 13
           citation: 12.2 - Normes de stationnement Cf. dispositions générales du présent règlement.
           statut: valide
           raison: citation non retrouvée (recouvrement 33%)
+          note: "PLU-VERIF-1 : page corrigée 10→13 (art. ARTICLE 11 - NORMES DE STATIONNEMENT (dispositions générales))."
       pleine_terre:
         pct:
           pct: 30.0
@@ -737,10 +740,11 @@ zones:
         par_logement:
           places: 2
           article: UD 12 renvoi Art. 11 dispositions générales
-          page_pdf: 10
+          page_pdf: 13
           citation: 12.2 - Normes de stationnement Cf. dispositions générales du présent règlement.
           statut: valide
           raison: citation non retrouvée (recouvrement 33%)
+          note: "PLU-VERIF-1 : page corrigée 10→13 (art. ARTICLE 11 - NORMES DE STATIONNEMENT (dispositions générales))."
       pleine_terre:
         pct:
           pct: 40.0
@@ -982,10 +986,11 @@ zones:
         par_logement:
           places: 2
           article: UE 12 renvoi Art. 11 dispositions générales
-          page_pdf: 10
+          page_pdf: 13
           citation: 12.2 - Normes de stationnement Cf. dispositions générales du présent règlement.
           statut: valide
           raison: citation non retrouvée (recouvrement 33%)
+          note: "PLU-VERIF-1 : page corrigée 10→13 (art. ARTICLE 11 - NORMES DE STATIONNEMENT (dispositions générales))."
       pleine_terre:
         pct:
           pct: 30.0
@@ -1057,10 +1062,11 @@ zones:
         par_logement:
           places: 2
           article: UF 12 renvoi Art. 11 dispositions générales
-          page_pdf: 10
+          page_pdf: 13
           citation: 12.2 - Normes de stationnement Cf. dispositions générales du présent règlement.
           statut: valide
           raison: citation non retrouvée (recouvrement 33%)
+          note: "PLU-VERIF-1 : page corrigée 10→13 (art. ARTICLE 11 - NORMES DE STATIONNEMENT (dispositions générales))."
       pleine_terre:
         pct:
           pct: 30.0
@@ -1140,10 +1146,11 @@ zones:
         par_logement:
           places: 2
           article: UP 12 renvoi Art. 11 dispositions générales
-          page_pdf: 10
+          page_pdf: 13
           citation: 12.2 - Normes de stationnement Cf. dispositions générales du présent règlement.
           statut: valide
           raison: citation non retrouvée (recouvrement 33%)
+          note: "PLU-VERIF-1 : page corrigée 10→13 (art. ARTICLE 11 - NORMES DE STATIONNEMENT (dispositions générales))."
     silence: interdit
     silence_src: 'Art. UP1, p. 73 : « Sont interdites toutes les occupations ou utilisations non mentionnées à l''article
       UP2 » — clause explicite « seules sont admises » inversée : le silence vaut interdiction.'
