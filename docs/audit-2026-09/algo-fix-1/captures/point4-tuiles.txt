@@ -1,0 +1,8 @@
+=== (a) FRONT RUNTIME — /config/run rend le run servi VIVANT ===
+{"run":"q_v11_m137"}
+=== (b) CARTE signale non à jour — /map/tiles/meta ===
+  {'run_label': 'q_v11_m137', 'carte_le': '2026-09-14T10:59:55.855211+04:00', 'amont_le': '2026-09-25T15:18:23.897851+04:00', 'perime': True}
+=== (b) « À faire » — ligne BLOQUANTE Reconstruire les tuiles ===
+  [rouge] Reconstruire les tuiles de la carte
+   Les tuiles de la carte datent du 2026-09-14 ; le résiduel/le score servi a été recalculé depuis (run « q_v11_m137 ») — à reconstruire. En attendant, la carte affiche l'ancien run et le signale.
+  DECISION: enchainer — île estimée à 0.1 min (< 15) → rebuild enchaîné par la bascule.

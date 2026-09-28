@@ -19,7 +19,22 @@ import { EMPTY_FILTERS, useApp, type Filters } from '../store/useApp'
 // bascule (front sur l'ancien, backend sur le nouveau → listes vides, aucun message). Le repli ''
 // + la garde de démarrage (main.tsx : refuse de booter si SOURCE est vide) rendent l'erreur
 // FRANCHE. La cohérence du bundle réel reste garantie par test_bundle_front_construit_sur_le_run_servi.
-export const SOURCE = import.meta.env.VITE_RUN_LABEL ?? ''
+//
+// ALGO-FIX-1 (point 4) — le run est désormais LU À L'EXÉCUTION, plus figé au build : VITE_RUN_LABEL
+// n'est que la valeur INITIALE (repli). Au démarrage, main.tsx fetch `/config/run` (runs.current()
+// vivant) et appelle `_setServedRun()` — `SOURCE` est un binding VIVANT lu à CHAQUE requête (qf/q/
+// getFiche), donc après une bascule un simple rechargement suffit : plus de `npm run build` pour que
+// le front cesse d'épingler l'ancien run via `?source=`. Réassigné UNIQUEMENT par _setServedRun.
+export let SOURCE = import.meta.env.VITE_RUN_LABEL ?? ''
+
+/** ALGO-FIX-1 (point 4) — fixe le run servi lu à l'exécution (appelé une fois au boot, main.tsx).
+ *  N'écrase jamais avec une valeur vide (garde le repli build plutôt qu'un run indéterminé). */
+export function _setServedRun(run: string | null | undefined): void {
+  if (run) SOURCE = run
+}
+
+/** Le run servi VIVANT côté backend (runs.current()), pour l'aligner au démarrage. */
+export const fetchServedRun = () => j<{ run: string }>('/config/run')
 /** Commune active — depuis le store (null = « Toute l'île »). L'ancienne constante Saint-Paul
  *  est devenue un état : TOUTE requête commune-scopée passe par ici. */
 export const commune = () => useApp.getState().commune

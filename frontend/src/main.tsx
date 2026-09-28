@@ -3,7 +3,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'
 import { ErrorBoundary } from './components/ErrorBoundary'
-import { getSources, getSourcesCouverture, is429, SOURCE } from './lib/api'
+import { _setServedRun, fetchServedRun, getSources, getSourcesCouverture, is429, SOURCE } from './lib/api'
 import './styles/index.css'
 
 // M-Q P2-70 — GARDE DE DÉMARRAGE : le run servi (SOURCE) est injecté au build depuis
@@ -53,21 +53,34 @@ const qc = new QueryClient({
 // avoir exploré la carte), la donnée est déjà en cache → la page s'affiche d'un coup, sans spinner ni
 // saut. Échec silencieux : si le pré-cache n'a pas abouti à temps, SourcesPage retombe sur son
 // isLoading/isError normal.
-if (SOURCE) {
+function _lancerPrefetch(): void {
   qc.prefetchQuery({ queryKey: ['sources'], queryFn: getSources, staleTime: 5 * 60_000 }).catch(() => {})
   qc.prefetchQuery({ queryKey: ['sources-couverture'], queryFn: getSourcesCouverture, staleTime: 5 * 60_000 }).catch(() => {})
 }
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <ErrorBoundary>
-      {SOURCE
-        ? (
-          <QueryClientProvider client={qc}>
-            <App />
-          </QueryClientProvider>
-        )
-        : <RunNonConfigure />}
-    </ErrorBoundary>
-  </React.StrictMode>,
-)
+function _rendre(): void {
+  if (SOURCE) _lancerPrefetch()
+  ReactDOM.createRoot(document.getElementById('root')!).render(
+    <React.StrictMode>
+      <ErrorBoundary>
+        {SOURCE
+          ? (
+            <QueryClientProvider client={qc}>
+              <App />
+            </QueryClientProvider>
+          )
+          : <RunNonConfigure />}
+      </ErrorBoundary>
+    </React.StrictMode>,
+  )
+}
+
+// ALGO-FIX-1 (point 4) — au DÉMARRAGE, on lit le run servi VIVANT (/config/run = runs.current())
+// et on aligne `SOURCE` dessus : le run n'est plus figé au build (VITE_RUN_LABEL n'est que le repli).
+// Après une bascule, un simple rechargement suffit — plus de `npm run build` pour cesser d'épingler
+// l'ancien run. Échec réseau : on garde la valeur du bundle (repli) et on démarre quand même (la
+// garde « run non configuré » ne s'affiche que si les DEUX — vivant ET bundle — sont vides).
+fetchServedRun()
+  .then((r) => _setServedRun(r?.run))
+  .catch(() => { /* backend injoignable : on garde le run du bundle (repli) */ })
+  .finally(() => { _rendre() })

@@ -417,6 +417,16 @@ def healthz() -> dict:
     return {"status": "ok"}
 
 
+@app.get("/config/run")
+def config_run() -> dict:
+    """ALGO-FIX-1 (point 4) — le RUN SERVI VIVANT, lu à la requête (runs.current()). Le front le
+    fetch AU DÉMARRAGE et fixe sa constante `SOURCE` dessus, au lieu de la valeur FIGÉE au build
+    (VITE_RUN_LABEL, config/served_run.txt lu par vite.config). Après une bascule, un simple
+    rechargement suffit à servir le nouveau run — plus de `npm run build` obligatoire pour que le
+    front cesse d'épingler l'ancien run via `?source=`. Zéro accès DB (runs.current lit le pointeur)."""
+    return {"run": runs.current()}
+
+
 # ── 404 de NAVIGATION habillé (revue UI/UX S68 · O3 : porté au design system coffre_ui) :
 # une faute d'URL au navigateur ne montre plus du JSON brut sur fond blanc, et naît des mêmes
 # tokens que la porte/les pages légales (zéro hex local), ton sobre, toujours une sortie (LOI-2).

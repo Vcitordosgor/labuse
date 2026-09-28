@@ -1763,19 +1763,35 @@ def admin_flux_bascule(request: Request, body: BasculeIn) -> dict:
         except Exception:  # noqa: BLE001
             pass
     # DONNEES-2 (B1) — les tables SERVIES run-scopées (parcel_flags · parcel_renouvellement · score_e)
-    # et les tuiles carte ne « montent DANS le geste » que maintenant : la bascule LANCE, DÉTACHÉ, la
-    # reconstruction pour le NOUVEAU run (`build-mvt`, le geste unique M48). On ne la fait PAS en ligne :
-    # un DROP TABLE prend un verrou exclusif qui DEADLOCK avec les lectures de la garde (constaté). Tant
+    # et les tuiles carte ne « montent DANS le geste » que maintenant : la bascule reconstruit pour le
+    # NOUVEAU run (`build-mvt`, le geste unique M48). On ne la fait PAS en ligne dans la requête : un
+    # DROP TABLE prend un verrou exclusif qui DEADLOCK avec les lectures de la garde (constaté). Tant
     # qu'elle tourne, la garde reste à 5/6 (tables encore sur l'ancien run) ; elle repasse 6/6 à la fin.
+    #
+    # ALGO-FIX-1 (point 4) — la bascule DÉCIDE d'abord : elle mesure un rebuild sur une commune (table
+    # temp) et extrapole l'île. Si l'île tient en < 15 min → elle ENCHAÎNE le rebuild (lancé détaché).
+    # Sinon → elle NE lance PAS et l'onglet « À faire » porte une ligne BLOQUANTE « Reconstruire les
+    # tuiles (durée estimée) » (composer_a_faire détecte mvt périmé), et la carte signale via
+    # /map/tiles/meta.perime qu'elle n'est pas à jour. Dans TOUS les cas, aucune tuile ne sert l'ancien
+    # run EN SILENCE : soit elle est reconstruite, soit la carte et l'onglet le disent.
+    from .tiles import planifier_reconstruction_tuiles
     reconstruction = None
     try:
-        racine = Path(__file__).resolve().parents[3]
-        rlog = f"/tmp/labuse-build-mvt-{res['nouveau']}.log"
-        argv = [sys.executable, "-m", "labuse.cli", "build-mvt", "--label", res["nouveau"]]
-        with open(rlog, "ab") as fh:
-            subprocess.Popen(argv, cwd=str(racine), stdout=fh, stderr=fh, start_new_session=True)
-        reconstruction = {"lancee": True, "run": res["nouveau"], "log": rlog}
-    except Exception as exc:  # noqa: BLE001
+        with session_scope() as sm:
+            plan = planifier_reconstruction_tuiles(sm, run_label=res["nouveau"])
+        if plan["strategie"] == "enchainer":
+            racine = Path(__file__).resolve().parents[3]
+            rlog = f"/tmp/labuse-build-mvt-{res['nouveau']}.log"
+            argv = [sys.executable, "-m", "labuse.cli", "build-mvt", "--label", res["nouveau"]]
+            with open(rlog, "ab") as fh:
+                subprocess.Popen(argv, cwd=str(racine), stdout=fh, stderr=fh, start_new_session=True)
+            reconstruction = {"lancee": True, "enchainee": True, "run": res["nouveau"], "log": rlog,
+                              "estimation_min": plan["mesure"].get("estimation_ile_min"), "raison": plan["raison"]}
+        else:  # bloquer — trop long pour enchaîner : ligne « À faire » bloquante + carte périmée
+            reconstruction = {"lancee": False, "enchainee": False, "bloquant": True, "run": res["nouveau"],
+                              "estimation_min": plan.get("duree_estimee_min"), "raison": plan["raison"],
+                              "a_faire": f"Reconstruire les tuiles (~{plan.get('duree_estimee_min')} min)"}
+    except Exception as exc:  # noqa: BLE001 — la mesure/lancement ne casse jamais une bascule réussie
         reconstruction = {"lancee": False, "motif": f"{type(exc).__name__}"}
     res["reconstruction"] = reconstruction
     return res
@@ -2506,11 +2522,32 @@ def admin_circuit(request: Request) -> dict:
     _controle_ts = _iso(controle["ts"]) if controle else None
     _agents_ts = next((_iso(j["ts"]) for j in journal if j.get("geste") == "agent"), None)
     _dates_af = {"sonde": _derniere_sonde, "controle": _controle_ts, "agents": _agents_ts}
+    # ── ALGO-FIX-1 (point 4) — état des TUILES : périmées si bâties sur un autre run que le servi (ou
+    #    avant le dernier re-score/résiduel). Alimente la ligne « À faire » BLOQUANTE « Reconstruire les
+    #    tuiles » (composer), miroir de /map/tiles/meta.perime que lit la carte. ──
+    _tuiles_af = None
+    try:
+        with session_scope() as _st:
+            if _st.execute(text("SELECT to_regclass('mvt_meta')")).scalar():
+                _mrow = _st.execute(text(
+                    "SELECT value, updated_at FROM mvt_meta WHERE key='run_label'")).mappings().first()
+                _run_carte = _mrow["value"] if _mrow else None
+                _carte_le = _mrow["updated_at"] if _mrow else None
+                _servi_run = runs.current()
+                _amont = _st.execute(text("SELECT max(computed_at) FROM parcel_residuel")).scalar()
+                _run_diff = bool(_run_carte and _run_carte != _servi_run)
+                _amont_neuf = bool(_carte_le is not None and _amont is not None and _amont > _carte_le)
+                if _run_diff or _amont_neuf:
+                    _tuiles_af = {"perime": True, "run_carte": _run_carte, "run_servi": _servi_run,
+                                  "motif": "run" if _run_diff else "amont",
+                                  "carte_le": _carte_le.isoformat() if _carte_le else None}
+    except Exception:  # noqa: BLE001 — pas de tuiles (base de test) : pas de ligne
+        _tuiles_af = None
     a_faire = _resume.composer_a_faire(
         reservoirs, residuel=residuel, candidat=_candidat, run_servi=runs.current(),
         verrous=_verrous, fuites_robinets=_fuites_rob, ecarts=fuites,
         etats_compte=_etats_compte, contexte=_contexte_af, dates=_dates_af,
-        calculer=_calculer_af)
+        calculer=_calculer_af, tuiles=_tuiles_af)
     # ── CIRCUIT-6 — les sept garanties, jouées côté serveur (le front les REND, lot 8) +
     # le catalogue calculé (G1 : 116 en base / 95 en vitrine, jamais gravé) + les doublons.
     from dataclasses import asdict as _asdict
