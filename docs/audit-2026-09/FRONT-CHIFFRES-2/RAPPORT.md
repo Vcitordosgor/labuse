@@ -24,7 +24,9 @@ NI les 525 `legitime`, NI les 21 `supprimer` (déjà traités en FC-1). Restent 
 - **Verrou front** : `tests/test_front_chiffres_orphelins.py` (FC-1, réconcilié au merge).
 
 **Baseline (Étape 0)** : servers 8615/5815 up ; `test_v6b_coherence` + `test_front_chiffres_orphelins`
-**verts (4/4)** ; banc `--echantillon` rejoué → `<!-- BANC_BASELINE -->`.
+**verts (4/4)** ; banc `--echantillon` rejoué → **3161 comparaisons · 188 écarts (166 INCOHERENT /
+22 TOLERABLE)** (= l'état laissé par COHERENCE-FIX-1, 0 FAUX-CLIENT). C'est le point de départ ;
+chaque famille doit garder ce nombre ≤ 188 (0 écart nouveau).
 
 ---
 
@@ -69,7 +71,17 @@ NI les 525 `legitime`, NI les 21 `supprimer` (déjà traités en FC-1). Restent 
   FC-1 avait été supprimé ; travail FC-1 sauf sur `origin/main`). `.env` + `node_modules` (symlink).
 - Baseline verrous verts, banc lancé.
 - `FAMILLES.csv` (159) + `INVENTAIRE.csv` rejoué (colonnes famille/etat) produits.
-- **Familles traitées : voir `FAMILLES.csv` colonne `etat` + `CHANGEMENTS.csv`.**
+
+**Familles traitées cette session :**
+- **F04 — `FinancierQuestionnaire` bornes du garde « hors marché » (7 lignes, remonté).** Les bornes
+  20 000 / 8 000 / 12 000 €/m² étaient CODÉES au front (le garde client reproduisait le moteur). Le
+  back les sert désormais (`GET /financier/{idu}/questionnaire` → `hors_marche_bornes`) depuis la
+  SOURCE UNIQUE `faisabilite/engine.py` (déjà lue par le garde PDF `financier_bilan._hors_marche` —
+  un seul point de vérité, cf. `test_hypotheses_source_unique`). Le composant lit `hors_marche_bornes` ;
+  aucune valeur affichée ne change (bornes identiques des deux côtés) → 0 écart banc, 0 capture.
+  Garde : `tests/test_front_chiffres2_familles.py::test_f04_...`. tsc 0 · vitest 225 · back+V6 verts.
+
+**Reste : 413 lignes actionnables (voir `INVENTAIRE.csv` colonne `etat`).**
 
 <!-- PROGRESSION -->
 

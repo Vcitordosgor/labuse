@@ -7475,6 +7475,12 @@ def financier_questionnaire_get(idu: str, request: Request, db: Session = Depend
             "(pas de potentiel calculé). Renseignez le nombre de logements visés et la typologie "
             "moyenne : sans eux, le bilan financier ne peut pas être établi."),
     }
+    # FRONT-CHIFFRES-2 (F04) — les bornes du garde « hors marché » viennent de la SOURCE UNIQUE
+    # (faisabilite/engine.py, cf. test_hypotheses_source_unique) : le front ne les code plus (il
+    # reproduisait 20000/8000/12000), il LIT ce que le back sert. Le serveur reste la défense du
+    # PDF (422 via financier_bilan._hors_marche, mêmes constantes — un seul point de vérité).
+    from ..faisabilite.engine import (
+        MAX_COUT_CONSTRUCTION_M2, MAX_PRIX_BAILLEUR_M2, MAX_PRIX_SORTIE_M2)
     return {"idu": idu, "reponses": etat["reponses"], "complet": etat["complet"],
             "existe": etat["existe"], "ecrans": ecrans,
             "ecrans_par_usage": ecrans_par_usage,
@@ -7482,7 +7488,11 @@ def financier_questionnaire_get(idu: str, request: Request, db: Session = Depend
             "usages": qf.USAGES,  # RECETTE-6 (E5) — écran 0 « Que voulez-vous chiffrer ? »
             "tva_explication": qf.TVA_EXPLICATION,
             "champs_obligatoires": sorted(qf.OBLIGATOIRES),
-            "champs_obligatoires_revente": sorted(qf.OBLIGATOIRES_REVENTE)}
+            "champs_obligatoires_revente": sorted(qf.OBLIGATOIRES_REVENTE),
+            "hors_marche_bornes": {
+                "prix_sortie_saisi_eur_m2": MAX_PRIX_SORTIE_M2,
+                "cout_construction_saisi_eur_m2": MAX_COUT_CONSTRUCTION_M2,
+                "prix_vente_bailleur_saisi_eur_m2": MAX_PRIX_BAILLEUR_M2}}
 
 
 @app.put("/financier/{idu}/questionnaire")

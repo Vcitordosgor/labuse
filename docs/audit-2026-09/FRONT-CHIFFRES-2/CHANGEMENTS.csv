@@ -1,0 +1,2 @@
+famille,id,ancienne_valeur,nouvelle_valeur,pourquoi_ancienne_fausse
+F04,garde_bornes_hors_marche,"20000/8000/12000 (codées au front)","20000/8000/12000 (servies depuis faisabilite/engine.py)",aucun changement de valeur affichée — les bornes étaient déjà identiques des deux côtés ; seule la SOURCE change (le front lit au lieu de coder)

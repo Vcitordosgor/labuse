@@ -2547,6 +2547,9 @@ export interface QuestionnaireFinancier {
   // RECETTE-8 W13bis (C3) — les écrans PAR usage : le front sert le questionnaire du parcours choisi.
   ecrans_par_usage?: Record<string, QEcran[]>; champs_obligatoires_revente?: string[]
   programme?: QProgramme   // RECETTE-9 T1 — programme constructible : potentiel vs à saisir
+  // FRONT-CHIFFRES-2 (F04) — bornes du garde « hors marché » servies depuis la source unique
+  // (faisabilite/engine.py) : le front ne code plus 20000/8000/12000, il les lit.
+  hors_marche_bornes?: { prix_sortie_saisi_eur_m2: number; cout_construction_saisi_eur_m2: number; prix_vente_bailleur_saisi_eur_m2: number }
 }
 export const getFinancierQuestionnaire = (idu: string) =>
   j<QuestionnaireFinancier>(`/financier/${encodeURIComponent(idu)}/questionnaire`)

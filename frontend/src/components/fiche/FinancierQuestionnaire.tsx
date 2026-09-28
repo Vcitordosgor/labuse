@@ -6,7 +6,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getFinancierQuestionnaire, putFinancierQuestionnaire, validerFinancierQuestionnaire,
-         type QChamp, type QHorsMarche } from '../../lib/api'
+         type QChamp, type QHorsMarche, type QuestionnaireFinancier } from '../../lib/api'
 import { Bouton } from '../ui/Bouton'
 
 const MINT = '#4ADE80'
@@ -22,21 +22,27 @@ const champInput = (unite: string): 'number' | 'text' => (
 // (financier_bilan._hors_marche) pour DÉSACTIVER « Continuer »/« Enregistrer », surligner le champ et
 // écrire le message SOUS le champ — immédiatement, quoi qu'il arrive au réseau. Le serveur reste la
 // défense du PDF (422). Une valeur incohérente EST INCOHÉRENTE — jamais « elle manque ».
-const MAX_PRIX_SORTIE_M2 = 20000, MAX_COUT_M2 = 8000, MAX_BAILLEUR_M2 = 12000
+// FRONT-CHIFFRES-2 (F04) — les bornes du garde ne sont PLUS codées au front : elles sont SERVIES
+// (getFinancierQuestionnaire → hors_marche_bornes, source unique faisabilite/engine.py). Le garde
+// client rend ce que le back sert ; le serveur reste la défense du PDF (422). Tant que les bornes
+// ne sont pas arrivées (chargement), le garde client s'abstient — le serveur défend.
+type Bornes = NonNullable<QuestionnaireFinancier['hors_marche_bornes']>
 const fmtEurM2 = (n: number) => `${Math.round(n).toLocaleString('fr-FR')} €/m²`
 interface HMClient { champ_id: string; ecran: number; affiner: boolean; message: string }
 function horsMarcheClient(
   prix_sortie: number | null, cout: number | null, bailleur: number | null,
   ecranDe: (id: string) => number, affinerDe: (id: string) => boolean,
+  bornes: Bornes | undefined,
 ): HMClient | null {
+  if (!bornes) return null
   const mk = (id: string, message: string): HMClient => (
     { champ_id: id, ecran: ecranDe(id), affiner: affinerDe(id), message })
   // 1) bornes absolues (probable PRIX TOTAL saisi dans un champ €/m²), MÊME ORDRE que le serveur
-  if (prix_sortie != null && prix_sortie > MAX_PRIX_SORTIE_M2)
+  if (prix_sortie != null && prix_sortie > bornes.prix_sortie_saisi_eur_m2)
     return mk('prix_sortie_saisi_eur_m2', `Cette valeur (${fmtEurM2(prix_sortie)}) est incohérente : elle dépasse tout prix de marché — un prix TOTAL a probablement été saisi à la place d'un prix au m².`)
-  if (cout != null && cout > MAX_COUT_M2)
+  if (cout != null && cout > bornes.cout_construction_saisi_eur_m2)
     return mk('cout_construction_saisi_eur_m2', `Cette valeur (${fmtEurM2(cout)}) est incohérente : elle dépasse tout coût de construction au m².`)
-  if (bailleur != null && bailleur > MAX_BAILLEUR_M2)
+  if (bailleur != null && bailleur > bornes.prix_vente_bailleur_saisi_eur_m2)
     return mk('prix_vente_bailleur_saisi_eur_m2', `Cette valeur (${fmtEurM2(bailleur)}) est incohérente : un prix TOTAL a probablement été saisi à la place d'un prix au m².`)
   // 2) garde relationnelle : bailleur (vente en bloc) toujours < prix de vente libre
   if (prix_sortie != null && bailleur != null && bailleur > prix_sortie)
@@ -155,7 +161,8 @@ export function FinancierQuestionnaire({ idu, onClose }: { idu: string; onClose:
     return false
   }
   const hm = horsMarcheClient(valNum('prix_sortie_saisi_eur_m2'), valNum('cout_construction_saisi_eur_m2'),
-                              valNum('prix_vente_bailleur_saisi_eur_m2'), ecranDe, affinerDe)
+                              valNum('prix_vente_bailleur_saisi_eur_m2'), ecranDe, affinerDe,
+                              data?.hors_marche_bornes)
   // le champ incohérent est en « Affiner » (bailleur, part sociale…) → on OUVRE l'accordéon de son
   // écran pour que le surlignage et le message soient visibles sans chercher.
   useEffect(() => {
