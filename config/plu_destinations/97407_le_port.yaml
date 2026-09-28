@@ -294,7 +294,12 @@ zones:
           citation: L'emprise au sol des constructions ne doit pas excéder 80% de la superficie de l'unité
             foncière.
           statut: valide
-          note: "PLU-VERIF-1 (exception à afficher) : 60 % en OAP Mascareignes, secteur Uca et ZAC « Rivière des Galets »."
+          exceptions:
+          - texte: "L'emprise au sol des constructions ne doit pas excéder 80% de la superficie de l'unité foncière. Dans les secteurs ou périmètres suivants, l'emprise au sol des constructions ne doit pas excéder 60% de la superficie de l'unité foncière : OAP Mascareignes ; Uca ; ZAC « Rivière des Galets »."
+            article: "Uc 7"
+            page_pdf: 55
+            porte: "sous_secteur"
+            modifie_calcul: true
       retraits:
         voie:
           min_m: 3.0
@@ -629,7 +634,12 @@ zones:
           citation: Les constructions doivent être implantées en retrait par rapport aux voies et emprises
             publiques avec un recul minimal de 5 mètres.
           statut: valide
-          note: "PLU-VERIF-1 (exception à afficher) : Retrait minimal 25 m par rapport à l'axe de la RN1001 et de la RN1 (périmètre projet, dérogation Loi Barnier). Règle alternative : débords ≤0,20 m, transformateurs, rampes PMR non pris en compte."
+          exceptions:
+          - texte: "Les constructions doivent être implantées en retrait par rapport aux voies et emprises publiques avec un recul minimal de 5 mètres. En outre, il est exigé un retrait minimal de 25 mètres par rapport à l'axe de la RN1001 et à celui de la RN1 (uniquement au niveau du périmètre de projet concerné par le tome n°4 du rapport de présentation du PLU - Etude de dérogation « Loi Barnier »…)."
+            article: "Ue 4"
+            page_pdf: 81
+            porte: "voie_specifique"
+            modifie_calcul: true
         limites_separatives:
           min_m: 5.0
           article: Ue 5
@@ -1047,7 +1057,12 @@ zones:
           citation: Les constructions doivent être implantées en retrait par rapport aux voies et emprises
             publiques avec un recul minimal de 5 mètres.
           statut: valide
-          note: "PLU-VERIF-1 (exception à afficher) : Retrait minimal 25 m par rapport à l'axe de la RN7 (périmètre projet, dérogation Loi Barnier). Règle alternative : débords ≤0,20 m, transformateurs, rampes PMR non pris en compte."
+          exceptions:
+          - texte: "Les constructions doivent être implantées en retrait par rapport aux voies et emprises publiques avec un recul minimal de 5 mètres. En outre, il est exigé un retrait minimal de 25 mètres doit être observé par rapport à l'axe de la RN7 (uniquement au niveau du périmètre de projet concerné par le tome n°4 du rapport de présentation du PLU - Etude de dérogation « Loi Barnier »…)."
+            article: "Us 4"
+            page_pdf: 121
+            porte: "voie_specifique"
+            modifie_calcul: true
         limites_separatives:
           min_m: 5.0
           article: Us 5
