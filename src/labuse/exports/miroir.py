@@ -547,14 +547,25 @@ def _r_iris(v, val: Valeur):
     return f'<div data-quoi="iris_quartier">{t}</div>' + lignes
 
 
-def _r_equipements(v):
-    # même accord singulier/pluriel que l'écran et l'ancien bloc (RECETTE-8 W14) — point unique.
-    from collections import Counter
+#: EXPORTS-FIX-1 D4/E7 — libellé client de la famille d'équipement (« Bus » → « Arrêt de bus »).
+_CAT_EQUIP = {"Bus": "Arrêt de bus"}
 
-    from .blocs.autour import _accord
-    c = Counter(str(it.get("cat") or "") for it in v if isinstance(it, dict))
-    bits = [_accord(cat, n) for cat, n in c.items() if cat]
-    return esc(", ".join(bits))
+
+def _r_equipements(v):
+    # EXPORTS-FIX-1 D4 — MÊMES données que la fiche (Étude de zone) : le plus proche de chaque famille
+    # avec son NOM et sa distance, jamais un compte « 1 école, 1 commerce » identique d'une parcelle à
+    # l'autre (P1 et P2 avaient le même « 1 … » alors que les équipements diffèrent).
+    bits = []
+    for it in (v or []):
+        if not isinstance(it, dict):
+            continue
+        cat = _CAT_EQUIP.get(it.get("cat") or "", it.get("cat") or "")
+        nom = it.get("nom")
+        d = it.get("distance_m")
+        s = cat + (f" : {nom}" if nom else "") + (f" ({groupe(d)} m)" if d is not None else "")
+        if s:
+            bits.append(s)
+    return esc(" · ".join(bits))
 
 
 def _r_potentiel(v):

@@ -8,6 +8,12 @@ from ..rendu import esc, ligne_kv, note, section, table_kv
 
 IDS = ("run_label_servi", "potentiel_verdict")
 
+#: EXPORTS-FIX-1 D3 — alias de source → nom canonique unique (le client ne voit qu'une entrée).
+_SOURCE_ALIAS = {
+    "Potentiel foncier Région (Région ODS)": "Potentiel foncier — Région Réunion (Opendatasoft)",
+    "data.regionreunion.com — Potentiel foncier": "Potentiel foncier — Région Réunion (Opendatasoft)",
+}
+
 _LIMITES = [
     ("Constructibilité définitive", "Certificat d'urbanisme — mairie, service instructeur"),
     ("Valeur vénale", "Avis de valeur — notaire, expert"),
@@ -24,13 +30,29 @@ def corps_sources(valeurs) -> str:
     corps = "<h3>Ce que ce document ne peut pas dire</h3>"
     corps += table_kv([ligne_kv(k, esc(v), "") for k, v in _LIMITES])
     ds = val(valeurs, "run_label_servi") or []
+    # EXPORTS-FIX-1 D2 — une source CITÉE sans aucune ligne servie sort de la liste : on ne garde que
+    # les sources RÉELLEMENT lues (celles qui ont alimenté une section, via les réservoirs des Valeur).
+    # Ainsi RPG (non ingéré ici), ONF, INPN, Parc national, Cartofriches, 50 pas, classement sonore,
+    # érosion côtière, BODACC/INPI (silencieuses sur ces parcelles) ne se citent plus « pour rien ».
+    from ..pieds import sources_lues
+    _servies = {nom for nom, _m in sources_lues([v for v in valeurs.values()])}
     lignes = []
+    _vus: set[str] = set()
     for s in ds:
         if not isinstance(s, dict) or not s.get("nom"):
             continue
+        # EXPORTS-FIX-1 D3 — un ALIAS ne se cite pas à côté de sa source canonique (« Potentiel
+        # foncier Région (ODS) » ET « data.regionreunion.com — Potentiel foncier » = une seule source).
+        nom = _SOURCE_ALIAS.get(s["nom"], s["nom"])
+        if nom in _vus:
+            continue
+        # D2 — non servie sur cette parcelle → hors liste (ni ligne, ni citation orpheline).
+        if s["nom"] not in _servies and nom not in _servies:
+            continue
+        _vus.add(nom)
         # lot 2 — le NOM de la source et son producteur, jamais le millésime (ni « s['millesime'] »
         # ni date) : la fraîcheur est une lecture admin (Circuit), pas une ligne cliente.
-        lignes.append(ligne_kv(s["nom"], esc(s.get("fournisseur") or ""), ""))
+        lignes.append(ligne_kv(nom, esc(s.get("fournisseur") or ""), ""))
     # RECETTE-11 A3 — quand une hauteur a été MESURÉE au LiDAR HD, la source doit être citée ici
     # (elle n'y était pas). On l'ajoute avec son survol si elle n'apparaît pas déjà.
     pv = val(valeurs, "potentiel_verdict") or {}
