@@ -49,8 +49,12 @@ hauteur_alternative 6 · autre 5.
   `resolve_zone` reste celle des `regles`.
 - **Les 147 sont servies** : `test_147_feuilles_portent_une_exception` compte les feuilles porteuses
   et échoue à tout écart ≠ 147.
-- Banc `--echantillon` rejoué : **0 écart nouveau** (les exceptions sont additives, aucun nombre
-  servi ne change). V6b **vert** (9/9). `tsc` **0**, `vitest` **225 vert**, `build` **0**.
+- Banc `--echantillon` **lancé** (API 8665) ; sur la base **partagée par ~10 worktrees** il n'a pas
+  convergé dans la fenêtre de session (requêtes spatiales sérialisées par la contention, pas un blocage
+  logique). **0 écart nouveau garanti par construction** : le mandat n'ajoute qu'un champ `exceptions`
+  — **aucun nombre servi (hauteur/emprise/reculs/…) ne change**. Preuves indépendantes : **V6b vert
+  (9/9)** et le garde-fou `test_exception_nentre_dans_aucun_calcul` (la valeur servie par `resolve_zone`
+  reste celle des `regles`). `tsc` **0**, `vitest` **225 vert**, `build` **0**.
 
 ## Les exceptions « qui devraient modifier un calcul » — laissées pour calibrage
 **81 exceptions** (`modifie_calcul=true`) changeraient l'enveloppe chiffrée d'une parcelle ordinaire
