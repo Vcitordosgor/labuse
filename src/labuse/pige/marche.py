@@ -14,6 +14,16 @@ from ..ingestion.run_all import REUNION_COMMUNES
 
 SEUIL_N = 5   # sous ce n, une mesure statistique n'est pas servie (« échantillon insuffisant »)
 
+
+def _ecart_niveau(dn: int, an: int, seuil_ecart: int) -> str:
+    """RADAR-FIX-3 — palier d'un écart demandé/acté selon le nombre d'ANNONCES demandées (le côté rare ;
+    l'acté DVF est abondant) : « normal » ≥ seuil (30), « indicatif » de 5 à seuil−1, « insuffisant » < 5.
+    Même règle partout (4 chiffres, tableau, barre par commune, bloc « Ce bien »). On exige aussi ≥ 5
+    ventes actées, sinon la comparaison n'a pas de sens."""
+    if dn < SEUIL_N or an < SEUIL_N:
+        return "insuffisant"
+    return "normal" if (dn >= seuil_ecart and an >= seuil_ecart) else "indicatif"
+
 _AGG = """
   count(*) FILTER (WHERE b.statut = 'active')                                         AS actives,
   count(*) FILTER (WHERE b.date_premiere_saisie AT TIME ZONE 'Indian/Reunion'
@@ -95,13 +105,16 @@ def radar_stats(db: Session, commune: str | None = None, type_bien: str | None =
     w = " AND ".join(where) + excl
     row = db.execute(text(f"""
         SELECT count(*) FILTER (WHERE b.statut IN ('active','en_vente_longue'))                 AS actives,
+               -- RADAR-FIX-3 — « prix DEMANDÉS » = annonces EN VENTE (active/en_vente_longue) : le n de la
+               -- médiane ne compte plus les retirées (leur ancien prix affiché n'est pas « demandé »
+               -- aujourd'hui). Le n de la médiane = le n de « en vente » du même type (cohérence recette).
                percentile_cont(0.5) WITHIN GROUP (ORDER BY
                  CASE WHEN b.type_bien = 'terrain' THEN f.prix / NULLIF(f.surface_terrain,0)
                       ELSE f.prix / NULLIF(f.surface_hab,0) END)
-                 FILTER (WHERE f.prix IS NOT NULL
+                 FILTER (WHERE b.statut IN ('active','en_vente_longue') AND f.prix IS NOT NULL
                          AND ((b.type_bien='terrain' AND f.surface_terrain>0)
                            OR (b.type_bien IN ('maison','appartement','immeuble') AND f.surface_hab>0))) AS med_m2,
-               count(*) FILTER (WHERE f.prix IS NOT NULL
+               count(*) FILTER (WHERE b.statut IN ('active','en_vente_longue') AND f.prix IS NOT NULL
                          AND ((b.type_bien='terrain' AND f.surface_terrain>0)
                            OR (b.type_bien IN ('maison','appartement','immeuble') AND f.surface_hab>0)))   AS n_m2,
                count(DISTINCT b.bien_id) FILTER (WHERE b.statut IN ('active','en_vente_longue'))          AS n_ouvertes,
@@ -160,27 +173,33 @@ def tableau(db: Session, commune: str | None = None) -> dict:
     crows = {r["type_bien"]: r for r in db.execute(text(f"""
         SELECT b.type_bien,
           count(*) FILTER (WHERE b.statut IN ('active','en_vente_longue'))          AS en_vente,
-          count(*) FILTER (WHERE b.statut = 'en_vente_longue')                      AS sup90,
+          -- RADAR-FIX-3 — « > 90 j » calculé sur la DATE de première publication (comme le badge de la
+          -- liste), plus sur le statut `en_vente_longue` (jamais posé tant que le cycle ne tourne pas).
+          count(*) FILTER (WHERE b.statut IN ('active','en_vente_longue')
+                           AND COALESCE(b.date_publication, b.date_premiere_saisie::date)
+                               < (now() AT TIME ZONE 'Indian/Reunion')::date - 90) AS sup90,
           count(*) FILTER (WHERE b.statut IN ('active','en_vente_longue') AND {baisse_30j}) AS baisses30
         FROM pige_biens b JOIN pige_faits f ON f.bien_id = b.bien_id
         WHERE f.valide_at IS NOT NULL AND b.a_qualifier = false AND {scope_where}
         GROUP BY b.type_bien"""), params).mappings()}
 
-    def _demande_acte(t: str):
+    def _demande_acte(t: str, comm: str | None = commune):
         """Demandé (Radar) et acté (DVF) d'un type, AU MÊME PÉRIMÈTRE partout : la médiane demandée du
-        type et sa référence DVF du même type. Un seul point de calcul → le tableau par type ET les
-        4 chiffres du haut (maisons) disent la même chose (recette : cohérence des chiffres)."""
-        st = radar_stats(db, commune, t)["prix_m2_median_demande"]
+        type (annonces EN VENTE) et sa référence DVF du même type. Un seul point de calcul → le tableau
+        par type, les 4 chiffres du haut (maisons) ET la barre par commune disent la même chose (recette :
+        cohérence). RADAR-FIX-3 — l'écart porte son PALIER (`_ecart_niveau`) : servi dès 5 annonces
+        (indicatif de 5 à 29, normal ≥ 30) ; sous 5 → « sous le seuil »."""
+        st = radar_stats(db, comm, t)["prix_m2_median_demande"]
         dv, dn = st.get("valeur"), int(st.get("n") or 0)
         # RADAR-2 (retouches 2) — l'acté DVF est servi POUR CHAQUE TYPE, île ET commune (le garde
         # `if commune` masquait « Toute l'île » → maisons « 0 vente ». `_dvf_*` acceptent commune=None).
-        acte = _dvf_terrain(db, commune) if t == "terrain" else _dvf_bati_type(db, commune, t)
+        acte = _dvf_terrain(db, comm) if t == "terrain" else _dvf_bati_type(db, comm, t)
         av, an = acte.get("eur_m2"), int(acte.get("n") or 0)
-        # écart servi seulement si LES DEUX côtés tiennent le seuil (30), sinon « sous le seuil ».
-        e = None
-        if dv and av and dn >= SEUIL_ECART and an >= SEUIL_ECART:
-            e = round(100.0 * (dv - av) / av, 1)
-        return {"dv": dv, "dn": dn, "av": av, "an": an, "ecart": e, "aperiode": acte.get("periode")}
+        niveau = _ecart_niveau(dn, an, SEUIL_ECART)
+        # écart CALCULÉ dès 5 annonces (indicatif) ; masqué seulement sous 5 (« insuffisant »).
+        e = round(100.0 * (dv - av) / av, 1) if (dv and av and niveau != "insuffisant") else None
+        return {"dv": dv, "dn": dn, "av": av, "an": an, "ecart": e, "niveau": niveau,
+                "aperiode": acte.get("periode")}
 
     def _type_ligne(t: str) -> dict:
         m = _demande_acte(t)
@@ -188,14 +207,15 @@ def tableau(db: Session, commune: str | None = None) -> dict:
         return {"type": t, "en_vente": int(c.get("en_vente") or 0),
                 "demande_eur_m2": round(float(m["dv"])) if m["dv"] else None,
                 "acte_eur_m2": round(float(m["av"])) if m["av"] else None,
-                "ecart_pct": m["ecart"], "ecart_sous_seuil": m["ecart"] is None,
+                "ecart_pct": m["ecart"], "ecart_niveau": m["niveau"],
+                "ecart_sous_seuil": m["niveau"] == "insuffisant", "ecart_n": m["dn"],
                 "sup_90j": int(c.get("sup90") or 0), "baisses_30j": int(c.get("baisses30") or 0)}
 
     par_type = [_type_ligne("terrain"), _type_ligne("maison"), _type_ligne("appartement")]
     # RADAR-2 (recette 4b) — les 4 chiffres du haut « maisons » = EXACTEMENT la ligne « maison » du tableau
-    # (même appel `_demande_acte`), donc même prix acté, même écart, même seuil. Plus de divergence.
+    # (même appel `_demande_acte`), donc même prix acté, même écart, même palier. Plus de divergence.
     hm = _demande_acte("maison")
-    dem_v, dem_n, acte_v, acte_n, ecart = hm["dv"], hm["dn"], hm["av"], hm["an"], hm["ecart"]
+    dem_v, dem_n, acte_v, acte_n, ecart, ecart_niv = hm["dv"], hm["dn"], hm["av"], hm["an"], hm["ecart"], hm["niveau"]
     # RADAR-2 (recette 4a) — nombre canonique de biens en vente (= porte = liste), HORS appartements (copro).
     biens_en_vente = client.compter(db, commune)
     biens_sup_90j = client.compter(db, commune, sup90=True)
@@ -206,11 +226,16 @@ def tableau(db: Session, commune: str | None = None) -> dict:
           count(*) FILTER (WHERE b.statut IN ('active','en_vente_longue')
                            AND b.date_premiere_saisie >= (now() AT TIME ZONE 'Indian/Reunion')::date - 30) AS nouvelles,
           count(*) FILTER (WHERE b.statut IN ('active','en_vente_longue') AND {baisse_30j})                AS baisses,
-          -- RADAR-2 (recette 4c) — RETIRÉES = uniquement les retraits CONFIRMÉS PAR L'OUVERTURE DU LIEN
-          -- (radar_confirmation « supprimee » → event_log dedup 'pige:retiree:{id}', « confirmée par le
-          -- lien »). On NE compte PLUS les expirations de portail ni les retiree_sans_vente (cycle mensuel).
+          -- RADAR-2 (recette 4c) — RETIRÉES = retraits CONFIRMÉS PAR L'OUVERTURE DU LIEN (radar_confirmation
+          -- « supprimee » → event_log dedup 'pige:retiree:{id}'). RADAR-FIX-3 — on EXCLUT l'import initial
+          -- « en bloc » : ne comptent que les retraits d'un PASSAGE QUOTIDIEN, càd datés APRÈS le jour de
+          -- la toute première passe de confirmation (la passe de départ qui a soldé le corpus semé d'un
+          -- coup). Sans passe de confirmation → rien de fiable à compter.
           count(*) FILTER (WHERE EXISTS (SELECT 1 FROM event_log e
-                           WHERE e.dedup = :rp || b.bien_id AND e.ts >= now() - interval '30 days')) AS retirees,
+                           WHERE e.dedup = :rp || b.bien_id AND e.ts >= now() - interval '30 days'
+                             AND (e.ts AT TIME ZONE 'Indian/Reunion')::date
+                                 > (SELECT min(captured_at AT TIME ZONE 'Indian/Reunion')::date
+                                    FROM pige_passes WHERE passe = 'confirmation'))) AS retirees,
           count(*) FILTER (WHERE b.statut IN ('active','en_vente_longue')
                            AND b.last_seen_at >= now() - interval '30 days'
                            AND EXISTS (SELECT 1 FROM event_log e WHERE e.dedup = :ddp || b.bien_id || :dds)) AS de_retour
@@ -218,14 +243,16 @@ def tableau(db: Session, commune: str | None = None) -> dict:
         WHERE f.valide_at IS NOT NULL AND b.a_qualifier = false AND {scope_where}"""),
         {**params, "ddp": "pige:statut:", "dds": ":retiree", "rp": "pige:retiree:"}).mappings().first() or {}
 
-    # ── écart demandé / acté par commune (maisons = bâti, moteur fiche commune) ──
+    # ── écart demandé / acté par commune (MAISON contre MAISON, EXACTEMENT le calcul du tableau) ──
+    # RADAR-FIX-3 — plus de bâti mélangé (maison+appartement+immeuble) opposé à un acté « tous types » :
+    # une commune affiche ICI le MÊME écart que sa ligne « maison » du tableau (même `_demande_acte`).
+    # Chaque barre porte son palier (normal/indicatif) ; sous 5 annonces maisons demandées → pas de barre.
     ecart_par_commune = []
-    for c, r in by_commune.items():
-        d = (r.get("prix_m2_bati") or {})
-        dvv, dvn = d.get("valeur"), int(d.get("n") or 0)
-        av = (acte_map.get(c) or {}).get("prix_ancien")
-        if dvv is not None and av and dvn >= SEUIL_ECART:
-            ecart_par_commune.append({"commune": c, "ecart_pct": round(100.0 * (dvv - av) / av, 1)})
+    for c in by_commune:
+        m = _demande_acte("maison", c)
+        if m["ecart"] is not None:
+            ecart_par_commune.append({"commune": c, "ecart_pct": m["ecart"], "niveau": m["niveau"],
+                                      "n": m["dn"]})
     ecart_par_commune.sort(key=lambda x: x["ecart_pct"], reverse=True)
 
     # millésime DVF (pied de colonne) — du moteur commune, sinon d'une commune représentative.
@@ -246,13 +273,14 @@ def tableau(db: Session, commune: str | None = None) -> dict:
         "prix_acte_median_eur_m2": {"valeur": round(float(acte_v)) if acte_v else None,
                                     "n": int(acte_n), "sous_seuil": acte_v is None,
                                     "periode": hm.get("aperiode")},
-        "ecart_demande_acte_pct": ecart, "ecart_sous_seuil": ecart is None,
+        "ecart_demande_acte_pct": ecart, "ecart_sous_seuil": ecart_niv == "insuffisant",
+        "ecart_niveau": ecart_niv, "ecart_n": dem_n,
         "biens_en_vente": biens_en_vente, "biens_sup_90j": biens_sup_90j,
         "par_type": par_type,
         "bouge_30j": {"nouvelles": int(b30.get("nouvelles") or 0), "baisses": int(b30.get("baisses") or 0),
                       "retirees": int(b30.get("retirees") or 0), "de_retour": int(b30.get("de_retour") or 0)},
         "ecart_par_commune": ecart_par_commune,
-        "seuil_ecart_n": SEUIL_ECART, "millesime_dvf": mill,
+        "seuil_ecart_n": SEUIL_ECART, "seuil_indicatif_n": SEUIL_N, "millesime_dvf": mill,
         "derniere_capture_at": capture.isoformat() if capture else None,
     }
 
@@ -287,10 +315,12 @@ def bien_vs_marche(db: Session, bien_id: int) -> dict | None:
     acte_v, acte_n = acte.get("eur_m2"), int(acte.get("n") or 0)
 
     def _cmp(ref, n):
-        ok = bien_m2 is not None and ref and n >= SEUIL_ECART
+        # RADAR-FIX-3 — même palier que le tableau : normal ≥ 30, indicatif 5–29, sous le seuil < 5.
+        niveau = ("insuffisant" if (bien_m2 is None or not ref or n < SEUIL_N)
+                  else "normal" if n >= SEUIL_ECART else "indicatif")
         return {"median": round(float(ref)) if ref else None, "n": int(n),
-                "ecart_pct": round(100.0 * (bien_m2 - ref) / ref, 1) if ok else None,
-                "sous_seuil": not ok}
+                "ecart_pct": round(100.0 * (bien_m2 - ref) / ref, 1) if niveau != "insuffisant" else None,
+                "niveau": niveau, "sous_seuil": niveau == "insuffisant"}
 
     anc = db.execute(text("""
         SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY

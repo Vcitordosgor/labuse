@@ -287,8 +287,9 @@ def test_d4_jamais_de_badge_sur_a_qualifier(depots_prive):
 # ════════════════════════ D5 — collecte totale, service filtré ════════════════════════
 
 def test_d5_copros_embasees_mais_non_servies(depots_prive):
-    """D5 — ECH-1 (35 annonces, 18 appartements) : le flux CLIENT montre 17 biens (copros exclues),
-    la base en contient 35, et l'écart demandé/acté DIT son périmètre bâti (maisons + appartements)."""
+    """D5 — ECH-1 (35 annonces, 18 appartements) : le flux CLIENT exclut les copros ; la base en contient
+    35, et l'écart demandé/acté DIT son périmètre bâti (maisons + appartements). RADAR-FIX-3 — le flux
+    exclut AUSSI les biens à-qualifier (un seul périmètre « en vente ») : n_total = non-copro ET qualifiés."""
     from labuse.pige import client, signaux
     html = _ECH_A.read_text(encoding="utf-8")
     _purger(html)
@@ -301,11 +302,16 @@ def test_d5_copros_embasees_mais_non_servies(depots_prive):
         n_copro = db.execute(text(
             "SELECT count(*) FROM pige_biens b JOIN pige_annonces a ON a.bien_id = b.bien_id "
             "WHERE a.list_id = ANY(:i) AND b.est_copro = true"), {"i": ids}).scalar()
+        # RADAR-FIX-3 — les à-qualifier n'entrent pas dans le flux « en vente » ; on les compte pour l'assertion.
+        n_aq = db.execute(text(
+            "SELECT count(*) FROM pige_biens b JOIN pige_annonces a ON a.bien_id = b.bien_id "
+            "WHERE a.list_id = ANY(:i) AND b.est_copro = false AND b.a_qualifier = true"), {"i": ids}).scalar()
         # l'écart demandé/acté retrouve son périmètre bâti complet (les copros comptent ici).
         eda = signaux.ecart_demande_acte(db, "Saint-Denis")
     assert n_base == 35 and n_copro == 18
-    assert rep["n_total"] == 35 - 18                          # 17 servis au client (copros exclues)
+    assert rep["n_total"] == 35 - 18 - n_aq                   # non-copro ET qualifiés (RADAR-FIX-3)
     assert all(not b["est_copro"] for b in rep["biens"])      # aucune copro dans le flux
+    assert all(not b["a_qualifier"] for b in rep["biens"])    # aucun à-qualifier dans le flux « en vente »
     assert eda["perimetre_bati"] == "maisons + appartements"  # le chiffre DIT son périmètre
     _purger(html)
 
