@@ -132,7 +132,12 @@ zones:
             au faîtage ou 13,00m pour les constructions comportant un rez-de-chaussée commercial et pour le secteur
             UAt - R+2+combles'
           statut: valide
-          note: "PLU-VERIF-1 (exception à afficher) : Il est toléré 1,50m de plus sur les parties avales du bâtiment au faîtage, à l'égout du toit ou au sommet de l'acrotère ; +1,00m ajouté en zone à risque moyen d'inondation."
+          exceptions:
+          - texte: "Il est toléré 1,50m de plus sur les parties avales du bâtiment au faîtage, à l'égout du toit ou au sommet de l'acrotère."
+            article: "UA 10.2"
+            page_pdf: 24
+            porte: "hauteur_alternative"
+            modifie_calcul: true
         egout:
           m: 9.0
           article: UA 10.2
