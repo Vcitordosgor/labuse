@@ -11,7 +11,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 
-import { getFiltre, getFiltreCount, getProprietairesAutocomplete, getProprietairesFacettes, getZonageZones } from '../../lib/api'
+import { getAccueilChiffres, getFiltre, getFiltreCount, getProprietairesAutocomplete, getProprietairesFacettes, getZonageZones } from '../../lib/api'
 import { countActiveFilters, resumeCriteres } from '../../lib/filters'
 import { BANDE_META, BANDE_ORDER } from '../../lib/status'
 import { CLIENT } from '../../lib/strings'
@@ -633,6 +633,12 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
   // TOUJOURS la réponse /filtre réelle (état courant de l'interrupteur), jamais une estimation.
   // Registre DISCRET — le rituel 3 s de la Révélation reste la cérémonie, intacte.
   const nActifs = countActiveFilters(filters)
+  // FRONT-CHIFFRES-1 — le total de repli du rituel n'est plus un littéral figé (431 663, périmé à
+  // chaque bascule de run) : on lit la notion servie `n_parcelles_ile` (/accueil/chiffres). Le
+  // décompte réel reste `live` ; ce total ne sert que de cible d'animation quand `live` n'a pas
+  // encore répondu, et disparaît (0) si l'endpoint échoue — jamais un chiffre inventé.
+  const totalIleQ = useQuery({ queryKey: ['accueil-chiffres'], queryFn: getAccueilChiffres, staleTime: 60 * 60 * 1000 })
+  const totalIle = totalIleQ.data?.parcelles ?? null
   const [live, setLive] = useState<number | null>(null)
   const [liveLoading, setLiveLoading] = useState(false)
   useEffect(() => {
@@ -699,7 +705,7 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
     getFiltre({ ...snap, analyseLabuse: false }, 0).then((r) => setFreshTrame(r)).catch(() => { /* filet plus bas */ })
     if (!reduced) {
       const t0 = performance.now()
-      const cible = live ?? 431_663
+      const cible = live ?? totalIle ?? 0
       const tick = (now: number) => {
         const p = Math.min(1, (now - t0) / RITUEL_MS)
         setCountVal(Math.round(cible * p * p * p))   // easing cubique : les chiffres ACCÉLÈRENT
@@ -889,7 +895,7 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
               {!reduced && live != null && countVal >= live && <span aria-hidden> ✓</span>}
             </p>
             <p className="mt-1 text-[11px] leading-snug text-txt-dim">
-              {CLIENT.revelation.decompte(live ?? 431_663)}…
+              {CLIENT.revelation.decompte(live ?? totalIle ?? 0)}…
             </p>
           </div>
         ) : phase === 'error' ? (
@@ -966,7 +972,7 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
                 vert (le geste dominant) ; « Analyser avec LABUSE » = secondaire vert (moteur statistique,
                 pas l'IA → jamais mauve). */}
             <Bouton data-voir-factuel niveau="primaire" ton="vert" onClick={voirFactuel} className="w-full">
-              {CLIENT.revelation.voirN(live ?? 431_663)}
+              {CLIENT.revelation.voirN(live ?? totalIle ?? 0)}
             </Bouton>
             <Bouton data-analyser-btn niveau="secondaire" ton="vert" onClick={lancer} className="group w-full">
               <span>{CLIENT.revelation.boutonFaire.replace(/\s*→\s*$/, '')}</span>

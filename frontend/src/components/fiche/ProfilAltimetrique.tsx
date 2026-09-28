@@ -7,8 +7,10 @@ import { useQuery } from '@tanstack/react-query'
 import { getProfilParcelle, type ProfilAltimetrique as Profil } from '../../lib/api'
 import { GroupLabel } from './primitives'
 
-const nf = (n: number) => n.toLocaleString('fr-FR', { maximumFractionDigits: 0 })
-const nf1 = (n: number) => n.toLocaleString('fr-FR', { maximumFractionDigits: 1 })
+// FRONT-CHIFFRES-1 — null → « — » (jamais un 0 fabriqué pour une absence) ; un vrai 0
+// (terrain plat, dénivelé nul) reste « 0 ». Le bloc est déjà gardé par `p.disponible`.
+const nf = (n: number | null | undefined) => (n == null ? '—' : n.toLocaleString('fr-FR', { maximumFractionDigits: 0 }))
+const nf1 = (n: number | null | undefined) => (n == null ? '—' : n.toLocaleString('fr-FR', { maximumFractionDigits: 1 }))
 
 // le tracé SVG : altitude (y, inversé) vs distance (x). Points no-data (alt null) coupent le trait.
 function Graphe({ p }: { p: Profil }) {
@@ -67,12 +69,12 @@ function Corps({ p }: { p: Profil }) {
     <div className="flex flex-col gap-2">
       <Graphe p={p} />
       <div className="grid grid-cols-3 gap-x-3 gap-y-2">
-        <Chiffre l="Distance" v={`${nf(p.distance_m ?? 0)} m`} />
-        <Chiffre l="Dénivelé +" v={`+${nf(p.denivele_positif_m ?? 0)} m`} tone="up" />
-        <Chiffre l="Dénivelé −" v={`−${nf(p.denivele_negatif_m ?? 0)} m`} tone="down" />
-        <Chiffre l="Pente moyenne" v={`${nf1(p.pente_moyenne_pct ?? 0)} %`} />
-        <Chiffre l="Plus forte pente" v={`${nf1(p.pente_max_pct ?? 0)} %`} />
-        <Chiffre l="Altitude" v={`${nf(p.altitude_min_m ?? 0)}–${nf(p.altitude_max_m ?? 0)} m`} />
+        <Chiffre l="Distance" v={`${nf(p.distance_m)} m`} />
+        <Chiffre l="Dénivelé +" v={`+${nf(p.denivele_positif_m)} m`} tone="up" />
+        <Chiffre l="Dénivelé −" v={`−${nf(p.denivele_negatif_m)} m`} tone="down" />
+        <Chiffre l="Pente moyenne" v={`${nf1(p.pente_moyenne_pct)} %`} />
+        <Chiffre l="Plus forte pente" v={`${nf1(p.pente_max_pct)} %`} />
+        <Chiffre l="Altitude" v={`${nf(p.altitude_min_m)}–${nf(p.altitude_max_m)} m`} />
       </div>
       <p className="text-[9px] leading-snug text-txt-dim">
         {p.axe === 'trace' ? 'Le long de la ligne tracée. ' : 'Le long du plus grand axe de la parcelle. '}
