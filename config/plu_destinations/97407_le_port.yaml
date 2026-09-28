@@ -294,6 +294,7 @@ zones:
           citation: L'emprise au sol des constructions ne doit pas excéder 80% de la superficie de l'unité
             foncière.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : 60 % en OAP Mascareignes, secteur Uca et ZAC « Rivière des Galets »."
       retraits:
         voie:
           min_m: 3.0
@@ -628,6 +629,7 @@ zones:
           citation: Les constructions doivent être implantées en retrait par rapport aux voies et emprises
             publiques avec un recul minimal de 5 mètres.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Retrait minimal 25 m par rapport à l'axe de la RN1001 et de la RN1 (périmètre projet, dérogation Loi Barnier). Règle alternative : débords ≤0,20 m, transformateurs, rampes PMR non pris en compte."
         limites_separatives:
           min_m: 5.0
           article: Ue 5
@@ -1045,6 +1047,7 @@ zones:
           citation: Les constructions doivent être implantées en retrait par rapport aux voies et emprises
             publiques avec un recul minimal de 5 mètres.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Retrait minimal 25 m par rapport à l'axe de la RN7 (périmètre projet, dérogation Loi Barnier). Règle alternative : débords ≤0,20 m, transformateurs, rampes PMR non pris en compte."
         limites_separatives:
           min_m: 5.0
           article: Us 5
@@ -1235,19 +1238,21 @@ zones:
         faitage:
           m: 9.0
           article: Ua 8
-          page_pdf: 145
+          page_pdf: 25
           citation: La hauteur maximale des constructions ne peut excéder 9 mètres au faitage ou au sommet
             de l’acrotère.
           statut: valide
           raison: valeur 9 absente de la citation (harmonisation ≠ texte)
+          note: "PLU-VERIF-1 : page corrigée 145→25 (art. Ua 8)."
         egout:
           article: Ua 8
-          page_pdf: 145
+          page_pdf: 25
           citation: La hauteur maximale des constructions ne peut excéder 9 mètres au faitage ou au sommet
             de l’acrotère.
           statut: valide
           raison: valeur 9 absente de la citation (harmonisation ≠ texte)
           absent: true
+          note: "PLU-VERIF-1 : page corrigée 145→25 (art. Ua 8)."
       emprise_sol:
         ces:
           pct: 60.0
@@ -1261,11 +1266,12 @@ zones:
         voie:
           min_m: 3.0
           article: Ua 4
-          page_pdf: 146
+          page_pdf: 23
           citation: Les constructions doivent être implantées en retrait de l’alignement, avec un recul minimum
             de 3 mètres
           statut: valide
           raison: valeur 3 absente de la citation (harmonisation ≠ texte)
+          note: "PLU-VERIF-1 : page corrigée 146→23 (art. Ua 4)."
         limites_separatives:
           min_m: 3
           article: Ua 5
@@ -1306,47 +1312,52 @@ zones:
         faitage:
           m: 16.0
           article: Uc 8
-          page_pdf: 145
+          page_pdf: 55
           citation: La hauteur maximale des constructions ne peut excéder 16 mètres au faitage ou au sommet
             de l’acrotère.
           statut: valide
           raison: valeur 16 absente de la citation (harmonisation ≠ texte)
+          note: "PLU-VERIF-1 : page corrigée 145→55 (art. Uc 8)."
         egout:
           article: Uc 8
-          page_pdf: 145
+          page_pdf: 55
           citation: La hauteur maximale des constructions ne peut excéder 16 mètres au faitage ou au sommet
             de l’acrotère.
           statut: valide
           raison: valeur 16 absente de la citation (harmonisation ≠ texte)
           absent: true
+          note: "PLU-VERIF-1 : page corrigée 145→55 (art. Uc 8)."
       emprise_sol:
         ces:
           pct: 80.0
           article: Uc 7
-          page_pdf: 145
+          page_pdf: 55
           citation: L'emprise au sol des constructions ne doit pas excéder 80% de la superficie de l'unité
             foncière.
           statut: valide
           raison: valeur 80 absente de la citation (harmonisation ≠ texte)
+          note: "PLU-VERIF-1 : page corrigée 145→55 (art. Uc 7)."
       retraits:
         voie:
           min_m: 3
           article: Uc 4
-          page_pdf: 145
+          page_pdf: 53
           citation: Les constructions doivent être implantées soit à l’alignement, soit avec un recul minimum
             de 3 mètres.
           statut: valide
           raison: valeur 3 absente de la citation (harmonisation ≠ texte)
           formule: à l’alignement, sinon recul minimum 3 m
+          note: "PLU-VERIF-1 : page corrigée 145→53 (art. Uc 4)."
         limites_separatives:
           min_m: 4
           article: Uc 5
-          page_pdf: 145
+          page_pdf: 54
           citation: la distance comptée horizontalement de tout point de la façade au point le plus proche
             de la limite latérale, doit être au moins égale à 4 mètres
           statut: valide
           raison: valeur 4 absente de la citation (harmonisation ≠ texte)
           formule: sur limite, sinon retrait minimum 4 m
+          note: "PLU-VERIF-1 : page corrigée 145→54 (art. Uc 5)."
       stationnement:
         par_logement:
           places: 0.3
@@ -1382,10 +1393,11 @@ zones:
         faitage:
           m: 18.0
           article: Ue 8
-          page_pdf: 145
+          page_pdf: 82
           citation: En secteur Uem, la hauteur maximale des constructions est fixée 18 mètres.
           statut: valide
           raison: valeur 18 absente de la citation (harmonisation ≠ texte)
+          note: "PLU-VERIF-1 : page corrigée 145→82 (art. Ue 8)."
       emprise_sol:
         ces:
           pct: 60.0
@@ -1416,11 +1428,12 @@ zones:
       pleine_terre:
         pct:
           article: 1AU 11.1 (renvoi Ue 11.1)
-          page_pdf: 145
+          page_pdf: 85
           citation: Dans le cadre de tout projet, au minimum 20% de la superficie totale de l’unité foncière
             devront être des surfaces non imperméabilisées ou éco-aménageables.
           statut: valide
           absent: true
+          note: "PLU-VERIF-1 : page corrigée 145→85 (art. Ue 11.1)."
     renvoi: Uem
     renvoi_src: 'Art. 1AUindicée 1, p. 142 : « Se reporter au règlement de la zone U indiquée en indice ainsi qu''aux
       Orientations d''Aménagement et de Programmation lorsqu''elles existent. » — l''indice « em » désigne le secteur
@@ -1602,10 +1615,11 @@ zones:
         voie:
           min_m: 5.0
           article: Us 4
-          page_pdf: 145
+          page_pdf: 121
           citation: 'En zone 1AUs : un retrait minimal de 25 mètres doit être observé par rapport à l''axe
             de la RN7 ;'
           statut: valide
+          note: "PLU-VERIF-1 : page corrigée 145→121 (art. Us 4)."
         limites_separatives:
           min_m: 5
           article: Us 5
