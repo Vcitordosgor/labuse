@@ -853,14 +853,12 @@ function RtaaBlock({ rtaa }: { rtaa: { meta: Record<string, string>; exigences: 
     // RETOURS-20 Z3 — plus de card-elev ni de tuiles bg-surface-3 : kicker + note, chaque exigence
     // à plat (badge volet + phrase + renvoi d'article RefLink), séparée par le filet des lignes.
     <div data-rtaa-block>
-      <GroupLabel>RTAA DOM — rappel réglementaire</GroupLabel>
-      <p className="mt-1 text-[10.5px] leading-snug text-txt-mut">
-        Construction neuve de logements : protection solaire, ventilation traversante,
-        acoustique, aération et ECS renouvelable s'appliquent (seuils d'altitude 400/600 m).
-        <button onClick={() => setOpen((o) => !o)} className="ml-1.5 text-mint hover:underline">
-          {open ? 'replier' : `${rtaa.exigences.length} exigences →`}
-        </button>
-      </p>
+      {/* FICHE-FIX-5 (reste 3) — RTAA DOM en une Ligne « N exigences → » ; le rappel de conception
+          passe derrière le « i ». Le dépliage garde la liste détaillée. */}
+      <Lignes>
+        <Ligne label={<>RTAA DOM<InfoI aria="Sur le RTAA DOM" tip="Construction neuve de logements : protection solaire, ventilation traversante, acoustique, aération et ECS renouvelable s'appliquent (seuils d'altitude 400/600 m). Rappel de conception, ne remplace pas l'étude du maître d'œuvre." /></>}
+          valeur={<button data-rtaa-toggle onClick={() => setOpen((o) => !o)} className="text-mint hover:underline">{open ? 'replier' : `${rtaa.exigences.length} exigences →`}</button>} />
+      </Lignes>
       {open && (
         <div className="mt-1.5 flex flex-col">
           {rtaa.exigences.map((e, i) => (
@@ -910,75 +908,41 @@ export function dispositifsCount(d: NonNullable<Fiche['dispositifs']>): number {
 
 /** §4 Urbanisme — corps « droit des sols » (ER / EBC / doc urba / DPU / PEB / SUP), sans son RefDrawer. */
 export function DispositifsBody({ d }: { d: NonNullable<Fiche['dispositifs']> }) {
+  // FICHE-FIX-5 (reste 3) — ER / EBC / DPU / PEB / SUP en Lignes COURTES ; les paragraphes (source,
+  // article, détail) passent derrière le « i ». Code court en valeur (« PM1 · PPR … » via title).
   return (
-      <div className="flex flex-col gap-3">
-        {d.er && d.er.length > 0 && (
-          <div data-dispositifs-er>
-            <GroupLabel>Emplacements réservés</GroupLabel>
-            <div className="flex flex-col gap-1">
-              {d.er.map((e, i) => (
-                <FactRow key={i} label={e.libelle || 'Emplacement réservé'}
-                  value={`${e.part_pct} % de la parcelle${e.part_pct >= 50 ? ' — emprise majoritairement grevée' : ''}`}
-                  tone={e.part_pct >= 50 ? 'warn' : undefined} />
-              ))}
-            </div>
-            <FactNote>Surface réservée déduite de l’emprise constructible (pré-faisabilité). Source : prescriptions des PLU (Géoportail de l’urbanisme).</FactNote>
-          </div>
-        )}
-        {d.ebc && d.ebc.length > 0 && (
-          <div data-dispositifs-ebc>
-            <GroupLabel>Espaces boisés classés</GroupLabel>
-            <div className="flex flex-col gap-1">
-              {d.ebc.map((e, i) => (
-                <FactRow key={i} label={e.libelle || 'Espace boisé classé'} value={`${e.part_pct} % de la parcelle`} />
-              ))}
-            </div>
-            <FactNote>Construction interdite sur l’emprise boisée (art. L113-1 CU) — part soustraite de l’assiette du potentiel. Source : prescriptions des PLU (GPU).</FactNote>
-          </div>
-        )}
-        {d.plu_procedure && (
-          <div data-dispositifs-plu-procedure>
-            <GroupLabel>Document d'urbanisme</GroupLabel>
-            <FactNote>
-              {d.plu_procedure.detail}.{' '}
-              <a href={d.plu_procedure.lien} target="_blank" rel="noreferrer" className="underline">
-                Dossier d'enquête publique
-              </a>
-            </FactNote>
-          </div>
-        )}
-        <div data-dispositifs-dpu>
-          <GroupLabel>Droit de préemption urbain</GroupLabel>
-          {d.dpu.etat === 'servi' && (
-            <FactRow label={d.dpu.statut === 'renforce' ? 'DPU renforcé' : 'DPU simple'}
-              value="la commune peut préempter à la vente (DIA, ~2 mois)" />
+      <div className="flex flex-col gap-3" data-dispositifs>
+        <Lignes>
+          {(d.er ?? []).map((e, i) => (
+            <Ligne key={`er${i}`} ton={e.part_pct >= 50 ? 'ambre' : undefined}
+              label={<>Emplacement réservé<InfoI aria="Sur l'emplacement réservé" tip={`${e.libelle ? `${e.libelle}. ` : ''}Surface réservée déduite de l'emprise constructible (pré-faisabilité). Source : prescriptions PLU (GPU).`} /></>}
+              valeur={<>{e.part_pct} <small>% de la parcelle</small></>} />
+          ))}
+          {(d.ebc ?? []).map((e, i) => (
+            <Ligne key={`ebc${i}`}
+              label={<>Espace boisé classé<InfoI aria="Sur l'EBC" tip={`${e.libelle ? `${e.libelle}. ` : ''}Construction interdite sur l'emprise boisée (art. L113-1 CU) — part soustraite de l'assiette. Source : GPU.`} /></>}
+              valeur={<>{e.part_pct} <small>%</small></>} />
+          ))}
+          {d.plu_procedure && (
+            <Ligne label={<>Document d'urbanisme<InfoI aria="Sur la procédure PLU" tip={d.plu_procedure.detail} /></>}
+              valeur={<a href={d.plu_procedure.lien} target="_blank" rel="noreferrer" className="text-mint hover:underline">enquête publique ↗</a>} />
           )}
-          {d.dpu.etat === 'hors' && <FactNote>Hors périmètre de préemption publié.</FactNote>}
-          {d.dpu.etat === 'non_determinee' && <FactNote>Non déterminée — {d.dpu.detail}.</FactNote>}
-        </div>
-        <div data-dispositifs-peb>
-          <GroupLabel>Plan d'exposition au bruit</GroupLabel>
-          {['A', 'B', 'C', 'D'].includes(d.peb.zone) ? (
-            <FactRow label={`Zone ${d.peb.zone}${d.peb.libelle ? ` — ${d.peb.libelle}` : ''}`}
-              value={PEB_PHRASES[d.peb.zone]}
-              tone={['A', 'B'].includes(d.peb.zone) ? 'warn' : undefined} />
-          ) : d.peb.zone === 'hors' ? (
-            <FactNote>Hors zones PEB{d.peb.detail ? ` — ${d.peb.detail}` : ''}.</FactNote>
-          ) : (
-            <FactNote>Non déterminée{d.peb.detail ? ` — ${d.peb.detail}` : ''}.</FactNote>
-          )}
-        </div>
-        {d.sup && d.sup.length > 0 && (
-          <div data-dispositifs-sup>
-            <GroupLabel>Servitudes d'utilité publique</GroupLabel>
-            <div className="flex flex-col gap-1">
-              {d.sup.map((sv, i) => (
-                <FactRow key={i} label={sv.categorie} value={sv.libelle || 'servitude'} />
-              ))}
-            </div>
-            <FactNote>Assiettes publiées au GPU. T5/PT1/PT2 : publiées mais restreintes au téléchargement ; AS1 (captages) non publiée pour le 974 — publication surveillée.</FactNote>
-          </div>
-        )}
+          <Ligne data-dispositifs-dpu ton={d.dpu.etat === 'servi' ? undefined : 'gris'}
+            label={<>Préemption (DPU)<InfoI aria="Sur la préemption" tip={d.dpu.etat === 'servi'
+              ? `${d.dpu.statut === 'renforce' ? 'DPU renforcé' : 'DPU simple'} — la commune peut préempter à la vente (DIA, ~2 mois).`
+              : d.dpu.etat === 'hors' ? 'Hors périmètre de préemption publié.' : `Non déterminée — ${d.dpu.detail}.`} /></>}
+            valeur={d.dpu.etat === 'servi' ? (d.dpu.statut === 'renforce' ? 'DPU renforcé' : 'DPU simple') : d.dpu.etat === 'hors' ? 'hors périmètre' : 'non déterminée'} />
+          <Ligne data-dispositifs-peb ton={['A', 'B'].includes(d.peb.zone) ? 'ambre' : (['C', 'D'].includes(d.peb.zone) ? undefined : 'gris')}
+            label={<>Bruit aérien (PEB)<InfoI aria="Sur le PEB" tip={['A', 'B', 'C', 'D'].includes(d.peb.zone)
+              ? `${d.peb.libelle ? `${d.peb.libelle}. ` : ''}${PEB_PHRASES[d.peb.zone]}`
+              : d.peb.zone === 'hors' ? `Hors zones PEB${d.peb.detail ? ` — ${d.peb.detail}` : ''}.` : `Non déterminée${d.peb.detail ? ` — ${d.peb.detail}` : ''}.`} /></>}
+            valeur={['A', 'B', 'C', 'D'].includes(d.peb.zone) ? `Zone ${d.peb.zone}` : d.peb.zone === 'hors' ? 'hors zone' : 'non déterminée'} />
+          {(d.sup ?? []).map((sv, i) => (
+            <Ligne key={`sup${i}`} data-dispositifs-sup title={sv.libelle || sv.categorie}
+              label={<>Servitude (SUP)<InfoI aria="Sur la servitude" tip={`${sv.categorie} · ${sv.libelle || 'servitude'}. Assiettes publiées au GPU (T5/PT1/PT2 restreintes ; AS1 captages non publiée pour le 974).`} /></>}
+              valeur={<>{sv.categorie}{sv.libelle ? <small> · {sv.libelle}</small> : null}</>} />
+          ))}
+        </Lignes>
       </div>
   )
 }
