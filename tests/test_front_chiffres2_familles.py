@@ -36,3 +36,32 @@ def test_f04_financier_bornes_hors_marche_servies():
     assert "hors_marche_bornes" in fq and "bornes.prix_sortie_saisi_eur_m2" in fq
     for littéral in ("20000", "8000", "12000", "MAX_PRIX_SORTIE_M2", "MAX_COUT_M2", "MAX_BAILLEUR_M2"):
         assert littéral not in fq, f"borne codée en dur revenue au front : {littéral}"
+
+
+def test_f14_radar_badges_nouveau_et_vente_longue_servis():
+    """F14 — les badges « Nouveau » (< 2 j) et « En vente longue » (> 90 j) ne sont plus décidés au
+    front : `nouveau` est servi à plat (seuil back SEUIL_NOUVEAU_J) et « en vente longue » se lit sur
+    le `statut` du cycle back (SEUIL_VENTE_LONGUE_J) — un seul point de vérité, base Réunion."""
+    from labuse.pige.cycle import SEUIL_NOUVEAU_J, SEUIL_VENTE_LONGUE_J
+    assert (SEUIL_NOUVEAU_J, SEUIL_VENTE_LONGUE_J) == (2, 90)
+
+    # le back sert `nouveau` à plat, avec le seuil interpolé (pas de littéral détaché)
+    from labuse.pige import client
+    assert "AS nouveau" in client._SELECT and f"- {SEUIL_NOUVEAU_J}) AS nouveau" in client._SELECT
+    src_client = (ROOT / "src/labuse/pige/client.py").read_text(encoding="utf-8")
+    assert '"nouveau": bool(r.get("nouveau"))' in src_client
+
+    # le front LIT les décisions servies, ne recalcule plus j<2 / j>90
+    re_ = (SRC / "components/radar/RadarEcran.tsx").read_text(encoding="utf-8")
+    assert "const nouveau = b.nouveau" in re_
+    assert "b.statut === 'en_vente_longue'" in re_
+    assert "j < 2" not in re_ and "j > 90" not in re_, "seuil de badge recalculé au front (F14)"
+
+
+def test_f31_blocb_zan_horizon_sans_defaut_fabrique():
+    """F31 — la ligne ZAN ne fabrique plus un horizon d'épuisement de 99 ans quand il est absent
+    (`?? 99`) : un horizon ABSENT est neutre (ton mint), jamais faussement « > 5 ans » via un 99
+    inventé. Le palier de COULEUR (< 5 ans) reste de la présentation d'une valeur servie."""
+    bb = (SRC / "components/outils/blocB.tsx").read_text(encoding="utf-8")
+    assert "?? 99" not in bb, "défaut 99 fabriqué revenu (F31)"
+    assert "horizon != null && horizon < 5" in bb

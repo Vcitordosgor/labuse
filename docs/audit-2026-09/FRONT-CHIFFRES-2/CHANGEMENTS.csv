@@ -1,2 +1,4 @@
 famille,id,ancienne_valeur,nouvelle_valeur,pourquoi_ancienne_fausse
 F04,garde_bornes_hors_marche,"20000/8000/12000 (codées au front)","20000/8000/12000 (servies depuis faisabilite/engine.py)",aucun changement de valeur affichée — les bornes étaient déjà identiques des deux côtés ; seule la SOURCE change (le front lit au lieu de coder)
+F14,radar_badge_nouveau,"front j<2 (date_publication OU date_saisie, fuseau navigateur)","back nouveau (date_publication, base Réunion, seuil SEUIL_NOUVEAU_J)",le front et le back pouvaient diverger sur le même seuil 2j (dates et fuseau différents) — désormais une seule décision servie
+F14,radar_badge_en_vente_longue,"front j>90 (date_publication OU date_saisie)","back statut=en_vente_longue (cycle, date_publication, SEUIL_VENTE_LONGUE_J)",idem 90j calculé deux fois (liste vs colonne marché pouvaient se contredire) — le badge lit désormais le statut canonique du cycle

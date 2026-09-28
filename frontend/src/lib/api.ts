@@ -2259,6 +2259,9 @@ export interface RadarBienClient {
   // RADAR-2 (Lot 2) — pastilles de la liste : ancien prix (barré) + % de la dernière baisse ; « de retour »
   // (annonce ré-activée après un retrait sans vente). Servis à plat par le back (jamais recalculés au front).
   ancien_prix: number | null; baisse_pct: number | null; de_retour: boolean
+  // FRONT-CHIFFRES-2 (F14) — « nouveau » servi à plat (seuil back SEUIL_NOUVEAU_J) ; « en vente
+  // longue » se lit sur `statut` (cycle back, seuil SEUIL_VENTE_LONGUE_J) — le front ne recalcule plus.
+  nouveau: boolean
   // RADAR-DEPOT-2 D2 — faits DÉCLARÉS par le vendeur (zone PLU, drapeaux), « déclaré dans l'annonce ».
   declaratif: RadarDeclaratif | null; provenance: string | null
   // RADAR-DEPOT-2 D4 — badge « sous le marché » (null si non applicable/au-dessus du seuil).
