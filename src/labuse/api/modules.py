@@ -1749,6 +1749,15 @@ def faisabilite_sens1(idu: str, db: Session = Depends(get_db)) -> dict:
                            # le front rend un champ par entrée ; recalcul via POST …/recalcul.
                            "hypotheses_modifiables": _hyp_modifiables(_ctx.commune),
                            "avertissements": f.avertissements, "modulation": f.modulation}
+        # RETOURS-15 C3 — refonte du panneau : le bloc « Ce que le PLU permet » (tout Sourcé, article
+        # + page) réutilise EXACTEMENT le règlement PLU servi à la fiche (`_reglement_plu_block`, source
+        # unique). Import paresseux (app.py charge ce routeur : le résoudre au démarrage boucle). Jamais
+        # de 500 : un règlement indisponible retombe sur None (le front dit « non calibrée »).
+        try:
+            from .app import _reglement_plu_block
+            out["capacite"]["regles_plu"] = _reglement_plu_block(db, idu, _ctx.commune)
+        except Exception:  # noqa: BLE001 — panne ≠ absence
+            out["capacite"]["regles_plu"] = None
     else:
         out["capacite"] = None
     # EXPORTS-1 (1.1) : le marché passe par marche_service (point d'appel unique — hypothèses

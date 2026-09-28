@@ -39,21 +39,24 @@ function mockFetch() {
 }
 const qc = () => new QueryClient({ defaultOptions: { queries: { retry: false } } })
 
-describe('FAISABILITE-1 (lot C) — un seul mode : saisie de parcelle + lien vers le filtre Capacité', () => {
+describe('RETOURS-15 C3 — deux portes (Une parcelle / Trouver des parcelles pour un programme)', () => {
   beforeEach(() => { mockFetch(); useApp.setState({ parcelPrefill: null }) })
   afterEach(() => vi.restoreAllMocks())
 
-  it('ouvre sur la saisie de parcelle, sous-titre, PAS de sélecteur de mode « Par critères »', () => {
+  it('accueil = deux portes ; la porte « Une parcelle » ouvre la saisie (pas de mode « Par critères »)', () => {
     render(<QueryClientProvider client={qc()}><M22 /></QueryClientProvider>)
+    expect(document.querySelector('[data-faisa-porte="parcelle"]')).toBeTruthy()
+    expect(document.querySelector('[data-faisa-porte="programme"]')).toBeTruthy()
+    // on entre par « Une parcelle » → le sous-titre + la saisie apparaissent
+    fireEvent.click(document.querySelector('[data-faisa-porte="parcelle"]') as HTMLElement)
     expect(screen.getByText(/Ce que le PLU laisse construire sur cette parcelle/)).toBeTruthy()
-    // le mode « Par critères » a disparu (plus de sélecteur de mode)
     expect(document.querySelector('[data-faisa-mode]')).toBeFalsy()
-    expect(screen.queryByText('Par critères')).toBeFalsy()
     expect(document.querySelector('[data-prog-item]')).toBeFalsy()
   })
 
-  it('le lien « Chercher des parcelles par capacité → » ouvre la carte sur le panneau Filtre', () => {
+  it('la porte « Trouver des parcelles pour un programme » ouvre la carte sur le panneau Filtre', () => {
     render(<QueryClientProvider client={qc()}><M22 /></QueryClientProvider>)
+    fireEvent.click(document.querySelector('[data-faisa-porte="programme"]') as HTMLElement)
     const lien = document.querySelector('[data-chercher-capacite]') as HTMLElement
     expect(lien).toBeTruthy()
     fireEvent.click(lien)
@@ -70,6 +73,9 @@ describe('FAISABILITE — étape 12 (SHAB vendable retenue)', () => {
 
   it('la trace par parcelle gagne l\'étape « SHAB vendable retenue » (~123 m²)', async () => {
     render(<QueryClientProvider client={qc()}><FaisabiliteTab idu="97411000BZ1065" /></QueryClientProvider>)
+    // RETOURS-15 C3 — §5 « Le calcul, étape par étape » est REPLIÉ par défaut : on l'ouvre.
+    const toggle = await waitFor(() => { const t = document.querySelector('[data-faisa-steps-toggle]'); if (!t) throw new Error('no toggle'); return t as HTMLElement })
+    fireEvent.click(toggle)
     const ol = await waitFor(() => { const o = document.querySelector('[data-faisa-steps]'); if (!o) throw new Error('no steps'); return o as HTMLElement })
     // 2 étapes moteur + 1 étape ajoutée = 3
     expect(ol.querySelectorAll('li').length).toBe(3)
@@ -105,14 +111,14 @@ describe('RETOURS-13 P2 — le bouton « Expliquer ce calcul en clair » est ret
 
   it('fiche (non embedded) : plus AUCUN bouton IA « Expliquer »', async () => {
     render(<QueryClientProvider client={qc()}><FaisabiliteTab idu="97411000BZ1065" /></QueryClientProvider>)
-    await waitFor(() => { if (!document.querySelector('[data-faisa-steps]')) throw new Error('no steps') })
+    await waitFor(() => { if (!document.querySelector("[data-faisa-verdict]")) throw new Error("no verdict") })
     expect(document.querySelector('[data-faisa-explain]')).toBeFalsy()
     expect(document.querySelector('[data-faisa-explain-btn]')).toBeFalsy()
   })
 
   it('outil Faisabilité (embedded) : AUCUN point d\'entrée IA', async () => {
     render(<QueryClientProvider client={qc()}><FaisabiliteTab idu="97411000BZ1065" embedded /></QueryClientProvider>)
-    await waitFor(() => { if (!document.querySelector('[data-faisa-steps]')) throw new Error('no steps') })
+    await waitFor(() => { if (!document.querySelector("[data-faisa-verdict]")) throw new Error("no verdict") })
     expect(document.querySelector('[data-faisa-explain]')).toBeFalsy()
     expect(document.querySelector('[data-faisa-explain-btn]')).toBeFalsy()
   })
