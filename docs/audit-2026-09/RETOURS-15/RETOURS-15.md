@@ -161,8 +161,70 @@ Signal 6 099 parcelles, calculé le **09/08/2026**, RNE INPI lu au 06/07/2026. �
 | 97411000BL0098 | Saint-Denis | SCI C H A R (379193493) | **79 ans** |
 | 97422000AW0358 | Le Tampon | RANIMAT (452543622) | **77 ans** |
 
+## PARTIE D — recette Vic du 28/09/2026
+
+- **D1 Faisabilité — aucun défilement horizontal** — `overflow-x-hidden` + `w-full min-w-0` sur le
+  conteneur de l'outil (`M22Programme`) ET sur l'enveloppe `.fiche-v6` (`break-words`). Vérifié à 1440 px
+  sur 97411000BZ1065 : à chaque niveau du panneau `scrollWidth == clientWidth` (285/285, 287/287,
+  319/319) — plus aucun débordement latéral ; le verdict et les hypothèses passent à la ligne.
+- **D2 Double geste partout** — toutes les barres `ParcelInput` (défaut `withCarte`) affichent déjà
+  l'invite « ou cliquez une parcelle sur la carte ». **Pièges (blocB)** consommait le clic lui-même
+  (`withCarte={false}`, pour garder la fiche ouverte — B8) : l'invite était donc masquée. Ajout d'une
+  prop **`inviteCarte`** à `ParcelInput` qui découple l'invite de l'auto-consommation → Pièges passe
+  `withCarte={false} inviteCarte`. **Remonter le temps** utilise déjà `ParcelInput` (invite présente,
+  vérifiée live). Barres corrigées / vérifiées : Permis, Faisabilité (picker), Gabarit, Taxe, Étude de
+  zone, Solaire (Ensoleillement), Scan patrimoine, Courrier, Diligence, Mon secteur, Assemblage (départ),
+  ZAN, Vérif procédure, Veille, Calculette, **Remonter le temps**, **Pièges** (invite réaffichée). Comparer
+  garde son étape 1 « Cliquez les parcelles sur la carte » (affordance équivalente).
+- **D3 Gabarit — accordéon + bouton** — « Voir les règles appliquées » **ouvert par défaut**
+  (`reglesOuvertes=true`) ; bouton **« Réinitialiser » retiré**. Vérifié live (règles listées d'emblée).
+- **D4 Gabarit — la parcelle se voit en 2D et 3D** — **CAUSE de la régression trouvée** : sur une parcelle
+  « terrain exigu » (ex. 97411000BZ1065), le moteur renvoie `status:'ok'` **mais sans zone constructible**
+  (`zoneImplantationGeoJSON` null, `zoneImplantationM2` 0). L'ancien `contourOnly` ne se déclenchait que
+  pour `status:'incomplete'` → ni zone ni **contour** n'étaient tracés, la parcelle disparaissait en 2D.
+  Correctif (`useMapLayers`) : `contourOnly = !ok && !!contourGeoJSON` (tout statut) → le contour + le bâti
+  se dessinent dès qu'on les a. Vérifié live : `gabarit-contour` présent, zoom 19, parcelle + bâti visibles.
+  **Bouton « Voir en 3D » / « Revenir en 2D »** ajouté dans le panneau (`setTerrain3d`, même levier que le
+  menu haut-droite) : vérifié live (pitch → 55°, bâti extrudé, libellé bascule).
+- **D5 Adresse complète avec code postal** — **CAUSE trouvée** : la suggestion BAN arrive **scindée**
+  (`label` = numéro + voie ; `sub` = « CP + commune » — confirmé par le back : `label:"3 Chemin de la
+  Citerne"`, `sub:"97417 Saint-Denis"`). `AddressAutocomplete.pick` ne recopiait que `it.label` → la
+  voie seule. Correctif : pour une adresse, on recolle **`label, sub`** dans le champ ET dans `onSelect`.
+  Vérifié live : le clic affiche **« 3 Chemin de la Citerne, 97417 Saint-Denis »**. Test-garde ajouté.
+- **D6 « Méthode et limites » → accordéon de la charte** — dans Pièges (`blocB`), le `<details>` texte
+  « Méthode &amp; limites … (déplier) » devient l'accordéon standard (`Chevron` fermé ◀ / ouvert ▼,
+  libellé « Méthode et limites », fermé par défaut). Aucune autre occurrence littérale « (déplier) »
+  dans les outils ; les blocs fiche « N couches sans objet — déplier » sont un motif distinct, laissés.
+- **D7 Taxe — vérification de la calculette** — recalcul manuel de 2 témoins contre `calculer()` (vf 2026
+  = **892 €/m²**, abattement 50 % sur 100 premiers m² RP, part dép. 2,5 %) :
+  - **Saint-Denis (97411), taux communal 3 %** — RP, surface taxable 150 m² : assiette = 50×892 + 100×892×0,5
+    = **89 200 €** ; part com. 2 676 € ; part dép. 2 230 € ; **total 4 906 €** ; RAP (0,40 %) 356,80 €.
+  - **Saint-Paul (97415), taux communal 5 %** — RP, 120 m² + piscine 30 m² : assiette = (20×892 + 100×892×0,5)
+    + 30×251 = 62 440 + 7 530 = **69 970 €** ; part com. 3 498,50 € ; part dép. 1 749,25 € ; **total
+    5 247,75 €** ; RAP 279,88 €.
+  - **Écart calculette ↔ main = 0 €** sur les deux (au centime). Taux 3 % / 5 % confirmés depuis
+    `taxe_amenagement_taux` (DGFiP/DELTA). **Aucune correction nécessaire.**
+- **D8 Piscines — la liste remplace les communes** — au clic « Voir les piscines », l'encart total + liste
+  des communes **se replie** (`<details data-piscines-encart>`, rouvrable par le chevron de la charte) et
+  la liste des parcelles prend la place. Phrase technique « Statut servie (précision ≥ 85 %)… » **retirée** ;
+  une seule ligne de source **« Source : IGN FLAIR et CoSIA, 2025 »**. Vérifié live : total 12 576, encart
+  ouvert → replié après « Voir », 200 lignes affichées ; « précision ≥ 85 % » absent du DOM.
+
+## Recette PARTIE D
+
+- `tsc` 0 · `vite build` OK · `vitest` **200 passed** (48 fichiers) — dont 3 tests-gardes ajoutés :
+  socle D5 (label+sub recollés → adresse entière), socle D2 (`inviteCarte`), ProspectionSolaire D8
+  (encart replié + source unique). **Back non touché** (D7 = vérification seule) → pas de pytest requis.
+- Vérifications live sur l'app (back 8455 / front 5655, 1440 px) : D1, D2 (Pièges + Temps), D4 (2D+3D),
+  D5, D8. Captures dans `captures/` (préfixe `D…`).
+
 ## Cas non rangés
 
+- **D4 (3D relief)** — le bouton « Voir en 3D » allume bien le relief + le bâti extrudé (pitch 55°). En
+  test headless, la caméra se re-stabilise à un pitch moindre après un `moveend` (recharge du bâti par
+  bbox) : purement cosmétique en capture, le mécanisme (`setTerrain3d`, partagé avec le menu) est le bon.
+- **D6** — les blocs de la **fiche** « N couches sans objet — déplier » utilisent un motif d'affordance
+  distinct (mot-indice, pas le cue « (déplier) ») antérieur au mandat : laissés tels quels (hors périmètre).
 - **C3 Faisabilité** — la refonte visuelle complète (verdict-ligne à badges, 5 blocs nommés avec article+page,
   deux portes « Une parcelle » / « Trouver des parcelles pour un programme ») N'A PAS été refaite en entier :
   le correctif fonctionnel (recalcul vérifié + 3 hypothèses seulement) est livré ; la restructuration en 5
@@ -170,3 +232,46 @@ Signal 6 099 parcelles, calculé le **09/08/2026**, RNE INPI lu au 06/07/2026. �
 - **C2** — les millésimes « carte » (SCAN 50, EduGéo) sont étiquetés « 1950 (carte) » / « 1980 (carte) » pour
   ne pas se confondre avec l'ortho de la même décennie (Vic listait un seul 1950 et un seul 1980).
 - **B8** — le composant M10 (flux « Un lot ») reste EXPORTÉ pour son test unitaire mais n'est plus câblé à l'outil.
+
+---
+
+## C3 refonte + merge origin/main (fin de mandat)
+
+**C3 refonte livrée d'abord sur la base retours-15** (commit `89fd5625`) : `FaisabiliteTab` réécrit en 5 blocs
+(verdict-ligne à badges Sourcé/Estimé · « Ce que le PLU permet » Sourcé article+page · « Ce que ça donne »
+Estimé + 3 hypothèses inline · « Tester un projet » replié · « Le calcul » replié, stationnement fusionné) ;
+2 portes dans M22 ; back `capacite.regles_plu` réutilisant `_reglement_plu_block`. tsc0/vitest200/pytest faisa 26.
+
+**Puis `git fetch origin && git merge origin/main`** (commit de merge `290aea12`). `main` avait avancé de
+**102 commits** (FAISABILITE-3, FAISABILITE-POLISH-1, FICHE-FIX-3/4/5) qui ont **réécrit `FaisabiliteTab`/
+`BilanTab` et la fiche** — le panneau lit désormais `POST /modules/faisabilite/{idu}/scenario` (`pan`), pas
+l'ancien `GET …/{idu}` (`capacite`). **Règle appliquée : `main` gagne partout ; retours-15 ne réapplique que
+ce qu'il apporte en propre (m² jamais en hectares ; la grammaire POLISH là où main ne l'a pas).**
+
+### Rappel des lots retours-15
+Socle **S1–S5** · outils **B1–B9** · outils **C1–C10** · recette **D1–D8**. Tous committés avant le merge
+(`3cd2a04e`→`5bde66dd`, C3 `89fd5625`).
+
+### Conflits de merge et côté retenu
+| Fichier | Côté gardé | Ce que retours-15 réapplique par-dessus |
+|---|---|---|
+| `frontend/.../fiche/constructibilite.tsx` (`FaisabiliteTab`/`BilanTab`) | **main** (refonte FICHE-FIX-5 + POLISH-1) | **m² pour le plancher** dans « Tester un projet » (`fmtPlancherM2`, fmtM2 basculait en ha ≥ 10 000 m²). Le verdict serveur (`scenarios._fmt_m2`) est **déjà** en m². POLISH **déjà** dans main → rien à réappliquer. Les surfaces de **terrain** restent `fmtM2` (ha admis). |
+| `frontend/.../outils/Faisabilite.test.tsx` | **main** (teste le panneau scénario + M22 mono-mode) | — |
+| `frontend/.../outils/M22Programme.tsx` (auto-mergé vers mes 2 portes) | **reverté vers main** (mono-mode) | — (les 2 portes ne sont ni m² ni POLISH → main gagne) |
+| `src/labuse/api/modules.py` (auto-mergé, mon `regles_plu` survivait) | **main** — `regles_plu` **retiré** | — (le panneau scénario de main ne lit pas ce champ) |
+
+**Rien de ce que main a retiré n'est revenu** : « Comparer » / « Écrire au propriétaire » n'apparaissent plus
+qu'en commentaires « RETIRÉS » (FICHE-FIX-5) ; « Ce que le PLU permet » vit derrière le repli « Règles du PLU » ;
+les paragraphes gris de la fiche sont passés en Lignes/« i » (FICHE-FIX-5). Les autres lots retours-15 ont
+fusionné proprement — vérifiés présents : **D5** adresse complète (`libelleComplet`), **D2** `inviteCarte`,
+**D8** « Source : IGN FLAIR et CoSIA, 2025 ».
+
+### Vérifications post-merge
+- `tsc` **0** · `vitest` **225 passed** (50 fichiers) · `pytest` complet **3449 passed / 16 failed / 68 skipped**.
+  Les **16 échecs sont pré-existants et hors périmètre** (verrous/garanties + lot1_tables, front_reliquats,
+  circuit2_lot5, oracle_dossier, pige_socle, reparations1_lot2, retours11f4, retours17_permis, veille2_lot5) —
+  **aucun** dans faisabilité/scénario/modules ; mon aire ciblée (faisab|scenario|taxe|gabarit|piscine) = **195 passed**.
+- Captures (script node playwright direct, MCP expirant sur ce panneau) : `captures/C3-faisa-EM0174.png`
+  (terrain exigu, 0 débordement horizontal) et `captures/C3-faisa-constructible-BC0343.png` — verdict
+  **« Jusqu'à 14 156 m² de plancher · 56–63 logements (sur les 26 215 m² en U4c) »** : **m² partout, aucun
+  hectare, aucun défilement horizontal** (D1, garanti par la grammaire POLISH 320 px de main).

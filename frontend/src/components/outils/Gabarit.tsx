@@ -74,7 +74,11 @@ function useMapLayers(res: GabaritResult | undefined, terrain3d: boolean, batiVi
     // GABARIT-6 lot B : même quand le calcul est incomplet, on centre sur la parcelle et on trace son
     // contour cadastral (jamais d'écran vide). Les couches réglementaires (zone/retrait/3D) restent
     // réservées au calcul complet.
-    const contourOnly = !ok && res.status === 'incomplete' && !!res.contourGeoJSON
+    // RETOURS-15 D4 — RÉGRESSION : une parcelle « terrain exigu » revient status='ok' MAIS sans zone
+    // constructible (zoneImplantationGeoJSON null) — ex. 97411000BZ1065. L'ancien contourOnly ne
+    // couvrait QUE status='incomplete' → ni zone ni contour n'étaient tracés, la parcelle disparaissait
+    // en 2D. On trace donc le contour dès qu'on l'a et que la zone n'est pas dessinable (tout statut).
+    const contourOnly = !ok && !!res.contourGeoJSON
     if (!ok && !contourOnly) return
     // GABARIT-6 P4 — le bâti EXISTANT (emprise BD TOPO), FAIT contextuel, servi que le calcul soit
     // complet ou non (l'outil dit où l'on PEUT construire ; ceci dit ce qui est DÉJÀ là). Chaque
@@ -157,9 +161,10 @@ export function Gabarit() {
   const selectedIdu = useApp((s) => s.selectedIdu)
   const focusParcelle = useApp((s) => s.focusParcelle)   // RETOURS-15 C4 — zoom + contour à la résolution
   const terrain3d = useApp((s) => s.terrain3d)
+  const setTerrain3d = useApp((s) => s.setTerrain3d)   // RETOURS-15 D4 — bascule 2D / 3D dans le panneau
   const batiVisible = useApp((s) => s.batiVisible)   // RETOURS-13 P4 — chip « Bâtiments » (session)
   const [idu, setIdu] = useState<string | null>(selectedIdu)
-  const [reglesOuvertes, setReglesOuvertes] = useState(false)   // DA-031 — accordéon « Voir les règles appliquées »
+  const [reglesOuvertes, setReglesOuvertes] = useState(true)   // RETOURS-15 D3 — « Voir les règles appliquées » ouvert par défaut
   const [nonIntOuvertes, setNonIntOuvertes] = useState(true)    // GABARIT-6 P3 — liste des règles non intégrées, ouverte par défaut
 
   useEffect(() => {
@@ -202,8 +207,6 @@ export function Gabarit() {
   const cadastreM2 = parcelle?.surface_m2 ?? null
   const aCheval = !!raccZone?.a_cheval && cadastreM2 != null && res?.surfaceParcelleM2 != null
   const pctPortion = aCheval ? Math.round((res!.surfaceParcelleM2! / cadastreM2!) * 100) : null
-
-  const reset = () => setIdu(null)
 
   return (
     <div data-gabarit-panel className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
@@ -361,8 +364,11 @@ export function Gabarit() {
                 : <p className="mt-1.5">Bascule 2D / 3D : bouton <b className="text-txt">3D</b> de la carte.</p>}
           </div>
 
-          <Bouton niveau="secondaire" ton="vert" data-gabarit-reset onClick={reset} className="self-start">
-            Réinitialiser
+          {/* RETOURS-15 D4 — bascule 2D / 3D DANS le panneau : le client n'a plus à passer par le menu
+              3D en haut à droite. Même levier que ce menu (setTerrain3d), donc cohérent partout. */}
+          <Bouton niveau="secondaire" ton="vert" data-gabarit-3d
+            onClick={() => setTerrain3d(!terrain3d)} className="self-start">
+            {terrain3d ? 'Revenir en 2D' : 'Voir en 3D'}
           </Bouton>
         </>
       )}

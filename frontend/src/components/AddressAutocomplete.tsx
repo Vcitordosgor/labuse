@@ -143,8 +143,12 @@ export function AddressAutocomplete({
   const pick = (it: SuggestItem) => {
     if (it.note) return   // RECHERCHE-2 Lot 3 (b) — ligne d'information : rien à ouvrir, on ne fait rien.
     skipSearchRef.current = true   // le setText ci-dessous ne doit PAS relancer la recherche
-    setText(it.label)
-    onTextChange?.(it.label)
+    // RETOURS-15 S1/D5 — le champ reçoit l'adresse ENTIÈRE. Pour une adresse BAN, `label` ne porte que
+    // le numéro + voie et `sub` le « code postal + commune » : les recoller (« 3 Chemin de la Citerne,
+    // 97490 Saint-Denis ») pour que le libellé affiché ET remonté ne perde ni le CP ni la commune.
+    const libelleComplet = it.type === 'adresse' && it.sub ? `${it.label}, ${it.sub}` : it.label
+    setText(libelleComplet)
+    onTextChange?.(libelleComplet)
     setItems([])
     setOpen(false)
     setActive(-1)
@@ -153,7 +157,7 @@ export function AddressAutocomplete({
     // appelants parcelle le consomment déjà) ; les types étendus vont à onPick, avec un repli
     // raisonnable pour commune (recadrage par coordonnées).
     if (it.type === 'adresse' || it.type === 'cadastre') {
-      onSelect({ label: it.label, lon: it.lon ?? 0, lat: it.lat ?? 0, idu: it.idu ?? null })
+      onSelect({ label: libelleComplet, lon: it.lon ?? 0, lat: it.lat ?? 0, idu: it.idu ?? null })
     } else if (it.type === 'lieu_dit' && it.lon != null && it.lat != null) {
       // GEOPF-3 — un lieu-dit n'est pas une parcelle : un clic ZOOME sur le secteur (recadrage lon/lat).
       onSelect({ label: it.label, lon: it.lon, lat: it.lat, idu: null })

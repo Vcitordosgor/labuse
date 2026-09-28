@@ -93,13 +93,19 @@ describe('SOLAIRE — deux modes', () => {
     expect(document.querySelector('[data-piscines-voir]')).toBeNull()  // le bouton a disparu
   })
 
-  it('PISCINES-2 : source fusionnée (statut) + bascule « à confirmer » ; aucun « potentiel »', async () => {
+  it('PISCINES-2 / D8 : source « IGN FLAIR et CoSIA, 2025 » + bascule ; encart replié au « Voir »', async () => {
     renderTool()
     fireEvent.click(document.querySelector('[data-solaire-mode="piscines"]')!)
-    await waitFor(() => expect(document.querySelector('[data-piscines-source]')?.textContent).toContain('fusionnée'))
+    // RETOURS-15 D8 — phrase technique retirée, une seule ligne de source.
+    await waitFor(() => expect(document.querySelector('[data-piscines-source]')?.textContent).toContain('IGN FLAIR et CoSIA, 2025'))
+    expect(document.body.textContent ?? '').not.toContain('précision ≥ 85 %')
     expect(document.querySelector('[data-piscines-toggle-aconfirmer]')).toBeTruthy()   // statut, plus de « incertaines » confiance
-    fireEvent.click(document.querySelector('[data-piscines-voir]')!)   // ouvre le listing
+    // l'encart total+communes est ouvert avant le « Voir »
+    expect(document.querySelector<HTMLDetailsElement>('[data-piscines-encart]')?.open).toBe(true)
+    fireEvent.click(document.querySelector('[data-piscines-voir]')!)   // ouvre le listing…
     await waitFor(() => expect(document.querySelectorAll('[data-piscines-row]').length).toBe(2))
+    // …et replie l'encart (rouvrable) pour laisser la place à la liste (D8)
+    expect(document.querySelector<HTMLDetailsElement>('[data-piscines-encart]')?.open).toBe(false)
     expect((document.body.textContent ?? '').replace(/\s/g, '')).not.toContain('kWh/kWc')  // aucun potentiel solaire
   })
 

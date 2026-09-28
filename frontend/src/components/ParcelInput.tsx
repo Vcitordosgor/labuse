@@ -38,7 +38,7 @@ type Candidate = { idu: string; commune: string; surface_m2: number | null }
 // GEOPF-3 — 5ᵉ grammaire « lieu_dit » (BD NYME) active par défaut dans toutes les barres.
 const GRAMMAIRES_DEFAUT: SuggestType[] = ['adresse', 'cadastre', 'proprietaire', 'siren', 'lieu_dit']
 
-export function ParcelInput({ onPick, onAddress, onProprietaire, placeholder, autoFocus, withCarte = true, dataAttr, grammaires = GRAMMAIRES_DEFAUT }: {
+export function ParcelInput({ onPick, onAddress, onProprietaire, placeholder, autoFocus, withCarte = true, inviteCarte, dataAttr, grammaires = GRAMMAIRES_DEFAUT }: {
   onPick: (idu: string) => void
   onAddress?: (label: string) => void
   // RECHERCHE-2 Lot 1 — remonte un pick PROPRIÉTAIRE (SIREN) au niveau propriétaire (Scan patrimoine).
@@ -47,6 +47,10 @@ export function ParcelInput({ onPick, onAddress, onProprietaire, placeholder, au
   placeholder?: string
   autoFocus?: boolean
   withCarte?: boolean
+  // RETOURS-15 D2 — l'INVITE « ou cliquez une parcelle » est DÉCOUPLÉE de l'auto-consommation du clic :
+  // un outil qui consomme le clic carte lui-même (Pièges, via son propre effet selectedIdu) passe
+  // `withCarte={false} inviteCarte` pour montrer l'invite SANS que le socle rappelle onPick. Défaut = withCarte.
+  inviteCarte?: boolean
   dataAttr?: string                 // hook QA : pose data-<dataAttr> sur le champ (ex. « courrier-idu »)
   grammaires?: SuggestType[]        // défaut = les 4 familles ; un appelant peut restreindre/étendre.
 }) {
@@ -181,7 +185,7 @@ export function ParcelInput({ onPick, onAddress, onProprietaire, placeholder, au
       {/* RETOURS-15 S2/S4 — plus de bouton « Utiliser la parcelle sélectionnée » : le clic carte agit
           directement (l'effet ci-dessus le consomme). Il ne reste qu'une INVITE discrète au second
           geste ; elle DISPARAÎT dès qu'une parcelle est résolue par la barre (réapparaît si vidé). */}
-      {withCarte && !resolu && (
+      {(inviteCarte ?? withCarte) && !resolu && (
         <div data-parcelinput-carte className="flex items-center gap-2 rounded-md border border-dashed border-line-2 bg-surface-2/40 px-3 py-2 text-[11px] text-txt-dim">
           <span aria-hidden="true">◎</span> ou cliquez une parcelle sur la carte
         </div>

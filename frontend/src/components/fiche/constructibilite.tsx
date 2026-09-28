@@ -22,6 +22,10 @@ import { Tip } from '../Tip'
 // FICHE-FIX-5 (reste 2) — « Ce que le PLU permet » en Repli, Transformation/bilan en Lignes.
 import { Repli, Lignes, Ligne, InfoI } from './formes'
 
+// RETOURS-15 (retouche Vic) — la surface de PLANCHER s'écrit TOUJOURS en m², jamais en hectares
+// (« ~14 200 m² de plancher », pas « ~1,42 ha ») : fmtM2 bascule en ha ≥ 10 000 m². Le verdict serveur
+// (scenarios._fmt_m2) le fait déjà ; ici on couvre les surfaces de plancher rendues côté front (Tester).
+const fmtPlancherM2 = (v: number | null | undefined): string => v == null ? '—' : `${fmtInt(v)} m²`
 const PT_COLORS: Record<string, string> = { fort: '#4ADE96', modere: '#F5C244', faible: '#9AA6A0', nul: '#6B7280', indetermine: '#6B7280' }
 export function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
   if (pt.indisponible) return <BlocIndisponible titre="Potentiel de transformation" />   // M125 — panne ≠ absence
@@ -541,10 +545,10 @@ export function FaisabiliteTab({ idu }: { idu: string; embedded?: boolean }) {
             {test.statut === 'a_completer' && (<><Badge ton="neutre">À compléter</Badge> <span className="text-txt-dim">{test.message}</span></>)}
             {test.statut === 'non_autorise' && (<><Badge ton="ambre">Logement non autorisé</Badge> <span className="text-txt-mut">{test.message}</span></>)}
             {test.statut === 'tient' && (
-              <><Badge ton="vert">Tient</Badge> <span className="text-txt-mut">{fmtM2(test.besoin_m2)} sur {fmtM2(test.possible_m2)} possibles{test.places != null ? ` · ${test.places} place(s)` : ''}{test.demolition_m2 ? ` · démolition de ${fmtM2(test.demolition_m2)} à chiffrer` : ''}</span></>
+              <><Badge ton="vert">Tient</Badge> <span className="text-txt-mut">{fmtPlancherM2(test.besoin_m2)} sur {fmtPlancherM2(test.possible_m2)} possibles{test.places != null ? ` · ${test.places} place(s)` : ''}{test.demolition_m2 ? ` · démolition de ${fmtPlancherM2(test.demolition_m2)} à chiffrer` : ''}</span></>
             )}
             {test.statut === 'ne_tient_pas' && (
-              <><Badge ton="ambre">Ne tient pas</Badge> <span className="text-txt-mut">il manque {fmtM2(test.manque_m2)} de plancher ({fmtM2(test.besoin_m2)} demandés pour {fmtM2(test.possible_m2)} possibles)</span></>
+              <><Badge ton="ambre">Ne tient pas</Badge> <span className="text-txt-mut">il manque {fmtPlancherM2(test.manque_m2)} de plancher ({fmtPlancherM2(test.besoin_m2)} demandés pour {fmtPlancherM2(test.possible_m2)} possibles)</span></>
             )}
           </div>
         )}
