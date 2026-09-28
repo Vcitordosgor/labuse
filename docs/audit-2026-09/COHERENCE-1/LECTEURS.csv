@@ -1,0 +1,653 @@
+notion_id,lecteur,famille,categorie,nom_ecran,route_ou_fichier,rendu,phrase_absence
+acquisitions_pm_n,outil_communes_acquisitions,robinet,outil,Acquisitions récentes,/communes/{commune}/acquisitions-pm,json_puis_js,
+adresse_ban,declaration:fiche_parcelle_identite_reste,declaration,fiche,fiche_parcelle_identite_reste,/parcels/{idu} (declarations/fiche/reste_a_declarer.yaml),,Adresse non disponible — parcelle non rattachée à une voie (BAN).
+adresse_ban,lecture:api/export_commun.py,lecture_fine,code,"adresses_ban()/format_adresse : helper partagé (exports, dossiers, projets) qui lit la meilleure adresse BAN par idu (so",src/labuse/api/export_commun.py (table adresse_parcelles),,
+adresse_ban,lecture:api/export_commun.py,lecture_fine,code,JOIN adresses a ON a.id_ban=ap.id_ban dans adresses_ban() : numero/rep/voie/code_postal/commune composent la ligne d'adr,src/labuse/api/export_commun.py (table adresses),,
+adresse_ban,lecture:api/pre_dossier.py,lecture_fine,code,pre_dossier_zip lit l'adresse BAN principale de la parcelle pour préremplir le CERFA du pack pré-dossier PC — même donné,src/labuse/api/pre_dossier.py (table adresse_parcelles),,
+adresse_ban,lecture:api/pre_dossier.py,lecture_fine,code,numero/rep/voie/code_postal joints via adresse_parcelles pour le CERFA prérempli du pack pré-dossier — même donnée adres,src/labuse/api/pre_dossier.py (table adresses),,
+adresse_ban,lecture:pige/api.py,lecture_fine,code,la page Radar d'un bien rattaché sert out['adresse_ban'] (numero/rep/voie/cp/commune) « comme la fiche/exports » — même ,src/labuse/pige/api.py (table adresses),,
+adresse_ban,fiche_parcelle_entete,robinet,fiche,"En-tête (adresse, géométrie)",/parcels/{idu},json_puis_js,
+alea_inondation_couche,declaration:couche_alea_inondation,declaration,couche,couche_alea_inondation,/map/tiles/alea_inondation/{z}/{x}/{y}.pbf (declarations/couches/famille_risques.yaml),,Aléa inondation : parcelle hors zone d'aléa cartographié.
+alea_inondation_couche,couche_alea_inondation,robinet,couche,Aléa inondation,/map/tiles/georisque_alea/{z}/{x}/{y}.pbf,tuiles,
+alea_mvt_couche,declaration:couche_alea_mvt,declaration,couche,couche_alea_mvt,/map/tiles/alea_mvt/{z}/{x}/{y}.pbf (declarations/couches/famille_risques.yaml),,Aléa mouvement de terrain : parcelle hors zone d'aléa cartographié.
+alea_mvt_couche,couche_alea_mvt,robinet,couche,Aléa mouvement de terrain,/map/tiles/georisque_alea/{z}/{x}/{y}.pbf,tuiles,
+aleas_parcelle_liste,declaration:fiche_parcelle_risques,declaration,fiche,fiche_parcelle_risques,/parcels/{idu} (declarations/fiche/risques.yaml),,Aléas : aucun aléa réglementaire ne touche cette parcelle.
+aleas_parcelle_liste,fiche_parcelle_risques,robinet,fiche,Risques et protections,/parcels/{idu},json_puis_js,
+aleas_saisi_pct,ecran_questionnaire_financier,robinet,page_client,Questionnaire du Financier (4 écrans),/financier/{idu}/questionnaire (GET/PUT),json_puis_js,
+annee_ortho,outil_remonter_temps,robinet,outil,Remonter le temps,/ortho?an=…,json_puis_js,
+annonces_actives_n,declaration:fiche_commune_marche,declaration,fiche_commune,fiche_commune_marche,/communes/{c}/contexte (declarations/commune/marche.yaml),,Biens en vente : donnée non disponible sur cette commune.
+annonces_actives_n,lecture:pige/signaux.py,lecture_fine,code,annonces_actives_zone compte les biens actifs validés a_qualifier=false par commune — servi à Communes (onglet Marché/An,src/labuse/pige/signaux.py (table pige_biens),,
+annonces_actives_n,lecture:zone.py,lecture_fine,code,"Compte les biens actifs rattachés dont la parcelle tombe dans la zone (bloc marché de l'Étude de zone, servi comme MINIM",src/labuse/zone.py (table pige_biens),,
+annonces_actives_n,fiche_commune_annonces,robinet,fiche,Annonces en cours — Radar,/communes/{c}/contexte,json_puis_js,
+annonces_actives_n,outil_radar_client,robinet,outil,Radar,/radar/biens,json_puis_js,
+annonces_actives_n,outil_radar_marche,robinet,outil,Marché,/radar/marche,json_puis_js,
+apport_saisi_eur,ecran_questionnaire_financier,robinet,page_client,Questionnaire du Financier (4 écrans),/financier/{idu}/questionnaire (GET/PUT),json_puis_js,
+artificialisation_couche,declaration:couche_artificialisation,declaration,couche,couche_artificialisation,/map/tiles/artificialisation/{z}/{x}/{y}.pbf (declarations/couches/famille_urbanisme.yaml),,Artificialisation : aucune emprise OCS GE dans l'emprise visible.
+artificialisation_couche,couche_artificialisation,robinet,couche,Artificialisation (OCS GE),/map/tiles/artificialisation/{z}/{x}/{y}.pbf,tuiles,
+assemblage_parcelles_n,lecture:api/moteurs.py,lecture_fine,code,endpoint /moteurs/assemblage : lit id/surface/commune + adjacences ST_DWithin de parcels — LE calcul de l'assiette assem,src/labuse/api/moteurs.py (table parcels),,
+assemblage_parcelles_n,lecture:assemblage.py,lecture_fine,code,"détection d'adjacence cadastrale (ST_DWithin sur parcels) → ensembles contigus, compte des parcelles de l'assiette",src/labuse/assemblage.py (table parcels),,
+assemblage_parcelles_n,outil_assemblage,robinet,outil,Assemblage,/moteurs/assemblage,json_puis_js,
+assemblage_surface_m2,lecture:api/moteurs.py,lecture_fine,code,même endpoint /moteurs/assemblage : somme des surfaces cadastrales des parcelles retenues (aggregate_assiette) servie co,src/labuse/api/moteurs.py (table parcels),,
+assemblage_surface_m2,lecture:assemblage.py,lecture_fine,code,aggregate_assiette : somme des surface_m2 des parcelles assemblées (source unique partagée avec /moteurs/assemblage),src/labuse/assemblage.py (table parcels),,
+assemblage_surface_m2,outil_assemblage,robinet,outil,Assemblage,/moteurs/assemblage,json_puis_js,
+au_ouverture_statut,declaration:fiche_parcelle_urbanisme,declaration,fiche,fiche_parcelle_urbanisme,/parcels/{idu} (declarations/fiche/sections_restantes.yaml),,Ouverture de la zone AU : sans objet (la parcelle n'est pas en zone à urbaniser marquée).
+au_ouverture_statut,fiche_parcelle_urbanisme,robinet,fiche,Règlement d'urbanisme (zones + extraits),/parcels/{idu},json_puis_js,
+autres_loges_pct,declaration:fiche_commune_territoire,declaration,fiche_commune,fiche_commune_territoire,/communes/{c}/contexte (declarations/commune/territoire.yaml),,logés gratuitement : donnée non disponible sur cette commune.
+autres_loges_pct,lecture:api/app.py,lecture_fine,code,« autres logés gratuitement » calculé AU SERVEUR via le moteur registre (CIRCUIT-1 2.4) à partir de la même ligne insee_,src/labuse/api/app.py (table commune_insee_logement),,
+autres_loges_pct,fiche_commune_population,robinet,fiche,Population & logement,/communes/{c}/contexte,json_puis_js,
+axes_couche,declaration:couche_axe,declaration,couche,couche_axe,/map/tiles/axe_structurant/{z}/{x}/{y}.pbf (declarations/couches/famille_transport.yaml),,Axes structurants : aucun axe majeur dans l'emprise visible.
+axes_couche,declaration:couche_pole,declaration,couche,couche_pole,/map/tiles/pole_echange/{z}/{x}/{y}.pbf (declarations/couches/famille_transport.yaml),,Pôles d'échange : aucun pôle dans l'emprise visible.
+axes_couche,couche_axes,robinet,couche,Axes structurants,/map/tiles/axe_structurant/{z}/{x}/{y}.pbf,tuiles,
+azi_tri_commune,declaration:fiche_commune_cadre_de_vie,declaration,fiche_commune,fiche_commune_cadre_de_vie,/communes/{c}/contexte (declarations/commune/cadre_de_vie.yaml),,AZI / TRI de la commune : donnée non disponible sur cette commune.
+azi_tri_commune,fiche_commune_azi_tri,robinet,fiche,AZI / TRI (inondation),/communes/{commune} (bloc risques),json_puis_js,
+azimut_bati_deg,outil_prospection_solaire,robinet,outil,Prospection solaire,/modules/prospection-solaire,json_puis_js,
+azimut_bati_deg,outil_solaire_toits,robinet,outil,Toits bien exposés,/modules/prospection-solaire,json_puis_js,
+ban_plus_adresses_bati,declaration:fiche_parcelle_le_bien,declaration,fiche,fiche_parcelle_le_bien,/parcels/{idu} (declarations/fiche/le_bien.yaml),,Adresses BAN PLUS : aucun lien adresse↔bâtiment sur cette parcelle.
+ban_plus_adresses_bati,fiche_parcelle_le_bien,robinet,fiche,Le bien,/parcels/{idu},json_puis_js,
+batiments_3d_couche,declaration:couche_batiments_3d,declaration,couche,couche_batiments_3d,/map/batiments.geojson (declarations/couches/famille_equipements.yaml),,Bâti 3D : aucun bâtiment avec hauteur dans la vue (zoom ≥ 15).
+batiments_3d_couche,couche_batiments_3d,robinet,couche,"Bâti 3D (extrusion, hauteur)",/map/batiments.geojson,json_puis_js,
+bilan_aleas_eur,pdf_financier,robinet,pdf,Financier,"/financier/{idu}.pdf (builder exports, questionnaire)",pdf,
+bilan_ca_eur,pdf_banquier,robinet,pdf,Dossier banquier,/dossier-banquier/{idu}.pdf,pdf,
+bilan_cout_construction_eur,pdf_banquier,robinet,pdf,Dossier banquier,/dossier-banquier/{idu}.pdf,pdf,
+bilan_demolition_eur,pdf_financier,robinet,pdf,Financier,"/financier/{idu}.pdf (builder exports, questionnaire)",pdf,
+bilan_depollution_eur,pdf_financier,robinet,pdf,Financier,"/financier/{idu}.pdf (builder exports, questionnaire)",pdf,
+bilan_frais_acquisition_eur,pdf_financier,robinet,pdf,Financier,"/financier/{idu}.pdf (builder exports, questionnaire)",pdf,
+bilan_frais_eur,pdf_banquier,robinet,pdf,Dossier banquier,/dossier-banquier/{idu}.pdf,pdf,
+bilan_honoraires_techniques_eur,pdf_financier,robinet,pdf,Financier,"/financier/{idu}.pdf (builder exports, questionnaire)",pdf,
+bilan_marge_eur,pdf_banquier,robinet,pdf,Dossier banquier,/dossier-banquier/{idu}.pdf,pdf,
+bilan_portage_eur,pdf_financier,robinet,pdf,Financier,"/financier/{idu}.pdf (builder exports, questionnaire)",pdf,
+bilan_stationnement_eur,pdf_financier,robinet,pdf,Financier,"/financier/{idu}.pdf (builder exports, questionnaire)",pdf,
+bilan_vrd_eur,pdf_banquier,robinet,pdf,Dossier banquier,/dossier-banquier/{idu}.pdf,pdf,
+bpe_couche,declaration:couche_amenite_bpe,declaration,couche,couche_amenite_bpe,/map/tiles/amenite_bpe/{z}/{x}/{y}.pbf (declarations/couches/famille_equipements.yaml),,Équipements INSEE : aucun équipement BPE dans l'emprise visible (zoom ≥ 12).
+bpe_couche,couche_bpe,robinet,couche,Équipements (INSEE BPE),/map/tiles/amenite_bpe/{z}/{x}/{y}.pbf,tuiles,
+bruit_carte_couche,declaration:couche_bruit_carte,declaration,couche,couche_bruit_carte,/map/tiles/bruit_carte/{z}/{x}/{y}.pbf (declarations/couches/famille_risques.yaml),,Cartes de bruit : aucun dépassement cartographié dans l'emprise visible.
+bruit_carte_couche,couche_bruit_carte,robinet,couche,Cartes de bruit — dépassements,/map/tiles/bruit_carte/{z}/{x}/{y}.pbf,tuiles,
+bruit_couche,declaration:couche_bruit_route,declaration,couche,couche_bruit_route,/map/tiles/bruit_route/{z}/{x}/{y}.pbf (declarations/couches/famille_risques.yaml),,Classement sonore : parcelle hors secteur affecté par le bruit routier.
+bruit_couche,couche_bruit,robinet,couche,Classement sonore (bruit routier),/map/tiles/bruit_route/{z}/{x}/{y}.pbf,tuiles,
+capacite_logements,declaration:fiche_parcelle_constructibilite,declaration,fiche,fiche_parcelle_constructibilite,/parcels/{idu} (declarations/fiche/sections_restantes.yaml),,Capacité (logements) : non estimable sur cette parcelle.
+capacite_logements,fiche_parcelle_constructibilite,robinet,fiche,Constructibilité,/parcels/{idu},json_puis_js,
+capacite_logements,outil_faisabilite,robinet,outil,Faisabilité,/modules/faisabilite/{idu},json_puis_js,
+casias_couche,declaration:couche_casias,declaration,couche,couche_casias,/map/tiles/casias/{z}/{x}/{y}.pbf (declarations/couches/famille_risques.yaml),,CASIAS : aucun ancien site industriel recensé dans l'emprise visible.
+casias_couche,couche_casias,robinet,couche,Anciens sites industriels (CASIAS),/map/tiles/casias/{z}/{x}/{y}.pbf,tuiles,
+casias_statut,declaration:fiche_parcelle_risques,declaration,fiche,fiche_parcelle_risques,/parcels/{idu} (declarations/fiche/risques.yaml),,Anciens sites industriels (CASIAS) : aucun site recensé sur ou près de la parcelle.
+casias_statut,fiche_parcelle_sols,robinet,fiche,Sols (SIS / CASIAS),/parcels/{idu} (clé sols),json_puis_js,
+catnat_arretes_liste,declaration:fiche_commune_cadre_de_vie,declaration,fiche_commune,fiche_commune_cadre_de_vie,/communes/{c}/contexte (declarations/commune/cadre_de_vie.yaml),,Arrêtés CatNat (détail) : donnée non disponible sur cette commune.
+catnat_arretes_liste,fiche_commune_risques,robinet,fiche,Risques,/communes/{c}/contexte,json_puis_js,
+catnat_n,declaration:fiche_commune_cadre_de_vie,declaration,fiche_commune,fiche_commune_cadre_de_vie,/communes/{c}/contexte (declarations/commune/cadre_de_vie.yaml),,Arrêtés CatNat : donnée non disponible sur cette commune.
+catnat_n,lecture:api/fiche_commune.py,lecture_fine,code,RETOUCHES-1 (lot A) — la lecture a migré de api/modules.py (qui ne la lit plus) vers la fiche commune : `risques()` sert,src/labuse/api/fiche_commune.py (table catnat_arretes),,
+catnat_n,fiche_commune_risques,robinet,fiche,Risques,/communes/{c}/contexte,json_puis_js,
+charge_fonciere_basse_eur,pdf_financier,robinet,pdf,Financier,"/financier/{idu}.pdf (builder exports, questionnaire)",pdf,
+charge_fonciere_eur,declaration:fiche_parcelle_constructibilite,declaration,fiche,fiche_parcelle_constructibilite,/parcels/{idu} (declarations/fiche/sections_restantes.yaml),,Charge foncière : bilan non calculable (prix de sortie ou SDP manquants).
+charge_fonciere_eur,lecture:api/modules.py,lecture_fine,code,routes /modules/faisabilite/{idu} et /faisabilite/{idu}/charge : lisent id+surface_m2 de parcels puis parcel_faisabilite,src/labuse/api/modules.py (table parcels),,
+charge_fonciere_eur,lecture:faisabilite/db.py,lecture_fine,code,"parcel_faisabilite : lit geom_2975/surface de parcels pour l'emprise constructible insetée (reculs, U/AU, ER/EBC) — l'as",src/labuse/faisabilite/db.py (table parcels),,
+charge_fonciere_eur,fiche_parcelle_constructibilite,robinet,fiche,Constructibilité,/parcels/{idu},json_puis_js,
+charge_fonciere_eur,outil_faisabilite,robinet,outil,Faisabilité,/modules/faisabilite/{idu},json_puis_js,
+charge_fonciere_eur,pdf_banquier,robinet,pdf,Dossier banquier,/dossier-banquier/{idu}.pdf,pdf,
+charge_fonciere_haute_eur,pdf_financier,robinet,pdf,Financier,"/financier/{idu}.pdf (builder exports, questionnaire)",pdf,
+cinquante_pas_couche,declaration:couche_cinquante_pas,declaration,couche,couche_cinquante_pas,/map/tiles/cinquante_pas/{z}/{x}/{y}.pbf (declarations/couches/famille_urbanisme.yaml),,50 pas : parcelle hors bande littorale des 50 pas dans l'emprise visible.
+cinquante_pas_couche,couche_cinquante_pas,robinet,couche,50 pas géométriques,/map/tiles/cinquante_pas/{z}/{x}/{y}.pbf,tuiles,
+classe_residuel,lecture:faisabilite/residuel.py,lecture_fine,code,"potentiel résiduel : joint parcels au bâti (niveaux/hauteur) pour taux d'emprise, SDP résiduelle et classe de sous-densi",src/labuse/faisabilite/residuel.py (table parcels),,
+classe_residuel,couche_densifier,robinet,couche,Densifier l'existant,/map/renouvellement.geojson,json_puis_js,
+commission_apporteur_saisi_eur,ecran_questionnaire_financier,robinet,page_client,Questionnaire du Financier (4 écrans),/financier/{idu}/questionnaire (GET/PUT),json_puis_js,
+communes_couche,couche_communes,robinet,couche,Limites communes,contours embarqués (seed),json_puis_js,
+comparateur_composite,outil_communes_comparaison,robinet,outil,Comparaison communes,/comparateur-communes,json_puis_js,
+comparateur_composite,outil_comparer_parcelles,robinet,outil,Comparer des parcelles,/comparateur-communes,json_puis_js,
+copilote_compte_parcelles,lecture:api/nl_aggregate.py,lecture_fine,code,agrégats /ia/search : _BASE = FROM parcels + tiers du run servi → le NOMBRE de parcelles (« combien de brûlantes… ») ser,src/labuse/api/nl_aggregate.py (table parcels),,
+copilote_compte_parcelles,copilote_compter_parcelles,robinet,copilote,Compter des parcelles,/api/copilote-v2/ask,texte_llm,
+copilote_texte_web,copilote_recherche_web,robinet,copilote,Dernier recours — fait public La Réunion,/api/copilote-v2/ask,texte_llm,
+coproprietes_liste,declaration:fiche_parcelle_division,declaration,fiche,fiche_parcelle_division,/parcels/{idu} (declarations/fiche/sections_restantes.yaml),,Copropriétés : aucune copropriété immatriculée sur la parcelle.
+coproprietes_liste,fiche_parcelle_division,robinet,fiche,Division (copropriétés/lots),/parcels/{idu},json_puis_js,
+cosia_detecte_m2,declaration:fiche_parcelle_le_bien,declaration,fiche,fiche_parcelle_le_bien,/parcels/{idu} (declarations/fiche/le_bien.yaml),,Bâti CoSIA hors BD TOPO : aucune sur-détection (CoSIA et BD TOPO d'accord).
+cosia_detecte_m2,fiche_parcelle_le_bien,robinet,fiche,Le bien,/parcels/{idu},json_puis_js,
+courrier_demandes_n,outil_courrier,robinet,outil,Courrier propriétaire,/modules/courriers,json_puis_js,
+cout_construction_ref_eur_m2,bilan_cout_construction_ref,robinet,outil,Coût de construction (bilan),Hypotheses.charger (bilan/calculette/PDF),json_puis_js,
+cout_construction_saisi_eur_m2,outil_faisabilite,robinet,outil,Faisabilité,/modules/faisabilite/{idu},json_puis_js,
+cout_place_stationnement_saisi_eur,ecran_questionnaire_financier,robinet,page_client,Questionnaire du Financier (4 écrans),/financier/{idu}/questionnaire (GET/PUT),json_puis_js,
+couverture_commune_pct,page_sources_couverture,robinet,page_client,Couverture des sources,/sources/couverture,json_puis_js,
+crm_cartes_n,crm_kanban,robinet,crm,"Pipeline (kanban, cartes par colonne)",/pipeline/columns,json_puis_js,
+deficit_sru_pts,declaration:fiche_commune_territoire,declaration,fiche_commune,fiche_commune_territoire,/communes/{c}/contexte (declarations/commune/territoire.yaml),,"Déficit SRU (objectif − taux LLS, points) : donnée non disponible sur cette commune."
+deficit_sru_pts,lecture:api/app.py,lecture_fine,code,"fiche commune : déficit calculé LIVE greatest(objectif_pct − taux_lls, 0) — source unique partagée fiche + tableau compa",src/labuse/api/app.py (table commune_contexte_sru),,
+deficit_sru_pts,fiche_commune_sru,robinet,fiche,Logement social — SRU,/communes/{c}/contexte,json_puis_js,
+deficit_sru_pts,outil_communes,robinet,outil,Communes,/communes,json_puis_js,
+deficit_sru_pts,outil_communes_comparaison,robinet,outil,Comparaison communes,/comparateur-communes,json_puis_js,
+deficit_sru_pts,outil_comparer_parcelles,robinet,outil,Comparer des parcelles,/comparateur-communes,json_puis_js,
+delai_vente_median_j,outil_radar_marche,robinet,outil,Marché,/radar/marche,json_puis_js,
+densifier_couche,couche_densifier,robinet,couche,Densifier l'existant,/map/renouvellement.geojson,json_puis_js,
+depots_secteur_n,lecture:api/carnet.py,lecture_fine,code,"Compte des permis rattachés au secteur cadastral (idu_codes LIKE secteur, 24 mois) servi sur la page secteur du carnet.",src/labuse/api/carnet.py (table sitadel_permits),,
+depots_secteur_n,lecture:zone.py,lecture_fine,code,marche_zone (permis géolocalisés 36 mois dans la zone dessinée) + zone_demain (logements autorisés nb_lgt 36 mois) — ser,src/labuse/zone.py (table sitadel_permits),,
+depots_secteur_n,fiche_parcelle_autour,robinet,fiche,Autour de cette parcelle,/parcels/{idu} + /parcels/{idu}/zone,json_puis_js,
+dernier_depot_comptes,lecture:api/modules.py,lecture_fine,code,DONNEES-1 lot 2.3 — _dernier_depot_comptes / _depots_par_siren : dernier dépôt de comptes annuels d'une PM (max date_clo,src/labuse/api/modules.py (table bodacc_depots),,
+dernier_depot_comptes,outil_scan_patrimoine,robinet,outil,Scan patrimoine,/modules/patrimoine,json_puis_js,
+dernier_depot_comptes,outil_successions,robinet,outil,Successions à venir,/modules/successions,json_puis_js,
+destination_statut,copilote_destination_zone,robinet,copilote,Peut-on ouvrir une activité sur cette parcelle ?,/api/copilote-v2/ask,texte_llm,
+dirigeant_pm_signal,lecture:api/veille_promoteurs.py,lecture_fine,code,La frise promoteur lit pm_dirigeants.gerant_siren (actif) pour servir les « filiales identifiées » par lien de gérance I,src/labuse/api/veille_promoteurs.py (table pm_dirigeants),,
+dirigeant_pm_signal,outil_scan_patrimoine,robinet,outil,Scan patrimoine,/modules/patrimoine,json_puis_js,
+dispositifs_couche,declaration:couche_anru,declaration,couche,couche_anru,/map/tiles/anru/{z}/{x}/{y}.pbf (declarations/couches/famille_dispositifs.yaml),,ANRU : parcelle hors périmètre de rénovation urbaine dans l'emprise visible.
+dispositifs_couche,declaration:couche_frr,declaration,couche,couche_frr,/map/tiles/frr/{z}/{x}/{y}.pbf (declarations/couches/famille_dispositifs.yaml),,FRR : commune hors zone de revitalisation rurale dans l'emprise visible.
+dispositifs_couche,declaration:couche_qpv,declaration,couche,couche_qpv,/map/tiles/qpv/{z}/{x}/{y}.pbf (declarations/couches/famille_dispositifs.yaml),,QPV : parcelle hors quartier prioritaire dans l'emprise visible.
+dispositifs_couche,declaration:couche_tva_primo,declaration,couche,couche_tva_primo,/map/tiles/tva_primo/{z}/{x}/{y}.pbf (declarations/couches/famille_dispositifs.yaml),,TVA primo : parcelle hors périmètre de TVA réduite dans l'emprise visible.
+dispositifs_couche,declaration:couche_zfang,declaration,couche,couche_zfang,/map/tiles/zfang/{z}/{x}/{y}.pbf (declarations/couches/famille_dispositifs.yaml),,ZFANG : commune hors zone franche d'activité dans l'emprise visible.
+dispositifs_couche,couche_dispositifs,robinet,couche,Dispositifs et périmètres,/map/tiles/qpv/{z}/{x}/{y}.pbf,tuiles,
+dispositifs_parcelle,declaration:fiche_parcelle_dispositifs,declaration,fiche,fiche_parcelle_dispositifs,/parcels/{idu} (declarations/fiche/sections_restantes.yaml),,Droit des sols : aucune prescription (ER/EBC/DPU/PEB) sur la parcelle.
+dispositifs_parcelle,fiche_parcelle_droit_sols,robinet,fiche,Dispositifs et périmètres (droit des sols),/parcels/{idu} (clé dispositifs),json_puis_js,
+distance_arret_m,declaration:fiche_parcelle_reseaux,declaration,fiche,fiche_parcelle_reseaux,/parcels/{idu} (declarations/fiche/reseaux.yaml),,Arrêt de transport : aucun arrêt à proximité mesurable.
+distance_arret_m,fiche_parcelle_reseaux,robinet,fiche,Réseaux et accès,/parcels/{idu},json_puis_js,
+divisible_classe,declaration:fiche_parcelle_division,declaration,fiche,fiche_parcelle_division,/parcels/{idu} (declarations/fiche/sections_restantes.yaml),,Divisibilité : non évaluée.
+divisible_classe,fiche_parcelle_division,robinet,fiche,Division (copropriétés/lots),/parcels/{idu},json_puis_js,
+dpe_connu,declaration:fiche_parcelle_le_bien,declaration,fiche,fiche_parcelle_le_bien,/parcels/{idu} (declarations/fiche/le_bien.yaml),,DPE connu : aucun diagnostic enregistré à cette adresse (ADEME).
+dpe_connu,lecture:faisabilite/marche_commune.py,lecture_fine,code,ligne8_pression_dpe : compte des DPE connus + % F/G (seuil n≥30) servi dans le bloc marché commune — seul robinet candid,src/labuse/faisabilite/marche_commune.py (table dpe_records),,
+dpe_connu,fiche_parcelle_le_bien,robinet,fiche,Le bien,/parcels/{idu},json_puis_js,
+dpf_couche,declaration:couche_dpf,declaration,couche,couche_dpf,/map/tiles/dpf/{z}/{x}/{y}.pbf (declarations/couches/famille_risques.yaml),,Ravines DPF : aucune ravine du domaine public fluvial dans l'emprise visible.
+dpf_couche,couche_dpf,robinet,couche,Ravines et reculs (DPF),/map/tiles/dpf/{z}/{x}/{y}.pbf,tuiles,
+dpu_couche,declaration:couche_dpu,declaration,couche,couche_dpu,/map/tiles/dpu/{z}/{x}/{y}.pbf (declarations/couches/famille_urbanisme.yaml),,DPU : parcelle hors périmètre de préemption dans l'emprise visible.
+dpu_couche,couche_dpu,robinet,couche,Droit de préemption urbain,/map/tiles/dpu/{z}/{x}/{y}.pbf,tuiles,
+dpu_perimetre,declaration:fiche_parcelle_urbanisme_reste,declaration,fiche,fiche_parcelle_urbanisme_reste,/parcels/{idu} (declarations/fiche/reste_a_declarer.yaml),,Hors périmètre de préemption urbaine publié.
+dpu_perimetre,fiche_parcelle_droit_sols,robinet,fiche,Dispositifs et périmètres (droit des sols),/parcels/{idu} (clé dispositifs),json_puis_js,
+duree_portage_saisi_mois,ecran_questionnaire_financier,robinet,page_client,Questionnaire du Financier (4 écrans),/financier/{idu}/questionnaire (GET/PUT),json_puis_js,
+dvf_parcelle_liste,declaration:fiche_parcelle_marche,declaration,fiche,fiche_parcelle_marche,/parcels/{idu} (declarations/fiche/marche.yaml),,Ventes de cette parcelle : aucune mutation DVF connue sur la parcelle.
+dvf_parcelle_liste,lecture:api/scoreur.py,lecture_fine,code,"« Dernières ventes de cette parcelle » (6 mutations actées portant son idu, DISTINCT ON id_mutation) servies telles quel",src/labuse/api/scoreur.py (table dvf_mutations_parcelle),,
+dvf_parcelle_liste,fiche_parcelle_marche,robinet,fiche,Marché et secteur,/parcels/{idu},json_puis_js,
+ebc_classe,declaration:fiche_parcelle_urbanisme_reste,declaration,fiche,fiche_parcelle_urbanisme_reste,/parcels/{idu} (declarations/fiche/reste_a_declarer.yaml),,Hors espace boisé classé du PLU.
+ebc_classe,fiche_parcelle_droit_sols,robinet,fiche,Dispositifs et périmètres (droit des sols),/parcels/{idu} (clé dispositifs),json_puis_js,
+ebc_couche,declaration:couche_ebc,declaration,couche,couche_ebc,/map/tiles/ebc/{z}/{x}/{y}.pbf (declarations/couches/famille_urbanisme.yaml),,EBC : parcelle hors espace boisé classé dans l'emprise visible.
+ebc_couche,couche_ebc,robinet,couche,Espaces boisés classés,/map/tiles/ebc/{z}/{x}/{y}.pbf,tuiles,
+ecart_candidat_pct,admin_mise_a_jour,robinet,admin,Données › Mise à jour (Injecter·Calculer·Basculer),/admin/flux/run/lancer + /admin/flux/bascule,json_puis_js,
+ecart_demande_acte_pct,declaration:fiche_commune_marche,declaration,fiche_commune,fiche_commune_marche,/communes/{c}/contexte (declarations/commune/marche.yaml),,Écart demandé/acté : donnée non disponible sur cette commune.
+ecart_demande_acte_pct,lecture:pige/cycle.py,lecture_fine,code,matcher_dvf : mutation « Vente » 3-18 mois après publication → statut vendue + délai + écart prix affiché/acté enregistr,src/labuse/pige/cycle.py (table dvf_mutations_parcelle),,
+ecart_demande_acte_pct,lecture:pige/signaux.py,lecture_fine,code,"Référentiel DVF acté (médiane commune par type, même filtre baromètre) opposé au prix d'annonce → badge « sous le marché",src/labuse/pige/signaux.py (table dvf_mutations),,
+ecart_demande_acte_pct,lecture:pige/signaux.py,lecture_fine,code,"ecart_demande_acte : médiane Radar demandée vs médiane DVF actée par commune (signal #2), servi via annonces_actives_zon",src/labuse/pige/signaux.py (table pige_biens),,
+ecart_demande_acte_pct,lecture:pige/signaux.py,lecture_fine,code,Le côté DEMANDÉ de l'écart demandé/acté (médiane des prix affichés vs médiane DVF) est calculé sur f.prix — signal #2 se,src/labuse/pige/signaux.py (table pige_faits),,
+ecart_demande_acte_pct,fiche_commune_annonces,robinet,fiche,Annonces en cours — Radar,/communes/{c}/contexte,json_puis_js,
+ecart_demande_acte_pct,outil_radar_marche,robinet,outil,Marché,/radar/marche,json_puis_js,
+ecart_prix_demande_pct,outil_faisabilite,robinet,outil,Faisabilité,/modules/faisabilite/{idu},json_puis_js,
+emplois_fourchette,outil_etude_zone,robinet,outil,Étude de zone,/modules/etude-zone,json_puis_js,
+emprise_batie_m2,declaration:fiche_parcelle_le_bien,declaration,fiche,fiche_parcelle_le_bien,/parcels/{idu} (declarations/fiche/le_bien.yaml),,Emprise bâtie : aucun bâti au sol détecté sur cette parcelle.
+emprise_batie_m2,fiche_parcelle_le_bien,robinet,fiche,Le bien,/parcels/{idu},json_puis_js,
+endiguement_zone_protegee,declaration:fiche_parcelle_risques,declaration,fiche,fiche_parcelle_risques,/parcels/{idu} (declarations/fiche/risques.yaml),,Système d'endiguement : la parcelle n'est dans aucune zone protégée déclarée.
+endiguement_zone_protegee,fiche_parcelle_risques,robinet,fiche,Risques et protections,/parcels/{idu},json_puis_js,
+enp_couche,declaration:couche_enp,declaration,couche,couche_enp,/map/tiles/enp/{z}/{x}/{y}.pbf (declarations/couches/famille_nature.yaml),,ENP : parcelle hors espace naturel protégé sur l'emprise visible.
+enp_couche,couche_enp,robinet,couche,Espaces naturels protégés,/map/tiles/enp/{z}/{x}/{y}.pbf,tuiles,
+enr_exclue_hors_toiture_couche,declaration:couche_enr_exclue_hors_toiture,declaration,couche,couche_enr_exclue_hors_toiture,/map/tiles/enr_exclue_hors_toiture/{z}/{x}/{y}.pbf (declarations/couches/famille_energie.yaml),,EnR hors toiture : parcelle hors d'une zone d'exclusion EnR au sol dans l'emprise visible.
+enr_exclue_hors_toiture_couche,couche_enr_exclue_hors_toiture,robinet,couche,EnR interdites hors toiture (APER),/map/tiles/enr_exclue_hors_toiture/{z}/{x}/{y}.pbf,tuiles,
+enr_exclue_parcelle,declaration:fiche_parcelle_risques,declaration,fiche,fiche_parcelle_risques,/parcels/{idu} (declarations/fiche/risques.yaml),,EnR au sol interdites (APER) : la parcelle n'est dans aucune zone d'exclusion.
+enr_exclue_parcelle,fiche_parcelle_contraintes_env,robinet,fiche,Contraintes environnementales (APER / mesures compensatoires),"/parcels/{idu} (clés enr_exclue_toiture, mesures_compensatoires)",json_puis_js,
+equip_osm_couche,declaration:couche_amenite,declaration,couche,couche_amenite,/map/tiles/amenite/{z}/{x}/{y}.pbf (declarations/couches/famille_equipements.yaml),,Équipements OSM : aucun équipement dans l'emprise visible (zoom ≥ 12).
+equip_osm_couche,couche_equip_osm,robinet,couche,Équipements (OSM),/map/tiles/amenite/{z}/{x}/{y}.pbf,tuiles,
+equipements_proximite_liste,declaration:fiche_parcelle_quartier_reste,declaration,fiche,fiche_parcelle_quartier_reste,/parcels/{idu} (declarations/fiche/reste_a_declarer.yaml),,Équipements du quotidien non renseignés autour de cette parcelle.
+equipements_proximite_liste,lecture:api/fiche_ask.py,lecture_fine,code,Contexte IA de la fiche : lit les distances OSM au plus proche (parcel_amenites) pour répondre sourcé — même donnée que ,src/labuse/api/fiche_ask.py (table parcel_amenites),,
+equipements_proximite_liste,fiche_parcelle_autour,robinet,fiche,Autour de cette parcelle,/parcels/{idu} + /parcels/{idu}/zone,json_puis_js,
+er_couche,declaration:couche_er,declaration,couche,couche_er,/map/tiles/er/{z}/{x}/{y}.pbf (declarations/couches/famille_urbanisme.yaml),,ER : parcelle hors emplacement réservé dans l'emprise visible.
+er_couche,couche_er,robinet,couche,Emplacements réservés,/map/tiles/er/{z}/{x}/{y}.pbf,tuiles,
+er_emplacement_reserve,declaration:fiche_parcelle_urbanisme_reste,declaration,fiche,fiche_parcelle_urbanisme_reste,/parcels/{idu} (declarations/fiche/reste_a_declarer.yaml),,Hors emplacement réservé du PLU.
+er_emplacement_reserve,fiche_parcelle_droit_sols,robinet,fiche,Dispositifs et périmètres (droit des sols),/parcels/{idu} (clé dispositifs),json_puis_js,
+etablissements_parcelle_liste,declaration:fiche_parcelle_le_bien,declaration,fiche,fiche_parcelle_le_bien,/parcels/{idu} (declarations/fiche/le_bien.yaml),,Établissements : aucun établissement SIRENE rattaché à cette parcelle (par l'adresse BAN).
+etablissements_parcelle_liste,fiche_parcelle_le_bien,robinet,fiche,Le bien,/parcels/{idu},json_puis_js,
+evenements_proprietaire_liste,lecture:alertes.py,lecture_fine,code,"Génère les alertes 'bodacc_in_zone' (procédure du propriétaire PM d'une parcelle en zone de veille, type+date+dénominati",src/labuse/alertes.py (table bodacc_procedures),,
+evenements_proprietaire_liste,lecture:api/events.py,lecture_fine,code,"Notifications « parcelle suivie » : nouvelle procédure BODACC sur le propriétaire PM (type_procedure, date_annonce, déno",src/labuse/api/events.py (table bodacc_procedures),,
+evenements_proprietaire_liste,lecture:api/projets.py,lecture_fine,code,_signaux_parcelles : présence d'une procédure BODACC sur le propriétaire → badge signal « procédure » des listes Projets,src/labuse/api/projets.py (table bodacc_procedures),,
+evenements_proprietaire_liste,fiche_parcelle_proprietaire,robinet,fiche,Propriétaire,/parcels/{idu},json_puis_js,
+exposition_versant,declaration:fiche_entete_tuiles,declaration,fiche,fiche_entete_tuiles,/parcels/{idu} (declarations/fiche/entete_tuiles.yaml),,Exposition : relief non disponible sur la parcelle.
+exposition_versant,fiche_parcelle_entete,robinet,fiche,"En-tête (adresse, géométrie)",/parcels/{idu},json_puis_js,
+fibre_parcelle,declaration:fiche_parcelle_fibre,declaration,fiche,fiche_parcelle_fibre,/parcels/{idu} (declarations/fiche/petites_sections.yaml),,Fibre : aucune information de déploiement à l'adresse.
+fibre_parcelle,lecture:api/app.py,lecture_fine,code,"Étude de zone : compte les immeubles Arcep dans l'emprise et sert le % FttH (out['fibre']) — même donnée fibre, au grain",src/labuse/api/app.py (table arcep_immeubles),,
+fibre_parcelle,fiche_parcelle_fibre,robinet,fiche,Fibre (Réseaux et accès),/parcels/{idu} (clé fibre),json_puis_js,
+filiation_parcelle,declaration:fiche_parcelle_filiation,declaration,fiche,fiche_parcelle_filiation,/parcels/{idu} (declarations/fiche/petites_sections.yaml),,Filiation cadastrale : aucune filiation connue (parcelle stable).
+filiation_parcelle,lecture:api/moteurs.py,lecture_fine,code,/moteurs/histoire/{idu} lit idu_fille/idu_mere/nature/date_validation pour servir les faits « découpe » (filiation DFI) ,src/labuse/api/moteurs.py (table dfi_filiation),,
+filiation_parcelle,fiche_parcelle_filiation,robinet,fiche,Historique cadastral (filiation DFI),/parcels/{idu} (clé filiation),json_puis_js,
+frais_acquisition_saisi_pct,ecran_questionnaire_financier,robinet,page_client,Questionnaire du Financier (4 écrans),/financier/{idu}/questionnaire (GET/PUT),json_puis_js,
+frr_classement_commune,declaration:fiche_commune_regles,declaration,fiche_commune,fiche_commune_regles,/communes/{c}/contexte (declarations/commune/regles.yaml),,FRR — classement de la commune : donnée non disponible sur cette commune.
+frr_classement_commune,fiche_commune_zfang_frr,robinet,fiche,ZFANG / FRR (dispositifs fiscaux),/communes/{commune} (clé zfang_frr),json_puis_js,
+gabarit_couverture_verdict,declaration:fiche_parcelle_gabarit,declaration,fiche,fiche_parcelle_gabarit,/outils/gabarit/{idu} (declarations/fiche/sections_restantes.yaml),,Couverture réglementaire : non évaluée (gabarit non calculable).
+gabarit_couverture_verdict,outil_gabarit,robinet,outil,Gabarit réglementaire,/outils/gabarit/{idu},json_puis_js,
+gabarit_emprise_plafond_m2,declaration:fiche_parcelle_gabarit,declaration,fiche,fiche_parcelle_gabarit,/outils/gabarit/{idu} (declarations/fiche/sections_restantes.yaml),,Plafond d'emprise : gabarit non calculable (voir le motif).
+gabarit_emprise_plafond_m2,outil_gabarit,robinet,outil,Gabarit réglementaire,/outils/gabarit/{idu},json_puis_js,
+gabarit_hauteur_m,declaration:fiche_parcelle_gabarit,declaration,fiche,fiche_parcelle_gabarit,/outils/gabarit/{idu} (declarations/fiche/sections_restantes.yaml),,Hauteur réglementaire : gabarit non calculable (voir le motif).
+gabarit_hauteur_m,outil_gabarit,robinet,outil,Gabarit réglementaire,/outils/gabarit/{idu},json_puis_js,
+gabarit_implantation_m2,declaration:fiche_parcelle_gabarit,declaration,fiche,fiche_parcelle_gabarit,/outils/gabarit/{idu} (declarations/fiche/sections_restantes.yaml),,Zone d'implantation : gabarit non calculable (voir le motif).
+gabarit_implantation_m2,outil_gabarit,robinet,outil,Gabarit réglementaire,/outils/gabarit/{idu},json_puis_js,
+gabarit_motif_blocage,declaration:fiche_parcelle_gabarit,declaration,fiche,fiche_parcelle_gabarit,/outils/gabarit/{idu} (declarations/fiche/sections_restantes.yaml),,Gabarit : calculé (aucun motif de blocage).
+gabarit_motif_blocage,outil_gabarit,robinet,outil,Gabarit réglementaire,/outils/gabarit/{idu},json_puis_js,
+gabarit_plan_2d,declaration:fiche_parcelle_gabarit,declaration,fiche,fiche_parcelle_gabarit,/outils/gabarit/{idu} (declarations/fiche/sections_restantes.yaml),,Plan 2D : non tracé (gabarit non calculable).
+gabarit_plan_2d,outil_gabarit,robinet,outil,Gabarit réglementaire,/outils/gabarit/{idu},json_puis_js,
+gpu_brut_couche,couche_gpu_brut,robinet,couche,Limites officielles PLU (GPU brut),/map/tiles/plu_gpu_zone/{z}/{x}/{y}.pbf,tuiles,
+habitants_n,declaration:fiche_commune_territoire,declaration,fiche_commune,fiche_commune_territoire,/communes/{c}/contexte (declarations/commune/territoire.yaml),,Habitants : donnée non disponible sur cette commune.
+habitants_n,lecture:api/fiche_commune.py,lecture_fine,code,COMMUNE-FIX-1 (A1) — population() lit pop_mun (population municipale LÉGALE INSEE) pour les « Habitants » de la fiche co,src/labuse/api/fiche_commune.py (table sudocuh_procedures),,
+habitants_n,fiche_commune_population,robinet,fiche,Population & logement,/communes/{c}/contexte,json_puis_js,
+hauteur_bati_m,declaration:fiche_parcelle_le_bien,declaration,fiche,fiche_parcelle_le_bien,/parcels/{idu} (declarations/fiche/le_bien.yaml),,Hauteur du bâti : non mesurée (ni LiDAR ni hauteur BD TOPO sur ce bâti).
+hauteur_bati_m,lecture:api/app.py,lecture_fine,code,SOURCES-3 lot 1 — endpoint bâti 3D bbox (/map/batiments.geojson) : préfère faitage_m LiDAR à la hauteur BD TOPO pour l'e,src/labuse/api/app.py (table batiment_hauteur_lidar),,
+hauteur_bati_m,couche_batiments_3d,robinet,couche,"Bâti 3D (extrusion, hauteur)",/map/batiments.geojson,json_puis_js,
+hauteur_bati_m,fiche_parcelle_le_bien,robinet,fiche,Le bien,/parcels/{idu},json_puis_js,
+historique_permis_liste,declaration:fiche_parcelle_identite_reste,declaration,fiche,fiche_parcelle_identite_reste,/parcels/{idu} (declarations/fiche/reste_a_declarer.yaml),,Aucun permis recensé sur cette parcelle (Sitadel).
+historique_permis_liste,lecture:api/moteurs.py,lecture_fine,code,"Histoire de la parcelle : un fait par événement daté du permis (dépôt/autorisation/DAACT, idu_codes ? idu) avec nb_lgt/s",src/labuse/api/moteurs.py (table sitadel_permits),,
+historique_permis_liste,fiche_parcelle_autour,robinet,fiche,Autour de cette parcelle,/parcels/{idu} + /parcels/{idu}/zone,json_puis_js,
+honoraires_techniques_saisi_pct,ecran_questionnaire_financier,robinet,page_client,Questionnaire du Financier (4 écrans),/financier/{idu}/questionnaire (GET/PUT),json_puis_js,
+ia_cout_eur,admin_ia,robinet,admin,IA & quotas Copilote,/admin/ia,json_puis_js,
+iris_commune_quartiers,declaration:fiche_commune_territoire,declaration,fiche_commune,fiche_commune_territoire,/communes/{c}/contexte (declarations/commune/territoire.yaml),,Quartiers de la commune (IRIS) : donnée non disponible sur cette commune.
+iris_commune_quartiers,fiche_commune_quartiers,robinet,fiche,Quartiers (IRIS),/communes/{commune} (population.quartiers),json_puis_js,
+iris_quartier,declaration:fiche_parcelle_autour,declaration,fiche,fiche_parcelle_autour,/parcels/{idu} (declarations/fiche/sections_restantes.yaml),,Quartier (IRIS) : parcelle hors découpage IRIS connu.
+iris_quartier,lecture:zone.py,lecture_fine,code,"population_zone() joint iris_rp aux IRIS intersectant la zone (vacance_pct, part bâti avant 1990) — overlay quartiers IN",src/labuse/zone.py (table iris_rp),,
+iris_quartier,fiche_parcelle_quartier,robinet,fiche,Quartier INSEE (Autour),/parcels/{idu} (clé iris_quartier),json_puis_js,
+iris_quartier,outil_etude_zone,robinet,outil,Étude de zone,/modules/etude-zone,json_puis_js,
+lignes_ht_couche,declaration:couche_ligne_ht,declaration,couche,couche_ligne_ht,/map/tiles/ligne_ht/{z}/{x}/{y}.pbf (declarations/couches/famille_transport.yaml),,Lignes HTB : aucune ligne haute tension dans l'emprise visible.
+lignes_ht_couche,couche_lignes_ht,robinet,couche,Lignes haute tension,/map/tiles/ligne_ht/{z}/{x}/{y}.pbf,tuiles,
+limites_parcelles_couche,couche_limites_parcelles,robinet,couche,Limites parcelles,tuiles MVT (contours),tuiles,
+lls_inventaire_n,declaration:fiche_commune_territoire,declaration,fiche_commune,fiche_commune_territoire,/communes/{c}/contexte (declarations/commune/territoire.yaml),,Logements sociaux (inventaire SRU) : donnée non disponible sur cette commune.
+lls_inventaire_n,fiche_commune_sru,robinet,fiche,Logement social — SRU,/communes/{c}/contexte,json_puis_js,
+logements_vises_saisi,ecran_questionnaire_financier,robinet,page_client,Questionnaire du Financier (4 écrans),/financier/{idu}/questionnaire (GET/PUT),json_puis_js,
+loyer_median_eur_m2,declaration:fiche_commune_marche,declaration,fiche_commune,fiche_commune_marche,/communes/{c}/contexte (declarations/commune/marche.yaml),,Loyer médian : donnée non disponible sur cette commune.
+loyer_median_eur_m2,fiche_commune_loyers,robinet,fiche,Loyers,/communes/{c}/contexte,json_puis_js,
+mairie_coordonnees,declaration:fiche_commune_territoire,declaration,fiche_commune,fiche_commune_territoire,/communes/{c}/contexte (declarations/commune/territoire.yaml),,Mairie & service urbanisme (coordonnées) : donnée non disponible sur cette commune.
+mairie_coordonnees,lecture:api/modules.py,lecture_fine,code,plu_annuaire_pack lit nom/telephone/email/site_officiel et les sert en repli quand le GPU est vide/injoignable (« demand,src/labuse/api/modules.py (table mairies),,
+mairie_coordonnees,lecture:api/ops.py,lecture_fine,code,"annuaire Ops : les 24 mairies triables (commune, contacts) — le fichier dit lui-même « la MÊME donnée que la fiche » com",src/labuse/api/ops.py (table mairies),,
+mairie_coordonnees,fiche_commune_mairie,robinet,fiche,Mairie & service urbanisme,/communes/{c}/contexte,json_puis_js,
+marge_frais_saisie_pct,outil_faisabilite,robinet,outil,Faisabilité,/modules/faisabilite/{idu},json_puis_js,
+marge_surelevation_m,declaration:fiche_parcelle_potentiel_reste,declaration,fiche,fiche_parcelle_potentiel_reste,/parcels/{idu} (declarations/fiche/reste_a_declarer.yaml),,Marge de surélévation non calculable (hauteur de règle ou bâti non déterminés).
+marge_surelevation_m,lecture:faisabilite/hauteur_lidar.py,lecture_fine,code,hauteur_batie() lit faitage_m/egout_m mesurés (précalcul T9) pour les consommateurs surélévation — alimente la marge de ,src/labuse/faisabilite/hauteur_lidar.py (table batiment_hauteur_lidar),,
+marge_surelevation_m,fiche_parcelle_constructibilite,robinet,fiche,Constructibilité,/parcels/{idu},json_puis_js,
+marge_visee_saisi_pct,ecran_questionnaire_financier,robinet,page_client,Questionnaire du Financier (4 écrans),/financier/{idu}/questionnaire (GET/PUT),json_puis_js,
+mesures_compensatoires_couche,declaration:couche_mesures_compensatoires,declaration,couche,couche_mesures_compensatoires,/map/tiles/mesures_compensatoires/{z}/{x}/{y}.pbf (declarations/couches/famille_nature.yaml),,Mesures compensatoires : aucune mesure ERC dans l'emprise visible.
+mesures_compensatoires_couche,couche_mesures_compensatoires,robinet,couche,Mesures compensatoires (ERC),/map/tiles/mesures_compensatoires/{z}/{x}/{y}.pbf,tuiles,
+mesures_compensatoires_parcelle,declaration:fiche_parcelle_risques,declaration,fiche,fiche_parcelle_risques,/parcels/{idu} (declarations/fiche/risques.yaml),,Mesure compensatoire (GéoMCE) : aucune mesure ne recoupe la parcelle.
+mesures_compensatoires_parcelle,fiche_parcelle_contraintes_env,robinet,fiche,Contraintes environnementales (APER / mesures compensatoires),"/parcels/{idu} (clés enr_exclue_toiture, mesures_compensatoires)",json_puis_js,
+mixite_clause,declaration:fiche_parcelle_urbanisme_reste,declaration,fiche,fiche_parcelle_urbanisme_reste,/parcels/{idu} (declarations/fiche/reste_a_declarer.yaml),,Mixité sociale : seuils de la zone non renseignés à ce jour.
+mixite_clause,fiche_parcelle_constructibilite,robinet,fiche,Constructibilité,/parcels/{idu},json_puis_js,
+mixite_clause,pdf_banquier,robinet,pdf,Dossier banquier,/dossier-banquier/{idu}.pdf,pdf,
+mutations_12m_n,declaration:fiche_commune_marche,declaration,fiche_commune,fiche_commune_marche,/communes/{c}/contexte (declarations/commune/marche.yaml),,Mutations 12 mois : donnée non disponible sur cette commune.
+mutations_12m_n,lecture:zone.py,lecture_fine,code,marche_zone : ventes DVF 12 mois + €/m² bâti médian 36 mois des parcelles contenues dans la zone dessinée — servi par l',src/labuse/zone.py (table dvf_mutations_parcelle),,
+mutations_12m_n,fiche_commune_prix,robinet,fiche,Prix & tendance,/communes/{c}/contexte,json_puis_js,
+mutations_12m_n,outil_communes_evolution,robinet,outil,Évolution du marché,/moteurs/barometre,json_puis_js,
+n_a_faire,admin_pilotage,robinet,admin,Pilotage (KPI à faire / à jour),/admin/pilotage,json_puis_js,
+n_bascules_7j,notif_brief_matin,robinet,notification,Brief du matin,/brief,json_puis_js,
+n_bascules_7j,page_accueil_semaine,robinet,page_client,Accueil — cette semaine,/accueil/cette-semaine,json_puis_js,
+n_batiments,declaration:fiche_parcelle_le_bien,declaration,fiche,fiche_parcelle_le_bien,/parcels/{idu} (declarations/fiche/le_bien.yaml),,Bâtiments : aucun bâtiment détecté (parcelle nue au bâti cartographié).
+n_batiments,fiche_parcelle_le_bien,robinet,fiche,Le bien,/parcels/{idu},json_puis_js,
+n_biens_du_jour,notif_digest_quotidien,robinet,notification,Digest quotidien (mail),envoyer_digests (CLI digest),mail,
+n_biens_du_jour,notif_radar_digest,robinet,notification,Radar — digest quotidien (Brevo ID 12),template Brevo 12 (PRENOM·DATE·NB_BIENS·LIEN_RADAR·CARTES),mail,
+n_biens_veille,notif_radar_alerte,robinet,notification,Radar — alerte de veille (Brevo ID 13),template Brevo 13 (PRENOM·VEILLE·NB_BIENS·CRITERES·CARTES·LIEN_RADAR·LIEN_VEILLE),mail,
+n_blocs_pm,outil_blocs_fonciers,robinet,outil,Blocs fonciers,/modules/blocs,json_puis_js,
+n_communes_rnu,admin_destinations,robinet,admin,Destinations (calibration PLU),/admin/destinations,json_puis_js,
+n_communes_rnu,outil_plu,robinet,outil,PLU,/modules/plu-annuaire,json_puis_js,
+n_comptes_actifs,admin_licences,robinet,admin,"Licences (comptes, essais, quotas)",/admin/licences,json_puis_js,
+n_concurrents_zone,outil_etude_zone,robinet,outil,Étude de zone,/modules/etude-zone,json_puis_js,
+n_densifiables,declaration:fiche_commune_construction,declaration,fiche_commune,fiche_commune_construction,/communes/{c}/contexte (declarations/commune/construction.yaml),,Parcelles densifiables : donnée non disponible sur cette commune.
+n_densifiables,fiche_commune_foncier,robinet,fiche,Foncier repéré,/communes/{c}/contexte,json_puis_js,
+n_densifiables,outil_densifier,robinet,outil,Densifier l'existant,/modules/renouvellement,json_puis_js,
+n_depots_a_verifier,lecture:pige/api.py,lecture_fine,code,Lit a.portail/a.url_sortante (files extraction/reverif/a-instruire) et max(date_saisie) pour l'écran admin Radar (/admin,src/labuse/pige/api.py (table pige_annonces),,
+n_depots_a_verifier,lecture:pige/api.py,lecture_fine,code,"Lit statut/rattachement pour les files et compteurs de l'écran admin Radar (radar_check : annonces_en_vie, a_rattacher, ",src/labuse/pige/api.py (table pige_biens),,
+n_depots_a_verifier,lecture:pige/api.py,lecture_fine,code,"radar_check lit le DERNIER dépôt (date, nb_annonces/nouvelles/maj/à qualifier) pour le bilan de l'écran admin Radar (DAS",src/labuse/pige/api.py (table pige_depots),,
+n_depots_a_verifier,lecture:pige/api.py,lecture_fine,code,"La file d'extraction = pige_faits en attente de validation (valide_at NULL, moteur plateforme_compteurs.depots_a_verifie",src/labuse/pige/api.py (table pige_faits),,
+n_depots_a_verifier,admin_radar,robinet,admin,Radar (dépôts à vérifier),/admin/radar/*,json_puis_js,
+n_extraits_plu,outil_plu,robinet,outil,PLU,/modules/plu-annuaire,json_puis_js,
+n_notifications,notif_cloche,robinet,notification,Cloche (événements),/events,json_puis_js,
+n_parcelles_bloc,outil_blocs_fonciers,robinet,outil,Blocs fonciers,/modules/blocs,json_puis_js,
+n_parcelles_commune,declaration:fiche_commune_construction,declaration,fiche_commune,fiche_commune_construction,/communes/{c}/contexte (declarations/commune/construction.yaml),,N parcelles : donnée non disponible sur cette commune.
+n_parcelles_commune,lecture:regles/n_parcelles_commune.py,lecture_fine,code,fiche de règle CIRCUIT-4 du chiffre n_parcelles_commune : cite parcels.commune comme entrée de la formule count(*) par c,src/labuse/regles/n_parcelles_commune.py (table parcels),,
+n_parcelles_commune,fiche_commune_foncier,robinet,fiche,Foncier repéré,/communes/{c}/contexte,json_puis_js,
+n_parcelles_ile,lecture:api/accueil.py,lecture_fine,code,count(*) FROM parcels (compteur accueil + repli du moteur plateforme_compteurs) — le nombre de parcelles servi au bloc c,src/labuse/api/accueil.py (table parcels),,
+n_parcelles_ile,page_accueil_chiffres,robinet,page_client,Accueil — bloc chiffres,/accueil/chiffres (cache 1 h),json_puis_js,
+n_parcelles_pm,lecture:api/fiche_commune.py,lecture_fine,code,outils_counters compte les parcelles PM de la commune (count DISTINCT idu par insee) pour le compteur de la passerelle «,src/labuse/api/fiche_commune.py (table parcelle_personne_morale),,
+n_parcelles_pm,lecture:api/modules.py,lecture_fine,code,"/modules/patrimoine : inventaire des parcelles d'un SIREN (jointure pm→parcels, dénomination, millésime MAJIC servi) + a",src/labuse/api/modules.py (table parcelle_personne_morale),,
+n_parcelles_pm,lecture:api/recherche.py,lecture_fine,code,Suggestions omnibox propriétaire/SIREN : dénomination + count(*) de parcelles détenues affiché en sous-titre (« N parcel,src/labuse/api/recherche.py (table parcelle_personne_morale),,
+n_parcelles_pm,lecture:api/veille_promoteurs.py,lecture_fine,code,Veille promoteurs : le propriétaire moral (denomination/siren/groupe via idu) identifie les opérations « ce qu'ils const,src/labuse/api/veille_promoteurs.py (table parcelle_personne_morale),,
+n_parcelles_pm,lecture:copilote_v2/outils.py,lecture_fine,code,Outil copilote parcelles_par_entreprise : résout le SIREN par dénomination (tokens/acronyme) puis répond avec n_parcelle,src/labuse/copilote_v2/outils.py (table parcelle_personne_morale),,
+n_parcelles_pm,lecture:proprietaire_facettes.py,lecture_fine,code,"Facettes des filtres propriétaire PM (formes juridiques, couverture, millésime) + autocomplétion des dénominations avec ",src/labuse/proprietaire_facettes.py (table parcelle_personne_morale),,
+n_parcelles_pm,copilote_parcelles_entreprise,robinet,copilote,Parcelles détenues par une personne morale,/api/copilote-v2/ask,texte_llm,
+n_parcelles_pm,fiche_proprietaire,robinet,fiche,Fiche propriétaire (timeline PM),/parcels/{idu} (bloc) + patrimoine,json_puis_js,
+n_parcelles_pm,outil_scan_construit,robinet,outil,Ce qu'ils construisent,/modules/patrimoine + permis,json_puis_js,
+n_parcelles_pm,outil_scan_patrimoine,robinet,outil,Scan patrimoine,/modules/patrimoine,json_puis_js,
+n_parcelles_pm,outil_scan_possede,robinet,outil,Possède,/modules/patrimoine?siren=…,json_puis_js,
+n_permis_proximite,declaration:fiche_parcelle_autour,declaration,fiche,fiche_parcelle_autour,/parcels/{idu} (declarations/fiche/sections_restantes.yaml),,Permis à proximité : aucun permis récent repéré.
+n_permis_proximite,lecture:api/modules.py,lecture_fine,code,"/modules/parcelle-permis : permis autorisés < 200 m (c100/c200, distance, cliquables) — la preuve derrière les compteurs",src/labuse/api/modules.py (table via_permits_geo),,
+n_permis_proximite,lecture:faisabilite/viabilisation_build.py,lecture_fine,code,"Construit via_permits_geo (permis géolocalisés datés, EPSG 2975) depuis sitadel_permits pour les compteurs c100/c200 du ",src/labuse/faisabilite/viabilisation_build.py (table sitadel_permits),,
+n_permis_proximite,lecture:faisabilite/viabilisation_build.py,lecture_fine,code,"Lit via_permits_geo (ST_DWithin 100/200 m, récents, achevés état='6') pour calculer c100/c200 et le score/band de viabil",src/labuse/faisabilite/viabilisation_build.py (table via_permits_geo),,
+n_permis_proximite,lecture:flash/data.py,lecture_fine,code,_dynamique : n permis + total logements dans le rayon autour de la parcelle (fenêtre en mois) + couverture géocodée + 3 ,src/labuse/flash/data.py (table sitadel_permits),,
+n_permis_proximite,fiche_parcelle_autour,robinet,fiche,Autour de cette parcelle,/parcels/{idu} + /parcels/{idu}/zone,json_puis_js,
+n_piscines,lecture:api/fiche_commune.py,lecture_fine,code,Compteur de la passerelle « Solaire piscines » de la fiche commune (count piscines par commune) — annonce ce que l'outil,src/labuse/api/fiche_commune.py (table parcel_equipements),,
+n_piscines,lecture:api/modules.py,lecture_fine,code,"Mode Piscines (pisciniste) : agrégats île/commune via le moteur compte_piscines + listing filtré confiance ≥ 0,80 — sert",src/labuse/api/modules.py (table parcel_equipements),,
+n_piscines,copilote_compter_piscines,robinet,copilote,Compter les piscines détectées,/api/copilote-v2/ask,texte_llm,
+n_piscines,outil_solaire_piscines,robinet,outil,Piscines,/modules/prospection-piscines,json_puis_js,
+n_procedures_plu,outil_plu_procedure,robinet,outil,Procédure & changement,/moteurs/simulplu/procedures,json_puis_js,
+n_sources,admin_catalogue_sources,robinet,admin,Données › Catalogue (sources),/admin/sources,json_puis_js,
+n_sources,admin_flux_circuit,robinet,admin,Données › Circuit (fourmilière + Radar + cohérence),/admin/flux + /admin/flux/runs,json_puis_js,
+n_sources,page_accueil_chiffres,robinet,page_client,Accueil — bloc chiffres,/accueil/chiffres (cache 1 h),json_puis_js,
+n_sources,page_sources_client,robinet,page_client,Sources de données,/sources,json_puis_js,
+n_sources_surveillees,admin_flux_circuit,robinet,admin,Données › Circuit (fourmilière + Radar + cohérence),/admin/flux + /admin/flux/runs,json_puis_js,
+n_successions_veille,outil_successions,robinet,outil,Successions à venir,/modules/successions,json_puis_js,
+n_veilles,veille_evaluations,robinet,veille,Veilles (critères + déclenchements),/copilote-v2/veilles,json_puis_js,
+n_vigilances,declaration:fiche_parcelle_risques,declaration,fiche,fiche_parcelle_risques,/parcels/{idu} (declarations/fiche/risques.yaml),,Points de risque : non évalués (parcelle hors run servi).
+n_vigilances,fiche_parcelle_risques,robinet,fiche,Risques et protections,/parcels/{idu},json_puis_js,
+n_vigilances,outil_pieges,robinet,outil,Pièges et risques,/modules/risques,json_puis_js,
+nature_toit,declaration:fiche_parcelle_le_bien,declaration,fiche,fiche_parcelle_le_bien,/parcels/{idu} (declarations/fiche/le_bien.yaml),,Forme du toit : non déterminée (pans non nets ou LiDAR indisponible).
+nature_toit,fiche_parcelle_le_bien,robinet,fiche,Le bien,/parcels/{idu},json_puis_js,
+ort_statut,declaration:fiche_commune_regles,declaration,fiche_commune,fiche_commune_regles,/communes/{c}/contexte (declarations/commune/regles.yaml),,ACV / PVD / ORT : donnée non disponible sur cette commune.
+ort_statut,fiche_commune_ort,robinet,fiche,ACV / PVD / ORT — Denormandie,/communes/{commune} (clé ort),json_puis_js,
+parc_ancien_pct,declaration:fiche_commune_territoire,declaration,fiche_commune,fiche_commune_territoire,/communes/{c}/contexte (declarations/commune/territoire.yaml),,Parc construit avant 1991 : donnée non disponible sur cette commune.
+parc_ancien_pct,lecture:api/fiche_commune.py,lecture_fine,code,"DONNEES-1 lot 2.4 — _parc_ancien_pct lit la distribution ACHL (période d'achèvement, RP2022) pour servir la part du parc",src/labuse/api/fiche_commune.py (table rp_logement_commune),,
+parc_ancien_pct,fiche_commune_population,robinet,fiche,Population & logement,/communes/{c}/contexte,json_puis_js,
+parc_national_couche,declaration:couche_parc,declaration,couche,couche_parc,/map/tiles/parc_national/{z}/{x}/{y}.pbf (declarations/couches/famille_nature.yaml),,Parc national : parcelle hors périmètre du Parc dans l'emprise visible.
+parc_national_couche,couche_parc_national,robinet,couche,Parc national,/map/tiles/parc_national/{z}/{x}/{y}.pbf,tuiles,
+parc_social_rpls_logements,declaration:fiche_commune_territoire,declaration,fiche_commune,fiche_commune_territoire,/communes/{c}/contexte (declarations/commune/territoire.yaml),,Parc social (logements RPLS) : donnée non disponible sur cette commune.
+parc_social_rpls_logements,lecture:api/fiche_commune.py,lecture_fine,code,DONNEES-1 lot 2.4 — parc_social() lit nb_logements/construct_median du parc social SDES pour le bloc « Population et log,src/labuse/api/fiche_commune.py (table rpls_commune),,
+parc_social_rpls_logements,fiche_commune_population,robinet,fiche,Population & logement,/communes/{c}/contexte,json_puis_js,
+parc_social_rpls_logements,fiche_parcelle_marche,robinet,fiche,Marché et secteur,/parcels/{idu},json_puis_js,
+parcelle_geometrie,declaration:fiche_parcelle_identite_reste,declaration,fiche,fiche_parcelle_identite_reste,/parcels/{idu} (declarations/fiche/reste_a_declarer.yaml),,Géométrie de la parcelle non disponible pour cette référence.
+parcelle_geometrie,fiche_parcelle_entete,robinet,fiche,"En-tête (adresse, géométrie)",/parcels/{idu},json_puis_js,
+parcelles_par_zone_n,panel_filtres,robinet,outil,Filtres (sélecteur de zones PLU),/zonage/zones,json_puis_js,
+part_artificialisee_pct,declaration:fiche_parcelle_le_bien,declaration,fiche,fiche_parcelle_le_bien,/parcels/{idu} (declarations/fiche/le_bien.yaml),,Part artificialisée : hors couverture OCS GE pour cette parcelle.
+part_artificialisee_pct,couche_artificialisation,robinet,couche,Artificialisation (OCS GE),/map/tiles/artificialisation/{z}/{x}/{y}.pbf,tuiles,
+part_artificialisee_pct,fiche_parcelle_le_bien,robinet,fiche,Le bien,/parcels/{idu},json_puis_js,
+part_impermeabilisee_cosia_pct,declaration:fiche_parcelle_le_bien,declaration,fiche,fiche_parcelle_le_bien,/parcels/{idu} (declarations/fiche/le_bien.yaml),,Part imperméabilisée (CoSIA) : parcelle hors couverture CoSIA.
+part_impermeabilisee_cosia_pct,fiche_parcelle_le_bien,robinet,fiche,Le bien,/parcels/{idu},json_puis_js,
+part_logements_egout_pct,declaration:fiche_parcelle_reseaux_reste,declaration,fiche,fiche_parcelle_reseaux_reste,/parcels/{idu} (declarations/fiche/reste_a_declarer.yaml),,Taux de raccordement à l'égout non disponible pour ce secteur.
+part_logements_egout_pct,fiche_parcelle_reseaux,robinet,fiche,Réseaux et accès,/parcels/{idu},json_puis_js,
+part_sociale_saisi_pct,ecran_questionnaire_financier,robinet,page_client,Questionnaire du Financier (4 écrans),/financier/{idu}/questionnaire (GET/PUT),json_puis_js,
+part_sol_nu_cosia_pct,declaration:fiche_parcelle_le_bien,declaration,fiche,fiche_parcelle_le_bien,/parcels/{idu} (declarations/fiche/le_bien.yaml),,Part sol nu (CoSIA) : parcelle hors couverture CoSIA.
+part_sol_nu_cosia_pct,fiche_parcelle_le_bien,robinet,fiche,Le bien,/parcels/{idu},json_puis_js,
+part_vegetalisee_cosia_pct,declaration:fiche_parcelle_le_bien,declaration,fiche,fiche_parcelle_le_bien,/parcels/{idu} (declarations/fiche/le_bien.yaml),,Part végétalisée/boisée (CoSIA) : parcelle hors couverture CoSIA.
+part_vegetalisee_cosia_pct,fiche_parcelle_le_bien,robinet,fiche,Le bien,/parcels/{idu},json_puis_js,
+part_zone_AU_pct,declaration:fiche_commune_regles,declaration,fiche_commune,fiche_commune_regles,/communes/{c}/contexte (declarations/commune/regles.yaml),,Zonage — AU : donnée non disponible sur cette commune.
+part_zone_AU_pct,fiche_commune_zonage,robinet,fiche,Zonage,/communes/{c}/contexte,json_puis_js,
+part_zone_A_pct,declaration:fiche_commune_regles,declaration,fiche_commune,fiche_commune_regles,/communes/{c}/contexte (declarations/commune/regles.yaml),,Zonage — A : donnée non disponible sur cette commune.
+part_zone_A_pct,fiche_commune_zonage,robinet,fiche,Zonage,/communes/{c}/contexte,json_puis_js,
+part_zone_N_pct,declaration:fiche_commune_regles,declaration,fiche_commune,fiche_commune_regles,/communes/{c}/contexte (declarations/commune/regles.yaml),,Zonage — N : donnée non disponible sur cette commune.
+part_zone_N_pct,fiche_commune_zonage,robinet,fiche,Zonage,/communes/{c}/contexte,json_puis_js,
+part_zone_U_pct,declaration:fiche_commune_regles,declaration,fiche_commune,fiche_commune_regles,/communes/{c}/contexte (declarations/commune/regles.yaml),,Zonage — U : donnée non disponible sur cette commune.
+part_zone_U_pct,fiche_commune_zonage,robinet,fiche,Zonage,/communes/{c}/contexte,json_puis_js,
+peb_couche,declaration:couche_peb,declaration,couche,couche_peb,/map/tiles/peb/{z}/{x}/{y}.pbf (declarations/couches/famille_risques.yaml),,PEB : parcelle hors plan d'exposition au bruit aérien.
+peb_couche,couche_peb,robinet,couche,Plan d'exposition au bruit,/map/tiles/peb/{z}/{x}/{y}.pbf,tuiles,
+peb_zone,declaration:fiche_parcelle_urbanisme_reste,declaration,fiche,fiche_parcelle_urbanisme_reste,/parcels/{idu} (declarations/fiche/reste_a_declarer.yaml),,Hors zones du plan d'exposition au bruit.
+peb_zone,fiche_parcelle_droit_sols,robinet,fiche,Dispositifs et périmètres (droit des sols),/parcels/{idu} (clé dispositifs),json_puis_js,
+pente_deg,declaration:fiche_entete_tuiles,declaration,fiche,fiche_entete_tuiles,/parcels/{idu} (declarations/fiche/entete_tuiles.yaml),,Pente : relief non disponible sur la parcelle.
+pente_deg,fiche_parcelle_reseaux,robinet,fiche,Réseaux et accès,/parcels/{idu},json_puis_js,
+pente_toit_deg,declaration:fiche_parcelle_le_bien,declaration,fiche,fiche_parcelle_le_bien,/parcels/{idu} (declarations/fiche/le_bien.yaml),,Pente du toit : non relevée (LiDAR toiture non calculé sur ce bâti).
+pente_toit_deg,fiche_parcelle_le_bien,robinet,fiche,Le bien,/parcels/{idu},json_puis_js,
+perimetres_dispositifs_liste,declaration:fiche_parcelle_dispositifs,declaration,fiche,fiche_parcelle_dispositifs,/parcels/{idu} (declarations/fiche/sections_restantes.yaml),,Dispositifs : la parcelle n'est dans aucun dispositif territorial repéré.
+perimetres_dispositifs_liste,lecture:territoire_fiscal.py,lecture_fine,code,attributs_commune() = « LE point de service » : zfang_regime + frr_classement (tranché à la parcelle pour les communes e,src/labuse/territoire_fiscal.py (table territoire_fiscal_commune),,
+perimetres_dispositifs_liste,fiche_parcelle_dispositifs,robinet,fiche,"Dispositifs et périmètres (QPV, ANRU, ZFANG, FRR)",/parcels/{idu},json_puis_js,
+permis_12m_n,declaration:fiche_commune_construction,declaration,fiche_commune,fiche_commune_construction,/communes/{c}/contexte (declarations/commune/construction.yaml),,Permis de la commune sur 12 mois : donnée non disponible sur cette commune.
+permis_12m_n,lecture:api/modules.py,lecture_fine,code,/modules/permis : liste paginée + carte + total des permis par commune/fenêtre/état (moteur commune_compteurs pour le co,src/labuse/api/modules.py (table sitadel_permits),,
+permis_12m_n,lecture:api/moteurs.py,lecture_fine,code,Baromètre commune : série trimestrielle des permis (8 derniers trimestres complets) à côté des mutations DVF.,src/labuse/api/moteurs.py (table sitadel_permits),,
+permis_12m_n,lecture:faisabilite/marche_commune.py,lecture_fine,code,ligne6_offre_engagee : permis + logements autorisés (nb_lgt) sur 12 mois glissants ancrés sur max(date) — l'offre engagé,src/labuse/faisabilite/marche_commune.py (table sitadel_permits),,
+permis_12m_n,copilote_compter_permis,robinet,copilote,Nombre de permis accordés,/api/copilote-v2/ask,texte_llm,
+permis_12m_n,fiche_commune_permis,robinet,fiche,Permis & délais,/communes/{c}/contexte,json_puis_js,
+permis_12m_n,outil_permis,robinet,outil,Permis,/modules/permis,json_puis_js,
+permis_12m_n,outil_permis_radar,robinet,outil,Radar permis,/modules/permis,json_puis_js,
+permis_12m_n,outil_scan_construit,robinet,outil,Ce qu'ils construisent,/modules/patrimoine + permis,json_puis_js,
+permis_5a_n,outil_communes_comparaison,robinet,outil,Comparaison communes,/comparateur-communes,json_puis_js,
+permis_5a_n,outil_comparer_parcelles,robinet,outil,Comparer des parcelles,/comparateur-communes,json_puis_js,
+pipeline_entrees_n,crm_retour_terrain,robinet,crm,Retour terrain (étiquettes de contact),/pipeline,json_puis_js,
+piscine_m2,declaration:fiche_parcelle_reseaux,declaration,fiche,fiche_parcelle_reseaux,/parcels/{idu} (declarations/fiche/reseaux.yaml),,Piscine détectée : aucune piscine repérée sur la parcelle.
+piscine_m2,lecture:api/ortho.py,lecture_fine,code,"/ortho/equipements/{idu} : badge fiche piscine (bool, piscine_surface_m2 arrondie, confiance) sourcé détection ortho IGN",src/labuse/api/ortho.py (table parcel_equipements),,
+piscine_m2,fiche_parcelle_reseaux,robinet,fiche,Réseaux et accès,/parcels/{idu},json_puis_js,
+plh_objectif_logements_an,declaration:fiche_commune_regles,declaration,fiche_commune,fiche_commune_regles,/communes/{c}/contexte (declarations/commune/regles.yaml),,Objectif logements/an : donnée non disponible sur cette commune.
+plh_objectif_logements_an,lecture:api/app.py,lecture_fine,code,_compute_commune_contexte résout l'EPCI (config epci_974) puis lit SELECT * FROM plh_epci — bloc PLH (objectif logements,src/labuse/api/app.py (table plh_epci),,
+plh_objectif_logements_an,fiche_commune_plh,robinet,fiche,Programme local — PLH,/communes/{c}/contexte,json_puis_js,
+plu_procedure_en_cours,declaration:fiche_commune_regles,declaration,fiche_commune,fiche_commune_regles,/communes/{c}/contexte (declarations/commune/regles.yaml),,Procédure PLU en cours (Sudocuh) : aucune procédure recensée au dernier relevé.
+plu_procedure_en_cours,fiche_commune_regles_urbanisme,robinet,fiche,Règles d'urbanisme,/communes/{c}/contexte,json_puis_js,
+point_mort_n,declaration:fiche_commune_construction,declaration,fiche_commune,fiche_commune_construction,/communes/{c}/contexte (declarations/commune/construction.yaml),,Permis au point mort : donnée non disponible sur cette commune.
+point_mort_n,lecture:api/modules.py,lecture_fine,code,/modules (promesses dormantes) : PC anciens sans DAACT sur parcelle toujours non bâtie = permis au point mort.,src/labuse/api/modules.py (table sitadel_permits),,
+point_mort_n,fiche_commune_permis,robinet,fiche,Permis & délais,/communes/{c}/contexte,json_puis_js,
+point_mort_n,outil_permis_point_mort,robinet,outil,Permis au point mort,/modules/promesses,json_puis_js,
+population_zone,declaration:fiche_parcelle_autour,declaration,fiche,fiche_parcelle_autour,/parcels/{idu} (declarations/fiche/sections_restantes.yaml),,Population du secteur : non disponible.
+population_zone,lecture:api/app.py,lecture_fine,code,l'endpoint isochrone « autour » assemble population_zone (habitants/ménages de la zone via les carreaux) + revenu carrea,src/labuse/api/app.py (table filosofi_carreaux_200m),,
+population_zone,fiche_parcelle_autour,robinet,fiche,Autour de cette parcelle,/parcels/{idu} + /parcels/{idu}/zone,json_puis_js,
+population_zone,outil_etude_zone,robinet,outil,Étude de zone,/modules/etude-zone,json_puis_js,
+population_zone,pdf_flash,robinet,pdf,Rapport Flash,"/flash/telecharger (builder exports EXPORTS-2, sans §9)",pdf,
+poste_transformation_couche,declaration:couche_poste_transformation,declaration,couche,couche_poste_transformation,/map/tiles/poste_transformation/{z}/{x}/{y}.pbf (declarations/couches/famille_transport.yaml),,Postes de transformation : aucun poste dans l'emprise visible.
+poste_transformation_couche,couche_poste_transformation,robinet,couche,Postes de transformation,/map/tiles/poste_transformation/{z}/{x}/{y}.pbf,tuiles,
+potentiel_verdict,declaration:fiche_parcelle_constructibilite,declaration,fiche,fiche_parcelle_constructibilite,/parcels/{idu} (declarations/fiche/sections_restantes.yaml),,Potentiel : rien d'évaluable (zone non constructible ou données manquantes).
+potentiel_verdict,fiche_parcelle_constructibilite,robinet,fiche,Constructibilité,/parcels/{idu},json_puis_js,
+potentiel_verdict,pdf_dossier_expert,robinet,pdf,Dossier parcelle,/dossier/{idu}.pdf (builder exports EXPORTS-2),pdf,
+ppr_couche,declaration:couche_ppr,declaration,couche,couche_ppr,/map/tiles/ppr/{z}/{x}/{y}.pbf (declarations/couches/famille_risques.yaml),,PPR : parcelle hors périmètre PPR sur l'emprise visible.
+ppr_couche,couche_ppr,robinet,couche,PPR multirisque,/map/tiles/ppr/{z}/{x}/{y}.pbf,tuiles,
+ppr_pct,declaration:fiche_commune_cadre_de_vie,declaration,fiche_commune,fiche_commune_cadre_de_vie,/communes/{c}/contexte (declarations/commune/cadre_de_vie.yaml),,PPR (part des parcelles) : donnée non disponible sur cette commune.
+ppr_pct,fiche_commune_risques,robinet,fiche,Risques,/communes/{c}/contexte,json_puis_js,
+pression_zan_ha,lecture:api/carnet.py,lecture_fine,code,carnet de secteur (O7) sert le bloc zan (conso_2021_2024_m2 + source_nom) = pression ZAN de la commune ; aucun robinet c,src/labuse/api/carnet.py (table commune_conso_enaf),,
+pression_zan_ha,lecture:api/moteurs.py,lecture_fine,code,"_zan_indicateur (/zan, /zan/parcelle) : conso 2011-21/2021-24 observée (Sourcé) + budget/reste -50 % (Estimé) par commun",src/labuse/api/moteurs.py (table commune_conso_enaf),,
+pression_zan_ha,lecture:flash/data.py,lecture_fine,code,"bloc enaf du PDF Flash : conso_2011_2021/2021_2024 en ha + rythmes (pas de budget/horizon, garde-fou) = pression ZAN ; p",src/labuse/flash/data.py (table commune_conso_enaf),,
+pression_zan_ha,outil_communes_comparaison,robinet,outil,Comparaison communes,/comparateur-communes,json_puis_js,
+pression_zan_ha,outil_comparer_parcelles,robinet,outil,Comparer des parcelles,/comparateur-communes,json_puis_js,
+prix_achat_historique_eur,declaration:fiche_parcelle_identite_reste,declaration,fiche,fiche_parcelle_identite_reste,/parcels/{idu} (declarations/fiche/reste_a_declarer.yaml),,Dernière vente : aucune mutation DVF publiée sur cette parcelle (fenêtre 2014-2025).
+prix_achat_historique_eur,pdf_dossier_expert,robinet,pdf,Dossier parcelle,/dossier/{idu}.pdf (builder exports EXPORTS-2),pdf,
+prix_achat_revente_saisi_eur,ecran_questionnaire_financier,robinet,page_client,Questionnaire du Financier (4 écrans),/financier/{idu}/questionnaire (GET/PUT),json_puis_js,
+prix_ancien_median_eur_m2,declaration:fiche_commune_marche,declaration,fiche_commune,fiche_commune_marche,/communes/{c}/contexte (declarations/commune/marche.yaml),,€/m² ancien : donnée non disponible sur cette commune.
+prix_ancien_median_eur_m2,lecture:api/projets.py,lecture_fine,code,Médiane €/m² bâti DVF par commune (bornes 200-8000) servie sous les chips de l'entretien Projets et dans le « pourquoi »,src/labuse/api/projets.py (table dvf_mutations),,
+prix_ancien_median_eur_m2,copilote_marche,robinet,copilote,Marché immobilier d'une commune,/api/copilote-v2/ask,texte_llm,
+prix_ancien_median_eur_m2,fiche_commune_prix,robinet,fiche,Prix & tendance,/communes/{c}/contexte,json_puis_js,
+prix_ancien_median_eur_m2,outil_communes,robinet,outil,Communes,/communes,json_puis_js,
+prix_ancien_median_eur_m2,outil_communes_comparaison,robinet,outil,Comparaison communes,/comparateur-communes,json_puis_js,
+prix_ancien_median_eur_m2,outil_communes_evolution,robinet,outil,Évolution du marché,/moteurs/barometre,json_puis_js,
+prix_ancien_median_eur_m2,outil_comparer_parcelles,robinet,outil,Comparer des parcelles,/comparateur-communes,json_puis_js,
+prix_demande_eur,fiche_annonce,robinet,fiche,Fiche bien (Radar),/radar/biens/{id},json_puis_js,
+prix_demande_median_eur_m2,declaration:fiche_commune_marche,declaration,fiche_commune,fiche_commune_marche,/communes/{c}/contexte (declarations/commune/marche.yaml),,Prix demandé (médiane) : donnée non disponible sur cette commune.
+prix_demande_median_eur_m2,lecture:pige/signaux.py,lecture_fine,code,"_radar_medianes : médianes des prix AFFICHÉS terrain/bâti par commune (type_bien + statut lus ici), servies avec leur n ",src/labuse/pige/signaux.py (table pige_biens),,
+prix_demande_median_eur_m2,lecture:pige/signaux.py,lecture_fine,code,_radar_medianes lit f.prix/surface_hab/surface_terrain (validés seulement) → médianes affichées terrain/bâti par commune,src/labuse/pige/signaux.py (table pige_faits),,
+prix_demande_median_eur_m2,fiche_annonce,robinet,fiche,Fiche bien (Radar),/radar/biens/{id},json_puis_js,
+prix_demande_median_eur_m2,fiche_commune_annonces,robinet,fiche,Annonces en cours — Radar,/communes/{c}/contexte,json_puis_js,
+prix_demande_median_eur_m2,outil_radar_client,robinet,outil,Radar,/radar/biens,json_puis_js,
+prix_demande_median_eur_m2,outil_radar_marche,robinet,outil,Marché,/radar/marche,json_puis_js,
+prix_demande_saisi_eur,outil_faisabilite,robinet,outil,Faisabilité,/modules/faisabilite/{idu},json_puis_js,
+prix_flash_eur,page_flash_publique,robinet,page_client,/flash (formulaire public),/flash (GET/POST) + /flash/statut,template_serveur,
+prix_neuf_observe_eur_m2,declaration:fiche_commune_marche,declaration,fiche_commune,fiche_commune_marche,/communes/{c}/contexte (declarations/commune/marche.yaml),,Prix du neuf — observé (€/m²) : donnée non disponible sur cette commune.
+prix_neuf_observe_eur_m2,fiche_commune_prix,robinet,fiche,Prix & tendance,/communes/{c}/contexte,json_puis_js,
+prix_neuf_observe_eur_m2,fiche_parcelle_constructibilite,robinet,fiche,Constructibilité,/parcels/{idu},json_puis_js,
+prix_neuf_observe_eur_m2,pdf_banquier,robinet,pdf,Dossier banquier,/dossier-banquier/{idu}.pdf,pdf,
+prix_neuf_vefa_acte_eur_m2,declaration:fiche_commune_marche,declaration,fiche_commune,fiche_commune_marche,/communes/{c}/contexte (declarations/commune/marche.yaml),,Prix du neuf — VEFA à l'acte (€/m²) : donnée non disponible sur cette commune.
+prix_neuf_vefa_acte_eur_m2,declaration:fiche_parcelle_marche,declaration,fiche,fiche_parcelle_marche,/parcels/{idu} (declarations/fiche/marche.yaml),,Neuf VEFA — commune : échantillon VEFA insuffisant pour une médiane servie.
+prix_neuf_vefa_acte_eur_m2,fiche_commune_prix,robinet,fiche,Prix & tendance,/communes/{c}/contexte,json_puis_js,
+prix_neuf_vefa_acte_eur_m2,outil_communes,robinet,outil,Communes,/communes,json_puis_js,
+prix_neuf_vefa_acte_eur_m2,outil_communes_comparaison,robinet,outil,Comparaison communes,/comparateur-communes,json_puis_js,
+prix_neuf_vefa_acte_eur_m2,outil_comparer_parcelles,robinet,outil,Comparer des parcelles,/comparateur-communes,json_puis_js,
+prix_refuse_saisi_eur,ecran_questionnaire_financier,robinet,page_client,Questionnaire du Financier (4 écrans),/financier/{idu}/questionnaire (GET/PUT),json_puis_js,
+prix_revente_saisi_eur,ecran_questionnaire_financier,robinet,page_client,Questionnaire du Financier (4 écrans),/financier/{idu}/questionnaire (GET/PUT),json_puis_js,
+prix_revient_eur_m2,pdf_financier,robinet,pdf,Financier,"/financier/{idu}.pdf (builder exports, questionnaire)",pdf,
+prix_sortie_bati_eur_m2,declaration:fiche_parcelle_marche,declaration,fiche,fiche_parcelle_marche,/parcels/{idu} (declarations/fiche/marche.yaml),,Ancien bâti — secteur : échantillon DVF insuffisant pour une médiane fiable.
+prix_sortie_bati_eur_m2,fiche_parcelle_marche,robinet,fiche,Marché et secteur,/parcels/{idu},json_puis_js,
+prix_sortie_saisi_eur_m2,ecran_questionnaire_financier,robinet,page_client,Questionnaire du Financier (4 écrans),/financier/{idu}/questionnaire (GET/PUT),json_puis_js,
+prix_terrain_secteur_eur_m2,declaration:fiche_parcelle_marche,declaration,fiche,fiche_parcelle_marche,/parcels/{idu} (declarations/fiche/marche.yaml),,Terrain nu — secteur : échantillon DVF insuffisant pour une médiane fiable.
+prix_terrain_secteur_eur_m2,lecture:api/carnet.py,lecture_fine,code,"Médianes sectorielles par type_bien (mediane_prix_m2, n_ventes) servies sur la page secteur du carnet — même réservoir q",src/labuse/api/carnet.py (table dvf_secteur_medianes),,
+prix_terrain_secteur_eur_m2,lecture:api/mon_secteur.py,lecture_fine,code,_terrain_section (ETUDIER-BIEN-2 Lot B) : médiane du terrain nu de la SECTION cadastrale (table pré-agrégée `dvf_secteur,src/labuse/api/mon_secteur.py (table dvf_secteur_medianes),,
+prix_terrain_secteur_eur_m2,lecture:cascade/context.py,lecture_fine,code,"dvf_sector_terrain (M79) : POINT DE CALCUL UNIQUE du €/m² terrain nu du secteur cadastral (type_bien='terrain', n_ventes",src/labuse/cascade/context.py (table dvf_secteur_medianes),,
+prix_terrain_secteur_eur_m2,lecture:flash/data.py,lecture_fine,code,_marche : médianes bâti/terrain + comparables anonymisés dans le rayon autour de la parcelle pour le bloc Marché du PDF ,src/labuse/flash/data.py (table dvf_mutations),,
+prix_terrain_secteur_eur_m2,lecture:flash/data.py,lecture_fine,code,"Médianes du secteur cadastral (toutes type_bien, étiquetées « indicateur secondaire ») dans le bloc marché du PDF Flash.",src/labuse/flash/data.py (table dvf_secteur_medianes),,
+prix_terrain_secteur_eur_m2,lecture:flash/data.py,lecture_fine,code,collecte du rapport Flash : lit surface/geom de parcels et ancre les requêtes DVF secteur (profil secteur_dossier) du bl,src/labuse/flash/data.py (table parcels),,
+prix_terrain_secteur_eur_m2,lecture:marche_service.py,lecture_fine,code,point d'appel UNIQUE du marché des documents : geom de la parcelle ancre les comparables DVF (profil banquier_adaptatif ,src/labuse/marche_service.py (table parcels),,
+prix_terrain_secteur_eur_m2,fiche_parcelle_marche,robinet,fiche,Marché et secteur,/parcels/{idu},json_puis_js,
+prix_terrain_secteur_eur_m2,pdf_argumentaire,robinet,pdf,Argumentaire,/argumentaire,pdf,
+prix_terrain_secteur_eur_m2,pdf_banquier,robinet,pdf,Dossier banquier,/dossier-banquier/{idu}.pdf,pdf,
+prix_terrain_secteur_eur_m2,pdf_flash,robinet,pdf,Rapport Flash,"/flash/telecharger (builder exports EXPORTS-2, sans §9)",pdf,
+prix_terrain_zone_eur_m2,declaration:fiche_commune_marche,declaration,fiche_commune,fiche_commune_marche,/communes/{c}/contexte (declarations/commune/marche.yaml),,Terrain nu (zone U / AU) : donnée non disponible sur cette commune.
+prix_terrain_zone_eur_m2,fiche_commune_terrain_nu,robinet,fiche,Terrain nu,/communes/{c}/contexte,json_puis_js,
+prix_vente_bailleur_saisi_eur_m2,ecran_questionnaire_financier,robinet,page_client,Questionnaire du Financier (4 écrans),/financier/{idu}/questionnaire (GET/PUT),json_puis_js,
+prod_spec_kwh_kwc,declaration:fiche_parcelle_solaire,declaration,fiche,fiche_parcelle_solaire,/parcels/{idu} (declarations/fiche/sections_restantes.yaml),,Productible solaire : non calculé sur cette toiture.
+prod_spec_kwh_kwc,lecture:faisabilite/viabilisation_build.py,lecture_fine,code,"solaire_note : POINT DE CALCUL UNIQUE du libellé productible (prod_spec_kwh_kwc PVGIS + flags ombrage), servi au mot prè",src/labuse/faisabilite/viabilisation_build.py (table parcel_solar),,
+prod_spec_kwh_kwc,fiche_parcelle_solaire,robinet,fiche,"Solaire (rosace, productible)",/parcels/{idu},json_puis_js,
+prod_spec_kwh_kwc,fiche_soleil,robinet,fiche,Fiche soleil (photo toit + rosace),/modules/prospection-solaire (détail),json_puis_js,
+prod_spec_kwh_kwc,outil_prospection_solaire,robinet,outil,Prospection solaire,/modules/prospection-solaire,json_puis_js,
+prod_spec_kwh_kwc,outil_solaire_toits,robinet,outil,Toits bien exposés,/modules/prospection-solaire,json_puis_js,
+projet_cadrage_n,projets_compteur,robinet,projets,Bandeau d'analyse (compteur projet),/projets/compteur,json_puis_js,
+projet_cadrage_n,projets_liste,robinet,projets,Projets (cadrage · retenues · vivier),/projets,json_puis_js,
+projet_retenues_n,projets_liste,robinet,projets,Projets (cadrage · retenues · vivier),/projets,json_puis_js,
+proprietaire_timeline_liste,declaration:fiche_parcelle_proprietaire,declaration,fiche,fiche_parcelle_proprietaire,/parcels/{idu} (declarations/fiche/sections_restantes.yaml),,Historique de détention : aucun millésime de détention connu.
+proprietaire_timeline_liste,lecture:api/moteurs.py,lecture_fine,code,"/moteurs/histoire/{idu} sert les changements de propriétaire PM entre millésimes (via proprietaire_historique, lecteur d",src/labuse/api/moteurs.py (table pm_proprietaires_millesimes),,
+proprietaire_timeline_liste,fiche_parcelle_proprietaire,robinet,fiche,Propriétaire,/parcels/{idu},json_puis_js,
+pylone_couche,declaration:couche_pylone,declaration,couche,couche_pylone,/map/tiles/pylone/{z}/{x}/{y}.pbf (declarations/couches/famille_transport.yaml),,Pylônes : aucun pylône électrique dans l'emprise visible.
+pylone_couche,couche_pylone,robinet,couche,Pylônes électriques,/map/tiles/pylone/{z}/{x}/{y}.pbf,tuiles,
+qpv_n,declaration:fiche_commune_regles,declaration,fiche_commune,fiche_commune_regles,/communes/{c}/contexte (declarations/commune/regles.yaml),,QPV : donnée non disponible sur cette commune.
+qpv_n,fiche_commune_qpv,robinet,fiche,Quartiers prioritaires,/communes/{c}/contexte,json_puis_js,
+radar_annonces_liste,declaration:fiche_parcelle_marche,declaration,fiche,fiche_parcelle_marche,/parcels/{idu} (declarations/fiche/marche.yaml),,Annonces en cours (Radar) : aucune annonce active repérée dans le secteur.
+radar_annonces_liste,lecture:api/mon_secteur.py,lecture_fine,code,"Lit les biens actifs rattachés (b.idu, statut, a_qualifier) dans un rayon 1500 m autour de la parcelle pour la liste d'a",src/labuse/api/mon_secteur.py (table pige_biens),,
+radar_annonces_liste,lecture:api/mon_secteur.py,lecture_fine,code,Lit f.prix/surfaces/valide_at des annonces autour de la parcelle pour la liste annonces_radar de l'outil Mon secteur (pr,src/labuse/api/mon_secteur.py (table pige_faits),,
+radar_annonces_liste,fiche_parcelle_marche,robinet,fiche,Marché et secteur,/parcels/{idu},json_puis_js,
+rang_tier,declaration:fiche_parcelle_score,declaration,fiche,fiche_parcelle_score,/parcels/{idu} (declarations/fiche/petites_sections.yaml),,Rang : non calculé pour cette parcelle.
+rang_tier,fiche_parcelle_score,robinet,fiche,Score d'opportunité (tier),/parcels/{idu},json_puis_js,
+redevance_archeologie_eur,pdf_financier,robinet,pdf,Financier,"/financier/{idu}.pdf (builder exports, questionnaire)",pdf,
+regime_tva_saisi,ecran_questionnaire_financier,robinet,page_client,Questionnaire du Financier (4 écrans),/financier/{idu}/questionnaire (GET/PUT),json_puis_js,
+reglement_plu_bloc,declaration:fiche_parcelle_urbanisme,declaration,fiche,fiche_parcelle_urbanisme,/parcels/{idu} (declarations/fiche/sections_restantes.yaml),,Règlement de la zone : extraits non disponibles pour cette zone.
+reglement_plu_bloc,fiche_parcelle_urbanisme,robinet,fiche,Règlement d'urbanisme (zones + extraits),/parcels/{idu},json_puis_js,
+revenu_approche_eur,lecture:api/app.py,lecture_fine,code,"revenu = ind_snv/ind du carreau au centroïde (source UNIQUE fiche + étude de zone, jamais un 2e revenu divergent) — lign",src/labuse/api/app.py (table filosofi_carreaux_200m),,
+revenu_approche_eur,outil_etude_zone,robinet,outil,Étude de zone,/modules/etude-zone,json_puis_js,
+rnb_batiments_liste,declaration:fiche_parcelle_le_bien,declaration,fiche,fiche_parcelle_le_bien,/parcels/{idu} (declarations/fiche/le_bien.yaml),,Identifiants RNB : aucun bâtiment rattaché au RNB sur cette parcelle.
+rnb_batiments_liste,fiche_parcelle_le_bien,robinet,fiche,Le bien,/parcels/{idu},json_puis_js,
+rpg_couche,couche_rpg,robinet,couche,Cultures déclarées (RPG),/map/tiles/safer/{z}/{x}/{y}.pbf,tuiles,
+rtaa_exigences,declaration:fiche_parcelle_constructibilite,declaration,fiche,fiche_parcelle_constructibilite,/parcels/{idu} (declarations/fiche/sections_restantes.yaml),,RTAA DOM : aucune exigence de conception à rappeler ici.
+rtaa_exigences,fiche_parcelle_constructibilite,robinet,fiche,Constructibilité,/parcels/{idu},json_puis_js,
+rtaa_exigences,outil_faisabilite,robinet,outil,Faisabilité,/modules/faisabilite/{idu},json_puis_js,
+run_label_servi,admin_flux_circuit,robinet,admin,Données › Circuit (fourmilière + Radar + cohérence),/admin/flux + /admin/flux/runs,json_puis_js,
+run_label_servi,page_accueil_chiffres,robinet,page_client,Accueil — bloc chiffres,/accueil/chiffres (cache 1 h),json_puis_js,
+sar_divergence,declaration:fiche_parcelle_urbanisme_reste,declaration,fiche,fiche_parcelle_urbanisme_reste,/parcels/{idu} (declarations/fiche/reste_a_declarer.yaml),,Aucune divergence SAR indiquée.
+sar_divergence,fiche_parcelle_risques,robinet,fiche,Risques et protections,/parcels/{idu},json_puis_js,
+scenario_saisi,ecran_questionnaire_financier,robinet,page_client,Questionnaire du Financier (4 écrans),/financier/{idu}/questionnaire (GET/PUT),json_puis_js,
+scot_couche,declaration:couche_scot,declaration,couche,couche_scot,/map/tiles/scot/{z}/{x}/{y}.pbf (declarations/couches/famille_urbanisme.yaml),,SCOT : commune hors d'un périmètre de SCOT publié au GPU.
+scot_couche,couche_scot,robinet,couche,SCOT — périmètre,/map/tiles/scot/{z}/{x}/{y}.pbf,tuiles,
+scot_nom_date,declaration:fiche_commune_regles,declaration,fiche_commune,fiche_commune_regles,/communes/{c}/contexte (declarations/commune/regles.yaml),,SCOT (nom + approbation) : commune hors d'un périmètre de SCOT publié au GPU.
+scot_nom_date,fiche_commune_regles_urbanisme,robinet,fiche,Règles d'urbanisme,/communes/{c}/contexte,json_puis_js,
+scot_parcelle,declaration:fiche_parcelle_dispositifs,declaration,fiche,fiche_parcelle_dispositifs,/parcels/{idu} (declarations/fiche/sections_restantes.yaml),,SCOT : la parcelle n'est couverte par aucun schéma de cohérence territoriale.
+scot_parcelle,fiche_parcelle_droit_sols,robinet,fiche,Dispositifs et périmètres (droit des sols),/parcels/{idu} (clé dispositifs),json_puis_js,
+sdp_residuelle_m2,declaration:fiche_entete_tuiles,declaration,fiche,fiche_entete_tuiles,/parcels/{idu} (declarations/fiche/entete_tuiles.yaml),,SDP restante : zone non constructible ou plus de potentiel résiduel.
+sdp_residuelle_m2,fiche_parcelle_constructibilite,robinet,fiche,Constructibilité,/parcels/{idu},json_puis_js,
+sdp_residuelle_m2,outil_blocs_fonciers,robinet,outil,Blocs fonciers,/modules/blocs,json_puis_js,
+sdp_residuelle_m2,outil_densifier,robinet,outil,Densifier l'existant,/modules/renouvellement,json_puis_js,
+sdp_residuelle_m2,outil_faisabilite,robinet,outil,Faisabilité,/modules/faisabilite/{idu},json_puis_js,
+sdp_residuelle_m2,outil_successions,robinet,outil,Successions à venir,/modules/successions,json_puis_js,
+sdp_residuelle_m2,pdf_dossier_expert,robinet,pdf,Dossier parcelle,/dossier/{idu}.pdf (builder exports EXPORTS-2),pdf,
+secteur_lieu_dit,declaration:fiche_parcelle_identite_reste,declaration,fiche,fiche_parcelle_identite_reste,/parcels/{idu} (declarations/fiche/reste_a_declarer.yaml),,Aucun lieu-dit BD NYME dans le rayon — secteur non nommé.
+secteur_lieu_dit,fiche_parcelle_entete,robinet,fiche,"En-tête (adresse, géométrie)",/parcels/{idu},json_puis_js,
+sensibilite_cout_construction,pdf_financier,robinet,pdf,Financier,"/financier/{idu}.pdf (builder exports, questionnaire)",pdf,
+sensibilite_prix_sortie,pdf_financier,robinet,pdf,Financier,"/financier/{idu}.pdf (builder exports, questionnaire)",pdf,
+seuil_rentabilite_eur,pdf_financier,robinet,pdf,Financier,"/financier/{idu}.pdf (builder exports, questionnaire)",pdf,
+simulplu_resultat,outil_plu_simuler,robinet,outil,Simuler un changement,/moteurs/simulplu/zones,json_puis_js,
+sis_classe,declaration:fiche_parcelle_risques,declaration,fiche,fiche_parcelle_risques,/parcels/{idu} (declarations/fiche/risques.yaml),,Sols pollués (SIS) : la parcelle n'est dans aucun secteur d'information sur les sols.
+sis_classe,fiche_parcelle_sols,robinet,fiche,Sols (SIS / CASIAS),/parcels/{idu} (clé sols),json_puis_js,
+sis_couche,declaration:couche_sis,declaration,couche,couche_sis,/map/tiles/sis/{z}/{x}/{y}.pbf (declarations/couches/famille_risques.yaml),,SIS : la parcelle n'est dans aucun secteur d'information sur les sols.
+sis_couche,couche_sis,robinet,couche,Secteurs d'information sur les sols,/map/tiles/sis/{z}/{x}/{y}.pbf,tuiles,
+sols_parcelle,declaration:fiche_parcelle_risques_reste,declaration,fiche,fiche_parcelle_risques_reste,/parcels/{idu} (declarations/fiche/reste_a_declarer.yaml),,Aucun secteur d'information sur les sols ni site CASIAS à proximité.
+sols_parcelle,fiche_parcelle_sols,robinet,fiche,Sols (SIS / CASIAS),/parcels/{idu} (clé sols),json_puis_js,
+stationnement_type_saisi,ecran_questionnaire_financier,robinet,page_client,Questionnaire du Financier (4 écrans),/financier/{idu}/questionnaire (GET/PUT),json_puis_js,
+statut_plu,declaration:fiche_commune_regles,declaration,fiche_commune,fiche_commune_regles,/communes/{c}/contexte (declarations/commune/regles.yaml),,Règles d'urbanisme (statut) : donnée non disponible sur cette commune.
+statut_plu,declaration:fiche_parcelle_urbanisme,declaration,fiche,fiche_parcelle_urbanisme,/parcels/{idu} (declarations/fiche/sections_restantes.yaml),,PLU : document d'urbanisme non résolu pour cette commune.
+statut_plu,fiche_commune_regles_urbanisme,robinet,fiche,Règles d'urbanisme,/communes/{c}/contexte,json_puis_js,
+stock_opportunites,declaration:fiche_commune_construction,declaration,fiche_commune,fiche_commune_construction,/communes/{c}/contexte (declarations/commune/construction.yaml),,Stock d'opportunités (brûlantes + chaudes) : donnée non disponible sur cette commune.
+stock_opportunites,fiche_commune_foncier,robinet,fiche,Foncier repéré,/communes/{c}/contexte,json_puis_js,
+stock_opportunites,outil_communes,robinet,outil,Communes,/communes,json_puis_js,
+stock_opportunites,outil_communes_comparaison,robinet,outil,Comparaison communes,/comparateur-communes,json_puis_js,
+stock_opportunites,outil_comparer_parcelles,robinet,outil,Comparer des parcelles,/comparateur-communes,json_puis_js,
+sup_couche,declaration:couche_sup,declaration,couche,couche_sup,/map/tiles/sup/{z}/{x}/{y}.pbf (declarations/couches/famille_urbanisme.yaml),,SUP : parcelle hors servitude d'utilité publique dans l'emprise visible.
+sup_couche,couche_sup,robinet,couche,Servitudes d'utilité publique,/map/tiles/sup/{z}/{x}/{y}.pbf,tuiles,
+surface_libre_sol_m2,declaration:fiche_parcelle_le_bien,declaration,fiche,fiche_parcelle_le_bien,/parcels/{idu} (declarations/fiche/le_bien.yaml),,Surface au sol libre : non calculable (emprise ou surface parcelle manquante).
+surface_libre_sol_m2,fiche_parcelle_le_bien,robinet,fiche,Le bien,/parcels/{idu},json_puis_js,
+surface_parcelle_m2,declaration:fiche_entete_tuiles,declaration,fiche,fiche_entete_tuiles,/parcels/{idu} (declarations/fiche/entete_tuiles.yaml),,Surface : contenance cadastrale non disponible pour cette parcelle.
+surface_parcelle_m2,copilote_fiche_parcelle,robinet,copilote,Données d'une parcelle (IDU),/api/copilote-v2/ask,texte_llm,
+surface_parcelle_m2,outil_etudier_bien,robinet,outil,Étudier un bien,/modules/scoreur-adresse,json_puis_js,
+surface_plancher_m2,declaration:fiche_parcelle_potentiel_reste,declaration,fiche,fiche_parcelle_potentiel_reste,/parcels/{idu} (declarations/fiche/reste_a_declarer.yaml),,Surface de plancher non calculable (zone non constructible ou capacité nulle).
+surface_plancher_m2,fiche_parcelle_constructibilite,robinet,fiche,Constructibilité,/parcels/{idu},json_puis_js,
+surface_vendable_m2,declaration:fiche_parcelle_potentiel_reste,declaration,fiche,fiche_parcelle_potentiel_reste,/parcels/{idu} (declarations/fiche/reste_a_declarer.yaml),,Surface vendable non calculable pour cette parcelle.
+surface_vendable_m2,fiche_parcelle_constructibilite,robinet,fiche,Constructibilité,/parcels/{idu},json_puis_js,
+surface_vendable_m2,pdf_dossier_expert,robinet,pdf,Dossier parcelle,/dossier/{idu}.pdf (builder exports EXPORTS-2),pdf,
+taux_apport_saisi_pct,ecran_questionnaire_financier,robinet,page_client,Questionnaire du Financier (4 écrans),/financier/{idu}/questionnaire (GET/PUT),json_puis_js,
+taux_lls_pct,declaration:fiche_commune_territoire,declaration,fiche_commune,fiche_commune_territoire,/communes/{c}/contexte (declarations/commune/territoire.yaml),,Taux LLS : donnée non disponible sur cette commune.
+taux_lls_pct,lecture:api/app.py,lecture_fine,code,_compute_commune_contexte + signaux nommés : taux_lls vs objectif_pct servis sur le bloc SRU de la fiche commune (casse-,src/labuse/api/app.py (table commune_contexte_sru),,
+taux_lls_pct,lecture:flash/data.py,lecture_fine,code,"bloc leviers.sru du PDF Flash : statut, taux_lls, objectif_pct, déficit LLS dérivé, millésime ; pdf_flash n'est pas list",src/labuse/flash/data.py (table commune_contexte_sru),,
+taux_lls_pct,copilote_stats_commune,robinet,copilote,"Contexte d'une commune (SRU, marché)",/api/copilote-v2/ask,texte_llm,
+taux_lls_pct,fiche_commune_sru,robinet,fiche,Logement social — SRU,/communes/{c}/contexte,json_puis_js,
+taxe_amenagement_communale_pct,declaration:fiche_commune_regles,declaration,fiche_commune,fiche_commune_regles,/communes/{c}/contexte (declarations/commune/regles.yaml),,Taxe d'aménagement (part communale) : donnée non disponible sur cette commune.
+taxe_amenagement_communale_pct,fiche_commune_fiscalite,robinet,fiche,Taxe foncière (REI),/communes/{commune} (clé fiscalite),json_puis_js,
+taxe_amenagement_estimee_eur,declaration:fiche_parcelle_constructibilite,declaration,fiche,fiche_parcelle_constructibilite,/parcels/{idu} (declarations/fiche/sections_restantes.yaml),,Taxe d'aménagement : taux communal non renseigné pour cette commune.
+taxe_amenagement_estimee_eur,fiche_parcelle_constructibilite,robinet,fiche,Constructibilité,/parcels/{idu},json_puis_js,
+taxe_amenagement_eur,outil_taxe_amenagement,robinet,outil,Taxe d'aménagement,/modules/taxe-amenagement,json_puis_js,
+taxe_amenagement_saisi_eur,ecran_questionnaire_financier,robinet,page_client,Questionnaire du Financier (4 écrans),/financier/{idu}/questionnaire (GET/PUT),json_puis_js,
+tcsp_couche,declaration:couche_tcsp,declaration,couche,couche_tcsp,/map/tiles/tcsp/{z}/{x}/{y}.pbf (declarations/couches/famille_transport.yaml),,TCSP : aucun transport en site propre dans l'emprise visible.
+tcsp_couche,couche_tcsp,robinet,couche,Axe de transport structurant,/map/tiles/tcsp/{z}/{x}/{y}.pbf,tuiles,
+tcsp_stationnement_allege,declaration:fiche_parcelle_reseaux_reste,declaration,fiche,fiche_parcelle_reseaux_reste,/parcels/{idu} (declarations/fiche/reste_a_declarer.yaml),,Hors rayon de 800 m d'une station TCSP.
+tcsp_stationnement_allege,fiche_parcelle_reseaux,robinet,fiche,Réseaux et accès,/parcels/{idu},json_puis_js,
+tfpb_taux_pct,declaration:fiche_commune_regles,declaration,fiche_commune,fiche_commune_regles,/communes/{c}/contexte (declarations/commune/regles.yaml),,Taxe foncière (taux TFPB) : donnée non disponible sur cette commune.
+tfpb_taux_pct,declaration:fiche_entete_tuiles,declaration,fiche,fiche_entete_tuiles,/parcels/{idu} (declarations/fiche/entete_tuiles.yaml),,Taxe foncière : taux non disponible pour cette commune.
+tfpb_taux_pct,declaration:fiche_parcelle_dispositifs,declaration,fiche,fiche_parcelle_dispositifs,/parcels/{idu} (declarations/fiche/sections_restantes.yaml),,Taxe foncière : taux non disponible pour cette commune.
+tfpb_taux_pct,fiche_commune_fiscalite,robinet,fiche,Taxe foncière (REI),/communes/{commune} (clé fiscalite),json_puis_js,
+tfpnb_taux_pct,declaration:fiche_commune_regles,declaration,fiche_commune,fiche_commune_regles,/communes/{c}/contexte (declarations/commune/regles.yaml),,Taxe foncière non bâti (taux TFPNB) : donnée non disponible sur cette commune.
+tfpnb_taux_pct,fiche_commune_fiscalite,robinet,fiche,Taxe foncière (REI),/communes/{commune} (clé fiscalite),json_puis_js,
+tier_opportunite,declaration:fiche_parcelle_score,declaration,fiche,fiche_parcelle_score,/parcels/{idu} (declarations/fiche/petites_sections.yaml),,Classement : parcelle hors run servi.
+tier_opportunite,lecture:cascade/context.py,lecture_fine,code,"Médianes DVF par rayon (n, valeur, €/m²) pré-calculées comme signaux de la cascade d'évaluation → classement servi (tier",src/labuse/cascade/context.py (table dvf_mutations),,
+tier_opportunite,lecture:cascade/context.py,lecture_fine,code,EXISTS(mutation DVF sur la parcelle) = signal renouvellement du contexte de cascade → classement servi (tier).,src/labuse/cascade/context.py (table dvf_mutations_parcelle),,
+tier_opportunite,lecture:cascade/context.py,lecture_fine,code,sitadel_near : permis rattachés (idu_codes) et à proximité (rayon/fenêtre/types) comme signaux de la cascade d'évaluatio,src/labuse/cascade/context.py (table sitadel_permits),,
+tier_opportunite,lecture:faisabilite/bati_revele.py,lecture_fine,code,Lit l'emprise CoSIA par parcelle pour peupler parcel_bati_revele → tier déclassé `declasse_bati_revele` avec motif daté ,src/labuse/faisabilite/bati_revele.py (table p_model_bati_cosia),,
+tier_opportunite,couche_verdict,robinet,couche,Verdict · Classement servi,tuiles MVT (run servi),tuiles,
+tier_opportunite,fiche_parcelle_score,robinet,fiche,Score d'opportunité (tier),/parcels/{idu},json_puis_js,
+tier_opportunite,outil_etudier_bien,robinet,outil,Étudier un bien,/modules/scoreur-adresse,json_puis_js,
+tier_opportunite,pdf_dossier_expert,robinet,pdf,Dossier parcelle,/dossier/{idu}.pdf (builder exports EXPORTS-2),pdf,
+tier_opportunite,pdf_flash,robinet,pdf,Rapport Flash,"/flash/telecharger (builder exports EXPORTS-2, sans §9)",pdf,
+trafic_mja,outil_etude_zone,robinet,outil,Étude de zone,/modules/etude-zone,json_puis_js,
+tranche_prix_vefa,couche_vefa,robinet,couche,Prix du logement neuf (VEFA),/map/tiles/vefa_neuf/{z}/{x}/{y}.pbf,tuiles,
+transport_couche,declaration:couche_telepherique,declaration,couche,couche_telepherique,/map/tiles/telepherique/{z}/{x}/{y}.pbf (declarations/couches/famille_transport.yaml),,Téléphérique : hors emprise du réseau câblé.
+transport_couche,declaration:couche_transport_arret,declaration,couche,couche_transport_arret,/map/tiles/transport_arret/{z}/{x}/{y}.pbf (declarations/couches/famille_transport.yaml),,Arrêts de bus : aucun arrêt dans l'emprise visible (zoom ≥ 11).
+transport_couche,declaration:couche_transport_ligne,declaration,couche,couche_transport_ligne,/map/tiles/transport_ligne/{z}/{x}/{y}.pbf (declarations/couches/famille_transport.yaml),,Lignes de bus : aucun tracé dans l'emprise visible.
+transport_couche,couche_transport,robinet,couche,Transport public,/map/tiles/transport_ligne/{z}/{x}/{y}.pbf,tuiles,
+travaux_revente_saisi_eur,ecran_questionnaire_financier,robinet,page_client,Questionnaire du Financier (4 écrans),/financier/{idu}/questionnaire (GET/PUT),json_puis_js,
+tuiles_ortho_1950_1965,fond_ortho_1950,robinet,fond,1950-1965,WMTS ORTHOIMAGERY.ORTHOPHOTOS.1950-1965,tuiles,
+tuiles_ortho_2000_2005,fond_ortho_2000,robinet,fond,2000-2005,WMTS ORTHOIMAGERY.ORTHOPHOTOS2000-2005,tuiles,
+tuiles_ortho_2006_2010,fond_ortho_2006,robinet,fond,2006-2010,WMTS ORTHOIMAGERY.ORTHOPHOTOS2006-2010,tuiles,
+tuiles_ortho_2011_2015,fond_ortho_2011,robinet,fond,2011-2015,WMTS ORTHOIMAGERY.ORTHOPHOTOS2011-2015,tuiles,
+tuiles_ortho_2016_2020,fond_ortho_2016,robinet,fond,2016-2020,WMTS ORTHOIMAGERY.ORTHOPHOTOS2016-2020,tuiles,
+tuiles_ortho_2021_2023,fond_ortho_2021,robinet,fond,2021-2023,WMTS ORTHOIMAGERY.ORTHOPHOTOS2021-2023,tuiles,
+tuiles_ortho_2025,fond_ortho_actuelle,robinet,fond,Actuelle · Ortho Express 2025,WMTS ORTHOIMAGERY.ORTHOPHOTOS.ORTHO-EXPRESS.2025,tuiles,
+tuiles_plan_ign,fond_plan_ign,robinet,fond,Plan IGN v2,WMTS GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2,tuiles,
+type_proprietaire,declaration:fiche_parcelle_proprietaire,declaration,fiche,fiche_parcelle_proprietaire,/parcels/{idu} (declarations/fiche/sections_restantes.yaml),,Type de propriétaire : non déterminé.
+type_proprietaire,lecture:api/enrichment.py,lecture_fine,code,owner() lit groupe/forme_juridique/denomination/millesime pour classifier et servir la catégorie de propriétaire (PM nom,src/labuse/api/enrichment.py (table parcelle_personne_morale),,
+type_proprietaire,lecture:api/moteurs.py,lecture_fine,code,Assemblage et assemblage/voisines lisent denomination/siren par idu pour servir le propriétaire sous la règle privacy (P,src/labuse/api/moteurs.py (table parcelle_personne_morale),,
+type_proprietaire,lecture:api/served_cascade.py,lecture_fine,code,"Enrichit la couche « proprietaire » de la cascade servie : quand le détail dit « non renseigné », lit la dénomination PM",src/labuse/api/served_cascade.py (table parcelle_personne_morale),,
+type_proprietaire,fiche_parcelle_proprietaire,robinet,fiche,Propriétaire,/parcels/{idu},json_puis_js,
+type_proprietaire,outil_blocs_fonciers,robinet,outil,Blocs fonciers,/modules/blocs,json_puis_js,
+type_proprietaire,outil_successions,robinet,outil,Successions à venir,/modules/successions,json_puis_js,
+typologie_moyenne_saisi,ecran_questionnaire_financier,robinet,page_client,Questionnaire du Financier (4 écrans),/financier/{idu}/questionnaire (GET/PUT),json_puis_js,
+usage_outil_n,admin_produit,robinet,admin,Données produit (usage outils + retours),/admin/produit,json_puis_js,
+usage_sol_dominant,declaration:fiche_parcelle_le_bien,declaration,fiche,fiche_parcelle_le_bien,/parcels/{idu} (declarations/fiche/le_bien.yaml),,Usage du sol dominant : hors couverture OCS GE pour cette parcelle.
+usage_sol_dominant,fiche_parcelle_le_bien,robinet,fiche,Le bien,/parcels/{idu},json_puis_js,
+vacance_pct,declaration:fiche_commune_territoire,declaration,fiche_commune,fiche_commune_territoire,/communes/{c}/contexte (declarations/commune/territoire.yaml),,Vacance : donnée non disponible sur cette commune.
+vacance_pct,lecture:api/app.py,lecture_fine,code,même lecture insee_log : la vacance des logements servie sur le bloc population de la fiche commune.,src/labuse/api/app.py (table commune_insee_logement),,
+vacance_pct,fiche_commune_population,robinet,fiche,Population & logement,/communes/{c}/contexte,json_puis_js,
+vefa_couche,declaration:couche_vefa_neuf,declaration,couche,couche_vefa_neuf,/map/tiles/vefa_neuf/{z}/{x}/{y}.pbf (declarations/couches/famille_marche.yaml),,Prix neuf VEFA : commune sans vente neuve enregistrée dans l'emprise visible.
+vefa_couche,couche_vefa,robinet,couche,Prix du logement neuf (VEFA),/map/tiles/vefa_neuf/{z}/{x}/{y}.pbf,tuiles,
+velocite_delai_median_mois,declaration:fiche_commune_construction,declaration,fiche_commune,fiche_commune_construction,/communes/{c}/contexte (declarations/commune/construction.yaml),,"Vélocité admin (délai médian dépôt→autorisation, mois) : donnée non disponible sur cette commune."
+velocite_delai_median_mois,copilote_delais_instruction,robinet,copilote,Délai médian d'instruction (commune),/api/copilote-v2/ask,texte_llm,
+velocite_delai_median_mois,fiche_commune_permis,robinet,fiche,Permis & délais,/communes/{c}/contexte,json_puis_js,
+velocite_delai_median_mois,outil_communes,robinet,outil,Communes,/communes,json_puis_js,
+velocite_delai_median_mois,outil_communes_comparaison,robinet,outil,Comparaison communes,/comparateur-communes,json_puis_js,
+velocite_delai_median_mois,outil_comparer_parcelles,robinet,outil,Comparer des parcelles,/comparateur-communes,json_puis_js,
+velocite_delai_median_mois,outil_permis,robinet,outil,Permis,/modules/permis,json_puis_js,
+velocite_delai_median_mois,outil_permis_radar,robinet,outil,Radar permis,/modules/permis,json_puis_js,
+ventes_100m_n,declaration:fiche_parcelle_marche_reste,declaration,fiche,fiche_parcelle_marche_reste,/parcels/{idu} (declarations/fiche/reste_a_declarer.yaml),,Aucune vente DVF recensée à moins de 100 m sur 36 mois.
+ventes_100m_n,fiche_parcelle_marche,robinet,fiche,Marché et secteur,/parcels/{idu},json_puis_js,
+ventes_ecartees_n,declaration:fiche_parcelle_marche,declaration,fiche,fiche_parcelle_marche,/parcels/{idu} (declarations/fiche/marche.yaml),,Ventes écartées : aucune vente écartée (toutes vraisemblables).
+ventes_ecartees_n,fiche_parcelle_marche,robinet,fiche,Marché et secteur,/parcels/{idu},json_puis_js,
+ventes_retenues_n,declaration:fiche_parcelle_marche,declaration,fiche,fiche_parcelle_marche,/parcels/{idu} (declarations/fiche/marche.yaml),,Ventes retenues : aucune vente DVF exploitable dans le secteur.
+ventes_retenues_n,fiche_parcelle_marche,robinet,fiche,Marché et secteur,/parcels/{idu},json_puis_js,
+verdict_couche,couche_verdict,robinet,couche,Verdict · Classement servi,tuiles MVT (run servi),tuiles,
+verdict_icd,declaration:fiche_parcelle_confiance,declaration,fiche,fiche_parcelle_confiance,/parcels/{idu} (declarations/fiche/sections_restantes.yaml),,Indice de confiance : non calculé.
+verdict_icd,fiche_parcelle_confiance,robinet,fiche,Confiance données,/parcels/{idu},json_puis_js,
+viabilisation_verdict,declaration:fiche_parcelle_reseaux,declaration,fiche,fiche_parcelle_reseaux,/parcels/{idu} (declarations/fiche/reseaux.yaml),,Viabilisation : non évaluée sur cette parcelle.
+viabilisation_verdict,fiche_parcelle_reseaux,robinet,fiche,Réseaux et accès,/parcels/{idu},json_puis_js,
+voisinage_100m_liste,declaration:fiche_parcelle_autour,declaration,fiche,fiche_parcelle_autour,/parcels/{idu} (declarations/fiche/sections_restantes.yaml),,Ventes voisines : aucune vente à moins de 100 m.
+voisinage_100m_liste,fiche_parcelle_autour,robinet,fiche,Autour de cette parcelle,/parcels/{idu} + /parcels/{idu}/zone,json_puis_js,
+vrd_saisi_eur_m2,ecran_questionnaire_financier,robinet,page_client,Questionnaire du Financier (4 écrans),/financier/{idu}/questionnaire (GET/PUT),json_puis_js,
+zan_evolution_commune,declaration:fiche_commune_construction,declaration,fiche_commune,fiche_commune_construction,/communes/{c}/contexte (declarations/commune/construction.yaml),,Artificialisation 2017→2022 (OCS GE) : donnée non disponible sur cette commune.
+zan_evolution_commune,fiche_commune_zan,robinet,fiche,Enveloppe ZAN,/communes/{c}/contexte,json_puis_js,
+zan_reste_ha,declaration:fiche_commune_construction,declaration,fiche_commune,fiche_commune_construction,/communes/{c}/contexte (declarations/commune/construction.yaml),,Enveloppe ZAN (reste) : donnée non disponible sur cette commune.
+zan_reste_ha,lecture:api/app.py,lecture_fine,code,"_zan_horizon_ans : reste = conso_2011_2021×0,5 − conso_2021_2024 et rythme → années avant épuisement de l'enveloppe, sig",src/labuse/api/app.py (table commune_conso_enaf),,
+zan_reste_ha,fiche_commune_zan,robinet,fiche,Enveloppe ZAN,/communes/{c}/contexte,json_puis_js,
+zfang_regime_commune,declaration:fiche_commune_regles,declaration,fiche_commune,fiche_commune_regles,/communes/{c}/contexte (declarations/commune/regles.yaml),,ZFANG — régime de la commune : donnée non disponible sur cette commune.
+zfang_regime_commune,fiche_commune_zfang_frr,robinet,fiche,ZFANG / FRR (dispositifs fiscaux),/communes/{commune} (clé zfang_frr),json_puis_js,
+znieff_couche,declaration:couche_znieff,declaration,couche,couche_znieff,/map/tiles/znieff/{z}/{x}/{y}.pbf (declarations/couches/famille_nature.yaml),,ZNIEFF : parcelle hors zone d'inventaire dans l'emprise visible.
+znieff_couche,couche_znieff,robinet,couche,ZNIEFF — type I & II,/map/tiles/znieff/{z}/{x}/{y}.pbf,tuiles,
+zonage_abc_logement,declaration:fiche_commune_regles,declaration,fiche_commune,fiche_commune_regles,/communes/{c}/contexte (declarations/commune/regles.yaml),,Zonage A/B/C (logement) : donnée non disponible sur cette commune.
+zonage_abc_logement,fiche_commune_zonage_abc,robinet,fiche,Zonage A/B/C (logement),/communes/{commune} (clé zonage_abc),json_puis_js,
+zonage_plu_couche,declaration:couche_zonage,declaration,couche,couche_zonage,/map/tiles/plu_gpu_zone/{z}/{x}/{y}.pbf (declarations/couches/famille_urbanisme.yaml),,Zonage PLU : parcelle hors zone GPU dans l'emprise visible (Saint-Philippe : PLU non publié au GPU).
+zonage_plu_couche,couche_zonage_plu,robinet,couche,Zonage PLU (par type),/map/tiles/plu_gpu_zone/{z}/{x}/{y}.pbf,tuiles,
+zonage_plu_couche,pdf_lettre_zonage,robinet,pdf,Lettre de zonage,/pdf (courrier),pdf,
+zonage_plu_couche,pdf_pre_dossier_pc,robinet,pdf,Pré-dossier PC (ZIP CERFA 13406*17),/pre-dossier/zip,pdf,
+zone_humide_couche,declaration:couche_zone_humide,declaration,couche,couche_zone_humide,/map/tiles/zone_humide/{z}/{x}/{y}.pbf (declarations/couches/famille_nature.yaml),,Zones humides : aucun secteur inventorié dans l'emprise visible (couverture partielle).
+zone_humide_couche,couche_zone_humide,robinet,couche,Zones humides,/map/tiles/zone_humide/{z}/{x}/{y}.pbf,tuiles,
+zone_plu_famille,declaration:fiche_entete_tuiles,declaration,fiche,fiche_entete_tuiles,/parcels/{idu} (declarations/fiche/entete_tuiles.yaml),,Zone : non publié au GPU pour cette commune.
+zone_plu_famille,couche_zonage_plu,robinet,couche,Zonage PLU (par type),/map/tiles/plu_gpu_zone/{z}/{x}/{y}.pbf,tuiles,
+zone_plu_famille,fiche_parcelle_urbanisme,robinet,fiche,Règlement d'urbanisme (zones + extraits),/parcels/{idu},json_puis_js,
+zone_plu_famille,pdf_lettre_zonage,robinet,pdf,Lettre de zonage,/pdf (courrier),pdf,
+zone_plu_famille,pdf_pre_dossier_pc,robinet,pdf,Pré-dossier PC (ZIP CERFA 13406*17),/pre-dossier/zip,pdf,
