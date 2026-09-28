@@ -904,7 +904,10 @@ def _verdict_factuel(sec_id: str, valeurs: dict[str, Valeur]) -> tuple[str, str,
         iq = _v(valeurs, "iris_quartier")
         if isinstance(iq, dict) and iq.get("habitants") is not None:
             nom = iq.get("nom") or "le quartier IRIS"
-            return (esc(f"{nom} — {groupe(iq['habitants'])} habitants") + ".", "neutral", "iris_quartier")
+            # COHERENCE-FIX-1 (lot E) — le millésime du recensement accompagne le chiffre (« vrai
+            # hier, faux aujourd'hui, sans date pour le dire » — plus jamais).
+            mil = f" ({iq['millesime']})" if iq.get("millesime") else ""
+            return (esc(f"{nom} — {groupe(iq['habitants'])} habitants{mil}") + ".", "neutral", "iris_quartier")
         return None
     return None
 

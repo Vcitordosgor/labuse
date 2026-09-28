@@ -295,6 +295,8 @@ export interface ContexteCommune {
     habitants: number | null; menages: number | null; niveau_vie_moyen_eur: number | null
     // COMMUNE-FIX-1 (A1) — population LÉGALE INSEE (municipale) : millésime + population totale
     habitants_millesime?: string | null; habitants_pop_totale?: number | null; menages_millesime?: string | null
+    // COHERENCE-FIX-1 (lot E) — étiquette prête (« Population légale 2023 (INSEE) »), année comprise.
+    habitants_etiquette?: string | null
     logements: number | null; vacants: number | null; vacance_pct: number | null; source: string
     // DONNEES-1 lot 2.4 — part du parc construit avant 1991 (RP2022 ACHL). null = non ingéré.
     parc_ancien_pct?: number | null
