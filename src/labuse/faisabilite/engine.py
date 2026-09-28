@@ -435,6 +435,12 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
                           f"(√{surface_m2:.0f}−{recul_v:g}−{recul_l:g})×(√{surface_m2:.0f}−2×{recul_l:g})",
                           f"~{emprise:.0f} m²", f"{rv_src} ; {rl_src}", prov=_prov_recul))
 
+    # FAISABILITE-3 (Vic 27/09) — la ZONE D'IMPLANTATION (assiette après reculs, AVANT le plafond
+    # d'emprise au sol) : c'est l'étape 1 de la maquette (« Zone d'implantation après reculs »),
+    # distincte de l'étape 2 (« Emprise au sol max »). Snapshot AVANT la réassignation par le CES /
+    # la pleine terre — n'altère aucun calcul (lecture seule pour l'affichage du panneau).
+    _zone_impl_m2 = emprise
+
     # emprise % réglementée (ex. Usdu)
     if _is_num(rules.emprise_sol_pct):
         cap = surface_m2 * float(rules.emprise_sol_pct) / 100
@@ -701,6 +707,12 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
               # 3.D — hauteur du gabarit (niveaux × hauteur d'étage), pour l'extrusion 3D.
               "hauteur_m": round(niveaux * hyp.etage_m, 1),
               "hauteur_etage_m": hyp.etage_m,
+              # FAISABILITE-3 — étape 1 (zone d'implantation après reculs, avant plafond CES) et
+              # étape 2 (emprise au sol MAX réglementée = surface × CES % ; None si non réglementée →
+              # le panneau dit « bornée par les reculs »). Affichage seul — aucun calcul n'en dépend.
+              "zone_implantation_m2": round(_zone_impl_m2),
+              "emprise_sol_max_m2": (round(surface_m2 * float(rules.emprise_sol_pct) / 100)
+                                     if _is_num(rules.emprise_sol_pct) else None),
               # Potentiel résiduel (Lot B) : emprise constructible au sol et emprise bâtie MAX
               # (post-occupation), pour croiser avec le bâti existant.
               "emprise_constructible_m2": round(emprise),

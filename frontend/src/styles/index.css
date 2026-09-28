@@ -261,6 +261,18 @@
   .door { background:var(--bg-2); border:0.5px solid var(--line-2); border-radius:var(--r-g); padding:13px 14px; margin-bottom:8px; }
   .door-hot { border-left:2px solid var(--mint); border-top-left-radius:0; border-bottom-left-radius:0; }
 
+  /* RADAR-2 (recette) — LA GRANDE PORTE (carte icône + titre + résumé + « Ouvrir → »), composant partagé
+     des écrans Radar/Veille. Survol = COULEUR PLEINE (plus de dégradé — contrairement à --fill-mint), et le
+     carré de l'icône garde un CONTOUR VISIBLE (contour sombre sur fond vert). Une seule règle → toutes les
+     portes qui portent la classe .porte en héritent. */
+  .porte { transition:background .1s, color .1s, border-color .1s; }
+  .porte-ic { transition:background .1s, color .1s, border-color .1s; }
+  @media (hover:hover) {
+    .porte:hover { background:#2FBE66; border-color:#2FBE66; color:var(--ink); }
+    .porte:hover * { color:var(--ink) !important; }
+    .porte:hover .porte-ic { background:rgba(7,16,9,.12); border-color:rgba(7,16,9,.42) !important; color:var(--ink); }
+  }
+
   .chev { font-size:14px; color:var(--txt-faint); font-family:var(--mono); }
 
   /* pastilles */
@@ -421,6 +433,9 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
    RETOURS-14 P3 — l'en-tête est OPAQUE JUSQU'AU BORD HAUT du panneau : coins hauts CARRÉS (les coins
    arrondis laissaient voir le contenu défiler dans les arcs au ras du bord) + le conteneur défilant n'a
    plus de padding-haut (Fiche.tsx) qui décalait le sticky. Coins bas arrondis conservés (séparation). */
+/* FICHE-FIX-5 (Lot B) — l'en-tête collant est OPAQUE jusqu'au bord haut du panneau (aucune marge
+   au-dessus) : coins hauts CARRÉS, pas de bordure haute → le fond plein --bg-2 couvre tout le bord,
+   on ne voit plus les boutons de carte derrière. (Annule la carte flottante de FIX-4 A1.) */
 .fiche-v6 .tete-collee { position:sticky; top:0; z-index:20; background:var(--bg-2);
   border:0.5px solid var(--f-linehead); border-top:0; border-radius:0 0 6px 6px;
   box-shadow:0 3px 10px -6px rgba(0,0,0,.55); }
@@ -437,6 +452,12 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
    l'adresse complète au survol (title). */
 .fiche-v6 .addr > span { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; line-height:1.3; }
 .fiche-v6 .addr-row { padding:0 14px 11px; margin-top:-4px; }
+/* KELFONCIER-FIX-2 (Lot A) — SECTEUR rentré dans la carte d'en-tête : même retrait horizontal (14px)
+   que l'adresse, sous elle. Libellé gris (--txt-dim ≈ maquette --mut), nom en clair (--txt-hi ≈ --txt).
+   Quand un secteur suit l'adresse, l'adresse perd son padding-bas (le secteur porte la fermeture). */
+.fiche-v6 .addr-row.has-sect { padding-bottom:2px; }
+.fiche-v6 .sect-line { padding:0 14px 11px; font-size:11.5px; color:var(--txt-dim); line-height:1.3; }
+.fiche-v6 .sect-line b { color:var(--txt-hi); font-weight:400; }
 /* RETOURS-13 R17 — SIREN/SIRET : BLEU et SOULIGNÉ, partout (décision Vic 05/09 — la SEULE
    exception à « pas de bleu » de la DA : un lien externe doit ressembler à un lien). */
 .lien-siren { color:#5AA9E8; text-decoration:underline; text-underline-offset:2px; }

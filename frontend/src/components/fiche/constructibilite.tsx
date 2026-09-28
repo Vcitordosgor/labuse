@@ -5,9 +5,9 @@
  * Cycle-free : n'importe QUE des primitives + blocs feuilles, jamais Fiche.tsx.
  * Fiche.tsx ré-exporte Calculette + FaisabiliteTab (consommés par CalculetteFonciere / M22Programme).
  */
-import { useMutation, useQuery } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
-import { getCalculetteDefaults, getFaisabilite, getModeB, getPipelineForParcel, patchPipeline, postChargeFonciere, postFaisabiliteRecalcul, type CalculetteDefaults } from '../../lib/api'
+import { useQuery } from '@tanstack/react-query'
+import { useEffect, useState, type ReactNode } from 'react'
+import { getCalculetteDefaults, getFaisabilite, getModeB, getPipelineForParcel, patchPipeline, postChargeFonciere, postFaisabiliteScenario, type CalculetteDefaults } from '../../lib/api'
 import { fmtEurCompact, fmtInt, fmtM2 } from '../../lib/format'
 import { PERIM_POTENTIEL_COURT } from '../../lib/perimetres'
 import { Squelette } from '../Loading'
@@ -17,8 +17,15 @@ import type { Fiche, PotentielTransformation } from '../../lib/types'
 import { useApp } from '../../store/useApp'
 import { IC, RefDrawer, MicroTriple, PorteOutil, StepProv, HypInput, GroupLabel, FactRow, FactNote, RefLink, Vigilance } from './primitives'
 import { Badge } from '../ui/Badge'
-import { Chevron } from '../ui/Chevron'   // RETOURS-15 C3 — accordéon « Tester un projet »
+import { GrilleOutils, OutilCase } from '../shared/GrilleOutils'   // FAISABILITE-POLISH-1 — tuiles « Étudier ce bien »
+import { Tip } from '../Tip'
+// FICHE-FIX-5 (reste 2) — « Ce que le PLU permet » en Repli, Transformation/bilan en Lignes.
+import { Repli, Lignes, Ligne, InfoI } from './formes'
 
+// RETOURS-15 (retouche Vic) — la surface de PLANCHER s'écrit TOUJOURS en m², jamais en hectares
+// (« ~14 200 m² de plancher », pas « ~1,42 ha ») : fmtM2 bascule en ha ≥ 10 000 m². Le verdict serveur
+// (scenarios._fmt_m2) le fait déjà ; ici on couvre les surfaces de plancher rendues côté front (Tester).
+const fmtPlancherM2 = (v: number | null | undefined): string => v == null ? '—' : `${fmtInt(v)} m²`
 const PT_COLORS: Record<string, string> = { fort: '#4ADE96', modere: '#F5C244', faible: '#9AA6A0', nul: '#6B7280', indetermine: '#6B7280' }
 export function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
   if (pt.indisponible) return <BlocIndisponible titre="Potentiel de transformation" />   // M125 — panne ≠ absence
@@ -27,17 +34,22 @@ export function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
   // chiffrées deviennent des FactRow (valeur mono à droite), la source passe en FactNote.
   return (
     <div data-transformation>
+      {/* FICHE-FIX-5 (reste 2) — Potentiel de transformation en Lignes : SDP consommée % et marge en
+          hauteur ; la phrase (libellé) et le détail de contrainte passent derrière le « i ». */}
       <GroupLabel right={
         <span className="rounded-full px-2 py-0.5 text-[10.5px] font-medium capitalize" style={{ background: `${color}22`, color }}>{pt.niveau}</span>
       }>Potentiel de transformation</GroupLabel>
-      <p className="mt-1 text-[11px] leading-snug text-txt-mut">{pt.libelle}</p>
-      {pt.pct_consomme != null && <FactRow label="SDP consommée / autorisée" value={<>{pt.pct_consomme} <small>%</small></>} />}
-      {/* FICHE-RANGEMENT-1 Lot 1 (doublon #1) — la « SDP résiduelle » vit UNE fois, dans la tuile
-          d'en-tête « SDP restante » (triage glance, jeu délibéré des 6 tuiles). Ici on garde le
-          ratio consommée/autorisée et la marge en hauteur (le raisonnement), sans répéter le nombre. */}
-      {/* RECETTE-11 A6 — plus de verdict (« possible »/« non ») : la marge mesurée sous la règle et
-          la contrainte qui mord ; A3 : la date de survol quand c'est une mesure LiDAR HD. */}
-      {pt.hauteur_marge_m != null && <FactRow label="Marge en hauteur" tone={pt.hauteur_discordante ? 'warn' : undefined} value={<>~{pt.hauteur_marge_m} <small>m sous la règle{pt.hauteur_contrainte ? `, contrainte : ${pt.hauteur_contrainte === 'faîtage' ? 'le faîtage' : "l'égout"}` : ''}{pt.hauteur_survol ? ` — mesuré au LiDAR HD, survol de ${pt.hauteur_survol}` : ''}{pt.hauteur_permis_posterieur ? ` ; antérieur au permis du ${pt.hauteur_permis_posterieur}, possiblement dépassé` : ''}</small></>} />}
+      <Lignes>
+        {pt.pct_consomme != null && (
+          <Ligne label={<>SDP consommée / autorisée{pt.libelle ? <InfoI aria="Sur le potentiel de transformation" tip={pt.libelle} /> : null}</>}
+            valeur={<>{pt.pct_consomme} <small>%</small></>} />
+        )}
+        {pt.hauteur_marge_m != null && (
+          <Ligne ton={pt.hauteur_discordante ? 'ambre' : undefined}
+            label={<>Marge en hauteur<InfoI aria="Sur la marge en hauteur" tip={`${pt.hauteur_contrainte ? `Contrainte : ${pt.hauteur_contrainte === 'faîtage' ? 'le faîtage' : "l'égout"}. ` : ''}${pt.hauteur_survol ? `Mesuré au LiDAR HD, survol de ${pt.hauteur_survol}. ` : ''}${pt.hauteur_permis_posterieur ? `Antérieur au permis du ${pt.hauteur_permis_posterieur}, possiblement dépassé.` : ''}` || 'Marge mesurée sous la règle de hauteur.'} /></>}
+            valeur={<>~{pt.hauteur_marge_m} <small>m sous la règle</small></>} />
+        )}
+      </Lignes>
       {/* DONNEES-FIX-1 lot A — même règle que le §3 Bâti (`discordance_hauteur`) : le badge compare
           l'ÉGOUT LiDAR à BD TOPO (même grandeur) ou signale un faîtage aberrant, jamais le faîtage↔BD
           TOPO. Sans choix automatique. */}
@@ -380,322 +392,261 @@ function CalculetteBody({ idu, defauts, hideSource = false, prixDemandeExterne, 
 // Badges ÉQUIPEMENTS (mandat wave-ortho Lot 6) : piscine / PV / CES / pente — dans la
 // synthèse, sourcés « ortho IGN 2025, fiabilité statistique, non contractuelle ».
 
-// OUTILS-FIX-3 Lot F / RETOURS-13 P2 — `embedded` : FaisabiliteTab est partagé entre la FICHE et
-// l'OUTIL Faisabilité (M22, mode « par parcelle »). Le bouton IA « Expliquer ce calcul en clair »
-// (faisabiliteExplain) a été RETIRÉ des deux (RETOURS-13 P2 : un bloc, un rendu ; le Copilote reste
-// par « Poser une question »). `embedded` ne cantonne plus d'IA ici ; le calcul tracé, la capacité
-// et la charge foncière restent identiques en fiche comme dans l'outil.
+// FAISABILITE-3 (Vic 27/09/2026) — LE panneau de la maquette validée, une seule implémentation
+// partagée par l'outil Faisabilité (M22) et l'onglet Faisabilité de la fiche parcelle. RÈGLE
+// ABSOLUE : aucun calcul dans le front. Chaque chiffre (verdict, « ce qui limite », les 8 étapes,
+// la section PLU, le test d'un projet) vient d'UN SEUL appel au moteur (postFaisabiliteScenario →
+// faisabilite_scenario) ; le front ne fait que rendre et renvoyer le scénario + les hypothèses.
+// Le scénario est mémorisé dans la SESSION (Map ci-dessous) et, en projet, dans l'entrée pipeline
+// (prospection.faisa_scenario/faisa_overrides — doctrine 09/09), jamais en base hors projet.
+const _sessionScenario = new Map<string, 'terrain_libere' | 'bati_garde'>()
+type Sc = 'terrain_libere' | 'bati_garde'
+
+// FAISABILITE-POLISH-1 — les 4 suites deviennent des TUILES « Étudier ce bien » (icône + titre,
+// GrilleOutils/OutilCase partagé de la fiche parcelle), 2 × 2, sans « → ». Tracés SVG 15 px « line »,
+// même idiome que les tuiles d'export de la fiche.
+const svg15 = (path: ReactNode) =>
+  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">{path}</svg>
+const SUITE_ICO = {
+  gabarit: svg15(<><path d="M21 7.5 12 3 3 7.5v9L12 21l9-4.5z" /><path d="m3 7.5 9 4.5 9-4.5" /><path d="M12 12v9" /></>),
+  taxe: svg15(<><line x1="19" y1="5" x2="5" y2="19" /><circle cx="6.5" cy="6.5" r="2.5" /><circle cx="17.5" cy="17.5" r="2.5" /></>),
+  comparer: svg15(<><path d="M3 17h6" /><path d="m6 14 3 3-3 3" /><path d="M21 7h-6" /><path d="m18 10-3-3 3-3" /></>),
+  courrier: svg15(<><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></>),
+} as const
+
 export function FaisabiliteTab({ idu }: { idu: string; embedded?: boolean }) {
-  const { data: b, isLoading, isError, refetch } = useQuery({ queryKey: ['bilan', idu], queryFn: () => getFaisabilite(idu) })
-  // RETOURS-15 C3 — §5 « Le calcul, étape par étape » est REPLIÉ par défaut (réservé à l'expert) ;
-  // §4 « Tester un projet » l'est aussi. Le verdict + les 2 blocs de règles/résultat sont en tête.
-  const [showSteps, setShowSteps] = useState(false)
-  const [testerOuvert, setTesterOuvert] = useState(false)
-  const [projLogts, setProjLogts] = useState<number | null>(null)
-  const [projSurf, setProjSurf] = useState<number | null>(null)
-  // RETOURS-15 C3 — §4 renvoie vers Taxe / Gabarit, parcelle déjà remplie : `select` pose selectedIdu
-  // (que les deux outils adoptent), `setModule` ouvre l'outil ; `setParcelPrefill` en ceinture (fiche).
-  const select = useApp((s) => s.select)
-  const setModule = useApp((s) => s.setModule)
-  const setParcelPrefill = useApp((s) => s.setParcelPrefill)
-  // FAISABILITE-1 (lot D) — HYPOTHÈSES MODIFIABLES : les lignes Estimé/Dérivé sont éditables → recalcul
-  // immédiat de TOUT ce qui suit par le MOTEUR (endpoint /recalcul, aucune reimplémentation). Les valeurs
-  // se GARDENT DANS LE PROJET (prospection.faisa_overrides de l'entrée pipeline — jamais en base hors
-  // projet, jamais resservies sur une autre parcelle, doctrine 09/09). Bloc partagé fiche + outil (M22).
+  const { setModule, setParcelPrefill, chercherParCapacite } = useApp()
+  const [scenario, setScenario] = useState<Sc>(_sessionScenario.get(idu) ?? 'terrain_libere')
   const [overrides, setOverrides] = useState<Record<string, number>>({})
-  const [ovCharges, setOvCharges] = useState(false)
+  const [nLog, setNLog] = useState<number | null>(null)
+  const [surfLog, setSurfLog] = useState<number | null>(null)
+  const [showSteps, setShowSteps] = useState(false)   // « replié par défaut dans l'app » (maquette)
+  const [loaded, setLoaded] = useState(false)
+
+  // Projet : charge scénario + hypothèses gardés (une fois), persiste au fil des changements.
   const pipeQ = useQuery({ queryKey: ['pipe-faisa', idu], queryFn: () => getPipelineForParcel(idu) })
   const entryId = pipeQ.data?.entry?.id ?? null
   useEffect(() => {
-    if (!pipeQ.data || ovCharges) return
-    const ov = (pipeQ.data.entry?.prospection as Record<string, unknown> | undefined)?.faisa_overrides
+    if (!pipeQ.data || loaded) return
+    const pros = (pipeQ.data.entry?.prospection as Record<string, unknown> | undefined) ?? {}
+    const ov = pros.faisa_overrides
     if (ov && typeof ov === 'object') setOverrides(ov as Record<string, number>)
-    setOvCharges(true)
-  }, [pipeQ.data, ovCharges])
-  const recalc = useMutation({ mutationFn: (ov: Record<string, number>) => postFaisabiliteRecalcul(idu, ov) })
-  const recalcMutate = recalc.mutate
-  const nOv = Object.keys(overrides).length
+    const sc = pros.faisa_scenario
+    if (sc === 'terrain_libere' || sc === 'bati_garde') setScenario(sc)
+    setLoaded(true)
+  }, [pipeQ.data, loaded])
+
+  // Débounce des hypothèses + du test (le scénario, lui, bascule tout de suite).
+  const [deb, setDeb] = useState<{ ov: Record<string, number>; test: { n_logements: number | null; surface_par_logement: number | null } | null }>({ ov: {}, test: null })
   useEffect(() => {
-    if (!ovCharges) return
+    const t = window.setTimeout(() => setDeb({
+      ov: overrides,
+      test: nLog != null || surfLog != null ? { n_logements: nLog, surface_par_logement: surfLog } : null,
+    }), 350)
+    return () => window.clearTimeout(t)
+  }, [overrides, nLog, surfLog])
+
+  const q = useQuery({
+    queryKey: ['faisa-scenario', idu, scenario, JSON.stringify(deb.ov), JSON.stringify(deb.test)],
+    queryFn: () => postFaisabiliteScenario(idu, { scenario, overrides: deb.ov, test: deb.test }),
+    placeholderData: (prev) => prev,   // pas de flash au recalcul
+  })
+  const pan = q.data?.scenario ?? null
+
+  // Persiste scénario + hypothèses dans le projet (jamais bloquant).
+  useEffect(() => {
+    _sessionScenario.set(idu, scenario)
+    if (!loaded || entryId == null) return
     const t = window.setTimeout(() => {
-      if (nOv > 0) recalcMutate(overrides)                 // recalcul par le moteur
-      if (entryId != null) patchPipeline(entryId, { prospection: { faisa_overrides: overrides } }).catch(() => { /* projet non bloquant */ })
+      patchPipeline(entryId, { prospection: { faisa_overrides: overrides, faisa_scenario: scenario } })
+        .catch(() => { /* projet non bloquant */ })
     }, 350)
     return () => window.clearTimeout(t)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [overrides, ovCharges, entryId])
-  if (isLoading) return <Squelette lignes={4} />
-  if (isError || !b) return <ErrorState message="Faisabilité indisponible." retry={() => refetch()} />
+  }, [idu, scenario, overrides, loaded, entryId])
 
-  // capacité EFFECTIVE : le recalcul moteur (si des hypothèses sont modifiées) prime sur le servi.
-  const cap = (nOv > 0 && recalc.data?.capacite) ? recalc.data.capacite : b.capacite
-  const hypModif: { key: string; label: string; valeur: number; unite: string; min: number; max: number }[] =
-    cap?.hypotheses_modifiables ?? b.capacite?.hypotheses_modifiables ?? []
+  const chooseSc = (s: Sc) => { setScenario(s); _sessionScenario.set(idu, s) }
   const setOv = (key: string, v: number | null) => setOverrides((o) => {
     const n = { ...o }; if (v == null) delete n[key]; else n[key] = v; return n
   })
-  const fo = cap?.fourchette ?? {}
-  const steps: { label: string; valeur: string; source: string; prov: string }[] = cap?.steps ?? []
-  // FAISABILITE (mandat) — ÉTAPE MANQUANTE tracée : le saut « SHAB brute ~175 m² » (une étape) →
-  // « SHAB vendable ~123 m² » (en-tête) n'était pas dans la trace. Le vendable est calculé par le
-  // moteur (engine.py: shab_vendable_m2 = sol_central × logt_moyen) : c'est le nombre de logements
-  // RETENUS au sol (après plafond de densité ∩ stationnement ∩ modulation réunionnaise) reconverti en
-  // surface habitable (~72,5 m²/logt) — PAS un simple plafond appliqué à la SHAB brute. On expose la
-  // valeur SERVIE (fo.shab_vendable_m2), avec la vraie raison. Provenance « Dérivé » (cohérente moteur).
-  const stepsAff = steps.length > 0 && fo.shab_vendable_m2 != null
-    ? [...steps, {
-        label: 'SHAB vendable retenue',
-        valeur: `~${fmtM2(fo.shab_vendable_m2)}`,
-        source: 'logements retenus au sol × surface moyenne/logement — base du CA (la SHAB brute est théorique)',
-        prov: 'derive',   // LOT2 — la clé StepProv est 'derive' (sans accent) ; 'dérivé' retombait sur « — »
-      }]
-    : steps
-  // M58-P1 (c) : « un zéro n'est pas une absence ». Capacité réelle = fourchette logements > 0.
-  const logAuSol = Array.isArray(fo.logements_au_sol) ? fo.logements_au_sol : null
-  const logMax = logAuSol ? Math.max(logAuSol[0] ?? 0, logAuSol[1] ?? 0) : null
-  const capaciteReelle = logMax != null && logMax > 0
+  const goOutil = (key: string) => { setParcelPrefill(idu); setModule(key) }
 
-  // ── RETOURS-15 C3 — refonte du panneau en 5 blocs ────────────────────────────────────────────
-  // Bloc 2 « Ce que le PLU permet » (tout Sourcé) réutilise le règlement PLU servi à la fiche
-  // (capacite.regles_plu = _reglement_plu_block) : zone + valeurs sourcées (article + page) + mixité.
-  type RegleVal = { cle: string; libelle: string; valeur: string | null; etat: string; reference: string | null; url: string | null }
-  const regles = (cap?.regles_plu ?? null) as
-    { zones?: { zone?: string; libelle?: string | null; approbation?: string | null; regles_valeurs?: RegleVal[] }[];
-      mixite?: { seuil_logements?: number | null; quota_pct?: number | null; article?: string | null; page_pdf?: number | null; statut?: string | null } | null } | null
-  // Le bloc 2 doit montrer les règles de la zone SUR LAQUELLE la capacité est calculée (cap.zone),
-  // pas forcément la zone dominante par aire du règlement (une parcelle à cheval U/N a sa capacité sur
-  // la portion U mais peut être majoritairement N) — sinon on servirait les règles de la mauvaise zone.
-  const zoneReg = (regles?.zones?.find((z) => z.zone === cap?.zone) ?? regles?.zones?.[0]) ?? null
-  const reglesVal: RegleVal[] = zoneReg?.regles_valeurs ?? []
-  const mixite = regles?.mixite ?? null
-  // Les figures du verdict (bloc 1). niveaux/hauteur = Sourcé (gabarit PLU) ; plancher/logements = Estimé.
-  const niveauxTxt: string | null = fo.niveaux ?? (fo.niveaux_max != null ? `R+${Math.max(0, fo.niveaux_max - 1)}` : null)
-  const logTxt: string | null = logAuSol
-    ? (logAuSol[0] === logAuSol[1] ? `${logAuSol[0]} logement${logAuSol[0] > 1 ? 's' : ''}` : `${logAuSol[0]} à ${logAuSol[1]} logements`)
-    : null
-  // RETOURS-15 C3 (retouche Vic) — la surface de PLANCHER s'écrit TOUJOURS en m², jamais en hectares
-  // (« ~14 200 m² de plancher », pas « ~1,42 ha ») : fmtM2 bascule en ha au-delà de 10 000 m², donc on
-  // force m² pour toutes les surfaces du panneau Faisabilité (verdict + « Ce que ça donne »).
-  const m2 = (v: number | null | undefined): string => v == null ? '—' : `${fmtInt(v)} m²`
-  const planTxt: string | null = fo.surface_plancher_m2 ? `~${m2(fo.surface_plancher_m2)} de plancher` : null
-  // Places/logement LUES de la règle PLU stationnement (Sourcé) — jamais une hypothèse.
-  const placesParLogt: number | null = (() => {
-    const s = reglesVal.find((r) => r.cle === 'stationnement')?.valeur ?? ''
-    const m = String(s).match(/([\d]+(?:[.,]\d+)?)\s*place/i)
-    return m ? parseFloat(m[1].replace(',', '.')) : null
-  })()
-  const placesNecessaires: number | null = (placesParLogt != null && logMax != null) ? Math.ceil(placesParLogt * logMax) : null
-  // §5 — le moteur sert PLUSIEURS lignes de stationnement (scénarios au sol / sous-sol) : fusionnées en UNE.
-  const stepsMerged = (() => {
-    const isStat = (l: string) => /stationnement/i.test(l)
-    if (stepsAff.filter((s) => isStat(s.label)).length <= 1) return stepsAff
-    const last = [...stepsAff].reverse().find((s) => isStat(s.label))!
-    let placed = false
-    const out: typeof stepsAff = []
-    for (const s of stepsAff) {
-      if (isStat(s.label)) { if (!placed) { out.push({ ...last, label: 'Stationnement exigé' }); placed = true } }
-      else out.push(s)
-    }
-    return out
-  })()
-  // §4 « Tester un projet » — vérification INDICATIVE côté client (plancher requis vs plancher max servi).
-  const rendementPct = (typeof overrides.coef_rendement === 'number' ? overrides.coef_rendement
-    : hypModif.find((h) => h.key === 'coef_rendement')?.valeur ?? 80)
-  const projPlancherRequis = (projLogts && projSurf) ? Math.round(projLogts * projSurf / (rendementPct / 100)) : null
-  const projTient = (projPlancherRequis != null && fo.surface_plancher_m2 != null) ? projPlancherRequis <= fo.surface_plancher_m2 : null
-  const projPlaces = (projLogts != null && placesParLogt != null) ? Math.ceil(projLogts * placesParLogt) : null
-  const ouvrirOutil = (mod: string) => { setParcelPrefill(idu); select(idu); setModule(mod) }
+  if (q.isLoading && !pan) return <Squelette lignes={5} />
+  if (q.isError) return <ErrorState message="Faisabilité indisponible." retry={() => q.refetch()} />
+  if (!pan) return <p className="text-[11px] text-txt-mut">Zone PLU non résolue pour cette parcelle — capacité non calculable (honnête).</p>
+
+  const badges = pan.badges ?? {}
+  const test = pan.test as Record<string, any> | null
+  const rv: Record<string, any>[] = pan.plu?.regles_valeurs ?? []
+  const nOv = Object.keys(overrides).length
+  const hypModif: { key: string; label: string; valeur: number; unite: string; min: number; max: number }[] = pan.hypotheses_modifiables ?? []
+  const etapes: { n: number; label: string; valeur: string; source: string; prov: string }[] = pan.etapes ?? []
+
+  // FAISABILITE-POLISH-1 — chip d'état pour une règle PLU (source line) : Sourcé (vert) quand la
+  // règle est chiffrée avec un article ; sinon on reflète l'état SANS l'inventer (jamais « Sourcé »
+  // sur une règle non modélisée). Le texte de fond (valeur) n'est pas touché.
+  const regleBadge = (r: Record<string, any>) => {
+    if (r.etat === 'non_modelisee') return <Badge ton="neutre">Non modélisée</Badge>
+    if (r.etat === 'absent') return <Badge ton="neutre">Pas de règle PLU</Badge>
+    if (r.etat === 'prospect') return <Badge ton="neutre">Selon la voie</Badge>
+    if (r.etat === 'a_verifier') return <Badge ton="ambre">À vérifier</Badge>
+    return <Badge ton="vert">Sourcé</Badge>
+  }
+  const pluDoc = pan.plu?.document as string | undefined
 
   return (
-    <div className="flex flex-col gap-3">
-      {!cap ? (
-        <p className="text-[11px] text-txt-mut">
-          Zone PLU non résolue pour cette parcelle — capacité non calculable (honnête).
-        </p>
-      ) : (
-        <>
-          {/* ── §1 — LE VERDICT, une ligne, chaque chiffre avec son badge Sourcé / Estimé ── */}
-          <div data-faisa-verdict>
-            <GroupLabel>Le verdict</GroupLabel>
-            {capaciteReelle ? (
-              <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-[13px] text-txt-hi">
-                {niveauxTxt && (
-                  <span className="inline-flex items-center gap-1"><b>{niveauxTxt}</b><Badge ton="vert">Sourcé</Badge></span>
-                )}
-                {planTxt && (<><span className="text-txt-dim">·</span>
-                  <span className="inline-flex items-center gap-1"><b>jusqu'à {planTxt}</b><Badge ton="ambre">Estimé</Badge></span></>)}
-                {logTxt && (<><span className="text-txt-dim">·</span>
-                  <span className="inline-flex items-center gap-1"><b>{logTxt}</b><Badge ton="ambre">Estimé</Badge></span></>)}
-              </div>
-            ) : (
-              <p className="mt-1 text-[12px] font-medium text-st-creuser">{cap.verdict}</p>
-            )}
-            {!cap.calibree && <div className="mt-1 text-[11px] text-st-creuser">▲ estimation générique (zone non calibrée)</div>}
-          </div>
+    // Grille du panneau : UN seul rythme — 24 px entre sections (gap-6), aucune section ne rajoute
+    // de padding horizontal (le gutter de 16 px vient du conteneur), les titres passent tous par
+    // GroupLabel (capitales espacées, comme la fiche parcelle).
+    <div data-faisa-panneau className="flex flex-col gap-6">
+      {/* 1 · SCÉNARIO — deux cartes (« En gardant le bâti » visible seulement si bati_present) */}
+      <div data-faisa-scenarios className="flex gap-2">
+        <button data-sc="terrain_libere" onClick={() => chooseSc('terrain_libere')}
+          className={`min-w-0 flex-1 rounded-md border px-3 py-2 text-left transition-colors duration-quick ${pan.scenario === 'terrain_libere' ? 'border-2 border-mint bg-mint/[0.08]' : 'border-line-2 hover:border-mint/50'}`}>
+          <div className={`text-[12.5px] font-medium ${pan.scenario === 'terrain_libere' ? 'text-mint' : 'text-txt'}`}>Terrain libéré</div>
+          <div className="text-[10.5px] leading-snug text-txt-dim">l'enveloppe du terrain, bâti rasé</div>
+        </button>
+        {pan.bati_present && (
+          <button data-sc="bati_garde" onClick={() => chooseSc('bati_garde')}
+            className={`min-w-0 flex-1 rounded-md border px-3 py-2 text-left transition-colors duration-quick ${pan.scenario === 'bati_garde' ? 'border-2 border-mint bg-mint/[0.08]' : 'border-line-2 hover:border-mint/50'}`}>
+            <div className={`text-[12.5px] font-medium ${pan.scenario === 'bati_garde' ? 'text-mint' : 'text-txt'}`}>En gardant le bâti</div>
+            <div className="text-[10.5px] leading-snug text-txt-dim">{pan.bati_libelle ?? 'bâti existant conservé'}</div>
+          </button>
+        )}
+      </div>
 
-          {/* ── §2 — CE QUE LE PLU PERMET (tout Sourcé : article + page ; aucune hypothèse ici) ──
-              FAISABILITE-POLISH-1 (mergée) : chaque règle = TROIS lignes EMPILÉES pleine largeur —
-              libellé en petites capitales grises · valeur en clair pleine largeur (nombres jamais
-              coupés) · ligne source (chip Sourcé + article/page cliquable) ; filet fin entre règles ;
-              plus de colonnes côte à côte. Aucun défilement horizontal (D1). */}
-          <div data-faisa-plu>
-            <GroupLabel right={<StepProv prov="sourcee" />}>Ce que le PLU permet</GroupLabel>
-            {zoneReg ? (
-              <div className="flex flex-col">
-                {[
-                  // POLISH-1 : le NOM/millésime technique du PLU vit dans l'info « i » du titre, pas dans la
-                  // ligne — on ne garde que la DATE d'approbation (le libellé « byte-identique … md5 … » portait
-                  // des jetons insécables `97415_PLU_… / config/…yaml` qui débordaient à 320 px).
-                  { cle: 'zone', libelle: 'Zone', valeur: `${zoneReg.zone ?? cap.zone}${zoneReg.libelle && zoneReg.libelle !== (zoneReg.zone ?? cap.zone) ? ` — ${zoneReg.libelle}` : ''}`,
-                    etat: 'chiffre',
-                    ref: (() => { const d = String(zoneReg.approbation ?? '').match(/\d{2}\/\d{2}\/\d{4}/)?.[0]; return d ? `PLU approuvé le ${d}` : null })(),
-                    url: null as string | null },
-                  ...reglesVal.map((r) => {
-                    const [, ...rest] = String(r.libelle ?? '').split(/\s*=\s*/)
-                    const lab = String(r.libelle ?? '').split(/\s*=\s*/)[0]
-                    // « Art. 10.2 · p.176 (PLU, calibrage validé) » → « Art. 10.2 · p.176 » : le suffixe
-                    // parenthésé (technique) débordait à 320 px ; l'article + la page suffisent (POLISH-1).
-                    const ref = r.reference ? String(r.reference).replace(/\s*\([^)]*\)\s*$/, '') : null
-                    return { cle: r.cle, libelle: lab || r.cle, valeur: rest.join(' = ') || (r.valeur != null ? String(r.valeur) : '—'),
-                      etat: r.etat, ref, url: r.url }
-                  }),
-                  ...(mixite && mixite.statut === 'valide' && mixite.quota_pct != null
-                    ? [{ cle: 'mixite', libelle: 'Mixité sociale (LLS)', valeur: `${mixite.quota_pct} % dès ${mixite.seuil_logements ?? '—'} logements`,
-                        etat: 'texte', ref: mixite.article ? `${mixite.article}${mixite.page_pdf != null ? ` · p.${mixite.page_pdf}` : ''}` : null, url: null as string | null }]
-                    : []),
-                ].map((r) => (
-                  <div key={r.cle} data-faisa-regle className="flex flex-col gap-1 border-b border-line/60 py-2.5 last:border-0">
-                    <span className="text-[10px] font-medium uppercase tracking-[0.11em] text-txt-dim">{r.libelle}</span>
-                    <span className={`text-[12.5px] leading-snug ${r.etat === 'absent' ? 'text-txt-dim' : 'text-txt'}`} style={{ overflowWrap: 'anywhere' }}>{r.valeur}</span>
-                    {(r.etat === 'absent' || r.ref) && (
-                      <span className="flex flex-wrap items-center gap-2 text-[11px]" style={{ minWidth: 0, overflowWrap: 'anywhere' }}>
-                        {r.etat === 'absent' ? <Badge ton="neutre">Pas de règle PLU</Badge> : <Badge ton="vert">Sourcé</Badge>}
-                        {r.ref && (r.url ? <RefLink href={r.url}>{r.ref}</RefLink> : <span className="font-mono text-[11px] text-txt-mut" style={{ overflowWrap: 'anywhere', minWidth: 0 }}>{r.ref}</span>)}
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <FactNote>Règlement PLU non calibré pour cette zone — les valeurs ne sont pas encore sourcées article par article.</FactNote>
+      {/* 2 · VERDICT (bloc surligné) — QUATRE lignes empilées, jamais mêlées :
+          (a) la phrase seule, taille titre ; (b) une rangée de chips ; (c) une ligne de texte gris
+          (ce qui limite) ; (d) la source PLU en petit. L'en-tête « zone · surface » reste le titre. */}
+      <div data-faisa-verdict className="rounded-md border-2 border-mint/70 bg-mint/[0.05] px-4 py-3">
+        <div className="text-[10.5px] uppercase tracking-[0.12em] text-txt-dim">
+          Verdict · zone {pan.zone}{pan.a_cheval && pan.portion_zone ? ` (à cheval)` : ''} · <span className="whitespace-nowrap">{fmtM2(pan.surface_m2)}</span>
+          {q.isFetching && <span className="ml-2 animate-pulse normal-case tracking-normal text-mint">recalcul…</span>}
+        </div>
+        <div data-faisa-verdict-phrase className="mt-2 text-[15px] font-medium leading-snug text-txt-hi">{pan.verdict}</div>
+        <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+          {pan.ce_qui_limite && <Badge ton="ambre">Ce qui limite</Badge>}
+          {badges.regles_sourcees && <Badge ton="vert">Règles sourcées</Badge>}
+          {badges.plancher_estime && <Badge ton="ambre">Plancher estimé</Badge>}
+        </div>
+        {pan.ce_qui_limite && <p className="mt-2 text-[12px] leading-snug text-txt-mut">{pan.ce_qui_limite}</p>}
+        {badges.plu_approuve_le && <p className="mt-2 text-[10.5px] text-txt-dim">PLU — {String(badges.plu_approuve_le)}</p>}
+      </div>
+
+      {/* 3 · TESTER UN PROJET — deux champs EMPILÉS pleine largeur, unité dans le champ, libellé dessus */}
+      <div data-faisa-test>
+        <GroupLabel>Tester un projet · vos chiffres</GroupLabel>
+        <div className="flex flex-col gap-3">
+          <HypInput label="Nombre de logements" suffix="logements" value={nLog} placeholder="—" onChange={setNLog} />
+          <HypInput label="Surface de plancher par logement" suffix="m²" value={surfLog} placeholder="—" onChange={setSurfLog} />
+        </div>
+        {test && (
+          <div data-faisa-test-result className="mt-3 text-[12px] leading-snug">
+            {test.statut === 'a_completer' && (<><Badge ton="neutre">À compléter</Badge> <span className="text-txt-dim">{test.message}</span></>)}
+            {test.statut === 'non_autorise' && (<><Badge ton="ambre">Logement non autorisé</Badge> <span className="text-txt-mut">{test.message}</span></>)}
+            {test.statut === 'tient' && (
+              <><Badge ton="vert">Tient</Badge> <span className="text-txt-mut">{fmtPlancherM2(test.besoin_m2)} sur {fmtPlancherM2(test.possible_m2)} possibles{test.places != null ? ` · ${test.places} place(s)` : ''}{test.demolition_m2 ? ` · démolition de ${fmtPlancherM2(test.demolition_m2)} à chiffrer` : ''}</span></>
+            )}
+            {test.statut === 'ne_tient_pas' && (
+              <><Badge ton="ambre">Ne tient pas</Badge> <span className="text-txt-mut">il manque {fmtPlancherM2(test.manque_m2)} de plancher ({fmtPlancherM2(test.besoin_m2)} demandés pour {fmtPlancherM2(test.possible_m2)} possibles)</span></>
             )}
           </div>
+        )}
+      </div>
 
-          {/* ── §3 — CE QUE ÇA DONNE SUR CE TERRAIN (Estimé) — les 3 hypothèses vivent À CÔTÉ des
-              chiffres qu'elles produisent ; toute modification recalcule ce bloc ET le verdict. ── */}
-          <div data-faisa-cadonne>
-            <GroupLabel right={<StepProv prov="estimee" />}>Ce que ça donne sur ce terrain</GroupLabel>
-            {capaciteReelle ? (
-              // POLISH-1 : chaque résultat = deux lignes EMPILÉES pleine largeur (libellé petites
-              // capitales · valeur en clair, nombres jamais coupés white-space:nowrap) — pas de colonne
-              // étroite qui écraserait la valeur à 320 px.
-              <div className="flex flex-col">
-                {([
-                  ...(fo.emprise_constructible_m2 != null ? [['Emprise constructible (après reculs)', m2(fo.emprise_constructible_m2)]] : []),
-                  ['Plancher maximal', fo.surface_plancher_m2 ? m2(fo.surface_plancher_m2) : '—'],
-                  ['Logements possibles', logTxt ?? '—'],
-                  ['Places de stationnement nécessaires', placesNecessaires != null ? `~${fmtInt(placesNecessaires)}` : '—'],
-                  [`SHAB vendable (${PERIM_POTENTIEL_COURT})`, fo.shab_vendable_m2 ? `~${m2(fo.shab_vendable_m2)}` : '—'],
-                ] as [string, string][]).map(([lab, val]) => (
-                  <div key={lab} data-faisa-resultat className="flex flex-col gap-0.5 border-b border-line/60 py-2 last:border-0">
-                    <span className="text-[10px] font-medium uppercase tracking-[0.11em] text-txt-dim">{lab}</span>
-                    <span className="text-[12.5px] text-txt" style={{ whiteSpace: 'nowrap' }}>{val}</span>
-                  </div>
-                ))}
+      {/* 4 · CE QUE LE PLU PERMET — chaque règle = TROIS lignes empilées : libellé en petites
+          capitales grises · valeur en clair pleine largeur · ligne source (chip + article/page).
+          Le nom du PLU vit dans l'info « i » du titre, pas dans la ligne. Un filet fin entre règles. */}
+      {/* FICHE-FIX-5 (reste 2) — « Ce que le PLU permet » = doublon des tuiles §Urbanisme → REPLI
+          « Règles du PLU » (fermé par défaut ; le nom du règlement reste dans le « i »). */}
+      {rv.length > 0 && (
+        <Repli compteur={rv.length} label={<>Règles du PLU · zone {pan.zone}{pluDoc ? (
+          <Tip garder tip={<>Règlement : {pluDoc}{badges.plu_approuve_le ? ` · approuvé le ${String(badges.plu_approuve_le)}` : ''}</>}>
+            <span data-faisa-plu-info tabIndex={0} className="ml-1 inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-line-2 text-[9px] text-txt-dim">i</span>
+          </Tip>) : null}</>}>
+        <div data-faisa-plu>
+          <div>
+            {rv.map((r) => (
+              <div key={r.cle} className="flex flex-col gap-1 border-b border-line/60 py-2.5 last:border-0">
+                <span className="text-[10px] font-medium uppercase tracking-[0.11em] text-txt-dim">{r.libelle}</span>
+                <span className={`text-[12.5px] leading-snug ${r.etat === 'non_modelisee' || r.etat === 'absent' ? 'text-txt-dim' : 'text-txt'}`}>{r.valeur}</span>
+                <span className="flex items-center gap-2 text-[11px]">
+                  {regleBadge(r)}
+                  {r.reference && <RefLink href={r.url}>{r.reference}</RefLink>}
+                </span>
               </div>
-            ) : (
-              <div className="mt-1 text-[11px] text-txt-faint">Capacité logements non calculable pour cette parcelle (voir le verdict).</div>
-            )}
-            {/* HYPOTHÈSES modifiables INLINE (FAISABILITE-1 lot D + POLISH-1) — champs EMPILÉS pleine
-                largeur (unité dans le champ), recalcul immédiat par le moteur ; « Revenir aux valeurs
-                LABUSE » sous les champs ; gardées dans le projet. Les valeurs fixées par le PLU
-                (hauteur de niveau, densité, places/logement) ne sont JAMAIS des hypothèses (bloc 2). */}
-            {hypModif.length > 0 && (
-              <div data-faisa-hypotheses className="mt-2 rounded-md border border-line-2 bg-surface-2/40 px-2.5 py-2">
-                <span className="mb-1 block text-[10px] uppercase tracking-wide text-txt-dim">Hypothèses LABUSE — ajustez pour recalculer</span>
-                <div className="flex flex-col gap-2">
-                  {hypModif.map((h) => (
-                    <HypInput key={h.key} label={h.label} suffix={h.unite} hint={overrides[h.key] != null}
-                      value={overrides[h.key] ?? null} placeholder={String(h.valeur)}
-                      onChange={(v) => setOv(h.key, v)} />
-                  ))}
-                </div>
-                {nOv > 0 && (
-                  <button data-faisa-hyp-reset onClick={() => setOverrides({})}
-                    className="mt-1.5 text-[10.5px] text-mint underline decoration-mint/40 underline-offset-2 transition-colors duration-quick hover:text-txt-hi">
-                    Revenir aux valeurs LABUSE
-                  </button>
-                )}
-                <p className="mt-1.5 text-[9.5px] leading-snug text-txt-dim">
-                  {entryId != null ? 'Vos valeurs sont gardées dans le projet.' : 'Ajoutez la parcelle à un projet pour garder vos valeurs.'}
-                  {recalc.isPending && <span className="text-mint"> · recalcul…</span>}
-                </p>
-              </div>
-            )}
+            ))}
           </div>
-
-          {/* ── §4 — TESTER UN PROJET (replié) : « Je veux N logements de X m² » → tient / ne tient pas ── */}
-          <details data-faisa-tester open={testerOuvert}
-            onToggle={(e) => setTesterOuvert((e.target as HTMLDetailsElement).open)}
-            className="group rounded-lg border border-line-2 bg-surface-2">
-            <summary className="hover-fill flex cursor-pointer list-none items-center gap-1.5 rounded-lg px-3 py-2 text-[11px] font-medium text-txt">
-              <Chevron open={testerOuvert} /><b>Tester un projet</b>
-            </summary>
-            <div className="flex flex-col gap-2 px-3 pb-3 pt-1">
-              <p className="text-[10.5px] leading-snug text-txt-dim">« Je veux N logements de X m² » — vérification indicative contre le plancher maximal servi.</p>
-              {/* POLISH-1 — champs EMPILÉS pleine largeur, unité dans le champ. */}
-              <div className="flex flex-col gap-2">
-                <HypInput label="Nombre de logements" suffix="logts" value={projLogts} placeholder="ex. 12" onChange={(v) => setProjLogts(v)} />
-                <HypInput label="Surface / logement" suffix="m²" value={projSurf} placeholder="ex. 65" onChange={(v) => setProjSurf(v)} />
-              </div>
-              {projTient != null && (
-                <div data-faisa-tester-verdict className={`rounded-md px-2.5 py-1.5 text-[11px] leading-snug ${projTient ? 'bg-mint/10 text-mint' : 'bg-st-ecartee/10 text-st-ecartee'}`}>
-                  <b>{projTient ? '✓ Ça tient' : '✕ Ça ne tient pas'}</b> — <span style={{ whiteSpace: 'nowrap' }}>{m2(projPlancherRequis!)}</span> de plancher requis vs <span style={{ whiteSpace: 'nowrap' }}>{fo.surface_plancher_m2 ? m2(fo.surface_plancher_m2) : '—'}</span> max
-                  {projPlaces != null && <> · ~{fmtInt(projPlaces)} places nécessaires</>}
-                </div>
-              )}
-              <div className="flex flex-wrap gap-1.5">
-                <button data-faisa-vers-taxe onClick={() => ouvrirOutil('taxe-amenagement')}
-                  className="rounded-md border border-line-2 px-2 py-1 text-[10.5px] text-txt-mut transition-colors duration-quick hover:border-mint/60 hover:text-txt-hi">→ Taxe d'aménagement</button>
-                <button data-faisa-vers-gabarit onClick={() => ouvrirOutil('gabarit')}
-                  className="rounded-md border border-line-2 px-2 py-1 text-[10.5px] text-txt-mut transition-colors duration-quick hover:border-mint/60 hover:text-txt-hi">→ Gabarit réglementaire</button>
-              </div>
-            </div>
-          </details>
-
-          {/* ── §5 — LE CALCUL, ÉTAPE PAR ÉTAPE (replié, pour l'expert ; lignes de stationnement fusionnées) ── */}
-          {stepsMerged.length > 0 && (
-            <div>
-              <button data-faisa-steps-toggle onClick={() => setShowSteps((s) => !s)}
-                className="hover-fill mb-1 flex w-full items-center gap-1.5 rounded px-0.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-mint transition-colors duration-quick hover:text-txt-hi">
-                <Chevron open={showSteps} />
-                <span>Le calcul, étape par étape ({stepsMerged.length})</span>
-              </button>
-              {showSteps && (
-                <ol data-faisa-steps>
-                  {stepsMerged.map((s, i) => (
-                    <li key={i} className="flex items-start gap-2 border-b border-line/60 py-1.5 text-[11px] last:border-0">
-                      <span className="shrink-0 font-mono text-[9px] text-txt-dim">{i + 1}</span>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-baseline justify-between gap-2">
-                          <span className="text-txt">{s.label}</span>
-                          <b className="shrink-0 font-mono font-medium tnum text-txt-hi">{s.valeur}</b>
-                        </div>
-                        <div className="mt-0.5 flex items-center gap-1.5">
-                          <StepProv prov={s.prov} />
-                          <span className="truncate text-[9.5px] text-txt-dim">{s.source}</span>
-                        </div>
-                      </div>
-                    </li>
-                  ))}
-                </ol>
-              )}
-            </div>
-          )}
-
-          <FactNote>{cap.bandeau}</FactNote>
-        </>
+        </div>
+        </Repli>
       )}
+
+      {/* 5 · NOS HYPOTHÈSES (3 seulement) — champs EMPILÉS pleine largeur ; « Revenir aux valeurs
+          LABUSE » en Bouton lien SOUS les champs (jamais dans le titre). Tout se recalcule au moteur. */}
+      {hypModif.length > 0 && (
+        <div data-faisa-hypotheses>
+          <GroupLabel>Nos hypothèses · modifiables</GroupLabel>
+          <div className="flex flex-col gap-3">
+            {hypModif.map((h) => (
+              <HypInput key={h.key} label={h.label} suffix={h.unite} hint={overrides[h.key] != null}
+                value={overrides[h.key] ?? null} placeholder={String(h.valeur)}
+                onChange={(v) => setOv(h.key, v)} />
+            ))}
+          </div>
+          {nOv > 0 && (
+            <button data-faisa-hyp-reset onClick={() => setOverrides({})}
+              className="mt-2.5 text-[11px] text-mint underline decoration-mint/40 underline-offset-2 transition-colors duration-quick hover:decoration-mint">
+              ↻ Revenir aux valeurs LABUSE
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* 6 · LE CALCUL, ÉTAPE PAR ÉTAPE — accordéon (chevron de la charte : ◀ fermé / ▼ ouvert,
+          chevron vert), replié par défaut. */}
+      {etapes.length > 0 && (
+        <div data-faisa-steps-wrap>
+          <button onClick={() => setShowSteps((s) => !s)} aria-expanded={showSteps}
+            className="flex w-full items-center justify-between gap-2 text-[11px] font-medium uppercase tracking-[0.12em] text-lab transition-colors duration-quick hover:text-txt-hi">
+            <span>Le calcul, étape par étape ({etapes.length})</span>
+            <span className="text-mint">{showSteps ? '▼' : '◀'}</span>
+          </button>
+          {showSteps && (
+            <ol data-faisa-steps className="mt-1.5">
+              {etapes.map((s) => (
+                <li key={s.n} className="flex items-start gap-2 border-b border-line/60 py-2 text-[11px] last:border-0">
+                  <span className="shrink-0 font-mono text-[9px] text-txt-dim">{s.n}</span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="min-w-0 text-txt">{s.label}</span>
+                      <b className="shrink-0 whitespace-nowrap font-mono font-medium tnum text-txt-hi">{s.valeur}</b>
+                    </div>
+                    <div className="mt-1 flex items-center gap-1.5">
+                      <StepProv prov={s.prov} />
+                      <span className="truncate text-[9.5px] text-txt-dim">{s.source}</span>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          )}
+        </div>
+      )}
+
+      {/* 7 · ACTIONS DU BAS — 4 tuiles « Étudier ce bien » (icône + titre), 2 × 2 à largeurs
+          égales, sans « → ». Le texte « Pré-faisabilité indicative… » reste en dernier, en petit. */}
+      <div data-faisa-suites className="flex flex-col gap-2.5">
+        {/* FICHE-FIX-5 (reste 2) — « Comparer » et « Écrire au propriétaire » RETIRÉS du panneau
+            (même décision que Scan). Restent : Voir en 3D · Taxe d'aménagement · Chercher par capacité. */}
+        <GrilleOutils cols={2}>
+          <OutilCase data-suite="gabarit" nom="Voir en 3D" ic={SUITE_ICO.gabarit} onClick={() => goOutil('gabarit')} />
+          <OutilCase data-suite="taxe" nom="Taxe d'aménagement" ic={SUITE_ICO.taxe} onClick={() => goOutil('taxe-amenagement')} />
+        </GrilleOutils>
+        <div className="text-[10.5px] leading-snug text-txt-dim">
+          <button onClick={() => chercherParCapacite()} className="underline decoration-txt-dim/40 underline-offset-2 transition-colors duration-quick hover:text-mint">Chercher des parcelles par capacité →</button>
+          {' · '}{pan.bandeau ?? 'Pré-faisabilité sur règlement public, pas un certificat d’urbanisme.'}
+        </div>
+      </div>
     </div>
   )
 }
@@ -831,15 +782,19 @@ export function ModeBBody({ idu, initial }: { idu: string; initial: import('../.
           )}
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11 }}>
-            <span style={{ color: 'var(--txt-dim)' }}>Surface réhabilitable</span>
-            <span style={{ color: 'var(--txt-hi)' }}>~{fmtInt(c.surface.shab_rehabilitable_m2)} m² hab.</span>
-          </div>
-          <p style={{ margin: 0, fontSize: 10, color: '#8FA69A' }}>
-            emprise {fmtInt(c.surface.emprise_bati_m2)} m² <b style={{ color: '#5CE6A1' }}>Sourcé</b> ({c.surface.source_emprise}) × {c.surface.niveaux} niveau(x){' '}
-            <b style={{ color: c.surface.niveaux_reels ? '#5CE6A1' : '#E8B44C' }}>{c.surface.niveaux_reels ? 'Sourcé' : 'Estimé'}</b>
-            {' '}— {c.surface.niveaux_etiquette}
-          </p>
+          {/* FICHE-FIX-5 (reste 2) — le DÉTAIL (surface réhabilitable, emprise, niveaux) passe dans un
+              Repli ; restent visibles la réhabilitation (en tête), le prix de sortie, le coût travaux. */}
+          <Repli label="Détail du bilan">
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11 }}>
+              <span style={{ color: 'var(--txt-dim)' }}>Surface réhabilitable</span>
+              <span style={{ color: 'var(--txt-hi)' }}>~{fmtInt(c.surface.shab_rehabilitable_m2)} m² hab.</span>
+            </div>
+            <p style={{ margin: '4px 0 0', fontSize: 10, color: '#8FA69A' }}>
+              emprise {fmtInt(c.surface.emprise_bati_m2)} m² <b style={{ color: '#5CE6A1' }}>Sourcé</b> ({c.surface.source_emprise}) × {c.surface.niveaux} niveau(x){' '}
+              <b style={{ color: c.surface.niveaux_reels ? '#5CE6A1' : '#E8B44C' }}>{c.surface.niveaux_reels ? 'Sourcé' : 'Estimé'}</b>
+              {' '}— {c.surface.niveaux_etiquette}
+            </p>
+          </Repli>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11 }}>
             <span style={{ color: 'var(--txt-dim)' }}>Prix de sortie (revente)</span>
             <span style={{ color: 'var(--txt-hi)' }}>{fmtInt(c.prix_sortie.prix_m2)} €/m² <b style={{ color: '#5CE6A1', fontSize: 10 }}>Sourcé DVF</b></span>
@@ -859,9 +814,10 @@ export function ModeBBody({ idu, initial }: { idu: string; initial: import('../.
         </div>
         {/* M44 — SORTIE LOCATIVE : côte à côte avec la revente, jamais fusionnée. Loyer au plafond
             réglementaire Sourcé (ou marché Estimé) ; prix d'achat max à rendement cible. Mention fiscale. */}
+        {/* FICHE-FIX-5 (reste 2) — la SORTIE LOCATIVE passe dans un Repli. */}
         {mb.sortie_locative && (
-          <div data-mode-b-locatif style={{ borderTop: '1px solid #24312b', paddingTop: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <p style={{ margin: 0, fontSize: 12, color: 'var(--txt-hi)', fontWeight: 600 }}>Sortie locative</p>
+          <Repli label="Sortie locative">
+          <div data-mode-b-locatif style={{ paddingTop: 4, display: 'flex', flexDirection: 'column', gap: 4 }}>
             {/* M59-P1 (Q2) — l'avertissement sur le loyer retenu passe AVANT le chiffre du prix
                 d'achat locatif : le plafond réglementaire n'est pas un loyer de marché observé. */}
             <p data-mode-b-loyer-avert style={{ margin: 0, fontSize: 10, lineHeight: 1.4, color: '#E8B44C' }}>
@@ -886,6 +842,7 @@ export function ModeBBody({ idu, initial }: { idu: string; initial: import('../.
             )}
             <p style={{ margin: 0, fontSize: 9.5, lineHeight: 1.45, color: '#E8B44C' }}>{mb.sortie_locative.mention_fiscale}</p>
           </div>
+          </Repli>
         )}
         <p style={{ margin: 0, fontSize: 9.5, lineHeight: 1.45, color: '#6b7a72' }}>{mb.avertissement}</p>
       </div>
@@ -900,14 +857,12 @@ function RtaaBlock({ rtaa }: { rtaa: { meta: Record<string, string>; exigences: 
     // RETOURS-20 Z3 — plus de card-elev ni de tuiles bg-surface-3 : kicker + note, chaque exigence
     // à plat (badge volet + phrase + renvoi d'article RefLink), séparée par le filet des lignes.
     <div data-rtaa-block>
-      <GroupLabel>RTAA DOM — rappel réglementaire</GroupLabel>
-      <p className="mt-1 text-[10.5px] leading-snug text-txt-mut">
-        Construction neuve de logements : protection solaire, ventilation traversante,
-        acoustique, aération et ECS renouvelable s'appliquent (seuils d'altitude 400/600 m).
-        <button onClick={() => setOpen((o) => !o)} className="ml-1.5 text-mint hover:underline">
-          {open ? 'replier' : `${rtaa.exigences.length} exigences →`}
-        </button>
-      </p>
+      {/* FICHE-FIX-5 (reste 3) — RTAA DOM en une Ligne « N exigences → » ; le rappel de conception
+          passe derrière le « i ». Le dépliage garde la liste détaillée. */}
+      <Lignes>
+        <Ligne label={<>RTAA DOM<InfoI aria="Sur le RTAA DOM" tip="Construction neuve de logements : protection solaire, ventilation traversante, acoustique, aération et ECS renouvelable s'appliquent (seuils d'altitude 400/600 m). Rappel de conception, ne remplace pas l'étude du maître d'œuvre." /></>}
+          valeur={<button data-rtaa-toggle onClick={() => setOpen((o) => !o)} className="text-mint hover:underline">{open ? 'replier' : `${rtaa.exigences.length} exigences →`}</button>} />
+      </Lignes>
       {open && (
         <div className="mt-1.5 flex flex-col">
           {rtaa.exigences.map((e, i) => (
@@ -957,75 +912,41 @@ export function dispositifsCount(d: NonNullable<Fiche['dispositifs']>): number {
 
 /** §4 Urbanisme — corps « droit des sols » (ER / EBC / doc urba / DPU / PEB / SUP), sans son RefDrawer. */
 export function DispositifsBody({ d }: { d: NonNullable<Fiche['dispositifs']> }) {
+  // FICHE-FIX-5 (reste 3) — ER / EBC / DPU / PEB / SUP en Lignes COURTES ; les paragraphes (source,
+  // article, détail) passent derrière le « i ». Code court en valeur (« PM1 · PPR … » via title).
   return (
-      <div className="flex flex-col gap-3">
-        {d.er && d.er.length > 0 && (
-          <div data-dispositifs-er>
-            <GroupLabel>Emplacements réservés</GroupLabel>
-            <div className="flex flex-col gap-1">
-              {d.er.map((e, i) => (
-                <FactRow key={i} label={e.libelle || 'Emplacement réservé'}
-                  value={`${e.part_pct} % de la parcelle${e.part_pct >= 50 ? ' — emprise majoritairement grevée' : ''}`}
-                  tone={e.part_pct >= 50 ? 'warn' : undefined} />
-              ))}
-            </div>
-            <FactNote>Surface réservée déduite de l’emprise constructible (pré-faisabilité). Source : prescriptions des PLU (Géoportail de l’urbanisme).</FactNote>
-          </div>
-        )}
-        {d.ebc && d.ebc.length > 0 && (
-          <div data-dispositifs-ebc>
-            <GroupLabel>Espaces boisés classés</GroupLabel>
-            <div className="flex flex-col gap-1">
-              {d.ebc.map((e, i) => (
-                <FactRow key={i} label={e.libelle || 'Espace boisé classé'} value={`${e.part_pct} % de la parcelle`} />
-              ))}
-            </div>
-            <FactNote>Construction interdite sur l’emprise boisée (art. L113-1 CU) — part soustraite de l’assiette du potentiel. Source : prescriptions des PLU (GPU).</FactNote>
-          </div>
-        )}
-        {d.plu_procedure && (
-          <div data-dispositifs-plu-procedure>
-            <GroupLabel>Document d'urbanisme</GroupLabel>
-            <FactNote>
-              {d.plu_procedure.detail}.{' '}
-              <a href={d.plu_procedure.lien} target="_blank" rel="noreferrer" className="underline">
-                Dossier d'enquête publique
-              </a>
-            </FactNote>
-          </div>
-        )}
-        <div data-dispositifs-dpu>
-          <GroupLabel>Droit de préemption urbain</GroupLabel>
-          {d.dpu.etat === 'servi' && (
-            <FactRow label={d.dpu.statut === 'renforce' ? 'DPU renforcé' : 'DPU simple'}
-              value="la commune peut préempter à la vente (DIA, ~2 mois)" />
+      <div className="flex flex-col gap-3" data-dispositifs>
+        <Lignes>
+          {(d.er ?? []).map((e, i) => (
+            <Ligne key={`er${i}`} ton={e.part_pct >= 50 ? 'ambre' : undefined}
+              label={<>Emplacement réservé<InfoI aria="Sur l'emplacement réservé" tip={`${e.libelle ? `${e.libelle}. ` : ''}Surface réservée déduite de l'emprise constructible (pré-faisabilité). Source : prescriptions PLU (GPU).`} /></>}
+              valeur={<>{e.part_pct} <small>% de la parcelle</small></>} />
+          ))}
+          {(d.ebc ?? []).map((e, i) => (
+            <Ligne key={`ebc${i}`}
+              label={<>Espace boisé classé<InfoI aria="Sur l'EBC" tip={`${e.libelle ? `${e.libelle}. ` : ''}Construction interdite sur l'emprise boisée (art. L113-1 CU) — part soustraite de l'assiette. Source : GPU.`} /></>}
+              valeur={<>{e.part_pct} <small>%</small></>} />
+          ))}
+          {d.plu_procedure && (
+            <Ligne label={<>Document d'urbanisme<InfoI aria="Sur la procédure PLU" tip={d.plu_procedure.detail} /></>}
+              valeur={<a href={d.plu_procedure.lien} target="_blank" rel="noreferrer" className="text-mint hover:underline">enquête publique ↗</a>} />
           )}
-          {d.dpu.etat === 'hors' && <FactNote>Hors périmètre de préemption publié.</FactNote>}
-          {d.dpu.etat === 'non_determinee' && <FactNote>Non déterminée — {d.dpu.detail}.</FactNote>}
-        </div>
-        <div data-dispositifs-peb>
-          <GroupLabel>Plan d'exposition au bruit</GroupLabel>
-          {['A', 'B', 'C', 'D'].includes(d.peb.zone) ? (
-            <FactRow label={`Zone ${d.peb.zone}${d.peb.libelle ? ` — ${d.peb.libelle}` : ''}`}
-              value={PEB_PHRASES[d.peb.zone]}
-              tone={['A', 'B'].includes(d.peb.zone) ? 'warn' : undefined} />
-          ) : d.peb.zone === 'hors' ? (
-            <FactNote>Hors zones PEB{d.peb.detail ? ` — ${d.peb.detail}` : ''}.</FactNote>
-          ) : (
-            <FactNote>Non déterminée{d.peb.detail ? ` — ${d.peb.detail}` : ''}.</FactNote>
-          )}
-        </div>
-        {d.sup && d.sup.length > 0 && (
-          <div data-dispositifs-sup>
-            <GroupLabel>Servitudes d'utilité publique</GroupLabel>
-            <div className="flex flex-col gap-1">
-              {d.sup.map((sv, i) => (
-                <FactRow key={i} label={sv.categorie} value={sv.libelle || 'servitude'} />
-              ))}
-            </div>
-            <FactNote>Assiettes publiées au GPU. T5/PT1/PT2 : publiées mais restreintes au téléchargement ; AS1 (captages) non publiée pour le 974 — publication surveillée.</FactNote>
-          </div>
-        )}
+          <Ligne data-dispositifs-dpu ton={d.dpu.etat === 'servi' ? undefined : 'gris'}
+            label={<>Préemption (DPU)<InfoI aria="Sur la préemption" tip={d.dpu.etat === 'servi'
+              ? `${d.dpu.statut === 'renforce' ? 'DPU renforcé' : 'DPU simple'} — la commune peut préempter à la vente (DIA, ~2 mois).`
+              : d.dpu.etat === 'hors' ? 'Hors périmètre de préemption publié.' : `Non déterminée — ${d.dpu.detail}.`} /></>}
+            valeur={d.dpu.etat === 'servi' ? (d.dpu.statut === 'renforce' ? 'DPU renforcé' : 'DPU simple') : d.dpu.etat === 'hors' ? 'hors périmètre' : 'non déterminée'} />
+          <Ligne data-dispositifs-peb ton={['A', 'B'].includes(d.peb.zone) ? 'ambre' : (['C', 'D'].includes(d.peb.zone) ? undefined : 'gris')}
+            label={<>Bruit aérien (PEB)<InfoI aria="Sur le PEB" tip={['A', 'B', 'C', 'D'].includes(d.peb.zone)
+              ? `${d.peb.libelle ? `${d.peb.libelle}. ` : ''}${PEB_PHRASES[d.peb.zone]}`
+              : d.peb.zone === 'hors' ? `Hors zones PEB${d.peb.detail ? ` — ${d.peb.detail}` : ''}.` : `Non déterminée${d.peb.detail ? ` — ${d.peb.detail}` : ''}.`} /></>}
+            valeur={['A', 'B', 'C', 'D'].includes(d.peb.zone) ? `Zone ${d.peb.zone}` : d.peb.zone === 'hors' ? 'hors zone' : 'non déterminée'} />
+          {(d.sup ?? []).map((sv, i) => (
+            <Ligne key={`sup${i}`} data-dispositifs-sup title={sv.libelle || sv.categorie}
+              label={<>Servitude (SUP)<InfoI aria="Sur la servitude" tip={`${sv.categorie} · ${sv.libelle || 'servitude'}. Assiettes publiées au GPU (T5/PT1/PT2 restreintes ; AS1 captages non publiée pour le 974).`} /></>}
+              valeur={<>{sv.categorie}{sv.libelle ? <small> · {sv.libelle}</small> : null}</>} />
+          ))}
+        </Lignes>
       </div>
   )
 }
@@ -1084,6 +1005,15 @@ export function ConstructibiliteSection({ f, idu }: { f: Fiche; idu: string }) {
           ? [`surface ${delaisse.surface_m2} m²`, `seuil délaissé ${delaisse.seuil_m2} m²`, 'bilan non servi']
           : [fo?.niveaux ?? 'gabarit', <>SDP <span style={{ color: 'var(--txt-dim)' }}>{fo?.surface_plancher_m2 ?? reglesSdp ?? '—'} m²</span></>, 'calcul tracé']} />}>
         <div className="flex flex-col gap-3">
+          {/* KELFONCIER-FIX-1 (Lot A) — CAUSE §10 : une zone AU FERMÉE (ou au statut non déterminé)
+              explique un potentiel nul — la parcelle n'est pas constructible tant que le PLU n'a pas
+              ouvert la zone. Le motif cité vient du règlement (moteur d'ouverture AU). */}
+          {f.au_ouverture?.bloquant && (
+            <div data-au-ouverture-cause>
+              <Vigilance title={`Zone AU${f.au_ouverture.zone_lib ? ` (${f.au_ouverture.zone_lib})` : ''} — ${f.au_ouverture.statut}.`} />
+              {f.au_ouverture.motif && <FactNote>{f.au_ouverture.motif}</FactNote>}
+            </div>
+          )}
           {/* RETOURS-20 Z5 — l'alerte « délaissé » (boîte bordée creuser) devient une Vigilance
               (filet ambre à gauche, sans boîte). Libellé inchangé. */}
           {delaisse && (

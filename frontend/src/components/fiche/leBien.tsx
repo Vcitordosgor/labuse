@@ -12,9 +12,26 @@
  * (transition non-breaking ; le tiroir « Le bien » sera dissous à l'étape 4).
  */
 import type { Fiche } from '../../lib/types'
-import { fmtInt } from '../../lib/format'
-import { IC, RefDrawer, FactRow, FactNote } from './primitives'
+import { fmtInt, fmtDec, fmtDateNum } from '../../lib/format'
+import { IC, RefDrawer, FactRow, FactNote, GroupLabel } from './primitives'
 import { Badge } from '../ui/Badge'
+// KELFONCIER-FIX-2 (Partie B, Lot F) — les blocs Bâti/Terrain composent désormais les FORMES de la
+// maquette v3 (Verdict · Tuiles · Lignes · Repli). Aucune donnée recalculée : les valeurs, hauteurs,
+// verdicts « terrain nu » viennent servis par le back et sont réagencés tels quels.
+import { Verdict, Tuiles, type Tuile, Lignes, Ligne, Repli } from './formes'
+
+type Etab = NonNullable<Fiche['etablissements']>['liste'][number]
+/** Une ligne Établissement (SIRENE) — nom masqué en italique, NAF · effectif · état · régime collectif. */
+function EtabLigne({ e }: { e: Etab }) {
+  return (
+    <Ligne
+      label={<span className={e.nom_masque ? 'italic opacity-70' : ''}>{e.nom}</span>}
+      valeur={<>{e.naf_label ?? e.naf ?? '—'}
+        {e.tranche_effectif ? <> <small>· {e.tranche_effectif}</small></> : null}
+        {!e.actif ? <> <small className="text-txt-dim">· fermé</small></> : null}
+        {e.regime_collectif ? <> <small className="text-st-ecartee">· {e.regime_collectif.libelle}</small></> : null}</>} />
+  )
+}
 
 // verdicts de forme réellement SERVIS (les autres = états « non déterminée » / « non calculée »).
 const TOIT_SERVI = new Set(['plat', 'monopente', 'double_pente', 'croupe_complexe'])
@@ -26,7 +43,10 @@ export function hauteurBienMesuree(b: NonNullable<Fiche['le_bien']>): string | n
     : null
 }
 
-/** §3 Bâti — le bâti existant : emprise, CoSIA, nb, hauteur, DPE, toit, RNB. */
+/** §3 Bâti — le bâti existant : emprise, CoSIA, nb, hauteur, DPE, toit, RNB, établissements.
+ *  KELFONCIER-FIX-2 (Lot F) — mis en formes maquette v3 : Verdict + Tuiles d'en-tête, puis Lignes de
+ *  détail (aucune donnée perdue), Repli au-delà de 3 établissements. Terrain nu = Verdict + ligne
+ *  « aucun établissement ». Les valeurs et le verdict « terrain nu » sont servis par le back. */
 export function BatiBlock({ f }: { f: Fiche }) {
   const b = f.le_bien
   if (!b || !b.disponible) return null
@@ -35,114 +55,117 @@ export function BatiBlock({ f }: { f: Fiche }) {
   const nb = b.nb_batiments
   const toit = b.toit
   const toitServi = !!toit && TOIT_SERVI.has(toit.verdict)
+  const bati = (nb != null && nb > 0) || emprise > 0
+  const faitageSourced = b.hauteur_nature === 'sourcé' && b.hauteur_faitage_m != null
+  const etab = f.etablissements
+  const etabList = etab?.liste ?? []
+
+  // ── Tuiles d'en-tête (bâti présent) : emprise · hauteur. Le NB et la NATURE DU TOIT quittent les
+  // tuiles (Lot E) : le nb passe dans la ligne de comptes, le toit dans le repli « détail du bâti ».
+  const tuiles: Tuile[] = []
+  if (bati) {
+    tuiles.push({ label: 'Emprise bâtie au sol',
+      valeur: emprise > 0 ? <>{fmtInt(emprise)} <small>m²</small></> : '—',
+      ton: emprise > 0 ? undefined : 'gris', sous: b.emprise_source })
+    tuiles.push(faitageSourced
+      ? { label: 'Faîtage (LiDAR)', valeur: <>{fmtDec(b.hauteur_faitage_m)} <small>m</small></>, sous: 'haut de toit',
+          ton: b.hauteur_discordante && b.hauteur_discordance_motif === 'faîtage aberrant' ? 'ambre' : undefined }
+      : { label: 'Hauteur du bâti',
+          valeur: b.hauteur_bati_m != null ? <>{fmtDec(b.hauteur_bati_m)} <small>m</small></> : 'non déterminée',
+          ton: b.hauteur_bati_m != null ? undefined : 'gris', sous: b.hauteur_bati_m != null ? 'BD TOPO' : undefined })
+  }
+  const nbRnb = b.rnb?.length ?? 0
+  const nbBan = b.adresses_bati?.adresses ?? 0
+  const egoutTon = b.hauteur_discordante && b.hauteur_discordance_motif === 'égout ↔ BD TOPO' ? ('ambre' as const) : undefined
+
   return (
     <div className="flex flex-col gap-3" data-le-bien>
-      <div>
-        <FactRow label="Emprise bâtie au sol"
-          value={emprise > 0 ? <>{fmtInt(emprise)} <small>m²</small></> : '—'}
-          tone={emprise > 0 ? undefined : 'mute'}
-          src={<>{b.emprise_source}</>} />
-        {b.cosia_detecte_m2 != null && (
-          <FactRow label="Bâti détecté (imagerie CoSIA)" tone="mute"
-            value={<>~{fmtInt(b.cosia_detecte_m2)} <small>m² — non cartographié en BD TOPO, à vérifier</small></>}
-            src="CoSIA 2025" />
-        )}
-        <FactRow label="Nombre de bâtiments"
-          value={nb != null ? nb : 'non déterminé'} tone={nb != null ? undefined : 'mute'} />
-        {/* RECETTE-9 T9 — quand le LiDAR HD a mesuré la parcelle : faîtage ET égout MESURÉS
-            (sourcé), l'égout étant ce que BD TOPO ne donne pas. Sinon la hauteur BD TOPO (estimé).
-            DONNEES-FIX-1 lot A — trois lignes libellées SANS ambiguïté de grandeur : le faîtage
-            (haut de toit, LiDAR), l'égout (bord de toit, LiDAR), et la hauteur BD TOPO qui vaut
-            ≈ l'égout — c'est CES DEUX-LÀ qu'on compare pour le badge (même grandeur), jamais le
-            faîtage, toujours plus haut par construction sur un toit en pente ou un R+n. */}
-        {b.hauteur_nature === 'sourcé' && b.hauteur_faitage_m != null ? (
-          <>
-            <FactRow label="Faîtage mesuré (LiDAR)"
-              value={<>{b.hauteur_faitage_m} <small>m — haut de toit</small></>}
-              tone={b.hauteur_discordante && b.hauteur_discordance_motif === 'faîtage aberrant' ? 'warn' : undefined}
-              src={`LiDAR HD (mesuré${b.hauteur_survol ? `, survol de ${b.hauteur_survol}` : ''})`} />
-            {b.hauteur_egout_m != null && (
-              <FactRow label="Égout mesuré (LiDAR)"
-                value={<>{b.hauteur_egout_m} <small>m — bord de toit</small></>}
-                tone={b.hauteur_discordante && b.hauteur_discordance_motif === 'égout ↔ BD TOPO' ? 'warn' : undefined}
-                src="LiDAR HD (mesuré)" />
-            )}
-            {b.hauteur_bdtopo_m != null && (
-              <FactRow label="Hauteur BD TOPO (≈ égout)"
-                value={<>{b.hauteur_bdtopo_m} <small>m</small></>}
-                tone={b.hauteur_discordante && b.hauteur_discordance_motif === 'égout ↔ BD TOPO' ? 'warn' : undefined}
-                src="BD TOPO® (hauteur déclarée)" />
-            )}
-          </>
-        ) : (
-          <FactRow label="Hauteur du bâti"
-            value={b.hauteur_bati_m != null ? <>{b.hauteur_bati_m} <small>m</small></> : 'non déterminée'}
-            tone={b.hauteur_bati_m != null ? undefined : 'mute'}
-            src={b.hauteur_bati_m != null ? 'BD TOPO' : undefined} />
-        )}
-        {b.hauteur_discordante && (
-          <div data-hauteur-discordante className="mt-0.5">
-            <Badge ton="ambre">Sources discordantes</Badge>
-            <p className="mt-0.5 text-[11px] leading-snug text-amber">
-              {b.hauteur_discordance_motif === 'faîtage aberrant'
-                ? <>Faîtage mesuré {b.hauteur_faitage_m} m — valeur physiquement impossible, mesure à écarter.</>
-                : <>Égout LiDAR {b.hauteur_egout_m} m · BD TOPO {b.hauteur_bdtopo_m} m — écart{b.ecart_egout_bdtopo_m != null ? ` de ${Math.abs(b.ecart_egout_bdtopo_m)} m` : ''} sur la même grandeur, à vérifier sur photo aérienne.</>}
-            </p>
-          </div>
-        )}
-        {/* FICHE-1 lot 2 — DPE du BÂTIMENT (pas de la parcelle). DONNEES-1 lot 2 — la ligne ne
-            s'affiche QUE si un DPE existe : aucune ligne « non déterminé » (DPE non obligatoire
-            en DROM, ~0,3 % de couverture ; il ne sert aucun outil ni ciblage). */}
-        {dpe && (
-          <FactRow label="DPE du bâtiment"
-            value={<>{dpe.etiquette}{dpe.etiquette_ges ? <> / GES {dpe.etiquette_ges}</> : null}
-              {dpe.annee ? <> <small>({dpe.annee})</small></> : null}</>}
-            src={<>{dpe.source}{dpe.n > 1 ? ` · ${dpe.n} DPE connus, le plus récent` : ''}</>} />
-        )}
-      </div>
-      {/* Toit — LiDAR HD (cache). null = non encore relevé (relevé à l'ouverture de la fiche soleil). */}
-      <div data-le-bien-toit>
-        {toit ? (
-          <>
-            <FactRow label="Nature du toit" value={toit.libelle}
-              tone={toitServi ? undefined : 'mute'}
-              src={toitServi ? 'LiDAR HD IGN' : undefined} />
-            {toit.pente_mediane_deg != null && (
-              <FactRow label="Pente du toit"
-                value={<>{Math.round(toit.pente_mediane_deg)}<small>°</small></>}
-                src="LiDAR HD IGN — mesure directe" />
-            )}
-            <FactNote>{toit.methode}</FactNote>
-          </>
-        ) : (
-          /* FICHE-RANGEMENT-3 Lot 4 — la fiche AFFICHE, elle ne demande pas d'action : « non
-             disponible » plutôt que « ouvrez la fiche soleil pour la calculer ». */
-          <FactRow label="Nature du toit" tone="mute" value="non disponible" />
-        )}
-      </div>
-      {/* REPARATIONS-1 lot 4 — RNB ID (Référentiel National des Bâtiments) de chaque bâtiment. */}
-      {(b.rnb?.length ?? 0) > 0 && (
-        <div data-le-bien-rnb>
-          <div className="mt-2 mb-1 text-[11px] uppercase tracking-wide opacity-60">
-            Identifiant national du bâtiment (RNB)
-          </div>
-          {b.rnb!.map((r) => (
-            <FactRow key={r.rnb_id} label="RNB"
-              value={<a href={r.lien} target="_blank" rel="noreferrer"
-                className="font-mono text-[12px] hover:underline"
-                >{r.rnb_id} ↗</a>}
-              src="RNB — Référentiel National des Bâtiments" />
-          ))}
+      {/* Verdict — restitution de faits servis (occupation, emprise, hauteur), aucun recalcul. */}
+      {bati ? (
+        <Verdict ton="vert" reponse={b.occupation_label || `${nb ?? ''} bâtiment${(nb ?? 0) > 1 ? 's' : ''}`}
+          contexte={[emprise > 0 ? `emprise ${fmtInt(emprise)} m²` : null,
+            faitageSourced ? `faîtage ${fmtDec(b.hauteur_faitage_m)} m mesuré (LiDAR)` : null].filter(Boolean).join(' · ') || undefined} />
+      ) : (
+        <Verdict ton="vert" reponse="Terrain nu"
+          contexte={`aucun bâtiment BD TOPO, aucune hauteur LiDAR${etabList.length ? '' : ', aucun établissement rattaché'}`} />
+      )}
+
+      {bati && <Tuiles items={tuiles} />}
+
+      {/* FICHE-FIX-4 (Lot E) — UNE ligne de comptes cohérente : bâtiments BD TOPO · RNB · adresses BAN
+          (les identifiants RNB liés vivent dans le repli « détail du bâti » ci-dessous). */}
+      {bati && (
+        <Lignes>
+          <Ligne label="Bâtiments"
+            valeur={<>{nb ?? '—'} <small>BD&nbsp;TOPO</small> · {nbRnb} <small>RNB</small> · {nbBan} <small>adr.&nbsp;BAN</small></>} />
+        </Lignes>
+      )}
+
+      {b.hauteur_discordante && (
+        <div data-hauteur-discordante>
+          <Badge ton="ambre">Sources discordantes</Badge>
+          <p className="mt-0.5 text-[11px] leading-snug text-amber">
+            {b.hauteur_discordance_motif === 'faîtage aberrant'
+              ? <>Faîtage mesuré {fmtDec(b.hauteur_faitage_m)} m — valeur physiquement impossible, mesure à écarter.</>
+              : <>Égout LiDAR {fmtDec(b.hauteur_egout_m)} m · BD TOPO {fmtDec(b.hauteur_bdtopo_m)} m — écart{b.ecart_egout_bdtopo_m != null ? ` de ${fmtDec(Math.abs(b.ecart_egout_bdtopo_m))} m` : ''} sur la même grandeur, à vérifier sur photo aérienne.</>}
+          </p>
         </div>
       )}
-      {/* FICHE-RANGEMENT-3 Lot 5 — adresses BAN PLUS (IGN) : lien adresse ↔ bâtiment de la parcelle. */}
-      {b.adresses_bati && (b.adresses_bati.adresses > 0 || b.adresses_bati.batiments > 0) && (
-        <div data-le-bien-ban>
-          <FactRow label="Adresses BAN PLUS"
-            value={<>{b.adresses_bati.adresses} <small>adresse{b.adresses_bati.adresses > 1 ? 's' : ''} · {b.adresses_bati.batiments} bâtiment{b.adresses_bati.batiments > 1 ? 's' : ''}</small></>}
-            src={b.adresses_bati.source} />
-        </div>
+
+      {/* FICHE-FIX-4 (Lot E) — le DÉTAIL du bâti dans un Repli : égout LiDAR, hauteur BD TOPO, nature
+          du toit (grise « non disponible » quand non relevée), pente, CoSIA détecté, DPE, BAN PLUS,
+          et les RNB liés (plus de tuile « nature du toit — non disponible » dans le flux). */}
+      {bati && (
+        <Repli label="détail du bâti">
+          <Lignes>
+            {faitageSourced && b.hauteur_egout_m != null && (
+              <Ligne label="Égout mesuré (LiDAR)" valeur={<>{fmtDec(b.hauteur_egout_m)} <small>m — bord de toit</small></>} ton={egoutTon} />
+            )}
+            {faitageSourced && b.hauteur_bdtopo_m != null && (
+              <Ligne label="Hauteur BD TOPO (≈ égout)" valeur={<>{fmtDec(b.hauteur_bdtopo_m)} <small>m</small></>} ton={egoutTon} />
+            )}
+            <Ligne label="Nature du toit" valeur={toit ? toit.libelle : 'non disponible'} ton={toitServi ? undefined : 'gris'} />
+            {toitServi && toit?.pente_mediane_deg != null && (
+              <Ligne label="Pente du toit" valeur={<>{Math.round(toit.pente_mediane_deg)}<small>°</small></>} />
+            )}
+            {b.cosia_detecte_m2 != null && (
+              <Ligne label="Bâti détecté (CoSIA)" ton="gris" valeur={<>~{fmtInt(b.cosia_detecte_m2)} <small>m² — non cartographié BD TOPO</small></>} />
+            )}
+            {dpe && (
+              <Ligne label="DPE du bâtiment"
+                valeur={<>{dpe.etiquette}{dpe.etiquette_ges ? <> / GES {dpe.etiquette_ges}</> : null}{dpe.annee ? <> <small>({dpe.annee})</small></> : null}</>} />
+            )}
+            {b.adresses_bati && nbBan > 0 && (
+              <Ligne label="Adresses BAN PLUS"
+                valeur={<>{b.adresses_bati.adresses} <small>adr. · {b.adresses_bati.batiments} bât.</small></>} />
+            )}
+            {(b.rnb ?? []).map((r) => (
+              <Ligne key={r.rnb_id} label="RNB"
+                valeur={<a href={r.lien} target="_blank" rel="noreferrer" className="font-mono text-[12px] text-mint hover:underline">{r.rnb_id} ↗</a>} />
+            ))}
+          </Lignes>
+          {toitServi && toit?.methode && <FactNote>{toit.methode}</FactNote>}
+        </Repli>
       )}
+
+      {/* KELFONCIER-FIX-1 (Lot H) — ÉTABLISSEMENTS (SIRENE, rattachés par l'adresse BAN). Les 3
+          premiers visibles, le reste derrière un Repli (aucune donnée cachée). */}
+      {etab && etab.n > 0 ? (
+        <div data-etablissements>
+          <GroupLabel>Établissements sur la parcelle{etab.n > etab.affiches
+            ? ` (${etab.affiches} sur ${etab.n})` : ` (${etab.n})`}</GroupLabel>
+          <Lignes>{etabList.slice(0, 3).map((e) => <EtabLigne key={e.siret} e={e} />)}</Lignes>
+          {etabList.length > 3 && (
+            <Repli compteur={etabList.length - 3} label="autres établissements">
+              <Lignes>{etabList.slice(3).map((e) => <EtabLigne key={e.siret} e={e} />)}</Lignes>
+            </Repli>
+          )}
+          <FactNote>{etab.note}</FactNote>
+        </div>
+      ) : (!bati && (
+        <Lignes><Ligne label="Établissements sur la parcelle" valeur={<>aucun <small>SIRENE, adresse exacte</small></>} ton="gris" /></Lignes>
+      ))}
+
       <FactNote>Bâti existant — {b.source_bati}. Information de fiche, jamais un signal de classement.</FactNote>
     </div>
   )
@@ -184,30 +207,26 @@ export function TerrainDuBienBlock({ f }: { f: Fiche }) {
   )
 }
 
-/** §1 Identité — historique cadastral officiel (filiation DFI). */
+/** §1 Identité — historique cadastral officiel (filiation DFI).
+ *  FICHE-FIX-4 (Lot C) — chaque filiation en une Ligne (« Issue de » / « A donné », valeur qui passe
+ *  à la ligne proprement), le paragraphe de méthode passe en source (FactNote). */
 export function FiliationBlock({ f }: { f: Fiche }) {
   if (!f.filiation) return null
   const fi = f.filiation
   return (
     <div data-le-bien-filiation>
-      <div className="mt-2 mb-1 text-[11px] uppercase tracking-wide opacity-60">
-        Historique cadastral (filiation officielle)
-      </div>
-      {fi.meres?.map((m) => (
-        <FactRow key={`m-${m.idu}-${m.date}`} label="Issue de"
-          value={<>{m.idu}{m.date ? <small> · {m.date}</small> : null}
-            {m.nature ? <small> · {m.nature}</small> : null}</>} />
-      ))}
-      {fi.filles?.map((x) => (
-        <FactRow key={`f-${x.idu}-${x.date}`} label="A donné"
-          value={<>{x.idu}{x.date ? <small> · {x.date}</small> : null}
-            {x.nature ? <small> · {x.nature}</small> : null}</>} />
-      ))}
-      {fi.division_recente && (
-        <FactNote>Division récente (événement ≥ 2023) — signal de mouvement foncier.</FactNote>
-      )}
-      <FactNote>{fi.source}. Contrôle croisé avec le cadastre d'époque
-        (géométrie) — deux canaux, jamais un conflit.</FactNote>
+      <GroupLabel>Filiation cadastrale</GroupLabel>
+      <Lignes>
+        {fi.meres?.map((m) => (
+          <Ligne key={`m-${m.idu}-${m.date}`} label="Issue de"
+            valeur={<>{m.idu}{m.date ? <small> · {fmtDateNum(m.date)}</small> : null}{m.nature ? <small> · {m.nature}</small> : null}</>} />
+        ))}
+        {fi.filles?.map((x) => (
+          <Ligne key={`f-${x.idu}-${x.date}`} label="A donné"
+            valeur={<>{x.idu}{x.date ? <small> · {fmtDateNum(x.date)}</small> : null}{x.nature ? <small> · {x.nature}</small> : null}</>} />
+        ))}
+      </Lignes>
+      <FactNote>{fi.division_recente ? 'Division récente (événement ≥ 2023) — signal de mouvement foncier. ' : ''}{fi.source}. Contrôle croisé avec le cadastre d'époque (géométrie) — deux canaux, jamais un conflit.</FactNote>
     </div>
   )
 }

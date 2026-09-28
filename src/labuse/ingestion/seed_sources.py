@@ -663,12 +663,12 @@ SOURCES: list[dict] = [
                            "25.12.17_CHRONIQUES_de_L_EAU_149.pdf",
          endpoint_url=None,
          legal_notes="Licence à confirmer (publication Office de l'eau Réunion — non tranché à l'audit M6 §1.11).",
-         technical_notes="SERVIE à la fiche depuis M95 (démasquée M97, audit M96 G1) : source du classement "
-                         "« Sourcé · commune » des 3 communes intégralement en ANC — Salazie, La Plaine des "
-                         "Palmistes, Petite-Île (anc_office_eau_commune, branche source_commune d'anc_service). "
-                         "Chronique n°149 (déc. 2025, données 2023), chiffres par commune du texte p. 13 → seed "
-                         "versionné data/anc/office_eau_chronique_149_2023.csv (pas de scraping du PDF). "
-                         "Second usage : calage/contrôle croisé INSEE (calage_office_eau, QA)."),
+         technical_notes="RETIRÉ (SOURCES-3 lot 0.2 / SOURCES-FIX-1) : PLUS SERVIE À LA FICHE. L'ANC à "
+                         "l'échelle commune est désormais porté par l'INSEE RP2022 EGOUL (anc_maille_taux) ; "
+                         "la branche source_commune d'anc_service a été supprimée et plus aucun lecteur du code "
+                         "ne lit anc_office_eau_commune (table conservée, données non effacées). Historique : "
+                         "Chronique n°149 (déc. 2025, données 2023), seed versionné "
+                         "data/anc/office_eau_chronique_149_2023.csv. Le motif de retrait fait foi (retiree_raison)."),
     dict(name="BD ORTHO IRC (IGN)", category="imagerie", provider="IGN / Géoplateforme",
          access_type="WMS", status=S.CONNECTE, reliability_level=R.VERIFIE,
          rate_limit="gratuit sans clé ; 4 requêtes simultanées (politesse)",

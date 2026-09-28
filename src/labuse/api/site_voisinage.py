@@ -34,13 +34,25 @@ SRC_DVF = "DVF / valeurs foncières (Etalab)"
 def historique_permis(db: Session, idu: str) -> dict | None:
     """« Sur cette parcelle » : permis rattachés à l'IDU (idu_codes) + caducité (pc_caducs).
     Liste datée (type, dépôt, autorisation), un caduc DIT caduc. None si aucun permis ni caduc."""
-    permis = [dict(r) for r in db.execute(text("""
+    # KELFONCIER-FIX-1 (Lot C) — le TYPE (libellé PA/DP/PC/PD) et l'ÉTAT (annulé compris) sont
+    # servis à la fiche §4, par la source UNIQUE (ingestion.permits) : avant, la liste ne portait ni
+    # libellé de type ni état, et un permis annulé (4 324 en base) était indiscernable d'une autorisation.
+    from ..ingestion.permits import _TYPE_LABEL, etat_libelle as _permis_etat, est_annule as _permis_annule
+    permis = []
+    for r in db.execute(text("""
         SELECT permit_id, type, date::date::text AS date_autorisation,
-               date_depot::date::text AS date_depot
+               date_depot::date::text AS date_depot, raw
         FROM sitadel_permits
         WHERE idu_codes ? :idu
         ORDER BY COALESCE(date_depot, date) DESC
-        LIMIT 20"""), {"idu": idu}).mappings().all()]
+        LIMIT 20"""), {"idu": idu}).mappings().all():
+        raw = r["raw"] if isinstance(r["raw"], dict) else {}
+        permis.append({
+            "permit_id": r["permit_id"], "type": r["type"],
+            "type_label": _TYPE_LABEL.get(r["type"], r["type"]),
+            "date_autorisation": r["date_autorisation"], "date_depot": r["date_depot"],
+            "etat_libelle": _permis_etat(raw), "annule": _permis_annule(raw),
+        })
     caduc = db.execute(text("""
         SELECT pc_annee, caduc_depuis, statut_autorisation, statut_caducite, libelle_court, detail
         FROM pc_caducs WHERE idu = :idu"""), {"idu": idu}).mappings().first()

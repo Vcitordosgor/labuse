@@ -52,7 +52,7 @@ import { Blocs } from './Blocs'   // OUTILS-MUSCLER-3 — assiettes contiguës d
 import { TierBadge } from './TierBadge'
 import { ListPaginationFooter, PAGE_SIZE } from '../ListPagination'
 import { Bouton } from '../ui/Bouton'
-import { Case } from '../ui/Case'
+import { Badge } from '../ui/Badge'   // KELFONCIER-FIX-2 (Lot D) — pastille d'état de permis (vert/rouge)
 import { Retour } from '../ui/Retour'
 import { Chevron } from '../ui/Chevron'
 import { Chip } from '../ui/Chip'
@@ -176,19 +176,16 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
   // RETOURS-3 R4.3 — pont Scan patrimoine → Veille promoteurs (« Voir ses opérations », même SIREN).
   const setVeilleFocusSiren = useApp((s) => s.setVeilleFocusSiren)
   const setModule = useApp((s) => s.setModule)
-  // OUTILS-FIX-2 A1 — pont Scan patrimoine → Courrier ; A5 — pont Listes → Comparer. Le propriétaire
-  // est déjà résolu : le Courrier reçoit les IDU (jamais les noms). Comparer se limite à 3 côté outil.
-  const setCourrierPrefillIdus = useApp((s) => s.setCourrierPrefillIdus)
-  const addToCompare = useApp((s) => s.addToCompare)
-  const openCompare = useApp((s) => s.openCompare)
-  const pushOutilRetour = useApp((s) => s.pushOutilRetour)   // OUTILS-FIX-3 Lot D — fil de retour
-  const [sel, setSel] = useState<Set<string>>(new Set())
+  // KELFONCIER-FIX-2 (Lot B) — les ponts Courrier (setCourrierPrefillIdus) et Comparer (addToCompare/
+  // openCompare), le fil de retour (pushOutilRetour) et la sélection multiple (`sel`) ne servaient
+  // qu'aux deux actions retirées du Scan patrimoine → supprimés ici. Ils restent portés par les
+  // outils qui en ont besoin (Courrier, Comparateur), ailleurs dans le produit.
   const [sirenState, setSiren] = useState<string | null>(null)
   // RETOURS-12 O5 — le bandeau (nom + 3 chiffres + détail) est REPLIABLE en accordéon pour laisser
   // toute la place à la liste des parcelles (bug : la liste ne s'ouvrait pas, noyée sous le bandeau).
   const [bandeauReplie, setBandeauReplie] = useState(false)
   const siren = embedded ? (sirenProp ?? null) : sirenState
-  useEffect(() => { setBandeauReplie(false); setSel(new Set()) }, [siren])   // nouveau propriétaire → bandeau déplié + sélection vidée
+  useEffect(() => { setBandeauReplie(false) }, [siren])   // nouveau propriétaire → bandeau déplié
   useEffect(() => {
     // en mode embarqué, le SIREN vient de la fusion (sirenProp) — on ne consomme pas m02Prefill (pas de course).
     if (!embedded && m02Prefill) { setSiren(m02Prefill); setM02Prefill(null) }
@@ -330,34 +327,23 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
               REPLIÉE (bandeau déplié + bouton « Voir ses parcelles → ») ; le clic replie le
               bandeau ET ouvre la liste. Plus de doublon bouton + liste déjà affichée. */}
           {(!embedded || bandeauReplie) && (<>
-          {/* OUTILS-FIX-2 A1/A5 — sur sélection : pont Courrier (IDU du propriétaire résolu) + pont Comparer. */}
-          {sel.size > 0 && (
-            <div className="flex flex-wrap items-center gap-2">
-              {/* OUTILS-FIX-3 Lot D — fil de retour : le Courrier/Comparer cible affiche « ← Scan patrimoine »,
-                  qui rouvre ce propriétaire (m02Prefill = SIREN résolu). */}
-              <Bouton niveau="secondaire" ton="vert" data-scan-courrier onClick={() => { setCourrierPrefillIdus([...sel]); setModule('courriers'); pushOutilRetour({ module: 'patrimoine', label: 'Scan patrimoine', restore: { m02Prefill: String(d['siren']) } }) }}>
-                ✉ Préparer les courriers ({sel.size})
-              </Bouton>
-              <Bouton niveau="secondaire" ton="vert" data-scan-comparer onClick={() => { [...sel].slice(0, 3).forEach(addToCompare); openCompare(); pushOutilRetour({ module: 'patrimoine', label: 'Scan patrimoine', restore: { m02Prefill: String(d['siren']) } }) }}>
-                Comparer ({Math.min(sel.size, 3)}) →
-              </Bouton>
-              {sel.size > 3 && <span className="text-[10px] text-txt-dim">Comparer se limite à 3.</span>}
-            </div>
-          )}
+          {/* KELFONCIER-FIX-2 (Lot B) — les deux actions « ✉ Préparer les courriers » et « Comparer »
+              sont RETIRÉES du Scan patrimoine (l'outil observe, il ne démarche pas). La sélection
+              multiple (cases) ne servait QU'à ces deux ponts → retirée aussi (plus de case morte).
+              Les composants (Courrier, Comparateur) et leurs endpoints restent, joignables ailleurs. */}
           <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
             {items.map((i) => {
               const idu = i['idu'] as string
               return (
-              <div key={idu} className="flex min-w-0 items-center gap-2">
-                <Case data-scan-parc-sel checked={sel.has(idu)}
-                  onChange={() => setSel((s) => { const n = new Set(s); n.has(idu) ? n.delete(idu) : n.add(idu); return n })} />
-                <div className="min-w-0 flex-1">
+              <div key={idu} className="min-w-0">
                 {/* RECETTE-1 R8 — pastille de palier (scoring q_v14) retirée du Scan patrimoine. */}
+                {/* KELFONCIER-FIX-1 (Lot H) — « occupé par N établissements » (SIRENE rattaché par
+                    l'adresse BAN, même source que la fiche §3). Silencieux si 0. */}
                 <Row idu={idu} hoverFull
-                  sub={`${i['commune']} · ${fmt(i['surface_m2'] as number)} m² · SDP ${fmt(i['sdp'] as number)}`}
+                  sub={`${i['commune']} · ${fmt(i['surface_m2'] as number)} m² · SDP ${fmt(i['sdp'] as number)}`
+                    + (Number(i['n_etablissements']) > 0 ? ` · occupé par ${fmt(i['n_etablissements'] as number)} établissement${Number(i['n_etablissements']) > 1 ? 's' : ''}` : '')}
                   fiche={[['Propriétaire', String(d['nom'])], ['SIREN', String(d['siren'])],
                     ['Patrimoine', `${d['n_parcelles']} parcelles · SDP résiduelle ${fmt(d['sdp_residuelle_m2'] as number)} m²`]]} />
-                </div>
               </div>
             )})}
           </div>
@@ -443,7 +429,9 @@ export function PermitDrawer({ permitId, onClose }: { permitId: string; onClose:
               </div>
               <button onClick={onClose} aria-label="Fermer" className="flex h-7 w-7 items-center justify-center rounded-full border border-line-2 text-[11px] text-txt-mut transition-colors duration-quick hover:text-txt">✕</button>
             </div>
-            <F label="Statut" value={d['statut']} />
+            {/* KELFONCIER-FIX-2 (Lot D) — statut en pastille (rouge si annulé, vert sinon), même
+                fonction que la fiche (etat_libelle/annule servis par /permis/{id}). */}
+            <F label="Statut" value={d['statut'] ? <Badge ton={d['annule'] ? 'rouge' : 'vert'}>{String(d['statut'])}</Badge> : null} />
             {/* RETOURS-13 R30 — la DESTINATION est dite (hôtels, bureaux, commerce…) ; une position
                 estimée par l'adresse (parcelle du permis disparue du cadastre) est signalée. */}
             <F label="Destination" value={d['destination_libelle']} />
@@ -946,9 +934,10 @@ export function M03() {
                 aligné À DROITE de la MÊME ligne (avant : le badge décrochait sur une 2ᵉ ligne). */}
             {/* RETOURS-17 W3 — pastille = couleur d'état (source unique) ; sa définition tient dans l'infobulle. */}
             <span className="h-[7px] w-[7px] shrink-0 rounded-full" style={{ background: etatColor(et) }} aria-label={etTitre} />
-            {/* RETOURS-16 V2.3 — chip type masqué en mode Dormant : l'endpoint ne sert QUE des PC
-                (WHERE type='PC'), la valeur ne varie jamais — une constante n'est pas une information. */}
-            {!pointMort && <span className="shrink-0 rounded border border-line-2 px-1.5 py-0.5 font-mono text-[10px] text-txt-hi">{i['type'] as string}</span>}
+            {/* KELFONCIER-FIX-2 (Lot D) — le TYPE (PC / PA / DP) est TOUJOURS dans le libellé (même en
+                mode Dormant, où il vaut « PC ») : le mandat le demande explicitement, et c'est cohérent
+                avec la pastille d'état à droite. */}
+            <span className="shrink-0 rounded border border-line-2 px-1.5 py-0.5 font-mono text-[10px] text-txt-hi">{i['type'] as string}</span>
             {/* O17 (h) — DATE = date réelle d'autorisation du permis (par ligne), PAS la date du fichier. */}
             <span className="shrink-0 font-mono text-txt-mut">{i['date'] as string}</span>
             {i['nb_lgt'] != null && <b className="shrink-0 tnum text-txt">{String(i['nb_lgt'])} lgt{Number(i['nb_lgt']) > 1 ? 's' : ''}</b>}
@@ -967,7 +956,10 @@ export function M03() {
               {!pointMort && i['delai_mois'] != null && <span style={{ color: VIOLET }}>{String(i['delai_mois'])} m</span>}
               {pointMort
                 ? <span data-permis-badge-mort className="whitespace-nowrap rounded-full bg-st-ecartee/15 px-1.5 py-0.5 text-[9px] font-medium text-st-ecartee">Sans DAACT{ans != null ? ` · ${ans} an${ans > 1 ? 's' : ''}` : ''}</span>
-                : i['etat_label'] && <span data-permis-etat className="whitespace-nowrap rounded-full bg-surface-2 px-1.5 py-0.5 text-[9px] font-medium text-txt-mut">{i['etat_label'] as string}</span>}
+                /* KELFONCIER-FIX-2 (Lot D) — pastille d'état par la MÊME fonction que la fiche
+                   (etat_libelle/annule servis par /permis) : annulé → rouge, autorisé / travaux
+                   commencés / achevés → vert. Absent (dormant / non servi) : pas de pastille. */
+                : i['etat_libelle'] && <Badge data-permis-etat ton={i['annule'] ? 'rouge' : 'vert'}>{i['etat_libelle'] as string}</Badge>}
             </span>
           </button>
           )

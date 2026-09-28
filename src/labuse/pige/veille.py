@@ -16,6 +16,20 @@ from ..copilote_v2.veilles import TYPE_RADAR
 # événements qu'un client peut cocher (miroir des statuts/faits du Radar).
 EVENEMENTS_VEILLE = ("nouvelle", "baisse", "retour")
 
+# RADAR-2 (Lot 4) — la colonne `en_pause` (mise en pause d'une alerte) vit dans le DDL de la table
+# `veilles` (copilote_v2/veilles.py), appliqué au démarrage de l'app. Pour les chemins qui n'ouvrent pas
+# l'app (tests unitaires du digest), on la garantit ICI, une fois par process (IF NOT EXISTS, idempotent).
+_COLS_OK = False
+
+
+def _ensure_pause(db: Session) -> None:
+    global _COLS_OK
+    if _COLS_OK:
+        return
+    db.execute(text("ALTER TABLE veilles ADD COLUMN IF NOT EXISTS en_pause boolean DEFAULT false"))
+    db.execute(text("ALTER TABLE veilles ADD COLUMN IF NOT EXISTS paused_at timestamptz"))
+    _COLS_OK = True
+
 
 def creer(db: Session, *, compte_id: int | None, criteria: dict) -> int:
     """Crée une veille Radar. `criteria` (modèle VEILLE-2) = {communes?:[...], type_bien?, surface_min?,
@@ -32,13 +46,68 @@ def creer(db: Session, *, compte_id: int | None, criteria: dict) -> int:
         {"c": compte_id, "t": TYPE_RADAR, "comm": commune, "cr": json.dumps(criteria)}).scalar()
 
 
+def _norme(criteria: dict) -> dict:
+    """Forme CANONIQUE d'un jeu de critères, pour comparer deux alertes : valeurs vides retirées,
+    `commune` seule fondue dans `communes`, communes triées/dédupliquées. Deux alertes qui ciblent la
+    même chose ont la même forme, quel que soit l'ordre de saisie."""
+    c = {k: v for k, v in (criteria or {}).items() if v not in (None, [], False, "")}
+    communes = list(c.pop("communes", []) or [])
+    if c.pop("commune", None):
+        communes.append(criteria["commune"])
+    if communes:
+        c["communes"] = sorted(set(communes))
+    return c
+
+
+def existe_identique(db: Session, compte_id: int | None, criteria: dict) -> bool:
+    """RADAR-2 (retouches 2) — une alerte AUX MÊMES critères existe-t-elle déjà (compte-scopé, actives) ?
+    Comparaison sur la forme canonique (`_norme`) → l'ordre des communes ou une commune seule vs liste
+    d'une n'échappe pas au doublon."""
+    cible = _norme(criteria)
+    return any(_norme(v["criteria"]) == cible for v in lister(db, compte_id))
+
+
 def lister(db: Session, compte_id: int | None) -> list[dict]:
+    _ensure_pause(db)
     rows = db.execute(text(
-        "SELECT id, nom, commune, criteria, created_at FROM veilles "
+        "SELECT id, nom, commune, criteria, created_at, en_pause, paused_at FROM veilles "
         "WHERE type = :t AND actif AND compte_id IS NOT DISTINCT FROM :c ORDER BY id DESC"),
         {"t": TYPE_RADAR, "c": compte_id}).mappings().all()
     return [{"id": r["id"], "nom": r["nom"], "commune": r["commune"], "criteria": r["criteria"] or {},
-             "created_at": r["created_at"].isoformat() if r["created_at"] else None} for r in rows]
+             "created_at": r["created_at"].isoformat() if r["created_at"] else None,
+             "en_pause": bool(r["en_pause"]),
+             "paused_at": r["paused_at"].isoformat() if r["paused_at"] else None} for r in rows]
+
+
+def basculer_pause(db: Session, compte_id: int | None, veille_id: int, en_pause: bool) -> bool:
+    """RADAR-2 (Lot 4) — met une alerte EN PAUSE (ou la reprend). Distinct du soft-delete (`actif=false`) :
+    l'alerte reste listée mais ne notifie plus et ne compte plus de nouveaux tant qu'elle est en pause.
+    Même garde IDOR que supprimer/renommer (compte-scopé). Retourne True si une ligne du compte a bougé."""
+    _ensure_pause(db)
+    n = db.execute(text(
+        "UPDATE veilles SET en_pause = :p, paused_at = CASE WHEN :p THEN now() ELSE NULL END "
+        "WHERE id = :i AND type = :t AND actif AND compte_id IS NOT DISTINCT FROM :c"),
+        {"p": bool(en_pause), "i": veille_id, "t": TYPE_RADAR, "c": compte_id}).rowcount
+    return bool(n)
+
+
+def apercu(db: Session, compte_id: int | None) -> dict:
+    """RADAR-2 (Lot 1/4) — les alertes du compte, CHACUNE avec son nombre de « nouveaux depuis hier »
+    (biens validés vivants saisis depuis le début d'hier, Réunion, correspondant aux critères). Une alerte
+    en PAUSE ne compte aucun nouveau. Réutilise `_biens_du_jour` (contrat partagé avec le digest) et
+    `matche` — jamais un second calcul de correspondance. Renvoie aussi le total (badge du hub)."""
+    from .digests import _biens_du_jour
+    depuis = db.execute(text(
+        "SELECT ((now() AT TIME ZONE 'Indian/Reunion')::date - 1) AT TIME ZONE 'Indian/Reunion'")).scalar()
+    biens = _biens_du_jour(db, depuis)
+    alertes = []
+    total = 0
+    for v in lister(db, compte_id):
+        n = 0 if v["en_pause"] else sum(1 for b in biens if matche(v["criteria"], b))
+        if not v["en_pause"]:
+            total += n
+        alertes.append({**v, "nouveaux": n})
+    return {"alertes": alertes, "nouveaux_total": total}
 
 
 def supprimer(db: Session, compte_id: int | None, veille_id: int) -> bool:

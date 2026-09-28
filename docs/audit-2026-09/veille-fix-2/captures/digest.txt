@@ -1,0 +1,31 @@
+LABUSE — 5 changements sur vos suivis
+
+Bonjour,
+
+Voici le point sur vos parcelles suivies et vos critères pour hier (5 événements) :
+
+• Vente : votre parcelle CY0018 a changé de mains
+  Mutation du 2025-12-31 — 2 300 000 € (Vente terrain à bâtir).
+  https://app.labuse.immo/socle/#parcelle=97415000CY0018
+
+• Nouvelle annonce pour votre veille — Maison à ZZVF2E
+  320 000 € · Maison · ZZVF2E
+
+• Nouvelle annonce pour votre veille — Maison à ZZVF2E
+  350 000 € · Maison · ZZVF2E
+
+• Baisse de prix — Maison à ZZVF2E
+  360 000 € → 320 000 € · Maison · ZZVF2E
+
+• Annonce retirée — Maison à ZZVF2E
+  retirée le 27 septembre 2026 · Maison · ZZVF2E
+
+— — —
+Vous recevez cet e-mail parce que vous suivez des parcelles ou surveillez des critères Radar dans LABUSE.
+Régler la fréquence et vos préférences (quotidien, hebdo, cloche seule ; par type) :
+https://app.labuse.immo/events/preferences?c=86&t=k8W_xc90zaTO3QuJA1XQPksVRa_oe5_T
+Pour ne plus rien recevoir par e-mail :
+https://app.labuse.immo/events/desabonner?c=86&t=k8W_xc90zaTO3QuJA1XQPksVRa_oe5_T
+
+— LABUSE
+contact@labuse.immo

@@ -1,0 +1,583 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`formes de la fiche (maquette v3) — 12 composants > BarreEmpilee 1`] = `
+<div
+  data-forme="barre-empilee"
+>
+  <div
+    style="display: flex; height: 8px; border-radius: 999px; overflow: hidden; background: var(--line-2); margin-top: 8px;"
+  >
+    <i
+      style="display: block; height: 100%; width: 63.6%; background: rgb(107, 114, 128);"
+    />
+    <i
+      style="display: block; height: 100%; width: 26.1%; background: var(--mint);"
+    />
+  </div>
+  <div
+    style="display: flex; flex-wrap: wrap; gap: 6px 12px; margin-top: 6px; font-size: 11px; color: var(--txt-dim);"
+  >
+    <span>
+      <i
+        style="display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; background: rgb(107, 114, 128);"
+      />
+      Imperméabilisé 63,6 %
+    </span>
+    <span>
+      <i
+        style="display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; background: var(--mint);"
+      />
+      Végétalisé 26,1 %
+    </span>
+  </div>
+</div>
+`;
+
+exports[`formes de la fiche (maquette v3) — 12 composants > CasesEtat 1`] = `
+<div
+  data-forme="cases-etat"
+  style="display: grid; grid-template-columns: repeat(4,1fr); gap: 6px;"
+>
+  <div
+    style="border: 1px solid var(--line); border-radius: 6px; background: var(--bg-3); padding: 6px 4px; text-align: center;"
+  >
+    <div
+      style="font-size: 14px; line-height: 1; color: var(--mint);"
+    >
+      ✓
+    </div>
+    <div
+      style="font-size: 10.5px; color: var(--txt-dim); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
+    >
+      Voirie
+    </div>
+    <div
+      style="font-family: var(--mono, ui-monospace, Menlo, monospace); font-variant-numeric: tabular-nums; font-size: 11px; margin-top: 1px; color: var(--txt-hi);"
+    >
+      ≤ 10 m
+    </div>
+  </div>
+  <div
+    style="border: 1px solid var(--line); border-radius: 6px; background: var(--bg-3); padding: 6px 4px; text-align: center;"
+  >
+    <div
+      style="font-size: 14px; line-height: 1; color: var(--mint);"
+    >
+      ✓
+    </div>
+    <div
+      style="font-size: 10.5px; color: var(--txt-dim); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
+    >
+      Fibre
+    </div>
+    <div
+      style="font-family: var(--mono, ui-monospace, Menlo, monospace); font-variant-numeric: tabular-nums; font-size: 11px; margin-top: 1px; color: var(--txt-hi);"
+    >
+      FttH
+    </div>
+  </div>
+  <div
+    style="border: 1px solid var(--line); border-radius: 6px; background: var(--bg-3); padding: 6px 4px; text-align: center;"
+  >
+    <div
+      style="font-size: 14px; line-height: 1; color: var(--mint);"
+    >
+      ✓
+    </div>
+    <div
+      style="font-size: 10.5px; color: var(--txt-dim); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
+    >
+      Bus
+    </div>
+    <div
+      style="font-family: var(--mono, ui-monospace, Menlo, monospace); font-variant-numeric: tabular-nums; font-size: 11px; margin-top: 1px; color: var(--txt-hi);"
+    >
+      135 m
+    </div>
+  </div>
+  <div
+    style="border: 1px solid var(--line); border-radius: 6px; background: var(--bg-3); padding: 6px 4px; text-align: center;"
+  >
+    <div
+      style="font-size: 14px; line-height: 1; color: var(--amber);"
+    >
+      ?
+    </div>
+    <div
+      style="font-size: 10.5px; color: var(--txt-dim); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
+    >
+      Assainis.
+    </div>
+    <div
+      style="font-family: var(--mono, ui-monospace, Menlo, monospace); font-variant-numeric: tabular-nums; font-size: 11px; margin-top: 1px; color: var(--txt-hi);"
+    >
+      19 %
+    </div>
+  </div>
+</div>
+`;
+
+exports[`formes de la fiche (maquette v3) — 12 composants > Frise 1`] = `
+<div
+  data-forme="frise"
+  style="display: flex; height: 22px; border-radius: 6px; overflow: hidden; border: 1px solid var(--line-2); margin-top: 6px; font-size: 10.5px;"
+>
+  <div
+    style="display: flex; align-items: center; padding: 0px 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 3 1 0%; background: var(--bg-3); color: var(--txt-dim);"
+  >
+    <span
+      style="font-family: var(--mono, ui-monospace, Menlo, monospace); font-variant-numeric: tabular-nums; margin-right: 6px; color: var(--txt-off);"
+    >
+      2019
+    </span>
+    TCO
+  </div>
+  <div
+    style="display: flex; align-items: center; padding: 0px 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 4 1 0%; border-left: 1px solid var(--line-2); background: var(--mint-bg); color: var(--mint);"
+  >
+    <span
+      style="font-family: var(--mono, ui-monospace, Menlo, monospace); font-variant-numeric: tabular-nums; margin-right: 6px; color: var(--txt-off);"
+    >
+      2022
+    </span>
+    EPF Réunion
+  </div>
+</div>
+`;
+
+exports[`formes de la fiche (maquette v3) — 12 composants > Jauge3 1`] = `
+<div>
+  <div
+    data-forme="jauge3"
+    style="display: grid; grid-template-columns: 1fr auto auto; align-items: center; column-gap: 8px; padding: 5px 0px; border-bottom: 1px solid var(--line); font-size: 12.5px;"
+  >
+    <span
+      style="color: var(--txt-hi);"
+    >
+      Inondation
+    </span>
+    <span
+      style="display: flex; gap: 2px;"
+    >
+      <i
+        style="width: 14px; height: 6px; border-radius: 2px; background: var(--amber);"
+      />
+      <i
+        style="width: 14px; height: 6px; border-radius: 2px; background: var(--line-2);"
+      />
+      <i
+        style="width: 14px; height: 6px; border-radius: 2px; background: var(--line-2);"
+      />
+    </span>
+    <span
+      style="font-family: var(--mono, ui-monospace, Menlo, monospace); font-variant-numeric: tabular-nums; font-size: 11px; color: var(--txt-dim); min-width: 40px; text-align: right;"
+    >
+      100 %
+    </span>
+  </div>
+  <div
+    data-forme="jauge3"
+    style="display: grid; grid-template-columns: 1fr auto auto; align-items: center; column-gap: 8px; padding: 5px 0px; border-bottom: 1px solid var(--line); font-size: 12.5px;"
+  >
+    <span
+      style="color: var(--txt-hi);"
+    >
+      Mouvement
+    </span>
+    <span
+      style="display: flex; gap: 2px;"
+    >
+      <i
+        style="width: 14px; height: 6px; border-radius: 2px; background: var(--st-ecartee);"
+      />
+      <i
+        style="width: 14px; height: 6px; border-radius: 2px; background: var(--st-ecartee);"
+      />
+      <i
+        style="width: 14px; height: 6px; border-radius: 2px; background: var(--st-ecartee);"
+      />
+    </span>
+    <span
+      style="font-family: var(--mono, ui-monospace, Menlo, monospace); font-variant-numeric: tabular-nums; font-size: 11px; color: var(--txt-dim); min-width: 40px; text-align: right;"
+    >
+      100 %
+    </span>
+  </div>
+</div>
+`;
+
+exports[`formes de la fiche (maquette v3) — 12 composants > Ligne / Lignes 1`] = `
+<div
+  data-forme="lignes"
+  style="margin-top: 8px;"
+>
+  <div
+    data-forme="ligne"
+    style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 2px 10px; padding: 5px 0px; border-bottom: 1px solid var(--line); font-size: 12.5px;"
+  >
+    <span
+      style="color: var(--txt-hi); display: flex; align-items: baseline; gap: 5px; min-width: 0px;"
+    >
+      PLU
+    </span>
+    <span
+      style="font-family: var(--mono, ui-monospace, Menlo, monospace); font-variant-numeric: tabular-nums; text-align: right; flex: 0 0 auto; margin-left: auto; min-width: 0px; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--txt-hi);"
+    >
+      approuvé 17/12/2025
+    </span>
+  </div>
+  <div
+    data-forme="ligne"
+    style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 2px 10px; padding: 5px 0px; border-bottom: 1px solid var(--line); font-size: 12.5px;"
+  >
+    <span
+      style="color: var(--txt-hi); display: flex; align-items: baseline; gap: 5px; min-width: 0px;"
+    >
+      Préemption
+    </span>
+    <span
+      style="font-family: var(--mono, ui-monospace, Menlo, monospace); font-variant-numeric: tabular-nums; text-align: right; flex: 0 0 auto; margin-left: auto; min-width: 0px; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--amber);"
+    >
+      DPU simple
+    </span>
+  </div>
+</div>
+`;
+
+exports[`formes de la fiche (maquette v3) — 12 composants > OutilsSection (un seul principal vert) 1`] = `
+<div
+  data-forme="outils-section"
+  style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 10px;"
+>
+  <div>
+    <button
+      class="inline-flex items-center justify-center gap-2 h-8 rounded-md text-[13px] font-medium leading-none transition-colors duration-quick focus-visible:outline-none disabled:pointer-events-auto px-[14px] bg-transparent border border-mint text-mint hover:bg-mint hover:text-mint-on focus-visible:bg-mint focus-visible:text-mint-on w-full justify-between"
+      data-porte="plu"
+      type="button"
+    >
+      Simuler l'ouverture
+      <span
+        style="color: var(--mint);"
+      >
+        →
+      </span>
+    </button>
+  </div>
+  <div>
+    <button
+      class="inline-flex items-center justify-center gap-2 h-8 rounded-md text-[13px] font-medium leading-none transition-colors duration-quick focus-visible:outline-none disabled:pointer-events-auto px-[14px] bg-transparent border border-mint text-mint hover:bg-mint hover:text-mint-on focus-visible:bg-mint focus-visible:text-mint-on w-full justify-between !border-line-2 !text-txt !bg-transparent hover:!bg-surface-3 hover:!text-txt-hi hover:!border-line-3"
+      type="button"
+    >
+      Voir l'article
+      <span
+        style="color: var(--txt-faint);"
+      >
+        →
+      </span>
+    </button>
+  </div>
+  <div>
+    <button
+      class="inline-flex items-center justify-center gap-2 h-8 rounded-md text-[13px] font-medium leading-none transition-colors duration-quick focus-visible:outline-none disabled:pointer-events-auto px-[14px] bg-transparent border border-mint text-mint hover:bg-mint hover:text-mint-on focus-visible:bg-mint focus-visible:text-mint-on w-full justify-between !border-line-2 !text-txt !bg-transparent hover:!bg-surface-3 hover:!text-txt-hi hover:!border-line-3"
+      type="button"
+    >
+      Annuaire PLU
+      <span
+        style="color: var(--txt-faint);"
+      >
+        →
+      </span>
+    </button>
+  </div>
+  <div>
+    <button
+      class="inline-flex items-center justify-center gap-2 h-8 rounded-md text-[13px] font-medium leading-none transition-colors duration-quick focus-visible:outline-none disabled:pointer-events-auto px-[14px] bg-transparent border border-mint text-mint hover:bg-mint hover:text-mint-on focus-visible:bg-mint focus-visible:text-mint-on w-full justify-between !border-line-2 !text-txt !bg-transparent hover:!bg-surface-3 hover:!text-txt-hi hover:!border-line-3"
+      type="button"
+    >
+      Vérif procédure
+      <span
+        style="color: var(--txt-faint);"
+      >
+        →
+      </span>
+    </button>
+  </div>
+</div>
+`;
+
+exports[`formes de la fiche (maquette v3) — 12 composants > Pastilles 1`] = `
+<div
+  data-forme="pastilles"
+  style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px;"
+>
+  <button
+    aria-disabled="false"
+    aria-pressed="true"
+    class="inline-flex h-8 items-center gap-1 rounded-full border px-3 text-[12px] font-medium leading-none transition-colors duration-quick focus-visible:outline-none border-mint bg-mint text-mint-on"
+    tabindex="-1"
+    type="button"
+  >
+    <svg
+      aria-hidden="true"
+      class="h-3 w-3 shrink-0"
+      viewBox="0 0 12 12"
+    >
+      <polyline
+        fill="none"
+        points="2.5,6.5 5,9 9.5,3.5"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="1.7"
+      />
+    </svg>
+    ZFANG
+    <small
+      style="margin-left: 5px; opacity: 0.75; font-size: 10px;"
+    >
+      2019
+    </small>
+  </button>
+  <button
+    aria-disabled="true"
+    aria-pressed="false"
+    class="inline-flex h-8 items-center gap-1 rounded-full border px-3 text-[12px] font-medium leading-none transition-colors duration-quick focus-visible:outline-none border-line-2 bg-surface-3 text-txt-mut hover:border-mint hover:bg-mint hover:text-mint-on"
+    style="border-style: dashed; opacity: 0.7; cursor: default;"
+    tabindex="-1"
+    type="button"
+  >
+    QPV
+  </button>
+</div>
+`;
+
+exports[`formes de la fiche (maquette v3) — 12 composants > Reglette 1`] = `
+<div
+  data-forme="reglette"
+  style="margin-top: 8px;"
+>
+  <div
+    style="position: relative; height: 6px; border-radius: 999px; background: var(--line-2);"
+  >
+    <s
+      style="position: absolute; top: -2px; left: 50%; width: 2px; height: 10px; background: var(--txt-dim);"
+    />
+    <b
+      style="position: absolute; top: -3px; left: 62%; width: 12px; height: 12px; border-radius: 50%; background: var(--mint); border: 2px solid var(--bg-2); transform: translateX(-50%);"
+    />
+  </div>
+  <div
+    style="display: flex; justify-content: space-between; font-family: var(--mono, ui-monospace, Menlo, monospace); font-variant-numeric: tabular-nums; font-size: 10.5px; color: var(--txt-dim); margin-top: 4px;"
+  >
+    <span>
+      commune 3 633 €/m²
+    </span>
+    <span
+      style="color: var(--mint);"
+    >
+      secteur +7 %
+    </span>
+  </div>
+</div>
+`;
+
+exports[`formes de la fiche (maquette v3) — 12 composants > Repli (fermé par défaut, ouvre au clic) 1`] = `
+<div
+  data-forme="repli"
+>
+  <button
+    aria-expanded="true"
+    data-repli-toggle="true"
+    style="display: flex; align-items: center; gap: 6px; color: var(--mint); font-size: 12px; padding: 6px 0px 0px; background: none; border: medium; cursor: pointer; text-align: left;"
+    type="button"
+  >
+    <span
+      style="font-size: 9px; color: var(--mint);"
+    >
+      ▼
+    </span>
+    <b
+      style="color: var(--txt-hi); font-weight: 500;"
+    >
+      10 couches
+    </b>
+    <span>
+      sans objet
+    </span>
+  </button>
+  <div
+    style="margin-top: 4px;"
+  >
+    <div
+      data-contenu="true"
+    >
+      caché
+    </div>
+  </div>
+</div>
+`;
+
+exports[`formes de la fiche (maquette v3) — 12 composants > Tableau3 1`] = `
+<div
+  data-forme="tableau3"
+  style="display: grid; grid-template-columns: 1fr repeat(3,auto); column-gap: 10px; font-size: 12px; margin-top: 4px;"
+>
+  <span
+    style="color: var(--txt-dim); font-size: 10.5px; padding-bottom: 4px; border-bottom: 1px solid var(--line); text-align: left;"
+  >
+     
+  </span>
+  <span
+    style="color: var(--txt-dim); font-size: 10.5px; padding-bottom: 4px; border-bottom: 1px solid var(--line); text-align: right;"
+  >
+    Zone
+  </span>
+  <span
+    style="color: var(--txt-dim); font-size: 10.5px; padding-bottom: 4px; border-bottom: 1px solid var(--line); text-align: right;"
+  >
+    Commune
+  </span>
+  <span
+    style="color: var(--txt-dim); font-size: 10.5px; padding-bottom: 4px; border-bottom: 1px solid var(--line); text-align: right;"
+  >
+    Île
+  </span>
+  <span
+    style="padding: 5px 0px; border-bottom: 1px solid var(--line);"
+  >
+    Habitants
+  </span>
+  <span
+    style="padding: 5px 0px; border-bottom: 1px solid var(--line); font-family: var(--mono, ui-monospace, Menlo, monospace); font-variant-numeric: tabular-nums; text-align: right; color: var(--mint);"
+  >
+    35
+  </span>
+  <span
+    style="padding: 5px 0px; border-bottom: 1px solid var(--line); font-family: var(--mono, ui-monospace, Menlo, monospace); font-variant-numeric: tabular-nums; text-align: right;"
+  >
+    104 k
+  </span>
+  <span
+    style="padding: 5px 0px; border-bottom: 1px solid var(--line); font-family: var(--mono, ui-monospace, Menlo, monospace); font-variant-numeric: tabular-nums; text-align: right;"
+  >
+    876 k
+  </span>
+  <span
+    style="padding: 5px 0px; border-bottom: 1px solid var(--line);"
+  >
+    Moins de 25 ans
+  </span>
+  <span
+    style="padding: 5px 0px; border-bottom: 1px solid var(--line); font-family: var(--mono, ui-monospace, Menlo, monospace); font-variant-numeric: tabular-nums; text-align: right; color: var(--mint);"
+  >
+    30 %
+  </span>
+  <span
+    style="padding: 5px 0px; border-bottom: 1px solid var(--line); font-family: var(--mono, ui-monospace, Menlo, monospace); font-variant-numeric: tabular-nums; text-align: right;"
+  >
+    36 %
+  </span>
+  <span
+    style="padding: 5px 0px; border-bottom: 1px solid var(--line); font-family: var(--mono, ui-monospace, Menlo, monospace); font-variant-numeric: tabular-nums; text-align: right;"
+  >
+    37 %
+  </span>
+</div>
+`;
+
+exports[`formes de la fiche (maquette v3) — 12 composants > Tuiles 1`] = `
+<div
+  data-forme="tuiles"
+  style="display: grid; grid-template-columns: repeat(3,1fr); gap: 6px;"
+>
+  <div
+    style="border: 1px solid var(--line); border-radius: 6px; background: var(--bg-3); padding: 7px 8px 6px; min-width: 0px;"
+  >
+    <div
+      style="color: var(--txt-dim); font-size: 10.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
+      title="Hauteur max"
+    >
+      Hauteur max
+    </div>
+    <div
+      style="font-family: var(--mono, ui-monospace, Menlo, monospace); font-variant-numeric: tabular-nums; font-size: 14px; font-weight: 500; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--txt-hi);"
+    >
+      4 m
+    </div>
+    <div
+      style="font-size: 10.5px; color: var(--txt-off); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
+      title="art. 10 · p. 59"
+    >
+      art. 10 · p. 59
+    </div>
+  </div>
+  <div
+    style="border: 1px solid var(--line); border-radius: 6px; background: var(--bg-3); padding: 7px 8px 6px; min-width: 0px;"
+  >
+    <div
+      style="color: var(--txt-dim); font-size: 10.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
+      title="Emprise"
+    >
+      Emprise
+    </div>
+    <div
+      style="font-family: var(--mono, ui-monospace, Menlo, monospace); font-variant-numeric: tabular-nums; font-size: 14px; font-weight: 500; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--txt-dim);"
+    >
+      —
+    </div>
+    <div
+      style="font-size: 10.5px; color: var(--txt-off); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
+      title="non réglementée"
+    >
+      non réglementée
+    </div>
+  </div>
+  <div
+    style="border: 1px solid var(--line); border-radius: 6px; background: var(--bg-3); padding: 7px 8px 6px; min-width: 0px;"
+  >
+    <div
+      style="color: var(--txt-dim); font-size: 10.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
+      title="Destinations"
+    >
+      Destinations
+    </div>
+    <div
+      style="font-family: var(--mono, ui-monospace, Menlo, monospace); font-variant-numeric: tabular-nums; font-size: 14px; font-weight: 500; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--amber);"
+    >
+      1
+    </div>
+    <div
+      style="font-size: 10.5px; color: var(--txt-off); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
+      title="22 interdites"
+    >
+      22 interdites
+    </div>
+  </div>
+</div>
+`;
+
+exports[`formes de la fiche (maquette v3) — 12 composants > Verdict 1`] = `
+<div
+  data-forme="verdict"
+  style="display: flex; gap: 8px; align-items: flex-start; margin-bottom: 10px;"
+>
+  <span
+    style="width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex: 0 0 auto; background: var(--amber);"
+  />
+  <p
+    style="margin: 0px; font-size: 12.5px; line-height: 1.4; color: var(--txt-hi);"
+  >
+    <b
+      style="font-weight: 500;"
+    >
+      AU1est, à urbaniser
+    </b>
+     
+    <span
+      style="color: var(--txt-dim);"
+    >
+      le règlement fixe la hauteur et se tait sur le reste.
+    </span>
+  </p>
+</div>
+`;

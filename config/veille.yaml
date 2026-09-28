@@ -1,0 +1,79 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# LA GRILLE DE VEILLE — décision Vic du 27/09/2026 (VEILLE-FIX-2).
+#
+# SOURCE DE VÉRITÉ UNIQUE : qui est prévenu, par quelle voie, pour chaque événement.
+# Lue par le code (`labuse.veille_grille`) — jamais recopiée en dur ailleurs.
+# Gardée par `tests/test_veille_grille.py` : toute dérive de cette table casse le test,
+# et tout code qui décide « cloche / digest / immédiat » doit dériver d'ici.
+#
+# Colonnes de chaque événement :
+#   kind         : le `kind` d'event_log produit (null = pas d'event_log, mail dédié hors chaîne)
+#   destinataire : suiveur | criteres | tous | compte
+#   cloche       : non | oui | tete   (tete = en tête de la cloche, prioritaire)
+#   mail         : non | digest | immediat | dedie
+# ─────────────────────────────────────────────────────────────────────────────
+
+evenements:
+  parcelle_suivie:
+    kind: parcelle_suivie
+    destinataire: suiveur
+    cloche: oui
+    mail: digest
+    libelle: "Parcelle suivie : vente DVF · permis · changement de propriétaire PM"
+  radar_match:
+    kind: radar
+    destinataire: criteres
+    cloche: oui
+    mail: digest
+    libelle: "Annonce Radar qui matche les critères"
+  radar_baisse:
+    kind: radar_baisse
+    destinataire: criteres
+    cloche: oui
+    mail: digest
+    libelle: "Baisse de prix sur une annonce qui matche"
+  radar_retrait:
+    kind: radar_retrait
+    destinataire: criteres
+    cloche: oui
+    mail: digest
+    libelle: "Annonce retirée (confirmée) qui matchait"
+  parcelle_en_vente:
+    kind: parcelle_en_vente
+    destinataire: suiveur
+    cloche: tete
+    mail: immediat
+    libelle: "Parcelle suivie mise en vente (apparaît dans Radar)"
+  bascule:
+    kind: bascule
+    destinataire: tous
+    cloche: oui
+    mail: non
+    libelle: "Bascule de scoring"
+  nouvelle_source:
+    kind: nouveaute
+    destinataire: tous
+    cloche: oui
+    mail: non
+    libelle: "Nouvelle source importée"
+  essai:
+    kind: null
+    destinataire: compte
+    cloche: non
+    mail: dedie
+    libelle: "Essai : expiration, relances J+3 / J+10"
+
+# Fréquence des mails, réglable PAR COMPTE (notif_prefs.digest_freq).
+frequences: [quotidien, hebdo, cloche_seule]
+frequence_defaut: quotidien
+
+digest:
+  heure_reunion: "07:15"     # un seul digest par jour, à 07:15 (heure Réunion)
+  hebdo_jour: 0              # jour ISO du digest hebdo : 0 = lundi
+
+# Règles invariantes (rappel — appliquées par le code, gardées par les tests).
+regles:
+  - "un seul digest par jour à 07:15, seulement s'il y a quelque chose"
+  - "fréquence par compte : quotidien (défaut) · hebdo (lundi) · cloche_seule (jamais de mail)"
+  - "jamais de digest Radar à un compte sans critères"
+  - "la seule notification immédiate est la mise en vente d'une parcelle suivie"

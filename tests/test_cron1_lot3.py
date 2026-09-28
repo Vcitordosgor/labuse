@@ -8,8 +8,9 @@ def test_crontab_genere_une_ligne_par_job():
     lignes_job = [l for l in c.splitlines() if "jobs run" in l]
     # VEILLE-FIX-1 → 20 jobs ; VEILLE-2 (Lot 4) retire evaluer-secteurs (secteurs archivés) → 19 ;
     # COMMUNE-FIX-1 réinscrit fiche-commune-cache (précalcul nocturne réel) → 20 ;
-    # RADAR-AUTO-1 (Lot C) planifie radar-cycle / -dvf / -mensuel → 23.
-    assert len(lignes_job) == len(JOBS) == 23, "une ligne par job du registre, ni plus ni moins"
+    # RADAR-AUTO-1 (Lot C) planifie radar-cycle / -dvf / -mensuel → 23 ;
+    # VEILLE-FIX-2 (Lot D) ajoute mail-queue-consommer (worker de la file, 5 min) → 24.
+    assert len(lignes_job) == len(JOBS) == 24, "une ligne par job du registre, ni plus ni moins"
     for nom in JOBS:
         assert f"jobs run {nom}'" in c, f"{nom} absent du crontab généré"
     # jamais écrit à la main : en-tête d'avertissement + shell/mailto

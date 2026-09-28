@@ -314,6 +314,9 @@ async def _security_headers(request, call_next):
         "img-src 'self' data: blob: https://data.geopf.fr https://s3.amazonaws.com; "
         "connect-src 'self' https://data.geopf.fr https://s3.amazonaws.com; "
         "worker-src 'self' blob:; "
+        # KELFONCIER-FIX-1 (Lot G) — Street View : l'embed Google Maps (mode panorama) est un iframe
+        # servi par www.google.com → l'autoriser en frame-src (sans cela, default-src 'self' le bloque).
+        "frame-src https://www.google.com; "
         "frame-ancestors 'none'; base-uri 'self'; object-src 'none'")
     # P1 : HSTS quand la requête est en HTTPS (derrière Caddy, uvicorn --proxy-headers lit
     # X-Forwarded-Proto). JAMAIS en clair : un HSTS posé sur du http local bloquerait l'accès
@@ -1390,7 +1393,10 @@ def _q_v2_where(run_label: str,
                 pm_denom: str | None = None, pm_siren: str | None = None,
                 pm_forme: str | None = None, pm_ape: str | None = None,
                 pm_dirig_min: int | None = None, pm_dirig_max: int | None = None,
-                zfang: str | None = None, frr: str | None = None) -> tuple[str, dict]:
+                pm_age: str | None = None,
+                zfang: str | None = None, frr: str | None = None,
+                hauteur_min: float | None = None, hauteur_max: float | None = None,
+                emprise_min: int | None = None, emprise_max: int | None = None) -> tuple[str, dict]:
     """Fragment WHERE partagé liste/stats — les MÊMES filtres que les chips du front. Mode
     « Toute l'île » : le client ne détient plus les 431k features en mémoire, le serveur
     filtre en SQL (chiffres SQL-exacts, mêmes clés que matchScope côté front).
@@ -1688,6 +1694,24 @@ def _q_v2_where(run_label: str,
         if pm_dirig_max is not None:
             cond += " AND vpg.nb_dirigeants <= :pm_dirig_max"; params["pm_dirig_max"] = pm_dirig_max
         conds.append(cond + ")")
+    if pm_age and pm_age.strip():
+        # KELFONCIER-FIX-1 (Lot B) — TRANCHE d'âge du dirigeant (JAMAIS l'âge exact) : <50 / 50-69 / ≥70.
+        # Filtre sur `v_pm_propension_vendre.age_max_dirigeant` (âge MAX des dirigeants, déjà calculé et
+        # déjà consommé en interne par la veille succession — aucune donnée personnelle NOUVELLE exposée,
+        # et jamais l'âge exact : seule la tranche est un critère). OU entre tranches. Le contrôle exact-âge
+        # (config filtre_age_dirigeant, garde FORBIDDEN_FLAGS_RGPD) reste fermé et intact.
+        tranches = {x.strip() for x in pm_age.split(",") if x.strip()}
+        _BUCKETS = {
+            "moins50": "vpa.age_max_dirigeant < 50",
+            "50_69": "vpa.age_max_dirigeant BETWEEN 50 AND 69",
+            "70plus": "vpa.age_max_dirigeant >= 70",
+        }
+        picked_age = [_BUCKETS[t] for t in ("moins50", "50_69", "70plus") if t in tranches]
+        if picked_age:
+            conds.append("EXISTS (SELECT 1 FROM parcelle_personne_morale pmga"
+                         " JOIN v_pm_propension_vendre vpa ON vpa.siren = pmga.siren"
+                         " WHERE pmga.idu = p.idu AND vpa.age_max_dirigeant IS NOT NULL"
+                         " AND (" + " OR ".join(picked_age) + "))")
     if copro:   # propriété : copropriété RNIC (avec / sans) — s2.copro
         cp = [x.strip() for x in copro.split(",") if x.strip()]
         if "avec" in cp and "sans" not in cp:
@@ -1710,6 +1734,27 @@ def _q_v2_where(run_label: str,
         conds.append("EXISTS (SELECT 1 FROM territoire_fiscal_commune tfc WHERE tfc.insee = left(p.idu, 5)"
                      " AND tfc.frr_classement = ANY(CAST(:f_frr AS text[])))")
         params["f_frr"] = [x.strip() for x in frr.split(",") if x.strip()]
+    # ── KELFONCIER-FIX-1 (Lot D) — FILTRES BÂTI (données à la maille parcelle) ──
+    # Hauteur LiDAR (faîtage mesuré, batiment_hauteur_lidar) = la MÊME source que la fiche §3 Bâti
+    # (hauteur_bati_m, id registre le_bien.hauteur_bati_m, faîtage LiDAR HD). Filtre min/max en mètres :
+    # la parcelle doit porter un bâti mesuré au LiDAR dans la fourchette. Emprise bâtie en % = la colonne
+    # taux_emprise_pct du RUN SERVI (parcel_residuel) — exactement celle qui partitionne « État du sol ».
+    if hauteur_min is not None:
+        conds.append("EXISTS (SELECT 1 FROM batiment_hauteur_lidar bhl0 WHERE bhl0.idu = p.idu"
+                     " AND bhl0.faitage_m >= :f_hmin)")
+        params["f_hmin"] = hauteur_min
+    if hauteur_max is not None:
+        conds.append("EXISTS (SELECT 1 FROM batiment_hauteur_lidar bhl1 WHERE bhl1.idu = p.idu"
+                     " AND bhl1.faitage_m <= :f_hmax)")
+        params["f_hmax"] = hauteur_max
+    if emprise_min is not None:
+        conds.append("EXISTS (SELECT 1 FROM parcel_residuel re0 WHERE re0.parcel_id = p.id"
+                     " AND COALESCE(re0.taux_emprise_pct,0) >= :f_empmin)")
+        params["f_empmin"] = emprise_min
+    if emprise_max is not None:
+        conds.append("EXISTS (SELECT 1 FROM parcel_residuel re1 WHERE re1.parcel_id = p.id"
+                     " AND COALESCE(re1.taux_emprise_pct,0) <= :f_empmax)")
+        params["f_empmax"] = emprise_max
     # ── M45-B (Lot 1) — tiroir ÉCONOMIE (câblage sur données existantes ; étiquettes Sourcé/Estimé) ──
     if budget_max is not None:
         # « Mon budget » : prix d'achat max admissible (charge foncière SUPPORTABLE, M22-A) ≤ budget.
@@ -1831,9 +1876,16 @@ class FiltreCriteres:
     pm_ape: str | None = None
     pm_dirig_min: int | None = None
     pm_dirig_max: int | None = None
+    # KELFONCIER-FIX-1 (Lot B) — tranche d'âge du dirigeant (CSV parmi moins50 / 50_69 / 70plus).
+    pm_age: str | None = None
     # COUCHES-2 point 4 — statut ZFANG (renforce/standard) et FRR (totalite/partie/hors), CSV.
     zfang: str | None = None
     frr: str | None = None
+    # KELFONCIER-FIX-1 (Lot D) — filtres bâti : hauteur LiDAR faîtage (m) et emprise bâtie (%).
+    hauteur_min: float | None = None
+    hauteur_max: float | None = None
+    emprise_min: int | None = None
+    emprise_max: int | None = None
 
     def where(self) -> tuple[str, dict]:
         return _q_v2_where(self.source, self.surface_min, self.surface_max,
@@ -1851,7 +1903,10 @@ class FiltreCriteres:
                            droits_residuels=self.droits_residuels,
                            pm_denom=self.pm_denom, pm_siren=self.pm_siren, pm_forme=self.pm_forme,
                            pm_ape=self.pm_ape, pm_dirig_min=self.pm_dirig_min, pm_dirig_max=self.pm_dirig_max,
-                           zfang=self.zfang, frr=self.frr)
+                           pm_age=self.pm_age,
+                           zfang=self.zfang, frr=self.frr,
+                           hauteur_min=self.hauteur_min, hauteur_max=self.hauteur_max,
+                           emprise_min=self.emprise_min, emprise_max=self.emprise_max)
 
     def cache_key(self) -> tuple:
         return ("filtre", self.source, self.commune, self.surface_min,
@@ -1866,8 +1921,9 @@ class FiltreCriteres:
                 self.modeb_travaux_m2, self.modeb_loyer_m2, self.modeb_rendement_pct,
                 self.signaux, self.droits_residuels,
                 self.pm_denom, self.pm_siren, self.pm_forme, self.pm_ape,
-                self.pm_dirig_min, self.pm_dirig_max, self.zfang, self.frr,
-                self.destination)   # FAISABILITE-1 lot B — la destination entre dans le memo (compteur exact)
+                self.pm_dirig_min, self.pm_dirig_max, self.pm_age, self.zfang, self.frr,
+                self.hauteur_min, self.hauteur_max, self.emprise_min, self.emprise_max,   # KELFONCIER-FIX-1 Lot D
+                self.destination)   # FAISABILITE-1 lot B — la destination reste le DERNIER élément de la clé (test faisabilite1_capacite)
 
 
 @app.get("/parcels")
@@ -3501,7 +3557,10 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
 _HASH_NUM = {"smin": "surface_min", "smax": "surface_max", "sdp": "sdp_min", "sdpx": "sdp_max",
              "cap": "capacite_min", "rm": "rang_max", "bud": "budget_max", "chmin": "charge_min",
              "chmax": "charge_max", "pmin": "prix_marche_min", "pmax": "prix_marche_max",
-             "ca": "ca_min", "pdmin": "pm_dirig_min", "pdmax": "pm_dirig_max"}
+             "ca": "ca_min", "pdmin": "pm_dirig_min", "pdmax": "pm_dirig_max",
+             "emin": "emprise_min", "emax": "emprise_max"}   # KELFONCIER-FIX-1 Lot D — emprise bâtie (% entier)
+# KELFONCIER-FIX-1 Lot D — hauteur LiDAR (mètres, décimale) : évaluée comme `mm` (float, hors _HASH_NUM int).
+_HASH_FLOAT = {"hmin": "hauteur_min", "hmax": "hauteur_max"}
 _HASH_BOOL = {"ev": "evenement", "vs2": "veille", "hc": "hors_copro", "pm": "personne_morale",
               "sd": "sous_densite", "rnv": "renouvellement", "np": "npnru", "aa": "adresse_absente",
               "mf": "marche_fiable", "mb": "mode_b_rentable"}
@@ -3509,14 +3568,14 @@ _HASH_STR = {"fx": "flags_exclus", "cs": "communes", "zf": "zonage", "sv": "sign
              "cst": "constructibilite", "es": "etat_sol", "zpx": "zone_plu",
              "pt": "proprietaire_type", "soc": "etat_societe", "cp": "copro",
              "drr": "droits_residuels", "pmf": "pm_forme", "pma": "pm_ape",
-             "pmd": "pm_denom", "pms": "pm_siren",
+             "pmd": "pm_denom", "pms": "pm_siren", "pag": "pm_age",   # KELFONCIER-FIX-1 (Lot B) — tranche d'âge dirigeant
              "zfa": "zfang", "frr": "frr"}   # FILTRES-FIX-1 (lot 1) — ZFANG/FRR évalués par la veille (même moteur que la carte)
 #: dimensions du hash RÉELLEMENT évaluables (les seules connues du mappage) — pour l'annonce
 #: « cette veille surveille : … » et le signalement de ce qui n'est PAS retenu (KO-7 point 2).
 #: FILTRES-FIX-1 (lot 3) — `mm` (multiplicateur min) EST appliqué par filtre_from_hash (branche
 #: dédiée `mult_min`) : il est donc évaluable, plus jamais étiqueté « non évaluable » alors qu'il
 #: filtre. Il figure déjà dans _DIM_LABELS → annoncé dans « cette veille surveille : … ».
-DIMENSIONS_VEILLE_EVALUABLES = frozenset({"tv", "mm", *_HASH_NUM, *_HASH_BOOL, *_HASH_STR})
+DIMENSIONS_VEILLE_EVALUABLES = frozenset({"tv", "mm", *_HASH_NUM, *_HASH_FLOAT, *_HASH_BOOL, *_HASH_STR})
 
 
 def filtre_from_hash(hash_str: str) -> "FiltreCriteres":
@@ -3533,6 +3592,10 @@ def filtre_from_hash(hash_str: str) -> "FiltreCriteres":
             setattr(c, field, int(v))
     if g("mm") not in (None, ""):
         c.mult_min = float(g("mm"))
+    for k, field in _HASH_FLOAT.items():   # KELFONCIER-FIX-1 Lot D — hauteur LiDAR (m, décimale)
+        v = g(k)
+        if v not in (None, ""):
+            setattr(c, field, float(v))
     for k, field in _HASH_BOOL.items():
         if g(k) == "1":
             setattr(c, field, True)
@@ -3739,6 +3802,20 @@ def _relabel_dvf_terrain(layer: str, detail: str | None) -> str | None:
         return detail.replace("médiane ", "médiane terrain ", 1).replace(
             " €/m².", " €/m² (valeur ÷ surface terrain, tous biens).", 1)
     return detail
+
+
+def _street_view_block(lat: float | None, lon: float | None) -> dict | None:
+    """KELFONCIER-FIX-1 (Lot G) — Street View de la fiche §1. Renvoie l'URL d'embed Google Maps
+    (mode panorama, centré sur le CENTROÏDE de la parcelle) UNIQUEMENT si la clé `GOOGLE_MAPS_EMBED_KEY`
+    est posée (env, /etc/labuse/labuse.env). Absente → None → le bouton « Voir la rue » est MASQUÉ,
+    aucune erreur. L'Embed API (mode Street View) est gratuite et sans limite ; la clé est restreinte
+    par référent HTTP côté console Google. Le centroïde vient de la fiche (head lat/lon)."""
+    key = os.environ.get("GOOGLE_MAPS_EMBED_KEY")
+    if not key or lat is None or lon is None:
+        return None
+    from urllib.parse import urlencode
+    q = urlencode({"key": key, "location": f"{lat:.6f},{lon:.6f}"})
+    return {"embed_url": f"https://www.google.com/maps/embed/v1/streetview?{q}"}
 
 
 def _secteur_opportunites(db: Session, idu: str) -> dict:
@@ -4092,13 +4169,20 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
         "qualite_commune": _qualite_commune(idu[:5] if idu else None),     # M52 L4 — qualité commune DITE
         "icd": icd_block,
         "reglement_plu": _reglement_plu_block(db, idu, head["commune"]),
+        # KELFONCIER-FIX-1 (Lot A) — statut d'ouverture de la zone AU (§4 Urbanisme + cause §10).
+        "au_ouverture": _au_ouverture_block(db, idu),
         "plu_fraicheur": _plu_fraicheur(idu),   # M32 §2 : fraîcheur GPU-vs-mairie du zonage
         "radar_procedure": _radar_proc(idu, (score_v2 or {}).get("tier")),   # M41 — radar procédures PLU
         "historique_site": _historique_site(db, idu),      # M42 — « Sur cette parcelle » (permis + caduc)
         "voisinage_proche": _voisinage_proche(db, idu),    # M42 — « Autour, à moins de 100 m »
         "potentiel_transformation": _potentiel_transformation_block(db, idu),
+        # KELFONCIER-FIX-1 (Lot H) — « Établissements sur la parcelle » (§3 Bâti), rattachement BAN.
+        "etablissements": _etablissements_block(db, idu),
         "completeness_score": head["completeness_score"],  # M129-B : a_completude (matrice) retiré
         "coords": [round(head["lon"], 6), round(head["lat"], 6)],
+        # KELFONCIER-FIX-1 (Lot G) — Street View (§1 Identité) : URL d'embed centrée sur le centroïde,
+        # servie SEULEMENT si la clé GOOGLE_MAPS_EMBED_KEY est posée (sinon None → bouton masqué).
+        "street_view": _street_view_block(head["lat"], head["lon"]),
         "evenement": "rouge" if evenement_detail else None, "evenement_detail": evenement_detail,
         "lines": lines, "flags": flags,
         "score_v": score_v,
@@ -4188,6 +4272,12 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
         "catnat": _blocs3.catnat(db, idu),
         "pm_voisines": _blocs3.pm_voisines(db, idu),
         "anciennete_detention": _blocs3.anciennete_detention(db, idu),
+        # SOURCES-FIX-1 (A1/A2/A3) — 3 contraintes qui touchent la parcelle et manquaient à la fiche :
+        # zone EnR interdite hors toiture (APER) + mesures compensatoires (§Risques), SCOT (§Urbanisme).
+        # Mêmes couches que la carte (spatial_layers), intersection LIVE, même libellé.
+        "enr_exclue_toiture": _blocs3.enr_exclue_toiture(db, idu),
+        "mesures_compensatoires": _blocs3.mesures_compensatoires(db, idu),
+        "scot": _blocs3.scot(db, idu),
     }
 
 
@@ -4613,6 +4703,50 @@ def _dpe_connu_block(db: Session, idu: str) -> dict | None:
     }
 
 
+#: KELFONCIER-FIX-1 (Lot F) — libellés des dispositifs de commune ANCT (source unique commune_ort).
+_ANCT_PROGRAMME_LIBELLE = {
+    "pvd": "Petites Villes de Demain (PVD)",
+    "acv": "Action Cœur de Ville (ACV)",
+}
+
+
+def _dispositif_commune_ort(db: Session, insee: str) -> dict | None:
+    """KELFONCIER-FIX-1 (Lot F) — un dispositif de COMMUNE (PVD / ACV / ORT signée) pour la fiche §7,
+    lu par la MÊME fonction que la fiche commune (`ingestion.ort.ort_commune`, table commune_ort,
+    DGALN/ANCT). None si la commune n'est dans aucun programme (ni PVD/ACV, ni ORT signée) → aucune
+    ligne. L'ORT signée porte en plus l'éligibilité Denormandie (déjà calculée par ort_commune)."""
+    try:
+        from ..ingestion.ort import ort_commune
+        o = ort_commune(db, insee)
+    except Exception:  # noqa: BLE001 — jamais de 500 sur la fiche
+        return None
+    if not o:
+        return None
+    statut = o.get("statut")
+    prog = _ANCT_PROGRAMME_LIBELLE.get(statut)
+    ort_signee = bool(o.get("ort_signee"))
+    if not prog and not ort_signee:
+        return None   # commune hors dispositif (statut 'autre'/'hors' sans ORT signée) → pas de ligne
+    titre = prog or "Opération de Revitalisation de Territoire (ORT)"
+    if prog and ort_signee:
+        titre += " · ORT signée"
+    parts = []
+    if statut == "pvd":
+        parts.append("La commune est lauréate du programme national « Petites Villes de Demain » "
+                     "(ANCT) — ingénierie et crédits dédiés à la revitalisation des centres-bourgs.")
+    elif statut == "acv":
+        parts.append("La commune est engagée dans « Action Cœur de Ville » (ANCT) — revitalisation "
+                     "du cœur de ville, financements ANAH/Banque des Territoires.")
+    if ort_signee:
+        parts.append("Convention ORT signée : " + str(o.get("denormandie")))
+    else:
+        parts.append(str(o.get("denormandie")))
+    date_sig = o.get("date_signature")
+    src = f"DGALN/ANCT — {o.get('millesime', 'table ORT')}"
+    return {"libelle": titre + (f" (signée le {date_sig})" if date_sig else ""),
+            "detail": " ".join(parts), "source": src}
+
+
 def _territoire_fiscal_block(db: Session, idu: str) -> dict | None:
     from ..territoire_fiscal import attributs_commune, frr_position, frr_libelle_partie
     base = attributs_commune(db, idu[:5])
@@ -4711,6 +4845,13 @@ def _territoire_fiscal_block(db: Session, idu: str) -> dict | None:
                    "régime exact dépend de l'opération.",
          "source": "CGI (TVA DOM, art. 296 et 278 sexies)"},
     ]
+    # KELFONCIER-FIX-1 (Lot F) — DISPOSITIFS DE LA COMMUNE : Petites Villes de Demain (PVD), à côté
+    # d'ORT et Action Cœur de Ville (ACV). MÊME fonction que la fiche commune (ort.ort_commune, source
+    # unique DGALN/ANCT). Ajouté à `dispositifs_dom` → rendu en fiche §7 ET, comme A/B/C et la TVA,
+    # miroir au Dossier. Aucune ligne si la commune n'est dans aucun programme (statut hors/autre sans ORT).
+    _ort_disp = _dispositif_commune_ort(db, idu[:5])
+    if _ort_disp:
+        dispositifs_dom.append(_ort_disp)
     if base is None and not perimetres:
         return {"perimetres": [], "dispositifs_dom": dispositifs_dom}
     return {**(base or {}), "perimetres": perimetres, "dispositifs_dom": dispositifs_dom}
@@ -5237,6 +5378,69 @@ def _pm_identite(db: Session, siren: str | None) -> dict | None:
     }
 
 
+# KELFONCIER-FIX-1 (Lot H) — libellés INSEE des tranches d'effectif salarié (jamais l'effectif exact).
+_TRANCHE_EFFECTIF = {
+    "00": "0 salarié", "01": "1 à 2 salariés", "02": "3 à 5 salariés", "03": "6 à 9 salariés",
+    "11": "10 à 19 salariés", "12": "20 à 49 salariés", "21": "50 à 99 salariés",
+    "22": "100 à 199 salariés", "31": "200 à 249 salariés", "32": "250 à 499 salariés",
+    "41": "500 à 999 salariés", "42": "1 000 à 1 999 salariés", "51": "2 000 à 4 999 salariés",
+    "52": "5 000 à 9 999 salariés", "53": "10 000 salariés et plus",
+}
+_ETAB_FICHE_CAP = 25   # plafond d'affichage (une adresse partagée peut porter des centaines d'établissements)
+
+
+def _etablissements_block(db: Session, idu: str) -> dict | None:
+    """KELFONCIER-FIX-1 (Lot H) — « Établissements sur la parcelle » (fiche §3 Bâti). Lit la table
+    matérialisée `etablissement_parcelle` (rattachement BAN, précision « adresse » seulement) jointe à
+    SIRENE : nom · NAF fin · tranche d'effectif · état, plus le régime collectif BODACC (même lecture
+    que Scan patrimoine / fiche §1). Nom MASQUÉ si `diffusible=false` (RGPD). None si aucun établissement."""
+    if db.execute(text("SELECT to_regclass('etablissement_parcelle') IS NULL")).scalar():
+        return None
+    total = db.execute(text("SELECT count(*) FROM etablissement_parcelle WHERE idu = :i"),
+                       {"i": idu}).scalar() or 0
+    if not total:
+        return None
+    rows = db.execute(text(
+        """SELECT s.siret, s.siren, s.denomination, s.enseigne, s.naf, s.tranche_effectif,
+                  s.actif, s.diffusible, ep.precision
+             FROM etablissement_parcelle ep
+             JOIN sirene_etablissements s ON s.siret = ep.siret
+            WHERE ep.idu = :i
+            ORDER BY s.tranche_effectif DESC NULLS LAST, s.denomination NULLS LAST
+            LIMIT :lim"""), {"i": idu, "lim": _ETAB_FICHE_CAP}).mappings().all()
+    from ..naf_labels import label as _naf_label
+    # régime collectif BODACC (radiation / procédure collective) par SIREN — une seule requête groupée.
+    sirens = sorted({r["siren"] for r in rows if r["siren"]})
+    regime: dict[str, dict] = {}
+    if sirens:
+        for b in db.execute(text(
+            "SELECT siren, famille, max(date_annonce)::text AS d FROM bodacc_annonces_owner "
+            "WHERE siren = ANY(:s) AND famille IN ('radiation','pcl') GROUP BY siren, famille"),
+                {"s": sirens}).mappings().all():
+            lib = (f"radiée le {b['d']}" if b["famille"] == "radiation"
+                   else f"procédure collective (annonce {b['d']})")
+            regime[b["siren"]] = {"type": "radiée" if b["famille"] == "radiation" else "procédure collective",
+                                  "libelle": lib, "source": "BODACC"}
+    liste = []
+    for r in rows:
+        diffusible = bool(r["diffusible"])
+        nom = (r["denomination"] or r["enseigne"]) if diffusible else None
+        liste.append({
+            "siret": r["siret"],
+            "nom": nom or "Nom non diffusible (RGPD)",
+            "nom_masque": not diffusible,
+            "naf": r["naf"], "naf_label": _naf_label(r["naf"]) if r["naf"] else None,
+            "tranche_effectif": _TRANCHE_EFFECTIF.get(r["tranche_effectif"] or "", None),
+            "actif": bool(r["actif"]),
+            "precision": r["precision"],   # qualite_xy INSEE (11/12), dit au client
+            "regime_collectif": regime.get(r["siren"]),
+        })
+    return {"n": int(total), "affiches": len(liste), "liste": liste,
+            "note": ("Rattachement par l'adresse BAN (précision « adresse » seulement — « voie » et "
+                     "« commune » ne sont pas rattachés). Nom masqué si l'unité est non diffusible."),
+            "source": "INSEE SIRENE (établissements actifs) · BAN (rattachement) · BODACC (régime collectif)"}
+
+
 def _historique_site(db: Session, idu: str) -> dict | None:
     """M42 — « Sur cette parcelle » (historique permis + caducité). None si rien. Jamais bloquant.
     SAVEPOINT (idiome fraicheur.py) : une table/colonne absente (base de test) n'avorte pas la TX fiche."""
@@ -5257,6 +5461,40 @@ def _voisinage_proche(db: Session, idu: str) -> dict | None:
             return marche_service.marche_dvf(db, idu, profil=marche_service.DVF_VOISINAGE_100M)
     except Exception:  # noqa: BLE001
         return _bloc_indisponible("voisinage_proche")   # M125 — panne ≠ absence
+
+
+# KELFONCIER-FIX-1 (Lot A) — libellé LISIBLE du statut d'ouverture d'une zone AU (parcel_au_statut).
+# « ouverte » n'est jamais marqué (les zones documentées-ouvertes ne sont pas dans la table) : la table
+# ne porte QUE les cas à risque. On rend donc le statut réel de chaque classe, en clair.
+_AU_STATUT_LIBELLE = {
+    "conditionnelle_operation": "constructible sous condition d'une opération d'aménagement d'ensemble",
+    "au_sous_plancher": "ouverture sous condition (phasage / plancher) — à confirmer",
+    "declasse_au_fermee": "fermée — une modification du PLU est requise pour ouvrir la zone",
+    "declasse_au_statut_inconnu": "statut d'ouverture non déterminé (phasage 2AU → 1AU à confirmer)",
+    "générique": "statut d'ouverture non déterminé (zone non calibrée)",
+}
+#: classes qui EMPÊCHENT de construire tant que la zone n'est pas ouverte (cause de SDP résiduelle 0).
+_AU_CLASSES_BLOQUANTES = frozenset({"declasse_au_fermee", "declasse_au_statut_inconnu", "générique"})
+
+
+def _au_ouverture_block(db: Session, idu: str) -> dict | None:
+    """KELFONCIER-FIX-1 (Lot A) — statut d'OUVERTURE de la zone AU de la parcelle (moteur
+    `parcel_au_statut`, déjà peuplé mais jamais exposé en clair). Renvoie {classe, statut, zone_lib,
+    motif (citation du règlement), bloquant}. None si la parcelle n'est pas en zone AU marquée."""
+    r = db.execute(text(
+        "SELECT classe, zone_lib, motif FROM parcel_au_statut WHERE idu = :i"),
+        {"i": idu}).mappings().first()
+    if not r:
+        return None
+    classe = r["classe"]
+    return {
+        "classe": classe,
+        "statut": _AU_STATUT_LIBELLE.get(classe, "statut d'ouverture à confirmer"),
+        "zone_lib": r["zone_lib"],
+        "motif": r["motif"],   # citation du règlement (au_ouverture.py), servie telle quelle
+        "bloquant": classe in _AU_CLASSES_BLOQUANTES,
+        "source": "LABUSE — moteur d'ouverture AU (règlement PLU calibré)",
+    }
 
 
 def _reglement_plu_block(db: Session, idu: str, commune: str) -> dict | None:

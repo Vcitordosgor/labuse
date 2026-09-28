@@ -419,30 +419,20 @@ def marche_zone(session: Session, geom_geojson: dict) -> dict:
         return session.execute(text("SELECT to_regclass(:t)"), {"t": table}).scalar() is not None
 
     ventes = prix = annonces = permis = None
-    if _existe("dvf_mutations_parcelle") and _existe("parcels"):
+    if _existe("dvf_mutations"):
+        # SOURCES-FIX-1 (E1) — l'Étude de zone lit désormais la MÊME table que le bloc Marché de la
+        # fiche : `dvf_mutations` (maille MUTATION), via le point de calcul UNIQUE `dvf_mediane`.
+        # Avant, cette section lisait `dvf_mutations_parcelle` (table éclatée par parcelle) : une
+        # vente d'immeuble répétée sur N parcelles gonflait le compte des ventes et faisait exploser
+        # la médiane (artefact du « 100 888 €/m² »). Même table, même filtres, même borne, même
+        # fenêtre que `prix_par_type_zone` → une seule médiane à périmètre égal.
         ventes = session.execute(text(
-            f"""SELECT count(*) FROM dvf_mutations_parcelle d JOIN parcels p ON p.idu = d.id_parcelle
-                WHERE d.date_mutation >= (now() - interval '12 months')
-                  AND ST_Contains({z}, ST_Transform(p.centroid, 2975))"""), p).scalar()
-        # ETUDE-ZONE-1 A2 — médiane €/m² bâti : MÊME hygiène que le point de calcul UNIQUE du
-        # marché (marche_service._filtre_comparables / dvf_profils.yaml). SANS ce garde-fou, la
-        # médiane explosait (100 888 €/m² constaté) : `dvf_mutations_parcelle` répète la valeur
-        # foncière de TOUTE la mutation sur CHAQUE parcelle (une vente d'immeuble sur 1 008
-        # parcelles porte 10,8 M€ face à 53 m² de bâti → 204 042 €/m², et ces lignes dominent).
-        # On (a) déduplique (id_mutation, id_parcelle) — la table contient des doublons exacts,
-        # (b) ne garde que les VENTES avec ≥ 20 m² de bâti (art. marche_service), (c) borne le
-        # ratio au domaine de bon sens [1 000 ; 12 000] €/m² (filtre_comparables, artefacts DVF).
-        prix = session.execute(text(
-            f"""WITH v AS (
-                  SELECT DISTINCT d.id_mutation, d.id_parcelle,
-                         (d.valeur_fonciere / NULLIF(d.surface_reelle_bati, 0)) AS ratio
-                  FROM dvf_mutations_parcelle d JOIN parcels p ON p.idu = d.id_parcelle
-                  WHERE d.date_mutation >= (now() - interval '36 months')
-                    AND d.nature_mutation ILIKE 'vente%'
-                    AND d.valeur_fonciere > 0 AND coalesce(d.surface_reelle_bati, 0) >= 20
-                    AND ST_Contains({z}, ST_Transform(p.centroid, 2975)))
-                SELECT round(percentile_cont(0.5) WITHIN GROUP (ORDER BY ratio)::numeric)
-                FROM v WHERE ratio BETWEEN 1000 AND 12000"""), p).scalar()
+            f"""SELECT count(*) FROM dvf_mutations dm
+                WHERE dm.geom IS NOT NULL AND dm.nature_mutation ILIKE 'vente%'
+                  AND dm.date_mutation >= (now() - interval '12 months')
+                  AND ST_Contains({z}, ST_Transform(dm.geom, 2975))"""), p).scalar()
+        from .dvf_mediane import mediane_bati
+        prix = mediane_bati(session, geom_geojson=geom_geojson)["median"]
     if _existe("pige_biens") and _existe("parcels"):
         annonces = session.execute(text(
             f"""SELECT count(*) FROM pige_biens b JOIN parcels p ON p.idu = b.idu
@@ -617,32 +607,32 @@ def prix_par_type_zone(session: Session, geom_geojson: dict) -> dict:
     if session.execute(text("SELECT to_regclass('dvf_mutations')")).scalar() is None:
         return {"types": []}
     z = _zone2975()
-    defs = [
-        ("maison", "Maison", "dm.type_local = 'Maison'",
-         "dm.valeur_fonciere / NULLIF(dm.surface_reelle_bati, 0)", "dm.surface_reelle_bati >= 20", "bâti"),
-        ("appartement", "Appartement", "dm.type_local = 'Appartement'",
-         "dm.valeur_fonciere / NULLIF(dm.surface_reelle_bati, 0)", "dm.surface_reelle_bati >= 20", "bâti"),
-        ("terrain", "Terrain nu", "dm.type_local IS NULL",
-         "dm.valeur_fonciere / NULLIF(dm.surface_terrain, 0)",
-         "dm.surface_terrain >= 100 AND coalesce(dm.surface_reelle_bati, 0) < 20", "terrain"),
-    ]
+    from .dvf_mediane import mediane_bati
     rows = []
-    for slug, label, typecond, ratio, guard, base in defs:
-        r = session.execute(text(
-            f"""SELECT count(*) n,
-                       round(percentile_cont(0.5) WITHIN GROUP (ORDER BY {ratio})::numeric) med,
-                       to_char(min(dm.date_mutation), 'MM/YYYY') d0,
-                       to_char(max(dm.date_mutation), 'MM/YYYY') d1
-                FROM dvf_mutations dm
-                WHERE dm.geom IS NOT NULL AND dm.nature_mutation ILIKE 'vente%'
-                  AND dm.valeur_fonciere > 0 AND {typecond} AND {guard}
-                  AND dm.date_mutation >= (now() - interval '36 months')
-                  AND ST_Contains({z}, ST_Transform(dm.geom, 2975))"""),
-            {"zone": json.dumps(geom_geojson)}).mappings().first()
-        n = int(r["n"] or 0)
-        rows.append({"type": slug, "label": label, "base": base, "n": n,
-                     "median_eur_m2": int(r["med"]) if (n >= 5 and r["med"] is not None) else None,
-                     "periode": [r["d0"], r["d1"]] if n else None})
+    # SOURCES-FIX-1 (E1) — maison / appartement passent par le point de calcul UNIQUE `dvf_mediane`
+    # (même table, filtres, borne, fenêtre que l'Étude de zone `marche_zone`). Le terrain nu garde son
+    # ratio propre (valeur / surface_terrain), hors périmètre de la médiane bâtie.
+    for slug, label, tl in (("maison", "Maison", "Maison"), ("appartement", "Appartement", "Appartement")):
+        m = mediane_bati(session, geom_geojson=geom_geojson, type_local=tl)
+        rows.append({"type": slug, "label": label, "base": "bâti", "n": m["n"],
+                     "median_eur_m2": m["median"], "periode": m["periode"]})
+    rt = session.execute(text(
+        f"""SELECT count(*) n,
+                   round(percentile_cont(0.5) WITHIN GROUP (
+                     ORDER BY dm.valeur_fonciere / NULLIF(dm.surface_terrain, 0))::numeric) med,
+                   to_char(min(dm.date_mutation), 'MM/YYYY') d0,
+                   to_char(max(dm.date_mutation), 'MM/YYYY') d1
+            FROM dvf_mutations dm
+            WHERE dm.geom IS NOT NULL AND dm.nature_mutation ILIKE 'vente%'
+              AND dm.valeur_fonciere > 0 AND dm.type_local IS NULL
+              AND dm.surface_terrain >= 100 AND coalesce(dm.surface_reelle_bati, 0) < 20
+              AND dm.date_mutation >= (now() - interval '36 months')
+              AND ST_Contains({z}, ST_Transform(dm.geom, 2975))"""),
+        {"zone": json.dumps(geom_geojson)}).mappings().first()
+    nt = int(rt["n"] or 0)
+    rows.append({"type": "terrain", "label": "Terrain nu", "base": "terrain", "n": nt,
+                 "median_eur_m2": int(rt["med"]) if (nt >= 5 and rt["med"] is not None) else None,
+                 "periode": [rt["d0"], rt["d1"]] if nt else None})
     return {"types": rows, "seuil": 5,
             "millesime": "DVF (DGFiP/Etalab) — ventes 36 mois, même lecture que le bloc Marché de la fiche"}
 
@@ -654,12 +644,16 @@ def permis_par_type_zone(session: Session, geom_geojson: dict) -> dict:
     if session.execute(text("SELECT to_regclass('sitadel_permits')")).scalar() is None:
         return {"types": []}
     z = _zone2975()
+    # KELFONCIER-FIX-1 (Lot C) — les permis ANNULÉS (ETAT_DAU=4) ne gonflent plus les comptes
+    # « autorisés par type » : ils sont EXCLUS des types et comptés à part (`n_annules`). L'état vit
+    # dans `raw->>'etat'` (source unique ingestion.permits).
     r = session.execute(text(
         f"""SELECT
-              count(*) FILTER (WHERE raw->>'famille'='logements')                 AS n_log,
-              coalesce(sum((raw->>'nb_lgt')::int) FILTER (WHERE raw->>'famille'='logements'), 0) AS lgt,
-              count(*) FILTER (WHERE raw->>'famille'='locaux')                     AS n_loc,
-              count(*) FILTER (WHERE raw->>'famille' IN ('pa','pd'))               AS n_amng
+              count(*) FILTER (WHERE raw->>'famille'='logements' AND raw->>'etat' IS DISTINCT FROM '4') AS n_log,
+              coalesce(sum((raw->>'nb_lgt')::int) FILTER (WHERE raw->>'famille'='logements' AND raw->>'etat' IS DISTINCT FROM '4'), 0) AS lgt,
+              count(*) FILTER (WHERE raw->>'famille'='locaux' AND raw->>'etat' IS DISTINCT FROM '4')     AS n_loc,
+              count(*) FILTER (WHERE raw->>'famille' IN ('pa','pd') AND raw->>'etat' IS DISTINCT FROM '4') AS n_amng,
+              count(*) FILTER (WHERE raw->>'etat' = '4')                            AS n_annules
             FROM sitadel_permits
             WHERE geom IS NOT NULL AND date >= (now() - interval '36 months')
               AND ST_Contains({z}, ST_Transform(geom, 2975))"""),
@@ -671,8 +665,10 @@ def permis_par_type_zone(session: Session, geom_geojson: dict) -> dict:
         types.append({"type": "amenagement", "label": "Aménager / démolir",
                       "n": int(r["n_amng"]), "detail": None})
     return {"types": types,
-            "note": "Type = famille Sitadel (logements / locaux d'activité). Le détail commerce vs "
-                    "activité (code destination SDES) n'est pas décodé en base — non deviné.",
+            "n_annules": int(r["n_annules"] or 0),   # KELFONCIER-FIX-1 (Lot C) — annulés, hors des types
+            "note": "Type = famille Sitadel (logements / locaux d'activité) ; les permis ANNULÉS sont "
+                    "exclus des comptes et affichés à part. Le détail commerce vs activité (code "
+                    "destination SDES) n'est pas décodé en base — non deviné.",
             "millesime": "Sitadel (SDES) — autorisations 36 mois"}
 
 
@@ -887,10 +883,28 @@ def commune_contexte_zone(session: Session, geom_geojson: dict) -> dict | None:
             """SELECT l.loyer_median FROM oll_zonage z JOIN oll_loyers l ON l.zone = z.zone AND l.annee = z.annee
                WHERE z.insee = :insee AND l.type_habitat = 'tous' AND l.pieces = 'tous'
                ORDER BY z.annee DESC LIMIT 1"""), {"insee": insee}).scalar()
-    if loyer is None:
+    # KELFONCIER-FIX-1 (Lot F) — dispositif de commune (Petites Villes de Demain / ACV / ORT),
+    # à l'échelle de la commune, lu par la MÊME fonction que la fiche §7 et la fiche commune
+    # (ingestion.ort.ort_commune). None si la commune n'est dans aucun programme.
+    dispositif_ort = None
+    try:
+        from .ingestion.ort import ort_commune
+        o = ort_commune(session, insee)
+        if o:
+            _lib = {"pvd": "Petites Villes de Demain (PVD)", "acv": "Action Cœur de Ville (ACV)"}.get(o.get("statut"))
+            if _lib or o.get("ort_signee"):
+                dispositif_ort = {
+                    "libelle": _lib or "Opération de Revitalisation de Territoire (ORT)",
+                    "ort_signee": bool(o.get("ort_signee")),
+                    "date_signature": o.get("date_signature"),
+                    "source": f"DGALN/ANCT — {o.get('millesime', 'table ORT')}"}
+    except Exception:  # noqa: BLE001 — jamais casser l'Étude de zone
+        dispositif_ort = None
+    if loyer is None and dispositif_ort is None:
         return None
     return {"commune": commune, "insee": insee, "echelle": "commune",
-            "loyer_median_eur_m2": float(loyer),
+            "loyer_median_eur_m2": float(loyer) if loyer is not None else None,
+            "dispositif_ort": dispositif_ort,
             "millesime": "OLL 2024 — loyer médian €/m² (tous logements, secteur OLL) — à l'échelle de la commune"}
 
 

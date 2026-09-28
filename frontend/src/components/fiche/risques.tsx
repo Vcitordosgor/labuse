@@ -11,9 +11,17 @@
  */
 import type { Fiche } from '../../lib/types'
 import { useApp } from '../../store/useApp'
-import { IC, RefDrawer, MicroSegments, Line, PorteOutil, GroupLabel, Rappel } from './primitives'
+import { IC, RefDrawer, Line, GroupLabel, FactNote } from './primitives'
 import { Badge } from '../ui/Badge'
-import { Trace } from '../../lib/trace'
+// KELFONCIER-FIX-2 (Lot H) — maquette v3 : Verdict en tête + aléas en Jauge3 (3 crans + % servi).
+// FICHE-FIX-4 (Lot G) — CASIAS/EnR/mesures en Ligne de vigilance, CatNat en Repli, Pièges en bouton.
+import { Verdict, Jauge3, Lignes, Ligne, Repli, OutilsSection, InfoI } from './formes'
+import { fmtDateNum } from '../../lib/format'
+
+// niveau d'aléa (catégoriel servi) → cran 0..3 de la Jauge3 (présentation, aucun seuil inventé).
+const ALEA_CRAN: Record<string, 1 | 2 | 3> = { faible: 1, modéré: 2, modere: 2, moyen: 2, fort: 3, élevé: 3, eleve: 3 }
+const aleaCran = (niveau: string | null | undefined, redhibitoire: boolean): 0 | 1 | 2 | 3 =>
+  redhibitoire ? 3 : (niveau ? (ALEA_CRAN[niveau.toLowerCase()] ?? 1) : 0)
 
 export function RisquesSection({ f }: { f: Fiche; idu: string }) {
   const setModule = useApp((s) => s.setModule)
@@ -34,37 +42,45 @@ export function RisquesSection({ f }: { f: Fiche; idu: string }) {
       context={`${evaluees} couche${evaluees > 1 ? 's' : ''} évaluée${evaluees > 1 ? 's' : ''}`}
       value={vigilances.length === 0
         ? <Badge ton="vert">rien à signaler</Badge>
-        : <Badge ton="ambre">{vigilances.length} vigilance{vigilances.length > 1 ? 's' : ''}</Badge>}
-      micro={<MicroSegments n={evaluees} label={`${evaluees} couches`} />}>
+        : <Badge ton="ambre">{vigilances.length} vigilance{vigilances.length > 1 ? 's' : ''}</Badge>}>
+      {/* FICHE-FIX-4 (Lot G) — la barre « N couches ▬▬▬ » en tête (micro) est RETIRÉE : doublon du
+          sous-titre « N couches évaluées ». */}
       <div className="flex flex-col gap-3">
-        {/* FICHE-1 lot 3 — ALÉAS EN DÉTAIL : nature · niveau · part de la parcelle · référence PPR.
-            Compte n_vigilances au-dessus (dans le value du tiroir). Dérivé de la cascade servie. */}
+        {/* FICHE-FIX-4 (Lot G) — Verdict LISIBLE : l'aléa dominant (nature + niveau + part) puis le
+            fait marquant (ancien site industriel CASIAS). Réagence des faits servis, aucun recalcul. */}
+        {(() => {
+          const dom = aleas.find((a) => a.niveau) ?? aleas[0]
+          const cs = sols?.casias
+          const reponse = vigilances.length === 0 ? 'Rien à signaler'
+            : dom ? `${dom.nature.replace(/_/g, ' ')}${dom.niveau ? ` ${dom.niveau}` : ''}${dom.part_pct != null ? ` sur ${dom.part_pct} %` : ''}`
+            : `${vigilances.length} vigilance${vigilances.length > 1 ? 's' : ''}`
+          const ctx = [
+            cs ? `ancien site industriel ${cs.sur_place ? 'sur la parcelle' : `à ${cs.distance_m} m`}` : null,
+            aleas.length > 1 ? `${aleas.length} aléas au total` : null,
+          ].filter(Boolean).join(' · ') || undefined
+          return <Verdict ton={vigilances.length === 0 ? 'vert' : 'ambre'} reponse={reponse} contexte={ctx} />
+        })()}
+        {/* FICHE-1 lot 3 — ALÉAS : nature · niveau (Jauge3, 3 crans) · part de la parcelle · réf PPR.
+            Les aléas sans niveau (PPR — zone bleue) portent une pastille au lieu des crans. Références
+            PPR + sources consolidées en note (aucune donnée perdue). Compte n_vigilances au-dessus. */}
         {aleas.length > 0 && (
           <div data-aleas-detail>
             <GroupLabel>Aléas ({aleas.length})</GroupLabel>
-            <div className="flex flex-col gap-1.5">
-              {aleas.map((a, i) => (
-                <div key={i} className="flex items-start gap-2">
-                  <span aria-hidden className={`mt-2 shrink-0 ${a.redhibitoire ? 'text-st-ecartee' : 'text-st-creuser'}`}>▲</span>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-[13px]">
-                      <span className="font-semibold">{a.nature}</span>
-                      {a.niveau && <span className="text-txt-mut"> — niveau {a.niveau}</span>}
-                      {a.part_pct != null && <span className="text-txt-mut"> · {a.part_pct} % de la parcelle</span>}
-                      {a.redhibitoire && <Badge ton="ambre" className="ml-1.5">rédhibitoire</Badge>}
-                    </div>
-                    {a.ppr && a.ppr.length > 0 && (
-                      <div className="text-[11.5px] text-txt-mut">
-                        {a.ppr.map((p) => `${p.document}${p.approbation ? ` approuvé le ${p.approbation}` : ''}`).join(' · ')}
-                      </div>
-                    )}
-                    <div className="text-[11.5px] text-txt-dim">
-                      {a.source}{a.millesime ? ` · ${a.millesime}` : ''}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+            {aleas.map((a, i) => a.niveau != null || a.redhibitoire ? (
+              <Jauge3 key={i} niveau={aleaCran(a.niveau, a.redhibitoire)}
+                label={<>{a.nature}{a.niveau ? <small className="ml-1 text-txt-mut"> niveau {a.niveau}</small> : null}{a.redhibitoire && <Badge ton="ambre" className="ml-1.5">rédhibitoire</Badge>}</>}
+                pct={a.part_pct != null ? `${a.part_pct} %` : undefined} />
+            ) : (
+              <div key={i} className="flex items-center justify-between border-b border-line py-[5px] text-[12.5px]">
+                <span>{a.nature}</span>
+                <span className="flex items-center gap-2"><Badge ton="ambre">zone bleue</Badge><span className="font-mono text-[11px] text-txt-dim">{a.part_pct != null ? `${a.part_pct} %` : ''}</span></span>
+              </div>
+            ))}
+            <FactNote>
+              {[...new Set(aleas.flatMap((a) => (a.ppr ?? []).map((p) => `${p.document}${p.approbation ? ` (approuvé le ${p.approbation})` : ''}`)))].join(' · ')}
+              {aleas.some((a) => a.ppr && a.ppr.length) ? ' — ' : ''}
+              {[...new Set(aleas.map((a) => `${a.source}${a.millesime ? ` · ${a.millesime}` : ''}`))].join(' · ')}
+            </FactNote>
           </div>
         )}
         {/* SOURCES-1 lot 3 — SOLS (SIS / CASIAS) : live, mêmes règles que la cascade sol_pollue.
@@ -72,38 +88,18 @@ export function RisquesSection({ f }: { f: Fiche; idu: string }) {
         {sols && (sols.sis || sols.casias) && (
           <div data-sols>
             <GroupLabel>Sols (SIS / CASIAS)</GroupLabel>
-            <div className="flex flex-col gap-1.5 text-[12.5px]">
+            <Lignes>
               {sols.sis && (
-                <div className="flex items-start gap-2">
-                  <span aria-hidden className="mt-1.5 shrink-0 text-st-creuser">▲</span>
-                  <div className="min-w-0 flex-1">
-                    <span className="font-semibold">Secteur d’information sur les sols</span>
-                    {sols.sis.nom && <span> — {sols.sis.nom}</span>}
-                    <span className="text-txt-mut"> · {sols.sis.part_pct} % de la parcelle</span>
-                    <div className="text-[11.5px] text-txt-mut">
-                      Étude de sols obligatoire au changement d’usage (L556-2) · information écrite de
-                      l’acheteur/locataire obligatoire à la vente ou location (L125-7).
-                    </div>
-                  </div>
-                </div>
+                <Ligne ton="ambre"
+                  label={<>Secteur d’information sur les sols (SIS)<InfoI aria="Sur le SIS" tip="Étude de sols obligatoire au changement d’usage (L556-2) · information écrite de l’acheteur/locataire obligatoire à la vente ou location (L125-7)." /></>}
+                  valeur={<>{sols.sis.nom ? `${sols.sis.nom} · ` : ''}{sols.sis.part_pct} <small>% de la parcelle</small></>} />
               )}
               {sols.casias && (
-                <div className="flex items-start gap-2">
-                  <span aria-hidden className="mt-1.5 shrink-0 text-txt-dim">▲</span>
-                  <div className="min-w-0 flex-1">
-                    <span className="font-semibold">Ancien site industriel (CASIAS)</span>
-                    {sols.casias.nom && <span> — {sols.casias.nom}</span>}
-                    <span className="text-txt-mut">
-                      {sols.casias.sur_place ? ' · sur la parcelle' : ` · à ${sols.casias.distance_m} m`}
-                    </span>
-                    <div className="text-[11.5px] text-txt-mut">
-                      Inventaire historique — pas une pollution avérée ; étude de sol à prévoir pour un
-                      projet sensible.
-                    </div>
-                  </div>
-                </div>
+                <Ligne ton="gris"
+                  label={<>Ancien site industriel (CASIAS)<InfoI aria="Sur le CASIAS" tip="Inventaire historique — pas une pollution avérée ; étude de sol à prévoir pour un projet sensible." /></>}
+                  valeur={<>{sols.casias.nom ? `${sols.casias.nom} · ` : ''}{sols.casias.sur_place ? 'sur la parcelle' : `à ${sols.casias.distance_m} m`}</>} />
               )}
-            </div>
+            </Lignes>
           </div>
         )}
         {/* RETOUCHES-1 lot C.9 — CARTOFRICHES : la parcelle recoupe-t-elle une friche recensée ? */}
@@ -130,66 +126,88 @@ export function RisquesSection({ f }: { f: Fiche; idu: string }) {
             )}
           </div>
         )}
-        {/* RETOUCHES-1 lot C.12 — CatNat : les 5 arrêtés de catastrophe naturelle les plus récents. */}
-        {f.catnat && (
-          <div data-catnat>
-            <GroupLabel>Catastrophes naturelles (arrêtés)</GroupLabel>
-            {f.catnat.disponible ? (
-              <div className="flex flex-col gap-1 text-[12.5px]">
-                {f.catnat.arretes.map((a, i) => (
-                  <div key={i}>
-                    <span className="font-semibold">{a.peril}</span>
-                    {a.date_arrete && <span className="text-txt-mut"> — arrêté du {a.date_arrete.split('-').reverse().join('/')}</span>}
-                  </div>
-                ))}
-                <div className="text-[11px] text-txt-dim">{f.catnat.total} arrêté{f.catnat.total > 1 ? 's' : ''} au total (commune) · {f.catnat.source}</div>
-              </div>
-            ) : (
-              <div className="text-[12px] text-txt-dim"><span className="text-mint">✓</span> Sans objet — aucun arrêté CatNat pour la commune. <span className="text-txt-dim">({f.catnat.source})</span></div>
-            )}
-          </div>
+        {/* SOURCES-FIX-1 A1 — EnR au sol exclues (loi APER, sauf toiture). FICHE-FIX-4 (Lot G) : en Ligne. */}
+        {f.enr_exclue_toiture && (
+          <div data-enr-exclue><Lignes>
+            {f.enr_exclue_toiture.disponible
+              ? f.enr_exclue_toiture.zones.map((zn, i) => (
+                <Ligne key={i} ton="ambre"
+                  label={<>EnR au sol interdites (APER)<InfoI aria="Sur l'exclusion EnR" tip={`Photovoltaïque/ombrière au sol exclu ; en toiture non concerné. ${f.enr_exclue_toiture!.source} · ${f.enr_exclue_toiture!.millesime}`} /></>}
+                  valeur={<>{zn.libelle ?? 'zone exclue'}{zn.gestionnaire ? <small> · {zn.gestionnaire}</small> : null}</>} />
+              ))
+              : <Ligne ton="gris"
+                  label={<>EnR au sol (APER)<InfoI aria="Sur l'exclusion EnR" tip={`Zone d'exclusion des EnR au sol — sauf toiture. ${f.enr_exclue_toiture.millesime}`} /></>}
+                  valeur="hors zone d'exclusion" />}
+          </Lignes></div>
         )}
+        {/* SOURCES-FIX-1 A2 — mesures compensatoires (GéoMCE). FICHE-FIX-4 (Lot G) : en Ligne. */}
+        {f.mesures_compensatoires && (
+          <div data-mesures-compensatoires><Lignes>
+            {f.mesures_compensatoires.disponible
+              ? f.mesures_compensatoires.mesures.map((m, i) => (
+                <Ligne key={i} ton="ambre"
+                  label={<>Mesure compensatoire (GéoMCE)<InfoI aria="Sur la mesure compensatoire" tip={`${f.mesures_compensatoires!.source} · ${f.mesures_compensatoires!.millesime}`} /></>}
+                  valeur={<>{m.type_mesure ?? 'mesure'}{m.projet ? <small> · {m.projet}</small> : null}{m.date_decision ? <small> · {fmtDateNum(m.date_decision)}</small> : null}</>} />
+              ))
+              : <Ligne ton="gris"
+                  label={<>Mesure compensatoire (GéoMCE)<InfoI aria="Sur la mesure compensatoire" tip={`Base GéoMCE. ${f.mesures_compensatoires.millesime}`} /></>}
+                  valeur="aucune sur la parcelle" />}
+          </Lignes></div>
+        )}
+        {/* RETOUCHES-1 lot C.12 — CatNat. FICHE-FIX-4 (Lot G) : replié « N arrêtés · dernier JJ/MM/AAAA ». */}
+        {f.catnat?.disponible && f.catnat.arretes.length > 0 ? (
+          <div data-catnat>
+            <Repli compteur={f.catnat.total}
+              label={<>arrêtés CatNat (commune){f.catnat.arretes[0]?.date_arrete ? ` · dernier ${fmtDateNum(f.catnat.arretes[0].date_arrete)}` : ''}</>}>
+              <Lignes>
+                {f.catnat.arretes.map((a, i) => (
+                  <Ligne key={i} label={a.peril} valeur={a.date_arrete ? fmtDateNum(a.date_arrete) : '—'} ton={a.date_arrete ? undefined : 'gris'} />
+                ))}
+              </Lignes>
+              <FactNote>{f.catnat.total} arrêté{f.catnat.total > 1 ? 's' : ''} au total (commune) · {f.catnat.source}</FactNote>
+            </Repli>
+          </div>
+        ) : f.catnat && !f.catnat.disponible ? (
+          <div data-catnat><Lignes><Ligne label="Catastrophes naturelles (commune)" valeur="aucun arrêté" ton="gris" /></Lignes></div>
+        ) : null}
         {/* AUTRES VIGILANCES (hors aléas structurés) — chaque ligne marquée d'une puce ambre.
             RETOURS-20 Z1·02 — le titre encadré (font-mono caps) devient un KICKER partagé (GroupLabel). */}
-        {autresVig.length > 0 && (
+        {/* FICHE-FIX-5 (Lot F) — VIGILANCES en Lignes AMBRE (plus de puce ▲ ni d'encadré) : le libellé
+            avant « — », le détail après, la source derrière le « i ». Les lignes HT/HTA (ex-Rappel
+            encadré) rejoignent la même liste. Aucune donnée retirée. */}
+        {(autresVig.length > 0 || f.proximites?.ligne_ht || f.proximites?.ligne_mt) && (
           <div>
             <GroupLabel>Vigilances</GroupLabel>
-            <div className="flex flex-col gap-1">
+            <Lignes>
               {autresVig.map((l, i) => {
-                // CIRCUIT-2 lot 5.2 — le NIVEAU D'ALÉA porte l'étiquette de traçage (classe) :
-                // les lignes « Aléa … — niveau … » ouvrent le tiroir de leur couche.
-                const detail = (l.detail || '') as string
-                const alea = detail.startsWith('Aléa')
-                  ? (detail.toLowerCase().includes('inondation') ? 'alea_inondation_couche' : 'alea_mvt_couche')
-                  : null
-                const ligne = <div className="min-w-0 flex-1"><Line line={l} hideWeight hideDate /></div>
+                const det = (l.detail || '') as string
+                const dash = det.indexOf('—')
+                const label = dash >= 0 ? det.slice(0, dash).trim() : det
+                const val = dash >= 0 ? det.slice(dash + 1).trim() : ''
+                const src = l.source ? String(l.source) : ''
                 return (
-                  <div key={i} className="flex items-start gap-2">
-                    <span aria-hidden className="mt-2 shrink-0 text-st-creuser">▲</span>
-                    {alea ? <Trace id={alea}>{ligne}</Trace> : ligne}
-                  </div>
+                  <Ligne key={`v-${i}`} ton="ambre" title={det}
+                    label={<><span className="text-amber">{label}</span>{src ? <InfoI aria="Source de la vigilance" tip={src} /> : null}</>}
+                    valeur={val} />
                 )
               })}
-            </div>
+              {f.proximites?.ligne_ht && (
+                <Ligne ton="ambre" title={f.proximites.ligne_ht.libelle}
+                  label={<><span className="text-amber">Ligne haute tension</span><InfoI aria="Sur la ligne HT" tip={`${f.proximites.ligne_ht.libelle} — ${f.proximites.ligne_ht.source}`} /></>}
+                  valeur="au contact" />
+              )}
+              {f.proximites?.ligne_mt && (
+                <Ligne ton="ambre" title={f.proximites.ligne_mt.libelle}
+                  label={<><span className="text-amber">Ligne moyenne tension</span><InfoI aria="Sur la ligne HTA" tip={`${f.proximites.ligne_mt.libelle} — ${f.proximites.ligne_mt.source}`} /></>}
+                  valeur="à proximité" />
+              )}
+            </Lignes>
           </div>
         )}
         {/* lignes non évaluées (donnée absente) — dites, jamais masquées. */}
         {inconnues.length > 0 && (
           <div className="flex flex-col gap-1">
             {inconnues.map((l, i) => <Line key={i} line={l} hideWeight hideDate />)}
-          </div>
-        )}
-        {/* M106 P4 — ligne HT la plus proche : une CONTRAINTE (distance, jamais un booléen). La servitude
-            I4 n'est pas cartographiée (à vérifier gestionnaire). Seuil de pertinence appliqué en amont (F0). */}
-        {f.proximites?.ligne_ht && (
-          <div data-ligne-ht>
-            <Rappel src={f.proximites.ligne_ht.source}>{f.proximites.ligne_ht.libelle}</Rappel>
-          </div>
-        )}
-        {/* FICHE-COUCHES-2 lot 1 — ligne moyenne tension (HTA) : même famille que la HT, contrainte de proximité. */}
-        {f.proximites?.ligne_mt && (
-          <div data-ligne-mt>
-            <Rappel src={f.proximites.ligne_mt.source}>{f.proximites.ligne_mt.libelle}</Rappel>
           </div>
         )}
         {/* « rien à signaler » REPLIÉ — ne noie plus les vraies alertes. */}
@@ -204,10 +222,9 @@ export function RisquesSection({ f }: { f: Fiche; idu: string }) {
           </details>
         )}
         {lignes.length === 0 && <p className="text-xs text-txt-dim">Aucun signal sur cet onglet.</p>}
-        {/* M137-T — PORTE Risques : « Pièges et risques » (même moteur que cette section, O5). */}
-        <PorteOutil ico="⚑" data="risques" titre="Pièges et risques"
-          sous="Servitudes dormantes, risques et propriétaire — cette parcelle en détail, ou un lot au crible"
-          onClick={() => setModule('risques')} />
+        {/* FICHE-FIX-4 (Lot G) — Pièges & risques en bouton OutilsSection (plus de grande carte). */}
+        <OutilsSection outils={[{ label: 'Pièges & risques', principal: true, full: true, data: 'risques',
+          onClick: () => setModule('risques') }]} />
       </div>
     </RefDrawer>
   )

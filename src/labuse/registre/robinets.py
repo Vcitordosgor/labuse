@@ -133,7 +133,11 @@ ROBINETS: dict[str, Robinet] = {
  "fiche_parcelle_droit_sols": _r("fiche", "Dispositifs et périmètres (droit des sols)", "fiche_parcelle",
     "/parcels/{idu} (clé dispositifs)", "json_puis_js",
     chiffres=("dispositifs_parcelle", "er_emplacement_reserve", "ebc_classe",
-              "dpu_perimetre", "peb_zone",)),
+              "dpu_perimetre", "peb_zone", "scot_parcelle",)),
+ # SOURCES-FIX-1 (A1/A2) — contraintes environnementales servies à la parcelle (mêmes couches que la carte).
+ "fiche_parcelle_contraintes_env": _r("fiche", "Contraintes environnementales (APER / mesures compensatoires)",
+    "fiche_parcelle", "/parcels/{idu} (clés enr_exclue_toiture, mesures_compensatoires)", "json_puis_js",
+    chiffres=("enr_exclue_parcelle", "mesures_compensatoires_parcelle",)),
  # ── SOURCES-1 lot 2 — nature et eau ──
  "couche_dpf": _r("couche", "Ravines et reculs (DPF)", None,
     "/map/tiles/dpf/{z}/{x}/{y}.pbf", "tuiles", chiffres=("dpf_couche",)),
@@ -254,7 +258,7 @@ ROBINETS: dict[str, Robinet] = {
     # RETOUCHES-1 (lot A) — `secteur_lieu_dit` (BD NYME) servi sous l'adresse (« Secteur : … »).
     chiffres=("adresse_ban", "parcelle_geometrie", "exposition_versant", "secteur_lieu_dit",)),
  "fiche_parcelle_urbanisme": _r("fiche", "Règlement d'urbanisme (zones + extraits)", "fiche_parcelle",
-    "/parcels/{idu}", "json_puis_js", chiffres=("reglement_plu_bloc", "zone_plu_famille",)),
+    "/parcels/{idu}", "json_puis_js", chiffres=("reglement_plu_bloc", "zone_plu_famille", "au_ouverture_statut",)),
  "fiche_parcelle_dispositifs": _r("fiche", "Dispositifs et périmètres (QPV, ANRU, ZFANG, FRR)", "fiche_parcelle",
     "/parcels/{idu}", "json_puis_js", chiffres=("perimetres_dispositifs_liste",)),
  "fiche_parcelle_score": _r("fiche", "Score d'opportunité (tier)", "fiche_parcelle",
@@ -266,7 +270,7 @@ ROBINETS: dict[str, Robinet] = {
  # FICHE-RANGEMENT-1 Lot 3 — + cosia_detecte_m2 : le tiroir « Le bien » sert le bâti CoSIA hors
  # BD TOPO (orpheline du registre déclarée).
  "fiche_parcelle_le_bien": _r("fiche", "Le bien", "fiche_parcelle",
-    "/parcels/{idu}", "json_puis_js", chiffres=("emprise_batie_m2", "hauteur_bati_m", "n_batiments", "surface_libre_sol_m2", "nature_toit", "pente_toit_deg", "dpe_connu", "rnb_batiments_liste", "ban_plus_adresses_bati", "part_artificialisee_pct", "usage_sol_dominant", "cosia_detecte_m2", "part_impermeabilisee_cosia_pct", "part_vegetalisee_cosia_pct", "part_sol_nu_cosia_pct",)),
+    "/parcels/{idu}", "json_puis_js", chiffres=("emprise_batie_m2", "hauteur_bati_m", "n_batiments", "surface_libre_sol_m2", "nature_toit", "pente_toit_deg", "dpe_connu", "rnb_batiments_liste", "ban_plus_adresses_bati", "part_artificialisee_pct", "usage_sol_dominant", "cosia_detecte_m2", "part_impermeabilisee_cosia_pct", "part_vegetalisee_cosia_pct", "part_sol_nu_cosia_pct", "etablissements_parcelle_liste",)),
  # FICHE-RANGEMENT-1 Lot 3 — + endiguement_zone_protegee : la cascade risques sert le système
  # d'endiguement (orpheline du registre déclarée).
  "fiche_parcelle_risques": _r("fiche", "Risques et protections", "fiche_parcelle",

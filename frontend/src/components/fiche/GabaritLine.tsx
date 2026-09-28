@@ -1,8 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
 import { getGabarit, type GabGeom } from '../../lib/api'
 import { fmtInt } from '../../lib/format'
-import { useApp } from '../../store/useApp'
-import { FactRow, PorteOutil, StepProv, Vigilance } from './primitives'
+import { Vigilance } from './primitives'
+// FICHE-FIX-5 (Lot J) — le gabarit = vignette pleine largeur + 3 Lignes (valeurs nowrap) ; un seul
+// « Ouvrir le Gabarit » (celui du haut, dans les outils du Potentiel).
+import { Lignes, Ligne, InfoI } from './formes'
 
 // Tiroir §10 Potentiel — ligne « Gabarit réglementaire » (GABARIT-2). Réutilise les primitives
 // .fiche-v6 (FactRow/PorteOutil/Vigilance), aucun redesign. La hauteur PLU vit en §4 Urbanisme :
@@ -64,9 +66,6 @@ function MiniPlan({ contour, zone, retrait, excl }: {
 }
 
 export function GabaritLine({ idu }: { idu: string }) {
-  const setParcelPrefill = useApp((s) => s.setParcelPrefill)
-  const setModule = useApp((s) => s.setModule)
-  const pushOutilRetour = useApp((s) => s.pushOutilRetour)
   const q = useQuery({ queryKey: ['gabarit', idu], queryFn: () => getGabarit(idu), retry: false })
   const r = q.data
   // GABARIT-6 P2 — parcelle à cheval : cadastre entier (= la fiche) puis portion servie en sous-ligne.
@@ -75,64 +74,37 @@ export function GabaritLine({ idu }: { idu: string }) {
   const chev = !!rc?.zone?.a_cheval && cadM2 != null && r?.surfaceParcelleM2 != null
   const pctChev = chev ? Math.round((r!.surfaceParcelleM2! / cadM2!) * 100) : null
 
-  const ouvrir = () => {
-    setParcelPrefill(idu)
-    setModule('gabarit')
-    pushOutilRetour({ module: '', label: 'Fiche', restore: {} })
-  }
-
-  const porte = (
-    <PorteOutil ico="◱" data="gabarit" titre="Ouvrir le Gabarit" compacte
-      sous="Zone d'implantation, retraits, 2D / 3D sur la carte" onClick={ouvrir} />
-  )
-
   return (
     <div data-gabarit-fiche className="flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2/60 p-2.5">
       <p className="label-caps text-[9.5px] text-txt-dim">Gabarit réglementaire</p>
       {q.isLoading && <span className="text-[11px] text-txt-dim">Calcul…</span>}
       {q.isError && <span className="text-[11px] text-st-ecartee">Gabarit indisponible.</span>}
       {r && r.status === 'incomplete' && (
-        <>
-          <Vigilance title="Calcul incomplet — donnée réglementaire manquante">
-            {(r.validationErrors?.[0] ?? r.message ?? '')}
-          </Vigilance>
-          {porte}
-        </>
+        <Vigilance title="Calcul incomplet — donnée réglementaire manquante">
+          {(r.validationErrors?.[0] ?? r.message ?? '')}
+        </Vigilance>
       )}
       {r && r.status === 'ok' && (
         <>
-          <div className="flex gap-3">
-            <div className="flex min-w-0 flex-1 flex-col">
-              <FactRow label="Surface parcelle" value={chev
-                ? <span style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-end', lineHeight: 1.15 }}>
-                    <span>{fmtInt(cadM2)} m²</span>
-                    <span style={{ fontSize: 10, color: 'var(--txt-dim)' }}>dont {fmtInt(r.surfaceParcelleM2)} m² en {rc?.zone?.code} ({pctChev} %)</span>
-                  </span>
-                : `${fmtInt(r.surfaceParcelleM2)} m²`} />
-              {/* GEOMETRIE-1 lot D — même chiffre, même badge que l'étape 1 de la capacité
-                  (les deux lisent compute_gabarit : zone d'implantation = assiette). */}
-              <FactRow label="Zone d'implantation" value={`${fmtInt(r.zoneImplantationM2)} m²`}
-                src={<StepProv prov="sourcee" />} />
-              <FactRow label="Plafond d'emprise"
-                value={r.plafondEmpriseStatus === 'absent' ? 'Non réglementé' : `${fmtInt(r.plafondEmpriseM2)} m²`}
-                tone={r.plafondEmpriseStatus === 'absent' ? 'mute' : undefined} />
-              <FactRow label="Hauteur réglementaire"
-                value={r.hauteurStatus === 'not_integrated'
-                  ? 'Non chiffrée (prospect)'
-                  : r.hauteurBase === 'egout'
-                    ? `${fmtH(r.hauteurReglementaireM)} m à l'égout`
-                    : r.hauteurEgoutM != null
-                      ? <span style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-end', lineHeight: 1.15 }}>
-                          <span>{fmtH(r.hauteurReglementaireM)} m max</span>
-                          <span style={{ fontSize: 10, color: 'var(--txt-dim)' }}>égout {fmtH(r.hauteurEgoutM)} m</span>
-                        </span>
-                      : `${fmtH(r.hauteurReglementaireM)} m`}
-                tone={r.hauteurStatus === 'not_integrated' ? 'mute' : undefined} src="§4 Urbanisme" />
-            </div>
+          {/* FICHE-FIX-5 (Lot J) — VIGNETTE PLEINE LARGEUR, puis 3 Lignes (valeurs nowrap) — plus de
+              lettres en colonne. Détails (portion à cheval, égout) derrière le « i ». Résumé : la vue
+              2D/3D, les retraits par côté et le PPR découpé sont dans l'outil (bouton du haut). */}
+          <div className="flex justify-center">
             <MiniPlan contour={r.contourGeoJSON} zone={r.zoneImplantationGeoJSON}
               retrait={r.retraitsGeoJSON} excl={r.exclusionsGeoJSON} />
           </div>
-          {porte}
+          <Lignes>
+            <Ligne label={<>Surface parcelle{chev ? <InfoI aria="Portion en zone" tip={`dont ${fmtInt(r.surfaceParcelleM2)} m² en ${rc?.zone?.code} (${pctChev} %)`} /> : null}</>}
+              valeur={`${fmtInt(chev ? cadM2 : r.surfaceParcelleM2)} m²`} />
+            <Ligne label="Zone d'implantation" valeur={`${fmtInt(r.zoneImplantationM2)} m²`} />
+            <Ligne label="Plafond d'emprise" ton={r.plafondEmpriseStatus === 'absent' ? 'gris' : undefined}
+              valeur={r.plafondEmpriseStatus === 'absent' ? 'Non réglementé' : `${fmtInt(r.plafondEmpriseM2)} m²`} />
+            <Ligne label={<>Hauteur réglementaire<InfoI aria="Sur la hauteur" tip={`Source : §4 Urbanisme.${r.hauteurEgoutM != null ? ` Égout ${fmtH(r.hauteurEgoutM)} m.` : ''}`} /></>}
+              ton={r.hauteurStatus === 'not_integrated' ? 'gris' : undefined}
+              valeur={r.hauteurStatus === 'not_integrated' ? 'Non chiffrée (prospect)'
+                : r.hauteurBase === 'egout' ? `${fmtH(r.hauteurReglementaireM)} m à l'égout`
+                : `${fmtH(r.hauteurReglementaireM)} m max`} />
+          </Lignes>
         </>
       )}
     </div>

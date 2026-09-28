@@ -1,0 +1,118 @@
+id	name	category	provider	coalesce
+37	DPE ADEME (logements existants)	energie	ADEME	https://data.ademe.fr/data-fair/api/v1/datasets/dpe03existant/lines
+129	Loyers OLL — ADIL Réunion / AGORAH (réseau des observatoires)	marche	ADIL 974 / AGORAH — réseau OLL (Anil)	https://www.observatoires-des-loyers.org/datagouv/2024/Base_OP_2024_L9740.zip
+140	Micro-données OLL (ADIL / AGORAH)	logement	ADIL de La Réunion / AGORAH (observatoire local des loyers)	
+12	PEIGEO (hub régional)	hub	AGORAH	
+38	QPV 2024 (ANCT)	fiscal	ANCT (Agence nationale cohésion des territoires)	https://static.data.gouv.fr/resources/quartiers-prioritaires-de-la-politique-de-la-ville-qpv/20260115-204323/qpv-2024-geojson.zip
+74	Transport public — GTFS (PAN, 7 réseaux)	acces	AOM Réunion (Région, CINOR, TCO, CIVIS, CIREST, CASUD) via transport.data.gouv.fr	https://www.data.gouv.fr/api/1/datasets/horaire-du-reseau-citalis/
+100	RNIC — registre national des copropriétés (Anah)	logement	Anah (registre national d'immatriculation des copropriétés)	
+137	OPAH / PIG (Anah / EPCI)	logement	Anah / EPCI (conventions d'opérations programmées)	
+126	Fibre Arcep — Ma connexion internet (immeuble)	reseaux	Arcep (Ma connexion internet)	https://data.arcep.fr/fixe/maconnexioninternet/base_imb/last/departement/base_imb_974.csv.gz
+34	Géorisques — ICPE	risques	BRGM / Géorisques	https://www.georisques.gouv.fr/api/v1/installations_classees
+33	Géorisques — cavités souterraines	risques	BRGM / Géorisques	https://www.georisques.gouv.fr/api/v1/cavites
+36	Géorisques — mouvements de terrain	risques	BRGM / Géorisques	https://www.georisques.gouv.fr/api/v1/mvt
+32	Géorisques — sites et sols pollués	risques	BRGM / Géorisques	https://www.georisques.gouv.fr/api/v1/ssp
+114	AZI / TRI — inondation (Géorisques GASPAR)	risques	BRGM / Géorisques (GASPAR)	https://www.georisques.gouv.fr/api/v1/gaspar/azi
+97	CatNat (arrêtés GASPAR / Géorisques)	risques	BRGM / Géorisques (GASPAR)	https://www.georisques.gouv.fr/api/v1/gaspar/catnat
+4	Géorisques	risques	BRGM / MTE	https://www.georisques.gouv.fr/api/v1
+116	Géorisques — CASIAS (anciens sites industriels)	risques	BRGM / MTE (Géorisques — CASIAS, ex-BASIAS)	https://www.georisques.gouv.fr/api/v1/ssp
+115	Géorisques — secteurs d'information sur les sols (SIS)	risques	BRGM / MTE (Géorisques — infosols)	https://www.georisques.gouv.fr/api/v1/ssp
+24	ABF / Monuments historiques	patrimoine	Base Mérimée (Ministère Culture)	https://data.culture.gouv.fr/api/explore/v2.1/catalog/datasets/liste-des-immeubles-proteges-au-titre-des-monuments-historiques/records
+48	PVGIS (Commission européenne)	energie	CE / JRC	https://re.jrc.ec.europa.eu/api/v5_3/PVcalc
+135	Inventaires ZAE (EPCI — loi Climat et résilience)	economie	CINOR / TCO / CIVIS / CASUD / CIREST	
+134	Zonages d'assainissement SIG complets (EPCI / régies)	reseaux	CINOR / TCO / CIVIS / CASUD / CIREST (et régies)	
+46	Classement sonore ITT (Cerema)	reglement	Cerema (Cartagène)	https://cartagene.cerema.fr/server/rest/services/Hosted/Routes_classement_sonore_La_Reunion_V2/FeatureServer/0/query
+142	DV3F (Cerema)	marche	Cerema (DVF enrichi des Fichiers fonciers)	
+102	Consommation d'espaces NAF (Cerema — portail de l'artificialisation)	urbanisme	Cerema (portail national de l'artificialisation des sols)	
+35	Cartofriches (Cerema)	foncier	Cerema / DGALN	https://apidf-preprod.cerema.fr/cartofriches/geofriches/
+141	LOVAC (logements vacants)	logement	Cerema / DGFiP (LOVAC)	
+28	Cerema / GéoLittoral — indicateur d'érosion côtière	risques	Cerema / GéoLittoral	https://geolittoral.din.developpement-durable.gouv.fr/telechargement/couches_sig/N_evolution_trait_cote_S_reunion_epsg2975_062018_shape.zip
+139	ENS du Département (Conseil départemental)	environnement	Conseil départemental de La Réunion	
+10	RPG — déclarations agricoles (IGN/ASP)	agricole	DAAF (propre non public) · proxy RPG/IGN	https://data.geopf.fr/wfs/ows
+13	DEAL Réunion (WMS/WFS)	hub	DEAL Réunion	
+146	Carte hypsométrique du littoral (DEAL Lizmap)	risques	DEAL Réunion (Lizmap — deal974.lizmap.com)	https://deal974.lizmap.com/cartes/index.php/lizmap/service?repository=02sprinr&project=04tsunami
+113	Espaces protégés complémentaires — Ramsar, sites classés/inscrits (DEAL Carmen)	environnement	DEAL Réunion (Lizmap — deal974.lizmap.com)	https://deal974.lizmap.com/cartes/index.php/lizmap/service?repository=00cartogenerale&project=deal_reunion
+111	Ravines — domaine public fluvial (DEAL Carmen)	risques	DEAL Réunion (Lizmap — deal974.lizmap.com)	https://deal974.lizmap.com/cartes/index.php/lizmap/service?repository=00cartogenerale&project=deal_reunion
+145	Systèmes d'endiguement et zones protégées (DEAL Lizmap)	risques	DEAL Réunion (Lizmap — deal974.lizmap.com)	https://deal974.lizmap.com/cartes/index.php/lizmap/service?repository=02sprinr&project=03digues
+112	Zones humides — inventaires DEAL (Carmen)	environnement	DEAL Réunion (Lizmap — deal974.lizmap.com)	https://deal974.lizmap.com/cartes/index.php/lizmap/service?repository=00cartogenerale&project=deal_reunion
+47	50 pas géométriques — limite haute (DEAL)	reglement	DEAL Réunion (Lizmap)	https://deal974.lizmap.com/cartes/index.php/lizmap/service?repository=00cartogenerale&project=deal_reunion
+30	DEAL Réunion — PPR / aléas	risques	DEAL Réunion (Lizmap)	https://deal974.lizmap.com/cartes/index.php/lizmap/service?repository=02sprinr&project=01risque
+40	NPNRU (DEAL Réunion / ANCT)	logement	DEAL Réunion (WFS Carmen) · ANCT (liste)	http://ws.carmen.developpement-durable.gouv.fr/WFS/29/DEAL_REUNION_2020?typename=NPNRU
+117	DEAL — cartes de bruit stratégiques (CBS)	risques	DEAL Réunion (directive 2002/49/CE, échéance 4)	http://ws.carmen.developpement-durable.gouv.fr/WFS/29/Cartes_bruit_strategiques
+108	PEB — plans d'exposition au bruit (DGAC via annexes GPU)	risques	DGAC / DEAL (PEB approuvés) — republication annexes GPU	https://apicarto.ign.fr/api/gpu/info-surf
+128	ACV / PVD / ORT (DGALN — liste des communes)	dispositifs	DGALN / ANCT (table grist data.gouv)	https://grist.numerique.gouv.fr/o/dgaln/api/docs/j4i9oKD3jzFtgEUuM9sXnL/download/csv?tableId=BDD
+71	DGFiP — parcelles des personnes morales	proprietaire	DGFiP	https://data.economie.gouv.fr/api/v2/catalog/datasets/fichiers-des-locaux-et-des-parcelles-des-personnes-morales/attachments/fichier_des_parcelles_situation_2025_dpts_57_a_976_zip
+98	Taxe d'aménagement — taux communaux (délibérations)	fiscalite	DGFiP (application DELTA)	https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/delta_deliberation_tam_17_01_23/records
+132	DFI — documents de filiation informatisés (DGFiP)	cadastre	DGFiP (open data — agrégation des fichiers DFI)	https://dataeng-open.s3.rbx.io.cloud.ovh.net/dfi/dfi.parquet
+127	Taux de taxe foncière — fichier REI (DGFiP)	fiscalite	DGFiP (recensement des éléments d'imposition)	https://data.economie.gouv.fr/api/v2/catalog/datasets/impots-locaux-fichier-de-recensement-des-elements-dimposition-a-la-fiscalite-dir/attachments/rei_2025_fichier_notice_tracezip
+27	Fichiers fonciers (Cerema)	proprietaire	DGFiP / Cerema	
+2	Cadastre Etalab (bulk DGFiP/Etalab)	cadastre	DGFiP / Etalab	https://cadastre.data.gouv.fr/data/etalab-cadastre/latest/geojson/communes/974/97415/cadastre-97415-parcelles.json.gz
+5	DVF / valeurs foncières	marche	DGFiP / Etalab — géo-DVF	https://files.data.gouv.fr/geo-dvf/latest/csv/
+130	Loyers DHUP — carte des loyers (annonces)	marche	DHUP / MTE (carte des loyers, data.gouv)	
+109	Zonage ABC des communes (DHUP)	logement	DHUP / Ministère de la Transition écologique (arrêté national)	https://static.data.gouv.fr/resources/liste-des-communes-selon-le-zonage-abc/20260703-091314/liste-ensemble-des-communes-zonage-abc-en-vigueur-26-juin-2026.csv
+29	BODACC (procédures collectives)	economie	DILA (Opendatasoft)	https://bodacc-datadila.opendatasoft.com/api/explore/v2.1/catalog/datasets/annonces-commerciales/records
+99	Annuaire de l'administration (service-public.fr / DILA)	acces	DILA (service-public.fr)	https://api-lannuaire.service-public.fr/api/explore/v2.1/catalog/datasets/api-lannuaire-administration/records
+45	Recherche d'entreprises (DINUM)	economie	DINUM (api.gouv.fr)	https://recherche-entreprises.api.gouv.fr/search
+18	Base Adresse Nationale	acces	DINUM / IGN	https://api-adresse.data.gouv.fr/search/
+93	EDF Réunion — lignes moyenne tension HTA (open data)	acces	EDF SEI — open data La Réunion (portail Koumoul)	https://opendata-reunion.edf.fr/datasets/lignes-haute-tension-hta-aerien-run
+26	VRD / assainissement (SPANC)	reseaux	EPCI	
+138	Périmètres ORT infra-communaux (EPCI)	logement	EPCI (conventions ORT préfectorales)	
+136	Périmètres de ZAC (EPCI / communes / EPF Réunion)	urbanisme	EPCI / communes / EPF Réunion	
+42	PLH des 5 EPCI (extraction documentaire)	logement	EPCI 974 · DEAL Réunion (CDHH)	
+96	Cadastre d'époque (Etalab / PCI vecteur DGFiP)	topographie	Etalab / DGFiP via cadastre.data.gouv.fr	https://cadastre.data.gouv.fr/data/etalab-cadastre/
+14	Géoplateforme IGN	hub	IGN	https://data.geopf.fr/wfs/ows
+147	BAN PLUS — lien adresse ↔ bâtiment (IGN)	cadastre	IGN (Géoplateforme — BAN PLUS)	https://data.geopf.fr/wfs/ows (BAN-PLUS:lien_adresse_bati)
+44	SUP — assiettes GPU (API Carto)	reglement	IGN (Géoportail de l'urbanisme)	https://apicarto.ign.fr/api/gpu/assiette-sup-s
+1	Cadastre (API Carto PCI)	cadastre	IGN / API Carto	https://apicarto.ign.fr/api/cadastre/parcelle
+3	Urbanisme PLU/GPU (API Carto)	urbanisme	IGN / API Carto GPU	https://apicarto.ign.fr/api/gpu/zone-urba
+61	BD ORTHO 20 cm (IGN)	imagerie	IGN / Géoplateforme	https://data.geopf.fr/wms-r (ORTHOIMAGERY.ORTHOPHOTOS)
+69	BD ORTHO IRC (IGN)	imagerie	IGN / Géoplateforme	https://data.geopf.fr/wms-r (ORTHOIMAGERY.ORTHOPHOTOS.IRC)
+17	BD TOPO IGN	topographie	IGN / Géoplateforme	https://data.geopf.fr/wfs/ows
+83	CoSIA (couverture du sol IA, IGN)	occupation_sol	IGN / Géoplateforme	https://data.geopf.fr/telechargement/download/COSIA/COSIA_1-0__GPKG_RGR92UTM40S_D974_2025-01-01/COSIA_1-0__GPKG_RGR92UTM40S_D974_2025-01-01.7z
+22	IGN BD CARTO V5 — occupation du sol	occupation_sol	IGN / Géoplateforme	https://data.geopf.fr/wfs/ows
+70	LiDAR HD — MNH 50 cm (IGN)	terrain	IGN / Géoplateforme	https://data.geopf.fr/wms-r (IGNF_LIDAR-HD_MNH_ELEVATION.ELEVATIONGRIDCOVERAGE.RGR92UTM40S)
+6	RGE ALTI (altimétrie)	topographie	IGN / Géoplateforme	https://data.geopf.fr/altimetrie/1.0/calcul/alti/rest/elevation.json
+65	RGE ALTI 5 m (IGN)	terrain	IGN / Géoplateforme	
+144	OCS GE (IGN) — occupation du sol et artificialisation	topographie	IGN / Géoplateforme (portail de l'artificialisation)	https://data.geopf.fr/telechargement/resource/OCSGE
+63	GPU — zonages d'assainissement	urbanisme	IGN / Géoportail de l'urbanisme	https://apicarto.ign.fr/api/gpu/municipality/document/info-surf
+67	GPU — zonages d'assainissement (info-surf typeinf 19)	assainissement	IGN / Géoportail de l'urbanisme	https://apicarto.ign.fr/api/gpu/info-surf
+107	GPU — droit de préemption urbain (info-surf)	urbanisme	IGN / Géoportail de l'urbanisme (informations des PLU)	https://apicarto.ign.fr/api/gpu/info-surf
+105	GPU — emplacements réservés (prescriptions CNIG)	urbanisme	IGN / Géoportail de l'urbanisme (prescriptions des PLU)	https://apicarto.ign.fr/api/gpu/prescription-surf
+106	GPU — espaces boisés classés (prescriptions CNIG)	urbanisme	IGN / Géoportail de l'urbanisme (prescriptions des PLU)	https://apicarto.ign.fr/api/gpu/prescription-surf
+64	Contours IRIS (IGN/INSEE)	attractivite	IGN / INSEE	https://data.geopf.fr/wfs/ows
+148	Communes La Réunion — contours (IGN ADMIN EXPRESS via geo.api.gouv, seed)	administratif	IGN / geo.api.gouv	
+31	INPI RNE (dirigeants)	economie	INPI (Registre National des Entreprises)	https://registre-national-entreprises.inpi.fr/api/companies/{siren}
+25	INPN / patrinat — espaces protégés	environnement	INPN/MNHN (espaces protégés) · ENS dép. non public	https://data.geopf.fr/wfs/ows
+7	Parc National de La Réunion (INPN)	environnement	INPN/MNHN · API Carto · Région ODS	https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/pnrun_2021/records
+76	ZNIEFF (INPN/MNHN)	environnement	INPN/MNHN · PatriNat	https://data.geopf.fr/wfs/ows
+20	BPE INSEE	attractivite	INSEE	https://www.insee.fr/fr/statistiques/fichier/8217525/BPE25.zip
+52	Filosofi INSEE (carreaux 200 m)	attractivite	INSEE	
+41	INSEE RP Logement 2023	logement	INSEE	https://www.insee.fr/fr/statistiques/fichier/8997194/base_cc_logement_2023_xlsx.zip
+66	INSEE RP2022 — fichier détail Logements (EGOUL)	assainissement	INSEE	https://www.insee.fr/fr/statistiques/fichier/8647099/RP2022_logemt.zip
+133	INSEE RP2022 — bases IRIS (logement, population)	attractivite	INSEE (recensement de la population, bases infra-communales)	https://www.insee.fr/fr/statistiques/fichier/8647012/base-ic-logement-2022_csv.zip
+21	SIRENE	economie	INSEE / annuaire-entreprises	https://recherche-entreprises.api.gouv.fr/search
+86	SIRENE établissements géolocalisés	economie	INSEE / data.gouv	
+84	Radar (pige d'annonces)	marche	LABUSE — collecte humaine	
+72	ZFANG — zone franche d'activité nouvelle génération (Légifrance)	fiscal	Légifrance / DGOM	https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000054153903
+73	FRR ex-ZRR — zone spéciale d'action rurale (Légifrance)	fiscal	Légifrance / Région Réunion	https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000049746820
+43	RTAA DOM (textes réglementaires)	reglementaire	Légifrance — CCH R.192-1 à R.192-4 + arrêtés 17/04/2009 modifiés 11/01/2016	
+62	Sudocuh (procédures d'urbanisme)	urbanisme	Ministère Cohésion des territoires / DGALN	https://www.data.gouv.fr/api/1/datasets/r/61541a0f-e9b0-43dc-bace-6c3905714400
+39	Inventaire SRU (DHUP)	logement	Ministère Transition écologique — DHUP	https://static.data.gouv.fr/resources/communes-et-inventaire-sru/20251219-143258/donnees-sru-data-gouv-2025-v2.csv
+110	ZPPA — zones de présomption de prescription archéologique (Atlas des patrimoines)	patrimoine	Ministère de la Culture / DAC de La Réunion	https://atlas.patrimoines.culture.fr/
+8	Forêts publiques (ONF)	environnement	ONF / IGN (BD TOPO)	https://data.geopf.fr/wfs/ows
+19	OpenStreetMap / Overpass	signal	OSM	https://overpass-api.de/api/interpreter
+75	OSM — transport (pôles d'échange & téléphérique)	acces	OpenStreetMap	https://overpass-api.de/api/interpreter
+51	Parkings OSM (loi APER)	energie	OpenStreetMap	https://overpass-api.de/api/interpreter
+94	TCSP — voies bus en site propre (OSM)	acces	OpenStreetMap	https://overpass-api.de/api/interpreter
+143	RNB — Référentiel National des Bâtiments	topographie	RNB (beta.gouv / ADEME / IGN / DGALN)	https://rnb-api.beta.gouv.fr/api/alpha/buildings/
+11	Région Réunion Open Data (Opendatasoft)	hub	Région Réunion (Opendatasoft)	https://data.regionreunion.com/api/explore/v2.1/catalog/datasets
+15	data.regionreunion.com — Potentiel foncier	potentiel	Région Réunion (Opendatasoft)	https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/potentiel-foncier/records
+119	DVF Réunion (Région, data.regionreunion.com)	marche	Région Réunion (Opendatasoft) — DV3F public	https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/demande-de-valeurs-foncierespublic/records
+88	Trafic RN (Région Réunion — SIR)	economie	Région Réunion (Système d'Information Routier)	
+118	SAR — schéma d'aménagement régional (Région/DEAL)	urbanisme	Région Réunion (élaboration) / État (décret 22/11/2011)	https://sextant.ifremer.fr/services/wms/polmar_reunion
+9	Potentiel foncier Région (Région ODS)	urbanisme	Région Réunion / AGORAH	
+95	Réunion Express — hypothèses de tracé (débat public CNDP)	acces	Région Réunion / CNDP	https://www.debatpublic.fr/projet-train-reunion-express
+16	SITADEL (autorisations d'urbanisme)	dynamique	SDES (Dido)	https://data.statistiques.developpement-durable.gouv.fr/dido/api/v1/datafiles/{rid}/csv
+131	Coût de construction (EPTB SDES + choix LABUSE)	fiscalite	SDES (EPTB) · choix LABUSE (promotion)	
+101	RPLS — répertoire des logements locatifs sociaux (SDES)	logement	SDES (répertoire des logements locatifs des bailleurs sociaux)	
+(116 rows)

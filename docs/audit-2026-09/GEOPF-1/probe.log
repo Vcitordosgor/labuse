@@ -1,0 +1,20 @@
+TMS-only sans bbox à résoudre: 72
+  ...20/72
+  ...40/72
+  ...60/72
+Candidats (emprise déclarée croise Réunion): 667
+  50/667  [couvre] MNH issu de LiDAR HD
+  100/667  [couvre] CORINE Land Cover - 2000 révisée
+  150/667  [declaree_vide] bdortho-asp ortho-socle 2018
+  200/667  [declaree_vide] Carte du relief
+  250/667  [couvre] Communes - BD PARCELLAIRE
+  300/667  [couvre] Complexes sportifs et terrains de sports
+  350/667  [declaree_vide] Zones agricoles protégées
+  400/667  [couvre] Réserves naturelles et parcs
+  450/667  [couvre] BDTOPO : Lieux-dits non habités
+  500/667  [couvre] CORINE Land Cover - DOM - Changements 20
+  550/667  [couvre] Mesures compensatoires des atteintes à l
+  600/667  [couvre] Registre parcellaire graphique (RPG) 202
+  650/667  [indetermine] Blocs LIDARHD MNT
+VERDICTS: Counter({'couvre': 427, 'declaree_vide': 191, 'indetermine': 49})
+terminé: 667

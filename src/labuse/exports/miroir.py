@@ -362,9 +362,12 @@ def _r_territoire(v, val: Valeur):
     def _row(cle, lib):
         rows.append(f'<tr data-quoi="perimetres_dispositifs_liste"><td class="k">{esc(cle)}</td>'
                     f'<td>{esc(lib)}</td><td class="n">{chip(val)}</td></tr>')
-    dom = (v.get("dispositifs_dom") or [{}])[0]
-    if dom.get("libelle"):
-        _row("Zonage du logement", dom["libelle"])
+    # KELFONCIER-FIX-1 (Lot F) — le Dossier miroir rend TOUS les dispositifs de commune (zonage A/B/C,
+    # TVA DOM, et Petites Villes de Demain/ACV/ORT), plus seulement le premier. Le premier reste
+    # « Zonage du logement » ; les autres (TVA, ANCT) prennent « Dispositif de commune ».
+    for i, dom in enumerate(v.get("dispositifs_dom") or []):
+        if dom.get("libelle"):
+            _row("Zonage du logement" if i == 0 else "Dispositif de commune", dom["libelle"])
     if (v.get("zfang") or {}).get("libelle"):
         _row("ZFANG", v["zfang"]["libelle"])
     if (v.get("frr") or {}).get("libelle"):
@@ -517,10 +520,13 @@ def _verdict_factuel(sec_id: str, valeurs: dict[str, Valeur]) -> tuple[str, str,
     if sec_id == "fiscalite":
         tf = _v(valeurs, "perimetres_dispositifs_liste")
         if isinstance(tf, dict):
-            dom = (tf.get("dispositifs_dom") or [{}])[0]
+            _doms = tf.get("dispositifs_dom") or [{}]
+            dom = _doms[0]
             z = dom.get("libelle") or ""
+            # KELFONCIER-FIX-1 (Lot F) — le résumé compte AUSSI les dispositifs de commune au-delà du
+            # zonage (TVA DOM, Petites Villes de Demain/ACV/ORT), plus seulement zfang/frr/périmètres.
             n_disp = sum(1 for k in ("zfang", "frr") if (tf.get(k) or {}).get("libelle")) \
-                + len(tf.get("perimetres") or [])
+                + len(tf.get("perimetres") or []) + max(0, len(_doms) - 1)
             t = esc(z) if z else "Régime fiscal de droit commun"
             if n_disp:
                 t += f" · {n_disp} dispositif{'s' if n_disp > 1 else ''} territ{'oriaux' if n_disp > 1 else 'orial'}"

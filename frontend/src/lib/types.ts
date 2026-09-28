@@ -311,6 +311,9 @@ export interface Fiche {
   a_score: number
   completeness_score: number
   coords: [number, number]
+  // KELFONCIER-FIX-1 (Lot G) — Street View (§1) : URL d'embed centrée sur le centroïde, servie
+  // seulement si la clé GOOGLE_MAPS_EMBED_KEY est posée côté serveur (sinon null → bouton masqué).
+  street_view?: { embed_url: string } | null
   evenement: string | null
   evenement_detail: string | null
   lines: FicheLine[]
@@ -338,6 +341,8 @@ export interface Fiche {
   icd?: IcdBlock | null
   // M9 lot 2 : lien règlement PLU par zone (article/page ou document + repli GPU).
   reglement_plu?: ReglementPlu | null
+  // KELFONCIER-FIX-1 (Lot A) — statut d'ouverture de la zone AU (§4 Urbanisme + cause §10).
+  au_ouverture?: { classe: string; statut: string; zone_lib: string | null; motif: string | null; bloquant: boolean; source: string } | null
   // M32 §2 : fraîcheur GPU-vs-mairie du zonage (horizon = date mairie ; statut = écart exposé).
   plu_fraicheur?: {
     idurba: string | null; horizon: string | null
@@ -356,10 +361,18 @@ export interface Fiche {
     veille_au?: string | null
   } | null
   // M42 : « Sur cette parcelle » (historique permis + caducité) — contexte, 0 tier.
+  // KELFONCIER-FIX-1 (Lot H) — établissements SIRENE rattachés à la parcelle par l'adresse BAN (§3 Bâti).
+  etablissements?: {
+    n: number; affiches: number; note: string; source: string
+    liste: { siret: string; nom: string; nom_masque: boolean; naf: string | null; naf_label: string | null;
+             tranche_effectif: string | null; actif: boolean; precision: string | null;
+             regime_collectif: { type: string; libelle: string; source: string } | null }[]
+  } | null
   historique_site?: {
     indisponible?: boolean; raison?: string   // M125 — état PANNE (≠ absence)
     titre: string; n_permis: number; source: string; honnetete: string
-    permis: { permit_id: string; type: string | null; date_autorisation: string | null; date_depot: string | null }[]
+    // KELFONCIER-FIX-1 (Lot C) — type libellé (PA/DP/PC/PD) + état (annulé compris), source unique.
+    permis: { permit_id: string; type: string | null; type_label?: string | null; date_autorisation: string | null; date_depot: string | null; etat_libelle?: string | null; annule?: boolean }[]
     caducite?: { pc_annee?: number; caduc_depuis?: string | null; libelle_court?: string | null; detail?: string | null } | null
   } | null
   // M42 : « Autour, à moins de 100 m » (ventes DVF + permis, 36 mois) — contexte, 0 tier.
@@ -557,6 +570,10 @@ export interface Fiche {
   catnat?: { disponible: boolean; total: number; arretes: { peril: string | null; date_arrete: string | null; debut: string | null; fin: string | null }[]; source: string; millesime: string } | null
   pm_voisines?: { disponible: boolean; rayon_m: number; mois: number; acquereurs: { denomination: string | null; siren: string | null; date: string | null }[]; source: string; millesime: string } | null
   anciennete_detention?: { disponible: boolean; type?: string; denomination?: string | null; siren?: string | null; depuis_annee?: number; depuis_ans?: number; source: string; millesime: string | null } | null
+  // SOURCES-FIX-1 (A1/A2/A3) — 3 contraintes de zonage servies à la parcelle (mêmes couches que la carte).
+  enr_exclue_toiture?: { disponible: boolean; zones: { libelle: string | null; zonage: string | null; gestionnaire: string | null }[]; source: string; millesime: string } | null
+  mesures_compensatoires?: { disponible: boolean; mesures: { type_mesure: string | null; projet: string | null; classe: string | null; date_decision: string | null }[]; source: string; millesime: string } | null
+  scot?: { disponible: boolean; nom?: string | null; statut?: string | null; date_approbation?: string | null; source: string; millesime: string } | null
 }
 
 // FICHE-1 lot 1 — bloc « Le bien » (producteur bati.le_bien_block).
@@ -714,7 +731,9 @@ export interface ZoneAcquisitionsPM {
   acquereurs: { siren: string; denomination: string | null; n_parcelles: number }[]
   n_parcelles: number; millesime_courant?: number; millesime_precedent?: number; source?: string
 }
-export interface ZoneCommuneContexte { commune: string; insee: string; echelle: string; loyer_median_eur_m2: number | null; millesime?: string }
+export interface ZoneCommuneContexte { commune: string; insee: string; echelle: string; loyer_median_eur_m2: number | null; millesime?: string;
+  // KELFONCIER-FIX-1 (Lot F) — dispositif de commune (PVD / ACV / ORT), à l'échelle de la commune.
+  dispositif_ort?: { libelle: string; ort_signee: boolean; date_signature: string | null; source: string } | null }
 export interface ZoneFibre { immeubles: number; ftth: number; pct_ftth: number; source: string }
 export interface EtudeZoneResult {
   statut: string

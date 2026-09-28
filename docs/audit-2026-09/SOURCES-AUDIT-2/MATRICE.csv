@@ -1,0 +1,99 @@
+id,source,slug,fiche_parcelle,fiche_commune,carte_couches,filtres,outils,export_dossier,export_flash,copilote,radar_veille
+47,50 pas géométriques — limite haute (DEAL),cinquante_pas_deal,servie,servie,servie,sans_objet,sans_objet,servie,servie,sans_objet,sans_objet
+24,ABF / Monuments historiques,abf_merimee,servie,sans_objet,sans_objet,sans_objet,servie,servie,servie,sans_objet,sans_objet
+128,ACV / PVD / ORT (DGALN — liste des communes),anct_ort,sans_objet,servie,sans_objet,sans_objet,sans_objet,sans_objet,sans_objet,sans_objet,servie
+114,AZI / TRI — inondation (Géorisques GASPAR),georisques_azi_tri,servie,servie,sans_objet,sans_objet,sans_objet,servie,servie,sans_objet,sans_objet
+99,Annuaire de l'administration (service-public.fr / DILA),annuaire_service_public,sans_objet,servie,sans_objet,sans_objet,sans_objet,sans_objet,sans_objet,sans_objet,sans_objet
+147,BAN PLUS — lien adresse ↔ bâtiment (IGN),ban_plus,servie,sans_objet,sans_objet,sans_objet,servie,servie,servie,sans_objet,sans_objet
+154,BD NYME — lieux-dits (IGN),bd_nyme,servie,sans_objet,sans_objet,sans_objet,sans_objet,servie,servie,sans_objet,sans_objet
+61,BD ORTHO 20 cm (IGN),bd_ortho,servie,servie,servie,sans_objet,sans_objet,servie,servie,sans_objet,sans_objet
+69,BD ORTHO IRC (IGN),bd_ortho_irc,servie,sans_objet,servie,sans_objet,servie,servie,servie,servie,sans_objet
+17,BD TOPO IGN,bd_topo,servie,servie,servie,servie,servie,servie,servie,sans_objet,sans_objet
+29,BODACC (procédures collectives),bodacc,servie,sans_objet,sans_objet,sans_objet,servie,servie,servie,servie,servie
+20,BPE INSEE,bpe_insee,servie,servie,servie,sans_objet,servie,servie,servie,sans_objet,sans_objet
+18,Base Adresse Nationale,ban,servie,sans_objet,sans_objet,sans_objet,servie,servie,servie,sans_objet,sans_objet
+1,Cadastre (API Carto PCI),cadastre_api_carto,servie,servie,servie,servie,sans_objet,servie,servie,sans_objet,sans_objet
+35,Cartofriches (Cerema),cartofriches,sans_objet,sans_objet,sans_objet,sans_objet,sans_objet,sans_objet,sans_objet,servie,servie
+97,CatNat (arrêtés GASPAR / Géorisques),catnat_gaspar,servie,servie,sans_objet,sans_objet,sans_objet,servie,servie,servie,sans_objet
+28,Cerema / GéoLittoral — indicateur d'érosion côtière,erosion_cotiere_geolittoral,servie,sans_objet,sans_objet,sans_objet,sans_objet,servie,servie,sans_objet,sans_objet
+46,Classement sonore ITT (Cerema),bruit_itt_cerema,servie,servie,servie,sans_objet,sans_objet,servie,servie,sans_objet,sans_objet
+83,"CoSIA (couverture du sol IA, IGN)",cosia,servie,servie,servie,sans_objet,servie,servie,servie,servie,sans_objet
+148,"Communes La Réunion — contours (IGN ADMIN EXPRESS via geo.api.gouv, seed)",communes_ign,sans_objet,sans_objet,servie,sans_objet,sans_objet,sans_objet,sans_objet,sans_objet,sans_objet
+102,Consommation d'espaces NAF (Cerema — portail de l'artificialisation),enaf_cerema,sans_objet,servie,sans_objet,sans_objet,sans_objet,sans_objet,sans_objet,sans_objet,sans_objet
+64,Contours IRIS (IGN/INSEE),contours_iris,servie,sans_objet,sans_objet,sans_objet,sans_objet,servie,servie,sans_objet,sans_objet
+153,Contraintes EnR près des habitations (Géoplateforme),enr_habitation_wmts,sans_objet,sans_objet,servie,sans_objet,sans_objet,sans_objet,sans_objet,sans_objet,sans_objet
+131,Coût de construction (EPTB SDES + choix LABUSE),cout_construction_sdes,sans_objet,sans_objet,sans_objet,sans_objet,servie,servie,servie,sans_objet,sans_objet
+30,DEAL Réunion — PPR / aléas,deal_ppr,servie,servie,servie,sans_objet,servie,servie,servie,servie,sans_objet
+117,DEAL — cartes de bruit stratégiques (CBS),deal_bruit_cartes,sans_objet,sans_objet,servie,sans_objet,sans_objet,sans_objet,sans_objet,sans_objet,sans_objet
+132,DFI — documents de filiation informatisés (DGFiP),dgfip_dfi,servie,sans_objet,sans_objet,sans_objet,sans_objet,servie,servie,sans_objet,sans_objet
+71,DGFiP — parcelles des personnes morales,dgfip_parcelles_pm,servie,servie,sans_objet,servie,servie,servie,servie,servie,servie
+37,DPE ADEME (logements existants),dpe_ademe,servie,sans_objet,sans_objet,servie,sans_objet,servie,servie,sans_objet,sans_objet
+5,DVF / valeurs foncières,dvf,servie,servie,servie,servie,servie,servie,servie,servie,servie
+93,EDF Réunion — lignes moyenne tension HTA (open data),edf_hta,servie,sans_objet,sans_objet,servie,servie,servie,servie,sans_objet,sans_objet
+156,EduGéo Réunion 1980 (IGN),edugeo_1980,sans_objet,sans_objet,servie,sans_objet,servie,sans_objet,sans_objet,sans_objet,sans_objet
+113,"Espaces protégés complémentaires — Ramsar, sites classés/inscrits (DEAL Carmen)",enp_complements_deal,servie,sans_objet,servie,sans_objet,sans_objet,servie,servie,sans_objet,sans_objet
+73,FRR ex-ZRR — zone spéciale d'action rurale (Légifrance),frr_ex_zrr,servie,servie,servie,sans_objet,sans_objet,servie,servie,sans_objet,servie
+126,Fibre Arcep — Ma connexion internet (immeuble),arcep_fibre,servie,sans_objet,sans_objet,sans_objet,sans_objet,servie,servie,sans_objet,sans_objet
+52,Filosofi INSEE (carreaux 200 m),filosofi_carreaux,servie,sans_objet,servie,sans_objet,sans_objet,servie,servie,sans_objet,sans_objet
+8,Forêts publiques (ONF),forets_onf_bdtopo,servie,sans_objet,sans_objet,sans_objet,sans_objet,servie,servie,sans_objet,sans_objet
+107,GPU — droit de préemption urbain (info-surf),dpu_perimetres,servie,servie,servie,sans_objet,sans_objet,servie,servie,sans_objet,sans_objet
+105,GPU — emplacements réservés (prescriptions CNIG),gpu_prescriptions_er,servie,servie,servie,sans_objet,sans_objet,servie,servie,sans_objet,sans_objet
+106,GPU — espaces boisés classés (prescriptions CNIG),gpu_prescriptions_ebc,servie,servie,servie,sans_objet,sans_objet,servie,servie,sans_objet,sans_objet
+63,GPU — zonages d'assainissement,gpu_zonage_assainissement,servie,sans_objet,sans_objet,sans_objet,sans_objet,servie,servie,sans_objet,sans_objet
+150,GéoMCE — mesures compensatoires,geomce,devrait,servie,servie,sans_objet,sans_objet,sans_objet,sans_objet,sans_objet,sans_objet
+4,Géorisques,georisques_api,servie,sans_objet,sans_objet,sans_objet,sans_objet,servie,servie,sans_objet,sans_objet
+116,Géorisques — CASIAS (anciens sites industriels),georisques_casias,servie,servie,servie,sans_objet,servie,servie,servie,sans_objet,sans_objet
+34,Géorisques — ICPE,georisques_icpe,servie,sans_objet,sans_objet,sans_objet,sans_objet,servie,servie,sans_objet,sans_objet
+33,Géorisques — cavités souterraines,georisques_cavites,servie,sans_objet,sans_objet,sans_objet,sans_objet,servie,servie,sans_objet,sans_objet
+36,Géorisques — mouvements de terrain,georisques_mvt,servie,sans_objet,sans_objet,servie,servie,servie,servie,sans_objet,sans_objet
+115,Géorisques — secteurs d'information sur les sols (SIS),georisques_sis,servie,servie,servie,sans_objet,servie,servie,servie,sans_objet,sans_objet
+32,Géorisques — sites et sols pollués,georisques_ssp,servie,sans_objet,sans_objet,sans_objet,servie,servie,servie,sans_objet,sans_objet
+22,IGN BD CARTO V5 — occupation du sol,bd_carto_ocs,servie,sans_objet,sans_objet,sans_objet,sans_objet,servie,servie,sans_objet,sans_objet
+31,INPI RNE (dirigeants),inpi_rne,sans_objet,servie,sans_objet,sans_objet,servie,sans_objet,sans_objet,servie,servie
+25,INPN / patrinat — espaces protégés,inpn_espaces_proteges,servie,sans_objet,servie,sans_objet,sans_objet,servie,servie,sans_objet,sans_objet
+41,INSEE RP Logement 2023,insee_rp_logement,sans_objet,servie,sans_objet,sans_objet,sans_objet,sans_objet,sans_objet,servie,sans_objet
+133,"INSEE RP2022 — bases IRIS (logement, population)",insee_rp_iris,servie,servie,sans_objet,sans_objet,sans_objet,servie,servie,sans_objet,sans_objet
+66,INSEE RP2022 — fichier détail Logements (EGOUL),insee_rp2022_egoul,servie,servie,sans_objet,sans_objet,sans_objet,servie,servie,sans_objet,sans_objet
+39,Inventaire SRU (DHUP),sru_dhup,sans_objet,servie,sans_objet,sans_objet,sans_objet,sans_objet,sans_objet,servie,sans_objet
+70,LiDAR HD — MNH 50 cm (IGN),lidar_hd_mnh,servie,sans_objet,servie,sans_objet,servie,servie,servie,sans_objet,sans_objet
+130,Loyers DHUP — carte des loyers (annonces),loyers_dhup,sans_objet,servie,sans_objet,sans_objet,servie,sans_objet,sans_objet,sans_objet,sans_objet
+129,Loyers OLL — ADIL Réunion / AGORAH (réseau des observatoires),loyers_oll,sans_objet,servie,sans_objet,sans_objet,servie,sans_objet,sans_objet,servie,sans_objet
+40,NPNRU (DEAL Réunion / ANCT),npnru,servie,servie,servie,sans_objet,sans_objet,servie,servie,sans_objet,sans_objet
+144,OCS GE (IGN) — occupation du sol et artificialisation,ocsge,servie,servie,servie,sans_objet,sans_objet,servie,servie,sans_objet,sans_objet
+75,OSM — transport (pôles d'échange & téléphérique),osm_transport,servie,servie,servie,sans_objet,servie,servie,servie,sans_objet,sans_objet
+19,OpenStreetMap / Overpass,osm_overpass,servie,servie,servie,sans_objet,servie,servie,servie,sans_objet,sans_objet
+108,PEB — plans d'exposition au bruit (DGAC via annexes GPU),peb_dgac,servie,sans_objet,servie,sans_objet,sans_objet,servie,servie,sans_objet,sans_objet
+42,PLH des 5 EPCI (extraction documentaire),plh_epci,sans_objet,servie,sans_objet,sans_objet,sans_objet,sans_objet,sans_objet,sans_objet,sans_objet
+48,PVGIS (Commission européenne),pvgis,servie,sans_objet,sans_objet,sans_objet,servie,servie,servie,sans_objet,sans_objet
+7,Parc National de La Réunion (INPN),parc_national_inpn,servie,servie,servie,sans_objet,sans_objet,servie,servie,sans_objet,sans_objet
+51,Parkings OSM (loi APER),parkings_osm_aper,servie,sans_objet,sans_objet,sans_objet,sans_objet,servie,servie,sans_objet,sans_objet
+38,QPV 2024 (ANCT),qpv_2024,servie,servie,servie,sans_objet,sans_objet,servie,servie,sans_objet,sans_objet
+6,RGE ALTI (altimétrie),rge_alti,servie,sans_objet,servie,sans_objet,servie,servie,servie,sans_objet,sans_objet
+143,RNB — Référentiel National des Bâtiments,rnb,servie,sans_objet,sans_objet,sans_objet,sans_objet,servie,servie,sans_objet,sans_objet
+100,RNIC — registre national des copropriétés (Anah),rnic_anah,servie,sans_objet,sans_objet,sans_objet,sans_objet,servie,servie,sans_objet,sans_objet
+10,RPG — déclarations agricoles (IGN/ASP),rpg_proxy_ign,servie,servie,servie,sans_objet,sans_objet,servie,servie,sans_objet,sans_objet
+101,RPLS — répertoire des logements locatifs sociaux (SDES),rpls_sdes,servie,servie,sans_objet,sans_objet,sans_objet,servie,servie,sans_objet,sans_objet
+43,RTAA DOM (textes réglementaires),rtaa_dom,servie,sans_objet,sans_objet,sans_objet,sans_objet,servie,servie,sans_objet,sans_objet
+84,Radar (pige d'annonces),radar_pige,servie,servie,sans_objet,sans_objet,sans_objet,servie,servie,sans_objet,servie
+111,Ravines — domaine public fluvial (DEAL Carmen),deal_dpf_dpe,servie,sans_objet,servie,sans_objet,sans_objet,servie,servie,sans_objet,sans_objet
+45,Recherche d'entreprises (DINUM),recherche_entreprises_dinum,servie,sans_objet,sans_objet,sans_objet,sans_objet,servie,servie,sans_objet,sans_objet
+155,SCAN 50 historique 1950 (IGN),scan50_1950,sans_objet,sans_objet,servie,sans_objet,servie,sans_objet,sans_objet,sans_objet,sans_objet
+151,SCOT (GPU),scot_gpu,devrait,servie,servie,sans_objet,sans_objet,sans_objet,sans_objet,sans_objet,sans_objet
+86,SIRENE établissements géolocalisés,sirene_etablissements,servie,sans_objet,sans_objet,sans_objet,servie,servie,servie,servie,sans_objet
+16,SITADEL (autorisations d'urbanisme),sitadel,servie,servie,servie,servie,servie,servie,servie,servie,servie
+44,SUP — assiettes GPU (API Carto),sup_gpu,servie,servie,servie,sans_objet,servie,servie,servie,sans_objet,sans_objet
+62,Sudocuh (procédures d'urbanisme),sudocuh,servie,servie,sans_objet,sans_objet,servie,servie,servie,sans_objet,servie
+145,Systèmes d'endiguement et zones protégées (DEAL Lizmap),endiguement,servie,sans_objet,sans_objet,sans_objet,sans_objet,servie,servie,sans_objet,sans_objet
+94,TCSP — voies bus en site propre (OSM),tcsp_osm,servie,servie,servie,sans_objet,servie,servie,servie,sans_objet,sans_objet
+127,Taux de taxe foncière — fichier REI (DGFiP),dgfip_rei,sans_objet,servie,sans_objet,sans_objet,sans_objet,sans_objet,sans_objet,sans_objet,sans_objet
+98,Taxe d'aménagement — taux communaux (délibérations),taxe_amenagement,servie,servie,sans_objet,sans_objet,servie,servie,servie,servie,sans_objet
+88,Trafic RN (Région Réunion — SIR),trafic_rn,servie,sans_objet,sans_objet,sans_objet,sans_objet,servie,servie,sans_objet,sans_objet
+74,"Transport public — GTFS (PAN, 7 réseaux)",gtfs_pan,servie,servie,servie,sans_objet,servie,servie,servie,sans_objet,sans_objet
+3,Urbanisme PLU/GPU (API Carto),gpu_plu_api_carto,servie,servie,servie,servie,servie,servie,servie,servie,servie
+26,VRD / assainissement (SPANC),spanc_epci,servie,sans_objet,sans_objet,sans_objet,sans_objet,servie,servie,sans_objet,sans_objet
+72,ZFANG — zone franche d'activité nouvelle génération (Légifrance),zfang,servie,servie,servie,sans_objet,sans_objet,servie,servie,sans_objet,servie
+76,ZNIEFF (INPN/MNHN),znieff_inpn,servie,servie,servie,sans_objet,servie,servie,servie,sans_objet,sans_objet
+109,Zonage ABC des communes (DHUP),zonage_abc_dhup,sans_objet,servie,sans_objet,sans_objet,sans_objet,sans_objet,sans_objet,sans_objet,sans_objet
+152,Zones exclues EnR sauf toiture (OFB/APER),enr_aper_ofb,devrait,servie,servie,sans_objet,sans_objet,sans_objet,sans_objet,sans_objet,sans_objet
+112,Zones humides — inventaires DEAL (Carmen),deal_zones_humides,servie,sans_objet,servie,sans_objet,sans_objet,servie,servie,sans_objet,sans_objet
+15,data.regionreunion.com — Potentiel foncier,potentiel_foncier_ods,servie,sans_objet,sans_objet,sans_objet,sans_objet,servie,servie,sans_objet,sans_objet

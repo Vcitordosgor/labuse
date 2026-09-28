@@ -27,6 +27,10 @@ const apiPaths = ['/map', '/parcels', '/stats', '/sources', '/filters', '/filtre
   // '/bilan' (M58-P1) : la calculette de charge foncière charge /bilan/calculette-defaults —
   // MANQUAIT au proxy dev → 404 rouge en `npm run dev` (la calculette tombait sur son état
   // d'erreur Q5). Prod OK (même origine, FastAPI sert dist/). Comblé pour un dev honnête.
+  // KELFONCIER-FIX-1 (Lot B) : '/proprietaires' (facettes + autocomplétion PM) MANQUAIT au proxy dev
+  // → la section « Propriétaire » remontée 404-ait en `npm run dev` (endpoint pourtant vivant). En prod
+  // (même origine, FastAPI) l'appel fonctionnait déjà ; comblé pour un dev honnête (même patron que /bilan).
+  '/proprietaires',
   '/moteurs',   // M-U : outil Marché (+ baromètre/simulplu/zan) — JSON proxifié en dev
   '/moi', '/events',   // compte (menu VL) + cloche de notifs — MANQUAIENT → 404 rouges en `npm run dev`
                        // (les seules erreurs console rouges ; sans effet sur la carte, régression NI de M-W

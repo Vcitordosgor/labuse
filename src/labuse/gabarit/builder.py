@@ -371,15 +371,22 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
     # Même optimisation que le PPR (ST_ClipByBox2D avant l'intersection fine). Pas de re-run : le
     # prochain run résiduel le prendra (mandat).
     sup_src = RegulatorySource(document="SUP — servitudes d'utilité publique", provider=SUP_PROVIDER)
-    # RETOURS-15 C4 (P19) — CORRECTIF : `sources.append(sup_src)` manquait (régression RETOUCHES-1 D.15).
-    # La source SUP était référencée par l'exclusion ET la règle applicable mais ABSENTE du catalogue →
-    # validate levait « exclusion[sup] : source absente du catalogue » → gabarit=incomplete → repli legacy
-    # sur toute parcelle intersectée par un SUP (dont 97411000BZ1065). Une ligne rétablit le calcul.
-    sources.append(sup_src)
+    sources.append(sup_src)   # fix/sup-source — en MIROIR du PPR (l. ~342) : la source de l'exclusion SUP
+    # DOIT figurer au catalogue, sinon validate_input la rejette (« exclusion[sup] : source absente du
+    # catalogue ») → compute_gabarit=incomplete → repli residuel_legacy pour TOUTE parcelle sous SUP
+    # (régression RUN11-VS-RUN10 §8 : 73 609 parcelles, communes des Hauts vidées).
+    # VITESSE (fix/sup-source) — `sl.commune = p.commune` en MIROIR de _greve_certaine_m2
+    # (faisabilite/db.py). Le ST_ClipByBox2D était déjà là, mais SANS scope commune : la SUP `el10`
+    # (~1 055 km², 24 copies — une par commune) a une bbox insulaire, donc les ~48 lignes SUP qui la
+    # portent passaient toutes le pré-filtre GiST et subissaient le ST_Intersects fin par parcelle.
+    # Scoper à la commune ramène ce nombre à ~5 (les 417 SUP portent TOUTES une commune, 0 NULL) →
+    # ×2,9 sur les parcelles sous SUP. RÉSULTAT IDENTIQUE au m² (écart max 1,2e-10 m² sur 55 golden
+    # + 500 parcelles sous SUP) : une parcelle appartient à UNE commune, et sa SUP y est rattachée.
     sup_gj = session.execute(text(
         "SELECT ST_AsGeoJSON(ST_CollectionExtract(ST_Transform(ST_Intersection("
         "  ST_Union(ST_MakeValid(ST_ClipByBox2D(sl.geom_2975, p.geom_2975))), p.geom_2975), 4326), 3)) "
         "FROM spatial_layers sl, parcels p WHERE p.id = :pid AND sl.kind = 'sup' "
+        "AND sl.commune = p.commune "
         "AND ST_Intersects(sl.geom_2975, p.geom_2975) GROUP BY p.geom_2975"
     ), {"pid": pid}).first()
     _sup_present = bool(sup_gj and sup_gj[0] and json.loads(sup_gj[0]).get("coordinates"))

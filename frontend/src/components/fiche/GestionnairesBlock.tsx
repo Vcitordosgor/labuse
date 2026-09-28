@@ -11,29 +11,20 @@ import { BlocIndisponible } from './BlocIndisponible'
 import type { Gestionnaires, GestOperateur } from '../../lib/types'
 import { GroupLabel, FactNote } from './primitives'
 import { Badge } from '../ui/Badge'
+// FICHE-FIX-5 (Lot G) — gestionnaires en Lignes courtes (opérateur · type), les paragraphes de
+// méthode (bascule Runéo/Dionéo, DT-DICT) en source.
+import { Lignes, Ligne } from './formes'
 
-// RETOURS-20 Z2 — la confiance devient une pastille standard (tokens) : confirmé = mint,
-// à confirmer / incertain = ambre. Plus de couleur composée à la main (TOKENS.viab* + alpha).
-function Conf({ c }: { c?: GestOperateur['confidence'] }) {
-  if (!c) return null
-  const meta = { high: { t: 'confirmé', ton: 'vert' as const }, med: { t: 'à confirmer', ton: 'ambre' as const },
-                 low: { t: 'incertain', ton: 'ambre' as const } }[c]
-  return <Badge ton={meta.ton} className="ml-1.5">{meta.t}</Badge>
-}
-
-function Row({ icon, label, op, extra }: { icon: string; label: string; op: GestOperateur | null; extra?: string | null }) {
+const CONF_META = { high: { t: 'confirmé', ton: 'vert' as const }, med: { t: 'à confirmer', ton: 'ambre' as const }, low: { t: 'incertain', ton: 'ambre' as const } }
+function GestLigne({ label, op }: { label: string; op: GestOperateur | null }) {
+  if (!op) return <Ligne label={label} ton="gris" valeur="non renseigné" />
+  const c = op.confidence ? CONF_META[op.confidence] : null
   return (
-    <div className="flex items-baseline gap-1.5 text-[11.5px]">
-      <span aria-hidden className="shrink-0 text-txt-mut">{icon}</span>
-      <span className="w-24 shrink-0 text-txt-dim">{label}</span>
-      <span className="text-txt">
-        {op ? (<><b className="font-medium text-txt-hi">{op.operateur}</b><Conf c={op.confidence} />
-          {op.type && <span className="text-txt-dim"> · {op.type}</span>}</>)
-          : <span className="text-txt-mut">{extra ?? 'non renseigné'}</span>}
-      </span>
-    </div>
+    <Ligne label={label} title={`${op.operateur}${op.type ? ` · ${op.type}` : ''}`}
+      valeur={<>{op.operateur}{op.type ? <small> · {op.type}</small> : null}{c ? <> <Badge ton={c.ton}>{c.t}</Badge></> : null}</>} />
   )
 }
+
 
 export function GestionnairesBlock({ g }: { g: Gestionnaires }) {
   if (g.indisponible) return <BlocIndisponible titre="Gestionnaires (raccordement)" />   // M125 — panne ≠ absence
@@ -43,17 +34,13 @@ export function GestionnairesBlock({ g }: { g: Gestionnaires }) {
           plus de boîte dans la boîte. Lignes, note et disclaimer inchangés (données identiques).
           M70 point 4 — la date « à jour {millésime} » reste retirée du bloc (bruit). */}
       <GroupLabel>Gestionnaires (raccordement)</GroupLabel>
-      <div className="mt-1 flex flex-col gap-1">
-        {g.epci.nom && (
-          <Row icon="◆" label="Compétence" op={{ operateur: `${g.epci.code} — ${g.epci.nom}`, type: g.epci.contact ?? undefined }} />
-        )}
-        <Row icon="≈" label="Eau potable" op={g.eau} />
-        <Row icon="∿" label="Assainissement" op={g.assainissement} />
-        {g.spanc && <Row icon="◇" label="SPANC (ANC)" op={{ operateur: g.spanc }} />}
-        {g.electricite && (
-          <Row icon="↯" label="Électricité" op={{ operateur: g.electricite.gestionnaire, type: g.electricite.raccordement }} />
-        )}
-      </div>
+      <Lignes>
+        {g.epci.nom && <GestLigne label="Compétence" op={{ operateur: `${g.epci.code} — ${g.epci.nom}`, type: g.epci.contact ?? undefined }} />}
+        <GestLigne label="Eau potable" op={g.eau} />
+        <GestLigne label="Assainissement" op={g.assainissement} />
+        {g.spanc && <GestLigne label="SPANC (ANC)" op={{ operateur: g.spanc }} />}
+        {g.electricite && <GestLigne label="Électricité" op={{ operateur: g.electricite.gestionnaire, type: g.electricite.raccordement }} />}
+      </Lignes>
 
       {/* Z3 — les paragraphes de méthode passent en NOTE 11,5 px sous les lignes (plus de plein texte). */}
       {g.note && <FactNote>{g.note}</FactNote>}

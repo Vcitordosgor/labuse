@@ -117,6 +117,12 @@ export const filterParams = (f: Filters): Record<string, string | number> => ({
   ...(f.pmApe?.length ? { pm_ape: f.pmApe.join(',') } : {}),
   ...(f.pmDirigMin != null ? { pm_dirig_min: f.pmDirigMin } : {}),
   ...(f.pmDirigMax != null ? { pm_dirig_max: f.pmDirigMax } : {}),
+  ...(f.pmAge?.length ? { pm_age: f.pmAge.join(',') } : {}),   // KELFONCIER-FIX-1 (Lot B) — tranche d'âge dirigeant
+  // KELFONCIER-FIX-1 (Lot D) — filtres bâti : hauteur LiDAR faîtage (m) + emprise bâtie (%).
+  ...(f.hauteurMin != null ? { hauteur_min: f.hauteurMin } : {}),
+  ...(f.hauteurMax != null ? { hauteur_max: f.hauteurMax } : {}),
+  ...(f.empriseMin != null ? { emprise_min: f.empriseMin } : {}),
+  ...(f.empriseMax != null ? { emprise_max: f.empriseMax } : {}),
   ...(f.caMin != null ? { ca_min: f.caMin } : {}),
   // mode B rentable : porte AUSSI les paramètres du curseur SESSION partagé (L2)
   ...(f.modeBRentable ? {
@@ -292,6 +298,9 @@ export interface ContexteCommune {
   permis_bloc: {
     permis_12m: number; permis_5a: number | null; logements_12m: number | null
     delai_median_mois: number | null; point_mort: number; source: string
+    // KELFONCIER-FIX-1 (Lot C) servis, KELFONCIER-FIX-2 (Lot D) affichés : ventilation PC/PA/DP/PD
+    // (autorisés, 12 mois) + annulés (12 mois), même source SITADEL que le chiffre existant.
+    permis_type_12m?: Record<string, number>; permis_annules_12m?: number
   }
   densifiables: { parcelles: number | null; sdp_residuelle_m2: number | null; source: string | null } | null
   loyer: { median_eur_m2: number; type: string | null; source: string } | null
@@ -1447,16 +1456,21 @@ export interface BriefMatin {
 }
 export const getBrief = () => j<BriefMatin>('/events/brief')
 // M85-B — les parcelles suivies + date du dernier changement (null = jamais bougé).
-export interface SuiviItem { idu: string; depuis: string; commune: string | null; dernier_changement: string | null }
+export interface SuiviItem { idu: string; depuis: string; commune: string | null; dernier_changement: string | null
+  // RADAR-2 (Lot 4) — enrichissements de l'écran Veille · le foncier.
+  secteur?: string | null; dernier_evenement?: string | null; nouveau?: boolean }
 export const getSuivis = () => j<{ suivis: SuiviItem[]; plafond: number }>('/events/suivis')
 // M85 / M85-B — préférences par type (registre) et par canal (cloche / e-mail). `verrou` = non
 // désactivable (maintenance : e-mail toujours actif, conséquences réelles).
 // RETOURS-11F3 A5 — 3 canaux : cloche · brief (du matin) · e-mail. `brief_na` = brief non applicable
 // (chaînes 3, envoi immédiat — la case est grisée). `verrou` = e-mail non désactivable (maintenance).
 export interface NotifPref { key: string; label: string; cloche: boolean; email: boolean; brief: boolean; brief_na?: boolean; verrou?: boolean }
-export const getNotifPrefs = () => j<{ types: NotifPref[] }>('/events/prefs')
+// VEILLE-FIX-2 (Lot C) — la FRÉQUENCE des mails, réglable par compte (grille config/veille.yaml).
+export const getNotifPrefs = () => j<{ types: NotifPref[]; frequence: string; frequences: string[] }>('/events/prefs')
 export const patchNotifPref = (p: { pref_type: string; cloche: boolean; email: boolean; brief?: boolean }) =>
   j<{ ok: boolean }>('/events/prefs', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(p) })
+export const patchDigestFrequence = (frequence: string) =>
+  j<{ ok: boolean; frequence: string }>('/events/prefs/frequence', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ frequence }) })
 export const getEventsCount = () => j<{ unread: number; par_parcelle: Record<string, number> }>('/events/count')
 export const markEventRead = (id: number) => j<{ ok: boolean }>(`/events/${id}/read`, { method: 'POST' })
 export const markAllEventsRead = () => j<{ ok: boolean }>('/events/read-all', { method: 'POST' })
@@ -1565,6 +1579,7 @@ export interface AdminLicence {
   est_test?: boolean   // COMPTE-2 (Lot 3) — compte de test/interne : masqué des chiffres client
   stripe: NonNullable<StripeApercu['abonnements']>[number] | null | undefined
   mails: Record<string, { statut: string; sent_at: string | null }>
+  mail_echecs?: number   // VEILLE-FIX-2 (Lot D) — nb de mails en échec définitif → ligne rouge Comptes
   rappels: string[]
   partage: { sessions: number; ips: number; probable: boolean } | null   // A5 — sessions simultanées (informatif)
   kpi: { usage_7j_min: number; derniere_connexion: string | null; copilote_jour: number; copilote_quota: number
@@ -1945,6 +1960,20 @@ export const postFaisabiliteRecalcul = (idu: string, overrides: Record<string, n
   j<Record<string, any>>(`/modules/faisabilite/${idu}/recalcul`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ overrides }),
   })
+// FAISABILITE-3 (Vic 27/09) — UN SEUL appel sert le panneau (maquette validée) : scénario choisi
+// (terrain_libere/bati_garde), hypothèses surchargées et projet à tester y entrent, verdict/étapes/
+// section PLU/test en sortent. Aucun calcul dans le front — le moteur (parcel_faisabilite +
+// compute_residuel) fait tout. `scenario` = null quand la parcelle est hors PLU.
+export interface FaisaTest { n_logements?: number | null; surface_par_logement?: number | null }
+export const postFaisabiliteScenario = (
+  idu: string,
+  body: { scenario: 'terrain_libere' | 'bati_garde'; overrides?: Record<string, number>; test?: FaisaTest | null },
+) =>
+  j<{ idu: string; scenario: Record<string, any> | null }>(`/modules/faisabilite/${idu}/scenario`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ scenario: body.scenario, overrides: body.overrides ?? {}, test: body.test ?? null }),
+  })
+
 // M11 Surface C : explication IA de la dérivation du chiffrage (ancrée sur les steps, sur clic).
 export const faisabiliteExplain = (idu: string) =>
   j<{ disponible: boolean; rejected?: boolean; degraded?: boolean; texte?: string; message?: string;
@@ -2128,6 +2157,9 @@ export interface RadarCheck {
   dernier_depot: { date_depot: string | null; nom_fichier: string | null; nb_annonces: number | null
     nb_nouvelles: number | null; nb_maj: number | null; nb_a_qualifier: number | null } | null
   flux: { en_vie: number; biens: number; rattachees: number; paires: number; copros_non_servies: number }
+  // RADAR-FIX-1 (3) — dernière capture AUTOMATIQUE de l'extension + drapeau « Déposer Radar » (> 26 h).
+  capture_auto: { captured_at: string | null; pages: number; nouvelles: number } | null
+  capture_auto_en_retard: boolean
 }
 export const radarDeposer = (lien: string, image_b64: string, media_type: string) =>
   j<RadarProposition>('/admin/radar/deposer', {
@@ -2207,6 +2239,9 @@ export interface RadarBienClient {
   etiquettes: Record<string, string>; fraicheur_source: string | null
   date_publication: string | null; date_saisie: string | null; date_derniere_confirmation: string | null
   portail: string; url_sortante: string; annonce_id: number | null; baisse: boolean
+  // RADAR-2 (Lot 2) — pastilles de la liste : ancien prix (barré) + % de la dernière baisse ; « de retour »
+  // (annonce ré-activée après un retrait sans vente). Servis à plat par le back (jamais recalculés au front).
+  ancien_prix: number | null; baisse_pct: number | null; de_retour: boolean
   // RADAR-DEPOT-2 D2 — faits DÉCLARÉS par le vendeur (zone PLU, drapeaux), « déclaré dans l'annonce ».
   declaratif: RadarDeclaratif | null; provenance: string | null
   // RADAR-DEPOT-2 D4 — badge « sous le marché » (null si non applicable/au-dessus du seuil).
@@ -2319,6 +2354,53 @@ export const supprimerRadarVeille = (id: number) =>
 // RETOURS-11 A7 — renommer une veille Radar (nom vide = retour au résumé des critères).
 export const renommerRadarVeille = (id: number, nom: string) =>
   j<{ ok: boolean }>(`/radar/veille/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nom }) })
+
+// ── RADAR-2 — le hub (deux portes) + les alertes (pause / nouveaux depuis hier) ──
+export interface RadarApercu {
+  biens_en_vente: number; derniere_capture_at: string | null
+  suivis_n: number; alertes_n: number; nouveaux_total: number
+}
+export const getRadarApercu = () => j<RadarApercu>('/radar/apercu')
+export interface RadarAlerte {
+  id: number; nom: string | null; commune: string | null; criteria: Record<string, unknown>
+  created_at: string | null; en_pause: boolean; paused_at: string | null; nouveaux: number
+}
+export const getRadarAlertes = () => j<{ alertes: RadarAlerte[]; nouveaux_total: number }>('/radar/alertes')
+export const pauseRadarVeille = (id: number, en_pause: boolean) =>
+  j<{ ok: boolean; en_pause: boolean }>(`/radar/veille/${id}/pause`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ en_pause }) })
+
+// ── RADAR-2 (Lot 3) — le marché (colonne de droite) : 4 chiffres + table par type + 30 j + écart/commune ──
+export interface RadarMarcheChiffre { valeur: number | null; n: number; sous_seuil: boolean; periode?: string | null }
+export interface RadarMarcheTypeLigne {
+  type: 'terrain' | 'maison' | 'appartement'; en_vente: number
+  demande_eur_m2: number | null; acte_eur_m2: number | null
+  ecart_pct: number | null; ecart_sous_seuil: boolean; sup_90j: number; baisses_30j: number
+}
+export interface RadarMarcheEcartCommune { commune: string; ecart_pct: number }
+export interface RadarMarcheTableau {
+  scope: string; commune: string | null
+  prix_demande_median_eur_m2: RadarMarcheChiffre      // maisons
+  prix_acte_median_eur_m2: RadarMarcheChiffre         // maisons, DVF (moteur fiche commune)
+  ecart_demande_acte_pct: number | null; ecart_sous_seuil: boolean
+  biens_en_vente: number; biens_sup_90j: number
+  par_type: RadarMarcheTypeLigne[]
+  bouge_30j: { nouvelles: number; baisses: number; retirees: number; de_retour: number }
+  ecart_par_commune: RadarMarcheEcartCommune[]
+  seuil_ecart_n: number; millesime_dvf: string | null; derniere_capture_at: string | null
+}
+export const getRadarMarcheTableau = (commune?: string) =>
+  j<RadarMarcheTableau>(`/radar/marche-tableau${commune ? `?commune=${encodeURIComponent(commune)}` : ''}`)
+
+// RADAR-2 (recette) — « Ce bien face à son marché » (colonne de droite quand une annonce est sélectionnée)
+export interface RadarBienCmp { median: number | null; n: number; ecart_pct: number | null; sous_seuil: boolean }
+export interface RadarBienVsMarche {
+  bien_id: number; commune: string; type_bien: string | null; prix: number | null; eur_m2: number | null
+  demande: RadarBienCmp; acte: RadarBienCmp
+  anciennete_j: number | null; anciennete_mediane_j: number | null; anciennete_n: number; anciennete_sous_seuil: boolean
+  historique_prix: { date: string | null; ancien: number | null; nouveau: number | null }[]
+  url_sortante: string; portail: string; seuil_n: number; introuvable?: boolean
+}
+export const getRadarBienVsMarche = (bienId: number) => j<RadarBienVsMarche>(`/radar/biens/${bienId}/vs-marche`)
 
 // CRON-2 (K7) — la page CRON de l'admin (état des jobs planifiés)
 export interface CronJob {

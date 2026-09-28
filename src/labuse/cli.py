@@ -1565,6 +1565,18 @@ def ingest_taxe_amenagement_cmd() -> None:
     _jouer_filtre_apres_ingestion("taxe_amenagement", "ingest-taxe-amenagement")
 
 
+@app.command("build-etablissement-parcelle")
+def build_etablissement_parcelle_cmd() -> None:
+    """KELFONCIER-FIX-1 (Lot H) — (re)construit le rattachement établissement→parcelle par l'adresse BAN
+    (`etablissement_parcelle`). Aussi joué automatiquement à la suite du job mensuel SIRENE."""
+    from .ingestion.etablissement_parcelle import build_etablissement_parcelle, ensure_tables
+    ensure_tables(engine())
+    with session_scope() as s:
+        res = build_etablissement_parcelle(s)
+    typer.echo(f"✓ etablissement_parcelle : {res['rattaches']} rattachés / {res['n_etab_adresse']} "
+               f"(précision adresse) — {res['non_rattaches']} hors rayon (non rattachés).")
+
+
 @app.command("ingest-ort")
 def ingest_ort_cmd() -> None:
     """SOURCES-1 lot 5 — ACV/PVD/ORT (DGALN, table grist complète). Table commune_ort,
@@ -3816,6 +3828,21 @@ def radar_depot_html_cmd(
     typer.echo(f"✓ Radar HTML : {r['nb_annonces']} annonces — {r['nb_nouvelles']} nouvelles, "
                f"{r['nb_maj']} MAJ, {r['nb_a_qualifier']} à qualifier "
                f"(rattachement : {r['etats']}) · archive {r['archive']}")
+
+
+@app.command("radar-fusion")
+def radar_fusion_cmd(
+    dry_run: bool = typer.Option(False, "--dry-run", help="calcule le plan de fusion sans rien écrire"),
+) -> None:
+    """RADAR-FIX-1 (1) — rejoue « même bien, nouveau numéro » sur toute la base : fusionne les biens qui
+    sont le même bien physique (le plus ancien survit, garde sa date de 1ʳᵉ publication). Idempotent."""
+    from .pige import html_ingest
+    with session_scope() as s:
+        r = html_ingest.fusionner_doublons_existants(s, dry_run=dry_run)
+    prefixe = "PLAN (dry-run) — " if dry_run else "✓ "
+    typer.echo(f"{prefixe}{r['biens_fusionnes']} bien(s) fusionné(s) dans {r['groupes']} bien(s) survivant(s)")
+    for survivant, absorbe in r["paires"]:
+        typer.echo(f"   bien #{absorbe} → rejoint bien #{survivant}")
 
 
 @app.command("radar-cycle-quotidien")

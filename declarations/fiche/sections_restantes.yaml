@@ -148,6 +148,14 @@ donnees:
     absence_type: absente_ici
     statut_juridique: opposable
     pourquoi: "Prescriptions opposables du droit des sols ; replié, dans la même section que les dispositifs."
+  # SOURCES-FIX-1 A3 — le SCOT (document supra-communal opposable au PLU), même couche que la carte.
+  - quoi:  scot_parcelle
+    ou:    { rang: 30, etat: replie, section: "Droit des sols (ER · EBC · DPU · PEB)" , fiche_section: urbanisme }
+    comment: { libelle: "SCOT", format: texte, i: "Schéma de cohérence territoriale couvrant la parcelle (nom, date d'approbation) — document supra-communal opposable au PLU. Source : Géoportail de l'urbanisme (GPU)." }
+    absence: "SCOT : la parcelle n'est couverte par aucun schéma de cohérence territoriale."
+    absence_type: absente_ici
+    statut_juridique: opposable
+    pourquoi: "Cadre supra-communal opposable au PLU ; replié, dans la section droit des sols."
 ---
 surface:   fiche_parcelle_autour
 nom:       "Autour de cette parcelle"
@@ -198,6 +206,15 @@ donnees:
     absence: "Règlement de la zone : extraits non disponibles pour cette zone."
     absence_type: absente_ici
     pourquoi: "Les règles applicables ; en tête."
+
+  # KELFONCIER-FIX-1 (Lot A) — le statut d'OUVERTURE de la zone AU (ouverte / sous condition d'opération
+  # d'ensemble / fermée), sous la zone. Moteur `parcel_au_statut` déjà peuplé ; motif cité. Miroir Dossier.
+  - quoi:  au_ouverture_statut
+    ou:    { rang: 15, etat: en_tete, section: "Règlement" }
+    comment: { libelle: "Ouverture de la zone AU", format: classe, i: "Statut d'ouverture d'une zone À Urbaniser : ouverte, constructible sous condition d'une opération d'aménagement d'ensemble, ou fermée (modification du PLU requise). Le motif cite l'article du règlement." }
+    absence: "Ouverture de la zone AU : sans objet (la parcelle n'est pas en zone à urbaniser marquée)."
+    absence_type: absente_ici
+    pourquoi: "Une zone AU n'est constructible que si son règlement l'a ouverte ; sous la zone."
 
   # EXPORTS-REBRANCHEMENT-1 lot 1 — la fraîcheur du PLU (document servi, fait foi) est montrée
   # par l'écran (④ Urbanisme) ; elle était servie au PDF hors déclaration. Déclarée ici.
