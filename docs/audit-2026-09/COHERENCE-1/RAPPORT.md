@@ -34,7 +34,7 @@ droit d'écrire dans `src/` — la commande module ci-dessus est l'équivalent e
 | Écarts | **283** : 6 FAUX-CLIENT · 251 INCOHÉRENT · 26 TOLÉRABLE |
 | Comparaisons SQL île entière (`ECARTS-ILE.csv`) | 8 notions × 431 663 — **2 divergent** (SDP 98 004 · sous-densité 26 016), 6 à zéro |
 | Distributions île (`DISTRIBUTIONS.csv`) | 17 colonnes — 2 alarmes `pct_hors_bornes` (le « 999 ») |
-| Oracles externes (`VERITE.csv`) | {{VERITE_TOTAL}} lignes · {{VERITE_VRAI}} VRAI · {{VERITE_FAUX}} FAUX · skips dits |
+| Oracles externes (`VERITE.csv`) | **183 lignes · 157 VRAI · 19 FAUX** · 7 skips dits |
 | Agrégats (`ECARTS-AGGREGATS.csv`) | 13 vérifications — compteurs ✗, prédicat=fiche ✓ 20/20, bande liste=fiche ✓ 15/15 |
 | Recompositions (`ECARTS-RECOMPOSE.csv`) | **55, 0 écart** (les dérivés tiennent) |
 | Documents + Copilote (`ECARTS-DOCUMENTS.csv`) | **44, 0 écart** (Dossier=miroir ✓, Copilote 10/10 ✓, digest dry-run ✓) |
@@ -127,13 +127,14 @@ le dire.
 26 lignes : surfaces fiche arrondies à l'entier vs float base (≤ 1 %), prix médians ±1 €,
 PDF qui arrondit la pente à une décimale.
 
-## La vérité (lot C) — {{VERITE_VRAI}} VRAI / {{VERITE_FAUX}} FAUX sur {{VERITE_NOTES}} valeurs comparées
+## La vérité (lot C) — 157 VRAI / 19 FAUX sur 176 valeurs comparées
 
 Oracles joués : GPU (zone au centroïde, 40), cadastre PCI (contenance, 40), population
 légale (24), GASPAR CatNat (24), DVF brut Etalab (3 611 lignes 97411/2024 : présence et
 valeurs OK), alti IGN (7 témoins, plage du profil ✓), SIRENE (8 dénominations PM ✓),
-taux TA (2 délibérations vérifiées en recette ✓), 30 règles PLU ouvertes au PDF du pack
-GPU à la page citée. Skips DITS : PPR/aléas (pas de GetFeatureInfo public stable — couvert
+taux TA (2 délibérations vérifiées en recette ✓), 30 règles PLU calibrées ouvertes au
+PDF direct des annexes GPU à la page citée par la fiche : **29/30 les nombres s'y lisent**
+(1 lien sans page, dit). Le fichier DHUP SRU a changé de format de colonnes (skip dit). Skips DITS : PPR/aléas (pas de GetFeatureInfo public stable — couvert
 par le lot B), CoSIA raster, Sitadel brut, Filosofi, PDF Kelfoncier CK0678 (introuvable
 sur le poste). Détail : `VERITE.csv`.
 
