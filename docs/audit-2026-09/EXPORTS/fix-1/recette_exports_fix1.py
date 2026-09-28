@@ -14,13 +14,15 @@ from pathlib import Path
 import pypdf
 
 ICI = Path(__file__).resolve().parent
-APRES = ICI / "apres"
+# EXPORTS-FIX-1-BIS — la recette porte sur la seconde passe (apres-bis) ; repli sur apres/.
+APRES = (ICI / "apres-bis") if (ICI / "apres-bis").exists() else (ICI / "apres")
 P1, P2 = "97408000AO1424", "97415000EO0796"
 
 # Mots/motifs qui ne doivent JAMAIS apparaître dans un export (mandat, section Recette).
+# EXPORTS-FIX-1-BIS : + « cascade », « engagée le », « capacité nulle ».
 MOTS_INTERDITS = ["{'", "part_pct", "fiche identite", "miroir de la fiche",
                   "bandeau des six chif", "mouvement_terrain", "ocsge", "scot_gpu",
-                  "SCOT SCOT", "1 bâtiments"]
+                  "SCOT SCOT", "1 bâtiments", "cascade", "engagée le", "capacité nulle"]
 ISO_DATE = re.compile(r"\b\d{4}-\d{2}-\d{2}\b")
 
 

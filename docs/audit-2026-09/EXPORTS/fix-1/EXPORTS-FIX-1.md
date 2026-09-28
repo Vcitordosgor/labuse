@@ -112,3 +112,31 @@ oracle) — hors mandat. `test_exports2_lot2` mis à jour pour les deux encadré
 Aucune écriture en base, aucune réingestion, aucun run. Le front de la fiche (React) n'a pas été
 touché. Un commit par lot, après sa recette. Les corrections hors couche export qui auraient changé
 la valeur servie à la fiche ont été traitées côté export (présentation) ou signalées en STOP.
+
+---
+
+# EXPORTS-FIX-1-BIS — restes de la recette (seconde passe)
+
+Régénération → `apres-bis/` ; captures avant(=`apres/`)/après(=`apres-bis/`) → `captures-bis/` +
+`planche-bas-de-page.png` (27 bas de page des 4 PDF). Recette : `recette_exports_fix1.py` pointe
+sur `apres-bis/` avec les mots interdits ajoutés (`cascade`, `engagée le`, `capacité nulle`) →
+**RECETTE OK**. Test unitaire de la table OCS GE : `tests/test_ocsge_nomenclature.py` (4 tests).
+
+| # | fait / STOP | preuve | commit |
+|---|---|---|---|
+| 1 **bloquant** | Nomenclature d'usage OCS GE reprise CODE PAR CODE (IGN) : US1.1 = « Agriculture », US5 = « Usage résidentiel » (l'ancienne table les inversait). Test unitaire + garde anti-inversion. | `P1-dossier-p2-*` · `test_ocsge_nomenclature` | `bd8bbee5` |
+| 2 | P2 §10 : plus de ligne qui contredit la SDP résiduelle servie — « surface de plancher non calculable (capacité nulle) » retirée ; la capacité dit sa vraie raison. | `P2-dossier-p8-*` | `01ad227f` |
+| 6 | Risques : garde ET §5 = nombre d'aléas IMPRIMÉS (2 sur P1, 1 sur P2) ; le mot « cascade » disparaît. | `P1-dossier-p4-*` | `01ad227f` |
+| 11 | Étiquettes : viabilisation (score) → « probable » ; gabarit non chiffré → « Non disponible ici » sans étiquette ; surélévation → une seule cause (hauteur de règle). | `P1-dossier-p7-*` | `01ad227f` |
+| 3 | Terrain nu « insuffisant » nomme SON périmètre (« à moins de 500 m ») ; plus de « secteur » ambigu. | `P2-dossier-p6-*` | `4da15c87` |
+| 4 | RTAA DOM = règle applicable → ligne normale du §4 (« Rappel RTAA DOM »), hors de l'encadré. | `P2-dossier-p4-*` | `4da15c87` |
+| 5 **STOP donnée** | « dernière évolution » = date d'APPROBATION Sudocuh, jamais une prescription : plus de « engagée le 16/12/2021 ». La base Sudocuh locale ne porte PAS le 27/03/2025 (recette) — seulement l'approbation 2012-09-27 et la prescription 2021-12-16 → la ligne d'évolution s'omet, correctement (aucune écriture en base ; le 27/03/2025 viendrait d'une ingestion Sudocuh plus fraîche). | `P2-dossier-p4-*` | `4da15c87` |
+| 8 | §5 : ABF / ICPE / cavités, citées en source sans ligne, impriment leur « vérifié : rien » quand la cascade les a lues (result PASS). | `P1-dossier-p4-*` | `4da15c87` |
+| 7 | « Généré via LABUSE » dans un bloc de marge @page (@bottom-center statique) : jamais dans le flux, aucun chevauchement (vérifié sur les 27 bas de page) ; en-têtes de groupe `break-after: avoid`. | `planche-bas-de-page.png` | `f9586be6` |
+| 9 | Apporteur : sans émetteur, le §9 renvoie « à la personne qui vous a remis ce document » (plus « à l'émetteur (en tête) » inexistant). | `P1-apporteur-p4-*` | `f9586be6` |
+| 10 | Apporteur : ronds sur la ligne du libellé (« ◯ Non ◯ Oui ◯ Ne sait pas », `display:inline-block`) ; brief compact de 4 pages, aucune page à une seule question. | `P1-apporteur-p2-*` | `f9586be6` |
+
+## STOP / réserve BIS
+- **Point 5** — le 27/03/2025 (dernière modification approuvée) n'est pas dans la base Sudocuh
+  locale ; le code sert désormais une date d'approbation (jamais une prescription) et omet la ligne
+  faute d'approbation d'évolution — conforme à la règle « sinon la ligne ne s'imprime pas ».
