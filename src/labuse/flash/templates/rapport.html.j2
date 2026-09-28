@@ -115,6 +115,12 @@
     <tr><td>Hauteur au faîtage (PLU calibré)</td>
         <td class="num-cell">{{ (ident.regles.hauteur_faitage_m | round(1)) | string | replace('.0', '') }} m</td></tr>
     {% endif %}
+    {# PLU-EXCEPTIONS-1 — exceptions au règlement sous la règle, en note (verbatim + article/page).
+       Aide à la lecture : n'entrent dans aucun calcul (Lot C). #}
+    {% for e in (ident.regles.exceptions or []) %}
+    <tr><td>Exception au règlement</td>
+        <td><em>« {{ e.texte }} »</em>{% if e.article or e.page_pdf %}<br><small>{{ e.article }}{% if e.page_pdf %} · p. {{ e.page_pdf }}{% endif %}</small>{% endif %}</td></tr>
+    {% endfor %}
     {# M129-2 D : « Confiance du calibrage » (indice interne) RETIRÉE — aucun exportable ne porte
        d'indice de complétude / score / verdict. #}
   </table>

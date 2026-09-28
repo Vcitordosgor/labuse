@@ -66,7 +66,12 @@ zones:
           citation: en zone U1a — Le pourcentage minimal d'espaces libres perméables sera de 10 % de la surface
             totale du terrain d'assiette du projet.
           statut: valide
-          note: "PLU-VERIF-1 (exception à afficher) : En aléa fort du PPRI, le pourcentage minimal sera de 50 %. En cas de parking en sous-sol, 10 % au moins plantés sur dalle (terre >=0,8 m). Non exigé en surélévation/changement de destination."
+          exceptions:
+          - texte: "En aléa fort du PPRI, le pourcentage minimal d’espaces libres perméables sera de 50 % de la surface totale du terrain d’assiette du projet."
+            article: "13.1"
+            page_pdf: 35
+            porte: "majoration_conditionnelle"
+            modifie_calcul: true
     silence: autorise
     silence_src: Art. 1, § 1.2 "Sont interdits" = liste fermée de 3 occupations (entrepôt exclusif, agricole, campeurs/caravanes),
       p. 14 ; tout le reste n'est ni interdit ni conditionné par les articles 1 et 2.
@@ -1360,7 +1365,12 @@ zones:
           citation: Le pourcentage minimal d'espaces libres perméables sera de 20% de la surface totale du
             terrain d'assiette du projet.
           statut: valide
-          note: "PLU-VERIF-1 (exception à afficher) : En alea fort du PPRI, le pourcentage minimal sera de 50 %. En cas de parking en sous-sol sur toute la parcelle, 20 % au moins plantes sur dalle (terre 80 cm). Non exige en surelevation/changement de destination."
+          exceptions:
+          - texte: "En aléa fort du PPRI, le pourcentage minimal d’espaces libres perméables sera de 50% de la surface totale du terrain d’assiette du projet."
+            article: "13.1"
+            page_pdf: 125
+            porte: "majoration_conditionnelle"
+            modifie_calcul: true
     silence: autorise
     silence_src: Zones U3a-U3b-U3c-U3h, Art. 1.2 « Sont interdits » = liste fermée de 3 interdictions (entrepôt
       exclusif, destination agricole, camping/caravanes), p. 106 ; ce qui n'y figure pas relève de l'art. 2 ou demeure
@@ -1893,7 +1903,12 @@ zones:
           citation: en zone U4b Les constructions devront être implantées en retrait de 3 m minimum de la
             voie ou de l'emprise publique.
           statut: valide
-          note: "PLU-VERIF-1 (exception à afficher) : Les commerces situes en rez-de-chaussee pourront s'implanter a l'alignement."
+          exceptions:
+          - texte: "Les commerces situés en rez-de-chaussée pourront s’implanter à l’alignement."
+            article: "6"
+            page_pdf: 172
+            porte: "destination"
+            modifie_calcul: true
         limites_separatives:
           min_m: 3.0
           article: '7.2'

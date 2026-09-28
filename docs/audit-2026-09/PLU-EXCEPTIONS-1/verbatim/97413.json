@@ -1,0 +1,13 @@
+[
+ {
+  "zone": "UAt",
+  "regle": "hauteur.faitage",
+  "valeur_regle": "13.0 m",
+  "article": "UA 10.2",
+  "page_pdf": 24,
+  "texte": "Il est toléré 1,50m de plus sur les parties avales du bâtiment au faîtage, à l'égout du toit ou au sommet de l'acrotère.",
+  "porte": "hauteur_alternative",
+  "modifie_calcul": true,
+  "note": "Tolérance de +1,50 m applicable sur les parties avales, valable pour toute la zone UA (dont le secteur UAt à 13,00 m au faîtage). La clause distincte « il est ajouté 1,00m au calcul des hauteurs » dans les zones à risque moyen d'inondation figure à l'UA 10.1 (surélévation du premier plancher)."
+ }
+]

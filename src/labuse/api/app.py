@@ -4246,7 +4246,7 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
         "radar_procedure": _radar_proc(idu, (score_v2 or {}).get("tier")),   # M41 — radar procédures PLU
         "historique_site": _historique_site(db, idu),      # M42 — « Sur cette parcelle » (permis + caduc)
         "voisinage_proche": _voisinage_proche(db, idu),    # M42 — « Autour, à moins de 100 m »
-        "potentiel_transformation": _potentiel_transformation_block(db, idu),
+        "potentiel_transformation": _potentiel_transformation_block(db, idu, head["commune"]),
         # KELFONCIER-FIX-1 (Lot H) — « Établissements sur la parcelle » (§3 Bâti), rattachement BAN.
         "etablissements": _etablissements_block(db, idu),
         "completeness_score": head["completeness_score"],  # M129-B : a_completude (matrice) retiré
@@ -5621,7 +5621,7 @@ def _reglement_plu_block(db: Session, idu: str, commune: str) -> dict | None:
         return _bloc_indisponible("reglement_plu")   # M125 — panne ≠ absence (même classe que les 7)
 
 
-def _potentiel_transformation_block(db: Session, idu: str) -> dict | None:
+def _potentiel_transformation_block(db: Session, idu: str, commune: str | None = None) -> dict | None:
     """M9 lot 4 — indicateur « Potentiel de transformation » (fond de l'ancien outil Mutabilité).
 
     Alimenté par le ratio SDP consommée/autorisée déjà calculé (bloc D : parcel_residuel.
@@ -5708,8 +5708,26 @@ def _potentiel_transformation_block(db: Session, idu: str) -> dict | None:
                 h_permis_posterieur = _pp.strftime("%d/%m/%Y")
         except Exception:  # noqa: BLE001 — table permis absente (dev/test) → pas de caveat, jamais un faux
             db.rollback()
+    # PLU-EXCEPTIONS-1 Lot B — quand une exception au règlement POURRAIT changer le calcul (bande
+    # depuis une limite, sous-secteur à valeur différente, majoration de hauteur…), on la SIGNALE
+    # sous la capacité (« à vérifier »), avec renvoi vers §Urbanisme. Elle N'entre PAS dans le calcul
+    # (Lot C) : c'est un drapeau de lecture, jamais une valeur appliquée.
+    exceptions_calcul: list[dict] = []
+    try:
+        zlib = row["zone_lib"] if "zone_lib" in row.keys() else None
+        if zlib and commune:
+            from ..faisabilite.zonage import resolve_zone as _rz
+            _zr = _rz(zlib, commune)
+            for cle, lst in (getattr(_zr, "exceptions", None) or {}).items():
+                for e in lst:
+                    if e.get("modifie_calcul"):
+                        exceptions_calcul.append({"regle": cle, "porte": e.get("porte"),
+                                                  "article": e.get("article"), "page_pdf": e.get("page_pdf")})
+    except Exception:  # noqa: BLE001 — jamais de 500 sur la fiche
+        exceptions_calcul = []
     return {
         "niveau": niveau, "libelle": libelle,
+        "exceptions_calcul": exceptions_calcul,               # PLU-EXCEPTIONS-1 — drapeaux « à vérifier »
         "pct_consomme": pct,                                  # SDP consommée / autorisée (%)
         "pct_residuel": (max(0, 100 - pct) if pct is not None else None),
         "sdp_residuelle_m2": sdp_servie,

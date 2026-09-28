@@ -1,0 +1,35 @@
+[
+ {
+  "zone": "U1a",
+  "regle": "pleine_terre.pct",
+  "valeur_regle": "10.0 %",
+  "article": "13.1",
+  "page_pdf": 35,
+  "texte": "En aléa fort du PPRI, le pourcentage minimal d’espaces libres perméables sera de 50 % de la surface totale du terrain d’assiette du projet.",
+  "porte": "majoration_conditionnelle",
+  "modifie_calcul": true,
+  "note": null
+ },
+ {
+  "zone": "U3a",
+  "regle": "pleine_terre.pct",
+  "valeur_regle": "20.0 %",
+  "article": "13.1",
+  "page_pdf": 125,
+  "texte": "En aléa fort du PPRI, le pourcentage minimal d’espaces libres perméables sera de 50% de la surface totale du terrain d’assiette du projet.",
+  "porte": "majoration_conditionnelle",
+  "modifie_calcul": true,
+  "note": "L’exception « aléa fort PPRI 50% » se lit en page PDF 125 (la règle de base U3a 20% et la mention parking sous-sol sont en page PDF 124)."
+ },
+ {
+  "zone": "U4b",
+  "regle": "retraits.voie",
+  "valeur_regle": "3.0 m",
+  "article": "6",
+  "page_pdf": 172,
+  "texte": "Les commerces situés en rez-de-chaussée pourront s’implanter à l’alignement.",
+  "porte": "destination",
+  "modifie_calcul": true,
+  "note": null
+ }
+]

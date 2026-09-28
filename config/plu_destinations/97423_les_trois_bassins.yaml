@@ -22,7 +22,12 @@ zones:
             sommet de l’acrotère, 14 mètres au faîtage.'
           statut: valide
           raison: attribution douteuse (citation sous secteur None)
-          note: "PLU-VERIF-1 (exception à afficher) : Secteur Uaa : 16 m au faitage (12 m a l'egout), valeur differente non dite par la fiche zone Ua. Ua 10.3 : majoree de 40% pour services publics ; +1 m en zone inondation moyenne ; +0,80 m sur vide sanitaire au-dessus de 400 m."
+          exceptions:
+          - texte: "Dans le secteur Uaa, la hauteur maximale des constructions est fixée à : 12 mètres à l’égout du toit ou au sommet de l’acrotère, 16 mètres au faîtage."
+            article: "Ua 10.2"
+            page_pdf: 18
+            porte: "sous_secteur"
+            modifie_calcul: true
         egout:
           m: 10.0
           article: Ua 10.2
@@ -31,7 +36,12 @@ zones:
             sommet de l’acrotère, 14 mètres au faîtage.'
           statut: valide
           raison: attribution douteuse (citation sous secteur None)
-          note: "PLU-VERIF-1 (exception à afficher) : Secteur Uaa : 12 m a l'egout / 16 m au faitage (valeur differente, non dite par la fiche zone Ua). Ua 10.3 : majoree de 40% pour services publics ; +1 m en zone inondation moyenne ; +0,80 m sur vide sanitaire au-dessus de 400 m."
+          exceptions:
+          - texte: "Dans le secteur Uaa, la hauteur maximale des constructions est fixée à : 12 mètres à l’égout du toit ou au sommet de l’acrotère, 16 mètres au faîtage."
+            article: "Ua 10.2"
+            page_pdf: 18
+            porte: "sous_secteur"
+            modifie_calcul: true
       emprise_sol:
         ces:
           pct: 60.0

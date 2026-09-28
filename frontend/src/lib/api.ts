@@ -497,6 +497,8 @@ export interface PluExtrait {
 }
 export interface PluSearch {
   query: string; insee: string | null; n: number; resultats: PluExtrait[]; message?: string; avis?: string
+  // PLU-EXCEPTIONS-1 — exceptions calibrées de la zone filtrée (verbatim + article/page), sous l'article.
+  exceptions_zone?: { regle: string; texte: string; article: string | null; page_pdf: number | null; porte: string | null }[]
 }
 export interface PluCommune {
   insee: string; commune: string; statut: string; idurba?: string; millesime?: string

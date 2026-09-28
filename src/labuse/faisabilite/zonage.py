@@ -64,6 +64,11 @@ class ZoneRules:
     #  {seuil_logements, quota_pct, portee, article, page_pdf, citation, statut}. None si la zone n'en
     #  porte pas. `statut` = 'valide' → branchée (11e étape sourcée) ; 'propose'/None → non modélisée.
     mixite: dict | None = None
+    # PLU-EXCEPTIONS-1 — exceptions au règlement portées par les feuilles `regles` (verbatim + article +
+    #  page + `porte`). Servies AVEC leur règle (id `<cle_regle>.exception`), jamais recomposées. Une
+    #  liste par clé de règle ('hauteur','emprise','recul_voirie','recul_limites','pleine_terre',
+    #  'stationnement','mixite') ; {} si la zone n'en porte aucune. AUCUNE n'entre dans un calcul.
+    exceptions: dict[str, list[dict]] = field(default_factory=dict)
     notes: list[str] = field(default_factory=list)
     sources: dict[str, str] = field(default_factory=dict)
     raw: dict = field(default_factory=dict)
@@ -255,6 +260,48 @@ def _mixite_leaf(reg: dict) -> dict | None:
             "citation": m.get("citation"), "statut": m.get("statut")}
 
 
+# PLU-EXCEPTIONS-1 — clé de règle servie (reglement_block / regles_valeurs) pour un chemin de feuille.
+_CLE_REGLE = {"hauteur": "hauteur", "emprise_sol": "emprise", "pleine_terre": "pleine_terre",
+              "stationnement": "stationnement", "mixite": "mixite"}
+
+
+def _cle_regle(chemin: tuple) -> str:
+    rub = chemin[0]
+    if rub == "retraits":
+        return "recul_voirie" if (len(chemin) > 1 and chemin[1] == "voie") else "recul_limites"
+    return _CLE_REGLE.get(rub, rub)
+
+
+def _exceptions_from_regles(commune: str | None, code: str) -> dict[str, list[dict]]:
+    """Exceptions au règlement portées par les feuilles `regles` de la zone → {cle_regle: [exc…]}.
+    Relaie le bloc `exception` TEL QUEL (texte verbatim, article, page, porte) ; dédoublonne par
+    (cle, texte) : une même clause portée par faîtage ET égout n'apparaît qu'une fois. Ne fabrique
+    rien, n'entre dans aucun calcul (PLU-EXCEPTIONS-1 Lot C)."""
+    from ..plu import destinations as D
+    reg = D.regles_zone(_insee(commune) or "", code)
+    if not isinstance(reg, dict):
+        return {}
+    out: dict[str, list[dict]] = {}
+    vus: set[tuple] = set()
+    for chemin, feuille in D.iter_regles_feuilles(reg):
+        if not isinstance(feuille, dict):
+            continue
+        excs = feuille.get("exceptions") or ([feuille["exception"]] if feuille.get("exception") else [])
+        cle = _cle_regle(chemin)
+        for exc in excs:
+            if not isinstance(exc, dict) or not (exc.get("texte") or "").strip():
+                continue
+            clef = (cle, (exc.get("texte") or "").strip())
+            if clef in vus:            # même clause portée par faîtage ET égout → une fois
+                continue
+            vus.add(clef)
+            out.setdefault(cle, []).append({
+                "texte": exc.get("texte"), "article": exc.get("article"),
+                "page_pdf": exc.get("page_pdf"), "porte": exc.get("porte"),
+                "modifie_calcul": bool(exc.get("modifie_calcul"))})
+    return out
+
+
 def _zone_rules_from_regles(commune: str | None, code: str, zmeta: dict) -> ZoneRules:
     """ZoneRules d'une zone CALIBRÉE : valeurs des regles + métadonnée de zone (plu_zonage)."""
     from ..plu import destinations as D
@@ -262,6 +309,7 @@ def _zone_rules_from_regles(commune: str | None, code: str, zmeta: dict) -> Zone
     zm = (zmeta.get("zones") or {}).get(code, {})
     return ZoneRules(
         code=code, bassin=zm.get("bassin"), mixite=_mixite_leaf(reg),
+        exceptions=_exceptions_from_regles(commune, code),
         he_m=_val(reg, "hauteur", "egout", "m"),
         hf_m=_val(reg, "hauteur", "faitage", "m"),
         emprise_sol_pct=_val(reg, "emprise_sol", "ces", "pct"),

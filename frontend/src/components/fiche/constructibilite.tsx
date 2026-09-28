@@ -52,6 +52,19 @@ export function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
             valeur={<>~{pt.hauteur_marge_m} <small>m sous la règle</small></>} />
         )}
       </Lignes>
+      {/* PLU-EXCEPTIONS-1 Lot B — une exception du règlement peut changer l'enveloppe (bande depuis
+          une limite, sous-secteur, majoration de hauteur…). On la SIGNALE ici « à vérifier » (jamais
+          appliquée au calcul), avec renvoi vers le règlement de la zone (§Urbanisme). */}
+      {pt.exceptions_calcul && pt.exceptions_calcul.length > 0 && (
+        <div data-exception-calcul className="mt-0.5">
+          <Badge ton="ambre">Exception au règlement — à vérifier</Badge>
+          <p className="mt-0.5 text-[11px] leading-snug text-amber">
+            {pt.exceptions_calcul.length === 1 ? 'Une règle de cette zone comporte' : `${pt.exceptions_calcul.length} règles de cette zone comportent`} une exception
+            qui pourrait modifier la capacité (non appliquée au calcul) — voir le détail sous « Règlement » (§Urbanisme)
+            {pt.exceptions_calcul.some((e) => e.page_pdf != null) ? `, art. ${pt.exceptions_calcul.map((e) => e.article).filter(Boolean).join(', ')}.` : '.'}
+          </p>
+        </div>
+      )}
       {/* DONNEES-FIX-1 lot A — même règle que le §3 Bâti (`discordance_hauteur`) : le badge compare
           l'ÉGOUT LiDAR à BD TOPO (même grandeur) ou signale un faîtage aberrant, jamais le faîtage↔BD
           TOPO. Sans choix automatique. */}

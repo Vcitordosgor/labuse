@@ -1,0 +1,112 @@
+[
+ {
+  "zone": "1AUb",
+  "regle": "hauteur.egout",
+  "valeur_regle": "8.0 m",
+  "article": "UB 10.2",
+  "page_pdf": 31,
+  "texte": "A l’exception du secteur Uba, pour les projets d’aménagement dont la superficie du terrain d’assiette est au moins égale à 2 000 m², les constructions peuvent avoir une hauteur maximale de 10 mètres à l’égout du toit ou au sommet de l’acrotère et 13 mètres au faîtage.",
+  "porte": "majoration_conditionnelle",
+  "modifie_calcul": true,
+  "note": "1AUb renvoie via AUINDICEE 10 au règlement de la zone U d'indice 'b' (=Ub) ; Ub n'étant pas Uba, la majoration 8→2 000 m²→10 m à l'égout s'applique."
+ },
+ {
+  "zone": "1AUb",
+  "regle": "hauteur.egout",
+  "valeur_regle": "8.0 m",
+  "article": "UB 10.2",
+  "page_pdf": 32,
+  "texte": "Concernant les terrains desservis par la rue des Limites, la hauteur maximale des constructions est fixée à : - pour les constructions donnant sur une voie, la hauteur maximale des constructions est fixée à 6 mètres à l'égout, - pour les constructions implantées en recul d'au moins 8 mètres par rapport à l'alignement de la voie, la hauteur maximale des constructions est fixée à 9 mètres à l'égout",
+  "porte": "voie_specifique",
+  "modifie_calcul": true,
+  "note": "Minoration à l'égout (6 m, ou 9 m si recul ≥ 8 m) spécifique aux terrains desservis par la rue des Limites."
+ },
+ {
+  "zone": "1AUb",
+  "regle": "hauteur.faitage",
+  "valeur_regle": "11.0 m",
+  "article": "UB 10.2",
+  "page_pdf": 31,
+  "texte": "A l’exception du secteur Uba, pour les projets d’aménagement dont la superficie du terrain d’assiette est au moins égale à 2 000 m², les constructions peuvent avoir une hauteur maximale de 10 mètres à l’égout du toit ou au sommet de l’acrotère et 13 mètres au faîtage.",
+  "porte": "majoration_conditionnelle",
+  "modifie_calcul": true,
+  "note": "1AUb (=Ub via AUINDICEE 10) : majoration du faîtage 11→13 m pour terrain d'assiette ≥ 2 000 m²."
+ },
+ {
+  "zone": "1AUb",
+  "regle": "hauteur.faitage",
+  "valeur_regle": "11.0 m",
+  "article": "UB 10.2",
+  "page_pdf": 32,
+  "texte": "La hauteur maximale des constructions annexes est fixée à 3,50 mètres.",
+  "porte": "hauteur_alternative",
+  "modifie_calcul": false,
+  "note": "Plafond spécifique aux annexes ; ne change pas l'enveloppe d'une construction principale ordinaire."
+ },
+ {
+  "zone": "Ub",
+  "regle": "hauteur.egout",
+  "valeur_regle": "8.0 m",
+  "article": "UB 10.2",
+  "page_pdf": 31,
+  "texte": "A l’exception du secteur Uba, pour les projets d’aménagement dont la superficie du terrain d’assiette est au moins égale à 2 000 m², les constructions peuvent avoir une hauteur maximale de 10 mètres à l’égout du toit ou au sommet de l’acrotère et 13 mètres au faîtage.",
+  "porte": "majoration_conditionnelle",
+  "modifie_calcul": true,
+  "note": "Ub n'est pas Uba : éligible à la majoration 8→10 m à l'égout pour terrain d'assiette ≥ 2 000 m²."
+ },
+ {
+  "zone": "Ub",
+  "regle": "hauteur.egout",
+  "valeur_regle": "8.0 m",
+  "article": "UB 10.2",
+  "page_pdf": 32,
+  "texte": "Concernant les terrains desservis par la rue des Limites, la hauteur maximale des constructions est fixée à : - pour les constructions donnant sur une voie, la hauteur maximale des constructions est fixée à 6 mètres à l'égout, - pour les constructions implantées en recul d'au moins 8 mètres par rapport à l'alignement de la voie, la hauteur maximale des constructions est fixée à 9 mètres à l'égout",
+  "porte": "voie_specifique",
+  "modifie_calcul": true,
+  "note": "Minoration à l'égout (6 m, 9 m si recul ≥ 8 m) le long de la rue des Limites."
+ },
+ {
+  "zone": "Ub",
+  "regle": "hauteur.faitage",
+  "valeur_regle": "11.0 m",
+  "article": "UB 10.2",
+  "page_pdf": 31,
+  "texte": "A l’exception du secteur Uba, pour les projets d’aménagement dont la superficie du terrain d’assiette est au moins égale à 2 000 m², les constructions peuvent avoir une hauteur maximale de 10 mètres à l’égout du toit ou au sommet de l’acrotère et 13 mètres au faîtage.",
+  "porte": "majoration_conditionnelle",
+  "modifie_calcul": true,
+  "note": "Ub éligible : majoration du faîtage 11→13 m pour terrain d'assiette ≥ 2 000 m²."
+ },
+ {
+  "zone": "Ub",
+  "regle": "hauteur.faitage",
+  "valeur_regle": "11.0 m",
+  "article": "UB 10.2",
+  "page_pdf": 32,
+  "texte": "La hauteur maximale des constructions annexes est fixée à 3,50 mètres.",
+  "porte": "hauteur_alternative",
+  "modifie_calcul": false,
+  "note": "Plafond spécifique aux annexes ; ne modifie pas l'enveloppe d'une construction principale ordinaire."
+ },
+ {
+  "zone": "Uba",
+  "regle": "hauteur.egout",
+  "valeur_regle": "8.0 m",
+  "article": "UB 10.2",
+  "page_pdf": 32,
+  "texte": "Concernant les terrains desservis par la rue des Limites, la hauteur maximale des constructions est fixée à : - pour les constructions donnant sur une voie, la hauteur maximale des constructions est fixée à 6 mètres à l'égout, - pour les constructions implantées en recul d'au moins 8 mètres par rapport à l'alignement de la voie, la hauteur maximale des constructions est fixée à 9 mètres à l'égout",
+  "porte": "voie_specifique",
+  "modifie_calcul": true,
+  "note": "Uba est expressément EXCLU de la majoration ≥ 2 000 m² (égout reste à 8 m) ; seule minoration applicable à l'égout = rue des Limites (6 m, 9 m si recul ≥ 8 m)."
+ },
+ {
+  "zone": "Uba",
+  "regle": "hauteur.faitage",
+  "valeur_regle": "11.0 m",
+  "article": "UB 10.2",
+  "page_pdf": 32,
+  "texte": "La hauteur maximale des constructions annexes est fixée à 3,50 mètres.",
+  "porte": "hauteur_alternative",
+  "modifie_calcul": false,
+  "note": "Uba EXCLU de la majoration 13 m au faîtage (≥ 2 000 m²) ; plafond ferme à 11 m. La rue des Limites n'exprime aucune valeur au faîtage. Seule exception restante au faîtage : annexes à 3,50 m."
+ }
+]

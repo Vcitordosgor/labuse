@@ -2245,6 +2245,23 @@ def plu_annuaire_search(q: str, insee: str | None = None, zone: str | None = Non
         if r.get("pagination_ambigue"):
             r["pagination_note"] = ("pagination du document ambiguë (double numérotation) — la page "
                                     "citée est la PAGE PDF du fichier, pas la page imprimée.")
+    # PLU-EXCEPTIONS-1 — quand la recherche est cadrée sur une zone (ouverture depuis la fiche/Copilote),
+    # on joint les exceptions CALIBRÉES de cette zone (verbatim + article + page) pour les afficher SOUS
+    # l'article. Aide à la lecture : n'entre dans aucun calcul (Lot C).
+    exceptions_zone: list[dict] = []
+    if insee and zone:
+        try:
+            from ..faisabilite.zonage import resolve_zone
+            _zr = resolve_zone(zone, insee)
+            for cle, lst in (getattr(_zr, "exceptions", None) or {}).items():
+                for e in lst:
+                    if (e.get("texte") or "").strip():
+                        exceptions_zone.append({"regle": cle, "texte": e.get("texte"),
+                                                "article": e.get("article"), "page_pdf": e.get("page_pdf"),
+                                                "porte": e.get("porte")})
+        except Exception:  # noqa: BLE001
+            exceptions_zone = []
     return {"query": q, "insee": insee, "n": len(res), "resultats": res,
+            "exceptions_zone": exceptions_zone,
             "avis": "Verbatim du règlement opposable (source GPU). Vérifiez toujours au document "
                     "(lien) ; ceci n'est pas un conseil juridique."}

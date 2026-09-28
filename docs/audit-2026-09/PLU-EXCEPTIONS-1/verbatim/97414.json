@@ -1,0 +1,35 @@
+[
+ {
+  "zone": "UC",
+  "regle": "retraits.limites_separatives",
+  "valeur_regle": "3.0 m",
+  "article": "UC 7.2",
+  "page_pdf": 46,
+  "texte": "Toutefois, en secteur UC1, le retrait (L) est obligatoire et doit correspondre au minimum à la moitié de la hauteur à l’égout du toit (ou au faîtage en l’absence d’égout de toit) de la construction sans être inférieur à 3,00 mètres, soit : L = H1/2 (H1 étant la hauteur à l’égout) ou en l’absence de façade présentant un égout de toit : L = H2/2 (H2 étant la hauteur au faîtage).",
+  "porte": "sous_secteur",
+  "modifie_calcul": true,
+  "note": null
+ },
+ {
+  "zone": "UZ",
+  "regle": "hauteur.egout",
+  "valeur_regle": "9.0 m",
+  "article": "UZ 10.2",
+  "page_pdf": 99,
+  "texte": "Pour les espaces indiqués au schéma joint en annexe sous la rubrique « affectations dominantes en habitat avec activités et services compatibles » et légendés en « individuels », la hauteur maximale de tout point des constructions mesurée par rapport au domaine public pris au droit de l’alignement ne doit pas dépasser 9 mètres.",
+  "porte": "destination",
+  "modifie_calcul": true,
+  "note": "La règle UZ 10.2 plafonne par affectation : collectifs 17 m (§2), tertiaires 12 m (§4), et « hors tout » aucune construction ne dépasse la cote NGR 42 m (§1). Le 9 m ne vaut que pour les affectations « individuels ». C'est une hauteur maximale « en tout point » (pas un égout au sens strict)."
+ },
+ {
+  "zone": "UZ",
+  "regle": "hauteur.faitage",
+  "valeur_regle": "9.0 m",
+  "article": "UZ 10.2",
+  "page_pdf": 99,
+  "texte": "Pour les espaces indiqués au schéma joint en annexe sous la rubrique « affectations dominantes en habitat avec activités et services compatibles » et légendés en « individuels », la hauteur maximale de tout point des constructions mesurée par rapport au domaine public pris au droit de l’alignement ne doit pas dépasser 9 mètres.",
+  "porte": "destination",
+  "modifie_calcul": true,
+  "note": "La règle UZ ne distingue pas égout/faîtage : c'est une hauteur maximale « de tout point » (égout=faîtage=9 m pour les individuels). Collectifs 17 m (§2), tertiaires 12 m (§4), « hors tout » cote NGR 42 m (§1)."
+ }
+]

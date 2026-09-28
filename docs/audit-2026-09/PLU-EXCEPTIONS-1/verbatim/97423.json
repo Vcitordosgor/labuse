@@ -1,0 +1,24 @@
+[
+ {
+  "zone": "Ua",
+  "regle": "hauteur.egout",
+  "valeur_regle": "10.0 m",
+  "article": "Ua 10.2",
+  "page_pdf": 18,
+  "texte": "Dans le secteur Uaa, la hauteur maximale des constructions est fixée à : 12 mètres à l’égout du toit ou au sommet de l’acrotère, 16 mètres au faîtage.",
+  "porte": "sous_secteur",
+  "modifie_calcul": true,
+  "note": null
+ },
+ {
+  "zone": "Ua",
+  "regle": "hauteur.faitage",
+  "valeur_regle": "14.0 m",
+  "article": "Ua 10.2",
+  "page_pdf": 18,
+  "texte": "Dans le secteur Uaa, la hauteur maximale des constructions est fixée à : 12 mètres à l’égout du toit ou au sommet de l’acrotère, 16 mètres au faîtage.",
+  "porte": "sous_secteur",
+  "modifie_calcul": true,
+  "note": null
+ }
+]

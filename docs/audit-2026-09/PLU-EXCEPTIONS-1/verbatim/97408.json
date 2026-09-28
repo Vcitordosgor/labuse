@@ -1,0 +1,112 @@
+[
+ {
+  "zone": "AUB",
+  "regle": "hauteur.egout",
+  "valeur_regle": "9.0 m",
+  "article": "UB 10.2",
+  "page_pdf": 31,
+  "texte": "La hauteur maximale des constructions est fixée à : - 9 mètres à l'égout du toit ou au sommet de l'acrotère, - 12 mètres au faîtage. Dans les secteurs UBa, UBb et UBc, la hauteur maximale des constructions est fixée à : - 7 mètres à l'égout du toit ou au sommet de l'acrotère, - 10 mètres au faîtage. Dans le secteur UBpszc, la hauteur maximale des constructions est fixée à 7 mètres.",
+  "porte": "sous_secteur",
+  "modifie_calcul": true,
+  "note": "Renvoi AUINDICEE 10 vers la zone U en indice (UB). Aussi porteuses au même article : « En cas d'implantation en limite séparative, la hauteur maximale des constructions est fixée à 7 mètres sur une profondeur de 3 mètres » (bande_limite) et « La hauteur maximale des constructions annexes est fixée à 3,50 mètres »."
+ },
+ {
+  "zone": "AUB",
+  "regle": "hauteur.faitage",
+  "valeur_regle": "12.0 m",
+  "article": "UB 10.2",
+  "page_pdf": 31,
+  "texte": "La hauteur maximale des constructions est fixée à : - 9 mètres à l'égout du toit ou au sommet de l'acrotère, - 12 mètres au faîtage. Dans les secteurs UBa, UBb et UBc, la hauteur maximale des constructions est fixée à : - 7 mètres à l'égout du toit ou au sommet de l'acrotère, - 10 mètres au faîtage. Dans le secteur UBpszc, la hauteur maximale des constructions est fixée à 7 mètres.",
+  "porte": "sous_secteur",
+  "modifie_calcul": true,
+  "note": "Renvoi AUINDICEE 10 vers la zone U en indice (UB). Faîtage : UBa/UBb/UBc = 10 m ; UBpszc = 7 m (hauteur unique). Aussi limite séparative 7 m sur 3 m (bande_limite) et annexes 3,50 m."
+ },
+ {
+  "zone": "AUBpsfr2",
+  "regle": "hauteur.egout",
+  "valeur_regle": "9.0 m",
+  "article": "UB 10.2",
+  "page_pdf": 31,
+  "texte": "La hauteur maximale des constructions est fixée à : - 9 mètres à l'égout du toit ou au sommet de l'acrotère, - 12 mètres au faîtage. Dans les secteurs UBa, UBb et UBc, la hauteur maximale des constructions est fixée à : - 7 mètres à l'égout du toit ou au sommet de l'acrotère, - 10 mètres au faîtage. Dans le secteur UBpszc, la hauteur maximale des constructions est fixée à 7 mètres.",
+  "porte": "sous_secteur",
+  "modifie_calcul": true,
+  "note": "Renvoi AUINDICEE 10 vers la zone U en indice (UB) ; l'indice psfr2 est une servitude, pas un secteur à hauteur dérogée, donc valeur générale 9 m. Aussi limite séparative 7 m sur 3 m (bande_limite) et annexes 3,50 m."
+ },
+ {
+  "zone": "AUBpsfr2",
+  "regle": "hauteur.faitage",
+  "valeur_regle": "12.0 m",
+  "article": "UB 10.2",
+  "page_pdf": 31,
+  "texte": "La hauteur maximale des constructions est fixée à : - 9 mètres à l'égout du toit ou au sommet de l'acrotère, - 12 mètres au faîtage. Dans les secteurs UBa, UBb et UBc, la hauteur maximale des constructions est fixée à : - 7 mètres à l'égout du toit ou au sommet de l'acrotère, - 10 mètres au faîtage. Dans le secteur UBpszc, la hauteur maximale des constructions est fixée à 7 mètres.",
+  "porte": "sous_secteur",
+  "modifie_calcul": true,
+  "note": "Renvoi AUINDICEE 10 vers la zone U en indice (UB). Faîtage : UBa/UBb/UBc = 10 m ; UBpszc = 7 m. Aussi limite séparative 7 m sur 3 m (bande_limite) et annexes 3,50 m."
+ },
+ {
+  "zone": "AUEm",
+  "regle": "stationnement.par_logement",
+  "valeur_regle": "(sans valeur)",
+  "article": "UEM 12.2",
+  "page_pdf": 54,
+  "texte": "Habitations | Logements ≤ à 50 m² de SDP | 1 place minimum par logement | Logements > à 50 m² de SDP | 2 places minimum par logement",
+  "porte": "majoration_conditionnelle",
+  "modifie_calcul": true,
+  "note": "Renvoi AUINDICEE 12 vers la zone UEm. La norme par logement n'est pas un chiffre unique : elle dépend d'un seuil de SDP (1 place ≤ 50 m², 2 places > 50 m²), d'où l'abstention « sans valeur » défendable. Superficie min indicative 25 m²/place ; deux-roues : 1 emplacement/logement (≥ 2 logements)."
+ },
+ {
+  "zone": "UB",
+  "regle": "hauteur.egout",
+  "valeur_regle": "9.0 m",
+  "article": "UB 10.2",
+  "page_pdf": 31,
+  "texte": "La hauteur maximale des constructions est fixée à : - 9 mètres à l'égout du toit ou au sommet de l'acrotère, - 12 mètres au faîtage. Dans les secteurs UBa, UBb et UBc, la hauteur maximale des constructions est fixée à : - 7 mètres à l'égout du toit ou au sommet de l'acrotère, - 10 mètres au faîtage. Dans le secteur UBpszc, la hauteur maximale des constructions est fixée à 7 mètres. En cas d'implantation en limite séparative, la hauteur maximale des constructions est fixée à 7 mètres sur une profondeur de 3 mètres. La hauteur maximale des constructions annexes est fixée à 3,50 mètres.",
+  "porte": "sous_secteur",
+  "modifie_calcul": true,
+  "note": "Exceptions cumulées au même article : sous-secteurs UBa/UBb/UBc = 7 m égout et UBpszc = 7 m (sous_secteur) ; limite séparative 7 m sur 3 m de profondeur (bande_limite) ; annexes 3,50 m."
+ },
+ {
+  "zone": "UB",
+  "regle": "hauteur.faitage",
+  "valeur_regle": "12.0 m",
+  "article": "UB 10.2",
+  "page_pdf": 31,
+  "texte": "La hauteur maximale des constructions est fixée à : [...] - 12 mètres au faîtage. Dans les secteurs UBa, UBb et UBc, la hauteur maximale des constructions est fixée à : [...] - 10 mètres au faîtage. Dans le secteur UBpszc, la hauteur maximale des constructions est fixée à 7 mètres.",
+  "porte": "sous_secteur",
+  "modifie_calcul": true,
+  "note": "Faîtage : UBa/UBb/UBc = 10 m ; UBpszc = 7 m (hauteur unique). Aussi limite séparative 7 m sur 3 m (bande_limite) et annexes 3,50 m. Coupure « [...] » entre clauses distinctes du même bloc."
+ },
+ {
+  "zone": "UBpsfr2",
+  "regle": "hauteur.egout",
+  "valeur_regle": "9.0 m",
+  "article": "UB 10.2",
+  "page_pdf": 31,
+  "texte": "La hauteur maximale des constructions est fixée à : - 9 mètres à l'égout du toit ou au sommet de l'acrotère, - 12 mètres au faîtage. Dans les secteurs UBa, UBb et UBc, la hauteur maximale des constructions est fixée à : - 7 mètres à l'égout du toit ou au sommet de l'acrotère, - 10 mètres au faîtage. Dans le secteur UBpszc, la hauteur maximale des constructions est fixée à 7 mètres.",
+  "porte": "sous_secteur",
+  "modifie_calcul": true,
+  "note": "L'indice psfr2 est une servitude (pas un secteur à hauteur dérogée) : règle générale UB 9 m applicable. Aussi limite séparative 7 m sur 3 m (bande_limite) et annexes 3,50 m."
+ },
+ {
+  "zone": "UBpsfr2",
+  "regle": "hauteur.faitage",
+  "valeur_regle": "12.0 m",
+  "article": "UB 10.2",
+  "page_pdf": 31,
+  "texte": "La hauteur maximale des constructions est fixée à : [...] - 12 mètres au faîtage. Dans les secteurs UBa, UBb et UBc, la hauteur maximale des constructions est fixée à : [...] - 10 mètres au faîtage. Dans le secteur UBpszc, la hauteur maximale des constructions est fixée à 7 mètres.",
+  "porte": "sous_secteur",
+  "modifie_calcul": true,
+  "note": "Règle générale UB 12 m au faîtage applicable (psfr2 = servitude). Faîtage : UBa/UBb/UBc = 10 m ; UBpszc = 7 m. Aussi limite séparative 7 m sur 3 m (bande_limite) et annexes 3,50 m."
+ },
+ {
+  "zone": "UEm",
+  "regle": "stationnement.par_logement",
+  "valeur_regle": "(sans valeur)",
+  "article": "UEM 12.2",
+  "page_pdf": 54,
+  "texte": "Habitations | Logements ≤ à 50 m² de SDP | 1 place minimum par logement | Logements > à 50 m² de SDP | 2 places minimum par logement",
+  "porte": "majoration_conditionnelle",
+  "modifie_calcul": true,
+  "note": "Tableau « Habitations » de l'art. UEM 12.2. La norme par logement dépend d'un seuil de SDP (1 place ≤ 50 m², 2 places > 50 m²), d'où l'abstention « sans valeur » défendable. Superficie min indicative 25 m²/place (12.1) ; deux-roues 1 emplacement/logement pour ≥ 2 logements (12.4)."
+ }
+]

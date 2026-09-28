@@ -1,0 +1,101 @@
+[
+ {
+  "zone": "1AUa",
+  "regle": "hauteur.egout",
+  "valeur_regle": "21.0 m",
+  "article": "Ua10.2",
+  "page_pdf": 18,
+  "texte": "Dans le secteur Uav, ce seuil est limité à 16 mètres à l'égout du toit ou au sommet de l'acrotère et 20 mètres au faîtage.",
+  "porte": "sous_secteur",
+  "modifie_calcul": true,
+  "note": null
+ },
+ {
+  "zone": "1AUa",
+  "regle": "hauteur.faitage",
+  "valeur_regle": "25.0 m",
+  "article": "Ua10.2",
+  "page_pdf": 18,
+  "texte": "Dans le secteur Uav, ce seuil est limité à 16 mètres à l'égout du toit ou au sommet de l'acrotère et 20 mètres au faîtage.",
+  "porte": "sous_secteur",
+  "modifie_calcul": true,
+  "note": null
+ },
+ {
+  "zone": "1AUa",
+  "regle": "retraits.voie",
+  "valeur_regle": "4.0 m",
+  "article": "Ua6.2",
+  "page_pdf": 15,
+  "texte": "Les constructions peuvent s'implanter soit à l'alignement, soit à 4 mètres minimum de l'emprise de la voie ou de la limite d'emprise de l'emplacement réservé figurant au document graphique. Toutefois, le long de la RD3, entre la RN3 et la Ravine Blanche, les constructions nouvelles doivent respecter un recul minimal de 10,50 mètres par rapport à l'axe de la voie.",
+  "porte": "voie_specifique",
+  "modifie_calcul": true,
+  "note": null
+ },
+ {
+  "zone": "2AUa",
+  "regle": "hauteur.egout",
+  "valeur_regle": "21.0 m",
+  "article": "Ua10.2",
+  "page_pdf": 18,
+  "texte": "Dans le secteur Uav, ce seuil est limité à 16 mètres à l'égout du toit ou au sommet de l'acrotère et 20 mètres au faîtage.",
+  "porte": "sous_secteur",
+  "modifie_calcul": true,
+  "note": null
+ },
+ {
+  "zone": "2AUa",
+  "regle": "hauteur.faitage",
+  "valeur_regle": "25.0 m",
+  "article": "Ua10.2",
+  "page_pdf": 18,
+  "texte": "Dans le secteur Uav, ce seuil est limité à 16 mètres à l'égout du toit ou au sommet de l'acrotère et 20 mètres au faîtage.",
+  "porte": "sous_secteur",
+  "modifie_calcul": true,
+  "note": null
+ },
+ {
+  "zone": "Ua",
+  "regle": "hauteur.egout",
+  "valeur_regle": "21.0 m",
+  "article": "Ua10.3",
+  "page_pdf": 18,
+  "texte": "La nouvelle construction ne doit pas excéder sur tout point mitoyen à la limite séparative et dans une marge de 3,60 mètres de profondeur une hauteur absolue de 18 mètres. Dans le secteur Uav, ce seuil est limité à 13 mètres.",
+  "porte": "bande_limite",
+  "modifie_calcul": true,
+  "note": "Règle particulière 10.3 : dans une marge de 3,60 m depuis la limite séparative, plafond ramené à 18 m (13 m en Uav) vs 21 m en règle générale 10.2."
+ },
+ {
+  "zone": "Ua",
+  "regle": "hauteur.faitage",
+  "valeur_regle": "25.0 m",
+  "article": "Ua10.3",
+  "page_pdf": 18,
+  "texte": "La nouvelle construction ne doit pas excéder sur tout point mitoyen à la limite séparative et dans une marge de 3,60 mètres de profondeur une hauteur absolue de 18 mètres. Dans le secteur Uav, ce seuil est limité à 13 mètres.",
+  "porte": "bande_limite",
+  "modifie_calcul": true,
+  "note": "Règle particulière 10.3 : plafond de hauteur absolue de 18 m (13 m en Uav) dans la marge de 3,60 m depuis la limite séparative ; s'applique par rapport à la hauteur définie en 10.2."
+ },
+ {
+  "zone": "Ua",
+  "regle": "retraits.voie",
+  "valeur_regle": "4.0 m",
+  "article": "Ua6.2",
+  "page_pdf": 15,
+  "texte": "Les constructions peuvent s'implanter soit à l'alignement, soit à 4 mètres minimum de l'emprise de la voie ou de la limite d'emprise de l'emplacement réservé figurant au document graphique. Toutefois, le long de la RD3, entre la RN3 et la Ravine Blanche, les constructions nouvelles doivent respecter un recul minimal de 10,50 mètres par rapport à l'axe de la voie.",
+  "porte": "voie_specifique",
+  "modifie_calcul": true,
+  "note": null
+ },
+ {
+  "zone": "Uav",
+  "regle": "retraits.voie",
+  "valeur_regle": "4.0 m",
+  "article": "Ua6.2",
+  "page_pdf": 15,
+  "texte": "Les constructions peuvent s'implanter soit à l'alignement, soit à 4 mètres minimum de l'emprise de la voie ou de la limite d'emprise de l'emplacement réservé figurant au document graphique. Toutefois, le long de la RD3, entre la RN3 et la Ravine Blanche, les constructions nouvelles doivent respecter un recul minimal de 10,50 mètres par rapport à l'axe de la voie.",
+  "porte": "voie_specifique",
+  "modifie_calcul": true,
+  "note": "L'article Ua6.2 s'applique au secteur Uav sans valeur d'implantation propre ; l'exception voie (RD3, 10,50 m par rapport à l'axe) est la seule dérogation chiffrée aux 4 m / alignement."
+ }
+]

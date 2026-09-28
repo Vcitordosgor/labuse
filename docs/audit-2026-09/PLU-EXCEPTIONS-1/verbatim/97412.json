@@ -1,0 +1,156 @@
+[
+ {
+  "zone": "1AU3",
+  "regle": "hauteur.egout",
+  "valeur_regle": "11 m",
+  "article": "U3 10.2",
+  "page_pdf": 51,
+  "texte": "La hauteur maximale des constructions implantées dans une profondeur de 6 mètres comptés depuis la limite de l’alignement de la voie ou de l’emprise publique ne peut excéder : - 8 mètres à l’égout du toit ou au sommet de l’acrotère … La hauteur maximale des constructions implantées dans une profondeur comprise entre 6 mètres et 12 mètres … ne peut excéder : - 10 mètres à l’égout du toit … Dans le cas d’une construction principale implantée au-delà d’une profondeur de 12 mètres … la hauteur maximale ne peut excéder : - 11 mètres à l’égout du toit ou au sommet de l’acrotère",
+  "porte": "sous_secteur",
+  "modifie_calcul": true,
+  "note": "Zone 1AU3 renvoie au règlement U3 (« se reporter au règlement des zones urbaines correspondantes »). Égout U3 10.2 par tranches de profondeur (8/10/11 m) ; en outre porté à 13 m au-delà de 12 m si RDC commerces/services ou Résidence pour Personnes Âgées, et secteur U3a plafonné à 8 m (10 m si commerce au-delà de 6 m). LABUSE ne retient que la tranche 11 m."
+ },
+ {
+  "zone": "1AU3",
+  "regle": "hauteur.faitage",
+  "valeur_regle": "13 m",
+  "article": "U3 10.2",
+  "page_pdf": 51,
+  "texte": "La hauteur maximale des constructions implantées dans une profondeur de 6 mètres … ne peut excéder : … - 10 mètres au faîtage. La hauteur maximale des constructions implantées dans une profondeur comprise entre 6 mètres et 12 mètres … - 12 mètres au faîtage. Dans le cas d’une construction principale implantée au-delà d’une profondeur de 12 mètres … la hauteur maximale ne peut excéder : … - 13 mètres au faîtage.",
+  "porte": "sous_secteur",
+  "modifie_calcul": true,
+  "note": "Zone 1AU3 renvoie à U3. Faîtage U3 10.2 par tranches (10/12/13 m) ; porté à 15 m au-delà de 12 m si commerces/services/RPA ; secteur U3a plafonné à 9 m (12 m si commerce). LABUSE ne retient que 13 m."
+ },
+ {
+  "zone": "1AU5",
+  "regle": "emprise_sol.ces",
+  "valeur_regle": "50 %",
+  "article": "U5 9.2",
+  "page_pdf": 80,
+  "texte": "L'emprise au sol des constructions ne doit pas excéder 50% de la superficie de l'unité foncière. Dans le secteur U5cvd, ce seuil est porté à 75% et en U5cv à 60%, tandis que dans les secteurs U5ma, U5ru et U5vi ce seuil est limité à 40%.",
+  "porte": "sous_secteur",
+  "modifie_calcul": true,
+  "note": "Zone 1AU5 renvoie au règlement U5. LABUSE ne retient que le 50 % général."
+ },
+ {
+  "zone": "1AU6",
+  "regle": "hauteur.egout",
+  "valeur_regle": "12 m",
+  "article": "U6 10.2",
+  "page_pdf": 95,
+  "texte": "La hauteur maximale des constructions est fixée à : - 12 mètres à l’égout du toit … Dans le secteur U6c, ces seuils sont portés à : - 15 mètres à l’égout du toit … Dans le secteur U6ch et la zone d'activités de Vincendo, ces seuils sont limités à : - 10 mètres à l’égout du toit",
+  "porte": "sous_secteur",
+  "modifie_calcul": true,
+  "note": "Zone 1AU6 renvoie au règlement U6. LABUSE ne retient que le 12 m général."
+ },
+ {
+  "zone": "1AU6",
+  "regle": "hauteur.faitage",
+  "valeur_regle": "15 m",
+  "article": "U6 10.2",
+  "page_pdf": 95,
+  "texte": "La hauteur maximale des constructions est fixée à : … - 15 mètres au faîtage ou au sommet de l’acrotère. Dans le secteur U6c, ces seuils sont portés à : … - 18 mètres au faîtage ou au sommet de l’acrotère. Dans le secteur U6ch et la zone d'activités de Vincendo, ces seuils sont limités à : … - 13 mètres au faîtage ou au sommet de l’acrotère.",
+  "porte": "sous_secteur",
+  "modifie_calcul": true,
+  "note": "Zone 1AU6 renvoie au règlement U6. LABUSE ne retient que le 15 m général."
+ },
+ {
+  "zone": "U1",
+  "regle": "retraits.limites_separatives",
+  "valeur_regle": "3.0 m",
+  "article": "U1 7.2",
+  "page_pdf": 19,
+  "texte": "Dans le cas d’une unité foncière ayant un linéaire contigu à la voie inférieur à 12 mètres, les constructions doivent être implantées sur les deux limites latérales. Dans le cas contraire, les constructions peuvent être implantées soit en retrait soit sur une seule limite latérale. En cas de retrait de la construction, la distance … doit être au minimum égale à 3 mètres.",
+  "porte": "autre",
+  "modifie_calcul": true,
+  "note": "Si le linéaire de l'unité foncière contigu à la voie est inférieur à 12 m, le retrait latéral est interdit (implantation obligatoire sur les deux limites latérales) ; le minimum de 3 m ne s'applique que dans le cas contraire. LABUSE ne signale pas ce cas < 12 m (condition sur la géométrie de l'unité foncière, pas un sous-secteur ni une bande depuis limite)."
+ },
+ {
+  "zone": "U3",
+  "regle": "hauteur.egout",
+  "valeur_regle": "11.0 m",
+  "article": "U3 10.2",
+  "page_pdf": 51,
+  "texte": "La hauteur maximale des constructions implantées dans une profondeur de 6 mètres comptés depuis la limite de l’alignement de la voie ou de l’emprise publique ne peut excéder : - 8 mètres à l’égout du toit ou au sommet de l’acrotère … La hauteur maximale des constructions implantées dans une profondeur comprise entre 6 mètres et 12 mètres … ne peut excéder : - 10 mètres à l’égout du toit … Dans le cas d’une construction principale implantée au-delà d’une profondeur de 12 mètres … la hauteur maximale ne peut excéder : - 11 mètres à l’égout du toit ou au sommet de l’acrotère",
+  "porte": "bande_limite",
+  "modifie_calcul": true,
+  "note": "Égout par tranches de profondeur depuis l'alignement (8 m à 0-6 m, 10 m à 6-12 m, 11 m au-delà de 12 m) ; porté à 13 m au-delà de 12 m si RDC commerces/services/RPA ; secteur U3a plafonné à 8 m (10 m si commerce au-delà de 6 m). LABUSE retient la tranche la plus haute (11 m) sans les tranches ni les cas."
+ },
+ {
+  "zone": "U3",
+  "regle": "hauteur.faitage",
+  "valeur_regle": "13.0 m",
+  "article": "U3 10.2",
+  "page_pdf": 51,
+  "texte": "La hauteur maximale des constructions implantées dans une profondeur de 6 mètres … ne peut excéder : … - 10 mètres au faîtage. La hauteur maximale des constructions implantées dans une profondeur comprise entre 6 mètres et 12 mètres … - 12 mètres au faîtage. Dans le cas d’une construction principale implantée au-delà d’une profondeur de 12 mètres … la hauteur maximale ne peut excéder : … - 13 mètres au faîtage.",
+  "porte": "bande_limite",
+  "modifie_calcul": true,
+  "note": "Faîtage par tranches de profondeur (10/12/13 m) ; porté à 15 m au-delà de 12 m si commerces/services/RPA ; secteur U3a plafonné à 9 m (12 m si commerce). LABUSE ne retient que 13 m."
+ },
+ {
+  "zone": "U4",
+  "regle": "hauteur.egout",
+  "valeur_regle": "6.0 m",
+  "article": "U4 10.2",
+  "page_pdf": 65,
+  "texte": "La hauteur maximale des constructions ne peut excéder : - 6 mètres à l’égout du toit ou au sommet de l’acrotère … Toutefois, lorsque la construction comporte des locaux commerciaux, de services ou de bureaux, la hauteur maximale est portée à : - 7 mètres à l’égout du toit ou au sommet de l’acrotère",
+  "porte": "majoration_conditionnelle",
+  "modifie_calcul": true,
+  "note": "Portée à 7 m si la construction comporte des locaux commerciaux, de services ou de bureaux. LABUSE ne retient que 6 m."
+ },
+ {
+  "zone": "U4",
+  "regle": "hauteur.faitage",
+  "valeur_regle": "9.0 m",
+  "article": "U4 10.2",
+  "page_pdf": 65,
+  "texte": "La hauteur maximale des constructions ne peut excéder : … - 9 mètres au faîtage. Toutefois, lorsque la construction comporte des locaux commerciaux, de services ou de bureaux, la hauteur maximale est portée à : … - 10 mètres au faîtage.",
+  "porte": "majoration_conditionnelle",
+  "modifie_calcul": true,
+  "note": "Portée à 10 m si locaux commerciaux/services/bureaux. LABUSE ne retient que 9 m."
+ },
+ {
+  "zone": "U5",
+  "regle": "emprise_sol.ces",
+  "valeur_regle": "50.0 %",
+  "article": "U5 9.2",
+  "page_pdf": 80,
+  "texte": "L'emprise au sol des constructions ne doit pas excéder 50% de la superficie de l'unité foncière. Dans le secteur U5cvd, ce seuil est porté à 75% et en U5cv à 60%, tandis que dans les secteurs U5ma, U5ru et U5vi ce seuil est limité à 40%.",
+  "porte": "sous_secteur",
+  "modifie_calcul": true,
+  "note": null
+ },
+ {
+  "zone": "U5ma",
+  "regle": "retraits.voie",
+  "valeur_regle": "4.0 m",
+  "article": "U5 6.2",
+  "page_pdf": 77,
+  "texte": "Dans le secteur U5ma : un retrait de 1,5 mètres est autorisé pour les constructions à usage commercial et touristique à vocation de restauration et ou/d’hébergement et dès lors qu’il s’agit de terrasses ouvertes, aérées. La bande de recul de 1,5 mètres doit obligatoirement être plantée.",
+  "porte": "destination",
+  "modifie_calcul": true,
+  "note": "Le retrait de voie de 4 m est réduit à 1,5 m dans le secteur U5ma pour les constructions à usage commercial et touristique (restauration/hébergement) sur terrasses ouvertes. LABUSE ne retient que 4 m."
+ },
+ {
+  "zone": "U6",
+  "regle": "hauteur.egout",
+  "valeur_regle": "12.0 m",
+  "article": "U6 10.2",
+  "page_pdf": 95,
+  "texte": "La hauteur maximale des constructions est fixée à : - 12 mètres à l’égout du toit … Dans le secteur U6c, ces seuils sont portés à : - 15 mètres à l’égout du toit … Dans le secteur U6ch et la zone d'activités de Vincendo, ces seuils sont limités à : - 10 mètres à l’égout du toit",
+  "porte": "sous_secteur",
+  "modifie_calcul": true,
+  "note": "U6c porté à 15 m ; U6ch et ZA de Vincendo limités à 10 m. LABUSE ne retient que 12 m."
+ },
+ {
+  "zone": "U6",
+  "regle": "hauteur.faitage",
+  "valeur_regle": "15.0 m",
+  "article": "U6 10.2",
+  "page_pdf": 95,
+  "texte": "La hauteur maximale des constructions est fixée à : … - 15 mètres au faîtage ou au sommet de l’acrotère. Dans le secteur U6c, ces seuils sont portés à : … - 18 mètres au faîtage ou au sommet de l’acrotère. Dans le secteur U6ch et la zone d'activités de Vincendo, ces seuils sont limités à : … - 13 mètres au faîtage ou au sommet de l’acrotère.",
+  "porte": "sous_secteur",
+  "modifie_calcul": true,
+  "note": "U6c porté à 18 m ; U6ch et ZA de Vincendo limités à 13 m. LABUSE ne retient que 15 m."
+ }
+]

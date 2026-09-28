@@ -9,13 +9,15 @@
 import { useState } from 'react'
 import { Trace } from '../../lib/trace'
 import { fmtInt } from '../../lib/format'
-import type { FicheZoneDestinations, ReglementPlu } from '../../lib/types'
+import type { FicheZoneDestinations, ReglementPlu, PluException } from '../../lib/types'
 import { BlocIndisponible } from './BlocIndisponible'
 import { DestinationBadge } from '../outils/DestinationSelect'   // DESTINATIONS-1 (X4.2) — pastille contour partagée
 import { GroupLabel, FactNote } from './primitives'
 import { Chevron } from '../ui/Chevron'
 // KELFONCIER-FIX-2 (Lot G) — les règles-valeurs de la zone passent en Tuiles de la maquette v3.
-import { Tuiles, type Tuile } from './formes'
+import { Tuiles, type Tuile, InfoI } from './formes'
+// PLU-EXCEPTIONS-1 — l'exception au règlement, affichée sous le « i » de la tuile de règle.
+import { ExceptionTip } from './PluExceptionTip'
 
 // FICHE-FIX-4 (Lot F) — les 6 dimensions de règle, en gris « non calibré », pour les zones dont le
 // règlement n'est pas indexé à la lettre dans LABUSE (même gabarit que les zones calibrées).
@@ -131,12 +133,21 @@ export function ReglementPluBlock({ rp }: { rp: ReglementPlu }) {
             // voie · Recul limites · Pleine terre · Stationnement), valeur courte (« 10 m », « 50 % »,
             // « 1 / logt »), l'article en sous-ligne. Aucune donnée perdue (valeur pleine en `title`).
             <Tuiles cols={z.regles_valeurs.length >= 5 ? 3 : 2}
-              items={z.regles_valeurs.map((rv): Tuile => ({
-                label: shortReglLabel(rv.libelle),
-                valeur: (rv.etat === 'chiffre' || rv.etat === 'texte') && rv.valeur ? shortReglValeur(rv.valeur) : '—',
-                sous: rv.reference ? (rv.reference.split(',')[0].replace(/^Zone \S+ /, '').trim() || undefined) : undefined,
-                ton: rv.etat === 'chiffre' || rv.etat === 'texte' ? undefined : 'gris',
-              }))} />
+              items={z.regles_valeurs.map((rv): Tuile => {
+                const exc = (rv.exceptions ?? []) as PluException[]
+                return {
+                  label: shortReglLabel(rv.libelle),
+                  valeur: (rv.etat === 'chiffre' || rv.etat === 'texte') && rv.valeur ? shortReglValeur(rv.valeur) : '—',
+                  sous: rv.reference ? (rv.reference.split(',')[0].replace(/^Zone \S+ /, '').trim() || undefined) : undefined,
+                  ton: rv.etat === 'chiffre' || rv.etat === 'texte' ? undefined : 'gris',
+                  // PLU-EXCEPTIONS-1 — la tuile porte un point d'exception + un « i » qui ouvre le
+                  // texte (verbatim), l'article et la page. Une règle sans exception n'affiche rien.
+                  marque: exc.length > 0 || undefined,
+                  info: exc.length > 0
+                    ? <InfoI aria={`Exception au règlement — ${rv.libelle}`} tip={<ExceptionTip regle={rv.libelle} exceptions={exc} />} />
+                    : undefined,
+                }
+              })} />
           ) : (
             // FICHE-FIX-4 (Lot F) — MÊME GABARIT pour les zones non indexées : les 6 tuiles de règles
             // en gris « non calibré » (au lieu d'un paragraphe gris), le règlement écrit reste lié
