@@ -51,6 +51,7 @@ zones:
           citation: 'pour les constructions à usage d''habitation : 1 place de stationnement par logement
             ;'
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : LLTS : aucune place demandée. Mutualisation dans un rayon de 300 m (constructions/équipements publics) : -50 %. Équipements existants : pas d'exigence chiffrée."
       pleine_terre:
         pct:
           pct: 25.0
@@ -131,6 +132,7 @@ zones:
           page_pdf: 38
           citation: L'emprise au sol de l'ensemble des bâtiments ne pourra pas excéder 50 % de l'unité foncière
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Ne s'applique pas aux équipements publics d'intérêt collectif."
       retraits:
         voie:
           min_m: 4.0
@@ -152,6 +154,7 @@ zones:
           page_pdf: 40
           citation: 'pour les constructions : 1 place de stationnement par logement ;'
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : LLTS : aucune place demandée. Mutualisation dans 300 m (équipements publics) : -50 %. Équipements existants : pas d'exigence chiffrée."
       pleine_terre:
         pct:
           pct: 30.0
@@ -224,6 +227,7 @@ zones:
           page_pdf: 38
           citation: L'emprise au sol de l'ensemble des bâtiments ne pourra pas excéder 50 % de l'unité foncière
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Ne s'applique pas aux équipements publics d'intérêt collectif. (UC.9 commun, aucune règle d'emprise propre au secteur UCe.)"
       retraits:
         voie:
           min_m: 4.0
@@ -245,6 +249,7 @@ zones:
           page_pdf: 40
           citation: 'pour les constructions : 1 place de stationnement par logement ;'
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : LLTS : aucune place demandée. Mutualisation dans 300 m : -50 %. (UC.12 commun au secteur UCe.)"
       pleine_terre:
         pct:
           pct: 30.0
@@ -324,6 +329,7 @@ zones:
           page_pdf: 48
           citation: L'emprise au sol de l'ensemble des bâtiments ne pourra pas excéder 40 % de l'unité foncière.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Ne s'applique pas aux ouvrages techniques de distribution d'énergie électrique ni aux ouvrages de stockage des eaux."
       retraits:
         voie:
           min_m: 4.0
@@ -346,6 +352,7 @@ zones:
           citation: 'pour les constructions à usage d''habitation : 1 place de stationnement par logement
             ;'
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : LLTS : aucune place de stationnement n'est demandée."
       pleine_terre:
         pct:
           pct: 35.0
@@ -423,6 +430,7 @@ zones:
           page_pdf: 48
           citation: L'emprise au sol de l'ensemble des bâtiments ne pourra pas excéder 40 % de l'unité foncière.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Ne s'applique pas aux ouvrages techniques de distribution d'énergie électrique ni aux ouvrages de stockage des eaux. (UD.9 commun, pas de règle d'emprise propre au secteur UDe.)"
       retraits:
         voie:
           min_m: 4.0
@@ -445,6 +453,7 @@ zones:
           citation: 'pour les constructions à usage d''habitation : 1 place de stationnement par logement
             ;'
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : LLTS : aucune place demandée. (UD.12 commun au secteur UDe.)"
       pleine_terre:
         pct:
           pct: 35.0
@@ -611,6 +620,7 @@ zones:
           citation: La hauteur maximale des constructions par rapport au terrain est limitée à 7 mètres mesurés
             à l'égout du toit et 10 mètres au faîtage.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Pour des installations dont les caractéristiques techniques l'imposent : hauteur maximale de 13 mètres à l'égout du toit."
       emprise_sol:
         ces:
           pct: 50.0
@@ -627,6 +637,7 @@ zones:
           citation: Pour toutes les autres voies, les constructions doivent respecter un recul minimum de
             5 mètres par rapport à l'alignement.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Recul de 20 mètres minimum par rapport à l'axe de la RN 2 (sauf installations de distribution de carburant)."
         limites_separatives:
           min_m: 4.0
           article: UEa.7
@@ -942,6 +953,7 @@ zones:
           citation: 'pour les constructions à usage d''habitation : 1 place de stationnement par logement
             ;'
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : LLTS : aucune place de stationnement n'est demandée."
       pleine_terre:
         pct:
           pct: 10.0
@@ -1027,6 +1039,7 @@ zones:
           page_pdf: 93
           citation: L'emprise au sol de l'ensemble des bâtiments ne pourra pas excéder 50 % de l'unité foncière
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Ne s'applique pas aux équipements publics d'intérêt collectif."
       retraits:
         voie:
           min_m: 4.0
@@ -1048,6 +1061,7 @@ zones:
           page_pdf: 96
           citation: 'pour les constructions : 1 place de stationnement par logement ;'
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Logement Locatif Très Social (LLTS) : aucune place de stationnement n'est demandée."
       pleine_terre:
         pct:
           pct: 30.0
@@ -1125,6 +1139,7 @@ zones:
           page_pdf: 93
           citation: L'emprise au sol de l'ensemble des bâtiments ne pourra pas excéder 50 % de l'unité foncière
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Ne s'applique pas aux équipements publics d'intérêt collectif. (1AUa est un secteur de 1AU, article 1AU.9 commun.)"
       retraits:
         voie:
           min_m: 4.0
@@ -1146,6 +1161,7 @@ zones:
           page_pdf: 96
           citation: 'pour les constructions : 1 place de stationnement par logement ;'
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : LLTS : aucune place demandée. (1AUa relève de l'article 1AU.12 commun.)"
       pleine_terre:
         pct:
           pct: 30.0
@@ -1238,6 +1254,7 @@ zones:
           page_pdf: 103
           citation: L'emprise au sol de l'ensemble des bâtiments ne pourra pas excéder 50 % de l'unité foncière
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Ne s'applique pas aux équipements publics d'intérêt collectif."
       retraits:
         voie:
           min_m: 4.0
@@ -1259,6 +1276,7 @@ zones:
           page_pdf: 106
           citation: 'pour les constructions : 1 place de stationnement par logement ;'
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : LLTS : aucune place de stationnement n'est demandée."
       pleine_terre:
         pct:
           pct: 30.0
@@ -1546,6 +1564,7 @@ zones:
           citation: La hauteur maximale des constructions par rapport au terrain est limitée à 7 mètres mesurée
             à l'égout du toit et 10 mètres au faîtage.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Pour des installations dont les caractéristiques techniques l'imposent : hauteur maximale de 13 mètres à l'égout du toit."
       emprise_sol:
         ces:
           pct: 50.0
@@ -1562,6 +1581,7 @@ zones:
           citation: Pour toutes les autres voies, les constructions doivent respecter un recul minimum de
             5 mètres par rapport à l'alignement.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Recul de 20 mètres minimum par rapport à l'axe de la RN 2 (sauf installations de distribution de carburant)."
         limites_separatives:
           min_m: 4.0
           article: AUE.7
