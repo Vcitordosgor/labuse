@@ -2347,7 +2347,7 @@ export interface RadarMarcheLigne {
   prix_m2_terrain: RadarMesure; prix_m2_bati: RadarMesure; delai_median_j: RadarMesure
   taux_echec_pct: RadarMesure; part_particuliers_pct: RadarMesure
 }
-export interface RadarMarche { communes: RadarMarcheLigne[]; ile: RadarMarcheLigne; seuil_n: number; corpus_total: number; corpus_actif: number }
+export interface RadarMarche { communes: RadarMarcheLigne[]; ile: RadarMarcheLigne; seuil_n: number; corpus_total: number; corpus_actif: number; corpus_jeune: boolean }
 export const getRadarMarche = () => j<RadarMarche>('/radar/marche')
 // RADAR-HTML (Lot 4) — signaux croisés d'une commune (écart demandé/acté + annonces actives).
 export interface RadarEcart {

@@ -65,3 +65,15 @@ def test_f31_blocb_zan_horizon_sans_defaut_fabrique():
     bb = (SRC / "components/outils/blocB.tsx").read_text(encoding="utf-8")
     assert "?? 99" not in bb, "défaut 99 fabriqué revenu (F31)"
     assert "horizon != null && horizon < 5" in bb
+
+
+def test_f25_radar_corpus_jeune_servi():
+    """F25 — le bandeau « corpus jeune » n'est plus décidé au front (`corpus_total < 40`) : le back
+    sert le flag `corpus_jeune` (seuil SEUIL_CORPUS_JEUNE), le front le lit."""
+    from labuse.pige.marche import SEUIL_CORPUS_JEUNE
+    assert SEUIL_CORPUS_JEUNE == 40
+    src = (ROOT / "src/labuse/pige/marche.py").read_text(encoding="utf-8")
+    assert '"corpus_jeune": corpus_total < SEUIL_CORPUS_JEUNE' in src
+    rm = (SRC / "components/outils/RadarMarche.tsx").read_text(encoding="utf-8")
+    assert "const jeune = data.corpus_jeune" in rm
+    assert "corpus_total < 40" not in rm, "seuil corpus recalculé au front (F25)"

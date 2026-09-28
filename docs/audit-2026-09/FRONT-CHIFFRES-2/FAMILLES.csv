@@ -23,7 +23,7 @@ F21,1,seuil,remonter,fiche,components/fiche/blocks.tsx,1,remonter_back,blocks.ts
 F22,1,seuil,remonter,fiche,components/fiche/formes.tsx,1,remonter_back,formes.tsx:99,couleur/cran d'une valeur servie (aucun chiffre/libellé décidé),reclassé_présentation,
 F23,1,seuil,remonter,fiche,components/fiche/reseaux.tsx,1,remonter_back,reseaux.tsx:48-53,,a_faire,
 F24,1,seuil,remonter,admin/map,components/map/MapView.tsx,1,remonter_back,MapView.tsx:344,,a_faire,
-F25,1,seuil,remonter,outils,components/outils/RadarMarche.tsx,1,remonter_back,RadarMarche.tsx:46,,a_faire,
+F25,1,seuil,remonter,outils,components/outils/RadarMarche.tsx,1,remonter_back,RadarMarche.tsx:46,corpus jeune (bandeau Radar),remonté,F25
 F26,1,seuil,remonter,outils,components/outils/ScoringV2.tsx,1,remonter_back,ScoringV2.tsx:61,,a_faire,
 F27,1,seuil,remonter,outils,components/outils/Successions.tsx,1,remonter_back,Successions.tsx:152,,a_faire,
 F28,1,seuil,remonter,outils,components/outils/TaxeAmenagement.tsx,1,remonter_back,TaxeAmenagement.tsx:117,,a_faire,
