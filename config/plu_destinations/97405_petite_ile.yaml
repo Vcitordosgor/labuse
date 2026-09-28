@@ -51,7 +51,12 @@ zones:
           citation: 'pour les constructions à usage d''habitation : 1 place de stationnement par logement
             ;'
           statut: valide
-          note: "PLU-VERIF-1 (exception à afficher) : LLTS : aucune place demandée. Mutualisation dans un rayon de 300 m (constructions/équipements publics) : -50 %. Équipements existants : pas d'exigence chiffrée."
+          exceptions:
+          - texte: "b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée … En cas de mutualisation possible dans un rayon de 300 mètres pour les constructions et équipements publics, le nombre de places requises peut être diminué de 50%."
+            article: "UB.12"
+            page_pdf: 31
+            porte: "destination"
+            modifie_calcul: false
       pleine_terre:
         pct:
           pct: 25.0
@@ -132,7 +137,12 @@ zones:
           page_pdf: 38
           citation: L'emprise au sol de l'ensemble des bâtiments ne pourra pas excéder 50 % de l'unité foncière
           statut: valide
-          note: "PLU-VERIF-1 (exception à afficher) : Ne s'applique pas aux équipements publics d'intérêt collectif."
+          exceptions:
+          - texte: "L’emprise au sol de l’ensemble des bâtiments ne pourra pas excéder 50 % de l’unité foncière sous réserve du respect des dispositions de l’article UC.4 concernant l’assainissement des eaux usées et de l’article UC.13 concernant la perméabilité. Cette disposition ne s’applique pas aux équipements publics d’intérêt collectif."
+            article: "UC.9"
+            page_pdf: 38
+            porte: "exclusion_generique"
+            modifie_calcul: false
       retraits:
         voie:
           min_m: 4.0
@@ -154,7 +164,12 @@ zones:
           page_pdf: 40
           citation: 'pour les constructions : 1 place de stationnement par logement ;'
           statut: valide
-          note: "PLU-VERIF-1 (exception à afficher) : LLTS : aucune place demandée. Mutualisation dans 300 m (équipements publics) : -50 %. Équipements existants : pas d'exigence chiffrée."
+          exceptions:
+          - texte: "b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée … En cas de mutualisation possible dans un rayon de 300 mètres pour les constructions et équipements publics, le nombre de places requises peut être diminué de 50%."
+            article: "UC.12"
+            page_pdf: 40
+            porte: "destination"
+            modifie_calcul: false
       pleine_terre:
         pct:
           pct: 30.0
@@ -227,7 +242,12 @@ zones:
           page_pdf: 38
           citation: L'emprise au sol de l'ensemble des bâtiments ne pourra pas excéder 50 % de l'unité foncière
           statut: valide
-          note: "PLU-VERIF-1 (exception à afficher) : Ne s'applique pas aux équipements publics d'intérêt collectif. (UC.9 commun, aucune règle d'emprise propre au secteur UCe.)"
+          exceptions:
+          - texte: "L’emprise au sol de l’ensemble des bâtiments ne pourra pas excéder 50 % de l’unité foncière sous réserve du respect des dispositions de l’article UC.4 concernant l’assainissement des eaux usées et de l’article UC.13 concernant la perméabilité. Cette disposition ne s’applique pas aux équipements publics d’intérêt collectif."
+            article: "UC.9"
+            page_pdf: 38
+            porte: "exclusion_generique"
+            modifie_calcul: false
       retraits:
         voie:
           min_m: 4.0
@@ -249,7 +269,12 @@ zones:
           page_pdf: 40
           citation: 'pour les constructions : 1 place de stationnement par logement ;'
           statut: valide
-          note: "PLU-VERIF-1 (exception à afficher) : LLTS : aucune place demandée. Mutualisation dans 300 m : -50 %. (UC.12 commun au secteur UCe.)"
+          exceptions:
+          - texte: "b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée … En cas de mutualisation possible dans un rayon de 300 mètres pour les constructions et équipements publics, le nombre de places requises peut être diminué de 50%."
+            article: "UC.12"
+            page_pdf: 40
+            porte: "destination"
+            modifie_calcul: false
       pleine_terre:
         pct:
           pct: 30.0
@@ -329,7 +354,12 @@ zones:
           page_pdf: 48
           citation: L'emprise au sol de l'ensemble des bâtiments ne pourra pas excéder 40 % de l'unité foncière.
           statut: valide
-          note: "PLU-VERIF-1 (exception à afficher) : Ne s'applique pas aux ouvrages techniques de distribution d'énergie électrique ni aux ouvrages de stockage des eaux."
+          exceptions:
+          - texte: "L’emprise au sol de l’ensemble des bâtiments ne pourra pas excéder 40 % de l’unité foncière. Cette disposition ne s’applique pas aux ouvrages techniques de distribution d’énergie électrique ainsi qu’aux ouvrages de stockage des eaux."
+            article: "UD.9"
+            page_pdf: 48
+            porte: "exclusion_generique"
+            modifie_calcul: false
       retraits:
         voie:
           min_m: 4.0
@@ -352,7 +382,12 @@ zones:
           citation: 'pour les constructions à usage d''habitation : 1 place de stationnement par logement
             ;'
           statut: valide
-          note: "PLU-VERIF-1 (exception à afficher) : LLTS : aucune place de stationnement n'est demandée."
+          exceptions:
+          - texte: "b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée ;"
+            article: "UD.12"
+            page_pdf: 50
+            porte: "destination"
+            modifie_calcul: false
       pleine_terre:
         pct:
           pct: 35.0
@@ -430,7 +465,12 @@ zones:
           page_pdf: 48
           citation: L'emprise au sol de l'ensemble des bâtiments ne pourra pas excéder 40 % de l'unité foncière.
           statut: valide
-          note: "PLU-VERIF-1 (exception à afficher) : Ne s'applique pas aux ouvrages techniques de distribution d'énergie électrique ni aux ouvrages de stockage des eaux. (UD.9 commun, pas de règle d'emprise propre au secteur UDe.)"
+          exceptions:
+          - texte: "L’emprise au sol de l’ensemble des bâtiments ne pourra pas excéder 40 % de l’unité foncière. Cette disposition ne s’applique pas aux ouvrages techniques de distribution d’énergie électrique ainsi qu’aux ouvrages de stockage des eaux."
+            article: "UD.9"
+            page_pdf: 48
+            porte: "exclusion_generique"
+            modifie_calcul: false
       retraits:
         voie:
           min_m: 4.0
@@ -453,7 +493,12 @@ zones:
           citation: 'pour les constructions à usage d''habitation : 1 place de stationnement par logement
             ;'
           statut: valide
-          note: "PLU-VERIF-1 (exception à afficher) : LLTS : aucune place demandée. (UD.12 commun au secteur UDe.)"
+          exceptions:
+          - texte: "b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée ;"
+            article: "UD.12"
+            page_pdf: 50
+            porte: "destination"
+            modifie_calcul: false
       pleine_terre:
         pct:
           pct: 35.0
@@ -620,7 +665,12 @@ zones:
           citation: La hauteur maximale des constructions par rapport au terrain est limitée à 7 mètres mesurés
             à l'égout du toit et 10 mètres au faîtage.
           statut: valide
-          note: "PLU-VERIF-1 (exception à afficher) : Pour des installations dont les caractéristiques techniques l'imposent : hauteur maximale de 13 mètres à l'égout du toit."
+          exceptions:
+          - texte: "La hauteur maximale des constructions par rapport au terrain est limitée à 7 mètres mesurés à l’égout du toit et 10 mètres au faîtage. Toutefois, il peut être admis, pour des installations dont les caractéristiques techniques l’imposent, une hauteur maximale de 13 mètres à l’égout du toit."
+            article: "UEa.10"
+            page_pdf: 62
+            porte: "hauteur_alternative"
+            modifie_calcul: false
       emprise_sol:
         ces:
           pct: 50.0
@@ -637,7 +687,12 @@ zones:
           citation: Pour toutes les autres voies, les constructions doivent respecter un recul minimum de
             5 mètres par rapport à l'alignement.
           statut: valide
-          note: "PLU-VERIF-1 (exception à afficher) : Recul de 20 mètres minimum par rapport à l'axe de la RN 2 (sauf installations de distribution de carburant)."
+          exceptions:
+          - texte: "Les constructions doivent respecter un recul de 20 mètres minimum par rapport à l’axe de la RN 2. Cette règle ne s’applique pas aux installations liées à la distribution de carburant sous réserve de l’avis favorable de la DDT en matière de sécurité routière. Pour toutes les autres voies, les constructions doivent respecter un recul minimum de 5 mètres par rapport à l’alignement."
+            article: "UEa.6"
+            page_pdf: 61
+            porte: "voie_specifique"
+            modifie_calcul: true
         limites_separatives:
           min_m: 4.0
           article: UEa.7
@@ -953,7 +1008,12 @@ zones:
           citation: 'pour les constructions à usage d''habitation : 1 place de stationnement par logement
             ;'
           statut: valide
-          note: "PLU-VERIF-1 (exception à afficher) : LLTS : aucune place de stationnement n'est demandée."
+          exceptions:
+          - texte: "b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée ;"
+            article: "UZ.12"
+            page_pdf: 85
+            porte: "destination"
+            modifie_calcul: false
       pleine_terre:
         pct:
           pct: 10.0
@@ -1039,7 +1099,12 @@ zones:
           page_pdf: 93
           citation: L'emprise au sol de l'ensemble des bâtiments ne pourra pas excéder 50 % de l'unité foncière
           statut: valide
-          note: "PLU-VERIF-1 (exception à afficher) : Ne s'applique pas aux équipements publics d'intérêt collectif."
+          exceptions:
+          - texte: "L’emprise au sol de l’ensemble des bâtiments ne pourra pas excéder 50 % de l’unité foncière sous réserve du respect des dispositions de l’article 1 AU.4 concernant l’assainissement des eaux usées et de l’article 1AU.13 concernant la perméabilité. Cette disposition ne s’applique pas aux équipements publics d’intérêt collectif."
+            article: "1 AU.9"
+            page_pdf: 93
+            porte: "exclusion_generique"
+            modifie_calcul: false
       retraits:
         voie:
           min_m: 4.0
@@ -1061,7 +1126,12 @@ zones:
           page_pdf: 96
           citation: 'pour les constructions : 1 place de stationnement par logement ;'
           statut: valide
-          note: "PLU-VERIF-1 (exception à afficher) : Logement Locatif Très Social (LLTS) : aucune place de stationnement n'est demandée."
+          exceptions:
+          - texte: "b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée ;"
+            article: "1AU.12"
+            page_pdf: 96
+            porte: "destination"
+            modifie_calcul: false
       pleine_terre:
         pct:
           pct: 30.0
@@ -1139,7 +1209,12 @@ zones:
           page_pdf: 93
           citation: L'emprise au sol de l'ensemble des bâtiments ne pourra pas excéder 50 % de l'unité foncière
           statut: valide
-          note: "PLU-VERIF-1 (exception à afficher) : Ne s'applique pas aux équipements publics d'intérêt collectif. (1AUa est un secteur de 1AU, article 1AU.9 commun.)"
+          exceptions:
+          - texte: "L’emprise au sol de l’ensemble des bâtiments ne pourra pas excéder 50 % de l’unité foncière sous réserve du respect des dispositions de l’article 1 AU.4 concernant l’assainissement des eaux usées et de l’article 1AU.13 concernant la perméabilité. Cette disposition ne s’applique pas aux équipements publics d’intérêt collectif."
+            article: "1 AU.9"
+            page_pdf: 93
+            porte: "exclusion_generique"
+            modifie_calcul: false
       retraits:
         voie:
           min_m: 4.0
@@ -1161,7 +1236,12 @@ zones:
           page_pdf: 96
           citation: 'pour les constructions : 1 place de stationnement par logement ;'
           statut: valide
-          note: "PLU-VERIF-1 (exception à afficher) : LLTS : aucune place demandée. (1AUa relève de l'article 1AU.12 commun.)"
+          exceptions:
+          - texte: "b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée ;"
+            article: "1AU.12"
+            page_pdf: 96
+            porte: "destination"
+            modifie_calcul: false
       pleine_terre:
         pct:
           pct: 30.0
@@ -1254,7 +1334,12 @@ zones:
           page_pdf: 103
           citation: L'emprise au sol de l'ensemble des bâtiments ne pourra pas excéder 50 % de l'unité foncière
           statut: valide
-          note: "PLU-VERIF-1 (exception à afficher) : Ne s'applique pas aux équipements publics d'intérêt collectif."
+          exceptions:
+          - texte: "L’emprise au sol de l’ensemble des bâtiments ne pourra pas excéder 50 % de l’unité foncière sous réserve du respect des dispositions de l’article 1 AU.4 concernant l’assainissement des eaux usées et de l’article 1AU.13 concernant la perméabilité. Cette disposition ne s’applique pas aux équipements publics d’intérêt collectif."
+            article: "1AUZ.9"
+            page_pdf: 103
+            porte: "exclusion_generique"
+            modifie_calcul: false
       retraits:
         voie:
           min_m: 4.0
@@ -1276,7 +1361,12 @@ zones:
           page_pdf: 106
           citation: 'pour les constructions : 1 place de stationnement par logement ;'
           statut: valide
-          note: "PLU-VERIF-1 (exception à afficher) : LLTS : aucune place de stationnement n'est demandée."
+          exceptions:
+          - texte: "b) pour les logements locatifs financés par un prêt aidé de l’Etat : 1 place de stationnement par logement, à l’exception du Logement Locatif Très Social (LLTS) où aucune place de stationnement n’est demandée ;"
+            article: "1AUZ.12"
+            page_pdf: 106
+            porte: "destination"
+            modifie_calcul: false
       pleine_terre:
         pct:
           pct: 30.0
@@ -1564,7 +1654,12 @@ zones:
           citation: La hauteur maximale des constructions par rapport au terrain est limitée à 7 mètres mesurée
             à l'égout du toit et 10 mètres au faîtage.
           statut: valide
-          note: "PLU-VERIF-1 (exception à afficher) : Pour des installations dont les caractéristiques techniques l'imposent : hauteur maximale de 13 mètres à l'égout du toit."
+          exceptions:
+          - texte: "La hauteur maximale des constructions par rapport au terrain est limitée à 7 mètres mesurée à l’égout du toit et 10 mètres au faîtage. Toutefois, il peut être admis, pour des installations dont les caractéristiques techniques l’imposent, une hauteur maximale de 13 mètres à l’égout du toit."
+            article: "AUE.10"
+            page_pdf: 112
+            porte: "hauteur_alternative"
+            modifie_calcul: false
       emprise_sol:
         ces:
           pct: 50.0
@@ -1581,7 +1676,12 @@ zones:
           citation: Pour toutes les autres voies, les constructions doivent respecter un recul minimum de
             5 mètres par rapport à l'alignement.
           statut: valide
-          note: "PLU-VERIF-1 (exception à afficher) : Recul de 20 mètres minimum par rapport à l'axe de la RN 2 (sauf installations de distribution de carburant)."
+          exceptions:
+          - texte: "Les constructions doivent respecter un recul de 20 mètres minimum par rapport à l’axe de la RN 2. Cette règle ne s’applique pas aux installations liées à la distribution de carburant sous réserve de l’avis favorable de la DDT en matière de sécurité routière. Pour toutes les autres voies, les constructions doivent respecter un recul minimum de 5 mètres par rapport à l’alignement."
+            article: "AUE.6"
+            page_pdf: 111
+            porte: "voie_specifique"
+            modifie_calcul: true
         limites_separatives:
           min_m: 4.0
           article: AUE.7
