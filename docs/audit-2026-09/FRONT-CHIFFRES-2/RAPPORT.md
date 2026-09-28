@@ -105,16 +105,37 @@ V6b + verrou front verts, tsc 0, vitest vert, `CHANGEMENTS.csv` à jour.
 cf. `RECLASSEMENT.md`) :* **F11** (aléa→cran), **F15** (couleur d'écart), **F17** (teinte dépense/budget),
 **F22** (couleur de jauge). → `legitime`.
 
-*Arrêté pour décision de Vic (touche l'affichage du scoring) :* **F13** (pastille tier), **F29** (badge tier).
+*~~Arrêté~~ → REMONTÉ (décision Vic : servir la DA avec le tier) :* **F13** (pastille Projets) + **F29**
+(badge Outils). Le back sert, par palier, le **jeton DA + le ton + le libellé** (`scoring/tiers_client`
+`PALIER_DA`, endpoint `GET /vocabulaire/paliers`) ; la pastille et le badge LISENT la même carte, plus
+de correspondance palier→couleur en dur. À q_v15 (bandes A/B/C/D) un seul endroit change. F29 sans
+changement visible (déjà canonique) ; **F13 corrige une dérive** (CHANGEMENTS.csv) : la pastille
+colorait `brulante` en « Priorité » (corail) alors que `PRIORITE_SERVIE=false` le résout en « À suivre »
+(ambre). Gardes `test_f13_f29`. → **12 familles P1 traitées cette session.** Checkpoint F13/F29 **re-validé banc = 188** (0 nouveau, 0 FAUX-CLIENT) après le fix `LABUSE_RATE_LIMIT_OFF` (le compteur anti-scraping bloquait le rejeu du banc en DEV — cf. `PRE-DEPLOY-1/NOTES.md`).
+
+### F01 — plan (prochaine session, à reprendre ici)
+F01 (`Fiche.tsx`, 15 lignes « seuil ») n'est PAS une notion unique : c'est un **cluster réglementaire**
+à SCINDER en sous-familles (1 commit chacune), car chaque notion a son moteur back :
+- **F01a — zonage A/N → verdict de constructibilité** (Fiche 624/658/661/855/891/1246/1816 + constructibilite 986).
+  Le front décide « zone A/N interdit la construction neuve » par regex `/^(A(?!U)|N)/i` sur `reglement_plu.zones[0].zone`.
+  À remonter : servir `zone_famille` (moteur `zone_servie`, notion registre `zone_plu_famille`) + un flag
+  `constructible_neuf` ; le front lit. **Même valeur partout** : PDF + Copilote citent le même verdict.
+- **F01b — bandes de pente** (Fiche 859/1226, dupliquées). `pente_moy_deg` servi ; le front décide
+  `plat/modérée/forte/très forte` (5/15/30°). À remonter : servir `pente_bande` (moteur terrain).
+- **F01c — affichage SDP résiduelle** (Fiche 890/1246/1841/1819 : `reglesSdp>0` borne l'affichage) +
+  **sdpMin=200** (1826, seuil de densification poussé au filtre). Servir le verdict/seuil (moteur potentiel).
+- **F01d — encart « signal »** (Fiche 566 `multBase≥2`, 1045 `multBase≥4`) : seuils décidant un LIBELLÉ.
+- **F01e — niveau de risque** (863, regex `/fort|élev/`) + **pctConsommé ≥ 100 ton ambre** (1522, couleur — présentation).
+F02 (`constructibilite`) et F03 (`ModulePanel`) suivent le même découpage par notion.
 
 **Garde-fous fin de session :** tsc 0 · vitest 225/225 · V6b + verrou front + gardes FC-2 8/8 ·
 194 tests back des modules touchés (7 skips base-data pré-existants) · banc `--echantillon`
 → `**3161 comparaisons · 188 écarts (166 INCOHERENT / 22 TOLERABLE) — inchangé vs baseline, 0 écart nouveau, 0 FAUX-CLIENT** (les familles touchées — badges radar, corpus, ZAN, questionnaire — ne sont pas des notions comparées par le banc ; le garde-fou tient par construction).`.
 
-**Reste P1 : 22 familles** (dont les grosses F01 `Fiche` 15 seuils, F02 `constructibilite` 9, F03
-`ModulePanel` 8 — zonage A/N, pente 5/15/30°, SDP, ER 50 %, fenêtres 24/36 mois — vraies règles
-réglementaires/métier à remonter ; + admin F05/F09, + F07(SRU_META)/F10/F16/F19/F20/F23/F24/F27/F28/
-F30/F32/F06/F08/F12/F21/F26). Prochaine session P1 : reprendre par F01.
+**Reste P1 : 20 familles** (F13/F29 faits) — les grosses F01 `Fiche` (scinder, cf. plan ci-dessus),
+F02 `constructibilite` 9, F03 `ModulePanel` 8 (fenêtres 24/36 mois, sommeil 3 ans) ; + admin F05/F09 ;
++ F06/F07(SRU_META)/F08/F10/F12/F16/F19/F20/F21/F23/F24/F27/F28/F30/F32 ; **F26 ScoringV2 = arrêté
+(scoring)**. Prochaine session P1 : reprendre par **F01a** (zonage A/N → verdict constructibilité).
 
 <!-- PROGRESSION -->
 
