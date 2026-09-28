@@ -82,4 +82,9 @@ def test_traçage_des_classes_pose():
     blocks = (racine / "frontend/src/components/fiche/blocks.tsx").read_text()
     assert '<Trace id="zone_plu_famille">' in blocks
     risques = (racine / "frontend/src/components/fiche/risques.tsx").read_text()
-    assert "alea_inondation_couche" in risques and "alea_mvt_couche" in risques
+    # FICHE-FIX-5 Lot F (3a2787d2, « vigilances en Ligne ambre + i, plus d'encadré ») a retiré les
+    # étiquettes <Trace id="alea_*_couche"> de risques.tsx. La TRAÇABILITÉ de l'aléa (5.2) est conservée
+    # mais changée de forme : la provenance (source · millésime) de CHAQUE aléa est portée par la note du
+    # bloc Aléas (data-aleas-detail), le détail des vigilances passant par le « i ». On vérifie ce socle.
+    assert "data-aleas-detail" in risques
+    assert "a.source" in risques and "a.millesime" in risques
