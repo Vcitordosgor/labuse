@@ -66,15 +66,20 @@ par le même point d'entrée.
 
 **17/17 boutons ouvrent le bon outil sur la parcelle/commune. Aucun bouton cassé.**
 
-## Écarts assumés / restes documentés
+## Restes (FIX-5 rapport) — TERMINÉS (un commit par point)
 
-1. **Isochrone Quartier** (« À pied 15 min / Voiture 5 min ») pas encore aligné sur les rayons km de
-   l'outil Étude de zone — refonte d'AutourZoneBlock, non faite (Lot I).
-2. **Lot J, dans FaisabiliteTab/BilanTab** (constructibilite.tsx) : items non faits (budget) —
-   « Ce que le PLU permet » → repli ; retrait des boutons Comparer / Écrire au propriétaire ;
-   « Potentiel de transformation » en Ligne ; Simulation bilan en 3 Lignes + replis. Le repli du
-   panneau (item 1) et le Gabarit (item 4) SONT faits. Cas terrain-exigu (résiduel PLU > 0 mais non
-   bâtissable) : panneau laissé ouvert.
-3. **Lot E, DispositifsBody/RtaaFromBilan** : RTAA/DPU/PEB/SUP encore en paragraphes (les 6 tuiles de
-   règles + SDP consommée sont faits).
-4. **Captures carte** : rastérisées en headless SwiftShader (visible impossible sans session d'écran).
+1. **Quartier aligné sur l'Étude de zone** `a17e52b3` — AutourZoneBlock lit l'ampleur en RAYON km
+   (0,5 / 1 / 2 / 5 km, défaut 1 km) via le MÊME endpoint que l'outil (`/outils/etude-zone`) : mêmes
+   valeurs, libellés, source. Plus de minutes à pied/voiture.
+2. **FaisabiliteTab / BilanTab** `419834c8` — « Ce que le PLU permet » → Repli « Règles du PLU »
+   (test mis à jour) ; boutons Comparer / Écrire au propriétaire RETIRÉS ; « Potentiel de
+   transformation » en Lignes + « i » ; bilan Simulation — « Détail du bilan » et « Sortie locative »
+   en Replis (réhabilitation / prix de sortie / coût travaux modifiable restent visibles).
+3. **Urbanisme RTAA / DPU / PEB / SUP** `4094f740` — DispositifsBody + RtaaBlock en Lignes courtes
+   + « i » (RTAA « N exigences → », DPU/PEB/SUP en une Ligne, code court en valeur).
+
+## Écart résiduel
+
+- **Cas terrain-exigu** (SDP résiduelle PLU > 0 mais non bâtissable) : le panneau Faisabilité reste
+  ouvert (le faisabilité l'explique) — la clé de repli est la SDP résiduelle PLU.
+- **Captures carte** : rastérisées en headless SwiftShader (visible impossible sans session d'écran).
