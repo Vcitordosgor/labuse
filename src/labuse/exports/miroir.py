@@ -571,7 +571,9 @@ def _r_voisinage(v):
 
 
 def _r_iris(v, val: Valeur):
-    t = tuiles([(groupe(v["habitants"]), f"habitants, {groupe(v.get('menages') or 0)} ménages"),
+    # COHERENCE-FIX-1 (lot D) — ménages absents → la mention SAUTE (jamais « 0 ménages »).
+    t = tuiles([(groupe(v["habitants"]),
+                 "habitants" + (f", {groupe(v['menages'])} ménages" if v.get("menages") is not None else "")),
                 (fmt_pct(v["part_60_plus_pct"]), "de 60 ans et plus")
                 if v.get("part_60_plus_pct") is not None else ("", ""),
                 (fmt_pct(v["part_locataires_pct"]), "de locataires")

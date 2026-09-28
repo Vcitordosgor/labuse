@@ -597,7 +597,10 @@ def _zan_indicateur(db: Session, commune: str | None = None) -> list[dict]:
         out.append({
             "commune": r["commune"],
             "conso_2011_2021_ha": round(c1121 / 10000, 1),          # Sourcé
-            "part_habitat_pct": round(100 * float(r["h1121"] or 0) / c1121) if c1121 else None,
+            # COHERENCE-FIX-1 (lot D) — habitat NULL (non ventilé dans la source) → None (« — »),
+            # jamais « 0 % » : un zéro affirmerait « aucune conso pour l'habitat », ce qui est faux.
+            "part_habitat_pct": (round(100 * float(r["h1121"]) / c1121)
+                                 if (c1121 and r["h1121"] is not None) else None),
             "conso_2021_2024_ha": round(c2124 / 10000, 1),          # Sourcé
             "budget_2021_2031_ha": round(budget / 10000, 1),        # Estimé (-50 %)
             "reste_theorique_ha": round(reste / 10000, 1),          # Estimé (± )

@@ -68,6 +68,15 @@ registre. On ne le remplit que pour **renommer**, poser un `i` propre à l'écra
 format. **Aucune duplication imposée** — c'est ce qui garde les fichiers courts et le registre
 seule source de vérité.
 
+### `absence` — le VOCABULAIRE est fermé (COHERENCE-FIX-1 lot D)
+
+Toute phrase d'absence appartient à l'une des **cinq formes** du registre
+(`src/labuse/registre/absences.py`) : `non_disponible` · `aucun` · `hors_perimetre` ·
+`sans_objet` · `non_calculable`. Une phrase libre qui n'entre dans aucune forme **casse le
+verrou V6b** — on la reformule dans le vocabulaire, on n'invente pas une sixième forme.
+(À l'écran, un chiffre absent se rend « — » — format.ts ; « n.c. » est réservé à la
+sentinelle SIRENE 1900.)
+
 ### `absence_type` — la cause de l'absence (ajustement Vic)
 
 Le client n'entend pas la même phrase selon **pourquoi** la donnée manque. Trois causes :

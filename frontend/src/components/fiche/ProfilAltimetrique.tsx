@@ -66,13 +66,16 @@ function Corps({ p }: { p: Profil }) {
   return (
     <div className="flex flex-col gap-2">
       <Graphe p={p} />
+      {/* COHERENCE-FIX-1 (lot D) — une mesure absente s'affiche « — », jamais « 0 m » / « 0 % »
+          (les `?? 0` servaient un faux zéro quand le profil ne portait pas la mesure). */}
       <div className="grid grid-cols-3 gap-x-3 gap-y-2">
-        <Chiffre l="Distance" v={`${nf(p.distance_m ?? 0)} m`} />
-        <Chiffre l="Dénivelé +" v={`+${nf(p.denivele_positif_m ?? 0)} m`} tone="up" />
-        <Chiffre l="Dénivelé −" v={`−${nf(p.denivele_negatif_m ?? 0)} m`} tone="down" />
-        <Chiffre l="Pente moyenne" v={`${nf1(p.pente_moyenne_pct ?? 0)} %`} />
-        <Chiffre l="Plus forte pente" v={`${nf1(p.pente_max_pct ?? 0)} %`} />
-        <Chiffre l="Altitude" v={`${nf(p.altitude_min_m ?? 0)}–${nf(p.altitude_max_m ?? 0)} m`} />
+        <Chiffre l="Distance" v={p.distance_m != null ? `${nf(p.distance_m)} m` : '—'} />
+        <Chiffre l="Dénivelé +" v={p.denivele_positif_m != null ? `+${nf(p.denivele_positif_m)} m` : '—'} tone="up" />
+        <Chiffre l="Dénivelé −" v={p.denivele_negatif_m != null ? `−${nf(p.denivele_negatif_m)} m` : '—'} tone="down" />
+        <Chiffre l="Pente moyenne" v={p.pente_moyenne_pct != null ? `${nf1(p.pente_moyenne_pct)} %` : '—'} />
+        <Chiffre l="Plus forte pente" v={p.pente_max_pct != null ? `${nf1(p.pente_max_pct)} %` : '—'} />
+        <Chiffre l="Altitude" v={p.altitude_min_m != null && p.altitude_max_m != null
+          ? `${nf(p.altitude_min_m)}–${nf(p.altitude_max_m)} m` : '—'} />
       </div>
       <p className="text-[9px] leading-snug text-txt-dim">
         {p.axe === 'trace' ? 'Le long de la ligne tracée. ' : 'Le long du plus grand axe de la parcelle. '}

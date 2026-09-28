@@ -68,7 +68,8 @@ export function SecteurResultats({ idu, embedded }: { idu: string; embedded?: bo
             {sb ? (
               <>
                 <div className="stats" data-secteur-bati-stats>
-                  <Cell l="Bâti secteur" v={`${fmtInt(sb.median_eur_m2 ?? 0)} €/m²`} sub={sb.type_prix ?? undefined} />
+                  {/* COHERENCE-FIX-1 (lot D) — médiane absente → « — », jamais « 0 €/m² ». */}
+                  <Cell l="Bâti secteur" v={sb.median_eur_m2 != null ? `${fmtInt(sb.median_eur_m2)} €/m²` : '—'} sub={sb.type_prix ?? undefined} />
                   <Cell l="Rayon" v={sb.rayon_m != null ? `${fmtInt(sb.rayon_m)} m` : '—'} sub={sb.commune_seule ? 'repli commune' : 'adaptatif'} />
                   <Cell l="Ventes" v={sb.n != null ? fmtInt(sb.n) : '—'} sub={sb.periode ? `${sb.periode[0]}–${sb.periode[1]}` : undefined} />
                   <Cell l="Tendance 12 m" v={sb.tendance_pct != null ? `${sb.tendance_pct > 0 ? '+' : ''}${sb.tendance_pct} %` : '—'} sub={sb.tendance ?? undefined} />
