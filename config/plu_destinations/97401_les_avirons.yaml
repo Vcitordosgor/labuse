@@ -47,7 +47,12 @@ zones:
             horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la
             voie, au moins égale à 4 mètres.
           statut: valide
-          note: "PLU-VERIF-1 (exception à afficher) : Article U 6.3 : aucune marge de recul n'est imposee pour les saillies, les piscines, les extensions de constructions existantes non conformes, la mise en valeur d'un element bati protege (L.151-19), les equipements techniques et les services publics/equipements d'interet collectif."
+          exceptions:
+          - texte: "Dans les cas suivants, aucune marge de recul par rapport à la voie n'est imposée : … pour les piscines, … pour mettre en valeur un élément bâti faisant l'objet d'une protection au titre de l'article L.151-19 du Code de l'Urbanisme, … pour les services publics et équipements d'intérêt collectif dont les caractéristiques fonctionnelles, architecturales ou de sécurité l'imposent."
+            article: "U 6.3"
+            page_pdf: 10
+            porte: "exclusion_generique"
+            modifie_calcul: false
         limites_separatives:
           min_m: 1.9
           article: U 7.2
@@ -244,7 +249,12 @@ zones:
             horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la
             voie, au moins égale à 4 mètres.
           statut: valide
-          note: "PLU-VERIF-1 (exception à afficher) : Article U 6.3 : aucune marge de recul n'est imposee pour les saillies, les piscines, les extensions de constructions existantes non conformes, la mise en valeur d'un element bati protege (L.151-19), les equipements techniques et les services publics/equipements d'interet collectif."
+          exceptions:
+          - texte: "Dans les cas suivants, aucune marge de recul par rapport à la voie n'est imposée : … pour les piscines, … pour mettre en valeur un élément bâti faisant l'objet d'une protection au titre de l'article L.151-19 du Code de l'Urbanisme, … pour les services publics et équipements d'intérêt collectif dont les caractéristiques fonctionnelles, architecturales ou de sécurité l'imposent."
+            article: "U 6.3"
+            page_pdf: 10
+            porte: "exclusion_generique"
+            modifie_calcul: false
         limites_separatives:
           min_m: 1.9
           article: U 7.2
@@ -417,7 +427,12 @@ zones:
             horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la
             voie, au moins égale à 4 mètres.
           statut: valide
-          note: "PLU-VERIF-1 (exception à afficher) : Article U 6.3 : aucune marge de recul n'est imposee pour les saillies, les piscines, les extensions de constructions existantes non conformes, la mise en valeur d'un element bati protege (L.151-19), les equipements techniques et les services publics/equipements d'interet collectif."
+          exceptions:
+          - texte: "Dans les cas suivants, aucune marge de recul par rapport à la voie n'est imposée : … pour les piscines, … pour mettre en valeur un élément bâti faisant l'objet d'une protection au titre de l'article L.151-19 du Code de l'Urbanisme, … pour les services publics et équipements d'intérêt collectif dont les caractéristiques fonctionnelles, architecturales ou de sécurité l'imposent."
+            article: "U 6.3"
+            page_pdf: 10
+            porte: "exclusion_generique"
+            modifie_calcul: false
         limites_separatives:
           min_m: 1.9
           article: U 7.2
@@ -475,7 +490,12 @@ zones:
             horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la
             voie, au moins égale à 4 mètres.
           statut: valide
-          note: "PLU-VERIF-1 (exception à afficher) : Article U 6.3 : aucune marge de recul n'est imposee pour les saillies, les piscines, les extensions de constructions existantes non conformes, la mise en valeur d'un element bati protege (L.151-19), les equipements techniques et les services publics/equipements d'interet collectif."
+          exceptions:
+          - texte: "Dans les cas suivants, aucune marge de recul par rapport à la voie n'est imposée : … pour les piscines, … pour mettre en valeur un élément bâti faisant l'objet d'une protection au titre de l'article L.151-19 du Code de l'Urbanisme, … pour les services publics et équipements d'intérêt collectif dont les caractéristiques fonctionnelles, architecturales ou de sécurité l'imposent."
+            article: "U 6.3"
+            page_pdf: 10
+            porte: "exclusion_generique"
+            modifie_calcul: false
         limites_separatives:
           min_m: 1.9
           article: U 7.2
@@ -532,7 +552,12 @@ zones:
             horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la
             voie, au moins égale à 4 mètres.
           statut: valide
-          note: "PLU-VERIF-1 (exception à afficher) : Article U 6.3 : aucune marge de recul n'est imposee pour les saillies, les piscines, les extensions de constructions existantes non conformes, la mise en valeur d'un element bati protege (L.151-19), les equipements techniques et les services publics/equipements d'interet collectif."
+          exceptions:
+          - texte: "Dans les cas suivants, aucune marge de recul par rapport à la voie n'est imposée : … pour les piscines, … pour mettre en valeur un élément bâti faisant l'objet d'une protection au titre de l'article L.151-19 du Code de l'Urbanisme, … pour les services publics et équipements d'intérêt collectif dont les caractéristiques fonctionnelles, architecturales ou de sécurité l'imposent."
+            article: "U 6.3"
+            page_pdf: 10
+            porte: "exclusion_generique"
+            modifie_calcul: false
         limites_separatives:
           min_m: 1.9
           article: U 7.2
@@ -587,7 +612,12 @@ zones:
             horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la
             voie, au moins égale à 4 mètres.
           statut: valide
-          note: "PLU-VERIF-1 (exception à afficher) : Article U 6.3 : aucune marge de recul n'est imposee pour les saillies, les piscines, les extensions de constructions existantes non conformes, la mise en valeur d'un element bati protege (L.151-19), les equipements techniques et les services publics/equipements d'interet collectif."
+          exceptions:
+          - texte: "Dans les cas suivants, aucune marge de recul par rapport à la voie n'est imposée : … pour les piscines, … pour mettre en valeur un élément bâti faisant l'objet d'une protection au titre de l'article L.151-19 du Code de l'Urbanisme, … pour les services publics et équipements d'intérêt collectif dont les caractéristiques fonctionnelles, architecturales ou de sécurité l'imposent."
+            article: "U 6.3"
+            page_pdf: 10
+            porte: "exclusion_generique"
+            modifie_calcul: false
         limites_separatives:
           min_m: 1.9
           article: U 7.2
@@ -699,7 +729,12 @@ zones:
             horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la
             voie, au moins égale à 4 mètres.
           statut: valide
-          note: "PLU-VERIF-1 (exception à afficher) : Article U 6.3 : aucune marge de recul n'est imposee pour les saillies, les piscines, les extensions de constructions existantes non conformes, la mise en valeur d'un element bati protege (L.151-19), les equipements techniques et les services publics/equipements d'interet collectif."
+          exceptions:
+          - texte: "Dans les cas suivants, aucune marge de recul par rapport à la voie n'est imposée : … pour les piscines, … pour mettre en valeur un élément bâti faisant l'objet d'une protection au titre de l'article L.151-19 du Code de l'Urbanisme, … pour les services publics et équipements d'intérêt collectif dont les caractéristiques fonctionnelles, architecturales ou de sécurité l'imposent."
+            article: "U 6.3"
+            page_pdf: 10
+            porte: "exclusion_generique"
+            modifie_calcul: false
         limites_separatives:
           min_m: 1.9
           article: U 7.2
@@ -877,7 +912,12 @@ zones:
             horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la
             voie, au moins égale à 4 mètres.
           statut: valide
-          note: "PLU-VERIF-1 (exception à afficher) : Article U 6.3 : aucune marge de recul n'est imposee pour les saillies, les piscines, les extensions de constructions existantes non conformes, la mise en valeur d'un element bati protege (L.151-19), les equipements techniques et les services publics/equipements d'interet collectif."
+          exceptions:
+          - texte: "Dans les cas suivants, aucune marge de recul par rapport à la voie n'est imposée : … pour les piscines, … pour mettre en valeur un élément bâti faisant l'objet d'une protection au titre de l'article L.151-19 du Code de l'Urbanisme, … pour les services publics et équipements d'intérêt collectif dont les caractéristiques fonctionnelles, architecturales ou de sécurité l'imposent."
+            article: "U 6.3"
+            page_pdf: 10
+            porte: "exclusion_generique"
+            modifie_calcul: false
         limites_separatives:
           min_m: 1.9
           article: U 7.2
@@ -938,7 +978,12 @@ zones:
             horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la
             voie, au moins égale à 4 mètres.
           statut: valide
-          note: "PLU-VERIF-1 (exception à afficher) : Article U 6.3 : aucune marge de recul n'est imposee pour les saillies, les piscines, les extensions de constructions existantes non conformes, la mise en valeur d'un element bati protege (L.151-19), les equipements techniques et les services publics/equipements d'interet collectif."
+          exceptions:
+          - texte: "Dans les cas suivants, aucune marge de recul par rapport à la voie n'est imposée : … pour les piscines, … pour mettre en valeur un élément bâti faisant l'objet d'une protection au titre de l'article L.151-19 du Code de l'Urbanisme, … pour les services publics et équipements d'intérêt collectif dont les caractéristiques fonctionnelles, architecturales ou de sécurité l'imposent."
+            article: "U 6.3"
+            page_pdf: 10
+            porte: "exclusion_generique"
+            modifie_calcul: false
         limites_separatives:
           min_m: 1.9
           article: U 7.2
@@ -1002,7 +1047,12 @@ zones:
             horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la
             voie, au moins égale à 4 mètres.
           statut: valide
-          note: "PLU-VERIF-1 (exception à afficher) : Article U 6.3 : aucune marge de recul n'est imposee pour les saillies, les piscines, les extensions de constructions existantes non conformes, la mise en valeur d'un element bati protege (L.151-19), les equipements techniques et les services publics/equipements d'interet collectif."
+          exceptions:
+          - texte: "Dans les cas suivants, aucune marge de recul par rapport à la voie n'est imposée : … pour les piscines, … pour mettre en valeur un élément bâti faisant l'objet d'une protection au titre de l'article L.151-19 du Code de l'Urbanisme, … pour les services publics et équipements d'intérêt collectif dont les caractéristiques fonctionnelles, architecturales ou de sécurité l'imposent."
+            article: "U 6.3"
+            page_pdf: 10
+            porte: "exclusion_generique"
+            modifie_calcul: false
         limites_separatives:
           min_m: 1.9
           article: U 7.2
@@ -1182,7 +1232,12 @@ zones:
             horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la
             voie, au moins égale à 4 mètres.
           statut: valide
-          note: "PLU-VERIF-1 (exception à afficher) : Article U 6.3 : aucune marge de recul n'est imposee pour les saillies, les piscines, les extensions de constructions existantes non conformes, la mise en valeur d'un element bati protege (L.151-19), les equipements techniques et les services publics/equipements d'interet collectif."
+          exceptions:
+          - texte: "Dans les cas suivants, aucune marge de recul par rapport à la voie n'est imposée : … pour les piscines, … pour mettre en valeur un élément bâti faisant l'objet d'une protection au titre de l'article L.151-19 du Code de l'Urbanisme, … pour les services publics et équipements d'intérêt collectif dont les caractéristiques fonctionnelles, architecturales ou de sécurité l'imposent."
+            article: "U 6.3"
+            page_pdf: 10
+            porte: "exclusion_generique"
+            modifie_calcul: false
         limites_separatives:
           min_m: 1.9
           article: U 7.2
@@ -1274,7 +1329,12 @@ zones:
             horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la
             voie, au moins égale à 4 mètres.
           statut: valide
-          note: "PLU-VERIF-1 (exception à afficher) : Article U 6.3 : aucune marge de recul n'est imposee pour les saillies, les piscines, les extensions de constructions existantes non conformes, la mise en valeur d'un element bati protege (L.151-19), les equipements techniques et les services publics/equipements d'interet collectif."
+          exceptions:
+          - texte: "Dans les cas suivants, aucune marge de recul par rapport à la voie n'est imposée : … pour les piscines, … pour mettre en valeur un élément bâti faisant l'objet d'une protection au titre de l'article L.151-19 du Code de l'Urbanisme, … pour les services publics et équipements d'intérêt collectif dont les caractéristiques fonctionnelles, architecturales ou de sécurité l'imposent."
+            article: "U 6.3"
+            page_pdf: 10
+            porte: "exclusion_generique"
+            modifie_calcul: false
         limites_separatives:
           min_m: 1.9
           article: U 7.2
@@ -1361,7 +1421,12 @@ zones:
             horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la
             voie, au moins égale à 4 mètres.
           statut: valide
-          note: "PLU-VERIF-1 (exception à afficher) : Article U 6.3 : aucune marge de recul n'est imposee pour les saillies, les piscines, les extensions de constructions existantes non conformes, la mise en valeur d'un element bati protege (L.151-19), les equipements techniques et les services publics/equipements d'interet collectif."
+          exceptions:
+          - texte: "Dans les cas suivants, aucune marge de recul par rapport à la voie n'est imposée : … pour les piscines, … pour mettre en valeur un élément bâti faisant l'objet d'une protection au titre de l'article L.151-19 du Code de l'Urbanisme, … pour les services publics et équipements d'intérêt collectif dont les caractéristiques fonctionnelles, architecturales ou de sécurité l'imposent."
+            article: "U 6.3"
+            page_pdf: 10
+            porte: "exclusion_generique"
+            modifie_calcul: false
         limites_separatives:
           min_m: 1.9
           article: U 7.2
@@ -1645,7 +1710,12 @@ zones:
             horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la
             voie, au moins égale à 4 mètres.
           statut: valide
-          note: "PLU-VERIF-1 (exception à afficher) : Article U 6.3 : aucune marge de recul n'est imposee pour les saillies (<3,50 m de hauteur, debord 0,20 m ; >3,50 m debord 0,80 m), les saillies en retrait (debord 1 m), les piscines, les extensions de constructions existantes non conformes, la mise en valeur d'un element bati protege (L.151-19), les equipements techniques (securite/eau/energie/OM) et les services publics/equipements d'interet collectif."
+          exceptions:
+          - texte: "Dans les cas suivants, aucune marge de recul par rapport à la voie n'est imposée : … pour les piscines, … pour mettre en valeur un élément bâti faisant l'objet d'une protection au titre de l'article L.151-19 du Code de l'Urbanisme, … pour les services publics et équipements d'intérêt collectif dont les caractéristiques fonctionnelles, architecturales ou de sécurité l'imposent."
+            article: "U 6.3"
+            page_pdf: 10
+            porte: "exclusion_generique"
+            modifie_calcul: false
         limites_separatives:
           min_m: 1.9
           article: U 7.2
@@ -1714,7 +1784,12 @@ zones:
             horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la
             voie, au moins égale à 4 mètres.
           statut: valide
-          note: "PLU-VERIF-1 (exception à afficher) : Article U 6.3 : aucune marge de recul n'est imposee pour les saillies, les piscines, les extensions de constructions existantes non conformes, la mise en valeur d'un element bati protege (L.151-19), les equipements techniques et les services publics/equipements d'interet collectif."
+          exceptions:
+          - texte: "Dans les cas suivants, aucune marge de recul par rapport à la voie n'est imposée : … pour les piscines, … pour mettre en valeur un élément bâti faisant l'objet d'une protection au titre de l'article L.151-19 du Code de l'Urbanisme, … pour les services publics et équipements d'intérêt collectif dont les caractéristiques fonctionnelles, architecturales ou de sécurité l'imposent."
+            article: "U 6.3"
+            page_pdf: 10
+            porte: "exclusion_generique"
+            modifie_calcul: false
         limites_separatives:
           min_m: 1.9
           article: U 7.2
@@ -1781,7 +1856,12 @@ zones:
             horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la
             voie, au moins égale à 4 mètres.
           statut: valide
-          note: "PLU-VERIF-1 (exception à afficher) : Article U 6.3 : aucune marge de recul n'est imposee pour les saillies, les piscines, les extensions de constructions existantes non conformes, la mise en valeur d'un element bati protege (L.151-19), les equipements techniques et les services publics/equipements d'interet collectif."
+          exceptions:
+          - texte: "Dans les cas suivants, aucune marge de recul par rapport à la voie n'est imposée : … pour les piscines, … pour mettre en valeur un élément bâti faisant l'objet d'une protection au titre de l'article L.151-19 du Code de l'Urbanisme, … pour les services publics et équipements d'intérêt collectif dont les caractéristiques fonctionnelles, architecturales ou de sécurité l'imposent."
+            article: "U 6.3"
+            page_pdf: 10
+            porte: "exclusion_generique"
+            modifie_calcul: false
         limites_separatives:
           min_m: 1.9
           article: U 7.2
