@@ -30,7 +30,7 @@ donnees:
 
   - quoi:  sis_classe
     ou:    { rang: 30, etat: en_tete, section: "Ce qui contraint" }
-    comment: { libelle: "Sols pollués (SIS)", format: classe, i: "La parcelle est dans un Secteur d'Information sur les Sols (Géorisques) — servitude OPPOSABLE aux autorisations d'urbanisme (art. L125-6 c. env.)." }
+    comment: { libelle: "Sols pollués (SIS)", format: classe, i: "La parcelle est dans un Secteur d'Information sur les Sols (Géorisques, art. L125-6 c. env.) : cette information est annexée au PLU et déclenche, en cas de projet de construction ou de lotissement, une obligation d'étude de sols (art. L556-2 c. env.)." }
     absence: "Sols pollués (SIS) : la parcelle n'est dans aucun secteur d'information sur les sols."
     absence_type: absente_ici
     statut_juridique: opposable

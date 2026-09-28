@@ -921,8 +921,8 @@ function RtaaBlock({ rtaa }: { rtaa: { meta: Record<string, string>; exigences: 
 const PEB_PHRASES: Record<string, string> = {
   A: 'constructions d’habitation interdites (art. L112-10 CU)',
   B: 'constructions d’habitation interdites (art. L112-10 CU)',
-  C: 'isolement acoustique renforcé obligatoire (art. L112-10 CU)',
-  D: 'zone d’information sur le bruit (art. L112-10 CU)',
+  C: 'constructions d’habitation limitées, sans accroissement sensible de la population exposée (art. L112-10 CU)',
+  D: 'constructions autorisées sous réserve d’isolation acoustique (art. L112-10 et L112-12 CU)',
 }
 
 // FICHE-RANGEMENT-2 Lot 1 — nombre de périmètres du droit des sols (pour le résumé de §4/tiroir).
@@ -945,7 +945,7 @@ export function DispositifsBody({ d }: { d: NonNullable<Fiche['dispositifs']> })
           ))}
           {(d.ebc ?? []).map((e, i) => (
             <Ligne key={`ebc${i}`}
-              label={<>Espace boisé classé<InfoI aria="Sur l'EBC" tip={`${e.libelle ? `${e.libelle}. ` : ''}Construction interdite sur l'emprise boisée (art. L113-1 CU) — part soustraite de l'assiette. Source : GPU.`} /></>}
+              label={<>Espace boisé classé<InfoI aria="Sur l'EBC" tip={`${e.libelle ? `${e.libelle}. ` : ''}Construction interdite sur l'emprise boisée classée (art. L113-1 et L113-2 CU) — part soustraite de l'assiette. Source : GPU.`} /></>}
               valeur={<>{e.part_pct} <small>%</small></>} />
           ))}
           {d.plu_procedure && (

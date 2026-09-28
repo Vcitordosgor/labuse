@@ -1,0 +1,1640 @@
+[
+ {
+  "id": "DECL-008",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/fiche/le_bien.yaml:106",
+  "ou": "bulle i ligne « Forme du toit » section Le bien fiche parcelle",
+  "texte": "Forme du toit du plus grand bâtiment (LiDAR HD, ≥ 0,70 de confiance) : plat, monopente, double pente ou croupe complexe.",
+  "notion": "nature_toit",
+  "note": "seuil confiance 0"
+ },
+ {
+  "id": "DECL-009",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/fiche/le_bien.yaml:118",
+  "ou": "pourquoi/note affichée ? ligne « DPE connu » — doute (champ pourquoi interne)",
+  "texte": "le DPE n'est PAS obligatoire dans les DROM et la couverture est d'environ 0,3 %",
+  "notion": "dpe_connu",
+  "note": "champ pourquoi (interne) - EXCLU normalement ; 0"
+ },
+ {
+  "id": "DECL-020",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/fiche/sections_restantes.yaml:275",
+  "ou": "bulle i ligne « Couverture réglementaire » section Gabarit fiche parcelle",
+  "texte": "Familles réglementaires vérifiées (reculs, hauteur, emprise, risques) sur 4, et les règles connues mais non intégrées (hauteur en prospect, stationnement…).",
+  "notion": "gabarit_couverture_verdict",
+  "note": "« sur 4 » (nombre de familles réglementaires)"
+ },
+ {
+  "id": "DECL-023",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/fiche/reste_a_declarer.yaml:42",
+  "ou": "bulle i ligne « Dernière vente (DVF) » section Identité fiche parcelle",
+  "texte": "Dernière mutation DVF observée sur la parcelle (valeur actée, ventes publiées avec un à trois ans de délai).",
+  "notion": "prix_achat_historique_eur",
+  "note": "délai « un à trois ans » de publication DVF"
+ },
+ {
+  "id": "DECL-024",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/fiche/reste_a_declarer.yaml:42",
+  "ou": "absence ligne « Dernière vente (DVF) »",
+  "texte": "Dernière vente : aucune mutation DVF publiée sur cette parcelle (fenêtre 2014-2025).",
+  "notion": "prix_achat_historique_eur",
+  "note": "fenêtre 2014-2025 en dur"
+ },
+ {
+  "id": "DECL-035",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/fiche/reste_a_declarer.yaml:201",
+  "ou": "bulle i ligne « Stationnement allégé (TCSP, L151-36) » section Accès fiche parcelle",
+  "texte": "La parcelle est-elle à moins de 800 m d'une station de transport en site propre (plafond de stationnement L151-36).",
+  "notion": "tcsp_stationnement_allege",
+  "note": "art. L151-36 c. urb. + seuil 800 m en dur"
+ },
+ {
+  "id": "DECL-036",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/fiche/reste_a_declarer.yaml:203",
+  "ou": "absence ligne « Stationnement allégé (TCSP) »",
+  "texte": "Hors rayon de 800 m d'une station TCSP.",
+  "notion": "tcsp_stationnement_allege",
+  "note": "seuil 800 m en dur"
+ },
+ {
+  "id": "DECL-038",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/fiche/reste_a_declarer.yaml:222",
+  "ou": "bulle i ligne « Sols (SIS/CASIAS, parcelle) » section Sols fiche parcelle",
+  "texte": "État des sols : périmètre SIS intersecté, site CASIAS/instruction le plus proche (≤ 100 m).",
+  "notion": "sols_parcelle",
+  "note": "seuil 100 m en dur (proximité CASIAS)"
+ },
+ {
+  "id": "DECL-040",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/fiche/reste_a_declarer.yaml:257",
+  "ou": "libellé ligne « Ventes à moins de 100 m (36 mois) » section Le secteur fiche parcelle",
+  "texte": "Ventes à moins de 100 m (36 mois)",
+  "notion": "ventes_100m_n",
+  "note": "100 m + 36 mois en dur"
+ },
+ {
+  "id": "DECL-041",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/fiche/reste_a_declarer.yaml:264",
+  "ou": "bulle i ligne « Ventes à moins de 100 m (36 mois) » section Le secteur fiche parcelle",
+  "texte": "Nombre de mutations DVF à moins de 100 m sur 36 mois (+ médiane) — voisinage immédiat.",
+  "notion": "ventes_100m_n",
+  "note": "100 m + 36 mois en dur"
+ },
+ {
+  "id": "DECL-042",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/fiche/reste_a_declarer.yaml:265",
+  "ou": "absence ligne « Ventes à moins de 100 m »",
+  "texte": "Aucune vente DVF recensée à moins de 100 m sur 36 mois.",
+  "notion": "ventes_100m_n",
+  "note": "100 m + 36 mois en dur"
+ },
+ {
+  "id": "DECL-043",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/fiche/sections_restantes.yaml:184",
+  "ou": "libellé ligne « Ventes voisines (100 m) » section Le secteur fiche parcelle",
+  "texte": "Ventes voisines (100 m)",
+  "notion": "voisinage_100m_liste",
+  "note": "100 m en dur"
+ },
+ {
+  "id": "DECL-044",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/fiche/sections_restantes.yaml:185",
+  "ou": "absence ligne « Ventes voisines (100 m) »",
+  "texte": "Ventes voisines : aucune vente à moins de 100 m.",
+  "notion": "voisinage_100m_liste",
+  "note": "100 m en dur"
+ },
+ {
+  "id": "DECL-048",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/commune/cadre_de_vie.yaml:24",
+  "ou": "bulle i ligne « Arrêtés CatNat (détail) » carte Risques fiche commune",
+  "texte": "arrêtés CatNat de la commune détaillés : péril, dates de début/fin/arrêté, code national et date de publication au JO — 12 plus récents (le compte total reste catnat_n)",
+  "notion": "catnat_arretes_liste",
+  "note": "« 12 plus récents » en dur"
+ },
+ {
+  "id": "DECL-049",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/commune/construction.yaml:18",
+  "ou": "bulle i ligne « Vélocité admin » carte Construction fiche commune",
+  "texte": "percentile_cont(0.5) sur m10_permit_delais famille logements",
+  "notion": "velocite_delai_median_mois",
+  "note": "percentile 0.5 - technique/doute ; noté par doute"
+ },
+ {
+  "id": "DECL-050",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/commune/construction.yaml:12",
+  "ou": "bulle i ligne « Permis de la commune sur 12 mois » carte Construction fiche commune",
+  "texte": "count sitadel_permits de la commune, fenêtre 12 mois, sans rayon (commune entière)",
+  "notion": "permis_12m_n",
+  "note": "fenêtre 12 mois en dur"
+ },
+ {
+  "id": "DECL-051",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/commune/construction.yaml:54",
+  "ou": "bulle i ligne « Artificialisation 2017→2022 (OCS GE) » carte Construction fiche commune",
+  "texte": "surface artificialisée entre les millésimes OCS GE 2017 et 2022, par commune — produit différentiel OFFICIEL IGN (flags artif du portail de l'artificialisation) ; la pression ZAN a",
+  "notion": "zan_evolution_commune",
+  "note": "millésimes 2017 et 2022 en dur"
+ },
+ {
+  "id": "DECL-052",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/commune/marche.yaml:30",
+  "ou": "bulle i ligne « Terrain nu (zone U / AU) » carte Marché fiche commune",
+  "texte": "médiane DVF terrain nu par famille de zone, seuil 10 ventes",
+  "notion": "prix_terrain_zone_eur_m2",
+  "note": "seuil 10 ventes en dur"
+ },
+ {
+  "id": "DECL-053",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/commune/marche.yaml:36",
+  "ou": "bulle i ligne « Loyer médian » carte Marché fiche commune",
+  "texte": "SOURCES-1 lot 5 — bascule CANONIQUE/REPLI : loyer OBSERVÉ de la zone OLL (ADIL 974/AGORAH) quand la commune tient dans UNE zone (16/24) ; sinon loyer d'ANNONCE DHUP (carte des loye",
+  "notion": "loyer_median_eur_m2",
+  "note": "« 16/24 » communes en dur"
+ },
+ {
+  "id": "DECL-054",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/commune/marche.yaml:42",
+  "ou": "bulle i ligne « Mutations 12 mois » carte Marché fiche commune",
+  "texte": "count dvf_mutations sur les 12 derniers mois DE DONNÉES (pas calendaire)",
+  "notion": "mutations_12m_n",
+  "note": "12 derniers mois en dur"
+ },
+ {
+  "id": "DECL-055",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/commune/marche.yaml:48",
+  "ou": "bulle i ligne « Biens en vente » carte Marché fiche commune",
+  "texte": "count pige_biens actifs a_qualifier=false ; n<5 → NULL insuffisant",
+  "notion": "annonces_actives_n",
+  "note": "seuil n<5 en dur"
+ },
+ {
+  "id": "DECL-056",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/commune/marche.yaml:54",
+  "ou": "bulle i ligne « Prix demandé (médiane) » carte Marché fiche commune",
+  "texte": "médiane des prix affichés terrain/bâti, n<5 masqué",
+  "notion": "prix_demande_median_eur_m2",
+  "note": "seuil n<5 en dur"
+ },
+ {
+  "id": "DECL-057",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/commune/regles.yaml:24",
+  "ou": "bulle i ligne « Zonage — U » carte Règles fiche commune",
+  "texte": "surface cadastrée U / surface zonée totale (somme=100 %)",
+  "notion": "part_zone_U_pct",
+  "note": "somme=100 % - format ; doute ; noté par doute"
+ },
+ {
+  "id": "DECL-058",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/commune/regles.yaml:36",
+  "ou": "bulle i ligne « Zonage — A » carte Règles fiche commune",
+  "texte": "surface A / surface zonée (Saint-Paul : 35,8 % — la part en PARCELLES vaut 17,8 %)",
+  "notion": "part_zone_A_pct",
+  "note": "valeurs 35"
+ },
+ {
+  "id": "DECL-059",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/commune/regles.yaml:42",
+  "ou": "bulle i ligne « Zonage — N » carte Règles fiche commune",
+  "texte": "surface N / surface zonée (Saint-Paul : 47,2 % — la part en PARCELLES vaut 6,8 %)",
+  "notion": "part_zone_N_pct",
+  "note": "valeurs 47"
+ },
+ {
+  "id": "DECL-065",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/commune/regles.yaml:78",
+  "ou": "bulle i ligne « Zonage A/B/C (logement) » carte Fiscalité fiche commune",
+  "texte": "zone A/B/C du dispositif d'investissement locatif pour la commune (arrêté du 23/06/2026, en vigueur 26/06/2026 — passe-plat, jamais recalculé)",
+  "notion": "zonage_abc_logement",
+  "note": "arrêté du 23/06/2026 en vigueur 26/06/2026 (dates en dur)"
+ },
+ {
+  "id": "DECL-070",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/commune/territoire.yaml:42",
+  "ou": "bulle i ligne « Parc social (logements RPLS) » carte Population fiche commune",
+  "texte": "nombre de logements locatifs sociaux de la commune (RPLS SDES, millésime 01/01/2025) — contexte marché de la fiche commune, du Flash et du PDF, jamais un signal scoring",
+  "notion": "parc_social_rpls_logements",
+  "note": "millésime 01/01/2025 en dur"
+ },
+ {
+  "id": "DECL-071",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/commune/territoire.yaml:48",
+  "ou": "bulle i ligne « Parc construit avant 1991 » carte Population fiche commune",
+  "texte": "part (%) du parc de logements achevé avant 1991 (RP2022, distribution ACHL) — stock ancien, indicatif du potentiel de rénovation ; le type maison/appartement, la tenure et la vacance sont déjà servis (commune_insee_logement / IRIS / RPLS)",
+  "notion": "parc_ancien_pct",
+  "note": "seuil année 1991 en dur"
+ },
+ {
+  "id": "DECL-072",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/commune/territoire.yaml:47",
+  "ou": "libellé ligne « Parc construit avant 1991 » carte Population fiche commune",
+  "texte": "Parc construit avant 1991",
+  "notion": "parc_ancien_pct",
+  "note": "année 1991 en dur"
+ },
+ {
+  "id": "DECL-079",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_dispositifs.yaml:53",
+  "ou": "bulle i couche TVA réduite primo-accédant (panneau couches carte)",
+  "texte": "Périmètre de TVA à taux réduit (5,5 %) pour l'accession sociale — buffer 500 m DÉRIVÉ des QPV (ANRU / quartiers prioritaires).",
+  "notion": "dispositifs_couche_tva_primo",
+  "note": "TVA 5"
+ },
+ {
+  "id": "DECL-080",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_dispositifs.yaml:55",
+  "ou": "légende couche TVA primo (carte)",
+  "texte": "TVA réduite 5,5 % (buffer 500 m des QPV)",
+  "notion": "dispositifs_couche_tva_primo",
+  "note": "TVA 5"
+ },
+ {
+  "id": "DECL-081",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_dispositifs.yaml:69",
+  "ou": "bulle i couche QPV (panneau couches carte)",
+  "texte": "Quartiers Prioritaires de la politique de la Ville (2024) — abattement TFPB, exonérations, priorités de rénovation.",
+  "notion": "dispositifs_couche_qpv",
+  "note": "QPV 2024 abattement TFPB / exonérations"
+ },
+ {
+  "id": "DECL-089",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_risques.yaml:87",
+  "ou": "bulle i couche Classement sonore (panneau couches carte)",
+  "texte": "Classement sonore des voies (catégories 1 à 5) — isolement acoustique requis.",
+  "notion": "bruit_couche",
+  "note": "catégories 1 à 5 + obligation isolement acoustique"
+ },
+ {
+  "id": "DECL-095",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_urbanisme.yaml:34",
+  "ou": "bulle i couche 50 pas géométriques (panneau couches carte)",
+  "texte": "Réserve des 50 pas géométriques (bande littorale du domaine public, ~81,20 m) — inconstructibilité de principe, gestion État.",
+  "notion": "cinquante_pas_couche",
+  "note": "50 pas géométriques ~81"
+ },
+ {
+  "id": "DECL-097",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_urbanisme.yaml:50",
+  "ou": "bulle i couche Artificialisation (OCS GE) (panneau couches carte)",
+  "texte": "Occupation du sol OCS GE : sols artificialisés 2022 + évolution renaturée 2017→2022 (matrice décret 2023-1096, suivi ZAN).",
+  "notion": "artificialisation_couche",
+  "note": "décret 2023-1096 (matrice ZAN) + millésimes 2017/2022"
+ },
+ {
+  "id": "DECL-110",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_nature.yaml:66",
+  "ou": "bulle i couche Parc national (panneau couches carte)",
+  "texte": "Périmètre du Parc national de La Réunion. Deux assiettes : le CŒUR (~40 % de l'île, inconstructible) et l'AIRE D'ADHÉSION (réglementée mais constructible). Urbanisation très restreinte.",
+  "notion": "parc_national_couche",
+  "note": "cœur inconstructible ~40 % de l'île + aire d'adhésion réglementée"
+ },
+ {
+  "id": "DECL-111",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_nature.yaml:70",
+  "ou": "légende niveaux couche Parc national (carte)",
+  "texte": "Cœur — inconstructible (~40 % de l'île)",
+  "notion": "parc_national_couche",
+  "note": "cœur inconstructible ~40 % en dur"
+ },
+ {
+  "id": "DECL-113",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_marche.yaml:16",
+  "ou": "bulle i couche Prix du logement neuf (VEFA) (panneau couches carte)",
+  "texte": "Prix médian du neuf VEFA par commune (DVF, ventes en l'état futur d'achèvement) — choroplèthe par tranche €/m². Les communes sous 10 ventes sont GRISÉES (prix non fiable), pas peintes en tranche.",
+  "notion": "vefa_couche",
+  "note": "seuil 10 ventes en dur"
+ },
+ {
+  "id": "DECL-114",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_marche.yaml:19",
+  "ou": "légende niveaux couche VEFA (carte)",
+  "texte": "Moins de 4 000 €/m²",
+  "notion": "vefa_couche",
+  "note": "tranche 4 000 €/m² en dur"
+ },
+ {
+  "id": "DECL-115",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_marche.yaml:19",
+  "ou": "légende niveaux couche VEFA (carte)",
+  "texte": "4 000 – 4 500 €/m²",
+  "notion": "vefa_couche",
+  "note": "tranche 4 000-4 500 €/m² en dur"
+ },
+ {
+  "id": "DECL-116",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_marche.yaml:19",
+  "ou": "légende niveaux couche VEFA (carte)",
+  "texte": "4 500 – 5 000 €/m²",
+  "notion": "vefa_couche",
+  "note": "tranche 4 500-5 000 €/m² en dur"
+ },
+ {
+  "id": "DECL-117",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_marche.yaml:19",
+  "ou": "légende niveaux couche VEFA (carte)",
+  "texte": "5 000 – 5 500 €/m²",
+  "notion": "vefa_couche",
+  "note": "tranche 5 000-5 500 €/m² en dur"
+ },
+ {
+  "id": "DECL-118",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_marche.yaml:19",
+  "ou": "légende niveaux couche VEFA (carte)",
+  "texte": "5 500 €/m² et plus",
+  "notion": "vefa_couche",
+  "note": "tranche 5 500 €/m² en dur"
+ },
+ {
+  "id": "DECL-119",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_marche.yaml:19",
+  "ou": "légende niveaux couche VEFA (carte)",
+  "texte": "Moins de 10 ventes — prix non fiable",
+  "notion": "vefa_couche",
+  "note": "seuil 10 ventes en dur"
+ },
+ {
+  "id": "DECL-120",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_marche.yaml:19",
+  "ou": "légende couche VEFA (carte)",
+  "texte": "Prix neuf VEFA €/m² (grisé = moins de 10 ventes)",
+  "notion": "vefa_couche",
+  "note": "seuil 10 ventes en dur"
+ },
+ {
+  "id": "DECL-121",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_transport.yaml:18",
+  "ou": "légende couche Axes structurants (carte)",
+  "texte": "Axe routier structurant (importance 1-2)",
+  "notion": "axes_couche",
+  "note": "importance IGN 1-2 en dur - doute (échelle interne) ; noté par doute"
+ },
+ {
+  "id": "DECL-122",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_transport.yaml:100",
+  "ou": "bulle i couche Lignes haute tension (HTB) (panneau couches carte)",
+  "texte": "Réseau de transport 63/90 kV (BD TOPO, aérien) — servitude de voisinage, champ électromagnétique.",
+  "notion": "lignes_ht_couche",
+  "note": "63/90 kV en dur + servitude de voisinage"
+ },
+ {
+  "id": "DECL-123",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_transport.yaml:101",
+  "ou": "légende couche HTB (carte)",
+  "texte": "Ligne HTB 63/90 kV (aérien)",
+  "notion": "lignes_ht_couche",
+  "note": "63/90 kV en dur"
+ },
+ {
+  "id": "DECL-124",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_transport.yaml:115",
+  "ou": "bulle i couche Lignes moyenne tension (HTA) (panneau couches carte)",
+  "texte": "Réseau HTA 15-20 kV EDF (aérien + souterrain) — tracé indicatif (sécurité publique), ne remplace pas une DT-DICT. Distinct de la HTB.",
+  "notion": "ligne_mt_couche",
+  "note": "15-20 kV en dur + ne remplace pas une DT-DICT"
+ },
+ {
+  "id": "DECL-125",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_transport.yaml:116",
+  "ou": "légende couche HTA (carte)",
+  "texte": "Ligne HTA 15-20 kV (aérien / souterrain)",
+  "notion": "ligne_mt_couche",
+  "note": "15-20 kV en dur"
+ },
+ {
+  "id": "DECL-126",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_transport.yaml:162",
+  "ou": "bulle i couche TCSP / stationnement allégé (panneau couches carte)",
+  "texte": "Transport en commun en site propre : voies en site propre (OSM) + stations + zone des 800 m (L151-36, parcelles couvertes teintées où le stationnement peut être allégé). UNE couche, 3 kinds unis.",
+  "notion": "tcsp_couche",
+  "note": "art. L151-36 c. urb. + zone 800 m en dur"
+ },
+ {
+  "id": "DECL-127",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_transport.yaml:169",
+  "ou": "légende niveaux couche TCSP (carte)",
+  "texte": "Zone 800 m — parcelles couvertes",
+  "notion": "tcsp_couche",
+  "note": "800 m en dur"
+ },
+ {
+  "id": "DECL-128",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_transport.yaml:169",
+  "ou": "légende niveaux couche TCSP (carte)",
+  "texte": "Rayon 800 m (contour)",
+  "notion": "tcsp_couche",
+  "note": "800 m en dur"
+ },
+ {
+  "id": "DECL-135",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/couches_sans_toggle.yaml:189",
+  "ou": "bulle i couche Cimetières (panneau couches carte)",
+  "texte": "Cimetières (BD TOPO) — servitude de voisinage (100 m).",
+  "notion": "cimetiere_couche",
+  "note": "servitude de voisinage 100 m en dur"
+ },
+ {
+  "id": "DECL-136",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/couches_sans_toggle.yaml:192",
+  "ou": "légende couche Cimetières (carte)",
+  "texte": "Cimetière (servitude de voisinage 100 m)",
+  "notion": "cimetiere_couche",
+  "note": "servitude de voisinage 100 m en dur"
+ },
+ {
+  "id": "DECL-139",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/couches_sans_toggle.yaml:265",
+  "ou": "bulle i couche Barrages, ponts et dalles (panneau couches carte)",
+  "texte": "Ouvrages surfaciques construits (BD TOPO) : barrages, ponts, dalles. 305 objets sur l'île.",
+  "notion": "construction_surfacique_couche",
+  "note": "305 objets en dur"
+ },
+ {
+  "id": "DECL-142",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/tuyau_hors_registre.yaml:55",
+  "ou": "bulle i couche Limites communes (panneau couches carte)",
+  "texte": "Limites administratives des 24 communes de La Réunion (contours IGN).",
+  "notion": "limites_communes",
+  "note": "24 communes en dur - doute (fait géographique) ; noté par doute"
+ },
+ {
+  "id": "DECL-143",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_transport.yaml:32",
+  "ou": "bulle i couche Lignes de bus (réseaux) (panneau couches carte)",
+  "texte": "Tracés GTFS des 6 réseaux (Car Jaune, Citalis, Kar'Ouest, Alternéo, Carsud, Estival) — couleur par réseau.",
+  "notion": "transport_couche",
+  "note": "6 réseaux en dur - doute (fait) ; noté par doute"
+ },
+ {
+  "id": "DECL-145",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/generiques.yaml:15",
+  "ou": "règle surface Sources de données (page /sources client)",
+  "texte": "Liste les sources de la vitrine (88 servies) ; une source nouvelle apparaît d'elle-même.",
+  "notion": "page_sources_client",
+  "note": "88 sources en dur - doute (méta interne) ; noté par doute"
+ },
+ {
+  "id": "DECL-149",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/fiche/le_bien.yaml:56",
+  "ou": "bulle i ligne « Part artificialisée (OCS GE) » section Le bien fiche parcelle",
+  "texte": "Part de la parcelle artificialisée d'après l'OCS GE 2022 (donnée d'îlot, pas la précision cadastrale) ; n'entre pas dans le score.",
+  "notion": "part_artificialisee_pct",
+  "note": "millésime 2022 en dur"
+ },
+ {
+  "id": "DECL-150",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/fiche/le_bien.yaml:63",
+  "ou": "bulle i ligne « Usage du sol dominant (OCS GE) » section Le bien fiche parcelle",
+  "texte": "Code d'usage OCS GE dominant par aire intersectée (millésime 2022, nomenclature IGN) — donnée d'îlot.",
+  "notion": "usage_sol_dominant",
+  "note": "millésime 2022 en dur"
+ },
+ {
+  "id": "DECL-151",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/fiche/le_bien.yaml:73",
+  "ou": "bulle i ligne « Part imperméabilisée (CoSIA) » section Le bien fiche parcelle",
+  "texte": "Part de la parcelle scellée (bâti, revêtement imperméable, piscine, serre) mesurée par CoSIA à 20 cm — complète l'artificialisation OCS GE d'îlot ; « imperméabilisé » n'est pas « artificialisé ».",
+  "notion": "part_impermeabilisee_cosia_pct",
+  "note": "résolution 20 cm en dur"
+ },
+ {
+  "id": "DECL-152",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/fiche/le_bien.yaml:92",
+  "ou": "bulle i ligne « Bâti détecté CoSIA (hors BD TOPO) » section Le bien fiche parcelle",
+  "texte": "Surface bâtie que CoSIA 2025 détecte sur la parcelle mais que l'empreinte BD TOPO n'a pas — signale un bâti récent ou non cartographié.",
+  "notion": "cosia_detecte_m2",
+  "note": "millésime CoSIA 2025 en dur"
+ },
+ {
+  "id": "DECL-153",
+  "zone": "declarations",
+  "fichier_ligne": "declarations/couches/famille_equipements.yaml:60",
+  "ou": "bulle i couche Bâti 3D (extrusion) (panneau couches carte)",
+  "texte": "Volumes bâtis extrudés (empreinte BD TOPO + hauteur) — faîtage LiDAR MESURÉ préféré quand la parcelle est ingérée, sinon hauteur BD TOPO estimée. Sans hauteur : jamais d'extrusion inventée. Visible de près (zoom ≥ 15), chargé sur la vue.",
+  "notion": "batiments_3d_couche",
+  "note": "zoom seuil 15 en dur - doute (technique) ; noté par doute"
+ },
+ {
+  "id": "DOC-010",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/provenance.py:176",
+  "ou": "liste blanche provenance (référence de droit citée)",
+  "texte": "seuil légal L151-36 (800 m) cité en clair — référence de droit, pas une mesure",
+  "notion": "L151-36 stationnement",
+  "note": "art. L151-36 code urba, 800 m en dur — référence de droit"
+ },
+ {
+  "id": "DOC-011",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/provenance.py:178",
+  "ou": "liste blanche provenance (part départementale taxe)",
+  "texte": "plafond légal de la part départementale de la taxe (2,5 %) — référence de droit",
+  "notion": "taxe part départementale",
+  "note": "plafond 2,5 % en dur — référence de droit"
+ },
+ {
+  "id": "DOC-012",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/provenance.py:180",
+  "ou": "liste blanche provenance (TVA)",
+  "texte": "taux légal de TVA sur le logement neuf à La Réunion (8,5 %) — référence de droit",
+  "notion": "TVA logement neuf DOM",
+  "note": "8,5 % en dur — référence de droit fiscal"
+ },
+ {
+  "id": "DOC-013",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/provenance.py:181",
+  "ou": "liste blanche provenance (TVA locatif)",
+  "texte": "taux légal de TVA réduit locatif à La Réunion (2,1 %) — référence de droit",
+  "notion": "TVA réduit locatif DOM",
+  "note": "2,1 % en dur — référence de droit fiscal"
+ },
+ {
+  "id": "DOC-014",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/provenance.py:177",
+  "ou": "liste blanche provenance (rayon secteur)",
+  "texte": "rayon de recherche du secteur (500 m) — paramètre d'affichage, pas une mesure",
+  "notion": "rayon secteur",
+  "note": "500 m en dur — paramètre d'affichage"
+ },
+ {
+  "id": "DOC-015",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/provenance.py:175",
+  "ou": "liste blanche provenance (validité brief)",
+  "texte": "durée de validité du brief apporteur (90 jours, constante d'affichage)",
+  "notion": "validité apporteur",
+  "note": "90 jours en dur"
+ },
+ {
+  "id": "DOC-016",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/provenance.py:182",
+  "ou": "liste blanche provenance (grille sensibilité)",
+  "texte": "pas de la grille de sensibilité du bilan (±5 %) — paramètre d'affichage",
+  "notion": "sensibilité bilan",
+  "note": "±5 % en dur"
+ },
+ {
+  "id": "DOC-018",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/zonage.py:60",
+  "ou": "PDF Dossier §2, ligne « Surface commerciale »",
+  "texte": "Au-delà de {seuil} m² de surface de vente : autorisation d'exploitation commerciale (CDAC)",
+  "notion": "commerce_cdac seuil_m2",
+  "note": "seuil CDAC servi depuis données (pas en dur) ; obligation autorisation CDAC"
+ },
+ {
+  "id": "DOC-028",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/reseaux.py:41",
+  "ou": "PDF Dossier §6, poste transformation",
+  "texte": "Au contact de la parcelle / À {d} m — coût de raccordement à confirmer (EDF SEI)",
+  "notion": "poste_transformation",
+  "note": "seuil 5 m en dur (d<=5) ; EDF SEI"
+ },
+ {
+  "id": "DOC-029",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/reseaux.py:53",
+  "ou": "PDF Dossier §6, ligne quartier ANC",
+  "texte": "{taux} % des logements en assainissement non collectif (INSEE {millésime})",
+  "notion": "part_logements_egout_pct",
+  "note": "assainissement non collectif ; taux servi INSEE"
+ },
+ {
+  "id": "DOC-030",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/reseaux.py:61",
+  "ou": "PDF Dossier §6, ligne ensoleillement",
+  "texte": "Productible solaire ~{n} kWh par kWc et par an",
+  "notion": "prod_kwh_kwc",
+  "note": "valeur servie (estimé)"
+ },
+ {
+  "id": "DOC-035",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/financier.py:25",
+  "ou": "PDF Financier, libellé poste bilan",
+  "texte": "Redevance d'archéologie préventive (0,40 %)",
+  "notion": "redevance_archeologie",
+  "note": "RAP 0,40 % en dur dans le libellé ; taxe légale (CGI)"
+ },
+ {
+  "id": "DOC-039",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/financier.py:329",
+  "ou": "PDF Financier, note fiscalité locale",
+  "texte": "Pendant {les X mois de portage}, le porteur acquitte la taxe foncière sur le bien. Elle se calcule sur la valeur locative cadastrale du bien × le taux communal ({X %}, part départementale et TEOM en sus). LABUSE n'invente pas de valeur locative : reportez-la de l'avis de taxe foncière du bien pour la chiffrer.",
+  "notion": "taxe foncière portage",
+  "note": "TFPB assiette valeur locative cadastrale ; taux/durée servis"
+ },
+ {
+  "id": "DOC-040",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/financier.py:332",
+  "ou": "PDF Financier, note zonage A/B/C",
+  "texte": "Zone {zone} (DHUP) : elle fixe l'éligibilité au PTZ dans le neuf, les plafonds de loyer et de ressources des dispositifs, et le prix de vente au bailleur social. À La Réunion, la TVA du logement neuf est de 8,5 % (2,1 % en locatif social).",
+  "notion": "zonage_abc PTZ/TVA",
+  "note": "8,5 % / 2,1 % en dur ; PTZ/plafonds loyer/ressources ; zonage DHUP"
+ },
+ {
+  "id": "DOC-045",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/financier.py:236",
+  "ou": "PDF Financier, note sensibilité",
+  "texte": "Coût de construction en lignes (bas/retenu/haut de la fourchette EPTB), prix de sortie en colonnes (±5 %). La charge foncière varie sur les deux axes.",
+  "notion": "sensibilité",
+  "note": "±5 % en dur"
+ },
+ {
+  "id": "DOC-046",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/financier.py:353",
+  "ou": "PDF Financier, calendrier",
+  "texte": "Acquisition → études et instruction (~{etudes} mois) → chantier (~{chantier} mois) → livraison. Durée de portage retenue : {duree} mois.",
+  "notion": "calendrier",
+  "note": "etudes=9 mois en dur (_calendrier), chantier=duree-9"
+ },
+ {
+  "id": "DOC-048",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/financier.py:384",
+  "ou": "PDF Financier revente, note",
+  "texte": "Calcul simple de marge (revente en l'état) : marge = prix de revente − prix d'achat − frais d'acquisition − travaux − coût de portage. Aucun bilan à rebours, aucune construction.",
+  "notion": "revente marge",
+  "note": "formule (pas de nombre en dur) — inclus par prudence"
+ },
+ {
+  "id": "DOC-049",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/marche.py:58",
+  "ou": "PDF Dossier §5, médiane secteur",
+  "texte": "{prix} €/m² — {n} ventes, {fenêtre}",
+  "notion": "dvf_parcelle_liste",
+  "note": "valeurs servies DVF"
+ },
+ {
+  "id": "DOC-050",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/marche.py:95",
+  "ou": "PDF Dossier §5, ligne permis",
+  "texte": "{n} permis autorisés dans un rayon de {rayon} m, sur les {fen} derniers mois",
+  "notion": "n_permis_proximite",
+  "note": "rayon/fenêtre servis (500 m/24 mois def.)"
+ },
+ {
+  "id": "DOC-051",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/marche.py:111",
+  "ou": "PDF Dossier §5, note",
+  "texte": "Ventes publiées (DVF), anonymisées ; les ventes récentes mettent un à trois ans à apparaître.",
+  "notion": "DVF fraîcheur",
+  "note": "« un à trois ans » en dur"
+ },
+ {
+  "id": "DOC-053",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/apporteur.py:262",
+  "ou": "PDF Apporteur, en-tête émission",
+  "texte": "Émis le {date} — valable 90 jours (jusqu'au {validite})",
+  "notion": "validité apporteur",
+  "note": "90 jours en dur"
+ },
+ {
+  "id": "DOC-061",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/commune.py:36",
+  "ou": "PDF Dossier §8, taxe d'aménagement",
+  "texte": "Taux communal {taux}{ — millésime}. {base}",
+  "notion": "taxe_amenagement taux",
+  "note": "taux communal servi (public)"
+ },
+ {
+  "id": "DOC-066",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/commune.py:59",
+  "ou": "PDF Dossier §8, parc social",
+  "texte": "{n} logements sociaux (RPLS)",
+  "notion": "parc_social_rpls_logements",
+  "note": "valeur servie RPLS"
+ },
+ {
+  "id": "DOC-067",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/autour.py:45",
+  "ou": "PDF Dossier §7, tuile",
+  "texte": "{pct} de 60 ans et plus",
+  "notion": "part_60_plus_pct",
+  "note": "libellé « 60 ans » = définition INSEE (allowlist) ; pct servi"
+ },
+ {
+  "id": "DOC-071",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/blocs/bilan.py:18",
+  "ou": "PDF Dossier §9, encart bilan",
+  "texte": "Le bilan dépend de chiffres que vous seul connaissez : prix demandé par le vendeur, coût de construction, marge visée. LABUSE ne les suppose pas à votre place.",
+  "notion": "bilan renvoi",
+  "note": "pas de nombre en dur — texte de renvoi (inclus par prudence, doute)"
+ },
+ {
+  "id": "DOC-077",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/miroir.py:134",
+  "ou": "PDF Dossier §8 (miroir), absence terrain nu",
+  "texte": "Terrain nu — à moins de 500 m : échantillon DVF insuffisant pour une médiane fiable.",
+  "notion": "prix_terrain_secteur_eur_m2",
+  "note": "500 m en dur"
+ },
+ {
+  "id": "DOC-082",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/miroir.py:474",
+  "ou": "PDF Dossier (miroir), TCSP",
+  "texte": "Station de transport en site propre à {d} m — stationnement allégé possible (L151-36, < 800 m) / hors rayon de 800 m (pas d'allègement L151-36)",
+  "notion": "tcsp_stationnement_allege",
+  "note": "L151-36 ; 800 m en dur"
+ },
+ {
+  "id": "DOC-086",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/miroir.py:948",
+  "ou": "PDF Dossier §11 (miroir), renvoi financier",
+  "texte": "Le bilan dépend de chiffres que vous seul connaissez : prix demandé par le vendeur, coût de construction, marge visée. LABUSE ne les suppose pas à votre place.",
+  "notion": "bilan renvoi",
+  "note": "pas de nombre en dur (inclus par prudence, doute)"
+ },
+ {
+  "id": "DOC-087",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/miroir.py:1013",
+  "ou": "PDF Dossier, page de garde tuile SDP",
+  "texte": "0 m² — zone {A/N}",
+  "notion": "sdp_residuelle_m2",
+  "note": "0 m² en dur pour zone A/N (non constructible)"
+ },
+ {
+  "id": "DOC-094",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/builder.py:151",
+  "ou": "PDF Dossier/Financier, page de garde légende natures",
+  "texte": "Une donnée absente est dite absente : ce document n'imprime jamais un zéro pour une valeur qu'il ne connaît pas.",
+  "notion": "légende",
+  "note": "« zéro » (pas un vrai chiffre engageant — inclus par prudence, doute)"
+ },
+ {
+  "id": "DOC-095",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/oracle_dossier.py:176",
+  "ou": "(oracle interne, non affiché) — rayon proximité",
+  "texte": "radius_m=500 … fenetre_mois=24",
+  "notion": "n_permis_proximite",
+  "note": "500 m/24 mois en dur — sert la ligne permis §5 (via robinet)"
+ },
+ {
+  "id": "DOC-096",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/robinet_fiche.py:624",
+  "ou": "(robinet, alimente Dossier §5) rayon permis",
+  "texte": "nearby_permits(db, pid, radius_m=500, fenetre_mois=24)",
+  "notion": "n_permis_proximite",
+  "note": "500 m/24 mois en dur"
+ },
+ {
+  "id": "DOC-098",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/financier_bilan.py:30",
+  "ou": "(moteur bilan Financier) constante TVA",
+  "texte": "TAUX_TVA_DEFAUT = 0.085 — La Réunion, logement neuf",
+  "notion": "taux_tva",
+  "note": "8,5 % en dur — taux légal TVA neuf DOM"
+ },
+ {
+  "id": "DOC-099",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/financier_bilan.py:18",
+  "ou": "(moteur bilan Financier) RAP docstring/commentaire",
+  "texte": "RAP = redevance d'archéologie préventive (0,40 % de l'assiette TA)",
+  "notion": "redevance_archeologie",
+  "note": "0,40 % en dur ; taxe légale — commentaire (chiffre remonte au libellé DOC-035)"
+ },
+ {
+  "id": "DOC-100",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/financier_bilan.py:35",
+  "ou": "(moteur bilan Financier) portage forfait",
+  "texte": "PORTAGE_FORFAIT_PCT = 3.0 — forfait si le client n'a pas saisi de taux",
+  "notion": "portage forfait",
+  "note": "3,0 % en dur"
+ },
+ {
+  "id": "DOC-101",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/financier_bilan.py:36",
+  "ou": "(moteur bilan Financier) sensibilité",
+  "texte": "PRIX_SORTIE_VAR = 0.05 — ±5 %",
+  "notion": "sensibilité",
+  "note": "±5 % en dur"
+ },
+ {
+  "id": "DOC-102",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/exports/financier_bilan.py:62",
+  "ou": "PDF Financier, verdict hors marché",
+  "texte": "cela dépasse tout prix de marché (borne {borne} €/m²) — un PRIX TOTAL a probablement été saisi à la place d'un prix au m².",
+  "notion": "hors_marche",
+  "note": "borne servie (engine.py) — inclus par prudence"
+ },
+ {
+  "id": "DOC-103",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/flash/report.py:48",
+  "ou": "PDF Flash, page de garde sous-titre (défaut)",
+  "texte": "RAPPORT FLASH · parcelle à l'unité",
+  "notion": "flash produit",
+  "note": "pas de chiffre engageant réel (inclus par prudence, doute — libellé produit)"
+ },
+ {
+  "id": "DOC-112",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/flash/templates/rapport.html.j2:189",
+  "ou": "PDF Flash §02, cartouche vendable",
+  "texte": "plancher (SDP) ~{plancher} m² = vendable ÷ rendement {rendement} %",
+  "notion": "faisa rendement",
+  "note": "rendement servi (0,80=80 %)"
+ },
+ {
+  "id": "DOC-114",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/flash/templates/rapport.html.j2:232",
+  "ou": "PDF Flash §03, aucun aléa",
+  "texte": "✓ Aucun aléa, PPR, site pollué ou ICPE identifié sur la parcelle ou à proximité (500 m) dans les couches analysées.",
+  "notion": "risques rien",
+  "note": "500 m en dur ; PPR/ICPE"
+ },
+ {
+  "id": "DOC-118",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/flash/templates/rapport.html.j2:304",
+  "ou": "PDF Flash §05, note effectif DVF",
+  "texte": "L'effectif « n » cité est le nombre de ventes DVF retenues (appartements/maisons du secteur, surface bâtie ≥ 20 m², prix > 20 000 €). Un petit effectif signale un marché peu liquide, pas une donnée erronée.",
+  "notion": "marche méthode",
+  "note": "≥ 20 m² / > 20 000 € en dur"
+ },
+ {
+  "id": "DOC-119",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/flash/templates/rapport.html.j2:309",
+  "ou": "PDF Flash §05, aucun comparable",
+  "texte": "Aucune vente enregistrée (DVF) dans un rayon de {rayon} m sur les {annees} dernières années — pas de comparable de proximité.",
+  "notion": "marche rien",
+  "note": "rayon/années servis"
+ },
+ {
+  "id": "DOC-120",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/flash/templates/rapport.html.j2:322",
+  "ou": "PDF Flash §05, ventes écartées",
+  "texte": "{n} vente(s) au prix/m² aberrant écartée(s) du tableau (prix incohérent avec la surface — mutation multi-parcelles probable).",
+  "notion": "n_ecartees",
+  "note": "n servi"
+ },
+ {
+  "id": "DOC-121",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/flash/templates/rapport.html.j2:344",
+  "ou": "PDF Flash §05, dernière mutation",
+  "texte": "{nature} du {date} — {valeur} € (mutation entière, plusieurs parcelles possibles).",
+  "notion": "derniere_mutation",
+  "note": "valeurs servies DVF"
+ },
+ {
+  "id": "DOC-122",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/flash/templates/rapport.html.j2:358",
+  "ou": "PDF Flash §06, aucune autorisation",
+  "texte": "Aucune autorisation d'urbanisme géolocalisée (Sitadel) dans un rayon de {rayon} m sur les {mois} derniers mois — couverture géolocalisée Sitadel : {pct} % des autorisations (un zéro est un minimum, pas une absence prouvée).",
+  "notion": "dynamique",
+  "note": "rayon/mois/pct servis (500 m/24 mois def.)"
+ },
+ {
+  "id": "DOC-124",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/flash/templates/rapport.html.j2:404",
+  "ou": "PDF Flash §07, note délai instruction",
+  "texte": "ce délai est calculé sur les seuls permis accordés — les dossiers refusés ou encore en instruction ne sont pas comptés, ce qui raccourcit mécaniquement la médiane. C'est donc un minimum optimiste, pas un délai garanti. Médiane robuste, cohortes mûres (dépôts de plus de 12 mois), historique 2013+.",
+  "notion": "velocite méthode",
+  "note": "12 mois / 2013+ en dur"
+ },
+ {
+  "id": "DOC-125",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/flash/templates/rapport.html.j2:415",
+  "ou": "PDF Flash §07, SRU",
+  "texte": "SRU : commune {statut} — {taux} % de logements sociaux pour un objectif de {objectif} % · besoin estimé ~{deficit} logements sociaux.",
+  "notion": "leviers sru",
+  "note": "loi SRU ; taux/objectif servis (déficit dérivé)"
+ },
+ {
+  "id": "DOC-126",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/flash/templates/rapport.html.j2:420",
+  "ou": "PDF Flash §07, QPV leviers",
+  "texte": "Quartier prioritaire (QPV) Leviers bailleur : TVA 2,1 % (au lieu de 8,5 % DOM), abattement TFPB 30 %, éligibilité LLS/LLTS renforcée.",
+  "notion": "leviers qpv",
+  "note": "TVA 2,1 %/8,5 % + abattement TFPB 30 % en dur — dispositifs fiscaux QPV"
+ },
+ {
+  "id": "DOC-128",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/flash/templates/rapport.html.j2:450",
+  "ou": "PDF Flash §08, pente",
+  "texte": "Pente moyenne (RGE ALTI 5 m)",
+  "notion": "pente",
+  "note": "RGE ALTI 5 m (métadonnée source, chiffre en dur '5 m')"
+ },
+ {
+  "id": "DOC-129",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/flash/templates/rapport.html.j2:461",
+  "ou": "PDF Flash §08, pente forte",
+  "texte": "Pente forte — terrassement lourd probable",
+  "notion": "pente terrassement",
+  "note": "seuil servi (flag)"
+ },
+ {
+  "id": "DOC-131",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/flash/templates/rapport.html.j2:502",
+  "ou": "PDF Flash §09, zone atteignable",
+  "texte": "Zone atteignable en {minutes} min {mode} depuis la parcelle — isochrone IGN, temps « hors trafic ».",
+  "notion": "zone",
+  "note": "minutes servi (10 def.)"
+ },
+ {
+  "id": "DOC-132",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/flash/templates/rapport.html.j2:564",
+  "ou": "PDF Flash §09, note revenu",
+  "texte": "Revenu estimé — carreaux INSEE Filosofi 2021, valeurs lissées pour la confidentialité. Temps de trajet « hors trafic ».",
+  "notion": "zone revenu",
+  "note": "Filosofi 2021 (millésime)"
+ },
+ {
+  "id": "DOC-137",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/flash/data.py:546",
+  "ou": "PDF Flash §05, méthode marché",
+  "texte": "Médiane observée : {n} €/m² bâti, tous types de biens, rayon {rayon} m sur {annees} ans — indicateur de marché local, distinct du prix de sortie du bilan (appartements, rayon adaptatif). Ventes au prix/m² aberrant écartées du tableau des comparables.",
+  "notion": "marche méthode",
+  "note": "rayon/années servis"
+ },
+ {
+  "id": "DOC-139",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/financier_questionnaire.py:229",
+  "ou": "Questionnaire Financier (écran), aide régime TVA",
+  "texte": "Le régime de TVA décide si le bilan travaille HT ou TTC. À La Réunion la TVA sur le logement neuf est de 8,5 %. Le régime réel dépend du montage (TVA sur marge à l'acquisition, récupération sur les coûts, taux réduit en accession sociale) : à confirmer avec votre expert-comptable.",
+  "notion": "TVA_EXPLICATION",
+  "note": "8,5 % en dur — taux légal TVA neuf DOM"
+ },
+ {
+  "id": "DOC-140",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/financier_questionnaire.py:156",
+  "ou": "Questionnaire Financier, aide frais acquisition",
+  "texte": "Un pourcentage — notaire et droits de mutation (usage 7 à 8 %). Pré-rempli à 7 %.",
+  "notion": "frais_acquisition_saisi_pct",
+  "note": "7 à 8 % / 7 % en dur"
+ },
+ {
+  "id": "DOC-141",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/financier_questionnaire.py:159",
+  "ou": "Questionnaire Financier, aide coût construction",
+  "texte": "Un coût en €/m² de plancher (usage 2 300 à 2 800 à La Réunion). Pré-rempli à la médiane régionale.",
+  "notion": "cout_construction_saisi_eur_m2",
+  "note": "2 300 à 2 800 en dur"
+ },
+ {
+  "id": "DOC-142",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/financier_questionnaire.py:163",
+  "ou": "Questionnaire Financier, aide aléas",
+  "texte": "Un pourcentage — provision pour aléas de chantier (usage 3 à 5 %). Pré-rempli à 4 %.",
+  "notion": "aleas_saisi_pct",
+  "note": "3 à 5 % / 4 % en dur"
+ },
+ {
+  "id": "DOC-143",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/financier_questionnaire.py:167",
+  "ou": "Questionnaire Financier, aide marge",
+  "texte": "Un pourcentage du chiffre d'affaires (marge cible promoteur, usage ~9 %). Pré-rempli.",
+  "notion": "marge_visee_saisi_pct",
+  "note": "~9 % en dur"
+ },
+ {
+  "id": "DOC-144",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/financier_questionnaire.py:160",
+  "ou": "Questionnaire Financier, aide honoraires",
+  "texte": "Un pourcentage du coût travaux (architecte, BET, contrôle — usage ~12 %). Pré-rempli.",
+  "notion": "honoraires_techniques_saisi_pct",
+  "note": "~12 % en dur"
+ },
+ {
+  "id": "DOC-145",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/financier_questionnaire.py:169",
+  "ou": "Questionnaire Financier, aide durée portage",
+  "texte": "Une durée en mois (instruction + chantier). Pré-remplie à 29 mois.",
+  "notion": "duree_portage_saisi_mois",
+  "note": "29 mois en dur"
+ },
+ {
+  "id": "DOC-147",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/financier_questionnaire.py:248",
+  "ou": "Questionnaire Financier, pré-remplissage (source affichée)",
+  "texte": "usage standard : notaire et droits de mutation (7 à 8 %)",
+  "notion": "frais_acquisition_saisi_pct",
+  "note": "7 à 8 % en dur (source affichée sous le champ)"
+ },
+ {
+  "id": "DOC-148",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/financier_questionnaire.py:253",
+  "ou": "Questionnaire Financier, pré-remplissage (source)",
+  "texte": "médiane régionale 2021-2025, EPTB 2024 / dataset CDC (2 300 à 2 800 €/m²)",
+  "notion": "cout_construction_saisi_eur_m2",
+  "note": "2 300 à 2 800 en dur"
+ },
+ {
+  "id": "DOC-149",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/financier_questionnaire.py:255",
+  "ou": "Questionnaire Financier, pré-remplissage (source)",
+  "texte": "délai d'instruction médian (~9 mois) + 20 mois de chantier",
+  "notion": "duree_portage_saisi_mois",
+  "note": "9 + 20 mois en dur (=29)"
+ },
+ {
+  "id": "DOC-150",
+  "zone": "documents_pdf",
+  "fichier_ligne": "src/labuse/financier_questionnaire.py:204",
+  "ou": "Questionnaire Financier, manque programme",
+  "texte": "cette parcelle n'a pas de surface vendable chiffrable — renseignez un nombre de logements visés et une typologie, ou vérifiez le potentiel de la parcelle.",
+  "notion": "manques",
+  "note": "pas de nombre en dur (inclus par prudence, doute)"
+ },
+ {
+  "id": "COP-007",
+  "zone": "copilote",
+  "fichier_ligne": "src/labuse/copilote_v2/outils.py:448-452",
+  "ou": "prompt système web/connaissance (_DOM) — impose au copilote un régime fiscal DOM chiffré destiné au client",
+  "texte": "défiscalisation Pinel OUTRE-MER et Girardin (pas le Pinel métropolitain) ; TVA à 8,5 % (pas 20 %) ; ZFANG (zones franches d'activité nouvelle génération) ; zonage A/B/C spécifique DOM.",
+  "notion": "TVA DOM 8,5 % / dispositifs Girardin, Pinel OM, ZFANG",
+  "note": "Chiffre en dur (TVA 8,5 %) + régime fiscal DOM affirmé, injecté dans toute réponse web de connaissance. Double famille : chiffré (8,5 %) + juridique (dispositifs). Vérifier taux TVA DOM et existence/nom des dispositifs."
+ },
+ {
+  "id": "COP-008",
+  "zone": "copilote",
+  "fichier_ligne": "src/labuse/copilote_v2/answering.py:129-130",
+  "ou": "catalogue outil fiche_parcelle (desc lue par le LLM sélecteur) — définit l'IDU",
+  "texte": "Données d'UNE parcelle précise identifiée par son IDU (14 car.) : commune, surface, zone, verdict.",
+  "notion": "IDU = 14 caractères",
+  "note": "DOUTE : « 14 car. » est un format d'identifiant (nombre en dur qui engage la validité de l'entrée). Répété COP-009/COP-010. Inclus par prudence, marginal."
+ },
+ {
+  "id": "COP-009",
+  "zone": "copilote",
+  "fichier_ligne": "src/labuse/copilote_v2/answering.py:1330-1331",
+  "ou": "réponse Copilote fiche, clarification IDU manquant (mission vérification)",
+  "texte": "Quelle parcelle dois-je évaluer ? Donnez-moi l'IDU (14 caractères) — j'ouvre la Calculette foncière pour la comparer au prix.",
+  "notion": "IDU = 14 caractères",
+  "note": "Nombre en dur (14) engageant le format attendu. Marginal ; même notion que COP-008."
+ },
+ {
+  "id": "COP-010",
+  "zone": "copilote",
+  "fichier_ligne": "src/labuse/copilote_v2/missions_lourdes.py:56",
+  "ou": "réponse Copilote fiche/vérification, clarification IDU manquant",
+  "texte": "Quelle parcelle dois-je vérifier ? Donnez-moi son IDU (14 caractères).",
+  "notion": "IDU = 14 caractères",
+  "note": "Nombre en dur (14). Marginal ; doublon notionnel de COP-008/009."
+ },
+ {
+  "id": "COP-011",
+  "zone": "copilote",
+  "fichier_ligne": "src/labuse/copilote_v2/recap.py:52",
+  "ou": "réponse Copilote fiche, suggestion d'affinage recherche (chip _SUGGESTIONS)",
+  "texte": "Au moins 1 000 m²",
+  "notion": "seuil surface suggéré 1 000 m²",
+  "note": "DOUTE : seuil en dur (1 000 m²) proposé comme filtre, pas une règle de droit. Suggestion d'UI servie au client. Inclus par prudence."
+ },
+ {
+  "id": "COP-012",
+  "zone": "copilote",
+  "fichier_ligne": "src/labuse/copilote_v2/outils.py:103-104",
+  "ou": "réponse Copilote fiche, refus commune non reconnue (_refus_commune)",
+  "texte": "Je n'ai pas reconnu la commune « {nom} » — précisez parmi les 24 communes de La Réunion (ex. Saint-Denis, Le Tampon, L'Étang-Salé).",
+  "notion": "24 communes de La Réunion",
+  "note": "Nombre en dur (24 communes) engageant un fait administratif. Vérifier le compte des communes de La Réunion (24)."
+ },
+ {
+  "id": "MAIL-001",
+  "zone": "mails",
+  "fichier_ligne": "src/labuse/emails.py:19",
+  "ou": "email réinitialisation mot de passe, durée de validité du lien",
+  "texte": "Ce lien est valable 1 heure. Passé ce délai, il faudra en redemander un.",
+  "notion": "délai de validité lien reset",
+  "note": "« 1 heure » en dur dans le corps du mail ; vérifier que le token expire bien à 1 h côté auth"
+ },
+ {
+  "id": "MAIL-012",
+  "zone": "mails",
+  "fichier_ligne": "src/labuse/courrier_compose.py:201-203",
+  "ou": "lettre au propriétaire (verso synthèse), mutations DVF sur 3 ans",
+  "texte": "Environnement immobilier : {n} mutation(s) publiée(s) dans le périmètre analysé sur les {x} dernières années.",
+  "notion": "fenêtre DVF 3 ans / rayon 500 m",
+  "note": "x_annees=3 (X_ANNEES_DVF), rayon 500 m (RAYON_DVF_M) en dur dans le module ; valeurs injectées dans la phrase"
+ },
+ {
+  "id": "MAIL-019",
+  "zone": "mails",
+  "fichier_ligne": "frontend/src/components/outils/ModulePanel.tsx:1534",
+  "ou": "outil Courrier étape 3, délai de communication du tarif",
+  "texte": "Tarif communiqué sous 24 h ouvrées.",
+  "notion": "délai tarif",
+  "note": "« sous 24 h ouvrées » en dur — engagement de délai"
+ },
+ {
+  "id": "MAIL-020",
+  "zone": "mails",
+  "fichier_ligne": "frontend/src/components/outils/ModulePanel.tsx:1550",
+  "ou": "outil Courrier confirmation, rappel sous 24h ouvrées",
+  "texte": "LABUSE vous rappelle sous 24 h ouvrées avec le tarif — impression, mise sous pli, affranchissement et suivi compris.",
+  "notion": "délai de rappel",
+  "note": "« sous 24 h ouvrées » en dur — engagement de délai"
+ },
+ {
+  "id": "PY-010",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/taxe_amenagement.py:280",
+  "ou": "libellé forfait éolienne",
+  "texte": "Éolienne(s) (mât > 12 m)",
+  "notion": "taxe aménagement / forfait",
+  "note": "seuil mât > 12 m en dur (forfait taxe éolienne)"
+ },
+ {
+  "id": "PY-025",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/verdict_servi.py:100",
+  "ou": "motif client fallback fiche",
+  "texte": "Classement ajusté après vérification manuelle — détail disponible sur demande.",
+  "notion": "verdict fiche",
+  "note": "doute : pas de droit ni chiffre en dur — INCLUS par prudence, probablement HORS (à écarter)"
+ },
+ {
+  "id": "PY-026",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/verdict_servi.py:60",
+  "ou": "libellé périmètre rang",
+  "texte": "copropriétés hors univers de classement — pas d'assiette foncière mobilisable",
+  "notion": "verdict / rang",
+  "note": "doute : explication, pas de chiffre en dur — probablement HORS"
+ },
+ {
+  "id": "PY-031",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/faisabilite/engine.py:354",
+  "ou": "avertissement faisabilité",
+  "texte": "Recul voirie non calibré pour la zone {rules.code} → hypothèse prudente {recul_v:g} m.",
+  "notion": "recul voirie",
+  "note": "recul par défaut 5,0 m (SEUIL) ; valeur via variable — HORS strict (chiffre depuis variable) INCLUS par prudence"
+ },
+ {
+  "id": "PY-032",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/faisabilite/engine.py:363",
+  "ou": "avertissement faisabilité",
+  "texte": "Recul limites séparatives non calibré pour la zone {rules.code} → hypothèse prudente {recul_l:g} m.",
+  "notion": "recul limites séparatives",
+  "note": "recul par défaut 3,0 m ; valeur via variable — INCLUS par prudence"
+ },
+ {
+  "id": "PY-033",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/faisabilite/engine.py:394",
+  "ou": "verdict faisabilité",
+  "texte": "Terrain trop exigu compte tenu des reculs ({recul_used:g} m) — non constructible en l'état (le contour inseté se vide).",
+  "notion": "surface critique / recul",
+  "note": "seuil SEUIL_EXIGU_M2=5,0 ; recul via variable"
+ },
+ {
+  "id": "PY-034",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/faisabilite/engine.py:426",
+  "ou": "avertissement faisabilité",
+  "texte": "Recul voirie {rules.recul_voirie_m:g} m s'applique en sus sur la façade sur rue (bord rue non identifiable au cadastre → non déduit géométriquement).",
+  "notion": "recul voirie",
+  "note": "recul via variable — INCLUS par prudence"
+ },
+ {
+  "id": "PY-037",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/faisabilite/engine.py:516",
+  "ou": "avertissement faisabilité",
+  "texte": "Hauteur égout (hé) non précisée pour {rules.code} : niveaux estimés depuis hf {rules.hf_m:g} m (prudent).",
+  "notion": "hauteur égout",
+  "note": "hauteur via variable — INCLUS par prudence"
+ },
+ {
+  "id": "PY-054",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/faisabilite/bilan.py:1039",
+  "ou": "motif bilan",
+  "texte": "Absent — emprise bâtie non mesurable (< 20 m²) : pas de bilan inventé",
+  "notion": "emprise bâtie seuil",
+  "note": "seuil 20 m² en dur (BD TOPO)"
+ },
+ {
+  "id": "PY-055",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/faisabilite/bilan.py:1164",
+  "ou": "avertissement bilan",
+  "texte": "Estimé — ni un prix ni une promesse ; sans donnée d'état du bâti, ...",
+  "notion": "bilan estimé",
+  "note": "doute : pas de chiffre en dur ni droit — probablement HORS, INCLUS par prudence"
+ },
+ {
+  "id": "PY-056",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/faisabilite/marche_commune.py:244",
+  "ou": "motif présence permis",
+  "texte": "aucun permis autorisé sur 12 mois",
+  "notion": "délai / permis",
+  "note": "fenêtre 12 mois en dur"
+ },
+ {
+  "id": "PY-065",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/gabarit/validate.py:122",
+  "ou": "erreur validation gabarit",
+  "texte": "périmètre insuffisamment couvert par les limites ({ratio * 100:.0f} % < {COVER_MIN_RATIO * 100:.0f} %)",
+  "notion": "couverture périmètre seuil",
+  "note": "seuil 98 % (COVER_MIN_RATIO=0.98) ; formaté depuis variable — INCLUS par prudence"
+ },
+ {
+  "id": "PY-066",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/quota.py:56",
+  "ou": "message dépassement quota",
+  "texte": "Plafond quotidien d'usage loyal atteint : {plafond} exports aujourd'hui (offre Intégral). Vos exports reprennent demain. Le rapport Flash à l'unité reste disponible, hors quota. Un besoin ponctuel plus large ? Écrivez-nous : contact@labuse.immo.",
+  "notion": "quota abonnement",
+  "note": "plafond 30 exports/jour (PLAFONDS_JOUR) ; formaté via {plafond} — notion 'usage loyal'"
+ },
+ {
+  "id": "PY-082",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/regles/taxe_amenagement_eur.py:9",
+  "ou": "résumé fiche règle taxe aménagement",
+  "texte": "Assiette = surface_taxable × valeur forfaitaire de l'année (892 €/m² hors IdF, millésime 2026 du YAML daté) + forfaits d'installations (piscine 251 €/m², PV au sol 10 €/m², stationnement extérieur 2 928 €/place, éolienne 3 000 €/mât) ; abattement 50 % sur les 100 premiers m² d'une résidence principale et sur les logements aidés ; exonération de ...",
+  "notion": "taxe aménagement",
+  "note": "valeurs en dur : 892 €/m², 251, 10, 2 928, 3 000 €, 50 %, 100 m²"
+ },
+ {
+  "id": "PY-084",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/regles/taxe_amenagement_eur.py:31",
+  "ou": "extrait officiel fiche taxe",
+  "texte": "1635 quater H : « fixée forfaitairement à 892 € pour les communes situées hors de la région d'Ile-de-France et à 1 011 € pour les communes situées dans la région d'Ile-de-France » ... abattement de 50 % est appliqué ... Les cent premiers mètres carrés des locaux d'habitation ... (2026) : piscines 251 €/m², stationnement extérieur 2 928 €/place (jusqu'à 5 857 € sur délibération), panneaux PV au sol 10 €/m², éolienne > 12 m 3 000 €/unité.",
+  "notion": "taxe aménagement",
+  "note": "citation CGI 1635 quater H : 892/1 011 €, 50 %, 100 m², 251, 2 928, 5 857, 10, 3 000 €, mât >12 m"
+ },
+ {
+  "id": "PY-087",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/regles/destination_statut.py:22",
+  "ou": "extrait officiel CDAC",
+  "texte": "supérieure à 1 000 mètres carrés » ; « 2° L'extension de la surface de vente d'un magasin de commerce de détail ayant déjà atteint le seuil des 1 000 mètres carrés",
+  "notion": "CDAC",
+  "note": "seuil 1 000 m² en dur (art. L752-1)"
+ },
+ {
+  "id": "PY-089",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/regles/distance_arret_m.py:23",
+  "ou": "extrait officiel stationnement",
+  "texte": "L151-36 : « Pour les constructions destinées à l'habitation ... situées à moins de huit cents mètres d'une gare ou d'une station de transport public guidé ou de transport collectif en site propre ... il ne peut ... être exigé la réalisation de plus d'une aire de stationnement par logement. » L151-35 ... à moins de 800 m, « il ne peut être exigé la réalisation de plus de 0,5 aire de stationnement par logement » pour les logements aidés/résidences ...",
+  "notion": "stationnement / transports",
+  "note": "citation L151-36/L151-35 : 800 m, 1 aire, 0,5 aire"
+ },
+ {
+  "id": "PY-090",
+  "zone": "verdicts_py",
+  "fichier_ligne": "src/labuse/regles/destination_statut.py:10",
+  "ou": "résumé fiche destination",
+  "texte": "1 000 m² (code : float(seuil_m2) > CDAC_SEUIL_M2, CDAC_SEUIL_M2 = 1000) → mention",
+  "notion": "CDAC",
+  "note": "seuil CDAC 1 000 m² en dur"
+ },
+ {
+  "id": "FRT-001",
+  "zone": "front",
+  "fichier_ligne": "frontend/src/components/fiche/constructibilite.tsx:102",
+  "ou": "bloc Taxe d'aménagement fiche parcelle",
+  "texte": "plafond légal 2,5 % — à confirmer",
+  "notion": "taux départemental taxe aménagement",
+  "note": "2,5 % en dur = plafond légal part départementale (CGI). Vérifier valeur légale actuelle."
+ },
+ {
+  "id": "FRT-009",
+  "zone": "front",
+  "fichier_ligne": "frontend/src/components/fiche/constructibilite.tsx:1009",
+  "ou": "bloc Délaissé fiche parcelle",
+  "texte": "seuil {delaisse.seuil_m2} m²",
+  "notion": "seuil délaissé",
+  "note": "Seuil servi par variable (pas de littéral). Notion délaissé L113-2. Doute : inclus car engage un droit."
+ },
+ {
+  "id": "FRT-011",
+  "zone": "front",
+  "fichier_ligne": "frontend/src/components/fiche/reseaux.tsx:110",
+  "ou": "bloc TCSP fiche parcelle",
+  "texte": "rayon 800 m",
+  "notion": "TCSP distance stationnement",
+  "note": "800 m en dur = seuil réglementaire stationnement allégé à proximité TCSP."
+ },
+ {
+  "id": "FRT-017",
+  "zone": "front",
+  "fichier_ligne": "frontend/src/components/outils/TaxeAmenagement.tsx:309",
+  "ou": "aide taux communal outil Taxe",
+  "texte": "À défaut de délibération, le taux légal minimal est de 1 %.",
+  "notion": "taux légal minimal",
+  "note": "1 % en dur = taux légal minimal taxe d'aménagement part communale."
+ },
+ {
+  "id": "FRT-018",
+  "zone": "front",
+  "fichier_ligne": "frontend/src/components/outils/TaxeAmenagement.tsx:397",
+  "ou": "bloc RAP outil Taxe",
+  "texte": "Redevance d'archéologie préventive (0,40 %)",
+  "notion": "taux RAP",
+  "note": "0,40 % en dur = taux légal redevance archéologie préventive."
+ },
+ {
+  "id": "FRT-021",
+  "zone": "front",
+  "fichier_ligne": "frontend/src/components/outils/Successions.tsx:35",
+  "ou": "bandeau signal outil Successions",
+  "texte": "dirigeant le plus âgé a ≥ 70 ans, ou une SCI créée il y a ≥ 20 ans sans mise à jour RNE depuis ≥ 5 ans",
+  "notion": "seuils âge/ancienneté signal",
+  "note": "Seuils en dur 70 ans / 20 ans / 5 ans définissant le signal. Vérifier cohérence avec back (VEILLE_SUCCESSION_FORMES)."
+ },
+ {
+  "id": "FRT-022",
+  "zone": "front",
+  "fichier_ligne": "frontend/src/components/outils/Successions.tsx:72",
+  "ou": "bandeau méthode outil Successions",
+  "texte": "un radar à 3-7 ans, pas une succession ouverte",
+  "notion": "horizon succession",
+  "note": "Horizon 3-7 ans en dur = qualification de l'horizon temporel du signal."
+ },
+ {
+  "id": "FRT-037",
+  "zone": "front",
+  "fichier_ligne": "frontend/src/components/radar/RadarMarcheColonne.tsx:202",
+  "ou": "règle seuil Radar Marché",
+  "texte": "L'écart est « indicatif » de {seuil_indicatif_n} à {seuil_ecart_n - 1} annonces, ferme à {seuil_ecart_n}, « sous le seuil » en deçà.",
+  "notion": "seuils fiabilité statistique",
+  "note": "Seuils servis par variables (pas de littéral). Doute : inclus, règle de fiabilité affichée. Renvoyer FC-2 si back."
+ },
+ {
+  "id": "FRT-038",
+  "zone": "front",
+  "fichier_ligne": "frontend/src/components/sources/SourcesPage.tsx:172",
+  "ou": "page Sources avertissement filtre",
+  "texte": "le filtre masque les micro-parcelles « sliver » < 2 m²",
+  "notion": "seuil micro-parcelle",
+  "note": "2 m² en dur = seuil MIN_DISPLAY_SURFACE_M2. Déjà audité FRONT-CHIFFRES-1 (garde). Renvoyer FC-2."
+ },
+ {
+  "id": "FRT-039",
+  "zone": "front",
+  "fichier_ligne": "frontend/src/components/sources/SourcesPage.tsx:181",
+  "ou": "page Sources note DVF",
+  "texte": "les {...} micro-parcelles (moins de 2 m²) sont écartées de l'exploration.",
+  "notion": "seuil micro-parcelle",
+  "note": "2 m² en dur. Doublon de notion FRT-038."
+ },
+ {
+  "id": "FRT-040",
+  "zone": "front",
+  "fichier_ligne": "frontend/src/components/sources/SourcesPage.tsx:196",
+  "ou": "page Sources note DVF",
+  "texte": "mettent 1 à 3 ans à apparaître dans DVF.",
+  "notion": "délai publication DVF",
+  "note": "1 à 3 ans en dur = délai de publication des mutations DVF."
+ },
+ {
+  "id": "FRT-041",
+  "zone": "front",
+  "fichier_ligne": "frontend/src/components/header/Header.tsx:152",
+  "ou": "toast recherche référence header",
+  "texte": "« {val} » existe dans {n} communes ({liste}) — ouvrez la commune, puis ressaisissez la référence.",
+  "notion": "multi-commune",
+  "note": "Nombre servi par variable (comms.length). Pas de littéral engageant. Doute : inclus mais probablement HORS."
+ },
+ {
+  "id": "APIDOC-002",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/pre_dossier.py:291",
+  "ou": "pré-dossier PC, encart servitudes (règles zonage)",
+  "texte": "Abords de Monument historique (~500 m) — avis ABF probable",
+  "notion": "abf",
+  "note": "buffer 500 m en dur ; abords monument historique / avis ABF"
+ },
+ {
+  "id": "APIDOC-007",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/pre_dossier.py:318",
+  "ou": "pré-dossier PC, encart servitudes",
+  "texte": "— la commune peut préempter à la vente (DIA, ~2 mois)",
+  "notion": "dpu",
+  "note": "DPU/DIA : délai ~2 mois en dur ; droit de préempter à la vente"
+ },
+ {
+  "id": "APIDOC-015",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/pre_dossier.py:360",
+  "ou": "pré-dossier PC, section Fiscalité",
+  "texte": "Redevance d'archéologie préventive 0,68 €/m² de surface créée (art. L524-7 du Code du patrimoine) — chiffrée sur la SDP du projet",
+  "notion": "redevance_archeologie",
+  "note": "tarif 0,68 €/m² en dur ; art. L524-7 code du patrimoine"
+ },
+ {
+  "id": "APIDOC-019",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/pre_dossier.py:398",
+  "ou": "pré-dossier PC, section pièces (collectif)",
+  "texte": "Scénario retenu : collectif → dépôt sur CERFA 13409 (pièces PC1 à PC8), à récupérer sur service-public.gouv.fr.",
+  "notion": "cerfa",
+  "note": "CERFA 13409 en dur ; pièces PC1 à PC8 ; dépôt collectif"
+ },
+ {
+  "id": "APIDOC-034",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/pre_dossier.py:1112",
+  "ou": "pré-dossier PC, LISEZMOI, scénario collectif",
+  "texte": "Un collectif relève du CERFA 13409 (pièces PC1 à PC8), à récupérer sur service-public.gouv.fr. Le CERFA 13406 fourni ci-dessus NE VAUT QUE pour une maison individuelle",
+  "notion": "cerfa",
+  "note": "CERFA 13409 / 13406 en dur ; pièces PC1 à PC8 ; distinction collectif/maison"
+ },
+ {
+  "id": "APIDOC-036",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/pre_dossier.py:136",
+  "ou": "pré-dossier PC, scénario (interne mais rendu dans texte collectif)",
+  "texte": "collectif (≥ 3 logements)",
+  "notion": "scenario_collectif",
+  "note": "seuil 3 logements en dur (cap >= 3) définissant le régime CERFA 13409"
+ },
+ {
+  "id": "APIDOC-041",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/fiche_blocs3.py:14",
+  "ou": "fiche parcelle, bloc trafic RN",
+  "texte": "TMJA_RAYON_M = 300 / « axe le plus proche » : au-delà, la RN n'est plus une nuisance de la parcelle",
+  "notion": "trafic_rn",
+  "note": "rayon 300 m en dur (constante servie via rayon_m au front)"
+ },
+ {
+  "id": "APIDOC-042",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/fiche_blocs3.py:16",
+  "ou": "fiche parcelle, bloc PM voisines",
+  "texte": "PM_VOISIN_RAYON_M = 300 / rayon des acquisitions de PM voisines",
+  "notion": "pm_voisines",
+  "note": "rayon 300 m en dur (servi via rayon_m)"
+ },
+ {
+  "id": "APIDOC-043",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/fiche_blocs3.py:17",
+  "ou": "fiche parcelle, bloc PM voisines",
+  "texte": "PM_VOISIN_MOIS = 36 / fenêtre 36 mois",
+  "notion": "pm_voisines",
+  "note": "fenêtre 36 mois en dur (servie via mois)"
+ },
+ {
+  "id": "APIDOC-045",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/marche_bloc.py:32",
+  "ou": "documents (dossier/flash/banquier/premium), bloc Marché condensé",
+  "texte": "Prix de sortie neuf {prix} €/m² (niveau {niveau}, n {n})",
+  "notion": "prix_sortie_neuf",
+  "note": "valeurs servies par variables — HORS littéral ; noté pour trace (unité €/m² seule)"
+ },
+ {
+  "id": "APIDOC-046",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/marche_bloc.py:34",
+  "ou": "documents, bloc Marché condensé",
+  "texte": "Tendance {sens} {delta} % sur 12 mois",
+  "notion": "tendance_12m",
+  "note": "12 mois en dur dans le libellé (le reste servi par variables)"
+ },
+ {
+  "id": "APIDOC-047",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/marche_bloc.py:39",
+  "ou": "documents, bloc Marché condensé",
+  "texte": "Liquidité {n} ventes au dernier trimestre",
+  "notion": "liquidite",
+  "note": "valeurs servies par variables ; « dernier trimestre » = période ; noté pour trace"
+ },
+ {
+  "id": "APIDOC-048",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/marche_bloc.py:41",
+  "ou": "documents, bloc Marché condensé",
+  "texte": "Offre engagée {logements_12m} logements autorisés / 12 mois ({permis_12m} permis)",
+  "notion": "offre_engagee",
+  "note": "12 mois en dur dans le libellé (chiffres servis par variables)"
+ },
+ {
+  "id": "APIDOC-059",
+  "zone": "api_documents",
+  "fichier_ligne": "src/labuse/api/dossier.py:84",
+  "ou": "Dossier parcelle, message quota (429)",
+  "texte": "Quota mensuel de Dossiers parcelle atteint ({dossier_quota_mois}/mois, plan Essentiel).",
+  "notion": "quota_dossier",
+  "note": "quota servi par variable (config s.dossier_quota_mois) — HORS littéral ; noté pour trace"
+ }
+]

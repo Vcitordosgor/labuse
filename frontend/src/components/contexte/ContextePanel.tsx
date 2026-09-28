@@ -26,7 +26,7 @@ function RowT({ lbl, val, strong }: { lbl: string; val: string; strong?: boolean
 //: statut SRU → couleur + lecture métier (une phrase sobre — le ciblage de la promotrice)
 const SRU_META: Record<string, { color: string; label: string; lecture: string }> = {
   carencee: { color: TOKENS.stEcartee, label: 'CARENCÉE',
-    lecture: 'Commune en carence SRU : forte pression de production de logement social — les programmes avec part LLS y sont attendus (et souvent facilités).' },
+    lecture: 'Commune en constat de carence SRU (art. L302-9-1 CCH) : régime de rattrapage (prélèvement majoré, le préfet peut reprendre la délivrance des autorisations d’urbanisme) — forte pression à la production de logement social. La faisabilité d’un programme reste soumise au PLU et à l’instruction.' },
   deficitaire: { color: TOKENS.stCreuser, label: 'DÉFICITAIRE',
     lecture: 'Sous l’objectif légal : la commune doit produire du logement social — un programme mixte y répond à une obligation réelle.' },
   exemptee: { color: TOKENS.txtMut, label: 'EXEMPTÉE 2023-2025',

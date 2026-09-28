@@ -185,13 +185,17 @@ _MOTIFS_EXONERATION = {
                        "CGI art. 1635 quater D, 9°"),
 }
 
-# TAXE-FIX-1 point 2 — redevance (« taxe ») d'archéologie préventive due pour les travaux soumis à
-# AUTORISATION D'URBANISME (permis) : MÊME assiette que la taxe d'aménagement (surface × valeur
-# forfaitaire, abattements ET exonérations inclus — l'assiette exclut déjà les surfaces exonérées),
-# taux 0,40 %. Code du patrimoine art. L524-7 (fait de droit stable). À NE PAS confondre avec le
-# régime au m² (0,69 €/m² en 2026, arrêté du 23/12/2025), réservé aux aménagements SANS permis.
+# TAXE-FIX-1 point 2 — redevance d'archéologie préventive « part logement » due pour les travaux
+# soumis à AUTORISATION D'URBANISME (permis) : MÊME assiette que la taxe d'aménagement (surface ×
+# valeur forfaitaire, abattements ET exonérations inclus — l'assiette exclut déjà les surfaces
+# exonérées), taux 0,40 %. TEXTES-1 — référence corrigée : depuis l'ordonnance n° 2022-883 du
+# 14/06/2022 (en vigueur 01/09/2022) cette part est gérée par la DGFiP et rattachée au CGI (même
+# fait générateur que la taxe d'aménagement, art. 1635 quater F). L'ancien fondement « code du
+# patrimoine art. L524-7 » ne porte plus que le régime AU M² (0,69 €/m² en 2026, arrêté du
+# 23/12/2025), réservé aux aménagements SANS permis. (Légifrance L524-7 v. 01/09/2022, lu 2026-09-29.)
 _RAP_PCT = 0.40
-_RAP_SOURCE = "code du patrimoine art. L524-7 (0,40 % de l'assiette de la taxe d'aménagement)"
+_RAP_SOURCE = ("redevance d'archéologie préventive — 0,40 % de l'assiette de la taxe d'aménagement "
+               "(CGI, gestion DGFiP depuis l'ordonnance 2022-883 ; fait générateur art. 1635 quater F)")
 
 
 def calculer(

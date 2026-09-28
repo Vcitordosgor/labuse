@@ -43,11 +43,12 @@ AVERTISSEMENT = ("Fait territorial sourcé et daté. Les taux cités sont les ta
 
 _ZFANG_LIBELLE = {
     # M134 (arbitrage Vic, option b) : le taux statutaire EST un fait du décret 2026-421.
-    "renforce": "Régime renforcé (commune de l'Est, décret n° 2026-421 du 29 mai 2026) — "
-                "abattements majorés : 80 % sur les bénéfices et la taxe foncière bâtie, 100 % "
-                "sur la CFE, jusqu'en 2030.",
-    "standard": "Régime standard — dispositif de plein droit dans les DOM (art. 44 quaterdecies "
-                "CGI) : abattement d'environ 50 % sur les bénéfices.",
+    "renforce": "Régime renforcé (ZFANG, art. 44 quaterdecies CGI ; liste des communes éligibles "
+                "fixée par le décret n° 2026-421 du 29 mai 2026) — sous réserve d'éligibilité de "
+                "l'activité, abattements majorés pouvant atteindre 80 % sur les bénéfices et la "
+                "taxe foncière bâtie et 100 % sur la CFE, jusqu'en 2030 — à confirmer auprès d'un fiscaliste.",
+    "standard": "Régime standard (ZFANG, art. 44 quaterdecies CGI) — sous réserve d'éligibilité de "
+                "l'activité, abattement d'environ 50 % sur les bénéfices — à confirmer auprès d'un fiscaliste.",
 }
 _FRR_LIBELLE = {
     "totalite": "Commune classée en totalité (zone spéciale d'action rurale — décret n° 78-690 ; "
