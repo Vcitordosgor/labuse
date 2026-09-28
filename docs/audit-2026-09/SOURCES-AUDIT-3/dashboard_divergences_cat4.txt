@@ -1,0 +1,40 @@
+# 39 divergences DEUX magasins renseignés mais textes DIFFERENTS
+ACV / PVD / ORT (DGALN — liste des communes)	DS=table DGALN vivante — 19 communes 974, 13 ORT signées	RT=table DGALN vivante — 19 communes 974 (07/09/2026)
+AZI / TRI — inondation (Géorisques GASPAR)	DS=GASPAR azi+tri par commune (07/09/2026)	RT=GASPAR azi+tri par commune (07/09/2026) ; scénarios DI v2 fréquent/moyen/extrême (Lizmap 01risque, 13/09/2026)
+Annuaire de l'administration (service-public.fr / DILA)	DS=annuaire service-public.fr — 24 mairies (OUTILS K2)	RT=annuaire service-public.fr — 24 mairies + ~436 services 974 (SOURCES-5)
+BAN PLUS — lien adresse ↔ bâtiment (IGN)	DS=BAN PLUS (data.gouv maj 27/08/2026), moisson 13/09/2026	RT=BAN PLUS IGN (data.gouv maj 27/08/2026), moisson WFS 13/09/2026
+BD ORTHO 20 cm (IGN)	DS=BD ORTHO IGN 974 — millésime 2025 (piscine, 90,7 %)	RT=BD ORTHO IGN 974 — millésime 2025
+BD TOPO IGN	DS=BD TOPO® V3 (IGN) — édition non enregistrée	RT=BD TOPO® V3 (IGN)
+Cadastre (API Carto PCI)	DS=PCI Parcellaire Express (DGFiP) — « latest » ingérée	RT=PCI Parcellaire Express (DGFiP), édition courante
+Cadastre Etalab (bulk DGFiP/Etalab)	DS=Etalab cadastre — « latest » ingérée (DGFiP)	RT=Etalab cadastre (DGFiP), édition courante
+Cadastre d'époque (Etalab / PCI vecteur DGFiP)	DS=archives 2017-02 (PCI) et 2017-07→2026-06 (Etalab)	RT=PCI vecteur Etalab — corpus complet 2008 + 2017-02 + 35 éditions 2017-07→2026-06 (SOURCES-5)
+CatNat (arrêtés GASPAR / Géorisques)	DS=GASPAR — arrêtés CatNat 974 (paginés, 06/09/2026)	RT=GASPAR — 426 arrêtés sur 24 communes
+Cerema / GéoLittoral — indicateur d'érosion côtière	DS=millésime 2018	RT=SHP officiel Cerema 06/2018 — 13 champs (SOURCES-5)
+Communes La Réunion — contours (IGN ADMIN EXPRESS via geo.api.gouv, seed)	DS=ADMIN EXPRESS — contours communaux	RT=IGN ADMIN EXPRESS (contours communaux, via geo.api.gouv — seed)
+Coût de construction (EPTB SDES + choix LABUSE)	DS=EPTB 2024 (contexte) ; choix promotion 2300-2800 €/m² SDP	RT=EPTB 2024 (contexte) ; choix promotion servi
+DEAL — cartes de bruit stratégiques (CBS)	DS=CBS 2022 — 6 zones de dépassement Lden/Ln (RN/RD/VC)	RT=CBS 2022 — dépassements Lden/Ln (type c, RN/RD/VC)
+Espaces protégés complémentaires — Ramsar, sites classés/inscrits (DEAL Carmen)	DS=Ramsar 1 · sites 7 · RN 152 · ENS Dépt 178 (13/09/2026)	RT=Ramsar 1 · sites classés/inscrits 7 · RN 3 (Carmen 07/09/2026)
+FRR ex-ZRR — zone spéciale d'action rurale (Légifrance)	DS=ZSAR 1978 · FRR 01/07/2024 · réf. ZRR 2017 (Région)	RT=ZSAR 1978 · FRR 01/07/2024 · réf. ZRR 2017
+Fibre Arcep — Ma connexion internet (immeuble)	DS=2026_T1 — 330 051 immeubles 974 (découpage départemental)	RT=Arcep 2026_T1 — 330 051 immeubles 974 (FttH + opérateurs)
+GPU — droit de préemption urbain (info-surf)	DS=GPU typeinf 04 — partiel, non-publiées listées	RT=GPU typeinf 04 — 4/24 communes publiées (06/09/2026)
+GéoMCE — mesures compensatoires	DS=GéoMCE — géoportail des mesures compensatoires (national)	RT=GéoMCE (MTE/OFB) — mesures compensatoires
+Géorisques — CASIAS (anciens sites industriels)	DS=453 sites 974 (435 points, 18 emprises) — canal SSP, 07/09/2026	RT=453 CASIAS + 56 instructions (canal SSP, 07/09/2026)
+INSEE RP2022 — fichier détail Logements (EGOUL)	DS=RP2022 — fichier détail Logements, publié le 16/10/2025 (INSEE)	RT=RP2022 — fichier détail Logements (16/10/2025) ; SOURCES-5 : toutes variables logement
+LiDAR HD — MNH 50 cm (IGN)	DS=Survol 11/08–11/10/2023 · MNx édités 13/03/2025	RT=LiDAR HD MNH — dalles publiées 25/06/2025 (IGN) ; hauteurs faîtage/égout par parcelle (batch dalles complet)
+Loyers OLL — ADIL Réunion / AGORAH (réseau des observatoires)	DS=OLL 2024 — Île de La Réunion (L9740, 6 zones + agglo)	RT=OLL 2024 Île de La Réunion (6 zones + agglo, IRIS→zone)
+OCS GE (IGN) — occupation du sol et artificialisation	DS=OCS GE 2.0 D974 — 2017 + 2022 ; diff artif 2025-09-16	RT=OCS GE 2.0 D974 — 2017 + 2022 (IGN, livraisons 2025-04) ; diff artificialisation 2017→2022 (2025-09-16)
+PEB — plans d'exposition au bruit (DGAC via annexes GPU)	DS=Roland-Garros B/C/D (GPU) ; Pierrefonds non publié	RT=Roland-Garros A/B/C/D (annexes GPU) ; Pierrefonds non publié
+PVGIS (Commission européenne)	DS=PVGIS v5.3 · modèle SARAH3 (relevé au run du builder solaire)	RT=PVGIS v5.3 · modèle SARAH3
+RGE ALTI (altimétrie)	DS=RGE ALTI® (IGN) — édition non enregistrée	RT=RGE ALTI® (IGN)
+RNB — Référentiel National des Bâtiments	DS=RNB — flux continu (ingéré par commune, 13/09/2026)	RT=RNB — flux continu (rnb.beta.gouv.fr), ingéré par commune 13/09/2026
+RNIC — registre national des copropriétés (Anah)	DS=RNIC (ANAH) — registre des copropriétés (extraction annuelle)	RT=RNIC (ANAH) — registre des copropriétés
+RPG — déclarations agricoles (IGN/ASP)	DS=proxy RPG.LATEST (IGN) — campagne 2024 (data.gouv RPG-R)	RT=RPG (IGN), édition courante
+Radar (pige d'annonces)	DS=Collecte manuelle — biens en vente (faits + lien)	RT=collecte manuelle + capture assistée — biens en vente (faits + lien)
+SAR — schéma d'aménagement régional (Région/DEAL)	DS=couche SIG officielle NON diffusée (recherche 07/09/2026)	RT=PROXY vocations (Potentiel foncier Région) — SAR officiel non diffusé
+SCOT (GPU)	DS=GPU — périmètres SCOT (idurba CNIG par document)	RT=GPU — périmètres SCOT (idurba CNIG)
+Sudocuh (procédures d'urbanisme)	DS=Sudocuh — état au 31/12/2024 (Licence Ouverte 2.0)	RT=Sudocuh — état au 31/12/2024
+Systèmes d'endiguement et zones protégées (DEAL Lizmap)	DS=EDD Hydrétudes déc. 2024 (attrs Source par zone)	RT=EDD Hydrétudes déc. 2024 (attrs Source par zone) — Lizmap 03digues
+Taxe d'aménagement — taux communaux (délibérations)	DS=DGFiP DELTA — 24/24 communes en vigueur (08/09/2026)	RT=taux communaux DGFiP DELTA — 24/24 communes (part communale 1→5 %, part départementale 2,5 %), ingérés le 08/09/2026 ; secteurs à taux majoré par parcelle (taxe_amenagement_secteur, TAXE-FIX-1 : Saint-Leu 14 %, Trois-Bassins 20 %…)
+Trafic RN (Région Réunion — SIR)	DS=Trafic RN Région — comptages (millésime porté par tronçon)	RT=Trafic RN Région — millésime porté par tronçon
+Zones exclues EnR sauf toiture (OFB/APER)	DS=OFB — zonages exclus des aires d'accélération EnR (loi APER)	RT=OFB — zones exclues aires d'accélération EnR (loi APER)
+Zones humides — inventaires DEAL (Carmen)	DS=inventaires 2003/2009/2011/2019 par secteurs (partiels)	RT=inventaires DEAL 2003/2009/2011/2019 par secteurs
