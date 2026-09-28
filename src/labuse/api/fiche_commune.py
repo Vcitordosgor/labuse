@@ -82,8 +82,8 @@ def risques(db: Session, commune: str, insee: str | None) -> dict:
     from ..registre.moteurs.commune import pct_parcelles_couche
     tot = db.execute(text("SELECT count(*) FROM parcels WHERE commune = :c"), {"c": commune}).scalar() or 0
 
-    def _pct_layer(kind: str) -> float | None:
-        return pct_parcelles_couche(db, commune, kind, tot)
+    def _pct_layer(kind: str, subtype: str | None = None) -> float | None:
+        return pct_parcelles_couche(db, commune, kind, tot, subtype)
 
     catnat = (db.execute(text("SELECT count(*) FROM catnat_arretes WHERE insee = :i"),
                          {"i": insee}).scalar() or 0) if insee else 0
@@ -116,12 +116,16 @@ def risques(db: Session, commune: str, insee: str | None) -> dict:
             azi_tri = None
     return {
         "ppr_pct": _pct_layer("ppr"),
-        "mouvement_terrain_pct": _pct_layer("mvt"),
+        # SOURCES-FIX-2 lot A — aléa mouvement de terrain = l'aléa RÉGLEMENTAIRE zoné
+        # (kind='georisque_alea' subtype='mouvement_terrain', DEAL PPR/aléas source 30), MÊME
+        # donnée que la couche carte `alea_mvt` et la fiche §Pièges & risques. (Avant : kind='mvt'
+        # = inventaire d'événements BDMvt Géorisques source 36, une notion distincte non zonée.)
+        "mouvement_terrain_pct": _pct_layer("georisque_alea", "mouvement_terrain"),
         "catnat_arretes": int(catnat),
         "catnat_detail": catnat_detail,   # SOURCES-4 lot 1 — arrêtés détaillés (péril, dates, code national)
         "parc_national": bool(parc),
         "azi_tri": azi_tri,
-        "source": "Géorisques (PPR, mouvement de terrain) · GASPAR (arrêtés CatNat, AZI/TRI) · BD TOPO (Parc National).",
+        "source": "DEAL Réunion — PPR / aléas (zones PPR, aléa mouvement de terrain) · GASPAR (arrêtés CatNat, AZI/TRI) · BD TOPO (Parc National).",
     }
 
 
@@ -504,7 +508,7 @@ _FALLBACK = {
     "parc_social": None, "prix_neuf_observe": None, "scot": None,
     "risques": {"ppr_pct": None, "mouvement_terrain_pct": None, "catnat_arretes": 0,
                 "catnat_detail": [], "parc_national": False, "azi_tri": None,
-                "source": "Géorisques · GASPAR · BD TOPO"},
+                "source": "DEAL Réunion — PPR / aléas · GASPAR · BD TOPO"},
     "population": {"habitants": None, "habitants_pop_totale": None, "habitants_millesime": None,
                    "menages": None, "menages_millesime": None, "niveau_vie_moyen_eur": None,
                    "logements": None, "vacants": None, "vacance_pct": None, "quartiers": None,

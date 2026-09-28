@@ -116,15 +116,26 @@ def mutations_12m(db, commune: str) -> int:
 
 # ── risques & population (extraction de api/fiche_commune.py) ───────────────────────────────────
 
-def pct_parcelles_couche(db, commune: str, kind: str, total_parcelles: int) -> float | None:
+def pct_parcelles_couche(db, commune: str, kind: str, total_parcelles: int,
+                         subtype: str | None = None) -> float | None:
     """ppr_pct (et mouvement_terrain_pct) — part des parcelles de la commune intersectant la
-    couche `kind` de spatial_layers, sur le total FOURNI (calculé une fois par l'appelant)."""
+    couche `kind` de spatial_layers, sur le total FOURNI (calculé une fois par l'appelant).
+
+    `subtype` (optionnel) restreint au sous-type de la couche : SOURCES-FIX-2 lot A — la part
+    « mouvement de terrain » de la commune lit désormais l'ALÉA RÉGLEMENTAIRE (kind='georisque_alea'
+    subtype='mouvement_terrain', DEAL PPR/aléas — source 30), la MÊME donnée que la couche carte
+    `alea_mvt`, la fiche §Pièges & risques et l'Étude de zone. (Auparavant : kind='mvt', inventaire
+    d'événements BDMvt Géorisques source 36 — une notion distincte, non réglementaire.)"""
     if not total_parcelles:
         return None
+    clause = "sl.kind = :k" + (" AND sl.subtype = :st" if subtype else "")
+    params = {"k": kind, "c": commune}
+    if subtype:
+        params["st"] = subtype
     n = db.execute(text(
-        "SELECT count(DISTINCT p.idu) FROM parcels p JOIN spatial_layers sl ON sl.kind = :k "
-        "AND ST_Intersects(p.geom_2975, sl.geom_2975) WHERE p.commune = :c"),
-        {"k": kind, "c": commune}).scalar() or 0
+        "SELECT count(DISTINCT p.idu) FROM parcels p JOIN spatial_layers sl ON " + clause +
+        " AND ST_Intersects(p.geom_2975, sl.geom_2975) WHERE p.commune = :c"),
+        params).scalar() or 0
     return round(100.0 * n / total_parcelles, 1)
 
 
