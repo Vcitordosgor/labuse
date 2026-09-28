@@ -168,12 +168,21 @@ def _coup_d_oeil(valeurs, ctx) -> str:
         lignes.append(ligne_kv("Surface", fmt_m2(val(valeurs, "surface_parcelle_m2")), ""))
     if a(valeurs, "zone_plu_famille"):
         plu = val(valeurs, "statut_plu")
-        libelle = plu.get("libelle") if isinstance(plu, dict) else None
-        if libelle:
-            # RECETTE-5 (V20d) — on RETIRE le langage de plomberie « Document à jour du GPU — c'est
-            # celui qui fait foi » : l'apporteur n'a que faire de la traçabilité GPU (on garde « PLU
-            # approuvé le … »). Le reste des documents/écrans, eux, gardent leur mention.
-            libelle = _RE_GPU_PLOMBERIE.sub("", libelle).rstrip(" —·").strip()
+        libelle = None
+        if isinstance(plu, dict):
+            # EXPORTS-FIX-1 C1/A7 — date d'APPROBATION réelle (Sudocuh) et format JJ/MM/AAAA, jamais
+            # la date de publication GPU en ISO (« 2025-12-17 ») : cohérent avec le Dossier.
+            appro = plu.get("approbation_sudocuh")
+            if appro:
+                y, m, d = (appro.split("T")[0].split("-") + ["", "", ""])[:3]
+                libelle = f"PLU approuvé le {d}/{m}/{y}"
+            else:
+                libelle = plu.get("libelle")
+                if libelle:
+                    # RECETTE-5 (V20d) — on RETIRE le langage de plomberie GPU (l'apporteur n'a que
+                    # faire de la traçabilité) ; A7 — les dates ISO résiduelles passent en JJ/MM/AAAA.
+                    libelle = _RE_GPU_PLOMBERIE.sub("", libelle).rstrip(" —·").strip()
+                    libelle = re.sub(r"\b(\d{4})-(\d{2})-(\d{2})\b", r"\3/\2/\1", libelle)
         # RECETTE-8 W15 — le CODE de zone réel (« Zone Um (famille U) »), le MÊME libellé partagé
         # que le Dossier (verdicts.zone_libelle) : plus de « Zone U » tronqué ici pendant que le
         # Dossier dit « Zone Um » — une donnée, une réponse dans les deux documents.
