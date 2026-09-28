@@ -427,6 +427,18 @@ def config_run() -> dict:
     return {"run": runs.current()}
 
 
+@app.get("/vocabulaire/paliers")
+def vocabulaire_paliers() -> dict:
+    """FRONT-CHIFFRES-2 (F13/F29) — LA DA DES PALIERS servie depuis la source unique
+    (scoring/tiers_client) : chaque palier → chip, libellé long, jeton DA (variable CSS) et ton du
+    Badge. La pastille (Projets) et le badge (Outils) LISENT cette carte au lieu de coder la
+    correspondance palier→couleur ; à la bascule q_v15 (bandes A/B/C/D) un seul endroit change.
+    Zéro accès DB (constantes du vocabulaire). Le front résout d'abord tier→code (codePalier, même
+    mapping, garanti par le test anti-dérive), puis lit la couleur/ton ici."""
+    from ..scoring.tiers_client import paliers_da
+    return {"paliers": paliers_da()}
+
+
 @app.get("/sante/fraicheur")
 def sante_fraicheur(request: Request, db: Session = Depends(get_db)) -> dict:
     """COHERENCE-FIX-1 (lot A) — L'ÉTAT DE FRAÎCHEUR de chaque cache (admin) : clé attendue /

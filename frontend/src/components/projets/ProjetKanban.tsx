@@ -2,8 +2,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
 import {
   getCadrageCompteur, getParcoursEtat, getProjet, patchProjet, setStatutParcelle,
-  type Cadrage, type ParcoursEtat, type ParcoursItem, type StatutParcelle,
+  type Cadrage, type PalierDA, type ParcoursEtat, type ParcoursItem, type StatutParcelle,
 } from '../../lib/api'
+import { palierDe, usePaliersDA } from '../../lib/usePaliers'
 import { AlgoExplainer, ScoringExplainer } from '../panel/LeftPanel'
 import { FiltreFacettes } from '../panel/FiltreFacettes'
 import { FiltreProvider } from '../panel/filtreContext'
@@ -32,9 +33,17 @@ function etatLabel(etat_bien?: string | null): string {
         : etat_bien === 'bati' ? 'Bâti' : ''
 }
 
-/** PROJETS-V4 (V1) — la pastille de tier : Priorité (rouge) · À suivre (orange) · autres (gris). */
-const TIER_DOT: Record<string, string> = { brulante: TOKENS.stEcartee, chaude: TOKENS.stCreuser }
-function tierDot(tier: string | null): string { return (tier && TIER_DOT[tier]) || '#4a4a4a' }
+/** PROJETS-V4 (V1) — la pastille de tier. FRONT-CHIFFRES-2 (F13) : sa couleur vient du back (jeton
+ *  DA, source unique scoring/tiers_client via /vocabulaire/paliers), plus de correspondance
+ *  tier→couleur codée ici. L'ancienne colorait `brulante` en corail « Priorité » alors que
+ *  PRIORITE_SERVIE=false le résout en « À suivre » (ambre) — dérive corrigée, même source que le
+ *  badge Outils (F29). Repli gris neutre tant que la carte n'est pas chargée. */
+function tierDot(tier: string | null, paliers: Record<string, PalierDA> | undefined): string {
+  const jeton = palierDe(tier, paliers)?.jeton
+  // le jeton nommé par le back est résolu par le registre DA du front (tokens.ts) ; repli gris DA
+  // tant que la carte n'est pas chargée (jamais une couleur inventée par palier).
+  return (jeton && jeton in TOKENS ? TOKENS[jeton as keyof typeof TOKENS] : TOKENS.stExclue)
+}
 
 /** retire l'item de son groupe et le pousse dans le groupe cible — maj optimiste. */
 function moveItem(etat: ParcoursEtat, idu: string, statut: StatutParcelle): ParcoursEtat {
@@ -94,11 +103,12 @@ function SignauxLigne({ signaux }: { signaux?: { label: string; fort: boolean }[
 function LigneParcelle({ it, onDragStart, onRetenir, onEcarter, onFiche, onVoir }: {
   it: ParcoursItem; onDragStart: () => void; onRetenir: () => void; onEcarter: () => void; onFiche: () => void; onVoir: () => void
 }) {
+  const paliers = usePaliersDA()
   return (
     <div draggable onDragStart={onDragStart} data-tri-ligne={it.idu}
       onClick={(e) => { if (!(e.target as HTMLElement).closest('button')) onFiche() }}
       className="grid cursor-pointer grid-cols-[14px_1fr_170px_76px_auto] items-center gap-3 border-b border-line/50 px-3.5 py-2 transition-colors duration-quick hover:bg-surface-2">
-      <span className="h-[7px] w-[7px] rounded-full" style={{ background: tierDot(it.tier) }} />
+      <span className="h-[7px] w-[7px] rounded-full" style={{ background: tierDot(it.tier, paliers) }} />
       <AdresseLigne it={it} mono={etatLabel(it.etat_bien)} />
       <SignauxLigne signaux={it.signaux} />
       <span className="text-right font-mono text-[11.5px] text-txt-mut">{it.surface_m2 != null ? fmtM2(it.surface_m2) : '—'}</span>
@@ -125,11 +135,12 @@ function MiniLigne({ it, col, onDragStart, onRetour, onFiche }: {
   it: ParcoursItem; col: StatutParcelle; onDragStart: () => void; onRetour: () => void; onFiche: () => void
 }) {
   const ecartee = col === 'ecartee'
+  const paliers = usePaliersDA()
   return (
     <div draggable onDragStart={onDragStart} data-mini-ligne={it.idu}
       onClick={(e) => { if (!(e.target as HTMLElement).closest('button')) onFiche() }}
       className="grid cursor-pointer grid-cols-[14px_1fr_26px] items-center gap-2 border-b border-line/50 px-3.5 py-2 transition-colors duration-quick hover:bg-surface-2">
-      <span className="h-[7px] w-[7px] shrink-0 rounded-full" style={{ background: tierDot(it.tier) }} />
+      <span className="h-[7px] w-[7px] shrink-0 rounded-full" style={{ background: tierDot(it.tier, paliers) }} />
       <div className="min-w-0">
         {it.adresse
           ? <b className="block truncate text-[12.5px] font-medium text-txt">{it.adresse}</b>

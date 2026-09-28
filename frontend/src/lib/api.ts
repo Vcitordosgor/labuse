@@ -818,6 +818,12 @@ export interface AccueilChiffres {
 }
 export const getAccueilChiffres = () => j<AccueilChiffres>('/accueil/chiffres')
 
+// FRONT-CHIFFRES-2 (F13/F29) — la DA d'un palier servie depuis la source unique (scoring/
+// tiers_client) : jeton DA (variable CSS) + ton du Badge + libellés. Le front ne code plus la
+// correspondance palier→couleur (pastille Projets, badge Outils) ; à q_v15 seul le back change.
+export interface PalierDA { code?: string; chip: string; long: string; jeton: string; ton: 'vert' | 'ambre' | 'neutre' | 'rouge' }
+export const getPaliersDA = () => j<{ paliers: Record<string, PalierDA> }>('/vocabulaire/paliers')
+
 // RETOURS-8 (R2) — la ligne d'accueil n'annonce plus de « retard » : deux chiffres réels (sources
 // affichées · parcelles couvertes) → « voir les données ». `ton` toujours 'ok' (aucun rouge client).
 export interface AccueilFraicheur {

@@ -11,7 +11,7 @@ F09,1,seuil,remonter,admin/map,components/admin/AdminView.tsx,2,remonter_back,Ad
 F10,1,seuil,remonter,fiche,components/fiche/marche.tsx,2,remonter_back,marche.tsx:70 ; marche.tsx:73,,a_faire,
 F11,1,seuil,remonter,fiche,components/fiche/risques.tsx,2,remonter_back,risques.tsx:22 ; risques.tsx:24,couleur/cran d'une valeur servie (aucun chiffre/libellé décidé),reclassé_présentation,
 F12,1,seuil,mixte(remonter+declarer),outils,components/outils/MonSecteur.tsx,2,declarer_registre+remonter_back,MonSecteur.tsx:120 ; MonSecteur.tsx:81,,a_faire,
-F13,1,seuil,remonter,panel/projets/contexte,components/projets/ProjetKanban.tsx,2,remonter_back,ProjetKanban.tsx:37,mapping tier(scoring)→couleur — touche l'affichage du scoring,arrêté_pour_décision,
+F13,1,seuil,remonter,panel/projets/contexte,components/projets/ProjetKanban.tsx,2,remonter_back,ProjetKanban.tsx:37,DA du palier (jeton+ton+libellé) servie,remonté,F13
 F14,1,seuil,remonter,radar/copilote/crm,components/radar/RadarEcran.tsx,2,remonter_back,RadarEcran.tsx:60-61 ; RadarEcran.tsx:86,badges radar nouveau/en_vente_longue,remonté,F14
 F15,1,seuil,remonter,radar/copilote/crm,components/radar/RadarMarcheColonne.tsx,2,remonter_back,RadarMarcheColonne.tsx:181-182 ; RadarMarcheColonne.tsx:19,couleur/cran d'une valeur servie (aucun chiffre/libellé décidé),reclassé_présentation,
 F16,1,seuil,remonter,panel/projets/contexte,FiltreLabuse.tsx,1,remonter_back,FiltreLabuse.tsx:820,,a_faire,
@@ -27,7 +27,7 @@ F25,1,seuil,remonter,outils,components/outils/RadarMarche.tsx,1,remonter_back,Ra
 F26,1,seuil,remonter,outils,components/outils/ScoringV2.tsx,1,remonter_back,ScoringV2.tsx:61,,a_faire,
 F27,1,seuil,remonter,outils,components/outils/Successions.tsx,1,remonter_back,Successions.tsx:152,,a_faire,
 F28,1,seuil,remonter,outils,components/outils/TaxeAmenagement.tsx,1,remonter_back,TaxeAmenagement.tsx:117,,a_faire,
-F29,1,seuil,remonter,outils,components/outils/TierBadge.tsx,1,remonter_back,TierBadge.tsx:9,mapping tier(scoring)→couleur — touche l'affichage du scoring,arrêté_pour_décision,
+F29,1,seuil,remonter,outils,components/outils/TierBadge.tsx,1,remonter_back,TierBadge.tsx:9,DA du palier (jeton+ton+libellé) servie,remonté,F29
 F30,1,seuil,remonter,outils,components/outils/TimeMachine.tsx,1,remonter_back,TimeMachine.tsx:84,,a_faire,
 F31,1,seuil,remonter,outils,components/outils/blocB.tsx,1,remonter_back,blocB.tsx:383,ton ligne ZAN (absence horizon + palier couleur),remonté,F31
 F32,1,seuil,remonter,lib/store,lib/permis.ts,1,remonter_back,permis.ts:9-12,,a_faire,

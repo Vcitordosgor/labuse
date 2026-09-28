@@ -77,3 +77,29 @@ def test_f25_radar_corpus_jeune_servi():
     rm = (SRC / "components/outils/RadarMarche.tsx").read_text(encoding="utf-8")
     assert "const jeune = data.corpus_jeune" in rm
     assert "corpus_total < 40" not in rm, "seuil corpus recalculé au front (F25)"
+
+
+def test_f13_f29_paliers_da_servis():
+    """F13/F29 — la pastille (Projets) et le badge (Outils) ne codent plus la correspondance
+    palier→couleur : le back sert, par palier, le jeton DA + le ton + le libellé (source unique
+    scoring/tiers_client, endpoint /vocabulaire/paliers). À la bascule q_v15 (bandes A/B/C/D), seul
+    le back change ; pastille et badge suivent, une seule source."""
+    from labuse.scoring.tiers_client import DOMAINE_PALIERS, PALIER_DA, paliers_da
+    # chaque palier du domaine porte un jeton + un ton
+    for code in DOMAINE_PALIERS:
+        assert code in PALIER_DA and PALIER_DA[code]["jeton"] and PALIER_DA[code]["ton"]
+    m = paliers_da()
+    assert m["a_suivre"]["ton"] == "ambre" and m["sans_signal"]["ton"] == "neutre"
+    assert m["a_suivre"]["chip"] == "À suivre"
+    # l'endpoint existe
+    app = (ROOT / "src/labuse/api/app.py").read_text(encoding="utf-8")
+    assert '@app.get("/vocabulaire/paliers")' in app
+
+    # F29 : le badge lit le ton servi, plus de correspondance hex→ton (tonDeCouleur supprimée)
+    tb = (SRC / "components/outils/TierBadge.tsx").read_text(encoding="utf-8")
+    assert "usePaliersDA" in tb and "servi?.ton" in tb
+    assert "tonDeCouleur" not in tb, "correspondance hex→ton codée revenue au front (F29)"
+    # F13 : la pastille lit le jeton servi, plus de TIER_DOT en dur
+    pk = (SRC / "components/projets/ProjetKanban.tsx").read_text(encoding="utf-8")
+    assert "palierDe(tier, paliers)" in pk
+    assert "TIER_DOT" not in pk, "correspondance tier→couleur codée revenue au front (F13)"

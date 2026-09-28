@@ -13,13 +13,15 @@ faire, listé comme tel »).
 | F17 | Ia.tsx:165 | teinte rouge si `depense_eur >= budget_eur` (deux valeurs **servies**) | comparaison de deux servis → couleur seule (admin) |
 | F22 | formes.tsx:99 | couleur des crans de Jauge3 selon le `niveau` (**prop servie**) | couleur d'un cran servi ; le nombre de crans vient de la donnée |
 
-## Arrêté pour décision (touche le scoring — hors périmètre FC-2, décision Vic)
+## ~~Arrêté pour décision~~ → REMONTÉ (décision Vic : servir la DA avec le tier)
 
 | famille | ligne(s) | raison |
 |---|---|---|
 | F13 | ProjetKanban.tsx:37 | mapping `tier` (sortie du **scoring** brûlante/chaude/…) → couleur de pastille |
 | F29 | TierBadge.tsx:9 | mapping hex→ton du badge de **verdict tier** (scoring) |
 
-Ces deux-là AFFICHENT le tier du scoring ; les reclasser ou les remonter touche la présentation du
-scoring servi → laissé à Vic (le mapping tier→couleur pourrait être servi avec le tier, ou resté
-présentation). Aucune valeur n'est fausse ; c'est un choix, pas un bug.
+**Résolu (F13/F29 remontés).** Décision Vic : le back sert, à côté du tier, sa couleur (jeton DA)
+et son libellé (`/vocabulaire/paliers`, source `scoring/tiers_client`). Pastille et badge lisent la
+même carte ; à q_v15 (bandes A/B/C/D) un seul endroit change. La pastille F13 est corrigée au
+passage (elle colorait `brulante` en « Priorité » alors que PRIORITE_SERVIE=false le résout en « À
+suivre » — cf. CHANGEMENTS.csv).
