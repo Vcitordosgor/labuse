@@ -626,13 +626,14 @@ def _gabarit(db, idu: str) -> dict:
         cov = res.coverage
         fam = [nom for ok, nom in ((cov and cov.reculs, "reculs"), (cov and cov.emprise, "emprise"),
                                    (cov and cov.hauteur, "hauteur"), (cov and cov.risques, "risques")) if ok]
-        txt = (f"{len(fam)} famille{'s' if len(fam) > 1 else ''} vérifiée{'s' if len(fam) > 1 else ''} "
-               f"sur 4 ({', '.join(fam)})") if fam else "aucune famille vérifiée"
+        # EXPORTS-FIX-1 A8 — plus de « 4 familles vérifiées sur 4 … non intégrée(s) » (jargon QA) :
+        # on dit en clair ce qui est vérifié et ce qui n'est pas modélisé.
+        txt = ("Vérifié : " + ", ".join(fam)) if fam else "Aucune règle vérifiée"
         # « PPR — analyse » est not_integrated quand il n'y a pas de zone rouge : la famille risques est
         # déjà comptée « vérifiée » → ne pas la relister comme non intégrée (lecture contradictoire).
         non_int = [r.label for r in (res.nonIntegratedRules or []) if r.label and r.id != "PPR"]
         if non_int:
-            txt += " — non intégrée(s) : " + ", ".join(non_int)
+            txt += " · non modélisé : " + ", ".join(non_int)
         out.update(served=True, zone_m2=res.zoneImplantationM2, couverture=txt,
                    plafond=("Non réglementé" if res.plafondEmpriseStatus == "absent" else res.plafondEmpriseM2),
                    hauteur=("Non chiffrée (prospect)" if res.hauteurStatus == "not_integrated"

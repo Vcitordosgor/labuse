@@ -35,7 +35,11 @@ _NOMS_REPLI = {"rpls_sdes": "RPLS — logements locatifs sociaux (SDES)",
                # EXPORTS-REBRANCHEMENT-1 lot 1 — réservoirs du miroir sans nom au catalogue.
                "rnb": "RNB — Référentiel national des bâtiments (IGN)",
                "ban_plus": "BAN PLUS — liens adresse-bâtiment (IGN)",
-               "taxe_amenagement": "Taxe d'aménagement — barème public (DGFiP/DELTA)"}
+               "taxe_amenagement": "Taxe d'aménagement — barème public (DGFiP/DELTA)",
+               # EXPORTS-FIX-1 A4 — réservoirs sans nom au catalogue : leur id technique fuyait
+               # dans le pied « Sources : … » (« ocsge », « scot_gpu »). Nom public du catalogue.
+               "ocsge": "OCS GE — occupation du sol et artificialisation (IGN)",
+               "scot_gpu": "SCOT (GPU)"}
 
 
 def sources_lues(valeurs: Iterable[Valeur]) -> list[tuple[str, str | None]]:

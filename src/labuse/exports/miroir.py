@@ -29,6 +29,81 @@ from .registre_fmt import fmt_eur, fmt_eur_m2, fmt_m, fmt_m2, fmt_pct, groupe
 from .rendu import aside, esc, esc_noms, note, section, tuiles, verdict
 from .verdicts import rendu_verdict, verdict_potentiel, verdict_reseaux, verdict_zonage
 
+# ── EXPORTS-FIX-1 : normalisations d'affichage (lot A) ───────────────────────────────────────
+import re as _re
+
+#: EXPORTS-FIX-1 A7 — toute date ISO servie (AAAA-MM-JJ) s'imprime JJ/MM/AAAA. On ne touche PAS la
+#: valeur du registre : on la met en forme au rendu (les codes type « 97408_PLU_20251217 » n'ont
+#: pas de tiret et ne sont donc jamais capturés).
+def _fr_dates(s: str) -> str:
+    return _re.sub(r"\b(\d{4})-(\d{2})-(\d{2})\b", lambda m: f"{m.group(3)}/{m.group(2)}/{m.group(1)}", str(s))
+
+
+#: EXPORTS-FIX-1 A4 — nomenclature OCS GE (usage du sol, IGN v2.0) : un code US* ne s'imprime
+#: jamais nu. Repli : le code seul si la classe n'est pas au catalogue (jamais inventé).
+_OCS_GE_US = {
+    "US1.1": "zones à usage résidentiel", "US1.2": "zones à usage agricole",
+    "US1.3": "zones d'extraction de matériaux", "US1.4": "zones de pêche et d'aquaculture",
+    "US1.5": "zones de production de sel", "US2": "zones à usage secondaire (industrie)",
+    "US3": "zones à usage tertiaire", "US235": "zones à usage secondaire et tertiaire",
+    "US4.1.1": "zones de transport routier", "US4.1.2": "zones de transport ferré",
+    "US4.1.3": "zones de transport aérien", "US4.2": "zones de services (eau, énergie, télécom)",
+    "US4.3": "zones logistiques et de transport", "US5": "zones sans usage caractérisé",
+    "US6.1": "zones en cours d'aménagement", "US6.2": "zones abandonnées",
+}
+
+
+def _ocs_ge_libelle(code: str) -> str:
+    lib = _OCS_GE_US.get(str(code).strip())
+    return lib.capitalize() if lib else str(code)
+
+
+#: EXPORTS-FIX-1 A5 — libellés des catégories de servitudes d'utilité publique (code CNIG → clair).
+_SUP_CAT = {
+    "PM1": "plan de prévention des risques naturels (PPR)",
+    "PM2": "plan de prévention des risques technologiques (PPRT)",
+    "PM3": "plan de prévention des risques miniers",
+    "AC1": "abords de monuments historiques", "AC2": "sites classés ou inscrits",
+    "AC4": "aire de mise en valeur de l'architecture et du patrimoine",
+    "AS1": "protection des eaux (captage)", "EL3": "halage et marchepied",
+    "EL7": "alignement des voies", "I4": "lignes électriques", "T1": "voies ferrées",
+    "PT1": "protection des centres de réception radioélectriques",
+    "PT2": "protection contre les obstacles (radioélectrique)", "PT3": "communications téléphoniques",
+    "A1": "forêts de protection", "A4": "cours d'eau non domaniaux",
+}
+
+
+def _sup_libelle(cat: str) -> str:
+    lib = _SUP_CAT.get(str(cat).strip().upper())
+    return f"{cat} — {lib}" if lib else str(cat)
+
+
+def _norm_ebc(lib: str) -> str:
+    """EXPORTS-FIX-1 A1 — « EBC Espace Boisé Classé » → « Espace boisé classé »."""
+    l = str(lib).strip()
+    if l.upper().startswith("EBC "):
+        l = l[4:].strip()
+    if l.lower().startswith("espace bois"):
+        return "Espace boisé classé"
+    return l
+
+
+#: EXPORTS-FIX-1 A4 — natures d'aléa servies avec un code technique (« mouvement_terrain »).
+def _nature_alea(nat: str) -> str:
+    return _re.sub(r"mouvement_terrain", "mouvement de terrain", str(nat)).replace("_", " ")
+
+
+#: EXPORTS-FIX-1 A8 — phrases d'absence servies en jargon interne, dites en clair au rendu (le
+#: fait est conservé ; seul le vocabulaire client change — la valeur du registre n'est pas modifiée).
+_ABSENCE_CLAIR = {
+    "cosia_detecte_m2": "Bâti détecté par IA (CoSIA) : cohérent avec la cartographie IGN, rien à signaler.",
+}
+
+
+def _absence_clair(quoi: str, phrase: str) -> str:
+    return _ABSENCE_CLAIR.get(quoi, phrase)
+
+
 # ── la structure : sections + lignes, depuis les déclarations ────────────────────────────────
 
 
@@ -144,15 +219,20 @@ def _r_permis_liste(v):
 
 
 def _r_er_ebc(v):
-    if isinstance(v, dict):
-        lib = v.get("libelle") or v.get("detail") or "parcelle concernée"
-        part = v.get("part_pct")
-        return esc(f"{lib} ({groupe(part, 1)} % de la parcelle)" if part else lib)
-    return esc(v)
+    # EXPORTS-FIX-1 A1 — la valeur servie peut être un dict OU une liste de dicts : dans les deux
+    # cas on rend une phrase (« Espace boisé classé — 89,6 % de la parcelle »), jamais le dict brut.
+    item = v[0] if isinstance(v, list) and v else v
+    if isinstance(item, dict):
+        lib = _norm_ebc(item.get("libelle") or item.get("detail") or "parcelle concernée")
+        part = item.get("part_pct")
+        return esc(f"{lib} — {groupe(part, 1)} % de la parcelle" if part else lib)
+    return esc(item)
 
 
 def _r_dpu(v):
-    return esc(v.get("detail") or v.get("libelle") or "Droit de préemption urbain institué")
+    # EXPORTS-FIX-1 A6 — la valeur dit le FAIT, jamais le sigle nu (« DPU : DPU »).
+    return esc("Parcelle dans le périmètre du droit de préemption urbain (DPU) : "
+               "la commune peut préempter à la vente")
 
 
 def _r_peb(v):
@@ -161,20 +241,53 @@ def _r_peb(v):
 
 
 def _r_sup(v):
+    # EXPORTS-FIX-1 A5 — dédoublonnage par catégorie CNIG (deux assiettes PM1 = UNE servitude PM1)
+    # et libellé clair de chaque catégorie, jamais le code d'assiette technique répété.
     if isinstance(v, list):
-        cats = [str(x.get("categorie") or x.get("libelle") or x) for x in v if x]
-        return esc(f"{len(v)} servitude{'s' if len(v) > 1 else ''} — " + " · ".join(cats[:6]))
+        cats: list[str] = []
+        for x in v:
+            if not x:
+                continue
+            cat = str((x.get("categorie") if isinstance(x, dict) else None) or x)
+            if cat not in cats:
+                cats.append(cat)
+        libs = [_sup_libelle(c) for c in cats[:6]]
+        return esc(f"{len(cats)} servitude{'s' if len(cats) > 1 else ''} — " + " · ".join(libs))
     return esc(v)
 
 
 def _r_statut_plu(v):
-    return esc(v.get("libelle") or "")
+    # EXPORTS-FIX-1 A7 — dates ISO servies → JJ/MM/AAAA.
+    return esc(_fr_dates(v.get("libelle") or ""))
+
+
+def _r_scot(v):
+    # EXPORTS-FIX-1 A6/A7 — la valeur ne répète pas le libellé « SCOT » de la ligne (« SCOT SCOT
+    # TCO »), et sa date d'approbation s'imprime JJ/MM/AAAA.
+    s = _fr_dates(v if isinstance(v, str) else (v.get("libelle") if isinstance(v, dict) else str(v)))
+    s = _re.sub(r"^\s*SCOT\s+", "", s)
+    return esc(s)
+
+
+def _r_usage_sol(v):
+    # EXPORTS-FIX-1 A4 — code d'usage OCS GE → libellé français (nomenclature IGN).
+    return esc(_ocs_ge_libelle(v))
+
+
+def _r_gabarit_motif(v):
+    # EXPORTS-FIX-1 A8 — motif interne « PLU non calibré pour la zone A (estimation générique) »
+    # dit en clair, sans jargon de calibration.
+    s = str(v or "")
+    m = _re.match(r"PLU non calibré pour la zone (\S+)", s)
+    if m:
+        return esc(f"Règles de la zone {m.group(1)} non détaillées dans LABUSE — gabarit non chiffré ici.")
+    return esc(s)
 
 
 def _r_aleas(v, val: Valeur):
     rows = []
     for a in v:
-        nat = esc(a.get("nature") or "Aléa")
+        nat = esc(_nature_alea(a.get("nature") or "Aléa"))   # EXPORTS-FIX-1 A4 — jamais « mouvement_terrain »
         lib = esc(a.get("libelle") or "")
         niv = a.get("niveau")
         if niv:
@@ -194,7 +307,8 @@ def _r_sols(v):
 
 
 def _r_viab(v):
-    lib = v.get("libelle") or v.get("verdict") or ""
+    # EXPORTS-FIX-1 A8 — « confirmée par les faits » (langage interne) → « confirmée ».
+    lib = (v.get("libelle") or v.get("verdict") or "").replace(" confirmée par les faits", " confirmée")
     ind = v.get("indices") or []
     if ind:
         lib += " — indices : " + " · ".join(str(i) for i in ind[:4])
@@ -341,7 +455,8 @@ def _r_tfpb(v):
         bits.append(f"EPCI {fmt_pct(v['tfpb_epci_pct'], 2)}")
     if v.get("teom_pct") is not None:
         bits.append(f"TEOM {fmt_pct(v['teom_pct'], 2)}")
-    return esc("Taxe foncière (TFPB) : " + " · ".join(bits))
+    # EXPORTS-FIX-1 A6 — la valeur ne répète plus le libellé « Taxe foncière (TFPB) » de la ligne.
+    return esc(" · ".join(bits))
 
 
 def _r_taxe(v):
@@ -352,7 +467,7 @@ def _r_taxe(v):
     if v.get("taux_communal_millesime"):
         lib += f" — {v['taux_communal_millesime']}"
     lib += (". Se calcule sur la surface de plancher créée par le projet — "
-            "montant chiffré au Dossier financier.")
+            "montant chiffré dans le document Financier.")   # EXPORTS-FIX-1 A8
     return esc(lib)
 
 
@@ -360,21 +475,46 @@ def _r_territoire(v, val: Valeur):
     rows = []
 
     def _row(cle, lib):
+        # EXPORTS-FIX-1 A7 — les dates de ces libellés (ORT « signée le … ») s'impriment JJ/MM/AAAA.
         rows.append(f'<tr data-quoi="perimetres_dispositifs_liste"><td class="k">{esc(cle)}</td>'
-                    f'<td>{esc(lib)}</td><td class="n">{chip(val)}</td></tr>')
+                    f'<td>{esc(_fr_dates(lib))}</td><td class="n">{chip(val)}</td></tr>')
+
+    def _cle_dom(dom: dict, i: int) -> str:
+        # EXPORTS-FIX-1 A9 — chaque dispositif de commune est NOMMÉ (jamais « Dispositif de commune »).
+        lib = (dom.get("libelle") or "").lower()
+        if i == 0:
+            return "Zonage du logement"
+        if "tva" in lib:
+            return "TVA outre-mer"
+        if "revitalisation" in lib or "ort" in lib:
+            return "Opération de revitalisation (ORT)"
+        if "action cœur de ville" in lib or "acv" in lib:
+            return "Action Cœur de Ville (ACV)"
+        if "petites villes" in lib:
+            return "Petites Villes de Demain (PVD)"
+        return "Dispositif de commune"
     # KELFONCIER-FIX-1 (Lot F) — le Dossier miroir rend TOUS les dispositifs de commune (zonage A/B/C,
-    # TVA DOM, et Petites Villes de Demain/ACV/ORT), plus seulement le premier. Le premier reste
-    # « Zonage du logement » ; les autres (TVA, ANCT) prennent « Dispositif de commune ».
+    # TVA DOM, et Petites Villes de Demain/ACV/ORT), plus seulement le premier.
     for i, dom in enumerate(v.get("dispositifs_dom") or []):
         if dom.get("libelle"):
-            _row("Zonage du logement" if i == 0 else "Dispositif de commune", dom["libelle"])
+            _row(_cle_dom(dom, i), dom["libelle"])
     if (v.get("zfang") or {}).get("libelle"):
         _row("ZFANG", v["zfang"]["libelle"])
     if (v.get("frr") or {}).get("libelle"):
         _row("FRR (ex-ZRR)", v["frr"]["libelle"])
     for per in (v.get("perimetres") or []):
         if per.get("libelle"):
-            _row("Périmètre", per["libelle"])
+            # EXPORTS-FIX-1 A9 — la bande QPV est nommée, jamais « Périmètre » nu.
+            lib = (per.get("libelle") or "").lower()
+            cle = per.get("cle") or per.get("type")
+            if not cle:
+                if "quartier prioritaire" in lib or "qpv" in lib:
+                    cle = "Quartier prioritaire (QPV)"
+                elif "npnru" in lib or "renouvellement urbain" in lib:
+                    cle = "Renouvellement urbain (NPNRU)"
+                else:
+                    cle = "Périmètre"
+            _row(cle, per["libelle"])
     return '<table class="kv">' + "".join(rows) + "</table>" if rows else ""
 
 
@@ -406,6 +546,9 @@ _RENDEURS: dict[str, Any] = {
     "dpe_connu": _r_dpe, "rnb_batiments_liste": _r_rnb, "tfpb_taux_pct": _r_tfpb,
     "taxe_amenagement_estimee_eur": _r_taxe, "rang_tier": _r_rang,
     "filiation_parcelle": _r_filiation,
+    # EXPORTS-FIX-1 A4/A6/A7/A8
+    "scot_parcelle": _r_scot, "usage_sol_dominant": _r_usage_sol,
+    "gabarit_motif_blocage": _r_gabarit_motif,
 }
 def _r_gabarit_plan(brute, val=None):
     """Le plan 2D du gabarit (SVG) — fragment pleine largeur, figure de la ligne « zone
@@ -420,6 +563,9 @@ _RENDEURS_BLOC: dict[str, Any] = {
     "iris_quartier": _r_iris, "perimetres_dispositifs_liste": _r_territoire,
     "gabarit_plan_2d": _r_gabarit_plan,
 }
+#: EXPORTS-FIX-1 A8 — intitulés de groupe internes, masqués au rendu (lignes conservées).
+_GROUPES_MASQUES = {"Bilan indicatif"}
+
 #: le règlement PLU (extraits) garde son rendu de bloc historique (blocs/zonage._regles) — réutilisé.
 #: `simulation` : lignes remplacées par l'encart de renvoi (lot 2) — dit dans le rendu.
 _IGNORES_SIMULATION = True
@@ -497,7 +643,8 @@ def _verdict_factuel(sec_id: str, valeurs: dict[str, Valeur]) -> tuple[str, str,
         if isinstance(tl, list) and tl:
             ans = [str(x.get("millesime")) for x in tl if x.get("millesime")]
             if ans:
-                bout = f" — au fichier depuis {ans[0]}" if len(set(ans)) == 1 else f" — au fichier {ans[0]}–{ans[-1]}"
+                # EXPORTS-FIX-1 A8 — « au fichier 2019–2025 » (interne) → « propriétaire depuis au moins … ».
+                bout = f" — propriétaire depuis au moins {ans[0]}"
         return (esc(str(pm).split(" (SIREN")[0]) + esc(bout) + ".", "neutral", "type_proprietaire")
     if sec_id == "terrain":
         p = _v(valeurs, "pente_deg")
@@ -641,8 +788,9 @@ def cover_dossier(idu: str, fiche: dict, numero: str, jour, valeurs: dict[str, V
         if sec["id"] == "entete":
             continue
         n += 1
-        toc.append(f'<li>{n}. {esc(sec["titre"])}<span>fiche {esc(sec["id"])}</span></li>')
-    toc.append(f'<li>{n + 1}. Limites et sources<span>annexe</span></li>')
+        # EXPORTS-FIX-1 A3 — plus de clé technique (« fiche identite ») en colonne droite du sommaire.
+        toc.append(f'<li>{n}. {esc(sec["titre"])}</li>')
+    toc.append(f'<li>{n + 1}. Limites et sources</li>')
     legende = (
         '<div class="legend">'
         '<span class="chip s">sourcé</span> lu dans la source · '
@@ -659,10 +807,10 @@ def cover_dossier(idu: str, fiche: dict, numero: str, jour, valeurs: dict[str, V
         f'<div><b>{esc(numero)}</b>n° de rapport</div>'
         f'<div><b>{jour:%d/%m/%Y}</b>généré le</div>'
         f'<div><b>{fmt_m2(valeurs["surface_parcelle_m2"].valeur) if valeurs.get("surface_parcelle_m2") else "—"}</b>contenance</div>'
-        f'<div><b>Modèle {esc(modele)}</b>miroir de la fiche</div>'
+        # EXPORTS-FIX-1 A2 — plus de « Modèle 3.0 · miroir de la fiche » en page de garde.
         '</div>'
         f'<div class="cover-tiles">{"".join(tuiles_html)}</div>'
-        '<p class="note">Le bandeau des six chiffres de la fiche.</p>'
+        # EXPORTS-FIX-1 A2 — plus de « Le bandeau des six chiffres de la fiche. »
         f'<ul class="toc">{"".join(toc)}</ul>'
         + legende +
         '</div>')
@@ -711,7 +859,9 @@ def rendu_sections(valeurs: dict[str, Valeur], fiche: dict, *, plan_html: str = 
             groupes.setdefault(grp, []).append(_ligne_tr(l.quoi, lib, html, chip(v)))
         rows: list[str] = []
         for grp, lignes_grp in groupes.items():      # un en-tête de groupe UNE fois, jamais vide
-            if grp:
+            # EXPORTS-FIX-1 A8 — « Bilan indicatif » est un intitulé interne : ses lignes se rangent
+            # dans la section sans cet en-tête (retiré, pas renommé — le libellé fiche fait foi).
+            if grp and grp not in _GROUPES_MASQUES:
                 rows.append(f'<tr class="grp"><td colspan="3"><strong>{esc(grp)}</strong></td></tr>')
             rows += lignes_grp
         if rows:
@@ -722,7 +872,7 @@ def rendu_sections(valeurs: dict[str, Valeur], fiche: dict, *, plan_html: str = 
         if sec["id"] == "identite" and plan_html:
             frags.append(plan_html)
         if absents:
-            lis = "".join(f'<li data-quoi="{esc(q)}">{esc(ph)}</li>' for q, ph in absents)
+            lis = "".join(f'<li data-quoi="{esc(q)}">{esc(_absence_clair(q, ph))}</li>' for q, ph in absents)
             frags.append(f'<div class="sansobjet"><div class="t">Vérifié, sans objet</div>'
                          f'<ul>{lis}</ul></div>')
         if vals_lus:
