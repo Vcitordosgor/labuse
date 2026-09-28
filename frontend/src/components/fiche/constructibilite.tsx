@@ -19,6 +19,8 @@ import { IC, RefDrawer, MicroTriple, PorteOutil, StepProv, HypInput, GroupLabel,
 import { Badge } from '../ui/Badge'
 import { GrilleOutils, OutilCase } from '../shared/GrilleOutils'   // FAISABILITE-POLISH-1 — tuiles « Étudier ce bien »
 import { Tip } from '../Tip'
+// FICHE-FIX-5 (reste 2) — « Ce que le PLU permet » en Repli, Transformation/bilan en Lignes.
+import { Repli, Lignes, Ligne, InfoI } from './formes'
 
 const PT_COLORS: Record<string, string> = { fort: '#4ADE96', modere: '#F5C244', faible: '#9AA6A0', nul: '#6B7280', indetermine: '#6B7280' }
 export function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
@@ -28,17 +30,22 @@ export function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
   // chiffrées deviennent des FactRow (valeur mono à droite), la source passe en FactNote.
   return (
     <div data-transformation>
+      {/* FICHE-FIX-5 (reste 2) — Potentiel de transformation en Lignes : SDP consommée % et marge en
+          hauteur ; la phrase (libellé) et le détail de contrainte passent derrière le « i ». */}
       <GroupLabel right={
         <span className="rounded-full px-2 py-0.5 text-[10.5px] font-medium capitalize" style={{ background: `${color}22`, color }}>{pt.niveau}</span>
       }>Potentiel de transformation</GroupLabel>
-      <p className="mt-1 text-[11px] leading-snug text-txt-mut">{pt.libelle}</p>
-      {pt.pct_consomme != null && <FactRow label="SDP consommée / autorisée" value={<>{pt.pct_consomme} <small>%</small></>} />}
-      {/* FICHE-RANGEMENT-1 Lot 1 (doublon #1) — la « SDP résiduelle » vit UNE fois, dans la tuile
-          d'en-tête « SDP restante » (triage glance, jeu délibéré des 6 tuiles). Ici on garde le
-          ratio consommée/autorisée et la marge en hauteur (le raisonnement), sans répéter le nombre. */}
-      {/* RECETTE-11 A6 — plus de verdict (« possible »/« non ») : la marge mesurée sous la règle et
-          la contrainte qui mord ; A3 : la date de survol quand c'est une mesure LiDAR HD. */}
-      {pt.hauteur_marge_m != null && <FactRow label="Marge en hauteur" tone={pt.hauteur_discordante ? 'warn' : undefined} value={<>~{pt.hauteur_marge_m} <small>m sous la règle{pt.hauteur_contrainte ? `, contrainte : ${pt.hauteur_contrainte === 'faîtage' ? 'le faîtage' : "l'égout"}` : ''}{pt.hauteur_survol ? ` — mesuré au LiDAR HD, survol de ${pt.hauteur_survol}` : ''}{pt.hauteur_permis_posterieur ? ` ; antérieur au permis du ${pt.hauteur_permis_posterieur}, possiblement dépassé` : ''}</small></>} />}
+      <Lignes>
+        {pt.pct_consomme != null && (
+          <Ligne label={<>SDP consommée / autorisée{pt.libelle ? <InfoI aria="Sur le potentiel de transformation" tip={pt.libelle} /> : null}</>}
+            valeur={<>{pt.pct_consomme} <small>%</small></>} />
+        )}
+        {pt.hauteur_marge_m != null && (
+          <Ligne ton={pt.hauteur_discordante ? 'ambre' : undefined}
+            label={<>Marge en hauteur<InfoI aria="Sur la marge en hauteur" tip={`${pt.hauteur_contrainte ? `Contrainte : ${pt.hauteur_contrainte === 'faîtage' ? 'le faîtage' : "l'égout"}. ` : ''}${pt.hauteur_survol ? `Mesuré au LiDAR HD, survol de ${pt.hauteur_survol}. ` : ''}${pt.hauteur_permis_posterieur ? `Antérieur au permis du ${pt.hauteur_permis_posterieur}, possiblement dépassé.` : ''}` || 'Marge mesurée sous la règle de hauteur.'} /></>}
+            valeur={<>~{pt.hauteur_marge_m} <small>m sous la règle</small></>} />
+        )}
+      </Lignes>
       {/* DONNEES-FIX-1 lot A — même règle que le §3 Bâti (`discordance_hauteur`) : le badge compare
           l'ÉGOUT LiDAR à BD TOPO (même grandeur) ou signale un faîtage aberrant, jamais le faîtage↔BD
           TOPO. Sans choix automatique. */}
@@ -546,13 +553,14 @@ export function FaisabiliteTab({ idu }: { idu: string; embedded?: boolean }) {
       {/* 4 · CE QUE LE PLU PERMET — chaque règle = TROIS lignes empilées : libellé en petites
           capitales grises · valeur en clair pleine largeur · ligne source (chip + article/page).
           Le nom du PLU vit dans l'info « i » du titre, pas dans la ligne. Un filet fin entre règles. */}
+      {/* FICHE-FIX-5 (reste 2) — « Ce que le PLU permet » = doublon des tuiles §Urbanisme → REPLI
+          « Règles du PLU » (fermé par défaut ; le nom du règlement reste dans le « i »). */}
       {rv.length > 0 && (
+        <Repli compteur={rv.length} label={<>Règles du PLU · zone {pan.zone}{pluDoc ? (
+          <Tip garder tip={<>Règlement : {pluDoc}{badges.plu_approuve_le ? ` · approuvé le ${String(badges.plu_approuve_le)}` : ''}</>}>
+            <span data-faisa-plu-info tabIndex={0} className="ml-1 inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-line-2 text-[9px] text-txt-dim">i</span>
+          </Tip>) : null}</>}>
         <div data-faisa-plu>
-          <GroupLabel right={pluDoc ? (
-            <Tip garder tip={<>Règlement : {pluDoc}{badges.plu_approuve_le ? ` · approuvé le ${String(badges.plu_approuve_le)}` : ''}</>}>
-              <span data-faisa-plu-info tabIndex={0} className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-line-2 text-[9px] text-txt-dim">i</span>
-            </Tip>
-          ) : undefined}>Ce que le PLU permet · règlement {pan.zone}</GroupLabel>
           <div>
             {rv.map((r) => (
               <div key={r.cle} className="flex flex-col gap-1 border-b border-line/60 py-2.5 last:border-0">
@@ -566,6 +574,7 @@ export function FaisabiliteTab({ idu }: { idu: string; embedded?: boolean }) {
             ))}
           </div>
         </div>
+        </Repli>
       )}
 
       {/* 5 · NOS HYPOTHÈSES (3 seulement) — champs EMPILÉS pleine largeur ; « Revenir aux valeurs
@@ -623,11 +632,11 @@ export function FaisabiliteTab({ idu }: { idu: string; embedded?: boolean }) {
       {/* 7 · ACTIONS DU BAS — 4 tuiles « Étudier ce bien » (icône + titre), 2 × 2 à largeurs
           égales, sans « → ». Le texte « Pré-faisabilité indicative… » reste en dernier, en petit. */}
       <div data-faisa-suites className="flex flex-col gap-2.5">
+        {/* FICHE-FIX-5 (reste 2) — « Comparer » et « Écrire au propriétaire » RETIRÉS du panneau
+            (même décision que Scan). Restent : Voir en 3D · Taxe d'aménagement · Chercher par capacité. */}
         <GrilleOutils cols={2}>
           <OutilCase data-suite="gabarit" nom="Voir en 3D" ic={SUITE_ICO.gabarit} onClick={() => goOutil('gabarit')} />
           <OutilCase data-suite="taxe" nom="Taxe d'aménagement" ic={SUITE_ICO.taxe} onClick={() => goOutil('taxe-amenagement')} />
-          <OutilCase data-suite="comparer" nom="Comparer" ic={SUITE_ICO.comparer} onClick={() => goOutil('comparer')} />
-          <OutilCase data-suite="courrier" nom="Écrire au propriétaire" ic={SUITE_ICO.courrier} onClick={() => goOutil('courriers')} />
         </GrilleOutils>
         <div className="text-[10.5px] leading-snug text-txt-dim">
           <button onClick={() => chercherParCapacite()} className="underline decoration-txt-dim/40 underline-offset-2 transition-colors duration-quick hover:text-mint">Chercher des parcelles par capacité →</button>
@@ -769,15 +778,19 @@ export function ModeBBody({ idu, initial }: { idu: string; initial: import('../.
           )}
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11 }}>
-            <span style={{ color: 'var(--txt-dim)' }}>Surface réhabilitable</span>
-            <span style={{ color: 'var(--txt-hi)' }}>~{fmtInt(c.surface.shab_rehabilitable_m2)} m² hab.</span>
-          </div>
-          <p style={{ margin: 0, fontSize: 10, color: '#8FA69A' }}>
-            emprise {fmtInt(c.surface.emprise_bati_m2)} m² <b style={{ color: '#5CE6A1' }}>Sourcé</b> ({c.surface.source_emprise}) × {c.surface.niveaux} niveau(x){' '}
-            <b style={{ color: c.surface.niveaux_reels ? '#5CE6A1' : '#E8B44C' }}>{c.surface.niveaux_reels ? 'Sourcé' : 'Estimé'}</b>
-            {' '}— {c.surface.niveaux_etiquette}
-          </p>
+          {/* FICHE-FIX-5 (reste 2) — le DÉTAIL (surface réhabilitable, emprise, niveaux) passe dans un
+              Repli ; restent visibles la réhabilitation (en tête), le prix de sortie, le coût travaux. */}
+          <Repli label="Détail du bilan">
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11 }}>
+              <span style={{ color: 'var(--txt-dim)' }}>Surface réhabilitable</span>
+              <span style={{ color: 'var(--txt-hi)' }}>~{fmtInt(c.surface.shab_rehabilitable_m2)} m² hab.</span>
+            </div>
+            <p style={{ margin: '4px 0 0', fontSize: 10, color: '#8FA69A' }}>
+              emprise {fmtInt(c.surface.emprise_bati_m2)} m² <b style={{ color: '#5CE6A1' }}>Sourcé</b> ({c.surface.source_emprise}) × {c.surface.niveaux} niveau(x){' '}
+              <b style={{ color: c.surface.niveaux_reels ? '#5CE6A1' : '#E8B44C' }}>{c.surface.niveaux_reels ? 'Sourcé' : 'Estimé'}</b>
+              {' '}— {c.surface.niveaux_etiquette}
+            </p>
+          </Repli>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11 }}>
             <span style={{ color: 'var(--txt-dim)' }}>Prix de sortie (revente)</span>
             <span style={{ color: 'var(--txt-hi)' }}>{fmtInt(c.prix_sortie.prix_m2)} €/m² <b style={{ color: '#5CE6A1', fontSize: 10 }}>Sourcé DVF</b></span>
@@ -797,9 +810,10 @@ export function ModeBBody({ idu, initial }: { idu: string; initial: import('../.
         </div>
         {/* M44 — SORTIE LOCATIVE : côte à côte avec la revente, jamais fusionnée. Loyer au plafond
             réglementaire Sourcé (ou marché Estimé) ; prix d'achat max à rendement cible. Mention fiscale. */}
+        {/* FICHE-FIX-5 (reste 2) — la SORTIE LOCATIVE passe dans un Repli. */}
         {mb.sortie_locative && (
-          <div data-mode-b-locatif style={{ borderTop: '1px solid #24312b', paddingTop: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <p style={{ margin: 0, fontSize: 12, color: 'var(--txt-hi)', fontWeight: 600 }}>Sortie locative</p>
+          <Repli label="Sortie locative">
+          <div data-mode-b-locatif style={{ paddingTop: 4, display: 'flex', flexDirection: 'column', gap: 4 }}>
             {/* M59-P1 (Q2) — l'avertissement sur le loyer retenu passe AVANT le chiffre du prix
                 d'achat locatif : le plafond réglementaire n'est pas un loyer de marché observé. */}
             <p data-mode-b-loyer-avert style={{ margin: 0, fontSize: 10, lineHeight: 1.4, color: '#E8B44C' }}>
@@ -824,6 +838,7 @@ export function ModeBBody({ idu, initial }: { idu: string; initial: import('../.
             )}
             <p style={{ margin: 0, fontSize: 9.5, lineHeight: 1.45, color: '#E8B44C' }}>{mb.sortie_locative.mention_fiscale}</p>
           </div>
+          </Repli>
         )}
         <p style={{ margin: 0, fontSize: 9.5, lineHeight: 1.45, color: '#6b7a72' }}>{mb.avertissement}</p>
       </div>

@@ -101,6 +101,14 @@ describe('FAISABILITE-3 — le panneau (verdict, PLU, hypothèses, étapes)', ()
 
   it('la section PLU affiche une règle avec article/page cliquable + mixité « non modélisée »', async () => {
     renderTab()
+    // FICHE-FIX-5 (reste 2) — « Ce que le PLU permet » est désormais dans un Repli « Règles du PLU »
+    // (doublon des tuiles §Urbanisme) : on l'ouvre avant de vérifier son contenu.
+    const toggle = await waitFor(() => {
+      const t = [...document.querySelectorAll('[data-repli-toggle]')].find((b) => /Règles du PLU/.test(b.textContent ?? ''))
+      if (!t) throw new Error('no repli')
+      return t as HTMLElement
+    })
+    toggle.click()
     const plu = await waitFor(() => { const e = document.querySelector('[data-faisa-plu]'); if (!e) throw new Error('no plu'); return e as HTMLElement })
     const lien = plu.querySelector('a.f-ref') as HTMLAnchorElement
     expect(lien).toBeTruthy()
