@@ -53,6 +53,7 @@ zones:
             point de la façade de la construction au point le plus proche de la limite séparative, doit être
             au minimum de 3,50 mètres.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Ua 7.2 : implantation au maximum sur deux limites separatives, le 3,50 m ne vaut qu'en cas de retrait ; regle particuliere si implantation en fond de parcelle (retrait 3,50 m par rapport aux angles). Ua 7.3 (Exception) : saillies (0,40 m), travaux sur existant, equipements techniques, etc."
       stationnement:
         par_logement:
           places: 1.5
@@ -60,6 +61,7 @@ zones:
           page_pdf: 21
           citation: 12.2 - Normes de stationnement (cf. annexe du règlement)
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Le 12.2 renvoie a l'annexe (p.103) : 1,5 place/logement ne vaut que pour les logements >30 m² (arrondi entier inferieur) ; les logements <30 m² n'exigent que 1 place."
       pleine_terre:
         pct:
           pct: 20.0
@@ -162,6 +164,7 @@ zones:
           page_pdf: 33
           citation: 12.2 - Normes de stationnement (cf. annexe du règlement)
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Le 12.2 renvoie a l'annexe (p.103) : 1,5 place/logement ne vaut que pour les logements >30 m² ; les logements <30 m² n'exigent que 1 place."
       pleine_terre:
         pct:
           pct: 40.0
@@ -251,6 +254,7 @@ zones:
             d’eaux pluviales et autres aménagements de façade) au point le plus proche de l’alignement, est
             de 4,00 mètres minimum.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Uc 6.3 (Exception) : implantations differentes possibles pour saillies (debord max 0,40 m), travaux sur existant non conforme, equipements techniques, constructions/installations d'interet collectif."
         limites_separatives:
           min_m: 3.5
           article: Uc 7.2
@@ -266,6 +270,7 @@ zones:
           page_pdf: 45
           citation: 12.2 - Normes de stationnement (cf. annexe du règlement)
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Le 12.2 renvoie a l'annexe (p.103) : 1,5 place/logement ne vaut que pour les logements >30 m² ; les logements <30 m² n'exigent que 1 place."
       pleine_terre:
         pct:
           pct: 50.0
@@ -348,6 +353,7 @@ zones:
             d’eaux pluviales et autres aménagements de façade) au point le plus proche de l’alignement, est
             de 5,00 mètres minimum.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Ur 6.3 (Exception) : saillies (0,40 m), travaux sur existant non conforme, equipements techniques, installations d'interet collectif (alignement/retrait libre), mise en valeur element bati protege, piscines non couvertes."
         limites_separatives:
           min_m: 3.5
           article: Ur 7.2
@@ -356,6 +362,7 @@ zones:
             comptée horizontalement et perpendiculairement de tout point de la façade de la construction au
             point le plus proche de la limite séparative, doit être au minimum de 3,50 mètres.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Ur 7.3 (Exception) : saillies (0,40 m), travaux sur existant non conforme, equipements techniques, installations d'interet collectif (retrait <3,50 m possible), mise en valeur element bati protege, piscines non couvertes."
       stationnement:
         par_logement:
           places: 1.5
@@ -363,6 +370,7 @@ zones:
           page_pdf: 57
           citation: 12.2 - Normes de stationnement (cf. annexe du règlement)
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Le 12.2 renvoie a l'annexe (p.103) : 1,5 place/logement ne vaut que pour les logements >30 m² ; les logements <30 m² n'exigent que 1 place."
       pleine_terre:
         pct:
           pct: 50.0
@@ -441,6 +449,7 @@ zones:
             d’eaux pluviales et autres aménagements de façade) au point le plus proche de l’alignement, est
             de 3 mètres minimum.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Ue 6.3 (Exception) : implantations differentes possibles pour saillies (0,40 m), travaux sur existant non conforme, equipements techniques, constructions/installations d'interet collectif (alignement ou retrait libre possibles)."
         limites_separatives:
           min_m: 3.5
           article: Ue 7.2
@@ -449,6 +458,7 @@ zones:
             point de la façade de la construction au point le plus proche de la limite séparative, doit être
             au minimum de 3,50 mètres.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Ue 7.2 : implantation au maximum sur deux limites separatives, le 3,50 m ne vaut qu'en cas de retrait. Ue 7.3 (Exception) : saillies (0,40 m), travaux sur existant, equipements techniques, installations d'interet collectif (retrait <3,50 m possible)."
       pleine_terre:
         pct:
           pct: 25.0
@@ -600,6 +610,7 @@ zones:
           page_pdf: 33
           citation: 12.2 - Normes de stationnement (cf. annexe du règlement)
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Le 12.2 renvoie a l'annexe (p.103) : 1,5 place/logement ne vaut que pour les logements de plus de 30 m² (arrondi a l'entier inferieur pour l'ensemble de l'operation) ; les logements de moins de 30 m² n'exigent que 1 place. AUb renvoie a Ub (p.75)."
       pleine_terre:
         pct:
           pct: 40.0
@@ -649,6 +660,7 @@ zones:
             d’eaux pluviales et autres aménagements de façade) au point le plus proche de l’alignement, est
             de 4,00 mètres minimum.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Article Uc 6.3 (Exception) : implantations differentes possibles pour saillies (debord max 0,40 m), travaux sur construction existante non conforme, equipements techniques, constructions/installations d'interet collectif, piscines non couvertes. AUc renvoie a Uc (p.75 : 'se reporter au reglement des zones urbaines correspondantes')."
         limites_separatives:
           min_m: 3.5
           article: Uc 7.2
@@ -664,6 +676,7 @@ zones:
           page_pdf: 45
           citation: 12.2 - Normes de stationnement (cf. annexe du règlement)
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Le 12.2 renvoie a l'annexe (p.103) : 1,5 place/logement ne vaut que pour les logements >30 m² ; les logements <30 m² n'exigent que 1 place. AUc renvoie a Uc (p.75)."
       pleine_terre:
         pct:
           pct: 50.0
@@ -706,6 +719,7 @@ zones:
             d’eaux pluviales et autres aménagements de façade) au point le plus proche de l’alignement, est
             de 3 mètres minimum.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Ue 6.3 (Exception) : implantations differentes possibles pour saillies (debord max 0,40 m), travaux sur existant non conforme, equipements techniques, constructions/installations d'interet collectif (alignement ou retrait libre possibles). AUe renvoie a Ue (p.75)."
         limites_separatives:
           min_m: 3.5
           article: Ue 7.2
@@ -714,6 +728,7 @@ zones:
             point de la façade de la construction au point le plus proche de la limite séparative, doit être
             au minimum de 3,50 mètres.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Ue 7.2 : les constructions peuvent etre implantees au maximum sur deux limites separatives ; le 3,50 m ne s'applique qu'en cas de retrait. Ue 7.3 (Exception) : saillies (0,40 m), travaux sur existant non conforme, equipements techniques, installations d'interet collectif (retrait <3,50 m possible). AUe renvoie a Ue (p.75)."
       pleine_terre:
         pct:
           pct: 25.0
@@ -761,6 +776,7 @@ zones:
             d’eaux pluviales et autres aménagements de façade) au point le plus proche de l’alignement, est
             de 5,00 mètres minimum.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Ur 6.3 (Exception) : saillies (0,40 m), travaux sur existant non conforme, equipements techniques, installations d'interet collectif (alignement/retrait libre), mise en valeur element bati protege, piscines non couvertes. AUr renvoie a Ur (p.75)."
         limites_separatives:
           min_m: 3.5
           article: Ur 7.2
@@ -769,6 +785,7 @@ zones:
             comptée horizontalement et perpendiculairement de tout point de la façade de la construction au
             point le plus proche de la limite séparative, doit être au minimum de 3,50 mètres.
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Ur 7.3 (Exception) : saillies (0,40 m), travaux sur existant non conforme, equipements techniques, installations d'interet collectif (retrait <3,50 m possible), mise en valeur element bati protege, piscines non couvertes. AUr renvoie a Ur (p.75)."
       stationnement:
         par_logement:
           places: 1.5
@@ -776,6 +793,7 @@ zones:
           page_pdf: 57
           citation: 12.2 - Normes de stationnement (cf. annexe du règlement)
           statut: valide
+          note: "PLU-VERIF-1 (exception à afficher) : Le 12.2 renvoie a l'annexe (p.103) : 1,5 place/logement ne vaut que pour les logements >30 m² ; les logements <30 m² n'exigent que 1 place. AUr renvoie a Ur (p.75)."
       pleine_terre:
         pct:
           pct: 50.0
