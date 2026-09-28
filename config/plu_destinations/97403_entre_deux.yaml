@@ -578,19 +578,21 @@ zones:
         faitage:
           m: 13.0
           article: U7.2
-          page_pdf: 29
+          page_pdf: 21
           citation: "En zones Ub et Ue, la hauteur maximale des constructions est fixée à : \n- 9 mètres à\
             \ l’égout du toit ou au sommet de l’acrotère ; \n- 13 mètres au faitage."
           statut: valide
           raison: citation INTROUVABLE à la re-lecture du PDF
+          note: "PLU-VERIF-1 : page corrigée 29→21 (art. U7.2 (via renvoi AU7 : AUb -> zone Ub))."
         egout:
           m: 9.0
           article: U7.2
-          page_pdf: 29
+          page_pdf: 21
           citation: "En zones Ub et Ue, la hauteur maximale des constructions est fixée à : \n- 9 mètres à\
             \ l’égout du toit ou au sommet de l’acrotère ; \n- 13 mètres au faitage."
           statut: valide
           raison: citation INTROUVABLE à la re-lecture du PDF
+          note: "PLU-VERIF-1 : page corrigée 29→21 (art. U7.2 (via renvoi AU7 : AUb -> zone Ub))."
       retraits:
         voie:
           min_m: 4.0
