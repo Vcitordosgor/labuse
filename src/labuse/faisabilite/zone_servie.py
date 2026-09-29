@@ -43,10 +43,20 @@ _TOK = ("COALESCE(NULLIF(rtrim(split_part(btrim(z.attrs->>'libelle'), ' ', 1), '
 # GPU `subtype`) — plus jamais devinée depuis `name`. Le CASE historique vivait ici en double.
 _FAM = "labuse_zone_famille(z.subtype)"
 
-# Sonde bon marché (index gist, pas d'aire) : combien de codes de zone distincts touchent
-# la parcelle ? 1 seul → pas d'aire à calculer, la dominante est entière.
+# Sonde bon marché (index gist, pas d'aire) : combien de zones distinctes touchent la
+# parcelle ? 1 seule → pas d'aire à calculer, la dominante est entière.
+#
+# CALCULS-FIX-1 (Lot A) — la sonde compte les zones distinctes par (TOKEN, FAMILLE), la MÊME
+# clé que `_PARTS` (GROUP BY 1,2). Le mandat proposait de grouper par (commune, token) ; la
+# mesure île l'a INFIRMÉ : une parcelle d'un seul type de zone à cheval sur deux communes
+# (ex. 97420000AB0002 = 100 % N réparti Ste-Suzanne/voisine) serait alors basculée « à cheval »
+# à tort, alors que « N » RÉSUME la parcelle (a_cheval = « la dominante ne résume plus »). La
+# dominante et `a_cheval` se décident donc sur le TYPE de zone (token+famille), jamais sur la
+# commune. La sonde clée désormais sur (token, famille) pour rester alignée avec `_PARTS` et
+# déclencher le calcul des parts au vrai cas d'ambiguïté (un même token portant deux familles) —
+# 0 parcelle île aujourd'hui (mesuré), garde défensive contre une future collision token↔famille.
 _N_ZONES = text(f"""
-SELECT count(DISTINCT {_TOK}) AS n, min({_TOK}) AS zone, min({_FAM}) AS fam
+SELECT count(DISTINCT ({_TOK}, {_FAM})) AS n, min({_TOK}) AS zone, min({_FAM}) AS fam
 FROM spatial_layers z, (SELECT geom_2975 AS g FROM parcels WHERE id = :pid) p
 WHERE z.kind = 'plu_gpu_zone' AND ST_Intersects(z.geom_2975, p.g)
 """)

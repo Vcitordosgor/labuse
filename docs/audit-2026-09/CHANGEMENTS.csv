@@ -1,0 +1,2 @@
+lot,fichier:fonction,objet,notion,avant,apres,n_parcelles,raison
+A,zone_servie.py:_N_ZONES,(sonde n_zones),clé de comptage des zones,count(DISTINCT token),count(DISTINCT (token,famille)),0,"Garde défensive alignée sur _PARTS : a_cheval/dominante décidés sur le TYPE (token+famille). Le fix littéral (commune,token) créait des faux positifs « à cheval » (mesuré : 97420000AB0002 100% N, 97420000AS0404 95,8% N cross-commune → basculés à cheval à tort). 0 parcelle île a un token multi-famille → 0 valeur servie change aujourd'hui."
