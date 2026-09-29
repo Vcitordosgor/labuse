@@ -113,6 +113,27 @@ changement visible (déjà canonique) ; **F13 corrige une dérive** (CHANGEMENTS
 colorait `brulante` en « Priorité » (corail) alors que `PRIORITE_SERVIE=false` le résout en « À suivre »
 (ambre). Gardes `test_f13_f29`. → **12 familles P1 traitées cette session.** Checkpoint F13/F29 **re-validé banc = 188** (0 nouveau, 0 FAUX-CLIENT) après le fix `LABUSE_RATE_LIMIT_OFF` (le compteur anti-scraping bloquait le rejeu du banc en DEV — cf. `PRE-DEPLOY-1/NOTES.md`).
 
+### Session 3 (lot P1, suite) — F01a réglementaire + quick-wins + CatNat
+- **F01a (remonté, réglementaire)** — verdict de constructibilité NEUVE servi par la cascade
+  (`zone_dominante` → `reglement_plu.zone_famille` + `constructible_neuf`), même valeur que le
+  Pré-dossier / la garde SDP. **2 CORRECTIONS mesurées** (CHANGEMENTS.csv, pas des déplacements) :
+  (a) famille GPU (subtype) prime sur le libellé (token-collision « UD », 1/433) ; (b) `/^(A|N)/`
+  flaguait les zones **AU** comme non constructibles (sous-titres SDP + verdict) — corrigé.
+- **F21 (remonté)** — drapeau « à cheval » servi par la cascade (`reglement_plu.a_cheval`,
+  `SEUIL_A_CHEVAL_PCT`), plus de `part[0] < 0,9` au front.
+- **Reclassés présentation** : F07 (SRU statut→couleur/label + couleur d'un signe), F20 (≥2
+  millésimes = minimum inhérent d'une frise), F24 (>20000 = plafond de RENDU carte). Cf. RECLASSEMENT.md.
+- **Arrêté pour Vic** : F26 (ScoringV2 1/50 = scoring) ; **CatNat** (carte Géorisques brut 17/22 vs
+  servi dédoublonné 15/20 — nos lecteurs sont TOUS cohérents à 15/20, le 17/22 réintroduirait les
+  doublons GASPAR ; aligner = recalcul de table → `PRE-DEPLOY-1/NOTES.md`).
+- **Dev-tooling** : `LABUSE_RATE_LIMIT_OFF` (le banc sans DEV_MODE, cf. PRE-DEPLOY-1).
+
+**État P1 (32) : 7 remonté · 7 reclassé · 1 arrêté · F01 partiel (a fait, b-e restent) · 16 a_faire.**
+Guardrails fin de session : tsc 0 · vitest 225 · verrous + gardes FC-2 34 verts · banc `**188 écarts (166 INCOHERENT / 22 TOLERABLE) = baseline, 0 nouveau, 0 FAUX-CLIENT** (F01a aligne la fiche sur la cascade — mêmes notions).`.
+**Les 20 P1 ne sont PAS toutes finies** : les 16 restantes (F02 constructibilite, F03 ModulePanel,
+F05/F09 admin, F06/F08/F10/F12/F16/F18/F19/F23/F27/F28/F30/F32) sont de vrais *remonters* backend
+(serveur qui expose un flag/verdict + front qui lit), ~5 fichiers chacun — à poursuivre en sessions P1.
+
 ### F01 — plan (prochaine session, à reprendre ici)
 F01 (`Fiche.tsx`, 15 lignes « seuil ») n'est PAS une notion unique : c'est un **cluster réglementaire**
 à SCINDER en sous-familles (1 commit chacune), car chaque notion a son moteur back :
