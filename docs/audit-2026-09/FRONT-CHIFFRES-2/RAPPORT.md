@@ -234,6 +234,39 @@ F02 `constructibilite` 9, F03 `ModulePanel` 8 (fenêtres 24/36 mois, sommeil 3 a
 + F06/F07(SRU_META)/F08/F10/F12/F16/F19/F20/F21/F23/F24/F27/F28/F30/F32 ; **F26 ScoringV2 = arrêté
 (scoring)**. Prochaine session P1 : reprendre par **F01a** (zonage A/N → verdict constructibilité).
 
+### Session 9 (lot P1, FIN) — F03, F01e remontés ; F01(reste)/F05/F09 reclassés ; arrêtés notés
+- **F03 (remonté, 0 valeur affichée changée)** — deux décisions du `ModulePanel` remontées au back :
+  (1) la **coupure « récent »** (fenêtre de 24 mois ancrée sur la fin du flux Sitadel) est SERVIE
+  (`coupure_recent` = dmax − 24 mois, `modules.permis`) ; le front lisait `minus24m()` (supprimé),
+  il lit désormais `coupure_recent` (vérifié live : `2024-07-31` = valeur identique) ; (2) le verdict
+  **« société en sommeil »** lit le flag servi `muet` (F27, `SEUIL_DEPOT_MUET_ANS`) au lieu d'un seuil
+  codé au front. Les **sélecteurs de fenêtre** (12/24/48/72/240, défauts 24/36) restent des contrôles
+  de filtre = présentation.
+- **F01e (remonté, 0 valeur affichée changée)** — la **synthèse du niveau de risque** (« rédhibitoire »
+  / « fort ») est décidée au back (`_aleas_block` → `synthese`, moteur qui ordonne la sévérité) ; la
+  tuile Risques lit `f.aleas?.synthese`. Vérifié sur témoins réels : `97415000BO0436` (rédhibitoire),
+  `97415000BP0048` (fort) — 0 divergence vs l'ancienne logique front sur l'échantillon testé.
+- **Reclassements (présentation / hors surface client)** — **F01 (reste)** : orientation, réglette,
+  passe-plat `au_ouverture.motif`, gating SDP `reglesSdp>0` (inhérent), montage `FaisabiliteTab`, et le
+  **push filtre `sdpMin`** (défaut de paramètre de requête, éditable, jamais affiché) ; **F05** & **F09**
+  (écrans **admin** : fenêtres invitation/essai, budget IA, backlog Courrier > 5 j, âge sauvegarde > 1 j).
+- **Arrêté (scoring, à trancher Vic)** — **F01 (part)** : `signalEcarte` (`mult_base ≥ 2`) et le libellé
+  « signal fort » vs « au-dessus de la moyenne » (`mult_base ≥ 4`) sont des seuils sur le **multiplicateur
+  de scoring** → décision de scoring (analogue à F26). **PRIORITE_SERVIE** : tranché **hors périmètre
+  FC-2** (Vic) — laissé tel quel, à traiter avec la bascule q_v15 (DONNEES-FIX-1 + run 11).
+
+**P1 TERMINÉ.** Bilan P1 (32 familles) : **19 remonté(+parts)** · **~11 reclassé** · **2 arrêté scoring**
+(F01 mult_base à trancher, PRIORITE_SERVIE hors périmètre). Aucune valeur affichée modifiée sur toute
+la P1 (CHANGEMENTS.csv inchangé — les remonters ne déplacent que la DÉCISION, pas la valeur).
+
+**Garde-fous fin de session :** tsc 0 · vitest 225/225 · V6b + verrou front + gardes FC-2 (19 dans le
+fichier familles, 26 avec verrous+rate-limit) · banc `--echantillon` →
+`**3161 comparaisons · 188 écarts (166 INCOHERENT / 22 TOLERABLE) — inchangé vs baseline, 0 écart nouveau, 0 FAUX-CLIENT**`.
+
+**Régime P2+ (consigne Vic reçue en fin de P1)** : lots de 15–20 familles/session, **un commit par lot**,
+compte rendu unique ; cérémonial complet (commit dédié + garde + CHANGEMENTS) réservé aux familles qui
+**changent une valeur affichée**. **Ne pas démarrer P2 sans feu vert de Vic.**
+
 <!-- PROGRESSION -->
 
 ---
