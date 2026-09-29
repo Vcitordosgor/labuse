@@ -19,7 +19,7 @@ F17,1,seuil,remonter,admin/map,components/admin/Ia.tsx,1,remonter_back,Ia.tsx:16
 F18,1,seuil,remonter,radar/copilote/crm,components/crm/Kanban.tsx,1,remonter_back,Kanban.tsx:87-88,,a_faire,
 F19,1,seuil,remonter,fiche,components/fiche/PermitsProximityBlock.tsx,1,remonter_back,PermitsProximityBlock.tsx:42,,a_faire,
 F20,1,seuil,declarer,fiche,components/fiche/ProprietaireHistorique.tsx,1,declarer_registre,ProprietaireHistorique.tsx:25,,a_faire,
-F21,1,seuil,remonter,fiche,components/fiche/blocks.tsx,1,remonter_back,blocks.tsx:106,,a_faire,
+F21,1,seuil,remonter,fiche,components/fiche/blocks.tsx,1,remonter_back,blocks.tsx:106,drapeau à cheval (zone),remonté,F21
 F22,1,seuil,remonter,fiche,components/fiche/formes.tsx,1,remonter_back,formes.tsx:99,couleur/cran d'une valeur servie (aucun chiffre/libellé décidé),reclassé_présentation,
 F23,1,seuil,remonter,fiche,components/fiche/reseaux.tsx,1,remonter_back,reseaux.tsx:48-53,,a_faire,
 F24,1,seuil,remonter,admin/map,components/map/MapView.tsx,1,remonter_back,MapView.tsx:344,,a_faire,

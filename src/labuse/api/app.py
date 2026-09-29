@@ -5639,6 +5639,9 @@ def _reglement_plu_block(db: Session, idu: str, commune: str) -> dict | None:
             _fam = _zs.zone_fam if _zs else None
             block["zone_famille"] = _fam
             block["constructible_neuf"] = (_fam not in ("A", "N")) if _fam else None
+            # FRONT-CHIFFRES-2 (F21) — le drapeau « à cheval » (aucune zone ≥ SEUIL_A_CHEVAL_PCT)
+            # vient de la cascade, plus du seuil 0,9 recalculé au front sur les parts.
+            block["a_cheval"] = _zs.a_cheval if _zs else None
         return block
     except Exception:  # noqa: BLE001 — jamais de 500 sur la fiche
         return _bloc_indisponible("reglement_plu")   # M125 — panne ≠ absence (même classe que les 7)

@@ -98,6 +98,15 @@ def test_f01a_constructibilite_zone_servie_par_la_cascade():
     assert "zoneFamille === 'A'" in fiche and "zoneFamille === 'N'" in fiche  # libellés agricole/naturelle servis
 
 
+def test_f21_a_cheval_servi():
+    """F21 — le drapeau « à cheval » (aucune zone ≥ SEUIL_A_CHEVAL_PCT) vient de la cascade
+    (reglement_plu.a_cheval), plus du seuil 0,9 recalculé au front sur les parts."""
+    app = (ROOT / "src/labuse/api/app.py").read_text(encoding="utf-8")
+    assert '"a_cheval"' in app and "_zs.a_cheval" in app
+    blocks = (SRC / "components/fiche/blocks.tsx").read_text(encoding="utf-8")
+    assert "rp.a_cheval ??" in blocks
+
+
 def test_f13_f29_paliers_da_servis():
     """F13/F29 — la pastille (Projets) et le badge (Outils) ne codent plus la correspondance
     palier→couleur : le back sert, par palier, le jeton DA + le ton + le libellé (source unique
