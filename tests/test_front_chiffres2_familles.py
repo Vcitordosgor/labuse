@@ -219,3 +219,14 @@ def test_f18_crm_relance_echeance_servie():
     k = (SRC / "components/crm/Kanban.tsx").read_text(encoding="utf-8")
     assert "e.relance_echeance" in k
     assert "toLocaleDateString('en-CA')" not in k and "todayISO" not in k, "échéance recalculée au fuseau navigateur (F18)"
+
+
+def test_f28_taxe_zone_agricole_servie():
+    """F28 — l'exonération « locaux agricoles » (zone A, hors AU) n'est plus décidée par une regex
+    `/^A(?!U)/` sur le libellé : le prefill taxe sert la FAMILLE de zone (`zone_famille`), le front
+    teste `=== 'A'` (même notion que la fiche §PLU, cf. F01a)."""
+    app = (ROOT / "src/labuse/api/app.py").read_text(encoding="utf-8")
+    assert '"zone_famille": row["zone_fam"]' in app
+    ta = (SRC / "components/outils/TaxeAmenagement.tsx").read_text(encoding="utf-8")
+    assert "prefill.data?.zone_famille === 'A'" in ta
+    assert "/^A(?!U)/i.test" not in ta, "regex de zone (exonération) revenue au front (F28)"

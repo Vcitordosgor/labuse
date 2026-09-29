@@ -26,7 +26,7 @@ F24,1,seuil,remonter,admin/map,components/map/MapView.tsx,1,remonter_back,MapVie
 F25,1,seuil,remonter,outils,components/outils/RadarMarche.tsx,1,remonter_back,RadarMarche.tsx:46,corpus jeune (bandeau Radar),remonté,F25
 F26,1,seuil,remonter,outils,components/outils/ScoringV2.tsx,1,remonter_back,ScoringV2.tsx:61,seuil bas fraction (« peu probable ») servi,remonté,F26
 F27,1,seuil,remonter,outils,components/outils/Successions.tsx,1,remonter_back,Successions.tsx:152,dépôt de comptes muet (sommeil),remonté,F27
-F28,1,seuil,remonter,outils,components/outils/TaxeAmenagement.tsx,1,remonter_back,TaxeAmenagement.tsx:117,,a_faire,
+F28,1,seuil,remonter,outils,components/outils/TaxeAmenagement.tsx,1,remonter_back,TaxeAmenagement.tsx:117,exonération taxe locaux agricoles (zone A servie),remonté,F28
 F29,1,seuil,remonter,outils,components/outils/TierBadge.tsx,1,remonter_back,TierBadge.tsx:9,DA du palier (jeton+ton+libellé) servie,remonté,F29
 F30,1,seuil,remonter,outils,components/outils/TimeMachine.tsx,1,remonter_back,TimeMachine.tsx:84,disponibilité de la surcouche cadastre d'époque (fait historique fixe: 1er millésime 2017),reclassé_présentation,
 F31,1,seuil,remonter,outils,components/outils/blocB.tsx,1,remonter_back,blocB.tsx:383,ton ligne ZAN (absence horizon + palier couleur),remonté,F31

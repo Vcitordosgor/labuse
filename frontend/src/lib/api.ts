@@ -741,6 +741,7 @@ export const getPromoteurAcquisitions = (siren: string) => j<PromoteurAcquisitio
 export interface TaxePrefill {
   idu: string; commune: string; insee: string
   surface_terrain_m2: number | null; zone_plu: string | null; sdp_gabarit_m2: number | null; deja_batie?: boolean
+  zone_famille?: string | null   // FRONT-CHIFFRES-2 (F28) — U/AU/A/N servie (exonération locaux agricoles = 'A')
   taux_communal_pct: number | null
   taux_communal_source: 'public' | null
   taux_communal_millesime: string | null

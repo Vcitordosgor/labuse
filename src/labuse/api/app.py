@@ -2869,6 +2869,10 @@ def taxe_amenagement_prefill(idu: str, db: Session = Depends(get_db)) -> dict:
     return {"idu": idu, "commune": row["commune"], "insee": idu[:5],
             "surface_terrain_m2": row["surface_terrain_m2"],
             "zone_plu": row["zone_libelle"] or row["zone_fam"],
+            # FRONT-CHIFFRES-2 (F28) — la FAMILLE de zone (U/AU/A/N) servie : le front décide
+            # « locaux agricoles exonérés » sur `zone_famille === 'A'` au lieu d'une regex `/^A(?!U)/`
+            # sur le libellé (même notion que la fiche §PLU, cf. F01a).
+            "zone_famille": row["zone_fam"],
             "sdp_gabarit_m2": int(sdp) if (sdp is not None and sdp > 0) else None,
             "deja_batie": bool(row["taux_emprise_pct"] and float(row["taux_emprise_pct"]) > 0),
             "taux_communal_pct": (pub["part_communale_pct"] if pub else None),
