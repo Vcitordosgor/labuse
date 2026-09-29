@@ -39,12 +39,34 @@ def test_valeurs_pour_jamais_une_valeur_inventee(db_session):
     assert v == {}
 
 
-def test_prix_neuf_des_pdf_jamais_l_acte():
-    """Arbitrage Q3 (verrou code) : aucun builder d'export ne lit `neuf_vefa_commune` (l'acte,
-    réservé au scoring) — le neuf des PDF vient de resolve_prix_sortie_servi (l'observé)."""
+def test_prix_neuf_vefa_a_l_acte_seulement_sous_sa_notion_labellisee():
+    """Arbitrage Q3, MIS À JOUR (PRE-DEPLOY-1 lot B, confirmé Vic) — la scission EXPORTS-FIX-1 C5.
+
+    Q3 interdisait de servir le VEFA à l'acte MAQUILLÉ en neuf observé. EXPORTS-FIX-1 C5 a depuis
+    SCINDÉ la notion : le VEFA à l'acte est servi comme une donnée DISTINCTE, DÉCLARÉE au registre et
+    LABELLISÉE « VEFA à l'acte » (`prix_neuf_vefa_acte_eur_m2`, Comparateur communes), à côté du neuf
+    OBSERVÉ (`prix_neuf_observe_eur_m2`, `resolve_prix_sortie_servi`). L'invariant réel devient donc :
+    le moteur de l'acte (`neuf_vefa_commune`) n'est lu QUE sous l'extracteur de sa notion labellisée —
+    JAMAIS sous celui du neuf observé (sinon on re-maquillerait l'acte en observé, le vrai danger Q3)."""
+    from labuse.registre.donnees import DONNEES
+    # 1) la notion de l'acte est bien DÉCLARÉE et LABELLISÉE « à l'acte » (scission assumée, pas un slip)
+    d = DONNEES.get("prix_neuf_vefa_acte_eur_m2")
+    assert d is not None, "la notion VEFA à l'acte doit être déclarée au registre"
+    assert "acte" in getattr(d, "libelle", "").lower(), "son libellé doit dire « à l'acte » (distinct de l'observé)"
+    # 2) dans chaque builder, `neuf_vefa_commune` n'apparaît QUE sous l'extracteur de l'acte.
+    import re
+    deco = re.compile(r'@extracteur\(\s*["\']([^"\']+)["\']')
     for b in BUILDERS:
-        src = (RACINE / b).read_text()
-        assert "neuf_vefa_commune" not in src, f"{b} lit le VEFA à l'acte (réservé au scoring)"
+        courant = None
+        for ligne in (RACINE / b).read_text().splitlines():
+            m = deco.search(ligne)
+            if m:
+                courant = m.group(1)
+            if "neuf_vefa_commune" in ligne:
+                assert courant == "prix_neuf_vefa_acte_eur_m2", (
+                    f"{b} lit `neuf_vefa_commune` sous l'extracteur « {courant} » — le VEFA à l'acte "
+                    "n'est admis que sous sa notion labellisée `prix_neuf_vefa_acte_eur_m2`, jamais "
+                    "confondu avec le neuf observé (`prix_neuf_observe_eur_m2`).")
 
 
 def test_collectes_attachent_les_valeurs_registre():

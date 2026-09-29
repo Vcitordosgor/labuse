@@ -768,6 +768,67 @@ def test_env_local_avec_secret_key_refuse_le_boot(monkeypatch):
     config.get_settings.cache_clear()
 
 
+def test_dev_mode_refuse_hors_local(monkeypatch):
+    """PRE-DEPLOY-1 (lot A) : LABUSE_DEV_MODE=1 court-circuite TOUT l'anti-scraping
+    (rate-limit + quotas). C'est un réglage de POSTE DE DEV ; laissé sur une machine publique il
+    ouvre l'API au scraping. Hors 'local' (pilot|production), le boot DOIT échouer (fail-closed).
+    Le banc de cohérence nocturne n'a plus besoin de ce flag : il tourne en-process."""
+    from labuse import config
+    from labuse.api import auth
+    # local + dev_mode → toléré (poste de dev)
+    monkeypatch.setenv("LABUSE_ENV", "local")
+    monkeypatch.setenv("LABUSE_DEV_MODE", "1")
+    config.get_settings.cache_clear()
+    auth.exiger_pas_de_dev_mode_deploiement()          # ne lève pas
+    # production + dev_mode → refus BRUYANT
+    monkeypatch.setenv("LABUSE_ENV", "production")
+    config.get_settings.cache_clear()
+    with pytest.raises(RuntimeError, match="DEV_MODE"):
+        auth.exiger_pas_de_dev_mode_deploiement()
+    # pilot + dev_mode → refus aussi (toute machine publique)
+    monkeypatch.setenv("LABUSE_ENV", "pilot")
+    config.get_settings.cache_clear()
+    with pytest.raises(RuntimeError, match="DEV_MODE"):
+        auth.exiger_pas_de_dev_mode_deploiement()
+    # production SANS dev_mode → démarre
+    monkeypatch.delenv("LABUSE_DEV_MODE", raising=False)
+    config.get_settings.cache_clear()
+    auth.exiger_pas_de_dev_mode_deploiement()          # ne lève pas
+    config.get_settings.cache_clear()
+
+
+def test_banc_coherence_en_process_hote_reserve_exempte_rate_limit(monkeypatch):
+    """PRE-DEPLOY-1 (lot A) : le banc nocturne interroge l'API EN-PROCESS (TestClient, hôte réservé
+    `protection.HOTE_INTERNE`) — jamais l'API publique. Ce trafic interne est exempté du rate-limit
+    SANS `LABUSE_DEV_MODE` (l'exemption est sûre : `client.host` est posé par le transport ASGI,
+    jamais par le réseau). Un client ORDINAIRE, lui, reste plafonné à rate_limit_rpm."""
+    from fastapi.testclient import TestClient
+
+    from labuse import config
+    from labuse.api import auth, protection
+    from labuse.api.app import app
+    from labuse.api.protection import HOTE_INTERNE
+    # rate-limit ACTIF (poser un réglage réveille _actif_sous_pytest) et bas (le seuil doit mordre)
+    monkeypatch.setenv("LABUSE_RATE_LIMIT_RPM", "5")
+    monkeypatch.setenv("LABUSE_ENV", "local")           # auth off : on teste le SEUL rate-limit
+    monkeypatch.delenv("LABUSE_DEV_MODE", raising=False)
+    config.get_settings.cache_clear()                   # RPM=5 pris en compte (get_settings est caché)
+    # état mémoire de la garde REMIS À NEUF avant ET après : ce test martèle le middleware (fenêtres/
+    # défis/bursts) — sans ce nettoyage il polluerait les autres tests de protection (sujet partagé).
+    protection.reset_etat_memoire()
+    try:
+        chemin = "/parcels/ZZZZZINVALID9"               # protégé, 404 rapide, non-fiche (hors quota)
+        interne = TestClient(app, client=(HOTE_INTERNE, 0))
+        codes_interne = [interne.get(chemin).status_code for _ in range(20)]
+        ordinaire = TestClient(app)
+        codes_ordinaire = [ordinaire.get(chemin).status_code for _ in range(20)]
+        assert 429 not in codes_interne, "le banc en-process ne doit JAMAIS être rate-limité"
+        assert 429 in codes_ordinaire, "un client ordinaire DOIT être plafonné (preuve que la garde mord)"
+    finally:
+        protection.reset_etat_memoire()                 # ne pas polluer les tests suivants
+        config.get_settings.cache_clear()
+
+
 def test_pay_token_sans_secret_en_dur(monkeypatch):
     """Le jeton de bascule paiement ne repose plus sur une constante en dur : un jeton forgé
     avec l'ancien secret « labuse-dev-secret » est REFUSÉ ; un vrai jeton est accepté."""

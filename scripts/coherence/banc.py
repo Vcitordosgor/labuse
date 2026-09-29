@@ -96,14 +96,22 @@ def passe_croisements(ctx, ec, parcelles):
                      "source_differente")
 
 
-def passe_determinisme(ctx, ec, parcelles, communes):
-    """Chaque lecteur appelé deux fois rend la même valeur (cache vs base, tuile stable)."""
-    import urllib.request
-    from .lib import API
+def passe_determinisme(ctx, ec, parcelles, communes, refetch=None):
+    """Chaque lecteur appelé deux fois rend la même valeur (cache vs base, tuile stable).
+
+    `refetch(path)` = un SECOND appel FRAIS (non caché) du même lecteur. En-process il passe par
+    le TestClient (jamais l'API publique) ; à défaut, urllib vers l'API HTTP (chemin historique)."""
+    if refetch is None:
+        import urllib.parse as _up
+        import urllib.request as _ur
+        from .lib import API
+
+        def refetch(path):
+            with _ur.urlopen(API + path, timeout=120) as r:
+                return json.loads(r.read())
     for idu in [r["idu"] for r in parcelles[:5]]:
         try:
-            with urllib.request.urlopen(f"{API}/parcels/{idu}", timeout=120) as r:
-                deux = json.loads(r.read())
+            deux = refetch(f"/parcels/{idu}")
         except Exception as e:  # noqa: BLE001
             deux = Erreur(e)
         un = ctx.fiche(idu)
@@ -117,12 +125,10 @@ def passe_determinisme(ctx, ec, parcelles, communes):
                                   "lecteur_b": "fiche appel 2", "valeur_b": str(deux.get(k))[:120],
                                   "ecart": "2 appels ≠", "cause": "non_deterministe",
                                   "gravite": "INCOHERENT"})
+    import urllib.parse
     for com in communes[:3]:
-        import urllib.parse
         try:
-            with urllib.request.urlopen(
-                    f"{API}/communes/{urllib.parse.quote(com)}/contexte", timeout=120) as r:
-                deux = json.loads(r.read())
+            deux = refetch(f"/communes/{urllib.parse.quote(com)}/contexte")
         except Exception as e:  # noqa: BLE001
             deux = Erreur(e)
         un = ctx.commune_ctx(com)
@@ -135,25 +141,45 @@ def passe_determinisme(ctx, ec, parcelles, communes):
                                   "gravite": "INCOHERENT"})
 
 
-def main() -> None:
-    ile = "--ile" in sys.argv
+def run(ile: bool = False, en_process: bool = False) -> dict:
+    """Joue le banc et écrit ECARTS.csv. Renvoie un résumé (comparaisons, écarts par gravité).
+
+    `en_process=True` (PRE-DEPLOY-1 lot A) : les lecteurs HTTP passent par un TestClient FastAPI
+    EN-PROCESS — jamais l'API publique, donc ni quota anti-scraping ni `LABUSE_DEV_MODE`. C'est le
+    mode du job nocturne `coherence-banc`. Sinon : chemin historique (urllib vers `LABUSE_COHERENCE_API`,
+    utile en dev contre un serveur déjà lancé)."""
     parcelles = charger_echantillon()
     communes = sorted({r["commune"] for r in parcelles if r["commune"] and r["commune"] != "?"})
-    ctx, ec = Contexte(), Ecarts()
+    refetch = None
+    if en_process:
+        from .lib import client_en_process
+        client, fetch = client_en_process()
+        ctx = Contexte(fetch=fetch, client=client)
+        refetch = fetch                       # 2e appel frais = même canal en-process
+    else:
+        ctx = Contexte()
+    ec = Ecarts()
     t0 = time.time()
     print(f"banc de cohérence — {len(parcelles)} parcelles, {len(communes)} communes, "
-          f"mode {'île' if ile else 'échantillon'}")
+          f"mode {'île' if ile else 'échantillon'}"
+          f"{' · EN-PROCESS (TestClient, sans API publique)' if en_process else ''}")
     passe_parcelles(ctx, ec, parcelles)
     print(f"parcelles faites ({time.time()-t0:.0f}s) ; communes…")
     passe_communes(ctx, ec, communes, ile=ile)
     passe_croisements(ctx, ec, parcelles)
-    passe_determinisme(ctx, ec, parcelles, communes)
+    passe_determinisme(ctx, ec, parcelles, communes, refetch=refetch)
     chemin_csv = ec.ecrire()
     par_gravite: dict[str, int] = {}
     for l in ec.lignes:
         par_gravite[l["gravite"]] = par_gravite.get(l["gravite"], 0) + 1
     print(f"\n{ec.n_comparaisons} comparaisons · {len(ec.lignes)} écarts : {par_gravite}")
     print(f"→ {chemin_csv} ({time.time()-t0:.0f}s)")
+    return {"comparaisons": ec.n_comparaisons, "ecarts": len(ec.lignes),
+            "par_gravite": par_gravite, "fichier": str(chemin_csv)}
+
+
+def main() -> None:
+    run(ile="--ile" in sys.argv, en_process="--en-process" in sys.argv)
 
 
 if __name__ == "__main__":

@@ -2417,12 +2417,15 @@ def residuel_serve_cmd(run_seq: int = typer.Argument(..., help="run_seq à SERVI
         set_served(c, run_seq)
     # le manifeste ne PILOTE plus le résiduel (bascule_flux ne rejoue plus set_served) : il en est un
     # simple MIROIR. On le réaligne ici pour que is_served == manifeste.residuel_run_seq reste vrai.
+    # PRE-DEPLOY-1 (lot C) — s'il n'existe pas encore, on le POSE (bootstrap depuis l'état servi) :
+    # residuel-serve ne laisse JAMAIS le miroir périmé/absent → le manifeste ne peut plus mentir.
     from . import manifeste as _manifeste
-    m = _manifeste.lire()
-    if m is not None:
-        m = {**m, "residuel_run_seq": int(run_seq)}
-        _manifeste.ecrire(m)
+    with session_scope() as _s:
+        m = _manifeste.lire() or _manifeste.construire_depuis_pointeurs(_s)
+    m = {**m, "residuel_run_seq": int(run_seq)}
+    _manifeste.ecrire(m)
     typer.echo(f"✓ bascule : run servi {avant} → {run_seq} (retour : residuel-serve {avant})")
+    typer.echo(f"  ⚠ manifeste modifié : à commiter ({_manifeste.chemin()})")
     # COHERENCE-FIX-1 (lot A) — le résiduel servi vient de changer : les caches qui en dérivent
     # (tuiles mvt_parcels, fiche commune…) sont PÉRIMÉS à l'instant même (clé de fraîcheur). On
     # lance `labuse rebuild` DÉTACHÉ (même geste unique que la bascule scoring) — c'est le
@@ -4882,6 +4885,9 @@ def golden_promote_cmd(run: str = typer.Argument(..., help="Label du run candida
         typer.echo(f"  manifeste (fait foi) : {r.get('manifeste_path')}")
         typer.echo(f"  arbre servi          : {r.get('arbre')}")
         typer.echo(f"  runs.current() relu  : {r.get('current_apres')}")
+        # PRE-DEPLOY-1 (lot C) — le manifeste vient d'être réécrit : il est VERSIONNÉ (le déploiement
+        # sert le fichier commité). Le rappeler explicitement pour qu'il ne reste jamais non commité.
+        typer.echo("  ⚠ manifeste modifié : à commiter (config/served_manifest.json)")
     else:
         # verifie is False = la bascule s'est annoncée mais runs.current() n'a pas changé (démasqué).
         typer.echo(f"✗ Bascule {'NON confirmée' if r.get('verifie') is False else 'refusée'} : {r.get('motif')}")

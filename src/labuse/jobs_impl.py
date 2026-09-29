@@ -157,29 +157,32 @@ def fiche_commune_cache(ctx: JobContext) -> None:
 
 
 def coherence_banc(ctx: JobContext) -> None:
-    """COHERENCE-FIX-1 (lot G) — joue le banc de cohérence (mode --ile) contre l'API locale,
-    journalise le passage (coherence_runs) et laisse la cloche sonner au premier FAUX-CLIENT
-    nouveau. L'API visée : LABUSE_COHERENCE_API (défaut prod http://127.0.0.1:8000)."""
-    import os
-    import subprocess
+    """COHERENCE-FIX-1 (lot G) + PRE-DEPLOY-1 (lot A) — joue le banc de cohérence (mode --ile)
+    EN-PROCESS (TestClient FastAPI), journalise le passage (coherence_runs) et laisse la cloche
+    sonner au premier FAUX-CLIENT nouveau.
+
+    EN-PROCESS, jamais l'API publique : plus de HTTP vers le port servi, donc PLUS de quota
+    anti-scraping ni de `LABUSE_DEV_MODE` (l'API refuse même de démarrer avec ce flag hors 'local').
+    L'auth reste active — le banc mint une session pilote en interne (cf. lib.client_en_process)."""
     import sys
     from pathlib import Path
     racine = Path(__file__).resolve().parents[2]
-    env = {**os.environ,
-           "LABUSE_COHERENCE_API": os.environ.get("LABUSE_COHERENCE_API", "http://127.0.0.1:8000")}
-    r = subprocess.run([sys.executable, "-m", "scripts.coherence.banc", "--ile"],
-                       cwd=str(racine), env=env, capture_output=True, text=True, timeout=6600)
-    if r.returncode:
-        raise RuntimeError(f"banc en erreur (code {r.returncode}) : {(r.stderr or r.stdout)[-400:]}")
+    if str(racine) not in sys.path:
+        sys.path.insert(0, str(racine))
+    try:
+        from scripts.coherence.banc import run as _run_banc
+    except Exception as e:  # noqa: BLE001 — le banc fait partie du produit : introuvable = échec
+        raise RuntimeError(f"banc introuvable : {e}") from e
+    _run_banc(ile=True, en_process=True)      # écrit ECARTS.csv (lecteurs en-process, sans réseau)
     from .coherence_journal import journaliser_passage
     res = journaliser_passage(ctx.db, mode="ile")
     ctx.db.commit()
     ctx.compte(**res)
-    # un banc qui n'a rien pu lire (API coupée → tout en « erreur lecteur ») est un ÉCHEC bruyant,
-    # jamais un passage vert par vacuité.
+    # un banc qui n'a rien pu lire (tout en « erreur lecteur ») est un ÉCHEC bruyant, jamais un
+    # passage vert par vacuité (app non démarrable, base coupée…).
     if res["ecarts"] == 0 and res["erreurs_lecteur"] > 100:
         raise RuntimeError(f"banc illisible : {res['erreurs_lecteur']} lecteurs en erreur "
-                           "(API locale coupée ou limitée) — passage non probant.")
+                           "(app non démarrable en-process ou base coupée) — passage non probant.")
 
 
 def radar_cycle(ctx: JobContext) -> None:

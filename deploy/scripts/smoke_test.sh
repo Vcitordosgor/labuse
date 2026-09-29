@@ -11,12 +11,14 @@
 # =============================================================================
 set -uo pipefail   # pas de -e : on veut exécuter TOUS les tests et tout rapporter
 
+REPO="$(cd "$(dirname "$0")/../.." && pwd)"
 BASE="${LABUSE_BASE_URL:-http://127.0.0.1:8000}"
 DB="${LABUSE_DB_NAME:-labuse}"
 DB_USER="${LABUSE_DB_USER:-labuse}"
 DB_HOST="${LABUSE_DB_HOST:-localhost}"
 DB_PORT="${LABUSE_DB_PORT:-5432}"
 PSQL=(psql -X -tA -q -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB")
+MANIFEST="${LABUSE_SERVED_MANIFEST:-$REPO/config/served_manifest.json}"
 
 fail=0
 ok()   { printf '  \033[32m✓\033[0m %s\n' "$1"; }
@@ -60,6 +62,40 @@ else
     printf '  · /demo-status %s (informatif, non bloquant)\n' "$code"
 fi
 rm -f /tmp/labuse_smoke_demo.json 2>/dev/null || true
+
+# 7) PRE-DEPLOY-1 (lot C) — LE MANIFESTE COMMITÉ NE MENT PAS : config/served_manifest.json doit
+#    refléter le résiduel RÉELLEMENT servi en base (residuel_runs.is_served). C'est le contrôle qui
+#    aurait attrapé « manifeste run 8 ↔ is_served run 10 » (7ae2c2b7). BLOQUANT.
+if [ ! -f "$MANIFEST" ]; then
+    ko "served_manifest.json absent ($MANIFEST) — pointeur servi non traçable"
+else
+    man_seq=$(grep -o '"residuel_run_seq"[[:space:]]*:[[:space:]]*[0-9]*' "$MANIFEST" | head -1 | grep -o '[0-9]*$')
+    db_seq=$("${PSQL[@]}" -c "SELECT run_seq FROM residuel_runs WHERE is_served LIMIT 1;" 2>/dev/null || true)
+    if [ -z "$db_seq" ]; then
+        printf '  · manifeste vs is_served (residuel_runs indéterminé, non bloquant)\n'
+    elif [ "$man_seq" = "$db_seq" ]; then
+        ok "manifeste = servi en base (résiduel seq $db_seq)"
+    else
+        ko "MANIFESTE MENTEUR : residuel_run_seq=$man_seq (commité) ≠ is_served=$db_seq (base) — corriger config/served_manifest.json avant de basculer le trafic"
+    fi
+fi
+
+# 8) PRE-DEPLOY-1 (lot D) — INTERSECTIONS parcelle × couche (servitudes) : complète / partielle /
+#    absente + date. INFORMATIF (les lecteurs repassent au calcul au vol, résultat identique) —
+#    jamais bloquant, mais DIT pour qu'une table incomplète ne passe pas inaperçue.
+if [ "$("${PSQL[@]}" -c "SELECT to_regclass('parcel_couche_intersection') IS NOT NULL;" 2>/dev/null)" = "t" ]; then
+    ni=$("${PSQL[@]}" -c "SELECT count(*) FROM parcel_couche_intersection;" 2>/dev/null || echo 0)
+    nc=$("${PSQL[@]}" -c "SELECT count(DISTINCT layer_id) FROM parcel_couche_intersection;" 2>/dev/null || echo 0)
+    np=$("${PSQL[@]}" -c "SELECT count(DISTINCT parcel_id) FROM parcel_couche_intersection;" 2>/dev/null || echo 0)
+    di=$("${PSQL[@]}" -c "SELECT to_char(max(updated_at),'YYYY-MM-DD') FROM parcel_couche_intersection_meta;" 2>/dev/null || echo '?')
+    if [ "${ni:-0}" -gt 0 ]; then
+        ok "intersections : $ni lignes · $nc couches · $np parcelles · le ${di:-?}"
+    else
+        printf '  · intersections : table présente mais VIDE (calcul au vol) — labuse build-intersections\n'
+    fi
+else
+    printf '  · intersections : table absente (calcul au vol, correct mais lent) — labuse build-intersections\n'
+fi
 
 echo "=============================================="
 if [ "$fail" -eq 0 ]; then

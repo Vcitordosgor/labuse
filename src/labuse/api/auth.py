@@ -125,6 +125,23 @@ def exiger_env_deploiement() -> None:
             "Démarrage refusé (fail-closed).")
 
 
+def exiger_pas_de_dev_mode_deploiement() -> None:
+    """PRE-DEPLOY-1 (lot A) — fail-closed : `LABUSE_DEV_MODE=1` court-circuite TOUT le rate-limit
+    et les quotas anti-scraping (protection.garde_protection). C'est un réglage de POSTE DE DEV,
+    jamais d'un déploiement — laissé par erreur en ligne, il ouvre l'API au scraping (fiches,
+    tuiles, géocodage BAN externe). Hors 'local' (pilot|production), on REFUSE de démarrer plutôt
+    que de servir sans protection. Le banc de cohérence n'a plus besoin de ce flag : il tourne
+    EN-PROCESS (TestClient, hôte réservé exempté), jamais contre l'API publique."""
+    s = get_settings()
+    if s.env != "local" and s.dev_mode:
+        raise RuntimeError(
+            f"LABUSE_DEV_MODE=1 en environnement '{s.env}' : le rate-limit et les quotas "
+            "anti-scraping seraient DÉSACTIVÉS sur une machine publique. C'est un réglage de "
+            "développement local UNIQUEMENT. Retirez LABUSE_DEV_MODE de l'environnement de "
+            "déploiement (le banc de cohérence tourne en-process, sans ce flag). "
+            "Démarrage refusé (fail-closed).")
+
+
 def _sign(payload: str) -> str:
     return hmac.new(_key(), payload.encode("utf-8"), hashlib.sha256).hexdigest()
 
