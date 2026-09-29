@@ -1,0 +1,32 @@
+constante|fichier|valeur_code|origine_declaree|valeur_officielle_en_vigueur|source|verdict
+valeur forfaitaire m² hors IdF|taxe_amenagement (YAML meta.annee 2026)|892 €/m²|CGI 1635 quater H, service-public A15416|892 €/m² (2026 ; 2025=914, révisée à la baisse par indexation ICC)|economie.gouv.fr — Tout savoir sur la taxe d'aménagement (2026)|CONFORME 2026
+forfait piscine|taxe_amenagement (YAML forfaits)|251 €/m²|art. 1635 quater J|251 €/m² (2026)|economie.gouv.fr|CONFORME 2026
+forfait stationnement extérieur|taxe_amenagement (YAML)|2 928 €/place|art. 1635 quater J|2 928 €/place (jusqu'à 5 857 sur délibération)|economie.gouv.fr|CONFORME 2026 (plafond délib 5857 défini mais JAMAIS appliqué au calcul)
+forfait PV au sol|taxe_amenagement (YAML)|10 €/m²|art. 1635 quater J|10 €/m²|economie.gouv.fr|CONFORME
+forfait éolienne (mât>12m)|taxe_amenagement (YAML)|3 000 €/mât|art. 1635 quater J|3 000 €/mât|service-public|CONFORME
+part départementale défaut|taxe_amenagement (YAML taux)|2,5 %|plafond CGI, confirmé DELTA 974|2,5 % (plafond)|CGI 1635 quater|CONFORME (défaut unique pour toutes communes)
+abattement surface|taxe_amenagement (YAML)|50 % sur 100 premiers m² RP|CGI 1635 quater H|50 % / 100 m²|CGI ; JAMAIS sur les forfaits (correct)|CONFORME
+exonération petite surface|taxe_amenagement (YAML)|< 5 m²|CGI 1635 quater D 10°|< 5 m²|CGI|CONFORME
+RAP (redevance archéo. préventive)|taxe_amenagement (_RAP_PCT)|0,40 %|CGI, gestion DGFiP ord. 2022-883, fait gén. 1635 quater F|0,40 %|CGI 1635 quater F|CONFORME (réf. déjà recodifiée post-TEXTES-1)
+coef_surface défisc (constante/num/plafond)|defisc.py / defisc_2026.yaml|0,7 / 19,0 / 1,2|CGI/BOFiP BOI-BAREME-000017 (2026-03-10)|0,7 + 19/S, plafond 1,2|BOFiP|CONFORME (⚠ défauts codés dupliquent le YAML → dérive silencieuse possible)
+plafonds loyer défisc|defisc_2026.yaml|12,21 / 12,71 €/m²/mois|BOFiP 2026-03-10|valeurs 2026|BOFiP|CONFORME 2026 — À RE-MILLÉSIMER (ANNEE_ACTIVE=2026 FIGÉE en dur → péremption silencieuse en 2027 si oubli)
+ETAGE_REF_M|residuel.py|3,0 m|calibré DONNEES-FIX-1 (75,7% exact/98,3% ±1 sur 229 615)|—|interne DONNEES-FIX-1|HYPOTHÈSE LABUSE (documentée, calibrée)
+coef_sdp_existante|Hypotheses (engine)|≈0,95|emprise-toit→plancher, DONNEES-FIX-1 lot C|—|interne|HYPOTHÈSE LABUSE (documentée)
+TOITURE_TYPIQUE_M|potentiel.py|2,5 m|comble courant Réunion « à confirmer » (RECETTE-7 E1)|—|interne NON validé|HYPOTHÈSE LABUSE NON VALIDÉE (ajoute 2,5 m à toute règle d'égout→faîtage estimé, pilote la marge servie)
+SURELEVATION_MARGE_MIN_M|potentiel.py|2,8 m|« un niveau habitable », repris ancien bâtisseur|—|interne (pas de CCH cité)|HYPOTHÈSE LABUSE (seuil verdict possible/non, à sourcer)
+solaire pente pentue / confiance|solaire_toiture.py|[8,50]° ; SEUIL_CONFIANCE 0,70|calibré 50 bâtis (confiance sourcée ; bornes forme non)|—|interne|HYPOTHÈSE LABUSE (confiance calibrée ; bornes de forme non)
+VRD_VOIRIE_INTERNE_PCT|bilan.py:35|40 %|aucune (Estimé)|—|AUCUNE|ORIGINE INCONNUE (entre dans la charge foncière servie)
+VRD_PLACES_PAR_LOGT_DEFAUT|bilan.py:36|2,0|repli non sourcé|—|AUCUNE|ORIGINE INCONNUE (repli)
+coût construction €/m² SDP|engine.py/bilan|2 300–2 800 (mil. 2 550)|calibration web « auditée O2 » (2026)|—|observatoire, non re-daté au code|HYPOTHÈSE (Estimé, non re-millésimée ; ancre tout le coût)
+prix_m2_lls|bilan_calibration.py|2 900 €/m²|« estimee », proxy revient social DOM|—|non confirmé DVF|HYPOTHÈSE (Estimé, non confirmé)
+SECTEUR_PRIX_NEUF (5 bassins)|bilan_calibration.py|3 400–6 000 €/m²|observatoire SeLoger 14/06/2026|—|non confirmé DVF (démotés hors préséance)|HYPOTHÈSE (Estimé)
+MODE_B_TRAVAUX_M2_DEFAUT|bilan.py|1 500 €/m² [500;4000]|arbitrage Vic 06/08|—|non sourcé marché|HYPOTHÈSE (Estimé, pilote achat max réhab)
+Score LABUSE bandes|score_labuse.yaml|A≥80 / B≥50 / C≥30 / D / 0|« décisions Vic gravées »|—|AUCUNE dérivation|ORIGINE INCONNUE (⚠ Score LABUSE NON servi sur run q_v11_m137 — cf. ALGO-AUDIT-1)
+Score LABUSE barème capacité/facteurs|score_labuse.yaml|paliers 80/200/400/1000/2000→15/35/55/75/90 ; coef min 0,4|« VALEURS PROVISOIRES 30 témoins, à RE-CALER »|—|interne provisoire|HYPOTHÈSE PROVISOIRE (auto-déclarée non recalibrée ; non servie)
+Signal paliers|scoring_client.yaml|0,20 / 0,10 (entrée) ; 0,18 / 0,09 (sortie anti-churn)|config paliers|—|interne (anti-churn non dérivé)|HYPOTHÈSE LABUSE (SERVI : tier_opportunite)
+market_signal coefficients|marche_commune.py / obsimmo.py|50/40/20/10/4/−6/−12 ; seuils 60/40|aucune|—|AUCUNE|ORIGINE INCONNUE (2 barèmes différents pour « signal favorable »)
+pente labels|pente_fmt.py|10 / 25 / 40 %|aucune (ni PLU ni DTU ni géotech)|—|AUCUNE|ORIGINE INCONNUE (frontière faible/modérée/forte/très forte)
+exposition seuils plat|exposition.py|PENTE_PLATE 3° / PENTE_MIN_CELL 2°|aucune|—|AUCUNE|ORIGINE INCONNUE (décide plat vs orienté)
+SEUIL_A_CHEVAL_PCT|zone_servie.py|90 %|choix produit|—|non réglementaire|HYPOTHÈSE LABUSE (drapeau a_cheval servi)
+dvf_mediane bornes/seuil|dvf_mediane.py|36 mois ; [1000;12000] ; SEUIL_N 5 ; surf≥20|LITTÉRAUX (pas config)|—|non tracé (divergent de filtre_params config)|ORIGINE INCONNUE au code (bornes/seuil non tracés ; incohérence source de vérité)
+vue_mer constantes|vue_mer.py|SEA_MAX 2 m ; 0,15/0,03 ; EYE 1,7 m ; 8000 m|aucune|—|AUCUNE|ORIGINE INCONNUE — mais MODULE NON SERVI (historique, remplacé par exposition)
