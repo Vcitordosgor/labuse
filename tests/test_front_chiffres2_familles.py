@@ -167,3 +167,16 @@ def test_f26_scoring_fraction_seuil_bas_servi():
     assert "CLIENT.tri.lunettes(dPeuProbable)" in rs
     lp = (SRC / "components/panel/LeftPanel.tsx").read_text(encoding="utf-8")
     assert "CLIENT.algo.corps(sf?.seuil_bas_denominateur" in lp
+
+
+def test_f01b_pente_bande_servie():
+    """F01b — la bande de pente (plat/modérée/forte/très forte) n'est plus classée au front par des
+    seuils 5/15/30° : le back sert `terrain.pente_bande` (fonction _pente_bande, vocabulaire cartes.gouv)."""
+    from labuse.api.app import _pente_bande
+    assert (_pente_bande(3), _pente_bande(8), _pente_bande(20), _pente_bande(40), _pente_bande(None)) == \
+        ("plat", "modérée", "forte", "très forte", None)
+    app = (ROOT / "src/labuse/api/app.py").read_text(encoding="utf-8")
+    assert '"pente_bande": _pente_bande(terrain["pente_moy_deg"])' in app
+    fiche = (SRC / "components/fiche/Fiche.tsx").read_text(encoding="utf-8")
+    assert "f.terrain?.pente_bande ?? undefined" in fiche
+    assert "pente < 15" not in fiche and "penteDeg < 15" not in fiche, "bande de pente reclassée au front (F01b)"

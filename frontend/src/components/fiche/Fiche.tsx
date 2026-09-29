@@ -861,8 +861,9 @@ export function Fiche({ idu }: { idu: string }) {
             : zoneFamille === 'AU' ? 'à urbaniser' : zoneFamille === 'U' ? 'constructible'
             : zoneFamille === 'A' ? 'agricole' : zoneFamille === 'N' ? 'naturelle' : undefined
           const pente = f.terrain?.pente_moy_deg
-          const penteSous = pente == null ? undefined
-            : pente < 5 ? 'plat' : pente < 15 ? 'modérée' : pente < 30 ? 'forte' : 'très forte'
+          // FRONT-CHIFFRES-2 (F01b) — bande de pente SERVIE (terrain.pente_bande) ; le front ne
+          // classe plus par seuils 5/15/30° codés en dur.
+          const penteSous = f.terrain?.pente_bande ?? undefined
           // Risques — compteur (vigilances de l'onglet risques) + niveau, comme le badge de §5.
           const vigils = f.lines.filter((l) => l.onglet === 'risques' && (l.result === 'SOFT_FLAG' || l.result === 'HARD_EXCLUDE'))
           const aleas = f.aleas?.liste ?? []
@@ -1226,10 +1227,10 @@ export function Fiche({ idu }: { idu: string }) {
             : zoneFamille === 'A' ? 'agricole' : zoneFamille === 'N' ? 'naturelle' : undefined
           const tuileZone = { v: reglesZone ?? 'Non publié au GPU', s: zoneSous, vide: reglesZone == null,
             i: 'Zone du PLU au point de la parcelle (règlement communal, archive GPU). « Non publié au GPU » : la commune n’a pas déposé de document opposable.' }
-          // Pente → §2 Terrain (RGE ALTI) + sous-titre par degrés (plat → très forte).
+          // Pente → §2 Terrain (RGE ALTI). FRONT-CHIFFRES-2 (F01b) — bande SERVIE (terrain.pente_bande),
+          // plus de seuils 5/15/30° au front.
           const penteDeg = f.terrain?.pente_moy_deg
-          const penteSous = penteDeg == null ? undefined
-            : penteDeg < 5 ? 'plat' : penteDeg < 15 ? 'modérée' : penteDeg < 30 ? 'forte' : 'très forte'
+          const penteSous = f.terrain?.pente_bande ?? undefined
           const tuilePente = { v: penteDeg != null ? `${nf(penteDeg)} °` : '—', s: penteSous, vide: penteDeg == null,
             i: 'Pente moyenne du terrain, calculée sur le modèle de relief RGE ALTI (IGN). À La Réunion elle commande le coût de terrassement autant que la constructibilité. « — » : relief non disponible sur la parcelle.' }
           // Exposition → §2 Terrain (orientation du versant + pente, MNT RGE ALTI, sans ligne de vue).

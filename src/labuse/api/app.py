@@ -3931,6 +3931,21 @@ def _secteur_opportunites(db: Session, idu: str) -> dict:
     return {"section": section, "n": int(n)}
 
 
+# FRONT-CHIFFRES-2 (F01b) — LA BANDE DE PENTE (vocabulaire cartes.gouv), ICI une fois. Le front
+# (fiche §1.2 et §2 Terrain) ne classe plus la pente par des seuils 5/15/30° codés en dur : il lit
+# `terrain.pente_bande`. Bornes en degrés du grade absolu moyen (RGE ALTI).
+_PENTE_BANDES = ((5.0, "plat"), (15.0, "modérée"), (30.0, "forte"))
+
+
+def _pente_bande(deg: float | None) -> str | None:
+    if deg is None:
+        return None
+    for borne, libelle in _PENTE_BANDES:
+        if deg < borne:
+            return libelle
+    return "très forte"
+
+
 def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
     """Fiche premium v2 (dryrun) : en-tête matrice + lignes cascade TRACÉES (axe Q/A, onglet,
     source cliquable, date), flags, événement. « La traçabilité EST le produit »."""
@@ -4281,7 +4296,8 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
         "lines": lines, "flags": flags,
         "score_v": score_v,
         "dvf_parcelle": dvf_parcelle,
-        "terrain": dict(terrain) if terrain else None,
+        # FRONT-CHIFFRES-2 (F01b) — + la bande de pente servie (plat/modérée/forte/très forte).
+        "terrain": {**dict(terrain), "pente_bande": _pente_bande(terrain["pente_moy_deg"])} if terrain else None,
         "coproprietes": copros,
         "radar_bien": radar_bien,   # RADAR P3 (C3) — bien en vente rattaché (fait + statut + lien)
         "marche_secteur": marche_secteur,

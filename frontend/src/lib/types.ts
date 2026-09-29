@@ -551,7 +551,7 @@ export interface Fiche {
   // RECETTE-5 (V4) — les champs déjà SERVIS par le payload parcelle, typés pour l'en-tête à 8 tuiles.
   // `terrain` : pente du terrain (RGE ALTI) — tuile Pente. `prix_ancien` : prix du bâti ancien au m²
   // (marche_service, même chiffre que la synthèse et les documents) — tuile Bâti ancien.
-  terrain?: { pente_moy_deg: number | null; pente_max_deg: number | null; flag_terrassement_lourd: boolean } | null
+  terrain?: { pente_moy_deg: number | null; pente_max_deg: number | null; flag_terrassement_lourd: boolean; pente_bande?: string | null } | null
   prix_ancien?: {
     type_prix: string | null; n: number | null; fiabilite?: string | null; commune_fallback?: boolean
     distribution?: { apres?: { median: number | null; n: number | null } | null } | null
