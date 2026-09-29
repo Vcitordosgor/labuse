@@ -145,9 +145,14 @@ def test_etat_liste_les_perimes(monkeypatch):
                         lambda db: {"cache": "served_manifest.json (pointeur servi)", "perime": False})
     monkeypatch.setattr(fraicheur_caches, "_etat_intersections",
                         lambda db: {"cache": "parcel_couche_intersection (servitudes)", "perime": False})
+    # CALCULS-FIX-1 (lot C) — contrôle ajouté : barème de défiscalisation (config millésimée). Ici
+    # « à jour » (le geste annuel est fait) → la liste des périmés ne change pas. Monkeypatché pour
+    # rester déterministe quelle que soit l'année de la CI (sinon il périmerait au 1er janvier suivant).
+    monkeypatch.setattr(fraicheur_caches, "_etat_defisc_bareme",
+                        lambda: {"cache": "barème défiscalisation (config millésimée)", "perime": False})
     e = fraicheur_caches.etat(None)
     assert e["perimes"] == ["commune_contexte_cache"]
-    assert len(e["caches"]) == 7
+    assert len(e["caches"]) == 8
 
 
 # ── PRE-DEPLOY-1 (lot C) — le manifeste ne peut plus mentir ──────────────────────────────────

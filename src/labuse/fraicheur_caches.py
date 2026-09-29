@@ -309,13 +309,32 @@ def _etat_intersections(db) -> dict:
             "remede": "labuse build-intersections (geste de Vic) ou labuse rebuild — calcul au vol si absente"}
 
 
+def _etat_defisc_bareme() -> dict:
+    """CALCULS-FIX-1 (Lot C) — fraîcheur du barème de défiscalisation (config millésimée). Périmé
+    dès que l'année du barème servi est < année courante (geste annuel de loi de finances non fait)."""
+    import datetime
+
+    from .faisabilite import defisc
+    an = datetime.date.today().year
+    ba = defisc.annee_active()
+    perime = ba < an
+    return {"cache": "barème défiscalisation (config millésimée)",
+            "porte_sur": f"plafonds de loyer + coefficient de surface — barème {ba}",
+            "cle_attendue": f"barème {an}", "cle_reelle": f"barème {ba}",
+            "perime": perime, "statut": "perime" if perime else "frais", "date": str(ba),
+            "detail": (defisc.signalement_fraicheur()
+                       or f"Barème {ba} à jour pour {an}."),
+            "remede": (f"dupliquer config/calibrage/defisc_{ba}.yaml en defisc_{an}.yaml et le "
+                       f"mettre à jour depuis le barème officiel de loi de finances {an}")}
+
+
 def etat(db) -> dict:
     """L'ÉTAT DE FRAÎCHEUR de chaque cache : clé attendue / clé réelle / périmé. Servi par
     `/sante/fraicheur`, affiché page Données, joué par `labuse rebuild --dry-run` (fumée)."""
     attendue = empreinte_attendue(db)
     caches = [_etat_manifeste(db), _etat_commune_cache(db, attendue), _etat_tuiles(db),
               _etat_tile_cache(db), _etat_spatial_sub(db), _etat_ia_cache(db, empreinte_courte(db)),
-              _etat_intersections(db)]
+              _etat_intersections(db), _etat_defisc_bareme()]
     return {"empreinte_attendue": attendue,
             "perimes": [c["cache"] for c in caches if c.get("perime")],
             "caches": caches}
