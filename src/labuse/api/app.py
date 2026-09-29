@@ -5726,22 +5726,30 @@ def _potentiel_transformation_block(db: Session, idu: str, commune: str | None =
     # depuis une limite, sous-secteur à valeur différente, majoration de hauteur…), on la SIGNALE
     # sous la capacité (« à vérifier »), avec renvoi vers §Urbanisme. Elle N'entre PAS dans le calcul
     # (Lot C) : c'est un drapeau de lecture, jamais une valeur appliquée.
+    # DONNEES-FIX-1 point 4 — les exceptions `modifie_calcul=true` entrent désormais au moteur (même
+    # système, zonage.appliquer_exceptions_calcul) : appliquées quand modélisables, sinon la parcelle
+    # PORTE « règle non modélisée » (regles_non_modelisees) au lieu d'être approximée. exceptions_calcul
+    # reste la liste affichée « à vérifier » ; regles_non_modelisees dit lesquelles ne sont pas déduites.
     exceptions_calcul: list[dict] = []
+    regles_non_modelisees: list[dict] = []
     try:
         zlib = row["zone_lib"] if "zone_lib" in row.keys() else None
         if zlib and commune:
-            from ..faisabilite.zonage import resolve_zone as _rz
+            from ..faisabilite.zonage import resolve_zone as _rz, appliquer_exceptions_calcul as _aec
             _zr = _rz(zlib, commune)
             for cle, lst in (getattr(_zr, "exceptions", None) or {}).items():
                 for e in lst:
                     if e.get("modifie_calcul"):
                         exceptions_calcul.append({"regle": cle, "porte": e.get("porte"),
                                                   "article": e.get("article"), "page_pdf": e.get("page_pdf")})
+            _, regles_non_modelisees = _aec(_zr, commune, zlib, None)
     except Exception:  # noqa: BLE001 — jamais de 500 sur la fiche
         exceptions_calcul = []
+        regles_non_modelisees = []
     return {
         "niveau": niveau, "libelle": libelle,
         "exceptions_calcul": exceptions_calcul,               # PLU-EXCEPTIONS-1 — drapeaux « à vérifier »
+        "regles_non_modelisees": regles_non_modelisees,       # DONNEES-FIX-1 pt4 — exceptions non déduites que la parcelle PORTE
         "pct_consomme": pct,                                  # SDP consommée / autorisée (%)
         "pct_residuel": (max(0, 100 - pct) if pct is not None else None),
         "sdp_residuelle_m2": sdp_servie,

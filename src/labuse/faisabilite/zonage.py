@@ -406,6 +406,67 @@ def resolve_zone(code: str, commune: str | None = None) -> ZoneRules | None:
 resolve_zone_v2 = resolve_zone
 
 
+# ── DONNEES-FIX-1 point 4 — les exceptions PLU `modifie_calcul=true` entrent au moteur ────────────
+# Constat : 81 exceptions (bandes depuis limite, sous-secteurs, majorations conditionnelles) étaient
+# AFFICHÉES sous le « i » mais jamais déduites. Elles entrent maintenant par le MÊME système unique
+# que le reste des règles (ce module). Calibrage figé, sourcé article/page, dans
+# `config/plu_exceptions_effet.json` (index = ligne de PLU-EXCEPTIONS-1/A_CALIBRER.csv). Quatre
+# décisions, une seule source :
+#   · applique       — la valeur de l'exception entre dans ZoneRules SI sa condition est vérifiée
+#                      (ex. majoration de hauteur si terrain ≥ seuil), jamais approximée ;
+#   · deja_couvert   — le sous-secteur cité se résout DÉJÀ comme sa propre zone calibrée (resolve_zone
+#                      lui sert la bonne valeur) → aucune action sur la zone parente ;
+#   · hors_sdp       — n'affecte pas l'enveloppe SDP (stationnement) → aucune action ;
+#   · non_modelisee  — on NE l'approxime PAS : la règle reste affichée et la parcelle la PORTE
+#                      (« règle non modélisée », avec article/page), jamais une valeur inventée.
+_EXC_EFFET = _CONFIG / "plu_exceptions_effet.json"
+
+
+@lru_cache(maxsize=1)
+def _exceptions_effet() -> dict[tuple[str, str], list[dict]]:
+    """Calibrage des 81 exceptions `modifie_calcul=true`, indexé par (insee, zone). SOURCE UNIQUE."""
+    import json
+    try:
+        raw = json.loads(_EXC_EFFET.read_text(encoding="utf-8"))
+    except (FileNotFoundError, ValueError):
+        return {}
+    out: dict[tuple[str, str], list[dict]] = {}
+    for e in (raw.get("entries") or {}).values():
+        out.setdefault((e["insee"], e["zone"]), []).append(e)
+    return out
+
+
+def appliquer_exceptions_calcul(rules: "ZoneRules | None", commune: str | None,
+                                zone_lib: str | None, surface_m2: float | None
+                                ) -> tuple["ZoneRules | None", list[dict]]:
+    """Applique au moteur les exceptions PLU `modifie_calcul=true` de (commune, zone_lib) et renvoie
+    (rules ajustées, règles non modélisées). Copie la ZoneRules (dataclasses.replace) — la règle de
+    zone partagée n'est JAMAIS mutée. Une majoration ne fait que RELÂCHER (valeur plus haute) : elle
+    n'abaisse jamais une contrainte de zone (garde de sens)."""
+    if rules is None or not zone_lib:
+        return rules, []
+    ins = _insee(commune)
+    if not ins:
+        return rules, []
+    non_modelisees: list[dict] = []
+    for e in _exceptions_effet().get((ins, zone_lib), []):
+        dec = e.get("decision")
+        if dec == "non_modelisee":
+            non_modelisees.append({"regle": e.get("regle"), "porte": e.get("porte"),
+                                   "article": e.get("article"), "page_pdf": e.get("page_pdf")})
+        elif dec == "applique":
+            eff = e.get("effet") or {}
+            if eff.get("type") == "majoration_surface":
+                seuil, champ, val = eff.get("seuil_m2"), eff.get("champ"), eff.get("valeur")
+                if (surface_m2 is not None and seuil is not None and champ and val is not None
+                        and float(surface_m2) >= float(seuil)):
+                    cur = getattr(rules, champ, None)
+                    if not isinstance(cur, (int, float)) or float(val) > float(cur):
+                        rules = _replace(rules, **{champ: float(val)})
+        # deja_couvert / hors_sdp : aucune action (documenté au calibrage)
+    return rules, non_modelisees
+
+
 def load_rules(commune: str | None = None) -> dict[str, ZoneRules]:
     """(Sous-)zones d'une commune → ZoneRules (regles + overlay validé), sans repli générique
     (chaque zone garde ses valeurs calibrées, ex. l'emprise, même sans hauteur exploitable)."""

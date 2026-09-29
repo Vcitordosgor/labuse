@@ -61,6 +61,10 @@ class ParcelContext:
     zone_fam: str | None = None
     a_cheval: bool = False
     zone_parts: list = field(default_factory=list)
+    # DONNEES-FIX-1 point 4 — exceptions PLU `modifie_calcul=true` présentes sur la zone mais qu'on
+    # ne sait pas modéliser (bandes/voies nommées/destination…) : la parcelle les PORTE plutôt que
+    # de les approximer. Chaque item : {regle, porte, article, page_pdf}. Renseigné par parcel_faisabilite.
+    regles_non_modelisees: list = field(default_factory=list)
 
 
 def _layer_params(name: str) -> dict:
@@ -411,6 +415,15 @@ def parcel_faisabilite(session: Session, parcel_id: int,
         rules = replace(rules, hf_m=L, calibree=True,
                         notes=[*rules.notes,
                                f"Hauteur prospect L≥H = {L:.0f} m (largeur chaussée BD TOPO : {src})"])
+
+    # DONNEES-FIX-1 point 4 — les exceptions PLU `modifie_calcul=true` entrent au moteur par le même
+    # système (zonage). Une majoration conditionnée à la surface (terrain ≥ seuil) relève la hauteur ;
+    # les exceptions non modélisables (bandes, voies nommées, destination…) sont PORTÉES par la parcelle
+    # (« règle non modélisée ») sans jamais être approximées. La condition de surface porte sur le
+    # terrain d'assiette du projet = la superficie de la parcelle (ctx.surface_m2), pas la portion clippée.
+    from .zonage import appliquer_exceptions_calcul
+    rules, ctx.regles_non_modelisees = appliquer_exceptions_calcul(
+        rules, ctx.commune, ctx.zone, ctx.surface_m2)
 
     hyp = Hypotheses.charger(ctx.commune)   # M-N P1-13 : hypothèses de la commune
     # FAISABILITE-1 (lot D) — surcharges d'hypothèses (édition « et si… » de l'utilisateur, jamais

@@ -1,0 +1,1071 @@
+{
+ "_doc": "DONNEES-FIX-1 point 4 — calibrage des 81 exceptions PLU modifie_calcul=true. decision: applique|deja_couvert|hors_sdp|non_modelisee. Source: docs/audit-2026-09/PLU-EXCEPTIONS-1/A_CALIBRER.csv. Cle = index CSV.",
+ "entries": {
+  "0": {
+   "insee": "97402",
+   "zone": "1AUb",
+   "regle": "hauteur.egout",
+   "porte": "majoration_conditionnelle",
+   "article": "UB 10.2",
+   "page_pdf": "31",
+   "texte_md5": "a8e173d082",
+   "decision": "applique",
+   "effet": {
+    "type": "majoration_surface",
+    "seuil_m2": 2000,
+    "champ": "he_m",
+    "valeur": 10.0
+   },
+   "raison": "majoration conditionnee a la surface du terrain (>=2000 m2) — valeur lue verbatim dans le PDF"
+  },
+  "1": {
+   "insee": "97402",
+   "zone": "1AUb",
+   "regle": "hauteur.egout",
+   "porte": "voie_specifique",
+   "article": "UB 10.2",
+   "page_pdf": "32",
+   "texte_md5": "64812a36ae",
+   "decision": "non_modelisee",
+   "effet": null,
+   "raison": "depend de l adjacence a une voie nommee (RN/RD/rue) — non disponible par parcelle"
+  },
+  "2": {
+   "insee": "97402",
+   "zone": "1AUb",
+   "regle": "hauteur.faitage",
+   "porte": "majoration_conditionnelle",
+   "article": "UB 10.2",
+   "page_pdf": "31",
+   "texte_md5": "a8e173d082",
+   "decision": "applique",
+   "effet": {
+    "type": "majoration_surface",
+    "seuil_m2": 2000,
+    "champ": "hf_m",
+    "valeur": 13.0
+   },
+   "raison": "majoration conditionnee a la surface du terrain (>=2000 m2) — valeur lue verbatim dans le PDF"
+  },
+  "3": {
+   "insee": "97402",
+   "zone": "Ub",
+   "regle": "hauteur.egout",
+   "porte": "majoration_conditionnelle",
+   "article": "UB 10.2",
+   "page_pdf": "31",
+   "texte_md5": "a8e173d082",
+   "decision": "applique",
+   "effet": {
+    "type": "majoration_surface",
+    "seuil_m2": 2000,
+    "champ": "he_m",
+    "valeur": 10.0
+   },
+   "raison": "majoration conditionnee a la surface du terrain (>=2000 m2) — valeur lue verbatim dans le PDF"
+  },
+  "4": {
+   "insee": "97402",
+   "zone": "Ub",
+   "regle": "hauteur.egout",
+   "porte": "voie_specifique",
+   "article": "UB 10.2",
+   "page_pdf": "32",
+   "texte_md5": "64812a36ae",
+   "decision": "non_modelisee",
+   "effet": null,
+   "raison": "depend de l adjacence a une voie nommee (RN/RD/rue) — non disponible par parcelle"
+  },
+  "5": {
+   "insee": "97402",
+   "zone": "Ub",
+   "regle": "hauteur.faitage",
+   "porte": "majoration_conditionnelle",
+   "article": "UB 10.2",
+   "page_pdf": "31",
+   "texte_md5": "a8e173d082",
+   "decision": "applique",
+   "effet": {
+    "type": "majoration_surface",
+    "seuil_m2": 2000,
+    "champ": "hf_m",
+    "valeur": 13.0
+   },
+   "raison": "majoration conditionnee a la surface du terrain (>=2000 m2) — valeur lue verbatim dans le PDF"
+  },
+  "6": {
+   "insee": "97402",
+   "zone": "Uba",
+   "regle": "hauteur.egout",
+   "porte": "voie_specifique",
+   "article": "UB 10.2",
+   "page_pdf": "32",
+   "texte_md5": "64812a36ae",
+   "decision": "non_modelisee",
+   "effet": null,
+   "raison": "depend de l adjacence a une voie nommee (RN/RD/rue) — non disponible par parcelle"
+  },
+  "7": {
+   "insee": "97405",
+   "zone": "AUE",
+   "regle": "retraits.voie",
+   "porte": "voie_specifique",
+   "article": "AUE.6",
+   "page_pdf": "111",
+   "texte_md5": "2412e86b72",
+   "decision": "non_modelisee",
+   "effet": null,
+   "raison": "depend de l adjacence a une voie nommee (RN/RD/rue) — non disponible par parcelle"
+  },
+  "8": {
+   "insee": "97405",
+   "zone": "UEa",
+   "regle": "retraits.voie",
+   "porte": "voie_specifique",
+   "article": "UEa.6",
+   "page_pdf": "61",
+   "texte_md5": "2412e86b72",
+   "decision": "non_modelisee",
+   "effet": null,
+   "raison": "depend de l adjacence a une voie nommee (RN/RD/rue) — non disponible par parcelle"
+  },
+  "9": {
+   "insee": "97406",
+   "zone": "AUb",
+   "regle": "stationnement.par_logement",
+   "porte": "majoration_conditionnelle",
+   "article": "Ub 12.2 (renvoi annexe)",
+   "page_pdf": "103",
+   "texte_md5": "ca884bbd87",
+   "decision": "hors_sdp",
+   "effet": null,
+   "raison": "stationnement : n affecte pas l enveloppe SDP (residuel/gabarit)"
+  },
+  "10": {
+   "insee": "97406",
+   "zone": "AUc",
+   "regle": "stationnement.par_logement",
+   "porte": "majoration_conditionnelle",
+   "article": "Uc 12.2 (renvoi annexe)",
+   "page_pdf": "103",
+   "texte_md5": "ca884bbd87",
+   "decision": "hors_sdp",
+   "effet": null,
+   "raison": "stationnement : n affecte pas l enveloppe SDP (residuel/gabarit)"
+  },
+  "11": {
+   "insee": "97406",
+   "zone": "AUr",
+   "regle": "stationnement.par_logement",
+   "porte": "majoration_conditionnelle",
+   "article": "Ur 12.2 (renvoi annexe)",
+   "page_pdf": "103",
+   "texte_md5": "ca884bbd87",
+   "decision": "hors_sdp",
+   "effet": null,
+   "raison": "stationnement : n affecte pas l enveloppe SDP (residuel/gabarit)"
+  },
+  "12": {
+   "insee": "97406",
+   "zone": "Ua",
+   "regle": "retraits.limites_separatives",
+   "porte": "autre",
+   "article": "Ua 7.2",
+   "page_pdf": "16",
+   "texte_md5": "5421dc591a",
+   "decision": "non_modelisee",
+   "effet": null,
+   "raison": "clause au cas par cas (recul conditionnel)"
+  },
+  "13": {
+   "insee": "97406",
+   "zone": "Ua",
+   "regle": "stationnement.par_logement",
+   "porte": "majoration_conditionnelle",
+   "article": "Ua 12.2 (renvoi annexe)",
+   "page_pdf": "103",
+   "texte_md5": "ca884bbd87",
+   "decision": "hors_sdp",
+   "effet": null,
+   "raison": "stationnement : n affecte pas l enveloppe SDP (residuel/gabarit)"
+  },
+  "14": {
+   "insee": "97406",
+   "zone": "Ub",
+   "regle": "stationnement.par_logement",
+   "porte": "majoration_conditionnelle",
+   "article": "Ub 12.2 (renvoi annexe)",
+   "page_pdf": "103",
+   "texte_md5": "ca884bbd87",
+   "decision": "hors_sdp",
+   "effet": null,
+   "raison": "stationnement : n affecte pas l enveloppe SDP (residuel/gabarit)"
+  },
+  "15": {
+   "insee": "97406",
+   "zone": "Uc",
+   "regle": "stationnement.par_logement",
+   "porte": "majoration_conditionnelle",
+   "article": "Uc 12.2 (renvoi annexe)",
+   "page_pdf": "103",
+   "texte_md5": "ca884bbd87",
+   "decision": "hors_sdp",
+   "effet": null,
+   "raison": "stationnement : n affecte pas l enveloppe SDP (residuel/gabarit)"
+  },
+  "16": {
+   "insee": "97406",
+   "zone": "Ur",
+   "regle": "stationnement.par_logement",
+   "porte": "majoration_conditionnelle",
+   "article": "Ur 12.2 (renvoi annexe)",
+   "page_pdf": "103",
+   "texte_md5": "ca884bbd87",
+   "decision": "hors_sdp",
+   "effet": null,
+   "raison": "stationnement : n affecte pas l enveloppe SDP (residuel/gabarit)"
+  },
+  "17": {
+   "insee": "97407",
+   "zone": "Uc",
+   "regle": "emprise_sol.ces",
+   "porte": "sous_secteur",
+   "article": "Uc 7",
+   "page_pdf": "55",
+   "texte_md5": "ad5b2674d7",
+   "decision": "deja_couvert",
+   "effet": [
+    "Uca"
+   ],
+   "raison": "sous-secteur(s) resolus comme zone calibree — valeur deja appliquee par resolve_zone"
+  },
+  "18": {
+   "insee": "97407",
+   "zone": "Uem",
+   "regle": "retraits.voie",
+   "porte": "voie_specifique",
+   "article": "Ue 4",
+   "page_pdf": "81",
+   "texte_md5": "7330a9f763",
+   "decision": "non_modelisee",
+   "effet": null,
+   "raison": "depend de l adjacence a une voie nommee (RN/RD/rue) — non disponible par parcelle"
+  },
+  "19": {
+   "insee": "97407",
+   "zone": "Us",
+   "regle": "retraits.voie",
+   "porte": "voie_specifique",
+   "article": "Us 4",
+   "page_pdf": "121",
+   "texte_md5": "6bd1030681",
+   "decision": "non_modelisee",
+   "effet": null,
+   "raison": "depend de l adjacence a une voie nommee (RN/RD/rue) — non disponible par parcelle"
+  },
+  "20": {
+   "insee": "97408",
+   "zone": "AUB",
+   "regle": "hauteur.egout",
+   "porte": "sous_secteur",
+   "article": "UB 10.2",
+   "page_pdf": "31",
+   "texte_md5": "f127c08c5f",
+   "decision": "deja_couvert",
+   "effet": [
+    "UBb",
+    "UBa",
+    "UBpszc",
+    "UBc"
+   ],
+   "raison": "sous-secteur(s) resolus comme zone calibree — valeur deja appliquee par resolve_zone"
+  },
+  "21": {
+   "insee": "97408",
+   "zone": "AUB",
+   "regle": "hauteur.faitage",
+   "porte": "sous_secteur",
+   "article": "UB 10.2",
+   "page_pdf": "31",
+   "texte_md5": "f127c08c5f",
+   "decision": "deja_couvert",
+   "effet": [
+    "UBb",
+    "UBa",
+    "UBpszc",
+    "UBc"
+   ],
+   "raison": "sous-secteur(s) resolus comme zone calibree — valeur deja appliquee par resolve_zone"
+  },
+  "22": {
+   "insee": "97408",
+   "zone": "AUBpsfr2",
+   "regle": "hauteur.egout",
+   "porte": "sous_secteur",
+   "article": "UB 10.2",
+   "page_pdf": "31",
+   "texte_md5": "f127c08c5f",
+   "decision": "deja_couvert",
+   "effet": [
+    "UBb",
+    "UBa",
+    "UBpszc",
+    "UBc"
+   ],
+   "raison": "sous-secteur(s) resolus comme zone calibree — valeur deja appliquee par resolve_zone"
+  },
+  "23": {
+   "insee": "97408",
+   "zone": "AUBpsfr2",
+   "regle": "hauteur.faitage",
+   "porte": "sous_secteur",
+   "article": "UB 10.2",
+   "page_pdf": "31",
+   "texte_md5": "f127c08c5f",
+   "decision": "deja_couvert",
+   "effet": [
+    "UBb",
+    "UBa",
+    "UBpszc",
+    "UBc"
+   ],
+   "raison": "sous-secteur(s) resolus comme zone calibree — valeur deja appliquee par resolve_zone"
+  },
+  "24": {
+   "insee": "97408",
+   "zone": "AUEm",
+   "regle": "stationnement.par_logement",
+   "porte": "majoration_conditionnelle",
+   "article": "UEM 12.2",
+   "page_pdf": "54",
+   "texte_md5": "1b68989528",
+   "decision": "hors_sdp",
+   "effet": null,
+   "raison": "stationnement : n affecte pas l enveloppe SDP (residuel/gabarit)"
+  },
+  "25": {
+   "insee": "97408",
+   "zone": "UB",
+   "regle": "hauteur.egout",
+   "porte": "sous_secteur",
+   "article": "UB 10.2",
+   "page_pdf": "31",
+   "texte_md5": "56f060b0b7",
+   "decision": "deja_couvert",
+   "effet": [
+    "UBb",
+    "UBa",
+    "UBpszc",
+    "UBc"
+   ],
+   "raison": "sous-secteur(s) resolus comme zone calibree — valeur deja appliquee par resolve_zone"
+  },
+  "26": {
+   "insee": "97408",
+   "zone": "UB",
+   "regle": "hauteur.faitage",
+   "porte": "sous_secteur",
+   "article": "UB 10.2",
+   "page_pdf": "31",
+   "texte_md5": "0efb0b46b6",
+   "decision": "deja_couvert",
+   "effet": [
+    "UBb",
+    "UBa",
+    "UBpszc",
+    "UBc"
+   ],
+   "raison": "sous-secteur(s) resolus comme zone calibree — valeur deja appliquee par resolve_zone"
+  },
+  "27": {
+   "insee": "97408",
+   "zone": "UBpsfr2",
+   "regle": "hauteur.egout",
+   "porte": "sous_secteur",
+   "article": "UB 10.2",
+   "page_pdf": "31",
+   "texte_md5": "f127c08c5f",
+   "decision": "deja_couvert",
+   "effet": [
+    "UBb",
+    "UBa",
+    "UBpszc",
+    "UBc"
+   ],
+   "raison": "sous-secteur(s) resolus comme zone calibree — valeur deja appliquee par resolve_zone"
+  },
+  "28": {
+   "insee": "97408",
+   "zone": "UBpsfr2",
+   "regle": "hauteur.faitage",
+   "porte": "sous_secteur",
+   "article": "UB 10.2",
+   "page_pdf": "31",
+   "texte_md5": "0efb0b46b6",
+   "decision": "deja_couvert",
+   "effet": [
+    "UBb",
+    "UBa",
+    "UBpszc",
+    "UBc"
+   ],
+   "raison": "sous-secteur(s) resolus comme zone calibree — valeur deja appliquee par resolve_zone"
+  },
+  "29": {
+   "insee": "97408",
+   "zone": "UEm",
+   "regle": "stationnement.par_logement",
+   "porte": "majoration_conditionnelle",
+   "article": "UEM 12.2",
+   "page_pdf": "54",
+   "texte_md5": "1b68989528",
+   "decision": "hors_sdp",
+   "effet": null,
+   "raison": "stationnement : n affecte pas l enveloppe SDP (residuel/gabarit)"
+  },
+  "30": {
+   "insee": "97411",
+   "zone": "Ud",
+   "regle": "emprise_sol.ces",
+   "porte": "sous_secteur",
+   "article": "Article Ud.9",
+   "page_pdf": "44",
+   "texte_md5": "a2a9b85c34",
+   "decision": "non_modelisee",
+   "effet": null,
+   "raison": "sous-secteur non calibre separement (Udop:cal=True,Udo:cal=False,Udp:cal=True)"
+  },
+  "31": {
+   "insee": "97411",
+   "zone": "Ud",
+   "regle": "retraits.voie",
+   "porte": "autre",
+   "article": "Article Ud.6",
+   "page_pdf": "40",
+   "texte_md5": "2356f459c9",
+   "decision": "non_modelisee",
+   "effet": null,
+   "raison": "clause au cas par cas (recul conditionnel)"
+  },
+  "32": {
+   "insee": "97411",
+   "zone": "Udop",
+   "regle": "hauteur.niveaux",
+   "porte": "voie_specifique",
+   "article": "Article Ud.10",
+   "page_pdf": "44",
+   "texte_md5": "7bcb0d03a8",
+   "decision": "non_modelisee",
+   "effet": null,
+   "raison": "depend de l adjacence a une voie nommee (RN/RD/rue) — non disponible par parcelle"
+  },
+  "33": {
+   "insee": "97411",
+   "zone": "Udp",
+   "regle": "hauteur.niveaux",
+   "porte": "voie_specifique",
+   "article": "Article Ud.10",
+   "page_pdf": "44",
+   "texte_md5": "33395a3051",
+   "decision": "non_modelisee",
+   "effet": null,
+   "raison": "depend de l adjacence a une voie nommee (RN/RD/rue) — non disponible par parcelle"
+  },
+  "34": {
+   "insee": "97411",
+   "zone": "Ui",
+   "regle": "emprise_sol.ces",
+   "porte": "sous_secteur",
+   "article": "Article Ui.9",
+   "page_pdf": "56",
+   "texte_md5": "7bc24f8590",
+   "decision": "non_modelisee",
+   "effet": null,
+   "raison": "sous-secteur non calibre separement (Uip:cal=False,Uicm:cal=True)"
+  },
+  "35": {
+   "insee": "97411",
+   "zone": "Ui",
+   "regle": "retraits.voie",
+   "porte": "autre",
+   "article": "Article Ui.6",
+   "page_pdf": "54",
+   "texte_md5": "3eb803c78d",
+   "decision": "non_modelisee",
+   "effet": null,
+   "raison": "clause au cas par cas (recul conditionnel)"
+  },
+  "36": {
+   "insee": "97411",
+   "zone": "Up",
+   "regle": "retraits.limites_separatives",
+   "porte": "autre",
+   "article": "Article Up.7",
+   "page_pdf": "33",
+   "texte_md5": "3c003694c4",
+   "decision": "non_modelisee",
+   "effet": null,
+   "raison": "clause au cas par cas (recul conditionnel)"
+  },
+  "37": {
+   "insee": "97412",
+   "zone": "1AU3",
+   "regle": "hauteur.egout",
+   "porte": "sous_secteur",
+   "article": "U3 10.2",
+   "page_pdf": "51",
+   "texte_md5": "73037746ff",
+   "decision": "non_modelisee",
+   "effet": null,
+   "raison": "sous-secteur non calibre separement ()"
+  },
+  "38": {
+   "insee": "97412",
+   "zone": "1AU3",
+   "regle": "hauteur.faitage",
+   "porte": "sous_secteur",
+   "article": "U3 10.2",
+   "page_pdf": "51",
+   "texte_md5": "5bb21c8abc",
+   "decision": "non_modelisee",
+   "effet": null,
+   "raison": "sous-secteur non calibre separement ()"
+  },
+  "39": {
+   "insee": "97412",
+   "zone": "1AU5",
+   "regle": "emprise_sol.ces",
+   "porte": "sous_secteur",
+   "article": "U5 9.2",
+   "page_pdf": "80",
+   "texte_md5": "2e5e470929",
+   "decision": "deja_couvert",
+   "effet": [
+    "U5ru",
+    "U5vi",
+    "U5cv",
+    "U5ma",
+    "U5cvd"
+   ],
+   "raison": "sous-secteur(s) resolus comme zone calibree — valeur deja appliquee par resolve_zone"
+  },
+  "40": {
+   "insee": "97412",
+   "zone": "1AU6",
+   "regle": "hauteur.egout",
+   "porte": "sous_secteur",
+   "article": "U6 10.2",
+   "page_pdf": "95",
+   "texte_md5": "01eff10f3b",
+   "decision": "non_modelisee",
+   "effet": null,
+   "raison": "sous-secteur non calibre separement (U6c:cal=True,U6ch:cal=False)"
+  },
+  "41": {
+   "insee": "97412",
+   "zone": "1AU6",
+   "regle": "hauteur.faitage",
+   "porte": "sous_secteur",
+   "article": "U6 10.2",
+   "page_pdf": "95",
+   "texte_md5": "a6ef13362c",
+   "decision": "non_modelisee",
+   "effet": null,
+   "raison": "sous-secteur non calibre separement (U6c:cal=True,U6ch:cal=False)"
+  },
+  "42": {
+   "insee": "97412",
+   "zone": "U1",
+   "regle": "retraits.limites_separatives",
+   "porte": "autre",
+   "article": "U1 7.2",
+   "page_pdf": "19",
+   "texte_md5": "afb8ad085d",
+   "decision": "non_modelisee",
+   "effet": null,
+   "raison": "clause au cas par cas (recul conditionnel)"
+  },
+  "43": {
+   "insee": "97412",
+   "zone": "U3",
+   "regle": "hauteur.egout",
+   "porte": "bande_limite",
+   "article": "U3 10.2",
+   "page_pdf": "51",
+   "texte_md5": "73037746ff",
+   "decision": "non_modelisee",
+   "effet": null,
+   "raison": "regle dans une bande geometrique depuis une limite / liste de parcelles — hors moteur zone-level"
+  },
+  "44": {
+   "insee": "97412",
+   "zone": "U3",
+   "regle": "hauteur.faitage",
+   "porte": "bande_limite",
+   "article": "U3 10.2",
+   "page_pdf": "51",
+   "texte_md5": "5bb21c8abc",
+   "decision": "non_modelisee",
+   "effet": null,
+   "raison": "regle dans une bande geometrique depuis une limite / liste de parcelles — hors moteur zone-level"
+  },
+  "45": {
+   "insee": "97412",
+   "zone": "U4",
+   "regle": "hauteur.egout",
+   "porte": "majoration_conditionnelle",
+   "article": "U4 10.2",
+   "page_pdf": "65",
+   "texte_md5": "b3b684aec3",
+   "decision": "non_modelisee",
+   "effet": null,
+   "raison": "majoration conditionnee a la destination du projet (commerce/locaux) — hors hypothese logement"
+  },
+  "46": {
+   "insee": "97412",
+   "zone": "U4",
+   "regle": "hauteur.faitage",
+   "porte": "majoration_conditionnelle",
+   "article": "U4 10.2",
+   "page_pdf": "65",
+   "texte_md5": "d61b3f0a9b",
+   "decision": "non_modelisee",
+   "effet": null,
+   "raison": "majoration conditionnee a la destination du projet (commerce/locaux) — hors hypothese logement"
+  },
+  "47": {
+   "insee": "97412",
+   "zone": "U5",
+   "regle": "emprise_sol.ces",
+   "porte": "sous_secteur",
+   "article": "U5 9.2",
+   "page_pdf": "80",
+   "texte_md5": "2e5e470929",
+   "decision": "deja_couvert",
+   "effet": [
+    "U5ru",
+    "U5vi",
+    "U5cv",
+    "U5ma",
+    "U5cvd"
+   ],
+   "raison": "sous-secteur(s) resolus comme zone calibree — valeur deja appliquee par resolve_zone"
+  },
+  "48": {
+   "insee": "97412",
+   "zone": "U5ma",
+   "regle": "retraits.voie",
+   "porte": "destination",
+   "article": "U5 6.2",
+   "page_pdf": "77",
+   "texte_md5": "6beeea7b8b",
+   "decision": "non_modelisee",
+   "effet": null,
+   "raison": "depend de la destination (commerce/habitat/schema annexe)"
+  },
+  "49": {
+   "insee": "97412",
+   "zone": "U6",
+   "regle": "hauteur.egout",
+   "porte": "sous_secteur",
+   "article": "U6 10.2",
+   "page_pdf": "95",
+   "texte_md5": "01eff10f3b",
+   "decision": "non_modelisee",
+   "effet": null,
+   "raison": "sous-secteur non calibre separement (U6c:cal=True,U6ch:cal=False)"
+  },
+  "50": {
+   "insee": "97412",
+   "zone": "U6",
+   "regle": "hauteur.faitage",
+   "porte": "sous_secteur",
+   "article": "U6 10.2",
+   "page_pdf": "95",
+   "texte_md5": "a6ef13362c",
+   "decision": "non_modelisee",
+   "effet": null,
+   "raison": "sous-secteur non calibre separement (U6c:cal=True,U6ch:cal=False)"
+  },
+  "51": {
+   "insee": "97413",
+   "zone": "UAt",
+   "regle": "hauteur.faitage",
+   "porte": "hauteur_alternative",
+   "article": "UA 10.2",
+   "page_pdf": "24",
+   "texte_md5": "c3978dd7f7",
+   "decision": "non_modelisee",
+   "effet": null,
+   "raison": "hauteur alternative selon le cas (surelevation/mitoyennete)"
+  },
+  "52": {
+   "insee": "97414",
+   "zone": "UC",
+   "regle": "retraits.limites_separatives",
+   "porte": "sous_secteur",
+   "article": "UC 7.2",
+   "page_pdf": "46",
+   "texte_md5": "537fc732df",
+   "decision": "deja_couvert",
+   "effet": [
+    "UC1"
+   ],
+   "raison": "sous-secteur(s) resolus comme zone calibree — valeur deja appliquee par resolve_zone"
+  },
+  "53": {
+   "insee": "97414",
+   "zone": "UZ",
+   "regle": "hauteur.egout",
+   "porte": "destination",
+   "article": "UZ 10.2",
+   "page_pdf": "99",
+   "texte_md5": "f2badd4755",
+   "decision": "non_modelisee",
+   "effet": null,
+   "raison": "depend de la destination (commerce/habitat/schema annexe)"
+  },
+  "54": {
+   "insee": "97414",
+   "zone": "UZ",
+   "regle": "hauteur.faitage",
+   "porte": "destination",
+   "article": "UZ 10.2",
+   "page_pdf": "99",
+   "texte_md5": "f2badd4755",
+   "decision": "non_modelisee",
+   "effet": null,
+   "raison": "depend de la destination (commerce/habitat/schema annexe)"
+  },
+  "55": {
+   "insee": "97415",
+   "zone": "U1a",
+   "regle": "pleine_terre.pct",
+   "porte": "majoration_conditionnelle",
+   "article": "13.1",
+   "page_pdf": "35",
+   "texte_md5": "19632ba8fb",
+   "decision": "non_modelisee",
+   "effet": null,
+   "raison": "condition PPRI alea fort — alea_ppr non cable dans le chemin residuel"
+  },
+  "56": {
+   "insee": "97415",
+   "zone": "U3a",
+   "regle": "pleine_terre.pct",
+   "porte": "majoration_conditionnelle",
+   "article": "13.1",
+   "page_pdf": "125",
+   "texte_md5": "372e64ed86",
+   "decision": "non_modelisee",
+   "effet": null,
+   "raison": "condition PPRI alea fort — alea_ppr non cable dans le chemin residuel"
+  },
+  "57": {
+   "insee": "97415",
+   "zone": "U4b",
+   "regle": "retraits.voie",
+   "porte": "destination",
+   "article": "6",
+   "page_pdf": "172",
+   "texte_md5": "180ba9a30b",
+   "decision": "non_modelisee",
+   "effet": null,
+   "raison": "depend de la destination (commerce/habitat/schema annexe)"
+  },
+  "58": {
+   "insee": "97416",
+   "zone": "AUazi",
+   "regle": "hauteur.egout",
+   "porte": "bande_limite",
+   "article": "Ua3.5",
+   "page_pdf": "177",
+   "texte_md5": "0cb2d3452b",
+   "decision": "non_modelisee",
+   "effet": null,
+   "raison": "regle dans une bande geometrique depuis une limite / liste de parcelles — hors moteur zone-level"
+  },
+  "59": {
+   "insee": "97416",
+   "zone": "AUazi",
+   "regle": "hauteur.faitage",
+   "porte": "bande_limite",
+   "article": "Ua3.5",
+   "page_pdf": "177",
+   "texte_md5": "0cb2d3452b",
+   "decision": "non_modelisee",
+   "effet": null,
+   "raison": "regle dans une bande geometrique depuis une limite / liste de parcelles — hors moteur zone-level"
+  },
+  "60": {
+   "insee": "97416",
+   "zone": "AUf",
+   "regle": "hauteur.faitage",
+   "porte": "sous_secteur",
+   "article": "Uf3.5",
+   "page_pdf": "119",
+   "texte_md5": "c7ce7d3107",
+   "decision": "deja_couvert",
+   "effet": [
+    "AUfGB"
+   ],
+   "raison": "sous-secteur(s) resolus comme zone calibree — valeur deja appliquee par resolve_zone"
+  },
+  "61": {
+   "insee": "97416",
+   "zone": "Uaza",
+   "regle": "hauteur.egout",
+   "porte": "sous_secteur",
+   "article": "Ua3.5",
+   "page_pdf": "178",
+   "texte_md5": "127885cf36",
+   "decision": "non_modelisee",
+   "effet": null,
+   "raison": "sous-secteur non calibre separement ()"
+  },
+  "62": {
+   "insee": "97416",
+   "zone": "Uazi",
+   "regle": "hauteur.egout",
+   "porte": "bande_limite",
+   "article": "Ua3.5",
+   "page_pdf": "177",
+   "texte_md5": "0cb2d3452b",
+   "decision": "non_modelisee",
+   "effet": null,
+   "raison": "regle dans une bande geometrique depuis une limite / liste de parcelles — hors moteur zone-level"
+  },
+  "63": {
+   "insee": "97416",
+   "zone": "Uazi",
+   "regle": "hauteur.faitage",
+   "porte": "bande_limite",
+   "article": "Ua3.5",
+   "page_pdf": "177",
+   "texte_md5": "0cb2d3452b",
+   "decision": "non_modelisee",
+   "effet": null,
+   "raison": "regle dans une bande geometrique depuis une limite / liste de parcelles — hors moteur zone-level"
+  },
+  "64": {
+   "insee": "97416",
+   "zone": "Ue",
+   "regle": "hauteur.egout",
+   "porte": "bande_limite",
+   "article": "Ue3.5",
+   "page_pdf": "193",
+   "texte_md5": "f2750e1841",
+   "decision": "non_modelisee",
+   "effet": null,
+   "raison": "regle dans une bande geometrique depuis une limite / liste de parcelles — hors moteur zone-level"
+  },
+  "65": {
+   "insee": "97416",
+   "zone": "Uemi",
+   "regle": "hauteur.egout",
+   "porte": "bande_limite",
+   "article": "Ue3.5",
+   "page_pdf": "193",
+   "texte_md5": "f2750e1841",
+   "decision": "non_modelisee",
+   "effet": null,
+   "raison": "regle dans une bande geometrique depuis une limite / liste de parcelles — hors moteur zone-level"
+  },
+  "66": {
+   "insee": "97416",
+   "zone": "Uep",
+   "regle": "hauteur.egout",
+   "porte": "bande_limite",
+   "article": "Ue3.5",
+   "page_pdf": "193",
+   "texte_md5": "f2750e1841",
+   "decision": "non_modelisee",
+   "effet": null,
+   "raison": "regle dans une bande geometrique depuis une limite / liste de parcelles — hors moteur zone-level"
+  },
+  "67": {
+   "insee": "97416",
+   "zone": "Uf",
+   "regle": "hauteur.egout",
+   "porte": "bande_limite",
+   "article": "Uf3.5",
+   "page_pdf": "119",
+   "texte_md5": "4ff02e3971",
+   "decision": "non_modelisee",
+   "effet": null,
+   "raison": "regle dans une bande geometrique depuis une limite / liste de parcelles — hors moteur zone-level"
+  },
+  "68": {
+   "insee": "97416",
+   "zone": "Uf",
+   "regle": "hauteur.faitage",
+   "porte": "sous_secteur",
+   "article": "Uf3.5",
+   "page_pdf": "119",
+   "texte_md5": "27c3227264",
+   "decision": "deja_couvert",
+   "effet": [
+    "UfCa"
+   ],
+   "raison": "sous-secteur(s) resolus comme zone calibree — valeur deja appliquee par resolve_zone"
+  },
+  "69": {
+   "insee": "97421",
+   "zone": "UA",
+   "regle": "hauteur.egout",
+   "porte": "sous_secteur",
+   "article": "U 10.2",
+   "page_pdf": "15",
+   "texte_md5": "d6c9fe9b0d",
+   "decision": "deja_couvert",
+   "effet": [
+    "UA1"
+   ],
+   "raison": "sous-secteur(s) resolus comme zone calibree — valeur deja appliquee par resolve_zone"
+  },
+  "70": {
+   "insee": "97422",
+   "zone": "1AUa",
+   "regle": "hauteur.egout",
+   "porte": "sous_secteur",
+   "article": "Ua10.2",
+   "page_pdf": "18",
+   "texte_md5": "c29c6329f8",
+   "decision": "deja_couvert",
+   "effet": [
+    "Uav"
+   ],
+   "raison": "sous-secteur(s) resolus comme zone calibree — valeur deja appliquee par resolve_zone"
+  },
+  "71": {
+   "insee": "97422",
+   "zone": "1AUa",
+   "regle": "hauteur.faitage",
+   "porte": "sous_secteur",
+   "article": "Ua10.2",
+   "page_pdf": "18",
+   "texte_md5": "c29c6329f8",
+   "decision": "deja_couvert",
+   "effet": [
+    "Uav"
+   ],
+   "raison": "sous-secteur(s) resolus comme zone calibree — valeur deja appliquee par resolve_zone"
+  },
+  "72": {
+   "insee": "97422",
+   "zone": "1AUa",
+   "regle": "retraits.voie",
+   "porte": "voie_specifique",
+   "article": "Ua6.2",
+   "page_pdf": "15",
+   "texte_md5": "b938966d83",
+   "decision": "non_modelisee",
+   "effet": null,
+   "raison": "depend de l adjacence a une voie nommee (RN/RD/rue) — non disponible par parcelle"
+  },
+  "73": {
+   "insee": "97422",
+   "zone": "2AUa",
+   "regle": "hauteur.egout",
+   "porte": "sous_secteur",
+   "article": "Ua10.2",
+   "page_pdf": "18",
+   "texte_md5": "c29c6329f8",
+   "decision": "deja_couvert",
+   "effet": [
+    "Uav"
+   ],
+   "raison": "sous-secteur(s) resolus comme zone calibree — valeur deja appliquee par resolve_zone"
+  },
+  "74": {
+   "insee": "97422",
+   "zone": "2AUa",
+   "regle": "hauteur.faitage",
+   "porte": "sous_secteur",
+   "article": "Ua10.2",
+   "page_pdf": "18",
+   "texte_md5": "c29c6329f8",
+   "decision": "deja_couvert",
+   "effet": [
+    "Uav"
+   ],
+   "raison": "sous-secteur(s) resolus comme zone calibree — valeur deja appliquee par resolve_zone"
+  },
+  "75": {
+   "insee": "97422",
+   "zone": "Ua",
+   "regle": "hauteur.egout",
+   "porte": "bande_limite",
+   "article": "Ua10.3",
+   "page_pdf": "18",
+   "texte_md5": "29a307ca1e",
+   "decision": "non_modelisee",
+   "effet": null,
+   "raison": "regle dans une bande geometrique depuis une limite / liste de parcelles — hors moteur zone-level"
+  },
+  "76": {
+   "insee": "97422",
+   "zone": "Ua",
+   "regle": "hauteur.faitage",
+   "porte": "bande_limite",
+   "article": "Ua10.3",
+   "page_pdf": "18",
+   "texte_md5": "29a307ca1e",
+   "decision": "non_modelisee",
+   "effet": null,
+   "raison": "regle dans une bande geometrique depuis une limite / liste de parcelles — hors moteur zone-level"
+  },
+  "77": {
+   "insee": "97422",
+   "zone": "Ua",
+   "regle": "retraits.voie",
+   "porte": "voie_specifique",
+   "article": "Ua6.2",
+   "page_pdf": "15",
+   "texte_md5": "b938966d83",
+   "decision": "non_modelisee",
+   "effet": null,
+   "raison": "depend de l adjacence a une voie nommee (RN/RD/rue) — non disponible par parcelle"
+  },
+  "78": {
+   "insee": "97422",
+   "zone": "Uav",
+   "regle": "retraits.voie",
+   "porte": "voie_specifique",
+   "article": "Ua6.2",
+   "page_pdf": "15",
+   "texte_md5": "b938966d83",
+   "decision": "non_modelisee",
+   "effet": null,
+   "raison": "depend de l adjacence a une voie nommee (RN/RD/rue) — non disponible par parcelle"
+  },
+  "79": {
+   "insee": "97423",
+   "zone": "Ua",
+   "regle": "hauteur.egout",
+   "porte": "sous_secteur",
+   "article": "Ua 10.2",
+   "page_pdf": "18",
+   "texte_md5": "f1d5474709",
+   "decision": "deja_couvert",
+   "effet": [
+    "Uaa"
+   ],
+   "raison": "sous-secteur(s) resolus comme zone calibree — valeur deja appliquee par resolve_zone"
+  },
+  "80": {
+   "insee": "97423",
+   "zone": "Ua",
+   "regle": "hauteur.faitage",
+   "porte": "sous_secteur",
+   "article": "Ua 10.2",
+   "page_pdf": "18",
+   "texte_md5": "f1d5474709",
+   "decision": "deja_couvert",
+   "effet": [
+    "Uaa"
+   ],
+   "raison": "sous-secteur(s) resolus comme zone calibree — valeur deja appliquee par resolve_zone"
+  }
+ }
+}
