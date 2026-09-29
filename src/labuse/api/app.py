@@ -4478,6 +4478,8 @@ _PLU_PROCEDURES: dict[str, dict] = {
 _DISPOSITIFS_SQL = text("""
 SELECT sl.kind, sl.subtype, coalesce(sl.attrs->>'libelle', sl.name) AS libelle,
        sl.attrs->>'nomsuplitt' AS nomsuplitt, sl.attrs->>'zone' AS peb_zone,
+       ds.source_millesime, ds.source_horizon_at,
+       COALESCE(ds.last_sync_at, ds.updated_at)::date AS ingere_le,
        ST_Area(ST_Intersection(p.geom_2975, sl.geom_2975))
          / NULLIF(ST_Area(p.geom_2975), 0) AS part
 FROM parcels p
@@ -4485,6 +4487,7 @@ JOIN spatial_layers sl
   ON ST_Intersects(p.geom_2975, sl.geom_2975)
  AND (sl.kind IN ('dpu', 'peb', 'sup')
       OR (sl.kind = 'plu_gpu_prescription' AND sl.subtype IN ('01', '05')))
+LEFT JOIN data_sources ds ON ds.id = sl.data_source_id
 WHERE p.idu = :idu
 """)
 # MATÉRIALISÉ (VITESSE-FIX-1 lot B) — mêmes colonnes, mêmes valeurs : `area_m2` rangé =
@@ -4493,6 +4496,8 @@ WHERE p.idu = :idu
 _DISPOSITIFS_SQL_MAT = text("""
 SELECT sl.kind, sl.subtype, coalesce(sl.attrs->>'libelle', sl.name) AS libelle,
        sl.attrs->>'nomsuplitt' AS nomsuplitt, sl.attrs->>'zone' AS peb_zone,
+       ds.source_millesime, ds.source_horizon_at,
+       COALESCE(ds.last_sync_at, ds.updated_at)::date AS ingere_le,
        pci.area_m2 / NULLIF(ST_Area(p.geom_2975), 0) AS part
 FROM parcels p
 JOIN parcel_couche_intersection pci
@@ -4500,6 +4505,7 @@ JOIN parcel_couche_intersection pci
  AND (pci.kind IN ('dpu', 'peb', 'sup')
       OR (pci.kind = 'plu_gpu_prescription' AND pci.subtype IN ('01', '05')))
 JOIN spatial_layers sl ON sl.id = pci.layer_id
+LEFT JOIN data_sources ds ON ds.id = sl.data_source_id
 WHERE p.idu = :idu
 """)
 
@@ -4543,8 +4549,13 @@ def _dispositifs_block(db: Session, idu: str) -> dict | None:
             if peb is None or z < peb["zone"]:
                 peb = {"zone": z, "libelle": r["libelle"], "part_pct": part}
         elif r["kind"] == "sup":
+            # RETOUCHES-1 point 7 — millésime de la SUP (data_sources.source_millesime, producteur
+            # unique millesime_source.composer), repli sur la date d'ingestion si non versionné.
+            from ..millesime_source import composer as _mill
+            _m = _mill(r["source_millesime"], source_horizon_at=r["source_horizon_at"]) \
+                or (str(r["ingere_le"]) if r["ingere_le"] else None)
             sup.append({"categorie": (r["subtype"] or "?").upper(),
-                        "libelle": r["nomsuplitt"] or r["libelle"], "part_pct": part})
+                        "libelle": r["nomsuplitt"] or r["libelle"], "part_pct": part, "millesime": _m})
     # DPU : distinguer « hors périmètre publié » de « commune non publiée » (règle 3 du mandat).
     # SOURCES-2 lot 2 — JAMAIS « pas de DPU » : quand rien n'est au GPU, l'état par commune
     # dit ce qui est PROUVÉ (institution documentée, délégataire, RNU) — cf. _DPU_HORS_GPU.
