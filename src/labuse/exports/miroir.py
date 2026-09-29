@@ -705,9 +705,26 @@ def _r_rang(v):
 
 
 def _r_filiation(v):
-    if isinstance(v, list):
+    # RETOUCHES-1 point 5 — on rend la filiation ELLE-MÊME (parcelles mères « Issue de » / filles
+    # « A donné », avec date et nature), comme la fiche (FiliationBlock, FICHE-FIX-4), au lieu de
+    # l'annonce vide « Filiation cadastrale disponible ». `v` = passe-plat de dfi.filiation_parcelle().
+    if isinstance(v, list):   # compat d'un ancien format (liste d'événements)
         return esc(f"{len(v)} événement{'s' if len(v) > 1 else ''} cadastral(aux) (DFI)")
-    return esc(v.get("libelle") or "Filiation cadastrale disponible")
+    if not isinstance(v, dict):
+        return ""
+
+    def _un(r):
+        det = r.get("code_amont") or r.get("nature")
+        qual = ", ".join(x for x in (det, r.get("date")) if x)
+        return (r.get("idu") or "") + (f" ({qual})" if qual else "")
+
+    bits = []
+    if v.get("meres"):
+        bits.append("Issue de " + " · ".join(_un(m) for m in v["meres"][:6]))
+    if v.get("filles"):
+        bits.append("A donné " + " · ".join(_un(x) for x in v["filles"][:6]))
+    # aucune mère ni fille exploitable → "" : la ligne bascule en « Non disponible ici » (absence déclarée).
+    return esc(_fr_dates(" — ".join(bits)))
 
 
 #: id → rendeur. `bloc` = fragment pleine largeur (tableau propre) ; sinon cellule valeur.
