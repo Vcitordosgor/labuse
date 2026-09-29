@@ -985,7 +985,9 @@ export function ConstructibiliteSection({ f, idu }: { f: Fiche; idu: string }) {
   const delaisse = faisa.data?.delaisse
   const reglesZone = f.reglement_plu?.zones?.[0]?.zone
   const reglesSdp = f.potentiel_transformation?.sdp_residuelle_m2
-  const nonConstructible = !!(reglesZone && /^(A(?!U)|N)/i.test(reglesZone))
+  // FRONT-CHIFFRES-2 (F01a) — verdict de constructibilité NEUVE servi par la cascade (même valeur
+  // que la fiche et la garde SDP résiduelle) ; plus de regex front sur le libellé de zone.
+  const nonConstructible = f.reglement_plu?.constructible_neuf === false
   const logMax = Array.isArray(fo?.logements_au_sol)
     ? Math.max(fo.logements_au_sol[0] ?? 0, fo.logements_au_sol[1] ?? 0)
     : (typeof fo?.logements_au_sol === 'number' ? fo.logements_au_sol : null)

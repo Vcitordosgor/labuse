@@ -875,7 +875,10 @@ export interface MixiteRegle {
   citation?: string | null
   statut?: string | null   // 'valide' → branchée ; 'propose'/absente → non modélisée
 }
-export interface ReglementPlu extends Indisponible { zones: ReglementZone[]; disclaimer: string; mixite?: MixiteRegle | null }
+// FRONT-CHIFFRES-2 (F01a) — `zone_famille` (U/AU/A/N) et `constructible_neuf` viennent de la CASCADE
+// (moteur zone_servie, même valeur que le Pré-dossier et la garde SDP résiduelle) : le front lit le
+// verdict de constructibilité au lieu de le dériver par regex sur le libellé de zone.
+export interface ReglementPlu extends Indisponible { zones: ReglementZone[]; disclaimer: string; mixite?: MixiteRegle | null; zone_famille?: string | null; constructible_neuf?: boolean | null }
 
 export interface PotentielTransformation extends Indisponible {
   niveau: 'fort' | 'modere' | 'faible' | 'nul' | 'indetermine'

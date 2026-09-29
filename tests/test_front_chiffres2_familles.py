@@ -79,6 +79,25 @@ def test_f25_radar_corpus_jeune_servi():
     assert "corpus_total < 40" not in rm, "seuil corpus recalculé au front (F25)"
 
 
+def test_f01a_constructibilite_zone_servie_par_la_cascade():
+    """F01a (réglementaire) — le verdict de constructibilité NEUVE n'est plus dérivé par regex front
+    sur le libellé de zone : il vient de la CASCADE (moteur zone_servie, famille via
+    labuse_zone_famille sur le subtype GPU), servi dans reglement_plu (zone_famille + constructible_neuf).
+    Même valeur que le Pré-dossier et la garde SDP résiduelle — une seule vérité."""
+    app = (ROOT / "src/labuse/api/app.py").read_text(encoding="utf-8")
+    assert "from ..faisabilite.zone_servie import zone_dominante" in app
+    assert '"constructible_neuf"' in app and '"zone_famille"' in app
+
+    # front : lit constructible_neuf, plus de regex de zone pour le verdict
+    fiche = (SRC / "components/fiche/Fiche.tsx").read_text(encoding="utf-8")
+    constr = (SRC / "components/fiche/constructibilite.tsx").read_text(encoding="utf-8")
+    for f in (fiche, constr):
+        assert "constructible_neuf === false" in f
+        assert "/^(A(?!U)|N)/i.test(reglesZone)" not in f, "regex de zone (verdict) revenue au front"
+    assert "/^(A|N)/i.test(reglesZone)" not in fiche, "regex bugguée /^(A|N)/ (AU flaggé) revenue"
+    assert "zoneFamille === 'A'" in fiche and "zoneFamille === 'N'" in fiche  # libellés agricole/naturelle servis
+
+
 def test_f13_f29_paliers_da_servis():
     """F13/F29 — la pastille (Projets) et le badge (Outils) ne codent plus la correspondance
     palier→couleur : le back sert, par palier, le jeton DA + le ton + le libellé (source unique

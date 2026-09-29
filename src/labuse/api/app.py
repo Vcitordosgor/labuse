@@ -5628,6 +5628,17 @@ def _reglement_plu_block(db: Session, idu: str, commune: str) -> dict | None:
             from ..faisabilite.zonage import resolve_zone as _resolve_zone_mixite
             _zr = _resolve_zone_mixite(block["zones"][0].get("zone"), commune) if block["zones"] else None
             block["mixite"] = (_zr.mixite if _zr else None)
+            # FRONT-CHIFFRES-2 (F01a) — la FAMILLE de la zone dominante et le verdict de
+            # constructibilité NEUVE viennent désormais de la CASCADE (moteur zone_servie, famille
+            # via labuse_zone_famille sur le subtype GPU), PLUS de la regex front sur le libellé. La
+            # valeur servie est EXACTEMENT celle du Pré-dossier / de la garde SDP résiduelle — une
+            # seule vérité. `constructible_neuf` : None si famille inconnue, sinon famille ∉ (A, N).
+            from ..faisabilite.zone_servie import zone_dominante
+            _pid = db.execute(text("SELECT id FROM parcels WHERE idu = :idu"), {"idu": idu}).scalar()
+            _zs = zone_dominante(db, _pid) if _pid else None
+            _fam = _zs.zone_fam if _zs else None
+            block["zone_famille"] = _fam
+            block["constructible_neuf"] = (_fam not in ("A", "N")) if _fam else None
         return block
     except Exception:  # noqa: BLE001 — jamais de 500 sur la fiche
         return _bloc_indisponible("reglement_plu")   # M125 — panne ≠ absence (même classe que les 7)

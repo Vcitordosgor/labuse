@@ -1,5 +1,5 @@
 famille_id,priorite,type,action,zone,composant,n,verdicts,exemples_ligne,notion,etat,commit
-F01,1,seuil,mixte(remonter+declarer),fiche,components/fiche/Fiche.tsx,15,declarer_registre+remonter_back,Fiche.tsx:1045 ; Fiche.tsx:1226 ; Fiche.tsx:1246 ; Fiche.tsx:1522,,a_faire,
+F01,1,seuil,mixte(remonter+declarer),fiche,components/fiche/Fiche.tsx,15,declarer_registre+remonter_back,Fiche.tsx:1045 ; Fiche.tsx:1226 ; Fiche.tsx:1246 ; Fiche.tsx:1522,zone A/N constructibilité + pente + SDP + signal + risque,partiel (F01a fait; b-e restent),F01a
 F02,1,seuil,mixte(remonter+declarer),fiche,components/fiche/constructibilite.tsx,9,declarer_registre+remonter_back,constructibilite.tsx:1001 ; constructibilite.tsx:194 ; constructibilite.tsx:196 ; constructibilite.tsx:333,,a_faire,
 F03,1,seuil,remonter,outils,components/outils/ModulePanel.tsx,8,remonter_back,ModulePanel.tsx:1033 ; ModulePanel.tsx:255 ; ModulePanel.tsx:545 ; ModulePanel.tsx:547,,a_faire,
 F04,1,seuil,remonter,fiche,components/fiche/FinancierQuestionnaire.tsx,7,remonter_back,FinancierQuestionnaire.tsx:25 ; FinancierQuestionnaire.tsx:35 ; FinancierQuestionnaire.tsx:37 ; FinancierQuestionnaire.tsx:39,bornes garde hors-marché (€/m²),remonté,F04
