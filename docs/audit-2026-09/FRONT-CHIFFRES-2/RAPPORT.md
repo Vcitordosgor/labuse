@@ -151,6 +151,20 @@ F05/F09 admin, F06/F08/F10/F12/F16/F18/F19/F23/F27/F28/F30/F32) sont de vrais *r
 tsc 0 · vitest 225 · verrous + gardes 15 · banc `**188 (= baseline, 0 nouveau, 0 FAUX-CLIENT)** — F10 est front-only (lit des valeurs déjà servies).`. **Reste** (P1) : F02, F03, F05,
 F06, F08, F09, F12, F16, F18, F23, F27, F28, F30, F32 + F01b–e — vrais remonters backend, à poursuivre.
 
+### Session 5 (lot P1, suite) — F26 (décision Vic)
+- **F26 (remonté)** — le seuil « peu probable » de la fraction de probabilité de vente (« sous 1/50 →
+  tiret ») était codé en dur dans TROIS textes (ScoringV2, tooltip « i » des résultats, modal
+  scoring). Remonté à la source unique `config/scoring_client.yaml` (via `fraction_client.
+  seuil_bas_denominateur` + endpoint `/vocabulaire/scoring-fraction`, sert le dénominateur + les
+  paliers). Le VERDICT (fraction ou « — ») était DÉJÀ calculé une fois au serveur (`fraction_humaine`)
+  → cohérent fiche/filtres/Dossier/Copilote. Le front lit le seuil : `ScoringV2`, `CLIENT.tri.
+  lunettes(d)` (ResultsSection), `CLIENT.algo.corps(d, paliers)` (AlgoExplainer). Une bascule de
+  bandes met tout à jour, un seul endroit. 0 valeur changée. Garde `test_f26`.
+
+**État P1 (32) : 10 remonté · 8 reclassé · 0 arrêté · F01 partiel · ~13 a_faire.** Guardrails :
+tsc 0 · vitest 225 · verrous + gardes 16 · banc `**188 (= baseline, 0 nouveau, 0 FAUX-CLIENT)** — F26 sert un seuil de config (endpoint read-only), aucune notion comparée touchée.`. **Reste** (P1) : F02, F03, F05,
+F06, F08, F09, F12, F16, F18, F23, F27, F28, F30, F32 + F01b–e.
+
 ### F01 — plan (prochaine session, à reprendre ici)
 F01 (`Fiche.tsx`, 15 lignes « seuil ») n'est PAS une notion unique : c'est un **cluster réglementaire**
 à SCINDER en sous-familles (1 commit chacune), car chaque notion a son moteur back :
