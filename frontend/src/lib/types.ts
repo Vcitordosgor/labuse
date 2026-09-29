@@ -813,6 +813,9 @@ export interface DvfSecteur {
 export interface DvfParcelle {
   derniere_mutation?: unknown
   secteur?: DvfSecteur[] | null
+  // FRONT-CHIFFRES-2 (F46) — valeur estimée au prix du secteur (contenance × médiane terrain), servie
+  // par le back (le front ne multiplie plus). null si pas de médiane terrain ou pas de surface.
+  valeur_terrain_secteur_eur?: number | null
   // M101 B2 : le NEUF que l'acte déclare (VEFA), grain commune, profil dvf_profils.yaml —
   // sous le seuil, insuffisant_libelle est servi À LA PLACE de la médiane (état normal, dit).
   neuf_vefa?: { grandeur: string; grain: string; fenetre_ans: number; n: number

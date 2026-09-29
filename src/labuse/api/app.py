@@ -4124,6 +4124,15 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
             "  ORDER BY date_mutation DESC LIMIT 1) last ON last.id_mutation = d.id_mutation "
             "WHERE d.id_parcelle = :idu"), {"idu": idu}).mappings().first() \
             if db.execute(text("SELECT to_regclass('dvf_mutation_detail') IS NOT NULL")).scalar() else None
+    # FRONT-CHIFFRES-2 (F46) — « Valeur au prix du secteur » = contenance × médiane terrain du secteur.
+    # Ce produit vivait au front (marche.tsx) ALORS QUE le back le calcule déjà (score_e « prix probable »
+    # = médiane terrain × surface) : divergence possible fiche↔Dossier↔Copilote. Servi ICI (même
+    # arithmétique exacte : round(surface) × médiane entière) pour une source unique ; estimé, pas vénal.
+    _terr_med = next((r for r in dvf_secteur
+                      if r.get("type_bien") == "terrain" and r.get("mediane_prix_m2")), None)
+    _surf_i = round(head["surface_m2"]) if head.get("surface_m2") else None
+    valeur_terrain_secteur_eur = (_surf_i * int(_terr_med["mediane_prix_m2"])
+                                  if _surf_i and _terr_med else None)
     dvf_parcelle = None
     if dvf_last or dvf_secteur:
         # EXPORTS-1 (1.4, arbitrage Q3) : UN SEUL « neuf » servi — `resolve_prix_neuf_marche`
@@ -4145,6 +4154,9 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
                                       if dvf_detail else {})}
                                   if dvf_last else None),
             "secteur": dvf_secteur,
+            # FRONT-CHIFFRES-2 (F46) — valeur estimée au prix du secteur (contenance × médiane terrain),
+            # décidée au back ; None si pas de médiane terrain ou pas de surface. Le front ne multiplie plus.
+            "valeur_terrain_secteur_eur": valeur_terrain_secteur_eur,
             # EXPORTS-1 (1.3) : grain dit — indicateur secondaire, jamais la tête de fiche.
             "secteur_etiquette": "médianes du secteur cadastral — indicateur secondaire",
             "caveat": "valeur = mutation entière (multi-parcelles possible) ; fenêtre 2021-2025",

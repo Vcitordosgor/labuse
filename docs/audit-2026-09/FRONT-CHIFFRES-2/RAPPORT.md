@@ -267,6 +267,33 @@ fichier familles, 26 avec verrous+rate-limit) · banc `--echantillon` →
 compte rendu unique ; cérémonial complet (commit dédié + garde + CHANGEMENTS) réservé aux familles qui
 **changent une valeur affichée**. **Ne pas démarrer P2 sans feu vert de Vic.**
 
+### Session 10 (P2 — lot 1, nouveau régime) — F33–F50 (18 familles `calcul`)
+Premier lot au **régime P2** (15–20 familles/session, **un commit par lot**, cérémonial complet réservé
+aux familles qui changent une valeur affichée). Classification confiée à 3 forks lecture-seule (héritant
+des principes P1), exécution par moi.
+
+- **Un seul remonter — F46** (`fiche/marche.tsx`, **valeur affichée inchangée**) : la « **Valeur au prix
+  du secteur** » (`contenance × médiane terrain du secteur`) était un produit calculé au front, alors que
+  le back calcule DÉJÀ ce produit (`score_e` « prix probable ») → divergence possible fiche↔Dossier↔Copilote.
+  Servi `dvf_parcelle.valeur_terrain_secteur_eur` (même arithmétique exacte : `round(surface) × médiane`),
+  le front lit. Vérifié sur témoins (`97402000AB0003` 7 027 416 · `AH0162` 44 304 · `AK1716` 24 786) =
+  valeurs identiques. Guard `test_f46_valeur_secteur_servie`.
+- **13 familles présentation** (reclassé légitime, 0 changement) — **F33** constructibilite, **F34**
+  ContextePanel, **F36** ModulePanel, **F38** ProjetKanban, **F39** Fiche, **F40** SourcesPage, **F41**
+  VeillePromoteurs, **F42** ResultsSection, **F43** ComparePanel, **F47** blocB, **F48** RadarEcran, **F49**
+  geo.ts, **F50** Gabarit : tout `calcul` n'y re-exprime/agrège/formate que des valeurs **déjà servies**
+  (somme, différence, ratio, max/min, complément à 100, conversion d'unité, temps relatif, jauge, couleur).
+- **4 familles admin interne** (hors surface client, rendues sous `App.tsx` `view==='admin'`) — **F35**
+  Licences, **F37** AdminView, **F44** Courrier, **F45** Produit : monitoring ops, pas des chiffres client.
+
+**Garde-fous fin de session :** tsc 0 · vitest 225/225 · V6b + verrou front + gardes FC-2 (20 dans le
+fichier familles, 27 avec verrous+rate-limit) · banc `--echantillon` →
+`**3161 comparaisons · 188 écarts (166 INCOHERENT / 22 TOLERABLE) — inchangé vs baseline, 0 nouveau, 0 FAUX-CLIENT**`.
+
+**État P2 (36 familles) : lot 1 = 18 fait** (1 remonté · 13 présentation · 4 admin). **Reste lot 2 =
+F51–F68** (18 familles). Détail dans RECLASSEMENT.md § « P2 — lot 1 ». **Préviendra Vic à la fin de P2,
+avant P3/P4.**
+
 <!-- PROGRESSION -->
 
 ---

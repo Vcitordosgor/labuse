@@ -289,3 +289,16 @@ def test_f01e_risque_synthese_servie():
     fi = (SRC / "components/fiche/Fiche.tsx").read_text(encoding="utf-8")
     assert "f.aleas?.synthese === 'redhibitoire'" in fi and "f.aleas?.synthese === 'fort'" in fi
     assert ".test(a.niveau" not in fi, "niveau d'aléa réinspecté au front pour la synthèse (F01e)"
+
+
+def test_f46_valeur_secteur_servie():
+    """F46 (P2) — la « Valeur au prix du secteur » (contenance × médiane terrain du secteur) n'est plus
+    un produit calculé au front : le back la sert (`dvf_parcelle.valeur_terrain_secteur_eur`, même
+    arithmétique exacte), source unique alignée sur le « prix probable » back (score_e). Le front lit,
+    ne multiplie plus — valeur affichée inchangée (vérifié sur témoins). Reste de F46 = présentation."""
+    app = (ROOT / "src/labuse/api/app.py").read_text(encoding="utf-8")
+    assert '"valeur_terrain_secteur_eur": valeur_terrain_secteur_eur' in app
+    m = (SRC / "components/fiche/marche.tsx").read_text(encoding="utf-8")
+    assert "f.dvf_parcelle?.valeur_terrain_secteur_eur != null" in m
+    assert "f.dvf_parcelle.valeur_terrain_secteur_eur" in m
+    assert "f.surface_m2 * dvfSecteur.mediane_prix_m2" not in m, "valeur au m² recalculée au front (F46)"

@@ -120,15 +120,15 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
           Même moteur que le bilan (`marche.median`). Sous le seuil : dit tel quel, jamais un chiffre inventé.
           RETOURS-20 Z1·03 — plus de boîte : FactRow (valeur mono à droite), méthode en FactNote. */}
       {/* FICHE-FIX-4 (Lot J) — prix de sortie + valeur au prix du secteur en Lignes, méthode en « i ». */}
-      {(mb?.median != null || (f.surface_m2 != null && dvfSecteur?.mediane_prix_m2 != null && dvfSecteur.mediane_prix_m2 > 0)) && (
+      {(mb?.median != null || f.dvf_parcelle?.valeur_terrain_secteur_eur != null) && (
         <Lignes>
           {mb?.median != null && (
             <Ligne label={<>Prix de sortie — bâti secteur<InfoI aria="Méthode du prix de sortie" tip={`${mb.type_prix}, ${mb.n} ventes ≤ ${Math.round(mb.radius_m)} m (rayon adaptatif) · fiabilité ${mb.fiabilite}${mb.tendance ? ` · tendance ${mb.tendance}` : ''}${horizon ? ` · DVF — ${horizon}` : ''}`} /></>}
               valeur={<>{fmtInt(Number(mb.median))} <small>€/m²</small></>} />
           )}
-          {f.surface_m2 != null && dvfSecteur?.mediane_prix_m2 != null && dvfSecteur.mediane_prix_m2 > 0 && (
+          {f.dvf_parcelle?.valeur_terrain_secteur_eur != null && (
             <Ligne label={<>Valeur au prix du secteur<InfoI aria="Méthode de la valeur" tip="Contenance × prix médian du terrain nu au m² du secteur — estimé, pas une valeur vénale." /></>}
-              valeur={<>≈ {fmtInt(Math.round(f.surface_m2 * dvfSecteur.mediane_prix_m2))} <small>€</small></>} />
+              valeur={<>≈ {fmtInt(f.dvf_parcelle.valeur_terrain_secteur_eur)} <small>€</small></>} />
           )}
         </Lignes>
       )}
