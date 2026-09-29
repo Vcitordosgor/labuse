@@ -4788,7 +4788,16 @@ def _aleas_block(db: Session, idu: str, lines: list[dict] | None = None) -> dict
         })
     items.sort(key=lambda a: (not a["redhibitoire"],
                               -_ALEA_NIVEAU_RANG.get((a["niveau"] or "").lower(), 0)))
-    return {"n": len(items), "liste": items}
+    # FRONT-CHIFFRES-2 (F01e) — SYNTHÈSE du niveau de risque des aléas, décidée ICI (le moteur qui
+    # ordonne la sévérité), pas au front : « redhibitoire » si un aléa l'est, sinon « fort » si un
+    # niveau est fort/élevé, sinon None. La tuile Risques lit `synthese` au lieu de refaire le test.
+    def _est_fort(niveau: str | None) -> bool:
+        n = (niveau or "").lower()
+        return "fort" in n or "élev" in n or "elev" in n
+    synthese = ("redhibitoire" if any(a["redhibitoire"] for a in items)
+                else "fort" if any(_est_fort(a["niveau"]) for a in items)
+                else None)
+    return {"n": len(items), "liste": items, "synthese": synthese}
 
 
 def _dpe_connu_block(db: Session, idu: str) -> dict | None:

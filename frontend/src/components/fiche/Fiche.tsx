@@ -866,9 +866,10 @@ export function Fiche({ idu }: { idu: string }) {
           const penteSous = f.terrain?.pente_bande ?? undefined
           // Risques — compteur (vigilances de l'onglet risques) + niveau, comme le badge de §5.
           const vigils = f.lines.filter((l) => l.onglet === 'risques' && (l.result === 'SOFT_FLAG' || l.result === 'HARD_EXCLUDE'))
-          const aleas = f.aleas?.liste ?? []
-          const risqueNiveau = aleas.some((a) => a.redhibitoire) ? 'aléa rédhibitoire'
-            : aleas.some((a) => /fort|élev/i.test(a.niveau ?? '')) ? 'aléa fort'
+          // FRONT-CHIFFRES-2 (F01e) — la synthèse aléa (« rédhibitoire »/« fort ») est DÉCIDÉE au back
+          // (aleas.synthese, moteur qui ordonne la sévérité) ; le front n'inspecte plus les niveaux.
+          const risqueNiveau = f.aleas?.synthese === 'redhibitoire' ? 'aléa rédhibitoire'
+            : f.aleas?.synthese === 'fort' ? 'aléa fort'
             : vigils.length > 0 ? `vigilance${vigils.length > 1 ? 's' : ''}` : 'rien à signaler'
           type Tuile = { l: string; v: string; s?: string; i?: string; vide?: boolean }
           const tuiles: Tuile[] = [

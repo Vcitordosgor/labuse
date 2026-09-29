@@ -495,6 +495,8 @@ export interface Fiche {
       source: string | null; millesime: string | null
       ppr: { document: string; approbation: string | null }[] | null
     }[]
+    // FRONT-CHIFFRES-2 (F01e) — synthèse du niveau de risque décidée au back (jamais au front).
+    synthese?: 'redhibitoire' | 'fort' | null
   } | null
   // SOURCES-1 lot 1 — « Dispositifs et périmètres » du droit des sols (ER, EBC, DPU, PEB, SUP).
   // null → aucune couche ingérée (le front omet le bloc). Chaque absence est TYPÉE (jamais un zéro).
