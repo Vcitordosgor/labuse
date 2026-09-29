@@ -24,7 +24,7 @@ F22,1,seuil,remonter,fiche,components/fiche/formes.tsx,1,remonter_back,formes.ts
 F23,1,seuil,remonter,fiche,components/fiche/reseaux.tsx,1,remonter_back,reseaux.tsx:48-53,,a_faire,
 F24,1,seuil,remonter,admin/map,components/map/MapView.tsx,1,remonter_back,MapView.tsx:344,"plafond de RENDU carte (le front ne peut peindre >20k features) — limite technique, pas une donnée",reclassé_présentation,
 F25,1,seuil,remonter,outils,components/outils/RadarMarche.tsx,1,remonter_back,RadarMarche.tsx:46,corpus jeune (bandeau Radar),remonté,F25
-F26,1,seuil,remonter,outils,components/outils/ScoringV2.tsx,1,remonter_back,ScoringV2.tsx:61,,a_faire,
+F26,1,seuil,remonter,outils,components/outils/ScoringV2.tsx,1,remonter_back,ScoringV2.tsx:61,ScoringV2 seuil 1/50 proba de vente — touche le scoring,arrêté_pour_décision,
 F27,1,seuil,remonter,outils,components/outils/Successions.tsx,1,remonter_back,Successions.tsx:152,,a_faire,
 F28,1,seuil,remonter,outils,components/outils/TaxeAmenagement.tsx,1,remonter_back,TaxeAmenagement.tsx:117,,a_faire,
 F29,1,seuil,remonter,outils,components/outils/TierBadge.tsx,1,remonter_back,TierBadge.tsx:9,DA du palier (jeton+ton+libellé) servie,remonté,F29
