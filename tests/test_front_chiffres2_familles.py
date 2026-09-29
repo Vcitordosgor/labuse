@@ -144,3 +144,26 @@ def test_f10_marche_par_type_seuil_au_back():
     assert "ms?.par_type?.terrain_nu ?? null" in m
     assert "n >= 5" not in m and "n_ventes >= 5" not in m, "seuil de suffisance recalculé au front (F10)"
     assert "const lm =" not in m
+
+
+def test_f26_scoring_fraction_seuil_bas_servi():
+    """F26 (décision Vic) — le seuil bas « sous 1/d → peu probable » n'est plus codé « 1/50 » dans
+    le texte du front : il est servi depuis config/scoring_client.yaml (fraction_client
+    seuil_bas_denominateur, endpoint /vocabulaire/scoring-fraction). Le VERDICT (fraction ou « — »)
+    reste calculé UNE fois au serveur (fraction_humaine) → cohérent fiche/filtres/Dossier/Copilote,
+    et suit une bascule de bandes (config)."""
+    from labuse.scoring.fraction_client import seuil_bas_denominateur
+    assert seuil_bas_denominateur() == 50
+    app = (ROOT / "src/labuse/api/app.py").read_text(encoding="utf-8")
+    assert '@app.get("/vocabulaire/scoring-fraction")' in app
+    sv = (SRC / "components/outils/ScoringV2.tsx").read_text(encoding="utf-8")
+    assert "getScoringFraction" in sv and "dPeuProbable" in sv
+    assert "1/50" not in sv, "seuil « 1/50 » codé en dur revenu au front (F26)"
+    # les DEUX autres surfaces affichées (fiche/filtres tooltip + modal scoring) suivent le config
+    strings = (SRC / "lib/strings.ts").read_text(encoding="utf-8")
+    assert "lunettes: (d = 50) =>" in strings and "corps: (d = 50, paliers" in strings
+    assert "Sous 1/50," not in strings, "« 1/50 » affiché codé en dur dans strings.ts (F26)"
+    rs = (SRC / "components/panel/ResultsSection.tsx").read_text(encoding="utf-8")
+    assert "CLIENT.tri.lunettes(dPeuProbable)" in rs
+    lp = (SRC / "components/panel/LeftPanel.tsx").read_text(encoding="utf-8")
+    assert "CLIENT.algo.corps(sf?.seuil_bas_denominateur" in lp

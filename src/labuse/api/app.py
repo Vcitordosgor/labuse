@@ -439,6 +439,17 @@ def vocabulaire_paliers() -> dict:
     return {"paliers": paliers_da()}
 
 
+@app.get("/vocabulaire/scoring-fraction")
+def vocabulaire_scoring_fraction() -> dict:
+    """FRONT-CHIFFRES-2 (F26) — le SEUIL BAS de la fraction de probabilité (« sous 1/d → peu
+    probable ») servi depuis la source unique (config/scoring_client.yaml, lu par fraction_client) :
+    le front ne code plus « 1/50 » dans son texte, il lit `seuil_bas_denominateur`. Le VERDICT (la
+    fraction ou « — ») est déjà calculé UNE fois au serveur (fraction_humaine) et cohérent partout
+    (fiche, filtres, Dossier, Copilote) ; ici on sert juste le seuil pour le libellé. Zéro DB."""
+    from ..scoring.fraction_client import _cfg, seuil_bas_denominateur
+    return {"seuil_bas_denominateur": seuil_bas_denominateur(), "paliers": _cfg()["paliers"]}
+
+
 @app.get("/sante/fraicheur")
 def sante_fraicheur(request: Request, db: Session = Depends(get_db)) -> dict:
     """COHERENCE-FIX-1 (lot A) — L'ÉTAT DE FRAÎCHEUR de chaque cache (admin) : clé attendue /

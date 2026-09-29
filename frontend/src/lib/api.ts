@@ -235,6 +235,11 @@ export const getCommunes = () => j<CommuneInfo[]>('/communes')
 // simple) + une phrase chiffrée/datée pour le client. Mémorisé 6h côté serveur.
 export interface ScoringBacktest { phrase_client: string | null; fenetre_fin?: string; base_pct?: number }
 export const getScoringBacktest = () => j<ScoringBacktest>('/scoring/backtest')
+// FRONT-CHIFFRES-2 (F26) — le seuil bas de la fraction de probabilité (« sous 1/d → peu probable »)
+// servi depuis config/scoring_client.yaml : le front n'écrit plus « 1/50 » en dur, il lit le seuil
+// (une bascule de bandes le met à jour partout). Le verdict lui-même (fraction ou « — ») est déjà
+// calculé au serveur et cohérent fiche/filtres/Dossier/Copilote.
+export const getScoringFraction = () => j<{ seuil_bas_denominateur: number; paliers: number[] }>('/vocabulaire/scoring-fraction')
 // RETOURS-1 R3 — acquisitions PM d'une commune : constat DGFiP (changement de propriétaire moral
 // d'un millésime au suivant), hors scoring. Servi par le bloc contexte ET le listing dédié.
 export interface AcquisitionsPm {
