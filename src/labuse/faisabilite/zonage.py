@@ -452,8 +452,11 @@ def appliquer_exceptions_calcul(rules: "ZoneRules | None", commune: str | None,
     for e in _exceptions_effet().get((ins, zone_lib), []):
         dec = e.get("decision")
         if dec == "non_modelisee":
+            # PLU-CALIBRAGE-5 — on PORTE aussi le verbatim (`texte`, source A_CALIBRER.csv) : la fiche
+            # affiche sous la capacité « une exception du règlement n'est pas modélisée » AVEC son texte.
             non_modelisees.append({"regle": e.get("regle"), "porte": e.get("porte"),
-                                   "article": e.get("article"), "page_pdf": e.get("page_pdf")})
+                                   "article": e.get("article"), "page_pdf": e.get("page_pdf"),
+                                   "texte": e.get("texte")})
         elif dec == "applique":
             eff = e.get("effet") or {}
             if eff.get("type") == "majoration_surface":

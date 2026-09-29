@@ -1,5 +1,5 @@
 {
- "_doc": "DONNEES-FIX-1 point 4 — calibrage des 81 exceptions PLU modifie_calcul=true. decision: applique|deja_couvert|hors_sdp|non_modelisee. Source: docs/audit-2026-09/PLU-EXCEPTIONS-1/A_CALIBRER.csv. Cle = index CSV.",
+ "_doc": "DONNEES-FIX-1 point 4 — calibrage des 81 exceptions PLU modifie_calcul=true. decision: applique|deja_couvert|hors_sdp|non_modelisee. Source: docs/audit-2026-09/PLU-EXCEPTIONS-1/A_CALIBRER.csv. Cle = index CSV. | PLU-CALIBRAGE-5: ajout du verbatim `texte` (source A_CALIBRER.csv) pour l'affichage fiche des règles non modélisées.",
  "entries": {
   "0": {
    "insee": "97402",
@@ -9,6 +9,7 @@
    "article": "UB 10.2",
    "page_pdf": "31",
    "texte_md5": "a8e173d082",
+   "texte": "A l’exception du secteur Uba, pour les projets d’aménagement dont la superficie du terrain d’assiette est au moins égale à 2 000 m², les constructions peuvent avoir une hauteur maximale de 10 mètres à l’égout du toit ou au sommet de l’acrotère et 13 mètres au faîtage.",
    "decision": "applique",
    "effet": {
     "type": "majoration_surface",
@@ -26,6 +27,7 @@
    "article": "UB 10.2",
    "page_pdf": "32",
    "texte_md5": "64812a36ae",
+   "texte": "Concernant les terrains desservis par la rue des Limites, la hauteur maximale des constructions est fixée à : - pour les constructions donnant sur une voie, la hauteur maximale des constructions est fixée à 6 mètres à l'égout, - pour les constructions implantées en recul d'au moins 8 mètres par rapport à l'alignement de la voie, la hauteur maximale des constructions est fixée à 9 mètres à l'égout",
    "decision": "non_modelisee",
    "effet": null,
    "raison": "depend de l adjacence a une voie nommee (RN/RD/rue) — non disponible par parcelle"
@@ -38,6 +40,7 @@
    "article": "UB 10.2",
    "page_pdf": "31",
    "texte_md5": "a8e173d082",
+   "texte": "A l’exception du secteur Uba, pour les projets d’aménagement dont la superficie du terrain d’assiette est au moins égale à 2 000 m², les constructions peuvent avoir une hauteur maximale de 10 mètres à l’égout du toit ou au sommet de l’acrotère et 13 mètres au faîtage.",
    "decision": "applique",
    "effet": {
     "type": "majoration_surface",
@@ -55,6 +58,7 @@
    "article": "UB 10.2",
    "page_pdf": "31",
    "texte_md5": "a8e173d082",
+   "texte": "A l’exception du secteur Uba, pour les projets d’aménagement dont la superficie du terrain d’assiette est au moins égale à 2 000 m², les constructions peuvent avoir une hauteur maximale de 10 mètres à l’égout du toit ou au sommet de l’acrotère et 13 mètres au faîtage.",
    "decision": "applique",
    "effet": {
     "type": "majoration_surface",
@@ -72,6 +76,7 @@
    "article": "UB 10.2",
    "page_pdf": "32",
    "texte_md5": "64812a36ae",
+   "texte": "Concernant les terrains desservis par la rue des Limites, la hauteur maximale des constructions est fixée à : - pour les constructions donnant sur une voie, la hauteur maximale des constructions est fixée à 6 mètres à l'égout, - pour les constructions implantées en recul d'au moins 8 mètres par rapport à l'alignement de la voie, la hauteur maximale des constructions est fixée à 9 mètres à l'égout",
    "decision": "non_modelisee",
    "effet": null,
    "raison": "depend de l adjacence a une voie nommee (RN/RD/rue) — non disponible par parcelle"
@@ -84,6 +89,7 @@
    "article": "UB 10.2",
    "page_pdf": "31",
    "texte_md5": "a8e173d082",
+   "texte": "A l’exception du secteur Uba, pour les projets d’aménagement dont la superficie du terrain d’assiette est au moins égale à 2 000 m², les constructions peuvent avoir une hauteur maximale de 10 mètres à l’égout du toit ou au sommet de l’acrotère et 13 mètres au faîtage.",
    "decision": "applique",
    "effet": {
     "type": "majoration_surface",
@@ -101,6 +107,7 @@
    "article": "UB 10.2",
    "page_pdf": "32",
    "texte_md5": "64812a36ae",
+   "texte": "Concernant les terrains desservis par la rue des Limites, la hauteur maximale des constructions est fixée à : - pour les constructions donnant sur une voie, la hauteur maximale des constructions est fixée à 6 mètres à l'égout, - pour les constructions implantées en recul d'au moins 8 mètres par rapport à l'alignement de la voie, la hauteur maximale des constructions est fixée à 9 mètres à l'égout",
    "decision": "non_modelisee",
    "effet": null,
    "raison": "depend de l adjacence a une voie nommee (RN/RD/rue) — non disponible par parcelle"
@@ -113,6 +120,7 @@
    "article": "AUE.6",
    "page_pdf": "111",
    "texte_md5": "2412e86b72",
+   "texte": "Les constructions doivent respecter un recul de 20 mètres minimum par rapport à l’axe de la RN 2. Cette règle ne s’applique pas aux installations liées à la distribution de carburant sous réserve de l’avis favorable de la DDT en matière de sécurité routière. Pour toutes les autres voies, les constructions doivent respecter un recul minimum de 5 mètres par rapport à l’alignement.",
    "decision": "non_modelisee",
    "effet": null,
    "raison": "depend de l adjacence a une voie nommee (RN/RD/rue) — non disponible par parcelle"
@@ -125,6 +133,7 @@
    "article": "UEa.6",
    "page_pdf": "61",
    "texte_md5": "2412e86b72",
+   "texte": "Les constructions doivent respecter un recul de 20 mètres minimum par rapport à l’axe de la RN 2. Cette règle ne s’applique pas aux installations liées à la distribution de carburant sous réserve de l’avis favorable de la DDT en matière de sécurité routière. Pour toutes les autres voies, les constructions doivent respecter un recul minimum de 5 mètres par rapport à l’alignement.",
    "decision": "non_modelisee",
    "effet": null,
    "raison": "depend de l adjacence a une voie nommee (RN/RD/rue) — non disponible par parcelle"
@@ -137,6 +146,7 @@
    "article": "Ub 12.2 (renvoi annexe)",
    "page_pdf": "103",
    "texte_md5": "ca884bbd87",
+   "texte": "- logement de moins de 30 m² : 1 place par logement … - logement de plus de 30 m² : 1,5 place par logement arrondi à l’entier inférieur pour l’ensemble de l’opération",
    "decision": "hors_sdp",
    "effet": null,
    "raison": "stationnement : n affecte pas l enveloppe SDP (residuel/gabarit)"
@@ -149,6 +159,7 @@
    "article": "Uc 12.2 (renvoi annexe)",
    "page_pdf": "103",
    "texte_md5": "ca884bbd87",
+   "texte": "- logement de moins de 30 m² : 1 place par logement … - logement de plus de 30 m² : 1,5 place par logement arrondi à l’entier inférieur pour l’ensemble de l’opération",
    "decision": "hors_sdp",
    "effet": null,
    "raison": "stationnement : n affecte pas l enveloppe SDP (residuel/gabarit)"
@@ -161,6 +172,7 @@
    "article": "Ur 12.2 (renvoi annexe)",
    "page_pdf": "103",
    "texte_md5": "ca884bbd87",
+   "texte": "- logement de moins de 30 m² : 1 place par logement … - logement de plus de 30 m² : 1,5 place par logement arrondi à l’entier inférieur pour l’ensemble de l’opération",
    "decision": "hors_sdp",
    "effet": null,
    "raison": "stationnement : n affecte pas l enveloppe SDP (residuel/gabarit)"
@@ -173,6 +185,7 @@
    "article": "Ua 7.2",
    "page_pdf": "16",
    "texte_md5": "5421dc591a",
+   "texte": "Les constructions peuvent être implantées au maximum sur deux limites séparatives. Toutefois, en cas d’implantation sur la limite de fond de parcelle, la construction ne peut être implantée que sur une seule limite séparative latérale et elle doit respecter un retrait minimal de 3,50 mètres par rapport aux angles du terrain joignant les limites séparatives latérales.",
    "decision": "non_modelisee",
    "effet": null,
    "raison": "clause au cas par cas (recul conditionnel)"
@@ -185,6 +198,7 @@
    "article": "Ua 12.2 (renvoi annexe)",
    "page_pdf": "103",
    "texte_md5": "ca884bbd87",
+   "texte": "- logement de moins de 30 m² : 1 place par logement … - logement de plus de 30 m² : 1,5 place par logement arrondi à l’entier inférieur pour l’ensemble de l’opération",
    "decision": "hors_sdp",
    "effet": null,
    "raison": "stationnement : n affecte pas l enveloppe SDP (residuel/gabarit)"
@@ -197,6 +211,7 @@
    "article": "Ub 12.2 (renvoi annexe)",
    "page_pdf": "103",
    "texte_md5": "ca884bbd87",
+   "texte": "- logement de moins de 30 m² : 1 place par logement … - logement de plus de 30 m² : 1,5 place par logement arrondi à l’entier inférieur pour l’ensemble de l’opération",
    "decision": "hors_sdp",
    "effet": null,
    "raison": "stationnement : n affecte pas l enveloppe SDP (residuel/gabarit)"
@@ -209,6 +224,7 @@
    "article": "Uc 12.2 (renvoi annexe)",
    "page_pdf": "103",
    "texte_md5": "ca884bbd87",
+   "texte": "- logement de moins de 30 m² : 1 place par logement … - logement de plus de 30 m² : 1,5 place par logement arrondi à l’entier inférieur pour l’ensemble de l’opération",
    "decision": "hors_sdp",
    "effet": null,
    "raison": "stationnement : n affecte pas l enveloppe SDP (residuel/gabarit)"
@@ -221,6 +237,7 @@
    "article": "Ur 12.2 (renvoi annexe)",
    "page_pdf": "103",
    "texte_md5": "ca884bbd87",
+   "texte": "- logement de moins de 30 m² : 1 place par logement … - logement de plus de 30 m² : 1,5 place par logement arrondi à l’entier inférieur pour l’ensemble de l’opération",
    "decision": "hors_sdp",
    "effet": null,
    "raison": "stationnement : n affecte pas l enveloppe SDP (residuel/gabarit)"
@@ -233,6 +250,7 @@
    "article": "Uc 7",
    "page_pdf": "55",
    "texte_md5": "ad5b2674d7",
+   "texte": "L'emprise au sol des constructions ne doit pas excéder 80% de la superficie de l'unité foncière. Dans les secteurs ou périmètres suivants, l'emprise au sol des constructions ne doit pas excéder 60% de la superficie de l'unité foncière : OAP Mascareignes ; Uca ; ZAC « Rivière des Galets ».",
    "decision": "deja_couvert",
    "effet": [
     "Uca"
@@ -247,6 +265,7 @@
    "article": "Ue 4",
    "page_pdf": "81",
    "texte_md5": "7330a9f763",
+   "texte": "Les constructions doivent être implantées en retrait par rapport aux voies et emprises publiques avec un recul minimal de 5 mètres. En outre, il est exigé un retrait minimal de 25 mètres par rapport à l'axe de la RN1001 et à celui de la RN1 (uniquement au niveau du périmètre de projet concerné par le tome n°4 du rapport de présentation du PLU - Etude de dérogation « Loi Barnier »…).",
    "decision": "non_modelisee",
    "effet": null,
    "raison": "depend de l adjacence a une voie nommee (RN/RD/rue) — non disponible par parcelle"
@@ -259,6 +278,7 @@
    "article": "Us 4",
    "page_pdf": "121",
    "texte_md5": "6bd1030681",
+   "texte": "Les constructions doivent être implantées en retrait par rapport aux voies et emprises publiques avec un recul minimal de 5 mètres. En outre, il est exigé un retrait minimal de 25 mètres doit être observé par rapport à l'axe de la RN7 (uniquement au niveau du périmètre de projet concerné par le tome n°4 du rapport de présentation du PLU - Etude de dérogation « Loi Barnier »…).",
    "decision": "non_modelisee",
    "effet": null,
    "raison": "depend de l adjacence a une voie nommee (RN/RD/rue) — non disponible par parcelle"
@@ -271,6 +291,7 @@
    "article": "UB 10.2",
    "page_pdf": "31",
    "texte_md5": "f127c08c5f",
+   "texte": "La hauteur maximale des constructions est fixée à : - 9 mètres à l'égout du toit ou au sommet de l'acrotère, - 12 mètres au faîtage. Dans les secteurs UBa, UBb et UBc, la hauteur maximale des constructions est fixée à : - 7 mètres à l'égout du toit ou au sommet de l'acrotère, - 10 mètres au faîtage. Dans le secteur UBpszc, la hauteur maximale des constructions est fixée à 7 mètres.",
    "decision": "deja_couvert",
    "effet": [
     "UBb",
@@ -288,6 +309,7 @@
    "article": "UB 10.2",
    "page_pdf": "31",
    "texte_md5": "f127c08c5f",
+   "texte": "La hauteur maximale des constructions est fixée à : - 9 mètres à l'égout du toit ou au sommet de l'acrotère, - 12 mètres au faîtage. Dans les secteurs UBa, UBb et UBc, la hauteur maximale des constructions est fixée à : - 7 mètres à l'égout du toit ou au sommet de l'acrotère, - 10 mètres au faîtage. Dans le secteur UBpszc, la hauteur maximale des constructions est fixée à 7 mètres.",
    "decision": "deja_couvert",
    "effet": [
     "UBb",
@@ -305,6 +327,7 @@
    "article": "UB 10.2",
    "page_pdf": "31",
    "texte_md5": "f127c08c5f",
+   "texte": "La hauteur maximale des constructions est fixée à : - 9 mètres à l'égout du toit ou au sommet de l'acrotère, - 12 mètres au faîtage. Dans les secteurs UBa, UBb et UBc, la hauteur maximale des constructions est fixée à : - 7 mètres à l'égout du toit ou au sommet de l'acrotère, - 10 mètres au faîtage. Dans le secteur UBpszc, la hauteur maximale des constructions est fixée à 7 mètres.",
    "decision": "deja_couvert",
    "effet": [
     "UBb",
@@ -322,6 +345,7 @@
    "article": "UB 10.2",
    "page_pdf": "31",
    "texte_md5": "f127c08c5f",
+   "texte": "La hauteur maximale des constructions est fixée à : - 9 mètres à l'égout du toit ou au sommet de l'acrotère, - 12 mètres au faîtage. Dans les secteurs UBa, UBb et UBc, la hauteur maximale des constructions est fixée à : - 7 mètres à l'égout du toit ou au sommet de l'acrotère, - 10 mètres au faîtage. Dans le secteur UBpszc, la hauteur maximale des constructions est fixée à 7 mètres.",
    "decision": "deja_couvert",
    "effet": [
     "UBb",
@@ -339,6 +363,7 @@
    "article": "UEM 12.2",
    "page_pdf": "54",
    "texte_md5": "1b68989528",
+   "texte": "Habitations | Logements ≤ à 50 m² de SDP | 1 place minimum par logement | Logements > à 50 m² de SDP | 2 places minimum par logement",
    "decision": "hors_sdp",
    "effet": null,
    "raison": "stationnement : n affecte pas l enveloppe SDP (residuel/gabarit)"
@@ -351,6 +376,7 @@
    "article": "UB 10.2",
    "page_pdf": "31",
    "texte_md5": "56f060b0b7",
+   "texte": "La hauteur maximale des constructions est fixée à : - 9 mètres à l'égout du toit ou au sommet de l'acrotère, - 12 mètres au faîtage. Dans les secteurs UBa, UBb et UBc, la hauteur maximale des constructions est fixée à : - 7 mètres à l'égout du toit ou au sommet de l'acrotère, - 10 mètres au faîtage. Dans le secteur UBpszc, la hauteur maximale des constructions est fixée à 7 mètres. En cas d'implantation en limite séparative, la hauteur maximale des constructions est fixée à 7 mètres sur une profondeur de 3 mètres. La hauteur maximale des constructions annexes est fixée à 3,50 mètres.",
    "decision": "deja_couvert",
    "effet": [
     "UBb",
@@ -368,6 +394,7 @@
    "article": "UB 10.2",
    "page_pdf": "31",
    "texte_md5": "0efb0b46b6",
+   "texte": "La hauteur maximale des constructions est fixée à : [...] - 12 mètres au faîtage. Dans les secteurs UBa, UBb et UBc, la hauteur maximale des constructions est fixée à : [...] - 10 mètres au faîtage. Dans le secteur UBpszc, la hauteur maximale des constructions est fixée à 7 mètres.",
    "decision": "deja_couvert",
    "effet": [
     "UBb",
@@ -385,6 +412,7 @@
    "article": "UB 10.2",
    "page_pdf": "31",
    "texte_md5": "f127c08c5f",
+   "texte": "La hauteur maximale des constructions est fixée à : - 9 mètres à l'égout du toit ou au sommet de l'acrotère, - 12 mètres au faîtage. Dans les secteurs UBa, UBb et UBc, la hauteur maximale des constructions est fixée à : - 7 mètres à l'égout du toit ou au sommet de l'acrotère, - 10 mètres au faîtage. Dans le secteur UBpszc, la hauteur maximale des constructions est fixée à 7 mètres.",
    "decision": "deja_couvert",
    "effet": [
     "UBb",
@@ -402,6 +430,7 @@
    "article": "UB 10.2",
    "page_pdf": "31",
    "texte_md5": "0efb0b46b6",
+   "texte": "La hauteur maximale des constructions est fixée à : [...] - 12 mètres au faîtage. Dans les secteurs UBa, UBb et UBc, la hauteur maximale des constructions est fixée à : [...] - 10 mètres au faîtage. Dans le secteur UBpszc, la hauteur maximale des constructions est fixée à 7 mètres.",
    "decision": "deja_couvert",
    "effet": [
     "UBb",
@@ -419,6 +448,7 @@
    "article": "UEM 12.2",
    "page_pdf": "54",
    "texte_md5": "1b68989528",
+   "texte": "Habitations | Logements ≤ à 50 m² de SDP | 1 place minimum par logement | Logements > à 50 m² de SDP | 2 places minimum par logement",
    "decision": "hors_sdp",
    "effet": null,
    "raison": "stationnement : n affecte pas l enveloppe SDP (residuel/gabarit)"
@@ -431,6 +461,7 @@
    "article": "Article Ud.9",
    "page_pdf": "44",
    "texte_md5": "a2a9b85c34",
+   "texte": "En secteur Udo : L'emprise au sol des constructions n'est pas réglementée. En secteur Udop, Udp : L'emprise au sol des constructions est limitée à 70 % de la superficie de l'unité foncière, 30% minimum de la parcelle doit être en pleine terre",
    "decision": "non_modelisee",
    "effet": null,
    "raison": "sous-secteur non calibre separement (Udop:cal=True,Udo:cal=False,Udp:cal=True)"
@@ -443,6 +474,7 @@
    "article": "Article Ud.6",
    "page_pdf": "40",
    "texte_md5": "2356f459c9",
+   "texte": "Voies et emprises publiques de moins de 12 m : les constructions seront implantées à 4 m minimum de l'alignement. Voies et emprises publiques de moins de 3,50 m : les constructions seront implantées à 3 m minimum de l'alignement.",
    "decision": "non_modelisee",
    "effet": null,
    "raison": "clause au cas par cas (recul conditionnel)"
@@ -455,6 +487,7 @@
    "article": "Article Ud.10",
    "page_pdf": "44",
    "texte_md5": "7bcb0d03a8",
+   "texte": "En secteur Udop : Hauteur maximale R+5, soit 18m, au faîtage ou à l'acrotère, généralisé sauf sur les rues suivantes : Hauteur maximale R+8 Bld Lancastel et rue L. Rambaud, soit 27 m au faîtage ou à l'acrotère … Hauteur maximale R+3, soit 12 m, au faîtage ou à l'acrotère, sur les rues suivantes : ruelle Sanisal, rue Mérancienne",
    "decision": "non_modelisee",
    "effet": null,
    "raison": "depend de l adjacence a une voie nommee (RN/RD/rue) — non disponible par parcelle"
@@ -467,6 +500,7 @@
    "article": "Article Ud.10",
    "page_pdf": "44",
    "texte_md5": "33395a3051",
+   "texte": "En secteur Udp : Hauteur maximale R+5, soit 18 m, au faîtage ou à l'acrotère, généralisé sauf sur les rues suivantes : Hauteur maximale R+8 Blvd Jean Jaurès, Bld Lancatel et rue L. Rambaud, soit 27 m au faîtage ou à l'acrotère … Hauteur maximale R+3, soit 12 m, au faîtage ou à l'acrotère, sur les rues suivantes : ruelles Tadar, Beauvillain, Magnan, Turpin, Nicaise, rues Marcadet et Magnan et allée de la cité Ah Soune",
    "decision": "non_modelisee",
    "effet": null,
    "raison": "depend de l adjacence a une voie nommee (RN/RD/rue) — non disponible par parcelle"
@@ -479,6 +513,7 @@
    "article": "Article Ui.9",
    "page_pdf": "56",
    "texte_md5": "7bc24f8590",
+   "texte": "En secteur Uicm : L'emprise au sol des constructions est limitée à 40 % de la superficie de l'unité foncière. … En secteur Uip : L'emprise au sol des constructions est limitée à 60 % de la superficie de l'unité foncière, 40% minimum de la parcelle doit être en pleine terre.",
    "decision": "non_modelisee",
    "effet": null,
    "raison": "sous-secteur non calibre separement (Uip:cal=False,Uicm:cal=True)"
@@ -491,6 +526,7 @@
    "article": "Article Ui.6",
    "page_pdf": "54",
    "texte_md5": "3eb803c78d",
+   "texte": "Voies d'une emprise de moins de 12 m : les constructions seront implantées à 4 m minimum de l'alignement. Voies d'une emprise de moins de 3,50 m : les constructions seront implantées à 3 m minimum de l'alignement.",
    "decision": "non_modelisee",
    "effet": null,
    "raison": "clause au cas par cas (recul conditionnel)"
@@ -503,6 +539,7 @@
    "article": "Article Up.7",
    "page_pdf": "33",
    "texte_md5": "3c003694c4",
+   "texte": "Dans le secteur Upr ; Sans préjudice du paragraphe précédent, les constructions seront implantées avec un recul de 6 m par rapport au pied de la falaise repérée sur le plan N°3 annexé.",
    "decision": "non_modelisee",
    "effet": null,
    "raison": "clause au cas par cas (recul conditionnel)"
@@ -515,6 +552,7 @@
    "article": "U3 10.2",
    "page_pdf": "51",
    "texte_md5": "73037746ff",
+   "texte": "La hauteur maximale des constructions implantées dans une profondeur de 6 mètres comptés depuis la limite de l’alignement de la voie ou de l’emprise publique ne peut excéder : - 8 mètres à l’égout du toit ou au sommet de l’acrotère … La hauteur maximale des constructions implantées dans une profondeur comprise entre 6 mètres et 12 mètres … ne peut excéder : - 10 mètres à l’égout du toit … Dans le cas d’une construction principale implantée au-delà d’une profondeur de 12 mètres … la hauteur maximale ne peut excéder : - 11 mètres à l’égout du toit ou au sommet de l’acrotère",
    "decision": "non_modelisee",
    "effet": null,
    "raison": "sous-secteur non calibre separement ()"
@@ -527,6 +565,7 @@
    "article": "U3 10.2",
    "page_pdf": "51",
    "texte_md5": "5bb21c8abc",
+   "texte": "La hauteur maximale des constructions implantées dans une profondeur de 6 mètres … ne peut excéder : … - 10 mètres au faîtage. La hauteur maximale des constructions implantées dans une profondeur comprise entre 6 mètres et 12 mètres … - 12 mètres au faîtage. Dans le cas d’une construction principale implantée au-delà d’une profondeur de 12 mètres … la hauteur maximale ne peut excéder : … - 13 mètres au faîtage.",
    "decision": "non_modelisee",
    "effet": null,
    "raison": "sous-secteur non calibre separement ()"
@@ -539,6 +578,7 @@
    "article": "U5 9.2",
    "page_pdf": "80",
    "texte_md5": "2e5e470929",
+   "texte": "L'emprise au sol des constructions ne doit pas excéder 50% de la superficie de l'unité foncière. Dans le secteur U5cvd, ce seuil est porté à 75% et en U5cv à 60%, tandis que dans les secteurs U5ma, U5ru et U5vi ce seuil est limité à 40%.",
    "decision": "deja_couvert",
    "effet": [
     "U5ru",
@@ -557,6 +597,7 @@
    "article": "U6 10.2",
    "page_pdf": "95",
    "texte_md5": "01eff10f3b",
+   "texte": "La hauteur maximale des constructions est fixée à : - 12 mètres à l’égout du toit … Dans le secteur U6c, ces seuils sont portés à : - 15 mètres à l’égout du toit … Dans le secteur U6ch et la zone d'activités de Vincendo, ces seuils sont limités à : - 10 mètres à l’égout du toit",
    "decision": "non_modelisee",
    "effet": null,
    "raison": "sous-secteur non calibre separement (U6c:cal=True,U6ch:cal=False)"
@@ -569,6 +610,7 @@
    "article": "U6 10.2",
    "page_pdf": "95",
    "texte_md5": "a6ef13362c",
+   "texte": "La hauteur maximale des constructions est fixée à : … - 15 mètres au faîtage ou au sommet de l’acrotère. Dans le secteur U6c, ces seuils sont portés à : … - 18 mètres au faîtage ou au sommet de l’acrotère. Dans le secteur U6ch et la zone d'activités de Vincendo, ces seuils sont limités à : … - 13 mètres au faîtage ou au sommet de l’acrotère.",
    "decision": "non_modelisee",
    "effet": null,
    "raison": "sous-secteur non calibre separement (U6c:cal=True,U6ch:cal=False)"
@@ -581,6 +623,7 @@
    "article": "U1 7.2",
    "page_pdf": "19",
    "texte_md5": "afb8ad085d",
+   "texte": "Dans le cas d’une unité foncière ayant un linéaire contigu à la voie inférieur à 12 mètres, les constructions doivent être implantées sur les deux limites latérales. Dans le cas contraire, les constructions peuvent être implantées soit en retrait soit sur une seule limite latérale. En cas de retrait de la construction, la distance … doit être au minimum égale à 3 mètres.",
    "decision": "non_modelisee",
    "effet": null,
    "raison": "clause au cas par cas (recul conditionnel)"
@@ -593,6 +636,7 @@
    "article": "U3 10.2",
    "page_pdf": "51",
    "texte_md5": "73037746ff",
+   "texte": "La hauteur maximale des constructions implantées dans une profondeur de 6 mètres comptés depuis la limite de l’alignement de la voie ou de l’emprise publique ne peut excéder : - 8 mètres à l’égout du toit ou au sommet de l’acrotère … La hauteur maximale des constructions implantées dans une profondeur comprise entre 6 mètres et 12 mètres … ne peut excéder : - 10 mètres à l’égout du toit … Dans le cas d’une construction principale implantée au-delà d’une profondeur de 12 mètres … la hauteur maximale ne peut excéder : - 11 mètres à l’égout du toit ou au sommet de l’acrotère",
    "decision": "non_modelisee",
    "effet": null,
    "raison": "regle dans une bande geometrique depuis une limite / liste de parcelles — hors moteur zone-level"
@@ -605,6 +649,7 @@
    "article": "U3 10.2",
    "page_pdf": "51",
    "texte_md5": "5bb21c8abc",
+   "texte": "La hauteur maximale des constructions implantées dans une profondeur de 6 mètres … ne peut excéder : … - 10 mètres au faîtage. La hauteur maximale des constructions implantées dans une profondeur comprise entre 6 mètres et 12 mètres … - 12 mètres au faîtage. Dans le cas d’une construction principale implantée au-delà d’une profondeur de 12 mètres … la hauteur maximale ne peut excéder : … - 13 mètres au faîtage.",
    "decision": "non_modelisee",
    "effet": null,
    "raison": "regle dans une bande geometrique depuis une limite / liste de parcelles — hors moteur zone-level"
@@ -617,6 +662,7 @@
    "article": "U4 10.2",
    "page_pdf": "65",
    "texte_md5": "b3b684aec3",
+   "texte": "La hauteur maximale des constructions ne peut excéder : - 6 mètres à l’égout du toit ou au sommet de l’acrotère … Toutefois, lorsque la construction comporte des locaux commerciaux, de services ou de bureaux, la hauteur maximale est portée à : - 7 mètres à l’égout du toit ou au sommet de l’acrotère",
    "decision": "non_modelisee",
    "effet": null,
    "raison": "majoration conditionnee a la destination du projet (commerce/locaux) — hors hypothese logement"
@@ -629,6 +675,7 @@
    "article": "U4 10.2",
    "page_pdf": "65",
    "texte_md5": "d61b3f0a9b",
+   "texte": "La hauteur maximale des constructions ne peut excéder : … - 9 mètres au faîtage. Toutefois, lorsque la construction comporte des locaux commerciaux, de services ou de bureaux, la hauteur maximale est portée à : … - 10 mètres au faîtage.",
    "decision": "non_modelisee",
    "effet": null,
    "raison": "majoration conditionnee a la destination du projet (commerce/locaux) — hors hypothese logement"
@@ -641,6 +688,7 @@
    "article": "U5 9.2",
    "page_pdf": "80",
    "texte_md5": "2e5e470929",
+   "texte": "L'emprise au sol des constructions ne doit pas excéder 50% de la superficie de l'unité foncière. Dans le secteur U5cvd, ce seuil est porté à 75% et en U5cv à 60%, tandis que dans les secteurs U5ma, U5ru et U5vi ce seuil est limité à 40%.",
    "decision": "deja_couvert",
    "effet": [
     "U5ru",
@@ -659,6 +707,7 @@
    "article": "U5 6.2",
    "page_pdf": "77",
    "texte_md5": "6beeea7b8b",
+   "texte": "Dans le secteur U5ma : un retrait de 1,5 mètres est autorisé pour les constructions à usage commercial et touristique à vocation de restauration et ou/d’hébergement et dès lors qu’il s’agit de terrasses ouvertes, aérées. La bande de recul de 1,5 mètres doit obligatoirement être plantée.",
    "decision": "non_modelisee",
    "effet": null,
    "raison": "depend de la destination (commerce/habitat/schema annexe)"
@@ -671,6 +720,7 @@
    "article": "U6 10.2",
    "page_pdf": "95",
    "texte_md5": "01eff10f3b",
+   "texte": "La hauteur maximale des constructions est fixée à : - 12 mètres à l’égout du toit … Dans le secteur U6c, ces seuils sont portés à : - 15 mètres à l’égout du toit … Dans le secteur U6ch et la zone d'activités de Vincendo, ces seuils sont limités à : - 10 mètres à l’égout du toit",
    "decision": "non_modelisee",
    "effet": null,
    "raison": "sous-secteur non calibre separement (U6c:cal=True,U6ch:cal=False)"
@@ -683,6 +733,7 @@
    "article": "U6 10.2",
    "page_pdf": "95",
    "texte_md5": "a6ef13362c",
+   "texte": "La hauteur maximale des constructions est fixée à : … - 15 mètres au faîtage ou au sommet de l’acrotère. Dans le secteur U6c, ces seuils sont portés à : … - 18 mètres au faîtage ou au sommet de l’acrotère. Dans le secteur U6ch et la zone d'activités de Vincendo, ces seuils sont limités à : … - 13 mètres au faîtage ou au sommet de l’acrotère.",
    "decision": "non_modelisee",
    "effet": null,
    "raison": "sous-secteur non calibre separement (U6c:cal=True,U6ch:cal=False)"
@@ -695,6 +746,7 @@
    "article": "UA 10.2",
    "page_pdf": "24",
    "texte_md5": "c3978dd7f7",
+   "texte": "Il est toléré 1,50m de plus sur les parties avales du bâtiment au faîtage, à l'égout du toit ou au sommet de l'acrotère.",
    "decision": "non_modelisee",
    "effet": null,
    "raison": "hauteur alternative selon le cas (surelevation/mitoyennete)"
@@ -707,6 +759,7 @@
    "article": "UC 7.2",
    "page_pdf": "46",
    "texte_md5": "537fc732df",
+   "texte": "Toutefois, en secteur UC1, le retrait (L) est obligatoire et doit correspondre au minimum à la moitié de la hauteur à l’égout du toit (ou au faîtage en l’absence d’égout de toit) de la construction sans être inférieur à 3,00 mètres, soit : L = H1/2 (H1 étant la hauteur à l’égout) ou en l’absence de façade présentant un égout de toit : L = H2/2 (H2 étant la hauteur au faîtage).",
    "decision": "deja_couvert",
    "effet": [
     "UC1"
@@ -721,6 +774,7 @@
    "article": "UZ 10.2",
    "page_pdf": "99",
    "texte_md5": "f2badd4755",
+   "texte": "Pour les espaces indiqués au schéma joint en annexe sous la rubrique « affectations dominantes en habitat avec activités et services compatibles » et légendés en « individuels », la hauteur maximale de tout point des constructions mesurée par rapport au domaine public pris au droit de l’alignement ne doit pas dépasser 9 mètres.",
    "decision": "non_modelisee",
    "effet": null,
    "raison": "depend de la destination (commerce/habitat/schema annexe)"
@@ -733,6 +787,7 @@
    "article": "UZ 10.2",
    "page_pdf": "99",
    "texte_md5": "f2badd4755",
+   "texte": "Pour les espaces indiqués au schéma joint en annexe sous la rubrique « affectations dominantes en habitat avec activités et services compatibles » et légendés en « individuels », la hauteur maximale de tout point des constructions mesurée par rapport au domaine public pris au droit de l’alignement ne doit pas dépasser 9 mètres.",
    "decision": "non_modelisee",
    "effet": null,
    "raison": "depend de la destination (commerce/habitat/schema annexe)"
@@ -745,6 +800,7 @@
    "article": "13.1",
    "page_pdf": "35",
    "texte_md5": "19632ba8fb",
+   "texte": "En aléa fort du PPRI, le pourcentage minimal d’espaces libres perméables sera de 50 % de la surface totale du terrain d’assiette du projet.",
    "decision": "non_modelisee",
    "effet": null,
    "raison": "condition PPRI alea fort — alea_ppr non cable dans le chemin residuel"
@@ -757,6 +813,7 @@
    "article": "13.1",
    "page_pdf": "125",
    "texte_md5": "372e64ed86",
+   "texte": "En aléa fort du PPRI, le pourcentage minimal d’espaces libres perméables sera de 50% de la surface totale du terrain d’assiette du projet.",
    "decision": "non_modelisee",
    "effet": null,
    "raison": "condition PPRI alea fort — alea_ppr non cable dans le chemin residuel"
@@ -769,6 +826,7 @@
    "article": "6",
    "page_pdf": "172",
    "texte_md5": "180ba9a30b",
+   "texte": "Les commerces situés en rez-de-chaussée pourront s’implanter à l’alignement.",
    "decision": "non_modelisee",
    "effet": null,
    "raison": "depend de la destination (commerce/habitat/schema annexe)"
@@ -781,6 +839,7 @@
    "article": "Ua3.5",
    "page_pdf": "177",
    "texte_md5": "0cb2d3452b",
+   "texte": "Dans les secteurs Uazi et AUazi de la ZI N° 4 pour les parcelles 1, 9, 11, 21, 22, 23 et 24, la hauteur maximale des constructions nouvelles est fixée à 8 m dans une bande de 15 m à partir de la limite du lotissement longeant la Ravine des Cabris.",
    "decision": "non_modelisee",
    "effet": null,
    "raison": "regle dans une bande geometrique depuis une limite / liste de parcelles — hors moteur zone-level"
@@ -793,6 +852,7 @@
    "article": "Ua3.5",
    "page_pdf": "177",
    "texte_md5": "0cb2d3452b",
+   "texte": "Dans les secteurs Uazi et AUazi de la ZI N° 4 pour les parcelles 1, 9, 11, 21, 22, 23 et 24, la hauteur maximale des constructions nouvelles est fixée à 8 m dans une bande de 15 m à partir de la limite du lotissement longeant la Ravine des Cabris.",
    "decision": "non_modelisee",
    "effet": null,
    "raison": "regle dans une bande geometrique depuis une limite / liste de parcelles — hors moteur zone-level"
@@ -805,6 +865,7 @@
    "article": "Uf3.5",
    "page_pdf": "119",
    "texte_md5": "c7ce7d3107",
+   "texte": "Dans le secteur AUfGB limiter la hauteur à 5,5 m au faîtage.",
    "decision": "deja_couvert",
    "effet": [
     "AUfGB"
@@ -819,6 +880,7 @@
    "article": "Ua3.5",
    "page_pdf": "178",
    "texte_md5": "127885cf36",
+   "texte": "Dans le secteur Uaza, la hauteur maximale des constructions est fixée à 14 m au faîtage.",
    "decision": "non_modelisee",
    "effet": null,
    "raison": "sous-secteur non calibre separement ()"
@@ -831,6 +893,7 @@
    "article": "Ua3.5",
    "page_pdf": "177",
    "texte_md5": "0cb2d3452b",
+   "texte": "Dans les secteurs Uazi et AUazi de la ZI N° 4 pour les parcelles 1, 9, 11, 21, 22, 23 et 24, la hauteur maximale des constructions nouvelles est fixée à 8 m dans une bande de 15 m à partir de la limite du lotissement longeant la Ravine des Cabris.",
    "decision": "non_modelisee",
    "effet": null,
    "raison": "regle dans une bande geometrique depuis une limite / liste de parcelles — hors moteur zone-level"
@@ -843,6 +906,7 @@
    "article": "Ua3.5",
    "page_pdf": "177",
    "texte_md5": "0cb2d3452b",
+   "texte": "Dans les secteurs Uazi et AUazi de la ZI N° 4 pour les parcelles 1, 9, 11, 21, 22, 23 et 24, la hauteur maximale des constructions nouvelles est fixée à 8 m dans une bande de 15 m à partir de la limite du lotissement longeant la Ravine des Cabris.",
    "decision": "non_modelisee",
    "effet": null,
    "raison": "regle dans une bande geometrique depuis une limite / liste de parcelles — hors moteur zone-level"
@@ -855,6 +919,7 @@
    "article": "Ue3.5",
    "page_pdf": "193",
    "texte_md5": "f2750e1841",
+   "texte": "Sur les limites séparatives (latérales ou fond de parcelles), la hauteur des constructions nouvelles n'excèdera pas 6 m. La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle de 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative.",
    "decision": "non_modelisee",
    "effet": null,
    "raison": "regle dans une bande geometrique depuis une limite / liste de parcelles — hors moteur zone-level"
@@ -867,6 +932,7 @@
    "article": "Ue3.5",
    "page_pdf": "193",
    "texte_md5": "f2750e1841",
+   "texte": "Sur les limites séparatives (latérales ou fond de parcelles), la hauteur des constructions nouvelles n'excèdera pas 6 m. La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle de 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative.",
    "decision": "non_modelisee",
    "effet": null,
    "raison": "regle dans une bande geometrique depuis une limite / liste de parcelles — hors moteur zone-level"
@@ -879,6 +945,7 @@
    "article": "Ue3.5",
    "page_pdf": "193",
    "texte_md5": "f2750e1841",
+   "texte": "Sur les limites séparatives (latérales ou fond de parcelles), la hauteur des constructions nouvelles n'excèdera pas 6 m. La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle de 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative.",
    "decision": "non_modelisee",
    "effet": null,
    "raison": "regle dans une bande geometrique depuis une limite / liste de parcelles — hors moteur zone-level"
@@ -891,6 +958,7 @@
    "article": "Uf3.5",
    "page_pdf": "119",
    "texte_md5": "4ff02e3971",
+   "texte": "Sur les limites séparatives (latérales ou fond de parcelles), la hauteur des constructions nouvelles n'excède pas 4 m. La hauteur de la construction est ensuite limitée dans un gabarit formé par un angle de 100 % sur une profondeur de 3 m comptée horizontalement et perpendiculairement de tout point de la limite séparative.",
    "decision": "non_modelisee",
    "effet": null,
    "raison": "regle dans une bande geometrique depuis une limite / liste de parcelles — hors moteur zone-level"
@@ -903,6 +971,7 @@
    "article": "Uf3.5",
    "page_pdf": "119",
    "texte_md5": "27c3227264",
+   "texte": "Dans le secteur UfCa limiter la hauteur à 6 m égout et 7,5 m au faîtage.",
    "decision": "deja_couvert",
    "effet": [
     "UfCa"
@@ -917,6 +986,7 @@
    "article": "U 10.2",
    "page_pdf": "15",
    "texte_md5": "d6c9fe9b0d",
+   "texte": "Dans le secteur UA1, la hauteur maximale des constructions est limitée à 7 mètres à l’égout du toit ou au sommet de l’acrotère, sans dépasser R+1.",
    "decision": "deja_couvert",
    "effet": [
     "UA1"
@@ -931,6 +1001,7 @@
    "article": "Ua10.2",
    "page_pdf": "18",
    "texte_md5": "c29c6329f8",
+   "texte": "Dans le secteur Uav, ce seuil est limité à 16 mètres à l'égout du toit ou au sommet de l'acrotère et 20 mètres au faîtage.",
    "decision": "deja_couvert",
    "effet": [
     "Uav"
@@ -945,6 +1016,7 @@
    "article": "Ua10.2",
    "page_pdf": "18",
    "texte_md5": "c29c6329f8",
+   "texte": "Dans le secteur Uav, ce seuil est limité à 16 mètres à l'égout du toit ou au sommet de l'acrotère et 20 mètres au faîtage.",
    "decision": "deja_couvert",
    "effet": [
     "Uav"
@@ -959,6 +1031,7 @@
    "article": "Ua6.2",
    "page_pdf": "15",
    "texte_md5": "b938966d83",
+   "texte": "Les constructions peuvent s'implanter soit à l'alignement, soit à 4 mètres minimum de l'emprise de la voie ou de la limite d'emprise de l'emplacement réservé figurant au document graphique. Toutefois, le long de la RD3, entre la RN3 et la Ravine Blanche, les constructions nouvelles doivent respecter un recul minimal de 10,50 mètres par rapport à l'axe de la voie.",
    "decision": "non_modelisee",
    "effet": null,
    "raison": "depend de l adjacence a une voie nommee (RN/RD/rue) — non disponible par parcelle"
@@ -971,6 +1044,7 @@
    "article": "Ua10.2",
    "page_pdf": "18",
    "texte_md5": "c29c6329f8",
+   "texte": "Dans le secteur Uav, ce seuil est limité à 16 mètres à l'égout du toit ou au sommet de l'acrotère et 20 mètres au faîtage.",
    "decision": "deja_couvert",
    "effet": [
     "Uav"
@@ -985,6 +1059,7 @@
    "article": "Ua10.2",
    "page_pdf": "18",
    "texte_md5": "c29c6329f8",
+   "texte": "Dans le secteur Uav, ce seuil est limité à 16 mètres à l'égout du toit ou au sommet de l'acrotère et 20 mètres au faîtage.",
    "decision": "deja_couvert",
    "effet": [
     "Uav"
@@ -999,6 +1074,7 @@
    "article": "Ua10.3",
    "page_pdf": "18",
    "texte_md5": "29a307ca1e",
+   "texte": "La nouvelle construction ne doit pas excéder sur tout point mitoyen à la limite séparative et dans une marge de 3,60 mètres de profondeur une hauteur absolue de 18 mètres. Dans le secteur Uav, ce seuil est limité à 13 mètres.",
    "decision": "non_modelisee",
    "effet": null,
    "raison": "regle dans une bande geometrique depuis une limite / liste de parcelles — hors moteur zone-level"
@@ -1011,6 +1087,7 @@
    "article": "Ua10.3",
    "page_pdf": "18",
    "texte_md5": "29a307ca1e",
+   "texte": "La nouvelle construction ne doit pas excéder sur tout point mitoyen à la limite séparative et dans une marge de 3,60 mètres de profondeur une hauteur absolue de 18 mètres. Dans le secteur Uav, ce seuil est limité à 13 mètres.",
    "decision": "non_modelisee",
    "effet": null,
    "raison": "regle dans une bande geometrique depuis une limite / liste de parcelles — hors moteur zone-level"
@@ -1023,6 +1100,7 @@
    "article": "Ua6.2",
    "page_pdf": "15",
    "texte_md5": "b938966d83",
+   "texte": "Les constructions peuvent s'implanter soit à l'alignement, soit à 4 mètres minimum de l'emprise de la voie ou de la limite d'emprise de l'emplacement réservé figurant au document graphique. Toutefois, le long de la RD3, entre la RN3 et la Ravine Blanche, les constructions nouvelles doivent respecter un recul minimal de 10,50 mètres par rapport à l'axe de la voie.",
    "decision": "non_modelisee",
    "effet": null,
    "raison": "depend de l adjacence a une voie nommee (RN/RD/rue) — non disponible par parcelle"
@@ -1035,6 +1113,7 @@
    "article": "Ua6.2",
    "page_pdf": "15",
    "texte_md5": "b938966d83",
+   "texte": "Les constructions peuvent s'implanter soit à l'alignement, soit à 4 mètres minimum de l'emprise de la voie ou de la limite d'emprise de l'emplacement réservé figurant au document graphique. Toutefois, le long de la RD3, entre la RN3 et la Ravine Blanche, les constructions nouvelles doivent respecter un recul minimal de 10,50 mètres par rapport à l'axe de la voie.",
    "decision": "non_modelisee",
    "effet": null,
    "raison": "depend de l adjacence a une voie nommee (RN/RD/rue) — non disponible par parcelle"
@@ -1047,6 +1126,7 @@
    "article": "Ua 10.2",
    "page_pdf": "18",
    "texte_md5": "f1d5474709",
+   "texte": "Dans le secteur Uaa, la hauteur maximale des constructions est fixée à : 12 mètres à l’égout du toit ou au sommet de l’acrotère, 16 mètres au faîtage.",
    "decision": "deja_couvert",
    "effet": [
     "Uaa"
@@ -1061,6 +1141,7 @@
    "article": "Ua 10.2",
    "page_pdf": "18",
    "texte_md5": "f1d5474709",
+   "texte": "Dans le secteur Uaa, la hauteur maximale des constructions est fixée à : 12 mètres à l’égout du toit ou au sommet de l’acrotère, 16 mètres au faîtage.",
    "decision": "deja_couvert",
    "effet": [
     "Uaa"

@@ -65,6 +65,27 @@ export function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
           </p>
         </div>
       )}
+      {/* PLU-CALIBRAGE-5 Lot C — une exception du règlement N'EST PAS modélisée (bande depuis une
+          limite, sous-secteur non calibré, condition non mesurable par parcelle…). On ne l'approxime
+          jamais : la capacité porte le badge « Estimé » et on l'affiche ici sous la capacité, AVEC le
+          texte verbatim de l'exception (article/page en source). Le Dossier et le Copilote suivent par
+          le registre (capacite_estimee). */}
+      {pt.regles_non_modelisees && pt.regles_non_modelisees.length > 0 && (
+        <div data-regle-non-modelisee className="mt-0.5">
+          <Badge ton="ambre">Estimé — exception non modélisée</Badge>
+          <p className="mt-0.5 text-[11px] leading-snug text-amber">
+            {pt.regles_non_modelisees.length === 1 ? 'Une exception du règlement n’est pas modélisée' : `${pt.regles_non_modelisees.length} exceptions du règlement ne sont pas modélisées`} — à vérifier. La capacité affichée est estimée (jamais sourcée) sur cette parcelle.
+          </p>
+          <ul className="mt-0.5 space-y-0.5">
+            {pt.regles_non_modelisees.map((e, i) => (
+              <li key={i} className="text-[10.5px] leading-snug text-txt-dim">
+                {e.texte ? <span className="italic">« {e.texte} »</span> : <span>Règle {e.regle}</span>}
+                {e.article ? <span className="not-italic"> — art. {e.article}{e.page_pdf != null ? ` · p. ${e.page_pdf}` : ''}.</span> : null}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       {/* DONNEES-FIX-1 lot A — même règle que le §3 Bâti (`discordance_hauteur`) : le badge compare
           l'ÉGOUT LiDAR à BD TOPO (même grandeur) ou signale un faîtage aberrant, jamais le faîtage↔BD
           TOPO. Sans choix automatique. */}
