@@ -192,3 +192,18 @@ def test_f27_succession_depot_muet_servi():
     su = (SRC / "components/outils/Successions.tsx").read_text(encoding="utf-8")
     assert "it.depot_comptes?.muet ?? false" in su
     assert "depuis_ans >= 3" not in su, "seuil sommeil recalculé au front (F27)"
+
+
+def test_f32_permis_note_incoherence_servie():
+    """F32 — la note d'incohérence dépôt/autorisation (seuil 1 mois) n'est plus calculée au front
+    (lib/permis.ts supprimé) : le back la sert (miroir.permis_incoherence_note, source unique) dans
+    /modules/permis ET l'historique_site (autour). Front lit `note_incoherence`."""
+    from labuse.exports.miroir import permis_incoherence_note
+    assert "modificatif" in permis_incoherence_note("2024-06-01", "2024-01-01")  # gap > 1 mois
+    assert permis_incoherence_note("2024-01-10", "2024-01-01") == "dates incohérentes chez le producteur"
+    for mod in ("api/modules.py", "api/site_voisinage.py"):
+        assert '"note_incoherence": ' in (ROOT / "src/labuse" / mod).read_text(encoding="utf-8")
+    assert not (SRC / "lib/permis.ts").exists(), "lib/permis.ts (fonction front dupliquée) doit être supprimé (F32)"
+    for comp in ("components/outils/ModulePanel.tsx", "components/fiche/autour.tsx"):
+        t = (SRC / comp).read_text(encoding="utf-8")
+        assert "note_incoherence" in t and "permisIncoherenceNote" not in t

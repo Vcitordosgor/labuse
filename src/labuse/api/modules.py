@@ -45,6 +45,7 @@ from ..faisabilite.bilan import (  # défauts calculette dérivés de la source 
     CALCULETTE_VRD_DEFAUT_M2,
 )
 from .. import runs  # S3 : run servi relu à la requête (bascule à chaud)
+from ..exports import miroir as _miroir  # F32 — note d'incohérence dépôt/autorisation (source unique)
 from ..scoring import score_v_constants  # OUTILS-S2 Lot A : formes retenues du signal succession
 
 
@@ -687,6 +688,9 @@ def permis_fiche(permit_id: str, db: Session = Depends(get_db)) -> dict:
         "nb_lots": int(r["nb_lgt"]) if (r["nb_lgt"] or "").isdigit() else None,
         "surface_hab_m2": float(r["surf_hab"]) if r["surf_hab"] else None,
         "date_depot": r["date_depot"], "date_autorisation": r["date_autorisation"],
+        # FRONT-CHIFFRES-2 (F32) — la note d'incohérence dépôt/autorisation (seuil 1 mois) vient de la
+        # fonction PARTAGÉE `miroir.permis_incoherence_note`, plus de la regex de seuil au front.
+        "note_incoherence": _miroir.permis_incoherence_note(r["date_depot"], r["date_autorisation"]) or None,
         "date_achevement": r["date_achevement"] or r["daact"],
         "delai_instruction": delai,
         # KELFONCIER-FIX-2 (Lot D) — statut par la fonction PARTAGÉE de la fiche (ingestion/permits.py) :

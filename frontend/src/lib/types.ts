@@ -372,7 +372,7 @@ export interface Fiche {
     indisponible?: boolean; raison?: string   // M125 — état PANNE (≠ absence)
     titre: string; n_permis: number; source: string; honnetete: string
     // KELFONCIER-FIX-1 (Lot C) — type libellé (PA/DP/PC/PD) + état (annulé compris), source unique.
-    permis: { permit_id: string; type: string | null; type_label?: string | null; date_autorisation: string | null; date_depot: string | null; etat_libelle?: string | null; annule?: boolean }[]
+    permis: { permit_id: string; type: string | null; type_label?: string | null; date_autorisation: string | null; date_depot: string | null; etat_libelle?: string | null; annule?: boolean; note_incoherence?: string | null }[]
     caducite?: { pc_annee?: number; caduc_depuis?: string | null; libelle_court?: string | null; detail?: string | null } | null
   } | null
   // M42 : « Autour, à moins de 100 m » (ventes DVF + permis, 36 mois) — contexte, 0 tier.

@@ -30,7 +30,7 @@ F28,1,seuil,remonter,outils,components/outils/TaxeAmenagement.tsx,1,remonter_bac
 F29,1,seuil,remonter,outils,components/outils/TierBadge.tsx,1,remonter_back,TierBadge.tsx:9,DA du palier (jeton+ton+libellé) servie,remonté,F29
 F30,1,seuil,remonter,outils,components/outils/TimeMachine.tsx,1,remonter_back,TimeMachine.tsx:84,disponibilité de la surcouche cadastre d'époque (fait historique fixe: 1er millésime 2017),reclassé_présentation,
 F31,1,seuil,remonter,outils,components/outils/blocB.tsx,1,remonter_back,blocB.tsx:383,ton ligne ZAN (absence horizon + palier couleur),remonté,F31
-F32,1,seuil,remonter,lib/store,lib/permis.ts,1,remonter_back,permis.ts:9-12,,a_faire,
+F32,1,seuil,remonter,lib/store,lib/permis.ts,1,remonter_back,permis.ts:9-12,note incohérence dépôt/autorisation permis,remonté,F32
 F33,2,calcul,mixte(remonter+declarer),fiche,components/fiche/constructibilite.tsx,11,declarer_registre+remonter_back,constructibilite.tsx:197 ; constructibilite.tsx:198 ; constructibilite.tsx:359 ; constructibilite.tsx:360,,a_faire,
 F34,2,calcul,mixte(remonter+declarer),panel/projets/contexte,ContextePanel.tsx,10,declarer_registre+remonter_back,ContextePanel.tsx:157 ; ContextePanel.tsx:160 ; ContextePanel.tsx:171 ; ContextePanel.tsx:313,,a_faire,
 F35,2,calcul,remonter,admin/map,components/admin/Licences.tsx,7,remonter_back,Licences.tsx:147 ; Licences.tsx:161 ; Licences.tsx:174 ; Licences.tsx:26,,a_faire,

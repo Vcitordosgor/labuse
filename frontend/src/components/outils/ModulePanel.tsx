@@ -12,7 +12,6 @@ import { ParcelInput } from '../ParcelInput'
 import { TEMPS_MILLESIMES } from '../map/basemaps'
 import { fmtInt, fmtM2 } from '../../lib/format'
 import { iduComplet, iduCourt, estIdu } from '../../lib/format'
-import { permisIncoherenceNote } from '../../lib/permis'
 import { pointInPolygon } from '../../lib/geo'
 import { TOKENS } from '../../lib/tokens'
 import { carteEtat, etatColor, type PermisEtat, type PermisEtatCarte } from '../../lib/permisEtats'
@@ -457,7 +456,7 @@ export function PermitDrawer({ permitId, onClose }: { permitId: string; onClose:
                 producteur SDES/Dido, qualifiée par l'écart (au-delà d'1 mois = modificatif/transféré
                 probable). Le délai d'instruction reste non servi. Voir lib/permis.ts. */}
             {(() => {
-              const note = permisIncoherenceNote(d['date_depot'] as string | null, d['date_autorisation'] as string | null)
+              const note = (d['note_incoherence'] as string | null) ?? null   // FRONT-CHIFFRES-2 (F32) — servie
               return note ? <p className="mt-1 text-[10px] leading-snug text-st-ecartee">{note} — délai d'instruction non calculé.</p> : null
             })()}
             <F label="Achèvement (DAACT)" value={d['date_achevement']} />
