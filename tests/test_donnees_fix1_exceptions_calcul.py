@@ -39,6 +39,8 @@ def test_calibrage_couvre_les_81_exceptions():
             assert e["effet"] and e["effet"].get("champ") and e["effet"].get("valeur") is not None
         if e["decision"] == "non_modelisee":
             assert e.get("article") and e.get("page_pdf")
+        # PLU-CALIBRAGE-5 — le verbatim est présent partout (affichage fiche des règles portées).
+        assert e.get("texte"), f"entrée {e['insee']}/{e['zone']} sans verbatim `texte`"
 
 
 def test_index_par_zone_charge():

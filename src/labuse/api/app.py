@@ -5843,7 +5843,10 @@ def _potentiel_transformation_block(db: Session, idu: str, commune: str | None =
         "sdp_residuelle_m2": sdp_servie,
         "cause": None,                                        # garde A/N→0 retirée (FAISABILITE-clip) — plus de cause-garde
         "sous_densite": row["sous_densite"],
-        "capacite_estimee": row["capacite_estimee"],
+        # PLU-CALIBRAGE-5 — la capacité est « Estimé » (jamais « Sourcé ») dès qu'une exception du
+        # règlement n'est pas modélisée (regles_non_modelisees), même sur un run servi calibré. On
+        # ne recalcule pas la SDP servie ; on rend seulement le badge honnête tout de suite.
+        "capacite_estimee": bool(row["capacite_estimee"]) or bool(regles_non_modelisees),
         # EXPORTS-1 (3.2) : surélévation au MOTEUR COMMUN — hauteur à l'ÉGOUT, base dite
         # (repli faîtage seulement si l'égout n'est pas calibré, avec avertissement).
         "surelevation_possible": h_possible,

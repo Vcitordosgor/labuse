@@ -241,7 +241,10 @@ def compute_residuel(session: Session, parcel_id: int,
         "estimation_sdp": not niveaux_reels,
         # Traçabilité capacité : calibré (YAML PLU communal) vs estimation générique.
         "calibree": f.calibree,
-        "capacite_estimee": not f.calibree,
+        # PLU-CALIBRAGE-5 — une parcelle qui PORTE une exception non modélisée (règle du PLU non
+        # déduite, cf. regles_non_modelisees) a une capacité moins certaine : badge « Estimé », jamais
+        # « Sourcé », même en zone calibrée. La valeur SDP n'est pas approximée pour autant.
+        "capacite_estimee": (not f.calibree) or bool(getattr(ctx, "regles_non_modelisees", None)),
         # GEOMETRIE-1 lot B — provenance de l'assiette : 'gabarit' (zone d'implantation,
         # reculs par côté + PPR rouge découpé) / 'residuel_legacy' (parcelle non servie).
         "assiette_source": fr.get("assiette_source"),

@@ -914,6 +914,9 @@ export interface PotentielTransformation extends Indisponible {
   // PLU-EXCEPTIONS-1 — exceptions du règlement qui POURRAIENT changer le calcul (à vérifier). Ne
   // sont PAS appliquées ; renvoient vers §Urbanisme.
   exceptions_calcul?: { regle: string; porte: string | null; article: string | null; page_pdf: number | null }[]
+  // PLU-CALIBRAGE-5 — exceptions du règlement NON modélisées que cette parcelle PORTE : la capacité
+  // reste « Estimé » et la fiche l'affiche sous la capacité, avec le texte verbatim (jamais approximé).
+  regles_non_modelisees?: { regle: string; porte: string | null; article: string | null; page_pdf: number | null; texte: string | null }[]
   pct_consomme: number | null
   pct_residuel: number | null
   sdp_residuelle_m2: number | null
