@@ -165,6 +165,24 @@ F06, F08, F09, F12, F16, F18, F23, F27, F28, F30, F32 + F01b–e — vrais remon
 tsc 0 · vitest 225 · verrous + gardes 16 · banc `**188 (= baseline, 0 nouveau, 0 FAUX-CLIENT)** — F26 sert un seuil de config (endpoint read-only), aucune notion comparée touchée.`. **Reste** (P1) : F02, F03, F05,
 F06, F08, F09, F12, F16, F18, F23, F27, F28, F30, F32 + F01b–e.
 
+### Session 6 (lot P1, suite) — 5 familles
+*Remonters :*
+- **F01b** — bande de pente (plat/modérée/forte/très forte) servie (`terrain.pente_bande`, fonction
+  `_pente_bande`, bornes 5/15/30° en un endroit) ; front §1.2 + §2 ne classe plus.
+- **F27** — « dépôt de comptes muet ≥ 3 ans → sommeil » servi à plat (`depot_comptes.muet`, seuil
+  `SEUIL_DEPOT_MUET_ANS`) ; Successions ne décide plus.
+- **F32** — note d'incohérence dépôt/autorisation permis : `lib/permis.ts` (front dupliqué) SUPPRIMÉ ;
+  le back sert `note_incoherence` (source unique `miroir.permis_incoherence_note`) dans /modules/permis
+  ET l'historique_site (autour).
+- **F18** — échéance de relance CRM (« due aujourd'hui / échue ») servie sur le jour RÉUNION
+  (`relance_echeance`, `tz.today_reunion`) au lieu du fuseau du navigateur. CHANGEMENTS.csv (correction TZ).
+*Reclassé présentation :* **F30** (`periodAn >= 2016` = disponibilité surcouche cadastre d'époque,
+fait historique fixe — plomberie viewer).
+
+**État P1 (32) : 13 remonté · 9 reclassé · 0 arrêté · F01 partiel (a+b) · ~8 a_faire.** Guardrails :
+tsc 0 · vitest 225 · verrous + gardes 20 · banc `**188 (= baseline, 0 nouveau, 0 FAUX-CLIENT)** — les notions touchées (pente/sommeil/permis note/relance) ne sont pas comparées par le banc.`. **Reste** (P1) : F02, F03, F05,
+F06, F08, F09, F12, F16, F23, F28 + F01c–e.
+
 ### F01 — plan (prochaine session, à reprendre ici)
 F01 (`Fiche.tsx`, 15 lignes « seuil ») n'est PAS une notion unique : c'est un **cluster réglementaire**
 à SCINDER en sous-familles (1 commit chacune), car chaque notion a son moteur back :
