@@ -11,7 +11,8 @@ Base : les 6 risques structurels de `docs/audit-2026-09/CALCULS-1/RAPPORT.md`. T
 | `tsc --noEmit` | **0** |
 | `vitest run` | **225 passed** |
 | V6b (`test_v6b_coherence`) | **vert** |
-| `pytest tests/` | état de départ (1 échec **pré-existant** hors périmètre, voir plus bas) — 0 régression |
+| `banc --echantillon` (en-process) | 20 écarts (0 FAUX-CLIENT) — **0 nouveau** ; aucun ne touche zone/défisc |
+| `pytest tests/` | 3560 passed / **7 échecs pré-existants** (vérifiés identiques sur `origin/main`) — 0 régression |
 
 Un commit par lot, poussé sur `origin/fix/calculs-1`. Pas de merge.
 
@@ -54,9 +55,17 @@ Fichier : `faisabilite/zone_servie.py:_N_ZONES`. Test : `tests/regles/test_calcu
 
 ---
 
-## Échec pytest de départ (pré-existant, hors périmètre)
+## Échecs pytest de départ (pré-existants, hors périmètre)
 
-`tests/test_faisabilite.py::test_plafond_densite_borne_les_zones_denses` échoue déjà sur `origin/main` (vérifié : Lot B stashé, fichier de test identique à la base). Il appelle `estimate_capacity(resolve_zone("U1pru"), …)` — sans aucun lien avec les fonctions corrigées ici ; la base de test ne porte pas la calibration PLU `U1pru` produisant la modulation « plafond de densité ». **0 régression introduite par ce mandat.**
+Les 4 fichiers touchés ont été remis à `origin/main` puis les tests rejoués : **7 échecs sont pré-existants** (identiques sur la base), **0 régression** introduite. Ce sont des tests « sur la base réelle » / de calibration absente de la base de test :
+
+- `test_faisabilite.py::test_plafond_densite_borne_les_zones_denses` et `::test_u1pru_stationnement_exempte_non_borne` (calibration PLU `U1pru` absente de la base de test) ;
+- `test_exports2_lot7.py::test_regles_gagnent_destinations_ta_redevance` ;
+- `test_rate_limit_off.py::test_banc_ne_depend_pas_de_dev_mode` ;
+- `test_garanties.py::test_g4_vert_et_vide_jamais_a_jour` ;
+- `test_lot1_tables.py::test_verrous_lot1_passent_sur_la_base_reelle`, `test_lot2_sources.py::test_v2a_68_partout_sur_la_base_reelle`.
+
+**Un seul test a été impacté par ce mandat et corrigé** : `test_coherencefix1_lot_a_fraicheur.py::test_etat_liste_les_perimes` attendait 7 caches ; le Lot C ajoute une 8e entrée légitime (barème défiscalisation) à `/sante/fraicheur` → assertion bumpée à 8, entrée défisc monkeypatchée pour rester déterministe selon l'année de CI.
 
 ## Risques laissés pour après le déploiement (rappel)
 
