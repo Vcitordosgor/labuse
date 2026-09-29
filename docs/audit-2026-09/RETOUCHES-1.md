@@ -18,12 +18,12 @@ Parcelle de démonstration du point 4 : **97411000AE0001** (Le Tampon, secteur a
 | # | Constat | Fait / STOP | Preuve | Commit |
 |---|---------|-------------|--------|--------|
 | 1 | « Généré via LABUSE » coupé sur 3 lignes en pied de page | **fait** | `captures/p1-footer-avant.png` (Généré / via / LABUSE) → `p1-footer-apres.png` (une ligne) ; `p1-planche-bas-de-page.png` = les 9+10 pages des 2 Dossiers, une ligne partout | `f3fb7b5e` |
-| 2 | Taxe foncière « part communale 48,68 % · EPCI 0,00 % · TEOM 16,00 % » sans dire ce qui manque | **fait** | `p2-taxe-avant.png` → **la même ligne** dans les 3 surfaces : `p2-taxe-dossier-apres.png`, `p2-taxe-fiche-apres.png`, `p2-taxe-copilote-apres.png` | `8ba0d011` |
+| 2 | Taxe foncière « part communale 48,68 % · EPCI 0,00 % · TEOM 16,00 % » sans dire ce qui manque | **fait** (+ retouche TEOM) | `p2-taxe-avant.png` → **la même ligne** dans les 3 surfaces : `p2-taxe-dossier-apres.png`, `p2-taxe-fiche-apres.png`, `p2-taxe-copilote-apres.png` | `8ba0d011` · `82911ecd` |
 | 3 | Titre Apporteur « Un bien bâti à sonder » sur une parcelle agricole | **fait** | `p3-titre-avant.png` (« Un bien bâti à sonder » sur zone A) → `p3-titre-apres.png` (« Une parcelle agricole à sonder ») | `ef0744ef` |
 | 4 | §8 Marché « Autre 215 000 € — 43 ventes » (fourre-tout DVF, prix total) | **fait** | `p4-autre-avant.png` (Appartement/**Autre**/Maison) → `p4-autre-apres.png` (Autre retirée) | `6c53b273` |
 | 5 | §1 « Filiation cadastrale : Filiation cadastrale disponible » — annonce vide | **fait** | `p5-filiation-avant.png` → `p5-filiation-apres.png` (« Issue de 97408000AO1402 (document d'arpentage, 12/06/2006) ») | `5e4df172` |
 | 6 | Pipeline `flash/` orphelin (SOURCES-FIX-2) — à supprimer | **STOP** | `flash/` est **activement appelé** (voir §Point 6) — non supprimé, non orphelin | — |
-| 7 | Servitudes : date d'ingestion non affichée (SOURCES-FIX-2) | **fait** | `p7-servitudes-millesime.png` : date d'ingestion → millésime `source_millesime` (PPR « approuvés 2011–2026 », Cerema « arrêtés déc. 2023 »…) | `ba07355c` |
+| 7 | Servitudes : date d'ingestion non affichée (SOURCES-FIX-2) | **fait** (+ retouche Dossier) | `p7-servitudes-millesime.png` (fiche/outil) ; **au Dossier** §5 `p7-dossier-aleas-avant/apres.png`, §4 `p7-dossier-sup-avant/apres.png` | `ba07355c` · `114709c8` |
 
 ## Détail par point
 
@@ -42,8 +42,11 @@ périmètre), mais la largeur reste réservée et **écrase** la case `@bottom-c
 croyait lire la taxe foncière entière, alors qu'il manquait la part départementale (et les taxes
 spéciales), et EPCI/TEOM étaient listés comme s'ils s'additionnaient.
 **Correctif.** Producteur **unique** `src/labuse/fiscalite_libelle.py::lignes_taxe_fonciere(fisc)` →
-« **Taxe foncière (bâti) — part communale X % · hors part départementale, TEOM et taxes spéciales** »
-(+ une ligne **non bâti** si la TFPNB est servie). La même chaîne alimente :
+« **Taxe foncière (bâti) — part communale X % · TEOM Y % · hors part départementale et taxes
+spéciales** » (+ une ligne **non bâti** si la TFPNB est servie). _Retouche de recette (`82911ecd`) :
+la TEOM est **réintégrée** — elle était juste et utile, elle ne doit pas être annoncée comme exclue ;
+elle s'affiche quand on l'a (bâti seul, jamais sur le non-bâti) et disparaît sinon ; la mention EPCI
+à 0 % reste retirée._ La même chaîne alimente :
 - le **Dossier** : `exports/miroir.py::_r_tfpb` (valeur) + intitulé `declarations/fiche/sections_restantes.yaml` (« Taxe foncière (bâti) ») ;
 - le **Copilote** : `copilote_v2/resume_fiche.py` (réponse `champ_precis` + carte « Fiscalité ») ;
 - la **fiche** : bloc fiscalité servi (`api/fiche_commune.py::fiscalite` → `lignes`), affiché tel quel
@@ -110,6 +113,18 @@ Témoin La Possession (`p7-servitudes-millesime.png`) : DEAL PPR « PPR/PPRL app
 Cerema « arrêtés déc. 2023 », PLU/GPU « révisions » ; SUP assiettes GPU (sans millésime amont) →
 repli sur la date d'ingestion.
 
+**Retouche de recette (`114709c8`) — le millésime au Dossier.** Le premier correctif ne touchait que la
+fiche et l'outil ; **aucun millésime n'apparaissait dans les deux Dossiers**. Le §12 « Limites et
+sources » masque volontairement tout millésime (décision EXPORTS-2 lot 2), donc on l'imprime **sur la
+ligne**, là où le lecteur regarde :
+- **§5 Risques** (`miroir._r_aleas`) : « …niveau moyen · millésime PPR/PPRL approuvés 2011–2026 (DEAL
+  Lizmap) » — la donnée est déjà composée par `servitudes.aleas_parcelle` ;
+- **§4 Urbanisme, SUP** (`miroir._r_sup`) : « 1 servitude — PM1 … · millésime 2026-09-14 » — après
+  jonction de `data_sources` aux deux requêtes `_DISPOSITIFS_SQL(_MAT)` et composition dans
+  `_dispositifs_block` (l'assiette SUP GPU n'a pas de millésime amont → repli sur la date d'ingestion).
+
+Captures : §5 `p7-dossier-aleas-avant.png`→`…-apres.png`, §4 `p7-dossier-sup-avant.png`→`…-apres.png`.
+
 ## Vérification (verrous)
 
 | Verrou | Résultat |
@@ -144,7 +159,7 @@ branchée — piège d'environnement, pas de régression.)
 | 3 | `src/labuse/exports/blocs/apporteur.py` |
 | 4 | `src/labuse/exports/miroir.py` |
 | 5 | `src/labuse/exports/miroir.py` |
-| 7 | `src/labuse/api/servitudes.py` |
+| 7 | `src/labuse/api/servitudes.py` (fiche/outil) · `src/labuse/exports/miroir.py` + `src/labuse/api/app.py` (millésime au Dossier §4/§5, retouche) |
 
 Outillage de recette (non produit, sous `scripts/`) : `retouches1_gen.py` (génère les 4 PDF par
 les vraies routes, TestClient, `carte=false`) et `retouches1_crop.py` (recadrage des bandes par

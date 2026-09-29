@@ -267,7 +267,8 @@ Points de risque                               1                                
 
 
 Aléa mouvement de terrain                      Aléa mouvement de terrain — niveau faible (toute la                    sourcé
-                                               parcelle).
+                                               parcelle). · millésime PPR/PPRL approuvés 2011–2026
+                                               (arrêtés, DEAL Lizmap)
 
 
   VÉRIFIÉ : RIEN
@@ -337,8 +338,8 @@ Logements (EGOUL) · GPU — zonages d'assainissement
 
 Taxes
 
-Taxe foncière (bâti)                           part communale 41,77 % · hors part départementale,                     sourcé
-                                               TEOM et taxes spéciales
+Taxe foncière (bâti)                           part communale 41,77 % · TEOM 16,00 % · hors part                      sourcé
+                                               départementale et taxes spéciales
 
 Taxe d'aménagement — taux                      Taux communal 5,0 % — Taux communal en vigueur                         sourcé
 communal                                       depuis le 01/01/2022 (délibération communale). Se

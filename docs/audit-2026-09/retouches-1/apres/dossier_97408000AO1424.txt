@@ -163,7 +163,7 @@ Rappel RTAA DOM                                Conception réglementée pour tou
 Droit des sols (ER · EBC · DPU · PEB)
 
 Prescriptions du droit des sols                 1 servitude — PM1 — plan de prévention des risques                   sourcé
-                                                naturels (PPR)
+                                                naturels (PPR) · millésime 2026-09-14
 
 SCOT                                            TCO — approuvé le 03/10/2022                                         sourcé
 
@@ -231,11 +231,13 @@ Points de risque                              2                                 
 
 
 Aléa mouvement de terrain                     Aléa mouvement de terrain — niveau moyen (~2% de la                  sourcé
-                                              parcelle).
+                                              parcelle). · millésime PPR/PPRL approuvés 2011–2026
+                                              (arrêtés, DEAL Lizmap)
 
 PPR — zone bleue                              Zone bleue PPR inondation et mouvement de terrain                    sourcé
                                               (~2% de la parcelle) — constructible SOUS
-                                              PRESCRIPTIONS (règlement DEAL).
+                                              PRESCRIPTIONS (règlement DEAL). · millésime PPR/PPRL
+                                              approuvés 2011–2026 (arrêtés, DEAL Lizmap)
 
 
   VÉRIFIÉ : RIEN
@@ -282,14 +284,15 @@ Accès
 Arrêt de transport le plus proche             Arrêt Ravine à Marquet (Kar'Ouest) à 256 m · Impasse                 sourcé
                                               Europa à 1 065 m · N1 à 507 m
 
-Stationnement allégé (TCSP, L151-36)          Station de transport en site propre à 812 m — hors                   sourcé
-                                              rayon de 800 m (pas d'allègement L151-36)
-
 
 
 
                                                          Généré via LABUSE                                            5/9
-  NON DISPONIBLE ICI
+Stationnement allégé (TCSP, L151-36)           Station de transport en site propre à 812 m — hors                     sourcé
+                                               rayon de 800 m (pas d'allègement L151-36)
+
+
+  NON DISPONIBLE ICI
     • Productible solaire : non calculé sur cette toiture.
 
 
@@ -306,8 +309,8 @@ Logements (EGOUL) · GPU — zonages d'assainissement
 
 Taxes
 
-Taxe foncière (bâti)                           part communale 48,68 % · hors part départementale,                     sourcé
-                                               TEOM et taxes spéciales
+Taxe foncière (bâti)                           part communale 48,68 % · TEOM 16,00 % · hors part                      sourcé
+                                               départementale et taxes spéciales
 
 Taxe d'aménagement — taux                      Taux communal 5,0 % — Taux communal en vigueur                         sourcé
 communal                                       depuis le 01/01/2022 (délibération communale). Se
