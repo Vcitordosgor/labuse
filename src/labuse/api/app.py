@@ -4549,11 +4549,11 @@ def _dispositifs_block(db: Session, idu: str) -> dict | None:
             if peb is None or z < peb["zone"]:
                 peb = {"zone": z, "libelle": r["libelle"], "part_pct": part}
         elif r["kind"] == "sup":
-            # RETOUCHES-1 point 7 — millésime de la SUP (data_sources.source_millesime, producteur
-            # unique millesime_source.composer), repli sur la date d'ingestion si non versionné.
-            from ..millesime_source import composer as _mill
-            _m = _mill(r["source_millesime"], source_horizon_at=r["source_horizon_at"]) \
-                or (str(r["ingere_le"]) if r["ingere_le"] else None)
+            # RETOUCHES-1 point 7 — libellé daté nommé selon sa provenance : « millésime <X> » si
+            # publié en amont (data_sources.source_millesime), sinon « ingéré le JJ/MM/AAAA » (repli).
+            from ..millesime_source import libelle_date_source as _date_source
+            _m = _date_source(r["source_millesime"], source_horizon_at=r["source_horizon_at"],
+                              ingere_le=r["ingere_le"])
             sup.append({"categorie": (r["subtype"] or "?").upper(),
                         "libelle": r["nomsuplitt"] or r["libelle"], "part_pct": part, "millesime": _m})
     # DPU : distinguer « hors périmètre publié » de « commune non publiée » (règle 3 du mandat).

@@ -99,3 +99,16 @@ def composer(source_millesime, *, source_horizon_at=None, dernier_vu=None,
         base = str(mill).split(" — ")[0]
         return f"{base} — édition courante"
     return nettoyer_notes_internes(mill)
+
+
+def libelle_date_source(source_millesime, *, source_horizon_at=None, ingere_le=None) -> str | None:
+    """RETOUCHES-1 point 7 — le libellé DATÉ d'une source, nommé selon sa provenance.
+
+    « millésime <X> » quand une date est PUBLIÉE en amont (source_millesime / horizon, via composer) ;
+    sinon, en repli, « ingéré le JJ/MM/AAAA » depuis la date d'ingestion LABUSE. Le mot « millésime »
+    est RÉSERVÉ aux dates publiées par la source — jamais à la date d'ingestion. None si rien à dire."""
+    mill = composer(source_millesime, source_horizon_at=source_horizon_at)
+    if mill:
+        return f"millésime {mill}"
+    d = _fr(ingere_le)
+    return f"ingéré le {d}" if d else None

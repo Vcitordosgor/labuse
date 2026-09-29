@@ -370,8 +370,8 @@ def _r_sup(v):
                 mills.append(m)
         libs = [_sup_libelle(c) for c in cats[:6]]
         s = f"{len(cats)} servitude{'s' if len(cats) > 1 else ''} — " + " · ".join(libs)
-        if mills:   # millésime de la source (data_sources.source_millesime), comme les autres sources
-            s += " · millésime " + " · ".join(mills[:3])
+        if mills:   # libellé daté déjà nommé (« millésime <X> » ou « ingéré le JJ/MM/AAAA »)
+            s += " · " + " · ".join(mills[:3])
         return esc(s)
     return esc(v)
 
@@ -428,11 +428,11 @@ def _r_aleas(v, val: Valeur):
         niv = a.get("niveau")
         if niv:
             lib += esc(f" — aléa de niveau {niv}") if "niveau" not in (a.get("libelle") or "") else ""
-        # RETOUCHES-1 point 7 — le MILLÉSIME de la source (data_sources.source_millesime, déjà composé
-        # par servitudes.aleas_parcelle) s'imprime sur la ligne, comme le veut la relecture du Dossier.
+        # RETOUCHES-1 point 7 — le libellé daté de la source (déjà nommé par servitudes.aleas_parcelle :
+        # « millésime <X> » si publié amont, sinon « ingéré le JJ/MM/AAAA ») s'imprime sur la ligne.
         mill = a.get("millesime")
         if mill:
-            lib += esc(f" · millésime {mill}")
+            lib += esc(f" · {mill}")
         rows.append(f'<tr data-quoi="aleas_parcelle_liste"><td class="k">{nat}</td>'
                     f'<td>{lib}</td><td class="n">{chip(val)}</td></tr>')
     return '<table class="kv">' + "".join(rows) + "</table>"

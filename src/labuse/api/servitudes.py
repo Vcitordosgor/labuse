@@ -18,7 +18,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from ..millesime_source import composer as _millesime  # RETOUCHES-1 point 7 — producteur unique
+from ..millesime_source import libelle_date_source as _date_source  # RETOUCHES-1 point 7 (repli nommé)
 
 log = logging.getLogger("labuse.servitudes")
 router = APIRouter(prefix="/servitudes-invisibles", tags=["servitudes-invisibles"])
@@ -241,10 +241,9 @@ def aleas_parcelle(db: Session, idu: str) -> list[dict]:
         pct = r["pct"] or 0
         if pct <= 0:   # intersection au bord (aire arrondie à 0 %) → bruit, pas une contrainte
             continue
-        # RETOUCHES-1 point 7 — millésime = source_millesime composé par le producteur unique
-        # (comme la fiche §Sources et les autres sources) ; repli sur la date d'ingestion si la source
-        # n'a pas de millésime amont publié, pour tenir la promesse « chaque servitude datée ».
-        mill = _millesime(r["source_millesime"], source_horizon_at=r["source_horizon_at"]) or r["ingere_le"]
+        # RETOUCHES-1 point 7 — libellé daté nommé selon sa provenance : « millésime <X> » si publié
+        # en amont (source_millesime), sinon « ingéré le JJ/MM/AAAA » (repli d'ingestion).
+        mill = _date_source(r["source_millesime"], source_horizon_at=r["source_horizon_at"], ingere_le=r["ingere_le"])
         risque = r["risque"] or "risque naturel"
         pctxt = f" (~{pct}% de la parcelle)" if pct < 99 else " (toute la parcelle)"
         if r["zone"] == "INTERDICTION":
@@ -289,7 +288,7 @@ def aleas_parcelle(db: Session, idu: str) -> list[dict]:
         niveau = a["niveau"] or "moyen"
         pct = a["pct"] or 0
         pctxt = f" (~{pct}% de la parcelle)" if pct < 99 else " (toute la parcelle)"
-        mill = _millesime(a["source_millesime"], source_horizon_at=a["source_horizon_at"]) or a["ingere_le"]
+        mill = _date_source(a["source_millesime"], source_horizon_at=a["source_horizon_at"], ingere_le=a["ingere_le"])
         out.append({"nature": f"Aléa {typ}", "niveau": niveau, "part_pct": pct,
                     "libelle": _clean_risque(f"Aléa {typ} — niveau {niveau}{pctxt}."), "redhibitoire": False,
                     "source": a["source"] or "DEAL Réunion / Géorisques", "millesime": mill})
@@ -330,11 +329,10 @@ def contraintes_parcelle(db: Session, idu: str) -> list[dict]:
         if key in seen:
             continue
         seen.add(key)
-        # RETOUCHES-1 point 7 — la « date » servie est le MILLÉSIME de la source (data_sources.source_millesime,
-        # composé par le producteur unique, comme la fiche §Sources), pas la seule date d'ingestion ;
-        # repli sur la date d'ingestion quand la source n'a pas de millésime amont publié.
-        mill = _millesime(r["source_millesime"], source_horizon_at=r["source_horizon_at"]) \
-            or (str(r["date_source"]) if r["date_source"] else None)
+        # RETOUCHES-1 point 7 — libellé daté nommé : « millésime <X> » si publié en amont
+        # (data_sources.source_millesime), sinon « ingéré le JJ/MM/AAAA » (repli d'ingestion).
+        mill = _date_source(r["source_millesime"], source_horizon_at=r["source_horizon_at"],
+                            ingere_le=r["date_source"])
         items.append({"categorie": _KINDS.get(r["kind"], r["kind"]), "effet": detail,
                       "source": r["source"] or "spatial_layers", "date": mill})
     # PIEGES-RISQUES-2 (Lot B) — RISQUE GRADUÉ (PPR zoné rouge/bleu + aléas par niveau) ajouté aux DEUX
