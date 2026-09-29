@@ -536,6 +536,12 @@ def _r_dvf_liste(v, val: Valeur, zone=None):
         if n is not None and n < SEUIL_N:
             continue
         typ = str(r.get("type_bien") or "")
+        # RETOUCHES-1 point 4 — « autre » est le fourre-tout DVF (dépendances, locaux, biens mixtes) :
+        # une médiane en PRIX TOTAL (pas de €/m², `mediane_prix_m2` absente), sans surface comparable
+        # aux lignes maison/appartement/terrain. La fiche ne l'affiche jamais (marche.tsx ne rend que
+        # terrain/maison/appartement) ; on le retire du Dossier pour la même raison — cohérence fiche == Dossier.
+        if typ.lower() == "autre":
+            continue
         tb = esc(typ.capitalize())
         px = fmt_eur_m2(r["mediane_prix_m2"]) if r.get("mediane_prix_m2") else \
             (fmt_eur(r["mediane_valeur"]) if r.get("mediane_valeur") else "")
