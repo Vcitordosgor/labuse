@@ -265,7 +265,19 @@ def rendu(valeurs, ctx=None) -> str:
     # RECETTE-6 (F1) — le titre SUIT le contenu : un terrain nu se « sonde », un bien déjà bâti aussi
     # mais on ne l'appelle pas « terrain ». Le brief adaptait déjà ses questions (bâti / PM / industriel)
     # mais gardait un titre « terrain » démenti par la ligne « 2 bâtiments · 151 m² au sol ».
-    titre = "Un bien bâti à sonder" if is_bati else "Un terrain à sonder"
+    # RETOUCHES-1 point 3 — le titre suit AUSSI la nature de la parcelle : une zone agricole (A) ou
+    # naturelle (N) n'est jamais « un bien bâti » (même bâtie, la constructibilité y est le fait
+    # dominant), et un terrain sans bâti reste « un terrain ». Jamais « bâti » sans bâti. La famille
+    # de zone est lue comme dans _coup_d_oeil (val zone_plu_famille : « A », « N », « U », « AU »).
+    _fam = str(val(valeurs, "zone_plu_famille") or "").upper()
+    if _fam == "A":
+        titre = "Une parcelle agricole à sonder"
+    elif _fam == "N":
+        titre = "Une parcelle naturelle à sonder"
+    elif is_bati:
+        titre = "Un bien bâti à sonder"
+    else:
+        titre = "Un terrain à sonder"
     h = ('<div class="brand"><span class="wordmark">LABUSE</span>'
          '<span class="kind">Brief apporteur</span></div>'
          + f'<h1>{esc(titre)}</h1>'
