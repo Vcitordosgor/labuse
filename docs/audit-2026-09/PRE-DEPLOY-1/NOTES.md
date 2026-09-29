@@ -16,3 +16,17 @@ Notes à traiter/valider lors du mandat PRE-DEPLOY-1.
   (c'est un flag dev/ops uniquement — sinon la protection anti-scraping est désactivée en prod) ;
   (2) le job nocturne `coherence-banc` tourne SANS dev_mode ni rate_limit_off en prod (il doit
   passer la protection légitimement — sujet allowlisté `LABUSE_QA_ALLOWLIST`, ou débit sous 60/min).
+
+## CatNat — carte risques (Géorisques brut) vs compte servi (dédoublonné) — ARRÊTÉ pour décision Vic
+- **Observation** : 97410 15≠17, 97418 20≠22 (écart constant −2).
+- **Analyse** (FRONT-CHIFFRES-2) : nos trois lecteurs servis (fiche parcelle `fiche_blocs3.catnat.total`,
+  fiche commune `fiche_commune`, page Sources `filtres/sources`) donnent TOUS **15/20** — `count(*)` sur
+  `catnat_arretes`, table **dédoublonnée** à l'ingestion (contrainte UNIQUE `insee,type_peril,date_arrete,
+  date_debut`). Le front affiche 15/20 PARTOUT (liste risques + compteur ContextePanel) : **aucune
+  incohérence interne**. Le 17/22 est le **compte Géorisques BRUT** (GASPAR renvoie 2 arrêtés qui
+  partagent péril+dates → dédoublonnés par DESIGN, décision COHERENCE-FIX-1 « CatNat dédoublonné GASPAR »).
+- **Donc** : notre 15/20 est correct-par-choix ; le 17/22 réintroduirait les doublons GASPAR.
+- **ARRÊTÉ** : si Vic veut aligner sur le brut Géorisques (17/22), il faut **re-ingérer `catnat_arretes`
+  avec une clé de dédoublonnage incluant `code_national_catnat`** (recalcul de table) ET revenir sur le
+  dédoublonnage COHERENCE-FIX-1. Recalcul de table → hors périmètre FRONT-CHIFFRES-2 (garde-fou : arrêté).
+  À trancher : le doublon GASPAR est-il un vrai doublon (garder 15) ou 2 arrêtés distincts (passer à 17) ?
