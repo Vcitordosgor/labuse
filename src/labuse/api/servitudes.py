@@ -18,6 +18,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from ..millesime_source import libelle_date_source as _date_source  # RETOUCHES-1 point 7 (repli nommé)
+
 log = logging.getLogger("labuse.servitudes")
 router = APIRouter(prefix="/servitudes-invisibles", tags=["servitudes-invisibles"])
 
@@ -230,7 +232,8 @@ def aleas_parcelle(db: Session, idu: str) -> list[dict]:
            SELECT upper(sl.subtype) AS zone, sl.attrs->>'risque' AS risque,
                   round((100 * ST_Area(ST_Union(ST_Intersection(sl.geom_2975, p.g))) / NULLIF(min(p.a), 0))::numeric)::int AS pct,
                   max(ds.name) AS source,
-                  max(COALESCE(ds.last_sync_at, ds.updated_at)::date)::text AS millesime
+                  max(ds.source_millesime) AS source_millesime, max(ds.source_horizon_at) AS source_horizon_at,
+                  max(COALESCE(ds.last_sync_at, ds.updated_at)::date)::text AS ingere_le
            FROM spatial_layers sl CROSS JOIN p LEFT JOIN data_sources ds ON ds.id = sl.data_source_id
            WHERE sl.kind = 'ppr' AND sl.geom_2975 IS NOT NULL AND ST_Intersects(sl.geom_2975, p.g)
              AND upper(sl.subtype) IN ('INTERDICTION', 'PRESCRIPTION')
@@ -238,6 +241,9 @@ def aleas_parcelle(db: Session, idu: str) -> list[dict]:
         pct = r["pct"] or 0
         if pct <= 0:   # intersection au bord (aire arrondie à 0 %) → bruit, pas une contrainte
             continue
+        # RETOUCHES-1 point 7 — libellé daté nommé selon sa provenance : « millésime <X> » si publié
+        # en amont (source_millesime), sinon « ingéré le JJ/MM/AAAA » (repli d'ingestion).
+        mill = _date_source(r["source_millesime"], source_horizon_at=r["source_horizon_at"], ingere_le=r["ingere_le"])
         risque = r["risque"] or "risque naturel"
         pctxt = f" (~{pct}% de la parcelle)" if pct < 99 else " (toute la parcelle)"
         if r["zone"] == "INTERDICTION":
@@ -253,12 +259,12 @@ def aleas_parcelle(db: Session, idu: str) -> list[dict]:
                 red = False
             out.append({"nature": "PPR — zone rouge", "niveau": "rouge", "part_pct": pct,
                         "libelle": _clean_risque(lib), "redhibitoire": red,
-                        "source": r["source"] or "DEAL Réunion", "millesime": r["millesime"]})
+                        "source": r["source"] or "DEAL Réunion", "millesime": mill})
         else:   # PRESCRIPTION = zone bleue
             lib = (f"Zone bleue PPR {risque}{pctxt} — constructible SOUS PRESCRIPTIONS (règlement DEAL).")
             out.append({"nature": "PPR — zone bleue", "niveau": "bleu", "part_pct": pct,
                         "libelle": _clean_risque(lib), "redhibitoire": False,
-                        "source": r["source"] or "DEAL Réunion", "millesime": r["millesime"]})
+                        "source": r["source"] or "DEAL Réunion", "millesime": mill})
     # Aléas Géorisques : UN niveau (le plus fort) par type d'aléa, avec % touché (arbitrage M73).
     best: dict[str, tuple[int, dict]] = {}
     for a in db.execute(text(
@@ -266,7 +272,8 @@ def aleas_parcelle(db: Session, idu: str) -> list[dict]:
            SELECT COALESCE(sl.attrs->>'type', sl.subtype) AS type, lower(sl.attrs->>'niveau') AS niveau,
                   round((100 * ST_Area(ST_Union(ST_Intersection(sl.geom_2975, p.g))) / NULLIF(min(p.a), 0))::numeric)::int AS pct,
                   max(ds.name) AS source,
-                  max(COALESCE(ds.last_sync_at, ds.updated_at)::date)::text AS millesime
+                  max(ds.source_millesime) AS source_millesime, max(ds.source_horizon_at) AS source_horizon_at,
+                  max(COALESCE(ds.last_sync_at, ds.updated_at)::date)::text AS ingere_le
            FROM spatial_layers sl CROSS JOIN p LEFT JOIN data_sources ds ON ds.id = sl.data_source_id
            WHERE sl.kind = 'georisque_alea' AND sl.geom_2975 IS NOT NULL AND ST_Intersects(sl.geom_2975, p.g)
            GROUP BY COALESCE(sl.attrs->>'type', sl.subtype), lower(sl.attrs->>'niveau')"""),
@@ -281,9 +288,10 @@ def aleas_parcelle(db: Session, idu: str) -> list[dict]:
         niveau = a["niveau"] or "moyen"
         pct = a["pct"] or 0
         pctxt = f" (~{pct}% de la parcelle)" if pct < 99 else " (toute la parcelle)"
+        mill = _date_source(a["source_millesime"], source_horizon_at=a["source_horizon_at"], ingere_le=a["ingere_le"])
         out.append({"nature": f"Aléa {typ}", "niveau": niveau, "part_pct": pct,
                     "libelle": _clean_risque(f"Aléa {typ} — niveau {niveau}{pctxt}."), "redhibitoire": False,
-                    "source": a["source"] or "DEAL Réunion / Géorisques", "millesime": a["millesime"]})
+                    "source": a["source"] or "DEAL Réunion / Géorisques", "millesime": mill})
     return out
 
 
@@ -298,7 +306,8 @@ def contraintes_parcelle(db: Session, idu: str) -> list[dict]:
     rows = db.execute(text(
         """WITH p AS (SELECT geom_2975 FROM parcels WHERE idu = :idu)
            SELECT sl.kind, sl.subtype, sl.name, sl.attrs,
-                  ds.name AS source, COALESCE(ds.last_sync_at, ds.updated_at)::date AS date_source
+                  ds.name AS source, ds.source_millesime, ds.source_horizon_at,
+                  COALESCE(ds.last_sync_at, ds.updated_at)::date AS date_source
            FROM spatial_layers sl LEFT JOIN data_sources ds ON ds.id = sl.data_source_id, p
            WHERE sl.kind = ANY(:kinds) AND sl.geom_2975 IS NOT NULL
              AND ST_Intersects(sl.geom_2975, p.geom_2975)"""),
@@ -320,8 +329,12 @@ def contraintes_parcelle(db: Session, idu: str) -> list[dict]:
         if key in seen:
             continue
         seen.add(key)
+        # RETOUCHES-1 point 7 — libellé daté nommé : « millésime <X> » si publié en amont
+        # (data_sources.source_millesime), sinon « ingéré le JJ/MM/AAAA » (repli d'ingestion).
+        mill = _date_source(r["source_millesime"], source_horizon_at=r["source_horizon_at"],
+                            ingere_le=r["date_source"])
         items.append({"categorie": _KINDS.get(r["kind"], r["kind"]), "effet": detail,
-                      "source": r["source"] or "spatial_layers", "date": str(r["date_source"]) if r["date_source"] else None})
+                      "source": r["source"] or "spatial_layers", "date": mill})
     # PIEGES-RISQUES-2 (Lot B) — RISQUE GRADUÉ (PPR zoné rouge/bleu + aléas par niveau) ajouté aux DEUX
     # modes : la même donnée que la couche carte et que la fiche §Pièges & risques (le mode parcelle ne
     # voyait le PPR que par l'assiette SUP, sans le zonage ni le niveau).

@@ -358,14 +358,21 @@ def _r_sup(v):
     # et libellé clair de chaque catégorie, jamais le code d'assiette technique répété.
     if isinstance(v, list):
         cats: list[str] = []
+        mills: list[str] = []      # RETOUCHES-1 point 7 — millésime(s) des SUP intersectées
         for x in v:
             if not x:
                 continue
             cat = str((x.get("categorie") if isinstance(x, dict) else None) or x)
             if cat not in cats:
                 cats.append(cat)
+            m = x.get("millesime") if isinstance(x, dict) else None
+            if m and m not in mills:
+                mills.append(m)
         libs = [_sup_libelle(c) for c in cats[:6]]
-        return esc(f"{len(cats)} servitude{'s' if len(cats) > 1 else ''} — " + " · ".join(libs))
+        s = f"{len(cats)} servitude{'s' if len(cats) > 1 else ''} — " + " · ".join(libs)
+        if mills:   # libellé daté déjà nommé (« millésime <X> » ou « ingéré le JJ/MM/AAAA »)
+            s += " · " + " · ".join(mills[:3])
+        return esc(s)
     return esc(v)
 
 
@@ -421,6 +428,11 @@ def _r_aleas(v, val: Valeur):
         niv = a.get("niveau")
         if niv:
             lib += esc(f" — aléa de niveau {niv}") if "niveau" not in (a.get("libelle") or "") else ""
+        # RETOUCHES-1 point 7 — le libellé daté de la source (déjà nommé par servitudes.aleas_parcelle :
+        # « millésime <X> » si publié amont, sinon « ingéré le JJ/MM/AAAA ») s'imprime sur la ligne.
+        mill = a.get("millesime")
+        if mill:
+            lib += esc(f" · {mill}")
         rows.append(f'<tr data-quoi="aleas_parcelle_liste"><td class="k">{nat}</td>'
                     f'<td>{lib}</td><td class="n">{chip(val)}</td></tr>')
     return '<table class="kv">' + "".join(rows) + "</table>"
@@ -536,6 +548,12 @@ def _r_dvf_liste(v, val: Valeur, zone=None):
         if n is not None and n < SEUIL_N:
             continue
         typ = str(r.get("type_bien") or "")
+        # RETOUCHES-1 point 4 — « autre » est le fourre-tout DVF (dépendances, locaux, biens mixtes) :
+        # une médiane en PRIX TOTAL (pas de €/m², `mediane_prix_m2` absente), sans surface comparable
+        # aux lignes maison/appartement/terrain. La fiche ne l'affiche jamais (marche.tsx ne rend que
+        # terrain/maison/appartement) ; on le retire du Dossier pour la même raison — cohérence fiche == Dossier.
+        if typ.lower() == "autre":
+            continue
         tb = esc(typ.capitalize())
         px = fmt_eur_m2(r["mediane_prix_m2"]) if r.get("mediane_prix_m2") else \
             (fmt_eur(r["mediane_valeur"]) if r.get("mediane_valeur") else "")
@@ -630,13 +648,13 @@ def _r_rnb(v):
 
 
 def _r_tfpb(v):
-    bits = [f"part communale {fmt_pct(v['tfpb_commune_pct'], 2)}"]
-    if v.get("tfpb_epci_pct") is not None:
-        bits.append(f"EPCI {fmt_pct(v['tfpb_epci_pct'], 2)}")
-    if v.get("teom_pct") is not None:
-        bits.append(f"TEOM {fmt_pct(v['teom_pct'], 2)}")
-    # EXPORTS-FIX-1 A6 — la valeur ne répète plus le libellé « Taxe foncière (TFPB) » de la ligne.
-    return esc(" · ".join(bits))
+    # RETOUCHES-1 point 2 — MÊME ligne que la fiche et le Copilote : « part communale X % · hors part
+    # départementale, TEOM et taxes spéciales ». Producteur unique (fiscalite_libelle). On n'énumère
+    # plus « EPCI 0,00 % · TEOM 16,00 % » (le lecteur croyait lire la taxe entière). L'intitulé de la
+    # ligne devient « Taxe foncière (bâti) » (sections_restantes.yaml).
+    from ..fiscalite_libelle import lignes_taxe_fonciere
+    lignes = lignes_taxe_fonciere(v)
+    return esc(lignes[0]["detail"]) if lignes else ""
 
 
 def _r_taxe(v):
@@ -705,9 +723,26 @@ def _r_rang(v):
 
 
 def _r_filiation(v):
-    if isinstance(v, list):
+    # RETOUCHES-1 point 5 — on rend la filiation ELLE-MÊME (parcelles mères « Issue de » / filles
+    # « A donné », avec date et nature), comme la fiche (FiliationBlock, FICHE-FIX-4), au lieu de
+    # l'annonce vide « Filiation cadastrale disponible ». `v` = passe-plat de dfi.filiation_parcelle().
+    if isinstance(v, list):   # compat d'un ancien format (liste d'événements)
         return esc(f"{len(v)} événement{'s' if len(v) > 1 else ''} cadastral(aux) (DFI)")
-    return esc(v.get("libelle") or "Filiation cadastrale disponible")
+    if not isinstance(v, dict):
+        return ""
+
+    def _un(r):
+        det = r.get("code_amont") or r.get("nature")
+        qual = ", ".join(x for x in (det, r.get("date")) if x)
+        return (r.get("idu") or "") + (f" ({qual})" if qual else "")
+
+    bits = []
+    if v.get("meres"):
+        bits.append("Issue de " + " · ".join(_un(m) for m in v["meres"][:6]))
+    if v.get("filles"):
+        bits.append("A donné " + " · ".join(_un(x) for x in v["filles"][:6]))
+    # aucune mère ni fille exploitable → "" : la ligne bascule en « Non disponible ici » (absence déclarée).
+    return esc(_fr_dates(" — ".join(bits)))
 
 
 #: id → rendeur. `bloc` = fragment pleine largeur (tableau propre) ; sinon cellule valeur.

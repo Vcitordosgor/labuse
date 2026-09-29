@@ -561,6 +561,10 @@ export interface Fiche {
   // que la fiche commune). Tuile « Taxe foncière ». `perime` = fraîcheur > 1 an. null = non ingéré.
   fiscalite?: {
     tfpb_commune_pct: number | null; tfpb_epci_pct: number | null; teom_pct: number | null
+    tfpnb_commune_pct?: number | null; tfpnb_epci_pct?: number | null
+    // RETOUCHES-1 point 2 — ligne(s) canonique(s) « Taxe foncière (bâti/non bâti) — part communale … »,
+    // producteur unique partagé par la fiche, le Dossier et le Copilote (jamais recomposée à l'écran).
+    lignes?: { label: string; detail: string; ligne: string }[]
     millesime: string; maj_at?: string | null; perime?: boolean; source: string
   } | null
   // RETOUCHES-1 lot C (FICHE-3) — six blocs sourcés/millésimés, `disponible=false` = « sans objet ».

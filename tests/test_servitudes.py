@@ -111,7 +111,9 @@ def test_flux_sup_sourcee_datee_et_dedup(db_session):
     out = sv.servitudes_invisibles(idu, s)
     assert out["n"] == 1                                   # dédup : gen1+gen2 = 1 ligne
     it = out["servitudes"][0]
-    assert "Risques naturels" in it["effet"] and it["source"] == "SUP test" and it["date"] == "2026-07-10"
+    # RETOUCHES-1 point 7 — la source n'a pas de millésime amont publié → repli d'ingestion NOMMÉ
+    # « ingéré le JJ/MM/AAAA » (le mot « millésime » est réservé aux dates publiées par la source).
+    assert "Risques naturels" in it["effet"] and it["source"] == "SUP test" and it["date"] == "ingéré le 10/07/2026"
     assert out["non_couvert"]                              # manques listés
 
 

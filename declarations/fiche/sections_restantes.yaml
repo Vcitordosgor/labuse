@@ -131,7 +131,7 @@ donnees:
   # de l'ÉCRAN reste déclarée dans entete_tuiles.yaml.
   - quoi:  tfpb_taux_pct
     ou:    { rang: 5, etat: en_tete, section: "Taxes" }
-    comment: { libelle: "Taxe foncière (TFPB)", format: texte, i: "Taux de taxe foncière (part communale, EPCI, TEOM) — fichier REI (DGFiP)." }
+    comment: { libelle: "Taxe foncière (bâti)", format: texte, i: "Part communale du taux de taxe foncière sur le bâti (E12, fichier REI DGFiP) — hors part départementale, TEOM et taxes spéciales." }
     absence: "Taxe foncière : taux non disponible pour cette commune."
     absence_type: non_ingeree
     pourquoi: "La charge annuelle du bien pendant le portage ; en tête de la fiscalité."
