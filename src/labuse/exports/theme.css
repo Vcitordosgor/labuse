@@ -27,7 +27,10 @@
   margin: 17mm 16mm 19mm 16mm;
   @top-left { content: string(doc-title); font: 8pt "Inter", "Inter", "DejaVu Sans", sans-serif; color: #6B746E; }
   @top-right { content: string(doc-ref); font: 8pt "IBM Plex Mono", "DejaVu Sans Mono", monospace; color: #6B746E; }
-  @bottom-left { content: string(doc-foot); font: 7.2pt "Inter", "DejaVu Sans", sans-serif; color: #6B746E; width: 150mm; }
+  /* RETOUCHES-1 point 1 — plus de `width: 150mm` RÉSERVÉE ici : elle écrasait la case @bottom-center
+     (mention « Généré via LABUSE ») sur trois lignes. La case s'ajuste à son contenu ; le pied @bottom-center
+     dispose enfin de la largeur pour tenir sur une seule ligne (cf. `white-space: nowrap` de la route). */
+  @bottom-left { content: string(doc-foot); font: 7.2pt "Inter", "DejaVu Sans", sans-serif; color: #6B746E; }
   @bottom-right { content: counter(page) " / " counter(pages); font: 8pt "Inter", "DejaVu Sans", sans-serif; color: #6B746E; }
 }
 @page :first { @top-left { content: none } @top-right { content: none } }

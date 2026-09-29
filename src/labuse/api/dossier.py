@@ -101,7 +101,9 @@ def dossier_pdf(idu: str, request: Request, carte: bool = True,
     # string()/element()) : jamais dans le flux → aucun chevauchement possible (badge « sourcé »,
     # titres). Le div `position:fixed` (F1) qui chevauchait encore est retiré.
     _txt = ("Généré via LABUSE" + _pour).replace("\\", "").replace('"', "'")
-    style = ('<style>@page { @bottom-center { content: "' + _txt + '"; '
+    # RETOUCHES-1 point 1 — `white-space: nowrap` : la mention tient sur UNE ligne (elle se coupait en
+    # « Généré / via / LABUSE » quand la case @bottom-left réservait 150 mm — largeur retirée à la feuille).
+    style = ('<style>@page { @bottom-center { content: "' + _txt + '"; white-space: nowrap; '
              'font: 7pt "Inter","DejaVu Sans",sans-serif; color: #5F6C65; } }</style>')
     pdf = render_pdf(res.html.replace("</head>", style + "</head>"))
 
