@@ -23,7 +23,7 @@ Parcelle de démonstration du point 4 : **97411000AE0001** (Le Tampon, secteur a
 | 4 | §8 Marché « Autre 215 000 € — 43 ventes » (fourre-tout DVF, prix total) | **fait** | `p4-autre-avant.png` (Appartement/**Autre**/Maison) → `p4-autre-apres.png` (Autre retirée) | `6c53b273` |
 | 5 | §1 « Filiation cadastrale : Filiation cadastrale disponible » — annonce vide | **fait** | `p5-filiation-avant.png` → `p5-filiation-apres.png` (« Issue de 97408000AO1402 (document d'arpentage, 12/06/2006) ») | `5e4df172` |
 | 6 | Pipeline `flash/` orphelin (SOURCES-FIX-2) — à supprimer | **STOP** | `flash/` est **activement appelé** (voir §Point 6) — non supprimé, non orphelin | — |
-| 7 | Servitudes : date d'ingestion non affichée (SOURCES-FIX-2) | **fait** (+ retouche Dossier) | `p7-servitudes-millesime.png` (fiche/outil) ; **au Dossier** §5 `p7-dossier-aleas-avant/apres.png`, §4 `p7-dossier-sup-avant/apres.png` | `ba07355c` · `114709c8` |
+| 7 | Servitudes : date d'ingestion non affichée (SOURCES-FIX-2) | **fait** (+ retouche Dossier) | `p7-servitudes-millesime.png` (fiche/outil) ; **au Dossier** §5 `p7-dossier-aleas-avant/apres.png`, §4 `p7-dossier-sup-avant/apres.png` | `ba07355c` · `114709c8` · `6c0e19c6` |
 
 ## Détail par point
 
@@ -119,11 +119,22 @@ sources » masque volontairement tout millésime (décision EXPORTS-2 lot 2), do
 ligne**, là où le lecteur regarde :
 - **§5 Risques** (`miroir._r_aleas`) : « …niveau moyen · millésime PPR/PPRL approuvés 2011–2026 (DEAL
   Lizmap) » — la donnée est déjà composée par `servitudes.aleas_parcelle` ;
-- **§4 Urbanisme, SUP** (`miroir._r_sup`) : « 1 servitude — PM1 … · millésime 2026-09-14 » — après
+- **§4 Urbanisme, SUP** (`miroir._r_sup`) : « 1 servitude — PM1 … · ingéré le 14/09/2026 » — après
   jonction de `data_sources` aux deux requêtes `_DISPOSITIFS_SQL(_MAT)` et composition dans
-  `_dispositifs_block` (l'assiette SUP GPU n'a pas de millésime amont → repli sur la date d'ingestion).
+  `_dispositifs_block`.
 
-Captures : §5 `p7-dossier-aleas-avant.png`→`…-apres.png`, §4 `p7-dossier-sup-avant.png`→`…-apres.png`.
+**Retouche de recette (`6c0e19c6`) — nommer le repli.** Le mot « **millésime** » est RÉSERVÉ aux
+dates **publiées en amont** par la source ; quand seule la date d'ingestion existe (l'assiette SUP GPU
+n'a pas de millésime amont), on écrit « **ingéré le JJ/MM/AAAA** », jamais « millésime ». Un producteur
+unique `millesime_source.libelle_date_source(source_millesime, source_horizon_at, ingere_le)` rend le
+libellé nommé (« millésime <X> » sinon « ingéré le <JJ/MM/AAAA> »), utilisé **partout où ce repli
+sert** : `servitudes.aleas_parcelle` / `contraintes_parcelle` (fiche, outil), `_dispositifs_block`
+(Dossier §4). Les rendeurs `_r_aleas` / `_r_sup` impriment ce libellé verbatim. Témoin La Possession :
+aléa PPR « millésime PPR/PPRL approuvés 2011–2026 (DEAL Lizmap) », SUP PM1 « ingéré le 14/09/2026 »
+(assiette GPU sans millésime amont). Verrou `test_servitudes` mis à jour (repli nommé).
+
+Captures : §5 `p7-dossier-aleas-avant.png`→`…-apres.png`, §4 `p7-dossier-sup-avant.png`→`…-apres.png`,
+table `p7-servitudes-millesime.png`.
 
 ## Vérification (verrous)
 
