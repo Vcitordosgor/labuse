@@ -197,6 +197,19 @@ F06, F08, F09, F12, F16, F23, F28 + F01c–e.
 tsc 0 · vitest 225 · verrous + gardes 23 · banc `**188 (= baseline, 0 nouveau, 0 FAUX-CLIENT)**.`. **Reste** (P1) : F02, F03, F05,
 F06, F08, F09, F16 + F01c–e.
 
+### Session 8 (lot P1, suite) — reclassements + F02
+- **Reclassements présentation** (cf. RECLASSEMENT.md) : **F06** (glyphes/couleurs de signe « + »/flèche +
+  agrégation UI `sdp>0`), **F16** (note descriptive de la règle SQL nu/bâti 5 %), **F08 (part)**
+  (`completudeColor` 50 % + `ageSignal` couleur/temps-relatif).
+- **Arrêté (scoring)** : **F08** `PRIORITE_SERVIE` (drapeau de politique scoring, miroir testé).
+- **F02 (mixte, remonté)** — le verdict « votre charge couvre / est sous le prix du marché » servi
+  (`charge_couvre_marche`, `modules.faisabilite_charge`) ; le reste de F02 est présentation/inhérent
+  (couleurs ER≥50 %/PEB, `<= 0` inhérents, step de saisie, garde relationnelle coût>sortie).
+
+**État P1 (32) : 17 remonté(+parts) · 12 reclassé · 1 arrêté (PRIORITE_SERVIE) · F01 partiel (a+b) ·
+~4 a_faire.** Guardrails : tsc 0 · vitest 225 · verrous + gardes 24 · banc `**188 (= baseline, 0 nouveau, 0 FAUX-CLIENT)**.`.
+**Reste** (P1) : **F03** (ModulePanel, fenêtres 24/36 mois + rang), **F05/F09** (admin interne) + **F01c–e**.
+
 ### F01 — plan (prochaine session, à reprendre ici)
 F01 (`Fiche.tsx`, 15 lignes « seuil ») n'est PAS une notion unique : c'est un **cluster réglementaire**
 à SCINDER en sous-familles (1 commit chacune), car chaque notion a son moteur back :
