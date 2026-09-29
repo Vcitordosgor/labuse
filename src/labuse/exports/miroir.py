@@ -636,13 +636,13 @@ def _r_rnb(v):
 
 
 def _r_tfpb(v):
-    bits = [f"part communale {fmt_pct(v['tfpb_commune_pct'], 2)}"]
-    if v.get("tfpb_epci_pct") is not None:
-        bits.append(f"EPCI {fmt_pct(v['tfpb_epci_pct'], 2)}")
-    if v.get("teom_pct") is not None:
-        bits.append(f"TEOM {fmt_pct(v['teom_pct'], 2)}")
-    # EXPORTS-FIX-1 A6 — la valeur ne répète plus le libellé « Taxe foncière (TFPB) » de la ligne.
-    return esc(" · ".join(bits))
+    # RETOUCHES-1 point 2 — MÊME ligne que la fiche et le Copilote : « part communale X % · hors part
+    # départementale, TEOM et taxes spéciales ». Producteur unique (fiscalite_libelle). On n'énumère
+    # plus « EPCI 0,00 % · TEOM 16,00 % » (le lecteur croyait lire la taxe entière). L'intitulé de la
+    # ligne devient « Taxe foncière (bâti) » (sections_restantes.yaml).
+    from ..fiscalite_libelle import lignes_taxe_fonciere
+    lignes = lignes_taxe_fonciere(v)
+    return esc(lignes[0]["detail"]) if lignes else ""
 
 
 def _r_taxe(v):

@@ -199,8 +199,11 @@ def resume_commune(db: Session, commune: str) -> dict | None:
     if risq.get("ppr_pct") is not None:
         carte("Risques", f"PPR sur {str(risq['ppr_pct']).replace('.', ',')} % du territoire communal.")
     fisc = c.get("fiscalite") or {}
-    if fisc.get("tfpb_commune_pct") is not None:
-        carte("Fiscalité", f"TFPB part communale {str(fisc['tfpb_commune_pct']).replace('.', ',')} %.")
+    # RETOUCHES-1 point 2 — la MÊME ligne que la fiche et le Dossier (producteur unique
+    # fiscalite_libelle, déjà calculée dans le bloc fiscalité servi).
+    _lignes_tf = fisc.get("lignes") or []
+    if _lignes_tf:
+        carte("Fiscalité", _lignes_tf[0]["ligne"] + ".")
     comp = c.get("comparable") or {}
     if comp.get("delai_median_mois") is not None:
         carte("Instruction", f"Délai médian d'instruction {comp['delai_median_mois']} mois.")
@@ -232,7 +235,7 @@ _CHAMPS = [
      ("type_proprietaire", "Propriétaire")),
     (("taxe d'amenagement", "taxe damenagement", "taxe amenagement", "ta communale", "taux de ta"),
      ("taxe_amenagement_estimee_eur", "Taxe d'aménagement")),
-    (("taxe fonciere", "tfpb", "taxe fonciere batie"), ("tfpb_taux_pct", "Taxe foncière (TFPB)")),
+    (("taxe fonciere", "tfpb", "taxe fonciere batie"), ("tfpb_taux_pct", "Taxe foncière (bâti)")),
     (("zone", "zonage", "plu"), ("zone_plu_famille", "Zone PLU")),
     (("risque", "risques", "alea", "aleas", "ppr", "inondation"), ("aleas_parcelle_liste", "Risques et aléas")),
     (("pente", "denivele"), ("pente_deg", "Pente")),
@@ -293,7 +296,12 @@ def _rendre_champ(cid: str, libelle: str, valeur: Any, valeurs: dict) -> str:
     if cid in ("surface_parcelle_m2", "sdp_residuelle_m2"):
         return f"{libelle} : {fmt_m2(valeur)} ({cid})."
     if cid in ("tfpb_taux_pct",):
-        return f"{libelle} : {fmt_pct(valeur)} ({cid})."
+        # RETOUCHES-1 point 2 — la MÊME ligne canonique que la fiche et le Dossier (producteur unique).
+        from ..fiscalite_libelle import lignes_taxe_fonciere
+        _lignes = lignes_taxe_fonciere(valeur if isinstance(valeur, dict) else {})
+        if _lignes:
+            return f"{_lignes[0]['ligne']} ({cid})."
+        return f"{libelle} : non renseigné ({cid})."
     if cid == "pente_deg":
         return f"Pente : {str(valeur).replace('.', ',')}° ({cid})."
     return f"{libelle} : {valeur} ({cid})."

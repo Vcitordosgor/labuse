@@ -1741,6 +1741,12 @@ export function Fiche({ idu }: { idu: string }) {
                           contexte={[zonageVal ? `zone ${zonageVal} (PTZ/loyers)` : null, tvaM ? `TVA ${tvaM[1]} %` : null].filter(Boolean).join(' · ') || undefined} />
                       )}
                       {tuiles.length > 0 && <Tuiles items={tuiles} />}
+                      {/* RETOUCHES-1 point 2 — la ligne CANONIQUE de la taxe foncière, servie par le
+                          producteur unique (fiscalite.lignes) : identique au Dossier et au Copilote.
+                          Dit ce que le taux ne comprend pas au lieu d'énumérer EPCI/TEOM. */}
+                      {f.fiscalite?.lignes?.map((l, i) => (
+                        <p key={i} data-tf-ligne className="text-[11px] leading-snug text-txt-mut">{l.ligne}</p>
+                      ))}
                       <GroupLabel>Dispositifs de la commune</GroupLabel>
                       <Pastilles items={disp} />
                       {/* FICHE-1 lot 5 — taxe d'aménagement en BOUTON (change les hypothèses). */}
