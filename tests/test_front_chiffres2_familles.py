@@ -242,3 +242,13 @@ def test_f23_viabilisation_da_servie():
     rx = (SRC / "components/fiche/reseaux.tsx").read_text(encoding="utf-8")
     assert "f.viabilisation.mot" in rx and "f.viabilisation.ton" in rx
     assert "const VIAB_MOT" not in rx, "table band→DA codée revenue au front (F23)"
+
+
+def test_f12_monsecteur_sens_ecart_servi():
+    """F12 — le MOT « sous » / « au-dessus » de la comparaison secteur↔commune n'est plus dérivé du
+    signe au front : le back sert `ecart_commune.sens`. (La couleur, elle, reste présentation.)"""
+    src = (ROOT / "src/labuse/api/mon_secteur.py").read_text(encoding="utf-8")
+    assert '"sens": (None if not ep else "sous" if ep < 0 else "au_dessus")' in src
+    ms = (SRC / "components/outils/MonSecteur.tsx").read_text(encoding="utf-8")
+    assert "sb.ecart_commune.sens === 'sous'" in ms
+    assert "ecart_commune.ecart_pct < 0 ? 'sous'" not in ms, "mot sous/au-dessus dérivé du signe au front (F12)"

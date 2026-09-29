@@ -95,6 +95,9 @@ def mon_secteur(idu: str = Query(..., description="IDU de la parcelle (résolu d
             ecart_commune = {
                 "secteur_eur_m2": sp.get("median"), "rayon_m": int(sp.get("radius_m") or 0),
                 "commune_eur_m2": cv, "n_commune": com.get("n"), "ecart_pct": ep,
+                # FRONT-CHIFFRES-2 (F12) — le SENS (« sous » / « au-dessus » de la commune) servi : le
+                # front ne dérive plus le mot du signe de ecart_pct. None si écart nul/absent.
+                "sens": (None if not ep else "sous" if ep < 0 else "au_dessus"),
                 "phrase": f"secteur {int(sp.get('radius_m') or 0)} m · commune entière {cv} €/m²"
                           + (f" ({ep:+d} %)" if ep is not None else ""),
             }

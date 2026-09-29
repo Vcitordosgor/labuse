@@ -663,7 +663,7 @@ export const getGabarit = (idu: string) =>
 // type + tendance 12 mois + annonces Radar dans le rayon). Chaque chiffre porte son n/millésime.
 export interface DistribRepere { n: number; min: number | null; p25: number | null; median: number | null; p75: number | null; max: number | null }
 export interface Distribution { avant: DistribRepere; apres: DistribRepere; n_exclus_extremes: number; n_min_vise: number; periode_segment?: string }
-export interface EcartCommune { secteur_eur_m2: number | null; rayon_m: number; commune_eur_m2: number; n_commune: number | null; ecart_pct: number | null; phrase: string }
+export interface EcartCommune { secteur_eur_m2: number | null; rayon_m: number; commune_eur_m2: number; n_commune: number | null; ecart_pct: number | null; phrase: string; sens?: 'sous' | 'au_dessus' | null }
 export interface LocalMed { eur_m2: number; n: number | null; millesime: string | null; rayon_m: number | null; perimetre: string | null; distribution?: Distribution | null }
 export interface MonSecteurData {
   idu: string; commune: string; adresse: string | null

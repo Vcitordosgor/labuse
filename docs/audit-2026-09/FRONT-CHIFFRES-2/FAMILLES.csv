@@ -10,7 +10,7 @@ F08,1,seuil,remonter,lib/store,lib/status.ts,3,remonter_back,status.ts:229 ; sta
 F09,1,seuil,remonter,admin/map,components/admin/AdminView.tsx,2,remonter_back,AdminView.tsx:239 ; AdminView.tsx:284,,a_faire,
 F10,1,seuil,remonter,fiche,components/fiche/marche.tsx,2,remonter_back,marche.tsx:70 ; marche.tsx:73,médianes par type — seuil de suffisance au back,remonté,F10
 F11,1,seuil,remonter,fiche,components/fiche/risques.tsx,2,remonter_back,risques.tsx:22 ; risques.tsx:24,couleur/cran d'une valeur servie (aucun chiffre/libellé décidé),reclassé_présentation,
-F12,1,seuil,mixte(remonter+declarer),outils,components/outils/MonSecteur.tsx,2,declarer_registre+remonter_back,MonSecteur.tsx:120 ; MonSecteur.tsx:81,,a_faire,
+F12,1,seuil,mixte(remonter+declarer),outils,components/outils/MonSecteur.tsx,2,declarer_registre+remonter_back,MonSecteur.tsx:120 ; MonSecteur.tsx:81,sens de l'écart secteur/commune (mot servi ; couleur=présentation),remonté,F12
 F13,1,seuil,remonter,panel/projets/contexte,components/projets/ProjetKanban.tsx,2,remonter_back,ProjetKanban.tsx:37,DA du palier (jeton+ton+libellé) servie,remonté,F13
 F14,1,seuil,remonter,radar/copilote/crm,components/radar/RadarEcran.tsx,2,remonter_back,RadarEcran.tsx:60-61 ; RadarEcran.tsx:86,badges radar nouveau/en_vente_longue,remonté,F14
 F15,1,seuil,remonter,radar/copilote/crm,components/radar/RadarMarcheColonne.tsx,2,remonter_back,RadarMarcheColonne.tsx:181-182 ; RadarMarcheColonne.tsx:19,couleur/cran d'une valeur servie (aucun chiffre/libellé décidé),reclassé_présentation,
