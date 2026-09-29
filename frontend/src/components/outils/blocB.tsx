@@ -380,7 +380,11 @@ export function O9Rarete() {
             creuser: { bar: 'bg-st-creuser', txt: 'text-st-creuser' },
             mint: { bar: 'bg-mint', txt: 'text-mint' },
           } as const
-          const tone = TONES[depasse ? 'ecartee' : (c.horizon_epuisement_ans ?? 99) < 5 ? 'creuser' : 'mint']
+          // FRONT-CHIFFRES-2 (F31) — plus de défaut 99 fabriqué : un horizon d'épuisement ABSENT
+          // n'est pas « > 5 ans » (sain) mais INCONNU → ton neutre (mint), jamais un 99 inventé. Le
+          // palier de COULEUR (< 5 ans = à creuser) reste de la présentation d'une valeur servie.
+          const horizon = c.horizon_epuisement_ans
+          const tone = TONES[depasse ? 'ecartee' : (horizon != null && horizon < 5) ? 'creuser' : 'mint']
           return (
             <div key={c.insee} data-o9-commune={c.insee} className="flex items-center gap-2 overflow-hidden border-b border-line py-1.5 text-[11px]">
               <span className="min-w-0 flex-1 truncate text-txt">{c.commune}</span>

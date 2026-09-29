@@ -38,6 +38,7 @@ from .. import config, models, prospection
 from .. import bati as _bati   # FICHE-1 lot 1 — bloc « Le bien » (producteur unique)
 from .. import rnu as _rnu
 from ..db import session_scope
+from ..tz import today_reunion as _today_reunion   # F18 — « relance due » sur le jour Réunion
 from ..enums import FeedbackVerdict
 from .. import runs  # S3 : run servi relu à la requête (bascule à chaud)
 from ..millesime_source import composer as _compose_millesime  # SOURCES-FIX-2 lot D — millésime unique
@@ -428,6 +429,29 @@ def config_run() -> dict:
     rechargement suffit à servir le nouveau run — plus de `npm run build` obligatoire pour que le
     front cesse d'épingler l'ancien run via `?source=`. Zéro accès DB (runs.current lit le pointeur)."""
     return {"run": runs.current()}
+
+
+@app.get("/vocabulaire/paliers")
+def vocabulaire_paliers() -> dict:
+    """FRONT-CHIFFRES-2 (F13/F29) — LA DA DES PALIERS servie depuis la source unique
+    (scoring/tiers_client) : chaque palier → chip, libellé long, jeton DA (variable CSS) et ton du
+    Badge. La pastille (Projets) et le badge (Outils) LISENT cette carte au lieu de coder la
+    correspondance palier→couleur ; à la bascule q_v15 (bandes A/B/C/D) un seul endroit change.
+    Zéro accès DB (constantes du vocabulaire). Le front résout d'abord tier→code (codePalier, même
+    mapping, garanti par le test anti-dérive), puis lit la couleur/ton ici."""
+    from ..scoring.tiers_client import paliers_da
+    return {"paliers": paliers_da()}
+
+
+@app.get("/vocabulaire/scoring-fraction")
+def vocabulaire_scoring_fraction() -> dict:
+    """FRONT-CHIFFRES-2 (F26) — le SEUIL BAS de la fraction de probabilité (« sous 1/d → peu
+    probable ») servi depuis la source unique (config/scoring_client.yaml, lu par fraction_client) :
+    le front ne code plus « 1/50 » dans son texte, il lit `seuil_bas_denominateur`. Le VERDICT (la
+    fraction ou « — ») est déjà calculé UNE fois au serveur (fraction_humaine) et cohérent partout
+    (fiche, filtres, Dossier, Copilote) ; ici on sert juste le seuil pour le libellé. Zéro DB."""
+    from ..scoring.fraction_client import _cfg, seuil_bas_denominateur
+    return {"seuil_bas_denominateur": seuil_bas_denominateur(), "paliers": _cfg()["paliers"]}
 
 
 @app.get("/sante/fraicheur")
@@ -2848,6 +2872,10 @@ def taxe_amenagement_prefill(idu: str, db: Session = Depends(get_db)) -> dict:
     return {"idu": idu, "commune": row["commune"], "insee": idu[:5],
             "surface_terrain_m2": row["surface_terrain_m2"],
             "zone_plu": row["zone_libelle"] or row["zone_fam"],
+            # FRONT-CHIFFRES-2 (F28) — la FAMILLE de zone (U/AU/A/N) servie : le front décide
+            # « locaux agricoles exonérés » sur `zone_famille === 'A'` au lieu d'une regex `/^A(?!U)/`
+            # sur le libellé (même notion que la fiche §PLU, cf. F01a).
+            "zone_famille": row["zone_fam"],
             "sdp_gabarit_m2": int(sdp) if (sdp is not None and sdp > 0) else None,
             "deja_batie": bool(row["taux_emprise_pct"] and float(row["taux_emprise_pct"]) > 0),
             "taux_communal_pct": (pub["part_communale_pct"] if pub else None),
@@ -3911,6 +3939,21 @@ def _secteur_opportunites(db: Session, idu: str) -> dict:
     return {"section": section, "n": int(n)}
 
 
+# FRONT-CHIFFRES-2 (F01b) — LA BANDE DE PENTE (vocabulaire cartes.gouv), ICI une fois. Le front
+# (fiche §1.2 et §2 Terrain) ne classe plus la pente par des seuils 5/15/30° codés en dur : il lit
+# `terrain.pente_bande`. Bornes en degrés du grade absolu moyen (RGE ALTI).
+_PENTE_BANDES = ((5.0, "plat"), (15.0, "modérée"), (30.0, "forte"))
+
+
+def _pente_bande(deg: float | None) -> str | None:
+    if deg is None:
+        return None
+    for borne, libelle in _PENTE_BANDES:
+        if deg < borne:
+            return libelle
+    return "très forte"
+
+
 def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
     """Fiche premium v2 (dryrun) : en-tête matrice + lignes cascade TRACÉES (axe Q/A, onglet,
     source cliquable, date), flags, événement. « La traçabilité EST le produit »."""
@@ -4084,6 +4127,15 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
             "  ORDER BY date_mutation DESC LIMIT 1) last ON last.id_mutation = d.id_mutation "
             "WHERE d.id_parcelle = :idu"), {"idu": idu}).mappings().first() \
             if db.execute(text("SELECT to_regclass('dvf_mutation_detail') IS NOT NULL")).scalar() else None
+    # FRONT-CHIFFRES-2 (F46) — « Valeur au prix du secteur » = contenance × médiane terrain du secteur.
+    # Ce produit vivait au front (marche.tsx) ALORS QUE le back le calcule déjà (score_e « prix probable »
+    # = médiane terrain × surface) : divergence possible fiche↔Dossier↔Copilote. Servi ICI (même
+    # arithmétique exacte : round(surface) × médiane entière) pour une source unique ; estimé, pas vénal.
+    _terr_med = next((r for r in dvf_secteur
+                      if r.get("type_bien") == "terrain" and r.get("mediane_prix_m2")), None)
+    _surf_i = round(head["surface_m2"]) if head.get("surface_m2") else None
+    valeur_terrain_secteur_eur = (_surf_i * int(_terr_med["mediane_prix_m2"])
+                                  if _surf_i and _terr_med else None)
     dvf_parcelle = None
     if dvf_last or dvf_secteur:
         # EXPORTS-1 (1.4, arbitrage Q3) : UN SEUL « neuf » servi — `resolve_prix_neuf_marche`
@@ -4105,6 +4157,9 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
                                       if dvf_detail else {})}
                                   if dvf_last else None),
             "secteur": dvf_secteur,
+            # FRONT-CHIFFRES-2 (F46) — valeur estimée au prix du secteur (contenance × médiane terrain),
+            # décidée au back ; None si pas de médiane terrain ou pas de surface. Le front ne multiplie plus.
+            "valeur_terrain_secteur_eur": valeur_terrain_secteur_eur,
             # EXPORTS-1 (1.3) : grain dit — indicateur secondaire, jamais la tête de fiche.
             "secteur_etiquette": "médianes du secteur cadastral — indicateur secondaire",
             "caveat": "valeur = mutation entière (multi-parcelles possible) ; fenêtre 2021-2025",
@@ -4162,6 +4217,11 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
             "filosofi_200m": ({**dict(carreau),
                                "taux_pauvrete_pct": round(100 * carreau["men_pauv"] / carreau["men"])
                                if carreau["men"] else None,
+                               # FRONT-CHIFFRES-2 (F58) — part de propriétaires (100 × men_prop / men)
+                               # décidée ICI (le front la recalculait, la MÊME formule vit dans
+                               # solaire.py pour le scoring : notion à source unique). Valeur inchangée.
+                               "part_proprietaires_pct": (round(100 * carreau["men_prop"] / carreau["men"])
+                                                          if carreau["men"] else None),
                                "millesime": "Filosofi 2021 (INSEE, carreaux 200 m)"}
                               if carreau else None),
             "rpls_commune": rpls_dict,
@@ -4261,7 +4321,8 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
         "lines": lines, "flags": flags,
         "score_v": score_v,
         "dvf_parcelle": dvf_parcelle,
-        "terrain": dict(terrain) if terrain else None,
+        # FRONT-CHIFFRES-2 (F01b) — + la bande de pente servie (plat/modérée/forte/très forte).
+        "terrain": {**dict(terrain), "pente_bande": _pente_bande(terrain["pente_moy_deg"])} if terrain else None,
         "coproprietes": copros,
         "radar_bien": radar_bien,   # RADAR P3 (C3) — bien en vente rattaché (fait + statut + lien)
         "marche_secteur": marche_secteur,
@@ -4758,7 +4819,16 @@ def _aleas_block(db: Session, idu: str, lines: list[dict] | None = None) -> dict
         })
     items.sort(key=lambda a: (not a["redhibitoire"],
                               -_ALEA_NIVEAU_RANG.get((a["niveau"] or "").lower(), 0)))
-    return {"n": len(items), "liste": items}
+    # FRONT-CHIFFRES-2 (F01e) — SYNTHÈSE du niveau de risque des aléas, décidée ICI (le moteur qui
+    # ordonne la sévérité), pas au front : « redhibitoire » si un aléa l'est, sinon « fort » si un
+    # niveau est fort/élevé, sinon None. La tuile Risques lit `synthese` au lieu de refaire le test.
+    def _est_fort(niveau: str | None) -> bool:
+        n = (niveau or "").lower()
+        return "fort" in n or "élev" in n or "elev" in n
+    synthese = ("redhibitoire" if any(a["redhibitoire"] for a in items)
+                else "fort" if any(_est_fort(a["niveau"]) for a in items)
+                else None)
+    return {"n": len(items), "liste": items, "synthese": synthese}
 
 
 def _dpe_connu_block(db: Session, idu: str) -> dict | None:
@@ -5630,6 +5700,20 @@ def _reglement_plu_block(db: Session, idu: str, commune: str) -> dict | None:
             from ..faisabilite.zonage import resolve_zone as _resolve_zone_mixite
             _zr = _resolve_zone_mixite(block["zones"][0].get("zone"), commune) if block["zones"] else None
             block["mixite"] = (_zr.mixite if _zr else None)
+            # FRONT-CHIFFRES-2 (F01a) — la FAMILLE de la zone dominante et le verdict de
+            # constructibilité NEUVE viennent désormais de la CASCADE (moteur zone_servie, famille
+            # via labuse_zone_famille sur le subtype GPU), PLUS de la regex front sur le libellé. La
+            # valeur servie est EXACTEMENT celle du Pré-dossier / de la garde SDP résiduelle — une
+            # seule vérité. `constructible_neuf` : None si famille inconnue, sinon famille ∉ (A, N).
+            from ..faisabilite.zone_servie import zone_dominante
+            _pid = db.execute(text("SELECT id FROM parcels WHERE idu = :idu"), {"idu": idu}).scalar()
+            _zs = zone_dominante(db, _pid) if _pid else None
+            _fam = _zs.zone_fam if _zs else None
+            block["zone_famille"] = _fam
+            block["constructible_neuf"] = (_fam not in ("A", "N")) if _fam else None
+            # FRONT-CHIFFRES-2 (F21) — le drapeau « à cheval » (aucune zone ≥ SEUIL_A_CHEVAL_PCT)
+            # vient de la cascade, plus du seuil 0,9 recalculé au front sur les parts.
+            block["a_cheval"] = _zs.a_cheval if _zs else None
         return block
     except Exception:  # noqa: BLE001 — jamais de 500 sur la fiche
         return _bloc_indisponible("reglement_plu")   # M125 — panne ≠ absence (même classe que les 7)
@@ -7515,6 +7599,12 @@ def financier_questionnaire_get(idu: str, request: Request, db: Session = Depend
             "(pas de potentiel calculé). Renseignez le nombre de logements visés et la typologie "
             "moyenne : sans eux, le bilan financier ne peut pas être établi."),
     }
+    # FRONT-CHIFFRES-2 (F04) — les bornes du garde « hors marché » viennent de la SOURCE UNIQUE
+    # (faisabilite/engine.py, cf. test_hypotheses_source_unique) : le front ne les code plus (il
+    # reproduisait 20000/8000/12000), il LIT ce que le back sert. Le serveur reste la défense du
+    # PDF (422 via financier_bilan._hors_marche, mêmes constantes — un seul point de vérité).
+    from ..faisabilite.engine import (
+        MAX_COUT_CONSTRUCTION_M2, MAX_PRIX_BAILLEUR_M2, MAX_PRIX_SORTIE_M2)
     return {"idu": idu, "reponses": etat["reponses"], "complet": etat["complet"],
             "existe": etat["existe"], "ecrans": ecrans,
             "ecrans_par_usage": ecrans_par_usage,
@@ -7522,7 +7612,11 @@ def financier_questionnaire_get(idu: str, request: Request, db: Session = Depend
             "usages": qf.USAGES,  # RECETTE-6 (E5) — écran 0 « Que voulez-vous chiffrer ? »
             "tva_explication": qf.TVA_EXPLICATION,
             "champs_obligatoires": sorted(qf.OBLIGATOIRES),
-            "champs_obligatoires_revente": sorted(qf.OBLIGATOIRES_REVENTE)}
+            "champs_obligatoires_revente": sorted(qf.OBLIGATOIRES_REVENTE),
+            "hors_marche_bornes": {
+                "prix_sortie_saisi_eur_m2": MAX_PRIX_SORTIE_M2,
+                "cout_construction_saisi_eur_m2": MAX_COUT_CONSTRUCTION_M2,
+                "prix_vente_bailleur_saisi_eur_m2": MAX_PRIX_BAILLEUR_M2}}
 
 
 @app.put("/financier/{idu}/questionnaire")
@@ -7846,6 +7940,12 @@ def _entry_dict(db: Session, e: models.PipelineEntry, *,
         "priority": e.priority,
         "notes": e.notes or "",
         "reminder_date": e.reminder_date.isoformat() if e.reminder_date else None,
+        # FRONT-CHIFFRES-2 (F18) — l'échéance de relance (due aujourd'hui / échue / à venir) décidée au
+        # BACK sur le jour RÉUNION (tz.today_reunion), plus au fuseau du navigateur : même verdict pour
+        # tous les clients. None si pas de rappel ou rappel à venir.
+        "relance_echeance": (None if not e.reminder_date else
+                             "due_aujourdhui" if e.reminder_date == _today_reunion() else
+                             "echue" if e.reminder_date < _today_reunion() else None),
         "created_at": e.created_at.isoformat() if e.created_at else None,
         "archived_at": e.archived_at.isoformat() if e.archived_at else None,   # M137
         "prospection": e.prospection or {},

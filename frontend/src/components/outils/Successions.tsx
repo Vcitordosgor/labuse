@@ -149,7 +149,9 @@ function Carte({ it, onOpen }: { it: SuccessionItem; onOpen: () => void }) {
 // Motif RÉEL du signal, par parcelle (la seule donnée datée est le calcul — servie au bandeau).
 // DONNEES-1 lot 2.3 — le silence de dépôt de comptes BODACC (≥ 3 ans) renforce le motif « sommeil ».
 function Motif({ it }: { it: SuccessionItem }) {
-  const depotMuet = it.depot_comptes != null && it.depot_comptes.depuis_ans != null && it.depot_comptes.depuis_ans >= 3
+  // FRONT-CHIFFRES-2 (F27) — « dépôt muet » servi à plat (seuil back SEUIL_DEPOT_MUET_ANS) ; le front
+  // ne recalcule plus l'ancienneté du silence de dépôt.
+  const depotMuet = it.depot_comptes?.muet ?? false
   const base = it.sci_dormante ? 'SCI dormante'
     : it.dirigeant_age != null ? `dirigeant ${it.dirigeant_age} ans` : null
   if (!base && !depotMuet) return null

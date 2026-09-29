@@ -59,6 +59,15 @@ BANDES = [
     (0,  "lourde",      "Viabilisation lourde probable"),
 ]
 
+# FRONT-CHIFFRES-2 (F23) — la DA de la bande (mot court + ton du badge), ICI une fois : le front
+# (reseaux) ne mappe plus band→libellé/ton en dur. `lourde` et `incertaine` se disent « à confirmer ».
+BANDE_DA: dict[str, dict[str, str]] = {
+    "confirmee":  {"mot": "confirmée",   "ton": "vert"},
+    "probable":   {"mot": "probable",    "ton": "ambre"},
+    "incertaine": {"mot": "à confirmer", "ton": "neutre"},
+    "lourde":     {"mot": "à confirmer", "ton": "ambre"},
+}
+
 DISCLAIMER = (
     "Indicateur de PROBABILITÉ de viabilisation (faisceau de preuves), pas une "
     "certitude ni un droit à construire. Aucun tracé de réseau (donnée sensible). "
@@ -214,10 +223,14 @@ def build_indicateur(sig: dict[str, Any], elec_pv: dict[str, Any] | None = None,
     score = compute_score(sig)
     code, libelle = band(score)
     contribs = contributions(sig)
+    _da = BANDE_DA.get(code, BANDE_DA["incertaine"])
     out: dict[str, Any] = {
         "score": score,
         "band": code,
         "libelle": libelle,
+        # FRONT-CHIFFRES-2 (F23) — mot court + ton du badge servis (le front ne mappe plus band→DA).
+        "mot": _da["mot"],
+        "ton": _da["ton"],
         "contributions": contribs,
         "cout_raccordement": cout_raccordement(sig, code),
         "disclaimer": DISCLAIMER,

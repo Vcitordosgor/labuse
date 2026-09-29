@@ -13,6 +13,8 @@ indexée (scripts/m42_indexes.py) → ~17 ms/fiche.
 from __future__ import annotations
 
 from sqlalchemy import text
+
+from ..exports.miroir import permis_incoherence_note as _incoherence_note  # F32 — source unique
 from sqlalchemy.orm import Session
 
 # MANDAT_DVF-B — rayon/fenêtre du voisinage (profil voisinage_100m) LUS de config/dvf_profils.yaml : plus
@@ -52,6 +54,9 @@ def historique_permis(db: Session, idu: str) -> dict | None:
             "type_label": _TYPE_LABEL.get(r["type"], r["type"]),
             "date_autorisation": r["date_autorisation"], "date_depot": r["date_depot"],
             "etat_libelle": _permis_etat(raw), "annule": _permis_annule(raw),
+            # FRONT-CHIFFRES-2 (F32) — note d'incohérence dépôt/autorisation par la fonction PARTAGÉE
+            # (miroir.permis_incoherence_note, seuil 1 mois) ; le front ne la calcule plus.
+            "note_incoherence": _incoherence_note(r["date_depot"], r["date_autorisation"]) or None,
         })
     caduc = db.execute(text("""
         SELECT pc_annee, caduc_depuis, statut_autorisation, statut_caducite, libelle_court, detail

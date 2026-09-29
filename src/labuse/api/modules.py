@@ -45,6 +45,7 @@ from ..faisabilite.bilan import (  # défauts calculette dérivés de la source 
     CALCULETTE_VRD_DEFAUT_M2,
 )
 from .. import runs  # S3 : run servi relu à la requête (bascule à chaud)
+from ..exports import miroir as _miroir  # F32 — note d'incohérence dépôt/autorisation (source unique)
 from ..scoring import score_v_constants  # OUTILS-S2 Lot A : formes retenues du signal succession
 
 
@@ -236,6 +237,12 @@ _TIERS_ACTIONNABLES = ("brulante", "chaude", "reserve_fonciere", "a_creuser",
                        "priorite", "a_suivre", "sans_signal")  # PALIERS-1 : deux vocabulaires
 
 
+# FRONT-CHIFFRES-2 (F27) — silence de dépôt de comptes BODACC AU-DELÀ de ce seuil (ans) = signal
+# « société en sommeil probable ». Le seuil vivait au front (Successions `depuis_ans >= 3`) ; ici, le
+# back sert le flag `muet` à plat pour que le front ne décide plus.
+SEUIL_DEPOT_MUET_ANS = 3
+
+
 def _depots_par_siren(db: Session, sirens: list[str]) -> dict[str, dict]:
     """DONNEES-1 lot 2.3 — dernier dépôt de comptes annuels (table `bodacc_depots`) pour une liste de
     SIREN, en UNE requête. Pour chaque siren : `annee` = exercice le plus récent (max date_cloture
@@ -262,7 +269,8 @@ def _depots_par_siren(db: Session, sirens: list[str]) -> dict[str, dict]:
         cloture, parution = r["derniere_cloture"], r["derniere_parution"]
         annee = cloture.year if cloture else (parution.year if parution else None)
         depuis = (annee_courante - parution.year) if parution else None
-        out[r["siren"]] = {"annee": annee, "depuis_ans": depuis}
+        out[r["siren"]] = {"annee": annee, "depuis_ans": depuis,
+                           "muet": depuis is not None and depuis >= SEUIL_DEPOT_MUET_ANS}
     return out
 
 
@@ -540,10 +548,16 @@ def permis(commune: str | None = None, months: int = 24, nature: str | None = No
     # (operator does not exist: timestamp >= interval) = 500. On répond un état VIDE honnête.
     if dmax is None:
         if count_only:   # RETOURS-16 V4 — même forme compteur, base vide comprise
-            return {"total": 0, "geocodes": 0, "donnees_jusqu_au": None}
+            return {"total": 0, "geocodes": 0, "donnees_jusqu_au": None, "coupure_recent": None}
         return {"commune": commune or "Toute l'île", "months": months, "nature": nature,
                 "total": 0, "affiches": 0, "has_more": False, "donnees_jusqu_au": None,
+                "coupure_recent": None,
                 "geocodes": 0, "sans_localisation": 0, "pct_geocode": 0, "carte": [], "items": []}
+    # FRONT-CHIFFRES-2 (F03) — coupure « récent » (dmax − 24 mois) calculée ICI, même ancre et même
+    # fenêtre que le prédicat d'état servi, et servie à plat : le front ne reconstruit plus la fenêtre
+    # de 24 mois (`minus24m`), il lit `coupure_recent` pour colorer récent vs reste en mode « Tous ».
+    coupure_recent = db.execute(
+        text("SELECT (:d - interval '24 months')::date::text"), {"d": dmax}).scalar()
     limit = max(1, min(limit, 2000))  # garde-fou payload ; « voir plus » pagine par offset
     # RETOURS-17 W2 — prédicat d'état de cycle (récent/achevé/autre), whitelist fermée. `ep` sans alias
     # (count + carte), `eps` avec alias `s.` (liste). :run n'est lu que par l'état « autre ».
@@ -562,7 +576,7 @@ def permis(commune: str | None = None, months: int = 24, nature: str | None = No
                  AND date >= :dmax - (:m || ' months')::interval{ep}"""),
             {"c": commune, "m": months, "nat": nature, "dmax": dmax, "run": prun}).mappings().first()
         return {"total": int(c["n"] or 0), "geocodes": int(c["geo"] or 0),
-                "donnees_jusqu_au": dmax.date().isoformat()}
+                "donnees_jusqu_au": dmax.date().isoformat(), "coupure_recent": coupure_recent}
     # M10 : jointure sur la date de dépôt + délai d'instruction rapatriés (m10_permit_delais)
     # LISTE paginée (plafond levé côté client par « voir plus » — offset).
     rows = db.execute(text(f"""
@@ -619,6 +633,7 @@ def permis(commune: str | None = None, months: int = 24, nature: str | None = No
         "commune": commune or "Toute l'île", "months": months, "nature": nature,
         "total": true_total, "affiches": offset + len(rows), "has_more": offset + len(rows) < true_total,
         "donnees_jusqu_au": dmax.date().isoformat() if dmax else None,
+        "coupure_recent": coupure_recent,
         "geocodes": geocodes_total, "sans_localisation": max(0, true_total - geocodes_total),
         "pct_geocode": round(100 * geocodes_total / true_total) if true_total else 0,
         "carte": carte,
@@ -680,6 +695,9 @@ def permis_fiche(permit_id: str, db: Session = Depends(get_db)) -> dict:
         "nb_lots": int(r["nb_lgt"]) if (r["nb_lgt"] or "").isdigit() else None,
         "surface_hab_m2": float(r["surf_hab"]) if r["surf_hab"] else None,
         "date_depot": r["date_depot"], "date_autorisation": r["date_autorisation"],
+        # FRONT-CHIFFRES-2 (F32) — la note d'incohérence dépôt/autorisation (seuil 1 mois) vient de la
+        # fonction PARTAGÉE `miroir.permis_incoherence_note`, plus de la regex de seuil au front.
+        "note_incoherence": _miroir.permis_incoherence_note(r["date_depot"], r["date_autorisation"]) or None,
         "date_achevement": r["date_achevement"] or r["daact"],
         "delai_instruction": delai,
         # KELFONCIER-FIX-2 (Lot D) — statut par la fonction PARTAGÉE de la fiche (ingestion/permits.py) :
@@ -1945,6 +1963,11 @@ def faisabilite_charge(idu: str, body: ChargeIn, db: Session = Depends(get_db)) 
             res["terrain_zone_eur_m2"] = tz["eur_m2"]
             res["terrain_zone_fiabilite"] = tz["fiabilite"]
             res["terrain_zone_n"] = tz["n"]
+            # FRONT-CHIFFRES-2 (F02) — le VERDICT « la charge couvre / est sous le prix du marché »
+            # servi : le front ne compare plus les deux €/m² pour choisir la phrase.
+            _cf = res.get("charge_fonciere") or {}
+            if _cf.get("par_m2_terrain") is not None and tz.get("eur_m2") is not None:
+                res["charge_couvre_marche"] = float(_cf["par_m2_terrain"]) >= float(tz["eur_m2"])
     except Exception:  # noqa: BLE001 — la confrontation est un bonus, ne casse jamais la charge
         pass
     if not res.get("calculable"):

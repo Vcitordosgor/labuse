@@ -206,7 +206,9 @@ export function Gabarit() {
   const raccZone = (res?.raccordement?.zone ?? null) as { code?: string; a_cheval?: boolean } | null
   const cadastreM2 = parcelle?.surface_m2 ?? null
   const aCheval = !!raccZone?.a_cheval && cadastreM2 != null && res?.surfaceParcelleM2 != null
-  const pctPortion = aCheval ? Math.round((res!.surfaceParcelleM2! / cadastreM2!) * 100) : null
+  // FRONT-CHIFFRES-2 (F50/F57) — % « à cheval » SERVI (pctPortionZone) ; ce ratio vivait à DEUX sites
+  // front (ici + GabaritLine) → recalculé une seule fois au back, les deux le lisent (plus de divergence).
+  const pctPortion = res?.pctPortionZone ?? null
 
   return (
     <div data-gabarit-panel className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">

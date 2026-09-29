@@ -95,5 +95,11 @@ def gabarit_detail(idu: str, db: Session = Depends(get_db)) -> GabaritResult:
 
     res = compute_gabarit(build.input)
     res.raccordement = build.raccordement
+    # FRONT-CHIFFRES-2 (F57/F50) — % « à cheval » calculé ICI, une seule fois : round(portion / cadastre
+    # × 100), même arithmétique que les deux sites front qui le recomputaient (GabaritLine + panneau).
+    _rac = build.raccordement or {}
+    _cad = (_rac.get("parcelle") or {}).get("surface_m2")
+    if (_rac.get("zone") or {}).get("a_cheval") and _cad and res.surfaceParcelleM2 is not None:
+        res.pctPortionZone = round(res.surfaceParcelleM2 / _cad * 100)
     res.batiExistantGeoJSON = _bati_existant(db, idu)
     return res

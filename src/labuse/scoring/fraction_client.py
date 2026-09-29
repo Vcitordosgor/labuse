@@ -18,6 +18,14 @@ def _cfg() -> dict:
     return {"paliers": [int(d) for d in f["paliers"]], "seuil_bas_p": float(f["seuil_bas_p"])}
 
 
+def seuil_bas_denominateur(cfg: dict | None = None) -> int:
+    """FRONT-CHIFFRES-2 (F26) — le dénominateur du seuil bas (« sous 1/d → tiret, peu probable »),
+    = round(1 / seuil_bas_p). Servi au front pour que le TEXTE d'explication suive le config au lieu
+    de coder « 1/50 » en dur : une bascule de bandes (nouveau seuil_bas_p) le met à jour partout."""
+    c = cfg or _cfg()
+    return round(1.0 / c["seuil_bas_p"])
+
+
 def fraction_humaine(p_raw: float | None, cfg: dict | None = None) -> dict | None:
     """(p_raw) → {'denominateur': d, 'texte': '1/d'} ou None (= « — », peu probable).
 

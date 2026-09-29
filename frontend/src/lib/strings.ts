@@ -210,7 +210,9 @@ export const CLIENT = {
     // malentendu (« pourquoi ce n'est pas monotone ? » = parce que c'est groupé par tier).
     groupe: 'groupée par priorité d’action (priorité → faible) · trier par Surface pour un ordre global',
     // M135 — le « i » de la barre TRIER : la lecture de la fraction + les deux tris.
-    lunettes: '« 1/5 sous 1 an » ≈ une chance sur cinq qu’une vente intervienne dans l’année — estimation calibrée sur les ventes réelles 2017-2025. Sous 1/50, un tiret « — » (peu probable). '
+    // FRONT-CHIFFRES-2 (F26) — le seuil bas (« sous 1/d ») est SERVI (config scoring_client) : le
+    // texte le reçoit, il ne code plus « 1/50 » (suit une bascule de bandes). Défaut 50 au chargement.
+    lunettes: (d = 50) => `« 1/5 sous 1 an » ≈ une chance sur cinq qu’une vente intervienne dans l’année — estimation calibrée sur les ventes réelles 2017-2025. Sous 1/${d}, un tiret « — » (peu probable). `
       + 'La liste est classée par cette probabilité (ex æquo départagés par la qualité du terrain, copropriétés en queue) ; Surface = la plus grande d’abord, re-cliquer inverse.',
   },
 
@@ -351,7 +353,10 @@ export const CLIENT = {
     //    particulier »), état bâti/nu et part bâtie du secteur (Sitadel + DVF), ventes du secteur
     //    parties à des sociétés, ancienneté du PLU, contraintes d'urbanisme, marché du secteur ;
     //  · ×N : aucun plafond codé (le classement sert une probabilité, arrondie à un palier humain).
-    corps: [
+    // FRONT-CHIFFRES-2 (F26) — `corps` reçoit le seuil bas + les paliers SERVIS (config
+    // scoring_client) : le bloc « fraction » les interpole au lieu de coder « 1/50 » / la liste des
+    // paliers en dur (suit une bascule de bandes). Défauts au chargement.
+    corps: (d = 50, paliers: number[] = [2, 3, 4, 5, 10, 20, 50]) => [
       {
         h: 'Ce que mesure le classement',
         p: 'Une seule chose : la probabilité qu’une parcelle change de main à court terme. ' +
@@ -370,7 +375,7 @@ export const CLIENT = {
         h: 'La probabilité en fraction',
         p: '« 1/5 sous 1 an » ≈ une chance sur cinq qu’une vente intervienne dans l’année — ' +
           'la probabilité, recalibrée par segment sur les ventes réelles, arrondie à un palier humain ' +
-          '(1/2, 1/3, 1/4, 1/5, 1/10, 1/20, 1/50). Sous 1/50, un tiret « — » (peu probable).',
+          `(${paliers.map((k) => `1/${k}`).join(', ')}). Sous 1/${d}, un tiret « — » (peu probable).`,
       },
       {
         h: 'Ce qu’il ne dit pas',

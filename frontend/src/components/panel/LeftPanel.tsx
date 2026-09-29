@@ -1,4 +1,6 @@
+import { useQuery } from '@tanstack/react-query'
 import { useEffect, useRef } from 'react'
+import { getScoringFraction } from '../../lib/api'
 import { useApp } from '../../store/useApp'
 import { Legend } from '../map/Legend'
 import { NouvellesCouches } from '../map/CouchesTuyau'  // COUCHES-TUYAU-1 lot 2
@@ -37,10 +39,13 @@ function Modale({ id, titre, onClose, children }: { id: string; titre: string; o
 // « Comprendre le classement » — la MÉTHODE (ce qui est mesuré, le ×N, l'entraînement). Contenu
 // centralisé dans strings.ts (CLIENT.algo.corps), validé par Vic. M55-H p11 : plus de ligne de date.
 export function AlgoExplainer({ onClose }: { onClose: () => void }) {
+  // FRONT-CHIFFRES-2 (F26) — seuil bas + paliers SERVIS (config scoring_client) : le bloc « fraction »
+  // du modal les interpole au lieu de coder « 1/50 » / la liste des paliers en dur.
+  const sf = useQuery({ queryKey: ['scoring-fraction'], queryFn: getScoringFraction, staleTime: 60 * 60 * 1000 }).data
   return (
     <Modale id="classement" titre={CLIENT.algo.titre} onClose={onClose}>
       <div className="mt-3 flex flex-col gap-3">
-        {CLIENT.algo.corps.map((s) => (
+        {CLIENT.algo.corps(sf?.seuil_bas_denominateur ?? 50, sf?.paliers ?? [2, 3, 4, 5, 10, 20, 50]).map((s) => (
           <div key={s.h}>
             <p className="label-caps text-[9.5px]">{s.h}</p>
             <p className="mt-0.5 text-[12px] leading-relaxed text-txt-mut">{s.p}</p>

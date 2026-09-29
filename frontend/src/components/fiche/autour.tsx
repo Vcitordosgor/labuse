@@ -11,7 +11,6 @@
  */
 import type { Fiche } from '../../lib/types'
 import { fmtInt } from '../../lib/format'
-import { permisIncoherenceNote } from '../../lib/permis'
 import { BlocIndisponible } from './BlocIndisponible'
 import { MarcheSecteurBlock } from './MarcheSecteurBlock'
 import { PermitsProximityBlock } from './PermitsProximityBlock'
@@ -39,7 +38,7 @@ export function HistoriqueSiteBlock({ f }: { f: Fiche }) {
           // DONNEES-6/7 — JAMAIS réordonner les dates : si l'autorisation précède le dépôt (incohérence
           // du producteur SDES/Dido), on montre les deux dates telles quelles et on qualifie l'écart
           // (au-delà d'1 mois = modificatif/transféré probable ; sous 1 mois = incohérence). Voir permis.ts.
-          const note = permisIncoherenceNote(pm.date_depot, pm.date_autorisation)
+          const note = pm.note_incoherence ?? null   // FRONT-CHIFFRES-2 (F32) — servie (source unique miroir)
           return (
             // KELFONCIER-FIX-1 (Lot C) — le TYPE libellé (Permis d'aménager / Déclaration préalable…) et
             // l'ÉTAT sont servis ; un permis ANNULÉ le DIT (rouge), plus jamais confondu avec une autorisation.

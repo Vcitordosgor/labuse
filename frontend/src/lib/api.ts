@@ -235,6 +235,11 @@ export const getCommunes = () => j<CommuneInfo[]>('/communes')
 // simple) + une phrase chiffrée/datée pour le client. Mémorisé 6h côté serveur.
 export interface ScoringBacktest { phrase_client: string | null; fenetre_fin?: string; base_pct?: number }
 export const getScoringBacktest = () => j<ScoringBacktest>('/scoring/backtest')
+// FRONT-CHIFFRES-2 (F26) — le seuil bas de la fraction de probabilité (« sous 1/d → peu probable »)
+// servi depuis config/scoring_client.yaml : le front n'écrit plus « 1/50 » en dur, il lit le seuil
+// (une bascule de bandes le met à jour partout). Le verdict lui-même (fraction ou « — ») est déjà
+// calculé au serveur et cohérent fiche/filtres/Dossier/Copilote.
+export const getScoringFraction = () => j<{ seuil_bas_denominateur: number; paliers: number[] }>('/vocabulaire/scoring-fraction')
 // RETOURS-1 R3 — acquisitions PM d'une commune : constat DGFiP (changement de propriétaire moral
 // d'un millésime au suivant), hors scoring. Servi par le bloc contexte ET le listing dédié.
 export interface AcquisitionsPm {
@@ -630,6 +635,8 @@ export interface GabaritResult {
   validationErrors: string[]
   raccordement?: Record<string, unknown> | null
   surfaceParcelleM2?: number | null
+  // FRONT-CHIFFRES-2 (F57/F50) — % de la parcelle en zone dominante « à cheval », servi (plus recalculé au front).
+  pctPortionZone?: number | null
   zoneImplantationM2?: number | null
   plafondEmpriseM2?: number | null
   plafondEmpriseStatus?: string | null   // 'absent' → « Non réglementé »
@@ -660,7 +667,7 @@ export const getGabarit = (idu: string) =>
 // type + tendance 12 mois + annonces Radar dans le rayon). Chaque chiffre porte son n/millésime.
 export interface DistribRepere { n: number; min: number | null; p25: number | null; median: number | null; p75: number | null; max: number | null }
 export interface Distribution { avant: DistribRepere; apres: DistribRepere; n_exclus_extremes: number; n_min_vise: number; periode_segment?: string }
-export interface EcartCommune { secteur_eur_m2: number | null; rayon_m: number; commune_eur_m2: number; n_commune: number | null; ecart_pct: number | null; phrase: string }
+export interface EcartCommune { secteur_eur_m2: number | null; rayon_m: number; commune_eur_m2: number; n_commune: number | null; ecart_pct: number | null; phrase: string; sens?: 'sous' | 'au_dessus' | null }
 export interface LocalMed { eur_m2: number; n: number | null; millesime: string | null; rayon_m: number | null; perimetre: string | null; distribution?: Distribution | null }
 export interface MonSecteurData {
   idu: string; commune: string; adresse: string | null
@@ -738,6 +745,7 @@ export const getPromoteurAcquisitions = (siren: string) => j<PromoteurAcquisitio
 export interface TaxePrefill {
   idu: string; commune: string; insee: string
   surface_terrain_m2: number | null; zone_plu: string | null; sdp_gabarit_m2: number | null; deja_batie?: boolean
+  zone_famille?: string | null   // FRONT-CHIFFRES-2 (F28) — U/AU/A/N servie (exonération locaux agricoles = 'A')
   taux_communal_pct: number | null
   taux_communal_source: 'public' | null
   taux_communal_millesime: string | null
@@ -819,6 +827,12 @@ export interface AccueilChiffres {
   run_label: string
 }
 export const getAccueilChiffres = () => j<AccueilChiffres>('/accueil/chiffres')
+
+// FRONT-CHIFFRES-2 (F13/F29) — la DA d'un palier servie depuis la source unique (scoring/
+// tiers_client) : jeton DA (variable CSS) + ton du Badge + libellés. Le front ne code plus la
+// correspondance palier→couleur (pastille Projets, badge Outils) ; à q_v15 seul le back change.
+export interface PalierDA { code?: string; chip: string; long: string; jeton: string; ton: 'vert' | 'ambre' | 'neutre' | 'rouge' }
+export const getPaliersDA = () => j<{ paliers: Record<string, PalierDA> }>('/vocabulaire/paliers')
 
 // RETOURS-8 (R2) — la ligne d'accueil n'annonce plus de « retard » : deux chiffres réels (sources
 // affichées · parcelles couvertes) → « voir les données ». `ton` toujours 'ok' (aucun rouge client).
@@ -1046,7 +1060,7 @@ export interface SuccessionItem {
   sdp_residuelle_m2: number | null   // Estimé — moteur de la fiche (p_model_ext_dataset)
   dirigeant_age: number | null; sci_dormante: boolean
   // DONNEES-1 lot 2.3 — dernier dépôt de comptes BODACC du propriétaire PM (null = aucun publié).
-  depot_comptes: { annee: number | null; depuis_ans: number | null } | null
+  depot_comptes: { annee: number | null; depuis_ans: number | null; muet?: boolean } | null
   proprio: SolaireProprio
 }
 export interface SuccessionsResp {
@@ -1211,6 +1225,7 @@ export interface CompareRow {
   // COMPARER-2 §4 / SOURCES-FIX-2 lot B — Classement LABUSE du RUN SERVI (même source que l'Analyse et la fiche) : bande + Signal
   bande?: string | null; signal_niveau?: string | null
   terrain_zone_eur_m2?: number | null; contrainte_majeure?: string | null   // M82
+  charge_couvre_marche?: boolean | null   // FRONT-CHIFFRES-2 (F02) — verdict charge vs marché servi
   n_contraintes?: number; contraintes?: string[]
   // RETOURS-11F M13 (O9) — colonnes ajoutées, toutes de la fiche servie / du bilan servi.
   proprietaire?: string | null; bati_existant_pct?: number | null
@@ -2261,6 +2276,9 @@ export interface RadarBienClient {
   // RADAR-2 (Lot 2) — pastilles de la liste : ancien prix (barré) + % de la dernière baisse ; « de retour »
   // (annonce ré-activée après un retrait sans vente). Servis à plat par le back (jamais recalculés au front).
   ancien_prix: number | null; baisse_pct: number | null; de_retour: boolean
+  // FRONT-CHIFFRES-2 (F14) — « nouveau » servi à plat (seuil back SEUIL_NOUVEAU_J) ; « en vente
+  // longue » se lit sur `statut` (cycle back, seuil SEUIL_VENTE_LONGUE_J) — le front ne recalcule plus.
+  nouveau: boolean
   // RADAR-DEPOT-2 D2 — faits DÉCLARÉS par le vendeur (zone PLU, drapeaux), « déclaré dans l'annonce ».
   declaratif: RadarDeclaratif | null; provenance: string | null
   // RADAR-DEPOT-2 D4 — badge « sous le marché » (null si non applicable/au-dessus du seuil).
@@ -2346,7 +2364,7 @@ export interface RadarMarcheLigne {
   prix_m2_terrain: RadarMesure; prix_m2_bati: RadarMesure; delai_median_j: RadarMesure
   taux_echec_pct: RadarMesure; part_particuliers_pct: RadarMesure
 }
-export interface RadarMarche { communes: RadarMarcheLigne[]; ile: RadarMarcheLigne; seuil_n: number; corpus_total: number; corpus_actif: number }
+export interface RadarMarche { communes: RadarMarcheLigne[]; ile: RadarMarcheLigne; seuil_n: number; corpus_total: number; corpus_actif: number; corpus_jeune: boolean }
 export const getRadarMarche = () => j<RadarMarche>('/radar/marche')
 // RADAR-HTML (Lot 4) — signaux croisés d'une commune (écart demandé/acté + annonces actives).
 export interface RadarEcart {
@@ -2549,6 +2567,9 @@ export interface QuestionnaireFinancier {
   // RECETTE-8 W13bis (C3) — les écrans PAR usage : le front sert le questionnaire du parcours choisi.
   ecrans_par_usage?: Record<string, QEcran[]>; champs_obligatoires_revente?: string[]
   programme?: QProgramme   // RECETTE-9 T1 — programme constructible : potentiel vs à saisir
+  // FRONT-CHIFFRES-2 (F04) — bornes du garde « hors marché » servies depuis la source unique
+  // (faisabilite/engine.py) : le front ne code plus 20000/8000/12000, il les lit.
+  hors_marche_bornes?: { prix_sortie_saisi_eur_m2: number; cout_construction_saisi_eur_m2: number; prix_vente_bailleur_saisi_eur_m2: number }
 }
 export const getFinancierQuestionnaire = (idu: string) =>
   j<QuestionnaireFinancier>(`/financier/${encodeURIComponent(idu)}/questionnaire`)

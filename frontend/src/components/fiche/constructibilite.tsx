@@ -345,7 +345,9 @@ function CalculetteBody({ idu, defauts, hideSource = false, prixDemandeExterne, 
                       Confrontation — vous pouvez payer <b className="tnum text-mint">{fmtInt(Number(cf.par_m2_terrain))} €/m²</b> de terrain ;
                       le marché de la zone vend le terrain nu à <b className="tnum text-txt">{fmtInt(Number(d.terrain_zone_eur_m2))} €/m²</b>
                       {' '}<span className="text-txt-dim">(DVF terrains, fiabilité {String(d.terrain_zone_fiabilite ?? 'moyenne')})</span>.
-                      {Number(cf.par_m2_terrain) >= Number(d.terrain_zone_eur_m2)
+                      {/* FRONT-CHIFFRES-2 (F02) — verdict charge vs marché SERVI (charge_couvre_marche) ;
+                          le front ne compare plus les deux €/m². */}
+                      {d.charge_couvre_marche
                         ? ' Votre charge couvre le prix du marché.'
                         : ' Votre charge est sous le prix du marché — négociation ou densité à retrouver.'}
                     </p>
@@ -998,7 +1000,9 @@ export function ConstructibiliteSection({ f, idu }: { f: Fiche; idu: string }) {
   const delaisse = faisa.data?.delaisse
   const reglesZone = f.reglement_plu?.zones?.[0]?.zone
   const reglesSdp = f.potentiel_transformation?.sdp_residuelle_m2
-  const nonConstructible = !!(reglesZone && /^(A(?!U)|N)/i.test(reglesZone))
+  // FRONT-CHIFFRES-2 (F01a) — verdict de constructibilité NEUVE servi par la cascade (même valeur
+  // que la fiche et la garde SDP résiduelle) ; plus de regex front sur le libellé de zone.
+  const nonConstructible = f.reglement_plu?.constructible_neuf === false
   const logMax = Array.isArray(fo?.logements_au_sol)
     ? Math.max(fo.logements_au_sol[0] ?? 0, fo.logements_au_sol[1] ?? 0)
     : (typeof fo?.logements_au_sol === 'number' ? fo.logements_au_sol : null)

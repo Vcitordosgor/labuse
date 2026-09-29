@@ -13,6 +13,10 @@ from sqlalchemy.orm import Session
 from ..ingestion.run_all import REUNION_COMMUNES
 
 SEUIL_N = 5   # sous ce n, une mesure statistique n'est pas servie (« échantillon insuffisant »)
+# FRONT-CHIFFRES-2 (F25) — en dessous de ce corpus total, le Radar est « jeune » (bandeau « le
+# corpus se constitue »). Ce seuil vivait EN DUR au front (RadarMarche `corpus_total < 40`) ; il est
+# ici, servi à plat (flag `corpus_jeune`), pour que le front n'en décide plus.
+SEUIL_CORPUS_JEUNE = 40
 
 
 def _ecart_niveau(dn: int, an: int, seuil_ecart: int) -> str:
@@ -364,8 +368,11 @@ def stats(db: Session) -> dict:
     ile = _ligne("Toute l'île", dict(total_row) if total_row else None)
 
     corpus = sum(l["actives"] + l["retirees_30j"] + l["vendues_90j"] for l in lignes)
+    corpus_total = db.execute(text(
+        "SELECT count(*) FROM pige_biens b JOIN pige_faits f ON f.bien_id=b.bien_id "
+        f"WHERE f.valide_at IS NOT NULL{excl}")).scalar() or 0
     return {"communes": lignes, "ile": ile, "seuil_n": SEUIL_N,
-            "corpus_total": db.execute(text(
-                "SELECT count(*) FROM pige_biens b JOIN pige_faits f ON f.bien_id=b.bien_id "
-                f"WHERE f.valide_at IS NOT NULL{excl}")).scalar() or 0,
+            "corpus_total": corpus_total,
+            # FRONT-CHIFFRES-2 (F25) — le front lit ce flag au lieu de coder « corpus_total < 40 ».
+            "corpus_jeune": corpus_total < SEUIL_CORPUS_JEUNE,
             "corpus_actif": corpus}

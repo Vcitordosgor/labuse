@@ -58,7 +58,11 @@ function CarteBien({ b, sel, onClick, selRef }: {
   b: RadarBienClient; sel: boolean; onClick: () => void; selRef: React.RefObject<HTMLButtonElement>
 }) {
   const j = joursDepuis(b.date_publication || b.date_saisie)
-  const nouveau = j != null && j < 2
+  // FRONT-CHIFFRES-2 (F14) — les DÉCISIONS de badge sont servies (le front ne les recalcule plus) :
+  // `nouveau` à plat (seuil back SEUIL_NOUVEAU_J), « en vente longue » sur le `statut` du cycle back
+  // (seuil SEUIL_VENTE_LONGUE_J). `j` ne sert plus qu'à AFFICHER l'ancienneté (présentation).
+  const nouveau = b.nouveau
+  const enVenteLongue = b.statut === 'en_vente_longue'
   const vendeur = b.faits.particulier_pro === 'pro' ? 'Pro' : b.faits.particulier_pro === 'particulier' ? 'Particulier' : b.portail
   const ouvrir = () => { radarClic(b.bien_id, b.annonce_id).catch(() => {}); window.open(b.url_sortante, '_blank', 'noopener,noreferrer') }
   // RADAR-FIX-3 — l'annonce ouverte dans « Ce bien » porte l'ÉTAT ACTIF de la charte (fond vert, encre
@@ -83,7 +87,7 @@ function CarteBien({ b, sel, onClick, selRef }: {
             Baisse −{b.baisse_pct} %{b.ancien_prix != null && <span className={`ml-1 line-through ${sel ? 'text-mint-on/60' : 'text-txt-dim'}`}>{fmtEur(b.ancien_prix)}</span>}
           </span>
         )}
-        {j != null && j > 90 && <span className={`rounded-full px-2 py-0.5 text-[10.5px] font-medium ${sel ? puce : 'bg-amber/12 text-amber'}`}>En vente depuis {j} j</span>}
+        {enVenteLongue && <span className={`rounded-full px-2 py-0.5 text-[10.5px] font-medium ${sel ? puce : 'bg-amber/12 text-amber'}`}>En vente{j != null ? ` depuis ${j} j` : ' longue'}</span>}
         {b.de_retour && <span className={`rounded-full px-2 py-0.5 text-[10.5px] font-medium ${sel ? puce : 'bg-amber/12 text-amber'}`}>De retour</span>}
         <a onClick={(e) => { e.stopPropagation(); e.preventDefault(); ouvrir() }} href={b.url_sortante} target="_blank" rel="noopener noreferrer"
           data-radar-portail className={`ml-auto text-[12px] font-medium underline underline-offset-2 ${sel ? 'text-mint-on decoration-mint-on/50 hover:decoration-mint-on' : 'text-[#E7B008] decoration-[#E7B008]/40 hover:decoration-[#E7B008]'}`}>

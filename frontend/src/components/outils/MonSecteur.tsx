@@ -81,7 +81,9 @@ export function SecteurResultats({ idu, embedded }: { idu: string; embedded?: bo
                     {sb.ecart_commune.phrase}
                     {sb.ecart_commune.ecart_pct != null && (
                       <span className={`ml-1 font-medium ${sb.ecart_commune.ecart_pct < 0 ? 'text-mint' : 'text-amber'}`}>
-                        {sb.ecart_commune.ecart_pct < 0 ? 'sous' : 'au-dessus de'} la commune
+                        {/* FRONT-CHIFFRES-2 (F12) — le MOT (sous/au-dessus) est servi (`sens`) ; seule la
+                            couleur reste dérivée du signe (présentation). */}
+                        {sb.ecart_commune.sens === 'sous' ? 'sous' : 'au-dessus de'} la commune
                       </span>
                     )}
                   </p>

@@ -1,6 +1,6 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { Fragment, useEffect, useMemo, useState } from 'react'
-import { getAnalyse, getAnalyseStats, getCommunes, getFiltre, getParcelsGeojson, getResults, type BandeGroupe, type QualiteKey, type SignalNiveauKey, type SortKey } from '../../lib/api'
+import { getAnalyse, getAnalyseStats, getCommunes, getFiltre, getParcelsGeojson, getResults, getScoringFraction, type BandeGroupe, type QualiteKey, type SignalNiveauKey, type SortKey } from '../../lib/api'
 import { hasScopeFilters, matchAll, type ParcelProps } from '../../lib/filters'
 import { roughCentroid } from '../../lib/geo'
 import { fmtInt as fmt } from '../../lib/format'
@@ -473,6 +473,8 @@ function BandeHeader({ bande }: { bande: Bande }) {
 
 export function ResultsSection() {
   const { filters, query, zone, resetFilters, commune, setCommune } = useApp()
+  // FRONT-CHIFFRES-2 (F26) — seuil bas « peu probable » servi (config scoring_client) pour le « i ».
+  const dPeuProbable = useQuery({ queryKey: ['scoring-fraction'], queryFn: getScoringFraction, staleTime: 60 * 60 * 1000 }).data?.seuil_bas_denominateur ?? 50
   const ile = commune == null   // mode « Toute l'île » : liste + compteurs servis en SQL
   // M55-G point 8 — décision Vic : sans analyse demandée, l'avis LABUSE ne s'affiche pas.
   // Mode FACTUEL (analyse OFF) : liste neutre, tri Surface seul, aucune ventilation d'opinion.
@@ -643,7 +645,7 @@ export function ResultsSection() {
         {!analyse && <div data-tri-bar className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1.5">
           <span className="flex h-[15px] shrink-0 items-center gap-1.5 text-[10px] uppercase tracking-wide text-txt-dim">Trier
             {/* M55-F point 6 : le « i » des deux lunettes (opportunité globale vs probabilité seule) */}
-            <Tip garder side="top" tip={CLIENT.tri.lunettes}>
+            <Tip garder side="top" tip={CLIENT.tri.lunettes(dPeuProbable)}>
               <span data-tri-info role="button" tabIndex={0} aria-label="Comprendre les deux tris"
                 className="flex h-[15px] w-[15px] items-center justify-center rounded-full border border-line-2 text-[9px] font-bold normal-case leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
             </Tip>

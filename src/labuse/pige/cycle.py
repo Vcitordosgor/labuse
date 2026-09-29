@@ -31,6 +31,10 @@ from .tables import EV_STATUT_CHANGE, EV_VENDUE_DVF, journaliser
 _AUJ_REU = "(now() AT TIME ZONE 'Indian/Reunion')::date"
 SEUIL_VENTE_LONGUE_J = 90
 SEUIL_REVERIF_J = 60
+# FRONT-CHIFFRES-2 (F14) — un bien est « nouveau » s'il est publié depuis moins de N jours. Ce seuil
+# vivait EN DUR au front (RadarEcran `j < 2`) ; il est ici, à côté de son frère `en_vente_longue`,
+# servi à plat par pige/client (flag `nouveau`) pour que le front n'en décide plus.
+SEUIL_NOUVEAU_J = 2
 
 
 def _basculer(db: Session, bien_id: int, nouveau: str, commune: str, motif: str) -> None:

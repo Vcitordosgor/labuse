@@ -12,6 +12,7 @@
  */
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
+import { getScoringFraction } from '../../lib/api'
 import { useApp } from '../../store/useApp'
 import { Squelette } from '../Loading'
 import { EmptyState, ErrorState } from '../States'
@@ -51,6 +52,10 @@ export function ScoringV2Module() {
   const [copro, setCopro] = useState(false)
   const select = useApp((s) => s.select)
   const { data, isLoading, error } = useListe(tab, copro)
+  // FRONT-CHIFFRES-2 (F26) — le seuil bas (« sous 1/d, peu probable ») vient du back (config
+  // scoring_client) ; plus de littéral « 1 sur cinquante » codé dans le texte. Repli 50 au chargement.
+  const seuilBas = useQuery({ queryKey: ['scoring-fraction'], queryFn: getScoringFraction, staleTime: 60 * 60 * 1000 })
+  const dPeuProbable = seuilBas.data?.seuil_bas_denominateur ?? 50
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2">
@@ -58,7 +63,7 @@ export function ScoringV2Module() {
       <div className="rounded-lg border border-mint/30 bg-mint/[0.06] px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut">
         Le <b className="text-txt">classement</b> des parcelles par <b className="text-txt">probabilité
         de vente</b> sous 1 an. La <b className="text-mint">fraction</b> (« 1/5 ») dit la chance qu’une
-        vente intervienne dans l’année ; sous 1/50, un tiret « — » (<b>peu probable</b>). <b>À suivre (tête)</b> =
+        vente intervienne dans l’année ; sous 1/{dPeuProbable}, un tiret « — » (<b>peu probable</b>). <b>À suivre (tête)</b> =
         la tête du classement, à contacter d’abord ; <b>Réserve foncière</b> = forte capacité constructible résiduelle (marqueur, pas un palier) ;
         <b>Classement</b> = toutes, par ordre de priorité.
       </div>
