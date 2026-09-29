@@ -21,7 +21,7 @@ F19,1,seuil,remonter,fiche,components/fiche/PermitsProximityBlock.tsx,1,remonter
 F20,1,seuil,declarer,fiche,components/fiche/ProprietaireHistorique.tsx,1,declarer_registre,ProprietaireHistorique.tsx:25,≥2 millésimes = minimum inhérent pour une frise/un changement,reclassé_présentation,
 F21,1,seuil,remonter,fiche,components/fiche/blocks.tsx,1,remonter_back,blocks.tsx:106,drapeau à cheval (zone),remonté,F21
 F22,1,seuil,remonter,fiche,components/fiche/formes.tsx,1,remonter_back,formes.tsx:99,couleur/cran d'une valeur servie (aucun chiffre/libellé décidé),reclassé_présentation,
-F23,1,seuil,remonter,fiche,components/fiche/reseaux.tsx,1,remonter_back,reseaux.tsx:48-53,,a_faire,
+F23,1,seuil,remonter,fiche,components/fiche/reseaux.tsx,1,remonter_back,reseaux.tsx:48-53,badge viabilisation (mot+ton servis),remonté,F23
 F24,1,seuil,remonter,admin/map,components/map/MapView.tsx,1,remonter_back,MapView.tsx:344,"plafond de RENDU carte (le front ne peut peindre >20k features) — limite technique, pas une donnée",reclassé_présentation,
 F25,1,seuil,remonter,outils,components/outils/RadarMarche.tsx,1,remonter_back,RadarMarche.tsx:46,corpus jeune (bandeau Radar),remonté,F25
 F26,1,seuil,remonter,outils,components/outils/ScoringV2.tsx,1,remonter_back,ScoringV2.tsx:61,seuil bas fraction (« peu probable ») servi,remonté,F26

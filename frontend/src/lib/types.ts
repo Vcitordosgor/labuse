@@ -938,6 +938,8 @@ export interface Viabilisation {
   score: number
   band: 'confirmee' | 'probable' | 'incertaine' | 'lourde'
   libelle: string
+  // FRONT-CHIFFRES-2 (F23) — mot court + ton du badge servis (le front ne mappe plus band→DA).
+  mot?: string; ton?: 'vert' | 'ambre' | 'neutre'
   contributions: ViaContribution[]
   cout_raccordement: { niveau: string; assainissement: string; disclaimer: string }
   disclaimer: string

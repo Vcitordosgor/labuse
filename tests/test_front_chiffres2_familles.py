@@ -230,3 +230,15 @@ def test_f28_taxe_zone_agricole_servie():
     ta = (SRC / "components/outils/TaxeAmenagement.tsx").read_text(encoding="utf-8")
     assert "prefill.data?.zone_famille === 'A'" in ta
     assert "/^A(?!U)/i.test" not in ta, "regex de zone (exonération) revenue au front (F28)"
+
+
+def test_f23_viabilisation_da_servie():
+    """F23 — le badge de viabilisation (mot court + ton) n'est plus mappé au front (VIAB_MOT
+    band→libellé/ton) : le back sert `mot`+`ton` (viabilisation.py BANDE_DA, source unique)."""
+    from labuse.faisabilite.viabilisation import BANDE_DA, build_indicateur
+    assert set(BANDE_DA) == {"confirmee", "probable", "incertaine", "lourde"}
+    r = build_indicateur({"c100": 10, "zone_fam": "U", "voie10": True, "bati10": True, "bati30": True})
+    assert r["mot"] and r["ton"]
+    rx = (SRC / "components/fiche/reseaux.tsx").read_text(encoding="utf-8")
+    assert "f.viabilisation.mot" in rx and "f.viabilisation.ton" in rx
+    assert "const VIAB_MOT" not in rx, "table band→DA codée revenue au front (F23)"
