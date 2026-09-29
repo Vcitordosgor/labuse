@@ -5,7 +5,7 @@ F03,1,seuil,remonter,outils,components/outils/ModulePanel.tsx,8,remonter_back,Mo
 F04,1,seuil,remonter,fiche,components/fiche/FinancierQuestionnaire.tsx,7,remonter_back,FinancierQuestionnaire.tsx:25 ; FinancierQuestionnaire.tsx:35 ; FinancierQuestionnaire.tsx:37 ; FinancierQuestionnaire.tsx:39,bornes garde hors-marché (€/m²),remonté,F04
 F05,1,seuil,remonter,admin/map,components/admin/Licences.tsx,4,remonter_back,Licences.tsx:154 ; Licences.tsx:241 ; Licences.tsx:350 ; Licences.tsx:583,,a_faire,
 F06,1,seuil,mixte(remonter+declarer),outils,components/outils/moteurs.tsx,4,declarer_registre+remonter_back,moteurs.tsx:303 ; moteurs.tsx:346 ; moteurs.tsx:353-355 ; moteurs.tsx:716,,a_faire,
-F07,1,seuil,remonter,panel/projets/contexte,ContextePanel.tsx,3,remonter_back,ContextePanel.tsx:27 ; ContextePanel.tsx:465 ; ContextePanel.tsx:498,,a_faire,
+F07,1,seuil,remonter,panel/projets/contexte,ContextePanel.tsx,3,remonter_back,ContextePanel.tsx:27 ; ContextePanel.tsx:465 ; ContextePanel.tsx:498,SRU statut→couleur/label + couleur d'un signe (valeur servie),reclassé_présentation,
 F08,1,seuil,remonter,lib/store,lib/status.ts,3,remonter_back,status.ts:229 ; status.ts:298-303 ; status.ts:33,,a_faire,
 F09,1,seuil,remonter,admin/map,components/admin/AdminView.tsx,2,remonter_back,AdminView.tsx:239 ; AdminView.tsx:284,,a_faire,
 F10,1,seuil,remonter,fiche,components/fiche/marche.tsx,2,remonter_back,marche.tsx:70 ; marche.tsx:73,,a_faire,
@@ -18,11 +18,11 @@ F16,1,seuil,remonter,panel/projets/contexte,FiltreLabuse.tsx,1,remonter_back,Fil
 F17,1,seuil,remonter,admin/map,components/admin/Ia.tsx,1,remonter_back,Ia.tsx:165,couleur/cran d'une valeur servie (aucun chiffre/libellé décidé),reclassé_présentation,
 F18,1,seuil,remonter,radar/copilote/crm,components/crm/Kanban.tsx,1,remonter_back,Kanban.tsx:87-88,,a_faire,
 F19,1,seuil,remonter,fiche,components/fiche/PermitsProximityBlock.tsx,1,remonter_back,PermitsProximityBlock.tsx:42,,a_faire,
-F20,1,seuil,declarer,fiche,components/fiche/ProprietaireHistorique.tsx,1,declarer_registre,ProprietaireHistorique.tsx:25,,a_faire,
+F20,1,seuil,declarer,fiche,components/fiche/ProprietaireHistorique.tsx,1,declarer_registre,ProprietaireHistorique.tsx:25,≥2 millésimes = minimum inhérent pour une frise/un changement,reclassé_présentation,
 F21,1,seuil,remonter,fiche,components/fiche/blocks.tsx,1,remonter_back,blocks.tsx:106,drapeau à cheval (zone),remonté,F21
 F22,1,seuil,remonter,fiche,components/fiche/formes.tsx,1,remonter_back,formes.tsx:99,couleur/cran d'une valeur servie (aucun chiffre/libellé décidé),reclassé_présentation,
 F23,1,seuil,remonter,fiche,components/fiche/reseaux.tsx,1,remonter_back,reseaux.tsx:48-53,,a_faire,
-F24,1,seuil,remonter,admin/map,components/map/MapView.tsx,1,remonter_back,MapView.tsx:344,,a_faire,
+F24,1,seuil,remonter,admin/map,components/map/MapView.tsx,1,remonter_back,MapView.tsx:344,"plafond de RENDU carte (le front ne peut peindre >20k features) — limite technique, pas une donnée",reclassé_présentation,
 F25,1,seuil,remonter,outils,components/outils/RadarMarche.tsx,1,remonter_back,RadarMarche.tsx:46,corpus jeune (bandeau Radar),remonté,F25
 F26,1,seuil,remonter,outils,components/outils/ScoringV2.tsx,1,remonter_back,ScoringV2.tsx:61,,a_faire,
 F27,1,seuil,remonter,outils,components/outils/Successions.tsx,1,remonter_back,Successions.tsx:152,,a_faire,

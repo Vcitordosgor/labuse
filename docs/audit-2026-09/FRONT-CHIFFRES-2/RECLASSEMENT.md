@@ -25,3 +25,10 @@ et son libellé (`/vocabulaire/paliers`, source `scoring/tiers_client`). Pastill
 même carte ; à q_v15 (bandes A/B/C/D) un seul endroit change. La pastille F13 est corrigée au
 passage (elle colorait `brulante` en « Priorité » alors que PRIORITE_SERVIE=false le résout en « À
 suivre » — cf. CHANGEMENTS.csv).
+
+## Lot P1 (suite) — reclassements présentation
+| famille | ligne(s) | pourquoi présentation |
+|---|---|---|
+| F07 | ContextePanel:27/465/498 | SRU_META mappe le `statut` SERVI (carencée/déficitaire) → couleur+label+lecture ; :465/:498 = couleur selon le SIGNE d'une valeur servie (tendance/écart). Aucun chiffre décidé. |
+| F20 | ProprietaireHistorique:25 | `n_millesimes < 2` : il faut AU MOINS deux millésimes pour tracer une frise / un changement — minimum inhérent, pas un seuil métier. `n_millesimes` est servi. |
+| F24 | MapView:344 | `> 20 000` = plafond de RENDU (le front ne peut peindre 20k+ features à la parcelle) — contrainte technique d'affichage, pas une donnée que le client lit. *(Servable si Vic veut le rendre réglable.)* |
