@@ -332,7 +332,9 @@ function CalculetteBody({ idu, defauts, hideSource = false, prixDemandeExterne, 
                       Confrontation — vous pouvez payer <b className="tnum text-mint">{fmtInt(Number(cf.par_m2_terrain))} €/m²</b> de terrain ;
                       le marché de la zone vend le terrain nu à <b className="tnum text-txt">{fmtInt(Number(d.terrain_zone_eur_m2))} €/m²</b>
                       {' '}<span className="text-txt-dim">(DVF terrains, fiabilité {String(d.terrain_zone_fiabilite ?? 'moyenne')})</span>.
-                      {Number(cf.par_m2_terrain) >= Number(d.terrain_zone_eur_m2)
+                      {/* FRONT-CHIFFRES-2 (F02) — verdict charge vs marché SERVI (charge_couvre_marche) ;
+                          le front ne compare plus les deux €/m². */}
+                      {d.charge_couvre_marche
                         ? ' Votre charge couvre le prix du marché.'
                         : ' Votre charge est sous le prix du marché — négociation ou densité à retrouver.'}
                     </p>

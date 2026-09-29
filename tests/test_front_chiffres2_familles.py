@@ -252,3 +252,14 @@ def test_f12_monsecteur_sens_ecart_servi():
     ms = (SRC / "components/outils/MonSecteur.tsx").read_text(encoding="utf-8")
     assert "sb.ecart_commune.sens === 'sous'" in ms
     assert "ecart_commune.ecart_pct < 0 ? 'sous'" not in ms, "mot sous/au-dessus dérivé du signe au front (F12)"
+
+
+def test_f02_charge_couvre_marche_servi():
+    """F02 — le verdict « la charge couvre / est sous le prix du marché » n'est plus décidé au front
+    (comparaison des deux €/m²) : le back sert `charge_couvre_marche`. (Le reste de F02 —
+    couleurs ER≥50 %/PEB, signes, `<= 0` inhérents, step d'input — est présentation.)"""
+    src = (ROOT / "src/labuse/api/modules.py").read_text(encoding="utf-8")
+    assert '"charge_couvre_marche"' in src
+    c = (SRC / "components/fiche/constructibilite.tsx").read_text(encoding="utf-8")
+    assert "d.charge_couvre_marche" in c
+    assert "Number(cf.par_m2_terrain) >= Number(d.terrain_zone_eur_m2)" not in c, "verdict charge/marché recalculé au front (F02)"

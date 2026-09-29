@@ -1221,6 +1221,7 @@ export interface CompareRow {
   // COMPARER-2 §4 / SOURCES-FIX-2 lot B — Classement LABUSE du RUN SERVI (même source que l'Analyse et la fiche) : bande + Signal
   bande?: string | null; signal_niveau?: string | null
   terrain_zone_eur_m2?: number | null; contrainte_majeure?: string | null   // M82
+  charge_couvre_marche?: boolean | null   // FRONT-CHIFFRES-2 (F02) — verdict charge vs marché servi
   n_contraintes?: number; contraintes?: string[]
   // RETOURS-11F M13 (O9) — colonnes ajoutées, toutes de la fiche servie / du bilan servi.
   proprietaire?: string | null; bati_existant_pct?: number | null

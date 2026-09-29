@@ -1956,6 +1956,11 @@ def faisabilite_charge(idu: str, body: ChargeIn, db: Session = Depends(get_db)) 
             res["terrain_zone_eur_m2"] = tz["eur_m2"]
             res["terrain_zone_fiabilite"] = tz["fiabilite"]
             res["terrain_zone_n"] = tz["n"]
+            # FRONT-CHIFFRES-2 (F02) — le VERDICT « la charge couvre / est sous le prix du marché »
+            # servi : le front ne compare plus les deux €/m² pour choisir la phrase.
+            _cf = res.get("charge_fonciere") or {}
+            if _cf.get("par_m2_terrain") is not None and tz.get("eur_m2") is not None:
+                res["charge_couvre_marche"] = float(_cf["par_m2_terrain"]) >= float(tz["eur_m2"])
     except Exception:  # noqa: BLE001 — la confrontation est un bonus, ne casse jamais la charge
         pass
     if not res.get("calculable"):

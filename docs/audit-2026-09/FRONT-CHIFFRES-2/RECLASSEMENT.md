@@ -40,3 +40,4 @@ suivre » — cf. CHANGEMENTS.csv).
 
 ## Arrêté pour décision (touche le scoring)
 | F08 (part) | status.ts:33 | `PRIORITE_SERVIE = false` est le DRAPEAU DE POLITIQUE du scoring (miroir de `tiers_client.PRIORITE_SERVIE`, égalité garantie par un test anti-dérive). Le repasser à True est une décision de scoring (Vic, réversible) ; le servir de façon asynchrone casserait les dérivations synchrones de `TIER_V2_META`. → arrêté. |
+| F02 (reste) | constructibilite: 196/198/815/929/947/994 | présentation/inhérent : `coutDepasse` (garde relationnelle input>servi, pas de seuil codé), `negatif` (charge `<= 0` = sens inhérent), `step={50}` (pas d'un champ de saisie), couleur ER `>= 50 %` + PEB `['A','B']` (couleur d'un seuil/classe servie), `capaciteNulle` (`logMax <= 0` inhérent). Seul le VERDICT charge↔marché est remonté (`charge_couvre_marche`). |
