@@ -647,7 +647,9 @@ export interface Copropriete {
 export interface MarcheSecteur {
   filosofi_200m: {
     ind: number; men: number; men_pauv: number; men_prop: number
-    nivvie_moyen_eur: number | null; taux_pauvrete_pct: number | null; millesime: string
+    nivvie_moyen_eur: number | null; taux_pauvrete_pct: number | null
+    // FRONT-CHIFFRES-2 (F58) — part de propriétaires servie (100 × men_prop / men), plus recalculée au front.
+    part_proprietaires_pct: number | null; millesime: string
   } | null
   rpls_commune: {
     nb_logements: number; construct_median: number | null; pct_qpv: number | null; millesime: string

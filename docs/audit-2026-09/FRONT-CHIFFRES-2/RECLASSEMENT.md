@@ -68,4 +68,28 @@ Tout `calcul` front qui ne fait que **re-exprimer / agréger / formater des vale
 | F47 | outils/blocB.tsx | présentation | `max/min` best-of-colonne, largeur de barre ZAN clampée sur valeurs **servies**, horizon **servi** (F31). |
 | F48 | radar/RadarEcran.tsx | présentation | `joursDepuis` = temps relatif (comme `ilYA`) ; verdicts `enVenteLongue`/`de_retour` **servis** ; €/m² = ratio de deux servis (`prix`/`surface`) pour affichage. |
 | F49 | lib/geo.ts | présentation/inhérent | géométrie carte côté client (haversine, aire shoelace, point-in-polygon, `fmtDistance`/`fmtArea`) sur géométrie servie/dessinée — approximations planes locales pour mesures de zone, pas des nombres du registre (cohérent F19/F24). |
-| F50 | outils/Gabarit.tsx | présentation | bbox `fitBounds` (rendu carte) ; `pctPortion` = ratio de deux surfaces **servies** (`surfaceParcelleM2 / cadastre`) pour l'affichage « à cheval » — même motif que F48 €/m² (ratio de servis = présentation ; la doctrine « zéro recalcul » du gabarit vise les RÈGLES, pas un ratio d'affichage). |
+| F50 | outils/Gabarit.tsx | **REMONTER** (révisé au lot 2) + présentation | bbox `fitBounds` = présentation ; `pctPortion` (`surfaceParcelleM2 / cadastre × 100`) était classé présentation au lot 1, MAIS le lot 2 a trouvé que **F57 (`GabaritLine.tsx`) recalcule la MÊME formule** → deux sites divergents. **Remonté** `pctPortionZone` (servi une fois par `gabarit.py`), les deux le lisent. Valeur inchangée. *(cf. § P2 lot 2)* |
+
+## P2 — lot 2 (F51–F68, familles `calcul`)
+Même règle qu'au lot 1. Classification confirmée par un **test de divergence explicite** par ligne (inputs = champs servis ? le résultat pourrait-il différer d'un calcul back de la même notion ? tout doute → remonter). **2 remonters** trouvés (F57/F50, F58) — tous deux valeur inchangée, tous deux étaient des formules DUPLIQUÉES (deux sites, ou front↔back).
+
+| famille | fichier | verdict | pourquoi (inputs servis ? divergence ?) |
+|---|---|---|---|
+| F51 | outils/TaxeAmenagement.tsx | présentation | `zoneA = prefill.zone_famille === 'A'` lit `zone_famille` **servi** (F28) ; la taxe est calculée par le back. Aucun calcul de taxe au front. Pas de divergence. |
+| F52 | projets/ParcoursTinder.tsx | présentation | `total`/`decided` = somme de compteurs **servis** (`etat.counts`) pour une barre de progression. Pas de divergence. |
+| F53 | radar/RadarMarcheColonne.tsx | présentation | pied de colonne = `seuil_indicatif_n`/`seuil_ecart_n` **servis** ; `EcartInline` lit `cmp.niveau`/`median`/`ecart_pct`/`n` **servis** (RADAR-FIX-3, calculés back). Format/couleur seuls. Pas de divergence. |
+| F54 | panel/FiltreLabuse.tsx | présentation | `o.n` facettes **servies** ; `bandeTotalReveal` = somme de comptes de bandes **servis** (« comptes bruts, aucun quota/rang »). Bandes = scoring mais comptes servis, le front somme. Pas de divergence. |
+| F55 | admin/Radar.tsx | admin interne | écran admin : temps relatif (jours depuis `iso` servi). Pas de divergence. |
+| F56 | admin/circuit/CircuitDiagram.tsx | admin interne | schéma circuit dev/admin : `size` d'un Set de `moteur` **servis**. Pas de divergence. |
+| **F57** | **fiche/GabaritLine.tsx** | **REMONTER** (valeur inchangée) | `pctChev = round(surfaceParcelleM2 / cadM2 × 100)` — **MÊME formule qu'à F50 (`Gabarit.tsx`)**, deux sites front. Divergence possible si l'un change. **Remonté** `pctPortionZone` (une fois, `gabarit.py`). |
+| **F58** | **fiche/MarcheSecteurBlock.tsx** | **REMONTER** (valeur inchangée) | `partProp = round(100 × men_prop / men)` — la **MÊME formule vit au back** (`solaire.py:328`, pour le scoring). Deux sites de calcul (front↔back) → divergence possible. **Remonté** `part_proprietaires_pct` sur le bloc filosofi_200m. |
+| F59 | fiche/ProprietaireHistorique.tsx | présentation | `.filter(!c.non_identifiable).length` : compte des `changements` **servis** par flag **servi** (DONNEES-FIX-1 décide au back). Pas de divergence. |
+| F60 | fiche/autour.tsx | présentation | chaînes à partir de `nivvie_moyen_eur`/`taux_pauvrete_pct`/`distance_m` **servis** ; `fmtDist` m→km. Pas de divergence. |
+| F61 | fiche/blocks.tsx | présentation | `aCheval = rp.a_cheval ?? …` (**servi**, F21) ; `pct = round(p×100)` formate une part **servie**. Pas de divergence. |
+| F62 | fiche/leBien.tsx | présentation | `abs(ecart_egout_bdtopo_m)` **servi** + flags `hauteur_discordante`/`_motif` **servis** (DONNEES-FIX-1) ; `abs` = sens inhérent. Pas de divergence. |
+| F63 | fiche/risques.tsx | présentation | `evaluees = vigilances + sansObjet + inconnues` : comptes de `f.lines` **servies** par `result` **servi**. Pas de divergence. |
+| F64 | outils/EtudeZone.tsx | présentation | `surface_m2 / 10000` (m²→ha) + `n_parcelles` **servis**. Pas de divergence. |
+| F65 | outils/moteurs.tsx | présentation | `.length` de `zan_compatibles` **servi** (conso/budget/pct/depasse servis verbatim autour). Pas de divergence. |
+| F66 | projets/ProjetsPanel.tsx | présentation | somme + ratio de compteurs **servis** (`p.counts`) pour un % de progression (comme F52). Pas de divergence. |
+| F67 | header/Header.tsx | présentation | plomberie de pagination « Voir plus » sur `items.length` **servi** (le back ne renvoie pas de total ; `+PAGE_SIZE` = artefact de pied, pas un total revendiqué). Pas un chiffre client. |
+| F68 | lib/useApplySearch.ts | présentation | somme de 4 buckets de tiers **servis** (`getStats().tiers.*`) = « univers filtré hors écartées » ; sommer exactement ces 4 buckets ne peut pas diverger de leur total (comme F42). Pas de divergence. |

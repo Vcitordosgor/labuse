@@ -151,6 +151,10 @@ class GabaritResult(BaseModel):
     # présents seulement si status == "ok"
     surfaceParcelleM2: Optional[float] = None
     zoneImplantationM2: Optional[float] = None
+    # FRONT-CHIFFRES-2 (F57/F50) — % de la parcelle dans la zone dominante quand elle est « à cheval »
+    # (round(portion / cadastre × 100)), calculé UNE fois au service. Deux sites front (GabaritLine +
+    # panneau Gabarit) le recomputaient à l'identique → divergence possible ; ils lisent ce champ. None si non « à cheval ».
+    pctPortionZone: Optional[int] = None
     plafondEmpriseM2: Optional[float] = None
     plafondEmpriseStatus: Optional[str] = None   # 'absent' → « Non réglementé » (silence prouvé)
     hauteurReglementaireM: Optional[float] = None

@@ -294,6 +294,77 @@ fichier familles, 27 avec verrous+rate-limit) · banc `--echantillon` →
 F51–F68** (18 familles). Détail dans RECLASSEMENT.md § « P2 — lot 1 ». **Préviendra Vic à la fin de P2,
 avant P3/P4.**
 
+### Session 11 (P2 — lot 2) — F51–F68 · **P2 TERMINÉ**
+Classification par 2 forks lecture-seule avec **test de divergence explicite par ligne** (inputs = champs
+servis ? le résultat pourrait-il différer d'un calcul back de la même notion ? tout doute → remonter).
+
+- **2 remonters — F57/F50 et F58** (tous deux **valeur affichée inchangée**, tous deux des formules DUPLIQUÉES) :
+  - **F57 + F50** : le « **% à cheval** » (`portion / cadastre × 100`) vivait à DEUX sites front
+    (`GabaritLine.tsx` **et** `Gabarit.tsx`) — divergence possible. Remonté `pctPortionZone` (calculé une
+    fois dans `api/gabarit.py`), les deux le lisent. Vérifié témoins à cheval (`AB1116` 84 % · `AB1184`
+    86 % · `AB0149` 83 %). **Ceci RÉVISE le classement F50 du lot 1** (présentation → remonter).
+  - **F58** : la « **part de propriétaires** » (`100 × men_prop / men`) était recalculée au front alors que
+    la MÊME formule vit au back (`solaire.py:328`, scoring). Remonté `part_proprietaires_pct` sur le bloc
+    filosofi_200m. Vérifié témoin (`97402000AB0004` = 82 %).
+- **14 présentation** (F51/F52/F53/F54/F59/F60/F61/F62/F63/F64/F65/F66/F67/F68) + **2 admin interne**
+  (F55/F56). Détail ligne par ligne (inputs servis + « pas de divergence ») dans RECLASSEMENT.md § P2 lot 2.
+
+**Garde-fous fin de session :** tsc 0 · vitest 225/225 · V6b + verrou front + gardes FC-2 (22 dans le
+fichier familles, 29 avec verrous+rate-limit) · banc `--echantillon` →
+`**3161 comparaisons · 188 écarts (166 INCOHERENT / 22 TOLERABLE) — inchangé vs baseline, 0 nouveau, 0 FAUX-CLIENT**`.
+
+---
+
+## RAPPORT DE FIN DE P2
+
+**P2 (36 familles `calcul`, F33–F68) terminé en 2 lots.** Bilan : **4 remontés** (F46, F57, F50, F58 —
+tous à **valeur affichée inchangée** ; chacun corrigeait une formule dupliquée front↔back ou front↔front)
+· **26 reclassés présentation** · **6 admin interne** (hors surface client). banc **188** tout du long
+(baseline, 0 FAUX-CLIENT). Aucun changement de valeur affichée sur toute la P2.
+
+### 3 justifications de reclassement tirées au hasard (demande Vic — vérifier que « re-exprime des valeurs servies » ne masque pas un calcul qui pourrait diverger)
+Tirage aléatoire (`random.sample`, 3 sur les 26 présentation) → **F67, F49, F66**.
+
+**① F67 — `header/Header.tsx:557`** (pagination « Voir plus »)
+```tsx
+{(ev.data?.items?.length ?? 0) >= limite && (
+  <ListPaginationFooter shown={ev.data?.items?.length ?? 0}
+    total={(ev.data?.items?.length ?? 0) + PAGE_SIZE} … /> )}
+```
+Inputs = `ev.data.items` (liste **servie** par le back) ; `limite`/`PAGE_SIZE` = état d'UI. `shown` = longueur
+de la liste chargée ; `total` = `shown + PAGE_SIZE` n'est **pas** un total revendiqué — c'est un artefact
+de pied « il y en a probablement d'autres » (le back ne renvoie pas de total, commentaire à l'appui). **Aucun
+nombre client, aucune divergence** : rien ici n'est comparé à un compte back.
+
+**② F49 — `lib/geo.ts`** (géométrie carte côté client)
+```ts
+export function haversine(a, b) { … 2 * R * Math.asin(Math.sqrt(s)) }        // distance
+export function polygonArea(pts) { … return Math.abs(s / 2) }                // aire (shoelace, projection locale)
+export const fmtDistance = (m) => m >= 1000 ? `${(m/1000).toFixed(2)} km` : `${Math.round(m)} m`
+export const fmtArea = (m2) => m2 >= 10_000 ? `${(m2/10_000).toFixed(2)} ha` : `${…} m²`
+```
+Inputs = géométrie **servie/dessinée** (coordonnées de la parcelle ou du polygone tracé par l'utilisateur).
+Ce sont des mesures d'affichage pour l'outil de dessin de zone (distance/aire d'un tracé), « approximations
+planes locales » assumées, **jamais un nombre du registre** — aucune de ces valeurs n'est un chiffre que le
+back sert par ailleurs (cohérent avec F19 distance servie / F24 rendu). Pas de divergence possible : il n'y
+a pas de « distance officielle » back que ceci contredirait.
+
+**③ F66 — `projets/ProjetsPanel.tsx:51`** (barre de progression d'un projet)
+```tsx
+const c = p.counts ?? { proposee: 0, retenue: 0, ecartee: 0, a_analyser: 0 }
+const decidees = c.retenue + c.ecartee + (c.a_analyser ?? 0)
+const vivier   = c.proposee + decidees
+// … pct = vivier > 0 ? Math.round((decidees / vivier) * 100) : 0
+```
+Inputs = `p.counts` (les 4 compteurs de pipeline **servis** par le back). `decidees`/`vivier` = **sommes
+de ces compteurs servis**, `pct` = leur ratio, pour une barre de progression. **Ne peut pas diverger** :
+sommer/diviser exactement les compteurs servis donne, par construction, la même chose que le back — il n'y
+a pas de « % de progression » back concurrent (contrairement à F58, où une 2ᵉ formule existait au back → là
+j'ai remonté, pas reclassé). C'est précisément le test appliqué à chaque ligne.
+
+**État FC-2 : P1 + P2 faits.** Reste **P3 (45 familles) + P4 (46 familles)** = surtout `declarer`/format.
+**⚠ Attente du feu vert de Vic avant d'entamer P3/P4.**
+
 <!-- PROGRESSION -->
 
 ---

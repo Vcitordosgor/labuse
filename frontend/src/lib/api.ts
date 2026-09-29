@@ -633,6 +633,8 @@ export interface GabaritResult {
   validationErrors: string[]
   raccordement?: Record<string, unknown> | null
   surfaceParcelleM2?: number | null
+  // FRONT-CHIFFRES-2 (F57/F50) — % de la parcelle en zone dominante « à cheval », servi (plus recalculé au front).
+  pctPortionZone?: number | null
   zoneImplantationM2?: number | null
   plafondEmpriseM2?: number | null
   plafondEmpriseStatus?: string | null   // 'absent' → « Non réglementé »

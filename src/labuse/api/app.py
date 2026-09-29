@@ -4214,6 +4214,11 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
             "filosofi_200m": ({**dict(carreau),
                                "taux_pauvrete_pct": round(100 * carreau["men_pauv"] / carreau["men"])
                                if carreau["men"] else None,
+                               # FRONT-CHIFFRES-2 (F58) — part de propriétaires (100 × men_prop / men)
+                               # décidée ICI (le front la recalculait, la MÊME formule vit dans
+                               # solaire.py pour le scoring : notion à source unique). Valeur inchangée.
+                               "part_proprietaires_pct": (round(100 * carreau["men_prop"] / carreau["men"])
+                                                          if carreau["men"] else None),
                                "millesime": "Filosofi 2021 (INSEE, carreaux 200 m)"}
                               if carreau else None),
             "rpls_commune": rpls_dict,

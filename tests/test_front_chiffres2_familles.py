@@ -302,3 +302,30 @@ def test_f46_valeur_secteur_servie():
     assert "f.dvf_parcelle?.valeur_terrain_secteur_eur != null" in m
     assert "f.dvf_parcelle.valeur_terrain_secteur_eur" in m
     assert "f.surface_m2 * dvfSecteur.mediane_prix_m2" not in m, "valeur au m² recalculée au front (F46)"
+
+
+def test_f57_f50_pct_portion_zone_servie():
+    """F57 + F50 (P2) — le « % à cheval » (portion de parcelle dans la zone dominante) vivait à DEUX
+    sites front (GabaritLine + panneau Gabarit) qui le recalculaient à l'identique : divergence
+    possible si l'un changeait. Calculé UNE fois au service (`gabarit.py`, round(portion/cadastre×100))
+    et servi `pctPortionZone` ; les deux front le lisent. Valeur inchangée (vérifié témoins à cheval)."""
+    contract = (ROOT / "src/labuse/gabarit/contract.py").read_text(encoding="utf-8")
+    assert "pctPortionZone" in contract
+    gab = (ROOT / "src/labuse/api/gabarit.py").read_text(encoding="utf-8")
+    assert "res.pctPortionZone = round(res.surfaceParcelleM2 / _cad * 100)" in gab
+    gl = (SRC / "components/fiche/GabaritLine.tsx").read_text(encoding="utf-8")
+    gp = (SRC / "components/outils/Gabarit.tsx").read_text(encoding="utf-8")
+    assert "r?.pctPortionZone" in gl and "res?.pctPortionZone" in gp
+    assert "/ cadM2!) * 100" not in gl, "ratio à-cheval recalculé au front (F57)"
+    assert "/ cadastreM2!) * 100" not in gp, "ratio à-cheval recalculé au front (F50)"
+
+
+def test_f58_part_proprietaires_servie():
+    """F58 (P2) — la « part de propriétaires » (100 × men_prop / men du carreau Filosofi) était
+    recalculée au front ALORS que la MÊME formule vit au back (scoring, solaire.py) : notion à source
+    unique. Servie `part_proprietaires_pct` sur le bloc filosofi_200m ; le front la lit. Valeur inchangée."""
+    app = (ROOT / "src/labuse/api/app.py").read_text(encoding="utf-8")
+    assert '"part_proprietaires_pct": (round(100 * carreau["men_prop"] / carreau["men"])' in app
+    m = (SRC / "components/fiche/MarcheSecteurBlock.tsx").read_text(encoding="utf-8")
+    assert "f?.part_proprietaires_pct ?? null" in m
+    assert "(100 * f.men_prop) / f.men" not in m, "part propriétaires recalculée au front (F58)"
