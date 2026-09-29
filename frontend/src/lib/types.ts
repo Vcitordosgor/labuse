@@ -809,6 +809,7 @@ export interface DvfSecteur {
   mediane_valeur: number | null
   mediane_prix_m2: number | null
   fenetre?: string | null
+  perimetre?: string | null   // COHERENCE-FIX-2 : périmètre servi par le back (« section cadastrale »)
 }
 export interface DvfParcelle {
   derniere_mutation?: unknown

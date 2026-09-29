@@ -138,6 +138,16 @@ def build_permits(session: Session) -> None:
     """)
 
 
+# COHERENCE-FIX-2 (lot A) — NOTION DISTINCTE, JAMAIS L'EMPRISE BÂTIE CLIENT. p_model_bati.emprise_bati_m2
+# est l'emprise bâtie de SCORING = MAX(BD TOPO clippé, CoSIA) : elle COMPLÈTE la BD TOPO par le CoSIA pour
+# que le modèle P ne rate pas le bâti (classement nu/densité). L'emprise SERVIE au client (fiche §Bâti,
+# Dossier, constructibilité) est BD TOPO SEUL clippé (bati.emprise_bati_bdtopo_m2, CoSIA servi à part
+# « bâti révélé »). Cet id ne doit JAMAIS apparaître dans une déclaration de fiche/export : le verrou V6b
+# (circuit_verrous.verrou_coherence_banc, mâchoire scoring) échoue si c'est le cas.
+EMPRISE_BATI_SCORING_ID = "emprise_bati_scoring_m2"
+EMPRISE_BATI_SCORING_LIBELLE = "Emprise bâtie (scoring, BD TOPO ∪ CoSIA)"
+
+
 def build_bati(session: Session) -> None:
     """Emprise bâtie par parcelle. BRANCHEMENT CoSIA (GO Vic 04/08) : emprise servie =
     MAX(BD TOPO, CoSIA) — la BD TOPO (spatial_layers, intersection exacte) reste la base ;

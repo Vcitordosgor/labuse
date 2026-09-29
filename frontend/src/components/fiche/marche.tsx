@@ -72,7 +72,9 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
   const parTypeAppart = lm(ms?.par_type?.appartement ?? null)
   const parTypeTerrain = (dvfSecteur && dvfSecteur.n_ventes != null && dvfSecteur.n_ventes >= 5 && dvfSecteur.mediane_prix_m2 != null) ? dvfSecteur : null
   const annoncesRayon = ms?.annonces_radar ?? []
-  const contexte = (dvfSecteur?.n_ventes ? `${dvfSecteur.n_ventes} vente${dvfSecteur.n_ventes > 1 ? 's' : ''} secteur` : 'comparables DVF') + (horizon ? ` · DVF — ${horizon}` : '')
+  // COHERENCE-FIX-2 (lot B) — « secteur » ne paraît jamais seul : le périmètre (servi par le back,
+  // `dvfSecteur.perimetre` = « section cadastrale ») accompagne le chiffre. Aucun libellé en dur ici.
+  const contexte = (dvfSecteur?.n_ventes ? `${dvfSecteur.n_ventes} vente${dvfSecteur.n_ventes > 1 ? 's' : ''}${dvfSecteur.perimetre ? ` · ${dvfSecteur.perimetre}` : ''}` : 'comparables DVF') + (horizon ? ` · DVF — ${horizon}` : '')
   return (
     <RefDrawer id="marche" icon={IC.marche} name="Marché"
       context={contexte}
@@ -85,7 +87,7 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
         // le Verdict ne cite QUE des valeurs présentes dans les tuiles (plus de « terrain nu X » sans tuile).
         const typeTuiles: Tuile[] = []
         const cite: string[] = []
-        if (parTypeTerrain) { typeTuiles.push({ label: 'Terrain nu', valeur: fmtInt(parTypeTerrain.mediane_prix_m2!), sous: `€/m² · ${parTypeTerrain.n_ventes} ventes` }); cite.push(`terrain nu ${fmtInt(parTypeTerrain.mediane_prix_m2!)} €/m²`) }
+        if (parTypeTerrain) { typeTuiles.push({ label: 'Terrain nu', valeur: fmtInt(parTypeTerrain.mediane_prix_m2!), sous: `€/m² · ${parTypeTerrain.n_ventes} ventes${parTypeTerrain.perimetre ? ` · ${parTypeTerrain.perimetre}` : ''}` }); cite.push(`terrain nu ${fmtInt(parTypeTerrain.mediane_prix_m2!)} €/m²`) }
         if (parTypeMaison) { typeTuiles.push({ label: 'Maison', valeur: fmtInt(parTypeMaison.eur_m2), sous: `€/m² · ${parTypeMaison.n} ventes${parTypeMaison.rayon_m != null ? ` · ${fmtInt(parTypeMaison.rayon_m)} m` : ''}` }); cite.push(`maison ${fmtInt(parTypeMaison.eur_m2)} €/m²`) }
         if (parTypeAppart) { typeTuiles.push({ label: 'Appartement', valeur: fmtInt(parTypeAppart.eur_m2), sous: `€/m² · ${parTypeAppart.n} ventes${parTypeAppart.rayon_m != null ? ` · ${fmtInt(parTypeAppart.rayon_m)} m` : ''}` }); cite.push(`appartement ${fmtInt(parTypeAppart.eur_m2)} €/m²`) }
         const rep = cite.length ? cite.slice(0, 2).join(', ') : 'Marché de secteur'

@@ -908,11 +908,70 @@ def verrou_coherence_banc(db=None) -> ResultatVerrou:
             manifeste_note = " · manifeste = servi en base"
     except Exception as e:  # noqa: BLE001
         pbs.append(f"contrôle manifeste injouable : {type(e).__name__}: {e}")
+    # 6. COHERENCE-FIX-2 (lot C) — « SECTEUR » DIT SON PÉRIMÈTRE. Une notion dont le libellé évoque un
+    # périmètre de voisinage (secteur / à proximité / autour / alentours) doit PORTER ce périmètre
+    # (section cadastrale · rayon · IRIS · commune · km · m · adaptatif…) — sinon deux écrans emploient
+    # le même mot pour deux étendues (le cas fondateur du mandat : Marché rayon court ≠ Étude de zone
+    # rayon long). Les emplois PROPRES du mot (lieu-dit, SIS = nom réglementaire, équipements dont chaque
+    # item porte SA distance) sont listés — ce ne sont pas des étendues à nommer.
+    try:
+        import re as _re
+        from .registre.donnees import DONNEES as _DON2
+        _mot_perim = _re.compile(r"secteur|à proximité|proximité|proximite|alentour|autour", _re.I)
+        _porte_perim = _re.compile(
+            r"section|cadastr|rayon|iris|commune|\bkm\b|\d+\s*m\b|\bm\b|adaptatif|parcelle|voisinage|à moins de",
+            _re.I)
+        _secteur_nom_propre = {                 # « secteur/proximité » = nom propre, pas une distance
+            "secteur_lieu_dit",                 # lieu-dit BD NYME (« Secteur : Le Chaudron »)
+            "sis_classe", "sis_couche",         # Secteur d'Information sur les Sols (nom réglementaire)
+            "equipements_proximite_liste",      # chaque équipement porte SA distance (pas un périmètre agrégé)
+        }
+        for cid, d in _DON2.items():
+            if cid in _secteur_nom_propre:
+                continue
+            if _mot_perim.search(d.libelle) and not _porte_perim.search(d.libelle):
+                pbs.append(f"notion « secteur » sans périmètre au libellé : {cid} = « {d.libelle} »")
+        for notion, tol, lecteurs, cause in CHECKS_P:
+            if _mot_perim.search(notion) and not _porte_perim.search(notion):
+                pbs.append(f"check parcelle « {notion} » : « secteur » sans périmètre dans l'id de la notion")
+    except Exception as e:  # noqa: BLE001
+        pbs.append(f"règle périmètre injouable : {type(e).__name__}: {e}")
+    # 7. COHERENCE-FIX-2 (lot A/C) — L'EMPRISE DE SCORING N'EST JAMAIS SERVIE AU CLIENT. L'id
+    # emprise_bati_scoring_m2 (= p_model_bati.emprise_bati_m2 = MAX(BD TOPO clippé, CoSIA)) est une
+    # ENTRÉE du modèle P, distincte de l'emprise bâtie CLIENT (BD TOPO clippé seul, bati.emprise_bati_bdtopo_m2).
+    # Il ne doit apparaître ni comme donnée client du registre, ni dans un producteur de fiche/export.
+    try:
+        import re as _re
+        from .registre.donnees import DONNEES as _DON3
+        _scoring_id = "emprise_bati_scoring_m2"
+        if _scoring_id in _DON3:
+            pbs.append(f"id scoring {_scoring_id} déclaré comme donnée client (registre DONNEES) — interdit")
+        emp = _DON3.get("emprise_batie_m2")
+        if emp is not None:
+            _src = f"{emp.fonction or ''} {emp.table or ''}"
+            if "p_model_bati" in _src:
+                pbs.append("emprise bâtie CLIENT (emprise_batie_m2) source la colonne scoring p_model_bati")
+            if not _re.search(r"le_bien|bdtopo|bd topo", _src, _re.I):
+                pbs.append("emprise bâtie CLIENT (emprise_batie_m2) ne source pas le producteur BD TOPO servi")
+        _sql_read = _re.compile(r"FROM\s+p_model_bati\b", _re.I)   # la LECTURE SQL, pas une mention en commentaire
+        _client_files = list((Path(__file__).parent / "exports").rglob("*.py"))
+        _client_files.append(Path(__file__).parent / "faisabilite" / "bilan.py")   # compute_mode_b nourrit le Dossier
+        for _py in _client_files:
+            try:
+                _txt = _py.read_text(encoding="utf-8", errors="ignore")
+            except OSError:
+                continue
+            if _sql_read.search(_txt):
+                pbs.append(f"producteur de fiche/export lit l'emprise scoring (FROM p_model_bati) : "
+                           f"{_py.relative_to(Path(__file__).parent)}")
+    except Exception as e:  # noqa: BLE001
+        pbs.append(f"règle emprise scoring injouable : {type(e).__name__}: {e}")
     if pbs:
         return ResultatVerrou("V6b", PHRASES["V6b"], "casse", f"{len(pbs)} problème(s)", pbs[:40])
     return ResultatVerrou("V6b", PHRASES["V6b"], "ok",
                           f"{len(CHECKS_P)} checks parcelle + {len(CHECKS_C)} commune bien formés, "
-                          f"vocabulaire d'absence 5 formes, registre couvert{golden_note}{manifeste_note}")
+                          f"vocabulaire d'absence 5 formes, registre couvert, périmètres « secteur » nommés, "
+                          f"emprise scoring cloisonnée{golden_note}{manifeste_note}")
 
 
 def verrou_regles_citations(db=None) -> ResultatVerrou:

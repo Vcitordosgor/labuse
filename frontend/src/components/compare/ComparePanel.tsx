@@ -6,7 +6,7 @@ import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getCompare, type CompareRow } from '../../lib/api'
 import { fmtEurCompact, fmtInt, fmtPctConsomme, iduCourt } from '../../lib/format'
-import { PERIM_POTENTIEL_COURT, PERIM_RESIDUEL_COURT } from '../../lib/perimetres'
+import { PERIM_POTENTIEL_COURT, PERIM_RESIDUEL_COURT, PERIM_SECTION_CADASTRALE } from '../../lib/perimetres'
 import { bandeMeta, signalMeta } from '../../lib/status'   // COMPARER-2 §4 — bande + Signal (comme l'Analyse)
 import { useApp } from '../../store/useApp'
 import { ParcelInput } from '../ParcelInput'   // OUTILS-FIX-2 D1 — saisie clavier (IDU/adresse/réf courte)
@@ -73,7 +73,7 @@ const ROWS: Row[] = [
   // COMPARER-2 §3 — une MÉDIANE DVF est un calcul sur des ventes, pas un fait cadastral → badge Estimé.
   { label: 'Prix terrain nu zone', prov: 'estime', val: (r) => r.terrain_zone_eur_m2 != null ? `${fmtInt(r.terrain_zone_eur_m2)} €/m²` : '—', num: (r) => r.terrain_zone_eur_m2 ?? null, best: 'lo', title: 'Médiane DVF du terrain nu dans la zone (calcul, pas un fait) — plus bas = plus intéressant.' },
   // RETOURS-11F M13 (O9) — lignes utiles ajoutées, toutes de la fiche servie (aucun second moteur).
-  { label: 'Prix bâti secteur', prov: 'estime', val: (r) => r.prix_secteur_bati_m2 != null ? `${fmtInt(r.prix_secteur_bati_m2)} €/m²` : '—', num: (r) => r.prix_secteur_bati_m2 ?? null, title: 'Médiane DVF du bâti (maison/appartement) dans le secteur (calcul) — même source que la fiche Marché.' },
+  { label: `Prix bâti · ${PERIM_SECTION_CADASTRALE}`, prov: 'estime', val: (r) => r.prix_secteur_bati_m2 != null ? `${fmtInt(r.prix_secteur_bati_m2)} €/m²` : '—', num: (r) => r.prix_secteur_bati_m2 ?? null, title: 'Médiane DVF du bâti (maison/appartement) sur la section cadastrale (calcul) — même source que la fiche Marché (dvf_parcelle.secteur).' },
   // OUTILS-FIX-2 D3 — la fourchette de logements affiche ses DEUX bornes (avant : borne haute seule).
   { label: 'Logements possibles', prov: 'estime',
     val: (r) => { const hi = r.logements_possibles, lo = r.logements_min

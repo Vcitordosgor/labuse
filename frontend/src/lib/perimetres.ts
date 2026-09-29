@@ -14,3 +14,10 @@ export const PERIM_POTENTIEL = 'potentiel, terrain libéré'
 // résiduelle · bâti conservé », « SHAB vendable · terrain libéré »). Même source, un seul endroit.
 export const PERIM_RESIDUEL_COURT = 'bâti conservé'
 export const PERIM_POTENTIEL_COURT = 'terrain libéré'
+
+// COHERENCE-FIX-2 (lot B) — périmètres des PRIX de secteur : le mot « secteur » ne paraît JAMAIS seul.
+// Le back sert le périmètre AVEC chaque valeur (dvf_parcelle.secteur[].perimetre = « section cadastrale »,
+// mon-secteur par_type[].perimetre = rayon adaptatif) et le front le rend. Ces deux constantes ne servent
+// qu'aux rares libellés d'un chiffre servi SANS champ perimetre (comparateur) : une seule source de vérité.
+export const PERIM_SECTION_CADASTRALE = 'section cadastrale'
+export const PERIM_RAYON_ADAPTATIF = 'rayon adaptatif 500–1500 m'

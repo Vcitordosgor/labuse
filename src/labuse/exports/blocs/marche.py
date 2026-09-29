@@ -69,7 +69,7 @@ def rendu(valeurs) -> str:
     lignes = []
     tn = val(valeurs, "prix_terrain_secteur_eur_m2")
     if isinstance(tn, dict) and tn.get("valeur_eur"):
-        lignes.append(ligne_kv("Terrain nu au prix du secteur",
+        lignes.append(ligne_kv("Terrain nu au prix du secteur (section cadastrale)",
                                esc(f"{fmt_eur(tn['valeur_eur'])} ({groupe(tn['prix_m2'])} €/m² × "
                                    f"{tn.get('surface_m2', '?')} m²)"), chip_span("d", "dérivé")))
     if isinstance(pa, dict) and pa.get("tendance_pct") is not None:

@@ -1,0 +1,16 @@
+id,ancienne,nouvelle,pourquoi_l_ancienne_etait_equivoque
+mode_b.composantes.surface.emprise_bati_m2,"p_model_bati.emprise_bati_m2 = MAX(BD TOPO, CoSIA) — colonne SCORING, souvent double-comptée (SUM des intersections avant le correctif ST_Union → empreintes mitoyennes comptées 2×, parfois 3×)","bati.emprise_bati_bdtopo_m2 (BD TOPO clippé ST_Union) ∪ CoSIA révélé — emprise SERVIE, nommée « révélée » au libellé","Le Dossier réhabilitation servait « emprise X m² [Sourcé] × niveaux » depuis une colonne de scoring gonflée, alors que la fiche §Bâti sert BD TOPO clippé : deux emprises sous un même mot sur la même parcelle, l'une 2× l'autre."
+mode_b.composantes.surface.sdp_existante_m2,dérivée de l'emprise scoring (× niveaux),dérivée de l'emprise servie BD TOPO ∪ CoSIA,SDP existante recalculée sur l'emprise servie (même cause que ci-dessus)
+mode_b.composantes.surface.shab_rehabilitable_m2,dérivée de l'emprise scoring,dérivée de l'emprise servie,SHAB réhabilitable recalculée sur l'emprise servie
+mode_b.achat_max_eur,dérivé de la SHAB (emprise scoring),dérivé de la SHAB (emprise servie),"Prix d'achat max réhab recalculé : sur les parcelles à double-compte, l'ancien bilan surestimait la SHAB donc le CA et l'achat max jusqu'à ~2×."
+97411000EM0174.mode_b.emprise_bati_m2,974,487,double-compte (empreintes mitoyennes) — BD TOPO clippé réel = 487 m²
+97402000AK0252.mode_b.emprise_bati_m2,730,365,double-compte — BD TOPO clippé réel = 365 m²
+97408000AZ0066.mode_b.emprise_bati_m2,1506,502,triple-compte — BD TOPO clippé réel = 502 m²
+97423000AI0696.mode_b.emprise_bati_m2,355,29,sur-compte (×12) — BD TOPO clippé réel = 29 m²
+registre.prix_terrain_secteur_eur_m2.libelle,Terrain nu secteur,Terrain nu · section cadastrale,"« secteur » seul : le chiffre est la médiane de la SECTION cadastrale (left(idu,10)), la définition disait à tort « rayon adaptatif » (corrigée)"
+registre.prix_sortie_bati_eur_m2.libelle,Prix de sortie — bâti secteur,Prix de sortie — bâti · rayon adaptatif,« secteur » seul : le chiffre est la médiane au rayon adaptatif 500→1500 m
+registre.depots_secteur_n.libelle,Déposés sur le secteur (36 mois),Déposés · section cadastrale (36 mois),« secteur » seul : les dépôts sont ceux de la section cadastrale
+fiche.marche.contexte,« N ventes secteur »,« N ventes · section cadastrale »,« secteur » seul : périmètre servi par le back (dvf_parcelle.secteur.perimetre)
+fiche.marche.tuile_terrain.sous,« €/m² · N ventes »,« €/m² · N ventes · section cadastrale »,le terrain nu de la fiche est la médiane de section cadastrale — le périmètre est désormais rendu
+compare.prix_secteur_bati_m2.label,Prix bâti secteur,Prix bâti · section cadastrale,« secteur » seul : le comparateur sert la médiane bâti de la section cadastrale (dvf_parcelle.secteur)
+banc.notion.prix_median_maison_secteur,prix_median_maison_secteur (fiche section cadastrale VS mon-secteur rayon adaptatif),prix_maison_secteur_section_cadastrale (fiche VS table dvf_secteur_medianes, même section),"L'id comparait deux périmètres différents sous un même mot (96 écarts « instrumentaux ») ; scindé en une vérif même-périmètre (→ 0). Valeur affichée inchangée."
