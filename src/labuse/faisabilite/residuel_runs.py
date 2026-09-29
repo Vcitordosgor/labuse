@@ -22,7 +22,7 @@ from sqlalchemy import text
 # GEOMETRIE-1 : assiette_source ajoutée EN FIN (CREATE OR REPLACE VIEW n'accepte que ça).
 _VIEW_COLS = ("parcel_id", "taux_emprise_pct", "pct_potentiel", "sous_densite",
               "sdp_residuelle_m2", "computed_at", "capacite_estimee", "cause",
-              "assiette_source", "hauteur_source")
+              "assiette_source", "hauteur_source", "regles_non_modelisees")
 
 
 class ServedRunWriteError(RuntimeError):
@@ -48,6 +48,11 @@ def ensure_runs_schema(conn) -> None:
     # (étages/hauteur déclarés), 'sans' (placeholder). NULL = run antérieur au lot. Ajoutée EN FIN.
     conn.execute(text("ALTER TABLE parcel_residuel_runs "
                       "ADD COLUMN IF NOT EXISTS hauteur_source text"))
+    # DONNEES-FIX-1 point 4 — exceptions PLU `modifie_calcul=true` présentes sur la zone mais NON
+    # modélisées (bandes, voies nommées, destination…) : la parcelle les PORTE (JSON texte : liste de
+    # {regle, porte, article, page_pdf}) au lieu de les approximer. NULL = aucune / run antérieur au lot.
+    conn.execute(text("ALTER TABLE parcel_residuel_runs "
+                      "ADD COLUMN IF NOT EXISTS regles_non_modelisees text"))
     # index lecteurs-par-parcelle (les EXISTS/JOIN sur parcel_id) : (parcel_id, run_seq)
     conn.execute(text("CREATE INDEX IF NOT EXISTS parcel_residuel_runs_pid "
                       "ON parcel_residuel_runs (parcel_id, run_seq)"))
@@ -72,9 +77,10 @@ def ensure_runs_schema(conn) -> None:
         cols = {r[0] for r in conn.execute(text(
             "SELECT attname FROM pg_attribute WHERE attrelid='parcel_residuel'::regclass "
             "AND attnum > 0 AND NOT attisdropped"))}
-        # CREATE OR REPLACE VIEW n'accepte que des AJOUTS en fin de liste : assiette_source puis
-        # hauteur_source sont toutes deux en fin de `_VIEW_COLS`, donc OR REPLACE suffit. Idempotent.
-        if "assiette_source" not in cols or "hauteur_source" not in cols:
+        # CREATE OR REPLACE VIEW n'accepte que des AJOUTS en fin de liste : assiette_source,
+        # hauteur_source puis regles_non_modelisees sont toutes en fin de `_VIEW_COLS` → OR REPLACE
+        # suffit. Idempotent.
+        if not {"assiette_source", "hauteur_source", "regles_non_modelisees"} <= cols:
             conn.execute(text(_view_sql(or_replace=True)))
 
 

@@ -17,6 +17,8 @@ Lecture seule, isolée : ne touche ni la cascade ni le scoring.
 """
 from __future__ import annotations
 
+import json as _json
+
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -243,6 +245,9 @@ def compute_residuel(session: Session, parcel_id: int,
         # GEOMETRIE-1 lot B — provenance de l'assiette : 'gabarit' (zone d'implantation,
         # reculs par côté + PPR rouge découpé) / 'residuel_legacy' (parcelle non servie).
         "assiette_source": fr.get("assiette_source"),
+        # DONNEES-FIX-1 point 4 — exceptions PLU présentes sur la zone qu'on ne modélise PAS : la
+        # parcelle les porte (« règle non modélisée », avec article/page) au lieu de les approximer.
+        "regles_non_modelisees": list(getattr(ctx, "regles_non_modelisees", []) or []),
     }
 
 
@@ -251,13 +256,14 @@ def compute_residuel(session: Session, parcel_id: int,
 _UPSERT = text(
     """INSERT INTO parcel_residuel_runs
          (run_seq, parcel_id, taux_emprise_pct, pct_potentiel, sous_densite, sdp_residuelle_m2,
-          capacite_estimee, cause, assiette_source, hauteur_source, computed_at)
-       VALUES (:rs, :p, :t, :pp, :sd, :sr, :ce, :cz, :asrc, :hsrc, now())
+          capacite_estimee, cause, assiette_source, hauteur_source, regles_non_modelisees, computed_at)
+       VALUES (:rs, :p, :t, :pp, :sd, :sr, :ce, :cz, :asrc, :hsrc, :rnm, now())
        ON CONFLICT (run_seq, parcel_id) DO UPDATE SET
          taux_emprise_pct=EXCLUDED.taux_emprise_pct, pct_potentiel=EXCLUDED.pct_potentiel,
          sous_densite=EXCLUDED.sous_densite, sdp_residuelle_m2=EXCLUDED.sdp_residuelle_m2,
          capacite_estimee=EXCLUDED.capacite_estimee, cause=EXCLUDED.cause,
          assiette_source=EXCLUDED.assiette_source, hauteur_source=EXCLUDED.hauteur_source,
+         regles_non_modelisees=EXCLUDED.regles_non_modelisees,
          computed_at=now()""")
 
 
@@ -292,11 +298,13 @@ def compute_residuel_batch(session: Session, parcel_ids: list[int], run_seq: int
                 log(f"  ⚠ résiduel parcel_id={pid} : {type(exc).__name__}: {exc}")
             continue
         if r.get("disponible"):
+            rnm = r.get("regles_non_modelisees") or []
             session.execute(_UPSERT, {
                 "rs": run_seq, "p": pid, "t": r["taux_emprise_pct"], "pp": r["pct_potentiel"],
                 "sd": r["sous_densite"], "sr": r["sdp_residuelle_m2"],
                 "ce": r["capacite_estimee"], "cz": None, "asrc": r.get("assiette_source"),
-                "hsrc": r.get("hauteur_source")})
+                "hsrc": r.get("hauteur_source"),
+                "rnm": (_json.dumps(rnm, ensure_ascii=False) if rnm else None)})
             res["calcules"] += 1
             continue
         cause = r.get("cause") or "indetermine"
@@ -305,7 +313,7 @@ def compute_residuel_batch(session: Session, parcel_ids: list[int], run_seq: int
             continue
         session.execute(_UPSERT, {"rs": run_seq, "p": pid, "t": None, "pp": None, "sd": None,
                                   "sr": r.get("sdp_ecrite"), "ce": None, "cz": cause,
-                                  "asrc": None, "hsrc": None})
+                                  "asrc": None, "hsrc": None, "rnm": None})
         res["causes"][cause] = res["causes"].get(cause, 0) + 1
     session.flush()
     return res
