@@ -263,3 +263,20 @@ def test_f02_charge_couvre_marche_servi():
     c = (SRC / "components/fiche/constructibilite.tsx").read_text(encoding="utf-8")
     assert "d.charge_couvre_marche" in c
     assert "Number(cf.par_m2_terrain) >= Number(d.terrain_zone_eur_m2)" not in c, "verdict charge/marché recalculé au front (F02)"
+
+
+def test_f03_permis_coupure_et_sommeil_servis():
+    """F03 — deux décisions du ModulePanel remontées au back (aucune valeur affichée ne change) :
+    (1) la coupure « récent » (fenêtre de 24 mois ancrée sur la fin du flux Sitadel) est SERVIE
+        (`coupure_recent`) au lieu d'être reconstruite au front ;
+    (2) le verdict « société en sommeil » lit le flag servi `muet` (SEUIL_DEPOT_MUET_ANS, F27) au
+        lieu de comparer `depuis_ans` à un seuil codé au front.
+    Les sélecteurs de fenêtre (options/défauts) restent des contrôles de filtre (présentation)."""
+    mods = (ROOT / "src/labuse/api/modules.py").read_text(encoding="utf-8")
+    assert '"coupure_recent"' in mods and "interval '24 months'" in mods
+    assert '"muet"' in mods and "SEUIL_DEPOT_MUET_ANS" in mods
+    mp = (SRC / "components/outils/ModulePanel.tsx").read_text(encoding="utf-8")
+    assert "baseCoupure ?? radarCoupure" in mp and "dc.muet" in mp
+    assert "minus24m" not in mp, "fenêtre de 24 mois reconstruite au front (F03)"
+    assert "dc.depuis_ans >= 3" not in mp, "seuil de sommeil recodé au front (F03)"
+

@@ -548,10 +548,16 @@ def permis(commune: str | None = None, months: int = 24, nature: str | None = No
     # (operator does not exist: timestamp >= interval) = 500. On répond un état VIDE honnête.
     if dmax is None:
         if count_only:   # RETOURS-16 V4 — même forme compteur, base vide comprise
-            return {"total": 0, "geocodes": 0, "donnees_jusqu_au": None}
+            return {"total": 0, "geocodes": 0, "donnees_jusqu_au": None, "coupure_recent": None}
         return {"commune": commune or "Toute l'île", "months": months, "nature": nature,
                 "total": 0, "affiches": 0, "has_more": False, "donnees_jusqu_au": None,
+                "coupure_recent": None,
                 "geocodes": 0, "sans_localisation": 0, "pct_geocode": 0, "carte": [], "items": []}
+    # FRONT-CHIFFRES-2 (F03) — coupure « récent » (dmax − 24 mois) calculée ICI, même ancre et même
+    # fenêtre que le prédicat d'état servi, et servie à plat : le front ne reconstruit plus la fenêtre
+    # de 24 mois (`minus24m`), il lit `coupure_recent` pour colorer récent vs reste en mode « Tous ».
+    coupure_recent = db.execute(
+        text("SELECT (:d - interval '24 months')::date::text"), {"d": dmax}).scalar()
     limit = max(1, min(limit, 2000))  # garde-fou payload ; « voir plus » pagine par offset
     # RETOURS-17 W2 — prédicat d'état de cycle (récent/achevé/autre), whitelist fermée. `ep` sans alias
     # (count + carte), `eps` avec alias `s.` (liste). :run n'est lu que par l'état « autre ».
@@ -570,7 +576,7 @@ def permis(commune: str | None = None, months: int = 24, nature: str | None = No
                  AND date >= :dmax - (:m || ' months')::interval{ep}"""),
             {"c": commune, "m": months, "nat": nature, "dmax": dmax, "run": prun}).mappings().first()
         return {"total": int(c["n"] or 0), "geocodes": int(c["geo"] or 0),
-                "donnees_jusqu_au": dmax.date().isoformat()}
+                "donnees_jusqu_au": dmax.date().isoformat(), "coupure_recent": coupure_recent}
     # M10 : jointure sur la date de dépôt + délai d'instruction rapatriés (m10_permit_delais)
     # LISTE paginée (plafond levé côté client par « voir plus » — offset).
     rows = db.execute(text(f"""
@@ -627,6 +633,7 @@ def permis(commune: str | None = None, months: int = 24, nature: str | None = No
         "commune": commune or "Toute l'île", "months": months, "nature": nature,
         "total": true_total, "affiches": offset + len(rows), "has_more": offset + len(rows) < true_total,
         "donnees_jusqu_au": dmax.date().isoformat() if dmax else None,
+        "coupure_recent": coupure_recent,
         "geocodes": geocodes_total, "sans_localisation": max(0, true_total - geocodes_total),
         "pct_geocode": round(100 * geocodes_total / true_total) if true_total else 0,
         "carte": carte,

@@ -250,8 +250,8 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
           {d['depot_comptes'] != null && (
             <div data-m02-depot className="text-[10.5px] text-txt-dim">
               Dépôt de comptes — {(() => {
-                const dc = d['depot_comptes'] as { annee: number | null; depuis_ans: number | null }
-                if (dc.depuis_ans != null && dc.depuis_ans >= 3) return `aucun dépôt depuis ${dc.depuis_ans} ans (société en sommeil probable)`
+                const dc = d['depot_comptes'] as { annee: number | null; depuis_ans: number | null; muet?: boolean }
+                if (dc.muet) return `aucun dépôt depuis ${dc.depuis_ans} ans (société en sommeil probable)`
                 return `dernier exercice déposé : ${dc.annee ?? '—'}`
               })()}
             </div>
@@ -367,14 +367,6 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
 // RETOURS-15 U3 — règle d'ordre : la case « Tout » / « Tous » est TOUJOURS la dernière à droite.
 const NATURES = [['PC', 'PC'], ['DP', 'DP'], ['PA', 'PA'], ['PD', 'PD'], ['', 'Tout']] as const
 
-// RETOURS-17 W3 — coupure « récent » (24 mois avant la fin du flux Sitadel), format 'AAAA-MM-JJ'.
-// Le serveur ancre récent sur `date >= dmax - interval '24 months'` ; ici on reproduit la MÊME coupure
-// pour colorer chaque point de la carte (comparaison lexicographique de dates ISO = comparaison réelle).
-const minus24m = (iso?: string): string => {
-  if (!iso) return '9999-99-99'   // pas de date → jamais « récent » (sécurité : reste gris)
-  const [y, m, d] = iso.split('-')
-  return `${Number(y) - 2}-${m}-${d}`
-}
 /** Tiroir « fiche permis » (M10 lot 1.1) — s'ouvre au clic sur un permis, partagé radar/fiche. */
 export function PermitDrawer({ permitId, onClose }: { permitId: string; onClose: () => void }) {
   const q = useQuery({ queryKey: ['permis-fiche', permitId], queryFn: () => modPermisFiche(permitId) })
@@ -600,9 +592,8 @@ export function M03() {
   // fait TOUJOURS le total (partition exacte), sans payer le COUNT « autre » (≈ 560 ms) à chaque montage.
   const autreEntryTotal = (tousEntryTotal != null && radarEntryTotal != null && pmEntryTotal != null && acheveEntryTotal != null)
     ? Math.max(0, tousEntryTotal - radarEntryTotal - pmEntryTotal - acheveEntryTotal) : undefined
-  // base : date du millésime, lue du compteur « Tous » (PERMIS-CHECK-1 P4 : la ligne « … localisés »
-  // du bloc total est retirée ; `baseJusquAu` sert encore la coupure 24 mois `cut24`).
-  const baseJusquAu = qTousEntry.data?.donnees_jusqu_au
+  // base : coupure « récent » du compteur « Tous » (SERVIE par le back, cf. cut24 plus bas).
+  const baseCoupure = (qTousEntry.data as Record<string, any> | undefined)?.['coupure_recent'] as string | undefined
   const setPermitHover = useApp((s) => s.setPermitHover)
   useEffect(() => () => setPermitHover(null), [setPermitHover])   // nettoyage au démontage
 
@@ -621,6 +612,7 @@ export function M03() {
     queryFn: () => modParcellePermis(parcelIdu!), enabled: !!parcelIdu })
   // date du millésime Sitadel servi — lue du compteur radar (fenêtre 24 m, TOUJOURS actif).
   const donneesJusquAu = (qRadarEntry.data as Record<string, any> | undefined)?.['donnees_jusqu_au'] as string | undefined
+  const radarCoupure = (qRadarEntry.data as Record<string, any> | undefined)?.['coupure_recent'] as string | undefined
 
   const q = pointMort ? qPm : qRadar
   const pages = (q.data?.pages ?? []) as Record<string, any>[]
@@ -643,8 +635,10 @@ export function M03() {
     ? (qPm.data?.pages ?? []).flatMap((p) => (p['items'] ?? []) as Record<string, any>[]).filter((i) => i['geom'])
     : []).filter(geomInZone)
   // RETOURS-17 W3 — état de PANNEAU d'une ligne/point radar : Récent (≤ 24 mois) vert · Achevé/Autre gris.
-  // Le segment fixe l'état sauf en « Tous » où la coupure 24 mois (cut24) distingue récent du reste.
-  const cut24 = minus24m(baseJusquAu ?? donneesJusquAu)
+  // Le segment fixe l'état sauf en « Tous » où la coupure `cut24` distingue récent du reste.
+  // FRONT-CHIFFRES-2 (F03) — `cut24` est la coupure SERVIE (`coupure_recent` = dmax − 24 mois, calculée
+  // au back) : le front ne reconstruit plus la fenêtre. Sans coupure servie (base vide) → rien de récent.
+  const cut24 = (baseCoupure ?? radarCoupure) ?? '9999-99-99'
   const radarEtat = (i: Record<string, any>): PermisEtat =>
     seg === 'acheve' ? 'acheve' : seg === 'autre' ? 'autre'
     : (String(i['date'] ?? '') >= cut24 ? 'recent' : 'autre')
