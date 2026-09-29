@@ -9,13 +9,60 @@ Sources : BOFiP BOI-BAREME-000017-20260310 (plafonds 2026) + CGI (coefficient de
 """
 from __future__ import annotations
 
-from ..config import load_yaml_config
+import datetime
+import re
 
-ANNEE_ACTIVE = 2026   # bascule annuelle (loi de finances) : pointer le defisc_<annee>.yaml courant
+from ..config import get_settings, load_yaml_config
+
+#: premier millésime disponible (plancher si le dossier de config est vide).
+_ANNEE_PLANCHER = 2026
+
+
+def _annees_disponibles() -> list[int]:
+    """Les années pour lesquelles un `config/calibrage/defisc_<Y>.yaml` existe, triées."""
+    d = get_settings().config_path / "calibrage"
+    out: list[int] = []
+    if d.is_dir():
+        for f in d.glob("defisc_*.yaml"):
+            m = re.fullmatch(r"defisc_(\d{4})", f.stem)
+            if m:
+                out.append(int(m.group(1)))
+    return sorted(out)
+
+
+def annee_active(today: datetime.date | None = None) -> int:
+    """CALCULS-FIX-1 (Lot C) — l'année du barème à SERVIR, DÉDUITE de la date du jour et des
+    barèmes disponibles ; plus jamais figée en dur. On sert le plus récent `defisc_<Y>.yaml`
+    dont Y ≤ année courante. Au 1er janvier, si le barème de la nouvelle année n'existe pas
+    encore, on sert le dernier disponible (avec son millésime affiché + un signalement page
+    Données — jamais un chiffre muet), au lieu de servir des plafonds périmés sans le dire."""
+    an = (today or datetime.date.today()).year
+    dispo = _annees_disponibles()
+    if not dispo:
+        return _ANNEE_PLANCHER
+    passes = [y for y in dispo if y <= an]
+    return max(passes) if passes else min(dispo)
+
+
+def bareme_perime(today: datetime.date | None = None) -> bool:
+    """True quand le barème servi est plus vieux que l'année courante (geste annuel non fait)."""
+    return annee_active(today) < (today or datetime.date.today()).year
+
+
+def signalement_fraicheur(today: datetime.date | None = None) -> str | None:
+    """Le message servi (fiche + page Données) quand le barème est en retard d'un millésime."""
+    if not bareme_perime(today):
+        return None
+    ba = annee_active(today)
+    an = (today or datetime.date.today()).year
+    return (f"Barème de défiscalisation {ba} servi en {an} : les plafonds de loyer et le "
+            f"coefficient de surface n'ont pas encore été mis à jour pour {an} (geste annuel de "
+            f"loi de finances). Valeurs {ba} servies avec leur millésime affiché, jamais un "
+            f"chiffre muet.")
 
 
 def _config() -> dict:
-    return load_yaml_config(f"calibrage/defisc_{ANNEE_ACTIVE}") or {}
+    return load_yaml_config(f"calibrage/defisc_{annee_active()}") or {}
 
 
 # ─────────────────────────────── LINT (schéma strict, modèle M41) ───────────────────────────────
@@ -26,7 +73,7 @@ def lint(cfg: dict | None = None) -> list[str]:
     cfg = cfg if cfg is not None else _config()
     errs: list[str] = []
     if not cfg:
-        return [f"config defisc_{ANNEE_ACTIVE}.yaml absente ou vide"]
+        return [f"config defisc_{annee_active()}.yaml absente ou vide"]
     if not cfg.get("mention_conseil_fiscal"):
         errs.append("mention_conseil_fiscal obligatoire (dossier avocat)")
     plaf = cfg.get("plafonds_loyer") or {}
@@ -117,6 +164,11 @@ def sortie_locative(shab_m2: float, cout_travaux_eur: float, *,
 
     return {
         "disponible": True,
+        # CALCULS-FIX-1 (Lot C) — le millésime du barème est SERVI (« barème 2026 »), avec un
+        # signalement si le geste annuel n'a pas encore été fait : jamais un plafond muet.
+        "millesime_bareme": annee_active(),
+        "bareme_perime": bareme_perime(),
+        "signalement_fraicheur": signalement_fraicheur(),
         "loyer": {
             "m2_mois_effectif": round(loyer_m2_eff, 2),
             "plafond_brut_m2": round(plafond_brut, 2) if plafond_brut else None,
