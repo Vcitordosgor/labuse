@@ -207,3 +207,15 @@ def test_f32_permis_note_incoherence_servie():
     for comp in ("components/outils/ModulePanel.tsx", "components/fiche/autour.tsx"):
         t = (SRC / comp).read_text(encoding="utf-8")
         assert "note_incoherence" in t and "permisIncoherenceNote" not in t
+
+
+def test_f18_crm_relance_echeance_servie():
+    """F18 — l'échéance de relance CRM (due aujourd'hui / échue) n'est plus décidée au fuseau du
+    NAVIGATEUR : le back sert `relance_echeance` sur le jour Réunion (tz.today_reunion). Même verdict
+    pour tous les clients."""
+    app = (ROOT / "src/labuse/api/app.py").read_text(encoding="utf-8")
+    assert '"relance_echeance"' in app and "_today_reunion()" in app
+    assert "from ..tz import today_reunion" in app
+    k = (SRC / "components/crm/Kanban.tsx").read_text(encoding="utf-8")
+    assert "e.relance_echeance" in k
+    assert "toLocaleDateString('en-CA')" not in k and "todayISO" not in k, "échéance recalculée au fuseau navigateur (F18)"

@@ -16,7 +16,7 @@ F14,1,seuil,remonter,radar/copilote/crm,components/radar/RadarEcran.tsx,2,remont
 F15,1,seuil,remonter,radar/copilote/crm,components/radar/RadarMarcheColonne.tsx,2,remonter_back,RadarMarcheColonne.tsx:181-182 ; RadarMarcheColonne.tsx:19,couleur/cran d'une valeur servie (aucun chiffre/libellé décidé),reclassé_présentation,
 F16,1,seuil,remonter,panel/projets/contexte,FiltreLabuse.tsx,1,remonter_back,FiltreLabuse.tsx:820,,a_faire,
 F17,1,seuil,remonter,admin/map,components/admin/Ia.tsx,1,remonter_back,Ia.tsx:165,couleur/cran d'une valeur servie (aucun chiffre/libellé décidé),reclassé_présentation,
-F18,1,seuil,remonter,radar/copilote/crm,components/crm/Kanban.tsx,1,remonter_back,Kanban.tsx:87-88,,a_faire,
+F18,1,seuil,remonter,radar/copilote/crm,components/crm/Kanban.tsx,1,remonter_back,Kanban.tsx:87-88,échéance de relance CRM (jour Réunion),remonté,F18
 F19,1,seuil,remonter,fiche,components/fiche/PermitsProximityBlock.tsx,1,remonter_back,PermitsProximityBlock.tsx:42,"couleur violet des permis à ≤100m (emphase de proximité, distance servie & affichée)",reclassé_présentation,
 F20,1,seuil,declarer,fiche,components/fiche/ProprietaireHistorique.tsx,1,declarer_registre,ProprietaireHistorique.tsx:25,≥2 millésimes = minimum inhérent pour une frise/un changement,reclassé_présentation,
 F21,1,seuil,remonter,fiche,components/fiche/blocks.tsx,1,remonter_back,blocks.tsx:106,drapeau à cheval (zone),remonté,F21

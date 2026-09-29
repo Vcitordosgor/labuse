@@ -38,6 +38,7 @@ from .. import config, models, prospection
 from .. import bati as _bati   # FICHE-1 lot 1 — bloc « Le bien » (producteur unique)
 from .. import rnu as _rnu
 from ..db import session_scope
+from ..tz import today_reunion as _today_reunion   # F18 — « relance due » sur le jour Réunion
 from ..enums import FeedbackVerdict
 from .. import runs  # S3 : run servi relu à la requête (bascule à chaud)
 from ..millesime_source import composer as _compose_millesime  # SOURCES-FIX-2 lot D — millésime unique
@@ -7869,6 +7870,12 @@ def _entry_dict(db: Session, e: models.PipelineEntry, *,
         "priority": e.priority,
         "notes": e.notes or "",
         "reminder_date": e.reminder_date.isoformat() if e.reminder_date else None,
+        # FRONT-CHIFFRES-2 (F18) — l'échéance de relance (due aujourd'hui / échue / à venir) décidée au
+        # BACK sur le jour RÉUNION (tz.today_reunion), plus au fuseau du navigateur : même verdict pour
+        # tous les clients. None si pas de rappel ou rappel à venir.
+        "relance_echeance": (None if not e.reminder_date else
+                             "due_aujourdhui" if e.reminder_date == _today_reunion() else
+                             "echue" if e.reminder_date < _today_reunion() else None),
         "created_at": e.created_at.isoformat() if e.created_at else None,
         "archived_at": e.archived_at.isoformat() if e.archived_at else None,   # M137
         "prospection": e.prospection or {},

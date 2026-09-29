@@ -131,6 +131,8 @@ export interface PipelineEntry {
   priority: string
   notes: string
   reminder_date?: string | null   // M137 — date de relance (éditable via l'écran de carte)
+  // FRONT-CHIFFRES-2 (F18) — échéance de relance décidée au back sur le jour Réunion (plus au fuseau navigateur).
+  relance_echeance?: 'due_aujourdhui' | 'echue' | null
   prospection?: Record<string, string>   // M137 — statut proprio + contact manuel (édité via PATCH)
   proprietaire_label?: string
   has_manual_contact?: boolean

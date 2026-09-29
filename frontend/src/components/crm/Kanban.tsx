@@ -82,10 +82,10 @@ function Card({ e, onDragStart, newEvents, onArchive, onEdit, columns, onMove, o
   const { select, setView } = useApp()
   const clos = e.courrier?.statut === 'repondu' || e.courrier?.statut === 'sans_reponse'
   // M137 — indicateur de relance CONDITIONNEL : visible seulement si la relance est
-  // échue OU due aujourd'hui (reminder_date <= aujourd'hui). Sinon rien. Pas un badge
-  // permanent de coin — un point ambre discret + l'échéance, à gauche du titre.
-  const todayISO = new Date().toLocaleDateString('en-CA') // AAAA-MM-JJ local
-  const reminderDue = !!e.reminder_date && e.reminder_date <= todayISO
+  // échue OU due aujourd'hui. Sinon rien. Un point ambre discret + l'échéance, à gauche du titre.
+  // FRONT-CHIFFRES-2 (F18) — l'échéance est SERVIE (jour Réunion, tz du back) ; le front ne compare
+  // plus au fuseau du navigateur (drift d'un jour aux limites de fuseau).
+  const reminderDue = !!e.relance_echeance
   return (
     <div
       draggable
@@ -110,7 +110,7 @@ function Card({ e, onDragStart, newEvents, onArchive, onEdit, columns, onMove, o
       <div className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-1.5">
           {reminderDue && (
-            <Tip garder tip={e.reminder_date === todayISO ? 'Relance due aujourd’hui' : 'Relance échue'}>
+            <Tip garder tip={e.relance_echeance === 'due_aujourdhui' ? 'Relance due aujourd’hui' : 'Relance échue'}>
               <span className="flex shrink-0 items-center gap-1 text-[10px] font-medium text-amber" aria-label="Relance échue ou due aujourd’hui">
                 <span className="h-1.5 w-1.5 rounded-full bg-amber" aria-hidden />
                 {e.reminder_date!.slice(8, 10)}/{e.reminder_date!.slice(5, 7)}
