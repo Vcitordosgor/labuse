@@ -1055,7 +1055,7 @@ export interface SuccessionItem {
   sdp_residuelle_m2: number | null   // Estimé — moteur de la fiche (p_model_ext_dataset)
   dirigeant_age: number | null; sci_dormante: boolean
   // DONNEES-1 lot 2.3 — dernier dépôt de comptes BODACC du propriétaire PM (null = aucun publié).
-  depot_comptes: { annee: number | null; depuis_ans: number | null } | null
+  depot_comptes: { annee: number | null; depuis_ans: number | null; muet?: boolean } | null
   proprio: SolaireProprio
 }
 export interface SuccessionsResp {

@@ -236,6 +236,12 @@ _TIERS_ACTIONNABLES = ("brulante", "chaude", "reserve_fonciere", "a_creuser",
                        "priorite", "a_suivre", "sans_signal")  # PALIERS-1 : deux vocabulaires
 
 
+# FRONT-CHIFFRES-2 (F27) — silence de dépôt de comptes BODACC AU-DELÀ de ce seuil (ans) = signal
+# « société en sommeil probable ». Le seuil vivait au front (Successions `depuis_ans >= 3`) ; ici, le
+# back sert le flag `muet` à plat pour que le front ne décide plus.
+SEUIL_DEPOT_MUET_ANS = 3
+
+
 def _depots_par_siren(db: Session, sirens: list[str]) -> dict[str, dict]:
     """DONNEES-1 lot 2.3 — dernier dépôt de comptes annuels (table `bodacc_depots`) pour une liste de
     SIREN, en UNE requête. Pour chaque siren : `annee` = exercice le plus récent (max date_cloture
@@ -262,7 +268,8 @@ def _depots_par_siren(db: Session, sirens: list[str]) -> dict[str, dict]:
         cloture, parution = r["derniere_cloture"], r["derniere_parution"]
         annee = cloture.year if cloture else (parution.year if parution else None)
         depuis = (annee_courante - parution.year) if parution else None
-        out[r["siren"]] = {"annee": annee, "depuis_ans": depuis}
+        out[r["siren"]] = {"annee": annee, "depuis_ans": depuis,
+                           "muet": depuis is not None and depuis >= SEUIL_DEPOT_MUET_ANS}
     return out
 
 

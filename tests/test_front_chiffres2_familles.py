@@ -180,3 +180,15 @@ def test_f01b_pente_bande_servie():
     fiche = (SRC / "components/fiche/Fiche.tsx").read_text(encoding="utf-8")
     assert "f.terrain?.pente_bande ?? undefined" in fiche
     assert "pente < 15" not in fiche and "penteDeg < 15" not in fiche, "bande de pente reclassée au front (F01b)"
+
+
+def test_f27_succession_depot_muet_servi():
+    """F27 — le signal « dépôt de comptes muet ≥ 3 ans → société en sommeil » n'est plus décidé au
+    front (`depuis_ans >= 3`) : le back sert le flag `muet` à plat (seuil SEUIL_DEPOT_MUET_ANS)."""
+    from labuse.api.modules import SEUIL_DEPOT_MUET_ANS
+    assert SEUIL_DEPOT_MUET_ANS == 3
+    src = (ROOT / "src/labuse/api/modules.py").read_text(encoding="utf-8")
+    assert '"muet": depuis is not None and depuis >= SEUIL_DEPOT_MUET_ANS' in src
+    su = (SRC / "components/outils/Successions.tsx").read_text(encoding="utf-8")
+    assert "it.depot_comptes?.muet ?? false" in su
+    assert "depuis_ans >= 3" not in su, "seuil sommeil recalculé au front (F27)"
