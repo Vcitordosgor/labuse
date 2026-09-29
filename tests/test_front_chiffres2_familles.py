@@ -131,3 +131,16 @@ def test_f13_f29_paliers_da_servis():
     pk = (SRC / "components/projets/ProjetKanban.tsx").read_text(encoding="utf-8")
     assert "palierDe(tier, paliers)" in pk
     assert "TIER_DOT" not in pk, "correspondance tier→couleur codée revenue au front (F13)"
+
+
+def test_f10_marche_par_type_seuil_au_back():
+    """F10 — le seuil de suffisance (n<5 → « — ») des médianes locales par type est appliqué au
+    BACK (mon_secteur.SEUIL_N ; medianes_par_type renvoie None sous le seuil). Le front lit les
+    médianes déjà filtrées, plus de `n >= 5` recalculé, et le terrain nu utilise la méthode
+    canonique `_terrain_section` (par_type.terrain_nu)."""
+    from labuse.api import mon_secteur
+    assert mon_secteur.SEUIL_N == 5
+    m = (SRC / "components/fiche/marche.tsx").read_text(encoding="utf-8")
+    assert "ms?.par_type?.terrain_nu ?? null" in m
+    assert "n >= 5" not in m and "n_ventes >= 5" not in m, "seuil de suffisance recalculé au front (F10)"
+    assert "const lm =" not in m
