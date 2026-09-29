@@ -244,3 +244,6 @@ F02 `constructibilite` 9, F03 `ModulePanel` 8 (fenêtres 24/36 mois, sommeil 3 a
 - `test_front_chiffres_orphelins.py` étendu : liste blanche = les 525 `legitime` commentés ; toute
   occurrence des motifs du lot A hors liste fait échouer la suite.
 </content>
+
+## RÉGIME P2+ (consigne Vic, reçue en fin de P1)
+À partir des P2 : lots de **15 à 20 familles/session**, **un commit par lot** (plus par famille), **un seul compte rendu** en fin de session. Cérémonial complet (commit dédié + garde + entrée CHANGEMENTS) réservé aux familles qui **changent une valeur affichée**. Les reclassements/arrêtés se groupent.
