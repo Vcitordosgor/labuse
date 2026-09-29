@@ -38,6 +38,10 @@ def _seed(session):
     session.execute(text(
         "CREATE TABLE IF NOT EXISTS p_model_bati ("
         " idu varchar(14) PRIMARY KEY, emprise_bati_m2 double precision)"))
+    # COHERENCE-FIX-2 (lot A) — l'emprise du mode B ne vient PLUS de la colonne scoring
+    # p_model_bati.emprise_bati_m2 (interdite d'export) mais de l'emprise SERVIE = BD TOPO clippé
+    # (bati.emprise_bati_bdtopo_m2) ∪ CoSIA révélé (parcel_bati_revele.emprise_cosia_m2). Sans
+    # géométrie bâtiment en base de test, BD TOPO = 0 → on pilote l'emprise par le CoSIA révélé.
     session.execute(text(
         "CREATE TABLE IF NOT EXISTS dvf_secteur_medianes ("
         " secteur varchar(10) NOT NULL, type_bien varchar(16) NOT NULL,"
@@ -53,7 +57,7 @@ def _seed(session):
         ("97499100MB0005", "declasse_bati_sature", 120.0),   # pas de secteur → repli COMMUNE
     ]
     for idu, tier, emprise in cas:
-        _parcel(session, idu)
+        pid = _parcel(session, idu)
         session.execute(text(
             "INSERT INTO parcel_p_score_v2 (run_id, parcelle_id, p_raw, mult_base, percentile, "
             "rang, contrib_z, contrib_d, copro, tier, model_version) "
@@ -63,6 +67,12 @@ def _seed(session):
             "INSERT INTO p_model_bati (idu, emprise_bati_m2) VALUES (:i, :e) "
             "ON CONFLICT (idu) DO UPDATE SET emprise_bati_m2 = :e"),
             {"i": idu, "e": emprise})
+        # COHERENCE-FIX-2 — source SERVIE de l'emprise mode B : CoSIA révélé (BD TOPO = 0 sans géométrie).
+        session.execute(text(
+            "INSERT INTO parcel_bati_revele (parcel_id, idu, emprise_bdtopo_m2, emprise_cosia_m2, bande, motif) "
+            "VALUES (:p, :i, 0, :e, '', 'm33-test') "
+            "ON CONFLICT (parcel_id) DO UPDATE SET emprise_cosia_m2 = :e, emprise_bdtopo_m2 = 0"),
+            {"p": pid, "i": idu, "e": emprise})
     session.execute(text(
         "INSERT INTO dvf_secteur_medianes (secteur, type_bien, n_ventes, mediane_prix_m2, fenetre) VALUES "
         "('97499000MB', 'maison', 8, 3000, '2021-2025'),"

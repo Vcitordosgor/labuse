@@ -1032,8 +1032,17 @@ def compute_mode_b(session: Session, idu: str, *,
                 "motif": "hors population mode B (réservé aux parcelles déclassées pour "
                          "cause de bâti : saturé ou révélé)"}
     porte = _porte_mode_b(session, idu, tier)   # M101 A2 — la porte réelle, en français lisible
-    emprise = session.execute(text(
-        "SELECT emprise_bati_m2 FROM p_model_bati WHERE idu = :i"), {"i": idu}).scalar()
+    # COHERENCE-FIX-2 (lot A) — emprise SERVIE (BD TOPO clippé ST_Union, producteur unique
+    # bati.emprise_bati_bdtopo_m2) COMPLÉTÉE par le CoSIA pour la population « révélée » (bâti
+    # que BD TOPO rate) : c'est la notion NOMMÉE « emprise bâtie révélée (BD TOPO ∪ CoSIA) »,
+    # explicitée au libellé (source_emprise). On NE lit plus la colonne scoring
+    # p_model_bati.emprise_bati_m2 (stale/double-compte SUM ; interdite d'export, verrou V6b).
+    from ..bati import emprise_bati_bdtopo_m2
+    pid = session.execute(text("SELECT id FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
+    emprise_bd = emprise_bati_bdtopo_m2(session, pid) if pid else 0.0
+    cosia = session.execute(text(
+        "SELECT emprise_cosia_m2 FROM parcel_bati_revele WHERE idu = :i"), {"i": idu}).scalar()
+    emprise = max(emprise_bd, float(cosia or 0.0))
     if not emprise or float(emprise) < 20:
         return {"disponible": False, "porte": porte,
                 "motif": "Absent — emprise bâtie non mesurable (< 20 m²) : pas de bilan inventé"}
@@ -1043,7 +1052,6 @@ def compute_mode_b(session: Session, idu: str, *,
                 "motif": "Absent — aucun prix de sortie bâti local (DVF) : pas de bilan inventé"}
 
     hyp = Hypotheses.charger()
-    pid = session.execute(text("SELECT id FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
     from .residuel import _niveaux_existants   # POINT UNIQUE du calcul de niveaux (M33)
     niveaux, niveaux_reels, _hsrc = _niveaux_existants(session, pid, hyp.niveaux_bati_existant_defaut)
 
@@ -1131,7 +1139,7 @@ def compute_mode_b(session: Session, idu: str, *,
                                       "Estimé — 1 niveau supposé (hauteur non mesurée)"),
                 "sdp_existante_m2": round(sdp_exist),
                 "shab_rehabilitable_m2": round(shab),
-                "source_emprise": "max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025)",
+                "source_emprise": "emprise révélée = max(BD TOPO clippé éd. 2026-06-15, CoSIA PVA 2025)",
                 "etiquette_emprise": "Sourcé",
             },
             "prix_sortie": {

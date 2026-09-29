@@ -34,7 +34,7 @@
   "tolerance": "0,5 point",
   "valeur": 11.5
  },
- "prix_median_maison_secteur": {
+ "prix_maison_secteur_section_cadastrale": {
   "lecteur": "fiche:dvf_parcelle.secteur[maison].mediane_prix_m2",
   "tolerance": "1 %",
   "valeur": 1750

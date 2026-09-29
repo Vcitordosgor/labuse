@@ -122,6 +122,25 @@ def stats_batch(session: Session, parcel_ids: list[int]) -> dict[int, dict]:
     return out
 
 
+def emprise_bati_bdtopo_m2(session: Session, parcel_id: int) -> float:
+    """COHERENCE-FIX-2 (lot A) — PRODUCTEUR UNIQUE de l'EMPRISE BÂTIE SERVIE au client.
+
+    Empreinte vecteur BD TOPO CLIPPÉE à la parcelle : ST_Union AVANT ST_Area (les empreintes
+    mitoyennes / faces qui se recouvrent sont fusionnées avant mesure → plus de double-compte,
+    et le résultat est borné par la parcelle). CoSIA n'est JAMAIS fondu ici : il est servi À
+    PART (« bâti révélé », le_bien_block). C'est la définition de la donnée `emprise_batie_m2`.
+
+    ≠ `p_model_bati.emprise_bati_m2` (= MAX(BD TOPO, CoSIA), ENTRÉE SCORING `emprise_bati_scoring_m2`,
+    cf. scoring/p_model/sql.py) et ≠ `stats_batch().bati_ratio` (SUM sans union → double-compte,
+    usage scoring/résiduel). Ces deux-là ne sont jamais l'emprise bâtie CLIENT."""
+    v = session.execute(text(
+        "SELECT COALESCE(ST_Area(ST_Union(ST_Intersection(b.geom_2975, p.geom_2975))), 0) "
+        "FROM spatial_layers b JOIN parcels p ON p.id = :pid "
+        "WHERE b.kind = 'batiment' AND ST_Intersects(b.geom_2975, p.geom_2975)"),
+        {"pid": parcel_id}).scalar()
+    return float(v or 0.0)
+
+
 def fiche_block(session: Session, parcel_id: int, surface_m2: float | None) -> dict:
     """Bloc « Occupation actuelle / bâti détecté » de la fiche (et des exports).
 
@@ -222,12 +241,7 @@ def le_bien_block(session: Session, idu: str) -> dict | None:
     # réelle des empreintes = 150,8 m² (chevauchement de 150,8 m²), bien dans les 272,7 m² de la parcelle.
     # ST_Union fusionne les empreintes AVANT de mesurer l'aire : plus de double-compte, et le résultat est
     # naturellement borné par la géométrie de la parcelle (une intersection ne sort jamais de la parcelle).
-    emprise_bdtopo = session.execute(text(
-        "SELECT COALESCE(ST_Area(ST_Union(ST_Intersection(b.geom_2975, p.geom_2975))), 0) "
-        "FROM spatial_layers b JOIN parcels p ON p.id = :pid "
-        "WHERE b.kind = 'batiment' AND ST_Intersects(b.geom_2975, p.geom_2975)"),
-        {"pid": pid}).scalar()
-    emprise = float(emprise_bdtopo or 0.0)
+    emprise = emprise_bati_bdtopo_m2(session, pid)   # producteur unique (COHERENCE-FIX-2 lot A)
     emprise_m2 = round(emprise) if emprise > 0 else 0
     emprise_cosia = session.execute(text(
         "SELECT emprise_cosia_m2 FROM parcel_bati_revele WHERE idu = :i"), {"i": idu}).scalar()

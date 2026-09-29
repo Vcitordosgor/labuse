@@ -384,7 +384,8 @@ TABLES_FABRIQUEES: dict[str, str] = {
     "piscines": "source unique piscines (piscines-build — FLAIR ∪ CoSIA dédoublonnées, statut servie/à confirmer/écartée)",
     "tuyau_telepherique": "tuyau (build_tuyau_telepherique — Papang servi + ligne Payanké projet)",
     "tuyau_sup": "tuyau (build_tuyau_sup — SUP dissoute par famille, opacité uniforme au zoom)",
-    "p_model_bati": "modèle P (features bâti)",
+    "p_model_bati": "modèle P (features bâti) — emprise_bati_m2 = emprise_bati_scoring_m2 "
+                    "(MAX(BD TOPO, CoSIA), COHERENCE-FIX-2) : entrée scoring, JAMAIS l'emprise bâtie client",
     "p_model_candidates": "modèle P (candidats)",
     "p_model_dataset": "modèle P (dataset v1)",
     "p_model_dataset_v2": "modèle P (dataset v2)",

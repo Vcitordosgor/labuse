@@ -146,10 +146,18 @@ CHECKS: list[tuple] = [
          _sql("SELECT pente_max_deg FROM parcel_terrain WHERE idu=%(idu)s")),
     ], "cache_perime"),
 
+    # COHERENCE-FIX-2 (lot A) — le jumeau SQL reproduit la DÉFINITION SERVIE de l'emprise bâtie :
+    # BD TOPO clippé à la parcelle, ST_Union AVANT ST_Area (pas de double-compte des empreintes
+    # mitoyennes), CoSIA servi À PART (jamais fondu). C'est exactement bati.emprise_bati_bdtopo_m2,
+    # le producteur unique lu par la fiche. On NE compare PLUS à p_model_bati.emprise_bati_m2 =
+    # MAX(BD TOPO, CoSIA) : c'est une NOTION DISTINCTE (entrée scoring `emprise_bati_scoring_m2`),
+    # jamais l'emprise bâtie client — les comparer confondait deux notions sous un même mot.
     ("emprise_batie_m2", "1 %", [
         ("fiche:le_bien.emprise_batie_m2", _f("le_bien.emprise_batie_m2")),
-        ("sql:p_model_bati.emprise_bati_m2",
-         _sql("SELECT emprise_bati_m2 FROM p_model_bati WHERE idu=%(idu)s")),
+        ("sql:BD TOPO clippé ST_Union (emprise servie)",
+         _sql("SELECT round(COALESCE(ST_Area(ST_Union(ST_Intersection(b.geom_2975, p.geom_2975))), 0)) "
+              "FROM spatial_layers b JOIN parcels p ON p.idu=%(idu)s "
+              "WHERE b.kind='batiment' AND ST_Intersects(b.geom_2975, p.geom_2975)")),
     ], "source_differente"),
 
     ("hauteur_faitage_m", "1 %", [
@@ -190,14 +198,20 @@ CHECKS: list[tuple] = [
         ("tuile:flags[cinquante_pas]", _tuile_flag("cinquante_pas")),
     ], "run_different"),
 
-    # prix médian du secteur — la fiche (dvf_parcelle.secteur, fenêtre 2021-2025) et
-    # l'outil Mon secteur (rayon 500/1000 m) doivent dire le même chiffre quand ils
-    # parlent du même périmètre ; l'écart mesuré instruit le lot H (« secteur » nommé).
-    ("prix_median_maison_secteur", "1 %", [
+    # COHERENCE-FIX-2 (lot B) — « secteur » DIT SON PÉRIMÈTRE. L'ancien check comparait deux
+    # NOTIONS DISTINCTES sous un même mot : la fiche `dvf_parcelle.secteur[maison]` = médiane de
+    # la SECTION CADASTRALE (table dvf_secteur_medianes, fenêtre 2021-2025), et mon-secteur
+    # `par_type.maison` = médiane au RAYON ADAPTATIF 500→1500 m (reference_locale). Deux périmètres,
+    # deux ids — on ne les compare plus. Ici, la cohérence VÉRIFIABLE : la fiche sert FIDÈLEMENT la
+    # table de section cadastrale qu'elle lit. Le rayon adaptatif est une valeur mono-productrice
+    # (reference_locale), servie avec son périmètre — nommée, pas recalculée.
+    ("prix_maison_secteur_section_cadastrale", "1 %", [
         ("fiche:dvf_parcelle.secteur[maison].mediane_prix_m2", _prix_maison_fiche),
-        ("api:/outils/mon-secteur.par_type.maison.eur_m2",
-         _api("/outils/mon-secteur?idu={idu}", "par_type.maison.eur_m2")),
-    ], "calcul_different(rayon/fenetre)"),
+        ("sql:dvf_secteur_medianes[maison] (section cadastrale)",
+         _sql("SELECT mediane_prix_m2 FROM dvf_secteur_medianes "
+              "WHERE secteur=substring(%(idu)s FROM 1 FOR 10) AND type_bien='maison' "
+              "ORDER BY n_ventes DESC NULLS LAST LIMIT 1")),
+    ], "source_differente"),
 
     ("filiation_mere", "0", [
         ("fiche:filiation.meres.0.idu", _f("filiation.meres.0.idu")),

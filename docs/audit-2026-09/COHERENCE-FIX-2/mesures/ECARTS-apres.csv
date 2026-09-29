@@ -1,0 +1,900 @@
+notion,objet,lecteur_a,valeur_a,lecteur_b,valeur_b,ecart,cause,gravite
+surface_parcelle_m2,97402000AB1117,fiche:surface_m2,4097,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97402000AB1117,fiche:reglement_plu.zones.0.zone,N,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97402000AB1117,sql:parcel_zone_plu.zone_fam,N,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97402000AB1117,fiche:potentiel_transformation.sdp_residuelle_m2,27.0,tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97402000AB1117,fiche:potentiel_transformation.sous_densite,True,tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97402000AB1117,fiche:score_v2.tier,ecartee,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97402000AB1117,fiche:score_v2.rang,359557,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97402000AB1117,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97402000AB1117,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97402000AB1117,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97411000BZ1065,fiche:surface_m2,1625,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97411000BZ1065,fiche:reglement_plu.zones.0.zone,Uh,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97411000BZ1065,sql:parcel_zone_plu.zone_fam,U,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97411000BZ1065,fiche:potentiel_transformation.sdp_residuelle_m2,26.0,tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97411000BZ1065,fiche:potentiel_transformation.sous_densite,True,tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97411000BZ1065,fiche:score_v2.tier,a_creuser,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97411000BZ1065,fiche:score_v2.rang,341326,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97411000BZ1065,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97411000BZ1065,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97411000BZ1065,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97411000DE0231,fiche:surface_m2,388,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97411000DE0231,fiche:reglement_plu.zones.0.zone,Ui,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97411000DE0231,sql:parcel_zone_plu.zone_fam,U,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97411000DE0231,fiche:potentiel_transformation.sdp_residuelle_m2,0.0,tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97411000DE0231,fiche:potentiel_transformation.sous_densite,False,tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97411000DE0231,fiche:score_v2.tier,declasse_bati_sature,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97411000DE0231,fiche:score_v2.rang,29025,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97411000DE0231,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97411000DE0231,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97411000DE0231,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97411000EM0174,fiche:surface_m2,1825,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97411000EM0174,fiche:reglement_plu.zones.0.zone,Um,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97411000EM0174,sql:parcel_zone_plu.zone_fam,U,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97411000EM0174,fiche:potentiel_transformation.sdp_residuelle_m2,0.0,tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97411000EM0174,fiche:potentiel_transformation.sous_densite,False,tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97411000EM0174,fiche:score_v2.tier,declasse_bati_sature,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97411000EM0174,fiche:score_v2.rang,97390,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97411000EM0174,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97411000EM0174,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97411000EM0174,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97415000AB0134,fiche:surface_m2,20357,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97415000AB0134,fiche:reglement_plu.zones.0.zone,AU1est,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97415000AB0134,sql:parcel_zone_plu.zone_fam,AU,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97415000AB0134,sql:parcel_residuel.sdp_residuelle_m2,∅ (pas de donnée),tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97415000AB0134,sql:parcel_residuel.sous_densite,∅ (pas de donnée),tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97415000AB0134,fiche:score_v2.tier,a_creuser,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97415000AB0134,fiche:score_v2.rang,6831,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97415000AB0134,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97415000AB0134,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97415000AB0134,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97415000CK0678,fiche:surface_m2,413,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97415000CK0678,fiche:reglement_plu.zones.0.zone,U6c,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97415000CK0678,sql:parcel_zone_plu.zone_fam,U,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97415000CK0678,fiche:potentiel_transformation.sdp_residuelle_m2,183.0,tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97415000CK0678,fiche:potentiel_transformation.sous_densite,True,tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97415000CK0678,fiche:score_v2.tier,a_creuser,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97415000CK0678,fiche:score_v2.rang,242318,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97415000CK0678,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97415000CK0678,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97415000CK0678,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97418000AC0198,fiche:surface_m2,2441,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97418000AC0198,fiche:reglement_plu.zones.0.zone,Acu,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97418000AC0198,sql:parcel_zone_plu.zone_fam,A,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97418000AC0198,sql:parcel_residuel.sdp_residuelle_m2,∅ (pas de donnée),tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97418000AC0198,sql:parcel_residuel.sous_densite,∅ (pas de donnée),tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97418000AC0198,fiche:score_v2.tier,ecartee,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97418000AC0198,fiche:score_v2.rang,372969,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97418000AC0198,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97418000AC0198,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97418000AC0198,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97401000AN0259,fiche:surface_m2,2404,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97401000AN0259,fiche:reglement_plu.zones.0.zone,A,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97401000AN0259,sql:parcel_zone_plu.zone_fam,A,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97401000AN0259,sql:parcel_residuel.sdp_residuelle_m2,∅ (pas de donnée),tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97401000AN0259,sql:parcel_residuel.sous_densite,∅ (pas de donnée),tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97401000AN0259,fiche:score_v2.tier,ecartee,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97401000AN0259,fiche:score_v2.rang,407214,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97401000AN0259,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97401000AN0259,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97401000AN0259,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97401000AP0282,fiche:surface_m2,207,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97401000AP0282,fiche:reglement_plu.zones.0.zone,Uc,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97401000AP0282,sql:parcel_zone_plu.zone_fam,U,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97401000AP0282,fiche:potentiel_transformation.sdp_residuelle_m2,41.0,tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97401000AP0282,fiche:potentiel_transformation.sous_densite,True,tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97401000AP0282,fiche:score_v2.tier,a_creuser,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97401000AP0282,fiche:score_v2.rang,295938,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97401000AP0282,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97401000AP0282,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97401000AP0282,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97402000AD0527,fiche:surface_m2,99,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97402000AD0527,fiche:reglement_plu.zones.0.zone,Uc,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97402000AD0527,sql:parcel_zone_plu.zone_fam,U,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97402000AD0527,fiche:potentiel_transformation.sdp_residuelle_m2,∅ (pas de donnée),tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97402000AD0527,fiche:potentiel_transformation.sous_densite,∅ (pas de donnée),tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97402000AD0527,fiche:score_v2.tier,ecartee,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97402000AD0527,fiche:score_v2.rang,227927,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97402000AD0527,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97402000AD0527,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97402000AD0527,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97402000AK0252,fiche:surface_m2,889,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97402000AK0252,fiche:reglement_plu.zones.0.zone,Uba,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97402000AK0252,sql:parcel_zone_plu.zone_fam,U,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97402000AK0252,fiche:potentiel_transformation.sdp_residuelle_m2,0.0,tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97402000AK0252,fiche:potentiel_transformation.sous_densite,False,tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97402000AK0252,fiche:score_v2.tier,declasse_bati_sature,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97402000AK0252,fiche:score_v2.rang,213742,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97402000AK0252,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97402000AK0252,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97402000AK0252,fiche:flags[cinquante_pas],False,sql:parcel_flags[cinquante_pas],True,False ≠ True,label,INCOHERENT
+vigilance_cinquante_pas,97402000AK0252,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97402000AO0010,fiche:surface_m2,696563,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97402000AO0010,fiche:reglement_plu.zones.0.zone,Npnr,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97402000AO0010,sql:parcel_zone_plu.zone_fam,N,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97402000AO0010,sql:parcel_residuel.sdp_residuelle_m2,∅ (pas de donnée),tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97402000AO0010,sql:parcel_residuel.sous_densite,∅ (pas de donnée),tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97402000AO0010,fiche:score_v2.tier,ecartee,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97402000AO0010,fiche:score_v2.rang,419053,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97402000AO0010,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97402000AO0010,fiche:flags[ravine],True,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97402000AO0010,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97403000AL0256,fiche:surface_m2,224840,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97403000AL0256,fiche:reglement_plu.zones.0.zone,Nr,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97403000AL0256,sql:parcel_zone_plu.zone_fam,N,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97403000AL0256,sql:parcel_residuel.sdp_residuelle_m2,∅ (pas de donnée),tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97403000AL0256,sql:parcel_residuel.sous_densite,∅ (pas de donnée),tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97403000AL0256,fiche:score_v2.tier,ecartee,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97403000AL0256,fiche:score_v2.rang,418368,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97403000AL0256,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97403000AL0256,fiche:flags[ravine],True,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97403000AL0256,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97403000AM0515,fiche:surface_m2,2226,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97403000AM0515,fiche:reglement_plu.zones.0.zone,N,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97403000AM0515,sql:parcel_zone_plu.zone_fam,N,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97403000AM0515,sql:parcel_residuel.sdp_residuelle_m2,∅ (pas de donnée),tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97403000AM0515,sql:parcel_residuel.sous_densite,∅ (pas de donnée),tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97403000AM0515,fiche:score_v2.tier,ecartee,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97403000AM0515,fiche:score_v2.rang,304865,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97403000AM0515,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97403000AM0515,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97403000AM0515,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97404000AI2280,fiche:surface_m2,434,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97404000AI2280,fiche:reglement_plu.zones.0.zone,UC,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97404000AI2280,sql:parcel_zone_plu.zone_fam,U,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97404000AI2280,fiche:potentiel_transformation.sdp_residuelle_m2,73.0,tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97404000AI2280,fiche:potentiel_transformation.sous_densite,False,tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97404000AI2280,fiche:score_v2.tier,ecartee,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97404000AI2280,fiche:score_v2.rang,147800,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97404000AI2280,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97404000AI2280,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97404000AI2280,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97405000AL1258,fiche:surface_m2,701,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97405000AL1258,fiche:reglement_plu.zones.0.zone,2AU,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97405000AL1258,sql:parcel_zone_plu.zone_fam,AU,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97405000AL1258,sql:parcel_residuel.sdp_residuelle_m2,∅ (pas de donnée),tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97405000AL1258,sql:parcel_residuel.sous_densite,∅ (pas de donnée),tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97405000AL1258,fiche:score_v2.tier,declasse_au_statut_inconnu,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97405000AL1258,fiche:score_v2.rang,228695,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97405000AL1258,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97405000AL1258,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97405000AL1258,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97405000AM0888,fiche:surface_m2,181,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97405000AM0888,fiche:reglement_plu.zones.0.zone,A,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97405000AM0888,sql:parcel_zone_plu.zone_fam,A,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97405000AM0888,sql:parcel_residuel.sdp_residuelle_m2,∅ (pas de donnée),tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97405000AM0888,sql:parcel_residuel.sous_densite,∅ (pas de donnée),tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97405000AM0888,fiche:score_v2.tier,ecartee,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97405000AM0888,fiche:score_v2.rang,333875,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97405000AM0888,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97405000AM0888,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97405000AM0888,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97405000BC0309,fiche:surface_m2,151,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97405000BC0309,fiche:reglement_plu.zones.0.zone,Nce,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97405000BC0309,sql:parcel_zone_plu.zone_fam,N,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97405000BC0309,sql:parcel_residuel.sdp_residuelle_m2,∅ (pas de donnée),tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97405000BC0309,sql:parcel_residuel.sous_densite,∅ (pas de donnée),tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97405000BC0309,fiche:score_v2.tier,ecartee,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97405000BC0309,fiche:score_v2.rang,411352,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97405000BC0309,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97405000BC0309,fiche:flags[ravine],True,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97405000BC0309,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97405000BD0077,fiche:surface_m2,1054,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97405000BD0077,fiche:reglement_plu.zones.0.zone,N,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97405000BD0077,sql:parcel_zone_plu.zone_fam,N,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97405000BD0077,sql:parcel_residuel.sdp_residuelle_m2,∅ (pas de donnée),tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97405000BD0077,sql:parcel_residuel.sous_densite,∅ (pas de donnée),tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97405000BD0077,fiche:score_v2.tier,ecartee,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97405000BD0077,fiche:score_v2.rang,357836,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97405000BD0077,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97405000BD0077,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97405000BD0077,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97406000AT0250,fiche:surface_m2,10504,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97406000AT0250,fiche:reglement_plu.zones.0.zone,A,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97406000AT0250,sql:parcel_zone_plu.zone_fam,A,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97406000AT0250,sql:parcel_residuel.sdp_residuelle_m2,∅ (pas de donnée),tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97406000AT0250,sql:parcel_residuel.sous_densite,∅ (pas de donnée),tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97406000AT0250,fiche:score_v2.tier,ecartee,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97406000AT0250,fiche:score_v2.rang,355108,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97406000AT0250,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97406000AT0250,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97406000AT0250,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97406000AV0152,fiche:surface_m2,93,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97406000AV0152,fiche:reglement_plu.zones.0.zone,Aco,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97406000AV0152,sql:parcel_zone_plu.zone_fam,A,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97406000AV0152,sql:parcel_residuel.sdp_residuelle_m2,∅ (pas de donnée),tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97406000AV0152,sql:parcel_residuel.sous_densite,∅ (pas de donnée),tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97406000AV0152,fiche:score_v2.tier,ecartee,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97406000AV0152,fiche:score_v2.rang,215462,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97406000AV0152,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97406000AV0152,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97406000AV0152,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97407000AI0054,fiche:surface_m2,301,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97407000AI0054,fiche:reglement_plu.zones.0.zone,Uc,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97407000AI0054,sql:parcel_zone_plu.zone_fam,U,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97407000AI0054,fiche:potentiel_transformation.sdp_residuelle_m2,37.0,tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97407000AI0054,fiche:potentiel_transformation.sous_densite,False,tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97407000AI0054,fiche:score_v2.tier,a_creuser,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97407000AI0054,fiche:score_v2.rang,285224,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97407000AI0054,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97407000AI0054,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97407000AI0054,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97407000AX0215,fiche:surface_m2,6782,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97407000AX0215,fiche:reglement_plu.zones.0.zone,2AUp,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97407000AX0215,sql:parcel_zone_plu.zone_fam,AU,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97407000AX0215,sql:parcel_residuel.sdp_residuelle_m2,∅ (pas de donnée),tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97407000AX0215,sql:parcel_residuel.sous_densite,∅ (pas de donnée),tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97407000AX0215,fiche:score_v2.tier,declasse_au_statut_inconnu,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97407000AX0215,fiche:score_v2.rang,78672,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97407000AX0215,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97407000AX0215,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97407000AX0215,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97408000AO1003,fiche:surface_m2,385,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97408000AO1003,fiche:reglement_plu.zones.0.zone,UBpsfr2,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97408000AO1003,sql:parcel_zone_plu.zone_fam,U,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97408000AO1003,fiche:potentiel_transformation.sdp_residuelle_m2,32.0,tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97408000AO1003,fiche:potentiel_transformation.sous_densite,False,tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97408000AO1003,fiche:score_v2.tier,declasse_bati_sature,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97408000AO1003,fiche:score_v2.rang,56937,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97408000AO1003,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97408000AO1003,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97408000AO1003,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97408000AZ0066,fiche:surface_m2,1386722,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97408000AZ0066,fiche:reglement_plu.zones.0.zone,Npnr,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97408000AZ0066,sql:parcel_zone_plu.zone_fam,N,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97408000AZ0066,sql:parcel_residuel.sdp_residuelle_m2,∅ (pas de donnée),tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97408000AZ0066,sql:parcel_residuel.sous_densite,∅ (pas de donnée),tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97408000AZ0066,fiche:score_v2.tier,ecartee,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97408000AZ0066,fiche:score_v2.rang,403413,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97408000AZ0066,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97408000AZ0066,fiche:flags[ravine],True,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97408000AZ0066,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97409000AH0155,fiche:surface_m2,1608,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97409000AH0155,fiche:reglement_plu.zones.0.zone,UC,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97409000AH0155,sql:parcel_zone_plu.zone_fam,U,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97409000AH0155,fiche:potentiel_transformation.sdp_residuelle_m2,0.0,tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97409000AH0155,fiche:potentiel_transformation.sous_densite,False,tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97409000AH0155,fiche:score_v2.tier,declasse_bati_sature,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97409000AH0155,fiche:score_v2.rang,200699,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97409000AH0155,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97409000AH0155,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97409000AH0155,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97409000AR2385,fiche:surface_m2,414,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97409000AR2385,fiche:reglement_plu.zones.0.zone,UC,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97409000AR2385,sql:parcel_zone_plu.zone_fam,U,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97409000AR2385,fiche:potentiel_transformation.sdp_residuelle_m2,121.0,tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97409000AR2385,fiche:potentiel_transformation.sous_densite,False,tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97409000AR2385,fiche:score_v2.tier,a_creuser,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97409000AR2385,fiche:score_v2.rang,18891,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97409000AR2385,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97409000AR2385,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97409000AR2385,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97409000AY1442,fiche:surface_m2,684,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97409000AY1442,fiche:reglement_plu.zones.0.zone,UC,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97409000AY1442,sql:parcel_zone_plu.zone_fam,U,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97409000AY1442,fiche:potentiel_transformation.sdp_residuelle_m2,292.0,tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97409000AY1442,fiche:potentiel_transformation.sous_densite,True,tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97409000AY1442,fiche:score_v2.tier,a_creuser,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97409000AY1442,fiche:score_v2.rang,139223,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97409000AY1442,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97409000AY1442,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97409000AY1442,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97409000AZ1040,fiche:surface_m2,414,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97409000AZ1040,fiche:reglement_plu.zones.0.zone,UC,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97409000AZ1040,sql:parcel_zone_plu.zone_fam,U,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97409000AZ1040,fiche:potentiel_transformation.sdp_residuelle_m2,92.0,tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97409000AZ1040,fiche:potentiel_transformation.sous_densite,False,tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97409000AZ1040,fiche:score_v2.tier,a_creuser,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97409000AZ1040,fiche:score_v2.rang,79927,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97409000AZ1040,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97409000AZ1040,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97409000AZ1040,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97409000BD0958,fiche:surface_m2,153,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97409000BD0958,fiche:reglement_plu.zones.0.zone,UB,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97409000BD0958,sql:parcel_zone_plu.zone_fam,U,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97409000BD0958,fiche:potentiel_transformation.sdp_residuelle_m2,0.0,tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97409000BD0958,fiche:potentiel_transformation.sous_densite,False,tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97409000BD0958,fiche:score_v2.tier,declasse_bati_sature,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97409000BD0958,fiche:score_v2.rang,216467,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97409000BD0958,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97409000BD0958,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97409000BD0958,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97410000AP0527,fiche:surface_m2,365,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97410000AP0527,fiche:reglement_plu.zones.0.zone,Ub,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97410000AP0527,sql:parcel_zone_plu.zone_fam,U,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97410000AP0527,fiche:potentiel_transformation.sdp_residuelle_m2,23.0,tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97410000AP0527,fiche:potentiel_transformation.sous_densite,True,tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97410000AP0527,fiche:score_v2.tier,ecartee,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97410000AP0527,fiche:score_v2.rang,363915,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97410000AP0527,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97410000AP0527,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97410000AP0527,fiche:flags[cinquante_pas],True,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97410000AY0304,fiche:surface_m2,69771,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97410000AY0304,fiche:reglement_plu.zones.0.zone,A,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97410000AY0304,sql:parcel_zone_plu.zone_fam,A,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97410000AY0304,sql:parcel_residuel.sdp_residuelle_m2,∅ (pas de donnée),tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97410000AY0304,sql:parcel_residuel.sous_densite,∅ (pas de donnée),tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97410000AY0304,fiche:score_v2.tier,ecartee,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97410000AY0304,fiche:score_v2.rang,172168,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97410000AY0304,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97410000AY0304,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97410000AY0304,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97410000BM1045,fiche:surface_m2,577,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97410000BM1045,fiche:reglement_plu.zones.0.zone,Ua,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97410000BM1045,sql:parcel_zone_plu.zone_fam,U,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97410000BM1045,fiche:potentiel_transformation.sdp_residuelle_m2,623.0,tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97410000BM1045,fiche:potentiel_transformation.sous_densite,True,tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97410000BM1045,fiche:score_v2.tier,a_creuser,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97410000BM1045,fiche:score_v2.rang,187824,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97410000BM1045,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97410000BM1045,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97410000BM1045,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97410000BX1873,fiche:surface_m2,431,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97410000BX1873,fiche:reglement_plu.zones.0.zone,Ub,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97410000BX1873,sql:parcel_zone_plu.zone_fam,U,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97410000BX1873,fiche:potentiel_transformation.sdp_residuelle_m2,466.0,tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97410000BX1873,fiche:potentiel_transformation.sous_densite,True,tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97410000BX1873,fiche:score_v2.tier,a_creuser,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97410000BX1873,fiche:score_v2.rang,292542,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97410000BX1873,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97410000BX1873,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97410000BX1873,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97410000BY0507,fiche:surface_m2,4690,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97410000BY0507,fiche:reglement_plu.zones.0.zone,A,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97410000BY0507,sql:parcel_zone_plu.zone_fam,A,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97410000BY0507,sql:parcel_residuel.sdp_residuelle_m2,∅ (pas de donnée),tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97410000BY0507,sql:parcel_residuel.sous_densite,∅ (pas de donnée),tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97410000BY0507,fiche:score_v2.tier,ecartee,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97410000BY0507,fiche:score_v2.rang,405996,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97410000BY0507,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97410000BY0507,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97410000BY0507,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97411000AN0416,fiche:surface_m2,398,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97411000AN0416,fiche:reglement_plu.zones.0.zone,Ui,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97411000AN0416,sql:parcel_zone_plu.zone_fam,U,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97411000AN0416,fiche:potentiel_transformation.sdp_residuelle_m2,0.0,tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97411000AN0416,fiche:potentiel_transformation.sous_densite,False,tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97411000AN0416,fiche:score_v2.tier,declasse_bati_sature,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97411000AN0416,fiche:score_v2.rang,∅ (pas de donnée),tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97411000AN0416,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97411000AN0416,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97411000AN0416,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97411000CE1095,fiche:surface_m2,271398,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97411000CE1095,fiche:reglement_plu.zones.0.zone,N,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97411000CE1095,sql:parcel_zone_plu.zone_fam,N,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97411000CE1095,sql:parcel_residuel.sdp_residuelle_m2,∅ (pas de donnée),tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97411000CE1095,sql:parcel_residuel.sous_densite,∅ (pas de donnée),tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97411000CE1095,fiche:score_v2.tier,ecartee,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97411000CE1095,fiche:score_v2.rang,67078,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97411000CE1095,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97411000CE1095,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97411000CE1095,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97411000CH0402,fiche:surface_m2,2769,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97411000CH0402,fiche:reglement_plu.zones.0.zone,Uh,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97411000CH0402,sql:parcel_zone_plu.zone_fam,U,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97411000CH0402,fiche:potentiel_transformation.sdp_residuelle_m2,137.0,tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97411000CH0402,fiche:potentiel_transformation.sous_densite,True,tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97411000CH0402,fiche:score_v2.tier,a_creuser,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97411000CH0402,fiche:score_v2.rang,268965,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97411000CH0402,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97411000CH0402,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97411000CH0402,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97411000CH0711,fiche:surface_m2,12426,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97411000CH0711,fiche:reglement_plu.zones.0.zone,A,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97411000CH0711,sql:parcel_zone_plu.zone_fam,A,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97411000CH0711,sql:parcel_residuel.sdp_residuelle_m2,∅ (pas de donnée),tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97411000CH0711,sql:parcel_residuel.sous_densite,∅ (pas de donnée),tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97411000CH0711,fiche:score_v2.tier,ecartee,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97411000CH0711,fiche:score_v2.rang,342032,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97411000CH0711,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97411000CH0711,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97411000CH0711,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97411000CI0085,fiche:surface_m2,42003,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97411000CI0085,fiche:reglement_plu.zones.0.zone,A,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97411000CI0085,sql:parcel_zone_plu.zone_fam,A,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97411000CI0085,fiche:potentiel_transformation.sdp_residuelle_m2,21643.0,tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97411000CI0085,fiche:potentiel_transformation.sous_densite,True,tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97411000CI0085,fiche:score_v2.tier,a_creuser,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97411000CI0085,fiche:score_v2.rang,342013,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97411000CI0085,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97411000CI0085,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97411000CI0085,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97411000CP0367,fiche:surface_m2,11713,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97411000CP0367,fiche:reglement_plu.zones.0.zone,Ntc,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97411000CP0367,sql:parcel_zone_plu.zone_fam,N,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97411000CP0367,fiche:potentiel_transformation.sdp_residuelle_m2,13.0,tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97411000CP0367,fiche:potentiel_transformation.sous_densite,True,tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97411000CP0367,fiche:score_v2.tier,ecartee,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97411000CP0367,fiche:score_v2.rang,397488,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97411000CP0367,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97411000CP0367,fiche:flags[ravine],True,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97411000CP0367,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97411000DT0159,fiche:surface_m2,1646,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97411000DT0159,fiche:reglement_plu.zones.0.zone,Uh,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97411000DT0159,sql:parcel_zone_plu.zone_fam,U,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97411000DT0159,fiche:potentiel_transformation.sdp_residuelle_m2,0.0,tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97411000DT0159,fiche:potentiel_transformation.sous_densite,False,tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97411000DT0159,fiche:score_v2.tier,declasse_bati_sature,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97411000DT0159,fiche:score_v2.rang,∅ (pas de donnée),tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+copro_presente,97411000DT0159,fiche:coproprietes(non vide),False,sql:p_model_ext_copro,True,False ≠ True,label,INCOHERENT
+vigilance_ppr,97411000DT0159,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97411000DT0159,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97411000DT0159,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97411000ET0054,fiche:surface_m2,847,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97411000ET0054,fiche:reglement_plu.zones.0.zone,Um,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97411000ET0054,sql:parcel_zone_plu.zone_fam,U,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97411000ET0054,fiche:potentiel_transformation.sdp_residuelle_m2,0.0,tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97411000ET0054,fiche:potentiel_transformation.sous_densite,False,tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97411000ET0054,fiche:score_v2.tier,declasse_bati_sature,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97411000ET0054,fiche:score_v2.rang,224084,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97411000ET0054,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97411000ET0054,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97411000ET0054,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97411000EZ0299,fiche:surface_m2,221,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97411000EZ0299,fiche:reglement_plu.zones.0.zone,Um,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97411000EZ0299,sql:parcel_zone_plu.zone_fam,U,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97411000EZ0299,fiche:potentiel_transformation.sdp_residuelle_m2,0.0,tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97411000EZ0299,fiche:potentiel_transformation.sous_densite,False,tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97411000EZ0299,fiche:score_v2.tier,declasse_bati_sature,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97411000EZ0299,fiche:score_v2.rang,258860,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97411000EZ0299,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97411000EZ0299,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97411000EZ0299,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97411000HE0410,fiche:surface_m2,654,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97411000HE0410,fiche:reglement_plu.zones.0.zone,Um,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97411000HE0410,sql:parcel_zone_plu.zone_fam,U,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97411000HE0410,fiche:potentiel_transformation.sdp_residuelle_m2,0.0,tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97411000HE0410,fiche:potentiel_transformation.sous_densite,False,tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97411000HE0410,fiche:score_v2.tier,declasse_bati_sature,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97411000HE0410,fiche:score_v2.rang,266462,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97411000HE0410,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97411000HE0410,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97411000HE0410,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97411000HM0161,fiche:surface_m2,3033,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97411000HM0161,fiche:reglement_plu.zones.0.zone,Ui,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97411000HM0161,sql:parcel_zone_plu.zone_fam,U,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97411000HM0161,fiche:potentiel_transformation.sdp_residuelle_m2,0.0,tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97411000HM0161,fiche:potentiel_transformation.sous_densite,False,tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97411000HM0161,fiche:score_v2.tier,declasse_bati_sature,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97411000HM0161,fiche:score_v2.rang,∅ (pas de donnée),tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97411000HM0161,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97411000HM0161,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97411000HM0161,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97411000IS0549,fiche:surface_m2,633,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97411000IS0549,fiche:reglement_plu.zones.0.zone,Um,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97411000IS0549,sql:parcel_zone_plu.zone_fam,U,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97411000IS0549,fiche:potentiel_transformation.sdp_residuelle_m2,0.0,tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97411000IS0549,fiche:potentiel_transformation.sous_densite,False,tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97411000IS0549,fiche:score_v2.tier,declasse_bati_sature,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97411000IS0549,fiche:score_v2.rang,314821,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97411000IS0549,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97411000IS0549,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97411000IS0549,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97411000KC0302,fiche:surface_m2,730,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97411000KC0302,fiche:reglement_plu.zones.0.zone,Uj,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97411000KC0302,sql:parcel_zone_plu.zone_fam,U,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97411000KC0302,sql:parcel_residuel.sdp_residuelle_m2,∅ (pas de donnée),tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97411000KC0302,sql:parcel_residuel.sous_densite,∅ (pas de donnée),tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97411000KC0302,fiche:score_v2.tier,ecartee,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97411000KC0302,fiche:score_v2.rang,333278,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97411000KC0302,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97411000KC0302,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97411000KC0302,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97412000AB0016,fiche:surface_m2,1775664,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97412000AB0016,fiche:reglement_plu.zones.0.zone,Npnr,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97412000AB0016,sql:parcel_zone_plu.zone_fam,N,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97412000AB0016,sql:parcel_residuel.sdp_residuelle_m2,∅ (pas de donnée),tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97412000AB0016,sql:parcel_residuel.sous_densite,∅ (pas de donnée),tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97412000AB0016,fiche:score_v2.tier,ecartee,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97412000AB0016,fiche:score_v2.rang,418998,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97412000AB0016,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97412000AB0016,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97412000AB0016,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97412000AH0870,fiche:surface_m2,337,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97412000AH0870,fiche:reglement_plu.zones.0.zone,U5vi,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97412000AH0870,sql:parcel_zone_plu.zone_fam,U,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97412000AH0870,fiche:potentiel_transformation.sdp_residuelle_m2,0.0,tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97412000AH0870,fiche:potentiel_transformation.sous_densite,False,tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97412000AH0870,fiche:score_v2.tier,a_creuser,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97412000AH0870,fiche:score_v2.rang,99561,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97412000AH0870,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97412000AH0870,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97412000AH0870,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97412000AN0542,fiche:surface_m2,2028,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97412000AN0542,fiche:reglement_plu.zones.0.zone,A,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97412000AN0542,sql:parcel_zone_plu.zone_fam,A,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97412000AN0542,sql:parcel_residuel.sdp_residuelle_m2,∅ (pas de donnée),tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97412000AN0542,sql:parcel_residuel.sous_densite,∅ (pas de donnée),tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97412000AN0542,fiche:score_v2.tier,ecartee,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97412000AN0542,fiche:score_v2.rang,322898,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97412000AN0542,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97412000AN0542,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97412000AN0542,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97412000AN0751,fiche:surface_m2,1176,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97412000AN0751,fiche:reglement_plu.zones.0.zone,2AU5,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97412000AN0751,sql:parcel_zone_plu.zone_fam,AU,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97412000AN0751,sql:parcel_residuel.sdp_residuelle_m2,∅ (pas de donnée),tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97412000AN0751,sql:parcel_residuel.sous_densite,∅ (pas de donnée),tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97412000AN0751,fiche:score_v2.tier,declasse_zone_fermee,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97412000AN0751,fiche:score_v2.rang,229646,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97412000AN0751,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97412000AN0751,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97412000AN0751,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97412000AO0394,fiche:surface_m2,1501,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97412000AO0394,fiche:reglement_plu.zones.0.zone,A,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97412000AO0394,sql:parcel_zone_plu.zone_fam,A,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97412000AO0394,sql:parcel_residuel.sdp_residuelle_m2,∅ (pas de donnée),tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97412000AO0394,sql:parcel_residuel.sous_densite,∅ (pas de donnée),tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97412000AO0394,fiche:score_v2.tier,ecartee,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97412000AO0394,fiche:score_v2.rang,13349,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97412000AO0394,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97412000AO0394,fiche:flags[ravine],True,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97412000AO0394,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97412000BT0835,fiche:surface_m2,863,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97412000BT0835,fiche:reglement_plu.zones.0.zone,U2a,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97412000BT0835,sql:parcel_zone_plu.zone_fam,U,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97412000BT0835,fiche:potentiel_transformation.sdp_residuelle_m2,678.0,tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97412000BT0835,fiche:potentiel_transformation.sous_densite,True,tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97412000BT0835,fiche:score_v2.tier,a_creuser,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97412000BT0835,fiche:score_v2.rang,260374,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97412000BT0835,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97412000BT0835,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97412000BT0835,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97412000BX0076,fiche:surface_m2,2120,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97412000BX0076,fiche:reglement_plu.zones.0.zone,2AU6,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97412000BX0076,sql:parcel_zone_plu.zone_fam,AU,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97412000BX0076,fiche:potentiel_transformation.sdp_residuelle_m2,942.0,tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97412000BX0076,fiche:potentiel_transformation.sous_densite,True,tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97412000BX0076,fiche:score_v2.tier,declasse_zone_fermee,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97412000BX0076,fiche:score_v2.rang,305227,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97412000BX0076,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97412000BX0076,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97412000BX0076,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97412000BY0776,fiche:surface_m2,47,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97412000BY0776,fiche:reglement_plu.zones.0.zone,U5,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97412000BY0776,sql:parcel_zone_plu.zone_fam,U,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97412000BY0776,sql:parcel_residuel.sdp_residuelle_m2,∅ (pas de donnée),tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97412000BY0776,sql:parcel_residuel.sous_densite,∅ (pas de donnée),tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97412000BY0776,fiche:score_v2.tier,a_creuser,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97412000BY0776,fiche:score_v2.rang,271220,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97412000BY0776,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97412000BY0776,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97412000BY0776,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97412000CE0305,fiche:surface_m2,2729,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97412000CE0305,fiche:reglement_plu.zones.0.zone,A,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97412000CE0305,sql:parcel_zone_plu.zone_fam,A,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97412000CE0305,sql:parcel_residuel.sdp_residuelle_m2,∅ (pas de donnée),tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97412000CE0305,sql:parcel_residuel.sous_densite,∅ (pas de donnée),tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97412000CE0305,fiche:score_v2.tier,ecartee,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97412000CE0305,fiche:score_v2.rang,356133,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97412000CE0305,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97412000CE0305,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97412000CE0305,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97412000CE0490,fiche:surface_m2,10727,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97412000CE0490,fiche:reglement_plu.zones.0.zone,A,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97412000CE0490,sql:parcel_zone_plu.zone_fam,A,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97412000CE0490,sql:parcel_residuel.sdp_residuelle_m2,∅ (pas de donnée),tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97412000CE0490,sql:parcel_residuel.sous_densite,∅ (pas de donnée),tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97412000CE0490,fiche:score_v2.tier,ecartee,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97412000CE0490,fiche:score_v2.rang,351919,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97412000CE0490,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97412000CE0490,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97412000CE0490,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97412000CI0199,fiche:surface_m2,71,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97412000CI0199,fiche:reglement_plu.zones.0.zone,1AU5ru,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97412000CI0199,sql:parcel_zone_plu.zone_fam,AU,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97412000CI0199,sql:parcel_residuel.sdp_residuelle_m2,∅ (pas de donnée),tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97412000CI0199,sql:parcel_residuel.sous_densite,∅ (pas de donnée),tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97412000CI0199,fiche:score_v2.tier,ecartee,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97412000CI0199,fiche:score_v2.rang,36543,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97412000CI0199,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97412000CI0199,fiche:flags[ravine],True,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97412000CI0199,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97412000CI0219,fiche:surface_m2,2225,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97412000CI0219,fiche:reglement_plu.zones.0.zone,A,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97412000CI0219,sql:parcel_zone_plu.zone_fam,A,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97412000CI0219,fiche:potentiel_transformation.sdp_residuelle_m2,9.0,tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97412000CI0219,fiche:potentiel_transformation.sous_densite,False,tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97412000CI0219,fiche:score_v2.tier,ecartee,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97412000CI0219,fiche:score_v2.rang,365974,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97412000CI0219,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97412000CI0219,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97412000CI0219,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97412000CK0440,fiche:surface_m2,779,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97412000CK0440,fiche:reglement_plu.zones.0.zone,U5ru,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97412000CK0440,sql:parcel_zone_plu.zone_fam,U,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97412000CK0440,fiche:potentiel_transformation.sdp_residuelle_m2,173.0,tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97412000CK0440,fiche:potentiel_transformation.sous_densite,True,tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97412000CK0440,fiche:score_v2.tier,a_creuser,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97412000CK0440,fiche:score_v2.rang,253728,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97412000CK0440,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97412000CK0440,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97412000CK0440,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97412000CY0532,fiche:surface_m2,599,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97412000CY0532,fiche:reglement_plu.zones.0.zone,U5ru,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97412000CY0532,sql:parcel_zone_plu.zone_fam,U,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97412000CY0532,fiche:potentiel_transformation.sdp_residuelle_m2,116.0,tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97412000CY0532,fiche:potentiel_transformation.sous_densite,False,tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97412000CY0532,fiche:score_v2.tier,a_creuser,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97412000CY0532,fiche:score_v2.rang,216992,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97412000CY0532,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97412000CY0532,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97412000CY0532,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97413000AV1535,fiche:surface_m2,213,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97413000AV1535,fiche:reglement_plu.zones.0.zone,UB,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97413000AV1535,sql:parcel_zone_plu.zone_fam,U,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97413000AV1535,fiche:potentiel_transformation.sdp_residuelle_m2,0.0,tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97413000AV1535,fiche:potentiel_transformation.sous_densite,False,tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97413000AV1535,fiche:score_v2.tier,declasse_bati_sature,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97413000AV1535,fiche:score_v2.rang,63944,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97413000AV1535,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97413000AV1535,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97413000AV1535,fiche:flags[cinquante_pas],False,sql:parcel_flags[cinquante_pas],True,False ≠ True,label,INCOHERENT
+vigilance_cinquante_pas,97413000AV1535,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97413000CD0739,fiche:surface_m2,441,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97413000CD0739,fiche:reglement_plu.zones.0.zone,UC,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97413000CD0739,sql:parcel_zone_plu.zone_fam,U,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97413000CD0739,fiche:potentiel_transformation.sdp_residuelle_m2,15.0,tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97413000CD0739,fiche:potentiel_transformation.sous_densite,False,tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97413000CD0739,fiche:score_v2.tier,a_creuser,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97413000CD0739,fiche:score_v2.rang,9273,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97413000CD0739,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97413000CD0739,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97413000CD0739,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97413000CY1004,fiche:surface_m2,15184,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97413000CY1004,fiche:reglement_plu.zones.0.zone,AUB,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97413000CY1004,sql:parcel_zone_plu.zone_fam,AU,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97413000CY1004,fiche:potentiel_transformation.sdp_residuelle_m2,15128.0,tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97413000CY1004,fiche:potentiel_transformation.sous_densite,True,tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97413000CY1004,fiche:score_v2.tier,a_creuser,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97413000CY1004,fiche:score_v2.rang,125782,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97413000CY1004,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97413000CY1004,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97413000CY1004,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97413000DI0075,fiche:surface_m2,45,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97413000DI0075,fiche:reglement_plu.zones.0.zone,UD,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97413000DI0075,sql:parcel_zone_plu.zone_fam,U,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97413000DI0075,fiche:potentiel_transformation.sdp_residuelle_m2,∅ (pas de donnée),tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97413000DI0075,fiche:potentiel_transformation.sous_densite,∅ (pas de donnée),tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97413000DI0075,fiche:score_v2.tier,declasse_bati_sature,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97413000DI0075,fiche:score_v2.rang,76164,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97413000DI0075,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97413000DI0075,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97413000DI0075,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97414000EN3358,fiche:surface_m2,454,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97414000EN3358,fiche:reglement_plu.zones.0.zone,1AUb1,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97414000EN3358,sql:parcel_zone_plu.zone_fam,AU,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97414000EN3358,fiche:potentiel_transformation.sdp_residuelle_m2,401.0,tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97414000EN3358,fiche:potentiel_transformation.sous_densite,True,tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97414000EN3358,fiche:score_v2.tier,a_creuser,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97414000EN3358,fiche:score_v2.rang,38997,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97414000EN3358,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97414000EN3358,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97414000EN3358,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97414000EN3486,fiche:surface_m2,768,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97414000EN3486,fiche:reglement_plu.zones.0.zone,UB,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97414000EN3486,sql:parcel_zone_plu.zone_fam,U,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97414000EN3486,fiche:potentiel_transformation.sdp_residuelle_m2,361.0,tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97414000EN3486,fiche:potentiel_transformation.sous_densite,False,tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97414000EN3486,fiche:score_v2.tier,a_creuser,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97414000EN3486,fiche:score_v2.rang,265798,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97414000EN3486,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97414000EN3486,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97414000EN3486,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97414000EN4035,fiche:surface_m2,469,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97414000EN4035,fiche:reglement_plu.zones.0.zone,1AUb2,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97414000EN4035,sql:parcel_zone_plu.zone_fam,AU,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97414000EN4035,fiche:potentiel_transformation.sdp_residuelle_m2,214.0,tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97414000EN4035,fiche:potentiel_transformation.sous_densite,False,tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97414000EN4035,fiche:score_v2.tier,declasse_bati_revele,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97414000EN4035,fiche:score_v2.rang,1800,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97414000EN4035,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97414000EN4035,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97414000EN4035,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97414000EY0177,fiche:surface_m2,236,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97414000EY0177,fiche:reglement_plu.zones.0.zone,UC,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97414000EY0177,sql:parcel_zone_plu.zone_fam,U,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97414000EY0177,fiche:potentiel_transformation.sdp_residuelle_m2,∅ (pas de donnée),tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97414000EY0177,fiche:potentiel_transformation.sous_densite,∅ (pas de donnée),tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97414000EY0177,fiche:score_v2.tier,ecartee,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97414000EY0177,fiche:score_v2.rang,288811,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97414000EY0177,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97414000EY0177,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97414000EY0177,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97415000AL0041,fiche:surface_m2,620898,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97415000AL0041,fiche:reglement_plu.zones.0.zone,N,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97415000AL0041,sql:parcel_zone_plu.zone_fam,N,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97415000AL0041,sql:parcel_residuel.sdp_residuelle_m2,∅ (pas de donnée),tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97415000AL0041,sql:parcel_residuel.sous_densite,∅ (pas de donnée),tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97415000AL0041,fiche:score_v2.tier,ecartee,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97415000AL0041,fiche:score_v2.rang,354856,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97415000AL0041,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97415000AL0041,fiche:flags[ravine],True,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97415000AL0041,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97415000AM0160,fiche:surface_m2,9263,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97415000AM0160,fiche:reglement_plu.zones.0.zone,N,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97415000AM0160,sql:parcel_zone_plu.zone_fam,N,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97415000AM0160,sql:parcel_residuel.sdp_residuelle_m2,∅ (pas de donnée),tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97415000AM0160,sql:parcel_residuel.sous_densite,∅ (pas de donnée),tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97415000AM0160,fiche:score_v2.tier,ecartee,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97415000AM0160,fiche:score_v2.rang,424661,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97415000AM0160,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97415000AM0160,fiche:flags[ravine],True,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97415000AM0160,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97415000AM0238,fiche:surface_m2,40312,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97415000AM0238,fiche:reglement_plu.zones.0.zone,N,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97415000AM0238,sql:parcel_zone_plu.zone_fam,N,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97415000AM0238,sql:parcel_residuel.sdp_residuelle_m2,∅ (pas de donnée),tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97415000AM0238,sql:parcel_residuel.sous_densite,∅ (pas de donnée),tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97415000AM0238,fiche:score_v2.tier,ecartee,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97415000AM0238,fiche:score_v2.rang,426358,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97415000AM0238,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97415000AM0238,fiche:flags[ravine],True,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97415000AM0238,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97415000BZ0280,fiche:surface_m2,15337,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97415000BZ0280,fiche:reglement_plu.zones.0.zone,A,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97415000BZ0280,sql:parcel_zone_plu.zone_fam,A,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97415000BZ0280,sql:parcel_residuel.sdp_residuelle_m2,∅ (pas de donnée),tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97415000BZ0280,sql:parcel_residuel.sous_densite,∅ (pas de donnée),tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97415000BZ0280,fiche:score_v2.tier,ecartee,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97415000BZ0280,fiche:score_v2.rang,390198,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97415000BZ0280,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97415000BZ0280,fiche:flags[ravine],True,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97415000BZ0280,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97415000CL0181,fiche:surface_m2,1343,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97415000CL0181,fiche:reglement_plu.zones.0.zone,A,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97415000CL0181,sql:parcel_zone_plu.zone_fam,A,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97415000CL0181,sql:parcel_residuel.sdp_residuelle_m2,∅ (pas de donnée),tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97415000CL0181,sql:parcel_residuel.sous_densite,∅ (pas de donnée),tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97415000CL0181,fiche:score_v2.tier,ecartee,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97415000CL0181,fiche:score_v2.rang,378199,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97415000CL0181,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97415000CL0181,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97415000CL0181,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97415000CT1817,fiche:surface_m2,946,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97415000CT1817,fiche:reglement_plu.zones.0.zone,U3c,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97415000CT1817,sql:parcel_zone_plu.zone_fam,U,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97415000CT1817,fiche:potentiel_transformation.sdp_residuelle_m2,336.0,tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97415000CT1817,fiche:potentiel_transformation.sous_densite,True,tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97415000CT1817,fiche:score_v2.tier,a_creuser,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97415000CT1817,fiche:score_v2.rang,∅ (pas de donnée),tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97415000CT1817,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97415000CT1817,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97415000CT1817,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97415000DI0636,fiche:surface_m2,715,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97415000DI0636,fiche:reglement_plu.zones.0.zone,U2d,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97415000DI0636,sql:parcel_zone_plu.zone_fam,U,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97415000DI0636,fiche:potentiel_transformation.sdp_residuelle_m2,0.0,tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97415000DI0636,fiche:potentiel_transformation.sous_densite,False,tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97415000DI0636,fiche:score_v2.tier,declasse_bati_sature,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97415000DI0636,fiche:score_v2.rang,∅ (pas de donnée),tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+copro_presente,97415000DI0636,fiche:coproprietes(non vide),False,sql:p_model_ext_copro,True,False ≠ True,label,INCOHERENT
+vigilance_ppr,97415000DI0636,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97415000DI0636,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97415000DI0636,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97415000EH0304,fiche:surface_m2,12610,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97415000EH0304,fiche:reglement_plu.zones.0.zone,A,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97415000EH0304,sql:parcel_zone_plu.zone_fam,A,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97415000EH0304,fiche:potentiel_transformation.sdp_residuelle_m2,40.0,tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97415000EH0304,fiche:potentiel_transformation.sous_densite,False,tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97415000EH0304,fiche:score_v2.tier,ecartee,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97415000EH0304,fiche:score_v2.rang,335857,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97415000EH0304,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97415000EH0304,fiche:flags[ravine],True,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97415000EH0304,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97415000EW1626,fiche:surface_m2,2038,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97415000EW1626,fiche:reglement_plu.zones.0.zone,U2c,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97415000EW1626,sql:parcel_zone_plu.zone_fam,U,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97415000EW1626,fiche:potentiel_transformation.sdp_residuelle_m2,0.0,tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97415000EW1626,fiche:potentiel_transformation.sous_densite,False,tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97415000EW1626,fiche:score_v2.tier,declasse_bati_sature,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97415000EW1626,fiche:score_v2.rang,∅ (pas de donnée),tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+copro_presente,97415000EW1626,fiche:coproprietes(non vide),False,sql:p_model_ext_copro,True,False ≠ True,label,INCOHERENT
+vigilance_ppr,97415000EW1626,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97415000EW1626,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97415000EW1626,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97415000HI0411,fiche:surface_m2,282,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97415000HI0411,fiche:reglement_plu.zones.0.zone,U2c,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97415000HI0411,sql:parcel_zone_plu.zone_fam,U,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97415000HI0411,fiche:potentiel_transformation.sdp_residuelle_m2,37.0,tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97415000HI0411,fiche:potentiel_transformation.sous_densite,True,tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97415000HI0411,fiche:score_v2.tier,a_creuser,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97415000HI0411,fiche:score_v2.rang,46559,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97415000HI0411,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97415000HI0411,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97415000HI0411,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97416000DL0004,fiche:surface_m2,34,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97416000DL0004,fiche:reglement_plu.zones.0.zone,Np,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97416000DL0004,sql:parcel_zone_plu.zone_fam,N,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97416000DL0004,sql:parcel_residuel.sdp_residuelle_m2,∅ (pas de donnée),tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97416000DL0004,sql:parcel_residuel.sous_densite,∅ (pas de donnée),tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97416000DL0004,fiche:score_v2.tier,ecartee,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97416000DL0004,fiche:score_v2.rang,277545,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97416000DL0004,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97416000DL0004,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97416000DL0004,fiche:flags[cinquante_pas],True,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97416000DM0398,fiche:surface_m2,8083,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97416000DM0398,fiche:reglement_plu.zones.0.zone,Np,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97416000DM0398,sql:parcel_zone_plu.zone_fam,N,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97416000DM0398,sql:parcel_residuel.sdp_residuelle_m2,∅ (pas de donnée),tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97416000DM0398,sql:parcel_residuel.sous_densite,∅ (pas de donnée),tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97416000DM0398,fiche:score_v2.tier,ecartee,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97416000DM0398,fiche:score_v2.rang,343565,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97416000DM0398,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97416000DM0398,fiche:flags[ravine],True,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97416000DM0398,fiche:flags[cinquante_pas],True,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97416000DY0117,fiche:surface_m2,3167,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97416000DY0117,fiche:reglement_plu.zones.0.zone,Ud,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97416000DY0117,sql:parcel_zone_plu.zone_fam,U,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97416000DY0117,fiche:potentiel_transformation.sdp_residuelle_m2,0.0,tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97416000DY0117,fiche:potentiel_transformation.sous_densite,False,tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97416000DY0117,fiche:score_v2.tier,declasse_bati_sature,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97416000DY0117,fiche:score_v2.rang,∅ (pas de donnée),tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97416000DY0117,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97416000DY0117,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97416000DY0117,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97416000ES1484,fiche:surface_m2,3488,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97416000ES1484,fiche:reglement_plu.zones.0.zone,N,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97416000ES1484,sql:parcel_zone_plu.zone_fam,N,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97416000ES1484,sql:parcel_residuel.sdp_residuelle_m2,∅ (pas de donnée),tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97416000ES1484,sql:parcel_residuel.sous_densite,∅ (pas de donnée),tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97416000ES1484,fiche:score_v2.tier,ecartee,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97416000ES1484,fiche:score_v2.rang,398243,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97416000ES1484,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97416000ES1484,fiche:flags[ravine],True,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97416000ES1484,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97416000ES2026,fiche:surface_m2,11,sql:parcels.surface_m2,11.306016164114688,0.306016,arrondi,TOLERABLE
+surface_parcelle_m2,97416000ES2026,fiche:surface_m2,11,sql:ST_Area(geom_2975),11.306016164114688,0.306016,arrondi,TOLERABLE
+surface_parcelle_m2,97416000ES2026,fiche:surface_m2,11,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97416000ES2026,fiche:reglement_plu.zones.0.zone,Ug,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97416000ES2026,sql:parcel_zone_plu.zone_fam,U,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97416000ES2026,sql:parcel_residuel.sdp_residuelle_m2,∅ (pas de donnée),tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97416000ES2026,sql:parcel_residuel.sous_densite,∅ (pas de donnée),tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97416000ES2026,fiche:score_v2.tier,ecartee,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97416000ES2026,fiche:score_v2.rang,94491,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97416000ES2026,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97416000ES2026,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97416000ES2026,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97416000ET2142,fiche:surface_m2,334,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97416000ET2142,fiche:reglement_plu.zones.0.zone,UfCA,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97416000ET2142,sql:parcel_zone_plu.zone_fam,U,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97416000ET2142,fiche:potentiel_transformation.sdp_residuelle_m2,125.0,tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97416000ET2142,fiche:potentiel_transformation.sous_densite,True,tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97416000ET2142,fiche:score_v2.tier,a_creuser,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97416000ET2142,fiche:score_v2.rang,23836,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97416000ET2142,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97416000ET2142,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97416000ET2142,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97416000IA0340,fiche:surface_m2,883,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97416000IA0340,fiche:reglement_plu.zones.0.zone,N,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97416000IA0340,sql:parcel_zone_plu.zone_fam,N,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97416000IA0340,fiche:potentiel_transformation.sdp_residuelle_m2,0.0,tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97416000IA0340,fiche:potentiel_transformation.sous_densite,False,tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97416000IA0340,fiche:score_v2.tier,ecartee,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97416000IA0340,fiche:score_v2.rang,357559,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97416000IA0340,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97416000IA0340,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97416000IA0340,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+surface_parcelle_m2,97416000IA0536,fiche:surface_m2,637,tuile:surface_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_lib,97416000IA0536,fiche:reglement_plu.zones.0.zone,Uf,tuile:zone_lib,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+zone_plu_famille,97416000IA0536,sql:parcel_zone_plu.zone_fam,U,tuile:zone_fam,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+sdp_residuelle_m2,97416000IA0536,fiche:potentiel_transformation.sdp_residuelle_m2,49.0,tuile:sdp_residuelle_m2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+classe_residuel(sous_densite),97416000IA0536,fiche:potentiel_transformation.sous_densite,True,tuile:sous_densite,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+tier_opportunite,97416000IA0536,fiche:score_v2.tier,chaude,tuile:tier_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+rang_score,97416000IA0536,fiche:score_v2.rang,1603,tuile:rang_v2,ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ppr,97416000IA0536,fiche:flags[ppr],False,tuile:flags[ppr],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_ravine,97416000IA0536,fiche:flags[ravine],False,tuile:flags[ravine],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97416000IA0536,fiche:flags[cinquante_pas],False,tuile:flags[cinquante_pas],ERREUR(Expecting value: line 1 column 1 (char 0)),erreur lecteur,erreur,INCOHERENT
+vigilance_cinquante_pas,97417000AY0130,fiche:flags[cinquante_pas],False,sql:parcel_flags[cinquante_pas],True,False ≠ True,label,INCOHERENT
+surface_parcelle_m2,97418000BE0449,fiche:surface_m2,13,sql:parcels.surface_m2,12.687673840289772,0.312326,arrondi,TOLERABLE
+surface_parcelle_m2,97418000BE0449,fiche:surface_m2,13,sql:ST_Area(geom_2975),12.687673840289772,0.312326,arrondi,TOLERABLE
+surface_parcelle_m2,97418000BE0449,fiche:surface_m2,13,tuile:surface_m2,12.687673840289772,0.312326,arrondi,TOLERABLE
+vigilance_cinquante_pas,97419000AL0891,fiche:flags[cinquante_pas],False,sql:parcel_flags[cinquante_pas],True,False ≠ True,label,INCOHERENT
+vigilance_cinquante_pas,97420000AI0679,fiche:flags[cinquante_pas],False,sql:parcel_flags[cinquante_pas],True,False ≠ True,label,INCOHERENT
+prix_neuf_eur_m2,Le Tampon,ctx:comparable.neuf_eur_m2,4891,ctx:prix_neuf_observe.eur_m2,4318,573,calcul_ou_source,INCOHERENT
+prix_neuf_eur_m2,Saint-Denis,ctx:comparable.neuf_eur_m2,5000,ctx:prix_neuf_observe.eur_m2,4275,725,calcul_ou_source,INCOHERENT
+prix_neuf_eur_m2,Saint-Leu,ctx:comparable.neuf_eur_m2,4794,ctx:prix_neuf_observe.eur_m2,4953,159,arrondi,TOLERABLE
+prix_neuf_eur_m2,Saint-Pierre,ctx:comparable.neuf_eur_m2,4952,ctx:prix_neuf_observe.eur_m2,4258,694,calcul_ou_source,INCOHERENT
+taxe_amenagement_taux_communal_pct,97423000AB1824↔Les Trois-Bassins,fiche:taxe_amenagement.taux_communal_pct (97423000AB1824),20.0,ctx:taxe_amenagement.part_communale_pct,3.0,17,calcul_ou_source,INCOHERENT
+taxe_amenagement_taux_communal_pct,97413000AV1535↔Saint-Leu,fiche:taxe_amenagement.taux_communal_pct (97413000AV1535),14.0,ctx:taxe_amenagement.part_communale_pct,5.0,9,calcul_ou_source,INCOHERENT

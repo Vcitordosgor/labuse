@@ -4115,6 +4115,10 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
     for _r in dvf_secteur:
         if _r.get("fenetre"):
             _r["fenetre"] = str(_r["fenetre"]).split(" (")[0]
+        # COHERENCE-FIX-2 (lot B) — le PÉRIMÈTRE voyage avec la valeur : ces médianes sont celles de
+        # la SECTION CADASTRALE (clé left(idu,10)), jamais un rayon. Le front n'affiche plus « secteur »
+        # seul — il rend ce libellé. (≠ mon-secteur par_type = rayon adaptatif, autre notion.)
+        _r["perimetre"] = "section cadastrale"
     # SOURCES-4 lot 2 (DVF+) — adresse / nombre de pièces / surfaces Carrez / nombre de lots de la
     # DERNIÈRE mutation de la parcelle, depuis la table latérale dvf_mutation_detail (ne nourrit NI le
     # scoring NI le marché). Jointe via la dernière mutation (id_mutation) de la parcelle.

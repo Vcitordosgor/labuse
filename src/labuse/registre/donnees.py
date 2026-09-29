@@ -399,11 +399,13 @@ DONNEES: dict[str, Donnee] = {
     "rang au sein du tier",
     moteur="scoring_p_v2", calcul="moteur", fonction="src/labuse/api/app.py:3283",
     reservoirs=(), portee="run"),
- "prix_terrain_secteur_eur_m2": C("Terrain nu secteur", "€/m²", "parcelle",
-    "médiane DVF rayon adaptatif 500→1500 m, trim 5 %, min 8 ventes, indice fiabilité",
-    moteur="sector_price", calcul="moteur", fonction="src/labuse/faisabilite/bilan.py (sector_price)",
+ "prix_terrain_secteur_eur_m2": C("Terrain nu · section cadastrale", "€/m²", "parcelle",
+    "COHERENCE-FIX-2 (lot B) — médiane DVF du TERRAIN nu de la SECTION CADASTRALE (clé left(idu,10), "
+    "dvf_secteur_medianes), repli commune sous le seuil ; JAMAIS un rayon (déf. corrigée : "
+    "_prix_terrain_local lit idu[:10], pas sector_price). Le libellé porte son périmètre.",
+    moteur="sector_price", calcul="moteur", fonction="src/labuse/faisabilite/bilan.py:_prix_terrain_local",
     reservoirs=("cadastre_api_carto", "dvf",), portee="live"),
- "prix_sortie_bati_eur_m2": C("Prix de sortie — bâti secteur", "€/m²", "parcelle",
+ "prix_sortie_bati_eur_m2": C("Prix de sortie — bâti · rayon adaptatif", "€/m²", "parcelle",
     "sector_price PARCELLE (n, rayon effectif, période) servi AU SERVEUR par _q_v2_fiche — "
     "même phrase écran et PDF (EXPORTS-1 1.3, plus de calcul front)",
     moteur="sector_price", calcul="moteur",
@@ -469,7 +471,7 @@ DONNEES: dict[str, Donnee] = {
     moteur="marche_service", calcul="moteur",
     fonction="src/labuse/marche_service.py:permits (profil flash_500m → nearby_permits)",
     reservoirs=("sitadel",), portee="live"),
- "depots_secteur_n": C("Déposés sur le secteur (36 mois)", "nombre", "zone",
+ "depots_secteur_n": C("Déposés · section cadastrale (36 mois)", "nombre", "zone",
     "dépôts Sitadel de la section cadastrale (préfixe IDU 10), fenêtre 36 mois "
     "(DEPOTS_FENETRE_MOIS, profil fiche_36m)",
     moteur="marche_service", calcul="moteur",
@@ -1450,10 +1452,12 @@ DONNEES: dict[str, Donnee] = {
  # FICHE-1 lot 1 — tiroir « Le bien » : le bâti EXISTANT servi à la fiche (était en_attente
  # « maquettes d'exports »). Producteur unique bati.le_bien_block (aucun calcul au front).
  "emprise_batie_m2": C("Emprise bâtie", "m²", "parcelle",
-    "emprise au sol du bâti — empreinte vecteur BD TOPO (somme des intersections), cohérente avec "
-    "le nombre de bâtiments ; CoSIA servi À PART quand il détecte du bâti hors BD TOPO",
+    "emprise au sol du bâti — empreinte vecteur BD TOPO CLIPPÉE à la parcelle (ST_Union avant "
+    "ST_Area : pas de double-compte des empreintes mitoyennes), cohérente avec le nombre de "
+    "bâtiments ; CoSIA servi À PART (« bâti révélé »), jamais fondu dans ce chiffre. "
+    "≠ emprise_bati_scoring_m2 (= MAX(BD TOPO, CoSIA), entrée scoring, jamais servie au client)",
     moteur="bati_revele", calcul="moteur",
-    fonction="src/labuse/bati.py:le_bien_block (BD TOPO au sol ; CoSIA parcel_bati_revele en note)",
+    fonction="src/labuse/bati.py:emprise_bati_bdtopo_m2 (producteur unique ; le_bien_block le lit)",
     reservoirs=("bd_topo", "cosia",), portee="live"),
  "hauteur_bati_m": C("Hauteur du bâti", "m", "parcelle",
     "hauteur du bâti principal — max des bâtiments intersectants (BD TOPO) en fiche/potentiel ; "
