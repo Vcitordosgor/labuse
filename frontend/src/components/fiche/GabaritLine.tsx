@@ -72,7 +72,9 @@ export function GabaritLine({ idu }: { idu: string }) {
   const rc = (r?.raccordement ?? null) as { parcelle?: { surface_m2?: number | null }; zone?: { code?: string; a_cheval?: boolean } } | null
   const cadM2 = rc?.parcelle?.surface_m2 ?? null
   const chev = !!rc?.zone?.a_cheval && cadM2 != null && r?.surfaceParcelleM2 != null
-  const pctChev = chev ? Math.round((r!.surfaceParcelleM2! / cadM2!) * 100) : null
+  // FRONT-CHIFFRES-2 (F57) — % « à cheval » SERVI (pctPortionZone) : le front ne recompute plus le
+  // ratio portion/cadastre (le panneau Gabarit le faisait aussi → source unique, plus de divergence).
+  const pctChev = r?.pctPortionZone ?? null
 
   return (
     <div data-gabarit-fiche className="flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2/60 p-2.5">

@@ -10,7 +10,7 @@
  * Auto-suffisante : re-dérive dvfSecteur + marcheLines depuis `f` ; bilan via queryKey ['bilan',idu].
  */
 import { useQuery } from '@tanstack/react-query'
-import { getFaisabilite, getMonSecteur, radarClic, type LocalMed } from '../../lib/api'
+import { getFaisabilite, getMonSecteur, radarClic } from '../../lib/api'
 import { fmtInt, fmtDateNum } from '../../lib/format'
 import type { Fiche } from '../../lib/types'
 import { useApp } from '../../store/useApp'
@@ -66,11 +66,13 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
   const secteurQ = useQuery({ queryKey: ['mon-secteur', idu], queryFn: () => getMonSecteur(idu), enabled: !!idu })
   const ms = secteurQ.data
   const ec = ms?.secteur_bati?.ecart_commune
-  // médiane locale par type : sous le seuil (n < 5) → « — », jamais un chiffre inventé.
-  const lm = (m: LocalMed | null): LocalMed | null => (m && m.n != null && m.n >= 5) ? m : null
-  const parTypeMaison = lm(ms?.par_type?.maison ?? null)
-  const parTypeAppart = lm(ms?.par_type?.appartement ?? null)
-  const parTypeTerrain = (dvfSecteur && dvfSecteur.n_ventes != null && dvfSecteur.n_ventes >= 5 && dvfSecteur.mediane_prix_m2 != null) ? dvfSecteur : null
+  // FRONT-CHIFFRES-2 (F10) — le seuil de suffisance (n < 5 → « — ») est appliqué au BACK (mon_secteur
+  // SEUIL_N : `medianes_par_type` renvoie None sous le seuil) ; le front ne le recalcule plus, il lit
+  // les médianes déjà filtrées. Le terrain nu utilise la MÉTHODE CANONIQUE `_terrain_section`
+  // (ms.par_type.terrain_nu, « une seule méthode partout ») au lieu de refiltrer dvf_parcelle.secteur.
+  const parTypeMaison = ms?.par_type?.maison ?? null
+  const parTypeAppart = ms?.par_type?.appartement ?? null
+  const parTypeTerrain = ms?.par_type?.terrain_nu ?? null
   const annoncesRayon = ms?.annonces_radar ?? []
   // COHERENCE-FIX-2 (lot B) — « secteur » ne paraît jamais seul : le périmètre (servi par le back,
   // `dvfSecteur.perimetre` = « section cadastrale ») accompagne le chiffre. Aucun libellé en dur ici.
@@ -87,7 +89,9 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
         // le Verdict ne cite QUE des valeurs présentes dans les tuiles (plus de « terrain nu X » sans tuile).
         const typeTuiles: Tuile[] = []
         const cite: string[] = []
-        if (parTypeTerrain) { typeTuiles.push({ label: 'Terrain nu', valeur: fmtInt(parTypeTerrain.mediane_prix_m2!), sous: `€/m² · ${parTypeTerrain.n_ventes} ventes${parTypeTerrain.perimetre ? ` · ${parTypeTerrain.perimetre}` : ''}` }); cite.push(`terrain nu ${fmtInt(parTypeTerrain.mediane_prix_m2!)} €/m²`) }
+        // Valeur servie (FC-2 : `ms.par_type.terrain_nu`, méthode canonique `_terrain_section`) + périmètre
+        // servi (COHERENCE-FIX-2 lot B : `dvfSecteur.perimetre` = « section cadastrale », même donnée de section).
+        if (parTypeTerrain) { typeTuiles.push({ label: 'Terrain nu', valeur: fmtInt(parTypeTerrain.eur_m2), sous: `€/m² · ${parTypeTerrain.n} ventes${dvfSecteur?.perimetre ? ` · ${dvfSecteur.perimetre}` : ''}` }); cite.push(`terrain nu ${fmtInt(parTypeTerrain.eur_m2)} €/m²`) }
         if (parTypeMaison) { typeTuiles.push({ label: 'Maison', valeur: fmtInt(parTypeMaison.eur_m2), sous: `€/m² · ${parTypeMaison.n} ventes${parTypeMaison.rayon_m != null ? ` · ${fmtInt(parTypeMaison.rayon_m)} m` : ''}` }); cite.push(`maison ${fmtInt(parTypeMaison.eur_m2)} €/m²`) }
         if (parTypeAppart) { typeTuiles.push({ label: 'Appartement', valeur: fmtInt(parTypeAppart.eur_m2), sous: `€/m² · ${parTypeAppart.n} ventes${parTypeAppart.rayon_m != null ? ` · ${fmtInt(parTypeAppart.rayon_m)} m` : ''}` }); cite.push(`appartement ${fmtInt(parTypeAppart.eur_m2)} €/m²`) }
         const rep = cite.length ? cite.slice(0, 2).join(', ') : 'Marché de secteur'
@@ -120,15 +124,15 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
           Même moteur que le bilan (`marche.median`). Sous le seuil : dit tel quel, jamais un chiffre inventé.
           RETOURS-20 Z1·03 — plus de boîte : FactRow (valeur mono à droite), méthode en FactNote. */}
       {/* FICHE-FIX-4 (Lot J) — prix de sortie + valeur au prix du secteur en Lignes, méthode en « i ». */}
-      {(mb?.median != null || (f.surface_m2 != null && dvfSecteur?.mediane_prix_m2 != null && dvfSecteur.mediane_prix_m2 > 0)) && (
+      {(mb?.median != null || f.dvf_parcelle?.valeur_terrain_secteur_eur != null) && (
         <Lignes>
           {mb?.median != null && (
             <Ligne label={<>Prix de sortie — bâti secteur<InfoI aria="Méthode du prix de sortie" tip={`${mb.type_prix}, ${mb.n} ventes ≤ ${Math.round(mb.radius_m)} m (rayon adaptatif) · fiabilité ${mb.fiabilite}${mb.tendance ? ` · tendance ${mb.tendance}` : ''}${horizon ? ` · DVF — ${horizon}` : ''}`} /></>}
               valeur={<>{fmtInt(Number(mb.median))} <small>€/m²</small></>} />
           )}
-          {f.surface_m2 != null && dvfSecteur?.mediane_prix_m2 != null && dvfSecteur.mediane_prix_m2 > 0 && (
+          {f.dvf_parcelle?.valeur_terrain_secteur_eur != null && (
             <Ligne label={<>Valeur au prix du secteur<InfoI aria="Méthode de la valeur" tip="Contenance × prix médian du terrain nu au m² du secteur — estimé, pas une valeur vénale." /></>}
-              valeur={<>≈ {fmtInt(Math.round(f.surface_m2 * dvfSecteur.mediane_prix_m2))} <small>€</small></>} />
+              valeur={<>≈ {fmtInt(f.dvf_parcelle.valeur_terrain_secteur_eur)} <small>€</small></>} />
           )}
         </Lignes>
       )}

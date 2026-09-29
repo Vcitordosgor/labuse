@@ -131,6 +131,8 @@ export interface PipelineEntry {
   priority: string
   notes: string
   reminder_date?: string | null   // M137 — date de relance (éditable via l'écran de carte)
+  // FRONT-CHIFFRES-2 (F18) — échéance de relance décidée au back sur le jour Réunion (plus au fuseau navigateur).
+  relance_echeance?: 'due_aujourdhui' | 'echue' | null
   prospection?: Record<string, string>   // M137 — statut proprio + contact manuel (édité via PATCH)
   proprietaire_label?: string
   has_manual_contact?: boolean
@@ -372,7 +374,7 @@ export interface Fiche {
     indisponible?: boolean; raison?: string   // M125 — état PANNE (≠ absence)
     titre: string; n_permis: number; source: string; honnetete: string
     // KELFONCIER-FIX-1 (Lot C) — type libellé (PA/DP/PC/PD) + état (annulé compris), source unique.
-    permis: { permit_id: string; type: string | null; type_label?: string | null; date_autorisation: string | null; date_depot: string | null; etat_libelle?: string | null; annule?: boolean }[]
+    permis: { permit_id: string; type: string | null; type_label?: string | null; date_autorisation: string | null; date_depot: string | null; etat_libelle?: string | null; annule?: boolean; note_incoherence?: string | null }[]
     caducite?: { pc_annee?: number; caduc_depuis?: string | null; libelle_court?: string | null; detail?: string | null } | null
   } | null
   // M42 : « Autour, à moins de 100 m » (ventes DVF + permis, 36 mois) — contexte, 0 tier.
@@ -493,6 +495,8 @@ export interface Fiche {
       source: string | null; millesime: string | null
       ppr: { document: string; approbation: string | null }[] | null
     }[]
+    // FRONT-CHIFFRES-2 (F01e) — synthèse du niveau de risque décidée au back (jamais au front).
+    synthese?: 'redhibitoire' | 'fort' | null
   } | null
   // SOURCES-1 lot 1 — « Dispositifs et périmètres » du droit des sols (ER, EBC, DPU, PEB, SUP).
   // null → aucune couche ingérée (le front omet le bloc). Chaque absence est TYPÉE (jamais un zéro).
@@ -551,7 +555,7 @@ export interface Fiche {
   // RECETTE-5 (V4) — les champs déjà SERVIS par le payload parcelle, typés pour l'en-tête à 8 tuiles.
   // `terrain` : pente du terrain (RGE ALTI) — tuile Pente. `prix_ancien` : prix du bâti ancien au m²
   // (marche_service, même chiffre que la synthèse et les documents) — tuile Bâti ancien.
-  terrain?: { pente_moy_deg: number | null; pente_max_deg: number | null; flag_terrassement_lourd: boolean } | null
+  terrain?: { pente_moy_deg: number | null; pente_max_deg: number | null; flag_terrassement_lourd: boolean; pente_bande?: string | null } | null
   prix_ancien?: {
     type_prix: string | null; n: number | null; fiabilite?: string | null; commune_fallback?: boolean
     distribution?: { apres?: { median: number | null; n: number | null } | null } | null
@@ -647,7 +651,9 @@ export interface Copropriete {
 export interface MarcheSecteur {
   filosofi_200m: {
     ind: number; men: number; men_pauv: number; men_prop: number
-    nivvie_moyen_eur: number | null; taux_pauvrete_pct: number | null; millesime: string
+    nivvie_moyen_eur: number | null; taux_pauvrete_pct: number | null
+    // FRONT-CHIFFRES-2 (F58) — part de propriétaires servie (100 × men_prop / men), plus recalculée au front.
+    part_proprietaires_pct: number | null; millesime: string
   } | null
   rpls_commune: {
     nb_logements: number; construct_median: number | null; pct_qpv: number | null; millesime: string
@@ -814,6 +820,9 @@ export interface DvfSecteur {
 export interface DvfParcelle {
   derniere_mutation?: unknown
   secteur?: DvfSecteur[] | null
+  // FRONT-CHIFFRES-2 (F46) — valeur estimée au prix du secteur (contenance × médiane terrain), servie
+  // par le back (le front ne multiplie plus). null si pas de médiane terrain ou pas de surface.
+  valeur_terrain_secteur_eur?: number | null
   // M101 B2 : le NEUF que l'acte déclare (VEFA), grain commune, profil dvf_profils.yaml —
   // sous le seuil, insuffisant_libelle est servi À LA PLACE de la médiane (état normal, dit).
   neuf_vefa?: { grandeur: string; grain: string; fenetre_ans: number; n: number
@@ -894,7 +903,10 @@ export interface MixiteRegle {
   citation?: string | null
   statut?: string | null   // 'valide' → branchée ; 'propose'/absente → non modélisée
 }
-export interface ReglementPlu extends Indisponible { zones: ReglementZone[]; disclaimer: string; mixite?: MixiteRegle | null }
+// FRONT-CHIFFRES-2 (F01a) — `zone_famille` (U/AU/A/N) et `constructible_neuf` viennent de la CASCADE
+// (moteur zone_servie, même valeur que le Pré-dossier et la garde SDP résiduelle) : le front lit le
+// verdict de constructibilité au lieu de le dériver par regex sur le libellé de zone.
+export interface ReglementPlu extends Indisponible { zones: ReglementZone[]; disclaimer: string; mixite?: MixiteRegle | null; zone_famille?: string | null; constructible_neuf?: boolean | null; a_cheval?: boolean | null }
 
 export interface PotentielTransformation extends Indisponible {
   niveau: 'fort' | 'modere' | 'faible' | 'nul' | 'indetermine'
@@ -955,6 +967,8 @@ export interface Viabilisation {
   score: number
   band: 'confirmee' | 'probable' | 'incertaine' | 'lourde'
   libelle: string
+  // FRONT-CHIFFRES-2 (F23) — mot court + ton du badge servis (le front ne mappe plus band→DA).
+  mot?: string; ton?: 'vert' | 'ambre' | 'neutre'
   contributions: ViaContribution[]
   cout_raccordement: { niveau: string; assainissement: string; disclaimer: string }
   disclaimer: string

@@ -105,7 +105,9 @@ export function ReglementPluBlock({ rp }: { rp: ReglementPlu }) {
   // vérité (toutes les zones et leur SURFACE respective), là où la couche « par parcelle » ne montre
   // que la zone dominante.
   const partsConnues = rp.zones.filter((z) => typeof z.part === 'number')
-  const aCheval = partsConnues.length >= 2 && (partsConnues[0].part ?? 1) < 0.9
+  // FRONT-CHIFFRES-2 (F21) — « à cheval » servi par la cascade (seuil SEUIL_A_CHEVAL_PCT au back) ;
+  // le front ne recalcule plus `part[0] < 0,9`. Repli sur l'ancien calcul si le drapeau n'est pas servi.
+  const aCheval = rp.a_cheval ?? (partsConnues.length >= 2 && (partsConnues[0].part ?? 1) < 0.9)
   const pct = (p?: number | null) => (typeof p === 'number' ? `${Math.round(p * 100)} %` : null)
   return (
     <div data-reglement-plu>

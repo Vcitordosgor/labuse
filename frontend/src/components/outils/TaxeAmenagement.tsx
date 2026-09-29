@@ -114,7 +114,8 @@ export function TaxeAmenagement() {
     ? (prefill.data.taux_communal_pct ?? null) : null
   // TAXE-FIX-1 point 1 — zone A (agricole) mais PAS AU (à urbaniser) : on propose la case
   // « Locaux agricoles » (sans la cocher), car ces locaux y sont exonérés de plein droit.
-  const zoneA = /^A(?!U)/i.test(prefill.data?.zone_plu ?? '')
+  // FRONT-CHIFFRES-2 (F28) — la FAMILLE de zone est servie (cascade) ; plus de regex `/^A(?!U)/`.
+  const zoneA = prefill.data?.zone_famille === 'A'
 
   // Paramètres du calcul — envoyés seulement quand une surface taxable est saisie.
   const params: TaxeParams | null = useMemo(() => {

@@ -45,18 +45,16 @@ export function EquipementsBadges({ idu }: { idu: string }) {
 // FICHE-FIX-2 P1 — le badge d'en-tête ne couvre QUE ce que le score de viabilisation teste :
 // eau/élec (permis proches + voie + bâti + zone PLU). L'assainissement N'ENTRE PAS dans le score
 // (viabilisation.py compute_score) ; il vit à part, sourcé du zonage SIG (anc). Deux faits distincts.
-const VIAB_MOT: Record<string, { mot: string; ton: 'vert' | 'ambre' | 'neutre' }> = {
-  confirmee:  { mot: 'confirmée',    ton: 'vert' },
-  probable:   { mot: 'probable',     ton: 'ambre' },
-  incertaine: { mot: 'à confirmer',  ton: 'neutre' },
-  lourde:     { mot: 'à confirmer',  ton: 'ambre' },
-}
+// FRONT-CHIFFRES-2 (F23) — le mot + ton du badge de viabilisation sont SERVIS (viabilisation.py
+// BANDE_DA) ; l'ancienne table VIAB_MOT (band→mot/ton) est retirée.
 
 export function ReseauxSection({ f }: { f: Fiche; idu: string }) {
   // FICHE-FIX-2 P1 — deux faits distincts dans l'en-tête :
   //   ① le badge = viabilisation EAU/ÉLEC (le score, rattaché à ce qu'il teste) ;
   //   ② le sous-titre = ASSAINISSEMENT (zonage SIG sourcé, hors score).
-  const viabMot = f.viabilisation ? (VIAB_MOT[f.viabilisation.band] ?? VIAB_MOT.incertaine) : null
+  // FRONT-CHIFFRES-2 (F23) — mot + ton du badge SERVIS (viabilisation.py BANDE_DA) ; le front ne
+  // mappe plus band→libellé/ton en dur. Repli neutre « à confirmer » si non servi.
+  const viabMot = f.viabilisation ? { mot: f.viabilisation.mot ?? 'à confirmer', ton: f.viabilisation.ton ?? 'neutre' } : null
   const assain = assainissementResume(f.anc)
   const viabBadge = viabMot ? <Badge ton={viabMot.ton}>eau/élec {viabMot.mot}</Badge>
     : (f.gestionnaires ? <Badge ton="neutre">réseaux renseignés</Badge> : undefined)

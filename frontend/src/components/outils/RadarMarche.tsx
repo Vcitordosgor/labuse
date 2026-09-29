@@ -43,7 +43,8 @@ export function RadarMarche() {
   if (isError || !data) return (
     <ErrorState message="Le marché du Radar n’a pas pu être chargé — le serveur n’a pas répondu." retry={() => refetch()} />
   )
-  const jeune = data.corpus_total < 40
+  // FRONT-CHIFFRES-2 (F25) — le front ne décide plus le seuil « corpus jeune » : il lit le flag servi.
+  const jeune = data.corpus_jeune
 
   return (
     <div className="flex flex-col gap-3 p-3">

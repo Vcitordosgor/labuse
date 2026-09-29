@@ -135,6 +135,12 @@ class Settings(BaseSettings):
     # telle exemption tuerait la protection en prod. En prod derrière proxy de confiance,
     # l'IP réelle vient de X-Forwarded-For (voir trusted_proxies).
     dev_mode: bool = False                # LABUSE_DEV_MODE=1 → quotas/rate-limit désactivés
+    # FRONT-CHIFFRES-2 — COURT-CIRCUITE LA PROTECTION ANTI-SCRAPING (compteur 60/min + gel de
+    # récidive + quotas de consultation fiches/carto/tuiles), comme dev_mode MAIS sans ses autres
+    # effets. Flag LOCAL de dev/ops (ex. rejouer le banc de cohérence pendant des redémarrages
+    # d'API) : le banc ne doit JAMAIS dépendre de LABUSE_DEV_MODE (note PRE-DEPLOY-1). Prod ne le
+    # pose pas ; explicite, jamais une détection localhost. Off par défaut.
+    rate_limit_off: bool = False          # LABUSE_RATE_LIMIT_OFF=1 → protection anti-scraping désactivée
     # IPs des proxys de confiance (séparées par des virgules, ex. "127.0.0.1"). Quand le
     # pair TCP est l'un d'eux, le sujet anti-scraping = 1er hop non-proxy de X-Forwarded-For
     # (en partant de la droite : la partie gauche de l'en-tête est forgeable par le client).

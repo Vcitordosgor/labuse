@@ -14,7 +14,9 @@ export function MarcheSecteurBlock({ ms }: { ms: MarcheSecteur }) {
   const f = ms.filosofi_200m
   const r = ms.rpls_commune
   if (!f && !r) return null
-  const partProp = f && f.men > 0 ? Math.round((100 * f.men_prop) / f.men) : null
+  // FRONT-CHIFFRES-2 (F58) — part de propriétaires SERVIE ; le front ne recalcule plus
+  // 100 × men_prop / men (même formule vit au back pour le scoring → source unique, pas de divergence).
+  const partProp = f?.part_proprietaires_pct ?? null
   // RETOURS-20 Z1·02/Z3 — plus de card-elev : le titre devient un KICKER, chaque chiffre une
   // FactRow (valeur mono à droite, source datée dessous). Données/libellés/millésimes inchangés.
   return (

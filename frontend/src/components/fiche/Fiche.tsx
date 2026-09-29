@@ -607,6 +607,10 @@ export function Fiche({ idu }: { idu: string }) {
   // Règles : zone PLU + SDP résiduelle (données déjà chargées).
   const reglesLines = ongletLines('regles')
   const reglesZone = f?.reglement_plu?.zones?.[0]?.zone
+  // FRONT-CHIFFRES-2 (F01a) — famille de zone + verdict de constructibilité NEUVE SERVIS par la
+  // cascade (moteur zone_servie, famille via labuse_zone_famille sur le subtype GPU) : même valeur
+  // que le Pré-dossier et la garde SDP résiduelle. Le front ne dérive plus par regex sur le libellé.
+  const zoneFamille = f?.reglement_plu?.zone_famille ?? null
   const reglesSdp = f?.potentiel_transformation?.sdp_residuelle_m2
   // M19 réf. · faisabilité au niveau fiche pour la MICRO-PREUVE fermée (gabarit / logements /
   // charge). MÊME queryKey ['bilan', idu] que Faisabilité/Bilan → cache partagé, zéro requête en +.
@@ -618,10 +622,11 @@ export function Fiche({ idu }: { idu: string }) {
   // partagé, zéro requête en plus). Corrige GABARIT-AUDIT-1 : l'en-tête servait niveaux × 3 m (une
   // estimation d'étages présentée comme un « max »), qui contredisait le règlement cité et le tiroir §10.
   const gab = useQuery({ queryKey: ['gabarit', idu], queryFn: () => getGabarit(idu), retry: false, enabled: !!f })
-  // M56-B3/B4 : zone A (agricole) et N (naturelle) = inconstructibles par principe. ATTENTION :
-  // « AU » (à urbaniser) EST constructible → on exclut AU (« A » non suivi de « U »). Les zones
-  // numérotées (1AU/2AU) commencent par un chiffre → non captées. U reste constructible.
-  const nonConstructible = !!(reglesZone && /^(A(?!U)|N)/i.test(reglesZone))
+  // FRONT-CHIFFRES-2 (F01a) — verdict de constructibilité NEUVE servi par la cascade (famille ∉
+  // A/N). Remplace la regex front `/^(A(?!U)|N)/` : la famille GPU (subtype) prime sur le libellé,
+  // ce qui corrige les libellés-collision (cf. CHANGEMENTS.csv). `null` (famille inconnue) ≠ non
+  // constructible : on ne barre pas une parcelle dont la zone n'est pas publiée.
+  const nonConstructible = f?.reglement_plu?.constructible_neuf === false
   // RETOURS-11F4 (F5) : logMax/capaciteNulle/logementsTxt (valeur d'en-tête Constructibilité) vivent
   // désormais dans `ConstructibiliteSection` (constructibilite.tsx). Fiche ne les calcule plus.
   // micro-preuve Règles : jauge = part de SDP DÉJÀ consommée (le reste = potentiel).
@@ -850,18 +855,21 @@ export function Fiche({ idu }: { idu: string }) {
             une duplication. NE PAS les retirer lors d'un audit « une notion, un endroit ». */}
         {f && (() => {
           const nf = (n: number) => n.toLocaleString('fr-FR')
-          const z = (reglesZone ?? '').toUpperCase()
-          const zoneSous = !z ? undefined
-            : z.startsWith('AU') ? 'à urbaniser' : z.startsWith('U') ? 'constructible'
-            : z.startsWith('A') ? 'agricole' : z.startsWith('N') ? 'naturelle' : undefined
+          // FRONT-CHIFFRES-2 (F01a) — sous-titre lu de la famille de zone SERVIE (cascade), plus du
+          // préfixe du libellé.
+          const zoneSous = !zoneFamille ? undefined
+            : zoneFamille === 'AU' ? 'à urbaniser' : zoneFamille === 'U' ? 'constructible'
+            : zoneFamille === 'A' ? 'agricole' : zoneFamille === 'N' ? 'naturelle' : undefined
           const pente = f.terrain?.pente_moy_deg
-          const penteSous = pente == null ? undefined
-            : pente < 5 ? 'plat' : pente < 15 ? 'modérée' : pente < 30 ? 'forte' : 'très forte'
+          // FRONT-CHIFFRES-2 (F01b) — bande de pente SERVIE (terrain.pente_bande) ; le front ne
+          // classe plus par seuils 5/15/30° codés en dur.
+          const penteSous = f.terrain?.pente_bande ?? undefined
           // Risques — compteur (vigilances de l'onglet risques) + niveau, comme le badge de §5.
           const vigils = f.lines.filter((l) => l.onglet === 'risques' && (l.result === 'SOFT_FLAG' || l.result === 'HARD_EXCLUDE'))
-          const aleas = f.aleas?.liste ?? []
-          const risqueNiveau = aleas.some((a) => a.redhibitoire) ? 'aléa rédhibitoire'
-            : aleas.some((a) => /fort|élev/i.test(a.niveau ?? '')) ? 'aléa fort'
+          // FRONT-CHIFFRES-2 (F01e) — la synthèse aléa (« rédhibitoire »/« fort ») est DÉCIDÉE au back
+          // (aleas.synthese, moteur qui ordonne la sévérité) ; le front n'inspecte plus les niveaux.
+          const risqueNiveau = f.aleas?.synthese === 'redhibitoire' ? 'aléa rédhibitoire'
+            : f.aleas?.synthese === 'fort' ? 'aléa fort'
             : vigils.length > 0 ? `vigilance${vigils.length > 1 ? 's' : ''}` : 'rien à signaler'
           type Tuile = { l: string; v: string; s?: string; i?: string; vide?: boolean }
           const tuiles: Tuile[] = [
@@ -888,7 +896,7 @@ export function Fiche({ idu }: { idu: string }) {
             { l: 'Risques', v: vigils.length > 0 ? `${vigils.length}` : '—', s: risqueNiveau, vide: vigils.length === 0,
               i: 'Vigilances évaluées sur la parcelle (aléas, servitudes, sols…) — compteur et niveau, comme le badge de §5. Le détail est dans « Risques et environnement ».' },
             { l: 'SDP restante', v: reglesSdp != null && reglesSdp > 0 ? `${fmtInt(reglesSdp)} m²` : '—',
-              s: reglesSdp != null && reglesSdp > 0 ? undefined : (reglesZone && /^(A|N)/i.test(reglesZone) ? 'zone non constructible' : 'pas de potentiel résiduel'),
+              s: reglesSdp != null && reglesSdp > 0 ? undefined : (nonConstructible ? 'zone non constructible' : 'pas de potentiel résiduel'),
               vide: !(reglesSdp != null && reglesSdp > 0),
               i: 'Surface de plancher que le PLU autorise ENCORE sur la parcelle (potentiel résiduel). « — » : zone non constructible ou plus de potentiel.' },
           ]
@@ -1214,16 +1222,16 @@ export function Fiche({ idu }: { idu: string }) {
           // Surface → bandeau de tête (le bloc `data-fiche-tuiles`) UNIQUEMENT ; retirée d'Identité
           // (KELFONCIER-FIX-2 Lot G, maquette v3 : la contenance ne se répète pas dans la section).
           // Zone → §4 Urbanisme (zone PLU au point de la parcelle) + son sous-titre lisible.
-          const zUp = (reglesZone ?? '').toUpperCase()
-          const zoneSous = !zUp ? undefined
-            : zUp.startsWith('AU') ? 'à urbaniser' : zUp.startsWith('U') ? 'constructible'
-            : zUp.startsWith('A') ? 'agricole' : zUp.startsWith('N') ? 'naturelle' : undefined
+          // FRONT-CHIFFRES-2 (F01a) — sous-titre lu de la famille de zone SERVIE (cascade).
+          const zoneSous = !zoneFamille ? undefined
+            : zoneFamille === 'AU' ? 'à urbaniser' : zoneFamille === 'U' ? 'constructible'
+            : zoneFamille === 'A' ? 'agricole' : zoneFamille === 'N' ? 'naturelle' : undefined
           const tuileZone = { v: reglesZone ?? 'Non publié au GPU', s: zoneSous, vide: reglesZone == null,
             i: 'Zone du PLU au point de la parcelle (règlement communal, archive GPU). « Non publié au GPU » : la commune n’a pas déposé de document opposable.' }
-          // Pente → §2 Terrain (RGE ALTI) + sous-titre par degrés (plat → très forte).
+          // Pente → §2 Terrain (RGE ALTI). FRONT-CHIFFRES-2 (F01b) — bande SERVIE (terrain.pente_bande),
+          // plus de seuils 5/15/30° au front.
           const penteDeg = f.terrain?.pente_moy_deg
-          const penteSous = penteDeg == null ? undefined
-            : penteDeg < 5 ? 'plat' : penteDeg < 15 ? 'modérée' : penteDeg < 30 ? 'forte' : 'très forte'
+          const penteSous = f.terrain?.pente_bande ?? undefined
           const tuilePente = { v: penteDeg != null ? `${nf(penteDeg)} °` : '—', s: penteSous, vide: penteDeg == null,
             i: 'Pente moyenne du terrain, calculée sur le modèle de relief RGE ALTI (IGN). À La Réunion elle commande le coût de terrassement autant que la constructibilité. « — » : relief non disponible sur la parcelle.' }
           // Exposition → §2 Terrain (orientation du versant + pente, MNT RGE ALTI, sans ligne de vue).
@@ -1243,7 +1251,7 @@ export function Fiche({ idu }: { idu: string }) {
           const tfpb = f.fiscalite?.tfpb_commune_pct
           // SDP restante → §10 Potentiel (potentiel résiduel autorisé par le PLU).
           const tuileSdp = { v: reglesSdp != null && reglesSdp > 0 ? `${fmtInt(reglesSdp)} m²` : '—',
-            s: reglesSdp != null && reglesSdp > 0 ? undefined : (reglesZone && /^(A|N)/i.test(reglesZone) ? 'zone non constructible' : 'pas de potentiel résiduel'),
+            s: reglesSdp != null && reglesSdp > 0 ? undefined : (nonConstructible ? 'zone non constructible' : 'pas de potentiel résiduel'),
             vide: !(reglesSdp != null && reglesSdp > 0),
             i: 'Surface de plancher que le PLU autorise ENCORE sur la parcelle (potentiel résiduel). « — » : zone non constructible ou plus de potentiel.' }
           // ChiffreDissous — présente une ex-tuile d'en-tête comme un fait de section (label · valeur ·
@@ -1820,13 +1828,13 @@ export function Fiche({ idu }: { idu: string }) {
                     (Terrain libéré, Tester un projet, hypothèses, gabarit) est REPLIÉ sous « Étudier
                     quand même ». Sinon : panneau ouvert. On ne modifie PAS FaisabiliteTab/GabaritLine. */}
                 {(() => {
-                  const inconstructible = !!f.au_ouverture?.bloquant || (!!reglesZone && /^(A|N)/i.test(reglesZone))
+                  const inconstructible = !!f.au_ouverture?.bloquant || nonConstructible
                   // FICHE-FIX-5 (Lot J) — le panneau se replie dès que la SDP résiduelle est 0, QUELLE
                   // QUE SOIT la cause (destination interdite, terrain exigu, densité atteinte…).
                   const sdpNulle = !(reglesSdp != null && reglesSdp > 0)
                   const pourquoi = f.au_ouverture?.motif
-                    || (reglesZone && /^A/i.test(reglesZone) ? 'Zone agricole — construction de logements non autorisée.'
-                      : reglesZone && /^N/i.test(reglesZone) ? 'Zone naturelle — construction non autorisée.'
+                    || (zoneFamille === 'A' ? 'Zone agricole — construction de logements non autorisée.'
+                      : zoneFamille === 'N' ? 'Zone naturelle — construction non autorisée.'
                       : sdpNulle ? 'Aucune SDP résiduelle exploitable sur cette parcelle — le détail du calcul (terrain libéré, hypothèses, gabarit) est dans « Étudier quand même ».' : null)
                   const outils: OutilSection[] = []
                   if (f.commune) outils.push({ label: "Densifier l'existant", data: 'densifier-filtre',

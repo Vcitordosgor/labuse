@@ -57,6 +57,37 @@ DOMAINE_PALIERS = ("priorite", "a_suivre", "sans_signal", "ecartee")
 #: le ×N (rapport à la moyenne de la commune) ne s'affiche QU'À côté de ces deux paliers.
 PALIERS_AVEC_MULTIPLE = ("priorite", "a_suivre")
 
+#: FRONT-CHIFFRES-2 (F13/F29) — LA DA DU PALIER, ICI, une fois. Le front (pastille Projets,
+#: badge Outils) ne code plus la correspondance palier→couleur : il lit `jeton` (jeton DA = variable
+#: CSS de la charte) et `ton` (les 3 tons du composant Badge : vert/ambre/neutre). À la bascule
+#: q_v15, quand les paliers deviennent les bandes A/B/C/D, SEUL cet endroit change — la pastille ET
+#: le badge suivent. Aligné sur PALIER_META de la charte (menthe/ambre/gris-vert).
+#: `jeton` = clé du registre de jetons DA du front (frontend/src/lib/tokens.ts, le point de
+#: définition unique d'une couleur de marque). Le back nomme le jeton par palier ; le front le
+#: résout en couleur — il ne code plus la correspondance palier→couleur.
+PALIER_DA: dict[str, dict[str, str]] = {
+    "priorite":    {"jeton": "stEcartee", "ton": "ambre"},   # corail — non servi tant que PRIORITE_SERVIE False
+    "a_suivre":    {"jeton": "stCreuser", "ton": "ambre"},   # ambre
+    "sans_signal": {"jeton": "stExclue",  "ton": "neutre"},  # gris neutre DA (sans signal)
+    "ecartee":     {"jeton": "stExclue",  "ton": "neutre"},  # gris neutre DA (écartée)
+}
+
+
+def palier_da(tier: str | None) -> dict[str, str] | None:
+    """La DA (jeton + ton + libellés) du palier canonique d'un tier — le point unique lu par la
+    pastille et le badge. None si tier inconnu/nul (le front rend alors un ton neutre)."""
+    code = code_palier(tier)
+    if not code:
+        return None
+    chip, lng = PALIERS_CLIENT[code]
+    return {"code": code, "chip": chip, "long": lng, **PALIER_DA[code]}
+
+
+def paliers_da() -> dict[str, dict[str, str]]:
+    """La carte SERVIE au front : chaque palier du domaine → chip, libellé long, jeton DA, ton."""
+    return {code: {"chip": PALIERS_CLIENT[code][0], "long": PALIERS_CLIENT[code][1], **PALIER_DA[code]}
+            for code in DOMAINE_PALIERS}
+
 
 def code_palier(tier: str | None) -> str | None:
     """Le CODE canonique d'un tier (nouveau ou ancien) — la correspondance en lecture.

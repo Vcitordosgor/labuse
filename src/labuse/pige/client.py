@@ -10,6 +10,7 @@ from __future__ import annotations
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from .cycle import SEUIL_NOUVEAU_J   # FRONT-CHIFFRES-2 (F14) — seuil « nouveau » servi à plat
 from .rattachement_html import niveau_preuve as _niveau_preuve
 from .tables import EV_SIGNALEMENT, journaliser
 
@@ -93,7 +94,7 @@ def _where(filtres: dict) -> tuple[str, dict]:
     return " AND ".join(conds), p
 
 
-_SELECT = """
+_SELECT = f"""
 SELECT b.bien_id, b.commune, b.type_bien, b.est_copro, b.statut, b.idu,
        b.rattachement_niveau, b.rattachement_confiance, b.rattachement_etat, b.rattachement_pistes,
        b.rattachement_criteres, b.rattachement_humain,
@@ -110,6 +111,10 @@ SELECT b.bien_id, b.commune, b.type_bien, b.est_copro, b.statut, b.idu,
        bp.ancien_prix AS ancien_prix,
        (EXISTS (SELECT 1 FROM event_log e WHERE e.dedup = :ddp || b.bien_id || :dds)
         AND b.statut IN ('active','en_vente_longue')) AS de_retour,
+       -- FRONT-CHIFFRES-2 (F14) — « nouveau » servi à plat (seuil SEUIL_NOUVEAU_J, base Réunion,
+       -- même fuseau que le cycle en_vente_longue) : le front ne recalcule plus « j < 2 ».
+       (b.date_publication IS NOT NULL
+        AND b.date_publication >= (now() AT TIME ZONE 'Indian/Reunion')::date - {SEUIL_NOUVEAU_J}) AS nouveau,
        ST_X(p.centroid) AS lon, ST_Y(p.centroid) AS lat,
        -- RADAR-AUTO-1 (recette) — position de QUARTIER portée par le bien lui-même (portail, floutée),
        -- servie quand le bien n'est pas rattaché à une parcelle : la carte l'affiche en marqueur distinct.
@@ -164,6 +169,7 @@ def _bien_row(r: dict) -> dict:
         "baisse_pct": (round(100.0 * (float(r["ancien_prix"]) - float(r["prix"])) / float(r["ancien_prix"]))
                        if r.get("ancien_prix") and r.get("prix") and float(r["ancien_prix"]) > float(r["prix"]) else None),
         "de_retour": bool(r.get("de_retour")),
+        "nouveau": bool(r.get("nouveau")),   # FRONT-CHIFFRES-2 (F14) — servi à plat (seuil back)
         # RADAR-VEILLE-1 (R3) — annonce DÉPOSÉE par une agence : contenu confié (photos + texte + adresse
         # abonnés-seuls) AFFICHÉ ; le collecté a photos=[] / description=NULL (jamais peuplés) → rien à
         # montrer, la doctrine « faits + lien » reste entière pour lui.
