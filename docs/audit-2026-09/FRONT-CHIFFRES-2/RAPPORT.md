@@ -183,6 +183,20 @@ fait historique fixe — plomberie viewer).
 tsc 0 · vitest 225 · verrous + gardes 20 · banc `**188 (= baseline, 0 nouveau, 0 FAUX-CLIENT)** — les notions touchées (pente/sommeil/permis note/relance) ne sont pas comparées par le banc.`. **Reste** (P1) : F02, F03, F05,
 F06, F08, F09, F12, F16, F23, F28 + F01c–e.
 
+### Session 7 (lot P1, suite) — 3 familles
+*Remonters :*
+- **F28** — exonération taxe « locaux agricoles » (zone A) : le prefill taxe sert `zone_famille`
+  (`parcel_zone_plu.zone_fam`), le front teste `=== 'A'` au lieu d'une regex `/^A(?!U)/` (même notion
+  canonique que la fiche §PLU, F01a). CHANGEMENTS.csv (alignement F01a).
+- **F23** — badge de viabilisation : `mot` + `ton` servis (`viabilisation.py BANDE_DA`, source unique),
+  la table front `VIAB_MOT` (band→libellé/ton) retirée.
+- **F12** — le MOT « sous »/« au-dessus » de l'écart secteur↔commune servi (`ecart_commune.sens`) ;
+  seule la couleur reste présentation.
+
+**État P1 (32) : 16 remonté · 9 reclassé · 0 arrêté · F01 partiel (a+b) · ~5 a_faire.** Guardrails :
+tsc 0 · vitest 225 · verrous + gardes 23 · banc `**188 (= baseline, 0 nouveau, 0 FAUX-CLIENT)**.`. **Reste** (P1) : F02, F03, F05,
+F06, F08, F09, F16 + F01c–e.
+
 ### F01 — plan (prochaine session, à reprendre ici)
 F01 (`Fiche.tsx`, 15 lignes « seuil ») n'est PAS une notion unique : c'est un **cluster réglementaire**
 à SCINDER en sous-familles (1 commit chacune), car chaque notion a son moteur back :
