@@ -17,7 +17,7 @@ Notes à traiter/valider lors du mandat PRE-DEPLOY-1.
   (2) le job nocturne `coherence-banc` tourne SANS dev_mode ni rate_limit_off en prod (il doit
   passer la protection légitimement — sujet allowlisté `LABUSE_QA_ALLOWLIST`, ou débit sous 60/min).
 
-## CatNat — carte risques (Géorisques brut) vs compte servi (dédoublonné) — ARRÊTÉ pour décision Vic
+## CatNat — carte risques (Géorisques brut) vs compte servi (dédoublonné) — ✅ TRANCHÉ (Vic) : garder 15/20
 - **Observation** : 97410 15≠17, 97418 20≠22 (écart constant −2).
 - **Analyse** (FRONT-CHIFFRES-2) : nos trois lecteurs servis (fiche parcelle `fiche_blocs3.catnat.total`,
   fiche commune `fiche_commune`, page Sources `filtres/sources`) donnent TOUS **15/20** — `count(*)` sur
@@ -26,7 +26,7 @@ Notes à traiter/valider lors du mandat PRE-DEPLOY-1.
   incohérence interne**. Le 17/22 est le **compte Géorisques BRUT** (GASPAR renvoie 2 arrêtés qui
   partagent péril+dates → dédoublonnés par DESIGN, décision COHERENCE-FIX-1 « CatNat dédoublonné GASPAR »).
 - **Donc** : notre 15/20 est correct-par-choix ; le 17/22 réintroduirait les doublons GASPAR.
-- **ARRÊTÉ** : si Vic veut aligner sur le brut Géorisques (17/22), il faut **re-ingérer `catnat_arretes`
-  avec une clé de dédoublonnage incluant `code_national_catnat`** (recalcul de table) ET revenir sur le
-  dédoublonnage COHERENCE-FIX-1. Recalcul de table → hors périmètre FRONT-CHIFFRES-2 (garde-fou : arrêté).
-  À trancher : le doublon GASPAR est-il un vrai doublon (garder 15) ou 2 arrêtés distincts (passer à 17) ?
+- **TRANCHÉ (Vic, session 4)** : **garder 15/20**. Le doublon GASPAR est un VRAI doublon (le même
+  arrêté publié deux fois), le dédoublonnage de COHERENCE-FIX-1 est le bon choix. **Aucune
+  re-ingestion**, aucune modification : notre compte servi (15/20) est le compte correct ; le 17/22
+  de Géorisques brut inclut les doublons et n'est pas à répliquer. Rien à faire côté FRONT-CHIFFRES-2.
