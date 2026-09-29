@@ -498,17 +498,29 @@ def contraintes_plu(session: Session, geom_geojson: dict) -> dict:
     # les calibrations de destinations (module plu.destinations) sont clées sur ce token. En lisant
     # `subtype`, la zone « U » ne matchait aucune calibration → « calibration en cours » à tort sur
     # Saint-Paul (pourtant calibré/validé). On aligne l'outil sur la fiche : token du libellé, repli name.
+    # CALCULS-FIX-1 (Lot B) — les morceaux d'intersection d'un même (zone, commune, document)
+    # sont FUSIONNÉS (ST_Union) AVANT l'aire : deux polygones GPU qui se recouvrent (bord
+    # partagé mal digitalisé, secteur superposé) ne comptent plus deux fois. Sans ça, une part
+    # pouvait dépasser 100 % (mesuré : jusqu'à 200 % sur des parcelles-témoins). Même doctrine
+    # que risques_zone/assainissement_zone/espaces_zonages_zone (déjà en ST_Union). Union
+    # calculée une seule fois (CTE agg), pas en SELECT + HAVING.
     rows = session.execute(text(
-        f"""SELECT COALESCE(NULLIF(rtrim(split_part(btrim(l.attrs->>'libelle'), ' ', 1), ':'), ''),
-                            rtrim(split_part(btrim(l.name), ' ', 1), ':'),
-                            l.subtype, '?') AS zone,
-                   l.commune, l.attrs->>'idurba' AS document,
-                   round(100 * sum(ST_Area(ST_Intersection(ST_Transform(l.geom,2975), {z})))
-                         / :aire) AS part_pct
-            FROM spatial_layers l
-            WHERE l.kind='plu_gpu_zone' AND ST_Intersects(ST_Transform(l.geom,2975), {z})
-            GROUP BY 1,2,3
-            HAVING round(100 * sum(ST_Area(ST_Intersection(ST_Transform(l.geom,2975), {z}))) / :aire) > 0
+        f"""WITH clip AS (
+              SELECT COALESCE(NULLIF(rtrim(split_part(btrim(l.attrs->>'libelle'), ' ', 1), ':'), ''),
+                              rtrim(split_part(btrim(l.name), ' ', 1), ':'),
+                              l.subtype, '?') AS zone,
+                     l.commune, l.attrs->>'idurba' AS document,
+                     ST_Intersection(ST_Transform(l.geom,2975), {z}) AS g
+              FROM spatial_layers l
+              WHERE l.kind='plu_gpu_zone' AND ST_Intersects(ST_Transform(l.geom,2975), {z})
+            ),
+            agg AS (
+              SELECT zone, commune, document, ST_Area(ST_Union(g)) AS a
+              FROM clip GROUP BY zone, commune, document
+            )
+            SELECT zone, commune, document, round(100 * a / :aire) AS part_pct
+            FROM agg
+            WHERE round(100 * a / :aire) > 0
             ORDER BY part_pct DESC LIMIT 12"""), p).mappings().all()
     zones = [{"zone": r["zone"], "part_pct": int(r["part_pct"] or 0), "commune": r["commune"],
               "document": r["document"]} for r in rows]
@@ -542,8 +554,13 @@ def zone_demain(session: Session, geom_geojson: dict) -> dict:
         permis, logements = int(r["n"] or 0), int(r["lgt"] or 0)
     au_n = au_ha = None
     if _existe("spatial_layers"):
+        # CALCULS-FIX-1 (Lot B) — les zones AU sont FUSIONNÉES (ST_Union) avant le calcul des
+        # hectares : deux zones AU qui se recouvrent ne gonflent plus le total. `n` reste le
+        # nombre de polygones AU intersectant la zone (un compte, pas une aire) ; `ha` est la
+        # surface de leur UNION (footprint réel, jamais un double compte).
         r = session.execute(text(
-            f"""SELECT count(*) n, round((coalesce(sum(ST_Area(ST_Transform(geom,2975))),0)/10000)::numeric) ha
+            f"""SELECT count(*) n,
+                       round((coalesce(ST_Area(ST_Union(ST_Transform(geom,2975))),0)/10000)::numeric) ha
                 FROM spatial_layers
                 WHERE kind='plu_gpu_zone' AND subtype LIKE 'AU%'
                   AND ST_Intersects({z}, ST_Transform(geom, 2975))"""), p).mappings().first()
