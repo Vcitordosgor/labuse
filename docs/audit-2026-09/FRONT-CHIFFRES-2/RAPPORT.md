@@ -134,6 +134,23 @@ Guardrails fin de session : tsc 0 · vitest 225 · verrous + gardes FC-2 34 vert
 F05/F09 admin, F06/F08/F10/F12/F16/F18/F19/F23/F27/F28/F30/F32) sont de vrais *remonters* backend
 (serveur qui expose un flag/verdict + front qui lit), ~5 fichiers chacun — à poursuivre en sessions P1.
 
+### Session 4 (lot P1, suite) — F10 + décisions Vic
+- **F10 (remonté)** — le seuil de suffisance (n<5 → « — ») des médianes locales par type est appliqué
+  au BACK (`mon_secteur.SEUIL_N` ; `medianes_par_type` renvoie None sous le seuil) ; `marche.tsx` lit
+  les médianes déjà filtrées, plus de `n >= 5` au front. Terrain nu → **méthode canonique
+  `_terrain_section`** (`par_type.terrain_nu`) au lieu de refiltrer `dvf_parcelle.secteur`
+  (CHANGEMENTS.csv : correction — inclut « terrain à bâtir », seuil au back).
+- **F19 (reclassé présentation)** — `distance_m ≤ 100` ne décide qu'une couleur d'emphase (permis
+  proches) ; distance servie & affichée.
+- **CatNat — TRANCHÉ (Vic) : garder 15/20** (vrai doublon GASPAR, dédoublonnage COHERENCE-FIX-1
+  correct, pas de re-ingestion). Noté dans `PRE-DEPLOY-1/NOTES.md`.
+- **F26 (ScoringV2)** — expliqué à Vic (seuil 1/50 = « peu probable », touche l'affichage du
+  scoring) ; en attente de sa décision (servir le cutoff ou garder la convention).
+
+**État P1 (32) : 9 remonté · 8 reclassé · 1 arrêté (F26) · F01 partiel · ~13 a_faire.** Guardrails :
+tsc 0 · vitest 225 · verrous + gardes 15 · banc `**188 (= baseline, 0 nouveau, 0 FAUX-CLIENT)** — F10 est front-only (lit des valeurs déjà servies).`. **Reste** (P1) : F02, F03, F05,
+F06, F08, F09, F12, F16, F18, F23, F27, F28, F30, F32 + F01b–e — vrais remonters backend, à poursuivre.
+
 ### F01 — plan (prochaine session, à reprendre ici)
 F01 (`Fiche.tsx`, 15 lignes « seuil ») n'est PAS une notion unique : c'est un **cluster réglementaire**
 à SCINDER en sous-familles (1 commit chacune), car chaque notion a son moteur back :
