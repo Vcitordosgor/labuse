@@ -93,3 +93,26 @@ Même règle qu'au lot 1. Classification confirmée par un **test de divergence 
 | F66 | projets/ProjetsPanel.tsx | présentation | somme + ratio de compteurs **servis** (`p.counts`) pour un % de progression (comme F52). Pas de divergence. |
 | F67 | header/Header.tsx | présentation | plomberie de pagination « Voir plus » sur `items.length` **servi** (le back ne renvoie pas de total ; `+PAGE_SIZE` = artefact de pied, pas un total revendiqué). Pas un chiffre client. |
 | F68 | lib/useApplySearch.ts | présentation | somme de 4 buckets de tiers **servis** (`getStats().tiers.*`) = « univers filtré hors écartées » ; sommer exactement ces 4 buckets ne peut pas diverger de leur total (comme F42). Pas de divergence. |
+
+## P3 (F69–F113) & P4 (F114–F159) — familles `calcul`/`declarer`/format
+Classification par 6 forks lecture-seule avec **test de divergence explicite par ligne** (inputs = champs servis ? le résultat pourrait-il différer d'un calcul back de la même notion ? tout doute → remonter). Sur les **91 familles : 2 code (P3), 0 code (P4)**, le reste = présentation / admin interne / declarer (référence).
+
+### Les 2 seules actions code (P3)
+| famille | fichier | verdict | détail |
+|---|---|---|---|
+| **F96** | fiche/ProprietaireHistorique.tsx:30 | **CORRECTION (valeur affichée)** | libellé de couverture figé « 2019–2024 » **périmé** → corrigé « 2019–2025 » (source unique back `_MILLESIME_SERVI=2025`). cf. CHANGEMENTS.csv. Guard `test_f96_proprio_millesimes_a_jour`. |
+| **F113** | store/useApp.ts:171 | **VERROU ANTI-DÉRIVE** (valeur inchangée) | `MODE_B_DEFAUT {travauxM2:1500, loyerM2:12.21, rendementPct:6}` = miroir des défauts back (bilan.py `MODE_B_TRAVAUX_M2_DEFAUT`, défisc `valeur_eur_m2_mois`/`rendement_cible.defaut_pct`). C'est un **défaut d'état de store** (init synchrone → non servable en async) ; verrou de test qui casse si l'un dérive (comme le miroir `tiers_client`). Guard `test_f113_mode_b_defaut_verrou_anti_derive`. |
+
+### Declarer — constantes de RÉFÉRENCE / juridiques (mirroir de constantes back ou de la loi ; à sourcer, pas un calcul front)
+- **F105** taxe « taux légal minimal 1 % », **F75** « plafond légal 2,5 % » départemental, **F80** seuils succession (« ≥ 70 ans », « SCI ≥ 20 ans », radar 3–7 ans, miroir `VEILLE_SUCCESSION`), **F69** ZFANG 80/100 %, TCSP 800 m, ER/EBC 50/80 %, L151-34, **F78** ZAN « conso 2011-21 × 0,5 », **F97** « division ≥ 2023 » (décision servie, année descriptive), **F99** « ≥ 5 biens », **F106** « à partir de 2017 », **F77** « (5 %) » trim, **F81** « < 2 m² » / « 1-3 ans DVF ». Ces valeurs **décrivent** une règle back/juridique ; le front ne les calcule pas. → declarer (citer la source ; verrou si drift souhaité).
+
+### ⚠ Declarer — RÉSIDU à templater (compteurs servis figés dans des infobulles CLIENT)
+**F69 (`lib/layers.ts`) et F71 (`lib/strings.ts`)** contiennent des **comptes servis codés en dur** dans des textes d'aide client : `431 663` (couverture île, ×4), `33 622` (PM privée), `7 129` (succession), `9,93 %` (à cheval), `35 546` (BPE), `38 460` (RPG), `227 545` (rattachement). **Exacts aujourd'hui** (431 663 = compteur de couverture, cf. FC-1) mais **codés en dur → risque de dérive** — même classe que le `431_663` corrigé en FC-1 (mais le verrou FC-1 ne couvre QUE `FiltreLabuse.tsx`, pas ces deux fichiers de vocabulaire). **Recommandation : un lot de suivi dédié** pour templater ces infobulles depuis les compteurs servis (injection au rendu). Non fait ici (refactor vocabulaire multi-fichiers, hors cadence du lot).
+
+### Présentation / admin interne (reclassé légitime, 0 changement) — le reste des 91
+- **P3 présentation** : F70, F72, F74, F76, F79, F82, F83, F84, F85, F86, F94, F95, F98, F100, F101, F102, F103, F104, F107, F108, F109, F110, F111, F112 · **F73** (`capaciteMin` = saisie utilisateur, « ~70 m²/logt » = texte descriptif, PAS une division front).
+- **P3 admin interne** : F87, F88, F89, F90, F91, F92, F93.
+- **P4 présentation** : F114, F115, F116, F117 (taxe servie), F118 (déjà remonté, « le front NE RE-DIVISE PLUS »), F119, F120, F121, F122, F124, F125 (déjà remonté A6), F126, F127, F128, F129, F130, F132, F133, F134, F135, F136, F137, F138, F139, F140, F147, F148 (déjà remonté F04), F149, F150, F151, F152, F153, F154, F155, F156, F157, F158, F159.
+- **P4 admin interne** : F123, F131, F141, F142, F143, F144, F145, F146.
+
+Tous : inputs = champs servis / saisie utilisateur / vocabulaire statique ; **aucune divergence possible** (vérifié ligne par ligne, cf. dossiers des forks G1–G6). Plusieurs tags « remonter »/« declarer » de l'inventaire FC-1 se sont révélés **déjà servis** (F118/F125/F130/F136/F140/F148) — l'inventaire était prudent.

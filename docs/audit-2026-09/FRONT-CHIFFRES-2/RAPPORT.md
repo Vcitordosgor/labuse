@@ -365,6 +365,51 @@ j'ai remonté, pas reclassé). C'est précisément le test appliqué à chaque l
 **État FC-2 : P1 + P2 faits.** Reste **P3 (45 familles) + P4 (46 familles)** = surtout `declarer`/format.
 **⚠ Attente du feu vert de Vic avant d'entamer P3/P4.**
 
+### Session 12 (P3 + P4 enchaînés) — F69–F159 · **P3 & P4 TERMINÉS · FC-2 COMPLET**
+91 familles classées par 6 forks lecture-seule (G1–G6) avec **test de divergence par ligne**. P3 = surtout
+`declarer`/`calcul`, P4 = surtout `declarer`/format. **Bilan : 2 actions code (P3), 0 code (P4).**
+
+- **F96 (P3, CORRECTION — valeur affichée)** : la couverture DGFiP affichée en l'absence d'historique PM
+  était figée « 2019–2024 » (**périmée**) ; la source unique back sert 2019→2025 (`_MILLESIME_SERVI=2025`).
+  Corrigée « 2019–2025 ». **CHANGEMENTS.csv** + guard `test_f96_proprio_millesimes_a_jour`.
+- **F113 (P3, VERROU ANTI-DÉRIVE — valeur inchangée)** : `MODE_B_DEFAUT {1500, 12.21, 6}` (store front) est
+  un miroir des défauts back du mode B (bilan.py `MODE_B_TRAVAUX_M2_DEFAUT`, défisc `valeur_eur_m2_mois`/
+  `rendement_cible.defaut_pct`). C'est un défaut d'**état de store** (init synchrone, non servable en async) ;
+  posé un **verrou anti-dérive** (comme le miroir `tiers_client`) qui casse si l'un des trois dérive.
+- **Reste (89 familles)** : **63 présentation** · **15 admin interne** · **11 declarer** (constantes de
+  référence/juridiques : taxe 1 %, plafond 2,5 %, seuils succession, ZFANG, ZAN ×0,5 ; + descriptions de
+  règles back). Vérifié ligne par ligne, **0 divergence** (inputs = champs servis / saisie / vocabulaire).
+  L'inventaire FC-1 avait sur-tagué « remonter » plusieurs familles déjà servies (F118/F125/F130/F136/F140/F148).
+
+**⚠ Résidu déclaré (F69 `layers.ts` / F71 `strings.ts`)** : des **compteurs servis codés en dur dans des
+infobulles client** (`431 663`, `33 622`, `7 129`, `9,93 %`, `35 546`, `38 460`, `227 545`). **Exacts
+aujourd'hui** mais figés → risque de dérive (même classe que le `431_663` de FC-1, dont le verrou ne couvre
+QUE `FiltreLabuse.tsx`). **Recommandé : un lot de suivi** pour templater ces textes depuis les compteurs
+servis (refactor vocabulaire multi-fichiers, hors cadence). Signalé, non fait.
+
+**Garde-fous fin de session :** tsc 0 · vitest 225/225 · V6b + verrou front + gardes FC-2 (24 fichier
+familles, 31 avec verrous+rate-limit) · banc `--echantillon` →
+`**3161 comparaisons · 188 écarts (166 INCOHERENT / 22 TOLERABLE) — inchangé vs baseline, 0 nouveau, 0 FAUX-CLIENT**`.
+
+---
+
+## RAPPORT DE FIN DE FC-2 (P1 → P4)
+
+**Les 4 priorités sont traitées (159 familles).** Bilan global :
+- **P1 (32, seuils/verdicts)** : ~19 remontés · ~11 reclassés · 2 arrêtés scoring (mult_base, PRIORITE_SERVIE — hors périmètre FC-2, à traiter avec la bascule q_v15).
+- **P2 (36, `calcul`)** : 4 remontés (F46, F57, F50, F58 — tous valeur inchangée, chacun corrigeait une formule dupliquée) · 26 présentation · 6 admin.
+- **P3 (45)** : 1 correction (F96, valeur), 1 verrou anti-dérive (F113) · le reste présentation/admin/declarer.
+- **P4 (46)** : 0 code · présentation/admin/declarer.
+
+**Règle d'or tenue** : après FC-2, le front ne DÉCIDE plus de chiffre/seuil/conversion/verdict client — il
+rend ce que le back sert. **Une seule valeur affichée a changé sur tout FC-2** (F96, une correction : couverture
+DGFiP périmée). banc **188 = baseline, 0 FAUX-CLIENT** de bout en bout.
+
+**Résidus déclarés (non bloquants, pour décision Vic) :**
+1. **Compteurs figés en infobulles** (F69/F71) — à templater depuis les compteurs servis (lot de suivi).
+2. **Scoring hors périmètre** — `mult_base` (F01) et `PRIORITE_SERVIE` (F08) : à traiter avec la bascule q_v15 (DONNEES-FIX-1 + run 11).
+3. **Declarer référence/juridique** (11 familles P3) — constantes de loi affichées (taxe 1 %, plafond 2,5 %, seuils succession…) : exactes, à **sourcer** au registre si Vic veut un verrou anti-dérive.
+
 <!-- PROGRESSION -->
 
 ---

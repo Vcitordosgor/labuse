@@ -329,3 +329,29 @@ def test_f58_part_proprietaires_servie():
     m = (SRC / "components/fiche/MarcheSecteurBlock.tsx").read_text(encoding="utf-8")
     assert "f?.part_proprietaires_pct ?? null" in m
     assert "(100 * f.men_prop) / f.men" not in m, "part propriétaires recalculée au front (F58)"
+
+
+def test_f96_proprio_millesimes_a_jour():
+    """F96 (P3) — la couverture DGFiP affichée quand l'historique PM est absent était figée « 2019–2024 »
+    (périmée) alors que la source unique back est 2019→2025 (_MILLESIME_SERVI=2025 + docstring endpoint +
+    en-tête du module). Corrigée à 2019–2025 : VALEUR AFFICHÉE corrigée (cf. CHANGEMENTS.csv)."""
+    from labuse.proprietaire_historique import _MILLESIME_SERVI
+    assert _MILLESIME_SERVI == 2025
+    p = (SRC / "components/fiche/ProprietaireHistorique.tsx").read_text(encoding="utf-8")
+    assert "2019–2025" in p
+    assert "2019–2024" not in p, "couverture DGFiP périmée au front (F96)"
+
+
+def test_f113_mode_b_defaut_verrou_anti_derive():
+    """F113 (P3) — MODE_B_DEFAUT (store front) est un MIROIR des défauts back du mode B ; s'il dérive, le
+    bilan mode B affiché ≠ le bilan calculé. Verrou anti-dérive (comme le miroir tiers_client) : les 3
+    valeurs front DOIVENT égaler les constantes back (travaux bilan.py, loyer/rendement défisc)."""
+    from labuse.faisabilite.bilan import MODE_B_TRAVAUX_M2_DEFAUT
+    from labuse.faisabilite.defisc import _config
+    rendement_defaut = float((_config().get("rendement_cible") or {}).get("defaut_pct"))
+    ua = (SRC / "store/useApp.ts").read_text(encoding="utf-8")
+    assert f"travauxM2: {int(MODE_B_TRAVAUX_M2_DEFAUT)}" in ua      # 1500
+    assert f"rendementPct: {int(rendement_defaut)}" in ua          # 6
+    assert "loyerM2: 12.21" in ua                                  # = défisc valeur_eur_m2_mois / repli filtre
+    app = (ROOT / "src/labuse/api/app.py").read_text(encoding="utf-8")
+    assert "else 12.21" in app, "le repli loyer back a changé sans mettre à jour le miroir front (F113)"
