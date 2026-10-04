@@ -1,8 +1,9 @@
 import { useMutation } from '@tanstack/react-query'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { verifProcedure, type VerifProcedure as VP } from '../../lib/api'
 import { useApp } from '../../store/useApp'
-import { ParcelInput } from '../ParcelInput'
+import { EntreeParcelle, type SourceParcelle } from './EntreeParcelle'   // RECETTE-1 F2 (H1)
+import { Reinitialiser } from '../ui/Reinitialiser'   // RECETTE-1 F3 (H1)
 import { ErrorState } from '../States'
 
 // M41 Phase 2.6 — OUTIL « VÉRIF PROCÉDURE » : un IDU → la commune a-t-elle une procédure PLU en
@@ -11,24 +12,40 @@ import { ErrorState } from '../States'
 // M60 P1d — PORTE depuis la fiche : le champ IDU s'AMORCE de selectedIdu (préservé par setModule).
 export function VerifProcedure() {
   const selectedIdu = useApp((s) => s.selectedIdu)
+  const select = useApp((s) => s.select)   // RECETTE-1 F3 (H1) — fermer la fiche au Réinitialiser
   const m = useMutation({ mutationFn: (i: string) => verifProcedure(i.trim()) })
   const lancer = (i: string) => { if (i.trim().length >= 10) m.mutate(i) }
-  useEffect(() => { if (selectedIdu) lancer(selectedIdu) }, [selectedIdu])   // porte fiche → amorce + run
+  // RECETTE-1 (F2, H1) — source de la parcelle (grise l'autre entrée). INVARIANT : 'carte' seulement
+  // quand la parcelle vient de selectedIdu.
+  const [source, setSource] = useState<SourceParcelle>(selectedIdu ? 'carte' : null)
+  // RECETTE-1 (F1, H1) — porte fiche / clic carte (selectedIdu) → amorce + vérifie ; fermer la fiche
+  // (selectedIdu → null) alors que la parcelle venait de la carte VIDE la vérification.
+  useEffect(() => {
+    if (selectedIdu) { lancer(selectedIdu); if (source == null) setSource('carte') }
+    else if (source === 'carte') { m.reset(); setSource(null) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedIdu])
+  // RECETTE-1 (F3, H1) — Réinitialiser : vide le résultat + rend les deux entrées + ferme la fiche.
+  const resetAll = () => { if (selectedIdu) select(null); m.reset(); setSource(null) }
   const d: VP | undefined = m.data
   const cons = d?.consequences
+  const aParcelle = m.variables != null || m.isPending || d != null
 
   return (
     <div data-verif-procedure className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
       <div className="flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2 p-3">
-        <p className="text-[10.5px] leading-snug text-txt-mut">
-          Une parcelle → la commune est-elle en procédure PLU, et qu’en découle-t-il
-          pour la parcelle. Radar Sudocuh + registre curaté ; jamais l’issue de la procédure.
-        </p>
-        {/* RETOURS-13 R24 — la barre passe sur le MOTEUR UNIQUE (ParcelInput) : IDU 14, référence
-            cadastrale courte (« BZ1065 », désambiguïsation par commune), adresse. Le champ maison qui
-            n'acceptait que l'IDU brut est retiré (promesse T1 tenue sur TOUTES les barres). */}
-        <ParcelInput dataAttr="verif-idu" onPick={(i) => lancer(i)}
-          placeholder="Adresse, IDU ou référence (BW0917)" />
+        <div className="flex items-start gap-1.5">
+          <p className="min-w-0 flex-1 text-[10.5px] leading-snug text-txt-mut">
+            Une parcelle → la commune est-elle en procédure PLU, et qu’en découle-t-il
+            pour la parcelle. Radar Sudocuh + registre curaté ; jamais l’issue de la procédure.
+          </p>
+          {/* RECETTE-1 (F3, H1) — Réinitialiser dès qu'une parcelle est vérifiée. */}
+          {aParcelle && <Reinitialiser onReset={resetAll} />}
+        </div>
+        {/* RECETTE-1 (F2, H1) — EntreeParcelle : adresse/IDU OU clic carte, l'une grise l'autre.
+            (Remplace le ParcelInput RETOURS-13 R24 ; même moteur de résolution.) */}
+        <EntreeParcelle source={source}
+          onPick={(i, src) => { setSource(src); lancer(i) }} />
       </div>
 
       {m.isError && <ErrorState message="Parcelle inconnue ou erreur." retry={m.variables ? () => m.mutate(m.variables!) : undefined} />}

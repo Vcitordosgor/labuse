@@ -1,9 +1,9 @@
-import { useInfiniteQuery, useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Siren } from '../shared/Siren'   // RETOURS-12 T2 — SIREN cliquable Pappers
 import { useEffect, useState } from 'react'
 import { ListPaginationFooter } from '../ListPagination'
 import { ParcelInput } from '../ParcelInput'   // OUTILS-MUSCLER-1 B1 — entrée par parcelle (omnibox)
-import { addProfile, getAssemblageVoisines, getCommunes, getProfiles, getResults, motAssemblage, motBarometre, motMarcheCommune, motSimulPlu, motSimulPluZones, motZan, promoteursActifs, zanParcelle } from '../../lib/api'
+import { addProfile, getCommunes, getProfiles, getResults, motAssemblage, motBarometre, motMarcheCommune, motSimulPlu, motSimulPluZones, motZan, promoteursActifs, zanParcelle } from '../../lib/api'
 import { CLIENT } from '../../lib/strings'
 import { fmtEurCompact, fmtInt } from '../../lib/format'
 import { TOKENS } from '../../lib/tokens'
@@ -14,6 +14,8 @@ import { Tip } from '../Tip'
 import { CP_COMMUNES } from '../panel/FiltreLabuse'   // RETOURS-11 T6 — source unique des 24 communes
 import { trierCommunes } from '../../lib/communes'
 import { Bouton } from '../ui/Bouton'
+import { Reinitialiser } from '../ui/Reinitialiser'   // RECETTE-1 F3
+import { EntreeParcelle } from './EntreeParcelle'   // RECETTE-1 H5 — entrée parcelle (adresse OU clic carte)
 
 const fmt = fmtInt
 
@@ -125,31 +127,32 @@ export function M15({ communeOverride }: { communeOverride?: string | null } = {
 
 /* ───────────── M16 — ASSEMBLAGE ───────────── */
 
+const ASM_MAX = 8   // RECETTE-1 (H5, Vic) — 8 parcelles maximum pour un assemblage.
+
 export function M16() {
-  const { msel, setMsel, setModuleMap, parcelPrefill, setParcelPrefill, setModule, setCourrierPrefillIdus } = useApp()
-  const pushOutilRetour = useApp((s) => s.pushOutilRetour)   // OUTILS-MUSCLER-1 B5 — fil de retour
-  const setM02Prefill = useApp((s) => s.setM02Prefill)       // B5 — pont Scan patrimoine (SIREN PM)
+  const { msel, setMsel, setModuleMap, parcelPrefill, setParcelPrefill } = useApp()
   const run = useMutation({ mutationFn: () => motAssemblage(msel) })
-  // OUTILS-MUSCLER-1 B1/B2/B4 — parcelles de DÉPART : chaque départ tire son 1ᵉʳ anneau de voisines
-  // contiguës (moteur ST_DWithin 0,5 m servi À l'utilisateur, plus seulement derrière lui). Un départ
-  // désigné à l'omnibox REMPLACE la proposition ; « ses voisines → » sur une cochée l'ÉTEND d'un
-  // anneau (jamais de recherche automatique au-delà — B4).
-  const [rings, setRings] = useState<string[]>([])
+  // RECETTE-1 (H5, Vic) — refonte en ÉTAPES (modèle Comparer communes). Étape 1 = choisir les parcelles
+  // (EntreeParcelle + clic carte), 8 max. La section « parcelles voisines » (rings/voisines) est RETIRÉE.
+  const [max8, setMax8] = useState(false)
   const addDepart = (idu: string) => {
     const i = idu.trim().toUpperCase()
-    setMsel(msel.includes(i) ? msel : [...msel, i])
-    setRings((r) => (r.includes(i) ? r : [i]))
+    if (!i || msel.includes(i)) return
+    if (msel.length >= ASM_MAX) { setMax8(true); return }
+    setMax8(false); setMsel([...msel, i])
   }
-  // RETOURS-15 B6 — « ses voisines → » retiré : plus d'extension d'anneau depuis une voisine.
-  const ringQs = useQueries({ queries: rings.map((r) => ({
-    queryKey: ['asm-voisines', r], queryFn: () => getAssemblageVoisines(r), staleTime: 60_000, retry: false })) })
-  // M-ENTREE — porte fiche → Assemblage : la parcelle devient la 1ʳᵉ du lot (motif parcelPrefill
-  // partagé, consommation-puis-reset) ; l'utilisateur agrège les contiguës au clic-carte.
-  // OUTILS-MUSCLER-1 B2 — la porte (fiche) fait AUSSI de la parcelle le départ : ses voisines
-  // contiguës sont proposées dès l'ouverture. (1B pt 2 : le pont « Assembler → » de Successions
-  // à venir a été retiré ; la fiche reste la source de parcelPrefill.)
+  // garde-fou : un clic carte (MapView, module='assemblage') pousse directement dans msel → on plafonne
+  // aussi côté store à 8 et on dit pourquoi (la 9ᵉ est refusée, pas coupée en silence).
   useEffect(() => {
-    if (parcelPrefill) { setMsel([parcelPrefill]); setRings([parcelPrefill]); setParcelPrefill(null) }
+    if (msel.length > ASM_MAX) { setMsel(msel.slice(0, ASM_MAX)); setMax8(true) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [msel])
+  // RECETTE-1 (H5, F3) — Réinitialiser : vide la liste + le résultat ; reste dans l'outil.
+  const resetAll = () => { setMsel([]); setMax8(false); run.reset() }
+  // M-ENTREE — porte fiche → Assemblage : la parcelle devient la 1ʳᵉ du lot (motif parcelPrefill
+  // partagé, consommation-puis-reset) ; l'utilisateur agrège les autres au clic-carte / à l'omnibox.
+  useEffect(() => {
+    if (parcelPrefill) { setMsel([parcelPrefill]); setParcelPrefill(null) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [parcelPrefill])
   // B5 — retour du Scan patrimoine : la sélection d'assiette revient par PREFILL consommé (idiome
@@ -179,126 +182,68 @@ export function M16() {
   const ratioStr = ratio != null ? ratio.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : null
   const pct = d?.gain_pct ?? null
   return (
-    // §1a — UN SEUL conteneur de défilement (wrapper ModulePanel = overflow-hidden) : on accède à
-    // la suite (analyse, propriétaires, courriers) au lieu d'un bas d'écran coupé.
+    // §1a — UN SEUL conteneur de défilement (wrapper ModulePanel = overflow-hidden).
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-0.5">
-      {/* M15 A1 : la cause du « ne fonctionne pas » = à l'échelle de l'île aucune parcelle n'est
-          chargée ni cliquable. On guide explicitement : ZOOMER d'abord fait apparaître les contours. */}
-      <Banner>Réunissez des parcelles voisines pour voir ce qu'elles valent ensemble : surface, droits à bâtir cumulés, logements possibles, charge foncière. Zoomez, cliquez les parcelles (re-cliquez pour retirer) — ou désignez une parcelle de départ : ses voisines contiguës vous sont proposées.</Banner>
-      {/* OUTILS-MUSCLER-1 B1 — entrée PAR PARCELLE (omnibox SOCLE : IDU · adresse · référence
-          courte), en plus du clic-carte. La parcelle désignée devient la parcelle de DÉPART. */}
-      <ParcelInput dataAttr="asm-depart" placeholder="Adresse, IDU ou référence (BW0917)" onPick={addDepart} />
+      <div className="flex items-start gap-1.5">
+        <div className="min-w-0 flex-1">
+          <Banner>Réunissez des parcelles voisines pour voir ce qu'elles valent ensemble : surface, droits à bâtir cumulés, logements possibles, charge foncière. Zoomez et cliquez les parcelles sur la carte (re-cliquez pour retirer), ou saisissez-les ci-dessous.</Banner>
+        </div>
+        {/* RECETTE-1 (F3) — Réinitialiser dès qu'une parcelle est dans l'assiette. */}
+        {msel.length > 0 && <Reinitialiser onReset={resetAll} />}
+      </div>
+      {/* RECETTE-1 (H5, Vic) — ÉTAPE 1 « Choisir les parcelles » : EntreeParcelle (adresse OU clic carte)
+          + liste des parcelles retenues (✕), 8 maximum, puis « Vérifier l'assemblage ». */}
+      <p className="label-caps text-[9.5px]">Étape 1 — choisir les parcelles ({ASM_MAX} maximum)</p>
+      <EntreeParcelle source={null} onPick={(i) => addDepart(i)} />
       <div className="flex flex-wrap gap-1">
         {msel.map((i) => (
-          <button key={i} onClick={() => setMsel(msel.filter((x) => x !== i))}
+          <button key={i} data-asm-chip onClick={() => { setMsel(msel.filter((x) => x !== i)); setMax8(false) }}
             className="min-h-7 rounded-full border border-mint/60 px-2 py-0.5 font-mono text-[11px] text-mint transition-colors duration-quick hover:bg-mint/10">
             {i.slice(8)} ×
           </button>
         ))}
         {msel.length === 0 && <span className="text-[11px] text-txt-dim">aucune parcelle sélectionnée</span>}
       </div>
-      <div className="flex gap-2">
-        <Bouton niveau="primaire" ton="vert" onClick={() => msel.length >= 2 && run.mutate()} disabled={msel.length < 2 || run.isPending}
-          className="flex-1">
-          Analyser l'assiette ({msel.length})
-        </Bouton>
-        {msel.length > 0 && (
-          <Bouton niveau="lien" onClick={() => setMsel([])}>vider</Bouton>
-        )}
-      </div>
-      {/* OUTILS-MUSCLER-1 B2/B3/B4/B5 — VOISINES PROPOSÉES, en cartes empilées, même propriétaire
-          en tête (tri serveur). Cocher = entrer dans l'assemblage (msel — même style carte que le
-          clic, via moduleMap) ; rien n'est coché d'office. Aucun badge de score : l'analyse de
-          l'assiette n'a pas encore été demandée. */}
-      {rings.map((ring, k) => {
-        const rq = ringQs[k]
-        const rd = rq?.data
-        return (
-          <div key={ring} data-asm-ring={ring} className="flex flex-col gap-1">
-            {rq?.isLoading && <Squelette lignes={3} />}
-            {rq?.isError && <ErrorState message={`Voisines de ${ring.slice(8)} indisponibles — parcelle inconnue ?`} retry={rq ? () => rq.refetch() : undefined} />}
-            {rd && rd.n === 0 && (
-              <EmptyState title={`Aucune voisine contiguë au cadastre pour ${ring.slice(8)}`}
-                hint="la voirie et le domaine public (non cadastrés) coupent l'anneau." />
-            )}
-            {rd && rd.n > 0 && (
-              <>
-                {/* bandeau B2 : « N voisines contiguës, dont M du même propriétaire » */}
-                <div data-asm-ring-bandeau className="text-[10.5px] leading-snug text-txt-mut">
-                  <b className="tnum text-txt">{rd.n}</b> voisine{rd.n > 1 ? 's' : ''} contiguë{rd.n > 1 ? 's' : ''}
-                  {rings.length > 1 ? <> de <span className="font-mono">{ring.slice(8)}</span></> : null},
-                  dont <b className="tnum text-txt">{rd.n_meme_proprietaire}</b> du même propriétaire
-                  {!rd.depart_pm && <span className="text-txt-dim"> (départ chez un particulier : « même propriétaire » indécidable — aucune identité de personne physique en base)</span>}
-                </div>
-                {rd.items.map((v) => {
-                  const coche = msel.includes(v.idu)
-                  const pr = v.proprio
-                  // RETOURS-15 B6 (P12) — la liste des voisines reste EN LECTURE : plus de case à
-                  // cocher, plus de « ses voisines → ». On AJOUTE une voisine en la cliquant sur la
-                  // CARTE (socle S4 : clic carte = ajout direct à l'assiette). Une pastille dit
-                  // « dans l'assiette » quand elle y est déjà.
-                  return (
-                    <div key={v.idu} data-asm-voisine={v.idu} className="rounded-lg border border-line-2 bg-surface-3 px-2.5 py-1.5">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-[11px] text-txt-hi">{v.idu.slice(8)}</span>
-                        {coche && (
-                          <span data-asm-voisine-dans className="rounded-full bg-mint/15 px-1.5 py-0.5 text-[9px] font-medium text-mint">dans l'assiette</span>
-                        )}
-                        {v.meme_proprietaire && (
-                          <span className="rounded-full bg-mint/10 px-1.5 py-0.5 text-[9px] font-medium text-mint">même propriétaire</span>
-                        )}
-                        <span className="ml-auto tnum text-[11px] text-txt">{v.sdp_residuelle_m2 == null ? '—' : `${fmt(v.sdp_residuelle_m2)} m²`}</span>
-                        <span className="rounded bg-amber-500/15 px-1 text-[8.5px] font-medium text-amber-500">Estimé</span>
-                      </div>
-                      <div className="mt-0.5 flex items-center gap-1.5 text-[10.5px]">
-                        <span className="shrink-0 text-txt-dim">{fmt(v.surface_m2)} m²</span>
-                        {v.zone && <><span className="text-txt-dim">·</span><span className="shrink-0 text-txt-dim">{v.zone}</span></>}
-                        <span className="text-txt-dim">·</span>
-                        <span className="min-w-0 flex-1 truncate">
-                          {pr.type === 'personne_morale'
-                            ? <span className="text-txt">{pr.denomination}</span>
-                            : <span className="italic text-txt-dim">particulier — non nommé</span>}
-                        </span>
-                        {/* B5 — pont Scan patrimoine sur une voisine PM (le retour restaure la sélection) */}
-                        {pr.type === 'personne_morale' && pr.siren && (
-                          <Bouton niveau="lien" data-asm-voisine-scan
-                            onClick={() => { setM02Prefill(pr.siren!); setModule('patrimoine'); pushOutilRetour({ module: 'assemblage', label: 'Assemblage', restore: { mselPrefill: [...msel] } }) }}
-                            className="shrink-0">Scan patrimoine →</Bouton>
-                        )}
-                      </div>
-                    </div>
-                  )
-                })}
-              </>
-            )}
-          </div>
-        )
-      })}
+      {max8 && <p data-asm-max className="text-[10.5px] text-st-creuser">{ASM_MAX} parcelles maximum pour un assemblage.</p>}
+      <Bouton niveau="primaire" ton="vert" data-asm-verifier onClick={() => msel.length >= 2 && run.mutate()} disabled={msel.length < 2 || run.isPending}
+        className="w-full">
+        {run.isPending ? 'Vérification…' : `Vérifier l'assemblage (${msel.length})`}
+      </Bouton>
       {run.isError && <ErrorState message="Erreur — au moins 2 parcelles valides ?" retry={() => run.mutate()} />}
-      {d && (
+
+      {/* RECETTE-1 (H5, Vic) — ÉTAPE 2 « Assemblage ». NON contiguës → « pas d'assemblage possible » +
+          les parcelles ISOLÉES, RIEN D'AUTRE (deux blocs séparés ne font pas une opération). */}
+      {d && !d.contigu && (
+        <div data-asm-pas-possible className="flex flex-col gap-2 rounded-lg border border-st-ecartee/50 bg-st-ecartee/[0.09] px-3 py-2.5 text-[11.5px] leading-snug text-st-ecartee">
+          <b>Pas d'assemblage possible : ces parcelles ne se touchent pas.</b>
+          {(d.isolees as string[] | undefined)?.length ? (
+            <>
+              <span className="text-txt-dim">Parcelle{(d.isolees as string[]).length > 1 ? 's' : ''} isolée{(d.isolees as string[]).length > 1 ? 's' : ''} (hors du bloc d'un seul tenant) :</span>
+              <div className="flex flex-wrap gap-1">
+                {(d.isolees as string[]).map((i) => (
+                  <span key={i} data-asm-isolee className="rounded-full border border-st-ecartee/50 px-2 py-0.5 font-mono text-[11px] text-st-ecartee">{i.slice(8)}</span>
+                ))}
+              </div>
+            </>
+          ) : null}
+        </div>
+      )}
+
+      {/* ÉTAPE 2 — assemblage CONTIGU : l'en-tête (N contiguës · surface totale) puis le résultat. */}
+      {d && d.contigu && (
         <>
+          <p data-asm-contigu className="text-[11.5px] text-mint">
+            <b className="tnum">{d.n}</b> parcelle{d.n > 1 ? 's' : ''} contiguë{d.n > 1 ? 's' : ''} · surface totale <b className="tnum text-txt">{fmt(d.surface_totale_m2)} m²</b>
+          </p>
           {d.tronquee && <p className="text-[10.5px] text-st-creuser">Assiette limitée aux {fmt(d.cap)} premières parcelles.</p>}
-          {/* #3 — le SCORE a disparu (doctrine M120 : pas de « qualité N/100 »). À la place, les FAITS
-              qu'il agrégeait, dits séparément : d'un seul tenant · N interlocuteurs · ×gain. */}
+          {/* #3 — pas de score (doctrine M120) : les FAITS agrégés — d'un seul tenant · N interlocuteurs. */}
           <div data-asm-faits className="flex flex-wrap items-center gap-1.5 text-[11px]">
-            <span className={`rounded-full px-2 py-0.5 ${d.contigu ? 'bg-mint/10 text-mint' : 'bg-st-ecartee/10 text-st-ecartee'}`}>
-              {d.contigu ? "d'un seul tenant" : 'NON contiguë'}</span>
+            <span className="rounded-full bg-mint/10 px-2 py-0.5 text-mint">d'un seul tenant</span>
             <span className="rounded-full bg-surface-3 px-2 py-0.5 text-txt-mut">{d.n_proprietaires} interlocuteur(s)</span>
             {(d.n_personnes_morales > 0 || d.n_particuliers > 0) && (
               <span className="rounded-full bg-surface-3 px-2 py-0.5 text-txt-mut">{d.n_personnes_morales} personne{d.n_personnes_morales > 1 ? 's' : ''} morale{d.n_personnes_morales > 1 ? 's' : ''} · {d.n_particuliers} particulier{d.n_particuliers > 1 ? 's' : ''}</span>
             )}
           </div>
-
-          {/* O10(c) — EXPLIQUER, pas seulement signaler. La non-contiguïté est un problème de fond (deux
-              blocs séparés ne font pas une opération) : on le DIT fort, pas juste une pastille. Et les
-              parcelles qui n'apportent RIEN au bilan (SDP estimée nulle — souvent zones sans droits à
-              bâtir A/N, mais on ne nomme pas la zone qui n'est pas servie par parcelle) : on propose de
-              les retirer. Les deux blocs ne s'affichent que si la donnée du payload les justifie. */}
-          {!d.contigu && (
-            <div data-asm-non-contigu className="rounded-lg border border-st-ecartee/50 bg-st-ecartee/[0.09] px-3 py-2 text-[11px] leading-snug text-st-ecartee">
-              <b>Assiette NON contiguë.</b> <span className="text-txt-dim">Les parcelles ne se touchent pas toutes : ce sont plusieurs blocs séparés, pas une seule opération. Le bilan les additionne, mais un projet d'ensemble suppose une assiette d'un seul tenant — vérifiez la sélection.</span>
-            </div>
-          )}
           {(() => {
             const vides = (d.items as Record<string, any>[]).filter((i) => !((i.sdp_m2 as number) > 0))
             if (vides.length === 0) return null
@@ -403,13 +348,7 @@ export function M16() {
               </div>
             )})}
           </div>
-          {/* point 4 — PONT COURRIER : un seul geste ouvre l'outil Courrier prérempli avec TOUTES les
-              parcelles de l'assemblage (patron courrierPrefillIdus, comme l'import Assemblage côté Courrier). */}
-          {(d.items as Record<string, any>[]).length > 0 && (
-            <Bouton niveau="secondaire" ton="vert" data-asm-courrier onClick={() => { setCourrierPrefillIdus((d.items as Record<string, any>[]).map((i) => i.idu as string)); setModule('courriers') }}>
-              ✉ Préparer les courriers ({(d.items as Record<string, any>[]).length}) → Courrier propriétaire
-            </Bouton>
-          )}
+          {/* RECETTE-1 (H5, Vic) — bouton « Préparer courrier propriétaire » RETIRÉ de l'Assemblage. */}
           {/* C — indivision non détectable en base (honnête, pas fabriqué) */}
           <p className="shrink-0 text-[10px] leading-snug text-txt-dim">Indivision : non détectable en open data (aucune structure de propriété physique publiée) — signal non affiché plutôt qu'inventé.</p>
         </>
@@ -556,6 +495,10 @@ function M18Tableau({ d }: { d: Record<string, any> }) {
   const perm = Object.fromEntries((d.permis_trimestres ?? []).map((r: any) => [r.trimestre, r]))
   // union des trimestres (l'ancien porte l'axe de référence), tri chronologique.
   const tris = [...new Set([...ancien.map((r) => r.trimestre), ...Object.keys(terr), ...Object.keys(perm)])].sort()
+  // RECETTE-1 (H3, Vic) — un trimestre sans ancien NI terrain alors qu'il a des permis = VRAI trou :
+  // DVF n'est publié que jusqu'au dernier trimestre ancien ; les permis (Sitadel) vont plus loin. On le DIT.
+  const dernierDvf = [...ancien.map((r) => r.trimestre as string)].sort().at(-1)
+  const trousRecents = tris.filter((t) => dernierDvf && t > dernierDvf)
   const partiel = new Set(ancien.filter((r) => r.partiel).map((r) => r.trimestre))
   const ancByT = Object.fromEntries(ancien.map((r) => [r.trimestre, r]))
   const th = 'sticky top-0 z-10 bg-bg-3 px-2 py-1.5 text-right font-medium text-txt-dim first:text-left'
@@ -595,6 +538,11 @@ function M18Tableau({ d }: { d: Record<string, any> }) {
         <Tip garder tip="Ancien : médiane €/m² bâti, ventes strictes DVF (VEFA exclu). Terrain : médiane €/m² terrain nu (bâti=0). Permis : autorisés/trimestre (Sitadel). Volume (n) entre parenthèses."><span className="cursor-help rounded-full border border-line-2 px-1 text-[8px]">i</span></Tip>
       </div>
       {tris.some((t) => partiel.has(t)) && <p className="mt-0.5 text-[9.5px] text-st-creuser">· dernier trimestre partiel (délai de publication DVF) — grisé, hors tendance.</p>}
+      {/* RECETTE-1 (H3, Vic) — le vrai trou expliqué : DVF publié jusqu'au <dernierDvf>, les trimestres
+          plus récents n'ont que les permis (Sitadel en avance). Plus de « — » muet pris pour un bug. */}
+      {trousRecents.length > 0 && dernierDvf && (
+        <p className="mt-0.5 text-[9.5px] text-txt-dim">· Ancien &amp; terrain : DVF publié jusqu'au <b className="text-txt-mut">{dernierDvf}</b> — {trousRecents.join(', ')} n'{trousRecents.length > 1 ? 'ont' : 'a'} encore que les permis (Sitadel, en avance sur DVF).</p>
+      )}
     </div>
   )
 }
@@ -613,6 +561,13 @@ export function M18() {
   const q = useQuery({ queryKey: ['m18', insee || 'ile'], queryFn: () => motBarometre(insee || null) })
   const d = q.data as Record<string, any> | undefined
   const nr = d?.neuf_reference as Record<string, any> | undefined
+  // RECETTE-1 (H3, Vic) — l'en-tête dit le nombre de trimestres RÉELLEMENT affichés (union des 3 séries),
+  // plus « 8 derniers trimestres » en dur (l'union en compte souvent 11 : DVF + permis en avance).
+  const nbTri = d ? new Set([
+    ...((d.dvf_trimestres ?? []) as any[]).map((r) => r.trimestre),
+    ...((d.terrain_trimestres ?? []) as any[]).map((r) => r.trimestre),
+    ...((d.permis_trimestres ?? []) as any[]).map((r) => r.trimestre),
+  ]).size : 0
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
       {/* M141 Partie 1 — bouton « Rapport PDF » RETIRÉ (le baromètre ne sort plus en PDF, décision Vic).
@@ -624,7 +579,7 @@ export function M18() {
           <option value="">Île entière (24 communes)</option>
           {communesTriees.map((c) => <option key={c.insee} value={c.insee}>{c.commune}</option>)}
         </select>
-        <span className="text-[10px] text-txt-dim">{d?.perimetre ?? ''} — 8 derniers trimestres.</span>
+        <span className="text-[10px] text-txt-dim">{d?.perimetre ?? ''}{nbTri ? ` — ${nbTri} trimestres affichés.` : ''}</span>
       </div>
       {/* COMMUNE-124 (RETOUCHES-1 lot B) — le back refuse désormais un code qui ne résout aucune commune
           (code postal, code hors 24) par un 400 explicite au lieu de servir l'île entière en silence.

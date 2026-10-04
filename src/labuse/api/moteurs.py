@@ -234,7 +234,11 @@ def assemblage(body: AssemblageIn, db: Session = Depends(get_db)) -> dict:
                   + 20 * min(1, 2 / max(1, len(owners_pm) + n_particuliers))
                   + (10 if tous_pm else 0) + 25 * min(1, sdp / 3000)))
     return {
-        "n": len(rows), "contigu": contigu, "surface_totale_m2": agg["surface_cumulee_m2"],
+        "n": len(rows), "contigu": contigu,
+        # RECETTE-1 (H5, Vic) — les parcelles ISOLÉES (hors du bloc d'un seul tenant de la 1ʳᵉ parcelle) :
+        # l'étape 2 les nomme quand « pas d'assemblage possible » (elles ne se touchent pas).
+        "isolees": [r["idu"] for r in rows if r["id"] not in seen],
+        "surface_totale_m2": agg["surface_cumulee_m2"],
         "tronquee": tronquee, "cap": cap,
         # #1 — capacité + bilan cumulés RÉELS (fiche_payload agrégé)
         "sdp_combinee_m2": sdp, "sdp_max_seule_m2": sdp_max_seule,
@@ -812,6 +816,28 @@ def _barometre_data(db: Session, insee: str | None = None) -> dict:
                 400, f"Commune inconnue : « {insee} » n'est pas l'INSEE cadastral d'une des 24 communes "
                      "de La Réunion (un code postal n'est pas un code INSEE).")
     par = {"nom": nom, "insee": insee}
+    # RECETTE-1 (H3, Vic) — AXE DE TRIMESTRES COMMUN aux trois séries. Cause des faux trous : chaque série
+    # prenait SES 8 trimestres les plus récents indépendamment (LIMIT 8), et DVF embarquait un trimestre
+    # 2026 quasi vide (ex. 2026T3 = 1 ligne, 0 retenue) qui (a) mangeait un créneau et chassait 2024T1 de
+    # l'ancien (pourtant 957 ventes), (b) gonflait q_max → la fenêtre permis sautait à 2026 et vidait les
+    # permis 2024T1-T3 (pourtant servis par Sitadel). CORRECTIF : `axis_min` = le 8ᵉ trimestre le plus
+    # récent AYANT une vraie donnée ancien (HAVING retenue > 0) ; les trois séries partent de cet axe et
+    # chacune va jusqu'à SON horizon réel (ancien/terrain : DVF publié ~T-2 ; permis : Sitadel en avance).
+    # Un trimestre vide dans une série = VRAI trou (DVF non publié) — dit par la ligne, jamais inventé.
+    axis_min = db.execute(text(f"""
+        WITH q AS (
+          SELECT date_trunc('quarter', date_mutation) AS qt
+          FROM dvf_mutations
+          WHERE date_mutation IS NOT NULL
+            AND date_trunc('quarter', date_mutation) < date_trunc('quarter', CURRENT_DATE)
+            AND (CAST(:nom AS text) IS NULL OR commune = :nom)
+          GROUP BY 1 HAVING count(*) FILTER (WHERE {_BAROMETRE_RETENUE}) > 0
+          ORDER BY 1 DESC LIMIT 8)
+        SELECT min(qt) FROM q"""), par).scalar()
+    if axis_min is None:   # commune sans aucune vente ancien retenue : repli sur 3 ans (séries honnêtes/vides)
+        axis_min = db.execute(text(
+            "SELECT date_trunc('quarter', CURRENT_DATE - INTERVAL '3 years')")).scalar()
+    par["axis_min"] = axis_min
     dvf = db.execute(text(f"""
         SELECT to_char(date_trunc('quarter', date_mutation), 'YYYY"T"Q') AS trimestre,
                count(*) FILTER (WHERE {_BAROMETRE_RETENUE}) AS mutations,
@@ -821,28 +847,23 @@ def _barometre_data(db: Session, insee: str | None = None) -> dict:
                  FILTER (WHERE {_BAROMETRE_RETENUE}))::int AS median_eur_m2_bati
         FROM dvf_mutations WHERE date_mutation IS NOT NULL
           AND date_trunc('quarter', date_mutation) < date_trunc('quarter', CURRENT_DATE)
+          AND date_trunc('quarter', date_mutation) >= :axis_min
           AND (CAST(:nom AS text) IS NULL OR commune = :nom)
-        GROUP BY 1 ORDER BY 1 DESC LIMIT 8"""), par).mappings().all()
-    # RETOURS-15 B3 (P5) — CAUSE des « — » en permis sur 2024T1/T2 : les séries DVF et permis
-    # prenaient CHACUNE leurs 8 trimestres les plus récents indépendamment. Le flux Sitadel est EN
-    # AVANCE sur DVF (permis jusqu'à 2026T2, DVF publié jusqu'à 2025T4) → la fenêtre permis était
-    # 2024T3..2026T2 alors que la fenêtre DVF (axe de référence du tableau) était 2024T1..2025T4 :
-    # l'union affichait 2024T1/T2 avec un permis vide (hors fenêtre permis). CORRECTIF : on borne la
-    # série permis au DERNIER trimestre DVF (axe commun) → les DEUX séries couvrent les MÊMES 8
-    # trimestres pleins (Sitadel a bien 710 et 626 permis en 2024T1/T2).
+        -- RECETTE-1 (H3) — HAVING retenue > 0 : un trimestre sans VRAIE vente ancien (ex. 2026T3 =
+        -- 1 ligne, 0 retenue) ne crée plus de ligne fantôme ni ne chasse un trimestre réel de la fenêtre.
+        GROUP BY 1 HAVING count(*) FILTER (WHERE {_BAROMETRE_RETENUE}) > 0
+        ORDER BY 1 DESC LIMIT 16"""), par).mappings().all()
+    # RECETTE-1 (H3, Vic) — remplace RETOURS-15 B3. La série permis part du MÊME `axis_min` que l'ancien
+    # (axe commun) et va jusqu'à SON horizon réel (Sitadel en avance sur DVF). Elle REMPLIT donc 2024T1-T3
+    # (Sitadel les a) ET montre les trimestres 2026 récents ; les cellules ancien/terrain vides sur 2026
+    # sont un VRAI trou (DVF non publié), dit par la ligne — jamais un permis caché derrière un axe DVF.
     permis = db.execute(text("""
-        WITH ref AS (
-          SELECT max(date_trunc('quarter', date_mutation)) AS q_max
-          FROM dvf_mutations
-          WHERE date_mutation IS NOT NULL
-            AND date_trunc('quarter', date_mutation) < date_trunc('quarter', CURRENT_DATE)
-            AND (CAST(:nom AS text) IS NULL OR commune = :nom))
         SELECT to_char(date_trunc('quarter', date), 'YYYY"T"Q') AS trimestre, count(*) AS permis
-        FROM sitadel_permits, ref
+        FROM sitadel_permits
         WHERE date_trunc('quarter', date) < date_trunc('quarter', CURRENT_DATE)
-          AND date_trunc('quarter', date) <= ref.q_max
+          AND date_trunc('quarter', date) >= :axis_min
           AND (CAST(:nom AS text) IS NULL OR commune = :nom)
-        GROUP BY 1 ORDER BY 1 DESC LIMIT 8"""), par).mappings().all()
+        GROUP BY 1 ORDER BY 1 DESC LIMIT 16"""), par).mappings().all()
     # §2 — SÉRIE TERRAIN NU par trimestre (dvf_mutations_parcelle, ventes terrain, €/m² dédupliqué
     # par mutation comme ligne2_terrain_zone : val / terrain TOTAL de la mutation, jamais val÷un-bout).
     # Échantillon robuste (~600-770 ventes/trim) — contrairement à la VEFA (neuf), trop rare pour une série.
@@ -854,13 +875,14 @@ def _barometre_data(db: Session, insee: str | None = None) -> dict:
           WHERE m.nature_mutation = 'Vente' AND COALESCE(m.surface_reelle_bati, 0) = 0 AND m.surface_terrain > 0
             AND m.valeur_fonciere > 1000 AND m.date_mutation IS NOT NULL
             AND date_trunc('quarter', m.date_mutation) < date_trunc('quarter', CURRENT_DATE)
+            AND date_trunc('quarter', m.date_mutation) >= :axis_min   -- RECETTE-1 (H3) — axe commun
             AND (CAST(:insee AS text) IS NULL OR m.code_commune = :insee)),
         tot AS (SELECT id_mutation, sum(terr_parc) AS terr_tot, max(val) AS val, max(dm) AS dm
                 FROM parc GROUP BY id_mutation)
         SELECT to_char(date_trunc('quarter', dm), 'YYYY"T"Q') AS trimestre, count(*) AS mutations,
                round(percentile_cont(0.5) WITHIN GROUP (ORDER BY val / NULLIF(terr_tot, 0)))::int AS median_eur_m2_terrain
         FROM tot WHERE terr_tot > 0 AND val / NULLIF(terr_tot, 0) BETWEEN 5 AND 5000
-        GROUP BY 1 ORDER BY 1 DESC LIMIT 8"""), par).mappings().all()
+        GROUP BY 1 ORDER BY 1 DESC LIMIT 16"""), par).mappings().all()
     # §2 — NEUF : PAS de série (VEFA DVF trop rare : 0-4 ventes/trim récents → une courbe sur 2 points
     # mentirait). On sert la RÉFÉRENCE actuelle. Île : dvf_prix_sortie_neuf. Commune : le moteur UNIQUE
     # M1 (`neuf_vefa_commune`, même chiffre que la fiche/la table Communes/la carte).

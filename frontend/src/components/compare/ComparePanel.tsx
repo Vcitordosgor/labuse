@@ -10,6 +10,7 @@ import { PERIM_POTENTIEL_COURT, PERIM_RESIDUEL_COURT, PERIM_SECTION_CADASTRALE }
 import { bandeMeta, signalMeta } from '../../lib/status'   // COMPARER-2 §4 — bande + Signal (comme l'Analyse)
 import { useApp } from '../../store/useApp'
 import { ParcelInput } from '../ParcelInput'   // OUTILS-FIX-2 D1 — saisie clavier (IDU/adresse/réf courte)
+import { Reinitialiser } from '../ui/Reinitialiser'   // RECETTE-1 F3
 import { Squelette } from '../Loading'
 import { EmptyState } from '../States'
 import { Bouton } from '../ui/Bouton'
@@ -127,7 +128,11 @@ export function CompareModule() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
-      <p className="text-[11px] text-txt-mut">Jusqu'à 3 parcelles, côte à côte, aux <b>mêmes points de calcul que la fiche</b>.</p>
+      <div className="flex items-start gap-1.5">
+        <p className="min-w-0 flex-1 text-[11px] text-txt-mut">Jusqu'à 3 parcelles, côte à côte, aux <b>mêmes points de calcul que la fiche</b>.</p>
+        {/* RECETTE-1 (F3) — Réinitialiser unique (vide la sélection) dès qu'une parcelle est choisie. */}
+        {n > 0 && <Reinitialiser onReset={clearCompare} />}
+      </div>
 
       {/* ① cliquez les parcelles sur la carte + chips */}
       <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2">
@@ -164,7 +169,7 @@ export function CompareModule() {
                 + Ajouter la parcelle courante ({iduCourt(selectedIdu)})
               </Bouton>
             )}
-            {n > 0 && <Bouton niveau="lien" data-compare-vider onClick={clearCompare} className="mt-1.5">tout vider</Bouton>}
+            {/* RECETTE-1 (F3) — « tout vider » remplacé par le Réinitialiser unique en tête du panneau. */}
           </div>
         </div>
       </div>

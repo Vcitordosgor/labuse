@@ -20,7 +20,8 @@ import { getPiscinesAgregat, getPiscinesListe, getPiscinesPoints, getSolaireFich
 import { fmtInt } from '../../lib/format'
 import { TOKENS } from '../../lib/tokens'
 import { useApp } from '../../store/useApp'
-import { ParcelInput } from '../ParcelInput'
+import { EntreeParcelle, type SourceParcelle } from './EntreeParcelle'   // RECETTE-1 F2
+import { Reinitialiser } from '../ui/Reinitialiser'   // RECETTE-1 F3
 import { Squelette } from '../Loading'
 import { ErrorState } from '../States'
 import { ListPaginationFooter, usePagination } from '../ListPagination'
@@ -232,15 +233,33 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
 // d'UNE parcelle désignée, pas d'une liste globale. Reste la barre unique (SOCLE) → fiche soleil.
 function ModeEnsoleillement({ onBack, prefillIdu }: { onBack: () => void; prefillIdu?: string | null }) {
   const select = useApp((s) => s.select)
-  const [ficheIdu, setFicheIdu] = useState<string | null>(prefillIdu ?? null)
+  const selectedIdu = useApp((s) => s.selectedIdu)   // RECETTE-1 F1 — adopter un clic carte
+  const [ficheIdu, setFicheIdu] = useState<string | null>(prefillIdu ?? selectedIdu ?? null)
+  // RECETTE-1 (F2) — quelle entrée a désigné la parcelle (grise l'autre dans EntreeParcelle).
+  // INVARIANT (comme Taxe/Gabarit) : source='carte' UNIQUEMENT quand la parcelle vient de selectedIdu
+  // (sinon l'effet F1 la viderait au montage). Un prefill (tuile Solaire de la fiche) laisse source=null.
+  const [source, setSource] = useState<SourceParcelle>(selectedIdu ? 'carte' : null)
 
   const fiche = useQuery({ queryKey: ['solaire-fiche', ficheIdu], queryFn: () => getSolaireFiche(ficheIdu!), enabled: !!ficheIdu, retry: false })
+
+  // RECETTE-1 (F1) — un clic carte (selectedIdu) est adopté ; fermer la fiche (selectedIdu → null)
+  // alors que la parcelle venait de la carte VIDE la fiche soleil.
+  useEffect(() => {
+    if (selectedIdu && selectedIdu !== ficheIdu) { setFicheIdu(selectedIdu); if (source == null) setSource('carte') }
+    else if (selectedIdu == null && source === 'carte') { setFicheIdu(null); setSource(null) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedIdu])
+  // RECETTE-1 (F3) — Réinitialiser : vide la fiche soleil + ferme la fiche parcelle + rend les deux entrées.
+  const resetAll = () => { if (selectedIdu) select(null); setFicheIdu(null); setSource(null) }
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
       <BackBar onBack={onBack} titre="☀️ Ensoleillement" />
-      {/* BARRE UNIQUE (SOCLE) → FICHE SOLEIL */}
-      <ParcelInput dataAttr="solaire-idu" placeholder="Adresse, IDU ou référence (BW0917)" onPick={setFicheIdu} />
+      {/* RECETTE-1 (F3) — Réinitialiser dès qu'une parcelle est désignée. */}
+      {ficheIdu && <div className="flex justify-end"><Reinitialiser onReset={resetAll} /></div>}
+      {/* RECETTE-1 (F2) — EntreeParcelle : adresse/IDU OU clic carte, l'une grise l'autre. */}
+      <EntreeParcelle source={source}
+        onPick={(i, src) => { setSource(src); setFicheIdu(i) }} />
       {ficheIdu && fiche.isLoading && <Squelette lignes={4} />}
       {ficheIdu && fiche.isError && <ErrorState message="Parcelle introuvable — vérifiez l’IDU." retry={() => fiche.refetch()} />}
       {ficheIdu && fiche.data && <FicheSoleil f={fiche.data} onOpen={() => select(ficheIdu)} />}

@@ -9,6 +9,8 @@ import {
 } from '../../lib/api'
 import { AddressAutocomplete } from '../AddressAutocomplete'
 import { ParcelInput } from '../ParcelInput'
+import { EntreeParcelle, type SourceParcelle } from './EntreeParcelle'   // RECETTE-1 F2
+import { Reinitialiser } from '../ui/Reinitialiser'   // RECETTE-1 F3
 import { TEMPS_MILLESIMES } from '../map/basemaps'
 import { fmtInt, fmtM2 } from '../../lib/format'
 import { iduComplet, iduCourt, estIdu } from '../../lib/format'
@@ -53,7 +55,7 @@ import { ListPaginationFooter, PAGE_SIZE } from '../ListPagination'
 import { Bouton } from '../ui/Bouton'
 import { Badge } from '../ui/Badge'   // KELFONCIER-FIX-2 (Lot D) — pastille d'état de permis (vert/rouge)
 import { Retour } from '../ui/Retour'
-import { Chevron } from '../ui/Chevron'
+// RECETTE-1 (H2) — Chevron retiré : le bloc proximité n'est plus un accordéon.
 import { Chip } from '../ui/Chip'
 
 /* ───────── primitives partagées (doctrine module : violet, bandeau honnête, liste→fiche) ───────── */
@@ -256,41 +258,33 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
               })()}
             </div>
           )}
-          {/* RETOURS-12 O5 — BANDEAU repliable : replié, une barre compacte rouvrable ; déplié, le nom +
-              les 3 chiffres + le détail. Replier libère toute la hauteur pour la LISTE des parcelles. */}
-          {bandeauReplie ? (
-            <button data-scan-bandeau-rouvrir onClick={() => setBandeauReplie(false)}
-              className="flex w-full items-center justify-between rounded-lg border border-line-2 bg-surface-2 px-3 py-1.5 text-left text-[11.5px] text-txt-dim transition-colors duration-quick hover:text-txt">
-              <span className="min-w-0 truncate"><b className="text-txt">{d['nom'] as string}</b> · {fmt(total)} parcelles</span>
-              <span className="shrink-0 text-txt-mut">détail ▾</span>
-            </button>
-          ) : (
-            <>
-              <div className="truncate text-xs font-medium text-txt-hi">{d['nom'] as string}</div>
-              {/* RETOURS-15 B5 (P10) — 4 chiffres FACTUELS et sourcés pour notaires / agences / apporteurs /
-                  architectes (plus « actionnables » ni « valorisation », qui parlaient au promoteur). La SDP
-                  résiduelle n'est plus un chiffre-titre : elle reste visible parcelle par parcelle dans la liste. */}
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  { v: fmt(d['n_parcelles'] as number), lbl: 'parcelles' },
-                  { v: fmtM2(d['surface_totale_m2'] as number | null), lbl: 'surface totale' },
-                  { v: `${fmt(d['n_terrains_nus'] as number)} / ${fmt(d['n_terrains_batis'] as number)}`, lbl: 'terrains nus / bâtis' },
-                  { v: fmt(d['n_constructible_u_au'] as number), lbl: 'en zone U ou AU' },
-                ].map((c) => (
-                  <div key={c.lbl} data-m02-kpi className="min-w-0 rounded-lg border border-line-2 bg-surface-2 px-2.5 py-2.5">
-                    <div className="num-key whitespace-nowrap text-[16px] tabular-nums text-mint">{c.v}</div>
-                    <div className="mt-0.5 text-[10px] leading-tight text-txt-mut">{c.lbl}</div>
-                  </div>
-                ))}
+          {/* RECETTE-1 (H4, Vic) — les 4 tuiles de compteurs RESTENT visibles, même quand la liste des
+              parcelles s'ouvre (avant RETOURS-12 O5 : le bandeau se repliait en barre compacte et
+              masquait les chiffres). « Voir ses parcelles » n'affecte plus que la liste + le repli du
+              bloc « Blocs contigus » ; le nom + les 4 chiffres (notaires/agences/apporteurs) restent. */}
+          <div className="truncate text-xs font-medium text-txt-hi">{d['nom'] as string}</div>
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              { v: fmt(d['n_parcelles'] as number), lbl: 'parcelles' },
+              { v: fmtM2(d['surface_totale_m2'] as number | null), lbl: 'surface totale' },
+              { v: `${fmt(d['n_terrains_nus'] as number)} / ${fmt(d['n_terrains_batis'] as number)}`, lbl: 'terrains nus / bâtis' },
+              { v: fmt(d['n_constructible_u_au'] as number), lbl: 'en zone U ou AU' },
+            ].map((c) => (
+              <div key={c.lbl} data-m02-kpi className="min-w-0 rounded-lg border border-line-2 bg-surface-2 px-2.5 py-2.5">
+                <div className="num-key whitespace-nowrap text-[16px] tabular-nums text-mint">{c.v}</div>
+                <div className="mt-0.5 text-[10px] leading-tight text-txt-mut">{c.lbl}</div>
               </div>
-            </>
-          )}
+            ))}
+          </div>
           {/* RETOURS-15 C9 — pont Blocs fonciers : les GROUPES de parcelles contiguës du propriétaire
               (même moteur que l'outil Blocs, table parcel_blocs). Ligne « Blocs contigus : N » + les
               groupes cliquables (→ fiche de leur parcelle représentative). */}
           {(() => {
             const bc = d['blocs_contigus'] as { n: number; items: { bloc_id: number; n_parcelles: number; surface_m2: number; communes: string[]; sdp_residuelle_m2: number; idu_repr: string | null }[] } | undefined
             if (!bc || bc.n === 0) return null
+            // RECETTE-1 (H4, Vic) — le bloc « Blocs contigus » se REPLIE (disparaît) quand la liste des
+            // parcelles s'ouvre (fusion ScanPatrimoine, bandeau replié) : il reprend sa place au retour.
+            if (embedded && bandeauReplie) return null
             return (
               <div data-m02-blocs className="rounded-lg border border-line-2 bg-surface-2 px-2.5 py-1.5">
                 <div className="text-[11px] font-medium text-txt-mut">Blocs contigus : <b className="text-txt">{fmt(bc.n)}</b></div>
@@ -312,7 +306,8 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
               seul), le pont historique « Voir ses opérations → » vers Veille promoteurs est conservé. */}
           {d['siren'] != null && (embedded ? (
             !bandeauReplie && (
-              <Bouton niveau="secondaire" ton="vert" data-scan-voir-parcelles onClick={() => setBandeauReplie(true)} className="w-full">
+              /* RECETTE-1 (H4, Vic) — vrai bouton PLEINE LARGEUR (primaire), marge standard. */
+              <Bouton niveau="primaire" ton="vert" data-scan-voir-parcelles onClick={() => setBandeauReplie(true)} className="mt-1 min-h-9 w-full">
                 Voir ses parcelles →</Bouton>
             )
           ) : (
@@ -604,8 +599,7 @@ export function M03() {
   // permis ouvrait d'office le 1er permis (l'utilisateur ne voyait pas le compte). Désormais on affiche
   // TOUJOURS une phrase de résultat (0 / X permis) et on laisse le client cliquer les points sur la carte.
   const [parcelIdu, setParcelIdu] = useState<string | null>(null)
-  // RETOURS-15 B1 — le bloc « N permis à moins de 200 m… » est un ACCORDÉON repliable, ouvert par défaut.
-  const [resProximiteOuvert, setResProximiteOuvert] = useState(true)
+  // RECETTE-1 (H2) — le bloc « N permis à moins de 200 m… » n'est plus un accordéon (phrase en clair).
   // RECHERCHE-2 Lot 2 — propriétaire choisi dans la barre permis → sous-panneau de ses parcelles.
   const [permisOwner, setPermisOwner] = useState<{ siren: string; nom: string } | null>(null)
   const qParcelPermis = useQuery({ queryKey: ['parcelle-permis-search', parcelIdu],
@@ -624,7 +618,7 @@ export function M03() {
   // O17 (e) — filtre géocodage appliqué à la liste ET à la carte (elles restent synchrones, item i).
   const passeGeo = (i: Record<string, any>) => geoFiltre === 'tous' || (geoFiltre === 'geo' ? !!i['geom'] : !i['geom'])
   // liste = items paginés accumulés (« voir plus ») ; la ZONE dessinée filtre les géocodés
-  const items = pages.flatMap((p) => (p['items'] ?? []) as Record<string, any>[]).filter(inZone).filter(passeGeo)
+  const radarListItems = pages.flatMap((p) => (p['items'] ?? []) as Record<string, any>[]).filter(inZone).filter(passeGeo)
   const geomInZone = (i: Record<string, any>) => !zone || pointInPolygon((i['geom'] as { coordinates: [number, number] }).coordinates, zone)
   // CARTE = points cliquables. RETOURS-17 W3 : la COULEUR SUIT L'ÉTAT (avant, tout radar était peint
   // en vert → « 47 000 verts, lit 5 580 récents », constat Vic). carteRadar = les points servis par
@@ -639,11 +633,19 @@ export function M03() {
   // FRONT-CHIFFRES-2 (F03) — `cut24` est la coupure SERVIE (`coupure_recent` = dmax − 24 mois, calculée
   // au back) : le front ne reconstruit plus la fenêtre. Sans coupure servie (base vide) → rien de récent.
   const cut24 = (baseCoupure ?? radarCoupure) ?? '9999-99-99'
+  // RECETTE-1 (H2.4, Vic) — PÉRIMÈTRE : dès qu'une parcelle est saisie (parcelIdu), tout l'outil
+  // travaille dans ses 200 m (compteurs d'état, filtre, liste, carte) ; jamais deux périmètres actifs.
+  // Classe d'état client depuis le payload /parcelle-permis : achevé = raw etat '6' ; récent = ≤ cut24.
+  const perim = !!parcelIdu
+  const perimClasse = (i: Record<string, any>): PermisEtat =>
+    i['etat'] === '6' ? 'acheve' : (String(i['date'] ?? '') >= cut24 ? 'recent' : 'autre')
   const radarEtat = (i: Record<string, any>): PermisEtat =>
     seg === 'acheve' ? 'acheve' : seg === 'autre' ? 'autre'
     : (String(i['date'] ?? '') >= cut24 ? 'recent' : 'autre')
   const _feat = (i: Record<string, any>, etat: PermisEtatCarte) => ({ type: 'Feature' as const, geometry: i['geom'],
-    properties: { kind: 'permis', etat, permit_id: i['permit_id'], label: `${i['type']} ${i['date']}` } })
+    // RECETTE-1 (H2) — commune + précision géocodage portées à la feature → lues par la BULLE (MapView).
+    properties: { kind: 'permis', etat, permit_id: i['permit_id'], label: `${i['type']} ${i['date']}`,
+      commune: i['commune'] ?? null, geoloc: i['geoloc'] ?? null } })
   // PERMIS-CHECK-2 pt 1 — parcelle CIBLÉE : la carte montre EXACTEMENT les permis de la parcelle
   // (/modules/parcelle-permis, ≤ 200 m, géolocalisés), INDÉPENDAMMENT du filtre d'état — sinon la
   // phrase « X permis » comptait la proximité (tous états) mais la carte ne peignait que le radar filtré
@@ -654,30 +656,62 @@ export function M03() {
     ? (((qParcelPermis.data as Record<string, any> | undefined)?.['items'] ?? []) as Record<string, any>[])
     : []).filter((i) => i['geom'])
   const featParcelle = (i: Record<string, any>) => ({ type: 'Feature' as const, geometry: i['geom'],
-    properties: { kind: 'permis', etat: (String(i['date'] ?? '') >= cut24 ? 'recent' : 'gris') as PermisEtatCarte,
-      permit_id: i['permit_id'], label: `${i['nature'] ?? ''} ${i['date']}`.trim() } })
+    // RECETTE-1 (H2.4) — couleur = ÉTAT du permis (récent/achevé/autre), comme le radar (plus recent/gris).
+    properties: { kind: 'permis', etat: carteEtat(perimClasse(i)),
+      permit_id: i['permit_id'], label: `${i['nature'] ?? ''} ${i['date']}`.trim(),
+      commune: i['commune'] ?? null, geoloc: i['geoloc'] ?? null } })   // RECETTE-1 (H2) — pour la bulle
+  // RECETTE-1 (H2.4) — compteurs par état DANS les 200 m + filtre + liste scopés au périmètre.
+  const perimSeg = seg === 'cours' ? 'recent' : seg === 'acheve' ? 'acheve' : seg === 'autre' ? 'autre' : 'tous'
+  const perimItems: Record<string, any>[] = perim
+    ? parcelPermisItems.filter((i) => perimSeg === 'tous' || perimClasse(i) === perimSeg)
+        .map((i) => ({ ...i, type: i['nature'] }))
+    : []
+  const perimCounts = {
+    tous: parcelPermisItems.length,
+    recent: parcelPermisItems.filter((i) => perimClasse(i) === 'recent').length,
+    acheve: parcelPermisItems.filter((i) => perimClasse(i) === 'acheve').length,
+    autre: parcelPermisItems.filter((i) => perimClasse(i) === 'autre').length,
+  }
+  const items = perim ? perimItems : radarListItems
+  // cercle 200 m discret autour de la parcelle (centroïde servi par la fiche) ; le contour de la
+  // parcelle est déjà tracé par focusParcelle. « Réinitialiser » (ci-dessous) revient à l'île.
+  const perimCentre = useQuery({ queryKey: ['perim-centre', parcelIdu], queryFn: () => getFiche(parcelIdu!), enabled: perim, staleTime: 60_000 })
+  const perimCercle = (() => {
+    const c = (perimCentre.data as { coords?: [number, number] } | undefined)?.coords
+    if (!perim || !c) return null
+    const [lon, lat] = c, dLat = 200 / 111320, dLon = 200 / (111320 * Math.cos((lat * Math.PI) / 180))
+    const pts: [number, number][] = []
+    for (let a = 0; a <= 360; a += 10) { const r = (a * Math.PI) / 180; pts.push([lon + dLon * Math.cos(r), lat + dLat * Math.sin(r)]) }
+    return { type: 'Feature' as const, geometry: { type: 'Polygon' as const, coordinates: [pts] }, properties: { kind: 'zone-iso' } }
+  })()
   useModuleMap([],
-    // W3 — `etat` (recent|dormant|gris) voyage dans les properties ; la carte peint depuis la MÊME source
-    // de couleurs que les pastilles (lib/permisEtats). En « Tous », le corail dormant est posé APRÈS le
-    // gris/vert → il prime visuellement (un PC dormant reste corail même sous un point gris).
-    featureCollection(parcelIdu
-      ? parcelPermisItems.map(featParcelle)
+    // W3 — `etat` voyage dans les properties ; la carte peint depuis la MÊME source de couleurs.
+    // RECETTE-1 (H2.4) — en périmètre : cercle 200 m + permis des 200 m colorés par état (filtrés par seg).
+    featureCollection(perim
+      ? [...(perimCercle ? [perimCercle] : []), ...perimItems.map(featParcelle)]
       : [...carteRadar.map((i) => _feat(i, carteEtat(radarEtat(i)))), ...cartePm.map((i) => _feat(i, 'dormant'))]),
-    // O17 (i) — `geoFiltre` en dép. : le filtre géocodage resynchronise la carte avec la liste.
-    // pt 1 — `parcelIdu`/données en dép. : cibler une parcelle bascule la carte sur ses permis.
-    [seg, pointMort, tous, qRadar.dataUpdatedAt, qPm.dataUpdatedAt, zone, geoFiltre, parcelIdu, qParcelPermis.dataUpdatedAt])
-  const total = pointMort ? qPmCount.data?.total : ((head?.['total'] as number) ?? 0)
-  const loaded = pages.flatMap((p) => (p['items'] ?? []) as unknown[]).length
+    // O17 (i) — `geoFiltre` ; pt 1 — `parcelIdu`/données ; H2.4 — `seg`/centre pour re-peindre le périmètre.
+    [seg, pointMort, tous, qRadar.dataUpdatedAt, qPm.dataUpdatedAt, zone, geoFiltre, parcelIdu, qParcelPermis.dataUpdatedAt, perimCentre.dataUpdatedAt])
+  const total = perim ? perimItems.length : pointMort ? qPmCount.data?.total : ((head?.['total'] as number) ?? 0)
+  const loaded = perim ? perimItems.length : pages.flatMap((p) => (p['items'] ?? []) as unknown[]).length
 
   // RETOURS-18 X1 — les cinq états (Tous + 4 partition), source unique du rendu ET des résumés d'accordéon.
   // DA-FIX-4 verif (task 1) — « Tous » TOUJOURS en dernier à droite (charte 5.2 / RETOURS-15 U3).
-  const ETATS = [
+  // RECETTE-1 (H2.4) — en périmètre, les compteurs comptent DANS les 200 m (3 classes dérivables du
+  // payload : récent / achevé / autre ; « dormant » exige le non-bâti par permis, non servi ici → fondu
+  // dans « autre »). Hors périmètre, les compteurs servis par la base (toute l'île / commune).
+  const ETATS = (perim ? ([
+    ['cours', 'Récent', 'recent', perimCounts.recent, 'autorisé ≤ 24 mois'],
+    ['acheve', 'Achevés', 'acheve', perimCounts.acheve, 'travaux déclarés (DAACT)'],
+    ['autre', 'Autres', 'autre', perimCounts.autre, 'ni récent, ni achevé'],
+    ['tous', 'Tous', null, perimCounts.tous, 'dans les 200 m'],
+  ] as const) : ([
     ['cours', 'Récent', 'recent', radarEntryTotal, 'autorisé ≤ 24 mois'],
     ['mort', 'Dormant', 'dormant', pmEntryTotal, 'ancien PC sans achèvement'],
     ['acheve', 'Achevés', 'acheve', acheveEntryTotal, 'travaux déclarés (DAACT)'],
     ['autre', 'Autres', 'autre', autreEntryTotal, 'ni récent, ni dormant, ni achevé'],
     ['tous', 'Tous', null, tousEntryTotal, 'toute la base'],
-  ] as const
+  ] as const))
   const actE = ETATS.find((e) => e[0] === seg) ?? ETATS[0]
   // résumé « Filtrer par état » replié : l'état actif + son compte (« Tous — 50 544 »).
   const resumeEtat = `${actE[1]} — ${actE[3] != null ? fmt(actE[3]) : '…'}`
@@ -719,7 +753,7 @@ export function M03() {
           // (MapView) ; si une fiche est restée ouverte sur une parcelle A (clic carte/liste), elle MASQUAIT
           // le focus B demandé ici → la carte ne bougeait pas (constat Vic). On lève la sélection stale pour
           // que la barre RECENTRE TOUJOURS sur la parcelle choisie, qu'une fiche soit ouverte ou non.
-          onSelect={(sel) => { if (sel.idu) { const c = iduComplet(sel.idu); select(null); focusParcelle(c); setParcelIdu(c) } else setFlyTo({ center: [sel.lon, sel.lat], zoom: 15 }) }}
+          onSelect={(sel) => { if (sel.idu) { const c = iduComplet(sel.idu); select(null); focusParcelle(c); setParcelIdu(c); setSeg('cours') } else setFlyTo({ center: [sel.lon, sel.lat], zoom: 15 }) }}
           // RETOURS-15 B1 — « le mot effacer disparaît ; vider le champ suffit » : vider la barre lève la
           // parcelle ciblée (et donc le bloc de proximité et les points de la carte).
           onClear={() => setParcelIdu(null)}
@@ -728,7 +762,7 @@ export function M03() {
             // RETOURS-12 O12.2 — IDU cadastral complet (14 car.) → la carte ZOOME et DÉLIMITE la parcelle
             // (focusParcelle, même geste que O1/J1) EN PLUS de chercher ses permis (O17 g).
             // pt 2 — `select(null)` d'abord : le focus barre prime sur une fiche stale (cf. onSelect).
-            if (v.length === 14 && estIdu(v)) { select(null); focusParcelle(v); setParcelIdu(v); return }
+            if (v.length === 14 && estIdu(v)) { select(null); focusParcelle(v); setParcelIdu(v); setSeg('cours'); return }
             // sinon une référence Sitadel compacte → fiche permis
             if (/^[0-9][0-9a-z]{6,}$/i.test(v)) setOpen(v)
           }} />
@@ -737,7 +771,7 @@ export function M03() {
         {permisOwner && (
           <div className="mt-1.5">
             <OwnerParcelles siren={permisOwner.siren} nom={permisOwner.nom}
-              onPick={(idu) => { const c = iduComplet(idu); select(null); focusParcelle(c); setParcelIdu(c); setPermisOwner(null) }}
+              onPick={(idu) => { const c = iduComplet(idu); select(null); focusParcelle(c); setParcelIdu(c); setSeg('cours'); setPermisOwner(null) }}
               onChanger={() => setPermisOwner(null)} />
           </div>
         )}
@@ -758,32 +792,30 @@ export function M03() {
           const nonLocTxt = nonLoc > 0 ? ` (${fmt(nonLoc)} non localisé${nonLoc > 1 ? 's' : ''}, sans point sur la carte)` : ''
           const vide = items.length === 0
           const ton = loc === 0 ? 'border-st-creuser/40 bg-st-creuser/10 text-st-creuser' : 'border-mint/50 bg-mint/10 text-mint'
-          // RETOURS-15 B1 — ACCORDÉON (Chevron de la charte), ouvert par défaut, repliable. En-tête =
-          // le compte (toujours visible) ; corps repliable = le détail « cliquez les points ». Plus de
-          // lien « effacer » (vider le champ suffit → onClear).
+          // RECETTE-1 (H2, Vic) — la phrase de résultat n'est PLUS un accordéon : le compte ET le détail
+          // (« cliquez les points » / « sur les N derniers mois ») s'affichent ensemble, en clair, sans
+          // chevron ni repli. (Remplace l'accordéon RETOURS-15 B1.) Vider le champ la lève (onClear).
           const titre = vide
             ? <>Aucun permis à moins de 200 m de <span className="font-mono">{iduCourt(parcelIdu)}</span></>
             : loc === 0
               ? <><b className="tnum">{fmt(nonLoc)}</b> permis à moins de 200 m de <span className="font-mono">{iduCourt(parcelIdu)}</span>, non localisés</>
               : <><b className="tnum">{fmt(loc)}</b> permis à moins de 200 m de <span className="font-mono">{iduCourt(parcelIdu)}</span></>
           return (
-            <div data-permis-parcelle-resultat {...(loc === 0 ? { 'data-permis-parcelle-vide': '1' } : {})}
-              className={`mt-1 rounded-lg border text-[11px] leading-snug ${ton}`}>
-              <button type="button" data-permis-proximite-toggle onClick={() => setResProximiteOuvert((o) => !o)}
-                className="flex w-full items-center gap-2 px-3 py-2 text-left">
-                <Chevron open={resProximiteOuvert} />
-                <span className="min-w-0 flex-1">{titre}</span>
-              </button>
-              {resProximiteOuvert && (
-                <div className="-mt-0.5 px-3 pb-2 pl-[30px]">
-                  {vide
-                    ? <>sur les {Math.max(...MONTHS_RADAR)} derniers mois{donneesJusquAu ? ` (Sitadel au ${donneesJusquAu})` : ''}.</>
-                    : loc === 0
-                      ? <>aucun point à afficher.</>
-                      : <>cliquez les points sur la carte{nonLocTxt}.</>}
-                </div>
-              )}
-            </div>
+            <>
+              <div data-permis-parcelle-resultat {...(loc === 0 ? { 'data-permis-parcelle-vide': '1' } : {})}
+                className={`mt-1 rounded-lg border px-3 py-2 text-[11px] leading-snug ${ton}`}>
+                <span>{titre} — </span>
+                {vide
+                  ? <>sur les {Math.max(...MONTHS_RADAR)} derniers mois{donneesJusquAu ? ` (Sitadel au ${donneesJusquAu})` : ''}.</>
+                  : loc === 0
+                    ? <>aucun point à afficher.</>
+                    : <>cliquez les points sur la carte{nonLocTxt}.</>}
+              </div>
+              {/* RECETTE-1 (H2.4, Vic) — Réinitialiser revient à l'île (quitte le périmètre 200 m). */}
+              <div className="mt-1 flex justify-end">
+                <Reinitialiser onReset={() => { setParcelIdu(null); setSeg('cours') }} label="Revenir à l'île" />
+              </div>
+            </>
           )
         })()}
       </div>
@@ -887,12 +919,15 @@ export function M03() {
           {/* RETOURS-17 W2 — pied : le vivant de la vue active (carte · zone · chargement) ; le total, les
               localisés et la date vivent dans le bloc en tête. shrink-0 : reste visible au-dessus de la liste. */}
           <p data-permis-pied className="shrink-0 px-2 pt-2 text-[11px] text-txt-dim">
-            {pointMort
+            {perim
+              /* RECETTE-1 (H2.4) — en périmètre : le compte est celui des permis dans les 200 m. */
+              ? <>{fmt(perimItems.length)} dans les 200 m de <span className="font-mono">{iduCourt(parcelIdu!)}</span></>
+              : pointMort
               ? <>{fmt(cartePm.length)} dormants sur la carte{total != null && loaded < total
                   ? <> · <span data-permis-plafond>les {fmt(loaded)} plus anciens chargés — zoomez pour affiner</span></> : ''}</>
               : <>{fmt(carteRadar.length)} sur la carte
                   {total != null && loaded < total ? <> · {fmt(loaded)} / {fmt(total)} chargés</> : null}</>}
-            {zone && <span className="text-mint/70"> · {items.length} dans la zone dessinée</span>}
+            {!perim && zone && <span className="text-mint/70"> · {items.length} dans la zone dessinée</span>}
           </p>
 
           {pointMort && qPm.isLoading && <Squelette bloc className="py-8" />}
@@ -912,7 +947,7 @@ export function M03() {
           const gaucheL2 = commuLbl || (iduLbl ? `Parcelle ${iduLbl}` : '')
           // RETOURS-17 W3 — la pastille de la LIGNE = la couleur de son ÉTAT (source unique lib/permisEtats),
           // la MÊME que le point sur la carte : Récent vert · Dormant corail · Achevé/Autre gris.
-          const et: PermisEtat = pointMort ? 'dormant' : radarEtat(i)
+          const et: PermisEtat = perim ? perimClasse(i) : pointMort ? 'dormant' : radarEtat(i)
           const etTitre = { recent: 'Récent — autorisé dans les 24 derniers mois.',
             dormant: 'Dormant — permis de construire de plus de 36 mois, sans déclaration d\'achèvement (DAACT) et parcelle toujours non bâtie.',
             acheve: 'Achevé — travaux déclarés terminés (DAACT).',
@@ -942,17 +977,12 @@ export function M03() {
                 coupée ») ; le chip « Autorisé » n'arrive plus (état 2 muet côté serveur : constant
                 au 974, l'information vit dans la phrase d'explication en tête d'outil). */}
             <span className={`flex shrink-0 items-center gap-1.5 ${gaucheL2 ? '' : 'ml-auto'}`}>
-              {/* RETOURS-14 S5.1 — un permis à parcelle incertaine ne pose JAMAIS de point : la
-                  liste le dit. RETOURS-15 U4 — libellé COURT, le complet vit dans l'infobulle. */}
-              {!i['geom'] && <span data-permis-badge-nongeo className="whitespace-nowrap rounded-full bg-st-creuser/15 px-1.5 py-0.5 text-[9px] font-medium text-st-creuser">
-                {i['geoloc'] ? 'approx. (adresse)' : 'non localisé'}</span>}
+              {/* RECETTE-1 (H2, Vic) — les pastilles « approx. (adresse) » / « non localisé » et « autorisé »
+                  (état_libelle) qui DÉBORDAIENT sont retirées de la ligne ; la précision du géocodage passe
+                  dans la BULLE du point sur la carte. On garde le point de couleur d'état (à gauche) et le
+                  badge « Sans DAACT » du mode Dormant (information propre, pas un débordement). */}
               {!pointMort && i['delai_mois'] != null && <span style={{ color: VIOLET }}>{String(i['delai_mois'])} m</span>}
-              {pointMort
-                ? <span data-permis-badge-mort className="whitespace-nowrap rounded-full bg-st-ecartee/15 px-1.5 py-0.5 text-[9px] font-medium text-st-ecartee">Sans DAACT{ans != null ? ` · ${ans} an${ans > 1 ? 's' : ''}` : ''}</span>
-                /* KELFONCIER-FIX-2 (Lot D) — pastille d'état par la MÊME fonction que la fiche
-                   (etat_libelle/annule servis par /permis) : annulé → rouge, autorisé / travaux
-                   commencés / achevés → vert. Absent (dormant / non servi) : pas de pastille. */
-                : i['etat_libelle'] && <Badge data-permis-etat ton={i['annule'] ? 'rouge' : 'vert'}>{i['etat_libelle'] as string}</Badge>}
+              {pointMort && <span data-permis-badge-mort className="whitespace-nowrap rounded-full bg-st-ecartee/15 px-1.5 py-0.5 text-[9px] font-medium text-st-ecartee">Sans DAACT{ans != null ? ` · ${ans} an${ans > 1 ? 's' : ''}` : ''}</span>}
             </span>
           </button>
           )
@@ -1149,23 +1179,27 @@ const TEMPS_KEYS = TEMPS_MILLESIMES.map((m) => m.key) as string[]
 export function M08() {
   const { cmpLeft, setCmpLeft, setCmpRight, parcelPrefill, setParcelPrefill, setFlyTo, setTempsPinIdu } = useApp()
   const [idu, setIdu] = useState('')
+  // RECETTE-1 (F2) — quelle entrée a désigné la parcelle (grise l'autre dans EntreeParcelle).
+  const [source, setSource] = useState<SourceParcelle>(null)
   // « après » = TOUJOURS aujourd'hui (verrouillé) ; « avant » démarre sur 1950 si hors frise.
   useEffect(() => {
     setCmpRight('bm-ortho-now')
     if (!TEMPS_KEYS.includes(cmpLeft)) setCmpLeft('bm-ortho-1950')
   }, [])   // eslint-disable-line react-hooks/exhaustive-deps
-  const designer = async (code: string, coords?: [number, number]) => {
+  const designer = async (code: string, src: 'adresse' | 'carte', coords?: [number, number]) => {
     const c = code.trim(); if (c.length < 10) return
-    setIdu(c)
+    setIdu(c); setSource(src)
     setTempsPinIdu(c)   // épingle le contour de LA parcelle sur les deux fonds
     if (coords) { setFlyTo({ center: coords, zoom: 18 }); return }
     try { const f = await getFiche(c); if (f.coords) setFlyTo({ center: f.coords, zoom: 18 }) } catch { /* parcelle recentrée au mieux */ }
   }
-  // parcelPrefill (fiche « 1950 », clic carte via parcelAt, Copilote) → désigne la parcelle.
+  // parcelPrefill (fiche « 1950 », clic carte via parcelAt, Copilote) → désigne la parcelle (source carte).
   useEffect(() => {
-    if (parcelPrefill) { void designer(parcelPrefill); setParcelPrefill(null) }
+    if (parcelPrefill) { void designer(parcelPrefill, 'carte'); setParcelPrefill(null) }
   }, [parcelPrefill])   // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => () => setTempsPinIdu(null), [])   // eslint-disable-line react-hooks/exhaustive-deps
+  // RECETTE-1 (F3) — Réinitialiser : vide la parcelle épinglée + rend les deux entrées + remet l'année ancienne au défaut.
+  const resetAll = () => { setIdu(''); setSource(null); setTempsPinIdu(null); setCmpLeft('bm-ortho-1950') }
 
   // DA-FIX-2 Lot 2 (DA-004) — OMNIBOX PERMANENTE : le champ « désigner la parcelle » reste EN TÊTE,
   // même une fois la parcelle choisie (plus de bandeau + « changer » qui la masquaient). La frise des
@@ -1175,10 +1209,14 @@ export function M08() {
       <Banner>La <b>parcelle d'abord</b> : son IDU, une adresse, ou <b>cliquez-la sur la carte</b>. Puis
         choisissez l'année à revoir — l'« après » est toujours aujourd'hui.</Banner>
       <div className="flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2 p-3">
-        <p className="label-caps text-[9.5px]">Quelle parcelle voir évoluer ?</p>
-        {/* PATRON OMNIBOX (M137) — adresse OU IDU dans le même champ, via ParcelInput partagé */}
-        <ParcelInput dataAttr="temps-idu" placeholder="Adresse, IDU ou référence (BW0917)"
-          onPick={(id) => void designer(id)} />
+        <div className="flex items-center gap-1.5">
+          <p className="min-w-0 flex-1 label-caps text-[9.5px]">Quelle parcelle voir évoluer ?</p>
+          {/* RECETTE-1 (F3) — Réinitialiser dès qu'une parcelle est désignée. */}
+          {idu && <Reinitialiser onReset={resetAll} />}
+        </div>
+        {/* RECETTE-1 (F2) — EntreeParcelle : adresse/IDU OU clic carte, l'une grise l'autre. */}
+        <EntreeParcelle source={source}
+          onPick={(id, src) => void designer(id, src)} />
       </div>
       {!idu ? (
         <p className="text-[11px] text-txt-mut">Accès direct depuis toute fiche : bouton « 1950 ».</p>

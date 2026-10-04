@@ -166,9 +166,12 @@ export function PluAnnuaire() {
             </p>
             <div className="flex gap-2">
               {/* RETOURS-5 T6 — plus d'autoFocus (même correction que « Étudier un bien ») : bord neutre au repos. */}
+              {/* RECETTE-1 (H1, Vic) — placeholder RACCOURCI : « dans <commune> » était redondant (la
+                  phrase au-dessus le dit déjà) et se faisait COUPER dans le champ étroit sur les noms de
+                  commune longs. Reste l'exemple seul, qui tient toujours. */}
               <input data-plu-q value={q} onChange={(e) => setQ(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') run() }}
-                placeholder={`dans ${nomInsee(insee)} — ex. hauteur de clôture`}
+                placeholder="ex. hauteur de clôture"
                 className="min-w-0 flex-1 rounded-md border border-line-2 bg-surface-3 px-2.5 py-1.5 text-[12px] text-txt focus:border-mint focus:outline-none" />
               <Bouton niveau="secondaire" ton="vert" onClick={run} disabled={q.trim().length < 2 || m.isPending}
                 className="shrink-0 whitespace-nowrap">

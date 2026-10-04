@@ -248,3 +248,175 @@ screenshot MCP expire à 5 s sur ce poste — constat récurrent des mandats pr�
 
 > Captures de Vic : **5** présentes dans `captures-vic/` (le mandat en annonce ~20 ; les points se
 > lisent sans elles, comme prévu). Signalé, non bloquant.
+
+---
+
+## Session 3 (`fix/recette-1c`) — Lot F : le reste des outils (pattern F appliqué/jugé par outil)
+
+**Règle tenue** : 0 valeur servie changée (aucune ligne CHANGEMENTS.csv — ce sont des changements de
+STRUCTURE d'état/affordance, pas de valeur), run-safe. `tsc` 0 sur mes 9 fichiers (⚠ voir note maplibre),
+`vitest` **230 verts**.
+
+**Invariant du pattern (corrigé cette session)** : `source='carte'` ne doit JAMAIS être posé tant que
+`selectedIdu` est faux — sinon l'effet F1 (« fermer la fiche vide l'outil ») se déclenche AU MONTAGE et
+efface une parcelle pré-remplie par une PORTE (calcPrefill, solairePrefill…). Les portes laissent donc
+`source=null` (parcelle chargée, les deux entrées restent actives jusqu'au Réinitialiser). Bug attrapé par
+les tests ProspectionSolaire ; corrigé aussi dans Calculette (même schéma).
+
+### Outils RÉÉCRITS au pattern F cette session
+- **Calculette foncière** (`CalculetteFonciere.tsx`) — F1/F2/F3. Couplée à `selectedIdu` (comme Taxe),
+  porte `calcPrefill` conservée (source=null). `{fiche:true}` au pick.
+- **Remonter le temps M08** (`ModulePanel.tsx`) — F2 (EntreeParcelle, `designer(id, src)`) + F3
+  (Réinitialiser : vide `tempsPinIdu` + remet l'année ancienne à 1950). Carte-centré via `parcelPrefill`
+  (source='carte'). **= le « H9 »** (le reste de M08 — frise, épingle — était déjà en place).
+- **Étude de zone** (`EtudeZone.tsx`) — F3/F4. `nouvelleEtude` scindé : `resetEtude` (Réinitialiser,
+  reste dans la porte) + `nouvelleEtude` (`← Changer la zone`, retour accueil 2 portes). Le bouton
+  « Nouvelle étude » du bas devient le Réinitialiser unique. **H8 « fusion 2 chemins »** : les deux
+  entrées (point / polygone) alimentent DÉJÀ un seul pipeline de résultat (en-tête qui nomme le périmètre
+  réel) → la fusion était faite ; F la rend cohérente côté reset.
+- **Prospection solaire** (`ProspectionSolaire.tsx`) — F2/F3 dans **Ensoleillement** (EntreeParcelle +
+  Réinitialiser + adoption `selectedIdu`). F4 déjà là (2 cartes d'entrée + BackBar). **Piscines** garde
+  son « Toute l'île » (clear commune) + reset auto au changement de commune — pas de reset fait-main à
+  unifier. **= H13** (les 2 métiers/2 entrées existaient déjà ; F complète Ensoleillement).
+- **Comparer** (`compare/ComparePanel.tsx`) — F3 : « tout vider » → Réinitialiser unique en tête. Multi-add
+  (jusqu'à 3) ⇒ PAS d'EntreeParcelle (le champ cumule, il ne « grise » pas). **H6 colonnes** déjà en place.
+- **Blocs fonciers** (`Blocs.tsx`) — F3 : Réinitialiser (remet TOUS les filtres au défaut + replie le
+  listing + ferme la fiche). Entrée commune+filtres ⇒ PAS d'EntreeParcelle.
+- **Successions** (`Successions.tsx`) — F3 : Réinitialiser (revient « toute l'île » + ferme la fiche).
+  Entrée commune ⇒ PAS d'EntreeParcelle.
+- **Pièges & risques** (`blocB.tsx` `O5Servitudes`) — F2 (EntreeParcelle : champ → `allerA` zoom SANS
+  ouvrir la fiche ; clic carte → effet `selectedIdu` qui analyse + ouvre) + F3. F1 déjà inhérent (le
+  wrapper `Risques` remonte O5 par `key={selectedIdu}`). **= « F1 scénario 2 »**.
+- **Assemblage M16** (`moteurs.tsx`) — F3 : « vider » → Réinitialiser (vide `msel` + anneaux voisines +
+  résultat). Multi-sélection (`msel`) ⇒ PAS d'EntreeParcelle (clic-carte cumule). **H5 « garde msel DANS
+  l'outil »** : `msel` est bien store-local à l'outil (purgé au démontage, GB-010). La « refonte en étapes »
+  détaillée demande le texte recette de Vic (non persisté) — voir § H à spécifier.
+
+### Outils JUGÉS déjà conformes F (aucun code changé, motivé)
+- **Scan patrimoine** (H4) — owner-centric, `ParcelInput` multi-callback (onPick/onProprietaire/onAddress)
+  → EntreeParcelle ne convient pas. F4 **déjà** là (`Retour` des 2 portes + « changer » = reset du
+  propriétaire). F1 via `setModule`/ponts consommés. Conforme en l'état.
+- **Communes** (H3) & **Plu** (H1) — hubs multi-niveaux (portes + `Retour`), entrée commune/zone, pas de
+  parcelle unique ni de reset fait-main. F4 **déjà** satisfait. Conformes en l'état.
+- **Permis M03** (H2) & **Courrier M09** (H16) — radar / flux multi-destinataires guidé : pas d'entrée
+  « une parcelle » (M03 = AddressAutocomplete large ; M09 = liste de destinataires), pas de reset fait-main
+  (« effacer » déjà retiré par RETOURS-15, « vider le champ suffit »). F2/F3 ne s'appliquent pas ; F1/F4
+  déjà couverts (setModule / stepper+Retour). **H2/H16 = items recette à part** (texte non persisté).
+- **Mon secteur** (S1) — `hidden` (contenu déplacé dans la fiche §Marché) : laissé tel quel.
+- **Faisabilité** (H10) — dans la FICHE (`fiche/constructibilite.tsx`), pas un module. Non touché.
+
+### ⚠ À SPÉCIFIER par Vic (bloquant pour faire « juste »)
+Le **détail** des points H (H1,H2,H3,H5-refonte,H9,H13-refonte-piscines,H14,H15,H16) n'est persisté NULLE
+PART — seules les descriptions d'une ligne du présent rapport existent (le texte recette original est dans
+la session d'origine, perdu). J'ai appliqué **F partout où il s'applique** + les H **évidents dans le code**.
+Les « refontes » (H5 étapes, H13 piscines) et les H non décrits ont besoin du texte de Vic.
+
+### ⚠ maplibre / node_modules symlinké
+Mi-session, `tsc` a mis à sortir des erreurs `maplibre-gl` (« no default export ») dans `map/*` et
+`TimeMachine.tsx` — **fichiers NON touchés par moi**. `node_modules` est un **symlink vers le worktree
+principal** `~/Desktop/labuse/frontend/node_modules`, réécrit par une autre session/worktree pendant le
+mandat (drift de version maplibre). Mes 9 fichiers compilent proprement ; `vitest` 230 verts. Env, pas mon
+code — à re-vérifier `tsc` quand le node_modules partagé est stable.
+
+### RESTE (ordre Vic) : **G + reste de H (si Vic fournit le détail) → B**
+B = vitesse carte : **NON commencé** ; exige l'API relancée + `pg_stat_activity` vérifié d'abord
+(CHASSE-FIX-1 partage la base). API/front PAS lancés cette session (travail purement front/tsc/vitest).
+
+---
+
+## Session 4 (`fix/recette-1c`) — H1–H4 corrigés (Vic : « pas déjà conformes ») sur les parties FRONT
+
+Vic a fourni le détail H1–H4 + répondu à 8 points d'arbitrage. ⚠ Le texte **H5→H16 + Lot G** n'est
+**toujours pas parvenu** (attachement puis gros collage : seul le texte autour arrive de mon côté — les
+blocs collés/pièces jointes sont tronqués dans mon contexte). À redonner en **texte simple dans le message**.
+
+Commits `853aa478` (H1/H2 sans ambiguïté) + `b66c425f` (H2/H4 front). tsc 0, vitest **230**.
+
+### FAIT (front, vérifié)
+- **H1 PLU** — (1) « les vérifications » : `VerifProcedure` (onglet *Par parcelle*) passe au pattern F
+  (EntreeParcelle + Réinitialiser + adoption/clear `selectedIdu`). (2) placeholder annuaire coupé →
+  raccourci « ex. hauteur de clôture » (le « dans <commune> » redondant + tronqué sur noms longs).
+- **H2 Permis** — (1) **phrase ≤ 200 m sans accordéon** (compte + détail en clair). (3) **pastilles
+  retirées** : « approx. (adresse) »/« non localisé » et le badge « autorisé » (état_libelle) retirés de la
+  ligne ; **point de couleur d'état gardé** ; précision du géocodage **déplacée dans la bulle**. (bulle↓)
+  **BULLE au clic** sur le point permis (MapView) : nature+date+état+commune+précision + « détails → »
+  (ouvre le drawer) — comme opérations/concurrents. `commune`/`geoloc` portés à la feature.
+- **H4 Scan patrimoine** — (a) « Voir ses parcelles → » = **vrai bouton primaire pleine largeur** (marge
+  standard). (b) le bloc **« Blocs contigus » se replie** quand la liste s'ouvre ; **les 4 tuiles de
+  compteurs RESTENT** (la barre compacte qui les masquait est supprimée) ; liste **en surbrillance carte**
+  (useModuleMap, déjà là). (c) retour **« ← Scan patrimoine » gardé APRÈS recherche** (état 2).
+
+### RESTE H1–H4 — besoin de l'API/DB (à grouper avec B)
+- **H2 (2) périmètre 200 m** : quand une parcelle est saisie → les compteurs d'état **comptent dans les
+  200 m**, le filtre s'applique dans ce périmètre, la carte ne montre **que** ces permis colorés par état ;
+  dessin **contour parcelle + cercle 200 m discret** ; **Réinitialiser revient à l'île**. ⇒ vérifier les
+  champs servis par `/modules/parcelle-permis` (classification d'état par item) + dessin cercle (centroïde).
+- **H3 Communes** : (7) **diagnostiquer chaque trou** de l'évolution (ex. 2024T1 ancien vide alors que
+  terrain = 449 ventes = bug requête ; permis vides 2024T1-T3 ; 2026 vide = DVF non publié) → corriger le
+  bug / expliquer le vrai trou ; en-tête = **nombre de lignes réellement affichées** (11, pas « 8 trim. »).
+  (8) **cadence Radar** : vérifier que la capture tourne chaque jour (page « dernière capture 27/09 » un
+  4 oct → dire pourquoi) ; le bloc Marché des annonces **affiche la date de dernière capture**.
+
+### Toujours bloquant
+- **H5→H16 + Lot G** : texte non reçu (voir ⚠ ci-dessus). Impossible de faire « juste » sans.
+- **API non lancée** : la relance passe la migration `origine` (verrou exclusif sur base partagée
+  CHASSE-FIX-1) = geste Vic. H2-périmètre / H3 / B l'exigent → **green-light + état migration `origine`
+  attendus de Vic** avant de démarrer l'API (puis `pg_stat_activity` vérifié, pas de mass-kill).
+
+---
+
+## Session 5 (`fix/recette-1c`) — mandat complet reçu (`MANDAT-RECETTE-1-GH.md`) ; H1–H4 FINIS, API up
+
+Le mandat G + H1→H16 est enfin lisible (fichier `MANDAT-RECETTE-1-GH.md`, fait foi). Feu vert API donné
+(colonne `origine` déjà en base, aucune migration). API 8695 relancée après vérif `pg_stat_activity`
+(0 requête > 30 s sur `parcels`) ; jamais de backend tué. Ordre Vic : **H2-périmètre + H3 → H5→H16 → G → B**.
+
+**H1–H4 FINIS** (commits `853aa478` · `b66c425f` · `bee676d5` · `9c049309`) — tsc 0, vitest 230, vérifiés
+sur l'API réelle :
+- **H1 PLU** : VerifProcedure → pattern F ; placeholder annuaire raccourci. (reste H1.1-3 = Protocole G.)
+- **H2 Permis** : phrase ≤200 m sans accordéon · bulle au clic sur le point (MapView) · pastilles
+  « approx./autorisé » retirées (point d'état gardé) · **périmètre 200 m** (compteurs/filtre/liste/carte
+  scopés, cercle 200 m + contour, « Revenir à l'île »). (reste H2.1-2 complétude/exactitude = Protocole G.)
+- **H3 Communes** : évolution — **axe de trimestres commun** (axis_min) corrige les faux trous (2024T1
+  ancien 957 ventes, permis 2024T1-T3) ; vrais trous 2026 expliqués (DVF jusqu'au 2025T4) ; en-tête = nb
+  lignes réelles (11). Radar — **date de dernière capture** affichée (27/09, 7 j de retard au 04/10) ;
+  **la capture passe par l'EXTENSION Mac (RADAR-AUTO-1), pas un cron VPS** → la « cadence VPS » du mandat
+  n'existe pas ; la staleness est désormais visible. (reste H3.1 Protocole G 4 chemins.)
+- **H4 Scan** : « Voir ses parcelles » vrai bouton primaire pleine largeur · bloc « Blocs contigus » se
+  replie à l'ouverture de la liste · **4 tuiles de compteurs gardées** (barre compacte supprimée) · retour
+  « ← Scan patrimoine » après recherche · surbrillance carte (useModuleMap, déjà là).
+
+### RESTE (ordre Vic) : H5→H16 (UI + Protocole G), puis Lot G, puis B
+- **UI refontes** encore à faire : **H5** Assemblage (refonte en étapes 1/2, 8 max, contiguïté/isolées,
+  retirer voisines + bouton courrier), **H6** Comparer (2ᵉ colonne trop large → colonnes égales), **H7**
+  Méthode & limites (texte = sources lues + rond flèche contrasté), **H8** Étude de zone (fusion 1 entrée
+  parcelle + choix « zone seule / zone + chalandise », retirer « temps de trajet », auto-ouverture étape 2),
+  **H9** Temps (bouton « 1980 carte » : corriger WMTS ou retirer), **H10** Faisabilité (3D→Gabarit, pied
+  retiré, bloc règles mis en valeur, Réinit), **H13** Solaire piscines (« N confirmées · N à confirmer »
+  24 communes, retirer plafond 1 000 → pagination 50, parcelles colorées, retirer colonne m²).
+- **Lot G** (protocole de branchement) : **gros audit** — pour CHAQUE outil, chaque chiffre/libellé relié
+  à son id registre (V5f) + ligne BRANCHEMENT.csv, recalcul SQL/fonction sur 3 témoins (Saint-Paul ·
+  Bras-Panon · Saint-Denis pour les outils commune), écarts→bug→fix→test, V6b complété. Livrable
+  `BRANCHEMENT-OUTILS.csv`. = effort multi-session (H12/H14/H15/H16 = Protocole G seul).
+- **B** vitesse carte : en dernier.
+
+⚠ API 8695 laissée up (mandat en cours, feu vert Vic). À arrêter en vraie fin de session.
+
+---
+
+## Session 6 (`fix/recette-1c`) — H5 Assemblage FINI (refonte + Protocole G cité)
+
+- **H5.2/H5.3 refonte** (commit `9a354425`) : Assemblage en **étapes** (modèle Comparer communes).
+  Étape 1 « Choisir les parcelles » (EntreeParcelle adresse/clic carte + liste ✕, **8 max** avec message,
+  « Vérifier l'assemblage ») ; Étape 2 « Assemblage » — contiguës → en-tête « N contiguës · surface
+  totale » + bilan ; **non contiguës → « Pas d'assemblage possible » + parcelles isolées, rien d'autre**
+  (back renvoie `isolees`). Réinitialiser vide la liste. **Retiré** : section « parcelles voisines »
+  (rings/voisines) + bouton « Préparer courrier propriétaire ». tsc 0, vitest 231 (Assemblage.test réécrit).
+- **H5.1 Protocole G** (commit `07b9e30c`, `BRANCHEMENT-OUTILS.csv`) : chaque chiffre tracé à sa fonction.
+  SDP/charge/logements = `aggregate_assiette` → `fiche_payload` + `_capacite_union` (**même moteur que la
+  fiche, sur l'UNION des géométries** — vérifié `assemblage.py:244`, jamais la somme des résiduels) → cité
+  CALCULS-AUDIT-1 (non recalculé, conformément au mandat). NB : l'Assemblage affiche la **charge** foncière
+  (bilan d'opération), pas la **taxe** foncière annuelle. 0 écart.
+
+**Avancement mandat** : G + H1·H2·H3·H4·H5·H11 faits. **Reste** H6·H7·H8·H9·H10·H12·H13·H14·H15·H16
+(UI + Protocole G par outil, `BRANCHEMENT-OUTILS.csv` à étendre), puis **B** (vitesse carte).

@@ -4,7 +4,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
 import { useApp } from '../../store/useApp'
-import { ParcelInput } from '../ParcelInput'
+import { EntreeParcelle, type SourceParcelle } from './EntreeParcelle'   // RECETTE-1 F2
+import { Reinitialiser } from '../ui/Reinitialiser'   // RECETTE-1 F3
 import { Squelette } from '../Loading'
 import { EmptyState, ErrorState } from '../States'
 import { Tip } from '../Tip'
@@ -36,8 +37,17 @@ type Servitudes = {
 export function O5Servitudes() {
   const { selectedIdu, select, focusParcelle } = useApp()
   const [idu, setIdu] = useState(selectedIdu ?? '')
+  // RECETTE-1 (F2) — quelle entrée a désigné la parcelle (grise l'autre). INVARIANT : 'carte' seulement
+  // quand la parcelle vient de selectedIdu. (Le wrapper Risques remonte O5 à chaque selectedIdu → F1 inhérent.)
+  const [source, setSource] = useState<SourceParcelle>(selectedIdu ? 'carte' : null)
   const [methodeOuverte, setMethodeOuverte] = useState(false)   // RETOURS-15 D6 — accordéon charte, fermé par défaut
-  useEffect(() => { if (selectedIdu) setIdu(selectedIdu) }, [selectedIdu])
+  useEffect(() => {
+    if (selectedIdu && selectedIdu !== idu) { setIdu(selectedIdu); if (source == null) setSource('carte') }
+    else if (selectedIdu == null && source === 'carte') { setIdu(''); setSource(null) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedIdu])
+  // RECETTE-1 (F3) — Réinitialiser : vide l'analyse + la surbrillance + rend les deux entrées.
+  const resetAll = () => { if (selectedIdu) select(null); setIdu(''); setSource(null) }
   // PIEGES-RISQUES-1 pt2 — la saisie (adresse/IDU/réf courte) doit AMENER SUR la parcelle : zoom +
   // surbrillance de son contour, sans ouvrir la fiche (ça fermerait l'outil). Même geste que Permis
   // (PERMIS-CHECK-2) : `select(null)` AVANT `focusParcelle` — la carte cible `selectedIdu ?? focusIdu`,
@@ -54,14 +64,18 @@ export function O5Servitudes() {
       {/* RETOURS-12 O3 — intro DESCRIPTIVE : ce que l'outil montre. L'aveu « ce que nos données ne
           couvrent pas » quitte l'accueil client ; la limite vit désormais dans « Méthode & limites »
           (replié, plus bas). */}
-      <Banner>Ce qui peut bloquer un projet sans se voir sur la carte : servitudes, sols, bruit,
-        assainissement. Chaque servitude est nommée, datée et sourcée.</Banner>
-      {/* PATRON OMNIBOX (M137) — adresse OU IDU dans le même champ (ParcelInput partagé). RETOURS-15 B8
-          — withCarte=false : le clic carte est capté par l'effet selectedIdu ci-dessus (il analyse ET
-          ouvre la fiche) ; on ne laisse pas l'auto-consommation du socle rappeler `allerA` (qui ferait
-          select(null) et refermerait la fiche). RETOURS-15 D2 — `inviteCarte` réaffiche l'invite
-          « ou cliquez une parcelle sur la carte » (le second geste existe, il doit se voir). */}
-      <ParcelInput dataAttr="o5-idu" withCarte={false} inviteCarte placeholder="Adresse, IDU ou référence (BW0917)" onPick={allerA} />
+      <div className="flex items-start gap-1.5">
+        <div className="min-w-0 flex-1">
+          <Banner>Ce qui peut bloquer un projet sans se voir sur la carte : servitudes, sols, bruit,
+            assainissement. Chaque servitude est nommée, datée et sourcée.</Banner>
+        </div>
+        {/* RECETTE-1 (F3) — Réinitialiser dès qu'une parcelle est désignée. */}
+        {idu && <Reinitialiser onReset={resetAll} />}
+      </div>
+      {/* RECETTE-1 (F2) — EntreeParcelle : adresse/IDU (→ allerA : zoom + contour SANS ouvrir la fiche)
+          OU clic carte (capté par l'effet selectedIdu : il analyse ET ouvre la fiche). */}
+      <EntreeParcelle source={source}
+        onPick={(i, src) => { setSource(src); allerA(i) }} />
       {q.isLoading && <Squelette lignes={4} />}
       {q.isError && <ErrorState className="py-6" message="Servitudes indisponibles." retry={() => q.refetch()} />}
       {d && (

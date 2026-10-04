@@ -206,6 +206,9 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
       ) : (
         /* ───────── ÉTAT 2 — propriétaire trouvé : encart en tête + onglets soulignés. ───────── */
         <>
+          {/* RECETTE-1 (H4, Vic) — le retour « ← Scan patrimoine » reste APRÈS la recherche (palier F4) :
+              on revient aux deux portes, pas seulement « changer » de propriétaire. */}
+          <Retour data-scan-retour-portes label="Scan patrimoine" onClick={() => setPorte(null)} />
           {/* U1.5 — encart propriétaire : raison sociale + SIREN + « changer » (retour état 1). */}
           <div data-scan-owner className="flex items-center justify-between gap-2.5 rounded-lg border border-line-2 bg-surface-3 px-3 py-2">
             <div className="min-w-0">
