@@ -234,7 +234,11 @@ def assemblage(body: AssemblageIn, db: Session = Depends(get_db)) -> dict:
                   + 20 * min(1, 2 / max(1, len(owners_pm) + n_particuliers))
                   + (10 if tous_pm else 0) + 25 * min(1, sdp / 3000)))
     return {
-        "n": len(rows), "contigu": contigu, "surface_totale_m2": agg["surface_cumulee_m2"],
+        "n": len(rows), "contigu": contigu,
+        # RECETTE-1 (H5, Vic) — les parcelles ISOLÉES (hors du bloc d'un seul tenant de la 1ʳᵉ parcelle) :
+        # l'étape 2 les nomme quand « pas d'assemblage possible » (elles ne se touchent pas).
+        "isolees": [r["idu"] for r in rows if r["id"] not in seen],
+        "surface_totale_m2": agg["surface_cumulee_m2"],
         "tronquee": tronquee, "cap": cap,
         # #1 — capacité + bilan cumulés RÉELS (fiche_payload agrégé)
         "sdp_combinee_m2": sdp, "sdp_max_seule_m2": sdp_max_seule,
