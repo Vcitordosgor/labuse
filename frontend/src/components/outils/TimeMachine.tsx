@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import * as maplibregl from 'maplibre-gl'
+import maplibregl from 'maplibre-gl'
 import { useEffect, useRef, useState } from 'react'
 import { getParcelGeojson, getParcelsGeojson, getParcellaireEpoque, parcelAt } from '../../lib/api'
 import { useApp } from '../../store/useApp'
@@ -41,7 +41,7 @@ function applyBasemap(m: maplibregl.Map, def: BasemapDef) {
 
 function muteTileErrors(m: maplibregl.Map) {
   m.on('error', (e) => {
-    const msg = String(e.error?.message ?? '')
+    const msg = String((e as { error?: Error }).error?.message ?? '')
     if (/AJAXError|40[04]/.test(msg)) return
     console.error(e.error ?? e)
   })

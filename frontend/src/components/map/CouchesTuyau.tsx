@@ -3,7 +3,7 @@
 // dès la vue île (aucun bandeau d'attente, aucun « Zoomez »). Un échec de tuile est signalé sur la
 // ligne de la couche, jamais muet. ADDITIF : ne touche à aucune couche existante.
 import { useEffect, useMemo, useRef, useState } from 'react'
-import * as maplibregl from 'maplibre-gl'
+import maplibregl from 'maplibre-gl'
 import { useQuery } from '@tanstack/react-query'
 import { useApp } from '../../store/useApp'
 import { LayerRowUI } from '../panel/LayerRowUI'   // COUCHES-RECETTE-2 B2 : composant de ligne partagé
