@@ -107,8 +107,11 @@ export function O5Servitudes() {
             <details data-o5-methode open={methodeOuverte}
               onToggle={(e) => setMethodeOuverte((e.target as HTMLDetailsElement).open)}
               className="group rounded-lg border border-line-2 bg-surface-2">
-              <summary className="hover-fill flex cursor-pointer list-none items-center gap-1.5 rounded-lg px-3 py-2 text-[10.5px] text-txt-dim">
-                <Chevron open={methodeOuverte} />
+              {/* RECETTE-1 H7.2 — chevron `boite` (charte) : sur une barre à fond plein survolée, le
+                  conteneur du chevron reste CONTRASTÉ et le glyphe lisible (fini le « rond invisible,
+                  vert sur vert »). C'est le variant prévu pour les en-têtes d'accordéon sur .hover-fill. */}
+              <summary className="hover-fill group flex cursor-pointer list-none items-center gap-1.5 rounded-lg px-3 py-2 text-[10.5px] text-txt-dim">
+                <Chevron open={methodeOuverte} boite />
                 <b className="text-txt-mut">Méthode et limites</b>
               </summary>
               <div className="space-y-0.5 border-t border-line px-3 pb-2 pt-1.5">
