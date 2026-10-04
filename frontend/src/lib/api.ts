@@ -1022,7 +1022,9 @@ export const getSolaireFiche = (idu: string) =>
   j<SolaireFiche>(`/modules/prospection-solaire/parcelle/${idu}`)
 // SOLAIRE (refonte) — mode Piscines : AGRÉGATS de la détection (île + par commune). Décomptes, jamais recalcul.
 export interface PiscinesAgregat {
-  total: number; communes: { commune: string; n: number }[]; source: string; maj: string
+  // RECETTE-1 H13.1 — par commune, les DEUX bandes : `confirmees` (servie) et `a_confirmer`. `n` reste
+  // le total gouverné par la bascule (compat). L'écran liste les 24 communes avec les deux comptes.
+  total: number; communes: { commune: string; n: number; confirmees?: number; a_confirmer?: number }[]; source: string; maj: string
   // RETOURS-11F M12 — bandes de confiance + corrections « pas une piscine »
   confiance?: { haute: number; incertaines: number; seuil_haute: number; inclure_incertaines: boolean }
   corrigees?: number
@@ -1044,12 +1046,14 @@ export interface PiscineItem {
   source: 'flair' | 'cosia' | 'flair+cosia'; statut: 'servie' | 'a_confirmer' | 'ecartee'
   proprio: { type: 'personne_morale'; denomination: string; siren: string | null } | { type: 'particulier' }
 }
-export interface PiscinesListe { total: number; n: number; cap?: number; tronquee?: boolean; items: PiscineItem[]; maj: string; source: string }
-export interface PiscinesFiltres { commune?: string | null; statut?: 'servie' | 'tous'; surfMin?: number; proprio?: 'tous' | 'pm' | 'pp' }
+// RECETTE-1 H13.2 — pagination SERVEUR par 50 (`limit`/`offset`, `a_suite` = reste-t-il une page).
+export interface PiscinesListe { total: number; n: number; limit: number; offset: number; a_suite: boolean; items: PiscineItem[]; maj: string; source: string }
+export interface PiscinesFiltres { commune?: string | null; statut?: 'servie' | 'tous'; surfMin?: number; proprio?: 'tous' | 'pm' | 'pp'; limit?: number; offset?: number }
 export const getPiscinesListe = (f: PiscinesFiltres) =>
   j<PiscinesListe>(`/modules/prospection-piscines/liste?${qf({
     ...(f.commune ? { commune: f.commune } : {}), ...(f.statut === 'tous' ? { statut: 'tous' } : {}),
-    ...(f.surfMin ? { surf_min: f.surfMin } : {}), ...(f.proprio && f.proprio !== 'tous' ? { proprio: f.proprio } : {}) })}`)
+    ...(f.surfMin ? { surf_min: f.surfMin } : {}), ...(f.proprio && f.proprio !== 'tous' ? { proprio: f.proprio } : {}),
+    ...(f.limit != null ? { limit: f.limit } : {}), ...(f.offset ? { offset: f.offset } : {}) })}`)
 // ── OUTILS-MUSCLER-1 Lot A — outil « Successions » (radar patrimonial Score V v1.3). Le signal est
 // une succession PROBABLE (dirigeant ≥ 70 ans / SCI dormante), JAMAIS « en succession » (A0) ; le
 // propriétaire est une PM nommée par construction (SIREN confirmé exigé par le critère).

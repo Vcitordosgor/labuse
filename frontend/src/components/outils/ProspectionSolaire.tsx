@@ -13,7 +13,7 @@
  * présentation + requêtes d'agrégats (nouveaux endpoints /prospection-piscines et .../parcelle/{idu}
  * = lecture seule de données gelées).
  */
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { getPiscinesAgregat, getPiscinesListe, getPiscinesPoints, getSolaireFiche,
   postPasUnePiscine, type SolaireFiche } from '../../lib/api'
@@ -24,7 +24,6 @@ import { EntreeParcelle, type SourceParcelle } from './EntreeParcelle'   // RECE
 import { Reinitialiser } from '../ui/Reinitialiser'   // RECETTE-1 F3
 import { Squelette } from '../Loading'
 import { ErrorState } from '../States'
-import { ListPaginationFooter, usePagination } from '../ListPagination'
 import { Bouton } from '../ui/Bouton'
 import { Chip } from '../ui/Chip'
 import { Retour } from '../ui/Retour'
@@ -104,9 +103,14 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
   const [pasPiscine, setPasPiscine] = useState<Set<string>>(new Set())
 
   const agg = useQuery({ queryKey: ['piscines-agg', commune, inclureAConfirmer], queryFn: () => getPiscinesAgregat(commune, 0, inclureAConfirmer), staleTime: 60_000 })
-  const list = useQuery({
+  // RECETTE-1 H13.2 — pagination SERVEUR par 50 (useInfiniteQuery : chaque « Voir plus » charge l'offset
+  // suivant, jamais tout d'un coup). La carte, elle, montre tout le périmètre (getPiscinesPoints).
+  const PAGE = 50
+  const list = useInfiniteQuery({
     queryKey: ['piscines-liste', commune, inclureAConfirmer],
-    queryFn: () => getPiscinesListe({ commune, statut: inclureAConfirmer ? 'tous' : 'servie' }),
+    queryFn: ({ pageParam }) => getPiscinesListe({ commune, statut: inclureAConfirmer ? 'tous' : 'servie', limit: PAGE, offset: pageParam }),
+    initialPageParam: 0,
+    getNextPageParam: (last) => last.a_suite ? last.offset + last.n : undefined,
     staleTime: 60_000, enabled: montre,
   })
   const signalerPasPiscine = async (idu: string) => {
@@ -116,8 +120,8 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
     }
   }
   const annulerPasPiscine = (idu: string) => setPasPiscine((s) => { const n = new Set(s); n.delete(idu); return n })
-  const items = (list.data?.items ?? []).filter((it) => !pasPiscine.has(it.idu))
-  const page = usePagination(items.length)
+  const total = list.data?.pages[0]?.total ?? 0
+  const items = (list.data?.pages.flatMap((p) => p.items) ?? []).filter((it) => !pasPiscine.has(it.idu))
   const [carteBusy, setCarteBusy] = useState(false)
   useEffect(() => () => setModuleMap({ idus: [], extra: null }), [setModuleMap])
   useEffect(() => { setMontre(false); setEncartOuvert(true); setModuleMap({ idus: [], extra: null }) }, [commune, setModuleMap])
@@ -166,13 +170,17 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
               </div>
             )}
             <div data-piscines-source className="mt-1 text-[9px] leading-snug text-txt-dim">Source : IGN FLAIR et CoSIA, 2025</div>
-            {/* (2) FILTRE commune (liste des communes, comptes) */}
+            {/* (2) FILTRE commune — RECETTE-1 H13.1 : les 24 communes listées (plus de top-8 tronqué),
+                chacune avec « N confirmées · N à confirmer » (deux comptes nommés, plus de total ambigu). */}
             {!commune && agg.data.communes.length > 0 && (
               <div className="mt-2 flex flex-col gap-0.5">
-                {agg.data.communes.slice(0, 8).map((c) => (
+                {agg.data.communes.map((c) => (
                   <div key={c.commune} className="flex items-baseline justify-between gap-2 text-[11px]">
                     <Bouton niveau="lien" onClick={() => setCommune(c.commune)}>{c.commune}</Bouton>
-                    <span className="tnum text-txt">{fmtInt(c.n)}</span>
+                    <span className="tnum shrink-0 text-txt">
+                      <b style={{ color: TOKENS.mint }}>{fmtInt(c.confirmees ?? c.n)}</b> conf.
+                      <span className="text-txt-dim"> · {fmtInt(c.a_confirmer ?? 0)} à conf.</span>
+                    </span>
                   </div>
                 ))}
               </div>
@@ -188,21 +196,22 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
         </Bouton>
       )}
 
-      {/* LISTE : IDU · commune · surface de parcelle · source. Clic ligne → focusParcelle(fiche) + points goutte. */}
+      {/* LISTE : IDU · commune · source · statut. RECETTE-1 H13.4 — colonne m² par piscine RETIRÉE.
+          Clic ligne → focusParcelle(fiche) + points carte. H13.2 — « Voir plus » charge l'offset suivant. */}
       {list.isLoading && <Squelette lignes={6} />}
       {list.data && (
         <>
           <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
-            {items.slice(0, page.shown).map((it, i) => (
+            {items.map((it, i) => (
               <div key={`${it.idu}-${i}`} data-piscines-row role="button" tabIndex={0}
                 onClick={() => focusParcelle(it.idu, { fiche: true })}
                 className="hover-fill cursor-pointer rounded-lg border border-line-2 bg-surface-3 px-2.5 py-1.5 transition-colors duration-quick">
                 <div className="flex items-center gap-2">
                   <span className="font-mono text-[11px] text-txt-hi">{it.idu.slice(8)}</span>
                   <span className="shrink-0 text-[10.5px] text-txt-mut">{it.commune}</span>
-                  <span className="ml-auto tnum text-[11px] text-txt">{it.surface_m2 == null ? '—' : `${fmtInt(it.surface_m2)} m²`}</span>
-                  <span className="shrink-0 rounded bg-surface-2 px-1 text-[8.5px] text-txt-dim">{SOURCE_LBL[it.source] ?? it.source}</span>
+                  <span className="ml-auto shrink-0 rounded bg-surface-2 px-1 text-[8.5px] text-txt-dim">{SOURCE_LBL[it.source] ?? it.source}</span>
                   {it.statut === 'a_confirmer' && <span className="shrink-0 rounded bg-amber-500/15 px-1 text-[8.5px] font-medium text-amber-500">à confirmer</span>}
+                  <span className="shrink-0 text-[10px] text-mint hover:underline">Fiche →</span>
                   <Chip data-piscines-pas ton="neutre" className="shrink-0"
                     onClick={(e) => { e.stopPropagation(); void signalerPasPiscine(it.idu) }}>pas une piscine</Chip>
                 </div>
@@ -214,13 +223,16 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
               </div>
             )}
           </div>
-          <ListPaginationFooter shown={Math.min(page.shown, items.length)} total={items.length} onMore={page.more}>
-            {list.data.total > items.length && (
-              <span data-piscines-cap className="text-[10.5px] text-txt-dim">
-                {fmtInt(items.length)} sur <b className="text-txt-mut">{fmtInt(list.data.total)}</b> — la carte les montre toutes.
-              </span>
+          <div className="flex shrink-0 items-center justify-between gap-2 pt-1">
+            <span data-piscines-cap className="text-[10.5px] text-txt-dim">
+              {fmtInt(items.length)} affichée(s) sur <b className="text-txt-mut">{fmtInt(total)}</b> — la carte montre tout le périmètre.
+            </span>
+            {list.hasNextPage && (
+              <Bouton niveau="lien" data-piscines-voir-plus onClick={() => list.fetchNextPage()} disabled={list.isFetchingNextPage}>
+                {list.isFetchingNextPage ? 'Chargement…' : `Voir plus (+${PAGE})`}
+              </Bouton>
             )}
-          </ListPaginationFooter>
+          </div>
         </>
       )}
       <p className="text-[9.5px] leading-snug text-txt-dim">Source unique fusionnée FLAIR ∪ CoSIA (IGN 20 cm 2025) · propriétaire DGFiP</p>
