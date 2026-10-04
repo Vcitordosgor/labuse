@@ -1622,6 +1622,11 @@ def _q_v2_where(run_label: str,
                        " AND COALESCE(rs.taux_emprise_pct,0) >= 5)")
         if sub:
             conds.append("(" + " OR ".join(sub) + ")")
+        elif cl:
+            # RECETTE-1 (E3) — l'écran a passé une valeur (ex. sentinelle « tout décoché »/« __aucun__ »)
+            # mais AUCUNE case reconnue → 0 parcelle (et non « pas de filtre »). Un `etat_sol=` vide
+            # (aucune case passée) n'arrive jamais ici (cl vide) → périmètre inchangé.
+            conds.append("FALSE")
     if capacite_min is not None:
         # Capacité logements ESTIMÉE ≥ N — dérivée de la SDP résiduelle (≈ 70 m² SDP / logement).
         # Étiquette Estimé portée par le front. Le seuil SDP est le point de calcul unique.

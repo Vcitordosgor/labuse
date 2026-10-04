@@ -73,7 +73,9 @@ export function matchScope(p: ParcelProps, f: Filters, zone: LngLat[] | null): b
   // sur la fiche fait donc ressortir la parcelle (avant : 4 500,50 affiché « 4 501 » mais < 4501).
   if (f.surfaceMin != null && Math.round(p.surface_m2 ?? 0) < f.surfaceMin) return false
   if (f.surfaceMax != null && Math.round(p.surface_m2 ?? Infinity) > f.surfaceMax) return false
-  if (f.sdpMin != null && (p.sdp_residuelle_m2 ?? -1) < f.sdpMin) return false
+  // RECETTE-1 (E2, Vic 04/10) — l'encart « Capacité » (SDP restante / logements / destination) est
+  // RETIRÉ : plus de prédicat sdpMin ici (les champs restent inertes pour qu'un vieux hash/vue s'ouvre
+  // sans erreur — cf. NUM_KEYS, la clé est simplement ignorée).
   if (f.evenement && p.evenement !== 'rouge') return false
   if (f.veille && !p.veille) return false
   if (f.horsCopro && p.copro_v2) return false
@@ -93,7 +95,7 @@ export const matchAll = (p: ParcelProps, f: Filters, zone: LngLat[] | null) => {
 }
 
 export const hasScopeFilters = (f: Filters, zone: LngLat[] | null) =>
-  f.surfaceMin != null || f.surfaceMax != null || f.sdpMin != null ||
+  f.surfaceMin != null || f.surfaceMax != null ||
   f.evenement || f.veille || f.horsCopro || f.flags.length > 0 ||
   f.flagsExclus.length > 0 || f.communes.length > 0 || !!zone
 
@@ -106,15 +108,17 @@ const F_ARRAYS: (keyof Filters)[] = ['tiers', 'flags', 'flagsExclus', 'communes'
   'constructibilite', 'etatSol', 'zonePlu', 'proprietaireType', 'etatSociete', 'copro', 'signaux', 'droitsResiduels',
   'pmForme', 'pmApe', 'pmAge',   // KF1 (rattrapage KelFoncier) — facettes propriétaire ; pmAge = tranche d'âge (KELFONCIER-FIX-1 Lot B)
   'zfangRegime', 'frrClassement']   // FILTRES-FIX-1 (lot 1) — ZFANG/FRR comptés comme les autres facettes (badge, compteur vivant)
-const F_NUMS: (keyof Filters)[] = ['surfaceMin', 'surfaceMax', 'sdpMin', 'sdpMax',
-  'capaciteMin', 'multMin', 'rangMax', 'budgetMax', 'chargeMin', 'chargeMax',
+// RECETTE-1 (E2) — l'encart « Capacité » retiré : sdpMin/sdpMax/capaciteMin/renouvellement/
+// destinationAutorisee ne sont plus comptés ni persistés (champs gardés inertes dans le store pour
+// qu'un vieux hash/vue s'ouvre sans erreur ; voir NUM_KEYS/BOOL_KEYS/STR_KEYS d'où ils sont retirés).
+const F_NUMS: (keyof Filters)[] = ['surfaceMin', 'surfaceMax',
+  'multMin', 'rangMax', 'budgetMax', 'chargeMin', 'chargeMax',
   'prixMarcheMin', 'prixMarcheMax', 'caMin', 'pmDirigMin', 'pmDirigMax',
   'hauteurMin', 'hauteurMax', 'empriseMin', 'empriseMax']   // KELFONCIER-FIX-1 (Lot D) — filtres bâti
 const F_BOOLS: (keyof Filters)[] = ['evenement', 'veille', 'horsCopro', 'personneMorale',
-  'sousDensite', 'renouvellement', 'npnru', 'adresseAbsente', 'marcheFiable', 'modeBRentable']
+  'sousDensite', 'npnru', 'adresseAbsente', 'marcheFiable', 'modeBRentable']
 // KF1 — champs texte libres (dénomination, SIREN) : comptés/persistés comme les autres.
-// FAISABILITE-1 (lot B) — `destinationAutorisee` (sous-destination R151-28) compte comme les autres.
-const F_STRS: (keyof Filters)[] = ['pmDenom', 'pmSiren', 'destinationAutorisee']
+const F_STRS: (keyof Filters)[] = ['pmDenom', 'pmSiren']
 
 export function countActiveFilters(f: Filters): number {
   let n = 0
@@ -131,9 +135,7 @@ export function countActiveFilters(f: Filters): number {
 const TERRAIN_FIELDS = new Set<keyof Filters>(['surfaceMin', 'surfaceMax', 'zonagePlu', 'zonePlu',
   'etatSol', 'flags', 'flagsExclus', 'communes',
   'signaux',   // M55-D stage 6 : les Signaux de vie = ÉVÉNEMENTS SOURCÉS, filtrables sans analyse
-  // FAISABILITE-1 (lot B) — la CAPACITÉ (SDP restante, logements, destination) est un FAIT lu au PLU
-  // + parcel_residuel servi, pas une opinion LABUSE → n'allume PAS l'interrupteur d'analyse.
-  'sdpMin', 'sdpMax', 'capaciteMin', 'destinationAutorisee',
+  // RECETTE-1 (E2) — la Capacité (SDP restante / logements / destination) est retirée du panneau.
   'pmForme', 'pmApe', 'pmAge', 'pmDirigMin', 'pmDirigMax',   // KF1 — critères propriétaire = faits (DGFiP/INPI), pas une opinion LABUSE
   'hauteurMin', 'hauteurMax', 'empriseMin', 'empriseMax',   // KELFONCIER-FIX-1 (Lot D) — le bâti mesuré = un FAIT (LiDAR/run servi), pas une opinion
   'zfangRegime', 'frrClassement'])   // FILTRES-FIX-1 (lot 1) — statut fiscal de la commune = un FAIT (territoire_fiscal), pas une opinion
@@ -156,10 +158,7 @@ export function resumeCriteres(f: Filters, signalLabels: Record<string, string> 
   else if (f.surfaceMin != null) parts.push(`> ${f.surfaceMin.toLocaleString('fr-FR')} m²`)
   else if (f.surfaceMax != null) parts.push(`< ${f.surfaceMax.toLocaleString('fr-FR')} m²`)
   if (f.zonagePlu.length) parts.push(`zone ${f.zonagePlu.join('/')}`)
-  // FAISABILITE-1 (lot B) — groupe Capacité : SDP restante, logements, destination.
-  if (f.sdpMin != null) parts.push(`SDP restante ≥ ${f.sdpMin.toLocaleString('fr-FR')} m²`)
-  if (f.capaciteMin != null) parts.push(`≥ ${f.capaciteMin} logt${f.capaciteMin > 1 ? 's' : ''}`)
-  if (f.destinationAutorisee) parts.push('destination autorisée')
+  // RECETTE-1 (E2) — groupe Capacité (SDP restante / logements / destination) retiré du récap.
   if (f.etatSol.length === 1) parts.push(f.etatSol[0] === 'nu' ? 'terrain nu' : 'bâti')
   // KELFONCIER-FIX-1 (Lot D) — filtres bâti dans le récap de la Révélation.
   if (f.hauteurMin != null && f.hauteurMax != null) parts.push(`hauteur ${f.hauteurMin}–${f.hauteurMax} m`)
@@ -179,7 +178,7 @@ export function activeChips(f: Filters): Chip[] {
   for (const t of f.tiers) out.push({ token: `tier:${t}`, label: ALL_TIER_META[t].label })
   if (f.surfaceMin != null) out.push({ token: 'surfaceMin', label: `≥ ${f.surfaceMin.toLocaleString('fr-FR')} m²` })
   if (f.surfaceMax != null) out.push({ token: 'surfaceMax', label: `≤ ${f.surfaceMax.toLocaleString('fr-FR')} m²` })
-  if (f.sdpMin != null) out.push({ token: 'sdpMin', label: `SDP ≥ ${f.sdpMin.toLocaleString('fr-FR')} m²` })
+  // RECETTE-1 (E2) — chip « SDP ≥ … » (Capacité) retiré.
   if (f.evenement) out.push({ token: 'evenement', label: '● Événement' })
   if (f.veille) out.push({ token: 'veille', label: 'Veille succession' })
   if (f.horsCopro) out.push({ token: 'horsCopro', label: 'Hors copro' })
@@ -209,9 +208,12 @@ export function removeToken(f: Filters, token: string): Filters {
 // possible. Clés HISTORIQUES conservées (tv/smin/smax/sdp/ev/vs2/hc/fl/fx/cs/z) : un ancien
 // lien s'ouvre à l'identique. FIX-SCOREMIN : la clé `q` (scoreMin, matrice morte) est RETIRÉE —
 // un vieux lien portant `q=` est désormais ignoré proprement (au lieu d'être lu puis jamais filtré).
+// RECETTE-1 (E2) — les clés de l'encart Capacité (sdp/sdpx/cap/rnv/dst) sont RETIRÉES des tables de
+// hash : un vieux lien / une vue / une veille qui les porte s'ouvre SANS erreur, la clé est simplement
+// ignorée (même mécanique que les clés mortes `q`/`fl` plus haut). Aucune nouvelle vue ne les sérialise.
 const NUM_KEYS: [keyof Filters, string][] = [
-  ['surfaceMin', 'smin'], ['surfaceMax', 'smax'], ['sdpMin', 'sdp'],
-  ['sdpMax', 'sdpx'], ['capaciteMin', 'cap'], ['multMin', 'mm'], ['rangMax', 'rm'],
+  ['surfaceMin', 'smin'], ['surfaceMax', 'smax'],
+  ['multMin', 'mm'], ['rangMax', 'rm'],
   ['budgetMax', 'bud'], ['chargeMin', 'chmin'], ['chargeMax', 'chmax'],
   ['prixMarcheMin', 'pmin'], ['prixMarcheMax', 'pmax'], ['caMin', 'ca'],
   ['pmDirigMin', 'pdmin'], ['pmDirigMax', 'pdmax'],   // KF1 — nombre de dirigeants
@@ -220,7 +222,7 @@ const NUM_KEYS: [keyof Filters, string][] = [
 ]
 const BOOL_KEYS: [keyof Filters, string][] = [
   ['evenement', 'ev'], ['veille', 'vs2'], ['horsCopro', 'hc'], ['personneMorale', 'pm'],
-  ['sousDensite', 'sd'], ['renouvellement', 'rnv'], ['npnru', 'np'],
+  ['sousDensite', 'sd'], ['npnru', 'np'],
   ['adresseAbsente', 'aa'], ['marcheFiable', 'mf'], ['modeBRentable', 'mb'],
 ]
 // M55-D stage 7 : la clé legacy `fl` (flags contraintes de secteur) n'est PLUS lue ni écrite —
@@ -235,9 +237,8 @@ const CSV_KEYS: [keyof Filters, string][] = [
   ['zfangRegime', 'zfa'], ['frrClassement', 'frr'],   // FILTRES-FIX-1 (lot 1) — ZFANG/FRR persistés (URL, Mes vues, veille)
 ]
 // KF1 — clés texte (dénomination, SIREN) : persistées telles quelles dans le hash.
-// FAISABILITE-1 (lot B) — `dst` porte la sous-destination autorisée (slug R151-28).
-const STR_KEYS: [keyof Filters, string][] = [['pmDenom', 'pmd'], ['pmSiren', 'pms'],
-  ['destinationAutorisee', 'dst']]
+// RECETTE-1 (E2) — `dst` (destination autorisée, encart Capacité) retiré : clé ignorée à l'ouverture.
+const STR_KEYS: [keyof Filters, string][] = [['pmDenom', 'pmd'], ['pmSiren', 'pms']]
 
 export function filtersToHash(f: Filters, zone: LngLat[] | null): string {
   const p = new URLSearchParams()

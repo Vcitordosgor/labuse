@@ -33,7 +33,7 @@ donnees:
     ou:    { rang: 10, etat: replie, section: "Littoral" }
     comment: { libelle: "50 pas géométriques", format: liste, i: "Réserve des 50 pas géométriques (bande littorale du domaine public, ~81,20 m) — inconstructibilité de principe, gestion État." }
     # COUCHES-RECETTE-2 C3 : teinte FRANCHE (le cyan à 0,16 était trop pastel) → bleu littoral soutenu.
-    carte: { kind: cinquante_pas, agregat: false, famille: urbanisme, geometrie: polygone, zoom_min: 0, rang_carte: 20, style: { couleur: "#1E9BD8", opacite: 0.34, trait: "#0B6FA6", tirets: [2, 1.4], epaisseur: 1.8 }, legende: "Réserve des 50 pas géométriques (littoral)" }
+    carte: { kind: cinquante_pas, agregat: false, famille: urbanisme, geometrie: polygone, zoom_min: 12, rang_carte: 20, style: { couleur: "#1E9BD8", opacite: 0.34, trait: "#0B6FA6", tirets: [2, 1.4], epaisseur: 1.8 }, legende: "Réserve des 50 pas géométriques (littoral)" }
     absence: "50 pas : parcelle hors bande littorale des 50 pas dans l'emprise visible."
     absence_type: absente_ici
     pourquoi: "C3 : bleu littoral franc (#1E9BD8 @0,34) au lieu du cyan pastel."
@@ -102,7 +102,7 @@ donnees:
   - quoi:  er_couche
     ou:    { rang: 10, etat: replie, section: "Réservations" }
     comment: { libelle: "Emplacements réservés (ER)", format: liste, i: "Emplacements réservés du PLU (voirie, équipement, espace vert) — l'emprise est grevée au bénéfice d'une collectivité." }
-    carte: { kind: er, agregat: false, famille: urbanisme, geometrie: polygone, zoom_min: 0, rang_carte: 28, style: { couleur: "#D4A017", opacite: 0.30, trait: "#D4A017" }, popup: [ { champ: txt, libelle: "Destination / bénéficiaire" }, { champ: libelle, libelle: "Libellé" }, { champ: url_source, libelle: "Document", lien: true } ], legende: "Emplacement réservé (emprise grevée)" }
+    carte: { kind: er, agregat: false, famille: urbanisme, geometrie: polygone, zoom_min: 13, rang_carte: 28, style: { couleur: "#D4A017", opacite: 0.30, trait: "#D4A017" }, popup: [ { champ: txt, libelle: "Destination / bénéficiaire" }, { champ: libelle, libelle: "Libellé" }, { champ: url_source, libelle: "Document", lien: true } ], legende: "Emplacement réservé (emprise grevée)" }
     absence: "ER : parcelle hors emplacement réservé dans l'emprise visible."
     absence_type: absente_ici
     statut_juridique: opposable

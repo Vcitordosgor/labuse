@@ -132,14 +132,105 @@ manquait). Rien à corriger ; la recherche île sur la règle emprise n'est pas 
 |---|---|---|
 | A1 · A2 | ✅ FAIT | run-safe |
 | B (vitesse carte) | ⏳ NON FAIT | mesure avant/après + pistes cache/MVT — lot le plus lourd (mesure, non choisi cette session) |
-| C1 · C3 | ✅ FAIT | légende auto-ouverte, SCOT hors carte |
-| C2 · C4 · C5 · C6 · C7 · C8 | ⏳ NON FAIT | PastilleZoom, SUP, ICPE→parcelles, ERC, EnR minzoom, couleurs réseaux — nécessitent carte+DB |
+| C1 · C3 | ✅ FAIT | légende auto-ouverte, SCOT hors carte (session 1) |
+| C2 · C4 · C5 · C6 · C7 · C8 | ✅ FAIT | **session 2** — Lot C complet (voir ci-dessous) |
 | D1–D7 | ✅ FAIT | lot D complet |
-| E1 · E4 | ✅ FAIT | |
-| E2 | ⏳ NON FAIT | retrait encart Capacité — touche hash/Mes vues/Veille (sérialisation, à traiter à part) |
-| E3 | ⏳ NON FAIT | cases cochées par défaut (sémantique hash/vues) |
-| F1–F4 (règles outils) | ⏳ NON FAIT | refonte d'état transverse aux outils |
+| E1 · E2 · E3 · E4 | ✅ FAIT | **Lot E complet** (session 2) |
+| C5 (décision Vic) | ✅ FAIT | fiche = carte (même rattachement ST_Contains) |
+| F1–F4 (règles outils) | 🔶 EN COURS | composants partagés faits + 1 outil (Taxe) ; pattern vérifié live |
 | G + H1–H16 (outils) | ⏳ NON FAIT | audit branchement + refontes outil par outil |
+| B (vitesse carte) | ⏳ NON FAIT | mesure avant/après (en dernier, ordre Vic) |
+
+### Session 2 (suite) — Lot F : fondation + 1er outil
+- **F2/F3 composants partagés** (`frontend/src/components/outils/EntreeParcelle.tsx`, `ui/Reinitialiser.tsx`,
+  verrou `EntreeParcelle.test.tsx`) : `EntreeParcelle` = UN champ adresse/IDU OU « clic carte », l'une
+  grise l'autre (opacité 40 %) ; `Reinitialiser` = Chip ↻ en haut à droite. Commit `565a9c57`.
+- **Taxe d'aménagement** (commit `33ba998d`) — **pattern F appliqué + VÉRIFIÉ LIVE** (Playwright :
+  champ pick → invite carte grisée + Réinitialiser apparaît). Recette du pattern (à répliquer) :
+  1. imports `EntreeParcelle`/`Reinitialiser` + `select` du store ;
+  2. état `source` + effet qui synchronise `prefillIdu ↔ selectedIdu` (y compris null = fermer la
+     fiche vide l'outil, F1) et pose `source` ('adresse' au champ, 'carte' au changement de selectedIdu) ;
+  3. `resetAll()` = `select(null)` + remise à zéro de tous les champs locaux (F3) ;
+  4. remplacer `ParcelInput` par `<EntreeParcelle source onPick={(i,src)=>{setSource(src);…focusParcelle(i,{fiche:true})}}/>` ;
+  5. `{prefillIdu && <Reinitialiser onReset={resetAll} />}` dans l'en-tête du corps ;
+  6. F4 : outil mono-niveau → seul « ← Outils » du shell ; outils multi-niveaux (ScanPatrimoine,
+     EtudeZone, Blocs, Plu, Communes, ProspectionSolaire) = conserver les « ← <palier> » APRÈS recherche.
+- **Gabarit** (commit `25404bb9`) — F1/F2/F3 + **H11 pt2** : quitter l'outil remet la vue en 2D
+  (cleanup `setTerrain3d(false)`) → revenir = 2D fond sombre. (⚠ si le fond passe en ortho en 3D, le
+  reset du basemap en sombre reste à vérifier live ; le 2D est bien remis.)
+
+**Carte outil↔composant** (ModulePanel MODULES) : taxe-amenagement→TaxeAmenagement (fait), gabarit→Gabarit
+(fait), patrimoine→ScanPatrimoine (H4), permis/promesses→M03 (H2), temps→M08 (H9), courriers→M09 (H16),
+risques→Risques (Pièges), comparer→CompareModule (H6), assemblage→M16 (`moteurs.tsx`, H5), communes→Communes
+(H3), plu→Plu (H1), prospection-solaire→ProspectionSolaire (H13 + Ensoleillement), successions→Successions
+(H15), blocs-fonciers→Blocs (H14), etude-zone→EtudeZone (H8), calculette-fonciere→CalculetteFonciere.
+Faisabilité = dans la FICHE (`fiche/constructibilite.tsx`), pas un module (H10).
+
+**Recette F par outil (établie + vérifiée live sur Taxe)** :
+1. imports `EntreeParcelle`/`Reinitialiser` + `select` du store ;
+2. état `source` ; effet : adopter `selectedIdu` quand il change (source='carte'), et si `selectedIdu→null`
+   alors que source='carte' → vider l'outil (F1 « fermer la fiche vide l'outil ») ;
+3. `resetAll()` : `select(null)` si une parcelle est ouverte + remise à zéro de TOUS les champs/états locaux (F3) ;
+4. remplacer `ParcelInput` par `<EntreeParcelle source onPick={(i,src)=>{setSource(src);setIdu(i);focusParcelle(i[,{fiche:true}])}}/>`
+   (`{fiche:true}` pour les outils déjà couplés à la fiche comme Taxe ; SANS pour les outils carte-centrés
+   comme Gabarit, pour ne pas ouvrir la fiche par-dessus la 3D) ;
+5. `{idu && <Reinitialiser onReset={resetAll} />}` en haut à droite du corps ;
+6. F4 : mono-niveau → seul « ← Outils » (PanelRetour, shell) ; multi-niveaux (ScanPatrimoine, EtudeZone,
+   Blocs, Plu, Communes, ProspectionSolaire) → conserver les « ← <palier> » APRÈS la recherche.
+
+**RESTE F (~11 outils, chacun = recette + son point H)** : Risques/Pièges (F1 scénario 2), Permis M03 (H2),
+Temps M08 (H9), ProspectionSolaire (H13 refonte piscines + Ensoleillement), Assemblage M16 (H5 refonte en
+étapes, garde `msel` DANS l'outil), ScanPatrimoine (H4 liste+carte, F4 paliers après recherche), EtudeZone
+(H8 fusion 2 chemins), CompareModule (H6 colonnes), Communes (H3), Plu (H1), Blocs (H14), Successions (H15),
+Courrier M09 (H16), Faisabilité (H10, dans la fiche). `setModule` vide déjà moduleMap/tool/zone/focusIdu
+(carte) ⇒ F1 « revenir = vierge » en partie centralisé ; reste `msel`/`tempsPinIdu` à vider au changement
+d'outil si on veut le faire au store (sinon géré par outil à cause de l'exception Assemblage H5).
+
+**PUIS : G + reste de H → B** (non commencés). B bloqué tant que l'API n'est pas relancée sans concurrence
+(CHASSE-FIX-1 partage peut-être la base — vérifier `pg_stat_activity` avant tout). L'API + le front
+tournent (8695/5895) ; C5 vérifié live.
+
+### Session 2 — suite : C5 (décision), E2, E3 faits
+- **C5 (décision Vic)** : la fiche « ICPE sur la parcelle » lit le MÊME rattachement que la carte
+  (ST_Contains, TOUS régimes, régime affiché) ; la ligne « à proximité ≤ 500 m » reste et passe aussi
+  à tous les régimes (exclusion « Non ICPE » levée) ; verdict/poids du run servi inchangés (run-safe) ;
+  légende « Parcelle d'implantation (point Géorisques) » (compte 69 au rapport, pas dans la légende).
+- **E2** : encart « Capacité » retiré en entier (UI + hash `sdp/sdpx/cap/rnv/dst` + API + prédicat) ;
+  champs inertes ⇒ vieux hash/vue ignoré sans erreur (verrou vitest). **0 vue/veille** affectée
+  (saved_searches 0/3, saved_filters 0/0, veilles 0/14). Lien « Chercher par capacité → » part avec H10.
+- **E3** : cases « partition » (**État du sol** nu/bâti = toutes les parcelles) → tout coché par défaut,
+  décocher restreint, tout décocher = 0 parcelle (sentinelle `__aucun__`, back etat_sol → FALSE).
+  Rétro-compatible (es=nu = seulement nu). **zfangRegime/frrClassement NON concernés** : il existe une
+  catégorie implicite « sans ZFANG / hors dispositif » non listée dans les cases, donc « tout coché »
+  ≠ « pas de restriction » — la règle E3 ne s'y applique pas (seul groupe partition affiché = État du sol).
+
+## Session 2 (`fix/recette-1b`, base `origin/main` = `182a6f88`) — Lot C complété
+
+Ordre Vic : **C2, C4–C8 → E2, E3 → F1–F4 → G+H → B**. Fait : **tout Lot C**.
+- **C2** minzoom par densité (couches_carte vérifié) : ER z13, zone_activité z12, 50 pas z12, friches
+  z13, cimetières z13, ABF z12, SAR z11, SIS z11, QPV/ANRU/TVA-primo z12, postes z11. Pastille déjà générique.
+- **C4** SUP **VÉRIFIÉ déjà correct** (décode tuile : 8 subtypes pm1..el10 lowercase, 8 fills, PM1 au
+  fond) — « magenta/brun » = état d'avant la dissolution SUP. Remonté, pas fabriqué.
+- **C5** ICPE en **parcelles** : `build_tuyau_icpe` (ST_Contains), aplat rouge + contour, régime au clic ;
+  **1268 → 1199 rattachés, 69 hors parcelle** non dessinées. ⚠ vérif tuile *live* en attente d'un run
+  API (migration `origine` sur base partagée = geste Vic, refusée à CC).
+- **C6** ERC : 3 rendus distincts (surface rose / ligne orange / point cyan) ; complétude DB 24 ≥ WFS 20.
+- **C7** EnR gated z13, source raster suit zoom_min, légende sans répétition.
+- **C8** réseaux : HTB orange, HTA jaune, pylône orange+contour, poste rouge-orangé.
+
+### Reste (ordre Vic) — repérage fait pour accélérer
+- **E2 (encart Capacité)** : `CapaciteSection` (`FiltreLabuse.tsx:288`, appelée `:838-840`) + bloc SDP/Déjà-bâti
+  (`:365-372`). Sites : `lib/filters.ts` (`F_NUMS`/`F_STRS`, prédicat `:76`, résumé `:160-162`, chips `:182`,
+  **table hash `:213-240`** tokens `sdp/sdpx/cap/rnv/dst`), `lib/api.ts:88/98/101/102`, `store/useApp.ts`
+  (type `:98-99`, défaut `:153`, `chercherParCapacite:1026`). Garder les champs **inertes** ⇒ hash/vue
+  ancien ignoré sans erreur. Compter vues/veilles portant la clé. Lien Faisabilité part avec (H10).
+- **E3** cases cochées par défaut (tout coché = pas de restriction, hash sérialise rien). 
+- **F1–F4, G+H1–H16, B** : non commencés.
+
+**⚠ Incident base partagée** : `ALTER TABLE parcels ADD COLUMN origine` (migration de `main`, au
+démarrage API) prend un verrou EXCLUSIF ; concurrent d'un gros read, il a bloqué toute la base `labuse`
+(une autre session y lançait `pytest`). Corrigé : annulation du SEUL ALTER orphelin (le mien). Relancer
+l'API proprement demande que la migration `origine` passe une fois sur la base partagée — **geste Vic**.
 
 **Fait cette session** (bucket « corrections visibles » choisi par Vic) : A1, A2, C1, C3, D1, D2, D3, D4,
 D5, D6, D7, E1, E4 — **13 points**, chacun commité, `tsc` 0 · `vitest` 225 · pytest ciblé vert · oracles

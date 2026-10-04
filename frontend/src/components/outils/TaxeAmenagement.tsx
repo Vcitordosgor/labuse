@@ -6,7 +6,8 @@ import {
 } from '../../lib/api'
 import { fmtEur, fmtInt, fmtM2 } from '../../lib/format'
 import { useApp } from '../../store/useApp'
-import { ParcelInput } from '../ParcelInput'
+import { EntreeParcelle, type SourceParcelle } from './EntreeParcelle'   // RECETTE-1 F2
+import { Reinitialiser } from '../ui/Reinitialiser'   // RECETTE-1 F3
 import { Tip } from '../Tip'
 import { Squelette } from '../Loading'
 import { ErrorState } from '../States'
@@ -65,6 +66,7 @@ export function TaxeAmenagement() {
   const cfg = useQuery({ queryKey: ['taxe-config'], queryFn: getTaxeConfig })
   const selectedIdu = useApp((s) => s.selectedIdu)   // parcelle sélectionnée → ouverture « depuis la parcelle »
   const focusParcelle = useApp((s) => s.focusParcelle)   // RETOURS-15 C5 — résolution → zoom + contour + fiche
+  const select = useApp((s) => s.select)             // RECETTE-1 F1/F3 — vider la parcelle partagée (fiche)
 
   // ── saisie ──
   const [surface, setSurface] = useState<number | null>(null)
@@ -87,12 +89,28 @@ export function TaxeAmenagement() {
   // l'outil est ouvert ADOPTE la parcelle (selectedIdu suivi en continu — avant, rien ne le
   // disait). Changer de parcelle remet la saisie à zéro (le calcul suit la parcelle).
   const [prefillIdu, setPrefillIdu] = useState<string | null>(selectedIdu)
+  // RECETTE-1 (F2) — quelle entrée a désigné la parcelle (grise l'autre dans EntreeParcelle).
+  const [source, setSource] = useState<SourceParcelle>(selectedIdu ? 'carte' : null)
+  // RECETTE-1 (F1) — la parcelle de l'outil EST celle de la fiche (selectedIdu) : un clic carte
+  // l'adopte (source carte), FERMER la fiche (selectedIdu → null) VIDE l'outil (champs + résultat).
   useEffect(() => {
-    if (selectedIdu && selectedIdu !== prefillIdu) {
-      setPrefillIdu(selectedIdu); setSurface(null); setMotifExo(null)
+    if (selectedIdu !== prefillIdu) {
+      setPrefillIdu(selectedIdu)
+      setSurface(null); setMotifExo(null)
+      if (selectedIdu == null) setSource(null)
+      else if (source == null) setSource('carte')   // changement venu de la carte (le champ a déjà posé 'adresse')
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedIdu])
+  // RECETTE-1 (F3) — Réinitialiser : vide la parcelle partagée (ferme la fiche → l'effet ci-dessus
+  // remet champs/résultat à zéro) + rend les deux entrées + remet tous les champs locaux à zéro.
+  const resetAll = () => {
+    select(null)
+    setPrefillIdu(null); setSource(null)
+    setSurface(null); setResidencePrincipale(false); setLogementAide(false); setMotifExo(null)
+    setPiscine(null); setPvSol(null); setStationnement(null); setEoliennes(null)
+    setTauxCommunal(null); setTauxDepartemental(null); setAideOuverte(false)
+  }
   const prefill = useQuery({
     queryKey: ['taxe-prefill', prefillIdu], queryFn: () => getTaxePrefill(prefillIdu!),
     enabled: !!prefillIdu, retry: false,
@@ -165,11 +183,13 @@ export function TaxeAmenagement() {
           <span role="button" tabIndex={0} aria-label="Méthode et sources"
             className="flex h-[15px] w-[15px] shrink-0 items-center justify-center rounded-full border border-line-2 text-[9px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
         </Tip>
+        {/* RECETTE-1 (F3) — Réinitialiser en haut à droite du corps de l'outil (dès qu'une parcelle est désignée). */}
+        {prefillIdu && <Reinitialiser onReset={resetAll} />}
       </div>
-      {/* barre UNIQUE (adresse / IDU / référence courte — moteur ParcelInput, comme Étudier un bien) */}
-      {/* RETOURS-15 C5 — résolution d'adresse → focusParcelle(idu, {fiche}) : zoom + contour + fiche. */}
-      <ParcelInput dataAttr="taxe-parcelle" onPick={(i: string) => { setPrefillIdu(i); focusParcelle(i, { fiche: true }) }}
-        placeholder="Adresse, IDU ou référence (BW0917)" />
+      {/* RECETTE-1 (F2) — EntreeParcelle : adresse/IDU OU clic carte, l'une grise l'autre. Le pick du
+          champ fixe source='adresse' puis focusParcelle (fiche) ; le clic carte est adopté par l'effet selectedIdu. */}
+      <EntreeParcelle source={source}
+        onPick={(i, src) => { setSource(src); setPrefillIdu(i); focusParcelle(i, { fiche: true }) }} />
       {!prefillIdu && (
         <p data-taxe-attente className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] leading-snug text-txt-dim">
           Le formulaire s'ouvrira quand une parcelle sera choisie — vous saisissez la surface taxable

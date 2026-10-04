@@ -52,7 +52,7 @@ donnees:
     ou:    { rang: 10, etat: replie, section: "Dispositifs fiscaux" }
     comment: { libelle: "TVA réduite (primo-accédant)", format: liste, i: "Périmètre de TVA à taux réduit (5,5 %) pour l'accession sociale — buffer 500 m DÉRIVÉ des QPV (ANRU / quartiers prioritaires)." }
     # COUCHES-RECETTE-2 C3 : teinte FRANCHE (le cyan à 0,24 était trop pastel) → turquoise soutenu.
-    carte: { kind: tva_primo, agregat: false, famille: dispositifs, geometrie: polygone, zoom_min: 0, rang_carte: 4, style: { couleur: "#12A6B4", opacite: 0.40, trait: "#0A6B75" }, legende: "TVA réduite 5,5 % (buffer 500 m des QPV)" }
+    carte: { kind: tva_primo, agregat: false, famille: dispositifs, geometrie: polygone, zoom_min: 12, rang_carte: 4, style: { couleur: "#12A6B4", opacite: 0.40, trait: "#0A6B75" }, legende: "TVA réduite 5,5 % (buffer 500 m des QPV)" }
     absence: "TVA primo : parcelle hors périmètre de TVA réduite dans l'emprise visible."
     absence_type: absente_ici
     pourquoi: "C3 : turquoise franc (#12A6B4 @0,40) au lieu du cyan pastel."
@@ -67,7 +67,7 @@ donnees:
   - quoi:  dispositifs_couche
     ou:    { rang: 10, etat: replie, section: "Dispositifs fiscaux" }
     comment: { libelle: "Quartiers prioritaires (QPV)", format: liste, i: "Quartiers Prioritaires de la politique de la Ville (2024) — abattement TFPB, exonérations, priorités de rénovation." }
-    carte: { kind: qpv, agregat: false, famille: dispositifs, geometrie: polygone, zoom_min: 0, rang_carte: 5, style: { couleur: "#E8934A", opacite: 0.28, trait: "#E8934A" }, legende: "Quartier prioritaire de la Ville (QPV 2024)" }
+    carte: { kind: qpv, agregat: false, famille: dispositifs, geometrie: polygone, zoom_min: 12, rang_carte: 5, style: { couleur: "#E8934A", opacite: 0.28, trait: "#E8934A" }, legende: "Quartier prioritaire de la Ville (QPV 2024)" }
     absence: "QPV : parcelle hors quartier prioritaire dans l'emprise visible."
     absence_type: absente_ici
     pourquoi: "Rendu identique (#E8934A orange)."
@@ -84,7 +84,7 @@ donnees:
     comment: { libelle: "Rénovation urbaine (ANRU)", format: liste, i: "Périmètres NPNRU / ANRU (nouveau programme national de renouvellement urbain) — quartiers en rénovation." }
     # trame ANRU (hachure décorative) réexaminée → aplat plein #C6E82E : 8 polygones, ΔE 8,4 dès 0,10,
     # la teinte chartreuse suffit à distinguer sans texture.
-    carte: { kind: anru, agregat: false, famille: dispositifs, geometrie: polygone, zoom_min: 0, rang_carte: 6, style: { couleur: "#C6E82E", opacite: 0.30, trait: "#C6E82E" }, legende: "Périmètre ANRU / NPNRU (rénovation urbaine)" }
+    carte: { kind: anru, agregat: false, famille: dispositifs, geometrie: polygone, zoom_min: 12, rang_carte: 6, style: { couleur: "#C6E82E", opacite: 0.30, trait: "#C6E82E" }, legende: "Périmètre ANRU / NPNRU (rénovation urbaine)" }
     absence: "ANRU : parcelle hors périmètre de rénovation urbaine dans l'emprise visible."
     absence_type: absente_ici
     pourquoi: "Trame décorative réexaminée → aplat plein chartreuse #C6E82E (ΔE 8,4)."

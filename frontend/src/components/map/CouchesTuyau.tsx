@@ -88,7 +88,10 @@ const ENR_HABITATION_COUCHE: TuyauCouche = {
   nom: 'Contraintes EnR près des habitations',
   famille: 'energie',
   geometrie: 'raster',
-  zoom_min: 10,
+  // RECETTE-1 (C7, Vic 04/10) — l'aplat beige recouvrait quasiment toute l'île à l'échelle île (le
+  // tampon autour des habitations n'a de sens qu'au quartier). zoom_min relevé à 13 ; EN DESSOUS,
+  // RIEN n'est dessiné (la source raster suit ce zoom_min, cf. addSource) — seule la pastille (C2) s'affiche.
+  zoom_min: 13,
   rang_carte: 7,
   style: {},
   niveaux: [{ id: 'perimetre', propriete: 'x', valeur: 'x', couleur: '#E8873A', legende: 'Périmètre de contrainte (habitations)', geometrie: 'polygone' }],
@@ -446,7 +449,9 @@ export function CouchesTuyauLayers({ map, ready }: {
       if (c.geometrie === 'raster') {
         const rsrc = `tuyau-${c.kind}`
         if (!m.getSource(rsrc)) {
-          m.addSource(rsrc, { type: 'raster', tileSize: 256, minzoom: 6, maxzoom: 18,
+          // RECETTE-1 (C7) — la source raster suit le zoom_min de la couche (EnR : rien avant z13) ;
+          // les courbes de niveau gardent leur z11. En dessous : aucune tuile demandée, rien de dessiné.
+          m.addSource(rsrc, { type: 'raster', tileSize: 256, minzoom: c.zoom_min ?? 6, maxzoom: 18,
             tiles: [`${window.location.origin}${c.tuiles_url}`] })
         }
         const rid = `tuyau-${c.kind}-raster`
@@ -547,7 +552,7 @@ export function CouchesTuyauLayers({ map, ready }: {
 
   return (
     <>
-      <TuyauLegend plan={plan} zoom={zoom} />
+      <TuyauLegend plan={plan} />
       {gatees.length > 0 && (
         <div data-tuyau-zoom-hint
           className="pointer-events-none absolute left-1/2 top-16 z-10 -translate-x-1/2 rounded-full border border-mint/40 bg-surface-2/95 px-3.5 py-1.5 text-[11.5px] text-txt shadow-elev-2">
@@ -561,7 +566,7 @@ export function CouchesTuyauLayers({ map, ready }: {
 // ── la LÉGENDE bas-droite — COUCHES-RECETTE-1 A10 : titrée « Légende », UN ACCORDÉON PAR COUCHE
 // active (titré du nom). La dernière couche allumée est dépliée, les autres repliées ; clic pour
 // déplier. Décalée vers le haut pour ne pas chevaucher l'attribution « Cadastre © DGFiP ».
-function TuyauLegend({ plan, zoom }: { plan: TuyauCouche[] | undefined; zoom: number }) {
+function TuyauLegend({ plan }: { plan: TuyauCouche[] | undefined }) {
   const { tuyauActives } = useApp()
   const actives = useMemo(
     () => (plan || []).filter((c) => tuyauActives[c.kind]).sort((a, b) => (b.rang_carte || 0) - (a.rang_carte || 0)),
@@ -618,9 +623,6 @@ function TuyauLegend({ plan, zoom }: { plan: TuyauCouche[] | undefined; zoom: nu
           const isOpen = estDeplie(e)
           const sw = pastillesLegende(e)
           const note = e.membres.map((m) => m.note).find(Boolean)
-          // COUCHES-RECETTE-2 B5 : couche à zoom minimum non atteint → « Zoomez pour voir … ».
-          const zmin = Math.max(...e.membres.map((m) => m.zoom_min ?? 0))
-          const gated = zmin > zoom + 0.001
           return (
             <div key={e.cle} className="rounded-md border border-line">
               {/* COUCHES-RECETTE-2 B4 : PAS de pastille à côté du titre (les pastilles sont DANS
@@ -633,9 +635,10 @@ function TuyauLegend({ plan, zoom }: { plan: TuyauCouche[] | undefined; zoom: nu
               </button>
               {isOpen && (
                 <div className="flex flex-col gap-0.5 px-2 pb-2">
-                  {gated ? (
-                    <div className="text-[10.5px] font-medium text-mint">Zoomez pour voir {e.nom}</div>
-                  ) : sw.length > 0 ? (
+                  {/* RECETTE-1 (C7) — plus de « Zoomez pour voir … » DANS la légende : la pastille du
+                      haut de carte (data-tuyau-zoom-hint) le dit déjà pour toutes les couches gated.
+                      La légende garde ses pastilles de couleur (toujours informatives). */}
+                  {sw.length > 0 ? (
                     sw.map((n) => (
                       <div key={n.k} className="flex items-start gap-2 text-[10.5px] leading-tight text-txt-mut">
                         <span className="mt-0.5 h-2.5 w-3.5 shrink-0 rounded-sm border"

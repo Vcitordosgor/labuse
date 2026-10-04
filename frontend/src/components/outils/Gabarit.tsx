@@ -3,7 +3,8 @@ import { useQuery } from '@tanstack/react-query'
 import { getGabarit, type GabaritResult, type GabGeom } from '../../lib/api'
 import { fmtInt } from '../../lib/format'
 import { useApp } from '../../store/useApp'
-import { ParcelInput } from '../ParcelInput'
+import { EntreeParcelle, type SourceParcelle } from './EntreeParcelle'   // RECETTE-1 F2
+import { Reinitialiser } from '../ui/Reinitialiser'   // RECETTE-1 F3
 import { Squelette } from '../Loading'
 import { ErrorState } from '../States'
 import { Bouton } from '../ui/Bouton'
@@ -160,17 +161,28 @@ function Num({ label, value, unit, accent, statusLabel, sub }: {
 export function Gabarit() {
   const selectedIdu = useApp((s) => s.selectedIdu)
   const focusParcelle = useApp((s) => s.focusParcelle)   // RETOURS-15 C4 — zoom + contour à la résolution
+  const select = useApp((s) => s.select)   // RECETTE-1 F1/F3
   const terrain3d = useApp((s) => s.terrain3d)
   const setTerrain3d = useApp((s) => s.setTerrain3d)   // RETOURS-15 D4 — bascule 2D / 3D dans le panneau
   const batiVisible = useApp((s) => s.batiVisible)   // RETOURS-13 P4 — chip « Bâtiments » (session)
   const [idu, setIdu] = useState<string | null>(selectedIdu)
+  const [source, setSource] = useState<SourceParcelle>(selectedIdu ? 'carte' : null)   // RECETTE-1 F2
   const [reglesOuvertes, setReglesOuvertes] = useState(true)   // RETOURS-15 D3 — « Voir les règles appliquées » ouvert par défaut
   const [nonIntOuvertes, setNonIntOuvertes] = useState(true)    // GABARIT-6 P3 — liste des règles non intégrées, ouverte par défaut
 
+  // RECETTE-1 (F1) — une parcelle désignée SUR LA CARTE (selectedIdu) est adoptée (source carte) ;
+  // fermer la fiche de cette parcelle (selectedIdu → null) VIDE l'outil. Un pick dans le champ reste
+  // autonome (source adresse). RECETTE-1 (H11) — quitter l'outil remet la vue en 2D (fond sombre).
   useEffect(() => {
-    if (selectedIdu && selectedIdu !== idu) setIdu(selectedIdu)
+    if (selectedIdu && selectedIdu !== idu) { setIdu(selectedIdu); setSource('carte') }
+    else if (selectedIdu == null && source === 'carte') { setIdu(null); setSource(null) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedIdu])
+  useEffect(() => () => { setTerrain3d(false) }, [setTerrain3d])   // RECETTE-1 H11 — sortie → 2D
+  const resetAll = () => {
+    if (selectedIdu) select(null)
+    setIdu(null); setSource(null); setTerrain3d(false); setReglesOuvertes(true); setNonIntOuvertes(true)
+  }
 
   const target = idu
   const q = useQuery({
@@ -212,14 +224,18 @@ export function Gabarit() {
 
   return (
     <div data-gabarit-panel className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
-      <p className="text-[11px] leading-snug text-txt-mut">
-        Où et jusqu'où une construction peut s'implanter, selon les règles réglementaires
-        <b className="text-txt"> intégrées et sourcées</b> dans LABUSE.
-      </p>
+      <div className="flex items-start gap-1.5">
+        <p className="min-w-0 flex-1 text-[11px] leading-snug text-txt-mut">
+          Où et jusqu'où une construction peut s'implanter, selon les règles réglementaires
+          <b className="text-txt"> intégrées et sourcées</b> dans LABUSE.
+        </p>
+        {/* RECETTE-1 (F3) — Réinitialiser en haut à droite (dès qu'une parcelle est désignée). */}
+        {target && <Reinitialiser onReset={resetAll} />}
+      </div>
 
-      <ParcelInput dataAttr="gabarit-parcelle"
-        onPick={(i: string) => { setIdu(i); focusParcelle(i) }}
-        placeholder="Adresse, IDU ou référence (BW0917)" />
+      {/* RECETTE-1 (F2) — EntreeParcelle : adresse/IDU OU clic carte, l'une grise l'autre. */}
+      <EntreeParcelle source={source}
+        onPick={(i, src) => { setSource(src); setIdu(i); focusParcelle(i) }} />
 
       {!target && (
         <p className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] leading-snug text-txt-dim">
