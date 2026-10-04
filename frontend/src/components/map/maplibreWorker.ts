@@ -1,0 +1,21 @@
+// MAPLIBRE-1 Lot B — chargement du worker maplibre 6 sous Vite.
+//
+// maplibre 6 est distribué en ESM pur et charge son worker (`maplibre-gl-worker.mjs`) par URL. Sous un
+// bundler comme Vite, `import.meta.url` ne résout PAS le worker à l'intérieur du graphe de modules : il
+// faut déclarer son URL explicitement (doc officielle de migration v5→v6). `?worker&url` fait passer le
+// worker par le pipeline *worker* de Vite (chunk autonome, dépendances incluses) et renvoie son URL.
+//
+// C'est LA correction des deux pannes de la tentative précédente :
+//   - en dev (`npm run dev`), « maplibre-gl-worker.mjs introuvable » (le pré-bundling Vite ne le trouvait pas) ;
+//   - dans le build servi par l'API (`/socle/`), PAGE NOIRE (le worker n'était pas émis → aucune tuile rendue).
+// `optimizeDeps.exclude` seul ne règle NI l'un NI l'autre ; `setWorkerUrl` les règle tous les deux.
+import * as maplibregl from 'maplibre-gl'
+import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
+
+let fait = false
+/** À appeler une fois, AVANT toute création de `maplibregl.Map`. Idempotent. */
+export function reglerWorkerMaplibre(): void {
+  if (fait) return
+  maplibregl.setWorkerUrl(workerUrl)
+  fait = true
+}
