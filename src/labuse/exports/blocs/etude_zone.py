@@ -116,7 +116,7 @@ def _equipements(z) -> str:
         nom, dom = eq.get("nom"), eq.get("domaine")
         t = eq.get("temps_min")
         if nom:
-            suff = f" · {int(t)} min" if isinstance(t, (int, float)) else ""
+            suff = f" · {round(t)} min" if isinstance(t, (int, float)) and not isinstance(t, bool) else ""
             lignes.append(_kv(esc(dom or "Équipement"), f"{esc(nom)}{suff}"))
     return _sec("Équipements", lignes)
 

@@ -159,6 +159,23 @@ def nombres_ancres(valeurs: dict[str, Valeur], ctx: dict | None = None) -> dict[
             _poser(x, "statut_plu")
         for x in _scalaires((ctx.get("voisines") or {})):
             _poser(x, "assemblage_surface_m2")
+        # ── DOCS-1 (Lot C/D) — les 3 nouveaux documents portent le résultat de LEUR outil dans le
+        # contexte (miroir de l'écran : même endpoint, aucun recalcul). Chaque nombre imprimé vient de
+        # ce résultat ; on le rattache à une donnée-TÊTE du domaine (faute d'un id par champ), comme le
+        # bilan Financier. Les ids-tête sont des données réelles du registre (robinets outil_gabarit /
+        # outil_etude_zone + chiffres parcelle de Comparer). Sur-rattacher un nombre non imprimé est bénin.
+        for x in _scalaires(ctx.get("gabarit")):
+            _poser(x, "gabarit_hauteur_m")
+        for x in _scalaires(ctx.get("comparatif")):
+            _poser(x, "sdp_residuelle_m2")
+            _poser(abs(x), "sdp_residuelle_m2")   # charge foncière négative affichée « -94 €/m² »
+        # le « Gabarit max » s'imprime « R+(niveaux-1) » : on rattache aussi la valeur dérivée affichée.
+        for r in (ctx.get("comparatif") or []):
+            nmax = r.get("gabarit_niveaux_max") if isinstance(r, dict) else None
+            if isinstance(nmax, (int, float)) and not isinstance(nmax, bool):
+                _poser(float(int(nmax) - 1), "gabarit_niveaux_max")
+        for x in _scalaires(ctx.get("zone")):
+            _poser(x, "population_zone")
         # l'adresse (numéro de voie) est une donnée d'identité (adresse_ban), pas une grandeur —
         # rattachée pour ne pas la compter comme fuite quand un document l'imprime hors Valeur.
         for x in _scalaires(ctx.get("adresse")):
