@@ -137,9 +137,29 @@ manquait). Rien à corriger ; la recherche île sur la règle emprise n'est pas 
 | D1–D7 | ✅ FAIT | lot D complet |
 | E1 · E2 · E3 · E4 | ✅ FAIT | **Lot E complet** (session 2) |
 | C5 (décision Vic) | ✅ FAIT | fiche = carte (même rattachement ST_Contains) |
-| F1–F4 (règles outils) | ⏳ NON FAIT | refonte d'état transverse aux outils |
+| F1–F4 (règles outils) | 🔶 EN COURS | composants partagés faits + 1 outil (Taxe) ; pattern vérifié live |
 | G + H1–H16 (outils) | ⏳ NON FAIT | audit branchement + refontes outil par outil |
 | B (vitesse carte) | ⏳ NON FAIT | mesure avant/après (en dernier, ordre Vic) |
+
+### Session 2 (suite) — Lot F : fondation + 1er outil
+- **F2/F3 composants partagés** (`frontend/src/components/outils/EntreeParcelle.tsx`, `ui/Reinitialiser.tsx`,
+  verrou `EntreeParcelle.test.tsx`) : `EntreeParcelle` = UN champ adresse/IDU OU « clic carte », l'une
+  grise l'autre (opacité 40 %) ; `Reinitialiser` = Chip ↻ en haut à droite. Commit `565a9c57`.
+- **Taxe d'aménagement** (commit `33ba998d`) — **pattern F appliqué + VÉRIFIÉ LIVE** (Playwright :
+  champ pick → invite carte grisée + Réinitialiser apparaît). Recette du pattern (à répliquer) :
+  1. imports `EntreeParcelle`/`Reinitialiser` + `select` du store ;
+  2. état `source` + effet qui synchronise `prefillIdu ↔ selectedIdu` (y compris null = fermer la
+     fiche vide l'outil, F1) et pose `source` ('adresse' au champ, 'carte' au changement de selectedIdu) ;
+  3. `resetAll()` = `select(null)` + remise à zéro de tous les champs locaux (F3) ;
+  4. remplacer `ParcelInput` par `<EntreeParcelle source onPick={(i,src)=>{setSource(src);…focusParcelle(i,{fiche:true})}}/>` ;
+  5. `{prefillIdu && <Reinitialiser onReset={resetAll} />}` dans l'en-tête du corps ;
+  6. F4 : outil mono-niveau → seul « ← Outils » du shell ; outils multi-niveaux (ScanPatrimoine,
+     EtudeZone, Blocs, Plu, Communes, ProspectionSolaire) = conserver les « ← <palier> » APRÈS recherche.
+- **Reste F (~13 outils)** : Pièges/risques, Faisabilité (+H10), Gabarit (+H11, F4+3D 2D-défaut), Remonter
+  le temps (+H9), Ensoleillement, Assemblage (+H5, garde msel dans l'outil), Scan patrimoine (+H4, F4),
+  Étude de zone (+H8), Permis (+H2), Comparer communes (+H6), Bloc foncier, Succession, Courrier — même
+  recette ; `setModule` vide déjà moduleMap/tool/zone/focusIdu (carte) → F1 « revenir = vierge » en partie
+  centralisé (reste msel/tempsPin à vider sur changement d'outil si on veut le faire au store).
 
 ### Session 2 — suite : C5 (décision), E2, E3 faits
 - **C5 (décision Vic)** : la fiche « ICPE sur la parcelle » lit le MÊME rattachement que la carte
