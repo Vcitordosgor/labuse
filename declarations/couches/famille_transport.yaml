@@ -98,10 +98,12 @@ donnees:
   - quoi:  lignes_ht_couche
     ou:    { rang: 10, etat: replie, section: "Réseaux d'énergie" }
     comment: { libelle: "Lignes haute tension (HTB)", format: liste, i: "Réseau de transport 63/90 kV (BD TOPO, aérien) — servitude de voisinage, champ électromagnétique." }
-    carte: { kind: ligne_ht, agregat: false, famille: reseaux, geometrie: ligne, zoom_min: 0, rang_carte: 74, style: { couleur: "#B9C4C0", epaisseur: 1.6, tirets: [5, 2.5], opacite: 0.9 }, legende: "Ligne HTB 63/90 kV (aérien)" }
+    # RECETTE-1 (C8, Vic 04/10) — HTB en ORANGE VIF (gris #B9C4C0 illisible sur fond sombre). La forme
+    # (tireté long 5/2,5) + la teinte la séparent de la HTA (jaune) et du poste (rouge-orangé).
+    carte: { kind: ligne_ht, agregat: false, famille: reseaux, geometrie: ligne, zoom_min: 0, rang_carte: 74, style: { couleur: "#FF7A1A", epaisseur: 2, tirets: [5, 2.5], opacite: 0.95 }, legende: "Ligne HTB 63/90 kV (aérien)" }
     absence: "Lignes HTB : aucune ligne haute tension dans l'emprise visible."
     absence_type: absente_ici
-    pourquoi: "Rendu identique (argent #B9C4C0, tireté long 5/2,5)."
+    pourquoi: "RECETTE-1 C8 : orange vif #FF7A1A, tireté long 5/2,5 (lisible sur fond sombre)."
 ---
 surface:   couche_ligne_mt
 nom:       "Lignes moyenne tension (HTA)"
@@ -113,10 +115,11 @@ donnees:
   - quoi:  ligne_mt_couche
     ou:    { rang: 10, etat: replie, section: "Réseaux d'énergie" }
     comment: { libelle: "Lignes moyenne tension (HTA)", format: liste, i: "Réseau HTA 15-20 kV EDF (aérien + souterrain) — tracé indicatif (sécurité publique), ne remplace pas une DT-DICT. Distinct de la HTB." }
-    carte: { kind: ligne_mt, agregat: false, limite: 40000, famille: reseaux, geometrie: ligne, zoom_min: 0, rang_carte: 72, style: { couleur: "#6E86C4", epaisseur: 1.1, tirets: [2, 1.6], opacite: 0.85 }, legende: "Ligne HTA 15-20 kV (aérien / souterrain)" }
+    # RECETTE-1 (C8) — HTA en JAUNE (le tireté court 2/1,6 + la teinte la séparent de la HTB orange).
+    carte: { kind: ligne_mt, agregat: false, limite: 40000, famille: reseaux, geometrie: ligne, zoom_min: 0, rang_carte: 72, style: { couleur: "#F2C230", epaisseur: 1.3, tirets: [2, 1.6], opacite: 0.9 }, legende: "Ligne HTA 15-20 kV (aérien / souterrain)" }
     absence: "Lignes HTA : aucune ligne moyenne tension dans l'emprise visible."
     absence_type: absente_ici
-    pourquoi: "Rendu identique (ardoise-bleu #6E86C4, tireté court 2/1,6 — la forme le sépare de la HTB)."
+    pourquoi: "RECETTE-1 C8 : jaune #F2C230, tireté court 2/1,6 — la teinte et la forme la séparent de la HTB orange."
 ---
 surface:   couche_pylone
 nom:       "Pylônes électriques"
@@ -128,11 +131,12 @@ donnees:
   - quoi:  pylone_couche
     ou:    { rang: 10, etat: replie, section: "Réseaux d'énergie" }
     comment: { libelle: "Pylônes électriques", format: liste, i: "Supports du réseau de transport électrique (BD TOPO IGN, points). Un pylône sur ou au ras d'une parcelle = servitude de voisinage et gêne à l'implantation. Distinct des lignes HTB (qu'il porte)." }
-    # GEOPF-3 — point acier (anneau) distinct des lignes HT (#B9C4C0) / MT (#6E86C4). Pas de vert.
-    carte: { kind: pylone, agregat: false, famille: reseaux, geometrie: point, zoom_min: 11, rang_carte: 76, style: { couleur: "#7E8A94", anneau: true, zoom_rayon: [11, 3, 14, 5, 17, 7], epaisseur: 1.8, opacite: 0.95, trait: "#3E4B55" }, popup: [ { champ: name, libelle: "Objet" }, { champ: etat, libelle: "État" } ], legende: "Pylône électrique (support HTB)" }
+    # RECETTE-1 (C8) — pylône en ORANGE PLEIN avec CONTOUR (gris #7E8A94 illisible) ; point (anneau),
+    # distinct par la FORME de la ligne HTB orange qu'il porte.
+    carte: { kind: pylone, agregat: false, famille: reseaux, geometrie: point, zoom_min: 11, rang_carte: 76, style: { couleur: "#FF8A2A", anneau: true, zoom_rayon: [11, 3, 14, 5, 17, 7], epaisseur: 1.8, opacite: 0.98, trait: "#5A2E0A" }, popup: [ { champ: name, libelle: "Objet" }, { champ: etat, libelle: "État" } ], legende: "Pylône électrique (support HTB)" }
     absence: "Pylônes : aucun pylône électrique dans l'emprise visible."
     absence_type: absente_ici
-    pourquoi: "GEOPF-3 : point acier (anneau) — support HTB, distinct des lignes ; zoom_min 11 (dense)."
+    pourquoi: "RECETTE-1 C8 : point orange plein #FF8A2A + contour #5A2E0A (anneau) — support HTB ; zoom_min 11 (dense)."
 ---
 surface:   couche_poste_transformation
 nom:       "Postes de transformation"
@@ -144,8 +148,9 @@ donnees:
   - quoi:  poste_transformation_couche
     ou:    { rang: 10, etat: replie, section: "Réseaux d'énergie" }
     comment: { libelle: "Postes de transformation", format: liste, i: "Postes de transformation électriques (BD TOPO IGN, emprises). La distance au poste le plus proche pèse sur le coût de raccordement d'un projet ; la fiche parcelle la sert au tiroir Réseaux." }
-    # GEOPF-3 — emprise orange (ambre soutenu), centroïde pour rester visible à l'échelle île. Pas de vert.
-    carte: { kind: poste_transformation, agregat: false, famille: reseaux, geometrie: polygone, centroide: true, zoom_min: 0, rang_carte: 78, style: { couleur: "#E8873A", opacite: 0.55, trait: "#8A4A17", epaisseur: 1.4, zoom_rayon: [9, 3, 13, 5, 16, 7] }, popup: [ { champ: name, libelle: "Poste" }, { champ: importance, libelle: "Importance" } ], legende: "Poste de transformation électrique" }
+    # RECETTE-1 (C8) — poste en ROUGE-ORANGÉ (distinct de la HTB orange et des pylônes orange plein),
+    # emprise + centroïde pour rester visible à l'échelle île.
+    carte: { kind: poste_transformation, agregat: false, famille: reseaux, geometrie: polygone, centroide: true, zoom_min: 11, rang_carte: 78, style: { couleur: "#E0472A", opacite: 0.6, trait: "#8A2817", epaisseur: 1.4, zoom_rayon: [9, 3, 13, 5, 16, 7] }, popup: [ { champ: name, libelle: "Poste" }, { champ: importance, libelle: "Importance" } ], legende: "Poste de transformation électrique" }
     absence: "Postes de transformation : aucun poste dans l'emprise visible."
     absence_type: absente_ici
     pourquoi: "GEOPF-3 : emprise ambre #E8873A + centroïde (visible île) — infrastructure électrique."

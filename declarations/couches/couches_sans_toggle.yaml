@@ -38,7 +38,7 @@ donnees:
     comment: { libelle: "Friches", format: liste, i: "Friches recensées (Cartofriches + recensement AGORAH des friches urbaines BÂTIES, bâtiment désaffecté). Statut : avec projet / potentielle / sans projet." }
     # COUCHES-RECETTE-2 Lot D : le subtype PORTE le statut → 3 couleurs distinctes (avec projet = vert,
     # potentielle = ambre, sans projet = rouge brique = le gisement disponible).
-    carte: { kind: friche, agregat: false, centroide: true, famille: foncier, geometrie: polygone, zoom_min: 0, rang_carte: 40, style: { couleur_propriete: subtype, couleur: "#d9a441", opacite: 0.40, trait: "#5a4020", rayon: 5 }, niveaux: [ { id: avec_projet, propriete: subtype, valeur: "friche avec projet", couleur: "#3FB56A", legende: "Avec projet" }, { id: potentielle, propriete: subtype, valeur: "friche potentielle", couleur: "#E8B23A", legende: "Potentielle" }, { id: sans_projet, propriete: subtype, valeur: "friche sans projet", couleur: "#D0563F", legende: "Sans projet (gisement disponible)" } ], popup: [ { champ: site_type, libelle: "Type de friche" }, { champ: site_statut, libelle: "Statut" }, { champ: site_adresse, libelle: "Adresse" } ], legende: "Friche — avec projet (vert) / potentielle (ambre) / sans projet (rouge)" }
+    carte: { kind: friche, agregat: false, centroide: true, famille: foncier, geometrie: polygone, zoom_min: 13, rang_carte: 40, style: { couleur_propriete: subtype, couleur: "#d9a441", opacite: 0.40, trait: "#5a4020", rayon: 5 }, niveaux: [ { id: avec_projet, propriete: subtype, valeur: "friche avec projet", couleur: "#3FB56A", legende: "Avec projet" }, { id: potentielle, propriete: subtype, valeur: "friche potentielle", couleur: "#E8B23A", legende: "Potentielle" }, { id: sans_projet, propriete: subtype, valeur: "friche sans projet", couleur: "#D0563F", legende: "Sans projet (gisement disponible)" } ], popup: [ { champ: site_type, libelle: "Type de friche" }, { champ: site_statut, libelle: "Statut" }, { champ: site_adresse, libelle: "Adresse" } ], legende: "Friche — avec projet (vert) / potentielle (ambre) / sans projet (rouge)" }
     absence: "Friches : aucune friche recensée dans l'emprise visible."
     absence_type: absente_ici
     pourquoi: "Gisement foncier ; légende par statut de projet."
@@ -113,7 +113,7 @@ donnees:
   - quoi:  abf_couche
     ou:    { rang: 10, etat: en_tete, section: "Patrimoine" }
     comment: { libelle: "Périmètres ABF", format: liste, i: "Périmètres ABF / monuments (arrêtés)." }
-    carte: { kind: abf, agregat: false, famille: patrimoine, geometrie: polygone, zoom_min: 0, rang_carte: 50, style: { couleur: "#C9A227", opacite: 0.30, trait: "#8a6d1a" }, legende: "Périmètre ABF — avis conforme requis" }
+    carte: { kind: abf, agregat: false, famille: patrimoine, geometrie: polygone, zoom_min: 12, rang_carte: 50, style: { couleur: "#C9A227", opacite: 0.30, trait: "#8a6d1a" }, legende: "Périmètre ABF — avis conforme requis" }
     absence: "Périmètres ABF : parcelle hors de tout périmètre de protection."
     absence_type: absente_ici
     statut_juridique: opposable
@@ -135,7 +135,7 @@ donnees:
     comment: { libelle: "SAR — proxy potentiel foncier (Région)", format: liste, i: "PROXY : géométrie du « potentiel foncier Région » (data.regionreunion.com), vocations INDICATIVES. Le règlement du Schéma d'Aménagement Régional (couche SIG officielle) n'est PAS diffusé en vecteur (07/09/2026), donc non ingéré. Indicatif, jamais opposable, jamais une interdiction." }
     # COUCHES-RECETTE-1 (Lot B) : la donnée PORTE une vocation (subtype) → légende PAR VOCATION,
     # couleurs distinctes (avant : une seule teinte verte). 7 vocations servies en base.
-    carte: { kind: sar, agregat: false, famille: foncier, geometrie: polygone, zoom_min: 0, rang_carte: 20, style: { couleur_propriete: subtype, couleur: "#6BA368", opacite: 0.30, trait: "#2f4f2c" }, niveaux: [ { id: urbaine, propriete: subtype, valeur: vocation_urbaine, couleur: "#E5623C", legende: "Urbaine" }, { id: agricole, propriete: subtype, valeur: vocation_agricole, couleur: "#E8B23A", legende: "Agricole" }, { id: naturelle, propriete: subtype, valeur: vocation_naturelle, couleur: "#3FB56A", legende: "Naturelle" }, { id: rurale, propriete: subtype, valeur: vocation_rurale, couleur: "#A8C24A", legende: "Rurale" }, { id: continuite, propriete: subtype, valeur: vocation_continuite, couleur: "#4FA8E0", legende: "Continuité écologique" }, { id: coupure, propriete: subtype, valeur: vocation_coupure, couleur: "#9B6BE0", legende: "Coupure d'urbanisation" }, { id: mixte, propriete: subtype, valeur: vocation_mixte, couleur: "#8A94A6", legende: "Mixte" } ], popup: [ { champ: vocation, libelle: "Vocation (proxy)" }, { champ: statut, libelle: "Statut" } ], legende: "SAR — proxy potentiel foncier Région (règlement SAR non ingéré) · vocations indicatives : urbaine / agricole / naturelle / rurale / continuité / coupure / mixte" }
+    carte: { kind: sar, agregat: false, famille: foncier, geometrie: polygone, zoom_min: 11, rang_carte: 20, style: { couleur_propriete: subtype, couleur: "#6BA368", opacite: 0.30, trait: "#2f4f2c" }, niveaux: [ { id: urbaine, propriete: subtype, valeur: vocation_urbaine, couleur: "#E5623C", legende: "Urbaine" }, { id: agricole, propriete: subtype, valeur: vocation_agricole, couleur: "#E8B23A", legende: "Agricole" }, { id: naturelle, propriete: subtype, valeur: vocation_naturelle, couleur: "#3FB56A", legende: "Naturelle" }, { id: rurale, propriete: subtype, valeur: vocation_rurale, couleur: "#A8C24A", legende: "Rurale" }, { id: continuite, propriete: subtype, valeur: vocation_continuite, couleur: "#4FA8E0", legende: "Continuité écologique" }, { id: coupure, propriete: subtype, valeur: vocation_coupure, couleur: "#9B6BE0", legende: "Coupure d'urbanisation" }, { id: mixte, propriete: subtype, valeur: vocation_mixte, couleur: "#8A94A6", legende: "Mixte" } ], popup: [ { champ: vocation, libelle: "Vocation (proxy)" }, { champ: statut, libelle: "Statut" } ], legende: "SAR — proxy potentiel foncier Région (règlement SAR non ingéré) · vocations indicatives : urbaine / agricole / naturelle / rurale / continuité / coupure / mixte" }
     absence: "SAR : vocation non renseignée sur l'emprise visible."
     absence_type: absente_ici
     statut_juridique: informatif
@@ -189,7 +189,7 @@ donnees:
     comment: { libelle: "Cimetières", format: liste, i: "Cimetières (BD TOPO) — servitude de voisinage (100 m)." }
     # COUCHES-RECETTE-1 A2 : le gris clair #E0E7EC sur fond sombre était invisible. Teinte vive
     # (violet-ardoise) + opacité relevée. Point d'île (centroïde) rendu par le front (cf. lot front).
-    carte: { kind: cimetiere, agregat: false, centroide: true, famille: patrimoine, geometrie: polygone, zoom_min: 0, rang_carte: 45, style: { couleur: "#B48CE6", rayon: 6, opacite: 0.5, halo: 2, trait: "#6E51A8" }, legende: "Cimetière (servitude de voisinage 100 m)" }
+    carte: { kind: cimetiere, agregat: false, centroide: true, famille: patrimoine, geometrie: polygone, zoom_min: 13, rang_carte: 45, style: { couleur: "#B48CE6", rayon: 6, opacite: 0.5, halo: 2, trait: "#6E51A8" }, legende: "Cimetière (servitude de voisinage 100 m)" }
     absence: "Cimetières : aucun cimetière dans l'emprise visible."
     absence_type: absente_ici
     statut_juridique: informatif
@@ -226,7 +226,7 @@ donnees:
     ou:    { rang: 10, etat: replie, section: "Économie" }
     comment: { libelle: "Zones d'activité", format: liste, i: "Zones d'activité économique (vocation, distinct des équipements BPE)." }
     # COUCHES-RECETTE-2 (retour) : plus de zoom_min — tuile île 0,09 s (134 Ko, 9 020 zones) → île OK.
-    carte: { kind: zone_activite, limite: 40000, famille: foncier, geometrie: polygone, zoom_min: 0, rang_carte: 35, style: { couleur: "#D98E4A", opacite: 0.25, trait: "#8a5a2a" }, legende: "Zone d'activité économique" }
+    carte: { kind: zone_activite, limite: 40000, famille: foncier, geometrie: polygone, zoom_min: 12, rang_carte: 35, style: { couleur: "#D98E4A", opacite: 0.25, trait: "#8a5a2a" }, legende: "Zone d'activité économique" }
     absence: "Zones d'activité : aucune zone dans l'emprise visible."
     absence_type: absente_ici
     pourquoi: "Vocation économique du secteur ; repliée. ⚠ ARBITRAGE : à distinguer d'amenite_bpe (voir rapport)."
