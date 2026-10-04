@@ -99,6 +99,12 @@ function RefDrawer({ id, name, context, value, valueColor, accent, icon, micro, 
     // (sinon 11 scrollIntoView se battent) ; le scroll vers le 1ᵉʳ résultat est piloté par la recherche.
     if (!open || acc.forceOpen || !ref.current) return
     const reduced = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    // RECETTE-1 (D3, Vic 04/10) — le titre de la section ouverte doit arriver EN HAUT, SOUS l'en-tête
+    // collant (`.tete-collee`/`[data-ctx-tete]`). On mesure la hauteur réelle de l'en-tête sticky du
+    // conteneur et on la pose en `scroll-margin-top` : scrollIntoView s'arrête alors sous l'en-tête,
+    // plus derrière lui (le titre n'était plus visible → « la vue ne bouge pas » ressenti).
+    const tete = document.querySelector('[data-fiche-tete-collee],[data-ctx-tete]') as HTMLElement | null
+    if (ref.current) ref.current.style.scrollMarginTop = `${(tete?.offsetHeight ?? 0) + 8}px`
     const t = setTimeout(() => ref.current?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' }), reduced ? 0 : 220)
     return () => clearTimeout(t)
   }, [open])

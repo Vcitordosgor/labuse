@@ -19,23 +19,21 @@ type TipProps = {
   side?: 'top' | 'bottom'
   className?: string
   block?: boolean                       // true = wrapper display:flex (lignes entières)
-  hoverDelayMs?: number                 // M62-P1 (c) : délai d'apparition AU SURVOL (0 = immédiat, défaut) ;
+  hoverDelayMs?: number                 // RECETTE-1 (D1) : délai d'apparition AU SURVOL (défaut 150 ms) ;
                                         // le focus clavier et le tap/clic restent IMMÉDIATS (jamais retardés).
   garder?: boolean                      // RECETTE-2 (S10) : n'affiche la bulle QUE si `garder` (contrôle
                                         // carte OU déclencheur fonctionnel icône-seule « i »).
-  survol?: boolean                      // FINITIONS-1 (P1) : la bulle s'ouvre AU SURVOL. Réservé aux
-                                        // CONTRÔLES DE CARTE — les 3 outils de mesure et le « i » des
-                                        // couches (DA-FIX-5 P3, charte §7.1) — SEULE exception au retrait
-                                        // des infobulles au survol. Sans `survol`, la bulle ne s'ouvre
-                                        // qu'au clic/tap ou au focus clavier (les « i » restent lisibles).
+  survol?: boolean                      // Hérité (FINITIONS-1) — désormais sans effet : depuis RECETTE-1 (D1)
+                                        // TOUTE bulle `garder` s'ouvre au survol. Conservé pour compat des
+                                        // appelants (contrôles de carte) ; ne change plus le comportement.
 }
 
-/** RECETTE-2 (S10) puis FINITIONS-1 (P1, tranché par Vic) — les infobulles AU SURVOL sont RETIRÉES
- *  PARTOUT dans l'app. SEULE exception : les 3 outils de mesure de la carte, qui passent `survol`.
- *  `garder` monte encore la bulle (déclencheurs icône-seule « i », pastille d'état) mais SANS survol :
- *  elle ne s'ouvre plus qu'au CLIC/TAP ou au FOCUS clavier (l'info reste accessible, plus de bulle qui
- *  jaillit à la souris). Sans `garder`, le composant ne rend que ses enfants (le wrapper `block`/
- *  `className` est conservé pour ne rien déplacer), aucune bulle. La bulle complète vit dans TipBulle. */
+/** RECETTE-1 (D1, tranché par Vic 04/10) — RÉTABLISSEMENT du survol : tous les « i » de l'app se
+ *  révèlent AU SURVOL (délai 150 ms) et au FOCUS clavier ; fermeture à la sortie / Échap ; sur tactile,
+ *  un tap ouvre, un tap dehors ferme. (Annule FINITIONS-1 P1 qui avait retiré le survol partout.)
+ *  Le gate `garder` est conservé : seules les bulles « i »/contrôles montent (pas de bulle sauvage sur
+ *  un élément quelconque). Sans `garder`, le composant ne rend que ses enfants (wrapper `block`/
+ *  `className` conservé pour ne rien déplacer). La bulle complète vit dans TipBulle. */
 export function Tip(props: TipProps) {
   if (!props.garder) {
     return <span className={`${props.block ? 'flex' : 'inline-flex'} ${props.className ?? ''}`}>{props.children}</span>
@@ -43,7 +41,7 @@ export function Tip(props: TipProps) {
   return <TipBulle {...props} />
 }
 
-function TipBulle({ tip, children, side = 'top', className = '', block = false, hoverDelayMs = 0, survol = false }: TipProps) {
+function TipBulle({ tip, children, side = 'top', className = '', block = false, hoverDelayMs = 150 }: TipProps) {
   const [open, setOpen] = useState(false)
   const hoverTimer = useRef<number | null>(null)
   const clearHover = () => { if (hoverTimer.current) { window.clearTimeout(hoverTimer.current); hoverTimer.current = null } }
@@ -52,15 +50,21 @@ function TipBulle({ tip, children, side = 'top', className = '', block = false, 
   const bubbleRef = useRef<HTMLSpanElement>(null)
   const [pos, setPos] = useState<{ left: number; top: number; place: 'top' | 'bottom' } | null>(null)
 
-  // Fermeture : tap extérieur (mobile toggle) OU minuterie 4 s.
+  // Fermeture : tap extérieur (mobile toggle), touche Échap (D1), OU minuterie 4 s (filet tactile).
   useEffect(() => {
     if (!open) return
     const close = (e: PointerEvent) => {
       if (!ref.current?.contains(e.target as Node)) setOpen(false)
     }
+    const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
     window.addEventListener('pointerdown', close)
+    window.addEventListener('keydown', onEsc)
     const t = window.setTimeout(() => setOpen(false), 4000)
-    return () => { window.removeEventListener('pointerdown', close); window.clearTimeout(t) }
+    return () => {
+      window.removeEventListener('pointerdown', close)
+      window.removeEventListener('keydown', onEsc)
+      window.clearTimeout(t)
+    }
   }, [open])
 
   // Positionnement : ancré sur le déclencheur, en coordonnées viewport (`fixed`), avec
@@ -100,11 +104,10 @@ function TipBulle({ tip, children, side = 'top', className = '', block = false, 
   return (
     <span ref={ref}
       className={`${block ? 'flex' : 'inline-flex'} ${className}`}
-      // FINITIONS-1 (P1) : le SURVOL n'ouvre la bulle que pour `survol` (les 3 outils de mesure) ; ailleurs
-      // le pointeur ne déclenche plus rien (clic/tap et focus clavier restent, ci-dessous). M62-P1 (c) :
-      // quand survol est actif, délai `hoverDelayMs` (0 par défaut) ; focus/clic = IMMÉDIATS.
-      onPointerEnter={(e) => { if (!survol || e.pointerType === 'touch') return; if (hoverDelayMs > 0) { clearHover(); hoverTimer.current = window.setTimeout(() => setOpen(true), hoverDelayMs) } else setOpen(true) }}
-      onPointerLeave={(e) => { if (survol && e.pointerType !== 'touch') { clearHover(); setOpen(false) } }}
+      // RECETTE-1 (D1) : le SURVOL souris ouvre la bulle après `hoverDelayMs` (150 ms par défaut) ;
+      // le tactile n'ouvre PAS au survol (tap plus bas) ; focus clavier = IMMÉDIAT (ci-dessous).
+      onPointerEnter={(e) => { if (e.pointerType === 'touch') return; clearHover(); if (hoverDelayMs > 0) { hoverTimer.current = window.setTimeout(() => setOpen(true), hoverDelayMs) } else setOpen(true) }}
+      onPointerLeave={(e) => { if (e.pointerType !== 'touch') { clearHover(); setOpen(false) } }}
       onFocus={() => { clearHover(); setOpen(true) }}
       onBlur={() => { clearHover(); setOpen(false) }}
       onClick={(e) => { e.stopPropagation(); clearHover(); setOpen((o) => !o) }}>

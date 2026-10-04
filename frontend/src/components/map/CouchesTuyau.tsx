@@ -582,7 +582,12 @@ function TuyauLegend({ plan, zoom }: { plan: TuyauCouche[] | undefined; zoom: nu
   const prev = useRef<Record<string, boolean>>({})
   useEffect(() => {
     const nouv = Object.keys(tuyauActives).find((k) => tuyauActives[k] && !prev.current[k])
+    const retire = Object.keys(prev.current).find((k) => prev.current[k] && !tuyauActives[k])
     if (nouv) setOuverts((o) => ({ ...o, [nouv]: true }))
+    // RECETTE-1 (C1, Vic 04/10) — cocher/décocher une couche REND la main à l'auto-ouverture :
+    // cocher une couche déplie la légende (même si elle avait été repliée à la main), décocher la
+    // dernière couche non-défaut la replie. Le repli manuel reste possible (jusqu'au prochain toggle).
+    if (nouv || retire) setOuvertManuel(null)
     prev.current = { ...tuyauActives }
   }, [tuyauActives])
   if (!actives.length) return null

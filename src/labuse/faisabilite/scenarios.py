@@ -108,7 +108,17 @@ def _cause_limite(f, zone: str) -> tuple[str, str, bool]:
                     f"(zone {z}).", "Zone AU non ouverte à l'urbanisation.", True)
         return (f.verdict, f"Construction neuve non autorisée en zone {z}.", True)
     if cause == "terrain_exigu":
-        return (f.verdict, "Terrain trop exigu compte tenu des reculs.", True)
+        # RECETTE-1 A1 — « ce qui limite » suit la RAISON réelle du vidage (jamais « reculs » par
+        # défaut sur une parcelle vidée par un PPR rouge / un emplacement réservé / une portion U/AU).
+        _lim = {
+            "ppr_rouge": "Parcelle en PPR zone rouge (inconstructible).",
+            "emplacement_reserve": "Emplacement réservé couvrant la parcelle.",
+            "ebc": "Espace boisé classé couvrant la parcelle.",
+            "contraintes": "Contraintes géométriques certaines (PPR/PEB/ravine/50 pas).",
+            "portion_reduite": "Portion constructible U/AU réduite (parcelle à cheval).",
+        }.get(getattr(f, "exigu_raison", None) or "",
+              "Terrain trop exigu compte tenu des reculs.")
+        return (f.verdict, _lim, True)
     if cause == "redhibitoire":
         return (f.verdict, "Contrainte rédhibitoire (voir les modulations réunionnaises).", True)
     if cause == "hauteur_indispo":

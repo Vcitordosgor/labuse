@@ -776,9 +776,9 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
         <div className="gcard mt-2 p-3">
         <div className="flex flex-wrap gap-1">
           {CP_COMMUNES.map(([cp, nom]) => (
-            // RECETTE-2 LOT A : la liste ne montre QUE le code postal ; la bulle au survol dit UNIQUEMENT
-            // le nom de commune (répéter le CP déjà à l'écran = bruit). La valeur filtrée reste le `nom`.
-            <Tip key={cp} side="top" tip={nom}>
+            // RECETTE-1 (E4, Vic 04/10) : au survol d'un code commune, l'infobulle (D1 — `garder` →
+            // survol) nomme la commune sous la forme « <code> — <commune> ». La valeur filtrée reste le `nom`.
+            <Tip key={cp} garder side="top" tip={`${cp} — ${nom}`}>
               <button onClick={() => setCommunesFilter(
                   filters.communes.includes(nom) ? filters.communes.filter((c) => c !== nom) : [...filters.communes, nom])}
                 className={`rounded-full border px-2 py-0.5 text-[10.5px] tabular-nums transition-colors duration-quick ${
@@ -820,10 +820,8 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
         <div>
           <p className="label-caps text-txt-dim">État du sol</p>
           <div className="mt-1"><ChipGroup field="etatSol" options={ETAT_SOL} /></div>
-          {/* FIX-FILTRES F1 — l'étiquette cesse d'être muette sur l'inconnu : « nu » = pas d'emprise
-              bâtie ≥ 5 % DÉTECTÉE, ce qui inclut les parcelles au bâti non mesuré (≈ 41 % ont une
-              emprise inconnue en base). La clause SQL ne bouge pas (partition complète et défendable). */}
-          <p className="mt-1 text-[10px] leading-snug text-txt-dim">« Terrain nu » = aucune emprise bâtie ≥ 5 % détectée (bâti non mesuré compris) ; la fiabilité est précisée en fiche.</p>
+          {/* RECETTE-1 (E1, Vic 04/10) — la phrase explicative « Terrain nu = aucune emprise bâtie ≥ 5 %… »
+              est RETIRÉE (la clause SQL ne bouge pas, seul l'affichage). */}
         </div>
         {/* KELFONCIER-FIX-2 (Lot C) — « Sans copropriété », « Hauteur du bâti (LiDAR) » et « Emprise bâtie »
             (ex-KELFONCIER-FIX-1 Lot D/E) descendent dans « Affiner la recherche » (façade allégée). Les
