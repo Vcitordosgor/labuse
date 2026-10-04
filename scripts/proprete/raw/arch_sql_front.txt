@@ -1,0 +1,2 @@
+frontend/src/components/panel/FiltreLabuse.tsx:24:import { DestinationSelect } from '../outils/DestinationSelect'   // FAISABILITE-1 lot B — sélecteur R151-28 partagé
+frontend/src/components/outils/EtudeZone.tsx:29:import { DestinationBadge, DestinationSelect } from './DestinationSelect'

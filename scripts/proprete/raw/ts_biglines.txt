@@ -1,0 +1,31 @@
+=== MEASURE 6: files > 400 lines ===
+2632	./lib/api.ts
+2054	./components/fiche/Fiche.tsx
+1844	./components/outils/ModulePanel.tsx
+1579	./components/map/MapView.tsx
+1100	./components/fiche/constructibilite.tsx
+1058	./store/useApp.ts
+1030	./components/panel/FiltreLabuse.tsx
+994	./lib/types.ts
+991	./components/outils/EtudeZone.tsx
+891	./components/outils/moteurs.tsx
+875	./components/panel/ResultsSection.tsx
+842	./components/header/Header.tsx
+762	./components/map/CouchesTuyau.tsx
+757	./components/contexte/ContextePanel.tsx
+749	./components/admin/Licences.tsx
+714	./components/crm/Kanban.tsx
+647	./lib/strings.ts
+512	./components/fiche/FinancierQuestionnaire.tsx
+509	./components/panel/LeftPanel.tsx
+508	./components/projets/ProjetKanban.tsx
+508	./components/admin/AdminView.tsx
+502	./App.tsx
+488	./components/admin/circuit/Detail.tsx
+459	./components/outils/blocB.tsx
+415	./components/outils/TaxeAmenagement.tsx
+408	./components/outils/ProspectionSolaire.tsx
+--- count >400 ---
+26
+--- total ts/tsx files + LOC ---
+210

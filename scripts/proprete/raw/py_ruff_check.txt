@@ -1,0 +1,68 @@
+2828	PLC0415	[ ] import-outside-top-level
+1190	E501   	[ ] line-too-long
+ 688	PLR2004	[ ] magic-value-comparison
+ 381	I001   	[*] unsorted-imports
+ 285	B008   	[ ] function-call-in-default-argument
+ 273	C408   	[ ] unnecessary-collection-call
+ 230	E702   	[ ] multiple-statements-on-one-line-semicolon
+ 186	PLR0913	[ ] too-many-arguments
+ 119	PLR0917	[ ] too-many-positional-arguments
+ 113	E741   	[ ] ambiguous-variable-name
+ 108	UP045  	[*] non-pep604-annotation-optional
+  94	PLR0915	[ ] too-many-statements
+  88	PLR0912	[ ] too-many-branches
+  86	UP017  	[*] datetime-timezone-utc
+  82	F401   	[-] unused-import
+  45	PLR0911	[ ] too-many-return-statements
+  38	E402   	[ ] module-import-not-at-top-of-file
+  36	SIM105 	[ ] suppressible-exception
+  35	UP037  	[*] quoted-annotation
+  32	PLW1510	[ ] subprocess-run-without-check
+  28	SIM115 	[ ] open-file-with-context-handler
+  26	C416   	[ ] unnecessary-comprehension
+  26	B007   	[ ] unused-loop-control-variable
+  26	F841   	[-] unused-variable
+  25	B905   	[ ] zip-without-explicit-strict
+  21	B023   	[ ] function-uses-loop-variable
+  21	PLW0603	[ ] global-statement
+  20	B904   	[ ] raise-without-from-inside-except
+  17	E401   	[*] multiple-imports-on-one-line
+  16	PLW2901	[ ] redefined-loop-name
+  15	F541   	[*] f-string-missing-placeholders
+  15	PLW0108	[ ] unnecessary-lambda
+   9	E701   	[ ] multiple-statements-on-one-line-colon
+   8	UP035  	[*] deprecated-import
+   8	F821   	[ ] undefined-name
+   7	SIM102 	[ ] collapsible-if
+   6	E731   	[ ] lambda-assignment
+   6	C420   	[*] unnecessary-dict-comprehension-for-iterable
+   6	C401   	[ ] unnecessary-generator-set
+   5	SIM108 	[ ] if-else-block-instead-of-if-exp
+   5	SIM103 	[ ] needless-bool
+   4	UP033  	[*] lru-cache-with-maxsize-none
+   4	UP028  	[ ] yield-in-for-loop
+   3	PLC0206	[ ] dict-index-missing-items
+   3	UP034  	[*] extraneous-parentheses
+   3	PLC0207	[*] missing-maxsplit-arg
+   3	SIM117 	[*] multiple-with-statements
+   3	SIM300 	[*] yoda-conditions
+   2	B009   	[*] get-attr-with-constant
+   2	SIM401 	[ ] if-else-block-instead-of-dict-get
+   2	PLR1730	[*] if-stmt-min-max
+   2	UP031  	[ ] printf-string-formatting
+   2	PLR1714	[ ] repeated-equality-comparison
+   1	PLR5501	[*] collapsible-else-if
+   1	PLR0124	[ ] comparison-with-itself
+   1	SIM910 	[*] dict-get-with-none-default
+   1	SIM113 	[ ] enumerate-for-loop
+   1	UP032  	[*] f-string
+   1	SIM212 	[ ] if-expr-with-twisted-arms
+   1	SIM118 	[ ] in-dict-keys
+   1	PLC1802	[*] len-test
+   1	PLR0402	[*] manual-from-import
+   1	F811   	[*] redefined-while-unused
+   1	SIM110 	[ ] reimplemented-builtin
+   1	UP042  	[ ] replace-str-enum
+   1	E703   	[*] useless-semicolon
+Found 7299 errors.
+[*] 767 fixable with the `--fix` option (424 hidden fixes can be enabled with the `--unsafe-fixes` option).

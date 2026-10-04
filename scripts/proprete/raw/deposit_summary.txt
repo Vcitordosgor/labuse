@@ -1,0 +1,16 @@
+worktrees:
+/Users/openclaw/Desktop/labuse          182a6f88 [main]
+/Users/openclaw/Desktop/labuse-chasse   3e3a2afa [audit/chasse-1]
+/Users/openclaw/Desktop/labuse-oracle   d5c90ea9 [fix/oracle-1]
+/Users/openclaw/Desktop/labuse-proprete 3e3a2afa [audit/proprete-1]
+/Users/openclaw/Desktop/labuse-recette1 182a6f88 [fix/recette-1b]
+/Users/openclaw/Desktop/labuse-scoring8 3e3a2afa [fix/scoring-8]
+
+remote branches total:
+50
+merged into origin/main (not deleted):
+49
+commit convention (prefix) last 200:
+0
+
+gitleaks: 28 findings (27 generic-api-key +1 curl) — qa/ scraped HTML 15, docs mockups 7, tests fixtures 4, frontend basemaps.ts 2 (false pos: 'key:' literals). 0 real LABUSE secret.

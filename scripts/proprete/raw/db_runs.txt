@@ -1,0 +1,17 @@
+relname	total
+dryrun_cascade_results	15 GB
+p_model_dataset_v2bis	1851 MB
+parcel_residuel_runs	523 MB
+score_snapshot_parcelles	473 MB
+dryrun_parcel_evaluations	359 MB
+filosofi_carreaux_200m	8408 kB
+p_score_v2_runs	176 kB
+run_bascule_journal	88 kB
+residuel_runs	80 kB
+served_run_exceptions	64 kB
+score_labuse_runs	64 kB
+division_or_revue_snapshot	64 kB
+score_snapshots	48 kB
+ingestion_runs	24 kB
+watch_snapshots	16 kB
+(15 rows)

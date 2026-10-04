@@ -1,0 +1,13 @@
+--- api imports ---
+   1 labuse.cli
+--- cascade imports ---
+--- copilote_v2 imports ---
+--- connectors imports ---
+--- exports imports ---
+--- scoring imports ---
+--- registre imports ---
+--- regles imports ---
+   1 labuse.registre
+--- faisabilite imports ---
+   1 labuse.faisabilite
+--- gabarit imports ---

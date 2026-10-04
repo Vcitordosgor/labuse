@@ -1,0 +1,256 @@
+npm warn exec The following package was not found and will be installed: knip@6.39.0
+Unused files (187)
+_lg.mjs: _lg.mjs
+qa/_e_shot.mjs: qa/_e_shot.mjs
+qa/assemblage_plus.mjs: qa/assemblage_plus.mjs
+qa/audit_couches_m51.mjs: qa/audit_couches_m51.mjs
+qa/audit_m6_boutons.mjs: qa/audit_m6_boutons.mjs
+qa/audit_m6_boutons2.mjs: qa/audit_m6_boutons2.mjs
+qa/audit_m6_boutons3.mjs: qa/audit_m6_boutons3.mjs
+qa/audit_m6_boutons4.mjs: qa/audit_m6_boutons4.mjs
+qa/audit_m6_dom.mjs: qa/audit_m6_dom.mjs
+qa/audit_m6_exports.mjs: qa/audit_m6_exports.mjs
+qa/audit_m6_fiche.mjs: qa/audit_m6_fiche.mjs
+qa/audit_m6_fiche2.mjs: qa/audit_m6_fiche2.mjs
+qa/audit_m6_fiche3.mjs: qa/audit_m6_fiche3.mjs
+qa/audit_m6_filtres.mjs: qa/audit_m6_filtres.mjs
+qa/audit_m6_outils.mjs: qa/audit_m6_outils.mjs
+qa/capture_surface_a.mjs: qa/capture_surface_a.mjs
+qa/circuit_sources1_cap.mjs: qa/circuit_sources1_cap.mjs
+qa/coherence1.mjs: qa/coherence1.mjs
+qa/commune_audit1_cap.mjs: qa/commune_audit1_cap.mjs
+qa/commune_rangement1_cap.mjs: qa/commune_rangement1_cap.mjs
+qa/commune_rangement2_cap.mjs: qa/commune_rangement2_cap.mjs
+qa/dashboard4_apres.mjs: qa/dashboard4_apres.mjs
+qa/dashboard4_avant.mjs: qa/dashboard4_avant.mjs
+qa/dashboard4_lot1.mjs: qa/dashboard4_lot1.mjs
+qa/dashboard4_lot2.mjs: qa/dashboard4_lot2.mjs
+qa/dashboard4_lot2_detail.mjs: qa/dashboard4_lot2_detail.mjs
+qa/dashboard4_lot2_resume.mjs: qa/dashboard4_lot2_resume.mjs
+qa/dashboard4_lot5.mjs: qa/dashboard4_lot5.mjs
+qa/dashboard4b_lot1.mjs: qa/dashboard4b_lot1.mjs
+qa/dashboard4b_lot2.mjs: qa/dashboard4b_lot2.mjs
+qa/fiche1_captures.mjs: qa/fiche1_captures.mjs
+qa/fiche_audit1.mjs: qa/fiche_audit1.mjs
+qa/fiche_audit1_rehab.mjs: qa/fiche_audit1_rehab.mjs
+qa/fiche_couches.mjs: qa/fiche_couches.mjs
+qa/fiche_couches2.mjs: qa/fiche_couches2.mjs
+qa/fiche_couches2_lot2.mjs: qa/fiche_couches2_lot2.mjs
+qa/fiche_couches3_dom.mjs: qa/fiche_couches3_dom.mjs
+qa/fiche_couches4_lot1.mjs: qa/fiche_couches4_lot1.mjs
+qa/fiche_couches4_lot2.mjs: qa/fiche_couches4_lot2.mjs
+qa/fiche_rangement2_cap.mjs: qa/fiche_rangement2_cap.mjs
+qa/fiche_rangement3_cap.mjs: qa/fiche_rangement3_cap.mjs
+qa/fiche_rangement_cap.mjs: qa/fiche_rangement_cap.mjs
+qa/finitions_captures.mjs: qa/finitions_captures.mjs
+qa/finitions_repro.mjs: qa/finitions_repro.mjs
+qa/fix_cosmetique_a.mjs: qa/fix_cosmetique_a.mjs
+qa/fix_ia_fiche.mjs: qa/fix_ia_fiche.mjs
+qa/fix_lot1_captures.mjs: qa/fix_lot1_captures.mjs
+qa/fix_lot1_de.mjs: qa/fix_lot1_de.mjs
+qa/fix_lot2_captures.mjs: qa/fix_lot2_captures.mjs
+qa/fix_lot2_d.mjs: qa/fix_lot2_d.mjs
+qa/fix_lot3_captures.mjs: qa/fix_lot3_captures.mjs
+qa/fix_pv.mjs: qa/fix_pv.mjs
+qa/health_journeys.mjs: qa/health_journeys.mjs
+qa/health_saintpaul.mjs: qa/health_saintpaul.mjs
+qa/health_voletA.mjs: qa/health_voletA.mjs
+qa/health_voletA_carte.mjs: qa/health_voletA_carte.mjs
+qa/health_voletB.mjs: qa/health_voletB.mjs
+qa/inspect_clic_tout.mjs: qa/inspect_clic_tout.mjs
+qa/inspect_scenarios.mjs: qa/inspect_scenarios.mjs
+qa/lot2_rtaa.mjs: qa/lot2_rtaa.mjs
+qa/m11_a_fix_capture.mjs: qa/m11_a_fix_capture.mjs
+qa/m11_b1_captures.mjs: qa/m11_b1_captures.mjs
+qa/m11_b2_captures.mjs: qa/m11_b2_captures.mjs
+qa/m11_c_captures.mjs: qa/m11_c_captures.mjs
+qa/m26b_5etats_capture.mjs: qa/m26b_5etats_capture.mjs
+qa/m26b_etat1_capture.mjs: qa/m26b_etat1_capture.mjs
+qa/m26b_etat5_capture.mjs: qa/m26b_etat5_capture.mjs
+qa/m55a_anru.mjs: qa/m55a_anru.mjs
+qa/m55a_captures.mjs: qa/m55a_captures.mjs
+qa/m55a_item4.mjs: qa/m55a_item4.mjs
+qa/m55a_point2.mjs: qa/m55a_point2.mjs
+qa/m55a_point4.mjs: qa/m55a_point4.mjs
+qa/m55b_autocomplete_probe.mjs: qa/m55b_autocomplete_probe.mjs
+qa/m55b_autocomplete_shots.mjs: qa/m55b_autocomplete_shots.mjs
+qa/m55b_commune_search.mjs: qa/m55b_commune_search.mjs
+qa/m55b_search_states.mjs: qa/m55b_search_states.mjs
+qa/m55g_captures.mjs: qa/m55g_captures.mjs
+qa/m55g_suite_captures.mjs: qa/m55g_suite_captures.mjs
+qa/m55h_captures.mjs: qa/m55h_captures.mjs
+qa/m55i_captures.mjs: qa/m55i_captures.mjs
+qa/m55j_captures.mjs: qa/m55j_captures.mjs
+qa/m55k_captures.mjs: qa/m55k_captures.mjs
+qa/m61_couches.mjs: qa/m61_couches.mjs
+qa/m65_capture.mjs: qa/m65_capture.mjs
+qa/m6_2a_a01_vignettes.mjs: qa/m6_2a_a01_vignettes.mjs
+qa/m6_2a_captures.mjs: qa/m6_2a_captures.mjs
+qa/m6_parcours_client.mjs: qa/m6_parcours_client.mjs
+qa/m6_scenarios.mjs: qa/m6_scenarios.mjs
+qa/matching_plus.mjs: qa/matching_plus.mjs
+qa/nettoyage1_legende.mjs: qa/nettoyage1_legende.mjs
+qa/nuit_bailleur.mjs: qa/nuit_bailleur.mjs
+qa/nuit_courrier.mjs: qa/nuit_courrier.mjs
+qa/nuit_diligence.mjs: qa/nuit_diligence.mjs
+qa/nuit_velocite.mjs: qa/nuit_velocite.mjs
+qa/onb_repro.mjs: qa/onb_repro.mjs
+qa/onboarding1_captures.mjs: qa/onboarding1_captures.mjs
+qa/outils6_captures.mjs: qa/outils6_captures.mjs
+qa/outils_fix1_captures.mjs: qa/outils_fix1_captures.mjs
+qa/outils_fix2_captures.mjs: qa/outils_fix2_captures.mjs
+qa/pack_print_clair.mjs: qa/pack_print_clair.mjs
+qa/pages_audit.mjs: qa/pages_audit.mjs
+qa/pages_audit_fix.mjs: qa/pages_audit_fix.mjs
+qa/pagesources1.mjs: qa/pagesources1.mjs
+qa/perf_baseline_nav.mjs: qa/perf_baseline_nav.mjs
+qa/perf_fiche_check.mjs: qa/perf_fiche_check.mjs
+qa/portes1_cap.mjs: qa/portes1_cap.mjs
+qa/projet_parcours.mjs: qa/projet_parcours.mjs
+qa/projet_phase2.mjs: qa/projet_phase2.mjs
+qa/projet_unifie.mjs: qa/projet_unifie.mjs
+qa/promo1_captures.mjs: qa/promo1_captures.mjs
+qa/qa.mjs: qa/qa.mjs
+qa/qa_audit27.mjs: qa/qa_audit27.mjs
+qa/qa_calculette.mjs: qa/qa_calculette.mjs
+qa/qa_communes_contrastees.mjs: qa/qa_communes_contrastees.mjs
+qa/qa_contexte.mjs: qa/qa_contexte.mjs
+qa/qa_correctifs.mjs: qa/qa_correctifs.mjs
+qa/qa_dernierepasse.mjs: qa/qa_dernierepasse.mjs
+qa/qa_dossiers.mjs: qa/qa_dossiers.mjs
+qa/qa_events.mjs: qa/qa_events.mjs
+qa/qa_expert.mjs: qa/qa_expert.mjs
+qa/qa_filtres_reels.mjs: qa/qa_filtres_reels.mjs
+qa/qa_ia.mjs: qa/qa_ia.mjs
+qa/qa_ile.mjs: qa/qa_ile.mjs
+qa/qa_m51.mjs: qa/qa_m51.mjs
+qa/qa_missions_sp.mjs: qa/qa_missions_sp.mjs
+qa/qa_modules.mjs: qa/qa_modules.mjs
+qa/qa_moteurs.mjs: qa/qa_moteurs.mjs
+qa/qa_partners.mjs: qa/qa_partners.mjs
+qa/qa_projet.mjs: qa/qa_projet.mjs
+qa/qa_regressions.mjs: qa/qa_regressions.mjs
+qa/qa_revue2.mjs: qa/qa_revue2.mjs
+qa/qa_revue3.mjs: qa/qa_revue3.mjs
+qa/qa_segments.mjs: qa/qa_segments.mjs
+qa/qa_vague0.mjs: qa/qa_vague0.mjs
+qa/radar_categorie_recette.mjs: qa/radar_categorie_recette.mjs
+qa/radar_categorie_shots.mjs: qa/radar_categorie_shots.mjs
+qa/radar_depot2_shots.mjs: qa/radar_depot2_shots.mjs
+qa/radar_html_shots.mjs: qa/radar_html_shots.mjs
+qa/radar_intake_geste.mjs: qa/radar_intake_geste.mjs
+qa/radar_recette1_shots.mjs: qa/radar_recette1_shots.mjs
+qa/rangement1.mjs: qa/rangement1.mjs
+qa/rangement2_lot3_search.mjs: qa/rangement2_lot3_search.mjs
+qa/rangement2_lot4_cap.mjs: qa/rangement2_lot4_cap.mjs
+qa/rattachement_v2_shots.mjs: qa/rattachement_v2_shots.mjs
+qa/recette1_couches.mjs: qa/recette1_couches.mjs
+qa/recette2_couches.mjs: qa/recette2_couches.mjs
+qa/recherche1_cap.mjs: qa/recherche1_cap.mjs
+qa/registre2_circuit.mjs: qa/registre2_circuit.mjs
+qa/registre2_i.mjs: qa/registre2_i.mjs
+qa/registre_circuit.mjs: qa/registre_circuit.mjs
+qa/registre_i.mjs: qa/registre_i.mjs
+qa/retours1_shots.mjs: qa/retours1_shots.mjs
+qa/retours20_shots.mjs: qa/retours20_shots.mjs
+qa/retours23_shots.mjs: qa/retours23_shots.mjs
+qa/retrait1_fonds.mjs: qa/retrait1_fonds.mjs
+qa/retrait_global.mjs: qa/retrait_global.mjs
+qa/rv1_captures.mjs: qa/rv1_captures.mjs
+qa/rv1_wizard.mjs: qa/rv1_wizard.mjs
+qa/sansobjet1_cap.mjs: qa/sansobjet1_cap.mjs
+qa/score_v_shots.mjs: qa/score_v_shots.mjs
+qa/secteur1_captures.mjs: qa/secteur1_captures.mjs
+qa/secteur2_captures.mjs: qa/secteur2_captures.mjs
+qa/secteur2b_captures.mjs: qa/secteur2b_captures.mjs
+qa/style3_final.mjs: qa/style3_final.mjs
+qa/style4_novoile.mjs: qa/style4_novoile.mjs
+qa/style5_fonds.mjs: qa/style5_fonds.mjs
+qa/style6_selecteur.mjs: qa/style6_selecteur.mjs
+qa/style6_sombre.mjs: qa/style6_sombre.mjs
+qa/sup_gestionnaire.mjs: qa/sup_gestionnaire.mjs
+qa/swipe_fonds_plan.mjs: qa/swipe_fonds_plan.mjs
+qa/tuiles1_bandeau_cap.mjs: qa/tuiles1_bandeau_cap.mjs
+qa/tuiles1_portes_cap.mjs: qa/tuiles1_portes_cap.mjs
+qa/zan_enrichi.mjs: qa/zan_enrichi.mjs
+scripts/ebc_er_captures.mjs: scripts/ebc_er_captures.mjs
+scripts/express01_captures.mjs: scripts/express01_captures.mjs
+scripts/shot_export.mjs: scripts/shot_export.mjs
+scripts/shot_m29.mjs: scripts/shot_m29.mjs
+scripts/shot_m30.mjs: scripts/shot_m30.mjs
+scripts/shot_m30_liste.mjs: scripts/shot_m30_liste.mjs
+scripts/shot_m30_popover.mjs: scripts/shot_m30_popover.mjs
+scripts/shot_m30_revue.mjs: scripts/shot_m30_revue.mjs
+src/circuit-harness.tsx: src/circuit-harness.tsx
+src/components/copilote/CopiloteEmbarque.tsx: src/components/copilote/CopiloteEmbarque.tsx
+src/components/outils/RadarDeclaratif.tsx: src/components/outils/RadarDeclaratif.tsx
+src/components/outils/ScoringV2.tsx: src/components/outils/ScoringV2.tsx
+src/components/radar/DepotAgence.tsx: src/components/radar/DepotAgence.tsx
+src/components/shared/IconTile.tsx: src/components/shared/IconTile.tsx
+Unused devDependencies (1)
+package.json: playwright
+Unused exports (41)
+src/components/admin/Licences.tsx: prochaineAction
+src/components/admin/Programmes.tsx: ProgrammesSection
+src/components/copilote/ui.tsx: Etiquette, Badge, SecHead, PillStatut
+src/components/crm/DeplacerMenu.tsx: RETIRER, default
+src/components/fiche/AnalyseLabuseCard.tsx: default
+src/components/fiche/AskBar.tsx: renderRich
+src/components/fiche/PluExceptionTip.tsx: porteLabel
+src/components/fiche/ProprietaireHistorique.tsx: aDesAnciensProprietaires
+src/components/fiche/blocks.tsx: ZoneDestinationsLigne
+src/components/fiche/constructibilite.tsx: FiscalLeviersBlock, dispositifsCount, ConstructibiliteSection
+src/components/fiche/leBien.tsx: hauteurBienMesuree, TerrainDuBienBlock, LeBienSection
+src/components/fiche/primitives.tsx: SEV_COLOR, REF, RENOUV, RENOUV_CODE_LABEL, drSvg, MicroJauge, MicroSegments, Weight, SourceRef, ICD_COLORS, icdColor, StatusLine, Rappel
+src/components/map/CouchesTuyau.tsx: COURBES_NIVEAU_KIND, ENR_HABITATION_KIND, useTuyauPlan
+src/components/map/Legend.tsx: useV2Actif
+src/components/map/basemaps.ts: WMTS, ORTHO_PROXY, CARTE_ANCIENNE_PROXY
+src/components/outils/DestinationSelect.tsx: useDestinationsRef
+src/components/outils/MonSecteur.tsx: SecteurResultats
+src/components/outils/blocB.tsx: O7Carnet, O9Rarete, O10Bascules
+src/components/outils/moteurs.tsx: M17, MarcheCommune, M19
+src/components/outils/registry.ts: VIOLET_DIM, GROUPS
+src/components/panel/FiltreLabuse.tsx: CapaciteSection, SectionProprietaire
+src/components/panel/LayerRowUI.tsx: LayerInfoPill
+src/components/panel/LeftPanel.tsx: ComprendreAnalyse
+src/components/panel/ResultsSection.tsx: segmentOf
+src/components/ui/Badge.tsx: default
+src/components/ui/Bouton.tsx: default
+src/components/ui/Case.tsx: default
+src/components/ui/Chevron.tsx: default
+src/components/ui/Chip.tsx: default
+src/components/ui/Retour.tsx: default
+src/components/ui/Tri.tsx: default
+src/lib/api.ts: commune, filterParams, getScoringBacktest, postProfilLigne, getParcelleZone, etudeZonePdfUrl, getPromoteurAcquisitions, getAccueilFraicheur, copiloteV2Heros, getProspectionSolaire, prospectionSolaireCsvUrl, pdfUrl, supprimerDocument, getWatchZones, createWatchZone, renameWatchZone, deleteWatchZone, getAlertes, refreshAlertes, ackAlerte, getExplain, postFeedback, modPatrimoineCsvUrl, getSavedSearches, saveSearch, deleteSearch, getSearchApercu, veilleNL, getAdminStripe, getAdminSources, postAdminSourceCadence, postAdminSourceRelancer, postAdminSourceAffichage, postAdminSourceVeilleVerifier, postAdminSourceVeilleMail, getHealthzCrons, getAdminFluxRunEtat, postAdminFluxArreterRun, getAdminFlux, getAdminFluxRuns, postFaisabiliteRecalcul, faisabiliteExplain, rejouerProjet, projetCsvUrl, radarDeposer, getRadarDepotOuvert, radarDepotAgenceAnalyser, radarDepotAgencePublier, radarInteresse, getRadarAInstruire, getRadarBienDetail, radarSignaler, radarInstruire, getRadarSignaux, getRadarVeilles, renommerRadarVeille, getAdminCommuneContacts, postAdminCircuitVerrous, postAdminCircuitPurger
+src/lib/filters.ts: FLAG_DEFS, inDefaultPerimetre, matchScope, activeChips, removeToken
+src/lib/format.ts: fmtPct, PCT_CONSOMME_SEUIL
+src/lib/geo.ts: haversine
+src/lib/layers.ts: LAYER_LABEL, layerInfo
+src/lib/perimetres.ts: PERIM_RESIDUEL, PERIM_POTENTIEL, PERIM_RAYON_ADAPTATIF
+src/lib/permisEtats.ts: PERMIS_LEGENDE
+src/lib/status.ts: PRIORITE_SERVIE, PALIER_META, CORRESPONDANCE_LEGACY, DECLASSE_ORDER, BANDE_QUALITE, ETAT_BIEN_META, BPE_DOM, BPE_DOM_CODES, NONE_COLOR, statutColor, completudeColor, V_BAND_META, EQUIP_META, ageSignal
+src/lib/useApplySearch.ts: filtresToFilters
+src/store/useApp.ts: MODE_B_DEFAUT
+Unused exported types (12)
+src/components/admin/circuit/types.ts: Etat, CibleType, Ligne, Kpi, Resume, Famille, Categorie, AFaireType, AFaireBouton, AFaire, EtatsSources, HorsVitrine, VerrouLigne
+src/components/documents/catalogue.ts: DocKind, DocBadge
+src/components/map/CouchesTuyau.tsx: TuyauNiveau, TuyauStyle, TuyauPopup, TuyauEtiquette
+src/components/outils/registry.ts: OutilGroup
+src/components/ui/Bouton.tsx: BoutonNiveau, BoutonTon
+src/components/ui/Chip.tsx: ChipTon
+src/lib/api.ts: ScoringBacktest, Entonnoir, ProfilPoint, TaxeLigne, GabRegSource, GabAppliedRule, GabNonIntegratedRule, GabCoverage, GabBatiProps, GabFeatureCollection, DistribRepere, EcartCommune, ProgrammeLie, ProgrammePublie, PromoteurAcquisitions, AccueilFraicheur, AccueilCetteSemaine, CopiloteCapacite, CopiloteVeille, SolaireProprio, SolaireItem, ProspectionSolaireResp, SolaireFiltres, PiscineItem, VoisineItem, BlocMembre, CourrierEnvoi, ShortlistSujet, WatchZone, Alerte, ExplainResult, FeedbackVerdict, BriefGroupe, StripeApercu, Offre, AdminSourceVeille, AdminSourceAlimente, SourceEtat, AdminSource, AdminSources, FluxDot, FluxSourceNode, FluxMoteurNode, FluxSurfaceNode, FluxRun, FluxFourmiliere, RadarCompteurs, FluxRadarEcart, FluxRadar, CoherenceCheck, FluxRunStatut, FluxRunProgress, FluxRunTermine, FluxRunEtat, FluxDerniereBascule, AdminFlux, ProprietairePublic, ProjetCounts, ProjetDerive, ApercuTop, Apercu, RadarProposition, DepotRec, RadarAInstruire, RadarDeclaratif, RadarSousMarche, RadarBienDetail, RadarCritere, RadarCandidateFiche, RadarPiste, RadarEcart, RadarSignaux, RadarVeille, RadarMarcheEcartCommune, Epci, AutreContact, QChampPrefill, QEcran, QUsage, QProgramme
+src/lib/filters.ts: Chip
+src/lib/status.ts: LegacyTier
+src/lib/strings.ts: ClientStrings
+src/lib/types.ts: OwnerType, VSignal, ScoreV, Indisponible, ModeB, QualiteCommune, LeBien, ZonePopulation, ZoneEquipement, ZoneConcurrent, ZoneEntreprise, ZoneGenerateur, ZoneMarche, ZoneCouverture, DestinationEtat, DestinationCdac, DestinationZoneVerdict, DestinationRef, SousDestinationRef, DestinationsReferentiel, ZoneAgeStructure, ZonePrixType, ZonePermisType, ZoneProprietairePM, ZoneRisques, ZoneAssainissement, ZoneEspaces, ZoneBpe, ZoneAcquisitionsPM, ZoneCommuneContexte, ZoneFibre, Renouvellement, DvfSecteur, DvfParcelle, IcdBlock, ReglementZone, FicheDestinationLigne, MixiteRegle, ViaContribution
+src/store/useApp.ts: RadarEcran, LayerToggles, ModeBParams, ProjetBrouillon, IaTop, IaRestitution, OutilRetour
+Duplicate exports (9)
+src/components/crm/DeplacerMenu.tsx: DeplacerMenu, default
+src/components/fiche/AnalyseLabuseCard.tsx: AnalyseLabuseCard, default
+src/components/ui/Badge.tsx: Badge, default
+src/components/ui/Bouton.tsx: Bouton, default
+src/components/ui/Case.tsx: Case, default
+src/components/ui/Chevron.tsx: Chevron, default
+src/components/ui/Chip.tsx: Chip, default
+src/components/ui/Retour.tsx: Retour, default
+src/components/ui/Tri.tsx: Tri, default

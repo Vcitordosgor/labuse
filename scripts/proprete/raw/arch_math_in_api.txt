@@ -1,0 +1,31 @@
+src/labuse/api/scoreur.py:74:        out["prix_saisi_m2_terrain"] = round(prix / surface)
+src/labuse/api/scoreur.py:77:        out["marge_a_ce_prix_eur"] = round(charge - prix)
+src/labuse/api/scoreur.py:208:            "sdp_plancher_m2": round(shab / coef) if (shab and coef) else None,
+src/labuse/api/enrichment.py:271:            out["profondeur_note"] = "Approximation surface/façade (terrain régulier)."
+src/labuse/api/projets.py:83:    filtres camelCase (`filtres` : communes/sdpMin/flagsExclus — dérivé M114) → on le garde tel quel
+src/labuse/api/projets.py:159:        "  AND valeur_fonciere / surface_reelle_bati BETWEEN 200 AND 8000 "
+src/labuse/api/projets.py:440:        pct = round(100 * sdp / sdp_besoin)
+src/labuse/api/projets.py:1181:        "  AND valeur_fonciere / surface_reelle_bati BETWEEN 200 AND 8000 AND commune = ANY(:cs) "
+src/labuse/api/moteurs.py:219:    gain_ratio = round(sdp / sdp_max_seule, 2) if sdp_max_seule else None
+src/labuse/api/moteurs.py:220:    gain_pct = round((sdp / sdp_max_seule - 1) * 100) if sdp_max_seule else None
+src/labuse/api/moteurs.py:235:                  + (10 if tous_pm else 0) + 25 * min(1, sdp / 3000)))
+src/labuse/api/moteurs.py:276:    """Voisines contiguës (1ᵉʳ anneau) de la parcelle `idu` : surface/zonage Sourcés, SDP
+src/labuse/api/traducteur.py:57:        emprise_m2 = round(zr.emprise_sol_pct / 100.0 * surface)
+src/labuse/api/traducteur.py:68:        pt_m2 = round(zr.pleine_terre_pct / 100.0 * surface)
+src/labuse/api/rarete.py:40:  e.conso_2021_2024_m2 / 3.0 / 10000.0 AS conso_ha_an,
+src/labuse/api/rarete.py:41:  e.conso_2011_2021_m2 * 0.5 / 10000.0 AS budget_zan_ha,
+src/labuse/api/rarete.py:42:  (e.conso_2011_2021_m2 * 0.5 - e.conso_2021_2024_m2) / 10000.0 AS reste_zan_ha,
+src/labuse/api/pre_dossier.py:614:    """Enveloppe rectangulaire du terrain (bbox, mètres vrais 2975) + surface et emprise bâtie.
+src/labuse/api/events.py:1009:     "un mouvement de prix / de valeur"),
+src/labuse/api/courrier.py:62:            "plafond_jour": plafond, "envoyes_jour": envoyes, "reste_jour": max(0, plafond - envoyes),
+src/labuse/api/courrier.py:372:@router.post("/admin/demandes/{demande_id}/prix")
+src/labuse/api/modules.py:1084:    de règle regles/sdp_residuelle_m2.py). Surface/zonage Sourcés ; propriétaire = PM DGFiP (public).
+src/labuse/api/modules.py:1912:    (capacité) + prix de sortie (DVF) sont SOURCÉS ; le coût de construction et la marge viennent
+src/labuse/api/blocs_documents.py:28:.bloc { background: var(--surface); border: 1px solid var(--line); border-radius: 6px;
+src/labuse/api/pdf_premium.py:7:LABUSE reste à l'écran) : en-tête (IDU/adresse/surface), bandeau événement, droits à bâtir (SDP),
+src/labuse/api/dashboard.py:1564:    (sources → moteurs → surfaces + run courant), le bandeau de mise à jour, le bloc Radar (accumulation),
+src/labuse/api/app.py:509:    `DataError`). Ce n'est JAMAIS un bug interne (ceux-là = 42xxx syntaxe / XX000 interne) : c'est de
+src/labuse/api/app.py:1858:            " AND (rmb.sdp_residuelle_m2 * :f_loyer * 12.0 / (:f_rend / 100.0)"
+src/labuse/api/app.py:2313:        "       conso_2021_2024_m2 / 3.0 / 10000.0 AS rythme_ha_an "
+src/labuse/api/app.py:2833:    """Valeurs forfaitaires + plafonds + source/année (config datée) — pour l'écran de la calculette."""
+src/labuse/api/app.py:4566:       pci.area_m2 / NULLIF(ST_Area(p.geom_2975), 0) AS part

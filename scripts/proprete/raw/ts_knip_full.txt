@@ -1,0 +1,506 @@
+Unused files (187)
+_lg.mjs                                     
+qa/_e_shot.mjs                              
+qa/assemblage_plus.mjs                      
+qa/audit_couches_m51.mjs                    
+qa/audit_m6_boutons.mjs                     
+qa/audit_m6_boutons2.mjs                    
+qa/audit_m6_boutons3.mjs                    
+qa/audit_m6_boutons4.mjs                    
+qa/audit_m6_dom.mjs                         
+qa/audit_m6_exports.mjs                     
+qa/audit_m6_fiche.mjs                       
+qa/audit_m6_fiche2.mjs                      
+qa/audit_m6_fiche3.mjs                      
+qa/audit_m6_filtres.mjs                     
+qa/audit_m6_outils.mjs                      
+qa/capture_surface_a.mjs                    
+qa/circuit_sources1_cap.mjs                 
+qa/coherence1.mjs                           
+qa/commune_audit1_cap.mjs                   
+qa/commune_rangement1_cap.mjs               
+qa/commune_rangement2_cap.mjs               
+qa/dashboard4_apres.mjs                     
+qa/dashboard4_avant.mjs                     
+qa/dashboard4_lot1.mjs                      
+qa/dashboard4_lot2_detail.mjs               
+qa/dashboard4_lot2_resume.mjs               
+qa/dashboard4_lot2.mjs                      
+qa/dashboard4_lot5.mjs                      
+qa/dashboard4b_lot1.mjs                     
+qa/dashboard4b_lot2.mjs                     
+qa/fiche_audit1_rehab.mjs                   
+qa/fiche_audit1.mjs                         
+qa/fiche_couches.mjs                        
+qa/fiche_couches2_lot2.mjs                  
+qa/fiche_couches2.mjs                       
+qa/fiche_couches3_dom.mjs                   
+qa/fiche_couches4_lot1.mjs                  
+qa/fiche_couches4_lot2.mjs                  
+qa/fiche_rangement_cap.mjs                  
+qa/fiche_rangement2_cap.mjs                 
+qa/fiche_rangement3_cap.mjs                 
+qa/fiche1_captures.mjs                      
+qa/finitions_captures.mjs                   
+qa/finitions_repro.mjs                      
+qa/fix_cosmetique_a.mjs                     
+qa/fix_ia_fiche.mjs                         
+qa/fix_lot1_captures.mjs                    
+qa/fix_lot1_de.mjs                          
+qa/fix_lot2_captures.mjs                    
+qa/fix_lot2_d.mjs                           
+qa/fix_lot3_captures.mjs                    
+qa/fix_pv.mjs                               
+qa/health_journeys.mjs                      
+qa/health_saintpaul.mjs                     
+qa/health_voletA_carte.mjs                  
+qa/health_voletA.mjs                        
+qa/health_voletB.mjs                        
+qa/inspect_clic_tout.mjs                    
+qa/inspect_scenarios.mjs                    
+qa/lot2_rtaa.mjs                            
+qa/m11_a_fix_capture.mjs                    
+qa/m11_b1_captures.mjs                      
+qa/m11_b2_captures.mjs                      
+qa/m11_c_captures.mjs                       
+qa/m26b_5etats_capture.mjs                  
+qa/m26b_etat1_capture.mjs                   
+qa/m26b_etat5_capture.mjs                   
+qa/m55a_anru.mjs                            
+qa/m55a_captures.mjs                        
+qa/m55a_item4.mjs                           
+qa/m55a_point2.mjs                          
+qa/m55a_point4.mjs                          
+qa/m55b_autocomplete_probe.mjs              
+qa/m55b_autocomplete_shots.mjs              
+qa/m55b_commune_search.mjs                  
+qa/m55b_search_states.mjs                   
+qa/m55g_captures.mjs                        
+qa/m55g_suite_captures.mjs                  
+qa/m55h_captures.mjs                        
+qa/m55i_captures.mjs                        
+qa/m55j_captures.mjs                        
+qa/m55k_captures.mjs                        
+qa/m6_2a_a01_vignettes.mjs                  
+qa/m6_2a_captures.mjs                       
+qa/m6_parcours_client.mjs                   
+qa/m6_scenarios.mjs                         
+qa/m61_couches.mjs                          
+qa/m65_capture.mjs                          
+qa/matching_plus.mjs                        
+qa/nettoyage1_legende.mjs                   
+qa/nuit_bailleur.mjs                        
+qa/nuit_courrier.mjs                        
+qa/nuit_diligence.mjs                       
+qa/nuit_velocite.mjs                        
+qa/onb_repro.mjs                            
+qa/onboarding1_captures.mjs                 
+qa/outils_fix1_captures.mjs                 
+qa/outils_fix2_captures.mjs                 
+qa/outils6_captures.mjs                     
+qa/pack_print_clair.mjs                     
+qa/pages_audit_fix.mjs                      
+qa/pages_audit.mjs                          
+qa/pagesources1.mjs                         
+qa/perf_baseline_nav.mjs                    
+qa/perf_fiche_check.mjs                     
+qa/portes1_cap.mjs                          
+qa/projet_parcours.mjs                      
+qa/projet_phase2.mjs                        
+qa/projet_unifie.mjs                        
+qa/promo1_captures.mjs                      
+qa/qa_audit27.mjs                           
+qa/qa_calculette.mjs                        
+qa/qa_communes_contrastees.mjs              
+qa/qa_contexte.mjs                          
+qa/qa_correctifs.mjs                        
+qa/qa_dernierepasse.mjs                     
+qa/qa_dossiers.mjs                          
+qa/qa_events.mjs                            
+qa/qa_expert.mjs                            
+qa/qa_filtres_reels.mjs                     
+qa/qa_ia.mjs                                
+qa/qa_ile.mjs                               
+qa/qa_m51.mjs                               
+qa/qa_missions_sp.mjs                       
+qa/qa_modules.mjs                           
+qa/qa_moteurs.mjs                           
+qa/qa_partners.mjs                          
+qa/qa_projet.mjs                            
+qa/qa_regressions.mjs                       
+qa/qa_revue2.mjs                            
+qa/qa_revue3.mjs                            
+qa/qa_segments.mjs                          
+qa/qa_vague0.mjs                            
+qa/qa.mjs                                   
+qa/radar_categorie_recette.mjs              
+qa/radar_categorie_shots.mjs                
+qa/radar_depot2_shots.mjs                   
+qa/radar_html_shots.mjs                     
+qa/radar_intake_geste.mjs                   
+qa/radar_recette1_shots.mjs                 
+qa/rangement1.mjs                           
+qa/rangement2_lot3_search.mjs               
+qa/rangement2_lot4_cap.mjs                  
+qa/rattachement_v2_shots.mjs                
+qa/recette1_couches.mjs                     
+qa/recette2_couches.mjs                     
+qa/recherche1_cap.mjs                       
+qa/registre_circuit.mjs                     
+qa/registre_i.mjs                           
+qa/registre2_circuit.mjs                    
+qa/registre2_i.mjs                          
+qa/retours1_shots.mjs                       
+qa/retours20_shots.mjs                      
+qa/retours23_shots.mjs                      
+qa/retrait_global.mjs                       
+qa/retrait1_fonds.mjs                       
+qa/rv1_captures.mjs                         
+qa/rv1_wizard.mjs                           
+qa/sansobjet1_cap.mjs                       
+qa/score_v_shots.mjs                        
+qa/secteur1_captures.mjs                    
+qa/secteur2_captures.mjs                    
+qa/secteur2b_captures.mjs                   
+qa/style3_final.mjs                         
+qa/style4_novoile.mjs                       
+qa/style5_fonds.mjs                         
+qa/style6_selecteur.mjs                     
+qa/style6_sombre.mjs                        
+qa/sup_gestionnaire.mjs                     
+qa/swipe_fonds_plan.mjs                     
+qa/tuiles1_bandeau_cap.mjs                  
+qa/tuiles1_portes_cap.mjs                   
+qa/zan_enrichi.mjs                          
+scripts/ebc_er_captures.mjs                 
+scripts/express01_captures.mjs              
+scripts/shot_export.mjs                     
+scripts/shot_m29.mjs                        
+scripts/shot_m30_liste.mjs                  
+scripts/shot_m30_popover.mjs                
+scripts/shot_m30_revue.mjs                  
+scripts/shot_m30.mjs                        
+src/circuit-harness.tsx                     
+src/components/copilote/CopiloteEmbarque.tsx
+src/components/outils/RadarDeclaratif.tsx   
+src/components/outils/ScoringV2.tsx         
+src/components/radar/DepotAgence.tsx        
+src/components/shared/IconTile.tsx          
+Unused devDependencies (1)
+playwright  package.json:28:6
+Unused exports (150)
+prochaineAction                function  src/components/admin/Licences.tsx:67:17              
+ProgrammesSection              function  src/components/admin/Programmes.tsx:112:17           
+Etiquette                      function  src/components/copilote/ui.tsx:8:17                  
+Badge                          function  src/components/copilote/ui.tsx:25:17                 
+SecHead                        function  src/components/copilote/ui.tsx:29:17                 
+PillStatut                     function  src/components/copilote/ui.tsx:43:17                 
+RETIRER                                  src/components/crm/DeplacerMenu.tsx:5:14             
+default                        function  src/components/crm/DeplacerMenu.tsx:31:16            
+default                        function  src/components/fiche/AnalyseLabuseCard.tsx:60:16     
+renderRich                     function  src/components/fiche/AskBar.tsx:34:17                
+ZoneDestinationsLigne          function  src/components/fiche/blocks.tsx:54:17                
+FiscalLeviersBlock             function  src/components/fiche/constructibilite.tsx:729:17     
+dispositifsCount               function  src/components/fiche/constructibilite.tsx:952:17     
+ConstructibiliteSection        function  src/components/fiche/constructibilite.tsx:1014:17    
+hauteurBienMesuree             function  src/components/fiche/leBien.tsx:40:17                
+TerrainDuBienBlock             function  src/components/fiche/leBien.tsx:175:17               
+LeBienSection                  function  src/components/fiche/leBien.tsx:234:17               
+porteLabel                     function  src/components/fiche/PluExceptionTip.tsx:22:17       
+SEV_COLOR                                src/components/fiche/primitives.tsx:394:10           
+REF                                      src/components/fiche/primitives.tsx:394:21           
+RENOUV                                   src/components/fiche/primitives.tsx:394:26           
+RENOUV_CODE_LABEL                        src/components/fiche/primitives.tsx:394:34           
+drSvg                                    src/components/fiche/primitives.tsx:394:53           
+MicroJauge                               src/components/fiche/primitives.tsx:394:106          
+MicroSegments                            src/components/fiche/primitives.tsx:394:118          
+Weight                                   src/components/fiche/primitives.tsx:394:188          
+SourceRef                                src/components/fiche/primitives.tsx:394:196          
+ICD_COLORS                               src/components/fiche/primitives.tsx:394:232          
+icdColor                                 src/components/fiche/primitives.tsx:394:244          
+StatusLine                               src/components/fiche/primitives.tsx:394:304          
+Rappel                                   src/components/fiche/primitives.tsx:394:327          
+aDesAnciensProprietaires       function  src/components/fiche/ProprietaireHistorique.tsx:19:17
+WMTS                                     src/components/map/basemaps.ts:5:14                  
+ORTHO_PROXY                              src/components/map/basemaps.ts:16:14                 
+CARTE_ANCIENNE_PROXY                     src/components/map/basemaps.ts:21:14                 
+COURBES_NIVEAU_KIND                      src/components/map/CouchesTuyau.tsx:63:14            
+ENR_HABITATION_KIND                      src/components/map/CouchesTuyau.tsx:85:14            
+useTuyauPlan                   function  src/components/map/CouchesTuyau.tsx:111:17           
+useV2Actif                     function  src/components/map/Legend.tsx:9:17                   
+O7Carnet                       function  src/components/outils/blocB.tsx:276:17               
+O9Rarete                       function  src/components/outils/blocB.tsx:360:17               
+O10Bascules                    function  src/components/outils/blocB.tsx:417:17               
+useDestinationsRef             function  src/components/outils/DestinationSelect.tsx:8:17     
+SecteurResultats               function  src/components/outils/MonSecteur.tsx:49:17           
+M17                            function  src/components/outils/moteurs.tsx:470:17             
+MarcheCommune                  function  src/components/outils/moteurs.tsx:728:17             
+M19                            function  src/components/outils/moteurs.tsx:779:17             
+VIOLET_DIM                               src/components/outils/registry.ts:9:14               
+GROUPS                                   src/components/outils/registry.ts:38:14              
+CapaciteSection                function  src/components/panel/FiltreLabuse.tsx:288:17         
+SectionProprietaire            function  src/components/panel/FiltreLabuse.tsx:442:17         
+LayerInfoPill                  function  src/components/panel/LayerRowUI.tsx:13:17            
+ComprendreAnalyse              function  src/components/panel/LeftPanel.tsx:75:17             
+segmentOf                      function  src/components/panel/ResultsSection.tsx:260:17       
+default                        function  src/components/ui/Badge.tsx:36:16                    
+default                        function  src/components/ui/Bouton.tsx:59:16                   
+default                        function  src/components/ui/Case.tsx:30:16                     
+default                        function  src/components/ui/Chevron.tsx:24:16                  
+default                        function  src/components/ui/Chip.tsx:44:16                     
+default                        function  src/components/ui/Retour.tsx:20:16                   
+default                        function  src/components/ui/Tri.tsx:28:16                      
+commune                                  src/lib/api.ts:40:14                                 
+filterParams                             src/lib/api.ts:83:14                                 
+getScoringBacktest                       src/lib/api.ts:237:14                                
+postProfilLigne                          src/lib/api.ts:453:14                                
+getParcelleZone                          src/lib/api.ts:457:14                                
+etudeZonePdfUrl                          src/lib/api.ts:482:14                                
+getPromoteurAcquisitions                 src/lib/api.ts:740:14                                
+getAccueilFraicheur                      src/lib/api.ts:843:14                                
+copiloteV2Heros                          src/lib/api.ts:949:14                                
+getProspectionSolaire                    src/lib/api.ts:997:14                                
+prospectionSolaireCsvUrl                 src/lib/api.ts:1000:14                               
+pdfUrl                                   src/lib/api.ts:1166:14                               
+supprimerDocument                        src/lib/api.ts:1215:14                               
+getWatchZones                            src/lib/api.ts:1237:14                               
+createWatchZone                          src/lib/api.ts:1238:14                               
+renameWatchZone                          src/lib/api.ts:1242:14                               
+deleteWatchZone                          src/lib/api.ts:1244:14                               
+getAlertes                               src/lib/api.ts:1246:14                               
+refreshAlertes                           src/lib/api.ts:1247:14                               
+ackAlerte                                src/lib/api.ts:1248:14                               
+getExplain                               src/lib/api.ts:1292:14                               
+postFeedback                             src/lib/api.ts:1296:14                               
+modPatrimoineCsvUrl                      src/lib/api.ts:1394:14                               
+getSavedSearches                         src/lib/api.ts:1551:14                               
+saveSearch                               src/lib/api.ts:1552:14                               
+deleteSearch                             src/lib/api.ts:1554:14                               
+getSearchApercu                          src/lib/api.ts:1557:14                               
+veilleNL                                 src/lib/api.ts:1561:14                               
+getAdminStripe                           src/lib/api.ts:1644:14                               
+getAdminSources                          src/lib/api.ts:1842:14                               
+postAdminSourceCadence                   src/lib/api.ts:1843:14                               
+postAdminSourceRelancer                  src/lib/api.ts:1845:14                               
+postAdminSourceAffichage                 src/lib/api.ts:1848:14                               
+postAdminSourceVeilleVerifier            src/lib/api.ts:1851:14                               
+postAdminSourceVeilleMail                src/lib/api.ts:1856:14                               
+getHealthzCrons                          src/lib/api.ts:1861:14                               
+getAdminFluxRunEtat                      src/lib/api.ts:1915:14                               
+postAdminFluxArreterRun                  src/lib/api.ts:1916:14                               
+getAdminFlux                             src/lib/api.ts:1928:14                               
+getAdminFluxRuns                         src/lib/api.ts:1929:14                               
+postFaisabiliteRecalcul                  src/lib/api.ts:2031:14                               
+faisabiliteExplain                       src/lib/api.ts:2050:14                               
+rejouerProjet                            src/lib/api.ts:2127:14                               
+projetCsvUrl                             src/lib/api.ts:2179:14                               
+radarDeposer                             src/lib/api.ts:2236:14                               
+getRadarDepotOuvert                      src/lib/api.ts:2265:14                               
+radarDepotAgenceAnalyser                 src/lib/api.ts:2266:14                               
+radarDepotAgencePublier                  src/lib/api.ts:2270:14                               
+radarInteresse                           src/lib/api.ts:2274:14                               
+getRadarAInstruire                       src/lib/api.ts:2290:14                               
+getRadarBienDetail                       src/lib/api.ts:2371:14                               
+radarSignaler                            src/lib/api.ts:2374:14                               
+radarInstruire                           src/lib/api.ts:2391:14                               
+getRadarSignaux                          src/lib/api.ts:2420:14                               
+getRadarVeilles                          src/lib/api.ts:2424:14                               
+renommerRadarVeille                      src/lib/api.ts:2430:14                               
+getAdminCommuneContacts                  src/lib/api.ts:2509:14                               
+postAdminCircuitVerrous                  src/lib/api.ts:2560:14                               
+postAdminCircuitPurger                   src/lib/api.ts:2562:14                               
+FLAG_DEFS                                src/lib/filters.ts:49:14                             
+inDefaultPerimetre                       src/lib/filters.ts:64:14                             
+matchScope                     function  src/lib/filters.ts:68:17                             
+activeChips                    function  src/lib/filters.ts:177:17                            
+removeToken                    function  src/lib/filters.ts:192:17                            
+fmtPct                                   src/lib/format.ts:36:14                              
+PCT_CONSOMME_SEUIL                       src/lib/format.ts:43:14                              
+haversine                      function  src/lib/geo.ts:9:17                                  
+LAYER_LABEL                              src/lib/layers.ts:6:14                               
+layerInfo                                src/lib/layers.ts:180:14                             
+PERIM_RESIDUEL                           src/lib/perimetres.ts:11:14                          
+PERIM_POTENTIEL                          src/lib/perimetres.ts:12:14                          
+PERIM_RAYON_ADAPTATIF                    src/lib/perimetres.ts:23:14                          
+PERMIS_LEGENDE                           src/lib/permisEtats.ts:36:14                         
+PRIORITE_SERVIE                          src/lib/status.ts:33:14                              
+PALIER_META                              src/lib/status.ts:36:14                              
+CORRESPONDANCE_LEGACY                    src/lib/status.ts:43:14                              
+DECLASSE_ORDER                           src/lib/status.ts:97:14                              
+BANDE_QUALITE                            src/lib/status.ts:126:14                             
+ETAT_BIEN_META                           src/lib/status.ts:150:14                             
+BPE_DOM                                  src/lib/status.ts:163:14                             
+BPE_DOM_CODES                            src/lib/status.ts:172:14                             
+NONE_COLOR                               src/lib/status.ts:223:14                             
+statutColor                              src/lib/status.ts:225:14                             
+completudeColor                          src/lib/status.ts:229:14                             
+V_BAND_META                              src/lib/status.ts:235:14                             
+EQUIP_META                               src/lib/status.ts:272:14                             
+ageSignal                      function  src/lib/status.ts:296:17                             
+filtresToFilters               function  src/lib/useApplySearch.ts:14:17                      
+MODE_B_DEFAUT                            src/store/useApp.ts:173:14                           
+Unused exported types (152)
+Etat                     type       src/components/admin/circuit/types.ts:4:13 
+CibleType                type       src/components/admin/circuit/types.ts:6:13 
+Ligne                    type       src/components/admin/circuit/types.ts:8:13 
+Kpi                      type       src/components/admin/circuit/types.ts:9:13 
+Resume                   type       src/components/admin/circuit/types.ts:10:13
+Famille                  type       src/components/admin/circuit/types.ts:25:13
+Categorie                type       src/components/admin/circuit/types.ts:26:13
+AFaireType               type       src/components/admin/circuit/types.ts:29:13
+AFaireBouton             type       src/components/admin/circuit/types.ts:30:13
+AFaire                   type       src/components/admin/circuit/types.ts:38:13
+EtatsSources             type       src/components/admin/circuit/types.ts:45:13
+HorsVitrine              type       src/components/admin/circuit/types.ts:50:13
+VerrouLigne              type       src/components/admin/circuit/types.ts:84:13
+DocKind                  type       src/components/documents/catalogue.ts:9:13 
+DocBadge                 interface  src/components/documents/catalogue.ts:11:18
+TuyauNiveau              interface  src/components/map/CouchesTuyau.tsx:14:18  
+TuyauStyle               interface  src/components/map/CouchesTuyau.tsx:19:18  
+TuyauPopup               interface  src/components/map/CouchesTuyau.tsx:28:18  
+TuyauEtiquette           interface  src/components/map/CouchesTuyau.tsx:29:18  
+OutilGroup               type       src/components/outils/registry.ts:19:13    
+BoutonNiveau             type       src/components/ui/Bouton.tsx:12:13         
+BoutonTon                type       src/components/ui/Bouton.tsx:13:13         
+ChipTon                  type       src/components/ui/Chip.tsx:7:13            
+ScoringBacktest          interface  src/lib/api.ts:236:18                      
+Entonnoir                interface  src/lib/api.ts:369:18                      
+ProfilPoint              interface  src/lib/api.ts:436:18                      
+TaxeLigne                interface  src/lib/api.ts:559:18                      
+GabRegSource             interface  src/lib/api.ts:621:18                      
+GabAppliedRule           interface  src/lib/api.ts:625:18                      
+GabNonIntegratedRule     interface  src/lib/api.ts:629:18                      
+GabCoverage              interface  src/lib/api.ts:630:18                      
+GabBatiProps             interface  src/lib/api.ts:658:18                      
+GabFeatureCollection     interface  src/lib/api.ts:659:18                      
+DistribRepere            interface  src/lib/api.ts:668:18                      
+EcartCommune             interface  src/lib/api.ts:670:18                      
+ProgrammeLie             interface  src/lib/api.ts:688:18                      
+ProgrammePublie          interface  src/lib/api.ts:712:18                      
+PromoteurAcquisitions    interface  src/lib/api.ts:739:18                      
+AccueilFraicheur         interface  src/lib/api.ts:839:18                      
+AccueilCetteSemaine      interface  src/lib/api.ts:846:18                      
+CopiloteCapacite         interface  src/lib/api.ts:926:18                      
+CopiloteVeille           interface  src/lib/api.ts:958:18                      
+SolaireProprio           type       src/lib/api.ts:966:13                      
+SolaireItem              interface  src/lib/api.ts:969:18                      
+ProspectionSolaireResp   interface  src/lib/api.ts:976:18                      
+SolaireFiltres           interface  src/lib/api.ts:980:18                      
+PiscineItem              interface  src/lib/api.ts:1044:18                     
+VoisineItem              interface  src/lib/api.ts:1077:18                     
+BlocMembre               interface  src/lib/api.ts:1109:18                     
+CourrierEnvoi            interface  src/lib/api.ts:1228:18                     
+ShortlistSujet           interface  src/lib/api.ts:1231:18                     
+WatchZone                interface  src/lib/api.ts:1235:18                     
+Alerte                   interface  src/lib/api.ts:1245:18                     
+ExplainResult            interface  src/lib/api.ts:1288:18                     
+FeedbackVerdict          type       src/lib/api.ts:1295:13                     
+BriefGroupe              interface  src/lib/api.ts:1519:18                     
+StripeApercu             interface  src/lib/api.ts:1583:18                     
+Offre                    interface  src/lib/api.ts:1682:18                     
+AdminSourceVeille        interface  src/lib/api.ts:1785:18                     
+AdminSourceAlimente      interface  src/lib/api.ts:1817:18                     
+SourceEtat               type       src/lib/api.ts:1824:13                     
+AdminSource              interface  src/lib/api.ts:1825:18                     
+AdminSources             interface  src/lib/api.ts:1836:18                     
+FluxDot                  type       src/lib/api.ts:1865:13                     
+FluxSourceNode           interface  src/lib/api.ts:1866:18                     
+FluxMoteurNode           interface  src/lib/api.ts:1872:18                     
+FluxSurfaceNode          interface  src/lib/api.ts:1873:18                     
+FluxRun                  interface  src/lib/api.ts:1874:18                     
+FluxFourmiliere          interface  src/lib/api.ts:1879:18                     
+RadarCompteurs           interface  src/lib/api.ts:1886:18                     
+FluxRadarEcart           interface  src/lib/api.ts:1890:18                     
+FluxRadar                interface  src/lib/api.ts:1891:18                     
+CoherenceCheck           interface  src/lib/api.ts:1895:18                     
+FluxRunStatut            type       src/lib/api.ts:1898:13                     
+FluxRunProgress          interface  src/lib/api.ts:1899:18                     
+FluxRunTermine           interface  src/lib/api.ts:1900:18                     
+FluxRunEtat              interface  src/lib/api.ts:1910:18                     
+FluxDerniereBascule      interface  src/lib/api.ts:1918:18                     
+AdminFlux                interface  src/lib/api.ts:1919:18                     
+ProprietairePublic       type       src/lib/api.ts:2086:13                     
+ProjetCounts             interface  src/lib/api.ts:2089:18                     
+ProjetDerive             interface  src/lib/api.ts:2115:18                     
+ApercuTop                interface  src/lib/api.ts:2120:18                     
+Apercu                   interface  src/lib/api.ts:2121:18                     
+RadarProposition         interface  src/lib/api.ts:2198:18                     
+DepotRec                 interface  src/lib/api.ts:2258:18                     
+RadarAInstruire          interface  src/lib/api.ts:2280:18                     
+RadarDeclaratif          interface  src/lib/api.ts:2329:18                     
+RadarSousMarche          interface  src/lib/api.ts:2335:18                     
+RadarBienDetail          interface  src/lib/api.ts:2343:18                     
+RadarCritere             interface  src/lib/api.ts:2377:18                     
+RadarCandidateFiche      interface  src/lib/api.ts:2379:18                     
+RadarPiste               interface  src/lib/api.ts:2383:18                     
+RadarEcart               interface  src/lib/api.ts:2408:18                     
+RadarSignaux             interface  src/lib/api.ts:2413:18                     
+RadarVeille              interface  src/lib/api.ts:2423:18                     
+RadarMarcheEcartCommune  interface  src/lib/api.ts:2457:18                     
+Epci                     interface  src/lib/api.ts:2491:18                     
+AutreContact             interface  src/lib/api.ts:2492:18                     
+QChampPrefill            interface  src/lib/api.ts:2588:18                     
+QEcran                   interface  src/lib/api.ts:2595:18                     
+QUsage                   interface  src/lib/api.ts:2598:18                     
+QProgramme               interface  src/lib/api.ts:2601:18                     
+Chip                     interface  src/lib/filters.ts:101:18                  
+LegacyTier               type       src/lib/status.ts:64:13                    
+ClientStrings            type       src/lib/strings.ts:647:13                  
+OwnerType                type       src/lib/types.ts:5:13                      
+VSignal                  interface  src/lib/types.ts:7:18                      
+ScoreV                   interface  src/lib/types.ts:19:18                     
+Indisponible             interface  src/lib/types.ts:223:18                    
+ModeB                    interface  src/lib/types.ts:225:18                    
+QualiteCommune           interface  src/lib/types.ts:269:18                    
+LeBien                   interface  src/lib/types.ts:588:18                    
+ZonePopulation           interface  src/lib/types.ts:666:18                    
+ZoneEquipement           interface  src/lib/types.ts:674:18                    
+ZoneConcurrent           interface  src/lib/types.ts:692:18                    
+ZoneEntreprise           interface  src/lib/types.ts:694:18                    
+ZoneGenerateur           interface  src/lib/types.ts:697:18                    
+ZoneMarche               interface  src/lib/types.ts:698:18                    
+ZoneCouverture           type       src/lib/types.ts:699:13                    
+DestinationEtat          type       src/lib/types.ts:702:13                    
+DestinationCdac          interface  src/lib/types.ts:703:18                    
+DestinationZoneVerdict   interface  src/lib/types.ts:704:18                    
+DestinationRef           interface  src/lib/types.ts:718:18                    
+SousDestinationRef       interface  src/lib/types.ts:719:18                    
+DestinationsReferentiel  interface  src/lib/types.ts:720:18                    
+ZoneAgeStructure         interface  src/lib/types.ts:724:18                    
+ZonePrixType             interface  src/lib/types.ts:729:18                    
+ZonePermisType           interface  src/lib/types.ts:730:18                    
+ZoneProprietairePM       interface  src/lib/types.ts:731:18                    
+ZoneRisques              interface  src/lib/types.ts:732:18                    
+ZoneAssainissement       interface  src/lib/types.ts:737:18                    
+ZoneEspaces              interface  src/lib/types.ts:738:18                    
+ZoneBpe                  interface  src/lib/types.ts:739:18                    
+ZoneAcquisitionsPM       interface  src/lib/types.ts:740:18                    
+ZoneCommuneContexte      interface  src/lib/types.ts:744:18                    
+ZoneFibre                interface  src/lib/types.ts:747:18                    
+Renouvellement           interface  src/lib/types.ts:790:18                    
+DvfSecteur               interface  src/lib/types.ts:812:18                    
+DvfParcelle              interface  src/lib/types.ts:820:18                    
+IcdBlock                 interface  src/lib/types.ts:834:18                    
+ReglementZone            interface  src/lib/types.ts:854:18                    
+FicheDestinationLigne    interface  src/lib/types.ts:881:18                    
+MixiteRegle              interface  src/lib/types.ts:897:18                    
+ViaContribution          interface  src/lib/types.ts:949:18                    
+RadarEcran               type       src/store/useApp.ts:20:13                  
+LayerToggles             interface  src/store/useApp.ts:25:18                  
+ModeBParams              interface  src/store/useApp.ts:168:18                 
+ProjetBrouillon          interface  src/store/useApp.ts:177:18                 
+IaTop                    interface  src/store/useApp.ts:185:18                 
+IaRestitution            interface  src/store/useApp.ts:186:18                 
+OutilRetour              type       src/store/useApp.ts:226:13                 
+Duplicate exports (9)
+DeplacerMenu|default       src/components/crm/DeplacerMenu.tsx       
+AnalyseLabuseCard|default  src/components/fiche/AnalyseLabuseCard.tsx
+Badge|default              src/components/ui/Badge.tsx               
+Bouton|default             src/components/ui/Bouton.tsx              
+Case|default               src/components/ui/Case.tsx                
+Chevron|default            src/components/ui/Chevron.tsx             
+Chip|default               src/components/ui/Chip.tsx                
+Retour|default             src/components/ui/Retour.tsx              
+Tri|default                src/components/ui/Tri.tsx                 
+Configuration hints (1)
+. (root)    .  Create knip.json configuration file, and add entry and/or refine project files (187 unused files)

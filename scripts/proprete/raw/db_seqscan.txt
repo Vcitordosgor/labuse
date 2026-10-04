@@ -1,0 +1,7 @@
+relname	seq_scan	idx_scan	n_live_tup	sz
+spatial_layers	3602102	107925431	1933479	4167 MB
+parcels	13554	554664159	430867	484 MB
+score_labuse	7502	8377105	591630	2967 MB
+parcel_residuel_runs	3436	89743334	3752351	523 MB
+mvt_parcels	3038	2671	431663	240 MB
+(5 rows)

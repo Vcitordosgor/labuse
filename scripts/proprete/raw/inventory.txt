@@ -1,0 +1,40 @@
+# Inventaire PROPRETE-1  —  9847 fichiers suivis (hors node_modules)
+
+## Lignes par langage (fichiers texte suivis)
+langage                   fichiers       lignes
+Python                        1461       247713
+JSON                           473       183030
+Markdown                      1452       173349
+YAML                           150       115213
+HTML                           171        66331
+TypeScript/React               168        37024
+Texte                          206        34041
+JS (config)                    400        27542
+TypeScript                      44         8685
+SQL                             33         1739
+Shell                           27         1453
+CSS                              5         1347
+JS                               6          747
+TOTAL                         4596       898214
+
+## 20 plus gros fichiers du working tree (octets)
+    53809244  qa/cosia/cartes_entrantes_recomposition.pdf
+    39952799  qa/cosia/cartes_mouvements_cosia.pdf
+    36009170  qa/m38/vigilances_m38_digest.csv
+    23255422  qa/ponderation/cartes_mouvements.html
+    21227672  reports/j3-revue/DOSSIER-REVUE-J3.html
+    18132591  qa/m37/vigilances_avant_digest.csv.gz
+    18132591  qa/m37/vigilances_apres_digest.csv.gz
+    15303850  reports/m36-foncier/scores-2025-fold-final.csv
+    14176996  reports/j3-revue/DOSSIER-REVUE-J3.pdf
+     9348718  qa/m39/deck_m39.html
+     8459456  docs/mandats/O12_PARTIEL_REVUE.zip
+     7561454  docs/mandats/O12_PARTIEL_REVUE.pdf
+     6422278  docs/audit-2026-09/CARTE-VITESSE-1/MESURES/har/boot_cold.har
+     5767248  docs/audit-2026-09/RETOURS-16/captures/V1-ortho-z16-avant.png
+     5767248  docs/audit-2026-09/RETOURS-16/captures/V1-ortho-z16-apres.png
+     5753532  docs/audit-2026-09/RETOURS-15/captures/U1-ortho-st-denis-z16-apres.png
+     5721783  docs/audit-2026-09/RETOURS-15/captures/U1-ortho-st-denis-z16-avant.png
+     5697508  docs/audit-2026-09/RETOURS-13/captures/R7-alea-mvt-zoom-plan-avant.png
+     5595291  docs/audit-2026-09/RETOURS-12/captures/J1-oeil-ambre-ortho.png
+     5544137  docs/audit-2026-09/RETOURS-13/captures/R7-alea-mvt-zoom-plan-apres.png

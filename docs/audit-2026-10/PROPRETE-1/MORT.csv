@@ -1,0 +1,57 @@
+categorie,type,chemin_ou_nom,preuve
+code-py,variable,src/labuse/api/events.py:303 is_market,vulture 100% jamais lu
+code-py,variable,src/labuse/api/servitudes.py:198 db_unused,vulture 100% jamais lu
+code-py,variable,src/labuse/ingestion/division_or.py:626 decoupe,vulture 100% jamais lu
+code-py,variable,src/labuse/ingestion/ortho_tiles.py:192 keep_tables,vulture 100% jamais lu
+code-py,variable,src/labuse/marque.py:34 mime_declare,vulture 100% jamais lu
+code-py,variable,src/labuse/millesime_source.py:84 dernier_vu,vulture 100% jamais lu
+code-py,import,src/labuse/faisabilite/hauteur_lidar_dalles.py:33 ET,vulture 90% import inutilise
+code-py,import,src/labuse/faisabilite/hauteur_lidar_dalles.py:230 array_bounds,vulture 90% inutilise
+code-py,import,scripts/coherence/banc.py:105 _up,vulture 90% inutilise
+code-py,imports,src/labuse + scripts (82 occ F401),ruff F401 unused-import a elaguer
+code-ts,fichier,frontend/src/circuit-harness.tsx,knip unused-files (ref par circuit-harness.html seul)
+code-ts,fichier,frontend/src/components/copilote/CopiloteEmbarque.tsx,knip unused-files
+code-ts,fichier,frontend/src/components/outils/RadarDeclaratif.tsx,knip unused-files
+code-ts,fichier,frontend/src/components/outils/ScoringV2.tsx,knip unused-files
+code-ts,fichier,frontend/src/components/radar/DepotAgence.tsx,knip unused-files
+code-ts,fichier,frontend/src/components/shared/IconTile.tsx,knip unused-files
+code-ts,exports,frontend/src/lib/api.ts (~60 fn + ~95 types),knip unused-exports (baril 2632 lignes)
+code-ts,types,frontend/src/lib/types.ts (~45),knip unused-exported-types
+code-ts,exports-dupliques,frontend/src/components/ui/{Badge Bouton Case Chevron Chip Retour Tri} + DeplacerMenu + AnalyseLabuseCard (9),knip duplicate-exports (named+default)
+script,orphelin,scripts/algo2_challenger.py,0 reference (grep basename+import)
+script,orphelin,scripts/algo3_challenger.py,0 reference
+script,orphelin,scripts/audit/scoring/challenger.py,0 reference (arene scoring perimee)
+script,orphelin,scripts/audit/scoring/l2_colonnes.py,0 reference
+script,orphelin,scripts/audit/scoring/l4_potentiel.py,0 reference
+script,orphelin,scripts/audit/scoring/q_v15_arene.py,0 reference
+script,orphelin,scripts/audit/scoring/raisons.py,0 reference
+script,orphelin,scripts/audit/scoring/run_candidat.py,0 reference
+script,orphelin,scripts/bascule_bati_revele.py,0 reference (bascule ponctuelle)
+script,orphelin,scripts/build_subdivise_incremental.py,0 reference
+script,orphelin,scripts/j3_gel_anchors.py,0 reference
+script,orphelin,scripts/m129d/retier_q_v10.py,0 reference (q_v10 perime)
+script,orphelin,scripts/o12_demolition_bilan.py,0 reference (campagne o12)
+script,orphelin,scripts/o12_rerun_targeted.py,0 reference
+script,orphelin,scripts/o12_run_ile.py,0 reference
+script,orphelin,scripts/plu_verif/appliquer_exceptions.py,0 reference (homonyme faisabilite/zonage)
+script,orphelin,scripts/plu_verif/inventaire.py,0 reference
+script,orphelin,scripts/racine1_rangement.sh,0 reference
+script,orphelin,scripts/retrait_14_dette4.py,0 reference
+script,orphelin,scripts/run_ile_q_v10_m129.sh,0 reference (run q_v10 perime)
+script,orphelin,scripts/verif_v8_substitution.py,0 reference (v8 perime)
+cli,doublon,labuse evaluer-veilles,remplace par job actif evaluer-suivis (non cite)
+cli,doublon,labuse radar-fusion,remplace par radar-cycle* (non cite)
+cli,doublon,labuse fraicheur-etat,vs check-fraicheur / /sante/fraicheur (non cite)
+cli,non-cite,33 commandes labuse (voir raw/sixdocs_cli_unreferenced.txt),jamais citees docs/deploy/cron/jobs (ingestions/migrations one-shot)
+env,cle-morte,.env.example LABUSE_DOMAIN,lue par Caddy/compose pas par le code Python (a reclasser)
+env,cle-morte,.env.example POSTGRES_PASSWORD,consommee par docker-compose pas par le code (a reclasser)
+docs,perime,docs/mandats/A1_PC_CADUCS_CADRAGE.md,decrit etats 4+6 ; code pc_caducs.py:63 = IN('2','5','6') depuis ORACLE-FIX-1
+docs,perime,docs/audit-2026-09/run11/RUN11-VS-RUN10.md,verdict NON servable + correctif non applique ; builder.py:374 contient deja sources.append(sup_src)
+docs,perime,docs/audit-2026-09/TAXE-AUDIT-1.md,RAP sous L524-7 ; recodifiee CGI 1635 quater F (taxe_amenagement.py:193)
+branche,mergee-non-supprimee,49 branches distantes (voir raw/git_merged_branches.txt),git branch -r --merged origin/main
+table,run-bloat,dryrun_cascade_results (15 GB / 74 M lignes),table de dry-run ; tronquable hors run actif
+table,run-bloat,dryrun_parcel_evaluations (359 Mo),table de dry-run
+table,doublon,p_model_dataset_v2bis (1851 Mo),double de p_model_dataset_v2 (1596 Mo) coexistant
+table,run-bloat,parcel_residuel_runs (523 Mo) + score_snapshot_parcelles (473 Mo),historique de runs accumule
+index,inutilise,80 index idx_scan=0 non-unique (741 Mo) (voir raw/db_unused_idx.txt),pg_stat_user_indexes idx_scan=0
+dep-ts,critical,maplibre-gl (npm audit critical),CVE critique dep directe a bumper

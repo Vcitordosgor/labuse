@@ -1,0 +1,75 @@
+domaine,mesure,valeur,seuil_etalon,note
+1-Depot,Secrets gitleaks (3985 commits scannes),28 trouves / 0 secret LABUSE reel (qa HTML scrape 15, docs maquettes 7, fixtures tests 4, basemaps.ts faux-pos 2),0 secret reel,A
+1-Depot,Fichiers >1 Mo commites (hors node_modules),597,0,D
+1-Depot,Artefacts generes commites (png/jpg/pdf/zip/gz/har/log/joblib),4545 (dont 4064 png),0,D
+1-Depot,Taille pack git (.git),4.02 GiB,aucun binaire/rapport genere commite,D
+1-Depot,Volume docs/audit-2026-09,913 Mo / 2144 fichiers / 109 sous-dossiers,raisonnable,C
+1-Depot,Branches distantes mergees non supprimees,49 / 50,0,C
+1-Depot,Branches mortes >30 jours,0 (projet recent, max 11 j),0,A
+1-Depot,Worktrees orphelins,0 (5 actifs ; 1 ref garbage 64 o),0,A
+1-Depot,.gitignore vs suivis (.env/__pycache__/DS_Store),0 fichier a ignorer suivi,0,A
+1-Depot,pre-commit,ABSENT,present et actif,C
+1-Depot,CI (.github/gitlab/circle),ABSENTE,CI qui refuse lint/format/types/tests,D
+1-Depot,Conventions de commit (200 derniers),86% (172/200) prefixe mandat lisible,lisible,A
+2-Python,ruff check (E/F/W/I/B/UP/SIM/C4/PL),7299 violations (767 auto-fixables ; 8 F821),0,D
+2-Python,ruff format --check,748 / 764 fichiers non formates,0,D
+2-Python,Typage retour annote,79.9% (3716/4653) ; ty coeur 47 erreurs ; mypy absent,strict 0,C
+2-Python,vulture --min-confidence 80,9 items morts,0,B
+2-Python,deptry,843 issues mais 0 reelle (faux-pos -e. + alias cv2/yaml/fitz),0,B
+2-Python,bandit -ll,13 HIGH (MD5/SHA1 x12 + tarfile) / 338 MEDIUM (SQL f-string B608 x312),0 HIGH,D
+2-Python,pip-audit (venv 126 pkgs),20 CVE / 7 paquets (pypdf torch starlette urllib3 anyio setuptools weasyprint),0,E
+2-Python,radon cc,moy 5.76 (B) ; CC>10 = 754 ; CC>15 = 376 ; pire render_fiche_pdf CC 314,<=10 aucune >15,D
+2-Python,Fichiers >800 lignes,27 (app.py 8386 ; cli.py 5274 ; dashboard.py 3396),0,D
+2-Python,Cycles d'import,indetermine (2828 PLC0415 import-in-function = contournement),0,B
+2-Python,Duplication (jscpd),0.61% (898/147194 lignes),faible,A
+2-Python,print() dans src/labuse,31 (+970 scripts CLI legitimes),bas,B
+2-Python,except: nus / except Exception large,0 nus / 635 larges,0 nus,C
+2-Python,TODO/FIXME/XXX/HACK,42 (age ~3 mois, stable),bas,B
+2-Python,Melange FR/EN dans noms def/class,~10% mixte (490 verbes EN / 207 mots FR),coherent,C
+2-Python,Vestiges (flash/ renouvellement/ Densifier),0 mort (tous LIVE),0 mort,A
+3-TS,tsc --noEmit (strict deja active),0 erreur,0,A
+3-TS,Durcissements strict manquants,exactOptionalPropertyTypes +109 / noUncheckedIndexedAccess +162,0,B
+3-TS,ESLint / Biome,ESLint ABSENT (aucune config),lint sans erreur,C
+3-TS,knip (code mort),6 fichiers morts + 150 exports morts + 152 types morts + 9 exports dupliques,0,B
+3-TS,madge --circular,17 cycles (hubs Admin/Outils/Radar),0,C
+3-TS,any / as any / ts-ignore / ts-expect-error,66 any (45 :any + 21 as any) ; 0 ts-ignore ; 0 ts-expect-error ; 39 eslint-disable dormants,0 non justifie,B
+3-TS,Composants >400 lignes,26 (lib/api.ts 2632 ; Fiche.tsx 2054 ; ModulePanel 1844),0,D
+3-TS,Styles en dur hors components/ui/,501 hex inline dans ~15 .tsx ; classes couleur dur 10/1164 (0.9%),jetons DA,B
+3-TS,npm audit,11 CVE (1 critical maplibre-gl / 7 high / 3 moderate),0,D
+3-TS,Build vite,OK 4.52 s ; dist 3.9 Mo ; plus gros chunk maplibre 786 kB,build propre,A
+3-TS,Dependances inutilisees,0 reelle (playwright = faux-pos qa/*.mjs),0,A
+4-Tests,Tests collectes,3645 (+1 erreur de collecte : test_marche_commune.py ouvre une connexion DB a l'import),0 erreur de collecte,C
+4-Tests,Couverture globale (pytest-cov),47% (plancher ; sous-estime par 998 tests en timeout sur labuse_test),>=80% coeur,D
+4-Tests,Couverture du coeur (modules les moins couverts),residuel.py 49% / assemblage.py 16% / exports/builder.py 34% / 8 exports/blocs 0% / cascade 22-28% / scoring p_v2 15% (vs zonage 94% registre/donnees 100% score_labuse 90%),>=80% coeur,D
+4-Tests,Tests ignores,48 skipped runtime (11 skipif + 78 pytest.skip + 0 xfail) tous env/donnee-dependants sans ticket,0 skip sans ticket,C
+4-Tests,Tests toleres rouges / xfail,0 (aucune liste de toleres ; 0 xfail ; 0 xfail_strict),0,A
+4-Tests,Duree suite,811 s (13 min 31) gonflee par timeouts ; non decoupee (pas de CI),<10 min ou decoupee,B
+4-Tests,Couplage vraie base,257 @pytest.mark.db + 18 @pytest.mark.local ; 2 runs sur la base reelle ont hange (>5 min),base de test suffit,C
+4-Tests,Front vitest,225 tests / 50 fichiers verts ; couverture indispo (@vitest/coverage-v8 absent),couverture mesuree,B
+4-Tests,Tests triviaux / auto-mock,0 (0 assert True / 0 auto-mock ; 193 "is not None" faibles),0,A
+5-BDD,Taille base / nb tables,52 GB / 261 tables,bloat maitrise,C
+5-BDD,Plus grosse table,dryrun_cascade_results 15 GB / 74 M lignes,pas de dry-run ancien,D
+5-BDD,Tables de runs/dry-runs/doublons,~18 GB (dryrun_cascade 15G + dryrun_parcel_eval 359M + p_model_dataset_v2bis 1851M + parcel_residuel_runs 523M + score_snapshot_parcelles 473M),0 ancien,D
+5-BDD,Dead tuples / bloat (>50k),0 table (autovacuum sain),maitrise,A
+5-BDD,Index jamais scannes (idx_scan=0 non-unique >1Mo),80 index / 741 Mo,utilises,C
+5-BDD,Scans sequentiels lourds,spatial_layers 3.6 M seq_scan (+107 M idx),index utilises,B
+5-BDD,Tables sans lecteur dans le code,0 (grep substring = borne faible ; dryrun referencees),0 orphelin,A
+5-BDD,Source du schema (derive migrations),PAS de migrations (alembic absent) : 38 ORM + 224 DDL src + 151 DDL scripts pour 261 tables,migrations = source unique,C
+5-BDD,Reglages Postgres vs 52 GB,shared_buffers 2 GB / effective_cache_size 4 GB / work_mem 4 MB / maint 64 MB,adapte a la taille,B
+6-Cfg,Scripts orphelins sous scripts/,21 / 199,0,D
+6-Cfg,Commandes CLI labuse jamais citees,33 / 207 (dont doublons evaluer-veilles radar-fusion fraicheur-etat),0 morte,C
+6-Cfg,Config dupliquee/contradictoire,prix 349/79 reecrits en clair + 2 yaml cascade + 2 yaml solaire + 3 stores scoring,source unique,B
+6-Cfg,.env.example vs variables lues,12 documentees vs 108+ lues ; 122 LABUSE_* non documentees (dont SECRET_KEY) ; 2 cles mortes,.env.example == variables lues,D
+6-Cfg,Rapports docs contredisant le code,3 (A1_PC_CADUCS 4+6 ; run11 NON servable ; TAXE RAP L524-7),0,C
+6-Cfg,README install en 10 min,contradiction venv/pip vs conda/requirements + vars non expliquees,oui,C
+6-Cfg,deploy.sh idempotence,idempotent (set -eu, crontab regenere, backup avant retrait),idempotent,A
+6-Cfg,Versions epinglees / lockfile,46 bornes >= / 0 lockfile (pas de uv.lock),epingle + lock,D
+6-Cfg,Secrets en clair deploy/compose,1 (docker-compose.yml POSTGRES_PASSWORD:labuse = DEV local),0,B
+6-Cfg,Makefile,ABSENT (cree par ce mandat : cible proprete),cibles canalisees,B
+7-Arch,Imports remontants (service -> API),119 imports api / 34 fichiers (98% lazy) ; coeur moteur 0 top-level ; connecteurs 0,0 inversion de couche,B
+7-Arch,Calcul metier dans routes API,5+ (scoreur.py:75 ; moteurs.py:219-235 bareme magique ; traducteur.py:57/68 ; projets.py:440),0,C
+7-Arch,SQL dans le front,0 reel (2 faux-pos DestinationSelect),0,A
+7-Arch,Texte client dans le moteur,verdicts calcules (residuel.py:160 ; zonage.py:726) ; scoring propre,separe,B
+7-Arch,Points d'ouverture connexion BDD,8 occ / 2 fichiers ; factory unique db.py (+1 create_engine cli.py:2964),factory unique,A
+7-Arch,Registre couverture chiffres servis,mecanisme auto-verifie (liste exceptions VIDE, garde test) ; front ne fabrique plus,couvert,A
+7-Arch,Points d'entree multiples (meme action),mediane/export PDF/residuel-SDP/taxe = 1 source chacun (dedoublonnages tenus),0,A

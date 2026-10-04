@@ -1,0 +1,822 @@
+npm warn exec The following package was not found and will be installed: @biomejs/biome@2.5.15
+src/circuit-harness.tsx:10:12 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+  
+     9 │ const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  > 10 │ createRoot(document.getElementById('root')!).render(
+       │            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    11 │   <QueryClientProvider client={qc}>
+    12 │     <div style={{ padding: '18px 24px 120px', background: '#0f1512', minHeight: '100vh' }}>
+  
+
+src/components/ParcelInput.test.tsx:41:19 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+  
+    39 │   it('interroge le suggest avec les 4 grammaires quand aucune prop de grammaires n’est passée', async () => {
+    40 │     const { container } = render(<ParcelInput onPick={() => {}} withCarte={false} />)
+  > 41 │     const input = container.querySelector<HTMLInputElement>('[data-suggest-input]')!
+       │                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    42 │     fireEvent.change(input, { target: { value: 'CBO' } })
+    43 │     await waitFor(() => {
+  
+
+src/components/ParcelInput.test.tsx:54:19 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+  
+    52 │     const picked: string[] = []
+    53 │     render(<ParcelInput onPick={(idu) => picked.push(idu)} withCarte={false} />)
+  > 54 │     const input = document.querySelector<HTMLInputElement>('[data-suggest-input]')!
+       │                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    55 │     fireEvent.change(input, { target: { value: 'CBO' } })
+    56 │     // la suggestion propriétaire apparaît (portal dans document.body)
+  
+
+src/components/ParcelInput.test.tsx:77:19 lint/style/noNonNullAssertion ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! Forbidden non-null assertion.
+  
+    75 │     const picked: string[] = []
+    76 │     render(<ParcelInput onPick={(idu) => picked.push(idu)} onProprietaire={(s) => owners.push(s)} withCarte={false} />)
+  > 77 │     const input = document.querySelector<HTMLInputElement>('[data-suggest-input]')!
+       │                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    78 │     fireEvent.change(input, { target: { value: 'CBO' } })
+    79 │     const opt = await waitFor(() => {
+  
+
+src/circuit-harness.tsx format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     2  2 │   // L'API (/admin/circuit…) est interceptée par Playwright avec des fixtures RÉELLES ; ce fichier ne
+     3  3 │   // connaît ni la base ni les fixtures. Il n'est utilisé qu'en recette (jamais dans l'app).
+     4    │ - import·{·QueryClient,·QueryClientProvider·}·from·'@tanstack/react-query'
+     5    │ - import·{·createRoot·}·from·'react-dom/client'
+        4 │ + import·{·QueryClient,·QueryClientProvider·}·from·"@tanstack/react-query";
+        5 │ + import·{·createRoot·}·from·"react-dom/client";
+     6  6 │   
+     7    │ - import·{·CircuitSection·}·from·'./components/admin/circuit/Circuit'
+        7 │ + import·{·CircuitSection·}·from·"./components/admin/circuit/Circuit";
+     8  8 │   
+     9    │ - const·qc·=·new·QueryClient({·defaultOptions:·{·queries:·{·retry:·false·}·}·})
+    10    │ - createRoot(document.getElementById('root')!).render(
+    11    │ - ··<QueryClientProvider·client={qc}>
+    12    │ - ····<div·style={{·padding:·'18px·24px·120px',·background:·'#0f1512',·minHeight:·'100vh'·}}>
+    13    │ - ······<CircuitSection·/>
+    14    │ - ····</div>
+    15    │ - ··</QueryClientProvider>,
+    16    │ - )
+        9 │ + const·qc·=·new·QueryClient({·defaultOptions:·{·queries:·{·retry:·false·}·}·});
+       10 │ + createRoot(document.getElementById("root")!).render(
+       11 │ + → <QueryClientProvider·client={qc}>
+       12 │ + → → <div
+       13 │ + → → → style={{
+       14 │ + → → → → padding:·"18px·24px·120px",
+       15 │ + → → → → background:·"#0f1512",
+       16 │ + → → → → minHeight:·"100vh",
+       17 │ + → → → }}
+       18 │ + → → >
+       19 │ + → → → <CircuitSection·/>
+       20 │ + → → </div>
+       21 │ + → </QueryClientProvider>,
+       22 │ + );
+    17 23 │   
+  
+
+src/components/AvisIA.tsx format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     1    │ - import·{·CLIENT·}·from·'../lib/strings'
+        1 │ + import·{·CLIENT·}·from·"../lib/strings";
+     2  2 │   
+     3  3 │   /** EXPRESS-01 · Volet B — avis IA posé en tête de TOUTE surface où l'IA s'exprime.
+    ····· │ 
+     6  6 │    *  jamais recopié. `className` permet d'accorder les couleurs à la DA de chaque surface
+     7  7 │    *  (par défaut : cartouche neutre sur fond sombre standard). */
+     8    │ - export·function·AvisIA({·className·=·'mb-3·border-line-2·bg-surface-2·text-txt-mut'·}:·{·className?:·string·})·{
+     9    │ - ··return·(
+    10    │ - ····<p·data-avis-ia·className={`rounded-lg·border·px-3·py-2·text-[11px]·leading-snug·${className}`}>
+    11    │ - ······{CLIENT.avisIa}
+    12    │ - ····</p>
+    13    │ - ··)
+        8 │ + export·function·AvisIA({
+        9 │ + → className·=·"mb-3·border-line-2·bg-surface-2·text-txt-mut",
+       10 │ + }:·{
+       11 │ + → className?:·string;
+       12 │ + })·{
+       13 │ + → return·(
+       14 │ + → → <p
+       15 │ + → → → data-avis-ia
+       16 │ + → → → className={`rounded-lg·border·px-3·py-2·text-[11px]·leading-snug·${className}`}
+       17 │ + → → >
+       18 │ + → → → {CLIENT.avisIa}
+       19 │ + → → </p>
+       20 │ + → );
+    14 21 │   }
+    15 22 │   
+  
+
+src/components/ListPagination.test.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━━━━━━━━━
+
+  × Sort these imports.
+  
+  > 1 │ import { describe, expect, it, vi } from 'vitest'
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  > 2 │ import { act, render, renderHook, screen } from '@testing-library/react'
+  > 3 │ import { createElement } from 'react'
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    4 │ import { fmtInt } from '../lib/format'
+    5 │ import { ListPaginationFooter, PAGE_SIZE, usePagination } from './ListPagination'
+  
+  i Safe fix: Organize imports and exports (Biome)
+  
+     1    │ - import·{·describe,·expect,·it,·vi·}·from·'vitest'
+     2    │ - import·{·act,·render,·renderHook,·screen·}·from·'@testing-library/react'
+     3    │ - import·{·createElement·}·from·'react'
+        1 │ + import·{·act,·render,·renderHook,·screen·}·from·'@testing-library/react'
+        2 │ + import·{·createElement·}·from·'react'
+        3 │ + import·{·describe,·expect,·it,·vi·}·from·'vitest'
+     4  4 │   import { fmtInt } from '../lib/format'
+     5  5 │   import { ListPaginationFooter, PAGE_SIZE, usePagination } from './ListPagination'
+  
+
+src/components/ListPagination.test.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     1     │ - import·{·describe,·expect,·it,·vi·}·from·'vitest'
+     2     │ - import·{·act,·render,·renderHook,·screen·}·from·'@testing-library/react'
+     3     │ - import·{·createElement·}·from·'react'
+     4     │ - import·{·fmtInt·}·from·'../lib/format'
+     5     │ - import·{·ListPaginationFooter,·PAGE_SIZE,·usePagination·}·from·'./ListPagination'
+         1 │ + import·{·describe,·expect,·it,·vi·}·from·"vitest";
+         2 │ + import·{·act,·render,·renderHook,·screen·}·from·"@testing-library/react";
+         3 │ + import·{·createElement·}·from·"react";
+         4 │ + import·{·fmtInt·}·from·"../lib/format";
+         5 │ + import·{
+         6 │ + → ListPaginationFooter,
+         7 │ + → PAGE_SIZE,
+         8 │ + → usePagination,
+         9 │ + }·from·"./ListPagination";
+     6  10 │   
+     7  11 │   // RETOURS-10 (T3) — doctrine : page de 200, « Voir N de plus » incrémental, JAMAIS de « Tout charger ».
+     8     │ - describe('T3·—·usePagination',·()·=>·{
+     9     │ - ··it('la·page·est·de·200',·()·=>·{
+    10     │ - ····expect(PAGE_SIZE).toBe(200)
+    11     │ - ··})
+        12 │ + describe("T3·—·usePagination",·()·=>·{
+        13 │ + → it("la·page·est·de·200",·()·=>·{
+        14 │ + → → expect(PAGE_SIZE).toBe(200);
+        15 │ + → });
+    12  16 │   
+    13     │ - ··it('une·liste·de·33·910·ne·montre·que·200·au·premier·rendu,·puis·200·de·plus·par·clic',·()·=>·{
+    14     │ - ····const·{·result·}·=·renderHook(()·=>·usePagination(33_910))
+    15     │ - ····expect(result.current.shown).toBe(200)··········//·premier·rendu·:·200,·pas·33·910
+    16     │ - ····expect(result.current.hasMore).toBe(true)
+    17     │ - ····act(()·=>·result.current.more())
+    18     │ - ····expect(result.current.shown).toBe(400)··········//·+200
+    19     │ - ····act(()·=>·result.current.more())
+    20     │ - ····expect(result.current.shown).toBe(600)··········//·+200·encore·—·jamais·de·saut·à·33·910
+    21     │ - ····expect(result.current.hasMore).toBe(true)
+    22     │ - ··})
+        17 │ + → it("une·liste·de·33·910·ne·montre·que·200·au·premier·rendu,·puis·200·de·plus·par·clic",·()·=>·{
+        18 │ + → → const·{·result·}·=·renderHook(()·=>·usePagination(33_910));
+        19 │ + → → expect(result.current.shown).toBe(200);·//·premier·rendu·:·200,·pas·33·910
+        20 │ + → → expect(result.current.hasMore).toBe(true);
+        21 │ + → → act(()·=>·result.current.more());
+        22 │ + → → expect(result.current.shown).toBe(400);·//·+200
+        23 │ + → → act(()·=>·result.current.more());
+        24 │ + → → expect(result.current.shown).toBe(600);·//·+200·encore·—·jamais·de·saut·à·33·910
+        25 │ + → → expect(result.current.hasMore).toBe(true);
+        26 │ + → });
+    23  27 │   
+    24     │ - ··it('le·dernier·paquet·ne·dépasse·jamais·le·total',·()·=>·{
+    25     │ - ····const·{·result·}·=·renderHook(()·=>·usePagination(300))
+    26     │ - ····act(()·=>·result.current.more())
+    27     │ - ····expect(result.current.shown).toBe(300)··········//·200·→·300·(pas·400)
+    28     │ - ····expect(result.current.hasMore).toBe(false)
+    29     │ - ··})
+        28 │ + → it("le·dernier·paquet·ne·dépasse·jamais·le·total",·()·=>·{
+        29 │ + → → const·{·result·}·=·renderHook(()·=>·usePagination(300));
+        30 │ + → → act(()·=>·result.current.more());
+        31 │ + → → expect(result.current.shown).toBe(300);·//·200·→·300·(pas·400)
+        32 │ + → → expect(result.current.hasMore).toBe(false);
+        33 │ + → });
+    30  34 │   
+    31     │ - ··it('total·plus·petit·qu\'une·page·:·tout·est·visible·d\'emblée',·()·=>·{
+    32     │ - ····const·{·result·}·=·renderHook(()·=>·usePagination(137))
+    33     │ - ····expect(result.current.shown).toBe(137)
+    34     │ - ····expect(result.current.hasMore).toBe(false)
+    35     │ - ··})
+        35 │ + → it("total·plus·petit·qu'une·page·:·tout·est·visible·d'emblée",·()·=>·{
+        36 │ + → → const·{·result·}·=·renderHook(()·=>·usePagination(137));
+        37 │ + → → expect(result.current.shown).toBe(137);
+        38 │ + → → expect(result.current.hasMore).toBe(false);
+        39 │ + → });
+    36  40 │   
+    37     │ - ··it('un·nouveau·jeu·(total·qui·change)·réinitialise·la·fenêtre·à·une·page',·()·=>·{
+    38     │ - ····let·total·=·5000
+    39     │ - ····const·{·result,·rerender·}·=·renderHook(()·=>·usePagination(total))
+    40     │ - ····act(()·=>·{·result.current.more();·result.current.more()·})
+    41     │ - ····expect(result.current.shown).toBe(600)
+    42     │ - ····total·=·1200
+    43     │ - ····rerender()
+    44     │ - ····expect(result.current.shown).toBe(PAGE_SIZE)····//·repart·à·200·sur·la·nouvelle·requête
+    45     │ - ··})
+    46     │ - })
+        41 │ + → it("un·nouveau·jeu·(total·qui·change)·réinitialise·la·fenêtre·à·une·page",·()·=>·{
+        42 │ + → → let·total·=·5000;
+        43 │ + → → const·{·result,·rerender·}·=·renderHook(()·=>·usePagination(total));
+        44 │ + → → act(()·=>·{
+        45 │ + → → → result.current.more();
+        46 │ + → → → result.current.more();
+        47 │ + → → });
+        48 │ + → → expect(result.current.shown).toBe(600);
+        49 │ + → → total·=·1200;
+        50 │ + → → rerender();
+        51 │ + → → expect(result.current.shown).toBe(PAGE_SIZE);·//·repart·à·200·sur·la·nouvelle·requête
+        52 │ + → });
+        53 │ + });
+    47  54 │   
+    48     │ - describe('T3·—·ListPaginationFooter',·()·=>·{
+    49     │ - ··//·getByText·normalise·les·espaces·insécables·(U+202F·de·fmtInt·fr)·en·espace·simple·;·on·aligne.
+    50     │ - ··const·n·=·(s:·string)·=>·s.replace(/\s/g,·'·')
+        55 │ + describe("T3·—·ListPaginationFooter",·()·=>·{
+        56 │ + → //·getByText·normalise·les·espaces·insécables·(U+202F·de·fmtInt·fr)·en·espace·simple·;·on·aligne.
+        57 │ + → const·n·=·(s:·string)·=>·s.replace(/\s/g,·"·");
+    51  58 │   
+    52     │ - ··it('compteur·exact·+·«·Voir·200·de·plus·»·;·AUCUN·bouton·«·tout·charger·»',·()·=>·{
+    53     │ - ····const·onMore·=·vi.fn()
+    54     │ - ····render(createElement(ListPaginationFooter,·{·shown:·200,·total:·33_910,·onMore·}))
+    55     │ - ····expect(screen.getByText(n(`${fmtInt(200)}·/·${fmtInt(33_910)}`))).toBeTruthy()
+    56     │ - ····screen.getByText(n(`Voir·${fmtInt(200)}·de·plus`)).click()
+    57     │ - ····expect(onMore).toHaveBeenCalledOnce()
+    58     │ - ····//·le·bouton·de·chargement·massif·n'existe·plus·(il·figeait·l'app)
+    59     │ - ····expect(screen.queryByText(/[Tt]out·charger/)).toBeNull()
+    60     │ - ··})
+        59 │ + → it("compteur·exact·+·«·Voir·200·de·plus·»·;·AUCUN·bouton·«·tout·charger·»",·()·=>·{
+        60 │ + → → const·onMore·=·vi.fn();
+        61 │ + → → render(
+        62 │ + → → → createElement(ListPaginationFooter,·{
+        63 │ + → → → → shown:·200,
+        64 │ + → → → → total:·33_910,
+        65 │ + → → → → onMore,
+        66 │ + → → → }),
+        67 │ + → → );
+        68 │ + → → expect(
+        69 │ + → → → screen.getByText(n(`${fmtInt(200)}·/·${fmtInt(33_910)}`)),
+        70 │ + → → ).toBeTruthy();
+        71 │ + → → screen.getByText(n(`Voir·${fmtInt(200)}·de·plus`)).click();
+        72 │ + → → expect(onMore).toHaveBeenCalledOnce();
+        73 │ + → → //·le·bouton·de·chargement·massif·n'existe·plus·(il·figeait·l'app)
+        74 │ + → → expect(screen.queryByText(/[Tt]out·charger/)).toBeNull();
+        75 │ + → });
+    61  76 │   
+    62     │ - ··it('dernière·page·:·le·compteur·reste,·plus·de·bouton·«·de·plus·»',·()·=>·{
+    63     │ - ····render(createElement(ListPaginationFooter,·{·shown:·137,·total:·137,·onMore:·()·=>·{}·}))
+    64     │ - ····expect(screen.getByText(n(`${fmtInt(137)}·/·${fmtInt(137)}`))).toBeTruthy()
+    65     │ - ····expect(screen.queryByText(/de·plus/)).toBeNull()
+    66     │ - ··})
+        77 │ + → it("dernière·page·:·le·compteur·reste,·plus·de·bouton·«·de·plus·»",·()·=>·{
+        78 │ + → → render(
+        79 │ + → → → createElement(ListPaginationFooter,·{
+        80 │ + → → → → shown:·137,
+        81 │ + → → → → total:·137,
+        82 │ + → → → → onMore:·()·=>·{},
+        83 │ + → → → }),
+        84 │ + → → );
+        85 │ + → → expect(screen.getByText(n(`${fmtInt(137)}·/·${fmtInt(137)}`))).toBeTruthy();
+        86 │ + → → expect(screen.queryByText(/de·plus/)).toBeNull();
+        87 │ + → });
+    67  88 │   
+    68     │ - ··it('avant-dernière·page·:·«·Voir·37·de·plus·»·(honnête,·pas·200)',·()·=>·{
+    69     │ - ····render(createElement(ListPaginationFooter,·{·shown:·100,·total:·137,·onMore:·()·=>·{}·}))
+    70     │ - ····expect(screen.getByText(n(`Voir·${fmtInt(37)}·de·plus`))).toBeTruthy()
+    71     │ - ··})
+    72     │ - })
+  12 more lines truncated
+  
+
+src/components/ListPagination.tsx:1:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━
+
+  × Sort the imported names.
+  
+  > 1 │ import { useEffect, useState, type ReactNode } from 'react'
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    2 │ import { fmtInt } from '../lib/format'
+    3 │ 
+  
+  i Safe fix: Organize imports and exports (Biome)
+  
+     1    │ - import·{·useEffect,·useState,·type·ReactNode·}·from·'react'
+        1 │ + import·{·type·ReactNode,·useEffect,·useState·}·from·'react'
+     2  2 │   import { fmtInt } from '../lib/format'
+     3  3 │   
+  
+
+src/components/ListPagination.tsx:70:9 lint/a11y/useButtonType ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Provide an explicit type prop for the button element.
+  
+    68 │       </span>
+    69 │       {hasMore && (
+  > 70 │         <button data-pagination-more onClick={onMore} className="text-mint hover:underline">
+       │         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    71 │           Voir {fmtInt(nextChunk)} de plus
+    72 │         </button>
+  
+  i The default type of a button is submit, which causes the submission of a form when placed inside a `form` element. This is likely not the behaviour that you want inside a React application.
+  
+  i Allowed button types are: submit, button or reset
+  
+
+src/components/ListPagination.tsx format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     1    │ - import·{·useEffect,·useState,·type·ReactNode·}·from·'react'
+     2    │ - import·{·fmtInt·}·from·'../lib/format'
+        1 │ + import·{·useEffect,·useState,·type·ReactNode·}·from·"react";
+        2 │ + import·{·fmtInt·}·from·"../lib/format";
+     3  3 │   
+     4  4 │   // SOCLE (refonte 13 outils) — PAGINATION DE LISTE PARTAGÉE, l'UNIQUE pied de liste de l'app. Doctrine :
+    ····· │ 
+    19 19 │   //     (on lui passe alors shown/total/onMore issus de useInfiniteQuery ou d'un offset).
+    20 20 │   
+    21    │ - export·const·PAGE_SIZE·=·200
+       21 │ + export·const·PAGE_SIZE·=·200;
+    22 22 │   
+    23 23 │   export interface Pagination {
+    24    │ - ··shown:·number
+    25    │ - ··hasMore:·boolean
+    26    │ - ··more:·()·=>·void
+    27    │ - ··reset:·()·=>·void
+    28    │ - ··step:·number
+       24 │ + → shown:·number;
+       25 │ + → hasMore:·boolean;
+       26 │ + → more:·()·=>·void;
+       27 │ + → reset:·()·=>·void;
+       28 │ + → step:·number;
+    29 29 │   }
+    30 30 │   
+    ····· │ 
+    32 32 │   // requête → `total` bouge) ; à `total` inchangé (re-tri client), la fenêtre agrandie est préservée
+    33 33 │   // (deps stables, l'effet ne refire pas) → la position de défilement tient.
+    34    │ - export·function·usePagination(total:·number,·step:·number·=·PAGE_SIZE):·Pagination·{
+    35    │ - ··const·[shown,·setShown]·=·useState(()·=>·Math.min(step,·total))
+    36    │ - ··useEffect(()·=>·{·setShown(Math.min(step,·total))·},·[total,·step])
+    37    │ - ··return·{
+    38    │ - ····shown,
+    39    │ - ····hasMore:·shown·<·total,
+    40    │ - ····more:·()·=>·setShown((s)·=>·Math.min(s·+·step,·total)),
+    41    │ - ····reset:·()·=>·setShown(Math.min(step,·total)),
+    42    │ - ····step,
+    43    │ - ··}
+       34 │ + export·function·usePagination(
+       35 │ + → total:·number,
+       36 │ + → step:·number·=·PAGE_SIZE,
+       37 │ + ):·Pagination·{
+       38 │ + → const·[shown,·setShown]·=·useState(()·=>·Math.min(step,·total));
+       39 │ + → useEffect(()·=>·{
+       40 │ + → → setShown(Math.min(step,·total));
+       41 │ + → },·[total,·step]);
+       42 │ + → return·{
+       43 │ + → → shown,
+       44 │ + → → hasMore:·shown·<·total,
+       45 │ + → → more:·()·=>·setShown((s)·=>·Math.min(s·+·step,·total)),
+       46 │ + → → reset:·()·=>·setShown(Math.min(step,·total)),
+       47 │ + → → step,
+       48 │ + → };
+    44 49 │   }
+    45 50 │   
+    46 51 │   export function ListPaginationFooter({
+    47    │ - ··shown,·total,·step·=·PAGE_SIZE,·onMore,·children,·className,
+       52 │ + → shown,
+       53 │ + → total,
+       54 │ + → step·=·PAGE_SIZE,
+       55 │ + → onMore,
+       56 │ + → children,
+       57 │ + → className,
+    48 58 │   }: {
+    49    │ - ··shown:·number
+    50    │ - ··total:·number
+    51    │ - ··step?:·number
+    52    │ - ··onMore:·()·=>·void
+    53    │ - ··children?:·ReactNode········//·actions·additionnelles·(ex.·Densifier·:·«·Exporter·CSV·»)
+    54    │ - ··className?:·string
+       59 │ + → shown:·number;
+       60 │ + → total:·number;
+       61 │ + → step?:·number;
+       62 │ + → onMore:·()·=>·void;
+       63 │ + → children?:·ReactNode;·//·actions·additionnelles·(ex.·Densifier·:·«·Exporter·CSV·»)
+       64 │ + → className?:·string;
+    55 65 │   }) {
+    56    │ - ··const·remaining·=·Math.max(0,·total·-·shown)
+    57    │ - ··const·hasMore·=·remaining·>·0
+    58    │ - ··//·Honnête·sur·la·dernière·page·:·«·Voir·137·de·plus·»,·pas·«·Voir·200·de·plus·»·quand·il·en·reste·137.
+    59    │ - ··const·nextChunk·=·Math.min(step,·remaining)
+    60    │ - ··return·(
+    61    │ - ····<div
+    62    │ - ······data-pagination
+    63    │ - ······className={className·??·'flex·flex-wrap·items-center·gap-3·border-t·border-line·pt-2·text-[11px]·text-txt-mut'}
+    64    │ - ····>
+    65    │ - ······{/*·compteur·TOUJOURS·rendu,·valeurs·exactes·*/}
+    66    │ - ······<span·data-pagination-count>
+    67    │ - ········<b·className="text-txt">{fmtInt(shown)}·/·{fmtInt(total)}</b>·affichées
+    68    │ - ······</span>
+    69    │ - ······{hasMore·&&·(
+    70    │ - ········<button·data-pagination-more·onClick={onMore}·className="text-mint·hover:underline">
+    71    │ - ··········Voir·{fmtInt(nextChunk)}·de·plus
+    72    │ - ········</button>
+    73    │ - ······)}
+    74    │ - ······{children}
+    75    │ - ····</div>
+    76    │ - ··)
+       66 │ + → const·remaining·=·Math.max(0,·total·-·shown);
+       67 │ + → const·hasMore·=·remaining·>·0;
+       68 │ + → //·Honnête·sur·la·dernière·page·:·«·Voir·137·de·plus·»,·pas·«·Voir·200·de·plus·»·quand·il·en·reste·137.
+       69 │ + → const·nextChunk·=·Math.min(step,·remaining);
+       70 │ + → return·(
+       71 │ + → → <div
+       72 │ + → → → data-pagination
+       73 │ + → → → className={
+       74 │ + → → → → className·??
+       75 │ + → → → → "flex·flex-wrap·items-center·gap-3·border-t·border-line·pt-2·text-[11px]·text-txt-mut"
+       76 │ + → → → }
+       77 │ + → → >
+       78 │ + → → → {/*·compteur·TOUJOURS·rendu,·valeurs·exactes·*/}
+       79 │ + → → → <span·data-pagination-count>
+       80 │ + → → → → <b·className="text-txt">
+       81 │ + → → → → → {fmtInt(shown)}·/·{fmtInt(total)}
+       82 │ + → → → → </b>{"·"}
+       83 │ + → → → → affichées
+       84 │ + → → → </span>
+       85 │ + → → → {hasMore·&&·(
+       86 │ + → → → → <button
+       87 │ + → → → → → data-pagination-more
+       88 │ + → → → → → onClick={onMore}
+       89 │ + → → → → → className="text-mint·hover:underline"
+       90 │ + → → → → >
+       91 │ + → → → → → Voir·{fmtInt(nextChunk)}·de·plus
+       92 │ + → → → → </button>
+       93 │ + → → → )}
+       94 │ + → → → {children}
+       95 │ + → → </div>
+       96 │ + → );
+    77 97 │   }
+    78 98 │   
+  
+
+src/components/OwnerParcelles.tsx:57:3 lint/correctness/useExhaustiveDependencies  FIXABLE  ━━━━━━━━━━
+
+  × This hook does not specify its dependency on charger.
+  
+    55 │   }
+    56 │ 
+  > 57 │   useEffect(() => { setParcelles([]); setTotal(0); setTitre(nom); void charger(0) }, [siren]) // eslint-disable-line react-hooks/exhaustive-deps
+       │   ^^^^^^^^^
+    58 │ 
+    59 │   return (
+  
+  i This dependency is being used here, but is not specified in the hook dependency list.
+  
+    55 │   }
+    56 │ 
+  > 57 │   useEffect(() => { setParcelles([]); setTotal(0); setTitre(nom); void charger(0) }, [siren]) // eslint-disable-line react-hooks/exhaustive-deps
+       │                                                                        ^^^^^^^
+    58 │ 
+    59 │   return (
+  
+  i React relies on hook dependencies to determine when to re-compute Effects.
+    Failing to specify dependencies can result in Effects not updating correctly when state changes.
+    These "stale closures" are a common source of surprising bugs.
+  
+  i Unsafe fix: Add the missing dependency charger to the list.
+  
+    57 │ ··useEffect(()·=>·{·setParcelles([]);·setTotal(0);·setTitre(nom);·void·charger(0)·},·[siren,·charger])·//·eslint-disable-line·react-hooks/exhaustive-deps
+       │                                                                                            +++++++++                                                     
+
+src/components/OwnerParcelles.tsx:57:3 lint/correctness/useExhaustiveDependencies  FIXABLE  ━━━━━━━━━━
+
+  × This hook does not specify its dependency on nom.
+  
+    55 │   }
+    56 │ 
+  > 57 │   useEffect(() => { setParcelles([]); setTotal(0); setTitre(nom); void charger(0) }, [siren]) // eslint-disable-line react-hooks/exhaustive-deps
+       │   ^^^^^^^^^
+    58 │ 
+    59 │   return (
+  
+  i This dependency is being used here, but is not specified in the hook dependency list.
+  
+    55 │   }
+    56 │ 
+  > 57 │   useEffect(() => { setParcelles([]); setTotal(0); setTitre(nom); void charger(0) }, [siren]) // eslint-disable-line react-hooks/exhaustive-deps
+       │                                                             ^^^
+    58 │ 
+    59 │   return (
+  
+  i React relies on hook dependencies to determine when to re-compute Effects.
+    Failing to specify dependencies can result in Effects not updating correctly when state changes.
+    These "stale closures" are a common source of surprising bugs.
+  
+  i Unsafe fix: Add the missing dependency nom to the list.
+  
+    57 │ ··useEffect(()·=>·{·setParcelles([]);·setTotal(0);·setTitre(nom);·void·charger(0)·},·[siren,·nom])·//·eslint-disable-line·react-hooks/exhaustive-deps
+       │                                                                                            +++++                                                     
+
+src/components/OwnerParcelles.tsx:57:3 lint/correctness/useExhaustiveDependencies  FIXABLE  ━━━━━━━━━━
+
+  × This hook specifies more dependencies than necessary: siren.
+  
+    55 │   }
+    56 │ 
+  > 57 │   useEffect(() => { setParcelles([]); setTotal(0); setTitre(nom); void charger(0) }, [siren]) // eslint-disable-line react-hooks/exhaustive-deps
+       │   ^^^^^^^^^
+    58 │ 
+    59 │   return (
+  
+  i Outer scope values aren't valid dependencies because mutating them doesn't re-render the component.
+  
+    55 │   }
+    56 │ 
+  > 57 │   useEffect(() => { setParcelles([]); setTotal(0); setTitre(nom); void charger(0) }, [siren]) // eslint-disable-line react-hooks/exhaustive-deps
+       │                                                                                       ^^^^^
+    58 │ 
+    59 │   return (
+  
+  i React relies on hook dependencies to determine when to re-compute Effects.
+    Specifying more dependencies than required can lead to unnecessary re-rendering
+    and degraded performance.
+  
+  i Unsafe fix: Remove the extra dependencies from the list.
+  
+    57 │ ··useEffect(()·=>·{·setParcelles([]);·setTotal(0);·setTitre(nom);·void·charger(0)·},·[siren])·//·eslint-disable-line·react-hooks/exhaustive-deps
+       │                                                                                       -----                                                     
+
+src/components/OwnerParcelles.tsx:67:11 lint/a11y/useButtonType ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Provide an explicit type prop for the button element.
+  
+    65 │         </p>
+    66 │         {onChanger && (
+  > 67 │           <button data-owner-changer onClick={onChanger}
+       │           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  > 68 │             className="shrink-0 text-[10px] text-mint underline underline-offset-2 hover:text-mint/80">changer</button>
+       │             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    69 │         )}
+    70 │       </div>
+  
+  i The default type of a button is submit, which causes the submission of a form when placed inside a `form` element. This is likely not the behaviour that you want inside a React application.
+  
+  i Allowed button types are: submit, button or reset
+  
+
+src/components/OwnerParcelles.tsx:73:9 lint/a11y/useButtonType ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Provide an explicit type prop for the button element.
+  
+    71 │       {err && <p data-owner-msg className="px-1 text-[10.5px] text-st-creuser">{err}</p>}
+    72 │       {parcelles.map((p) => (
+  > 73 │         <button key={p.idu} data-owner-parcelle onClick={() => onPick(p.idu, centreDeGeom(p.geom))}
+       │         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  > 74 │           className="hover-fill flex items-baseline justify-between gap-2 rounded px-2 py-1 text-left text-[11px] text-txt transition-colors duration-quick">
+       │           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    75 │           <span className="font-medium text-txt-hi">{p.commune}</span>
+    76 │           <span className="flex items-baseline gap-2 text-[10px] text-txt-dim">
+  
+  i The default type of a button is submit, which causes the submission of a form when placed inside a `form` element. This is likely not the behaviour that you want inside a React application.
+  
+  i Allowed button types are: submit, button or reset
+  
+
+src/components/ParcelInput.test.tsx:4:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━━━━━━━━━━━
+
+  × Sort these imports.
+  
+    2 │ // /api/recherche/suggest avec les QUATRE familles (adresse, cadastre, propriétaire, SIREN), et un
+    3 │ // pick propriétaire déroule ses parcelles → onPick(idu) comme un clic carte.
+  > 4 │ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  > 5 │ import { fireEvent, render, waitFor } from '@testing-library/react'
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    6 │ import { ParcelInput } from './ParcelInput'
+    7 │ 
+  
+  i Safe fix: Organize imports and exports (Biome)
+  
+     2  2 │   // /api/recherche/suggest avec les QUATRE familles (adresse, cadastre, propriétaire, SIREN), et un
+     3  3 │   // pick propriétaire déroule ses parcelles → onPick(idu) comme un clic carte.
+     4    │ - import·{·afterEach,·beforeEach,·describe,·expect,·it,·vi·}·from·'vitest'
+     5    │ - import·{·fireEvent,·render,·waitFor·}·from·'@testing-library/react'
+        4 │ + 
+        5 │ + import·{·fireEvent,·render,·waitFor·}·from·'@testing-library/react'
+        6 │ + import·{·afterEach,·beforeEach,·describe,·expect,·it,·vi·}·from·'vitest'
+     6  7 │   import { ParcelInput } from './ParcelInput'
+     7  8 │   
+  
+
+src/components/ParcelInput.test.tsx format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     2   2 │   // /api/recherche/suggest avec les QUATRE familles (adresse, cadastre, propriétaire, SIREN), et un
+     3   3 │   // pick propriétaire déroule ses parcelles → onPick(idu) comme un clic carte.
+     4     │ - import·{·afterEach,·beforeEach,·describe,·expect,·it,·vi·}·from·'vitest'
+     5     │ - import·{·fireEvent,·render,·waitFor·}·from·'@testing-library/react'
+     6     │ - import·{·ParcelInput·}·from·'./ParcelInput'
+         4 │ + import·{·afterEach,·beforeEach,·describe,·expect,·it,·vi·}·from·"vitest";
+         5 │ + import·{·fireEvent,·render,·waitFor·}·from·"@testing-library/react";
+         6 │ + import·{·ParcelInput·}·from·"./ParcelInput";
+     7   7 │   
+     8     │ - let·calls:·string[]·=·[]
+         8 │ + let·calls:·string[]·=·[];
+     9   9 │   
+    10  10 │   function mockFetch() {
+    11     │ - ··calls·=·[]
+    12     │ - ··global.fetch·=·vi.fn(async·(url:·string)·=>·{
+    13     │ - ····const·u·=·String(url)
+    14     │ - ····calls.push(u)
+    15     │ - ····const·json·=·async·(v:·unknown)·=>·v
+    16     │ - ····if·(u.includes('/api/recherche/suggest'))·{
+    17     │ - ······return·{·ok:·true,·json:·()·=>·json({
+    18     │ - ········q:·'CBO',·total:·1,·ms:·1,·formats:·'',
+    19     │ - ········groupes:·[{·type:·'proprietaire',·items:·[{·label:·'CBO·TERRITORIA',·sub:·'1833·parcelles',·siren:·'452038805'·}]·}],
+    20     │ - ······})·}
+    21     │ - ····}
+    22     │ - ····if·(u.includes('/modules/patrimoine'))·{
+    23     │ - ······return·{·ok:·true,·json:·()·=>·json({
+    24     │ - ········siren:·'452038805',·nom:·'CBO·TERRITORIA',·n_parcelles:·2,·tronquee:·false,
+    25     │ - ········items:·[
+    26     │ - ··········{·idu:·'97415000CM1799',·commune:·'Saint-Paul',·surface_m2:·812,·sdp:·null·},
+    27     │ - ··········{·idu:·'97411000BW0917',·commune:·'Saint-Denis',·surface_m2:·1300,·sdp:·null·},
+    28     │ - ········],
+    29     │ - ······})·}
+    30     │ - ····}
+    31     │ - ····return·{·ok:·true,·json:·()·=>·json({})·}
+    32     │ - ··})·as·unknown·as·typeof·fetch
+        11 │ + → calls·=·[];
+        12 │ + → global.fetch·=·vi.fn(async·(url:·string)·=>·{
+        13 │ + → → const·u·=·String(url);
+        14 │ + → → calls.push(u);
+        15 │ + → → const·json·=·async·(v:·unknown)·=>·v;
+        16 │ + → → if·(u.includes("/api/recherche/suggest"))·{
+        17 │ + → → → return·{
+        18 │ + → → → → ok:·true,
+        19 │ + → → → → json:·()·=>
+        20 │ + → → → → → json({
+        21 │ + → → → → → → q:·"CBO",
+        22 │ + → → → → → → total:·1,
+        23 │ + → → → → → → ms:·1,
+        24 │ + → → → → → → formats:·"",
+        25 │ + → → → → → → groupes:·[
+        26 │ + → → → → → → → {
+        27 │ + → → → → → → → → type:·"proprietaire",
+        28 │ + → → → → → → → → items:·[
+        29 │ + → → → → → → → → → {
+        30 │ + → → → → → → → → → → label:·"CBO·TERRITORIA",
+        31 │ + → → → → → → → → → → sub:·"1833·parcelles",
+        32 │ + → → → → → → → → → → siren:·"452038805",
+        33 │ + → → → → → → → → → },
+        34 │ + → → → → → → → → ],
+        35 │ + → → → → → → → },
+        36 │ + → → → → → → ],
+        37 │ + → → → → → }),
+        38 │ + → → → };
+        39 │ + → → }
+        40 │ + → → if·(u.includes("/modules/patrimoine"))·{
+        41 │ + → → → return·{
+        42 │ + → → → → ok:·true,
+        43 │ + → → → → json:·()·=>
+        44 │ + → → → → → json({
+        45 │ + → → → → → → siren:·"452038805",
+        46 │ + → → → → → → nom:·"CBO·TERRITORIA",
+        47 │ + → → → → → → n_parcelles:·2,
+        48 │ + → → → → → → tronquee:·false,
+        49 │ + → → → → → → items:·[
+        50 │ + → → → → → → → {
+        51 │ + → → → → → → → → idu:·"97415000CM1799",
+        52 │ + → → → → → → → → commune:·"Saint-Paul",
+        53 │ + → → → → → → → → surface_m2:·812,
+        54 │ + → → → → → → → → sdp:·null,
+        55 │ + → → → → → → → },
+        56 │ + → → → → → → → {
+        57 │ + → → → → → → → → idu:·"97411000BW0917",
+        58 │ + → → → → → → → → commune:·"Saint-Denis",
+        59 │ + → → → → → → → → surface_m2:·1300,
+        60 │ + → → → → → → → → sdp:·null,
+        61 │ + → → → → → → → },
+        62 │ + → → → → → → ],
+        63 │ + → → → → → }),
+        64 │ + → → → };
+        65 │ + → → }
+        66 │ + → → return·{·ok:·true,·json:·()·=>·json({})·};
+        67 │ + → })·as·unknown·as·typeof·fetch;
+    33  68 │   }
+    34  69 │   
+    35     │ - describe('RECHERCHE-2·Lot·1·—·ParcelInput,·4·familles·par·défaut',·()·=>·{
+    36     │ - ··beforeEach(()·=>·{·mockFetch()·})
+    37     │ - ··afterEach(()·=>·{·vi.restoreAllMocks()·})
+        70 │ + describe("RECHERCHE-2·Lot·1·—·ParcelInput,·4·familles·par·défaut",·()·=>·{
+        71 │ + → beforeEach(()·=>·{
+        72 │ + → → mockFetch();
+        73 │ + → });
+        74 │ + → afterEach(()·=>·{
+        75 │ + → → vi.restoreAllMocks();
+        76 │ + → });
+    38  77 │   
+    39     │ - ··it('interroge·le·suggest·avec·les·4·grammaires·quand·aucune·prop·de·grammaires·n’est·passée',·async·()·=>·{
+    40     │ - ····const·{·container·}·=·render(<ParcelInput·onPick={()·=>·{}}·withCarte={false}·/>)
+    41     │ - ····const·input·=·container.querySelector<HTMLInputElement>('[data-suggest-input]')!
+    42     │ - ····fireEvent.change(input,·{·target:·{·value:·'CBO'·}·})
+    43     │ - ····await·waitFor(()·=>·{
+    44     │ - ······const·suggest·=·calls.find((u)·=>·u.includes('/api/recherche/suggest'))
+    45     │ - ······expect(suggest).toBeTruthy()
+    46     │ - ······//·les·4·familles·du·mandat,·aucune·de·plus,·aucune·de·moins
+    47     │ - ······expect(suggest).toContain('types=adresse,cadastre,proprietaire,siren')
+    48     │ - ····})
+    49     │ - ··})
+        78 │ + → it("interroge·le·suggest·avec·les·4·grammaires·quand·aucune·prop·de·grammaires·n’est·passée",·async·()·=>·{
+        79 │ + → → const·{·container·}·=·render(
+        80 │ + → → → <ParcelInput·onPick={()·=>·{}}·withCarte={false}·/>,
+        81 │ + → → );
+        82 │ + → → const·input·=·container.querySelector<HTMLInputElement>(
+        83 │ + → → → "[data-suggest-input]",
+        84 │ + → → )!;
+        85 │ + → → fireEvent.change(input,·{·target:·{·value:·"CBO"·}·});
+        86 │ + → → await·waitFor(()·=>·{
+        87 │ + → → → const·suggest·=·calls.find((u)·=>·u.includes("/api/recherche/suggest"));
+        88 │ + → → → expect(suggest).toBeTruthy();
+        89 │ + → → → //·les·4·familles·du·mandat,·aucune·de·plus,·aucune·de·moins
+        90 │ + → → → expect(suggest).toContain("types=adresse,cadastre,proprietaire,siren");
+        91 │ + → → });
+        92 │ + → });
+    50  93 │   
+    51     │ - ··it('un·pick·propriétaire·déroule·ses·parcelles·→·onPick(idu)',·async·()·=>·{
+    52     │ - ····const·picked:·string[]·=·[]
+    53     │ - ····render(<ParcelInput·onPick={(idu)·=>·picked.push(idu)}·withCarte={false}·/>)
+    54     │ - ····const·input·=·document.querySelector<HTMLInputElement>('[data-suggest-input]')!
+    55     │ - ····fireEvent.change(input,·{·target:·{·value:·'CBO'·}·})
+    56     │ - ····//·la·suggestion·propriétaire·apparaît·(portal·dans·document.body)
+    57     │ - ····const·opt·=·await·waitFor(()·=>·{
+    58     │ - ······const·el·=·document.querySelector('[data-suggest-item="proprietaire"]')
+    59     │ - ······expect(el).toBeTruthy()
+    60     │ - ······return·el·as·HTMLElement
+    61     │ - ····})
+    62     │ - ····fireEvent.mouseDown(opt)
+    63     │ - ····//·le·sous-panneau·liste·ses·parcelles
+    64     │ - ····const·parcelles·=·await·waitFor(()·=>·{
+    65     │ - ······const·els·=·document.querySelectorAll('[data-owner-parcelle]')
+    66     │ - ······expect(els.length).toBe(2)
+    67     │ - ······return·els
+    68     │ - ····})
+  74 more lines truncated
+  
+
+src/test/setup.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+    1 1 │   // M26-B — socle des tests front (Vitest + Testing Library).
+    2   │ - import·'@testing-library/jest-dom/vitest'
+    3   │ - import·{·cleanup·}·from·'@testing-library/react'
+    4   │ - import·{·afterEach·}·from·'vitest'
+      2 │ + import·"@testing-library/jest-dom/vitest";
+      3 │ + import·{·cleanup·}·from·"@testing-library/react";
+      4 │ + import·{·afterEach·}·from·"vitest";
+    5 5 │   
+    6   │ - afterEach(cleanup)
+      6 │ + afterEach(cleanup);
+    7 7 │   
+  
+
+src/vite-env.d.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     3  3 │   // Clôture A-1 : le run servi est configurable au build (fin du hard-code). Défaut dans api.ts.
+     4  4 │   interface ImportMetaEnv {
+     5    │ - ··readonly·VITE_RUN_LABEL?:·string
+        5 │ + → readonly·VITE_RUN_LABEL?:·string;
+     6  6 │   }
+     7  7 │   interface ImportMeta {
+     8    │ - ··readonly·env:·ImportMetaEnv
+        8 │ + → readonly·env:·ImportMetaEnv;
+     9  9 │   }
+    10 10 │   
+  
+
+The number of diagnostics exceeds the limit allowed. Use --max-diagnostics to increase it.
+Diagnostics not shown: 1885.
+Checked 212 files in 569ms. No fixes applied.
+Found 1191 errors.
+Found 471 warnings.
+Found 243 infos.
+check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Some errors were emitted while running checks.
+  
+

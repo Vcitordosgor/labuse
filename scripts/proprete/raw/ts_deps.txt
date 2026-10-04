@@ -1,0 +1,26 @@
+=== MEASURE 10: declared deps ===
+dependencies: @tanstack/react-query, maplibre-gl, react, react-dom, zustand
+devDependencies: @testing-library/jest-dom, @testing-library/react, @types/node, @types/react, @types/react-dom, @vitejs/plugin-react, autoprefixer, jsdom, playwright, postcss, tailwindcss, typescript, vite, vitest
+=== knip: unused deps + unlisted (unresolved) ===
+Unused devDependencies (1)
+--- lines after those headers ---
+=== verify each declared dep is imported in src ===
+@tanstack/react-query : src_imports=96 config_refs=1
+maplibre-gl : src_imports=3 config_refs=2
+react : src_imports=95 config_refs=4
+react-dom : src_imports=4 config_refs=2
+zustand : src_imports=1 config_refs=2
+@testing-library/jest-dom : src_imports=0 config_refs=1
+@testing-library/react : src_imports=36 config_refs=1
+@types/node : src_imports=0 config_refs=1
+@types/react : src_imports=0 config_refs=1
+@types/react-dom : src_imports=0 config_refs=1
+@vitejs/plugin-react : src_imports=0 config_refs=4
+autoprefixer : src_imports=0 config_refs=2
+jsdom : src_imports=0 config_refs=3
+playwright : src_imports=0 config_refs=1
+postcss : src_imports=0 config_refs=1
+tailwindcss : src_imports=0 config_refs=2
+typescript : src_imports=0 config_refs=1
+vite : src_imports=0 config_refs=4
+vitest : src_imports=51 config_refs=3

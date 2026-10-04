@@ -1,0 +1,6 @@
+=== baseline tsc (current tsconfig) ===
+0 errors (already strict:true)
++--noImplicitReturns => 0 errors
++--exactOptionalPropertyTypes => 109 errors
++--noUncheckedIndexedAccess => 162 errors
++--noPropertyAccessFromIndexSignature => 464 errors
