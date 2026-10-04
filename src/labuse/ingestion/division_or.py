@@ -223,7 +223,9 @@ WITH cand AS (
   WHERE p.commune = :commune AND p.surface_m2 BETWEEN {surface_min} AND {surface_max}
     AND EXISTS (SELECT 1 FROM spatial_layers b WHERE b.kind='batiment' AND ST_Intersects(b.geom_2975, p.geom_2975))),
 bldg AS (
-  SELECT c.id, b.geom_2975 AS g, ST_Area(ST_Intersection(b.geom_2975, c.geom_2975)) AS a
+  -- CHASSE-FIX-1 (C05) : DISTINCT sur la géométrie — la même construction ingérée sous 2
+  -- communes voisines comptait double (nb_bat, bat_m2, ratios) en bande frontalière.
+  SELECT DISTINCT c.id, b.geom_2975 AS g, ST_Area(ST_Intersection(b.geom_2975, c.geom_2975)) AS a
   FROM cand c JOIN spatial_layers b ON b.kind='batiment' AND ST_Intersects(b.geom_2975, c.geom_2975)),
 -- nb_bat compte comme la cascade (bati.stats_batch) : intersection ≥ 10 m² (les voisins en
 -- limite et les abris minuscules ne comptent pas) ; max_bat_m2 = plus grande emprise intersectée

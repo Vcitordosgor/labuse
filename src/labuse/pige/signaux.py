@@ -16,7 +16,15 @@ from __future__ import annotations
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-SEUIL_N = 5   # même honnêteté statistique que l'onglet Marché : sous 5, pas de médiane servie
+def _seuil_mediane() -> int:
+    # CHASSE-FIX-1 (C25) — seuil UNIQUE des médianes de référence (config dvf_profils.yaml,
+    # seuils_effectif.mediane_generique) ; repli 8 si config absente. Plus jamais « 5 » en dur.
+    try:
+        from ..marche_service import seuil_effectif_local
+        return seuil_effectif_local("mediane_generique", 8)
+    except Exception:  # noqa: BLE001 — config indisponible : repli doctrine n≥8
+        return 8
+SEUIL_N = _seuil_mediane()   # CHASSE-FIX-1 (C25) : seuil unique (8, config)
 
 # RADAR-DEPOT-2 (D4) — SEUIL du badge « sous le marché ». JUSTIFICATION (mandat : « ne le sors pas du
 # chapeau ») : le référentiel est la MÉDIANE DVF actée de la zone. Par construction, la moitié des

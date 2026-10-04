@@ -235,7 +235,7 @@ def fiche_html(fiche: dict) -> str:
             "<h2>Réhabilitation (Estimé)</h2>" + tete + "<ul>"
             f"<li>Surface réhabilitable : ~{cmb['surface']['shab_rehabilitable_m2']} m² habitables "
             f"(emprise {cmb['surface']['emprise_bati_m2']} m² [Sourcé] × {cmb['surface']['niveaux']} niveau(x) "
-            f"[{'Sourcé' if cmb['surface']['niveaux_reels'] else 'Estimé'}])</li>"
+            f"[{'Sourcé' if cmb['surface']['niveaux_reels'] else 'Estimé'}] ÷ 1,15 plancher→habitable)</li>"   # CHASSE-FIX-1 (C17) : la formule affichée = le calcul (bilan.py coef_plancher_habitable)
             f"<li>Prix de sortie : {cmb['prix_sortie']['prix_m2']} €/m² — {html.escape(cmb['prix_sortie']['libelle'])} "
             f"({html.escape(cmb['prix_sortie'].get('perimetre', 'médiane secteur→commune, sans rayon adaptatif'))}) [Sourcé DVF]</li>"
             f"<li>{html.escape(cmb['travaux']['libelle'])}</li>"

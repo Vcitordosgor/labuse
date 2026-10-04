@@ -509,7 +509,7 @@ def render_fiche_pdf(fiche: dict) -> bytes:
         sru = ctx.get("sru")
         if sru:
             st = {"carencee": "CARENCÉE", "deficitaire": "déficitaire",
-                  "exemptee": "exemptée 2023-2025", "conforme": "conforme"}.get(sru["statut"], sru["statut"])
+                  "exemptee": "exemptée (période triennale en cours)", "conforme": "conforme"}.get(sru["statut"], sru["statut"])
             lignes.append(f"SRU : {sru['taux_lls']} % de logements sociaux — objectif {sru['objectif_pct']} % — {st}"
                           + (f" (prélèvement 2025 : {int(sru['prelevement_eur']):,} €)".replace(",", " ")
                              if (sru.get("prelevement_eur") or 0) > 0 else ""))
@@ -902,7 +902,7 @@ def render_fiche_pdf(fiche: dict) -> bytes:
         if fi:
             bits = []
             if fi.get("nivvie_moyen_eur"):
-                bits.append(f"niveau de vie médian ~{int(fi['nivvie_moyen_eur']):,} €".replace(",", " "))
+                bits.append(f"niveau de vie moyen ~{int(fi['nivvie_moyen_eur']):,} €".replace(",", " "))  # CHASSE-FIX-1 (C11) : moyenne Filosofi, jamais « médian »
             if fi.get("men") and fi.get("men_prop") is not None:
                 bits.append(f"{round(100 * fi['men_prop'] / fi['men'])} % propriétaires")
             if fi.get("taux_pauvrete_pct") is not None:

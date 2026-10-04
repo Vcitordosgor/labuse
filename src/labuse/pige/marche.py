@@ -12,7 +12,15 @@ from sqlalchemy.orm import Session
 
 from ..ingestion.run_all import REUNION_COMMUNES
 
-SEUIL_N = 5   # sous ce n, une mesure statistique n'est pas servie (« échantillon insuffisant »)
+def _seuil_mediane() -> int:
+    # CHASSE-FIX-1 (C25) — seuil UNIQUE des médianes de référence (config dvf_profils.yaml,
+    # seuils_effectif.mediane_generique) ; repli 8 si config absente. Plus jamais « 5 » en dur.
+    try:
+        from ..marche_service import seuil_effectif_local
+        return seuil_effectif_local("mediane_generique", 8)
+    except Exception:  # noqa: BLE001 — config indisponible : repli doctrine n≥8
+        return 8
+SEUIL_N = _seuil_mediane()   # CHASSE-FIX-1 (C25) : seuil unique (8, config)
 # FRONT-CHIFFRES-2 (F25) — en dessous de ce corpus total, le Radar est « jeune » (bandeau « le
 # corpus se constitue »). Ce seuil vivait EN DUR au front (RadarMarche `corpus_total < 40`) ; il est
 # ici, servi à plat (flag `corpus_jeune`), pour que le front n'en décide plus.

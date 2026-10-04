@@ -190,7 +190,7 @@ def promoteurs_actifs(commune: str | None = None, db: Session = Depends(get_db))
         ORDER BY count(*) DESC, sum(CASE WHEN raw->>'nb_lgt' ~ '^[0-9]+$' THEN (raw->>'nb_lgt')::int ELSE 0 END) DESC NULLS LAST
         LIMIT 12"""), {"c": commune}).mappings().all()
     return {"commune": commune, "reel": True,
-            "source": "SITADEL — permis déposés, 5 dernières années (déposants personnes morales, SIREN public)",
+            "source": "SITADEL — permis AUTORISÉS, 5 dernières années (pétitionnaires personnes morales, SIREN public)",  # CHASSE-FIX-1 (C18) : le WHERE porte sur la date d'autorisation
             "promoteurs": [{"nom": r["nom"], "siren": r["siren"], "n_permis": r["n_permis"],
                             "dernier": r["dernier"].isoformat() if r["dernier"] else None,
                             "logements": r["logements"] or None} for r in rows]}

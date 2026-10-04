@@ -946,7 +946,16 @@ def _geo_dvf_aggregate(rows: list[dict]) -> list[dict]:
                        if r["longitude"] and r["latitude"]), None)
         if not vals or not coords:    # sans prix ou sans géolocalisation : inexploitable
             continue
-        terr = next((float(r["surface_terrain"]) for r in rs if r.get("surface_terrain")), None)
+        # CHASSE-FIX-1 (C04) — le terrain de la MUTATION = somme des terrains PAR PARCELLE
+        # (la ligne répète le terrain de SA parcelle ; « premier bout » sous-évaluait ~15×
+        # les mutations multi-parcelles → med_m2_terrain flash surévalué).
+        _terr_par_parcelle: dict = {}
+        for r in rs:
+            if r.get("surface_terrain"):
+                k = r.get("id_parcelle") or r.get("idu") or "?"
+                _terr_par_parcelle[k] = max(_terr_par_parcelle.get(k, 0.0),
+                                            float(r["surface_terrain"]))
+        terr = sum(_terr_par_parcelle.values()) or None
         # EXPORTS-1 (2.2, arbitrage Q8) : une mutation qui SOMME plusieurs lots n'est pas « un
         # appartement de 750 m² » (audit A2, mutation 2025-1268771) — elle est typée 'Immeuble'
         # (vente en bloc), n_lots tracé. Les populations appart/maison (sector_price, tendance,

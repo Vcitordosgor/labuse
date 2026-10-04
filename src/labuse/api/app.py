@@ -4532,7 +4532,7 @@ _DPU_NON_PUBLIE_DEFAUT = (
 _PLU_PROCEDURES: dict[str, dict] = {
     "Saint-Leu": {
         "etat": "revision_en_cours",
-        "detail": "PLU en révision — enquête publique du 1er septembre au 9 octobre 2026 ; "
+        "detail": "PLU en révision — enquête publique menée en 2026 (arrêté n°579/2026/DAD) ; "  # CHASSE-FIX-1 (C36) : plus de date-butoir figée qui périme
                   "le PLU actuel reste opposable jusqu'à l'approbation (visée fin 2026/T1 2027)",
         "lien": "https://www.registre-numerique.fr/revision-plu-stleu",
     },
@@ -5674,6 +5674,26 @@ def _au_ouverture_block(db: Session, idu: str) -> dict | None:
     }
 
 
+
+# CHASSE-FIX-1 (C27) — PLU dépublié du GPU (contentieux/retrait) : AUCUN mécanisme n'existait,
+# la fiche servait zone et règles comme un PLU vivant. Liste entretenue (config/plu_depublies.yaml,
+# même doctrine que rnu_communes.yaml) ; la note voyage sur le bloc règlement (fiche + PDF miroir).
+def _plu_depublie(commune: str | None) -> bool:
+    global _PLU_DEPUBLIES
+    if _PLU_DEPUBLIES is None:
+        try:
+            import yaml as _yaml
+            from .. import config as _cfg
+            _doc = _yaml.safe_load(open(_cfg._repo_root() / "config" / "plu_depublies.yaml")) or {}
+            _PLU_DEPUBLIES = frozenset(_doc.get("depublies") or [])
+        except Exception:  # noqa: BLE001 — fichier absent : aucun dépublié
+            _PLU_DEPUBLIES = frozenset()
+    return (commune or "") in _PLU_DEPUBLIES
+
+
+_PLU_DEPUBLIES: frozenset | None = None
+
+
 def _reglement_plu_block(db: Session, idu: str, commune: str) -> dict | None:
     """M9 lot 2 — lien règlement PLU par zone. Croise plu_gpu_zone au centroïde/emprise
     de la parcelle → (zone, idurba) → référence article/page (config/plu_<commune>.yaml).
@@ -5736,6 +5756,12 @@ def _reglement_plu_block(db: Session, idu: str, commune: str) -> dict | None:
             # FRONT-CHIFFRES-2 (F21) — le drapeau « à cheval » (aucune zone ≥ SEUIL_A_CHEVAL_PCT)
             # vient de la cascade, plus du seuil 0,9 recalculé au front sur les parts.
             block["a_cheval"] = _zs.a_cheval if _zs else None
+        # CHASSE-FIX-1 (C27) — le dépublié est DIT, jamais servi comme un PLU vivant.
+        if isinstance(block, dict) and _plu_depublie(commune):
+            block["depublie"] = True
+            block["depublie_note"] = ("PLU retiré du Géoportail de l'urbanisme (dépublication/"
+                                      "contentieux) : règles citées du dernier état connu — "
+                                      "à confirmer en mairie avant tout dépôt.")
         return block
     except Exception:  # noqa: BLE001 — jamais de 500 sur la fiche
         return _bloc_indisponible("reglement_plu")   # M125 — panne ≠ absence (même classe que les 7)

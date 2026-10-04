@@ -148,7 +148,9 @@ def _postes(prog: dict, h: dict, cout: float | None, ca: float | None) -> dict:
     portage = None
     if h.get("duree_portage") is not None:
         if h.get("taux_apport") is not None and construction is not None:
-            portage = (construction + (vrd or 0.0)) * (h["taux_apport"] / 100) * (h["duree_portage"] / 12)
+            # CHASSE-FIX-1 (C28) — VRD non chiffré : le portage reste calculable (assiette =
+            # construction seule) mais la convention est DITE au poste, plus un 0 silencieux.
+            portage = (construction + (vrd if vrd is not None else 0.0)) * (h["taux_apport"] / 100) * (h["duree_portage"] / 12)
         elif ca is not None:
             portage = ca * PORTAGE_FORFAIT_PCT / 100
     frais_acq = (h["prix_demande"] * h["frais_acq_pct"] / 100) if (h.get("prix_demande") is not None and h.get("frais_acq_pct") is not None) else None
@@ -169,7 +171,10 @@ def _postes(prog: dict, h: dict, cout: float | None, ca: float | None) -> dict:
         "aleas": {"montant": aleas, "nature": "derive", "ht_ttc": "HT"},
         "taxe_amenagement": {"montant": _f(h.get("taxe")), "nature": "derive", "ht_ttc": "HT"},
         "redevance_archeologie": {"montant": rap, "nature": "derive", "ht_ttc": "HT"},
-        "portage": {"montant": portage, "nature": "derive", "ht_ttc": "HT"},
+        "portage": {"montant": portage, "nature": "derive", "ht_ttc": "HT",
+                    # CHASSE-FIX-1 (C28) — la convention est DITE au poste, plus un 0 silencieux
+                    "note": ("VRD non chiffrés — assiette = construction seule"
+                             if (portage is not None and vrd is None) else None)},
         "frais_acquisition": {"montant": frais_acq, "nature": "derive", "ht_ttc": "HT"},
     }
 

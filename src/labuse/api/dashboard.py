@@ -2273,7 +2273,7 @@ def carte_sonde(reservoirs: list[dict], nouvelles: int) -> dict:
     en_panne = sum(1 for r in sondables
                    if r["veille"].get("statut") in ("injoignable", "illisible")
                    and int(r["veille"].get("echecs_consecutifs") or 0) >= 3)
-    return {"cadence": "03:00 chaque nuit", "interrogeables": len(sondables),
+    return {"cadence": "03:00 UTC (07:00 Réunion) chaque nuit", "interrogeables": len(sondables),
             "dernier_passage": dernier, "interrogees": len(sondables),
             "en_panne": en_panne, "nouvelles": nouvelles}
 

@@ -203,7 +203,8 @@ def veille_promoteurs(commune: str | None = Query(None), categorie: str | None =
                             f"(≤ {OP_CONTIG_M} m) et déposés sur ≤ {OP_PERIODE_MOIS} mois"},
         "operations": ops[:lim],
         "note": "Le demandeur = propriétaire foncier personne morale de la parcelle (Scan patrimoine, même "
-                "SIREN). L'open Sitadel n'identifie le pétitionnaire que ~0,5 % du temps.",
+                "SIREN). L'open Sitadel n'identifie pas toujours le pétitionnaire "
+                "(SIREN absent sur une large part des permis).",  # CHASSE-FIX-1 (C15) : ~0,5 % était faux (mesuré ~18 %)
     }
 
 
@@ -244,7 +245,8 @@ def promoteur_frise(siren: str, db: Session = Depends(get_db)) -> dict:
     # « La Mare » = un quartier entier). Jamais un total gonflé sans méthode.
     petit = db.execute(text(
         "SELECT count(*) AS n, sum(NULLIF(raw->>'nb_lgt','')::int) AS lgt "
-        "FROM sitadel_permits WHERE raw->>'petitioner_siren' = :s"), {"s": siren}).mappings().first()
+        "FROM sitadel_permits WHERE raw->>'petitioner_siren' = :s "
+        "  AND COALESCE(date_depot, date) >= DATE '2013-01-01'"), {"s": siren}).mappings().first()   # CHASSE-FIX-1 (C40) : le « (2013+) » annoncé est appliqué
     filles = db.execute(text(
         "SELECT d.siren, count(s.id) AS n, sum(NULLIF(s.raw->>'nb_lgt','')::int) AS lgt, "
         "       max(s.raw->>'petitioner_name') AS nom "
@@ -260,7 +262,7 @@ def promoteur_frise(siren: str, db: Session = Depends(get_db)) -> dict:
                            "(fichier DGFiP) — les opérations livrées puis revendues sortent de ce compte"),
         "petitionnaire": {"n_permis": int(petit["n"] or 0),
                           "n_logements": int(petit["lgt"] or 0),
-                          "note": "permis Sitadel déposés au nom de la société (2013+), toutes destinations"},
+                          "note": "permis Sitadel au nom de la société (2013+), toutes destinations"},
         "filiales_identifiees": [{"siren": f["siren"], "nom": f["nom"], "n_permis": int(f["n"]),
                                   "n_logements": int(f["lgt"] or 0)} for f in filles],
         "frise": frise, "operations": ops_nommees,

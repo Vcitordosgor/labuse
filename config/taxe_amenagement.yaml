@@ -22,7 +22,7 @@ valeur_forfaitaire_m2:
   idf: 1011            # documenté pour mémoire, non applicable au 974
 
 # Exonération de PLEIN DROIT des petites surfaces : une construction dont la surface taxable est
-# < 5 m² n'est pas soumise à la part surface (CGI art. 1635 quater D, 1°). Cadré et incontestable.
+# < 5 m² n'est pas soumise à la part surface (CGI art. 1635 quater D, 10°). Cadré et incontestable.  # CHASSE-FIX-1 (C42)
 exoneration_surface_min_m2: 5
 
 # Abattement de 50 % sur la valeur forfaitaire (CGI art. 1635 quater H) :
