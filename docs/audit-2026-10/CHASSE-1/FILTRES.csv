@@ -1,0 +1,34 @@
+test,params,attendu,obtenu,verdict
+total_sans_filtre,,,430813,REF
+compteur=liste #1,surface_min=500&commune=Saint-Denis&zonage=U,15220,15220,OK
+compteur=liste #2,capacite_min=200&surface_min=1000,469,469,OK
+compteur=liste #3,surface_min=500&commune=Le+Tampon&personne_morale=true,3233,3233,OK
+compteur=liste #4,capacite_min=200&evenement=true,0,0,OK
+compteur=liste #5,commune=Saint-Denis&sdp_min=100&personne_morale=true,2332,2332,OK
+compteur=liste #6,sous_densite=true&zonage=U,61182,0 (tronqué),OK
+compteur=liste #7,surface_max=2000&personne_morale=true,59718,0 (tronqué),OK
+compteur=liste #8,zonage=U&surface_min=1000,46901,0 (tronqué),OK
+compteur=liste #9,etat_sol=nu&surface_min=500,117697,0 (tronqué),OK
+compteur=liste #10,hors_copro=true&surface_min=500,231212,0 (tronqué),OK
+compteur=liste #11,etat_sol=bati&zonage=U,221979,0 (tronqué),OK
+compteur=liste #12,sous_densite=true&surface_min=500,46367,0 (tronqué),OK
+compteur=liste #13,commune=Le+Tampon&zonage=AU,701,701,OK
+compteur=liste #14,etat_sol=bati&sdp_min=100&commune=Le+Tampon,11108,11108,OK
+compteur=liste #15,capacite_min=200&zonage=AU,127,127,OK
+compteur=liste #16,capacite_min=200&surface_min=500,469,469,OK
+compteur=liste #17,zonage=U&sous_densite=true,61182,0 (tronqué),OK
+compteur=liste #18,etat_sol=bati&surface_max=2000&renouvellement=true,216732,0 (tronqué),OK
+compteur=liste #19,sdp_min=100&zonage=U,92840,0 (tronqué),OK
+compteur=liste #20,commune=Le+Tampon&surface_max=2000&capacite_min=200,0,0,OK
+compteur=liste #21,sous_densite=true&hors_copro=true,67837,0 (tronqué),OK
+compteur=liste #22,renouvellement=true&capacite_min=200,438,438,OK
+compteur=liste #23,etat_sol=nu&commune=Saint-Paul&capacite_min=200,43,43,OK
+compteur=liste #24,etat_sol=nu&hors_copro=true,200104,0 (tronqué),OK
+compteur=liste #25,commune=Le+Tampon&sdp_min=100,13679,13679,OK
+compteur=liste #26,etat_sol=nu&sdp_min=100&adresse_absente=true,17050,17050,OK
+compteur=liste #27,sous_densite=true&surface_min=1000,24768,0 (tronqué),OK
+compteur=liste #28,surface_min=1000&capacite_min=200,469,469,OK
+compteur=liste #29,renouvellement=true&zonage=U&personne_morale=true,41936,0 (tronqué),OK
+compteur=liste #30,hors_copro=true&etat_sol=bati&capacite_min=200,231,231,OK
+nu + bati vs total,etat_sol,430813,200604+230209=430813,OK
+surface_min 1000 ⊆ 500,,≤ 233531,128534,OK

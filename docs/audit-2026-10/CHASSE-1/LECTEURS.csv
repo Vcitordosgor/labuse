@@ -1,0 +1,45 @@
+notion;lecteur;fonction;fichier_ligne;remarque
+surface_m2;fiche §Identité;app._q_v2_fiche (SELECT parcels);api/app.py:3962;source unique parcels.surface_m2
+surface_m2;tuiles MVT;tiles.build_mvt_table;api/tiles.py:131;même colonne
+surface_m2;export CSV projets;projets.projet_export_csv;api/projets.py:~1300;même colonne
+surface_m2;Copilote fiche;fiche_ask._ask_context;api/fiche_ask.py:172;même colonne
+zone_plu;fiche §Urbanisme (détail);app._q_v2_fiche cascade + parcel_zone_plu;api/app.py:4020;détail zone_lib
+zone_plu;tuiles MVT (couleur);tiles.build_parcel_zone_plu;api/tiles.py:35-102;zone_fam famille — même table
+zone_plu;Copilote fiche;fiche_ask._ask_context (reglement_plu.zones);api/fiche_ask.py:115;même source
+sdp_residuelle_m2;fiche §Potentiel;vue parcel_residuel (run servi is_served);api/app.py:3957;cause IS NULL
+sdp_residuelle_m2;tuiles MVT;tiles.build_mvt_table CASE cause IS NULL;api/tiles.py:181;même règle M125
+sdp_residuelle_m2;export CSV;projets.projet_export_csv;api/projets.py:~1300;même règle
+sdp_residuelle_m2;projet/dossier;parcel_residuel_runs relu LIVE;api/projets.py:1544;⚠ DEUX TEMPORALITÉS — relecture post-création vs fiche au service (M139)
+sdp_residuelle_m2;moteur simulPLU;ratio analogie surface×SDP;api/moteurs.py:61-105;dérivé déclaré
+score_bande;fiche analyse_labuse;score_labuse WHERE run_label=_score_labuse_run();api/app.py:3910;NULL tant que le run servi n'a pas de lignes (q_v11_m137 absent)
+tier_v2/verdict;fiche score_v2;parcel_p_score_v2 + verdict_servi;api/app.py:3977-4015;pointeur runs.current()
+tier_v2/verdict;tuiles MVT (couleur);tiles.build_mvt_table s2.tier;api/tiles.py:174;même table
+signal_mutation;fiche analyse_labuse;signal_mutation.signal_niveau(signal_p);scoring/signal_mutation.py:24;paliers absolus PALIERS-1
+taxe_amenagement;outil Taxe;taxe_amenagement.calculer;taxe_amenagement.py:201;moteur unique
+taxe_amenagement;fiche §Fiscalité;app._taxe_amenagement_block;api/app.py:4721;appelle le même moteur
+taxe_amenagement;outil Faisabilité (bilan);faisabilite.bilan.compute_bilan (h["taxe"]);faisabilite/bilan.py:454;TA passée en hypothèse
+taxe_amenagement;PDF Financier;exports.blocs.financier.rendu → _bilan_rebours;exports/blocs/financier.py:184;via builder unique
+taxe_amenagement;Excel Bilan (BILAN-1);exports.financier_bilan.calculer;exports/financier_bilan.py:124;moteur prêt, export pas branché au jour de l'audit
+taxe_fonciere;fiche commune §Fiscalité;fiche_commune.fiscalite (REI);api/fiche_commune.py:~384;source unique commune_rei
+prix_terrain;fiche §Marché (dvf_parcelle);surface × dvf_secteur_medianes.mediane_prix_m2;api/app.py:4141;périmètre SECTEUR CADASTRAL
+prix_ancien;fiche en-tête (marche_synthese);marche_service.marche_dvf (profil banquier);api/app.py:4272;périmètre ADAPTATIF rayon
+prix_ancien;comparateur communes C2;fiche_commune.comparable;api/fiche_commune.py:15;périmètre COMMUNE ENTIÈRE — ⚠ 3 périmètres pour « prix » (libellés à distinguer)
+prix_neuf;fiche/Radar;marche_service + radar marche;api/app.py:4145-4149;conflit VEFA vs baromètre résolu (VEFA cantonné outil)
+population_legale;fiche commune §Population;population_legale (API INSEE) sinon sudocuh;api/fiche_commune.py:156-164;⚠ 2 sources, priorité API documentée
+menages;fiche commune §Population;commune_insee_logement.res_principales;api/fiche_commune.py:169-171;RP choisi vs Filosofi (2 arithmétiques possibles)
+part_proprietaires_pct;fiche §Marché (Filosofi);formule locale app.py;api/app.py:4227;⚠ formule DUPLIQUÉE dans solaire.py (identique)
+emprise_batie;fiche §Bâti;bati.le_bien_block (BD TOPO clippé ST_Union);bati.py;COHERENCE-FIX-2 : servie = clippée
+emprise_batie_scoring;filtres État du sol;parcel_filtre_bati (p_model_bati = max(BDTOPO,CoSIA) NON clippé);faisabilite/filtre_bati.py:101;notion cloisonnée scoring — ratio>100 possible (cap 300)
+dvf_mediane_secteur;fiche dvf_parcelle.secteur;dvf_secteur_medianes;api/app.py:4107-4121;pré-calculée
+dvf_mediane_secteur;outil Étude de zone;mon_secteur.medianes_par_type;api/mon_secteur.py;unifiée RETOUCHES-1 B.5
+annonces_radar;fiche radar_annonces;app._radar_annonces_block;api/app.py:4669;pige_biens validées
+radar_medianes;Radar écran marché;pige.signaux._radar_medianes/_dvf_bati/_ecart;pige/signaux.py:65-150;seuils N=5/8/30 — voir angle 3
+digests_mail;Veille digest;pige.digests._biens_du_jour/_carte_item;pige/digests.py:61-136;mêmes signaux que Radar
+compteur_filtre;FiltreLabuse (bandeau);GET /filtre (compte/tiers/bandes);frontend/src/lib/api.ts:192;servi, limit=0
+compteurs_accueil;accueil 3 cases;GET /accueil/chiffres;frontend/src/lib/api.ts:829;servis
+etat_bien nu/bâti;filtres + export CSV;COALESCE(taux_emprise_pct,0) seuil 5 %;api/app.py:3261+3393;même seuil partout (yaml seuils_geometrie)
+cascade_risques;fiche lines[];dryrun_cascade_results + arbitrer_risques;api/app.py:4020-4074;dédup M46, arbitrage M73
+hauteur_lidar;fiche + endpoint dédié;faisabilite.hauteur_lidar.hauteur_parcelle_lidar;faisabilite/hauteur_lidar.py;badge discordance 15 m
+proprietaire_pm;fiche proprietaire_moral;app. + proprietaire_historique (siren_reel);api/app.py:4086-4102;⚠ en-tête front « Particulier » si non résolu (Fiche.tsx:1314)
+documents_pdf;8 documents;exports.builder.construire*;exports/builder.py:170+;builder UNIQUE, millésimes figés documents_generes
+copilote_chiffres;3 chemins (fiche/général/facts);fiche_ask._ask_context / copilote_v2.outils / assistant_facts;api/fiche_ask.py:53-218;liste blanche, refus hors contexte

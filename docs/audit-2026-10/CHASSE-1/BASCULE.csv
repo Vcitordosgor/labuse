@@ -1,0 +1,8 @@
+lecteur,avant,apres,attendu,verdict
+config_run,q_v11_m137,q_v99b,q_v11_m137→q_v99b,OK
+fiche.millesime_dvf,None,None,suit TEST-2099 si affiché,OK
+fiche.sdp_residuelle,500.0,1500.0,500→1500,OK
+fiche.tier_v2,chaude,brulante,chaude→brulante,OK
+filtre.compte,1,1,doit bouger ou refléter le run B,INCHANGE_A_INSTRUIRE
+filtre.sdp_min_1000,0,1,doit bouger ou refléter le run B,
+filtre.tiers,"{'brulante': 0, 'chaude': 1, 'reserve_fonciere': 0, 'a_creuser': 0, 'sans_signal","{'brulante': 1, 'chaude': 0, 'reserve_fonciere': 0, 'a_creuser': 0, 'sans_signal",doit bouger ou refléter le run B,
