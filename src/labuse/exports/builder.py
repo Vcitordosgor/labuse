@@ -35,14 +35,21 @@ class DocumentNonEtablissable(Exception):
 _LABEL = {
     "dossier": ("Dossier parcelle", "Ce que cette parcelle est, ce qu'elle porte, ce que le règlement y permet."),
     "flash": ("Rapport Flash", "Ce que cette parcelle est, ce qu'elle porte, ce que le règlement y permet."),
-    "financier": ("Dossier financier", ""),   # RECETTE-5 (V17) — ex « Bilan de l'opération »
+    # DOCS-1 §4 (décision Vic) — le document s'appelle « Bilan » côté client (ex « Dossier financier »,
+    # RECETTE-5 V17). La clé interne reste « financier » (route, builder, questionnaire) ; seul le
+    # LIBELLÉ humain change (titre de garde + nom de fichier). Moteur/ratios/Excel → BILAN-1.
+    "financier": ("Bilan", ""),
     "apporteur": ("Brief apporteur", ""),
+    # DOCS-1 (Lot C) — les 3 nouveaux documents (miroirs des outils Gabarit, Comparer, Étude de zone).
+    "gabarit": ("Gabarit", "L'enveloppe réglementaire de la parcelle : zone d'implantation, plafond d'emprise, hauteur."),
+    "comparatif": ("Comparatif", "Deux à trois parcelles côte à côte, sur les lignes de Comparer."),
+    "etude-zone": ("Étude de zone", "Le territoire autour de la parcelle, dans le rayon choisi."),
 }
 
 
 def titre_document(document: str) -> str:
     """RECETTE-5 (V17) — le titre humain d'un document (page de garde) — point unique, réutilisé
-    pour le nom de fichier téléchargé (« Dossier financier — FI-….pdf »)."""
+    pour le nom de fichier téléchargé (« Bilan — FI-….pdf »)."""
     return _LABEL.get(document, (document, ""))[0]
 
 _FOOT_DOSSIER = ("Document d'information établi à partir de données publiques. Ne remplace ni un "
@@ -55,6 +62,13 @@ _FOOT = {
                   "remplace pas un bilan promoteur professionnel. Données LABUSE au {au}."),
     "apporteur": ("Document confidentiel remis par l'émetteur à son apporteur d'affaires. Ne pas "
                   "transmettre au propriétaire. Ne vaut pas mandat. Données publiques LABUSE au {au}."),
+    # DOCS-1 (Lot C)
+    "gabarit": ("Gabarit réglementaire 2D, pré-faisabilité sur règlement public. Ne remplace ni un "
+                "certificat d'urbanisme, ni une étude de faisabilité réglementaire. Données LABUSE au {au}."),
+    "comparatif": ("Comparatif indicatif de parcelles établi sur des données publiques. Ni un prix, "
+                   "ni un conseil. Données LABUSE au {au}."),
+    "etude-zone": ("Agrégats de données publiques dans le périmètre indiqué. Les mailles « à l'échelle "
+                   "de la commune » portent sur toute la commune. Données LABUSE au {au}."),
 }
 
 #: composition de chaque document. EXPORTS-REBRANCHEMENT-1 lot 1 : le Dossier n'est PLUS une
@@ -498,6 +512,88 @@ def construire(db, idu: str, document: str = "dossier", *, fiche: dict | None = 
     html = page_html(label, cart, corps)
     return ResultatDoc(html=html, valeurs=valeurs, numero=numero, cartouche=cart,
                        contexte={**(ctx or {}), "adresse": adresse})
+
+
+# ── DOCS-1 (Lot C) — les 3 nouveaux documents : miroirs des outils, même builder/couverture/pied. ──
+_GABARIT_INCALCULABLE = "Gabarit non calculable sur cette parcelle : donnée réglementaire manquante"
+
+
+def _entete_doc(document: str, ref_ligne: str, numero: str, jour: date) -> str:
+    """En-tête compact commun aux 3 nouveaux documents (même marque/typo que l'en-tête Financier) :
+    marque + titre + sous-titre + ligne d'identité (référence · n° de rapport · date)."""
+    label, sous = _LABEL.get(document, (document, ""))
+    return (f'<div class="brand"><span class="wordmark">LABUSE</span>'
+            f'<span class="kind">{esc(label)}</span></div>'
+            f'<h1>{esc(label)}</h1>'
+            + (f'<p class="subtitle">{esc(sous)}</p>' if sous else "")
+            + f'<p class="idu">{esc(ref_ligne)} · {esc(numero)} · {jour:%d/%m/%Y}</p>')
+
+
+def _cart(document: str, titre_suffixe: str, idu_ref: str, numero: str, jour: date) -> Cartouche:
+    label, _ = _LABEL.get(document, (document, ""))
+    au = f"{jour:%d/%m/%Y}"
+    return Cartouche(
+        doc_title=f"LABUSE — {label}" + (f" · {titre_suffixe}" if titre_suffixe else ""),
+        doc_ref=f"{idu_ref} · {numero}",
+        doc_foot=_FOOT.get(document, "Document d'information LABUSE. Données au {au}.").format(au=au))
+
+
+def construire_gabarit(db, idu: str, *, jour: date | None = None) -> ResultatDoc:
+    """Le Gabarit, miroir de l'outil /outils/gabarit : plan 2D + zone d'implantation + plafond
+    d'emprise + hauteur + règles appliquées / non intégrées. ABSENT si « Calcul incomplet » :
+    on lève DocumentNonEtablissable (la route rend 422 + le message, la porte le dit avant génération).
+    On lit le MÊME moteur que l'écran (build_gabarit_input + compute_gabarit)."""
+    from ..gabarit.builder import build_gabarit_input
+    from ..gabarit.engine import compute_gabarit
+    from .blocs import gabarit as bloc_gabarit
+    from .robinet_fiche import collecte
+    j = jour or date.today()
+    build = build_gabarit_input(db, idu)
+    if build is None or build.blocking:
+        raise DocumentNonEtablissable([{"libelle": _GABARIT_INCALCULABLE}])
+    gr = compute_gabarit(build.input)
+    if gr.status != "ok":
+        raise DocumentNonEtablissable([{"libelle": _GABARIT_INCALCULABLE}])
+    valeurs = collecte(db, idu, sorted(bloc_gabarit.IDS), fiche={})
+    numero = numeros.numero_rapport("gabarit", idu, j)
+    cart = _cart("gabarit", idu, idu, numero, j)
+    corps = _entete_doc("gabarit", idu, numero, j) + bloc_gabarit.rendu(valeurs, {"gabarit": gr})
+    html = page_html(_LABEL["gabarit"][0], cart, corps)
+    # le contexte porte le résultat gabarit (pour que le crible de provenance rattache SES nombres).
+    return ResultatDoc(html=html, valeurs=valeurs, numero=numero, cartouche=cart,
+                       contexte={"gabarit": gr.model_dump() if hasattr(gr, "model_dump") else dict(gr)})
+
+
+def construire_comparatif(idus: list[str], rows: list[dict], *, jour: date | None = None) -> ResultatDoc:
+    """Le Comparatif, miroir de l'outil Comparer (/compare) : 2-3 parcelles en colonnes sur les lignes
+    de Comparer, EN PAGE PAYSAGE. `rows` sont les CompareRow servis (aucun recalcul ici)."""
+    from .blocs import comparatif as bloc_comparatif
+    j = jour or date.today()
+    ids = [i.strip() for i in idus if i and i.strip()][:3]
+    ref0 = ids[0] if ids else ""
+    numero = numeros.numero_rapport("comparatif", ref0, j)
+    suffixe = f"{len(rows)} parcelles"
+    cart = _cart("comparatif", suffixe, " · ".join(ids), numero, j)
+    corps = _entete_doc("comparatif", suffixe, numero, j) + bloc_comparatif.rendu(rows)
+    html = page_html(_LABEL["comparatif"][0], cart, corps, paysage=True)
+    return ResultatDoc(html=html, valeurs={}, numero=numero, cartouche=cart,
+                       contexte={"comparatif": rows})
+
+
+def construire_etude_zone(idu: str, rayon_km, zone: dict, map_html: str, *,
+                          jour: date | None = None) -> ResultatDoc:
+    """L'Étude de zone, miroir de l'outil /outils/etude-zone en mode rayon : page 1 carte du périmètre
+    + « Rayon N km autour de <IDU> », puis les 7 sections. `zone` est le résultat servi (aucun recalcul)."""
+    from .blocs import etude_zone as bloc_zone
+    j = jour or date.today()
+    numero = numeros.numero_rapport("etude-zone", idu, j)
+    suffixe = f"Rayon {rayon_km} km autour de {idu}"
+    cart = _cart("etude-zone", suffixe, idu, numero, j)
+    corps = (_entete_doc("etude-zone", suffixe, numero, j)
+             + bloc_zone.rendu(zone, map_html=map_html, idu=idu, rayon_km=rayon_km))
+    html = page_html(_LABEL["etude-zone"][0], cart, corps)
+    return ResultatDoc(html=html, valeurs={}, numero=numero, cartouche=cart,
+                       contexte={"zone": zone})
 
 
 def generer_pdf(db, idu: str, document: str = "dossier", *, fiche: dict | None = None,

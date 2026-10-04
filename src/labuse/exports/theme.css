@@ -221,3 +221,27 @@ dl.gloss dd { margin: 0 0 6pt; color: var(--muted); }
 .cols > * { flex: 1; }
 
 .pb { page-break-before: always; }
+
+/* ══ DOCS-1 (Lot C) — les 3 nouveaux documents (Gabarit · Comparatif paysage · Étude de zone) ══ */
+/* Comparatif : page PAYSAGE (première orientation du builder — size seulement, le reste hérite). */
+@page paysage { size: A4 landscape; }
+.paysage { page: paysage; }
+/* Comparatif — parcelles en COLONNES (les lignes de Comparer). */
+table.cmp { width: 100%; border-collapse: collapse; font-size: 9pt; margin: 6pt 0 10pt; }
+table.cmp th, table.cmp td { padding: 4.5pt 8pt; border-bottom: 1px solid var(--line); vertical-align: top; text-align: left; }
+table.cmp thead th { font-weight: 700; font-size: 9.5pt; border-bottom: 1.5px solid var(--ink); }
+table.cmp thead th.sub { font-weight: 400; font-size: 8pt; color: var(--muted); }
+table.cmp td.lbl { color: var(--muted); width: 24%; }
+table.cmp td.lbl .chip { margin-left: 4pt; }
+table.cmp tr { page-break-inside: avoid; }
+/* Gabarit — plan 2D + règles appliquées / non intégrées (nom · citation · source). */
+.plan2d { border: 1px solid var(--line); border-radius: 3pt; padding: 6pt; margin: 4pt 0 12pt; page-break-inside: avoid; }
+.plan2d svg { width: 100%; height: auto; max-height: 120mm; display: block; }
+.regles .r { padding: 5pt 0; border-bottom: 1px solid var(--line); page-break-inside: avoid; }
+.regles .r .nom { font-weight: 600; font-size: 9.5pt; }
+.regles .r .src { color: var(--muted); font-size: 8pt; margin-top: 1pt; }
+.regles.nonint .r .nom { color: var(--muted); font-weight: 600; }
+/* Étude de zone — carte du périmètre (page 1). */
+.zone-map { width: 100%; height: 95mm; border: 1px solid var(--line); border-radius: 3pt; object-fit: cover; display: block; page-break-inside: avoid; }
+.zone-map-ph { width: 100%; height: 95mm; border: 1px solid var(--line); border-radius: 3pt; display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 9pt; text-align: center; }
+.zone-echelle { color: var(--muted); font-size: 9pt; margin: 4pt 0 2pt; }

@@ -30,9 +30,12 @@ from sqlalchemy.orm import Session
 # nouveautés (ventes DVF en zone, permis près d'une parcelle suivie) sont l'intention
 # commerciale d'un compte — elles ne doivent jamais fuiter à un autre. compte_id + FK cascade
 # comme les autres ; la dédup permis passe à (compte_id, parcel_id, source_ref), cf. models.
+# DOCS-1 (Lot B) — documents_generes : la bibliothèque « Mes documents » (recette d'un document
+# généré par un compte). Données strictement privées (parcelle(s) regardée(s), hypothèses saisies) →
+# compte_id + FK cascade comme les autres ; un compte ne voit QUE ses lignes (test dédié).
 SCOPED_TABLES = ("projets", "pipeline_entries", "saved_searches", "saved_filters",
                  "signalements", "event_log", "watched_parcels", "watch_zones", "alertes",
-                 "courrier_demandes")
+                 "courrier_demandes", "documents_generes")
 
 
 def ensure_scoping(db: Session) -> None:

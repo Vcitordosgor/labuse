@@ -103,6 +103,114 @@ def apporteur_pdf(idu: str, request: Request, db: Session = Depends(get_db)) -> 
     return rendre_document(db, idu, request, "apporteur", forms=True, marque=False)
 
 
+# ── DOCS-1 (Lot C) — les 3 nouveaux documents : miroirs des outils Gabarit, Comparer, Étude de zone. ──
+def _pdf_response(res, document: str, *, marque: bool = True) -> Response:
+    """Rend un ResultatDoc en PDF (WeasyPrint) avec la même enveloppe que les 4 documents existants :
+    mention d'attribution, nom de fichier humain, no-store."""
+    from ..exports import builder
+    from ..exports.rendu import render_pdf
+    from urllib.parse import quote
+    html = _mention_marque(res.html) if marque else res.html
+    try:
+        pdf = render_pdf(html)
+    except Exception:  # noqa: BLE001
+        log.exception("document %s : échec du rendu PDF", document)
+        raise HTTPException(status_code=500, detail={"erreur": "erreur_technique",
+                            "message": "Le document n'a pas pu être rendu (erreur technique)."})
+    nom = f"{builder.titre_document(document)} — {res.numero}.pdf"
+    dispo = f'inline; filename="{res.numero}.pdf"; filename*=UTF-8\'\'{quote(nom)}'
+    return Response(pdf, media_type="application/pdf",
+                    headers={"Content-Disposition": dispo,
+                             "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+                             "Pragma": "no-cache"})
+
+
+@router.get("/gabarit/{idu}.pdf")
+def gabarit_pdf(idu: str, request: Request, db: Session = Depends(get_db)) -> Response:
+    """Le Gabarit, sortie seule de l'enveloppe réglementaire. 422 + message si « Calcul incomplet »."""
+    from ..exports import builder
+    from ..quota import porte_export
+    porte_export(request, db)
+    try:
+        res = builder.construire_gabarit(db, idu)
+    except builder.DocumentNonEtablissable as exc:
+        raise HTTPException(status_code=422, detail={
+            "erreur": "document_non_etablissable",
+            "message": "Ce document ne peut pas être établi : il manque des éléments indispensables.",
+            "manques": exc.manques})
+    except HTTPException:
+        raise
+    except Exception:  # noqa: BLE001
+        log.exception("gabarit %s : échec technique", idu)
+        raise HTTPException(status_code=500, detail={"erreur": "erreur_technique",
+                            "message": "Le document n'a pas pu être généré (erreur technique)."})
+    return _pdf_response(res, "gabarit")
+
+
+@router.get("/comparatif.pdf")
+def comparatif_pdf(idus: str, request: Request, db: Session = Depends(get_db)) -> Response:
+    """Le Comparatif, miroir de /compare : 2-3 parcelles en colonnes (page paysage). `idus` = IDU
+    séparés par des virgules (2 obligatoires)."""
+    from ..exports import builder
+    from ..quota import porte_export
+    ids = [x.strip() for x in (idus or "").split(",") if x.strip()][:3]
+    if len(ids) < 2:
+        raise HTTPException(422, "au moins deux parcelles sont requises")
+    porte_export(request, db)
+    try:
+        from .app import compare as _compare_fn
+        data = _compare_fn(idus=",".join(ids), db=db)
+        res = builder.construire_comparatif(ids, data.get("parcels") or [])
+    except HTTPException:
+        raise
+    except Exception:  # noqa: BLE001
+        log.exception("comparatif %s : échec technique", ids)
+        raise HTTPException(status_code=500, detail={"erreur": "erreur_technique",
+                            "message": "Le document n'a pas pu être généré (erreur technique)."})
+    return _pdf_response(res, "comparatif")
+
+
+@router.get("/etude-zone.pdf")
+def etude_zone_pdf(idu: str, request: Request, rayon_km: float = 2.0,
+                   db: Session = Depends(get_db)) -> Response:
+    """L'Étude de zone, miroir de /outils/etude-zone en mode rayon : carte du périmètre + 7 sections."""
+    from ..exports import builder
+    from ..quota import porte_export
+    porte_export(request, db)
+    try:
+        from .app import EtudeZoneIn, etude_zone as _etude_zone_fn
+        zone = _etude_zone_fn(EtudeZoneIn(idu=idu, rayon_km=rayon_km), db)
+        res = builder.construire_etude_zone(idu, rayon_km, zone, _zone_map_html(db, zone))
+    except HTTPException:
+        raise
+    except Exception:  # noqa: BLE001
+        log.exception("etude-zone %s : échec technique", idu)
+        raise HTTPException(status_code=500, detail={"erreur": "erreur_technique",
+                            "message": "Le document n'a pas pu être généré (erreur technique)."})
+    return _pdf_response(res, "etude-zone")
+
+
+def _zone_map_html(db, zone: dict) -> str:
+    """Carte du périmètre (page 1) : ortho IGN + géométrie de la zone, MÊME composant que l'Apporteur
+    (plan_ortho). Best-effort : réseau/géométrie absents → cadre neutre légendé (jamais d'erreur)."""
+    import json
+    geom = (zone or {}).get("geom")
+    if geom:
+        try:
+            from .plan_situation import plan_ortho
+            from ..flash.report import storage_dir
+            res = plan_ortho(json.dumps(geom), cache_dir=storage_dir() / "tiles", zoom_delta=0, zoom_max=17)
+            if res.get("ok"):
+                import base64
+                img = "data:image/jpeg;base64," + base64.b64encode(res["jpeg"]).decode()
+                cap = res.get("attribution") or ""
+                return (f'<img class="zone-map" src="{img}" alt="Carte du périmètre">'
+                        + (f'<div class="zone-echelle">{cap}</div>' if cap else ""))
+        except Exception:  # noqa: BLE001 — la carte est un plus, jamais un bloqueur du document
+            pass
+    return '<div class="zone-map-ph">Carte du périmètre (fond cartographique momentanément indisponible)</div>'
+
+
 # RECETTE-3 (T2, décision Vic) — le document Résumé est SUPPRIMÉ : sa route /resume/{idu}.pdf
 # n'existe plus (aucun autre document ne l'appelait ; l'ex-redirection export.pdf pointe désormais
 # vers le Dossier). Reste Dossier · Financier · Apporteur (+ Flash via facturation, Pré-dossier ZIP).

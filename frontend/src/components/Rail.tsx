@@ -44,6 +44,14 @@ const ICONS: Record<Zone, JSX.Element> = {
       <path d="M12.6 7.4 L11 11 L7.4 12.6 L9 9 Z" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
     </>
   ),
+  // DOCS-1 (Lot A) — page cornée + lignes : la catégorie Documents (catalogue des documents à générer).
+  documents: (
+    <>
+      <path d="M5.5 3.5 H11.5 L15 7 V16.5 H5.5 Z" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+      <path d="M11.5 3.5 V7 H15" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
+      <path d="M7.8 10.5 H12.2 M7.8 13 H12.2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+    </>
+  ),
   crm: (
     <>
       <rect x="3.5" y="9" width="3.6" height="7.5" rx="0.8" fill="currentColor" />
@@ -85,6 +93,8 @@ type RailKey = Zone
 const RAIL: { key: RailKey; label: string; ia?: boolean }[] = [
   { key: 'cartes', label: 'Carte' },
   { key: 'outils', label: 'Outils' },
+  // DOCS-1 (Lot A) — Documents en 3ᵉ, après Outils (Sources/Admin restent épinglés au pied).
+  { key: 'documents', label: 'Documents' },
   { key: 'copilote', label: 'Copilote', ia: true },
   // RADAR-2 (Lot 1) — « Veille » QUITTE le rail : on l'atteint par la porte « Veille » du hub Radar.
   { key: 'radar', label: 'Radar' },

@@ -488,9 +488,10 @@ export const CLIENT = {
       //   1. « Finance »  (RETENU — garde le sens « document de financement », tient sans troncature)
       //   2. « Banque »   (clair mais évoque un contact, pas un document)
       //   3. « Note fin. » (abréviation, moins lisible)
-      // RECETTE-5 (V17, décision Vic) — « Finance » → « Dossier financier » partout (bouton, titre du
-      // PDF, nom de fichier). Le libellé long est accepté ; la tuile s'adapte (retour à la ligne).
-      finance: 'Dossier financier',
+      // RECETTE-5 (V17) — « Finance » → « Dossier financier ». DOCS-1 §4 (décision Vic) — le mot
+      // « Financier » disparaît côté client (bouton, titre du PDF, nom de fichier, catalogue) au
+      // profit de « Bilan » ; moteur, ratios et Excel viennent en BILAN-1.
+      finance: 'Bilan',
       // M20-A · tuile « Courrier propriétaire » — ouvre le module M09 (un seul moteur, cf. Outils)
       // avec la parcelle courante pré-remplie. Boussole : aucune identité de personne physique
       // (le module adresse génériquement — identification via workflow SPF/CERFA).

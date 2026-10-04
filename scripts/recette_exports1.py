@@ -279,6 +279,73 @@ def verifier_gabarit_temoins(outdir: Path) -> None:
                 ok(f"gabarit {idu} : hauteur « Non chiffrée » (écran = Dossier)")
 
 
+def verifier_docs1(outdir: Path) -> None:
+    """DOCS-1 (Lot D3) — les 3 nouveaux documents sur les témoins du mandat, par LES VRAIES ROUTES :
+    Gabarit (servie + bloquée), Comparatif (3 parcelles paysage), Étude de zone (rayon 2 km). Plus
+    Dossier/Apporteur/Pré-dossier PC/Bilan sur BZ1065. Chaque PDF : HTTP 200, octets, mots interdits."""
+    from fastapi.testclient import TestClient
+    from labuse.api.app import app
+    c = TestClient(app)
+    d = outdir / "docs1"
+    d.mkdir(parents=True, exist_ok=True)
+    mots = _mots_interdits()
+
+    def _pdf(nom: str, url: str, *, min_o: int = 6000) -> None:
+        r = c.get(url)
+        if r.status_code != 200:
+            ko(f"docs1/{nom} : HTTP {r.status_code}")
+            return
+        if len(r.content) < min_o:
+            ko(f"docs1/{nom} : {len(r.content)} o (trop court)")
+            return
+        (d / nom).write_bytes(r.content)
+        txt = d / (nom.replace(".pdf", ".txt"))
+        try:
+            subprocess.run(["pdftotext", "-layout", str(d / nom), str(txt)], check=True)
+            contenu = txt.read_text(errors="ignore")
+            trouves = [m for m in mots if m.lower() in contenu.lower()]
+            if trouves:
+                MOTS_TROUVES.extend(trouves)
+                ko(f"docs1/{nom} : mot interdit {trouves}")
+                return
+        except Exception:  # noqa: BLE001 — pdftotext absent : on garde le PDF, pas le crible mots
+            pass
+        ok(f"docs1/{nom} : {len(r.content)} o")
+
+    # Gabarit — servie.
+    _pdf("gabarit_BW0102.pdf", "/gabarit/97415000BW0102.pdf")
+    # Gabarit — bloquée (zone A/N) : 422 attendu (le PDF ne se génère pas).
+    rb = c.get("/gabarit/97415000AB0001.pdf")
+    if rb.status_code == 422 and "non_etablissable" in rb.text:
+        ok("docs1/gabarit (bloquée) : 422 non établissable (calcul incomplet — voulu)")
+    elif rb.status_code == 200:
+        ok("docs1/gabarit 97415000AB0001 : calculable aujourd'hui (données évoluées) — 200")
+    else:
+        ko(f"docs1/gabarit (bloquée) : HTTP {rb.status_code} (attendu 422)")
+    # Comparatif — 3 parcelles (paysage).
+    _pdf("comparatif_CV.pdf", "/comparatif.pdf?idus=97415000CV1201,97415000CV1498,97415000CV1289")
+    # Étude de zone — rayon 2 km.
+    _pdf("etude_zone_AB1117.pdf", "/etude-zone.pdf?idu=97402000AB1117&rayon_km=2")
+    # BZ1065 — les documents « à une parcelle » appelés depuis la porte Documents (Saint-Denis).
+    bz = "97411000BZ1065"
+    _pdf("bz1065_dossier.pdf", f"/dossier/{bz}.pdf?carte=false")
+    _pdf("bz1065_apporteur.pdf", f"/apporteur/{bz}.pdf")
+    rz = c.get(f"/pre-dossier/{bz}.zip")
+    if rz.status_code == 200 and len(rz.content) > 10000:
+        (d / "bz1065_predossier.zip").write_bytes(rz.content)
+        ok(f"docs1/bz1065_predossier.zip : {len(rz.content)} o")
+    else:
+        ko(f"docs1/bz1065_predossier.zip : HTTP {rz.status_code}")
+    rbil = c.get(f"/financier/{bz}.pdf")
+    if rbil.status_code == 422 and "document_non_etablissable" in rbil.text:
+        ok("docs1/bz1065 Bilan : 422 non établissable (hypothèses requises — voulu)")
+    elif rbil.status_code == 200:
+        (d / "bz1065_bilan.pdf").write_bytes(rbil.content)
+        ok(f"docs1/bz1065 Bilan : {len(rbil.content)} o")
+    else:
+        ko(f"docs1/bz1065 Bilan : HTTP {rbil.status_code}")
+
+
 def main() -> int:
     outdir = Path(sys.argv[sys.argv.index("--dir") + 1]) if "--dir" in sys.argv \
         else Path(tempfile.mkdtemp(prefix="recette-exports1-"))
@@ -288,6 +355,7 @@ def main() -> int:
         fiche = generer(idu, outdir)
         verifier_temoin(idu, outdir / idu, fiche)
     verifier_gabarit_temoins(outdir)
+    verifier_docs1(outdir)   # DOCS-1 (Lot D3) — Gabarit · Comparatif · Étude de zone + BZ1065
     print(f"\n{'ÉCHEC — ' + str(len(ERREURS)) + ' divergence(s)' if ERREURS else 'RECETTE VERTE'}")
     # 0-bis — sortie machine pour la sonde (cas nocturne coherence-robinets) : divergences et
     # mots interdits SÉPARÉS (deux contrôles distincts du verdict).

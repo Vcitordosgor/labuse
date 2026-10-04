@@ -356,7 +356,7 @@ def _regles_et_pieces(db: Session, idu: str, scen: dict | None = None) -> bytes:
         # RECETTE-8 W2 — le pré-dossier est PRÉPARATOIRE : aucun projet chiffré n'est saisi, la taxe
         # d'aménagement et la redevance d'archéologie (toutes deux assises sur la surface CRÉÉE)
         # ne sont donc PAS chiffrées ici. On donne le taux communal et sur quoi elles se calculeront ;
-        # le montant est établi au Dossier financier, sur la SDP du projet.
+        # le montant est établi au Bilan, sur la SDP du projet.
         ta = f.get("taxe_amenagement") or {}
         if ta.get("taux_communal_pct") is not None or ta.get("taux_communal_manquant"):
             if ta.get("taux_communal_manquant"):
@@ -365,10 +365,10 @@ def _regles_et_pieces(db: Session, idu: str, scen: dict | None = None) -> bytes:
                 ta_txt = f"taux communal {ta['taux_communal_pct']:g} %"
             extra += (f"<h2>Fiscalité de l'opération</h2><table>"
                       f"<tr><td>Taxe d'aménagement</td><td>{ta_txt} — se calcule sur la surface de "
-                      f"plancher créée par le projet (chiffrée au Dossier financier)</td></tr>"
+                      f"plancher créée par le projet (chiffrée au Bilan)</td></tr>"
                       f"<tr><td>Redevance d'archéologie préventive</td><td>0,40 % de l'assiette de "
                       f"la taxe d'aménagement pour les travaux soumis à permis (CGI, gestion DGFiP "
-                      f"depuis l'ordonnance 2022-883) — chiffrée sur la SDP du projet, au Dossier financier</td></tr></table>")
+                      f"depuis l'ordonnance 2022-883) — chiffrée sur la SDP du projet, au Bilan</td></tr></table>")
     except Exception:  # noqa: BLE001 — enrichissement optionnel, ne casse pas la fiche
         pass
     # FAISABILITE-3 (Lot C) — le pré-dossier PC lit LE MÊME appel de faisabilité (faisabilite_scenario)

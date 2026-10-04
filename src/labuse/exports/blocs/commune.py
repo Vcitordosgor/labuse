@@ -24,7 +24,7 @@ def _taxe(t: dict) -> str:
     # constructible calculé (où le Financier ne s'établissait pas — cul-de-sac de T2, désormais ouvert
     # par T1 : le nombre de logements visés + la typologie y suffisent). Aucun chiffre inventé.
     base = ("Se calcule sur la surface de plancher créée par le projet (taxe due une fois un projet "
-            "déposé). Pour en obtenir le montant : ouvrez le Dossier financier et décrivez le "
+            "déposé). Pour en obtenir le montant : ouvrez le Bilan et décrivez le "
             "programme — le nombre de logements visés et la typologie suffisent lorsque la parcelle "
             "n'a pas de potentiel constructible calculé.")
     if t.get("taux_communal_manquant"):

@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LABUSE — maquette « Documents » v4</title>
+<style>
+/* ---------- jetons (à remapper sur DA-LABUSE.html) ---------- */
+:root{
+  --bg:#0f1613; --bg-2:#141d19; --panel:#182220; --line:#26332d; --line-2:#334539;
+  --text:#e7ede9; --muted:#97a69e; --dim:#6b7a72;
+  --mint:#4ade80; --mint-ink:#08170f;           /* contenu inversé sur vert opaque */
+  --yellow:#facc15; --amber:#f59e0b; --mauve:#a78bfa; --danger:#ef4444;
+  --r-4:4px; --r-6:6px; --pill:999px;
+  --h-ctl:32px; --h-omni:40px;
+  --font:Inter, "Helvetica Neue", Arial, system-ui, sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 var(--font)}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+a{color:inherit;text-decoration:none}
+::-webkit-scrollbar{width:10px;height:0}
+::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:var(--pill)}
+::-webkit-scrollbar-thumb:hover{background:var(--mint)}
+
+/* ---------- coque : rail + bandeau ---------- */
+.app{display:grid;grid-template-columns:60px 1fr;min-height:100vh}
+.rail{background:var(--bg-2);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:12px 0;gap:6px;position:sticky;top:0;height:100vh}
+.rail .logo{width:28px;height:28px;border-radius:50%;background:var(--mint);margin-bottom:10px;position:relative}
+.rail .logo::after{content:"";position:absolute;left:7px;top:9px;width:14px;height:8px;border-radius:0 8px 8px 8px;background:var(--mint-ink)}
+.rail .item{width:44px;height:44px;border-radius:var(--r-6);display:grid;place-items:center;color:var(--muted);position:relative}
+.rail .item svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.rail .item:hover{background:var(--mint);color:var(--mint-ink)}
+.rail .item.active{background:rgba(74,222,128,.14);color:var(--mint)}
+.rail .item.active:hover{background:rgba(74,222,128,.14);color:var(--mint)}
+.rail .item.ia.active{background:rgba(167,139,250,.16);color:var(--mauve)}
+.rail .item span{position:absolute;left:52px;top:50%;transform:translateY(-50%);white-space:nowrap;font-size:12px;color:var(--muted);pointer-events:none}
+.rail .spacer{flex:1}
+.rail .new{position:absolute;right:-2px;top:-2px;width:8px;height:8px;border-radius:50%;background:var(--yellow)}
+
+.main{display:flex;flex-direction:column;min-width:0}
+.band{height:52px;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 24px;gap:18px;background:var(--bg-2);position:sticky;top:0;z-index:5}
+.wordmark{font-weight:800;letter-spacing:.06em;font-size:18px}
+.wordmark b{color:var(--mint);font-weight:800}
+.band .page{color:var(--muted)}
+.band .page::before{content:"/";margin:0 10px;color:var(--dim)}
+
+.content{padding:24px 24px 48px;display:grid;grid-template-columns:minmax(0,1fr);gap:24px;align-items:start;max-width:1400px}
+h1{font-size:22px;font-weight:700;margin:0 0 4px}
+.lead{color:var(--muted);margin:0 0 20px;max-width:64ch}
+
+/* ---------- catalogue ---------- */
+.group{margin-bottom:22px}
+.group h2{font-size:13px;font-weight:600;color:var(--muted);margin:0 0 10px;display:flex;align-items:center;gap:10px}
+.group h2::after{content:"";flex:1;height:1px;background:var(--line)}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.doc{display:grid;grid-template-columns:56px 1fr;gap:12px;padding:12px;border:1px solid var(--line);border-radius:var(--r-6);background:var(--panel);text-align:left;color:var(--text);min-height:112px;align-items:start}
+.doc .thumb{width:56px;height:72px;border-radius:var(--r-4);border:1px solid var(--line-2);background:var(--bg);position:relative;overflow:hidden}
+.doc .thumb svg{width:100%;height:100%;display:block}
+.doc .thumb .b{fill:var(--line-2)} .doc .thumb .m{fill:var(--mint)} .doc .thumb .s{stroke:var(--mint);fill:none;stroke-width:1.2}
+.doc .name{font-weight:600;font-size:15px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.doc .desc{color:var(--muted);margin:4px 0 8px;font-size:13px}
+.doc .for{color:var(--dim);font-size:12px}
+.badge{display:inline-flex;align-items:center;height:18px;padding:0 7px;border-radius:var(--pill);font-size:11px;font-weight:600;border:1px solid var(--line-2);color:var(--muted)}
+.badge.new{border-color:var(--yellow);color:var(--yellow)}
+.doc:hover,.doc.selected{background:var(--mint);border-color:var(--mint);color:var(--mint-ink)}
+.doc:hover .desc,.doc:hover .for,.doc.selected .desc,.doc.selected .for{color:var(--mint-ink);opacity:.8}
+.doc:hover .badge,.doc.selected .badge{border-color:var(--mint-ink);color:var(--mint-ink)}
+.doc:hover .thumb,.doc.selected .thumb{background:var(--mint-ink);border-color:var(--mint-ink)}
+.doc:hover .thumb .m,.doc.selected .thumb .m{fill:var(--mint)}
+.doc:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
+
+/* ---------- porte ---------- */
+.veil{position:fixed;inset:0;background:rgba(6,10,8,.72);display:none;align-items:center;justify-content:center;z-index:20}
+.veil.open{display:flex}
+.porte{width:420px;background:var(--panel);border:1px solid var(--line-2);border-radius:var(--r-6);padding:16px}
+.porte header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.porte header .t{font-weight:700;font-size:16px}
+.porte header .x{width:var(--h-ctl);height:var(--h-ctl);border-radius:var(--r-6);display:grid;place-items:center;color:var(--muted)}
+.porte header .x:hover{background:var(--mint);color:var(--mint-ink)}
+.porte .q{font-weight:600;margin:14px 0 8px}
+.porte .q:first-of-type{margin-top:0}
+.omni{height:var(--h-omni);width:100%;border:1px solid var(--line-2);border-radius:var(--r-6);background:var(--bg);color:var(--text);padding:0 12px;outline:none}
+.omni::placeholder{color:var(--dim)}
+.omni:focus{border-color:var(--mint)}
+.or{color:var(--dim);font-size:12px;margin:8px 0}
+.btn{height:var(--h-ctl);padding:0 12px;border-radius:var(--r-6);display:inline-flex;align-items:center;gap:8px;font-weight:600;white-space:nowrap}
+.btn.primary{background:var(--mint);color:var(--mint-ink)}
+.btn.primary:hover{background:#7cf0a5}
+.btn.secondary{border:1px solid var(--mint);color:var(--mint)}
+.btn.secondary:hover{background:var(--mint);color:var(--mint-ink)}
+.btn.block{width:100%;justify-content:center}
+.btn[disabled]{opacity:.4;cursor:not-allowed}
+.btn.small{height:26px;padding:0 9px;font-size:12px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{height:var(--h-ctl);padding:0 12px;border-radius:var(--pill);border:1px solid var(--line-2);color:var(--muted);display:inline-flex;align-items:center;font-weight:500}
+.chip:hover{background:var(--mint);border-color:var(--mint);color:var(--mint-ink)}
+.chip.on{background:var(--mint);border-color:var(--mint);color:var(--mint-ink)}
+.resolved{margin-top:10px;border:1px solid var(--line-2);border-radius:var(--r-6);padding:10px 12px;display:grid;gap:2px;position:relative}
+.resolved .idu{font-weight:600}
+.resolved .sub{color:var(--muted);font-size:13px}
+.resolved .fiche{position:absolute;right:12px;top:10px;color:var(--yellow);font-weight:600;font-size:13px}
+.resolved .fiche:hover{color:var(--mint-ink);background:var(--yellow);border-radius:var(--r-4);padding:0 4px}
+.then{margin:14px 0 10px;color:var(--muted);font-size:13px;border-left:2px solid var(--line-2);padding-left:10px}
+.stack{display:grid;gap:8px}
+.step{display:flex;align-items:center;gap:10px;margin-top:6px}
+.step .btn{width:32px;padding:0;justify-content:center;font-size:18px}
+.step .km{flex:1;text-align:center;height:var(--h-ctl);line-height:var(--h-ctl);border:1px solid var(--line-2);border-radius:var(--r-6);background:var(--bg)}
+
+/* ---------- bibliothèque ---------- */
+.lib{grid-column:1 / -1;margin-top:8px}
+.lib .head{display:flex;align-items:center;gap:14px;margin-bottom:12px}
+.lib h2{font-size:18px;margin:0}
+.lib .count{color:var(--muted)}
+.lib .filters{margin-left:auto}
+table{width:100%;border-collapse:collapse;table-layout:fixed}
+th{text-align:left;font-weight:600;color:var(--muted);font-size:12px;padding:8px 10px;border-bottom:1px solid var(--line)}
+td{padding:0 10px;height:44px;border-bottom:1px solid var(--line);vertical-align:middle;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+tr.row:hover td{background:var(--mint);color:var(--mint-ink)}
+tr.row:hover .state{border-color:var(--mint-ink);color:var(--mint-ink)}
+tr.row:hover .btn.secondary{border-color:var(--mint-ink);color:var(--mint-ink)}
+tr.row:hover .btn.secondary:hover{background:var(--mint-ink);color:var(--mint)}
+tr.row:hover .muted{color:var(--mint-ink);opacity:.75}
+.muted{color:var(--muted)}
+.state{display:inline-flex;align-items:center;height:22px;padding:0 9px;border-radius:var(--pill);font-size:12px;font-weight:600;border:1px solid var(--mint);color:var(--mint)}
+.state.changed{border-color:var(--amber);color:var(--amber)}
+td .acts{display:flex;gap:6px;justify-content:flex-end}
+.empty{border:1px dashed var(--line-2);border-radius:var(--r-6);padding:22px;text-align:center;color:var(--muted);margin-top:18px}
+.empty b{display:block;color:var(--text);margin-bottom:4px}
+
+.note{grid-column:1 / -1;margin-top:28px;padding:12px 14px;border:1px solid var(--line);border-radius:var(--r-6);color:var(--muted);font-size:12px;background:var(--bg-2)}
+.note b{color:var(--text)}
+@media (prefers-reduced-motion:no-preference){.doc,.chip,.btn,.rail .item{transition:background-color .1s,color .1s,border-color .1s}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- rail : ordre des catégories, Documents proposé en 3e après Outils -->
+  <nav class="rail" aria-label="Catégories">
+    <div class="logo" title=""></div>
+    <a class="item" href="#"><svg viewBox="0 0 24 24"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg></a>
+    <a class="item" href="#"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0 5 5L13 18l-3-3 6.7-6.7z"/><path d="M4 20l4-4"/></svg></a>
+    <a class="item active" href="#" aria-current="page"><svg viewBox="0 0 24 24"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 12h6M10 16h6"/></svg><span></span></a>
+    <a class="item ia" href="#"><svg viewBox="0 0 24 24"><path d="M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/></svg></a>
+    <a class="item" href="#"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 12l5-3M12 3v3M21 12h-3"/></svg></a>
+    <a class="item" href="#"><svg viewBox="0 0 24 24"><path d="M6 17V11a6 6 0 0 1 12 0v6l2 2H4z"/><path d="M10 21h4"/></svg></a>
+    <a class="item" href="#"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="1"/><path d="M9 5v14M15 5v14"/></svg></a>
+    <a class="item" href="#"><svg viewBox="0 0 24 24"><path d="M4 8h16M4 12h16M4 16h10"/></svg></a>
+    <div class="spacer"></div>
+    <a class="item" href="#"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></svg></a>
+    <a class="item" href="#"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg></a>
+  </nav>
+
+  <div class="main">
+    <div class="band">
+      <div class="wordmark">LA <b>BUSE</b></div>
+      <div class="page">Documents</div>
+    </div>
+
+    <div class="content">
+
+      <!-- ============ catalogue (porte) ============ -->
+      <section>
+        <h1>Documents</h1>
+        <p class="lead">Huit documents, tous produits depuis les données de la fiche parcelle. Choisissez le document, puis la parcelle, et générez.</p>
+
+        <div class="grid">
+<button class="doc" data-kind="parcelle" data-name="Dossier" data-cta="Générer le dossier" data-then="La fiche parcelle complète, telle qu'elle est aujourd'hui. Le PDF apparaît dans Mes documents." data-dest="la fiche">
+              <div class="thumb"><svg viewBox="0 0 56 72"><rect class="m" x="8" y="8" width="24" height="3"/><rect class="b" x="8" y="16" width="40" height="2"/><rect class="b" x="8" y="21" width="34" height="2"/><rect class="b" x="8" y="26" width="38" height="2"/><rect class="s" x="8" y="33" width="40" height="18" rx="1"/><rect class="b" x="8" y="56" width="30" height="2"/><rect class="b" x="8" y="61" width="36" height="2"/></svg></div>
+              <div><div class="name">Dossier <span class="badge">PDF</span></div>
+              <div class="desc">La fiche parcelle complète, imprimable : zonage, capacité, risques, marché, réseaux.</div></div>
+            </button>
+
+<button class="doc" data-kind="parcelle" data-name="Bilan" data-cta="Générer le bilan" data-then="Se calcule sur les données de la fiche et vos ratios. Le PDF et l'Excel apparaissent dans Mes documents." data-dest="l'onglet Bilan de la fiche">
+              <div class="thumb"><svg viewBox="0 0 56 72"><rect class="m" x="8" y="8" width="20" height="3"/><rect class="b" x="8" y="16" width="26" height="2"/><rect class="b" x="40" y="16" width="8" height="2"/><rect class="b" x="8" y="21" width="22" height="2"/><rect class="b" x="40" y="21" width="8" height="2"/><rect class="b" x="8" y="26" width="28" height="2"/><rect class="b" x="40" y="26" width="8" height="2"/><rect class="b" x="8" y="31" width="24" height="2"/><rect class="b" x="40" y="31" width="8" height="2"/><rect class="b" x="8" y="40" width="26" height="2"/><rect class="b" x="40" y="40" width="8" height="2"/><rect class="b" x="8" y="45" width="30" height="2"/><rect class="b" x="40" y="45" width="8" height="2"/><rect class="m" x="8" y="56" width="20" height="3"/><rect class="m" x="38" y="56" width="10" height="3"/></svg></div>
+              <div><div class="name">Bilan <span class="badge">PDF</span><span class="badge">Excel</span></div>
+              <div class="desc">Charge foncière, coûts, CA et marge, avec vos propres ratios. Prix connu, ou prix maximum du terrain pour votre marge.</div></div>
+            </button>
+
+<button class="doc" data-kind="parcelle" data-name="Apporteur" data-cta="Générer l'apporteur" data-then="Une page depuis la fiche. Le PDF apparaît dans Mes documents." data-dest="la fiche">
+              <div class="thumb"><svg viewBox="0 0 56 72"><rect class="m" x="8" y="8" width="28" height="3"/><rect class="s" x="8" y="15" width="40" height="22" rx="1"/><path class="s" d="M14 33l8-10 7 6 9-9 8 7"/><rect class="b" x="8" y="42" width="40" height="2"/><rect class="b" x="8" y="47" width="30" height="2"/><rect class="b" x="8" y="52" width="36" height="2"/><rect class="b" x="8" y="60" width="18" height="2"/></svg></div>
+              <div><div class="name">Apporteur <span class="badge">PDF</span></div>
+              <div class="desc">Présenter un terrain à un acheteur en une page : plan, faits, dernière vente, contact.</div></div>
+            </button>
+
+<button class="doc" data-kind="parcelle" data-name="Pré-dossier PC" data-cta="Générer le pré-dossier PC" data-then="Règles du PLU, enveloppe réglementaire, pièces à joindre. Le PDF apparaît dans Mes documents." data-dest="la fiche">
+              <div class="thumb"><svg viewBox="0 0 56 72"><rect class="m" x="8" y="8" width="30" height="3"/><rect class="b" x="8" y="16" width="40" height="2"/><rect class="b" x="8" y="21" width="36" height="2"/><rect class="s" x="8" y="27" width="4" height="4"/><rect class="b" x="15" y="28" width="26" height="2"/><rect class="s" x="8" y="34" width="4" height="4"/><rect class="b" x="15" y="35" width="30" height="2"/><rect class="s" x="8" y="41" width="4" height="4"/><rect class="b" x="15" y="42" width="22" height="2"/><rect class="s" x="8" y="48" width="4" height="4"/><rect class="b" x="15" y="49" width="28" height="2"/><rect class="b" x="8" y="58" width="34" height="2"/></svg></div>
+              <div><div class="name">Pré-dossier PC <span class="badge">PDF</span></div>
+              <div class="desc">Ce que le PLU permet et exige ici, l'enveloppe réglementaire et la liste des pièces à joindre.</div></div>
+            </button>
+
+<button class="doc" data-kind="parcelle" data-name="Gabarit" data-cta="Générer le gabarit" data-then="Le plan et les règles, depuis l'outil Gabarit. Absent si le calcul est incomplet." data-dest="la fiche">
+              <div class="thumb"><svg viewBox="0 0 56 72"><rect class="m" x="8" y="8" width="22" height="3"/><path class="s" d="M10 18h36v34H10z"/><path class="m" d="M16 24h24v22H16z" opacity=".5"/><rect class="b" x="8" y="58" width="30" height="2"/><rect class="b" x="8" y="63" width="20" height="2"/></svg></div>
+              <div><div class="name">Gabarit <span class="badge">PDF</span></div>
+              <div class="desc">Zone d'implantation, plafond d'emprise, hauteur : le plan, les règles appliquées et celles non intégrées.</div></div>
+            </button>
+
+<button class="doc" data-kind="parcelle" data-name="Comparables DVF" data-cta="Générer les comparables" data-then="Les ventes comparables autour de la parcelle, depuis la section Marché. Le PDF apparaît dans Mes documents." data-dest="la section Marché de la fiche">
+              <div class="thumb"><svg viewBox="0 0 56 72"><rect class="m" x="8" y="8" width="30" height="3"/><circle class="s" cx="28" cy="28" r="12"/><circle class="m" cx="28" cy="28" r="1.6"/><circle class="b" cx="22" cy="24" r="1.4"/><circle class="b" cx="34" cy="31" r="1.4"/><circle class="b" cx="31" cy="21" r="1.4"/><circle class="b" cx="24" cy="34" r="1.4"/><rect class="b" x="8" y="46" width="40" height="2"/><rect class="b" x="8" y="51" width="40" height="2"/><rect class="b" x="8" y="56" width="40" height="2"/><rect class="b" x="8" y="61" width="28" height="2"/></svg></div>
+              <div><div class="name">Comparables DVF <span class="badge">PDF</span></div>
+              <div class="desc">Les ventes comparables autour de la parcelle : date, type, surface, prix, distance, avec la médiane et le rayon retenu.</div></div>
+            </button>
+
+<button class="doc" data-kind="multi" data-name="Comparatif" data-dest="l'outil Comparer">
+              <div class="thumb"><svg viewBox="0 0 56 72"><rect class="m" x="8" y="8" width="16" height="3"/><rect class="m" x="28" y="8" width="9" height="3"/><rect class="m" x="40" y="8" width="9" height="3"/><rect class="b" x="8" y="16" width="16" height="2"/><rect class="b" x="28" y="16" width="9" height="2"/><rect class="b" x="40" y="16" width="9" height="2"/><rect class="b" x="8" y="22" width="14" height="2"/><rect class="b" x="28" y="22" width="9" height="2"/><rect class="b" x="40" y="22" width="9" height="2"/><rect class="b" x="8" y="28" width="16" height="2"/><rect class="b" x="28" y="28" width="9" height="2"/><rect class="b" x="40" y="28" width="9" height="2"/><rect class="b" x="8" y="34" width="12" height="2"/><rect class="b" x="28" y="34" width="9" height="2"/><rect class="b" x="40" y="34" width="9" height="2"/><rect class="b" x="8" y="40" width="16" height="2"/><rect class="b" x="28" y="40" width="9" height="2"/><rect class="b" x="40" y="40" width="9" height="2"/><rect class="b" x="8" y="46" width="14" height="2"/><rect class="b" x="28" y="46" width="9" height="2"/><rect class="b" x="40" y="46" width="9" height="2"/><rect class="b" x="8" y="52" width="16" height="2"/><rect class="b" x="28" y="52" width="9" height="2"/><rect class="b" x="40" y="52" width="9" height="2"/></svg></div>
+              <div><div class="name">Comparatif <span class="badge">PDF</span></div>
+              <div class="desc">Deux ou trois parcelles côte à côte sur les 17 lignes de Comparer, en page paysage.</div></div>
+            </button>
+
+<button class="doc" data-kind="zone" data-name="Étude de zone" data-dest="l'outil Étude de zone">
+              <div class="thumb"><svg viewBox="0 0 56 72"><rect class="m" x="8" y="8" width="26" height="3"/><rect class="s" x="8" y="15" width="40" height="22" rx="1"/><path class="m" d="M18 20l14-3 10 8-6 9-14 1-6-8z" opacity=".45"/><rect class="b" x="8" y="42" width="40" height="2"/><rect class="b" x="8" y="47" width="40" height="2"/><rect class="b" x="8" y="52" width="32" height="2"/><rect class="b" x="8" y="57" width="40" height="2"/><rect class="b" x="8" y="62" width="24" height="2"/></svg></div>
+              <div><div class="name">Étude de zone <span class="badge">PDF</span></div>
+              <div class="desc">Population, économie, immobilier, foncier, contraintes, équipements, dynamique — autour d'une parcelle, dans le rayon que vous choisissez.</div></div>
+            </button>
+</div>
+      </section>
+
+      <!-- ============ porte ============ -->
+      <div class="veil" id="veil"><aside class="porte" id="porte" role="dialog" aria-modal="true">
+        <header><div class="t" id="p-title">Bilan</div><button class="x" id="p-close" aria-label="Fermer">✕</button></header>
+
+        <!-- variante parcelle -->
+        <div id="v-parcelle">
+          <div class="q">Sur quelle parcelle ?</div>
+          <input class="omni" placeholder="Adresse, IDU ou référence (BW0917)" value="BW0102 Saint-Paul">
+          
+          <div class="resolved">
+            <div class="idu">97415000BW0102</div>
+            <div class="sub">12 chemin Summer, 97460 Saint-Paul</div>
+            <div class="sub">U6c · 10 321 m² dont 7 465 m² en U6c</div>
+            <a class="fiche" href="#">Fiche →</a>
+          </div>
+
+          <div class="then" id="p-then">Se calcule sur les données de la fiche et vos ratios. Le PDF et l'Excel apparaissent dans Mes documents.</div>
+          <button class="btn primary block" id="p-cta">Générer le bilan</button>
+        </div>
+
+        <!-- variante 2-3 parcelles -->
+        <div id="v-multi" hidden>
+          <div class="q">Quelles parcelles ? (2 à 3)</div>
+          <div class="stack">
+            <input class="omni" placeholder="Adresse, IDU ou référence (BW0917)" value="CV1201 Saint-Paul">
+            <input class="omni" placeholder="Adresse, IDU ou référence (BW0917)" value="CV1498 Saint-Paul">
+            <input class="omni" placeholder="Troisième parcelle (facultatif)">
+          </div>
+                    <div class="then">Les 17 lignes de Comparer, côte à côte. Le PDF apparaît dans Mes documents.</div>
+          <button class="btn primary block">Générer le comparatif</button>
+        </div>
+
+        <!-- variante zone -->
+        <div id="v-zone" hidden>
+          <div class="q">Autour d'une parcelle</div>
+          <input class="omni" placeholder="Adresse, IDU ou référence (BW0917)" value="AB1117 Saint-Denis">
+          <div class="q" style="font-weight:500;color:var(--muted);margin-top:8px">Rayon autour de la parcelle</div>
+          <div class="step"><button class="btn secondary" id="km-minus" aria-label="Réduire">−</button><div class="km"><b id="km">2</b> km</div><button class="btn secondary" id="km-plus" aria-label="Augmenter">+</button></div>
+          <div class="then">Les 7 sections et la carte du périmètre. Le PDF apparaît dans Mes documents.</div>
+          <button class="btn primary block">Générer l'étude de zone</button>
+        </div>
+      </aside></div>
+
+      <!-- ============ bibliothèque ============ -->
+      <section class="lib">
+        <div class="head">
+          <h2>Mes documents</h2>
+          <span class="count">12</span>
+          <div class="chips filters">
+            <button class="chip">Dossier</button><button class="chip">Bilan</button><button class="chip">Apporteur</button><button class="chip">Pré-dossier PC</button><button class="chip">Gabarit</button><button class="chip">Comparables</button><button class="chip">Comparatif</button><button class="chip">Étude de zone</button><button class="chip on">Tous</button>
+          </div>
+        </div>
+
+        <table>
+          <colgroup><col style="width:110px"><col style="width:160px"><col><col style="width:170px"><col style="width:200px"><col style="width:220px"></colgroup>
+          <thead><tr><th>Généré le</th><th>Document</th><th>Sur</th><th>Projet</th><th>État</th><th></th></tr></thead>
+          <tbody>
+            <tr class="row"><td>28/09/2026</td><td>Bilan</td><td>97415000BW0102 <span class="muted">· Saint-Paul</span></td><td>Ouest 2026</td><td><span class="state">À jour</span></td><td><div class="acts"><button class="btn secondary small">Ouvrir</button><button class="btn secondary small">Excel</button></div></td></tr>
+            <tr class="row"><td>27/09/2026</td><td>Dossier</td><td>97411000EL0157 <span class="muted">· Saint-Denis</span></td><td>Ouest 2026</td><td><span class="state changed">Sources modifiées depuis</span></td><td><div class="acts"><button class="btn secondary small">Ouvrir</button><button class="btn secondary small">Régénérer</button></div></td></tr>
+            <tr class="row"><td>25/09/2026</td><td>Étude de zone</td><td>Rayon 2 km autour de AB1117 <span class="muted">· Saint-Denis</span></td><td><span class="muted">—</span></td><td><span class="state">À jour</span></td><td><div class="acts"><button class="btn secondary small">Ouvrir</button></div></td></tr>
+            <tr class="row"><td>24/09/2026</td><td>Comparatif</td><td>CV1201 · CV1498 · CV1289 <span class="muted">· Saint-Paul</span></td><td>Ouest 2026</td><td><span class="state">À jour</span></td><td><div class="acts"><button class="btn secondary small">Ouvrir</button></div></td></tr>
+            <tr class="row"><td>22/09/2026</td><td>Apporteur</td><td>97416000BR0332 <span class="muted">· Saint-Pierre</span></td><td>Sud</td><td><span class="state changed">Sources modifiées depuis</span></td><td><div class="acts"><button class="btn secondary small">Ouvrir</button><button class="btn secondary small">Régénérer</button></div></td></tr>
+            <tr class="row"><td>20/09/2026</td><td>Pré-dossier PC</td><td>97415000BZ1065 <span class="muted">· Saint-Paul</span></td><td><span class="muted">—</span></td><td><span class="state">À jour</span></td><td><div class="acts"><button class="btn secondary small">Ouvrir</button></div></td></tr>
+          </tbody>
+        </table>
+
+        <div class="empty">
+          <b>Aucun document pour l'instant</b>
+          Choisissez un document ci-dessus, puis une parcelle. Chaque document généré apparaît ici.
+        </div>
+      </section>
+
+      <div class="note">
+        <b>Notes pour le mandat.</b> Documents = catalogue + porte + bibliothèque, aucune donnée propre : tout se branche sur la fiche parcelle ou l'outil. Position proposée dans le rail : 3e, après Outils. Étude de zone : depuis une parcelle seulement, rayon en km au ± (pas de dessin). Le clic sur une carte ouvre une fenêtre (parcelle seule, jamais depuis un projet) dont le bouton génère le document directement. La bibliothèque stocke la recette (document, parcelle ou périmètre, date, hypothèses, version des sources) et régénère à la demande ; « Sources modifiées depuis » compare la version des sources au moment de la génération avec celle servie aujourd'hui. Jetons, typo et icônes à remapper sur DA-LABUSE.html ; composants Bouton, Chip, Badge, Retour de components/ui/ à réutiliser tels quels.
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+const cards=[...document.querySelectorAll('.doc')];
+const veil=document.getElementById('veil');
+const v={parcelle:document.getElementById('v-parcelle'),multi:document.getElementById('v-multi'),zone:document.getElementById('v-zone')};
+function open(c){
+  const k=c.dataset.kind,name=c.dataset.name;
+  document.getElementById('p-title').textContent=name;
+  Object.entries(v).forEach(([key,el])=>el.hidden=key!==k);
+  if(k==='parcelle'){document.getElementById('p-then').textContent=c.dataset.then;document.getElementById('p-cta').textContent=c.dataset.cta;}
+  veil.classList.add('open');
+}
+function close(){veil.classList.remove('open');}
+cards.forEach(c=>c.addEventListener('click',()=>open(c)));
+document.getElementById('p-close').addEventListener('click',close);
+veil.addEventListener('click',e=>{if(e.target===veil)close();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')close();});
+let km=2;const kmEl=document.getElementById('km');document.getElementById('km-minus').addEventListener('click',()=>{km=Math.max(1,km-1);kmEl.textContent=km;});document.getElementById('km-plus').addEventListener('click',()=>{km=Math.min(20,km+1);kmEl.textContent=km;});
+document.querySelectorAll('.filters .chip').forEach(ch=>ch.addEventListener('click',()=>{document.querySelectorAll('.filters .chip').forEach(x=>x.classList.remove('on'));ch.classList.add('on');}));
+</script>
+</body>
+</html>

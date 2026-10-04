@@ -237,6 +237,8 @@ LECTURES: tuple[Lecture, ...] = (
       "jointures parcels (idu→commune, id→signaux) pour libeller les entrées du carnet — pas de chiffre candidat servi"),
     L("parcels", "api/division_review.py", None, None,
       "dossier de revue ADMIN « division en or » (validation Vic) : geom parcelle pour dessiner les cartes — pas un robinet client (divisible_classe est servi par api/app.py sur la fiche)"),
+    L("parcels", "api/documents_bibliotheque.py", None, None,
+      "lit parcels.commune par idu pour libeller la colonne « Sur » de la bibliothèque « Mes documents » (DOCS-1) — jointure de rattachement, pas un chiffre candidat"),
     L("parcels", "api/enrichment.py", None, None,
       "calcule les enrichissements de fiche (points échantillonnés, périmètre, aménités, front de rue) mis en cache parcel_enrichment — aucun des 18 chiffres candidats n'y est produit"),
     L("parcels", "api/events.py", None, None,
