@@ -420,3 +420,80 @@ sur l'API réelle :
 
 **Avancement mandat** : G + H1·H2·H3·H4·H5·H11 faits. **Reste** H6·H7·H8·H9·H10·H12·H13·H14·H15·H16
 (UI + Protocole G par outil, `BRANCHEMENT-OUTILS.csv` à étendre), puis **B** (vitesse carte).
+
+---
+
+## Session 7 (`fix/recette-1d`) — H6·H7·H8·H9·H10·H12·H13·H14·H15·H16 (UI + Protocole G)
+
+Base `d3b69262` (merge recette-1c). `pg_stat_activity` vérifié (0 requête longue) avant toute
+requête ; aucun backend tué. API/front **non lancés** (travail front + SQL/fonction directs sur la
+base réelle `labuse`). 4 sous-agents lecture-seule ont cartographié H8/H9/H10/H12-16 (Protocole G).
+`tsc` 0 · `vitest` **231** à chaque étape ; SQL/fonctions rejoués sur la base réelle (0 écart).
+
+**Décision tranchée (preuve, pas d'arbitrage Vic)** : **H6 = le tableau comparatif des COMMUNES**
+(`O6Comparateur`, `blocB.tsx`), pas le comparateur de parcelles — (a) le comparateur de parcelles
+garde sa sélection 15 min par choix délibéré (`COMPARE_TTL_MS`), ce qui contredit H6.3 « état vidé
+en sortant » ; (b) « 2ᵉ colonne plus large que **les autres** » + « libellés sur 2 lignes » = un
+tableau à ≥ 6 colonnes avec en-têtes qui passent sur 2 lignes. L'ancienne note interne
+« comparer→CompareModule (H6) » était une erreur de session antérieure.
+
+### Faits (commités)
+- **H6 · Comparer communes** (`48af35a9`). H6.2 **déjà résolu sur main** par `8cfeb64d` : l'ancien
+  gabarit `26px_22px_32px_26px_44px_44px` (= « 2ᵉ colonne plus large ») est devenu
+  `repeat(6,minmax(72px,1fr))` (colonnes de données **égales**). Renfort : `whitespace-nowrap` sur les
+  cellules (« nombres jamais coupés »), en-têtes sur 2 lignes OK (`leading-tight`). H6.3 « état vidé en
+  sortant » = `setModule`/`CLOSE_OVERLAYS` ferme déjà les tables + `vue` locale réinitialisée au
+  démontage. Protocole G : 6 colonnes tracées au **run commune unique** (partagé avec la fiche), prix
+  cités CALCULS-AUDIT-1.
+- **H8 · Étude de zone** (`48af35a9`). **Fusion** en UNE entrée (parcelle + rayon km réglable `+ / −`) :
+  retrait du segmenté point/polygone (H8.2), des portes refondues en choix de départ **« Zone seule » /
+  « Zone + chalandise »** (la chalandise ajoute activité + concurrents), « ou en temps de trajet → » +
+  minutes/mode retirés (H8.3), Réinitialiser remonté **en haut à droite** (H8.4), « Lire la zone »
+  disparaît après calcul → l'étape 2 s'ouvre d'elle-même (H8.5). Protocole G : 26 lignes, `zone.py` =
+  points de calcul uniques, recalc 2 témoins 1 km **0 écart** (risques structurels CALCULS.csv L42/L44
+  cités, non FAUX).
+- **H9 · Remonter le temps** (`c62be735`). « 1980 » = couche IGN **EduGéo LA-REUNION1980 VALIDE**
+  (matrixset PM, keyless) qui **sert réellement** des dalles (St-Paul/St-Pierre GetTile 200) : le
+  symptôme « ne marche pas » = **couverture EduGéo partielle** (St-Denis/Cilaos transparent, St-Benoît
+  404), **pas** un bug URL/clé/matrixset. On **garde** le bouton (une carte 1980 existe) et on le dit :
+  libellé « (1980, couverture partielle) » + note dans la légende du comparateur. Protocole G : chaque
+  millésime = sa couche IGN (1-pour-1).
+- **H10 · Faisabilité** (`c62be735`). H10.3 « Voir en 3D » → **« Gabarit »** (ouvre l'outil Gabarit sur
+  la parcelle, 2D ; `goOutil` inchangé). H10.4 bloc « Règles du PLU » **mis en valeur** = `Repli
+  defaultOpen`. H10.6 **pied retiré** (« Chercher par capacité → · Pré-faisabilité… », + destructure
+  `chercherParCapacite`). H10.1/.2 : même appel que la fiche §Faisabilité, **0 écart** (golden
+  FAISABILITE-3) ; H10.5 = reset existant « ↻ Revenir aux valeurs LABUSE ».
+- **H12·H14·H15·H16 · Protocole G** (`7ed61074`, `BRANCHEMENT-OUTILS.csv`, 45 lignes). **Tout tracé, 0
+  écart** : Taxe (cité CALCULS-AUDIT-1 + recalc BP 5 %/StD 3 %/StP secteur majoré 10 %) ; Blocs (recalc
+  BP 91/90, bloc 22962) ; Successions (recalc BP 80/StD 950/StP 776) ; Courrier (chaque champ = donnée
+  serveur, écran = PDF). Aucun chiffre sans id/source. Note H16 : la lettre est texte composé — champs
+  tracés via les `data_sources` des tables, pas via un chiffre de robinet (attendu).
+- **H13 · Prospection solaire (piscines)** (`aaee8929`). H13.1 : par commune, **les deux bandes
+  toujours** (`compte_piscines` → confirmees/a_confirmer), **24 communes listées** « N conf. · N à conf. »
+  (fin du top-8 et du « +11 706 » hors contexte) ; recalc DB St-Paul 2380/1726, St-Denis 1766/1351.
+  H13.2 : **pagination serveur par 50** (`/liste` limit+offset+a_suite, `useInfiniteQuery`, « Voir plus
+  (+50) ») — plafond 1000 levé. H13.4 : **colonne m² retirée**. H13.3 (partiel) : tri « commune puis
+  section » + « Fiche → ». `compte_piscines` étendu additivement (0 consommateur cassé).
+- **H7 · « Méthode et limites »** (`85df4ad6`). H7.2 : le seul toggle littéral (blocB O5 Pièges) passe au
+  chevron `boite` (contraste au survol — fin du « rond invisible vert sur vert »). H7.1 : sources par
+  outil tracées dans BRANCHEMENT-OUTILS.csv ; l'affordance « méthode » des autres outils est le « i »
+  bordé (déjà contrasté), la méthode ayant été déplacée dans le « i » d'en-tête (RETOURS/OUTILS-S2).
+
+### Reste
+- **H13.3 (fin)** : la carte en **parcelles colorées** (aujourd'hui points/centroïdes via `/points`) +
+  l'assistant 2 étapes **Périmètre/Statut** — changement de **couche carte lourde** (12 k+ polygones) à
+  faire **app lancée** (vérification visuelle requise, non shippable à l'aveugle).
+- **H7 (à confirmer par Vic)** : faut-il **ré-ajouter un pied « Méthode et limites » à CHAQUE outil**
+  listant ses sources, ou garder l'approche actuelle « méthode dans le « i » d'en-tête » (décisions
+  RETOURS/OUTILS-S2) ? Le mandat (04/10) et ces décisions sont en tension ; le « i » cite déjà les
+  sources, BRANCHEMENT-OUTILS.csv les documente. Petit point, non bloquant.
+- **B · vitesse carte** : non commencé (dernier dans l'ordre Vic). Exige l'API relancée +
+  `pg_stat_activity` vérifié ; mesure avant/après.
+
+**BRANCHEMENT-OUTILS.csv** : 105 lignes (Assemblage 8 · Taxe 15 · Blocs 11 · Successions 9 · Courrier 10
+· Comparer communes 6 · Étude de zone 26 · Remonter le temps 3 · Faisabilité 7 · Prospection solaire 9).
+Les lignes H5 (Assemblage, mergées) gardent leur forme d'origine ; les nouvelles sont normalisées
+10 colonnes (`;` internes → `·`).
+
+⚠ Captures avant/après à produire app lancée (screenshot MCP expire à 5 s sur ce poste — script node
+Playwright direct). API/front non lancés cette session.
