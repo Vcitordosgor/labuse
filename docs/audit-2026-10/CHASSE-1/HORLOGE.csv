@@ -1,0 +1,23 @@
+idu,champ,avant,apres,verdict
+97420000BD1224,.anciennete_detention.depuis_ans,5,6,bouge_horloge_python
+97420000BD1224,.fiscalite.perime,False,True,bouge_horloge_python
+97420000BD1224,.taxe_amenagement.taux_communal_perime,False,True,bouge_horloge_python
+97418000AP3198,.fiscalite.perime,False,True,bouge_horloge_python
+97418000AP3198,.taxe_amenagement.taux_communal_perime,False,True,bouge_horloge_python
+97418000AO1326,.fiscalite.perime,False,True,bouge_horloge_python
+97418000AO1326,.taxe_amenagement.taux_communal_perime,False,True,bouge_horloge_python
+97411000AC0196,.anciennete_detention.depuis_ans,5,6,bouge_horloge_python
+97411000AC0196,.fiscalite.perime,False,True,bouge_horloge_python
+97411000AC0196,.mode_b.sortie_locative.bareme_perime,False,True,bouge_horloge_python
+97411000AC0196,.mode_b.sortie_locative.signalement_fraicheur,None,Barème de défiscalisation 2026 servi en 2027 : les plafonds de loyer et le coefficient de surface n',bouge_horloge_python
+97411000AC0196,.taxe_amenagement.taux_communal_perime,False,True,bouge_horloge_python
+97413000CD0532,.fiscalite.perime,False,True,bouge_horloge_python
+97413000CD0532,.taxe_amenagement.taux_communal_perime,False,True,bouge_horloge_python
+97415000AB0425,.anciennete_detention.depuis_ans,6,7,bouge_horloge_python
+97415000AB0425,.fiscalite.perime,False,True,bouge_horloge_python
+97415000AB0425,.taxe_amenagement.taux_communal_perime,False,True,bouge_horloge_python
+97408000AC2877,.fiscalite.perime,False,True,bouge_horloge_python
+97408000AC2877,.taxe_amenagement.taux_communal_perime,False,True,bouge_horloge_python
+97410000CI0215,.anciennete_detention.depuis_ans,7,8,bouge_horloge_python
+97410000CI0215,.fiscalite.perime,False,True,bouge_horloge_python
+97410000CI0215,.taxe_amenagement.taux_communal_perime,False,True,bouge_horloge_python
