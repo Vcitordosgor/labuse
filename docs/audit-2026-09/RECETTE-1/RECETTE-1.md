@@ -321,3 +321,44 @@ code — à re-vérifier `tsc` quand le node_modules partagé est stable.
 ### RESTE (ordre Vic) : **G + reste de H (si Vic fournit le détail) → B**
 B = vitesse carte : **NON commencé** ; exige l'API relancée + `pg_stat_activity` vérifié d'abord
 (CHASSE-FIX-1 partage la base). API/front PAS lancés cette session (travail purement front/tsc/vitest).
+
+---
+
+## Session 4 (`fix/recette-1c`) — H1–H4 corrigés (Vic : « pas déjà conformes ») sur les parties FRONT
+
+Vic a fourni le détail H1–H4 + répondu à 8 points d'arbitrage. ⚠ Le texte **H5→H16 + Lot G** n'est
+**toujours pas parvenu** (attachement puis gros collage : seul le texte autour arrive de mon côté — les
+blocs collés/pièces jointes sont tronqués dans mon contexte). À redonner en **texte simple dans le message**.
+
+Commits `853aa478` (H1/H2 sans ambiguïté) + `b66c425f` (H2/H4 front). tsc 0, vitest **230**.
+
+### FAIT (front, vérifié)
+- **H1 PLU** — (1) « les vérifications » : `VerifProcedure` (onglet *Par parcelle*) passe au pattern F
+  (EntreeParcelle + Réinitialiser + adoption/clear `selectedIdu`). (2) placeholder annuaire coupé →
+  raccourci « ex. hauteur de clôture » (le « dans <commune> » redondant + tronqué sur noms longs).
+- **H2 Permis** — (1) **phrase ≤ 200 m sans accordéon** (compte + détail en clair). (3) **pastilles
+  retirées** : « approx. (adresse) »/« non localisé » et le badge « autorisé » (état_libelle) retirés de la
+  ligne ; **point de couleur d'état gardé** ; précision du géocodage **déplacée dans la bulle**. (bulle↓)
+  **BULLE au clic** sur le point permis (MapView) : nature+date+état+commune+précision + « détails → »
+  (ouvre le drawer) — comme opérations/concurrents. `commune`/`geoloc` portés à la feature.
+- **H4 Scan patrimoine** — (a) « Voir ses parcelles → » = **vrai bouton primaire pleine largeur** (marge
+  standard). (b) le bloc **« Blocs contigus » se replie** quand la liste s'ouvre ; **les 4 tuiles de
+  compteurs RESTENT** (la barre compacte qui les masquait est supprimée) ; liste **en surbrillance carte**
+  (useModuleMap, déjà là). (c) retour **« ← Scan patrimoine » gardé APRÈS recherche** (état 2).
+
+### RESTE H1–H4 — besoin de l'API/DB (à grouper avec B)
+- **H2 (2) périmètre 200 m** : quand une parcelle est saisie → les compteurs d'état **comptent dans les
+  200 m**, le filtre s'applique dans ce périmètre, la carte ne montre **que** ces permis colorés par état ;
+  dessin **contour parcelle + cercle 200 m discret** ; **Réinitialiser revient à l'île**. ⇒ vérifier les
+  champs servis par `/modules/parcelle-permis` (classification d'état par item) + dessin cercle (centroïde).
+- **H3 Communes** : (7) **diagnostiquer chaque trou** de l'évolution (ex. 2024T1 ancien vide alors que
+  terrain = 449 ventes = bug requête ; permis vides 2024T1-T3 ; 2026 vide = DVF non publié) → corriger le
+  bug / expliquer le vrai trou ; en-tête = **nombre de lignes réellement affichées** (11, pas « 8 trim. »).
+  (8) **cadence Radar** : vérifier que la capture tourne chaque jour (page « dernière capture 27/09 » un
+  4 oct → dire pourquoi) ; le bloc Marché des annonces **affiche la date de dernière capture**.
+
+### Toujours bloquant
+- **H5→H16 + Lot G** : texte non reçu (voir ⚠ ci-dessus). Impossible de faire « juste » sans.
+- **API non lancée** : la relance passe la migration `origine` (verrou exclusif sur base partagée
+  CHASSE-FIX-1) = geste Vic. H2-périmètre / H3 / B l'exigent → **green-light + état migration `origine`
+  attendus de Vic** avant de démarrer l'API (puis `pg_stat_activity` vérifié, pas de mass-kill).
