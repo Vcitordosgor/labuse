@@ -155,11 +155,40 @@ manquait). Rien à corriger ; la recherche île sur la règle emprise n'est pas 
   5. `{prefillIdu && <Reinitialiser onReset={resetAll} />}` dans l'en-tête du corps ;
   6. F4 : outil mono-niveau → seul « ← Outils » du shell ; outils multi-niveaux (ScanPatrimoine,
      EtudeZone, Blocs, Plu, Communes, ProspectionSolaire) = conserver les « ← <palier> » APRÈS recherche.
-- **Reste F (~13 outils)** : Pièges/risques, Faisabilité (+H10), Gabarit (+H11, F4+3D 2D-défaut), Remonter
-  le temps (+H9), Ensoleillement, Assemblage (+H5, garde msel dans l'outil), Scan patrimoine (+H4, F4),
-  Étude de zone (+H8), Permis (+H2), Comparer communes (+H6), Bloc foncier, Succession, Courrier — même
-  recette ; `setModule` vide déjà moduleMap/tool/zone/focusIdu (carte) → F1 « revenir = vierge » en partie
-  centralisé (reste msel/tempsPin à vider sur changement d'outil si on veut le faire au store).
+- **Gabarit** (commit `25404bb9`) — F1/F2/F3 + **H11 pt2** : quitter l'outil remet la vue en 2D
+  (cleanup `setTerrain3d(false)`) → revenir = 2D fond sombre. (⚠ si le fond passe en ortho en 3D, le
+  reset du basemap en sombre reste à vérifier live ; le 2D est bien remis.)
+
+**Carte outil↔composant** (ModulePanel MODULES) : taxe-amenagement→TaxeAmenagement (fait), gabarit→Gabarit
+(fait), patrimoine→ScanPatrimoine (H4), permis/promesses→M03 (H2), temps→M08 (H9), courriers→M09 (H16),
+risques→Risques (Pièges), comparer→CompareModule (H6), assemblage→M16 (`moteurs.tsx`, H5), communes→Communes
+(H3), plu→Plu (H1), prospection-solaire→ProspectionSolaire (H13 + Ensoleillement), successions→Successions
+(H15), blocs-fonciers→Blocs (H14), etude-zone→EtudeZone (H8), calculette-fonciere→CalculetteFonciere.
+Faisabilité = dans la FICHE (`fiche/constructibilite.tsx`), pas un module (H10).
+
+**Recette F par outil (établie + vérifiée live sur Taxe)** :
+1. imports `EntreeParcelle`/`Reinitialiser` + `select` du store ;
+2. état `source` ; effet : adopter `selectedIdu` quand il change (source='carte'), et si `selectedIdu→null`
+   alors que source='carte' → vider l'outil (F1 « fermer la fiche vide l'outil ») ;
+3. `resetAll()` : `select(null)` si une parcelle est ouverte + remise à zéro de TOUS les champs/états locaux (F3) ;
+4. remplacer `ParcelInput` par `<EntreeParcelle source onPick={(i,src)=>{setSource(src);setIdu(i);focusParcelle(i[,{fiche:true}])}}/>`
+   (`{fiche:true}` pour les outils déjà couplés à la fiche comme Taxe ; SANS pour les outils carte-centrés
+   comme Gabarit, pour ne pas ouvrir la fiche par-dessus la 3D) ;
+5. `{idu && <Reinitialiser onReset={resetAll} />}` en haut à droite du corps ;
+6. F4 : mono-niveau → seul « ← Outils » (PanelRetour, shell) ; multi-niveaux (ScanPatrimoine, EtudeZone,
+   Blocs, Plu, Communes, ProspectionSolaire) → conserver les « ← <palier> » APRÈS la recherche.
+
+**RESTE F (~11 outils, chacun = recette + son point H)** : Risques/Pièges (F1 scénario 2), Permis M03 (H2),
+Temps M08 (H9), ProspectionSolaire (H13 refonte piscines + Ensoleillement), Assemblage M16 (H5 refonte en
+étapes, garde `msel` DANS l'outil), ScanPatrimoine (H4 liste+carte, F4 paliers après recherche), EtudeZone
+(H8 fusion 2 chemins), CompareModule (H6 colonnes), Communes (H3), Plu (H1), Blocs (H14), Successions (H15),
+Courrier M09 (H16), Faisabilité (H10, dans la fiche). `setModule` vide déjà moduleMap/tool/zone/focusIdu
+(carte) ⇒ F1 « revenir = vierge » en partie centralisé ; reste `msel`/`tempsPinIdu` à vider au changement
+d'outil si on veut le faire au store (sinon géré par outil à cause de l'exception Assemblage H5).
+
+**PUIS : G + reste de H → B** (non commencés). B bloqué tant que l'API n'est pas relancée sans concurrence
+(CHASSE-FIX-1 partage peut-être la base — vérifier `pg_stat_activity` avant tout). L'API + le front
+tournent (8695/5895) ; C5 vérifié live.
 
 ### Session 2 — suite : C5 (décision), E2, E3 faits
 - **C5 (décision Vic)** : la fiche « ICPE sur la parcelle » lit le MÊME rattachement que la carte
