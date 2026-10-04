@@ -371,8 +371,16 @@ def stats(db: Session) -> dict:
     corpus_total = db.execute(text(
         "SELECT count(*) FROM pige_biens b JOIN pige_faits f ON f.bien_id=b.bien_id "
         f"WHERE f.valide_at IS NOT NULL{excl}")).scalar() or 0
+    # RECETTE-1 (H3, Vic) — DATE de la DERNIÈRE CAPTURE Radar servie au bloc « Marché des annonces » :
+    # max(pige_passes.captured_at), repli max(pige_biens.last_seen_at). Le Radar est alimenté par
+    # l'EXTENSION du Mac (RADAR-AUTO-1), pas un cron VPS → le bloc affiche la date pour que la fraîcheur
+    # (ou une capture en retard, ex. « 27/09 » un 4/10) soit visible au lieu d'être muette.
+    capture = db.execute(text("SELECT max(captured_at) FROM pige_passes")).scalar()
+    if capture is None:
+        capture = db.execute(text("SELECT max(last_seen_at) FROM pige_biens")).scalar()
     return {"communes": lignes, "ile": ile, "seuil_n": SEUIL_N,
             "corpus_total": corpus_total,
             # FRONT-CHIFFRES-2 (F25) — le front lit ce flag au lieu de coder « corpus_total < 40 ».
             "corpus_jeune": corpus_total < SEUIL_CORPUS_JEUNE,
-            "corpus_actif": corpus}
+            "corpus_actif": corpus,
+            "derniere_capture_at": capture.isoformat() if capture else None}

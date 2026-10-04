@@ -48,6 +48,21 @@ export function RadarMarche() {
 
   return (
     <div className="flex flex-col gap-3 p-3">
+      {/* RECETTE-1 (H3, Vic) — DATE de la dernière capture Radar (le bloc lit la même table que le Radar).
+          Le Radar est alimenté par l'EXTENSION (Mac), pas un cron VPS : afficher la date rend une capture
+          en retard VISIBLE (ex. « 27/09 » un 4/10 = extension non déposée depuis). */}
+      {data.derniere_capture_at && (() => {
+        const dc = new Date(data.derniere_capture_at)
+        const jours = Math.floor((Date.now() - dc.getTime()) / 86_400_000)
+        const retard = jours > 2
+        return (
+          <p data-radar-capture className={`text-[10.5px] ${retard ? 'text-st-creuser' : 'text-txt-dim'}`}>
+            Dernière capture : <b className={retard ? 'text-st-creuser' : 'text-txt-mut'}>{dc.toLocaleDateString('fr-FR')}</b>
+            {' '}· Radar alimenté par l’extension (capture quotidienne)
+            {retard ? ` — ${jours} jours sans dépôt, vérifier l’extension` : ''}.
+          </p>
+        )
+      })()}
       {jeune && (
         <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5 text-[11.5px] leading-relaxed text-txt-mut">
           Le corpus du Radar se constitue jour après jour (aujourd’hui {data.corpus_total} bien{data.corpus_total > 1 ? 's' : ''} suivi{data.corpus_total > 1 ? 's' : ''}).

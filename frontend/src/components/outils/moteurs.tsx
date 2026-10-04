@@ -564,6 +564,10 @@ function M18Tableau({ d }: { d: Record<string, any> }) {
   const perm = Object.fromEntries((d.permis_trimestres ?? []).map((r: any) => [r.trimestre, r]))
   // union des trimestres (l'ancien porte l'axe de référence), tri chronologique.
   const tris = [...new Set([...ancien.map((r) => r.trimestre), ...Object.keys(terr), ...Object.keys(perm)])].sort()
+  // RECETTE-1 (H3, Vic) — un trimestre sans ancien NI terrain alors qu'il a des permis = VRAI trou :
+  // DVF n'est publié que jusqu'au dernier trimestre ancien ; les permis (Sitadel) vont plus loin. On le DIT.
+  const dernierDvf = [...ancien.map((r) => r.trimestre as string)].sort().at(-1)
+  const trousRecents = tris.filter((t) => dernierDvf && t > dernierDvf)
   const partiel = new Set(ancien.filter((r) => r.partiel).map((r) => r.trimestre))
   const ancByT = Object.fromEntries(ancien.map((r) => [r.trimestre, r]))
   const th = 'sticky top-0 z-10 bg-bg-3 px-2 py-1.5 text-right font-medium text-txt-dim first:text-left'
@@ -603,6 +607,11 @@ function M18Tableau({ d }: { d: Record<string, any> }) {
         <Tip garder tip="Ancien : médiane €/m² bâti, ventes strictes DVF (VEFA exclu). Terrain : médiane €/m² terrain nu (bâti=0). Permis : autorisés/trimestre (Sitadel). Volume (n) entre parenthèses."><span className="cursor-help rounded-full border border-line-2 px-1 text-[8px]">i</span></Tip>
       </div>
       {tris.some((t) => partiel.has(t)) && <p className="mt-0.5 text-[9.5px] text-st-creuser">· dernier trimestre partiel (délai de publication DVF) — grisé, hors tendance.</p>}
+      {/* RECETTE-1 (H3, Vic) — le vrai trou expliqué : DVF publié jusqu'au <dernierDvf>, les trimestres
+          plus récents n'ont que les permis (Sitadel en avance). Plus de « — » muet pris pour un bug. */}
+      {trousRecents.length > 0 && dernierDvf && (
+        <p className="mt-0.5 text-[9.5px] text-txt-dim">· Ancien &amp; terrain : DVF publié jusqu'au <b className="text-txt-mut">{dernierDvf}</b> — {trousRecents.join(', ')} n'{trousRecents.length > 1 ? 'ont' : 'a'} encore que les permis (Sitadel, en avance sur DVF).</p>
+      )}
     </div>
   )
 }
@@ -621,6 +630,13 @@ export function M18() {
   const q = useQuery({ queryKey: ['m18', insee || 'ile'], queryFn: () => motBarometre(insee || null) })
   const d = q.data as Record<string, any> | undefined
   const nr = d?.neuf_reference as Record<string, any> | undefined
+  // RECETTE-1 (H3, Vic) — l'en-tête dit le nombre de trimestres RÉELLEMENT affichés (union des 3 séries),
+  // plus « 8 derniers trimestres » en dur (l'union en compte souvent 11 : DVF + permis en avance).
+  const nbTri = d ? new Set([
+    ...((d.dvf_trimestres ?? []) as any[]).map((r) => r.trimestre),
+    ...((d.terrain_trimestres ?? []) as any[]).map((r) => r.trimestre),
+    ...((d.permis_trimestres ?? []) as any[]).map((r) => r.trimestre),
+  ]).size : 0
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
       {/* M141 Partie 1 — bouton « Rapport PDF » RETIRÉ (le baromètre ne sort plus en PDF, décision Vic).
@@ -632,7 +648,7 @@ export function M18() {
           <option value="">Île entière (24 communes)</option>
           {communesTriees.map((c) => <option key={c.insee} value={c.insee}>{c.commune}</option>)}
         </select>
-        <span className="text-[10px] text-txt-dim">{d?.perimetre ?? ''} — 8 derniers trimestres.</span>
+        <span className="text-[10px] text-txt-dim">{d?.perimetre ?? ''}{nbTri ? ` — ${nbTri} trimestres affichés.` : ''}</span>
       </div>
       {/* COMMUNE-124 (RETOUCHES-1 lot B) — le back refuse désormais un code qui ne résout aucune commune
           (code postal, code hors 24) par un 400 explicite au lieu de servir l'île entière en silence.
