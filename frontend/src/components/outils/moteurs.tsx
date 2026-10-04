@@ -14,6 +14,7 @@ import { Tip } from '../Tip'
 import { CP_COMMUNES } from '../panel/FiltreLabuse'   // RETOURS-11 T6 — source unique des 24 communes
 import { trierCommunes } from '../../lib/communes'
 import { Bouton } from '../ui/Bouton'
+import { Reinitialiser } from '../ui/Reinitialiser'   // RECETTE-1 F3
 
 const fmt = fmtInt
 
@@ -140,6 +141,9 @@ export function M16() {
     setMsel(msel.includes(i) ? msel : [...msel, i])
     setRings((r) => (r.includes(i) ? r : [i]))
   }
+  // RECETTE-1 (F3) — Réinitialiser : vide l'assiette (msel), les voisines proposées (rings) et le
+  // résultat d'analyse — rend l'outil vierge, sans en sortir.
+  const resetAll = () => { setMsel([]); setRings([]); run.reset() }
   // RETOURS-15 B6 — « ses voisines → » retiré : plus d'extension d'anneau depuis une voisine.
   const ringQs = useQueries({ queries: rings.map((r) => ({
     queryKey: ['asm-voisines', r], queryFn: () => getAssemblageVoisines(r), staleTime: 60_000, retry: false })) })
@@ -184,7 +188,13 @@ export function M16() {
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-0.5">
       {/* M15 A1 : la cause du « ne fonctionne pas » = à l'échelle de l'île aucune parcelle n'est
           chargée ni cliquable. On guide explicitement : ZOOMER d'abord fait apparaître les contours. */}
-      <Banner>Réunissez des parcelles voisines pour voir ce qu'elles valent ensemble : surface, droits à bâtir cumulés, logements possibles, charge foncière. Zoomez, cliquez les parcelles (re-cliquez pour retirer) — ou désignez une parcelle de départ : ses voisines contiguës vous sont proposées.</Banner>
+      <div className="flex items-start gap-1.5">
+        <div className="min-w-0 flex-1">
+          <Banner>Réunissez des parcelles voisines pour voir ce qu'elles valent ensemble : surface, droits à bâtir cumulés, logements possibles, charge foncière. Zoomez, cliquez les parcelles (re-cliquez pour retirer) — ou désignez une parcelle de départ : ses voisines contiguës vous sont proposées.</Banner>
+        </div>
+        {/* RECETTE-1 (F3) — Réinitialiser dès qu'une parcelle est dans l'assiette. */}
+        {msel.length > 0 && <Reinitialiser onReset={resetAll} />}
+      </div>
       {/* OUTILS-MUSCLER-1 B1 — entrée PAR PARCELLE (omnibox SOCLE : IDU · adresse · référence
           courte), en plus du clic-carte. La parcelle désignée devient la parcelle de DÉPART. */}
       <ParcelInput dataAttr="asm-depart" placeholder="Adresse, IDU ou référence (BW0917)" onPick={addDepart} />
@@ -202,9 +212,7 @@ export function M16() {
           className="flex-1">
           Analyser l'assiette ({msel.length})
         </Bouton>
-        {msel.length > 0 && (
-          <Bouton niveau="lien" onClick={() => setMsel([])}>vider</Bouton>
-        )}
+        {/* RECETTE-1 (F3) — « vider » remplacé par le Réinitialiser unique en tête de l'outil. */}
       </div>
       {/* OUTILS-MUSCLER-1 B2/B3/B4/B5 — VOISINES PROPOSÉES, en cartes empilées, même propriétaire
           en tête (tri serveur). Cocher = entrer dans l'assemblage (msel — même style carte que le

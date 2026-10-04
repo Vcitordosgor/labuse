@@ -248,3 +248,76 @@ screenshot MCP expire à 5 s sur ce poste — constat récurrent des mandats pr�
 
 > Captures de Vic : **5** présentes dans `captures-vic/` (le mandat en annonce ~20 ; les points se
 > lisent sans elles, comme prévu). Signalé, non bloquant.
+
+---
+
+## Session 3 (`fix/recette-1c`) — Lot F : le reste des outils (pattern F appliqué/jugé par outil)
+
+**Règle tenue** : 0 valeur servie changée (aucune ligne CHANGEMENTS.csv — ce sont des changements de
+STRUCTURE d'état/affordance, pas de valeur), run-safe. `tsc` 0 sur mes 9 fichiers (⚠ voir note maplibre),
+`vitest` **230 verts**.
+
+**Invariant du pattern (corrigé cette session)** : `source='carte'` ne doit JAMAIS être posé tant que
+`selectedIdu` est faux — sinon l'effet F1 (« fermer la fiche vide l'outil ») se déclenche AU MONTAGE et
+efface une parcelle pré-remplie par une PORTE (calcPrefill, solairePrefill…). Les portes laissent donc
+`source=null` (parcelle chargée, les deux entrées restent actives jusqu'au Réinitialiser). Bug attrapé par
+les tests ProspectionSolaire ; corrigé aussi dans Calculette (même schéma).
+
+### Outils RÉÉCRITS au pattern F cette session
+- **Calculette foncière** (`CalculetteFonciere.tsx`) — F1/F2/F3. Couplée à `selectedIdu` (comme Taxe),
+  porte `calcPrefill` conservée (source=null). `{fiche:true}` au pick.
+- **Remonter le temps M08** (`ModulePanel.tsx`) — F2 (EntreeParcelle, `designer(id, src)`) + F3
+  (Réinitialiser : vide `tempsPinIdu` + remet l'année ancienne à 1950). Carte-centré via `parcelPrefill`
+  (source='carte'). **= le « H9 »** (le reste de M08 — frise, épingle — était déjà en place).
+- **Étude de zone** (`EtudeZone.tsx`) — F3/F4. `nouvelleEtude` scindé : `resetEtude` (Réinitialiser,
+  reste dans la porte) + `nouvelleEtude` (`← Changer la zone`, retour accueil 2 portes). Le bouton
+  « Nouvelle étude » du bas devient le Réinitialiser unique. **H8 « fusion 2 chemins »** : les deux
+  entrées (point / polygone) alimentent DÉJÀ un seul pipeline de résultat (en-tête qui nomme le périmètre
+  réel) → la fusion était faite ; F la rend cohérente côté reset.
+- **Prospection solaire** (`ProspectionSolaire.tsx`) — F2/F3 dans **Ensoleillement** (EntreeParcelle +
+  Réinitialiser + adoption `selectedIdu`). F4 déjà là (2 cartes d'entrée + BackBar). **Piscines** garde
+  son « Toute l'île » (clear commune) + reset auto au changement de commune — pas de reset fait-main à
+  unifier. **= H13** (les 2 métiers/2 entrées existaient déjà ; F complète Ensoleillement).
+- **Comparer** (`compare/ComparePanel.tsx`) — F3 : « tout vider » → Réinitialiser unique en tête. Multi-add
+  (jusqu'à 3) ⇒ PAS d'EntreeParcelle (le champ cumule, il ne « grise » pas). **H6 colonnes** déjà en place.
+- **Blocs fonciers** (`Blocs.tsx`) — F3 : Réinitialiser (remet TOUS les filtres au défaut + replie le
+  listing + ferme la fiche). Entrée commune+filtres ⇒ PAS d'EntreeParcelle.
+- **Successions** (`Successions.tsx`) — F3 : Réinitialiser (revient « toute l'île » + ferme la fiche).
+  Entrée commune ⇒ PAS d'EntreeParcelle.
+- **Pièges & risques** (`blocB.tsx` `O5Servitudes`) — F2 (EntreeParcelle : champ → `allerA` zoom SANS
+  ouvrir la fiche ; clic carte → effet `selectedIdu` qui analyse + ouvre) + F3. F1 déjà inhérent (le
+  wrapper `Risques` remonte O5 par `key={selectedIdu}`). **= « F1 scénario 2 »**.
+- **Assemblage M16** (`moteurs.tsx`) — F3 : « vider » → Réinitialiser (vide `msel` + anneaux voisines +
+  résultat). Multi-sélection (`msel`) ⇒ PAS d'EntreeParcelle (clic-carte cumule). **H5 « garde msel DANS
+  l'outil »** : `msel` est bien store-local à l'outil (purgé au démontage, GB-010). La « refonte en étapes »
+  détaillée demande le texte recette de Vic (non persisté) — voir § H à spécifier.
+
+### Outils JUGÉS déjà conformes F (aucun code changé, motivé)
+- **Scan patrimoine** (H4) — owner-centric, `ParcelInput` multi-callback (onPick/onProprietaire/onAddress)
+  → EntreeParcelle ne convient pas. F4 **déjà** là (`Retour` des 2 portes + « changer » = reset du
+  propriétaire). F1 via `setModule`/ponts consommés. Conforme en l'état.
+- **Communes** (H3) & **Plu** (H1) — hubs multi-niveaux (portes + `Retour`), entrée commune/zone, pas de
+  parcelle unique ni de reset fait-main. F4 **déjà** satisfait. Conformes en l'état.
+- **Permis M03** (H2) & **Courrier M09** (H16) — radar / flux multi-destinataires guidé : pas d'entrée
+  « une parcelle » (M03 = AddressAutocomplete large ; M09 = liste de destinataires), pas de reset fait-main
+  (« effacer » déjà retiré par RETOURS-15, « vider le champ suffit »). F2/F3 ne s'appliquent pas ; F1/F4
+  déjà couverts (setModule / stepper+Retour). **H2/H16 = items recette à part** (texte non persisté).
+- **Mon secteur** (S1) — `hidden` (contenu déplacé dans la fiche §Marché) : laissé tel quel.
+- **Faisabilité** (H10) — dans la FICHE (`fiche/constructibilite.tsx`), pas un module. Non touché.
+
+### ⚠ À SPÉCIFIER par Vic (bloquant pour faire « juste »)
+Le **détail** des points H (H1,H2,H3,H5-refonte,H9,H13-refonte-piscines,H14,H15,H16) n'est persisté NULLE
+PART — seules les descriptions d'une ligne du présent rapport existent (le texte recette original est dans
+la session d'origine, perdu). J'ai appliqué **F partout où il s'applique** + les H **évidents dans le code**.
+Les « refontes » (H5 étapes, H13 piscines) et les H non décrits ont besoin du texte de Vic.
+
+### ⚠ maplibre / node_modules symlinké
+Mi-session, `tsc` a mis à sortir des erreurs `maplibre-gl` (« no default export ») dans `map/*` et
+`TimeMachine.tsx` — **fichiers NON touchés par moi**. `node_modules` est un **symlink vers le worktree
+principal** `~/Desktop/labuse/frontend/node_modules`, réécrit par une autre session/worktree pendant le
+mandat (drift de version maplibre). Mes 9 fichiers compilent proprement ; `vitest` 230 verts. Env, pas mon
+code — à re-vérifier `tsc` quand le node_modules partagé est stable.
+
+### RESTE (ordre Vic) : **G + reste de H (si Vic fournit le détail) → B**
+B = vitesse carte : **NON commencé** ; exige l'API relancée + `pg_stat_activity` vérifié d'abord
+(CHASSE-FIX-1 partage la base). API/front PAS lancés cette session (travail purement front/tsc/vitest).

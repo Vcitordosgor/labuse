@@ -24,6 +24,7 @@ import { CommuneScope, useModuleMap } from './ModulePanel'
 import { Bouton } from '../ui/Bouton'
 import { Case } from '../ui/Case'
 import { Chevron } from '../ui/Chevron'
+import { Reinitialiser } from '../ui/Reinitialiser'   // RECETTE-1 F3
 
 const fmtM2 = (v: number | null | undefined) => (v == null ? '—' : `${fmtInt(v)} m²`)
 
@@ -136,10 +137,20 @@ export function Blocs() {
   const [montre, setMontre] = useState(false)
   const [filtresOuverts, setFiltresOuverts] = useState(true)
   const voir = () => { setMontre(true); setFiltresOuverts(false) }
+  const select = useApp((s) => s.select)             // RECETTE-1 F3 — fermer la fiche ouverte par un bloc
+  const selectedIdu = useApp((s) => s.selectedIdu)
 
   // OUTILS-S1 (Lot D) — la sélection multiple ne servait QU'au pont Courrier (retiré) : plus de cases
   // à cocher par bloc (hors DA des autres outils). Le seul geste par bloc = « Scan patrimoine → ».
   const reset = () => { setOpenId(null) }
+  // RECETTE-1 (F3) — Réinitialiser : remet TOUS les filtres au défaut, replie le listing, rouvre les
+  // filtres, ferme la fiche éventuellement ouverte par un bloc. Reste dans l'outil.
+  const dirty = montre || commune !== null || surfMin > 0 || sdpMin > 0 || nMin !== 2 || inclurePublics
+  const resetAll = () => {
+    setCommune(null); setSurfMin(0); setSdpMin(0); setNMin(2); setInclurePublics(false)
+    setOpenId(null); setMontre(false); setFiltresOuverts(true)
+    if (selectedIdu) select(null)
+  }
   const q = useInfiniteQuery({
     queryKey: ['blocs', commune, surfMin, sdpMin, nMin, inclurePublics],
     queryFn: ({ pageParam }) => getBlocs(commune, surfMin, sdpMin, nMin, inclurePublics, pageParam),
@@ -153,6 +164,8 @@ export function Blocs() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
+      {/* RECETTE-1 (F3) — Réinitialiser en haut à droite dès qu'un filtre est posé ou le listing ouvert. */}
+      {dirty && <div className="flex justify-end"><Reinitialiser onReset={resetAll} /></div>}
       {/* bandeau client — ce que l'outil EST (et n'est pas) */}
       <div className="rounded-lg border px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut"
         style={{ borderColor: `${TOKENS.mint}4d`, background: `${TOKENS.mint}0f` }}>

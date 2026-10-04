@@ -9,6 +9,8 @@ import {
 } from '../../lib/api'
 import { AddressAutocomplete } from '../AddressAutocomplete'
 import { ParcelInput } from '../ParcelInput'
+import { EntreeParcelle, type SourceParcelle } from './EntreeParcelle'   // RECETTE-1 F2
+import { Reinitialiser } from '../ui/Reinitialiser'   // RECETTE-1 F3
 import { TEMPS_MILLESIMES } from '../map/basemaps'
 import { fmtInt, fmtM2 } from '../../lib/format'
 import { iduComplet, iduCourt, estIdu } from '../../lib/format'
@@ -1149,23 +1151,27 @@ const TEMPS_KEYS = TEMPS_MILLESIMES.map((m) => m.key) as string[]
 export function M08() {
   const { cmpLeft, setCmpLeft, setCmpRight, parcelPrefill, setParcelPrefill, setFlyTo, setTempsPinIdu } = useApp()
   const [idu, setIdu] = useState('')
+  // RECETTE-1 (F2) — quelle entrée a désigné la parcelle (grise l'autre dans EntreeParcelle).
+  const [source, setSource] = useState<SourceParcelle>(null)
   // « après » = TOUJOURS aujourd'hui (verrouillé) ; « avant » démarre sur 1950 si hors frise.
   useEffect(() => {
     setCmpRight('bm-ortho-now')
     if (!TEMPS_KEYS.includes(cmpLeft)) setCmpLeft('bm-ortho-1950')
   }, [])   // eslint-disable-line react-hooks/exhaustive-deps
-  const designer = async (code: string, coords?: [number, number]) => {
+  const designer = async (code: string, src: 'adresse' | 'carte', coords?: [number, number]) => {
     const c = code.trim(); if (c.length < 10) return
-    setIdu(c)
+    setIdu(c); setSource(src)
     setTempsPinIdu(c)   // épingle le contour de LA parcelle sur les deux fonds
     if (coords) { setFlyTo({ center: coords, zoom: 18 }); return }
     try { const f = await getFiche(c); if (f.coords) setFlyTo({ center: f.coords, zoom: 18 }) } catch { /* parcelle recentrée au mieux */ }
   }
-  // parcelPrefill (fiche « 1950 », clic carte via parcelAt, Copilote) → désigne la parcelle.
+  // parcelPrefill (fiche « 1950 », clic carte via parcelAt, Copilote) → désigne la parcelle (source carte).
   useEffect(() => {
-    if (parcelPrefill) { void designer(parcelPrefill); setParcelPrefill(null) }
+    if (parcelPrefill) { void designer(parcelPrefill, 'carte'); setParcelPrefill(null) }
   }, [parcelPrefill])   // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => () => setTempsPinIdu(null), [])   // eslint-disable-line react-hooks/exhaustive-deps
+  // RECETTE-1 (F3) — Réinitialiser : vide la parcelle épinglée + rend les deux entrées + remet l'année ancienne au défaut.
+  const resetAll = () => { setIdu(''); setSource(null); setTempsPinIdu(null); setCmpLeft('bm-ortho-1950') }
 
   // DA-FIX-2 Lot 2 (DA-004) — OMNIBOX PERMANENTE : le champ « désigner la parcelle » reste EN TÊTE,
   // même une fois la parcelle choisie (plus de bandeau + « changer » qui la masquaient). La frise des
@@ -1175,10 +1181,14 @@ export function M08() {
       <Banner>La <b>parcelle d'abord</b> : son IDU, une adresse, ou <b>cliquez-la sur la carte</b>. Puis
         choisissez l'année à revoir — l'« après » est toujours aujourd'hui.</Banner>
       <div className="flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2 p-3">
-        <p className="label-caps text-[9.5px]">Quelle parcelle voir évoluer ?</p>
-        {/* PATRON OMNIBOX (M137) — adresse OU IDU dans le même champ, via ParcelInput partagé */}
-        <ParcelInput dataAttr="temps-idu" placeholder="Adresse, IDU ou référence (BW0917)"
-          onPick={(id) => void designer(id)} />
+        <div className="flex items-center gap-1.5">
+          <p className="min-w-0 flex-1 label-caps text-[9.5px]">Quelle parcelle voir évoluer ?</p>
+          {/* RECETTE-1 (F3) — Réinitialiser dès qu'une parcelle est désignée. */}
+          {idu && <Reinitialiser onReset={resetAll} />}
+        </div>
+        {/* RECETTE-1 (F2) — EntreeParcelle : adresse/IDU OU clic carte, l'une grise l'autre. */}
+        <EntreeParcelle source={source}
+          onPick={(id, src) => void designer(id, src)} />
       </div>
       {!idu ? (
         <p className="text-[11px] text-txt-mut">Accès direct depuis toute fiche : bouton « 1950 ».</p>

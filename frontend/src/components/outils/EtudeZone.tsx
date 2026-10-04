@@ -28,6 +28,7 @@ import { Squelette } from '../Loading'
 import { ErrorState } from '../States'
 import { DestinationBadge, DestinationSelect } from './DestinationSelect'
 import { Bouton } from '../ui/Bouton'
+import { Reinitialiser } from '../ui/Reinitialiser'   // RECETTE-1 F3
 import { Chevron } from '../ui/Chevron'
 
 const TEMPS = [5, 10, 15]
@@ -180,10 +181,13 @@ export function EtudeZone() {
   // section ; le chevron suit l'idiome de l'outil (fermé ▸ pointe à droite, ouvert ▾).
   const [openSecs, setOpenSecs] = useState<Set<string>>(() => new Set(['population', 'economie']))
 
-  const nouvelleEtude = () => {
+  // RECETTE-1 (F3) — Réinitialiser : vide la zone définie + la lecture, SANS changer de porte (reste
+  // dans l'outil). « ← Changer la zone » (F4) ajoute le retour à l'accueil des deux portes.
+  const resetEtude = () => {
     setCible(null); setNaf(null); setNafQuery(''); setSousDest(null); setZone(null); setTool(null)
-    setModuleMap({ idus: [], extra: null }); mut.reset(); setPorteZone(null)
+    setModuleMap({ idus: [], extra: null }); mut.reset()
   }
+  const nouvelleEtude = () => { resetEtude(); setPorteZone(null) }
 
   const enTete = res?.zone_disponible
     ? (res.entree === 'polygone'
@@ -637,8 +641,10 @@ export function EtudeZone() {
             {res.concurrents != null && <Concurrents res={res} />}
           </div>}
 
-          {/* RECETTE-2 LOT C1 : le bouton « Exporter le PDF » est retiré. */}
-          <Bouton niveau="secondaire" ton="vert" onClick={nouvelleEtude} className="w-full">Nouvelle étude</Bouton>
+          {/* RECETTE-2 LOT C1 : le bouton « Exporter le PDF » est retiré.
+              RECETTE-1 (F3) — « Nouvelle étude » devient le Réinitialiser unique (vide la zone + la
+              lecture, reste dans la porte). Changer de porte = « ← Changer la zone » en tête. */}
+          <div className="flex justify-end"><Reinitialiser onReset={resetEtude} label="Nouvelle étude" /></div>
           {res.note && <p className="text-[9.5px] leading-snug text-txt-dim">{res.note}</p>}
         </div>
       )}

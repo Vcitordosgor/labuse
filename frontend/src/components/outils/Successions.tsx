@@ -23,6 +23,7 @@ import { Squelette } from '../Loading'
 import { ErrorState } from '../States'
 import { Siren } from '../shared/Siren'
 import { Tip } from '../Tip'
+import { Reinitialiser } from '../ui/Reinitialiser'   // RECETTE-1 F3
 import { CommuneScope } from './ModulePanel'
 
 const fmtM2 = (v: number | null | undefined) => (v == null ? '—' : `${fmtInt(v)} m²`)
@@ -49,8 +50,12 @@ function methodeTip(maj?: string | null, rne?: string | null): string {
 
 export function Successions() {
   const focusParcelle = useApp((s) => s.focusParcelle)   // RETOURS-15 C8 — clic ligne → zoom + contour + fiche
+  const select = useApp((s) => s.select)                  // RECETTE-1 F3 — fermer la fiche ouverte par une ligne
+  const selectedIdu = useApp((s) => s.selectedIdu)
 
   const [commune, setCommune] = useState<string | null>(null)   // Toute l'île par défaut
+  // RECETTE-1 (F3) — Réinitialiser : revient à « toute l'île » + ferme la fiche éventuellement ouverte.
+  const resetAll = () => { setCommune(null); if (selectedIdu) select(null) }
 
   const q = useInfiniteQuery({
     queryKey: ['successions', commune],
@@ -78,7 +83,11 @@ export function Successions() {
 
       {/* entrée : périmètre EXPLICITE (Toute l'île par défaut). RETOURS-15 C8 — le filtre « Résiduel
           minimum (SDP) » est retiré (le tri serveur reste résiduel décroissant). */}
-      <CommuneScope commune={commune} noteFiltre={false} onChange={(c) => setCommune(c)} />
+      <div className="flex items-center gap-2">
+        <div className="min-w-0 flex-1"><CommuneScope commune={commune} noteFiltre={false} onChange={(c) => setCommune(c)} /></div>
+        {/* RECETTE-1 (F3) — Réinitialiser dès qu'une commune est choisie. */}
+        {commune && <Reinitialiser onReset={resetAll} />}
+      </div>
 
       {q.isLoading && <Squelette lignes={6} />}
       {q.isError && <ErrorState message="Signal momentanément indisponible — réessayez." retry={() => q.refetch()} />}
