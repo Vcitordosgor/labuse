@@ -281,15 +281,15 @@ function Toast() {
 }
 
 export default function App() {
-  const { view, selectedIdu, select, setView, filters, setFilters, zone, setZone, module, setModule, setFlyTo, flyTo, commune, setCommune, verdict, setVerdict, outilsOpen, parcours, setMsel, setPermitToOpen, setIaRestitution, compareOpen, contexteCommune, setContexteCommune, togglePanel, setTuyauActives, toggleTuyau } = useApp()
+  const { view, selectedIdu, select, setView, filters, setFilters, zone, setZone, module, setModule, setFlyTo, flyTo, commune, setCommune, verdict, setVerdict, outilsOpen, parcours, setMsel, setPermitToOpen, setIaRestitution, compareOpen, contexteCommune, setContexteCommune, togglePanel, setTuyauActives, toggleTuyau, setModuleMap } = useApp()
 
   // Hook d'auto-QA (stable, sans effet produit) : sélection directe d'une parcelle / d'une vue.
   // RECETTE-10 — + setContexteCommune / togglePanel / setFilters exposés pour piloter les captures
   // (fiche commune, volet Résultats, mode analyse) ; aucun effet produit (mêmes actions que l'UI).
   // COUCHES-RECETTE-1 — + setTuyauActives / toggleTuyau pour piloter panneau ET légende dans les captures.
   useEffect(() => {
-    ;(window as unknown as Record<string, unknown>).__labuse = { select, setView, setZone, setModule, setFlyTo, setCommune, setVerdict, setMsel, setPermitToOpen, setIaRestitution, setContexteCommune, togglePanel, setFilters, getFilters: () => filters, setTuyauActives, toggleTuyau }
-  }, [select, setView, setZone, setModule, setFlyTo, setCommune, setVerdict, setMsel, setPermitToOpen, setIaRestitution, setContexteCommune, togglePanel, setFilters, filters, setTuyauActives, toggleTuyau])
+    ;(window as unknown as Record<string, unknown>).__labuse = { select, setView, setZone, setModule, setFlyTo, setCommune, setVerdict, setMsel, setPermitToOpen, setIaRestitution, setContexteCommune, togglePanel, setFilters, getFilters: () => filters, setTuyauActives, toggleTuyau, setModuleMap }
+  }, [select, setView, setZone, setModule, setFlyTo, setCommune, setVerdict, setMsel, setPermitToOpen, setIaRestitution, setContexteCommune, togglePanel, setFilters, filters, setTuyauActives, toggleTuyau, setModuleMap])
 
   // DASHBOARD-V1 · D1 — capteurs d'usage (Tour de contrôle) : heartbeat de session au boot,
   // ouverture d'outil (module) et changement de vue. Fire-and-forget, dédoublonné dans usage.ts —

@@ -24,7 +24,8 @@ const PISC_LIST = {
       proprio: { type: 'particulier' } },
   ],
 }
-const POINTS = { type: 'FeatureCollection', features: [{ type: 'Feature', geometry: { type: 'Point', coordinates: [55.3, -21] }, properties: { kind: 'piscine', idu: '97411000AP0000' } }] }
+// RECETTE-1 H13.3 — la carte montre des PARCELLES COLORÉES (polygones), plus des points/gouttes.
+const PARCELLES = { type: 'FeatureCollection', features: [{ type: 'Feature', geometry: { type: 'Polygon', coordinates: [[[55.3, -21], [55.31, -21], [55.31, -21.01], [55.3, -21]]] }, properties: { kind: 'piscine-parcelle', idu: '97411000AP0000', statut: 'servie' } }] }
 function mkItem(i: number, ecartee = false) {
   return {
     idu: `97411000AP${String(i).padStart(4, '0')}`, commune: 'Saint-Paul', productible: 1598 - i,   // IDU 14 car.
@@ -51,7 +52,7 @@ const FICHE = {
 function mockFetch() {
   global.fetch = vi.fn(async (url: string) => {
     const u = String(url)
-    if (u.includes('/prospection-piscines/points')) return { ok: true, json: async () => POINTS }
+    if (u.includes('/prospection-piscines/parcelles')) return { ok: true, json: async () => PARCELLES }
     if (u.includes('/prospection-piscines/liste')) return { ok: true, json: async () => PISC_LIST }
     if (u.includes('/prospection-piscines')) return { ok: true, json: async () => AGG }
     if (u.includes('/prospection-solaire/parcelle/')) return { ok: true, json: async () => FICHE }
@@ -78,34 +79,36 @@ describe('SOLAIRE — deux modes', () => {
     expect(screen.queryByText(/gelées 11\/07\/2026/)).toBeNull()
   })
 
-  it('RETOURS-15 C6 : encart « N piscines détectées à La Réunion », « Voir les piscines » ouvre la liste', async () => {
+  it('H13.3 — étape 1 Périmètre : toute l\'île + les communes avec leurs comptes (pas de liste encore)', async () => {
     renderTool()
     fireEvent.click(document.querySelector('[data-solaire-mode="piscines"]')!)
-    // (1) encart total + (2) par commune apparaissent d'emblée ; (3) « Voir les piscines » ouvre la liste.
-    await waitFor(() => expect(document.querySelector('[data-piscines-total]')?.textContent).toContain('480'))
-    expect(document.body.textContent).toContain('piscines détectées à La Réunion')   // C6 — encart
-    expect(document.body.textContent).not.toContain('à équiper')                     // sous-texte retiré
-    expect(screen.getByText('Saint-Pierre')).toBeTruthy()       // filtre par commune
-    expect(document.querySelector('[data-piscines-row]')).toBeNull()   // pas encore de listing
-    expect(document.querySelector('[data-piscines-voir]')?.textContent).toContain('Voir les piscines')
-    fireEvent.click(document.querySelector('[data-piscines-voir]')!)
+    // étape 1 : choix du périmètre (toute l'île OU une commune), compte à côté ; aucune liste pour l'instant.
+    await waitFor(() => expect(document.querySelector('[data-piscines-perim="ile"]')).toBeTruthy())
+    expect(document.body.textContent).toContain('Toute l’île')
+    expect(screen.getByText('Saint-Pierre')).toBeTruthy()            // les communes sont listées
+    expect(document.querySelector('[data-piscines-row]')).toBeNull() // pas de listing à l'étape périmètre
+    // étape 2 : statut (confirmées / à confirmer / les deux)
+    fireEvent.click(document.querySelector('[data-piscines-perim="ile"]')!)
+    await waitFor(() => expect(document.querySelector('[data-piscines-statut="servie"]')).toBeTruthy())
+    expect(document.querySelector('[data-piscines-statut="a_confirmer"]')).toBeTruthy()
+    expect(document.querySelector('[data-piscines-statut="tous"]')).toBeTruthy()
+    // résultat : compte (confirmées de l'île = 12 480) + liste paginée
+    fireEvent.click(document.querySelector('[data-piscines-statut="servie"]')!)
     await waitFor(() => expect(document.querySelectorAll('[data-piscines-row]').length).toBe(2))
-    expect(document.querySelector('[data-piscines-voir]')).toBeNull()  // le bouton a disparu
+    expect(document.querySelector('[data-piscines-total]')?.textContent).toContain('480')
+    expect(document.body.textContent).toContain('à La Réunion')
   })
 
-  it('PISCINES-2 / D8 : source « IGN FLAIR et CoSIA, 2025 » + bascule ; encart replié au « Voir »', async () => {
+  it('H13.3 — source « IGN FLAIR et CoSIA, 2025 », aucun potentiel solaire dans le chemin Piscines', async () => {
     renderTool()
     fireEvent.click(document.querySelector('[data-solaire-mode="piscines"]')!)
-    // RETOURS-15 D8 — phrase technique retirée, une seule ligne de source.
-    await waitFor(() => expect(document.querySelector('[data-piscines-source]')?.textContent).toContain('IGN FLAIR et CoSIA, 2025'))
+    await waitFor(() => expect(document.querySelector('[data-piscines-perim="ile"]')).toBeTruthy())
+    expect(document.querySelector('[data-piscines-source]')?.textContent).toContain('IGN FLAIR et CoSIA, 2025')
     expect(document.body.textContent ?? '').not.toContain('précision ≥ 85 %')
-    expect(document.querySelector('[data-piscines-toggle-aconfirmer]')).toBeTruthy()   // statut, plus de « incertaines » confiance
-    // l'encart total+communes est ouvert avant le « Voir »
-    expect(document.querySelector<HTMLDetailsElement>('[data-piscines-encart]')?.open).toBe(true)
-    fireEvent.click(document.querySelector('[data-piscines-voir]')!)   // ouvre le listing…
+    fireEvent.click(document.querySelector('[data-piscines-perim="ile"]')!)
+    await waitFor(() => expect(document.querySelector('[data-piscines-statut="servie"]')).toBeTruthy())
+    fireEvent.click(document.querySelector('[data-piscines-statut="servie"]')!)
     await waitFor(() => expect(document.querySelectorAll('[data-piscines-row]').length).toBe(2))
-    // …et replie l'encart (rouvrable) pour laisser la place à la liste (D8)
-    expect(document.querySelector<HTMLDetailsElement>('[data-piscines-encart]')?.open).toBe(false)
     expect((document.body.textContent ?? '').replace(/\s/g, '')).not.toContain('kWh/kWc')  // aucun potentiel solaire
   })
 
@@ -139,20 +142,23 @@ describe('SOLAIRE — deux modes', () => {
     expect(document.querySelector('[data-solaire-kwc-hyp]')?.textContent).toContain('0,2 kWc/m²')
   })
 
-  it('RETOURS-15 C6 — liste IDU · commune · surface ; clic ligne → fiche ; sans courrier/propriétaire/sélection', async () => {
+  it('H13.3 — liste IDU · commune · source ; « pas une piscine » en ICÔNE ; clic ligne → fiche', async () => {
     renderTool()
     fireEvent.click(document.querySelector('[data-solaire-mode="piscines"]')!)
-    await waitFor(() => expect(document.querySelector('[data-piscines-voir]')).toBeTruthy())
-    fireEvent.click(document.querySelector('[data-piscines-voir]')!)   // « Voir les piscines »
+    await waitFor(() => expect(document.querySelector('[data-piscines-perim="ile"]')).toBeTruthy())
+    fireEvent.click(document.querySelector('[data-piscines-perim="ile"]')!)
+    await waitFor(() => expect(document.querySelector('[data-piscines-statut="servie"]')).toBeTruthy())
+    fireEvent.click(document.querySelector('[data-piscines-statut="servie"]')!)
     await waitFor(() => expect(document.querySelectorAll('[data-piscines-row]').length).toBe(2))
     const body = document.body.textContent ?? ''
-    // C6 — plus de propriétaire dans la liste, plus de section Courrier ni de cases de sélection.
+    // plus de propriétaire dans la liste, plus de section Courrier ni de cases de sélection.
     expect(body).not.toContain('SCI SOLEIL')
     expect(document.querySelector('[data-piscines-courrier]')).toBeNull()
     expect(document.querySelectorAll('[data-piscines-sel]').length).toBe(0)
-    // IDU · commune · surface affichés ; « pas une piscine » (correction) conservé.
+    // IDU · commune affichés ; « pas une piscine » conservé, désormais en ICÔNE (croix ✕).
     expect(body).toContain('Saint-Paul')
     expect(document.querySelectorAll('[data-piscines-pas]').length).toBe(2)
+    expect(document.querySelector('[data-piscines-pas]')?.textContent).toBe('✕')
     // clic sur une ligne → focusParcelle(fiche) : la fiche s'ouvre (selectedIdu posé).
     fireEvent.click(document.querySelector('[data-piscines-row]')!)
     expect(useApp.getState().selectedIdu).toBe('97411000AP0000')

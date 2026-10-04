@@ -1312,9 +1312,44 @@ def prospection_piscines_points(commune: str | None = None, bati: str = "tous",
         for r in rows]}
 
 
+@router.get("/prospection-piscines/parcelles")
+def prospection_piscines_parcelles(commune: str | None = None,
+                                   statut: str = "servie",   # servie | a_confirmer | tous
+                                   piscine_surf_min: int = 0,
+                                   db: Session = Depends(get_db)):
+    """RECETTE-1 H13.3 — la carte du pisciniste montre des PARCELLES COLORÉES (plus des points/centroïdes).
+    Le POLYGONE de chaque parcelle à piscine du périmètre, en GeoJSON, porte son `statut` (servie /
+    a_confirmer) pour que la carte distingue « confirmées » (menthe) de « à confirmer » (ambre).
+    Géométrie simplifiée (~2 m) pour alléger le transfert ; lecture seule de la source gelée `piscines`
+    jointe à `parcels` (aucun recalcul). Corrections « pas une piscine » exclues, comme /points et /liste.
+    Le périmètre entier est servi (pas de plafond) — Saint-Paul ≈ 0,4 Mo, toute l'île ≈ 2,3 Mo."""
+    if not db.execute(text("SELECT to_regclass('piscines') IS NOT NULL")).scalar():
+        raise HTTPException(503, "source piscines indisponible (lancer `labuse piscines-build`).")
+    from ..ingestion.ortho_equipements import ensure_corrections
+    ensure_corrections(db)
+    # Même sélection de statut que la liste : servie (défaut) · a_confirmer · tous (les deux, colorés).
+    statuts = ("('servie','a_confirmer')" if statut == "tous"
+               else "('a_confirmer')" if statut == "a_confirmer" else "('servie')")
+    surf_cond = " AND pi.surface_m2 >= :psmin" if piscine_surf_min else ""
+    corr_cond = " AND NOT EXISTS (SELECT 1 FROM piscine_corrections pc WHERE pc.idu = pi.idu)"
+    where = (f"WHERE pi.statut IN {statuts}" + surf_cond + corr_cond
+             + (" AND pi.commune = :c" if commune else ""))
+    rows = db.execute(text(
+        f"""SELECT pi.idu, pi.commune, pi.source, pi.statut,
+                   ST_AsGeoJSON(ST_SimplifyPreserveTopology(ST_Transform(p.geom_2975, 4326), 0.00002), 6) AS g
+            FROM piscines pi JOIN parcels p ON p.idu = pi.idu
+            {where} AND p.geom_2975 IS NOT NULL"""),
+        {"c": commune, "psmin": piscine_surf_min}).mappings().all()
+    return {"type": "FeatureCollection", "features": [
+        {"type": "Feature", "geometry": json.loads(r["g"]),
+         "properties": {"kind": "piscine-parcelle", "idu": r["idu"], "commune": r["commune"],
+                        "source": r["source"], "statut": r["statut"]}}
+        for r in rows if r["g"]]}
+
+
 @router.get("/prospection-piscines/liste")
 def prospection_piscines_liste(commune: str | None = None,
-                               statut: str = "servie",   # servie | tous (servie + a_confirmer)
+                               statut: str = "servie",   # servie | a_confirmer | tous (les deux)
                                surf_min: int = 0,
                                proprio: str = "tous",   # tous | pm | pp
                                limit: int = 50,   # RECETTE-1 H13.2 — pagination serveur par 50 (plus de cap 1000)
@@ -1329,7 +1364,8 @@ def prospection_piscines_liste(commune: str | None = None,
         raise HTTPException(503, "source piscines indisponible (lancer `labuse piscines-build`).")
     from ..ingestion.ortho_equipements import ensure_corrections
     ensure_corrections(db)
-    statuts = "('servie','a_confirmer')" if statut == "tous" else "('servie')"
+    statuts = ("('servie','a_confirmer')" if statut == "tous"
+               else "('a_confirmer')" if statut == "a_confirmer" else "('servie')")
     surf_cond = " AND pi.surface_m2 >= :smin" if surf_min else ""
     prop_cond = " AND pm.idu IS NOT NULL" if proprio == "pm" \
         else " AND pm.idu IS NULL" if proprio == "pp" else ""
