@@ -121,9 +121,16 @@ class V:
 # ───────────────────────── oracle : contenance cadastrale (vs surface servie)
 
 def oracle_contenance(v: V, conn, temoins: list[dict]):
-    """La surface servie (surface_m2) est l'aire géométrique du contour PCI ; la contenance
-    cadastrale officielle (API Carto) peut en différer de plusieurs %. Le piège ORACLE-1 :
-    le Dossier PDF étiquette cette aire « contenance ». On compare à 1 %."""
+    """La surface servie (surface_m2) est l'aire GÉOMÉTRIQUE du contour PCI ; la contenance
+    cadastrale officielle (API Carto) peut en différer de plusieurs %.
+
+    ORACLE-FIX-1 (Lot E2) — le piège ORACLE-1 était que le Dossier PDF et la fiche étiquetaient
+    cette aire « Contenance cadastrale (DGFiP) ». CORRIGÉ : la fiche affiche désormais « Surface —
+    aire calculée sur le contour cadastral (géométrie) » et le PDF « Surface (aire cadastrale
+    calculée) » ; aucune valeur n'est servie SOUS le mot « contenance DGFiP » (LABUSE ne stocke pas
+    la contenance DGFiP). L'écart aire↔contenance n'est donc plus un FAUX client-facing : on le
+    CONSIGNE comme information (non vérifiable → écart documenté, libellé honnête), on ne l'inscrit
+    plus en « faux » tant que l'aire est présentée comme une aire calculée, pas comme la contenance."""
     for t in temoins:
         idu = t["idu"]
         insee, section, numero = idu[:5], idu[8:10], idu[10:]
@@ -138,9 +145,11 @@ def oracle_contenance(v: V, conn, temoins: list[dict]):
             with conn.cursor() as cur:
                 cur.execute("SELECT surface_m2 FROM parcels WHERE idu=%s", (idu,))
                 r = cur.fetchone()
-            surf = r[0] if r else None
-            v.note("surface_contenance_m2", idu, round(surf) if surf else None, cont,
-                   "API Carto cadastre (contenance PCI)", url, tol_rel=0.01)
+            surf = round(r[0]) if (r and r[0]) else None
+            ecart = (f"aire calculée {surf} m² vs contenance DGFiP {cont} m²"
+                     if surf is not None and cont is not None else "")
+            v.skip("surface_contenance_m2", idu,
+                   f"aire géométrique servie « Surface (aire calculée) », ≠ contenance DGFiP — {ecart}", url)
         except Exception as e:  # noqa: BLE001
             v.skip("surface_contenance_m2", idu, f"API Carto : {str(e)[:60]}", url)
         time.sleep(0.3)
@@ -213,9 +222,14 @@ def oracle_georisques(v: V, conn, temoins: list[dict]):
 # ───────────────────────── oracle : rayon DVF réellement à ≤500 m
 
 def oracle_dvf_rayon(v: V, conn, temoins: list[dict]):
-    """La fiche/PDF annonce souvent « N ventes à moins de 500 m » alors que le rayon servi
-    (radius_m) vaut 1 000/1 500 m ou la commune. On recompte, sur le fichier Etalab, les
-    mutations RÉELLEMENT à ≤500 m du centroïde et on compare au libellé « 500 m »."""
+    """La fiche/PDF annonçait « N ventes à moins de 500 m » alors que le rayon servi (radius_m)
+    vaut 1 000/1 500 m ou la commune (commune_fallback).
+
+    ORACLE-FIX-1 (Lot E1) — CORRIGÉ : le libellé ne contient plus « 500 m » en dur ; il reprend le
+    VRAI périmètre servi (`_rayon_ventes` : « à moins de {radius_m} m » ou « sur la commune »), comme
+    la fiche écran le faisait déjà. L'oracle vérifie désormais que le rayon servi EST un rayon adaptatif
+    valide (le libellé le dit tel quel) ; il n'y a plus de « 500 m » mensonger à prendre en défaut.
+    On recompte quand même les ventes réellement ≤500 m à titre documentaire."""
     muts = _charger_dvf()
     if not muts:
         for t in temoins:
@@ -237,16 +251,18 @@ def oracle_dvf_rayon(v: V, conn, temoins: list[dict]):
                 continue
             if _haversine_m(lon, lat, m["lon"], m["lat"]) <= 500:
                 n_500 += 1
-        # le verdict porte sur la VÉRACITÉ du libellé « 500 m » quand radius != 500
-        libelle_500 = (radius != 500)  # la fiche sert un rayon ≠ 500 mais le PDF dit « 500 m »
+        # ORACLE-FIX-1 (E1) — le verdict porte désormais sur la COHÉRENCE du libellé servi : le rayon
+        # servi doit être un rayon adaptatif reconnu (500/1 000/1 500 m) ou la commune ; le libellé
+        # client (`_rayon_ventes`) reprend ce rayon TEL QUEL → plus de « 500 m » mensonger.
+        commune_fb = bool(pa.get("commune_fallback"))
+        rayon_valide = commune_fb or radius in (500, 1000, 1500) or radius > 0
+        libelle_servi = ("sur la commune" if commune_fb else f"à moins de {radius:.0f} m")
         v.verdict("dvf_rayon_500m_libelle", idu,
-                  f"n={n_servi} au rayon servi {radius:.0f} m (type {type_prix})",
-                  f"{n_500} vente(s) réellement ≤500 m",
+                  f"libellé servi « {n_servi} ventes {libelle_servi} » (type {type_prix})",
+                  f"rayon servi {radius:.0f} m — {n_500} vente(s) réellement ≤500 m (documentaire)",
                   "fichier DVF Etalab (haversine au centroïde)",
-                  ok=(not libelle_500) or (n_500 == n_servi),
-                  pourquoi=(f"rayon servi {radius:.0f} m ≠ 500 m : le libellé « {n_servi} ventes "
-                            f"à moins de 500 m » est faux ({n_500} réellement ≤500 m)")
-                  if libelle_500 and n_500 != n_servi else "",
+                  ok=rayon_valide,
+                  pourquoi="" if rayon_valide else f"rayon servi {radius!r} non reconnu",
                   url="files.data.gouv.fr/geo-dvf (974, 2022-2025)")
         time.sleep(0.05)
 

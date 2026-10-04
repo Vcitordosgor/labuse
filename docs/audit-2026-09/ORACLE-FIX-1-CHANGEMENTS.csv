@@ -1,0 +1,23 @@
+lot;parcelle;zone/objet;champ affiché;avant;apres;surface;source
+A;S07 97422000AD0250;2AUd (Le Tampon);Recul sur voie;non réglementé;4 m;fiche + PDF;Art. Ud6.2 p.60 (renvoi 2AUd→Ud)
+A;S07 97422000AD0250;2AUd (Le Tampon);Recul limites séparatives;non réglementé;3 m;fiche + PDF;Art. Ud7.1 p.61 (renvoi 2AUd→Ud)
+A;S07 97422000AD0250;2AUd (Le Tampon);Pleine terre min;non réglementé;30 %;fiche + PDF;Art. Ud13.2 p.69 (renvoi 2AUd→Ud)
+A;S07 97422000AD0250;2AUd (Le Tampon);Stationnement;non réglementé;1 place / logement;fiche + PDF;Art. Ud12.2 p.67 (renvoi 2AUd→Ud)
+A;S07 97422000AD0250;2AUd (Le Tampon);Gabarit — zone d'implantation;bloqué (recul non validé → 0 m², repli legacy);3 535 m² (reculs 4 m / 3 m appliqués);outil Gabarit + PDF;compute_gabarit
+A;île (14 zones AU, 5 communes);"AUt(97404) · 2AUe(97405) · 1AUa/1AUc/1AUem/2AUem(97407) · 2AUa/2AUb/2AUc/2AUd/2AUe(97422) · 2AUa/2AUb/2AUc(97421)";règles SDP affichées;non réglementé (calibrage partiel);valeur de la zone U indiquée en indice (recul/pleine terre/stationnement/hauteur selon la zone);fiche + PDF + gabarit;renvoi du règlement (art. AUindicée)
+B;S10 97409000AB0018;UC / PPR bleue (Saint-André);Gabarit — zone d'implantation;0 m² — « Exclusion (PPR rouge) »;9 177 m² (sur 10 682 m²), aucune exclusion PPR;outil Gabarit + PDF §10;builder.py (SUP pm1 exclu)
+B;S10 97409000AB0018;plan gabarit (légende);« Exclusion (PPR rouge) » sans zone rouge;« Exclusion réglementaire (PPR rouge / SUP) », affichée seulement si présente;PDF;plan_svg.py
+B;île (~75 736 parcelles);sous enveloppe PPR pm1 sans zone rouge;emprise constructible;soustraite à tort par la SUP pm1;emprise rendue (gabarit/résiduel) — matérialisé au run;gabarit/résiduel;builder.py
+C;S20 97420000AB0268;permis PC 2018 etat=4 (annulé);bloc caducité;« PC autorisé 2018 · caduc probable · constructibilité prouvée · ×1,6 »;absent (permis annulé → sort de la preuve);fiche §caducité + PDF;pc_caducs.py
+C;île (−1 422 / +~3 083 parcelles);permis;caducité;2 161 parcelles (toutes tirées d'un annulé);4 822 parcelles (autorisé jamais commencé, 0 annulé) — matérialisé au run;fiche §caducité + signal permis_actif;pc_caducs.py
+D;S05 97410000CI0215;Saint-Benoît (44,9 ha);Nombre de bâtiments;63;21;fiche + PDF + score (declassement);bati.py (dédup — 3 ré-ingestions superposées)
+D;S07 97422000AD0250;Le Tampon;Nombre de bâtiments;6;3;fiche + PDF + score;bati.py (dédup)
+D;S09 97407000AO0158;Le Port;Nombre de bâtiments;6;3;fiche + PDF + score;bati.py (dédup)
+D;S12 97422000AD0042;Le Tampon;Nombre de bâtiments;9;3;fiche + PDF + score;bati.py (dédup)
+E1;S03 97415000AB0425;prix ancien médian;proximité des ventes;« 10 ventes à moins de 500 m »;« 10 ventes à moins de 1 500 m »;PDF;radius_m=1500 servi
+E1;S08 97414000CD0012;prix ancien médian;proximité des ventes;« 101 ventes à moins de 500 m »;« 101 ventes sur la commune »;PDF;commune_fallback servi
+E1;S20 97420000AB0268;prix ancien médian;proximité des ventes;« 24 ventes à moins de 500 m »;« 24 ventes à moins de 1 000 m »;PDF;radius_m=1000 servi
+E1;île;prix ancien médian (PDF, 2 emplacements);proximité des ventes;« N ventes à moins de 500 m » (en dur);rayon réellement servi (500/1 000/1 500 m ou commune);PDF;miroir.py _rayon_ventes
+E2;île;identité parcellaire;libellé de la surface;« Contenance cadastrale (DGFiP) » (= aire géométrique);« Surface (aire calculée) » + tooltip « aire calculée sur le contour cadastral »;fiche + PDF;Fiche.tsx + rapport.html.j2
+E3;S18 97405000BE0599;propriétaire (Petite-Île);type de propriétaire;« Société (SA / SARL / SAS) » (SIREN U23631848);« Indivision » (pseudo-SIREN U… non affiché);fiche + PDF;proprietaire_type.py + robinet_fiche.py
+E4;97409 / 97413;fraîcheur PLU (Saint-André / Saint-Leu);statut du document;« opposable, présent au GPU » / « il fait foi à ce jour »;« opposable en mairie ; publication au GPU à vérifier » + « à vérifier en mairie »;fiche + PDF;app.py (opposabilite_en_attente)

@@ -13,10 +13,18 @@ Signal RÉTROSPECTIF (l'arène le juge de plein droit).
 
 Définition parcelle (état Sitadel — la DOC/ouverture de chantier n'existe pas dans les données ; la
 contre-vérif bâti est inopérante, cf. cadrage §3.2) :
-  - réalisé = ≥1 PC achevé (etat=6 OU DAACT présent) ;
-  - caduc   = octroyé (etat∈{4,6}) MAIS aucun réalisé → accordé jamais achevé ;
+  - réalisé = ≥1 PC achevé (etat=6 OU DAACT présent) OU travaux commencés (etat=5 : la constructibilité
+    a été non seulement prouvée mais mise en œuvre → ce n'est pas « jamais commencé ») ;
+  - caduc   = OCTROYÉ (etat∈{2 autorisé, 5 commencés, 6 achevés}) MAIS aucun réalisé → en pratique un
+    PC AUTORISÉ (etat=2) jamais commencé ni achevé ;
   - Y+4 dépassé (marge d'un an au-delà des 3 ans légaux, prorogations invisibles) → Y ≤ ref_year-4.
 Autorisation = Sourcé (Sitadel) ; caducité = Estimé (inférée).
+
+ORACLE-FIX-1 (Lot C) — un permis ANNULÉ (etat=4, cf. ingestion/permits.ETAT_LABELS) ne prouve AUCUNE
+constructibilité : il SORT de la preuve et de toute surcote. L'ancien `granted = etat∈{4,6}` traitait
+l'annulé comme un octroi (lecture fausse héritée du cadrage A1, qui croyait « 4 = accordé non achevé ») ;
+comme etat=6 est toujours « réalisé », la table ne tirait EN FAIT que sur des annulés (cas S20). On rétablit
+la définition doctrinale « octroyé » = autorisé/commencé/achevé {2,5,6}, jamais annulé.
 """
 from __future__ import annotations
 
@@ -50,10 +58,12 @@ WITH pc AS (
   WHERE pmp.type = 'PC' AND pmp.date_autorisation IS NOT NULL),
 parc AS (
   SELECT idu,
-         min(y) FILTER (WHERE etat IN ('4','6')) AS y_octroye,
-         bool_or(daact OR etat = '6') AS realized,
-         bool_or(etat IN ('4','6'))   AS granted,
-         count(*) FILTER (WHERE etat IN ('4','6')) AS n_octroyes
+         -- ORACLE-FIX-1 : octroyé = autorisé/commencé/achevé {2,5,6} (JAMAIS annulé=4) ;
+         -- réalisé = achevé/DAACT OU travaux commencés (5) → exclut le « jamais commencé ».
+         min(y) FILTER (WHERE etat IN ('2','5','6')) AS y_octroye,
+         bool_or(daact OR etat IN ('5','6')) AS realized,
+         bool_or(etat IN ('2','5','6'))      AS granted,
+         count(*) FILTER (WHERE etat IN ('2','5','6')) AS n_octroyes
   FROM pc GROUP BY idu)
 SELECT parc.idu, parc.y_octroye, parc.n_octroyes
 FROM parc

@@ -398,8 +398,10 @@ def _resolve_zone_base(code: str, commune: str | None = None) -> ZoneRules | Non
 
 
 def resolve_zone(code: str, commune: str | None = None) -> ZoneRules | None:
-    """Résout le code de zone, PUIS superpose les règles chiffrées validées (PLU-CALIBRAGE-2)."""
-    return _appliquer_calibrage(_resolve_zone_base(code, commune), code, commune)
+    """Résout le code de zone, PUIS superpose les règles chiffrées validées (PLU-CALIBRAGE-2), PUIS
+    complète le renvoi AU → U (ORACLE-FIX-1 Lot A : règles SDP reprises de la zone U de renvoi)."""
+    rules = _appliquer_calibrage(_resolve_zone_base(code, commune), code, commune)
+    return _completer_renvoi(rules, code, commune)
 
 
 # rétro-compat : le harnais d'équivalence et d'anciens scripts nomment resolve_zone_v2.
@@ -635,6 +637,69 @@ def _appliquer_calibrage(rules: ZoneRules | None, code: str, commune: str | None
         return rules
     champs, src = ov
     return _replace(rules, sources={**(rules.sources or {}), **src}, **champs)
+
+
+# ── ORACLE-FIX-1 (Lot A) — complétion du renvoi AU → U ────────────────────────────────────────────
+# Constat ORACLE-1 (défaut systémique n°1) : des zones AU<indice> servent recul/pleine terre/stationnement
+# « non réglementé » alors que le règlement les fixe — parce que leur bloc `regles` n'a calibré QU'UNE
+# partie (souvent la seule hauteur), et que le renvoi « se reporter au règlement de la zone U<indice> »
+# (art. AUindicée) n'était appliqué qu'aux codes SANS hit direct (étape 3 de _resolve_zone_base) et
+# seulement pour la forme « AU<chiffre> ». Résultat : le moteur calculait la SDP comme si recul/pleine
+# terre étaient LIBRES (capacité gonflée — témoin S07 2AUd Le Tampon → Ud). On complète ici : toute règle
+# SDP laissée None par la zone AU est reprise de sa zone U de renvoi (valeur + source « via renvoi »),
+# SANS jamais écraser une règle déjà posée par la zone AU. Corrige l'affichage (regles_valeurs) ET la
+# capacité (même ZoneRules), sur toute l'île, en un seul point.
+_RENVOI_AU = re.compile(r"^(\d*)AU(\w+)$", re.I)   # 2AUd→Ud · 1AUe→Ue · AU1a→U1a
+
+# champ ZoneRules SDP → (clé de source, champs auxiliaires solidaires à reprendre ensemble)
+_SDP_RENVOI = {
+    "he_m": ("hauteur", ()),
+    "hf_m": ("hauteur", ("hauteur_plage", "hauteur_mode")),
+    "emprise_sol_pct": ("emprise", ("emprise_plage",)),
+    "recul_voirie_m": ("recul_voirie", ("recul_voirie_alignement",)),
+    "recul_limites_sep_m": ("recul_limites", ("recul_limites_alignement",)),
+    "pleine_terre_pct": ("pleine_terre", ("pleine_terre_compose",)),
+    "stat_logement": ("stationnement", ()),
+}
+
+
+def _ref_u_code(code: str | None) -> str | None:
+    """Code de la zone U de renvoi d'une zone AU<indice> (2AUd→Ud, 1AUe→Ue, AU1a→U1a). None sinon."""
+    m = _RENVOI_AU.match((code or "").strip())
+    return ("U" + m.group(2)) if m else None
+
+
+def _completer_renvoi(rules: "ZoneRules | None", code: str, commune: str | None) -> "ZoneRules | None":
+    """Reprend de la zone U de renvoi les règles SDP que la zone AU laisse None (voir note ci-dessus)."""
+    from .zone_norm import normalize_key
+    from ..plu import destinations as D
+    if rules is None or not getattr(rules, "calibree", False):
+        return rules
+    u = _ref_u_code(code)
+    ins = _insee(commune)
+    if not u or not ins or normalize_key(u) == normalize_key(code):
+        return rules
+    u_hit = {normalize_key(r["zone"]): r["zone"] for r in D.regles_commune(ins)}.get(normalize_key(u))
+    if u_hit is None:
+        return rules
+    ov = _calibrage_overlay(u_hit, commune)
+    if ov is None:
+        return rules
+    champs, src = ov
+    fill: dict = {}
+    new_src = dict(rules.sources or {})
+    for champ, (cle_src, aux) in _SDP_RENVOI.items():
+        if getattr(rules, champ, None) is None and champ in champs:
+            fill[champ] = champs[champ]
+            for a in aux:
+                if a in champs:
+                    fill[a] = champs[a]
+            if cle_src in src and cle_src not in new_src:
+                new_src[cle_src] = f"{src[cle_src]} — via renvoi {code} → {u_hit}"
+    if not fill:
+        return rules
+    return _replace(rules, via_renvoi=f"{code} → règles de {u_hit} (renvoi du règlement)",
+                    sources=new_src, **fill)
 
 
 # ── repli générique + hypothèses moteur ─────────────────────────────────────────────────────────

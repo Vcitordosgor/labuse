@@ -96,7 +96,7 @@ def gabarit_svg(result: Any, *, width: int = 340, height: int = 250) -> Optional
     y0 = plot_h + 12
     leg = [(c, l) for c, l, present in (
         (C_ZONE, "Zone d'implantation", zone), (C_RETRAIT, "Retraits", retrait),
-        (C_BATI, "Bâti existant", bati), (C_EXCL, "Exclusion (PPR rouge)", excl),
+        (C_BATI, "Bâti existant", bati), (C_EXCL, "Exclusion réglementaire (PPR rouge / SUP)", excl),
         (C_CONTOUR, "Contour cadastral", contour)) if present]
     parts.append(f'<text x="{PAD}" y="{plot_h + 2}" font-size="8" fill="#6b7075">'
                  f'Zone d\'implantation réglementaire (schéma — pas un plan de masse)</text>')

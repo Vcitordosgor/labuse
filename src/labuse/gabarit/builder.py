@@ -382,10 +382,20 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
     # Scoper à la commune ramène ce nombre à ~5 (les 417 SUP portent TOUTES une commune, 0 NULL) →
     # ×2,9 sur les parcelles sous SUP. RÉSULTAT IDENTIQUE au m² (écart max 1,2e-10 m² sur 55 golden
     # + 500 parcelles sous SUP) : une parcelle appartient à UNE commune, et sa SUP y est rattachée.
+    # ORACLE-FIX-1 (Lot B) — EXCLURE la SUP `pm1` (enveloppe PPR). Constat ORACLE-1 sur S10
+    # (97409000AB0018) : §5 « PPR zone BLEUE — constructible SOUS PRESCRIPTIONS » vs §10 « Zone
+    # d'implantation 0 m² / Exclusion ». La cause n'est PAS le PPR lui-même (lu correctement en
+    # SOFT_FLAG par la cascade et par le bloc PPR ci-dessus, qui n'exclut QUE subtype='INTERDICTION'
+    # = rouge), mais ce bloc SUP qui soustrayait ÉGALEMENT la SUP `pm1` = « Enveloppe des zonages
+    # réglementaires » du PPR (311 lignes île). L'enveloppe couvre bleue ET rouge indistinctement →
+    # une parcelle en zone bleue (constructible) voyait toute son emprise exclue. C'était une DEUXIÈME
+    # lecture, incohérente, du même PPR. On ne la lit plus qu'une fois (bloc PPR → INTERDICTION). Les
+    # autres SUP (ac1/ac2/ac3/ac4 monuments·sites, el10, pm2/pm3) restent des exclusions réelles.
     sup_gj = session.execute(text(
         "SELECT ST_AsGeoJSON(ST_CollectionExtract(ST_Transform(ST_Intersection("
         "  ST_Union(ST_MakeValid(ST_ClipByBox2D(sl.geom_2975, p.geom_2975))), p.geom_2975), 4326), 3)) "
         "FROM spatial_layers sl, parcels p WHERE p.id = :pid AND sl.kind = 'sup' "
+        "AND sl.subtype <> 'pm1' "          # enveloppe PPR : lue par le bloc PPR (rouge), pas ici
         "AND sl.commune = p.commune "
         "AND ST_Intersects(sl.geom_2975, p.geom_2975) GROUP BY p.geom_2975"
     ), {"pid": pid}).first()

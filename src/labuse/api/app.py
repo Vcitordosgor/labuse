@@ -5434,10 +5434,15 @@ def _plu_fraicheur(idu: str) -> dict | None:
         en_cours = "Annulation contentieuse limitée, hors zonage servi (détail en note)."
         action = "Pour le secteur visé par l'annulation, vérifier le règlement en mairie."
     elif statut == "opposabilite_en_attente":
-        document_servi = f"{doc} (opposable, présent au GPU)"
-        fait_foi = "Document opposable — il fait foi à ce jour."
-        en_cours = "Une révision est en cours, non approuvée — non opposable, non servie."
-        action = "Vérifier en mairie le calendrier de révision avant engagement."
+        # ORACLE-FIX-1 (E4) — ORACLE-1 a constaté que le GPU ne sert PLUS de document pour certaines de
+        # ces communes (Saint-Leu 97413, Saint-André 97409 : dépublication côté GPU), alors que ce libellé
+        # affirmait « présent au GPU ». On ne nie pas l'opposabilité (document opposable en mairie, cf.
+        # catalogue plu_millesimes), mais on n'affirme plus sa présence au GPU : elle est À VÉRIFIER.
+        document_servi = f"{doc} (opposable en mairie ; publication au GPU à vérifier)"
+        fait_foi = "Document opposable en mairie — il fait foi à ce jour."
+        en_cours = ("Une révision est en cours, non approuvée — non opposable, non servie. "
+                    "Publication au Géoportail de l'urbanisme non garantie (dépublication possible).")
+        action = "Vérifier en mairie le document opposable et le calendrier de révision avant engagement."
     elif statut == "rnu":
         document_servi = "Aucun PLU — RNU (règlement national d'urbanisme)."
         fait_foi = "Le RNU s'applique ; aucun zonage communal servi."

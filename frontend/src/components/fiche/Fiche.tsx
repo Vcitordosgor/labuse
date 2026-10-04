@@ -874,7 +874,7 @@ export function Fiche({ idu }: { idu: string }) {
           type Tuile = { l: string; v: string; s?: string; i?: string; vide?: boolean }
           const tuiles: Tuile[] = [
             { l: 'Surface', v: f.surface_m2 != null ? fmtM2(f.surface_m2) : '—', vide: f.surface_m2 == null,
-              i: 'Contenance cadastrale de la parcelle (DGFiP).' },
+              i: 'Aire de la parcelle calculée sur le contour cadastral (géométrie). La contenance cadastrale officielle (DGFiP) peut en différer de quelques %.' },
             { l: 'Zone', v: reglesZone ?? 'Non publié au GPU', s: zoneSous, vide: reglesZone == null,
               i: 'Zone du PLU au point de la parcelle (règlement communal, archive GPU). « Non publié au GPU » : la commune n’a pas déposé de document opposable.' },
             { l: 'Pente', v: pente != null ? `${nf(pente)} °` : '—', s: penteSous, vide: pente == null,

@@ -55,23 +55,38 @@ def _seed_pc(s, idu, annee, etat, daact=False):
 
 
 @pytest.mark.db
-def test_build_caduc_vs_realise_vs_rejete(db_session):
+def test_build_caduc_vs_realise_vs_annule(db_session):
+    # ORACLE-FIX-1 (Lot C) — « octroyé » = AUTORISÉ (etat=2), jamais ANNULÉ (etat=4). Un permis
+    # annulé ne prouve aucune constructibilité → EXCLU. Réalisé (achevé/commencé) → EXCLU.
     s = db_session
     _ensure_sources(s)
-    A, B, C = "97499000ZA0001", "97499000ZB0002", "97499000ZC0003"
-    _seed_parcelle(s, A); _seed_pc(s, A, 2018, "4")               # octroyé jamais achevé → CADUC
+    A, B, C, D = "97499000ZA0001", "97499000ZB0002", "97499000ZC0003", "97499000ZF0006"
+    _seed_parcelle(s, A); _seed_pc(s, A, 2018, "2")               # autorisé jamais commencé → CADUC
     _seed_parcelle(s, B); _seed_pc(s, B, 2018, "6", daact=True)   # achevé → réalisé (EXCLU)
-    _seed_parcelle(s, C); _seed_pc(s, C, 2018, "5")               # rejeté (EXCLU)
+    _seed_parcelle(s, C); _seed_pc(s, C, 2018, "5")               # travaux commencés → agi (EXCLU)
+    _seed_parcelle(s, D); _seed_pc(s, D, 2018, "4")               # ANNULÉ → ne prouve rien (EXCLU)
 
     pcz.build_pc_caducs(s, ref_year=2026, commit=False)
 
     rows = {r["idu"]: r for r in s.execute(text(
         "SELECT idu, pc_annee, caduc_depuis, statut_autorisation, statut_caducite, libelle_court "
-        "FROM pc_caducs WHERE idu = ANY(:ids)"), {"ids": [A, B, C]}).mappings().all()}
-    assert set(rows) == {A}                                        # seul le caduc
+        "FROM pc_caducs WHERE idu = ANY(:ids)"), {"ids": [A, B, C, D]}).mappings().all()}
+    assert set(rows) == {A}                                        # seul l'AUTORISÉ jamais commencé
     assert rows[A]["pc_annee"] == 2018 and rows[A]["caduc_depuis"] == 2021
     assert rows[A]["statut_autorisation"] == "Sourcé" and rows[A]["statut_caducite"] == "Estimé"
     assert "jamais commencé · caduc probable" in rows[A]["libelle_court"]
+
+
+@pytest.mark.db
+def test_annule_seul_jamais_caduc(db_session):
+    # ORACLE-FIX-1 (Lot C) — garde explicite : une parcelle avec UNIQUEMENT un permis annulé (etat=4,
+    # cas S20 97420000AB0268) ne doit JAMAIS apparaître en « caduc probable ».
+    s = db_session
+    _ensure_sources(s)
+    A = "97499000ZG0007"
+    _seed_parcelle(s, A); _seed_pc(s, A, 2018, "4")
+    pcz.build_pc_caducs(s, ref_year=2026, commit=False)
+    assert s.execute(text("SELECT count(*) FROM pc_caducs WHERE idu=:i"), {"i": A}).scalar() == 0
 
 
 @pytest.mark.db
@@ -79,7 +94,7 @@ def test_build_idempotent(db_session):
     s = db_session
     _ensure_sources(s)
     A = "97499000ZD0004"
-    _seed_parcelle(s, A); _seed_pc(s, A, 2017, "4")
+    _seed_parcelle(s, A); _seed_pc(s, A, 2017, "2")              # autorisé jamais commencé → caduc
     r1 = pcz.build_pc_caducs(s, ref_year=2026, commit=False)
     r2 = pcz.build_pc_caducs(s, ref_year=2026, commit=False)
     assert r1["total"] == r2["total"]
@@ -88,11 +103,11 @@ def test_build_idempotent(db_session):
 
 @pytest.mark.db
 def test_recent_pc_non_caduc(db_session):
-    # PC 2024 : Y+4 non dépassé (ref 2026) → PAS caduc.
+    # PC 2024 autorisé : Y+4 non dépassé (ref 2026) → PAS caduc.
     s = db_session
     _ensure_sources(s)
     A = "97499000ZE0005"
-    _seed_parcelle(s, A); _seed_pc(s, A, 2024, "4")
+    _seed_parcelle(s, A); _seed_pc(s, A, 2024, "2")
     pcz.build_pc_caducs(s, ref_year=2026, commit=False)
     assert s.execute(text("SELECT count(*) FROM pc_caducs WHERE idu=:i"), {"i": A}).scalar() == 0
 

@@ -43,7 +43,7 @@
     <tr><td>Date de génération</td><td>{{ data.date_generation }}</td></tr>
     <tr><td>Commune</td><td>{{ p.commune }} ({{ p.insee }})</td></tr>
     <tr><td>Références cadastrales</td><td>{{ p.reference }}</td></tr>
-    <tr><td>Contenance cadastrale</td><td>{{ p.surface_m2 }} m²</td></tr>
+    <tr><td>Surface (aire cadastrale calculée)</td><td>{{ p.surface_m2 }} m²</td></tr>
     <tr><td>Version du modèle de rapport</td><td>{{ template_version }}</td></tr>
   </table>
 </section>
@@ -53,7 +53,7 @@
 <section class="saut">
   <h2><span class="num">01</span>Identité parcellaire</h2>
   <div class="cartouches">
-    <div class="cartouche"><div class="titre">Contenance cadastrale</div>
+    <div class="cartouche"><div class="titre">Surface (aire calculée)</div>
       <div class="valeur">{{ p.surface_m2 }} <small>m²</small></div></div>
     {# MANDAT RNU (ajout Vic) : en commune sans document local, les règles de capacité
        affichent « non applicable — RNU » — JAMAIS des cartouches absentes qui laisseraient
