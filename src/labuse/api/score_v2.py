@@ -30,7 +30,7 @@ def _check_idu(idu: str) -> str:
     return _c(idu)
 
 AVERTISSEMENT_CENSURE = ("les ventes récentes apparaissent dans DVF avec 1 à 3 ans "
-                         "de retard — les niveaux 2025-2026 sont provisoires, "
+                         "de retard — les millésimes les plus récents sont provisoires, "  # CHASSE-FIX-1 (C36) : plus d'années en dur qui mentiront en 2027
                          "le classement est fiable")
 
 

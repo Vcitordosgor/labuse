@@ -218,6 +218,15 @@ def faisabilite_scenario(session: Session, parcel_id: int, scenario: str | None 
         "hypotheses_modifiables": hypotheses_modifiables(hyp),
         "hypotheses_notes": f.hypotheses, "avertissements": f.avertissements, "modulation": f.modulation,
     }
+    # CHASSE-FIX-1 (C06) — zone AU à ouverture bloquée : capacité servie mais JAMAIS présentée
+    # disponible. Règle et libellé uniques (au_differe), les mêmes que la fiche §Potentiel.
+    from .au_differe import libelle_differe, statut_differe
+    _diff = statut_differe(session, parcel_id=parcel_id)
+    base["capacite_differee"] = _diff is not None
+    base["capacite_differee_detail"] = _diff
+    if _diff is not None:
+        base["avertissements"] = list(base.get("avertissements") or []) + [
+            libelle_differe(sdp_servie)]
 
     # ── Cas NON constructible : 0 partout + motif, jamais un chiffre inventé ──
     if not f.constructible:

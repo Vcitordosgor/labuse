@@ -15,7 +15,7 @@ from typing import Any
 from sqlalchemy import text
 
 from ...enums import Severity
-from ..base import Layer, Verdict, hard_exclude, passed, positive, register, soft_flag, unknown
+from ..base import Layer, Verdict, couvre_commune, hard_exclude, passed, positive, register, soft_flag, unknown
 from ..context import EvalContext, ParcelRef
 
 # Noms canoniques des sources (doivent matcher le catalogue data_sources, §6).
@@ -649,6 +649,14 @@ class RisquesLayer(Layer):
         kind_alea = params["spatial_kind_alea"]
         if not ctx.kind_present(kind_ppr) and not ctx.kind_present(kind_alea):
             return [unknown(self.name, "Risques Géorisques/PPR non ingérés.", source=SRC_GEORISQUES)]
+        # CHASSE-FIX-1 (C22) — couverture par COMMUNE (gabarit EnsLayer, M70) : une couche vide
+        # SUR CETTE COMMUNE ne conclut jamais « Aucun risque » (l'absence de donnée n'est pas
+        # une absence de risque). On évalue chaque famille (PPR / aléas) selon SA couverture.
+        ppr_couvert = couvre_commune(ctx, kind_ppr, getattr(parcel, 'commune', None))
+        alea_couvert = couvre_commune(ctx, kind_alea, getattr(parcel, 'commune', None))
+        if not ppr_couvert and not alea_couvert:
+            return [unknown(self.name, "Non couvert par la source sur cette commune "
+                            "(PPR DEAL / aléas Géorisques non ingérés ici).", source=SRC_GEORISQUES)]
 
         verdicts: list[Verdict] = []
         red = set(params.get("ppr_red_subtypes", []))
@@ -722,6 +730,14 @@ class RisquesLayer(Layer):
             alea_type = (i.attrs or {}).get("type", i.subtype or "aléa")
             verdicts.append(soft_flag(self.name, f"Aléa {alea_type} — niveau {niveau}.", sev, source=SRC_GEORISQUES))
 
+        # CHASSE-FIX-1 (C22) — une famille non couverte sur la commune est DITE non couverte
+        # (unknown), jamais fondue dans un « Aucun risque ».
+        if not ppr_couvert:
+            verdicts.append(unknown(self.name, "PPR : non couvert par la source sur cette commune.",
+                                    source=SRC_GEORISQUES))
+        if not alea_couvert:
+            verdicts.append(unknown(self.name, "Aléas : non couverts par la source sur cette commune.",
+                                    source=SRC_GEORISQUES))
         if not verdicts:
             verdicts.append(passed(self.name, "Aucun risque PPR/aléa intersecté.", source=SRC_GEORISQUES))
         return verdicts

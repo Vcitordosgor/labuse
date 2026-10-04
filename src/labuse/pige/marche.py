@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 
 from ..ingestion.run_all import REUNION_COMMUNES
 
-SEUIL_N = 5   # sous ce n, une mesure statistique n'est pas servie (« échantillon insuffisant »)
+SEUIL_N = 5   # seuil INDICATIF Radar (RADAR-FIX-3) — distinct de la médiane de référence marché (8)
 # FRONT-CHIFFRES-2 (F25) — en dessous de ce corpus total, le Radar est « jeune » (bandeau « le
 # corpus se constitue »). Ce seuil vivait EN DUR au front (RadarMarche `corpus_total < 40`) ; il est
 # ici, servi à plat (flag `corpus_jeune`), pour que le front n'en décide plus.

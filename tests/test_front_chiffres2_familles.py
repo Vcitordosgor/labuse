@@ -139,7 +139,7 @@ def test_f10_marche_par_type_seuil_au_back():
     médianes déjà filtrées, plus de `n >= 5` recalculé, et le terrain nu utilise la méthode
     canonique `_terrain_section` (par_type.terrain_nu)."""
     from labuse.api import mon_secteur
-    assert mon_secteur.SEUIL_N == 5
+    assert mon_secteur.SEUIL_N == 8   # CHASSE-FIX-1 (C25) : seuil de référence unifié (yaml mediane_generique)
     m = (SRC / "components/fiche/marche.tsx").read_text(encoding="utf-8")
     assert "ms?.par_type?.terrain_nu ?? null" in m
     assert "n >= 5" not in m and "n_ventes >= 5" not in m, "seuil de suffisance recalculé au front (F10)"

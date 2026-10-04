@@ -76,3 +76,15 @@ def register(layer_cls: type[Layer]) -> type[Layer]:
         raise ValueError(f"{layer_cls.__name__} doit définir un `name`")
     REGISTRY[inst.name] = inst
     return layer_cls
+
+
+def couvre_commune(ctx, kind: str, commune) -> bool:
+    """CHASSE-FIX-1 (C22/C23) — la source `kind` couvre-t-elle CETTE commune ?
+
+    Gabarit EnsLayer (M70) : une couche vide SUR la commune ne doit jamais conclure
+    « Aucun … » (faux négatif de l'absence). Tolérant aux contextes de test minimaux :
+    un `ctx` sans `kind_present_commune` (stub d'ancien test) → True (comportement
+    historique, pas de régression de ces tests) ; le vrai EvalContext applique le test
+    par commune."""
+    fn = getattr(ctx, "kind_present_commune", None)
+    return True if fn is None else bool(fn(kind, commune))

@@ -16,7 +16,7 @@ from __future__ import annotations
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-SEUIL_N = 5   # même honnêteté statistique que l'onglet Marché : sous 5, pas de médiane servie
+SEUIL_N = 5   # seuil INDICATIF Radar (RADAR-FIX-3 : <5 sous le seuil) — distinct de la médiane de référence (8)
 
 # RADAR-DEPOT-2 (D4) — SEUIL du badge « sous le marché ». JUSTIFICATION (mandat : « ne le sors pas du
 # chapeau ») : le référentiel est la MÉDIANE DVF actée de la zone. Par construction, la moitié des

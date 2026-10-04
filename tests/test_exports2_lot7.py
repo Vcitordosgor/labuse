@@ -45,7 +45,7 @@ def test_pcmi4_reprend_les_servitudes_et_sources():
 def test_regles_gagnent_destinations_ta_redevance():
     assert "Destinations autorisées" in SRC
     assert "Taxe d'aménagement" in SRC and "Redevance d'archéologie préventive" in SRC
-    assert "L524-7" in SRC       # redevance : article du Code du patrimoine (libellé sur 2 lignes source)
+    assert "2022-883" in SRC   # CHASSE-FIX-1 (C19) : RAP recodifiée (ord. 2022-883, ex-L524-7) — pre_dossier déjà recodifié
 
 
 # ── P4 — deux bâtiments, EPSG retiré des légendes ───────────────────────────────────────────

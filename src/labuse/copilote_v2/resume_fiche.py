@@ -197,7 +197,7 @@ def resume_commune(db: Session, commune: str) -> dict | None:
         carte("Logement social (SRU)", f"Taux LLS {str(sru['taux_lls']).replace('.', ',')} % — {sru.get('statut') or 'statut non précisé'}.")
     risq = c.get("risques") or {}
     if risq.get("ppr_pct") is not None:
-        carte("Risques", f"PPR sur {str(risq['ppr_pct']).replace('.', ',')} % du territoire communal.")
+        carte("Risques", f"PPR sur {str(risq['ppr_pct']).replace('.', ',')} % des parcelles de la commune.")  # CHASSE-FIX-1 (C14)
     fisc = c.get("fiscalite") or {}
     # RETOUCHES-1 point 2 — la MÊME ligne que la fiche et le Dossier (producteur unique
     # fiscalite_libelle, déjà calculée dans le bloc fiscalité servi).

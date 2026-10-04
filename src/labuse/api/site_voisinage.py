@@ -76,17 +76,25 @@ def voisinage_proche(db: Session, idu: str) -> dict | None:
     """« Autour, à moins de 100 m » : ventes DVF + permis récents (36 mois) dans le buffer 100 m,
     la parcelle EXCLUE. Prix médian seulement si n≥3 (sinon « échantillon insuffisant »). None si
     aucune vente ni permis (pas de bloc vide)."""
+    # CHASSE-FIX-1 (C01) — on compte des MUTATIONS (id_mutation distinct), jamais des lignes
+    # DVF : dvf_mutations_parcelle porte 1 ligne par parcelle × lot × nature_culture (une vente
+    # d'immeuble en copropriété = ~60-200 lignes). Avant : « 122 ventes » pour 2 mutations, et
+    # une médiane pondérée ~60× par la même vente. La médiane se calcule PAR MUTATION (une
+    # valeur par id_mutation — la valeur foncière de la mutation entière, répétée sur ses
+    # lignes, d'où max()).
     row = db.execute(text(f"""
         WITH a AS (SELECT geom_2975 AS g FROM parcels WHERE idu = :idu),
-        since AS (SELECT (now() - interval '{FENETRE_MOIS} months')::date AS d)
+        since AS (SELECT (now() - interval '{FENETRE_MOIS} months')::date AS d),
+        muts AS (
+          SELECT m.id_mutation, max(m.valeur_fonciere) AS valeur
+          FROM dvf_mutations_parcelle m JOIN parcels dp ON dp.idu = m.id_parcelle, a, since
+          WHERE m.date_mutation >= since.d AND m.id_parcelle <> :idu
+            AND ST_DWithin(a.g, dp.geom_2975, {RAYON_M})
+          GROUP BY m.id_mutation)
         SELECT
-          (SELECT count(*) FROM dvf_mutations_parcelle m JOIN parcels dp ON dp.idu = m.id_parcelle, a, since
-            WHERE m.date_mutation >= since.d AND m.id_parcelle <> :idu
-              AND ST_DWithin(a.g, dp.geom_2975, {RAYON_M})) AS n_dvf,
-          (SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY m.valeur_fonciere)
-             FROM dvf_mutations_parcelle m JOIN parcels dp ON dp.idu = m.id_parcelle, a, since
-            WHERE m.date_mutation >= since.d AND m.id_parcelle <> :idu AND m.valeur_fonciere > 0
-              AND ST_DWithin(a.g, dp.geom_2975, {RAYON_M})) AS prix_median,
+          (SELECT count(*) FROM muts) AS n_dvf,
+          (SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY valeur)
+             FROM muts WHERE valeur > 0) AS prix_median,
           (SELECT count(*) FROM sitadel_permits p, a, since
             WHERE p.geom_2975 IS NOT NULL AND COALESCE(p.date_depot, p.date) >= since.d
               AND NOT (p.idu_codes ? :idu) AND ST_DWithin(a.g, p.geom_2975, {RAYON_M})) AS n_permis

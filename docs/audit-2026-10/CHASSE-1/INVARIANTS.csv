@@ -1,0 +1,30 @@
+invariant,libelle,perimetre,violations,exemples
+emprise_lte_surface,emprise bâtie ≤ surface parcelle (tolérance 1 %),parcel_filtre_bati × parcels (île),19728,97402000AB1016 (emprise=121 surface=40); 97402000AB0616 (emprise=327 surface=182); 97402000AB0615 (emprise=370 surface=187); 97402000AB0365 (emprise=550 surface=472); 97402000AB0369 (emprise=540 surface=443)
+taux_emprise_hors_bornes,"taux_emprise_pct ∈ [0,100] (pilote filtres « État du sol » et fiche)",parcel_residuel (vue servie),100000,343072 (taux=106); 343094 (taux=107); 342857 (taux=207); 342859 (taux=166); 343110 (taux=123) [≥100000 : tronqué]
+pct_potentiel_aberrant,"pct_potentiel ∈ [0,300] (au-delà = SDP existante aberrante, pas une sur-densité)",parcel_residuel (vue servie),31084,343064 (pct=607); 342695 (pct=302); 342722 (pct=671); 342711 (pct=505); 343151 (pct=505)
+pct_bornes_filtre_bati,"ratio_pct ∈ [0,100]",parcel_filtre_bati (île),20536,97415000BO0339 (ratio=100.00000000000001); 97401000AD1373 (ratio=140.55870481778476); 97401000AD1385 (ratio=108.16488692639032); 97401000AD1456 (ratio=159.68896584906412); 97401000AD0393 (ratio=101.1676273057596)
+pct_bornes_score,"percentile ∈ [0,100], p_raw ∈ [0,1], mult_base ≥ 0 (run v2 servi)",parcel_p_score_v2 run q_v11_m137,0,
+sdp_non_negative,SDP résiduelle ≥ 0 (run servi),parcel_residuel (vue servie),0,
+mediane_dvf_entre_min_max,"médiane secteur ∈ [min, max] des ventes du secteur (même type, toutes fenêtres)",dvf_secteur_medianes × dvf_mutations_parcelle,7,97407000AB/terrain (med=2453325 min=1162700 max=2453325 n=1); 97407000AT/maison (med=138384 min=138384 max=7200000 n=9); 97410000AT/appartement (med=4991766 min=25000 max=4991766 n=1); 97411000BX/terrain (med=103813 min=103813 max=730700 n=1); 97415000AC/maison (med=746108 min=45000 max=746108 n=1)
+permis_caduc_borne,un PC caduc suppose ≥1 PC octroyé sur la parcelle (caducs ⊂ autorisés),pc_caducs (île),0,
+au_fermee_differee_presentee,AU non ouverte à capacité > 0 ⇒ présentation différée (verrou API test_chasse_fix1 C06),parcel_au_statut × parcel_residuel (socle) + TestClient (verrou),0,
+cinquante_pas_distance_cote,"flag « 50 pas » ⇒ distance au trait de côte ≤ 200 m (81,2 m + marge corridor)",parcel_flags × spatial_layers trait_de_cote,754,97415000BI0615 (d=292.2 m); 97415000BI0055 (d=443.3 m); 97415000BI0070 (d=381.0 m); 97415000BI0089 (d=484.6 m); 97415000BI0619 (d=440.7 m)
+tfpb_taux_plausible,"taux TFPB communal ∈ ]0, 60] % (REI)",commune_rei (24 communes),0,
+ta_taux_bornes_legales,"taux TA ∈ [1,5] % (droit commun) ou ≤ 20 % (secteur majoré)",taxe_amenagement_taux + taxe_amenagement_secteur,0,
+dvf_valeurs_positives,valeur foncière > 0 et surfaces ≥ 0,dvf_mutations_parcelle (île),0,
+surfaces_positives,surface parcelle > 0,parcels (île),0,
+pente_bornes,"pente ∈ [0,75°] et pente_max ≥ pente_moy",parcel_terrain (île),0,
+hauteur_lidar_coherente,"égout ≤ faîtage + 0,5 m ; faîtage ∈ ]0,60] (aberrations = badge DONNEES-FIX-1, comptées)",batiment_hauteur_lidar (île),58,97418000AW0381 (faitage=-0.3 egout=-5.3); 97416000CR0229 (faitage=-0.6 egout=-4.5); 97422000AD0240 (faitage=0 egout=-0.3); 97422000AZ0046 (faitage=-0.1 egout=-0.8); 97413000DC1454 (faitage=-11.6 egout=-15.7)
+zone_fam_domaine,"zone_fam ∈ {U, AU, A, N}",parcel_zone_plu (île),0,
+idu_prefixe_commune,code INSEE de l'IDU = INSEE de la commune attribut,parcels × communes_referentiel,0,
+geom_valide,ST_IsValid(geom) partout,parcels (île),0,
+bande_domaine,"bande ∈ {A,B,C,D,NC,0} (table candidate q_v15 : seule peuplée)",score_labuse q_v15,0,
+tier_domaine,tier v2 servi dans le vocabulaire connu,parcel_p_score_v2 run q_v11_m137,0,
+rang_unique,rang unique dans le run v2 servi (pas deux parcelles au même rang),parcel_p_score_v2 run q_v11_m137,0,
+dvf_doublon_exact,"pas deux lignes identiques (id_mutation, id_parcelle, type_local, valeur)",dvf_mutations_parcelle (île),7086,2024-1191492/97416000DT0865 (3 lignes); 2021-1682378/97412000BM1277 (3 lignes); 2024-1187134/97411000AD0283 (2 lignes); 2024-1188171/97410000AO0457 (2 lignes); 2021-1675178/97415000AX0832 (2 lignes)
+pm_un_seul_proprio,une seule PM par parcelle au millésime courant (table servie),parcelle_personne_morale,0,
+dates_bodacc_depots_date_cloture,dates plausibles (date_cloture),bodacc_depots,1,2117-11-03
+dates_sirene_etablissements_date_creation,dates plausibles (date_creation),sirene_etablissements,10,0026-02-02; 2026-10-28; 2026-11-17; 2026-12-03; 2027-01-01
+dates_surface_d_events_date_evenement,dates plausibles (date_evenement),surface_d_events,219,2027-01-01; 2027-01-01; 2027-01-01; 2027-01-01; 2027-01-01
+surface_egale_st_area,surface_m2 = ST_Area(geom_2975) (écart max 0 mesuré au tirage échantillon),parcels (île),0,"mesure du 2026-10-04, requête dans echantillon.py"
+formules_moteur,"formules servies (TA, médianes, niveaux, taxe, %…) — CALCULS-1 : 1 185 recalculs, 0 écart","moteur (cité, pas rejoué)",0,docs/audit-2026-09/CALCULS-1

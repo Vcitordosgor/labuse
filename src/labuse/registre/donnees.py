@@ -1394,8 +1394,8 @@ DONNEES: dict[str, Donnee] = {
     fonction="src/labuse/faisabilite/bilan.py (EXPORTS-2 lot 5 — portage, à câbler)",
     reservoirs=(), portee="projet"),
  "redevance_archeologie_eur": C("Redevance d'archéologie préventive (bilan)", "€", "parcelle",
-    "redevance d'archéologie préventive = surface de plancher créée × taux légal (art. L524-7 "
-    "du Code du patrimoine), assiette au-delà du seuil d'exonération",
+    "redevance d'archéologie préventive = 0,40 % de l'assiette de la taxe d'aménagement "
+    "(CGI art. 1635 quater F — recodification ord. 2022-883, ex-L524-7)",  # CHASSE-FIX-1 (C19)
     moteur="bilan_promoteur", calcul="moteur",
     fonction="src/labuse/faisabilite/bilan.py (EXPORTS-2 lot 5 — redevance archéologie, à câbler)",
     reservoirs=(), portee="live"),

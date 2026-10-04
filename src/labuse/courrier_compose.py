@@ -96,8 +96,10 @@ def _synthese(db, idu: str) -> dict:
     # DVF : mutations dans le périmètre sur X ans (secteur actif)
     if row:
         try:
+            # CHASSE-FIX-1 (C03) — mutations DISTINCTES (même règle que le bloc voisinage C01),
+            # jamais les lignes brutes (1 ligne par parcelle × lot × nature_culture).
             d["n_mutations"] = int(db.execute(text(f"""
-                SELECT count(*) FROM dvf_mutations_parcelle m
+                SELECT count(DISTINCT m.id_mutation) FROM dvf_mutations_parcelle m
                 JOIN parcels pp ON pp.idu = m.id_parcelle
                 WHERE ST_DWithin(pp.geom_2975, (SELECT geom_2975 FROM parcels WHERE idu = :i), :r)
                   AND m.date_mutation >= current_date - make_interval(years => :x)"""),

@@ -14,7 +14,15 @@ from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/outils", tags=["mon-secteur"])
 
-SEUIL_N = 5   # même honnêteté statistique que le baromètre / les signaux : sous 5 ventes, pas de médiane
+def _seuil_mediane() -> int:
+    # CHASSE-FIX-1 (C25) — seuil UNIQUE des médianes de référence (config dvf_profils.yaml,
+    # seuils_effectif.mediane_generique) ; repli 8 si config absente. Plus jamais « 5 » en dur.
+    try:
+        from ..marche_service import seuil_effectif_local
+        return seuil_effectif_local("mediane_generique", 8)
+    except Exception:  # noqa: BLE001 — config indisponible : repli doctrine n≥8
+        return 8
+SEUIL_N = _seuil_mediane()   # CHASSE-FIX-1 (C25) : seuil unique (8, config)
 
 
 def get_db():
@@ -98,8 +106,10 @@ def mon_secteur(idu: str = Query(..., description="IDU de la parcelle (résolu d
                 # FRONT-CHIFFRES-2 (F12) — le SENS (« sous » / « au-dessus » de la commune) servi : le
                 # front ne dérive plus le mot du signe de ecart_pct. None si écart nul/absent.
                 "sens": (None if not ep else "sous" if ep < 0 else "au_dessus"),
-                "phrase": f"secteur {int(sp.get('radius_m') or 0)} m · commune entière {cv} €/m²"
-                          + (f" ({ep:+d} %)" if ep is not None else ""),
+                # CHASSE-FIX-1 (C43) — rayon inconnu : jamais « secteur 0 m » fabriqué.
+                "phrase": ((f"secteur {int(sp['radius_m'])} m · commune entière {cv} €/m²"
+                            if sp.get("radius_m") else f"commune entière {cv} €/m²")
+                           + (f" ({ep:+d} %)" if ep is not None else "")),
             }
         secteur_bati = {
             "median_eur_m2": sp.get("median"), "q1": sp.get("q1"), "q3": sp.get("q3"),
@@ -150,6 +160,6 @@ def mon_secteur(idu: str = Query(..., description="IDU de la parcelle (résolu d
         "sources": ["DVF (ventes actées) — bâti maison/appartement : médiane locale au rayon adaptatif "
                     "500→1500 m ; terrain nu : médiane de la section cadastrale (même méthode que la fiche)",
                     "Radar LABUSE — annonces actives rattachées dans le rayon (dépôts humains)"],
-        "note": "Chaque chiffre porte son n et son millésime ; sous 5 ventes, il est ABSENT (jamais "
+        "note": f"Chaque chiffre porte son n et son millésime ; sous {SEUIL_N} ventes, il est ABSENT (jamais "
                 "inventé). Les annonces Radar s'ajoutent au fil des dépôts.",
     }

@@ -1310,8 +1310,8 @@ export function Fiche({ idu }: { idu: string }) {
             {/* FICHE-RANGEMENT-3 Lot 4 — la commune n'est plus rappelée en sous-titre (déjà dans
                 l'en-tête « PARCELLE · <COMMUNE> ») : le sous-titre ne porte que le signal propriétaire. */}
             <RefDrawer id="identite" icon={IC.proprio} name="Identité" accent={proprioAccent}
-              context={proprioSignal ? (f.proprietaire_moral ? proprioType : 'personne physique') : undefined}
-              value={proprioSignal ? shorten(proprioSignal.detail).slice(0, 20) : (f.proprietaire_moral ? proprioType.slice(0, 18) : 'Particulier')}
+              context={proprioSignal ? (f.proprietaire_moral ? proprioType : 'non identifié') : undefined}
+              value={proprioSignal ? shorten(proprioSignal.detail).slice(0, 20) : (f.proprietaire_moral ? proprioType.slice(0, 18) : 'Non identifié')  /* CHASSE-FIX-1 (C24) : absence de PM ≠ personne physique — le tiroir le dit déjà */}
               micro={proprioPastilles.length ? <MicroPastilles items={proprioPastilles} /> : undefined}>
               <div className="flex flex-col gap-3">
                 {/* KELFONCIER-FIX-2 (Lot G) — maquette v3 : Verdict + Tuiles×4 (SIREN · Créée·état ·

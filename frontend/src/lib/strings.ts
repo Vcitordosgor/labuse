@@ -29,7 +29,7 @@ export const CLIENT = {
     // (« maj 07/2026 », « arrêté 06/2026 », « calcul 08/2026 », millésime « 2025 ») : la SOURCE reste,
     // la date part (elle vit sur la page Sources). Le fond des libellés est inchangé.
     infos: {
-      pm_privee: 'La parcelle — nue ou bâtie — est détenue par une société privée (personne morale hors État, collectivités et bailleurs sociaux ; fichiers fonciers MAJIC). 33 622 parcelles sur l’île.',
+      pm_privee: 'La parcelle — nue ou bâtie — est détenue par une société privée (personne morale hors État, collectivités et bailleurs sociaux ; fichiers fonciers MAJIC).',
       procedure: 'Le propriétaire (société) a connu une procédure collective — sauvegarde, redressement ou liquidation, en cours ou récente (BODACC). Ne couvre que les propriétaires personnes morales identifiés. L’événement BODACC du classement n’est évalué que sur les parcelles classées et, de façon ciblée, sur les écartées dont le propriétaire est sous procédure — une écartée sans procédure connue ne porte jamais d’événement (exclusion délibérée, M103).',
       permis_actif: 'Un permis de construire accordé depuis moins de 3 ans, non repéré caduc (Sitadel — rattachement à la parcelle tel que déclaré au permis).',
       permis_caduc: 'Permis accordé jamais suivi de travaux repérés — caducité ESTIMÉE par LABUSE (croisement Sitadel × bâti) ; à vérifier en mairie.',
@@ -203,7 +203,7 @@ export const CLIENT = {
     // résiduelle du tri « Potentiel » reste dans l'analyse, nulle part ailleurs).
     adresse: 'Adresse',
     adresseTip: 'Les parcelles avec une adresse renseignée d’abord, puis les plus grandes surfaces — rien que le fait cadastral, sans calcul LABUSE',
-    rangTip: 'Le classement LABUSE — la probabilité de vente sous 1 an, apprise sur dix ans de ventes réelles, les ex æquo départagés par la qualité du terrain ; copropriétés en queue',
+    rangTip: 'Le classement LABUSE — la probabilité de vente sous 1 an, apprise sur les ventes réelles 2017-2025, les ex æquo départagés par la qualité du terrain ; copropriétés en queue',
     surfaceTip: 'Trie par surface de parcelle',
     // M69 A — le tri « Probabilité de vente » (défaut, analyse) groupe la liste par tier ; les
     // tris de colonne (Surface) s'appliquent GLOBALEMENT. Ce libellé dit l'état pour lever le
@@ -364,8 +364,8 @@ export const CLIENT = {
       },
       {
         h: 'Comment',
-        p: 'Le modèle a appris sur les ventes réelles de La Réunion — les mutations jusqu’en 2023, ' +
-          'calibré sur l’année 2024 et vérifié sur l’année 2025 tenue à l’écart de l’apprentissage. ' +
+        p: 'Le modèle a appris sur les ventes réelles de La Réunion — les mutations 2017-2024, ' +
+          'calibré sur les millésimes les plus récents (protocole du run servi, page Données). ' +
           'Il repère les motifs qui précèdent une vente (âge de détention, permis, état bâti ou nu, ' +
           'part bâtie et ventes du secteur, ancienneté du PLU, règles d’urbanisme, marché du secteur…) ' +
           'et les cherche sur les parcelles d’aujourd’hui. La probabilité est recalibrée par segment ' +
@@ -409,8 +409,8 @@ export const CLIENT = {
     // les parcelles), cités avec leur provenance (jamais un count live).
     adresseAbsenteInfo:
       'Aucune adresse de la Base Adresse Nationale (BAN) n’est rattachée à cette parcelle. '
-      + 'Ce rattachement couvre environ la moitié des parcelles de l’île (227 545 sur 431 663 — '
-      + 'mesure interne M55-G) : les parcelles naturelles ou sans bâti n’ont le plus souvent pas '
+      + 'Ce rattachement ne couvre pas toutes les parcelles de l’île : les parcelles naturelles '
+      + 'ou sans bâti n’ont le plus souvent pas '
       + 'd’adresse. C’est une absence réelle dans la source, pas un défaut de l’outil.',
     // C2 · le lien Pages Jaunes, renommé et assumé (jaune côté JSX)
     pagesJaunes: 'Voir sur Pages Jaunes',

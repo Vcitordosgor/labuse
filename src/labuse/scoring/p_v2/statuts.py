@@ -62,6 +62,10 @@ def plancher_c(df: pd.DataFrame, params: TierParams) -> pd.Series:
     et la branche SDP n'existe pas au RNU — pas de règlement, pas de droits calculables).
     La colonne `dans_pau` est injectée par le pipeline (parcel_pau) et vaut False
     partout ailleurs : comportement STRICTEMENT identique pour les communes à PLU."""
+    # CHASSE-FIX-1 (C26, classé) — fillna(0) : une SDP INCONNUE n'ouvre pas la branche
+    # « droits calculés » (prudent) mais reste éligible par la branche surface × U/AU ;
+    # la fiche trace « Marge SDP non calculée » (niveau indéterminé). Distinguer NULL de 0
+    # au NIVEAU DU TIER modifierait le classement servi → décision produit (run), pas un fix.
     sdp = pd.to_numeric(df["sdp_residuelle_m2"], errors="coerce").fillna(0)
     surf = pd.to_numeric(df["surface_m2"], errors="coerce").fillna(0)
     en_u_au = df["zone_plu"].isin(["U", "AU"])

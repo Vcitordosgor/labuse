@@ -20,7 +20,15 @@ from sqlalchemy.orm import Session
 #: paramètres du marché LIVE de zone — un critère, un endroit.
 FENETRE_MOIS = 36
 BORNE_EUR_M2 = (1000, 12000)   # ratio €/m² retenu (artefacts DVF écartés hors de cette plage)
-SEUIL_N = 5                    # sous 5 ventes : pas de médiane servie (honnêteté statistique)
+def _seuil_mediane() -> int:
+    # CHASSE-FIX-1 (C25) — seuil UNIQUE des médianes de référence (config dvf_profils.yaml,
+    # seuils_effectif.mediane_generique) ; repli 8 si config absente. Plus jamais « 5 » en dur.
+    try:
+        from labuse.marche_service import seuil_effectif_local
+        return seuil_effectif_local("mediane_generique", 8)
+    except Exception:  # noqa: BLE001 — config indisponible : repli doctrine n≥8
+        return 8
+SEUIL_N = _seuil_mediane()     # CHASSE-FIX-1 (C25) : 8 (config), plus jamais 5 en dur
 
 
 def mediane_bati(session: Session, *, geom_geojson: dict | None = None, commune: str | None = None,

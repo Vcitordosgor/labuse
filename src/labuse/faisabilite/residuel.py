@@ -217,8 +217,18 @@ def compute_residuel(session: Session, parcel_id: int,
     seuil = float(hyp.sous_densite_seuil_pct)
     sous_densite = (taux_emprise < seuil) if taux_emprise is not None else None
 
+    # CHASSE-FIX-1 (C06) — le moteur lit parcel_au_statut et POSE LE DRAPEAU « capacité
+    # différée » (zone AU à ouverture bloquée) : la SDP est calculée (doctrine « différée,
+    # pas exclue », décision Vic) mais aucun lecteur ne la présente comme disponible. Le
+    # drapeau n'est PAS stocké au run (un mot un sens : la vérité vit dans parcel_au_statut,
+    # relue au service) — il voyage dans le payload du calcul live.
+    from .au_differe import statut_differe
+    _au_differe = statut_differe(session, parcel_id=parcel_id)
+
     return {
         "disponible": True,
+        "capacite_differee": _au_differe is not None,
+        "capacite_differee_detail": _au_differe,
         "taux_emprise_pct": round(taux_emprise) if taux_emprise is not None else None,
         "pct_potentiel": round(pct_potentiel) if pct_potentiel is not None else None,
         "sous_densite": sous_densite,

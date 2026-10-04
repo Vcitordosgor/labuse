@@ -70,6 +70,12 @@ def rendu(valeurs, ctx=None) -> str:
     rni = _regles(getattr(gr, "nonIntegratedRules", None), appliquees=False) if gr is not None else ""
     if rni:
         corps += "<h3>Règles non intégrées</h3>" + rni
+    # CHASSE-FIX-1 (C06) — zone AU à ouverture bloquée : l'enveloppe est « après ouverture »
+    # (drapeau posé par l'API gabarit, règle unique faisabilite.au_differe).
+    _au = (getattr(gr, "raccordement", None) or {}).get("au_differe") if gr is not None else None
+    if _au:
+        corps += verdict(esc(_au.get("libelle") or "Potentiel différé — ouverture de la zone requise"),
+                         "warn")
     corps += note("Gabarit réglementaire 2D, pré-faisabilité sur règlement public. Une étude par un "
                   "professionnel peut modifier ces valeurs.")
     corps += pied(valeurs, IDS)

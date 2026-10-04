@@ -1,0 +1,7 @@
+# CHASSE-FIX-1 (C27) — communes dont le PLU est DÉPUBLIÉ du GPU (retrait/contentieux) :
+# LABUSE sert les règles du DERNIER ÉTAT CONNU et le DIT (note sur la fiche §Urbanisme).
+# Entretenu à la main (comme rnu_communes.yaml) — vérifier au GPU avant d'ajouter/retirer.
+# Constat CHASSE-1 (COUVERTURE.csv) : prescriptions GPU à 0 sur ces communes.
+depublies:
+  - Saint-Leu
+  - Saint-André

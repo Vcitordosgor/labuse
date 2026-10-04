@@ -82,19 +82,27 @@ def gabarit_detail(idu: str, db: Session = Depends(get_db)) -> GabaritResult:
     if build is None:
         raise HTTPException(404, f"Parcelle inconnue : {idu}")
 
+    # CHASSE-FIX-1 (C06) — zone AU à ouverture bloquée : l'enveloppe (complète OU incomplète)
+    # est dite « après ouverture ». Règle/libellé uniques : faisabilite.au_differe.
+    from ..faisabilite.au_differe import LIBELLE_COURT, statut_differe
+    _diff = statut_differe(db, idu=idu)
+    _racc = build.raccordement
+    if _diff is not None:
+        _racc = {**(_racc or {}), "au_differe": {**_diff, "libelle": LIBELLE_COURT}}
+
     if build.blocking:
         # GABARIT-6 lot B : calcul incomplet, mais la parcelle reste VISIBLE. On sert le contour
         # cadastral + la référence/commune (via raccordement.parcelle) pour que la carte centre sur
         # la parcelle et que le panneau l'identifie AU-DESSUS du motif — jamais un écran vide.
         parcel = build.input.parcel if build.input else None
         return GabaritResult(status="incomplete", message=INCOMPLETE_MESSAGE,
-                             validationErrors=build.blocking, raccordement=build.raccordement,
+                             validationErrors=build.blocking, raccordement=_racc,
                              contourGeoJSON=parcel.geometry if parcel else None,
                              surfaceParcelleM2=parcel.areaM2 if parcel else None,
                              batiExistantGeoJSON=_bati_existant(db, idu))
 
     res = compute_gabarit(build.input)
-    res.raccordement = build.raccordement
+    res.raccordement = _racc
     # FRONT-CHIFFRES-2 (F57/F50) — % « à cheval » calculé ICI, une seule fois : round(portion / cadastre
     # × 100), même arithmétique que les deux sites front qui le recomputaient (GabaritLine + panneau).
     _rac = build.raccordement or {}

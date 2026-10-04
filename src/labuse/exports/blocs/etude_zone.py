@@ -77,7 +77,9 @@ def _immobilier(z) -> str:
 def _foncier(z) -> str:
     pm = z.get("proprietaires_pm") or {}
     lignes = []
-    top = pm.get("top") or pm.get("items") or []
+    # CHASSE-FIX-1 (C39) — le producteur sert `proprietaires` (zone.py:709) : les clés
+    # top/items ne s'imprimaient JAMAIS (section morte depuis DOCS-1).
+    top = pm.get("proprietaires") or pm.get("top") or pm.get("items") or []
     for o in (top[:5] if isinstance(top, list) else []):
         nom = o.get("denomination") or o.get("nom")
         surf = _i(o.get("surface_m2"))
@@ -124,8 +126,10 @@ def _equipements(z) -> str:
 def _dynamique(z) -> str:
     lignes = []
     acq = z.get("acquisitions_pm") or {}
-    if acq.get("n") is not None:
-        lignes.append(_kv("Acquisitions récentes (personnes morales)", f"{_i(acq.get('n'))}"))
+    # CHASSE-FIX-1 (C39) — la clé servie est n_parcelles (zone.py:878), `n` ne s'imprimait jamais.
+    _n_acq = acq.get("n_parcelles") if acq.get("n_parcelles") is not None else acq.get("n")
+    if _n_acq is not None:
+        lignes.append(_kv("Acquisitions récentes (personnes morales)", f"{_i(_n_acq)}"))
     cc = z.get("commune_contexte") or {}
     # maille commune : libellée « à l'échelle de la commune » comme à l'écran.
     if cc.get("loyer_median_eur_m2") is not None:

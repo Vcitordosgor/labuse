@@ -23,6 +23,10 @@ garde_fou_ecart_facteur: 2.0
 # Le filtre « marché fiable » ne vit PAS ici : il lit secteur_dossier.seuil_effectif (même question,
 # même grandeur — la référence de marché du secteur, n≥8 mesuré ±44 % sous n≈8).
 seuils_effectif:
+  # CHASSE-FIX-1 (C25) — seuil GÉNÉRIQUE des médianes de référence (baromètre zone, Radar
+  # demandé/acté, mon-secteur) : aligné sur la doctrine n≥8 (sous n≈8 la médiane oscille
+  # ±44 %) ; les 4 « SEUIL_N = 5 » en dur lisaient une autre rigueur que la config.
+  mediane_generique: 8
   mode_b_prix_local: 3        # M59 : médiane LOCALE (secteur puis repli commune) des prix du mode B —
                               # un repère local, pas une référence de marché (le bilan porte sa fiabilité)
   terrain_cellule_commune: 10 # M79/M-U : cellule commune × zone U/AU du bloc Marché (motif « n < X » dit)

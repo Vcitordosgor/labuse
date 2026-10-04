@@ -112,12 +112,15 @@ def division_compute(request: Request, commune: str = "Saint-Paul", db: Session 
                    z.zone
             FROM parcels p
             JOIN LATERAL (
+              -- CHASSE-FIX-1 (C05) — DÉDUP géométrique (DISTINCT geom) : la même construction
+              -- ingérée sous 2 communes voisines (bbox) comptait double (compte ET emprise) en
+              -- bande frontalière — même garde que bati.stats_batch (ORACLE-FIX-1 D).
               SELECT count(*) AS n,
-                     COALESCE(sum(ST_Area(ST_Intersection(sl.geom_2975, p.geom_2975))), 0)
+                     COALESCE(sum(ST_Area(ST_Intersection(g, p.geom_2975))), 0)
                        / NULLIF(ST_Area(p.geom_2975), 0) AS emprise,
-                     ST_Union(sl.geom_2975) AS bati_geom
-              FROM spatial_layers sl
-              WHERE sl.kind = 'batiment' AND ST_Intersects(sl.geom_2975, p.geom_2975)
+                     ST_Union(g) AS bati_geom
+              FROM (SELECT DISTINCT sl.geom_2975 AS g FROM spatial_layers sl
+                    WHERE sl.kind = 'batiment' AND ST_Intersects(sl.geom_2975, p.geom_2975)) d
             ) b ON true
             JOIN LATERAL (
               SELECT sl.subtype AS zone FROM spatial_layers sl
@@ -1272,7 +1275,7 @@ def prospection_piscines(commune: str | None = None,
             "corrigees": n_corrigees,   # « pas une piscine » signalées par un humain, exclues du service
             "source": "Source unique fusionnée FLAIR ∪ CoSIA (BD ORTHO / CoSIA 20 cm 2025, IGN), "
                       "dédoublonnée à 5 m ; statut `servie` (précision mesurée ≥ 85 %) par défaut, "
-                      "« à confirmer » (50–85 %) sur bascule ; à vérifier sur site",
+                      "« à confirmer » (précision mesurée 30–60 %) sur bascule ; à vérifier sur site",  # CHASSE-FIX-1 (C20)
             "maj": maj or "—"}
 
 

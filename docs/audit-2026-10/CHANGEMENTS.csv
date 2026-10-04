@@ -1,0 +1,33 @@
+id;fichiers;changement;touche_le_run;verrou
+C01;api/site_voisinage.py;compteur+médiane par MUTATION (CTE muts);non;test_c01_voisinage_compte_des_mutations
+C02;ingestion/dvf_marche.py (vue), flash/data.py, api/app.py;€/m² sur totaux mutation (bâti dédup, terrain sommé), n_parcelles servi, flash porte le drapeau ; DDL vue rejouée en base dev (réversible);non (vue recalculée à la lecture);test_c02_vue_prix_m2_sur_totaux_mutation
+C03;courrier_compose.py;count(DISTINCT id_mutation);non;couvert par C01 (même règle)
+C04;ingestion/layers_ingest.py;terrain mutation = somme par parcelle;OUI (prochain rebuild DVF);—
+C05;api/modules.py, ingestion/division_or.py;DISTINCT geom (doublons inter-communes);non (lectures live) / OUI pour division_or (prochain build);—
+C06;faisabilite/au_differe.py (neuf), residuel.py, api/app.py, scenarios.py, api/gabarit.py, fiche_ask.py, exports/blocs/gabarit.py, front constructibilite.tsx + Gabarit.tsx;capacité AU « différée, pas exclue » : règle+libellé uniques, drapeau partout, SDP inchangée;NON (présentation ; valeurs stockées intactes);test_c06_* (4 tests)
+C07-C10,C16;frontend strings.ts, layers.ts;protocole du run servi ; compteurs figés retirés ; VEFA 60 mois/8;non;tsc + relecture
+C11;api/pdf_premium.py;« moyen » (ind_snv/ind);non;—
+C12;exports/miroir.py;« section cadastrale »;non;—
+C13;exports/blocs/financier.py;« au taux du régime » → taux par défaut 8,5 % dit;non;—
+C14;copilote_v2/resume_fiche.py;« % des parcelles de la commune »;non;—
+C15,C40;api/veille_promoteurs.py;0,5 % retiré ; filtre 2013+ appliqué;non;—
+C17;api/export.py;formule affichée porte ÷ 1,15;non;—
+C18;api/partners.py;« AUTORISÉS »;non;—
+C19;regles/seuil_rentabilite_eur.py, registre/donnees.py;RAP = 0,40 % assiette TA (CGI 1635 quater F);non (fiches registre);—
+C20;api/modules.py;précision 30-60 %;non;—
+C21;api/dashboard.py;03:00 UTC (07:00 Réunion);non;—
+C22;cascade/layers/phase1.py;RisquesLayer : kind_present_commune PPR+aléas, unknown « non couvert »;OUI (cascade stockée par run);relecture + gabarit EnsLayer
+C23;cascade/layers/etage1.py, api/app.py (_dispositifs_block), exports/miroir.py;Sup/SolPollue/Friche par commune ; sup_etat live + phrase conditionnée;cascade OUI / live NON;—
+C24;frontend Fiche.tsx;« Non identifié »;non;tsc
+C25;config/dvf_profils.yaml + dvf_mediane.py + pige/signaux.py + pige/marche.py + api/mon_secteur.py + tests/regles/test_ecart_demande_acte.py;seuil médiane unique n≥8 (yaml), textes suivent;non (servi à la requête);test_ecart_formule_et_seuils (aligné)
+C26;scoring/p_v2/statuts.py;CLASSÉ : doctrine au code ; corriger l'éligibilité = décision produit (tiers);OUI si corrigé un jour;—
+C27;config/plu_depublies.yaml (neuf), api/app.py;note « PLU dépublié — dernier état connu » (St-Leu, St-André);non;—
+C28;exports/financier_bilan.py;note « VRD non chiffrés » au poste portage;non;—
+C29-C35,C37,C44,C45;—;CLASSÉS avec preuve (voir CHASSE-FIX-1.md);—;—
+C36;api/app.py, api/score_v2.py, api/pdf_premium.py;sentinelles figées neutralisées;non;—
+C39;exports/blocs/etude_zone.py;clés lues = clés servies (sections ressuscitées);non;—
+C41;api/events.py;« 7 derniers jours »;non;—
+C42;config/taxe_amenagement.yaml;alinéa 10°;non;—
+C43;api/mon_secteur.py;jamais « secteur 0 m »;non;—
+Lot3;tests/conftest.py (+migrate_to_runs), tests/test_chasse_fix1.py;labuse_test sert la VUE parcel_residuel (M135) ; sitadel geom_2975 aligné;non;test_lot3_parcel_residuel_est_une_vue
+Lot2bis;cascade/base.py, cascade/layers/*.py, pige/signaux.py, pige/marche.py, tests/conftest.py, tests (ecart/f10/exports_lot7/b6);helper couvre_commune (tolérant stubs) ; C25 cadré (Radar 5 / référence 8) ; règles INSTEAD OF vue test ; tests alignés;non;0 régression prouvée (base f4bc8e0b)

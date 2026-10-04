@@ -4107,7 +4107,8 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
     pm_historique = _pm_historique(db, idu)
     # LOT 1 (data-gap) : dernière mutation DVF de LA parcelle + médianes du secteur cadastral.
     dvf_last = db.execute(text(
-        "SELECT date_mutation, nature, valeur, prix_m2_bati, prix_m2_terrain, multi_parcelles "
+        "SELECT date_mutation, nature, valeur, prix_m2_bati, prix_m2_terrain, multi_parcelles, "
+        "       n_parcelles "
         "FROM v_parcel_dvf_last WHERE idu = :idu"), {"idu": idu}).mappings().first()
     dvf_secteur = [dict(r) for r in db.execute(text(
         "SELECT type_bien, n_ventes, mediane_valeur, mediane_prix_m2, fenetre "
@@ -4536,7 +4537,7 @@ _DPU_NON_PUBLIE_DEFAUT = (
 _PLU_PROCEDURES: dict[str, dict] = {
     "Saint-Leu": {
         "etat": "revision_en_cours",
-        "detail": "PLU en révision — enquête publique du 1er septembre au 9 octobre 2026 ; "
+        "detail": "PLU en révision — enquête publique menée en 2026 (arrêté n°579/2026/DAD) ; "  # CHASSE-FIX-1 (C36) : plus de date-butoir figée qui périme
                   "le PLU actuel reste opposable jusqu'à l'approbation (visée fin 2026/T1 2027)",
         "lien": "https://www.registre-numerique.fr/revision-plu-stleu",
     },
@@ -4648,10 +4649,20 @@ def _dispositifs_block(db: Session, idu: str) -> dict | None:
     sup_vus: set[tuple] = set()
     sup = [s for s in sup
            if (cle := (s["categorie"], s["libelle"])) not in sup_vus and not sup_vus.add(cle)]
+    # CHASSE-FIX-1 (C23) — même honnêteté que le DPU pour les SUP : une liste vide ne dit
+    # « aucune » QUE si la commune a des assiettes publiées ; sinon l'état « non couvert »
+    # est servi (l'absence de donnée n'est pas une absence de servitude).
+    sup_etat = "servi" if sup else (
+        "hors" if db.execute(text(
+            "SELECT 1 FROM spatial_layers WHERE kind = 'sup' AND commune = :c LIMIT 1"),
+            {"c": commune}).first() else "non_couvert")
     return {
         "er": er or None,
         "ebc": ebc or None,
         "dpu": dpu_etat,
+        "sup_etat": sup_etat,
+        "sup_note": ("SUP : non couvert par la source sur cette commune (assiettes GPU)."
+                     if sup_etat == "non_couvert" else None),
         "plu_procedure": _PLU_PROCEDURES.get(commune or ""),
         "peb": ({"zone": peb["zone"], "part_pct": peb["part_pct"], "libelle": peb["libelle"]}
                 if peb else
@@ -5642,8 +5653,10 @@ _AU_STATUT_LIBELLE = {
     "declasse_au_statut_inconnu": "statut d'ouverture non déterminé (phasage 2AU → 1AU à confirmer)",
     "générique": "statut d'ouverture non déterminé (zone non calibrée)",
 }
-#: classes qui EMPÊCHENT de construire tant que la zone n'est pas ouverte (cause de SDP résiduelle 0).
-_AU_CLASSES_BLOQUANTES = frozenset({"declasse_au_fermee", "declasse_au_statut_inconnu", "générique"})
+#: classes qui EMPÊCHENT de construire tant que la zone n'est pas ouverte. CHASSE-FIX-1 (C06) :
+#: source unique dans faisabilite.au_differe (doctrine « différée, pas exclue » — la capacité
+#: reste calculée, les lecteurs la présentent « après ouverture »).
+from ..faisabilite.au_differe import AU_CLASSES_DIFFEREES as _AU_CLASSES_BLOQUANTES  # noqa: E402
 
 
 def _au_ouverture_block(db: Session, idu: str) -> dict | None:
@@ -5664,6 +5677,26 @@ def _au_ouverture_block(db: Session, idu: str) -> dict | None:
         "bloquant": classe in _AU_CLASSES_BLOQUANTES,
         "source": "LABUSE — moteur d'ouverture AU (règlement PLU calibré)",
     }
+
+
+
+# CHASSE-FIX-1 (C27) — PLU dépublié du GPU (contentieux/retrait) : AUCUN mécanisme n'existait,
+# la fiche servait zone et règles comme un PLU vivant. Liste entretenue (config/plu_depublies.yaml,
+# même doctrine que rnu_communes.yaml) ; la note voyage sur le bloc règlement (fiche + PDF miroir).
+def _plu_depublie(commune: str | None) -> bool:
+    global _PLU_DEPUBLIES
+    if _PLU_DEPUBLIES is None:
+        try:
+            import yaml as _yaml
+            from .. import config as _cfg
+            _doc = _yaml.safe_load(open(_cfg._repo_root() / "config" / "plu_depublies.yaml")) or {}
+            _PLU_DEPUBLIES = frozenset(_doc.get("depublies") or [])
+        except Exception:  # noqa: BLE001 — fichier absent : aucun dépublié
+            _PLU_DEPUBLIES = frozenset()
+    return (commune or "") in _PLU_DEPUBLIES
+
+
+_PLU_DEPUBLIES: frozenset | None = None
 
 
 def _reglement_plu_block(db: Session, idu: str, commune: str) -> dict | None:
@@ -5728,6 +5761,12 @@ def _reglement_plu_block(db: Session, idu: str, commune: str) -> dict | None:
             # FRONT-CHIFFRES-2 (F21) — le drapeau « à cheval » (aucune zone ≥ SEUIL_A_CHEVAL_PCT)
             # vient de la cascade, plus du seuil 0,9 recalculé au front sur les parts.
             block["a_cheval"] = _zs.a_cheval if _zs else None
+        # CHASSE-FIX-1 (C27) — le dépublié est DIT, jamais servi comme un PLU vivant.
+        if isinstance(block, dict) and _plu_depublie(commune):
+            block["depublie"] = True
+            block["depublie_note"] = ("PLU retiré du Géoportail de l'urbanisme (dépublication/"
+                                      "contentieux) : règles citées du dernier état connu — "
+                                      "à confirmer en mairie avant tout dépôt.")
         return block
     except Exception:  # noqa: BLE001 — jamais de 500 sur la fiche
         return _bloc_indisponible("reglement_plu")   # M125 — panne ≠ absence (même classe que les 7)
@@ -5772,6 +5811,15 @@ def _potentiel_transformation_block(db: Session, idu: str, commune: str | None =
         niveau, libelle = "faible", "Potentiel faible — parcelle proche de sa densité autorisée"
     else:
         niveau, libelle = "nul", "Densité autorisée atteinte ou dépassée"
+    # CHASSE-FIX-1 (C06) — zone AU à ouverture bloquée : la capacité reste calculée (doctrine
+    # « différée, pas exclue », décision Vic) mais n'est JAMAIS présentée comme disponible.
+    # Règle ET libellé uniques : faisabilite.au_differe (les mêmes pour Faisabilité/Gabarit/PDF/
+    # Copilote) — la SDP servie ne change pas, seul le discours change.
+    from ..faisabilite.au_differe import libelle_differe, statut_differe
+    _diff = statut_differe(db, idu=idu)
+    capacite_differee = _diff is not None
+    if capacite_differee:
+        niveau, libelle = "differe", libelle_differe(sdp_servie)
     sur = sur or {}
     # RECETTE-9 T9 — le scénario de surélévation branché sur le LiDAR : la surélévation se décide à
     # l'ÉGOUT (bord de toit) vs la règle d'égout (cause de fond de E1). Le bâti BD TOPO est un faîtage
@@ -5846,6 +5894,10 @@ def _potentiel_transformation_block(db: Session, idu: str, commune: str | None =
         regles_non_modelisees = []
     return {
         "niveau": niveau, "libelle": libelle,
+        # CHASSE-FIX-1 (C06) — capacité DIFFÉRÉE (zone AU non ouverte) : drapeau + détail de la
+        # règle unique au_differe ; la SDP reste servie (≈ m² APRÈS ouverture), jamais « disponible ».
+        "capacite_differee": capacite_differee,
+        "capacite_differee_detail": _diff,
         "exceptions_calcul": exceptions_calcul,               # PLU-EXCEPTIONS-1 — drapeaux « à vérifier »
         "regles_non_modelisees": regles_non_modelisees,       # DONNEES-FIX-1 pt4 — exceptions non déduites que la parcelle PORTE
         "pct_consomme": pct,                                  # SDP consommée / autorisée (%)

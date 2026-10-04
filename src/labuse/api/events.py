@@ -1262,7 +1262,7 @@ def digest_html(request: Request, db: Session = Depends(get_db)) -> str:
     # M85-B — le marché SORT du digest (règle mandant : mail SSI parcelle suivie / zone / annonce —
     # « rien d'autre »). Il reste un flux cloche informatif, jamais un e-mail.
     return digest_html_email(evs, {"total": 0}, d.get("top_chaudes", []), lien_desabo, lien_prefs,
-                             periode="aujourd'hui")
+                             periode="7 derniers jours")   # CHASSE-FIX-1 (C41) : _digest_data() par défaut = 7 jours, pas « aujourd'hui »
 
 
 # ── M21-B3 — ENVOI du digest par e-mail (le contenu M13 existait, l'envoi jamais) ──
