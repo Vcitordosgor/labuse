@@ -1,0 +1,513 @@
+PARCELLE · SAINT-ANDRÉ
+97409000AB0018
+pj
+380 Rue Bois Rouge, 97440 Saint-André
+Secteur : Lotissement Virapoullé
+SURFACE
+i
+1,07 ha
+ZONE
+UC
+constructible
+PENTE
+1,9 °
+plat
+EXPOSITION
+Plat
+terrain quasi plat
+RISQUES
+4
+vigilances
+SDP RESTANTE
+—
+pas de potentiel résiduel
+Demander à LABUSE
+Poser une question
+LE BIEN
+Identité
+DEPARTEMENT DE LA
+›
+Terrain
+pente plat
+Bâti
+Ensemble bâti détecté (résidence / équipement)
+9 bâtiments
+LE DROIT DU SOL
+Urbanisme
+12 m max
+égout 9 m
+Risques et environnement
+16 couches évaluées
+4 vigilances
+Réseaux et desserte
+Assainissement : non renseigné
+eau/élec confirmée
+Fiscalité et dispositifs
+ZFANG renforcé
+LE MARCHÉ
+Marché
+12 ventes secteur · DVF — jusqu'à déc. 2025
+147 €/m²
+Quartier
+Équipements, population et permis du voisinage
+isochrone
+LE PROJET
+Potentiel
+calcul tracé
+Simulation
+charge foncière · réhabilitation · outils projet
+bilan
++ CRM
++ Projet
+Dossier
+Dossier financier
+Apporteur
+Pré-dossier PC
+Courrier
+Remonter le temps
+Estimations indicatives issues de données publiques — ni conseil juridique/notarial ni garantie de constructibilité. Ces informations ne remplacent pas un certificat d'urbanisme.
+⚑ Signaler une erreur
+
+### tiroir ouvert : Identité
+
+### tiroir ouvert : DEPARTEMENT DE LA
+⌄
+DEPARTEMENT DE LA REUNION propriétaire depuis 2019 — aucune procédure collective
+SIREN
+229740014
+annuaire des entreprises ↗
+Créée · état
+1962active
+SIRENE
+Activité
+Autres activités des médecins spécialistes
+8622C
+BODACC
+aucune procédure
+DGFiP / BODACC
+Siège
+RUE ADRIEN LAGOURGUE · Saint-Leu
+Groupe
+Département
+HISTORIQUE DU PROPRIÉTAIRE
+2019 → 2025
+DEPARTEMENT DE LA REUNION
+Détention
+≥ 7 ans (depuis 2019)
+Scan patrimoine du propriétaire
+→
+
+### tiroir ouvert : Terrain
+
+### tiroir ouvert : 1,9 °
+Terrain plat 1,9 ° · 8 916 m² au sol libre · 80,7 % artificialisé (OCS GE)
+Pente
+1,9 ° plat
+Exposition
+Surface au sol libre
+8 916 m²
+Sol artificialisé
+80,7 %
+OCS GE 2022
+COUVERTURE DU SOL · COSIA 20 CM
+Imperméabilisé 40,6 %
+Végétalisé 53,6 %
+Sol nu 0 %
+PROFIL ALTIMÉTRIQUE
+16
+13
+0
+205 m
+DISTANCE
+DÉNIVELÉ +
++1 m
+DÉNIVELÉ −
+−4 m
+PENTE MOYENNE
+2,6 %
+PLUS FORTE PENTE
+9,8 %
+ALTITUDE
+13–16 m
+Le long du plus grand axe de la parcelle. Source RGE ALTI 5 m (IGN). Vocabulaire cartes.gouv (pente moyenne = grade absolu moyen).
+OCS GE (IGN, donnée d’îlot, décret 2023-1096) · CoSIA (IGN, détection IA, mesure de la parcelle) · pente et exposition RGE ALTI (IGN).
+
+### tiroir ouvert : Bâti
+
+### tiroir ouvert : 9 bâtiments
+Ensemble bâti détecté (résidence / équipement) emprise 1 766 m²
+Emprise bâtie au sol
+1 766 m²
+BD TOPO IGN
+Hauteur du bâti
+4,0 m
+BD TOPO
+Bâtiments
+9 BD TOPO · 9 RNB · 0 adr. BAN
+◀
+détail du bâti
+Bâti existant — BD TOPO® V3 (IGN) + CoSIA 2025. Information de fiche, jamais un signal de classement.
+
+### tiroir ouvert : Urbanisme
+
+### tiroir ouvert : 12 m max
+UC, constructible 4 destinations interdites · 1 sous condition
+Zone
+UCconstructible
+PLU
+approuvé le 28/02/2019
+📡Révision générale du PLU en cours — stade « prescrite », prescrite le 2022-06-22.
+Sursis à statuer : non servi (débat PADD non constaté à ce jour).
+RÈGLEMENT — ZONE UC
+voir l’article
+Hauteur
+12 m
+Art. UC 10 · p.40 (PLU
+Emprise
+Recul voie
+4 m
+Art. UC 6 · p.38 (PLU
+Recul limites
+3 m
+Art. UC 7 · p.39 (PLU
+Pleine terre
+40 %
+Art. UC 13.1 · p.43 (PLU
+Stationnement
+Destinations · 18 autorisées (Hébergement, Artisanat et commerce de détail, Restauration…) · 4 interdites · 1 sous condition
+Le règlement PLU fait foi ; les valeurs affichées sont une aide à la lecture, non un certificat d'urbanisme.
+SITUATION
+SDP résiduelle
+SDP résiduelle 0 m² — rien à construire.
+Parcelle déclarée agricole (RPG)
+Parcelle déclarée agricole au RPG (déclarations PAC) — usage agricole, à vérifier au PLU.
+RPG — déclarations agricoles (IGN/ASP)
+· proxy RPG.LATEST (IGN) — campagne 2024 (data.gouv RPG-R)
+Surface parcelle
+Surface utile 10682 m².
+Foncier public
+info
+Propriété publique (DEPARTEMENT DE LA REUNION) — cession/préemption : interlocuteur public [DGFiP groupe 3 : Département].
+Annuaire PLU
+Vérif procédure
+RTAA DOM
+10 exigences →
+Préemption (DPU)
+non déterminée
+Bruit aérien (PEB)
+hors zone
+Servitude (SUP)
+PM1 · PM1_PPR_i_mvt_SAINT_ANDRE_gen2_ass
+SCOT
+hors périmètre
+MIXITÉ SOCIALE (LLS)
+non modélisée
+Clause de mixité sociale
+non modélisée pour cette zone
+Aucune clause de mixité sociale validée pour cette zone dans le règlement calibré.
+✓ 9 couches sans objet — déplier
+Emprise linéaire
+Forme non linéaire (largeur 105 m, allongement 1.9×).
+Emprise routière
+Pas une emprise routière (129 m d'axes, densité 0.07, bâti 17%).
+Forêt publique
+Hors forêt publique.
+Forêts publiques (ONF)
+· BD TOPO® V3 — forêt publique (IGN)
+Friche
+Aucune friche recensée.
+Cartofriches (Cerema)
+Occupation du sol (BD CARTO V5 — grain grossier)
+Sol classé artificialisé (occupation du sol BD CARTO V5, grain grossier, précision limitée à la parcelle).
+IGN BD CARTO V5 — occupation du sol
+· BD CARTO® V5 — occupation du sol (IGN, proxy)
+Faux positif OSM
+Aucun faux positif géométrique OSM.
+OpenStreetMap / Overpass
+Parc national
+Hors Parc National.
+Parc National de La Réunion (INPN)
+· millésime 2021
+Prescriptions PLU
+Aucune prescription PLU sur la parcelle.
+Urbanisme PLU/GPU (API Carto)
+· GPU/PLU par commune (révisions — détail en fiche)
+Potentiel foncier Région (indicatif)
+Hors îlot cartographié — aucune contrainte déduite automatiquement.
+Potentiel foncier Région (Région ODS)
+· îlots non urbanisés — estimation Région (ODS, non versionné)
+
+### tiroir ouvert : Risques et environnement
+
+### tiroir ouvert : 4 vigilances
+Aléa inondation faible sur 100 % 3 aléas au total
+ALÉAS (3)
+Aléa inondation niveau faible
+100 %
+Aléa mouvement_terrain niveau faible
+PPR — zone bleue
+zone bleue
+PPR (approuvé le 2026-04-16) · PPRL (approuvé le 2024-07-17) — DEAL Réunion — PPR / aléas · 2026-09-13
+FRICHE RECENSÉE (CARTOFRICHES)
+✓ Sans objet — parcelle non recensée comme friche. (édition courante (Cerema, mise à jour trimestrielle))
+EnR au sol (APER)
+hors zone d'exclusion
+Mesure compensatoire (GéoMCE)
+aucune sur la parcelle
+17
+arrêtés CatNat (commune) · dernier 20/03/2025
+VIGILANCES
+Servitude(s) d'utilité publique sur la parcelle : PM1.
+Ligne moyenne tension
+à proximité
+Espace protégé réglementaire (INPN)
+inconnu
+Donnée espaces protégés (INPN) non disponible sur cette commune.
+INPN / patrinat — espaces protégés
+· INPN/patrinat espaces protégés — passe 05/07/2026
+✓ 11 couches sans objet — déplier
+ABF / Monuments
+Hors périmètre ABF.
+ABF / Monuments historiques
+Classement sonore (bruit routier)
+Hors secteurs affectés par le bruit routier.
+Classement sonore ITT (Cerema)
+· arrêtés déc. 2023
+Cavités
+Aucun objet recensé à proximité.
+Géorisques — cavités souterraines
+50 pas géométriques
+Hors zone des 50 pas géométriques.
+50 pas géométriques — limite haute (DEAL)
+· cadastre 1877 (géoréf. 2012/1950)
+Eau
+Hors hydrographie.
+· BD TOPO® V3 (IGN) — édition non enregistrée
+ICPE
+Géorisques — ICPE
+Mouvement de terrain
+Géorisques — mouvements de terrain
+Pente faible (~2%) — calculée, non éliminatoire.
+RGE ALTI (altimétrie)
+· RGE ALTI® (IGN) — édition non enregistrée
+Ravines
+Hors voisinage immédiat d'une ravine.
+Sols pollués
+Géorisques — sites et sols pollués
+Indicateur d'érosion côtière (Cerema)
+Hors zone de recul du trait de côte.
+Cerema / GéoLittoral — indicateur d'érosion côtière
+· millésime 2018
+Pièges & risques
+
+### tiroir ouvert : Réseaux et desserte
+
+### tiroir ouvert : eau/élec confirmée
+Viabilisation eau/élec confirmée assainissement non renseigné
+✓
+Eau/élec
+confirmée
+Fibre
+FttH
+Bus
+155 m
+?
+Assainis.
+non renseigné
+Fibre (Arcep)
+FttH · 19 m · 5 op.
+Arrêt de bus
+CLG CAMBUSTON · 155 m
+Ligne de transport
+Estival · 131 m
+Stationnement allégé (TCSP)
+hors rayon · 966 m
+ACCÈS
+Accès voirie : voie publique à ≤ 10 m de la parcelle (faisceau viabilisation
+le test au contact strict de l'axe BD TOPO est retiré).
+GESTIONNAIRES (RACCORDEMENT)
+Compétence
+CIREST — Communauté intercommunale Réunion Est · cirest.fr
+Eau potable
+CISE Réunion (SAUR) · DSP — concession unifiée CIREST depuis 05/05/2025 confirmé
+Assainissement
+CISE Réunion (SAUR) · DSP confirmé
+SPANC (ANC)
+Régie CIREST
+Électricité
+EDF SEI · EDF SEI Réunion — raccordement.reunion@edf.fr / edf.re
+Sur le contrat unifié CISE depuis le 05/05/2025.
+Gestionnaires administratifs à jour au 2026-07, à revérifier annuellement (les délégations changent aux renouvellements de contrat). Contact administratif uniquement — aucun tracé de réseau (donnée sensible). Viabilité (eau, électricité, assainissement) à confirmer auprès des concessionnaires via DT-DICT (reseaux-et-canalisations.gouv.fr).
+Viabilisation eau · élec
+confirmée par les faits
+Raccordement eau · élec
+Raccordement a priori SIMPLE : réseaux présumés en façade/voirie, secteur déjà desservi et construit.
+Solaire
+Ensoleillement très favorable à une installation solaire — productible estimé ~1 550 kWh/kWc/an (modèle SARAH3, hors gradient côtier local). Estimé
+non renseigné (secteur indicatif)
+indices (faisceau de preuves)
+
+### tiroir ouvert : Fiscalité et dispositifs
+
+### tiroir ouvert : ZFANG renforcé
+Zone franche (ZFANG), France Ruralités (FRR), ORT signée zone B1 (PTZ/loyers) · TVA 8,5 %
+Taxe foncière
+39,48 %
+part communale
+Taxe d'aménagement
+5 + 2.5 %
+commune · dépt
+Zonage A/B/C
+B1
+PTZ · loyers
+TVA
+8,5 %
+DOM · 2,1 % LLS
+DISPOSITIFS DE LA COMMUNE
+ZFANG
+FRR
+ORT
+05/10/2021
+QPV
+PVD
+Cœur de ville
+Calculer la taxe d'aménagement
+détail des dispositifs
+Fait territorial sourcé et daté. Les taux cités sont les taux LÉGAUX du dispositif (décret / CGI), pas un calcul de votre avantage : l'éligibilité et l'effet réel relèvent de votre expert-comptable ou avocat fiscaliste.
+
+### tiroir ouvert : Marché
+
+### tiroir ouvert : 147 €/m²
+Terrain nu 147 €/m², maison 1 774 €/m² secteur +10 % vs commune, tendance hausse
+Terrain nu
+147
+€/m² · 12 ventes
+Maison
+1 774
+€/m² · 9 ventes · 500 m
+Appartement
+1 651
+€/m² · 35 ventes · 1 000 m
+commune
+secteur +10 %
+Marché DVF
+Prix médian terrain 147 €/m² — 12 ventes secteur cadastral 2021-2025 (millésimes géo-DVF disponibles). Contexte de marché favorable.
+DVF / valeurs foncières
+· géo-DVF Etalab 2021–2025 + archives DGFiP 2014–2020
+Potentiel foncier Région
+Hors îlot « Potentiel foncier » Région.
+data.regionreunion.com — Potentiel foncier
+Prix de sortie — bâti secteur
+1 651 €/m²
+Valeur au prix du secteur
+≈ 1 570 254 €
+Prix par type : maison / appartement = médiane locale par type au rayon adaptatif (DVF) ; terrain nu = médiane de la section cadastrale (même source que la valeur du secteur).
+Loyers (OLL)
+zone non couverte
+Outil Communes — Saint-André
+
+### tiroir ouvert : Quartier
+
+### tiroir ouvert : isochrone
+Secteur Lotissement Virapoullé niveau de vie 16 999 €, 54 % sous le seuil de pauvreté, commerces à 193 m
+À PROXIMITÉ (À PIED)
+École
+48 m
+Commerces
+193 m
+Santé
+58 m
+CONTEXTE SOCIO-ÉCONOMIQUE (SECTEUR)
+Niveau de vie médian
+16 999 €
+SOURCÉFilosofi 2021 (INSEE, carreaux 200 m)
+Propriétaires
+46 %
+Pauvreté
+54 %
+Parc social — commune entière
+5 500 logements
+RPLS 01/01/2025 · maille commune
+Contexte informatif — hors scoring. Niveau de vie/pauvreté au carreau 200 m ; parc social à la commune.
+QUARTIER INSEE — CAMBUSTON-L'ÉTANG-BOIS ROUGE
+Logements
+1 422
+Vacance
+5,2 %
+Bâti avant 1990
+46,3 %
+Pers./ménage
+2,69
+60 ans et +
+13,9 %
+HLM
+0,4 %
+INSEE — recensement de la population, bases IRIS (maille quartier) — RP2022 (parution 16/10/2025, géographie 01/01/2024). Maille quartier (IRIS) : affine la commune, ne la remplace pas.
+0,5 km
+1 km
+2 km
+5 km
+Lecture de la zone…
+PERMIS À PROXIMITÉ
+5 à < 100 m · 19 à < 200 m
+Permis autorisés géolocalisés < 200 m (source du signal viabilisation M-VIA). Cliquez pour la fiche.
+PC
+2016-01-15
+1 lgt
+68 m
+2023-01-26
+69 m
+DP
+2022-03-01
+2018-05-29
+76 m
+2022-09-28
+99 m
+◀ + 7 autres permis
+ACTIVITÉ DE DÉPÔT DE PERMIS
+Sourcé Sitadel3 / SDES
+Sur le secteur : 10 dépôts sur 36 mois · section cadastrale · dernier 2026-02-26
+activité de dépôt (permis aboutis — les refus et dossiers en cours ne sont pas publiés).
+Étude de zone · Chalandise
+Étude de zone · Particulier
+Permis commune
+Fiche commune
+
+### tiroir ouvert : Potentiel
+
+### tiroir ouvert : —
+Pas de SDP résiduelle exploitable
+SDP restante
+—pas de potentiel résiduel
+Aucune SDP résiduelle exploitable sur cette parcelle — le détail du calcul (terrain libéré, hypothèses, gabarit) est dans « Étudier quand même ».
+Densifier l'existant
+Ouvrir le Gabarit
+Étudier quand même
+
+### tiroir ouvert : Simulation
+
+### tiroir ouvert : bilan
+Prix de sortie retenu 1 651 €/m²
+PRIX DE SORTIE RETENU (BILAN)
+Le prix de sortie bâti retenu pour la charge foncière est le prix du secteur affiché dans « Marché » (échantillon, rayon, tendance, fraîcheur y sont détaillés).
+RÉHABILITATION (MODE B)
+bilan négatif
+Le terrain est bâti (23 % d'emprise) d'un bâti récent ou d'année inconnue, et n'est pas divisible — pas d'assiette exploitable.
+bilan négatif à 1500 €/m² de travaux — le marché local n'absorbe pas cette hypothèse
+terrain nu au prix du secteur : ~1,57 M€ (147 €/m² × 10 682 m² · Estimé)
+À ces hypothèses, la valeur de cette parcelle est portée par le terrain, pas par le bâti.
+Détail du bilan
+Prix de sortie (revente)
+1 774 €/m² Sourcé DVF
+médiane DVF maison/appartement du secteur (n ≥ 3) · médiane secteur→commune, sans rayon adaptatif
+Coût travaux ESTIMÉ
+€/m²
+coût travaux : hypothèse ~1500 €/m² (ESTIMÉ) — à ajuster selon l'état constaté du bâti
+marge 9% + frais 12% du CA (mêmes conventions que le mode A)
+Sortie locative
+Estimé — ni un prix ni une promesse ; sans donnée d'état du bâti, l'incertitude est portée par le paramètre travaux. Sortie = revente (homogène mode A).
+Faisabilité
+Calculette foncière
+Assemblage
+
+### tiroir ouvert : final

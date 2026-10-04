@@ -1,0 +1,431 @@
+PARCELLE · CILAOS
+97424000AB0039
+pj
+adresse non rattachée (Absent)
+i
+Secteur : Îlet Dijoux
+SURFACE
+1,29 ha
+ZONE
+N
+naturelle
+PENTE
+27,6 °
+forte
+EXPOSITION
+Est
+versant (RGE ALTI)
+RISQUES
+4
+aléa rédhibitoire
+SDP RESTANTE
+—
+zone non constructible
+Demander à LABUSE
+Poser une question
+LE BIEN
+Identité
+COMMUNE DE CILAOS
+›
+Terrain
+pente forte · Est
+Bâti
+Aucun bâti significatif détecté
+terrain nu
+LE DROIT DU SOL
+Urbanisme
+constructibilité très limitée
+ⓘ
+Risques et environnement
+15 couches évaluées
+4 vigilances
+Réseaux et desserte
+Assainissement : non renseigné
+eau/élec à confirmer
+Fiscalité et dispositifs
+46,06 %
+LE MARCHÉ
+Marché
+5 ventes secteur · DVF — jusqu'à déc. 2025
+Quartier
+Équipements, population et permis du voisinage
+isochrone
+LE PROJET
+Potentiel
+calcul tracé
+Simulation
+charge foncière · réhabilitation · outils projet
+bilan
++ CRM
++ Projet
+Dossier
+Dossier financier
+Apporteur
+Pré-dossier PC
+Courrier
+Remonter le temps
+Estimations indicatives issues de données publiques — ni conseil juridique/notarial ni garantie de constructibilité. Ces informations ne remplacent pas un certificat d'urbanisme.
+⚑ Signaler une erreur
+
+### tiroir ouvert : Identité
+
+### tiroir ouvert : COMMUNE DE CILAOS
+⌄
+COMMUNE DE CILAOS propriétaire depuis 2020 — aucune procédure collective
+SIREN
+219740248
+annuaire des entreprises ↗
+Créée · état
+1983active
+SIRENE
+Activité
+Administration publique générale
+8411Z
+BODACC
+aucune procédure
+DGFiP / BODACC
+Siège
+66 RUE DU PERE BOITEAU · Cilaos
+Groupe
+Commune
+HISTORIQUE DU PROPRIÉTAIRE
+2019
+COMMUNE DE CILAOS BIEN PRESUME SANS MAITRE
+2020
+Détention
+≥ 6 ans (depuis 2020)
+Scan patrimoine du propriétaire
+→
+
+### tiroir ouvert : Terrain
+
+### tiroir ouvert : 27,6 °
+Versant Est 27,6 ° · 12 871 m² au sol libre · 0 % artificialisé (OCS GE)
+Pente
+27,6 ° forte
+Exposition
+versant · RGE ALTI
+Surface au sol libre
+12 871 m²
+Sol artificialisé
+0 %
+OCS GE 2022
+COUVERTURE DU SOL · COSIA 20 CM
+Imperméabilisé 0 %
+Végétalisé 99,6 %
+Sol nu 0,3 %
+Azimut du versant
+94,1 ° (0 = Nord, sens horaire)
+PROFIL ALTIMÉTRIQUE
+Lecture du relief (RGE ALTI)…
+OCS GE (IGN, donnée d’îlot, décret 2023-1096) · CoSIA (IGN, détection IA, mesure de la parcelle) · pente et exposition RGE ALTI (IGN).
+
+### tiroir ouvert : Bâti
+953
+893
+0
+206 m
+DISTANCE
+DÉNIVELÉ +
++63 m
+DÉNIVELÉ −
+−16 m
+PENTE MOYENNE
+38,7 %
+PLUS FORTE PENTE
+304,1 %
+ALTITUDE
+893–953 m
+Le long du plus grand axe de la parcelle. Source RGE ALTI 5 m (IGN). Vocabulaire cartes.gouv (pente moyenne = grade absolu moyen).
+
+### tiroir ouvert : terrain nu
+Terrain nu aucun bâtiment BD TOPO, aucune hauteur LiDAR, aucun établissement rattaché
+Établissements sur la parcelle
+aucun SIRENE, adresse exacte
+Bâti existant — BD TOPO® V3 (IGN) + CoSIA 2025. Information de fiche, jamais un signal de classement.
+
+### tiroir ouvert : Urbanisme
+
+### tiroir ouvert : constructibilité très limitée
+N, naturelle 23 destinations interdites
+Zone
+Nnaturelle
+PLU
+approuvé le 13/02/2024
+document
+RÈGLEMENT — ZONE N
+voir le règlement
+Hauteur
+non calibré
+Emprise
+Recul voie
+Recul limites
+Pleine terre
+Stationnement
+Destinations · 23 interdites
+Le règlement des zones agricoles et naturelles n'est pas indexé article par article dans LABUSE. Consultez le document complet.
+Le règlement PLU fait foi ; les valeurs affichées sont une aide à la lecture, non un certificat d'urbanisme.
+SITUATION
+Foncier public
+info
+Propriété publique (COMMUNE DE CILAOS) — cession/préemption : interlocuteur public [DGFiP groupe 4 : Commune].
+Forêt publique
+Exclue : forêt domaniale (domaine public — terrain inacquérable).
+Forêts publiques (ONF)
+· BD TOPO® V3 — forêt publique (IGN)
+Parc national
+moyen
+Aire d'adhésion du Parc National — contraintes de charte.
+Parc National de La Réunion (INPN)
+· millésime 2021
+Prescriptions PLU
+fort
+Espace boisé classé (EBC) : Espace boisé classé (~78% de la parcelle) — toute construction interdite sur l'emprise boisée (Art. L113-1 CU).
+Urbanisme PLU/GPU (API Carto)
+· GPU/PLU par commune (révisions — détail en fiche)
+SDP résiduelle
+SDP résiduelle 0 m² — rien à construire.
+Surface parcelle
+Surface utile 12871 m².
+Annuaire PLU
+Vérif procédure
+RTAA DOM
+10 exigences →
+Espace boisé classé
+77.6 %
+Préemption (DPU)
+non déterminée
+Bruit aérien (PEB)
+hors zone
+Servitude (SUP)
+PM1 · PM1_PPR_i_mvt_CILAOS_gen1_ass
+SCOT
+SCOT DU GRAND SUD · approuvé le 02/09/2024
+MIXITÉ SOCIALE (LLS)
+non modélisée
+Clause de mixité sociale
+non modélisée pour cette zone
+Aucune clause de mixité sociale validée pour cette zone dans le règlement calibré.
+✓ 7 couches sans objet — déplier
+Emprise linéaire
+Forme non linéaire (largeur 109 m, allongement 1.8×).
+Emprise routière
+Aucun axe routier carrossable ne touche la parcelle.
+Friche
+Aucune friche recensée.
+Cartofriches (Cerema)
+Occupation du sol (BD CARTO V5 — grain grossier)
+Sol classé artificialisé (occupation du sol BD CARTO V5, grain grossier, précision limitée à la parcelle).
+IGN BD CARTO V5 — occupation du sol
+· BD CARTO® V5 — occupation du sol (IGN, proxy)
+Faux positif OSM
+Aucun faux positif géométrique OSM.
+OpenStreetMap / Overpass
+Parcelle déclarée agricole (RPG)
+Hors parcelle agricole déclarée (RPG).
+RPG — déclarations agricoles (IGN/ASP)
+· proxy RPG.LATEST (IGN) — campagne 2024 (data.gouv RPG-R)
+Potentiel foncier Région (indicatif)
+Hors îlot cartographié — aucune contrainte déduite automatiquement.
+Potentiel foncier Région (Région ODS)
+· îlots non urbanisés — estimation Région (ODS, non versionné)
+
+### tiroir ouvert : Risques et environnement
+
+### tiroir ouvert : 4 vigilances
+Aléa mouvement terrain fort sur 100 % 2 aléas au total
+ALÉAS (2)
+PPR — zone rougerédhibitoire
+100 %
+Aléa mouvement_terrain niveau fort
+PPR (approuvé le 2023-08-10) — DEAL Réunion — PPR / aléas · 2026-09-13
+FRICHE RECENSÉE (CARTOFRICHES)
+✓ Sans objet — parcelle non recensée comme friche. (édition courante (Cerema, mise à jour trimestrielle))
+EnR au sol interdites (APER)
+Parc national · Parc national de La Réunion
+Mesure compensatoire (GéoMCE)
+aucune sur la parcelle
+◀
+16
+arrêtés CatNat (commune) · dernier 17/06/2024
+VIGILANCES
+Pente forte tres_fort (~88% > seuil 30%)
+terrassement et accès renchéris (majoration VRD du bilan), pas une exclusion.
+Servitude(s) d'utilité publique sur la parcelle : PM1.
+✓ 11 couches sans objet — déplier
+ABF / Monuments
+Hors périmètre ABF.
+ABF / Monuments historiques
+Classement sonore (bruit routier)
+Hors secteurs affectés par le bruit routier.
+Classement sonore ITT (Cerema)
+· arrêtés déc. 2023
+Cavités
+Aucun objet recensé à proximité.
+Géorisques — cavités souterraines
+50 pas géométriques
+Hors zone des 50 pas géométriques.
+50 pas géométriques — limite haute (DEAL)
+· cadastre 1877 (géoréf. 2012/1950)
+Eau
+Hors hydrographie.
+BD TOPO IGN
+· BD TOPO® V3 (IGN) — édition non enregistrée
+Espace protégé réglementaire (INPN)
+Hors espace protégé (INPN).
+INPN / patrinat — espaces protégés
+· INPN/patrinat espaces protégés — passe 05/07/2026
+ICPE
+Géorisques — ICPE
+Mouvement de terrain
+Géorisques — mouvements de terrain
+Ravines
+Hors voisinage immédiat d'une ravine.
+Sols pollués
+Géorisques — sites et sols pollués
+Indicateur d'érosion côtière (Cerema)
+Hors zone de recul du trait de côte.
+Cerema / GéoLittoral — indicateur d'érosion côtière
+· millésime 2018
+Pièges & risques
+
+### tiroir ouvert : Réseaux et desserte
+
+### tiroir ouvert : eau/élec à confirmer
+Viabilisation eau/élec à confirmer assainissement non renseigné
+?
+Eau/élec
+à confirmer
+Fibre
+✓
+Bus
+524 m
+Assainis.
+non renseigné
+Fibre (Arcep)
+non renseignée
+Arrêt de bus
+Bois Rouge · 524 m
+ACCÈS
+Accès voirie : voie publique à ≤ 10 m de la parcelle (faisceau viabilisation
+le test au contact strict de l'axe BD TOPO est retiré).
+GESTIONNAIRES (RACCORDEMENT)
+Compétence
+CIVIS — Communauté intercommunale des Villes solidaires · civis.re
+Eau potable
+Régie CIVIS — SPIEP · régie confirmé
+Assainissement
+Régie CIVIS — SPIAC · régie confirmé
+SPANC (ANC)
+SPIANC (régie)
+Électricité
+EDF SEI · EDF SEI Réunion — raccordement.reunion@edf.fr / edf.re
+Seule commune CIVIS en régie complète.
+Gestionnaires administratifs à jour au 2026-07, à revérifier annuellement (les délégations changent aux renouvellements de contrat). Contact administratif uniquement — aucun tracé de réseau (donnée sensible). Viabilité (eau, électricité, assainissement) à confirmer auprès des concessionnaires via DT-DICT (reseaux-et-canalisations.gouv.fr).
+Viabilisation eau · élec
+lourde probable
+Raccordement eau · élec
+Extension de réseau PROBABLE, surcoût significatif : parcelle éloignée du secteur desservi (façade et/ou secteur non construits).
+Solaire
+Ensoleillement favorable à une installation solaire — productible estimé ~1 280 kWh/kWc/an (modèle SARAH3, hors gradient côtier local). Estimé
+non renseigné (secteur indicatif)
+3
+indices (faisceau de preuves)
+
+### tiroir ouvert : Fiscalité et dispositifs
+
+### tiroir ouvert : 46,06 %
+Zone franche (ZFANG), France Ruralités (FRR) zone B1 (PTZ/loyers) · TVA 8,5 %
+Taxe foncière
+part communale
+Taxe d'aménagement
+5 + 2.5 %
+commune · dépt
+Zonage A/B/C
+B1
+PTZ · loyers
+TVA
+8,5 %
+DOM · 2,1 % LLS
+DISPOSITIFS DE LA COMMUNE
+ZFANG
+FRR
+ORT
+QPV
+PVD
+Cœur de ville
+Calculer la taxe d'aménagement
+détail des dispositifs
+Fait territorial sourcé et daté. Les taux cités sont les taux LÉGAUX du dispositif (décret / CGI), pas un calcul de votre avantage : l'éligibilité et l'effet réel relèvent de votre expert-comptable ou avocat fiscaliste.
+
+### tiroir ouvert : Marché
+
+### tiroir ouvert : —
+Marché de secteur secteur -13 % vs commune, tendance hausse
+commune
+secteur -13 %
+Aucun signal sur cet onglet.
+Prix de sortie — bâti secteur
+1 840 €/m²
+VENTES À MOINS DE 100 M
+Ventes
+(< 100 m · 36 mois)
+1 vente
+Prix médian
+échantillon insuffisant (< 3 ventes)
+Loyers (OLL)
+zone non couverte
+Outil Communes — Cilaos
+
+### tiroir ouvert : Quartier
+
+### tiroir ouvert : isochrone
+Secteur Îlet Dijoux commerces à 1,3 km
+À PROXIMITÉ (À PIED)
+École
+1,9 km
+Commerces
+1,3 km
+Santé
+1,7 km
+CONTEXTE SOCIO-ÉCONOMIQUE (SECTEUR)
+Parc social — commune entière
+62 logements
+RPLS 01/01/2025 · maille commune
+Contexte informatif — hors scoring. Niveau de vie/pauvreté au carreau 200 m ; parc social à la commune.
+QUARTIER INSEE — ÎLET À CORDES-OUEST BRAS ROUGE
+Logements
+182
+Vacance
+18 %
+Bâti avant 1990
+47,8 %
+Pers./ménage
+2,86
+60 ans et +
+17,9 %
+HLM
+INSEE — recensement de la population, bases IRIS (maille quartier) — RP2022 (parution 16/10/2025, géographie 01/01/2024). Maille quartier (IRIS) : affine la commune, ne la remplace pas.
+0,5 km
+1 km
+2 km
+5 km
+Lecture de la zone…
+Étude de zone · Chalandise
+Étude de zone · Particulier
+Permis commune
+Fiche commune
+
+### tiroir ouvert : Potentiel
+
+### tiroir ouvert : Simulation
+
+### tiroir ouvert : bilan
+Prix de sortie retenu 1 840 €/m²
+PRIX DE SORTIE RETENU (BILAN)
+Le prix de sortie bâti retenu pour la charge foncière est le prix du secteur affiché dans « Marché » (échantillon, rayon, tendance, fraîcheur y sont détaillés).
+Faisabilité
+Calculette foncière
+Assemblage
+
+### tiroir ouvert : final

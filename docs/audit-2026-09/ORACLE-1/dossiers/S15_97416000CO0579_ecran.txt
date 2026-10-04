@@ -1,0 +1,539 @@
+PARCELLE · SAINT-PIERRE
+97416000CO0579
+pj
+498 Route de l’Entre Deux, 97410 Saint-Pierre
+SURFACE
+i
+1 113 m²
+ZONE
+Uaza
+constructible
+PENTE
+2,7 °
+plat
+EXPOSITION
+Nord-Ouest
+versant (RGE ALTI)
+RISQUES
+7
+vigilances
+SDP RESTANTE
+—
+pas de potentiel résiduel
+Demander à LABUSE
+Poser une question
+LE BIEN
+Identité
+NOUVELLES LES TROI
+›
+Terrain
+pente plat · Nord-Ouest
+Bâti
+Parcelle déjà bâtie
+2 bâtiments
+LE DROIT DU SOL
+Urbanisme
+Risques et environnement
+15 couches évaluées
+7 vigilances
+Réseaux et desserte
+Assainissement : non renseigné
+eau/élec probable
+Fiscalité et dispositifs
+44,18 %
+LE MARCHÉ
+Marché
+10 ventes secteur · DVF — jusqu'à déc. 2025
+188 €/m²
+Quartier
+Équipements, population et permis du voisinage
+isochrone
+LE PROJET
+Potentiel
+calcul tracé
+Simulation
+charge foncière · réhabilitation · outils projet
+bilan
++ CRM
++ Projet
+Dossier
+Dossier financier
+Apporteur
+Pré-dossier PC
+Courrier
+Remonter le temps
+Estimations indicatives issues de données publiques — ni conseil juridique/notarial ni garantie de constructibilité. Ces informations ne remplacent pas un certificat d'urbanisme.
+⚑ Signaler une erreur
+
+### tiroir ouvert : Identité
+
+### tiroir ouvert : NOUVELLES LES TROI
+⌄
+NOUVELLES LES TROIS CHEMINEES propriétaire depuis 2019 — aucune procédure collective
+SIREN
+484615513
+annuaire des entreprises ↗
+Créée · état
+2026active
+SIRENE
+Activité
+Location de terrains et d'autres biens immobiliers
+6820B
+BODACC
+aucune procédure
+DGFiP / BODACC
+Siège
+131 RUE AMIRAL LACAZE · Saint-Pierre
+Groupe
+Personne morale — fichier DGFiP
+HISTORIQUE DU PROPRIÉTAIRE
+2019 → 2025
+NOUVELLES LES TROIS CHEMINEES
+Détention
+≥ 7 ans (depuis 2019)
+Scan patrimoine du propriétaire
+→
+FILIATION CADASTRALE
+Issue de
+97416000CO0414 · 29/06/2004 · document d’arpentage
+DGFiP — documents de filiation informatisés (trimestriel). Contrôle croisé avec le cadastre d'époque (géométrie) — deux canaux, jamais un conflit.
+
+### tiroir ouvert : Terrain
+
+### tiroir ouvert : 2,7 °
+Versant Nord-Ouest 2,7 ° · 593 m² au sol libre · 100 % artificialisé (OCS GE)
+Pente
+2,7 ° plat
+Exposition
+versant · RGE ALTI
+Surface au sol libre
+593 m²
+Sol artificialisé
+100 %
+OCS GE 2022
+COUVERTURE DU SOL · COSIA 20 CM
+Imperméabilisé 97,9 %
+Végétalisé 2,1 %
+Sol nu 0 %
+Azimut du versant
+318,2 ° (0 = Nord, sens horaire)
+PROFIL ALTIMÉTRIQUE
+100
+99
+0
+53 m
+DISTANCE
+DÉNIVELÉ +
++2 m
+DÉNIVELÉ −
+−0 m
+PENTE MOYENNE
+4 %
+PLUS FORTE PENTE
+8,3 %
+ALTITUDE
+99–100 m
+Le long du plus grand axe de la parcelle. Source RGE ALTI 5 m (IGN). Vocabulaire cartes.gouv (pente moyenne = grade absolu moyen).
+OCS GE (IGN, donnée d’îlot, décret 2023-1096) · CoSIA (IGN, détection IA, mesure de la parcelle) · pente et exposition RGE ALTI (IGN).
+
+### tiroir ouvert : Bâti
+
+### tiroir ouvert : 2 bâtiments
+Parcelle déjà bâtie emprise 520 m² · faîtage 7,6 m mesuré (LiDAR)
+Emprise bâtie au sol
+520 m²
+BD TOPO IGN
+Faîtage (LiDAR)
+7,6 m
+haut de toit
+Bâtiments
+2 BD TOPO · 1 RNB · 1 adr. BAN
+◀
+détail du bâti
+ÉTABLISSEMENTS SUR LA PARCELLE (12)
+AMPAH
+Ingénierie, études techniques
+E P ALU AND CO
+Fabrication de charpentes et d'autres menuiseries
+PAPANG EXPRESS
+Autres activités de poste et de courrier
+9
+autres établissements
+Rattachement par l'adresse BAN (précision « adresse » seulement — « voie » et « commune » ne sont pas rattachés). Nom masqué si l'unité est non diffusible.
+Bâti existant — BD TOPO® V3 (IGN) + CoSIA 2025. Information de fiche, jamais un signal de classement.
+
+### tiroir ouvert : Urbanisme
+
+### tiroir ouvert : —
+Uaza, constructible 13 destinations interdites · 4 sous condition
+Zone
+Uazaconstructible
+PLU
+approuvé le 25/06/2024
+document
+RÈGLEMENT — ZONE UAZA
+voir l’article
+Hauteur
+14 m
+Art. Ua3.5 · p.178 (PLU
+Emprise
+75 %
+Art. Ua3.4 · p.177 (PLU
+Recul voie
+4 m
+Art. Ua3.1 · p.176 (PLU
+Recul limites
+3 m
+Art. Ua3.2 · p.177 (PLU
+Pleine terre
+20 %
+Art. Ua5.1 · p.182 (PLU
+Stationnement
+Destinations · 6 autorisées (Locaux et bureaux accueillant du public des administrations publiques et assimilés, Locaux techniques et industriels des administrations publiques et assimilés, Équipements sportifs…) · 13 interdites · 4 sous condition
+Le règlement PLU fait foi ; les valeurs affichées sont une aide à la lecture, non un certificat d'urbanisme.
+SITUATION
+SDP résiduelle
+SDP résiduelle 0 m² — rien à construire.
+Surface parcelle
+Surface utile 1113 m².
+declassement
+fort
+accès non identifié (voirie la plus proche à ~7 m, BD TOPO) — desserte ou servitude de passage à vérifier
+Annuaire PLU
+Vérif procédure
+RTAA DOM
+10 exigences →
+Préemption (DPU)
+non déterminée
+Bruit aérien (PEB)
+hors zone
+Servitude (SUP)
+PM1 · PM1_PPR_i_mvt_SAINT_PIERRE_gen2_ass
+SCOT
+SCOT DU GRAND SUD · approuvé le 02/09/2024
+MIXITÉ SOCIALE (LLS)
+non modélisée
+Clause de mixité sociale
+non modélisée pour cette zone
+Aucune clause de mixité sociale validée pour cette zone dans le règlement calibré.
+✓ 11 couches sans objet — déplier
+Emprise linéaire
+Forme non linéaire (largeur 29 m, allongement 1.8×).
+Emprise routière
+Pas une emprise routière (0 m d'axes, densité 0.00, bâti 47%).
+Foncier public
+Propriétaire PM « Personnes morales non remarquables » (groupe 0) — acquérable.
+Forêt publique
+Hors forêt publique.
+Forêts publiques (ONF)
+· BD TOPO® V3 — forêt publique (IGN)
+Friche
+Aucune friche recensée.
+Cartofriches (Cerema)
+Occupation du sol (BD CARTO V5 — grain grossier)
+Sol classé artificialisé (occupation du sol BD CARTO V5, grain grossier, précision limitée à la parcelle).
+IGN BD CARTO V5 — occupation du sol
+· BD CARTO® V5 — occupation du sol (IGN, proxy)
+Faux positif OSM
+Aucun faux positif géométrique OSM.
+OpenStreetMap / Overpass
+Parc national
+Hors Parc National.
+Parc National de La Réunion (INPN)
+· millésime 2021
+Prescriptions PLU
+Aucune prescription PLU sur la parcelle.
+Urbanisme PLU/GPU (API Carto)
+· GPU/PLU par commune (révisions — détail en fiche)
+Parcelle déclarée agricole (RPG)
+Hors parcelle agricole déclarée (RPG).
+RPG — déclarations agricoles (IGN/ASP)
+· proxy RPG.LATEST (IGN) — campagne 2024 (data.gouv RPG-R)
+Potentiel foncier Région (indicatif)
+Hors îlot cartographié — aucune contrainte déduite automatiquement.
+Potentiel foncier Région (Région ODS)
+· îlots non urbanisés — estimation Région (ODS, non versionné)
+
+### tiroir ouvert : Risques et environnement
+
+### tiroir ouvert : 7 vigilances
+Aléa mouvement terrain moyen sur 100 % ancien site industriel à 56 m · 2 aléas au total
+ALÉAS (2)
+Aléa mouvement_terrain niveau moyen
+PPR — zone bleue
+zone bleue
+PPR (approuvé le 2016-04-01) · PPRL (approuvé le 2018-09-24) — DEAL Réunion — PPR / aléas · 2026-09-13
+SOLS (SIS / CASIAS)
+Ancien site industriel (CASIAS)
+Sucrerie Bois d¿Olives · à 56 m
+FRICHE RECENSÉE (CARTOFRICHES)
+✓ Sans objet — parcelle non recensée comme friche. (édition courante (Cerema, mise à jour trimestrielle))
+EnR au sol (APER)
+hors zone d'exclusion
+Mesure compensatoire (GéoMCE)
+aucune sur la parcelle
+20
+arrêtés CatNat (commune) · dernier 21/04/2025
+VIGILANCES
+Installation classée (ICPE) à proximité
+SOCIETE REUNIONNAISE CONCASSAGE, régime Enregistrement, 48 m.
+Pente forte tres_fort (~31% > seuil 30%)
+terrassement et accès renchéris (majoration VRD du bilan), pas une exclusion.
+Secteur affecté par le bruit routier (classement sonore cat. 3, bande 100 m)
+isolement acoustique renforcé obligatoire (R.571-32 CE).
+Site pollué recensé (CASIAS/instruction) à proximité
+étude de sol à prévoir, coût de dépollution potentiel. (Sucrerie Bois d¿Olives, 56 m)
+Servitude(s) d'utilité publique sur la parcelle : PM1.
+Ligne moyenne tension
+à proximité
+ABF / Monuments
+inconnu
+Abords MH ~500 m (tampon) — covisibilité à instruire.
+ABF / Monuments historiques
+✓ 7 couches sans objet — déplier
+Cavités
+Aucun objet recensé à proximité.
+Géorisques — cavités souterraines
+50 pas géométriques
+Hors zone des 50 pas géométriques.
+50 pas géométriques — limite haute (DEAL)
+· cadastre 1877 (géoréf. 2012/1950)
+Eau
+Hors hydrographie.
+· BD TOPO® V3 (IGN) — édition non enregistrée
+Espace protégé réglementaire (INPN)
+Hors espace protégé (INPN).
+INPN / patrinat — espaces protégés
+· INPN/patrinat espaces protégés — passe 05/07/2026
+Mouvement de terrain
+Géorisques — mouvements de terrain
+Ravines
+Hors voisinage immédiat d'une ravine.
+Indicateur d'érosion côtière (Cerema)
+Hors zone de recul du trait de côte.
+Cerema / GéoLittoral — indicateur d'érosion côtière
+· millésime 2018
+Pièges & risques
+
+### tiroir ouvert : Réseaux et desserte
+
+### tiroir ouvert : eau/élec probable
+Viabilisation eau/élec probable assainissement non renseigné
+?
+Eau/élec
+probable
+✓
+Fibre
+FttH
+Bus
+227 m
+Assainis.
+non renseigné
+Fibre (Arcep)
+FttH · 0 m · 1 op.
+Arrêt de bus
+Bois Noirs · 227 m
+Ligne de transport
+Alternéo · 173 m
+Pôle d’échange
+Gare routière · 2.43 km
+ACCÈS
+Accès voirie : voie publique à ≤ 10 m de la parcelle (faisceau viabilisation
+le test au contact strict de l'axe BD TOPO est retiré).
+GESTIONNAIRES (RACCORDEMENT)
+Compétence
+CIVIS — Communauté intercommunale des Villes solidaires · civis.re
+Eau potable
+Runéo (Veolia) · DSP à confirmer
+Assainissement
+Runéo · DSP à confirmer
+SPANC (ANC)
+SPIANC / Runéo
+Électricité
+EDF SEI · EDF SEI Réunion — raccordement.reunion@edf.fr / edf.re
+Secteurs marginaux Sudéau/SI Hirondelles ; opérateur principal Runéo. Concernée concession CIVIS 2025.
+Gestionnaires administratifs à jour au 2026-07, à revérifier annuellement (les délégations changent aux renouvellements de contrat). Contact administratif uniquement — aucun tracé de réseau (donnée sensible). Viabilité (eau, électricité, assainissement) à confirmer auprès des concessionnaires via DT-DICT (reseaux-et-canalisations.gouv.fr).
+Viabilisation eau · élec
+Raccordement eau · élec
+Raccordement PROBABLE au coût standard : secteur partiellement desservi. À confirmer (longueur de branchement, capacité).
+Solaire
+Ensoleillement favorable à une installation solaire — productible estimé ~1 440 kWh/kWc/an (modèle SARAH3, hors gradient côtier local). Estimé
+non renseigné (secteur indicatif)
+4
+indices (faisceau de preuves)
+
+### tiroir ouvert : Fiscalité et dispositifs
+
+### tiroir ouvert : 44,18 %
+Zone franche (ZFANG), France Ruralités (FRR), ORT signée zone B1 (PTZ/loyers) · TVA 8,5 %
+Taxe foncière
+part communale
+Taxe d'aménagement
+5 + 2.5 %
+commune · dépt
+Zonage A/B/C
+B1
+PTZ · loyers
+TVA
+8,5 %
+DOM · 2,1 % LLS
+DISPOSITIFS DE LA COMMUNE
+ZFANG
+FRR
+ORT
+19/11/2021
+QPV
+PVD
+Cœur de ville
+Calculer la taxe d'aménagement
+détail des dispositifs
+Fait territorial sourcé et daté. Les taux cités sont les taux LÉGAUX du dispositif (décret / CGI), pas un calcul de votre avantage : l'éligibilité et l'effet réel relèvent de votre expert-comptable ou avocat fiscaliste.
+
+### tiroir ouvert : Marché
+
+### tiroir ouvert : 188 €/m²
+Terrain nu 188 €/m², maison 3 257 €/m² secteur -8 % vs commune, tendance hausse
+Terrain nu
+188
+€/m² · 10 ventes
+Maison
+3 257
+€/m² · 10 ventes · 500 m
+Appartement
+2 663
+€/m² · 27 ventes · 1 000 m
+commune
+secteur -8 %
+Marché DVF
+Prix médian terrain 188 €/m² — 10 ventes secteur cadastral 2021-2025 (millésimes géo-DVF disponibles). Contexte de marché favorable.
+DVF / valeurs foncières
+· géo-DVF Etalab 2021–2025 + archives DGFiP 2014–2020
+Potentiel foncier Région
+Hors îlot « Potentiel foncier » Région.
+data.regionreunion.com — Potentiel foncier
+Prix de sortie — bâti secteur
+2 663 €/m²
+Valeur au prix du secteur
+≈ 209 244 €
+Prix par type : maison / appartement = médiane locale par type au rayon adaptatif (DVF) ; terrain nu = médiane de la section cadastrale (même source que la valeur du secteur).
+Loyers (OLL)
+zone non couverte
+Acquéreur PM voisin (3)
+SCI BOIS D'O · 26/11/2024
+Outil Communes — Saint-Pierre
+
+### tiroir ouvert : Quartier
+
+### tiroir ouvert : isochrone
+Quartier Pierrefonds niveau de vie 16 386 €, 59 % sous le seuil de pauvreté, commerces à 49 m
+À PROXIMITÉ (À PIED)
+École
+0 m
+Commerces
+49 m
+Santé
+190 m
+CONTEXTE SOCIO-ÉCONOMIQUE (SECTEUR)
+Niveau de vie médian
+16 386 €
+SOURCÉFilosofi 2021 (INSEE, carreaux 200 m)
+Propriétaires
+78 %
+Pauvreté
+59 %
+Parc social — commune entière
+7 572 logements
+RPLS 01/01/2025 · maille commune
+Contexte informatif — hors scoring. Niveau de vie/pauvreté au carreau 200 m ; parc social à la commune.
+QUARTIER INSEE — PIERREFONDS
+Logements
+904
+Vacance
+9,7 %
+Bâti avant 1990
+32,4 %
+Pers./ménage
+2,66
+60 ans et +
+17,3 %
+HLM
+19,2 %
+INSEE — recensement de la population, bases IRIS (maille quartier) — RP2022 (parution 16/10/2025, géographie 01/01/2024). Maille quartier (IRIS) : affine la commune, ne la remplace pas.
+0,5 km
+1 km
+2 km
+5 km
+Lecture de la zone…
+PERMIS À PROXIMITÉ
+0 à < 100 m · 14 à < 200 m
+Permis autorisés géolocalisés < 200 m (source du signal viabilisation M-VIA). Cliquez pour la fiche.
+PC
+2018-07-27
+1 lgt
+110 m
+2017-07-21
+124 m
+2023-10-24
+2 lgt
+128 m
+2016-07-07
+133 m
+2021-03-31
+148 m
+◀ + 7 autres permis
+ACTIVITÉ DE DÉPÔT DE PERMIS
+Sourcé Sitadel3 / SDES
+Sur le secteur : 6 dépôts sur 36 mois · section cadastrale · dernier 2025-01-01
+activité de dépôt (permis aboutis — les refus et dossiers en cours ne sont pas publiés).
+Étude de zone · Chalandise
+Étude de zone · Particulier
+Permis commune
+Fiche commune
+
+### tiroir ouvert : Potentiel
+QUI VIT DANS LA ZONE
+habitants
+5 187
+ménages
+1 803
+revenu médian / an
+18 709 €
+Sourcé
+moins de 25 ans
+36 %
+ÉQUIPEMENTS & COMMERCES
+Enseignement — AB FORMA CONCEPT
+Commerces — SOGAMA
+Santé et action sociale — COLINE BREULS DE TIECKEN
+Services aux particuliers — E.P.M.S
+Sports, loisirs et culture — PAS DE TIR A L ARC
+Zone atteignable dans un rayon de 1 km — même lecture que l'outil Étude de zone (Filosofi · BPE · isochrones IGN).
+
+### tiroir ouvert : Simulation
+
+### tiroir ouvert : bilan
+Prix de sortie retenu 2 663 €/m²
+PRIX DE SORTIE RETENU (BILAN)
+Le prix de sortie bâti retenu pour la charge foncière est le prix du secteur affiché dans « Marché » (échantillon, rayon, tendance, fraîcheur y sont détaillés).
+RÉHABILITATION (MODE B)
+Estimé · ~160 k€
+Le bâti existant occupe 93 % du terrain (mesuré sur BD TOPO et image aérienne 2025) — il ne reste pas d'assiette pour construire.
+Ce que la réhabilitation du bâti justifie : ~160 k€(Estimé — l'hypothèse travaux l'est toujours)
+hors valeur du terrain — le foncier (1 113 m²) s'ajoute à ce montant
+terrain nu au prix du secteur : ~209 k€ (188 €/m² × 1 113 m² · Estimé)
+À ces hypothèses, la valeur de cette parcelle est portée par le terrain, pas par le bâti.
+Détail du bilan
+Prix de sortie (revente)
+2 123 €/m² Sourcé DVF
+médiane DVF maison/appartement du secteur (n ≥ 3) · médiane secteur→commune, sans rayon adaptatif
+Coût travaux ESTIMÉ
+€/m²
+coût travaux : hypothèse ~1500 €/m² (ESTIMÉ) — à ajuster selon l'état constaté du bâti
+marge 9% + frais 12% du CA (mêmes conventions que le mode A)
+Sortie locative
+Estimé — ni un prix ni une promesse ; sans donnée d'état du bâti, l'incertitude est portée par le paramètre travaux. Sortie = revente (homogène mode A).
+Faisabilité
+Calculette foncière
+Assemblage
+
+### tiroir ouvert : final

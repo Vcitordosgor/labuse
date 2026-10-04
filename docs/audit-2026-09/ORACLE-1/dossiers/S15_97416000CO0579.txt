@@ -1,0 +1,587 @@
+D O S S I E R PA R C E L L E
+
+97416000CO0579
+498 Route de l’Entre Deux, 97410 Saint-Pierre
+Saint-Pierre
+
+
+DP-20260928-0579                 28/09/2026           1 113 m²
+n° de rapport                    généré le            contenance
+
+
+
+   1 113 m²                                    Uaza                                             2,7°
+   SURFACE                                     ZONE                                             PENTE
+
+
+
+
+   Nord-Ouest                                  2 relevés
+   EXPOSITION                                  RISQUES
+
+
+
+
+1. Identité                                                               7. Fiscalité et dispositifs
+2. Terrain                                                                8. Marché
+3. Bâti                                                                   9. Quartier
+4. Urbanisme                                                              10. Potentiel
+5. Risques et environnement                                               11. Simulation
+6. Réseaux et desserte                                                    12. Limites et sources
+
+ sourcé      lu dans la source · ƒ dérivé calculé · estimé hypothèse dite · projet saisi par vous
+
+
+
+
+                                                                 Généré
+                                                                   via                                  1 / 10
+                                                                 LABUSE
+   1. Identité
+
+  Personne morale — NOUVELLES LES TROIS CHEMINEES — propriétaire depuis
+  au moins 2019.
+
+
+Adresse                                           498 Route de l’Entre Deux, 97410 Saint-Pierre                      sourcé
+
+
+Qui détient
+
+Type de propriétaire                              Personne morale — NOUVELLES LES TROIS CHEMINEES                    sourcé
+                                                  (SIREN 484615513)
+
+Historique de détention (PM)                      NOUVELLES LES TROIS CHEMINEES (2019–2025)                          sourcé
+
+
+Historique cadastral
+
+Filiation cadastrale                              Filiation cadastrale disponible                                    sourcé
+
+
+
+
+  Plan de situation — la parcelle (contour) et ses voisines · © IGN — BD ORTHO
+
+
+
+  VÉRIFIÉ : RIEN
+     • Copropriétés : aucune copropriété immatriculée sur la parcelle.
+     • Dernière vente : aucune mutation DVF publiée sur cette parcelle (fenêtre 2014-2025).
+     • Aucun permis recensé sur cette parcelle (Sitadel).
+
+
+Sources : Base Adresse Nationale · DGFiP — parcelles des personnes morales · DFI — documents de filiation informatisés
+(DGFiP)
+
+
+
+   2. Terrain
+
+  Pente 2,7° · 593 m² de sol libre.
+
+
+Ce qu'il reste à bâtir
+
+Surface au sol libre                              593 m²                                                            ƒ dérivé
+
+
+
+
+                                                                   Généré
+                                                                     via                                                 2 / 10
+                                                                   LABUSE
+Couverture du sol
+
+Part artificialisée (OCS GE)                   100,0 %                                                                    sourcé
+
+
+Usage du sol dominant (OCS GE)                 Production tertiaire                                                       sourcé
+
+
+Part imperméabilisée (CoSIA)                   97,9 %                                                                     sourcé
+
+
+Part végétalisée/boisée (CoSIA)                2,1 %                                                                      sourcé
+
+
+Part sol nu (CoSIA)                            0,0 %                                                                      sourcé
+
+
+
+  VÉRIFIÉ : RIEN
+     • Piscine détectée : aucune piscine repérée sur la parcelle.
+
+
+Sources : BD TOPO IGN · CoSIA (couverture du sol IA, IGN) · Cadastre (API Carto PCI) · OCS GE — occupation du sol et
+artificialisation (IGN)
+
+
+
+   3. Bâti
+
+   2 bâtiments, 520 m² au sol.
+
+
+Ce qu'il y a dessus
+
+Bâtiments                                      2                                                                          sourcé
+
+
+Emprise bâtie                                  520 m²                                                                     sourcé
+
+
+Hauteur du bâti                                7,6 m                                                                      estimé
+
+
+Identifiants et références
+
+Identifiants RNB                               1 identifiant RNB                                                          sourcé
+
+
+Adresses liées au bâti (BAN PLUS)              1                                                                          sourcé
+
+
+
+  VÉRIFIÉ : RIEN
+     • Bâti détecté par IA (CoSIA) : cohérent avec la cartographie IGN, rien à signaler.
+
+
+
+  NON DISPONIBLE ICI
+     • Pente du toit : non relevée (LiDAR toiture non calculé sur ce bâti).
+     • Forme du toit : non déterminée (pans non nets ou LiDAR indisponible).
+
+
+Sources : BD TOPO IGN · CoSIA (couverture du sol IA, IGN) · LiDAR HD — MNH 50 cm (IGN) · RNB — Référentiel national des
+bâtiments (IGN) · BAN PLUS — liens adresse-bâtiment (IGN)
+
+
+
+
+                                                               Généré
+                                                                 via                                                        3 / 10
+                                                               LABUSE
+   4. Urbanisme
+
+  Zone Uaza (famille U) — urbaine, constructible. Le document opposable du
+  Géoportail de l'urbanisme fait foi ; les valeurs de règle ci-dessous sont une aide à
+  la lecture.
+
+
+Rappel RTAA DOM                         Conception réglementée pour tout logement neuf              sourcé
+                                        (aération traversante, protection solaire, eau chaude
+                                        solaire) — à intégrer au projet.
+
+Droit des sols (ER · EBC · DPU · PEB)
+
+Prescriptions du droit des sols         1 servitude — PM1 — plan de prévention des risques          sourcé
+                                        naturels (PPR)
+
+SCOT                                    DU GRAND SUD — approuvé le 02/09/2024                       sourcé
+
+
+Règlement
+
+PLU                                     PLU approuvé le 25/06/2024 — version publiée au             sourcé
+                                        Géoportail de l'urbanisme le 25/06/2024 (document
+                                        opposable).
+
+
+Ce que le règlement fixe ici
+
+Règle                                   Valeur retenue
+
+Hauteur max                             14 m au faîtage · 16 m à l'égout Art. Ua3.5 · p.178         sourcé
+
+
+Emprise au sol max                      75 % Art. Ua3.4 · p.177                                     sourcé
+
+
+Recul sur voie                          4 m Art. Ua3.1 · p.176                                      sourcé
+
+
+Recul limites séparatives               3 m Art. Ua3.2 · p.177                                      sourcé
+
+
+Pleine terre min                        20 % Art. Ua5.1 · p.182                                     sourcé
+
+
+Stationnement                           non réglementé                                              estimé
+
+
+
+Ce que le règlement autorise ici
+
+Autorisées                              Locaux et bureaux accueillant du public des                 sourcé
+                                        administrations publiques et assimilés · Locaux
+                                        techniques et industriels des administrations publiques
+                                        et assimilés · Équipements sportifs · Entrepôt · Bureau ·
+                                        Cuisine dédiée à la vente en ligne
+
+Sous conditions                         Artisanat et commerce de détail · Restauration ·            sourcé
+                                        Commerce de gros · Activités de services où s'effectue
+                                        l'accueil d'une clientèle
+
+
+
+
+                                                       Généré
+                                                         via                                          4 / 10
+                                                       LABUSE
+Interdites                                    Exploitation agricole · Exploitation forestière ·                      sourcé
+                                              Logement · Hébergement · Cinéma · Hôtels · Autres
+                                              hébergements touristiques · Établissements
+                                              d'enseignement, de santé et d'action sociale · Salles
+                                              d'art et de spectacles · Lieux de culte · Autres
+                                              équipements recevant du public · Industrie · Centre de
+                                              congrès et d'exposition
+
+Surface commerciale                           Au-delà de 1000 m² de surface de vente : autorisation                  sourcé
+                                              d'exploitation commerciale (CDAC)
+
+Règlement complet : 97416_PLU_20240625 sur le Géoportail de l'urbanisme. Les valeurs ci-dessus sont une aide à la lecture ;
+le règlement fait foi.
+
+
+  VÉRIFIÉ : RIEN
+    • Hors emplacement réservé du PLU.
+    • Hors espace boisé classé du PLU.
+    • Hors périmètre de préemption urbaine publié.
+    • Hors zones du plan d'exposition au bruit.
+
+
+
+  NON DISPONIBLE ICI
+    • Mixité sociale : seuils de la zone non renseignés à ce jour.
+
+
+Sources : Urbanisme PLU/GPU (API Carto) · Sudocuh (procédures d'urbanisme) · GPU — emplacements réservés (prescriptions
+CNIG) · GPU — espaces boisés classés (prescriptions CNIG) · GPU — droit de préemption urbain (info-surf) · PEB — plans
+d'exposition au bruit (DGAC via annexes GPU) · SUP — assiettes GPU (API Carto) · SCOT (GPU)
+
+
+
+   5. Risques et environnement
+
+  Aléas relevés — aucun rédhibitoire.
+
+
+Ce qui contraint
+
+Points de risque                              2                                                                      sourcé
+
+
+Pour information
+
+Anciens sites industriels (CASIAS)            proche_100m                                                            sourcé
+
+
+Sols (SIS · CASIAS)
+
+Sols (SIS/CASIAS, parcelle)                   CASIAS : {'nom': 'Sucrerie Bois d¿Olives', 'subtype':                  sourcé
+                                              'casias', 'statut': 'En arrêt', 'distance_m': 56, 'sur_place':
+                                              False, 'fiche_risque': 'https://fiches-risques.brgm.fr/
+                                              georisques/casias/SSP4038081'}
+
+
+Aléa mouvement de terrain                     Aléa mouvement de terrain — niveau moyen (toute la                     sourcé
+                                              parcelle).
+
+
+
+
+                                                              Généré
+                                                                via                                                    5 / 10
+                                                              LABUSE
+PPR — zone bleue                               Zone bleue PPR inondation et mouvement de terrain                      sourcé
+                                               (toute la parcelle) — constructible SOUS PRESCRIPTIONS
+                                               (règlement DEAL).
+
+
+  VÉRIFIÉ : RIEN
+    • Sols pollués (SIS) : la parcelle n'est dans aucun secteur d'information sur les sols.
+    • Système d'endiguement : la parcelle n'est dans aucune zone protégée déclarée.
+    • EnR au sol interdites (APER) : la parcelle n'est dans aucune zone d'exclusion.
+    • Mesure compensatoire (GéoMCE) : aucune mesure ne recoupe la parcelle.
+    • Cavités souterraines : aucune recensée à proximité.
+
+
+Sources : ABF / Monuments historiques · DEAL Réunion — PPR / aléas · Géorisques — mouvements de terrain · Géorisques — ICPE
+· Géorisques — cavités souterraines · Géorisques — sites et sols pollués · ZNIEFF (INPN/MNHN) · AZI / TRI — inondation
+(Géorisques GASPAR) · Géorisques — CASIAS (anciens sites industriels) · Géorisques — secteurs d'information sur les sols (SIS)
+
+
+
+   6. Réseaux et desserte
+
+  Viabilisation probable — le tracé et la capacité exacts des réseaux ne sont pas
+  relevés à cette échelle : à confirmer auprès des gestionnaires par une DT-DICT.
+
+
+Fibre
+
+Fibre (FTTH)                                   Immeuble raccordable (Arcep)                                           sourcé
+
+
+Viabilisation
+
+Viabilisation                                  Viabilisation probable                                                 estimé
+
+
+Logements raccordés à l'égout                  Dans ce secteur IRIS « Pierrefonds », 56 % des                         sourcé
+                                               logements ne sont pas raccordés au réseau collectif
+                                               (INSEE RP2022). C'est un taux de SECTEUR, pas l'état de
+                                               cette parcelle. À vérifier auprès du SPANC.
+
+Accès
+
+Arrêt de transport le plus proche              Arrêt Bois Noirs (Alternéo) à 227 m · Gare routière à 2 426            sourcé
+                                               m
+
+
+  VÉRIFIÉ : RIEN
+    • Hors rayon de 800 m d'une station TCSP.
+
+
+
+  NON DISPONIBLE ICI
+    • Productible solaire : non calculé sur cette toiture.
+
+
+Sources : Fibre Arcep — Ma connexion internet (immeuble) · BD TOPO IGN · RGE ALTI (altimétrie) · Parkings OSM (loi APER) ·
+Transport public — GTFS (PAN, 7 réseaux) · OSM — transport (pôles d'échange & téléphérique) · INSEE RP2022 — fichier détail
+Logements (EGOUL) · GPU — zonages d'assainissement
+
+
+
+
+                                                              Généré
+                                                                via                                                     6 / 10
+                                                              LABUSE
+   7. Fiscalité et dispositifs
+
+  Zonage d'investissement locatif : B1 · 4 dispositifs territoriaux.
+
+
+Taxes
+
+Taxe foncière (TFPB)                         part communale 44,18 % · EPCI 3,00 % · TEOM 17,91 %                     sourcé
+
+
+Taxe d'aménagement — taux                    Taux communal 5,0 % — Taux communal en vigueur                          sourcé
+communal                                     depuis le 01/01/2022 (délibération communale). Se
+                                             calcule sur la surface de plancher créée par le projet —
+                                             montant chiffré dans le document Financier.
+
+
+Zonage du logement                           Zonage d'investissement locatif : B1                                    sourcé
+
+
+TVA outre-mer                                TVA outre-mer : 8,5 % (taux normal DOM) · 2,1 %                         sourcé
+                                             logement locatif social
+
+Opération de revitalisation (ORT)            Action Cœur de Ville (ACV) · ORT signée (signée le                      sourcé
+                                             19/11/2021)
+
+ZFANG                                        Régime standard — dispositif de plein droit dans les                    sourcé
+                                             DOM (art. 44 quaterdecies CGI) : abattement d'environ
+                                             50 % sur les bénéfices.
+
+FRR (ex-ZRR)                                 Commune classée FRR en partie — zone spéciale                           sourcé
+                                             d'action rurale des Hauts (décret 1978) ; position de
+                                             cette parcelle dans le périmètre non vérifiée
+                                             géométriquement. À La Réunion, ce classement n'ouvre
+                                             que les mesures NON FISCALES (FAQ FRR DGCL, juillet
+                                             2025) : l'exonération d'impôt de l'art. 44 quindecies A
+                                             CGI ne s'y applique pas — à confirmer par un fiscaliste.
+
+Sources : Taux de taxe foncière — fichier REI (DGFiP) · QPV 2024 (ANCT) · NPNRU (DEAL Réunion / ANCT) · ZFANG — zone franche
+d'activité nouvelle génération (Légifrance) · FRR ex-ZRR — zone spéciale d'action rurale (Légifrance) · Taxe d'aménagement —
+barème public (DGFiP/DELTA)
+
+
+
+   8. Marché
+
+  Prix ancien médian 2 663 €/m² (27 ventes à moins de 500 m).
+
+
+Constaté — ventes actées (DVF)
+
+Terrain nu — secteur                         188 €/m²                                                                sourcé
+
+
+Ancien bâti — secteur                        2 663 €/m² — ancien, 27 ventes à moins de 500 m                         sourcé
+
+
+Ventes retenues                              27                                                                      sourcé
+
+
+Ventes écartées                              0                                                                       sourcé
+
+
+
+
+                                                           Généré
+                                                             via                                                        7 / 10
+                                                           LABUSE
+Affiché — neuf déclaré (VEFA)
+
+Neuf VEFA — commune                            4 945 €/m² — VEFA déclaré à l'acte, 151 ventes                           sourcé
+                                               (commune, 5 ans)
+
+
+Maison                                         2 123 €/m² — 19 ventes · secteur cadastral, 2021-2025                    sourcé
+
+
+Terrain                                        188 €/m² — 10 ventes · secteur cadastral, 2021-2025                      sourcé
+
+
+
+  VÉRIFIÉ : RIEN
+     • Annonces en cours (Radar) : aucune annonce active repérée dans le secteur.
+     • Aucune vente DVF recensée à moins de 100 m sur 36 mois.
+
+
+Sources : Cadastre (API Carto PCI) · DVF / valeurs foncières
+
+
+
+   9. Quartier
+
+   Pierrefonds — 2 315 habitants.
+
+
+Le secteur
+
+Permis à proximité                             3 permis (< 500 m, 24 mois)                                              sourcé
+
+
+À proximité
+
+À proximité (équipements)                      École : AB FORMA CONCEPT (0 m) · Commerces : SOGAMA                      sourcé
+                                               (49 m) · Santé : COLINE BREULS DE TIECKEN (190 m) · Arrêt
+                                               de bus : Bois Noirs (227 m)
+
+
+
+  2 315                                        17,3 %                                    35,9 %
+  habitants, 764 ménages                       de 60 ans et plus                         de locataires
+
+
+
+Parc de logements du quartier                  904 logements, 9,7 % de vacance                                          sourcé
+
+
+Sources : INSEE RP2022 — bases IRIS (logement, population) · Contours IRIS (IGN/INSEE) · SITADEL (autorisations d'urbanisme) ·
+BPE INSEE · OpenStreetMap / Overpass
+
+
+
+   10. Potentiel
+
+   Potentiel de construction : Marge SDP non calculée.
+
+
+Ce qui est constructible
+
+Potentiel (verdict)                            Marge SDP non calculée                                                   estimé
+
+
+Marge de surélévation (au faîtage)             6,4 m                                                                    estimé
+
+
+
+
+                                                               Généré
+                                                                 via                                                      8 / 10
+                                                               LABUSE
+  NON DISPONIBLE ICI
+     • Capacité (logements) : non estimable sur cette parcelle.
+     • Gabarit réglementaire : Limites de la parcelle non qualifiées (voie / limite séparative) — arête sans voie ni voisin
+       cadastré (ravine, littoral ou domaine public non routier) — non chiffré ici.
+     • Surface de plancher non calculable (capacité nulle).
+     • Surface vendable non calculable pour cette parcelle.
+
+
+Sources : BD TOPO IGN · CoSIA (couverture du sol IA, IGN) · Urbanisme PLU/GPU (API Carto) · LiDAR HD — MNH 50 cm (IGN)
+
+
+
+   11. Simulation
+
+  Renseignez votre opération pour obtenir le bilan
+  Le bilan dépend de chiffres que vous seul connaissez : prix demandé par le vendeur, coût de construction,
+  marge visée. LABUSE ne les suppose pas à votre place. Le document Financier les recueille et imprime le chiffre
+  d'affaires, la charge foncière supportable, l'écart au prix demandé et la sensibilité au coût de construction.
+
+
+
+
+   12. Limites et sources
+
+Ce que ce document ne peut pas dire
+
+Constructibilité définitive                    Certificat d'urbanisme — mairie, service instructeur
+
+Valeur vénale                                  Avis de valeur — notaire, expert
+
+État du bâti, servitudes privées               Visite et acte notarié
+
+Coût de démolition, de dépollution             Devis d'entreprise
+
+Réseaux et raccordements chiffrés              Gestionnaires, DT-DICT
+
+Position du propriétaire, prix demandé Contact direct ou apporteur d'affaires
+
+
+Sources
+
+SITADEL (autorisations d'urbanisme)            SDES (Dido)
+
+DVF / valeurs foncières                        DGFiP / Etalab — géo-DVF
+
+ABF / Monuments historiques                    Base Mérimée (Ministère Culture)
+
+DGFiP — parcelles des personnes                DGFiP
+morales
+
+SUP — assiettes GPU (API Carto)                IGN (Géoportail de l'urbanisme)
+
+DEAL Réunion — PPR / aléas                     DEAL Réunion (Lizmap)
+
+Géorisques — ICPE                              BRGM / Géorisques
+
+Géorisques — cavités souterraines              BRGM / Géorisques
+
+Géorisques — mouvements de terrain             BRGM / Géorisques
+
+
+
+                                                               Généré
+                                                                 via                                                          9 / 10
+                                                               LABUSE
+Géorisques — sites et sols pollués          BRGM / Géorisques
+
+OpenStreetMap / Overpass                    OSM
+
+BD TOPO IGN                                 IGN / Géoplateforme
+
+RGE ALTI (altimétrie)                       IGN / Géoplateforme
+
+Urbanisme PLU/GPU (API Carto)               IGN / API Carto GPU
+
+LiDAR HD (MNS) — hauteurs mesurées          IGN / Géoplateforme
+
+Document d'information établi à partir de données publiques. Il ne constitue ni un document d'urbanisme opposable, ni une
+étude de faisabilité réglementaire, ni un conseil juridique, et ne remplace pas un certificat d'urbanisme. Fonds
+cartographiques : © IGN, © contributeurs OpenStreetMap (ODbL).
+
+
+
+
+                                                          Généré
+                                                            via                                                      10 / 10
+                                                          LABUSE
+

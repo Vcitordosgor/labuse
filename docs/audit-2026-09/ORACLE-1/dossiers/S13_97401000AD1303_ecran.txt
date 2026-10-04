@@ -1,0 +1,457 @@
+PARCELLE · LES AVIRONS
+97401000AD1303
+pj
+adresse non rattachée (Absent)
+i
+Secteur : le Tévelave
+SURFACE
+2 m²
+ZONE
+Uc3
+constructible
+PENTE
+1,83 °
+plat
+EXPOSITION
+Sud
+versant (RGE ALTI)
+RISQUES
+2
+vigilances
+SDP RESTANTE
+—
+pas de potentiel résiduel
+Demander à LABUSE
+Poser une question
+LE BIEN
+Identité
+Particulier
+›
+Terrain
+pente plat · Sud
+Bâti
+Aucun bâti significatif détecté
+terrain nu
+LE DROIT DU SOL
+Urbanisme
+Risques et environnement
+14 couches évaluées
+2 vigilances
+Réseaux et desserte
+Assainissement : non renseigné
+eau/élec probable
+Fiscalité et dispositifs
+29,55 %
+LE MARCHÉ
+Marché
+32 ventes secteur
+141 €/m²
+Quartier
+Équipements, population et permis du voisinage
+isochrone
+LE PROJET
+Potentiel
+calcul tracé
+Simulation
+charge foncière · réhabilitation · outils projet
+bilan
++ CRM
++ Projet
+Dossier
+Dossier financier
+Apporteur
+Pré-dossier PC
+Courrier
+Remonter le temps
+Estimations indicatives issues de données publiques — ni conseil juridique/notarial ni garantie de constructibilité. Ces informations ne remplacent pas un certificat d'urbanisme.
+⚑ Signaler une erreur
+
+### tiroir ouvert : Identité
+9 m max
+égout 6 m
+32 ventes secteur · DVF — jusqu'à déc. 2025
+
+### tiroir ouvert : Particulier
+⌄
+Propriétaire non identifié personne physique ou hors fichier des personnes morales
+Courrier SPF
+→
+FILIATION CADASTRALE
+Issue de
+97401000AD0775 · 31/08/2009 · document d’arpentage
+DGFiP — documents de filiation informatisés (trimestriel). Contrôle croisé avec le cadastre d'époque (géométrie) — deux canaux, jamais un conflit.
+
+### tiroir ouvert : Terrain
+
+### tiroir ouvert : 1,83 °
+Versant Sud 1,83 ° · 2 m² au sol libre · 100 % artificialisé (OCS GE)
+Pente
+1,83 ° plat
+Exposition
+versant · RGE ALTI
+Surface au sol libre
+2 m²
+Sol artificialisé
+100 %
+OCS GE 2022
+COUVERTURE DU SOL · COSIA 20 CM
+Imperméabilisé 0 %
+Végétalisé 83,8 %
+Sol nu 0 %
+Azimut du versant
+165,2 ° (0 = Nord, sens horaire)
+PROFIL ALTIMÉTRIQUE
+920
+919
+0
+5 m
+DISTANCE
+DÉNIVELÉ +
++0 m
+DÉNIVELÉ −
+−0 m
+PENTE MOYENNE
+3,6 %
+PLUS FORTE PENTE
+ALTITUDE
+919–920 m
+Le long du plus grand axe de la parcelle. Source RGE ALTI 5 m (IGN). Vocabulaire cartes.gouv (pente moyenne = grade absolu moyen).
+OCS GE (IGN, donnée d’îlot, décret 2023-1096) · CoSIA (IGN, détection IA, mesure de la parcelle) · pente et exposition RGE ALTI (IGN).
+
+### tiroir ouvert : Bâti
+
+### tiroir ouvert : terrain nu
+Terrain nu aucun bâtiment BD TOPO, aucune hauteur LiDAR, aucun établissement rattaché
+Établissements sur la parcelle
+aucun SIRENE, adresse exacte
+Bâti existant — BD TOPO® V3 (IGN) + CoSIA 2025. Information de fiche, jamais un signal de classement.
+
+### tiroir ouvert : Urbanisme
+
+### tiroir ouvert : —
+Uc3, constructible 4 destinations interdites · 11 sous condition
+Zone
+Uc3constructible
+PLU
+approuvé le 06/12/2024
+document
+RÈGLEMENT — ZONE UC3
+voir l’article
+Hauteur
+9 m
+Art. U 10.2 · p.12 (PLU
+Emprise
+40 %
+Art. U 9.2 · p.11 (PLU
+Recul voie
+4 m
+Art. U 6.2 · p.10 (PLU
+Recul limites
+1,9 m
+Art. U 7.2 · p.11 (PLU
+Pleine terre
+Art. U 13.1 · p.18 (PLU
+Stationnement
+1,5 / logt
+Destinations · 8 autorisées (Hébergement, Locaux et bureaux accueillant du public des administrations publiques et assimilés, Locaux techniques et industriels des administrations publiques et assimilés…) · 4 interdites · 11 sous condition
+Le règlement PLU fait foi ; les valeurs affichées sont une aide à la lecture, non un certificat d'urbanisme.
+SITUATION
+Parc national
+moyen
+Aire d'adhésion du Parc National — contraintes de charte.
+Parc National de La Réunion (INPN)
+· millésime 2021
+SDP résiduelle
+info
+SDP résiduelle 0 m² — rien à construire.
+Surface parcelle
+Micro-parcelle 2 m² (< 40 m²) — aucun programme possible.
+Annuaire PLU
+Vérif procédure
+RTAA DOM
+10 exigences →
+Préemption (DPU)
+non déterminée
+Bruit aérien (PEB)
+hors zone
+SCOT
+SCOT DU GRAND SUD · approuvé le 02/09/2024
+MIXITÉ SOCIALE (LLS)
+non modélisée
+Clause de mixité sociale
+non modélisée pour cette zone
+Aucune clause de mixité sociale validée pour cette zone dans le règlement calibré.
+✓ 10 couches sans objet — déplier
+Emprise linéaire
+Forme non linéaire (largeur 1 m, allongement 7.6×).
+Emprise routière
+Pas une emprise routière (0 m d'axes, densité 0.00, bâti 0%).
+Foncier public
+Propriétaire non public (personne physique ou PM privée).
+Forêt publique
+Hors forêt publique.
+Forêts publiques (ONF)
+· BD TOPO® V3 — forêt publique (IGN)
+Friche
+Aucune friche recensée.
+Cartofriches (Cerema)
+Occupation du sol (BD CARTO V5 — grain grossier)
+Sol classé artificialisé (occupation du sol BD CARTO V5, grain grossier, précision limitée à la parcelle).
+IGN BD CARTO V5 — occupation du sol
+· BD CARTO® V5 — occupation du sol (IGN, proxy)
+Faux positif OSM
+Aucun faux positif géométrique OSM.
+OpenStreetMap / Overpass
+Prescriptions PLU
+Aucune prescription PLU sur la parcelle.
+Urbanisme PLU/GPU (API Carto)
+· GPU/PLU par commune (révisions — détail en fiche)
+Parcelle déclarée agricole (RPG)
+Hors parcelle agricole déclarée (RPG).
+RPG — déclarations agricoles (IGN/ASP)
+· proxy RPG.LATEST (IGN) — campagne 2024 (data.gouv RPG-R)
+Potentiel foncier Région (indicatif)
+Hors îlot cartographié — aucune contrainte déduite automatiquement.
+Potentiel foncier Région (Région ODS)
+· îlots non urbanisés — estimation Région (ODS, non versionné)
+
+### tiroir ouvert : Risques et environnement
+
+### tiroir ouvert : 2 vigilances
+Aléa mouvement terrain faible sur 100 %
+ALÉAS (1)
+Aléa mouvement_terrain niveau faible
+DEAL Réunion — PPR / aléas · 2026-09-13
+FRICHE RECENSÉE (CARTOFRICHES)
+✓ Sans objet — parcelle non recensée comme friche. (édition courante (Cerema, mise à jour trimestrielle))
+EnR au sol interdites (APER)
+Parc national · Parc national de La Réunion
+Mesure compensatoire (GéoMCE)
+aucune sur la parcelle
+◀
+16
+arrêtés CatNat (commune) · dernier 18/03/2024
+VIGILANCES
+Installation classée (ICPE) à proximité
+LTM, régime Autorisation, 67 m.
+✓ 12 couches sans objet — déplier
+ABF / Monuments
+Hors périmètre ABF.
+ABF / Monuments historiques
+Classement sonore (bruit routier)
+Hors secteurs affectés par le bruit routier.
+Classement sonore ITT (Cerema)
+· arrêtés déc. 2023
+Cavités
+Aucun objet recensé à proximité.
+Géorisques — cavités souterraines
+50 pas géométriques
+Hors zone des 50 pas géométriques.
+50 pas géométriques — limite haute (DEAL)
+· cadastre 1877 (géoréf. 2012/1950)
+Eau
+Hors hydrographie.
+BD TOPO IGN
+· BD TOPO® V3 (IGN) — édition non enregistrée
+Espace protégé réglementaire (INPN)
+Hors espace protégé (INPN).
+INPN / patrinat — espaces protégés
+· INPN/patrinat espaces protégés — passe 05/07/2026
+Mouvement de terrain
+Géorisques — mouvements de terrain
+Pente faible (~7%) — calculée, non éliminatoire.
+RGE ALTI (altimétrie)
+· RGE ALTI® (IGN) — édition non enregistrée
+Ravines
+Hors voisinage immédiat d'une ravine.
+Sols pollués
+Géorisques — sites et sols pollués
+Servitudes (SUP)
+Aucune servitude d'utilité publique recensée.
+SUP — assiettes GPU (API Carto)
+Indicateur d'érosion côtière (Cerema)
+Hors zone de recul du trait de côte.
+Cerema / GéoLittoral — indicateur d'érosion côtière
+· millésime 2018
+Pièges & risques
+
+### tiroir ouvert : Réseaux et desserte
+
+### tiroir ouvert : eau/élec probable
+Viabilisation eau/élec probable assainissement non renseigné
+?
+Eau/élec
+probable
+✓
+Fibre
+FttH
+Bus
+111 m
+Assainis.
+non renseigné
+Fibre (Arcep)
+FttH · 8 m · 5 op.
+Arrêt de bus
+Eglise Du Tévelave · 111 m
+Ligne de transport
+Alternéo · 100 m
+ACCÈS
+Accès voirie : voie publique à ≤ 75 m mais pas au droit de la parcelle
+accès à vérifier sur site (faisceau viabilisation).
+GESTIONNAIRES (RACCORDEMENT)
+Compétence
+CIVIS — Communauté intercommunale des Villes solidaires · civis.re
+Eau potable
+CISE Réunion (SAUR) · DSP confirmé
+Assainissement
+SPANC (ANC)
+SPIANC
+Électricité
+EDF SEI · EDF SEI Réunion — raccordement.reunion@edf.fr / edf.re
+CISE assure eau + collecte/traitement.
+Gestionnaires administratifs à jour au 2026-07, à revérifier annuellement (les délégations changent aux renouvellements de contrat). Contact administratif uniquement — aucun tracé de réseau (donnée sensible). Viabilité (eau, électricité, assainissement) à confirmer auprès des concessionnaires via DT-DICT (reseaux-et-canalisations.gouv.fr).
+Viabilisation eau · élec
+Raccordement eau · élec
+Raccordement PROBABLE au coût standard : secteur partiellement desservi. À confirmer (longueur de branchement, capacité).
+Solaire
+Ensoleillement favorable à une installation solaire — productible estimé ~1 340 kWh/kWc/an (modèle SARAH3, hors gradient côtier local). Estimé
+non renseigné (secteur indicatif)
+4
+indices (faisceau de preuves)
+
+### tiroir ouvert : Fiscalité et dispositifs
+
+### tiroir ouvert : 29,55 %
+Zone franche (ZFANG), France Ruralités (FRR) zone A (PTZ/loyers) · TVA 8,5 %
+Taxe foncière
+part communale
+Taxe d'aménagement
+5 + 2.5 %
+commune · dépt
+Zonage A/B/C
+A
+PTZ · loyers
+TVA
+8,5 %
+DOM · 2,1 % LLS
+DISPOSITIFS DE LA COMMUNE
+ZFANG
+FRR
+ORT
+QPV
+PVD
+Cœur de ville
+Calculer la taxe d'aménagement
+détail des dispositifs
+Fait territorial sourcé et daté. Les taux cités sont les taux LÉGAUX du dispositif (décret / CGI), pas un calcul de votre avantage : l'éligibilité et l'effet réel relèvent de votre expert-comptable ou avocat fiscaliste.
+
+### tiroir ouvert : Marché
+
+### tiroir ouvert : 141 €/m²
+Terrain nu 141 €/m², maison 2 239 €/m² secteur -31 % vs commune, tendance hausse
+Terrain nu
+141
+€/m² · 32 ventes
+Maison
+2 239
+€/m² · 18 ventes · 500 m
+commune
+secteur -31 %
+Aucun signal sur cet onglet.
+Prix de sortie — bâti secteur
+2 171 €/m²
+Valeur au prix du secteur
+≈ 282 €
+Prix par type : maison / appartement = médiane locale par type au rayon adaptatif (DVF) ; terrain nu = médiane de la section cadastrale (même source que la valeur du secteur).
+VENTES À MOINS DE 100 M
+Ventes
+(< 100 m · 36 mois)
+6 ventes
+Prix médian
+~178 k€
+Loyers (OLL)
+zone non couverte
+Acquéreur PM voisin
+COMMUNE DES AVIRONS · 26/09/2024
+Outil Communes — Les Avirons
+
+### tiroir ouvert : Quartier
+
+### tiroir ouvert : isochrone
+Secteur le Tévelave niveau de vie 17 910 €, 50 % sous le seuil de pauvreté, commerces à 117 m
+À PROXIMITÉ (À PIED)
+École
+170 m
+Commerces
+117 m
+Santé
+86 m
+CONTEXTE SOCIO-ÉCONOMIQUE (SECTEUR)
+Niveau de vie médian
+17 910 €
+SOURCÉFilosofi 2021 (INSEE, carreaux 200 m)
+Propriétaires
+68 %
+Pauvreté
+50 %
+Parc social — commune entière
+649 logements
+RPLS 01/01/2025 · maille commune
+Contexte informatif — hors scoring. Niveau de vie/pauvreté au carreau 200 m ; parc social à la commune.
+QUARTIER INSEE — LE TÉVELAVE
+Logements
+921
+Vacance
+14 %
+Bâti avant 1990
+33 %
+Pers./ménage
+2,68
+60 ans et +
+19,6 %
+HLM
+4,6 %
+INSEE — recensement de la population, bases IRIS (maille quartier) — RP2022 (parution 16/10/2025, géographie 01/01/2024). Maille quartier (IRIS) : affine la commune, ne la remplace pas.
+0,5 km
+1 km
+2 km
+5 km
+Lecture de la zone…
+PERMIS À PROXIMITÉ
+2 à < 100 m · 18 à < 200 m
+Permis autorisés géolocalisés < 200 m (source du signal viabilisation M-VIA). Cliquez pour la fiche.
+PC
+2014-12-29
+1 lgt
+24 m
+2020-03-25
+83 m
+2024-01-18
+112 m
+2026-06-09
+116 m
+DP
+2026-01-12
+◀ + 7 autres permis
+ACTIVITÉ DE DÉPÔT DE PERMIS
+Sourcé Sitadel3 / SDES
+Sur le secteur : 10 dépôts sur 36 mois · section cadastrale · dernier 2026-06-09
+activité de dépôt (permis aboutis — les refus et dossiers en cours ne sont pas publiés).
+Étude de zone · Chalandise
+Étude de zone · Particulier
+Permis commune
+Fiche commune
+
+### tiroir ouvert : Potentiel
+
+### tiroir ouvert : Simulation
+
+### tiroir ouvert : bilan
+Prix de sortie retenu 2 171 €/m²
+PRIX DE SORTIE RETENU (BILAN)
+Le prix de sortie bâti retenu pour la charge foncière est le prix du secteur affiché dans « Marché » (échantillon, rayon, tendance, fraîcheur y sont détaillés).
+Faisabilité
+Calculette foncière
+Assemblage
+
+### tiroir ouvert : final

@@ -1,0 +1,21 @@
+slot;idu;commune;zone_plu_labuse;surface_m2_labuse;criteres;detail_tirage
+S01;97411000AC0196;Saint-Denis;Uavap;1401;U dense + bâtie ancienne + copropriété;copro RNIC 18 lots, période 1949-1960, zone AVAP centre
+S02;97413000CD0532;Saint-Leu;UC;622;U pavillonnaire + bâtie récente + personne physique;DPE maison 2021, aucune PM 2024 → proprio personne physique
+S03;97415000AB0425;Saint-Paul;AU1st;5521;AU ouverte + nue;classe AU conditionnelle_operation, emprise bâtie <5 m²
+S04;97408000AC2877;La Possession;AUst;5526;AU fermée;classe declasse_au_fermee
+S05;97410000CI0215;Saint-Benoît;A;449400;zone A + géante;44,9 ha agricole
+S06;97424000AB0039;Cilaos;N;12871;zone N + ravine;ravine à <15 m
+S07;97422000AD0250;Le Tampon;2AUd+A;5916;à cheval sur deux zones;2 zones GPU ≥20 % chacune (2AUd + A)
+S08;97414000CD0012;Saint-Louis;?;220448;à cheval sur deux communes;géométrie chevauche des parcelles des Avirons (>5 m²)
+S09;97407000AO0158;Le Port;Uv;9938;PPR rouge;intersecte PPR subtype=INTERDICTION
+S10;97409000AB0018;Saint-André;UC;10682;PPR bleue;intersecte PPR PRESCRIPTION sans INTERDICTION
+S11;97413000AV0011;Saint-Leu;UA;585;littoral 50 pas;intersecte couche cinquante_pas
+S12;97422000AD0042;Le Tampon;A;4589;ligne HTA;ligne MT à <20 m
+S13;97401000AD1303;Les Avirons;Uc3;1.7;minuscule;1,7 m² en zone U
+S14;97401000AD0238;Les Avirons;Ud1;466;vendue DVF <2 ans;mutation ≥2024-09-28, valeur >10 k€
+S15;97416000CO0579;Saint-Pierre;Uaza;1113;SCI + établissement SIRENE;PM 2024 forme SCI + etablissement_parcelle
+S16;97402000AD0694;Bras-Panon;1AUe;9597;propriétaire EPF;ETS PUBLIC FONCIER DE LA REUNION (2024)
+S17;97410000AB0258;Saint-Benoît;Ub;856;propriétaire commune;PM 2024 forme COM
+S18;97405000BE0599;Petite-Île;UB;874;indivision probable;PM 2024 « INDIVISAIRES DE LA PARCELLE BE599 »
+S19;97421000AB0337;Salazie;Aba;1610;permis récent;Sitadel ≥2024 rattaché à l'idu
+S20;97420000AB0268;Sainte-Suzanne;UB;966;permis caduc/annulé;pc_caducs (PC 2018, caducité estimée)

@@ -1,0 +1,529 @@
+PARCELLE · BRAS-PANON
+97402000AD0694
+pj
+adresse non rattachée (Absent)
+i
+Secteur : Résidence la Falaise
+SURFACE
+9 597 m²
+ZONE
+1AUe
+PENTE
+3,9 °
+plat
+EXPOSITION
+Nord-Est
+versant (RGE ALTI)
+RISQUES
+3
+vigilances
+SDP RESTANTE
+—
+pas de potentiel résiduel
+Demander à LABUSE
+Poser une question
+LE BIEN
+Identité
+ETS PUBLIC FONCIER
+›
+Terrain
+pente plat · Nord-Est
+Bâti
+Aucun bâti significatif détecté
+2 bâtiments
+LE DROIT DU SOL
+Urbanisme
+Risques et environnement
+14 couches évaluées
+3 vigilances
+Réseaux et desserte
+Assainissement : non renseigné
+eau/élec confirmée
+Fiscalité et dispositifs
+ZFANG renforcé
+LE MARCHÉ
+Marché
+30 ventes secteur · DVF — jusqu'à déc. 2025
+252 €/m²
+Quartier
+Équipements, population et permis du voisinage
+isochrone
+LE PROJET
+Potentiel
+calcul tracé
+Simulation
+charge foncière · réhabilitation · outils projet
+bilan
++ CRM
++ Projet
+Dossier
+Dossier financier
+Apporteur
+Pré-dossier PC
+Courrier
+Remonter le temps
+Estimations indicatives issues de données publiques — ni conseil juridique/notarial ni garantie de constructibilité. Ces informations ne remplacent pas un certificat d'urbanisme.
+⚑ Signaler une erreur
+
+### tiroir ouvert : Identité
+
+### tiroir ouvert : ETS PUBLIC FONCIER
+⌄
+ETS PUBLIC FONCIER DE LA REUNION propriétaire depuis 2024 — aucune procédure collective
+SIREN
+444704977
+annuaire des entreprises ↗
+Créée · état
+2005active
+SIRENE
+Activité
+Administration publique (tutelle) des activités économiques
+8413Z
+BODACC
+aucune procédure
+DGFiP / BODACC
+Siège
+7 RUE ANDRE LARDY · Sainte-Marie
+Groupe
+Établissements publics ou organismes associés
+HISTORIQUE DU PROPRIÉTAIRE
+2024 → 2025
+ETS PUBLIC FONCIER DE LA REUNION
+Détention
+≥ 2 ans (depuis 2024)
+Scan patrimoine du propriétaire
+→
+Dernière vente
+octobre 2022
+Vente groupée (plusieurs parcelles) — le prix global de la mutation (661 100 €) n'est pas attribuable à cette seule parcelle.
+FILIATION CADASTRALE
+Issue de
+97402000AD0621 · 29/05/2007 · document d’arpentage
+DGFiP — documents de filiation informatisés (trimestriel). Contrôle croisé avec le cadastre d'époque (géométrie) — deux canaux, jamais un conflit.
+🏗️ SUR CETTE PARCELLE
+Permis d'aménager — déposé 2025-01-01, autorisé 2025-05-16
+Autorisations et dépôts uniquement — refus et dossiers en cours non publiés.
+
+### tiroir ouvert : Terrain
+
+### tiroir ouvert : 3,9 °
+Versant Nord-Est 3,9 ° · 9 584 m² au sol libre · 0 % artificialisé (OCS GE)
+Pente
+3,9 ° plat
+Exposition
+versant · RGE ALTI
+Surface au sol libre
+9 584 m²
+Sol artificialisé
+0 %
+OCS GE 2022
+COUVERTURE DU SOL · COSIA 20 CM
+Imperméabilisé 0 %
+Végétalisé 100 %
+Sol nu 0 %
+Azimut du versant
+65,4 ° (0 = Nord, sens horaire)
+PROFIL ALTIMÉTRIQUE
+101
+95
+0
+173 m
+DISTANCE
+DÉNIVELÉ +
++3 m
+DÉNIVELÉ −
+−8 m
+PENTE MOYENNE
+6,4 %
+PLUS FORTE PENTE
+25,8 %
+ALTITUDE
+95–101 m
+Le long du plus grand axe de la parcelle. Source RGE ALTI 5 m (IGN). Vocabulaire cartes.gouv (pente moyenne = grade absolu moyen).
+OCS GE (IGN, donnée d’îlot, décret 2023-1096) · CoSIA (IGN, détection IA, mesure de la parcelle) · pente et exposition RGE ALTI (IGN).
+
+### tiroir ouvert : Bâti
+
+### tiroir ouvert : 2 bâtiments
+Aucun bâti significatif détecté emprise 13 m² · faîtage 7,9 m mesuré (LiDAR)
+Emprise bâtie au sol
+13 m²
+BD TOPO IGN
+Faîtage (LiDAR)
+7,9 m
+haut de toit
+Bâtiments
+2 BD TOPO · 1 RNB · 0 adr. BAN
+◀
+détail du bâti
+Bâti existant — BD TOPO® V3 (IGN) + CoSIA 2025. Information de fiche, jamais un signal de classement.
+
+### tiroir ouvert : Urbanisme
+
+### tiroir ouvert : —
+1AUe : constructible sous condition d'une opération d'aménagement d'ensemble Zone à urbaniser — ouverture conditionnée à une opération d'aménagement d'ensemble et/ou à une modification du PLU. Constructibilité à confirmer auprès de la commune avant tout engagement.
+Zone
+PLU
+approuvé le 28/04/2026
+document
+Parcelle à cheval sur 2 zones du PLU. La colorisation « par parcelle » n’affiche que la zone dominante — voici la surface réelle de chacune :
+1AUe 57 %
+1AUec 43 %
+Tracé officiel : couche « Limites officielles du PLU » (sous-option du zonage sur la carte).
+RÈGLEMENT — ZONE 1AUE · 57 % DE LA PARCELLE
+voir l’article
+Hauteur
+16 m
+Art. UE 10.2 · p.71 (PLU
+Emprise
+50 %
+Art. UE 9 · p.70 (PLU
+Recul voie
+5 m
+Art. UE 6.2 · p.68 (PLU
+Recul limites
+Art. UE 7.2-7.3 · p.69 (PLU
+Pleine terre
+20 %
+Art. UE 13.1 · p.74 (PLU
+Stationnement
+Destinations · 9 autorisées (Restauration, Activités de services où s'effectue l'accueil d'une clientèle, Cinéma…) · 4 interdites · 10 sous condition
+RÈGLEMENT — ZONE 1AUEC · 43 % DE LA PARCELLE
+18 m
+Art. AUINDICEE 10 · p.80 (PLU
+70 %
+Art. UA 9 · p.18 (PLU
+2 m
+Art. UA 6.2 · p.16 (PLU
+3 m
+Art. UA 7.2-7.3 · p.17 (PLU
+Art. AUINDICEE 13 · p.80 (PLU
+Destinations · 12 autorisées (Artisanat et commerce de détail, Commerce de gros, Hôtels…) · 10 interdites · 1 sous condition
+Le règlement PLU fait foi ; les valeurs affichées sont une aide à la lecture, non un certificat d'urbanisme.
+Zone AU (1AUe)
+constructible sous condition d'une opération d'aménagement d'ensemble
+LABUSE — moteur d'ouverture AU (règlement PLU calibré)
+Zone à urbaniser — ouverture conditionnée à une opération d'aménagement d'ensemble et/ou à une modification du PLU. Constructibilité à confirmer auprès de la commune avant tout engagement.
+⇢
+Simuler l'ouverture de la zone AU
+Ce que la bascule 1AUe → U changerait
+SITUATION
+SDP résiduelle
+SDP résiduelle 0 m² — rien à construire.
+Surface parcelle
+Surface utile 9597 m².
+Occupation du sol (BD CARTO V5 — grain grossier)
+Sol classé naturel — artificialisation à justifier (occupation du sol BD CARTO V5, grain grossier, précision limitée à la parcelle).
+IGN BD CARTO V5 — occupation du sol
+· BD CARTO® V5 — occupation du sol (IGN, proxy)
+Foncier public
+info
+Propriétaire institutionnel (ETS PUBLIC FONCIER DE LA REUNION) — hors marché courant, acquisition improbable [DGFiP groupe 9 : établissements publics et assimilés].
+Annuaire PLU
+Vérif procédure
+RTAA DOM
+10 exigences →
+Préemption (DPU)
+non déterminée
+Bruit aérien (PEB)
+hors zone
+SCOT
+hors périmètre
+MIXITÉ SOCIALE (LLS)
+non modélisée
+Clause de mixité sociale
+non modélisée pour cette zone
+Aucune clause de mixité sociale validée pour cette zone dans le règlement calibré.
+✓ 9 couches sans objet — déplier
+Emprise linéaire
+Forme non linéaire (largeur 60 m, allongement 2.7×).
+Emprise routière
+Pas une emprise routière (187 m d'axes, densité 0.12, bâti 0%).
+Forêt publique
+Hors forêt publique.
+Forêts publiques (ONF)
+· BD TOPO® V3 — forêt publique (IGN)
+Friche
+Aucune friche recensée.
+Cartofriches (Cerema)
+Faux positif OSM
+Aucun faux positif géométrique OSM.
+OpenStreetMap / Overpass
+Parc national
+Hors Parc National.
+Parc National de La Réunion (INPN)
+· millésime 2021
+Prescriptions PLU
+Aucune prescription PLU sur la parcelle.
+Urbanisme PLU/GPU (API Carto)
+· GPU/PLU par commune (révisions — détail en fiche)
+Parcelle déclarée agricole (RPG)
+Hors parcelle agricole déclarée (RPG).
+RPG — déclarations agricoles (IGN/ASP)
+· proxy RPG.LATEST (IGN) — campagne 2024 (data.gouv RPG-R)
+Potentiel foncier Région (indicatif)
+Potentiel foncier Région : vocation compatible détectée — espace d'urbanisation prioritaire Potentiel foncier Région — compatible — à croiser avec PLU/PPR.
+Potentiel foncier Région (Région ODS)
+· îlots non urbanisés — estimation Région (ODS, non versionné)
+
+### tiroir ouvert : Risques et environnement
+
+### tiroir ouvert : 3 vigilances
+Aléa mouvement terrain faible sur 100 %
+ALÉAS (1)
+Aléa mouvement_terrain niveau faible
+100 %
+DEAL Réunion — PPR / aléas · 2026-09-13
+FRICHE RECENSÉE (CARTOFRICHES)
+✓ Sans objet — parcelle non recensée comme friche. (édition courante (Cerema, mise à jour trimestrielle))
+EnR au sol (APER)
+hors zone d'exclusion
+Mesure compensatoire (GéoMCE)
+aucune sur la parcelle
+17
+arrêtés CatNat (commune) · dernier 20/03/2025
+VIGILANCES
+Secteur affecté par le bruit routier (classement sonore cat. 1, bande 300 m)
+isolement acoustique renforcé obligatoire (R.571-32 CE).
+Mouvement de terrain recensé à proximité (aléa réglementaire déjà pris en compte via PPR). (Chute de blocs / Eboulement, 38 m)
+✓ 11 couches sans objet — déplier
+ABF / Monuments
+Hors périmètre ABF.
+ABF / Monuments historiques
+Cavités
+Aucun objet recensé à proximité.
+Géorisques — cavités souterraines
+50 pas géométriques
+Hors zone des 50 pas géométriques.
+50 pas géométriques — limite haute (DEAL)
+· cadastre 1877 (géoréf. 2012/1950)
+Eau
+Hors hydrographie.
+· BD TOPO® V3 (IGN) — édition non enregistrée
+Espace protégé réglementaire (INPN)
+Hors espace protégé (INPN).
+INPN / patrinat — espaces protégés
+· INPN/patrinat espaces protégés — passe 05/07/2026
+ICPE
+Géorisques — ICPE
+Pente modérée (~16%) — calculée, non éliminatoire.
+RGE ALTI (altimétrie)
+· RGE ALTI® (IGN) — édition non enregistrée
+Ravines
+Hors voisinage immédiat d'une ravine.
+Sols pollués
+Géorisques — sites et sols pollués
+Servitudes (SUP)
+Aucune servitude d'utilité publique recensée.
+SUP — assiettes GPU (API Carto)
+Indicateur d'érosion côtière (Cerema)
+Hors zone de recul du trait de côte.
+Cerema / GéoLittoral — indicateur d'érosion côtière
+· millésime 2018
+Pièges & risques
+
+### tiroir ouvert : Réseaux et desserte
+
+### tiroir ouvert : eau/élec confirmée
+Viabilisation eau/élec confirmée assainissement non renseigné
+✓
+Eau/élec
+confirmée
+✕
+Fibre
+56 m
+Bus
+90 m
+?
+Assainis.
+non renseigné
+Fibre (Arcep)
+non FttH · 56 m
+Arrêt de bus
+RUE DU TEMPLE · 90 m
+Ligne de transport
+Car Jaune · 75 m
+Pôle d’échange
+Gare routière de St-André · 2.15 km
+Trafic N2
+25 261 véh./j · 1 010 PL
+ACCÈS
+Accès voirie : voie publique à ≤ 10 m de la parcelle (faisceau viabilisation
+le test au contact strict de l'axe BD TOPO est retiré).
+GESTIONNAIRES (RACCORDEMENT)
+Compétence
+CIREST — Communauté intercommunale Réunion Est · cirest.fr
+Eau potable
+Runéo (Veolia) → CISE au 01/01/2027 · Runéo jusqu'au 31/12/2026 confirmé
+Assainissement
+Runéo → CISE au 01/01/2027 · Runéo jusqu'au 31/12/2026 confirmé
+SPANC (ANC)
+Régie CIREST
+Électricité
+EDF SEI · EDF SEI Réunion — raccordement.reunion@edf.fr / edf.re
+⚠ Seule commune encore Runéo/Veolia au 2026-07. Bascule CISE 01/01/2027.
+Gestionnaires administratifs à jour au 2026-07, à revérifier annuellement (les délégations changent aux renouvellements de contrat). Contact administratif uniquement — aucun tracé de réseau (donnée sensible). Viabilité (eau, électricité, assainissement) à confirmer auprès des concessionnaires via DT-DICT (reseaux-et-canalisations.gouv.fr).
+Viabilisation eau · élec
+confirmée par les faits
+Raccordement eau · élec
+Raccordement a priori SIMPLE : réseaux présumés en façade/voirie, secteur déjà desservi et construit.
+Solaire
+Ensoleillement très favorable à une installation solaire — productible estimé ~1 530 kWh/kWc/an ; ombrage local à vérifier sur place (modèle SARAH3, hors gradient côtier local). Estimé
+non renseigné (secteur indicatif)
+4
+indices (faisceau de preuves)
+Axe structurant
+Axe structurant N2 (type autoroutier) à ~76 m — deux faces : accessibilité (desserte rapide) ET nuisances potentielles (bruit, pollution ; recul le long des axes classés, art. L. 111-6 — non cartographié en donnée ouverte, à vérifier au PLU). Le classement sonore, lui, est évalué au tiroir Risques.
+
+### tiroir ouvert : Fiscalité et dispositifs
+
+### tiroir ouvert : ZFANG renforcé
+Zone franche (ZFANG), France Ruralités (FRR), ORT signée zone B1 (PTZ/loyers) · TVA 8,5 %
+Taxe foncière
+46,26 %
+part communale
+Taxe d'aménagement
+5 + 2.5 %
+commune · dépt
+Zonage A/B/C
+B1
+PTZ · loyers
+TVA
+8,5 %
+DOM · 2,1 % LLS
+DISPOSITIFS DE LA COMMUNE
+ZFANG
+FRR
+ORT
+05/10/2021
+QPV
+PVD
+Cœur de ville
+Calculer la taxe d'aménagement
+détail des dispositifs
+Fait territorial sourcé et daté. Les taux cités sont les taux LÉGAUX du dispositif (décret / CGI), pas un calcul de votre avantage : l'éligibilité et l'effet réel relèvent de votre expert-comptable ou avocat fiscaliste.
+
+### tiroir ouvert : Marché
+
+### tiroir ouvert : 252 €/m²
+Terrain nu 252 €/m², maison 2 420 €/m² secteur +52 % vs commune, tendance stable
+Terrain nu
+252
+€/m² · 30 ventes
+Maison
+2 420
+€/m² · 15 ventes · 1 500 m
+commune
+secteur +52 %
+Potentiel foncier Région
+Dans un îlot « Potentiel foncier » Région — recouvrement 61% de la parcelle.
+data.regionreunion.com — Potentiel foncier
+Marché DVF
+Prix médian terrain 252 €/m² — 30 ventes secteur cadastral 2021-2025 (millésimes géo-DVF disponibles). Contexte de marché favorable.
+DVF / valeurs foncières
+· géo-DVF Etalab 2021–2025 + archives DGFiP 2014–2020
+Prix de sortie — bâti secteur
+2 420 €/m²
+Valeur au prix du secteur
+≈ 2 418 444 €
+Prix par type : maison / appartement = médiane locale par type au rayon adaptatif (DVF) ; terrain nu = médiane de la section cadastrale (même source que la valeur du secteur).
+VENTES À MOINS DE 100 M
+Ventes
+(< 100 m · 36 mois)
+2 ventes
+Prix médian
+échantillon insuffisant (< 3 ventes)
+Loyers (OLL)
+zone non couverte
+Outil Communes — Bras-Panon
+
+### tiroir ouvert : Quartier
+
+### tiroir ouvert : isochrone
+Secteur Résidence la Falaise commerces à 312 m
+À PROXIMITÉ (À PIED)
+École
+743 m
+Commerces
+312 m
+Santé
+716 m
+CONTEXTE SOCIO-ÉCONOMIQUE (SECTEUR)
+Parc social — commune entière
+1 679 logements
+RPLS 01/01/2025 · maille commune
+Contexte informatif — hors scoring. Niveau de vie/pauvreté au carreau 200 m ; parc social à la commune.
+QUARTIER INSEE — LES BAS DE LA RIVIÈRE DU MÂT
+Logements
+1 958
+Vacance
+6 %
+Bâti avant 1990
+17,4 %
+Pers./ménage
+2,4
+60 ans et +
+14,4 %
+HLM
+36,4 %
+INSEE — recensement de la population, bases IRIS (maille quartier) — RP2022 (parution 16/10/2025, géographie 01/01/2024). Maille quartier (IRIS) : affine la commune, ne la remplace pas.
+0,5 km
+1 km
+2 km
+5 km
+Lecture de la zone…
+PERMIS À PROXIMITÉ
+6 à < 100 m · 13 à < 200 m
+Permis autorisés géolocalisés < 200 m (source du signal viabilisation M-VIA). Cliquez pour la fiche.
+PA
+2025-05-16
+0 m
+PC
+2017-02-02
+1 lgt
+64 m
+2017-06-01
+65 m
+2017-09-20
+2017-06-13
+◀ + 7 autres permis
+ACTIVITÉ DE DÉPÔT DE PERMIS
+Sourcé Sitadel3 / SDES
+Sur cette parcelle : 1 dépôt sur 36 mois · dernier 2025-01-01
+Sur le secteur : 12 dépôts sur 36 mois · section cadastrale · dernier 2026-07-31
+activité de dépôt (permis aboutis — les refus et dossiers en cours ne sont pas publiés).
+Étude de zone · Chalandise
+Étude de zone · Particulier
+Permis commune
+Fiche commune
+
+### tiroir ouvert : Potentiel
+
+### tiroir ouvert : Simulation
+QUI VIT DANS LA ZONE
+habitants
+3 220
+ménages
+1 097
+revenu médian / an
+17 240 €
+Sourcé
+moins de 25 ans
+39 %
+ÉQUIPEMENTS & COMMERCES
+Enseignement — ECOLE PRIMAIRE PUBLIQUE ARY PAYET
+Commerces — SNACK CHEZ FLORENCE
+Santé et action sociale — RECREANOU
+Services aux particuliers — GREEN-BATI
+Sports, loisirs et culture — BOULODROME
+Zone atteignable dans un rayon de 1 km — même lecture que l'outil Étude de zone (Filosofi · BPE · isochrones IGN).
+
+### tiroir ouvert : bilan
+Prix de sortie retenu 2 420 €/m²
+PRIX DE SORTIE RETENU (BILAN)
+Le prix de sortie bâti retenu pour la charge foncière est le prix du secteur affiché dans « Marché » (échantillon, rayon, tendance, fraîcheur y sont détaillés).
+Faisabilité
+Calculette foncière
+Assemblage
+
+### tiroir ouvert : final

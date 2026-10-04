@@ -1,0 +1,518 @@
+PARCELLE · SAINT-DENIS
+97411000AC0196
+pj
+26 Rue de la Boulangerie, 97400 Saint-Denis
+Secteur : les Bas de la Rivière
+SURFACE
+i
+1 401 m²
+ZONE
+Uavap
+constructible
+PENTE
+3,9 °
+plat
+EXPOSITION
+Ouest
+versant (RGE ALTI)
+RISQUES
+7
+aléa fort
+SDP RESTANTE
+—
+pas de potentiel résiduel
+Demander à LABUSE
+Poser une question
+LE BIEN
+Identité
+Particulier
+›
+Terrain
+pente plat · Ouest
+Bâti
+Parcelle déjà bâtie probable
+2 bâtiments
+LE DROIT DU SOL
+Urbanisme
+Risques et environnement
+17 couches évaluées
+7 vigilances
+Réseaux et desserte
+Assainissement : collectif
+eau/élec confirmée
+Fiscalité et dispositifs
+36,73 %
+LE MARCHÉ
+Marché
+2 ventes secteur
+87 €/m²
+Quartier
+Équipements, population et permis du voisinage
+isochrone
+LE PROJET
+Potentiel
+calcul tracé
+Simulation
+charge foncière · réhabilitation · outils projet
+bilan
++ CRM
++ Projet
+Dossier
+Dossier financier
+Apporteur
+Pré-dossier PC
+Courrier
+Remonter le temps
+Estimations indicatives issues de données publiques — ni conseil juridique/notarial ni garantie de constructibilité. Ces informations ne remplacent pas un certificat d'urbanisme.
+⚑ Signaler une erreur
+
+### tiroir ouvert : Identité
+2 ventes secteur · DVF — jusqu'à déc. 2025
+R+2 · calcul tracé
+
+### tiroir ouvert : Particulier
+⌄
+Propriétaire non identifié personne physique ou hors fichier des personnes morales
+Détention
+≥ 5 ans (depuis 2021)
+COPROPRIÉTÉ RATTACHÉE
+RESIDENCE FLEURIE · 36 lots (dont 18 hab.), 18 stationnement, 18 hab./bur./com. · DE_1949_A_1960 · syndic professionnel · TOQUET IMMOBILIER · SIRET 42925121800021
+28 r de la boulangerie 97400 Saint-Denis
+Source : RNIC (registre national des copropriétés) — information, jamais un verdict.
+Courrier SPF
+→
+Dernière vente
+mai 2021 — 160 000 €
+Mutation DVF de la parcelle — vente · 26 RUE DE LA BOULANGERIE · 4 pièces · 85 m² Carrez.
+FILIATION CADASTRALE
+Issue de
+97411000AC0053 · 12/09/1996 · document d’arpentage
+DGFiP — documents de filiation informatisés (trimestriel). Contrôle croisé avec le cadastre d'époque (géométrie) — deux canaux, jamais un conflit.
+✓ 3 couches sans objet — déplier
+Âge du dirigeant
+inconnu
+Âge dirigeant inconnu (PM sans dirigeant physique daté).
+INPI RNE (dirigeants)
+BODACC
+BODACC sans objet — propriétaire non personne morale.
+BODACC (procédures collectives)
+Propriétaire
+Propriétaire (personne morale) non renseigné pour cette parcelle.
+DGFiP — parcelles des personnes morales
+· Panel millésimes 2019→2025 (situation 1ᵉʳ janvier)
+
+### tiroir ouvert : Terrain
+
+### tiroir ouvert : 3,9 °
+Versant Ouest 3,9 ° · 969 m² au sol libre · 100 % artificialisé (OCS GE)
+Pente
+3,9 ° plat
+Exposition
+versant · RGE ALTI
+Surface au sol libre
+969 m²
+Sol artificialisé
+100 %
+OCS GE 2022
+COUVERTURE DU SOL · COSIA 20 CM
+Imperméabilisé 72,1 %
+Végétalisé 27,9 %
+Sol nu 0 %
+Azimut du versant
+270,2 ° (0 = Nord, sens horaire)
+PROFIL ALTIMÉTRIQUE
+5
+4
+0
+59 m
+DISTANCE
+DÉNIVELÉ +
++1 m
+DÉNIVELÉ −
+−1 m
+PENTE MOYENNE
+2,9 %
+PLUS FORTE PENTE
+5,7 %
+ALTITUDE
+4–5 m
+Le long du plus grand axe de la parcelle. Source RGE ALTI 5 m (IGN). Vocabulaire cartes.gouv (pente moyenne = grade absolu moyen).
+OCS GE (IGN, donnée d’îlot, décret 2023-1096) · CoSIA (IGN, détection IA, mesure de la parcelle) · pente et exposition RGE ALTI (IGN).
+
+### tiroir ouvert : Bâti
+
+### tiroir ouvert : 2 bâtiments
+Parcelle déjà bâtie probable emprise 432 m² · faîtage 17,9 m mesuré (LiDAR)
+Emprise bâtie au sol
+432 m²
+BD TOPO IGN
+Faîtage (LiDAR)
+17,9 m
+haut de toit
+Bâtiments
+2 BD TOPO · 3 RNB · 2 adr. BAN
+◀
+détail du bâti
+ÉTABLISSEMENTS SUR LA PARCELLE (3)
+LOGOS CONSULTING ET MANAGEMENT
+Conseil pour les affaires et autres conseils de gestion
+Nom non diffusible (RGPD)
+Activités des sociétés holding
+Location de logements
+Rattachement par l'adresse BAN (précision « adresse » seulement — « voie » et « commune » ne sont pas rattachés). Nom masqué si l'unité est non diffusible.
+Bâti existant — BD TOPO® V3 (IGN) + CoSIA 2025. Information de fiche, jamais un signal de classement.
+
+### tiroir ouvert : Urbanisme
+
+### tiroir ouvert : —
+Uavap, constructible 3 destinations interdites · 3 sous condition
+Zone
+Uavapconstructible
+SDP consommée
+145 %
+PLU
+approuvé le 05/08/2026
+document
+RÈGLEMENT — ZONE UAVAP
+voir le règlement
+Hauteur
+non calibré
+Emprise
+Recul voie
+Recul limites
+Pleine terre
+Stationnement
+Destinations · 17 autorisées (Hébergement, Restauration, Commerce de gros…) · 3 interdites · 3 sous condition
+Le règlement des zones agricoles et naturelles n'est pas indexé article par article dans LABUSE. Consultez le document complet.
+Le règlement PLU fait foi ; les valeurs affichées sont une aide à la lecture, non un certificat d'urbanisme.
+SITUATION
+SDP résiduelle
+SDP résiduelle 0 m² — rien à construire.
+Prescriptions PLU
+Prescription PLU : Début et fin de Portion de Falaise à prendre en compte selon disposition générale XV (Hauteur de Falaise) (~100% de la parcelle) — à vérifier au règlement.
+Urbanisme PLU/GPU (API Carto)
+· GPU/PLU par commune (révisions — détail en fiche)
+Prescription PLU : Périmètre zone souple (~100% de la parcelle) — à vérifier au règlement.
+Prescription PLU : Périmètre zone tendue (~100% de la parcelle) — à vérifier au règlement.
+Surface parcelle
+Surface utile 1401 m².
+Annuaire PLU
+Vérif procédure
+RTAA DOM
+10 exigences →
+Préemption (DPU)
+DPU renforcé
+Bruit aérien (PEB)
+hors zone
+Servitude (SUP)
+AC4 · Site patrimonial remarquable de Saint-Denis
+PM1 · PM1_PPR_i_mvt_SAINT_DENIS_gen2_ass
+PM1 · PM1_PPR_i_mvt_SAINT_DENIS_gen1_ass
+SCOT
+SCOT DE LA CINOR · approuvé
+MIXITÉ SOCIALE (LLS)
+non modélisée
+Clause de mixité sociale
+non modélisée pour cette zone
+Aucune clause de mixité sociale validée pour cette zone dans le règlement calibré.
+✓ 10 couches sans objet — déplier
+Emprise linéaire
+Forme non linéaire (largeur 27 m, allongement 1.9×).
+Emprise routière
+Pas une emprise routière (0 m d'axes, densité 0.00, bâti 31%).
+Foncier public
+Propriétaire non public (personne physique ou PM privée).
+Forêt publique
+Hors forêt publique.
+Forêts publiques (ONF)
+· BD TOPO® V3 — forêt publique (IGN)
+Friche
+Aucune friche recensée.
+Cartofriches (Cerema)
+Occupation du sol (BD CARTO V5 — grain grossier)
+Sol classé artificialisé (occupation du sol BD CARTO V5, grain grossier, précision limitée à la parcelle).
+IGN BD CARTO V5 — occupation du sol
+· BD CARTO® V5 — occupation du sol (IGN, proxy)
+Faux positif OSM
+Aucun faux positif géométrique OSM.
+OpenStreetMap / Overpass
+Parc national
+Hors Parc National.
+Parc National de La Réunion (INPN)
+· millésime 2021
+Parcelle déclarée agricole (RPG)
+Hors parcelle agricole déclarée (RPG).
+RPG — déclarations agricoles (IGN/ASP)
+· proxy RPG.LATEST (IGN) — campagne 2024 (data.gouv RPG-R)
+Potentiel foncier Région (indicatif)
+Hors îlot cartographié — aucune contrainte déduite automatiquement.
+Potentiel foncier Région (Région ODS)
+· îlots non urbanisés — estimation Région (ODS, non versionné)
+
+### tiroir ouvert : Risques et environnement
+
+### tiroir ouvert : 7 vigilances
+Aléa inondation fort sur 48 % 3 aléas au total
+ALÉAS (3)
+Aléa inondation niveau fort
+48 %
+PPR — zone rouge
+zone bleue
+17 %
+PPR — zone bleue
+78 %
+PPR (approuvé le 2012-10-17) — DEAL Réunion — PPR / aléas · 2026-09-13
+FRICHE RECENSÉE (CARTOFRICHES)
+✓ Sans objet — parcelle non recensée comme friche. (édition courante (Cerema, mise à jour trimestrielle))
+EnR au sol (APER)
+hors zone d'exclusion
+Mesure compensatoire (GéoMCE)
+aucune sur la parcelle
+21
+arrêtés CatNat (commune) · dernier 08/07/2025
+VIGILANCES
+Parcelle au contact de la bande des 50 pas géométriques (corridor ±90 m de la limite haute 1877)
+régime foncier SPÉCIFIQUE à vérifier : domaine public littoral, cession encadrée (agence des 50 pas).
+Installation classée (ICPE) à proximité
+SODIAC, régime Enregistrement, 306 m.
+Servitude(s) d'utilité publique sur la parcelle : AC4 (Site patrimonial remarquable de Saint-Denis) ; PM1.
+ABF / Monuments
+Abords MH ~500 m (tampon) — covisibilité à instruire.
+ABF / Monuments historiques
+✓ 9 couches sans objet — déplier
+Classement sonore (bruit routier)
+Hors secteurs affectés par le bruit routier.
+Classement sonore ITT (Cerema)
+· arrêtés déc. 2023
+Cavités
+Aucun objet recensé à proximité.
+Géorisques — cavités souterraines
+Eau
+Hors hydrographie.
+· BD TOPO® V3 (IGN) — édition non enregistrée
+Espace protégé réglementaire (INPN)
+Hors espace protégé (INPN).
+INPN / patrinat — espaces protégés
+· INPN/patrinat espaces protégés — passe 05/07/2026
+Mouvement de terrain
+Géorisques — mouvements de terrain
+Pente modérée (~12%) — calculée, non éliminatoire.
+RGE ALTI (altimétrie)
+· RGE ALTI® (IGN) — édition non enregistrée
+Ravines
+Hors voisinage immédiat d'une ravine.
+Sols pollués
+Géorisques — sites et sols pollués
+Indicateur d'érosion côtière (Cerema)
+Hors zone de recul du trait de côte.
+Cerema / GéoLittoral — indicateur d'érosion côtière
+· millésime 2018
+Pièges & risques
+
+### tiroir ouvert : Réseaux et desserte
+
+### tiroir ouvert : eau/élec confirmée
+Viabilisation eau/élec confirmée assainissement collectif
+✓
+Eau/élec
+confirmée
+Fibre
+FttH
+Bus
+55 m
+Assainis.
+collectif
+Fibre (Arcep)
+FttH · 0 m · 5 op.
+Arrêt de bus
+Le Pont · 55 m
+Ligne de transport
+Citalis · 5 m
+Pôle d’échange
+HôTel De Ville De St Denis · 380 m
+Stationnement allégé (TCSP)
+hors rayon · 1241 m
+Trafic N1
+30 000 véh./j · 1 440 PL
+ACCÈS
+Accès voirie : voie publique à ≤ 10 m de la parcelle (faisceau viabilisation
+le test au contact strict de l'axe BD TOPO est retiré).
+GESTIONNAIRES (RACCORDEMENT)
+Compétence
+CINOR — Communauté intercommunale du Nord de La Réunion · cinor.re
+Eau potable
+Dionéo (CINOR + Runéo/Veolia) · DSP concession → 30/06/2030 confirmé
+Assainissement
+Dionéo ; STEP Grand Prado (Runéo) · DSP → 16/06/2030 à confirmer
+SPANC (ANC)
+Régie SPANC CINOR
+Électricité
+EDF SEI · EDF SEI Réunion — raccordement.reunion@edf.fr / edf.re
+2023 : bascule Runéo → Dionéo (entité CINOR+Runéo). Collecte CISE, contrat 2020-2024 échu — à revérifier.
+Gestionnaires administratifs à jour au 2026-07, à revérifier annuellement (les délégations changent aux renouvellements de contrat). Contact administratif uniquement — aucun tracé de réseau (donnée sensible). Viabilité (eau, électricité, assainissement) à confirmer auprès des concessionnaires via DT-DICT (reseaux-et-canalisations.gouv.fr).
+Viabilisation eau · élec
+confirmée par les faits
+Raccordement eau · élec
+Raccordement a priori SIMPLE : réseaux présumés en façade/voirie, secteur déjà desservi et construit.
+Solaire
+Ensoleillement très favorable à une installation solaire — productible estimé ~1 550 kWh/kWc/an (modèle SARAH3, hors gradient côtier local). Estimé
+indices (faisceau de preuves)
+Axe structurant
+Axe structurant N1 (route à 1 chaussée) à ~145 m — deux faces : accessibilité (desserte rapide) ET nuisances potentielles (bruit, pollution ; recul le long des axes classés, art. L. 111-6 — non cartographié en donnée ouverte, à vérifier au PLU). Le classement sonore, lui, est évalué au tiroir Risques.
+
+### tiroir ouvert : Fiscalité et dispositifs
+
+### tiroir ouvert : 36,73 %
+Zone franche (ZFANG), France Ruralités (FRR) zone B1 (PTZ/loyers) · TVA 8,5 %
+Taxe foncière
+part communale
+Taxe d'aménagement
+3 + 2.5 %
+commune · dépt
+Zonage A/B/C
+B1
+PTZ · loyers
+TVA
+8,5 %
+DOM · 2,1 % LLS
+DISPOSITIFS DE LA COMMUNE
+ZFANG
+FRR
+ORT
+QPV
+PVD
+Cœur de ville
+Calculer la taxe d'aménagement
+détail des dispositifs
+Fait territorial sourcé et daté. Les taux cités sont les taux LÉGAUX du dispositif (décret / CGI), pas un calcul de votre avantage : l'éligibilité et l'effet réel relèvent de votre expert-comptable ou avocat fiscaliste.
+
+### tiroir ouvert : Marché
+
+### tiroir ouvert : 87 €/m²
+Maison 4 375 €/m², appartement 2 803 €/m² secteur +10 % vs commune, tendance hausse
+Maison
+4 375
+€/m² · 12 ventes · 500 m
+Appartement
+2 803
+€/m² · 84 ventes · 500 m
+commune
+secteur +10 %
+Marché DVF
+Prix médian terrain : échantillon insuffisant (2 vente(s) dans le secteur).
+DVF / valeurs foncières
+· géo-DVF Etalab 2021–2025 + archives DGFiP 2014–2020
+Potentiel foncier Région
+Hors îlot « Potentiel foncier » Région.
+data.regionreunion.com — Potentiel foncier
+Prix de sortie — bâti secteur
+2 803 €/m²
+Valeur au prix du secteur
+≈ 121 887 €
+Prix par type : maison / appartement = médiane locale par type au rayon adaptatif (DVF) ; terrain nu = médiane de la section cadastrale (même source que la valeur du secteur).
+VENTES À MOINS DE 100 M
+Ventes
+(< 100 m · 36 mois)
+66 ventes
+Prix médian
+~170 k€
+Loyers (OLL)
+zone non couverte
+Acquéreur PM voisin (4)
+LES JARDINS DE LA PLAGE · 03/10/2025
+Outil Communes — Saint-Denis
+
+### tiroir ouvert : Quartier
+
+### tiroir ouvert : isochrone
+Secteur les Bas de la Rivière niveau de vie 23 819 €, 18 % sous le seuil de pauvreté, commerces à 72 m
+À PROXIMITÉ (À PIED)
+École
+276 m
+Commerces
+72 m
+Santé
+175 m
+CONTEXTE SOCIO-ÉCONOMIQUE (SECTEUR)
+Niveau de vie médian
+23 819 €
+SOURCÉFilosofi 2021 (INSEE, carreaux 200 m)
+Propriétaires
+20 %
+Pauvreté
+18 %
+Parc social — commune entière
+25 185 logements
+RPLS 01/01/2025 · maille commune
+Contexte informatif — hors scoring. Niveau de vie/pauvreté au carreau 200 m ; parc social à la commune.
+QUARTIER INSEE — LE BAS DE LA RIVIÈRE
+Logements
+1 331
+Vacance
+7,8 %
+Bâti avant 1990
+44,9 %
+Pers./ménage
+2,49
+60 ans et +
+16,2 %
+HLM
+46,3 %
+INSEE — recensement de la population, bases IRIS (maille quartier) — RP2022 (parution 16/10/2025, géographie 01/01/2024). Maille quartier (IRIS) : affine la commune, ne la remplace pas.
+0,5 km
+1 km
+2 km
+5 km
+Lecture de la zone…
+PERMIS À PROXIMITÉ
+3 à < 100 m · 7 à < 200 m
+Permis autorisés géolocalisés < 200 m (source du signal viabilisation M-VIA). Cliquez pour la fiche.
+PC
+2026-06-25
+11 m
+2024-02-09
+77 m
+2016-06-22
+2019-11-25
+121 m
+2024-10-04
+126 m
+◀ + 2 autres permis
+ACTIVITÉ DE DÉPÔT DE PERMIS
+Sourcé Sitadel3 / SDES
+Sur le secteur : 6 dépôts sur 36 mois · section cadastrale · dernier 2025-01-01
+activité de dépôt (permis aboutis — les refus et dossiers en cours ne sont pas publiés).
+Étude de zone · Chalandise
+Étude de zone · Particulier
+Permis commune
+Fiche commune
+
+### tiroir ouvert : Potentiel
+
+### tiroir ouvert : Simulation
+
+### tiroir ouvert : bilan
+Prix de sortie retenu 2 803 €/m²
+PRIX DE SORTIE RETENU (BILAN)
+Le prix de sortie bâti retenu pour la charge foncière est le prix du secteur affiché dans « Marché » (échantillon, rayon, tendance, fraîcheur y sont détaillés).
+RÉHABILITATION (MODE B)
+Estimé · ~3,71 M€
+La surface constructible autorisée par le PLU est déjà consommée par le bâti existant.
+Ce que la réhabilitation du bâti justifie : ~3,71 M€(Estimé — l'hypothèse travaux l'est toujours)
+hors valeur du terrain — le foncier (1 401 m²) s'ajoute à ce montant
+terrain nu au prix du secteur : ~451 k€ (322 €/m² × 1 401 m² · Estimé)
+Détail du bilan
+Prix de sortie (revente)
+4 222 €/m² Sourcé DVF
+médiane DVF maison/appartement du secteur (n ≥ 3) · médiane secteur→commune, sans rayon adaptatif
+Coût travaux ESTIMÉ
+€/m²
+coût travaux : hypothèse ~1500 €/m² (ESTIMÉ) — à ajuster selon l'état constaté du bâti
+marge 9% + frais 12% du CA (mêmes conventions que le mode A)
+Sortie locative
+Estimé — ni un prix ni une promesse ; sans donnée d'état du bâti, l'incertitude est portée par le paramètre travaux. Sortie = revente (homogène mode A).
+Faisabilité
+Calculette foncière
+Assemblage
+
+### tiroir ouvert : final

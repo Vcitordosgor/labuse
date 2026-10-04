@@ -1,0 +1,523 @@
+PARCELLE · SAINTE-SUZANNE
+97420000AB0268
+pj
+187 Rue Louis Hoarau, 97441 Sainte-Suzanne
+Secteur : la Grande Montée
+SURFACE
+i
+966 m²
+ZONE
+UB
+constructible
+PENTE
+7,7 °
+modérée
+EXPOSITION
+Nord-Est
+versant (RGE ALTI)
+RISQUES
+1
+vigilance
+SDP RESTANTE
+754 m²
+Demander à LABUSE
+Poser une question
+LE BIEN
+Identité
+Particulier
+›
+Terrain
+pente modérée · Nord-Est
+Bâti
+Aucun bâti significatif détecté
+terrain nu
+LE DROIT DU SOL
+Urbanisme
+—
+Risques et environnement
+14 couches évaluées
+1 vigilance
+Réseaux et desserte
+Assainissement : non renseigné
+eau/élec confirmée
+Fiscalité et dispositifs
+47,6 %
+LE MARCHÉ
+Marché
+12 ventes secteur
+150 €/m²
+Quartier
+Équipements, population et permis du voisinage
+isochrone
+LE PROJET
+Potentiel
+calcul tracé
+754 m² SDP
+Simulation
+charge foncière · réhabilitation · outils projet
+bilan
++ CRM
++ Projet
+Dossier
+Dossier financier
+Apporteur
+Pré-dossier PC
+Courrier
+Remonter le temps
+Estimations indicatives issues de données publiques — ni conseil juridique/notarial ni garantie de constructibilité. Ces informations ne remplacent pas un certificat d'urbanisme.
+⚑ Signaler une erreur
+
+### tiroir ouvert : Identité
+12 m max
+égout 9 m
+12 ventes secteur · DVF — jusqu'à déc. 2025
+R+2 · calcul tracé
+
+### tiroir ouvert : Particulier
+⌄
+Propriétaire non identifié personne physique ou hors fichier des personnes morales
+Courrier SPF
+→
+🏗️ SUR CETTE PARCELLE
+Permis de construire — déposé 2018-01-01, autorisé 2018-11-08 · annulé
+PC 2018 — PC autorisé 2018 · jamais commencé · caduc probable
+Autorisations et dépôts uniquement — refus et dossiers en cours non publiés.
+✓ 3 couches sans objet — déplier
+Âge du dirigeant
+inconnu
+Âge dirigeant inconnu (PM sans dirigeant physique daté).
+INPI RNE (dirigeants)
+BODACC
+BODACC sans objet — propriétaire non personne morale.
+BODACC (procédures collectives)
+Propriétaire
+Propriétaire (personne morale) non renseigné pour cette parcelle.
+DGFiP — parcelles des personnes morales
+· Panel millésimes 2019→2025 (situation 1ᵉʳ janvier)
+
+### tiroir ouvert : Terrain
+
+### tiroir ouvert : 7,7 °
+Versant Nord-Est 7,7 ° · 966 m² au sol libre · 1,1 % artificialisé (OCS GE)
+Pente
+7,7 ° modérée
+Exposition
+versant · RGE ALTI
+Surface au sol libre
+966 m²
+Sol artificialisé
+1,1 %
+OCS GE 2022
+COUVERTURE DU SOL · COSIA 20 CM
+Imperméabilisé 2,2 %
+Végétalisé 51,7 %
+Sol nu 0 %
+Azimut du versant
+60,2 ° (0 = Nord, sens horaire)
+PROFIL ALTIMÉTRIQUE
+188
+183
+0
+53 m
+DISTANCE
+DÉNIVELÉ +
++0 m
+DÉNIVELÉ −
+−6 m
+PENTE MOYENNE
+10,5 %
+PLUS FORTE PENTE
+22,6 %
+ALTITUDE
+183–188 m
+Le long du plus grand axe de la parcelle. Source RGE ALTI 5 m (IGN). Vocabulaire cartes.gouv (pente moyenne = grade absolu moyen).
+OCS GE (IGN, donnée d’îlot, décret 2023-1096) · CoSIA (IGN, détection IA, mesure de la parcelle) · pente et exposition RGE ALTI (IGN).
+
+### tiroir ouvert : Bâti
+
+### tiroir ouvert : terrain nu
+Terrain nu aucun bâtiment BD TOPO, aucune hauteur LiDAR, aucun établissement rattaché
+Établissements sur la parcelle
+aucun SIRENE, adresse exacte
+Bâti existant — BD TOPO® V3 (IGN) + CoSIA 2025. Information de fiche, jamais un signal de classement.
+
+### tiroir ouvert : Urbanisme
+
+### tiroir ouvert : —
+UB, constructible 3 destinations interdites · 2 sous condition
+Zone
+UBconstructible
+SDP consommée
+0 %
+PLU
+approuvé le 29/09/2025
+document
+RÈGLEMENT — ZONE UB
+voir l’article
+Hauteur
+12 m
+Art. U8.2 · p.14 (PLU
+Emprise
+Recul voie
+4 m
+Art. U4.2 · p.12 (PLU
+Recul limites
+3 m
+Art. U5.2 · p.13 (PLU
+Pleine terre
+30 %
+Art. U12.1 · p.16 (PLU
+Stationnement
+2 / logt
+Destinations · 18 autorisées (Hébergement, Artisanat et commerce de détail, Restauration…) · 3 interdites · 2 sous condition
+Le règlement PLU fait foi ; les valeurs affichées sont une aide à la lecture, non un certificat d'urbanisme.
+SITUATION
+SDP résiduelle
+SDP résiduelle 808 m² — opération viable.
+Occupation du sol (BD CARTO V5 — grain grossier)
+Sol classé naturel — artificialisation à justifier (occupation du sol BD CARTO V5, grain grossier, précision limitée à la parcelle).
+IGN BD CARTO V5 — occupation du sol
+· BD CARTO® V5 — occupation du sol (IGN, proxy)
+Surface parcelle
+Surface utile 966 m².
+Annuaire PLU
+Vérif procédure
+RTAA DOM
+10 exigences →
+Préemption (DPU)
+non déterminée
+Bruit aérien (PEB)
+hors zone
+SCOT
+SCOT DE LA CINOR · approuvé
+MIXITÉ SOCIALE (LLS)
+non modélisée
+Clause de mixité sociale
+non modélisée pour cette zone
+Aucune clause de mixité sociale validée pour cette zone dans le règlement calibré.
+✓ 10 couches sans objet — déplier
+Emprise linéaire
+Forme non linéaire (largeur 37 m, allongement 1.2×).
+Emprise routière
+Pas une emprise routière (0 m d'axes, densité 0.00, bâti 0%).
+Foncier public
+Propriétaire non public (personne physique ou PM privée).
+Forêt publique
+Hors forêt publique.
+Forêts publiques (ONF)
+· BD TOPO® V3 — forêt publique (IGN)
+Friche
+Aucune friche recensée.
+Cartofriches (Cerema)
+Faux positif OSM
+Aucun faux positif géométrique OSM.
+OpenStreetMap / Overpass
+Parc national
+Hors Parc National.
+Parc National de La Réunion (INPN)
+· millésime 2021
+Prescriptions PLU
+Aucune prescription PLU sur la parcelle.
+Urbanisme PLU/GPU (API Carto)
+· GPU/PLU par commune (révisions — détail en fiche)
+Parcelle déclarée agricole (RPG)
+Hors parcelle agricole déclarée (RPG).
+RPG — déclarations agricoles (IGN/ASP)
+· proxy RPG.LATEST (IGN) — campagne 2024 (data.gouv RPG-R)
+Potentiel foncier Région (indicatif)
+Hors îlot cartographié — aucune contrainte déduite automatiquement.
+Potentiel foncier Région (Région ODS)
+· îlots non urbanisés — estimation Région (ODS, non versionné)
+
+### tiroir ouvert : Risques et environnement
+
+### tiroir ouvert : 1 vigilance
+Aléa mouvement terrain faible sur 100 %
+ALÉAS (1)
+Aléa mouvement_terrain niveau faible
+100 %
+DEAL Réunion — PPR / aléas · 2026-09-13
+FRICHE RECENSÉE (CARTOFRICHES)
+✓ Sans objet — parcelle non recensée comme friche. (édition courante (Cerema, mise à jour trimestrielle))
+EnR au sol (APER)
+hors zone d'exclusion
+Mesure compensatoire (GéoMCE)
+aucune sur la parcelle
+◀
+19
+arrêtés CatNat (commune) · dernier 20/03/2025
+VIGILANCES
+Ligne moyenne tension
+à proximité
+Espace protégé réglementaire (INPN)
+Donnée espaces protégés (INPN) non disponible sur cette commune.
+INPN / patrinat — espaces protégés
+· INPN/patrinat espaces protégés — passe 05/07/2026
+✓ 12 couches sans objet — déplier
+ABF / Monuments
+Hors périmètre ABF.
+ABF / Monuments historiques
+Classement sonore (bruit routier)
+Hors secteurs affectés par le bruit routier.
+Classement sonore ITT (Cerema)
+· arrêtés déc. 2023
+Cavités
+Aucun objet recensé à proximité.
+Géorisques — cavités souterraines
+50 pas géométriques
+Hors zone des 50 pas géométriques.
+50 pas géométriques — limite haute (DEAL)
+· cadastre 1877 (géoréf. 2012/1950)
+Eau
+Hors hydrographie.
+BD TOPO IGN
+· BD TOPO® V3 (IGN) — édition non enregistrée
+ICPE
+Géorisques — ICPE
+Mouvement de terrain
+Géorisques — mouvements de terrain
+Pente fort (~24%) — calculée, non éliminatoire.
+RGE ALTI (altimétrie)
+· RGE ALTI® (IGN) — édition non enregistrée
+Ravines
+Hors voisinage immédiat d'une ravine.
+Sols pollués
+Géorisques — sites et sols pollués
+Servitudes (SUP)
+Aucune servitude d'utilité publique recensée.
+SUP — assiettes GPU (API Carto)
+Indicateur d'érosion côtière (Cerema)
+Hors zone de recul du trait de côte.
+Cerema / GéoLittoral — indicateur d'érosion côtière
+· millésime 2018
+Pièges & risques
+
+### tiroir ouvert : Réseaux et desserte
+
+### tiroir ouvert : eau/élec confirmée
+Viabilisation eau/élec confirmée assainissement non renseigné
+✓
+Eau/élec
+confirmée
+Fibre
+FttH
+Bus
+68 m
+?
+Assainis.
+non renseigné
+Fibre (Arcep)
+FttH · 0 m · 5 op.
+Arrêt de bus
+Grande Montée · 68 m
+Ligne de transport
+Citalis · 3 m
+Pôle d’échange
+HôTel De Ville De Ste Suzanne · 2.75 km
+ACCÈS
+Accès voirie : voie publique à ≤ 10 m de la parcelle (faisceau viabilisation
+le test au contact strict de l'axe BD TOPO est retiré).
+GESTIONNAIRES (RACCORDEMENT)
+Compétence
+CINOR — Communauté intercommunale du Nord de La Réunion · cinor.re
+Eau potable
+Runéo (Veolia) · DSP concession → 30/06/2030 confirmé
+Assainissement
+STEP Terre des Trois Frères (CISE) ; collecte CISE · → 28/08/2031 à confirmer
+SPANC (ANC)
+Régie SPANC CINOR
+Électricité
+EDF SEI · EDF SEI Réunion — raccordement.reunion@edf.fr / edf.re
+Runéo ici NON rebrandé Dionéo (Dionéo = Saint-Denis seulement).
+Gestionnaires administratifs à jour au 2026-07, à revérifier annuellement (les délégations changent aux renouvellements de contrat). Contact administratif uniquement — aucun tracé de réseau (donnée sensible). Viabilité (eau, électricité, assainissement) à confirmer auprès des concessionnaires via DT-DICT (reseaux-et-canalisations.gouv.fr).
+Viabilisation eau · élec
+confirmée par les faits
+Raccordement eau · élec
+Raccordement a priori SIMPLE : réseaux présumés en façade/voirie, secteur déjà desservi et construit.
+Solaire
+Ensoleillement très favorable à une installation solaire — productible estimé ~1 500 kWh/kWc/an (modèle SARAH3, hors gradient côtier local). Estimé
+non renseigné (secteur indicatif)
+4
+indices (faisceau de preuves)
+
+### tiroir ouvert : Fiscalité et dispositifs
+
+### tiroir ouvert : 47,6 %
+Zone franche (ZFANG), France Ruralités (FRR) zone B1 (PTZ/loyers) · TVA 8,5 %
+Taxe foncière
+part communale
+Taxe d'aménagement
+5 + 2.5 %
+commune · dépt
+Zonage A/B/C
+B1
+PTZ · loyers
+TVA
+8,5 %
+DOM · 2,1 % LLS
+DISPOSITIFS DE LA COMMUNE
+ZFANG
+FRR
+ORT
+QPV
+PVD
+Cœur de ville
+Calculer la taxe d'aménagement
+détail des dispositifs
+Fait territorial sourcé et daté. Les taux cités sont les taux LÉGAUX du dispositif (décret / CGI), pas un calcul de votre avantage : l'éligibilité et l'effet réel relèvent de votre expert-comptable ou avocat fiscaliste.
+
+### tiroir ouvert : Marché
+
+### tiroir ouvert : 150 €/m²
+Terrain nu 150 €/m², maison 2 411 €/m² secteur +14 % vs commune, tendance hausse
+Terrain nu
+150
+€/m² · 12 ventes
+Maison
+2 411
+€/m² · 24 ventes · 1 000 m
+commune
+secteur +14 %
+Marché DVF
+Prix médian terrain 150 €/m² — 12 ventes secteur cadastral 2021-2025 (millésimes géo-DVF disponibles). Contexte de marché favorable.
+DVF / valeurs foncières
+· géo-DVF Etalab 2021–2025 + archives DGFiP 2014–2020
+Potentiel foncier Région
+Hors îlot « Potentiel foncier » Région.
+data.regionreunion.com — Potentiel foncier
+Prix de sortie — bâti secteur
+2 411 €/m²
+Valeur au prix du secteur
+≈ 144 900 €
+Prix par type : maison / appartement = médiane locale par type au rayon adaptatif (DVF) ; terrain nu = médiane de la section cadastrale (même source que la valeur du secteur).
+VENTES À MOINS DE 100 M
+Ventes
+(< 100 m · 36 mois)
+1 vente
+Prix médian
+échantillon insuffisant (< 3 ventes)
+Loyers (OLL)
+zone non couverte
+Acquéreur PM voisin
+COMMUNE DE SAINTE SUZANNE · 28/09/2023
+Outil Communes — Sainte-Suzanne
+
+### tiroir ouvert : Quartier
+
+### tiroir ouvert : isochrone
+Secteur la Grande Montée niveau de vie 18 625 €, 34 % sous le seuil de pauvreté, commerces à 746 m
+À PROXIMITÉ (À PIED)
+École
+437 m
+Commerces
+746 m
+Santé
+456 m
+CONTEXTE SOCIO-ÉCONOMIQUE (SECTEUR)
+Niveau de vie médian
+18 625 €
+SOURCÉFilosofi 2021 (INSEE, carreaux 200 m)
+Propriétaires
+57 %
+Pauvreté
+34 %
+Parc social — commune entière
+2 412 logements
+RPLS 01/01/2025 · maille commune
+Contexte informatif — hors scoring. Niveau de vie/pauvreté au carreau 200 m ; parc social à la commune.
+QUARTIER INSEE — BAGATELLE
+Logements
+2 097
+Vacance
+5,9 %
+Bâti avant 1990
+31,6 %
+Pers./ménage
+2,74
+60 ans et +
+15,9 %
+HLM
+14,8 %
+INSEE — recensement de la population, bases IRIS (maille quartier) — RP2022 (parution 16/10/2025, géographie 01/01/2024). Maille quartier (IRIS) : affine la commune, ne la remplace pas.
+0,5 km
+1 km
+2 km
+5 km
+Lecture de la zone…
+PERMIS À PROXIMITÉ
+7 à < 100 m · 15 à < 200 m
+Permis autorisés géolocalisés < 200 m (source du signal viabilisation M-VIA). Cliquez pour la fiche.
+PC
+2018-11-08
+1 lgt
+0 m
+2025-12-22
+16 m
+2016-02-16
+20 m
+2021-11-25
+36 m
+2017-10-19
+48 m
+◀ + 7 autres permis
+ACTIVITÉ DE DÉPÔT DE PERMIS
+Sourcé Sitadel3 / SDES
+Sur le secteur : 8 dépôts sur 36 mois · section cadastrale · dernier 2025-06-06
+activité de dépôt (permis aboutis — les refus et dossiers en cours ne sont pas publiés).
+Étude de zone · Chalandise
+Étude de zone · Particulier
+Permis commune
+Fiche commune
+
+### tiroir ouvert : Potentiel
+
+### tiroir ouvert : 754 m² SDP
+754 m² de SDP résiduelle capacité R+2
+SDP restante
+Densifier l'existant
+Ouvrir le Gabarit
+POTENTIEL DE TRANSFORMATION
+Fort
+SDP consommée / autorisée
+Ratio SDP consommée/autorisée (bloc D du modèle P) + surélévation au moteur commun (règles PLU calibrées × bâti BD TOPO, hauteur à l'égout)
+Terrain libéré
+l'enveloppe du terrain, bâti rasé
+VERDICT · ZONE UB · 966 M²
+Jusqu'à 754 m² de plancher · 5–6 logement(s).
+Ce qui limite
+Règles sourcées
+Plancher estimé
+hauteur 9 m (R+2) · stationnement 2 pl./logt
+TESTER UN PROJET · VOS CHIFFRES
+Nombre de logements
+logements
+Surface de plancher par logement
+m²
+7
+Règles du PLU · zone UB
+NOS HYPOTHÈSES · MODIFIABLES
+Occupation du gabarit
+%
+Rendement SDP → habitable
+Surface moyenne / logement
+LE CALCUL, ÉTAPE PAR ÉTAPE (8)
+Voir en 3D
+Chercher des parcelles par capacité → · Pré-faisabilité indicative sur règlement PLU public — ne remplace pas une étude de faisabilité réglementaire par un professionnel.
+GABARIT RÉGLEMENTAIRE
+Zone d'implantation
+559 m²
+Plafond d'emprise
+Non réglementé
+Hauteur réglementaire
+
+### tiroir ouvert : Simulation
+
+### tiroir ouvert : bilan
+Prix de sortie retenu 2 411 €/m²
+PRIX DE SORTIE RETENU (BILAN)
+Le prix de sortie bâti retenu pour la charge foncière est le prix du secteur affiché dans « Marché » (échantillon, rayon, tendance, fraîcheur y sont détaillés).
+Faisabilité
+Calculette foncière
+Assemblage
+
+### tiroir ouvert : final
