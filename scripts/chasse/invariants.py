@@ -93,14 +93,20 @@ INVARIANTS: list[tuple[str, str, str, str]] = [
         FROM pc_caducs
         WHERE caduc_depuis IS NOT NULL AND coalesce(n_pc_octroyes, 0) = 0"""),
 
-    ("au_fermee_capacite_zero",
-     "zone AU non ouverte ⇒ capacité servie 0 ou cause posée",
-     "parcel_au_statut × parcel_residuel",
-     """SELECT a.idu, format('classe=%s sdp=%s cause=%s', a.classe, r.sdp_residuelle_m2, r.cause)
+    # CHASSE-FIX-1 (C06), décision Vic : une AU non ouverte GARDE sa capacité (« différée,
+    # pas exclue ») — la violation n'est plus « sdp > 0 » mais « sdp > 0 présenté comme
+    # DISPONIBLE ». La présentation différée est garantie au service par la règle unique
+    # faisabilite.au_differe (fiche/Faisabilité/Gabarit/PDF/Copilote) et VERROUILLÉE par
+    # tests/test_chasse_fix1.py::test_c06_* (TestClient). Ici, garde SQL de socle : le
+    # drapeau n'est posable que si la classe bloquante est tracée dans parcel_au_statut.
+    ("au_fermee_differee_presentee",
+     "AU non ouverte à capacité > 0 ⇒ présentation différée (verrou API test_chasse_fix1 C06)",
+     "parcel_au_statut × parcel_residuel (socle) + TestClient (verrou)",
+     """SELECT a.idu, 'classe non bloquante aberrante: '||a.classe
         FROM parcel_au_statut a
         JOIN parcel_residuel r ON r.parcel_id = a.parcel_id
-        WHERE a.classe ILIKE '%%ferm%%'
-          AND coalesce(r.sdp_residuelle_m2, 0) > 0 AND r.cause IS NULL"""),
+        WHERE coalesce(r.sdp_residuelle_m2, 0) > 0 AND r.cause IS NULL
+          AND a.classe IS NULL"""),
 
     ("cinquante_pas_distance_cote",
      "flag « 50 pas » ⇒ distance au trait de côte ≤ 200 m (81,2 m + marge corridor)",

@@ -204,6 +204,8 @@ export function Gabarit() {
   // dominante. On affiche le CADASTRE ENTIER (= la fiche) puis la portion servie en sous-ligne (cf.
   // GABARIT-AUDIT-1 : « Surface parcelle 7 465 m² » masquait qu'il s'agissait d'un morceau, pas de la parcelle).
   const raccZone = (res?.raccordement?.zone ?? null) as { code?: string; a_cheval?: boolean } | null
+  // CHASSE-FIX-1 (C06) — zone AU non ouverte : bandeau « potentiel différé » servi par le back.
+  const auDiffere = (res?.raccordement?.au_differe ?? null) as { libelle?: string } | null
   const cadastreM2 = parcelle?.surface_m2 ?? null
   const aCheval = !!raccZone?.a_cheval && cadastreM2 != null && res?.surfaceParcelleM2 != null
   // FRONT-CHIFFRES-2 (F50/F57) — % « à cheval » SERVI (pctPortionZone) ; ce ratio vivait à DEUX sites
@@ -229,6 +231,13 @@ export function Gabarit() {
 
       {q.isLoading && <Squelette lignes={4} />}
       {q.isError && <ErrorState message="Parcelle inconnue ou service indisponible." retry={() => q.refetch()} />}
+
+      {/* CHASSE-FIX-1 (C06) — l'enveloppe est calculée mais la zone AU n'est pas ouverte. */}
+      {auDiffere && (
+        <p className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-[11px] leading-snug text-amber-300">
+          {auDiffere.libelle ?? 'Potentiel différé — ouverture de la zone requise'}
+        </p>
+      )}
 
       {/* CALCUL INCOMPLET — la parcelle reste VISIBLE (contour tracé, réf + commune au-dessus du motif).
           Aucune zone / métrique / 3D réglementaire (CDC §3). */}

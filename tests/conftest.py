@@ -153,6 +153,12 @@ def engine():
     # RADAR (pige) · P0 — schéma isolé pige_* (comme au boot).
     from labuse.pige.tables import ensure_tables as _pige_ens
     _pige_ens(eng)
+    # CHASSE-FIX-1 (Lot 3) — la base de test sert `parcel_residuel` comme la PROD : une VUE
+    # sur parcel_residuel_runs filtrée par le run servi (migration M135, idempotente). Avant,
+    # la base de test gardait la TABLE historique vide → les tests ne voyaient jamais le
+    # chemin réel (is_served) ; le test de bascule CHASSE-1 l'a prouvé.
+    from labuse.faisabilite.residuel_runs import migrate_to_runs as _residuel_migrate
+    _residuel_migrate(eng)
     # F3 (Phase 0 J1) : tables « data-gap » interrogées par l'app mais NON déclarées en ORM (créées
     # hors code en prod par l'ingestion pente). On les matérialise VIDES en base de test → l'app ne
     # casse plus sur « relation inexistante » (le contrat data-gap = 0 ligne, jamais une erreur SQL).

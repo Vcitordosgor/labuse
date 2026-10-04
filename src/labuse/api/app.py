@@ -5637,8 +5637,10 @@ _AU_STATUT_LIBELLE = {
     "declasse_au_statut_inconnu": "statut d'ouverture non déterminé (phasage 2AU → 1AU à confirmer)",
     "générique": "statut d'ouverture non déterminé (zone non calibrée)",
 }
-#: classes qui EMPÊCHENT de construire tant que la zone n'est pas ouverte (cause de SDP résiduelle 0).
-_AU_CLASSES_BLOQUANTES = frozenset({"declasse_au_fermee", "declasse_au_statut_inconnu", "générique"})
+#: classes qui EMPÊCHENT de construire tant que la zone n'est pas ouverte. CHASSE-FIX-1 (C06) :
+#: source unique dans faisabilite.au_differe (doctrine « différée, pas exclue » — la capacité
+#: reste calculée, les lecteurs la présentent « après ouverture »).
+from ..faisabilite.au_differe import AU_CLASSES_DIFFEREES as _AU_CLASSES_BLOQUANTES  # noqa: E402
 
 
 def _au_ouverture_block(db: Session, idu: str) -> dict | None:
@@ -5767,6 +5769,15 @@ def _potentiel_transformation_block(db: Session, idu: str, commune: str | None =
         niveau, libelle = "faible", "Potentiel faible — parcelle proche de sa densité autorisée"
     else:
         niveau, libelle = "nul", "Densité autorisée atteinte ou dépassée"
+    # CHASSE-FIX-1 (C06) — zone AU à ouverture bloquée : la capacité reste calculée (doctrine
+    # « différée, pas exclue », décision Vic) mais n'est JAMAIS présentée comme disponible.
+    # Règle ET libellé uniques : faisabilite.au_differe (les mêmes pour Faisabilité/Gabarit/PDF/
+    # Copilote) — la SDP servie ne change pas, seul le discours change.
+    from ..faisabilite.au_differe import libelle_differe, statut_differe
+    _diff = statut_differe(db, idu=idu)
+    capacite_differee = _diff is not None
+    if capacite_differee:
+        niveau, libelle = "differe", libelle_differe(sdp_servie)
     sur = sur or {}
     # RECETTE-9 T9 — le scénario de surélévation branché sur le LiDAR : la surélévation se décide à
     # l'ÉGOUT (bord de toit) vs la règle d'égout (cause de fond de E1). Le bâti BD TOPO est un faîtage
@@ -5841,6 +5852,10 @@ def _potentiel_transformation_block(db: Session, idu: str, commune: str | None =
         regles_non_modelisees = []
     return {
         "niveau": niveau, "libelle": libelle,
+        # CHASSE-FIX-1 (C06) — capacité DIFFÉRÉE (zone AU non ouverte) : drapeau + détail de la
+        # règle unique au_differe ; la SDP reste servie (≈ m² APRÈS ouverture), jamais « disponible ».
+        "capacite_differee": capacite_differee,
+        "capacite_differee_detail": _diff,
         "exceptions_calcul": exceptions_calcul,               # PLU-EXCEPTIONS-1 — drapeaux « à vérifier »
         "regles_non_modelisees": regles_non_modelisees,       # DONNEES-FIX-1 pt4 — exceptions non déduites que la parcelle PORTE
         "pct_consomme": pct,                                  # SDP consommée / autorisée (%)

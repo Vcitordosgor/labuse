@@ -26,7 +26,9 @@ import { Repli, Lignes, Ligne, InfoI } from './formes'
 // (« ~14 200 m² de plancher », pas « ~1,42 ha ») : fmtM2 bascule en ha ≥ 10 000 m². Le verdict serveur
 // (scenarios._fmt_m2) le fait déjà ; ici on couvre les surfaces de plancher rendues côté front (Tester).
 const fmtPlancherM2 = (v: number | null | undefined): string => v == null ? '—' : `${fmtInt(v)} m²`
-const PT_COLORS: Record<string, string> = { fort: '#4ADE96', modere: '#F5C244', faible: '#9AA6A0', nul: '#6B7280', indetermine: '#6B7280' }
+// CHASSE-FIX-1 (C06) — niveau « differe » (zone AU non ouverte) : ambre, libellé servi par le back.
+const PT_COLORS: Record<string, string> = { fort: '#4ADE96', modere: '#F5C244', faible: '#9AA6A0', nul: '#6B7280', indetermine: '#6B7280', differe: '#F5A623' }
+const PT_CHIP: Record<string, string> = { differe: 'différé' }
 export function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
   if (pt.indisponible) return <BlocIndisponible titre="Potentiel de transformation" />   // M125 — panne ≠ absence
   const color = PT_COLORS[pt.niveau] ?? '#9AA6A0'
@@ -37,7 +39,7 @@ export function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
       {/* FICHE-FIX-5 (reste 2) — Potentiel de transformation en Lignes : SDP consommée % et marge en
           hauteur ; la phrase (libellé) et le détail de contrainte passent derrière le « i ». */}
       <GroupLabel right={
-        <span className="rounded-full px-2 py-0.5 text-[10.5px] font-medium capitalize" style={{ background: `${color}22`, color }}>{pt.niveau}</span>
+        <span className="rounded-full px-2 py-0.5 text-[10.5px] font-medium capitalize" style={{ background: `${color}22`, color }}>{PT_CHIP[pt.niveau] ?? pt.niveau}</span>
       }>Potentiel de transformation</GroupLabel>
       <Lignes>
         {/* COHERENCE-FIX-1 (lot B) — plus jamais « 999 % » : au-delà de 300, « > 300 % » (l'« i »
@@ -569,10 +571,18 @@ export function FaisabiliteTab({ idu }: { idu: string; embedded?: boolean }) {
         </div>
         <div data-faisa-verdict-phrase className="mt-2 text-[15px] font-medium leading-snug text-txt-hi">{pan.verdict}</div>
         <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+          {/* CHASSE-FIX-1 (C06) — zone AU non ouverte : la capacité est « après ouverture ». */}
+          {pan.capacite_differee && <Badge ton="ambre">Potentiel différé</Badge>}
           {pan.ce_qui_limite && <Badge ton="ambre">Ce qui limite</Badge>}
           {badges.regles_sourcees && <Badge ton="vert">Règles sourcées</Badge>}
           {badges.plancher_estime && <Badge ton="ambre">Plancher estimé</Badge>}
         </div>
+        {pan.capacite_differee && (
+          <p data-faisa-differe className="mt-2 text-[12px] leading-snug text-amber-300">
+            Potentiel différé — ouverture de la zone requise (modification du PLU) ;
+            les surfaces ci-dessous valent après ouverture.
+          </p>
+        )}
         {pan.ce_qui_limite && <p className="mt-2 text-[12px] leading-snug text-txt-mut">{pan.ce_qui_limite}</p>}
         {badges.plu_approuve_le && <p className="mt-2 text-[10.5px] text-txt-dim">PLU — {String(badges.plu_approuve_le)}</p>}
       </div>

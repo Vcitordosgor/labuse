@@ -185,6 +185,10 @@ def _ask_context(db: Session, idu: str) -> tuple[dict, dict]:
         "risques": _F(risques or None),
         # ── potentiel de transformation (ESTIMÉ) ──
         "potentiel_niveau": _F(pot.get("niveau"), "ESTIME"),
+        # CHASSE-FIX-1 (C06) — zone AU non ouverte : le Copilote dit « différé », jamais
+        # « disponible » (même libellé servi que la fiche §Potentiel, règle au_differe).
+        "capacite_differee": _F(pot.get("libelle") if pot.get("capacite_differee") else None,
+                                "ESTIME"),
         "sdp_residuelle_m2": _F(pot.get("sdp_residuelle_m2") or pot.get("sdp_residuelle"), "ESTIME"),
         # COHERENCE-FIX-1 (lot B) — le Copilote cite ce que le client VOIT : > 300 → « > 300 »
         # (même règle que fiche/Dossier), jamais le 999 historique ni un exact trompeur.
