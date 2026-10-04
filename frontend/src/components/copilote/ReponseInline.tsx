@@ -108,14 +108,9 @@ export function ReponseInline({ v2 }: { v2: CopiloteV2Reponse }) {
       {v2.compris && <p data-compris className="mb-2.5 text-[12px] leading-snug text-cp-muted">{v2.compris}</p>}
       <p className="whitespace-pre-wrap text-[14px] leading-relaxed text-cp-txt">{v2.text}</p>
 
-      {/* COPILOTE-2 lot 7 — le JOURNAL D'INSTRUCTION lisible : une ligne « ce que j'ai fait » (« J'ai lu
-          la fiche… », « J'ai ouvert Faisabilité… », « J'ai cherché sur le web : 3 sources »), au lieu du
-          #seq/kind/payload d'avant. Le payload brut reste en admin (télémétrie). */}
-      {v2.journal && (
-        <p data-journal-ligne className="mt-2 flex items-center gap-1.5 font-mono text-[10.5px] text-cp-faint">
-          <span className="text-cp-ia">›</span> {v2.journal}
-        </p>
-      )}
+      {/* RECETTE-1 (D5, Vic 04/10) — la ligne « journal d'instruction » (« › J'ai lu la fiche de la
+          parcelle… ») est RETIRÉE de l'affichage (bruit d'exploitation, cf. Radar). Le journal reste
+          en télémétrie admin ; seul l'affichage client change. */}
 
       {/* DESTINATIONS-1 (X4.4) — la PHRASE SOURCÉE du verdict destination, servie TELLE QUELLE
           (article/page/millésime/CDAC) — le fait exact sous la formulation, jamais reformulé. */}
@@ -163,9 +158,15 @@ export function ReponseInline({ v2 }: { v2: CopiloteV2Reponse }) {
           {v2.voie.libelle} →
         </button>
       )}
-      {(v2.sources?.length ?? 0) > 0 && (
-        <p className="mt-3 font-mono text-[10.5px] uppercase tracking-[.06em] text-cp-faint">SOURCE · {v2.sources!.join(' · ')}</p>
-      )}
+      {/* RECETTE-1 (D5, Vic 04/10) — le tag interne « SOURCE · FICHE LABUSE (RUN SERVI) » est retiré de
+          l'affichage (le sourçage INTERNE de la réponse ne change pas : on ne filtre que l'affichage,
+          `v2.sources` reste intact pour le choix de variante). Les sources EXTERNES restent affichées. */}
+      {(() => {
+        const srcs = (v2.sources ?? []).filter((s) => !/FICHE\s+LABUSE/i.test(s))
+        return srcs.length > 0 ? (
+          <p className="mt-3 font-mono text-[10.5px] uppercase tracking-[.06em] text-cp-faint">SOURCE · {srcs.join(' · ')}</p>
+        ) : null
+      })()}
     </div>
   )
 }

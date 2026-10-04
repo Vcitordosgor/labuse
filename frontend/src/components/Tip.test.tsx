@@ -1,48 +1,55 @@
-// FINITIONS-1 (P1, tranché par Vic) — les infobulles AU SURVOL sont RETIRÉES PARTOUT. SEULE exception :
-// les 3 outils de mesure de la carte, qui passent `survol`. `garder` monte encore la bulle mais SANS
-// survol : elle ne s'ouvre qu'au CLIC ou au FOCUS clavier (les « i » restent lisibles). jsdom +
-// testing-library déclenchent fiablement les événements React : ces tests VERROUILLENT la bascule.
-import { afterEach, describe, expect, it } from 'vitest'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+// RECETTE-1 (D1, tranché par Vic 04/10) — RÉTABLISSEMENT du survol : tous les « i » (`garder`) se
+// révèlent AU SURVOL (délai 150 ms) et au FOCUS clavier ; fermeture à Échap / à la sortie ; sur
+// tactile un tap ouvre. Le gate `garder` reste : sans lui, aucune bulle (pas de bulle sauvage).
+// Ces tests VERROUILLENT la bascule (annule FINITIONS-1 P1).
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { Tip } from './Tip'
 
 afterEach(cleanup)
 
-describe('FINITIONS-1 P1 — survol retiré partout sauf `survol`', () => {
-  it('SANS garder : aucune bulle au survol ni au focus (les enfants restent)', () => {
+describe('RECETTE-1 D1 — les « i » se révèlent au survol / focus / tap', () => {
+  it('SANS garder : aucune bulle au survol ni au focus (gate conservé)', () => {
     const { container } = render(<Tip tip="explication"><button>déclencheur</button></Tip>)
-    expect(screen.getByText('déclencheur')).toBeTruthy()          // le contenu reste
+    expect(screen.getByText('déclencheur')).toBeTruthy()
     const wrap = container.querySelector('span')!
     fireEvent.pointerEnter(wrap, { pointerType: 'mouse' })
     fireEvent.focus(wrap)
-    expect(document.querySelector('[role="tooltip"]')).toBeNull() // JAMAIS de bulle
+    expect(document.querySelector('[role="tooltip"]')).toBeNull()
     expect(screen.queryByText('explication')).toBeNull()
   })
 
-  it('AVEC garder SANS survol : le SURVOL n\'ouvre plus la bulle (les « i »)', () => {
+  it('AVEC garder : le SURVOL souris ouvre la bulle après le délai (150 ms)', () => {
+    vi.useFakeTimers()
+    try {
+      const { container } = render(<Tip garder tip="explication"><button>i</button></Tip>)
+      const wrap = container.querySelector('span')!
+      fireEvent.pointerEnter(wrap, { pointerType: 'mouse' })
+      expect(document.querySelector('[role="tooltip"]')).toBeNull()   // pas avant le délai
+      act(() => { vi.advanceTimersByTime(150) })
+      const bulle = document.querySelector('[role="tooltip"]')
+      expect(bulle).not.toBeNull()
+      expect(bulle!.textContent).toContain('explication')
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('AVEC garder : le FOCUS clavier ouvre immédiatement, Échap ferme', () => {
     const { container } = render(<Tip garder tip="explication"><button>i</button></Tip>)
     const wrap = container.querySelector('span')!
-    fireEvent.pointerEnter(wrap, { pointerType: 'mouse' })
-    expect(document.querySelector('[role="tooltip"]')).toBeNull() // plus de bulle au survol
-    // …mais le CLIC (ou le focus clavier) la révèle toujours : l'info reste accessible.
-    fireEvent.click(wrap)
-    const bulle = document.querySelector('[role="tooltip"]')
-    expect(bulle).not.toBeNull()
-    expect(bulle!.textContent).toContain('explication')
-  })
-
-  it('AVEC garder + survol : la bulle apparaît au survol (les 3 outils de mesure)', () => {
-    const { container } = render(<Tip garder survol tip="explication"><button>i</button></Tip>)
-    const wrap = container.querySelector('span')!
-    fireEvent.pointerEnter(wrap, { pointerType: 'mouse' })
-    const bulle = document.querySelector('[role="tooltip"]')
-    expect(bulle).not.toBeNull()
-    expect(bulle!.textContent).toContain('explication')
-  })
-
-  it('AVEC garder + survol : un survol tactile n\'ouvre pas (comportement inchangé)', () => {
-    const { container } = render(<Tip garder survol tip="x"><button>i</button></Tip>)
-    fireEvent.pointerEnter(container.querySelector('span')!, { pointerType: 'touch' })
+    fireEvent.focus(wrap)
+    expect(document.querySelector('[role="tooltip"]')).not.toBeNull()
+    fireEvent.keyDown(window, { key: 'Escape' })
     expect(document.querySelector('[role="tooltip"]')).toBeNull()
+  })
+
+  it('AVEC garder : un survol tactile n\'ouvre pas (un tap oui)', () => {
+    const { container } = render(<Tip garder tip="x"><button>i</button></Tip>)
+    const wrap = container.querySelector('span')!
+    fireEvent.pointerEnter(wrap, { pointerType: 'touch' })
+    expect(document.querySelector('[role="tooltip"]')).toBeNull()
+    fireEvent.click(wrap)
+    expect(document.querySelector('[role="tooltip"]')).not.toBeNull()
   })
 })

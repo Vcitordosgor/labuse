@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { getSources, getSourcesCouverture } from '../../lib/api'
-import { TOKENS } from '../../lib/tokens'
 import type { SourceInfo } from '../../lib/types'
 import { useApp } from '../../store/useApp'
 import { Squelette } from '../Loading'
@@ -100,13 +99,6 @@ export function SourcesPage() {
   // Les sources servies (hors doublons). L'API ne sert déjà que connecte-hors-masquées ; filtre défensif.
   const comptees = useMemo(() => (data ?? []).filter((s) => !s.doublon), [data])
   const nTotal = comptees.length
-  // FIX-SOURCES S3 — la réserve DVF ne code plus « 2025–2026 » en dur : la borne RÉCENTE est LUE dans
-  // la base (dernière donnée servie de la source DVF). Sans donnée → phrase sans chiffre.
-  const dvfMaxAnnee = useMemo(() => {
-    const d = (data ?? []).find((s) => s.name === 'DVF / valeurs foncières')?.derniere_donnee
-    const y = d ? new Date(d).getFullYear() : NaN
-    return Number.isFinite(y) ? y : null
-  }, [data])
   // RETOURS-9 (Q11.1) — les THÈMES existants (catégorie du catalogue), pour l'accordéon « Filtrer par thème ».
   const themes = useMemo(() => {
     const set = new Map<string, number>()
@@ -182,25 +174,8 @@ export function SourcesPage() {
           </p>
         )}
 
-        {/* PAGE-SOURCES-1 (lot 2) — la réserve « Densifier l'existant » est retirée ; reste la seule
-            réserve sur les ventes (retard de publication DVF). Une limite → « Une limite ». */}
-        <details data-sources-reserves className="mb-8 rounded-[10px] border border-line bg-surface-2">
-          <summary className="flex cursor-pointer list-none items-center gap-2.5 px-[18px] py-3.5 text-[13px] text-txt-mut [&::-webkit-details-marker]:hidden">
-            <span className="rounded-[3px] border px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-[.12em]"
-              style={{ borderColor: TOKENS.warn, color: TOKENS.warn }}>Réserve</span>
-            Une limite à connaître avant de lire les scores
-          </summary>
-          <div className="border-t border-line px-[18px] pb-[18px] pt-4">
-            <p className="max-w-[78ch] text-[13px] leading-relaxed text-txt-mut">
-              <strong className="font-semibold text-txt">Retard de publication des ventes.</strong> Les ventes
-              mettent 1 à 3 ans à apparaître dans DVF.{' '}
-              {dvfMaxAnnee
-                ? <>Les niveaux de prix les plus récents (jusqu’à {dvfMaxAnnee}) sont provisoires</>
-                : <>Les niveaux de prix les plus récents sont provisoires</>} ; le
-              classement relatif entre parcelles, lui, reste fiable.
-            </p>
-          </div>
-        </details>
+        {/* RECETTE-1 (D7, Vic 04/10) — toute la section « Réserve » (retard de publication DVF) est
+            RETIRÉE de la page Sources côté client. Les données ne bougent pas, seul l'affichage. */}
 
         {/* RETOURS-9 (Q11.1) — barre d'outils : recherche + « Toutes » + accordéon replié « Filtrer par thème »
             (les thèmes existent déjà dans le catalogue : Énergie, Urbanisme, Risques, Marché, Cadastre…). */}

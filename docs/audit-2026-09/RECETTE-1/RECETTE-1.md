@@ -76,20 +76,53 @@ manquait). Rien à corriger ; la recherche île sur la règle emprise n'est pas 
 
 ---
 
-## Lots B → H — état
-Voir le suivi point par point ci-dessous. Chaque point non traité dans cette session est marqué
-`NON FAIT` avec motif, conformément à la règle « rien n'est oublié silencieusement ».
+## Lot D — « i », fiches, Copilote, Radar, Sources (prioritaire « corrections visibles », Vic 04/10)
+
+- **D1 · Tous les « i » au survol** — ✅ FAIT. `Tip` (LE composant tooltip de l'app, rôle `InfoBulle`)
+  rétablit le SURVOL (délai 150 ms) + FOCUS clavier + TAP tactile + fermeture Échap / sortie
+  (annule FINITIONS-1 P1 qui l'avait retiré). Le gate `garder` est conservé (seuls les « i »/contrôles
+  montent, pas de bulle sauvage) ; `survol` devient un no-op (compat). 34 fichiers portent des « i »
+  via `Tip`, tous désormais au survol ; aucun « i » à click-popover custom (grep : 0). Verrou
+  `Tip.test.tsx` réécrit (4 tests : survol après délai, focus+Échap, gate sans `garder`, tactile).
+- **D2 · Barre grise** — ✅ FAIT. Le filet 1 px (`borderTop` gris) entre la rangée « + CRM / + Projet »
+  (cartes bord vert/ambre) et la grille des tuiles (Dossier/Financier/Apporteur) est retiré ; la
+  respiration (height) est conservée. (`Fiche.tsx`, la seule barre horizontale décorative de la page ;
+  les autres `border-t` sont des bords de conteneurs fonctionnels, pas des filets.)
+- **D3 · Fiche parcelle — défilement en tête de section** — ⏳ À FAIRE.
+- **D4 · Fiche commune — premier tiroir seul ouvert** — ⏳ À FAIRE.
+- **D5 · Copilote** — ✅ FAIT. `ReponseInline.tsx` : la ligne « journal » (« › J'ai lu la fiche… ») est
+  retirée de l'affichage ; le tag interne « SOURCE · FICHE LABUSE (RUN SERVI) » est filtré de la ligne
+  SOURCE (les sources EXTERNES restent). `v2.sources` reste intact (choix de variante inchangé) →
+  sourçage interne non modifié. Le bouton « Voir la fiche parcelle complète → » est conservé.
+- **D6 · Radar / Veille (hub)** — ✅ FAIT. `RadarHub.tsx` : « Ouvrir → » retiré (carte entièrement
+  cliquable, `cursor-pointer`), la ligne de bas des deux cartes (« N biens en vente · dernière
+  capture … », « N parcelles suivies · N alertes ») retirée ; reste icône + titre + une description.
+  La requête `getRadarApercu` (compteurs) n'est plus appelée sur le hub. (Les sous-portes Veille
+  gardent leur compteur — hors D6.)
+- **D7 · Sources — section « Réserve »** — ✅ FAIT. `SourcesPage.tsx` : le `<details data-sources-reserves>`
+  entier est retiré (données inchangées, seul l'affichage). `dvfMaxAnnee`/`TOKENS` devenus inutiles supprimés.
+
+## Lot E — Filtres
+- **E1 · phrase « Terrain nu = … »** — ✅ FAIT. `FiltreLabuse.tsx` : phrase retirée (clause SQL inchangée).
+- **E2 · encart « Capacité »** — ⏳ À FAIRE (touche le hash / Mes vues / Veille — traité à part).
+- **E3 · cases cochées par défaut** — ⏳ À FAIRE.
+- **E4 · survol code commune → nom** — ⏳ À FAIRE (dépend de D1, fait).
+
+## Suivi global
 
 | Point | État | Note |
 |---|---|---|
-| A1 | ✅ FAIT | message/raison ciblés, run-safe, verrou |
-| A2 | ✅ FAIT | règlement muet confirmé (Art. 9 U1e), aucun correctif |
+| A1 · A2 | ✅ FAIT | run-safe |
 | B (vitesse carte) | ⏳ À FAIRE | mesure avant/après + pistes cache/MVT |
 | C1–C8 (couches/légende) | ⏳ À FAIRE | |
-| D1–D7 (i, fiches, Copilote, Radar, Sources) | ⏳ À FAIRE | |
-| E1–E4 (filtres) | ⏳ À FAIRE | |
+| D1 · D2 · D5 · D6 · D7 | ✅ FAIT | corrections visibles |
+| D3 · D4 | ⏳ À FAIRE | tiroirs fiches |
+| E1 | ✅ FAIT | |
+| E2 · E3 · E4 | ⏳ À FAIRE | E2 touche hash/vues |
 | F1–F4 (règles outils) | ⏳ À FAIRE | |
 | G + H1–H16 (outils) | ⏳ À FAIRE | |
+
+Baselines préservés après Lot D/E : `tsc` 0 · `vitest` 225 verts.
 
 > Captures de Vic : **5** présentes dans `captures-vic/` (le mandat en annonce ~20 ; les points se
 > lisent sans elles, comme prévu). Signalé, non bloquant.

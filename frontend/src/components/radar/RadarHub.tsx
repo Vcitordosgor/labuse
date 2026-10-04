@@ -5,9 +5,7 @@
 //   'veille-foncier'  → les parcelles suivies
 //   'veille-annonces' → les alertes Radar
 // La Veille n'a plus d'entrée de rail ni de carte : on l'atteint par la porte « Veille » de ce hub.
-import { useQuery } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
-import { getRadarApercu } from '../../lib/api'
 import { useApp } from '../../store/useApp'
 import { Squelette } from '../Loading'
 import { RadarEcran } from './RadarEcran'
@@ -41,19 +39,22 @@ export function EcranTete({ surtitre, titre, sous, retour }: {
 }
 
 // ── Une PORTE : grande carte cliquable (icône inversée au survol, charte DA §7). ──
+// RECETTE-1 (D6, Vic 04/10) — « Ouvrir → » retiré (toute la carte est cliquable, curseur main) ;
+// `resume` devient OPTIONNEL (le hub ne porte plus de compteur de bas de carte).
 export function PorteCard({ ic, titre, desc, resume, onClick, data }: {
-  ic: ReactNode; titre: string; desc: string; resume: ReactNode; onClick: () => void; data?: string
+  ic: ReactNode; titre: string; desc: string; resume?: ReactNode; onClick: () => void; data?: string
 }) {
   return (
     <button {...(data ? { [`data-${data}`]: true } : {})} onClick={onClick}
-      className="porte group flex min-h-[220px] w-full flex-col rounded-lg border border-line-2 bg-surface-2 p-7 text-left">
+      className="porte group flex min-h-[220px] w-full cursor-pointer flex-col rounded-lg border border-line-2 bg-surface-2 p-7 text-left">
       <span className="porte-ic mb-6 grid h-11 w-11 place-items-center rounded-md border border-mint/40 text-mint">{ic}</span>
       <div className="text-[20px] font-semibold text-txt-hi">{titre}</div>
       <p className="mt-2 text-[13px] leading-relaxed text-txt-mut">{desc}</p>
-      <div className="mt-auto flex items-center justify-between pt-6 text-[12.5px]">
-        <span className="text-txt-dim">{resume}</span>
-        <span className="font-medium text-mint">Ouvrir →</span>
-      </div>
+      {resume && (
+        <div className="mt-auto flex items-center pt-6 text-[12.5px]">
+          <span className="text-txt-dim">{resume}</span>
+        </div>
+      )}
     </button>
   )
 }
@@ -71,13 +72,11 @@ const IcoCloche = () => (
   </svg>
 )
 
-// ── Les deux portes de tête : Radar · Veille (résumé chiffré RÉEL). ──
+// ── Les deux portes de tête : Radar · Veille. ──
+// RECETTE-1 (D6) — plus de compteur de bas de carte (« 92 biens en vente · dernière capture… »,
+// « 9 parcelles suivies · 5 alertes ») : icône + titre + une ligne de description, carte cliquable.
 function PortesRadar() {
   const setRadarEcran = useApp((s) => s.setRadarEcran)
-  const { data, isLoading } = useQuery({ queryKey: ['radar-apercu'], queryFn: getRadarApercu })
-  const biens = data?.biens_en_vente ?? 0
-  const suivis = data?.suivis_n ?? 0
-  const alertes = data?.alertes_n ?? 0
   return (
     <div className="min-h-0 flex-1 overflow-y-auto">
       <div className="mx-auto w-full max-w-[1060px] px-8 py-10">
@@ -85,11 +84,9 @@ function PortesRadar() {
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
           <PorteCard data="radar-porte-radar" ic={<IcoRadar />} titre="Radar"
             desc="Les biens en vente sur les portails, et le marché de chaque commune : ce qui est demandé, ce qui se vend vraiment."
-            resume={isLoading ? '…' : <>{biens} bien{biens > 1 ? 's' : ''} en vente · dernière capture {fmtCapture(data?.derniere_capture_at ?? null)}</>}
             onClick={() => setRadarEcran('radar')} />
           <PorteCard data="radar-porte-veille" ic={<IcoCloche />} titre="Veille"
             desc="Vos parcelles suivies et vos alertes sur les annonces. Soyez prévenu quand quelque chose bouge."
-            resume={isLoading ? '…' : <>{suivis} parcelle{suivis > 1 ? 's' : ''} suivie{suivis > 1 ? 's' : ''} · {alertes} alerte{alertes > 1 ? 's' : ''}</>}
             onClick={() => setRadarEcran('veille')} />
         </div>
       </div>
