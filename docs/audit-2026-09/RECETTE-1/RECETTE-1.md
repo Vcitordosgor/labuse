@@ -132,14 +132,43 @@ manquait). Rien à corriger ; la recherche île sur la règle emprise n'est pas 
 |---|---|---|
 | A1 · A2 | ✅ FAIT | run-safe |
 | B (vitesse carte) | ⏳ NON FAIT | mesure avant/après + pistes cache/MVT — lot le plus lourd (mesure, non choisi cette session) |
-| C1 · C3 | ✅ FAIT | légende auto-ouverte, SCOT hors carte |
-| C2 · C4 · C5 · C6 · C7 · C8 | ⏳ NON FAIT | PastilleZoom, SUP, ICPE→parcelles, ERC, EnR minzoom, couleurs réseaux — nécessitent carte+DB |
+| C1 · C3 | ✅ FAIT | légende auto-ouverte, SCOT hors carte (session 1) |
+| C2 · C4 · C5 · C6 · C7 · C8 | ✅ FAIT | **session 2** — Lot C complet (voir ci-dessous) |
 | D1–D7 | ✅ FAIT | lot D complet |
 | E1 · E4 | ✅ FAIT | |
-| E2 | ⏳ NON FAIT | retrait encart Capacité — touche hash/Mes vues/Veille (sérialisation, à traiter à part) |
+| E2 | ⏳ NON FAIT | retrait encart Capacité — sites repérés (voir § session 2) |
 | E3 | ⏳ NON FAIT | cases cochées par défaut (sémantique hash/vues) |
 | F1–F4 (règles outils) | ⏳ NON FAIT | refonte d'état transverse aux outils |
 | G + H1–H16 (outils) | ⏳ NON FAIT | audit branchement + refontes outil par outil |
+| B (vitesse carte) | ⏳ NON FAIT | mesure avant/après (en dernier, ordre Vic) |
+
+## Session 2 (`fix/recette-1b`, base `origin/main` = `182a6f88`) — Lot C complété
+
+Ordre Vic : **C2, C4–C8 → E2, E3 → F1–F4 → G+H → B**. Fait : **tout Lot C**.
+- **C2** minzoom par densité (couches_carte vérifié) : ER z13, zone_activité z12, 50 pas z12, friches
+  z13, cimetières z13, ABF z12, SAR z11, SIS z11, QPV/ANRU/TVA-primo z12, postes z11. Pastille déjà générique.
+- **C4** SUP **VÉRIFIÉ déjà correct** (décode tuile : 8 subtypes pm1..el10 lowercase, 8 fills, PM1 au
+  fond) — « magenta/brun » = état d'avant la dissolution SUP. Remonté, pas fabriqué.
+- **C5** ICPE en **parcelles** : `build_tuyau_icpe` (ST_Contains), aplat rouge + contour, régime au clic ;
+  **1268 → 1199 rattachés, 69 hors parcelle** non dessinées. ⚠ vérif tuile *live* en attente d'un run
+  API (migration `origine` sur base partagée = geste Vic, refusée à CC).
+- **C6** ERC : 3 rendus distincts (surface rose / ligne orange / point cyan) ; complétude DB 24 ≥ WFS 20.
+- **C7** EnR gated z13, source raster suit zoom_min, légende sans répétition.
+- **C8** réseaux : HTB orange, HTA jaune, pylône orange+contour, poste rouge-orangé.
+
+### Reste (ordre Vic) — repérage fait pour accélérer
+- **E2 (encart Capacité)** : `CapaciteSection` (`FiltreLabuse.tsx:288`, appelée `:838-840`) + bloc SDP/Déjà-bâti
+  (`:365-372`). Sites : `lib/filters.ts` (`F_NUMS`/`F_STRS`, prédicat `:76`, résumé `:160-162`, chips `:182`,
+  **table hash `:213-240`** tokens `sdp/sdpx/cap/rnv/dst`), `lib/api.ts:88/98/101/102`, `store/useApp.ts`
+  (type `:98-99`, défaut `:153`, `chercherParCapacite:1026`). Garder les champs **inertes** ⇒ hash/vue
+  ancien ignoré sans erreur. Compter vues/veilles portant la clé. Lien Faisabilité part avec (H10).
+- **E3** cases cochées par défaut (tout coché = pas de restriction, hash sérialise rien). 
+- **F1–F4, G+H1–H16, B** : non commencés.
+
+**⚠ Incident base partagée** : `ALTER TABLE parcels ADD COLUMN origine` (migration de `main`, au
+démarrage API) prend un verrou EXCLUSIF ; concurrent d'un gros read, il a bloqué toute la base `labuse`
+(une autre session y lançait `pytest`). Corrigé : annulation du SEUL ALTER orphelin (le mien). Relancer
+l'API proprement demande que la migration `origine` passe une fois sur la base partagée — **geste Vic**.
 
 **Fait cette session** (bucket « corrections visibles » choisi par Vic) : A1, A2, C1, C3, D1, D2, D3, D4,
 D5, D6, D7, E1, E4 — **13 points**, chacun commité, `tsc` 0 · `vitest` 225 · pytest ciblé vert · oracles
