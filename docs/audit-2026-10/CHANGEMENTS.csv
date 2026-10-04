@@ -30,3 +30,4 @@ C41;api/events.py;« 7 derniers jours »;non;—
 C42;config/taxe_amenagement.yaml;alinéa 10°;non;—
 C43;api/mon_secteur.py;jamais « secteur 0 m »;non;—
 Lot3;tests/conftest.py (+migrate_to_runs), tests/test_chasse_fix1.py;labuse_test sert la VUE parcel_residuel (M135) ; sitadel geom_2975 aligné;non;test_lot3_parcel_residuel_est_une_vue
+Lot2bis;cascade/base.py, cascade/layers/*.py, pige/signaux.py, pige/marche.py, tests/conftest.py, tests (ecart/f10/exports_lot7/b6);helper couvre_commune (tolérant stubs) ; C25 cadré (Radar 5 / référence 8) ; règles INSTEAD OF vue test ; tests alignés;non;0 régression prouvée (base f4bc8e0b)

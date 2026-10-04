@@ -65,6 +65,39 @@ au prochain run), C04 (ingestion DVF — effet au prochain rebuild), C26 si un j
 (tiers). **NON** pour tout le reste (service/affichage/vue SQL recalculée à la lecture —
 y compris C06 : la SDP servie ne change pas d'un m²).
 
-## Vérifications de fin
+## Résultats des vérifications de fin
 
-(complétées en fin de mandat — voir section Résultats ci-dessous)
+- **Bilan écarts** : sur 45 lignes d'ECARTS.csv — **33 corrigés** (dont les 5 bloquants :
+  C01 122→2, C02 prix/m² sur totaux, C06 « différé » partout, C22/C23 couverture commune),
+  **10 classés avec preuve** (C29-C35, C37, C44, C45), **2 à arbitrage Vic** (C26 éligibilité
+  scoring = toucherait les tiers ; C35 propriétaires publics au top).
+- **tsc front** : 0 erreur.
+- **V6b** (banc cohérence, en-process) : **3 210 comparaisons · 44 écarts** = EXACTEMENT la
+  baseline (familles pré-existantes : cache commune 24, surface 6 TOLERABLE, cinquante_pas 5,
+  copro 3, prix_neuf 4, taxe 2). Aucune régression. ⚠ le banc DOIT tourner `--en-process`
+  (sinon « Connection refused » ou, sous forte charge CPU, timeout du décodeur tuile node →
+  faux « Expecting value » en masse : ce n'est pas une régression, c'est de la contention).
+- **5 oracles** : 71 vrai · **0 faux** · 69 non vérifiable (APIs externes injoignables hors
+  réseau) — identique au départ.
+- **pytest tests/** : les tests sur le code modifié sont **verts** (180 passed sur les 16
+  fichiers touchés, 2 restants = pré-existants faisa). Sur l'ensemble, **0 régression
+  introduite** : chaque échec résiduel a été PROUVÉ pré-existant en rejouant les mêmes tests
+  sur la base `f4bc8e0b` (avant mes commits) — familles : rate-limit (forcé actif alors que
+  l'env de run pose `LABUSE_RATE_LIMIT_OFF=1` — test_protection ×5, rate_limit_off, audit_secu),
+  LLM réel (BadRequestError 400 — cloisonnement copilote), base réelle (verrous lot1/lot2),
+  `test_deps_declared` (échoue aussi en base), `test_faisabilite` plafond_densité + u1pru
+  (échouent aussi en base). Tests MIS À JOUR (comportement intentionnellement changé, pas une
+  casse) : test_ecart_demande_acte (Radar reste 5), test_f10 (mon_secteur→8), test_exports2_lot7
+  (RAP recodifiée), test_b6 (vue + manifeste), + 9 verrous neufs dans test_chasse_fix1.py.
+- **make chasse** : rejoué (échantillon/invariants/couverture/intruses/filtres 0 écart/horloge
+  saine) ; le face-à-face et le V6b doivent être lus en-process (cf. note contention ci-dessus).
+
+## Note de cadrage sur C25 (seuil minimal DVF)
+
+L'audit pointait « 5 en dur dans 4 fichiers vs 8 au yaml ». En corrigeant, distinction établie :
+`dvf_mediane` et `mon_secteur` servent la **médiane de référence du secteur** (même question
+que le dossier/fiche) → unifiés sur `seuils_effectif.mediane_generique = 8` (yaml, source
+unique). `pige/signaux` et `pige/marche` portent le **seuil indicatif du Radar** (RADAR-FIX-3 :
+< 5 sous le seuil / 5-29 indicatif / ≥ 30 normal) — une question DIFFÉRENTE (signal d'annonces
+en cours, pas une référence de valorisation) : laissés à 5, commenté. Ce n'est donc pas « un
+seuil pour tout », mais « un seuil par question, nommé ».
