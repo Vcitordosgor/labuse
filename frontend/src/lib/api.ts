@@ -1190,6 +1190,31 @@ export const docComparatifUrl = (idus: string[]) =>
 export const docEtudeZoneUrl = (idu: string, rayonKm: number) =>
   `/etude-zone.pdf?idu=${encodeURIComponent(idu)}&rayon_km=${encodeURIComponent(String(rayonKm))}`
 
+// DOCS-1 (Lot B) — la bibliothèque « Mes documents » (recette d'un document, jamais le PDF).
+export type DocType = 'dossier' | 'bilan' | 'apporteur' | 'pre-dossier' | 'gabarit' | 'comparatif' | 'etude-zone'
+export interface DocGenereRow {
+  id: number
+  doc_type: DocType
+  document: string
+  created_at: string
+  idus: string[]
+  rayon_km: number | null
+  commune: string | null
+  projet: string | null
+  etat: 'a_jour' | 'modifie'
+  excel: boolean
+  hypotheses: Record<string, unknown> | null
+}
+export interface DocGenereListe { total: number; documents: DocGenereRow[]; reste: number }
+export const listerDocuments = (limite = 200) => j<DocGenereListe>(`/documents?limite=${limite}`)
+export const enregistrerDocument = (body: { doc_type: DocType; idus: string[]; rayon_km?: number | null; hypotheses?: Record<string, unknown> | null }) =>
+  j<{ id: number; created_at: string }>('/documents', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+export const rafraichirDocument = (id: number) =>
+  j<{ ok: boolean }>(`/documents/${id}/rafraichir`, { method: 'POST' })
+export const supprimerDocument = (id: number) =>
+  j<{ ok: boolean }>(`/documents/${id}`, { method: 'DELETE' })
+
 // M54-EXPO-2 Volet C — statuts servis là où les boutons existent (dossier : dispo+quota ; courrier).
 export interface DossierStatut { disponible: boolean; raison: string | null; plan: string; illimite: boolean; quota_mois: number | null; utilises_mois: number; restants: number | null }
 export const getDossierStatut = () => j<DossierStatut>('/dossier/statut')

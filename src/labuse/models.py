@@ -1090,6 +1090,7 @@ def _ensure_schema_steps(engine, *, geom_backfill: bool) -> None:
     ensure_passoire_thermique_view(engine)
     ensure_bilan_params(engine)
     ensure_watch_zones(engine)
+    ensure_documents_generes(engine)        # DOCS-1 (Lot B) — bibliothèque « Mes documents »
     ensure_watch_snap_no_orphans(engine)    # FIX-C6 (GB-063) : purge orphelins snap + FK CASCADE
     ensure_derived_read_stubs(engine)       # FIX-C6 (GB-049) : stubs vides tables dérivées lues
     ensure_pipeline_prospection(engine)
@@ -1719,6 +1720,36 @@ def ensure_watch_zones(engine) -> None:
         c.execute(_t("DROP INDEX IF EXISTS uq_alertes_parcel_permit"))
         c.execute(_t("CREATE UNIQUE INDEX IF NOT EXISTS uq_alertes_compte_parcel_permit "
                      "ON alertes (compte_id, parcel_id, source_ref) WHERE kind = 'permit_near_followed'"))
+
+
+def ensure_documents_generes(engine) -> None:
+    """DOCS-1 (Lot B) — la BIBLIOTHÈQUE « Mes documents » : la RECETTE d'un document généré par un
+    compte (jamais le PDF — il est régénéré à la demande). Une ligne = un document :
+      · doc_type       : clé interne (dossier · bilan · apporteur · pre-dossier · gabarit ·
+                         comparatif · etude-zone) ;
+      · cible_idus     : la/les parcelle(s) — 1 (parcelle), 2-3 (comparatif), 1 (étude de zone) ;
+      · rayon_km       : étude de zone seulement (sinon NULL) ;
+      · hypotheses     : le questionnaire saisi s'il y en a un (Bilan), sinon NULL ;
+      · millesimes     : INSTANTANÉ {source → millésime} des sources servies à la génération
+                         (data_sources.source_millesime) — sert l'état « À jour » vs
+                         « Sources modifiées depuis ».
+    `compte_id` + FK cascade sont posés par api/tenant.ensure_scoping (documents_generes ∈
+    SCOPED_TABLES). Idempotent (CREATE IF NOT EXISTS)."""
+    from sqlalchemy import text as _t
+
+    with engine.begin() as c:
+        c.execute(_t(
+            "CREATE TABLE IF NOT EXISTS documents_generes ("
+            " id serial PRIMARY KEY,"
+            " compte_id integer,"
+            " doc_type varchar(24) NOT NULL,"
+            " cible_idus text[] NOT NULL DEFAULT '{}',"
+            " rayon_km numeric,"
+            " hypotheses jsonb,"
+            " millesimes jsonb NOT NULL DEFAULT '{}'::jsonb,"
+            " created_at timestamptz NOT NULL DEFAULT now())"))
+        c.execute(_t("CREATE INDEX IF NOT EXISTS ix_documents_generes_compte_cree "
+                     "ON documents_generes (compte_id, created_at DESC)"))
 
 
 def ensure_derived_read_stubs(engine) -> None:

@@ -5,7 +5,7 @@
 // Tout lit la fiche ou l'outil par les fonctions déjà servies. Aucun calcul au front, aucun chiffre
 // décidé ici : la porte résout une parcelle (getFiche) et ouvre l'URL du générateur existant.
 import { useEffect, useRef, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useApp } from '../../store/useApp'
 import { Badge } from '../ui/Badge'
 import { Bouton } from '../ui/Bouton'
@@ -14,10 +14,27 @@ import { ParcelInput } from '../ParcelInput'
 import { FinancierQuestionnaire } from '../fiche/FinancierQuestionnaire'
 import {
   getFiche, getGabarit,
-  docDossierUrl, docApporteurUrl, docPreDossierUrl, docGabaritUrl, docComparatifUrl, docEtudeZoneUrl,
+  docDossierUrl, docBilanUrl, docApporteurUrl, docPreDossierUrl, docGabaritUrl, docComparatifUrl, docEtudeZoneUrl,
+  listerDocuments, enregistrerDocument, rafraichirDocument,
+  type DocType, type DocGenereRow,
 } from '../../lib/api'
 import { fmtM2, iduComplet } from '../../lib/format'
 import { CATALOGUE, type DocCatalogue } from './catalogue'
+
+// l'URL du générateur d'une ligne de bibliothèque (régénération à la demande — « Ouvrir »).
+function urlDocument(r: Pick<DocGenereRow, 'doc_type' | 'idus' | 'rayon_km'>): string | null {
+  const i0 = r.idus[0]
+  switch (r.doc_type) {
+    case 'dossier': return i0 ? docDossierUrl(i0) : null
+    case 'bilan': return i0 ? docBilanUrl(i0) : null
+    case 'apporteur': return i0 ? docApporteurUrl(i0) : null
+    case 'pre-dossier': return i0 ? docPreDossierUrl(i0) : null
+    case 'gabarit': return i0 ? docGabaritUrl(i0) : null
+    case 'comparatif': return r.idus.length >= 2 ? docComparatifUrl(r.idus) : null
+    case 'etude-zone': return i0 ? docEtudeZoneUrl(i0, r.rayon_km ?? 2) : null
+    default: return null
+  }
+}
 
 // ── vignette : un glyphe sobre par carte (la DA finale les remappe ; ici distinct et net à 56×72). ──
 function Vignette({ kind, bientot }: { kind: DocCatalogue['kind']; bientot?: boolean }) {
@@ -126,6 +143,14 @@ function ParcelleResolue({ idu, onFiche }: { idu: string; onFiche: () => void })
 function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
   const select = useApp((s) => s.select)
   const setView = useApp((s) => s.setView)
+  const qc = useQueryClient()
+  // enregistre la génération dans « Mes documents » (best-effort : la bibliothèque n'empêche jamais
+  // de produire le PDF — un compte pilote/non connecté génère sans trace, sans erreur bloquante).
+  const enregistrer = (doc_type: DocType, idusCible: string[], rayon_km?: number | null) => {
+    enregistrerDocument({ doc_type, idus: idusCible, rayon_km: rayon_km ?? null })
+      .then(() => qc.invalidateQueries({ queryKey: ['documents'] }))
+      .catch(() => { /* non bloquant */ })
+  }
   // variante parcelle / multi / zone
   const [idu, setIdu] = useState<string | null>(null)                // parcelle & zone
   const [idus, setIdus] = useState<(string | null)[]>([null, null, null])  // multi (2 à 3)
@@ -148,7 +173,12 @@ function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
   const gabaritBloque = d.key === 'gabarit' && !!idu && gab.data?.status === 'incomplete'
 
   const generer = () => {
-    if (d.key === 'bilan') { setBilanOuvert(true); return }
+    if (d.key === 'bilan') {
+      // Exception assumée : ouvre l'écran d'hypothèses (qui génère), et l'inscrit dans Mes documents.
+      if (idu) enregistrer('bilan', [idu])
+      setBilanOuvert(true)
+      return
+    }
     if (!idu) return
     const url =
       d.key === 'dossier' ? docDossierUrl(idu)
@@ -156,7 +186,7 @@ function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
       : d.key === 'pre-dossier' ? docPreDossierUrl(idu)
       : d.key === 'gabarit' ? docGabaritUrl(idu)
       : null
-    if (url) { window.open(url, '_blank', 'noopener'); onClose() }
+    if (url) { window.open(url, '_blank', 'noopener'); enregistrer(d.key as DocType, [idu]); onClose() }
   }
 
   const idusValides = idus.filter((x): x is string => !!x)
@@ -202,7 +232,7 @@ function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
             </div>
             <p className="my-3 border-l-2 border-line-2 pl-2.5 text-[13px] text-txt-dim">{d.explication}</p>
             <Bouton niveau="primaire" ton="vert" className="w-full" disabled={idusValides.length < 2}
-              onClick={() => { window.open(docComparatifUrl(idusValides), '_blank', 'noopener'); onClose() }}>
+              onClick={() => { window.open(docComparatifUrl(idusValides), '_blank', 'noopener'); enregistrer('comparatif', idusValides); onClose() }}>
               {d.cta}
             </Bouton>
           </div>
@@ -222,7 +252,7 @@ function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
             </div>
             <p className="my-3 border-l-2 border-line-2 pl-2.5 text-[13px] text-txt-dim">{d.explication}</p>
             <Bouton niveau="primaire" ton="vert" className="w-full" disabled={!idu}
-              onClick={() => { if (idu) { window.open(docEtudeZoneUrl(idu, rayon), '_blank', 'noopener'); onClose() } }}>
+              onClick={() => { if (idu) { window.open(docEtudeZoneUrl(idu, rayon), '_blank', 'noopener'); enregistrer('etude-zone', [idu], rayon); onClose() } }}>
               {d.cta}
             </Bouton>
           </div>
@@ -239,26 +269,103 @@ function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
   )
 }
 
-// ── bibliothèque « Mes documents » — en-tête + filtres + état vide (Lot B remplit la table). ──
-const FILTRES = ['Dossier', 'Bilan', 'Apporteur', 'Pré-dossier PC', 'Gabarit', 'Comparables', 'Comparatif', 'Étude de zone']
+// ── bibliothèque « Mes documents » — la liste de ce que le compte a généré, régénérable. ──
+// Les chips filtrent par type ; « Tous » (dernier à droite) est l'état par défaut.
+const FILTRES: { label: string; type: DocType | null }[] = [
+  { label: 'Dossier', type: 'dossier' }, { label: 'Bilan', type: 'bilan' },
+  { label: 'Apporteur', type: 'apporteur' }, { label: 'Pré-dossier PC', type: 'pre-dossier' },
+  { label: 'Gabarit', type: 'gabarit' }, { label: 'Comparatif', type: 'comparatif' },
+  { label: 'Étude de zone', type: 'etude-zone' },
+]
+const dateFr = (iso: string) => { const d = new Date(iso); return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}` }
+
+function sur(r: DocGenereRow): string {
+  if (r.doc_type === 'etude-zone') return `Rayon ${r.rayon_km ?? 2} km autour de ${iduComplet(r.idus[0] ?? '')}`
+  if (r.doc_type === 'comparatif') return r.idus.join(' · ')
+  return iduComplet(r.idus[0] ?? '')
+}
+
+function LigneDoc({ r, onChange }: { r: DocGenereRow; onChange: () => void }) {
+  const ouvrir = () => { const u = urlDocument(r); if (u) window.open(u, '_blank', 'noopener') }
+  const regenerer = () => { ouvrir(); rafraichirDocument(r.id).then(onChange).catch(() => {}) }
+  return (
+    <tr className="group border-b border-line hover:bg-mint hover:text-mint-on">
+      <td className="h-11 px-2.5 align-middle">{dateFr(r.created_at)}</td>
+      <td className="px-2.5">{r.document}</td>
+      <td className="truncate px-2.5">{sur(r)}{r.commune ? <span className="text-txt-dim group-hover:text-mint-on/75"> · {r.commune}</span> : null}</td>
+      <td className="px-2.5">{r.projet || <span className="text-txt-dim group-hover:text-mint-on/75">—</span>}</td>
+      <td className="px-2.5">
+        {r.etat === 'a_jour'
+          ? <Badge ton="vert">À jour</Badge>
+          : <Badge ton="ambre">Sources modifiées depuis</Badge>}
+      </td>
+      <td className="px-2.5">
+        <div className="flex justify-end gap-1.5">
+          <Bouton niveau="secondaire" ton="vert" className="h-[26px] px-[9px] text-[12px]" onClick={ouvrir}>Ouvrir</Bouton>
+          {/* Excel : seulement sur les lignes Bilan ET si l'export existe (sinon absent, pas grisé). */}
+          {r.doc_type === 'bilan' && r.excel && (
+            <Bouton niveau="secondaire" ton="vert" className="h-[26px] px-[9px] text-[12px]" onClick={ouvrir}>Excel</Bouton>
+          )}
+          {r.etat === 'modifie' && (
+            <Bouton niveau="secondaire" ton="vert" className="h-[26px] px-[9px] text-[12px]" onClick={regenerer}>Régénérer</Bouton>
+          )}
+        </div>
+      </td>
+    </tr>
+  )
+}
+
 function Bibliotheque() {
-  const [actif, setActif] = useState('Tous')
+  const qc = useQueryClient()
+  const [actif, setActif] = useState<DocType | null>(null)   // null = « Tous »
+  const [limite, setLimite] = useState(200)
+  const q = useQuery({ queryKey: ['documents', limite], queryFn: () => listerDocuments(limite) })
+  const data = q.data
+  const rows = (data?.documents ?? []).filter((r) => actif == null || r.doc_type === actif)
+  const refresh = () => qc.invalidateQueries({ queryKey: ['documents'] })
   return (
     <section className="mt-8">
-      <div className="mb-3 flex items-center gap-3.5">
+      <div className="mb-3 flex flex-wrap items-center gap-3.5">
         <h2 className="text-[18px] font-semibold text-txt">Mes documents</h2>
-        <span className="text-txt-dim">0</span>
+        <span className="text-txt-dim">{data?.total ?? 0}</span>
         <div className="ml-auto flex flex-wrap gap-1.5">
-          {/* chip « Tous » dernier à droite (règle gravée). */}
-          {[...FILTRES, 'Tous'].map((c) => (
-            <Chip key={c} on={actif === c} onClick={() => setActif(c)}>{c}</Chip>
+          {FILTRES.map((c) => (
+            <Chip key={c.label} on={actif === c.type} onClick={() => setActif(c.type)}>{c.label}</Chip>
           ))}
+          {/* chip « Tous » dernier à droite (règle gravée). */}
+          <Chip on={actif == null} onClick={() => setActif(null)}>Tous</Chip>
         </div>
       </div>
-      <div className="mt-4 rounded-md border border-dashed border-line-2 p-6 text-center text-txt-dim">
-        <b className="mb-1 block text-txt">Aucun document pour l’instant</b>
-        Choisissez un document ci-dessus, puis une parcelle. Chaque document généré apparaît ici.
-      </div>
+
+      {rows.length === 0 ? (
+        <div className="mt-4 rounded-md border border-dashed border-line-2 p-6 text-center text-txt-dim">
+          <b className="mb-1 block text-txt">Aucun document pour l’instant</b>
+          Choisissez un document ci-dessus, puis une parcelle. Chaque document généré apparaît ici.
+        </div>
+      ) : (
+        <table className="w-full table-fixed border-collapse">
+          <colgroup>
+            <col style={{ width: '110px' }} /><col style={{ width: '150px' }} /><col /><col style={{ width: '160px' }} /><col style={{ width: '190px' }} /><col style={{ width: '210px' }} />
+          </colgroup>
+          <thead>
+            <tr className="border-b border-line text-left text-[12px] font-semibold text-txt-mut">
+              <th className="px-2.5 py-2">Généré le</th><th className="px-2.5 py-2">Document</th><th className="px-2.5 py-2">Sur</th><th className="px-2.5 py-2">Projet</th><th className="px-2.5 py-2">État</th><th />
+            </tr>
+          </thead>
+          <tbody className="text-[13px]">
+            {rows.map((r) => <LigneDoc key={r.id} r={r} onChange={refresh} />)}
+          </tbody>
+        </table>
+      )}
+
+      {/* Sous 200 lignes tout s'affiche ; au-delà, « voir 200 de plus ». */}
+      {(data?.reste ?? 0) > 0 && (
+        <div className="mt-3 text-center">
+          <Bouton niveau="secondaire" ton="vert" onClick={() => setLimite((l) => l + 200)}>
+            Voir 200 de plus ({data!.reste} restants)
+          </Bouton>
+        </div>
+      )}
     </section>
   )
 }
