@@ -100,14 +100,19 @@ def classify_dgfip(groupe: int | None, forme_abregee: str | None, denomination: 
     if otype == "etablissement_public" and any(k in nom_l for k in ("epf", "foncier")):
         otype = "epf"
     if otype is None:  # groupe 0 — personnes morales « non remarquables »
-        if "SCI" in forme or "civile immobili" in nom_l:
+        # ORACLE-FIX-1 (E3) — une INDIVISION portée au fichier DGFiP (dénomination « INDIVISAIRES DE
+        # LA PARCELLE … », pseudo-SIREN « U… ») tombait ici en « société ». Le type suit la donnée :
+        # la dénomination dit l'indivision, on ne l'étiquette pas « Société (SA/SARL/SAS) ».
+        if "indivis" in nom_l or forme in ("INDIV", "INDIVISION"):
+            otype = "indivision"
+        elif "SCI" in forme or "civile immobili" in nom_l:
             otype = "sci"
         elif any(k in forme for k in ("ASL", "AFUL", "SYND")) or "copropri" in nom_l:
             otype = "copropriete"
         else:
             otype = "societe"
     ot = _pack(otype, indivision=(otype == "indivision"),
-               identifiable=(otype not in ("inconnu", "personne_physique")), categorie=nom or forme)
+               identifiable=(otype not in ("inconnu", "personne_physique", "indivision")), categorie=nom or forme)
     ot["owner_name"] = nom or None
     ot["forme_juridique"] = forme or None
     return ot

@@ -64,11 +64,19 @@ def _c_adresse(db, idu, f):
 
 @extracteur("type_proprietaire")
 def _c_proprietaire(db, idu, f):
+    import re
+    from ..proprietaire_historique import siren_reel
     pm = f.get("proprietaire_moral")
     if not isinstance(pm, dict):
         return None
     denom, siren = pm.get("denomination"), pm.get("siren")
-    if denom and siren:
+    # ORACLE-FIX-1 (E3) — le type suit la donnée DGFiP : une dénomination « INDIVISAIRES … » est une
+    # INDIVISION, pas une « Personne morale » ; et un pseudo-SIREN (préfixe « U… », ≠ identité juridique)
+    # ne s'affiche pas comme un SIREN réel (cf. siren_reel). S18 (97405000BE0599) : « INDIVISAIRES DE LA
+    # PARCELLE BE599 », SIREN U23631848 → « Indivision », sans SIREN inventé.
+    if denom and re.search(r"indivis", denom, re.I):
+        return f"Indivision — {denom}"
+    if denom and siren_reel(siren):
         return f"Personne morale — {denom} (SIREN {siren})"
     if denom:
         return f"Personne morale — {denom}"

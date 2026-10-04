@@ -104,12 +104,22 @@ def stats_batch(session: Session, parcel_ids: list[int]) -> dict[int, dict]:
         return {}
     out: dict[int, dict] = {pid: {"bati_ratio": 0.0, "bati_count": 0, "bati_max_m2": 0.0}
                             for pid in parcel_ids}
+    # ORACLE-FIX-1 (Lot D) — DÉDOUBLONNAGE du bâti. Constat ORACLE-1 (S05 : 63 bâtiments servis vs
+    # 33 RNB/BD TOPO) : la couche `batiment` porte plusieurs ingestions superposées non purgées (S05 =
+    # 3 ingestion_run_id × 21 géométries identiques = 63 lignes). Le `COUNT(*)` comptait les doublons,
+    # et le `SUM(ST_Area)` les additionnait (ratio gonflé, clampé à 1.0 → faux `déjà_bâti`). On compte
+    # désormais les GÉOMÉTRIES DISTINCTES (un bâtiment = une empreinte, quelle que soit l'ingestion) et
+    # on UNIT les empreintes avant de mesurer le ratio — même principe que `emprise_bati_bdtopo_m2`, qui
+    # ne double-comptait déjà plus. `nb`/`ratio` alimentent le SCORE (declassement.classify →
+    # ensemble_bati si nb≥3 ET ratio≥15 %) : le run matérialisera les nouvelles valeurs. Dédup = géom
+    # identique (les ré-ingestions sont byte-identiques, cf. S05 63=3×21) ; ≠ réconciliation BD TOPO↔RNB.
     rows = session.execute(text(
         """
         SELECT p.id,
-               LEAST(1.0, SUM(ST_Area(ST_Intersection(b.geom_2975, p.geom_2975)))
+               LEAST(1.0, ST_Area(ST_Union(ST_Intersection(b.geom_2975, p.geom_2975)))
                           / NULLIF(ST_Area(p.geom_2975), 0)) AS ratio,
-               COUNT(*) FILTER (WHERE ST_Area(ST_Intersection(b.geom_2975, p.geom_2975)) >= 10) AS nb,
+               COUNT(DISTINCT b.geom_2975)
+                     FILTER (WHERE ST_Area(ST_Intersection(b.geom_2975, p.geom_2975)) >= 10) AS nb,
                MAX(ST_Area(ST_Intersection(b.geom_2975, p.geom_2975))) AS max_m2
         FROM parcels p
         JOIN spatial_layers b ON b.kind = 'batiment' AND ST_Intersects(b.geom_2975, p.geom_2975)

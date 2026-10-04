@@ -496,12 +496,26 @@ def _r_fibre(v):
     return esc({"servi": "Immeuble raccordable (Arcep)"}.get(e, v.get("libelle") or str(e)))
 
 
+def _rayon_ventes(d: dict) -> str:
+    """ORACLE-FIX-1 (Lot E1) — libellé du PÉRIMÈTRE RÉELLEMENT servi pour un compte de ventes DVF.
+    Le rayon servi (`prix_ancien.radius_m`) vaut 500 / 1 000 / 1 500 m, ou la commune entière quand
+    `commune_fallback`. L'ancien libellé affirmait « à moins de 500 m » dans TOUS les cas (ORACLE-1 :
+    0 vente réellement ≤ 500 m sur presque tous les témoins) — on dit désormais le vrai rayon, et on
+    n'invente aucun chiffre si le rayon est inconnu."""
+    if not isinstance(d, dict):
+        return "à proximité"
+    if d.get("commune_fallback"):
+        return "sur la commune"
+    r = d.get("radius_m")
+    return f"à moins de {groupe(round(r))} m" if r else "à proximité"
+
+
 def _r_prix_ancien(v):
     lib = fmt_eur_m2(v["median"])
     n = v.get("n")
     typ = v.get("type_bien") or "ancien"
     if n:
-        lib += f" — {typ}, {groupe(n)} ventes à moins de 500 m"
+        lib += f" — {typ}, {groupe(n)} ventes {_rayon_ventes(v)}"
     return esc(lib)
 
 
@@ -932,7 +946,7 @@ def _verdict_factuel(sec_id: str, valeurs: dict[str, Valeur]) -> tuple[str, str,
         if isinstance(pa, dict) and pa.get("median") is not None:
             t = f"Prix ancien médian {fmt_eur_m2(pa['median'])}"
             if pa.get("n"):
-                t += f" ({groupe(pa['n'])} ventes à moins de 500 m)"
+                t += f" ({groupe(pa['n'])} ventes {_rayon_ventes(pa)})"
             return (esc(t) + ".", "neutral", "prix_sortie_bati_eur_m2")
         return None
     if sec_id == "quartier":
