@@ -55,7 +55,7 @@ import { ListPaginationFooter, PAGE_SIZE } from '../ListPagination'
 import { Bouton } from '../ui/Bouton'
 import { Badge } from '../ui/Badge'   // KELFONCIER-FIX-2 (Lot D) — pastille d'état de permis (vert/rouge)
 import { Retour } from '../ui/Retour'
-import { Chevron } from '../ui/Chevron'
+// RECETTE-1 (H2) — Chevron retiré : le bloc proximité n'est plus un accordéon.
 import { Chip } from '../ui/Chip'
 
 /* ───────── primitives partagées (doctrine module : violet, bandeau honnête, liste→fiche) ───────── */
@@ -606,8 +606,7 @@ export function M03() {
   // permis ouvrait d'office le 1er permis (l'utilisateur ne voyait pas le compte). Désormais on affiche
   // TOUJOURS une phrase de résultat (0 / X permis) et on laisse le client cliquer les points sur la carte.
   const [parcelIdu, setParcelIdu] = useState<string | null>(null)
-  // RETOURS-15 B1 — le bloc « N permis à moins de 200 m… » est un ACCORDÉON repliable, ouvert par défaut.
-  const [resProximiteOuvert, setResProximiteOuvert] = useState(true)
+  // RECETTE-1 (H2) — le bloc « N permis à moins de 200 m… » n'est plus un accordéon (phrase en clair).
   // RECHERCHE-2 Lot 2 — propriétaire choisi dans la barre permis → sous-panneau de ses parcelles.
   const [permisOwner, setPermisOwner] = useState<{ siren: string; nom: string } | null>(null)
   const qParcelPermis = useQuery({ queryKey: ['parcelle-permis-search', parcelIdu],
@@ -760,9 +759,9 @@ export function M03() {
           const nonLocTxt = nonLoc > 0 ? ` (${fmt(nonLoc)} non localisé${nonLoc > 1 ? 's' : ''}, sans point sur la carte)` : ''
           const vide = items.length === 0
           const ton = loc === 0 ? 'border-st-creuser/40 bg-st-creuser/10 text-st-creuser' : 'border-mint/50 bg-mint/10 text-mint'
-          // RETOURS-15 B1 — ACCORDÉON (Chevron de la charte), ouvert par défaut, repliable. En-tête =
-          // le compte (toujours visible) ; corps repliable = le détail « cliquez les points ». Plus de
-          // lien « effacer » (vider le champ suffit → onClear).
+          // RECETTE-1 (H2, Vic) — la phrase de résultat n'est PLUS un accordéon : le compte ET le détail
+          // (« cliquez les points » / « sur les N derniers mois ») s'affichent ensemble, en clair, sans
+          // chevron ni repli. (Remplace l'accordéon RETOURS-15 B1.) Vider le champ la lève (onClear).
           const titre = vide
             ? <>Aucun permis à moins de 200 m de <span className="font-mono">{iduCourt(parcelIdu)}</span></>
             : loc === 0
@@ -770,21 +769,13 @@ export function M03() {
               : <><b className="tnum">{fmt(loc)}</b> permis à moins de 200 m de <span className="font-mono">{iduCourt(parcelIdu)}</span></>
           return (
             <div data-permis-parcelle-resultat {...(loc === 0 ? { 'data-permis-parcelle-vide': '1' } : {})}
-              className={`mt-1 rounded-lg border text-[11px] leading-snug ${ton}`}>
-              <button type="button" data-permis-proximite-toggle onClick={() => setResProximiteOuvert((o) => !o)}
-                className="flex w-full items-center gap-2 px-3 py-2 text-left">
-                <Chevron open={resProximiteOuvert} />
-                <span className="min-w-0 flex-1">{titre}</span>
-              </button>
-              {resProximiteOuvert && (
-                <div className="-mt-0.5 px-3 pb-2 pl-[30px]">
-                  {vide
-                    ? <>sur les {Math.max(...MONTHS_RADAR)} derniers mois{donneesJusquAu ? ` (Sitadel au ${donneesJusquAu})` : ''}.</>
-                    : loc === 0
-                      ? <>aucun point à afficher.</>
-                      : <>cliquez les points sur la carte{nonLocTxt}.</>}
-                </div>
-              )}
+              className={`mt-1 rounded-lg border px-3 py-2 text-[11px] leading-snug ${ton}`}>
+              <span>{titre} — </span>
+              {vide
+                ? <>sur les {Math.max(...MONTHS_RADAR)} derniers mois{donneesJusquAu ? ` (Sitadel au ${donneesJusquAu})` : ''}.</>
+                : loc === 0
+                  ? <>aucun point à afficher.</>
+                  : <>cliquez les points sur la carte{nonLocTxt}.</>}
             </div>
           )
         })()}
