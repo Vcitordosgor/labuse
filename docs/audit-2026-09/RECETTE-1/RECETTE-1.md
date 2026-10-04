@@ -88,8 +88,16 @@ manquait). Rien à corriger ; la recherche île sur la règle emprise n'est pas 
   (cartes bord vert/ambre) et la grille des tuiles (Dossier/Financier/Apporteur) est retiré ; la
   respiration (height) est conservée. (`Fiche.tsx`, la seule barre horizontale décorative de la page ;
   les autres `border-t` sont des bords de conteneurs fonctionnels, pas des filets.)
-- **D3 · Fiche parcelle — défilement en tête de section** — ⏳ À FAIRE.
-- **D4 · Fiche commune — premier tiroir seul ouvert** — ⏳ À FAIRE.
+- **D3 · Fiche parcelle — défilement en tête de section** — ✅ FAIT. `RefDrawer` (primitives.tsx)
+  faisait déjà `scrollIntoView` à l'ouverture, mais `scrollMarginTop` valait 8 px → le titre atterrissait
+  DERRIÈRE l'en-tête collant (`.tete-collee`), d'où « la vue ne bouge pas » ressenti. Désormais
+  `scrollMarginTop` = hauteur MESURÉE de l'en-tête collant + 8 px → le titre arrive bien en haut, sous
+  l'en-tête. Accordéon exclusif inchangé.
+- **D4 · Fiche commune — premier tiroir seul ouvert** — ✅ FAIT. `ContextePanel.tsx` : l'accordéon
+  passe d'un modèle « un `<details>` mémorisé par id en localStorage » (non exclusif → « tous ouverts »)
+  à un **accordéon EXCLUSIF** (contexte partagé `CommuneAccProvider`) : un seul tiroir ouvert, le
+  **premier** (Identité) ouvert par défaut (revendiqué au montage, réinitialisé par commune via `key`),
+  défilement en tête du tiroir ouvert (comme D3, offset `[data-ctx-tete]` → 8 px, pas d'en-tête sticky ici).
 - **D5 · Copilote** — ✅ FAIT. `ReponseInline.tsx` : la ligne « journal » (« › J'ai lu la fiche… ») est
   retirée de l'affichage ; le tag interne « SOURCE · FICHE LABUSE (RUN SERVI) » est filtré de la ligne
   SOURCE (les sources EXTERNES restent). `v2.sources` reste intact (choix de variante inchangé) →
@@ -106,23 +114,46 @@ manquait). Rien à corriger ; la recherche île sur la règle emprise n'est pas 
 - **E1 · phrase « Terrain nu = … »** — ✅ FAIT. `FiltreLabuse.tsx` : phrase retirée (clause SQL inchangée).
 - **E2 · encart « Capacité »** — ⏳ À FAIRE (touche le hash / Mes vues / Veille — traité à part).
 - **E3 · cases cochées par défaut** — ⏳ À FAIRE.
-- **E4 · survol code commune → nom** — ⏳ À FAIRE (dépend de D1, fait).
+- **E4 · survol code commune → nom** — ✅ FAIT. `FiltreLabuse.tsx` : la puce de code commune portait
+  déjà un `Tip` mais SANS `garder` (donc aucune bulle depuis le gate D1) ; ajout de `garder` + libellé
+  « `<code> — <commune>` » (ex. « 97460 — Saint-Paul »). S'ouvre au survol (D1).
+
+## C1 · C3 — carte couches & légende (déjà traités, cf. Lot C)
+- **C1 · La légende s'ouvre au cochage** — ✅ FAIT (`CouchesTuyau.tsx`). Cocher une couche REND la main
+  à l'auto-ouverture (ré-ouvre la légende même après un repli manuel) ; décocher la dernière couche
+  non-défaut la replie ; le repli manuel reste possible.
+- **C3 · Couche SCOT retirée de la carte** — ✅ FAIT (`couches_tuyau.py`, endpoint `/map/tuyau/couches`).
+  SCOT absent de la liste des couches ET de la légende ; info conservée en fiche (TCO nom+date,
+  CINOR nom+statut — date absente du GPU, Bras-Panon hors périmètre publié) et au Dossier PDF.
 
 ## Suivi global
 
 | Point | État | Note |
 |---|---|---|
 | A1 · A2 | ✅ FAIT | run-safe |
-| B (vitesse carte) | ⏳ À FAIRE | mesure avant/après + pistes cache/MVT |
-| C1–C8 (couches/légende) | ⏳ À FAIRE | |
-| D1 · D2 · D5 · D6 · D7 | ✅ FAIT | corrections visibles |
-| D3 · D4 | ⏳ À FAIRE | tiroirs fiches |
-| E1 | ✅ FAIT | |
-| E2 · E3 · E4 | ⏳ À FAIRE | E2 touche hash/vues |
-| F1–F4 (règles outils) | ⏳ À FAIRE | |
-| G + H1–H16 (outils) | ⏳ À FAIRE | |
+| B (vitesse carte) | ⏳ NON FAIT | mesure avant/après + pistes cache/MVT — lot le plus lourd (mesure, non choisi cette session) |
+| C1 · C3 | ✅ FAIT | légende auto-ouverte, SCOT hors carte |
+| C2 · C4 · C5 · C6 · C7 · C8 | ⏳ NON FAIT | PastilleZoom, SUP, ICPE→parcelles, ERC, EnR minzoom, couleurs réseaux — nécessitent carte+DB |
+| D1–D7 | ✅ FAIT | lot D complet |
+| E1 · E4 | ✅ FAIT | |
+| E2 | ⏳ NON FAIT | retrait encart Capacité — touche hash/Mes vues/Veille (sérialisation, à traiter à part) |
+| E3 | ⏳ NON FAIT | cases cochées par défaut (sémantique hash/vues) |
+| F1–F4 (règles outils) | ⏳ NON FAIT | refonte d'état transverse aux outils |
+| G + H1–H16 (outils) | ⏳ NON FAIT | audit branchement + refontes outil par outil |
 
-Baselines préservés après Lot D/E : `tsc` 0 · `vitest` 225 verts.
+**Fait cette session** (bucket « corrections visibles » choisi par Vic) : A1, A2, C1, C3, D1, D2, D3, D4,
+D5, D6, D7, E1, E4 — **13 points**, chacun commité, `tsc` 0 · `vitest` 225 · pytest ciblé vert · oracles
+0 faux préservé. L'app se lance sans erreur de rendu (smoke test Playwright : 0 erreur hors
+`/config/run` 404 et `/moi` 401 d'environnement).
+
+**Non fait, avec motif** (hors bucket cette session) : B (mesure vitesse, lot le plus lourd) ; C2/C4–C8
+(couches carte, nécessitent rendu carte + DB) ; E2/E3 (touchent la sérialisation hash/Mes vues/Veille) ;
+F1–F4 et G+H1–H16 (refontes d'état et audit branchement des 16 outils, le gros du mandat). Aucun point
+n'est sauté silencieusement : ils restent à traiter dans une session suivante.
+
+**⚠ Captures avant/après** : à produire avec l'app lancée via script node Playwright direct (le
+screenshot MCP expire à 5 s sur ce poste — constat récurrent des mandats précédents). L'app tourne
+(API 8695 / front 5895) ; la base des captures « après » est en place (`captures-apres/`).
 
 > Captures de Vic : **5** présentes dans `captures-vic/` (le mandat en annonce ~20 ; les points se
 > lisent sans elles, comme prévu). Signalé, non bloquant.
