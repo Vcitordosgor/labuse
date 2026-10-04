@@ -13,6 +13,8 @@ from datetime import date
 PREFIXE = {
     "dossier": "DP", "financier": "FI", "apporteur": "AP",
     "predossier_pc": "PC", "flash": "FL",
+    # DOCS-1 (Lot C) — les 3 nouveaux documents.
+    "gabarit": "GA", "comparatif": "CO", "etude-zone": "EZ",
 }
 
 

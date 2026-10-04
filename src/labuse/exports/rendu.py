@@ -101,13 +101,18 @@ def _spans_cartouche(c: Cartouche) -> str:
             f'<span class="doc-foot" style="display:none">{esc(c.doc_foot)}</span>')
 
 
-def page_html(titre_html: str, cartouche: Cartouche, corps_html: str, *, lang: str = "fr") -> str:
-    """Le document HTML complet : theme.css liée + polices, cartouche @page, corps."""
+def page_html(titre_html: str, cartouche: Cartouche, corps_html: str, *, lang: str = "fr",
+              paysage: bool = False) -> str:
+    """Le document HTML complet : theme.css liée + polices, cartouche @page, corps.
+    DOCS-1 (Lot C) — `paysage=True` enveloppe le corps dans `.paysage` (page A4 paysage, @page
+    paysage de theme.css) : le Comparatif met ses parcelles en colonnes. Rien d'autre ne change —
+    même couverture/en-tête/pied/tableaux/badges."""
+    corps = f'<div class="paysage">{corps_html}</div>' if paysage else corps_html
     return (f'<!doctype html><html lang="{lang}"><head><meta charset="utf-8">'
             f'<title>{esc(titre_html)}</title>'
             f'<link rel="stylesheet" href="theme.css">'
             f'<style>{_FONT_FACE}</style></head><body>'
-            f'{_spans_cartouche(cartouche)}{corps_html}</body></html>')
+            f'{_spans_cartouche(cartouche)}{corps}</body></html>')
 
 
 def render_pdf(page_html_str: str, *, forms: bool = False) -> bytes:
