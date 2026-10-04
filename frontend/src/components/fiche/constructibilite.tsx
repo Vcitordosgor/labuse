@@ -453,7 +453,7 @@ const SUITE_ICO = {
 } as const
 
 export function FaisabiliteTab({ idu }: { idu: string; embedded?: boolean }) {
-  const { setModule, setParcelPrefill, chercherParCapacite } = useApp()
+  const { setModule, setParcelPrefill } = useApp()
   // ALGO-FIX-1 (point 3, suite autorisée) — l'onglet s'ouvre par DÉFAUT sur « bâti gardé » : pour une
   // parcelle BÂTIE, la première capacité montrée est le RÉSIDUEL SERVI (parcel_residuel, ex. EO0796
   // 179 m²), la MÊME que la fiche §Potentiel et le Dossier — plus l'enveloppe démolition (338, une
@@ -601,10 +601,11 @@ export function FaisabiliteTab({ idu }: { idu: string; embedded?: boolean }) {
       {/* 4 · CE QUE LE PLU PERMET — chaque règle = TROIS lignes empilées : libellé en petites
           capitales grises · valeur en clair pleine largeur · ligne source (chip + article/page).
           Le nom du PLU vit dans l'info « i » du titre, pas dans la ligne. Un filet fin entre règles. */}
-      {/* FICHE-FIX-5 (reste 2) — « Ce que le PLU permet » = doublon des tuiles §Urbanisme → REPLI
-          « Règles du PLU » (fermé par défaut ; le nom du règlement reste dans le « i »). */}
+      {/* FICHE-FIX-5 — « Ce que le PLU permet » = REPLI « Règles du PLU » (le nom du règlement reste
+          dans le « i »). RECETTE-1 H10.4 — bloc MIS EN VALEUR : ouvert par défaut (titre + chevron +
+          même DA Repli que les autres blocs du panneau). */}
       {rv.length > 0 && (
-        <Repli compteur={rv.length} label={<>Règles du PLU · zone {pan.zone}{pluDoc ? (
+        <Repli defaultOpen compteur={rv.length} label={<>Règles du PLU · zone {pan.zone}{pluDoc ? (
           <Tip garder tip={<>Règlement : {pluDoc}{badges.plu_approuve_le ? ` · approuvé le ${String(badges.plu_approuve_le)}` : ''}</>}>
             <span data-faisa-plu-info tabIndex={0} className="ml-1 inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-line-2 text-[9px] text-txt-dim">i</span>
           </Tip>) : null}</>}>
@@ -677,19 +678,15 @@ export function FaisabiliteTab({ idu }: { idu: string; embedded?: boolean }) {
         </div>
       )}
 
-      {/* 7 · ACTIONS DU BAS — 4 tuiles « Étudier ce bien » (icône + titre), 2 × 2 à largeurs
-          égales, sans « → ». Le texte « Pré-faisabilité indicative… » reste en dernier, en petit. */}
+      {/* 7 · ACTIONS DU BAS — tuiles « Étudier ce bien » (icône + titre), à largeurs égales.
+          RECETTE-1 H10.3 — « Voir en 3D » renommé « Gabarit » (ouvre l'outil Gabarit sur la parcelle,
+          vue 2D). RECETTE-1 H10.6 — le pied « Chercher des parcelles par capacité → · Pré-faisabilité
+          indicative … » est RETIRÉ en entier. */}
       <div data-faisa-suites className="flex flex-col gap-2.5">
-        {/* FICHE-FIX-5 (reste 2) — « Comparer » et « Écrire au propriétaire » RETIRÉS du panneau
-            (même décision que Scan). Restent : Voir en 3D · Taxe d'aménagement · Chercher par capacité. */}
         <GrilleOutils cols={2}>
-          <OutilCase data-suite="gabarit" nom="Voir en 3D" ic={SUITE_ICO.gabarit} onClick={() => goOutil('gabarit')} />
+          <OutilCase data-suite="gabarit" nom="Gabarit" ic={SUITE_ICO.gabarit} onClick={() => goOutil('gabarit')} />
           <OutilCase data-suite="taxe" nom="Taxe d'aménagement" ic={SUITE_ICO.taxe} onClick={() => goOutil('taxe-amenagement')} />
         </GrilleOutils>
-        <div className="text-[10.5px] leading-snug text-txt-dim">
-          <button onClick={() => chercherParCapacite()} className="underline decoration-txt-dim/40 underline-offset-2 transition-colors duration-quick hover:text-mint">Chercher des parcelles par capacité →</button>
-          {' · '}{pan.bandeau ?? 'Pré-faisabilité sur règlement public, pas un certificat d’urbanisme.'}
-        </div>
       </div>
     </div>
   )
