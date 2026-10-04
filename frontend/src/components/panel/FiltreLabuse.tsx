@@ -776,9 +776,9 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
         <div className="gcard mt-2 p-3">
         <div className="flex flex-wrap gap-1">
           {CP_COMMUNES.map(([cp, nom]) => (
-            // RECETTE-2 LOT A : la liste ne montre QUE le code postal ; la bulle au survol dit UNIQUEMENT
-            // le nom de commune (répéter le CP déjà à l'écran = bruit). La valeur filtrée reste le `nom`.
-            <Tip key={cp} side="top" tip={nom}>
+            // RECETTE-1 (E4, Vic 04/10) : au survol d'un code commune, l'infobulle (D1 — `garder` →
+            // survol) nomme la commune sous la forme « <code> — <commune> ». La valeur filtrée reste le `nom`.
+            <Tip key={cp} garder side="top" tip={`${cp} — ${nom}`}>
               <button onClick={() => setCommunesFilter(
                   filters.communes.includes(nom) ? filters.communes.filter((c) => c !== nom) : [...filters.communes, nom])}
                 className={`rounded-full border px-2 py-0.5 text-[10.5px] tabular-nums transition-colors duration-quick ${

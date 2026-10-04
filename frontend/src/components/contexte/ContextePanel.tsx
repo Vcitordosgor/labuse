@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { deleteCommuneContact, getCommuneAcquisitions, getCommuneContacts, getContexteCommune, getMoi, motMarcheCommune, motRarete, postCommuneContact } from '../../lib/api'
 import { TOKENS } from '../../lib/tokens'
 import { Trace } from '../../lib/trace'
@@ -62,17 +62,22 @@ function Bar({ parts }: { parts: { label: string; pct: number; color: string }[]
   )
 }
 
-// OUTILS-6 C4 — l'accordéon. Son état ouvert/fermé est MÉMORISÉ d'une fiche à l'autre (localStorage,
-// par identifiant de section) : un client retrouve ses sections de prédilection. `dot` = pastille de
-// signal (couleur), `cle` = le chiffre-clé porté SUR LA LIGNE FERMÉE (on lit l'essentiel sans ouvrir).
-const ACC_LS = 'labuse.fiche.acc'
-function readAcc(id: string, def: boolean): boolean {
-  try { const o = JSON.parse(localStorage.getItem(ACC_LS) || '{}'); return typeof o[id] === 'boolean' ? o[id] : def }
-  catch { return def }
-}
-function writeAcc(id: string, v: boolean) {
-  try { const o = JSON.parse(localStorage.getItem(ACC_LS) || '{}'); o[id] = v; localStorage.setItem(ACC_LS, JSON.stringify(o)) }
-  catch { /* localStorage indisponible — l'accordéon reste fonctionnel, sans mémoire */ }
+// RECETTE-1 (D4, Vic 04/10) — comme la fiche parcelle : accordéon EXCLUSIF (un seul tiroir ouvert à
+// la fois), le PREMIER tiroir ouvert par défaut, les autres fermés. L'état vit dans un contexte
+// partagé (fini le localStorage par-section qui laissait « tous les tiroirs ouverts »).
+const CommuneAccCtx = createContext<{ openId: string | null; toggle: (id: string) => void; claimDefault: (id: string) => void }>({
+  openId: null, toggle: () => {}, claimDefault: () => {},
+})
+function CommuneAccProvider({ children }: { children: React.ReactNode }) {
+  const [openId, setOpenId] = useState<string | null>(null)
+  const defaulted = useRef(false)
+  const value = useMemo(() => ({
+    openId,
+    toggle: (id: string) => setOpenId((cur) => (cur === id ? null : id)),
+    // le PREMIER tiroir monté (identité) revendique l'ouverture, une seule fois (remontée à la clé commune).
+    claimDefault: (id: string) => { if (!defaulted.current) { defaulted.current = true; setOpenId(id) } },
+  }), [openId])
+  return <CommuneAccCtx.Provider value={value}>{children}</CommuneAccCtx.Provider>
 }
 // K2 — une ligne de coordonnée mairie : valeur, lien optionnel, ou « Absent » (jamais inventé).
 function MairieLigne({ label, val, href }: { label: string; val: string | null; href?: string }) {
@@ -207,15 +212,33 @@ function LigneCarte({ id, ic, titre, sous, val, ton, badge, defaultOpen, chiffre
   // CIRCUIT-1 lot 7.2 — chiffre_id du registre : traçage allumé, la valeur porte son étiquette.
   chiffre?: string; children: React.ReactNode
 }) {
-  const [open, setOpen] = useState(() => readAcc(id, !!defaultOpen))
+  void defaultOpen   // RECETTE-1 D4 — l'ouverture par défaut est gérée par l'accordéon exclusif (premier tiroir).
+  const acc = useContext(CommuneAccCtx)
+  const open = acc.openId === id
   const col = ton ? TON_COL[ton] : undefined
+  // RECETTE-1 D4 — le PREMIER tiroir monté revendique l'ouverture par défaut (une seule fois).
+  useEffect(() => { acc.claimDefault(id) }, [])   // eslint-disable-line react-hooks/exhaustive-deps
+  // RECETTE-1 D4/D3 — à l'ouverture, le titre de la section remonte EN HAUT du conteneur défilant.
+  const ref = useRef<HTMLDetailsElement>(null)
+  useEffect(() => {
+    if (!open || !ref.current) return
+    const reduced = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    const tete = document.querySelector('[data-ctx-tete]') as HTMLElement | null
+    ref.current.style.scrollMarginTop = `${(tete?.offsetHeight ?? 0) + 8}px`
+    const t = setTimeout(() => ref.current?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' }), reduced ? 0 : 60)
+    return () => clearTimeout(t)
+  }, [open])
   return (
-    <details data-acc={id} open={open} className="group mb-2"
-      onToggle={(e) => { const o = (e.currentTarget as HTMLDetailsElement).open; setOpen(o); writeAcc(id, o) }}>
+    <details ref={ref} data-acc={id} open={open} className="group mb-2"
+      onToggle={(e) => { /* contrôlé par le contexte : on neutralise le toggle natif (le clic summary décide) */
+        const o = (e.currentTarget as HTMLDetailsElement).open
+        if (o !== open) e.currentTarget.open = open
+      }}>
       {/* RETOURS-6 U2 — survol PLEIN (aplat vert dégradé, encre sombre) via .hover-fill, comme partout ailleurs :
           titre, sous-ligne, valeur/chip de droite et chevron s'inversent en encre sombre (`* { color: ink }`).
           Une carte de la fiche commune sent la même main que les cases d'outils et les lignes de la fiche parcelle. */}
-      <summary data-ligne-carte={id} className="hover-fill flex cursor-pointer list-none items-center gap-2.5 rounded-xl border border-line-2 bg-surface-2 px-3 py-2.5 [&::-webkit-details-marker]:hidden">
+      <summary data-ligne-carte={id} onClick={(e) => { e.preventDefault(); acc.toggle(id) }}
+        className="hover-fill flex cursor-pointer list-none items-center gap-2.5 rounded-xl border border-line-2 bg-surface-2 px-3 py-2.5 [&::-webkit-details-marker]:hidden">
         {/* `lc-ic` : au survol plein, le carré d'icône s'éclaircit (aplat ink translucide) pour que le glyphe
             passé en encre sombre reste lisible — sinon sombre-sur-sombre. Réglé dans index.css (gaté pointeur fin). */}
         <span className="lc-ic flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-line-2 bg-surface-3 text-[14px] text-txt-mut">{ic}</span>
@@ -280,6 +303,7 @@ export function ContextePanel() {
   const insee = d?.insee ?? null
 
   return (
+    <CommuneAccProvider key={commune}>
     <aside data-contexte-panel className="absolute right-0 top-0 z-30 flex h-full w-[420px] flex-col border-l border-line bg-surface-1 shadow-elev-3">
       <div className="flex shrink-0 items-start justify-between border-b border-line px-5 py-3">
         <div className="min-w-0">
@@ -753,5 +777,6 @@ export function ContextePanel() {
         )}
       </div>
     </aside>
+    </CommuneAccProvider>
   )
 }
