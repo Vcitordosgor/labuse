@@ -135,12 +135,25 @@ manquait). Rien à corriger ; la recherche île sur la règle emprise n'est pas 
 | C1 · C3 | ✅ FAIT | légende auto-ouverte, SCOT hors carte (session 1) |
 | C2 · C4 · C5 · C6 · C7 · C8 | ✅ FAIT | **session 2** — Lot C complet (voir ci-dessous) |
 | D1–D7 | ✅ FAIT | lot D complet |
-| E1 · E4 | ✅ FAIT | |
-| E2 | ⏳ NON FAIT | retrait encart Capacité — sites repérés (voir § session 2) |
-| E3 | ⏳ NON FAIT | cases cochées par défaut (sémantique hash/vues) |
+| E1 · E2 · E3 · E4 | ✅ FAIT | **Lot E complet** (session 2) |
+| C5 (décision Vic) | ✅ FAIT | fiche = carte (même rattachement ST_Contains) |
 | F1–F4 (règles outils) | ⏳ NON FAIT | refonte d'état transverse aux outils |
 | G + H1–H16 (outils) | ⏳ NON FAIT | audit branchement + refontes outil par outil |
 | B (vitesse carte) | ⏳ NON FAIT | mesure avant/après (en dernier, ordre Vic) |
+
+### Session 2 — suite : C5 (décision), E2, E3 faits
+- **C5 (décision Vic)** : la fiche « ICPE sur la parcelle » lit le MÊME rattachement que la carte
+  (ST_Contains, TOUS régimes, régime affiché) ; la ligne « à proximité ≤ 500 m » reste et passe aussi
+  à tous les régimes (exclusion « Non ICPE » levée) ; verdict/poids du run servi inchangés (run-safe) ;
+  légende « Parcelle d'implantation (point Géorisques) » (compte 69 au rapport, pas dans la légende).
+- **E2** : encart « Capacité » retiré en entier (UI + hash `sdp/sdpx/cap/rnv/dst` + API + prédicat) ;
+  champs inertes ⇒ vieux hash/vue ignoré sans erreur (verrou vitest). **0 vue/veille** affectée
+  (saved_searches 0/3, saved_filters 0/0, veilles 0/14). Lien « Chercher par capacité → » part avec H10.
+- **E3** : cases « partition » (**État du sol** nu/bâti = toutes les parcelles) → tout coché par défaut,
+  décocher restreint, tout décocher = 0 parcelle (sentinelle `__aucun__`, back etat_sol → FALSE).
+  Rétro-compatible (es=nu = seulement nu). **zfangRegime/frrClassement NON concernés** : il existe une
+  catégorie implicite « sans ZFANG / hors dispositif » non listée dans les cases, donc « tout coché »
+  ≠ « pas de restriction » — la règle E3 ne s'y applique pas (seul groupe partition affiché = État du sol).
 
 ## Session 2 (`fix/recette-1b`, base `origin/main` = `182a6f88`) — Lot C complété
 
