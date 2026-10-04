@@ -1044,6 +1044,33 @@ class ParcelPScoreV2(Base):
     icd_detail: Mapped[dict | None] = mapped_column(JSONB)   # {groupe: bool} des 9 groupes
 
 
+# ── gardes ANTI-VERROU du DDL de démarrage (SCORING-8 lot A bis) ──────────────────────────────
+# Un DDL idempotent (« ADD COLUMN IF NOT EXISTS », « DROP COLUMN IF EXISTS », ALTER TYPE
+# d'agrandissement, CREATE INDEX IF NOT EXISTS) prend quand même un verrou ACCESS EXCLUSIVE (ou
+# SHARE pour un index) sur la table AU MOMENT où il s'exécute, MÊME quand il n'a rien à faire ; si
+# une transaction (run cascade, build) tient la table, le boot se met en FILE derrière elle et gèle
+# toutes les lectures qui arrivent ensuite (prod figée sur /parcels — vécu en M6). On teste donc
+# l'état du schéma AVANT (information_schema / pg_class : aucun verrou de table) et on n'émet le DDL
+# QUE s'il manque vraiment. Même correctif que `ensure_geom_2975` (commit 70278401), généralisé.
+def _col_presente(c, table: str, col: str) -> bool:
+    from sqlalchemy import text as _t
+    return bool(c.execute(_t("SELECT 1 FROM information_schema.columns "
+                             "WHERE table_name = :t AND column_name = :c"),
+                          {"t": table, "c": col}).scalar())
+
+
+def _index_present(c, nom: str) -> bool:
+    from sqlalchemy import text as _t
+    return bool(c.execute(_t("SELECT to_regclass(:n) IS NOT NULL"), {"n": nom}).scalar())
+
+
+def _varchar_len(c, table: str, col: str):
+    from sqlalchemy import text as _t
+    return c.execute(_t("SELECT character_maximum_length FROM information_schema.columns "
+                        "WHERE table_name = :t AND column_name = :c"),
+                     {"t": table, "c": col}).scalar()
+
+
 def ensure_parcel_eval_status_dropped(engine) -> None:
     """M46 (Lot C) — SUPPRESSION PHYSIQUE du rail legacy `parcel_evaluations.status` (le geste
     « à froid » prévu en M37, exécuté à froid ici).
@@ -1053,18 +1080,31 @@ def ensure_parcel_eval_status_dropped(engine) -> None:
     les mentions de `parcel_evaluations.status` sont des commentaires « éteint » ; les lecteurs
     vivants lisent `dryrun_parcel_evaluations.status` (table DISTINCTE, servie, conservée).
     Idempotent : DROP des colonnes `status` (si jamais restée) et `status_pre_m37` si présentes ;
-    sur base neuve aucune n'existe → no-op. (M37 renommait status→status_pre_m37 ; M46 solde.)"""
+    sur base neuve aucune n'existe → no-op. (M37 renommait status→status_pre_m37 ; M46 solde.)
+
+    SCORING-8 (lot A bis) — sans verrou au boot : on ne rejoue le DROP QUE si une colonne legacy
+    subsiste encore (sinon un `DROP COLUMN IF EXISTS` no-op prendrait un ACCESS EXCLUSIVE à vide)."""
     from sqlalchemy import text as _t
+    with engine.connect() as c:
+        a_droper = [col for col in ("status_pre_m37", "status")
+                    if _col_presente(c, "parcel_evaluations", col)]
+    if not a_droper:
+        return
     with engine.begin() as c:
-        c.execute(_t("ALTER TABLE parcel_evaluations DROP COLUMN IF EXISTS status_pre_m37"))
-        c.execute(_t("ALTER TABLE parcel_evaluations DROP COLUMN IF EXISTS status"))
+        for col in a_droper:        # noms issus d'une liste littérale fermée — pas d'injection
+            c.execute(_t(f"ALTER TABLE parcel_evaluations DROP COLUMN IF EXISTS {col}"))
 
 
 def ensure_sitadel_depot(engine) -> None:
     """M38 — colonne `date_depot` (Sitadel3 DR_DEPOT) sur sitadel_permits. Idempotent
     (ADD COLUMN IF NOT EXISTS) — durable au rebuild, présent pour la fiche même avant
-    ré-ingestion. Informatif seul, jamais lu par le scoring."""
+    ré-ingestion. Informatif seul, jamais lu par le scoring.
+
+    SCORING-8 (lot A bis) — sans verrou au boot : l'ALTER n'est émis que si la colonne manque."""
     from sqlalchemy import text as _t
+    with engine.connect() as c:
+        if _col_presente(c, "sitadel_permits", "date_depot"):
+            return
     with engine.begin() as c:
         c.execute(_t("ALTER TABLE sitadel_permits ADD COLUMN IF NOT EXISTS date_depot date"))
 
@@ -1149,32 +1189,40 @@ def create_all(engine) -> None:
 
 def ensure_icd_columns(engine) -> None:
     """Colonnes ICD (indice de confiance données) sur parcel_p_score_v2 — M9 lot 1.
-    Méta d'affichage annexe (cf. scoring/icd.py), CLOISONNÉE du score P. Idempotent."""
+    Méta d'affichage annexe (cf. scoring/icd.py), CLOISONNÉE du score P. Idempotent.
+
+    SCORING-8 (lot A bis) — sans verrou au boot : chaque ALTER/CREATE INDEX n'est émis que s'il
+    manque vraiment. Décisif pour `ix_parcels_idu_commune` : un `CREATE INDEX IF NOT EXISTS` sur
+    `parcels`, même no-op, prend un SHARE qui se met en file derrière une transaction ouverte sur
+    `parcels` et bloque alors les écritures — le boot doit rester instantané."""
     from sqlalchemy import text as _t
 
     with engine.begin() as c:
-        c.execute(_t("ALTER TABLE parcel_p_score_v2 "
-                     "ADD COLUMN IF NOT EXISTS icd smallint"))
-        c.execute(_t("ALTER TABLE parcel_p_score_v2 "
-                     "ADD COLUMN IF NOT EXISTS icd_detail jsonb"))
+        if not _col_presente(c, "parcel_p_score_v2", "icd"):
+            c.execute(_t("ALTER TABLE parcel_p_score_v2 ADD COLUMN IF NOT EXISTS icd smallint"))
+        if not _col_presente(c, "parcel_p_score_v2", "icd_detail"):
+            c.execute(_t("ALTER TABLE parcel_p_score_v2 ADD COLUMN IF NOT EXISTS icd_detail jsonb"))
         # FIX-C6 (GB-058) — /map/tiles/meta fait `max(computed_at) WHERE run_id=…` (tiles.py:332,
         # appelé au 1er paint carte) : sans index sur (run_id, computed_at) c'est un Parallel Seq
         # Scan de ~430k lignes (p95 mesuré ~3,9 s au cycle 6). Index couvrant → max index-only.
-        c.execute(_t("CREATE INDEX IF NOT EXISTS ix_p_v2_run_computed "
-                     "ON parcel_p_score_v2 (run_id, computed_at)"))
+        if not _index_present(c, "ix_p_v2_run_computed"):
+            c.execute(_t("CREATE INDEX IF NOT EXISTS ix_p_v2_run_computed "
+                         "ON parcel_p_score_v2 (run_id, computed_at)"))
         # RETOURS-10 (T2) — /accueil/chiffres (sondé aussi par Pilotage et Données·Circuit) comptait
         # `p_model_ext_dataset WHERE label_l2=1 AND annee BETWEEN …` en Parallel Seq Scan de 4,3 M lignes
         # (~0,95 s mesuré sur la base réelle). Index composite (label_l2, annee) → range scan sélectif.
         # `p_model_ext_dataset` n'est PAS une table ORM (bâtie par l'ingestion) : elle peut manquer sur une
         # base neuve/de test → on ne crée l'index QUE si la table existe (sinon l'index vivra au 1ᵉ passage).
-        if c.execute(_t("SELECT to_regclass('p_model_ext_dataset')")).scalar():
+        if (not _index_present(c, "ix_pmed_label_annee")
+                and c.execute(_t("SELECT to_regclass('p_model_ext_dataset')")).scalar()):
             c.execute(_t("CREATE INDEX IF NOT EXISTS ix_pmed_label_annee "
                          "ON p_model_ext_dataset (label_l2, annee)"))
         # RETOURS-10 (T2) — /accueil/chiffres (sondé LIVE par Pilotage & Circuit, cache busté exprès)
         # compte les communes calibrées via `parcels ⋈ parcel_zone_plu GROUP BY commune` : sans index
         # couvrant, Parallel Seq Scan de parcels (~0,66 s). (idu) INCLUDE (commune) → index-only (~0,15 s).
-        c.execute(_t("CREATE INDEX IF NOT EXISTS ix_parcels_idu_commune "
-                     "ON parcels (idu) INCLUDE (commune)"))
+        if not _index_present(c, "ix_parcels_idu_commune"):
+            c.execute(_t("CREATE INDEX IF NOT EXISTS ix_parcels_idu_commune "
+                         "ON parcels (idu) INCLUDE (commune)"))
 
 
 def ensure_signalements(engine) -> None:
@@ -1941,9 +1989,13 @@ def ensure_constructibilite_cache(engine) -> None:
             " computed_at timestamptz NOT NULL DEFAULT now())"))
         # Élargissement des colonnes qui reçoivent le TIER : le déclassement ajoute
         # `declasse_non_constructible` (26 car.) qui débordait varchar(24) (bascule 29/07).
-        # ALTER TYPE d'agrandissement = métadonnée-only en Postgres (instantané, pas de réécriture).
-        c.execute(_t("ALTER TABLE parcel_p_score_v2 ALTER COLUMN tier TYPE varchar(32)"))
-        c.execute(_t("ALTER TABLE score_snapshot_parcelles ALTER COLUMN statut TYPE varchar(32)"))
+        # ALTER TYPE d'agrandissement = métadonnée-only en Postgres (instantané, pas de réécriture)
+        # MAIS prend un ACCESS EXCLUSIVE : SCORING-8 (lot A bis) ne le rejoue QUE si la colonne
+        # n'est pas déjà en varchar(32) — sinon no-op sans verrou sur parcel_p_score_v2.
+        if _varchar_len(c, "parcel_p_score_v2", "tier") != 32:
+            c.execute(_t("ALTER TABLE parcel_p_score_v2 ALTER COLUMN tier TYPE varchar(32)"))
+        if _varchar_len(c, "score_snapshot_parcelles", "statut") != 32:
+            c.execute(_t("ALTER TABLE score_snapshot_parcelles ALTER COLUMN statut TYPE varchar(32)"))
 
 
 def ensure_au_statut_cache(engine) -> None:
@@ -2132,9 +2184,22 @@ def ensure_score_v_view(engine) -> None:
 
 
 def ensure_parcel_origine(engine) -> None:
-    """Colonne `origine` sur parcels (Lot A — audit pull). Idempotent."""
+    """Colonne `origine` sur parcels (Lot A — audit pull). Idempotent.
+
+    Boot SANS verrou (même correctif que `ensure_geom_2975`, commit 70278401) : un
+    `ALTER TABLE … ADD COLUMN IF NOT EXISTS`, même no-op quand la colonne est déjà là,
+    prend un verrou ACCESS EXCLUSIVE sur `parcels` et met en FILE toutes les lectures
+    derrière lui si une transaction (run cascade, build) la tient. On teste donc d'abord
+    `information_schema` et on n'émet l'ALTER QUE si la colonne manque — le chemin nominal
+    (colonne déjà posée) ne prend plus aucun verrou. Le chemin de pose reste identique."""
     from sqlalchemy import text as _t
 
+    with engine.connect() as c:
+        presente = bool(c.execute(_t(
+            "SELECT 1 FROM information_schema.columns "
+            "WHERE table_name = 'parcels' AND column_name = 'origine'")).scalar())
+    if presente:
+        return
     with engine.begin() as c:
         c.execute(_t("ALTER TABLE parcels ADD COLUMN IF NOT EXISTS origine varchar(16)"))
 

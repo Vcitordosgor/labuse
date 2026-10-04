@@ -43,6 +43,7 @@ NC_ZONE = "zone non résolue"
 NC_REGLE_PLU = "règle PLU non validée"
 NC_DONNEE = "donnée critique absente"
 NC_GEOMETRIE = "géométrie"
+NC_SDP = "capacité résiduelle non calculée"   # C26 (SCORING-8, arbitrage Vic) : SDP inconnue ≠ 0
 
 # Classes AU différées (capacité ×0,5) — mêmes codes que le résiduel/l'écran.
 _AU_DIFFEREE = {"declasse_au_fermee", "declasse_au_statut_inconnu"}
@@ -168,6 +169,15 @@ def _cause_nc(e: ScoreEntrees) -> str | None:
         return NC_ZONE
     if c.startswith("regle_plu_non_validee"):     # après merge PLU-CALIBRAGE-6/7 (geste Vic)
         return NC_REGLE_PLU
+    # C26 (SCORING-8, arbitrage Vic) : une SDP résiduelle INCONNUE (non calculée) ne doit JAMAIS
+    # être lue comme 0 dans l'éligibilité du classement. `sdp = NULL` = capacité non calculable →
+    # NC « Analyse incomplète », jamais bande « 0 / Non retenue ». Un vrai zéro (`sdp = 0`, produit
+    # par le moteur : terrain exigu, zone inconstructible, bâti saturé…) reste la bande « 0 ».
+    # C'est un filet CAUSE-INDÉPENDANT : aujourd'hui toute SDP NULL porte déjà une cause NC
+    # (hors_plu), mais un run futur (exception PLU non modélisée, trou de donnée) peut produire une
+    # SDP NULL SANS cause NC — elle doit alors tomber ici, pas en bande 0.
+    if e.sdp_residuelle_m2 is None:
+        return NC_SDP
     return None
 
 
