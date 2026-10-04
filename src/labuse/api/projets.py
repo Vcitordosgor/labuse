@@ -484,7 +484,8 @@ _REUNION_TZ = timezone(timedelta(hours=4))
 def _compteur_cle(cadrage: dict) -> str:
     import hashlib
     import json as _json
-    return hashlib.md5((runs.current() + "|" + _json.dumps(cadrage, sort_keys=True)).encode()).hexdigest()
+    return hashlib.md5((runs.current() + "|" + _json.dumps(cadrage, sort_keys=True)).encode(),
+                       usedforsecurity=False).hexdigest()
 
 
 @router.post("/compteur")

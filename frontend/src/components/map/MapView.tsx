@@ -1,5 +1,5 @@
 import { useQuery, useIsFetching } from '@tanstack/react-query'
-import maplibregl from 'maplibre-gl'
+import * as maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useEffect, useRef, useState } from 'react'
 import { getBatiments, getCommunes, getFiche, getFiltreIdus, getParcelGeojson, getParcelsGeojson, getTilesMeta, parcelAt } from '../../lib/api'
@@ -479,7 +479,7 @@ export function MapView() {
     // tuiles hors-emprise (océan) : l'IGN répond 400 → bruit inévitable, avalé ici pour que la
     // console ne montre que les VRAIES erreurs (règle d'inspection : zéro ligne rouge parasite)
     m.on('error', (e) => {
-      const msg = String((e as { error?: Error }).error?.message ?? '')
+      const msg = String(e.error?.message ?? '')
       if (/AJAXError|40[04]/.test(msg)) return
       console.error(e.error ?? e)
     })

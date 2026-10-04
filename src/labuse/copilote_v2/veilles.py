@@ -133,7 +133,7 @@ def evaluer(db: Session, veille: dict) -> int:
             if len(hits) > 20:
                 detail += f"\n… et {len(hits) - 20} autres."
         refs = "|".join(sorted(str(h.get("ref")) for h in hits))
-        dedup = f"veille:{veille['id']}:" + hashlib.md5(refs.encode()).hexdigest()[:16]
+        dedup = f"veille:{veille['id']}:" + hashlib.md5(refs.encode(), usedforsecurity=False).hexdigest()[:16]
         creer_notification(db, kind="veille", compte_id=veille.get("compte_id"),
                            titre=titre, detail=detail, source="Copilote · veille",
                            lien=f"/copilote?veille={veille['id']}", dedup=dedup)

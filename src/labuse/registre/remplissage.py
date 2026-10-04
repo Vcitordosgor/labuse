@@ -55,7 +55,7 @@ def temoins_du_jour(db) -> list[tuple[str, str, str]]:
         {"jour": jour}).all()
     tires = []
     for idu, commune in sorted(rows, key=lambda r: hashlib.md5(
-            (r[0] + jour).encode()).hexdigest()):
+            (r[0] + jour).encode(), usedforsecurity=False).hexdigest()):
         if idu not in exclus:
             tires.append((idu, idu[:5], commune or ""))
         if len(tires) == 4:

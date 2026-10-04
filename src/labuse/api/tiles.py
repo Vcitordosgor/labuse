@@ -597,7 +597,7 @@ _WARM_ZOOMS = (9, 10, 11)
 
 
 def _etag(body: bytes) -> str:
-    return hashlib.md5(body).hexdigest()  # noqa: S324 — hash de CONTENU (ETag), pas de sécurité
+    return hashlib.md5(body, usedforsecurity=False).hexdigest()  # hash de CONTENU (ETag), pas de sécurité
 
 
 def _tile_cache_get(db: Session, version: str, z: int, x: int, y: int):

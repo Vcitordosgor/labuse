@@ -71,7 +71,7 @@ def millesimes_hash(db) -> str:
             "SELECT name, coalesce(source_millesime, '') FROM data_sources ORDER BY name")).all()
     except Exception:  # noqa: BLE001 — table absente (base de test nue) : composante neutre
         return "sans-sources"
-    h = hashlib.md5("|".join(f"{n}={m}" for n, m in rows).encode()).hexdigest()[:10]
+    h = hashlib.md5("|".join(f"{n}={m}" for n, m in rows).encode(), usedforsecurity=False).hexdigest()[:10]
     return h
 
 
@@ -85,7 +85,7 @@ def empreinte_attendue(db) -> str:
 
 def empreinte_courte(db) -> str:
     """Version 10 caractères de l'empreinte (clés composites à largeur bornée, ex. ia_cache)."""
-    return hashlib.md5(empreinte_attendue(db).encode()).hexdigest()[:10]
+    return hashlib.md5(empreinte_attendue(db).encode(), usedforsecurity=False).hexdigest()[:10]
 
 
 # ═══════════════════════════ l'état — clé attendue / clé réelle ═══════════════════════════
