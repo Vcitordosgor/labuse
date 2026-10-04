@@ -388,7 +388,7 @@ def parcel_faisabilite(session: Session, parcel_id: int,
     le RUN RÉSIDUEL SERVI (run 8, `--assiette-clippee`). Sur une parcelle A/N à cheval, la zone
     dominante non constructible n'annule plus la portion U/AU : la capacité est celle de la portion.
     (Le calcul d'un RUN reste piloté par le flag explicite de `compute_residuel_batch` — inchangé.)"""
-    from .engine import Hypotheses
+    from .engine import Hypotheses, SEUIL_EXIGU_M2
 
     ctx = parcel_context(session, parcel_id)
     if ctx is None or not ctx.zone:
@@ -500,6 +500,18 @@ def parcel_faisabilite(session: Session, parcel_id: int,
                 "DPF, ravine, 50 pas) soustraits de l'assiette. Le PPR rouge est déjà découpé "
                 "de l'assiette (jamais compté deux fois).")
         greve_a = greve_tot          # déduction NETTE réellement retranchée (extras)
+        # RECETTE-1 A1 — raison réelle du vidage (message « trop exigu » ciblé, pas « reculs » partout).
+        vide_raison = None
+        if emprise < SEUIL_EXIGU_M2:
+            if ppr_rouge:
+                vide_raison = "ppr_rouge"
+            elif emprise_brute >= SEUIL_EXIGU_M2 and greve_tot >= 0.9 * emprise_brute:
+                vide_raison = ("emplacement_reserve" if er_a >= max(ebc_a, greve_cert)
+                               else "ebc" if ebc_a >= greve_cert else "contraintes")
+            elif servie_sur:
+                vide_raison = "portion_reduite"
+            else:
+                vide_raison = "reculs"
     else:
         row = session.execute(_EMPRISE, args).one()
         full_a = float(row.full_area or 0.0)
@@ -545,6 +557,21 @@ def parcel_faisabilite(session: Session, parcel_id: int,
                 ctx.contraintes.libelles.append(
                     f"Assiette clippée : {greve_cert:.0f} m² de contraintes géométriques certaines "
                     "(PPR rouge, PEB A/B, marchepied DPF, ravine, 50 pas) soustraits de l'emprise.")
+        # RECETTE-1 A1 — raison réelle du vidage (chemin legacy).
+        vide_raison = None
+        if emprise < SEUIL_EXIGU_M2:
+            if full_a < SEUIL_EXIGU_M2:
+                vide_raison = "reculs"            # parcelle réellement étroite (inset vide)
+            elif base < SEUIL_EXIGU_M2:
+                vide_raison = "portion_reduite"   # portion U/AU résiduelle minuscule
+            elif er_a >= 0.9 * base:
+                vide_raison = "emplacement_reserve"
+            elif ebc_a >= 0.9 * base:
+                vide_raison = "ebc"
+            elif greve_cert >= 0.9 * base:
+                vide_raison = "contraintes"
+            else:
+                vide_raison = "reculs"
 
     # Surface au sol servant aux plafonds CES/pleine terre : la seule portion U/AU (à cheval).
     surface_assiette = ctx.surface_m2
@@ -581,7 +608,8 @@ def parcel_faisabilite(session: Session, parcel_id: int,
     extras = {"er_m2": er_a, "ebc_m2": ebc_a, "greve_certaine_m2": greve_cert,
               "total_deduit_m2": greve_a if assiette_source == "gabarit" else greve_a + greve_cert,
               "mixite": bool(eco.get("mixite")),
-              "assiette_source": assiette_source}
+              "assiette_source": assiette_source,
+              "assiette_vide": vide_raison}   # RECETTE-1 A1 — raison du vidage (message ciblé)
     return ctx, estimate_capacity(rules, surface_assiette, ctx.contraintes, hyp=hyp,
                                   emprise_geo=(emprise, recul), extras=extras)
 

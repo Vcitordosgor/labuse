@@ -256,6 +256,12 @@ class Faisabilite:
     #   B « parcelle inconstructible » : {"terrain_exigu", "redhibitoire", "hauteur_indispo"} —
     #     contrainte physique/donnée, pas un interdit de zone.
     cause: str | None = None
+    # RECETTE-1 A1 — quand cause == "terrain_exigu", POURQUOI l'assiette est vide (le message
+    # « compte tenu des reculs » était servi à tort sur de grandes parcelles vidées par un PPR
+    # rouge, un emplacement réservé ou une portion U/AU réduite — jamais par les reculs). Renseigné
+    # par parcel_faisabilite depuis la base ; None ⇒ repli « reculs » (tests purs, assemblage).
+    #   'reculs' | 'ppr_rouge' | 'emplacement_reserve' | 'ebc' | 'contraintes' | 'portion_reduite'
+    exigu_raison: str | None = None
 
 
 _BANDEAU = (
@@ -270,6 +276,34 @@ def _is_num(x) -> bool:
 
 def _rng(lo: float, hi: float) -> tuple[int, int]:
     return max(0, math.floor(lo)), max(0, math.ceil(hi))
+
+
+# RECETTE-1 A1 — verdict d'assiette vide, par RAISON réelle (plus de « compte tenu des reculs »
+# générique). Même fourchette (0) dans tous les cas : ce qui change, c'est QUI vide l'assiette.
+_ASSIETTE_VIDE_LIB = {
+    "ppr_rouge": ("Parcelle couverte par le PPR en zone rouge (inconstructible) — aucune emprise "
+                  "constructible, non constructible en l'état.", "0 m² (PPR zone rouge)"),
+    "emplacement_reserve": ("Emplacement réservé couvrant la parcelle — l'emprise constructible "
+                            "résiduelle est nulle (terrain réservé à un projet public).",
+                            "0 m² (emplacement réservé)"),
+    "ebc": ("Espace boisé classé couvrant la parcelle — inconstructible (Art. L113-1 CU).",
+            "0 m² (espace boisé classé)"),
+    "contraintes": ("Contraintes géométriques certaines (PPR rouge, PEB A/B, marchepied DPF, "
+                    "ravine, 50 pas géométriques) couvrant la parcelle — aucune emprise résiduelle.",
+                    "0 m² (contraintes certaines)"),
+    "portion_reduite": ("Portion constructible U/AU trop réduite sur cette parcelle à cheval — "
+                        "l'assiette constructible se vide une fois les reculs appliqués.",
+                        "≈ 0 m² (portion U/AU réduite)"),
+}
+
+
+def _verdict_assiette_vide(raison: str | None, recul_used: float) -> tuple[str, str]:
+    lib = _ASSIETTE_VIDE_LIB.get(raison or "")
+    if lib:
+        return lib
+    # 'reculs' (défaut) — parcelle réellement étroite : le contour inseté se vide par les reculs.
+    return (f"Terrain trop exigu compte tenu des reculs ({recul_used:g} m) — non constructible "
+            "en l'état (le contour inseté se vide).", "≈ 0 m² (contour vidé)")
 
 
 def estimate_capacity(rules: ZoneRules, surface_m2: float,
@@ -299,10 +333,10 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
         avert.append("Capacité ESTIMÉE — zone non calibrée finement : hypothèses génériques "
                      "prudentes (reculs et hauteurs par défaut).")
 
-    def fini(constructible, verdict, fourchette, cause=None):
+    def fini(constructible, verdict, fourchette, cause=None, exigu_raison=None):
         return Faisabilite(rules.code, rules.via_renvoi, constructible, verdict,
                            steps, hypotheses, avert, modul, fourchette, _BANDEAU,
-                           calibree=rules.calibree, cause=cause)
+                           calibree=rules.calibree, cause=cause, exigu_raison=exigu_raison)
 
     # PLU-CALIBRAGE-6 — GARDE : une règle SDP encore `propose` (non validée) rend la capacité NON
     # CALCULABLE, jamais une valeur par défaut. On sort AVANT tout calcul (donc avant les reculs
@@ -387,14 +421,19 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
             _step1_source = f"{rl_src} (séparatif) ; recul voirie en sus"
             _step1_prov = _prov_recul
         if emprise < SEUIL_EXIGU_M2:
-            steps.append(Step(_step1_label, _step1_formule,
-                              "≈ 0 m² (contour vidé)",
+            # RECETTE-1 A1 — l'assiette est vide, mais PAS toujours « à cause des reculs ». La raison
+            # réelle est mesurée par parcel_faisabilite (extras['assiette_vide']) : un PPR zone rouge
+            # ou un emplacement réservé couvrant la parcelle, une portion U/AU réduite à cheval, ou
+            # bien les reculs sur une parcelle réellement étroite. Le message le DIT (plus jamais
+            # « compte tenu des reculs (4 m) » sur une parcelle de 1 625 m² vidée par un PPR rouge).
+            raison = (extras or {}).get("assiette_vide") or "reculs"
+            verdict, step_val = _verdict_assiette_vide(raison, recul_used)
+            steps.append(Step(_step1_label, _step1_formule, step_val,
                               _step1_source if _asrc == "gabarit" else f"{rl_src}",
                               prov=_step1_prov))
-            return fini(False, f"Terrain trop exigu compte tenu des reculs ({recul_used:g} m) — "
-                        "non constructible en l'état (le contour inseté se vide).",
+            return fini(False, verdict,
                         {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)},
-                        cause="terrain_exigu")
+                        cause="terrain_exigu", exigu_raison=raison)
         steps.append(Step(_step1_label, _step1_formule,
                           f"~{emprise:.0f} m²", _step1_source, prov=_step1_prov))
         # FAISABILITE-1 (lot D) — ligne « Espaces inconstructibles déduits » (ER/EBC/greve certaine
