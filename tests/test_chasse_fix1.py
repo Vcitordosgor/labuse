@@ -115,3 +115,85 @@ def test_lot3_parcel_residuel_est_une_vue(engine):
         relkind = c.execute(text(
             "SELECT relkind FROM pg_class WHERE relname = 'parcel_residuel'")).scalar()
     assert relkind == "v", "parcel_residuel doit être la VUE M135 (comme en prod), pas une table"
+
+
+# ───────────────────────── C01 — « Autour, à moins de 100 m » : des MUTATIONS, pas des lignes
+
+@pytest.fixture
+def dvf_eclatee_seed(engine):
+    """Deux parcelles voisines ; une mutation d'immeuble ÉCLATÉE en 60 lignes sur la seconde."""
+    g1 = ("SRID=4326;POLYGON((55.280 -21.020, 55.2803 -21.020, 55.2803 -21.0203, "
+          "55.280 -21.0203, 55.280 -21.020))")
+    g2 = ("SRID=4326;POLYGON((55.2804 -21.020, 55.2807 -21.020, 55.2807 -21.0203, "
+          "55.2804 -21.0203, 55.2804 -21.020))")
+    i1, i2 = "97415000ZZ9907", "97415000ZZ9908"
+    with engine.begin() as c:
+        # aligne le schéma de test sur la prod (geom_2975 ajouté par migration en prod)
+        c.execute(text("ALTER TABLE sitadel_permits ADD COLUMN IF NOT EXISTS "
+                       "geom_2975 geometry(Geometry, 2975)"))
+        pids = []
+        for idu, g in ((i1, g1), (i2, g2)):
+            pids.append(c.execute(text(
+                "INSERT INTO parcels (idu, commune, section, numero, geom, geom_2975, surface_m2, centroid) "
+                "VALUES (:i, 'Saint-Paul', 'ZZ', :num, ST_GeomFromEWKT(:g), "
+                "        ST_Transform(ST_GeomFromEWKT(:g), 2975), 900, "
+                "        ST_Centroid(ST_GeomFromEWKT(:g))) "
+                "ON CONFLICT (idu) DO UPDATE SET commune = EXCLUDED.commune RETURNING id"),
+                {"i": idu, "g": g, "num": idu[-4:]}).scalar())
+        for _ in range(60):   # la vente d'immeuble : 60 lignes identiques (lots × nature_culture)
+            c.execute(text(
+                "INSERT INTO dvf_mutations_parcelle (id_mutation, date_mutation, nature_mutation, "
+                " valeur_fonciere, id_parcelle, type_local, surface_reelle_bati, surface_terrain, millesime) "
+                "VALUES ('TESTC01-1', current_date - 30, 'Vente', 10000000, :i, 'Dépendance', 25, 500, 2026)"),
+                {"i": i2})
+        c.execute(text(
+            "INSERT INTO dvf_mutations_parcelle (id_mutation, date_mutation, nature_mutation, "
+            " valeur_fonciere, id_parcelle, type_local, surface_reelle_bati, surface_terrain, millesime) "
+            "VALUES ('TESTC01-2', current_date - 60, 'Vente', 200000, :i, 'Maison', 90, 500, 2026)"),
+            {"i": i2})
+    yield i1, i2
+    with engine.begin() as c:
+        c.execute(text("DELETE FROM dvf_mutations_parcelle WHERE id_mutation LIKE 'TESTC01-%'"))
+        c.execute(text("DELETE FROM parcels WHERE idu IN (:a, :b)"), {"a": i1, "b": i2})
+
+
+def test_c01_voisinage_compte_des_mutations(engine, dvf_eclatee_seed):
+    i1, _ = dvf_eclatee_seed
+    from labuse.api.site_voisinage import voisinage_proche
+    from labuse.db import session_factory
+    db = session_factory()()
+    try:
+        v = voisinage_proche(db, i1)
+    finally:
+        db.close()
+    assert v is not None
+    # 61 lignes DVF mais DEUX mutations : le compteur dit 2, jamais 61
+    assert v["ventes_dvf"] == 2, v
+
+
+# ───────────────────────── C02 — prix/m² de la dernière mutation = totaux de la MUTATION
+
+def test_c02_vue_prix_m2_sur_totaux_mutation(engine, dvf_eclatee_seed):
+    from labuse.ingestion.dvf_marche import ensure_dvf_views
+    ensure_dvf_views(engine)
+    _, i2 = dvf_eclatee_seed
+    with engine.begin() as c:
+        c.execute(text(
+            "INSERT INTO dvf_mutations_parcelle (id_mutation, date_mutation, nature_mutation, "
+            " valeur_fonciere, id_parcelle, type_local, surface_reelle_bati, surface_terrain, millesime) "
+            "SELECT 'TESTC01-3', current_date - 10, 'Vente', 400000, idu, 'Maison', 80, 100, 2026 "
+            "FROM (VALUES ('97415000ZZ9907'), ('97415000ZZ9907')) v(idu)"))   # ligne dupliquée ×2
+        c.execute(text(
+            "INSERT INTO dvf_mutations_parcelle (id_mutation, date_mutation, nature_mutation, "
+            " valeur_fonciere, id_parcelle, type_local, surface_reelle_bati, surface_terrain, millesime) "
+            "VALUES ('TESTC01-3', current_date - 10, 'Vente', 400000, '97415000ZZ9908', NULL, NULL, 300, 2026)"))
+    with engine.connect() as c:
+        row = c.execute(text(
+            "SELECT valeur, prix_m2_bati, prix_m2_terrain, multi_parcelles, n_parcelles "
+            "FROM v_parcel_dvf_last WHERE idu = '97415000ZZ9907'")).mappings().first()
+    assert row is not None
+    assert row["multi_parcelles"] is True and row["n_parcelles"] == 2
+    # bâti : lignes dupliquées DÉDUPLIQUÉES (80, pas 160) → 400000/80 = 5000
+    assert row["prix_m2_bati"] == 5000, dict(row)
+    # terrain : somme des parcelles de la mutation (100 + 300) → 400000/400 = 1000
+    assert row["prix_m2_terrain"] == 1000, dict(row)

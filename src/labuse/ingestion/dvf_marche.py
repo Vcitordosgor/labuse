@@ -26,23 +26,47 @@ FENETRE = "2021-2025"   # EXPORTS-REBRANCHEMENT-1 lot 0 — plus de « (millési
 
 
 def ensure_dvf_views(engine) -> None:
-    """Vue par parcelle — dernière mutation observée (fenêtre 2021-2025)."""
+    """Vue par parcelle — dernière mutation observée (fenêtre 2021-2025).
+
+    CHASSE-FIX-1 (C02) — le €/m² se calcule sur la MUTATION ENTIÈRE, jamais « valeur totale
+    ÷ surfaces d'UNE parcelle » (41 % des parcelles sont en mutation multi-parcelles : le
+    ratio était faux par construction). Dénominateurs :
+      · bâti  = somme des lignes DÉDUPLIQUÉES (id_parcelle, type_local, surface) sur TOUTES
+        les parcelles de la mutation (les répétitions par nature_culture gonflaient ~9 %) ;
+      · terrain = somme des terrains par parcelle (max par parcelle : la ligne répète le
+        terrain de SA parcelle), sur toutes les parcelles de la mutation.
+    `n_parcelles` est servi pour que les lecteurs écrivent « vente groupée (N parcelles) »."""
     with engine.begin() as c:
         c.execute(text(
             """
             CREATE OR REPLACE VIEW v_parcel_dvf_last AS
-            WITH nb_parcelles AS (
-              SELECT id_mutation, count(DISTINCT id_parcelle) AS n_parcelles
-              FROM dvf_mutations_parcelle GROUP BY id_mutation
+            WITH lignes_dedup AS (           -- 1 ligne par local réel (répétitions nature_culture ôtées)
+              SELECT DISTINCT id_mutation, id_parcelle, type_local,
+                     COALESCE(surface_reelle_bati,0) AS bati_l
+              FROM dvf_mutations_parcelle
+            ),
+            bati_mutation AS (
+              SELECT id_mutation, sum(bati_l) AS bati_m2 FROM lignes_dedup GROUP BY id_mutation
+            ),
+            terrain_parcelle AS (            -- le terrain est répété ligne à ligne : max PAR parcelle
+              SELECT id_mutation, id_parcelle, max(COALESCE(surface_terrain,0)) AS terr_p
+              FROM dvf_mutations_parcelle GROUP BY id_mutation, id_parcelle
+            ),
+            mutation_tot AS (
+              SELECT id_mutation, count(*) AS n_parcelles, sum(terr_p) AS terrain_m2
+              FROM terrain_parcelle GROUP BY id_mutation
             ),
             par_mutation AS (
               SELECT d.id_parcelle, d.id_mutation, d.date_mutation,
                      max(d.nature_mutation)                AS nature,
                      max(d.valeur_fonciere)                AS valeur,
-                     sum(COALESCE(d.surface_reelle_bati,0)) AS bati_m2,
-                     max(COALESCE(d.surface_terrain,0))     AS terrain_m2,
-                     max(np.n_parcelles) > 1                AS multi_parcelles
-              FROM dvf_mutations_parcelle d JOIN nb_parcelles np USING (id_mutation)
+                     max(bm.bati_m2)                       AS bati_m2,
+                     max(mt.terrain_m2)                    AS terrain_m2,
+                     max(mt.n_parcelles)                   AS n_parcelles,
+                     max(mt.n_parcelles) > 1               AS multi_parcelles
+              FROM dvf_mutations_parcelle d
+              JOIN mutation_tot mt USING (id_mutation)
+              LEFT JOIN bati_mutation bm USING (id_mutation)
               GROUP BY d.id_parcelle, d.id_mutation, d.date_mutation
             ),
             derniere AS (
@@ -51,7 +75,8 @@ def ensure_dvf_views(engine) -> None:
             )
             SELECT id_parcelle AS idu, date_mutation, nature, valeur, multi_parcelles,
                    CASE WHEN bati_m2   > 0 THEN round(valeur / bati_m2)   END AS prix_m2_bati,
-                   CASE WHEN terrain_m2 > 0 THEN round(valeur / terrain_m2) END AS prix_m2_terrain
+                   CASE WHEN terrain_m2 > 0 THEN round(valeur / terrain_m2) END AS prix_m2_terrain,
+                   n_parcelles
             FROM derniere
             """))
 

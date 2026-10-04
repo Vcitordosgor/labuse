@@ -124,15 +124,20 @@ _ABSENCE_CLAIR = {
     # EXPORTS-FIX-1 B5 — `dispositifs_parcelle` = les SERVITUDES d'utilité publique (SUP) seules ;
     # ER/EBC/DPU/PEB sont des lignes distinctes avec leur propre absence. La phrase ne doit donc
     # PAS revendiquer « aucune prescription (ER/EBC/DPU/PEB) » quand un DPU, lui, est présent.
-    "dispositifs_parcelle": "Aucune servitude d'utilité publique (SUP) intersectant la parcelle.",
+    # CHASSE-FIX-1 (C23) — l'absence est conditionnée aux assiettes PUBLIÉES (couverture
+    # partielle par construction) ; le « non couvert commune » voyage par sup_etat/cascade.
+    "dispositifs_parcelle": ("Aucune servitude d'utilité publique (SUP) intersectant la parcelle, "
+                             "sur les assiettes publiées pour la commune (GPU)."),
     # EXPORTS-FIX-1 C4 — la RTAA DOM s'applique à TOUT logement neuf : jamais « aucune exigence ».
     "rtaa_exigences": ("RTAA DOM : conception réglementée pour tout logement neuf (aération "
                        "traversante, protection solaire, eau chaude solaire) — à intégrer au projet."),
     # EXPORTS-FIX-1-BIS point 3 — la ligne « insuffisant » du terrain nu nomme SON périmètre (rayon
     # 500 m, le même que l'ancien bâti secteur), pas un « secteur » ambigu avec le « secteur cadastral »
     # des médianes par type.
-    "prix_terrain_secteur_eur_m2": ("Terrain nu — à moins de 500 m : échantillon DVF insuffisant "
-                                    "pour une médiane fiable."),
+    # CHASSE-FIX-1 (C12) — le périmètre RÉEL est la section cadastrale (repli commune),
+    # jamais un rayon : dvf_secteur_medianes est clé left(idu,10) (registre/lectures.py).
+    "prix_terrain_secteur_eur_m2": ("Terrain nu — section cadastrale : échantillon DVF "
+                                    "insuffisant pour une médiane fiable."),
 }
 
 #: EXPORTS-FIX-1 C3 — le SAR n'est pas en base : la ligne « Aucune divergence SAR indiquée » ne

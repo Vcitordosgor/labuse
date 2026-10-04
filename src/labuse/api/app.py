@@ -4102,7 +4102,8 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
     pm_historique = _pm_historique(db, idu)
     # LOT 1 (data-gap) : dernière mutation DVF de LA parcelle + médianes du secteur cadastral.
     dvf_last = db.execute(text(
-        "SELECT date_mutation, nature, valeur, prix_m2_bati, prix_m2_terrain, multi_parcelles "
+        "SELECT date_mutation, nature, valeur, prix_m2_bati, prix_m2_terrain, multi_parcelles, "
+        "       n_parcelles "
         "FROM v_parcel_dvf_last WHERE idu = :idu"), {"idu": idu}).mappings().first()
     dvf_secteur = [dict(r) for r in db.execute(text(
         "SELECT type_bien, n_ventes, mediane_valeur, mediane_prix_m2, fenetre "
@@ -4643,10 +4644,20 @@ def _dispositifs_block(db: Session, idu: str) -> dict | None:
     sup_vus: set[tuple] = set()
     sup = [s for s in sup
            if (cle := (s["categorie"], s["libelle"])) not in sup_vus and not sup_vus.add(cle)]
+    # CHASSE-FIX-1 (C23) — même honnêteté que le DPU pour les SUP : une liste vide ne dit
+    # « aucune » QUE si la commune a des assiettes publiées ; sinon l'état « non couvert »
+    # est servi (l'absence de donnée n'est pas une absence de servitude).
+    sup_etat = "servi" if sup else (
+        "hors" if db.execute(text(
+            "SELECT 1 FROM spatial_layers WHERE kind = 'sup' AND commune = :c LIMIT 1"),
+            {"c": commune}).first() else "non_couvert")
     return {
         "er": er or None,
         "ebc": ebc or None,
         "dpu": dpu_etat,
+        "sup_etat": sup_etat,
+        "sup_note": ("SUP : non couvert par la source sur cette commune (assiettes GPU)."
+                     if sup_etat == "non_couvert" else None),
         "plu_procedure": _PLU_PROCEDURES.get(commune or ""),
         "peb": ({"zone": peb["zone"], "part_pct": peb["part_pct"], "libelle": peb["libelle"]}
                 if peb else

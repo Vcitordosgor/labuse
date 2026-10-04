@@ -562,8 +562,11 @@ def _marche(db: Session, idu: str, avail: set[str]) -> dict | None:
            # MANDAT_DVF-B — la réserve de méthode DVF voyage avec le chiffre (helper unique).
            "reserve": _reserve_dvf()}
     if "v_parcel_dvf_last" in avail:
+        # CHASSE-FIX-1 (C02) — le flash sert AUSSI le drapeau multi_parcelles + n_parcelles
+        # (avant : prix/m² d'une mutation groupée servi SANS la mention, seul lecteur à l'omettre).
         last = db.execute(text(
-            "SELECT date_mutation, nature, valeur, prix_m2_bati, prix_m2_terrain "
+            "SELECT date_mutation, nature, valeur, prix_m2_bati, prix_m2_terrain, "
+            "       multi_parcelles, n_parcelles "
             "FROM v_parcel_dvf_last WHERE idu = :idu"), {"idu": idu}).mappings().first()
         if last:
             dm = last["date_mutation"]
