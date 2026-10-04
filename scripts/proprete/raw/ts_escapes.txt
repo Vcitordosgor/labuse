@@ -1,0 +1,8 @@
+=== MEASURE 5: escape hatches ===
+: any                count=45 files=14
+as any               count=21 files=8
+@ts-ignore           count=0 files=0
+@ts-expect-error     count=0 files=0
+eslint-disable       count=39 files=22
+--- any total (: any OR as any) files ---
+16

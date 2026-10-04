@@ -1,0 +1,2 @@
+748 files would be reformatted, 16 files already formatted
+... [diffs retirés — résumé seul ; rejouer: uvx ruff format --check src/labuse scripts]

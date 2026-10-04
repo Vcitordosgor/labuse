@@ -1,0 +1,119 @@
+src/labuse/mail.py:130:        from .api.events import creer_notification
+src/labuse/circuit_verrous.py:882:            from .api.app import app as _app
+src/labuse/coherence_flux.py:42:    from .api import sante
+src/labuse/sonde_circuit.py:166:        from .api.app import _foncier_commune
+src/labuse/sonde_circuit.py:240:        from .api.app import app
+src/labuse/sonde_circuit.py:393:        from .api.app import app
+src/labuse/fraicheur_caches.py:128:    from .api.tiles import tuiles_etat
+src/labuse/fraicheur_caches.py:368:    from .api.tiles import rebuild_mvt_servies, tuiles_etat
+src/labuse/fraicheur_caches.py:399:        from .api.app import _ensure_contexte_cache, rafraichir_contexte_cache
+src/labuse/cli.py:995:    from .api.tiles import RUN
+src/labuse/cli.py:1080:    from .api.tiles import RUN
+src/labuse/cli.py:1115:    from .api.tiles import rebuild_mvt_servies
+src/labuse/cli.py:1117:    # DONNEES-2 (B1) — défaut = run SERVI, lu VIVANT via runs.current() (l'ancien `from .api.tiles
+src/labuse/cli.py:1262:    from .api.tiles import warm_parcel_tiles
+src/labuse/cli.py:2659:    from .api.app import _build_fiche
+src/labuse/cli.py:2660:    from .api.enrichment import enrichment_cached
+src/labuse/cli.py:2661:    from .api.export import fiche_html, fiche_markdown
+src/labuse/cli.py:3199:    from .api.events import detect_events, ensure_tables, run_precedent_servi
+src/labuse/cli.py:3200:    from .api.tiles import RUN
+src/labuse/cli.py:3239:    from .api.events import _ensure_cols, ensure_tables
+src/labuse/cli.py:3287:    from .api.events import creer_notification, ensure_tables
+src/labuse/cli.py:3308:    from .api.events import ensure_tables, evaluer_suivis
+src/labuse/cli.py:3324:    from .api.events import ensure_tables, notifier_fraicheur
+src/labuse/cli.py:3339:    from .api.events import ensure_tables, purge_notifications
+src/labuse/cli.py:3360:    from .api.events import ensure_tables, envoyer_digests
+src/labuse/cli.py:3397:    from .api.events import apercu_annonce, ensure_tables, envoyer_annonce
+src/labuse/cli.py:3602:    from .api.protection import ensure_tables as prot_ensure
+src/labuse/cli.py:3603:    from .api.protection import scan_abus
+src/labuse/cli.py:4383:    from .api import division_review
+src/labuse/facturation.py:213:        from .api.app import parcel_fiche as _parcel_fiche
+src/labuse/marche_service.py:137:        from .api.site_voisinage import voisinage_proche
+src/labuse/marche_service.py:302:        from .api.site_voisinage import voisinage_proche
+src/labuse/marque.py:65:        from .api.tenant import current_compte   # M-K (P2-65) : chemin unique de résolution du compte
+src/labuse/demo.py:194:        from .api.export import fiche_html, fiche_markdown
+src/labuse/flux.py:242:    from .api.dashboard import _relance_pour
+src/labuse/quota.py:42:        from .api.auth import session_info
+src/labuse/circuit_tuiles.py:399:    from .api import couches_tuyau as tuyau
+src/labuse/circuit_tuiles.py:448:    from .api import couches_tuyau as tuyau
+src/labuse/exports/builder.py:391:        from ..api.plan_situation import plan_ortho
+src/labuse/jobs_impl.py:140:    from .api.app import rafraichir_contexte_cache
+src/labuse/jobs_impl.py:218:    from .api.events import ensure_tables
+src/labuse/jobs_impl.py:230:    from .api.events import ensure_tables, evaluer_suivis as _eval
+src/labuse/jobs_impl.py:250:    from .api.events import detect_events as _detect, ensure_tables
+src/labuse/jobs_impl.py:274:    from .api.events import ensure_tables, envoyer_digests
+src/labuse/jobs_impl.py:354:    from .api import sante
+src/labuse/jobs_impl.py:360:        from .api.events import creer_notification
+src/labuse/jobs_impl.py:391:        from .api.events import creer_notification
+src/labuse/jobs_impl.py:730:        from .api.events import creer_notification
+src/labuse/jobs_impl.py:738:        from .api.events import creer_notification
+src/labuse/jobs_impl.py:773:        from .api.events import creer_notification
+src/labuse/exports/robinet_fiche.py:686:            from ..api.gabarit import _bati_existant
+src/labuse/bascule_flux.py:68:    from .api import projets as _projets
+src/labuse/bascule_flux.py:71:    from .api import accueil as _accueil
+src/labuse/bascule_flux.py:76:    from .api import protection as _protection
+src/labuse/bascule_flux.py:78:    from .api import tiles as _tiles
+src/labuse/alertes.py:135:    from .api import events as _events
+src/labuse/alertes.py:152:    from .api.events import creer_notification
+src/labuse/copilote_v2/outils.py:145:    from ..api.app import FiltreCriteres, filtre
+src/labuse/copilote_v2/outils.py:294:    from ..api.modules import patrimoine
+src/labuse/copilote_v2/outils.py:341:    from ..api.app import _q_v2_fiche
+src/labuse/copilote_v2/outils.py:358:    from ..api.app import commune_contexte
+src/labuse/copilote_v2/outils.py:378:    from ..api.modules import velocite
+src/labuse/copilote_v2/outils.py:576:        from ..api.modules import prospection_piscines
+src/labuse/copilote_v2/outils.py:598:        from ..api.modules import permis as _permis_endpoint
+src/labuse/sentinelle.py:956:    from .api.events import creer_notification
+src/labuse/sentinelle.py:983:    from .api.events import creer_notification
+src/labuse/coherence_journal.py:68:            from .api.events import creer_notification
+src/labuse/flash/data.py:20:from ..api.export_commun import nettoyer_libelle_client  # M127-A3 — meme hygiene de libelle que la fiche
+src/labuse/flash/data.py:149:    from ..api.served_cascade import served_cascade_lines, served_group
+src/labuse/flash/data.py:246:            from ..api.projets import _residuel_run_servi
+src/labuse/flash/data.py:392:    from ..api.served_cascade import served_cascade_lines, served_group
+src/labuse/flash/data.py:435:    from ..api.served_cascade import served_cascade_lines, served_group
+src/labuse/flash/data.py:463:        from ..api.marche_bloc import bloc_condense
+src/labuse/flash/data.py:494:    from ..api.mon_secteur import medianes_par_type
+src/labuse/flash/data.py:948:        from ..api.export_commun import adresse_ban_texte
+src/labuse/ingestion/fraicheur.py:284:            from ..api.events import creer_notification
+src/labuse/plu_reglement.py:124:        from .api.export_commun import purger_marqueurs_internes
+src/labuse/flash/report.py:49:    from ..api.pdf_premium import _LOGO_PTS
+src/labuse/flash/report.py:102:    from ..api.export_commun import SOURCES_ATTRIBUTION  # source unique (M6 2a)
+src/labuse/flash/report.py:106:    from ..api.blocs_documents import BLOC_CSS       # M73-G — habillage des blocs, écrit une fois
+src/labuse/flash/report.py:108:    from ..api.export_commun import LIMITES_TITRE, limites_document   # M73 §5 (source unique)
+src/labuse/flash/report.py:111:    from ..api.blocs_documents import anc_bloc_html, rehab_bloc_html
+src/labuse/pige/digests.py:30:from ..api.events import creer_notification
+src/labuse/pige/digests.py:385:    from ..api.events import _notif_token, creer_notification
+src/labuse/pige/digests.py:459:    from ..api.events import creer_notification
+src/labuse/scoring/backtest.py:32:    from ..api.app import _score_v2_run_id
+src/labuse/pige/signaux.py:213:    from ..api.moteurs import _BAROMETRE_RETENUE
+src/labuse/scoring/dryrun.py:272:    from ..api.tiles import build_mvt_table
+src/labuse/pige/marche.py:158:    from ..api.comparateur import raw_rows
+src/labuse/copilote_v2/resume_fiche.py:76:    from ..api.app import _q_v2_fiche
+src/labuse/copilote_v2/resume_fiche.py:165:    from ..api.app import commune_contexte
+src/labuse/copilote_v2/veilles.py:126:        from ..api.events import creer_notification
+src/labuse/pige/api.py:54:    from ..api.auth import exiger_admin
+src/labuse/pige/api.py:69:    from ..api.auth import exiger_admin
+src/labuse/pige/api.py:254:    from ..api.auth import exiger_admin
+src/labuse/pige/api.py:266:    from ..api.auth import exiger_admin
+src/labuse/pige/api.py:288:    from ..api.auth import exiger_admin
+src/labuse/pige/api.py:325:    from ..api.auth import exiger_admin
+src/labuse/pige/api.py:337:    from ..api.auth import exiger_admin
+src/labuse/pige/api.py:360:    from ..api.auth import exiger_admin
+src/labuse/pige/api.py:375:    from ..api.auth import exiger_admin
+src/labuse/pige/api.py:533:    from ..api.tenant import current_compte
+src/labuse/pige/api.py:547:    from ..api.auth import exiger_admin
+src/labuse/pige/api.py:627:    from ..api.auth import exiger_admin
+src/labuse/pige/api.py:671:    from ..api.auth import exiger_admin
+src/labuse/pige/api.py:695:    from ..api.auth import exiger_admin
+src/labuse/pige/api.py:736:    from ..api.tenant import current_compte
+src/labuse/pige/api.py:765:    from ..api.tenant import current_compte
+src/labuse/pige/api.py:780:    from ..api.tenant import current_compte
+src/labuse/pige/api.py:788:    from ..api.tenant import current_compte
+src/labuse/pige/api.py:803:    from ..api.tenant import current_compte
+src/labuse/pige/api.py:818:    from ..api.tenant import current_compte
+src/labuse/pige/api.py:830:    from ..api.tenant import current_compte
+src/labuse/pige/api.py:842:    from ..api.tenant import current_compte
+src/labuse/pige/api.py:911:    from ..api.auth import exiger_admin
+src/labuse/pige/api.py:985:    from ..api.auth import exiger_admin
+src/labuse/pige/api.py:999:    from ..api.auth import exiger_admin
+src/labuse/pige/api.py:1063:    from ..api.tenant import current_compte
+src/labuse/promo/rattachement.py:34:    from ..api.veille_promoteurs import _operations, _TOUS_GROUPES

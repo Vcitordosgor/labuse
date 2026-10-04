@@ -1,0 +1,22 @@
+relname	indexrelname	sz	idx_scan
+p_model_candidates	ix_pmc_annee	179 MB	0
+tuyau_subdivise	tuyau_subdivise_gix	91 MB	0
+parcel_p_score_v2	ix_p_v2_run_tier	70 MB	0
+parcel_couche_intersection	parcel_couche_intersection_build_geom_2975_idx	65 MB	0
+score_snapshot_parcelles	ix_score_snapshot_parcelles_parcelle_id	52 MB	0
+score_snapshot_parcelles	ix_score_snapshot_parcelles_snapshot_id	29 MB	0
+p_model_dataset_v2	p_model_dataset_v2_annee_idx	29 MB	0
+p_model_dataset_v2bis	p_model_dataset_v2bis_annee_idx	29 MB	0
+qa_cadastre_bati	qa_cadastre_bati_geom_idx	25 MB	0
+ban_plus_liens	ix_ban_plus_rnb	21 MB	0
+parcel_v_score	ix_parcel_v_score_band	20 MB	0
+ocsge_sol	ix_ocsge_sol_geom	18 MB	0
+parcel_adjacence	parcel_adjacence_pb_idx	16 MB	0
+parcel_adjacence	parcel_adjacence_pa_idx	15 MB	0
+p_model_dataset	p_model_dataset_annee_idx	14 MB	0
+parcel_couche_intersection	parcel_couche_intersection_build_kind_subtype_idx	11 MB	0
+parcel_residuel_bati	ix_prb_residuel	7384 kB	0
+p_model_ext_dvf	p_model_ext_dvf_id_parcelle_date_mutation_idx	5768 kB	0
+parcel_viabilisation	ix_parcel_viab_commune	5752 kB	0
+parcel_viabilisation	ix_parcel_viab_band	5344 kB	0
+(20 rows)

@@ -1,0 +1,25 @@
+=== MEASURE 7: hardcoded styles ===
+-- hex colors in src (ALL) --
+707
+-- hex colors in src EXCLUDING components/ui/ --
+707
+-- top 10 files by hex count (outside ui/) --
+ 102 components/map/MapView.tsx
+  68 lib/mapTheme.ts
+  67 components/projets/ParcoursProjet.tsx
+  62 lib/tokens.ts
+  60 lib/status.ts
+  50 components/fiche/FinancierQuestionnaire.tsx
+  37 components/projets/ProjetsPanel.tsx
+  37 components/fiche/constructibilite.tsx
+  27 components/fiche/Fiche.tsx
+  25 components/map/CouchesTuyau.tsx
+-- tailwind hardcoded color classes (bg-/text-/border- with color-number) outside ui/ --
+10
+-- tailwind token/semantic usage (var-based: bg-[var / custom theme names) estimate: arbitrary [var(--...)] --
+0
+-- top 5 files by tailwind-hardcoded-color count (outside ui/) --
+   4 components/outils/ProspectionSolaire.tsx
+   2 components/outils/moteurs.tsx
+   2 components/outils/Successions.tsx
+   2 components/outils/Blocs.tsx

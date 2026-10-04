@@ -1,0 +1,24 @@
+npm warn exec The following package was not found and will be installed: madge@8.0.0
+- Finding files
+Processed 211 files (4.6s) 
+
+✖ Found 17 circular dependencies!
+
+1) components/admin/AdminView.tsx > components/admin/Contacts.tsx
+2) components/admin/AdminView.tsx > components/admin/Contacts.tsx > components/shared/ContactEdit.tsx
+3) components/admin/AdminView.tsx > components/admin/Courrier.tsx
+4) components/admin/AdminView.tsx > components/admin/Donnees.tsx > components/admin/circuit/Circuit.tsx > components/admin/Destinations.tsx
+5) components/admin/circuit/Circuit.tsx > components/admin/circuit/Sources.tsx
+6) components/admin/AdminView.tsx > components/admin/Ia.tsx
+7) components/admin/AdminView.tsx > components/admin/Licences.tsx
+8) components/admin/AdminView.tsx > components/admin/Produit.tsx
+9) components/admin/AdminView.tsx > components/admin/Radar.tsx
+10) components/outils/ModulePanel.tsx > components/outils/Blocs.tsx
+11) components/fiche/Fiche.tsx > components/fiche/autour.tsx > components/fiche/PermitsProximityBlock.tsx > components/outils/ModulePanel.tsx > components/outils/CalculetteFonciere.tsx
+12) components/fiche/Fiche.tsx > components/fiche/autour.tsx > components/fiche/PermitsProximityBlock.tsx > components/outils/ModulePanel.tsx > components/outils/M22Programme.tsx
+13) components/outils/ModulePanel.tsx > components/outils/Plu.tsx > components/outils/ProcedureChangement.tsx
+14) components/outils/ModulePanel.tsx > components/outils/ScanPatrimoine.tsx
+15) components/outils/ModulePanel.tsx > components/outils/Successions.tsx
+16) components/radar/RadarHub.tsx > components/radar/RadarEcran.tsx > components/radar/RadarMarcheColonne.tsx
+17) components/radar/RadarHub.tsx > components/radar/VeilleEcrans.tsx
+

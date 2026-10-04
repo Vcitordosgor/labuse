@@ -1,0 +1,441 @@
+error[io]: `/Users/openclaw/Desktop/labuse-proprete/src/labuse/residuel.py`: No such file or directory (os error 2)
+
+error[invalid-argument-type]: Method `__getitem__` of type `bound method dict[int, dict[int, dict[Unknown, Unknown]]].__getitem__(key: int, /) -> dict[int, dict[Unknown, Unknown]]` cannot be called with key of type `float*` on object of type `dict[int, dict[int, dict[Unknown, Unknown]]]`
+   --> src/labuse/cascade/context.py:439:20
+    |
+439 |             return self._dvf[radius_m].get(parcel_id, {"count": 0, "median_value": None, "median_eur_m2": None})
+    |                    ^^^^^^^^^
+
+error[unresolved-attribute]: Attribute `get` is not defined on `None` in union `dict[Unknown, Unknown] | None`
+  --> src/labuse/cascade/layers/etage2.py:56:58
+   |
+56 |                           "v_foncier_propension_vendre", pr.get("siren"))
+   |                                                          ^^^^^^
+
+error[unresolved-attribute]: Attribute `subtype` is not defined on `None` in union `Any | None`
+   --> src/labuse/cascade/layers/phase1.py:289:20
+    |
+289 |             lib = (_dominant(an).subtype or "").strip()
+    |                    ^^^^^^^^^^^^^^^^^^^^^
+
+error[unresolved-attribute]: Attribute `subtype` is not defined on `None` in union `Any | None`
+   --> src/labuse/cascade/layers/phase1.py:341:23
+    |
+341 |             lib_an = (_dominant(an).subtype or "").strip()
+    |                       ^^^^^^^^^^^^^^^^^^^^^
+
+error[unresolved-attribute]: Attribute `subtype` is not defined on `None` in union `Any | None`
+   --> src/labuse/cascade/layers/phase1.py:349:20
+    |
+349 |             lib = (_dominant(uau).subtype or "").strip()
+    |                    ^^^^^^^^^^^^^^^^^^^^^^
+
+error[unresolved-attribute]: Attribute `subtype` is not defined on `None` in union `Any | None`
+   --> src/labuse/cascade/layers/phase1.py:365:20
+    |
+365 |             lib = (_dominant(an).subtype or "").strip()
+    |                    ^^^^^^^^^^^^^^^^^^^^^
+
+error[unresolved-attribute]: Attribute `subtype` is not defined on `None` in union `Any | None`
+   --> src/labuse/cascade/layers/phase1.py:372:20
+    |
+372 |         libelle = (_dominant(inter).subtype or "").strip()
+    |                    ^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[invalid-assignment]: Invalid subscript assignment with key of type `Unknown` and value of type `ZoneRules | None` on object of type `dict[str, ZoneRules]`
+   --> src/labuse/faisabilite/zonage.py:486:9
+    |
+486 |         out[code] = _appliquer_calibrage(_zone_rules_from_regles(commune, code, zc), code, commune)
+    |         ^^^^^^^^^^^^-------------------------------------------------------------------------------
+    |                     |
+    |                     Expected value of type `ZoneRules`, got `ZoneRules | None`
+
+error[invalid-argument-type]: Argument to function `_load_run` is incorrect
+   --> src/labuse/scoring/arene.py:170:44
+    |
+170 |     champ, chall, lab = _load_run(session, champion), _load_run(session, challenger), _load_labels(session, eval_year)
+    |                                            ^^^^^^^^ Expected `str`, found `str | None`
+info: element `None` of union `str | None` is not assignable to `str`
+info: Function defined here
+  --> src/labuse/scoring/arene.py:57:5
+   |
+57 | def _load_run(session: Session, run_id: str) -> pd.DataFrame:
+   |     ^^^^^^^^^                   ----------- Parameter declared here
+
+error[no-matching-overload]: No overload of `dict.__init__` matches arguments
+  --> src/labuse/scoring/backtest.py:36:11
+   |
+36 |       tot = dict(db.execute(text(
+   |  ___________^
+37 | |         "SELECT tier, count(*) FROM parcel_p_score_v2 WHERE run_id=:v GROUP BY tier"), {"v": v2}).all())
+   | |________________________________________________________________________________________________________^
+info: First overload defined here
+    --> stdlib/builtins.pyi:3103:5
+     |
+3103 | /     @overload
+3104 | |     def __init__(self, /) -> None: ...
+     | |______________________________________^ First overload defined here
+info: Possible overloads for bound method `__init__`:
+info:   (self, /) -> None
+info:   (self: dict[str, _VT@dict], /, **kwargs: _VT@dict) -> None
+info:   (self, map: SupportsKeysAndGetItem[_KT@dict, _VT@dict], /) -> None
+info:   (self: dict[str, _VT@dict], map: SupportsKeysAndGetItem[str, _VT@dict], /, **kwargs: _VT@dict) -> None
+info:   (self, iterable: Iterable[tuple[_KT@dict, _VT@dict]], /) -> None
+info:   (self: dict[str, _VT@dict], iterable: Iterable[tuple[str, _VT@dict]], /, **kwargs: _VT@dict) -> None
+info:   (self: dict[str, str], iterable: Iterable[list[str]], /) -> None
+info:   (self: dict[bytes, bytes], iterable: Iterable[list[bytes]], /) -> None
+
+error[no-matching-overload]: No overload of `dict.__init__` matches arguments
+  --> src/labuse/scoring/backtest.py:38:11
+   |
+38 |       mut = dict(db.execute(text(f"""
+   |  ___________^
+39 | |         SELECT s.tier, count(DISTINCT p.idu)
+40 | |         FROM dvf_mutations d
+41 | |         JOIN parcels p ON ST_Contains(p.geom, d.geom)
+42 | |         JOIN parcel_p_score_v2 s ON s.parcelle_id=p.idu AND s.run_id=:v
+43 | |         WHERE {_VENTE} GROUP BY s.tier"""), {"v": v2, "cut": cut}).all())
+   | |_________________________________________________________________________^
+info: First overload defined here
+    --> stdlib/builtins.pyi:3103:5
+     |
+3103 | /     @overload
+3104 | |     def __init__(self, /) -> None: ...
+     | |______________________________________^ First overload defined here
+info: Possible overloads for bound method `__init__`:
+info:   (self, /) -> None
+info:   (self: dict[str, _VT@dict], /, **kwargs: _VT@dict) -> None
+info:   (self, map: SupportsKeysAndGetItem[_KT@dict, _VT@dict], /) -> None
+info:   (self: dict[str, _VT@dict], map: SupportsKeysAndGetItem[str, _VT@dict], /, **kwargs: _VT@dict) -> None
+info:   (self, iterable: Iterable[tuple[_KT@dict, _VT@dict]], /) -> None
+info:   (self: dict[str, _VT@dict], iterable: Iterable[tuple[str, _VT@dict]], /, **kwargs: _VT@dict) -> None
+info:   (self: dict[str, str], iterable: Iterable[list[str]], /) -> None
+info:   (self: dict[bytes, bytes], iterable: Iterable[list[bytes]], /) -> None
+
+error[invalid-argument-type]: Argument to function `classer_verdict` is incorrect
+   --> src/labuse/scoring/cascade_v2.py:100:30
+    |
+100 |         vv = classer_verdict(v.get("layer_name"), v.get("result"), v.get("detail"),
+    |                              ^^^^^^^^^^^^^^^^^^^ Expected `str`, found `Unknown | None`
+info: element `None` of union `Unknown | None` is not assignable to `str`
+info: Function defined here
+  --> src/labuse/scoring/cascade_v2.py:74:5
+   |
+74 | def classer_verdict(layer_name: str, result: str, detail: str | None = None,
+   |     ^^^^^^^^^^^^^^^ --------------- Parameter declared here
+
+error[invalid-argument-type]: Argument to function `classer_verdict` is incorrect
+   --> src/labuse/scoring/cascade_v2.py:100:51
+    |
+100 |         vv = classer_verdict(v.get("layer_name"), v.get("result"), v.get("detail"),
+    |                                                   ^^^^^^^^^^^^^^^ Expected `str`, found `Unknown | None`
+info: element `None` of union `Unknown | None` is not assignable to `str`
+info: Function defined here
+  --> src/labuse/scoring/cascade_v2.py:74:5
+   |
+74 | def classer_verdict(layer_name: str, result: str, detail: str | None = None,
+   |     ^^^^^^^^^^^^^^^                  ----------- Parameter declared here
+
+error[invalid-argument-type]: Argument to function `positive` is incorrect
+  --> src/labuse/scoring/feedback.py:47:53
+   |
+47 |     verdict = (positive("feedback_terrain", detail, None) if adj > 0
+   |                                                     ^^^^ Expected `str`, found `None`
+info: Function defined here
+  --> src/labuse/cascade/base.py:44:5
+   |
+44 | def positive(layer: str, detail: str, bonus_key: str, *, magnitude: float = 1.0, source: str | None = None) -> Verdict:
+   |     ^^^^^^^^                          -------------- Parameter declared here
+
+error[unresolved-attribute]: Attribute `transform` is not defined on `None` in union `WoeEncoder | None`
+  --> src/labuse/scoring/p_model/model.py:64:13
+   |
+64 |         X = self.encoder.transform(df)
+   |             ^^^^^^^^^^^^^^^^^^^^^^
+
+error[unresolved-attribute]: Attribute `binned` is not defined on `None` in union `WoeEncoder | None`
+   --> src/labuse/scoring/p_model/model.py:139:25
+    |
+139 |         for name, bf in self.encoder.binned.items():
+    |                         ^^^^^^^^^^^^^^^^^^^
+
+error[unresolved-attribute]: Attribute `transform` is not defined on `None` in union `WoeEncoder | None`
+  --> src/labuse/scoring/p_model/shadow.py:52:15
+   |
+52 |     X_train = model.encoder.transform(df_train)
+   |               ^^^^^^^^^^^^^^^^^^^^^^^
+
+error[unresolved-attribute]: Attribute `transform` is not defined on `None` in union `WoeEncoder | None`
+  --> src/labuse/scoring/p_model/shadow.py:53:13
+   |
+53 |     X_val = model.encoder.transform(df_val)
+   |             ^^^^^^^^^^^^^^^^^^^^^^^
+
+error[unresolved-attribute]: Object of type `Result[Any]` has no attribute `rowcount`
+   --> src/labuse/scoring/p_model/sql.py:378:16
+    |
+378 |     return int(r.rowcount or 0)
+    |                ^^^^^^^^^^
+
+error[invalid-type-form]: Function `callable` is not valid in a type expression
+   --> src/labuse/scoring/p_v2/libelles_client.py:196:28
+    |
+196 | _RAISON_COURTE: dict[str, "callable"] = {
+    |                            ^^^^^^^^ Did you mean `collections.abc.Callable`?
+
+error[unresolved-attribute]: Attribute `binned` is not defined on `None` in union `WoeEncoder | None`
+   --> src/labuse/scoring/p_v2/pipeline.py:166:14
+    |
+166 |         bf = model.encoder.binned.get(base)
+    |              ^^^^^^^^^^^^^^^^^^^^
+
+error[unresolved-attribute]: Attribute `enrichir` is not defined on `None` in union `None | <module 'labuse.scoring.p_v2.qv12'> | <module 'labuse.scoring.p_v2.qv14'> | <module 'labuse.scoring.p_v2.qv15'>`
+   --> src/labuse/scoring/p_v2/pipeline.py:306:14
+    |
+306 |         df = _rec.enrichir(session.connection(), df, (annee,))
+    |              ^^^^^^^^^^^^^
+
+error[unresolved-attribute]: Attribute `segmenter` is not defined on `None` in union `None | <module 'labuse.scoring.p_v2.qv12'> | <module 'labuse.scoring.p_v2.qv14'> | <module 'labuse.scoring.p_v2.qv15'>`
+   --> src/labuse/scoring/p_v2/pipeline.py:307:15
+    |
+307 |         seg = _rec.segmenter(df, df["copro"].to_numpy())
+    |               ^^^^^^^^^^^^^^
+
+error[unresolved-attribute]: Attribute `LIBELLES_QV12` is not defined on `None`, `<module 'labuse.scoring.p_v2.qv14'>` in union `None | <module 'labuse.scoring.p_v2.qv12'> | <module 'labuse.scoring.p_v2.qv14'> | <module 'labuse.scoring.p_v2.qv15'>`
+   --> src/labuse/scoring/p_v2/pipeline.py:497:21
+    |
+497 |         lib_extra = _rec.LIBELLES_QV12 if recette == "q_v12" else _rec.LIBELLES_QV14
+    |                     ^^^^^^^^^^^^^^^^^^
+
+error[unresolved-attribute]: Attribute `LIBELLES_QV14` is not defined on `None`, `<module 'labuse.scoring.p_v2.qv12'>` in union `None | <module 'labuse.scoring.p_v2.qv12'> | <module 'labuse.scoring.p_v2.qv14'> | <module 'labuse.scoring.p_v2.qv15'>`
+   --> src/labuse/scoring/p_v2/pipeline.py:497:67
+    |
+497 |         lib_extra = _rec.LIBELLES_QV12 if recette == "q_v12" else _rec.LIBELLES_QV14
+    |                                                                   ^^^^^^^^^^^^^^^^^^
+
+error[unresolved-attribute]: Object of type `Result[Any]` has no attribute `rowcount`
+   --> src/labuse/scoring/p_v2/potentiel.py:108:9
+    |
+108 |       n = session.execute(text("""
+    |  _________^
+109 | |         UPDATE parcel_p_score_v2 s
+110 | |         SET potentiel_sdp_m2 = r.sdp_residuelle_m2,
+111 | |             prix_secteur_eur_m2 = px.med,
+112 | |             valeur_creee_eur     = CASE WHEN r.sdp_residuelle_m2 IS NULL OR px.med IS NULL
+113 | |                                         THEN NULL ELSE r.sdp_residuelle_m2 * px.med END,
+114 | |             valeur_creee_min_eur = CASE WHEN r.sdp_residuelle_m2 IS NULL OR px.q1 IS NULL
+115 | |                                         THEN NULL ELSE r.sdp_residuelle_m2 * px.q1 END,
+116 | |             valeur_creee_max_eur = CASE WHEN r.sdp_residuelle_m2 IS NULL OR px.q3 IS NULL
+117 | |                                         THEN NULL ELSE r.sdp_residuelle_m2 * px.q3 END,
+118 | |             acces_pm_siren = EXISTS (SELECT 1 FROM parcel_v_score v
+119 | |                                      WHERE v.parcelle_id = s.parcelle_id
+120 | |                                        AND v.owner_siren IS NOT NULL),
+121 | |             acces_courrier = EXISTS (SELECT 1 FROM parcel_adresse a
+122 | |                                      WHERE a.idu = s.parcelle_id
+123 | |                                        AND a.ban_voie IS NOT NULL)
+124 | |         FROM parcels p
+125 | |         LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
+126 | |         LEFT JOIN _prix_secteur px ON px.commune = left(p.idu, 5)
+127 | |         WHERE s.run_id = :r AND s.parcelle_id = p.idu"""), {"r": run_id}).rowcount
+    | |__________________________________________________________________________________^
+
+error[no-matching-overload]: No overload of `dict.__init__` matches arguments
+   --> src/labuse/scoring/p_v2/potentiel.py:161:12
+    |
+161 |     return dict(stats)
+    |            ^^^^^^^^^^^
+info: First overload defined here
+    --> stdlib/builtins.pyi:3103:5
+     |
+3103 | /     @overload
+3104 | |     def __init__(self, /) -> None: ...
+     | |______________________________________^ First overload defined here
+info: Possible overloads for bound method `__init__`:
+info:   (self, /) -> None
+info:   (self: dict[str, _VT@dict], /, **kwargs: _VT@dict) -> None
+info:   (self, map: SupportsKeysAndGetItem[_KT@dict, _VT@dict], /) -> None
+info:   (self: dict[str, _VT@dict], map: SupportsKeysAndGetItem[str, _VT@dict], /, **kwargs: _VT@dict) -> None
+info:   (self, iterable: Iterable[tuple[_KT@dict, _VT@dict]], /) -> None
+info:   (self: dict[str, _VT@dict], iterable: Iterable[tuple[str, _VT@dict]], /, **kwargs: _VT@dict) -> None
+info:   (self: dict[str, str], iterable: Iterable[list[str]], /) -> None
+info:   (self: dict[bytes, bytes], iterable: Iterable[list[bytes]], /) -> None
+
+error[unsupported-operator]: Unsupported `-` operation
+   --> src/labuse/scoring/p_v2/qv12.py:385:54
+    |
+385 |         w = ventes_pm[(ventes_pm["date_mutation"] >= asof - pd.DateOffset(months=24))
+    |                                                      ----^^^------------------------
+    |                                                      |      |
+    |                                                      |      Has type `DateOffset`
+    |                                                      Has type `Timestamp | NaTType`
+
+error[unsupported-operator]: Unsupported `-` operation
+   --> src/labuse/scoring/p_v2/qv14.py:213:15
+    |
+213 |         deb = asof - pd.DateOffset(months=36)
+    |               ----^^^------------------------
+    |               |      |
+    |               |      Has type `DateOffset`
+    |               Has type `Timestamp | NaTType`
+
+error[unsupported-operator]: Unsupported `-` operation
+   --> src/labuse/scoring/p_v2/qv14.py:266:39
+    |
+266 |         w = mut[(mut.date_mutation >= a - pd.DateOffset(months=36))
+    |                                       -^^^------------------------
+    |                                       |   |
+    |                                       |   Has type `DateOffset`
+    |                                       Has type `Timestamp | NaTType`
+
+error[invalid-argument-type]: Argument is incorrect
+   --> src/labuse/scoring/p_v2/statuts.py:172:31
+    |
+172 |               return TierParams(**{**params.__dict__,
+    |  _______________________________^
+173 | |                                  "brulante_seuil_d": seuil,
+174 | |                                  "brulante_top_decile_d": top_dec})
+    | |__________________________________________________________________^ Expected `int`, found `Any | float`
+info: element `float*` of union `Any | int | float*` is not assignable to `int`
+
+error[invalid-argument-type]: Argument is incorrect
+   --> src/labuse/scoring/p_v2/statuts.py:172:31
+    |
+172 |               return TierParams(**{**params.__dict__,
+    |  _______________________________^
+173 | |                                  "brulante_seuil_d": seuil,
+174 | |                                  "brulante_top_decile_d": top_dec})
+    | |__________________________________________________________________^ Expected `int`, found `Any | float`
+info: element `float*` of union `Any | int | float*` is not assignable to `int`
+
+error[invalid-argument-type]: Argument is incorrect
+   --> src/labuse/scoring/p_v2/statuts.py:172:31
+    |
+172 |               return TierParams(**{**params.__dict__,
+    |  _______________________________^
+173 | |                                  "brulante_seuil_d": seuil,
+174 | |                                  "brulante_top_decile_d": top_dec})
+    | |__________________________________________________________________^ Expected `int`, found `Any | float`
+info: element `float*` of union `Any | int | float*` is not assignable to `int`
+
+error[invalid-argument-type]: Argument is incorrect
+   --> src/labuse/scoring/p_v2/statuts.py:172:31
+    |
+172 |               return TierParams(**{**params.__dict__,
+    |  _______________________________^
+173 | |                                  "brulante_seuil_d": seuil,
+174 | |                                  "brulante_top_decile_d": top_dec})
+    | |__________________________________________________________________^ Expected `int`, found `Any | float`
+info: element `float*` of union `Any | int | float*` is not assignable to `int`
+
+error[invalid-argument-type]: Argument is incorrect
+   --> src/labuse/scoring/p_v2/statuts.py:175:23
+    |
+175 |       return TierParams(**{**params.__dict__,
+    |  _______________________^
+176 | |                          "brulante_seuil_d": float(d.quantile(0.5)) if len(d) else 0.0,
+177 | |                          "brulante_top_decile_d": top_dec})
+    | |__________________________________________________________^ Expected `int`, found `Any | float`
+info: element `float*` of union `Any | int | float*` is not assignable to `int`
+
+error[invalid-argument-type]: Argument is incorrect
+   --> src/labuse/scoring/p_v2/statuts.py:175:23
+    |
+175 |       return TierParams(**{**params.__dict__,
+    |  _______________________^
+176 | |                          "brulante_seuil_d": float(d.quantile(0.5)) if len(d) else 0.0,
+177 | |                          "brulante_top_decile_d": top_dec})
+    | |__________________________________________________________^ Expected `int`, found `Any | float`
+info: element `float*` of union `Any | int | float*` is not assignable to `int`
+
+error[invalid-argument-type]: Argument is incorrect
+   --> src/labuse/scoring/p_v2/statuts.py:175:23
+    |
+175 |       return TierParams(**{**params.__dict__,
+    |  _______________________^
+176 | |                          "brulante_seuil_d": float(d.quantile(0.5)) if len(d) else 0.0,
+177 | |                          "brulante_top_decile_d": top_dec})
+    | |__________________________________________________________^ Expected `int`, found `Any | float`
+info: element `float*` of union `Any | int | float*` is not assignable to `int`
+
+error[invalid-argument-type]: Argument is incorrect
+   --> src/labuse/scoring/p_v2/statuts.py:175:23
+    |
+175 |       return TierParams(**{**params.__dict__,
+    |  _______________________^
+176 | |                          "brulante_seuil_d": float(d.quantile(0.5)) if len(d) else 0.0,
+177 | |                          "brulante_top_decile_d": top_dec})
+    | |__________________________________________________________^ Expected `int`, found `Any | float`
+info: element `float*` of union `Any | int | float*` is not assignable to `int`
+
+error[invalid-argument-type]: Argument to function `round` is incorrect
+   --> src/labuse/scoring/score_labuse.py:252:82
+    |
+252 |         contributions.append({"sens": "baisse", "libelle": f"pente forte ({round(pente_pct)} %)"})
+    |                                                                                  ^^^^^^^^^ Expected `_SupportsRound1[int]`, found `float | None`
+info: element `None` of union `int | float* | None` is not assignable to `_SupportsRound1[int]`
+info: └── type `None` is not assignable to protocol `_SupportsRound1[int]`
+info:     └── protocol member `__round__` is not defined on type `None`
+info: Matching overload defined here
+    --> stdlib/builtins.pyi:4691:5
+     |
+4691 | def round(number: _SupportsRound1[_T], ndigits: None = None) -> _T:
+     |     ^^^^^ --------------------------- Parameter declared here
+info: Non-matching overloads for function `round`:
+info:   [_T](number: _SupportsRound2[_T], ndigits: SupportsIndex) -> _T
+
+error[invalid-argument-type]: Argument is incorrect
+   --> src/labuse/scoring/score_labuse_combine.py:121:13
+    |
+121 |             couverture_pct=sc.couverture.get("pct"),
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Expected `int`, found `Unknown | None`
+info: element `None` of union `Unknown | None` is not assignable to `int`
+
+error[invalid-argument-type]: Argument is incorrect
+   --> src/labuse/scoring/score_labuse_combine.py:123:13
+    |
+123 |             confiance_niveau=sc.confiance.get("niveau"),
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Expected `str`, found `Unknown | None`
+info: element `None` of union `Unknown | None` is not assignable to `str`
+
+error[not-subscriptable]: Cannot subscript object of type `None` with no `__getitem__` method
+   --> src/labuse/scoring/score_v.py:516:56
+    |
+516 |                 b_cands = famille_b(siren, fiche, age, ow["forme"], match, today)
+    |                                                        ^^^^^^^^^^^
+
+error[not-subscriptable]: Cannot subscript object of type `None` with no `__getitem__` method
+   --> src/labuse/scoring/score_v.py:526:79
+    |
+526 |                 if veille_succession_eligible(otype, conf, age, sci_dormante, ow["forme"]):
+    |                                                                               ^^^^^^^^^^^
+
+error[unresolved-attribute]: Attribute `cursor` is not defined on `None` in union `Any | None`
+   --> src/labuse/scoring/score_v.py:587:10
+    |
+587 |     with raw.cursor() as cur:
+    |          ^^^^^^^^^^
+
+error[unresolved-attribute]: Object of type `Result[Any]` has no attribute `rowcount`
+   --> src/labuse/scoring/score_v.py:624:9
+    |
+624 |       n = session.execute(text(
+    |  _________^
+625 | |         """INSERT INTO score_snapshot_parcelles
+626 | |              (snapshot_id, parcelle_id, statut, v_score, v_band, brulante, veille_succession)
+627 | |            SELECT :sid, p.idu, d.matrice_statut, vs.v_score, vs.v_band,
+628 | |                   COALESCE(d.matrice_statut = 'chaude' AND vs.v_score >= :t, false),
+629 | |                   (vv.parcelle_id IS NOT NULL)
+630 | |            FROM parcels p
+631 | |            JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :r
+632 | |            LEFT JOIN parcel_v_score vs ON vs.parcelle_id = p.idu
+633 | |            LEFT JOIN parcel_veille_succession vv ON vv.parcelle_id = p.idu"""),
+634 | |         {"sid": sid, "t": brulante_threshold, "r": run_label}).rowcount
+    | |_______________________________________________________________________^
+
+error[invalid-argument-type]: Method `__getitem__` of type `bound method dict[str, tuple[str, str]].__getitem__(key: str, /) -> tuple[str, str]` cannot be called with key of type `None` on object of type `dict[str, tuple[str, str]]`
+   --> src/labuse/scoring/tiers_client.py:134:11
+    |
+134 |     code: PALIERS_CLIENT[code_palier(code)]
+    |           ^^^^^^^^^^^^^^
+
+Found 47 diagnostics

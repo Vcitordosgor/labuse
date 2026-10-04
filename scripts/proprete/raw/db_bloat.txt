@@ -1,0 +1,2 @@
+relname	n_live_tup	n_dead_tup	pct_dead	sz	last_autovacuum
+(0 rows)

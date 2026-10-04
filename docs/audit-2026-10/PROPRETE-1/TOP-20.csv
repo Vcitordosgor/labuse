@@ -1,0 +1,21 @@
+rang,action,domaine,effort,risque,gain,mandat
+1,TRUNCATE dryrun_cascade_results + dryrun_parcel_evaluations (hors run actif),5-BDD,S,faible,tres-eleve (~15 Go liberes),FIX-1
+2,ruff format + ruff check --fix (767 corrections auto) sur src+scripts,2-Python,S,faible,eleve (748 fichiers normalises),FIX-1
+3,DROP table p_model_dataset_v2bis (doublon de p_model_dataset_v2),5-BDD,S,faible,eleve (1.85 Go),FIX-1
+4,Bump 7 paquets CVE (pypdf torch starlette urllib3 anyio setuptools weasyprint),2-Python,S,faible,eleve (securite E),FIX-1
+5,Bump maplibre-gl + tailwindcss (npm audit critical/high),3-TS,S,moyen,eleve (securite),FIX-1
+6,DROP 80 index jamais scannes (idx_scan=0 non-unique),5-BDD,S,moyen (verif requetes),eleve (741 Mo + ecritures),FIX-1
+7,Supprimer les 49 branches distantes deja mergees dans main,1-Depot,S,nul,moyen,FIX-1
+8,Completer .env.example avec les 122 LABUSE_* lues (dont SECRET_KEY),6-Cfg,S,nul,moyen (operabilite prod),FIX-1
+9,Supprimer 21 scripts orphelins + 33 commandes CLI mortes,6-Cfg,S,faible,moyen,FIX-1
+10,Elaguer code mort (vulture 9 + 82 F401 + 6 fichiers TS + barils api.ts/types.ts),2-Python/3-TS,M,faible,moyen,FIX-1
+11,Retirer artefacts generes du suivi git + etendre .gitignore (captures/reports/qa/docs binaires),1-Depot,M,moyen,tres-eleve (~2 Go working tree),FIX-1
+12,Ajouter un lockfile (uv.lock / pip freeze) et epingler les 46 bornes >=,6-Cfg,M,faible,moyen (builds reproductibles),FIX-1
+13,Archiver/corriger 3 rapports docs perimes (pc_caducs 4+6, run11, RAP L524-7),6-Cfg,S,nul,faible (coherence revue),FIX-1
+14,Mettre en place CI (lint/format/types/tests) + pre-commit,1-Depot,M,faible,eleve (verrou anti-regression),FIX-1
+15,Ajouter une config ESLint et lever/justifier les 39 eslint-disable,3-TS,M,faible,moyen,FIX-1
+16,Corriger 13 bandit HIGH (MD5/SHA1 usedforsecurity=False + tarfile members),2-Python,M,faible,moyen (securite),FIX-1
+17,Rapatrier le calcul metier des routes vers le moteur (scoreur/moteurs/traducteur/projets),7-Arch,M,moyen,moyen,FIX-2
+18,Durcir tsconfig (exactOptionalPropertyTypes +109 / noUncheckedIndexedAccess +162),3-TS,M,moyen,moyen,FIX-2
+19,Decouper api/app.py (8386 l) + fonctions CC>15 (render_fiche_pdf 314, _q_v2_where 139),2-Python/7-Arch,L,eleve,eleve (structurel),FIX-2
+20,Decouper fichiers TS >400 l (api.ts 2632, Fiche.tsx 2054) + casser 17 cycles madge,3-TS,L,moyen,moyen (structurel),FIX-2

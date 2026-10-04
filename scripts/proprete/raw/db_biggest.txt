@@ -1,0 +1,22 @@
+relname	total	idx	est_rows
+dryrun_cascade_results	15 GB	3310 MB	74418632
+parcel_p_score_v2	7746 MB	1070 MB	4757505
+spatial_layers	4167 MB	396 MB	1933479
+score_labuse	2967 MB	42 MB	591630
+p_model_dataset_v2bis	1851 MB	196 MB	4316755
+p_model_candidates	1845 MB	518 MB	4317422
+cascade_results	1806 MB	405 MB	9178309
+tuyau_subdivise	1758 MB	106 MB	2249283
+spatial_layers_sub	1703 MB	62 MB	1540319
+p_model_dataset_v2	1596 MB	196 MB	4315112
+p_model_ext_dataset	1563 MB	224 MB	4316630
+parcel_couche_intersection	1115 MB	92 MB	1598535
+p_model_dataset	769 MB	98 MB	2158295
+parcel_solar	561 MB	38 MB	429284
+parcel_residuel_runs	523 MB	233 MB	3758392
+parcels	484 MB	97 MB	430867
+score_snapshot_parcelles	473 MB	183 MB	4316469
+adresses	443 MB	320 MB	339915
+rgealti_pente_5m	425 MB	200 kB	2793
+parcel_cosia_couverture	382 MB	153 MB	1947019
+(20 rows)
