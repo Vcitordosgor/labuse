@@ -258,41 +258,33 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
               })()}
             </div>
           )}
-          {/* RETOURS-12 O5 — BANDEAU repliable : replié, une barre compacte rouvrable ; déplié, le nom +
-              les 3 chiffres + le détail. Replier libère toute la hauteur pour la LISTE des parcelles. */}
-          {bandeauReplie ? (
-            <button data-scan-bandeau-rouvrir onClick={() => setBandeauReplie(false)}
-              className="flex w-full items-center justify-between rounded-lg border border-line-2 bg-surface-2 px-3 py-1.5 text-left text-[11.5px] text-txt-dim transition-colors duration-quick hover:text-txt">
-              <span className="min-w-0 truncate"><b className="text-txt">{d['nom'] as string}</b> · {fmt(total)} parcelles</span>
-              <span className="shrink-0 text-txt-mut">détail ▾</span>
-            </button>
-          ) : (
-            <>
-              <div className="truncate text-xs font-medium text-txt-hi">{d['nom'] as string}</div>
-              {/* RETOURS-15 B5 (P10) — 4 chiffres FACTUELS et sourcés pour notaires / agences / apporteurs /
-                  architectes (plus « actionnables » ni « valorisation », qui parlaient au promoteur). La SDP
-                  résiduelle n'est plus un chiffre-titre : elle reste visible parcelle par parcelle dans la liste. */}
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  { v: fmt(d['n_parcelles'] as number), lbl: 'parcelles' },
-                  { v: fmtM2(d['surface_totale_m2'] as number | null), lbl: 'surface totale' },
-                  { v: `${fmt(d['n_terrains_nus'] as number)} / ${fmt(d['n_terrains_batis'] as number)}`, lbl: 'terrains nus / bâtis' },
-                  { v: fmt(d['n_constructible_u_au'] as number), lbl: 'en zone U ou AU' },
-                ].map((c) => (
-                  <div key={c.lbl} data-m02-kpi className="min-w-0 rounded-lg border border-line-2 bg-surface-2 px-2.5 py-2.5">
-                    <div className="num-key whitespace-nowrap text-[16px] tabular-nums text-mint">{c.v}</div>
-                    <div className="mt-0.5 text-[10px] leading-tight text-txt-mut">{c.lbl}</div>
-                  </div>
-                ))}
+          {/* RECETTE-1 (H4, Vic) — les 4 tuiles de compteurs RESTENT visibles, même quand la liste des
+              parcelles s'ouvre (avant RETOURS-12 O5 : le bandeau se repliait en barre compacte et
+              masquait les chiffres). « Voir ses parcelles » n'affecte plus que la liste + le repli du
+              bloc « Blocs contigus » ; le nom + les 4 chiffres (notaires/agences/apporteurs) restent. */}
+          <div className="truncate text-xs font-medium text-txt-hi">{d['nom'] as string}</div>
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              { v: fmt(d['n_parcelles'] as number), lbl: 'parcelles' },
+              { v: fmtM2(d['surface_totale_m2'] as number | null), lbl: 'surface totale' },
+              { v: `${fmt(d['n_terrains_nus'] as number)} / ${fmt(d['n_terrains_batis'] as number)}`, lbl: 'terrains nus / bâtis' },
+              { v: fmt(d['n_constructible_u_au'] as number), lbl: 'en zone U ou AU' },
+            ].map((c) => (
+              <div key={c.lbl} data-m02-kpi className="min-w-0 rounded-lg border border-line-2 bg-surface-2 px-2.5 py-2.5">
+                <div className="num-key whitespace-nowrap text-[16px] tabular-nums text-mint">{c.v}</div>
+                <div className="mt-0.5 text-[10px] leading-tight text-txt-mut">{c.lbl}</div>
               </div>
-            </>
-          )}
+            ))}
+          </div>
           {/* RETOURS-15 C9 — pont Blocs fonciers : les GROUPES de parcelles contiguës du propriétaire
               (même moteur que l'outil Blocs, table parcel_blocs). Ligne « Blocs contigus : N » + les
               groupes cliquables (→ fiche de leur parcelle représentative). */}
           {(() => {
             const bc = d['blocs_contigus'] as { n: number; items: { bloc_id: number; n_parcelles: number; surface_m2: number; communes: string[]; sdp_residuelle_m2: number; idu_repr: string | null }[] } | undefined
             if (!bc || bc.n === 0) return null
+            // RECETTE-1 (H4, Vic) — le bloc « Blocs contigus » se REPLIE (disparaît) quand la liste des
+            // parcelles s'ouvre (fusion ScanPatrimoine, bandeau replié) : il reprend sa place au retour.
+            if (embedded && bandeauReplie) return null
             return (
               <div data-m02-blocs className="rounded-lg border border-line-2 bg-surface-2 px-2.5 py-1.5">
                 <div className="text-[11px] font-medium text-txt-mut">Blocs contigus : <b className="text-txt">{fmt(bc.n)}</b></div>
@@ -314,7 +306,8 @@ export function M02({ embedded, sirenProp }: { embedded?: boolean; sirenProp?: s
               seul), le pont historique « Voir ses opérations → » vers Veille promoteurs est conservé. */}
           {d['siren'] != null && (embedded ? (
             !bandeauReplie && (
-              <Bouton niveau="secondaire" ton="vert" data-scan-voir-parcelles onClick={() => setBandeauReplie(true)} className="w-full">
+              /* RECETTE-1 (H4, Vic) — vrai bouton PLEINE LARGEUR (primaire), marge standard. */
+              <Bouton niveau="primaire" ton="vert" data-scan-voir-parcelles onClick={() => setBandeauReplie(true)} className="mt-1 min-h-9 w-full">
                 Voir ses parcelles →</Bouton>
             )
           ) : (
@@ -644,7 +637,9 @@ export function M03() {
     seg === 'acheve' ? 'acheve' : seg === 'autre' ? 'autre'
     : (String(i['date'] ?? '') >= cut24 ? 'recent' : 'autre')
   const _feat = (i: Record<string, any>, etat: PermisEtatCarte) => ({ type: 'Feature' as const, geometry: i['geom'],
-    properties: { kind: 'permis', etat, permit_id: i['permit_id'], label: `${i['type']} ${i['date']}` } })
+    // RECETTE-1 (H2) — commune + précision géocodage portées à la feature → lues par la BULLE (MapView).
+    properties: { kind: 'permis', etat, permit_id: i['permit_id'], label: `${i['type']} ${i['date']}`,
+      commune: i['commune'] ?? null, geoloc: i['geoloc'] ?? null } })
   // PERMIS-CHECK-2 pt 1 — parcelle CIBLÉE : la carte montre EXACTEMENT les permis de la parcelle
   // (/modules/parcelle-permis, ≤ 200 m, géolocalisés), INDÉPENDAMMENT du filtre d'état — sinon la
   // phrase « X permis » comptait la proximité (tous états) mais la carte ne peignait que le radar filtré
@@ -656,7 +651,8 @@ export function M03() {
     : []).filter((i) => i['geom'])
   const featParcelle = (i: Record<string, any>) => ({ type: 'Feature' as const, geometry: i['geom'],
     properties: { kind: 'permis', etat: (String(i['date'] ?? '') >= cut24 ? 'recent' : 'gris') as PermisEtatCarte,
-      permit_id: i['permit_id'], label: `${i['nature'] ?? ''} ${i['date']}`.trim() } })
+      permit_id: i['permit_id'], label: `${i['nature'] ?? ''} ${i['date']}`.trim(),
+      commune: i['commune'] ?? null, geoloc: i['geoloc'] ?? null } })   // RECETTE-1 (H2) — pour la bulle
   useModuleMap([],
     // W3 — `etat` (recent|dormant|gris) voyage dans les properties ; la carte peint depuis la MÊME source
     // de couleurs que les pastilles (lib/permisEtats). En « Tous », le corail dormant est posé APRÈS le
@@ -935,17 +931,12 @@ export function M03() {
                 coupée ») ; le chip « Autorisé » n'arrive plus (état 2 muet côté serveur : constant
                 au 974, l'information vit dans la phrase d'explication en tête d'outil). */}
             <span className={`flex shrink-0 items-center gap-1.5 ${gaucheL2 ? '' : 'ml-auto'}`}>
-              {/* RETOURS-14 S5.1 — un permis à parcelle incertaine ne pose JAMAIS de point : la
-                  liste le dit. RETOURS-15 U4 — libellé COURT, le complet vit dans l'infobulle. */}
-              {!i['geom'] && <span data-permis-badge-nongeo className="whitespace-nowrap rounded-full bg-st-creuser/15 px-1.5 py-0.5 text-[9px] font-medium text-st-creuser">
-                {i['geoloc'] ? 'approx. (adresse)' : 'non localisé'}</span>}
+              {/* RECETTE-1 (H2, Vic) — les pastilles « approx. (adresse) » / « non localisé » et « autorisé »
+                  (état_libelle) qui DÉBORDAIENT sont retirées de la ligne ; la précision du géocodage passe
+                  dans la BULLE du point sur la carte. On garde le point de couleur d'état (à gauche) et le
+                  badge « Sans DAACT » du mode Dormant (information propre, pas un débordement). */}
               {!pointMort && i['delai_mois'] != null && <span style={{ color: VIOLET }}>{String(i['delai_mois'])} m</span>}
-              {pointMort
-                ? <span data-permis-badge-mort className="whitespace-nowrap rounded-full bg-st-ecartee/15 px-1.5 py-0.5 text-[9px] font-medium text-st-ecartee">Sans DAACT{ans != null ? ` · ${ans} an${ans > 1 ? 's' : ''}` : ''}</span>
-                /* KELFONCIER-FIX-2 (Lot D) — pastille d'état par la MÊME fonction que la fiche
-                   (etat_libelle/annule servis par /permis) : annulé → rouge, autorisé / travaux
-                   commencés / achevés → vert. Absent (dormant / non servi) : pas de pastille. */
-                : i['etat_libelle'] && <Badge data-permis-etat ton={i['annule'] ? 'rouge' : 'vert'}>{i['etat_libelle'] as string}</Badge>}
+              {pointMort && <span data-permis-badge-mort className="whitespace-nowrap rounded-full bg-st-ecartee/15 px-1.5 py-0.5 text-[9px] font-medium text-st-ecartee">Sans DAACT{ans != null ? ` · ${ans} an${ans > 1 ? 's' : ''}` : ''}</span>}
             </span>
           </button>
           )

@@ -51,13 +51,15 @@ describe('PERMIS — double entrée + densité', () => {
     expect(document.querySelector('[data-permis-seg="mort"]')?.textContent).toContain('412')
   })
 
-  it('lignes enrichies : commune + badge « non géocodé » (après ouverture du bloc liste)', async () => {
+  it('lignes enrichies : commune, et PLUS de badge « non géocodé » (RECETTE-1 H2 — passe dans la bulle)', async () => {
     const { container } = renderM03()
     ouvrirListe()
     await waitFor(() => expect(document.querySelectorAll('[data-permis-row]').length).toBe(2))
     expect(container.textContent).toContain('Saint-Denis')
     expect(container.textContent).toContain('Sainte-Marie')
-    expect(document.querySelector('[data-permis-badge-nongeo]')).toBeTruthy()   // le PC2 non géocodé
+    // RECETTE-1 (H2, Vic) — les pastilles « approx. (adresse) »/« non localisé » qui débordaient sont
+    // retirées de la liste ; la précision du géocodage passe dans la bulle du point sur la carte.
+    expect(document.querySelector('[data-permis-badge-nongeo]')).toBeFalsy()
   })
 
   it('la liste ne s\'affiche PAS d\'emblée (accordéon replié)', async () => {
@@ -69,20 +71,17 @@ describe('PERMIS — double entrée + densité', () => {
     await waitFor(() => expect(document.querySelectorAll('[data-permis-row]').length).toBe(2))
   })
 
-  it('KELFONCIER-FIX-2 Lot D — pastille d\'état (annulé rouge) + type PC/PA/DP sur chaque ligne', async () => {
+  it('RECETTE-1 H2 — point de couleur d\'état par ligne (plus de badge « autorisé ») + type PC/PA/DP', async () => {
     const { container } = renderM03()
     ouvrirListe()
     await waitFor(() => expect(document.querySelectorAll('[data-permis-row]').length).toBe(2))
-    const badges = container.querySelectorAll('[data-permis-etat]')
-    expect(badges.length).toBe(2)                                   // une pastille d'état par ligne
-    const txt = Array.from(badges).map((b) => b.textContent).join('|')
-    expect(txt).toContain('autorisé')
-    expect(txt).toContain('annulé')
-    // l'annulé porte le ton rouge (st-ecartee) ; l'autorisé le ton vert (mint)
-    const annule = Array.from(badges).find((b) => b.textContent?.includes('annulé'))!
-    expect(annule.className).toContain('st-ecartee')
-    const autorise = Array.from(badges).find((b) => b.textContent?.includes('autorisé'))!
-    expect(autorise.className).toContain('mint')
+    // RECETTE-1 (H2, Vic) — le badge texte « autorisé »/« annulé » (data-permis-etat) qui débordait est
+    // retiré ; on GARDE le point de couleur d'état, porté par chaque ligne (data-permis-row-etat).
+    expect(container.querySelectorAll('[data-permis-etat]').length).toBe(0)
+    const etats = Array.from(document.querySelectorAll('[data-permis-row]'))
+      .map((r) => r.getAttribute('data-permis-row-etat'))
+    expect(etats.length).toBe(2)
+    expect(etats.every((e) => e && e.length > 0)).toBe(true)   // chaque ligne porte son état (= couleur du point)
     // le type PC est dans le libellé de chaque ligne (toujours visible)
     expect(container.textContent).toContain('PC')
   })

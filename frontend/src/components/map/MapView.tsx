@@ -823,7 +823,28 @@ export function MapView() {
           const popup = new maplibregl.Popup({ offset: 12, className: 'labuse-popup' }).setLngLat([lon, lat]).setDOMContent(box).addTo(m)
           btn.addEventListener('click', () => { parcelAt(lon, lat).then((r) => { if (r.idu) select(String(r.idu)) }).catch(() => {}); popup.remove() })
           ;(e as maplibregl.MapLayerMouseEvent).preventDefault()
-        } else if (pid) { setPermitToOpen(String(pid)); (e as maplibregl.MapLayerMouseEvent).preventDefault() }
+        } else if (pid) {
+          // RECETTE-1 (H2, Vic) — BULLE au clic sur le point permis (comme les opérations / concurrents) :
+          // nature + date + état + commune, et la PRÉCISION DU GÉOCODAGE (déplacée depuis la liste).
+          // Un bouton « détails → » ouvre la fiche permis (drawer). DOM textContent (anti-injection).
+          const box = document.createElement('div'); box.style.cssText = POPUP_BOX_CSS
+          const nom = document.createElement('b')
+          nom.textContent = String(props?.label || props?.nature || 'Permis')
+          nom.style.cssText = 'display:block;font-size:14px;font-weight:650'; box.appendChild(nom)
+          const etatLbl: Record<string, string> = { recent: 'Récent', dormant: 'Dormant', acheve: 'Achevé', autre: 'Autre' }
+          const sub = document.createElement('div'); sub.style.cssText = 'color:#98a39d;font-size:12px;margin-top:5px;line-height:1.55'
+          const l1 = [props?.commune ? String(props.commune) : '', etatLbl[String(props?.etat)] ?? ''].filter(Boolean).join(' · ')
+          sub.textContent = l1
+          const prec = props?.geoloc ? 'Position approchée (adresse)' : 'Position de la parcelle rattachée'
+          const br = document.createElement('br'); sub.appendChild(br); sub.appendChild(document.createTextNode(prec))
+          box.appendChild(sub)
+          const btn = document.createElement('button'); btn.textContent = 'détails →'
+          btn.style.cssText = 'margin-top:9px;color:#4ADE80;background:none;border:1px solid rgba(74,222,128,.35);border-radius:8px;cursor:pointer;font:12px system-ui;padding:7px 10px'
+          box.appendChild(btn)
+          const popup = new maplibregl.Popup({ offset: 12, className: 'labuse-popup' }).setLngLat((e as maplibregl.MapLayerMouseEvent).lngLat).setDOMContent(box).addTo(m)
+          btn.addEventListener('click', () => { setPermitToOpen(String(pid)); popup.remove() })
+          ;(e as maplibregl.MapLayerMouseEvent).preventDefault()
+        }
         else if (props?.idu) { select(String(props.idu)); (e as maplibregl.MapLayerMouseEvent).preventDefault() }  // LOT8b : clic piscine → fiche parcelle
       }
       // RETOURS-11 R8 — même handler pour les ronds ET les gouttes piscine (clic idu → fiche parcelle).
