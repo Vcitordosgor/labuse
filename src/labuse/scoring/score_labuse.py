@@ -43,6 +43,7 @@ NC_ZONE = "zone non résolue"
 NC_REGLE_PLU = "règle PLU non validée"
 NC_DONNEE = "donnée critique absente"
 NC_GEOMETRIE = "géométrie"
+NC_SDP = "capacité résiduelle non calculée"   # C26 (SCORING-8, arbitrage Vic) : SDP inconnue ≠ 0
 
 # Classes AU différées (capacité ×0,5) — mêmes codes que le résiduel/l'écran.
 _AU_DIFFEREE = {"declasse_au_fermee", "declasse_au_statut_inconnu"}
@@ -168,6 +169,15 @@ def _cause_nc(e: ScoreEntrees) -> str | None:
         return NC_ZONE
     if c.startswith("regle_plu_non_validee"):     # après merge PLU-CALIBRAGE-6/7 (geste Vic)
         return NC_REGLE_PLU
+    # C26 (SCORING-8, arbitrage Vic) : une SDP résiduelle INCONNUE (non calculée) ne doit JAMAIS
+    # être lue comme 0 dans l'éligibilité du classement. `sdp = NULL` = capacité non calculable →
+    # NC « Analyse incomplète », jamais bande « 0 / Non retenue ». Un vrai zéro (`sdp = 0`, produit
+    # par le moteur : terrain exigu, zone inconstructible, bâti saturé…) reste la bande « 0 ».
+    # C'est un filet CAUSE-INDÉPENDANT : aujourd'hui toute SDP NULL porte déjà une cause NC
+    # (hors_plu), mais un run futur (exception PLU non modélisée, trou de donnée) peut produire une
+    # SDP NULL SANS cause NC — elle doit alors tomber ici, pas en bande 0.
+    if e.sdp_residuelle_m2 is None:
+        return NC_SDP
     return None
 
 
@@ -270,6 +280,12 @@ def score_parcelle(e: ScoreEntrees, bareme: dict, version: str, run_label: str) 
 
 
 # ── lecture des caches (batch) ───────────────────────────────────────────────
+# UNE ligne par parcelle pour CHAQUE cache, par une règle EXPLICITE — jamais « la dernière
+# au hasard » (SCORING-8 lot A). Les trois tables nommées ont aujourd'hui une clé primaire sur
+# la colonne de jointure (0 doublon mesuré), mais `parcel_residuel` et `dryrun_cascade_results`
+# n'ont AUCUNE contrainte d'unicité : la requête se garantit donc elle-même, sans dépendre d'un
+# invariant tenu ailleurs. Chaque sous-requête choisit la ligne la plus CONTRAIGNANTE, de sorte
+# que le score est le même quel que soit l'ordre des lignes en base.
 _ENTREES_SQL = text("""
 SELECT p.id, p.idu, p.commune,
        (r.parcel_id IS NOT NULL)                       AS residuel_present,
@@ -284,13 +300,31 @@ SELECT p.id, p.idu, p.commune,
        au.classe                                       AS au_classe,
        acc.result                                      AS acces
 FROM parcels p
-LEFT JOIN parcel_residuel r        ON r.parcel_id = p.id
-LEFT JOIN parcel_terrain t         ON t.idu = p.idu
-LEFT JOIN batiment_hauteur_lidar h ON h.idu = p.idu
-LEFT JOIN parcel_au_statut au      ON au.parcel_id = p.id
+-- résiduel : cache MULTI-CHAMP cohérent (SDP, emprise, cause calculés ensemble) → on prend la
+-- ligne COMPLÈTE la plus récente, jamais un mélange de champs de lignes différentes.
+LEFT JOIN LATERAL (
+    SELECT r0.parcel_id, r0.sdp_residuelle_m2, r0.taux_emprise_pct, r0.cause, r0.capacite_estimee
+    FROM parcel_residuel r0 WHERE r0.parcel_id = p.id
+    ORDER BY r0.computed_at DESC NULLS LAST, r0.sdp_residuelle_m2 ASC NULLS LAST
+    LIMIT 1) r ON TRUE
+-- faîtage = MAX des mesures LiDAR de la parcelle (le bâtiment le plus HAUT → cran R+2 déclenché
+-- dès qu'un bâtiment ≥ faitage_r2_m, quel que soit l'ordre).
+LEFT JOIN LATERAL (
+    SELECT max(h0.faitage_m) AS faitage_m FROM batiment_hauteur_lidar h0 WHERE h0.idu = p.idu) h ON TRUE
+-- terrain : pente la plus CONTRAIGNANTE (la plus forte) si plusieurs mesures.
+LEFT JOIN LATERAL (
+    SELECT max(t0.pente_moy_deg) AS pente_moy_deg FROM parcel_terrain t0 WHERE t0.idu = p.idu) t ON TRUE
+-- statut AU : le plus CONTRAIGNANT = une classe AU différée (cf. _AU_DIFFEREE, capacité ×0,5)
+-- l'emporte sur toute autre ; départage alphabétique pour le déterminisme.
+LEFT JOIN LATERAL (
+    SELECT au0.classe FROM parcel_au_statut au0 WHERE au0.parcel_id = p.id
+    ORDER BY (au0.classe IN ('declasse_au_fermee', 'declasse_au_statut_inconnu')) DESC, au0.classe
+    LIMIT 1) au ON TRUE
+-- cascade `acces` : verdict le plus DÉFAVORABLE (PASS = voie non identifiée → malus) si plusieurs.
 LEFT JOIN LATERAL (
     SELECT d.result FROM dryrun_cascade_results d
     WHERE d.run_label = :clabel AND d.parcel_id = p.id AND d.layer_name = 'acces'
+    ORDER BY (d.result = 'PASS') DESC
     LIMIT 1) acc ON TRUE
 WHERE p.id = ANY(:ids)
 """)
