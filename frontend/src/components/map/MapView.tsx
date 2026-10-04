@@ -891,9 +891,17 @@ export function MapView() {
             const lib = f.properties?.zone_lib && f.properties.zone_lib !== 'null' ? String(f.properties.zone_lib) : null
             const fam = f.properties?.zone_fam ? String(f.properties.zone_fam) : null
             if (lib || fam) {
+              // MAPLIBRE-1 Lot A — bulle PLU en DOM pur (lib/fam viennent de la tuile = donnée) : plus
+              // aucun texte de donnée via setHTML. Rendu identique (mêmes styles inline, même structure).
+              const box = document.createElement('div')
+              box.style.cssText = 'background:#0F1A14;border:1px solid #2E6B4F;color:#ECF5EF;font:12px Inter,sans-serif;padding:6px 10px;border-radius:8px'
+              box.appendChild(document.createTextNode(`Zone ${lib ?? fam}`))
+              const sub = document.createElement('div'); sub.style.cssText = 'color:#8FA69A;font-size:10px'
+              sub.textContent = `zonage PLU (GPU)${fam && lib ? ` · famille ${fam}` : ''}`
+              box.appendChild(sub)
               new maplibregl.Popup({ closeButton: false, className: 'labuse-popup' })
                 .setLngLat((e as maplibregl.MapLayerMouseEvent).lngLat)
-                .setHTML(`<div style="background:#0F1A14;border:1px solid #2E6B4F;color:#ECF5EF;font:12px Inter,sans-serif;padding:6px 10px;border-radius:8px">Zone ${lib ?? fam}<div style="color:#8FA69A;font-size:10px">zonage PLU (GPU)${fam && lib ? ` · famille ${fam}` : ''}</div></div>`)
+                .setDOMContent(box)
                 .addTo(m)
             }
           }
@@ -1213,7 +1221,8 @@ export function MapView() {
       const name = communePastille(c.commune)
       // M62-P1 (e) : le libellé = le NOM SEUL (« · Fiche commune » retiré des 24). Le clic ouvre
       // toujours la fiche commune (inchangé) ; l'affordance reste dans le `title` au survol.
-      el.innerHTML = `<span>${name}</span>`
+      // MAPLIBRE-1 Lot A — nom de commune posé en textContent (plus de innerHTML). Rendu identique.
+      const nameSpan = document.createElement('span'); nameSpan.textContent = name; el.appendChild(nameSpan)
       // RETOURS-11 T8 — taille de police et padding +20 %.
       const size = Math.min(13, 10 + (opinion ? Math.log10(Math.max(1, c.chaudes)) * 2 : 0)) * 1.2
       el.style.cssText = `cursor:pointer;white-space:nowrap;border-radius:9999px;padding:2.4px 10.8px;` +

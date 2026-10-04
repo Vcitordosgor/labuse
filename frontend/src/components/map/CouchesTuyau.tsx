@@ -346,45 +346,64 @@ function ajouterEmojiIcone(m: maplibregl.Map, id: string, emoji: string) {
   m.addImage(id, { width: D, height: D, data: new Uint8Array(img.data.buffer) }, { pixelRatio: 2 })
 }
 
-function popupHTML(c: TuyauCouche, props: Record<string, unknown>): string {
-  const lignes = (c.popup || []).map((p) => {
-    const v = props[p.champ]
-    if (v == null || v === '') return ''
-    const val = p.lien
-      ? `<a href="${String(v)}" target="_blank" rel="noopener" style="color:#7CC5FF">ouvrir</a>`
-      : String(v)
-    return `<div><span style="color:#9AA7A0">${p.libelle} :</span> ${val}</div>`
-  }).filter(Boolean).join('')
-  const titre = `<div style="font-weight:600;margin-bottom:2px">${c.nom}</div>`
-  // COUCHES-RECETTE-2 Lot D : boîte OPAQUE (comme l'ancienne popup) — le conteneur MapLibre est
-  // transparent (cf. .labuse-popup), donc l'opacité vient d'ici.
-  return `<div style="font-size:12px;line-height:1.5;background:rgba(14,18,16,0.97);color:#E6EDE8;`
-    + `border:1px solid rgba(120,140,128,0.28);border-radius:8px;padding:8px 10px;max-width:280px">`
-    + `${titre}${lignes || '<div style="color:#9AA7A0">—</div>'}</div>`
+// MAPLIBRE-1 Lot A — les bulles sont construites en DOM (textContent), JAMAIS en HTML : aucune donnée
+// (nom d'ICPE, de servitude, URL de source) ne traverse plus setHTML/innerHTML. Le rendu visuel est
+// identique aux anciennes chaînes HTML (mêmes styles inline, même structure). Ferme la porte XSS
+// indépendamment de la version de maplibre (le setHTML passait par DOM.sanitize, vecteur du CVE).
+const POPUP_BOX = 'font-size:12px;line-height:1.5;background:rgba(14,18,16,0.97);color:#E6EDE8;'
+  + 'border:1px solid rgba(120,140,128,0.28);border-radius:8px;padding:8px 10px'
+// une URL n'est posée en href QUE si c'est http(s) — un `javascript:`/`data:` venu des données
+// retombe en texte brut (durcissement : plus aucune exécution possible depuis une bulle).
+function hrefSur(v: string): string | null { return /^https?:\/\//i.test(v) ? v : null }
+// une ligne « libellé : valeur » (ou « libellé : [ouvrir] » pour un lien) — tout en nœuds texte.
+function ligneNode(p: TuyauPopup, v: unknown): HTMLDivElement | null {
+  if (v == null || v === '') return null
+  const row = document.createElement('div')
+  const lab = document.createElement('span'); lab.style.color = '#9AA7A0'; lab.textContent = `${p.libelle} : `
+  row.appendChild(lab)
+  if (p.lien) {
+    const href = hrefSur(String(v))
+    if (href) {
+      const a = document.createElement('a'); a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer'
+      a.style.color = '#7CC5FF'; a.textContent = 'ouvrir'; row.appendChild(a)
+    } else { row.appendChild(document.createTextNode('ouvrir')) }
+  } else { row.appendChild(document.createTextNode(String(v))) }
+  return row
+}
+export function popupNode(c: TuyauCouche, props: Record<string, unknown>): HTMLElement {
+  const box = document.createElement('div'); box.style.cssText = `${POPUP_BOX};max-width:280px`
+  const titre = document.createElement('div'); titre.style.cssText = 'font-weight:600;margin-bottom:2px'
+  titre.textContent = c.nom; box.appendChild(titre)
+  const lignes = (c.popup || []).map((p) => ligneNode(p, props[p.champ])).filter(Boolean) as HTMLDivElement[]
+  if (lignes.length) for (const l of lignes) box.appendChild(l)
+  else { const d = document.createElement('div'); d.style.color = '#9AA7A0'; d.textContent = '—'; box.appendChild(d) }
+  return box
 }
 
 // COUCHES-RECETTE-2 (retour) — popup PRÉCIS d'une couche dissoute (SUP) : chaque servitude concernée
 // (renvoyée par l'endpoint de détail, table d'origine) rend ses champs déclarés (popup_detail).
-function popupDetailHTML(c: TuyauCouche, servitudes: Record<string, unknown>[]): string {
+export function popupDetailNode(c: TuyauCouche, servitudes: Record<string, unknown>[]): HTMLElement {
   const champs = c.popup_detail || []
-  const titre = `<div style="font-weight:600;margin-bottom:3px">${c.nom}</div>`
-  const corps = servitudes.length
-    ? servitudes.map((sv, i) => {
-        const lignes = champs.map((p) => {
-          const v = sv[p.champ]
-          if (v == null || v === '') return ''
-          const val = p.lien
-            ? `<a href="${String(v)}" target="_blank" rel="noopener" style="color:#7CC5FF">ouvrir</a>`
-            : String(v)
-          return `<div><span style="color:#9AA7A0">${p.libelle} :</span> ${val}</div>`
-        }).filter(Boolean).join('')
-        const sep = i > 0 ? 'border-top:1px solid rgba(120,140,128,0.22);margin-top:5px;padding-top:5px;' : ''
-        return `<div style="${sep}">${lignes}</div>`
-      }).join('')
-    : '<div style="color:#9AA7A0">Aucune servitude à ce point.</div>'
-  return `<div style="font-size:12px;line-height:1.5;background:rgba(14,18,16,0.97);color:#E6EDE8;`
-    + `border:1px solid rgba(120,140,128,0.28);border-radius:8px;padding:8px 10px;max-width:300px">`
-    + `${titre}${corps}</div>`
+  const box = document.createElement('div'); box.style.cssText = `${POPUP_BOX};max-width:300px`
+  const titre = document.createElement('div'); titre.style.cssText = 'font-weight:600;margin-bottom:3px'
+  titre.textContent = c.nom; box.appendChild(titre)
+  if (!servitudes.length) {
+    const d = document.createElement('div'); d.style.color = '#9AA7A0'; d.textContent = 'Aucune servitude à ce point.'
+    box.appendChild(d); return box
+  }
+  servitudes.forEach((sv, i) => {
+    const sec = document.createElement('div')
+    if (i > 0) sec.style.cssText = 'border-top:1px solid rgba(120,140,128,0.22);margin-top:5px;padding-top:5px;'
+    for (const p of champs) { const l = ligneNode(p, sv[p.champ]); if (l) sec.appendChild(l) }
+    box.appendChild(sec)
+  })
+  return box
+}
+// bulle d'attente (« … ») pendant le fetch du détail — DOM, pas de HTML.
+function popupAttenteNode(): HTMLElement {
+  const d = document.createElement('div')
+  d.style.cssText = 'font-size:12px;background:rgba(14,18,16,0.97);color:#9AA7A0;border-radius:8px;padding:8px 10px'
+  d.textContent = '…'; return d
 }
 
 // COUCHES-STYLE-5 — la couche parcelles du tuyau (contour cadastral) suit le FOND actif, exactement
@@ -489,13 +508,13 @@ export function CouchesTuyauLayers({ map, ready }: {
             // COUCHES-RECETTE-2 (retour) : couche affichée DISSOUTE (SUP) → clic PRÉCIS via l'endpoint
             // de détail (table d'origine, assiettes non dissoutes) ; sinon popup depuis la tuile.
             if (c.detail_kind) {
-              pop.setHTML('<div style="font-size:12px;background:rgba(14,18,16,0.97);color:#9AA7A0;border-radius:8px;padding:8px 10px">…</div>').addTo(m)
+              pop.setDOMContent(popupAttenteNode()).addTo(m)
               fetch(`/map/couche-detail/${c.detail_kind}?lon=${e.lngLat.lng}&lat=${e.lngLat.lat}`)
                 .then((r) => r.ok ? r.json() : { servitudes: [] })
-                .then((j) => pop.setHTML(popupDetailHTML(c, (j.servitudes || []) as Record<string, unknown>[])))
-                .catch(() => pop.setHTML(popupDetailHTML(c, [])))
+                .then((j) => pop.setDOMContent(popupDetailNode(c, (j.servitudes || []) as Record<string, unknown>[])))
+                .catch(() => pop.setDOMContent(popupDetailNode(c, [])))
             } else {
-              pop.setHTML(popupHTML(c, f.properties as Record<string, unknown>)).addTo(m)
+              pop.setDOMContent(popupNode(c, f.properties as Record<string, unknown>)).addTo(m)
             }
           })
           m.on('mouseenter', spec.id, () => { m.getCanvas().style.cursor = 'pointer' })
