@@ -1,0 +1,502 @@
+D O S S I E R PA R C E L L E
+
+97421000AB0337
+Salazie
+
+
+DP-20260928-0337                 28/09/2026           1 610 m²
+n° de rapport                    généré le            contenance
+
+
+
+   1 610 m²                                    Aba                                          18,3°
+   SURFACE                                     ZONE                                         PENTE
+
+
+
+
+   Sud-Est                                     3 relevés                                    0 m² — zone A
+   EXPOSITION                                  RISQUES                                      SDP RESTANTE
+
+
+
+
+1. Identité                                                           7. Fiscalité et dispositifs
+2. Terrain                                                            8. Marché
+3. Bâti                                                               9. Quartier
+4. Urbanisme                                                          10. Potentiel
+5. Risques et environnement                                           11. Simulation
+6. Réseaux et desserte                                                12. Limites et sources
+
+ sourcé      lu dans la source · ƒ dérivé calculé · estimé hypothèse dite · projet saisi par vous
+
+
+
+
+                                                             Généré
+                                                               via                                          1/9
+                                                             LABUSE
+   1. Identité
+Historique cadastral
+
+Filiation cadastrale                              Filiation cadastrale disponible                                      sourcé
+
+
+Sur la parcelle
+
+Sur cette parcelle (permis)                       1 permis sur la parcelle (Sitadel) — PC — déposé                     sourcé
+                                                  2025-01-01, autorisé 2025-09-01
+
+
+
+
+  Plan de situation — la parcelle (contour) et ses voisines · © IGN — BD ORTHO
+
+
+
+  VÉRIFIÉ : RIEN
+     • Copropriétés : aucune copropriété immatriculée sur la parcelle.
+     • Dernière vente : aucune mutation DVF publiée sur cette parcelle (fenêtre 2014-2025).
+     • Historique de détention : aucun millésime de détention connu.
+
+
+
+  NON DISPONIBLE ICI
+     • Adresse non disponible — parcelle non rattachée à une voie (BAN).
+     • Type de propriétaire : non déterminé.
+
+
+Sources : DFI — documents de filiation informatisés (DGFiP) · SITADEL (autorisations d'urbanisme) · cadastre_epoque
+
+
+
+   2. Terrain
+
+  Pente 18,3° · 1 610 m² de sol libre.
+
+
+Ce qu'il reste à bâtir
+
+Surface au sol libre                              1 610 m²                                                            ƒ dérivé
+
+
+Couverture du sol
+
+Part artificialisée (OCS GE)                      69,9 %                                                               sourcé
+
+
+Usage du sol dominant (OCS GE)                    Usage résidentiel                                                    sourcé
+
+
+
+                                                                   Généré
+                                                                     via                                                  2/9
+                                                                   LABUSE
+Part imperméabilisée (CoSIA)                   0,0 %                                                                   sourcé
+
+
+Part végétalisée/boisée (CoSIA)                99,2 %                                                                  sourcé
+
+
+Part sol nu (CoSIA)                            0,0 %                                                                   sourcé
+
+
+
+  VÉRIFIÉ : RIEN
+     • Piscine détectée : aucune piscine repérée sur la parcelle.
+
+
+Sources : BD TOPO IGN · CoSIA (couverture du sol IA, IGN) · Cadastre (API Carto PCI) · OCS GE — occupation du sol et
+artificialisation (IGN)
+
+
+
+   3. Bâti
+
+   Parcelle non bâtie (aucun bâtiment cartographié).
+
+
+Ce qu'il y a dessus
+
+Bâtiments                                      0                                                                       sourcé
+
+
+Emprise bâtie                                  0 m²                                                                    sourcé
+
+
+
+  VÉRIFIÉ : RIEN
+     • Hauteur du bâti : non mesurée (ni LiDAR ni hauteur BD TOPO sur ce bâti).
+     • Bâti détecté par IA (CoSIA) : cohérent avec la cartographie IGN, rien à signaler.
+     • Identifiants RNB : aucun bâtiment rattaché au RNB sur cette parcelle.
+     • Adresses BAN PLUS : aucun lien adresse↔bâtiment sur cette parcelle.
+
+
+
+  NON DISPONIBLE ICI
+     • Pente du toit : non relevée (LiDAR toiture non calculé sur ce bâti).
+     • Forme du toit : non déterminée (pans non nets ou LiDAR indisponible).
+
+
+Sources : BD TOPO IGN · CoSIA (couverture du sol IA, IGN)
+
+
+
+   4. Urbanisme
+
+   Zone Aba (famille A) — agricole, non constructible pour un projet d'habitat
+   courant. Seules les destinations liées à la vocation agricole sont admises, et sous
+   conditions (voir la liste des destinations ci-dessous).
+
+
+Rappel RTAA DOM                                Conception réglementée pour tout logement neuf                          sourcé
+                                               (aération traversante, protection solaire, eau chaude
+                                               solaire) — à intégrer au projet.
+
+Droit des sols (ER · EBC · DPU · PEB)
+
+
+
+
+                                                               Généré
+                                                                 via                                                      3/9
+                                                               LABUSE
+Prescriptions du droit des sols                 1 servitude — PM1 — plan de prévention des risques                   sourcé
+                                                naturels (PPR)
+
+Règlement
+
+PLU                                             PLU approuvé le 24/05/2022 — version publiée au                      sourcé
+                                                Géoportail de l'urbanisme le 24/05/2022 (document
+                                                opposable).
+
+
+Ce que le règlement autorise ici
+
+Sous conditions                                 Logement                                                             sourcé
+
+
+Interdites                                      Exploitation agricole · Exploitation forestière ·                    sourcé
+                                                Hébergement · Artisanat et commerce de détail ·
+                                                Restauration · Commerce de gros · Activités de services
+                                                où s'effectue l'accueil d'une clientèle · Cinéma · Hôtels ·
+                                                Autres hébergements touristiques · Locaux et bureaux
+                                                accueillant du public des administrations publiques et
+                                                assimilés · Locaux techniques et industriels des
+                                                administrations publiques et assimilés · Établissements
+                                                d'enseignement, de santé et d'action sociale · Salles
+                                                d'art et de spectacles · Équipements sportifs · Lieux de
+                                                culte · Autres équipements recevant du public ·
+                                                Industrie · Entrepôt · Bureau · Centre de congrès et
+                                                d'exposition · Cuisine dédiée à la vente en ligne
+
+Règlement complet : 97421_PLU_20220524 sur le Géoportail de l'urbanisme. Les valeurs ci-dessus sont une aide à la lecture ;
+le règlement fait foi.
+
+
+  VÉRIFIÉ : RIEN
+      • SCOT : la parcelle n'est couverte par aucun schéma de cohérence territoriale.
+      • Hors emplacement réservé du PLU.
+      • Hors espace boisé classé du PLU.
+      • Hors périmètre de préemption urbaine publié.
+      • Hors zones du plan d'exposition au bruit.
+
+
+
+  NON DISPONIBLE ICI
+      • Mixité sociale : seuils de la zone non renseignés à ce jour.
+
+
+Sources : Urbanisme PLU/GPU (API Carto) · Sudocuh (procédures d'urbanisme) · GPU — emplacements réservés (prescriptions
+CNIG) · GPU — espaces boisés classés (prescriptions CNIG) · GPU — droit de préemption urbain (info-surf) · PEB — plans
+d'exposition au bruit (DGAC via annexes GPU) · SUP — assiettes GPU (API Carto)
+
+
+
+   5. Risques et environnement
+
+  Aléas relevés — aucun rédhibitoire.
+
+
+Ce qui contraint
+
+Points de risque                                3                                                                    sourcé
+
+
+
+                                                                Généré
+                                                                  via                                                   4/9
+                                                                LABUSE
+Pour information
+
+EnR au sol interdites (APER)                  Parc national (Parc national de La Réunion)                          sourcé
+
+
+
+Aléa inondation                               Aléa inondation — niveau fort (~1% de la parcelle).                  sourcé
+
+
+Aléa mouvement de terrain                     Aléa mouvement de terrain — niveau fort (~2% de la                   sourcé
+                                              parcelle).
+
+PPR — zone rouge                              PPR inondation et mouvement de terrain — zone rouge                  sourcé
+                                              sur 19 % de la surface : vigilance forte, constructibilité à
+                                              vérifier au règlement (pas d'exclusion automatique).
+
+
+  VÉRIFIÉ : RIEN
+    • Sols pollués (SIS) : la parcelle n'est dans aucun secteur d'information sur les sols.
+    • Système d'endiguement : la parcelle n'est dans aucune zone protégée déclarée.
+    • Anciens sites industriels (CASIAS) : aucun site recensé sur ou près de la parcelle.
+    • Mesure compensatoire (GéoMCE) : aucune mesure ne recoupe la parcelle.
+    • Aucun secteur d'information sur les sols ni site CASIAS à proximité.
+    • ABF / Monuments historiques : hors périmètre de protection.
+    • Cavités souterraines : aucune recensée à proximité.
+    • ICPE : aucune installation classée relevée à proximité.
+
+
+Sources : ABF / Monuments historiques · DEAL Réunion — PPR / aléas · Géorisques — mouvements de terrain · Géorisques — ICPE
+· Géorisques — cavités souterraines · Géorisques — sites et sols pollués · ZNIEFF (INPN/MNHN) · AZI / TRI — inondation
+(Géorisques GASPAR) · enr_aper_ofb
+
+
+
+   6. Réseaux et desserte
+
+  Viabilisation probable — le tracé et la capacité exacts des réseaux ne sont pas
+  relevés à cette échelle : à confirmer auprès des gestionnaires par une DT-DICT.
+
+
+Fibre
+
+Fibre (FTTH)                                  Immeuble raccordable (Arcep)                                         sourcé
+
+
+Viabilisation
+
+Viabilisation                                 Viabilisation probable                                               estimé
+
+
+Logements raccordés à l'égout                 Dans ce secteur IRIS « Mare à Martin », 100 % des                    sourcé
+                                              logements ne sont pas raccordés au réseau collectif
+                                              (INSEE RP2022). C'est un taux de SECTEUR, pas l'état de
+                                              cette parcelle. À vérifier auprès du SPANC.
+
+Accès
+
+Arrêt de transport le plus proche             Arrêt COIN DU CAP (Estival) à 47 m                                   sourcé
+
+
+
+  VÉRIFIÉ : RIEN
+    • Hors rayon de 800 m d'une station TCSP.
+
+
+
+                                                                Généré
+                                                                  via                                                 5/9
+                                                                LABUSE
+  NON DISPONIBLE ICI
+    • Productible solaire : non calculé sur cette toiture.
+
+
+Sources : Fibre Arcep — Ma connexion internet (immeuble) · BD TOPO IGN · RGE ALTI (altimétrie) · Parkings OSM (loi APER) ·
+Transport public — GTFS (PAN, 7 réseaux) · OSM — transport (pôles d'échange & téléphérique) · INSEE RP2022 — fichier détail
+Logements (EGOUL) · GPU — zonages d'assainissement
+
+
+
+   7. Fiscalité et dispositifs
+
+  Zonage d'investissement locatif : B1 · 4 dispositifs territoriaux.
+
+
+Taxes
+
+Taxe foncière (TFPB)                           part communale 46,16 % · EPCI 2,00 % · TEOM 17,90 %                    sourcé
+
+
+Taxe d'aménagement — taux                      Taux communal 3,0 % — Taux communal en vigueur                         sourcé
+communal                                       depuis le 01/01/2022 (délibération communale). Se
+                                               calcule sur la surface de plancher créée par le projet —
+                                               montant chiffré dans le document Financier.
+
+
+Zonage du logement                             Zonage d'investissement locatif : B1                                   sourcé
+
+
+TVA outre-mer                                  TVA outre-mer : 8,5 % (taux normal DOM) · 2,1 %                        sourcé
+                                               logement locatif social
+
+Opération de revitalisation (ORT)              Petites Villes de Demain (PVD) · ORT signée (signée le                 sourcé
+                                               05/10/2021)
+
+ZFANG                                          Régime renforcé (commune de l'Est, décret n° 2026-421                  sourcé
+                                               du 29 mai 2026) — abattements majorés : 80 % sur les
+                                               bénéfices et la taxe foncière bâtie, 100 % sur la CFE,
+                                               jusqu'en 2030.
+
+FRR (ex-ZRR)                                   Parcelle en zone FRR — zone spéciale d'action rurale                   sourcé
+                                               des Hauts. À La Réunion, ce classement n'ouvre que les
+                                               mesures NON FISCALES (FAQ FRR DGCL, juillet 2025) :
+                                               l'exonération d'impôt de l'art. 44 quindecies A CGI ne s'y
+                                               applique pas — à confirmer par un fiscaliste.
+
+Sources : Taux de taxe foncière — fichier REI (DGFiP) · QPV 2024 (ANCT) · NPNRU (DEAL Réunion / ANCT) · ZFANG — zone franche
+d'activité nouvelle génération (Légifrance) · FRR ex-ZRR — zone spéciale d'action rurale (Légifrance) · Taxe d'aménagement —
+barème public (DGFiP/DELTA)
+
+
+
+   8. Marché
+
+  Prix ancien médian 1 848 €/m² (59 ventes à moins de 500 m).
+
+
+Constaté — ventes actées (DVF)
+
+
+
+
+                                                             Généré
+                                                               via                                                       6/9
+                                                             LABUSE
+Ancien bâti — secteur                         1 848 €/m² — ancien, 59 ventes à moins de 500 m                           sourcé
+
+
+Ventes retenues                               59                                                                        sourcé
+
+
+Ventes écartées                               21                                                                        sourcé
+
+
+Le secteur
+
+Ventes à moins de 100 m (36 mois)             0 vente DVF · 1 permis (< 100 m, 36 mois)                                 sourcé
+
+
+
+  VÉRIFIÉ : RIEN
+     • Terrain nu — à moins de 500 m : échantillon DVF insuffisant pour une médiane fiable.
+     • Neuf VEFA — commune : échantillon VEFA insuffisant pour une médiane servie.
+     • Annonces en cours (Radar) : aucune annonce active repérée dans le secteur.
+
+
+Sources : DVF / valeurs foncières
+
+
+
+   9. Quartier
+
+   Mare à Martin — 557 habitants.
+
+
+Le secteur
+
+Permis à proximité                            1 permis (< 500 m, 24 mois)                                               sourcé
+
+
+À proximité
+
+À proximité (équipements)                     École : ECOLE PRIMAIRE PUBLIQUE FRANCOIS FREDERIC                         sourcé
+                                              SISAHAYE (1 582 m) · Commerces : FLEURS DT (1 339 m) ·
+                                              Santé : DISPENSAIRE DE MARE A MARTIN (1 660 m) · Arrêt
+                                              de bus : COIN DU CAP (47 m)
+
+
+
+  557                                         13,3 %                                     4,3 %
+  habitants, 190 ménages                      de 60 ans et plus                          de locataires
+
+
+
+Parc de logements du quartier                 242 logements, 10,9 % de vacance                                          sourcé
+
+
+Sources : INSEE RP2022 — bases IRIS (logement, population) · Contours IRIS (IGN/INSEE) · SITADEL (autorisations d'urbanisme) ·
+BPE INSEE · OpenStreetMap / Overpass
+
+
+
+
+                                                            Généré
+                                                              via                                                          7/9
+                                                            LABUSE
+   10. Potentiel
+  NON DISPONIBLE ICI
+    • Potentiel : rien d'évaluable (zone non constructible).
+    • Capacité (logements) : non estimable sur cette parcelle.
+    • Gabarit réglementaire : parcelle entièrement en zone non constructible (A/N) — non chiffré ici.
+    • Surface de plancher non calculable (zone non constructible).
+    • Surface vendable non calculable pour cette parcelle.
+    • Marge de surélévation non calculable (hauteur de règle non déterminée).
+
+
+
+
+   11. Simulation
+
+  Renseignez votre opération pour obtenir le bilan
+  Le bilan dépend de chiffres que vous seul connaissez : prix demandé par le vendeur, coût de construction,
+  marge visée. LABUSE ne les suppose pas à votre place. Le document Financier les recueille et imprime le chiffre
+  d'affaires, la charge foncière supportable, l'écart au prix demandé et la sensibilité au coût de construction.
+
+
+
+
+   12. Limites et sources
+
+Ce que ce document ne peut pas dire
+
+Constructibilité définitive                   Certificat d'urbanisme — mairie, service instructeur
+
+Valeur vénale                                 Avis de valeur — notaire, expert
+
+État du bâti, servitudes privées              Visite et acte notarié
+
+Coût de démolition, de dépollution            Devis d'entreprise
+
+Réseaux et raccordements chiffrés             Gestionnaires, DT-DICT
+
+Position du propriétaire, prix demandé Contact direct ou apporteur d'affaires
+
+
+Sources
+
+ABF / Monuments historiques                   Base Mérimée (Ministère Culture)
+
+SUP — assiettes GPU (API Carto)               IGN (Géoportail de l'urbanisme)
+
+DEAL Réunion — PPR / aléas                    DEAL Réunion (Lizmap)
+
+Géorisques — ICPE                             BRGM / Géorisques
+
+Géorisques — cavités souterraines             BRGM / Géorisques
+
+Géorisques — mouvements de terrain            BRGM / Géorisques
+
+Géorisques — sites et sols pollués            BRGM / Géorisques
+
+OpenStreetMap / Overpass                      OSM
+
+BD TOPO IGN                                   IGN / Géoplateforme
+
+
+                                                               Généré
+                                                                 via                                            8/9
+                                                               LABUSE
+RGE ALTI (altimétrie)                       IGN / Géoplateforme
+
+Urbanisme PLU/GPU (API Carto)               IGN / API Carto GPU
+
+Document d'information établi à partir de données publiques. Il ne constitue ni un document d'urbanisme opposable, ni une
+étude de faisabilité réglementaire, ni un conseil juridique, et ne remplace pas un certificat d'urbanisme. Fonds
+cartographiques : © IGN, © contributeurs OpenStreetMap (ODbL).
+
+
+
+
+                                                          Généré
+                                                            via                                                        9/9
+                                                          LABUSE
+

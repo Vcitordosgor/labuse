@@ -1,0 +1,590 @@
+D O S S I E R PA R C E L L E
+
+97409000AB0018
+380 Rue Bois Rouge, 97440 Saint-André
+Saint-André
+
+
+DP-20260928-0018                 28/09/2026           10 682 m²
+n° de rapport                    généré le            contenance
+
+
+
+   10 682 m²                                   UC                                           1,9°
+   SURFACE                                     ZONE                                         PENTE
+
+
+
+
+   plat                                        3 relevés
+   EXPOSITION                                  RISQUES
+
+
+
+
+1. Identité                                                           7. Fiscalité et dispositifs
+2. Terrain                                                            8. Marché
+3. Bâti                                                               9. Quartier
+4. Urbanisme                                                          10. Potentiel
+5. Risques et environnement                                           11. Simulation
+6. Réseaux et desserte                                                12. Limites et sources
+
+ sourcé      lu dans la source · ƒ dérivé calculé · estimé hypothèse dite · projet saisi par vous
+
+
+
+
+                                                             Généré
+                                                               via                                  1 / 10
+                                                             LABUSE
+   1. Identité
+
+  Personne morale — DEPARTEMENT DE LA REUNION — propriétaire depuis au
+  moins 2019.
+
+
+Adresse                                           380 Rue Bois Rouge, 97440 Saint-André                 sourcé
+
+
+Qui détient
+
+Type de propriétaire                              Personne morale — DEPARTEMENT DE LA REUNION (SIREN    sourcé
+                                                  229740014)
+
+Historique de détention (PM)                      DEPARTEMENT DE LA REUNION (2019–2025)                 sourcé
+
+
+
+
+  Plan de situation — la parcelle (contour) et ses voisines · © IGN — BD ORTHO
+
+
+
+  VÉRIFIÉ : RIEN
+     • Copropriétés : aucune copropriété immatriculée sur la parcelle.
+     • Filiation cadastrale : aucune filiation connue (parcelle stable).
+     • Dernière vente : aucune mutation DVF publiée sur cette parcelle (fenêtre 2014-2025).
+     • Aucun permis recensé sur cette parcelle (Sitadel).
+
+
+Sources : Base Adresse Nationale · DGFiP — parcelles des personnes morales
+
+
+
+   2. Terrain
+
+  Pente 1,9° · 8 916 m² de sol libre.
+
+
+Ce qu'il reste à bâtir
+
+Surface au sol libre                              8 916 m²                                             ƒ dérivé
+
+
+Couverture du sol
+
+Part artificialisée (OCS GE)                      80,7 %                                                sourcé
+
+
+
+
+                                                                   Généré
+                                                                     via                                  2 / 10
+                                                                   LABUSE
+Usage du sol dominant (OCS GE)                 Production tertiaire                                                       sourcé
+
+
+Part imperméabilisée (CoSIA)                   40,6 %                                                                     sourcé
+
+
+Part végétalisée/boisée (CoSIA)                53,6 %                                                                     sourcé
+
+
+Part sol nu (CoSIA)                            0,0 %                                                                      sourcé
+
+
+
+  VÉRIFIÉ : RIEN
+     • Piscine détectée : aucune piscine repérée sur la parcelle.
+
+
+Sources : BD TOPO IGN · CoSIA (couverture du sol IA, IGN) · Cadastre (API Carto PCI) · OCS GE — occupation du sol et
+artificialisation (IGN)
+
+
+
+   3. Bâti
+
+   9 bâtiments, 1 766 m² au sol.
+
+
+Ce qu'il y a dessus
+
+Bâtiments                                      9                                                                          sourcé
+
+
+Emprise bâtie                                  1 766 m²                                                                   sourcé
+
+
+Hauteur du bâti                                4,0 m                                                                      estimé
+
+
+Identifiants et références
+
+Identifiants RNB                               9 identifiants RNB                                                         sourcé
+
+
+
+  VÉRIFIÉ : RIEN
+     • Bâti détecté par IA (CoSIA) : cohérent avec la cartographie IGN, rien à signaler.
+     • Adresses BAN PLUS : aucun lien adresse↔bâtiment sur cette parcelle.
+
+
+
+  NON DISPONIBLE ICI
+     • Pente du toit : non relevée (LiDAR toiture non calculé sur ce bâti).
+     • Forme du toit : non déterminée (pans non nets ou LiDAR indisponible).
+
+
+Sources : BD TOPO IGN · CoSIA (couverture du sol IA, IGN) · LiDAR HD — MNH 50 cm (IGN) · RNB — Référentiel national des
+bâtiments (IGN)
+
+
+
+   4. Urbanisme
+
+   Zone UC (famille U) — urbaine, constructible. Le document opposable du
+   Géoportail de l'urbanisme fait foi ; les valeurs de règle ci-dessous sont une aide à
+   la lecture.
+
+
+
+                                                               Généré
+                                                                 via                                                        3 / 10
+                                                               LABUSE
+Rappel RTAA DOM                         Conception réglementée pour tout logement neuf                  sourcé
+                                        (aération traversante, protection solaire, eau chaude
+                                        solaire) — à intégrer au projet.
+
+Droit des sols (ER · EBC · DPU · PEB)
+
+Prescriptions du droit des sols         1 servitude — PM1 — plan de prévention des risques              sourcé
+                                        naturels (PPR)
+
+Règlement
+
+PLU                                     PLU approuvé le 28/02/2019 — version publiée au                 sourcé
+                                        Géoportail de l'urbanisme le 28/02/2019 (document
+                                        opposable).
+
+
+Ce que le règlement fixe ici
+
+Règle                                   Valeur retenue
+
+Hauteur max                             12 m au faîtage · 9 m à l'égout Art. UC 10 · p.40               sourcé
+
+
+Emprise au sol max                      non réglementé                                                  estimé
+
+
+Recul sur voie                          4 m Art. UC 6 · p.38                                            sourcé
+
+
+Recul limites séparatives               3 m Art. UC 7 · p.39                                            sourcé
+
+
+Pleine terre min                        40 % Art. UC 13.1 · p.43                                        sourcé
+
+
+Stationnement                           à vérifier au règlement                                         estimé
+
+
+
+Ce que le règlement autorise ici
+
+Autorisées                              Hébergement · Artisanat et commerce de détail ·                 sourcé
+                                        Restauration · Commerce de gros · Activités de services
+                                        où s'effectue l'accueil d'une clientèle · Cinéma · Hôtels ·
+                                        Autres hébergements touristiques · Locaux et bureaux
+                                        accueillant du public des administrations publiques et
+                                        assimilés · Locaux techniques et industriels des
+                                        administrations publiques et assimilés · Établissements
+                                        d'enseignement, de santé et d'action sociale · Salles
+                                        d'art et de spectacles · Équipements sportifs · Lieux de
+                                        culte · Autres équipements recevant du public · Bureau ·
+                                        Centre de congrès et d'exposition · Cuisine dédiée à la
+                                        vente en ligne
+
+Sous conditions                         Logement                                                        sourcé
+
+
+Interdites                              Exploitation agricole · Exploitation forestière · Industrie ·   sourcé
+                                        Entrepôt
+
+Surface commerciale                     Au-delà de 1000 m² de surface de vente : autorisation           sourcé
+                                        d'exploitation commerciale (CDAC)
+
+
+
+
+                                                       Généré
+                                                         via                                              4 / 10
+                                                       LABUSE
+  Prescriptions non vérifiables sur cette commune — aucun document d'urbanisme téléversé au Géoportail de
+  l'urbanisme. Un emplacement réservé ou une servitude peut exister sans être publié : à vérifier en mairie.
+
+
+Règlement complet : 97409_20190228 sur le Géoportail de l'urbanisme. Les valeurs ci-dessus sont une aide à la lecture ; le
+règlement fait foi.
+
+
+  VÉRIFIÉ : RIEN
+    • SCOT : la parcelle n'est couverte par aucun schéma de cohérence territoriale.
+    • Hors emplacement réservé du PLU.
+    • Hors espace boisé classé du PLU.
+    • Hors périmètre de préemption urbaine publié.
+    • Hors zones du plan d'exposition au bruit.
+
+
+
+  NON DISPONIBLE ICI
+    • Mixité sociale : seuils de la zone non renseignés à ce jour.
+
+
+Sources : Urbanisme PLU/GPU (API Carto) · Sudocuh (procédures d'urbanisme) · GPU — emplacements réservés (prescriptions
+CNIG) · GPU — espaces boisés classés (prescriptions CNIG) · GPU — droit de préemption urbain (info-surf) · PEB — plans
+d'exposition au bruit (DGAC via annexes GPU) · SUP — assiettes GPU (API Carto)
+
+
+
+   5. Risques et environnement
+
+  Aléas relevés — aucun rédhibitoire.
+
+
+Ce qui contraint
+
+Points de risque                              3                                                                       sourcé
+
+
+
+Aléa inondation                               Aléa inondation — niveau faible (toute la parcelle).                    sourcé
+
+
+Aléa mouvement de terrain                     Aléa mouvement de terrain — niveau faible (toute la                     sourcé
+                                              parcelle).
+
+PPR — zone bleue                              Zone bleue PPR inondation+MOUVEMENTS_DE_TERRAIN                         sourcé
+                                              (toute la parcelle) — constructible SOUS PRESCRIPTIONS
+                                              (règlement DEAL).
+
+
+  VÉRIFIÉ : RIEN
+    • Sols pollués (SIS) : la parcelle n'est dans aucun secteur d'information sur les sols.
+    • Système d'endiguement : la parcelle n'est dans aucune zone protégée déclarée.
+    • Anciens sites industriels (CASIAS) : aucun site recensé sur ou près de la parcelle.
+    • EnR au sol interdites (APER) : la parcelle n'est dans aucune zone d'exclusion.
+    • Mesure compensatoire (GéoMCE) : aucune mesure ne recoupe la parcelle.
+    • Aucun secteur d'information sur les sols ni site CASIAS à proximité.
+    • ABF / Monuments historiques : hors périmètre de protection.
+    • Cavités souterraines : aucune recensée à proximité.
+    • ICPE : aucune installation classée relevée à proximité.
+
+
+
+
+                                                                Généré
+                                                                  via                                                    5 / 10
+                                                                LABUSE
+Sources : ABF / Monuments historiques · DEAL Réunion — PPR / aléas · Géorisques — mouvements de terrain · Géorisques — ICPE
+· Géorisques — cavités souterraines · Géorisques — sites et sols pollués · ZNIEFF (INPN/MNHN) · AZI / TRI — inondation
+(Géorisques GASPAR)
+
+
+
+   6. Réseaux et desserte
+
+  Viabilisation probable — le tracé et la capacité exacts des réseaux ne sont pas
+  relevés à cette échelle : à confirmer auprès des gestionnaires par une DT-DICT.
+
+
+Fibre
+
+Fibre (FTTH)                                   Immeuble raccordable (Arcep)                                           sourcé
+
+
+Viabilisation
+
+Viabilisation                                  Viabilisation probable                                                 estimé
+
+
+Logements raccordés à l'égout                  Dans ce secteur IRIS « Cambuston-L'Étang-Bois                          sourcé
+                                               Rouge », 70 % des logements ne sont pas raccordés au
+                                               réseau collectif (INSEE RP2022). C'est un taux de
+                                               SECTEUR, pas l'état de cette parcelle. À vérifier auprès
+                                               du SPANC.
+
+Accès
+
+Arrêt de transport le plus proche              Arrêt CLG CAMBUSTON (Estival) à 155 m                                  sourcé
+
+
+Stationnement allégé (TCSP, L151-36)           Station de transport en site propre à 966 m — hors                     sourcé
+                                               rayon de 800 m (pas d'allègement L151-36)
+
+
+  NON DISPONIBLE ICI
+    • Productible solaire : non calculé sur cette toiture.
+
+
+Sources : Fibre Arcep — Ma connexion internet (immeuble) · BD TOPO IGN · RGE ALTI (altimétrie) · Parkings OSM (loi APER) ·
+Transport public — GTFS (PAN, 7 réseaux) · OSM — transport (pôles d'échange & téléphérique) · INSEE RP2022 — fichier détail
+Logements (EGOUL) · GPU — zonages d'assainissement
+
+
+
+   7. Fiscalité et dispositifs
+
+  Zonage d'investissement locatif : B1 · 5 dispositifs territoriaux.
+
+
+Taxes
+
+Taxe foncière (TFPB)                           part communale 39,48 % · EPCI 2,00 % · TEOM 17,90 %                    sourcé
+
+
+Taxe d'aménagement — taux                      Taux communal 5,0 % — Taux communal en vigueur                         sourcé
+communal                                       depuis le 01/01/2022 (délibération communale). Se
+                                               calcule sur la surface de plancher créée par le projet —
+                                               montant chiffré dans le document Financier.
+
+
+
+
+                                                             Généré
+                                                               via                                                      6 / 10
+                                                             LABUSE
+Zonage du logement                             Zonage d'investissement locatif : B1                                  sourcé
+
+
+TVA outre-mer                                  TVA outre-mer : 8,5 % (taux normal DOM) · 2,1 %                       sourcé
+                                               logement locatif social
+
+Opération de revitalisation (ORT)              Action Cœur de Ville (ACV) · ORT signée (signée le                    sourcé
+                                               05/10/2021)
+
+ZFANG                                          Régime renforcé (commune de l'Est, décret n° 2026-421                 sourcé
+                                               du 29 mai 2026) — abattements majorés : 80 % sur les
+                                               bénéfices et la taxe foncière bâtie, 100 % sur la CFE,
+                                               jusqu'en 2030.
+
+FRR (ex-ZRR)                                   Commune classée FRR en partie — zone spéciale                         sourcé
+                                               d'action rurale des Hauts (décret 1978) ; position de
+                                               cette parcelle dans le périmètre non vérifiée
+                                               géométriquement. À La Réunion, ce classement n'ouvre
+                                               que les mesures NON FISCALES (FAQ FRR DGCL, juillet
+                                               2025) : l'exonération d'impôt de l'art. 44 quindecies A
+                                               CGI ne s'y applique pas — à confirmer par un fiscaliste.
+
+Quartier prioritaire (QPV)                     Bande autour d'un quartier prioritaire (TVA réduite                   sourcé
+                                               accession)
+
+Sources : Taux de taxe foncière — fichier REI (DGFiP) · QPV 2024 (ANCT) · NPNRU (DEAL Réunion / ANCT) · ZFANG — zone franche
+d'activité nouvelle génération (Légifrance) · FRR ex-ZRR — zone spéciale d'action rurale (Légifrance) · Taxe d'aménagement —
+barème public (DGFiP/DELTA)
+
+
+
+   8. Marché
+
+   Prix ancien médian 1 651 €/m² (35 ventes à moins de 500 m).
+
+
+Constaté — ventes actées (DVF)
+
+Terrain nu — secteur                           147 €/m²                                                              sourcé
+
+
+Ancien bâti — secteur                          1 651 €/m² — ancien, 35 ventes à moins de 500 m                       sourcé
+
+
+Ventes retenues                                35                                                                    sourcé
+
+
+Ventes écartées                                1                                                                     sourcé
+
+
+
+Maison                                         1 774 €/m² — 15 ventes · secteur cadastral, 2021-2025                 sourcé
+
+
+Terrain                                        147 €/m² — 12 ventes · secteur cadastral, 2021-2025                   sourcé
+
+
+
+  VÉRIFIÉ : RIEN
+     • Neuf VEFA — commune : échantillon VEFA insuffisant pour une médiane servie.
+     • Annonces en cours (Radar) : aucune annonce active repérée dans le secteur.
+     • Aucune vente DVF recensée à moins de 100 m sur 36 mois.
+
+
+Sources : Cadastre (API Carto PCI) · DVF / valeurs foncières
+
+
+                                                               Généré
+                                                                 via                                                    7 / 10
+                                                               LABUSE
+   9. Quartier
+
+   Cambuston-L'Étang-Bois Rouge — 3 612 habitants.
+
+
+Le secteur
+
+Permis à proximité                            7 permis (< 500 m, 24 mois)                                               sourcé
+
+
+À proximité
+
+À proximité (équipements)                     École : COLLEGE DE CAMBUSTON-CLAUDE MAHOUDEAUX                            sourcé
+                                              (48 m) · Commerces : LE 290 (193 m) · Santé : PHARMACIE
+                                              DU COLOSSE (58 m) · Arrêt de bus : CLG CAMBUSTON (155
+                                              m)
+
+
+
+  3 612                                       13,9 %                                     49,7 %
+  habitants, 1 337 ménages                    de 60 ans et plus                          de locataires
+
+
+
+Parc de logements du quartier                 1 422 logements, 5,2 % de vacance                                         sourcé
+
+
+Sources : INSEE RP2022 — bases IRIS (logement, population) · Contours IRIS (IGN/INSEE) · SITADEL (autorisations d'urbanisme) ·
+BPE INSEE · OpenStreetMap / Overpass
+
+
+
+   10. Potentiel
+
+   Potentiel de construction : Marge SDP non calculée.
+
+
+Ce qui est constructible
+
+Potentiel (verdict)                           Marge SDP non calculée                                                    estimé
+
+
+Marge de surélévation (au faîtage)            8,0 m                                                                     estimé
+
+
+Gabarit réglementaire
+
+Zone d'implantation                           0 m²                                                                      sourcé
+
+
+Plafond d'emprise                             Non réglementé                                                            estimé
+
+
+Hauteur réglementaire                         12,0 m                                                                    sourcé
+
+
+Couverture réglementaire                      Vérifié : reculs, emprise, hauteur, risques · non modélisé :              sourcé
+                                              Stationnement, Espaces libres
+
+
+
+
+                                                            Généré
+                                                              via                                                         8 / 10
+                                                            LABUSE
+                                 Zone d'implantation réglementaire (schéma — pas un plan de masse)
+
+                                    Retraits                               Bâti existant
+                                    Exclusion (PPR rouge)                  Contour cadastral
+
+
+
+
+  NON DISPONIBLE ICI
+     • Capacité (logements) : non estimable sur cette parcelle.
+     • Surface de plancher non calculable (capacité nulle).
+     • Surface vendable non calculable pour cette parcelle.
+
+
+Sources : BD TOPO IGN · CoSIA (couverture du sol IA, IGN) · Urbanisme PLU/GPU (API Carto) · Cadastre (API Carto PCI) · DEAL
+Réunion — PPR / aléas · LiDAR HD — MNH 50 cm (IGN)
+
+
+
+   11. Simulation
+
+   Renseignez votre opération pour obtenir le bilan
+   Le bilan dépend de chiffres que vous seul connaissez : prix demandé par le vendeur, coût de construction,
+   marge visée. LABUSE ne les suppose pas à votre place. Le document Financier les recueille et imprime le chiffre
+   d'affaires, la charge foncière supportable, l'écart au prix demandé et la sensibilité au coût de construction.
+
+
+
+
+   12. Limites et sources
+
+Ce que ce document ne peut pas dire
+
+Constructibilité définitive                     Certificat d'urbanisme — mairie, service instructeur
+
+Valeur vénale                                   Avis de valeur — notaire, expert
+
+État du bâti, servitudes privées                Visite et acte notarié
+
+Coût de démolition, de dépollution              Devis d'entreprise
+
+Réseaux et raccordements chiffrés               Gestionnaires, DT-DICT
+
+Position du propriétaire, prix demandé Contact direct ou apporteur d'affaires
+
+
+Sources
+
+ABF / Monuments historiques                     Base Mérimée (Ministère Culture)
+
+
+
+
+                                                                  Généré
+                                                                    via                                                       9 / 10
+                                                                  LABUSE
+DGFiP — parcelles des personnes             DGFiP
+morales
+
+SUP — assiettes GPU (API Carto)             IGN (Géoportail de l'urbanisme)
+
+DEAL Réunion — PPR / aléas                  DEAL Réunion (Lizmap)
+
+Géorisques — ICPE                           BRGM / Géorisques
+
+Géorisques — cavités souterraines           BRGM / Géorisques
+
+Géorisques — mouvements de terrain          BRGM / Géorisques
+
+Géorisques — sites et sols pollués          BRGM / Géorisques
+
+OpenStreetMap / Overpass                    OSM
+
+BD TOPO IGN                                 IGN / Géoplateforme
+
+RGE ALTI (altimétrie)                       IGN / Géoplateforme
+
+Document d'information établi à partir de données publiques. Il ne constitue ni un document d'urbanisme opposable, ni une
+étude de faisabilité réglementaire, ni un conseil juridique, et ne remplace pas un certificat d'urbanisme. Fonds
+cartographiques : © IGN, © contributeurs OpenStreetMap (ODbL).
+
+
+
+
+                                                          Généré
+                                                            via                                                      10 / 10
+                                                          LABUSE
+

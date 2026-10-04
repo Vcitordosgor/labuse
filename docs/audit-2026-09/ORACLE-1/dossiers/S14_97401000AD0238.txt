@@ -1,0 +1,564 @@
+D O S S I E R PA R C E L L E
+
+97401000AD0238
+5 bis Rue Francis Rivière, 97425 Les Avirons
+Les Avirons
+
+
+DP-20260928-0238                 28/09/2026           466 m²
+n° de rapport                    généré le            contenance
+
+
+
+   466 m²                                      Ud1                                            9,7°
+   SURFACE                                     ZONE                                           PENTE
+
+
+
+
+   Ouest                                       1 relevé                                       177 m²
+   EXPOSITION                                  RISQUES                                        SDP RESTANTE
+
+
+
+
+1. Identité                                                             7. Fiscalité et dispositifs
+2. Terrain                                                              8. Marché
+3. Bâti                                                                 9. Quartier
+4. Urbanisme                                                            10. Potentiel
+5. Risques et environnement                                             11. Simulation
+6. Réseaux et desserte                                                  12. Limites et sources
+
+ sourcé      lu dans la source · ƒ dérivé calculé · estimé hypothèse dite · projet saisi par vous
+
+
+
+
+                                                               Généré
+                                                                 via                                         1/9
+                                                               LABUSE
+   1. Identité
+
+   Personne morale — COMMUNE DES AVIRONS — propriétaire depuis au moins
+   2022.
+
+
+Adresse                                           5 bis Rue Francis Rivière, 97425 Les Avirons          sourcé
+
+
+Qui détient
+
+Type de propriétaire                              Personne morale — COMMUNE DES AVIRONS (SIREN          sourcé
+                                                  219740016)
+
+Historique de détention (PM)                      COMMUNE DES AVIRONS (2022–2025)                       sourcé
+
+
+Sur la parcelle
+
+Dernière vente (DVF)                              24 000 € — echange, 2025                              sourcé
+
+
+
+
+  Plan de situation — la parcelle (contour) et ses voisines · © IGN — BD ORTHO
+
+
+
+  VÉRIFIÉ : RIEN
+     • Copropriétés : aucune copropriété immatriculée sur la parcelle.
+     • Filiation cadastrale : aucune filiation connue (parcelle stable).
+     • Aucun permis recensé sur cette parcelle (Sitadel).
+
+
+Sources : Base Adresse Nationale · DGFiP — parcelles des personnes morales · DVF / valeurs foncières
+
+
+
+   2. Terrain
+
+   Pente 9,7° · 466 m² de sol libre.
+
+
+Ce qu'il reste à bâtir
+
+Surface au sol libre                              466 m²                                               ƒ dérivé
+
+
+Couverture du sol
+
+
+                                                                   Généré
+                                                                     via                                   2/9
+                                                                   LABUSE
+Part artificialisée (OCS GE)                   100,0 %                                                                 sourcé
+
+
+Usage du sol dominant (OCS GE)                 Usage résidentiel                                                       sourcé
+
+
+Part imperméabilisée (CoSIA)                   25,6 %                                                                  sourcé
+
+
+Part végétalisée/boisée (CoSIA)                74,4 %                                                                  sourcé
+
+
+Part sol nu (CoSIA)                            0,0 %                                                                   sourcé
+
+
+
+  VÉRIFIÉ : RIEN
+     • Piscine détectée : aucune piscine repérée sur la parcelle.
+
+
+Sources : BD TOPO IGN · CoSIA (couverture du sol IA, IGN) · Cadastre (API Carto PCI) · OCS GE — occupation du sol et
+artificialisation (IGN)
+
+
+
+   3. Bâti
+
+   Parcelle non bâtie (aucun bâtiment cartographié).
+
+
+Ce qu'il y a dessus
+
+Bâtiments                                      0                                                                       sourcé
+
+
+Emprise bâtie                                  0 m²                                                                    sourcé
+
+
+
+  VÉRIFIÉ : RIEN
+     • Hauteur du bâti : non mesurée (ni LiDAR ni hauteur BD TOPO sur ce bâti).
+     • Bâti détecté par IA (CoSIA) : cohérent avec la cartographie IGN, rien à signaler.
+     • Identifiants RNB : aucun bâtiment rattaché au RNB sur cette parcelle.
+     • Adresses BAN PLUS : aucun lien adresse↔bâtiment sur cette parcelle.
+
+
+
+  NON DISPONIBLE ICI
+     • Pente du toit : non relevée (LiDAR toiture non calculé sur ce bâti).
+     • Forme du toit : non déterminée (pans non nets ou LiDAR indisponible).
+
+
+Sources : BD TOPO IGN · CoSIA (couverture du sol IA, IGN)
+
+
+
+   4. Urbanisme
+
+   Zone Ud1 (famille U) — urbaine, constructible. Le document opposable du
+   Géoportail de l'urbanisme fait foi ; les valeurs de règle ci-dessous sont une aide à
+   la lecture.
+
+
+Rappel RTAA DOM                                Conception réglementée pour tout logement neuf                          sourcé
+                                               (aération traversante, protection solaire, eau chaude
+                                               solaire) — à intégrer au projet.
+
+
+                                                               Généré
+                                                                 via                                                      3/9
+                                                               LABUSE
+Droit des sols (ER · EBC · DPU · PEB)
+
+SCOT                                           DU GRAND SUD — approuvé le 02/09/2024                                 sourcé
+
+
+Règlement
+
+PLU                                            PLU approuvé le 06/12/2024 — version publiée au                       sourcé
+                                               Géoportail de l'urbanisme le 06/12/2024 (document
+                                               opposable).
+
+
+Ce que le règlement fixe ici
+
+Règle                                          Valeur retenue
+
+Hauteur max                                    10 m au faîtage · 7 m à l'égout Art. U 10.2 · p.12                    sourcé
+
+
+Emprise au sol max                             50 % Art. U 9.2 · p.11                                                sourcé
+
+
+Recul sur voie                                 4 m Art. U 6.2 · p.10                                                 sourcé
+
+
+Recul limites séparatives                      1.9 m Art. U 7.2 · p.11                                               sourcé
+
+
+Pleine terre min                               40 % Art. U 13.1 · p.18                                               sourcé
+
+
+Stationnement                                  1.5 places / logement                                                 sourcé
+
+
+
+Ce que le règlement autorise ici
+
+Sous conditions                                Logement · Hébergement                                                sourcé
+
+
+Interdites                                     Exploitation agricole · Exploitation forestière · Artisanat           sourcé
+                                               et commerce de détail · Restauration · Commerce de
+                                               gros · Activités de services où s'effectue l'accueil d'une
+                                               clientèle · Cinéma · Hôtels · Autres hébergements
+                                               touristiques · Locaux et bureaux accueillant du public
+                                               des administrations publiques et assimilés · Locaux
+                                               techniques et industriels des administrations publiques
+                                               et assimilés · Établissements d'enseignement, de santé
+                                               et d'action sociale · Salles d'art et de spectacles ·
+                                               Équipements sportifs · Lieux de culte · Autres
+                                               équipements recevant du public · Industrie · Entrepôt ·
+                                               Bureau · Centre de congrès et d'exposition · Cuisine
+                                               dédiée à la vente en ligne
+
+Règlement complet : 97401_PLU_20241206 sur le Géoportail de l'urbanisme. Les valeurs ci-dessus sont une aide à la lecture ;
+le règlement fait foi.
+
+
+  VÉRIFIÉ : RIEN
+      • Aucune servitude d'utilité publique (SUP) intersectant la parcelle.
+      • Hors emplacement réservé du PLU.
+      • Hors espace boisé classé du PLU.
+      • Hors périmètre de préemption urbaine publié.
+      • Hors zones du plan d'exposition au bruit.
+
+
+
+
+                                                               Généré
+                                                                 via                                                    4/9
+                                                               LABUSE
+  NON DISPONIBLE ICI
+    • Mixité sociale : seuils de la zone non renseignés à ce jour.
+
+
+Sources : Urbanisme PLU/GPU (API Carto) · Sudocuh (procédures d'urbanisme) · SCOT (GPU)
+
+
+
+   5. Risques et environnement
+
+  Aléas relevés — aucun rédhibitoire.
+
+
+Ce qui contraint
+
+Points de risque                              1                                                                    sourcé
+
+
+Pour information
+
+EnR au sol interdites (APER)                  Parc national (Parc national de La Réunion)                          sourcé
+
+
+
+Aléa mouvement de terrain                     Aléa mouvement de terrain — niveau faible (toute la                  sourcé
+                                              parcelle).
+
+
+  VÉRIFIÉ : RIEN
+    • Sols pollués (SIS) : la parcelle n'est dans aucun secteur d'information sur les sols.
+    • Système d'endiguement : la parcelle n'est dans aucune zone protégée déclarée.
+    • Anciens sites industriels (CASIAS) : aucun site recensé sur ou près de la parcelle.
+    • Mesure compensatoire (GéoMCE) : aucune mesure ne recoupe la parcelle.
+    • Aucun secteur d'information sur les sols ni site CASIAS à proximité.
+    • ABF / Monuments historiques : hors périmètre de protection.
+    • Cavités souterraines : aucune recensée à proximité.
+    • ICPE : aucune installation classée relevée à proximité.
+
+
+Sources : ABF / Monuments historiques · DEAL Réunion — PPR / aléas · Géorisques — mouvements de terrain · Géorisques — ICPE
+· Géorisques — cavités souterraines · Géorisques — sites et sols pollués · ZNIEFF (INPN/MNHN) · AZI / TRI — inondation
+(Géorisques GASPAR) · enr_aper_ofb
+
+
+
+   6. Réseaux et desserte
+
+  Viabilisation probable — le tracé et la capacité exacts des réseaux ne sont pas
+  relevés à cette échelle : à confirmer auprès des gestionnaires par une DT-DICT.
+
+
+Fibre
+
+Fibre (FTTH)                                  Immeuble raccordable (Arcep)                                         sourcé
+
+
+Viabilisation
+
+Viabilisation                                 Viabilisation probable                                               estimé
+
+
+
+
+                                                                Généré
+                                                                  via                                                 5/9
+                                                                LABUSE
+Logements raccordés à l'égout                  Dans ce secteur IRIS « Le Tévelave », 93 % des                         sourcé
+                                               logements ne sont pas raccordés au réseau collectif
+                                               (INSEE RP2022). C'est un taux de SECTEUR, pas l'état de
+                                               cette parcelle. À vérifier auprès du SPANC.
+
+Accès
+
+Arrêt de transport le plus proche              Arrêt 33 Rue Francis Rivière (Alternéo) à 111 m                        sourcé
+
+
+
+  VÉRIFIÉ : RIEN
+    • Hors rayon de 800 m d'une station TCSP.
+
+
+
+  NON DISPONIBLE ICI
+    • Productible solaire : non calculé sur cette toiture.
+
+
+Sources : Fibre Arcep — Ma connexion internet (immeuble) · BD TOPO IGN · RGE ALTI (altimétrie) · Parkings OSM (loi APER) ·
+Transport public — GTFS (PAN, 7 réseaux) · OSM — transport (pôles d'échange & téléphérique) · INSEE RP2022 — fichier détail
+Logements (EGOUL) · GPU — zonages d'assainissement
+
+
+
+   7. Fiscalité et dispositifs
+
+  Zonage d'investissement locatif : A · 4 dispositifs territoriaux.
+
+
+Taxes
+
+Taxe foncière (TFPB)                           part communale 29,55 % · EPCI 3,00 % · TEOM 17,91 %                    sourcé
+
+
+Taxe d'aménagement — taux                      Taux communal 5,0 % — Taux communal en vigueur                         sourcé
+communal                                       depuis le 01/01/2022 (délibération communale). Se
+                                               calcule sur la surface de plancher créée par le projet —
+                                               montant chiffré dans le document Financier.
+
+
+Zonage du logement                             Zonage d'investissement locatif : A                                    sourcé
+
+
+TVA outre-mer                                  TVA outre-mer : 8,5 % (taux normal DOM) · 2,1 %                        sourcé
+                                               logement locatif social
+
+Petites Villes de Demain (PVD)                 Petites Villes de Demain (PVD)                                         sourcé
+
+
+ZFANG                                          Régime standard — dispositif de plein droit dans les                   sourcé
+                                               DOM (art. 44 quaterdecies CGI) : abattement d'environ
+                                               50 % sur les bénéfices.
+
+FRR (ex-ZRR)                                   Commune classée FRR en partie — zone spéciale                          sourcé
+                                               d'action rurale des Hauts (décret 1978) ; position de
+                                               cette parcelle dans le périmètre non vérifiée
+                                               géométriquement. À La Réunion, ce classement n'ouvre
+                                               que les mesures NON FISCALES (FAQ FRR DGCL, juillet
+                                               2025) : l'exonération d'impôt de l'art. 44 quindecies A
+                                               CGI ne s'y applique pas — à confirmer par un fiscaliste.
+
+
+
+                                                             Généré
+                                                               via                                                       6/9
+                                                             LABUSE
+Sources : Taux de taxe foncière — fichier REI (DGFiP) · QPV 2024 (ANCT) · NPNRU (DEAL Réunion / ANCT) · ZFANG — zone franche
+d'activité nouvelle génération (Légifrance) · FRR ex-ZRR — zone spéciale d'action rurale (Légifrance) · Taxe d'aménagement —
+barème public (DGFiP/DELTA)
+
+
+
+   8. Marché
+
+   Prix ancien médian 2 203 €/m² (12 ventes à moins de 500 m).
+
+
+Constaté — ventes actées (DVF)
+
+Ancien bâti — secteur                        2 203 €/m² — ancien, 12 ventes à moins de 500 m                         sourcé
+
+
+Ventes retenues                              12                                                                      sourcé
+
+
+Ventes écartées                              0                                                                       sourcé
+
+
+
+Maison                                       1 709 €/m² — 40 ventes · secteur cadastral, 2021-2025                   sourcé
+
+
+Terrain                                      141 €/m² — 32 ventes · secteur cadastral, 2021-2025                     sourcé
+
+
+
+  VÉRIFIÉ : RIEN
+     • Terrain nu — à moins de 500 m : échantillon DVF insuffisant pour une médiane fiable.
+     • Neuf VEFA — commune : échantillon VEFA insuffisant pour une médiane servie.
+     • Annonces en cours (Radar) : aucune annonce active repérée dans le secteur.
+     • Aucune vente DVF recensée à moins de 100 m sur 36 mois.
+
+
+Sources : DVF / valeurs foncières
+
+
+
+   9. Quartier
+
+   Le Tévelave — 2 019 habitants.
+
+
+Le secteur
+
+Permis à proximité                           5 permis (< 500 m, 24 mois)                                             sourcé
+
+
+À proximité
+
+À proximité (équipements)                    École : ECOLE PRIMAIRE PUBLIQUE MARCEL LE GUEN (445                     sourcé
+                                             m) · Commerces : VIVAL (458 m) · Santé : CENTRE
+                                             COMMUNAL D'ACTION SOCIALE (445 m) · Arrêt de bus : 33
+                                             Rue Francis Rivière (111 m)
+
+
+
+  2 019                                      19,6 %                                      27,2 %
+  habitants, 752 ménages                     de 60 ans et plus                           de locataires
+
+
+
+Parc de logements du quartier                921 logements, 14,0 % de vacance                                        sourcé
+
+
+
+                                                            Généré
+                                                              via                                                        7/9
+                                                            LABUSE
+Sources : INSEE RP2022 — bases IRIS (logement, population) · Contours IRIS (IGN/INSEE) · SITADEL (autorisations d'urbanisme) ·
+BPE INSEE · OpenStreetMap / Overpass
+
+
+
+   10. Potentiel
+
+   Potentiel de construction : Fort potentiel — parcelle en forte sous-densité — SDP
+   résiduelle (droits à bâtir non consommés) ≈ 177 m².
+
+
+Ce qui est constructible
+
+Potentiel (verdict)                              Fort potentiel — parcelle en forte sous-densité                           estimé
+
+
+Gabarit réglementaire
+
+Zone d'implantation                              196 m²                                                                    sourcé
+
+
+Plafond d'emprise                                233 m²                                                                    sourcé
+
+
+Hauteur réglementaire                            10,0 m                                                                    sourcé
+
+
+Couverture réglementaire                         Vérifié : reculs, emprise, hauteur, risques · non modélisé :              sourcé
+                                                 Stationnement, Espaces libres, Servitudes d'utilité
+                                                 publique
+
+
+
+
+                                 Zone d'implantation réglementaire (schéma — pas un plan de masse)
+
+                                    Zone d'implantation                    Retraits
+                                    Contour cadastral
+
+
+
+
+  NON DISPONIBLE ICI
+     • Capacité en logements : non chiffrée ici — le potentiel relève des droits à bâtir résiduels (la SDP ci-dessus), pas un
+       programme de logements.
+     • Surface vendable non calculable pour cette parcelle.
+     • Marge de surélévation non calculable (bâti non déterminé).
+
+
+Sources : BD TOPO IGN · CoSIA (couverture du sol IA, IGN) · Urbanisme PLU/GPU (API Carto) · Cadastre (API Carto PCI) · DEAL
+Réunion — PPR / aléas
+
+
+
+
+                                                                  Généré
+                                                                    via                                                         8/9
+                                                                  LABUSE
+   11. Simulation
+
+  Renseignez votre opération pour obtenir le bilan
+  Le bilan dépend de chiffres que vous seul connaissez : prix demandé par le vendeur, coût de construction,
+  marge visée. LABUSE ne les suppose pas à votre place. Le document Financier les recueille et imprime le chiffre
+  d'affaires, la charge foncière supportable, l'écart au prix demandé et la sensibilité au coût de construction.
+
+
+
+
+   12. Limites et sources
+
+Ce que ce document ne peut pas dire
+
+Constructibilité définitive                 Certificat d'urbanisme — mairie, service instructeur
+
+Valeur vénale                               Avis de valeur — notaire, expert
+
+État du bâti, servitudes privées            Visite et acte notarié
+
+Coût de démolition, de dépollution          Devis d'entreprise
+
+Réseaux et raccordements chiffrés           Gestionnaires, DT-DICT
+
+Position du propriétaire, prix demandé Contact direct ou apporteur d'affaires
+
+
+Sources
+
+SITADEL (autorisations d'urbanisme)         SDES (Dido)
+
+DVF / valeurs foncières                     DGFiP / Etalab — géo-DVF
+
+ABF / Monuments historiques                 Base Mérimée (Ministère Culture)
+
+DGFiP — parcelles des personnes             DGFiP
+morales
+
+Géorisques — ICPE                           BRGM / Géorisques
+
+Géorisques — cavités souterraines           BRGM / Géorisques
+
+Géorisques — mouvements de terrain          BRGM / Géorisques
+
+Géorisques — sites et sols pollués          BRGM / Géorisques
+
+OpenStreetMap / Overpass                    OSM
+
+BD TOPO IGN                                 IGN / Géoplateforme
+
+RGE ALTI (altimétrie)                       IGN / Géoplateforme
+
+Urbanisme PLU/GPU (API Carto)               IGN / API Carto GPU
+
+Document d'information établi à partir de données publiques. Il ne constitue ni un document d'urbanisme opposable, ni une
+étude de faisabilité réglementaire, ni un conseil juridique, et ne remplace pas un certificat d'urbanisme. Fonds
+cartographiques : © IGN, © contributeurs OpenStreetMap (ODbL).
+
+
+
+
+                                                          Généré
+                                                            via                                                        9/9
+                                                          LABUSE
+

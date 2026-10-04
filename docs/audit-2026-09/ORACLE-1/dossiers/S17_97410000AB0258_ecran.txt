@@ -1,0 +1,489 @@
+PARCELLE · SAINT-BENOÎT
+97410000AB0258
+pj
+9 Rue Moreau, 97470 Saint-Benoît
+Secteur : la Cabane
+SURFACE
+i
+856 m²
+ZONE
+Ub
+constructible
+PENTE
+3,2 °
+plat
+EXPOSITION
+Nord-Est
+versant (RGE ALTI)
+RISQUES
+8
+aléa rédhibitoire
+SDP RESTANTE
+—
+pas de potentiel résiduel
+Demander à LABUSE
+Poser une question
+LE BIEN
+Identité
+COMMUNE DE SAINT B
+›
+Terrain
+pente plat · Nord-Est
+Bâti
+Ensemble bâti détecté (résidence / équipement)
+6 bâtiments
+LE DROIT DU SOL
+Urbanisme
+Risques et environnement
+18 couches évaluées
+8 vigilances
+Réseaux et desserte
+Assainissement : non renseigné
+eau/élec confirmée
+Fiscalité et dispositifs
+ZFANG renforcé
+LE MARCHÉ
+Marché
+17 ventes secteur
+170 €/m²
+Quartier
+Équipements, population et permis du voisinage
+isochrone
+LE PROJET
+Potentiel
+calcul tracé
+Simulation
+charge foncière · réhabilitation · outils projet
+bilan
++ CRM
++ Projet
+Dossier
+Dossier financier
+Apporteur
+Pré-dossier PC
+Courrier
+Remonter le temps
+Estimations indicatives issues de données publiques — ni conseil juridique/notarial ni garantie de constructibilité. Ces informations ne remplacent pas un certificat d'urbanisme.
+⚑ Signaler une erreur
+
+### tiroir ouvert : Identité
+17 ventes secteur · DVF — jusqu'à déc. 2025
+R+2 · calcul tracé
+
+### tiroir ouvert : COMMUNE DE SAINT B
+⌄
+COMMUNE DE SAINT BENOIT propriétaire depuis 2019 — aucune procédure collective
+SIREN
+219740107
+annuaire des entreprises ↗
+Créée · état
+1970active
+SIRENE
+Activité
+Activités combinées de soutien lié aux bâtiments
+8110Z
+BODACC
+aucune procédure
+DGFiP / BODACC
+Siège
+RUE AUGUSTE DE VILLELE · Saint-Benoît
+Groupe
+Commune
+HISTORIQUE DU PROPRIÉTAIRE
+2019 → 2025
+COMMUNE DE SAINT BENOIT
+Détention
+≥ 7 ans (depuis 2019)
+Scan patrimoine du propriétaire
+→
+
+### tiroir ouvert : Terrain
+
+### tiroir ouvert : 3,2 °
+Versant Nord-Est 3,2 ° · 736 m² au sol libre · 100 % artificialisé (OCS GE)
+Pente
+3,2 ° plat
+Exposition
+versant · RGE ALTI
+Surface au sol libre
+736 m²
+Sol artificialisé
+100 %
+OCS GE 2022
+COUVERTURE DU SOL · COSIA 20 CM
+Imperméabilisé 19,1 %
+Végétalisé 77,9 %
+Sol nu 0 %
+Azimut du versant
+61,9 ° (0 = Nord, sens horaire)
+PROFIL ALTIMÉTRIQUE
+6
+3
+0
+75 m
+DISTANCE
+DÉNIVELÉ +
++1 m
+DÉNIVELÉ −
+−3 m
+PENTE MOYENNE
+4,4 %
+PLUS FORTE PENTE
+8,7 %
+ALTITUDE
+3–6 m
+Le long du plus grand axe de la parcelle. Source RGE ALTI 5 m (IGN). Vocabulaire cartes.gouv (pente moyenne = grade absolu moyen).
+OCS GE (IGN, donnée d’îlot, décret 2023-1096) · CoSIA (IGN, détection IA, mesure de la parcelle) · pente et exposition RGE ALTI (IGN).
+
+### tiroir ouvert : Bâti
+
+### tiroir ouvert : 6 bâtiments
+Ensemble bâti détecté (résidence / équipement) emprise 120 m² · faîtage 3,9 m mesuré (LiDAR)
+Emprise bâtie au sol
+120 m²
+BD TOPO IGN
+Faîtage (LiDAR)
+3,9 m
+haut de toit
+Bâtiments
+6 BD TOPO · 3 RNB · 0 adr. BAN
+◀
+détail du bâti
+Bâti existant — BD TOPO® V3 (IGN) + CoSIA 2025. Information de fiche, jamais un signal de classement.
+
+### tiroir ouvert : Urbanisme
+
+### tiroir ouvert : —
+Ub, constructible 2 destinations interdites · 1 sous condition
+Zone
+Ubconstructible
+SDP consommée
+PLU
+approuvé le 06/02/2020
+document
+RÈGLEMENT — ZONE UB
+voir le règlement
+Hauteur
+non calibré
+Emprise
+Recul voie
+Recul limites
+Pleine terre
+Stationnement
+Destinations · 20 autorisées (Logement, Hébergement, Artisanat et commerce de détail…) · 2 interdites · 1 sous condition
+Le règlement des zones agricoles et naturelles n'est pas indexé article par article dans LABUSE. Consultez le document complet.
+Le règlement PLU fait foi ; les valeurs affichées sont une aide à la lecture, non un certificat d'urbanisme.
+SITUATION
+Foncier public
+info
+Propriété publique (COMMUNE DE SAINT BENOIT) — cession/préemption : interlocuteur public [DGFiP groupe 4 : Commune].
+SDP résiduelle
+SDP résiduelle 292 m² — une maison — hors cible collectif.
+Surface parcelle
+Surface utile 856 m².
+Annuaire PLU
+Vérif procédure
+RTAA DOM
+10 exigences →
+Préemption (DPU)
+non déterminée
+Bruit aérien (PEB)
+hors zone
+Servitude (SUP)
+PM1 · PM1_PPR_l_SAINT_BENOIT_gen2_ass
+PM1 · PM1_PPR_i_mvt_SAINT_BENOIT_gen2_ass
+PM1 · PM1_PPR_l_SAINT_BENOIT_gen1_ass
+SCOT
+hors périmètre
+MIXITÉ SOCIALE (LLS)
+non modélisée
+Clause de mixité sociale
+non modélisée pour cette zone
+Aucune clause de mixité sociale validée pour cette zone dans le règlement calibré.
+✓ 10 couches sans objet — déplier
+Emprise linéaire
+Forme non linéaire (largeur 14 m, allongement 5.3×).
+Emprise routière
+Pas une emprise routière (15 m d'axes, densité 0.10, bâti 14%).
+Forêt publique
+Hors forêt publique.
+Forêts publiques (ONF)
+· BD TOPO® V3 — forêt publique (IGN)
+Friche
+Aucune friche recensée.
+Cartofriches (Cerema)
+Occupation du sol (BD CARTO V5 — grain grossier)
+Sol classé artificialisé (occupation du sol BD CARTO V5, grain grossier, précision limitée à la parcelle).
+IGN BD CARTO V5 — occupation du sol
+· BD CARTO® V5 — occupation du sol (IGN, proxy)
+Faux positif OSM
+Aucun faux positif géométrique OSM.
+OpenStreetMap / Overpass
+Parc national
+Hors Parc National.
+Parc National de La Réunion (INPN)
+· millésime 2021
+Prescriptions PLU
+Aucune prescription PLU sur la parcelle.
+Urbanisme PLU/GPU (API Carto)
+· GPU/PLU par commune (révisions — détail en fiche)
+Parcelle déclarée agricole (RPG)
+Hors parcelle agricole déclarée (RPG).
+RPG — déclarations agricoles (IGN/ASP)
+· proxy RPG.LATEST (IGN) — campagne 2024 (data.gouv RPG-R)
+Potentiel foncier Région (indicatif)
+Hors îlot cartographié — aucune contrainte déduite automatiquement.
+Potentiel foncier Région (Région ODS)
+· îlots non urbanisés — estimation Région (ODS, non versionné)
+
+### tiroir ouvert : Risques et environnement
+
+### tiroir ouvert : 8 vigilances
+Aléa submersion marine fort sur 48 % 6 aléas au total
+ALÉAS (6)
+PPR — zone rougerédhibitoire
+79 %
+Aléa submersion_marine niveau fort
+48 %
+Aléa inondation niveau moyen
+62 %
+Aléa mouvement_terrain niveau faible
+PPR — zone bleue
+zone bleue
+21 %
+PPR (approuvé le 2017-10-02) · PPRL (approuvé le 2017-10-02) — DEAL Réunion — PPR / aléas · 2026-09-13
+FRICHE RECENSÉE (CARTOFRICHES)
+✓ Sans objet — parcelle non recensée comme friche. (édition courante (Cerema, mise à jour trimestrielle))
+EnR au sol (APER)
+hors zone d'exclusion
+Mesure compensatoire (GéoMCE)
+aucune sur la parcelle
+17
+arrêtés CatNat (commune) · dernier 20/03/2025
+VIGILANCES
+Secteur affecté par le bruit routier (classement sonore cat. 2, bande 250 m)
+isolement acoustique renforcé obligatoire (R.571-32 CE).
+Parcelle au contact de la bande des 50 pas géométriques (corridor ±90 m de la limite haute 1877)
+régime foncier SPÉCIFIQUE à vérifier : domaine public littoral, cession encadrée (agence des 50 pas).
+Servitude(s) d'utilité publique sur la parcelle : PM1.
+Ligne moyenne tension
+à proximité
+ABF / Monuments
+Hors périmètre ABF.
+ABF / Monuments historiques
+Cavités
+Aucun objet recensé à proximité.
+Géorisques — cavités souterraines
+Eau
+Hors hydrographie.
+· BD TOPO® V3 (IGN) — édition non enregistrée
+Espace protégé réglementaire (INPN)
+Hors espace protégé (INPN).
+INPN / patrinat — espaces protégés
+· INPN/patrinat espaces protégés — passe 05/07/2026
+ICPE
+Géorisques — ICPE
+Mouvement de terrain
+Géorisques — mouvements de terrain
+Pente faible (~4%) — calculée, non éliminatoire.
+RGE ALTI (altimétrie)
+· RGE ALTI® (IGN) — édition non enregistrée
+Ravines
+Hors voisinage immédiat d'une ravine.
+Sols pollués
+Géorisques — sites et sols pollués
+Indicateur d'érosion côtière (Cerema)
+Hors zone de recul du trait de côte.
+Cerema / GéoLittoral — indicateur d'érosion côtière
+· millésime 2018
+Pièges & risques
+
+### tiroir ouvert : Réseaux et desserte
+
+### tiroir ouvert : eau/élec confirmée
+Viabilisation eau/élec confirmée assainissement non renseigné
+✓
+Eau/élec
+confirmée
+Fibre
+FttH
+Bus
+31 m
+?
+Assainis.
+non renseigné
+Fibre (Arcep)
+FttH · 4 m · 5 op.
+Arrêt de bus
+LA CABANE · 31 m
+Ligne de transport
+Estival · 19 m
+Pôle d’échange
+College Beaulieu · 2.52 km
+ACCÈS
+Accès voirie : voie publique à ≤ 10 m de la parcelle (faisceau viabilisation
+le test au contact strict de l'axe BD TOPO est retiré).
+GESTIONNAIRES (RACCORDEMENT)
+Compétence
+CIREST — Communauté intercommunale Réunion Est · cirest.fr
+Eau potable
+CISE Réunion (SAUR) · DSP affermage ; contrat unifié CISE 01/01/2027 confirmé
+Assainissement
+CISE Réunion (SAUR) · DSP confirmé
+SPANC (ANC)
+Régie CIREST
+Électricité
+EDF SEI · EDF SEI Réunion — raccordement.reunion@edf.fr / edf.re
+Déjà CISE → continuité ; intégration formelle 01/01/2027.
+Gestionnaires administratifs à jour au 2026-07, à revérifier annuellement (les délégations changent aux renouvellements de contrat). Contact administratif uniquement — aucun tracé de réseau (donnée sensible). Viabilité (eau, électricité, assainissement) à confirmer auprès des concessionnaires via DT-DICT (reseaux-et-canalisations.gouv.fr).
+Viabilisation eau · élec
+confirmée par les faits
+Raccordement eau · élec
+Raccordement a priori SIMPLE : réseaux présumés en façade/voirie, secteur déjà desservi et construit.
+Solaire
+Ensoleillement très favorable à une installation solaire — productible estimé ~1 530 kWh/kWc/an (modèle SARAH3, hors gradient côtier local). Estimé
+non renseigné (secteur indicatif)
+4
+indices (faisceau de preuves)
+Axe structurant
+Axe structurant N2 (type autoroutier) à ~742 m — deux faces : accessibilité (desserte rapide) ET nuisances potentielles (bruit, pollution ; recul le long des axes classés, art. L. 111-6 — non cartographié en donnée ouverte, à vérifier au PLU). Le classement sonore, lui, est évalué au tiroir Risques.
+
+### tiroir ouvert : Fiscalité et dispositifs
+
+### tiroir ouvert : ZFANG renforcé
+Zone franche (ZFANG), France Ruralités (FRR), ORT signée zone B1 (PTZ/loyers) · TVA 8,5 %
+Taxe foncière
+49,36 %
+part communale
+Taxe d'aménagement
+5 + 2.5 %
+commune · dépt
+Zonage A/B/C
+B1
+PTZ · loyers
+TVA
+8,5 %
+DOM · 2,1 % LLS
+DISPOSITIFS DE LA COMMUNE
+ZFANG
+FRR
+ORT
+05/10/2021
+QPV
+PVD
+Cœur de ville
+Calculer la taxe d'aménagement
+détail des dispositifs
+Fait territorial sourcé et daté. Les taux cités sont les taux LÉGAUX du dispositif (décret / CGI), pas un calcul de votre avantage : l'éligibilité et l'effet réel relèvent de votre expert-comptable ou avocat fiscaliste.
+
+### tiroir ouvert : Marché
+
+### tiroir ouvert : 170 €/m²
+Terrain nu 170 €/m², maison 2 232 €/m² secteur +5 % vs commune, tendance hausse
+Terrain nu
+170
+€/m² · 17 ventes
+Maison
+2 232
+€/m² · 27 ventes · 1 000 m
+commune
+secteur +5 %
+Aucun signal sur cet onglet.
+Prix de sortie — bâti secteur
+2 232 €/m²
+Valeur au prix du secteur
+≈ 145 520 €
+Prix par type : maison / appartement = médiane locale par type au rayon adaptatif (DVF) ; terrain nu = médiane de la section cadastrale (même source que la valeur du secteur).
+VENTES À MOINS DE 100 M
+Ventes
+(< 100 m · 36 mois)
+1 vente
+Prix médian
+échantillon insuffisant (< 3 ventes)
+Loyers (OLL)
+zone non couverte
+Acquéreur PM voisin
+RUNGA · 19/03/2025
+Outil Communes — Saint-Benoît
+
+### tiroir ouvert : Quartier
+
+### tiroir ouvert : isochrone
+Secteur la Cabane niveau de vie 16 534 €, 42 % sous le seuil de pauvreté, commerces à 204 m
+À PROXIMITÉ (À PIED)
+École
+727 m
+Commerces
+204 m
+Santé
+71 m
+CONTEXTE SOCIO-ÉCONOMIQUE (SECTEUR)
+Niveau de vie médian
+16 534 €
+SOURCÉFilosofi 2021 (INSEE, carreaux 200 m)
+Propriétaires
+88 %
+Pauvreté
+42 %
+Parc social — commune entière
+4 842 logements
+RPLS 01/01/2025 · maille commune
+Contexte informatif — hors scoring. Niveau de vie/pauvreté au carreau 200 m ; parc social à la commune.
+QUARTIER INSEE — BOURBIER-BEAUVALLON
+Logements
+1 410
+Vacance
+9,9 %
+Bâti avant 1990
+37,8 %
+Pers./ménage
+2,57
+60 ans et +
+21,6 %
+HLM
+6,5 %
+INSEE — recensement de la population, bases IRIS (maille quartier) — RP2022 (parution 16/10/2025, géographie 01/01/2024). Maille quartier (IRIS) : affine la commune, ne la remplace pas.
+0,5 km
+1 km
+2 km
+5 km
+Lecture de la zone…
+PERMIS À PROXIMITÉ
+3 à < 100 m · 17 à < 200 m
+Permis autorisés géolocalisés < 200 m (source du signal viabilisation M-VIA). Cliquez pour la fiche.
+PC
+2018-02-21
+1 lgt
+34 m
+2023-02-22
+65 m
+2015-07-29
+94 m
+DP
+2024-11-14
+101 m
+2024-06-26
+103 m
+◀ + 7 autres permis
+ACTIVITÉ DE DÉPÔT DE PERMIS
+Sourcé Sitadel3 / SDES
+Sur le secteur : 10 dépôts sur 36 mois · section cadastrale · dernier 2025-01-01
+activité de dépôt (permis aboutis — les refus et dossiers en cours ne sont pas publiés).
+Étude de zone · Chalandise
+Étude de zone · Particulier
+Permis commune
+Fiche commune
+
+### tiroir ouvert : Potentiel
+
+### tiroir ouvert : Simulation
+
+### tiroir ouvert : bilan
+Prix de sortie retenu 2 232 €/m²
+PRIX DE SORTIE RETENU (BILAN)
+Le prix de sortie bâti retenu pour la charge foncière est le prix du secteur affiché dans « Marché » (échantillon, rayon, tendance, fraîcheur y sont détaillés).
+Faisabilité
+Calculette foncière
+Assemblage
+
+### tiroir ouvert : final

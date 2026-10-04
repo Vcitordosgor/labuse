@@ -1,0 +1,474 @@
+PARCELLE · SAINT-PAUL
+97415000AB0425
+pj
+adresse non rattachée (Absent)
+i
+SURFACE
+5 521 m²
+ZONE
+AU1st
+à urbaniser
+PENTE
+2,9 °
+plat
+EXPOSITION
+Plat
+terrain quasi plat
+RISQUES
+7
+vigilances
+SDP RESTANTE
+—
+zone non constructible
+Demander à LABUSE
+Poser une question
+LE BIEN
+Identité
+COMMUNAUTE AGGLO T
+›
+Terrain
+pente plat
+Bâti
+Aucun bâti significatif détecté
+terrain nu
+LE DROIT DU SOL
+Urbanisme
+Risques et environnement
+16 couches évaluées
+7 vigilances
+Réseaux et desserte
+Assainissement : non renseigné
+eau/élec à confirmer
+Fiscalité et dispositifs
+41,77 %
+LE MARCHÉ
+Marché
+19 ventes secteur · DVF — jusqu'à déc. 2025
+272 €/m²
+Quartier
+Équipements, population et permis du voisinage
+isochrone
+LE PROJET
+Potentiel
+calcul tracé
+Simulation
+charge foncière · réhabilitation · outils projet
+bilan
++ CRM
++ Projet
+Dossier
+Dossier financier
+Apporteur
+Pré-dossier PC
+Courrier
+Remonter le temps
+Estimations indicatives issues de données publiques — ni conseil juridique/notarial ni garantie de constructibilité. Ces informations ne remplacent pas un certificat d'urbanisme.
+⚑ Signaler une erreur
+
+### tiroir ouvert : Identité
+
+### tiroir ouvert : COMMUNAUTE AGGLO T
+⌄
+COMMUNAUTE AGGLO TERRITOIRE COTE OUEST propriétaire depuis 2020 — aucune procédure collective
+SIREN
+249740101
+annuaire des entreprises ↗
+Créée · état
+2002active
+SIRENE
+Activité
+Administration publique générale
+8411Z
+BODACC
+aucune procédure
+DGFiP / BODACC
+Siège
+1 RUE ELIARD LAUDE · Le Port
+Groupe
+Commune
+HISTORIQUE DU PROPRIÉTAIRE
+2020 → 2025
+COMMUNAUTE AGGLO TERRITOIRE COTE OUEST
+Détention
+≥ 6 ans (depuis 2020)
+Scan patrimoine du propriétaire
+→
+FILIATION CADASTRALE
+Issue de
+97415000AB0007 · 28/07/2000 · document d’arpentage
+DGFiP — documents de filiation informatisés (trimestriel). Contrôle croisé avec le cadastre d'époque (géométrie) — deux canaux, jamais un conflit.
+
+### tiroir ouvert : Terrain
+
+### tiroir ouvert : 2,9 °
+Terrain plat 2,9 ° · 5 521 m² au sol libre · 90,6 % artificialisé (OCS GE)
+Pente
+2,9 ° plat
+Exposition
+Surface au sol libre
+5 521 m²
+Sol artificialisé
+90,6 %
+OCS GE 2022
+COUVERTURE DU SOL · COSIA 20 CM
+Imperméabilisé 13,3 %
+Végétalisé 10,4 %
+Sol nu 0 %
+PROFIL ALTIMÉTRIQUE
+Lecture du relief (RGE ALTI)…
+OCS GE (IGN, donnée d’îlot, décret 2023-1096) · CoSIA (IGN, détection IA, mesure de la parcelle) · pente et exposition RGE ALTI (IGN).
+
+### tiroir ouvert : Bâti
+32
+29
+0
+177 m
+DISTANCE
+DÉNIVELÉ +
++4 m
+DÉNIVELÉ −
+−1 m
+PENTE MOYENNE
+2,8 %
+PLUS FORTE PENTE
+9,5 %
+ALTITUDE
+29–32 m
+Le long du plus grand axe de la parcelle. Source RGE ALTI 5 m (IGN). Vocabulaire cartes.gouv (pente moyenne = grade absolu moyen).
+
+### tiroir ouvert : terrain nu
+Terrain nu aucun bâtiment BD TOPO, aucune hauteur LiDAR, aucun établissement rattaché
+Établissements sur la parcelle
+aucun SIRENE, adresse exacte
+Bâti existant — BD TOPO® V3 (IGN) + CoSIA 2025. Information de fiche, jamais un signal de classement.
+
+### tiroir ouvert : Urbanisme
+
+### tiroir ouvert : —
+AU1st, à urbaniser : constructible sous condition d'une opération d'aménagement d'ensemble Zone à urbaniser — ouverture conditionnée à une opération d'aménagement d'ensemble et/ou à une modification du PLU. Constructibilité à confirmer auprès de la commune avant tout engagement.
+Zone
+AU1stà urbaniser
+PLU
+approuvé le 17/12/2025
+document
+RÈGLEMENT — ZONE AU1ST
+voir l’article
+Hauteur
+4 m
+Art. 10 des sections AU*st (ex. p.59
+Emprise
+Recul voie
+Recul limites
+Pleine terre
+Stationnement
+Destinations · 22 interdites · 1 sous condition
+Le règlement PLU fait foi ; les valeurs affichées sont une aide à la lecture, non un certificat d'urbanisme.
+Zone AU (AU1st)
+constructible sous condition d'une opération d'aménagement d'ensemble
+LABUSE — moteur d'ouverture AU (règlement PLU calibré)
+Zone à urbaniser — ouverture conditionnée à une opération d'aménagement d'ensemble et/ou à une modification du PLU. Constructibilité à confirmer auprès de la commune avant tout engagement.
+⇢
+Simuler l'ouverture de la zone AU
+Ce que la bascule AU1st → U changerait
+SITUATION
+SDP résiduelle
+SDP résiduelle 0 m² — rien à construire.
+Surface parcelle
+Surface utile 5521 m².
+Foncier public
+info
+Propriété publique (COMMUNAUTE AGGLO TERRITOIRE COTE OUEST) — cession/préemption : interlocuteur public [DGFiP groupe 4 : Commune].
+Annuaire PLU
+Vérif procédure
+RTAA DOM
+10 exigences →
+Préemption (DPU)
+DPU simple
+Bruit aérien (PEB)
+hors zone
+Servitude (SUP)
+PM1 · PM1_PPR_i_mvt_SAINT_PAUL_gen2_ass
+SCOT
+SCOT TCO · approuvé le 03/10/2022
+MIXITÉ SOCIALE (LLS)
+non modélisée
+Clause de mixité sociale
+non modélisée pour cette zone
+Aucune clause de mixité sociale validée pour cette zone dans le règlement calibré.
+✓ 11 couches sans objet — déplier
+Emprise linéaire
+Forme non linéaire (largeur 77 m, allongement 2.1×).
+Emprise routière
+Pas une emprise routière (0 m d'axes, densité 0.00, bâti 0%).
+Forêt publique
+Hors forêt publique.
+Forêts publiques (ONF)
+· BD TOPO® V3 — forêt publique (IGN)
+Friche
+Aucune friche recensée.
+Cartofriches (Cerema)
+Occupation du sol (BD CARTO V5 — grain grossier)
+Sol classé artificialisé (occupation du sol BD CARTO V5, grain grossier, précision limitée à la parcelle).
+IGN BD CARTO V5 — occupation du sol
+· BD CARTO® V5 — occupation du sol (IGN, proxy)
+Faux positif OSM
+Aucun faux positif géométrique OSM.
+OpenStreetMap / Overpass
+Parc national
+Hors Parc National.
+Parc National de La Réunion (INPN)
+· millésime 2021
+Prescriptions PLU
+Zonage des eaux pluviales : zonage d'eau pluviale - zone réglementaire Forte — rétention/infiltration imposée (impacte la conception, pas la constructibilité).
+Urbanisme PLU/GPU (API Carto)
+· GPU/PLU par commune (révisions — détail en fiche)
+Orientation d'aménagement (OAP) : OAP 1.4 - La zone d'activités économiques de Cambaie — secteur de projet encadré (principes d'aménagement à respecter).
+Parcelle déclarée agricole (RPG)
+Hors parcelle agricole déclarée (RPG).
+RPG — déclarations agricoles (IGN/ASP)
+· proxy RPG.LATEST (IGN) — campagne 2024 (data.gouv RPG-R)
+Potentiel foncier Région (indicatif)
+Hors îlot cartographié — aucune contrainte déduite automatiquement.
+Potentiel foncier Région (Région ODS)
+· îlots non urbanisés — estimation Région (ODS, non versionné)
+
+### tiroir ouvert : Risques et environnement
+
+### tiroir ouvert : 7 vigilances
+Aléa inondation faible sur 100 % ancien site industriel à 22 m · 3 aléas au total
+ALÉAS (3)
+Aléa inondation niveau faible
+100 %
+Aléa mouvement_terrain niveau faible
+PPR — zone bleue
+zone bleue
+PPR (approuvé le 2016-10-26) · PPRL (approuvé le 2018-12-19) — DEAL Réunion — PPR / aléas · 2026-09-13
+SOLS (SIS / CASIAS)
+Ancien site industriel (CASIAS)
+communauté d’agglomération du territoire de la côte Ouest (TCO) · à 22 m
+FRICHE RECENSÉE (CARTOFRICHES)
+✓ Sans objet — parcelle non recensée comme friche. (édition courante (Cerema, mise à jour trimestrielle))
+EnR au sol (APER)
+hors zone d'exclusion
+Mesure compensatoire (GéoMCE)
+aucune sur la parcelle
+◀
+24
+arrêtés CatNat (commune) · dernier 19/01/2024
+VIGILANCES
+Secteur affecté par le bruit routier (classement sonore cat. 2, bande 250 m)
+isolement acoustique renforcé obligatoire (R.571-32 CE).
+Installation classée (ICPE) à proximité
+M'ROIVILI Abdallah, régime Enregistrement, 284 m.
+Site pollué recensé (CASIAS/instruction) à proximité
+étude de sol à prévoir, coût de dépollution potentiel. (communauté d’agglomération du territoire de la côte Ouest (TCO), 22 m)
+Servitude(s) d'utilité publique sur la parcelle : PM1.
+Ligne moyenne tension
+à proximité
+✓ 9 couches sans objet — déplier
+ABF / Monuments
+Hors périmètre ABF.
+ABF / Monuments historiques
+Cavités
+Aucun objet recensé à proximité.
+Géorisques — cavités souterraines
+50 pas géométriques
+Hors zone des 50 pas géométriques.
+50 pas géométriques — limite haute (DEAL)
+· cadastre 1877 (géoréf. 2012/1950)
+Eau
+Hors hydrographie.
+BD TOPO IGN
+· BD TOPO® V3 (IGN) — édition non enregistrée
+Espace protégé réglementaire (INPN)
+Hors espace protégé (INPN).
+INPN / patrinat — espaces protégés
+· INPN/patrinat espaces protégés — passe 05/07/2026
+Mouvement de terrain
+Géorisques — mouvements de terrain
+Pente faible (~4%) — calculée, non éliminatoire.
+RGE ALTI (altimétrie)
+· RGE ALTI® (IGN) — édition non enregistrée
+Ravines
+Hors voisinage immédiat d'une ravine.
+Indicateur d'érosion côtière (Cerema)
+Hors zone de recul du trait de côte.
+Cerema / GéoLittoral — indicateur d'érosion côtière
+· millésime 2018
+Pièges & risques
+
+### tiroir ouvert : Réseaux et desserte
+
+### tiroir ouvert : eau/élec à confirmer
+Viabilisation eau/élec à confirmer assainissement non renseigné
+?
+Eau/élec
+à confirmer
+Fibre
+✓
+Bus
+9 m
+Assainis.
+non renseigné
+Fibre (Arcep)
+non renseignée
+Arrêt de bus
+Karting · 9 m
+Ligne de transport
+Kar'Ouest · 8 m
+Pôle d’échange
+4X4 pour aller au départ rando Mafate · 2.82 km
+Stationnement allégé (TCSP)
+rayon 800 m · 28 m
+ACCÈS
+Accès voirie : voie publique à ≤ 10 m de la parcelle (faisceau viabilisation
+le test au contact strict de l'axe BD TOPO est retiré).
+GESTIONNAIRES (RACCORDEMENT)
+Compétence
+TCO — Territoire de la Côte Ouest · tco.re
+Eau potable
+Régie La Créole (régie communautaire TCO) · régie confirmé
+Assainissement
+Régie La Créole · régie confirmé
+SPANC (ANC)
+La Créole (SPANC)
+Électricité
+EDF SEI · EDF SEI Réunion — raccordement.reunion@edf.fr / edf.re
+Ex-régie communale transférée au TCO le 01/01/2020. Pas de délégataire.
+Gestionnaires administratifs à jour au 2026-07, à revérifier annuellement (les délégations changent aux renouvellements de contrat). Contact administratif uniquement — aucun tracé de réseau (donnée sensible). Viabilité (eau, électricité, assainissement) à confirmer auprès des concessionnaires via DT-DICT (reseaux-et-canalisations.gouv.fr).
+Viabilisation eau · élec
+incertaine — à vérifier
+Raccordement eau · élec
+Viabilisation À ÉTUDIER : extension de réseau possible, surcoût — faire chiffrer le branchement auprès du gestionnaire.
+Solaire
+Ensoleillement favorable à une installation solaire — productible estimé ~1 340 kWh/kWc/an (modèle SARAH3, hors gradient côtier local). Estimé
+non renseigné (secteur indicatif)
+3
+indices (faisceau de preuves)
+Axe structurant
+Axe structurant N7 (route à 2 chaussées) à ~14 m — deux faces : accessibilité (desserte rapide) ET nuisances potentielles (bruit, pollution ; recul le long des axes classés, art. L. 111-6 — non cartographié en donnée ouverte, à vérifier au PLU). Le classement sonore, lui, est évalué au tiroir Risques.
+
+### tiroir ouvert : Fiscalité et dispositifs
+
+### tiroir ouvert : 41,77 %
+Zone franche (ZFANG), France Ruralités (FRR), ORT signée zone A (PTZ/loyers) · TVA 8,5 %
+Taxe foncière
+part communale
+Taxe d'aménagement
+5 + 2.5 %
+commune · dépt
+Zonage A/B/C
+A
+PTZ · loyers
+TVA
+8,5 %
+DOM · 2,1 % LLS
+DISPOSITIFS DE LA COMMUNE
+ZFANG
+FRR
+ORT
+25/04/2022
+QPV
+PVD
+Cœur de ville
+Calculer la taxe d'aménagement
+détail des dispositifs
+Fait territorial sourcé et daté. Les taux cités sont les taux LÉGAUX du dispositif (décret / CGI), pas un calcul de votre avantage : l'éligibilité et l'effet réel relèvent de votre expert-comptable ou avocat fiscaliste.
+
+### tiroir ouvert : Marché
+
+### tiroir ouvert : 272 €/m²
+Terrain nu 272 €/m², maison 3 857 €/m² secteur +7 % vs commune, tendance baisse
+Terrain nu
+272
+€/m² · 19 ventes
+Maison
+3 857
+€/m² · 10 ventes · 1 500 m
+Appartement
+3 900
+commune
+secteur +7 %
+Marché DVF
+Prix médian terrain 272 €/m² — 19 ventes secteur cadastral 2021-2025 (millésimes géo-DVF disponibles). Contexte de marché favorable.
+DVF / valeurs foncières
+· géo-DVF Etalab 2021–2025 + archives DGFiP 2014–2020
+Potentiel foncier Région
+Hors îlot « Potentiel foncier » Région.
+data.regionreunion.com — Potentiel foncier
+Prix de sortie — bâti secteur
+3 900 €/m²
+Valeur au prix du secteur
+≈ 1 501 712 €
+Prix par type : maison / appartement = médiane locale par type au rayon adaptatif (DVF) ; terrain nu = médiane de la section cadastrale (même source que la valeur du secteur).
+Loyers (OLL)
+zone non couverte
+Outil Communes — Saint-Paul
+
+### tiroir ouvert : Quartier
+
+### tiroir ouvert : isochrone
+Quartier Le Stade-Cambaie commerces à 316 m
+À PROXIMITÉ (À PIED)
+École
+906 m
+Commerces
+316 m
+Santé
+577 m
+CONTEXTE SOCIO-ÉCONOMIQUE (SECTEUR)
+Parc social — commune entière
+7 265 logements
+RPLS 01/01/2025 · maille commune
+Contexte informatif — hors scoring. Niveau de vie/pauvreté au carreau 200 m ; parc social à la commune.
+QUARTIER INSEE — LE STADE-CAMBAIE
+Logements
+1 624
+Vacance
+4,8 %
+Bâti avant 1990
+25,8 %
+Pers./ménage
+2,49
+60 ans et +
+15,9 %
+HLM
+4,2 %
+INSEE — recensement de la population, bases IRIS (maille quartier) — RP2022 (parution 16/10/2025, géographie 01/01/2024). Maille quartier (IRIS) : affine la commune, ne la remplace pas.
+0,5 km
+1 km
+2 km
+5 km
+Lecture de la zone…
+PERMIS À PROXIMITÉ
+0 à < 100 m · 3 à < 200 m
+Permis autorisés géolocalisés < 200 m (source du signal viabilisation M-VIA). Cliquez pour la fiche.
+PC
+2013-06-07
+107 m
+2014-05-09
+PD
+2019-09-27
+173 m
+ACTIVITÉ DE DÉPÔT DE PERMIS
+Sourcé Sitadel3 / SDES
+Sur le secteur : 14 dépôts sur 36 mois · section cadastrale · dernier 2026-05-14
+activité de dépôt (permis aboutis — les refus et dossiers en cours ne sont pas publiés).
+Étude de zone · Chalandise
+Étude de zone · Particulier
+Permis commune
+Fiche commune
+
+### tiroir ouvert : Potentiel
+
+### tiroir ouvert : Simulation
+
+### tiroir ouvert : bilan
+Prix de sortie retenu 3 900 €/m²
+PRIX DE SORTIE RETENU (BILAN)
+Le prix de sortie bâti retenu pour la charge foncière est le prix du secteur affiché dans « Marché » (échantillon, rayon, tendance, fraîcheur y sont détaillés).
+Faisabilité
+Calculette foncière
+Assemblage
+
+### tiroir ouvert : final

@@ -1,0 +1,624 @@
+D O S S I E R PA R C E L L E
+
+97413000AV0011
+54 rue du général lambert, 97436 Saint-Leu
+Saint-Leu
+
+
+DP-20260928-0011                28/09/2026          585 m²
+n° de rapport                   généré le           contenance
+
+
+
+   585 m²                                      UA                                           3,3°
+   SURFACE                                     ZONE                                         PENTE
+
+
+
+
+   plat                                        2 relevés                                    0 m²
+   EXPOSITION                                  RISQUES                                      SDP RESTANTE
+
+
+
+
+1. Identité                                                           7. Fiscalité et dispositifs
+2. Terrain                                                            8. Marché
+3. Bâti                                                               9. Quartier
+4. Urbanisme                                                          10. Potentiel
+5. Risques et environnement                                           11. Simulation
+6. Réseaux et desserte                                                12. Limites et sources
+
+ sourcé      lu dans la source · ƒ dérivé calculé · estimé hypothèse dite · projet saisi par vous
+
+
+
+
+                                                             Généré
+                                                               via                                         1 / 11
+                                                             LABUSE
+   1. Identité
+
+  Personne morale — SOCIETE CIVILE FUN CHAT — propriétaire depuis au moins
+  2019.
+
+
+Adresse                                           54 rue du général lambert, 97436 Saint-Leu          sourcé
+
+
+Qui détient
+
+Type de propriétaire                              Personne morale — SOCIETE CIVILE FUN CHAT (SIREN    sourcé
+                                                  U23700210)
+
+Historique de détention (PM)                      SOCIETE CIVILE FUN CHAT (2019–2025)                 sourcé
+
+
+
+
+  Plan de situation — la parcelle (contour) et ses voisines · © IGN — BD ORTHO
+
+
+
+  VÉRIFIÉ : RIEN
+     • Copropriétés : aucune copropriété immatriculée sur la parcelle.
+     • Filiation cadastrale : aucune filiation connue (parcelle stable).
+     • Dernière vente : aucune mutation DVF publiée sur cette parcelle (fenêtre 2014-2025).
+     • Aucun permis recensé sur cette parcelle (Sitadel).
+
+
+Sources : Base Adresse Nationale · DGFiP — parcelles des personnes morales
+
+
+
+   2. Terrain
+
+  Pente 3,3° · 240 m² de sol libre.
+
+
+Ce qu'il reste à bâtir
+
+Surface au sol libre                              240 m²                                             ƒ dérivé
+
+
+Couverture du sol
+
+Part artificialisée (OCS GE)                      100,0 %                                             sourcé
+
+
+
+
+                                                                   Généré
+                                                                     via                                 2 / 11
+                                                                   LABUSE
+Usage du sol dominant (OCS GE)                 Production et usage résidentiel (secondaire, tertiaire,                    sourcé
+                                               résidentiel)
+
+Part imperméabilisée (CoSIA)                   87,8 %                                                                     sourcé
+
+
+Part végétalisée/boisée (CoSIA)                12,1 %                                                                     sourcé
+
+
+Part sol nu (CoSIA)                            0,0 %                                                                      sourcé
+
+
+
+  VÉRIFIÉ : RIEN
+     • Piscine détectée : aucune piscine repérée sur la parcelle.
+
+
+Sources : BD TOPO IGN · CoSIA (couverture du sol IA, IGN) · Cadastre (API Carto PCI) · OCS GE — occupation du sol et
+artificialisation (IGN)
+
+
+
+   3. Bâti
+
+   2 bâtiments, 345 m² au sol.
+
+
+Ce qu'il y a dessus
+
+Bâtiments                                      2                                                                          sourcé
+
+
+Emprise bâtie                                  345 m²                                                                     sourcé
+
+
+Hauteur du bâti                                10,3 m                                                                     estimé
+
+
+Identifiants et références
+
+Identifiants RNB                               2 identifiants RNB                                                         sourcé
+
+
+Adresses liées au bâti (BAN PLUS)              2                                                                          sourcé
+
+
+
+  VÉRIFIÉ : RIEN
+     • Bâti détecté par IA (CoSIA) : cohérent avec la cartographie IGN, rien à signaler.
+
+
+
+  NON DISPONIBLE ICI
+     • Pente du toit : non relevée (LiDAR toiture non calculé sur ce bâti).
+     • Forme du toit : non déterminée (pans non nets ou LiDAR indisponible).
+
+
+Sources : BD TOPO IGN · CoSIA (couverture du sol IA, IGN) · LiDAR HD — MNH 50 cm (IGN) · RNB — Référentiel national des
+bâtiments (IGN) · BAN PLUS — liens adresse-bâtiment (IGN)
+
+
+
+
+                                                               Généré
+                                                                 via                                                        3 / 11
+                                                               LABUSE
+   4. Urbanisme
+
+  Zone UA (famille U) — urbaine, constructible. Le document opposable du
+  Géoportail de l'urbanisme fait foi ; les valeurs de règle ci-dessous sont une aide à
+  la lecture.
+
+
+Rappel RTAA DOM                         Conception réglementée pour tout logement neuf            sourcé
+                                        (aération traversante, protection solaire, eau chaude
+                                        solaire) — à intégrer au projet.
+
+Droit des sols (ER · EBC · DPU · PEB)
+
+Prescriptions du droit des sols         1 servitude — PM1 — plan de prévention des risques        sourcé
+                                        naturels (PPR)
+
+SCOT                                    TCO — approuvé le 03/10/2022                              sourcé
+
+
+Règlement
+
+PLU                                     PLU approuvé le 26/02/2007 — version publiée au           sourcé
+                                        Géoportail de l'urbanisme le 26/02/2007 (document
+                                        opposable).
+
+
+Ce que le règlement fixe ici
+
+Règle                                   Valeur retenue
+
+Hauteur max                             12 m au faîtage · 9 m à l'égout Art. UA 10 · p.24         sourcé
+
+
+Emprise au sol max                      80 % Art. UA 9 · p.23                                     sourcé
+
+
+Recul sur voie                          4 m Art. UA 6 · p.22                                      sourcé
+
+
+Recul limites séparatives               3 m Art. UA 7 · p.22                                      sourcé
+
+
+Pleine terre min                        non réglementé                                            estimé
+
+
+Stationnement                           2 places / logement                                       sourcé
+
+
+
+Ce que le règlement autorise ici
+
+Autorisées                              Exploitation forestière · Hébergement · Restauration ·    sourcé
+                                        Activités de services où s'effectue l'accueil d'une
+                                        clientèle · Cinéma · Hôtels · Autres hébergements
+                                        touristiques · Locaux et bureaux accueillant du public
+                                        des administrations publiques et assimilés · Locaux
+                                        techniques et industriels des administrations publiques
+                                        et assimilés · Établissements d'enseignement, de santé
+                                        et d'action sociale · Salles d'art et de spectacles ·
+                                        Équipements sportifs · Lieux de culte · Autres
+                                        équipements recevant du public · Bureau · Centre de
+                                        congrès et d'exposition · Cuisine dédiée à la vente en
+                                        ligne
+
+
+                                                       Généré
+                                                         via                                        4 / 11
+                                                       LABUSE
+Sous conditions                                Logement · Artisanat et commerce de détail · Commerce                  sourcé
+                                               de gros
+
+Interdites                                     Exploitation agricole · Industrie · Entrepôt                           sourcé
+
+
+Surface commerciale                            Au-delà de 1000 m² de surface de vente : autorisation                  sourcé
+                                               d'exploitation commerciale (CDAC)
+
+
+  Prescriptions non vérifiables sur cette commune — aucun document d'urbanisme téléversé au Géoportail de
+  l'urbanisme. Un emplacement réservé ou une servitude peut exister sans être publié : à vérifier en mairie.
+
+
+Règlement complet : 97413_20070226 sur le Géoportail de l'urbanisme. Les valeurs ci-dessus sont une aide à la lecture ; le
+règlement fait foi.
+
+
+  VÉRIFIÉ : RIEN
+     • Hors emplacement réservé du PLU.
+     • Hors espace boisé classé du PLU.
+     • Hors périmètre de préemption urbaine publié.
+     • Hors zones du plan d'exposition au bruit.
+
+
+
+  NON DISPONIBLE ICI
+     • Mixité sociale : seuils de la zone non renseignés à ce jour.
+
+
+Sources : Urbanisme PLU/GPU (API Carto) · Sudocuh (procédures d'urbanisme) · GPU — emplacements réservés (prescriptions
+CNIG) · GPU — espaces boisés classés (prescriptions CNIG) · GPU — droit de préemption urbain (info-surf) · PEB — plans
+d'exposition au bruit (DGAC via annexes GPU) · SUP — assiettes GPU (API Carto) · SCOT (GPU)
+
+
+
+   5. Risques et environnement
+
+   Aléas relevés — aucun rédhibitoire.
+
+
+Ce qui contraint
+
+Points de risque                               2                                                                      sourcé
+
+
+Pour information
+
+Anciens sites industriels (CASIAS)             proche_100m                                                            sourcé
+
+
+Sols (SIS · CASIAS)
+
+Sols (SIS/CASIAS, parcelle)                    CASIAS : {'nom': "Atelier d'impression sur tissu DELTA                 sourcé
+                                               SUN", 'subtype': 'casias', 'statut': 'En arrêt', 'distance_m':
+                                               99, 'sur_place': False, 'fiche_risque': 'https://fiches-
+                                               risques.brgm.fr/georisques/casias/SSP4038208'}
+
+
+Aléa submersion marine                         Aléa submersion marine — niveau faible (~92% de la                     sourcé
+                                               parcelle).
+
+
+
+
+                                                               Généré
+                                                                 via                                                     5 / 11
+                                                               LABUSE
+PPR — zone bleue                               Zone bleue PPR littoral (toute la parcelle) —                          sourcé
+                                               constructible SOUS PRESCRIPTIONS (règlement DEAL).
+
+
+  VÉRIFIÉ : RIEN
+    • Sols pollués (SIS) : la parcelle n'est dans aucun secteur d'information sur les sols.
+    • Système d'endiguement : la parcelle n'est dans aucune zone protégée déclarée.
+    • EnR au sol interdites (APER) : la parcelle n'est dans aucune zone d'exclusion.
+    • Mesure compensatoire (GéoMCE) : aucune mesure ne recoupe la parcelle.
+    • Cavités souterraines : aucune recensée à proximité.
+    • ICPE : aucune installation classée relevée à proximité.
+
+
+Sources : ABF / Monuments historiques · DEAL Réunion — PPR / aléas · Géorisques — mouvements de terrain · Géorisques — ICPE
+· Géorisques — cavités souterraines · Géorisques — sites et sols pollués · ZNIEFF (INPN/MNHN) · AZI / TRI — inondation
+(Géorisques GASPAR) · Géorisques — CASIAS (anciens sites industriels) · Géorisques — secteurs d'information sur les sols (SIS)
+
+
+
+   6. Réseaux et desserte
+
+  Viabilisation probable — le tracé et la capacité exacts des réseaux ne sont pas
+  relevés à cette échelle : à confirmer auprès des gestionnaires par une DT-DICT.
+
+
+Fibre
+
+Fibre (FTTH)                                   Immeuble raccordable (Arcep)                                           sourcé
+
+
+Viabilisation
+
+Viabilisation                                  Viabilisation probable                                                 estimé
+
+
+Logements raccordés à l'égout                  Dans ce secteur IRIS « Saint-Leu Ville », 20 % des                     sourcé
+                                               logements ne sont pas raccordés au réseau collectif
+                                               (INSEE RP2022). C'est un taux de SECTEUR, pas l'état de
+                                               cette parcelle. À vérifier auprès du SPANC.
+
+Accès
+
+Arrêt de transport le plus proche              Arrêt Mairie de Saint-Leu (Kar'Ouest) à 49 m · Mairie De               sourcé
+                                               Saint-Leu à 51 m
+
+
+  VÉRIFIÉ : RIEN
+    • Hors rayon de 800 m d'une station TCSP.
+
+
+
+  NON DISPONIBLE ICI
+    • Productible solaire : non calculé sur cette toiture.
+
+
+Sources : Fibre Arcep — Ma connexion internet (immeuble) · BD TOPO IGN · RGE ALTI (altimétrie) · Parkings OSM (loi APER) ·
+Transport public — GTFS (PAN, 7 réseaux) · OSM — transport (pôles d'échange & téléphérique) · INSEE RP2022 — fichier détail
+Logements (EGOUL) · GPU — zonages d'assainissement
+
+
+
+
+                                                                Généré
+                                                                  via                                                    6 / 11
+                                                                LABUSE
+   7. Fiscalité et dispositifs
+
+  Zonage d'investissement locatif : A · 4 dispositifs territoriaux.
+
+
+Taxes
+
+Taxe foncière (TFPB)                         part communale 47,48 % · EPCI 0,00 % · TEOM 16,00 %                     sourcé
+
+
+Taxe d'aménagement — taux                    Taux communal 14,0 % — Secteur à taux majoré en                         sourcé
+communal                                     vigueur depuis le 01/01/2022 (délibération communale).
+                                             Se calcule sur la surface de plancher créée par le projet
+                                             — montant chiffré dans le document Financier.
+
+
+Zonage du logement                           Zonage d'investissement locatif : A                                     sourcé
+
+
+TVA outre-mer                                TVA outre-mer : 8,5 % (taux normal DOM) · 2,1 %                         sourcé
+                                             logement locatif social
+
+Opération de revitalisation (ORT)            Opération de Revitalisation de Territoire (ORT) (signée le              sourcé
+                                             25/04/2022)
+
+ZFANG                                        Régime standard — dispositif de plein droit dans les                    sourcé
+                                             DOM (art. 44 quaterdecies CGI) : abattement d'environ
+                                             50 % sur les bénéfices.
+
+FRR (ex-ZRR)                                 Commune classée FRR en partie — zone spéciale                           sourcé
+                                             d'action rurale des Hauts (décret 1978) ; position de
+                                             cette parcelle dans le périmètre non vérifiée
+                                             géométriquement. À La Réunion, ce classement n'ouvre
+                                             que les mesures NON FISCALES (FAQ FRR DGCL, juillet
+                                             2025) : l'exonération d'impôt de l'art. 44 quindecies A
+                                             CGI ne s'y applique pas — à confirmer par un fiscaliste.
+
+Sources : Taux de taxe foncière — fichier REI (DGFiP) · QPV 2024 (ANCT) · NPNRU (DEAL Réunion / ANCT) · ZFANG — zone franche
+d'activité nouvelle génération (Légifrance) · FRR ex-ZRR — zone spéciale d'action rurale (Légifrance) · Taxe d'aménagement —
+barème public (DGFiP/DELTA)
+
+
+
+   8. Marché
+
+  Prix ancien médian 5 148 €/m² (36 ventes à moins de 500 m).
+
+
+Constaté — ventes actées (DVF)
+
+Terrain nu — secteur                         512 €/m²                                                                sourcé
+
+
+Ancien bâti — secteur                        5 148 €/m² — ancien, 36 ventes à moins de 500 m                         sourcé
+
+
+Ventes retenues                              36                                                                      sourcé
+
+
+Ventes écartées                              1                                                                       sourcé
+
+
+
+
+                                                           Généré
+                                                             via                                                        7 / 11
+                                                           LABUSE
+Affiché — neuf déclaré (VEFA)
+
+Neuf VEFA — commune                            4 794 €/m² — VEFA déclaré à l'acte, 147 ventes                           sourcé
+                                               (commune, 5 ans)
+
+Le secteur
+
+Ventes à moins de 100 m (36 mois)              3 ventes DVF · 2 permis (< 100 m, 36 mois)                               sourcé
+
+
+
+Appartement                                    4 581 €/m² — 131 ventes · secteur cadastral, 2021-2025                   sourcé
+
+
+Autre                                          205 314 € — 35 ventes · secteur cadastral, 2021-2025                     sourcé
+
+
+Maison                                         4 223 €/m² — 32 ventes · secteur cadastral, 2021-2025                    sourcé
+
+
+Terrain                                        512 €/m² — 23 ventes · secteur cadastral, 2021-2025                      sourcé
+
+
+
+  VÉRIFIÉ : RIEN
+     • Annonces en cours (Radar) : aucune annonce active repérée dans le secteur.
+
+
+Sources : Cadastre (API Carto PCI) · DVF / valeurs foncières
+
+
+
+   9. Quartier
+
+   Saint-Leu Ville — 3 803 habitants.
+
+
+Le secteur
+
+Permis à proximité                             5 permis (< 500 m, 24 mois)                                              sourcé
+
+
+À proximité
+
+À proximité (équipements)                      École : ECOLE MATERNELLE PUBLIQUE SAINT LEU CENTRE                       sourcé
+                                               (164 m) · Commerces : LA CASA DHALL PURI NIGHT SHOP
+                                               (24 m) · Santé : SAAD CCAS ST LEU (33 m) · Arrêt de bus :
+                                               Mairie de Saint-Leu (49 m)
+
+
+
+  3 803                                        22,2 %                                    53,8 %
+  habitants, 1 785 ménages                     de 60 ans et plus                         de locataires
+
+
+
+Parc de logements du quartier                  2 331 logements, 9,9 % de vacance                                        sourcé
+
+
+Sources : INSEE RP2022 — bases IRIS (logement, population) · Contours IRIS (IGN/INSEE) · SITADEL (autorisations d'urbanisme) ·
+BPE INSEE · OpenStreetMap / Overpass
+
+
+
+
+                                                               Généré
+                                                                 via                                                       8 / 11
+                                                               LABUSE
+   10. Potentiel
+
+   Parcelle bâtie et saturée : la surface de plancher autorisée est déjà consommée
+   (245 %). La valeur est dans la réhabilitation du bâti ou dans sa reconstruction.
+
+
+Ce qui est constructible
+
+Potentiel (verdict)                             Densité autorisée atteinte ou dépassée                                    estimé
+
+
+Marge de surélévation (au faîtage)              1,7 m                                                                     estimé
+
+
+Gabarit réglementaire
+
+Zone d'implantation                             0 m²                                                                      sourcé
+
+
+Plafond d'emprise                               468 m²                                                                    sourcé
+
+
+Hauteur réglementaire                           12,0 m                                                                    sourcé
+
+
+Couverture réglementaire                        Vérifié : reculs, emprise, hauteur, risques · non modélisé :              sourcé
+                                                Stationnement, Espaces libres
+
+
+
+
+                                 Zone d'implantation réglementaire (schéma — pas un plan de masse)
+
+                                    Retraits                               Bâti existant
+                                    Exclusion (PPR rouge)                  Contour cadastral
+
+
+
+
+  NON DISPONIBLE ICI
+     • Capacité (logements) : non estimable sur cette parcelle.
+     • Surface de plancher non calculable (capacité nulle).
+     • Surface vendable non calculable pour cette parcelle.
+
+
+Sources : BD TOPO IGN · CoSIA (couverture du sol IA, IGN) · Urbanisme PLU/GPU (API Carto) · Cadastre (API Carto PCI) · DEAL
+Réunion — PPR / aléas · LiDAR HD — MNH 50 cm (IGN)
+
+
+
+
+                                                                  Généré
+                                                                    via                                                       9 / 11
+                                                                  LABUSE
+   11. Simulation
+
+  Renseignez votre opération pour obtenir le bilan
+  Le bilan dépend de chiffres que vous seul connaissez : prix demandé par le vendeur, coût de construction,
+  marge visée. LABUSE ne les suppose pas à votre place. Le document Financier les recueille et imprime le chiffre
+  d'affaires, la charge foncière supportable, l'écart au prix demandé et la sensibilité au coût de construction.
+
+
+
+
+   12. Limites et sources
+
+Ce que ce document ne peut pas dire
+
+Constructibilité définitive              Certificat d'urbanisme — mairie, service instructeur
+
+Valeur vénale                            Avis de valeur — notaire, expert
+
+État du bâti, servitudes privées         Visite et acte notarié
+
+Coût de démolition, de dépollution       Devis d'entreprise
+
+Réseaux et raccordements chiffrés        Gestionnaires, DT-DICT
+
+Position du propriétaire, prix demandé Contact direct ou apporteur d'affaires
+
+
+Sources
+
+SITADEL (autorisations d'urbanisme)      SDES (Dido)
+
+DVF / valeurs foncières                  DGFiP / Etalab — géo-DVF
+
+ABF / Monuments historiques              Base Mérimée (Ministère Culture)
+
+DGFiP — parcelles des personnes          DGFiP
+morales
+
+SUP — assiettes GPU (API Carto)          IGN (Géoportail de l'urbanisme)
+
+DEAL Réunion — PPR / aléas               DEAL Réunion (Lizmap)
+
+Géorisques — ICPE                        BRGM / Géorisques
+
+Géorisques — cavités souterraines        BRGM / Géorisques
+
+Géorisques — mouvements de terrain       BRGM / Géorisques
+
+Géorisques — sites et sols pollués       BRGM / Géorisques
+
+OpenStreetMap / Overpass                 OSM
+
+BD TOPO IGN                              IGN / Géoplateforme
+
+RGE ALTI (altimétrie)                    IGN / Géoplateforme
+
+LiDAR HD (MNS) — hauteurs mesurées       IGN / Géoplateforme
+
+
+
+
+                                                       Généré
+                                                         via                                                   10 / 11
+                                                       LABUSE
+Document d'information établi à partir de données publiques. Il ne constitue ni un document d'urbanisme opposable, ni une
+étude de faisabilité réglementaire, ni un conseil juridique, et ne remplace pas un certificat d'urbanisme. Fonds
+cartographiques : © IGN, © contributeurs OpenStreetMap (ODbL).
+
+
+
+
+                                                          Généré
+                                                            via                                                       11 / 11
+                                                          LABUSE
+

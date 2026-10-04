@@ -1,0 +1,530 @@
+PARCELLE · SAINT-LEU
+97413000CD0532
+pj
+11 rue de l'océan indien, 97436 Saint-Leu
+Secteur : Lotissement de la Pointe des Châteaux
+SURFACE
+i
+622 m²
+ZONE
+UC
+constructible
+PENTE
+8,7 °
+modérée
+EXPOSITION
+Sud-Ouest
+versant (RGE ALTI)
+RISQUES
+1
+vigilance
+SDP RESTANTE
+119 m²
+Demander à LABUSE
+Poser une question
+LE BIEN
+Identité
+Particulier
+›
+Terrain
+pente modérée · Sud-Ouest
+Bâti
+Parcelle partiellement bâtie
+2 bâtiments
+LE DROIT DU SOL
+Urbanisme
+—
+Risques et environnement
+14 couches évaluées
+1 vigilance
+Réseaux et desserte
+Assainissement : non renseigné
+eau/élec probable
+Fiscalité et dispositifs
+47,48 %
+LE MARCHÉ
+Marché
+2 ventes secteur
+166 €/m²
+Quartier
+Équipements, population et permis du voisinage
+isochrone
+LE PROJET
+Potentiel
+calcul tracé
+119 m² SDP
+Simulation
+charge foncière · réhabilitation · outils projet
+bilan
++ CRM
++ Projet
+Dossier
+Dossier financier
+Apporteur
+Pré-dossier PC
+Courrier
+Remonter le temps
+Estimations indicatives issues de données publiques — ni conseil juridique/notarial ni garantie de constructibilité. Ces informations ne remplacent pas un certificat d'urbanisme.
+⚑ Signaler une erreur
+
+### tiroir ouvert : Identité
+9 m max
+égout 6 m
+2 ventes secteur · DVF — jusqu'à déc. 2025
+R+1 · calcul tracé
+
+### tiroir ouvert : Particulier
+⌄
+Propriétaire non identifié personne physique ou hors fichier des personnes morales
+Courrier SPF
+→
+FILIATION CADASTRALE
+Issue de
+97413000CD0425 · 08/12/1999 · lotissement
+DGFiP — documents de filiation informatisés (trimestriel). Contrôle croisé avec le cadastre d'époque (géométrie) — deux canaux, jamais un conflit.
+✓ 3 couches sans objet — déplier
+Âge du dirigeant
+inconnu
+Âge dirigeant inconnu (PM sans dirigeant physique daté).
+INPI RNE (dirigeants)
+BODACC
+BODACC sans objet — propriétaire non personne morale.
+BODACC (procédures collectives)
+Propriétaire
+Propriétaire (personne morale) non renseigné pour cette parcelle.
+DGFiP — parcelles des personnes morales
+· Panel millésimes 2019→2025 (situation 1ᵉʳ janvier)
+
+### tiroir ouvert : Terrain
+
+### tiroir ouvert : 8,7 °
+Versant Sud-Ouest 8,7 ° · 461 m² au sol libre · 100 % artificialisé (OCS GE)
+Pente
+8,7 ° modérée
+Exposition
+versant · RGE ALTI
+Surface au sol libre
+461 m²
+Sol artificialisé
+100 %
+OCS GE 2022
+COUVERTURE DU SOL · COSIA 20 CM
+Imperméabilisé 48,8 %
+Végétalisé 40,5 %
+Sol nu 0 %
+Azimut du versant
+215,5 ° (0 = Nord, sens horaire)
+PROFIL ALTIMÉTRIQUE
+63
+58
+0
+38 m
+DISTANCE
+DÉNIVELÉ +
++5 m
+DÉNIVELÉ −
+−0 m
+PENTE MOYENNE
+14,3 %
+PLUS FORTE PENTE
+27,9 %
+ALTITUDE
+58–63 m
+Le long du plus grand axe de la parcelle. Source RGE ALTI 5 m (IGN). Vocabulaire cartes.gouv (pente moyenne = grade absolu moyen).
+OCS GE (IGN, donnée d’îlot, décret 2023-1096) · CoSIA (IGN, détection IA, mesure de la parcelle) · pente et exposition RGE ALTI (IGN).
+
+### tiroir ouvert : Bâti
+
+### tiroir ouvert : 2 bâtiments
+Parcelle partiellement bâtie emprise 161 m² · faîtage 5,8 m mesuré (LiDAR)
+Emprise bâtie au sol
+161 m²
+BD TOPO IGN
+Faîtage (LiDAR)
+5,8 m
+haut de toit
+Bâtiments
+2 BD TOPO · 2 RNB · 1 adr. BAN
+◀
+détail du bâti
+ÉTABLISSEMENTS SUR LA PARCELLE (1)
+CHILICOM
+Autres commerces de détail sur éventaires et marchés
+Rattachement par l'adresse BAN (précision « adresse » seulement — « voie » et « commune » ne sont pas rattachés). Nom masqué si l'unité est non diffusible.
+Bâti existant — BD TOPO® V3 (IGN) + CoSIA 2025. Information de fiche, jamais un signal de classement.
+
+### tiroir ouvert : Urbanisme
+
+### tiroir ouvert : —
+UC, constructible 2 destinations interdites · 3 sous condition
+Zone
+UCconstructible
+SDP consommée
+57 %
+PLU
+approuvé le 26/02/2007
+📡Révision générale du PLU en cours — stade « prescrite », prescrite le 2022-05-17.
+Sursis à statuer : non servi (débat PADD non constaté à ce jour).
+RÈGLEMENT — ZONE UC
+voir l’article
+Hauteur
+9 m
+Art. UC 10 · p.44 (PLU
+Emprise
+50 %
+Art. UC 9 · p.43 (PLU
+Recul voie
+3 m
+Art. UC 6 · p.41 (PLU
+Recul limites
+Art. UC 7 · p.42 (PLU
+Pleine terre
+30 %
+Art. UC 13 · p.47 (PLU
+Stationnement
+2 / logt
+Destinations · 18 autorisées (Exploitation forestière, Hébergement, Restauration…) · 2 interdites · 3 sous condition
+Le règlement PLU fait foi ; les valeurs affichées sont une aide à la lecture, non un certificat d'urbanisme.
+SITUATION
+SDP résiduelle
+SDP résiduelle 324 m² — petit collectif / 2-4 lots.
+Surface parcelle
+Surface utile 622 m².
+declassement
+fort
+bâti significatif : 26 % de la surface intersecte des bâtiments (BD TOPO) — occupation à vérifier
+Annuaire PLU
+Vérif procédure
+RTAA DOM
+10 exigences →
+Document d'urbanisme
+enquête publique ↗
+Préemption (DPU)
+non déterminée
+Bruit aérien (PEB)
+hors zone
+SCOT
+SCOT TCO · approuvé le 03/10/2022
+MIXITÉ SOCIALE (LLS)
+non modélisée
+Clause de mixité sociale
+non modélisée pour cette zone
+Aucune clause de mixité sociale validée pour cette zone dans le règlement calibré.
+✓ 11 couches sans objet — déplier
+Emprise linéaire
+Forme non linéaire (largeur 23 m, allongement 1.3×).
+Emprise routière
+Pas une emprise routière (0 m d'axes, densité 0.00, bâti 26%).
+Foncier public
+Propriétaire non public (personne physique ou PM privée).
+Forêt publique
+Hors forêt publique.
+Forêts publiques (ONF)
+· BD TOPO® V3 — forêt publique (IGN)
+Friche
+Aucune friche recensée.
+Cartofriches (Cerema)
+Occupation du sol (BD CARTO V5 — grain grossier)
+Sol classé artificialisé (occupation du sol BD CARTO V5, grain grossier, précision limitée à la parcelle).
+IGN BD CARTO V5 — occupation du sol
+· BD CARTO® V5 — occupation du sol (IGN, proxy)
+Faux positif OSM
+Aucun faux positif géométrique OSM.
+OpenStreetMap / Overpass
+Parc national
+Hors Parc National.
+Parc National de La Réunion (INPN)
+· millésime 2021
+Prescriptions PLU
+Aucune prescription PLU sur la parcelle.
+Urbanisme PLU/GPU (API Carto)
+· GPU/PLU par commune (révisions — détail en fiche)
+Parcelle déclarée agricole (RPG)
+Hors parcelle agricole déclarée (RPG).
+RPG — déclarations agricoles (IGN/ASP)
+· proxy RPG.LATEST (IGN) — campagne 2024 (data.gouv RPG-R)
+Potentiel foncier Région (indicatif)
+Hors îlot cartographié — aucune contrainte déduite automatiquement.
+Potentiel foncier Région (Région ODS)
+· îlots non urbanisés — estimation Région (ODS, non versionné)
+
+### tiroir ouvert : Risques et environnement
+
+### tiroir ouvert : 1 vigilance
+Aléa mouvement terrain faible sur 100 %
+ALÉAS (1)
+Aléa mouvement_terrain niveau faible
+DEAL Réunion — PPR / aléas · 2026-09-13
+FRICHE RECENSÉE (CARTOFRICHES)
+✓ Sans objet — parcelle non recensée comme friche. (édition courante (Cerema, mise à jour trimestrielle))
+EnR au sol (APER)
+hors zone d'exclusion
+Mesure compensatoire (GéoMCE)
+aucune sur la parcelle
+21
+arrêtés CatNat (commune) · dernier 17/06/2024
+VIGILANCES
+Ligne moyenne tension
+à proximité
+✓ 13 couches sans objet — déplier
+ABF / Monuments
+Hors périmètre ABF.
+ABF / Monuments historiques
+Classement sonore (bruit routier)
+Hors secteurs affectés par le bruit routier.
+Classement sonore ITT (Cerema)
+· arrêtés déc. 2023
+Cavités
+Aucun objet recensé à proximité.
+Géorisques — cavités souterraines
+50 pas géométriques
+Hors zone des 50 pas géométriques.
+50 pas géométriques — limite haute (DEAL)
+· cadastre 1877 (géoréf. 2012/1950)
+Eau
+Hors hydrographie.
+· BD TOPO® V3 (IGN) — édition non enregistrée
+Espace protégé réglementaire (INPN)
+Hors espace protégé (INPN).
+INPN / patrinat — espaces protégés
+· INPN/patrinat espaces protégés — passe 05/07/2026
+ICPE
+Géorisques — ICPE
+Mouvement de terrain
+Géorisques — mouvements de terrain
+Pente fort (~25%) — calculée, non éliminatoire.
+RGE ALTI (altimétrie)
+· RGE ALTI® (IGN) — édition non enregistrée
+Ravines
+Hors voisinage immédiat d'une ravine.
+Sols pollués
+Géorisques — sites et sols pollués
+Servitudes (SUP)
+Aucune servitude d'utilité publique recensée.
+SUP — assiettes GPU (API Carto)
+Indicateur d'érosion côtière (Cerema)
+Hors zone de recul du trait de côte.
+Cerema / GéoLittoral — indicateur d'érosion côtière
+· millésime 2018
+Pièges & risques
+
+### tiroir ouvert : Réseaux et desserte
+
+### tiroir ouvert : eau/élec probable
+Viabilisation eau/élec probable assainissement non renseigné
+?
+Eau/élec
+probable
+✓
+Fibre
+FttH
+Bus
+326 m
+Assainis.
+non renseigné
+Fibre (Arcep)
+FttH · 0 m · 5 op.
+Arrêt de bus
+Pointe des Chateaux · 326 m
+Ligne de transport
+Kar'Ouest · 174 m
+Pôle d’échange
+Mairie De Saint-Leu · 2.14 km
+ACCÈS
+Accès voirie : voie publique à ≤ 10 m de la parcelle (faisceau viabilisation
+le test au contact strict de l'axe BD TOPO est retiré).
+GESTIONNAIRES (RACCORDEMENT)
+Compétence
+TCO — Territoire de la Côte Ouest · tco.re
+Eau potable
+SAUR Derichebourg Aqua OI (SAUR) · DSP 01/07/2017 → 30/06/2027 confirmé
+Assainissement
+CISE Réunion (SAUR) · DSP 02/01/2017 → 30/06/2027 confirmé
+SPANC (ANC)
+La Créole (SPANC)
+Électricité
+EDF SEI · EDF SEI Réunion — raccordement.reunion@edf.fr / edf.re
+⚠ Eau ≠ assainissement (deux entités SAUR distinctes). Les 2 DSP expirent 30/06/2027.
+Gestionnaires administratifs à jour au 2026-07, à revérifier annuellement (les délégations changent aux renouvellements de contrat). Contact administratif uniquement — aucun tracé de réseau (donnée sensible). Viabilité (eau, électricité, assainissement) à confirmer auprès des concessionnaires via DT-DICT (reseaux-et-canalisations.gouv.fr).
+Viabilisation eau · élec
+Raccordement eau · élec
+Raccordement PROBABLE au coût standard : secteur partiellement desservi. À confirmer (longueur de branchement, capacité).
+Solaire
+Ensoleillement favorable à une installation solaire — productible estimé ~1 350 kWh/kWc/an (modèle SARAH3, hors gradient côtier local). Estimé
+non renseigné (secteur indicatif)
+4
+indices (faisceau de preuves)
+Axe structurant
+Axe structurant N1 (type autoroutier) à ~829 m — deux faces : accessibilité (desserte rapide) ET nuisances potentielles (bruit, pollution ; recul le long des axes classés, art. L. 111-6 — non cartographié en donnée ouverte, à vérifier au PLU). Le classement sonore, lui, est évalué au tiroir Risques.
+
+### tiroir ouvert : Fiscalité et dispositifs
+
+### tiroir ouvert : 47,48 %
+Zone franche (ZFANG), France Ruralités (FRR), ORT signée zone A (PTZ/loyers) · TVA 8,5 %
+Taxe foncière
+part communale
+Taxe d'aménagement
+14 + 2.5 %
+commune · dépt
+Zonage A/B/C
+A
+PTZ · loyers
+TVA
+8,5 %
+DOM · 2,1 % LLS
+DISPOSITIFS DE LA COMMUNE
+ZFANG
+FRR
+ORT
+25/04/2022
+QPV
+PVD
+Cœur de ville
+Calculer la taxe d'aménagement
+détail des dispositifs
+Fait territorial sourcé et daté. Les taux cités sont les taux LÉGAUX du dispositif (décret / CGI), pas un calcul de votre avantage : l'éligibilité et l'effet réel relèvent de votre expert-comptable ou avocat fiscaliste.
+
+### tiroir ouvert : Marché
+
+### tiroir ouvert : 166 €/m²
+Maison 4 771 €/m², appartement 6 086 €/m² secteur +28 % vs commune, tendance indéterminée
+Maison
+4 771
+€/m² · 17 ventes · 500 m
+Appartement
+6 086
+€/m² · 19 ventes · 500 m
+commune
+secteur +28 %
+Marché DVF
+Prix médian terrain : échantillon insuffisant (2 vente(s) dans le secteur).
+DVF / valeurs foncières
+· géo-DVF Etalab 2021–2025 + archives DGFiP 2014–2020
+Potentiel foncier Région
+Hors îlot « Potentiel foncier » Région.
+data.regionreunion.com — Potentiel foncier
+Prix de sortie — bâti secteur
+6 086 €/m²
+Valeur au prix du secteur
+≈ 103 252 €
+Prix par type : maison / appartement = médiane locale par type au rayon adaptatif (DVF) ; terrain nu = médiane de la section cadastrale (même source que la valeur du secteur).
+Loyers (OLL)
+zone non couverte
+Outil Communes — Saint-Leu
+
+### tiroir ouvert : Quartier
+
+### tiroir ouvert : isochrone
+Secteur Lotissement de la Pointe des Châteaux niveau de vie 31 503 €, 9 % sous le seuil de pauvreté, commerces à 376 m
+À PROXIMITÉ (À PIED)
+École
+237 m
+Commerces
+376 m
+Santé
+164 m
+CONTEXTE SOCIO-ÉCONOMIQUE (SECTEUR)
+Niveau de vie médian
+31 503 €
+SOURCÉFilosofi 2021 (INSEE, carreaux 200 m)
+Propriétaires
+91 %
+Pauvreté
+9 %
+Parc social — commune entière
+1 766 logements
+RPLS 01/01/2025 · maille commune
+Contexte informatif — hors scoring. Niveau de vie/pauvreté au carreau 200 m ; parc social à la commune.
+QUARTIER INSEE — LES COLIMAÇONS-BRAS MOUTON-LA FONTAINE
+Logements
+1 652
+Vacance
+8,1 %
+Bâti avant 1990
+27,2 %
+Pers./ménage
+2,51
+60 ans et +
+21,2 %
+HLM
+1,3 %
+INSEE — recensement de la population, bases IRIS (maille quartier) — RP2022 (parution 16/10/2025, géographie 01/01/2024). Maille quartier (IRIS) : affine la commune, ne la remplace pas.
+0,5 km
+1 km
+2 km
+5 km
+Lecture de la zone…
+PERMIS À PROXIMITÉ
+0 à < 100 m · 1 à < 200 m
+Permis autorisés géolocalisés < 200 m (source du signal viabilisation M-VIA). Cliquez pour la fiche.
+PC
+2026-02-19
+1 lgt
+192 m
+ACTIVITÉ DE DÉPÔT DE PERMIS
+Sourcé Sitadel3 / SDES
+Sur le secteur : 9 dépôts sur 36 mois · section cadastrale · dernier 2025-01-01
+activité de dépôt (permis aboutis — les refus et dossiers en cours ne sont pas publiés).
+Étude de zone · Chalandise
+Étude de zone · Particulier
+Permis commune
+Fiche commune
+
+### tiroir ouvert : Potentiel
+
+### tiroir ouvert : 119 m² SDP
+119 m² de SDP résiduelle capacité R+1
+SDP restante
+Densifier l'existant
+Ouvrir le Gabarit
+POTENTIEL DE TRANSFORMATION
+Modere
+SDP consommée / autorisée
+Marge en hauteur
+~2.8 m sous la règle
+Ratio SDP consommée/autorisée (bloc D du modèle P) + surélévation au moteur commun (règles PLU calibrées × bâti LiDAR HD, hauteur à l'égout MESURÉE)
+Terrain libéré
+l'enveloppe du terrain, bâti rasé
+En gardant le bâti
+161 m² bâtis · 1.0 niveau(x) (lidar)
+VERDICT · ZONE UC · 622 M²
+Encore 119 m² de plancher · 0–2 logement(s), bâti conservé.
+Ce qui limite
+Règles sourcées
+Plancher estimé
+le bâti existant conservé (~153 m² de plancher déduits, 1.0 niveau(x) au LiDAR).
+PLU — « Règlement écrit actualisé — Août 2013 » (consolidation du PLU approuvé 26/02/2007 avec ses modifications, cabinet Duteilh-Perrau) = LE texte opposable servi par la mairie. Le GPU ne sert PLUS aucun document pour 97413 (dépublication constatée sur pièces le 03/09). La révision arrêtée le 11/12/2025 n'est PAS approuvée → écartée.
+TESTER UN PROJET · VOS CHIFFRES
+Nombre de logements
+logements
+Surface de plancher par logement
+m²
+7
+Règles du PLU · zone UC
+NOS HYPOTHÈSES · MODIFIABLES
+Occupation du gabarit
+%
+Rendement SDP → habitable
+Surface moyenne / logement
+LE CALCUL, ÉTAPE PAR ÉTAPE (8)
+Voir en 3D
+Chercher des parcelles par capacité → · Pré-faisabilité indicative sur règlement PLU public — ne remplace pas une étude de faisabilité réglementaire par un professionnel.
+GABARIT RÉGLEMENTAIRE
+622 m²
+Zone d'implantation
+359 m²
+Plafond d'emprise
+311 m²
+Hauteur réglementaire
+
+### tiroir ouvert : Simulation
+
+### tiroir ouvert : bilan
+Prix de sortie retenu 6 086 €/m²
+PRIX DE SORTIE RETENU (BILAN)
+Le prix de sortie bâti retenu pour la charge foncière est le prix du secteur affiché dans « Marché » (échantillon, rayon, tendance, fraîcheur y sont détaillés).
+Faisabilité
+Calculette foncière
+Assemblage
+
+### tiroir ouvert : final

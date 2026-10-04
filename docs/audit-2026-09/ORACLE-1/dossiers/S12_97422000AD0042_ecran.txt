@@ -1,0 +1,440 @@
+PARCELLE · LE TAMPON
+97422000AD0042
+pj
+200 Route du Volcan- Jean Marc Miguet, 97418 Le Tampon
+SURFACE
+i
+4 589 m²
+ZONE
+A
+agricole
+PENTE
+12,8 °
+modérée
+EXPOSITION
+Ouest
+versant (RGE ALTI)
+RISQUES
+7
+vigilances
+SDP RESTANTE
+—
+zone non constructible
+Demander à LABUSE
+Poser une question
+LE BIEN
+Identité
+Particulier
+›
+Terrain
+pente modérée · Ouest
+Bâti
+Ensemble bâti détecté (résidence / équipement)
+9 bâtiments
+LE DROIT DU SOL
+Urbanisme
+constructibilité très limitée
+ⓘ
+Risques et environnement
+18 couches évaluées
+7 vigilances
+Réseaux et desserte
+Assainissement : non renseigné
+eau/élec à confirmer
+Fiscalité et dispositifs
+37,43 %
+LE MARCHÉ
+Marché
+20 ventes secteur · DVF — jusqu'à déc. 2025
+171 €/m²
+Quartier
+Équipements, population et permis du voisinage
+isochrone
+LE PROJET
+Potentiel
+calcul tracé
+Simulation
+charge foncière · réhabilitation · outils projet
+bilan
++ CRM
++ Projet
+Dossier
+Dossier financier
+Apporteur
+Pré-dossier PC
+Courrier
+Remonter le temps
+Estimations indicatives issues de données publiques — ni conseil juridique/notarial ni garantie de constructibilité. Ces informations ne remplacent pas un certificat d'urbanisme.
+⚑ Signaler une erreur
+
+### tiroir ouvert : Identité
+
+### tiroir ouvert : Particulier
+⌄
+Propriétaire non identifié personne physique ou hors fichier des personnes morales
+Courrier SPF
+→
+
+### tiroir ouvert : Terrain
+
+### tiroir ouvert : 12,8 °
+Versant Ouest 12,8 ° · 4 183 m² au sol libre · 76,7 % artificialisé (OCS GE)
+Pente
+12,8 ° modérée
+Exposition
+versant · RGE ALTI
+Surface au sol libre
+4 183 m²
+Sol artificialisé
+76,7 %
+OCS GE 2022
+COUVERTURE DU SOL · COSIA 20 CM
+Imperméabilisé 23,1 %
+Végétalisé 77 %
+Sol nu 0 %
+Azimut du versant
+254,7 ° (0 = Nord, sens horaire)
+PROFIL ALTIMÉTRIQUE
+1 753
+1 733
+0
+148 m
+DISTANCE
+DÉNIVELÉ +
++20 m
+DÉNIVELÉ −
+−0 m
+PENTE MOYENNE
+13,7 %
+PLUS FORTE PENTE
+50,5 %
+ALTITUDE
+1 733–1 753 m
+Le long du plus grand axe de la parcelle. Source RGE ALTI 5 m (IGN). Vocabulaire cartes.gouv (pente moyenne = grade absolu moyen).
+OCS GE (IGN, donnée d’îlot, décret 2023-1096) · CoSIA (IGN, détection IA, mesure de la parcelle) · pente et exposition RGE ALTI (IGN).
+
+### tiroir ouvert : Bâti
+
+### tiroir ouvert : 9 bâtiments
+Ensemble bâti détecté (résidence / équipement) emprise 406 m² · faîtage 4,3 m mesuré (LiDAR)
+Emprise bâtie au sol
+406 m²
+BD TOPO IGN
+Faîtage (LiDAR)
+4,3 m
+haut de toit
+Bâtiments
+9 BD TOPO · 3 RNB · 2 adr. BAN
+◀
+détail du bâti
+ÉTABLISSEMENTS SUR LA PARCELLE (1)
+Nom non diffusible (RGPD)
+Hébergement touristique et autre hébergement de courte durée
+Rattachement par l'adresse BAN (précision « adresse » seulement — « voie » et « commune » ne sont pas rattachés). Nom masqué si l'unité est non diffusible.
+Bâti existant — BD TOPO® V3 (IGN) + CoSIA 2025. Information de fiche, jamais un signal de classement.
+
+### tiroir ouvert : Urbanisme
+
+### tiroir ouvert : constructibilité très limitée
+A, agricole 20 destinations interdites · 3 sous condition
+Zone
+Aagricole
+PLU
+approuvé le 11/08/2023
+document
+RÈGLEMENT — ZONE A
+voir le règlement
+Hauteur
+non calibré
+Emprise
+Recul voie
+Recul limites
+Pleine terre
+Stationnement
+Destinations · 20 interdites · 3 sous condition
+Le règlement des zones agricoles et naturelles n'est pas indexé article par article dans LABUSE. Consultez le document complet.
+Le règlement PLU fait foi ; les valeurs affichées sont une aide à la lecture, non un certificat d'urbanisme.
+SITUATION
+Parc national
+moyen
+Aire d'adhésion du Parc National — contraintes de charte.
+Parc National de La Réunion (INPN)
+· millésime 2021
+SDP résiduelle
+info
+SDP résiduelle 0 m² — rien à construire.
+Surface parcelle
+Surface utile 4589 m².
+Annuaire PLU
+Vérif procédure
+RTAA DOM
+10 exigences →
+Préemption (DPU)
+hors périmètre
+Bruit aérien (PEB)
+hors zone
+Servitude (SUP)
+PM1 · PM1_PPR_i_mvt_LE_TAMPON_gen2_ass
+PM1 · PM1_PPR_i_mvt_LE_TAMPON_gen1_ass
+SCOT
+SCOT DU GRAND SUD · approuvé le 02/09/2024
+MIXITÉ SOCIALE (LLS)
+non modélisée
+Clause de mixité sociale
+non modélisée pour cette zone
+Aucune clause de mixité sociale validée pour cette zone dans le règlement calibré.
+✓ 10 couches sans objet — déplier
+Emprise linéaire
+Forme non linéaire (largeur 60 m, allongement 2.5×).
+Emprise routière
+Pas une emprise routière (49 m d'axes, densité 0.06, bâti 9%).
+Foncier public
+Propriétaire non public (personne physique ou PM privée).
+Forêt publique
+Hors forêt publique.
+Forêts publiques (ONF)
+· BD TOPO® V3 — forêt publique (IGN)
+Friche
+Aucune friche recensée.
+Cartofriches (Cerema)
+Occupation du sol (BD CARTO V5 — grain grossier)
+Sol classé artificialisé (occupation du sol BD CARTO V5, grain grossier, précision limitée à la parcelle).
+IGN BD CARTO V5 — occupation du sol
+· BD CARTO® V5 — occupation du sol (IGN, proxy)
+Faux positif OSM
+Aucun faux positif géométrique OSM.
+OpenStreetMap / Overpass
+Prescriptions PLU
+Aucune prescription PLU sur la parcelle.
+Urbanisme PLU/GPU (API Carto)
+· GPU/PLU par commune (révisions — détail en fiche)
+Parcelle déclarée agricole (RPG)
+Hors parcelle agricole déclarée (RPG).
+RPG — déclarations agricoles (IGN/ASP)
+· proxy RPG.LATEST (IGN) — campagne 2024 (data.gouv RPG-R)
+Potentiel foncier Région (indicatif)
+Hors îlot cartographié — aucune contrainte déduite automatiquement.
+Potentiel foncier Région (Région ODS)
+· îlots non urbanisés — estimation Région (ODS, non versionné)
+
+### tiroir ouvert : Risques et environnement
+
+### tiroir ouvert : 7 vigilances
+Aléa mouvement terrain moyen sur 100 % 3 aléas au total
+ALÉAS (3)
+Aléa mouvement_terrain niveau moyen
+100 %
+PPR — zone rouge
+zone bleue
+15 %
+PPR — zone bleue
+85 %
+PPR (approuvé le 2017-10-20) — DEAL Réunion — PPR / aléas · 2026-09-13
+FRICHE RECENSÉE (CARTOFRICHES)
+✓ Sans objet — parcelle non recensée comme friche. (édition courante (Cerema, mise à jour trimestrielle))
+EnR au sol (APER)
+hors zone d'exclusion
+Mesure compensatoire (GéoMCE)
+aucune sur la parcelle
+18
+arrêtés CatNat (commune) · dernier 20/03/2025
+VIGILANCES
+Pente forte tres_fort (~45% > seuil 30%)
+terrassement et accès renchéris (majoration VRD du bilan), pas une exclusion.
+Servitude(s) d'utilité publique sur la parcelle : PM1.
+Ligne moyenne tension
+à proximité
+✓ 11 couches sans objet — déplier
+ABF / Monuments
+Hors périmètre ABF.
+ABF / Monuments historiques
+Classement sonore (bruit routier)
+Hors secteurs affectés par le bruit routier.
+Classement sonore ITT (Cerema)
+· arrêtés déc. 2023
+Cavités
+Aucun objet recensé à proximité.
+Géorisques — cavités souterraines
+50 pas géométriques
+Hors zone des 50 pas géométriques.
+50 pas géométriques — limite haute (DEAL)
+· cadastre 1877 (géoréf. 2012/1950)
+Eau
+Hors hydrographie.
+· BD TOPO® V3 (IGN) — édition non enregistrée
+Espace protégé réglementaire (INPN)
+Hors espace protégé (INPN).
+INPN / patrinat — espaces protégés
+· INPN/patrinat espaces protégés — passe 05/07/2026
+ICPE
+Géorisques — ICPE
+Mouvement de terrain
+Géorisques — mouvements de terrain
+Ravines
+Hors voisinage immédiat d'une ravine.
+Sols pollués
+Géorisques — sites et sols pollués
+Indicateur d'érosion côtière (Cerema)
+Hors zone de recul du trait de côte.
+Cerema / GéoLittoral — indicateur d'érosion côtière
+· millésime 2018
+Pièges & risques
+
+### tiroir ouvert : Réseaux et desserte
+
+### tiroir ouvert : eau/élec à confirmer
+Viabilisation eau/élec à confirmer assainissement non renseigné
+?
+Eau/élec
+à confirmer
+✓
+Fibre
+FttH
+Bus
+710 m
+Assainis.
+non renseigné
+Fibre (Arcep)
+FttH · 0 m · 5 op.
+Arrêt de bus
+Terminus Pierre Picard · 710 m
+ACCÈS
+Accès voirie : voie publique à ≤ 10 m de la parcelle (faisceau viabilisation
+le test au contact strict de l'axe BD TOPO est retiré).
+GESTIONNAIRES (RACCORDEMENT)
+Compétence
+CASUD — Communauté d'agglomération du Sud · casud.re
+Eau potable
+Sudéau (SAUR) · DSP affermage CASUD 01/07/2023 → 01/07/2033 confirmé
+Assainissement
+Sud Assainissement Réunion (Runéo/Veolia) · DSP dès 01/07/2023 confirmé
+SPANC (ANC)
+Régie CASUD
+Électricité
+EDF SEI · EDF SEI Réunion — raccordement.reunion@edf.fr / edf.re
+⚠ Ancienne régie municipale des eaux transférée à CASUD, opérée par Sudéau depuis 2023.
+Gestionnaires administratifs à jour au 2026-07, à revérifier annuellement (les délégations changent aux renouvellements de contrat). Contact administratif uniquement — aucun tracé de réseau (donnée sensible). Viabilité (eau, électricité, assainissement) à confirmer auprès des concessionnaires via DT-DICT (reseaux-et-canalisations.gouv.fr).
+Viabilisation eau · élec
+incertaine — à vérifier
+Raccordement eau · élec
+Viabilisation À ÉTUDIER : extension de réseau possible, surcoût — faire chiffrer le branchement auprès du gestionnaire.
+Solaire
+Ensoleillement favorable à une installation solaire — productible estimé ~1 450 kWh/kWc/an (modèle SARAH3, hors gradient côtier local). Estimé
+non renseigné (secteur indicatif)
+4
+indices (faisceau de preuves)
+
+### tiroir ouvert : Fiscalité et dispositifs
+
+### tiroir ouvert : 37,43 %
+Zone franche (ZFANG), France Ruralités (FRR) zone B1 (PTZ/loyers) · TVA 8,5 %
+Taxe foncière
+part communale
+Taxe d'aménagement
+5 + 2.5 %
+commune · dépt
+Zonage A/B/C
+B1
+PTZ · loyers
+TVA
+8,5 %
+DOM · 2,1 % LLS
+DISPOSITIFS DE LA COMMUNE
+ZFANG
+FRR
+ORT
+QPV
+PVD
+Cœur de ville
+Calculer la taxe d'aménagement
+détail des dispositifs
+Fait territorial sourcé et daté. Les taux cités sont les taux LÉGAUX du dispositif (décret / CGI), pas un calcul de votre avantage : l'éligibilité et l'effet réel relèvent de votre expert-comptable ou avocat fiscaliste.
+
+### tiroir ouvert : Marché
+
+### tiroir ouvert : 171 €/m²
+Terrain nu 171 €/m², maison 2 109 €/m² secteur +25 % vs commune, tendance hausse
+Terrain nu
+171
+€/m² · 20 ventes
+Maison
+2 109
+€/m² · 10 ventes · 1 500 m
+commune
+secteur +25 %
+Aucun signal sur cet onglet.
+Prix de sortie — bâti secteur
+2 109 €/m²
+Valeur au prix du secteur
+≈ 784 719 €
+Prix par type : maison / appartement = médiane locale par type au rayon adaptatif (DVF) ; terrain nu = médiane de la section cadastrale (même source que la valeur du secteur).
+Loyers (OLL)
+zone non couverte
+Outil Communes — Le Tampon
+
+### tiroir ouvert : Quartier
+
+### tiroir ouvert : isochrone
+Quartier Bourg Murat-Route Notre-Dame de la Paix commerces à 1,4 km
+À PROXIMITÉ (À PIED)
+École
+1,8 km
+Commerces
+1,4 km
+Santé
+982 m
+CONTEXTE SOCIO-ÉCONOMIQUE (SECTEUR)
+Parc social — commune entière
+5 659 logements
+RPLS 01/01/2025 · maille commune
+Contexte informatif — hors scoring. Niveau de vie/pauvreté au carreau 200 m ; parc social à la commune.
+QUARTIER INSEE — BOURG MURAT-ROUTE NOTRE-DAME DE LA PAIX
+Logements
+1 841
+Vacance
+8,1 %
+Bâti avant 1990
+36,1 %
+Pers./ménage
+2,63
+60 ans et +
+17,9 %
+HLM
+1,5 %
+INSEE — recensement de la population, bases IRIS (maille quartier) — RP2022 (parution 16/10/2025, géographie 01/01/2024). Maille quartier (IRIS) : affine la commune, ne la remplace pas.
+0,5 km
+1 km
+2 km
+5 km
+Lecture de la zone…
+ACTIVITÉ DE DÉPÔT DE PERMIS
+Sourcé Sitadel3 / SDES
+Sur le secteur : 14 dépôts sur 36 mois · section cadastrale · dernier 2026-02-02
+activité de dépôt (permis aboutis — les refus et dossiers en cours ne sont pas publiés).
+Étude de zone · Chalandise
+Étude de zone · Particulier
+Permis commune
+Fiche commune
+
+### tiroir ouvert : Potentiel
+
+### tiroir ouvert : —
+Construction neuve non autorisée en A
+SDP restante
+—zone non constructible
+Zone agricole — construction de logements non autorisée.
+Densifier l'existant
+Ouvrir le Gabarit
+Étudier quand même
+
+### tiroir ouvert : Simulation
+
+### tiroir ouvert : bilan
+Prix de sortie retenu 2 109 €/m²
+PRIX DE SORTIE RETENU (BILAN)
+Le prix de sortie bâti retenu pour la charge foncière est le prix du secteur affiché dans « Marché » (échantillon, rayon, tendance, fraîcheur y sont détaillés).
+Faisabilité
+Calculette foncière
+Assemblage
+
+### tiroir ouvert : final
