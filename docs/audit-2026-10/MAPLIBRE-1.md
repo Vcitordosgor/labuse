@@ -12,6 +12,7 @@ rendu identique, prouvé par 12 captures avant/après et un diff pixel.
 
 - `tsc -b` : **0** · `vitest` : **234** (dont 4 nouveaux verrous anti-XSS) · `vite build` : **OK** · `npm audit --omit=dev` : **0**.
 - Build servi par l'API (`/socle/`) : **la page s'affiche** (plus de page noire) — cause trouvée et corrigée.
+- **Vitesse** (retour Vic) : la lenteur v6 sur GPU matériel est corrigée (workers de tuiles) — **60 fps fluide, ≈ v4**. Voir « Performance réelle sur GPU matériel » ci-dessous.
 
 ## Version cible
 
@@ -191,6 +192,42 @@ prendre avec réserve (rendu **logiciel** forcé pour la fiabilité des captures
 
 ---
 
+## Performance réelle sur GPU matériel (retour Vic — refus de la 1ʳᵉ version)
+
+La 1ʳᵉ livraison mesurait la vitesse en **rendu logiciel** (SwiftShader forcé pour fiabiliser les captures
+headless). Vic a signalé — à raison — que sa v6 était **très lente** sur son Chrome accéléré matériellement
+(dev ET build), invisible à cette mesure logicielle. Re-mesure en conditions réelles : **Chrome
+non-headless, `channel: chrome`, GPU matériel** (renderer confirmé `ANGLE Metal, Apple M1`), même parcours
+v4 puis v6, avec **molette + glisser réels** (harnais `scripts/maplibre1_perf.mjs`).
+
+| Interaction réelle (molette + glisser) | v4 | v6 (défaut) | **v6 + correctif** |
+|---|---|---|---|
+| renderer WebGL | Metal M1 | Metal M1 | Metal M1 |
+| workers de tuiles | 1 | 1 | **4** |
+| frames lentes (>33 ms) | 0 % | **23 %** | **1,8 %** |
+| p95 / p99 frame | 16,8 / 17,5 ms | **184 / 1167 ms** | 17,6 / 66,5 ms |
+| blocage fil principal (long tasks) | 0 ms | **2500 ms** | 107 ms |
+| repaint au repos (2 s) | 0 | 0 | 0 |
+
+**Pistes écartées** (toutes vérifiées) : réglage de captures resté dans le code (aucun `preserveDrawingBuffer`/
+`failIfMajorPerformanceCaveat`/`pixelRatio`/rendu logiciel dans l'app ; renderer = Metal matériel) ·
+busy-loop de repaint (0 repaint au repos) · projection (mercator, défaut) · coût du filtre `geometry-type`
+réécrit (il s'évalue côté **worker**, il n'explique pas le blocage du **fil principal**).
+
+**Cause.** v4 **et** v6 tournent à **1 worker** par défaut sur Chrome (`getWorkerCount()` = 1 mesuré pour
+les deux ; maplibre met `workerCount = 1` hors Safari). Mais le **pipeline de tuiles de v6 est plus lourd** :
+un worker unique **sature** pendant l'interaction continue → le décodage se sérialise → le fil principal
+attend → saccade (2500 ms de blocage, 23 % de frames lentes). Le worker unique de v4 suffisait.
+
+**Correctif** (`maplibreWorker.ts`) : `maplibregl.setWorkerCount(hardwareConcurrency/2)` (4 sur M1), appelé
+avant la 1ʳᵉ carte. On rend à v6 le parallélisme de décodage qu'il lui faut. **Aucun changement de rendu**
+(mêmes tuiles, mêmes pixels — c'est un débit de décodage, pas un style). Résultat : v6 repasse à **60 fps
+fluide (1,8 % de frames lentes, p95 17,6 ms)**, soit **≥ v4** pour l'usage. Chiffres bruts dans
+`reports/maplibre1/perf/perf_{v4,v6,v6fix}.json` (+ `trace_*.json` chargeables dans l'onglet Performance
+de Chrome). Pour vérifier le nb de workers en direct : `window.__mlgl.getWorkerCount()` dans la console.
+
+---
+
 ## Pour Vic — ouvrir la branche et vérifier soi-même
 
 **Option simple (dans ton dépôt principal `~/Desktop/labuse`)** — teste la branche avec ton workflow habituel :
@@ -229,6 +266,8 @@ cd frontend && npm run build       # puis recharger http://127.0.0.1:8000/socle/
 6. **Cocher PLU calibré** (zonage par parcelle) : les zones colorées (U/A/N…) remplissent bien la carte — **c'est le test de la rupture `geometry-type`**.
 7. **Cocher Réseaux** (lignes HTB/HTA + pylônes) : lignes jaunes + points.
 8. **Ouvrir une fiche** (liseré blanc sur la parcelle), activer **3D** (relief + bâtiments extrudés), tracer une **mesure de distance**, ouvrir **Remonter le temps** (comparateur 1950 ↔ aujourd'hui).
+
+9. **Fluidité** : zoomer à la molette et glisser (pan) rapidement sur Saint-Paul avec quelques couches actives — ça doit rester **fluide** (plus de saccade comme la 1ʳᵉ version). En console : `window.__mlgl.getWorkerCount()` doit renvoyer **≥ 2** (4 sur un 8 cœurs).
 
 Et un coup d'œil console (F12) : **aucune ligne rouge maplibre** (les 401/404 réseau existaient déjà avant).
 
