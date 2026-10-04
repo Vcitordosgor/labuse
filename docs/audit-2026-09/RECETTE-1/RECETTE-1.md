@@ -401,3 +401,22 @@ sur l'API réelle :
 - **B** vitesse carte : en dernier.
 
 ⚠ API 8695 laissée up (mandat en cours, feu vert Vic). À arrêter en vraie fin de session.
+
+---
+
+## Session 6 (`fix/recette-1c`) — H5 Assemblage FINI (refonte + Protocole G cité)
+
+- **H5.2/H5.3 refonte** (commit `9a354425`) : Assemblage en **étapes** (modèle Comparer communes).
+  Étape 1 « Choisir les parcelles » (EntreeParcelle adresse/clic carte + liste ✕, **8 max** avec message,
+  « Vérifier l'assemblage ») ; Étape 2 « Assemblage » — contiguës → en-tête « N contiguës · surface
+  totale » + bilan ; **non contiguës → « Pas d'assemblage possible » + parcelles isolées, rien d'autre**
+  (back renvoie `isolees`). Réinitialiser vide la liste. **Retiré** : section « parcelles voisines »
+  (rings/voisines) + bouton « Préparer courrier propriétaire ». tsc 0, vitest 231 (Assemblage.test réécrit).
+- **H5.1 Protocole G** (commit `07b9e30c`, `BRANCHEMENT-OUTILS.csv`) : chaque chiffre tracé à sa fonction.
+  SDP/charge/logements = `aggregate_assiette` → `fiche_payload` + `_capacite_union` (**même moteur que la
+  fiche, sur l'UNION des géométries** — vérifié `assemblage.py:244`, jamais la somme des résiduels) → cité
+  CALCULS-AUDIT-1 (non recalculé, conformément au mandat). NB : l'Assemblage affiche la **charge** foncière
+  (bilan d'opération), pas la **taxe** foncière annuelle. 0 écart.
+
+**Avancement mandat** : G + H1·H2·H3·H4·H5·H11 faits. **Reste** H6·H7·H8·H9·H10·H12·H13·H14·H15·H16
+(UI + Protocole G par outil, `BRANCHEMENT-OUTILS.csv` à étendre), puis **B** (vitesse carte).
