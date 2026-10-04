@@ -1,6 +1,8 @@
 # LA BUSE — image pilote minimale (API + CLI). Aucun secret dans l'image :
 # tout passe par les variables d'environnement (cf. docker-compose.yml / .env).
-FROM python:3.11-slim
+# PROPRETE-FIX-0 — 3.12 : aligné sur le VPS (deploy/scripts/deploy_app.sh = python3.12) et sur
+# l'environnement testé (le verrou requirements.lock épingle numpy 2.5.2, qui exige Python ≥ 3.12).
+FROM python:3.12-slim
 
 # postgresql-client : labuse backup-db / restore-db (pg_dump, pg_restore) depuis le conteneur.
 # curl : healthcheck Docker sur /healthz.
@@ -11,9 +13,12 @@ RUN apt-get update \
 WORKDIR /srv/labuse
 
 # Dépendances d'abord (cache de build), puis le code.
-COPY pyproject.toml README.md ./
+# PROPRETE-FIX-0 — installe depuis le VERROU (versions testées, CVE corrigées) puis le paquet
+# lui-même sans re-résoudre (--no-deps : le closure cœur vient déjà de requirements.lock).
+COPY pyproject.toml README.md requirements.lock ./
 COPY src ./src
-RUN pip install --no-cache-dir .
+RUN pip install --no-cache-dir -r requirements.lock \
+    && pip install --no-cache-dir --no-deps .
 
 # Règles & poids (cascade/scoring) — chemin ABSOLU car le paquet est installé en site-packages.
 COPY config ./config

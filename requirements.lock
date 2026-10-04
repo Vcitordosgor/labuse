@@ -1,0 +1,366 @@
+# LA BUSE — VERROU de dépendances CŒUR (prod). PROPRETE-FIX-0.
+# Généré par `uv pip compile` depuis pyproject.toml [project.dependencies], Python 3.12,
+# CONTRAINT aux versions EXACTES du venv qui passe les tests (anyio 4.14.2, starlette 1.3.1,
+# urllib3 2.8.0, weasyprint 70.0, pypdf 6.19.0… = CVE corrigées). CŒUR uniquement : ni [ml]
+# (torch) ni [ai] (anthropic). Le VPS / l'image installent depuis CE fichier (cf. Dockerfile,
+# deploy/scripts/deploy_app.sh). Régénérer : voir docs/audit-2026-10/PROPRETE-FIX-0.md.
+affine==3.0.1
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   rasterio
+annotated-doc==0.0.4
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   fastapi
+    #   typer
+annotated-types==0.7.0
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   pydantic
+anyio==4.14.2
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   labuse (pyproject.toml)
+    #   httpx
+    #   starlette
+    #   watchfiles
+argon2-cffi==25.1.0
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   labuse (pyproject.toml)
+argon2-cffi-bindings==25.1.0
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   argon2-cffi
+attrs==26.1.0
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   affine
+    #   jsonschema
+    #   rasterio
+    #   referencing
+brotli==1.2.0
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   fonttools
+certifi==2026.7.22
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   labuse (pyproject.toml)
+    #   httpcore
+    #   httpx
+    #   pyproj
+    #   rasterio
+    #   requests
+cffi==2.1.0
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   argon2-cffi-bindings
+    #   weasyprint
+charset-normalizer==3.4.9
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   requests
+click==8.5.0
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   click-plugins
+    #   cligj
+    #   rasterio
+    #   uvicorn
+click-plugins==1.1.1.2
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   rasterio
+cligj==0.7.2
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   rasterio
+cssselect2==0.9.0
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   weasyprint
+defusedxml==0.7.1
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   fpdf2
+duckdb==1.5.5
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   labuse (pyproject.toml)
+fastapi==0.136.3
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   labuse (pyproject.toml)
+fonttools==4.63.0
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   fpdf2
+    #   weasyprint
+fpdf2==2.8.7
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   labuse (pyproject.toml)
+geoalchemy2==0.20.0
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   labuse (pyproject.toml)
+h11==0.16.0
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   httpcore
+    #   uvicorn
+httpcore==1.0.9
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   httpx
+httptools==0.8.0
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   uvicorn
+httpx==0.28.1
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   labuse (pyproject.toml)
+idna==3.18
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   anyio
+    #   httpx
+    #   requests
+jinja2==3.1.6
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   labuse (pyproject.toml)
+jsonschema==4.26.0
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   labuse (pyproject.toml)
+jsonschema-specifications==2025.9.1
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   jsonschema
+markdown-it-py==4.2.0
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   rich
+markupsafe==3.0.3
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   labuse (pyproject.toml)
+    #   jinja2
+mdurl==0.1.2
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   markdown-it-py
+numpy==2.5.2
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   labuse (pyproject.toml)
+    #   opencv-python-headless
+    #   rasterio
+    #   scipy
+    #   shapely
+opencv-python-headless==5.0.0.93
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   labuse (pyproject.toml)
+packaging==26.2
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   geoalchemy2
+pillow==12.3.0
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   labuse (pyproject.toml)
+    #   fpdf2
+    #   weasyprint
+psycopg==3.3.4
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   labuse (pyproject.toml)
+psycopg-binary==3.3.4
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   psycopg
+pycparser==3.0
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   cffi
+pydantic==2.13.4
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   labuse (pyproject.toml)
+    #   fastapi
+    #   pydantic-settings
+pydantic-core==2.46.4
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   pydantic
+pydantic-settings==2.15.0
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   labuse (pyproject.toml)
+pydyf==0.12.1
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   weasyprint
+pygments==2.20.0
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   rich
+pymupdf==1.28.0
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   labuse (pyproject.toml)
+pyparsing==3.3.2
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   rasterio
+pypdf==6.19.0
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   labuse (pyproject.toml)
+pyphen==0.17.2
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   weasyprint
+pyproj==3.7.2
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   labuse (pyproject.toml)
+pyshp==3.0.12
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   labuse (pyproject.toml)
+python-dotenv==1.2.2
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   labuse (pyproject.toml)
+    #   pydantic-settings
+    #   uvicorn
+pyyaml==6.0.3
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   labuse (pyproject.toml)
+    #   uvicorn
+qrcode==8.2
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   labuse (pyproject.toml)
+rasterio==1.4.1
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   labuse (pyproject.toml)
+referencing==0.37.0
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   jsonschema
+    #   jsonschema-specifications
+requests==2.34.2
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   labuse (pyproject.toml)
+    #   stripe
+rich==15.0.0
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   typer
+rpds-py==2026.5.1
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   jsonschema
+    #   referencing
+scipy==1.18.0
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   labuse (pyproject.toml)
+shapely==2.1.2
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   labuse (pyproject.toml)
+shellingham==1.5.4
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   typer
+sqlalchemy==2.0.50
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   labuse (pyproject.toml)
+    #   geoalchemy2
+starlette==1.3.1
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   labuse (pyproject.toml)
+    #   fastapi
+stripe==15.3.0
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   labuse (pyproject.toml)
+tinycss2==1.5.1
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   cssselect2
+    #   weasyprint
+tinyhtml5==2.1.0
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   weasyprint
+typer==0.26.7
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   labuse (pyproject.toml)
+typing-extensions==4.15.0
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   anyio
+    #   fastapi
+    #   psycopg
+    #   pydantic
+    #   pydantic-core
+    #   referencing
+    #   sqlalchemy
+    #   starlette
+    #   stripe
+    #   typing-inspection
+typing-inspection==0.4.2
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   fastapi
+    #   pydantic
+    #   pydantic-settings
+urllib3==2.8.0
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   labuse (pyproject.toml)
+    #   requests
+uvicorn==0.49.0
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   labuse (pyproject.toml)
+uvloop==0.22.1
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   uvicorn
+watchfiles==1.2.0
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   uvicorn
+weasyprint==70.0
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   labuse (pyproject.toml)
+webencodings==0.5.1
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   cssselect2
+    #   tinycss2
+    #   tinyhtml5
+websockets==16.0
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   uvicorn
+zopfli==0.4.3
+    # via
+    #   -c /tmp/pf0/constraints.txt
+    #   fonttools

@@ -295,7 +295,7 @@ def creer_demande(db, *, compte_id: int | None, parcelles: list[str],
     bouton `disabled` ; ceci est la ceinture serveur."""
     p_json = json.dumps(parcelles)
     # clé d'idempotence = md5(compte|parcelles|corps) → 60 bits pour le verrou (⊂ bigint signé)
-    cle = hashlib.md5(f"{compte_id}|{p_json}|{corps or ''}".encode()).hexdigest()
+    cle = hashlib.md5(f"{compte_id}|{p_json}|{corps or ''}".encode(), usedforsecurity=False).hexdigest()
     db.execute(text("SELECT pg_advisory_xact_lock(:k)"), {"k": int(cle[:15], 16)})
     dup = db.execute(text("""
         SELECT id, ts, n, communes, statut FROM courrier_demandes

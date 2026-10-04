@@ -27,7 +27,10 @@ ssh -o BatchMode=yes "$HOST" 'sudo -u labuse bash -c "
   cd /opt/labuse
   [ -d venv ] || python3.12 -m venv venv
   ./venv/bin/pip install -q --upgrade pip
-  ./venv/bin/pip install -q -e ./app
+  # PROPRETE-FIX-0 — dépendances CŒUR depuis le VERROU (versions testées, CVE corrigées), puis
+  # le paquet lui-même en éditable SANS re-résoudre (--no-deps : le closure vient du lock).
+  ./venv/bin/pip install -q -r ./app/requirements.lock
+  ./venv/bin/pip install -q -e ./app --no-deps
   ./venv/bin/python -c \"import labuse.api.app, labuse.comptes, labuse.api.tenant, labuse.api.events; print(\\\"chaîne de démarrage importable ✓\\\")\"
 "'
 

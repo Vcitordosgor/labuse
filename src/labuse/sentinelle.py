@@ -1006,7 +1006,7 @@ def _emettre_digest(db, neuf: list[dict], echec: list[dict]) -> bool:
     # disponible, la signature est remplacée par son empreinte sha1 (même stabilité, taille fixe).
     if len("sentinelle-digest:" + sig) > 96:
         import hashlib
-        sig = "sha1:" + hashlib.sha1(sig.encode()).hexdigest()
+        sig = "sha1:" + hashlib.sha1(sig.encode(), usedforsecurity=False).hexdigest()
     cree = bool(creer_notification(
         db, kind="systeme", compte_id=None, source="Veille sources",
         titre=titre, detail="\n".join(lignes), lien="/sources",

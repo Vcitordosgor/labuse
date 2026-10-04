@@ -1,6 +1,7 @@
 [build-system]
-requires = ["setuptools>=78.1.1", "wheel"]   # REVUE · R4 — plancher setuptools sûr (outil de build,
-#                                              non embarqué dans le runtime servi ; cf. rapport)
+requires = ["setuptools>=83.0.0", "wheel"]   # REVUE · R4 / PROPRETE-FIX-0 — plancher setuptools sûr
+#                                              (patch PYSEC-2026-3447 ; outil de build, non embarqué
+#                                              dans le runtime servi ; cf. rapport)
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -25,9 +26,9 @@ dependencies = [
   "python-dotenv>=1.0",             # config.py — chargé au démarrage
   "PyYAML>=6.0",
   "fastapi>=0.110",
-  "starlette>=0.36",                # importé directement par api/app.py (pas seulement via fastapi)
+  "starlette>=1.3.1",               # api/app.py (direct) — PROPRETE-FIX-0 patch PYSEC-2026-248/249 (pip-audit)
   "uvicorn[standard]>=0.27",
-  "anyio>=4.0",                     # api/protection.py — run_sync direct
+  "anyio>=4.14.2",                  # api/protection.py — run_sync direct ; PROPRETE-FIX-0 patch PYSEC-2026-4024/4025
   "httpx>=0.26",
   "certifi>=2024.2",                # bundle CA des connecteurs (appels sortants) — importé en dur
   "numpy>=1.26",                    # scoring + api/ortho (chaîne d'import du serveur)
@@ -37,16 +38,16 @@ dependencies = [
   "typer>=0.9",
   "jsonschema>=4.21",
   "fpdf2>=2.8",
-  "weasyprint>=61",
+  "weasyprint>=70.0",               # PROPRETE-FIX-0 patch PYSEC-2026-3940 (pip-audit)
   "jinja2>=3.1",
   "MarkupSafe>=2.1",                # flash/report.py — échappement direct
   "argon2-cffi>=23.1",              # comptes.py — hachage argon2id (auth/cloison) : JAMAIS optionnel
   "stripe>=8",
-  "pypdf>=6.15.0",                 # REVUE · R4 — patch PYSEC-2026-3655/3656 (pip-audit)
+  "pypdf>=6.19.0",                 # REVUE · R4 + PROPRETE-FIX-0 — patch PYSEC-2026-4153..4160 (pip-audit)
   "pymupdf>=1.24",                  # fitz — plan de situation ortho du PDF premium (api/plan_situation, M73-F)
   "pillow>=10",                     # PIL — composition d'image du plan de situation + ingestion PLU
   "requests>=2.31",                 # tuiles IGN (plan de situation) + ingestion PLU (plu_ingest/plu_corpus)
-  "urllib3>=2.0",                   # importé en dur (retries HTTP) dans la chaîne d'ingestion PLU
+  "urllib3>=2.8.0",                 # retries HTTP (ingestion PLU) ; PROPRETE-FIX-0 patch PYSEC-2026-4175/4176/4177
   "qrcode>=7.4",                    # 2FA admin (VPS · AC-025) — QR d'enrôlement TOTP en SVG pur (jamais PIL)
   "duckdb>=1.0",                    # ZONE-DONNÉES — ingestion SIRENE : jointure parquet distant (géo INSEE × Stock), filtre 974
   # RETOURS-15 U5 — promues de l'extra [lidar] (que RIEN n'installait) en dépendances de SÉRIE :
@@ -66,7 +67,8 @@ ai = ["anthropic==0.116.0"]
 # ML / hors-ligne (entraînement P-model, détection ortho, backtests d'arène) — JAMAIS sur le serveur
 # de prod (il sert des scores pré-calculés). Sur le Mac/GPU : `pip install -e .[ml]`.
 ml = [
-  "torch>=2.2",
+  "torch>=2.2",   # PROPRETE-FIX-0 : PYSEC-2025-194 corrigé en 2.13.0, INDISPONIBLE sur l'index macOS arm64
+                  # (max 2.11.0) ; torch est ML-only, JAMAIS installé sur le serveur prod (cf. rapport)
   "scikit-learn>=1.4",
   "joblib>=1.3",
   "segmentation-models-pytorch>=0.3",

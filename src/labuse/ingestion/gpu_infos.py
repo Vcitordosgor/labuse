@@ -124,7 +124,7 @@ def ingest_gpu_infos(session: Session, run_id: int | None = None,
                     # dédoublonnage île (les bboxes voisines revoient les mêmes zones)
                     empreinte = hashlib.md5(
                         (str(p.get("idurba")) + "|" + zone + "|"
-                         + json.dumps(g, sort_keys=True)).encode()).hexdigest()
+                         + json.dumps(g, sort_keys=True)).encode(), usedforsecurity=False).hexdigest()
                     if empreinte in peb_vus:
                         continue
                     peb_vus.add(empreinte)

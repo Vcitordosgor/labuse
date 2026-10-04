@@ -158,7 +158,7 @@ def _pass_pci_edigeo(session: Session, cibles: dict[str, set[str]], log_fn=print
                 with tempfile.TemporaryDirectory() as td:
                     try:
                         with tarfile.open(fileobj=io.BytesIO(r.content), mode="r:bz2") as tf:
-                            tf.extractall(td)  # noqa: S202 — archive DGFiP officielle
+                            tf.extractall(td, filter="data")  # noqa: S202 — archive DGFiP officielle + filtre anti-traversée (3.12)
                         thf = next(Path(td).glob("*.THF"))
                         out = Path(td) / "p.json"
                         # le CRS EDIGEO « IGNF:RGR92UTM » n'est pas résolu par PROJ → on

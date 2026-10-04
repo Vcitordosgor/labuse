@@ -105,7 +105,7 @@ def telecharger_reglement(meta: dict, *, forcer: bool = False) -> Path:
     _REGLEMENTS_DIR.mkdir(parents=True, exist_ok=True)
     dest = _REGLEMENTS_DIR / nom
     attendu = meta.get("md5")
-    if dest.is_file() and not forcer and (not attendu or _md5(dest.read_bytes()).hexdigest() == attendu):
+    if dest.is_file() and not forcer and (not attendu or _md5(dest.read_bytes(), usedforsecurity=False).hexdigest() == attendu):
         return dest
     data = None
     try:
@@ -117,7 +117,7 @@ def telecharger_reglement(meta: dict, *, forcer: bool = False) -> Path:
     else:
         dest.write_bytes(data)
     if attendu:
-        vu = _md5(dest.read_bytes()).hexdigest()
+        vu = _md5(dest.read_bytes(), usedforsecurity=False).hexdigest()
         if vu != attendu:
             raise ValueError(f"md5 du règlement téléchargé ({vu}) ≠ md5 gravé ({attendu})")
     return dest

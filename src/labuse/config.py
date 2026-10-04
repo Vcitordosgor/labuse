@@ -422,7 +422,7 @@ def rules_version() -> str:
     """Empreinte courte des configs de règles (pour estampiller les évaluations)."""
     import hashlib
 
-    h = hashlib.sha1()
+    h = hashlib.sha1(usedforsecurity=False)
     for name in ("cascade_rules", "completeness_weights", "opportunity_weights"):
         h.update(yaml.safe_dump(load_yaml_config(name), sort_keys=True).encode("utf-8"))
     return h.hexdigest()[:12]
