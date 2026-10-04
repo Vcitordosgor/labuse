@@ -104,25 +104,39 @@ def _gardes_lot5(db: Session, idu: str, lignes: list[dict]) -> list[dict]:
                 l.update(result="SOFT_FLAG", severity="INFO",
                          detail="Accès voirie : aucune voie publique détectée à moins de 75 m "
                                 "(faisceau viabilisation) — enclavement possible, à vérifier.")
-        elif nom == "icpe" and l["result"] not in ("PASS",):
-            classee = db.execute(text(
+        elif nom == "icpe":
+            # RECETTE-1 (C5, décision Vic 04/10) — la fiche et la CARTE lisent le MÊME rattachement
+            # (ST_Contains, TOUS régimes, régime affiché). Deux notions : « sur la parcelle » (point
+            # Géorisques dans la parcelle = parcelle d'implantation, comme la couche tuyau_icpe) et
+            # « à proximité ≤ 500 m » (elle aussi tous régimes — l'exclusion « Non ICPE » Q9 est levée).
+            # Le verdict/poids restent ceux du run servi (run-safe) ; seul le DÉTAIL change.
+            sur = db.execute(text(
+                """WITH p AS (SELECT geom_2975 FROM parcels WHERE idu = :i)
+                   SELECT count(*) AS n,
+                          left(string_agg(DISTINCT sl.name, ' · '), 180) AS noms,
+                          string_agg(DISTINCT COALESCE(sl.subtype, 'régime inconnu'), ' · ') AS regimes
+                   FROM spatial_layers sl, p
+                   WHERE sl.kind = 'icpe' AND ST_Contains(p.geom_2975, sl.geom_2975)"""),
+                {"i": idu}).mappings().first()
+            proche = db.execute(text(
                 """WITH p AS (SELECT geom_2975 FROM parcels WHERE idu = :i)
                    SELECT sl.name, sl.subtype,
                           round(ST_Distance(sl.geom_2975, p.geom_2975))::int AS dist_m
                    FROM spatial_layers sl, p
                    WHERE sl.kind = 'icpe'
-                     AND COALESCE(sl.subtype, '') NOT IN ('Non ICPE', '')
                      AND ST_DWithin(sl.geom_2975, p.geom_2975, 500)
+                     AND NOT ST_Contains(p.geom_2975, sl.geom_2975)
                    ORDER BY dist_m LIMIT 1"""), {"i": idu}).mappings().first()
             l = dict(l)
-            if classee is None:
+            if sur and sur["n"]:
+                l.update(detail=f"Installation(s) recensée(s) Géorisques SUR la parcelle : "
+                                f"{sur['noms']} (régime {sur['regimes']}).")
+            elif proche:
+                l.update(detail=f"Installation (ICPE) à proximité — {proche['name']}, "
+                                f"régime {proche['subtype']}, {proche['dist_m']} m.")
+            elif l["result"] not in ("PASS",):
                 l.update(result="PASS", severity="INFO", weight_applied=0.0,
-                         detail="Aucune installation CLASSÉE (ICPE) à moins de 500 m — des sites "
-                                "recensés Géorisques non classés peuvent exister (voir tableau, "
-                                "avec leur régime).")
-            else:
-                l.update(detail=f"Installation classée (ICPE) à proximité — {classee['name']}, "
-                                f"régime {classee['subtype']}, {classee['dist_m']} m.")
+                         detail="Aucune installation recensée (Géorisques) à moins de 500 m.")
         elif nom == "proprietaire" and "non renseigné" in (l.get("detail") or ""):
             pm = db.execute(text(
                 "SELECT denomination FROM parcelle_personne_morale WHERE idu = :i LIMIT 1"),

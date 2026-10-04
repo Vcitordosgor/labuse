@@ -20,7 +20,7 @@ donnees:
     comment: { libelle: "ICPE", format: liste, i: "Installations classées (Géorisques) rattachées à LEUR PARCELLE (le point tombe dans la parcelle). La parcelle est colorée, plus de point. Les ICPE hors cadastre (mer, domaine public maritime) ne sont pas dessinées (voir le rapport pour le nombre). Le régime est au clic." }
     # RECETTE-1 (C5, Vic 04/10) — ICPE en PARCELLES (rattachement point→parcelle, ST_Contains), plus en
     # points. Aplat rouge translucide + contour ; servie via tuyau_icpe (build_tuyau_icpe).
-    carte: { kind: icpe, agregat: false, famille: risques, geometrie: polygone, zoom_min: 0, rang_carte: 70, style: { couleur: "#FF4A3D", opacite: 0.28, trait: "#B5281E", epaisseur: 1.4 }, popup: [ { champ: nom, libelle: "Installation(s)" }, { champ: regime, libelle: "Régime" }, { champ: n, libelle: "Nombre sur la parcelle" } ], legende: "Parcelle avec installation classée (ICPE)" }
+    carte: { kind: icpe, agregat: false, famille: risques, geometrie: polygone, zoom_min: 0, rang_carte: 70, style: { couleur: "#FF4A3D", opacite: 0.28, trait: "#B5281E", epaisseur: 1.4 }, popup: [ { champ: nom, libelle: "Installation(s)" }, { champ: regime, libelle: "Régime" }, { champ: n, libelle: "Nombre sur la parcelle" } ], legende: "Parcelle d'implantation (point Géorisques)" }
     absence: "ICPE : aucune installation classée dans l'emprise visible."
     absence_type: absente_ici
     statut_juridique: informatif
