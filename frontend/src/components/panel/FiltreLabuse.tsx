@@ -92,9 +92,34 @@ const nf = new Intl.NumberFormat('fr-FR')
 // DA-FIX-3 Lot 1 (DA-025) — le Chip LOCAL est remplacé par le Chip partagé (`../ui/Chip`),
 // ton par défaut `vert`. Les usages (ChipGroup, SignalChip) mappent on→on, onClick→onClick.
 
-export function ChipGroup({ field, options }: { field: keyof Filters; options: { k: string; l: string }[] }) {
+// RECETTE-1 (E3, Vic 04/10) — valeur sentinelle de l'état « tout décoché = 0 parcelle » pour un groupe
+// `partition` (voir plus bas). Elle ne correspond à aucune valeur réelle → 0 parcelle au back.
+export const AUCUN_SENTINEL = '__aucun__'
+
+// `partition` (E3) : les cases COUVRENT tout l'univers (ex. État du sol : nu + bâti = toutes les
+// parcelles, disjoints). Alors « rien de coché » = « pas de restriction » → on affiche TOUT COCHÉ par
+// défaut ; décocher restreint ; tout décocher = 0 parcelle (sentinelle). Le stockage garde la
+// sémantique « sous-ensemble inclus » (rétro-compatible : un vieux hash `es=nu` = « seulement nu ») :
+//   []                → tout coché (aucune restriction, rien sérialisé)
+//   ['nu']            → seulement nu (sous-ensemble)
+//   [AUCUN_SENTINEL]  → rien coché (0 parcelle)
+export function ChipGroup({ field, options, partition }: { field: keyof Filters; options: { k: string; l: string }[]; partition?: boolean }) {
   const { filters, setFilter } = useFiltre()
   const sel = (filters[field] as string[]) ?? []
+  if (partition) {
+    const allKeys = options.map((o) => o.k)
+    // ensemble COCHÉ affiché : vide = tout coché ; sentinelle = rien coché ; sinon le sous-ensemble stocké.
+    const cochees = sel.length === 0 ? allKeys : sel.includes(AUCUN_SENTINEL) ? [] : sel
+    const toggle = (k: string) => {
+      const next = cochees.includes(k) ? cochees.filter((x) => x !== k) : [...cochees, k]
+      setFilter(field, (next.length === allKeys.length ? [] : next.length === 0 ? [AUCUN_SENTINEL] : next) as never)
+    }
+    return (
+      <div className="mt-1 flex flex-wrap gap-1.5">
+        {options.map((o) => <Chip key={o.k} on={cochees.includes(o.k)} onClick={() => toggle(o.k)}>{o.l}</Chip>)}
+      </div>
+    )
+  }
   const toggle = (k: string) =>
     setFilter(field, (sel.includes(k) ? sel.filter((x) => x !== k) : [...sel, k]) as never)
   return (
@@ -779,7 +804,9 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
         </div>
         <div>
           <p className="label-caps text-txt-dim">État du sol</p>
-          <div className="mt-1"><ChipGroup field="etatSol" options={ETAT_SOL} /></div>
+          {/* RECETTE-1 (E3) — nu + bâti PARTITIONNENT les parcelles → tout coché par défaut, décocher
+              restreint, tout décocher = 0 parcelle (plus de « aucune cochée mais 430 k »). */}
+          <div className="mt-1"><ChipGroup field="etatSol" options={ETAT_SOL} partition /></div>
           {/* RECETTE-1 (E1, Vic 04/10) — la phrase explicative « Terrain nu = aucune emprise bâtie ≥ 5 %… »
               est RETIRÉE (la clause SQL ne bouge pas, seul l'affichage). */}
         </div>
