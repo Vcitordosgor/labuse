@@ -205,6 +205,10 @@ def registre() -> dict[str, CoucheTuyau]:
                 # repointée sur tuyau_sup (override la substitution subdivise ci-dessus).
                 if s.execute(text("SELECT to_regclass('tuyau_sup')")).scalar() and "sup" in reg:
                     reg["sup"] = _replace(reg["sup"], table="tuyau_sup")
+                # RECETTE-1 (C5) : ICPE servie en PARCELLES (rattachement point→parcelle) → repointée sur
+                # tuyau_icpe (polygones). Additif ; spatial_layers.icpe intacte (les points).
+                if s.execute(text("SELECT to_regclass('tuyau_icpe')")).scalar() and "icpe" in reg:
+                    reg["icpe"] = _replace(reg["icpe"], table="tuyau_icpe")
         except Exception:  # noqa: BLE001 — pas de base au chargement : défaut spatial_layers
             pass
         _REGISTRE = reg
@@ -378,6 +382,45 @@ def build_tuyau_sup(db: Session) -> int:
     db.commit()
     _CACHE.clear()
     return int(n)
+
+
+def build_tuyau_icpe(db: Session) -> dict:
+    """RECETTE-1 (C5, Vic 04/10) — ICPE servie en PARCELLES, plus en points. Chaque point Géorisques
+    est RATTACHÉ à la parcelle qui le CONTIENT (ST_Contains) ; on sert l'emprise de la parcelle (aplat
+    rouge + contour), jamais le point. Les ICPE hors parcelle (DPM, mer, hors cadastre) ne sont PAS
+    dessinées — leur nombre est dit (légende + rapport). La fiche parcelle (ICPE « sur ») lit le même
+    rattachement (ST_Contains sur spatial_layers kind='icpe'), donc carte et fiche concordent.
+
+    Additif : spatial_layers.icpe intacte. Un enregistrement par parcelle (noms/régimes/compte agrégés),
+    subdivisé (≤ 256 sommets) pour la performance des tuiles, comme les autres méga-polygones."""
+    db.execute(text("DROP TABLE IF EXISTS tuyau_icpe"))
+    # rattachement point → parcelle (ST_Contains) ; agrégation par parcelle
+    db.execute(text("""
+        CREATE TEMP TABLE _icpe_parc ON COMMIT DROP AS
+        SELECT p.id AS pid, p.commune, p.geom_2975,
+               count(*) AS n,
+               left(string_agg(DISTINCT i.name, ' · '), 240) AS noms,
+               string_agg(DISTINCT COALESCE(i.subtype, 'régime inconnu'), ' · ') AS regimes
+        FROM spatial_layers i JOIN parcels p ON ST_Contains(p.geom_2975, i.geom_2975)
+        WHERE i.kind = 'icpe'
+        GROUP BY p.id, p.commune, p.geom_2975"""))
+    db.execute(text("""
+        CREATE TABLE tuyau_icpe AS
+        SELECT 'icpe'::text AS kind, NULL::text AS subtype, left(a.noms, 240) AS name, a.commune,
+               jsonb_build_object('nom', a.noms, 'n', a.n, 'regime', a.regimes) AS attrs,
+               s.geom AS geom_2975
+        FROM _icpe_parc a, LATERAL ST_Subdivide(a.geom_2975, 256) AS s(geom)"""))
+    db.execute(text("CREATE INDEX tuyau_icpe_gix ON tuyau_icpe USING GIST (geom_2975)"))
+    db.execute(text("CREATE INDEX tuyau_icpe_kind ON tuyau_icpe (kind)"))
+    db.execute(text("ANALYZE tuyau_icpe"))
+    # compte total / rattachés / hors parcelle (pour la légende « N hors parcelle non affichées »)
+    total = db.execute(text("SELECT count(*) FROM spatial_layers WHERE kind='icpe'")).scalar() or 0
+    rattaches = db.execute(text("""
+        SELECT count(*) FROM spatial_layers i
+        WHERE i.kind='icpe' AND EXISTS (SELECT 1 FROM parcels p WHERE ST_Contains(p.geom_2975, i.geom_2975))""")).scalar() or 0
+    db.commit()
+    _CACHE.clear()
+    return {"total": int(total), "rattaches": int(rattaches), "hors_parcelle": int(total) - int(rattaches)}
 
 
 def build_tuyau_telepherique(db: Session) -> int:
