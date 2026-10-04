@@ -21,7 +21,6 @@ import { Bouton } from '../ui/Bouton'
 import { Case } from '../ui/Case'
 import { Chevron } from '../ui/Chevron'
 import { Chip } from '../ui/Chip'
-import { DestinationSelect } from '../outils/DestinationSelect'   // FAISABILITE-1 lot B — sélecteur R151-28 partagé
 import { useFiltre } from './filtreContext'   // M120 — binding partagé (carte OU cadrage projet)
 
 // ANALYSE-1 — le récapitulatif de la Révélation parle le NOUVEAU moteur (bandes de Score) ; l'ancien
@@ -276,38 +275,9 @@ export function NumField({ field, ph, suffix }: { field: keyof Filters; ph: stri
   )
 }
 
-// ═══════ FAISABILITE-1 (lot B) — GROUPE « CAPACITÉ » ═══════════════════════════════════════════
-// Chercher des parcelles PAR ce qu'on peut y construire. SDP restante ≥ X et logements ≥ N sont lus
-// dans `parcel_residuel` du RUN SERVI (la MÊME donnée que la fiche, jamais le gabarit brut — cf.
-// backend app.py sdp_min/capacite_min). « Destination autorisée » écarte les zones qui l'INTERDISENT
-// (plu_destinations validées) ; calibration en cours = non filtrée. Pas d'« Inclure A/N » : le
-// filtre Zonage suffit.
-// RETOURS-14 P5 — l'aide-calcul « Depuis un programme… » est RETIRÉE d'ici : dimensionner un programme
-// (bâtiments × unités × m²/unité → SDP) est le rôle de l'outil Faisabilité, qui le porte déjà. Aucune
-// logique déplacée (le filtre reste sdpMin/capaciteMin, saisie directe ci-dessous).
-export function CapaciteSection() {
-  const { filters, setFilter } = useFiltre()
-  // KELFONCIER-FIX-2 (Lot C) — FAÇADE ALLÉGÉE : la Capacité ne garde que « Logements possibles ≥ N »
-  // et « Activité (destination) ». « SDP restante min/max » et « Déjà bâti » descendent dans la
-  // section repliée « Affiner la recherche » (AffinerRecherche). Aucun prédicat ne bouge : les champs
-  // lisent/écrivent les MÊMES clés (`sdpMin`/`sdpMax`/`renouvellement`), seul l'emplacement change.
-  return (
-    <div data-capacite-filtre className="gcard mt-2 flex flex-col gap-3 p-3">
-      <div>
-        <p className="label-caps text-txt-dim">Logements possibles</p>
-        <div className="mt-1 flex items-center gap-1.5">
-          <span className="text-[10px] text-txt-dim">≥</span><NumField field="capaciteMin" ph="N" suffix="logts" />
-        </div>
-        <p className="mt-1 text-[10px] leading-snug text-txt-dim">Estimé — dérivé de la SDP restante (~70 m² SDP / logement).</p>
-      </div>
-      <div>
-        <DestinationSelect dataAttr="filtre-capacite" value={filters.destinationAutorisee}
-          onChange={(slug) => setFilter('destinationAutorisee', slug)} />
-        <p className="mt-1 text-[10px] leading-snug text-txt-dim">Écarte les zones qui l’interdisent au règlement ; « calibration en cours » = non filtrée.</p>
-      </div>
-    </div>
-  )
-}
+// RECETTE-1 (E2, Vic 04/10) — le GROUPE « CAPACITÉ » (CapaciteSection : logements possibles ≥ N +
+// destination ; SDP restante / Déjà bâti d'« Affiner ») est ENTIÈREMENT RETIRÉ. Les clés restent
+// inertes côté store ⇒ un vieux hash / une vue / une veille s'ouvre sans erreur (clé ignorée).
 
 // RETOURS-14 P5 — SECTION REPLIABLE « AFFINER LA RECHERCHE », FERMÉE PAR DÉFAUT, tout en bas du panneau.
 // Y sont REGROUPÉS (aucun filtre supprimé — simple relocalisation) : ZFANG (zone franche), FRR (ruralités)
@@ -321,10 +291,9 @@ function AffinerRecherche() {
   // descendus de la façade (copro, hauteur, emprise, SDP, déjà bâti). Le compteur du repli les
   // recense (sinon, section fermée, un filtre actif serait invisible) — ce n'est PAS le badge
   // « Filtres (N) » global (inchangé), juste l'indicateur local de cette section.
-  const nAffiner = nSig + (filters.horsCopro ? 1 : 0) + (filters.renouvellement ? 1 : 0)
+  const nAffiner = nSig + (filters.horsCopro ? 1 : 0)   // RECETTE-1 E2 — plus de SDP/Déjà bâti (Capacité retirée)
     + (filters.hauteurMin != null || filters.hauteurMax != null ? 1 : 0)
     + (filters.empriseMin != null || filters.empriseMax != null ? 1 : 0)
-    + (filters.sdpMin != null || filters.sdpMax != null ? 1 : 0)
   return (
     <div data-affiner className="mt-4">
       <button data-affiner-toggle aria-expanded={ouvert} onClick={() => setOuvert((v) => !v)}
@@ -359,17 +328,8 @@ function AffinerRecherche() {
             <div className="mt-1 flex items-center gap-1.5"><NumField field="empriseMin" ph="min" /><span className="text-txt-dim">–</span><NumField field="empriseMax" ph="max" suffix="%" /></div>
             <p className="mt-1 text-[10px] leading-snug text-txt-dim">Part de la parcelle déjà couverte par du bâti (run servi) — la même que « État du sol ».</p>
           </div>
-          {/* KELFONCIER-FIX-2 (Lot C) — « SDP restante » et « Déjà bâti » descendus de la Capacité.
-              DENSIFIER-PLI (PISCINES-2 Lot B) — « Déjà bâti » + « SDP restante ≥ X » = les parcelles
-              occupées qui peuvent porter davantage (clé interne legacy `renouvellement`, hash rnv). */}
-          <div>
-            <p className="label-caps text-txt-dim">SDP restante</p>
-            <div className="mt-1 flex items-center gap-1.5"><NumField field="sdpMin" ph="min" /><span className="text-txt-dim">–</span><NumField field="sdpMax" ph="max" suffix="m²" /></div>
-            <Case data-filtre-deja-bati className="mt-2"
-              checked={filters.renouvellement}
-              onChange={(e) => setFilter('renouvellement', e.target.checked as never)}
-              label="Déjà bâti (extension · surélévation)" />
-          </div>
+          {/* RECETTE-1 (E2) — « SDP restante » et « Déjà bâti » (part de l'encart Capacité) RETIRÉS
+              de « Affiner la recherche » avec le reste de la Capacité. */}
           {/* COUCHES-2 point 4 — filtre par STATUT ZFANG / FRR de la commune. SOURCE UNIQUE
               (territoire_fiscal) : le même statut peint la carte et s'affiche sur la fiche commune. */}
           <div>
@@ -832,12 +792,9 @@ export function FiltreLabuse({ onRetract, enVeille }: { onRetract?: () => void; 
           les flags restent visibles en fiche et en couches. Les clés URL legacy (fl=) sont
           ignorées proprement à la lecture (filters.ts). */}
 
-      {/* ═══════ 3 · CAPACITÉ (FAISABILITE-1 lot B) — ce que le PLU laisse construire : SDP restante,
-          logements, destination. SDP/logements lus dans parcel_residuel du RUN SERVI (= la fiche,
-          jamais le gabarit brut). Compteur SQL exact, ET avec les autres filtres, persisté à l'URL. ═══════ */}
-      <TitreSection cls="mt-4" titre="3 · Capacité"
-        info="Ce que le PLU laisse construire : SDP restante et logements (lus sur le run servi, comme la fiche) et destination admise. Chercher des parcelles par ce qu'on peut y bâtir." />
-      <CapaciteSection />
+      {/* RECETTE-1 (E2, Vic 04/10) — l'encart « 3 · Capacité » (SDP restante / logements possibles /
+          destination) est ENTIÈREMENT RETIRÉ (façade + « Plus de filtres »). Les clés restent ignorées
+          sans erreur dans un hash / une vue / une veille existante (cf. lib/filters.ts, tables de hash). */}
 
       {/* ═══════ RETOURS-14 P5 — « AFFINER LA RECHERCHE » (repliée, fermée par défaut, en bas) :
           ZFANG, FRR et Signaux de vie y sont regroupés (aucun filtre supprimé). ═══════ */}

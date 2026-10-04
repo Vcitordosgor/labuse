@@ -85,7 +85,8 @@ export const filterParams = (f: Filters): Record<string, string | number> => ({
   // M129-B : score_min (matrice morte) ne s'envoie plus — le rang/tier remplace.
   ...(f.surfaceMin != null ? { surface_min: f.surfaceMin } : {}),
   ...(f.surfaceMax != null ? { surface_max: f.surfaceMax } : {}),
-  ...(f.sdpMin != null ? { sdp_min: f.sdpMin } : {}),
+  // RECETTE-1 (E2) — encart « Capacité » retiré : sdp_min/sdp_max/capacite_min/destination ne sont
+  // plus envoyés au back (champs inertes côté store pour ignorer un vieux hash/vue sans erreur).
   ...(f.evenement ? { evenement: 'true' } : {}),
   ...(f.veille ? { veille: 'true' } : {}),
   ...(f.horsCopro ? { hors_copro: 'true' } : {}),
@@ -95,11 +96,8 @@ export const filterParams = (f: Filters): Record<string, string | number> => ({
   ...(f.personneMorale ? { personne_morale: 'true' } : {}),        // M11 B2 : propriétaire personne morale
   ...(f.zonagePlu.length ? { zonage: f.zonagePlu.join(',') } : {}), // M11 B2 : zonage PLU (familles U/AU/A/N)
   // M45 (P2a) — barre niveau 1 + tiroir droit
-  ...(f.sdpMax != null ? { sdp_max: f.sdpMax } : {}),
   ...(f.constructibilite.length ? { constructibilite: f.constructibilite.join(',') } : {}),
   ...(f.etatSol.length ? { etat_sol: f.etatSol.join(',') } : {}),
-  ...(f.capaciteMin != null ? { capacite_min: f.capaciteMin } : {}),
-  ...(f.destinationAutorisee ? { destination: f.destinationAutorisee } : {}),   // FAISABILITE-1 lot B
   ...(f.zonePlu.length ? { zone_plu: f.zonePlu.join(',') } : {}),
   // M45 (P2d) — tiroirs éco / mutation / propriété / veille
   ...(f.sousDensite ? { sous_densite: 'true' } : {}),

@@ -9,11 +9,14 @@ describe('filters URL persistence (M55-D)', () => {
     const f: Filters = {
       ...EMPTY_FILTERS,
       tiers: ['brulante', 'chaude'],
-      surfaceMin: 1000, surfaceMax: 5000, sdpMin: 300, sdpMax: 2000,
-      capaciteMin: 10, multMin: 2, rangMax: 100, budgetMax: 200000,
+      // RECETTE-1 (E2) — l'encart « Capacité » (sdpMin/sdpMax/capaciteMin/renouvellement/
+      // destinationAutorisee) est retiré : ces champs ne sont plus persistés (test de leur ignore
+      // gracieux plus bas) — on ne les met donc pas dans le round-trip « every field ».
+      surfaceMin: 1000, surfaceMax: 5000,
+      multMin: 2, rangMax: 100, budgetMax: 200000,
       chargeMin: 1000, chargeMax: 90000, prixMarcheMin: 100, prixMarcheMax: 900, caMin: 1_000_000,
       veille: true, horsCopro: true, personneMorale: true, sousDensite: true,
-      renouvellement: true, npnru: true, adresseAbsente: true,
+      npnru: true, adresseAbsente: true,
       marcheFiable: true, modeBRentable: true,
       flagsExclus: ['icpe'], communes: ['Saint-Paul'],
       zonagePlu: ['U', 'AU'], constructibilite: ['constructible'], etatSol: ['nu'],
@@ -64,6 +67,22 @@ describe('filters URL persistence (M55-D)', () => {
     expect('scoreMin' in back).toBe(false)   // la clé q n'alimente plus aucun champ
     expect(back.horsCopro).toBe(true)
     expect(back.flags ?? []).toEqual([])   // la clé contraintes est ignorée, le lien s'ouvre
+  })
+
+  // RECETTE-1 (E2) — l'encart « Capacité » est retiré : un vieux hash / une vue / une veille qui
+  // porte sdp/sdpx/cap/rnv/dst s'ouvre SANS erreur, les clés sont IGNORÉES (comme q/fl), et rien
+  // n'allume de filtre orphelin. Le reste du lien (surface, tier) s'ouvre normalement.
+  it('E2 — les clés de l\'encart Capacité (sdp/sdpx/cap/rnv/dst) sont ignorées sans erreur', () => {
+    const back = { ...EMPTY_FILTERS, ...filtersFromHash('#f=1&tv=chaude&smin=1000&sdp=300&sdpx=2000&cap=10&rnv=1&dst=logement')!.filters }
+    expect(back.tiers).toEqual(['chaude'])
+    expect(back.surfaceMin).toBe(1000)        // le reste du lien s'ouvre
+    expect(back.sdpMin).toBeNull()            // clé ignorée → reste au défaut (inerte)
+    expect(back.sdpMax).toBeNull()
+    expect(back.capaciteMin).toBeNull()
+    expect(back.renouvellement).toBe(false)
+    expect(back.destinationAutorisee).toBeNull()
+    // seuls tier + surface comptent ; aucune clé Capacité orpheline
+    expect(countActiveFilters(back as Filters)).toBe(2)
   })
 
   // KELFONCIER-FIX-1 (Lot D) — les filtres bâti entrent dans le hash (URL/Mes vues/veille), le
