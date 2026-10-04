@@ -1317,10 +1317,14 @@ def prospection_piscines_liste(commune: str | None = None,
                                statut: str = "servie",   # servie | tous (servie + a_confirmer)
                                surf_min: int = 0,
                                proprio: str = "tous",   # tous | pm | pp
+                               limit: int = 50,   # RECETTE-1 H13.2 — pagination serveur par 50 (plus de cap 1000)
+                               offset: int = 0,
                                db: Session = Depends(get_db)):
     """PISCINES-2 (A.3) — LISTE pisciniste : parcelle · commune · surface bassin · source · statut ·
     propriétaire (PM nommée + SIREN / particulier non nommé). Source unique `piscines`. Aucune colonne
-    « potentiel solaire » (hors sujet). Corrections « pas une piscine » exclues."""
+    « potentiel solaire » (hors sujet). Corrections « pas une piscine » exclues.
+    RECETTE-1 H13.2 — pagination SERVEUR par 50 (`limit`/`offset`) : le plafond unique de 1000 est levé ;
+    la carte (/points) montre tout le périmètre, la liste défile page par page."""
     if not db.execute(text("SELECT to_regclass('piscines') IS NOT NULL")).scalar():
         raise HTTPException(503, "source piscines indisponible (lancer `labuse piscines-build`).")
     from ..ingestion.ortho_equipements import ensure_corrections
@@ -1334,13 +1338,17 @@ def prospection_piscines_liste(commune: str | None = None,
              + (" AND pi.commune = :c" if commune else ""))
     base = ("FROM piscines pi LEFT JOIN parcelle_personne_morale pm ON pm.idu = pi.idu " + where)
     total = int(db.execute(text(f"SELECT count(*) {base}"), {"c": commune, "smin": surf_min}).scalar() or 0)
-    cap = 1000   # plafond de listing (la carte montre TOUTES les piscines) — jamais muet (`tronquee` servi)
+    # RECETTE-1 H13.2 — pagination serveur par 50 (bornée [1,200] pour ne pas resservir 1000 d'un coup).
+    # RECETTE-1 H13.3 — tri « commune puis SECTION » (idu[8:10]) puis surface.
+    lim = max(1, min(int(limit), 200))
+    off = max(0, int(offset))
     rows = db.execute(text(
         f"""SELECT pi.idu, pi.commune, round(pi.surface_m2)::int AS surface_m2, pi.source, pi.statut,
                    pm.denomination, pm.siren
             {base}
-            ORDER BY pi.commune, pi.surface_m2 DESC NULLS LAST, pi.idu LIMIT :lim"""),
-        {"c": commune, "smin": surf_min, "lim": cap}).mappings().all()
+            ORDER BY pi.commune, substring(pi.idu, 9, 2), pi.surface_m2 DESC NULLS LAST, pi.idu
+            LIMIT :lim OFFSET :off"""),
+        {"c": commune, "smin": surf_min, "lim": lim, "off": off}).mappings().all()
     items = []
     for r in rows:
         d = dict(r)
@@ -1348,7 +1356,8 @@ def prospection_piscines_liste(commune: str | None = None,
         d.pop("denomination", None); d.pop("siren", None)
         items.append(d)
     maj = db.execute(text("SELECT to_char(max(built_at), 'YYYY-MM-DD') FROM piscines")).scalar()
-    return {"total": total, "n": len(items), "cap": cap, "tronquee": total > len(items),
+    return {"total": total, "n": len(items), "limit": lim, "offset": off,
+            "a_suite": off + len(items) < total,   # reste-t-il une page ?
             "items": items, "maj": maj or "—",
             "source": "Source unique FLAIR ∪ CoSIA dédoublonnée (IGN 20 cm 2025) · propriétaire DGFiP"}
 

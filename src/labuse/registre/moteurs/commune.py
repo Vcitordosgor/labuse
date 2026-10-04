@@ -329,10 +329,19 @@ def compte_piscines(db, commune: str | None, bati: str, piscine_surf_min: int,
     params = {"c": commune, "psmin": piscine_surf_min}
     total = int(db.execute(text(
         f"SELECT count(*) FROM piscines pi {join_bati} {where}"), params).scalar() or 0)
+    # RECETTE-1 H13.1 — par commune, les DEUX bandes TOUJOURS (confirmées = `servie`, à confirmer =
+    # `a_confirmer`), indépendamment de la bascule : l'écran liste les 24 communes avec « N confirmées ·
+    # N à confirmer » (plus de compteur unique ambigu ni de « +11 706 » hors contexte). Filtres bati/surf/
+    # corrections/commune conservés ; `ecartee` jamais compté. `n` reste le total gouverné par la bascule.
+    where_bandes = ("WHERE pi.statut IN ('servie','a_confirmer')" + bati_cond + surf_cond + corr_cond
+                    + (" AND pi.commune = :c" if commune else ""))
     communes = db.execute(text(f"""
-        SELECT pi.commune AS commune, count(*)::int AS n
-        FROM piscines pi {join_bati} {where} AND pi.commune IS NOT NULL
-        GROUP BY pi.commune ORDER BY n DESC"""), params).mappings().all()
+        SELECT pi.commune AS commune,
+               count(*) FILTER (WHERE pi.statut = 'servie')::int AS confirmees,
+               count(*) FILTER (WHERE pi.statut = 'a_confirmer')::int AS a_confirmer,
+               count(*) FILTER (WHERE pi.statut IN {statuts})::int AS n
+        FROM piscines pi {join_bati} {where_bandes} AND pi.commune IS NOT NULL
+        GROUP BY pi.commune ORDER BY confirmees DESC, a_confirmer DESC"""), params).mappings().all()
     return {"total": total, "communes": [dict(c) for c in communes]}
 
 

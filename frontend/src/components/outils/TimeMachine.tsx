@@ -287,6 +287,12 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
           <span className="text-[10.5px] leading-snug text-txt-mut">
             <b className="text-txt">Zones noires</b> : secteurs non couverts par l'ortho ancienne (mer, limites
             de mission IGN) — ce n'est pas un défaut de chargement.
+            {/* RECETTE-1 H9.2 — la carte EduGéo 1980 est une couche IGN valide à COUVERTURE PARTIELLE
+                sur l'île (certains secteurs restent vides, en transparent) : on le dit, pas un bug. */}
+            {(leftKey === 'bm-edugeo-1980' || rightKey === 'bm-edugeo-1980') && (
+              <> <b className="text-txt">Carte 1980 (EduGéo)</b> : couverture partielle de l'île — là où elle
+              manque, le fond reste vide (ce n'est pas un défaut de chargement).</>
+            )}
           </span>
         </div>
       )}
