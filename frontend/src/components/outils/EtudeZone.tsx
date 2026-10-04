@@ -1,21 +1,23 @@
 /**
  * ÉTUDE DE ZONE · Z4 + ZONE-RECETTE — l'outil de chalandise (maquette, écran 2).
  *
- * TROIS ÉTAPES LISIBLES À L'ÉCRAN (RETOURS-11 · O19) :
- *  · Étape 1 « Définir la zone » — DEUX entrées EXCLUSIVES (segmenté) :
- *      « Autour d'un point » → ParcelInput (SOCLE : adresse OU IDU) + temps de trajet + mode ;
- *      « Zone dessinée » → « Dessiner la zone » (polygone) ; temps/mode disparaissent (ils n'ont
- *      aucun sens sur un polygone). Basculer d'un onglet à l'autre efface le périmètre de l'autre.
- *  · Étape 2 « Lire la zone » — la lecture brute du périmètre : habitants, ménages, revenus, emplois,
- *      toutes les entreprises, marché, permis, trafic, PLU, zone de demain. Aucune activité requise.
- *  · Étape 3 « Une activité » (FACULTATIVE) — une LENTILLE qui S'AJOUTE à la lecture : concurrents /
- *      chalandise d'une activité choisie. Ce n'est pas un autre mode ; elle ne remplace pas l'étape 2.
+ * RECETTE-1 H8 — fusion : UNE seule entrée (une parcelle + un rayon km réglable par + / −). Les deux
+ * ex-chemins (point/temps de trajet ET polygone dessiné) sont RETIRÉS ; au départ, un choix
+ * « Zone seule » / « Zone + chalandise » (ce dernier AJOUTE le sélecteur d'activité + les concurrents).
  *
- * L'en-tête de résultat DÉSIGNE le périmètre réellement mesuré (jamais « à 10 min » sur un polygone).
+ * ÉTAPES LISIBLES À L'ÉCRAN :
+ *  · Étape 1 « Définir la zone » — ParcelInput (SOCLE : adresse OU IDU) + rayon km (+ / −).
+ *  · Étape 2 « Lire la zone » — la lecture brute du périmètre : habitants, ménages, revenus, emplois,
+ *      toutes les entreprises, marché, permis, trafic, PLU, zone de demain. S'ouvre d'elle-même après
+ *      « Lire la zone » (le bouton disparaît alors — H8.5). Aucune activité requise en mode « Zone seule ».
+ *  · (Mode « Zone + chalandise ») — une LENTILLE qui S'AJOUTE à la lecture : concurrents / chalandise
+ *      d'une activité choisie. Ce n'est pas un autre mode ; elle ne remplace pas l'étape 2.
+ *
+ * L'en-tête de résultat DÉSIGNE le périmètre réellement mesuré (rayon en km autour de la parcelle).
  * Concurrents / actifs : trois états honnêtes (servie+0 / non couvert / indisponible), jamais un faux zéro.
  * Faits sourcés et datés — AUCUNE prévision de chiffre d'affaires.
  */
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 
 import { ParcelInput } from '../ParcelInput'
@@ -31,9 +33,13 @@ import { Bouton } from '../ui/Bouton'
 import { Reinitialiser } from '../ui/Reinitialiser'   // RECETTE-1 F3
 import { Chevron } from '../ui/Chevron'
 
-const TEMPS = [5, 10, 15]
-// RETOURS-15 B9 — l'AMPLEUR par défaut : un rayon en km (cercle exact tracé sur la carte).
-const RAYONS = [0.5, 1, 2, 5]
+// RECETTE-1 H8.2/H8.3 — fusion des deux chemins : UNE seule entrée (depuis une parcelle), un rayon en
+// km réglable par + / − ; l'entrée « temps de trajet » (minutes/mode) et l'entrée « zone dessinée »
+// (polygone) sont RETIRÉES. Bornes du rayon (km) : pas de 0,5 km, de 0,5 à 10 km.
+const RAYON_MIN = 0.5, RAYON_MAX = 10, RAYON_PAS = 0.5
+// minutes/mode restent requis par le type EtudeZoneInput mais sont IGNORÉS par le back dès que rayon_km
+// est fourni (cercle exact) — on envoie des constantes neutres, plus aucune UI de temps de trajet.
+const MINUTES_NEUTRE = 10, MODE_NEUTRE = 'voiture' as const
 
 function nb(n: number | null | undefined): string {
   return n == null ? '—' : n.toLocaleString('fr-FR')
@@ -48,9 +54,8 @@ function tempsTxt(min: number | null, mode: 'pied' | 'voiture'): string {
 
 export function EtudeZone() {
   const setModuleMap = useApp((s) => s.setModuleMap)
-  const setTool = useApp((s) => s.setTool)
-  const drawnZone = useApp((s) => s.zone)          // polygone dessiné [lng,lat][]
-  const setZone = useApp((s) => s.setZone)
+  const setTool = useApp((s) => s.setTool)          // RECETTE-1 H8.2 — gardé pour purger tout dessin résiduel
+  const setZone = useApp((s) => s.setZone)          // (le chemin polygone est retiré ; reset/cleanup l'effacent)
   const setFlyTo = useApp((s) => s.setFlyTo)
 
   // RETOURS-12 O13.1 — DEUX PORTES à l'ouverture (le MOTEUR reste unique — seules l'entrée et la sortie
@@ -58,13 +63,11 @@ export function EtudeZone() {
   // sont au premier plan) · « particulière » (contexte foncier autour d'une parcelle, sans hypothèse
   // d'activité : la lentille activité est masquée). Le bloc « Autour de cette parcelle » de la fiche
   // reste branché sur le même moteur (endpoint /outils/etude-zone), hors de ces portes.
+  // RECETTE-1 H8.2 — les deux portes deviennent le choix « Zone seule » (particuliere) /
+  // « Zone + chalandise » (chalandise) : même moteur, la chalandise AJOUTE le sélecteur d'activité +
+  // le bloc concurrents. Plus d'entrée point/polygone ni temps de trajet : UNE parcelle + un rayon km.
   const [porteZone, setPorteZone] = useState<'chalandise' | 'particuliere' | null>(null)
-  const [entree, setEntree] = useState<'point' | 'polygone'>('point')
   const [cible, setCible] = useState<{ idu: string; label: string } | null>(null)
-  const [mode, setMode] = useState<'voiture' | 'pied'>('voiture')
-  const [minutes, setMinutes] = useState(10)
-  // RETOURS-15 B9 — l'ampleur : RAYON en km par défaut ; « temps de trajet » en option secondaire.
-  const [ampleur, setAmpleur] = useState<'rayon' | 'temps'>('rayon')
   const [rayonKm, setRayonKm] = useState(1)
   // DESTINATIONS-1 (X4.1) — sous-destination R151-28 choisie (facultative) : verdict par zone PLU.
   const [sousDest, setSousDest] = useState<string | null>(null)
@@ -75,7 +78,7 @@ export function EtudeZone() {
   const setEtudeZonePrefill = useApp((s) => s.setEtudeZonePrefill)
   useEffect(() => {
     if (!etudeZonePrefill) return
-    if (etudeZonePrefill.idu) { setEntree('point'); setCible({ idu: etudeZonePrefill.idu, label: iduCourt(etudeZonePrefill.idu) }) }
+    if (etudeZonePrefill.idu) { setCible({ idu: etudeZonePrefill.idu, label: iduCourt(etudeZonePrefill.idu) }) }
     setSousDest(etudeZonePrefill.sous_destination)
     // O13.1 — la porte Copilote choisit la porte : sous-destination visée → chalandise, sinon contexte.
     setPorteZone(etudeZonePrefill.sous_destination ? 'chalandise' : 'particuliere')
@@ -101,16 +104,12 @@ export function EtudeZone() {
   }, [parcourir, familles])
   const choisirNaf = (o: NafOption) => { setNaf(o); setNafOpts([]); setNafQuery(''); setParcourir(false) }
 
-  const geomFromDrawn = useMemo(() => {
-    if (!drawnZone || drawnZone.length < 3) return null
-    return { type: 'Polygon' as const, coordinates: [[...drawnZone, drawnZone[0]]] }
-  }, [drawnZone])
-
   const mut = useMutation<EtudeZoneResult, Error, void>({
     mutationFn: () => {
-      const body: EtudeZoneInput = { minutes, mode, naf: naf?.code ?? null, sous_destination: sousDest }
-      if (entree === 'polygone' && geomFromDrawn) { body.geom = geomFromDrawn; body.titre = 'Zone dessinée' }
-      else if (cible) { body.idu = cible.idu; body.titre = cible.label; if (ampleur === 'rayon') body.rayon_km = rayonKm }
+      // RECETTE-1 H8.2 — UNE entrée : parcelle (cible) + rayon km. minutes/mode = constantes neutres
+      // (ignorées par le back dès que rayon_km est fourni). Plus de branche polygone/temps.
+      const body: EtudeZoneInput = { minutes: MINUTES_NEUTRE, mode: MODE_NEUTRE, naf: naf?.code ?? null, sous_destination: sousDest }
+      if (cible) { body.idu = cible.idu; body.titre = cible.label; body.rayon_km = rayonKm }
       return etudeZone(body)
     },
   })
@@ -120,13 +119,12 @@ export function EtudeZone() {
   // l'étude (sans NAF). Chargé une fois par zone ; réinitialisé quand l'entrée change.
   const [entOpen, setEntOpen] = useState(false)
   const entBody = (): EtudeZoneInput => {
-    const b: EtudeZoneInput = { minutes, mode }
-    if (entree === 'polygone' && geomFromDrawn) b.geom = geomFromDrawn
-    else if (cible) { b.idu = cible.idu; if (ampleur === 'rayon') b.rayon_km = rayonKm }
+    const b: EtudeZoneInput = { minutes: MINUTES_NEUTRE, mode: MODE_NEUTRE }
+    if (cible) { b.idu = cible.idu; b.rayon_km = rayonKm }
     return b
   }
   const entQ = useQuery({
-    queryKey: ['zone-entreprises', entree, cible?.idu, minutes, mode, ampleur, rayonKm, !!geomFromDrawn],
+    queryKey: ['zone-entreprises', cible?.idu, rayonKm],
     queryFn: () => etudeZoneEntreprises(entBody()), enabled: entOpen && !!res?.zone_disponible,
   })
 
@@ -137,15 +135,7 @@ export function EtudeZone() {
     // DESTINATIONS-1 (X4.1) — sousDest fait partie de la LECTURE de zone (étape 1/2, payload principal) :
     // le changer réarme « Lire la zone ». naf reste HORS deps (RETOURS-11 O19 : l'activité est la lentille
     // additive de l'étape 3, appliquée par son propre bouton — elle n'efface pas la lecture).
-    [entree, cible, sousDest, minutes, mode, ampleur, rayonKm, geomFromDrawn])
-
-  // basculer d'onglet efface le périmètre de l'AUTRE entrée
-  const choisirEntree = (e: 'point' | 'polygone') => {
-    if (e === entree) return
-    if (e === 'point') { setZone(null); setTool(null) }        // on quitte le polygone
-    else { setCible(null) }                                    // on quitte le point
-    setEntree(e)
-  }
+    [cible, sousDest, rayonKm])
 
   // pousse la zone sur la carte : anneaux d'isochrone + point d'origine + concurrents (ambre). Nettoie en sortie.
   useEffect(() => {
@@ -174,7 +164,7 @@ export function EtudeZone() {
   useEffect(() => () => { setModuleMap({ idus: [], extra: null }); setZone(null); setTool(null) },
     [setModuleMap, setZone, setTool])
 
-  const pretA = entree === 'polygone' ? !!geomFromDrawn : !!cible
+  const pretA = !!cible   // RECETTE-1 H8.2 — prêt dès qu'une parcelle est désignée (entrée unique)
 
   // ETUDE-ZONE-2 Lot A — le résultat est organisé en 7 sections repliables (accordéons). Les deux
   // premières (Population, Économie) sont ouvertes par défaut, les autres repliées. État par id de
@@ -198,17 +188,19 @@ export function EtudeZone() {
     : ''
 
   if (porteZone === null) {
-    // RETOURS-12 O13.1 — ACCUEIL : deux portes distinctes (moteur unique derrière).
+    // RECETTE-1 H8.2 — ACCUEIL : le choix de départ « Zone seule » / « Zone + chalandise » (même
+    // moteur ; la chalandise AJOUTE le sélecteur d'activité + le bloc concurrents). Ex-portes
+    // « Zone particulière » / « Zone de chalandise », renommées pour nommer ce qui est ajouté.
     return (
       <div data-etude-zone className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1">
-        <p className="text-[11.5px] leading-snug text-txt-mut">Autour d’un lieu, que voulez-vous étudier ?</p>
-        <button data-etude-porte="chalandise" onClick={() => setPorteZone('chalandise')} className="door door-hot hover-fill w-full text-left">
-          <div className="text-[12.5px] font-medium text-txt">Zone de chalandise</div>
-          <div className="mt-0.5 text-[10.5px] leading-snug text-txt-dim">Implanter une activité : population, emplois, concurrence, équipements, trafic — et ce que le PLU autorise pour cette activité.</div>
-        </button>
+        <p className="text-[11.5px] leading-snug text-txt-mut">Autour d’une parcelle, que voulez-vous étudier ?</p>
         <button data-etude-porte="particuliere" onClick={() => setPorteZone('particuliere')} className="door door-hot hover-fill w-full text-left">
-          <div className="text-[12.5px] font-medium text-txt">Zone particulière</div>
-          <div className="mt-0.5 text-[10.5px] leading-snug text-txt-dim">Le contexte foncier autour d’une parcelle ou d’un périmètre : ce qu’il y a autour, sans hypothèse d’activité.</div>
+          <div className="text-[12.5px] font-medium text-txt">Zone seule</div>
+          <div className="mt-0.5 text-[10.5px] leading-snug text-txt-dim">Le contexte foncier autour d’une parcelle : population, marché, foncier, contraintes, équipements — sans hypothèse d’activité.</div>
+        </button>
+        <button data-etude-porte="chalandise" onClick={() => setPorteZone('chalandise')} className="door door-hot hover-fill w-full text-left">
+          <div className="text-[12.5px] font-medium text-txt">Zone + chalandise</div>
+          <div className="mt-0.5 text-[10.5px] leading-snug text-txt-dim">La même lecture + une activité : le sélecteur d’activité, la concurrence et ce que le PLU autorise pour cette destination.</div>
         </button>
       </div>
     )
@@ -216,83 +208,48 @@ export function EtudeZone() {
 
   return (
     <div data-etude-zone className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pr-1">
-      {/* O13.1 / ETUDE-ZONE-1 A1 — retour à l'accueil de l'outil : bouton « ← » à GAUCHE,
-          comme les autres retours de l'app ; le badge de la porte choisie reste à droite. */}
-      <div className="flex items-center justify-between">
+      {/* O13.1 / ETUDE-ZONE-1 A1 — « ← Changer la zone » à GAUCHE (retour au choix de départ) ;
+          RECETTE-1 H8.4 — le Réinitialiser passe EN HAUT À DROITE (remplace l'ex-« Nouvelle étude »
+          du bas) ; le badge du mode choisi reste sous la barre. */}
+      <div className="flex items-center justify-between gap-2">
         <button data-etude-changer-porte onClick={nouvelleEtude} className="text-[10.5px] text-mint hover:underline">← Changer la zone</button>
-        <span data-etude-porte-active={porteZone} className="text-[10px] uppercase tracking-[.08em] text-mint">{porteZone === 'chalandise' ? 'Zone de chalandise' : 'Zone particulière'}</span>
+        {(cible || res) && <Reinitialiser onReset={resetEtude} />}
       </div>
-      {/* ÉTAPE 1 — DÉFINIR LA ZONE */}
-      <StepHead n={1} titre="Définir la zone" sous="autour d’un point (temps + mode) ou zone dessinée" />
-      {/* SEGMENTÉ — deux entrées exclusives */}
-      <div className="flex gap-1 rounded-lg border border-line-2 bg-surface-2 p-0.5">
-        {([['point', 'Autour d’un point'], ['polygone', 'Zone dessinée']] as const).map(([e, lbl]) => (
-          <button key={e} onClick={() => choisirEntree(e)}
-            className={`flex-1 rounded-md px-2 py-1 text-[11px] font-medium transition-colors duration-quick ${entree === e ? 'bg-mint/15 text-txt-hi' : 'text-txt-mut hover:text-txt'}`}>{lbl}</button>
-        ))}
+      <div className="flex justify-end">
+        <span data-etude-porte-active={porteZone} className="text-[10px] uppercase tracking-[.08em] text-mint">{porteZone === 'chalandise' ? 'Zone + chalandise' : 'Zone seule'}</span>
       </div>
-
-      {entree === 'point' ? (
-        <>
-          <ParcelInput dataAttr="zone-point" placeholder="Adresse, IDU ou référence (BW0917)"
-            withCarte onPick={(idu) => setCible({ idu, label: iduCourt(idu) })} />
-          {cible && <div className="text-[10.5px] text-txt-mut">Point : {cible.label}</div>}
-          {/* RETOURS-15 B9 — AMPLEUR : rayon en km PAR DÉFAUT (cercle tracé sur la carte). L'option
-              secondaire « ou en temps de trajet » déplie les 5/10/15 min à pied/en voiture. */}
-          <StepHead n={3} titre="Ampleur" sous="rayon en km (par défaut) ou temps de trajet" />
-          <div data-zone-rayons className="flex gap-1 rounded-lg border border-line-2 bg-surface-2 p-0.5">
-            {RAYONS.map((r) => (
-              <button key={r} data-zone-rayon={r} onClick={() => { setAmpleur('rayon'); setRayonKm(r) }}
-                className={`flex-1 rounded-md px-2 py-1 text-[11px] font-medium ${ampleur === 'rayon' && rayonKm === r ? 'bg-mint/15 text-txt-hi' : 'text-txt-mut hover:text-txt'}`}>
-                {String(r).replace('.', ',')} km</button>
-            ))}
-          </div>
-          {ampleur === 'rayon'
-            ? <button data-zone-vers-temps onClick={() => setAmpleur('temps')} className="self-start text-[10.5px] text-mint hover:underline">ou en temps de trajet →</button>
-            : (
-              <>
-                <button data-zone-vers-rayon onClick={() => setAmpleur('rayon')} className="self-start text-[10.5px] text-mint hover:underline">← revenir au rayon</button>
-                <div className="flex gap-1 rounded-lg border border-line-2 bg-surface-2 p-0.5">
-                  {TEMPS.map((t) => (
-                    <button key={t} onClick={() => setMinutes(t)}
-                      className={`flex-1 rounded-md px-2 py-1 text-[11px] font-medium ${minutes === t ? 'bg-mint/15 text-txt-hi' : 'text-txt-mut hover:text-txt'}`}>{t} min</button>
-                  ))}
-                </div>
-                <div className="flex gap-1 rounded-lg border border-line-2 bg-surface-2 p-0.5">
-                  {(['voiture', 'pied'] as const).map((mo) => (
-                    <button key={mo} onClick={() => setMode(mo)}
-                      className={`flex-1 rounded-md px-2 py-1 text-[11px] font-medium ${mode === mo ? 'bg-mint/15 text-txt-hi' : 'text-txt-mut hover:text-txt'}`}>{mo === 'voiture' ? 'Voiture' : 'À pied'}</button>
-                  ))}
-                </div>
-              </>
-            )}
-        </>
-      ) : (
-        <>
-          <Bouton niveau="secondaire" ton="vert" onClick={() => setTool('zone')} className="w-full">
-            Dessiner la zone
-          </Bouton>
-          {/* ETUDE-ZONE-1 A1 — rappel de la règle de dessin (une forme se valide par Entrée). */}
-          <div className="text-[10.5px] text-txt-mut">Une fois la zone définie, appuyez sur Entrée.</div>
-          <div className="text-[10.5px] text-txt-mut">
-            {geomFromDrawn ? `Polygone dessiné (${drawnZone!.length} sommets)` : 'Aucune zone tracée — cliquez « Dessiner la zone », posez les sommets, Entrée pour valider.'}
-          </div>
-        </>
-      )}
+      {/* ÉTAPE 1 — DÉFINIR LA ZONE : RECETTE-1 H8.2/H8.3 — UNE entrée (parcelle) + un rayon km réglable
+          (+ / −). Plus de segmenté point/polygone, plus de « temps de trajet ». */}
+      <StepHead n={1} titre="Définir la zone" sous="une parcelle + un rayon en km" />
+      <ParcelInput dataAttr="zone-point" placeholder="Adresse, IDU ou référence (BW0917)"
+        withCarte onPick={(idu) => setCible({ idu, label: iduCourt(idu) })} />
+      {cible && <div className="text-[10.5px] text-txt-mut">Parcelle : {cible.label}</div>}
+      {/* RECETTE-1 H8.3 — AMPLEUR : rayon en km réglable par + / − (cercle exact tracé sur la carte). */}
+      <div data-zone-rayons className="flex items-center justify-between rounded-lg border border-line-2 bg-surface-2 px-3 py-2">
+        <span className="text-[11px] text-txt-mut">Rayon</span>
+        <div className="flex items-center gap-2">
+          <button data-zone-rayon-moins aria-label="Réduire le rayon" disabled={rayonKm <= RAYON_MIN}
+            onClick={() => setRayonKm((r) => Math.max(RAYON_MIN, Math.round((r - RAYON_PAS) * 10) / 10))}
+            className="flex h-7 w-7 items-center justify-center rounded-md border border-line-2 text-txt-hi transition-colors duration-quick hover:border-mint hover:text-mint disabled:opacity-40">−</button>
+          <span className="tnum w-16 text-center font-mono text-[13px] text-txt-hi">{String(rayonKm).replace('.', ',')} km</span>
+          <button data-zone-rayon-plus aria-label="Agrandir le rayon" disabled={rayonKm >= RAYON_MAX}
+            onClick={() => setRayonKm((r) => Math.min(RAYON_MAX, Math.round((r + RAYON_PAS) * 10) / 10))}
+            className="flex h-7 w-7 items-center justify-center rounded-md border border-line-2 text-txt-hi transition-colors duration-quick hover:border-mint hover:text-mint disabled:opacity-40">+</button>
+        </div>
+      </div>
 
       {/* DESTINATIONS-1 (X4.1) — sous-destination R151-28 (facultative) : « peut-on y ouvrir un
           restaurant / un hôtel / un commerce ? » — verdict par zone PLU recouverte, phrase sourcée.
-          Fait partie de la LECTURE de zone (payload principal) ; l'activité NAF est, elle, portée par
-          la lentille additive de l'étape 3 (RETOURS-11 O19). */}
-      {/* O13.1 — la sous-destination PLU (« peut-on y ouvrir un commerce ? ») est une question
-          d'ACTIVITÉ → porte chalandise seulement. La zone particulière ne suppose aucune activité. */}
+          O13.1 — question d'ACTIVITÉ → mode « Zone + chalandise » seulement. */}
       {porteZone === 'chalandise' && <DestinationSelect dataAttr="etude-zone" value={sousDest} onChange={setSousDest} />}
 
-      {/* RETOURS-13 R28 — bouton d'ACTION PRINCIPALE : VERT OPAQUE, texte sombre (comme les autres
-          boutons principaux) — plus le fond terne bg-mint/20 qui le faisait passer pour inactif. */}
-      <Bouton niveau="primaire" ton="vert" onClick={() => mut.mutate()} disabled={!pretA || mut.isPending}>
-        {mut.isPending ? 'Calcul de la zone…' : 'Lire la zone'}
-      </Bouton>
+      {/* RETOURS-13 R28 — bouton d'ACTION PRINCIPALE vert opaque. RECETTE-1 H8.5 — une fois la zone lue,
+          le bouton DISPARAÎT (l'étape 2 s'ouvre d'elle-même) ; il revient si l'on relance (mut.reset). */}
+      {!res?.zone_disponible && (
+        <Bouton niveau="primaire" ton="vert" onClick={() => mut.mutate()} disabled={!pretA || mut.isPending}>
+          {mut.isPending ? 'Calcul de la zone…' : 'Lire la zone'}
+        </Bouton>
+      )}
 
       {/* RÉSULTATS */}
       {res && !res.zone_disponible && (
@@ -642,9 +599,8 @@ export function EtudeZone() {
           </div>}
 
           {/* RECETTE-2 LOT C1 : le bouton « Exporter le PDF » est retiré.
-              RECETTE-1 (F3) — « Nouvelle étude » devient le Réinitialiser unique (vide la zone + la
-              lecture, reste dans la porte). Changer de porte = « ← Changer la zone » en tête. */}
-          <div className="flex justify-end"><Reinitialiser onReset={resetEtude} label="Nouvelle étude" /></div>
+              RECETTE-1 H8.4 — l'ex-« Nouvelle étude » du bas est RETIRÉ : le Réinitialiser unique est
+              désormais EN HAUT À DROITE (en tête du panneau). */}
           {res.note && <p className="text-[9.5px] leading-snug text-txt-dim">{res.note}</p>}
         </div>
       )}
