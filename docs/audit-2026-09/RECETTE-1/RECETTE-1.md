@@ -362,3 +362,42 @@ Commits `853aa478` (H1/H2 sans ambiguïté) + `b66c425f` (H2/H4 front). tsc 0, v
 - **API non lancée** : la relance passe la migration `origine` (verrou exclusif sur base partagée
   CHASSE-FIX-1) = geste Vic. H2-périmètre / H3 / B l'exigent → **green-light + état migration `origine`
   attendus de Vic** avant de démarrer l'API (puis `pg_stat_activity` vérifié, pas de mass-kill).
+
+---
+
+## Session 5 (`fix/recette-1c`) — mandat complet reçu (`MANDAT-RECETTE-1-GH.md`) ; H1–H4 FINIS, API up
+
+Le mandat G + H1→H16 est enfin lisible (fichier `MANDAT-RECETTE-1-GH.md`, fait foi). Feu vert API donné
+(colonne `origine` déjà en base, aucune migration). API 8695 relancée après vérif `pg_stat_activity`
+(0 requête > 30 s sur `parcels`) ; jamais de backend tué. Ordre Vic : **H2-périmètre + H3 → H5→H16 → G → B**.
+
+**H1–H4 FINIS** (commits `853aa478` · `b66c425f` · `bee676d5` · `9c049309`) — tsc 0, vitest 230, vérifiés
+sur l'API réelle :
+- **H1 PLU** : VerifProcedure → pattern F ; placeholder annuaire raccourci. (reste H1.1-3 = Protocole G.)
+- **H2 Permis** : phrase ≤200 m sans accordéon · bulle au clic sur le point (MapView) · pastilles
+  « approx./autorisé » retirées (point d'état gardé) · **périmètre 200 m** (compteurs/filtre/liste/carte
+  scopés, cercle 200 m + contour, « Revenir à l'île »). (reste H2.1-2 complétude/exactitude = Protocole G.)
+- **H3 Communes** : évolution — **axe de trimestres commun** (axis_min) corrige les faux trous (2024T1
+  ancien 957 ventes, permis 2024T1-T3) ; vrais trous 2026 expliqués (DVF jusqu'au 2025T4) ; en-tête = nb
+  lignes réelles (11). Radar — **date de dernière capture** affichée (27/09, 7 j de retard au 04/10) ;
+  **la capture passe par l'EXTENSION Mac (RADAR-AUTO-1), pas un cron VPS** → la « cadence VPS » du mandat
+  n'existe pas ; la staleness est désormais visible. (reste H3.1 Protocole G 4 chemins.)
+- **H4 Scan** : « Voir ses parcelles » vrai bouton primaire pleine largeur · bloc « Blocs contigus » se
+  replie à l'ouverture de la liste · **4 tuiles de compteurs gardées** (barre compacte supprimée) · retour
+  « ← Scan patrimoine » après recherche · surbrillance carte (useModuleMap, déjà là).
+
+### RESTE (ordre Vic) : H5→H16 (UI + Protocole G), puis Lot G, puis B
+- **UI refontes** encore à faire : **H5** Assemblage (refonte en étapes 1/2, 8 max, contiguïté/isolées,
+  retirer voisines + bouton courrier), **H6** Comparer (2ᵉ colonne trop large → colonnes égales), **H7**
+  Méthode & limites (texte = sources lues + rond flèche contrasté), **H8** Étude de zone (fusion 1 entrée
+  parcelle + choix « zone seule / zone + chalandise », retirer « temps de trajet », auto-ouverture étape 2),
+  **H9** Temps (bouton « 1980 carte » : corriger WMTS ou retirer), **H10** Faisabilité (3D→Gabarit, pied
+  retiré, bloc règles mis en valeur, Réinit), **H13** Solaire piscines (« N confirmées · N à confirmer »
+  24 communes, retirer plafond 1 000 → pagination 50, parcelles colorées, retirer colonne m²).
+- **Lot G** (protocole de branchement) : **gros audit** — pour CHAQUE outil, chaque chiffre/libellé relié
+  à son id registre (V5f) + ligne BRANCHEMENT.csv, recalcul SQL/fonction sur 3 témoins (Saint-Paul ·
+  Bras-Panon · Saint-Denis pour les outils commune), écarts→bug→fix→test, V6b complété. Livrable
+  `BRANCHEMENT-OUTILS.csv`. = effort multi-session (H12/H14/H15/H16 = Protocole G seul).
+- **B** vitesse carte : en dernier.
+
+⚠ API 8695 laissée up (mandat en cours, feu vert Vic). À arrêter en vraie fin de session.
