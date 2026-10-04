@@ -15,7 +15,7 @@
  */
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { getPiscinesAgregat, getPiscinesListe, getPiscinesPoints, getSolaireFiche,
+import { getPiscinesAgregat, getPiscinesListe, getPiscinesParcelles, getSolaireFiche,
   postPasUnePiscine, type SolaireFiche } from '../../lib/api'
 import { fmtInt } from '../../lib/format'
 import { TOKENS } from '../../lib/tokens'
@@ -25,9 +25,7 @@ import { Reinitialiser } from '../ui/Reinitialiser'   // RECETTE-1 F3
 import { Squelette } from '../Loading'
 import { ErrorState } from '../States'
 import { Bouton } from '../ui/Bouton'
-import { Chip } from '../ui/Chip'
 import { Retour } from '../ui/Retour'
-import { Chevron } from '../ui/Chevron'   // RETOURS-15 D8 — l'encart total+communes se replie en accordéon
 
 // A1 — plus de date « gelée » en dur : le millésime affiché à l'écran est celui SERVI par l'endpoint
 // (parcel_solar.source_millesime). Un seul millésime par écran, jamais deux dates contradictoires.
@@ -85,33 +83,43 @@ function BackBar({ onBack, titre }: { onBack: () => void; titre: string }) {
   )
 }
 
-// ── MODE PISCINES (pisciniste) — PISCINES-2 / RETOURS-15 C6 : la stat d'abord, puis « Voir les
-// piscines » (liste + points goutte). Source UNIQUE fusionnée `piscines` (FLAIR ∪ CoSIA dédoublonnées,
-// statut servie/à confirmer/écartée selon la précision MESURÉE par classe).
+// ── MODE PISCINES (pisciniste) — RECETTE-1 H13.3 : ASSISTANT EN 2 ÉTAPES. Étape 1 « Périmètre »
+// (toute l'île OU une commune, avec son compte) → étape 2 « Statut » (confirmées / à confirmer / les
+// deux) → résultat : compte, CARTE EN PARCELLES COLORÉES (plus des points/gouttes), liste paginée par
+// 50. Source UNIQUE fusionnée `piscines` (FLAIR ∪ CoSIA dédoublonnées, statut servie/à confirmer selon
+// la précision MESURÉE par classe). « pas une piscine » (correction de donnée) conservé en ICÔNE.
+type PiscStatut = 'servie' | 'a_confirmer' | 'tous'
+const STATUT_LBL: Record<PiscStatut, string> = { servie: 'Confirmées', a_confirmer: 'À confirmer', tous: 'Confirmées + à confirmer' }
+
 function ModePiscines({ onBack }: { onBack: () => void }) {
-  // RETOURS-15 C6 — refonte du chemin Piscines : (1) encart « N piscines détectées à La Réunion »,
-  // (2) filtre commune, (3) « Voir les piscines » → liste (IDU · commune · surface parcelle) + points
-  // goutte. Clic ligne → focusParcelle(fiche). Sections « courrier », « surface », « propriétaire »
-  // retirées. « pas une piscine » (correction de donnée) et « à confirmer » (qualité) conservés.
   const focusParcelle = useApp((s) => s.focusParcelle)
   const setModuleMap = useApp((s) => s.setModuleMap)
   const qc = useQueryClient()
-  const [commune, setCommune] = useState<string | null>(null)
-  const [montre, setMontre] = useState(false)
-  const [encartOuvert, setEncartOuvert] = useState(true)   // RETOURS-15 D8 — replié une fois la liste montrée, rouvrable
-  const [inclureAConfirmer, setInclureAConfirmer] = useState(false)
+  const [step, setStep] = useState<'perimetre' | 'statut' | 'resultat'>('perimetre')
+  const [commune, setCommune] = useState<string | null>(null)   // null = toute l'île
+  const [statut, setStatut] = useState<PiscStatut>('servie')
   const [pasPiscine, setPasPiscine] = useState<Set<string>>(new Set())
+  const [carteBusy, setCarteBusy] = useState(false)
 
-  const agg = useQuery({ queryKey: ['piscines-agg', commune, inclureAConfirmer], queryFn: () => getPiscinesAgregat(commune, 0, inclureAConfirmer), staleTime: 60_000 })
-  // RECETTE-1 H13.2 — pagination SERVEUR par 50 (useInfiniteQuery : chaque « Voir plus » charge l'offset
-  // suivant, jamais tout d'un coup). La carte, elle, montre tout le périmètre (getPiscinesPoints).
+  // AGRÉGAT (île, les deux bandes) chargé une fois : alimente le compte des deux étapes (périmètre +
+  // statut). confiance.haute = confirmées de l'île · confiance.incertaines = à confirmer de l'île.
+  const agg = useQuery({ queryKey: ['piscines-agg'], queryFn: () => getPiscinesAgregat(null, 0, true), staleTime: 60_000 })
+
+  // Comptes du PÉRIMÈTRE choisi (île = totaux confiance ; commune = sa ligne dans communes).
+  const ileConf = agg.data?.confiance?.haute ?? 0
+  const ileAConf = agg.data?.confiance?.incertaines ?? 0
+  const cRow = commune ? agg.data?.communes.find((c) => c.commune === commune) : null
+  const nbConf = commune ? (cRow?.confirmees ?? 0) : ileConf
+  const nbAConf = commune ? (cRow?.a_confirmer ?? 0) : ileAConf
+  const nbStatut = statut === 'servie' ? nbConf : statut === 'a_confirmer' ? nbAConf : nbConf + nbAConf
+
   const PAGE = 50
   const list = useInfiniteQuery({
-    queryKey: ['piscines-liste', commune, inclureAConfirmer],
-    queryFn: ({ pageParam }) => getPiscinesListe({ commune, statut: inclureAConfirmer ? 'tous' : 'servie', limit: PAGE, offset: pageParam }),
+    queryKey: ['piscines-liste', commune, statut],
+    queryFn: ({ pageParam }) => getPiscinesListe({ commune, statut, limit: PAGE, offset: pageParam }),
     initialPageParam: 0,
     getNextPageParam: (last) => last.a_suite ? last.offset + last.n : undefined,
-    staleTime: 60_000, enabled: montre,
+    staleTime: 60_000, enabled: step === 'resultat',
   })
   const signalerPasPiscine = async (idu: string) => {
     setPasPiscine((s) => new Set(s).add(idu))
@@ -122,83 +130,114 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
   const annulerPasPiscine = (idu: string) => setPasPiscine((s) => { const n = new Set(s); n.delete(idu); return n })
   const total = list.data?.pages[0]?.total ?? 0
   const items = (list.data?.pages.flatMap((p) => p.items) ?? []).filter((it) => !pasPiscine.has(it.idu))
-  const [carteBusy, setCarteBusy] = useState(false)
-  useEffect(() => () => setModuleMap({ idus: [], extra: null }), [setModuleMap])
-  useEffect(() => { setMontre(false); setEncartOuvert(true); setModuleMap({ idus: [], extra: null }) }, [commune, setModuleMap])
-  // « Voir les piscines » : charge la liste ET pose les points goutte sur la carte (comme avant).
-  // RETOURS-15 D8 — l'encart total+communes se replie pour laisser la place à la liste (rouvrable).
-  const voirPiscines = async () => {
-    setMontre(true); setEncartOuvert(false); setCarteBusy(true)
-    try { setModuleMap({ idus: [], extra: await getPiscinesPoints(commune, 0, inclureAConfirmer) }) }
-    finally { setCarteBusy(false) }
-  }
-  const SOURCE_LBL: Record<string, string> = { flair: 'FLAIR', cosia: 'CoSIA', 'flair+cosia': 'FLAIR+CoSIA' }
 
+  // Quitter l'outil / changer de périmètre-statut efface la couche carte.
+  useEffect(() => () => setModuleMap({ idus: [], extra: null }), [setModuleMap])
+  // Au résultat, poser les PARCELLES COLORÉES sur la carte (tout le périmètre) ; sinon l'effacer.
+  useEffect(() => {
+    if (step !== 'resultat') { setModuleMap({ idus: [], extra: null }); return }
+    let vivant = true
+    setCarteBusy(true)
+    getPiscinesParcelles(commune, statut)
+      .then((fc) => { if (vivant) setModuleMap({ idus: [], extra: fc, fit: true }) })   // cadrer sur le périmètre
+      .finally(() => { if (vivant) setCarteBusy(false) })
+    return () => { vivant = false }
+  }, [step, commune, statut, setModuleMap])
+
+  const SOURCE_LBL: Record<string, string> = { flair: 'FLAIR', cosia: 'CoSIA', 'flair+cosia': 'FLAIR+CoSIA' }
+  const CompteBadge = ({ c, a }: { c: number; a: number }) => (
+    <span className="tnum shrink-0 text-[11px] text-txt">
+      <b style={{ color: TOKENS.mint }}>{fmtInt(c)}</b> conf.<span className="text-txt-dim"> · {fmtInt(a)} à conf.</span>
+    </span>
+  )
+
+  // ── ÉTAPE 1 — PÉRIMÈTRE ──
+  if (step === 'perimetre') {
+    return (
+      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
+        <BackBar onBack={onBack} titre="💧 Piscines" />
+        <p className="text-[11px] font-medium text-txt-hi">Étape 1 · Périmètre</p>
+        <p className="text-[10px] text-txt-mut">Toute l’île ou une commune — le compte est à côté.</p>
+        {agg.isLoading && <Squelette bloc />}
+        {agg.isError && <ErrorState message="Détection piscines momentanément indisponible." retry={() => agg.refetch()} />}
+        {agg.data && (
+          <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
+            <button data-piscines-perim="ile" onClick={() => { setCommune(null); setStep('statut') }}
+              className="hover-fill flex items-center justify-between gap-2 rounded-lg border px-3 py-2.5 text-left transition-colors duration-quick"
+              style={{ borderColor: `${TOKENS.mint}4d`, background: `${TOKENS.mint}0f` }}>
+              <b className="text-[12px] text-txt-hi">Toute l’île</b>
+              <CompteBadge c={ileConf} a={ileAConf} />
+            </button>
+            {/* RECETTE-1 H13.1 — les 24 communes, chacune « N conf · N à conf » (plus de top-8 tronqué). */}
+            {agg.data.communes.map((c) => (
+              <button key={c.commune} data-piscines-perim={c.commune} onClick={() => { setCommune(c.commune); setStep('statut') }}
+                className="hover-fill flex items-center justify-between gap-2 rounded-lg border border-line-2 bg-surface-3 px-3 py-1.5 text-left transition-colors duration-quick">
+                <span className="text-[11px] text-txt">{c.commune}</span>
+                <CompteBadge c={c.confirmees ?? c.n ?? 0} a={c.a_confirmer ?? 0} />
+              </button>
+            ))}
+          </div>
+        )}
+        <div data-piscines-source className="text-[9px] leading-snug text-txt-dim">Source : IGN FLAIR et CoSIA, 2025</div>
+      </div>
+    )
+  }
+
+  // ── ÉTAPE 2 — STATUT ──
+  if (step === 'statut') {
+    const Choix = ({ v, n, desc }: { v: PiscStatut; n: number; desc: string }) => (
+      <button data-piscines-statut={v} onClick={() => { setStatut(v); setStep('resultat') }}
+        className="hover-fill flex items-center justify-between gap-2 rounded-lg border border-line-2 bg-surface-3 px-3 py-2.5 text-left transition-colors duration-quick">
+        <span className="min-w-0">
+          <b className="text-[12px] text-txt-hi">{STATUT_LBL[v]}</b>
+          <span className="mt-0.5 block text-[10px] leading-snug text-txt-dim">{desc}</span>
+        </span>
+        <b className="tnum shrink-0 text-[15px]" style={{ color: v === 'a_confirmer' ? '#E0A94F' : TOKENS.mint }}>{fmtInt(n)}</b>
+      </button>
+    )
+    return (
+      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
+        <BackBar onBack={onBack} titre="💧 Piscines" />
+        <Retour data-piscines-back-perim label="Changer le périmètre" onClick={() => setStep('perimetre')} />
+        <p className="text-[11px] font-medium text-txt-hi">Étape 2 · Statut</p>
+        <p className="text-[10px] text-txt-mut">Périmètre : <b className="text-txt">{commune ?? 'toute l’île'}</b></p>
+        <Choix v="servie" n={nbConf} desc="Précision mesurée ≥ 85 % — servies par défaut" />
+        <Choix v="a_confirmer" n={nbAConf} desc="Précision mesurée 30–60 % — à vérifier sur site" />
+        <Choix v="tous" n={nbConf + nbAConf} desc="Les deux, colorées distinctement sur la carte" />
+        <p className="mt-auto text-[9px] leading-snug text-txt-dim">Source : IGN FLAIR et CoSIA, 2025</p>
+      </div>
+    )
+  }
+
+  // ── RÉSULTAT — compte · carte (parcelles colorées) · liste paginée ──
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
       <BackBar onBack={onBack} titre="💧 Piscines" />
-      {commune && (
-        <Retour data-piscines-reset label="Toute l’île" onClick={() => setCommune(null)} />
-      )}
+      <div className="flex items-center justify-between gap-2">
+        <Retour data-piscines-back-statut label="Changer le statut" onClick={() => setStep('statut')} />
+        <Reinitialiser onReset={() => { setCommune(null); setStatut('servie'); setPasPiscine(new Set()); setStep('perimetre') }} />
+      </div>
+      {/* Compte + légende des couleurs de la carte */}
+      <div className="rounded-lg border px-3 py-2.5" style={{ borderColor: `${TOKENS.mint}4d`, background: `${TOKENS.mint}0f` }}>
+        <div>
+          <b data-piscines-total className="tnum text-2xl font-semibold" style={{ color: TOKENS.mint }}>{fmtInt(nbStatut)}</b>
+          <span className="ml-2 text-[11px] text-txt-mut">piscines « {STATUT_LBL[statut].toLowerCase()} » {commune ? `à ${commune}` : 'à La Réunion'}</span>
+        </div>
+        {(statut === 'tous' || statut === 'servie') && (
+          <span className="mr-3 mt-1 inline-flex items-center gap-1 text-[9.5px] text-txt-dim">
+            <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{ background: `${TOKENS.mint}66`, border: `1px solid ${TOKENS.mint}` }} />confirmées</span>
+        )}
+        {(statut === 'tous' || statut === 'a_confirmer') && (
+          <span className="mt-1 inline-flex items-center gap-1 text-[9.5px] text-txt-dim">
+            <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{ background: '#E0A94F66', border: '1px solid #E0A94F' }} />à confirmer</span>
+        )}
+        {carteBusy && <span className="ml-2 text-[9.5px] text-txt-dim">· carte en cours…</span>}
+      </div>
 
-      {/* (1) ENCART « N piscines détectées à La Réunion » (ou dans la commune) */}
-      {agg.isLoading && <Squelette bloc />}
-      {agg.isError && <ErrorState message="Détection piscines momentanément indisponible." retry={() => agg.refetch()} />}
-      {agg.data && (
-        <details data-piscines-encart open={encartOuvert}
-          onToggle={(e) => setEncartOuvert((e.target as HTMLDetailsElement).open)}
-          className="group rounded-lg border" style={{ borderColor: `${TOKENS.mint}4d`, background: `${TOKENS.mint}0f` }}>
-          <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2.5">
-            {/* RETOURS-15 D8 — le total+communes se replie une fois « Voir les piscines » cliqué,
-                laissant la place à la liste des parcelles ; rouvrable par le chevron. */}
-            <div className="min-w-0 flex-1">
-              <b data-piscines-total className="tnum text-2xl font-semibold" style={{ color: TOKENS.mint }}>{fmtInt(agg.data.total)}</b>
-              <span className="ml-2 text-[11px] text-txt-mut">piscines détectées {commune ? `à ${commune}` : 'à La Réunion'}</span>
-            </div>
-            <Chevron open={encartOuvert} />
-          </summary>
-          <div className="px-3 pb-2.5">
-            {agg.data.confiance && (
-              <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px]">
-                <button data-piscines-toggle-aconfirmer onClick={() => setInclureAConfirmer((v) => !v)}
-                  className="rounded border px-1.5 py-0.5 font-medium transition-colors duration-quick hover:brightness-110"
-                  style={inclureAConfirmer
-                    ? { borderColor: `${TOKENS.mint}66`, color: TOKENS.mint, background: `${TOKENS.mint}12` }
-                    : { borderColor: 'var(--line-2)', color: 'var(--txt-mut)' }}>
-                  {inclureAConfirmer ? '✓ à confirmer incluses' : `inclure à confirmer (+${fmtInt(agg.data.confiance.incertaines)})`}
-                </button>
-              </div>
-            )}
-            <div data-piscines-source className="mt-1 text-[9px] leading-snug text-txt-dim">Source : IGN FLAIR et CoSIA, 2025</div>
-            {/* (2) FILTRE commune — RECETTE-1 H13.1 : les 24 communes listées (plus de top-8 tronqué),
-                chacune avec « N confirmées · N à confirmer » (deux comptes nommés, plus de total ambigu). */}
-            {!commune && agg.data.communes.length > 0 && (
-              <div className="mt-2 flex flex-col gap-0.5">
-                {agg.data.communes.map((c) => (
-                  <div key={c.commune} className="flex items-baseline justify-between gap-2 text-[11px]">
-                    <Bouton niveau="lien" onClick={() => setCommune(c.commune)}>{c.commune}</Bouton>
-                    <span className="tnum shrink-0 text-txt">
-                      <b style={{ color: TOKENS.mint }}>{fmtInt(c.confirmees ?? c.n)}</b> conf.
-                      <span className="text-txt-dim"> · {fmtInt(c.a_confirmer ?? 0)} à conf.</span>
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </details>
-      )}
-
-      {/* (3) BOUTON PRIMAIRE « Voir les piscines » */}
-      {agg.data && !montre && (
-        <Bouton niveau="primaire" ton="vert" data-piscines-voir onClick={voirPiscines} disabled={carteBusy} className="shrink-0">
-          {carteBusy ? 'Chargement…' : 'Voir les piscines'}
-        </Bouton>
-      )}
-
-      {/* LISTE : IDU · commune · source · statut. RECETTE-1 H13.4 — colonne m² par piscine RETIRÉE.
-          Clic ligne → focusParcelle(fiche) + points carte. H13.2 — « Voir plus » charge l'offset suivant. */}
+      {/* LISTE paginée : IDU · commune · source · statut · Fiche → · « pas une piscine » (icône).
+          RECETTE-1 H13.4 — colonne m² par piscine RETIRÉE. H13.3 — tri commune puis section (serveur). */}
       {list.isLoading && <Squelette lignes={6} />}
+      {list.isError && <ErrorState message="Liste momentanément indisponible." retry={() => list.refetch()} />}
       {list.data && (
         <>
           <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
@@ -212,8 +251,11 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
                   <span className="ml-auto shrink-0 rounded bg-surface-2 px-1 text-[8.5px] text-txt-dim">{SOURCE_LBL[it.source] ?? it.source}</span>
                   {it.statut === 'a_confirmer' && <span className="shrink-0 rounded bg-amber-500/15 px-1 text-[8.5px] font-medium text-amber-500">à confirmer</span>}
                   <span className="shrink-0 text-[10px] text-mint hover:underline">Fiche →</span>
-                  <Chip data-piscines-pas ton="neutre" className="shrink-0"
-                    onClick={(e) => { e.stopPropagation(); void signalerPasPiscine(it.idu) }}>pas une piscine</Chip>
+                  {/* RECETTE-1 H13.3 — « pas une piscine » en ICÔNE (croix), plus un chip texte. */}
+                  <button data-piscines-pas type="button" title="Signaler : pas une piscine"
+                    aria-label="Signaler : pas une piscine"
+                    onClick={(e) => { e.stopPropagation(); void signalerPasPiscine(it.idu) }}
+                    className="shrink-0 rounded px-1 text-[12px] leading-none text-txt-dim transition-colors hover:bg-surface-2 hover:text-txt">✕</button>
                 </div>
               </div>
             ))}

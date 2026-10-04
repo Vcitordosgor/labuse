@@ -508,8 +508,10 @@ interface AppState {
   tempsPinIdu: string | null
   setTempsPinIdu: (idu: string | null) => void
   // ce que le module affiche sur la carte : parcelles surlignées (idus) + géométries propres (lots, permis)
-  moduleMap: { idus: string[]; extra: unknown | null }
-  setModuleMap: (m: { idus: string[]; extra: unknown | null }) => void
+  // `fit` (optionnel) demande à la carte de cadrer sur l'emprise de `extra` (RECETTE-1 H13.3 : montrer
+  // « tout le périmètre » des parcelles à piscine — sinon, au zoom île, les parcelles colorées sont invisibles).
+  moduleMap: { idus: string[]; extra: unknown | null; fit?: boolean }
+  setModuleMap: (m: { idus: string[]; extra: unknown | null; fit?: boolean }) => void
   // ÉTUDE DE ZONE Z3 — segment du tiroir « Autour de cette parcelle » : 0 = à pied 15 min, 1 = voiture 5 min
   zoneSeg: number
   setZoneSeg: (i: number) => void

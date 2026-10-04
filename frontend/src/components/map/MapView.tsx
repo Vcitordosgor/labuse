@@ -459,6 +459,22 @@ export function MapView() {
   // ───────────────────────── init ─────────────────────────
   useEffect(() => {
     if (!ref.current || map.current) return
+    // RECETTE-1 B (vitesse carte) — maplibre-gl v4 n'utilise QU'UN worker par défaut hors Safari
+    // (getWorkerCount()===1) : tout le décodage des tuiles vectorielles (parcelles MVT z9-15, zonage,
+    // SUP…) est sérialisé sur un seul thread → la carte met plusieurs secondes à « se poser » après un
+    // zoom/pan sur l'île dense. On parallélise le PARSING sur la moitié des cœurs (cap 4) : rendu
+    // identique au pixel près, seule la file d'attente des tuiles se vide plus vite. Doit être réglé
+    // AVANT la création de la 1re carte (les workers démarrent à ce moment) ; idempotent et sans effet
+    // si déjà > 1 (ne jamais réduire un réglage posé ailleurs).
+    try {
+      const hc = (typeof navigator !== 'undefined' && navigator.hardwareConcurrency) || 4
+      // override QA `?wc=N` (mesure A/B de la vitesse carte), borné [1,8] ; sinon réglage auto moitié
+      // des cœurs (cap 4) — évite d'oversouscrire si un paramètre d'URL arbitraire est passé.
+      const ov = typeof window !== 'undefined' ? Number(new URLSearchParams(window.location.search).get('wc')) : NaN
+      const voulu = Number.isFinite(ov) && ov > 0 ? Math.min(8, Math.round(ov)) : Math.max(2, Math.min(4, Math.floor(hc / 2)))
+      if (maplibregl.getWorkerCount() !== voulu) maplibregl.setWorkerCount(voulu)
+      ;(window as unknown as Record<string, unknown>).__mapWorkerCount = maplibregl.getWorkerCount()
+    } catch { /* API absente (version/polyfill) → on garde le défaut */ }
     const m = new maplibregl.Map({
       container: ref.current,
       style: STYLE,
@@ -679,6 +695,18 @@ export function MapView() {
       m.addLayer({ id: 'module-zone-line', type: 'line', source: 'module-extra',
         filter: ['==', ['get', 'kind'], 'zone-iso'],
         paint: { 'line-color': '#4ADE80', 'line-opacity': 0.6, 'line-width': 2 } })
+      // RECETTE-1 H13.3 — PISCINES en PARCELLES COLORÉES (plus des gouttes/points) : le polygone de
+      // chaque parcelle à piscine du périmètre, teinté par STATUT (confirmées menthe · à confirmer ambre).
+      // kind='piscine-parcelle' (source module-extra, servie par /prospection-piscines/parcelles). Le clic
+      // ouvre la fiche via le handler parcels-fill sous-jacent (la parcelle vectorielle porte le vrai idu).
+      m.addLayer({ id: 'module-piscine-fill', type: 'fill', source: 'module-extra',
+        filter: ['==', ['get', 'kind'], 'piscine-parcelle'],
+        paint: { 'fill-color': ['match', ['get', 'statut'], 'a_confirmer', '#E0A94F', '#4ADE80'],
+                 'fill-opacity': ['match', ['get', 'statut'], 'a_confirmer', 0.28, 0.4] } })
+      m.addLayer({ id: 'module-piscine-line', type: 'line', source: 'module-extra',
+        filter: ['==', ['get', 'kind'], 'piscine-parcelle'],
+        paint: { 'line-color': ['match', ['get', 'statut'], 'a_confirmer', '#E0A94F', '#4ADE80'],
+                 'line-width': 1.4, 'line-opacity': 0.95 } })
       m.addLayer({ id: 'module-pts', type: 'circle', source: 'module-extra',
         // LOT8b — la même couche de points sert les permis (radar) ET les piscines (« 💧 Voir sur la
         // carte » : toutes les piscines de l'île en marqueurs). Les deux ne coexistent jamais (outils
@@ -1342,6 +1370,27 @@ export function MapView() {
     m.setFilter('module-hl', f)
     if (m.getLayer('ile-hl')) m.setFilter('ile-hl', f)
     ;(m.getSource('module-extra') as maplibregl.GeoJSONSource | undefined)?.setData((moduleMap.extra ?? EMPTY_FC) as never)
+    // RECETTE-1 H13.3 — `fit` : cadrer la carte sur l'emprise des géométries servies (« tout le
+    // périmètre »). Sans cela, au zoom île les parcelles colorées d'une commune sont trop petites pour
+    // être vues. Bornes calculées à partir du GeoJSON (coordonnées [lon,lat], tous types confondus).
+    const fc = moduleMap.extra as { features?: { geometry?: { coordinates?: unknown } }[] } | null
+    if (moduleMap.fit && fc?.features?.length) {
+      let minX = 180, minY = 90, maxX = -180, maxY = -90, seen = false
+      const scan = (co: unknown): void => {
+        if (!Array.isArray(co)) return
+        if (typeof co[0] === 'number' && typeof co[1] === 'number') {
+          const [x, y] = co as [number, number]
+          if (x < minX) minX = x; if (x > maxX) maxX = x
+          if (y < minY) minY = y; if (y > maxY) maxY = y; seen = true
+          return
+        }
+        for (const c of co) scan(c)
+      }
+      for (const feat of fc.features) scan(feat.geometry?.coordinates)
+      if (seen && maxX >= minX && maxY >= minY) {
+        m.fitBounds([[minX, minY], [maxX, maxY]], { padding: 48, maxZoom: 15.5, duration: 800 })
+      }
+    }
   }, [moduleMap, mapReady])
 
   // PERMIS (refonte) — surligne le point du permis survolé dans la liste (source dédiée à un point).

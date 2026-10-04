@@ -1034,6 +1034,11 @@ export const getPiscinesAgregat = (commune?: string | null, surfMin = 0, inclure
 // LOT8b — TOUTES les piscines (île/commune) en points GeoJSON pour la carte (pas le listing capé à 500).
 export const getPiscinesPoints = (commune?: string | null, surfMin = 0, inclureIncertaines = false) =>
   j<{ type: 'FeatureCollection'; features: unknown[] }>(`/modules/prospection-piscines/points?${qf({ ...(commune ? { commune } : {}), ...(surfMin ? { piscine_surf_min: surfMin } : {}), ...(inclureIncertaines ? { inclure_incertaines: 1 } : {}) })}`)
+// RECETTE-1 H13.3 — la carte du pisciniste montre des PARCELLES COLORÉES (plus des points) : le polygone
+// de chaque parcelle à piscine du périmètre, coloré par statut (confirmées menthe / à confirmer ambre).
+export type PiscineStatut = 'servie' | 'a_confirmer' | 'tous'
+export const getPiscinesParcelles = (commune?: string | null, statut: PiscineStatut = 'servie') =>
+  j<{ type: 'FeatureCollection'; features: unknown[] }>(`/modules/prospection-piscines/parcelles?${qf({ ...(commune ? { commune } : {}), ...(statut !== 'servie' ? { statut } : {}) })}`)
 // RETOURS-11F M12 — « pas une piscine » : signal humain qui retire la parcelle du service (compteur, carte).
 export const postPasUnePiscine = (idu: string, motif?: string) =>
   j<{ ok: boolean; idu: string; corrigees_total: number }>(`/modules/prospection-piscines/pas-une-piscine`, {
@@ -1048,10 +1053,10 @@ export interface PiscineItem {
 }
 // RECETTE-1 H13.2 — pagination SERVEUR par 50 (`limit`/`offset`, `a_suite` = reste-t-il une page).
 export interface PiscinesListe { total: number; n: number; limit: number; offset: number; a_suite: boolean; items: PiscineItem[]; maj: string; source: string }
-export interface PiscinesFiltres { commune?: string | null; statut?: 'servie' | 'tous'; surfMin?: number; proprio?: 'tous' | 'pm' | 'pp'; limit?: number; offset?: number }
+export interface PiscinesFiltres { commune?: string | null; statut?: PiscineStatut; surfMin?: number; proprio?: 'tous' | 'pm' | 'pp'; limit?: number; offset?: number }
 export const getPiscinesListe = (f: PiscinesFiltres) =>
   j<PiscinesListe>(`/modules/prospection-piscines/liste?${qf({
-    ...(f.commune ? { commune: f.commune } : {}), ...(f.statut === 'tous' ? { statut: 'tous' } : {}),
+    ...(f.commune ? { commune: f.commune } : {}), ...(f.statut && f.statut !== 'servie' ? { statut: f.statut } : {}),
     ...(f.surfMin ? { surf_min: f.surfMin } : {}), ...(f.proprio && f.proprio !== 'tous' ? { proprio: f.proprio } : {}),
     ...(f.limit != null ? { limit: f.limit } : {}), ...(f.offset ? { offset: f.offset } : {}) })}`)
 // ── OUTILS-MUSCLER-1 Lot A — outil « Successions » (radar patrimonial Score V v1.3). Le signal est

@@ -497,3 +497,48 @@ Les lignes H5 (Assemblage, mergées) gardent leur forme d'origine ; les nouvelle
 
 ⚠ Captures avant/après à produire app lancée (screenshot MCP expire à 5 s sur ce poste — script node
 Playwright direct). API/front non lancés cette session.
+
+---
+
+## Session 8 — Reprise 4 (dernière) : H13.3 · B vitesse carte · captures (app lancée)
+
+API 8695 + front 5895 relancés (`pg_stat_activity` vérifié 0 req longue, `origine` déjà en base =
+0 migration). Tout vérifié **app lancée**, GPU réel (Chrome headful, ANGLE Metal M1).
+
+### H13.3 — chemin Piscines : assistant 2 étapes + carte en parcelles colorées (FINI)
+- **Assistant 2 étapes** (`ProspectionSolaire.tsx`, `ModePiscines` réécrit) :
+  - Étape 1 **Périmètre** : « Toute l'île » (12 576 conf · 11 706 à conf) + les **24 communes**, chacune
+    « N conf · N à conf » (fin du top-8 tronqué).
+  - Étape 2 **Statut** : Confirmées (servie) / À confirmer (a_confirmer) / Les deux — compte à côté.
+  - **Résultat** : total, **carte en PARCELLES COLORÉES** (confirmées menthe `#4ADE80` / à confirmer
+    ambre `#E0A94F`), **liste paginée par 50** (IDU · commune · source FLAIR/CoSIA · Fiche → ·
+    « pas une piscine » en **icône** ✕). Tri serveur commune puis section. « Réinitialiser » revient à l'étape 1.
+- **Carte** : nouveau calque `module-piscine-fill` + `module-piscine-line` (kind `piscine-parcelle`),
+  cliquable (fiche via la parcelle vectorielle dessous). **Cadrage auto** sur le périmètre
+  (`moduleMap.fit` → `fitBounds` depuis l'emprise GeoJSON) — sinon au zoom île les parcelles d'une
+  commune sont invisibles.
+- **Back** : `GET /modules/prospection-piscines/parcelles?commune&statut` (polygones simplifiés ~2 m,
+  `ST_Transform 4326`, exclut les corrections « pas une piscine »). `liste` accepte désormais
+  `statut=a_confirmer`. Vérifié live : Saint-Paul 2376 servie / 1715 à confirmer ; île servie+à conf 4091.
+- Comptes **inchangés** (même agrégat `compte_piscines`) → **run-safe**. vitest `ProspectionSolaire` 7 verts.
+- **Captures** `captures-recette-1e/H13-3-*` (AVANT points/gouttes → APRÈS polygones colorés + wizard).
+
+### B — vitesse de la carte (reste en maplibre v4) (FINI)
+- Frames déjà fluides (60 fps, 0 % > 33 ms, 0 long-task). Le ressenti « lent » = **temps de pose**
+  après zoom/pan. **Cause** : v4.7.1 n'utilise **qu'1 worker** hors Safari → décodage des tuiles
+  vectorielles sérialisé. **Fix** : `setWorkerCount(moitié des cœurs, cap 4)` avant la 1re carte
+  (override QA `?wc=N` borné). **A/B GPU réel : −15 % de temps de pose** (4393 → 3716 ms), 0 px changé.
+  Détail : `reports/recette1e/task-B-vitesse-carte.md`.
+
+### Captures — scripts Playwright Node
+- `frontend/qa/recette1e_h13_captures.mjs` — H13.3 avant/après (points → parcelles colorées, wizard, fiche).
+- `frontend/qa/recette1e_walkthrough_captures.mjs` — « après » de toute la recette (1 écran/outil H1→H16 + fiche).
+- `frontend/scripts/recette1e_mapperf.mjs` — mesure perf carte (frames + temps de pose).
+
+### H7 — tranché par Vic
+On **garde le « i » d'en-tête**, **pas** de pied « Méthode et limites » ajouté. (Le point « Reste » de
+la Session 7 ci-dessus est donc clos.)
+
+### Fin de session
+tsc 0 (hors drift node_modules maplibre partagé), vitest **234 verts / 1 échec PRÉ-EXISTANT hors
+périmètre** (`layersCoquilles.test.ts` compte BPE 35 546, aucun de mes fichiers). API + front **arrêtés**.
