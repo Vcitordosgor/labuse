@@ -550,6 +550,13 @@ def tuyau_couches() -> dict:
         k = c["kind"]
         if k not in reg:
             continue
+        # RECETTE-1 (C3, décision Vic 04/10) — la couche « SCOT (périmètre) » SORT de la carte
+        # (liste des couches ET légende) : un périmètre de SCOT = une intercommunalité, sans objet à
+        # l'échelle commune/parcelle. L'information RESTE en fiche parcelle/commune et au Dossier PDF
+        # (spatial_layers kind='scot', chemin fiche_commune indépendant). La déclaration/robinet et le
+        # suivi de source sont conservés (seul le plan servi à la carte l'exclut).
+        if k == "scot":
+            continue
         couches.append({
             "kind": k,
             "nom": c.get("nom") or c.get("libelle") or k,
