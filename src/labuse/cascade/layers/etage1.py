@@ -11,7 +11,7 @@ from __future__ import annotations
 from sqlalchemy import text
 
 from ...enums import Severity
-from ..base import Layer, Verdict, passed, positive, register, soft_flag, unknown
+from ..base import couvre_commune, Layer, Verdict, passed, positive, register, soft_flag, unknown
 from ..context import EvalContext, ParcelRef
 
 SRC_FRICHE = "Cartofriches (Cerema)"
@@ -42,7 +42,7 @@ class FricheLayer(Layer):
             return unknown(self.name, "Friches non ingérées.", source=SRC_FRICHE)
         # CHASSE-FIX-1 (C23) — couverture par COMMUNE (gabarit EnsLayer M70) : Cartofriches
         # partiel ⇒ « Aucune friche » serait un faux négatif là où la commune n'a aucune donnée.
-        if not ctx.kind_present_commune(kind, parcel.commune):
+        if not couvre_commune(ctx, kind, getattr(parcel, 'commune', None)):
             return unknown(self.name, "Friches : non couvert par la source sur cette commune "
                            "(Cartofriches).", source=SRC_FRICHE)
         inter = [i for i in ctx.intersections(parcel.id, kind) if i.coverage > 0]
@@ -98,7 +98,7 @@ class SolPollueLayer(_NearestFlagLayer):
             return unknown(self.name, f"Couche {kind} non ingérée.", source=self.src)
         # CHASSE-FIX-1 (C23) — couverture par COMMUNE (gabarit EnsLayer M70) : SIS/CASIAS
         # partiels ⇒ jamais « aucun site » là où la commune n'a aucune donnée.
-        if not ctx.kind_present_commune(kind, parcel.commune):
+        if not couvre_commune(ctx, kind, getattr(parcel, 'commune', None)):
             return unknown(self.name, "Sols pollués : non couvert par la source sur cette "
                            "commune (SIS/CASIAS).", source=self.src)
         # 1) périmètre SIS intersecté (prime sur la proximité simple)
@@ -161,7 +161,7 @@ class SupLayer(Layer):
         # CHASSE-FIX-1 (C23) — couverture par COMMUNE (gabarit EnsLayer M70) : les assiettes
         # SUP sont ingérées par bbox de commune (couverture partielle par construction) ⇒
         # « Aucune servitude » serait un faux négatif là où la commune n'a aucune donnée.
-        if not ctx.kind_present_commune(kind, parcel.commune):
+        if not couvre_commune(ctx, kind, getattr(parcel, 'commune', None)):
             return unknown(self.name, "SUP : non couvert par la source sur cette commune "
                            "(assiettes GPU).", source=SRC_SUP)
         inter = [i for i in ctx.intersections(parcel.id, kind) if i.coverage > 0]

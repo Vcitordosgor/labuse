@@ -15,7 +15,7 @@ from typing import Any
 from sqlalchemy import text
 
 from ...enums import Severity
-from ..base import Layer, Verdict, hard_exclude, passed, positive, register, soft_flag, unknown
+from ..base import Layer, Verdict, couvre_commune, hard_exclude, passed, positive, register, soft_flag, unknown
 from ..context import EvalContext, ParcelRef
 
 # Noms canoniques des sources (doivent matcher le catalogue data_sources, §6).
@@ -652,8 +652,8 @@ class RisquesLayer(Layer):
         # CHASSE-FIX-1 (C22) — couverture par COMMUNE (gabarit EnsLayer, M70) : une couche vide
         # SUR CETTE COMMUNE ne conclut jamais « Aucun risque » (l'absence de donnée n'est pas
         # une absence de risque). On évalue chaque famille (PPR / aléas) selon SA couverture.
-        ppr_couvert = ctx.kind_present_commune(kind_ppr, parcel.commune)
-        alea_couvert = ctx.kind_present_commune(kind_alea, parcel.commune)
+        ppr_couvert = couvre_commune(ctx, kind_ppr, getattr(parcel, 'commune', None))
+        alea_couvert = couvre_commune(ctx, kind_alea, getattr(parcel, 'commune', None))
         if not ppr_couvert and not alea_couvert:
             return [unknown(self.name, "Non couvert par la source sur cette commune "
                             "(PPR DEAL / aléas Géorisques non ingérés ici).", source=SRC_GEORISQUES)]

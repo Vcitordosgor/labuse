@@ -159,6 +159,38 @@ def engine():
     # chemin réel (is_served) ; le test de bascule CHASSE-1 l'a prouvé.
     from labuse.faisabilite.residuel_runs import migrate_to_runs as _residuel_migrate
     _residuel_migrate(eng)
+    # CHASSE-FIX-1 (Lot 3) — la VUE parcel_residuel est LECTURE SEULE en prod (personne n'y écrit).
+    # En base de TEST, de nombreuses fixtures INSÈRENT/SUPPRIMENT dans parcel_residuel : on rend la
+    # vue écrivable via des règles INSTEAD OF qui routent vers le run SERVI — échafaudage de test
+    # uniquement, le comportement de lecture reste identique à la prod.
+    with eng.begin() as _c:
+        _c.execute(text("""
+          CREATE OR REPLACE RULE _test_pr_ins AS ON INSERT TO parcel_residuel DO INSTEAD
+          INSERT INTO parcel_residuel_runs
+            (run_seq, parcel_id, taux_emprise_pct, pct_potentiel, sous_densite,
+             sdp_residuelle_m2, capacite_estimee, cause, computed_at,
+             assiette_source, hauteur_source, regles_non_modelisees)
+          VALUES ((SELECT run_seq FROM residuel_runs WHERE is_served LIMIT 1),
+             NEW.parcel_id, NEW.taux_emprise_pct, NEW.pct_potentiel, NEW.sous_densite,
+             NEW.sdp_residuelle_m2, NEW.capacite_estimee, NEW.cause, COALESCE(NEW.computed_at, now()),
+             NEW.assiette_source, NEW.hauteur_source, NEW.regles_non_modelisees)
+          ON CONFLICT (run_seq, parcel_id) DO UPDATE SET
+             taux_emprise_pct = EXCLUDED.taux_emprise_pct, pct_potentiel = EXCLUDED.pct_potentiel,
+             sous_densite = EXCLUDED.sous_densite, sdp_residuelle_m2 = EXCLUDED.sdp_residuelle_m2,
+             capacite_estimee = EXCLUDED.capacite_estimee, cause = EXCLUDED.cause"""))
+        _c.execute(text("""
+          CREATE OR REPLACE RULE _test_pr_del AS ON DELETE TO parcel_residuel DO INSTEAD
+          DELETE FROM parcel_residuel_runs
+          WHERE parcel_id = OLD.parcel_id
+            AND run_seq = (SELECT run_seq FROM residuel_runs WHERE is_served LIMIT 1)"""))
+        _c.execute(text("""
+          CREATE OR REPLACE RULE _test_pr_upd AS ON UPDATE TO parcel_residuel DO INSTEAD
+          UPDATE parcel_residuel_runs SET
+             taux_emprise_pct = NEW.taux_emprise_pct, pct_potentiel = NEW.pct_potentiel,
+             sous_densite = NEW.sous_densite, sdp_residuelle_m2 = NEW.sdp_residuelle_m2,
+             capacite_estimee = NEW.capacite_estimee, cause = NEW.cause
+          WHERE parcel_id = OLD.parcel_id
+            AND run_seq = (SELECT run_seq FROM residuel_runs WHERE is_served LIMIT 1)"""))
     # F3 (Phase 0 J1) : tables « data-gap » interrogées par l'app mais NON déclarées en ORM (créées
     # hors code en prod par l'ingestion pente). On les matérialise VIDES en base de test → l'app ne
     # casse plus sur « relation inexistante » (le contrat data-gap = 0 ligne, jamais une erreur SQL).

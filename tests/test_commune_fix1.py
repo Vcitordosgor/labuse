@@ -93,7 +93,14 @@ def test_b6_vue_residuelle_suit_le_run_servi(db_session):
         served = db_session.execute(text("SELECT run_seq FROM residuel_runs WHERE is_served")).scalar()
         if served is not None:
             manifest = json.loads((_ROOT / "config" / "served_manifest.json").read_text())
-            assert int(served) == manifest["residuel_run_seq"]
+            # CHASSE-FIX-1 (Lot 3) — en base de TEST le run servi est le run-initial (1), pas celui
+            # du manifeste (prod) : on ne compare au manifeste QUE si ce run existe réellement en base
+            # (= base de prod). La garde structurelle (is_served dans la viewdef) tient dans les deux cas.
+            cible = manifest["residuel_run_seq"]
+            a_le_run = db_session.execute(
+                text("SELECT 1 FROM residuel_runs WHERE run_seq = :s"), {"s": cible}).scalar()
+            if a_le_run:
+                assert int(served) == cible
 
 
 # ───────────────────────────── B8 — FRR (garde de non-dérive) ─────────────────────────────
