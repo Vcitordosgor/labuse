@@ -1177,6 +1177,19 @@ export const pdfUrl = (idu: string, calc?: { cout_construction_m2: number; marge
 // M93 — one-pager retiré (onePagerUrl supprimé).
 export const preDossierUrl = (idu: string) => `/pre-dossier/${idu}.zip`
 
+// DOCS-1 (Lot A/C) — les URLs des documents de la catégorie « Documents », ouvertes en onglet (pas de
+// mutation front). Les 4 premiers existent déjà (builder unique) ; les 3 derniers sont servis par Lot C.
+//   • Bilan = le document « financier » (le mot « Financier » disparaît côté client, DOCS-1 §4).
+export const docDossierUrl = (idu: string) => `/dossier/${encodeURIComponent(idu)}.pdf`
+export const docBilanUrl = (idu: string) => `/financier/${encodeURIComponent(idu)}.pdf`
+export const docApporteurUrl = (idu: string) => `/apporteur/${encodeURIComponent(idu)}.pdf`
+export const docPreDossierUrl = (idu: string) => `/pre-dossier/${encodeURIComponent(idu)}.zip`
+export const docGabaritUrl = (idu: string) => `/gabarit/${encodeURIComponent(idu)}.pdf`
+export const docComparatifUrl = (idus: string[]) =>
+  `/comparatif.pdf?idus=${encodeURIComponent(idus.filter(Boolean).join(','))}`
+export const docEtudeZoneUrl = (idu: string, rayonKm: number) =>
+  `/etude-zone.pdf?idu=${encodeURIComponent(idu)}&rayon_km=${encodeURIComponent(String(rayonKm))}`
+
 // M54-EXPO-2 Volet C — statuts servis là où les boutons existent (dossier : dispo+quota ; courrier).
 export interface DossierStatut { disponible: boolean; raison: string | null; plan: string; illimite: boolean; quota_mois: number | null; utilises_mois: number; restants: number | null }
 export const getDossierStatut = () => j<DossierStatut>('/dossier/statut')

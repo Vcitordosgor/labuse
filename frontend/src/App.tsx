@@ -47,6 +47,8 @@ const RadarTablePanel = lazy(() => import('./components/outils/Communes').then((
 const CopiloteView = lazy(() => import('./components/copilote/CopiloteView').then((m) => ({ default: m.CopiloteView })))
 const ModulePanel = lazy(() => import('./components/outils/ModulePanel').then((m) => ({ default: m.ModulePanel })))
 const AdminView = lazy(() => import('./components/admin/AdminView').then((m) => ({ default: m.AdminView })))
+// DOCS-1 (Lot A) — la catégorie Documents (catalogue + porte + bibliothèque), chargée à la demande.
+const DocumentsView = lazy(() => import('./components/documents/DocumentsView').then((m) => ({ default: m.DocumentsView })))
 
 // État de chargement de la zone carte pendant que le chunk maplibre arrive (pas d'écran blanc).
 // DA — squelette unique (plus de spinner rotatif), on garde le conteneur flex-1.
@@ -456,6 +458,8 @@ export default function App() {
             </Suspense>
           )}
           {view === 'crm' && <Suspense fallback={<PanelLoading />}><Kanban /></Suspense>}
+          {/* DOCS-1 (Lot A) — Documents : page pleine largeur (catalogue + porte + bibliothèque). */}
+          {view === 'documents' && <Suspense fallback={<PanelLoading />}><DocumentsView /></Suspense>}
           {view === 'sources' && <Suspense fallback={<PanelLoading />}><SourcesPage /></Suspense>}
           {view === 'projets' && <Suspense fallback={<PanelLoading />}><ProjetsPanel /></Suspense>}
           {view === 'copilote' && <Suspense fallback={<PanelLoading />}><CopiloteView /></Suspense>}

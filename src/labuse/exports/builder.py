@@ -35,14 +35,17 @@ class DocumentNonEtablissable(Exception):
 _LABEL = {
     "dossier": ("Dossier parcelle", "Ce que cette parcelle est, ce qu'elle porte, ce que le règlement y permet."),
     "flash": ("Rapport Flash", "Ce que cette parcelle est, ce qu'elle porte, ce que le règlement y permet."),
-    "financier": ("Dossier financier", ""),   # RECETTE-5 (V17) — ex « Bilan de l'opération »
+    # DOCS-1 §4 (décision Vic) — le document s'appelle « Bilan » côté client (ex « Dossier financier »,
+    # RECETTE-5 V17). La clé interne reste « financier » (route, builder, questionnaire) ; seul le
+    # LIBELLÉ humain change (titre de garde + nom de fichier). Moteur/ratios/Excel → BILAN-1.
+    "financier": ("Bilan", ""),
     "apporteur": ("Brief apporteur", ""),
 }
 
 
 def titre_document(document: str) -> str:
     """RECETTE-5 (V17) — le titre humain d'un document (page de garde) — point unique, réutilisé
-    pour le nom de fichier téléchargé (« Dossier financier — FI-….pdf »)."""
+    pour le nom de fichier téléchargé (« Bilan — FI-….pdf »)."""
     return _LABEL.get(document, (document, ""))[0]
 
 _FOOT_DOSSIER = ("Document d'information établi à partir de données publiques. Ne remplace ni un "
