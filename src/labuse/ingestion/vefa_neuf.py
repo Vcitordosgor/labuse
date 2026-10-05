@@ -26,7 +26,12 @@ from pathlib import Path
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from .dvf_marche import NEUF_VEFA_FENETRE_ANS, neuf_vefa_commune
+from .dvf_marche import (
+    NEUF_VEFA_FENETRE_ANS,
+    VEFA_LOTS_HABITATION_SQL,
+    neuf_vefa_commune,
+    vefa_fenetre_predicat,
+)
 
 # Fenêtre glissante de la couche VEFA, en MOIS (affichée dans le « i »). RETOURS-11F M2 : 60 mois = 5 ans,
 # alignée sur `neuf_vefa_commune` (NEUF_VEFA_FENETRE_ANS=5) — un seul moteur, une seule fenêtre.
@@ -76,9 +81,10 @@ def build_vefa_neuf(session: Session, *, commit: bool = True, log=lambda *_: Non
     """Reconstruit l'aplat `vefa_neuf` — UN item par commune (les 24), peinte (tranche de prix) OU
     HACHURÉE (subtype 'sous_seuil', « moins de 10 ventes »). Jamais une commune absente. Idempotent."""
     geo = json.loads((_repo_root() / "frontend" / "public" / "communes974.geojson").read_text("utf-8"))
+    # VEFA-1 — dernière vente = l'ancre de la fenêtre (max des VEFA), plus de now() glissant.
     dmax = session.execute(text(
         f"SELECT to_char(max(date_mutation), 'YYYY-MM-DD') FROM dvf_mutations_parcelle "
-        f"WHERE {_VEFA} AND date_mutation >= (now() - interval '{FENETRE_MOIS} months')::date")).scalar()
+        f"WHERE {_VEFA}")).scalar()
     millesime = (f"VEFA DVF — {FENETRE_MOIS} mois glissants (dernière vente {dmax})" if dmax
                  else f"VEFA DVF — {FENETRE_MOIS} mois glissants")
     session.execute(text("DELETE FROM spatial_layers WHERE kind = 'vefa_neuf'"))
@@ -115,7 +121,11 @@ def build_vefa_neuf(session: Session, *, commit: bool = True, log=lambda *_: Non
                  "tranche": TRANCHE_LIBELLE[cle], "seuil": SEUIL_VEFA_AFFICHAGE,
                  "offre_engagee_logements": offre["logements"], "offre_engagee_permis": offre["permis"],
                  "millesime": millesime, "stock": None,
-                 "source": "geo-DVF (mutations VEFA, DGFiP) · Sitadel (offre engagée) — ECLN non couverte outre-mer"}
+                 "source": ("geo-DVF (mutations VEFA, DGFiP) · Sitadel (offre engagée) — ECLN non couverte "
+                            "outre-mer. €/m² = médiane sur les ventes à surface d'habitation connue ; le "
+                            "dénominateur ne somme que les lots d'habitation (commercial et parkings exclus). "
+                            "Les ventes sans surface d'habitation (bâti non construit à l'acte) comptent dans "
+                            "le volume, pas dans le prix — jamais extrapolé.")}
         session.execute(text(
             "INSERT INTO spatial_layers (kind, subtype, name, commune, geom, attrs) VALUES "
             "('vefa_neuf', :st, :nom, :c, ST_GeomFromGeoJSON(:g), CAST(:a AS jsonb))"),
@@ -142,13 +152,16 @@ def detail_commune(session: Session, insee: str) -> dict:
         WITH bornes AS (
           SELECT max(date_mutation) dmax FROM dvf_mutations_parcelle
           WHERE code_commune = :i AND {_VEFA}
-            AND date_mutation >= (now() - interval '{FENETRE_MOIS} months')::date),
+            AND {vefa_fenetre_predicat()}),
         mut AS (
-          SELECT id_mutation, max(valeur_fonciere) v, sum(coalesce(surface_reelle_bati,0)) b,
+          -- VEFA-1 : dénominateur = lots d'habitation seuls (comme le moteur), fenêtre ancrée.
+          SELECT id_mutation, max(valeur_fonciere) v,
+                 sum(coalesce(surface_reelle_bati,0))
+                   FILTER (WHERE type_local IN ({VEFA_LOTS_HABITATION_SQL})) b,
                  max(date_mutation) d
           FROM dvf_mutations_parcelle
           WHERE code_commune = :i AND {_VEFA}
-            AND date_mutation >= (now() - interval '{FENETRE_MOIS} months')::date
+            AND {vefa_fenetre_predicat()}
           GROUP BY id_mutation)
         SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY v/b)
                  FILTER (WHERE b>0 AND v>1000 AND v/b BETWEEN 50 AND 20000
@@ -168,7 +181,7 @@ def detail_commune(session: Session, insee: str) -> dict:
                count(*) FILTER (WHERE type_local ILIKE '%%maison%%') n_maison
         FROM dvf_mutations_parcelle
         WHERE code_commune = :i AND {_VEFA}
-          AND date_mutation >= (now() - interval '{FENETRE_MOIS} months')::date"""),
+          AND {vefa_fenetre_predicat()}"""),
         {"i": insee}).mappings().first()
 
     return {
@@ -185,6 +198,8 @@ def detail_commune(session: Session, insee: str) -> dict:
         "offre_engagee": _offre_sitadel(session, commune) | {"mois": OFFRE_SITADEL_MOIS,
                           "libelle": "logements collectifs autorisés (Sitadel) — l'offre qui arrive"},
         "millesime": (f"VEFA DVF — {FENETRE_MOIS} mois glissants"),
-        "source": "geo-DVF (mutations VEFA, DGFiP) · Sitadel (offre engagée). Chaque chiffre avec son n ; "
+        "source": "geo-DVF (mutations VEFA, DGFiP) · Sitadel (offre engagée). €/m² = médiane sur les lots "
+                  "d'habitation (commercial/parkings exclus du dénominateur) ; ventes sans surface "
+                  "d'habitation comptées au volume, pas au prix. Chaque chiffre avec son n ; "
                   "sous le seuil, absent, jamais extrapolé.",
     }

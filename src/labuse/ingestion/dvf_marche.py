@@ -162,6 +162,27 @@ NEUF_VEFA_FENETRE_ANS = 5   # RETOURS-11F M2 — fenêtre élargie 36→60 mois 
 # marginal (120 mois : 1 502, +17 % seulement). La couverture pleine île reste impossible — 14/24 communes
 # ont < 8 ventes VEFA même sur 5 ans : c'est l'état RÉEL du marché, pas un trou de données (hachure honnête).
 
+VEFA_NATURE_SQL = "nature_mutation = 'Vente en l''état futur d''achèvement'"
+# VEFA-1 (lots d'habitation) — le dénominateur d'un €/m² de LOGEMENT neuf ne somme QUE les lots
+# d'habitation (appartement/maison). Le commercial/industriel et les dépendances (parking, cave)
+# n'ont pas de prix habitable : les inclure diluait le €/m² d'une mutation mixte (mesuré : mutation
+# 2022-1639750, 1 appart 104 m² + 2 locaux 314 m² → 1 508 €/m² au lieu de 6 061 €/m² habitable).
+VEFA_LOTS_HABITATION = ("Appartement", "Maison")
+# Fragment SQL de la liste des lots d'habitation (source unique VEFA_LOTS_HABITATION) : "'Appartement','Maison'".
+VEFA_LOTS_HABITATION_SQL = ", ".join(f"'{t}'" for t in VEFA_LOTS_HABITATION)
+
+
+def vefa_fenetre_predicat(col: str = "date_mutation") -> str:
+    """VEFA-1 — LE prédicat de fenêtre VEFA, ANCRÉ sur la dernière vente VEFA observée (jamais now()).
+    Le millésime géo-DVF est FIGÉ (2021-2025, fenêtre glissante DGFiP figée au dépôt) ; un `now() -
+    5 ans` érodait silencieusement le vieux bord de la fenêtre à mesure que l'horloge avançait (au
+    05/10/2026 il jetait déjà 336 mutations de janv.-sept. 2021, −14 % de volume brut, pour rien).
+    On ancre donc sur max(date_mutation) des VEFA — exactement le principe que detail_commune applique
+    déjà à son pivot 12 mois (« calé sur la DERNIÈRE VENTE observée, pas sur l'horloge système »).
+    Fiche = table = carte lisent CE prédicat : une seule fenêtre, un seul endroit."""
+    return (f"{col} >= ((SELECT max(date_mutation) FROM dvf_mutations_parcelle WHERE {VEFA_NATURE_SQL}) "
+            f"- interval '{NEUF_VEFA_FENETRE_ANS} years')")
+
 
 def neuf_vefa_commune(session: Session, insee: str) -> dict:
     """M101 B2 (arbitrage Vic) — le NEUF que l'ACTE déclare : médiane €/m² bâti des ventes
@@ -171,20 +192,29 @@ def neuf_vefa_commune(session: Session, insee: str) -> dict:
     communes (§B1.3) — l'absence est un état normal du profil, dite, pas un trou. Le SEUIL
     d'effectif est appliqué par marche_service (config dvf_profils.yaml, un critère un endroit).
     Renvoie {n, mediane_prix_m2_bati|None, fenetre_ans}."""
-    # RETOURS-11 C3 (diagnostic mesuré) — sur 36 mois, ~988 mutations VEFA au 974 mais seules ~315 (32 %)
-    # portent `surface_reelle_bati` : à l'acte VEFA le bâti n'existe pas encore, la surface réelle est
-    # souvent VIDE. DVF au 974 (tel qu'ingéré : dvf_mutations_parcelle) NE porte PAS la surface Carrez des
-    # lots → on ne peut PAS récupérer le prix des ~673 restantes (jamais un prix inventé). On distingue
-    # donc le VOLUME VÉRITABLE de VEFA (`n_total`) du nombre à prix calculable (`n`) : la hachure honnête
-    # dit « peu de ventes » SEULEMENT quand le volume est vraiment faible, pas quand seule la surface manque.
+    # RETOURS-11 C3 (diagnostic mesuré) — ~44 % des mutations VEFA ne portent AUCUNE surface d'habitation
+    # (surface_reelle_bati NULL sur toutes leurs lignes, et dvf_mutation_detail sans Carrez : VEFA-1 a
+    # vérifié que la Carrez ne récupère que ~6 cas) : à l'acte VEFA le bâti n'existe pas encore. Ces
+    # mutations SANS surface restent EXCLUES du €/m² (prix non calculable, jamais inventé), mais comptées
+    # dans le VOLUME réel (`n_total`) : la hachure honnête dit « peu de ventes » SEULEMENT quand le volume
+    # est vraiment faible, pas quand seule la surface manque.
+    #
+    # VEFA-1 — deux correctifs à la source (voir docs/audit-2026-10/VEFA-1/VEFA-1.md) :
+    #   · fenêtre ANCRÉE sur la dernière vente (vefa_fenetre_predicat), plus de now() glissant qui jetait
+    #     ~336 mutations de 2021 sur un millésime pourtant figé 2021-2025 ;
+    #   · dénominateur = surfaces des LOTS D'HABITATION seuls (VEFA_LOTS_HABITATION) — le commercial et
+    #     les dépendances (parking) ne diluent plus le €/m² d'une mutation mixte, et une mutation
+    #     multi-lots se calcule bien en valeur / SOMME des surfaces habitables (jamais / un seul lot,
+    #     jamais éliminée).
     row = session.execute(text(f"""
         WITH mut AS (
           SELECT id_mutation, max(valeur_fonciere) AS valeur,
-                 sum(COALESCE(surface_reelle_bati,0)) AS bati
+                 sum(COALESCE(surface_reelle_bati,0))
+                   FILTER (WHERE type_local IN ({VEFA_LOTS_HABITATION_SQL})) AS bati
           FROM dvf_mutations_parcelle
           WHERE code_commune = :insee
-            AND nature_mutation = 'Vente en l''état futur d''achèvement'
-            AND date_mutation >= (now() - interval '{NEUF_VEFA_FENETRE_ANS} years')::date
+            AND {VEFA_NATURE_SQL}
+            AND {vefa_fenetre_predicat()}
           GROUP BY id_mutation)
         SELECT count(*) AS n_total,
                count(*) FILTER (WHERE bati > 0 AND valeur > 1000
