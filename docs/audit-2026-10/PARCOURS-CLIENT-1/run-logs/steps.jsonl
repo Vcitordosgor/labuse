@@ -1,0 +1,5 @@
+{"device":"desktop","name":"D9 client essai expiré (login)","verdict":"RÉGULARISER","url":"http://127.0.0.1:8795/login"}
+{"device":"mobile","name":"D9 client essai expiré (login)","verdict":"RÉGULARISER","url":"http://127.0.0.1:8795/login"}
+{"device":"desktop","name":"D12 dashboard activité","verdict":"LABUSE TOUR DE CONTRÔLE ◉ Pilotage ▣ Comptes ☰ Données ✉ Courrier ◎ Radar ◫ Produit ✦ IA ☎ Contacts Serveur — Run servi — Backup — Horloge — Verrous — Ouvrir l'app cliente → Pilota"}
+{"name":"SECTION D captures terminées","verdict":"OK"}
+{"name":"mobile public pages","verdict":"5 pages"}
