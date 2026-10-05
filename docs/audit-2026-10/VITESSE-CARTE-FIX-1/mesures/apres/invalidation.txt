@@ -1,0 +1,17 @@
+VITESSE-CARTE-FIX-1 (G2) — preuve d'invalidation du cache (rejouable)
+generated: 2026-10-05T23:05:05Z · run servi q_v16
+
+== versions en cache (overlays 1 seule version = la servie ; parcels séparées) ==
+overlays|q_v16.20261005234141.20261006025724320|1279
+parcels|20261005154145117|76
+parcels|20261005124703262|1
+
+ (a) _version(API) = q_v16.20261005234141.20261006025724320
+     = run + max(created_at spatial_layers) + mvt_meta.tuyau_rev
+
+ (b) purge au rebuild tuyau : overlays 1279 -> 0 (purgés) | parcels 77 -> 77 (INTACTS)
+     bump tuyau_rev -> version q_v16.20261005234141.20261006025724320
+                              -> q_v16.20261005234141.20261006030506696  (changée: True)
+
+== (c) GET après purge = lazy-fill (regénère + recache) ==
+ icpe z9 1er hit: http=200 t=0.037509s

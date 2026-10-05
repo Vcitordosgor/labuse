@@ -1,0 +1,4 @@
+# artefacts lourds non committés (régénérables par le harnais)
+har/
+*.har
+sonde_sql.csv

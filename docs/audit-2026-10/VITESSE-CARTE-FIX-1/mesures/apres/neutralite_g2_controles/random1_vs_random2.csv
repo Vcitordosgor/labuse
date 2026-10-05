@@ -1,0 +1,4 @@
+couche,zoom,px_total,px_avant,px_apres,px_diff,pct_diff,delta_max,px_gt2,px_gt8
+plu_gpu_zone,9,640000,112055,112055,16463,2.5723,32,2979,310
+plu_gpu_zone,11,640000,300820,300820,11633,1.8177,13,1096,10
+plu_gpu_zone,13,640000,640000,640000,7315,1.1430,6,405,0
