@@ -1,0 +1,15 @@
+===== 97415000AM0097 =====
+  [Simulation/Constructibilité] prix_sortie (S2 NEUF) : None | label: None
+  [bilan.calc.median servi]                          : None
+  [Marché] marche.median (S1 = Prix de l ancien)     : 4848
+  [Calculette] calculable: False | prix_sortie_median (S2): None | label: None
+===== 97411000BZ1065 =====
+  [Simulation/Constructibilité] prix_sortie (S2 NEUF) : 4275.0 | label: Estimé — médiane locale, 77 ventes
+  [bilan.calc.median servi]                          : 4275.0
+  [Marché] marche.median (S1 = Prix de l ancien)     : 2365
+  [Calculette] calculable: True | prix_sortie_median (S2): 4275.0 | label: Estimé — médiane locale, 77 ventes
+===== 97416000ES0266 =====
+  [Simulation/Constructibilité] prix_sortie (S2 NEUF) : 4258.0 | label: Estimé — médiane locale, 76 ventes
+  [bilan.calc.median servi]                          : 4258.0
+  [Marché] marche.median (S1 = Prix de l ancien)     : 2975
+  [Calculette] calculable: True | prix_sortie_median (S2): 4258.0 | label: Estimé — médiane locale, 76 ventes

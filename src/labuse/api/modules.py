@@ -1863,6 +1863,15 @@ def faisabilite_sens1(idu: str, db: Session = Depends(get_db)) -> dict:
         out["bilan"]["niveau_prix_neuf"] = None if ps["non_calculable"] else ps["niveau"]
         out["bilan"]["prix_neuf_label"] = ps["motif"] if ps["non_calculable"] else ps["label"]
         out["bilan"]["prix_neuf_repli_ile"] = ps["repli_ile"]
+    # MANDAT PRIX-SORTIE-1 (Vic 05/10/2026) — LE prix de sortie servi, SOURCE UNIQUE
+    # (resolve_prix_sortie_servi, prix NEUF). TOUTES les surfaces de la fiche le lisent ICI ;
+    # plus aucune ne lit `marche.median` (ancien) ni `neuf_vefa_commune` sous l'étiquette « prix de
+    # sortie ». Absent (parcelle non constructible / délaissée → bilan None) : null, la fiche n'affiche
+    # alors aucun prix de sortie (plutôt qu'un prix de l'ancien qui n'est pas la base du bilan).
+    out["prix_sortie"] = None if not ps else {
+        "prix": ps["prix"], "niveau": None if ps["non_calculable"] else ps["niveau"],
+        "n": ps.get("n"), "label": ps["motif"] if ps["non_calculable"] else ps["label"],
+        "non_calculable": bool(ps["non_calculable"]), "repli_ile": ps["repli_ile"]}
     # fiscal / leviers (bilan promoteur — données en base + hypothèses ÉTIQUETÉES)
     qpv = bool(db.execute(text("""SELECT 1 FROM spatial_layers q JOIN parcels p ON p.idu = :i
         WHERE q.kind = 'qpv' AND ST_Intersects(p.geom_2975, q.geom_2975) LIMIT 1"""), {"i": idu}).scalar())
@@ -2005,6 +2014,12 @@ def faisabilite_charge(idu: str, body: ChargeIn, db: Session = Depends(get_db)) 
                              mode=body.mode, vrd_m2=body.vrd_m2)
     res["prix_neuf_label"] = ps["label"]
     res["prix_neuf_repli_ile"] = ps["repli_ile"]
+    # MANDAT PRIX-SORTIE-1 — même objet source-unique que la fiche (resolve_prix_sortie_servi) :
+    # la Calculette sert EXACTEMENT le prix de sortie de la fiche/du bilan (test de non-divergence).
+    res["prix_sortie"] = {
+        "prix": ps["prix"], "niveau": None if ps["non_calculable"] else ps["niveau"],
+        "n": ps.get("n"), "label": ps["motif"] if ps["non_calculable"] else ps["label"],
+        "non_calculable": bool(ps["non_calculable"]), "repli_ile": ps["repli_ile"]}
     res["defaults"] = defaults
     # LA CONFRONTATION (le geste du scoreur) : le prix TERRAIN NU observé de la ZONE, à côté de la
     # charge supportable. RÉFÉRENTIEL UNIQUE `prix_terrain_nu_zone` (M79) — le MÊME code que le constat

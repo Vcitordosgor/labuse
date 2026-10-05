@@ -181,7 +181,9 @@ def _financier_contexte(db, idu: str, fiche: dict, compte_id: int | None) -> dic
     from .. import financier_questionnaire as qf
     from . import financier_bilan as fb
     etat = qf.charger(db, idu, compte_id)
-    prefill = qf.prefill(fiche)
+    # PRIX-SORTIE-1 (Vic 05/10/2026) — pré-remplissage du prix de sortie = prix NEUF servi
+    # (source unique), identique à la fiche/calculette ; None si non calculable → non pré-rempli.
+    prefill = qf.prefill(fiche, qf.prix_sortie_neuf_servi(db, idu))
     resolved = qf.resoudre(etat["reponses"], prefill)
     rv = lambda fid: (resolved.get(fid) or {}).get("valeur")  # noqa: E731
     # RECETTE-8 W13bis (C3) — le parcours « Revente en l'état » : calcul de marge SIMPLE (pas de

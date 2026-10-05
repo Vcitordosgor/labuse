@@ -110,13 +110,14 @@ def rendu(valeurs) -> str:
         return ""      # aucun prix/vente servi → section omise
     note_txt = ("Ventes publiées (DVF), anonymisées ; les ventes récentes mettent un à "
                 "trois ans à apparaître.")
-    # RECETTE-11 D2 — dire POURQUOI le prix « ancien {type} » : c'est le comparable de revente
-    # DOMINANT du secteur pour ce type (segment retenu par le rayon adaptatif), servi comme prix de
-    # sortie du programme reconstruit — jamais une estimation du bâti actuellement sur la parcelle
-    # (un terrain de trois maisons se reconstruit en collectif → l'appartement est le comparable).
+    # PRIX-SORTIE-1 (Vic 05/10/2026) — le prix « ancien {type} » est la référence de revente du
+    # bâti EXISTANT du secteur. Ce N'EST PAS le prix de sortie du bilan : celui-ci est le prix du
+    # NEUF servi (médiane du neuf de marché), porté par le Financier/la charge foncière. On ne nomme
+    # donc plus l'ancien « prix de sortie du programme reconstruit » — il reste un indicateur de marché.
     if isinstance(pa, dict) and pa.get("type_prix"):
-        note_txt += (f" Le prix « ancien {esc(pa['type_prix'])} » est la référence de revente du "
-                     "secteur pour ce type de bien (segment le plus représenté à proximité), utilisée "
-                     "comme prix de sortie du programme reconstruit — pas une estimation du bâti existant.")
+        note_txt += (f" Le prix « ancien {esc(pa['type_prix'])} » est la référence de revente du bâti "
+                     "EXISTANT du secteur pour ce type de bien (segment le plus représenté à proximité) — "
+                     "un indicateur de marché, pas le prix de sortie d'un programme neuf (celui-ci, prix du "
+                     "neuf de marché, est servi au bilan / au Financier).")
     corps = data + note(note_txt) + pied(valeurs, IDS)
     return section("5. Marché et prix", corps)

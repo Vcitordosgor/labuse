@@ -167,10 +167,12 @@ const O6_COLS: { k: string; head: string; title: string; tip?: string; best?: 'm
   { k: 'prix_ancien', head: '€/m² ancien',
     title: '€/m² ANCIEN — médiane DVF de la commune entière (tous types bâti, ventes strictes, n ≥ 100). Vue MACRO : la même série que le Baromètre.',
     tip: '€/m² ANCIEN — médiane DVF COMMUNE ENTIÈRE (tous types bâti, ventes strictes, n ≥ 100). Vue macro, série du Baromètre. ⚠ La FICHE d’une commune affiche un prix LOCAL (secteur autour de la parcelle centrale, appartements priorisés) — plus fin, souvent inférieur : c’est normal qu’il diffère de cette colonne.' },
-  { k: 'prix_neuf', head: '€/m² neuf',
+  { k: 'prix_neuf', head: '€/m² VEFA',
     // RECETTE-2 (D3) — on DIT le seuil dans le « i » : « — » = moins de 8 ventes VEFA (médiane instable).
-    title: '€/m² NEUF — prix de sortie du neuf (VEFA, DVF), €/m² habitable. À NE PAS confondre avec l’ancien : marché et niveau différents. « — » = moins de 8 ventes VEFA (sous ce seuil la médiane est instable, mesurée ±44 %).',
-    tip: '€/m² NEUF — prix de sortie du neuf (VEFA, DVF), €/m² habitable. À NE PAS confondre avec l’ancien. « — » = moins de 8 ventes VEFA (médiane instable sous le seuil).' },
+    // PRIX-SORTIE-1 (Vic 05/10/2026) — « prix VEFA commune » (prix observé à l'acte), JAMAIS « prix de
+    // sortie » (le prix de sortie servi au bilan est une autre notion, parcellaire, affichée en fiche).
+    title: '€/m² VEFA — prix VEFA observé à l’acte (ventes en l’état futur d’achèvement) de la commune, €/m² habitable. À NE PAS confondre avec l’ancien, ni avec le prix de sortie servi au bilan de la fiche. « — » = moins de 8 ventes VEFA (sous ce seuil la médiane est instable, mesurée ±44 %).',
+    tip: '€/m² VEFA — prix VEFA commune observé à l’acte (DVF), €/m² habitable. Distinct de l’ancien et du prix de sortie servi au bilan. « — » = moins de 8 ventes VEFA (médiane instable sous le seuil).' },
   // RETOURS-11F O14/M13 — €/m² TERRAIN NU DVF : « le chiffre du promoteur », absent jusqu'ici. MÊME
   // moteur que la fiche (Marché) — médiane DVF terrain nu par zone PLU calibrée (U de préférence, sinon
   // AU). Sous le seuil de cellule → « — ». 23/24 communes servables (mesuré base réelle).
@@ -279,7 +281,7 @@ export function CommunesLegende() {
       <b>Permis 5 ans</b> = permis SITADEL cumulés sur 5 ans ·{' '}
       <b>Déficit SRU</b> = objectif légal − taux de logement social (points) ·{' '}
       <b>€/m² ancien</b> = médiane DVF commune entière (ventes strictes) ·{' '}
-      <b>€/m² neuf</b> = prix de sortie du neuf (VEFA) ·{' '}
+      <b>€/m² VEFA</b> = prix VEFA commune observé à l’acte ·{' '}
       <b>€/m² terrain nu</b> = médiane DVF terrain nu par zone PLU (U sinon AU) — le chiffre du promoteur.
       <span className="mt-0.5 block">Meilleure valeur en <span className="font-semibold text-mint">vert</span> (foncier / rapidité d’instruction).
         Une donnée absente reste « — », jamais un zéro inventé.</span>

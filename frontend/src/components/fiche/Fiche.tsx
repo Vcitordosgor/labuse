@@ -1899,10 +1899,14 @@ export function Fiche({ idu }: { idu: string }) {
                     bilan) + OutilsSection en pied (Faisabilité · Calculette · Assemblage). */}
                 {/* FICHE-FIX-4 (Lot L) — le paragraphe explicatif passe derrière le « i » ; les 3 boutons restent. */}
                 {(() => {
-                  const prix = faisa.data?.marche?.median
+                  // PRIX-SORTIE-1 (Vic 05/10/2026) — prix de sortie = prix NEUF servi (source unique
+                  // `prix_sortie`), plus jamais `marche.median` (prix de l'ancien). Non calculable /
+                  // non constructible → pas de prix de sortie affiché (jamais un prix de l'ancien à la place).
+                  const ps = faisa.data?.prix_sortie
+                  const prix = ps && !ps.non_calculable ? ps.prix : null
                   return (
                     <Verdict ton="vert"
-                      reponse={<>Prix de sortie retenu {prix != null ? `${fmtInt(Number(prix))} €/m²` : '—'}<InfoI aria="Sur le prix de sortie" tip="C'est le prix affiché dans « Marché » (prix de sortie bâti secteur) — il sert de base au bilan de charge foncière ci-dessous." /></>} />
+                      reponse={<>Prix de sortie retenu {prix != null ? `${fmtInt(Number(prix))} €/m²` : '—'}<InfoI aria="Sur le prix de sortie" tip={`Prix de sortie NEUF servi${ps?.label ? ` — ${ps.label}` : ' (médiane du neuf de marché, DVF)'}. C'est la base du bilan de charge foncière ci-dessous, et le même chiffre dans la Calculette, l'Assemblage et les documents. Distinct du prix de l'ancien (secteur) affiché dans « Marché ».`} /></>} />
                   )
                 })()}
                 <BilanTab idu={idu} />

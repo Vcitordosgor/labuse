@@ -7671,7 +7671,8 @@ def financier_questionnaire_get(idu: str, request: Request, db: Session = Depend
         fiche = parcel_fiche(idu, db=db, request=request)
     except Exception:  # noqa: BLE001 — pas de fiche → seuls les pré-remplissages constants
         fiche = {}
-    prefill = qf.prefill(fiche)
+    # PRIX-SORTIE-1 (Vic 05/10/2026) — pré-remplissage prix de sortie = prix NEUF servi (source unique).
+    prefill = qf.prefill(fiche, qf.prix_sortie_neuf_servi(db, idu))
 
     # RECETTE-9 T1 — le PROGRAMME constructible (surface vendable) vient du POTENTIEL de la parcelle ;
     # quand la parcelle n'a PAS de potentiel chiffrable (bâtie à sa densité, zone qui l'interdit…), le
@@ -7778,7 +7779,7 @@ def financier_questionnaire_valider(idu: str, body: QuestionnaireFinancierIn, re
         fiche = parcel_fiche(idu, db=db, request=request)
     except Exception:  # noqa: BLE001 — pas de fiche → seuls les pré-remplissages constants
         fiche = {}
-    hm = qf.valider_hors_marche(body.reponses, qf.prefill(fiche))
+    hm = qf.valider_hors_marche(body.reponses, qf.prefill(fiche, qf.prix_sortie_neuf_servi(db, idu)))
     return {"idu": idu, "hors_marche": hm}
 
 
