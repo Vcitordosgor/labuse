@@ -18,6 +18,7 @@ def rendu(valeurs) -> str:
         'suppose pas à votre place.</p>'
         '<p style="margin:0">Une fois renseignés dans votre projet, cette section imprime le '
         "chiffre d'affaires, la charge foncière supportable, l'écart au prix demandé et la "
-        'sensibilité au coût de construction. Le document « Financier » reprend cette section '
+        # DOCS-FIX-1 (P2, arbitrage Vic) — « Financier » → « Bilan » côté client.
+        'sensibilité au coût de construction. Le document « Bilan » reprend cette section '
         'seule.</p></div>')
     return section("9. Bilan de l'opération", encart)

@@ -684,7 +684,8 @@ def _r_taxe(v):
     if v.get("taux_communal_millesime"):
         lib += f" — {v['taux_communal_millesime']}"
     lib += (". Se calcule sur la surface de plancher créée par le projet — "
-            "montant chiffré dans le document Financier.")   # EXPORTS-FIX-1 A8
+            # DOCS-FIX-1 (P2, arbitrage Vic) — « Financier » → « Bilan » côté client.
+            "montant chiffré dans le document Bilan.")   # EXPORTS-FIX-1 A8
     return esc(lib)
 
 
@@ -1001,7 +1002,8 @@ def _renvoi_financier() -> str:
         '<div class="t">Renseignez votre opération pour obtenir le bilan</div>'
         "<p>Le bilan dépend de chiffres que vous seul connaissez : prix demandé par le vendeur, "
         "coût de construction, marge visée. LABUSE ne les suppose pas à votre place. "
-        "Le document <strong>Financier</strong> les recueille et imprime le chiffre d'affaires, "
+        # DOCS-FIX-1 (P2, arbitrage Vic) — « Financier » → « Bilan » côté client.
+        "Le document <strong>Bilan</strong> les recueille et imprime le chiffre d'affaires, "
         "la charge foncière supportable, l'écart au prix demandé et la sensibilité au coût de "
         "construction.</p>", variante="projet")
 

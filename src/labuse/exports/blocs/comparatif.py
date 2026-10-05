@@ -57,7 +57,9 @@ def _pct(r, k, suffixe="%"):
 # « Classement LABUSE » (aucun badge, comme à l'écran).
 _LIGNES = [
     ("Surface", "s", lambda r: _m2(r, "surface_m2")),
-    ("Zone PLU", "s", lambda r: esc(r.get("zone")) if r.get("zone") else None),
+    # DOCS-FIX-1 (P5) — jamais « — » : la zone vient de zone_dominante (servie par /compare, comme la
+    # fiche) ; si aucune zone PLU ne couvre la parcelle, on écrit la RAISON en clair, pas un tiret.
+    ("Zone PLU", "s", lambda r: esc(r.get("zone")) if r.get("zone") else "hors zonage PLU"),
     ("Classement LABUSE", None, _classement),
     ("Constructible", "s", lambda r: _oui_non(r.get("constructible"))),
     ("SDP max estimée", "e", lambda r: _m2(r, "sdp_max_m2")),
