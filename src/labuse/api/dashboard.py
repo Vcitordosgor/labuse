@@ -123,6 +123,15 @@ class RetourIn(BaseModel):
     ecran: str | None = None
 
 
+@router.get("/retours", include_in_schema=False)
+def retours_get():
+    """PARCOURS-FIX-1 (Lot 2.7) — `/retours` est l'endpoint POST du bouton « Signaler » (app cliente).
+    Un humain qui tape l'URL dans son navigateur (GET) recevait un 405 « Method Not Allowed » nu
+    (finding G6). On le RENVOIE PROPREMENT dans l'app (le « Signaler » y vit) plutôt qu'une erreur."""
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse("/socle/", status_code=303)
+
+
 @router.post("/retours")
 def creer_retour(body: RetourIn, request: Request) -> dict:
     """Bouton « Signaler » global (app cliente) : bug/idée/question/donnée + message + CONTEXTE
@@ -785,6 +794,37 @@ def admin_licence_creer(body: NouveauClientIn, request: Request) -> dict:
     return {"ok": True, **inv}
 
 
+@router.post("/admin/licences/{compte_id}/lien-invitation")
+def admin_licence_lien_invitation(compte_id: int, request: Request) -> dict:
+    """PARCOURS-FIX-1 (Lot 2.5) — (RÉ)ÉMET le lien d'invitation d'un compte et le RENVOIE EN CLAIR,
+    pour que Vic le COPIE et l'envoie à la main si le mail n'arrive pas (finding G4). Le token clair
+    n'est JAMAIS stocké (seul le hash) → on en forge un neuf de 7 jours ; un éventuel ancien lien non
+    utilisé expire sans effet. Ne vaut que pour un titulaire encore `invite` (jamais activé) : un
+    compte déjà actif n'a pas de lien — il se connecte sur /login. `avert` = garde URL localhost."""
+    from fastapi import HTTPException
+    from .. import config
+    from ..comptes import creer_invitation
+    from ..db import engine, session_scope
+    from .auth import exiger_admin
+    exiger_admin(request)
+    with engine().begin() as c:
+        row = c.execute(text(
+            "SELECT email, statut FROM utilisateurs WHERE compte_id = :c AND role = 'titulaire'"
+            " ORDER BY id LIMIT 1"), {"c": compte_id}).mappings().first()
+    if not row:
+        raise HTTPException(404, "Compte introuvable (aucun titulaire).")
+    if row["statut"] != "invite":
+        raise HTTPException(409, "Ce client a déjà activé son accès — aucun lien d'invitation à donner "
+                                 "(il se connecte sur /login).")
+    try:
+        with session_scope() as s:
+            inv = creer_invitation(s, row["email"])
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+    return {"ok": True, "lien": inv["lien"], "email": inv["email"],
+            "expire_at": inv["expire_at"], "avert": config.base_url_probleme()}
+
+
 class EssaiIn(BaseModel):
     email: str = Field(min_length=5, max_length=200)
     nom: str | None = Field(default=None, max_length=120)
@@ -874,6 +914,41 @@ def admin_licence_prolonger(compte_id: int, body: ProlongerIn, request: Request)
             "detail": f"Essai prolongé jusqu'au {(_fmt_reunion(expire) or '').removeprefix('le ')}."}
 
 
+def _mail_cycle_de_vie(compte_id: int, key: str, demandeur: str) -> dict | None:
+    """PARCOURS-FIX-1 (Lot 2.6) — ENVOIE un mail du cycle de vie au titulaire, PAR LA FILE, au geste
+    admin correspondant (suspension/rétablissement). Best-effort : un envoi qui échoue (ou le dry-run
+    local) ne fait JAMAIS échouer le geste — la suspension/le rétablissement sont déjà actés en base ;
+    la file garde la trace de l'état réel du mail (RV-013). Marque `licence_mails` si reçu."""
+    from .. import brevo, mailfile
+    from ..db import engine, session_scope
+    try:
+        if brevo.template(key) is None:
+            return None
+        with engine().begin() as c:
+            row = c.execute(text(
+                "SELECT k.nom, k.essai_expire_at,"
+                " (SELECT u.email FROM utilisateurs u WHERE u.compte_id = k.id ORDER BY u.id LIMIT 1) AS email,"
+                " (SELECT u.dernier_login_at FROM utilisateurs u WHERE u.compte_id = k.id ORDER BY u.id LIMIT 1)"
+                "   AS dernier_login_at"
+                " FROM comptes k WHERE k.id = :c"), {"c": compte_id}).mappings().first()
+        if not row or not row["email"]:
+            return None
+        with session_scope() as db:
+            params = _params_licence(db, key, row)
+        r = mailfile.envoyer_mail(engine(), key=key, to=row["email"], params=params,
+                                  compte_id=compte_id, demandeur=demandeur)
+        if r.get("etat") == "recu":
+            with engine().begin() as c:
+                c.execute(text(
+                    "INSERT INTO licence_mails (compte_id, mail_key, statut) VALUES (:c, :k, 'envoye')"
+                    " ON CONFLICT (compte_id, mail_key) DO UPDATE SET statut = 'envoye', sent_at = now()"),
+                    {"c": compte_id, "k": key})
+        return {"etat": r.get("etat"), "mail_id": r.get("id")}
+    except Exception:  # noqa: BLE001 — le mail est best-effort ; jamais casser le geste
+        log.warning("mail cycle de vie « %s » non enfilé pour le compte %s", key, compte_id, exc_info=True)
+        return None
+
+
 class SuspendreIn(BaseModel):
     motif: str = Field(default="manuel", max_length=120)
 
@@ -882,25 +957,31 @@ class SuspendreIn(BaseModel):
 def admin_licence_suspendre(compte_id: int, body: SuspendreIn, request: Request) -> dict:
     """Suspension MANUELLE (mandat : jamais automatique sur un échec de carte) — flag en base,
     sessions coupées, données INTACTES, réversible. Le client voit « abonnement à régulariser »
-    + lien de paiement à son prochain login (cf. branche /login)."""
+    + lien de paiement à son prochain login (cf. branche /login). PARCOURS-FIX-1 (Lot 2.6) : le geste
+    DÉCLENCHE le mail `suspension` (template 10) — avant, le statut changeait mais aucun mail ne partait."""
     from .auth import exiger_admin
     exiger_admin(request)
     from ..comptes import suspendre_compte
     from ..db import session_scope
     with session_scope() as s:
         suspendre_compte(s, compte_id, motif=f"dashboard:{body.motif}")
-    return {"ok": True, "statut": "suspendu"}
+    qui = f"vic:{getattr(request.state, 'admin_email', '') or 'admin'}"
+    mail = _mail_cycle_de_vie(compte_id, "suspension", qui)
+    return {"ok": True, "statut": "suspendu", "mail": mail}
 
 
 @router.post("/admin/licences/{compte_id}/retablir")
 def admin_licence_retablir(compte_id: int, request: Request) -> dict:
+    """PARCOURS-FIX-1 (Lot 2.6) : le rétablissement DÉCLENCHE le mail `retablissement` (template 11)."""
     from .auth import exiger_admin
     exiger_admin(request)
     from ..comptes import reactiver_compte
     from ..db import session_scope
     with session_scope() as s:
         reactiver_compte(s, compte_id, motif="dashboard:retabli")
-    return {"ok": True, "statut": "actif"}
+    qui = f"vic:{getattr(request.state, 'admin_email', '') or 'admin'}"
+    mail = _mail_cycle_de_vie(compte_id, "retablissement", qui)
+    return {"ok": True, "statut": "actif", "mail": mail}
 
 
 @router.post("/admin/licences/{compte_id}/deconnecter")
@@ -979,7 +1060,18 @@ def _params_licence(db, key: str, row, override: dict | None = None) -> dict:
     elif key == "mdp_modifie":
         from datetime import datetime, timezone
         p["DATE_HEURE"] = _fmt_reunion(datetime.now(timezone.utc))
-    return {**p, **(override or {})}
+    elif key == "resiliation":
+        # PARCOURS-FIX-1 (Lot 2.6) — date de fin d'accès = échéance d'essai si présente (sinon laissée
+        # à l'override du caller). Jamais préfixée « le » ici (cf. normalisation ci-dessous).
+        p["DATE_FIN_ACCES"] = _fmt_reunion(row.get("essai_expire_at")) or ""
+    merged = {**p, **(override or {})}
+    # PARCOURS-FIX-1 (Lot 2.6) — ANTI « le le » : les sujets Brevo disent déjà « …prend fin le
+    # {{DATE_FIN_ACCES}} », or `_fmt_reunion` PRÉFIXE « le » → doublon « le le 12 octobre » (finding G5).
+    # On retire un « le » en tête de DATE_FIN_ACCES, quel que soit le caller (défense unique, idempotente).
+    d = merged.get("DATE_FIN_ACCES")
+    if isinstance(d, str) and d.lower().startswith("le "):
+        merged["DATE_FIN_ACCES"] = d[3:]
+    return merged
 
 
 @router.post("/admin/licences/{compte_id}/mail")

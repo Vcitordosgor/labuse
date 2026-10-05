@@ -299,11 +299,18 @@ def valider_invitation(db: Session, token: str) -> dict | None:
     if not token:
         return None
     r = db.execute(text(
-        "SELECT u.id, u.email, u.compte_id, c.plan FROM utilisateurs u"
+        "SELECT u.id, u.email, u.compte_id, c.plan, c.statut AS statut_compte, c.essai_expire_at"
+        " FROM utilisateurs u"
         " JOIN comptes c ON c.id = u.compte_id"
         " WHERE u.invite_token_hash = :h AND u.statut = 'invite' AND u.invite_expire_at > now()"),
         {"h": _sha(token)}).mappings().first()
-    return dict(r) if r else None
+    if not r:
+        return None
+    d = dict(r)
+    # PARCOURS-FIX-1 (Lot 2.3) — l'invitation porte un ESSAI si le compte a déjà une échéance d'essai
+    # posée (creer-essai) ; le tunnel montre alors « Commencer mon essai » et JAMAIS le paiement.
+    d["essai"] = bool(d.get("essai_expire_at") is not None)
+    return d
 
 
 def activer_par_invitation(db: Session, token: str, password: str,

@@ -9,7 +9,7 @@ import { useMemo, useState } from 'react'
 import {
   getAdminLicences, getAdminMailApercu, getAdminMails, getOffres, postAdminLicenceCreer,
   postAdminLicenceCreerEssai, postAdminLicenceConvertir, postAdminLicenceProlonger, postAdminLicenceMail,
-  postAdminRetablir, postAdminSuspendre, postAdminDeconnecter,
+  postAdminRetablir, postAdminSuspendre, postAdminDeconnecter, postAdminLienInvitation,
   type AdminLicence, type AdminLicences, type MailLigne,
 } from '../../lib/api'
 import { ActBtn } from './AdminView'
@@ -412,6 +412,18 @@ function FichePage({ l, libelles, stripeConfigure, mailLiens, onBack }: {
     mutationFn: () => postAdminDeconnecter(l.id),
     onSuccess: (r) => { setDecoMsg(`${r.sessions_fermees} session${r.sessions_fermees > 1 ? 's' : ''} fermée${r.sessions_fermees > 1 ? 's' : ''}`); refresh() },
   })
+  // PARCOURS-FIX-1 (Lot 2.5) — (ré)émet le lien d'invitation EN CLAIR et le copie (envoi à la main).
+  const [lienInvit, setLienInvit] = useState<string | null>(null)
+  const lienM = useMutation({
+    mutationFn: () => postAdminLienInvitation(l.id),
+    onSuccess: async (r) => {
+      setLienInvit(r.lien)
+      try { await navigator.clipboard.writeText(r.lien); setMsg('✓ Lien d’invitation copié dans le presse-papier.') }
+      catch { setMsg('Lien d’invitation prêt — copiez-le ci-dessous.') }
+      refresh(); qc.invalidateQueries({ queryKey: ['admin-mails', l.id] })
+    },
+    onError: () => setMsg("Impossible de générer le lien (ce client a peut-être déjà activé son accès)."),
+  })
   const suspendu = l.statut === 'suspendu'
   const act = prochaineAction(l)
   const sent = (k: string) => l.mails[k]?.statut === 'envoye'
@@ -447,6 +459,12 @@ function FichePage({ l, libelles, stripeConfigure, mailLiens, onBack }: {
           {!l.kpi.derniere_connexion && (
             <ActBtn tone="ghost" onClick={() => mail.mutate('souscription')} disabled={mail.isPending}>Renvoyer l'invitation</ActBtn>
           )}
+          {/* PARCOURS-FIX-1 (Lot 2.5) — copier le lien d'invitation EN CLAIR (envoi à la main si le
+              mail n'arrive pas). Visible tant que le client n'est JAMAIS entré (invité OU essai créé) ;
+              après sa 1ʳᵉ connexion il n'y a plus de lien à donner (le back renvoie 409). */}
+          {!l.kpi.derniere_connexion && l.statut !== 'resilie' && (
+            <ActBtn tone="ghost" onClick={() => lienM.mutate()} disabled={lienM.isPending}>Copier le lien d'invitation</ActBtn>
+          )}
           {/* COMPTE-3 (Lot 1) — Prolonger l'essai (au-delà de 48 h) : tout compte d'essai, en cours OU
               expiré (un essai expiré redevient Actif à la prolongation). */}
           {l.essai_expire_at != null && l.statut !== 'resilie' && (
@@ -461,6 +479,19 @@ function FichePage({ l, libelles, stripeConfigure, mailLiens, onBack }: {
             : <button onClick={suspendre} disabled={susp.isPending} className="rounded-lg border border-coral/40 px-3 py-1.5 text-xs font-medium text-coral">Suspendre</button>}
         </div>
       </div>
+
+      {/* PARCOURS-FIX-1 (Lot 2.5) — le lien d'invitation EN CLAIR, sélectionnable (à envoyer à la main). */}
+      {lienInvit && (
+        <div className="mt-3 rounded-lg border border-mint/40 bg-mint/5 px-3 py-2.5">
+          <div className="mb-1 text-[11.5px] text-txt-dim">Lien d'invitation (valable 7 jours) — à coller dans un message au client :</div>
+          <div className="flex items-center gap-2">
+            <input readOnly value={lienInvit} onFocus={(e) => e.currentTarget.select()}
+              className="min-w-0 flex-1 rounded-md border border-line bg-surface-1 px-2 py-1 font-mono text-[11.5px] text-txt" />
+            <button onClick={() => { navigator.clipboard?.writeText(lienInvit); setMsg('✓ Lien copié.') }}
+              className="shrink-0 rounded-md border border-mint/40 bg-mint/10 px-2.5 py-1 text-[11.5px] text-mint">Copier</button>
+          </div>
+        </div>
+      )}
 
       {/* DASHBOARD-4 (K5) — faits + phrase CALCULÉE sous les faits. */}
       <div className="mt-3 grid gap-4 rounded-xl border border-line bg-surface-1 px-4 py-3 sm:grid-cols-[1fr_auto]">

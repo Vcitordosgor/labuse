@@ -97,6 +97,19 @@ else
     printf '  · intersections : table absente (calcul au vol, correct mais lent) — labuse build-intersections\n'
 fi
 
+# 9) PARCOURS-FIX-1 (Lot 1.1) — LE BUILD SERVI S'OUVRE (Playwright). Un build cassé (chunk vendor
+#    CJS) rend une PAGE BLANCHE tout en répondant 200 aux tests ci-dessus — ce contrôle l'attrape.
+#    BLOQUANT s'il s'exécute et échoue ; SKIP non bloquant si node/playwright absents (code 77).
+if command -v node >/dev/null 2>&1; then
+    LABUSE_BASE_URL="$BASE" node "$REPO/deploy/scripts/smoke_build.mjs"
+    rc=$?
+    if [ "$rc" = "0" ]; then :;                                   # ok déjà imprimé par le script
+    elif [ "$rc" = "77" ]; then printf '  · smoke build : SKIP (outil/identifiant absent, non bloquant)\n';
+    else ko "le build servi ne s'ouvre pas (page blanche ?) — voir ci-dessus"; fi
+else
+    printf '  · smoke build : node absent — SKIP (non bloquant)\n'
+fi
+
 echo "=============================================="
 if [ "$fail" -eq 0 ]; then
     echo "✓ Smoke test : tous les tests critiques PASSENT."

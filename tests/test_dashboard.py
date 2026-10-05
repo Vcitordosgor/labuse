@@ -165,6 +165,10 @@ def test_mail_brevo_non_configure_propre(client, compte_test, monkeypatch):
     """D4/MAILS — Brevo absent : bouton répond {envoye:false, raison explicite}, rien de silencieux."""
     monkeypatch.delenv("LABUSE_BREVO_API_KEY", raising=False)
     monkeypatch.delenv("BREVO_API_KEY", raising=False)   # REVUE · R7 — repli sans préfixe aussi retiré
+    # PARCOURS-FIX-1 (Lot 1.2) — la garde `envoi_reel_autorise` court-circuite TOUT envoi en local sans
+    # LABUSE_MAIL_REEL (raison « dry-run »). Ce test garde le contrat du chemin « Brevo non configuré »
+    # (celui de la PROD) : on ouvre donc l'envoi réel (drapeau posé) pour l'atteindre réellement.
+    monkeypatch.setenv("LABUSE_MAIL_REEL", "1")
     from labuse import config
     config.get_settings.cache_clear()
     # COMPTE-2 : « retablissement » n'attend que PRENOM (toujours dérivable) → on teste bien le chemin

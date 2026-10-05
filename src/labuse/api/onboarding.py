@@ -54,18 +54,35 @@ _PARCOURS_JS = """
   document.addEventListener('DOMContentLoaded', function(){
     var pw=document.querySelector('[data-strength]');
     if(pw){ pw.addEventListener('input', function(){ strength(pw.value); }); }
-    // O2 \\u2014 la case CGV pilote l'\\u00c9TAT VISUEL du bouton : \\u00e9teint (.off) tant qu'elle n'est pas
-    // coch\\u00e9e, allum\\u00e9 d\\u00e8s qu'elle l'est. Le bouton n'est JAMAIS `disabled` (submit natif pr\\u00e9serv\\u00e9 :
-    // la validation `required` + le serveur restent le filet \\u2014 jamais de cul-de-sac si le JS \\u00e9choue).
-    // Le message n'appara\\u00eet QUE si l'utilisateur force l'action sur un bouton \\u00e9teint.
-    var cgv=document.getElementById('cgv'), cta=document.getElementById('cta'), err=document.getElementById('cgverr');
-    if(cgv&&cta){
-      var sync=function(){ var on=cgv.checked;
+    // PARCOURS-FIX-1 (Lot 2.3) \\u2014 le bouton est \\u00e9teint (.off) tant que la R\\u00c8GLE n'est pas tenue :
+    // 10 caract\\u00e8res minimum + les DEUX mots de passe identiques + (si pr\\u00e9sente) la case CGV coch\\u00e9e.
+    // Le bouton n'est JAMAIS `disabled` (submit natif pr\\u00e9serv\\u00e9 : `required`/minlength + le serveur
+    // restent le filet \\u2014 jamais de cul-de-sac si le JS \\u00e9choue). Le message n'appara\\u00eet QUE si l'on
+    // force l'action sur un bouton \\u00e9teint ; le champ de confirmation dit en direct s'il correspond.
+    var p1=document.getElementById('password'), p2=document.getElementById('password2'),
+        cgv=document.getElementById('cgv'), cta=document.getElementById('cta'),
+        err=document.getElementById('cgverr'), conf=document.getElementById('confirm');
+    if(cta){
+      var etat=function(){
+        var v=p1?p1.value:'', w=p2?p2.value:'';
+        var okLen=v.length>=10, okMatch=!p2||(w.length>0&&v===w), okCgv=!cgv||cgv.checked;
+        if(conf){
+          if(!p2||!w){ conf.textContent=''; }
+          else if(v===w){ conf.textContent='Les mots de passe correspondent.'; conf.style.color='var(--mint-ink,#0a7)'; }
+          else { conf.textContent='Les deux mots de passe diff\\u00e8rent.'; conf.style.color='var(--warn)'; }
+        }
+        var on=okLen&&okMatch&&okCgv;
         cta.classList.toggle('off', !on); cta.setAttribute('aria-disabled', String(!on));
-        if(err&&on) err.style.display='none'; };
-      cgv.addEventListener('change', sync); sync();
+        if(err&&on) err.style.display='none';
+        return on;
+      };
+      [p1,p2].forEach(function(el){ if(el) el.addEventListener('input', etat); });
+      if(cgv) cgv.addEventListener('change', etat);
+      etat();
       cta.addEventListener('click', function(e){
-        if(!cgv.checked){ e.preventDefault(); if(err) err.style.display='block'; cgv.focus(); }
+        if(!etat()){ e.preventDefault(); if(err) err.style.display='block';
+          var bad=(!p1||p1.value.length<10)?p1:(p2&&p1.value!==p2.value)?p2:cgv;
+          if(bad&&bad.focus) bad.focus(); }
       });
     }
     // ONBOARDING-1 (O2) \\u2014 la PORTE de connexion : \\u00e9tat de chargement au submit + effacement de
@@ -187,15 +204,31 @@ Choisissez un mot de passe : à votre première connexion, LABUSE vous fera acti
   autocomplete="new-password" autofocus aria-describedby="rules" data-strength></div>
 <div class="meter" id="meter" aria-hidden="true"><i></i><i></i><i></i></div>
 <div class="meterlbl" id="rules" role="status" aria-live="polite">10 caractères minimum — mélangez lettres, chiffres et symboles.</div>
-<button type="submit" id="cta">Créer mon accès administrateur →</button>
+<label for="password2">Confirmez le mot de passe</label>
+<div class="field"><input id="password2" name="password2" type="password" minlength="10" required
+  autocomplete="new-password" aria-describedby="confirm" data-confirm></div>
+<div class="meterlbl" id="confirm" role="status" aria-live="polite"></div>
+<button type="submit" id="cta" class="off" aria-disabled="true">Créer mon accès administrateur →</button>
+<p class="meterlbl" id="cgverr" role="status" aria-live="polite" style="display:none;text-align:center;margin-top:8px;color:var(--warn)">Pour continuer : 10 caractères minimum et les deux mots de passe identiques.</p>
 </form>
 <p class="note">Accès interne LABUSE — aucun paiement, aucun abonnement.</p>
 <script src="/parcours.js" defer></script>""", pied=False))
     # Le tunnel client sert TOUJOURS l'offre Intégral (source de vérité offres.py).
     p = offre_integral()
+    # PARCOURS-FIX-1 (Lot 2.3) — un ESSAI n'a RIEN à payer : le CTA le dit (« Commencer mon essai »)
+    # et la page ne parle NI de paiement, NI de Stripe (finding G2.3). Un abonnement payant garde le
+    # tunnel Checkout inchangé. On ajoute aussi un champ de CONFIRMATION du mot de passe et la règle
+    # « 10 caractères + confirmation identique » qui PILOTE l'état du bouton (G2.1/G2.2).
+    essai = bool(inv.get("essai"))
+    sous = (f"{p['label']} · essai gratuit · <span class=\"free\">sans carte bancaire</span>" if essai
+            else f"{p['label']} · {p['eur_mois']} €/mois · <span class=\"free\">sans engagement</span>")
+    cta_txt = "Commencer mon essai" if essai else "Continuer vers le paiement"
+    note = ("Aucune carte bancaire demandée pour l'essai — vous déciderez de vous abonner à la fin."
+            if essai else
+            "Paiement sécurisé par Stripe — aucune donnée de carte ne transite par LABUSE.")
     return HTMLResponse(_page("créer votre accès", f"""
 <h1>Créer votre accès</h1>
-<p class="sub">{p['label']} · {p['eur_mois']} €/mois · <span class="free">sans engagement</span></p>
+<p class="sub">{sous}</p>
 <p class="lede">Votre e-mail est validé. Choisissez un mot de passe, et vous entrez dans le radar foncier de La Réunion.</p>
 <form method="post" action="/invitation">
 <input type="hidden" name="token" value="{html.escape(token)}">
@@ -207,12 +240,16 @@ Choisissez un mot de passe : à votre première connexion, LABUSE vous fera acti
   autocomplete="new-password" autofocus aria-describedby="rules" data-strength></div>
 <div class="meter" id="meter" aria-hidden="true"><i></i><i></i><i></i></div>
 <div class="meterlbl" id="rules" role="status" aria-live="polite">10 caractères minimum — mélangez lettres, chiffres et symboles.</div>
+<label for="password2">Confirmez le mot de passe</label>
+<div class="field"><input id="password2" name="password2" type="password" minlength="10" required
+  autocomplete="new-password" aria-describedby="confirm" data-confirm></div>
+<div class="meterlbl" id="confirm" role="status" aria-live="polite"></div>
 <div class="consent"><input type="checkbox" id="cgv" name="cgv" value="oui" required aria-required="true">
 <label for="cgv">J'ai lu et j'accepte les <a href="/cgv" target="_blank">conditions générales</a>.</label></div>
-<button type="submit" id="cta" class="off" aria-disabled="true">Continuer vers le paiement <span class="arr" aria-hidden="true">→</span></button>
-<p class="meterlbl" id="cgverr" role="status" aria-live="polite" style="display:none;text-align:center;margin-top:8px;color:var(--warn)">Cochez les conditions générales pour continuer.</p>
+<button type="submit" id="cta" class="off" aria-disabled="true">{cta_txt} <span class="arr" aria-hidden="true">→</span></button>
+<p class="meterlbl" id="cgverr" role="status" aria-live="polite" style="display:none;text-align:center;margin-top:8px;color:var(--warn)">Pour continuer : 10 caractères minimum, les deux mots de passe identiques, et les conditions générales cochées.</p>
 </form>
-<p class="note">Paiement sécurisé par Stripe — aucune donnée de carte ne transite par LABUSE.</p>
+<p class="note">{note}</p>
 <script src="/parcours.js" defer></script>""", pied=True))
 
 
@@ -224,7 +261,15 @@ async def invitation_submit(request: Request, db: Session = Depends(get_db)):
     q = parse_qs((await request.body()).decode("utf-8", "replace"))
     token = (q.get("token") or [""])[0]
     password = (q.get("password") or [""])[0]
+    password2 = (q.get("password2") or [""])[0]
     cgv = (q.get("cgv") or [""])[0] == "oui"
+    # PARCOURS-FIX-1 (Lot 2.3) — filet SERVEUR de la confirmation : si le champ de confirmation est
+    # fourni et diffère (JS contourné / désactivé), on refuse PROPREMENT avec un retour au formulaire.
+    if password2 and password2 != password:
+        return HTMLResponse(_page("mot de passe", "<h1>Les mots de passe diffèrent</h1>"
+                                  "<p class='sous'>la confirmation ne correspond pas au mot de passe choisi</p>"
+                                  f"<p style='text-align:center'><a href='/invitation?token={html.escape(token)}'>revenir</a></p>"),
+                            status_code=400)
     # E2 — un compte interne (admin) n'a pas de CGV commerciales : la case n'existe pas sur son
     # écran. On confirme via le PLAN de l'invitation (source serveur), jamais via le champ caché
     # 'interne' seul (non falsifiable : un client ne peut pas se faire passer pour un interne).

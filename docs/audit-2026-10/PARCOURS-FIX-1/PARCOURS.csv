@@ -1,0 +1,41 @@
+seq,device,etape,ce_que_fait_le_client,verdict,clics,temps_s,capture
+1,desktop,A1 · Build prod,Vic ouvre l’app servie par l’API (build de production).,OK,1,1.2,captures/desktop/01-app-build-rendu.png
+2,desktop,A2 · Comptes,Vic voit la liste des comptes (essai [CT-PARCOURS] créé).,OK,1,0.1,captures/desktop/02-admin-comptes.png
+3,desktop,A3 · Fiche compte,La fiche expose « Copier le lien d’invitation » (G4 corrigé).,OK,1,0.2,captures/desktop/03-fiche-bouton-lien.png
+4,desktop,A3b · Lien copiable,"Le lien d’invitation s’affiche, sélectionnable + bouton Copier.",OK,1,0.2,captures/desktop/04-fiche-lien-affiche.png
+5,desktop,B1 · Choix du mot de passe,"Le client choisit son mot de passe : champ de confirmation présent, CTA adapté à l’essai.",OK,0,0.3,captures/desktop/05-invitation-mdp-page.png
+6,desktop,B2 · Règle 10 car.,Mot de passe trop court : le bouton reste éteint (règle imposée).,OK,2,0.2,captures/desktop/06-invitation-regle-courte.png
+7,desktop,B3 · Confirmation ≠,"Les deux mots de passe diffèrent : bouton éteint, message clair.",OK,2,0.2,captures/desktop/07-invitation-confirmation-differente.png
+8,desktop,B4 · Prêt,Mot de passe conforme + confirmation + CGV : le bouton s’allume.,OK,1,0.3,captures/desktop/08-invitation-pret.png
+9,desktop,B5 · Accès ouvert,Le compte est créé — le client entre dans l’app (essai).,OK,1,0.3,captures/desktop/09-invitation-active.png
+10,desktop,C1 · Connexion,La page de connexion propose « Se souvenir de moi ».,OK,0,0.3,captures/desktop/10-login-souvenir.png
+11,desktop,C2 · Session étendue,Connecté avec « se souvenir » : session ≈ 30 j (au lieu de 12 h).,OK,1,0.6,captures/desktop/11-app-accueil-souvenir.png
+12,desktop,7.1 · Chercher une adresse / parcelle,Le promoteur ouvre : Chercher une adresse / parcelle.,OK,1,0.4,captures/desktop/12-geste-01-recherche.png
+13,desktop,7.2 · PLU / zonage,Le promoteur ouvre : PLU / zonage.,OK,1,0.4,captures/desktop/13-geste-02-plu.png
+14,desktop,7.3 · Gabarit constructible 2D/3D,Le promoteur ouvre : Gabarit constructible 2D/3D.,OK,1,0.4,captures/desktop/14-geste-03-gabarit.png
+15,desktop,7.4 · Taxe d’aménagement,Le promoteur ouvre : Taxe d’aménagement.,OK,1,0.4,captures/desktop/15-geste-04-taxe-amenagement.png
+16,desktop,7.5 · Assembler deux parcelles,Le promoteur ouvre : Assembler deux parcelles.,OK,1,0.4,captures/desktop/16-geste-05-assemblage.png
+17,desktop,7.6 · Faisabilité / programme,Le promoteur ouvre : Faisabilité / programme.,OK,1,0.4,captures/desktop/17-geste-06-programme.png
+18,desktop,7.7 · Calculette foncière (bilan),Le promoteur ouvre : Calculette foncière (bilan).,OK,1,0.4,captures/desktop/18-geste-07-calculette-fonciere.png
+19,desktop,7.8 · Comparer des communes,Le promoteur ouvre : Comparer des communes.,OK,1,0.4,captures/desktop/19-geste-08-comparer.png
+20,desktop,7.9 · Fiche commune,Le promoteur ouvre : Fiche commune.,OK,1,0.4,captures/desktop/20-geste-09-communes.png
+21,desktop,7.10 · Risques & servitudes,Le promoteur ouvre : Risques & servitudes.,OK,1,0.4,captures/desktop/21-geste-10-risques.png
+22,desktop,7.11 · Étude de zone,Le promoteur ouvre : Étude de zone.,OK,1,0.4,captures/desktop/22-geste-11-etude-zone.png
+23,desktop,7.12 · Mon secteur,Le promoteur ouvre : Mon secteur.,OK,1,0.4,captures/desktop/23-geste-12-mon-secteur.png
+24,desktop,7.13 · Patrimoine / successions,Le promoteur ouvre : Patrimoine / successions.,OK,1,0.4,captures/desktop/24-geste-13-patrimoine.png
+25,desktop,7.14 · Permis déposés,Le promoteur ouvre : Permis déposés.,OK,1,0.4,captures/desktop/25-geste-14-permis.png
+26,desktop,7.15 · Baromètre du marché,Le promoteur ouvre : Baromètre du marché.,OK,1,0.4,captures/desktop/26-geste-15-barometre.png
+27,desktop,7.16 · Radar (marché en vente),Le promoteur ouvre : Radar (marché en vente).,OK,1,0.4,captures/desktop/27-geste-16-radar.png
+28,desktop,7.17 · Copilote (une question),Le promoteur ouvre : Copilote (une question).,OK,1,0.2,captures/desktop/28-geste-17-copilote.png
+29,desktop,7.18 · Mes documents,Le promoteur ouvre : Mes documents.,OK,1,0.1,captures/desktop/29-geste-18-documents.png
+30,desktop,7.19 · Veille promoteurs,Le promoteur ouvre : Veille promoteurs.,OK,1,0.1,captures/desktop/30-geste-19-veille-promoteurs.png
+31,desktop,7.20 · Remonter le temps,Le promoteur ouvre : Remonter le temps.,OK,1,0.1,captures/desktop/31-geste-20-temps.png
+32,desktop,8.1 · Mot de passe oublié,Le client demande un lien de réinitialisation (dry-run → .eml).,OK,1,0.2,captures/desktop/32-reset-demande.png
+33,desktop,8.2 · Nouveau mot de passe,Le client pose un nouveau mot de passe via le lien reçu.,OK,1,0.3,captures/desktop/33-reset-nouveau-mdp.png
+34,desktop,8.3 · Reconnexion,Le client se reconnecte avec le nouveau mot de passe.,OK,1,1.5,captures/desktop/34-reset-reconnexion.png
+35,desktop,D1 · Suspension,Vic suspend le compte → le mail « suspension » part (file : suspension:a_rejouer).,OK,1,0.2,captures/desktop/35-suspension.png
+36,desktop,D2 · Rétablissement,Vic rétablit le compte → le mail « rétablissement » part (file : retablissement:a_rejouer).,OK,1,0.1,captures/desktop/36-retablissement.png
+37,desktop,9 · Fin d’essai,"Essai expiré : le client voit « abonnement à régulariser », données intactes.",OK,1,0.3,captures/desktop/37-fin-essai.png
+1,mobile,M1 · Connexion (mobile),"Page de connexion sur mobile, avec « Se souvenir de moi ».",OK,1,0.2,captures/mobile/01-login.png
+2,mobile,M2 · Invitation (mobile),Page mot de passe sur mobile : confirmation + CTA essai.,OK,1,0.1,captures/mobile/02-invitation.png
+3,mobile,M3 · App (mobile),L’app (build de prod) s’ouvre et s’affiche sur mobile.,OK,1,0.1,captures/mobile/03-app-accueil.png

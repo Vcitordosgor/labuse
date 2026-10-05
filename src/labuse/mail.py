@@ -29,12 +29,58 @@ from dataclasses import dataclass
 from email.message import EmailMessage
 from email.utils import formatdate, make_msgid
 
-from .config import get_settings
+from .config import envoi_reel_autorise, get_settings
 
 log = logging.getLogger("labuse.mail")
 
 # Plafond Gmail gratuit (C2) — indicatif : au-delà, refus explicite plutôt qu'échec silencieux.
 GMAIL_DAILY_CAP = 500
+
+
+# ───────────────────────── transport .eml (dry-run étanche) ─────────────────────────
+# PARCOURS-FIX-1 (point 2) — quand l'envoi réseau n'est PAS autorisé (local sans LABUSE_MAIL_REEL),
+# le mail est écrit sur disque au format `.eml` au lieu de partir. Aucun appel réseau. Le fichier est
+# inspectable (l'ouvrir dans un client mail), c'est la PREUVE du dry-run.
+
+def _dryrun_dir(settings=None):
+    from pathlib import Path
+    from .config import _repo_root
+    s = settings or get_settings()
+    d = getattr(s, "mail_dryrun_dir", None)
+    p = Path(d) if d else (_repo_root() / "outputs" / "mails_dryrun")
+    p.mkdir(parents=True, exist_ok=True)
+    return p
+
+
+def _ecrire_eml(msg: EmailMessage, *, settings=None):
+    """Écrit un EmailMessage en `.eml` dans le dossier dry-run. Retourne le chemin (str)."""
+    from datetime import datetime
+    d = _dryrun_dir(settings)
+    stamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
+    dest = (msg.get("To") or "x").replace("/", "_").replace("@", "_at_").replace(" ", "")[:48]
+    path = d / f"{stamp}__{dest}.eml"
+    path.write_bytes(bytes(msg))
+    return str(path)
+
+
+def ecrire_dryrun_template(key: str, to: str, params: dict | None = None, *, settings=None) -> str:
+    """PARCOURS-FIX-1 (point 2) — trace `.eml` d'un template Brevo NON envoyé (dry-run). Le HTML réel
+    est rendu server-side par Brevo (indisponible sans appel réseau) : on écrit l'INTENTION (clé du
+    template, libellé, id, destinataire, paramètres) dans un `.eml` lisible. 0 appel réseau."""
+    from . import brevo
+    import json as _json
+    t = brevo.template(key)
+    libelle = t.libelle if t else key
+    corps = (
+        "[DRY-RUN LABUSE — ce mail N'EST PAS parti : envoi réel désactivé en local "
+        "(poser LABUSE_MAIL_REEL=1 pour envoyer).]\n\n"
+        f"Template Brevo : {key} (« {libelle} », id {brevo.template_id(key)})\n"
+        f"Destinataire   : {to}\n\n"
+        "Paramètres :\n" + _json.dumps(params or {}, ensure_ascii=False, indent=2) + "\n")
+    s = settings or get_settings()
+    from_addr = getattr(s, "mail_from", None) or "LABUSE <contact@labuse.immo>"
+    msg = _build_message(to, f"[DRY-RUN] {libelle}", corps, from_addr)
+    return _ecrire_eml(msg, settings=s)
 
 
 @dataclass(frozen=True)
@@ -74,6 +120,18 @@ def send_email(to: str, subject: str, body_text: str, *,
     """
     s = settings or get_settings()
     from_addr = getattr(s, "mail_from", None) or getattr(s, "smtp_from", "LABUSE <contact@labuse.immo>")
+
+    if not envoi_reel_autorise(s):
+        # PARCOURS-FIX-1 (point 2) — dry-run ÉTANCHE : on n'ouvre JAMAIS de socket SMTP, quoi que
+        # contienne le `.env`. Le mail est écrit en `.eml` (preuve inspectable), état `dry-run`.
+        msg = _build_message(to, subject, body_text, from_addr, headers=headers, body_html=body_html)
+        try:
+            path = _ecrire_eml(msg, settings=s)
+            log.info("MAIL DRY-RUN (.eml écrit, 0 réseau) — to=%s subject=%r fichier=%s", to, subject, path)
+        except Exception as exc:  # noqa: BLE001 — écrire le .eml ne doit jamais faire échouer la requête
+            log.warning("MAIL DRY-RUN — écriture .eml impossible (%s), mail journalisé seulement", exc)
+            log.info("MAIL DRY-RUN — to=%s subject=%r\n%s", to, subject, body_text)
+        return SendResult(False, "dry-run")
 
     if not s.smtp_host:
         # A2 — pas de config : on JOURNALISE le mail (debug) et on retourne non-envoyé.
@@ -116,7 +174,7 @@ def send_email_async(to: str, subject: str, body_text: str, *,
     retour synchrone utilisent `send_email`. `contexte` : libellé court pour l'admin (ex. « Courrier »)."""
     def _run() -> None:
         res = send_email(to, subject, body_text, headers=headers)
-        if not res.ok and res.detail != "no-config":   # échec RÉEL (le mode journal dev n'est pas un échec)
+        if not res.ok and res.detail not in ("no-config", "dry-run"):   # échec RÉEL (journal/dry-run dev ≠ échec)
             _journaliser_echec_admin(to, subject, res.detail, contexte)
     threading.Thread(target=_run, daemon=True, name="labuse-mail-async").start()
 

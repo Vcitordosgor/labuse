@@ -146,8 +146,9 @@ def _sign(payload: str) -> str:
     return hmac.new(_key(), payload.encode("utf-8"), hashlib.sha256).hexdigest()
 
 
-def make_token() -> str:
-    expiry = int(time.time() + get_settings().session_hours * 3600)
+def make_token(hours: float | None = None) -> str:
+    # PARCOURS-FIX-1 (Lot 2.4) — `hours` surcharge la durée (« Se souvenir de moi ») ; None = défaut.
+    expiry = int(time.time() + (hours if hours is not None else get_settings().session_hours) * 3600)
     payload = f"v1.{expiry}"
     return f"{payload}.{_sign(payload)}"
 
@@ -229,16 +230,23 @@ def password_ok(candidate: str) -> bool:
     return hmac.compare_digest(candidate, expected)
 
 
-def cookie_kwargs() -> dict:
+def cookie_kwargs(hours: float | None = None) -> dict:
+    # PARCOURS-FIX-1 (Lot 2.4) — `hours` surcharge la durée de vie du cookie (« Se souvenir de moi »).
     s = get_settings()
     return {
         "key": COOKIE,
         "httponly": True,
         "samesite": "lax",
         "secure": s.env != "local",          # pilote/production = derrière HTTPS (documenté)
-        "max_age": int(s.session_hours * 3600),
+        "max_age": int((hours if hours is not None else s.session_hours) * 3600),
         "path": "/",
     }
+
+
+def souvenir_heures(souvenir: bool) -> float | None:
+    """PARCOURS-FIX-1 (Lot 2.4) — durée de session selon la case « Se souvenir de moi » :
+    cochée → `session_hours_souvenir` (30 j) ; décochée → None (= défaut `session_hours`, 12 h)."""
+    return float(get_settings().session_hours_souvenir) if souvenir else None
 
 
 # ── VPS · AC-025 — jeton de DÉFI 2FA (mot de passe OK, code TOTP attendu) ──
@@ -355,6 +363,10 @@ def login_page(error: bool = False) -> str:
      autocomplete="current-password" aria-required="true"></div>
   <p class="err" id="loginerr" role="alert" aria-live="polite"{"" if error else " hidden"}>
     <span aria-hidden="true">▲</span> E-mail ou mot de passe incorrect.</p>
+  <label class="remember" for="souvenir" style="display:flex;align-items:center;gap:9px;font-size:13px;
+     color:var(--mut);margin:2px 0 4px;cursor:pointer">
+    <input type="checkbox" id="souvenir" name="souvenir" value="oui" style="width:auto;margin:0">
+    Se souvenir de moi sur cet ordinateur</label>
   <button type="submit"><span class="spin" hidden aria-hidden="true"></span>
     <span data-hideon="chargement">Entrer</span></button>
 </form>
