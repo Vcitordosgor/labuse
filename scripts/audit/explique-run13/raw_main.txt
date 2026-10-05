@@ -1,0 +1,106 @@
+Pager usage is off.
+psql:scripts/audit/explique-run13/explique_run13.sql:10: NOTICE:  table "_er13" does not exist, skipping
+DROP TABLE
+SELECT 431663
+==================== (0) CONTROLE TOTAUX ====================
+ parcelles | sdp_servi | sdp_qv16 | delta_sdp 
+-----------+-----------+----------+-----------
+    431663 |  79543072 | 93530496 |  13987424
+(1 row)
+
+==================== (1) MATRICE DE TRANSITION (famille servi -> qv16) ====================
+       fam_servi        |        fam_qv16        |   n    | delta_sdp 
+------------------------+------------------------+--------+-----------
+ calculee               | terrain_exigu          |   8637 |  -1873818
+ calculee               | regle_plu_non_validee  |    205 |   -241808
+ redhibitoire           | terrain_exigu          |    203 |         0
+ terrain_exigu          | regle_plu_non_validee  |     77 |         0
+ terrain_exigu          | calculee               |      5 |        92
+ terrain_exigu          | redhibitoire           |      1 |         0
+ calculee               | calculee               | 252819 |  16102958
+ zone_non_constructible | zone_non_constructible |  82449 |         0
+ terrain_exigu          | terrain_exigu          |  62412 |         0
+ zone_non_resolue       | zone_non_resolue       |  10463 |         0
+ redhibitoire           | redhibitoire           |   5073 |         0
+ habitat_interdit       | habitat_interdit       |   5042 |         0
+ hors_plu               | hors_plu               |   4244 |         0
+ regle_plu_non_validee  | regle_plu_non_validee  |     31 |         0
+ hauteur_indispo        | hauteur_indispo        |      2 |         0
+(15 rows)
+
+---- (1b) transitions NON diagonales seulement ----
+   fam_servi   |       fam_qv16        |  n   | delta_sdp 
+---------------+-----------------------+------+-----------
+ calculee      | terrain_exigu         | 8637 |  -1873818
+ calculee      | regle_plu_non_validee |  205 |   -241808
+ redhibitoire  | terrain_exigu         |  203 |         0
+ terrain_exigu | regle_plu_non_validee |   77 |         0
+ terrain_exigu | calculee              |    5 |        92
+ terrain_exigu | redhibitoire          |    1 |         0
+(6 rows)
+
+==================== (3a) DECOMPOSITION FLUX (sommes a +14M) ====================
+ stayers | d_stayers | leavers | d_leavers | enterers | d_enterers 
+---------+-----------+---------+-----------+----------+------------
+  252819 |  16102958 |    8842 |  -2115626 |        5 |         92
+(1 row)
+
+==================== (3b) VENTILATION PAR COMMUNE ====================
+         commune         | delta_sdp | n_stayers_chg | n_leavers 
+-------------------------+-----------+---------------+-----------
+ Le Tampon               |   4305974 |         21452 |       295
+ Saint-Denis             |   1564670 |         11252 |      2743
+ Saint-Louis             |   1403767 |         11882 |       230
+ Saint-Benoît            |    943318 |         11334 |         0
+ Saint-Pierre            |    761701 |         15600 |       309
+ La Possession           |    694177 |          7331 |        72
+ Sainte-Suzanne          |    541637 |          5161 |       236
+ Saint-Paul              |    534999 |         22151 |      1002
+ Les Avirons             |    534698 |          3235 |        55
+ Sainte-Marie            |    496143 |          7316 |       315
+ Le Port                 |    343587 |          3076 |       410
+ Bras-Panon              |    326130 |          2372 |        52
+ Petite-Île              |    283321 |          2959 |        23
+ Saint-Leu               |    272376 |          6707 |       227
+ L'Étang-Salé            |    235506 |          3600 |        87
+ La Plaine-des-Palmistes |    224290 |          2216 |       664
+ Saint-Joseph            |    199104 |          8880 |       369
+ Salazie                 |    119412 |          1527 |       101
+ Cilaos                  |    117428 |          1912 |       148
+ Les Trois-Bassins       |     89176 |          1541 |       525
+ Entre-Deux              |     72339 |          2060 |        60
+ Sainte-Rose             |     37104 |          1941 |        55
+ Saint-Philippe          |         0 |             0 |         0
+ Saint-André             |   -113433 |         12012 |       864
+(24 rows)
+
+==================== (3c) VENTILATION PAR FAMILLE DE ZONE ====================
+   zone_fam    | delta_sdp | n_calc_either 
+---------------+-----------+---------------
+ U             |  13743176 |        248319
+ AU            |    375503 |          6832
+ (hors zonage) |         0 |             0
+ A             |    -14748 |          2139
+ N             |   -116507 |          4376
+(5 rows)
+
+==================== (3d) ATTRIBUTION PAR CAUSE/MECANISME (partition exclusive, somme a +14M) ====================
+         bucket         |   n    | delta_sdp | n_up  | n_down 
+------------------------+--------+-----------+-------+--------
+ 0_AUTRE                | 169997 |         0 |     0 |      0
+ 1_LEAVER_TERRAIN_EXIGU |   8637 |  -1873818 |     0 |   4122
+ 2_LEAVER_REGLE_PLU     |    205 |   -241808 |     0 |    133
+ 4_ENTERER              |      5 |        92 |     5 |      0
+ 5_EXC_PLU_BRASPANON    |   1925 |    220192 |  1210 |     18
+ 6_EMPRISE              | 100560 |  13239158 | 71621 |   2957
+ 7_HAUTEUR_LIDAR        |  87388 |   2770230 | 78890 |   8498
+ 8_HAUTEUR_AUTRE        |   4323 |   -126622 |  3424 |    899
+ 9_INCHANGE             |  58623 |         0 |     0 |      0
+(9 rows)
+
+---- (3d-total) controle : somme des buckets ----
+ total_delta_doit_etre_13987424 
+--------------------------------
+                       13987424
+(1 row)
+
