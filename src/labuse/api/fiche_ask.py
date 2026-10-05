@@ -189,6 +189,10 @@ def _ask_context(db: Session, idu: str) -> tuple[dict, dict]:
         # « disponible » (même libellé servi que la fiche §Potentiel, règle au_differe).
         "capacite_differee": _F(pot.get("libelle") if pot.get("capacite_differee") else None,
                                 "ESTIME"),
+        # CHASSE-FIX-2 (D04) — la parcelle PORTE une cause de non-retenue (terrain exigu/PPR rouge/
+        # zone fermée…) : le Copilote la NOMME (même libellé que la fiche §Potentiel + Dossier),
+        # jamais un « non disponible » muet ni un faux potentiel sur une bande 0.
+        "potentiel_non_retenue": _F(pot.get("libelle") if pot.get("cause") else None, "ESTIME"),
         "sdp_residuelle_m2": _F(pot.get("sdp_residuelle_m2") or pot.get("sdp_residuelle"), "ESTIME"),
         # COHERENCE-FIX-1 (lot B) — le Copilote cite ce que le client VOIT : > 300 → « > 300 »
         # (même règle que fiche/Dossier), jamais le 999 historique ni un exact trompeur.

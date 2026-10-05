@@ -27,8 +27,10 @@ import { Repli, Lignes, Ligne, InfoI } from './formes'
 // (scenarios._fmt_m2) le fait déjà ; ici on couvre les surfaces de plancher rendues côté front (Tester).
 const fmtPlancherM2 = (v: number | null | undefined): string => v == null ? '—' : `${fmtInt(v)} m²`
 // CHASSE-FIX-1 (C06) — niveau « differe » (zone AU non ouverte) : ambre, libellé servi par le back.
-const PT_COLORS: Record<string, string> = { fort: '#4ADE96', modere: '#F5C244', faible: '#9AA6A0', nul: '#6B7280', indetermine: '#6B7280', differe: '#F5A623' }
-const PT_CHIP: Record<string, string> = { differe: 'différé' }
+const PT_COLORS: Record<string, string> = { fort: '#4ADE96', modere: '#F5C244', faible: '#9AA6A0', nul: '#6B7280', indetermine: '#6B7280', differe: '#F5A623', exclu: '#6B7280' }
+// CHASSE-FIX-2 (D04) — « exclu » (parcelle à cause) porte le chip « non retenue » ; la vraie
+// raison est affichée en clair plus bas (plus jamais un « indéterminé » muet sur une bande 0).
+const PT_CHIP: Record<string, string> = { differe: 'différé', exclu: 'non retenue' }
 export function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
   if (pt.indisponible) return <BlocIndisponible titre="Potentiel de transformation" />   // M125 — panne ≠ absence
   const color = PT_COLORS[pt.niveau] ?? '#9AA6A0'
@@ -54,6 +56,16 @@ export function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
             valeur={<>~{pt.hauteur_marge_m} <small>m sous la règle</small></>} />
         )}
       </Lignes>
+      {/* CHASSE-FIX-2 (D03/D04) — la parcelle porte une CAUSE : on la NOMME en clair (le libellé
+          serveur porte la vraie raison). Deux familles (arbitrage Vic) : CERTAINE (« exclu ») →
+          badge « Non retenue » (verdict ferme, SDP 0 nommée) ; IGNORANCE (« indetermine ») → badge
+          « Analyse incomplète » gris (SDP ∅, cohérent NC). Plus jamais de « Marge SDP non calculée ». */}
+      {pt.cause && pt.libelle && (
+        <div data-potentiel-non-retenue className="mt-0.5">
+          <Badge ton={pt.niveau === 'exclu' ? 'ambre' : 'neutre'}>{pt.niveau === 'exclu' ? 'Non retenue' : 'Analyse incomplète'}</Badge>
+          <p className="mt-0.5 text-[11px] leading-snug text-txt-dim">{pt.libelle}</p>
+        </div>
+      )}
       {/* PLU-EXCEPTIONS-1 Lot B — une exception du règlement peut changer l'enveloppe (bande depuis
           une limite, sous-secteur, majoration de hauteur…). On la SIGNALE ici « à vérifier » (jamais
           appliquée au calcul), avec renvoi vers le règlement de la zone (§Urbanisme). */}

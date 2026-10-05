@@ -288,6 +288,9 @@ export interface Fiche {
   secteur?: string | null   // GEOPF-3 : lieu-dit BD NYME le plus proche (rayon borné) — null si aucun
   proprietaire_moral: {
     denomination: string | null; siren: string | null; groupe_label: string | null
+    // CHASSE-FIX-2 (C35) — propriétaire public (État/collectivité/commune/EPCI/établissement public) :
+    // badge sur la fiche, même règle DGFiP (groupes 1-4/9) que la liste et le filtre.
+    proprietaire_public?: boolean | null
     etat_societe?: {
       etats: { type: string; date: string | null; libelle: string; source: string; etiquette: string }[]
       libelle: string; note: string
@@ -909,8 +912,13 @@ export interface MixiteRegle {
 export interface ReglementPlu extends Indisponible { zones: ReglementZone[]; disclaimer: string; mixite?: MixiteRegle | null; zone_famille?: string | null; constructible_neuf?: boolean | null; a_cheval?: boolean | null }
 
 export interface PotentielTransformation extends Indisponible {
-  niveau: 'fort' | 'modere' | 'faible' | 'nul' | 'indetermine'
+  niveau: 'fort' | 'modere' | 'faible' | 'nul' | 'indetermine' | 'differe' | 'exclu'
   libelle: string
+  // CHASSE-FIX-2 (D03/D04) — cause STRUCTURÉE de non-retenue (terrain_exigu, redhibitoire,
+  // zone_non_constructible:…) + raison fine du terrain exigu. `libelle` ci-dessus la NOMME ;
+  // null = parcelle calculée (potentiel disponible). Servi aussi en liste/Dossier/Copilote.
+  cause?: string | null
+  exigu_raison?: string | null
   // PLU-EXCEPTIONS-1 — exceptions du règlement qui POURRAIENT changer le calcul (à vérifier). Ne
   // sont PAS appliquées ; renvoient vers §Urbanisme.
   exceptions_calcul?: { regle: string; porte: string | null; article: string | null; page_pdf: number | null }[]

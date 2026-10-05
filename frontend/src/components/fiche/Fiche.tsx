@@ -1343,8 +1343,19 @@ export function Fiche({ idu }: { idu: string }) {
                   return (
                     <div>
                       <Verdict ton="vert" reponse={pm.denomination ?? 'Propriétaire (personne morale)'}
-                        contexte={[anc?.disponible && anc.depuis_annee ? `propriétaire depuis ${anc.depuis_annee}` : null,
+                        contexte={[pm.proprietaire_public ? 'propriétaire public' : null,
+                          anc?.disponible && anc.depuis_annee ? `propriétaire depuis ${anc.depuis_annee}` : null,
                           proc ? proc.libelle : 'aucune procédure collective'].filter(Boolean).join(' — ') || undefined} />
+                      {/* CHASSE-FIX-2 (C35) — badge « Propriétaire public » sur la fiche (État/collectivité/
+                          commune/EPCI/établissement public). Même règle DGFiP que la liste et le filtre ;
+                          la parcelle reste au classement, le filtre « propriétaire » l'écarte à la demande. */}
+                      {pm.proprietaire_public && (
+                        <div data-proprietaire-public className="mt-1">
+                          <span className="rounded-full border border-line-2 px-2 py-0.5 text-[10px] font-medium text-txt-dim">
+                            Propriétaire public — démarche dédiée (reste au classement ; filtrable)
+                          </span>
+                        </div>
+                      )}
                       <Tuiles items={tuiles} />
                       {(id?.siege || pm.groupe_label) && (
                         <Lignes>

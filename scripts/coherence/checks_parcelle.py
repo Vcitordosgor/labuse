@@ -103,11 +103,16 @@ CHECKS: list[tuple] = [
     ("sdp_residuelle_m2", "1 %", [
         ("fiche:potentiel_transformation.sdp_residuelle_m2",
          _f("potentiel_transformation.sdp_residuelle_m2")),
-        # COHERENCE-FIX-1 — le lecteur SQL applique la règle M125 des lecteurs VIVANTS (cause IS
-        # NULL) : une ligne à cause (terrain_exigu…) porte un « 0 écrit » de dataset, pas une
-        # valeur servie — fiche et tuile la rendent ∅, le SQL doit lire pareil.
+        # CHASSE-FIX-2 (D03, arbitrage Vic) — le bloc Potentiel sert la SDP du run pour une cause
+        # CERTAINE (0 nommé : terrain_exigu/zone_non_constructible/habitat_interdit/redhibitoire/
+        # capacite_nulle) et ∅ pour une cause d'IGNORANCE (zone_non_resolue/hors_plu/
+        # regle_plu_non_validee/hauteur_indispo…) — cohérent C26/NC. Le lecteur SQL applique la MÊME
+        # partition : raw sdp si cause NULL ou certaine, ∅ sinon (miroir de faisabilite.engine.cause_certaine).
         ("sql:parcel_residuel.sdp_residuelle_m2",
-         _sql("SELECT CASE WHEN r.cause IS NULL THEN r.sdp_residuelle_m2 END "
+         _sql("SELECT CASE WHEN r.cause IS NULL OR r.cause = 'terrain_exigu' "
+              "OR r.cause LIKE 'zone_non_constructible%%' OR r.cause LIKE 'habitat_interdit%%' "
+              "OR r.cause = 'redhibitoire' OR r.cause = 'capacite_nulle' "
+              "THEN r.sdp_residuelle_m2 END "
               "FROM parcel_residuel r JOIN parcels p ON p.id=r.parcel_id WHERE p.idu=%(idu)s")),
         ("tuile:sdp_residuelle_m2", _tuile("sdp_residuelle_m2")),
     ], "run_different"),

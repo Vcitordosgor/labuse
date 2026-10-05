@@ -12,6 +12,7 @@ import base64
 import json
 import logging
 import math
+import time
 from pathlib import Path
 
 import httpx
@@ -52,15 +53,36 @@ def _rings(geojson: dict) -> list[list[tuple[float, float]]]:
 
 
 def _fetch_tile(z: int, x: int, y: int, cache_dir: Path, client: httpx.Client,
-                tile_url: str = TILE_URL, prefix: str = "osm") -> bytes | None:
+                tile_url: str = TILE_URL, prefix: str = "osm",
+                retries: int = 3, backoff_s: float = 0.4) -> bytes | None:
     cached = cache_dir / f"{prefix}_{z}_{x}_{y}.bin"
     if cached.exists():
         return cached.read_bytes()
-    resp = client.get(tile_url.format(z=z, x=x, y=y))
-    resp.raise_for_status()
-    cache_dir.mkdir(parents=True, exist_ok=True)
-    cached.write_bytes(resp.content)
-    return resp.content
+    # CHASSE-FIX-2 (D01/D11) — data.geopf.fr (WMTS ortho IGN) rend des 400/5xx TRANSITOIRES sous
+    # rafale (CHASSE-2 : 24/68 crops échouaient au 1er passage, tous réussis à la relance). Un échec
+    # d'UNE tuile faisait tomber TOUTE la carte « momentanément indisponible », sans retry : le client
+    # Flash payait un PDF sans plan quand une relance l'aurait rempli. On RÉESSAIE avec backoff
+    # exponentiel AVANT d'abandonner. Un 404 (tuile hors couverture, non transitoire) ne se réessaie
+    # pas. Si toutes les tentatives échouent, on lève : l'appelant rend la page SANS carte (best-effort),
+    # jamais une carte PARTIELLE — mais plus jamais un abandon qu'une simple relance aurait évité.
+    last_exc: Exception | None = None
+    for essai in range(retries):
+        try:
+            resp = client.get(tile_url.format(z=z, x=x, y=y))
+            resp.raise_for_status()
+            cache_dir.mkdir(parents=True, exist_ok=True)
+            cached.write_bytes(resp.content)
+            return resp.content
+        except httpx.HTTPStatusError as exc:
+            if exc.response.status_code == 404:
+                raise                                   # tuile réellement absente : inutile d'insister
+            last_exc = exc
+        except httpx.TransportError as exc:             # réseau/timeout transitoire
+            last_exc = exc
+        if essai < retries - 1:
+            time.sleep(backoff_s * (2 ** essai))        # 0,4 s → 0,8 s → … (dernier essai : pas d'attente)
+    assert last_exc is not None
+    raise last_exc
 
 
 # Fond ORTHO IGN (Géoplateforme WMTS, grille PM = même Z/X/Y que OSM) — libre, sans clé Maps.

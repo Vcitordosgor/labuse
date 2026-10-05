@@ -306,6 +306,74 @@ def _verdict_assiette_vide(raison: str | None, recul_used: float) -> tuple[str, 
             "en l'état (le contour inseté se vide).", "≈ 0 m² (contour vidé)")
 
 
+# CHASSE-FIX-2 (D04) — la RAISON fine du terrain exigu (RECETTE-1 A1), formulée « Non retenue — … »
+# pour le client. Le mot « exigu » / « terrain trop » est TOUJOURS présent (invariant du mandat :
+# avant, « exigu » n'apparaissait 0 fois dans le payload servi — 71 252 parcelles muettes).
+_EXIGU_LIB = {
+    "ppr_rouge": "terrain trop étroit une fois retirée la zone rouge du PPR",
+    "emplacement_reserve": "terrain trop étroit une fois retiré l'emplacement réservé",
+    "ebc": "terrain trop étroit une fois retiré l'espace boisé classé",
+    "contraintes": "terrain trop étroit une fois retirées les contraintes géométriques certaines",
+    "portion_reduite": "portion constructible U/AU trop réduite sur cette parcelle à cheval (terrain exigu)",
+    "reculs": "terrain trop étroit une fois appliqués les reculs réglementaires",
+}
+
+
+# CHASSE-FIX-2 (D03, arbitrage Vic) — DEUX familles de cause, deux discours :
+#  · CERTAINE (verdict ferme « pas de potentiel ») → « Non retenue — … », SDP 0 NOMMÉE servie ;
+#  · IGNORANCE (on ne SAIT pas) → « Analyse incomplète — … », SDP ∅ (jamais un 0), cohérent avec
+#    C26 (NULL ≠ 0) et la bande NC. `capacite_nulle` = 0 calculé fermement → certaine.
+_CAUSES_CERTAINES = {"zone_non_constructible", "terrain_exigu", "habitat_interdit",
+                     "redhibitoire", "capacite_nulle"}
+
+
+def cause_certaine(cause: str | None) -> bool:
+    """True si la cause est un VERDICT ferme (pas de potentiel) → SDP 0 nommée ; False pour une
+    cause d'IGNORANCE (zone_non_resolue/hors_plu/regle_plu_non_validee/hauteur_indispo/indetermine)
+    → SDP ∅ + « Analyse incomplète ». None (parcelle calculée) → False."""
+    return bool(cause) and cause.partition(":")[0] in _CAUSES_CERTAINES
+
+
+def cause_libelle(cause: str | None, exigu_raison: str | None = None) -> str | None:
+    """CHASSE-FIX-2 (D04) — traduit la cause STRUCTURÉE d'un résiduel (parcel_residuel.cause) en
+    libellé CLIENT, servi et affiché PARTOUT (fiche, liste, Dossier PDF, Copilote). Avant, la
+    cause du run n'était traduite par AUCUN lecteur. None ⇒ parcelle calculée (pas de cause).
+
+    Préfixe selon la famille (cause_certaine) : « Non retenue — » (verdict ferme) vs « Analyse
+    incomplète — » (ignorance, cohérent NC/C26). `exigu_raison` (fine, RECETTE-1 A1) affine le
+    message terrain_exigu ; absent, on nomme quand même « terrain trop étroit »."""
+    if not cause:
+        return None
+    head, _, zone = cause.partition(":")
+    # ── causes CERTAINES (« Non retenue ») ──
+    if cause == "terrain_exigu":
+        return "Non retenue — " + _EXIGU_LIB.get(exigu_raison or "reculs", _EXIGU_LIB["reculs"]) + "."
+    if head == "zone_non_constructible":
+        return f"Non retenue — zone {zone} inconstructible au PLU." if zone else \
+            "Non retenue — zone inconstructible au PLU."
+    if head == "habitat_interdit":
+        return f"Non retenue — habitat interdit en zone {zone}." if zone else \
+            "Non retenue — habitat interdit par le règlement."
+    if head == "redhibitoire":
+        return "Non retenue — contrainte rédhibitoire couvrant toute la parcelle."
+    if head == "capacite_nulle":
+        return "Non retenue — capacité constructible nulle au règlement."
+    # ── causes d'IGNORANCE (« Analyse incomplète ») ──
+    if head == "regle_plu_non_validee":
+        return f"Analyse incomplète — règle PLU de la zone {zone} non validée." if zone else \
+            "Analyse incomplète — règle PLU non validée."
+    if head == "zone_non_resolue":
+        return f"Analyse incomplète — zone {zone} hors du PLU outillé." if zone else \
+            "Analyse incomplète — zone hors du PLU outillé."
+    if head == "hors_plu":
+        return "Analyse incomplète — parcelle hors du PLU outillé."
+    if head == "hauteur_indispo":
+        return "Analyse incomplète — hauteur de référence indisponible."
+    if head == "bati_non_ingere":
+        return "Analyse incomplète — couche bâtiments non ingérée."
+    return "Analyse incomplète — potentiel non calculable."
+
+
 def estimate_capacity(rules: ZoneRules, surface_m2: float,
                       contraintes: Contraintes | None = None,
                       hyp: Hypotheses | None = None,

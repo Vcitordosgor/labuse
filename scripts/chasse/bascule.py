@@ -58,6 +58,16 @@ def _lecteurs(fetch, client) -> dict:
         out["filtre.tiers"] = str(flt.get("tiers"))[:80]
     except Exception as e:  # noqa: BLE001
         out["filtre"] = f"ERR {str(e)[:60]}"
+    # CHASSE-FIX-2 (leçon D05) — on lit AUSSI le chemin `idus=1` (palette carte) : c'est LUI que la
+    # bascule q_v15→q_v16 a cassé sans que ce banc ne le voie (il ne lisait que le compteur). On
+    # enregistre « compte == parcelles peintes » : un lecteur idus qui lit un run non résolu rend 0.
+    try:
+        fi = fetch(f"/filtre?source={cfg.get('run') or 'q_v11_m137'}&limit=20&idus=1&sdp_min=1000")
+        _idus = fi.get("idus")
+        out["filtre.idus_n"] = None if _idus is None else len(_idus)
+        out["filtre.idus_eq_compte"] = (_idus is not None and len(_idus) == (fi.get("compte") or 0))
+    except Exception as e:  # noqa: BLE001
+        out["filtre.idus"] = f"ERR {str(e)[:60]}"
     # lecteur résiduel robuste sur la base-squelette : le filtre capacite/sdp_min lit la vue
     # parcel_residuel → 0 parcelle si le run servi a SDP 500, 9 si 1500
     try:

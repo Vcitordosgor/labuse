@@ -1696,9 +1696,11 @@ def _q_v2_where(run_label: str,
         if "public" in pt:
             # M129-D P3 (dalle : le public négociable est VISIBLE) — groupes DGFiP 1-4/9
             # (État/Région/Département/Commune/établissements publics), la classification
-            # de proprietaire_type.py servie en facette.
+            # de proprietaire_type.py servie en facette. CHASSE-FIX-2 (C35) — MÊME règle que le
+            # badge « Propriétaire public » de la liste et de la fiche (PUBLIC_GROUPES_SQL).
+            from ..proprietaire_type import PUBLIC_GROUPES_SQL
             sub.append("EXISTS (SELECT 1 FROM parcelle_personne_morale pmu WHERE pmu.idu = p.idu"
-                       " AND pmu.groupe IN (1,2,3,4,9))")
+                       f" AND pmu.groupe IN {PUBLIC_GROUPES_SQL})")
         if sub:
             conds.append("(" + " OR ".join(sub) + ")")
     if etat_societe:
@@ -2763,6 +2765,11 @@ def filtre(c: FiltreCriteres = Depends(),
     if idus:
         # COHERENCE-FIX-1 (lot C) — MÊME périmètre que le compteur : le masque des slivers < 2 m²
         # manquait ICI seul → 13 972 idus contre compte 13 970 DANS LA MÊME réponse (audit).
+        # CHASSE-FIX-2 (D05) — MÊME run que compteur/liste/stats : on résout la cascade (C1).
+        # dryrun_parcel_evaluations s'arrête à l'étage 0 réel (q_v13_sources1) ; sans _cascade_run
+        # la jointure sur `c.source` brut (q_v16) ne matchait AUCUNE ligne → carte peinte à 0
+        # pendant que le compteur (lui résolu) disait N. Régression née de la bascule q_v15→q_v16.
+        run_idus = _cascade_run(db, c.source)
         rows = db.execute(text(
             f"""
             SELECT p.idu
@@ -2772,7 +2779,7 @@ def filtre(c: FiltreCriteres = Depends(),
               AND (p.surface_m2 IS NULL OR p.surface_m2 >= :minsurf)
               {extra}
             LIMIT {_FILTRE_IDUS_CAP + 1}
-            """), {"c": c.commune, "run": c.source, "v2run": _score_v2_run_id(db),
+            """), {"c": c.commune, "run": run_idus, "v2run": _score_v2_run_id(db),
                    "minsurf": MIN_DISPLAY_SURFACE_M2, **extra_params}).scalars().all()
         tronque = len(rows) > _FILTRE_IDUS_CAP
         out["idus"] = None if tronque else list(rows)
@@ -3411,6 +3418,7 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
     M55-H point 5 : `groupes=True` préfixe l'ORDER BY par l'ordre des tiers (groupement) —
     le tri choisi devient secondaire, DANS chaque groupe."""
     run_label = _cascade_run(db, run_label)   # C1 : résout la cascade (empruntée si étage 0 réutilisé)
+    from ..proprietaire_type import PUBLIC_GROUPES_SQL as _PUB_SQL   # C35 — règle unique du badge public
     sort_key = sort if (sort or "rang") in _Q_V2_ORDERS else "rang"
     order = _Q_V2_ORDERS[sort_key or "rang"]
     if groupes:
@@ -3596,6 +3604,10 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
         SELECT pg.*, (vw.parcelle_id IS NOT NULL) AS veille,
                cl.n AS cluster, COALESCE(cl.denom, own.denomination) AS proprio,
                vs.v_score, vs.v_band, vs.owner_type,
+               -- CHASSE-FIX-2 (C35) — propriétaire PUBLIC (badge ligne), MÊME règle DGFiP que le
+               -- filtre d'exclusion (groupes 1-4/9), lue EN DIRECT (jamais le owner_type matérialisé
+               -- qui peut dater d'un ancien run) : badge et filtre ne divergent plus.
+               COALESCE(own.groupe IN {_PUB_SQL}, false) AS proprio_public,
                {_ETAT_BIEN_SQL} AS etat_bien,   -- M131 P3 : état du bien (affichage pur)
                {_pro_col} AS permis_pro,        -- RECETTE-3 (T4) : segment « un pro a déposé un permis »
                -- CRED-4 : fraîcheur du signal V daté le plus récent (BODACC/cessation/DPE)
@@ -3616,6 +3628,7 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
                "need": limit + offset, "minsurf": MIN_DISPLAY_SURFACE_M2,
                "v2run": v2run, "sl_run": _score_labuse_run(), "sig": signal_niveau, **xp}
     ).mappings().all()
+    from ..faisabilite.engine import cause_libelle as _cause_libelle   # D04 — badge de cause de liste
     return [{
         "idu": r["idu"], "commune": r["commune"], "surface_m2": round(r["surface_m2"]) if r["surface_m2"] else None,
         "adresse": _fmt_ban(r["ban_voie"], r["ban_cp"], r["ban_commune"]),
@@ -3626,6 +3639,10 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
         "cluster": int(r["cluster"]) if r["cluster"] else None,
         "proprio": r["proprio"],
         "v_score": r["v_score"], "v_band": r["v_band"], "owner_type": r["owner_type"],
+        # CHASSE-FIX-2 (C35) — propriétaire public (État/collectivité/commune/EPCI/établissement
+        # public) : reste au classement, badge « Propriétaire public » sur la ligne. Même règle que
+        # le filtre (groupes DGFiP 1-4/9), lue en direct.
+        "proprietaire_public": bool(r["proprio_public"]),
         "v_dernier_signal": r["v_dernier_signal"],
         "tier_v2": r["tier_v2"], "rang_v2": r["rang_v2"],
         "mult_v2": float(r["mult_v2"]) if r["mult_v2"] is not None else None,
@@ -3642,6 +3659,10 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
         # recalcule ni ne re-classe rien). zone_fam/zone_lib = la zone PLU dominante pour la ligne.
         "bande": r["bande"], "signal_niveau": r["signal_niveau"],
         "contributions": r["contributions"], "cause": r["cause"],
+        # CHASSE-FIX-2 (D04) — la cause de non-retenue est NOMMÉE sur la ligne de liste (badge), plus
+        # jamais une bande 0 muette. Libellé coarse (la raison fine du terrain exigu reste un détail
+        # de fiche — pas de recalcul live par ligne). MÊME helper que la fiche/PDF/Copilote.
+        "cause_libelle": _cause_libelle(r["cause"]),
         "non_calculable": bool(r["non_calculable"]) if r["non_calculable"] is not None else None,
         "sdp_residuelle_m2": int(r["sdp_residuelle_m2"]) if r["sdp_residuelle_m2"] is not None else None,
         "zone_fam": r["zone_fam"], "zone_lib": r["zone_lib"],
@@ -4089,13 +4110,17 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
              if l["weight"] in (None, 0) and l["result"] in ("SOFT_FLAG", "HARD_EXCLUDE", "UNKNOWN")]
 
     pm = db.execute(text(
-        "SELECT denomination, siren, groupe_label FROM parcelle_personne_morale WHERE idu = :idu"),
+        "SELECT denomination, siren, groupe, groupe_label FROM parcelle_personne_morale WHERE idu = :idu"),
         {"idu": idu}).mappings().first()
     pm = dict(pm) if pm else None
     if pm and pm.get("siren"):
         pm["etat_societe"] = _pm_etat_societe(db, pm["siren"])   # M43 — fait public société (PM only)
         pm["identite"] = _pm_identite(db, pm["siren"])           # RETOURS-11F3 F11 — activité/siège/date/état
     if pm:
+        # CHASSE-FIX-2 (C35) — propriétaire PUBLIC (badge fiche), MÊME règle DGFiP (groupes 1-4/9)
+        # que la liste et le filtre d'exclusion : un seul endroit décide « public ».
+        from ..proprietaire_type import PUBLIC_DGFIP_GROUPES
+        pm["proprietaire_public"] = pm.get("groupe") in PUBLIC_DGFIP_GROUPES
         # RETOURS-11F3 F11 — « Personnes morales non remarquables » est le NOM du fichier DGFiP, pas une
         # phrase client. On sert une étiquette humaine ; le nom de fichier ne s'affiche jamais.
         gl = (pm.get("groupe_label") or "")
@@ -5784,18 +5809,26 @@ def _potentiel_transformation_block(db: Session, idu: str, commune: str | None =
     # (faisabilite/potentiel.surelevation — hauteur à l'ÉGOUT, repli faîtage dit) ; la SDP servie
     # passe par la garde de lecture ZONE-1 (dominante A/N → 0, cause dite).
     try:
+        # CHASSE-FIX-2 (D03) — on LIT la cause au lieu de l'ignorer (« AND r.cause IS NULL » retiré).
+        # Avant, une parcelle à cause (terrain_exigu, redhibitoire…) rendait r.* NULL → le bloc disait
+        # « Marge SDP non calculée » (sdp ∅) pendant qu'Analyse LABUSE servait sdp 0 : MÊME fiche,
+        # deux discours (71 225 parcelles bâties). On lit r.cause et on NOMME la raison (D04).
         row = db.execute(text(
             """SELECT p.id AS pid, r.pct_potentiel, r.sdp_residuelle_m2, r.sous_densite,
-                      r.capacite_estimee, zp.zone_fam, zp.zone_lib
+                      r.capacite_estimee, r.cause, zp.zone_fam, zp.zone_lib
                  FROM parcels p
-                 LEFT JOIN parcel_residuel r ON r.parcel_id = p.id AND r.cause IS NULL
+                 LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
                  LEFT JOIN parcel_zone_plu zp ON zp.idu = p.idu
                 WHERE p.idu = :idu"""), {"idu": idu}).mappings().first()
         from ..faisabilite.potentiel import surelevation as _surelevation
         sur = _surelevation(db, row["pid"]) if row else None
     except Exception:  # noqa: BLE001 — jamais de 500 sur la fiche (tables résiduel absentes)
         return _bloc_indisponible("potentiel_transformation")   # M125 — panne ≠ absence
-    if not row or (row["pct_potentiel"] is None and (sur or {}).get("possible") is None):
+    cause = row["cause"] if row else None
+    # CHASSE-FIX-2 (D03/D04) — le bloc reste PRÉSENT quand la parcelle porte une cause (pour la
+    # nommer), même sans surélévation : sans cela « exigu » n'apparaissait nulle part sur la fiche.
+    if not row or (cause is None and row["pct_potentiel"] is None
+                   and (sur or {}).get("possible") is None):
         return None
     # FAISABILITE-clip (Vic 24/09/2026) — garde « dominante A/N → 0 » RETIRÉE : parcel_residuel lu
     # TEL QUEL (l'assiette clippée du run servi porte déjà la portion U/AU des parcelles à cheval).
@@ -5820,6 +5853,31 @@ def _potentiel_transformation_block(db: Session, idu: str, commune: str | None =
     capacite_differee = _diff is not None
     if capacite_differee:
         niveau, libelle = "differe", libelle_differe(sdp_servie)
+    # CHASSE-FIX-2 (D03/D04) — la parcelle PORTE une cause de non-retenue : on la NOMME (fin du
+    # muet « Marge SDP non calculée ») et la SDP résiduelle servie est 0, cohérente avec Analyse
+    # LABUSE (plus de contradiction intra-fiche). La raison FINE du terrain exigu (ppr_rouge/ER/
+    # EBC/portion/reculs — RECETTE-1 A1) n'est pas écrite au run : on la recalcule LIVE ici (une
+    # seule parcelle) pour « servir la raison déjà calculée » sans toucher au run.
+    exigu_raison = None
+    if cause:
+        from ..faisabilite.engine import cause_certaine, cause_libelle
+        if cause == "terrain_exigu":
+            try:
+                from ..faisabilite.db import parcel_faisabilite
+                _fres = parcel_faisabilite(db, row["pid"])
+                exigu_raison = _fres[1].exigu_raison if _fres else None
+            except Exception:  # noqa: BLE001 — jamais de 500 sur la fiche ; repli « reculs »
+                exigu_raison = None
+        libelle = cause_libelle(cause, exigu_raison) or libelle
+        # CHASSE-FIX-2 (D03, arbitrage Vic) — deux familles :
+        #  · CERTAINE (zone inconstructible, terrain exigu, habitat interdit, redhibitoire, capacité
+        #    nulle) : verdict ferme → « exclu », on NOMME le 0 du run (jamais forcé : il est écrit) ;
+        #  · IGNORANCE (zone non résolue, hors PLU, règle non validée, hauteur indispo…) : on ne SAIT
+        #    pas → « indetermine », SDP ∅ (on écarte le 0 du dataset), cohérent C26/bande NC.
+        if cause_certaine(cause):
+            niveau = "exclu"
+        else:
+            niveau, sdp_servie = "indetermine", None
     sur = sur or {}
     # RECETTE-9 T9 — le scénario de surélévation branché sur le LiDAR : la surélévation se décide à
     # l'ÉGOUT (bord de toit) vs la règle d'égout (cause de fond de E1). Le bâti BD TOPO est un faîtage
@@ -5903,7 +5961,10 @@ def _potentiel_transformation_block(db: Session, idu: str, commune: str | None =
         "pct_consomme": pct,                                  # SDP consommée / autorisée (%)
         "pct_residuel": (max(0, 100 - pct) if pct is not None else None),
         "sdp_residuelle_m2": sdp_servie,
-        "cause": None,                                        # garde A/N→0 retirée (FAISABILITE-clip) — plus de cause-garde
+        # CHASSE-FIX-2 (D03/D04) — la cause structurée du run et sa raison fine (terrain exigu) sont
+        # SERVIES (plus jamais None en présence d'une cause) ; `libelle` ci-dessus la nomme déjà.
+        "cause": cause,
+        "exigu_raison": exigu_raison,
         "sous_densite": row["sous_densite"],
         # PLU-CALIBRAGE-5 — la capacité est « Estimé » (jamais « Sourcé ») dès qu'une exception du
         # règlement n'est pas modélisée (regles_non_modelisees), même sur un run servi calibré. On
@@ -6848,9 +6909,13 @@ def renouvellement_liste(commune: str | None = None,
         FROM parcel_renouvellement r
         JOIN parcels p ON p.idu = r.idu
         LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = r.idu AND s2.run_id = :run
-        LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
+        LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :drun
         {where} ORDER BY {orders[sort]} LIMIT :n OFFSET :o"""),
-        {"c": commune, "n": eff, "o": offset, "run": runs.current()}).mappings().all()
+        {"c": commune, "n": eff, "o": offset, "run": runs.current(),
+         # CHASSE-FIX-2 (D06, même famille que D05) — l'étage 0 se lit sur le run de CASCADE
+         # (q_v13_sources1), pas sur le run servi BRUT (q_v16) absent de dryrun_parcel_evaluations.
+         # Sans cette résolution d.status était toujours NULL → la puce « écartée » jamais allumée.
+         "drun": _cascade_run(db, runs.current())}).mappings().all()
     meta = db.execute(text(f"""
         SELECT count(*) AS n, to_char(max(r.computed_at), 'YYYY-MM-DD') AS maj
         FROM parcel_renouvellement r JOIN parcels p ON p.idu = r.idu {where}"""),

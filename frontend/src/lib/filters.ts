@@ -40,6 +40,12 @@ export interface ParcelProps {
   signal_niveau?: string | null    // fort | moyen | faible (SIGNAL_META)
   contributions?: { sens: 'hausse' | 'baisse'; libelle: string }[] | null   // ce qui monte / ce qui baisse (FR, moteur)
   cause?: string | null            // cause d'« Analyse incomplète » (NC), en français lisible
+  // CHASSE-FIX-2 (D04) — la cause de non-retenue NOMMÉE pour le client (« Non retenue — terrain
+  // trop étroit… »). Servie par _q_v2_list (même helper que fiche/Dossier/Copilote). null = calculée.
+  cause_libelle?: string | null
+  // CHASSE-FIX-2 (C35) — propriétaire public (État/collectivité/commune/EPCI/établissement public) :
+  // badge « Propriétaire public » sur la ligne, même règle DGFiP que le filtre d'exclusion.
+  proprietaire_public?: boolean | null
   non_calculable?: boolean | null
   zone_fam?: string | null         // U | AU | A | N (zone PLU dominante — affichage ligne)
   zone_lib?: string | null

@@ -73,6 +73,11 @@ def verdict_potentiel(valeurs: dict[str, Valeur]) -> Verdict | None:
     if cause:
         # la cause de non-constructibilité PRIME sur toute sous-densité mesurée (jamais un faux
         # constructible) — on n'imprime pas le libellé brut du modèle qui dirait « fort potentiel ».
+        # CHASSE-FIX-2 (D04) — on NOMME la vraie raison : le libellé du bloc potentiel la porte déjà
+        # (terrain exigu/PPR rouge/ER/EBC/zone fermée…). L'ancien « nul par la règle de zonage »
+        # MENTAIT pour un terrain_exigu GÉOMÉTRIQUE (jamais un zonage). Repli générique si absent.
+        if libelle:
+            return (f"{libelle}", "warn", "")
         fam = _val(valeurs, "zone_plu_famille")
         z = f" (zone {fam})" if fam else ""
         return (f"Terrain non constructible{z} : le potentiel de construction est nul par la règle "
