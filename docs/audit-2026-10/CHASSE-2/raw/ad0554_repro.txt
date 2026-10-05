@@ -1,0 +1,57 @@
+CHASSE-2 AD0554 — 6 paires/phase, API charge = http://127.0.0.1:8755
+fiche chargée : commune=Les Avirons surface=634
+  A-sans-charge paire 0: DIVERGENCE (7s) — H1 plan de situation (placeholder d'un seul côté)
+    diff:
+    --- dossier
+    +++ flash
+    @@ -39,18 +39,17 @@
+        1. Identité
+    -Adresse                                        5 Rue des Longoses, 97425 Les Avirons                            sourcé
+    -
+    -
+    -
+    -
+    -            Plan de situation — la parcelle et ses voisines (fond cartographique momentanément indisponible)
+    -
+    -
+    -
+    -
+    -  VÉRIFIÉ : RIEN
+    -    • Copropriétés : aucune copropriété immatriculée sur la parcelle.
+    -    • Filiation cadastrale : aucune filiation connue (parcelle stable).
+    -    • Dernière vente : aucune mutation DVF publiée sur cette parcelle (fenêtre 2014-2025).
+    -    • Aucun permis recensé sur cette parcelle (Sitadel).
+    -    • Historique de détention : aucun millésime de détention connu.
+    +Adresse                                           5 Rue des Longoses, 97425 Les Avirons        sourcé
+    +
+    +
+    +
+    +
+    +  Plan de situation — la parcelle (contour) et ses voisines · © IGN — BD ORTHO
+    +
+    +
+    +
+    +  VÉRIFIÉ : RIEN
+    +     • Copropriétés : aucune copropriété immatriculée sur la parcelle.
+    +     • Filiation cadastrale : aucune filiation connue (parcelle stable).
+    +     • Dernière vente : aucune mutation DVF publiée sur cette parcelle (fenêtre 2014-2025).
+    +     • Aucun permis recensé sur cette parcelle (Sitadel).
+    +     • Historique de détention : aucun millésime de détention connu.
+     
+    @@ -59,3 +58,3 @@
+       NON DISPONIBLE ICI
+    -    • Type de propriétaire : non déterminé.
+    +     • Type de propriétaire : non déterminé.
+  A-sans-charge paire 1: identiques (3s)
+  A-sans-charge paire 2: identiques (3s)
+  A-sans-charge paire 3: identiques (4s)
+  A-sans-charge paire 4: identiques (3s)
+  A-sans-charge paire 5: identiques (3s)
+  B-avec-charge paire 0: identiques (4s)
+  B-avec-charge paire 1: identiques (3s)
+  B-avec-charge paire 2: identiques (4s)
+  B-avec-charge paire 3: identiques (4s)
+  B-avec-charge paire 4: identiques (3s)
+  B-avec-charge paire 5: identiques (5s)
+  charge API : {'ok': 12, 'ko': 0}
+bilan : {'A-sans-charge': 1, 'B-avec-charge': 0} (artefacts : /var/folders/gp/l5lv3__j29q_j4sp4hhmg6zh0000gp/T/chasse2-ad0554-1k1hjt8_)

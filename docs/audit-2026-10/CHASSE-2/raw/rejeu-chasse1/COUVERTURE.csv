@@ -1,0 +1,2103 @@
+source,insee,commune,n
+DVF (mutations rattachées),97401,Les Avirons,1426
+DVF (mutations rattachées),97402,Bras-Panon,1275
+DVF (mutations rattachées),97403,Entre-Deux,679
+DVF (mutations rattachées),97404,L'Étang-Salé,1966
+DVF (mutations rattachées),97405,Petite-Île,1858
+DVF (mutations rattachées),97406,La Plaine-des-Palmistes,846
+DVF (mutations rattachées),97407,Le Port,2046
+DVF (mutations rattachées),97408,La Possession,6094
+DVF (mutations rattachées),97409,Saint-André,3805
+DVF (mutations rattachées),97410,Saint-Benoît,3019
+DVF (mutations rattachées),97411,Saint-Denis,22473
+DVF (mutations rattachées),97412,Saint-Joseph,4149
+DVF (mutations rattachées),97413,Saint-Leu,4292
+DVF (mutations rattachées),97414,Saint-Louis,4194
+DVF (mutations rattachées),97415,Saint-Paul,16103
+DVF (mutations rattachées),97416,Saint-Pierre,10190
+DVF (mutations rattachées),97417,Saint-Philippe,532
+DVF (mutations rattachées),97418,Sainte-Marie,4104
+DVF (mutations rattachées),97419,Sainte-Rose,588
+DVF (mutations rattachées),97420,Sainte-Suzanne,2289
+DVF (mutations rattachées),97421,Salazie,520
+DVF (mutations rattachées),97422,Le Tampon,8562
+DVF (mutations rattachées),97423,Les Trois-Bassins,961
+DVF (mutations rattachées),97424,Cilaos,580
+DVF (mutations brutes),97401,Les Avirons,0
+DVF (mutations brutes),97402,Bras-Panon,0
+DVF (mutations brutes),97403,Entre-Deux,0
+DVF (mutations brutes),97404,L'Étang-Salé,0
+DVF (mutations brutes),97405,Petite-Île,0
+DVF (mutations brutes),97406,La Plaine-des-Palmistes,0
+DVF (mutations brutes),97407,Le Port,0
+DVF (mutations brutes),97408,La Possession,0
+DVF (mutations brutes),97409,Saint-André,0
+DVF (mutations brutes),97410,Saint-Benoît,0
+DVF (mutations brutes),97411,Saint-Denis,0
+DVF (mutations brutes),97412,Saint-Joseph,0
+DVF (mutations brutes),97413,Saint-Leu,0
+DVF (mutations brutes),97414,Saint-Louis,0
+DVF (mutations brutes),97415,Saint-Paul,0
+DVF (mutations brutes),97416,Saint-Pierre,0
+DVF (mutations brutes),97417,Saint-Philippe,0
+DVF (mutations brutes),97418,Sainte-Marie,0
+DVF (mutations brutes),97419,Sainte-Rose,0
+DVF (mutations brutes),97420,Sainte-Suzanne,0
+DVF (mutations brutes),97421,Salazie,0
+DVF (mutations brutes),97422,Le Tampon,0
+DVF (mutations brutes),97423,Les Trois-Bassins,0
+DVF (mutations brutes),97424,Cilaos,0
+DVF (mutations brutes),HORS_REF,,29566
+LiDAR hauteurs bâtiment,97401,Les Avirons,5244
+LiDAR hauteurs bâtiment,97402,Bras-Panon,4604
+LiDAR hauteurs bâtiment,97403,Entre-Deux,3523
+LiDAR hauteurs bâtiment,97404,L'Étang-Salé,6413
+LiDAR hauteurs bâtiment,97405,Petite-Île,7292
+LiDAR hauteurs bâtiment,97406,La Plaine-des-Palmistes,4141
+LiDAR hauteurs bâtiment,97407,Le Port,7661
+LiDAR hauteurs bâtiment,97408,La Possession,10040
+LiDAR hauteurs bâtiment,97409,Saint-André,18545
+LiDAR hauteurs bâtiment,97410,Saint-Benoît,14544
+LiDAR hauteurs bâtiment,97411,Saint-Denis,29852
+LiDAR hauteurs bâtiment,97412,Saint-Joseph,18360
+LiDAR hauteurs bâtiment,97413,Saint-Leu,14921
+LiDAR hauteurs bâtiment,97414,Saint-Louis,21576
+LiDAR hauteurs bâtiment,97415,Saint-Paul,35052
+LiDAR hauteurs bâtiment,97416,Saint-Pierre,32359
+LiDAR hauteurs bâtiment,97417,Saint-Philippe,2618
+LiDAR hauteurs bâtiment,97418,Sainte-Marie,11906
+LiDAR hauteurs bâtiment,97419,Sainte-Rose,3416
+LiDAR hauteurs bâtiment,97420,Sainte-Suzanne,8804
+LiDAR hauteurs bâtiment,97421,Salazie,3999
+LiDAR hauteurs bâtiment,97422,Le Tampon,31478
+LiDAR hauteurs bâtiment,97423,Les Trois-Bassins,3162
+LiDAR hauteurs bâtiment,97424,Cilaos,3942
+BAN adresses↔parcelles,97401,Les Avirons,6143
+BAN adresses↔parcelles,97402,Bras-Panon,9304
+BAN adresses↔parcelles,97403,Entre-Deux,3802
+BAN adresses↔parcelles,97404,L'Étang-Salé,8192
+BAN adresses↔parcelles,97405,Petite-Île,8432
+BAN adresses↔parcelles,97406,La Plaine-des-Palmistes,4868
+BAN adresses↔parcelles,97407,Le Port,13020
+BAN adresses↔parcelles,97408,La Possession,12681
+BAN adresses↔parcelles,97409,Saint-André,27088
+BAN adresses↔parcelles,97410,Saint-Benoît,20670
+BAN adresses↔parcelles,97411,Saint-Denis,41354
+BAN adresses↔parcelles,97412,Saint-Joseph,25711
+BAN adresses↔parcelles,97413,Saint-Leu,21104
+BAN adresses↔parcelles,97414,Saint-Louis,32216
+BAN adresses↔parcelles,97415,Saint-Paul,41621
+BAN adresses↔parcelles,97416,Saint-Pierre,50301
+BAN adresses↔parcelles,97417,Saint-Philippe,3772
+BAN adresses↔parcelles,97418,Sainte-Marie,16159
+BAN adresses↔parcelles,97419,Sainte-Rose,4773
+BAN adresses↔parcelles,97420,Sainte-Suzanne,11456
+BAN adresses↔parcelles,97421,Salazie,4643
+BAN adresses↔parcelles,97422,Le Tampon,40619
+BAN adresses↔parcelles,97423,Les Trois-Bassins,4681
+BAN adresses↔parcelles,97424,Cilaos,3755
+Permis caducs,97401,Les Avirons,39
+Permis caducs,97402,Bras-Panon,41
+Permis caducs,97403,Entre-Deux,27
+Permis caducs,97404,L'Étang-Salé,51
+Permis caducs,97405,Petite-Île,40
+Permis caducs,97406,La Plaine-des-Palmistes,45
+Permis caducs,97407,Le Port,41
+Permis caducs,97408,La Possession,49
+Permis caducs,97409,Saint-André,64
+Permis caducs,97410,Saint-Benoît,103
+Permis caducs,97411,Saint-Denis,162
+Permis caducs,97412,Saint-Joseph,82
+Permis caducs,97413,Saint-Leu,103
+Permis caducs,97414,Saint-Louis,180
+Permis caducs,97415,Saint-Paul,330
+Permis caducs,97416,Saint-Pierre,316
+Permis caducs,97417,Saint-Philippe,12
+Permis caducs,97418,Sainte-Marie,108
+Permis caducs,97419,Sainte-Rose,8
+Permis caducs,97420,Sainte-Suzanne,65
+Permis caducs,97421,Salazie,22
+Permis caducs,97422,Le Tampon,225
+Permis caducs,97423,Les Trois-Bassins,39
+Permis caducs,97424,Cilaos,9
+Sitadel permis,97401,Les Avirons,0
+Sitadel permis,97402,Bras-Panon,0
+Sitadel permis,97403,Entre-Deux,0
+Sitadel permis,97404,L'Étang-Salé,0
+Sitadel permis,97405,Petite-Île,0
+Sitadel permis,97406,La Plaine-des-Palmistes,0
+Sitadel permis,97407,Le Port,0
+Sitadel permis,97408,La Possession,0
+Sitadel permis,97409,Saint-André,0
+Sitadel permis,97410,Saint-Benoît,0
+Sitadel permis,97411,Saint-Denis,0
+Sitadel permis,97412,Saint-Joseph,0
+Sitadel permis,97413,Saint-Leu,0
+Sitadel permis,97414,Saint-Louis,0
+Sitadel permis,97415,Saint-Paul,0
+Sitadel permis,97416,Saint-Pierre,0
+Sitadel permis,97417,Saint-Philippe,0
+Sitadel permis,97418,Sainte-Marie,0
+Sitadel permis,97419,Sainte-Rose,0
+Sitadel permis,97420,Sainte-Suzanne,0
+Sitadel permis,97421,Salazie,0
+Sitadel permis,97422,Le Tampon,0
+Sitadel permis,97423,Les Trois-Bassins,0
+Sitadel permis,97424,Cilaos,0
+Sitadel permis,HORS_REF,,50545
+CatNat arrêtés,97401,Les Avirons,15
+CatNat arrêtés,97402,Bras-Panon,15
+CatNat arrêtés,97403,Entre-Deux,14
+CatNat arrêtés,97404,L'Étang-Salé,20
+CatNat arrêtés,97405,Petite-Île,19
+CatNat arrêtés,97406,La Plaine-des-Palmistes,11
+CatNat arrêtés,97407,Le Port,11
+CatNat arrêtés,97408,La Possession,17
+CatNat arrêtés,97409,Saint-André,17
+CatNat arrêtés,97410,Saint-Benoît,15
+CatNat arrêtés,97411,Saint-Denis,19
+CatNat arrêtés,97412,Saint-Joseph,20
+CatNat arrêtés,97413,Saint-Leu,21
+CatNat arrêtés,97414,Saint-Louis,21
+CatNat arrêtés,97415,Saint-Paul,23
+CatNat arrêtés,97416,Saint-Pierre,20
+CatNat arrêtés,97417,Saint-Philippe,21
+CatNat arrêtés,97418,Sainte-Marie,20
+CatNat arrêtés,97419,Sainte-Rose,10
+CatNat arrêtés,97420,Sainte-Suzanne,17
+CatNat arrêtés,97421,Salazie,16
+CatNat arrêtés,97422,Le Tampon,18
+CatNat arrêtés,97423,Les Trois-Bassins,11
+CatNat arrêtés,97424,Cilaos,14
+DPE,97401,Les Avirons,2
+DPE,97402,Bras-Panon,0
+DPE,97403,Entre-Deux,0
+DPE,97404,L'Étang-Salé,2
+DPE,97405,Petite-Île,9
+DPE,97406,La Plaine-des-Palmistes,2
+DPE,97407,Le Port,50
+DPE,97408,La Possession,31
+DPE,97409,Saint-André,312
+DPE,97410,Saint-Benoît,18
+DPE,97411,Saint-Denis,60
+DPE,97412,Saint-Joseph,19
+DPE,97413,Saint-Leu,20
+DPE,97414,Saint-Louis,88
+DPE,97415,Saint-Paul,219
+DPE,97416,Saint-Pierre,110
+DPE,97417,Saint-Philippe,7
+DPE,97418,Sainte-Marie,13
+DPE,97419,Sainte-Rose,1
+DPE,97420,Sainte-Suzanne,58
+DPE,97421,Salazie,0
+DPE,97422,Le Tampon,54
+DPE,97423,Les Trois-Bassins,48
+DPE,97424,Cilaos,0
+RNB bâtiments,97401,Les Avirons,6345
+RNB bâtiments,97402,Bras-Panon,5466
+RNB bâtiments,97403,Entre-Deux,4230
+RNB bâtiments,97404,L'Étang-Salé,8368
+RNB bâtiments,97405,Petite-Île,8323
+RNB bâtiments,97406,La Plaine-des-Palmistes,5714
+RNB bâtiments,97407,Le Port,10733
+RNB bâtiments,97408,La Possession,14339
+RNB bâtiments,97409,Saint-André,24605
+RNB bâtiments,97410,Saint-Benoît,17257
+RNB bâtiments,97411,Saint-Denis,42067
+RNB bâtiments,97412,Saint-Joseph,21756
+RNB bâtiments,97413,Saint-Leu,21355
+RNB bâtiments,97414,Saint-Louis,27482
+RNB bâtiments,97415,Saint-Paul,57704
+RNB bâtiments,97416,Saint-Pierre,41152
+RNB bâtiments,97417,Saint-Philippe,3455
+RNB bâtiments,97418,Sainte-Marie,15786
+RNB bâtiments,97419,Sainte-Rose,4112
+RNB bâtiments,97420,Sainte-Suzanne,12002
+RNB bâtiments,97421,Salazie,7029
+RNB bâtiments,97422,Le Tampon,44826
+RNB bâtiments,97423,Les Trois-Bassins,5188
+RNB bâtiments,97424,Cilaos,4787
+SIRENE établissements,97401,Les Avirons,1853
+SIRENE établissements,97402,Bras-Panon,2065
+SIRENE établissements,97403,Entre-Deux,1156
+SIRENE établissements,97404,L'Étang-Salé,3339
+SIRENE établissements,97405,Petite-Île,2157
+SIRENE établissements,97406,La Plaine-des-Palmistes,996
+SIRENE établissements,97407,Le Port,6639
+SIRENE établissements,97408,La Possession,5539
+SIRENE établissements,97409,Saint-André,8416
+SIRENE établissements,97410,Saint-Benoît,5248
+SIRENE établissements,97411,Saint-Denis,30556
+SIRENE établissements,97412,Saint-Joseph,5346
+SIRENE établissements,97413,Saint-Leu,7182
+SIRENE établissements,97414,Saint-Louis,7486
+SIRENE établissements,97415,Saint-Paul,26217
+SIRENE établissements,97416,Saint-Pierre,17722
+SIRENE établissements,97417,Saint-Philippe,824
+SIRENE établissements,97418,Sainte-Marie,6194
+SIRENE établissements,97419,Sainte-Rose,984
+SIRENE établissements,97420,Sainte-Suzanne,3323
+SIRENE établissements,97421,Salazie,1122
+SIRENE établissements,97422,Le Tampon,12235
+SIRENE établissements,97423,Les Trois-Bassins,1081
+SIRENE établissements,97424,Cilaos,835
+RNIC copropriétés,97401,Les Avirons,37
+RNIC copropriétés,97402,Bras-Panon,14
+RNIC copropriétés,97403,Entre-Deux,6
+RNIC copropriétés,97404,L'Étang-Salé,34
+RNIC copropriétés,97405,Petite-Île,9
+RNIC copropriétés,97406,La Plaine-des-Palmistes,3
+RNIC copropriétés,97407,Le Port,54
+RNIC copropriétés,97408,La Possession,114
+RNIC copropriétés,97409,Saint-André,40
+RNIC copropriétés,97410,Saint-Benoît,21
+RNIC copropriétés,97411,Saint-Denis,874
+RNIC copropriétés,97412,Saint-Joseph,28
+RNIC copropriétés,97413,Saint-Leu,122
+RNIC copropriétés,97414,Saint-Louis,43
+RNIC copropriétés,97415,Saint-Paul,371
+RNIC copropriétés,97416,Saint-Pierre,236
+RNIC copropriétés,97417,Saint-Philippe,2
+RNIC copropriétés,97418,Sainte-Marie,67
+RNIC copropriétés,97419,Sainte-Rose,0
+RNIC copropriétés,97420,Sainte-Suzanne,14
+RNIC copropriétés,97421,Salazie,1
+RNIC copropriétés,97422,Le Tampon,121
+RNIC copropriétés,97423,Les Trois-Bassins,9
+RNIC copropriétés,97424,Cilaos,0
+Propriétaires PM (DGFiP),97401,Les Avirons,987
+Propriétaires PM (DGFiP),97402,Bras-Panon,1183
+Propriétaires PM (DGFiP),97403,Entre-Deux,569
+Propriétaires PM (DGFiP),97404,L'Étang-Salé,1409
+Propriétaires PM (DGFiP),97405,Petite-Île,1463
+Propriétaires PM (DGFiP),97406,La Plaine-des-Palmistes,1113
+Propriétaires PM (DGFiP),97407,Le Port,4681
+Propriétaires PM (DGFiP),97408,La Possession,2895
+Propriétaires PM (DGFiP),97409,Saint-André,3636
+Propriétaires PM (DGFiP),97410,Saint-Benoît,4115
+Propriétaires PM (DGFiP),97411,Saint-Denis,11860
+Propriétaires PM (DGFiP),97412,Saint-Joseph,3525
+Propriétaires PM (DGFiP),97413,Saint-Leu,3944
+Propriétaires PM (DGFiP),97414,Saint-Louis,3523
+Propriétaires PM (DGFiP),97415,Saint-Paul,12539
+Propriétaires PM (DGFiP),97416,Saint-Pierre,7917
+Propriétaires PM (DGFiP),97417,Saint-Philippe,614
+Propriétaires PM (DGFiP),97418,Sainte-Marie,4275
+Propriétaires PM (DGFiP),97419,Sainte-Rose,1280
+Propriétaires PM (DGFiP),97420,Sainte-Suzanne,2206
+Propriétaires PM (DGFiP),97421,Salazie,1123
+Propriétaires PM (DGFiP),97422,Le Tampon,5369
+Propriétaires PM (DGFiP),97423,Les Trois-Bassins,1312
+Propriétaires PM (DGFiP),97424,Cilaos,1163
+REI fiscalité,97401,Les Avirons,1
+REI fiscalité,97402,Bras-Panon,1
+REI fiscalité,97403,Entre-Deux,1
+REI fiscalité,97404,L'Étang-Salé,1
+REI fiscalité,97405,Petite-Île,1
+REI fiscalité,97406,La Plaine-des-Palmistes,1
+REI fiscalité,97407,Le Port,1
+REI fiscalité,97408,La Possession,1
+REI fiscalité,97409,Saint-André,1
+REI fiscalité,97410,Saint-Benoît,1
+REI fiscalité,97411,Saint-Denis,1
+REI fiscalité,97412,Saint-Joseph,1
+REI fiscalité,97413,Saint-Leu,1
+REI fiscalité,97414,Saint-Louis,1
+REI fiscalité,97415,Saint-Paul,1
+REI fiscalité,97416,Saint-Pierre,1
+REI fiscalité,97417,Saint-Philippe,1
+REI fiscalité,97418,Sainte-Marie,1
+REI fiscalité,97419,Sainte-Rose,1
+REI fiscalité,97420,Sainte-Suzanne,1
+REI fiscalité,97421,Salazie,1
+REI fiscalité,97422,Le Tampon,1
+REI fiscalité,97423,Les Trois-Bassins,1
+REI fiscalité,97424,Cilaos,1
+Population légale,97401,Les Avirons,1
+Population légale,97402,Bras-Panon,1
+Population légale,97403,Entre-Deux,1
+Population légale,97404,L'Étang-Salé,1
+Population légale,97405,Petite-Île,1
+Population légale,97406,La Plaine-des-Palmistes,1
+Population légale,97407,Le Port,1
+Population légale,97408,La Possession,1
+Population légale,97409,Saint-André,1
+Population légale,97410,Saint-Benoît,1
+Population légale,97411,Saint-Denis,1
+Population légale,97412,Saint-Joseph,1
+Population légale,97413,Saint-Leu,1
+Population légale,97414,Saint-Louis,1
+Population légale,97415,Saint-Paul,1
+Population légale,97416,Saint-Pierre,1
+Population légale,97417,Saint-Philippe,1
+Population légale,97418,Sainte-Marie,1
+Population légale,97419,Sainte-Rose,1
+Population légale,97420,Sainte-Suzanne,1
+Population légale,97421,Salazie,1
+Population légale,97422,Le Tampon,1
+Population légale,97423,Les Trois-Bassins,1
+Population légale,97424,Cilaos,1
+Pentes (RGE Alti),97401,Les Avirons,8611
+Pentes (RGE Alti),97402,Bras-Panon,6041
+Pentes (RGE Alti),97403,Entre-Deux,6312
+Pentes (RGE Alti),97404,L'Étang-Salé,9070
+Pentes (RGE Alti),97405,Petite-Île,13137
+Pentes (RGE Alti),97406,La Plaine-des-Palmistes,6450
+Pentes (RGE Alti),97407,Le Port,10195
+Pentes (RGE Alti),97408,La Possession,13338
+Pentes (RGE Alti),97409,Saint-André,22600
+Pentes (RGE Alti),97410,Saint-Benoît,21671
+Pentes (RGE Alti),97411,Saint-Denis,38138
+Pentes (RGE Alti),97412,Saint-Joseph,28959
+Pentes (RGE Alti),97413,Saint-Leu,22959
+Pentes (RGE Alti),97414,Saint-Louis,29241
+Pentes (RGE Alti),97415,Saint-Paul,51129
+Pentes (RGE Alti),97416,Saint-Pierre,42425
+Pentes (RGE Alti),97417,Saint-Philippe,4162
+Pentes (RGE Alti),97418,Sainte-Marie,16746
+Pentes (RGE Alti),97419,Sainte-Rose,6287
+Pentes (RGE Alti),97420,Sainte-Suzanne,12527
+Pentes (RGE Alti),97421,Salazie,7035
+Pentes (RGE Alti),97422,Le Tampon,42756
+Pentes (RGE Alti),97423,Les Trois-Bassins,5314
+Pentes (RGE Alti),97424,Cilaos,6560
+Zonage PLU rattaché,97401,Les Avirons,8611
+Zonage PLU rattaché,97402,Bras-Panon,6041
+Zonage PLU rattaché,97403,Entre-Deux,6312
+Zonage PLU rattaché,97404,L'Étang-Salé,9070
+Zonage PLU rattaché,97405,Petite-Île,13137
+Zonage PLU rattaché,97406,La Plaine-des-Palmistes,6450
+Zonage PLU rattaché,97407,Le Port,10195
+Zonage PLU rattaché,97408,La Possession,13338
+Zonage PLU rattaché,97409,Saint-André,22600
+Zonage PLU rattaché,97410,Saint-Benoît,21671
+Zonage PLU rattaché,97411,Saint-Denis,38138
+Zonage PLU rattaché,97412,Saint-Joseph,28959
+Zonage PLU rattaché,97413,Saint-Leu,22868
+Zonage PLU rattaché,97414,Saint-Louis,29241
+Zonage PLU rattaché,97415,Saint-Paul,51129
+Zonage PLU rattaché,97416,Saint-Pierre,42425
+Zonage PLU rattaché,97417,Saint-Philippe,9
+Zonage PLU rattaché,97418,Sainte-Marie,16746
+Zonage PLU rattaché,97419,Sainte-Rose,6287
+Zonage PLU rattaché,97420,Sainte-Suzanne,12527
+Zonage PLU rattaché,97421,Salazie,7035
+Zonage PLU rattaché,97422,Le Tampon,42756
+Zonage PLU rattaché,97423,Les Trois-Bassins,5314
+Zonage PLU rattaché,97424,Cilaos,6560
+"Filosofi (carreaux, pas de commune)",ILE,(non communal),14773
+couche:abf,97401,Les Avirons,1
+couche:abf,97402,Bras-Panon,1
+couche:abf,97403,Entre-Deux,1
+couche:abf,97404,L'Étang-Salé,0
+couche:abf,97405,Petite-Île,3
+couche:abf,97406,La Plaine-des-Palmistes,0
+couche:abf,97407,Le Port,5
+couche:abf,97408,La Possession,1
+couche:abf,97409,Saint-André,12
+couche:abf,97410,Saint-Benoît,8
+couche:abf,97411,Saint-Denis,60
+couche:abf,97412,Saint-Joseph,2
+couche:abf,97413,Saint-Leu,5
+couche:abf,97414,Saint-Louis,8
+couche:abf,97415,Saint-Paul,27
+couche:abf,97416,Saint-Pierre,32
+couche:abf,97417,Saint-Philippe,3
+couche:abf,97418,Sainte-Marie,4
+couche:abf,97419,Sainte-Rose,2
+couche:abf,97420,Sainte-Suzanne,4
+couche:abf,97421,Salazie,7
+couche:abf,97422,Le Tampon,5
+couche:abf,97423,Les Trois-Bassins,0
+couche:abf,97424,Cilaos,1
+couche:abf,SANS_COMMUNE,(couche non communale),8
+couche:amenite,97401,Les Avirons,441
+couche:amenite,97402,Bras-Panon,323
+couche:amenite,97403,Entre-Deux,643
+couche:amenite,97404,L'Étang-Salé,805
+couche:amenite,97405,Petite-Île,510
+couche:amenite,97406,La Plaine-des-Palmistes,117
+couche:amenite,97407,Le Port,357
+couche:amenite,97408,La Possession,922
+couche:amenite,97409,Saint-André,623
+couche:amenite,97410,Saint-Benoît,776
+couche:amenite,97411,Saint-Denis,1728
+couche:amenite,97412,Saint-Joseph,328
+couche:amenite,97413,Saint-Leu,482
+couche:amenite,97414,Saint-Louis,614
+couche:amenite,97415,Saint-Paul,1459
+couche:amenite,97416,Saint-Pierre,2151
+couche:amenite,97417,Saint-Philippe,164
+couche:amenite,97418,Sainte-Marie,956
+couche:amenite,97419,Sainte-Rose,142
+couche:amenite,97420,Sainte-Suzanne,423
+couche:amenite,97421,Salazie,191
+couche:amenite,97422,Le Tampon,768
+couche:amenite,97423,Les Trois-Bassins,57
+couche:amenite,97424,Cilaos,234
+couche:amenite_bpe,97401,Les Avirons,353
+couche:amenite_bpe,97402,Bras-Panon,518
+couche:amenite_bpe,97403,Entre-Deux,271
+couche:amenite_bpe,97404,L'Étang-Salé,635
+couche:amenite_bpe,97405,Petite-Île,505
+couche:amenite_bpe,97406,La Plaine-des-Palmistes,213
+couche:amenite_bpe,97407,Le Port,1515
+couche:amenite_bpe,97408,La Possession,1105
+couche:amenite_bpe,97409,Saint-André,2423
+couche:amenite_bpe,97410,Saint-Benoît,1267
+couche:amenite_bpe,97411,Saint-Denis,6205
+couche:amenite_bpe,97412,Saint-Joseph,1332
+couche:amenite_bpe,97413,Saint-Leu,1649
+couche:amenite_bpe,97414,Saint-Louis,1965
+couche:amenite_bpe,97415,Saint-Paul,4976
+couche:amenite_bpe,97416,Saint-Pierre,4216
+couche:amenite_bpe,97417,Saint-Philippe,183
+couche:amenite_bpe,97418,Sainte-Marie,1346
+couche:amenite_bpe,97419,Sainte-Rose,215
+couche:amenite_bpe,97420,Sainte-Suzanne,816
+couche:amenite_bpe,97421,Salazie,258
+couche:amenite_bpe,97422,Le Tampon,3022
+couche:amenite_bpe,97423,Les Trois-Bassins,317
+couche:amenite_bpe,97424,Cilaos,239
+couche:anru,97401,Les Avirons,0
+couche:anru,97402,Bras-Panon,0
+couche:anru,97403,Entre-Deux,0
+couche:anru,97404,L'Étang-Salé,0
+couche:anru,97405,Petite-Île,0
+couche:anru,97406,La Plaine-des-Palmistes,0
+couche:anru,97407,Le Port,1
+couche:anru,97408,La Possession,0
+couche:anru,97409,Saint-André,1
+couche:anru,97410,Saint-Benoît,1
+couche:anru,97411,Saint-Denis,3
+couche:anru,97412,Saint-Joseph,0
+couche:anru,97413,Saint-Leu,0
+couche:anru,97414,Saint-Louis,1
+couche:anru,97415,Saint-Paul,0
+couche:anru,97416,Saint-Pierre,1
+couche:anru,97417,Saint-Philippe,0
+couche:anru,97418,Sainte-Marie,0
+couche:anru,97419,Sainte-Rose,0
+couche:anru,97420,Sainte-Suzanne,0
+couche:anru,97421,Salazie,0
+couche:anru,97422,Le Tampon,0
+couche:anru,97423,Les Trois-Bassins,0
+couche:anru,97424,Cilaos,0
+couche:artificialisation,97401,Les Avirons,0
+couche:artificialisation,97402,Bras-Panon,0
+couche:artificialisation,97403,Entre-Deux,0
+couche:artificialisation,97404,L'Étang-Salé,0
+couche:artificialisation,97405,Petite-Île,0
+couche:artificialisation,97406,La Plaine-des-Palmistes,0
+couche:artificialisation,97407,Le Port,0
+couche:artificialisation,97408,La Possession,0
+couche:artificialisation,97409,Saint-André,0
+couche:artificialisation,97410,Saint-Benoît,0
+couche:artificialisation,97411,Saint-Denis,0
+couche:artificialisation,97412,Saint-Joseph,0
+couche:artificialisation,97413,Saint-Leu,0
+couche:artificialisation,97414,Saint-Louis,0
+couche:artificialisation,97415,Saint-Paul,0
+couche:artificialisation,97416,Saint-Pierre,0
+couche:artificialisation,97417,Saint-Philippe,0
+couche:artificialisation,97418,Sainte-Marie,0
+couche:artificialisation,97419,Sainte-Rose,0
+couche:artificialisation,97420,Sainte-Suzanne,0
+couche:artificialisation,97421,Salazie,0
+couche:artificialisation,97422,Le Tampon,0
+couche:artificialisation,97423,Les Trois-Bassins,0
+couche:artificialisation,97424,Cilaos,0
+couche:artificialisation,SANS_COMMUNE,(couche non communale),12107
+couche:axe_structurant,97401,Les Avirons,0
+couche:axe_structurant,97402,Bras-Panon,0
+couche:axe_structurant,97403,Entre-Deux,0
+couche:axe_structurant,97404,L'Étang-Salé,0
+couche:axe_structurant,97405,Petite-Île,0
+couche:axe_structurant,97406,La Plaine-des-Palmistes,0
+couche:axe_structurant,97407,Le Port,0
+couche:axe_structurant,97408,La Possession,0
+couche:axe_structurant,97409,Saint-André,0
+couche:axe_structurant,97410,Saint-Benoît,0
+couche:axe_structurant,97411,Saint-Denis,0
+couche:axe_structurant,97412,Saint-Joseph,0
+couche:axe_structurant,97413,Saint-Leu,0
+couche:axe_structurant,97414,Saint-Louis,0
+couche:axe_structurant,97415,Saint-Paul,0
+couche:axe_structurant,97416,Saint-Pierre,0
+couche:axe_structurant,97417,Saint-Philippe,0
+couche:axe_structurant,97418,Sainte-Marie,0
+couche:axe_structurant,97419,Sainte-Rose,0
+couche:axe_structurant,97420,Sainte-Suzanne,0
+couche:axe_structurant,97421,Salazie,0
+couche:axe_structurant,97422,Le Tampon,0
+couche:axe_structurant,97423,Les Trois-Bassins,0
+couche:axe_structurant,97424,Cilaos,0
+couche:axe_structurant,SANS_COMMUNE,(couche non communale),3481
+couche:bassin_versant,97401,Les Avirons,4
+couche:bassin_versant,97402,Bras-Panon,8
+couche:bassin_versant,97403,Entre-Deux,4
+couche:bassin_versant,97404,L'Étang-Salé,2
+couche:bassin_versant,97405,Petite-Île,3
+couche:bassin_versant,97406,La Plaine-des-Palmistes,9
+couche:bassin_versant,97407,Le Port,3
+couche:bassin_versant,97408,La Possession,8
+couche:bassin_versant,97409,Saint-André,6
+couche:bassin_versant,97410,Saint-Benoît,12
+couche:bassin_versant,97411,Saint-Denis,8
+couche:bassin_versant,97412,Saint-Joseph,8
+couche:bassin_versant,97413,Saint-Leu,5
+couche:bassin_versant,97414,Saint-Louis,5
+couche:bassin_versant,97415,Saint-Paul,8
+couche:bassin_versant,97416,Saint-Pierre,6
+couche:bassin_versant,97417,Saint-Philippe,3
+couche:bassin_versant,97418,Sainte-Marie,6
+couche:bassin_versant,97419,Sainte-Rose,7
+couche:bassin_versant,97420,Sainte-Suzanne,6
+couche:bassin_versant,97421,Salazie,10
+couche:bassin_versant,97422,Le Tampon,9
+couche:bassin_versant,97423,Les Trois-Bassins,3
+couche:bassin_versant,97424,Cilaos,7
+couche:batiment,97401,Les Avirons,18077
+couche:batiment,97402,Bras-Panon,14272
+couche:batiment,97403,Entre-Deux,46493
+couche:batiment,97404,L'Étang-Salé,20407
+couche:batiment,97405,Petite-Île,17222
+couche:batiment,97406,La Plaine-des-Palmistes,7618
+couche:batiment,97407,Le Port,15828
+couche:batiment,97408,La Possession,42217
+couche:batiment,97409,Saint-André,50910
+couche:batiment,97410,Saint-Benoît,34683
+couche:batiment,97411,Saint-Denis,61522
+couche:batiment,97412,Saint-Joseph,25454
+couche:batiment,97413,Saint-Leu,35339
+couche:batiment,97414,Saint-Louis,41031
+couche:batiment,97415,Saint-Paul,83981
+couche:batiment,97416,Saint-Pierre,119094
+couche:batiment,97417,Saint-Philippe,4512
+couche:batiment,97418,Sainte-Marie,48795
+couche:batiment,97419,Sainte-Rose,6229
+couche:batiment,97420,Sainte-Suzanne,28794
+couche:batiment,97421,Salazie,7410
+couche:batiment,97422,Le Tampon,74136
+couche:batiment,97423,Les Trois-Bassins,7898
+couche:batiment,97424,Cilaos,5584
+couche:batiment_cosia,97401,Les Avirons,8010
+couche:batiment_cosia,97402,Bras-Panon,6051
+couche:batiment_cosia,97403,Entre-Deux,5582
+couche:batiment_cosia,97404,L'Étang-Salé,10149
+couche:batiment_cosia,97405,Petite-Île,10144
+couche:batiment_cosia,97406,La Plaine-des-Palmistes,7546
+couche:batiment_cosia,97407,Le Port,7952
+couche:batiment_cosia,97408,La Possession,15452
+couche:batiment_cosia,97409,Saint-André,23181
+couche:batiment_cosia,97410,Saint-Benoît,19623
+couche:batiment_cosia,97411,Saint-Denis,37231
+couche:batiment_cosia,97412,Saint-Joseph,27441
+couche:batiment_cosia,97413,Saint-Leu,23335
+couche:batiment_cosia,97414,Saint-Louis,26923
+couche:batiment_cosia,97415,Saint-Paul,61027
+couche:batiment_cosia,97416,Saint-Pierre,41476
+couche:batiment_cosia,97417,Saint-Philippe,3994
+couche:batiment_cosia,97418,Sainte-Marie,16221
+couche:batiment_cosia,97419,Sainte-Rose,7288
+couche:batiment_cosia,97420,Sainte-Suzanne,12576
+couche:batiment_cosia,97421,Salazie,8812
+couche:batiment_cosia,97422,Le Tampon,53097
+couche:batiment_cosia,97423,Les Trois-Bassins,6166
+couche:batiment_cosia,97424,Cilaos,5637
+couche:batiment_cosia,SANS_COMMUNE,(couche non communale),276
+couche:bruit_carte,97401,Les Avirons,0
+couche:bruit_carte,97402,Bras-Panon,0
+couche:bruit_carte,97403,Entre-Deux,0
+couche:bruit_carte,97404,L'Étang-Salé,0
+couche:bruit_carte,97405,Petite-Île,0
+couche:bruit_carte,97406,La Plaine-des-Palmistes,0
+couche:bruit_carte,97407,Le Port,0
+couche:bruit_carte,97408,La Possession,0
+couche:bruit_carte,97409,Saint-André,0
+couche:bruit_carte,97410,Saint-Benoît,0
+couche:bruit_carte,97411,Saint-Denis,0
+couche:bruit_carte,97412,Saint-Joseph,0
+couche:bruit_carte,97413,Saint-Leu,0
+couche:bruit_carte,97414,Saint-Louis,0
+couche:bruit_carte,97415,Saint-Paul,0
+couche:bruit_carte,97416,Saint-Pierre,0
+couche:bruit_carte,97417,Saint-Philippe,0
+couche:bruit_carte,97418,Sainte-Marie,0
+couche:bruit_carte,97419,Sainte-Rose,0
+couche:bruit_carte,97420,Sainte-Suzanne,0
+couche:bruit_carte,97421,Salazie,0
+couche:bruit_carte,97422,Le Tampon,0
+couche:bruit_carte,97423,Les Trois-Bassins,0
+couche:bruit_carte,97424,Cilaos,0
+couche:bruit_carte,SANS_COMMUNE,(couche non communale),6
+couche:bruit_route,97401,Les Avirons,0
+couche:bruit_route,97402,Bras-Panon,0
+couche:bruit_route,97403,Entre-Deux,0
+couche:bruit_route,97404,L'Étang-Salé,0
+couche:bruit_route,97405,Petite-Île,0
+couche:bruit_route,97406,La Plaine-des-Palmistes,0
+couche:bruit_route,97407,Le Port,0
+couche:bruit_route,97408,La Possession,0
+couche:bruit_route,97409,Saint-André,0
+couche:bruit_route,97410,Saint-Benoît,0
+couche:bruit_route,97411,Saint-Denis,0
+couche:bruit_route,97412,Saint-Joseph,0
+couche:bruit_route,97413,Saint-Leu,0
+couche:bruit_route,97414,Saint-Louis,0
+couche:bruit_route,97415,Saint-Paul,0
+couche:bruit_route,97416,Saint-Pierre,0
+couche:bruit_route,97417,Saint-Philippe,0
+couche:bruit_route,97418,Sainte-Marie,0
+couche:bruit_route,97419,Sainte-Rose,0
+couche:bruit_route,97420,Sainte-Suzanne,0
+couche:bruit_route,97421,Salazie,0
+couche:bruit_route,97422,Le Tampon,0
+couche:bruit_route,97423,Les Trois-Bassins,0
+couche:bruit_route,97424,Cilaos,0
+couche:bruit_route,HORS_REF,,1004
+couche:cavite,97401,Les Avirons,1
+couche:cavite,97402,Bras-Panon,0
+couche:cavite,97403,Entre-Deux,9
+couche:cavite,97404,L'Étang-Salé,2
+couche:cavite,97405,Petite-Île,0
+couche:cavite,97406,La Plaine-des-Palmistes,10
+couche:cavite,97407,Le Port,0
+couche:cavite,97408,La Possession,0
+couche:cavite,97409,Saint-André,0
+couche:cavite,97410,Saint-Benoît,6
+couche:cavite,97411,Saint-Denis,4
+couche:cavite,97412,Saint-Joseph,9
+couche:cavite,97413,Saint-Leu,4
+couche:cavite,97414,Saint-Louis,0
+couche:cavite,97415,Saint-Paul,20
+couche:cavite,97416,Saint-Pierre,0
+couche:cavite,97417,Saint-Philippe,24
+couche:cavite,97418,Sainte-Marie,0
+couche:cavite,97419,Sainte-Rose,48
+couche:cavite,97420,Sainte-Suzanne,0
+couche:cavite,97421,Salazie,1
+couche:cavite,97422,Le Tampon,10
+couche:cavite,97423,Les Trois-Bassins,3
+couche:cavite,97424,Cilaos,0
+couche:cimetiere,97401,Les Avirons,4
+couche:cimetiere,97402,Bras-Panon,3
+couche:cimetiere,97403,Entre-Deux,5
+couche:cimetiere,97404,L'Étang-Salé,5
+couche:cimetiere,97405,Petite-Île,4
+couche:cimetiere,97406,La Plaine-des-Palmistes,2
+couche:cimetiere,97407,Le Port,6
+couche:cimetiere,97408,La Possession,17
+couche:cimetiere,97409,Saint-André,8
+couche:cimetiere,97410,Saint-Benoît,6
+couche:cimetiere,97411,Saint-Denis,15
+couche:cimetiere,97412,Saint-Joseph,5
+couche:cimetiere,97413,Saint-Leu,10
+couche:cimetiere,97414,Saint-Louis,3
+couche:cimetiere,97415,Saint-Paul,18
+couche:cimetiere,97416,Saint-Pierre,18
+couche:cimetiere,97417,Saint-Philippe,3
+couche:cimetiere,97418,Sainte-Marie,9
+couche:cimetiere,97419,Sainte-Rose,2
+couche:cimetiere,97420,Sainte-Suzanne,3
+couche:cimetiere,97421,Salazie,3
+couche:cimetiere,97422,Le Tampon,12
+couche:cimetiere,97423,Les Trois-Bassins,1
+couche:cimetiere,97424,Cilaos,2
+couche:cinquante_pas,97401,Les Avirons,0
+couche:cinquante_pas,97402,Bras-Panon,0
+couche:cinquante_pas,97403,Entre-Deux,0
+couche:cinquante_pas,97404,L'Étang-Salé,0
+couche:cinquante_pas,97405,Petite-Île,0
+couche:cinquante_pas,97406,La Plaine-des-Palmistes,0
+couche:cinquante_pas,97407,Le Port,0
+couche:cinquante_pas,97408,La Possession,0
+couche:cinquante_pas,97409,Saint-André,0
+couche:cinquante_pas,97410,Saint-Benoît,0
+couche:cinquante_pas,97411,Saint-Denis,0
+couche:cinquante_pas,97412,Saint-Joseph,0
+couche:cinquante_pas,97413,Saint-Leu,0
+couche:cinquante_pas,97414,Saint-Louis,0
+couche:cinquante_pas,97415,Saint-Paul,0
+couche:cinquante_pas,97416,Saint-Pierre,0
+couche:cinquante_pas,97417,Saint-Philippe,0
+couche:cinquante_pas,97418,Sainte-Marie,0
+couche:cinquante_pas,97419,Sainte-Rose,0
+couche:cinquante_pas,97420,Sainte-Suzanne,0
+couche:cinquante_pas,97421,Salazie,0
+couche:cinquante_pas,97422,Le Tampon,0
+couche:cinquante_pas,97423,Les Trois-Bassins,0
+couche:cinquante_pas,97424,Cilaos,0
+couche:cinquante_pas,SANS_COMMUNE,(couche non communale),163
+couche:construction_lineaire,97401,Les Avirons,207
+couche:construction_lineaire,97402,Bras-Panon,164
+couche:construction_lineaire,97403,Entre-Deux,240
+couche:construction_lineaire,97404,L'Étang-Salé,186
+couche:construction_lineaire,97405,Petite-Île,118
+couche:construction_lineaire,97406,La Plaine-des-Palmistes,175
+couche:construction_lineaire,97407,Le Port,147
+couche:construction_lineaire,97408,La Possession,436
+couche:construction_lineaire,97409,Saint-André,178
+couche:construction_lineaire,97410,Saint-Benoît,492
+couche:construction_lineaire,97411,Saint-Denis,427
+couche:construction_lineaire,97412,Saint-Joseph,185
+couche:construction_lineaire,97413,Saint-Leu,482
+couche:construction_lineaire,97414,Saint-Louis,268
+couche:construction_lineaire,97415,Saint-Paul,855
+couche:construction_lineaire,97416,Saint-Pierre,441
+couche:construction_lineaire,97417,Saint-Philippe,74
+couche:construction_lineaire,97418,Sainte-Marie,258
+couche:construction_lineaire,97419,Sainte-Rose,209
+couche:construction_lineaire,97420,Sainte-Suzanne,183
+couche:construction_lineaire,97421,Salazie,147
+couche:construction_lineaire,97422,Le Tampon,410
+couche:construction_lineaire,97423,Les Trois-Bassins,198
+couche:construction_lineaire,97424,Cilaos,239
+couche:construction_surfacique,97401,Les Avirons,3
+couche:construction_surfacique,97402,Bras-Panon,4
+couche:construction_surfacique,97403,Entre-Deux,4
+couche:construction_surfacique,97404,L'Étang-Salé,18
+couche:construction_surfacique,97405,Petite-Île,2
+couche:construction_surfacique,97406,La Plaine-des-Palmistes,2
+couche:construction_surfacique,97407,Le Port,5
+couche:construction_surfacique,97408,La Possession,10
+couche:construction_surfacique,97409,Saint-André,18
+couche:construction_surfacique,97410,Saint-Benoît,6
+couche:construction_surfacique,97411,Saint-Denis,44
+couche:construction_surfacique,97412,Saint-Joseph,4
+couche:construction_surfacique,97413,Saint-Leu,43
+couche:construction_surfacique,97414,Saint-Louis,12
+couche:construction_surfacique,97415,Saint-Paul,35
+couche:construction_surfacique,97416,Saint-Pierre,24
+couche:construction_surfacique,97417,Saint-Philippe,1
+couche:construction_surfacique,97418,Sainte-Marie,33
+couche:construction_surfacique,97419,Sainte-Rose,2
+couche:construction_surfacique,97420,Sainte-Suzanne,19
+couche:construction_surfacique,97421,Salazie,0
+couche:construction_surfacique,97422,Le Tampon,6
+couche:construction_surfacique,97423,Les Trois-Bassins,10
+couche:construction_surfacique,97424,Cilaos,0
+couche:dpf,97401,Les Avirons,0
+couche:dpf,97402,Bras-Panon,0
+couche:dpf,97403,Entre-Deux,0
+couche:dpf,97404,L'Étang-Salé,0
+couche:dpf,97405,Petite-Île,0
+couche:dpf,97406,La Plaine-des-Palmistes,0
+couche:dpf,97407,Le Port,0
+couche:dpf,97408,La Possession,0
+couche:dpf,97409,Saint-André,0
+couche:dpf,97410,Saint-Benoît,0
+couche:dpf,97411,Saint-Denis,0
+couche:dpf,97412,Saint-Joseph,0
+couche:dpf,97413,Saint-Leu,0
+couche:dpf,97414,Saint-Louis,0
+couche:dpf,97415,Saint-Paul,0
+couche:dpf,97416,Saint-Pierre,0
+couche:dpf,97417,Saint-Philippe,0
+couche:dpf,97418,Sainte-Marie,0
+couche:dpf,97419,Sainte-Rose,0
+couche:dpf,97420,Sainte-Suzanne,0
+couche:dpf,97421,Salazie,0
+couche:dpf,97422,Le Tampon,0
+couche:dpf,97423,Les Trois-Bassins,0
+couche:dpf,97424,Cilaos,0
+couche:dpf,SANS_COMMUNE,(couche non communale),281
+couche:dpu,97401,Les Avirons,0
+couche:dpu,97402,Bras-Panon,0
+couche:dpu,97403,Entre-Deux,0
+couche:dpu,97404,L'Étang-Salé,0
+couche:dpu,97405,Petite-Île,0
+couche:dpu,97406,La Plaine-des-Palmistes,0
+couche:dpu,97407,Le Port,0
+couche:dpu,97408,La Possession,0
+couche:dpu,97409,Saint-André,0
+couche:dpu,97410,Saint-Benoît,0
+couche:dpu,97411,Saint-Denis,41
+couche:dpu,97412,Saint-Joseph,0
+couche:dpu,97413,Saint-Leu,0
+couche:dpu,97414,Saint-Louis,0
+couche:dpu,97415,Saint-Paul,158
+couche:dpu,97416,Saint-Pierre,0
+couche:dpu,97417,Saint-Philippe,0
+couche:dpu,97418,Sainte-Marie,1
+couche:dpu,97419,Sainte-Rose,0
+couche:dpu,97420,Sainte-Suzanne,0
+couche:dpu,97421,Salazie,0
+couche:dpu,97422,Le Tampon,2
+couche:dpu,97423,Les Trois-Bassins,0
+couche:dpu,97424,Cilaos,0
+couche:endiguement,97401,Les Avirons,0
+couche:endiguement,97402,Bras-Panon,0
+couche:endiguement,97403,Entre-Deux,0
+couche:endiguement,97404,L'Étang-Salé,0
+couche:endiguement,97405,Petite-Île,0
+couche:endiguement,97406,La Plaine-des-Palmistes,0
+couche:endiguement,97407,Le Port,1
+couche:endiguement,97408,La Possession,6
+couche:endiguement,97409,Saint-André,0
+couche:endiguement,97410,Saint-Benoît,0
+couche:endiguement,97411,Saint-Denis,13
+couche:endiguement,97412,Saint-Joseph,0
+couche:endiguement,97413,Saint-Leu,3
+couche:endiguement,97414,Saint-Louis,0
+couche:endiguement,97415,Saint-Paul,5
+couche:endiguement,97416,Saint-Pierre,6
+couche:endiguement,97417,Saint-Philippe,0
+couche:endiguement,97418,Sainte-Marie,3
+couche:endiguement,97419,Sainte-Rose,0
+couche:endiguement,97420,Sainte-Suzanne,1
+couche:endiguement,97421,Salazie,0
+couche:endiguement,97422,Le Tampon,0
+couche:endiguement,97423,Les Trois-Bassins,0
+couche:endiguement,97424,Cilaos,0
+couche:endiguement,HORS_REF,,10
+couche:endiguement,SANS_COMMUNE,(couche non communale),69
+couche:enr_exclue_hors_toiture,97401,Les Avirons,0
+couche:enr_exclue_hors_toiture,97402,Bras-Panon,0
+couche:enr_exclue_hors_toiture,97403,Entre-Deux,0
+couche:enr_exclue_hors_toiture,97404,L'Étang-Salé,0
+couche:enr_exclue_hors_toiture,97405,Petite-Île,0
+couche:enr_exclue_hors_toiture,97406,La Plaine-des-Palmistes,0
+couche:enr_exclue_hors_toiture,97407,Le Port,0
+couche:enr_exclue_hors_toiture,97408,La Possession,0
+couche:enr_exclue_hors_toiture,97409,Saint-André,0
+couche:enr_exclue_hors_toiture,97410,Saint-Benoît,0
+couche:enr_exclue_hors_toiture,97411,Saint-Denis,0
+couche:enr_exclue_hors_toiture,97412,Saint-Joseph,0
+couche:enr_exclue_hors_toiture,97413,Saint-Leu,0
+couche:enr_exclue_hors_toiture,97414,Saint-Louis,0
+couche:enr_exclue_hors_toiture,97415,Saint-Paul,0
+couche:enr_exclue_hors_toiture,97416,Saint-Pierre,0
+couche:enr_exclue_hors_toiture,97417,Saint-Philippe,0
+couche:enr_exclue_hors_toiture,97418,Sainte-Marie,0
+couche:enr_exclue_hors_toiture,97419,Sainte-Rose,0
+couche:enr_exclue_hors_toiture,97420,Sainte-Suzanne,0
+couche:enr_exclue_hors_toiture,97421,Salazie,0
+couche:enr_exclue_hors_toiture,97422,Le Tampon,0
+couche:enr_exclue_hors_toiture,97423,Les Trois-Bassins,0
+couche:enr_exclue_hors_toiture,97424,Cilaos,0
+couche:enr_exclue_hors_toiture,SANS_COMMUNE,(couche non communale),3
+couche:ens,97401,Les Avirons,1
+couche:ens,97402,Bras-Panon,2
+couche:ens,97403,Entre-Deux,3
+couche:ens,97404,L'Étang-Salé,2
+couche:ens,97405,Petite-Île,3
+couche:ens,97406,La Plaine-des-Palmistes,3
+couche:ens,97407,Le Port,0
+couche:ens,97408,La Possession,5
+couche:ens,97409,Saint-André,0
+couche:ens,97410,Saint-Benoît,6
+couche:ens,97411,Saint-Denis,4
+couche:ens,97412,Saint-Joseph,6
+couche:ens,97413,Saint-Leu,5
+couche:ens,97414,Saint-Louis,1
+couche:ens,97415,Saint-Paul,7
+couche:ens,97416,Saint-Pierre,2
+couche:ens,97417,Saint-Philippe,4
+couche:ens,97418,Sainte-Marie,1
+couche:ens,97419,Sainte-Rose,5
+couche:ens,97420,Sainte-Suzanne,0
+couche:ens,97421,Salazie,4
+couche:ens,97422,Le Tampon,4
+couche:ens,97423,Les Trois-Bassins,3
+couche:ens,97424,Cilaos,2
+couche:ens,SANS_COMMUNE,(couche non communale),338
+couche:foret_publique,97401,Les Avirons,0
+couche:foret_publique,97402,Bras-Panon,0
+couche:foret_publique,97403,Entre-Deux,0
+couche:foret_publique,97404,L'Étang-Salé,0
+couche:foret_publique,97405,Petite-Île,0
+couche:foret_publique,97406,La Plaine-des-Palmistes,0
+couche:foret_publique,97407,Le Port,0
+couche:foret_publique,97408,La Possession,0
+couche:foret_publique,97409,Saint-André,0
+couche:foret_publique,97410,Saint-Benoît,0
+couche:foret_publique,97411,Saint-Denis,0
+couche:foret_publique,97412,Saint-Joseph,0
+couche:foret_publique,97413,Saint-Leu,0
+couche:foret_publique,97414,Saint-Louis,0
+couche:foret_publique,97415,Saint-Paul,0
+couche:foret_publique,97416,Saint-Pierre,0
+couche:foret_publique,97417,Saint-Philippe,0
+couche:foret_publique,97418,Sainte-Marie,0
+couche:foret_publique,97419,Sainte-Rose,0
+couche:foret_publique,97420,Sainte-Suzanne,0
+couche:foret_publique,97421,Salazie,0
+couche:foret_publique,97422,Le Tampon,0
+couche:foret_publique,97423,Les Trois-Bassins,0
+couche:foret_publique,97424,Cilaos,0
+couche:foret_publique,SANS_COMMUNE,(couche non communale),65
+couche:friche,97401,Les Avirons,15
+couche:friche,97402,Bras-Panon,26
+couche:friche,97403,Entre-Deux,6
+couche:friche,97404,L'Étang-Salé,16
+couche:friche,97405,Petite-Île,6
+couche:friche,97406,La Plaine-des-Palmistes,43
+couche:friche,97407,Le Port,21
+couche:friche,97408,La Possession,2
+couche:friche,97409,Saint-André,17
+couche:friche,97410,Saint-Benoît,1
+couche:friche,97411,Saint-Denis,6
+couche:friche,97412,Saint-Joseph,26
+couche:friche,97413,Saint-Leu,0
+couche:friche,97414,Saint-Louis,42
+couche:friche,97415,Saint-Paul,9
+couche:friche,97416,Saint-Pierre,45
+couche:friche,97417,Saint-Philippe,12
+couche:friche,97418,Sainte-Marie,0
+couche:friche,97419,Sainte-Rose,9
+couche:friche,97420,Sainte-Suzanne,1
+couche:friche,97421,Salazie,20
+couche:friche,97422,Le Tampon,2
+couche:friche,97423,Les Trois-Bassins,15
+couche:friche,97424,Cilaos,32
+couche:frr,97401,Les Avirons,1
+couche:frr,97402,Bras-Panon,1
+couche:frr,97403,Entre-Deux,1
+couche:frr,97404,L'Étang-Salé,1
+couche:frr,97405,Petite-Île,1
+couche:frr,97406,La Plaine-des-Palmistes,1
+couche:frr,97407,Le Port,0
+couche:frr,97408,La Possession,1
+couche:frr,97409,Saint-André,1
+couche:frr,97410,Saint-Benoît,1
+couche:frr,97411,Saint-Denis,1
+couche:frr,97412,Saint-Joseph,1
+couche:frr,97413,Saint-Leu,1
+couche:frr,97414,Saint-Louis,1
+couche:frr,97415,Saint-Paul,1
+couche:frr,97416,Saint-Pierre,1
+couche:frr,97417,Saint-Philippe,1
+couche:frr,97418,Sainte-Marie,1
+couche:frr,97419,Sainte-Rose,1
+couche:frr,97420,Sainte-Suzanne,1
+couche:frr,97421,Salazie,1
+couche:frr,97422,Le Tampon,1
+couche:frr,97423,Les Trois-Bassins,1
+couche:frr,97424,Cilaos,1
+couche:georisque_alea,97401,Les Avirons,17
+couche:georisque_alea,97402,Bras-Panon,19
+couche:georisque_alea,97403,Entre-Deux,14
+couche:georisque_alea,97404,L'Étang-Salé,23
+couche:georisque_alea,97405,Petite-Île,21
+couche:georisque_alea,97406,La Plaine-des-Palmistes,8
+couche:georisque_alea,97407,Le Port,21
+couche:georisque_alea,97408,La Possession,412
+couche:georisque_alea,97409,Saint-André,17
+couche:georisque_alea,97410,Saint-Benoît,15
+couche:georisque_alea,97411,Saint-Denis,12
+couche:georisque_alea,97412,Saint-Joseph,22
+couche:georisque_alea,97413,Saint-Leu,21
+couche:georisque_alea,97414,Saint-Louis,19
+couche:georisque_alea,97415,Saint-Paul,211
+couche:georisque_alea,97416,Saint-Pierre,25
+couche:georisque_alea,97417,Saint-Philippe,8
+couche:georisque_alea,97418,Sainte-Marie,20
+couche:georisque_alea,97419,Sainte-Rose,27
+couche:georisque_alea,97420,Sainte-Suzanne,53
+couche:georisque_alea,97421,Salazie,12
+couche:georisque_alea,97422,Le Tampon,21
+couche:georisque_alea,97423,Les Trois-Bassins,33
+couche:georisque_alea,97424,Cilaos,42
+couche:icpe,97401,Les Avirons,7
+couche:icpe,97402,Bras-Panon,34
+couche:icpe,97403,Entre-Deux,0
+couche:icpe,97404,L'Étang-Salé,23
+couche:icpe,97405,Petite-Île,11
+couche:icpe,97406,La Plaine-des-Palmistes,12
+couche:icpe,97407,Le Port,182
+couche:icpe,97408,La Possession,30
+couche:icpe,97409,Saint-André,80
+couche:icpe,97410,Saint-Benoît,49
+couche:icpe,97411,Saint-Denis,116
+couche:icpe,97412,Saint-Joseph,53
+couche:icpe,97413,Saint-Leu,34
+couche:icpe,97414,Saint-Louis,69
+couche:icpe,97415,Saint-Paul,161
+couche:icpe,97416,Saint-Pierre,182
+couche:icpe,97417,Saint-Philippe,1
+couche:icpe,97418,Sainte-Marie,74
+couche:icpe,97419,Sainte-Rose,7
+couche:icpe,97420,Sainte-Suzanne,45
+couche:icpe,97421,Salazie,25
+couche:icpe,97422,Le Tampon,63
+couche:icpe,97423,Les Trois-Bassins,7
+couche:icpe,97424,Cilaos,3
+couche:iris_insee,97401,Les Avirons,4
+couche:iris_insee,97402,Bras-Panon,5
+couche:iris_insee,97403,Entre-Deux,3
+couche:iris_insee,97404,L'Étang-Salé,6
+couche:iris_insee,97405,Petite-Île,5
+couche:iris_insee,97406,La Plaine-des-Palmistes,1
+couche:iris_insee,97407,Le Port,16
+couche:iris_insee,97408,La Possession,13
+couche:iris_insee,97409,Saint-André,15
+couche:iris_insee,97410,Saint-Benoît,14
+couche:iris_insee,97411,Saint-Denis,64
+couche:iris_insee,97412,Saint-Joseph,14
+couche:iris_insee,97413,Saint-Leu,12
+couche:iris_insee,97414,Saint-Louis,19
+couche:iris_insee,97415,Saint-Paul,43
+couche:iris_insee,97416,Saint-Pierre,31
+couche:iris_insee,97417,Saint-Philippe,5
+couche:iris_insee,97418,Sainte-Marie,14
+couche:iris_insee,97419,Sainte-Rose,9
+couche:iris_insee,97420,Sainte-Suzanne,9
+couche:iris_insee,97421,Salazie,8
+couche:iris_insee,97422,Le Tampon,25
+couche:iris_insee,97423,Les Trois-Bassins,4
+couche:iris_insee,97424,Cilaos,5
+couche:ligne_ht,97401,Les Avirons,0
+couche:ligne_ht,97402,Bras-Panon,0
+couche:ligne_ht,97403,Entre-Deux,0
+couche:ligne_ht,97404,L'Étang-Salé,0
+couche:ligne_ht,97405,Petite-Île,0
+couche:ligne_ht,97406,La Plaine-des-Palmistes,0
+couche:ligne_ht,97407,Le Port,0
+couche:ligne_ht,97408,La Possession,0
+couche:ligne_ht,97409,Saint-André,0
+couche:ligne_ht,97410,Saint-Benoît,0
+couche:ligne_ht,97411,Saint-Denis,0
+couche:ligne_ht,97412,Saint-Joseph,0
+couche:ligne_ht,97413,Saint-Leu,0
+couche:ligne_ht,97414,Saint-Louis,0
+couche:ligne_ht,97415,Saint-Paul,0
+couche:ligne_ht,97416,Saint-Pierre,0
+couche:ligne_ht,97417,Saint-Philippe,0
+couche:ligne_ht,97418,Sainte-Marie,0
+couche:ligne_ht,97419,Sainte-Rose,0
+couche:ligne_ht,97420,Sainte-Suzanne,0
+couche:ligne_ht,97421,Salazie,0
+couche:ligne_ht,97422,Le Tampon,0
+couche:ligne_ht,97423,Les Trois-Bassins,0
+couche:ligne_ht,97424,Cilaos,0
+couche:ligne_ht,SANS_COMMUNE,(couche non communale),48
+couche:ligne_mt,97401,Les Avirons,0
+couche:ligne_mt,97402,Bras-Panon,0
+couche:ligne_mt,97403,Entre-Deux,0
+couche:ligne_mt,97404,L'Étang-Salé,0
+couche:ligne_mt,97405,Petite-Île,0
+couche:ligne_mt,97406,La Plaine-des-Palmistes,0
+couche:ligne_mt,97407,Le Port,0
+couche:ligne_mt,97408,La Possession,0
+couche:ligne_mt,97409,Saint-André,0
+couche:ligne_mt,97410,Saint-Benoît,0
+couche:ligne_mt,97411,Saint-Denis,0
+couche:ligne_mt,97412,Saint-Joseph,0
+couche:ligne_mt,97413,Saint-Leu,0
+couche:ligne_mt,97414,Saint-Louis,0
+couche:ligne_mt,97415,Saint-Paul,0
+couche:ligne_mt,97416,Saint-Pierre,0
+couche:ligne_mt,97417,Saint-Philippe,0
+couche:ligne_mt,97418,Sainte-Marie,0
+couche:ligne_mt,97419,Sainte-Rose,0
+couche:ligne_mt,97420,Sainte-Suzanne,0
+couche:ligne_mt,97421,Salazie,0
+couche:ligne_mt,97422,Le Tampon,0
+couche:ligne_mt,97423,Les Trois-Bassins,0
+couche:ligne_mt,97424,Cilaos,0
+couche:ligne_mt,SANS_COMMUNE,(couche non communale),19480
+couche:mesures_compensatoires,97401,Les Avirons,0
+couche:mesures_compensatoires,97402,Bras-Panon,0
+couche:mesures_compensatoires,97403,Entre-Deux,0
+couche:mesures_compensatoires,97404,L'Étang-Salé,0
+couche:mesures_compensatoires,97405,Petite-Île,0
+couche:mesures_compensatoires,97406,La Plaine-des-Palmistes,0
+couche:mesures_compensatoires,97407,Le Port,0
+couche:mesures_compensatoires,97408,La Possession,0
+couche:mesures_compensatoires,97409,Saint-André,0
+couche:mesures_compensatoires,97410,Saint-Benoît,0
+couche:mesures_compensatoires,97411,Saint-Denis,0
+couche:mesures_compensatoires,97412,Saint-Joseph,0
+couche:mesures_compensatoires,97413,Saint-Leu,0
+couche:mesures_compensatoires,97414,Saint-Louis,0
+couche:mesures_compensatoires,97415,Saint-Paul,0
+couche:mesures_compensatoires,97416,Saint-Pierre,0
+couche:mesures_compensatoires,97417,Saint-Philippe,0
+couche:mesures_compensatoires,97418,Sainte-Marie,0
+couche:mesures_compensatoires,97419,Sainte-Rose,0
+couche:mesures_compensatoires,97420,Sainte-Suzanne,0
+couche:mesures_compensatoires,97421,Salazie,0
+couche:mesures_compensatoires,97422,Le Tampon,0
+couche:mesures_compensatoires,97423,Les Trois-Bassins,0
+couche:mesures_compensatoires,97424,Cilaos,0
+couche:mesures_compensatoires,SANS_COMMUNE,(couche non communale),24
+couche:mvt,97401,Les Avirons,43
+couche:mvt,97402,Bras-Panon,12
+couche:mvt,97403,Entre-Deux,100
+couche:mvt,97404,L'Étang-Salé,38
+couche:mvt,97405,Petite-Île,53
+couche:mvt,97406,La Plaine-des-Palmistes,15
+couche:mvt,97407,Le Port,1
+couche:mvt,97408,La Possession,176
+couche:mvt,97409,Saint-André,341
+couche:mvt,97410,Saint-Benoît,29
+couche:mvt,97411,Saint-Denis,377
+couche:mvt,97412,Saint-Joseph,99
+couche:mvt,97413,Saint-Leu,142
+couche:mvt,97414,Saint-Louis,229
+couche:mvt,97415,Saint-Paul,160
+couche:mvt,97416,Saint-Pierre,29
+couche:mvt,97417,Saint-Philippe,8
+couche:mvt,97418,Sainte-Marie,42
+couche:mvt,97419,Sainte-Rose,20
+couche:mvt,97420,Sainte-Suzanne,26
+couche:mvt,97421,Salazie,795
+couche:mvt,97422,Le Tampon,78
+couche:mvt,97423,Les Trois-Bassins,20
+couche:mvt,97424,Cilaos,252
+couche:ocs_ge,97401,Les Avirons,103
+couche:ocs_ge,97402,Bras-Panon,100
+couche:ocs_ge,97403,Entre-Deux,8
+couche:ocs_ge,97404,L'Étang-Salé,17
+couche:ocs_ge,97405,Petite-Île,8
+couche:ocs_ge,97406,La Plaine-des-Palmistes,0
+couche:ocs_ge,97407,Le Port,9
+couche:ocs_ge,97408,La Possession,64
+couche:ocs_ge,97409,Saint-André,84
+couche:ocs_ge,97410,Saint-Benoît,121
+couche:ocs_ge,97411,Saint-Denis,67
+couche:ocs_ge,97412,Saint-Joseph,102
+couche:ocs_ge,97413,Saint-Leu,58
+couche:ocs_ge,97414,Saint-Louis,64
+couche:ocs_ge,97415,Saint-Paul,267
+couche:ocs_ge,97416,Saint-Pierre,276
+couche:ocs_ge,97417,Saint-Philippe,25
+couche:ocs_ge,97418,Sainte-Marie,45
+couche:ocs_ge,97419,Sainte-Rose,57
+couche:ocs_ge,97420,Sainte-Suzanne,1
+couche:ocs_ge,97421,Salazie,4
+couche:ocs_ge,97422,Le Tampon,157
+couche:ocs_ge,97423,Les Trois-Bassins,2
+couche:ocs_ge,97424,Cilaos,4
+couche:osm_faux_positif,97401,Les Avirons,63
+couche:osm_faux_positif,97402,Bras-Panon,125
+couche:osm_faux_positif,97403,Entre-Deux,230
+couche:osm_faux_positif,97404,L'Étang-Salé,158
+couche:osm_faux_positif,97405,Petite-Île,67
+couche:osm_faux_positif,97406,La Plaine-des-Palmistes,103
+couche:osm_faux_positif,97407,Le Port,517
+couche:osm_faux_positif,97408,La Possession,360
+couche:osm_faux_positif,97409,Saint-André,188
+couche:osm_faux_positif,97410,Saint-Benoît,318
+couche:osm_faux_positif,97411,Saint-Denis,719
+couche:osm_faux_positif,97412,Saint-Joseph,211
+couche:osm_faux_positif,97413,Saint-Leu,174
+couche:osm_faux_positif,97414,Saint-Louis,176
+couche:osm_faux_positif,97415,Saint-Paul,808
+couche:osm_faux_positif,97416,Saint-Pierre,756
+couche:osm_faux_positif,97417,Saint-Philippe,35
+couche:osm_faux_positif,97418,Sainte-Marie,532
+couche:osm_faux_positif,97419,Sainte-Rose,35
+couche:osm_faux_positif,97420,Sainte-Suzanne,175
+couche:osm_faux_positif,97421,Salazie,74
+couche:osm_faux_positif,97422,Le Tampon,395
+couche:osm_faux_positif,97423,Les Trois-Bassins,33
+couche:osm_faux_positif,97424,Cilaos,95
+couche:parc_national,97401,Les Avirons,0
+couche:parc_national,97402,Bras-Panon,0
+couche:parc_national,97403,Entre-Deux,0
+couche:parc_national,97404,L'Étang-Salé,0
+couche:parc_national,97405,Petite-Île,0
+couche:parc_national,97406,La Plaine-des-Palmistes,0
+couche:parc_national,97407,Le Port,0
+couche:parc_national,97408,La Possession,0
+couche:parc_national,97409,Saint-André,0
+couche:parc_national,97410,Saint-Benoît,0
+couche:parc_national,97411,Saint-Denis,0
+couche:parc_national,97412,Saint-Joseph,0
+couche:parc_national,97413,Saint-Leu,0
+couche:parc_national,97414,Saint-Louis,0
+couche:parc_national,97415,Saint-Paul,0
+couche:parc_national,97416,Saint-Pierre,0
+couche:parc_national,97417,Saint-Philippe,0
+couche:parc_national,97418,Sainte-Marie,0
+couche:parc_national,97419,Sainte-Rose,0
+couche:parc_national,97420,Sainte-Suzanne,0
+couche:parc_national,97421,Salazie,0
+couche:parc_national,97422,Le Tampon,0
+couche:parc_national,97423,Les Trois-Bassins,0
+couche:parc_national,97424,Cilaos,0
+couche:parc_national,SANS_COMMUNE,(couche non communale),3
+couche:peb,97401,Les Avirons,0
+couche:peb,97402,Bras-Panon,0
+couche:peb,97403,Entre-Deux,0
+couche:peb,97404,L'Étang-Salé,0
+couche:peb,97405,Petite-Île,0
+couche:peb,97406,La Plaine-des-Palmistes,0
+couche:peb,97407,Le Port,0
+couche:peb,97408,La Possession,0
+couche:peb,97409,Saint-André,0
+couche:peb,97410,Saint-Benoît,0
+couche:peb,97411,Saint-Denis,0
+couche:peb,97412,Saint-Joseph,0
+couche:peb,97413,Saint-Leu,0
+couche:peb,97414,Saint-Louis,0
+couche:peb,97415,Saint-Paul,0
+couche:peb,97416,Saint-Pierre,4
+couche:peb,97417,Saint-Philippe,0
+couche:peb,97418,Sainte-Marie,0
+couche:peb,97419,Sainte-Rose,0
+couche:peb,97420,Sainte-Suzanne,0
+couche:peb,97421,Salazie,0
+couche:peb,97422,Le Tampon,0
+couche:peb,97423,Les Trois-Bassins,0
+couche:peb,97424,Cilaos,0
+couche:peb,SANS_COMMUNE,(couche non communale),4
+couche:pente,97401,Les Avirons,3500
+couche:pente,97402,Bras-Panon,5676
+couche:pente,97403,Entre-Deux,4140
+couche:pente,97404,L'Étang-Salé,2804
+couche:pente,97405,Petite-Île,2272
+couche:pente,97406,La Plaine-des-Palmistes,5146
+couche:pente,97407,Le Port,768
+couche:pente,97408,La Possession,10115
+couche:pente,97409,Saint-André,3819
+couche:pente,97410,Saint-Benoît,15169
+couche:pente,97411,Saint-Denis,6900
+couche:pente,97412,Saint-Joseph,8488
+couche:pente,97413,Saint-Leu,6582
+couche:pente,97414,Saint-Louis,4557
+couche:pente,97415,Saint-Paul,13062
+couche:pente,97416,Saint-Pierre,7201
+couche:pente,97417,Saint-Philippe,5111
+couche:pente,97418,Sainte-Marie,4977
+couche:pente,97419,Sainte-Rose,8391
+couche:pente,97420,Sainte-Suzanne,4160
+couche:pente,97421,Salazie,5986
+couche:pente,97422,Le Tampon,11865
+couche:pente,97423,Les Trois-Bassins,2629
+couche:pente,97424,Cilaos,4080
+couche:piscine_cosia,97401,Les Avirons,969
+couche:piscine_cosia,97402,Bras-Panon,651
+couche:piscine_cosia,97403,Entre-Deux,655
+couche:piscine_cosia,97404,L'Étang-Salé,1415
+couche:piscine_cosia,97405,Petite-Île,1142
+couche:piscine_cosia,97406,La Plaine-des-Palmistes,591
+couche:piscine_cosia,97407,Le Port,378
+couche:piscine_cosia,97408,La Possession,2415
+couche:piscine_cosia,97409,Saint-André,2124
+couche:piscine_cosia,97410,Saint-Benoît,1776
+couche:piscine_cosia,97411,Saint-Denis,4915
+couche:piscine_cosia,97412,Saint-Joseph,2901
+couche:piscine_cosia,97413,Saint-Leu,2220
+couche:piscine_cosia,97414,Saint-Louis,2689
+couche:piscine_cosia,97415,Saint-Paul,6940
+couche:piscine_cosia,97416,Saint-Pierre,4686
+couche:piscine_cosia,97417,Saint-Philippe,335
+couche:piscine_cosia,97418,Sainte-Marie,1902
+couche:piscine_cosia,97419,Sainte-Rose,440
+couche:piscine_cosia,97420,Sainte-Suzanne,1217
+couche:piscine_cosia,97421,Salazie,510
+couche:piscine_cosia,97422,Le Tampon,4957
+couche:piscine_cosia,97423,Les Trois-Bassins,431
+couche:piscine_cosia,97424,Cilaos,291
+couche:piscine_cosia,SANS_COMMUNE,(couche non communale),49
+couche:plu_gpu_prescription,97401,Les Avirons,93
+couche:plu_gpu_prescription,97402,Bras-Panon,412
+couche:plu_gpu_prescription,97403,Entre-Deux,506
+couche:plu_gpu_prescription,97404,L'Étang-Salé,134
+couche:plu_gpu_prescription,97405,Petite-Île,4
+couche:plu_gpu_prescription,97406,La Plaine-des-Palmistes,892
+couche:plu_gpu_prescription,97407,Le Port,194
+couche:plu_gpu_prescription,97408,La Possession,86
+couche:plu_gpu_prescription,97409,Saint-André,0
+couche:plu_gpu_prescription,97410,Saint-Benoît,459
+couche:plu_gpu_prescription,97411,Saint-Denis,2908
+couche:plu_gpu_prescription,97412,Saint-Joseph,448
+couche:plu_gpu_prescription,97413,Saint-Leu,0
+couche:plu_gpu_prescription,97414,Saint-Louis,503
+couche:plu_gpu_prescription,97415,Saint-Paul,418
+couche:plu_gpu_prescription,97416,Saint-Pierre,713
+couche:plu_gpu_prescription,97417,Saint-Philippe,0
+couche:plu_gpu_prescription,97418,Sainte-Marie,693
+couche:plu_gpu_prescription,97419,Sainte-Rose,50
+couche:plu_gpu_prescription,97420,Sainte-Suzanne,124
+couche:plu_gpu_prescription,97421,Salazie,797
+couche:plu_gpu_prescription,97422,Le Tampon,590
+couche:plu_gpu_prescription,97423,Les Trois-Bassins,265
+couche:plu_gpu_prescription,97424,Cilaos,201
+couche:plu_gpu_zone,97401,Les Avirons,163
+couche:plu_gpu_zone,97402,Bras-Panon,130
+couche:plu_gpu_zone,97403,Entre-Deux,182
+couche:plu_gpu_zone,97404,L'Étang-Salé,78
+couche:plu_gpu_zone,97405,Petite-Île,335
+couche:plu_gpu_zone,97406,La Plaine-des-Palmistes,274
+couche:plu_gpu_zone,97407,Le Port,110
+couche:plu_gpu_zone,97408,La Possession,246
+couche:plu_gpu_zone,97409,Saint-André,142
+couche:plu_gpu_zone,97410,Saint-Benoît,306
+couche:plu_gpu_zone,97411,Saint-Denis,259
+couche:plu_gpu_zone,97412,Saint-Joseph,343
+couche:plu_gpu_zone,97413,Saint-Leu,368
+couche:plu_gpu_zone,97414,Saint-Louis,241
+couche:plu_gpu_zone,97415,Saint-Paul,765
+couche:plu_gpu_zone,97416,Saint-Pierre,285
+couche:plu_gpu_zone,97417,Saint-Philippe,0
+couche:plu_gpu_zone,97418,Sainte-Marie,268
+couche:plu_gpu_zone,97419,Sainte-Rose,125
+couche:plu_gpu_zone,97420,Sainte-Suzanne,191
+couche:plu_gpu_zone,97421,Salazie,325
+couche:plu_gpu_zone,97422,Le Tampon,391
+couche:plu_gpu_zone,97423,Les Trois-Bassins,165
+couche:plu_gpu_zone,97424,Cilaos,149
+couche:plu_gpu_zone__archive_m40,97401,Les Avirons,0
+couche:plu_gpu_zone__archive_m40,97402,Bras-Panon,0
+couche:plu_gpu_zone__archive_m40,97403,Entre-Deux,0
+couche:plu_gpu_zone__archive_m40,97404,L'Étang-Salé,0
+couche:plu_gpu_zone__archive_m40,97405,Petite-Île,0
+couche:plu_gpu_zone__archive_m40,97406,La Plaine-des-Palmistes,0
+couche:plu_gpu_zone__archive_m40,97407,Le Port,0
+couche:plu_gpu_zone__archive_m40,97408,La Possession,0
+couche:plu_gpu_zone__archive_m40,97409,Saint-André,0
+couche:plu_gpu_zone__archive_m40,97410,Saint-Benoît,0
+couche:plu_gpu_zone__archive_m40,97411,Saint-Denis,0
+couche:plu_gpu_zone__archive_m40,97412,Saint-Joseph,0
+couche:plu_gpu_zone__archive_m40,97413,Saint-Leu,0
+couche:plu_gpu_zone__archive_m40,97414,Saint-Louis,0
+couche:plu_gpu_zone__archive_m40,97415,Saint-Paul,0
+couche:plu_gpu_zone__archive_m40,97416,Saint-Pierre,0
+couche:plu_gpu_zone__archive_m40,97417,Saint-Philippe,3
+couche:plu_gpu_zone__archive_m40,97418,Sainte-Marie,0
+couche:plu_gpu_zone__archive_m40,97419,Sainte-Rose,0
+couche:plu_gpu_zone__archive_m40,97420,Sainte-Suzanne,0
+couche:plu_gpu_zone__archive_m40,97421,Salazie,0
+couche:plu_gpu_zone__archive_m40,97422,Le Tampon,0
+couche:plu_gpu_zone__archive_m40,97423,Les Trois-Bassins,0
+couche:plu_gpu_zone__archive_m40,97424,Cilaos,0
+couche:pole_echange,97401,Les Avirons,0
+couche:pole_echange,97402,Bras-Panon,0
+couche:pole_echange,97403,Entre-Deux,0
+couche:pole_echange,97404,L'Étang-Salé,0
+couche:pole_echange,97405,Petite-Île,0
+couche:pole_echange,97406,La Plaine-des-Palmistes,0
+couche:pole_echange,97407,Le Port,0
+couche:pole_echange,97408,La Possession,0
+couche:pole_echange,97409,Saint-André,0
+couche:pole_echange,97410,Saint-Benoît,0
+couche:pole_echange,97411,Saint-Denis,0
+couche:pole_echange,97412,Saint-Joseph,0
+couche:pole_echange,97413,Saint-Leu,0
+couche:pole_echange,97414,Saint-Louis,0
+couche:pole_echange,97415,Saint-Paul,0
+couche:pole_echange,97416,Saint-Pierre,0
+couche:pole_echange,97417,Saint-Philippe,0
+couche:pole_echange,97418,Sainte-Marie,0
+couche:pole_echange,97419,Sainte-Rose,0
+couche:pole_echange,97420,Sainte-Suzanne,0
+couche:pole_echange,97421,Salazie,0
+couche:pole_echange,97422,Le Tampon,0
+couche:pole_echange,97423,Les Trois-Bassins,0
+couche:pole_echange,97424,Cilaos,0
+couche:pole_echange,SANS_COMMUNE,(couche non communale),61
+couche:poste_transformation,97401,Les Avirons,0
+couche:poste_transformation,97402,Bras-Panon,0
+couche:poste_transformation,97403,Entre-Deux,0
+couche:poste_transformation,97404,L'Étang-Salé,0
+couche:poste_transformation,97405,Petite-Île,0
+couche:poste_transformation,97406,La Plaine-des-Palmistes,0
+couche:poste_transformation,97407,Le Port,0
+couche:poste_transformation,97408,La Possession,0
+couche:poste_transformation,97409,Saint-André,0
+couche:poste_transformation,97410,Saint-Benoît,0
+couche:poste_transformation,97411,Saint-Denis,0
+couche:poste_transformation,97412,Saint-Joseph,0
+couche:poste_transformation,97413,Saint-Leu,0
+couche:poste_transformation,97414,Saint-Louis,0
+couche:poste_transformation,97415,Saint-Paul,0
+couche:poste_transformation,97416,Saint-Pierre,0
+couche:poste_transformation,97417,Saint-Philippe,0
+couche:poste_transformation,97418,Sainte-Marie,0
+couche:poste_transformation,97419,Sainte-Rose,0
+couche:poste_transformation,97420,Sainte-Suzanne,0
+couche:poste_transformation,97421,Salazie,0
+couche:poste_transformation,97422,Le Tampon,0
+couche:poste_transformation,97423,Les Trois-Bassins,0
+couche:poste_transformation,97424,Cilaos,0
+couche:poste_transformation,SANS_COMMUNE,(couche non communale),20
+couche:potentiel_foncier,97401,Les Avirons,38
+couche:potentiel_foncier,97402,Bras-Panon,54
+couche:potentiel_foncier,97403,Entre-Deux,18
+couche:potentiel_foncier,97404,L'Étang-Salé,35
+couche:potentiel_foncier,97405,Petite-Île,70
+couche:potentiel_foncier,97406,La Plaine-des-Palmistes,133
+couche:potentiel_foncier,97407,Le Port,84
+couche:potentiel_foncier,97408,La Possession,29
+couche:potentiel_foncier,97409,Saint-André,121
+couche:potentiel_foncier,97410,Saint-Benoît,118
+couche:potentiel_foncier,97411,Saint-Denis,263
+couche:potentiel_foncier,97412,Saint-Joseph,155
+couche:potentiel_foncier,97413,Saint-Leu,128
+couche:potentiel_foncier,97414,Saint-Louis,82
+couche:potentiel_foncier,97415,Saint-Paul,303
+couche:potentiel_foncier,97416,Saint-Pierre,174
+couche:potentiel_foncier,97417,Saint-Philippe,56
+couche:potentiel_foncier,97418,Sainte-Marie,122
+couche:potentiel_foncier,97419,Sainte-Rose,49
+couche:potentiel_foncier,97420,Sainte-Suzanne,54
+couche:potentiel_foncier,97421,Salazie,57
+couche:potentiel_foncier,97422,Le Tampon,229
+couche:potentiel_foncier,97423,Les Trois-Bassins,50
+couche:potentiel_foncier,97424,Cilaos,31
+couche:ppr,97401,Les Avirons,7
+couche:ppr,97402,Bras-Panon,6
+couche:ppr,97403,Entre-Deux,4
+couche:ppr,97404,L'Étang-Salé,7
+couche:ppr,97405,Petite-Île,7
+couche:ppr,97406,La Plaine-des-Palmistes,4
+couche:ppr,97407,Le Port,8
+couche:ppr,97408,La Possession,5
+couche:ppr,97409,Saint-André,7
+couche:ppr,97410,Saint-Benoît,7
+couche:ppr,97411,Saint-Denis,12
+couche:ppr,97412,Saint-Joseph,7
+couche:ppr,97413,Saint-Leu,6
+couche:ppr,97414,Saint-Louis,9
+couche:ppr,97415,Saint-Paul,11
+couche:ppr,97416,Saint-Pierre,8
+couche:ppr,97417,Saint-Philippe,2
+couche:ppr,97418,Sainte-Marie,8
+couche:ppr,97419,Sainte-Rose,5
+couche:ppr,97420,Sainte-Suzanne,9
+couche:ppr,97421,Salazie,7
+couche:ppr,97422,Le Tampon,5
+couche:ppr,97423,Les Trois-Bassins,7
+couche:ppr,97424,Cilaos,6
+couche:ppr_etat,97401,Les Avirons,0
+couche:ppr_etat,97402,Bras-Panon,0
+couche:ppr_etat,97403,Entre-Deux,0
+couche:ppr_etat,97404,L'Étang-Salé,0
+couche:ppr_etat,97405,Petite-Île,0
+couche:ppr_etat,97406,La Plaine-des-Palmistes,0
+couche:ppr_etat,97407,Le Port,0
+couche:ppr_etat,97408,La Possession,0
+couche:ppr_etat,97409,Saint-André,0
+couche:ppr_etat,97410,Saint-Benoît,0
+couche:ppr_etat,97411,Saint-Denis,0
+couche:ppr_etat,97412,Saint-Joseph,0
+couche:ppr_etat,97413,Saint-Leu,0
+couche:ppr_etat,97414,Saint-Louis,0
+couche:ppr_etat,97415,Saint-Paul,0
+couche:ppr_etat,97416,Saint-Pierre,0
+couche:ppr_etat,97417,Saint-Philippe,0
+couche:ppr_etat,97418,Sainte-Marie,0
+couche:ppr_etat,97419,Sainte-Rose,0
+couche:ppr_etat,97420,Sainte-Suzanne,0
+couche:ppr_etat,97421,Salazie,0
+couche:ppr_etat,97422,Le Tampon,0
+couche:ppr_etat,97423,Les Trois-Bassins,0
+couche:ppr_etat,97424,Cilaos,0
+couche:ppr_etat,HORS_REF,,24
+couche:pylone,97401,Les Avirons,0
+couche:pylone,97402,Bras-Panon,0
+couche:pylone,97403,Entre-Deux,0
+couche:pylone,97404,L'Étang-Salé,0
+couche:pylone,97405,Petite-Île,0
+couche:pylone,97406,La Plaine-des-Palmistes,0
+couche:pylone,97407,Le Port,0
+couche:pylone,97408,La Possession,0
+couche:pylone,97409,Saint-André,0
+couche:pylone,97410,Saint-Benoît,0
+couche:pylone,97411,Saint-Denis,0
+couche:pylone,97412,Saint-Joseph,0
+couche:pylone,97413,Saint-Leu,0
+couche:pylone,97414,Saint-Louis,0
+couche:pylone,97415,Saint-Paul,0
+couche:pylone,97416,Saint-Pierre,0
+couche:pylone,97417,Saint-Philippe,0
+couche:pylone,97418,Sainte-Marie,0
+couche:pylone,97419,Sainte-Rose,0
+couche:pylone,97420,Sainte-Suzanne,0
+couche:pylone,97421,Salazie,0
+couche:pylone,97422,Le Tampon,0
+couche:pylone,97423,Les Trois-Bassins,0
+couche:pylone,97424,Cilaos,0
+couche:pylone,SANS_COMMUNE,(couche non communale),1187
+couche:qpv,97401,Les Avirons,0
+couche:qpv,97402,Bras-Panon,0
+couche:qpv,97403,Entre-Deux,0
+couche:qpv,97404,L'Étang-Salé,0
+couche:qpv,97405,Petite-Île,0
+couche:qpv,97406,La Plaine-des-Palmistes,0
+couche:qpv,97407,Le Port,1
+couche:qpv,97408,La Possession,0
+couche:qpv,97409,Saint-André,4
+couche:qpv,97410,Saint-Benoît,2
+couche:qpv,97411,Saint-Denis,12
+couche:qpv,97412,Saint-Joseph,3
+couche:qpv,97413,Saint-Leu,2
+couche:qpv,97414,Saint-Louis,6
+couche:qpv,97415,Saint-Paul,11
+couche:qpv,97416,Saint-Pierre,6
+couche:qpv,97417,Saint-Philippe,0
+couche:qpv,97418,Sainte-Marie,2
+couche:qpv,97419,Sainte-Rose,0
+couche:qpv,97420,Sainte-Suzanne,2
+couche:qpv,97421,Salazie,0
+couche:qpv,97422,Le Tampon,4
+couche:qpv,97423,Les Trois-Bassins,0
+couche:qpv,97424,Cilaos,0
+couche:qpv,HORS_REF,,2
+couche:ravine,97401,Les Avirons,286
+couche:ravine,97402,Bras-Panon,787
+couche:ravine,97403,Entre-Deux,280
+couche:ravine,97404,L'Étang-Salé,169
+couche:ravine,97405,Petite-Île,124
+couche:ravine,97406,La Plaine-des-Palmistes,504
+couche:ravine,97407,Le Port,66
+couche:ravine,97408,La Possession,1169
+couche:ravine,97409,Saint-André,353
+couche:ravine,97410,Saint-Benoît,1670
+couche:ravine,97411,Saint-Denis,856
+couche:ravine,97412,Saint-Joseph,482
+couche:ravine,97413,Saint-Leu,477
+couche:ravine,97414,Saint-Louis,509
+couche:ravine,97415,Saint-Paul,1244
+couche:ravine,97416,Saint-Pierre,411
+couche:ravine,97417,Saint-Philippe,35
+couche:ravine,97418,Sainte-Marie,578
+couche:ravine,97419,Sainte-Rose,456
+couche:ravine,97420,Sainte-Suzanne,417
+couche:ravine,97421,Salazie,629
+couche:ravine,97422,Le Tampon,583
+couche:ravine,97423,Les Trois-Bassins,229
+couche:ravine,97424,Cilaos,402
+couche:safer,97401,Les Avirons,1212
+couche:safer,97402,Bras-Panon,1444
+couche:safer,97403,Entre-Deux,1190
+couche:safer,97404,L'Étang-Salé,970
+couche:safer,97405,Petite-Île,2748
+couche:safer,97406,La Plaine-des-Palmistes,542
+couche:safer,97407,Le Port,18
+couche:safer,97408,La Possession,617
+couche:safer,97409,Saint-André,1869
+couche:safer,97410,Saint-Benoît,3158
+couche:safer,97411,Saint-Denis,327
+couche:safer,97412,Saint-Joseph,2872
+couche:safer,97413,Saint-Leu,2000
+couche:safer,97414,Saint-Louis,1807
+couche:safer,97415,Saint-Paul,2336
+couche:safer,97416,Saint-Pierre,5000
+couche:safer,97417,Saint-Philippe,861
+couche:safer,97418,Sainte-Marie,707
+couche:safer,97419,Sainte-Rose,1400
+couche:safer,97420,Sainte-Suzanne,1624
+couche:safer,97421,Salazie,774
+couche:safer,97422,Le Tampon,4383
+couche:safer,97423,Les Trois-Bassins,531
+couche:safer,97424,Cilaos,70
+couche:sar,97401,Les Avirons,38
+couche:sar,97402,Bras-Panon,54
+couche:sar,97403,Entre-Deux,18
+couche:sar,97404,L'Étang-Salé,35
+couche:sar,97405,Petite-Île,70
+couche:sar,97406,La Plaine-des-Palmistes,133
+couche:sar,97407,Le Port,84
+couche:sar,97408,La Possession,29
+couche:sar,97409,Saint-André,121
+couche:sar,97410,Saint-Benoît,118
+couche:sar,97411,Saint-Denis,263
+couche:sar,97412,Saint-Joseph,155
+couche:sar,97413,Saint-Leu,128
+couche:sar,97414,Saint-Louis,82
+couche:sar,97415,Saint-Paul,303
+couche:sar,97416,Saint-Pierre,174
+couche:sar,97417,Saint-Philippe,56
+couche:sar,97418,Sainte-Marie,122
+couche:sar,97419,Sainte-Rose,49
+couche:sar,97420,Sainte-Suzanne,54
+couche:sar,97421,Salazie,57
+couche:sar,97422,Le Tampon,229
+couche:sar,97423,Les Trois-Bassins,50
+couche:sar,97424,Cilaos,31
+couche:scot,97401,Les Avirons,0
+couche:scot,97402,Bras-Panon,0
+couche:scot,97403,Entre-Deux,0
+couche:scot,97404,L'Étang-Salé,0
+couche:scot,97405,Petite-Île,0
+couche:scot,97406,La Plaine-des-Palmistes,0
+couche:scot,97407,Le Port,0
+couche:scot,97408,La Possession,0
+couche:scot,97409,Saint-André,0
+couche:scot,97410,Saint-Benoît,0
+couche:scot,97411,Saint-Denis,0
+couche:scot,97412,Saint-Joseph,0
+couche:scot,97413,Saint-Leu,0
+couche:scot,97414,Saint-Louis,0
+couche:scot,97415,Saint-Paul,0
+couche:scot,97416,Saint-Pierre,0
+couche:scot,97417,Saint-Philippe,0
+couche:scot,97418,Sainte-Marie,0
+couche:scot,97419,Sainte-Rose,0
+couche:scot,97420,Sainte-Suzanne,0
+couche:scot,97421,Salazie,0
+couche:scot,97422,Le Tampon,0
+couche:scot,97423,Les Trois-Bassins,0
+couche:scot,97424,Cilaos,0
+couche:scot,SANS_COMMUNE,(couche non communale),3
+couche:sol_pollue,97401,Les Avirons,2
+couche:sol_pollue,97402,Bras-Panon,6
+couche:sol_pollue,97403,Entre-Deux,0
+couche:sol_pollue,97404,L'Étang-Salé,5
+couche:sol_pollue,97405,Petite-Île,8
+couche:sol_pollue,97406,La Plaine-des-Palmistes,11
+couche:sol_pollue,97407,Le Port,58
+couche:sol_pollue,97408,La Possession,12
+couche:sol_pollue,97409,Saint-André,29
+couche:sol_pollue,97410,Saint-Benoît,27
+couche:sol_pollue,97411,Saint-Denis,67
+couche:sol_pollue,97412,Saint-Joseph,16
+couche:sol_pollue,97413,Saint-Leu,24
+couche:sol_pollue,97414,Saint-Louis,19
+couche:sol_pollue,97415,Saint-Paul,60
+couche:sol_pollue,97416,Saint-Pierre,69
+couche:sol_pollue,97417,Saint-Philippe,4
+couche:sol_pollue,97418,Sainte-Marie,31
+couche:sol_pollue,97419,Sainte-Rose,13
+couche:sol_pollue,97420,Sainte-Suzanne,28
+couche:sol_pollue,97421,Salazie,7
+couche:sol_pollue,97422,Le Tampon,24
+couche:sol_pollue,97423,Les Trois-Bassins,6
+couche:sol_pollue,97424,Cilaos,5
+couche:sup,97401,Les Avirons,17
+couche:sup,97402,Bras-Panon,17
+couche:sup,97403,Entre-Deux,12
+couche:sup,97404,L'Étang-Salé,16
+couche:sup,97405,Petite-Île,15
+couche:sup,97406,La Plaine-des-Palmistes,15
+couche:sup,97407,Le Port,23
+couche:sup,97408,La Possession,21
+couche:sup,97409,Saint-André,17
+couche:sup,97410,Saint-Benoît,24
+couche:sup,97411,Saint-Denis,13
+couche:sup,97412,Saint-Joseph,14
+couche:sup,97413,Saint-Leu,19
+couche:sup,97414,Saint-Louis,17
+couche:sup,97415,Saint-Paul,34
+couche:sup,97416,Saint-Pierre,24
+couche:sup,97417,Saint-Philippe,7
+couche:sup,97418,Sainte-Marie,17
+couche:sup,97419,Sainte-Rose,9
+couche:sup,97420,Sainte-Suzanne,19
+couche:sup,97421,Salazie,13
+couche:sup,97422,Le Tampon,30
+couche:sup,97423,Les Trois-Bassins,13
+couche:sup,97424,Cilaos,11
+couche:tcsp_station,97401,Les Avirons,0
+couche:tcsp_station,97402,Bras-Panon,0
+couche:tcsp_station,97403,Entre-Deux,0
+couche:tcsp_station,97404,L'Étang-Salé,0
+couche:tcsp_station,97405,Petite-Île,0
+couche:tcsp_station,97406,La Plaine-des-Palmistes,0
+couche:tcsp_station,97407,Le Port,0
+couche:tcsp_station,97408,La Possession,0
+couche:tcsp_station,97409,Saint-André,0
+couche:tcsp_station,97410,Saint-Benoît,0
+couche:tcsp_station,97411,Saint-Denis,0
+couche:tcsp_station,97412,Saint-Joseph,0
+couche:tcsp_station,97413,Saint-Leu,0
+couche:tcsp_station,97414,Saint-Louis,0
+couche:tcsp_station,97415,Saint-Paul,0
+couche:tcsp_station,97416,Saint-Pierre,0
+couche:tcsp_station,97417,Saint-Philippe,0
+couche:tcsp_station,97418,Sainte-Marie,0
+couche:tcsp_station,97419,Sainte-Rose,0
+couche:tcsp_station,97420,Sainte-Suzanne,0
+couche:tcsp_station,97421,Salazie,0
+couche:tcsp_station,97422,Le Tampon,0
+couche:tcsp_station,97423,Les Trois-Bassins,0
+couche:tcsp_station,97424,Cilaos,0
+couche:tcsp_station,SANS_COMMUNE,(couche non communale),44
+couche:tcsp_troncon,97401,Les Avirons,0
+couche:tcsp_troncon,97402,Bras-Panon,0
+couche:tcsp_troncon,97403,Entre-Deux,0
+couche:tcsp_troncon,97404,L'Étang-Salé,0
+couche:tcsp_troncon,97405,Petite-Île,0
+couche:tcsp_troncon,97406,La Plaine-des-Palmistes,0
+couche:tcsp_troncon,97407,Le Port,0
+couche:tcsp_troncon,97408,La Possession,0
+couche:tcsp_troncon,97409,Saint-André,0
+couche:tcsp_troncon,97410,Saint-Benoît,0
+couche:tcsp_troncon,97411,Saint-Denis,0
+couche:tcsp_troncon,97412,Saint-Joseph,0
+couche:tcsp_troncon,97413,Saint-Leu,0
+couche:tcsp_troncon,97414,Saint-Louis,0
+couche:tcsp_troncon,97415,Saint-Paul,0
+couche:tcsp_troncon,97416,Saint-Pierre,0
+couche:tcsp_troncon,97417,Saint-Philippe,0
+couche:tcsp_troncon,97418,Sainte-Marie,0
+couche:tcsp_troncon,97419,Sainte-Rose,0
+couche:tcsp_troncon,97420,Sainte-Suzanne,0
+couche:tcsp_troncon,97421,Salazie,0
+couche:tcsp_troncon,97422,Le Tampon,0
+couche:tcsp_troncon,97423,Les Trois-Bassins,0
+couche:tcsp_troncon,97424,Cilaos,0
+couche:tcsp_troncon,SANS_COMMUNE,(couche non communale),142
+couche:tcsp_zone,97401,Les Avirons,0
+couche:tcsp_zone,97402,Bras-Panon,0
+couche:tcsp_zone,97403,Entre-Deux,0
+couche:tcsp_zone,97404,L'Étang-Salé,0
+couche:tcsp_zone,97405,Petite-Île,0
+couche:tcsp_zone,97406,La Plaine-des-Palmistes,0
+couche:tcsp_zone,97407,Le Port,0
+couche:tcsp_zone,97408,La Possession,0
+couche:tcsp_zone,97409,Saint-André,0
+couche:tcsp_zone,97410,Saint-Benoît,0
+couche:tcsp_zone,97411,Saint-Denis,0
+couche:tcsp_zone,97412,Saint-Joseph,0
+couche:tcsp_zone,97413,Saint-Leu,0
+couche:tcsp_zone,97414,Saint-Louis,0
+couche:tcsp_zone,97415,Saint-Paul,0
+couche:tcsp_zone,97416,Saint-Pierre,0
+couche:tcsp_zone,97417,Saint-Philippe,0
+couche:tcsp_zone,97418,Sainte-Marie,0
+couche:tcsp_zone,97419,Sainte-Rose,0
+couche:tcsp_zone,97420,Sainte-Suzanne,0
+couche:tcsp_zone,97421,Salazie,0
+couche:tcsp_zone,97422,Le Tampon,0
+couche:tcsp_zone,97423,Les Trois-Bassins,0
+couche:tcsp_zone,97424,Cilaos,0
+couche:tcsp_zone,SANS_COMMUNE,(couche non communale),2
+couche:telepherique,97401,Les Avirons,0
+couche:telepherique,97402,Bras-Panon,0
+couche:telepherique,97403,Entre-Deux,0
+couche:telepherique,97404,L'Étang-Salé,0
+couche:telepherique,97405,Petite-Île,0
+couche:telepherique,97406,La Plaine-des-Palmistes,0
+couche:telepherique,97407,Le Port,0
+couche:telepherique,97408,La Possession,0
+couche:telepherique,97409,Saint-André,0
+couche:telepherique,97410,Saint-Benoît,0
+couche:telepherique,97411,Saint-Denis,0
+couche:telepherique,97412,Saint-Joseph,0
+couche:telepherique,97413,Saint-Leu,0
+couche:telepherique,97414,Saint-Louis,0
+couche:telepherique,97415,Saint-Paul,0
+couche:telepherique,97416,Saint-Pierre,0
+couche:telepherique,97417,Saint-Philippe,0
+couche:telepherique,97418,Sainte-Marie,0
+couche:telepherique,97419,Sainte-Rose,0
+couche:telepherique,97420,Sainte-Suzanne,0
+couche:telepherique,97421,Salazie,0
+couche:telepherique,97422,Le Tampon,0
+couche:telepherique,97423,Les Trois-Bassins,0
+couche:telepherique,97424,Cilaos,0
+couche:telepherique,SANS_COMMUNE,(couche non communale),7
+couche:trait_de_cote,97401,Les Avirons,1007
+couche:trait_de_cote,97402,Bras-Panon,1007
+couche:trait_de_cote,97403,Entre-Deux,1007
+couche:trait_de_cote,97404,L'Étang-Salé,1007
+couche:trait_de_cote,97405,Petite-Île,1007
+couche:trait_de_cote,97406,La Plaine-des-Palmistes,1007
+couche:trait_de_cote,97407,Le Port,1007
+couche:trait_de_cote,97408,La Possession,1007
+couche:trait_de_cote,97409,Saint-André,1007
+couche:trait_de_cote,97410,Saint-Benoît,1007
+couche:trait_de_cote,97411,Saint-Denis,1007
+couche:trait_de_cote,97412,Saint-Joseph,1007
+couche:trait_de_cote,97413,Saint-Leu,1007
+couche:trait_de_cote,97414,Saint-Louis,1007
+couche:trait_de_cote,97415,Saint-Paul,1007
+couche:trait_de_cote,97416,Saint-Pierre,1007
+couche:trait_de_cote,97417,Saint-Philippe,1007
+couche:trait_de_cote,97418,Sainte-Marie,1007
+couche:trait_de_cote,97419,Sainte-Rose,1007
+couche:trait_de_cote,97420,Sainte-Suzanne,1007
+couche:trait_de_cote,97421,Salazie,1007
+couche:trait_de_cote,97422,Le Tampon,1007
+couche:trait_de_cote,97423,Les Trois-Bassins,1007
+couche:trait_de_cote,97424,Cilaos,1007
+couche:transport_arret,97401,Les Avirons,0
+couche:transport_arret,97402,Bras-Panon,0
+couche:transport_arret,97403,Entre-Deux,0
+couche:transport_arret,97404,L'Étang-Salé,0
+couche:transport_arret,97405,Petite-Île,0
+couche:transport_arret,97406,La Plaine-des-Palmistes,0
+couche:transport_arret,97407,Le Port,0
+couche:transport_arret,97408,La Possession,0
+couche:transport_arret,97409,Saint-André,0
+couche:transport_arret,97410,Saint-Benoît,0
+couche:transport_arret,97411,Saint-Denis,0
+couche:transport_arret,97412,Saint-Joseph,0
+couche:transport_arret,97413,Saint-Leu,0
+couche:transport_arret,97414,Saint-Louis,0
+couche:transport_arret,97415,Saint-Paul,0
+couche:transport_arret,97416,Saint-Pierre,0
+couche:transport_arret,97417,Saint-Philippe,0
+couche:transport_arret,97418,Sainte-Marie,0
+couche:transport_arret,97419,Sainte-Rose,0
+couche:transport_arret,97420,Sainte-Suzanne,0
+couche:transport_arret,97421,Salazie,0
+couche:transport_arret,97422,Le Tampon,0
+couche:transport_arret,97423,Les Trois-Bassins,0
+couche:transport_arret,97424,Cilaos,0
+couche:transport_arret,SANS_COMMUNE,(couche non communale),9956
+couche:transport_ligne,97401,Les Avirons,0
+couche:transport_ligne,97402,Bras-Panon,0
+couche:transport_ligne,97403,Entre-Deux,0
+couche:transport_ligne,97404,L'Étang-Salé,0
+couche:transport_ligne,97405,Petite-Île,0
+couche:transport_ligne,97406,La Plaine-des-Palmistes,0
+couche:transport_ligne,97407,Le Port,0
+couche:transport_ligne,97408,La Possession,0
+couche:transport_ligne,97409,Saint-André,0
+couche:transport_ligne,97410,Saint-Benoît,0
+couche:transport_ligne,97411,Saint-Denis,0
+couche:transport_ligne,97412,Saint-Joseph,0
+couche:transport_ligne,97413,Saint-Leu,0
+couche:transport_ligne,97414,Saint-Louis,0
+couche:transport_ligne,97415,Saint-Paul,0
+couche:transport_ligne,97416,Saint-Pierre,0
+couche:transport_ligne,97417,Saint-Philippe,0
+couche:transport_ligne,97418,Sainte-Marie,0
+couche:transport_ligne,97419,Sainte-Rose,0
+couche:transport_ligne,97420,Sainte-Suzanne,0
+couche:transport_ligne,97421,Salazie,0
+couche:transport_ligne,97422,Le Tampon,0
+couche:transport_ligne,97423,Les Trois-Bassins,0
+couche:transport_ligne,97424,Cilaos,0
+couche:transport_ligne,SANS_COMMUNE,(couche non communale),300
+couche:tri_zone,97401,Les Avirons,0
+couche:tri_zone,97402,Bras-Panon,0
+couche:tri_zone,97403,Entre-Deux,0
+couche:tri_zone,97404,L'Étang-Salé,0
+couche:tri_zone,97405,Petite-Île,0
+couche:tri_zone,97406,La Plaine-des-Palmistes,0
+couche:tri_zone,97407,Le Port,0
+couche:tri_zone,97408,La Possession,0
+couche:tri_zone,97409,Saint-André,0
+couche:tri_zone,97410,Saint-Benoît,0
+couche:tri_zone,97411,Saint-Denis,0
+couche:tri_zone,97412,Saint-Joseph,0
+couche:tri_zone,97413,Saint-Leu,0
+couche:tri_zone,97414,Saint-Louis,0
+couche:tri_zone,97415,Saint-Paul,0
+couche:tri_zone,97416,Saint-Pierre,0
+couche:tri_zone,97417,Saint-Philippe,0
+couche:tri_zone,97418,Sainte-Marie,0
+couche:tri_zone,97419,Sainte-Rose,0
+couche:tri_zone,97420,Sainte-Suzanne,0
+couche:tri_zone,97421,Salazie,0
+couche:tri_zone,97422,Le Tampon,0
+couche:tri_zone,97423,Les Trois-Bassins,0
+couche:tri_zone,97424,Cilaos,0
+couche:tri_zone,SANS_COMMUNE,(couche non communale),128
+couche:tva_primo,97401,Les Avirons,0
+couche:tva_primo,97402,Bras-Panon,0
+couche:tva_primo,97403,Entre-Deux,0
+couche:tva_primo,97404,L'Étang-Salé,0
+couche:tva_primo,97405,Petite-Île,0
+couche:tva_primo,97406,La Plaine-des-Palmistes,0
+couche:tva_primo,97407,Le Port,1
+couche:tva_primo,97408,La Possession,0
+couche:tva_primo,97409,Saint-André,1
+couche:tva_primo,97410,Saint-Benoît,1
+couche:tva_primo,97411,Saint-Denis,1
+couche:tva_primo,97412,Saint-Joseph,1
+couche:tva_primo,97413,Saint-Leu,1
+couche:tva_primo,97414,Saint-Louis,1
+couche:tva_primo,97415,Saint-Paul,1
+couche:tva_primo,97416,Saint-Pierre,1
+couche:tva_primo,97417,Saint-Philippe,0
+couche:tva_primo,97418,Sainte-Marie,1
+couche:tva_primo,97419,Sainte-Rose,0
+couche:tva_primo,97420,Sainte-Suzanne,1
+couche:tva_primo,97421,Salazie,0
+couche:tva_primo,97422,Le Tampon,1
+couche:tva_primo,97423,Les Trois-Bassins,0
+couche:tva_primo,97424,Cilaos,0
+couche:tva_primo,HORS_REF,,1
+couche:vefa_neuf,97401,Les Avirons,1
+couche:vefa_neuf,97402,Bras-Panon,1
+couche:vefa_neuf,97403,Entre-Deux,1
+couche:vefa_neuf,97404,L'Étang-Salé,1
+couche:vefa_neuf,97405,Petite-Île,1
+couche:vefa_neuf,97406,La Plaine-des-Palmistes,1
+couche:vefa_neuf,97407,Le Port,1
+couche:vefa_neuf,97408,La Possession,1
+couche:vefa_neuf,97409,Saint-André,1
+couche:vefa_neuf,97410,Saint-Benoît,1
+couche:vefa_neuf,97411,Saint-Denis,1
+couche:vefa_neuf,97412,Saint-Joseph,1
+couche:vefa_neuf,97413,Saint-Leu,1
+couche:vefa_neuf,97414,Saint-Louis,1
+couche:vefa_neuf,97415,Saint-Paul,1
+couche:vefa_neuf,97416,Saint-Pierre,1
+couche:vefa_neuf,97417,Saint-Philippe,1
+couche:vefa_neuf,97418,Sainte-Marie,1
+couche:vefa_neuf,97419,Sainte-Rose,1
+couche:vefa_neuf,97420,Sainte-Suzanne,1
+couche:vefa_neuf,97421,Salazie,1
+couche:vefa_neuf,97422,Le Tampon,1
+couche:vefa_neuf,97423,Les Trois-Bassins,1
+couche:vefa_neuf,97424,Cilaos,1
+couche:voirie,97401,Les Avirons,6063
+couche:voirie,97402,Bras-Panon,7744
+couche:voirie,97403,Entre-Deux,8802
+couche:voirie,97404,L'Étang-Salé,6986
+couche:voirie,97405,Petite-Île,6585
+couche:voirie,97406,La Plaine-des-Palmistes,3178
+couche:voirie,97407,Le Port,4897
+couche:voirie,97408,La Possession,11825
+couche:voirie,97409,Saint-André,13264
+couche:voirie,97410,Saint-Benoît,14922
+couche:voirie,97411,Saint-Denis,13542
+couche:voirie,97412,Saint-Joseph,8909
+couche:voirie,97413,Saint-Leu,11761
+couche:voirie,97414,Saint-Louis,9020
+couche:voirie,97415,Saint-Paul,22999
+couche:voirie,97416,Saint-Pierre,25949
+couche:voirie,97417,Saint-Philippe,2590
+couche:voirie,97418,Sainte-Marie,12745
+couche:voirie,97419,Sainte-Rose,6941
+couche:voirie,97420,Sainte-Suzanne,10884
+couche:voirie,97421,Salazie,2736
+couche:voirie,97422,Le Tampon,17349
+couche:voirie,97423,Les Trois-Bassins,3625
+couche:voirie,97424,Cilaos,2327
+couche:water,97401,Les Avirons,105
+couche:water,97402,Bras-Panon,335
+couche:water,97403,Entre-Deux,229
+couche:water,97404,L'Étang-Salé,127
+couche:water,97405,Petite-Île,78
+couche:water,97406,La Plaine-des-Palmistes,244
+couche:water,97407,Le Port,35
+couche:water,97408,La Possession,334
+couche:water,97409,Saint-André,245
+couche:water,97410,Saint-Benoît,743
+couche:water,97411,Saint-Denis,282
+couche:water,97412,Saint-Joseph,272
+couche:water,97413,Saint-Leu,273
+couche:water,97414,Saint-Louis,289
+couche:water,97415,Saint-Paul,546
+couche:water,97416,Saint-Pierre,313
+couche:water,97417,Saint-Philippe,17
+couche:water,97418,Sainte-Marie,215
+couche:water,97419,Sainte-Rose,187
+couche:water,97420,Sainte-Suzanne,201
+couche:water,97421,Salazie,173
+couche:water,97422,Le Tampon,548
+couche:water,97423,Les Trois-Bassins,179
+couche:water,97424,Cilaos,150
+couche:zfang,97401,Les Avirons,1
+couche:zfang,97402,Bras-Panon,1
+couche:zfang,97403,Entre-Deux,1
+couche:zfang,97404,L'Étang-Salé,1
+couche:zfang,97405,Petite-Île,1
+couche:zfang,97406,La Plaine-des-Palmistes,1
+couche:zfang,97407,Le Port,1
+couche:zfang,97408,La Possession,1
+couche:zfang,97409,Saint-André,1
+couche:zfang,97410,Saint-Benoît,1
+couche:zfang,97411,Saint-Denis,1
+couche:zfang,97412,Saint-Joseph,1
+couche:zfang,97413,Saint-Leu,1
+couche:zfang,97414,Saint-Louis,1
+couche:zfang,97415,Saint-Paul,1
+couche:zfang,97416,Saint-Pierre,1
+couche:zfang,97417,Saint-Philippe,1
+couche:zfang,97418,Sainte-Marie,1
+couche:zfang,97419,Sainte-Rose,1
+couche:zfang,97420,Sainte-Suzanne,1
+couche:zfang,97421,Salazie,1
+couche:zfang,97422,Le Tampon,1
+couche:zfang,97423,Les Trois-Bassins,1
+couche:zfang,97424,Cilaos,1
+couche:znieff,97401,Les Avirons,0
+couche:znieff,97402,Bras-Panon,0
+couche:znieff,97403,Entre-Deux,0
+couche:znieff,97404,L'Étang-Salé,0
+couche:znieff,97405,Petite-Île,0
+couche:znieff,97406,La Plaine-des-Palmistes,0
+couche:znieff,97407,Le Port,0
+couche:znieff,97408,La Possession,0
+couche:znieff,97409,Saint-André,0
+couche:znieff,97410,Saint-Benoît,0
+couche:znieff,97411,Saint-Denis,0
+couche:znieff,97412,Saint-Joseph,0
+couche:znieff,97413,Saint-Leu,0
+couche:znieff,97414,Saint-Louis,0
+couche:znieff,97415,Saint-Paul,0
+couche:znieff,97416,Saint-Pierre,0
+couche:znieff,97417,Saint-Philippe,0
+couche:znieff,97418,Sainte-Marie,0
+couche:znieff,97419,Sainte-Rose,0
+couche:znieff,97420,Sainte-Suzanne,0
+couche:znieff,97421,Salazie,0
+couche:znieff,97422,Le Tampon,0
+couche:znieff,97423,Les Trois-Bassins,0
+couche:znieff,97424,Cilaos,0
+couche:znieff,SANS_COMMUNE,(couche non communale),162
+couche:zonage_assainissement,97401,Les Avirons,0
+couche:zonage_assainissement,97402,Bras-Panon,0
+couche:zonage_assainissement,97403,Entre-Deux,0
+couche:zonage_assainissement,97404,L'Étang-Salé,20
+couche:zonage_assainissement,97405,Petite-Île,0
+couche:zonage_assainissement,97406,La Plaine-des-Palmistes,0
+couche:zonage_assainissement,97407,Le Port,92
+couche:zonage_assainissement,97408,La Possession,0
+couche:zonage_assainissement,97409,Saint-André,0
+couche:zonage_assainissement,97410,Saint-Benoît,0
+couche:zonage_assainissement,97411,Saint-Denis,119
+couche:zonage_assainissement,97412,Saint-Joseph,0
+couche:zonage_assainissement,97413,Saint-Leu,0
+couche:zonage_assainissement,97414,Saint-Louis,0
+couche:zonage_assainissement,97415,Saint-Paul,27
+couche:zonage_assainissement,97416,Saint-Pierre,0
+couche:zonage_assainissement,97417,Saint-Philippe,0
+couche:zonage_assainissement,97418,Sainte-Marie,0
+couche:zonage_assainissement,97419,Sainte-Rose,0
+couche:zonage_assainissement,97420,Sainte-Suzanne,0
+couche:zonage_assainissement,97421,Salazie,0
+couche:zonage_assainissement,97422,Le Tampon,0
+couche:zonage_assainissement,97423,Les Trois-Bassins,0
+couche:zonage_assainissement,97424,Cilaos,0
+couche:zone_activite,97401,Les Avirons,166
+couche:zone_activite,97402,Bras-Panon,241
+couche:zone_activite,97403,Entre-Deux,328
+couche:zone_activite,97404,L'Étang-Salé,200
+couche:zone_activite,97405,Petite-Île,149
+couche:zone_activite,97406,La Plaine-des-Palmistes,179
+couche:zone_activite,97407,Le Port,237
+couche:zone_activite,97408,La Possession,511
+couche:zone_activite,97409,Saint-André,504
+couche:zone_activite,97410,Saint-Benoît,605
+couche:zone_activite,97411,Saint-Denis,826
+couche:zone_activite,97412,Saint-Joseph,284
+couche:zone_activite,97413,Saint-Leu,373
+couche:zone_activite,97414,Saint-Louis,366
+couche:zone_activite,97415,Saint-Paul,881
+couche:zone_activite,97416,Saint-Pierre,894
+couche:zone_activite,97417,Saint-Philippe,94
+couche:zone_activite,97418,Sainte-Marie,531
+couche:zone_activite,97419,Sainte-Rose,123
+couche:zone_activite,97420,Sainte-Suzanne,313
+couche:zone_activite,97421,Salazie,233
+couche:zone_activite,97422,Le Tampon,653
+couche:zone_activite,97423,Les Trois-Bassins,116
+couche:zone_activite,97424,Cilaos,213
+couche:zone_humide,97401,Les Avirons,0
+couche:zone_humide,97402,Bras-Panon,0
+couche:zone_humide,97403,Entre-Deux,0
+couche:zone_humide,97404,L'Étang-Salé,0
+couche:zone_humide,97405,Petite-Île,0
+couche:zone_humide,97406,La Plaine-des-Palmistes,0
+couche:zone_humide,97407,Le Port,0
+couche:zone_humide,97408,La Possession,0
+couche:zone_humide,97409,Saint-André,0
+couche:zone_humide,97410,Saint-Benoît,0
+couche:zone_humide,97411,Saint-Denis,0
+couche:zone_humide,97412,Saint-Joseph,0
+couche:zone_humide,97413,Saint-Leu,0
+couche:zone_humide,97414,Saint-Louis,0
+couche:zone_humide,97415,Saint-Paul,0
+couche:zone_humide,97416,Saint-Pierre,0
+couche:zone_humide,97417,Saint-Philippe,0
+couche:zone_humide,97418,Sainte-Marie,0
+couche:zone_humide,97419,Sainte-Rose,0
+couche:zone_humide,97420,Sainte-Suzanne,0
+couche:zone_humide,97421,Salazie,0
+couche:zone_humide,97422,Le Tampon,0
+couche:zone_humide,97423,Les Trois-Bassins,0
+couche:zone_humide,97424,Cilaos,0
+couche:zone_humide,SANS_COMMUNE,(couche non communale),3122

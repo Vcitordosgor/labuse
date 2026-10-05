@@ -1,0 +1,170 @@
+notion,objet,lecteur_a,valeur_a,lecteur_b,valeur_b,ecart,cause,gravite
+filiation_mere,97410000AD0573,fiche:filiation.meres.0.idu,97410000AD0532,sql:dfi_filiation.idu_mere,97410000AD0542,'97410000AD0532' ≠ '97410000AD0542',label,INCOHERENT
+proprietaire_moral_denomination,97409000AK0804,fiche:proprietaire_moral.denomination,COMMUNE DE SAINT ANDRE,sql:pm_proprietaires_millesimes.denomination,SOCIETE D'EQUIPEMENT DU DEPARTEMENT DE LA REUNION,"'COMMUNE DE SAINT ANDRE' ≠ ""SOCIETE D'EQUIPEMENT DU DEPARTEMENT DE LA REUNION""",label,INCOHERENT
+proprietaire_moral_denomination,97409000AL1527,fiche:proprietaire_moral.denomination,COMMUNE DE SAINT ANDRE,sql:pm_proprietaires_millesimes.denomination,SOCIETE D'EQUIPEMENT DU DEPARTEMENT DE LA REUNION,"'COMMUNE DE SAINT ANDRE' ≠ ""SOCIETE D'EQUIPEMENT DU DEPARTEMENT DE LA REUNION""",label,INCOHERENT
+vigilance_cinquante_pas,97409000AS0135,fiche:flags[cinquante_pas],False,sql:parcel_flags[cinquante_pas],True,False ≠ True,label,INCOHERENT
+vigilance_ravine,97422000BD2548,fiche:flags[ravine],False,sql:parcel_flags[ravine],True,False ≠ True,label,INCOHERENT
+vigilance_ravine,97422000BD2547,fiche:flags[ravine],False,sql:parcel_flags[ravine],True,False ≠ True,label,INCOHERENT
+proprietaire_moral_denomination,97414000DI0382,fiche:proprietaire_moral.denomination,SARL CHAN OU TEUNG,sql:pm_proprietaires_millesimes.denomination,CHAN OU TEUNG,'SARL CHAN OU TEUNG' ≠ 'CHAN OU TEUNG',label,INCOHERENT
+vigilance_cinquante_pas,97409000AX0765,fiche:flags[cinquante_pas],False,sql:parcel_flags[cinquante_pas],True,False ≠ True,label,INCOHERENT
+vigilance_cinquante_pas,97418000AE0262,fiche:flags[cinquante_pas],False,sql:parcel_flags[cinquante_pas],True,False ≠ True,label,INCOHERENT
+vigilance_cinquante_pas,97409000AX0345,fiche:flags[cinquante_pas],False,sql:parcel_flags[cinquante_pas],True,False ≠ True,label,INCOHERENT
+vigilance_cinquante_pas,97412000BM0711,fiche:flags[cinquante_pas],False,sql:parcel_flags[cinquante_pas],True,False ≠ True,label,INCOHERENT
+vigilance_cinquante_pas,97409000AS0796,fiche:flags[cinquante_pas],False,sql:parcel_flags[cinquante_pas],True,False ≠ True,label,INCOHERENT
+vigilance_cinquante_pas,97409000AS0611,fiche:flags[cinquante_pas],False,sql:parcel_flags[cinquante_pas],True,False ≠ True,label,INCOHERENT
+vigilance_cinquante_pas,97409000AT0829,fiche:flags[cinquante_pas],False,sql:parcel_flags[cinquante_pas],True,False ≠ True,label,INCOHERENT
+vigilance_cinquante_pas,97415000DI0312,fiche:flags[cinquante_pas],False,sql:parcel_flags[cinquante_pas],True,False ≠ True,label,INCOHERENT
+filiation_mere,97411000HT0001,fiche:filiation.meres.0.idu,97411000BI0977,sql:dfi_filiation.idu_mere,97411000BI0988,'97411000BI0977' ≠ '97411000BI0988',label,INCOHERENT
+filiation_mere,97411000HL0011,fiche:filiation.meres.0.idu,97411000BI0418,sql:dfi_filiation.idu_mere,97411000BI0420,'97411000BI0418' ≠ '97411000BI0420',label,INCOHERENT
+filiation_mere,97422000BW2860,fiche:filiation.meres.0.idu,97422000BW1758,sql:dfi_filiation.idu_mere,97422000BW1787,'97422000BW1758' ≠ '97422000BW1787',label,INCOHERENT
+filiation_mere,97422000BW2857,fiche:filiation.meres.0.idu,97422000BW1988,sql:dfi_filiation.idu_mere,97422000BW2094,'97422000BW1988' ≠ '97422000BW2094',label,INCOHERENT
+filiation_mere,97411000HM0103,fiche:filiation.meres.0.idu,97411000BS0672,sql:dfi_filiation.idu_mere,97411000BS0673,'97411000BS0672' ≠ '97411000BS0673',label,INCOHERENT
+vigilance_ravine,97422000BZ0132,fiche:flags[ravine],False,sql:parcel_flags[ravine],True,False ≠ True,label,INCOHERENT
+filiation_mere,97407000AK1438,fiche:filiation.meres.0.idu,97407000AK0801,sql:dfi_filiation.idu_mere,97407000AK0810,'97407000AK0801' ≠ '97407000AK0810',label,INCOHERENT
+surface_parcelle_m2,97406000AE0664,fiche:surface_m2,29,sql:parcels.surface_m2,28.532365900642162,0.467634,arrondi,TOLERABLE
+surface_parcelle_m2,97406000AE0664,fiche:surface_m2,29,sql:ST_Area(geom_2975),28.532365900642162,0.467634,arrondi,TOLERABLE
+surface_parcelle_m2,97406000AE0664,fiche:surface_m2,29,tuile:surface_m2,28.532365900642162,0.467634,arrondi,TOLERABLE
+vigilance_cinquante_pas,97407000AV0071,fiche:flags[cinquante_pas],False,sql:parcel_flags[cinquante_pas],True,False ≠ True,label,INCOHERENT
+surface_parcelle_m2,97409000AR1060,fiche:surface_m2,15,sql:parcels.surface_m2,15.252590464289254,0.25259,arrondi,TOLERABLE
+surface_parcelle_m2,97409000AR1060,fiche:surface_m2,15,sql:ST_Area(geom_2975),15.252590464289254,0.25259,arrondi,TOLERABLE
+surface_parcelle_m2,97409000AR1060,fiche:surface_m2,15,tuile:surface_m2,15.252590464289254,0.25259,arrondi,TOLERABLE
+copro_presente,97409000AE0624,fiche:coproprietes(non vide),False,sql:p_model_ext_copro,True,False ≠ True,label,INCOHERENT
+surface_parcelle_m2,97410000AH0948,fiche:surface_m2,17,sql:parcels.surface_m2,17.21195148940187,0.211951,arrondi,TOLERABLE
+surface_parcelle_m2,97410000AH0948,fiche:surface_m2,17,sql:ST_Area(geom_2975),17.21195148940187,0.211951,arrondi,TOLERABLE
+surface_parcelle_m2,97410000AH0948,fiche:surface_m2,17,tuile:surface_m2,17.21195148940187,0.211951,arrondi,TOLERABLE
+surface_parcelle_m2,97411000CX1824,fiche:surface_m2,1,sql:parcels.surface_m2,0.8864454144931773,0.113555,calcul_ou_source,INCOHERENT
+surface_parcelle_m2,97411000CX1824,fiche:surface_m2,1,sql:ST_Area(geom_2975),0.8864454144931773,0.113555,calcul_ou_source,INCOHERENT
+surface_parcelle_m2,97411000CX1824,fiche:surface_m2,1,tuile:surface_m2,0.8864454144931773,0.113555,calcul_ou_source,INCOHERENT
+surface_parcelle_m2,97411000DR0715,fiche:surface_m2,6,sql:parcels.surface_m2,5.922578015795509,0.077422,arrondi,TOLERABLE
+surface_parcelle_m2,97411000DR0715,fiche:surface_m2,6,sql:ST_Area(geom_2975),5.922578015795509,0.077422,arrondi,TOLERABLE
+surface_parcelle_m2,97411000DR0715,fiche:surface_m2,6,tuile:surface_m2,5.922578015795509,0.077422,arrondi,TOLERABLE
+filiation_mere,97411000HV0146,fiche:filiation.meres.0.idu,97411000BI0849,sql:dfi_filiation.idu_mere,97411000BI0850,'97411000BI0849' ≠ '97411000BI0850',label,INCOHERENT
+vigilance_cinquante_pas,97412000BX0918,fiche:flags[cinquante_pas],False,sql:parcel_flags[cinquante_pas],True,False ≠ True,label,INCOHERENT
+zone_plu_lib,97414000DH1532,fiche:reglement_plu.zones.0.zone,1AUa oap1,sql:parcel_zone_plu.zone_lib,1AUa,'1AUa oap1' ≠ '1AUa',label,INCOHERENT
+zone_plu_lib,97414000DH1532,fiche:reglement_plu.zones.0.zone,1AUa oap1,tuile:zone_lib,1AUa,'1AUa oap1' ≠ '1AUa',label,INCOHERENT
+vigilance_cinquante_pas,97419000AL0651,fiche:flags[cinquante_pas],False,sql:parcel_flags[cinquante_pas],True,False ≠ True,label,INCOHERENT
+surface_parcelle_m2,97422000BS1761,fiche:surface_m2,47,sql:parcels.surface_m2,47.494354368334285,0.494354,arrondi,TOLERABLE
+surface_parcelle_m2,97422000BS1761,fiche:surface_m2,47,sql:ST_Area(geom_2975),47.494354368334285,0.494354,arrondi,TOLERABLE
+surface_parcelle_m2,97422000BS1761,fiche:surface_m2,47,tuile:surface_m2,47.494354368334285,0.494354,arrondi,TOLERABLE
+vigilance_ravine,97422000AX1477,fiche:flags[ravine],False,sql:parcel_flags[ravine],True,False ≠ True,label,INCOHERENT
+zone_plu_lib,97415000CW0863,fiche:reglement_plu.zones.0.zone,A,sql:parcel_zone_plu.zone_lib,Ncor,'A' ≠ 'Ncor',label,INCOHERENT
+zone_plu_lib,97415000CW0863,fiche:reglement_plu.zones.0.zone,A,tuile:zone_lib,Ncor,'A' ≠ 'Ncor',label,INCOHERENT
+surface_parcelle_m2,97414000DL0823,fiche:surface_m2,7,sql:parcels.surface_m2,6.513961891341515,0.486038,calcul_ou_source,INCOHERENT
+surface_parcelle_m2,97414000DL0823,fiche:surface_m2,7,sql:ST_Area(geom_2975),6.513961891341515,0.486038,calcul_ou_source,INCOHERENT
+surface_parcelle_m2,97414000DL0823,fiche:surface_m2,7,tuile:surface_m2,6.513961891341515,0.486038,calcul_ou_source,INCOHERENT
+surface_parcelle_m2,97415000CM1450,fiche:surface_m2,2,sql:parcels.surface_m2,2.4723429365632494,0.472343,calcul_ou_source,INCOHERENT
+surface_parcelle_m2,97415000CM1450,fiche:surface_m2,2,sql:ST_Area(geom_2975),2.4723429365632494,0.472343,calcul_ou_source,INCOHERENT
+surface_parcelle_m2,97415000CM1450,fiche:surface_m2,2,tuile:surface_m2,2.4723429365632494,0.472343,calcul_ou_source,INCOHERENT
+surface_parcelle_m2,97415000AB0688,fiche:surface_m2,17,sql:parcels.surface_m2,17.31654905019352,0.316549,arrondi,TOLERABLE
+surface_parcelle_m2,97415000AB0688,fiche:surface_m2,17,sql:ST_Area(geom_2975),17.31654905019352,0.316549,arrondi,TOLERABLE
+surface_parcelle_m2,97415000AB0688,fiche:surface_m2,17,tuile:surface_m2,17.31654905019352,0.316549,arrondi,TOLERABLE
+surface_parcelle_m2,97405000BI1100,fiche:surface_m2,18,sql:parcels.surface_m2,18.415743635209115,0.415744,arrondi,TOLERABLE
+surface_parcelle_m2,97405000BI1100,fiche:surface_m2,18,sql:ST_Area(geom_2975),18.415743635209115,0.415744,arrondi,TOLERABLE
+surface_parcelle_m2,97405000BI1100,fiche:surface_m2,18,tuile:surface_m2,18.415743635209115,0.415744,arrondi,TOLERABLE
+surface_parcelle_m2,97402000AK2141,fiche:surface_m2,22,sql:parcels.surface_m2,21.51173891707585,0.488261,arrondi,TOLERABLE
+surface_parcelle_m2,97402000AK2141,fiche:surface_m2,22,sql:ST_Area(geom_2975),21.51173891707585,0.488261,arrondi,TOLERABLE
+surface_parcelle_m2,97402000AK2141,fiche:surface_m2,22,tuile:surface_m2,21.51173891707585,0.488261,arrondi,TOLERABLE
+vigilance_cinquante_pas,97417000AX0065,fiche:flags[cinquante_pas],False,sql:parcel_flags[cinquante_pas],True,False ≠ True,label,INCOHERENT
+surface_parcelle_m2,97414000EV0819,fiche:surface_m2,8,sql:parcels.surface_m2,7.830383220980206,0.169617,arrondi,TOLERABLE
+surface_parcelle_m2,97414000EV0819,fiche:surface_m2,8,sql:ST_Area(geom_2975),7.830383220980206,0.169617,arrondi,TOLERABLE
+surface_parcelle_m2,97414000EV0819,fiche:surface_m2,8,tuile:surface_m2,7.830383220980206,0.169617,arrondi,TOLERABLE
+surface_parcelle_m2,97407000AK1556,fiche:surface_m2,15,sql:parcels.surface_m2,15.425394834769623,0.425395,arrondi,TOLERABLE
+surface_parcelle_m2,97407000AK1556,fiche:surface_m2,15,sql:ST_Area(geom_2975),15.425394834769623,0.425395,arrondi,TOLERABLE
+surface_parcelle_m2,97407000AK1556,fiche:surface_m2,15,tuile:surface_m2,15.425394834769623,0.425395,arrondi,TOLERABLE
+surface_parcelle_m2,97407000AO1809,fiche:surface_m2,8,sql:parcels.surface_m2,8.446061981307057,0.446062,calcul_ou_source,INCOHERENT
+surface_parcelle_m2,97407000AO1809,fiche:surface_m2,8,sql:ST_Area(geom_2975),8.446061981307057,0.446062,calcul_ou_source,INCOHERENT
+surface_parcelle_m2,97407000AO1809,fiche:surface_m2,8,tuile:surface_m2,8.446061981307057,0.446062,calcul_ou_source,INCOHERENT
+surface_parcelle_m2,97422000EL0222,fiche:surface_m2,30,sql:parcels.surface_m2,29.58974501162765,0.410255,arrondi,TOLERABLE
+surface_parcelle_m2,97422000EL0222,fiche:surface_m2,30,sql:ST_Area(geom_2975),29.58974501162765,0.410255,arrondi,TOLERABLE
+surface_parcelle_m2,97422000EL0222,fiche:surface_m2,30,tuile:surface_m2,29.58974501162765,0.410255,arrondi,TOLERABLE
+surface_parcelle_m2,97413000DA0519,fiche:surface_m2,3,sql:parcels.surface_m2,2.894593444399655,0.105407,arrondi,TOLERABLE
+surface_parcelle_m2,97413000DA0519,fiche:surface_m2,3,sql:ST_Area(geom_2975),2.894593444399655,0.105407,arrondi,TOLERABLE
+surface_parcelle_m2,97413000DA0519,fiche:surface_m2,3,tuile:surface_m2,2.894593444399655,0.105407,arrondi,TOLERABLE
+surface_parcelle_m2,97414000DL0750,fiche:surface_m2,1,sql:parcels.surface_m2,0.7901755749218262,0.209824,calcul_ou_source,INCOHERENT
+surface_parcelle_m2,97414000DL0750,fiche:surface_m2,1,sql:ST_Area(geom_2975),0.7901755749218262,0.209824,calcul_ou_source,INCOHERENT
+surface_parcelle_m2,97412000BR0834,fiche:surface_m2,5,sql:parcels.surface_m2,4.681090583144584,0.318909,calcul_ou_source,INCOHERENT
+surface_parcelle_m2,97412000BR0834,fiche:surface_m2,5,sql:ST_Area(geom_2975),4.681090583144584,0.318909,calcul_ou_source,INCOHERENT
+surface_parcelle_m2,97412000BR0834,fiche:surface_m2,5,tuile:surface_m2,4.681090583144584,0.318909,calcul_ou_source,INCOHERENT
+surface_parcelle_m2,97407000AI1858,fiche:surface_m2,16,sql:parcels.surface_m2,15.837742627332439,0.162257,arrondi,TOLERABLE
+surface_parcelle_m2,97407000AI1858,fiche:surface_m2,16,sql:ST_Area(geom_2975),15.837742627332439,0.162257,arrondi,TOLERABLE
+surface_parcelle_m2,97407000AI1858,fiche:surface_m2,16,tuile:surface_m2,15.837742627332439,0.162257,arrondi,TOLERABLE
+surface_parcelle_m2,97411000HP0455,fiche:surface_m2,8,sql:parcels.surface_m2,8.446165407856046,0.446165,calcul_ou_source,INCOHERENT
+surface_parcelle_m2,97411000HP0455,fiche:surface_m2,8,sql:ST_Area(geom_2975),8.446165407856046,0.446165,calcul_ou_source,INCOHERENT
+surface_parcelle_m2,97411000HP0455,fiche:surface_m2,8,tuile:surface_m2,8.446165407856046,0.446165,calcul_ou_source,INCOHERENT
+filiation_mere,97401000AO1026,fiche:filiation.meres.0.idu,97401000AO0205,sql:dfi_filiation.idu_mere,97401000AO0818,'97401000AO0205' ≠ '97401000AO0818',label,INCOHERENT
+vigilance_cinquante_pas,97410000BW0639,fiche:flags[cinquante_pas],False,sql:parcel_flags[cinquante_pas],True,False ≠ True,label,INCOHERENT
+surface_parcelle_m2,97415000CZ0608,fiche:surface_m2,14,sql:parcels.surface_m2,14.212465682172684,0.212466,arrondi,TOLERABLE
+surface_parcelle_m2,97415000CZ0608,fiche:surface_m2,14,sql:ST_Area(geom_2975),14.212465682172684,0.212466,arrondi,TOLERABLE
+surface_parcelle_m2,97415000CZ0608,fiche:surface_m2,14,tuile:surface_m2,14.212465682172684,0.212466,arrondi,TOLERABLE
+vigilance_cinquante_pas,97402000AK1153,fiche:flags[cinquante_pas],False,sql:parcel_flags[cinquante_pas],True,False ≠ True,label,INCOHERENT
+vigilance_cinquante_pas,97409000AK0447,fiche:flags[cinquante_pas],False,sql:parcel_flags[cinquante_pas],True,False ≠ True,label,INCOHERENT
+vigilance_cinquante_pas,97413000AV1005,fiche:flags[cinquante_pas],False,sql:parcel_flags[cinquante_pas],True,False ≠ True,label,INCOHERENT
+vigilance_cinquante_pas,97410000BX1598,fiche:flags[cinquante_pas],False,sql:parcel_flags[cinquante_pas],True,False ≠ True,label,INCOHERENT
+vigilance_cinquante_pas,97420000AD0347,fiche:flags[cinquante_pas],False,sql:parcel_flags[cinquante_pas],True,False ≠ True,label,INCOHERENT
+vigilance_cinquante_pas,97417000AT1169,fiche:flags[cinquante_pas],False,sql:parcel_flags[cinquante_pas],True,False ≠ True,label,INCOHERENT
+vigilance_cinquante_pas,97416000ET0298,fiche:flags[cinquante_pas],False,sql:parcel_flags[cinquante_pas],True,False ≠ True,label,INCOHERENT
+vigilance_cinquante_pas,97408000BM0057,fiche:flags[cinquante_pas],False,sql:parcel_flags[cinquante_pas],True,False ≠ True,label,INCOHERENT
+zone_plu_lib,97416000ES2104,fiche:reglement_plu.zones.0.zone,Ug,sql:parcel_zone_plu.zone_lib,N,'Ug' ≠ 'N',label,INCOHERENT
+zone_plu_lib,97416000ES2104,fiche:reglement_plu.zones.0.zone,Ug,tuile:zone_lib,N,'Ug' ≠ 'N',label,INCOHERENT
+vigilance_cinquante_pas,97416000ES2104,fiche:flags[cinquante_pas],False,sql:parcel_flags[cinquante_pas],True,False ≠ True,label,INCOHERENT
+vigilance_cinquante_pas,97410000AE1071,fiche:flags[cinquante_pas],False,sql:parcel_flags[cinquante_pas],True,False ≠ True,label,INCOHERENT
+surface_parcelle_m2,97420000AD0083,fiche:surface_m2,21,sql:parcels.surface_m2,20.64538653165058,0.354613,arrondi,TOLERABLE
+surface_parcelle_m2,97420000AD0083,fiche:surface_m2,21,sql:ST_Area(geom_2975),20.64538653165058,0.354613,arrondi,TOLERABLE
+surface_parcelle_m2,97420000AD0083,fiche:surface_m2,21,tuile:surface_m2,20.64538653165058,0.354613,arrondi,TOLERABLE
+vigilance_cinquante_pas,97404000AZ0165,fiche:flags[cinquante_pas],False,sql:parcel_flags[cinquante_pas],True,False ≠ True,label,INCOHERENT
+surface_parcelle_m2,97412000CK0141,fiche:surface_m2,28,sql:parcels.surface_m2,28.36670286832944,0.366703,arrondi,TOLERABLE
+surface_parcelle_m2,97412000CK0141,fiche:surface_m2,28,sql:ST_Area(geom_2975),28.36670286832944,0.366703,arrondi,TOLERABLE
+surface_parcelle_m2,97412000CK0141,fiche:surface_m2,28,tuile:surface_m2,28.36670286832944,0.366703,arrondi,TOLERABLE
+vigilance_cinquante_pas,97416000EL0266,fiche:flags[cinquante_pas],False,sql:parcel_flags[cinquante_pas],True,False ≠ True,label,INCOHERENT
+surface_parcelle_m2,97401000AR1377,fiche:surface_m2,1,sql:parcels.surface_m2,0.5388640775422548,0.461136,calcul_ou_source,INCOHERENT
+surface_parcelle_m2,97401000AR1377,fiche:surface_m2,1,sql:ST_Area(geom_2975),0.5388640775422548,0.461136,calcul_ou_source,INCOHERENT
+surface_parcelle_m2,97416000HX0712,fiche:surface_m2,31,sql:parcels.surface_m2,30.66976973363677,0.33023,arrondi,TOLERABLE
+surface_parcelle_m2,97416000HX0712,fiche:surface_m2,31,sql:ST_Area(geom_2975),30.66976973363677,0.33023,arrondi,TOLERABLE
+surface_parcelle_m2,97416000HX0712,fiche:surface_m2,31,tuile:surface_m2,30.66976973363677,0.33023,arrondi,TOLERABLE
+vigilance_cinquante_pas,97408000BL0155,fiche:flags[cinquante_pas],False,sql:parcel_flags[cinquante_pas],True,False ≠ True,label,INCOHERENT
+vigilance_cinquante_pas,97415000BP0290,fiche:flags[cinquante_pas],False,sql:parcel_flags[cinquante_pas],True,False ≠ True,label,INCOHERENT
+vigilance_cinquante_pas,97407000AC0040,fiche:flags[cinquante_pas],False,sql:parcel_flags[cinquante_pas],True,False ≠ True,label,INCOHERENT
+vigilance_cinquante_pas,97407000AC0052,fiche:flags[cinquante_pas],False,sql:parcel_flags[cinquante_pas],True,False ≠ True,label,INCOHERENT
+vigilance_cinquante_pas,97407000AC0071,fiche:flags[cinquante_pas],False,sql:parcel_flags[cinquante_pas],True,False ≠ True,label,INCOHERENT
+vigilance_cinquante_pas,97407000AC0073,fiche:flags[cinquante_pas],False,sql:parcel_flags[cinquante_pas],True,False ≠ True,label,INCOHERENT
+vigilance_cinquante_pas,97407000AC0074,fiche:flags[cinquante_pas],False,sql:parcel_flags[cinquante_pas],True,False ≠ True,label,INCOHERENT
+vigilance_cinquante_pas,97407000AC0075,fiche:flags[cinquante_pas],False,sql:parcel_flags[cinquante_pas],True,False ≠ True,label,INCOHERENT
+vigilance_cinquante_pas,97407000AC0081,fiche:flags[cinquante_pas],False,sql:parcel_flags[cinquante_pas],True,False ≠ True,label,INCOHERENT
+vigilance_cinquante_pas,97407000AC0092,fiche:flags[cinquante_pas],False,sql:parcel_flags[cinquante_pas],True,False ≠ True,label,INCOHERENT
+vigilance_cinquante_pas,97407000AC0093,fiche:flags[cinquante_pas],False,sql:parcel_flags[cinquante_pas],True,False ≠ True,label,INCOHERENT
+vigilance_cinquante_pas,97407000AC0095,fiche:flags[cinquante_pas],False,sql:parcel_flags[cinquante_pas],True,False ≠ True,label,INCOHERENT
+vigilance_cinquante_pas,97407000AC0104,fiche:flags[cinquante_pas],False,sql:parcel_flags[cinquante_pas],True,False ≠ True,label,INCOHERENT
+filiation_mere,97407000AC0104,fiche:filiation.meres.0.idu,97407000AC0076,sql:dfi_filiation.idu_mere,97407000AC0099,'97407000AC0076' ≠ '97407000AC0099',label,INCOHERENT
+proprietaire_moral_denomination,97407000AC0104,fiche:proprietaire_moral.denomination,GRAND PORT MARITIME DE LA REUNION,sql:pm_proprietaires_millesimes.denomination,ETAT PAR DIRECTION DE L IMMOBILIER DE L ETAT,'GRAND PORT MARITIME DE LA REUNION' ≠ 'ETAT PAR DIRECTION DE L IMMOBILIER DE L ETAT',label,INCOHERENT
+proprietaire_moral_denomination,97413000BM0406,fiche:proprietaire_moral.denomination,GFA MADURAN-MAINGARD,sql:pm_proprietaires_millesimes.denomination,MADURAN-MAINGARD,'GFA MADURAN-MAINGARD' ≠ 'MADURAN-MAINGARD',label,INCOHERENT
+vigilance_cinquante_pas,97409000AB0748,fiche:flags[cinquante_pas],False,sql:parcel_flags[cinquante_pas],True,False ≠ True,label,INCOHERENT
+surface_parcelle_m2,97413000CG0171,fiche:surface_m2,27,sql:parcels.surface_m2,27.37923599258496,0.379236,arrondi,TOLERABLE
+surface_parcelle_m2,97413000CG0171,fiche:surface_m2,27,sql:ST_Area(geom_2975),27.37923599258496,0.379236,arrondi,TOLERABLE
+surface_parcelle_m2,97413000CG0171,fiche:surface_m2,27,tuile:surface_m2,27.37923599258496,0.379236,arrondi,TOLERABLE
+tiers_hauts_n,Bras-Panon,ctx:classement.tiers_hauts,7,sql:parcel_p_score_v2[brulante+chaude],0,7,calcul_ou_source,INCOHERENT
+tiers_hauts_n,Cilaos,ctx:classement.tiers_hauts,1,sql:parcel_p_score_v2[brulante+chaude],0,1,calcul_ou_source,INCOHERENT
+tiers_hauts_n,Entre-Deux,ctx:classement.tiers_hauts,6,sql:parcel_p_score_v2[brulante+chaude],0,6,calcul_ou_source,INCOHERENT
+tiers_hauts_n,L'Étang-Salé,ctx:classement.tiers_hauts,9,sql:parcel_p_score_v2[brulante+chaude],0,9,calcul_ou_source,INCOHERENT
+tiers_hauts_n,La Plaine-des-Palmistes,ctx:classement.tiers_hauts,8,sql:parcel_p_score_v2[brulante+chaude],0,8,calcul_ou_source,INCOHERENT
+tiers_hauts_n,La Possession,ctx:classement.tiers_hauts,57,sql:parcel_p_score_v2[brulante+chaude],0,57,calcul_ou_source,INCOHERENT
+tiers_hauts_n,Le Port,ctx:classement.tiers_hauts,21,sql:parcel_p_score_v2[brulante+chaude],0,21,calcul_ou_source,INCOHERENT
+tiers_hauts_n,Le Tampon,ctx:classement.tiers_hauts,40,sql:parcel_p_score_v2[brulante+chaude],0,40,calcul_ou_source,INCOHERENT
+prix_neuf_eur_m2,Le Tampon,ctx:comparable.neuf_eur_m2,4891,ctx:prix_neuf_observe.eur_m2,4318,573,calcul_ou_source,INCOHERENT
+tiers_hauts_n,Les Avirons,ctx:classement.tiers_hauts,26,sql:parcel_p_score_v2[brulante+chaude],0,26,calcul_ou_source,INCOHERENT
+tiers_hauts_n,Les Trois-Bassins,ctx:classement.tiers_hauts,7,sql:parcel_p_score_v2[brulante+chaude],0,7,calcul_ou_source,INCOHERENT
+tiers_hauts_n,Petite-Île,ctx:classement.tiers_hauts,7,sql:parcel_p_score_v2[brulante+chaude],0,7,calcul_ou_source,INCOHERENT
+tiers_hauts_n,Saint-André,ctx:classement.tiers_hauts,19,sql:parcel_p_score_v2[brulante+chaude],0,19,calcul_ou_source,INCOHERENT
+tiers_hauts_n,Saint-Benoît,ctx:classement.tiers_hauts,19,sql:parcel_p_score_v2[brulante+chaude],0,19,calcul_ou_source,INCOHERENT
+tiers_hauts_n,Saint-Denis,ctx:classement.tiers_hauts,196,sql:parcel_p_score_v2[brulante+chaude],0,196,calcul_ou_source,INCOHERENT
+prix_neuf_eur_m2,Saint-Denis,ctx:comparable.neuf_eur_m2,5000,ctx:prix_neuf_observe.eur_m2,4275,725,calcul_ou_source,INCOHERENT
+tiers_hauts_n,Saint-Joseph,ctx:classement.tiers_hauts,28,sql:parcel_p_score_v2[brulante+chaude],0,28,calcul_ou_source,INCOHERENT
+tiers_hauts_n,Saint-Leu,ctx:classement.tiers_hauts,29,sql:parcel_p_score_v2[brulante+chaude],0,29,calcul_ou_source,INCOHERENT
+prix_neuf_eur_m2,Saint-Leu,ctx:comparable.neuf_eur_m2,4789,ctx:prix_neuf_observe.eur_m2,4953,164,arrondi,TOLERABLE
+tiers_hauts_n,Saint-Louis,ctx:classement.tiers_hauts,25,sql:parcel_p_score_v2[brulante+chaude],0,25,calcul_ou_source,INCOHERENT
+tiers_hauts_n,Saint-Paul,ctx:classement.tiers_hauts,125,sql:parcel_p_score_v2[brulante+chaude],0,125,calcul_ou_source,INCOHERENT
+tiers_hauts_n,Saint-Philippe,ctx:classement.tiers_hauts,4,sql:parcel_p_score_v2[brulante+chaude],0,4,calcul_ou_source,INCOHERENT
+tiers_hauts_n,Saint-Pierre,ctx:classement.tiers_hauts,128,sql:parcel_p_score_v2[brulante+chaude],0,128,calcul_ou_source,INCOHERENT
+prix_neuf_eur_m2,Saint-Pierre,ctx:comparable.neuf_eur_m2,4958,ctx:prix_neuf_observe.eur_m2,4258,700,calcul_ou_source,INCOHERENT
+tiers_hauts_n,Sainte-Marie,ctx:classement.tiers_hauts,28,sql:parcel_p_score_v2[brulante+chaude],0,28,calcul_ou_source,INCOHERENT
+tiers_hauts_n,Sainte-Suzanne,ctx:classement.tiers_hauts,4,sql:parcel_p_score_v2[brulante+chaude],0,4,calcul_ou_source,INCOHERENT
+taxe_amenagement_taux_communal_pct,97413000CA0198↔Saint-Leu,fiche:taxe_amenagement.taux_communal_pct (97413000CA0198),14.0,ctx:taxe_amenagement.part_communale_pct,5.0,9,calcul_ou_source,INCOHERENT

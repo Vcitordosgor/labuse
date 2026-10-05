@@ -1,0 +1,8 @@
+invariant,libelle,perimetre,violations,exemples
+bande_coherente_score,"bande = f(score) avec les seuils gravés (A≥80, B≥50, C≥30, D=1-29, 0=0, NC=score NULL)",score_labuse run q_v16 (île),0,
+nc_jamais_0,"non calculable ⇒ bande NC avec cause dite, JAMAIS la bande « 0 » (et réciproque : NC ⇒ non_calculable + score NULL)",score_labuse run q_v16 (île),0,
+zero_jamais_d,score = 0 ⇒ bande « 0 » (jamais D) ; bande « 0 » ⇒ score = 0,score_labuse run q_v16 (île),0,
+bande0_sdp_ou_cause,bande « 0 » ⇔ SDP résiduelle 0 ou cause posée (run résiduel servi) — jamais un 0 muet sur une parcelle à SDP > 0,score_labuse run q_v16 × parcel_residuel_runs seq 13,0,
+score_grave_reflete_run13,"la SDP portée par le score gravé = la SDP du run résiduel servi (pas un run périmé) — hors bande NC (mesuré : les 10 776 NC portent sdp NULL côté score et 0+cause côté run, vocabulaire d'absence attendu, pas une contradiction)",score_labuse run q_v16 × parcel_residuel_runs seq 13,0,
+score_couvre_ile,"le run scoring servi couvre toute l'île (même compte que parcels), 0 manquant / 0 orphelin",score_labuse run q_v16 vs parcels,0,
+bande_servie_est_q_v16,garde-fou harnais : le manifeste pointe bien q_v16 (sinon tout l'angle contrôle le mauvais run),config/served_manifest.json,0,
