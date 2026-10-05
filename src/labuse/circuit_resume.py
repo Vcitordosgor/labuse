@@ -235,7 +235,8 @@ def _calculer_present(calculer: dict | None, residuel: dict | None) -> bool:
 
 def total_a_faire(reservoirs: list[dict], *, fuites_robinets=(), ecarts=(),
                   verrous: dict | None = None, candidat: str | None = None,
-                  calculer: dict | None = None, residuel: dict | None = None) -> int:
+                  calculer: dict | None = None, residuel: dict | None = None,
+                  tuiles: dict | None = None) -> int:
     """CIRCUIT-P7 (lot 4) — L'INVARIANT, une fonction : le compteur « À faire » = la somme EXACTE des
     pastilles non vertes (Sources + Circuit) et des actions en attente. C'est ce que rend la tuile
     « tâches à effectuer » du Pilotage (lecture) ET la longueur de la liste de `composer_a_faire`.
@@ -243,13 +244,17 @@ def total_a_faire(reservoirs: list[dict], *, fuites_robinets=(), ecarts=(),
         en panne (Décider). « jamais vérifiée » (gris) et « à jour » (mint) n'en font pas.
       · Circuit non vert : chaque robinet qui lit hors moteur (fuite) · chaque écart ouvert · chaque
         verrou cassé (Décider).
-      · Actions en attente : Calculer (des entrées ont changé) · Basculer (un candidat est prêt)."""
+      · Actions en attente : Calculer (des entrées ont changé) · Basculer (un candidat est prêt).
+      · Tuiles périmées (DASHBOARD-FIX-1 point 5) : la ligne BLOQUANTE « Reconstruire les tuiles » de
+        composer_a_faire compte aussi ici — sans elle l'invariant tuile Pilotage = onglet se brisait
+        dès qu'une bascule laissait les tuiles en arrière."""
     def lib(r):
         return (r.get("etat") or ["", ""])[1]
     n_src = sum(1 for r in reservoirs if lib(r) in ("nouvelle version", "échue", "sonde en panne"))
     n_circuit = len(list(fuites_robinets)) + len(list(ecarts)) + len((verrous or {}).get("casses", []))
     n_actions = (1 if _calculer_present(calculer, residuel) else 0) + (1 if candidat else 0)
-    return n_src + n_circuit + n_actions
+    n_tuiles = 1 if (tuiles or {}).get("perime") else 0
+    return n_src + n_circuit + n_actions + n_tuiles
 
 
 def composer_a_faire(reservoirs: list[dict], *, residuel: dict | None, candidat: str | None,

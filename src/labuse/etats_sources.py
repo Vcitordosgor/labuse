@@ -35,6 +35,15 @@ ETATS = ("nouvelle_version", "a_rafraichir", "jamais_verifiee", "a_jour", "non_s
 #: méthodes de veille qui sont une VRAIE sonde amont (un rappel manuel n'en est pas une).
 _SONDES = ("api", "page", "entete", "temoin")
 
+
+def est_surveillee(methode, actif) -> bool:
+    """DASHBOARD-FIX-1 (point 6) — LE prédicat unique « cette source est surveillée » : une VRAIE sonde
+    amont (api/page/entete/temoin) et active. Partagé par etats_sources (ici) ET circuit_etats : les
+    deux moteurs classent « jamais vérifiée » avec la MÊME définition — fini les deux chiffres qui se
+    contredisaient (circuit « 11 » vs /admin/sources « 4 »). Une source NON surveillée (aucune sonde
+    câblée) n'attend aucun agent : elle n'est jamais « jamais vérifiée »."""
+    return methode in _SONDES and actif is not False
+
 #: cadence normée → tournure « le producteur publie … » (mention non-surveillée, jamais un jugement).
 _CADENCE_HUMAIN = {
     "hebdomadaire": "chaque semaine", "hebdo": "chaque semaine", "mensuel": "chaque mois",
@@ -73,7 +82,7 @@ def etat_source(row, *, now: datetime | None = None) -> dict:
     methode = row.get("veille_methode")
     statut = row.get("veille_statut")
     actif = row.get("veille_actif")
-    surveillee = methode in _SONDES and actif is not False
+    surveillee = est_surveillee(methode, actif)
     publie_le = _jjmm(row.get("source_horizon_at"))
     cad = (row.get("source_cadence") or "").strip().lower()
     cadence_h = _CADENCE_HUMAIN.get(cad)

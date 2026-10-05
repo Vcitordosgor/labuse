@@ -258,26 +258,49 @@ def _age_backup() -> dict:
     jobs_impl) ET la CLI `backup-db` (`*.dump`, format custom). L'ancien glob `*.dump` SEUL ne voyait
     jamais les dumps du cron → « aucun » à tort alors qu'un backup existait.
     ambre ≥ 2 j · rouge ≥ 7 j · « absent » si le répertoire existe mais est vide · « non configuré »
-    si le répertoire n'existe pas (LABUSE_BACKUP_DIR non renseigné en local)."""
+    si le répertoire n'existe pas (LABUSE_BACKUP_DIR non renseigné en local).
+
+    DASHBOARD-FIX-1 (point 2) — en PROD le dump vit dans LABUSE_BACKUP_DIR (/var/backups/labuse),
+    créé et alimenté par le cron `backup-postgres` (quotidien 13:30) et `deploy/scripts/backup_postgres.sh`
+    (rotation 7 + hebdo 4 sem.). Sur le POSTE LOCAL ce chemin VPS n'existe pas : au lieu de crier
+    « non configuré » à tort, la tuile pointe le MIROIR LOCAL `~/labuse-backups` qu'alimente
+    `pull_backups.sh` (portée = local) — « local : voir ~/labuse-backups »."""
     import glob
     import os
     import time as _t
     from .. import config
     rep = config.get_settings().backup_dir
-    if not rep or not os.path.isdir(rep):
-        return {"etat": "non_configure", "chemin": rep, "age_jours": None}
-    try:
-        dumps = glob.glob(os.path.join(rep, "labuse-*.sql.gz")) + glob.glob(os.path.join(rep, "*.dump"))
+
+    def _mesurer(dossier: str, portee: str) -> dict | None:
+        dumps = (glob.glob(os.path.join(dossier, "labuse-*.sql.gz"))
+                 + glob.glob(os.path.join(dossier, "*.dump")))
         if not dumps:
-            return {"etat": "absent", "chemin": rep, "age_jours": None}
+            return None
         recent = max(dumps, key=os.path.getmtime)
         mtime = os.path.getmtime(recent)
-        taille_mo = round(os.path.getsize(recent) / 1e6, 1)
         age_j = (_t.time() - mtime) / 86400
-        etat = "rouge" if age_j >= 7 else "ambre" if age_j >= 2 else "ok"
-        return {"etat": etat, "chemin": rep, "age_jours": round(age_j, 1),
+        # en prod : fraîcheur (ambre/rouge). En local : jamais une alerte (poste de travail),
+        # l'état « local » est neutre — la tuile affiche l'âge pour information, pas pour alerter.
+        etat = ("local" if portee == "local"
+                else "rouge" if age_j >= 7 else "ambre" if age_j >= 2 else "ok")
+        return {"etat": etat, "portee": portee, "chemin": dossier, "age_jours": round(age_j, 1),
                 "mtime": datetime.fromtimestamp(mtime, tz=timezone.utc).isoformat(),
-                "fichier": os.path.basename(recent), "taille_mo": taille_mo}
+                "fichier": os.path.basename(recent), "taille_mo": round(os.path.getsize(recent) / 1e6, 1)}
+
+    try:
+        # 1) le répertoire de PROD (LABUSE_BACKUP_DIR / /var/backups/labuse) : la vérité VPS.
+        if rep and os.path.isdir(rep):
+            m = _mesurer(rep, "prod")
+            return m or {"etat": "absent", "portee": "prod", "chemin": rep, "age_jours": None}
+        # 2) hors VPS, le répertoire de prod n'existe pas : on regarde le MIROIR LOCAL
+        #    (~/labuse-backups, alimenté par pull_backups.sh). La tuile dit « local : voir
+        #    ~/labuse-backups » — jamais « non configuré » à tort sur le poste de Vic.
+        local = os.path.expanduser("~/labuse-backups")
+        if os.path.isdir(local):
+            return _mesurer(local, "local") or {"etat": "local", "portee": "local",
+                                                 "chemin": local, "age_jours": None}
+        # 3) ni prod ni miroir local : rien à montrer (poste neuf jamais synchronisé).
+        return {"etat": "non_configure", "chemin": rep, "age_jours": None}
     except Exception:  # noqa: BLE001 — la tuile dit « absent », jamais un 500
         return {"etat": "absent", "chemin": rep, "age_jours": None}
 
@@ -297,20 +320,46 @@ def _horloge() -> dict:
 
 
 def _verrous() -> dict:
-    """DASHBOARD-2 (Lot 1) — LED rail « Verrous » : n / 16. Les seize verrous de cohérence du Circuit
-    (`circuit_verrous.VERROUS`) ; `ok` = seize moins les cassés au DERNIER passage journalisé
-    (`synthese_pour_page`, coût page — jamais rejoué ici). Jamais joué → ok = None (« — »)."""
+    """DASHBOARD-2 (Lot 1) — LED rail « Verrous » : n / 24. Les verrous de cohérence du Circuit
+    (`circuit_verrous.VERROUS`) ; `ok` = le total moins les cassés au DERNIER passage journalisé
+    (`synthese_pour_page`, coût page — jamais rejoué ici). Jamais joué → ok = None (« — »).
+
+    DASHBOARD-FIX-1 (point 4) — la LED DATE ce qu'elle montre (`dernier_ts`) et signale « à rejouer »
+    (`a_rejouer`) quand une BASCULE a eu lieu DEPUIS le dernier passage des verrous : l'état affiché
+    reflète alors un run antérieur (la bascule ne rejoue pas les verrous), Vic doit relancer
+    « labuse circuit verrous ». Fini le « 21/24 rouge sans date » d'un contrôle pré-correctif."""
     try:
-        from .. import circuit_verrous as _cv
+        from .. import bascule_flux as _bf, circuit_verrous as _cv
         from ..db import session_scope as _ss
         sur = len(_cv.VERROUS)
         with _ss() as _s:
             synth = _cv.synthese_pour_page(_s)
+            try:
+                derniere_bascule = _bf.derniere_bascule(_s)
+            except Exception:  # noqa: BLE001 — pas de journal de bascule : pas de « à rejouer »
+                derniere_bascule = None
+        dernier_ts = synth.get("dernier_ts")
+        # « à rejouer » : une bascule plus récente que le dernier passage des verrous (ou des verrous
+        # jamais joués alors qu'une bascule existe) → l'état des verrous précède le run servi.
+        a_rejouer = False
+        b_ts = (derniere_bascule or {}).get("ts")
+        if b_ts:
+            a_rejouer = (dernier_ts is None) or (_apres(b_ts, dernier_ts))
         if synth.get("jamais_joues"):
-            return {"ok": None, "sur": sur}
-        return {"ok": sur - len(synth.get("casses") or []), "sur": sur}
+            return {"ok": None, "sur": sur, "dernier_ts": None, "a_rejouer": a_rejouer}
+        return {"ok": sur - len(synth.get("casses") or []), "sur": sur,
+                "dernier_ts": dernier_ts, "a_rejouer": a_rejouer}
     except Exception:  # noqa: BLE001 — la LED dit « — », jamais un 500
-        return {"ok": None, "sur": None}
+        return {"ok": None, "sur": None, "dernier_ts": None, "a_rejouer": False}
+
+
+def _apres(a_iso: str, b_iso: str) -> bool:
+    """`a` est-il postérieur à `b` ? (deux timestamps ISO). Repli lexicographique si le parse échoue."""
+    try:
+        from datetime import datetime as _dt
+        return _dt.fromisoformat(a_iso) > _dt.fromisoformat(b_iso)
+    except Exception:  # noqa: BLE001 — formats hétérogènes : comparaison lexicographique (ISO trié = daté)
+        return a_iso > b_iso
 
 
 @router.get("/admin/pilotage")
@@ -2254,9 +2303,35 @@ def circuit_taches_a_effectuer() -> int | None:
             residuel = bascule_flux.residuel_entrees_changees(s)
         candidat = next((rr["label"] for rr in runs_list if rr.get("statut") == "termine"
                          and rr.get("label") != runs.current()), None)
+        # DASHBOARD-FIX-1 (point 5) — l'onglet « À faire » compte AUSSI la ligne bloquante
+        # « Reconstruire les tuiles » (tuiles périmées vs run servi) et la ligne « Calculer »
+        # enrichie du registre (circuit_dependance). Pour que ce compteur (tuile Pilotage) soit le
+        # MÊME nombre, on passe les mêmes ingrédients : sinon une bascule laissant les tuiles en
+        # arrière faisait diverger Pilotage (5) et onglet (9).
+        tuiles_af = None
+        try:
+            from .tiles import tuiles_etat as _tuiles_etat
+            with session_scope() as _st:
+                _te = _tuiles_etat(_st)
+            if _te.get("perime"):
+                tuiles_af = {"perime": True}
+        except Exception:  # noqa: BLE001 — pas de tuiles (base de test) : pas de ligne
+            tuiles_af = None
+        calculer_af = None
+        try:
+            from .. import circuit_dependance as _dep
+            with session_scope() as _sd:
+                _rd = _sd.execute(text(
+                    "SELECT computed_at_max FROM residuel_runs WHERE is_served LIMIT 1")).scalar()
+            _rd = _rd.isoformat() if _rd else None
+            calculer_af = _dep.calculer_ligne(reservoirs, run_servi_date=_rd,
+                                              plu_changees=_dep.plu_regles_changees(_rd), residuel=residuel)
+        except Exception:  # noqa: BLE001 — chaîne résiduel absente : on retombe sur le signal résiduel
+            calculer_af = None
         return _resume.total_a_faire(
             reservoirs, fuites_robinets=fuites_rob, ecarts=[None] * int(n_ecarts),
-            verrous=verrous, candidat=candidat, residuel=residuel)
+            verrous=verrous, candidat=candidat, residuel=residuel,
+            calculer=calculer_af, tuiles=tuiles_af)
     except Exception:  # noqa: BLE001 — la tuile Pilotage ne casse jamais la page (inconnu → None)
         return None
 
@@ -2485,7 +2560,11 @@ def admin_circuit(request: Request) -> dict:
         "fuites_classe": sum(1 for f in fuites if f.get("type") == "classe"),
         "fuites_geometrie": sum(1 for f in fuites if f.get("type") == "geometrie"),
         "eau_ancienne_ouverte": sum(1 for x in eau if x["statut"] == "ouvert"),
-        "jamais_verifies": sum(1 for r in reservoirs if not r["veille"]),
+        # DASHBOARD-FIX-1 (point 6) — UN SEUL moteur d'état : « jamais vérifiées » se compte sur le
+        # libellé déjà posé par etat_reservoir (= la pastille Sources = /admin/sources), jamais sur un
+        # prédicat propre (`not veille`) qui en inventait un troisième chiffre.
+        "jamais_verifies": sum(1 for r in reservoirs
+                               if (r.get("etat") or ["", ""])[1] == "jamais vérifiée"),
         "a_verifier": sum(1 for r in reservoirs if r.get("a_verifier")),
         # CIRCUIT-3 lot 5.2 — pastilles du filtre : sources en quarantaine / avec avertissements.
         "filtres_quarantaine": sum(1 for r in reservoirs

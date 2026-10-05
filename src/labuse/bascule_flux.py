@@ -20,6 +20,43 @@ from sqlalchemy.orm import Session
 
 _RUN_PRECEDENT_FILE = Path(__file__).resolve().parents[2] / "config" / "run_precedent.txt"
 
+#: DASHBOARD-FIX-1 (point 3) — les TROIS pointeurs suivis par git que la bascule réécrit. Après le
+#: geste, elle les commite ELLE-MÊME (fini l'arbre sale « précédent q_v16 » à committer à la main).
+_POINTEURS_CONFIG = ("config/served_run.txt", "config/run_precedent.txt", "config/served_manifest.json")
+
+
+def _commit_pointeurs(arbre: Path, run: str) -> dict:
+    """DASHBOARD-FIX-1 (point 3) — COMMITE les 3 pointeurs config/* que la bascule vient d'écrire
+    (`served_run.txt` · `run_precedent.txt` · `served_manifest.json`), message « bascule: <run> ».
+    N'ajoute QUE ces trois fichiers (jamais `git add -A` : l'arbre peut porter d'autres changements).
+    Retour : {ok: True, sha|rien_a_committer} si commité (ou déjà propre), sinon {ok: False, motif} —
+    et c'est le dashboard qui, sur ok:False, lève le bandeau rouge « 3 fichiers à commiter »."""
+    import subprocess
+    fichiers = list(_POINTEURS_CONFIG)
+    base = ["git", "-C", str(arbre)]
+    try:
+        add = subprocess.run([*base, "add", "--", *fichiers], capture_output=True, text=True, timeout=30)
+        if add.returncode != 0:
+            return {"ok": False, "fichiers": fichiers,
+                    "motif": (add.stderr or "git add a échoué").strip()[:200]}
+        # rien d'indexé (réexécution, pointeurs déjà commités) → considéré fait, pas de commit vide.
+        diff = subprocess.run([*base, "diff", "--cached", "--quiet", "--", *fichiers])
+        if diff.returncode == 0:
+            return {"ok": True, "fichiers": fichiers, "rien_a_committer": True,
+                    "message": f"bascule: {run}"}
+        com = subprocess.run([*base, "commit", "-m", f"bascule: {run}", "--", *fichiers],
+                             capture_output=True, text=True, timeout=30)
+        if com.returncode != 0:
+            return {"ok": False, "fichiers": fichiers,
+                    "motif": (com.stderr or com.stdout or "git commit a échoué").strip()[:200]}
+        sha = subprocess.run([*base, "rev-parse", "HEAD"], capture_output=True, text=True, timeout=30)
+        return {"ok": True, "fichiers": fichiers, "message": f"bascule: {run}",
+                "sha": sha.stdout.strip() if sha.returncode == 0 else None}
+    except FileNotFoundError:
+        return {"ok": False, "fichiers": fichiers, "motif": "git introuvable sur ce serveur"}
+    except Exception as exc:  # noqa: BLE001 — git indisponible : bandeau rouge, jamais un 500
+        return {"ok": False, "fichiers": fichiers, "motif": f"{type(exc).__name__}: {exc}"[:200]}
+
 
 def avertissement_arbre() -> str | None:
     """BASCULE-1 (Lot C) — l'ÉCART D'ARBRE. `labuse` est installé en ÉDITABLE sur UN checkout ; une
@@ -387,9 +424,17 @@ def basculer(db: Session, nouveau_run: str, par: str) -> dict:
     except Exception:  # noqa: BLE001
         pass
 
+    # DASHBOARD-FIX-1 (point 3) — LA BASCULE COMMITE SES POINTEURS. Les 3 fichiers config/* viennent
+    # d'être écrits (served_run.txt · run_precedent.txt · served_manifest.json) ; au lieu de laisser
+    # l'arbre sale (le « précédent q_v16 », commité à la main hors geste), elle les commite elle-même
+    # (« bascule: <run> ») dans l'arbre d'installation (parents[1] du manifeste = la racine du dépôt).
+    # Git indisponible ou échec → commit.ok = False : le dashboard lève un bandeau rouge « 3 fichiers
+    # à commiter » (geste à finir à la main). Ne casse JAMAIS une bascule réussie.
+    commit = _commit_pointeurs(_manifeste.chemin().resolve().parents[1], nouveau_run)
+
     return {"ok": True, "verifie": True, "ancien": ancien, "nouveau": nouveau_run,
             "current_apres": current_apres, "manifeste_path": manifeste_path, "arbre": arbre,
-            "caches_purges": caches, "sens": sens, "coherence": coherence,
+            "caches_purges": caches, "sens": sens, "coherence": coherence, "commit": commit,
             "note": "Effective immédiatement (manifeste relu à la requête, confirmé par runs.current()). "
                     "Les tables servies run-scopées et les tuiles se reconstruisent ensuite (build-mvt détaché)."}
 

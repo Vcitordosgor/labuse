@@ -1,0 +1,26 @@
+job;cadence;heure_reunion;touche;pose_par;commande
+sonde-sources;quotidien;07:00;eau;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run sonde-sources
+agents-sources;tous les 15 j (dim);23:00 dim;eau;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run agents-sources
+filtres-sources;quotidien;07:05;eau;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run filtres-sources
+coherence-robinets;quotidien;07:25;eau;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run coherence-robinets
+ingest-bodacc;quotidien;06:40;eau;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run ingest-bodacc
+ingest-sitadel;mensuel (10);04:30 le 10;eau;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run ingest-sitadel
+ingest-dpe;mensuel (12);04:00 le 12;eau;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run ingest-dpe
+ingest-sirene;mensuel (7);04:00 le 7;eau;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run ingest-sirene
+sync-gpu;mensuel (15);04:00 le 15;eau;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run sync-gpu
+backup-postgres;quotidien;13:30;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run backup-postgres
+pg-maintenance;hebdo (dim);04:00 dim;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run pg-maintenance
+healthcheck;15 min;toutes les 15 min;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run healthcheck
+sante-endpoints;15 min;toutes les 30 min;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run sante-endpoints
+copilote-purge;quotidien;03:30;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run copilote-purge
+radar-cloche;quotidien;07:05;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run radar-cloche
+radar-cycle;quotidien;04:00;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run radar-cycle
+radar-cycle-dvf;quotidien;04:30;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run radar-cycle-dvf
+radar-cycle-mensuel;mensuel (1er);05:30 le 1er;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run radar-cycle-mensuel
+evaluer-suivis;quotidien;07:02;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run evaluer-suivis
+detect-events;quotidien;07:04;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run detect-events
+digest;quotidien;07:15;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run digest
+mail-queue-consommer;5 min;toutes les 5 min;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run mail-queue-consommer
+fiche-commune-cache;quotidien;03:00;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run fiche-commune-cache
+coherence-banc;quotidien;03:45;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run coherence-banc
+restore-test;mensuel (1er);05:00 le 1er;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run restore-test

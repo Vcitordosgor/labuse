@@ -25,12 +25,20 @@ CAS = [
     # échec transitoire (< 3) : garde le dernier état confirmé → à jour
     ({"veille": {"statut": "injoignable", "passage": "2026-09-20", "echecs_consecutifs": 1}},
      ("mint", "à jour")),
-    # aucun contrôle réussi (sonde jamais passée) → jamais vérifiée (gris, jamais jaune)
-    ({"veille": {"statut": None, "passage": None}}, ("gris", "jamais vérifiée")),
-    # aucune veille du tout → jamais vérifiée
-    ({}, ("gris", "jamais vérifiée")),
+    # source SURVEILLÉE (vraie sonde api/page/entete/temoin active) dont l'agent n'est jamais passé
+    # (aucun statut) → jamais vérifiée (gris, jamais jaune). C'est le SEUL cas « jamais vérifiée »
+    # automatique (DASHBOARD-FIX-1 point 6 : même prédicat que /admin/sources).
+    ({"veille": {"methode": "api", "statut": None, "passage": None}}, ("gris", "jamais vérifiée")),
+    # DASHBOARD-FIX-1 (point 6) — source NON surveillée (aucune sonde amont câblée) : plus « jamais
+    # vérifiée » (elle n'attend aucun agent) mais « à jour » par construction, comme /admin/sources
+    # (non_surveillee, projeté « à jour » côté client).
+    ({"veille": {"statut": None, "passage": None}}, ("mint", "à jour")),   # veille sans méthode = non surveillée
+    ({}, ("mint", "à jour")),                                              # aucune veille du tout = non surveillée
+    ({"veille": {"methode": "rappel", "statut": None}}, ("mint", "à jour")),  # rappel manuel ≠ sonde amont
+    # sonde câblée mais DÉSACTIVÉE : non surveillée → à jour (pas « jamais vérifiée »)
+    ({"veille": {"methode": "api", "actif": False, "statut": None}}, ("mint", "à jour")),
     # sonde passée, statut ok → à jour
-    ({"veille": {"statut": "ok", "passage": "2026-09-23"}}, ("mint", "à jour")),
+    ({"veille": {"methode": "api", "statut": "ok", "passage": "2026-09-23"}}, ("mint", "à jour")),
     # CIRCUIT-P6 (tâche 2) — sans millésime par nature (OSM/INPI/Coût) : « à jour par construction »,
     # JAMAIS « jamais vérifiée », même sans aucune veille ni date de contrôle (rien à vérifier).
     ({"mode": "sans_millesime"}, ("mint", "à jour")),

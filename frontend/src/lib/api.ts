@@ -1606,10 +1606,13 @@ export interface AdminPilotage {
   mail_echecs_jour?: number   // DASHBOARD-2 (Lot 2) — échecs d'envoi du jour (mail_queue), jauge Système
   ia_mois: { cout_eur: number; appels: number }
   // RETOURS-8 (R10) — « non_configure » (répertoire absent) distinct d'« absent » (vide) ; + fichier/taille.
-  backup: { etat: 'ok' | 'ambre' | 'rouge' | 'absent' | 'non_configure'; chemin: string; age_jours: number | null; mtime?: string; fichier?: string; taille_mo?: number }
+  // DASHBOARD-FIX-1 (point 2) — « local » = hors VPS, miroir ~/labuse-backups (pull_backups.sh) ; portee=prod|local.
+  backup: { etat: 'ok' | 'ambre' | 'rouge' | 'absent' | 'non_configure' | 'local'; portee?: 'prod' | 'local'; chemin: string; age_jours: number | null; mtime?: string; fichier?: string; taille_mo?: number }
   // DASHBOARD-2 (Lot 1) — LED rail : Horloge (jobs posés / attendus) et Verrous (ok / 16). null = « — ».
   horloge?: { poses: number | null; attendus: number | null }
-  verrous?: { ok: number | null; sur: number | null }
+  // DASHBOARD-FIX-1 (point 4) — `dernier_ts` = date du dernier passage des verrous ; `a_rejouer` =
+  // une bascule a eu lieu depuis (les verrous reflètent un état pré-bascule → à rejouer).
+  verrous?: { ok: number | null; sur: number | null; dernier_ts?: string | null; a_rejouer?: boolean }
   // CONNEXIONS-2 Lot 7.2 (N3) — `endpoints`/`endpoints_ok` = sonde RUNTIME métier (avec DB), en plus du heal boot.
   sante: { ok: boolean | null; total: number | null; en_echec: string[]; endpoints_ok?: boolean | null; endpoints?: Array<{ endpoint: string; ok: boolean; detail: string | null }> }
   // CONNEXIONS-2 Lot 4 — KPI courriers ; DASHBOARD-4 P1 — `deposables` (ce qui peut réellement partir,
