@@ -41,7 +41,10 @@ export const CATALOGUE: DocCatalogue[] = [
   },
   {
     // RECETTE-5 / DOCS-1 §4 — le mot « Financier » disparaît côté client : le document s'appelle « Bilan ».
-    key: 'bilan', nom: 'Bilan', kind: 'parcelle', formats: ['PDF', 'Excel'],
+    // DOCS-FIX-1 (P12) — badge « Excel » RETIRÉ : l'export Excel n'existe pas (`_EXCEL_DISPONIBLE`
+    // vide côté back) → le badge promettait un format jamais servi. À réintroduire le jour où
+    // l'export existe (la plomberie `r.excel`/bouton Excel de LigneDoc reste en place).
+    key: 'bilan', nom: 'Bilan', kind: 'parcelle', formats: ['PDF'],
     desc: 'Charge foncière, coûts, CA et marge, avec vos propres ratios. Prix connu, ou prix maximum du terrain pour votre marge.',
     cta: 'Générer le bilan',
     explication: 'Se calcule sur les données de la fiche et vos ratios.',

@@ -19,6 +19,8 @@ import {
   type DocType, type DocGenereRow,
 } from '../../lib/api'
 import { fmtM2, iduComplet } from '../../lib/format'
+import { useOuvrirDocument } from '../../lib/ouvrirDocument'
+import { supprimerDocument } from '../../lib/api'
 import { CATALOGUE, type DocCatalogue } from './catalogue'
 
 // l'URL du générateur d'une ligne de bibliothèque (régénération à la demande — « Ouvrir »).
@@ -156,6 +158,10 @@ function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
   const [idus, setIdus] = useState<(string | null)[]>([null, null, null])  // multi (2 à 3)
   const [rayon, setRayon] = useState(2)                              // zone : 1..20 km, défaut 2
   const [bilanOuvert, setBilanOuvert] = useState(false)
+  // DOCS-FIX-1 (P3/P4) — ouverture propre (fetch + blob + attente + erreur FR), comme le Bilan :
+  // plus de window.open qui laisse l'onglet blanc puis affiche du JSON. L'erreur est rendue INLINE
+  // dans la porte (modèle FinancierQuestionnaire) ; la porte reste ouverte tant qu'il y a une erreur.
+  const { ouvrir, enCours, erreur } = useOuvrirDocument()
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
@@ -172,10 +178,11 @@ function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
   })
   const gabaritBloque = d.key === 'gabarit' && !!idu && gab.data?.status === 'incomplete'
 
-  const generer = () => {
+  const generer = async () => {
     if (d.key === 'bilan') {
-      // Exception assumée : ouvre l'écran d'hypothèses (qui génère), et l'inscrit dans Mes documents.
-      if (idu) enregistrer('bilan', [idu])
+      // Exception assumée : ouvre l'écran d'hypothèses (qui génère). DOCS-FIX-1 (P7) — le Bilan n'est
+      // PLUS inscrit ici (à l'ouverture, même si on annule) : il l'est après GÉNÉRATION réelle, via
+      // le callback onGenerated du questionnaire (plus d'entrée « fantôme » qui renverrait 422).
       setBilanOuvert(true)
       return
     }
@@ -186,7 +193,10 @@ function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
       : d.key === 'pre-dossier' ? docPreDossierUrl(idu)
       : d.key === 'gabarit' ? docGabaritUrl(idu)
       : null
-    if (url) { window.open(url, '_blank', 'noopener'); enregistrer(d.key as DocType, [idu]); onClose() }
+    if (!url) return
+    // DOCS-FIX-1 (P3/P4) — on n'inscrit dans « Mes documents » et on ne ferme la porte qu'au SUCCÈS ;
+    // sur erreur la porte reste ouverte et affiche le message (plus de ligne pour un doc jamais produit).
+    if (await ouvrir(url, d.key)) { enregistrer(d.key as DocType, [idu]); onClose() }
   }
 
   const idusValides = idus.filter((x): x is string => !!x)
@@ -215,8 +225,9 @@ function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
             ) : (
               <p className="my-3 border-l-2 border-line-2 pl-2.5 text-[13px] text-txt-dim">{d.explication}</p>
             )}
-            <Bouton niveau="primaire" ton="vert" className="w-full" disabled={!idu || gabaritBloque} onClick={generer}>
-              {d.cta}
+            {erreur && <p className="my-3 border-l-2 border-amber pl-2.5 text-[13px] text-amber">{erreur}</p>}
+            <Bouton niveau="primaire" ton="vert" className="w-full" disabled={!idu || gabaritBloque || !!enCours} onClick={generer}>
+              {enCours ? 'Génération…' : d.cta}
             </Bouton>
           </div>
         )}
@@ -231,9 +242,10 @@ function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
               <ParcelInput placeholder="Troisième parcelle (facultatif)" withCarte={false} onPick={(i) => setIdus((a) => [a[0], a[1], i])} />
             </div>
             <p className="my-3 border-l-2 border-line-2 pl-2.5 text-[13px] text-txt-dim">{d.explication}</p>
-            <Bouton niveau="primaire" ton="vert" className="w-full" disabled={idusValides.length < 2}
-              onClick={() => { window.open(docComparatifUrl(idusValides), '_blank', 'noopener'); enregistrer('comparatif', idusValides); onClose() }}>
-              {d.cta}
+            {erreur && <p className="my-3 border-l-2 border-amber pl-2.5 text-[13px] text-amber">{erreur}</p>}
+            <Bouton niveau="primaire" ton="vert" className="w-full" disabled={idusValides.length < 2 || !!enCours}
+              onClick={async () => { if (await ouvrir(docComparatifUrl(idusValides), 'comparatif')) { enregistrer('comparatif', idusValides); onClose() } }}>
+              {enCours ? 'Génération…' : d.cta}
             </Bouton>
           </div>
         )}
@@ -251,9 +263,10 @@ function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
               <Bouton niveau="secondaire" ton="vert" icone aria-label="Augmenter" disabled={rayon >= 20} onClick={() => setRayon((r) => Math.min(20, r + 1))}>+</Bouton>
             </div>
             <p className="my-3 border-l-2 border-line-2 pl-2.5 text-[13px] text-txt-dim">{d.explication}</p>
-            <Bouton niveau="primaire" ton="vert" className="w-full" disabled={!idu}
-              onClick={() => { if (idu) { window.open(docEtudeZoneUrl(idu, rayon), '_blank', 'noopener'); enregistrer('etude-zone', [idu], rayon); onClose() } }}>
-              {d.cta}
+            {erreur && <p className="my-3 border-l-2 border-amber pl-2.5 text-[13px] text-amber">{erreur}</p>}
+            <Bouton niveau="primaire" ton="vert" className="w-full" disabled={!idu || !!enCours}
+              onClick={async () => { if (idu && await ouvrir(docEtudeZoneUrl(idu, rayon), 'etude-zone')) { enregistrer('etude-zone', [idu], rayon); onClose() } }}>
+              {enCours ? 'Génération…' : d.cta}
             </Bouton>
           </div>
         )}
@@ -262,7 +275,10 @@ function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
       {/* Bilan (exception assumée) : l'écran d'hypothèses pré-rempli sur la parcelle, qui génère ensuite. */}
       {bilanOuvert && idu && (
         <div onClick={(e) => e.stopPropagation()}>
-          <FinancierQuestionnaire idu={idu} onClose={() => { setBilanOuvert(false); onClose() }} />
+          {/* DOCS-FIX-1 (P7) — on inscrit le Bilan dans « Mes documents » SEULEMENT après génération
+              réelle du PDF (onGenerated), jamais à l'ouverture de l'écran (plus d'entrée fantôme). */}
+          <FinancierQuestionnaire idu={idu} onGenerated={() => enregistrer('bilan', [idu])}
+            onClose={() => { setBilanOuvert(false); onClose() }} />
         </div>
       )}
     </div>
@@ -286,8 +302,22 @@ function sur(r: DocGenereRow): string {
 }
 
 function LigneDoc({ r, onChange }: { r: DocGenereRow; onChange: () => void }) {
-  const ouvrir = () => { const u = urlDocument(r); if (u) window.open(u, '_blank', 'noopener') }
-  const regenerer = () => { ouvrir(); rafraichirDocument(r.id).then(onChange).catch(() => {}) }
+  const setToast = useApp((s) => s.setToast)
+  // DOCS-FIX-1 (P3/P4) — ouverture propre (fetch + blob) ; l'erreur part au toast produit (« une
+  // action ne tombe jamais dans le vide ») plutôt que d'ouvrir un onglet blanc puis du JSON brut.
+  const { ouvrir: ouvrirDoc, enCours } = useOuvrirDocument(setToast)
+  const [confirmSuppr, setConfirmSuppr] = useState(false)
+  const busy = enCours === String(r.id)
+  const ouvrir = () => { const u = urlDocument(r); if (u) void ouvrirDoc(u, String(r.id)) }
+  const regenerer = async () => { const u = urlDocument(r); if (u && await ouvrirDoc(u, String(r.id))) rafraichirDocument(r.id).then(onChange).catch(() => {}) }
+  // DOCS-FIX-1 (P6) — « Supprimer » : la route DELETE et supprimerDocument existaient, mais AUCUN
+  // bouton ne les appelait. Deux temps (Supprimer → Confirmer) pour éviter la suppression accidentelle.
+  const supprimer = () => {
+    supprimerDocument(r.id)
+      .then(() => { setToast('Document retiré de « Mes documents ».'); onChange() })
+      .catch(() => setToast('Suppression échouée — réessayez.'))
+  }
+  const btn = 'h-[26px] px-[9px] text-[12px]'
   return (
     <tr className="group border-b border-line hover:bg-mint hover:text-mint-on">
       <td className="h-11 px-2.5 align-middle">{dateFr(r.created_at)}</td>
@@ -301,13 +331,21 @@ function LigneDoc({ r, onChange }: { r: DocGenereRow; onChange: () => void }) {
       </td>
       <td className="px-2.5">
         <div className="flex justify-end gap-1.5">
-          <Bouton niveau="secondaire" ton="vert" className="h-[26px] px-[9px] text-[12px]" onClick={ouvrir}>Ouvrir</Bouton>
+          <Bouton niveau="secondaire" ton="vert" className={btn} disabled={busy} onClick={ouvrir}>{busy ? 'Ouverture…' : 'Ouvrir'}</Bouton>
           {/* Excel : seulement sur les lignes Bilan ET si l'export existe (sinon absent, pas grisé). */}
           {r.doc_type === 'bilan' && r.excel && (
-            <Bouton niveau="secondaire" ton="vert" className="h-[26px] px-[9px] text-[12px]" onClick={ouvrir}>Excel</Bouton>
+            <Bouton niveau="secondaire" ton="vert" className={btn} disabled={busy} onClick={ouvrir}>Excel</Bouton>
           )}
           {r.etat === 'modifie' && (
-            <Bouton niveau="secondaire" ton="vert" className="h-[26px] px-[9px] text-[12px]" onClick={regenerer}>Régénérer</Bouton>
+            <Bouton niveau="secondaire" ton="vert" className={btn} disabled={busy} onClick={regenerer}>Régénérer</Bouton>
+          )}
+          {confirmSuppr ? (
+            <>
+              <Bouton niveau="primaire" ton="danger" className={btn} onClick={supprimer}>Confirmer</Bouton>
+              <Bouton niveau="lien" ton="vert" className={btn} onClick={() => setConfirmSuppr(false)}>Annuler</Bouton>
+            </>
+          ) : (
+            <Bouton niveau="secondaire" ton="danger" className={btn} onClick={() => setConfirmSuppr(true)}>Supprimer</Bouton>
           )}
         </div>
       </td>
@@ -380,7 +418,9 @@ export function DocumentsView() {
       <div className="mx-auto max-w-[1400px] px-6 pb-12 pt-6">
         <h1 className="mb-1 text-[22px] font-bold text-txt">Documents</h1>
         <p className="mb-5 max-w-[64ch] text-txt-dim">
-          Huit documents, tous produits depuis les données de la fiche parcelle. Choisissez le document, puis la parcelle, et générez.
+          {/* DOCS-FIX-1 (P9, arbitrage Vic) — « Huit » → « Sept » : 7 tuiles au catalogue. Courrier
+              n'est pas un document (c'est un outil, il part d'une parcelle) → pas de 8ᵉ tuile. */}
+          Sept documents, tous produits depuis les données de la fiche parcelle. Choisissez le document, puis la parcelle, et générez.
         </p>
         <div className="grid grid-cols-4 gap-3 max-[1100px]:grid-cols-2">
           {CATALOGUE.map((d) => (

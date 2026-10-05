@@ -1563,7 +1563,8 @@ def projet_export_pdf(pid: int, request: Request, db: Session = Depends(get_db))
     le document Financier, par parcelle, le remplace. On borne l'accès au compte (SEC-IDOR) puis on
     dit honnêtement que le document par parcelle a pris le relais."""
     _projet_or_404(db, pid, current_compte(request))       # SEC-IDOR : 404 hors compte
-    raise HTTPException(410, detail="Le PDF Projet est retiré ; le document « Financier », établi "
+    # DOCS-FIX-1 (P2, arbitrage Vic) — « Financier » → « Bilan » côté client (ce détail 410 est lisible).
+    raise HTTPException(410, detail="Le PDF Projet est retiré ; le document « Bilan », établi "
                         "par parcelle depuis vos hypothèses, le remplace.")
 
 

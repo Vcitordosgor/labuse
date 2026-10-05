@@ -46,7 +46,7 @@ export function CalculetteFonciere() {
         {idu && <div className="flex justify-end"><Reinitialiser onReset={resetAll} /></div>}
         <div>
           <h2 className="font-display text-base font-bold text-txt-hi">Calculette foncière</h2>
-          <p className="mt-0.5 text-[11.5px] text-txt-mut">La charge foncière supportable d'une parcelle, par bilan à rebours — mêmes hypothèses que le document financier.</p>
+          <p className="mt-0.5 text-[11.5px] text-txt-mut">La charge foncière supportable d'une parcelle, par bilan à rebours — mêmes hypothèses que le Bilan.</p>
         </div>
       </div>
       {/* RECETTE-1 (F2) — EntreeParcelle : adresse/IDU OU clic carte, l'une grise l'autre. */}

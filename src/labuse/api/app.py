@@ -7809,6 +7809,14 @@ def compare(idus: str = Query(..., description="2 à 3 IDU séparés par des vir
             row = _compare_row(_q_v2_fiche(db, idu), fiche_payload(db, pid))
         except HTTPException:
             continue
+        # DOCS-FIX-1 (P5, arbitrage Vic) — la « Zone PLU » du Comparatif = celle de la fiche (zone
+        # dominante par surface, zone_servie.zone_dominante). fiche_payload.zone est None pour une
+        # parcelle EXCLUE (forêt domaniale…) alors que l'écran/Dossier dérivent bien « N » → on
+        # retombe sur zone_dominante, jamais un « — » trompeur. (Une parcelle hors run servi est déjà
+        # écartée au-dessus par _q_v2_fiche → HTTPException ; ici la parcelle EST servie.)
+        if not row.get("zone"):
+            from ..faisabilite.zone_servie import zone_dominante
+            row["zone"] = zone_dominante(db, pid).zone
         # M82 — prix terrain nu PAR ZONE (point de calcul M79 unique, comme la fiche et l'outil Marché).
         commune, zone = row.get("commune"), (row.get("zone") or "")
         fam = "AU" if zone.upper().startswith("AU") else (zone[:1].upper() if zone else "")
