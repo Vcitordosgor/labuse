@@ -81,7 +81,7 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
     <RefDrawer id="marche" icon={IC.marche} name="Marché"
       context={contexte}
       /* RECETTE-2 (A9) — quand le secteur DVF manque (dvf_parcelle null), l'en-tête portait « — »
-         alors que le prix de sortie médian existe (faisa.marche.median) → on l'affiche. */
+         alors que le prix de l'ancien du secteur existe (faisa.marche.median) → on l'affiche. */
       value={dvfSecteur?.mediane_prix_m2 != null ? `${fmtInt(dvfSecteur.mediane_prix_m2)} €/m²`
         : (mb?.median != null ? `${fmtInt(Number(mb.median))} €/m²` : '—')}
       /* RECETTE-2 (A9) — le sous-titre « comparables DVF · … » vit dans l'en-tête (context) ; on ne le
@@ -126,14 +126,14 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
       {/* FICHE-RANGEMENT-2 Lot 1 — la DERNIÈRE VENTE (fait d'identité du bien) est relocalisée en
           §1 Identité (DerniereVenteBlock composé là) ; Marché ne porte plus que du prix de secteur. */}
 
-      {/* RETOURS-11F4 F7/F0 — PRIX DE SORTIE bâti secteur : le fait vit ICI (la Constructibilité y renvoie).
-          Même moteur que le bilan (`marche.median`). Sous le seuil : dit tel quel, jamais un chiffre inventé.
-          RETOURS-20 Z1·03 — plus de boîte : FactRow (valeur mono à droite), méthode en FactNote. */}
+      {/* PRIX-SORTIE-1 (Vic 05/10/2026) — PRIX DE L'ANCIEN (secteur) : référence de revente du bâti
+          EXISTANT (sector_price/`marche.median`). Ce n'est PAS le prix de sortie du bilan (celui-ci est
+          le prix NEUF servi, affiché en Simulation). Sous le seuil : dit tel quel, jamais un chiffre inventé. */}
       {/* FICHE-FIX-4 (Lot J) — prix de sortie + valeur au prix du secteur en Lignes, méthode en « i ». */}
       {(mb?.median != null || f.dvf_parcelle?.valeur_terrain_secteur_eur != null) && (
         <Lignes>
           {mb?.median != null && (
-            <Ligne label={<>Prix de sortie — bâti secteur<InfoI aria="Méthode du prix de sortie" tip={`${mb.type_prix}, ${mb.n} ventes ≤ ${Math.round(mb.radius_m)} m (rayon adaptatif) · fiabilité ${mb.fiabilite}${mb.tendance ? ` · tendance ${mb.tendance}` : ''}${horizon ? ` · DVF — ${horizon}` : ''}`} /></>}
+            <Ligne label={<>Prix de l'ancien (secteur)<InfoI aria="Méthode du prix de l'ancien" tip={`Référence de revente du bâti EXISTANT du secteur (DVF ventes actées) — ce n'est pas le prix de sortie d'un programme neuf. ${mb.type_prix}, ${mb.n} ventes ≤ ${Math.round(mb.radius_m)} m (rayon adaptatif) · fiabilité ${mb.fiabilite}${mb.tendance ? ` · tendance ${mb.tendance}` : ''}${horizon ? ` · DVF — ${horizon}` : ''}`} /></>}
               valeur={<>{fmtInt(Number(mb.median))} <small>€/m²</small></>} />
           )}
           {f.dvf_parcelle?.valeur_terrain_secteur_eur != null && (

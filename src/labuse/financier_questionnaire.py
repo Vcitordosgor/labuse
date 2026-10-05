@@ -276,9 +276,27 @@ def ensure(db) -> None:
             db.execute(text(stmt))
 
 
-def prefill(fiche: dict | None) -> dict[str, dict]:
+def prix_sortie_neuf_servi(db, idu: str) -> float | None:
+    """PRIX-SORTIE-1 (Vic 05/10/2026) — le prix de sortie NEUF servi (SOURCE UNIQUE
+    `resolve_prix_sortie_servi`) pour le pré-remplissage du questionnaire Financier. None si la
+    parcelle est inconnue ou le prix non calculable (commune social-dominante) — on ne pré-remplit
+    alors rien plutôt qu'un prix de l'ancien. Le MÊME chiffre que la fiche / le bilan / la calculette."""
+    from sqlalchemy import text
+    from .faisabilite.bilan import resolve_prix_sortie_servi
+    pid = db.execute(text("SELECT id FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
+    if pid is None:
+        return None
+    ps = resolve_prix_sortie_servi(db, int(pid))
+    return ps["prix"] if (ps and not ps["non_calculable"]) else None
+
+
+def prefill(fiche: dict | None, prix_sortie_neuf: float | None = None) -> dict[str, dict]:
     """{id → {valeur, source}} des champs PRÉ-REMPLIS, chacun AVEC sa source (règle 1). Un champ
-    sans source défendable n'est pas émis (prix demandé, démolition, dépollution, régime TVA…)."""
+    sans source défendable n'est pas émis (prix demandé, démolition, dépollution, régime TVA…).
+
+    `prix_sortie_neuf` (PRIX-SORTIE-1, Vic 05/10/2026) = prix de sortie NEUF servi
+    (resolve_prix_sortie_servi), le MÊME que la fiche/le bilan/la calculette. Pré-remplit
+    `prix_sortie_saisi_eur_m2` ; None (non calculable / non résolu) → champ non pré-rempli."""
     f = fiche or {}
     out: dict[str, dict] = {fid: {"valeur": v, "source": s} for fid, (v, s) in _PREFILL_CONST.items()}
     pot = f.get("potentiel_transformation") or {}
@@ -289,15 +307,14 @@ def prefill(fiche: dict | None) -> dict[str, dict]:
         cap = pot.get("capacite_estimee")
         if cap and not isinstance(cap, bool):
             out["logements_vises_saisi"] = {"valeur": cap, "source": "fourchette de logements du potentiel LABUSE"}
-    # EXPORTS-REBRANCHEMENT-2 lot 2 — le PRIX DE SORTIE est pré-rempli depuis le prix ancien du
-    # secteur (DVF), que le Dossier §8 nomme déjà « référence de revente … utilisée comme prix de
-    # sortie du programme reconstruit ». Il quitte les champs bloquants (le questionnaire tombe à
-    # UNE question vraiment irréductible, le régime de TVA) ; modifiable, il passe alors en projet.
-    pa = (f.get("prix_ancien") or {}).get("median")
-    if pa:
+    # PRIX-SORTIE-1 (Vic 05/10/2026) — le PRIX DE SORTIE est pré-rempli depuis le prix de sortie
+    # NEUF servi (resolve_prix_sortie_servi), le MÊME chiffre que la fiche / le bilan / la calculette
+    # (plus jamais le prix de l'ANCIEN du secteur, qui est une référence de revente de l'existant, pas
+    # un prix de sortie de programme neuf). Modifiable → passe alors en projet. Non résolu → non pré-rempli.
+    if prix_sortie_neuf:
         out["prix_sortie_saisi_eur_m2"] = {
-            "valeur": round(float(pa)),
-            "source": "prix ancien médian du secteur (DVF) — référence de revente du neuf reconstruit"}
+            "valeur": round(float(prix_sortie_neuf)),
+            "source": "prix de sortie NEUF servi (médiane du neuf de marché, DVF) — même chiffre que la fiche"}
     # RECETTE-8 W2 — la taxe d'aménagement n'est plus pré-remplie depuis la fiche (elle n'y porte
     # plus aucun montant : pas de projet, pas de taxe). Elle est pré-calculée AU FINANCIER, sur la
     # SDP du projet réellement retenu (`exports.builder._financier_contexte`), où le programme est

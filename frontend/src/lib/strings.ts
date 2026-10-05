@@ -139,7 +139,7 @@ export const CLIENT = {
     lignes: {
       prix_ancien_median: 'Prix ancien médian (€/m²)',
       prix_terrain_nu_par_zone: 'Prix du terrain nu, par zone (U / AU)',
-      prix_sortie_neuf: 'Prix de sortie neuf (€/m²)',
+      prix_sortie_neuf: 'Prix du neuf VEFA (€/m²)',
       tendance_12m: 'Tendance 12 mois',
       liquidite: 'Liquidité (mutations/trimestre)',
       offre_engagee: 'Offre engagée (logements autorisés)',

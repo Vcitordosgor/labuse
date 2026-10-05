@@ -590,7 +590,7 @@ export function M18() {
       )}
       {nr && (nr.prix_m2_neuf != null ? (
         <p className="text-[10.5px] text-txt-dim">Neuf : <b className="text-txt">~{fmt(nr.prix_m2_neuf)} €/m²</b> (référence actuelle, sur {fmt(nr.n)} ventes)
-          <Tip garder tip="La VEFA (neuf) est trop rare dans DVF (0-4 ventes/trimestre) pour une série trimestrielle honnête : on sert le prix de sortie neuf ACTUEL (référence île), pas une fausse courbe."><span className="ml-1 cursor-help rounded-full border border-line-2 px-1 text-[8px] text-txt-dim">i</span></Tip>
+          <Tip garder tip="La VEFA (neuf) est trop rare dans DVF (0-4 ventes/trimestre) pour une série trimestrielle honnête : on sert la référence VEFA ACTUELLE de la commune (ou le repli île), pas une fausse courbe. C'est un prix VEFA observé à l'acte, distinct du prix de sortie servi au bilan d'une parcelle."><span className="ml-1 cursor-help rounded-full border border-line-2 px-1 text-[8px] text-txt-dim">i</span></Tip>
         </p>
       ) : (
         // OUTILS-FIX-5 L5 — sous le seuil de fiabilité (même que la fiche/le tableau Communes), aucun

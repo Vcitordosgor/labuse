@@ -266,7 +266,7 @@ function CalculetteBody({ idu, defauts, hideSource = false, prixDemandeExterne, 
           <div data-calc-indispo>
             <p className="text-st-creuser">{d.message ?? 'Charge foncière non calculable.'}</p>
             {d.marche?.median != null && (
-              <p className="mt-1 text-txt-mut">Au mieux — prix de sortie bâti secteur : <b className="tnum text-mint">{fmtInt(Number(d.marche.median))} €/m²</b> ({d.marche.fiabilite}).</p>
+              <p className="mt-1 text-txt-mut">Au mieux — prix de l'ancien (secteur) : <b className="tnum text-mint">{fmtInt(Number(d.marche.median))} €/m²</b> ({d.marche.fiabilite}) — référence de l'existant, pas un prix de sortie neuf.</p>
             )}
           </div>
         )}
@@ -286,15 +286,12 @@ function CalculetteBody({ idu, defauts, hideSource = false, prixDemandeExterne, 
                 terrain <b className="tnum text-txt">{fmtInt(Number(d.terrain_m2))} m²</b>
               </p>
             )}
-            {/* RETOUCHES-1 (lot B.8) — la SOURCE et la FENÊTRE du prix de sortie DVF, sous la ligne. */}
-            {!hideSource && d.marche?.median != null && (
+            {/* PRIX-SORTIE-1 (Vic 05/10/2026) — la SOURCE décrit le prix NEUF réellement servi
+                (`prix_sortie.label` : niveau + n), PAS l'échantillon de l'ANCIEN (`marche.*`) : avant,
+                la ligne montrait le neuf mais décrivait le rayon/les ventes de l'ancien du secteur. */}
+            {!hideSource && d.prix_sortie?.prix != null && !d.prix_sortie?.non_calculable && (
               <p data-prix-sortie-source className="text-[10px] text-txt-dim">
-                Prix de sortie <span className="text-st-creuser">Estimé</span> — DVF (ventes actées{d.marche.type_prix ? `, ${d.marche.type_prix}` : ''})
-                {d.marche.n != null ? ` · ${fmtInt(Number(d.marche.n))} vente${Number(d.marche.n) > 1 ? 's' : ''}` : ''}
-                {d.marche.rayon_m ? ` · rayon ${fmtInt(Number(d.marche.rayon_m))} m` : ''}
-                {Array.isArray(d.marche.periode) && d.marche.periode.length === 2
-                  ? ` · ${d.marche.periode[0]}–${d.marche.periode[1]}`
-                  : (d.marche.periode ? ` · ${String(d.marche.periode)}` : '')}.
+                Prix de sortie neuf — DVF (neuf de marché){d.prix_sortie.label ? ` · ${d.prix_sortie.label}` : ''}.
               </p>
             )}
             {/* DIRE LE COÛT-PLANCHER : le coût de construction porte sur la SDP de PLANCHER (vendable
@@ -326,7 +323,7 @@ function CalculetteBody({ idu, defauts, hideSource = false, prixDemandeExterne, 
             {/* M60 P1b — garde-fou IMMÉDIAT : coût de construction > prix de sortie DVF du secteur. */}
             {coutDepasse && (
               <p data-calc-gardefou className="mt-2 rounded-lg bg-st-ecartee/10 px-3 py-2 text-[11px] font-medium leading-snug text-st-ecartee">
-                ⚠ Coût de construction ({fmtInt(coutSaisi)} €/m²) au-dessus du prix de sortie du secteur ({sortie != null ? fmtInt(sortie) : '—'} €/m²) — à ces hypothèses, l'opération ne peut pas dégager de valeur pour le terrain.
+                ⚠ Coût de construction ({fmtInt(coutSaisi)} €/m²) au-dessus du prix de sortie neuf ({sortie != null ? fmtInt(sortie) : '—'} €/m²) — à ces hypothèses, l'opération ne peut pas dégager de valeur pour le terrain.
               </p>
             )}
             {/* M22-A · BASCULE DE LECTURE — même équation, deux sens (discret, pas de refonte).
@@ -350,7 +347,7 @@ function CalculetteBody({ idu, defauts, hideSource = false, prixDemandeExterne, 
                 <>
                   <p data-calc-verdict-neg className="text-[11.5px] font-medium leading-snug text-st-ecartee">
                     À ces hypothèses, l'opération ne dégage aucune valeur pour le terrain. Le coût de construction
-                    ({fmtInt(coutSaisi)} €/m²) dépasse le prix de sortie du secteur ({sortie != null ? fmtInt(sortie) : '—'} €/m²).
+                    ({fmtInt(coutSaisi)} €/m²) dépasse le prix de sortie neuf ({sortie != null ? fmtInt(sortie) : '—'} €/m²).
                   </p>
                   <p className="mt-1 text-[10px] text-txt-dim">Détail — {mode === 'achat_max' ? "prix d'achat max" : 'charge foncière'} calculé : <b data-calc-cf className="tnum text-txt-mut">{fmtEurCompact(central)}</b> · fourchette {fmtEurCompact(bornBas)} – {fmtEurCompact(bornHaut)}.</p>
                 </>
@@ -731,14 +728,14 @@ export function BilanTab({ idu }: { idu: string }) {
           unique). La Constructibilité ne montre QUE le prix RETENU pour le bilan + un renvoi ; plus de
           fiche de marché rivale ici (le détail — n ventes, rayon, tendance, fraîcheur — est dans Marché). */}
       {/* RETOURS-20 Z3 — les Sec (card-elev) deviennent kicker + FactRow/FactNote (plus de boîte). */}
-      {/* FICHE-RANGEMENT-1 Lot 1 (doublon #3) — le PRIX DE SORTIE bâti secteur est un FAIT de marché :
-          il vit UNE fois, dans « Marché et secteur » (échantillon, rayon, tendance, fraîcheur). Le
-          bilan ne répète plus le chiffre — il renvoie au fait unique (la charge foncière ci-dessous
-          s'appuie dessus). */}
-      {b.marche?.median != null && (
+      {/* PRIX-SORTIE-1 (Vic 05/10/2026) — le prix de sortie retenu pour le bilan est le prix du NEUF
+          servi (source unique `prix_sortie`), PAS le prix du secteur ancien affiché dans « Marché ».
+          Le bloc dit le chiffre ET sa règle, sans contradiction avec Marché (qui porte l'ancien). */}
+      {b.prix_sortie?.prix != null && !b.prix_sortie?.non_calculable && (
         <div>
           <GroupLabel>Prix de sortie retenu (bilan)</GroupLabel>
-          <FactNote>Le prix de sortie bâti retenu pour la charge foncière est le prix du secteur affiché dans « Marché » (échantillon, rayon, tendance, fraîcheur y sont détaillés).</FactNote>
+          <FactRow label="Prix de sortie neuf" value={<>{fmtInt(Number(b.prix_sortie.prix))} <small>€/m²</small></>} />
+          <FactNote>Prix du NEUF servi{b.prix_sortie.label ? ` — ${b.prix_sortie.label}` : ' (médiane du neuf de marché, DVF)'}. C'est la base de la charge foncière ci-dessous. À distinguer du « Prix de l'ancien (secteur) » de l'onglet Marché (référence de revente du bâti existant) — ce n'est pas le prix de sortie d'un programme neuf.</FactNote>
         </div>
       )}
       {/* FICHE-RANGEMENT-3 Lot 1 — « Fiscal & leviers » (QPV/TVA/taxe) et « RTAA DOM » RETIRÉS de la
