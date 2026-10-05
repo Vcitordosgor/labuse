@@ -860,7 +860,7 @@ export function ModeBBody({ idu, initial }: { idu: string; initial: import('../.
             </p>
           </Repli>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11 }}>
-            <span style={{ color: 'var(--txt-dim)' }}>Prix de sortie (revente)</span>
+            <span style={{ color: 'var(--txt-dim)' }}>Prix de revente en l'état</span>
             <span style={{ color: 'var(--txt-hi)' }}>{fmtInt(c.prix_sortie.prix_m2)} €/m² <b style={{ color: '#5CE6A1', fontSize: 10 }}>Sourcé DVF</b></span>
           </div>
           <p data-mode-b-perimetre style={{ margin: 0, fontSize: 10, color: '#8FA69A' }}>

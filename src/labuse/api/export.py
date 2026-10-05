@@ -99,7 +99,7 @@ def fiche_markdown(fiche: dict) -> str:
             f"- Surface réhabilitable : ~{c['surface']['shab_rehabilitable_m2']} m² habitables "
             f"(emprise {c['surface']['emprise_bati_m2']} m² [Sourcé] × {c['surface']['niveaux']} niveau(x) "
             f"[{'Sourcé' if c['surface']['niveaux_reels'] else 'Estimé'}] ÷ 1,15)",
-            f"- Prix de sortie : {c['prix_sortie']['prix_m2']} €/m² — {c['prix_sortie']['libelle']} "
+            f"- Prix de revente en l'état : {c['prix_sortie']['prix_m2']} €/m² — {c['prix_sortie']['libelle']} "
             f"({c['prix_sortie'].get('perimetre', 'médiane secteur→commune, sans rayon adaptatif')}) [Sourcé DVF]",
             f"- {c['travaux']['libelle']}",
             f"- Frais & marge : {c['frais_marge']['libelle']}",
@@ -236,7 +236,7 @@ def fiche_html(fiche: dict) -> str:
             f"<li>Surface réhabilitable : ~{cmb['surface']['shab_rehabilitable_m2']} m² habitables "
             f"(emprise {cmb['surface']['emprise_bati_m2']} m² [Sourcé] × {cmb['surface']['niveaux']} niveau(x) "
             f"[{'Sourcé' if cmb['surface']['niveaux_reels'] else 'Estimé'}] ÷ 1,15 plancher→habitable)</li>"   # CHASSE-FIX-1 (C17) : la formule affichée = le calcul (bilan.py coef_plancher_habitable)
-            f"<li>Prix de sortie : {cmb['prix_sortie']['prix_m2']} €/m² — {html.escape(cmb['prix_sortie']['libelle'])} "
+            f"<li>Prix de revente en l'état : {cmb['prix_sortie']['prix_m2']} €/m² — {html.escape(cmb['prix_sortie']['libelle'])} "
             f"({html.escape(cmb['prix_sortie'].get('perimetre', 'médiane secteur→commune, sans rayon adaptatif'))}) [Sourcé DVF]</li>"
             f"<li>{html.escape(cmb['travaux']['libelle'])}</li>"
             f"<li>Frais &amp; marge : {html.escape(cmb['frais_marge']['libelle'])}</li></ul>"
