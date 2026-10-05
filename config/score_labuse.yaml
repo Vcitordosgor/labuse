@@ -1,9 +1,16 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # Barème du Score LABUSE V1 (SL-1) — SCORING-6 lot B.
 #
-# VALEURS PROVISOIRES calées sur les 30 parcelles témoins (SCORING-5-RETOUR §3,
-# reports/scoring-5/TEMOINS.csv). Le résiduel servi est PRÉ-calibrage : les bandes et
-# les paliers sont à RE-CALER après `residuel-serve` (décision Vic §17 du mandat SCORING-5).
+# CALIBRÉ (gravé) sur le RÉSIDUEL RUN 13 SERVI (q_v16) — SCORING-9, 2026-10-05.
+# Les valeurs ci-dessous (paliers de capacité, coefficients de faisabilité, seuils de bande)
+# étaient « provisoires / pré-calibrage » (calées sur le résiduel pré-serve en SCORING-5-RETOUR §3).
+# La décision Vic §17 (SCORING-5) prévoyait de les RE-CALER après `residuel-serve`. SCORING-9 l'a
+# fait : les 30 parcelles témoins ont été rejouées sur le run 13 servi ; 3 témoins périmés (devenus
+# incohérents après le recalcul LiDAR + l'enveloppe PPR) ont été remplacés par des parcelles de même
+# catégorie (AX0047→AW0304, AY0786→AP0993 « bonnes » ; CP0427→CR0561 « mauvaise » ;
+# reports/scoring-9/TEMOINS.csv) ; les INVARIANTS tiennent (bonnes ≥ 80 sauf cas d'école AB0798,
+# mauvaises ≤ 25, pas d'inversion, aucune NC à 0). Les VALEURS sont donc GRAVÉES À L'IDENTIQUE :
+# aucune n'a eu besoin d'être bougée — elles classent correctement sur le run servi.
 # Le hash sha256 de ce fichier entre dans `score_version` (labuse_v1+<hash8>) — tout
 # changement de barème sans lecture de la nouvelle version fait échouer le test de versionnement.
 #
