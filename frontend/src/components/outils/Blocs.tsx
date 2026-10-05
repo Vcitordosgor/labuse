@@ -170,9 +170,10 @@ export function Blocs() {
       {/* bandeau client — ce que l'outil EST (et n'est pas) */}
       <div className="rounded-lg border px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut"
         style={{ borderColor: `${TOKENS.mint}4d`, background: `${TOKENS.mint}0f` }}>
-        Les parcelles <b className="text-txt">contiguës d'un même propriétaire</b> regroupées en une
-        assiette — ce qu'un promoteur ne voit pas parcelle par parcelle. <b className="text-txt">Personnes
-        morales seulement</b> (SIREN) : les particuliers n'ont pas d'identité stable d'une parcelle à l'autre.
+        {/* RECETTE-2 (D15) — encart réduit à 2 lignes ; le détail (règle de contiguïté, particuliers hors
+            périmètre, nature des chiffres) vit dans le « i ». */}
+        Les parcelles <b className="text-txt">contiguës d'un même propriétaire</b> (personne morale) regroupées
+        en une assiette — ce qu'un promoteur ne voit pas parcelle par parcelle.
         <Tip garder tip="Le regroupement : un bloc = des parcelles cadastrales en contact (≤ 0,5 m) appartenant au MÊME propriétaire personne morale (SIREN confirmé, fichiers des personnes morales DGFiP), à partir de 2 parcelles. Contiguïté purement géométrique (PostGIS), jamais un rapprochement par nom. Ce qu'il ne dit pas : les particuliers sont hors périmètre (identité non stable d'une parcelle à l'autre) ; un bloc n'affirme ni la constructibilité, ni un accord de vente. Les chiffres : surface, communes et zonages Sourcés (cadastre, PLU) ; SDP résiduelle Estimée — somme des résiduels de la fiche (enveloppe PLU moins bâti existant), une parcelle hors PLU n'a pas de résiduel connu (le compteur « résiduel sur n/N » le dit). Tri par SDP résiduelle agrégée décroissante.">
           <span className="ml-1 cursor-help rounded-full border border-line-2 px-1 text-[8px] text-txt-dim">i</span>
         </Tip>

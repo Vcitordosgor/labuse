@@ -117,7 +117,37 @@ Légende : ✅ fait+capturé · 🚧 en cours · ⬜ non commencé · ⚠ à vé
 **Tableau D14(e) — jointure piscine→parcelle** : sur 30 → 1 faux ; sur 50 136 → **23 faux (0,05 %)** (identique ST_Contains/ST_Intersects) ; 380 (0,75 %) idu orphelin. **D14(g) verdict** : après (a)+(e), **l'outil TIENT** — la jointure par idu est spatialement saine (99,95 %), la goutte au centroïde est propre. **Pas de refonte nécessaire** ; seule option résiduelle : exclure/signaler les 380 idu orphelins et les 23 hors-parcelle.
 **D14(f) — statut « à confirmer »** : `piscines.statut='a_confirmer'` ⟺ `subtype='probable'` (CoSIA seule, sans corroboration ortho/FLAIR ≤ 2 m) ET `surface_m2 ≥ 8` (`PROBABLE_FLOOR_M2`, piscines_fusion.py:116). Sourcé par audit mesuré (précision 30–60 %). FLAIR toujours « servie ». Écrit dans le `i` du compteur.
 
-**Arbitrages lot D (tranchés) :** D3 « corriger à la source » = re-ingestion DVF → **interdit** (Étape 0) → non fait, documenté ; les « — » sont corrects. D2b/D4a/D7/D8-fusion/D10-calc/D11-géo/D15-encart : correctifs **identifiés** mais non terminés/vérifiés ce tour (volume du lot) — à finir. D11 3D : **non constatable en headless** → à vérifier par Vic.
+**Arbitrages lot D (tranchés) :** D3 « corriger à la source » = re-ingestion DVF → **interdit** (Étape 0) → non fait, documenté ; les « — » sont corrects.
+
+#### Mise à jour **commit lot D-reste** (`fix/recette-2`)
+| Pt | État mis à jour | Preuve |
+|---|---|---|
+| D2b | ✅ code (constat popup non fiabilisé headless) | popup permis = **fiche directe** (`modPermisFiche` rendue dans la bulle) ; « détails → » + drawer colonne **supprimés** (`setPermitToOpen` retiré, tsc) ; + « voir la parcelle → ». Clic du point minuscule non déclenchable en headless (5 candidats) → à constater par Vic |
+| D3-légende | ✅ | Légende Communes + `i` des colonnes : « — : sous le seuil (neuf **8** ventes VEFA · terrain nu **5** ventes) » |
+| D4a | ✅ | source GeoJSON dédiée `module-hl-geo` (polygones réels par idu, zoom-indépendant) → **3/3 parcelles surlignées** (ET2262/64/66). `D4a_assemblage_surlignage.png` |
+| D7 | ✅ | servitudes regroupées par catégorie : 1 carte « Classement sonore des voies » avec effets « catégorie 2 · catégorie 4 » (ES0981). `D7_pieges_sonore.png` |
+| D8 | ✅ | chemin UNIQUE : 0 porte, 0 « ← Changer la zone », 0 badge « ZONE SEULE » ; en-tête « Zone de X km autour de … » ; cercle (back). `D8_etude_zone_unique.png` |
+| D10 | ✅ | Réinitialiser Faisabilité ajouté (`D10_faisabilite_reinit.png`) ; accordéon « étape par étape » = `<Chevron>` fermé ; **tableau /recalcul ci-dessous (0 écart)** |
+| D11 | ✅ géométrie (3D à voir par Vic) | **tableau gabarit ci-dessous** (emprise/hauteur = règle, zone d'implantation réduite) ; le **rendu 3D** reste non constatable en headless |
+| D15 | ✅ | encart réduit à 2 lignes (détail dans le `i`) ; SIREN bleu ; Filtres accordéon Chevron ; 1 Bouton « Scan patrimoine » |
+
+**Tableau D10 — faisabilité servie vs `/recalcul` (0 écart) :**
+| IDU | SDP servi / recalcul | Logements servi / recalcul | Écart |
+|---|---|---|---|
+| BZ1065 (Uh) | 219 m² / 219 m² | 1–2 / 1–2 | **0** |
+| ES0266 (Ug) | 502 m² / 502 m² | 5–7 / 5–7 | **0** |
+| AM0097 (zone N) | — / — (non constructible) | — / — | **0** |
+Cohérence : BZ1065 R+0 → SDP = emprise 219 ; ES0266 R+1 → SDP = emprise 251 × 2 = 502 ; logements = SHAB vendable / surface par logement.
+
+**Tableau D11 — gabarit (règles citées, status `ok`/`integrated`) :**
+| IDU | Surface | Zone d'implantation | Plafond emprise | Hauteur règle |
+|---|---|---|---|---|
+| BZ1065 (Uh) | 1 625 m² | 926,9 m² (réduite : reculs/PPR) | 487,5 m² (= 30 % surface) | 7,0 m |
+| ES0266 (Ug) | 1 114,9 m² | 740,8 m² | 557,5 m² (= 50 %) | 12,0 m |
+| ES0981 (Ug) | 873,9 m² | 540,6 m² | 436,9 m² (= 50 %) | 12,0 m |
+Zone d'implantation = parcelle − reculs − PPR ; emprise % et hauteur = la règle de zone citée (0 écart). Le **rendu 3D** (flyTo, extrusion) reste à constater par Vic (non testable en headless).
+
+**Tableau D3-source — écart VEFA brut/servi (sans ré-ingestion, lecture seule) :** DVF contient **2 687 VEFA** (toutes dates) · 2 351 dans la fenêtre 5 ans · **1 245 servies** → **écart total 1 442** (336 hors fenêtre 5 ans + 1 106 filtre surface `bati>0`/vraisemblance). **3 communes les plus touchées** (écart réel servi) : **Saint-Denis** 606→267 (−339), **Saint-Paul** 570→297 (−273), **Le Tampon** 339→102 (−237). Cause = surface absente à l'acte VEFA (non rattrapable) + fenêtre glissante — correction = re-ingestion (hors périmètre « aucun run »). Les « — » restent corrects.
 
 ### E — Docs, Signaler, Notifications  — **commit lot E** (partiel)
 | Pt | Sujet | État | Preuve / note |

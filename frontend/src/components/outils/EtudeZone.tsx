@@ -66,7 +66,10 @@ export function EtudeZone() {
   // RECETTE-1 H8.2 — les deux portes deviennent le choix « Zone seule » (particuliere) /
   // « Zone + chalandise » (chalandise) : même moteur, la chalandise AJOUTE le sélecteur d'activité +
   // le bloc concurrents. Plus d'entrée point/polygone ni temps de trajet : UNE parcelle + un rayon km.
-  const [porteZone, setPorteZone] = useState<'chalandise' | 'particuliere' | null>(null)
+  // RECETTE-2 (D8) — CHEMIN UNIQUE : plus de choix « Zone seule » / « Zone + chalandise » à l'entrée.
+  // On part toujours du superset (le sélecteur d'activité et le bloc concurrents, OPTIONNELS, restent
+  // disponibles ; sans activité choisie, c'est la lecture « zone seule »).
+  const [porteZone] = useState<'chalandise' | 'particuliere'>('chalandise')
   const [cible, setCible] = useState<{ idu: string; label: string } | null>(null)
   const [rayonKm, setRayonKm] = useState(1)
   // DESTINATIONS-1 (X4.1) — sous-destination R151-28 choisie (facultative) : verdict par zone PLU.
@@ -80,8 +83,7 @@ export function EtudeZone() {
     if (!etudeZonePrefill) return
     if (etudeZonePrefill.idu) { setCible({ idu: etudeZonePrefill.idu, label: iduCourt(etudeZonePrefill.idu) }) }
     setSousDest(etudeZonePrefill.sous_destination)
-    // O13.1 — la porte Copilote choisit la porte : sous-destination visée → chalandise, sinon contexte.
-    setPorteZone(etudeZonePrefill.sous_destination ? 'chalandise' : 'particuliere')
+    // RECETTE-2 (D8) — chemin unique : plus de choix de porte (le prefill alimente juste l'activité).
     setEtudeZonePrefill(null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -177,7 +179,6 @@ export function EtudeZone() {
     setCible(null); setNaf(null); setNafQuery(''); setSousDest(null); setZone(null); setTool(null)
     setModuleMap({ idus: [], extra: null }); mut.reset()
   }
-  const nouvelleEtude = () => { resetEtude(); setPorteZone(null) }
 
   // RECETTE-2 (D8) — c'est le RAYON saisi (cercle) qui est mesuré et dessiné, jamais l'isochrone « 10 min ».
   // L'en-tête le dit : « Zone de X km autour de <adresse> » (plus de « LA ZONE À 10 MIN EN VOITURE »).
@@ -189,37 +190,11 @@ export function EtudeZone() {
           : `Zone autour de ${res.adresse ?? 'la parcelle'}`)
     : ''
 
-  if (porteZone === null) {
-    // RECETTE-1 H8.2 — ACCUEIL : le choix de départ « Zone seule » / « Zone + chalandise » (même
-    // moteur ; la chalandise AJOUTE le sélecteur d'activité + le bloc concurrents). Ex-portes
-    // « Zone particulière » / « Zone de chalandise », renommées pour nommer ce qui est ajouté.
-    return (
-      <div data-etude-zone className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1">
-        <p className="text-[11.5px] leading-snug text-txt-mut">Autour d’une parcelle, que voulez-vous étudier ?</p>
-        <button data-etude-porte="particuliere" onClick={() => setPorteZone('particuliere')} className="door door-hot hover-fill w-full text-left">
-          <div className="text-[12.5px] font-medium text-txt">Zone seule</div>
-          <div className="mt-0.5 text-[10.5px] leading-snug text-txt-dim">Le contexte foncier autour d’une parcelle : population, marché, foncier, contraintes, équipements — sans hypothèse d’activité.</div>
-        </button>
-        <button data-etude-porte="chalandise" onClick={() => setPorteZone('chalandise')} className="door door-hot hover-fill w-full text-left">
-          <div className="text-[12.5px] font-medium text-txt">Zone + chalandise</div>
-          <div className="mt-0.5 text-[10.5px] leading-snug text-txt-dim">La même lecture + une activité : le sélecteur d’activité, la concurrence et ce que le PLU autorise pour cette destination.</div>
-        </button>
-      </div>
-    )
-  }
-
   return (
     <div data-etude-zone className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pr-1">
-      {/* O13.1 / ETUDE-ZONE-1 A1 — « ← Changer la zone » à GAUCHE (retour au choix de départ) ;
-          RECETTE-1 H8.4 — le Réinitialiser passe EN HAUT À DROITE (remplace l'ex-« Nouvelle étude »
-          du bas) ; le badge du mode choisi reste sous la barre. */}
-      <div className="flex items-center justify-between gap-2">
-        <button data-etude-changer-porte onClick={nouvelleEtude} className="text-[10.5px] text-mint hover:underline">← Changer la zone</button>
-        {(cible || res) && <Reinitialiser onReset={resetEtude} />}
-      </div>
-      <div className="flex justify-end">
-        <span data-etude-porte-active={porteZone} className="text-[10px] uppercase tracking-[.08em] text-mint">{porteZone === 'chalandise' ? 'Zone + chalandise' : 'Zone seule'}</span>
-      </div>
+      {/* RECETTE-2 (D8) — chemin UNIQUE : plus de « ← Changer la zone » ni de badge « ZONE SEULE » /
+          « Zone + chalandise ». Réinitialiser seul sur sa ligne (T3), présent ssi une parcelle est posée. */}
+      {(cible || res) && <div className="flex justify-end"><Reinitialiser onReset={resetEtude} /></div>}
       {/* ÉTAPE 1 — DÉFINIR LA ZONE : RECETTE-1 H8.2/H8.3 — UNE entrée (parcelle) + un rayon km réglable
           (+ / −). Plus de segmenté point/polygone, plus de « temps de trajet ». */}
       <StepHead n={1} titre="Définir la zone" sous="une parcelle + un rayon en km" />

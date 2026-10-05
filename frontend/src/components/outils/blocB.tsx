@@ -79,22 +79,34 @@ export function O5Servitudes() {
       {q.isError && <ErrorState className="py-6" message="Servitudes indisponibles." retry={() => q.refetch()} />}
       {d && (
         <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
-          <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-1 rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px]">
-            <span className="num-key text-base text-mint">{d.n}</span>
-            <span className="text-txt-mut">servitude(s)/contrainte(s) sur</span>
-            <span className="font-mono text-txt-hi">{d.idu.slice(8, 10)} {d.idu.slice(10)}</span>
-            {/* RETOURS-15 B8 — « Ouvrir la fiche → » RETIRÉ : la fiche s'ouvre déjà au clic carte (select). */}
-          </div>
-          {d.servitudes.map((s, i) => (
-            <div key={i} className="rounded-lg bg-surface-3 px-3 py-2 shadow-elev-1">
-              <div className="flex flex-wrap items-baseline gap-1.5">
-                <b className="text-[11.5px] text-txt-hi">{s.categorie}</b>
-                <span className="rounded-full border border-mint/40 bg-mint/10 px-1.5 text-[8.5px] font-medium text-mint">Sourcé</span>
-                <span className="text-[9.5px] text-txt-dim">{s.source}{s.date ? ` · ${s.date}` : ''}</span>
+          {/* RECETTE-2 (D7) — regroupement par CATÉGORIE : deux voies classées (ex. « Classement sonore
+              des voies » catégories 2 et 4) ne font plus DEUX cartes identiques mais UNE, qui liste ses
+              effets (« catégorie 2 · catégorie 4 »). Dédoublonne aussi les effets strictement identiques. */}
+          {(() => {
+            const groupes = Object.values((d.servitudes as { categorie: string; effet: string; source?: string; date?: string }[])
+              .reduce((acc, s) => {
+                const g = acc[s.categorie] ?? (acc[s.categorie] = { categorie: s.categorie, source: s.source, date: s.date, effets: [] as string[] })
+                if (s.effet && !g.effets.includes(s.effet)) g.effets.push(s.effet)
+                return acc
+              }, {} as Record<string, { categorie: string; source?: string; date?: string; effets: string[] }>))
+            return (<>
+              <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-1 rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px]">
+                <span className="num-key text-base text-mint">{groupes.length}</span>
+                <span className="text-txt-mut">servitude(s)/contrainte(s) sur</span>
+                <span className="font-mono text-txt-hi">{d.idu.slice(8, 10)} {d.idu.slice(10)}</span>
               </div>
-              <p className="mt-1 text-[11px] leading-snug text-txt">{s.effet}</p>
-            </div>
-          ))}
+              {groupes.map((s, i) => (
+                <div key={i} className="rounded-lg bg-surface-3 px-3 py-2 shadow-elev-1">
+                  <div className="flex flex-wrap items-baseline gap-1.5">
+                    <b className="text-[11.5px] text-txt-hi">{s.categorie}</b>
+                    <span className="rounded-full border border-mint/40 bg-mint/10 px-1.5 text-[8.5px] font-medium text-mint">Sourcé</span>
+                    <span className="text-[9.5px] text-txt-dim">{s.source}{s.date ? ` · ${s.date}` : ''}</span>
+                  </div>
+                  <p className="mt-1 text-[11px] leading-snug text-txt">{s.effets.join(' · ')}</p>
+                </div>
+              ))}
+            </>)
+          })()}
           {d.servitudes.length === 0 && (
             <EmptyState title="Aucune servitude détectée dans les couches ingérées à cette parcelle." />
           )}
@@ -156,14 +168,15 @@ const O6_COLS: { k: string; head: string; title: string; tip?: string; best?: 'm
     title: '€/m² ANCIEN — médiane DVF de la commune entière (tous types bâti, ventes strictes, n ≥ 100). Vue MACRO : la même série que le Baromètre.',
     tip: '€/m² ANCIEN — médiane DVF COMMUNE ENTIÈRE (tous types bâti, ventes strictes, n ≥ 100). Vue macro, série du Baromètre. ⚠ La FICHE d’une commune affiche un prix LOCAL (secteur autour de la parcelle centrale, appartements priorisés) — plus fin, souvent inférieur : c’est normal qu’il diffère de cette colonne.' },
   { k: 'prix_neuf', head: '€/m² neuf',
-    title: '€/m² NEUF — prix de sortie du neuf (DVF), €/m² habitable. À NE PAS confondre avec l’ancien : marché et niveau différents.',
-    tip: '€/m² NEUF — prix de sortie du neuf (DVF), €/m² habitable. À NE PAS confondre avec l’ancien : marché et niveau différents.' },
+    // RECETTE-2 (D3) — on DIT le seuil dans le « i » : « — » = moins de 8 ventes VEFA (médiane instable).
+    title: '€/m² NEUF — prix de sortie du neuf (VEFA, DVF), €/m² habitable. À NE PAS confondre avec l’ancien : marché et niveau différents. « — » = moins de 8 ventes VEFA (sous ce seuil la médiane est instable, mesurée ±44 %).',
+    tip: '€/m² NEUF — prix de sortie du neuf (VEFA, DVF), €/m² habitable. À NE PAS confondre avec l’ancien. « — » = moins de 8 ventes VEFA (médiane instable sous le seuil).' },
   // RETOURS-11F O14/M13 — €/m² TERRAIN NU DVF : « le chiffre du promoteur », absent jusqu'ici. MÊME
   // moteur que la fiche (Marché) — médiane DVF terrain nu par zone PLU calibrée (U de préférence, sinon
   // AU). Sous le seuil de cellule → « — ». 23/24 communes servables (mesuré base réelle).
   { k: 'prix_terrain_nu', head: '€/m² terrain nu',
     title: '€/m² TERRAIN NU — médiane DVF des ventes de terrain nu de la commune, par zone PLU calibrée (U de préférence, sinon AU). C’est la valeur foncière brute que vise un promoteur — le chiffre le plus direct pour arbitrer un achat.',
-    tip: '€/m² TERRAIN NU — médiane DVF terrain nu par zone PLU (U sinon AU). La valeur foncière brute (« le chiffre du promoteur »). Absente si la commune n’a pas assez de ventes de terrain (→ « — »).' },
+    tip: '€/m² TERRAIN NU — médiane DVF terrain nu par zone PLU (U sinon AU). La valeur foncière brute (« le chiffre du promoteur »). « — » = moins de 5 ventes de terrain nu (médiane instable sous le seuil).' },
 ]
 // Rendu en GRAND (overlay ≤ 1100 px) : colonnes larges, tout lisible, zéro scroll horizontal. Dernière
 // piste = affordance de clic (chevron › / « Ouvrir la fiche → » au survol).
@@ -266,10 +279,12 @@ export function CommunesLegende() {
       <b>Permis 5 ans</b> = permis SITADEL cumulés sur 5 ans ·{' '}
       <b>Déficit SRU</b> = objectif légal − taux de logement social (points) ·{' '}
       <b>€/m² ancien</b> = médiane DVF commune entière (ventes strictes) ·{' '}
-      <b>€/m² neuf</b> = prix de sortie du neuf ·{' '}
+      <b>€/m² neuf</b> = prix de sortie du neuf (VEFA) ·{' '}
       <b>€/m² terrain nu</b> = médiane DVF terrain nu par zone PLU (U sinon AU) — le chiffre du promoteur.
       <span className="mt-0.5 block">Meilleure valeur en <span className="font-semibold text-mint">vert</span> (foncier / rapidité d’instruction).
         Une donnée absente reste « — », jamais un zéro inventé.</span>
+      {/* RECETTE-2 (D3) — on DIT le seuil : « — » n'est pas une absence mais une insuffisance de volume. */}
+      <span className="mt-0.5 block"><b className="text-txt-mut">« — » = sous le seuil de fiabilité</b> : €/m² neuf sous <b>8 ventes</b> VEFA · €/m² terrain nu sous <b>5 ventes</b> (médiane instable en deçà).</span>
     </div>
   )
 }
