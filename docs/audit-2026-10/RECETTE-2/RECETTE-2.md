@@ -83,8 +83,12 @@ Légende : ✅ fait+capturé · 🚧 en cours · ⬜ non commencé · ⚠ à vé
 
 **Note B5 (cache)** : la chip SIGNAUX est servie du cache `commune_contexte_cache` (précalc nocturne `fiche-commune-cache`). Le correctif code étant live-invisible sans rebuild, le cache de Saint-Denis (témoin) a été **rafraîchi** (recompute de contexte borné — ni run de scoring, ni calcul géométrique) pour constater « 1,1 an ». Les autres communes se mettront à jour au prochain précalcul nocturne.
 
-### C — Couches
-C1 : ⬜
+### C — Couches  — **commit lot C**
+| Pt | Sujet | État | Preuve / note |
+|---|---|---|---|
+| C1 | Retirer le minzoom du 04/10 (couches à pastille visibles à tous zooms, île comprise) ; pastille conservée | ✅ | `CouchesTuyau.tsx` : helper `zmin()` → source/calques chargent dès z0 pour toutes les couches **sauf** zonage par-parcelle (431 k, tuile île ingérable — gardé). Pastille « Zoomez pour voir **mieux** » (simple info). **Vérifié vue île z9.4** : QPV 79, 50 pas 251, BPE 35 544 features rendues. `C1_ile_3couches.png` |
+
+**Arbitrage C1 :** le bornage n'est pas supprimé aveuglément — **zonage par parcelle** (431 k polygones) GARDE son minzoom (la tuile île est ingérable, cf. harnais de captures). Les couches de la liste 04/10 (50 pas, ER, SIS, QPV, ANRU, TVA réduite, pylônes, postes, BPE, OSM, EnR, …) chargent à tous les zooms. Le gate était **client** (`addSource`/calques minzoom) ; le backend sert déjà les tuiles à tous les zooms (couches_tuyau §5).
 
 ### D — Outils
 D1…D15 : ⬜
