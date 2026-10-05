@@ -119,8 +119,17 @@ Légende : ✅ fait+capturé · 🚧 en cours · ⬜ non commencé · ⚠ à vé
 
 **Arbitrages lot D (tranchés) :** D3 « corriger à la source » = re-ingestion DVF → **interdit** (Étape 0) → non fait, documenté ; les « — » sont corrects. D2b/D4a/D7/D8-fusion/D10-calc/D11-géo/D15-encart : correctifs **identifiés** mais non terminés/vérifiés ce tour (volume du lot) — à finir. D11 3D : **non constatable en headless** → à vérifier par Vic.
 
-### E — Docs, Signaler, Notifications
-E1…E6 : ⬜
+### E — Docs, Signaler, Notifications  — **commit lot E** (partiel)
+| Pt | Sujet | État | Preuve / note |
+|---|---|---|---|
+| E1 | Rail « Documents » → « Docs » | ✅ | `E1_rail_docs.png` — rail « Docs » (1), « Documents » (0) |
+| E2 | Fenêtre Dossier : retirer « La fiche parcelle complète … Mes documents » (+ équivalents) | ✅ | `catalogue.ts` : explication Dossier vidée + « Le PDF apparaît dans Mes documents » retiré des 6 documents. **Tuile Comparables DVF grisée** : cause à constater (export dispo ? sinon retirer) — **non investiguée ce tour** |
+| E3 | « Signaler » (haut) + « Signaler une erreur » (bas) → les deux arrivent au dashboard admin | ⬜ **non fait ce tour** | nécessite un envoi de test par chaque entrée + constat dans le dashboard admin (même table/écran) — non testé ce tour |
+| E4 | Cloche : événements admin invisibles au client ; intro « vos secteurs » retirée | 🚧 partiel | **intro « vos secteurs » retirée** (la veille secteur n'existe plus) ✅. Le filtrage client/admin des événements (grille `config/veille.yaml`, test sur compte Vic + compte client, tableau oui/non par type) : **non fait ce tour** (test multi-comptes) |
+| E5 | Lien bas de cloche → ouvre Radar · Veille (accueil) ; libellé « Personnaliser les notifications → » | ✅ | `openRadar()` (radarEcran='portes') + libellé « Personnaliser les notifications → » |
+| E6 | Retirer « Dernière capture … Radar alimenté par l'extension … vérifier l'extension » | ✅ | bloc retiré de `RadarMarche.tsx` (client) |
+
+**Arbitrages lot E :** E3 (preuve dashboard) et E4-filtrage (client vs admin) exigent des **envois de test et une inspection multi-comptes** non réalisés ce tour → non faits, documentés. E2 tuile « Comparables DVF » grisée : à trancher (activer si l'export marche, sinon retirer) — non investiguée.
 
 ---
 

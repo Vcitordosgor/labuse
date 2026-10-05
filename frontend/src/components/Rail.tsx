@@ -94,7 +94,7 @@ const RAIL: { key: RailKey; label: string; ia?: boolean }[] = [
   { key: 'cartes', label: 'Carte' },
   { key: 'outils', label: 'Outils' },
   // DOCS-1 (Lot A) — Documents en 3ᵉ, après Outils (Sources/Admin restent épinglés au pied).
-  { key: 'documents', label: 'Documents' },
+  { key: 'documents', label: 'Docs' },   // RECETTE-2 (E1) — « Documents » ne tient pas dans le rail → « Docs »
   { key: 'copilote', label: 'Copilote', ia: true },
   // RADAR-2 (Lot 1) — « Veille » QUITTE le rail : on l'atteint par la porte « Veille » du hub Radar.
   { key: 'radar', label: 'Radar' },
