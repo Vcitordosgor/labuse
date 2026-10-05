@@ -2503,6 +2503,45 @@ def parcel_geojson(idu: str, db: Session = Depends(get_db)) -> dict:
             "properties": {"idu": idu}, "centroid": [row["lon"], row["lat"]]}
 
 
+@app.get("/parcels/{idu}.kmz")
+def parcel_kmz(idu: str, db: Session = Depends(get_db)) -> Response:
+    """LIENS-1 (lot 1) — contour de la parcelle en KMZ (KML zippé), à ouvrir dans Google Earth.
+    MÊME géométrie que la carte (`parcels.geom`, 4326) : le KML est produit par PostGIS
+    (`ST_AsKML`), jamais reconstruit à la main. Nom = IDU ; description = commune + surface servie
+    (`surface_m2`, identique à la fiche). Téléchargé au clic (Content-Disposition attachment)."""
+    from xml.sax.saxutils import escape as _xesc
+
+    row = db.execute(text(
+        """SELECT commune, surface_m2, ST_AsKML(geom, 7) AS kml
+           FROM parcels WHERE idu = :idu LIMIT 1"""), {"idu": idu}).mappings().first()
+    if not row or not row["kml"]:
+        raise HTTPException(404, "parcelle introuvable")
+    surface = row["surface_m2"]
+    desc = row["commune"] or ""
+    if surface:
+        desc = f"{desc} — {round(surface):d} m²" if desc else f"{round(surface):d} m²"
+    kml = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<kml xmlns="http://www.opengis.net/kml/2.2"><Document>'
+        f"<name>{_xesc(idu)}</name>"
+        '<Style id="labuse"><LineStyle><color>ff2f8f4f</color><width>2</width></LineStyle>'
+        '<PolyStyle><color>332f8f4f</color></PolyStyle></Style>'
+        f"<Placemark><name>{_xesc(idu)}</name><description>{_xesc(desc)}</description>"
+        f"<styleUrl>#labuse</styleUrl>{row['kml']}</Placemark>"
+        "</Document></kml>"
+    )
+    import io
+    import zipfile
+    buf = io.BytesIO()
+    # Convention Google Earth : le KML racine d'un KMZ s'appelle `doc.kml`.
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr("doc.kml", kml.encode("utf-8"))
+    return Response(
+        content=buf.getvalue(),
+        media_type="application/vnd.google-earth.kmz",
+        headers={"Content-Disposition": f'attachment; filename="{idu}.kmz"'})
+
+
 @app.get("/adresses/autocomplete")
 def adresses_autocomplete(q: str = Query(..., min_length=3),
                           limit: int = Query(6, ge=1, le=12),

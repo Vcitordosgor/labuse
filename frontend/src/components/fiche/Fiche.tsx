@@ -16,7 +16,7 @@ import { DeplacerMenu } from '../crm/DeplacerMenu'   // DA-FIX-5c — menu « D�
 import { AskBar } from './AskBar'
 import { FinancierQuestionnaire } from './FinancierQuestionnaire'
 import { GabaritLine } from './GabaritLine'
-import { cadastreGeoportailUrl, googleMapsUrl, pagesJaunes } from './liensExternes'
+import { cadastreGeoportailUrl, errialUrl, googleEarthKmzUrl, googleMapsUrl, pagesJaunes } from './liensExternes'
 import { LogoCadastre, LogoPagesJaunes, LogoGoogleMaps } from './logosServices'
 import { PourquoiPasTab } from './PourquoiPas'
 import { ScoreV2Block } from './ScoreV2Block'
@@ -727,73 +727,105 @@ export function Fiche({ idu }: { idu: string }) {
           clipperait le sticky) : fond opaque + ombre pour couvrir ce qui passe dessous. FINITIONS-2 avait
           annulé un sticky qui embarquait AUSSI les tuiles et recouvrait le contenu ; ici, identité seule. */}
       <div className="tete-collee" data-fiche-tete-collee>
-          <div className="head-top">
-            {/* RETOURS-11 R3 — la colonne gauche pousse (flex:1) pour donner sa largeur à l'adresse,
-                qui tient alors sur UNE ligne (tronquée en … si vraiment trop longue, voir .addr). */}
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <div className="eyebrow">PARCELLE{f?.commune ? ` · ${f.commune.toUpperCase()}` : ''}</div>
-              {/* IDU complet (mono) + copier sans cadre, collé à la référence. */}
-              <div className="ref" data-fiche-idu>{iduComplet(idu) || 'Absent'}{iduComplet(idu) && <CopyIdu value={iduComplet(idu)} />}</div>
-              {/* RETOURS-15 U7 — l'adresse QUITTE cette colonne (réduite par les logos + cloche à
-                  droite : elle y wrappait « à la moitié » alors que la pleine largeur est libre
-                  dessous) → rangée .addr-row pleine largeur sous le head-top. */}
-              {/* RETOURS-8 (R7) — le lien « Pages jaunes » quitte l'adresse : il remonte en tête,
-                  à côté de l'IDU, dans le trio Maps · Cadastre · Pages jaunes (voir .hbtns). */}
-            </div>
-            <div className="hbtns">
-              {/* RETOURS-11 F1 (03/09) — trois boutons-LOGOS (Cadastre Géoportail · Pages Jaunes · Google
-                  Maps) À CÔTÉ de la cloche, remplaçant les trois grandes pastilles sur deux lignes. Logos
-                  publics stockés en local (SVG inline, aucune requête externe), nom complet au survol. Les
-                  URL restent construites par les fonctions pures testées (liensExternes.ts). */}
+          {/* LIENS-1 (maquette Vic) — UNE ligne de boutons sur TOUTE la largeur, en deux groupes :
+              à GAUCHE les liens vers l'extérieur (nouvel onglet) Cadastre · Pages Jaunes · Google Maps ·
+              État des risques (Errial) · Google Earth ; à DROITE, séparées par un trait vertical fin,
+              les actions sur la fiche (Voir la rue si servie) · cloche · loupe · croix. La ligne
+              « PARCELLE · COMMUNE » est RETIRÉE (doublon avec l'adresse, ci-dessous). Chaque bouton a
+              son infobulle au survol (Tip). Mêmes boutons carrés, même taille, même style (.hbtn) ;
+              les deux nouveaux (Errial, Earth) sans style particulier (monochrome, comme loupe/croix). */}
+          <div className="head-actions" data-fiche-actions>
+            <div className="hbtns hbtns-ext">
+              {/* URL construites par les fonctions pures testées (liensExternes.ts). Logos publics
+                  stockés en local (SVG inline, aucune requête externe). */}
               {f && (() => {
                 const pj = pagesJaunes(f.adresse, f.commune)
+                const er = errialUrl(f.adresse, f.commune)
                 return (
                   <>
                     {f.coords && (
-                      <a data-cadastre-link className="hbtn" target="_blank" rel="noreferrer noopener"
-                        href={cadastreGeoportailUrl(f.coords)} aria-label="Cadastre Géoportail">
-                        <LogoCadastre />
-                      </a>
+                      <Tip side="bottom" tip="Cadastre" garder>
+                        <a data-cadastre-link className="hbtn" target="_blank" rel="noreferrer noopener"
+                          href={cadastreGeoportailUrl(f.coords)} aria-label="Cadastre">
+                          <LogoCadastre />
+                        </a>
+                      </Tip>
                     )}
                     {pj.url && (
-                      <a data-fiche-pj data-pj-commune-seule={pj.commune_seule || undefined} className="hbtn"
-                        target="_blank" rel="noreferrer noopener" href={pj.url}
-                        aria-label={pj.commune_seule ? 'Pages Jaunes — commune' : 'Pages Jaunes'}>
-                        <LogoPagesJaunes />
-                      </a>
+                      <Tip side="bottom" tip="Pages Jaunes" garder>
+                        <a data-fiche-pj data-pj-commune-seule={pj.commune_seule || undefined} className="hbtn"
+                          target="_blank" rel="noreferrer noopener" href={pj.url} aria-label="Pages Jaunes">
+                          <LogoPagesJaunes />
+                        </a>
+                      </Tip>
                     )}
                     {f.coords && (
-                      <a data-maps-link className="hbtn" target="_blank" rel="noreferrer noopener"
-                        href={googleMapsUrl(f.coords)} aria-label="Google Maps (épingle sur la parcelle)">
-                        <LogoGoogleMaps />
+                      <Tip side="bottom" tip="Google Maps" garder>
+                        <a data-maps-link className="hbtn" target="_blank" rel="noreferrer noopener"
+                          href={googleMapsUrl(f.coords)} aria-label="Google Maps">
+                          <LogoGoogleMaps />
+                        </a>
+                      </Tip>
+                    )}
+                    {/* État des risques — Errial (téléservice IAL de Géorisques) pré-rempli par
+                        ADRESSE (son appli ne lit que ?adresse= ; repli commune annoncé). Triangle d'alerte. */}
+                    {er.url && (
+                      <Tip side="bottom" tip="État des risques (Errial)" garder>
+                        <a data-errial-link data-errial-commune-seule={er.commune_seule || undefined} className="hbtn"
+                          target="_blank" rel="noreferrer noopener" href={er.url} aria-label="État des risques (Errial)">
+                          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" /><path d="M12 9v4" /><path d="M12 17h.01" /></svg>
+                        </a>
+                      </Tip>
+                    )}
+                    {/* Google Earth — contour SERVI en KMZ (endpoint back /parcels/{idu}.kmz, même
+                        géométrie que la carte), téléchargé au clic. Globe. */}
+                    <Tip side="bottom" tip="Ouvrir dans Google Earth" garder>
+                      <a data-earth-link className="hbtn" target="_blank" rel="noreferrer noopener"
+                        href={googleEarthKmzUrl(idu)} aria-label="Ouvrir dans Google Earth">
+                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M3 12h18" /><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18Z" /></svg>
                       </a>
-                    )}
-                    {/* KELFONCIER-FIX-1 (Lot G) — « Voir la rue » : n'apparaît QUE si le serveur sert
-                        un embed Street View (clé GOOGLE_MAPS_EMBED_KEY posée) ; sinon masqué, sans erreur.
-                        Ouvre un panneau (jamais en pleine page), centré sur le centroïde de la parcelle. */}
-                    {f.street_view?.embed_url && (
-                      <button data-street-view-btn className="hbtn" onClick={() => setStreetViewOpen((o) => !o)}
-                        style={streetViewOpen ? { borderColor: 'var(--mint)', color: 'var(--mint)' } : undefined}
-                        aria-label="Voir la rue (Street View)" title="Voir la rue">
-                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-                          <circle cx="12" cy="8" r="3" /><path d="M6 20c0-3 3-5 6-5s6 2 6 5" /><path d="M3 12h2M19 12h2" />
-                        </svg>
-                      </button>
-                    )}
+                    </Tip>
                   </>
                 )
               })()}
-              <WatchButton idu={idu} />
-              <button className="hbtn" onClick={() => setFicheSearchOpen((o) => { if (o) setFicheQuery(''); return !o })}
-                style={ficheSearchOpen ? { borderColor: 'var(--mint)', color: 'var(--mint)' } : undefined}
-                aria-label="Rechercher dans cette fiche">
-                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><circle cx="11" cy="11" r="6" /><path d="m20 20-3.5-3.5" /></svg>
-              </button>
-              <button className="hbtn" onClick={() => select(null)} aria-label="Fermer la fiche">
-                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
-              </button>
+            </div>
+            <div className="hbtns hbtns-act">
+              {/* trait vertical fin : sépare les liens externes (gauche) des actions sur la fiche (droite). */}
+              <span className="hsep" aria-hidden />
+              {/* KELFONCIER-FIX-1 (Lot G) — « Voir la rue » : n'apparaît QUE si le serveur sert un embed
+                  Street View (clé GOOGLE_MAPS_EMBED_KEY posée). Ouvre un panneau inline (action sur la
+                  fiche) → côté droit. */}
+              {f?.street_view?.embed_url && (
+                <Tip side="bottom" tip="Voir la rue" garder>
+                  <button data-street-view-btn className="hbtn" onClick={() => setStreetViewOpen((o) => !o)}
+                    style={streetViewOpen ? { borderColor: 'var(--mint)', color: 'var(--mint)' } : undefined}
+                    aria-label="Voir la rue (Street View)">
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="8" r="3" /><path d="M6 20c0-3 3-5 6-5s6 2 6 5" /><path d="M3 12h2M19 12h2" />
+                    </svg>
+                  </button>
+                </Tip>
+              )}
+              <Tip side="bottom" tip="Suivre cette parcelle" garder>
+                <WatchButton idu={idu} />
+              </Tip>
+              <Tip side="bottom" tip="Chercher dans la fiche" garder>
+                <button className="hbtn" onClick={() => setFicheSearchOpen((o) => { if (o) setFicheQuery(''); return !o })}
+                  style={ficheSearchOpen ? { borderColor: 'var(--mint)', color: 'var(--mint)' } : undefined}
+                  aria-label="Rechercher dans cette fiche">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><circle cx="11" cy="11" r="6" /><path d="m20 20-3.5-3.5" /></svg>
+                </button>
+              </Tip>
+              <Tip side="bottom" tip="Fermer" garder>
+                <button className="hbtn" onClick={() => select(null)} aria-label="Fermer la fiche">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+                </button>
+              </Tip>
             </div>
           </div>
+          {/* IDU complet (mono) en grand + copier, sous la ligne de boutons (RETOURS-15 : l'adresse
+              et le secteur suivent en rangées pleine largeur). */}
+          <div className="ref ref-sous-actions" data-fiche-idu>{iduComplet(idu) || 'Absent'}{iduComplet(idu) && <CopyIdu value={iduComplet(idu)} />}</div>
 
           {/* KELFONCIER-FIX-1 (Lot G) — panneau Street View INLINE (jamais en pleine page) : l'embed
               Google Maps (mode panorama) centré sur le centroïde de la parcelle. Rendu seulement quand

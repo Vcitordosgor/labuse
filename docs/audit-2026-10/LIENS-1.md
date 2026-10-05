@@ -73,3 +73,94 @@ attendre.
 **Résultat** : `tests/test_boot_sans_verrou.py` + `tests/test_residuel_runs.py` → **6 passed** (4,8 s).
 
 > Commit autonome : mergeable **sans le lot 1**.
+
+---
+
+## Lot 1 — en-tête de la fiche parcelle (maquette validée par Vic)
+
+### Avant / après (captures `captures/LIENS-1/`)
+| | Avant | Après |
+|---|---|---|
+| **large** (pane 371 px) | `entete-large_avant.png` | `entete-large_apres.png` |
+| **étroite** (pane 291 px) | `entete-etroite_avant.png` | `entete-etroite_apres.png` |
+
+**Avant** : ligne « PARCELLE · COMMUNE » en haut à gauche ; à droite un bloc de 6 boutons carrés
+(Cadastre · Pages Jaunes · Google Maps · cloche · loupe · croix). **Après** : plus de ligne
+« PARCELLE · COMMUNE » (doublon avec l'adresse) ; UNE ligne de boutons pleine largeur en deux
+groupes — à gauche les liens externes **Cadastre · Pages Jaunes · Google Maps · État des risques
+(Errial) · Google Earth** ; à droite, séparées d'un trait vertical fin, les actions **cloche · loupe ·
+croix** (+ « Voir la rue » si le serveur la sert). L'IDU en grand + copier, l'adresse + copier et le
+secteur suivent, inchangés.
+
+### Fichiers
+- **`frontend/src/components/fiche/liensExternes.ts`** — deux fonctions pures testées :
+  `errialUrl(adresse, commune)` et `googleEarthKmzUrl(idu)`.
+- **`frontend/src/components/fiche/Fiche.tsx`** — en-tête restructuré (ligne `.head-actions` à deux
+  groupes `.hbtns-ext` / `.hbtns-act` + `.hsep`) ; ligne « PARCELLE · COMMUNE » retirée ; IDU descendu
+  sous la ligne ; chaque bouton enveloppé d'un `Tip` (infobulle au survol). Icônes Errial = triangle
+  d'alerte, Google Earth = globe, monochrome (`currentColor`), sans style particulier — comme
+  loupe/croix.
+- **`frontend/src/styles/index.css`** — `.head-actions` / `.hbtns-act` / `.hsep` / `.ref-sous-actions`
+  ; gaps serrés (`.hbtns gap:3px`, `.head-actions gap:4px`, `.hsep margin:0 2px`) pour tenir à la
+  largeur minimale du panneau.
+- **`src/labuse/api/app.py`** — endpoint **`GET /parcels/{idu}.kmz`** (KML zippé du contour servi).
+
+### Infobulles (point 4)
+Chaque bouton de la ligne porte son `Tip` au survol : « Cadastre », « Pages Jaunes », « Google
+Maps », « État des risques (Errial) », « Ouvrir dans Google Earth », « Suivre cette parcelle »,
+« Chercher dans la fiche », « Fermer » (+ « Voir la rue » si servie).
+
+### Errial (point 5) — pré-remplissage par ADRESSE, PAS par parcelle
+Le bundle de l'appli Errial (`errial.georisques.gouv.fr`, vérifié le 05/10) lit **uniquement**
+`?adresse=` au montage (`mounted(){ this.adresseGeorisques = this.$route.query.adresse ; …
+searchAdresse(...) }`, routeur en mode **hash**). **Il n'existe AUCUN paramètre d'URL de
+pré-remplissage par parcelle/IDU/INSEE.** On pré-remplit donc par l'adresse exacte quand on l'a,
+sinon par la commune seule (repli annoncé par `commune_seule`, comme Pages Jaunes). URL produite :
+`https://errial.georisques.gouv.fr/#/?adresse=<adresse|commune>`.
+
+### Google Earth (point 6) — KMZ du contour servi
+`GET /parcels/{idu}.kmz` : `ST_AsKML(parcels.geom, 7)` (MÊME géométrie que la carte) emballé dans un
+Placemark KML, zippé en `doc.kml` (convention Google Earth). `name` = IDU, `description` = commune +
+surface servie (`surface_m2`). En-têtes `application/vnd.google-earth.kmz` +
+`Content-Disposition: attachment; filename="{idu}.kmz"`. Lien front relatif (même origine, comme
+`export.pdf`). IDU inconnu → 404.
+
+### Dossier PDF (point 7) — rien à ajouter
+Vérifié : le Dossier PDF **ne liste AUCUN lien externe de navigation** (ni Cadastre, ni Google Maps,
+ni Pages Jaunes — ces liens vivent seulement dans l'en-tête de la fiche côté front ; recherche
+exhaustive dans `exports/oracle_dossier.py`, `api/dossier.py`, `api/pre_dossier.py`,
+`api/pdf_premium.py`). La condition « si le Dossier liste déjà des liens externes » n'est donc pas
+remplie → **aucune modification du PDF** (et le KMZ n'y va jamais, conformément à la consigne).
+
+### Street View — arbitrage de placement
+Le bouton « Voir la rue » (conditionnel : seulement si `GOOGLE_MAPS_EMBED_KEY` est posée, absent en
+local) ouvre un panneau **inline** = une action sur la fiche. Il est donc placé dans le groupe de
+DROITE (actions), avant la cloche, et non parmi les liens externes (qui ouvrent tous un nouvel
+onglet). Le groupe de gauche reste exactement la liste de la maquette.
+
+### Tenue à l'étroit (point final)
+Mesuré à la largeur minimale réelle du panneau (pane 291 px sur écran 390 px) : **8 boutons, tous à
+leur taille pleine (26 px), 0 débordement, aucun retour à la ligne, aucun bouton coupé.** Le groupe
+gauche peut rétrécir en premier (les actions ne rétrécissent jamais), les gaps sont serrés pour
+garantir le tenue.
+
+### Tests
+- **`frontend/src/components/fiche/liensExternes.test.ts`** (+4 cas) : Errial avec/sans adresse/ni
+  l'un ni l'autre, et KMZ relatif. → **vitest 239 verts** (52 fichiers).
+- **`tests/test_parcel_kmz.py`** : insère une parcelle témoin, vérifie 200 + `vnd.google-earth.kmz` +
+  `doc.kml` + `<Polygon>` + commune/surface dans la description + 404 sur IDU inconnu. → **1 passed**.
+- **`tsc -b`** : 0 erreur.
+
+### Harnais de captures
+`frontend/qa/liens1_captures.mjs` (Playwright Node, `window.__labuse.select(idu)`, capture par clip
+pour contourner le repeint continu de la carte) — rejouable `LABEL=avant|apres BASE=… node
+qa/liens1_captures.mjs`.
+
+---
+
+## Clôture
+- Lot 0 : commit `9de46f6b` (déjà poussable, mergeable seul).
+- Lot 1 : commit séparé (ce lot).
+- Aucun run, aucune écriture hors `labuse_test`, aucun backend tiers arrêté (captures servies par un
+  vite local proxifié vers une API déjà en route, pas de nouveau boot d'API sur la base partagée).
+- API (aucune bootée) & vite local : arrêtés en fin de session.

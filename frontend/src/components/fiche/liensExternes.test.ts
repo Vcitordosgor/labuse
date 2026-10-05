@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { cadastreGeoportailUrl, googleMapsUrl, pagesJaunes, type Coords } from './liensExternes'
+import { cadastreGeoportailUrl, errialUrl, googleEarthKmzUrl, googleMapsUrl, pagesJaunes, type Coords } from './liensExternes'
 
 // RETOURS-10 (T4.3) — chaque lien de l'en-tête mène à la BONNE donnée : les cartes (Cadastre/Maps)
 // centrées sur le centroïde de la parcelle, Pages jaunes sur l'adresse exacte (repli commune annoncé).
@@ -46,5 +46,29 @@ describe('T4 — liens externes de la fiche', () => {
   it('Pages jaunes sans adresse NI commune : aucun lien (jamais un lien vide)', () => {
     expect(pagesJaunes(null, null).url).toBeNull()
     expect(pagesJaunes('', '  ').url).toBeNull()
+  })
+
+  // LIENS-1 — Errial (IAL Géorisques) : son appli ne lit QUE ?adresse= (pas la parcelle) → on
+  // pré-remplit par adresse exacte quand on l'a, sinon commune seule (repli annoncé). Routeur hash.
+  it('Errial AVEC adresse : pré-rempli par adresse exacte, pas de repli commune', () => {
+    const { url, commune_seule } = errialUrl('14 rue Françoise-Dolto', 'La Possession')
+    expect(commune_seule).toBe(false)
+    expect(url!.startsWith('https://errial.georisques.gouv.fr/#/?adresse=')).toBe(true)
+    expect(url).toContain(encodeURIComponent('14 rue Françoise-Dolto'))
+  })
+
+  it('Errial SANS adresse : commune seule + drapeau commune_seule', () => {
+    const { url, commune_seule } = errialUrl(null, 'Saint-Joseph')
+    expect(commune_seule).toBe(true)
+    expect(url).toBe(`https://errial.georisques.gouv.fr/#/?adresse=${encodeURIComponent('Saint-Joseph')}`)
+  })
+
+  it('Errial sans adresse NI commune : aucun lien', () => {
+    expect(errialUrl(null, null).url).toBeNull()
+    expect(errialUrl('  ', '').url).toBeNull()
+  })
+
+  it('Google Earth : endpoint KMZ relatif de la parcelle (même origine)', () => {
+    expect(googleEarthKmzUrl('97408000AP1599')).toBe('/parcels/97408000AP1599.kmz')
   })
 })
