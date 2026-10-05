@@ -34,6 +34,12 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from .. import runs
+# VITESSE-CARTE-FIX-1 (G2) — on RÉUTILISE le mécanisme de cache persistant des parcelles, sans en
+# inventer un second : même table `mvt_tile_cache`, mêmes fonctions de lecture/écriture, même ETag fort
+# et même fabrique de réponse conditionnelle (304). Pas d'import circulaire : tiles.py n'importe pas ce
+# module.
+from .tiles import (_etag, _tile_cache_get, _tile_cache_put, _tile_response,
+                    _TILE_CACHE_DDL)
 
 router = APIRouter(tags=["couches-tuyau"])
 
@@ -216,12 +222,49 @@ def registre() -> dict[str, CoucheTuyau]:
 
 
 # ───────────────────────── cache HTTP par run servi ─────────────────────────
-_CACHE: OrderedDict[tuple, bytes] = OrderedDict()
+# VITESSE-CARTE-FIX-1 (G2) — le LRU par worker stocke désormais (octets, ETag FORT md5) comme les
+# parcelles (cf. tiles._CACHE) : l'ETag alimente la revalidation conditionnelle 304 (_tile_response).
+_CACHE: OrderedDict[tuple, tuple[bytes, str]] = OrderedDict()
 _CACHE_MAX = 4096
 _HEADERS = {"Cache-Control": "public, max-age=3600, stale-while-revalidate=86400"}
 _VER: dict = {"v": "", "at": -1e9}
 _VER_TTL_S = 60.0            # COUCHES-RECETTE-1 : rafraîchie au plus toutes les 60 s
 _VER_LOCK = threading.Lock()
+
+# VITESSE-CARTE-FIX-1 (G2) — cache PERSISTANT des tuiles d'overlay, repris EXACTEMENT du mécanisme des
+# parcelles (table `mvt_tile_cache`, mêmes fonctions `_tile_cache_get/_tile_cache_put` de tiles.py,
+# même clé (version, z, x, y, layer) — ici `layer` = le kind-front). Seuls les zooms z9-z11 sont
+# persistés : ce sont les tuiles CHÈRES à froid (ST_AsMVTGeom 0,5–2,5 s sur l'île ; cf. audit G2), et
+# c'est un ensemble BORNÉ et figé entre deux builds (≈26 tuiles/couche). z≥12 reste en LRU par worker
+# (génération rapide, l'index GiST porte). MÊMES bornes que les parcelles (`tiles._WARM_ZOOMS`).
+_WARM_ZOOMS = (9, 10, 11)
+
+
+def _invalider_cache_persistant_overlays(db: Session) -> None:
+    """VITESSE-CARTE-FIX-1 (G2) — purge les tuiles d'overlay du cache persistant (tout `layer` autre
+    que 'parcels'). Appelée à CHAQUE (re)build d'une table source d'overlay (tuyau_subdivise, tuyau_sup,
+    tuyau_piscines, tuyau_icpe, tuyau_telepherique, mvt_communes) — en plus du changement de `version`
+    (run + max(created_at) de spatial_layers). CEINTURE ET BRETELLES : si une table dérivée est rebâtie
+    sans que spatial_layers.created_at ne bouge (cas rare), la `version` ne changerait pas → cette purge
+    garantit qu'aucune tuile ne survit au changement de la donnée qu'elle dessine. Best-effort/silencieux
+    (table absente sur base neuve)."""
+    try:
+        if db.execute(text("SELECT to_regclass('mvt_tile_cache')")).scalar():
+            db.execute(text("DELETE FROM mvt_tile_cache WHERE layer <> 'parcels'"))
+        # …ET bump le SEL de version du tuyau (`tuyau_rev`) : il entre dans `_version` → un rebuild de
+        # table tuyau change la version SERVIE même si spatial_layers.created_at ne bouge pas, donc le
+        # LRU par worker (clé versionnée) ET un cache proxy amont ratent aussi les anciennes tuiles.
+        # Ferme l'edge case « dérivée rebâtie sans réingestion » pour TOUS les étages de cache, pas
+        # seulement le persistant purgé ci-dessus.
+        db.execute(text("""CREATE TABLE IF NOT EXISTS mvt_meta
+                           (key varchar(48) PRIMARY KEY, value varchar(64), updated_at timestamptz)"""))
+        db.execute(text("""INSERT INTO mvt_meta (key, value, updated_at)
+                           VALUES ('tuyau_rev', to_char(now(),'YYYYMMDDHH24MISSMS'), now())
+                           ON CONFLICT (key) DO UPDATE
+                             SET value = to_char(now(),'YYYYMMDDHH24MISSMS'), updated_at = now()"""))
+        db.commit()
+    except Exception:  # noqa: BLE001
+        db.rollback()
 
 
 def _version(db: Session) -> str:
@@ -249,7 +292,15 @@ def _version(db: Session) -> str:
                 run = ""
             mx = db.execute(text(
                 "SELECT to_char(max(created_at), 'YYYYMMDDHH24MISS') FROM spatial_layers")).scalar() or ""
-            _VER["v"] = f"{run}.{mx}"
+            # VITESSE-CARTE-FIX-1 (G2) — SEL `tuyau_rev` (bumpé par `_invalider_cache_persistant_overlays`
+            # à chaque rebuild de table tuyau) : un rebuild de dérivée change la version servie même sans
+            # réingestion → invalide LRU + persistant + proxy. Absent (base neuve) → chaîne vide, no-op.
+            try:
+                rev = db.execute(text(
+                    "SELECT value FROM mvt_meta WHERE key = 'tuyau_rev'")).scalar() or ""
+            except Exception:  # noqa: BLE001 — mvt_meta pas encore créée
+                rev = ""
+            _VER["v"] = f"{run}.{mx}.{rev}"
             _VER["at"] = time.monotonic()
     finally:
         _VER_LOCK.release()
@@ -289,6 +340,7 @@ def build_tuyau_subdivise(db: Session) -> int:
     n = db.execute(text("SELECT count(*) FROM tuyau_subdivise")).scalar() or 0
     db.commit()
     _CACHE.clear()
+    _invalider_cache_persistant_overlays(db)   # VITESSE-CARTE-FIX-1 (G2) : purge du cache persistant
     return int(n)
 
 
@@ -351,6 +403,7 @@ def build_tuyau_piscines(db: Session) -> int:
     n = db.execute(text("SELECT count(*) FROM tuyau_piscines")).scalar() or 0
     db.commit()
     _CACHE.clear()
+    _invalider_cache_persistant_overlays(db)   # VITESSE-CARTE-FIX-1 (G2) : purge du cache persistant
     return int(n)
 
 
@@ -381,6 +434,7 @@ def build_tuyau_sup(db: Session) -> int:
     n = db.execute(text("SELECT count(*) FROM tuyau_sup")).scalar() or 0
     db.commit()
     _CACHE.clear()
+    _invalider_cache_persistant_overlays(db)   # VITESSE-CARTE-FIX-1 (G2) : purge du cache persistant
     return int(n)
 
 
@@ -420,6 +474,7 @@ def build_tuyau_icpe(db: Session) -> dict:
         WHERE i.kind='icpe' AND EXISTS (SELECT 1 FROM parcels p WHERE ST_Contains(p.geom_2975, i.geom_2975))""")).scalar() or 0
     db.commit()
     _CACHE.clear()
+    _invalider_cache_persistant_overlays(db)   # VITESSE-CARTE-FIX-1 (G2) : purge du cache persistant
     return {"total": int(total), "rattaches": int(rattaches), "hors_parcelle": int(total) - int(rattaches)}
 
 
@@ -454,6 +509,7 @@ def build_tuyau_telepherique(db: Session) -> int:
     n = db.execute(text("SELECT count(*) FROM tuyau_telepherique")).scalar() or 0
     db.commit()
     _CACHE.clear()
+    _invalider_cache_persistant_overlays(db)   # VITESSE-CARTE-FIX-1 (G2) : purge du cache persistant
     return int(n)
 
 
@@ -490,6 +546,7 @@ def build_mvt_communes(db: Session) -> int:
     db.execute(text("ANALYZE mvt_communes"))
     db.commit()
     _CACHE.clear()
+    _invalider_cache_persistant_overlays(db)   # VITESSE-CARTE-FIX-1 (G2) : purge du cache persistant
     return int(n)
 
 
@@ -542,17 +599,84 @@ def _construire_tuile(db: Session, c: CoucheTuyau, z: int, x: int, y: int) -> by
             WHERE {where}
               AND {g_src} && {filtre}
         )
-        SELECT ST_AsMVT(mvt.*, :layer, 4096, 'geom') FROM mvt WHERE geom IS NOT NULL
+        -- VITESSE-CARTE-FIX-1 (G2) : `ORDER BY mvt.geom` placé APRÈS TOUS les arguments (nom, extent,
+        -- geom_name) → octets DÉTERMINISTES (le Parallel Seq Scan renvoyait les features dans un ordre
+        -- variable, donc l'encodage MVT différait à chaque calcul → cache ≠ à-la-volée). L'ordre des
+        -- entités n'a AUCUN effet sur le rendu (mêmes pixels) ; il rend la tuile reproductible, donc
+        -- comparable (cache == à-la-volée == entre workers) — même raison et même remède que les
+        -- parcelles (tiles._parcel_tile_bytes). ⚠ le placement en fin d'arguments est OBLIGATOIRE :
+        -- `ST_AsMVT(x ORDER BY g, 'nom', …)` ferait avaler 'nom'/extent comme clés de tri (→ layer
+        -- « default »). Ici le nom (:layer = kind) et l'extent 4096 sont bien préservés.
+        SELECT ST_AsMVT(mvt.*, :layer, 4096, 'geom' ORDER BY mvt.geom) FROM mvt WHERE geom IS NOT NULL
     """)
     data = db.execute(sql, params).scalar()
     return bytes(data) if data else b""
+
+
+def warm_overlay_tiles(db: Session, log=lambda *_: None, kinds: list[str] | None = None) -> dict:
+    """VITESSE-CARTE-FIX-1 (G2) — pré-génère les tuiles d'overlay z9-z11 couvrant l'île et les stocke
+    dans `mvt_tile_cache` (layer = kind) à la VERSION courante du tuyau. Repris EXACTEMENT de
+    `warm_parcel_tiles` : mêmes zooms, même emprise, même table, octets STRICTEMENT identiques à la
+    route (même `_construire_tuile`). Idempotente (ON CONFLICT DO NOTHING) et chronométrée. Purge les
+    versions périmées. Appelée par `rebuild_mvt_servies` (après chaque build / bascule) ; `kinds=None`
+    → toutes les couches déclarées servies par le tuyau (hors raster, servies côté front)."""
+    import time as _t
+    t0 = _t.perf_counter()
+    db.execute(text(_TILE_CACHE_DDL))
+    db.commit()
+    version = _version(db)
+    if not version or version.startswith("."):
+        log("⚠ version du tuyau indisponible — rien à pré-chauffer.")
+        return {"tuiles": 0, "couches": 0, "version": version, "seconds": 0.0}
+    # emprise réelle de l'île (mvt_parcels, 3857) → plages de tuiles XYZ par zoom (même calcul que
+    # warm_parcel_tiles). mvt_parcels est le socle servi ; s'il manque, on ne pré-chauffe pas.
+    if not db.execute(text("SELECT to_regclass('mvt_parcels')")).scalar():
+        log("⚠ mvt_parcels absente — rien à pré-chauffer (overlays).")
+        return {"tuiles": 0, "couches": 0, "version": version, "seconds": 0.0}
+    ext = db.execute(text("SELECT ST_XMin(e), ST_XMax(e), ST_YMin(e), ST_YMax(e) "
+                          "FROM (SELECT ST_Extent(geom_3857) e FROM mvt_parcels) t")).first()
+    if not ext or ext[0] is None:
+        return {"tuiles": 0, "couches": 0, "version": version, "seconds": 0.0}
+    xmin, xmax, ymin, ymax = ext
+    W = 20037508.342789244
+    reg = registre()
+    if kinds is None:
+        kinds = list(reg.keys())
+    n = 0
+    couches_ok = 0
+    for kind in kinds:
+        c = reg.get(kind)
+        if c is None or _table_manquante(db, c.table):
+            continue
+        couches_ok += 1
+        for z in _WARM_ZOOMS:
+            span = (2 * W) / (2 ** z)
+            x0 = int((xmin + W) // span); x1 = int((xmax + W) // span)
+            y0 = int((W - ymax) // span); y1 = int((W - ymin) // span)
+            for x in range(x0, x1 + 1):
+                for y in range(y0, y1 + 1):
+                    body = _construire_tuile(db, c, z, x, y)   # mêmes octets que la route
+                    _tile_cache_put(db, version, z, x, y, body, _etag(body), layer=kind)
+                    n += 1
+    # purge des overlays périmés (garde uniquement la version servie ; ne touche pas 'parcels')
+    db.execute(text("DELETE FROM mvt_tile_cache WHERE layer <> 'parcels' AND version <> :v"),
+               {"v": version})
+    db.commit()
+    secs = round(_t.perf_counter() - t0, 2)
+    log(f"✓ overlays-warm : {n} tuiles z9-z11 sur {couches_ok} couches (version {version}) · {secs} s.")
+    return {"tuiles": n, "couches": couches_ok, "version": version, "seconds": secs}
 
 
 @router.get("/map/tiles/{kind}/{z}/{x}/{y}.pbf")
 def couche_tuile(kind: str, z: int, x: int, y: int,
                  request: Request, db: Session = Depends(get_db)) -> Response:
     """Tuile vectorielle MVT d'une couche déclarée. Chemin dédié `/map/tiles/{kind}/…` (4 segments
-    — distinct de `/map/tiles/{z}/{x}/{y}.pbf` parcelles et `/map/tiles/ov/…`)."""
+    — distinct de `/map/tiles/{z}/{x}/{y}.pbf` parcelles et `/map/tiles/ov/…`).
+
+    VITESSE-CARTE-FIX-1 (G2) — mêmes 3 étages que les parcelles (tiles.mvt_tile), dans le même ordre :
+    1) LRU en mémoire (par worker) ; 2) cache PERSISTANT `mvt_tile_cache` (z9-z11, traverse les 5
+    workers et survit aux reboots/builds) ; 3) miss → génération à la volée + alimentation du cache.
+    ETag FORT (md5 du contenu) via `_tile_response` → 304 propre, invalidé au changement de contenu."""
     reg = registre()
     c = reg.get(kind)
     if c is None:
@@ -563,23 +687,33 @@ def couche_tuile(kind: str, z: int, x: int, y: int,
     if z < 0 or z > 22:
         return Response(status_code=404)
     version = _version(db)
-    etag = f'"{version}:{kind}:{z}:{x}:{y}"'
-    if request.headers.get("if-none-match") == etag:
-        return Response(status_code=304, headers={**_HEADERS, "ETag": etag})
     key = (version, kind, z, x, y)
+    # 1) LRU en mémoire (par worker) — le plus rapide ; stocke (octets, ETag fort)
     if key in _CACHE:
         _CACHE.move_to_end(key)
-        return Response(content=_CACHE[key], media_type="application/x-protobuf",
-                        headers={**_HEADERS, "ETag": etag})
-    if _table_manquante(db, c.table):
-        # source pas encore construite (ex. mvt_communes avant build) — vide gracieux, jamais 500.
-        return Response(status_code=204)
-    body = _construire_tuile(db, c, z, x, y)
-    _CACHE[key] = body
+        body, etag = _CACHE[key]
+        return _tile_response(request, body, etag)
+    body = None
+    etag = None
+    # 2) cache PERSISTANT (traverse les workers) — z9-z11, layer = kind (MÊME table que les parcelles)
+    if z in _WARM_ZOOMS:
+        got = _tile_cache_get(db, version, z, x, y, layer=kind)
+        if got is not None:
+            body, etag = got[0], got[1]
+    if body is None:                     # 3) miss : générer à la volée
+        if _table_manquante(db, c.table):
+            # source pas encore construite (ex. mvt_communes avant build) — vide gracieux, jamais 500.
+            return Response(status_code=204)
+        body = _construire_tuile(db, c, z, x, y)
+        etag = _etag(body)
+        if z in _WARM_ZOOMS:             # …et alimenter le cache persistant (best-effort)
+            _tile_cache_put(db, version, z, x, y, body, etag, layer=kind)
+    if etag is None:                     # cache persistant d'un schéma ancien sans etag : recalcul
+        etag = _etag(body)
+    _CACHE[key] = (body, etag)
     if len(_CACHE) > _CACHE_MAX:
         _CACHE.popitem(last=False)
-    return Response(content=body, media_type="application/x-protobuf",
-                    headers={**_HEADERS, "ETag": etag})
+    return _tile_response(request, body, etag)
 
 
 @router.get("/map/tuyau/couches")

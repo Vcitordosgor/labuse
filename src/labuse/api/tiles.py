@@ -321,10 +321,32 @@ def rebuild_mvt_servies(db: Session, run_label: str | None = None, log=lambda *_
         db.rollback()
         log(f"⚠ tiles-warm a échoué (non bloquant) : {e}")
         warm = {"tuiles": 0}
+    # VITESSE-CARTE-FIX-1 (G2) — DANS le même geste unique : pré-chauffe z9-z11 des OVERLAYS LOURDS
+    # (couches servies depuis les méga-polygones subdivisés tuyau_subdivise/tuyau_sup — exactement les
+    # 0,5–2,5 s à froid de l'audit G2). Les couches légères (points, ICPE, communes) restent en lazy-fill
+    # (cache persistant alimenté au 1er GET), génération rapide. Non bloquant comme le warm parcelles.
+    try:
+        from .couches_tuyau import registre as _reg_tuyau, warm_overlay_tiles
+        # couches LOURDES pré-chauffées z9-z11 :
+        #  · méga-polygones subdivisés (tuyau_subdivise / tuyau_sup) — les 0,5–2,5 s à froid de l'audit ;
+        #  · `limites_parcelles` (table mvt_parcels) — contour cadastral COCHÉ PAR DÉFAUT sur l'île
+        #    (donc payé à 100 % des boots), ~2 s à froid, 5,6 Mo : la pire tuile froide du boot.
+        # EXCLUS : le bâti 3D (extrusion, HORS_PANNEAU, bbox au bouton 3D) et `zonage_parcelle`
+        # (source minzoom 11 côté front → z9/z10 jamais demandées ; lazy-fill au 1er z11 suffit).
+        reg_t = _reg_tuyau()
+        lourds = [k for k, c in reg_t.items()
+                  if c.geometrie != "extrusion" and k != "zonage_parcelle"
+                  and (c.table in ("tuyau_subdivise", "tuyau_sup") or k == "limites_parcelles")]
+        warm_ov = warm_overlay_tiles(db, log=log, kinds=lourds)
+    except Exception as e:  # noqa: BLE001
+        db.rollback()
+        log(f"⚠ overlays-warm a échoué (non bloquant) : {e}")
+        warm_ov = {"tuiles": 0}
     return {"n": n, "parcel_flags": pf["n"], "renouvellement": rr["n"],
             "score_e": se["total"], "renouv_coherence": cr["statut"], "peremption_ok": per["ok"],
             "tables_coherence": coh, "run_fiche": coh_fiche.get("statut"), "sources_declarees": srcs,
-            "unicite_pm": upm, "run_label": run_label, "tuiles_prechauffees": warm.get("tuiles", 0)}
+            "unicite_pm": upm, "run_label": run_label, "tuiles_prechauffees": warm.get("tuiles", 0),
+            "overlays_prechauffes": warm_ov.get("tuiles", 0)}
 
 
 #: ALGO-FIX-1 (point 4) — seuil au-delà duquel la bascule N'ENCHAÎNE PAS le rebuild île (elle crée
@@ -600,14 +622,19 @@ def _etag(body: bytes) -> str:
     return hashlib.md5(body, usedforsecurity=False).hexdigest()  # hash de CONTENU (ETag), pas de sécurité
 
 
-def _tile_cache_get(db: Session, version: str, z: int, x: int, y: int):
+def _tile_cache_get(db: Session, version: str, z: int, x: int, y: int, layer: str = "parcels"):
     """Lit la tuile pré-générée (version courante). Retourne (data, etag) ou None. Tolère l'absence
-    de table (pré-lot A / run en cours) sans bruit."""
+    de table (pré-lot A / run en cours) sans bruit.
+
+    VITESSE-CARTE-FIX-1 (G2) — `layer` généralise le mécanisme des parcelles aux 57 overlays du
+    tuyau (couches_tuyau.couche_tuile) : MÊME table, MÊME clé (version, z, x, y, layer), MÊME lecture.
+    Pour les overlays, `layer` = le kind-front (ppr, alea_mvt…) et `version` = la version du tuyau
+    (run + fraîcheur spatial_layers). Défaut 'parcels' → les appelants parcelles sont inchangés."""
     try:
         row = db.execute(text(
             "SELECT data, etag FROM mvt_tile_cache "
-            "WHERE version = :v AND z = :z AND x = :x AND y = :y AND layer = 'parcels'"),
-            {"v": version, "z": z, "x": x, "y": y}).first()
+            "WHERE version = :v AND z = :z AND x = :x AND y = :y AND layer = :l"),
+            {"v": version, "z": z, "x": x, "y": y, "l": layer}).first()
     except Exception:
         db.rollback()
         return None
@@ -616,15 +643,19 @@ def _tile_cache_get(db: Session, version: str, z: int, x: int, y: int):
     return bytes(row[0]), row[1]
 
 
-def _tile_cache_put(db: Session, version: str, z: int, x: int, y: int, body: bytes, etag: str) -> None:
+def _tile_cache_put(db: Session, version: str, z: int, x: int, y: int, body: bytes, etag: str,
+                    layer: str = "parcels") -> None:
     """Écrit (best-effort) une tuile dans le cache persistant. Sur le chemin GET c'est un bonus :
-    un échec (course, table absente) ne doit jamais faire échouer la réponse."""
+    un échec (course, table absente) ne doit jamais faire échouer la réponse.
+
+    VITESSE-CARTE-FIX-1 (G2) — `layer` (défaut 'parcels') permet de stocker aussi les tuiles d'overlay
+    (layer = kind-front) dans la MÊME table `mvt_tile_cache`, sans mécanisme parallèle."""
     try:
         db.execute(text("""
             INSERT INTO mvt_tile_cache (version, z, x, y, layer, data, etag)
-            VALUES (:v, :z, :x, :y, 'parcels', :d, :e)
+            VALUES (:v, :z, :x, :y, :l, :d, :e)
             ON CONFLICT (version, z, x, y, layer) DO NOTHING"""),
-            {"v": version, "z": z, "x": x, "y": y, "d": body, "e": etag})
+            {"v": version, "z": z, "x": x, "y": y, "l": layer, "d": body, "e": etag})
         db.commit()
     except Exception:
         db.rollback()
