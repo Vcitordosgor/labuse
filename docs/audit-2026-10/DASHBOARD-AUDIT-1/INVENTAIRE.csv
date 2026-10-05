@@ -1,0 +1,44 @@
+section;onglet;element;endpoint;source (table/fichier/registre);valeur_ecran;valeur_recalculee;verdict;note
+Pilotage;tuiles;Chiffre d'affaires du mois;GET /admin/pilotage;Stripe API (cache 5 min);(Stripe ca_mois vide en local);n/a;NON MESURABLE;Stripe live — vide sur ce poste (clé restreinte) ; vrai en prod
+Pilotage;tuiles;Licences actives;GET /admin/pilotage;comptes (comptes.licences_actives);1;1;JUSTE;compteur unique rail=tuile=Comptes
+Pilotage;tuiles;Coût IA du mois;GET /admin/pilotage;ia_log (SUM mois UTC);0,25653 €;0,25653 € / 60 appels;JUSTE;recompute exact
+Pilotage;tuiles;Courriers à déposer;GET /admin/pilotage;courrier_demandes;26;26;JUSTE;sous-titre "plus ancien 29 j ouvrés" = 41 j cal., cohérent
+Pilotage;tuiles;Tâches à effectuer;GET /admin/circuit;circuit_resume.total_a_faire;5;5 (lignes de résumé);DISCORDANT;la tuile=5 (lignes résumé) mais l'onglet À-faire affiche 9 items — le pied promet "ouvrir la page donne le même nombre"
+Pilotage;rail;Badge Données;GET /admin/circuit;resume.total;5;5;DISCORDANT;même écart 5 vs 9 que la tuile
+Pilotage;LED pied;Serveur;GET /admin/pilotage;sonde_metier (16 endpoints);OK;sante.ok=true;JUSTE;
+Pilotage;LED pied;Run servi;GET /admin/pilotage;config/served_manifest.json;q_v16;q_v16;JUSTE;manifeste=served_run.txt=mvt_meta
+Pilotage;LED pied;Backup;GET /admin/pilotage;os.getmtime(/var/backups/labuse);non configuré;dir /var/backups absent/illisible sur Mac;TROMPEUR;backups réels pullés dans ~/labuse-backups (dump 26/08) ; LED vraie seulement sur VPS
+Pilotage;LED pied;Horloge;GET /admin/pilotage;state files + len(jobs.JOBS);7 / 25;attendus=25 (len JOBS) ; posés=7;JUSTE (chiffre);mais 18 horloges jamais posées = scheduler à l'arrêt (voir HORLOGES.csv)
+Pilotage;LED pied;Verrous;GET /admin/pilotage;circuit_journal dernier controle verrous;21 / 24 (au moment de l'audit);sur=24 (len VERROUS) ; ok=24-casses du DERNIER passage;TROMPEUR;passage lu = 26/09 (V5b,G1,G8) PRÉ VERROUS-FIX-1 ; aucune date affichée ; rafraîchi à G8 seul par un run CLI 17:43
+Pilotage;À faire;Déployer — N commits d'avance;GET /admin/pilotage;config/deploiement.json + git rev-list;857;git rev-list 8564b1e..HEAD = 857;JUSTE (arith.);marqueur = baseline placeholder 21/09 "écrasé par deploy.sh" → surestime l'écart réel avec la prod
+Pilotage;À faire;Sauvegarder la base;GET /admin/pilotage;_age_backup;aucun répertoire configuré;dir backup absent sur Mac;TROMPEUR;idem LED Backup
+Pilotage;À faire;Sondes muettes en prod — N sources;GET /admin/pilotage;circuit_garanties.sources_sans_controle(7j);92;live (reflet du scheduler arrêté);JUSTE;cause affichée ("horloges pas posées en prod") = vraie
+Pilotage;Journal;fil système (event_log);GET /admin/pilotage;event_log kind=systeme;30 évén.;bascule q_v16 présente (15:36 05/10);JUSTE;le fait majeur du jour EST au Journal Pilotage
+Comptes;liste;Licences actives;GET /admin/licences;comptes;1;1;JUSTE;
+Comptes;liste;Comptes de test masqués;GET /admin/licences;comptes _MASQUE_SQL;33;33;JUSTE;
+Comptes;liste;Comptes visibles;GET /admin/licences;comptes;3;3;JUSTE;
+Comptes;liste;MRR € par mois;GET /admin/licences;Stripe montant_eur_mois (somme FRONT);(Stripe);n/a;NON MESURABLE;calcul front sur données Stripe ; vide en local
+IA;—;Coût du mois + appels;GET /admin/ia;ia_log;0,25653 € / 60;0,25653 € / 60;JUSTE;
+IA;—;Projection fin de mois;GET /admin/ia;ia_log 7j extrapolé;1,27 €;dérivé (3 j de données);JUSTE (formule);peu de données → projection fragile mais honnête
+IA;—;Crédit Anthropic;(aucun);littéral "—";—;JUSTE;non exposé par l'API, note honnête
+IA;—;Registre modèle par surface;GET /admin/ia;ai_models.SURFACES (code);23 surfaces;statique en code;JUSTE;pas une table ; modèles claude-haiku-4-5 / sonnet-4-6 en dur
+IA;—;Plafonds par compte;GET /admin/ia;comptes (36 quotas);36;36;JUSTE;
+Données;À faire;N choses à faire;GET /admin/circuit;a_faire.total;9;9 items;JUSTE (en soi);mais ≠ tuile Pilotage (5) → voir DISCORDANT
+Données;À faire;dates sonde / contrôle / agents;GET /admin/circuit;source_veille / circuit_controles / ia_log;sonde 24/09 · agents 24/09;source_veille agent max 24/09 ; ia_log agent_source 24/09;JUSTE;dates vraies = scheduler gelé depuis le 24/09
+Données;À faire;N sources jamais vérifiées attendent les agents;GET /admin/circuit;circuit_etats (not passage);11;11 (déf. circuit) vs 4 (déf. etat_source);TROMPEUR;même mot "jamais vérifiée"=11 ici / =4 sur /admin/sources ; "attendent les agents" alors que circuit_etats dit "pas une action attendue" et certaines ne sont pas surveillées
+Données;Sources;Toutes N (vitrine);GET /admin/circuit;data_sources WHERE_AFFICHEES;100;99 affichées + 1 interne = 100;JUSTE;
+Données;Sources;compteur sources vitrine (résumé);GET /admin/circuit;catalogue;99;99;JUSTE;99 (hors interne) — distinct du 100 ci-dessus, par conception
+Données;Sources;pastilles états (à jour/nouvelle/échue/jamais/panne);GET /admin/circuit;circuit_etats;83/5/1/11/0;83 a_jour recomputé;JUSTE (par moteur circuit);vocabulaire circuit ≠ vocabulaire /admin/sources (4 états) — voir TROMPEUR jamais-vérifiée
+Données;Sources;Sonde — interrogeables / dernier passage;GET /admin/circuit;source_veille;81 · 24/09;live;JUSTE;reflète le gel du scheduler
+Données;Sources;Agents — plafond / prochain dimanche;GET /admin/circuit;LABUSE_AGENT_PLAFOND_EUR;5 € · 18/10;live;JUSTE;
+Données;Sources;Fraîcheur caches — N périmés;GET /sante/fraicheur;clé attendue vs réelle (FRONT .filter);(selon caches);calcul front;JUSTE (présentation);compte calculé au front, pas un champ serveur
+Données;Circuit;Réservoirs — N, N à voir;GET /admin/circuit;compteurs;100 · 6;data_sources;JUSTE;
+Données;Circuit;Robinets — N, N à regarder;GET /admin/circuit;registre ROBINETS + circuit_ecarts/eau;169 · 1;ROBINETS=169 ; 1 = eau ancienne;JUSTE;mandat "169 robinets, 1 à regarder" confirmé
+Données;Circuit;Pompe — N moteurs, N chiffres;GET /admin/circuit;registre CHIFFRES (FRONT Set filter Boolean);29 · 286;moteurs=29 ; CHIFFRES=286;JUSTE;front filtre le moteur null → 29 (= serveur /pompe) ; mandat "29 moteurs, 286 chiffres" confirmé
+Données;Circuit;Run servi / candidat;GET /admin/circuit;manifeste;q_v16 / aucun;q_v16 ; aucun run plus récent;JUSTE;
+Données;Circuit;Vérifier que tout coule — N fuites;GET /admin/circuit;circuit_ecarts statut='ouvert';dernier contrôle=1 / live compteurs=0;ouverts=0 (3 soldés);COSMÉTIQUE;snapshot du contrôle (1 trouvée puis soldée) ≠ compteur live (0) — divergence instantané/live
+Données;Circuit;verrous N/N;GET /admin/circuit;compteurs_coherence.verrous ?? 22;24;len(VERROUS)=24;JUSTE;le repli front ??22/??30 (Resume.tsx) n'est jamais atteint (Resume non monté) ; docstrings "/16" "/22" périmés sans impact écran
+Données;Cohérence;Passages du banc;GET /admin/coherence;coherence_runs;0 (vide);coherence_runs=0;JUSTE (vide);onglet vide car banc nocturne V6b n'a jamais tourné ici
+Données;Cohérence;Golden posés;GET /admin/coherence;glob tests/golden/coherence/*.json;7;7 fichiers;JUSTE;chemin fichier ECARTS.csv = chemin local Mac (fragile VPS)
+Données;Flux(détail);Dernière bascule;GET /admin/flux;run_bascule_journal;05/09 q_v12→q_v11_m137;dernière ligne journal = 05/09;FAUX;la bascule q_v16 (05/10, servie) n'est PAS dans run_bascule_journal → indicateur périmé d'un mois
+Horloge;—;jobs posés / attendus;GET /admin/cron;state files + jobs.JOBS;7 / 25;attendus=25 ; 18 jamais posés;JUSTE (chiffre);voir HORLOGES.csv — aucun lanceur automatique local

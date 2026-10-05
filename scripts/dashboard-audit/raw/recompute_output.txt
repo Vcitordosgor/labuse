@@ -1,0 +1,37 @@
+### garde CHASSE-2 : backends actifs
+1
+
+### A. licences_actives / masqués / visibles (comptes.py _MASQUE_SQL)
+licences_actives (attendu écran 1) = 1
+masqués (attendu 33)            = 33
+visibles (attendu 3)            = 3
+licences total non-résilié (36) = 36
+
+### B. IA mois (attendu écran 0.25653 € / 60 appels)
+0.25653 € / 60 appels
+
+### C. sources affichées (vitrine 99) + interne (reservoirs 100)
+vitrine (99)        = 99
+vitrine + interne (100) = 100
+
+### D. courrier déposables (26) + plus ancien (29 ouvrés ≈ 41 cal.)
+déposables=26
+plus_vieux=2026-08-25 soit 41 j calendaires
+
+### E. fuites / eau ancienne (compteurs live)
+ecarts_ouverts=0 soldés=3
+coherence_runs=0
+
+### F. verrous — dernier contrôle journalisé (le dashboard LIT ce passage, ne le rejoue pas)
+dernier verrous: 2026-10-05 17:43:17.44832+04 casses=["G8"] joues=32
+
+### G. bascule — run_bascule_journal (alimente /admin/flux 'dernière bascule')
+dernière bascule journalisée: 2026-09-05 21:42:44.550967+04 q_v12→q_v11_m137 (arriere)
+   manifeste servi (fichier) : run_label=q_v16 maj=2026-10-05 15:41:45.117114+04
+   >>> si la dernière bascule journalisée ≠ run servi du manifeste : indicateur 'dernière bascule' PÉRIMÉ.
+
+### H. registres statiques (code, pas la base) : chiffres/moteurs/robinets/verrous
+CHIFFRES=286 (écran 286) | moteurs=29 (écran 29) | ROBINETS=169 (écran 169) | VERROUS=24 (écran 24) | JOBS=25 (horloge attendus 25)
+
+### I. déploiement — git rev-list depuis le marqueur config/deploiement.json
+marqueur sha=8564b1e7381db9aa10d51a44a306d113aba3349e (baseline 21/09) ; avance=857 commits (écran 857)
