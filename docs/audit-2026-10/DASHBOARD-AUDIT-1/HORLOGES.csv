@@ -1,0 +1,12 @@
+horloge;declaree_ou;lanceur_local_mac;lanceur_vps;commande;dernier_passage_enregistre_ou;derniere_execution_reelle;resultat;verdict
+sonde-sources;src/labuse/jobs.py (0 3 * * *, 07:00 Réunion);AUCUN (ni cron, ni launchd, ni systemd ne lance `labuse jobs run`);cron /etc/cron.d/labuse (généré par deploy.sh, non prouvé installé);labuse jobs run sonde-sources;state .local/state/jobs/sonde-sources.json + source_veille.dernier_passage_at;2026-09-22 (state) / 24-09 (DB api/page);ok;NE TOURNE NULLE PART auto → gel 24/09
+agents-sources;jobs.py (0 19 * * 0, dim 23:00, 1 sem/2);AUCUN;cron (même chaîne);labuse jobs run agents-sources;PAS de state file ; source_veille methode=agent + ia_log kind=agent_source;2026-09-24 (DB);ok;NE TOURNE NULLE PART auto → "agents 24/09"
+filtres-sources;jobs.py (5 3 * * *, 07:05);AUCUN;cron;labuse jobs run filtres-sources;state filtres-sources.json;AUCUN state (jamais);—;NE TOURNE NULLE PART
+coherence-robinets;jobs.py (25 3 * * *, 07:25);AUCUN;cron;labuse jobs run coherence-robinets;state coherence-robinets.json + circuit_journal;2026-09-22;ok;NE TOURNE NULLE PART auto
+ingest-bodacc;jobs.py (40 2 * * *, 06:40);AUCUN;cron;labuse jobs run ingest-bodacc;data_sources.last_sync_at (BODACC%);via data_sources;—;NE TOURNE NULLE PART
+ingest-dpe;jobs.py (0 0 12 * *, le 12);AUCUN;cron;labuse jobs run ingest-dpe;data_sources.last_sync_at (DPE ADEME%);via data_sources;—;NE TOURNE NULLE PART
+ingest-sirene;jobs.py (0 0 7 * *, le 7);AUCUN;cron;labuse jobs run ingest-sirene;data_sources.last_sync_at (SIRENE%);via data_sources;—;NE TOURNE NULLE PART
+ingest-sitadel;jobs.py (30 0 10 * *, le 10);AUCUN;cron;labuse jobs run ingest-sitadel;ingestion_runs (974 SDES Sitadel3%);via ingestion_runs;—;NE TOURNE NULLE PART
+sync-gpu;jobs.py (0 0 15 * *, le 15);AUCUN;cron;labuse jobs run sync-gpu;state sync-gpu.json;AUCUN state;—;NE TOURNE NULLE PART
+banc nocturne V6b (coherence-banc);jobs.py (45 23 * * *, 03:45);AUCUN;cron;labuse jobs run coherence-banc;state coherence-banc.json + coherence_runs;AUCUN (coherence_runs=0);—;NE TOURNE NULLE PART → onglet Cohérence VIDE
+capture Radar (radar-cycle);jobs.py (0 0, radar-cloche/radar-cycle);AUCUN;cron;labuse jobs run radar-cycle;state radar-cycle.json;2026-08-30;ok;NE TOURNE NULLE PART auto (gelé 30/08)
