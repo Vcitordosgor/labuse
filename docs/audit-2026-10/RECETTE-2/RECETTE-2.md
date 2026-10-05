@@ -47,8 +47,28 @@ Légende : ✅ fait+capturé · 🚧 en cours · ⬜ non commencé · ⚠ à vé
 
 > **Test pré-existant rouge (hors périmètre)** : `src/lib/layersCoquilles.test.ts` (« i » BPE attend `35 546`) échoue **déjà sur `origin/main`** (constaté par stash) — le texte `i` de la couche BPE (`lib/layers.ts`) ne porte aucun compte. Non causé par ce lot, non dans le périmètre T. Signalé ; à rattacher au lot C (couches) ou à un correctif données.
 
-### A — Fiche parcelle
-A1…A13 : ⬜ (non commencé)
+### A — Fiche parcelle  — **commit lot A** (témoins AM0097 zone N · BZ1065 zone Uh)
+| Pt | Sujet | État | Preuve / note |
+|---|---|---|---|
+| A1 | En-tête sticky : coins arrondis du haut visibles, rien de rogné | ✅ | `.tete-collee` : coins hauts carrés → carte pleinement arrondie (border-radius 6px + bordure haute), collée top:0 (aucun trou noir). `A1_entete_scroll.png` |
+| A2 | Branchement borné (circuit verrous + LIGNES.csv, 2 témoins) | ✅ | **V5d vert** (75 données maille parcelle, toutes déclarées) ; 120 lignes LIGNES.csv **toutes rendues ou sans objet motivé, 0 absent sans motif** (tableau A2 ci-dessous). 3 verrous rouges V1c/G5/G8 hors périmètre fiche |
+| A3 | Identité « Administration publ… » / « COMMUNE DE SA… » → T4 | ✅ | `.t-sub`/`.t-val` wrap (plus de « … ») ; « COMMUNE DE SAINT-PAUL » sur 2 lignes, mot entier |
+| A4 | Bâti : drapeau « Sources discordantes » (faîtage 4,1 vs BD TOPO 11,1) + titre « 2 bâtiments » | ✅ (live) | Nouveau motif directionnel « faîtage sous la hauteur BD TOPO » (hauteur_lidar.py) — **vérifié live** : `discordante:true`. Titre : BD TOPO=2 ∧ RNB=2 → « 2 bâtiments » (sous-titre + Verdict). `A4_bati.png` |
+| A5 | Urbanisme : sous-titre tronqué (a) · 6 tuiles non calibré zones A/N (b) · servitude EL10 (c) | ✅ | (a) T4 `.t-sub` ; (b) zone N : 6 tuiles vides → seul paragraphe servi `z.note` ; (c) `fmtSup` → « Servitude EL10 » (code brut `EL10_Reunion_ass` retiré ; EL10 sans `nomsuplitt` en base = lacune donnée notée). `A5_urbanisme.png` |
+| A6 | Risques : vigilance « Pente forte tres_fort (~56 %) » vs pente unique 19,1° (34,6 %) | ⚠ **non fait (live)** | Origine trouvée : `PenteLayer.evaluate` (phase1.py:891) prend le **MAX des slope_pct des cellules grille** (56,2 %) au lieu de la pente parcelle `pente_moy_deg`. **Mais la vigilance est SERVIE par le run épinglé q_v16** (`f.lines`/served_cascade), pas calculée en direct → la corriger exige de modifier la cascade **puis de rejouer un run**, interdit (Étape 0 « aucun run »). Root cause + correctif documentés ; à appliquer + re-run par Vic |
+| A7 | Réseaux : « Assainis. » (a) · viabilisation en doublon bandeau+ligne (b) | ✅ | (a) « Assainissement » ; (b) badge bandeau retiré, la ligne Verdict reste. `A7_reseaux.png` |
+| A8 | Fiscalité « 5 + 2.5 % » → virgule | ✅ | « 5 + 2,5 % », TVA 8,5 %, ORT 25/04/2022. `A8_fiscalite.png` |
+| A9 | Marché : sous-titre en double · « Aucun signal » · en-tête « — » vs 4 848 €/m² | ✅ | sous-titre une fois (MicroSpark sans label) ; « Aucun signal » retiré ; en-tête = `faisa.marche.median` → **4 848 €/m²** quand DVF secteur absent. `A9_marche.png` |
+| A10 | Quartier : revenu en colonne (a) · dates ISO (b) · ECOLE… tronqué (c) · 2 boutons Étude de zone (d) · habitants/ménages (e) | ✅ | (a) `.f-row` grid `minmax(0,1fr) auto` → « 13 666 € » sur 1 ligne ; (b) `fmtDateNum` sur PermitsProximityBlock + DepotsBlock (+ historique autour) ; (c) `break-words` ; (d) un seul bouton « Étude de zone » ; (e) **même endpoint `/outils/etude-zone` même rayon que l'outil → chiffres identiques par construction**. `A10_quartier.png` |
+| A11 | Simulation : sous-titre tronqué → T4 | ✅ | résolu par le wrap `.t-sub` (lot T) |
+| A12 | Encart « Analyse LABUSE » : Q_V16 = version servie = run le + récent · accordéon repliable | ✅ | **q_v16 = served_run.txt = served_manifest.scoring_run = MAX(computed_at) score_labuse_runs** (OUI/OUI, tableau A12). Encart repliable : `<Chevron>` + état collapse ajoutés (AnalyseLabuseCard + carte verdict) |
+| A13 | Assistant « momentanément indisponible » (a) · bouton « Voir l'entièreté » (b) | ✅ | (a) **pas un câblage** : `POST /parcels/{idu}/ask` répond 200 `degraded` · `reason: "solde de crédits Anthropic épuisé"` → clé/crédit `.env` à recharger (dit sans contourner) ; (b) bouton retiré |
+
+**Tableau A2 — branchement (extrait, 2 témoins) :** V5d vert ; 120 lignes testées contre `GET /parcels/{idu}` (+ sous-endpoints `/exposition`, `/modules/faisabilite/{idu}`). Zéro absent sans motif. Absences motivées : AM0097 **zone N non constructible** (potentiel/capacité/bilan nuls), PP (pas PM), pas de DVF/bâti classé/fibre immeuble. BZ1065 (Uh) sert toute la chaîne. Détail complet des ~25 champs « sans objet » conservé dans l'investigation.
+
+**Tableau A12 — version servie :** `config/served_run.txt`=q_v16 · `served_manifest.json.scoring_run`=q_v16 · `GET /config/run`={run:q_v16} · `score_labuse_runs` MAX(computed_at)=q_v16 (2026-10-05). Aucun run plus récent non servi.
+
+**Arbitrages lot A :** A6 tranché « non fait live » (contrainte « aucun run ») avec correctif documenté — seul point du lot non constatable. A4 : le drapeau >3 m de FICHE-FIX-2 n'est PAS réintroduit tel quel (16 % de faux positifs) ; motif **directionnel** ciblé (faîtage SOUS BD TOPO = sens impossible). A5c : EL10 n'a pas de `nomsuplitt` servi (lacune d'ingestion GPU) → libellé officiel de catégorie par `fmtSup`, code exact conservé dans le `i`.
 
 ### B — Fiche commune
 B1…B7 : ⬜

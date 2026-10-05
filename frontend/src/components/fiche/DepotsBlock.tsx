@@ -10,6 +10,7 @@
  */
 import { BlocIndisponible } from './BlocIndisponible'
 import { GroupLabel, FactNote } from './primitives'
+import { fmtDateNum } from '../../lib/format'
 
 type Ligne = { count: number; dernier: string | null; maille?: string }
 type Depots = {
@@ -43,7 +44,7 @@ export function DepotsBlock({ d }: { d: Depots }) {
           <p className="text-[11px] leading-snug text-txt">
             <span className="text-txt-dim">Sur cette parcelle :</span>{' '}
             <b>{d.parcelle.count}</b> dépôt{d.parcelle.count > 1 ? 's' : ''} sur {mois} mois
-            {d.parcelle.dernier && <span className="text-txt-mut"> · dernier {d.parcelle.dernier}</span>}
+            {d.parcelle.dernier && <span className="text-txt-mut"> · dernier {fmtDateNum(d.parcelle.dernier)}</span>}
           </p>
         )}
         {d.secteur && (
@@ -51,7 +52,7 @@ export function DepotsBlock({ d }: { d: Depots }) {
             <span className="text-txt-dim">Sur le secteur :</span>{' '}
             <b>{d.secteur.count}</b> dépôt{d.secteur.count > 1 ? 's' : ''} sur {mois} mois
             <span className="text-txt-mut"> · {d.secteur.maille}</span>
-            {d.secteur.dernier && <span className="text-txt-mut"> · dernier {d.secteur.dernier}</span>}
+            {d.secteur.dernier && <span className="text-txt-mut"> · dernier {fmtDateNum(d.secteur.dernier)}</span>}
           </p>
         )}
       </div>

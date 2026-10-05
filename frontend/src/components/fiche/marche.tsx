@@ -80,8 +80,13 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
   return (
     <RefDrawer id="marche" icon={IC.marche} name="Marché"
       context={contexte}
-      value={dvfSecteur?.mediane_prix_m2 != null ? `${fmtInt(dvfSecteur.mediane_prix_m2)} €/m²` : '—'}
-      micro={<MicroSpark label={contexte} />}>
+      /* RECETTE-2 (A9) — quand le secteur DVF manque (dvf_parcelle null), l'en-tête portait « — »
+         alors que le prix de sortie médian existe (faisa.marche.median) → on l'affiche. */
+      value={dvfSecteur?.mediane_prix_m2 != null ? `${fmtInt(dvfSecteur.mediane_prix_m2)} €/m²`
+        : (mb?.median != null ? `${fmtInt(Number(mb.median))} €/m²` : '—')}
+      /* RECETTE-2 (A9) — le sous-titre « comparables DVF · … » vit dans l'en-tête (context) ; on ne le
+         redouble plus sous la courbe (MicroSpark sans label). */
+      micro={<MicroSpark label="" />}>
       {/* KELFONCIER-FIX-2 (Lot I) — Verdict + Tuiles c3 (médiane par type, servie) + Réglette
           (écart secteur ↔ commune, servi). Aucun prix recalculé. */}
       {(() => {
@@ -114,9 +119,10 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
           </>
         )
       })()}
-      {marcheLines.length
-        ? <div className="flex flex-col gap-1">{marcheLines.map((l, i) => <Line key={i} line={l} hideWeight hideDate />)}</div>
-        : <p className="text-xs text-txt-dim">Aucun signal sur cet onglet.</p>}
+      {/* RECETTE-2 (A9) — « Aucun signal sur cet onglet. » retiré (rien plutôt qu'un aveu vide). */}
+      {marcheLines.length > 0 && (
+        <div className="flex flex-col gap-1">{marcheLines.map((l, i) => <Line key={i} line={l} hideWeight hideDate />)}</div>
+      )}
       {/* FICHE-RANGEMENT-2 Lot 1 — la DERNIÈRE VENTE (fait d'identité du bien) est relocalisée en
           §1 Identité (DerniereVenteBlock composé là) ; Marché ne porte plus que du prix de secteur. */}
 

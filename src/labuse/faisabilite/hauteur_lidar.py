@@ -211,6 +211,13 @@ SEUIL_ECART_EGOUT_BDTOPO_M = 15.0
 # 2 aberrations de coordonnée de l'audit (53 401 m) + les mesures cassées (faîtage ≤ 0, MNS < MNT) :
 # 58 parcelles au total.
 PLAFOND_FAITAGE_ABERRANT_M = 60.0
+# RECETTE-2 (A4, Vic 05/10) — motif DIRECTIONNEL qui manquait : un faîtage LiDAR nettement SOUS la
+# hauteur BD TOPO est physiquement impossible (le faîtage, point haut du toit, est ≥ l'égout ≈ BD TOPO).
+# Témoin AM0097 : faîtage 4,1 m vs BD TOPO 11,1 m (−7 m) — mesure LiDAR cassée, qui échappait aux deux
+# règles DONNEES-FIX-1 (l'égout 2,9 m reste à 8,2 m de BD TOPO < 15 ; le faîtage 4,1 m n'est pas « aberrant »
+# > 60). Ce motif ne RÉINTRODUIT PAS les 16 % de faux positifs de FICHE-FIX-2 (qui flaguaient le faîtage
+# AU-DESSUS de BD TOPO, cas normal des toits en pente) : il ne vise que le sens impossible (faîtage SOUS l'égout).
+SEUIL_FAITAGE_SOUS_BDTOPO_M = 3.0
 
 
 def discordance_hauteur(lid: dict | None) -> dict:
@@ -234,8 +241,13 @@ def discordance_hauteur(lid: dict | None) -> dict:
                 if egout is not None and bdtopo is not None else None)
     aberrant = fait is not None and (float(fait) <= 0 or float(fait) > PLAFOND_FAITAGE_ABERRANT_M)
     discord_eg = ecart_eg is not None and abs(ecart_eg) > SEUIL_ECART_EGOUT_BDTOPO_M
-    motif = "faîtage aberrant" if aberrant else ("égout ↔ BD TOPO" if discord_eg else None)
-    return {"discordante": bool(aberrant or discord_eg), "motif": motif,
+    # RECETTE-2 (A4) — faîtage nettement SOUS la hauteur BD TOPO (sens physiquement impossible).
+    discord_fait_bas = (fait is not None and bdtopo is not None
+                        and (float(bdtopo) - float(fait)) > SEUIL_FAITAGE_SOUS_BDTOPO_M)
+    motif = ("faîtage aberrant" if aberrant
+             else "faîtage sous la hauteur BD TOPO" if discord_fait_bas
+             else "égout ↔ BD TOPO" if discord_eg else None)
+    return {"discordante": bool(aberrant or discord_eg or discord_fait_bas), "motif": motif,
             "ecart_egout_bdtopo_m": ecart_eg,
             "ecart_faitage_bdtopo_m": lid.get("ecart_faitage_bdtopo_m")}
 

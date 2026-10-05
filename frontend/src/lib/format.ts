@@ -194,3 +194,24 @@ const ALEA: Record<string, string> = {
 }
 export const fmtAlea = (v: string | null | undefined): string =>
   v == null ? '—' : (ALEA[v.toLowerCase()] ?? v.replace(/_/g, ' '))
+
+/** RECETTE-2 (A5c/T6) — libellé d'une servitude d'utilité publique (SUP) depuis sa catégorie
+ *  (nomenclature nationale GPU). Code connu → libellé officiel ; inconnu → « Servitude <code> »
+ *  (jamais un code brut à underscores comme « EL10_Reunion_ass »). Le code exact reste dans le `i`. */
+const SUP_LABELS: Record<string, string> = {
+  AC1: 'Monuments historiques', AC2: 'Sites inscrits et classés', AC4: 'Secteur sauvegardé / AVAP',
+  AS1: 'Protection des eaux potables et minérales', A1: 'Forêts de protection',
+  A4: "Servitude de passage le long des cours d'eau", A5: "Canalisations d'eau et d'assainissement",
+  EL3: 'Halage et marchepied', EL7: 'Alignement des voies', EL9: 'Accès au rivage',
+  EL11: 'Routes express et déviations', I3: 'Canalisations de gaz', I4: "Lignes électriques",
+  I6: 'Stockage souterrain de gaz', PT1: 'Protection des réceptions radioélectriques',
+  PT2: 'Protection des transmissions radioélectriques', PT3: 'Réseaux de télécommunications',
+  T1: 'Voies ferrées', T5: 'Dégagement des aérodromes', T7: 'Balisage aéronautique',
+  PM1: 'Plan de prévention des risques naturels', PM2: 'Risques technologiques', PM3: 'Risques miniers',
+  INT1: 'Voisinage des cimetières',
+}
+export const fmtSup = (categorie: string | null | undefined): string => {
+  if (!categorie) return 'Servitude'
+  const c = categorie.toUpperCase().trim()
+  return SUP_LABELS[c] ?? `Servitude ${c}`
+}

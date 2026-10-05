@@ -10,7 +10,7 @@
  * Auto-suffisante ; cycle-free.
  */
 import type { Fiche } from '../../lib/types'
-import { fmtInt } from '../../lib/format'
+import { fmtInt, fmtDateNum } from '../../lib/format'
 import { BlocIndisponible } from './BlocIndisponible'
 import { MarcheSecteurBlock } from './MarcheSecteurBlock'
 import { PermitsProximityBlock } from './PermitsProximityBlock'
@@ -42,7 +42,7 @@ export function HistoriqueSiteBlock({ f }: { f: Fiche }) {
           return (
             // KELFONCIER-FIX-1 (Lot C) — le TYPE libellé (Permis d'aménager / Déclaration préalable…) et
             // l'ÉTAT sont servis ; un permis ANNULÉ le DIT (rouge), plus jamais confondu avec une autorisation.
-            <li key={i}>{pm.type_label ?? pm.type ?? 'permis'} — déposé {pm.date_depot ?? pm.date_autorisation ?? '?'}{pm.date_autorisation ? `, autorisé ${pm.date_autorisation}` : ''}
+            <li key={i}>{pm.type_label ?? pm.type ?? 'permis'} — déposé {pm.date_depot ? fmtDateNum(pm.date_depot) : (pm.date_autorisation ? fmtDateNum(pm.date_autorisation) : '?')}{pm.date_autorisation ? `, autorisé ${fmtDateNum(pm.date_autorisation)}` : ''}
               {pm.annule ? <span className="font-medium text-st-ecartee"> · annulé</span>
                 : pm.etat_libelle && pm.etat_libelle !== 'autorisé' && <span className="text-txt-dim"> · {pm.etat_libelle}</span>}
               {note && <span className="text-st-ecartee"> · {note}</span>}
@@ -74,10 +74,10 @@ export function AutourSection({ f, idu }: { f: Fiche; idu: string }) {
   // FICHE-FIX-5 (Lot I) — outils alignés sur l'outil ÉTUDE DE ZONE (ouvert SUR LA PARCELLE, ses deux
   // portes) + Permis / Fiche commune.
   const zPref = { idu, commune: f.commune ?? null, zone: null }
+  // RECETTE-2 (A10/D8) — chemin UNIQUE : un seul bouton « Étude de zone » (les sous-destinations
+  // Chalandise/Particulier fusionnent dans l'outil).
   const outils: OutilSection[] = [
-    { label: 'Étude de zone · Chalandise', data: 'etude-chalandise', principal: true,
-      onClick: () => { const st = useApp.getState(); st.setEtudeZonePrefill({ ...zPref, sous_destination: 'Commerce de détail' }); st.setModule('etude-zone') } },
-    { label: 'Étude de zone · Particulier', data: 'etude-particulier',
+    { label: 'Étude de zone', data: 'etude-zone', principal: true,
       onClick: () => { const st = useApp.getState(); st.setEtudeZonePrefill({ ...zPref, sous_destination: '' }); st.setModule('etude-zone') } },
   ]
   if (f.commune) {

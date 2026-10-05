@@ -436,8 +436,12 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 /* FICHE-FIX-5 (Lot B) — l'en-tête collant est OPAQUE jusqu'au bord haut du panneau (aucune marge
    au-dessus) : coins hauts CARRÉS, pas de bordure haute → le fond plein --bg-2 couvre tout le bord,
    on ne voit plus les boutons de carte derrière. (Annule la carte flottante de FIX-4 A1.) */
+/* RECETTE-2 (A1, Vic 05/10) — les COINS ARRONDIS DU HAUT doivent être visibles (FICHE-FIX-5 les avait
+   carrés, d'où le « haut rogné · trou noir au-dessus »). On restaure une carte pleinement arrondie +
+   bordure haute ; le bloc reste collé top:0 (fond --bg-2 opaque, aucun contenu ne défile au-dessus),
+   les petits arcs du haut laissent voir le fond opaque du panneau — des coins, pas un trou. */
 .fiche-v6 .tete-collee { position:sticky; top:0; z-index:20; background:var(--bg-2);
-  border:0.5px solid var(--f-linehead); border-top:0; border-radius:0 0 6px 6px;
+  border:0.5px solid var(--f-linehead); border-radius:6px;
   box-shadow:0 3px 10px -6px rgba(0,0,0,.55); }
 .fiche-v6 .head-top { padding:13px 14px; display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
 .fiche-v6 .eyebrow { font-size:9.5px; letter-spacing:.11em; color:var(--txt-off); }
@@ -563,7 +567,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 /* RECETTE-2 (T4) — plus de troncature « … » : sous-titre et valeur des tuiles passent sur 2+ lignes. */
 .fiche-v6 .t-sub { font-size:11px; color:var(--txt-mut); margin-top:2px; white-space:normal; overflow:visible; text-overflow:clip; overflow-wrap:anywhere; }
 .fiche-v6 .t-right { display:flex; align-items:center; gap:9px; flex-shrink:0; min-width:0; }
-.fiche-v6 .t-val { font-size:12.5px; color:var(--txt); white-space:normal; overflow:visible; text-overflow:clip; overflow-wrap:anywhere; word-break:break-word; max-width:140px; text-align:right; }
+.fiche-v6 .t-val { font-size:12.5px; color:var(--txt); white-space:normal; overflow:visible; text-overflow:clip; overflow-wrap:break-word; max-width:150px; text-align:right; }
 .fiche-v6 .t-val.absent { color:var(--txt-faint); }
 
 /* ════════ RETOURS-20 Z1 — grammaire partagée des accordéons (maquette-fiche-parcelle-accordeons.html).
@@ -579,10 +583,12 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
    ÉCRASAIT le libellé (« Nature du toit » réduit à 0 px, coupé). On borne la colonne du libellé
    (auto, ne descend plus sous son contenu) et on laisse la valeur RETOMBER À LA LIGNE plutôt que
    déborder du cadre — les nombres, courts, ne cassent jamais. Marges/graisses inchangées (cohérence). */
-.fiche-v6 .f-row { display:grid; grid-template-columns:auto 1fr; gap:3px 14px; align-items:baseline; padding:8px 0; border-bottom:0.5px solid var(--line); }
+/* RECETTE-2 (A10a) — le libellé (col. flexible) wrappe ; la VALEUR (col. auto) garde sa largeur
+   naturelle et ne se brise plus chiffre par chiffre (« 13 666 € » et non « 1/3/6/6/6 € »). */
+.fiche-v6 .f-row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:3px 14px; align-items:baseline; padding:8px 0; border-bottom:0.5px solid var(--line); }
 .fiche-v6 .f-row:last-child { border-bottom:0; }
 .fiche-v6 .f-row > .l { font-size:13px; color:var(--txt-dim); min-width:0; overflow-wrap:anywhere; }
-.fiche-v6 .f-row > .v { font-family:var(--mono); font-size:13px; color:var(--txt-hi); text-align:right; font-variant-numeric:tabular-nums; min-width:0; overflow-wrap:anywhere; }
+.fiche-v6 .f-row > .v { font-family:var(--mono); font-size:13px; color:var(--txt-hi); text-align:right; font-variant-numeric:tabular-nums; overflow-wrap:normal; }
 .fiche-v6 .f-row > .v small { font-family:var(--mono); font-size:11.5px; color:var(--txt-dim); font-weight:400; }
 .fiche-v6 .f-row > .v.warn { color:var(--amber); }
 .fiche-v6 .f-row > .v.mute { color:var(--txt-faint); }

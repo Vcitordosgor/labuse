@@ -102,7 +102,7 @@ export function AutourZoneBlock({ idu }: { idu: string }) {
               <div className="mt-1 flex flex-col gap-1">
                 {data.equipements.map((e, i) => (
                   <div key={i} className="flex items-center justify-between gap-2 text-[11.5px]">
-                    <span className="truncate text-txt">
+                    <span className="min-w-0 break-words text-txt">
                       {e.domaine} <span className="text-txt-mut">— {e.nom}</span>
                     </span>
                     {e.temps_min != null && <span className="shrink-0 font-mono text-[11px] text-txt-hi">{e.temps_min} min</span>}

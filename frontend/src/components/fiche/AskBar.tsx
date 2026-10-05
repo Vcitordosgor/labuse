@@ -177,15 +177,7 @@ export function AskBar({ idu, startOpen, onClose }: { idu: string; zone?: string
         </div>
       )}
 
-      {/* FIX post-validation E : quand une réponse occupe l'espace, un lien CLAIR replie toute la
-          zone IA (réponse comprise) et rend la place à la fiche. La réponse reste gardée — rouvrir
-          « ✦ Demander à l'IA » la ré-affiche (cache inchangé, aucun nouvel appel). */}
-      {d && !ask.isPending && (
-        <button data-askbar-voir-fiche onClick={close}
-          className="mt-2 flex min-h-7 w-full items-center justify-center gap-1 rounded-lg border border-violet/30 bg-violet/[0.06] py-1.5 text-[11px] font-medium text-violet transition-colors duration-quick hover:border-violet/60 hover:bg-violet/10">
-          Voir l'entièreté de la fiche →
-        </button>
-      )}
+      {/* RECETTE-2 (A13b) — bouton « Voir l'entièreté de la fiche → » retiré. */}
     </div>
   )
 }

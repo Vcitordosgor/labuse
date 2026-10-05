@@ -1482,7 +1482,13 @@ export function Fiche({ idu }: { idu: string }) {
                 S'omet si rien d'évaluable (couche bâtiments non ingérée → le_bien absent). */}
             {f.le_bien?.disponible && (
               <RefDrawer id="bati" icon={IC.faisa} name="Bâti"
-                context={f.le_bien.occupation_label || 'bâti existant'}
+                /* RECETTE-2 (A4) — quand BD TOPO et RNB s'accordent sur N bâtiments, le sous-titre dit
+                   « N bâtiments » (cohérent avec le badge) plutôt qu'un « Présence de bâti à vérifier » vague. */
+                context={(() => {
+                  const nb = f.le_bien.nb_batiments
+                  const nbRnb = Array.isArray(f.le_bien.rnb) ? f.le_bien.rnb.length : null
+                  return (nb != null && nb === nbRnb && nb >= 1) ? `${nb} bâtiment${nb > 1 ? 's' : ''}` : (f.le_bien.occupation_label || 'bâti existant')
+                })()}
                 value={f.le_bien.nb_batiments != null && f.le_bien.nb_batiments > 0
                   ? <Badge ton="vert">{f.le_bien.nb_batiments} bâtiment{f.le_bien.nb_batiments > 1 ? 's' : ''}</Badge>
                   : <Badge ton="vert">terrain nu</Badge>}>
@@ -1740,7 +1746,8 @@ export function Fiche({ idu }: { idu: string }) {
                   const tuiles: Tuile[] = []
                   if (tfpb != null) tuiles.push({ label: 'Taxe foncière', valeur: <>{nf(tfpb)} <small>%</small></>, sous: 'part communale' })
                   if (ta && (ta.taux_communal_pct != null || ta.taux_departemental_pct != null))
-                    tuiles.push({ label: "Taxe d'aménagement", valeur: <>{ta.taux_communal_pct ?? '—'} + {ta.taux_departemental_pct ?? '—'} <small>%</small></>, sous: 'commune · dépt' })
+                    /* RECETTE-2 (A8) — format FR : virgule décimale (« 5 + 2,5 % » et non « 5 + 2.5 % »). */
+                    tuiles.push({ label: "Taxe d'aménagement", valeur: <>{ta.taux_communal_pct != null ? ta.taux_communal_pct.toLocaleString('fr-FR') : '—'} + {ta.taux_departemental_pct != null ? ta.taux_departemental_pct.toLocaleString('fr-FR') : '—'} <small>%</small></>, sous: 'commune · dépt' })
                   if (zonageVal) tuiles.push({ label: 'Zonage A/B/C', valeur: zonageVal, sous: 'PTZ · loyers' })
                   if (tvaM) tuiles.push({ label: 'TVA', valeur: `${tvaM[1]} %`, sous: 'DOM · 2,1 % LLS' })
                   return (

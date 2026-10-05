@@ -82,7 +82,11 @@ export function BatiBlock({ f }: { f: Fiche }) {
     <div className="flex flex-col gap-3" data-le-bien>
       {/* Verdict — restitution de faits servis (occupation, emprise, hauteur), aucun recalcul. */}
       {bati ? (
-        <Verdict ton="vert" reponse={b.occupation_label || `${nb ?? ''} bâtiment${(nb ?? 0) > 1 ? 's' : ''}`}
+        /* RECETTE-2 (A4) — quand BD TOPO et RNB s'accordent sur un compte clair (N ≥ 1), le titre dit
+           « N bâtiments » plutôt qu'un « Présence de bâti à vérifier » vague (bande peu_bati sur l'emprise). */
+        <Verdict ton="vert" reponse={(nb != null && nb === nbRnb && nb >= 1)
+          ? `${nb} bâtiment${nb > 1 ? 's' : ''}`
+          : (b.occupation_label || `${nb ?? ''} bâtiment${(nb ?? 0) > 1 ? 's' : ''}`)}
           contexte={[emprise > 0 ? `emprise ${fmtInt(emprise)} m²` : null,
             faitageSourced ? `faîtage ${fmtDec(b.hauteur_faitage_m)} m mesuré (LiDAR)` : null].filter(Boolean).join(' · ') || undefined} />
       ) : (
@@ -107,6 +111,8 @@ export function BatiBlock({ f }: { f: Fiche }) {
           <p className="mt-0.5 text-[11px] leading-snug text-amber">
             {b.hauteur_discordance_motif === 'faîtage aberrant'
               ? <>Faîtage mesuré {fmtDec(b.hauteur_faitage_m)} m — valeur physiquement impossible, mesure à écarter.</>
+              : b.hauteur_discordance_motif === 'faîtage sous la hauteur BD TOPO'
+              ? <>Faîtage LiDAR {fmtDec(b.hauteur_faitage_m)} m sous la hauteur BD TOPO {fmtDec(b.hauteur_bdtopo_m)} m — un faîtage ne peut pas être sous l'égout : mesure LiDAR à vérifier sur photo aérienne.</>
               : <>Égout LiDAR {fmtDec(b.hauteur_egout_m)} m · BD TOPO {fmtDec(b.hauteur_bdtopo_m)} m — écart{b.ecart_egout_bdtopo_m != null ? ` de ${fmtDec(Math.abs(b.ecart_egout_bdtopo_m))} m` : ''} sur la même grandeur, à vérifier sur photo aérienne.</>}
           </p>
         </div>
