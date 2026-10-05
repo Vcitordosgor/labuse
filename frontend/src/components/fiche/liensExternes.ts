@@ -35,3 +35,26 @@ export function pagesJaunes(adresse: string | null | undefined, commune: string 
     commune_seule: !a,
   }
 }
+
+// LIENS-1 — Errial (téléservice IAL de Géorisques) : l'état des risques réglementés, PRÉ-REMPLI.
+// Son appli (bundle vérifié 05/10) lit UNIQUEMENT `?adresse=` au montage (`$route.query.adresse` →
+// `searchAdresse`) : PAS de pré-remplissage par parcelle/IDU côté URL. On passe donc l'adresse exacte
+// quand on l'a, sinon la commune seule (repli annoncé par `commune_seule`, comme Pages Jaunes). Le
+// routeur est en mode hash → la query vit APRÈS le `#/`.
+export function errialUrl(adresse: string | null | undefined, commune: string | null | undefined):
+  { url: string | null; commune_seule: boolean } {
+  const a = (adresse ?? '').trim()
+  const c = (commune ?? '').trim()
+  const ou = a || c
+  if (!ou) return { url: null, commune_seule: true } // ni adresse ni commune → pas de lien
+  return {
+    url: `https://errial.georisques.gouv.fr/#/?adresse=${encodeURIComponent(ou)}`,
+    commune_seule: !a,
+  }
+}
+
+// LIENS-1 — Google Earth : le contour SERVI de la parcelle en KMZ (endpoint back `/parcels/{idu}.kmz`,
+// même géométrie que la carte). Lien relatif (même origine, comme export.pdf) téléchargé au clic.
+export function googleEarthKmzUrl(idu: string): string {
+  return `/parcels/${encodeURIComponent(idu)}.kmz`
+}

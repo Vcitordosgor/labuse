@@ -29,46 +29,68 @@ class ServedRunWriteError(RuntimeError):
     """Écrire dans (ou purger) le run SERVI — interdit. Le service est immuable."""
 
 
+def _regclass_present(conn, nom: str) -> bool:
+    """Table/index présent ? `to_regclass` est une LECTURE de catalogue : aucun verrou de table."""
+    return conn.execute(text("SELECT to_regclass(:n) IS NOT NULL"), {"n": nom}).scalar() is True
+
+
+def _colonne_presente(conn, table: str, col: str) -> bool:
+    """Colonne présente ? Lecture pure d'`information_schema.columns` : aucun verrou de table."""
+    return bool(conn.execute(text(
+        "SELECT 1 FROM information_schema.columns "
+        "WHERE table_name = :t AND column_name = :c"), {"t": table, "c": col}).scalar())
+
+
 def ensure_runs_schema(conn) -> None:
-    """Crée les tables de versionnement + index (idempotent). N'affecte pas `parcel_residuel`."""
-    conn.execute(text("""
-        CREATE TABLE IF NOT EXISTS parcel_residuel_runs (
-          run_seq integer NOT NULL,
-          parcel_id integer NOT NULL REFERENCES parcels(id) ON DELETE CASCADE,
-          taux_emprise_pct integer, pct_potentiel integer, sous_densite boolean,
-          sdp_residuelle_m2 integer, capacite_estimee boolean, cause text,
-          computed_at timestamptz NOT NULL DEFAULT now(),
-          PRIMARY KEY (run_seq, parcel_id))"""))
-    # GEOMETRIE-1 lot B — provenance de l'assiette : 'gabarit' (zone d'implantation, reculs par
-    # côté + PPR rouge découpé) ou 'residuel_legacy' (inset uniforme ∩ U/AU — parcelles que le
-    # gabarit ne sert pas). NULL = run antérieur au lot. Pas de trou, pas de mensonge.
-    conn.execute(text("ALTER TABLE parcel_residuel_runs "
-                      "ADD COLUMN IF NOT EXISTS assiette_source text"))
-    # DONNEES-FIX-1 lot C — provenance des niveaux existants : 'lidar' (égout mesuré), 'bdtopo'
-    # (étages/hauteur déclarés), 'sans' (placeholder). NULL = run antérieur au lot. Ajoutée EN FIN.
-    conn.execute(text("ALTER TABLE parcel_residuel_runs "
-                      "ADD COLUMN IF NOT EXISTS hauteur_source text"))
-    # DONNEES-FIX-1 point 4 — exceptions PLU `modifie_calcul=true` présentes sur la zone mais NON
-    # modélisées (bandes, voies nommées, destination…) : la parcelle les PORTE (JSON texte : liste de
-    # {regle, porte, article, page_pdf}) au lieu de les approximer. NULL = aucune / run antérieur au lot.
-    conn.execute(text("ALTER TABLE parcel_residuel_runs "
-                      "ADD COLUMN IF NOT EXISTS regles_non_modelisees text"))
+    """Crée les tables de versionnement + index (idempotent). N'affecte pas `parcel_residuel`.
+
+    LIENS-1 (lot 0) — BOOT SANS VERROU : chaque DDL est précédé d'un test du CATALOGUE
+    (`to_regclass` / `information_schema` : des lectures pures, aucun verrou de table) et n'est
+    émis QUE s'il manque vraiment. Sur le chemin nominal (schéma déjà posé) AUCUN DDL n'est
+    exécuté → aucun ACCESS EXCLUSIVE : le boot ne se met JAMAIS en file derrière une transaction
+    tenant `parcel_residuel_runs`. Vécu le 05/10 : un `ADD COLUMN IF NOT EXISTS assiette_source`
+    *no-op* a pris un ACCESS EXCLUSIVE, a attendu derrière une transaction ouverte et a figé toutes
+    les lectures du résiduel 8 min. Même recette que `ensure_geom_2975` (commit 70278401) et
+    `_col_presente` (models.py), généralisée à CE step — le dernier au boot touchant une table chaude
+    qui émettait encore des ALTER non gardés."""
+    if not _regclass_present(conn, "parcel_residuel_runs"):
+        conn.execute(text("""
+            CREATE TABLE parcel_residuel_runs (
+              run_seq integer NOT NULL,
+              parcel_id integer NOT NULL REFERENCES parcels(id) ON DELETE CASCADE,
+              taux_emprise_pct integer, pct_potentiel integer, sous_densite boolean,
+              sdp_residuelle_m2 integer, capacite_estimee boolean, cause text,
+              computed_at timestamptz NOT NULL DEFAULT now(),
+              PRIMARY KEY (run_seq, parcel_id))"""))
+    # Trois colonnes additives — l'ALTER n'est émis QUE si la colonne manque (noms issus d'un tuple
+    # littéral fermé : pas d'injection). Chacune prendrait sinon un ACCESS EXCLUSIVE no-op à chaque boot.
+    #  • assiette_source (GEOMETRIE-1 B) : 'gabarit' (zone d'implantation, reculs par côté + PPR rouge
+    #    découpé) ou 'residuel_legacy' (inset uniforme ∩ U/AU). NULL = run antérieur au lot.
+    #  • hauteur_source (DONNEES-FIX-1 C) : 'lidar' (égout mesuré) / 'bdtopo' (déclaré) / 'sans'.
+    #  • regles_non_modelisees (DONNEES-FIX-1 pt4) : exceptions PLU `modifie_calcul` PORTÉES (JSON texte
+    #    : liste de {regle, porte, article, page_pdf}) au lieu d'être approximées. NULL = aucune.
+    for col in ("assiette_source", "hauteur_source", "regles_non_modelisees"):
+        if not _colonne_presente(conn, "parcel_residuel_runs", col):
+            conn.execute(text(f"ALTER TABLE parcel_residuel_runs ADD COLUMN {col} text"))
     # index lecteurs-par-parcelle (les EXISTS/JOIN sur parcel_id) : (parcel_id, run_seq)
-    conn.execute(text("CREATE INDEX IF NOT EXISTS parcel_residuel_runs_pid "
-                      "ON parcel_residuel_runs (parcel_id, run_seq)"))
-    conn.execute(text("""
-        CREATE TABLE IF NOT EXISTS residuel_runs (
-          run_seq integer PRIMARY KEY,
-          label text NOT NULL,
-          is_served boolean NOT NULL DEFAULT false,
-          is_pinned boolean NOT NULL DEFAULT false,      -- reproductibilité entraînement scoring
-          code_commit text, communes text,               -- communes NULL = île entière ; sinon partiel
-          computed_at_min timestamptz, computed_at_max timestamptz,
-          duree_s integer, note text,
-          created_at timestamptz NOT NULL DEFAULT now())"""))
+    if not _regclass_present(conn, "parcel_residuel_runs_pid"):
+        conn.execute(text("CREATE INDEX parcel_residuel_runs_pid "
+                          "ON parcel_residuel_runs (parcel_id, run_seq)"))
+    if not _regclass_present(conn, "residuel_runs"):
+        conn.execute(text("""
+            CREATE TABLE residuel_runs (
+              run_seq integer PRIMARY KEY,
+              label text NOT NULL,
+              is_served boolean NOT NULL DEFAULT false,
+              is_pinned boolean NOT NULL DEFAULT false,      -- reproductibilité entraînement scoring
+              code_commit text, communes text,               -- communes NULL = île entière ; sinon partiel
+              computed_at_min timestamptz, computed_at_max timestamptz,
+              duree_s integer, note text,
+              created_at timestamptz NOT NULL DEFAULT now())"""))
     # AU PLUS UN run servi (index partiel unique) — garantit l'unicité du pointeur.
-    conn.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS residuel_runs_one_served "
-                      "ON residuel_runs (is_served) WHERE is_served"))
+    if not _regclass_present(conn, "residuel_runs_one_served"):
+        conn.execute(text("CREATE UNIQUE INDEX residuel_runs_one_served "
+                          "ON residuel_runs (is_served) WHERE is_served"))
     # GEOMETRIE-1 — si la vue existe déjà sans assiette_source, la remettre au niveau
     # (OR REPLACE n'accepte qu'un ajout en fin de liste — c'est le cas). Idempotent.
     relkind = conn.execute(text(
