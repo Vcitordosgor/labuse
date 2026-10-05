@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Tip } from '../Tip'
 import { Bouton } from '../ui/Bouton'
 import { Badge } from '../ui/Badge'
+import { Chevron } from '../ui/Chevron'
 import { useEffect, useMemo, useState, useRef, type ReactNode } from 'react'
 import { addToPipeline, ajouterParcelle, ApiError, archivePipeline, createProjet, getDossierStatut, getFaisabilite, getFiche, getGabarit, getMoi, getParcelExposition, getPipelineForParcel, getPipelineMeta, getProjets, getWatch, is429, patchPipeline, postSignalement, preDossierUrl, projetsPourParcelle, SOURCE, toggleWatch } from '../../lib/api'
 import { verdictMeta } from '../../lib/status'
@@ -994,7 +995,8 @@ export function Fiche({ idu }: { idu: string }) {
                 <span style={{ fontSize: 10, letterSpacing: 1.4, color: 'var(--lab)', textTransform: 'uppercase' }}>Analyse LABUSE</span>
                 {analyseReplie && <span data-analyse-verdict style={{ fontSize: 14, fontWeight: 600, color: verdict.color }}>{verdict.label}</span>}
               </span>
-              <span className="chev" style={{ color: 'var(--txt-faint)', flexShrink: 0, fontSize: 14, lineHeight: 1 }}>{analyseReplie ? '›' : '⌃'}</span>
+              {/* RECETTE-2 (T8) — chevron UNIQUE partagé (fermé = ◀, ouvert = ▼ vert) comme la fiche commune. */}
+              <Chevron open={!analyseReplie} />
             </button>
             {!analyseReplie && (
             <div data-analyse-corps style={{ padding: '0 16px 15px' }}>
@@ -1491,7 +1493,13 @@ export function Fiche({ idu }: { idu: string }) {
                 S'omet si rien d'évaluable (couche bâtiments non ingérée → le_bien absent). */}
             {f.le_bien?.disponible && (
               <RefDrawer id="bati" icon={IC.faisa} name="Bâti"
-                context={f.le_bien.occupation_label || 'bâti existant'}
+                /* RECETTE-2 (A4) — quand BD TOPO et RNB s'accordent sur N bâtiments, le sous-titre dit
+                   « N bâtiments » (cohérent avec le badge) plutôt qu'un « Présence de bâti à vérifier » vague. */
+                context={(() => {
+                  const nb = f.le_bien.nb_batiments
+                  const nbRnb = Array.isArray(f.le_bien.rnb) ? f.le_bien.rnb.length : null
+                  return (nb != null && nb === nbRnb && nb >= 1) ? `${nb} bâtiment${nb > 1 ? 's' : ''}` : (f.le_bien.occupation_label || 'bâti existant')
+                })()}
                 value={f.le_bien.nb_batiments != null && f.le_bien.nb_batiments > 0
                   ? <Badge ton="vert">{f.le_bien.nb_batiments} bâtiment{f.le_bien.nb_batiments > 1 ? 's' : ''}</Badge>
                   : <Badge ton="vert">terrain nu</Badge>}>
@@ -1749,7 +1757,8 @@ export function Fiche({ idu }: { idu: string }) {
                   const tuiles: Tuile[] = []
                   if (tfpb != null) tuiles.push({ label: 'Taxe foncière', valeur: <>{nf(tfpb)} <small>%</small></>, sous: 'part communale' })
                   if (ta && (ta.taux_communal_pct != null || ta.taux_departemental_pct != null))
-                    tuiles.push({ label: "Taxe d'aménagement", valeur: <>{ta.taux_communal_pct ?? '—'} + {ta.taux_departemental_pct ?? '—'} <small>%</small></>, sous: 'commune · dépt' })
+                    /* RECETTE-2 (A8) — format FR : virgule décimale (« 5 + 2,5 % » et non « 5 + 2.5 % »). */
+                    tuiles.push({ label: "Taxe d'aménagement", valeur: <>{ta.taux_communal_pct != null ? ta.taux_communal_pct.toLocaleString('fr-FR') : '—'} + {ta.taux_departemental_pct != null ? ta.taux_departemental_pct.toLocaleString('fr-FR') : '—'} <small>%</small></>, sous: 'commune · dépt' })
                   if (zonageVal) tuiles.push({ label: 'Zonage A/B/C', valeur: zonageVal, sous: 'PTZ · loyers' })
                   if (tvaM) tuiles.push({ label: 'TVA', valeur: `${tvaM[1]} %`, sous: 'DOM · 2,1 % LLS' })
                   return (

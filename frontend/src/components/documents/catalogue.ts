@@ -37,26 +37,26 @@ export const CATALOGUE: DocCatalogue[] = [
     key: 'dossier', nom: 'Dossier', kind: 'parcelle', formats: ['PDF'],
     desc: 'La fiche parcelle complète, imprimable : zonage, capacité, risques, marché, réseaux.',
     cta: 'Générer le dossier',
-    explication: 'La fiche parcelle complète, telle qu’elle est aujourd’hui. Le PDF apparaît dans Mes documents.',
+    explication: '',   // RECETTE-2 (E2) — phrase « La fiche parcelle complète … Mes documents » retirée
   },
   {
     // RECETTE-5 / DOCS-1 §4 — le mot « Financier » disparaît côté client : le document s'appelle « Bilan ».
     key: 'bilan', nom: 'Bilan', kind: 'parcelle', formats: ['PDF', 'Excel'],
     desc: 'Charge foncière, coûts, CA et marge, avec vos propres ratios. Prix connu, ou prix maximum du terrain pour votre marge.',
     cta: 'Générer le bilan',
-    explication: 'Se calcule sur les données de la fiche et vos ratios. Le PDF apparaît dans Mes documents.',
+    explication: 'Se calcule sur les données de la fiche et vos ratios.',
   },
   {
     key: 'apporteur', nom: 'Apporteur', kind: 'parcelle', formats: ['PDF'],
     desc: 'Présenter un terrain à un acheteur en une page : plan, faits, dernière vente, contact.',
     cta: 'Générer l’apporteur',
-    explication: 'Une page depuis la fiche. Le PDF apparaît dans Mes documents.',
+    explication: 'Une page depuis la fiche.',
   },
   {
     key: 'pre-dossier', nom: 'Pré-dossier PC', kind: 'parcelle', formats: ['PDF'],
     desc: 'Ce que le PLU permet et exige ici, l’enveloppe réglementaire et la liste des pièces à joindre.',
     cta: 'Générer le pré-dossier PC',
-    explication: 'Règles du PLU, enveloppe réglementaire, pièces à joindre. Le PDF apparaît dans Mes documents.',
+    explication: 'Règles du PLU, enveloppe réglementaire, pièces à joindre.',
   },
   {
     key: 'gabarit', nom: 'Gabarit', kind: 'parcelle', formats: ['PDF'],
@@ -64,23 +64,19 @@ export const CATALOGUE: DocCatalogue[] = [
     cta: 'Générer le gabarit',
     explication: 'Le plan et les règles, depuis l’outil Gabarit. Absent si le calcul est incomplet.',
   },
-  {
-    key: 'comparables', nom: 'Comparables DVF', kind: 'parcelle', formats: ['PDF'],
-    desc: 'Les ventes comparables autour de la parcelle : date, type, surface, prix, distance, médiane et rayon retenu.',
-    cta: 'Générer les comparables',
-    explication: '',
-    bientot: true,
-  },
+  // RECETTE-2 (E2) — tuile « Comparables DVF » RETIRÉE : aucun export (pas d'endpoint, le tiroir
+  // comparables de la fiche et sa règle de sélection n'existent pas) → on ne laisse pas un document
+  // bancal grisé « bientôt ». À réintroduire le jour où l'export existe.
   {
     key: 'comparatif', nom: 'Comparatif', kind: 'multi', formats: ['PDF'],
     desc: 'Deux ou trois parcelles côte à côte sur les 17 lignes de Comparer, en page paysage.',
     cta: 'Générer le comparatif',
-    explication: 'Les 17 lignes de Comparer, côte à côte. Le PDF apparaît dans Mes documents.',
+    explication: 'Les 17 lignes de Comparer, côte à côte.',
   },
   {
     key: 'etude-zone', nom: 'Étude de zone', kind: 'zone', formats: ['PDF'],
     desc: 'Population, économie, immobilier, foncier, contraintes, équipements, dynamique — autour d’une parcelle, dans le rayon choisi.',
     cta: 'Générer l’étude de zone',
-    explication: 'Les 7 sections et la carte du périmètre. Le PDF apparaît dans Mes documents.',
+    explication: 'Les 7 sections et la carte du périmètre.',
   },
 ]

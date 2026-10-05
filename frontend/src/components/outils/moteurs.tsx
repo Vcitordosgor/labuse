@@ -184,12 +184,11 @@ export function M16() {
   return (
     // §1a — UN SEUL conteneur de défilement (wrapper ModulePanel = overflow-hidden).
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-0.5">
-      <div className="flex items-start gap-1.5">
-        <div className="min-w-0 flex-1">
-          <Banner>Réunissez des parcelles voisines pour voir ce qu'elles valent ensemble : surface, droits à bâtir cumulés, logements possibles, charge foncière. Zoomez et cliquez les parcelles sur la carte (re-cliquez pour retirer), ou saisissez-les ci-dessous.</Banner>
-        </div>
-        {/* RECETTE-1 (F3) — Réinitialiser dès qu'une parcelle est dans l'assiette. */}
-        {msel.length > 0 && <Reinitialiser onReset={resetAll} />}
+      {/* RECETTE-2 (T3) — Réinitialiser SEUL sur sa ligne (haut-droite) ; l'intro vient EN DESSOUS,
+          pleine largeur (plus de bouton côte à côte avec le texte). Présent ssi une parcelle est posée. */}
+      <div className="flex flex-col gap-1.5">
+        {msel.length > 0 && <div className="flex justify-end"><Reinitialiser onReset={resetAll} /></div>}
+        <Banner>Réunissez des parcelles voisines pour voir ce qu'elles valent ensemble : surface, droits à bâtir cumulés, logements possibles, charge foncière. Zoomez et cliquez les parcelles sur la carte (re-cliquez pour retirer), ou saisissez-les ci-dessous.</Banner>
       </div>
       {/* RECETTE-1 (H5, Vic) — ÉTAPE 1 « Choisir les parcelles » : EntreeParcelle (adresse OU clic carte)
           + liste des parcelles retenues (✕), 8 maximum, puis « Vérifier l'assemblage ». */}
@@ -240,9 +239,8 @@ export function M16() {
           <div data-asm-faits className="flex flex-wrap items-center gap-1.5 text-[11px]">
             <span className="rounded-full bg-mint/10 px-2 py-0.5 text-mint">d'un seul tenant</span>
             <span className="rounded-full bg-surface-3 px-2 py-0.5 text-txt-mut">{d.n_proprietaires} interlocuteur(s)</span>
-            {(d.n_personnes_morales > 0 || d.n_particuliers > 0) && (
-              <span className="rounded-full bg-surface-3 px-2 py-0.5 text-txt-mut">{d.n_personnes_morales} personne{d.n_personnes_morales > 1 ? 's' : ''} morale{d.n_personnes_morales > 1 ? 's' : ''} · {d.n_particuliers} particulier{d.n_particuliers > 1 ? 's' : ''}</span>
-            )}
+            {/* RECETTE-2 (D4b) — chip « N personnes morales · N particuliers » retirée (doublon de l'encart
+                « approche propriétaire » plus bas, qui porte le même compte avec son contexte). */}
           </div>
           {(() => {
             const vides = (d.items as Record<string, any>[]).filter((i) => !((i.sdp_m2 as number) > 0))

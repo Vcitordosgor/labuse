@@ -8,6 +8,7 @@
 import { createContext, isValidElement, useContext, useEffect, useRef, type ReactNode } from 'react'
 import { Tip } from '../Tip'
 import { Badge, type BadgeTon } from '../ui/Badge'
+import { Chevron } from '../ui/Chevron'
 import { ApiError } from '../../lib/api'
 import { fmtDateNum, fmtLibelleBrut } from '../../lib/format'
 import { layerLabel } from '../../lib/layers'
@@ -129,8 +130,9 @@ function RefDrawer({ id, name, context, value, valueColor, accent, icon, micro, 
               ? value
               : <span className={`t-val${absent ? ' absent' : ''}`} style={!absent && valueColor ? { color: valueColor } : undefined}>{value}</span>)
             : <span className="t-val absent">—</span>}
-          {/* RECETTE-1 R34 — ouvert → flèche vers le bas (⌄), fermé → chevron latéral (›). */}
-          {children && <span className="chev">{open ? '⌄' : '›'}</span>}
+          {/* RECETTE-2 (T8) — chevron UNIQUE partagé (fermé = ◀, ouvert = ▼ vert), comme la fiche commune
+              (remplace le glyphe texte ⌄/›). */}
+          {children && <Chevron open={open} />}
         </div>
       </button>
       {/* L'intérieur reste plat : paires libellé-valeur (children). Le micro riche (jauge/

@@ -497,19 +497,19 @@ exports[`formes de la fiche (maquette v3) — 12 composants > Tuiles 1`] = `
       style="color: var(--txt-dim); font-size: 10.5px; display: flex; align-items: center; gap: 3px; min-width: 0px;"
     >
       <span
-        style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0px;"
+        style="overflow-wrap: anywhere; min-width: 0px;"
         title="Hauteur max"
       >
         Hauteur max
       </span>
     </div>
     <div
-      style="font-family: var(--mono, ui-monospace, Menlo, monospace); font-variant-numeric: tabular-nums; font-size: 14px; font-weight: 500; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--txt-hi);"
+      style="font-family: var(--mono, ui-monospace, Menlo, monospace); font-variant-numeric: tabular-nums; font-size: 14px; font-weight: 500; margin-top: 2px; overflow-wrap: anywhere; color: var(--txt-hi);"
     >
       4 m
     </div>
     <div
-      style="font-size: 10.5px; color: var(--txt-off); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
+      style="font-size: 10.5px; color: var(--txt-off); margin-top: 1px; overflow-wrap: anywhere;"
       title="art. 10 · p. 59"
     >
       art. 10 · p. 59
@@ -522,19 +522,19 @@ exports[`formes de la fiche (maquette v3) — 12 composants > Tuiles 1`] = `
       style="color: var(--txt-dim); font-size: 10.5px; display: flex; align-items: center; gap: 3px; min-width: 0px;"
     >
       <span
-        style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0px;"
+        style="overflow-wrap: anywhere; min-width: 0px;"
         title="Emprise"
       >
         Emprise
       </span>
     </div>
     <div
-      style="font-family: var(--mono, ui-monospace, Menlo, monospace); font-variant-numeric: tabular-nums; font-size: 14px; font-weight: 500; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--txt-dim);"
+      style="font-family: var(--mono, ui-monospace, Menlo, monospace); font-variant-numeric: tabular-nums; font-size: 14px; font-weight: 500; margin-top: 2px; overflow-wrap: anywhere; color: var(--txt-dim);"
     >
       —
     </div>
     <div
-      style="font-size: 10.5px; color: var(--txt-off); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
+      style="font-size: 10.5px; color: var(--txt-off); margin-top: 1px; overflow-wrap: anywhere;"
       title="non réglementée"
     >
       non réglementée
@@ -547,19 +547,19 @@ exports[`formes de la fiche (maquette v3) — 12 composants > Tuiles 1`] = `
       style="color: var(--txt-dim); font-size: 10.5px; display: flex; align-items: center; gap: 3px; min-width: 0px;"
     >
       <span
-        style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0px;"
+        style="overflow-wrap: anywhere; min-width: 0px;"
         title="Destinations"
       >
         Destinations
       </span>
     </div>
     <div
-      style="font-family: var(--mono, ui-monospace, Menlo, monospace); font-variant-numeric: tabular-nums; font-size: 14px; font-weight: 500; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--amber);"
+      style="font-family: var(--mono, ui-monospace, Menlo, monospace); font-variant-numeric: tabular-nums; font-size: 14px; font-weight: 500; margin-top: 2px; overflow-wrap: anywhere; color: var(--amber);"
     >
       1
     </div>
     <div
-      style="font-size: 10.5px; color: var(--txt-off); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
+      style="font-size: 10.5px; color: var(--txt-off); margin-top: 1px; overflow-wrap: anywhere;"
       title="22 interdites"
     >
       22 interdites

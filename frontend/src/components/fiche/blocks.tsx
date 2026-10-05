@@ -19,16 +19,8 @@ import { Tuiles, type Tuile, InfoI } from './formes'
 // PLU-EXCEPTIONS-1 — l'exception au règlement, affichée sous le « i » de la tuile de règle.
 import { ExceptionTip } from './PluExceptionTip'
 
-// FICHE-FIX-4 (Lot F) — les 6 dimensions de règle, en gris « non calibré », pour les zones dont le
-// règlement n'est pas indexé à la lettre dans LABUSE (même gabarit que les zones calibrées).
-const REGLES_NON_CALIBRE: Tuile[] = [
-  { label: 'Hauteur', valeur: '—', sous: 'non calibré', ton: 'gris' },
-  { label: 'Emprise', valeur: '—', sous: 'non calibré', ton: 'gris' },
-  { label: 'Recul voie', valeur: '—', sous: 'non calibré', ton: 'gris' },
-  { label: 'Recul limites', valeur: '—', sous: 'non calibré', ton: 'gris' },
-  { label: 'Pleine terre', valeur: '—', sous: 'non calibré', ton: 'gris' },
-  { label: 'Stationnement', valeur: '—', sous: 'non calibré', ton: 'gris' },
-]
+// RECETTE-2 (A5b) — les 6 tuiles « non calibré » pour les zones A/N sont retirées (décision Vic 05/10) :
+// une zone non indexée affiche désormais le seul paragraphe servi (z.note), pas 6 tuiles vides.
 
 // FICHE-FIX-5 (Lot E) — libellé de règle en forme COURTE (la tuile ne tronque plus).
 function shortReglLabel(l: string): string {
@@ -151,11 +143,12 @@ export function ReglementPluBlock({ rp }: { rp: ReglementPlu }) {
                 }
               })} />
           ) : (
-            // FICHE-FIX-4 (Lot F) — MÊME GABARIT pour les zones non indexées : les 6 tuiles de règles
-            // en gris « non calibré » (au lieu d'un paragraphe gris), le règlement écrit reste lié
-            // (en-tête « voir le règlement ») et les articles éventuels listés sous les tuiles.
+            // RECETTE-2 (A5b, décision Vic 05/10) — pour une zone NON indexée (A/N), on ne montre plus
+            // 6 tuiles « non calibré » vides (FICHE-FIX-4 Lot F) mais le SEUL paragraphe servi
+            // (z.note = « Le règlement des zones agricoles et naturelles n'est pas indexé… »). Le
+            // règlement écrit reste lié (en-tête « voir le règlement »), les articles listés dessous.
             <>
-              <Tuiles cols={3} items={REGLES_NON_CALIBRE} />
+              {z.note && <p className="text-[12px] leading-snug text-txt-mut">{z.note}</p>}
               {z.articles.length > 0 && (
                 <ul className="mt-1 flex flex-col gap-0.5">
                   {z.articles.slice(0, 6).map((a, j) => (
@@ -169,8 +162,8 @@ export function ReglementPluBlock({ rp }: { rp: ReglementPlu }) {
           )}
           {/* DESTINATIONS-1 (X4.2) — la ligne « Destinations » de la zone (résumé + dépliable). */}
           {z.destinations && <ZoneDestinationsLigne d={z.destinations} />}
-          {/* note par zone UNIQUEMENT si elles diffèrent (sinon rendue une fois plus bas) */}
-          {z.note && !noteCommune && <FactNote>{z.note}</FactNote>}
+          {/* RECETTE-2 (A5b) — z.note (phrase zone A/N non indexée) est désormais rendu DANS la branche
+              non-indexée ci-dessus (plus de doublon ici). */}
         </div>
       ))}
       {noteCommune && <FactNote>{noteCommune}</FactNote>}

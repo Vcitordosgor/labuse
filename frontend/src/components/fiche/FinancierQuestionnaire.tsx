@@ -8,6 +8,7 @@ import { useQuery } from '@tanstack/react-query'
 import { getFinancierQuestionnaire, putFinancierQuestionnaire, validerFinancierQuestionnaire,
          type QChamp, type QHorsMarche, type QuestionnaireFinancier } from '../../lib/api'
 import { Bouton } from '../ui/Bouton'
+import { Chevron } from '../ui/Chevron'
 
 const MINT = '#4ADE80'
 const CARD = '#0C1410'
@@ -362,7 +363,8 @@ export function FinancierQuestionnaire({ idu, onClose }: { idu: string; onClose:
                         onClick={() => setAffinerOuvert((s) => ({ ...s, [etape]: !ouvert }))}
                         style={{ background: 'none', border: 0, color: MINT, cursor: 'pointer',
                           fontSize: 12.5, padding: '6px 0', display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span>{ouvert ? '▾' : '▸'}</span>
+                        {/* RECETTE-2 (T8) — chevron UNIQUE partagé (remplace le glyphe texte ▾/▸). */}
+                        <Chevron open={ouvert} />
                         <span>Affiner les hypothèses ({affiner.length})</span>
                         {/* RECETTE-11 B3 — l'en-tête dit combien de valeurs sont MODIFIÉES. */}
                         {modifies > 0

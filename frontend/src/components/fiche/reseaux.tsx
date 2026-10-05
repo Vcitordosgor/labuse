@@ -18,7 +18,6 @@ import { BlocIndisponible } from './BlocIndisponible'
 import { ViabilisationBlock, assainissementResume } from './ViabilisationBlock'
 import { GestionnairesBlock } from './GestionnairesBlock'
 import { IC, RefDrawer, GroupLabel } from './primitives'
-import { Badge } from '../ui/Badge'
 // KELFONCIER-FIX-2 (Lot H) — maquette v3 : Verdict + CasesEtat (glance eau·élec / fibre / bus /
 // assainissement), le détail (accès, gestionnaires, viabilisation…) reste rendu en dessous.
 import { Verdict, CasesEtat, type CaseEtat, Lignes, Ligne, InfoI } from './formes'
@@ -56,8 +55,7 @@ export function ReseauxSection({ f }: { f: Fiche; idu: string }) {
   // mappe plus band→libellé/ton en dur. Repli neutre « à confirmer » si non servi.
   const viabMot = f.viabilisation ? { mot: f.viabilisation.mot ?? 'à confirmer', ton: f.viabilisation.ton ?? 'neutre' } : null
   const assain = assainissementResume(f.anc)
-  const viabBadge = viabMot ? <Badge ton={viabMot.ton}>eau/élec {viabMot.mot}</Badge>
-    : (f.gestionnaires ? <Badge ton="neutre">réseaux renseignés</Badge> : undefined)
+  // RECETTE-2 (A7b) — le badge « eau/élec … » du bandeau est retiré (doublon de la ligne Verdict).
   const viabContext = (f.gestionnaires || f.viabilisation || f.anc)
     ? `Assainissement : ${assain.court}` : null
   // ① ACCÈS — le VERDICT vient du moteur `acces` (source unique). Plus de phrase codée en dur.
@@ -69,10 +67,13 @@ export function ReseauxSection({ f }: { f: Fiche; idu: string }) {
   if (f.fibre) cases.push({ etat: f.fibre.ftth ? 'ok' : (f.fibre.etat === 'servi' ? 'ko' : 'q'), label: 'Fibre',
     valeur: f.fibre.ftth ? 'FttH' : (f.fibre.distance_m != null ? `${f.fibre.distance_m} m` : '—') })
   if (trans?.arret) cases.push({ etat: 'ok', label: 'Bus', valeur: fmtDistanceM(trans.arret.distance_m) })
-  cases.push({ etat: assain.ton === 'vert' ? 'ok' : 'q', label: 'Assainis.', valeur: assain.court })
+  cases.push({ etat: assain.ton === 'vert' ? 'ok' : 'q', label: 'Assainissement', valeur: assain.court })
   return (
+    // RECETTE-2 (A7b) — « Viabilisation eau/élec … » était dans le BANDEAU (badge) ET en ligne (Verdict)
+    // plus bas : on garde la LIGNE, on retire le badge du bandeau (plus de doublon). Le contexte
+    // assainissement reste le résumé replié.
     <RefDrawer id="reseaux" icon={IC.viab} name="Réseaux et desserte" context={viabContext}
-      value={viabBadge}>
+      value={undefined}>
       <div className="flex flex-col gap-3">
         {/* KELFONCIER-FIX-2 (Lot H) — Verdict (viabilisation servie) + CasesEtat en glance. Le détail
             (accès, transport, gestionnaires, viabilisation, axes…) reste rendu en dessous, inchangé. */}

@@ -522,10 +522,10 @@ function NotifBell() {
                jamais « à proximité » figé ; un déclencheur ajouté au registre met la phrase à jour
                SEUL. M104 : vocabulaire aligné (« vos secteurs », plus jamais « veille »). */
             <p className="shrink-0 border-b border-line px-[22px] py-3 text-[12.5px] leading-snug text-txt-mut">
+              {/* RECETTE-2 (E4) — « vos secteurs » retiré : la veille secteur n'existe plus. */}
               Ce qui bouge sur <b className="font-semibold text-txt">vos parcelles suivies</b>
               {entete.data?.libelles?.length ? <> — {entete.data.libelles.join(', ')} — </> : ' '}
-              dans <b className="font-semibold text-txt">vos secteurs</b> et sur
-              <b className="font-semibold text-txt"> vos critères</b>. On ne vous prévient que sur ce
+              et sur <b className="font-semibold text-txt">vos critères</b>. On ne vous prévient que sur ce
               qu'on sait réellement détecter.
             </p>
             )}
@@ -562,9 +562,11 @@ function NotifBell() {
                 Surveillance (volet Critères) : la cloche affiche des ÉVÉNEMENTS, rien d'autre.
                 Un renvoi garde la boucle visible depuis ici — aucune régression, tout est là-bas. */}
             <div className="shrink-0 border-t border-line px-[22px] py-2.5">
-              <button data-notif-vers-surveillance onClick={() => { openSurveillance('criteres'); setOpen(false) }}
+              {/* RECETTE-2 (E5) — ouvre la PORTE Radar · Veille (page d'accueil, radarEcran='portes'),
+                  plus l'écran annonces/critères ; libellé « Personnaliser les notifications → ». */}
+              <button data-notif-vers-surveillance onClick={() => { useApp.getState().openRadar(); setOpen(false) }}
                 className="text-[11px] text-mint hover:underline">
-                Régler ce que vous surveillez (parcelles, secteurs, critères) →
+                Personnaliser les notifications →
               </button>
             </div>
           </div>

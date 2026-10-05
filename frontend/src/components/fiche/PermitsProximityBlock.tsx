@@ -11,6 +11,7 @@ import { modParcellePermis } from '../../lib/api'
 import { VIOLET } from '../outils/registry'
 import { PermitDrawer } from '../outils/ModulePanel'
 import { GroupLabel, FactNote } from './primitives'
+import { fmtDateNum } from '../../lib/format'
 
 export function PermitsProximityBlock({ idu }: { idu: string }) {
   const [open, setOpen] = useState<string | null>(null)
@@ -37,7 +38,7 @@ export function PermitsProximityBlock({ idu }: { idu: string }) {
           <button key={k} onClick={() => setOpen(i['permit_id'] as string)}
             className="flex items-center gap-2 px-0 py-1.5 text-left text-[11px] border-b border-line/60 last:border-0">
             <span className="font-mono text-txt">{i['nature'] as string}</span>
-            <span className="text-txt-mut">{i['date'] as string}</span>
+            <span className="text-txt-mut">{fmtDateNum(i['date'] as string)}</span>
             {i['nb_lgt'] != null && <span className="text-txt-dim">{String(i['nb_lgt'])} lgt</span>}
             <span className="ml-auto font-mono" style={{ color: i['distance_m'] <= 100 ? VIOLET : undefined }}>
               {String(i['distance_m'])} m

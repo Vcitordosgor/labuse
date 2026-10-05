@@ -177,25 +177,23 @@ export function TaxeAmenagement() {
     <div data-taxe-panel className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
       {/* RETOURS-14 S4 — le PREMIER écran ne porte que la parcelle et le calcul : l'intro
           (service-public, CGI…) vit derrière le « i ». */}
-      <div className="flex items-center gap-1.5">
-        <p className="min-w-0 flex-1 text-[11px] text-txt-mut">Désignez la parcelle du projet :</p>
-        <Tip garder side="bottom" tip={`Estimez la taxe d'aménagement de votre projet avant le dépôt du permis. Valeurs ${c.meta.annee} (arrêté officiel, base CGI art. 1635 quater A et suivants) ; à La Réunion, c'est la valeur forfaitaire hors Île-de-France qui s'applique. Le montant définitif est fixé par l'administration après le permis. Source : ${c.meta.source}.`}>
-          <span role="button" tabIndex={0} aria-label="Méthode et sources"
-            className="flex h-[15px] w-[15px] shrink-0 items-center justify-center rounded-full border border-line-2 text-[9px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
-        </Tip>
-        {/* RECETTE-1 (F3) — Réinitialiser en haut à droite du corps de l'outil (dès qu'une parcelle est désignée). */}
-        {prefillIdu && <Reinitialiser onReset={resetAll} />}
+      {/* RECETTE-2 (T3) — Réinitialiser SEUL sur sa ligne (haut-droite) ; l'intro vient EN DESSOUS,
+          pleine largeur (plus côte à côte). Présent ssi une parcelle est désignée. */}
+      <div className="flex flex-col gap-1.5">
+        {prefillIdu && <div className="flex justify-end"><Reinitialiser onReset={resetAll} /></div>}
+        <div className="flex items-center gap-1.5">
+          <p className="min-w-0 flex-1 text-[11px] text-txt-mut">Désignez la parcelle du projet :</p>
+          <Tip garder side="bottom" tip={`Estimez la taxe d'aménagement de votre projet avant le dépôt du permis. Valeurs ${c.meta.annee} (arrêté officiel, base CGI art. 1635 quater A et suivants) ; à La Réunion, c'est la valeur forfaitaire hors Île-de-France qui s'applique. Le montant définitif est fixé par l'administration après le permis. Source : ${c.meta.source}.`}>
+            <span role="button" tabIndex={0} aria-label="Méthode et sources"
+              className="flex h-[15px] w-[15px] shrink-0 items-center justify-center rounded-full border border-line-2 text-[9px] font-bold leading-none text-txt-dim hover:border-mint hover:text-mint">i</span>
+          </Tip>
+        </div>
       </div>
       {/* RECETTE-1 (F2) — EntreeParcelle : adresse/IDU OU clic carte, l'une grise l'autre. Le pick du
           champ fixe source='adresse' puis focusParcelle (fiche) ; le clic carte est adopté par l'effet selectedIdu. */}
       <EntreeParcelle source={source}
         onPick={(i, src) => { setSource(src); setPrefillIdu(i); focusParcelle(i, { fiche: true }) }} />
-      {!prefillIdu && (
-        <p data-taxe-attente className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] leading-snug text-txt-dim">
-          Le formulaire s'ouvrira quand une parcelle sera choisie — vous saisissez la surface taxable
-          de votre projet (surface close et couverte, garages et annexes inclus).
-        </p>
-      )}
+      {/* RECETTE-2 (D12) — section « Le formulaire s'ouvrira quand une parcelle sera choisie … » retirée. */}
       {prefillIdu && (
         <div data-taxe-contexte className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[10.5px] text-txt-mut">
           {prefill.isLoading && <span className="text-txt-dim">Chargement du contexte parcelle…</span>}

@@ -186,6 +186,15 @@ const F_POINT = ['==', ['geometry-type'], 'Point'] as unknown
 const F_LINE = ['==', ['geometry-type'], 'LineString'] as unknown
 const F_POLY = ['==', ['geometry-type'], 'Polygon'] as unknown
 
+// RECETTE-2 (C1, Vic 05/10) — le minzoom « 04/10 » qui masquait des couches en vue île est RETIRÉ :
+// toutes les couches à pastille redeviennent visibles à TOUS les zooms (île comprise) ; la source et
+// les calques chargent dès z0. La pastille « Zoomez pour voir mieux » reste (simple info, plus un gate).
+// SEULE exception : la couche par-parcelle très lourde (zonage par parcelle, 431 k features) garde son
+// bornage — sa tuile île est ingérable. `zmin` rend 0 pour tout le reste.
+const CHARGE_LOURDE = new Set(['zonage_parcelle'])
+const zmin = (kind: string, declared: number | undefined, fallback: number): number =>
+  CHARGE_LOURDE.has(kind) ? (declared ?? fallback) : 0
+
 // les calques MapLibre d'une couche (fond + contour + points selon la géométrie déclarée)
 function calques(c: TuyauCouche): maplibregl.AddLayerObject[] {
   const src = `tuyau-${c.kind}`
@@ -298,7 +307,7 @@ function calques(c: TuyauCouche): maplibregl.AddLayerObject[] {
     cas.push('')  // sous-type sans icône → pas d'image (le rond coloré reste)
     // COUCHES-RECETTE-2 Lot D : icônes LISIBLES dès le zoom commune (z12), plus seulement au zoom rue.
     out.push({ id: `${src}-icone`, source: src, 'source-layer': sl, type: 'symbol',
-      minzoom: c.zoom_min ?? 12,
+      minzoom: zmin(c.kind, c.zoom_min, 12),
       layout: { visibility: 'none', 'icon-image': cas as never, 'icon-allow-overlap': true,
         'icon-size': ['interpolate', ['linear'], ['zoom'], 12, 0.8, 15, 1.0, 20, 1.3] as never,
         'icon-anchor': 'center' } as never,
@@ -308,7 +317,7 @@ function calques(c: TuyauCouche): maplibregl.AddLayerObject[] {
   if (c.etiquette && c.etiquette.propriete) {
     const e = c.etiquette
     out.push({ id: `${src}-label`, source: src, 'source-layer': sl, type: 'symbol',
-      minzoom: e.zoom_min ?? 12,
+      minzoom: zmin(c.kind, e.zoom_min, 12),
       layout: { visibility: 'none', 'text-field': ['coalesce', ['get', e.propriete], ''] as never,
         'text-font': ['Open Sans Regular'], 'text-size': 11, 'symbol-placement': 'point',
         'text-allow-overlap': false } as never,
@@ -470,7 +479,7 @@ export function CouchesTuyauLayers({ map, ready }: {
         if (!m.getSource(rsrc)) {
           // RECETTE-1 (C7) — la source raster suit le zoom_min de la couche (EnR : rien avant z13) ;
           // les courbes de niveau gardent leur z11. En dessous : aucune tuile demandée, rien de dessiné.
-          m.addSource(rsrc, { type: 'raster', tileSize: 256, minzoom: c.zoom_min ?? 6, maxzoom: 18,
+          m.addSource(rsrc, { type: 'raster', tileSize: 256, minzoom: zmin(c.kind, c.zoom_min, 6), maxzoom: 18,
             tiles: [`${window.location.origin}${c.tuiles_url}`] })
         }
         const rid = `tuyau-${c.kind}-raster`
@@ -484,7 +493,7 @@ export function CouchesTuyauLayers({ map, ready }: {
         // une couche par-parcelle (zonage_parcelle, 431 k) ou un semis de points ne charge plus la
         // tuile ÎLE géante qui n'a aucun sens à cette échelle. Les couches d'aperçu (risques, zonages
         // GPU) gardent zoom_min 0 → visibles dès l'île. Géométrie inchangée (LOD, pas de dégradation).
-        m.addSource(src, { type: 'vector', minzoom: c.zoom_min ?? 0, maxzoom: 16,
+        m.addSource(src, { type: 'vector', minzoom: zmin(c.kind, c.zoom_min, 0), maxzoom: 16,
           tiles: [`${window.location.origin}${c.tuiles_url}`] })
       }
       if (c.centroide) {
@@ -566,7 +575,9 @@ export function CouchesTuyauLayers({ map, ready }: {
     return () => { m.off('zoom', upd) }
   }, [map, ready])
 
-  // couches actives dont le zoom_min n'est pas atteint (jamais un silence : dit en légende ET sur la carte).
+  // RECETTE-2 (C1) — la pastille devient une SIMPLE INFO (« voir mieux ») : les couches sont visibles
+  // à tous les zooms, la pastille invite juste à zoomer pour le détail au bon niveau. Elle liste les
+  // couches actives sous leur zoom conseillé (zoom_min reste en donnée pour cet indice ; il ne masque plus).
   const gatees = (plan || []).filter((c) => tuyauActives[c.kind] && (c.zoom_min ?? 0) > zoom + 0.001)
 
   return (
@@ -575,7 +586,7 @@ export function CouchesTuyauLayers({ map, ready }: {
       {gatees.length > 0 && (
         <div data-tuyau-zoom-hint
           className="pointer-events-none absolute left-1/2 top-16 z-10 -translate-x-1/2 rounded-full border border-mint/40 bg-surface-2/95 px-3.5 py-1.5 text-[11.5px] text-txt shadow-elev-2">
-          Zoomez pour voir : {gatees.map((c) => c.nom).join(', ')}
+          Zoomez pour voir mieux : {gatees.map((c) => c.nom).join(', ')}
         </div>
       )}
     </>

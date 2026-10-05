@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useApp } from '../../store/useApp'
 import { FaisabiliteTab } from '../fiche/Fiche'
 import { ParcelPicker } from './ParcelPicker'
+import { Reinitialiser } from '../ui/Reinitialiser'   // RECETTE-2 (D10) — Réinitialiser (T3)
 
 /** M22 · FAISABILITÉ — UN SEUL MODE (FAISABILITE-1 lot C).
  *  On désigne UNE parcelle (IDU / adresse / clic carte) et on voit sa faisabilité — exactement
@@ -14,6 +15,10 @@ import { ParcelPicker } from './ParcelPicker'
 export function M22() {
   const { parcelPrefill, setParcelPrefill, setModuleMap, chercherParCapacite } = useApp()
   const [picked, setPicked] = useState<string | null>(null)
+  // RECETTE-2 (D10) — Réinitialiser (T3) : vide la parcelle, le résultat, la surbrillance carte ET le
+  // champ du ParcelPicker (remonté via `nonce`). Présent ssi une parcelle est désignée.
+  const [nonce, setNonce] = useState(0)
+  const resetAll = () => { setPicked(null); setNonce((n) => n + 1) }
 
   // M-ENTREE — porte fiche/Densifier → Faisabilité : la parcelle amorce l'outil (motif partagé
   // parcelPrefill, consommation-puis-reset).
@@ -34,13 +39,15 @@ export function M22() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-0.5">
+      {/* RECETTE-2 (D10/T3) — Réinitialiser seul sur sa ligne (haut-droite), sous-titre en dessous. */}
+      {picked && <div className="flex justify-end"><Reinitialiser onReset={resetAll} /></div>}
       {/* Sous-titre : la promesse de l'outil, une parcelle à la fois. */}
       <p className="text-[11px] leading-relaxed text-txt-mut">
         Ce que le PLU laisse construire sur cette parcelle.
       </p>
       {/* DA-FIX-2 Lot 2 (DA-016) — OMNIBOX PERMANENTE : le sélecteur de parcelle reste EN TÊTE ;
           la faisabilité s'affiche DESSOUS dès qu'une parcelle est désignée. Retaper = changer. */}
-      <ParcelPicker onPick={setPicked} picked={picked} />
+      <ParcelPicker key={nonce} onPick={setPicked} picked={picked} />
       {picked ? (
         /* OUTILS-FIX-3 A1 — FaisabiliteTab rendu dans le MÊME contexte `.fiche-v6` que la fiche.
            `embedded` cantonne l'IA (explication du calcul) à la fiche parcelle. */

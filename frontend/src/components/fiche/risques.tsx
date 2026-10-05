@@ -16,7 +16,7 @@ import { Badge } from '../ui/Badge'
 // KELFONCIER-FIX-2 (Lot H) — maquette v3 : Verdict en tête + aléas en Jauge3 (3 crans + % servi).
 // FICHE-FIX-4 (Lot G) — CASIAS/EnR/mesures en Ligne de vigilance, CatNat en Repli, Pièges en bouton.
 import { Verdict, Jauge3, Lignes, Ligne, Repli, OutilsSection, InfoI } from './formes'
-import { fmtDateNum } from '../../lib/format'
+import { fmtDateNum, fmtAlea, fmtIntensite, fmtDec } from '../../lib/format'
 
 // niveau d'aléa (catégoriel servi) → cran 0..3 de la Jauge3 (présentation, aucun seuil inventé).
 const ALEA_CRAN: Record<string, 1 | 2 | 3> = { faible: 1, modéré: 2, modere: 2, moyen: 2, fort: 3, élevé: 3, eleve: 3 }
@@ -52,7 +52,7 @@ export function RisquesSection({ f }: { f: Fiche; idu: string }) {
           const dom = aleas.find((a) => a.niveau) ?? aleas[0]
           const cs = sols?.casias
           const reponse = vigilances.length === 0 ? 'Rien à signaler'
-            : dom ? `${dom.nature.replace(/_/g, ' ')}${dom.niveau ? ` ${dom.niveau}` : ''}${dom.part_pct != null ? ` sur ${dom.part_pct} %` : ''}`
+            : dom ? `${fmtAlea(dom.nature)}${dom.niveau ? ` ${fmtIntensite(dom.niveau)}` : ''}${dom.part_pct != null ? ` sur ${dom.part_pct} %` : ''}`
             : `${vigilances.length} vigilance${vigilances.length > 1 ? 's' : ''}`
           const ctx = [
             cs ? `ancien site industriel ${cs.sur_place ? 'sur la parcelle' : `à ${cs.distance_m} m`}` : null,
@@ -68,16 +68,16 @@ export function RisquesSection({ f }: { f: Fiche; idu: string }) {
             <GroupLabel>Aléas ({aleas.length})</GroupLabel>
             {aleas.map((a, i) => a.niveau != null || a.redhibitoire ? (
               <Jauge3 key={i} niveau={aleaCran(a.niveau, a.redhibitoire)}
-                label={<>{a.nature}{a.niveau ? <small className="ml-1 text-txt-mut"> niveau {a.niveau}</small> : null}{a.redhibitoire && <Badge ton="ambre" className="ml-1.5">rédhibitoire</Badge>}</>}
+                label={<>{fmtAlea(a.nature)}{a.niveau ? <small className="ml-1 text-txt-mut"> niveau {fmtIntensite(a.niveau)}</small> : null}{a.redhibitoire && <Badge ton="ambre" className="ml-1.5">rédhibitoire</Badge>}</>}
                 pct={a.part_pct != null ? `${a.part_pct} %` : undefined} />
             ) : (
               <div key={i} className="flex items-center justify-between border-b border-line py-[5px] text-[12.5px]">
-                <span>{a.nature}</span>
+                <span>{fmtAlea(a.nature)}</span>
                 <span className="flex items-center gap-2"><Badge ton="ambre">zone bleue</Badge><span className="font-mono text-[11px] text-txt-dim">{a.part_pct != null ? `${a.part_pct} %` : ''}</span></span>
               </div>
             ))}
             <FactNote>
-              {[...new Set(aleas.flatMap((a) => (a.ppr ?? []).map((p) => `${p.document}${p.approbation ? ` (approuvé le ${p.approbation})` : ''}`)))].join(' · ')}
+              {[...new Set(aleas.flatMap((a) => (a.ppr ?? []).map((p) => `${p.document}${p.approbation ? ` (approuvé le ${fmtDateNum(p.approbation)})` : ''}`)))].join(' · ')}
               {aleas.some((a) => a.ppr && a.ppr.length) ? ' — ' : ''}
               {[...new Set(aleas.map((a) => `${a.source}${a.millesime ? ` · ${a.millesime}` : ''}`))].join(' · ')}
             </FactNote>
@@ -179,8 +179,19 @@ export function RisquesSection({ f }: { f: Fiche; idu: string }) {
           <div>
             <GroupLabel>Vigilances</GroupLabel>
             <Lignes>
+              {/* RECETTE-2 (A6, affichage sans run) — la vigilance PENTE est servie par le run épinglé avec
+                  un « ~56 % tres_fort » (max des cellules de la grille) qui CONTREDIT la pente unique de la
+                  fiche. Côté affichage, on réécrit cette ligne à partir de la SEULE pente servie à la fiche
+                  (terrain.pente_moy_deg + pente_bande), identique à la tuile Pente et à §2 Terrain. Aucun
+                  run, aucun recalcul : simple lecture de la valeur déjà servie. */}
               {autresVig.map((l, i) => {
-                const det = (l.detail || '') as string
+                let det = (l.detail || '') as string
+                if (l.layer === 'pente' && f.terrain?.pente_moy_deg != null) {
+                  const deg = f.terrain.pente_moy_deg
+                  const pct = Math.tan((deg * Math.PI) / 180) * 100
+                  const bande = f.terrain.pente_bande ?? 'calculée'
+                  det = `Pente ${bande} (${fmtDec(deg)}° · ${fmtDec(pct)} %) — terrassement et accès renchéris (majoration VRD du bilan), pas une exclusion.`
+                }
                 const dash = det.indexOf('—')
                 const label = dash >= 0 ? det.slice(0, dash).trim() : det
                 const val = dash >= 0 ? det.slice(dash + 1).trim() : ''

@@ -2,7 +2,7 @@ import { useQuery, useIsFetching } from '@tanstack/react-query'
 import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useEffect, useRef, useState } from 'react'
-import { getBatiments, getCommunes, getFiche, getFiltreIdus, getParcelGeojson, getParcelsGeojson, getTilesMeta, parcelAt } from '../../lib/api'
+import { getBatiments, getCommunes, getFiche, getFiltreIdus, getParcelGeojson, getParcelsGeojson, getTilesMeta, modPermisFiche, parcelAt } from '../../lib/api'
 import { ALL_TIER_META, ZONE_FAM_META, ZONE_FAM_ORDER } from '../../lib/status'
 import { MAP_THEME } from '../../lib/mapTheme'
 import { TOKENS } from '../../lib/tokens'
@@ -349,8 +349,9 @@ export function MapView() {
   const ref = useRef<HTMLDivElement>(null)
   const map = useRef<maplibregl.Map | null>(null)
   const ready = useRef(false)
+  const hlGeoCle = useRef('')   // RECETTE-2 (D4a) — clé de la dernière sélection surlignée (garde anti-course)
   const [mapReady, setMapReady] = useState(false) // state : re-déclenche les effets APRÈS le load (remontage CRM→cartes)
-  const { selectedIdu, select, filters, layers, basemap, orthoYear, terrain3d, batiVisible, tool, setTool, setProfilLigne, zone, setZone, moduleMap, flyTo, setFlyTo, setPermitToOpen, commune, verdict, iaRestitution, module, comparePicking, view, focusIdu, focusNonce, fitCommuneNonce } = useApp()
+  const { selectedIdu, select, filters, layers, basemap, orthoYear, terrain3d, batiVisible, tool, setTool, setProfilLigne, zone, setZone, moduleMap, flyTo, setFlyTo, commune, verdict, iaRestitution, module, comparePicking, view, focusIdu, focusNonce, fitCommuneNonce } = useApp()
   const bpeDomains = useApp((s) => s.bpeDomains)   // M137-V — filtre par domaine de la couche BPE
   const ile = commune == null
   // M55-G point 8 — décision Vic : sans analyse demandée, l'avis LABUSE ne s'affiche pas.
@@ -684,6 +685,15 @@ export function MapView() {
       m.addLayer({ id: 'ile-hl', type: 'line', source: 'parcels-ile', 'source-layer': 'parcels',
         layout: { visibility: 'none' }, filter: ['==', ['get', 'idu'], ''],
         paint: { 'line-color': '#4ADE80', 'line-width': 1.6, 'line-opacity': 0.95 } })
+      // RECETTE-2 (D4a) — surlignage GÉOMÉTRIQUE indépendant du zoom/tuiles : module-hl (source `parcels`,
+      // vide sans commune) et ile-hl (tuiles, seulement les parcelles de la tuile chargée) ne surlignaient
+      // qu'1 parcelle sur 3 en vue île (Assemblage). Ici on injecte les polygones RÉELS des idus désignés
+      // (récupérés par idu) dans une source GeoJSON dédiée → les N parcelles sont toujours surlignées.
+      m.addSource('module-hl-geo', { type: 'geojson', data: EMPTY_FC as never })
+      m.addLayer({ id: 'module-hl-geo-line', type: 'line', source: 'module-hl-geo',
+        paint: { 'line-color': '#4ADE80', 'line-width': 1.8, 'line-opacity': 0.95 } })
+      m.addLayer({ id: 'module-hl-geo-fill', type: 'fill', source: 'module-hl-geo',
+        paint: { 'fill-color': '#4ADE80', 'fill-opacity': 0.12 } })
       m.addLayer({ id: 'module-lot', type: 'line', source: 'module-extra',
         filter: ['==', ['get', 'kind'], 'lot'],
         paint: { 'line-color': '#4ADE80', 'line-width': 1.8, 'line-dasharray': [2, 1.6] } })
@@ -852,9 +862,9 @@ export function MapView() {
           btn.addEventListener('click', () => { parcelAt(lon, lat).then((r) => { if (r.idu) select(String(r.idu)) }).catch(() => {}); popup.remove() })
           ;(e as maplibregl.MapLayerMouseEvent).preventDefault()
         } else if (pid) {
-          // RECETTE-1 (H2, Vic) — BULLE au clic sur le point permis (comme les opérations / concurrents) :
-          // nature + date + état + commune, et la PRÉCISION DU GÉOCODAGE (déplacée depuis la liste).
-          // Un bouton « détails → » ouvre la fiche permis (drawer). DOM textContent (anti-injection).
+          // RECETTE-2 (D2b, Vic 05/10) — la FICHE permis s'ouvre DIRECTEMENT en popup sur la carte : plus
+          // d'étape « détails → », plus d'ouverture dans la colonne de gauche (drawer). On fetch la fiche
+          // (modPermisFiche) et on la rend dans la bulle. DOM textContent (anti-injection).
           const box = document.createElement('div'); box.style.cssText = POPUP_BOX_CSS
           const nom = document.createElement('b')
           nom.textContent = String(props?.label || props?.nature || 'Permis')
@@ -866,11 +876,28 @@ export function MapView() {
           const prec = props?.geoloc ? 'Position approchée (adresse)' : 'Position de la parcelle rattachée'
           const br = document.createElement('br'); sub.appendChild(br); sub.appendChild(document.createTextNode(prec))
           box.appendChild(sub)
-          const btn = document.createElement('button'); btn.textContent = 'détails →'
-          btn.style.cssText = 'margin-top:9px;color:#4ADE80;background:none;border:1px solid rgba(74,222,128,.35);border-radius:8px;cursor:pointer;font:12px system-ui;padding:7px 10px'
-          box.appendChild(btn)
-          const popup = new maplibregl.Popup({ offset: 12, className: 'labuse-popup' }).setLngLat((e as maplibregl.MapLayerMouseEvent).lngLat).setDOMContent(box).addTo(m)
-          btn.addEventListener('click', () => { setPermitToOpen(String(pid)); popup.remove() })
+          const det = document.createElement('div'); det.style.cssText = 'margin-top:9px;color:#c9d2cc;font-size:12px;line-height:1.6'
+          det.textContent = 'Chargement de la fiche…'; box.appendChild(det)
+          const popup = new maplibregl.Popup({ offset: 12, className: 'labuse-popup', maxWidth: '320px' })
+            .setLngLat((e as maplibregl.MapLayerMouseEvent).lngLat).setDOMContent(box).addTo(m)
+          modPermisFiche(String(pid)).then((f) => {
+            const fmtD = (s: unknown) => { if (!s) return ''; const t = new Date(String(s)); return Number.isNaN(t.getTime()) ? '' : t.toLocaleDateString('fr-FR') }
+            det.textContent = ''
+            const ligne = (lab: string, val: string) => { if (!val) return; const d = document.createElement('div'); const c = document.createElement('span'); c.textContent = lab + ' : '; c.style.color = '#98a39d'; d.appendChild(c); d.appendChild(document.createTextNode(val)); det.appendChild(d) }
+            ligne('Nature', String(f.nature_libelle ?? f.nature ?? ''))
+            ligne('Destination', String(f.destination_libelle ?? ''))
+            ligne('Pétitionnaire', String(f.porteur ?? f.porteur_note ?? ''))
+            ligne('Logements / lots', f.nb_lots != null ? String(f.nb_lots) : '')
+            ligne('Surface habitable', f.surface_hab_m2 != null ? `${f.surface_hab_m2} m²` : '')
+            ligne('Autorisé le', fmtD(f.date_autorisation))
+            ligne('Statut', String(f.statut ?? '') + (f.annule ? ' · annulé' : ''))
+            const idu0 = (props?.idu ?? (Array.isArray(f.parcelles) ? (f.parcelles as string[])[0] : null)) as string | null
+            if (idu0) {
+              const bp = document.createElement('button'); bp.textContent = 'voir la parcelle →'
+              bp.style.cssText = 'margin-top:10px;color:#4ADE80;background:none;border:1px solid rgba(74,222,128,.35);border-radius:8px;cursor:pointer;font:12px system-ui;padding:7px 10px'
+              bp.addEventListener('click', () => { select(String(idu0)); popup.remove() }); det.appendChild(bp)
+            }
+          }).catch(() => { det.textContent = 'Fiche permis indisponible — réessayez.' })
           ;(e as maplibregl.MapLayerMouseEvent).preventDefault()
         }
         else if (props?.idu) { select(String(props.idu)); (e as maplibregl.MapLayerMouseEvent).preventDefault() }  // LOT8b : clic piscine → fiche parcelle
@@ -1370,6 +1397,27 @@ export function MapView() {
     m.setFilter('module-hl', f)
     if (m.getLayer('ile-hl')) m.setFilter('ile-hl', f)
     ;(m.getSource('module-extra') as maplibregl.GeoJSONSource | undefined)?.setData((moduleMap.extra ?? EMPTY_FC) as never)
+    // RECETTE-2 (D4a) — surlignage GÉOMÉTRIQUE des PETITES sélections (Assemblage, Comparer, Faisabilité) :
+    // on récupère les polygones réels par idu (≤ 50) et on les pose dans module-hl-geo, indépendant du
+    // zoom/tuiles → les N parcelles sont TOUTES surlignées, même en vue île. Au-delà (résultats de filtre),
+    // on laisse module-hl/ile-hl (vues en zoom commune). Garde anti-course : on ignore une réponse périmée.
+    const hlGeo = m.getSource('module-hl-geo') as maplibregl.GeoJSONSource | undefined
+    if (hlGeo) {
+      const ids = moduleMap.idus
+      if (ids.length > 0 && ids.length <= 50 && !moduleMap.extra) {
+        const cle = ids.join(',')
+        hlGeoCle.current = cle
+        Promise.all(ids.map((id) => getParcelGeojson(id).then((r) => r).catch(() => null))).then((feats) => {
+          if (hlGeoCle.current !== cle) return   // sélection changée entre-temps
+          hlGeo.setData({ type: 'FeatureCollection', features: feats.filter(Boolean)
+            .map((f) => ({ type: 'Feature', geometry: (f as { geometry: unknown }).geometry,
+              properties: { idu: (f as { properties?: { idu?: string } }).properties?.idu } })) } as never)
+        })
+      } else {
+        hlGeoCle.current = ''
+        hlGeo.setData(EMPTY_FC as never)
+      }
+    }
     // RECETTE-1 H13.3 — `fit` : cadrer la carte sur l'emprise des géométries servies (« tout le
     // périmètre »). Sans cela, au zoom île les parcelles colorées d'une commune sont trop petites pour
     // être vues. Bornes calculées à partir du GeoJSON (coordonnées [lon,lat], tous types confondus).

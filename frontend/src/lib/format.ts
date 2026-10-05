@@ -163,3 +163,55 @@ export const fmtLibelleBrut = (v: string | null | undefined): string => {
   const out = bas.join(' ')
   return out.charAt(0).toUpperCase() + out.slice(1)
 }
+
+/** RECETTE-2 (T5) — distance : « 850 m » / « 1,25 km » (virgule décimale, unité collée). Entrée en mètres. */
+export const fmtDist = (m: number | null | undefined): string =>
+  m == null ? '—' : m < 1000 ? `${fmtInt(m)} m` : `${fmtDec(m / 1000, m % 1000 === 0 ? 0 : 2)} km`
+
+/** RECETTE-2 (T5) — durée en années : « 1,1 an » / « 2,5 ans » (virgule, pluriel à partir de 2). */
+export const fmtAns = (n: number | null | undefined, p = 1): string => {
+  if (n == null) return '—'
+  const txt = fmtDec(n, p)
+  return `${txt} ${n < 2 ? 'an' : 'ans'}`
+}
+
+/** RECETTE-2 (T6) — intensité d'aléa : plus de code brut (`tres_fort` → « très fort »). */
+const INTENSITE: Record<string, string> = {
+  tres_faible: 'très faible', faible: 'faible', moyen: 'moyen', modere: 'modéré', moyennement_fort: 'moyennement fort',
+  fort: 'fort', tres_fort: 'très fort', nul: 'nul', inconnu: 'inconnu',
+}
+export const fmtIntensite = (v: string | null | undefined): string =>
+  v == null ? '—' : (INTENSITE[v.toLowerCase()] ?? v.replace(/_/g, ' '))
+
+/** RECETTE-2 (T6) — nature d'aléa : plus de code brut (`mouvement_terrain` → « mouvement de terrain »). */
+const ALEA: Record<string, string> = {
+  mouvement_terrain: 'mouvement de terrain', inondation: 'inondation', inondation_crue: 'inondation (crue)',
+  submersion_marine: 'submersion marine', houle: 'houle', cyclone: 'cyclone', vent_cyclonique: 'vent cyclonique',
+  feux_foret: 'feux de forêt', feu_foret: 'feu de forêt', seisme: 'séisme', volcan: 'volcanique',
+  eruption_volcanique: 'éruption volcanique', retrait_gonflement_argiles: 'retrait-gonflement des argiles',
+  argiles: 'retrait-gonflement des argiles', radon: 'radon', chute_blocs: 'chute de blocs',
+  glissement_terrain: 'glissement de terrain', rupture_barrage: 'rupture de barrage', tsunami: 'tsunami',
+}
+export const fmtAlea = (v: string | null | undefined): string =>
+  v == null ? '—' : (ALEA[v.toLowerCase()] ?? v.replace(/_/g, ' '))
+
+/** RECETTE-2 (A5c/T6) — libellé d'une servitude d'utilité publique (SUP) depuis sa catégorie
+ *  (nomenclature nationale GPU). Code connu → libellé officiel ; inconnu → « Servitude <code> »
+ *  (jamais un code brut à underscores comme « EL10_Reunion_ass »). Le code exact reste dans le `i`. */
+const SUP_LABELS: Record<string, string> = {
+  AC1: 'Monuments historiques', AC2: 'Sites inscrits et classés', AC4: 'Secteur sauvegardé / AVAP',
+  AS1: 'Protection des eaux potables et minérales', A1: 'Forêts de protection',
+  A4: "Servitude de passage le long des cours d'eau", A5: "Canalisations d'eau et d'assainissement",
+  EL3: 'Halage et marchepied', EL7: 'Alignement des voies', EL9: 'Accès au rivage',
+  EL11: 'Routes express et déviations', I3: 'Canalisations de gaz', I4: "Lignes électriques",
+  I6: 'Stockage souterrain de gaz', PT1: 'Protection des réceptions radioélectriques',
+  PT2: 'Protection des transmissions radioélectriques', PT3: 'Réseaux de télécommunications',
+  T1: 'Voies ferrées', T5: 'Dégagement des aérodromes', T7: 'Balisage aéronautique',
+  PM1: 'Plan de prévention des risques naturels', PM2: 'Risques technologiques', PM3: 'Risques miniers',
+  INT1: 'Voisinage des cimetières',
+}
+export const fmtSup = (categorie: string | null | undefined): string => {
+  if (!categorie) return 'Servitude'
+  const c = categorie.toUpperCase().trim()
+  return SUP_LABELS[c] ?? `Servitude ${c}`
+}

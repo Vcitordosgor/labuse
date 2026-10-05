@@ -142,7 +142,7 @@ describe('SOLAIRE — deux modes', () => {
     expect(document.querySelector('[data-solaire-kwc-hyp]')?.textContent).toContain('0,2 kWc/m²')
   })
 
-  it('H13.3 — liste IDU · commune · source ; « pas une piscine » en ICÔNE ; clic ligne → fiche', async () => {
+  it('D14b — liste IDU · commune (plus de colonne source ni croix « pas une piscine ») ; clic ligne → fiche', async () => {
     renderTool()
     fireEvent.click(document.querySelector('[data-solaire-mode="piscines"]')!)
     await waitFor(() => expect(document.querySelector('[data-piscines-perim="ile"]')).toBeTruthy())
@@ -155,10 +155,11 @@ describe('SOLAIRE — deux modes', () => {
     expect(body).not.toContain('SCI SOLEIL')
     expect(document.querySelector('[data-piscines-courrier]')).toBeNull()
     expect(document.querySelectorAll('[data-piscines-sel]').length).toBe(0)
-    // IDU · commune affichés ; « pas une piscine » conservé, désormais en ICÔNE (croix ✕).
+    // RECETTE-2 (D14b) — IDU · commune affichés ; colonne SOURCE (CoSIA/FLAIR) et croix « pas une
+    // piscine » RETIRÉES de chaque ligne.
     expect(body).toContain('Saint-Paul')
-    expect(document.querySelectorAll('[data-piscines-pas]').length).toBe(2)
-    expect(document.querySelector('[data-piscines-pas]')?.textContent).toBe('✕')
+    expect(document.querySelectorAll('[data-piscines-pas]').length).toBe(0)
+    expect(body).not.toContain('FLAIR+CoSIA')   // la colonne source par ligne (FLAIR+CoSIA) est retirée
     // clic sur une ligne → focusParcelle(fiche) : la fiche s'ouvre (selectedIdu posé).
     fireEvent.click(document.querySelector('[data-piscines-row]')!)
     expect(useApp.getState().selectedIdu).toBe('97411000AP0000')

@@ -21,7 +21,12 @@ export function EntreeParcelle({ source, onPick, placeholder, titre }: {
       {titre && <p className="text-[10.5px] text-txt-mut">{titre}</p>}
       <div className={champGrise ? 'pointer-events-none select-none opacity-40' : ''}
         aria-disabled={champGrise || undefined}>
-        <ParcelInput dataAttr="entree-parcelle" onPick={(idu) => { if (!champGrise) onPick(idu, 'adresse') }}
+        {/* T1/T2 (RECETTE-2) — l'invite « cliquez une parcelle » appartient à EntreeParcelle (ligne
+            « — ou — » ci-dessous, qui GRISE selon `source`, règle du 04/10). ParcelInput ne doit donc
+            PAS rendre sa propre invite `◎ ou cliquez…` (doublon) ni reconsommer le clic carte (le tiroir
+            l'adopte via selectedIdu) → withCarte={false}. Avant : deux invites, dont une grisée-mais-
+            visible sous le champ après un clic carte (constat Vic sur Solaire). */}
+        <ParcelInput dataAttr="entree-parcelle" withCarte={false} onPick={(idu) => { if (!champGrise) onPick(idu, 'adresse') }}
           placeholder={placeholder ?? 'Adresse, IDU ou référence (BW0917)'} />
       </div>
       <div data-entree-carte

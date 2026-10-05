@@ -1334,17 +1334,22 @@ def prospection_piscines_parcelles(commune: str | None = None,
     corr_cond = " AND NOT EXISTS (SELECT 1 FROM piscine_corrections pc WHERE pc.idu = pi.idu)"
     where = (f"WHERE pi.statut IN {statuts}" + surf_cond + corr_cond
              + (" AND pi.commune = :c" if commune else ""))
+    # RECETTE-2 (D14d, Vic 05/10) — on ne PEINT PLUS la parcelle entière : une GOUTTE au centroïde de
+    # CHAQUE piscine (kind='piscine' → symbole goutte de MapView). La couche fill/line (kind=
+    # 'piscine-parcelle') ne matche alors plus rien, aucune parcelle teintée. Statut conservé pour la
+    # bande (servie = haute / à confirmer = moyenne), lecture seule de `piscines` (aucun recalcul).
     rows = db.execute(text(
         f"""SELECT pi.idu, pi.commune, pi.source, pi.statut,
-                   ST_AsGeoJSON(ST_SimplifyPreserveTopology(ST_Transform(p.geom_2975, 4326), 0.00002), 6) AS g
-            FROM piscines pi JOIN parcels p ON p.idu = pi.idu
-            {where} AND p.geom_2975 IS NOT NULL"""),
+                   round(pi.surface_m2::numeric, 0) AS m2, ST_X(pi.geom) AS lon, ST_Y(pi.geom) AS lat
+            FROM piscines pi {where} AND pi.geom IS NOT NULL"""),
         {"c": commune, "psmin": piscine_surf_min}).mappings().all()
     return {"type": "FeatureCollection", "features": [
-        {"type": "Feature", "geometry": json.loads(r["g"]),
-         "properties": {"kind": "piscine-parcelle", "idu": r["idu"], "commune": r["commune"],
-                        "source": r["source"], "statut": r["statut"]}}
-        for r in rows if r["g"]]}
+        {"type": "Feature", "geometry": {"type": "Point", "coordinates": [float(r["lon"]), float(r["lat"])]},
+         "properties": {"kind": "piscine", "idu": r["idu"], "commune": r["commune"],
+                        "piscine_m2": float(r["m2"]) if r["m2"] is not None else None,
+                        "source": r["source"], "statut": r["statut"],
+                        "bande": "haute" if r["statut"] == "servie" else "moyenne"}}
+        for r in rows]}
 
 
 @router.get("/prospection-piscines/liste")

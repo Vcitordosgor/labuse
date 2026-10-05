@@ -128,10 +128,11 @@ export function CompareModule() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
-      <div className="flex items-start gap-1.5">
-        <p className="min-w-0 flex-1 text-[11px] text-txt-mut">Jusqu'à 3 parcelles, côte à côte, aux <b>mêmes points de calcul que la fiche</b>.</p>
-        {/* RECETTE-1 (F3) — Réinitialiser unique (vide la sélection) dès qu'une parcelle est choisie. */}
-        {n > 0 && <Reinitialiser onReset={clearCompare} />}
+      {/* RECETTE-2 (T3) — Réinitialiser SEUL sur sa ligne (haut-droite) ; l'intro vient EN DESSOUS,
+          pleine largeur (plus côte à côte). Présent ssi au moins une parcelle est choisie. */}
+      <div className="flex flex-col gap-1.5">
+        {n > 0 && <div className="flex justify-end"><Reinitialiser onReset={clearCompare} /></div>}
+        <p className="text-[11px] text-txt-mut">Jusqu'à 3 parcelles, côte à côte, aux <b>mêmes points de calcul que la fiche</b>.</p>
       </div>
 
       {/* ① cliquez les parcelles sur la carte + chips */}
@@ -139,13 +140,18 @@ export function CompareModule() {
         <div className="flex items-start gap-2">
           <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-mint text-[9px] font-medium text-mint">1</span>
           <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-medium text-txt">Cliquez les parcelles sur la carte</p>
+            {/* RECETTE-2 (D5) — invite EXPLICITE et dynamique (« Cliquez la Nᵉ parcelle … ou saisissez-la »),
+                pas seulement le chip « + 1 libre ». */}
+            <p className="text-[11px] font-medium text-txt">{n >= 3
+              ? '3 parcelles sélectionnées'
+              : `Cliquez la ${n + 1}${n === 0 ? 'ʳᵉ' : 'ᵉ'} parcelle sur la carte ou saisissez-la`}</p>
             <p className="text-[10px] text-txt-dim">la carte reste visible à droite — ou depuis une fiche → « Comparer »</p>
             {/* OUTILS-FIX-2 D1 — saisie clavier (IDU / adresse / référence courte), même composant que partout ;
-                le clic-carte reste actif en parallèle. Limite 3 côté Comparer. */}
+                le clic-carte reste actif en parallèle. Limite 3 côté Comparer.
+                RECETTE-2 (D5) — key={n} : la barre se VIDE après chaque ajout (remontage) pour la suivante. */}
             {n < 3 && (
               <div className="mt-1.5">
-                <ParcelInput dataAttr="compare-idu" withCarte={false}
+                <ParcelInput key={n} dataAttr="compare-idu" withCarte={false}
                   placeholder="Adresse, IDU ou référence (BW0917)"
                   onPick={(idu) => { if (!compareIdus.includes(idu)) addToCompare(idu) }} />
               </div>
@@ -241,11 +247,14 @@ export function ComparePanel() {
             </div>
           )}
           {compareIdus.length > 0 && q.isPending && <div className="p-4"><Squelette lignes={4} /></div>}
+          {/* RECETTE-2 (D6) — table-fixed : les 3 colonnes de données se partagent la largeur à ÉGALITÉ et
+              tiennent dans l'overlay (jamais de défilement horizontal) ; le texte long passe à la ligne
+              dans sa cellule (whitespace-nowrap retiré plus bas). */}
           {parcels.length > 0 && (
-            <table className="w-full border-collapse text-[12px]">
+            <table className="w-full table-fixed border-collapse text-[12px]">
               <thead>
                 <tr>
-                  <th className="w-[220px] p-2" />
+                  <th className="w-[120px] p-2" />
                   {parcels.map((r) => {
                     return (
                       <th key={r.idu} data-compare-col className="border-l border-line p-2 align-top">
@@ -277,7 +286,7 @@ export function ComparePanel() {
                   const winners = bestIdx(row, parcels)   // O9(d) — cellules gagnantes de la ligne
                   return (
                     <tr key={row.label} className="border-t border-line">
-                      <td className="whitespace-nowrap p-2 text-[10.5px] uppercase tracking-wide text-txt-dim">
+                      <td className="break-words p-2 text-[10.5px] uppercase tracking-wide text-txt-dim">
                         {row.title
                           ? <span className="cursor-help border-b border-dotted border-line-2">{row.label}</span>
                           : row.label}
@@ -286,7 +295,7 @@ export function ComparePanel() {
                       {parcels.map((r, i) => {
                         const win = winners.has(i)   // vert = meilleure valeur (comme la table Communes)
                         return (
-                          <td key={r.idu} className={`whitespace-nowrap border-l border-line p-2 ${win ? 'font-semibold text-mint' : 'text-txt'}`}>
+                          <td key={r.idu} className={`break-words border-l border-line p-2 ${win ? 'font-semibold text-mint' : 'text-txt'}`}>
                             {row.render ? row.render(r) : row.val(r)}
                           </td>
                         )

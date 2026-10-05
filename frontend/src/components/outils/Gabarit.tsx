@@ -226,24 +226,22 @@ export function Gabarit() {
 
   return (
     <div data-gabarit-panel className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
-      <div className="flex items-start gap-1.5">
-        <p className="min-w-0 flex-1 text-[11px] leading-snug text-txt-mut">
+      {/* RECETTE-2 (T3) — Réinitialiser SEUL sur sa ligne (haut-droite) ; l'intro vient EN DESSOUS,
+          pleine largeur (plus côte à côte). Présent ssi une parcelle est désignée. */}
+      <div className="flex flex-col gap-1.5">
+        {target && <div className="flex justify-end"><Reinitialiser onReset={resetAll} /></div>}
+        <p className="text-[11px] leading-snug text-txt-mut">
           Où et jusqu'où une construction peut s'implanter, selon les règles réglementaires
           <b className="text-txt"> intégrées et sourcées</b> dans LABUSE.
         </p>
-        {/* RECETTE-1 (F3) — Réinitialiser en haut à droite (dès qu'une parcelle est désignée). */}
-        {target && <Reinitialiser onReset={resetAll} />}
       </div>
 
       {/* RECETTE-1 (F2) — EntreeParcelle : adresse/IDU OU clic carte, l'une grise l'autre. */}
       <EntreeParcelle source={source}
         onPick={(i, src) => { setSource(src); setIdu(i); focusParcelle(i) }} />
 
-      {!target && (
-        <p className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] leading-snug text-txt-dim">
-          Choisissez une parcelle (barre ci-dessus ou clic sur la carte).
-        </p>
-      )}
+      {/* RECETTE-2 (D11) — section « Choisissez une parcelle (barre ci-dessus ou clic sur la carte) »
+          retirée (l'entrée parcelle ci-dessus le dit déjà). */}
 
       {q.isLoading && <Squelette lignes={4} />}
       {q.isError && <ErrorState message="Parcelle inconnue ou service indisponible." retry={() => q.refetch()} />}

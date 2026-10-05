@@ -90,7 +90,7 @@ function Carte({ it, ouvert, onToggle }: { it: BlocItem; ouvert: boolean; onTogg
     <div className="rounded-lg border border-line-2 bg-surface-3 px-2.5 py-1.5">
       <div data-bloc-row className="flex cursor-pointer items-center gap-2" onClick={onToggle}>
         <Chevron open={ouvert} />
-        <span className="min-w-0 flex-1 truncate text-[11px] text-txt">
+        <span className="min-w-0 flex-1 break-words text-[11px] text-txt">
           {it.denomination ?? '—'}
         </span>
         <span className="ml-auto tnum text-[11px] text-txt">{fmtM2(it.sdp_residuelle_m2)}</span>
@@ -101,12 +101,13 @@ function Carte({ it, ouvert, onToggle }: { it: BlocItem; ouvert: boolean; onTogg
         <span className="text-txt-dim">·</span>
         <span className="shrink-0">{fmtM2(it.surface_totale_m2)}</span>
         <span className="text-txt-dim">·</span>
-        <span className="shrink-0 truncate">{it.communes.join(', ')}</span>
+        <span className="min-w-0 break-words">{it.communes.join(', ')}</span>
         {it.zonages.length > 0 && <><span className="text-txt-dim">·</span>
-          <span className="shrink-0 truncate text-txt-dim">{it.zonages.slice(0, 4).join(' ')}</span></>}
+          <span className="min-w-0 break-words text-txt-dim">{it.zonages.slice(0, 4).join(' ')}</span></>}
       </div>
       <div className="mt-0.5 flex items-center gap-1.5 pl-4 text-[10px]">
-        {it.siren && <Siren value={it.siren} className="font-mono text-[10px] text-txt-dim" />}
+        {/* RECETTE-2 (D15) — SIREN en bleu (repère visuel de la personne morale). */}
+        {it.siren && <Siren value={it.siren} className="font-mono text-[10px] text-[#6B8FD4]" />}
         {it.sdp_couverture < it.n_parcelles && (
           <span className="text-txt-dim">
             résiduel sur {it.sdp_couverture}/{it.n_parcelles}
@@ -169,9 +170,10 @@ export function Blocs() {
       {/* bandeau client — ce que l'outil EST (et n'est pas) */}
       <div className="rounded-lg border px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut"
         style={{ borderColor: `${TOKENS.mint}4d`, background: `${TOKENS.mint}0f` }}>
-        Les parcelles <b className="text-txt">contiguës d'un même propriétaire</b> regroupées en une
-        assiette — ce qu'un promoteur ne voit pas parcelle par parcelle. <b className="text-txt">Personnes
-        morales seulement</b> (SIREN) : les particuliers n'ont pas d'identité stable d'une parcelle à l'autre.
+        {/* RECETTE-2 (D15) — encart réduit à 2 lignes ; le détail (règle de contiguïté, particuliers hors
+            périmètre, nature des chiffres) vit dans le « i ». */}
+        Les parcelles <b className="text-txt">contiguës d'un même propriétaire</b> (personne morale) regroupées
+        en une assiette — ce qu'un promoteur ne voit pas parcelle par parcelle.
         <Tip garder tip="Le regroupement : un bloc = des parcelles cadastrales en contact (≤ 0,5 m) appartenant au MÊME propriétaire personne morale (SIREN confirmé, fichiers des personnes morales DGFiP), à partir de 2 parcelles. Contiguïté purement géométrique (PostGIS), jamais un rapprochement par nom. Ce qu'il ne dit pas : les particuliers sont hors périmètre (identité non stable d'une parcelle à l'autre) ; un bloc n'affirme ni la constructibilité, ni un accord de vente. Les chiffres : surface, communes et zonages Sourcés (cadastre, PLU) ; SDP résiduelle Estimée — somme des résiduels de la fiche (enveloppe PLU moins bâti existant), une parcelle hors PLU n'a pas de résiduel connu (le compteur « résiduel sur n/N » le dit). Tri par SDP résiduelle agrégée décroissante.">
           <span className="ml-1 cursor-help rounded-full border border-line-2 px-1 text-[8px] text-txt-dim">i</span>
         </Tip>

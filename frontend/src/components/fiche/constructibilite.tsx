@@ -8,7 +8,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState, type ReactNode } from 'react'
 import { getCalculetteDefaults, getFaisabilite, getModeB, getPipelineForParcel, patchPipeline, postChargeFonciere, postFaisabiliteScenario, type CalculetteDefaults } from '../../lib/api'
-import { fmtEurCompact, fmtInt, fmtM2, fmtPctConsomme } from '../../lib/format'
+import { fmtEurCompact, fmtInt, fmtM2, fmtPctConsomme, fmtSup } from '../../lib/format'
+import { Chevron } from '../ui/Chevron'
 import { PERIM_POTENTIEL_COURT } from '../../lib/perimetres'
 import { Squelette } from '../Loading'
 import { ErrorState } from '../States'
@@ -676,7 +677,8 @@ export function FaisabiliteTab({ idu }: { idu: string; embedded?: boolean }) {
           <button onClick={() => setShowSteps((s) => !s)} aria-expanded={showSteps}
             className="flex w-full items-center justify-between gap-2 text-[11px] font-medium uppercase tracking-[0.12em] text-lab transition-colors duration-quick hover:text-txt-hi">
             <span>Le calcul, étape par étape ({etapes.length})</span>
-            <span className="text-mint">{showSteps ? '▼' : '◀'}</span>
+            {/* RECETTE-2 (D10) — accordéon Chevron de la charte (remplace le glyphe texte ◀/▼). */}
+            <Chevron open={showSteps} />
           </button>
           {showSteps && (
             <ol data-faisa-steps className="mt-1.5">
@@ -686,11 +688,13 @@ export function FaisabiliteTab({ idu }: { idu: string; embedded?: boolean }) {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-baseline justify-between gap-2">
                       <span className="min-w-0 text-txt">{s.label}</span>
-                      <b className="shrink-0 whitespace-nowrap font-mono font-medium tnum text-txt-hi">{s.valeur}</b>
+                      {/* RECETTE-2 (T4) — valeur mono : wrap plutôt que coupe/nowrap. */}
+                      <b className="min-w-0 break-words text-right font-mono font-medium tnum text-txt-hi">{s.valeur}</b>
                     </div>
-                    <div className="mt-1 flex items-center gap-1.5">
+                    <div className="mt-1 flex items-start gap-1.5">
                       <StepProv prov={s.prov} />
-                      <span className="truncate text-[9.5px] text-txt-dim">{s.source}</span>
+                      {/* RECETTE-2 (T4, D10) — citation de règle PLU sur 2+ lignes (plus de « … »). */}
+                      <span className="min-w-0 break-words text-[9.5px] text-txt-dim">{s.source}</span>
                     </div>
                   </div>
                 </li>
@@ -1007,7 +1011,14 @@ export function DispositifsBody({ d }: { d: NonNullable<Fiche['dispositifs']> })
           {(d.sup ?? []).map((sv, i) => (
             <Ligne key={`sup${i}`} data-dispositifs-sup title={sv.libelle || sv.categorie}
               label={<>Servitude (SUP)<InfoI aria="Sur la servitude" tip={`${sv.categorie} · ${sv.libelle || 'servitude'}. Assiettes publiées au GPU (T5/PT1/PT2 restreintes ; AS1 captages non publiée pour le 974).`} /></>}
-              valeur={<>{sv.categorie}{sv.libelle ? <small> · {sv.libelle}</small> : null}</>} />
+              /* RECETTE-2 (A5c/T6) — libellé de la servitude, jamais un code brut (« EL10 · EL10_Reunion_ass »).
+                 On garde le nom servi s'il est humain (nomsuplitt) ; sinon le libellé officiel de la catégorie.
+                 Le code exact reste dans le `i`. */
+              valeur={(() => {
+                const brut = (sv.libelle ?? '').trim()
+                const estCode = !brut || /_/.test(brut) || brut.toUpperCase() === (sv.categorie ?? '').toUpperCase() || /^[A-Z0-9]{1,8}$/.test(brut)
+                return estCode ? fmtSup(sv.categorie) : brut
+              })()} />
           ))}
         </Lignes>
       </div>
