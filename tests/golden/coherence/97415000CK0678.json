@@ -42,7 +42,7 @@
  "rang_score": {
   "lecteur": "fiche:score_v2.rang",
   "tolerance": "0",
-  "valeur": 242318
+  "valeur": 157747
  },
  "sdp_residuelle_m2": {
   "lecteur": "fiche:potentiel_transformation.sdp_residuelle_m2",
@@ -62,7 +62,7 @@
  "tier_opportunite": {
   "lecteur": "fiche:score_v2.tier",
   "tolerance": "0",
-  "valeur": "a_creuser"
+  "valeur": "sans_signal"
  },
  "vigilance_cinquante_pas": {
   "lecteur": "fiche:flags[cinquante_pas]",

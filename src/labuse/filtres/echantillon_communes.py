@@ -115,8 +115,15 @@ def rejouer(payload_par_insee: dict[str, dict]) -> list[dict]:
                 verdict = "ok" if ecart <= abs(float(attendu)) * tol / 100 + 1e-9 else "ecart"
             else:
                 verdict = "ok" if str(servi).strip() == str(attendu).strip() else "ecart"
-            if verdict == "ecart" and l.get("ecart_assume"):
-                verdict = "assume"      # écart de définition CONNU et motivé (note de la ligne)
+            # écart de définition CONNU et motivé (note de la ligne). `ecart_assume: true` = blanc-seing
+            # (l'écart va toujours dans le même sens — ex. Filosofi < population légale) ; `ecart_assume:
+            # <n>` = PRÉCIS : n'assume QUE la valeur servie connue (le compte dédoublonné), de sorte
+            # qu'une dérive NOUVELLE (toute autre valeur) reste un `ecart` qui casse (VERROUS-FIX-1).
+            ea = l.get("ecart_assume")
+            if verdict == "ecart" and ea:
+                if ea is True or (isinstance(ea, (int, float)) and isinstance(servi, (int, float))
+                                  and float(servi) == float(ea)):
+                    verdict = "assume"
             sorties.append({"carte": carte, "insee": l["insee"], "attendu": attendu,
                             "servi": servi, "verdict": verdict, "note": l.get("note")})
     return sorties

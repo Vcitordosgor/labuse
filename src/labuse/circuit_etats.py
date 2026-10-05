@@ -147,6 +147,7 @@ NOM_VERS_SLUG = {
     'Inventaire SRU (DHUP)': 'sru_dhup',
     'NPNRU (DEAL Réunion / ANCT)': 'npnru',
     'INSEE RP Logement 2023': 'insee_rp_logement',
+    'Population légale (INSEE via geo.api.gouv)': 'population_legale',   # COHERENCE-FIX-1 lot E
     'PLH des 5 EPCI (extraction documentaire)': 'plh_epci',
     'RTAA DOM (textes réglementaires)': 'rtaa_dom',
     'SUP — assiettes GPU (API Carto)': 'sup_gpu',
