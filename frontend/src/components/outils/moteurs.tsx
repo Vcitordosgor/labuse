@@ -239,9 +239,8 @@ export function M16() {
           <div data-asm-faits className="flex flex-wrap items-center gap-1.5 text-[11px]">
             <span className="rounded-full bg-mint/10 px-2 py-0.5 text-mint">d'un seul tenant</span>
             <span className="rounded-full bg-surface-3 px-2 py-0.5 text-txt-mut">{d.n_proprietaires} interlocuteur(s)</span>
-            {(d.n_personnes_morales > 0 || d.n_particuliers > 0) && (
-              <span className="rounded-full bg-surface-3 px-2 py-0.5 text-txt-mut">{d.n_personnes_morales} personne{d.n_personnes_morales > 1 ? 's' : ''} morale{d.n_personnes_morales > 1 ? 's' : ''} · {d.n_particuliers} particulier{d.n_particuliers > 1 ? 's' : ''}</span>
-            )}
+            {/* RECETTE-2 (D4b) — chip « N personnes morales · N particuliers » retirée (doublon de l'encart
+                « approche propriétaire » plus bas, qui porte le même compte avec son contexte). */}
           </div>
           {(() => {
             const vides = (d.items as Record<string, any>[]).filter((i) => !((i.sdp_m2 as number) > 0))

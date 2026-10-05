@@ -179,12 +179,14 @@ export function EtudeZone() {
   }
   const nouvelleEtude = () => { resetEtude(); setPorteZone(null) }
 
+  // RECETTE-2 (D8) — c'est le RAYON saisi (cercle) qui est mesuré et dessiné, jamais l'isochrone « 10 min ».
+  // L'en-tête le dit : « Zone de X km autour de <adresse> » (plus de « LA ZONE À 10 MIN EN VOITURE »).
   const enTete = res?.zone_disponible
-    ? (res.entree === 'polygone'
-        ? `La zone dessinée — ${nb(res.surface_ha)} ha`
-        : res.entree === 'rayon'
-          ? `Dans un rayon de ${String(res.rayon_km).replace('.', ',')} km${res.adresse ? ` — autour de ${res.adresse}` : ''}`
-          : `La zone à ${res.minutes} min ${res.mode === 'voiture' ? 'en voiture' : 'à pied'}${res.adresse ? ` — depuis ${res.adresse}` : ''}`)
+    ? (res.rayon_km != null
+        ? `Zone de ${String(res.rayon_km).replace('.', ',')} km autour de ${res.adresse ?? 'la parcelle'}`
+        : res.entree === 'polygone'
+          ? `La zone dessinée — ${nb(res.surface_ha)} ha`
+          : `Zone autour de ${res.adresse ?? 'la parcelle'}`)
     : ''
 
   if (porteZone === null) {

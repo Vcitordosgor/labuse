@@ -106,7 +106,8 @@ function Carte({ it, ouvert, onToggle }: { it: BlocItem; ouvert: boolean; onTogg
           <span className="min-w-0 break-words text-txt-dim">{it.zonages.slice(0, 4).join(' ')}</span></>}
       </div>
       <div className="mt-0.5 flex items-center gap-1.5 pl-4 text-[10px]">
-        {it.siren && <Siren value={it.siren} className="font-mono text-[10px] text-txt-dim" />}
+        {/* RECETTE-2 (D15) — SIREN en bleu (repère visuel de la personne morale). */}
+        {it.siren && <Siren value={it.siren} className="font-mono text-[10px] text-[#6B8FD4]" />}
         {it.sdp_couverture < it.n_parcelles && (
           <span className="text-txt-dim">
             résiduel sur {it.sdp_couverture}/{it.n_parcelles}

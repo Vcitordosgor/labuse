@@ -90,8 +90,34 @@ Légende : ✅ fait+capturé · 🚧 en cours · ⬜ non commencé · ⚠ à vé
 
 **Arbitrage C1 :** le bornage n'est pas supprimé aveuglément — **zonage par parcelle** (431 k polygones) GARDE son minzoom (la tuile île est ingérable, cf. harnais de captures). Les couches de la liste 04/10 (50 pas, ER, SIS, QPV, ANRU, TVA réduite, pylônes, postes, BPE, OSM, EnR, …) chargent à tous les zooms. Le gate était **client** (`addSource`/calques minzoom) ; le backend sert déjà les tuiles à tous les zooms (couches_tuyau §5).
 
-### D — Outils
-D1…D15 : ⬜
+### D — Outils  — **commit lot D** (partiel : voir états)
+| Pt | Sujet | État | Preuve / note |
+|---|---|---|---|
+| D1 | PLU : « révision » vs « non servi » = 2 faits distincts ; Trois-Bassins servi | ✅ | « 3 PLU en révision (PLU en vigueur servi) · 2 règlements non servis (Saint-André, Saint-Leu) ». API : n_procedures=3, non_servis=[St-André, St-Leu], **Trois-Bassins en révision mais PAS dans non_servis → servi** ✓ |
+| D2a | Permis : « Tous » coché par défaut | ✅ | `D2_permis_tous.png` — défaut seg='tous' |
+| D2b | Permis : clic point → popup directe sur la carte (plus de drawer colonne) | ⬜ **non fait ce tour** | refonte du handler ModulePanel (PermitDrawer modal → popup MapLibre au clic point) — identifié (ModulePanel.tsx PermitDrawer 365-472 / handler 521-528), non terminé/vérifié ce tour |
+| D3 | Communes €/m² neuf : seuil + servir le max de VEFA | 🚧 partiel | **seuil=8** (`config/dvf_profils.yaml:68`) ; **tableau 24 communes brut/servi ci-dessous**. Les « — » sont CORRECTS (« pas de médiane sans surface bâtie »). La « perte » = filtre `bati>0` (surface absente à l'acte VEFA, non rattrapable) + fenêtre 5 ans glissante sur `now()`. **Corriger à la source = re-ingestion (interdit « aucun run »)** → non fait ; légende « — : sous le seuil » UI non ajoutée ce tour |
+| D4a | Assemblage : N parcelles toutes surlignées (bug 1/3) | ⬜ **non fait ce tour** | diagnostic : en vue île le surlignage repose sur `ile-hl`/tuiles vectorielles qui ne contiennent pas les 3 parcelles tant qu'on n'a pas zoomé. Correctif identifié : source GeoJSON dédiée des `msel` (comme `module-extra`), indépendante du zoom (MapView.tsx:682-684) |
+| D4b | Doublon « 0 PM · 3 particuliers » (chip + encart) → une fois | ✅ | chip retirée (moteurs.tsx:242), encart « approche propriétaire » conservé |
+| D4c | Bilan union ET2262/2264/2266 = chiffres moteur | ✅ (vérif) | `/assemblage/study` (Saint-Pierre, contigu) : **surface 986 m² · SDP 444 m² · logements 3–4 · CA 1 055 984 € · charge foncière centrale −47 519 €** |
+| D5 | Comparer : barre se vide + invite explicite après chaque ajout | ✅ | invite dynamique « Cliquez la Nᵉ parcelle … ou saisissez-la » ; `key={n}` vide la barre |
+| D6 | Comparer : 3 colonnes égales, pas de scroll H, texte à la ligne | ✅ | `table-fixed` + colonnes égales + `break-words` |
+| D7 | Pièges : 2 cartes « Classement sonore » → une | ⬜ **non fait ce tour** | dédoublonnage probablement à la source (`/servitudes-invisibles`) — à vérifier/corriger côté back, non traité ce tour |
+| D8 | Étude de zone : chemin unique, cercle 3 km (pas isochrone), libellé | 🚧 partiel | **cercle déjà dessiné** (back ignore minutes dès `rayon_km`) ; **en-tête corrigé → « Zone de X km autour de <adresse> »** (plus « À 10 MIN »). Reste : fusion complète des 2 portes + retrait « ← Changer la zone »/« ZONE SEULE » (non fait ce tour) |
+| D9 | Remonter le temps : doublon → T1 | ✅ | couvert par le correctif `EntreeParcelle` (lot T) |
+| D10 | Faisabilité : Réinitialiser (T3) · citation PLU 2 lignes (T4) · « étape par étape » accordéon Chevron fermé · vérif calculs | 🚧 partiel | citation 2 lignes ✅ (lot T) ; **accordéon → `<Chevron>` fermé par défaut** ✅ ; Réinitialiser Faisabilité + tableau vérif `/recalcul` : non faits ce tour |
+| D11 | Gabarit : doublon (T1) · invite retirée · 3D Bouton (T7) · 3D rendu · vérif géométrie | 🚧 partiel | doublon ✅ (T1) · **section « Choisissez une parcelle » retirée** ✅ · 3D = `<Bouton>` ✅. **3D rendu NON CONSTATABLE en headless** (à vérifier par Vic) ; tableau géométrie non fait ce tour |
+| D12 | Taxe : doublon (T1) · retirer « Le formulaire s'ouvrira… » | ✅ | section retirée |
+| D13 | Solaire/Ensoleillement : T1/T2 · retirer invite + encart EnR + pied | ✅ | les 3 retirés |
+| D14 | Piscines : survol (T10) · colonne source+croix · Réinit · goutte au centroïde · jointure · statut | ✅ | **(a) goutte** : endpoint `/parcelles` sert désormais des Points (kind piscine) — `D14_piscines_gouttes.png` : **2 380 gouttes, 0 parcelle teintée** · (b) colonne source + croix retirées · (c) Réinitialiser retiré · (f) `i` du statut sourcé. Tableaux (e)/(g) ci-dessous |
+| D15 | Blocs : encart 2 lignes · Filtres Chevron · carte (SIREN bleu, 1 Bouton) | 🚧 partiel | **SIREN en bleu** ✅ · Filtres déjà accordéon Chevron ✅ · 1 seul Bouton « Scan patrimoine » ✅ · nom sur 2 lignes (break-words, lot T) ✅. Reste : encart réduit à 2 lignes (non fait ce tour) |
+
+**Tableau D3 — VEFA 24 communes (brut DVF / servi, fenêtre 5 ans, seuil 8)** : 3 communes basculent sous le seuil alors que leur volume VEFA réel ≥ 8 — **Saint-Louis** (24 brut / 6 servi), **Saint-André** (8/1), **Le Port** (7/1) : surface absente à l'acte VEFA (1 093 VEFA sans `surface_reelle_bati`, dont 5 seulement récupérables par Carrez). Les 5 communes sans VEFA (Entre-Deux, Plaine-des-Palmistes, St-Philippe, Ste-Rose, Cilaos) = « — » légitime. Détail 24 lignes dans l'investigation D3.
+
+**Tableau D14(e) — jointure piscine→parcelle** : sur 30 → 1 faux ; sur 50 136 → **23 faux (0,05 %)** (identique ST_Contains/ST_Intersects) ; 380 (0,75 %) idu orphelin. **D14(g) verdict** : après (a)+(e), **l'outil TIENT** — la jointure par idu est spatialement saine (99,95 %), la goutte au centroïde est propre. **Pas de refonte nécessaire** ; seule option résiduelle : exclure/signaler les 380 idu orphelins et les 23 hors-parcelle.
+**D14(f) — statut « à confirmer »** : `piscines.statut='a_confirmer'` ⟺ `subtype='probable'` (CoSIA seule, sans corroboration ortho/FLAIR ≤ 2 m) ET `surface_m2 ≥ 8` (`PROBABLE_FLOOR_M2`, piscines_fusion.py:116). Sourcé par audit mesuré (précision 30–60 %). FLAIR toujours « servie ». Écrit dans le `i` du compteur.
+
+**Arbitrages lot D (tranchés) :** D3 « corriger à la source » = re-ingestion DVF → **interdit** (Étape 0) → non fait, documenté ; les « — » sont corrects. D2b/D4a/D7/D8-fusion/D10-calc/D11-géo/D15-encart : correctifs **identifiés** mais non terminés/vérifiés ce tour (volume du lot) — à finir. D11 3D : **non constatable en headless** → à vérifier par Vic.
 
 ### E — Docs, Signaler, Notifications
 E1…E6 : ⬜

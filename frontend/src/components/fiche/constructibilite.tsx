@@ -9,6 +9,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState, type ReactNode } from 'react'
 import { getCalculetteDefaults, getFaisabilite, getModeB, getPipelineForParcel, patchPipeline, postChargeFonciere, postFaisabiliteScenario, type CalculetteDefaults } from '../../lib/api'
 import { fmtEurCompact, fmtInt, fmtM2, fmtPctConsomme, fmtSup } from '../../lib/format'
+import { Chevron } from '../ui/Chevron'
 import { PERIM_POTENTIEL_COURT } from '../../lib/perimetres'
 import { Squelette } from '../Loading'
 import { ErrorState } from '../States'
@@ -664,7 +665,8 @@ export function FaisabiliteTab({ idu }: { idu: string; embedded?: boolean }) {
           <button onClick={() => setShowSteps((s) => !s)} aria-expanded={showSteps}
             className="flex w-full items-center justify-between gap-2 text-[11px] font-medium uppercase tracking-[0.12em] text-lab transition-colors duration-quick hover:text-txt-hi">
             <span>Le calcul, étape par étape ({etapes.length})</span>
-            <span className="text-mint">{showSteps ? '▼' : '◀'}</span>
+            {/* RECETTE-2 (D10) — accordéon Chevron de la charte (remplace le glyphe texte ◀/▼). */}
+            <Chevron open={showSteps} />
           </button>
           {showSteps && (
             <ol data-faisa-steps className="mt-1.5">

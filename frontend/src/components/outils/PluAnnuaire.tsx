@@ -71,9 +71,14 @@ export function PluAnnuaire() {
                 {communes.data.n_plu_vigueur ?? communes.data.servables} PLU en vigueur ({communes.data.n_communes} communes{communes.data.n_rnu > 0 && <>, {communes.data.n_rnu} au RNU</>})
                 {/* RECETTE-1 R26 — « · N procédures en cours » RETIRÉ de ce bandeau (demande Vic). */}
               </p>
-              {(communes.data.non_servis?.length ?? 0) > 0 && (
+              {/* RECETTE-2 (D1) — DEUX FAITS DISTINCTS, plus mélangés : (1) les PLU en révision (en vigueur,
+                  servis) ; (2) les règlements non servis par le GPU. Les Trois-Bassins est en révision ET
+                  servi (il n'est pas dans non_servis) — vérifié. */}
+              {((communes.data.n_procedures ?? 0) > 0 || (communes.data.non_servis?.length ?? 0) > 0) && (
                 <p data-plu-trous className="mb-1.5 px-0.5 text-[9.5px] leading-snug text-cp-amber">
-                  Règlement de {communes.data.non_servis.length} commune{communes.data.non_servis.length > 1 ? 's' : ''} non servi par le Géoportail ({communes.data.non_servis.join(', ')}) — PLU en vigueur, texte à consulter en mairie.
+                  {(communes.data.n_procedures ?? 0) > 0 && <>{communes.data.n_procedures} PLU en révision (PLU en vigueur servi)</>}
+                  {(communes.data.n_procedures ?? 0) > 0 && (communes.data.non_servis?.length ?? 0) > 0 && ' · '}
+                  {(communes.data.non_servis?.length ?? 0) > 0 && <>{communes.data.non_servis.length} règlement{communes.data.non_servis.length > 1 ? 's' : ''} non servi{communes.data.non_servis.length > 1 ? 's' : ''} par le Géoportail ({communes.data.non_servis.join(', ')}) — texte à consulter en mairie</>}
                 </p>
               )}
               {/* R21 — UNE COLONNE : le nom de commune est TOUJOURS entier (la grille à 2 colonnes

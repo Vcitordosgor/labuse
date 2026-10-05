@@ -13,10 +13,10 @@
  * présentation + requêtes d'agrégats (nouveaux endpoints /prospection-piscines et .../parcelle/{idu}
  * = lecture seule de données gelées).
  */
-import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { getPiscinesAgregat, getPiscinesListe, getPiscinesParcelles, getSolaireFiche,
-  postPasUnePiscine, type SolaireFiche } from '../../lib/api'
+  type SolaireFiche } from '../../lib/api'
 import { fmtInt } from '../../lib/format'
 import { TOKENS } from '../../lib/tokens'
 import { useApp } from '../../store/useApp'
@@ -94,7 +94,6 @@ const STATUT_LBL: Record<PiscStatut, string> = { servie: 'Confirmées', a_confir
 function ModePiscines({ onBack }: { onBack: () => void }) {
   const focusParcelle = useApp((s) => s.focusParcelle)
   const setModuleMap = useApp((s) => s.setModuleMap)
-  const qc = useQueryClient()
   const [step, setStep] = useState<'perimetre' | 'statut' | 'resultat'>('perimetre')
   const [commune, setCommune] = useState<string | null>(null)   // null = toute l'île
   const [statut, setStatut] = useState<PiscStatut>('servie')
@@ -121,12 +120,6 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
     getNextPageParam: (last) => last.a_suite ? last.offset + last.n : undefined,
     staleTime: 60_000, enabled: step === 'resultat',
   })
-  const signalerPasPiscine = async (idu: string) => {
-    setPasPiscine((s) => new Set(s).add(idu))
-    try { await postPasUnePiscine(idu) } finally {
-      qc.invalidateQueries({ queryKey: ['piscines-agg'] }); qc.invalidateQueries({ queryKey: ['piscines-liste'] })
-    }
-  }
   const annulerPasPiscine = (idu: string) => setPasPiscine((s) => { const n = new Set(s); n.delete(idu); return n })
   const total = list.data?.pages[0]?.total ?? 0
   const items = (list.data?.pages.flatMap((p) => p.items) ?? []).filter((it) => !pasPiscine.has(it.idu))
@@ -144,7 +137,6 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
     return () => { vivant = false }
   }, [step, commune, statut, setModuleMap])
 
-  const SOURCE_LBL: Record<string, string> = { flair: 'FLAIR', cosia: 'CoSIA', 'flair+cosia': 'FLAIR+CoSIA' }
   const CompteBadge = ({ c, a }: { c: number; a: number }) => (
     <span className="tnum shrink-0 text-[11px] text-txt">
       <b style={{ color: TOKENS.mint }}>{fmtInt(c)}</b> conf.<span className="text-txt-dim"> · {fmtInt(a)} à conf.</span>
@@ -215,15 +207,21 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
       <BackBar onBack={onBack} titre="💧 Piscines" />
-      <div className="flex items-center justify-between gap-2">
+      {/* RECETTE-2 (D14c) — Réinitialiser retiré (le parcours Piscines se reprend par « Changer le
+          périmètre/statut » ; rien à effacer de plus). */}
+      <div className="flex items-center gap-2">
         <Retour data-piscines-back-statut label="Changer le statut" onClick={() => setStep('statut')} />
-        <Reinitialiser onReset={() => { setCommune(null); setStatut('servie'); setPasPiscine(new Set()); setStep('perimetre') }} />
       </div>
       {/* Compte + légende des couleurs de la carte */}
       <div className="rounded-lg border px-3 py-2.5" style={{ borderColor: `${TOKENS.mint}4d`, background: `${TOKENS.mint}0f` }}>
         <div>
           <b data-piscines-total className="tnum text-2xl font-semibold" style={{ color: TOKENS.mint }}>{fmtInt(nbStatut)}</b>
           <span className="ml-2 text-[11px] text-txt-mut">piscines « {STATUT_LBL[statut].toLowerCase()} » {commune ? `à ${commune}` : 'à La Réunion'}</span>
+          {/* RECETTE-2 (D14f) — d'où vient « à confirmer » : polygone CoSIA « probable » (sans détection
+              ortho/FLAIR corroborante) d'au moins 8 m² ; précision mesurée 30–60 % sur audit (30/classe).
+              Les détections FLAIR, elles, sont toujours « confirmées ». */}
+          <span data-piscines-i tabIndex={0} title={'« À confirmer » = polygone CoSIA « probable » (sans détection ortho/FLAIR corroborante à ≤ 2 m) d\'au moins 8 m² — précision mesurée 30 à 60 % (audit 30/classe). Les détections FLAIR sont toujours « confirmées ».'}
+            className="ml-1.5 inline-flex h-[14px] w-[14px] cursor-help items-center justify-center rounded-full border border-line-2 text-[8.5px] text-txt-dim align-middle">i</span>
         </div>
         {(statut === 'tous' || statut === 'servie') && (
           <span className="mr-3 mt-1 inline-flex items-center gap-1 text-[9.5px] text-txt-dim">
@@ -247,17 +245,14 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
               <div key={`${it.idu}-${i}`} data-piscines-row role="button" tabIndex={0}
                 onClick={() => focusParcelle(it.idu, { fiche: true })}
                 className="hover-fill cursor-pointer rounded-lg border border-line-2 bg-surface-3 px-2.5 py-1.5 transition-colors duration-quick">
+                {/* RECETTE-2 (D14b) — colonne SOURCE (CoSIA / FLAIR+CoSIA) et croix « pas une piscine » retirées. */}
                 <div className="flex items-center gap-2">
                   <span className="font-mono text-[11px] text-txt-hi">{it.idu.slice(8)}</span>
                   <span className="shrink-0 text-[10.5px] text-txt-mut">{it.commune}</span>
-                  <span className="ml-auto shrink-0 rounded bg-surface-2 px-1 text-[8.5px] text-txt-dim">{SOURCE_LBL[it.source] ?? it.source}</span>
-                  {it.statut === 'a_confirmer' && <span className="shrink-0 rounded bg-amber-500/15 px-1 text-[8.5px] font-medium text-amber-500">à confirmer</span>}
-                  <span className="shrink-0 text-[10px] text-mint hover:underline">Fiche →</span>
-                  {/* RECETTE-1 H13.3 — « pas une piscine » en ICÔNE (croix), plus un chip texte. */}
-                  <button data-piscines-pas type="button" title="Signaler : pas une piscine"
-                    aria-label="Signaler : pas une piscine"
-                    onClick={(e) => { e.stopPropagation(); void signalerPasPiscine(it.idu) }}
-                    className="shrink-0 rounded px-1 text-[12px] leading-none text-txt-dim transition-colors hover:bg-surface-2 hover:text-txt">✕</button>
+                  <span className="ml-auto flex shrink-0 items-center gap-2">
+                    {it.statut === 'a_confirmer' && <span className="rounded bg-amber-500/15 px-1 text-[8.5px] font-medium text-amber-500">à confirmer</span>}
+                    <span className="text-[10px] text-mint hover:underline">Fiche →</span>
+                  </span>
                 </div>
               </div>
             ))}
@@ -319,14 +314,8 @@ function ModeEnsoleillement({ onBack, prefillIdu }: { onBack: () => void; prefil
       {ficheIdu && fiche.isLoading && <Squelette lignes={4} />}
       {ficheIdu && fiche.isError && <ErrorState message="Parcelle introuvable — vérifiez l’IDU." retry={() => fiche.refetch()} />}
       {ficheIdu && fiche.data && <FicheSoleil f={fiche.data} onOpen={() => select(ficheIdu)} />}
-      {!ficheIdu && <p className="text-[11px] text-txt-mut">Saisissez une parcelle pour sa fiche soleil (potentiel, toiture, profil mensuel).</p>}
-      {/* GEOPF-3 — la couche « Contraintes EnR près des habitations » (loi APER) est superposable sur
-          la carte (groupe Énergie) : périmètres réglementaires liés aux habitations. */}
-      <p data-solaire-enr-habitation className="text-[9.5px] leading-snug text-txt-dim">
-        💡 Couche carte « Contraintes EnR près des habitations » (loi APER) disponible dans le groupe
-        <b className="text-txt-mut"> Énergie</b> du panneau Couches.
-      </p>
-      <p className="mt-auto text-[9.5px] leading-snug text-txt-dim">{SOURCES_PIED}</p>
+      {/* RECETTE-2 (D13) — retirés : l'invite « Saisissez une parcelle … », l'encart « 💡 Couche carte
+          Contraintes EnR … », et le pied « Détection FLAIR · PVGIS … · RGE ALTI ». */}
     </div>
   )
 }

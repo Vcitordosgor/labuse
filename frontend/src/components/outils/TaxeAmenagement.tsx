@@ -193,12 +193,7 @@ export function TaxeAmenagement() {
           champ fixe source='adresse' puis focusParcelle (fiche) ; le clic carte est adopté par l'effet selectedIdu. */}
       <EntreeParcelle source={source}
         onPick={(i, src) => { setSource(src); setPrefillIdu(i); focusParcelle(i, { fiche: true }) }} />
-      {!prefillIdu && (
-        <p data-taxe-attente className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] leading-snug text-txt-dim">
-          Le formulaire s'ouvrira quand une parcelle sera choisie — vous saisissez la surface taxable
-          de votre projet (surface close et couverte, garages et annexes inclus).
-        </p>
-      )}
+      {/* RECETTE-2 (D12) — section « Le formulaire s'ouvrira quand une parcelle sera choisie … » retirée. */}
       {prefillIdu && (
         <div data-taxe-contexte className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[10.5px] text-txt-mut">
           {prefill.isLoading && <span className="text-txt-dim">Chargement du contexte parcelle…</span>}

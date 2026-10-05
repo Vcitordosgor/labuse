@@ -119,8 +119,9 @@ describe('PERMIS — double entrée + densité', () => {
     expect(document.querySelector('[data-permis-segment]')).toBeNull()         // état refermé
     // la barre repliée « Filtrer par état » DIT son état actif + compte (défaut permis = Récent)
     const barreEtat = document.querySelector('[data-permis-bloc-toggle="etat"]')?.textContent
-    expect(barreEtat).toContain('Récent')
-    expect(barreEtat).toContain('613')
+    // RECETTE-2 (D2) — défaut permis = « Tous » (toute la base), plus « Récent ».
+    expect(barreEtat).toContain('Tous')
+    expect(barreEtat).toContain('412')
   })
 
   it('accordéon : Échap referme le bloc ouvert', async () => {

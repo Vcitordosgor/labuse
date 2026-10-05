@@ -240,11 +240,8 @@ export function Gabarit() {
       <EntreeParcelle source={source}
         onPick={(i, src) => { setSource(src); setIdu(i); focusParcelle(i) }} />
 
-      {!target && (
-        <p className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] leading-snug text-txt-dim">
-          Choisissez une parcelle (barre ci-dessus ou clic sur la carte).
-        </p>
-      )}
+      {/* RECETTE-2 (D11) — section « Choisissez une parcelle (barre ci-dessus ou clic sur la carte) »
+          retirée (l'entrée parcelle ci-dessus le dit déjà). */}
 
       {q.isLoading && <Squelette lignes={4} />}
       {q.isError && <ErrorState message="Parcelle inconnue ou service indisponible." retry={() => q.refetch()} />}
