@@ -51,7 +51,8 @@ function horsMarcheClient(
   return null
 }
 
-export function FinancierQuestionnaire({ idu, onClose }: { idu: string; onClose: () => void }) {
+export function FinancierQuestionnaire({ idu, onClose, onGenerated }:
+  { idu: string; onClose: () => void; onGenerated?: () => void }) {
   const { data, isLoading, error } = useQuery({
     queryKey: ['financier-questionnaire', idu],
     queryFn: () => getFinancierQuestionnaire(idu),
@@ -206,6 +207,7 @@ export function FinancierQuestionnaire({ idu, onClose }: { idu: string; onClose:
       if (!r.ok) { setDocTech('Le document n\'a pas pu être généré (erreur technique). Réessayez ; si cela persiste, signalez-le au support.'); return }
       const blob = await r.blob()
       window.open(URL.createObjectURL(blob), '_blank', 'noopener')
+      onGenerated?.()   // DOCS-FIX-1 (P7) — inscrit dans « Mes documents » APRÈS génération réelle.
     } catch { setDocTech('Le document n\'a pas pu être généré — vérifiez votre connexion et réessayez.') }
   }
 
@@ -222,7 +224,9 @@ export function FinancierQuestionnaire({ idu, onClose }: { idu: string; onClose:
     <div style={backdrop} onClick={onClose}>
       <div style={card} onClick={(e) => e.stopPropagation()} data-financier-questionnaire>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
-          <div style={{ fontSize: 11, letterSpacing: '.12em', color: MINT }}>FINANCIER</div>
+          {/* DOCS-FIX-1 (P2, arbitrage Vic) — le mot « Financier » disparaît côté client (eyebrow,
+              titres, messages) : le document s'appelle « Bilan ». Clé/route/table internes inchangées. */}
+          <div style={{ fontSize: 11, letterSpacing: '.12em', color: MINT }}>BILAN</div>
           <button onClick={onClose} style={{ background: 'none', border: 0, color: '#6F8578', cursor: 'pointer', fontSize: 20 }}>×</button>
         </div>
 
@@ -233,14 +237,14 @@ export function FinancierQuestionnaire({ idu, onClose }: { idu: string; onClose:
           <div>
             <h2 style={{ fontSize: 22, fontWeight: 500, margin: '8px 0 6px' }}>Questionnaire enregistré</h2>
             <p style={{ fontSize: 14, color: '#8FA69A', margin: '0 0 20px' }}>
-              Le document Financier reprend ces hypothèses. Vous pouvez rouvrir ce questionnaire à tout moment pour les modifier.
+              Le Bilan reprend ces hypothèses. Vous pouvez rouvrir ce questionnaire à tout moment pour les modifier.
             </p>
             {/* RECETTE-2 S2 — le parcours PRODUIT enfin le document : jusqu'ici il s'arrêtait sur
                 « enregistré » sans jamais ouvrir le PDF (route /financier/{idu}.pdf pourtant servie).
                 Action primaire = ouvrir le document ; « Fermer » devient secondaire. */}
             <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
               <Bouton data-financier-doc niveau="primaire" ton="vert" onClick={() => void ouvrirDoc()}>
-                Ouvrir le Dossier financier
+                Ouvrir le Bilan
               </Bouton>
               <Bouton niveau="lien" onClick={onClose}>Fermer</Bouton>
             </div>
@@ -248,7 +252,7 @@ export function FinancierQuestionnaire({ idu, onClose }: { idu: string; onClose:
             {docErr && (
               <div data-financier-manques style={{ marginTop: 16, padding: 14, border: '.5px solid #E0B341', borderRadius: 6, background: 'rgba(224,179,65,.06)' }}>
                 <p style={{ fontSize: 13, color: '#E0B341', margin: '0 0 8px', fontWeight: 500 }}>
-                  Le Dossier financier ne peut pas être établi — il manque :
+                  Le Bilan ne peut pas être établi — il manque :
                 </p>
                 <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: '#C7D6CD' }}>
                   {docErr.map((m, i) => (

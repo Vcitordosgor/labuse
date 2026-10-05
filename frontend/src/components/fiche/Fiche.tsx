@@ -4,7 +4,11 @@ import { Bouton } from '../ui/Bouton'
 import { Badge } from '../ui/Badge'
 import { Chevron } from '../ui/Chevron'
 import { useEffect, useMemo, useState, useRef, type ReactNode } from 'react'
-import { addToPipeline, ajouterParcelle, ApiError, archivePipeline, createProjet, getDossierStatut, getFaisabilite, getFiche, getGabarit, getMoi, getParcelExposition, getPipelineForParcel, getPipelineMeta, getProjets, getWatch, is429, patchPipeline, postSignalement, preDossierUrl, projetsPourParcelle, SOURCE, toggleWatch } from '../../lib/api'
+import { addToPipeline, ajouterParcelle, ApiError, archivePipeline, createProjet, docApporteurUrl, docDossierUrl, docPreDossierUrl, getDossierStatut, getFaisabilite, getFiche, getGabarit, getMoi, getParcelExposition, getPipelineForParcel, getPipelineMeta, getProjets, getWatch, is429, patchPipeline, postSignalement, projetsPourParcelle, SOURCE, toggleWatch } from '../../lib/api'
+// DOCS-FIX-1 (P3/P4) — ouverture propre des documents de la fiche (fetch + blob + attente + erreur FR
+// au toast), le MÊME comportement que la page Docs et que le Bilan. Plus de lien <a> qui ouvre un
+// onglet blanc puis du JSON sur erreur. P11 — URLs par les builders encodés (docDossierUrl…), plus de littéral.
+import { useOuvrirDocument } from '../../lib/ouvrirDocument'
 import { verdictMeta } from '../../lib/status'
 import { AnalyseLabuseCard } from './AnalyseLabuseCard'   // RETOURS-14 P1 — carte « Analyse LABUSE » extraite (testable), affiche la version servie
 import { fmtInt, fmtM2, fmtDateNum, fmtLibelleBrut, fmtPctConsomme, iduComplet } from '../../lib/format'
@@ -1958,8 +1962,7 @@ export function Fiche({ idu }: { idu: string }) {
                 <DossierTile idu={idu} />
                 {/* RECETTE-1 R28 — infobulles au survol retirées des tuiles d'export (le nom suffit). */}
                 <BanquierButton idu={idu} />
-                <OutilCase nom="Apporteur" data-apporteur href={`/apporteur/${idu}.pdf`}
-                  ic={<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /><path d="M8 9h8" /><path d="M8 13h5" /></svg>} />
+                <ApporteurTile idu={idu} />
                 <PreDossierTile idu={idu} />
                 <OutilCase nom={CLIENT.fiche.export.courrier} data-courrier-tile onClick={() => { setCourrierPrefill(idu); setModule('courriers') }}
                   ic={<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></svg>} />
@@ -2022,6 +2025,9 @@ export function Fiche({ idu }: { idu: string }) {
  *  à 7 tuiles n'est PAS réordonnée : c'est la même cellule, avec l'état en plus. */
 function DossierTile({ idu }: { idu: string }) {
   const st = useQuery({ queryKey: ['dossier-statut'], queryFn: getDossierStatut })
+  const setToast = useApp((s) => s.setToast)
+  const { ouvrir, enCours } = useOuvrirDocument(setToast)   // DOCS-FIX-1 (P3/P4) — ouverture propre
+  const busy = enCours === 'dossier'
   const icon = <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></svg>
   const d = st.data
   if (d && !d.disponible) return (
@@ -2029,9 +2035,26 @@ function DossierTile({ idu }: { idu: string }) {
   )
   const compteur = d && !d.illimite && d.restants != null
   const tip = d ? (d.illimite ? 'Dossier parcelle PDF brandé (illimité — Intégral)' : `Dossier parcelle PDF brandé — ${d.restants}/${d.quota_mois} restants ce mois`) : 'Dossier parcelle PDF brandé'
+  // DOCS-FIX-1 (P3/P4/P11) — onClick (fetch+blob) + URL par le builder encodé ; pendant la génération
+  // la tuile montre « … » et se désactive (l'app ne fige pas) ; l'erreur part au toast, jamais un onglet blanc.
   return (
-    <OutilCase nom="Dossier" ic={icon} href={`/dossier/${idu}.pdf`} title={tip} data-dossier-tile
-      chiffre={compteur ? `· ${d!.restants}` : undefined} />
+    <OutilCase nom="Dossier" ic={icon} onClick={() => void ouvrir(docDossierUrl(idu), 'dossier')} disabled={busy}
+      title={tip} data-dossier-tile chiffre={busy ? '…' : (compteur ? `· ${d!.restants}` : undefined)} />
+  )
+}
+
+
+/** DOCS-FIX-1 (P3/P4/P11) — tuile « Apporteur » : ouverture propre (fetch+blob) via le builder
+ *  encodé `docApporteurUrl` (plus de lien `<a href={`/apporteur/${idu}.pdf`}>` littéral non encodé
+ *  qui ouvrait un onglet blanc puis du JSON sur erreur). « … » pendant la génération, erreur au toast. */
+function ApporteurTile({ idu }: { idu: string }) {
+  const setToast = useApp((s) => s.setToast)
+  const { ouvrir, enCours } = useOuvrirDocument(setToast)
+  const busy = enCours === 'apporteur'
+  const icon = <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /><path d="M8 9h8" /><path d="M8 13h5" /></svg>
+  return (
+    <OutilCase nom="Apporteur" data-apporteur ic={icon} disabled={busy}
+      onClick={() => void ouvrir(docApporteurUrl(idu), 'apporteur')} chiffre={busy ? '…' : undefined} />
   )
 }
 
@@ -2042,13 +2065,18 @@ function DossierTile({ idu }: { idu: string }) {
 function PreDossierTile({ idu }: { idu: string }) {
   const moi = useQuery({ queryKey: ['moi'], queryFn: getMoi })
   const integral = moi.data?.plan === 'integral'
+  const setToast = useApp((s) => s.setToast)
+  const { ouvrir, enCours } = useOuvrirDocument(setToast)   // DOCS-FIX-1 (P3/P4) — ouverture propre
+  const busy = enCours === 'pre-dossier'
   const icon = <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M21 8v13H3V3h10" /><path d="M16 3h5v5" /><path d="M8 13h6M8 17h4" /></svg>
   if (!integral) return (
     <OutilCase nom={CLIENT.fiche.export.preDossier} ic={icon} disabled data-predossier-gate
       title={`${CLIENT.fiche.export.preDossierTip} — ${CLIENT.fiche.export.preDossierGate}`} />
   )
+  // DOCS-FIX-1 (P3/P4/P11) — onClick (fetch+blob) + builder encodé ; « … » pendant la génération, erreur au toast.
   return (
-    <OutilCase nom={CLIENT.fiche.export.preDossier} ic={icon} href={preDossierUrl(idu)} title={CLIENT.fiche.export.preDossierTip} data-predossier />
+    <OutilCase nom={CLIENT.fiche.export.preDossier} ic={icon} onClick={() => void ouvrir(docPreDossierUrl(idu), 'pre-dossier')}
+      disabled={busy} title={CLIENT.fiche.export.preDossierTip} data-predossier chiffre={busy ? '…' : undefined} />
   )
 }
 
