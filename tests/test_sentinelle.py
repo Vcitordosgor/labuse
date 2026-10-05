@@ -250,7 +250,12 @@ def test_seed_et_raisons_couvrent_les_64_sources_par_nom_exact():
     # SOURCES-CORRECTION-2 lot 3 — communes_ign est une source RÉELLE (au catalogue DB) mais seedée par le
     # référentiel EMBARQUÉ (scripts/registre2_raccord_db.py, « seed (référentiel embarqué) »), hors de la
     # liste SOURCES — comme les doublons couverts. Elle porte sa raison de non-surveillance. On l'admet.
-    seedees_hors_sources = {"Communes La Réunion — contours (IGN ADMIN EXPRESS via geo.api.gouv, seed)"}
+    # VERROUS-FIX-1 — Population légale (geo.api.gouv/INSEE) est elle aussi une source RÉELLE du
+    # catalogue DB, seedée par SON module d'ingestion (ingestion/population_legale.py:_upsert_catalogue,
+    # `labuse population-legale-sync`), hors de la liste SOURCES — comme communes_ign. Elle porte sa
+    # raison de non-surveillance (millésime annuel INSEE, pas d'en-tête de version amont à sonder).
+    seedees_hors_sources = {"Communes La Réunion — contours (IGN ADMIN EXPRESS via geo.api.gouv, seed)",
+                            "Population légale (INSEE via geo.api.gouv)"}
     catalogue = noms | seedees_hors_sources
     assert seed_noms <= catalogue, f"noms de SEED absents du catalogue : {seed_noms - catalogue}"
     assert raison_noms <= catalogue, f"raisons pour des noms absents du catalogue : {raison_noms - catalogue}"

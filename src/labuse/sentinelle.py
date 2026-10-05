@@ -802,6 +802,11 @@ RAISONS_NON_SURVEILLEES: dict[str, str] = {
     # NAF (Cerema) sorties d'ici : sous sonde RÉELLE (SEED SOURCES-3b) désormais ; une source ne peut
     # pas être à la fois surveillée et déclarée non surveillable (test_sentinelle).
     "INSEE RP Logement 2023": "Millésime ANNUEL du recensement (publication INSEE sans endpoint de version stable pour les tableaux communaux) — rappel par cadence, le millésime suivant s'ingère à la main (RP 2024 attendu fin 2026).",
+    # COHERENCE-FIX-1 lot E — populations légales en vigueur : geo.api.gouv renvoie la valeur courante
+    # SANS en-tête de version machine à comparer ; l'INSEE actualise les populations légales une fois
+    # l'an (en vigueur au 1er janvier). Même traitement que « INSEE RP Logement 2023 » : millésime
+    # annuel re-ingéré par `labuse population-legale-sync`, pas de fausse veille amont.
+    "Population légale (INSEE via geo.api.gouv)": "Populations légales INSEE en vigueur (geo.api.gouv) — millésime ANNUEL (en vigueur au 1er janvier), sans en-tête de version machine amont à sonder ; re-ingérées à la demande (`labuse population-legale-sync`), fraîcheur au Circuit.",
     "NPNRU (DEAL Réunion / ANCT)": "Liste ANCT FIGÉE (génération 2024) — pas de flux de version ; les quartiers NPNRU ne changent qu'à une nouvelle génération (geste manuel).",
     "PLH des 5 EPCI (extraction documentaire)": "Extraction DOCUMENTAIRE manuelle (dépôt) — la version vit dans les documents des EPCI, pas dans un flux ; rappel par cadence.",
     "RTAA DOM (textes réglementaires)": "Règles portées par le code (config/rtaa_dom.yaml), vérifiées sur Légifrance À LA MAIN aux versions consolidées « en vigueur » — pas d'API de version Légifrance exploitable pour ces articles.",

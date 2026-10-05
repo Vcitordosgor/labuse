@@ -40,6 +40,18 @@ Preuve locale (réseau seul, sans base — pour ne pas toucher le run résiduel 
 échantillon de 8 URLs `https` du `SEED` appelées via `sentinelle._http` → **8/8 `HTTP 200`,
 0 `CERTIFICATE_VERIFY_FAILED`** (avant le geste : 8/8 en échec SSL).
 
+## Note d'exploitation — G8 reste JAUNE quand l'agent est à 0 € (VERROUS-FIX-1)
+
+*05/10/2026.* G8 (« aucune source vitrine sans contrôle depuis plus de 7 jours ») **casse par
+budget, pas par régression de code** : la sentinelle (l'agent qui sonde les producteurs) est
+plafonnée à 0 € → les sondes ne tournent pas → les sources paraissent « sans contrôle récent ».
+C'est l'état que la phrase de G8 décrit elle-même (« avec l'agent plafonné à 0 €, une source
+hors sonde n'est contrôlée par personne — le verrou le dit »). `deploy.sh` passe déjà `-w G8`
+(avertissement NON bloquant, CRON-1 lot 3) : déployer n'aggrave rien, et bloquer empêcherait de
+poser les horloges. **G8 est donc laissé JAUNE volontairement** — il repasse vert dès qu'un
+budget de sonde est rendu à l'agent (aucun code à changer). Il ne compte pas dans « 24/24 »
+(c'est une garantie, pas un verrou V*). Les 24 verrous et G1–G7 sont verts.
+
 ## Lot 1 — les tables
 
 | | La phrase | Ce qui le garantit | Où ça se lit |

@@ -607,8 +607,8 @@ DONNEES: dict[str, Donnee] = {
     "l'agrégat Filosofi (carreaux fiscaux) sous-estimait la population et n'est plus servi ici (il ne "
     "sert plus que le niveau de vie)",
     moteur=None, calcul="passe_plat", fonction="src/labuse/api/fiche_commune.py (population)",
-    reservoirs=("sudocuh", "insee_rp_logement",), portee="live",
-    table="sudocuh_procedures.pop_mun (population municipale légale INSEE)"),
+    reservoirs=("population_legale", "sudocuh", "insee_rp_logement",), portee="live",
+    table="population_legale.pop_mun (primaire, geo.api.gouv) ; repli sudocuh_procedures.pop_mun"),
  "vacance_pct": C("Vacance", "%", "commune",
     "100 × vacants / logements (RP)",
     moteur="commune_compteurs", calcul="moteur",

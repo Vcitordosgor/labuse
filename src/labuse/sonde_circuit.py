@@ -476,16 +476,36 @@ def verifier_exports(db) -> dict:
             return {"erreur": f"recette sans verdict (rc={proc.returncode}) : "
                               f"{(proc.stderr or proc.stdout or '')[-400:]}"}
         verdict = json.loads(jpath.read_text())
+    cles_exports: set[str] = set()
+    cles_mots: set[str] = set()
     for e in verdict.get("erreurs", []):
         if "mot interdit" in e:
             continue           # contrôle distinct ci-dessous
+        cles_exports.add(e[:200])
         _upsert_ecart(db, "exports_recette", e[:200], "pdf:recette_exports1", "divergence",
                       "fiche.json / endpoint fiche", "référence écran", "autre")
     for m in verdict.get("mots_interdits", []):
+        cles_mots.add(m[:200])
         _upsert_ecart(db, "mots_interdits", m[:200], "pdf:recette_exports1", "présent",
                       "config/mots_interdits.yaml", "0 attendu", "autre")
+    # VERROUS-FIX-1 — SOLDE (miroir de la 4.4 catégorielle, REPARATIONS-1 lot 0) : la recette VIENT DE
+    # RE-JOUER les 24 PDF ; tout écart exports_recette / mots_interdits ENCORE ouvert mais ABSENT du
+    # verdict de ce passage est GUÉRI — il passe `solde` (sinon un écart réparé reste « ouvert » à vie,
+    # ligne rouge fantôme comptée par G7, comme l'aléa d'avant REPARATIONS-1). On ne solde QUE parce
+    # qu'on a un verdict en main (recette jouée) : une recette injouable sort plus haut sans rien solder.
+    soldes = 0
+    for chiffre, cles in (("exports_recette", cles_exports), ("mots_interdits", cles_mots)):
+        rows = db.execute(text(
+            "SELECT id, cle FROM circuit_ecarts WHERE chiffre_id = :c AND statut = 'ouvert'"),
+            {"c": chiffre}).all()
+        for eid, cle in rows:
+            if cle not in cles:
+                db.execute(text(
+                    "UPDATE circuit_ecarts SET statut = 'solde', solde_le = now() WHERE id = :i"),
+                    {"i": eid})
+                soldes += 1
     return {"n_erreurs_hors_mots": verdict.get("n_erreurs_hors_mots", 0),
-            "n_mots_interdits": verdict.get("n_mots_interdits", 0)}
+            "n_mots_interdits": verdict.get("n_mots_interdits", 0), "soldes": soldes}
 
 
 #: CIRCUIT-5 lot 5.2 — CE QUE LA SONDE COMPARE chaque nuit, couple par couple :

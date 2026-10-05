@@ -229,6 +229,10 @@ RESERVOIR_TABLES: dict[str, ReservoirTables] = {
                   "bodacc_depots")),
     # ── territoire / statistique ────────────────────────────────────────────────────
     "insee_rp_logement": Rt(("commune_insee_logement",)),
+    # COHERENCE-FIX-1 lot E — populations LÉGALES INSEE en vigueur (geo.api.gouv), servies PRIMAIRES
+    # sur la fiche commune (habitants_n), repli Sudocuh ; réservoir de première classe (V1c/V2a).
+    "population_legale": Rt(("population_legale",),
+                            millesime="Populations légales INSEE en vigueur (geo.api.gouv), millésime affiché"),
     "insee_rp2022_egoul": Rt(("anc_maille_taux", "rp_logement_commune"),
                              millesime="RP2022 — fichier détail Logements (16/10/2025) ; SOURCES-5 : toutes variables logement"),
     "filosofi_carreaux": Rt(("filosofi_carreaux_200m", "p_model_filo"), millesime="millésime 2021"),
@@ -384,6 +388,10 @@ TABLES_FABRIQUEES: dict[str, str] = {
     "piscines": "source unique piscines (piscines-build — FLAIR ∪ CoSIA dédoublonnées, statut servie/à confirmer/écartée)",
     "tuyau_telepherique": "tuyau (build_tuyau_telepherique — Papang servi + ligne Payanké projet)",
     "tuyau_sup": "tuyau (build_tuyau_sup — SUP dissoute par famille, opacité uniforme au zoom)",
+    # RECETTE-1 C5 (décision Vic) — polygones ICPE rattachés à la parcelle (ST_Contains, agrégés,
+    # subdivisés ≤ 256 sommets), fabriqués par api/couches_tuyau.py (DROP/CREATE AS, reconstruits au
+    # run) : artefact du tuyau vectoriel, comme tuyau_subdivise/tuyau_sup — pas un réservoir (V1c).
+    "tuyau_icpe": "tuyau (couches_tuyau — ICPE polygones rattachés parcelle, miroir carte/fiche)",
     "p_model_bati": "modèle P (features bâti) — emprise_bati_m2 = emprise_bati_scoring_m2 "
                     "(MAX(BD TOPO, CoSIA), COHERENCE-FIX-2) : entrée scoring, JAMAIS l'emprise bâtie client",
     "p_model_candidates": "modèle P (candidats)",
@@ -522,6 +530,9 @@ TABLES_EXPLOITATION: dict[str, str] = {
     "programmes": "programmes (promo)",
     "match_profiles": "profils de matching partenaires",
     "share_links": "liens de partage",
+    # DOCS-1 lot B — bibliothèque « Mes documents » : la RECETTE d'un document généré (jamais le PDF),
+    # cloisonnée par compte (api/tenant SCOPED_TABLES) — exploitation, pas une donnée servie (V1c).
+    "documents_generes": "bibliothèque « Mes documents » (recette d'un document, cloisonnée par compte)",
     "courrier_demandes": "courrier — demandes",
     "courrier_envois": "courrier — envois",
     "courrier_opposition": "courrier — registre d'opposition (stop@labuse.immo)",

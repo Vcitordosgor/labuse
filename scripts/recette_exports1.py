@@ -206,11 +206,22 @@ def verifier_temoin(idu: str, d: Path, fiche: dict) -> None:
         else:
             ok(f"SDP résiduelle écran = Dossier ({m3.group(1)} m²)")
     if idu == "97416000DY0106":
+        # VERROUS-FIX-1 (T3 re-calé) — DY0106 est À CHEVAL N + Ud. La garde de lecture
+        # « dominante A/N → 0 » (cause zone_non_constructible) a été RETIRÉE par Vic
+        # (FAISABILITE-clip, 1a39a90b, 24/09/2026) : le run servi lit l'assiette CLIPPÉE, qui
+        # porte déjà la portion Ud constructible. La parcelle est bâtie à ~377 % de sa densité
+        # → SDP résiduelle 0 « par densité atteinte », PLUS « par zone non constructible » : le
+        # témoin encodait l'ancien tout-ou-rien supprimé. Ce qui reste GARANTI (l'intention de T3)
+        # : le zéro n'est jamais SILENCIEUX — il porte son libellé d'explication, écran = Dossier.
         if sdp_ecran not in (0, 0.0, None):
-            ko(f"{idu} : SDP écran devrait être 0 par garde (zone N), servie {sdp_ecran}")
-        if "zone_non_constructible" not in json.dumps(fiche, ensure_ascii=False) and \
-           "zone_non_constructible" not in txts.get("dossier", ""):
-            ko(f"{idu} : cause zone_non_constructible absente (T3)")
+            ko(f"{idu} : SDP écran devrait être 0 (bâti au-delà de la densité), servie {sdp_ecran}")
+        libelle_pot = (pt.get("libelle") or "").strip()
+        if sdp_ecran in (0, 0.0) and not (libelle_pot or pt.get("cause")):
+            ko(f"{idu} : SDP résiduelle 0 SANS explication (ni libellé potentiel ni cause) — zéro silencieux (T3)")
+        elif "Densité autorisée atteinte" not in txts.get("dossier", ""):
+            ko(f"{idu} : le Dossier n'explique pas le 0 (« {libelle_pot} » absent du PDF) — écran ≠ Dossier (T3)")
+        else:
+            ok(f"{idu} : SDP 0 expliquée (« {libelle_pot} ») — à cheval N+Ud, assiette clippée (FAISABILITE-clip)")
 
     # ── lot 2 : plus jamais un « appartement » à surface d'immeuble dans un tableau ──
     for doc, t in txts.items():
@@ -251,8 +262,14 @@ def verifier_gabarit_temoins(outdir: Path) -> None:
         subprocess.run(["pdftotext", "-layout", str(d / "dossier.pdf"), str(d / "dossier.txt")], check=True)
         t = (d / "dossier.txt").read_text(encoding="utf-8", errors="replace")
         if g.get("status") != "ok":
-            # bloqué : le §10 imprime le motif métier et AUCUN chiffre de gabarit
-            if "Gabarit — calcul incomplet" not in t:
+            # bloqué : le §10 imprime le MOTIF métier et AUCUN chiffre de gabarit.
+            # VERROUS-FIX-1 — le motif est rendu par `gabarit_motif_blocage` (exports/miroir.py) dans
+            # « Non disponible ici » : « Gabarit réglementaire : <motif> — non chiffré ici. » Le littéral
+            # « Gabarit — calcul incomplet » visé jusqu'ici (GABARIT-5) est le MESSAGE DE L'ÉCRAN, jamais
+            # une chaîne du PDF — il n'existe nulle part dans le rendu ; la branche « bloqué » ne s'était
+            # encore jamais jouée sur un témoin (q_v16 a basculé AM1059 en « incomplete »).
+            motif_present = "Gabarit réglementaire" in t and "non chiffré ici" in t
+            if not motif_present:
                 ko(f"gabarit {idu} : bloqué mais motif absent du §10 Dossier")
             elif re.search(r"Zone d'implantation\s+\d", t):
                 ko(f"gabarit {idu} : bloqué mais un chiffre de zone d'implantation s'imprime")

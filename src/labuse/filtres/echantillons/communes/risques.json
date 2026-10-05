@@ -3,8 +3,8 @@
  "champ": "risques.catnat_arretes",
  "producteur": "GASPAR — arrêtés CatNat par commune (georisques.gouv.fr)",
  "tolerance_pct": 0,
- "lu_le": "2026-09-06",
- "note": null,
+ "lu_le": "2026-10-05",
+ "note": "VERROUS-FIX-1 — attendu = `results` BRUT de l'API GASPAR (lignes publiées). GASPAR sert certains arrêtés en PLUSIEURS lignes (mêmes code national / péril / date de publication, dates d'événement différentes) ; LABUSE dédoublonne par la contrainte unique de l'ingestion (COHERENCE-FIX-1 lot F, ingestion/catnat.py) et sert le compte DISTINCT. Les communes concernées portent `ecart_assume` avec le détail brut→distinct (relu en direct le 2026-10-05) — écart de DÉFINITION connu, jamais une erreur.",
  "lignes": [
   {
    "insee": "97401",
@@ -13,7 +13,9 @@
    "origine": {
     "url": "https://www.georisques.gouv.fr/api/v1/gaspar/catnat?code_insee=97401&page=1&page_size=1",
     "champ": "results (nombre d'arrêtés CatNat)"
-   }
+   },
+   "ecart_assume": 15,
+   "note": "GASPAR publie 16 lignes dont 1 doublon(s) strict(s) (mêmes code national / péril / date de publication) ; LABUSE dédoublonne par la contrainte unique (insee, péril, dates) → 15 servi pour 16 lignes producteur (relu 2026-10-05). Écart de définition assumé À CETTE VALEUR (15) : une dérive vers une autre valeur resterait un écart."
   },
   {
    "insee": "97402",
@@ -22,7 +24,9 @@
    "origine": {
     "url": "https://www.georisques.gouv.fr/api/v1/gaspar/catnat?code_insee=97402&page=1&page_size=1",
     "champ": "results (nombre d'arrêtés CatNat)"
-   }
+   },
+   "ecart_assume": 15,
+   "note": "GASPAR publie 17 lignes dont 2 doublon(s) strict(s) (mêmes code national / péril / date de publication) ; LABUSE dédoublonne par la contrainte unique (insee, péril, dates) → 15 servi pour 17 lignes producteur (relu 2026-10-05). Écart de définition assumé À CETTE VALEUR (15) : une dérive vers une autre valeur resterait un écart."
   },
   {
    "insee": "97403",
@@ -40,7 +44,9 @@
    "origine": {
     "url": "https://www.georisques.gouv.fr/api/v1/gaspar/catnat?code_insee=97404&page=1&page_size=1",
     "champ": "results (nombre d'arrêtés CatNat)"
-   }
+   },
+   "ecart_assume": 20,
+   "note": "GASPAR publie 21 lignes dont 1 doublon(s) strict(s) (mêmes code national / péril / date de publication) ; LABUSE dédoublonne par la contrainte unique (insee, péril, dates) → 20 servi pour 21 lignes producteur (relu 2026-10-05). Écart de définition assumé À CETTE VALEUR (20) : une dérive vers une autre valeur resterait un écart."
   },
   {
    "insee": "97405",
@@ -58,7 +64,9 @@
    "origine": {
     "url": "https://www.georisques.gouv.fr/api/v1/gaspar/catnat?code_insee=97406&page=1&page_size=1",
     "champ": "results (nombre d'arrêtés CatNat)"
-   }
+   },
+   "ecart_assume": 11,
+   "note": "GASPAR publie 12 lignes dont 1 doublon(s) strict(s) (mêmes code national / péril / date de publication) ; LABUSE dédoublonne par la contrainte unique (insee, péril, dates) → 11 servi pour 12 lignes producteur (relu 2026-10-05). Écart de définition assumé À CETTE VALEUR (11) : une dérive vers une autre valeur resterait un écart."
   },
   {
    "insee": "97407",
@@ -94,7 +102,9 @@
    "origine": {
     "url": "https://www.georisques.gouv.fr/api/v1/gaspar/catnat?code_insee=97410&page=1&page_size=1",
     "champ": "results (nombre d'arrêtés CatNat)"
-   }
+   },
+   "ecart_assume": 15,
+   "note": "GASPAR publie 17 lignes dont 2 doublon(s) strict(s) (mêmes code national / péril / date de publication) ; LABUSE dédoublonne par la contrainte unique (insee, péril, dates) → 15 servi pour 17 lignes producteur (relu 2026-10-05). Écart de définition assumé À CETTE VALEUR (15) : une dérive vers une autre valeur resterait un écart."
   },
   {
    "insee": "97411",
@@ -103,7 +113,9 @@
    "origine": {
     "url": "https://www.georisques.gouv.fr/api/v1/gaspar/catnat?code_insee=97411&page=1&page_size=1",
     "champ": "results (nombre d'arrêtés CatNat)"
-   }
+   },
+   "ecart_assume": 19,
+   "note": "GASPAR publie 21 lignes dont 2 doublon(s) strict(s) (mêmes code national / péril / date de publication) ; LABUSE dédoublonne par la contrainte unique (insee, péril, dates) → 19 servi pour 21 lignes producteur (relu 2026-10-05). Écart de définition assumé À CETTE VALEUR (19) : une dérive vers une autre valeur resterait un écart."
   },
   {
    "insee": "97412",
@@ -113,8 +125,8 @@
     "url": "https://www.georisques.gouv.fr/api/v1/gaspar/catnat?code_insee=97412&page=1&page_size=1",
     "champ": "results (nombre d'arrêtés CatNat)"
    },
-   "ecart_assume": true,
-   "note": "GASPAR publie un doublon strict (Inondations 17/01/2014, début 02/01/2014, deux codes nationaux) ; LABUSE dédoublonne par contrainte unique (insee, péril, dates) → 20 servi pour 21 lignes producteur. Écart assumé."
+   "ecart_assume": 20,
+   "note": "GASPAR publie 21 lignes dont 1 doublon(s) strict(s) (mêmes code national / péril / date de publication) ; LABUSE dédoublonne par la contrainte unique (insee, péril, dates) → 20 servi pour 21 lignes producteur (relu 2026-10-05). Écart de définition assumé À CETTE VALEUR (20) : une dérive vers une autre valeur resterait un écart."
   },
   {
    "insee": "97413",
@@ -132,7 +144,9 @@
    "origine": {
     "url": "https://www.georisques.gouv.fr/api/v1/gaspar/catnat?code_insee=97414&page=1&page_size=1",
     "champ": "results (nombre d'arrêtés CatNat)"
-   }
+   },
+   "ecart_assume": 21,
+   "note": "GASPAR publie 23 lignes dont 2 doublon(s) strict(s) (mêmes code national / péril / date de publication) ; LABUSE dédoublonne par la contrainte unique (insee, péril, dates) → 21 servi pour 23 lignes producteur (relu 2026-10-05). Écart de définition assumé À CETTE VALEUR (21) : une dérive vers une autre valeur resterait un écart."
   },
   {
    "insee": "97415",
@@ -141,7 +155,9 @@
    "origine": {
     "url": "https://www.georisques.gouv.fr/api/v1/gaspar/catnat?code_insee=97415&page=1&page_size=1",
     "champ": "results (nombre d'arrêtés CatNat)"
-   }
+   },
+   "ecart_assume": 23,
+   "note": "GASPAR publie 24 lignes dont 1 doublon(s) strict(s) (mêmes code national / péril / date de publication) ; LABUSE dédoublonne par la contrainte unique (insee, péril, dates) → 23 servi pour 24 lignes producteur (relu 2026-10-05). Écart de définition assumé À CETTE VALEUR (23) : une dérive vers une autre valeur resterait un écart."
   },
   {
    "insee": "97416",
@@ -168,7 +184,9 @@
    "origine": {
     "url": "https://www.georisques.gouv.fr/api/v1/gaspar/catnat?code_insee=97418&page=1&page_size=1",
     "champ": "results (nombre d'arrêtés CatNat)"
-   }
+   },
+   "ecart_assume": 20,
+   "note": "GASPAR publie 22 lignes dont 2 doublon(s) strict(s) (mêmes code national / péril / date de publication) ; LABUSE dédoublonne par la contrainte unique (insee, péril, dates) → 20 servi pour 22 lignes producteur (relu 2026-10-05). Écart de définition assumé À CETTE VALEUR (20) : une dérive vers une autre valeur resterait un écart."
   },
   {
    "insee": "97419",
@@ -186,7 +204,9 @@
    "origine": {
     "url": "https://www.georisques.gouv.fr/api/v1/gaspar/catnat?code_insee=97420&page=1&page_size=1",
     "champ": "results (nombre d'arrêtés CatNat)"
-   }
+   },
+   "ecart_assume": 17,
+   "note": "GASPAR publie 19 lignes dont 2 doublon(s) strict(s) (mêmes code national / péril / date de publication) ; LABUSE dédoublonne par la contrainte unique (insee, péril, dates) → 17 servi pour 19 lignes producteur (relu 2026-10-05). Écart de définition assumé À CETTE VALEUR (17) : une dérive vers une autre valeur resterait un écart."
   },
   {
    "insee": "97421",
@@ -195,7 +215,9 @@
    "origine": {
     "url": "https://www.georisques.gouv.fr/api/v1/gaspar/catnat?code_insee=97421&page=1&page_size=1",
     "champ": "results (nombre d'arrêtés CatNat)"
-   }
+   },
+   "ecart_assume": 16,
+   "note": "GASPAR publie 19 lignes dont 3 doublon(s) strict(s) (mêmes code national / péril / date de publication) ; LABUSE dédoublonne par la contrainte unique (insee, péril, dates) → 16 servi pour 19 lignes producteur (relu 2026-10-05). Écart de définition assumé À CETTE VALEUR (16) : une dérive vers une autre valeur resterait un écart."
   },
   {
    "insee": "97422",
@@ -222,7 +244,9 @@
    "origine": {
     "url": "https://www.georisques.gouv.fr/api/v1/gaspar/catnat?code_insee=97424&page=1&page_size=1",
     "champ": "results (nombre d'arrêtés CatNat)"
-   }
+   },
+   "ecart_assume": 14,
+   "note": "GASPAR publie 16 lignes dont 2 doublon(s) strict(s) (mêmes code national / péril / date de publication) ; LABUSE dédoublonne par la contrainte unique (insee, péril, dates) → 14 servi pour 16 lignes producteur (relu 2026-10-05). Écart de définition assumé À CETTE VALEUR (14) : une dérive vers une autre valeur resterait un écart."
   }
  ]
 }
