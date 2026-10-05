@@ -86,6 +86,22 @@ const apiPaths = ['/map', '/parcels', '/stats', '/sources', '/filters', '/filtre
   // COHERENCE-FIX-1 (lot A) : /sante/fraicheur (page Données — état des caches) — même famille
   // de trous de proxy dev que /outils, /bilan… Prod OK (même origine).
   '/sante',
+  // DOCS-FIX-1 (P1, bloquant dev) : les 3 documents DOCS-1 servis par le builder exports
+  // (`/gabarit/{idu}.pdf`, `/comparatif.pdf`, `/etude-zone.pdf`) ET la bibliothèque « Mes
+  // documents » (`/documents`, GET/POST/DELETE + /rafraichir) MANQUAIENT au proxy dev → en
+  // `npm run dev` le lien PDF sortait de la base '/socle/' (404 / page d'erreur Vite) et la
+  // bibliothèque restait vide. MÊME famille de trous que /dossier, /financier, /apporteur
+  // (RECETTE-1), /pre-dossier (M70). Prod OK (FastAPI même origine). Le garde-fou
+  // tests/test_proxy_dev_couvre_routes_api.py échoue désormais si une route d'API reste hors
+  // de cette liste — pour qu'une 4ᵉ occurrence ne revienne pas. ⚠ TRAIN 8 Caddy : routées aussi.
+  '/gabarit', '/comparatif', '/etude-zone', '/documents',
+  // DOCS-FIX-1 (P1, garde-fou) : trois routes d'API que le FRONT appelle en JSON (`j<…>`) mais qui
+  // MANQUAIENT encore au proxy dev — révélées par test_proxy_dev_couvre_routes_api.py :
+  //   • '/config'      → main.tsx au démarrage (fetchServedRun = /config/run = runs.current())
+  //   • '/partners'    → getProfiles / promoteursActifs (/partners/profiles, /partners/promoteurs-actifs)
+  //   • '/vocabulaire' → getPaliersDA / getScoringFraction (/vocabulaire/paliers, /scoring-fraction)
+  // Même famille de trous dev que /bilan (M58). Prod OK (FastAPI même origine). ⚠ TRAIN 8 Caddy.
+  '/config', '/partners', '/vocabulaire',
   '/api']   // M26-B : /api/copilote (runs + SSE)
 
 export default defineConfig({
