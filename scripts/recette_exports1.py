@@ -129,10 +129,23 @@ def generer(idu: str, outdir: Path) -> dict:
         if pdfa.exists():
             subprocess.run(["pdftotext", "-layout", str(pdfa), str(pdfa.with_suffix(".txt"))], check=True)
     if fl.exists() and do.exists():
-        if fl.read_text() == do.read_text():
+        ftxt, dtxt = fl.read_text(), do.read_text()
+        if ftxt == dtxt:
             ok(f"{idu} : Flash = Dossier (pdftotext identiques)")
         else:
-            ko(f"{idu} : Flash ≠ Dossier (le nom commercial diverge du document)")
+            # CHASSE-FIX-2 (D02) — on NOMME la (les) ligne(s) qui divergent réellement au lieu du
+            # « le nom commercial diverge » servi par DÉFAUT pour TOUT diff pdftotext. Le diagnostic
+            # gravé d'AD0554 (circuit_ecarts id=8) pointait le nom commercial alors que la vraie
+            # différence était le PLAN DE SITUATION (placeholder d'un seul côté) — un écart au mauvais
+            # libellé s'instruit mal. Le diff cite le texte extrait ; un écart hors texte (image/plan
+            # sans libellé extractible) est dit comme tel.
+            import difflib
+            diff = [ln for ln in difflib.unified_diff(
+                dtxt.splitlines(), ftxt.splitlines(), "dossier", "flash", lineterm="", n=0)
+                if ln and ln[0] in "+-" and not ln.startswith(("+++", "---")) and ln[1:].strip()]
+            apercu = " · ".join(ln.strip() for ln in diff[:4]) or \
+                "différence hors texte extractible (image/plan de situation d'un seul côté)"
+            ko(f"{idu} : Flash ≠ Dossier — {len(diff)} ligne(s) divergent : {apercu}")
     return fiche
 
 

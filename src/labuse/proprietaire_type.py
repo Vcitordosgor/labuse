@@ -35,6 +35,13 @@ _DGFIP_GROUPE: dict[int, str] = {
     # 0 = « personnes morales non remarquables » → raffiné par la forme juridique (SCI vs société).
 }
 
+# CHASSE-FIX-2 (C35, décision Vic) — groupes DGFiP d'un PROPRIÉTAIRE PUBLIC (État, Région,
+# Département, Commune, EPCI, établissement public). RÈGLE UNIQUE de détection : le badge
+# « Propriétaire public » (liste + fiche) ET le filtre d'exclusion existant (proprietaire_type=public)
+# la partagent — un seul endroit à changer. Clause SQL prête à injecter (`pmu.groupe IN (…)`).
+PUBLIC_DGFIP_GROUPES: tuple[int, ...] = (1, 2, 3, 4, 9)
+PUBLIC_GROUPES_SQL: str = "(" + ",".join(str(g) for g in PUBLIC_DGFIP_GROUPES) + ")"
+
 # Heuristiques sur le libellé `categorie` des Fichiers fonciers (mots-clés → type).
 _RULES: list[tuple[tuple[str, ...], str]] = [
     (("epf", "etablissement public foncier", "établissement public foncier"), "epf"),

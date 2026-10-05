@@ -1,6 +1,6 @@
 {
  "classe_residuel(sous_densite)": {
-  "lecteur": "sql:parcel_residuel.sous_densite",
+  "lecteur": "fiche:potentiel_transformation.sous_densite",
   "tolerance": "0",
   "valeur": null
  },
@@ -45,9 +45,9 @@
   "valeur": 424522
  },
  "sdp_residuelle_m2": {
-  "lecteur": "sql:parcel_residuel.sdp_residuelle_m2",
+  "lecteur": "fiche:potentiel_transformation.sdp_residuelle_m2",
   "tolerance": "1 %",
-  "valeur": null
+  "valeur": 0.0
  },
  "surface_parcelle_m2": {
   "lecteur": "fiche:surface_m2",

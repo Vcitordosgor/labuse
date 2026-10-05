@@ -32,8 +32,17 @@ _AGG = """
   count(*) FILTER (WHERE b.statut = 'active')                                         AS actives,
   count(*) FILTER (WHERE b.date_premiere_saisie AT TIME ZONE 'Indian/Reunion'
                         >= (now() AT TIME ZONE 'Indian/Reunion')::date - 30)          AS nouvelles_30j,
-  count(*) FILTER (WHERE b.statut IN ('retiree','retiree_sans_vente')
-                        AND b.retiree_le >= now() - interval '30 days')               AS retirees_30j,
+  -- CHASSE-FIX-2 (D07) — UN SEUL lecteur de « retirées (30 j) » : exactement la définition RADAR-FIX-3
+  -- du tableau (`bouge_30j.retirees`). On compte les retraits CONFIRMÉS par l'ouverture du lien
+  -- (event_log 'pige:retiree:<id>') et on EXCLUT l'import initial en bloc (datés APRÈS la 1re passe de
+  -- confirmation). Avant, ce chiffre (naïf : tout `retiree_le` < 30 j) disait 101 quand le tableau
+  -- disait 1 sur le MÊME écran. Expression sans paramètre (littéral inliné) : `_AGG` s'exécute nu.
+  count(*) FILTER (WHERE EXISTS (SELECT 1 FROM event_log e
+                        WHERE e.dedup = 'pige:retiree:' || b.bien_id
+                          AND e.ts >= now() - interval '30 days'
+                          AND (e.ts AT TIME ZONE 'Indian/Reunion')::date
+                              > (SELECT min(captured_at AT TIME ZONE 'Indian/Reunion')::date
+                                 FROM pige_passes WHERE passe = 'confirmation')))     AS retirees_30j,
   count(*) FILTER (WHERE b.statut = 'vendue'
                         AND b.vendue_le >= (now() AT TIME ZONE 'Indian/Reunion')::date - 90) AS vendues_90j,
   percentile_cont(0.5) WITHIN GROUP (ORDER BY f.prix / f.surface_terrain)

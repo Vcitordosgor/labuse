@@ -482,6 +482,11 @@ TABLES_EXPLOITATION: dict[str, str] = {
     "registre_robinets": "miroir du registre (robinets)",
     "registre_aretes": "miroir du registre (arêtes)",
     "circuit_journal": "journal du circuit",
+    # CHASSE-FIX-2 (Étape 0, V1c) — journal des passages du banc de cohérence (COHERENCE-FIX-1,
+    # écrit par coherence_journal.py / jobs.py, lu par l'onglet « Cohérence » de la page Données).
+    # Table d'EXPLOITATION active (jamais une orpheline à purger) : la déclarer éteint V1c sans
+    # rien désactiver — elle a un écriveur et un lecteur dans le code servi.
+    "coherence_runs": "journal des passages du banc de cohérence",
     "circuit_candidat_assume": "candidat assumé (V3a — déclaration journalisée, réversible)",
     "circuit_ecarts": "sonde — fuites",
     "circuit_eau_ancienne": "sonde — eau ancienne",

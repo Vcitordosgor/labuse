@@ -118,7 +118,18 @@ function ResultCard({ p, communeLabel, factual = false }: { p: ParcelProps & { c
               </span>
             </Tip>
           )}
-          {p.owner_type && OWNER_BADGE[p.owner_type] && (
+          {/* CHASSE-FIX-2 (C35) — badge « Propriétaire public » piloté par la règle DGFiP SERVIE en
+              direct (proprietaire_public, groupes 1-4/9 = MÊME règle que le filtre), jamais le
+              owner_type matérialisé qui peut dater. La parcelle reste au classement ; le filtre
+              « propriétaire » l'écarte à la demande. */}
+          {p.proprietaire_public && (
+            <Tip tip="Propriétaire public (État, collectivité, commune, EPCI, établissement public) — reste au classement ; le filtre « propriétaire » permet de l’écarter." className="shrink-0">
+              <span className="rounded-full border border-line-2 px-1.5 py-0.5 text-[8.5px] font-medium text-txt-dim">
+                Propriétaire public
+              </span>
+            </Tip>
+          )}
+          {p.owner_type && p.owner_type !== 'public' && OWNER_BADGE[p.owner_type] && (
             <Tip tip={OWNER_BADGE[p.owner_type].title} className="shrink-0">
               <span className="rounded-full border border-line-2 px-1.5 py-0.5 text-[8.5px] font-medium text-txt-dim">
                 {OWNER_BADGE[p.owner_type].label}
@@ -407,8 +418,12 @@ function AnalyseCard({ p, communeLabel }: { p: ParcelProps & { commune?: string 
         </div>
         <div data-card-adresse className={`truncate text-[10.5px] text-txt-dim ${p.adresse ? '' : 'opacity-60'}`}>{p.adresse ?? 'Adresse non disponible'}</div>
         <div className="truncate text-[11px] text-txt-mut tnum">{p.surface_m2 ? `${fmt(p.surface_m2)} m²` : '—'} · {p.commune ?? communeLabel}</div>
-        {nc && p.cause && <div data-cause className="mt-1 text-[10px] leading-snug" style={{ color: BANDE_META.NC.color }}>Analyse incomplète — {p.cause}.</div>}
-        {!nc && <ContributionsRow contributions={p.contributions} />}
+        {/* CHASSE-FIX-2 (D04) — on NOMME la cause (libellé serveur « Non retenue — … ») au lieu du
+            code brut (« terrain_exigu »). Vaut pour la bande NC (« Analyse incomplète ») ET la bande
+            0 (« terrain trop étroit… ») : plus jamais une bande 0 muette. Repli sur le code brut si
+            le libellé manque (vieille réponse en cache). Même règle que la fiche/Dossier/Copilote. */}
+        {(p.cause_libelle || (nc && p.cause)) && <div data-cause className="mt-1 text-[10px] leading-snug" style={{ color: bm?.color ?? BANDE_META.NC.color }}>{p.cause_libelle ?? `Analyse incomplète — ${p.cause}.`}</div>}
+        {!nc && !p.cause_libelle && <ContributionsRow contributions={p.contributions} />}
       </div>
     </button>
   )

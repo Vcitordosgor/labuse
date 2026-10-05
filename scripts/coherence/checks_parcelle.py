@@ -103,11 +103,13 @@ CHECKS: list[tuple] = [
     ("sdp_residuelle_m2", "1 %", [
         ("fiche:potentiel_transformation.sdp_residuelle_m2",
          _f("potentiel_transformation.sdp_residuelle_m2")),
-        # COHERENCE-FIX-1 — le lecteur SQL applique la règle M125 des lecteurs VIVANTS (cause IS
-        # NULL) : une ligne à cause (terrain_exigu…) porte un « 0 écrit » de dataset, pas une
-        # valeur servie — fiche et tuile la rendent ∅, le SQL doit lire pareil.
+        # CHASSE-FIX-2 (D03) — le bloc Potentiel LIT désormais les lignes à cause (jointure
+        # « AND r.cause IS NULL » retirée de app.py) : il sert la SDP du run (0 vrai pour
+        # terrain_exigu/zone inconstructible/redhibitoire ; ∅ pour hors_plu/indetermine), AVEC la
+        # cause NOMMÉE (D04). Le lecteur SQL lit donc la MÊME valeur servie — plus de CASE WHEN
+        # cause IS NULL qui modélisait l'ancien comportement (∅ partout) que D03 corrige.
         ("sql:parcel_residuel.sdp_residuelle_m2",
-         _sql("SELECT CASE WHEN r.cause IS NULL THEN r.sdp_residuelle_m2 END "
+         _sql("SELECT r.sdp_residuelle_m2 "
               "FROM parcel_residuel r JOIN parcels p ON p.id=r.parcel_id WHERE p.idu=%(idu)s")),
         ("tuile:sdp_residuelle_m2", _tuile("sdp_residuelle_m2")),
     ], "run_different"),
