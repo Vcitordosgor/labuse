@@ -1,0 +1,20 @@
+From: LABUSE <contact@labuse.immo>
+To: promoteur.parcoursfix@cabinet-parcours.re
+Subject: [DRY-RUN] =?utf-8?q?R=C3=A9tablissement?=
+Date: Mon, 05 Oct 2026 22:33:44 +0200
+Message-ID: <179123242443.78414.15952905292996281105@labuse.immo>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+[DRY-RUN LABUSE =E2=80=94 ce mail N'EST PAS parti : envoi r=C3=A9el d=C3=A9sa=
+ctiv=C3=A9 en local (poser LABUSE_MAIL_REEL=3D1 pour envoyer).]
+
+Template Brevo : retablissement (=C2=AB R=C3=A9tablissement =C2=BB, id 11)
+Destinataire   : promoteur.parcoursfix@cabinet-parcours.re
+
+Param=C3=A8tres :
+{
+  "EMAIL": "promoteur.parcoursfix@cabinet-parcours.re",
+  "PRENOM": "[CT-PARCOURS]"
+}

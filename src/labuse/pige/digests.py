@@ -532,9 +532,16 @@ def envoyer(db: Session, *, base_url: str = "", dry_run: bool = False,
             if not matches:
                 continue
             cartes = cartes_html(matches, base_url)
+            # PARCOURS-FIX-1 (Lot 2.6) — l'alerte de veille est un mail RÉCURRENT : lien de désabonnement
+            # (un clic, RFC 8058). `brevo.envoyer_template` pose l'en-tête List-Unsubscribe dès que
+            # `LIEN_DESABO` est présent ; le lien reste aussi disponible au template ({{params.LIEN_DESABO}}).
+            from ..api.events import _notif_token
+            tok = _notif_token(db, c["compte_id"])
+            lien_desabo = f"{(base_url or '').rstrip('/')}/events/desabonner?c={c['compte_id']}&t={tok}"
             params = {"PRENOM": c.get("prenom") or "", "VEILLE": _libelle_veille(v),
                       "NB_BIENS": len(matches), "CRITERES": _criteres_texte(cr), "CARTES": cartes,
-                      "LIEN_RADAR": lien_radar, "LIEN_VEILLE": f"{lien_radar}&veille={v['id']}"}
+                      "LIEN_RADAR": lien_radar, "LIEN_VEILLE": f"{lien_radar}&veille={v['id']}",
+                      "LIEN_DESABO": lien_desabo}
             _envoyer(db, compte_id=c["compte_id"], email=c["email"], template_key="radar_alerte",
                      dedup=f"pige:alerte:{c['compte_id']}:{v['id']}:{jour.isoformat()}", params=params,
                      n_biens=len(matches), cartes_html_str=cartes, type_envoi="alerte",

@@ -1,0 +1,21 @@
+From: LABUSE <contact@labuse.immo>
+To: promoteur.parcoursfix@cabinet-parcours.re
+Subject: [DRY-RUN] Suspension
+Date: Mon, 05 Oct 2026 22:33:37 +0200
+Message-ID: <179123241702.78414.12505425222309350691@labuse.immo>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+[DRY-RUN LABUSE =E2=80=94 ce mail N'EST PAS parti : envoi r=C3=A9el d=C3=A9sa=
+ctiv=C3=A9 en local (poser LABUSE_MAIL_REEL=3D1 pour envoyer).]
+
+Template Brevo : suspension (=C2=AB Suspension =C2=BB, id 10)
+Destinataire   : promoteur.parcoursfix@cabinet-parcours.re
+
+Param=C3=A8tres :
+{
+  "EMAIL": "promoteur.parcoursfix@cabinet-parcours.re",
+  "PRENOM": "[CT-PARCOURS]",
+  "LIEN_PAIEMENT": "http://127.0.0.1:8000/facturation"
+}

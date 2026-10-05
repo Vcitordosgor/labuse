@@ -1,0 +1,376 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8">
+<title>PARCOURS-FIX-1 — la planche du parcours (build de production)</title>
+<style>
+  :root { --ink:#0f1115; --dim:#5b6472; --line:#e5e7eb; --mint:#16A34A; }
+  * { box-sizing:border-box }
+  body { font:14px/1.5 -apple-system,Segoe UI,Roboto,Arial,sans-serif; color:var(--ink); margin:0; background:#fafafa }
+  header { padding:28px 32px 18px; border-bottom:2px solid var(--line); background:#fff }
+  h1 { font-size:22px; margin:0 0 4px }
+  .sous { color:var(--dim); font-size:13px }
+  .verdict { margin:16px 0 4px; font-size:21px; font-weight:800; color:var(--mint) }
+  .verdict small { font-weight:600; color:var(--ink); font-size:14px }
+  .resume { margin:12px 0 2px; display:flex; flex-wrap:wrap; gap:10px }
+  .pill { background:#f1f5f9; border:1px solid var(--line); border-radius:999px; padding:4px 12px; font-size:12px }
+  .pill b { color:var(--mint) }
+  h2 { font-size:15px; margin:26px 32px 4px; padding-top:8px; text-transform:uppercase; letter-spacing:.04em; color:var(--dim) }
+  .grille { display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; padding:10px 32px 24px }
+  .grille.mob { grid-template-columns:repeat(5, 1fr) }
+  .carte { margin:0; border:1px solid var(--line); border-radius:10px; overflow:hidden; background:#fff; break-inside:avoid }
+  .carte.ATTENTION { border-color:#Fcd34d } .carte.BLOQUANT { border-color:#fca5a5 }
+  .carte img { width:100%; display:block; border-bottom:1px solid var(--line); background:#111 }
+  figcaption { padding:8px 10px 10px }
+  .cap-top { display:flex; justify-content:space-between; align-items:baseline; gap:8px; font-size:12.5px }
+  .badge { font-size:11px; font-weight:700; white-space:nowrap }
+  .phrase { color:#1f2937; font-size:12px; margin:3px 0 4px }
+  .meta { color:var(--dim); font-size:11px; font-variant-numeric:tabular-nums }
+  footer { color:var(--dim); font-size:12px; padding:18px 32px 40px }
+</style></head><body>
+<header>
+  <h1>PARCOURS-FIX-1 — la planche du parcours, rejoué sur le <u>build de production</u></h1>
+  <div class="sous">5 octobre 2026 · app servie par l'API (build, pas Vite) · single-origin :6005 · dry-run mail étanche · desktop 1440×900 + mobile 390×844</div>
+  <div class="verdict">Le parcours est bon et fluide : OUI
+    <small>— un promoteur va de l’invitation à l’usage sans aide, sur le build de prod.</small></div>
+  <div class="resume">
+    <span class="pill">Étapes : <b>40</b> (desktop 37 · mobile 3)</span>
+    <span class="pill">✅ 40 · 🟠 0 · 🔴 0</span>
+    <span class="pill">Build prod : <b>s'ouvre</b> (0 « t is not a function »)</span>
+    <span class="pill">Dry-run : <b>0 envoi Brevo</b> · 4 .eml</span>
+    <span class="pill">« Se souvenir » : <b>30 j</b></span>
+    <span class="pill">/retours GET : <b>303</b> (plus de 405)</span>
+  </div>
+  <div class="sous" style="margin-top:8px">Mails du cycle de vie en file (dry-run, 0 appel réseau) : mdp_oublie:a_rejouer, mdp_modifie:a_rejouer, suspension:a_rejouer, retablissement:a_rejouer</div>
+</header>
+
+<h2>Ordinateur — le parcours de bout en bout</h2>
+<div class="grille">
+  <figure class="carte OK">
+    <img src="captures/desktop/01-app-build-rendu.png" alt="A1 · Build prod" loading="lazy">
+    <figcaption>
+      <div class="cap-top"><b>A1 · Build prod</b> <span class="badge" style="color:#16A34A">✅ OK</span></div>
+      <div class="phrase">Vic ouvre l’app servie par l’API (build de production).</div>
+      <div class="meta">1 clic · 1.2 s</div>
+    </figcaption>
+  </figure>
+  <figure class="carte OK">
+    <img src="captures/desktop/02-admin-comptes.png" alt="A2 · Comptes" loading="lazy">
+    <figcaption>
+      <div class="cap-top"><b>A2 · Comptes</b> <span class="badge" style="color:#16A34A">✅ OK</span></div>
+      <div class="phrase">Vic voit la liste des comptes (essai [CT-PARCOURS] créé).</div>
+      <div class="meta">1 clic · 0.1 s</div>
+    </figcaption>
+  </figure>
+  <figure class="carte OK">
+    <img src="captures/desktop/03-fiche-bouton-lien.png" alt="A3 · Fiche compte" loading="lazy">
+    <figcaption>
+      <div class="cap-top"><b>A3 · Fiche compte</b> <span class="badge" style="color:#16A34A">✅ OK</span></div>
+      <div class="phrase">La fiche expose « Copier le lien d’invitation » (G4 corrigé).</div>
+      <div class="meta">1 clic · 0.2 s</div>
+    </figcaption>
+  </figure>
+  <figure class="carte OK">
+    <img src="captures/desktop/04-fiche-lien-affiche.png" alt="A3b · Lien copiable" loading="lazy">
+    <figcaption>
+      <div class="cap-top"><b>A3b · Lien copiable</b> <span class="badge" style="color:#16A34A">✅ OK</span></div>
+      <div class="phrase">Le lien d’invitation s’affiche, sélectionnable + bouton Copier.</div>
+      <div class="meta">1 clic · 0.2 s</div>
+    </figcaption>
+  </figure>
+  <figure class="carte OK">
+    <img src="captures/desktop/05-invitation-mdp-page.png" alt="B1 · Choix du mot de passe" loading="lazy">
+    <figcaption>
+      <div class="cap-top"><b>B1 · Choix du mot de passe</b> <span class="badge" style="color:#16A34A">✅ OK</span></div>
+      <div class="phrase">Le client choisit son mot de passe : champ de confirmation présent, CTA adapté à l’essai.</div>
+      <div class="meta">0 clic · 0.3 s</div>
+    </figcaption>
+  </figure>
+  <figure class="carte OK">
+    <img src="captures/desktop/06-invitation-regle-courte.png" alt="B2 · Règle 10 car." loading="lazy">
+    <figcaption>
+      <div class="cap-top"><b>B2 · Règle 10 car.</b> <span class="badge" style="color:#16A34A">✅ OK</span></div>
+      <div class="phrase">Mot de passe trop court : le bouton reste éteint (règle imposée).</div>
+      <div class="meta">2 clics · 0.2 s</div>
+    </figcaption>
+  </figure>
+  <figure class="carte OK">
+    <img src="captures/desktop/07-invitation-confirmation-differente.png" alt="B3 · Confirmation ≠" loading="lazy">
+    <figcaption>
+      <div class="cap-top"><b>B3 · Confirmation ≠</b> <span class="badge" style="color:#16A34A">✅ OK</span></div>
+      <div class="phrase">Les deux mots de passe diffèrent : bouton éteint, message clair.</div>
+      <div class="meta">2 clics · 0.2 s</div>
+    </figcaption>
+  </figure>
+  <figure class="carte OK">
+    <img src="captures/desktop/08-invitation-pret.png" alt="B4 · Prêt" loading="lazy">
+    <figcaption>
+      <div class="cap-top"><b>B4 · Prêt</b> <span class="badge" style="color:#16A34A">✅ OK</span></div>
+      <div class="phrase">Mot de passe conforme + confirmation + CGV : le bouton s’allume.</div>
+      <div class="meta">1 clic · 0.3 s</div>
+    </figcaption>
+  </figure>
+  <figure class="carte OK">
+    <img src="captures/desktop/09-invitation-active.png" alt="B5 · Accès ouvert" loading="lazy">
+    <figcaption>
+      <div class="cap-top"><b>B5 · Accès ouvert</b> <span class="badge" style="color:#16A34A">✅ OK</span></div>
+      <div class="phrase">Le compte est créé — le client entre dans l’app (essai).</div>
+      <div class="meta">1 clic · 0.3 s</div>
+    </figcaption>
+  </figure>
+  <figure class="carte OK">
+    <img src="captures/desktop/10-login-souvenir.png" alt="C1 · Connexion" loading="lazy">
+    <figcaption>
+      <div class="cap-top"><b>C1 · Connexion</b> <span class="badge" style="color:#16A34A">✅ OK</span></div>
+      <div class="phrase">La page de connexion propose « Se souvenir de moi ».</div>
+      <div class="meta">0 clic · 0.3 s</div>
+    </figcaption>
+  </figure>
+  <figure class="carte OK">
+    <img src="captures/desktop/11-app-accueil-souvenir.png" alt="C2 · Session étendue" loading="lazy">
+    <figcaption>
+      <div class="cap-top"><b>C2 · Session étendue</b> <span class="badge" style="color:#16A34A">✅ OK</span></div>
+      <div class="phrase">Connecté avec « se souvenir » : session ≈ 30 j (au lieu de 12 h).</div>
+      <div class="meta">1 clic · 0.6 s</div>
+    </figcaption>
+  </figure>
+  <figure class="carte OK">
+    <img src="captures/desktop/12-geste-01-recherche.png" alt="7.1 · Chercher une adresse / parcelle" loading="lazy">
+    <figcaption>
+      <div class="cap-top"><b>7.1 · Chercher une adresse / parcelle</b> <span class="badge" style="color:#16A34A">✅ OK</span></div>
+      <div class="phrase">Le promoteur ouvre : Chercher une adresse / parcelle.</div>
+      <div class="meta">1 clic · 0.4 s</div>
+    </figcaption>
+  </figure>
+  <figure class="carte OK">
+    <img src="captures/desktop/13-geste-02-plu.png" alt="7.2 · PLU / zonage" loading="lazy">
+    <figcaption>
+      <div class="cap-top"><b>7.2 · PLU / zonage</b> <span class="badge" style="color:#16A34A">✅ OK</span></div>
+      <div class="phrase">Le promoteur ouvre : PLU / zonage.</div>
+      <div class="meta">1 clic · 0.4 s</div>
+    </figcaption>
+  </figure>
+  <figure class="carte OK">
+    <img src="captures/desktop/14-geste-03-gabarit.png" alt="7.3 · Gabarit constructible 2D/3D" loading="lazy">
+    <figcaption>
+      <div class="cap-top"><b>7.3 · Gabarit constructible 2D/3D</b> <span class="badge" style="color:#16A34A">✅ OK</span></div>
+      <div class="phrase">Le promoteur ouvre : Gabarit constructible 2D/3D.</div>
+      <div class="meta">1 clic · 0.4 s</div>
+    </figcaption>
+  </figure>
+  <figure class="carte OK">
+    <img src="captures/desktop/15-geste-04-taxe-amenagement.png" alt="7.4 · Taxe d’aménagement" loading="lazy">
+    <figcaption>
+      <div class="cap-top"><b>7.4 · Taxe d’aménagement</b> <span class="badge" style="color:#16A34A">✅ OK</span></div>
+      <div class="phrase">Le promoteur ouvre : Taxe d’aménagement.</div>
+      <div class="meta">1 clic · 0.4 s</div>
+    </figcaption>
+  </figure>
+  <figure class="carte OK">
+    <img src="captures/desktop/16-geste-05-assemblage.png" alt="7.5 · Assembler deux parcelles" loading="lazy">
+    <figcaption>
+      <div class="cap-top"><b>7.5 · Assembler deux parcelles</b> <span class="badge" style="color:#16A34A">✅ OK</span></div>
+      <div class="phrase">Le promoteur ouvre : Assembler deux parcelles.</div>
+      <div class="meta">1 clic · 0.4 s</div>
+    </figcaption>
+  </figure>
+  <figure class="carte OK">
+    <img src="captures/desktop/17-geste-06-programme.png" alt="7.6 · Faisabilité / programme" loading="lazy">
+    <figcaption>
+      <div class="cap-top"><b>7.6 · Faisabilité / programme</b> <span class="badge" style="color:#16A34A">✅ OK</span></div>
+      <div class="phrase">Le promoteur ouvre : Faisabilité / programme.</div>
+      <div class="meta">1 clic · 0.4 s</div>
+    </figcaption>
+  </figure>
+  <figure class="carte OK">
+    <img src="captures/desktop/18-geste-07-calculette-fonciere.png" alt="7.7 · Calculette foncière (bilan)" loading="lazy">
+    <figcaption>
+      <div class="cap-top"><b>7.7 · Calculette foncière (bilan)</b> <span class="badge" style="color:#16A34A">✅ OK</span></div>
+      <div class="phrase">Le promoteur ouvre : Calculette foncière (bilan).</div>
+      <div class="meta">1 clic · 0.4 s</div>
+    </figcaption>
+  </figure>
+  <figure class="carte OK">
+    <img src="captures/desktop/19-geste-08-comparer.png" alt="7.8 · Comparer des communes" loading="lazy">
+    <figcaption>
+      <div class="cap-top"><b>7.8 · Comparer des communes</b> <span class="badge" style="color:#16A34A">✅ OK</span></div>
+      <div class="phrase">Le promoteur ouvre : Comparer des communes.</div>
+      <div class="meta">1 clic · 0.4 s</div>
+    </figcaption>
+  </figure>
+  <figure class="carte OK">
+    <img src="captures/desktop/20-geste-09-communes.png" alt="7.9 · Fiche commune" loading="lazy">
+    <figcaption>
+      <div class="cap-top"><b>7.9 · Fiche commune</b> <span class="badge" style="color:#16A34A">✅ OK</span></div>
+      <div class="phrase">Le promoteur ouvre : Fiche commune.</div>
+      <div class="meta">1 clic · 0.4 s</div>
+    </figcaption>
+  </figure>
+  <figure class="carte OK">
+    <img src="captures/desktop/21-geste-10-risques.png" alt="7.10 · Risques &amp; servitudes" loading="lazy">
+    <figcaption>
+      <div class="cap-top"><b>7.10 · Risques &amp; servitudes</b> <span class="badge" style="color:#16A34A">✅ OK</span></div>
+      <div class="phrase">Le promoteur ouvre : Risques &amp; servitudes.</div>
+      <div class="meta">1 clic · 0.4 s</div>
+    </figcaption>
+  </figure>
+  <figure class="carte OK">
+    <img src="captures/desktop/22-geste-11-etude-zone.png" alt="7.11 · Étude de zone" loading="lazy">
+    <figcaption>
+      <div class="cap-top"><b>7.11 · Étude de zone</b> <span class="badge" style="color:#16A34A">✅ OK</span></div>
+      <div class="phrase">Le promoteur ouvre : Étude de zone.</div>
+      <div class="meta">1 clic · 0.4 s</div>
+    </figcaption>
+  </figure>
+  <figure class="carte OK">
+    <img src="captures/desktop/23-geste-12-mon-secteur.png" alt="7.12 · Mon secteur" loading="lazy">
+    <figcaption>
+      <div class="cap-top"><b>7.12 · Mon secteur</b> <span class="badge" style="color:#16A34A">✅ OK</span></div>
+      <div class="phrase">Le promoteur ouvre : Mon secteur.</div>
+      <div class="meta">1 clic · 0.4 s</div>
+    </figcaption>
+  </figure>
+  <figure class="carte OK">
+    <img src="captures/desktop/24-geste-13-patrimoine.png" alt="7.13 · Patrimoine / successions" loading="lazy">
+    <figcaption>
+      <div class="cap-top"><b>7.13 · Patrimoine / successions</b> <span class="badge" style="color:#16A34A">✅ OK</span></div>
+      <div class="phrase">Le promoteur ouvre : Patrimoine / successions.</div>
+      <div class="meta">1 clic · 0.4 s</div>
+    </figcaption>
+  </figure>
+  <figure class="carte OK">
+    <img src="captures/desktop/25-geste-14-permis.png" alt="7.14 · Permis déposés" loading="lazy">
+    <figcaption>
+      <div class="cap-top"><b>7.14 · Permis déposés</b> <span class="badge" style="color:#16A34A">✅ OK</span></div>
+      <div class="phrase">Le promoteur ouvre : Permis déposés.</div>
+      <div class="meta">1 clic · 0.4 s</div>
+    </figcaption>
+  </figure>
+  <figure class="carte OK">
+    <img src="captures/desktop/26-geste-15-barometre.png" alt="7.15 · Baromètre du marché" loading="lazy">
+    <figcaption>
+      <div class="cap-top"><b>7.15 · Baromètre du marché</b> <span class="badge" style="color:#16A34A">✅ OK</span></div>
+      <div class="phrase">Le promoteur ouvre : Baromètre du marché.</div>
+      <div class="meta">1 clic · 0.4 s</div>
+    </figcaption>
+  </figure>
+  <figure class="carte OK">
+    <img src="captures/desktop/27-geste-16-radar.png" alt="7.16 · Radar (marché en vente)" loading="lazy">
+    <figcaption>
+      <div class="cap-top"><b>7.16 · Radar (marché en vente)</b> <span class="badge" style="color:#16A34A">✅ OK</span></div>
+      <div class="phrase">Le promoteur ouvre : Radar (marché en vente).</div>
+      <div class="meta">1 clic · 0.4 s</div>
+    </figcaption>
+  </figure>
+  <figure class="carte OK">
+    <img src="captures/desktop/28-geste-17-copilote.png" alt="7.17 · Copilote (une question)" loading="lazy">
+    <figcaption>
+      <div class="cap-top"><b>7.17 · Copilote (une question)</b> <span class="badge" style="color:#16A34A">✅ OK</span></div>
+      <div class="phrase">Le promoteur ouvre : Copilote (une question).</div>
+      <div class="meta">1 clic · 0.2 s</div>
+    </figcaption>
+  </figure>
+  <figure class="carte OK">
+    <img src="captures/desktop/29-geste-18-documents.png" alt="7.18 · Mes documents" loading="lazy">
+    <figcaption>
+      <div class="cap-top"><b>7.18 · Mes documents</b> <span class="badge" style="color:#16A34A">✅ OK</span></div>
+      <div class="phrase">Le promoteur ouvre : Mes documents.</div>
+      <div class="meta">1 clic · 0.1 s</div>
+    </figcaption>
+  </figure>
+  <figure class="carte OK">
+    <img src="captures/desktop/30-geste-19-veille-promoteurs.png" alt="7.19 · Veille promoteurs" loading="lazy">
+    <figcaption>
+      <div class="cap-top"><b>7.19 · Veille promoteurs</b> <span class="badge" style="color:#16A34A">✅ OK</span></div>
+      <div class="phrase">Le promoteur ouvre : Veille promoteurs.</div>
+      <div class="meta">1 clic · 0.1 s</div>
+    </figcaption>
+  </figure>
+  <figure class="carte OK">
+    <img src="captures/desktop/31-geste-20-temps.png" alt="7.20 · Remonter le temps" loading="lazy">
+    <figcaption>
+      <div class="cap-top"><b>7.20 · Remonter le temps</b> <span class="badge" style="color:#16A34A">✅ OK</span></div>
+      <div class="phrase">Le promoteur ouvre : Remonter le temps.</div>
+      <div class="meta">1 clic · 0.1 s</div>
+    </figcaption>
+  </figure>
+  <figure class="carte OK">
+    <img src="captures/desktop/32-reset-demande.png" alt="8.1 · Mot de passe oublié" loading="lazy">
+    <figcaption>
+      <div class="cap-top"><b>8.1 · Mot de passe oublié</b> <span class="badge" style="color:#16A34A">✅ OK</span></div>
+      <div class="phrase">Le client demande un lien de réinitialisation (dry-run → .eml).</div>
+      <div class="meta">1 clic · 0.2 s</div>
+    </figcaption>
+  </figure>
+  <figure class="carte OK">
+    <img src="captures/desktop/33-reset-nouveau-mdp.png" alt="8.2 · Nouveau mot de passe" loading="lazy">
+    <figcaption>
+      <div class="cap-top"><b>8.2 · Nouveau mot de passe</b> <span class="badge" style="color:#16A34A">✅ OK</span></div>
+      <div class="phrase">Le client pose un nouveau mot de passe via le lien reçu.</div>
+      <div class="meta">1 clic · 0.3 s</div>
+    </figcaption>
+  </figure>
+  <figure class="carte OK">
+    <img src="captures/desktop/34-reset-reconnexion.png" alt="8.3 · Reconnexion" loading="lazy">
+    <figcaption>
+      <div class="cap-top"><b>8.3 · Reconnexion</b> <span class="badge" style="color:#16A34A">✅ OK</span></div>
+      <div class="phrase">Le client se reconnecte avec le nouveau mot de passe.</div>
+      <div class="meta">1 clic · 1.5 s</div>
+    </figcaption>
+  </figure>
+  <figure class="carte OK">
+    <img src="captures/desktop/35-suspension.png" alt="D1 · Suspension" loading="lazy">
+    <figcaption>
+      <div class="cap-top"><b>D1 · Suspension</b> <span class="badge" style="color:#16A34A">✅ OK</span></div>
+      <div class="phrase">Vic suspend le compte → le mail « suspension » part (file : suspension:a_rejouer).</div>
+      <div class="meta">1 clic · 0.2 s</div>
+    </figcaption>
+  </figure>
+  <figure class="carte OK">
+    <img src="captures/desktop/36-retablissement.png" alt="D2 · Rétablissement" loading="lazy">
+    <figcaption>
+      <div class="cap-top"><b>D2 · Rétablissement</b> <span class="badge" style="color:#16A34A">✅ OK</span></div>
+      <div class="phrase">Vic rétablit le compte → le mail « rétablissement » part (file : retablissement:a_rejouer).</div>
+      <div class="meta">1 clic · 0.1 s</div>
+    </figcaption>
+  </figure>
+  <figure class="carte OK">
+    <img src="captures/desktop/37-fin-essai.png" alt="9 · Fin d’essai" loading="lazy">
+    <figcaption>
+      <div class="cap-top"><b>9 · Fin d’essai</b> <span class="badge" style="color:#16A34A">✅ OK</span></div>
+      <div class="phrase">Essai expiré : le client voit « abonnement à régulariser », données intactes.</div>
+      <div class="meta">1 clic · 0.3 s</div>
+    </figcaption>
+  </figure></div>
+
+<h2>Mobile (390×844)</h2>
+<div class="grille mob">
+  <figure class="carte OK">
+    <img src="captures/mobile/01-login.png" alt="M1 · Connexion (mobile)" loading="lazy">
+    <figcaption>
+      <div class="cap-top"><b>M1 · Connexion (mobile)</b> <span class="badge" style="color:#16A34A">✅ OK</span></div>
+      <div class="phrase">Page de connexion sur mobile, avec « Se souvenir de moi ».</div>
+      <div class="meta">1 clic · 0.2 s</div>
+    </figcaption>
+  </figure>
+  <figure class="carte OK">
+    <img src="captures/mobile/02-invitation.png" alt="M2 · Invitation (mobile)" loading="lazy">
+    <figcaption>
+      <div class="cap-top"><b>M2 · Invitation (mobile)</b> <span class="badge" style="color:#16A34A">✅ OK</span></div>
+      <div class="phrase">Page mot de passe sur mobile : confirmation + CTA essai.</div>
+      <div class="meta">1 clic · 0.1 s</div>
+    </figcaption>
+  </figure>
+  <figure class="carte OK">
+    <img src="captures/mobile/03-app-accueil.png" alt="M3 · App (mobile)" loading="lazy">
+    <figcaption>
+      <div class="cap-top"><b>M3 · App (mobile)</b> <span class="badge" style="color:#16A34A">✅ OK</span></div>
+      <div class="phrase">L’app (build de prod) s’ouvre et s’affiche sur mobile.</div>
+      <div class="meta">1 clic · 0.1 s</div>
+    </figcaption>
+  </figure></div>
+
+<footer>
+  Chaque vignette = une capture réelle du BUILD servi par l'API. Verdict par étape : ✅ OK · 🟠 gênant · 🔴 bloquant.
+  Les mails (invitation, réinitialisation, suspension, rétablissement) partent en <b>dry-run .eml</b> (aucun envoi réel) —
+  preuve : <code>mails/eml/*.eml</code> et la file ci-dessus (tous <code>a_rejouer</code>, 0 <code>recu</code>).
+  Harnais rejouable : <code>scripts/run-api.sh</code> + <code>scripts/parcours_fix1.mjs</code> + <code>scripts/make_planche.mjs</code>.
+</footer>
+</body></html>

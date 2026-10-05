@@ -96,18 +96,20 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
-    // M-W (vite 8, Rolldown) : `rollupOptions` → `rolldownOptions`, et l'ancien `manualChunks`
-    // OBJET (retiré sous Rolldown) → `output.codeSplitting.groups` (test par chemin ; `advancedChunks`
-    // est lui-même déprécié → on prend le nom courant `codeSplitting`). Découpage IDENTIQUE :
-    // maplibre-gl dans son chunk (isolé + différé par le lazy-load M-V), react/react-dom/react-query/
-    // zustand dans `vendor`. Vérifié après build : chunks maplibre/vendor présents, maplibre HORS du
-    // graphe initial (index.html), pas d'explosion de bundle, aucun avertissement.
+    // PARCOURS-FIX-1 (Lot 1.1, reprise de MAPLIBRE-1 9cc198cb) — CAUSE DE LA PAGE BLANCHE EN PROD :
+    // le groupe de chunk manuel `vendor` regroupait React (module CommonJS) dans un chunk séparé ;
+    // sous Rolldown (vite 8), le helper d'interop CJS `__commonJSMin` n'était PAS co-localisé avec ce
+    // chunk → `TypeError: t is not a function` / `__commonJSMin is not a function` à l'init du vendor →
+    // React ne montait jamais → écran blanc (le dev, non chunké, n'était pas touché). On SUPPRIME le
+    // groupe `vendor` (React reste dans l'entrée, avec son helper). On GARDE le groupe `maplibre` :
+    // maplibre-gl est ESM (pas de helper CJS → aucun risque) et doit rester dans son PROPRE chunk
+    // asynchrone, hors du graphe initial (sinon Rolldown le hisse dans l'entrée). maplibre 4 conservé
+    // (rien d'autre de la branche maplibre-1). Vérifié : build OK, page prod rendue (plus de page blanche).
     rolldownOptions: {
       output: {
         codeSplitting: {
           groups: [
             { name: 'maplibre', test: /[\\/]node_modules[\\/]maplibre-gl[\\/]/ },
-            { name: 'vendor', test: /[\\/]node_modules[\\/](react|react-dom|scheduler|@tanstack[\\/]react-query|zustand)[\\/]/ },
           ],
         },
       },

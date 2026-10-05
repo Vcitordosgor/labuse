@@ -1,0 +1,22 @@
+From: LABUSE <contact@labuse.immo>
+To: promoteur.parcoursfix@cabinet-parcours.re
+Subject: [DRY-RUN] Mot de passe =?utf-8?q?oubli=C3=A9?=
+Date: Mon, 05 Oct 2026 22:33:00 +0200
+Message-ID: <179123238046.78414.8879020418729643063@labuse.immo>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+[DRY-RUN LABUSE =E2=80=94 ce mail N'EST PAS parti : envoi r=C3=A9el d=C3=A9sa=
+ctiv=C3=A9 en local (poser LABUSE_MAIL_REEL=3D1 pour envoyer).]
+
+Template Brevo : mdp_oublie (=C2=AB Mot de passe oubli=C3=A9 =C2=BB, id 14)
+Destinataire   : promoteur.parcoursfix@cabinet-parcours.re
+
+Param=C3=A8tres :
+{
+  "PRENOM": "[CT-PARCOURS]",
+  "VALIDITE": "1 heure",
+  "LIEN_RESET": "http://127.0.0.1:8000/reset?token=3Dd2NmpU55ydzdp_xdP7L93T0s=
+dE3wMYe2pUI3rcfsKEE"
+}

@@ -286,19 +286,46 @@ def envoyer_template(to: str, key: str, params: dict | None = None) -> dict:
     t = template(key)
     if not t:
         return {"envoye": False, "raison": f"Template inconnu « {key} »."}
+    # PARCOURS-FIX-1 (point 2) — ÉTANCHÉITÉ : en local sans LABUSE_MAIL_REEL, 0 appel réseau à Brevo,
+    # quoi que contienne le `.env` (où `BREVO_API_KEY` est réinjecté par `load_dotenv`). On écrit une
+    # trace `.eml` (intention : template + params) et on retourne une raison explicite. C'est la garde
+    # qui corrige l'incident PARCOURS-CLIENT-1 G1 (1ʳᵉ invitation partie pour de vrai).
+    from .config import envoi_reel_autorise
+    if not envoi_reel_autorise():
+        try:
+            from . import mail
+            path = mail.ecrire_dryrun_template(key, to, params)
+            log.info("BREVO DRY-RUN (.eml écrit, 0 réseau) — %s → %s fichier=%s", key, to, path)
+        except Exception as exc:  # noqa: BLE001 — la trace ne doit jamais faire échouer l'appel
+            log.warning("BREVO DRY-RUN — trace .eml impossible (%s)", exc)
+        return {"envoye": False,
+                "raison": "dry-run (local, LABUSE_MAIL_REEL absent) — aucun appel Brevo."}
     api_key = _api_key()
     if not api_key:
         return {"envoye": False,
                 "raison": "Brevo non configuré (BREVO_API_KEY absente) — aucun envoi."}
     tpl = template_id(key)
+    # PARCOURS-FIX-1 (Lot 2.6) — DÉSABONNEMENT un clic (RFC 8058) sur les mails RÉCURRENTS : si l'appelant
+    # fournit un `LIEN_DESABO` dans les params (ex. `radar_alerte`), on pose l'en-tête `List-Unsubscribe`
+    # + `List-Unsubscribe-Post` sur l'envoi Brevo. Gmail/Outlook affichent alors un bouton « Se désabonner »
+    # natif, indépendamment du HTML du template. (Pour un lien VISIBLE dans le corps, le template Brevo peut
+    # aussi référencer {{ params.LIEN_DESABO }} — le param est déjà passé.)
+    extra_headers = {}
+    _desabo = (params or {}).get("LIEN_DESABO")
+    if _desabo:
+        extra_headers = {"List-Unsubscribe": f"<{_desabo}>",
+                         "List-Unsubscribe-Post": "List-Unsubscribe=One-Click"}
     try:
         import httpx
+        payload = {"templateId": tpl, "to": [{"email": to}], "params": params or {},
+                   # suivi de clic/ouverture OFF pour les transactionnels (délivrabilité entreprise).
+                   "disableTracking": True}
+        if extra_headers:
+            payload["headers"] = extra_headers
         r = httpx.post(
             f"{_API}/smtp/email",
             headers={"api-key": api_key, "content-type": "application/json"},
-            json={"templateId": tpl, "to": [{"email": to}], "params": params or {},
-                  # suivi de clic/ouverture OFF pour les transactionnels (délivrabilité entreprise).
-                  "disableTracking": True},
+            json=payload,
             timeout=15.0)
         if r.status_code // 100 == 2:
             mid = None

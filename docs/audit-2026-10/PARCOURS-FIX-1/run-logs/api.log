@@ -1,0 +1,58 @@
+INFO:     Started server process [78414]
+INFO:     Waiting for application startup.
+INFO:     labuse — LA BUSE démarrée · env=local · auth=active · schéma=ok
+WARNING:     labuse — LABUSE_SECRET_KEY absente (env=local) : clé de session éphémère (les sessions ne survivront pas à un redémarrage).
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:6005 (Press CTRL+C to quit)
+INFO:     labuse.auth — login_ok ip=127.0.0.1
+INFO:     labuse.auth — login_ok ip=127.0.0.1
+INFO:     labuse.brevo — BREVO DRY-RUN (.eml écrit, 0 réseau) — mdp_oublie → promoteur.parcoursfix@cabinet-parcours.re fichier=/Users/openclaw/Desktop/labuse-parcoursfix/docs/audit-2026-10/PARCOURS-FIX-1/mails/eml/20261005-221428-897885__promoteur.parcoursfix_at_cabinet-parcours.re.eml
+INFO:     labuse.onboarding — [RESET-EMAIL] template 14 enfilé → compte 91
+INFO:     labuse.brevo — BREVO DRY-RUN (.eml écrit, 0 réseau) — mdp_modifie → promoteur.parcoursfix@cabinet-parcours.re fichier=/Users/openclaw/Desktop/labuse-parcoursfix/docs/audit-2026-10/PARCOURS-FIX-1/mails/eml/20261005-221500-926047__promoteur.parcoursfix_at_cabinet-parcours.re.eml
+INFO:     labuse.auth — login_ok ip=127.0.0.1
+INFO:     labuse.brevo — BREVO DRY-RUN (.eml écrit, 0 réseau) — suspension → promoteur.parcoursfix@cabinet-parcours.re fichier=/Users/openclaw/Desktop/labuse-parcoursfix/docs/audit-2026-10/PARCOURS-FIX-1/mails/eml/20261005-221508-150925__promoteur.parcoursfix_at_cabinet-parcours.re.eml
+INFO:     labuse.brevo — BREVO DRY-RUN (.eml écrit, 0 réseau) — retablissement → promoteur.parcoursfix@cabinet-parcours.re fichier=/Users/openclaw/Desktop/labuse-parcoursfix/docs/audit-2026-10/PARCOURS-FIX-1/mails/eml/20261005-221510-220881__promoteur.parcoursfix_at_cabinet-parcours.re.eml
+INFO:     labuse.auth — login_ok_suspendu ip=127.0.0.1
+INFO:     labuse.auth — login_ok ip=127.0.0.1
+INFO:     labuse.auth — login_ok ip=127.0.0.1
+INFO:     labuse.brevo — BREVO DRY-RUN (.eml écrit, 0 réseau) — mdp_oublie → promoteur.parcoursfix@cabinet-parcours.re fichier=/Users/openclaw/Desktop/labuse-parcoursfix/docs/audit-2026-10/PARCOURS-FIX-1/mails/eml/20261005-221909-405530__promoteur.parcoursfix_at_cabinet-parcours.re.eml
+INFO:     labuse.onboarding — [RESET-EMAIL] template 14 enfilé → compte 93
+INFO:     labuse.brevo — BREVO DRY-RUN (.eml écrit, 0 réseau) — mdp_modifie → promoteur.parcoursfix@cabinet-parcours.re fichier=/Users/openclaw/Desktop/labuse-parcoursfix/docs/audit-2026-10/PARCOURS-FIX-1/mails/eml/20261005-221941-382327__promoteur.parcoursfix_at_cabinet-parcours.re.eml
+INFO:     labuse.auth — login_ok ip=127.0.0.1
+INFO:     labuse.brevo — BREVO DRY-RUN (.eml écrit, 0 réseau) — suspension → promoteur.parcoursfix@cabinet-parcours.re fichier=/Users/openclaw/Desktop/labuse-parcoursfix/docs/audit-2026-10/PARCOURS-FIX-1/mails/eml/20261005-221946-030877__promoteur.parcoursfix_at_cabinet-parcours.re.eml
+INFO:     labuse.brevo — BREVO DRY-RUN (.eml écrit, 0 réseau) — retablissement → promoteur.parcoursfix@cabinet-parcours.re fichier=/Users/openclaw/Desktop/labuse-parcoursfix/docs/audit-2026-10/PARCOURS-FIX-1/mails/eml/20261005-221947-968529__promoteur.parcoursfix_at_cabinet-parcours.re.eml
+INFO:     labuse.auth — login_ok_suspendu ip=127.0.0.1
+INFO:     labuse.auth — login_ok ip=127.0.0.1
+INFO:     labuse.auth — login_ok ip=127.0.0.1
+INFO:     labuse.auth — login_ok ip=127.0.0.1
+INFO:     labuse.brevo — BREVO DRY-RUN (.eml écrit, 0 réseau) — mdp_oublie → promoteur.parcoursfix@cabinet-parcours.re fichier=/Users/openclaw/Desktop/labuse-parcoursfix/docs/audit-2026-10/PARCOURS-FIX-1/mails/eml/20261005-222419-745485__promoteur.parcoursfix_at_cabinet-parcours.re.eml
+INFO:     labuse.onboarding — [RESET-EMAIL] template 14 enfilé → compte 95
+INFO:     labuse.brevo — BREVO DRY-RUN (.eml écrit, 0 réseau) — mdp_modifie → promoteur.parcoursfix@cabinet-parcours.re fichier=/Users/openclaw/Desktop/labuse-parcoursfix/docs/audit-2026-10/PARCOURS-FIX-1/mails/eml/20261005-222451-648488__promoteur.parcoursfix_at_cabinet-parcours.re.eml
+INFO:     labuse.auth — login_ok ip=127.0.0.1
+INFO:     labuse.brevo — BREVO DRY-RUN (.eml écrit, 0 réseau) — suspension → promoteur.parcoursfix@cabinet-parcours.re fichier=/Users/openclaw/Desktop/labuse-parcoursfix/docs/audit-2026-10/PARCOURS-FIX-1/mails/eml/20261005-222456-034948__promoteur.parcoursfix_at_cabinet-parcours.re.eml
+INFO:     labuse.brevo — BREVO DRY-RUN (.eml écrit, 0 réseau) — retablissement → promoteur.parcoursfix@cabinet-parcours.re fichier=/Users/openclaw/Desktop/labuse-parcoursfix/docs/audit-2026-10/PARCOURS-FIX-1/mails/eml/20261005-222507-015959__promoteur.parcoursfix_at_cabinet-parcours.re.eml
+INFO:     labuse.auth — login_ok_suspendu ip=127.0.0.1
+INFO:     labuse.auth — login_ok ip=127.0.0.1
+INFO:     labuse.auth — login_ok ip=127.0.0.1
+INFO:     labuse.auth — login_ok ip=127.0.0.1
+INFO:     labuse.brevo — BREVO DRY-RUN (.eml écrit, 0 réseau) — mdp_oublie → promoteur.parcoursfix@cabinet-parcours.re fichier=/Users/openclaw/Desktop/labuse-parcoursfix/docs/audit-2026-10/PARCOURS-FIX-1/mails/eml/20261005-222817-011459__promoteur.parcoursfix_at_cabinet-parcours.re.eml
+INFO:     labuse.onboarding — [RESET-EMAIL] template 14 enfilé → compte 97
+INFO:     labuse.brevo — BREVO DRY-RUN (.eml écrit, 0 réseau) — mdp_modifie → promoteur.parcoursfix@cabinet-parcours.re fichier=/Users/openclaw/Desktop/labuse-parcoursfix/docs/audit-2026-10/PARCOURS-FIX-1/mails/eml/20261005-222848-846190__promoteur.parcoursfix_at_cabinet-parcours.re.eml
+INFO:     labuse.auth — login_ok ip=127.0.0.1
+INFO:     labuse.brevo — BREVO DRY-RUN (.eml écrit, 0 réseau) — suspension → promoteur.parcoursfix@cabinet-parcours.re fichier=/Users/openclaw/Desktop/labuse-parcoursfix/docs/audit-2026-10/PARCOURS-FIX-1/mails/eml/20261005-222857-683208__promoteur.parcoursfix_at_cabinet-parcours.re.eml
+INFO:     labuse.brevo — BREVO DRY-RUN (.eml écrit, 0 réseau) — retablissement → promoteur.parcoursfix@cabinet-parcours.re fichier=/Users/openclaw/Desktop/labuse-parcoursfix/docs/audit-2026-10/PARCOURS-FIX-1/mails/eml/20261005-222905-943995__promoteur.parcoursfix_at_cabinet-parcours.re.eml
+INFO:     labuse.auth — login_ok_suspendu ip=127.0.0.1
+INFO:     labuse.auth — login_ok ip=127.0.0.1
+INFO:     labuse.auth — login_ok ip=127.0.0.1
+INFO:     labuse.auth — login_ok ip=127.0.0.1
+INFO:     labuse.auth — login_ok ip=127.0.0.1
+INFO:     labuse.brevo — BREVO DRY-RUN (.eml écrit, 0 réseau) — mdp_oublie → promoteur.parcoursfix@cabinet-parcours.re fichier=/Users/openclaw/Desktop/labuse-parcoursfix/docs/audit-2026-10/PARCOURS-FIX-1/mails/eml/20261005-223300-468581__promoteur.parcoursfix_at_cabinet-parcours.re.eml
+INFO:     labuse.onboarding — [RESET-EMAIL] template 14 enfilé → compte 100
+INFO:     labuse.brevo — BREVO DRY-RUN (.eml écrit, 0 réseau) — mdp_modifie → promoteur.parcoursfix@cabinet-parcours.re fichier=/Users/openclaw/Desktop/labuse-parcoursfix/docs/audit-2026-10/PARCOURS-FIX-1/mails/eml/20261005-223332-551020__promoteur.parcoursfix_at_cabinet-parcours.re.eml
+INFO:     labuse.auth — login_ok ip=127.0.0.1
+INFO:     labuse.brevo — BREVO DRY-RUN (.eml écrit, 0 réseau) — suspension → promoteur.parcoursfix@cabinet-parcours.re fichier=/Users/openclaw/Desktop/labuse-parcoursfix/docs/audit-2026-10/PARCOURS-FIX-1/mails/eml/20261005-223337-021974__promoteur.parcoursfix_at_cabinet-parcours.re.eml
+INFO:     labuse.brevo — BREVO DRY-RUN (.eml écrit, 0 réseau) — retablissement → promoteur.parcoursfix@cabinet-parcours.re fichier=/Users/openclaw/Desktop/labuse-parcoursfix/docs/audit-2026-10/PARCOURS-FIX-1/mails/eml/20261005-223344-438006__promoteur.parcoursfix_at_cabinet-parcours.re.eml
+INFO:     labuse.auth — login_ok_suspendu ip=127.0.0.1
+INFO:     labuse.auth — login_ok ip=127.0.0.1
+INFO:     labuse.auth — login_ok ip=127.0.0.1
+INFO:     labuse.auth — login_ok ip=127.0.0.1

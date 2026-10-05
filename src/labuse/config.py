@@ -69,6 +69,9 @@ class Settings(BaseSettings):
     # redémarrage — acceptable en local, à définir en pilote).
     secret_key: str | None = None
     session_hours: float = 12.0
+    # PARCOURS-FIX-1 (Lot 2.4) — « Se souvenir de moi » : durée de session ÉTENDUE quand la case est
+    # cochée à la connexion (défaut 30 jours). Décochée → `session_hours` (12 h), le défaut raisonnable.
+    session_hours_souvenir: float = 24.0 * 30
     # AUDIT COMPTES · A5 — seuil du SIGNAL de partage de compte (dashboard admin) : nombre d'IP
     # distinctes actives simultanément au-delà duquel un compte est signalé (jamais bloqué).
     # 1 licence = 1 accès ; 3 postes simultanés = partage probable. Purement informatif.
@@ -245,6 +248,17 @@ class Settings(BaseSettings):
     smtp_user: str | None = None                 # LABUSE_SMTP_USER (ex. contactlabuse@gmail.com)
     smtp_password: str | None = None             # LABUSE_SMTP_PASSWORD (mot de passe d'application, 16 c.)
     smtp_starttls: bool = True                   # LABUSE_SMTP_STARTTLS
+    # PARCOURS-FIX-1 (point 2) — ÉTANCHÉITÉ DU DRY-RUN. `load_dotenv(.env)` (config.py:34) réinjecte
+    # dans le process TOUTE variable du `.env`, dont `BREVO_API_KEY` (non préfixé) : un opérateur qui
+    # « teste en local » avec une vraie clé Brevo envoyait de VRAIS mails sans le vouloir (incident
+    # PARCOURS-CLIENT-1 G1 : 1ʳᵉ invitation partie pour de vrai). Désormais, EN LOCAL, l'envoi RÉSEAU
+    # (SMTP ou Brevo) exige ce drapeau EXPLICITE ; sans lui, tout mail est écrit en `.eml` (transport
+    # fichier, `mail_dryrun_dir`) et AUCUN appel réseau n'est fait, quoi que contienne le `.env`.
+    # En pilote/production l'envoi réel est TOUJOURS actif (la config VPS porte les secrets ET pose
+    # ce drapeau) — jamais de mail client silencieusement avalé en prod. Garde : `envoi_reel_autorise`.
+    mail_reel: bool = False                      # LABUSE_MAIL_REEL=1 pour autoriser l'envoi RÉEL en local
+    # Dossier où le transport .eml écrit les mails en dry-run (défaut : <racine>/outputs/mails_dryrun).
+    mail_dryrun_dir: str | None = None           # LABUSE_MAIL_DRYRUN_DIR
     # Expéditeur AFFICHÉ (alias vérifié Google) — jamais l'adresse Gmail brute.
     mail_from: str = "LABUSE <contact@labuse.immo>"   # LABUSE_MAIL_FROM
     smtp_from: str = "LABUSE <contact@labuse.immo>"   # rétro-compat (déprécié — utiliser mail_from)
@@ -346,6 +360,23 @@ class Settings(BaseSettings):
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
     return Settings()
+
+
+def envoi_reel_autorise(settings=None) -> bool:
+    """PARCOURS-FIX-1 (point 2) — GARDE UNIQUE d'étanchéité du dry-run mail.
+
+    Renvoie True ssi l'envoi RÉSEAU (SMTP ou Brevo) est autorisé :
+      · env `pilot`/`production` → TOUJOURS (la config VPS porte les secrets ET pose `LABUSE_MAIL_REEL` ;
+        on n'avale jamais un mail client en prod, même si le drapeau manque par erreur) ;
+      · env `local` → UNIQUEMENT si `LABUSE_MAIL_REEL` est posé.
+    Sans quoi le transport est `.eml` (fichier) et AUCUN appel réseau n'est fait — quoi que contienne
+    le `.env` (où `BREVO_API_KEY` est réinjecté par `load_dotenv`). C'est le point d'étanchéité UNIQUE,
+    lu par `mail.send_email` (SMTP) et `brevo.envoyer_template` (transactionnel)."""
+    s = settings or get_settings()
+    env = (getattr(s, "env", None) or "local").strip().lower()
+    if env in ("pilot", "pilote", "production", "prod"):
+        return True
+    return bool(getattr(s, "mail_reel", False))
 
 
 def base_url_probleme(url: str | None = None) -> str | None:

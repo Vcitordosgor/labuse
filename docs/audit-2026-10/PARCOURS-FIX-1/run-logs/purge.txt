@@ -1,0 +1,10 @@
+comptes [CT-PARCOURS] AVANT purge : [100, 101] ['promoteur.mobile@cabinet-parcours.re', 'promoteur.parcoursfix@cabinet-parcours.re']
+  effacer_compte_rgpd(promoteur.mobile@cabinet-parcours.re) -> True
+  effacer_compte_rgpd(promoteur.parcoursfix@cabinet-parcours.re) -> True
+
+34 tables portent compte_id. Lignes restantes pour [100, 101] :
+  mail_queue par destinataire @cabinet-parcours.re : 0
+  utilisateurs @cabinet-parcours.re : 0
+  comptes restants : 0
+
+RESULTAT : PURGE PROPRE — 0 ligne orpheline

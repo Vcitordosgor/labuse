@@ -1736,6 +1736,9 @@ export const postAdminDeconnecter = (compteId: number) =>
   j<{ ok: boolean; sessions_fermees: number }>(`/admin/licences/${compteId}/deconnecter`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
 export const postAdminLicenceMail = (compteId: number, key: string) =>
   j<{ ok: boolean; envoye: boolean; raison?: string }>(`/admin/licences/${compteId}/mail`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key }) })
+// PARCOURS-FIX-1 (Lot 2.5) — (ré)émet le lien d'invitation EN CLAIR pour l'envoyer à la main (copie).
+export const postAdminLienInvitation = (compteId: number) =>
+  j<{ ok: boolean; lien: string; email: string; expire_at: string; avert: string | null }>(`/admin/licences/${compteId}/lien-invitation`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
 // COMPTE-2 (Lot 2/3) — la file mail_queue d'un compte (onglet Activité / Facturation de la fiche).
 export interface MailLigne {
   id: number; mail_key: string; template_nom: string | null; destinataire: string

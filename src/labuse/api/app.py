@@ -546,19 +546,23 @@ async def login_submit(request: Request):
     from . import auth
 
     body = await request.body()
-    password, identifiant = "", ""
+    password, identifiant, souvenir = "", "", False
     ctype = request.headers.get("content-type", "")
     if "json" in ctype:
         try:
             data = json.loads(body or b"{}")
             password = str(data.get("password") or "")
             identifiant = str(data.get("identifiant") or "")
+            souvenir = bool(data.get("souvenir"))
         except ValueError:
             password = ""
     else:
         q = parse_qs(body.decode("utf-8", "replace"))
         password = (q.get("password") or [""])[0]
         identifiant = (q.get("identifiant") or [""])[0].strip()
+        souvenir = (q.get("souvenir") or [""])[0] == "oui"
+    # PARCOURS-FIX-1 (Lot 2.4) — « Se souvenir de moi » : None = défaut (12 h), sinon 30 j.
+    souvenir_h = auth.souvenir_heures(souvenir)
 
     # PREMIER EURO · E1 — identifiant fourni = LOGIN UTILISATEUR (email + argon2id, verrou
     # après N échecs) ; identifiant vide = mot de passe PILOTE (compat — meurt à la bascule).
@@ -620,10 +624,10 @@ réglages vous attendent tels quels.</p>
                 resp = RedirectResponse("/login/2fa", status_code=303)
                 resp.set_cookie(value=auth.defi_2fa(u["utilisateur_id"]), **auth.cookie_2fa_kwargs())
                 return resp
-            tok = creer_session(db, u["utilisateur_id"], ip_hash=_iph, ua_hash=_uah)
+            tok = creer_session(db, u["utilisateur_id"], heures=souvenir_h, ip_hash=_iph, ua_hash=_uah)
         auth.log_event("login_ok", request)
         resp = RedirectResponse("/", status_code=303)
-        resp.set_cookie(value=f"u.{tok}", **auth.cookie_kwargs())
+        resp.set_cookie(value=f"u.{tok}", **auth.cookie_kwargs(hours=souvenir_h))
         return resp
 
     # VPS · go-live — le login pilote PARTAGÉ peut être ÉTEINT (LABUSE_LOGIN_PILOTE_ACTIF=0) :
@@ -639,7 +643,7 @@ réglages vous attendent tels quels.</p>
         return HTMLResponse(auth.login_page(error=True), status_code=401)
     auth.log_event("login_ok", request)
     resp = RedirectResponse("/", status_code=303)   # B2 : la racine (Caddy en prod, /socle/ en local)
-    resp.set_cookie(value=auth.make_token(), **auth.cookie_kwargs())
+    resp.set_cookie(value=auth.make_token(hours=souvenir_h), **auth.cookie_kwargs(hours=souvenir_h))
     return resp
 
 
