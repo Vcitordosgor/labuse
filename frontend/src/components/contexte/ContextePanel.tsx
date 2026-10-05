@@ -172,11 +172,11 @@ function AcquereursPmCommune({ commune }: { commune: string }) {
           g.siren
             ? <button key={g.siren} data-acquereur-pm onClick={() => ouvrirScan(g.siren!)}
                 className="flex items-baseline justify-between gap-2 py-0.5 text-left hover:text-mint">
-                <span className="min-w-0 truncate">{g.nom ?? g.siren}</span>
+                <span className="min-w-0 break-words">{g.nom ?? g.siren}</span>
                 <span className="tnum shrink-0 text-txt-mut">{g.n} parc. · {g.dernier}</span>
               </button>
             : <div key="anon" className="flex items-baseline justify-between gap-2 py-0.5 text-txt-mut">
-                <span className="min-w-0 truncate">Acquéreur non identifié</span><span className="tnum shrink-0">{g.n} parc.</span>
+                <span className="min-w-0 break-words">Acquéreur non identifié</span><span className="tnum shrink-0">{g.n} parc.</span>
               </div>
         ))}
       </div>

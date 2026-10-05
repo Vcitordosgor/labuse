@@ -64,13 +64,12 @@ export function O5Servitudes() {
       {/* RETOURS-12 O3 — intro DESCRIPTIVE : ce que l'outil montre. L'aveu « ce que nos données ne
           couvrent pas » quitte l'accueil client ; la limite vit désormais dans « Méthode & limites »
           (replié, plus bas). */}
-      <div className="flex items-start gap-1.5">
-        <div className="min-w-0 flex-1">
-          <Banner>Ce qui peut bloquer un projet sans se voir sur la carte : servitudes, sols, bruit,
-            assainissement. Chaque servitude est nommée, datée et sourcée.</Banner>
-        </div>
-        {/* RECETTE-1 (F3) — Réinitialiser dès qu'une parcelle est désignée. */}
-        {idu && <Reinitialiser onReset={resetAll} />}
+      {/* RECETTE-2 (T3) — Réinitialiser SEUL sur sa ligne (haut-droite) ; l'intro vient EN DESSOUS,
+          pleine largeur (plus de bouton côte à côte avec le texte). Présent ssi une parcelle est désignée. */}
+      <div className="flex flex-col gap-1.5">
+        {idu && <div className="flex justify-end"><Reinitialiser onReset={resetAll} /></div>}
+        <Banner>Ce qui peut bloquer un projet sans se voir sur la carte : servitudes, sols, bruit,
+          assainissement. Chaque servitude est nommée, datée et sourcée.</Banner>
       </div>
       {/* RECETTE-1 (F2) — EntreeParcelle : adresse/IDU (→ allerA : zoom + contour SANS ouvrir la fiche)
           OU clic carte (capté par l'effet selectedIdu : il analyse ET ouvre la fiche). */}
@@ -122,9 +121,8 @@ export function O5Servitudes() {
           )}
         </div>
       )}
-      {!d && !q.isLoading && !q.isError && (
-        <p className="text-[11px] text-txt-dim">Saisissez un IDU complet (14 caractères) ou cliquez une parcelle.</p>
-      )}
+      {/* RECETTE-2 (T1) — l'invite « Saisissez un IDU … ou cliquez une parcelle » est RETIRÉE : doublon de
+          l'invite d'EntreeParcelle ci-dessus (une seule mention, celle de la case de saisie). */}
     </>
   )
 }

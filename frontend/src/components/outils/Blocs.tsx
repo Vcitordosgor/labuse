@@ -90,7 +90,7 @@ function Carte({ it, ouvert, onToggle }: { it: BlocItem; ouvert: boolean; onTogg
     <div className="rounded-lg border border-line-2 bg-surface-3 px-2.5 py-1.5">
       <div data-bloc-row className="flex cursor-pointer items-center gap-2" onClick={onToggle}>
         <Chevron open={ouvert} />
-        <span className="min-w-0 flex-1 truncate text-[11px] text-txt">
+        <span className="min-w-0 flex-1 break-words text-[11px] text-txt">
           {it.denomination ?? '—'}
         </span>
         <span className="ml-auto tnum text-[11px] text-txt">{fmtM2(it.sdp_residuelle_m2)}</span>
@@ -101,9 +101,9 @@ function Carte({ it, ouvert, onToggle }: { it: BlocItem; ouvert: boolean; onTogg
         <span className="text-txt-dim">·</span>
         <span className="shrink-0">{fmtM2(it.surface_totale_m2)}</span>
         <span className="text-txt-dim">·</span>
-        <span className="shrink-0 truncate">{it.communes.join(', ')}</span>
+        <span className="min-w-0 break-words">{it.communes.join(', ')}</span>
         {it.zonages.length > 0 && <><span className="text-txt-dim">·</span>
-          <span className="shrink-0 truncate text-txt-dim">{it.zonages.slice(0, 4).join(' ')}</span></>}
+          <span className="min-w-0 break-words text-txt-dim">{it.zonages.slice(0, 4).join(' ')}</span></>}
       </div>
       <div className="mt-0.5 flex items-center gap-1.5 pl-4 text-[10px]">
         {it.siren && <Siren value={it.siren} className="font-mono text-[10px] text-txt-dim" />}

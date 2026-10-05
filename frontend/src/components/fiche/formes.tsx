@@ -60,16 +60,16 @@ export function Tuiles({ cols = 2, items }: { cols?: 2 | 3; items: Tuile[] }) {
   return (
     <div data-forme="tuiles" style={{ display: 'grid', gridTemplateColumns: `repeat(${cols},1fr)`, gap: 6 }}>
       {items.map((t, i) => (
-        // FICHE-FIX-4 (Lot B) — libellé et sous-ligne tronqués en « … » avec le texte complet en `title`
-        // (ex. Terrain › Exposition « versant (RGE ALTI, fenêtre 200 m) ») ; la valeur ne se coupe jamais.
+        // RECETTE-2 (T4) — plus de troncature « … » : libellé, valeur et sous-ligne passent sur 2+ lignes
+        // (overflow-wrap). Le `title` reste en repli d'accessibilité.
         <div key={i} data-exception={t.marque ? '1' : undefined} style={{ border: '1px solid var(--line)', borderRadius: 6, background: 'var(--bg-3)', padding: '7px 8px 6px', minWidth: 0 }}>
           <div style={{ color: 'var(--txt-dim)', fontSize: 10.5, display: 'flex', alignItems: 'center', gap: 3, minWidth: 0 }}>
-            <span title={typeof t.label === 'string' ? t.label : undefined} style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 }}>{t.label}</span>
+            <span title={typeof t.label === 'string' ? t.label : undefined} style={{ overflowWrap: 'anywhere', minWidth: 0 }}>{t.label}</span>
             {t.marque && <span aria-hidden style={{ color: 'var(--amber)', fontWeight: 700, flex: 'none' }}>*</span>}
             {t.info}
           </div>
-          <div style={{ ...mono, fontSize: 14, fontWeight: 500, marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: (t.ton && VAL_COLOR[t.ton]) || 'var(--txt-hi)' }}>{t.valeur}</div>
-          {t.sous != null && <div title={typeof t.sous === 'string' ? t.sous : undefined} style={{ fontSize: 10.5, color: 'var(--txt-off)', marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.sous}</div>}
+          <div style={{ ...mono, fontSize: 14, fontWeight: 500, marginTop: 2, overflowWrap: 'anywhere', color: (t.ton && VAL_COLOR[t.ton]) || 'var(--txt-hi)' }}>{t.valeur}</div>
+          {t.sous != null && <div title={typeof t.sous === 'string' ? t.sous : undefined} style={{ fontSize: 10.5, color: 'var(--txt-off)', marginTop: 1, overflowWrap: 'anywhere' }}>{t.sous}</div>}
         </div>
       ))}
     </div>

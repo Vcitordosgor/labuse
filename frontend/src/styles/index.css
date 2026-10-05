@@ -560,9 +560,10 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 .fiche-v6 .t-ico { width:32px; height:32px; border-radius:6px; background:var(--line); display:flex; align-items:center; justify-content:center; flex-shrink:0; color:var(--f-icotxt); }
 .fiche-v6 .t-body { flex:1; min-width:0; }
 .fiche-v6 .t-title { font-size:14px; color:var(--txt-hi); }
-.fiche-v6 .t-sub { font-size:11px; color:var(--txt-mut); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+/* RECETTE-2 (T4) — plus de troncature « … » : sous-titre et valeur des tuiles passent sur 2+ lignes. */
+.fiche-v6 .t-sub { font-size:11px; color:var(--txt-mut); margin-top:2px; white-space:normal; overflow:visible; text-overflow:clip; overflow-wrap:anywhere; }
 .fiche-v6 .t-right { display:flex; align-items:center; gap:9px; flex-shrink:0; min-width:0; }
-.fiche-v6 .t-val { font-size:12.5px; color:var(--txt); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:120px; }
+.fiche-v6 .t-val { font-size:12.5px; color:var(--txt); white-space:normal; overflow:visible; text-overflow:clip; overflow-wrap:anywhere; word-break:break-word; max-width:140px; text-align:right; }
 .fiche-v6 .t-val.absent { color:var(--txt-faint); }
 
 /* ════════ RETOURS-20 Z1 — grammaire partagée des accordéons (maquette-fiche-parcelle-accordeons.html).

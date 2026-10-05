@@ -811,9 +811,10 @@ export function M03() {
                     ? <>aucun point à afficher.</>
                     : <>cliquez les points sur la carte{nonLocTxt}.</>}
               </div>
-              {/* RECETTE-1 (H2.4, Vic) — Réinitialiser revient à l'île (quitte le périmètre 200 m). */}
+              {/* RECETTE-2 (T3/T7) — « Revenir à l'île » → « Réinitialiser » (libellé par défaut, composant
+                  partagé) ; seul sur sa ligne. L'effacement du champ adresse est traité en D2. */}
               <div className="mt-1 flex justify-end">
-                <Reinitialiser onReset={() => { setParcelIdu(null); setSeg('cours') }} label="Revenir à l'île" />
+                <Reinitialiser onReset={() => { setParcelIdu(null); setSeg('cours') }} />
               </div>
             </>
           )
@@ -1209,10 +1210,10 @@ export function M08() {
       <Banner>La <b>parcelle d'abord</b> : son IDU, une adresse, ou <b>cliquez-la sur la carte</b>. Puis
         choisissez l'année à revoir — l'« après » est toujours aujourd'hui.</Banner>
       <div className="flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2 p-3">
-        <div className="flex items-center gap-1.5">
-          <p className="min-w-0 flex-1 label-caps text-[9.5px]">Quelle parcelle voir évoluer ?</p>
-          {/* RECETTE-1 (F3) — Réinitialiser dès qu'une parcelle est désignée. */}
-          {idu && <Reinitialiser onReset={resetAll} />}
+        {/* RECETTE-2 (T3) — Réinitialiser SEUL sur sa ligne (haut-droite) ; le libellé vient EN DESSOUS. */}
+        <div className="flex flex-col gap-1.5">
+          {idu && <div className="flex justify-end"><Reinitialiser onReset={resetAll} /></div>}
+          <p className="label-caps text-[9.5px]">Quelle parcelle voir évoluer ?</p>
         </div>
         {/* RECETTE-1 (F2) — EntreeParcelle : adresse/IDU OU clic carte, l'une grise l'autre. */}
         <EntreeParcelle source={source}

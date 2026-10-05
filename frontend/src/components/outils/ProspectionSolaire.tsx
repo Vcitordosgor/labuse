@@ -162,9 +162,11 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
         {agg.isError && <ErrorState message="Détection piscines momentanément indisponible." retry={() => agg.refetch()} />}
         {agg.data && (
           <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
+            {/* RECETTE-2 (T10) — l'ancien fond inline mint 0f (quasi transparent) ÉCRASAIT le survol
+                `.hover-fill` (style inline > règle :hover) : au survol, texte sombre sur fond sombre =
+                illisible. Fond neutre + bord mint en classes → survol = vert opaque, contenu sombre. */}
             <button data-piscines-perim="ile" onClick={() => { setCommune(null); setStep('statut') }}
-              className="hover-fill flex items-center justify-between gap-2 rounded-lg border px-3 py-2.5 text-left transition-colors duration-quick"
-              style={{ borderColor: `${TOKENS.mint}4d`, background: `${TOKENS.mint}0f` }}>
+              className="hover-fill flex items-center justify-between gap-2 rounded-lg border border-mint/40 bg-surface-3 px-3 py-2.5 text-left transition-colors duration-quick">
               <b className="text-[12px] text-txt-hi">Toute l’île</b>
               <CompteBadge c={ileConf} a={ileAConf} />
             </button>

@@ -674,11 +674,13 @@ export function FaisabiliteTab({ idu }: { idu: string; embedded?: boolean }) {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-baseline justify-between gap-2">
                       <span className="min-w-0 text-txt">{s.label}</span>
-                      <b className="shrink-0 whitespace-nowrap font-mono font-medium tnum text-txt-hi">{s.valeur}</b>
+                      {/* RECETTE-2 (T4) — valeur mono : wrap plutôt que coupe/nowrap. */}
+                      <b className="min-w-0 break-words text-right font-mono font-medium tnum text-txt-hi">{s.valeur}</b>
                     </div>
-                    <div className="mt-1 flex items-center gap-1.5">
+                    <div className="mt-1 flex items-start gap-1.5">
                       <StepProv prov={s.prov} />
-                      <span className="truncate text-[9.5px] text-txt-dim">{s.source}</span>
+                      {/* RECETTE-2 (T4, D10) — citation de règle PLU sur 2+ lignes (plus de « … »). */}
+                      <span className="min-w-0 break-words text-[9.5px] text-txt-dim">{s.source}</span>
                     </div>
                   </div>
                 </li>

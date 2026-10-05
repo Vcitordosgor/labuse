@@ -232,7 +232,7 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
           <div className="flex flex-col gap-1">
             {annoncesRayon.slice(0, 8).map((a, i) => (
               <div key={i} className="flex items-center gap-2 text-[12px]">
-                <span className="flex-1 truncate text-txt">{a.type_bien} · {a.commune}{a.distance_m != null ? ` · ${a.distance_m} m` : ''}</span>
+                <span className="min-w-0 flex-1 break-words text-txt">{a.type_bien} · {a.commune}{a.distance_m != null ? ` · ${a.distance_m} m` : ''}</span>
                 <span className="whitespace-nowrap font-mono text-[11.5px] text-txt-mut">{a.prix != null ? `${fmtInt(a.prix)} €` : '—'}{a.prix_m2_affiche != null ? ` · ${fmtInt(a.prix_m2_affiche)} €/m²` : ''}</span>
                 {a.ecart_pct != null && <span className={`whitespace-nowrap font-mono text-[11.5px] ${a.ecart_pct < 0 ? 'text-mint' : 'text-st-ecartee'}`}>{a.ecart_pct > 0 ? '+' : ''}{a.ecart_pct} %</span>}
               </div>

@@ -128,10 +128,11 @@ export function CompareModule() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
-      <div className="flex items-start gap-1.5">
-        <p className="min-w-0 flex-1 text-[11px] text-txt-mut">Jusqu'à 3 parcelles, côte à côte, aux <b>mêmes points de calcul que la fiche</b>.</p>
-        {/* RECETTE-1 (F3) — Réinitialiser unique (vide la sélection) dès qu'une parcelle est choisie. */}
-        {n > 0 && <Reinitialiser onReset={clearCompare} />}
+      {/* RECETTE-2 (T3) — Réinitialiser SEUL sur sa ligne (haut-droite) ; l'intro vient EN DESSOUS,
+          pleine largeur (plus côte à côte). Présent ssi au moins une parcelle est choisie. */}
+      <div className="flex flex-col gap-1.5">
+        {n > 0 && <div className="flex justify-end"><Reinitialiser onReset={clearCompare} /></div>}
+        <p className="text-[11px] text-txt-mut">Jusqu'à 3 parcelles, côte à côte, aux <b>mêmes points de calcul que la fiche</b>.</p>
       </div>
 
       {/* ① cliquez les parcelles sur la carte + chips */}

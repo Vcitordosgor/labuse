@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Tip } from '../Tip'
 import { Bouton } from '../ui/Bouton'
 import { Badge } from '../ui/Badge'
+import { Chevron } from '../ui/Chevron'
 import { useEffect, useMemo, useState, useRef, type ReactNode } from 'react'
 import { addToPipeline, ajouterParcelle, ApiError, archivePipeline, createProjet, getDossierStatut, getFaisabilite, getFiche, getGabarit, getMoi, getParcelExposition, getPipelineForParcel, getPipelineMeta, getProjets, getWatch, is429, patchPipeline, postSignalement, preDossierUrl, projetsPourParcelle, SOURCE, toggleWatch } from '../../lib/api'
 import { verdictMeta } from '../../lib/status'
@@ -994,7 +995,8 @@ export function Fiche({ idu }: { idu: string }) {
                 <span style={{ fontSize: 10, letterSpacing: 1.4, color: 'var(--lab)', textTransform: 'uppercase' }}>Analyse LABUSE</span>
                 {analyseReplie && <span data-analyse-verdict style={{ fontSize: 14, fontWeight: 600, color: verdict.color }}>{verdict.label}</span>}
               </span>
-              <span className="chev" style={{ color: 'var(--txt-faint)', flexShrink: 0, fontSize: 14, lineHeight: 1 }}>{analyseReplie ? '›' : '⌃'}</span>
+              {/* RECETTE-2 (T8) — chevron UNIQUE partagé (fermé = ◀, ouvert = ▼ vert) comme la fiche commune. */}
+              <Chevron open={!analyseReplie} />
             </button>
             {!analyseReplie && (
             <div data-analyse-corps style={{ padding: '0 16px 15px' }}>

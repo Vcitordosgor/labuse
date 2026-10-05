@@ -138,11 +138,13 @@ export function ScanPatrimoine({ defaultTab = 'possede' }: { defaultTab?: Tab } 
       {porte === null && !owner ? (
         /* ───────── ACCUEIL — DEUX PORTES (B5). ───────── */
         <>
-          <button data-scan-porte="proprietaire" onClick={() => setPorte('proprietaire')} className="door door-hot hover-fill w-full text-left">
+          {/* RECETTE-2 (T9) — cartes de CHOIX internes : pas de bord gauche vert (door-hot réservé au
+              listing du menu Outils). */}
+          <button data-scan-porte="proprietaire" onClick={() => setPorte('proprietaire')} className="door hover-fill w-full text-left">
             <div className="text-[12.5px] font-medium text-txt">Un propriétaire</div>
             <div className="mt-0.5 text-[10.5px] leading-snug text-txt-dim">Ce qu'une société possède et construit — par nom, SIREN, adresse ou IDU.</div>
           </button>
-          <button data-scan-porte="operations" onClick={() => setPorte('operations')} className="door door-hot hover-fill w-full text-left">
+          <button data-scan-porte="operations" onClick={() => setPorte('operations')} className="door hover-fill w-full text-left">
             <div className="text-[12.5px] font-medium text-txt">Toutes les opérations de l'île</div>
             <div className="mt-0.5 text-[10.5px] leading-snug text-txt-dim">Ce que les promoteurs, bailleurs et SEM construisent — filtrable par commune et période.</div>
           </button>

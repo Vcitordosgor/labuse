@@ -40,13 +40,14 @@ export function CalculetteFonciere() {
   }
   return (
     <div data-calculette-fonciere className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-1">
-      <div className="flex items-start gap-1.5">
-        <div className="min-w-0 flex-1">
+      {/* RECETTE-2 (T3) — Réinitialiser SEUL sur sa ligne (haut-droite) ; titre + explication EN DESSOUS,
+          pleine largeur (plus côte à côte avec le bouton). Présent ssi une parcelle est désignée. */}
+      <div className="flex flex-col gap-1.5">
+        {idu && <div className="flex justify-end"><Reinitialiser onReset={resetAll} /></div>}
+        <div>
           <h2 className="font-display text-base font-bold text-txt-hi">Calculette foncière</h2>
           <p className="mt-0.5 text-[11.5px] text-txt-mut">La charge foncière supportable d'une parcelle, par bilan à rebours — mêmes hypothèses que le document financier.</p>
         </div>
-        {/* RECETTE-1 (F3) — Réinitialiser en haut à droite (dès qu'une parcelle est désignée). */}
-        {idu && <Reinitialiser onReset={resetAll} />}
       </div>
       {/* RECETTE-1 (F2) — EntreeParcelle : adresse/IDU OU clic carte, l'une grise l'autre. */}
       <EntreeParcelle source={source}

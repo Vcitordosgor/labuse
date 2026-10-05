@@ -34,13 +34,14 @@ export function VerifProcedure() {
   return (
     <div data-verif-procedure className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
       <div className="flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2 p-3">
-        <div className="flex items-start gap-1.5">
-          <p className="min-w-0 flex-1 text-[10.5px] leading-snug text-txt-mut">
+        {/* RECETTE-2 (T3) — Réinitialiser SEUL sur sa ligne (haut-droite) ; l'intro vient EN DESSOUS,
+            pleine largeur (plus côte à côte). Présent ssi une parcelle est vérifiée. */}
+        <div className="flex flex-col gap-1.5">
+          {aParcelle && <div className="flex justify-end"><Reinitialiser onReset={resetAll} /></div>}
+          <p className="text-[10.5px] leading-snug text-txt-mut">
             Une parcelle → la commune est-elle en procédure PLU, et qu’en découle-t-il
             pour la parcelle. Radar Sudocuh + registre curaté ; jamais l’issue de la procédure.
           </p>
-          {/* RECETTE-1 (F3, H1) — Réinitialiser dès qu'une parcelle est vérifiée. */}
-          {aParcelle && <Reinitialiser onReset={resetAll} />}
         </div>
         {/* RECETTE-1 (F2, H1) — EntreeParcelle : adresse/IDU OU clic carte, l'une grise l'autre.
             (Remplace le ParcelInput RETOURS-13 R24 ; même moteur de résolution.) */}
