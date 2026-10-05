@@ -16,7 +16,7 @@ import { Badge } from '../ui/Badge'
 // KELFONCIER-FIX-2 (Lot H) — maquette v3 : Verdict en tête + aléas en Jauge3 (3 crans + % servi).
 // FICHE-FIX-4 (Lot G) — CASIAS/EnR/mesures en Ligne de vigilance, CatNat en Repli, Pièges en bouton.
 import { Verdict, Jauge3, Lignes, Ligne, Repli, OutilsSection, InfoI } from './formes'
-import { fmtDateNum, fmtAlea, fmtIntensite } from '../../lib/format'
+import { fmtDateNum, fmtAlea, fmtIntensite, fmtDec } from '../../lib/format'
 
 // niveau d'aléa (catégoriel servi) → cran 0..3 de la Jauge3 (présentation, aucun seuil inventé).
 const ALEA_CRAN: Record<string, 1 | 2 | 3> = { faible: 1, modéré: 2, modere: 2, moyen: 2, fort: 3, élevé: 3, eleve: 3 }
@@ -179,8 +179,19 @@ export function RisquesSection({ f }: { f: Fiche; idu: string }) {
           <div>
             <GroupLabel>Vigilances</GroupLabel>
             <Lignes>
+              {/* RECETTE-2 (A6, affichage sans run) — la vigilance PENTE est servie par le run épinglé avec
+                  un « ~56 % tres_fort » (max des cellules de la grille) qui CONTREDIT la pente unique de la
+                  fiche. Côté affichage, on réécrit cette ligne à partir de la SEULE pente servie à la fiche
+                  (terrain.pente_moy_deg + pente_bande), identique à la tuile Pente et à §2 Terrain. Aucun
+                  run, aucun recalcul : simple lecture de la valeur déjà servie. */}
               {autresVig.map((l, i) => {
-                const det = (l.detail || '') as string
+                let det = (l.detail || '') as string
+                if (l.layer === 'pente' && f.terrain?.pente_moy_deg != null) {
+                  const deg = f.terrain.pente_moy_deg
+                  const pct = Math.tan((deg * Math.PI) / 180) * 100
+                  const bande = f.terrain.pente_bande ?? 'calculée'
+                  det = `Pente ${bande} (${fmtDec(deg)}° · ${fmtDec(pct)} %) — terrassement et accès renchéris (majoration VRD du bilan), pas une exclusion.`
+                }
                 const dash = det.indexOf('—')
                 const label = dash >= 0 ? det.slice(0, dash).trim() : det
                 const val = dash >= 0 ? det.slice(dash + 1).trim() : ''
