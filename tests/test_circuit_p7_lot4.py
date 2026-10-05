@@ -79,6 +79,22 @@ def test_ordre_rouge_puis_ambre():
     assert all(c == "ambre" for c in couleurs[premier_ambre:])
 
 
+def test_tuiles_perimees_comptent_dans_invariant():
+    """DASHBOARD-FIX-1 (point 5) — la ligne bloquante « Reconstruire les tuiles » (tuiles périmées vs
+    run servi) compte dans l'onglet ET dans total_a_faire : la tuile Pilotage et l'onglet « À faire »
+    ne peuvent plus diverger (5 vs 9) quand une bascule laisse les tuiles en arrière."""
+    tuiles = {"perime": True, "motif": "run", "run_carte": "q_v11", "run_servi": "q_v16"}
+    af = _compose(tuiles=tuiles)
+    assert any("Reconstruire les tuiles" in l["titre"] for l in af["lignes"])
+    assert af["total"] == len(af["lignes"])
+    # la fonction unique (tuile Pilotage) sur les MÊMES entrées, tuiles comprises
+    assert af["total"] == R.total_a_faire(
+        RESERVOIRS, fuites_robinets=FUITES_ROB, ecarts=ECARTS, verrous=VERROUS,
+        candidat="q_v15", residuel=None, tuiles=tuiles)
+    # une ligne de plus que sans tuiles périmées
+    assert af["total"] == _compose()["total"] + 1
+
+
 def test_tout_coule_zero_ligne():
     af = R.composer_a_faire([_res("Z", "à jour")], residuel=None, candidat=None, run_servi="q",
                             verrous={}, fuites_robinets=[], ecarts=[],

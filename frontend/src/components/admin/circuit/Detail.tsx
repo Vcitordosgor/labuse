@@ -435,9 +435,18 @@ function DetailPompe({ back, rafraichir }: { back: JSX.Element; rafraichir: () =
   const q = useQuery({ queryKey: ['circuit-detail', 'pompe'], queryFn: getAdminCircuitPompe })
   const [note, setNote] = useState<any>(null)
   const [noteLue, setNoteLue] = useState<string | null>(null)
+  // DASHBOARD-FIX-1 (point 3) — si la bascule n'a pas pu committer ses 3 pointeurs (git indisponible),
+  // on retient le motif pour lever un bandeau rouge « 3 fichiers à commiter ».
+  const [aCommiter, setACommiter] = useState<{ fichiers: string[]; motif?: string } | null>(null)
+  const apresGeste = (res: any) => {
+    setNote(null); setNoteLue(null)
+    setACommiter(res?.commit && res.commit.ok === false
+      ? { fichiers: res.commit.fichiers ?? [], motif: res.commit.motif } : null)
+    rafraichir()
+  }
   const lancer = useMutation({ mutationFn: () => postAdminFluxLancerRun('m36'), onSuccess: rafraichir })
-  const basculer = useMutation({ mutationFn: (run: string) => postAdminFluxBascule(run), onSuccess: () => { setNote(null); setNoteLue(null); rafraichir() } })
-  const revenir = useMutation({ mutationFn: postAdminCircuitRevenir, onSuccess: () => { setNote(null); setNoteLue(null); rafraichir() } })
+  const basculer = useMutation({ mutationFn: (run: string) => postAdminFluxBascule(run), onSuccess: apresGeste })
+  const revenir = useMutation({ mutationFn: postAdminCircuitRevenir, onSuccess: apresGeste })
 
   if (q.isLoading || !q.data) return <div className="detail on">{back}<div className="muted">Chargement…</div></div>
   const p = q.data
@@ -469,6 +478,13 @@ function DetailPompe({ back, rafraichir }: { back: JSX.Element; rafraichir: () =
               {precedent && <button className="btn" disabled={revenir.isPending} onClick={() => revenir.mutate()}>Revenir à {precedent}</button>}
             </div>
             <div className="muted" style={{ marginTop: 10 }}>Calculer produit un candidat, jamais servi tout seul. Basculer déplace tous les pointeurs d'un geste.</div>
+            {/* DASHBOARD-FIX-1 (point 3) — git indisponible au moment de la bascule : les 3 pointeurs
+                sont écrits mais pas commités. Bandeau rouge jusqu'à ce que Vic les commite à la main. */}
+            {aCommiter && <div className="card" style={{ marginTop: 10, borderColor: 'var(--rouge)' }}>
+              <h3 style={{ color: 'var(--rouge)' }}>3 fichiers à commiter</h3>
+              <div className="muted">La bascule n'a pas pu committer ses pointeurs{aCommiter.motif ? ` (${aCommiter.motif})` : ''}. À faire à la main :</div>
+              <pre style={{ fontSize: 11, whiteSpace: 'pre-wrap', marginTop: 6 }}>git add {aCommiter.fichiers.join(' ')}{'\n'}git commit -m "bascule: {p.run_servi}"</pre>
+            </div>}
           </div>
           {note && <div className="card" style={{ borderColor: 'var(--ambre)' }}>
             <h3 style={{ color: 'var(--ambre)' }}>Note de version de {note.candidat}</h3>

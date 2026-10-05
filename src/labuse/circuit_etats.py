@@ -310,12 +310,20 @@ def etat_reservoir(r: dict) -> tuple[str, str]:
             and "CERTIFICATE_VERIFY_FAILED" not in message):
         return ("rouge", "sonde en panne")
 
-    # (4) JAMAIS VÉRIFIÉE — aucun contrôle amont réussi (sonde jamais passée, ni agent). GRIS,
-    #     jamais jaune : c'est un trou de vérification, pas une action attendue.
-    if not passage:
+    # (4) JAMAIS VÉRIFIÉE — une source SURVEILLÉE (vraie sonde amont câblée et active) dont aucun
+    #     contrôle n'a encore rien constaté (aucun statut). GRIS, jamais jaune : c'est un trou de
+    #     vérification, pas une action attendue.
+    #     DASHBOARD-FIX-1 (point 6) — MÊME moteur que /admin/sources (etats_sources) : le prédicat
+    #     `est_surveillee` + « statut vide » est désormais partagé. Une source NON surveillée (aucune
+    #     sonde amont câblée) n'« attend » aucun agent — elle est « à jour » par construction, comme
+    #     les sources sans millésime (0). Fini le « 11 » du circuit ≠ « 4 » de /admin/sources : un
+    #     seul moteur, un seul nombre.
+    from .etats_sources import est_surveillee
+    if est_surveillee(veille.get("methode"), veille.get("actif")) and statut in (None, ""):
         return ("gris", "jamais vérifiée")
 
-    # (5) À JOUR — un contrôle a confirmé la source ; un échec transitoire (<3) garde ce dernier
+    # (5) À JOUR — un contrôle a confirmé la source, OU la source n'est pas surveillée (rien à
+    #     vérifier chez un producteur sans sonde amont). Un échec transitoire (<3) garde ce dernier
     #     état confirmé (la source ne « clignote » pas à la première nuit ratée).
     return ("mint", "à jour")
 

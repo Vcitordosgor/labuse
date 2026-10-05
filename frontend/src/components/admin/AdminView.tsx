@@ -238,12 +238,15 @@ function PilotageSection({ data, go, majAt }: { data: AdminPilotage | undefined;
   const plusAncienJ = cr.plus_ancien_ouvre_j ?? null
   const SEUIL_COURRIER_J = 5   // P2 — rouge seulement si le plus ancien attend > 5 jours OUVRÉS.
   const courrierRouge = plusAncienJ != null && plusAncienJ > SEUIL_COURRIER_J
-  // Tâches du circuit (P1) = le total du Résumé de la page Données. Rouge = « à corriger » (une ligne
-  // rouge du Résumé) ou un verrou cassé — jamais rouge juste parce que le compteur est élevé (P2).
-  const resume = circuit.data?.resume as { total?: number; groupes?: { lignes?: { couleur?: string }[] }[] } | undefined
-  const circuitTotal = resume?.total ?? null
+  // DASHBOARD-FIX-1 (point 5) — UN SEUL compteur « tâches à effectuer » : la tuile Pilotage, le badge
+  // du rail et l'onglet « À faire » lisent TOUS `a_faire.total` (la liste des gestes concrets), jamais
+  // `resume.total` (le résumé groupé, un surensemble qui donnait 5 à gauche / 9 à droite). Rouge = une
+  // ligne rouge de l'onglet (verrou cassé, fuite, écart, sonde en panne, tuiles périmées) ou un verrou
+  // cassé — jamais rouge juste parce que le compteur est élevé (P2).
+  const aFaire_ = circuit.data?.a_faire as { total?: number; lignes?: { couleur?: string }[] } | undefined
+  const circuitTotal = aFaire_?.total ?? null
   const verrousCasses = data.verrous && data.verrous.ok != null && data.verrous.sur != null ? data.verrous.sur - data.verrous.ok : 0
-  const circuitRouge = verrousCasses > 0 || (resume?.groupes ?? []).some((g) => (g.lignes ?? []).some((l) => l.couleur === 'rouge'))
+  const circuitRouge = verrousCasses > 0 || (aFaire_?.lignes ?? []).some((l) => l.couleur === 'rouge')
 
   // DASHBOARD-4 (K3) — MÊME fonction que le segment « À toucher » de Comptes (une seule définition).
   const aToucher = (licencesQ.data?.licences ?? []).filter((l) => estAToucher(l)).length
@@ -281,7 +284,9 @@ function PilotageSection({ data, go, majAt }: { data: AdminPilotage | undefined;
     verbe: 'Voir', cible: 'cron' })
   // Sauvegarde : rouge si > 24 h (ou absente / non configurée) (P3).
   const bk = data.backup
-  const bkRetard = bk?.etat === 'rouge' || bk?.etat === 'ambre' || bk?.etat === 'absent' || bk?.etat === 'non_configure' || (bk?.age_jours != null && bk.age_jours > 1)
+  // DASHBOARD-FIX-1 (point 2) — l'état « local » (hors VPS, miroir ~/labuse-backups) n'est JAMAIS une
+  // alerte : c'est un poste de travail, pas la prod. Il ne déclenche pas la tâche « Sauvegarder la base ».
+  const bkRetard = bk?.etat !== 'local' && (bk?.etat === 'rouge' || bk?.etat === 'ambre' || bk?.etat === 'absent' || bk?.etat === 'non_configure' || (bk?.age_jours != null && bk.age_jours > 1))
   if (bkRetard) aFaire.push({ cle: 'backup', tone: 'r', poids: 92,
     titre: 'Sauvegarder la base',
     phrase: bk.etat === 'non_configure' ? 'aucun répertoire de sauvegarde configuré'
@@ -419,7 +424,9 @@ export function AdminView() {
   const d = pilotage.data
   const echecs = d?.stripe.paiements_en_echec ?? 0
   // DASHBOARD-2 (Lot 1) — chaque nav porte le compteur de sa page (le même nombre que la page ouvre).
-  const circuitTotal = (circuit.data?.resume?.total as number | undefined) ?? null
+  // DASHBOARD-FIX-1 (point 5) — le badge « Données » du rail lit a_faire.total (= la tuile Pilotage =
+  // l'onglet « À faire »), jamais resume.total : un seul compteur, le même partout.
+  const circuitTotal = (circuit.data?.a_faire?.total as number | undefined) ?? null
   const produitOuverts = d ? (d.a_faire?.signalements_ouverts ?? 0) + Object.values(d.retours_par_type ?? {}).reduce((a, b) => a + b, 0) : 0
   const navCount: Partial<Record<AdminSection, number>> = {
     licences: d?.licences_actives ?? 0,
@@ -461,19 +468,27 @@ export function AdminView() {
           {/* RETOURS-8 (R10) — la tuile lit le même endroit/motif que le job (cron .sql.gz + CLI .dump).
               DASHBOARD-2 (Lot 1) — la VRAIE date du dernier dump (mtime), pas « répertoire non configuré »
               par défaut : ambre/rouge selon l'âge, « non configuré » / « aucun » distincts. */}
-          <Led ok={d ? ({ ok: 'ok', ambre: 'warn', rouge: 'err', absent: 'err', non_configure: 'off' } as const)[d.backup.etat] ?? 'off' : 'off'}
+          <Led ok={d ? ({ ok: 'ok', ambre: 'warn', rouge: 'err', absent: 'err', non_configure: 'off', local: 'off' } as const)[d.backup.etat] ?? 'off' : 'off'}
             label="Backup" value={
-              d?.backup.etat === 'non_configure' ? 'non configuré'
-                : d?.backup.etat === 'absent' ? 'aucun'
-                  : d?.backup.mtime
-                    ? fmtReu(d.backup.mtime)
-                    : d?.backup.age_jours != null ? `il y a ${Math.floor(d.backup.age_jours)} j` : '—'} />
+              /* DASHBOARD-FIX-1 (point 2) — hors VPS, pointer le miroir local au lieu de « non configuré ». */
+              d?.backup.etat === 'local' ? 'local : voir ~/labuse-backups'
+                : d?.backup.etat === 'non_configure' ? 'non configuré'
+                  : d?.backup.etat === 'absent' ? 'aucun'
+                    : d?.backup.mtime
+                      ? fmtReu(d.backup.mtime)
+                      : d?.backup.age_jours != null ? `il y a ${Math.floor(d.backup.age_jours)} j` : '—'} />
           {/* DASHBOARD-2 (Lot 1) — Horloge : jobs posés / attendus. Écart = ambre (« ce qui cloche »). */}
           <Led ok={d?.horloge?.poses == null ? 'off' : d.horloge.poses < (d.horloge.attendus ?? 0) ? 'warn' : 'ok'}
             label="Horloge" value={d?.horloge?.poses == null ? '—' : `${d.horloge.poses} / ${d.horloge.attendus}`} />
-          {/* DASHBOARD-2 (Lot 1) — Verrous : n / 16 (verrous de cohérence du Circuit, dernier passage). */}
-          <Led ok={d?.verrous?.ok == null ? 'off' : d.verrous.ok < (d.verrous.sur ?? 16) ? 'err' : 'ok'}
-            label="Verrous" value={d?.verrous?.ok == null ? '—' : `${d.verrous.ok} / ${d.verrous.sur}`} />
+          {/* DASHBOARD-2 (Lot 1) + DASHBOARD-FIX-1 (point 4) — Verrous : n / 24, DATÉ (dernier passage),
+              « à rejouer » (ambre) si une bascule a eu lieu depuis — l'état affiché précède le run servi. */}
+          <Led ok={d?.verrous?.ok == null ? (d?.verrous?.a_rejouer ? 'warn' : 'off')
+            : d.verrous.a_rejouer ? 'warn' : d.verrous.ok < (d.verrous.sur ?? 24) ? 'err' : 'ok'}
+            label="Verrous" value={
+              d?.verrous?.a_rejouer
+                ? (d?.verrous?.ok == null ? 'à rejouer' : `${d.verrous.ok} / ${d.verrous.sur} · à rejouer`)
+                : d?.verrous?.ok == null ? '—'
+                  : `${d.verrous.ok} / ${d.verrous.sur}${d.verrous.dernier_ts ? ` · ${fmtReu(d.verrous.dernier_ts)}` : ''}`} />
           <button onClick={() => setView('cartes')} className="mt-3 text-xs text-mint hover:underline">Ouvrir l'app cliente →</button>
         </div>
       </aside>
