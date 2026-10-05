@@ -64,13 +64,9 @@ export const CATALOGUE: DocCatalogue[] = [
     cta: 'Générer le gabarit',
     explication: 'Le plan et les règles, depuis l’outil Gabarit. Absent si le calcul est incomplet.',
   },
-  {
-    key: 'comparables', nom: 'Comparables DVF', kind: 'parcelle', formats: ['PDF'],
-    desc: 'Les ventes comparables autour de la parcelle : date, type, surface, prix, distance, médiane et rayon retenu.',
-    cta: 'Générer les comparables',
-    explication: '',
-    bientot: true,
-  },
+  // RECETTE-2 (E2) — tuile « Comparables DVF » RETIRÉE : aucun export (pas d'endpoint, le tiroir
+  // comparables de la fiche et sa règle de sélection n'existent pas) → on ne laisse pas un document
+  // bancal grisé « bientôt ». À réintroduire le jour où l'export existe.
   {
     key: 'comparatif', nom: 'Comparatif', kind: 'multi', formats: ['PDF'],
     desc: 'Deux ou trois parcelles côte à côte sur les 17 lignes de Comparer, en page paysage.',
