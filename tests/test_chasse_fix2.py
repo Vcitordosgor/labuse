@@ -141,7 +141,7 @@ def test_d06_densifier_etage0_resout_la_cascade(client, emprunteur_seed, engine)
 # ───────────────────────── D04 — la cause est NOMMÉE partout (un seul helper)
 
 def test_d04_cause_libelle_nomme_la_raison():
-    from labuse.faisabilite.engine import cause_libelle
+    from labuse.faisabilite.engine import cause_certaine, cause_libelle
 
     # terrain exigu : le mot « exigu » / « terrain trop » est TOUJOURS présent (invariant mandat).
     for raison in ("ppr_rouge", "emplacement_reserve", "ebc", "contraintes", "portion_reduite",
@@ -154,6 +154,22 @@ def test_d04_cause_libelle_nomme_la_raison():
     assert cause_libelle("redhibitoire", None).startswith("Non retenue")
     # parcelle calculée → aucun libellé de cause.
     assert cause_libelle(None) is None
+
+
+def test_d04_familles_certaine_vs_ignorance():
+    """Arbitrage Vic — CERTAINE → « Non retenue » (verdict ferme) ; IGNORANCE → « Analyse
+    incomplète » (cohérent C26/NC). cause_certaine partitionne les deux."""
+    from labuse.faisabilite.engine import cause_certaine, cause_libelle
+
+    for c in ("zone_non_constructible:Ub", "terrain_exigu", "habitat_interdit:Uaza",
+              "redhibitoire", "capacite_nulle"):
+        assert cause_certaine(c), c
+        assert cause_libelle(c).startswith("Non retenue — "), (c, cause_libelle(c))
+    for c in ("zone_non_resolue:N", "hors_plu", "regle_plu_non_validee:U5", "hauteur_indispo",
+              "indetermine"):
+        assert not cause_certaine(c), c
+        assert cause_libelle(c).startswith("Analyse incomplète — "), (c, cause_libelle(c))
+    assert not cause_certaine(None)
 
 
 # ───────────────────────── D07 — « retirées 30 j » : UN SEUL lecteur (celui de RADAR-FIX-3)

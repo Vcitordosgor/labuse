@@ -103,13 +103,16 @@ CHECKS: list[tuple] = [
     ("sdp_residuelle_m2", "1 %", [
         ("fiche:potentiel_transformation.sdp_residuelle_m2",
          _f("potentiel_transformation.sdp_residuelle_m2")),
-        # CHASSE-FIX-2 (D03) — le bloc Potentiel LIT désormais les lignes à cause (jointure
-        # « AND r.cause IS NULL » retirée de app.py) : il sert la SDP du run (0 vrai pour
-        # terrain_exigu/zone inconstructible/redhibitoire ; ∅ pour hors_plu/indetermine), AVEC la
-        # cause NOMMÉE (D04). Le lecteur SQL lit donc la MÊME valeur servie — plus de CASE WHEN
-        # cause IS NULL qui modélisait l'ancien comportement (∅ partout) que D03 corrige.
+        # CHASSE-FIX-2 (D03, arbitrage Vic) — le bloc Potentiel sert la SDP du run pour une cause
+        # CERTAINE (0 nommé : terrain_exigu/zone_non_constructible/habitat_interdit/redhibitoire/
+        # capacite_nulle) et ∅ pour une cause d'IGNORANCE (zone_non_resolue/hors_plu/
+        # regle_plu_non_validee/hauteur_indispo…) — cohérent C26/NC. Le lecteur SQL applique la MÊME
+        # partition : raw sdp si cause NULL ou certaine, ∅ sinon (miroir de faisabilite.engine.cause_certaine).
         ("sql:parcel_residuel.sdp_residuelle_m2",
-         _sql("SELECT r.sdp_residuelle_m2 "
+         _sql("SELECT CASE WHEN r.cause IS NULL OR r.cause = 'terrain_exigu' "
+              "OR r.cause LIKE 'zone_non_constructible%%' OR r.cause LIKE 'habitat_interdit%%' "
+              "OR r.cause = 'redhibitoire' OR r.cause = 'capacite_nulle' "
+              "THEN r.sdp_residuelle_m2 END "
               "FROM parcel_residuel r JOIN parcels p ON p.id=r.parcel_id WHERE p.idu=%(idu)s")),
         ("tuile:sdp_residuelle_m2", _tuile("sdp_residuelle_m2")),
     ], "run_different"),

@@ -5860,7 +5860,7 @@ def _potentiel_transformation_block(db: Session, idu: str, commune: str | None =
     # seule parcelle) pour « servir la raison déjà calculée » sans toucher au run.
     exigu_raison = None
     if cause:
-        from ..faisabilite.engine import cause_libelle
+        from ..faisabilite.engine import cause_certaine, cause_libelle
         if cause == "terrain_exigu":
             try:
                 from ..faisabilite.db import parcel_faisabilite
@@ -5868,11 +5868,16 @@ def _potentiel_transformation_block(db: Session, idu: str, commune: str | None =
                 exigu_raison = _fres[1].exigu_raison if _fres else None
             except Exception:  # noqa: BLE001 — jamais de 500 sur la fiche ; repli « reculs »
                 exigu_raison = None
-        niveau, libelle = "exclu", (cause_libelle(cause, exigu_raison) or libelle)
-        # NB — on NE force PAS sdp à 0 : la SDP servie reste CELLE du run (0 vrai pour terrain_exigu/
-        # redhibitoire ; ∅ pour hors_plu/indetermine). Forcer 0 ressusciterait le « zéro pour absence »
-        # que COHERENCE-FIX-1 a tué (la fiche servirait 0 là où parcel_residuel dit ∅). Le libellé
-        # de cause ci-dessus suffit à lever la contradiction D03 (plus de « Marge SDP non calculée »).
+        libelle = cause_libelle(cause, exigu_raison) or libelle
+        # CHASSE-FIX-2 (D03, arbitrage Vic) — deux familles :
+        #  · CERTAINE (zone inconstructible, terrain exigu, habitat interdit, redhibitoire, capacité
+        #    nulle) : verdict ferme → « exclu », on NOMME le 0 du run (jamais forcé : il est écrit) ;
+        #  · IGNORANCE (zone non résolue, hors PLU, règle non validée, hauteur indispo…) : on ne SAIT
+        #    pas → « indetermine », SDP ∅ (on écarte le 0 du dataset), cohérent C26/bande NC.
+        if cause_certaine(cause):
+            niveau = "exclu"
+        else:
+            niveau, sdp_servie = "indetermine", None
     sur = sur or {}
     # RECETTE-9 T9 — le scénario de surélévation branché sur le LiDAR : la surélévation se décide à
     # l'ÉGOUT (bord de toit) vs la règle d'égout (cause de fond de E1). Le bâti BD TOPO est un faîtage

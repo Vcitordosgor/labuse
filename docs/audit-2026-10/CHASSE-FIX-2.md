@@ -58,8 +58,15 @@ parcelle) : « servir la raison déjà calculée » sans toucher au run.
 - Servie et affichée : **fiche** (bloc Potentiel, badge « Non retenue »), **liste** (`cause_libelle`
   sur la ligne), **Dossier PDF** (`verdicts.verdict_potentiel` nomme la raison au lieu de « nul par la
   règle de zonage » — faux pour un terrain_exigu géométrique), **Copilote** (`potentiel_non_retenue`).
-- **La SDP servie reste CELLE du run** : 0 (vrai) pour terrain_exigu/zone inconstructible/redhibitoire,
-  ∅ pour hors_plu/indetermine. On ne force jamais 0 là où le run dit ∅ (pas de « zéro pour absence »).
+- **Deux familles de cause (arbitrage Vic 2026-10-05)** :
+  - **CERTAINE** (zone_non_constructible, terrain_exigu, habitat_interdit, redhibitoire, capacite_nulle)
+    → verdict ferme « Non retenue — <raison> », **SDP 0 nommée** (le 0 est écrit par le run, jamais forcé) ;
+  - **IGNORANCE** (zone_non_resolue, hors_plu, regle_plu_non_validee, hauteur_indispo, indetermine)
+    → « **Analyse incomplète** — <raison> », **SDP ∅** (on écarte le 0 du dataset), cohérent avec C26
+    (NULL ≠ 0) et la bande NC.
+  Partition unique `faisabilite.engine.cause_certaine` ; le lecteur SQL du banc applique le MÊME
+  prédicat (raw sdp si cause NULL ou certaine, ∅ sinon). Vérifié sur **2 témoins × 8 familles**
+  (fiche = banc, 0 divergence).
 - **Preuve** : `make -C scripts/chasse libelles2` → **exigu 70 nommé / 0 muet** (était 0/70),
   **discordance intra-fiche 0** (était 43/70), différé 40/40 conservé. Témoin 97409000AK0804 nommé.
 - **Verrou** : `test_d04_cause_libelle_nomme_la_raison`.
@@ -118,8 +125,8 @@ une parcelle réelle (97411000DE0285 = public).
 
 - `make -C scripts/chasse chasse` rejoué : filtres **33/0**, libelles2 exigu **70/0 muet** + discordance
   **0**, invariants2 **7/7 à 0**. Le face-à-face des lecteurs revient à sa baseline documentée —
-  **CHASSE-1 231 écarts (0 FAUX-CLIENT ; 155 INCOHERENT + 76 TOLERABLE)**, **CHASSE-2 170 (0 FAUX-CLIENT ;
-  115 + 55)** : les 376/410 écarts `sdp_residuelle_m2` apparus (puis **résorbés** par l'alignement du
+  **CHASSE-1 231 écarts (0 FAUX-CLIENT ; 155 INCOHERENT + 76 TOLERABLE)**, **CHASSE-2 169 (0 FAUX-CLIENT ;
+  114 + 55)** : les 376/410 écarts `sdp_residuelle_m2` apparus (puis **résorbés** par l'alignement du
   lecteur de banc, D03) ont disparu ; le reste = familles déjà classées (C44 slivers
   `surface_parcelle_m2`, C34 `cinquante_pas`, D08b `tiers_hauts_n` vocab q_v11, `filiation_mere` artefact).
 - `labuse circuit verrous` = **24/24 verrous** (V1c réparé, V6b vert après acceptation golden) ; seuls

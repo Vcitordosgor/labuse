@@ -56,12 +56,13 @@ export function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
             valeur={<>~{pt.hauteur_marge_m} <small>m sous la règle</small></>} />
         )}
       </Lignes>
-      {/* CHASSE-FIX-2 (D03/D04) — la parcelle porte une CAUSE de non-retenue (terrain exigu, PPR
-          rouge, zone fermée…) : on la NOMME en clair (le libellé serveur porte la vraie raison),
-          plus jamais un « Marge SDP non calculée » muet pendant qu'Analyse LABUSE sert SDP 0. */}
+      {/* CHASSE-FIX-2 (D03/D04) — la parcelle porte une CAUSE : on la NOMME en clair (le libellé
+          serveur porte la vraie raison). Deux familles (arbitrage Vic) : CERTAINE (« exclu ») →
+          badge « Non retenue » (verdict ferme, SDP 0 nommée) ; IGNORANCE (« indetermine ») → badge
+          « Analyse incomplète » gris (SDP ∅, cohérent NC). Plus jamais de « Marge SDP non calculée ». */}
       {pt.cause && pt.libelle && (
         <div data-potentiel-non-retenue className="mt-0.5">
-          <Badge ton="ambre">Non retenue</Badge>
+          <Badge ton={pt.niveau === 'exclu' ? 'ambre' : 'neutre'}>{pt.niveau === 'exclu' ? 'Non retenue' : 'Analyse incomplète'}</Badge>
           <p className="mt-0.5 text-[11px] leading-snug text-txt-dim">{pt.libelle}</p>
         </div>
       )}

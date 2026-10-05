@@ -168,4 +168,3 @@ prix_neuf_eur_m2,Saint-Pierre,ctx:comparable.neuf_eur_m2,4958,ctx:prix_neuf_obse
 tiers_hauts_n,Sainte-Marie,ctx:classement.tiers_hauts,28,sql:parcel_p_score_v2[brulante+chaude],0,28,calcul_ou_source,INCOHERENT
 tiers_hauts_n,Sainte-Suzanne,ctx:classement.tiers_hauts,4,sql:parcel_p_score_v2[brulante+chaude],0,4,calcul_ou_source,INCOHERENT
 taxe_amenagement_taux_communal_pct,97413000CA0198↔Saint-Leu,fiche:taxe_amenagement.taux_communal_pct (97413000CA0198),14.0,ctx:taxe_amenagement.part_communale_pct,5.0,9,calcul_ou_source,INCOHERENT
-determinisme_fiche.proprietaire_moral,97416000IA1697,fiche appel 1,"{'denomination': 'ELECTRICITE DE FRANCE', 'siren': '552081317', 'groupe': 0, 'groupe_label': 'Personne morale — fichier ",fiche appel 2,"{'denomination': 'ELECTRICITE DE FRANCE', 'siren': '552081317', 'groupe': 0, 'groupe_label': 'Personne morale — fichier ",2 appels ≠,non_deterministe,INCOHERENT
