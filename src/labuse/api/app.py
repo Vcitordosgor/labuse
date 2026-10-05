@@ -2335,7 +2335,8 @@ def _signaux_commune(db: Session, commune: str, insee: str | None,
     h = _zan_horizon_ans(db, insee)
     if h is not None and h < ZAN_SEUIL_ANS:              # ZAN < 5 ans
         out.append({"code": "zan", "ton": "orange",
-                    "libelle": (f"ZAN épuisé dans {h:.1f} ans".replace(".", ",") if h > 0
+                    # RECETTE-2 (B5) — « 1,1 an » (singulier sous 2 ans), virgule décimale.
+                    "libelle": (f"ZAN épuisé dans {h:.1f} {'an' if h < 2 else 'ans'}".replace(".", ",") if h > 0
                                 else "enveloppe ZAN déjà dépassée")})
     ppr = (risques or {}).get("ppr_pct")
     if ppr is not None and float(ppr) > SEUIL_PPR_PART_PCT:   # PPR > 30 % des parcelles

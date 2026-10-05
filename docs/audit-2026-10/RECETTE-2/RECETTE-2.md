@@ -70,8 +70,18 @@ Légende : ✅ fait+capturé · 🚧 en cours · ⬜ non commencé · ⚠ à vé
 
 **Arbitrages lot A :** A6 tranché « non fait live » (contrainte « aucun run ») avec correctif documenté — seul point du lot non constatable. A4 : le drapeau >3 m de FICHE-FIX-2 n'est PAS réintroduit tel quel (16 % de faux positifs) ; motif **directionnel** ciblé (faîtage SOUS BD TOPO = sens impossible). A5c : EL10 n'a pas de `nomsuplitt` servi (lacune d'ingestion GPU) → libellé officiel de catégorie par `fmtSup`, code exact conservé dans le `i`.
 
-### B — Fiche commune
-B1…B7 : ⬜
+### B — Fiche commune Saint-Denis  — **commit lot B**
+| Pt | Sujet | État | Preuve / note |
+|---|---|---|---|
+| B1 | Retirer le pied « Compteurs précalculés … Données de contexte … » | ✅ | `<p data-fiche-pied>` supprimé |
+| B2 | Risques CatNat illisible → chaque arrêté sur 2 lignes (libellé pleine largeur, puis JJ/MM/AAAA · code) ; idem AZI/TRI | ✅ | `B2_catnat.png` : « Mouvement de Terrain » / « 26/02/2025 → 01/03/2025 · INTE2519692A », « et 13 autres… », AZI/TRI idem |
+| B3 | « hors ORT — dit, jamais une carte absente » retiré ; « Dispositif — Aucune ORT » → « ORT — aucune » | ✅ | phrase interne retirée ; libellé conditionnel |
+| B4 | Acquéreurs tronqués → T4 | ✅ | `ContextePanel` acquéreurs `truncate`→`break-words` (lot T) |
+| B5 | « 50 ha promus »/« stock foncier repéré » → libellés registre · « 1,1 ans »→« 1,1 an » · « 7 M m² »→« 700 ha » | ✅ | labels « terrains classés opportunité (brûlantes+chaudes) · N ha cumulés » (registre) ; `fmtAns` (Foncier + Horizon) ; **chip SIGNAUX « ZAN épuisé dans 1,1 an »** (back `_signaux_commune` + cache Saint-Denis rafraîchi) ; « 700 ha » |
+| B6 | Urbanisme « ( 2026-04-23) » → T5 | ✅ | `fmtDateNum` sur PLU/procédure/SCOT (date_reglement, prescription, date_approbation) |
+| B7 | Chevrons carrés verts → T8 | ✅ | `ContextePanel` utilise déjà `<Chevron>` (fermé `<`, ouvert ▼ vert) — identique à la fiche parcelle. `B2_catnat.png` |
+
+**Note B5 (cache)** : la chip SIGNAUX est servie du cache `commune_contexte_cache` (précalc nocturne `fiche-commune-cache`). Le correctif code étant live-invisible sans rebuild, le cache de Saint-Denis (témoin) a été **rafraîchi** (recompute de contexte borné — ni run de scoring, ni calcul géométrique) pour constater « 1,1 an ». Les autres communes se mettront à jour au prochain précalcul nocturne.
 
 ### C — Couches
 C1 : ⬜
