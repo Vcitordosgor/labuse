@@ -61,3 +61,29 @@ horloge:
 	$(ENV) -m scripts.chasse.horloge
 
 .PHONY: chasse echantillon invariants couverture intruses face_a_face filtres horloge
+
+# CHASSE-3 — chasse sur le BUILD DE PROD (mandat CHASSE-3 : sorties dans
+# docs/audit-2026-10/CHASSE-3/). Les volets qui parlent à l'API exigent le build servi
+# (LABUSE_CHASSE3_API, défaut http://127.0.0.1:6015) — hors cible `chasse` pour la même
+# raison qu'ad0554 (serveur externe requis) : `make chasse3` les joue tous.
+chasse3: causes3 prix3 ecran_papier3 promoteur3 mobile3 charge3
+
+causes3:
+	$(ENV) -m scripts.chasse.causes3
+
+prix3:
+	$(ENV) -m scripts.chasse.prix3
+
+ecran_papier3:
+	$(ENV) -m scripts.chasse.ecran_papier3
+
+promoteur3:
+	$(ENV) -m scripts.chasse.promoteur3
+
+mobile3:
+	cd $(RACINE) && node scripts/chasse/mobile3.mjs
+
+charge3:
+	$(ENV) -m scripts.chasse.charge3
+
+.PHONY: chasse3 causes3 prix3 ecran_papier3 promoteur3 mobile3 charge3
