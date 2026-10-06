@@ -1131,6 +1131,7 @@ def _ensure_schema_steps(engine, *, geom_backfill: bool) -> None:
     ensure_bilan_params(engine)
     ensure_watch_zones(engine)
     ensure_documents_generes(engine)        # DOCS-1 (Lot B) — bibliothèque « Mes documents »
+    ensure_bilan_ratios(engine)             # BILAN-1 (Lot 4) — ratios maison par compte
     ensure_watch_snap_no_orphans(engine)    # FIX-C6 (GB-063) : purge orphelins snap + FK CASCADE
     ensure_derived_read_stubs(engine)       # FIX-C6 (GB-049) : stubs vides tables dérivées lues
     ensure_pipeline_prospection(engine)
@@ -1826,6 +1827,35 @@ def ensure_documents_generes(engine) -> None:
             " created_at timestamptz NOT NULL DEFAULT now())"))
         c.execute(_t("CREATE INDEX IF NOT EXISTS ix_documents_generes_compte_cree "
                      "ON documents_generes (compte_id, created_at DESC)"))
+
+
+def ensure_bilan_ratios(engine) -> None:
+    """BILAN-1 (Lot 4) — les RATIOS MAISON d'un compte. Le client mémorise ses taux
+    (notaire, archi, MOE + BET, AMO, GFA, commercialisation…) ; ils pré-remplissent ses
+    bilans suivants avec l'état « Mes ratios », toujours modifiables. Une ligne =
+    (compte, poste) : la valeur mémorisée (+ la TVA pour les lignes « TVA à saisir »).
+    `compte_id` + FK cascade sont posés par api/tenant.ensure_scoping (bilan_ratios ∈
+    SCOPED_TABLES) ; données strictement privées → un compte ne voit QUE ses lignes
+    (test d'isolation dédié). Idempotent (CREATE IF NOT EXISTS)."""
+    from sqlalchemy import text as _t
+
+    with engine.begin() as c:
+        c.execute(_t(
+            "CREATE TABLE IF NOT EXISTS bilan_ratios ("
+            " id serial PRIMARY KEY,"
+            " compte_id integer,"
+            " poste_id varchar(32) NOT NULL,"
+            " valeur double precision NOT NULL,"
+            " tva double precision,"
+            " maj_at timestamptz NOT NULL DEFAULT now())"))
+        # clé par tenant : un poste mémorisé une seule fois par compte (NULLS NOT DISTINCT
+        # pour que le bucket pilote hérité soit lui aussi unique). Repli PG < 15.
+        try:
+            c.execute(_t("CREATE UNIQUE INDEX IF NOT EXISTS uq_bilan_ratios_compte_poste "
+                         "ON bilan_ratios (compte_id, poste_id) NULLS NOT DISTINCT"))
+        except Exception:  # noqa: BLE001 — PG < 15
+            c.execute(_t("CREATE UNIQUE INDEX IF NOT EXISTS uq_bilan_ratios_compte_poste "
+                         "ON bilan_ratios (compte_id, poste_id)"))
 
 
 def ensure_derived_read_stubs(engine) -> None:

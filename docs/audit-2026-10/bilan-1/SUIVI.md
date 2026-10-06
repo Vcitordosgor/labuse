@@ -7,14 +7,18 @@ Venv : `~/Desktop/labuse/.venv/bin/python` ; imports LABUSE depuis ce worktree a
 `PYTHONPATH=src`. Le xlsx de la promotrice est copié en `docs/audit-2026-10/bilan-1/modele-promotrice.xlsx`
 (gitignoré, jamais commité).
 
+**Tests DB (ce Mac)** : Postgres tourne en socket (pas de TCP). Invocation :
+`PGHOST=/tmp LABUSE_TEST_DATABASE_URL="postgresql+psycopg://openclaw@/labuse_test" PYTHONPATH=src ~/Desktop/labuse/.venv/bin/python -m pytest …`
+(la base `labuse_test` existe, PostGIS présent). Tests non-DB : sans ces variables.
+
 ## État des lots
 | Lot | Sujet | État | Commit |
 |-----|-------|------|--------|
 | 0 | Vérifs + pièces en place | **fini** | — |
 | 1 | Catalogue `postes.yaml` | **fini** | bfe82e8e |
-| 2 | Moteur `bilan/moteur.py` | **fini** | (ce commit) |
+| 2 | Moteur `bilan/moteur.py` | **fini** | e3038bff |
 | 3 | Écran onglet Bilan + porte Docs | à faire | — |
-| 4 | Ratios du compte `bilan_ratios` | à faire | — |
+| 4 | Ratios du compte `bilan_ratios` | **fini** | (ce commit) |
 | 5 | Sorties PDF + Excel + documents_generes | à faire | — |
 | 6 | Page Docs 8 cartes | à faire | — |
 | 7 | Recette + rapport + captures | à faire | — |

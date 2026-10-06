@@ -8607,6 +8607,7 @@ from .partners import router as _partners_router  # noqa: E402
 from .pre_dossier import router as _pre_dossier_router  # noqa: E402
 from .documents import router as _documents_router  # noqa: E402  (EXPORTS-2 lot 8 — les 5 documents)
 from .documents_bibliotheque import router as _documents_biblio_router  # noqa: E402  (DOCS-1 Lot B — bibliothèque)
+from .bilan import router as _bilan_router  # noqa: E402  (BILAN-1 — bilan promoteur : ratios · calcul · sorties)
 from .scoreur import router as _scoreur_router  # noqa: E402  (O2 — scoreur d'adresse inversé)
 from .anti_fiche import router as _anti_fiche_router  # noqa: E402  (O3 — anti-fiche « pourquoi pas »)
 from .traducteur import router as _traducteur_router  # noqa: E402  (O4 — traducteur de règlement PLU)
@@ -8654,6 +8655,7 @@ app.include_router(_dossier_router)
 app.include_router(_pre_dossier_router)
 app.include_router(_documents_router)   # EXPORTS-2 lot 8 — Financier/Apporteur/Résumé + redirections
 app.include_router(_documents_biblio_router)   # DOCS-1 Lot B — bibliothèque « Mes documents »
+app.include_router(_bilan_router)   # BILAN-1 — bilan promoteur (ratios · calcul · sorties)
 app.include_router(_scoreur_router)
 app.include_router(_anti_fiche_router)
 app.include_router(_traducteur_router)
