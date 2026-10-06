@@ -21,7 +21,7 @@ Venv : `~/Desktop/labuse/.venv/bin/python` ; imports LABUSE depuis ce worktree a
 | 4 | Ratios du compte `bilan_ratios` | **fini** | a1365142 |
 | 5 | Sorties PDF + Excel + documents_generes | **fini** (backend 6f0edc3a ; boutons front ce commit) | — |
 | 6 | Page Docs 8 cartes | **fini** | a0fcce8b |
-| 7 | Recette + rapport + captures | à faire | — |
+| 7 | Recette + rapport + captures | **fini** (ce commit) — captures écran vivant restent à prendre sur la pile lancée | — |
 
 ## Étape 0 — faits
 - `pwd` = /Users/openclaw/Desktop/labuse-bilan1 ; branche `feat/bilan-1` ; arbre propre (seul le dossier bilan-1 non suivi).
@@ -39,6 +39,13 @@ Venv : `~/Desktop/labuse/.venv/bin/python` ; imports LABUSE depuis ce worktree a
 - + **2 lignes produit** (CA) : lignes 112-113 (« Programme = une ligne par produit »).
 - Cellules cassées du modèle (non reproduites, listées au rapport) : `E13` coût const./SHON = `#DIV/0!` (SHON `E6` vide).
 - Nom de société dans le modèle : « Cash flow océanis » (lignes 122/128) + chemin SharePoint en métadonnée (fichier non commité) → libellé rendu « Cash flow » / « Cash flow sans aléas ».
+
+## Captures d'écran vivant — procédure (reste à faire)
+Les artefacts PDF/Excel + rendus PNG sont dans `captures/`. Les captures de l'ÉCRAN
+(vide, complet, repère cliqué, ratios, Docs 8 cartes) demandent la pile lancée :
+1. API : `PGHOST=/tmp LABUSE_DATABASE_URL=postgresql+psycopg://openclaw@/labuse LABUSE_ENV=pilot LABUSE_AUTH_PASSWORD=… PYTHONPATH=src ~/Desktop/labuse/.venv/bin/python -m uvicorn labuse.api.app:app --port 8820`
+2. Front : `cd frontend && VITE_API=http://localhost:8820 node_modules/.bin/vite --port 6020` (ou servir `dist/`).
+3. Se connecter (compte pilote), ouvrir une fiche (ex. BZ1065) → tuile « Bilan », ou la page Docs → « Générer le bilan ». Captures via Playwright.
 
 ## Décisions / points pour Vic
 - **Repères « ratio de place ».** La doctrine écrite dit « un repère sans source publique ne s'affiche pas », mais la maquette v2 (validée) montre des repères de ratio (commission 3 %, notaire 1,5 %, honoraires…) et sa propre note liste « ratios de place » comme source de repère. J'ai tranché **selon la maquette** : deux familles de repères, `registre` (source publique : DVF, outil Taxe, archéo, coût de référence, Faisabilité) et `ratio_place` (ratio de place, étiqueté honnêtement). Aucun n'entre dans le calcul sans clic. À vetoer si tu préfères masquer les ratios de place.

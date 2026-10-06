@@ -56,7 +56,7 @@ def _taux(ln, poste) -> str:
     if poste.mode == "pct":
         return f"{v:.2f} %".replace(".", ",")
     if poste.mode == "unit":
-        return f"{_eur(v)[:-2]}{poste.unite or ''}".strip()
+        return f"{round(v):,}".replace(",", " ") + f" {poste.unite or ''}".rstrip()
     return _eur(v)
 
 
