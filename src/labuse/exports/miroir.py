@@ -1034,7 +1034,7 @@ _COVER_TUILES = [
     ("pente_deg", "Pente", lambda v: esc(f"{str(v).replace('.', ',')}°")),
     ("exposition_versant", "Exposition", lambda v: esc(v)),
     ("n_vigilances", "Risques", lambda v: esc(f"{groupe(v)} relevé{'s' if v and v > 1 else ''}")),
-    ("sdp_residuelle_m2", "SDP restante", lambda v: fmt_m2(v)),
+    ("sdp_residuelle_m2", "SDP restante (bâti conservé)", lambda v: fmt_m2(v)),
 ]
 
 

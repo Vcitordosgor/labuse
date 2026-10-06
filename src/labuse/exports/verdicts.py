@@ -97,7 +97,7 @@ def verdict_potentiel(valeurs: dict[str, Valeur]) -> Verdict | None:
         extra = ""
         if sdp is not None and float(sdp) > 0:
             from .registre_fmt import fmt_m2
-            extra = f" — SDP résiduelle (droits à bâtir non consommés) ≈ {fmt_m2(float(sdp))}"
+            extra = f" — surface de plancher constructible restante (bâti conservé) ≈ {fmt_m2(float(sdp))}"
         return (f"Potentiel de construction : {libelle}{extra}.", "", "")
     return None
 

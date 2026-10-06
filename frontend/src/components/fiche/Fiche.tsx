@@ -933,9 +933,9 @@ export function Fiche({ idu }: { idu: string }) {
             { l: 'Risques', v: vigils.length > 0 ? `${vigils.length}` : '—', s: risqueNiveau, vide: vigils.length === 0,
               i: 'Vigilances évaluées sur la parcelle (aléas, servitudes, sols…) — compteur et niveau, comme le badge de §5. Le détail est dans « Risques et environnement ».' },
             { l: 'SDP restante', v: reglesSdp != null && reglesSdp > 0 ? `${fmtInt(reglesSdp)} m²` : '—',
-              s: reglesSdp != null && reglesSdp > 0 ? undefined : (nonConstructible ? 'zone non constructible' : 'pas de potentiel résiduel'),
+              s: reglesSdp != null && reglesSdp > 0 ? 'bâti conservé' : (nonConstructible ? 'zone non constructible' : 'pas de potentiel résiduel'),
               vide: !(reglesSdp != null && reglesSdp > 0),
-              i: 'Surface de plancher que le PLU autorise ENCORE sur la parcelle (potentiel résiduel). « — » : zone non constructible ou plus de potentiel.' },
+              i: 'Surface de plancher constructible qui reste à bâtir EN GARDANT les bâtiments existants (le bâti existant est déjà déduit) — ce n’est pas du terrain libre. Pour la capacité après démolition, voir l’outil Faisabilité (« terrain libéré »). « — » : zone non constructible ou plus de potentiel.' },
           ]
           return (
             <div className="stats" data-bandeau-chiffres>
@@ -1289,9 +1289,9 @@ export function Fiche({ idu }: { idu: string }) {
           const tfpb = f.fiscalite?.tfpb_commune_pct
           // SDP restante → §10 Potentiel (potentiel résiduel autorisé par le PLU).
           const tuileSdp = { v: reglesSdp != null && reglesSdp > 0 ? `${fmtInt(reglesSdp)} m²` : '—',
-            s: reglesSdp != null && reglesSdp > 0 ? undefined : (nonConstructible ? 'zone non constructible' : 'pas de potentiel résiduel'),
+            s: reglesSdp != null && reglesSdp > 0 ? 'bâti conservé' : (nonConstructible ? 'zone non constructible' : 'pas de potentiel résiduel'),
             vide: !(reglesSdp != null && reglesSdp > 0),
-            i: 'Surface de plancher que le PLU autorise ENCORE sur la parcelle (potentiel résiduel). « — » : zone non constructible ou plus de potentiel.' }
+            i: 'Surface de plancher constructible qui reste à bâtir EN GARDANT les bâtiments existants (le bâti existant est déjà déduit) — ce n’est pas du terrain libre. Pour la capacité après démolition, voir l’outil Faisabilité (« terrain libéré »). « — » : zone non constructible ou plus de potentiel.' }
           // ChiffreDissous — présente une ex-tuile d'en-tête comme un fait de section (label · valeur ·
           // sous-titre · « i » source), grammaire FactRow. Reporté verbatim des 6 tuiles (RECETTE-8 W11).
           const ChiffreDissous = ({ l, t }: { l: string; t: { v: string; s?: string; vide?: boolean; i: string } }) => (
@@ -1912,7 +1912,7 @@ export function Fiche({ idu }: { idu: string }) {
                       <Verdict ton={inconstructible ? 'rouge' : (reglesSdp != null && reglesSdp > 0 ? 'vert' : 'ambre')}
                         reponse={inconstructible
                           ? `Construction neuve non autorisée${reglesZone ? ` en ${reglesZone}` : ''}`
-                          : (reglesSdp != null && reglesSdp > 0 ? `${fmtInt(reglesSdp)} m² de SDP résiduelle` : 'Pas de SDP résiduelle exploitable')}
+                          : (reglesSdp != null && reglesSdp > 0 ? `${fmtInt(reglesSdp)} m² de SDP constructible restante · bâti conservé` : 'Pas de SDP résiduelle exploitable')}
                         contexte={!inconstructible && fo?.niveaux ? `capacité ${fo.niveaux}` : undefined} />
                       <ChiffreDissous l="SDP restante" t={tuileSdp} />
                       {sdpNulle && pourquoi && <p className="text-[11.5px] leading-snug text-txt-mut" data-potentiel-pourquoi>{pourquoi}</p>}

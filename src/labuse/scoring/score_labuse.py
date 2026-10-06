@@ -266,7 +266,7 @@ def score_parcelle(e: ScoreEntrees, bareme: dict, version: str, run_label: str) 
     contributions = []
     sdp = round(float(e.sdp_residuelle_m2 or 0))
     if sdp > 0:
-        contributions.append({"sens": "hausse", "libelle": f"{sdp} m² de droits à construire restants"})
+        contributions.append({"sens": "hausse", "libelle": f"{sdp} m² de surface de plancher constructible restante (bâti conservé)"})
     else:
         contributions.append({"sens": "baisse", "libelle": "aucune SDP résiduelle exploitable"})
     if au_mult < 1.0:

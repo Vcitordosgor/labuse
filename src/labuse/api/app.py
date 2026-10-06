@@ -5890,7 +5890,7 @@ def _potentiel_transformation_block(db: Session, idu: str, commune: str | None =
     elif pct < 40:
         niveau, libelle = "fort", "Fort potentiel — parcelle en forte sous-densité"
     elif pct < 70:
-        niveau, libelle = "modere", "Potentiel modéré — droits à bâtir partiellement dormants"
+        niveau, libelle = "modere", "Potentiel modéré — surface de plancher constructible restante, bâti conservé"
     elif pct < 100:
         niveau, libelle = "faible", "Potentiel faible — parcelle proche de sa densité autorisée"
     else:

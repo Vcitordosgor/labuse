@@ -143,5 +143,7 @@ def test_contributions_lisibles():
     r = _s(sdp_residuelle_m2=400.0, pente_moy_deg=40.0, taux_emprise_pct=60.0, faitage_m=12.0,
            acces="PASS")
     libs = " ".join(c["libelle"] for c in r.contributions)
-    assert "droits à construire" in libs and "pente forte" in libs
+    # SDP-VERIF-1 phase 2 — « droits à construire restants » reformulé en « surface de plancher
+    # constructible restante (bâti conservé) » (ne laisse plus croire à du terrain libre).
+    assert "constructible restante" in libs and "pente forte" in libs
     assert "accès à la voie non identifié" in libs and "démolition" in libs
