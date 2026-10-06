@@ -110,6 +110,12 @@ export function BilanEcran({ idu, onClose, onGenerated }:
     for (const l of res?.lignes ?? []) m[l.id] = l
     return m
   }, [res])
+  // alertes de vraisemblance (non bloquantes) par cible
+  const vrais = useMemo(() => {
+    const m: Record<string, string> = {}
+    for (const v of res?.vraisemblance ?? []) m[v.cible] = v.message
+    return m
+  }, [res])
 
   if (isLoading) return <Overlay onClose={onClose}><div className="p-6 text-txt-mut">Chargement du bilan…</div></Overlay>
   if (error || !modele || !entrees) return <Overlay onClose={onClose}><div className="p-6 text-amber">Bilan indisponible sur cette parcelle.</div></Overlay>
@@ -210,6 +216,7 @@ export function BilanEcran({ idu, onClose, onGenerated }:
               <div className="h-full bg-mint" style={{ width: res ? `${Math.round((res.postes_renseignes / Math.max(1, res.total_postes)) * 100)}%` : '0%' }} />
             </div>
             <div className="mt-1 text-[12px] text-txt-mut">{prog}</div>
+            {vrais['marge'] && <div className="mt-2 border-l-2 border-amber pl-2 text-[12px] text-amber">{vrais['marge']}</div>}
           </section>
 
           {res?.ratios && (
@@ -229,6 +236,20 @@ export function BilanEcran({ idu, onClose, onGenerated }:
 
         {/* corps */}
         <main className="grid gap-4">
+          {/* Bandeau zone à cheval : partie non constructible (familles ≠ U/AU) */}
+          {modele.sourcee.non_constructible_pct > 0 && (
+            <div className="rounded-md border border-amber bg-surface-1 p-3 text-[13px]">
+              <b className="text-amber">Parcelle à {fmtNum(modele.sourcee.non_constructible_pct)} % en zone non constructible (N/A)</b>
+              <span className="text-txt"> : le programme ne peut porter que sur la partie constructible{modele.sourcee.constructible_m2 != null ? ` (${fmtNum(modele.sourcee.constructible_m2)} m²)` : ''}.</span>
+              {modele.sourcee.zonage && <div className="mt-1 text-[12px] text-txt-mut">{modele.sourcee.zonage}</div>}
+              {modele.sourcee.constructible_m2 != null && (
+                <button className="mt-2 rounded-full border border-dashed border-amber px-2 py-0.5 text-[12px] text-amber hover:bg-amber hover:text-mint-on"
+                  onClick={() => { majProgramme({ terrain: modele.sourcee.constructible_m2 }); bump() }}>
+                  Utiliser {fmtNum(modele.sourcee.constructible_m2)} m² comme terrain
+                </button>
+              )}
+            </div>
+          )}
           {/* Programme */}
           <Carte titre="Programme" sous="ce qui fixe les assiettes">
             <div className="grid grid-cols-2 gap-x-6 gap-y-2 p-3 md:grid-cols-3">
@@ -305,7 +326,7 @@ export function BilanEcran({ idu, onClose, onGenerated }:
                 {modele.blocs.map((b) => {
                   const tot = res?.blocs.find((x) => x.id === b.id)
                   return (
-                    <BlocLignes key={b.id} bloc={b} tot={tot} entrees={entrees} ligne={ligne} rev={rev}
+                    <BlocLignes key={b.id} bloc={b} tot={tot} entrees={entrees} ligne={ligne} rev={rev} vrais={vrais}
                       reperePoste={reperePoste} adopterRepere={adopterRepere} majPoste={majPoste} majPosteProg={majPosteProg} />
                   )
                 })}
@@ -365,7 +386,7 @@ function ChampNum({ label, value, source, repere, revKey, onChange, onPick }: {
   return (
     <label className="grid gap-1 text-[12px] text-txt-mut">{label}
       <input key={revKey} className={`h-8 rounded-md border bg-surface px-2.5 text-right tabular-nums ${value == null ? 'border-amber' : 'border-line-2'}`}
-        defaultValue={value ?? ''} placeholder="à saisir" onChange={(e) => onChange(parseNum(e.target.value))} />
+        defaultValue={value == null ? '' : fmtNum(value)} placeholder="à saisir" onChange={(e) => onChange(parseNum(e.target.value))} />
       {source && <Badge ton="vert">Sourcé</Badge>}
       {!source && value == null && repere && (
         <button className="justify-self-start rounded-full border border-dashed border-line-2 px-1.5 text-[11px] text-txt-mut hover:bg-mint hover:text-mint-on"
@@ -389,12 +410,13 @@ function CellNum({ value, onChange, revKey }: { value: number | null; onChange: 
   )
 }
 
-function BlocLignes({ bloc, tot, entrees, ligne, rev, reperePoste, adopterRepere, majPoste, majPosteProg }: {
+function BlocLignes({ bloc, tot, entrees, ligne, rev, vrais, reperePoste, adopterRepere, majPoste, majPosteProg }: {
   bloc: BilanModele['blocs'][number]
   tot: BilanResultat['blocs'][number] | undefined
   entrees: BilanEntrees
   ligne: Record<string, BilanResultat['lignes'][number]>
   rev: number
+  vrais: Record<string, string>
   reperePoste: (p: BilanPoste) => { valeur: number; label: string } | null
   adopterRepere: (p: BilanPoste) => void
   majPoste: (id: string, patch: Partial<BilanSaisie>) => void
@@ -417,7 +439,8 @@ function BlocLignes({ bloc, tot, entrees, ligne, rev, reperePoste, adopterRepere
         const estSansObjet = s.etat === 'sans_objet'
         return (
           <tr key={p.id} className="border-b border-line">
-            <td className="p-2">{p.libelle}{p.sub && <small className="block text-txt-dim"> {p.sub}</small>}</td>
+            <td className="p-2">{p.libelle}{p.sub && <small className="block text-txt-dim"> {p.sub}</small>}
+              {vrais[p.id] && <small className="block text-amber">{vrais[p.id]}</small>}</td>
             <td className="p-2 tabular-nums text-txt-mut">{l?.assiette_valeur != null ? fmtEur(l.assiette_valeur) : (p.mode === 'forfait' ? 'forfait' : '—')}
               {p.besoin_assiette && !estSansObjet && (
                 <input key={rev} className="ml-1 w-24 rounded border border-amber bg-surface px-1 py-0.5 text-right"

@@ -162,6 +162,7 @@ def _resultat_dict(r: ResultatBilan) -> dict:
     return {
         "complet": r.complet,
         "manquants": r.manquants,
+        "vraisemblance": r.vraisemblance,
         "total_postes": r.total_postes,
         "postes_renseignes": r.postes_renseignes,
         "lignes": [

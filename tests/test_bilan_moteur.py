@@ -155,6 +155,21 @@ def test_ht_tva_ttc_coherents_et_sans_objet():
     assert edf.ht == 0 and edf.tva == 0 and not edf.manquant
 
 
+def test_vraisemblance_non_bloquante():
+    """Une valeur hors bornes usuelles est SIGNALÉE (ambre), jamais corrigée ni bloquante."""
+    base = EntreesBilan(
+        programme=Programme(terrain=1746, surface_taxable=2560),
+        produits=[Produit("Libre", 46, 2560, 4800, 0.085)],
+        postes={"constr": SaisiePoste(2300, SAISI)},  # dans les bornes
+    )
+    assert Moteur().calculer(base).vraisemblance == []
+    base.postes["constr"] = SaisiePoste(6000, SAISI)  # coût hors 1 000–5 000
+    v = Moteur().calculer(base).vraisemblance
+    assert any(a["cible"] == "constr" for a in v)
+    base.postes["constr"] = SaisiePoste(300, SAISI)  # trop bas
+    assert any(a["cible"] == "constr" for a in Moteur().calculer(base).vraisemblance)
+
+
 def test_apport_est_en_base_ttc():
     """La commission d'apport (3 %) est toutes taxes, ramenée HT."""
     e = EntreesBilan(

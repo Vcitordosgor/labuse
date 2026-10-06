@@ -33,6 +33,13 @@ Venv : `~/Desktop/labuse/.venv/bin/python` ; imports LABUSE depuis ce worktree a
 
 **Tous les lots + les 4 décisions Vic avant merge sont faits.** Branche prête (pas de merge par CC).
 
+## Retours Vic sur la capture BC0343 (commit séparé) — FAITS
+1. Terrain arrondi au m² + séparateur partout (source `reperes._surface` round ; écran fmtNum, PDF _eur, Excel format).
+2. Bandeau zone à cheval (non constructible N/A) + répartition + repère « Utiliser X m² comme terrain » (constructible = terrain × part U/AU).
+3. Surface taxable jamais pré-remplie (vide + repère « (estimation) »).
+4. Alertes de vraisemblance non bloquantes (moteur `vraisemblance`) : coût const. hors 1 000–5 000 €/m², marge > 25 % → ligne ambrée.
+5. Nouvelles captures BC0343 (vide + complet). Boot 8820 (8810 idle, pas de contention), serveur arrêté après, 8810 jamais touché. pytest bilan 62 · tsc0 · vitest237.
+
 ## Étape 0 — faits
 - `pwd` = /Users/openclaw/Desktop/labuse-bilan1 ; branche `feat/bilan-1` ; arbre propre (seul le dossier bilan-1 non suivi).
 - Base `01965f44` = `origin/main` : contient DOCS-1 + DOCS-FIX-1. **TUILES-TX-1 (`2f6cf7ec`) n'est PAS mergé dans origin/main** (signalé à Vic) — sans effet sur ce mandat (fix tuiles MVT, hors périmètre bilan/docs).

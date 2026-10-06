@@ -143,3 +143,19 @@ badges d'état, Total 2 271 464 € TTC) + `bilan-pdf-synthese-3.png` (résultat
 **Ancien Financier backend** (`financier_bilan.py`, `financier_questionnaire.py`, routes
 `/financier/*`) **laissé en place** (no élargissement) ; seule la porte client bascule
 sur le nouveau bilan. Démontage = un chantier dédié.
+
+## 9. Retours Vic sur la capture BC0343 — appliqués
+1. **Terrain arrondi au m² + séparateur de milliers partout** : arrondi à la source
+   (`reperes.sources_parcelle`), affiché « 144 834 » (écran `fmtNum`, PDF `_eur`, Excel
+   number-format) — plus de flottant brut.
+2. **Bandeau zone à cheval** : quand une part est non constructible (familles ≠ U/AU),
+   un bandeau ambré en tête du bilan : « Parcelle à 81,9 % en zone non constructible
+   (N/A) : le programme ne peut porter que sur la partie constructible (26 215 m²) » +
+   la répartition par zone + un bouton **« Utiliser 26 215 m² comme terrain »** (le
+   terrain constructible proposé en repère).
+3. **Surface taxable** : jamais pré-remplie — vide + repère cliquable comme les autres ;
+   le repère Faisabilité est étiqueté « (estimation) ».
+4. **Alertes de vraisemblance non bloquantes** (moteur) : coût de construction hors
+   1 000–5 000 €/m² SUV, marge > 25 % du CA HT → ligne ambrée « valeur inhabituelle,
+   à vérifier » (sur le poste et au résultat) ; le bilan se calcule quand même.
+5. Nouvelle capture `ecran-bilan-vide.png` + `ecran-bilan-complet.png` (BC0343).

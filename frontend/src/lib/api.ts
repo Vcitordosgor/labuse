@@ -2669,7 +2669,13 @@ export interface BilanModele {
   produit_modele: { champs: { id: string; libelle: string; unite: string; tva?: string }[]; repere: string }
   programme: Record<string, unknown>[]
   blocs: BilanBloc[]
-  sourcee: { idu: string; parcel_id: number | null; commune: string | null; terrain: number | null; zonage: string | null; prix_achat_dvf: { valeur: number; date: string; label: string } | null }
+  sourcee: {
+    idu: string; parcel_id: number | null; commune: string | null
+    terrain: number | null; zonage: string | null
+    zonage_parts: { zone: string; fam: string; pct: number }[]
+    non_constructible_pct: number; constructible_m2: number | null
+    prix_achat_dvf: { valeur: number; date: string; label: string } | null
+  }
   reperes_publics: Record<string, { valeur: number; n?: number; label: string; source: string; parkings?: number | null; logements?: number[] | null }>
   ratios_compte: Record<string, { valeur: number; tva: number | null }>
 }
@@ -2688,6 +2694,7 @@ export interface BilanLigne {
 }
 export interface BilanResultat {
   complet: boolean; manquants: string[]; total_postes: number; postes_renseignes: number
+  vraisemblance: { cible: string; message: string }[]
   lignes: BilanLigne[]
   blocs: { id: string; titre: string; ht: number; tva: number; ttc: number; complet: boolean; manquants: number }[]
   produits: Record<string, unknown>[]

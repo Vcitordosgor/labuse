@@ -39,27 +39,39 @@ def _parcelle(db: Session, idu: str) -> tuple[int, str] | None:
     return _sans_poison(db, _q)
 
 
-def _surface(db: Session, idu: str) -> float | None:
+def _surface(db: Session, idu: str) -> int | None:
+    """Surface du terrain, ARRONDIE au m² (le cadastre la sert en flottant)."""
+
     def _q():
         v = db.execute(
             text("SELECT surface_m2 FROM parcels WHERE idu = :i"), {"i": idu}
         ).scalar()
-        return float(v) if v is not None else None
+        return round(float(v)) if v is not None else None
 
     return _sans_poison(db, _q)
 
 
-def _zonage(db: Session, parcel_id: int) -> str | None:
+def _zonage_detail(db: Session, parcel_id: int) -> dict | None:
+    """Zonage servi : libellé + répartition par zone (parts) + part non
+    constructible (familles ≠ U/AU)."""
+
     def _q():
-        from ..faisabilite.zone_servie import zone_dominante
+        from ..faisabilite.zone_servie import FAMILLES_CONSTRUCTIBLES, zone_dominante
 
         z = zone_dominante(db, parcel_id)
         if not z or not z.zone:
             return None
-        parts = getattr(z, "parts", None) or []
+        parts = [
+            {"zone": p["zone"], "fam": p["fam"], "pct": round(float(p["pct"]), 1)}
+            for p in (getattr(z, "parts", None) or [])
+        ]
         if len(parts) > 1:
-            return " · ".join(f"{p['zone']} {round(p['pct'])} %" for p in parts)
-        return str(z.zone)
+            label = " · ".join(f"{p['zone']} {round(p['pct'])} %" for p in parts)
+        else:
+            label = str(z.zone)
+        nc = round(sum(p["pct"] for p in parts if p["fam"] not in FAMILLES_CONSTRUCTIBLES), 1)
+        c = round(sum(p["pct"] for p in parts if p["fam"] in FAMILLES_CONSTRUCTIBLES), 1)
+        return {"label": label, "parts": parts, "non_constructible_pct": nc, "constructible_pct": c}
 
     return _sans_poison(db, _q)
 
@@ -70,12 +82,25 @@ def sources_parcelle(db: Session, idu: str) -> dict[str, Any]:
     pc = _parcelle(db, idu)
     parcel_id = pc[0] if pc else None
     commune = pc[1] if pc else None
+    terrain = _surface(db, idu)  # m² arrondi — Sourcé (cadastre)
+    zd = _zonage_detail(db, parcel_id) if parcel_id else None
+    nc_pct = zd["non_constructible_pct"] if zd else 0.0
+    c_pct = zd["constructible_pct"] if zd else 100.0
+    # terrain constructible = terrain × part U/AU, seulement s'il y a du non constructible
+    constructible_m2 = (
+        round(terrain * c_pct / 100.0)
+        if terrain is not None and nc_pct > 0
+        else None
+    )
     return {
         "idu": idu,
         "parcel_id": parcel_id,
         "commune": commune,
-        "terrain": _surface(db, idu),  # m² — Sourcé (cadastre)
-        "zonage": _zonage(db, parcel_id) if parcel_id else None,  # Sourcé (PLU)
+        "terrain": terrain,
+        "zonage": zd["label"] if zd else None,  # Sourcé (PLU)
+        "zonage_parts": zd["parts"] if zd else [],
+        "non_constructible_pct": nc_pct,
+        "constructible_m2": constructible_m2,
         "prix_achat_dvf": _prix_achat_dvf(db, parcel_id) if parcel_id else None,
     }
 
@@ -179,8 +204,8 @@ def reperes_publics(db: Session, idu: str, sourcee: dict) -> dict[str, dict]:
                 return None
             return {
                 "valeur": float(sdp),
-                "label": f"Faisabilité {round(float(sdp)):g} m² SDP",
-                "source": "faisabilité LABUSE",
+                "label": f"Faisabilité {round(float(sdp)):g} m² SDP (estimation)",
+                "source": "faisabilité LABUSE (estimation, à confirmer)",
                 "parkings": d.get("stationnement_places"),
                 "logements": d.get("logements"),
             }
