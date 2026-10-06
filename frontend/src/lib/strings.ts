@@ -480,8 +480,9 @@ export const CLIENT = {
       banquierPret: 'Note — prête',
       banquierEnCours: 'Note…',
       banquierErreur: 'Note — réessayer',
+      // BILAN-1 — la tuile « Bilan » ouvre le bilan promoteur (moteur + ratios + PDF/Excel).
       banquierTip:
-        'Note de financement PDF (synthèse exécutive, bilan & charge foncière, comparables DVF/SITADEL, risques) — présentation financeur.',
+        'Le bilan promoteur : charge foncière, coûts, chiffre d’affaires et marge — ou le prix maximum du terrain pour votre marge.',
       // C7 · ouvre le cadastre officiel externe, paramétré sur la parcelle
       cadastre: 'Cadastre ↗',
       cadastreTip:

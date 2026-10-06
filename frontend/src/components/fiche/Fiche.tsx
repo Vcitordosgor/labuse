@@ -18,7 +18,7 @@ import { Squelette } from '../Loading'
 import { EmptyState, ErrorState } from '../States'
 import { DeplacerMenu } from '../crm/DeplacerMenu'   // DA-FIX-5c — menu « Déplacer vers… » partagé (kanban CRM)
 import { AskBar } from './AskBar'
-import { FinancierQuestionnaire } from './FinancierQuestionnaire'
+import { BilanEcran } from './BilanEcran'   // BILAN-1 — le bilan promoteur remplace l'ancien écran d'hypothèses
 import { GabaritLine } from './GabaritLine'
 import { cadastreGeoportailUrl, errialUrl, googleEarthKmzUrl, googleMapsUrl, pagesJaunes } from './liensExternes'
 import { LogoCadastre, LogoPagesJaunes, LogoGoogleMaps } from './logosServices'
@@ -2159,7 +2159,7 @@ function BanquierButton({ idu }: { idu: string }) {
     <>
       <OutilCase nom={CLIENT.fiche.export.finance} ic={icon} onClick={() => setOpen(true)}
         data-banquier-btn title={CLIENT.fiche.export.banquierTip} />
-      {open && <FinancierQuestionnaire idu={idu} onClose={() => setOpen(false)} />}
+      {open && <BilanEcran idu={idu} onClose={() => setOpen(false)} />}
     </>
   )
 }

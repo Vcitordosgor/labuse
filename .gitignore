@@ -11,6 +11,9 @@ venv/
 
 # Env / secrets
 .env
+# Modèle Excel du bilan promoteur fourni par la promotrice (BILAN-1) — jamais commité
+# (seuls libellés/ordre/assiettes/formules en sont tirés, dans declarations/bilan/postes.yaml).
+docs/audit-2026-10/bilan-1/modele-promotrice.xlsx
 # Fichiers d'environnement RÉELS du pack de déploiement (jamais committés) ;
 # seuls les gabarits *.env.example sont versionnés.
 deploy/env/*.env

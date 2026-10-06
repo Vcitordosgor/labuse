@@ -1188,7 +1188,11 @@ export const preDossierUrl = (idu: string) => `/pre-dossier/${idu}.zip`
 // mutation front). Les 4 premiers existent déjà (builder unique) ; les 3 derniers sont servis par Lot C.
 //   • Bilan = le document « financier » (le mot « Financier » disparaît côté client, DOCS-1 §4).
 export const docDossierUrl = (idu: string) => `/dossier/${encodeURIComponent(idu)}.pdf`
-export const docBilanUrl = (idu: string) => `/financier/${encodeURIComponent(idu)}.pdf`
+// BILAN-1 (Lot 5) — le Bilan se régénère depuis ses saisies enregistrées (doc_id) ; PDF ET Excel.
+export const docBilanUrl = (idu: string, docId: number) =>
+  `/bilan/${encodeURIComponent(idu)}.pdf?doc_id=${docId}`
+export const docBilanExcelUrl = (idu: string, docId: number) =>
+  `/bilan/${encodeURIComponent(idu)}.xlsx?doc_id=${docId}`
 export const docApporteurUrl = (idu: string) => `/apporteur/${encodeURIComponent(idu)}.pdf`
 export const docPreDossierUrl = (idu: string) => `/pre-dossier/${encodeURIComponent(idu)}.zip`
 export const docGabaritUrl = (idu: string) => `/gabarit/${encodeURIComponent(idu)}.pdf`
@@ -2643,3 +2647,75 @@ export const validerFinancierQuestionnaire = (idu: string, reponses: Record<stri
     `/financier/${encodeURIComponent(idu)}/questionnaire/valider`,
     { method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ reponses }) })
+
+// ─────────────────────────── BILAN-1 — le bilan promoteur ───────────────────────────
+// Un moteur (Python), deux portes (fiche · Docs). Le front n'envoie QUE des saisies.
+export type BilanEtat = 'source' | 'saisi' | 'repere' | 'ratios' | 'sans_objet' | 'a_renseigner'
+export interface BilanReperePoste {
+  kind: 'registre' | 'ratio_place'
+  valeur?: number
+  registre_id?: string
+}
+export interface BilanPoste {
+  id: string; libelle: string; sub: string | null; note: string | null
+  mode: 'pct' | 'unit' | 'forfait'; base: string; assiette: string | null; unite: string | null
+  tva: number | 'a_saisir' | 'selon_produit' | null; tva_sourcee: boolean
+  besoin_assiette: boolean; alea: boolean; repere: BilanReperePoste | null
+}
+export interface BilanBloc { id: string; titre: string; postes: BilanPoste[] }
+export interface BilanModele {
+  version: number
+  tva_legales: Record<string, number>
+  produit_modele: { champs: { id: string; libelle: string; unite: string; tva?: string }[]; repere: string }
+  programme: Record<string, unknown>[]
+  blocs: BilanBloc[]
+  sourcee: {
+    idu: string; parcel_id: number | null; commune: string | null
+    terrain: number | null; zonage: string | null
+    zonage_parts: { zone: string; fam: string; pct: number }[]
+    non_constructible_pct: number; constructible_m2: number | null
+    prix_achat_dvf: { valeur: number; date: string; label: string } | null
+  }
+  reperes_publics: Record<string, { valeur: number; n?: number; label: string; source: string; parkings?: number | null; logements?: number[] | null }>
+  ratios_compte: Record<string, { valeur: number; tva: number | null }>
+}
+export interface BilanSaisie { valeur: number | null; etat: BilanEtat; tva?: number | null; assiette_valeur?: number | null }
+export interface BilanProduit { libelle: string; lots: number | null; suv: number | null; prix_ttc_m2_suv: number | null; tva: number | null }
+export interface BilanEntrees {
+  programme: { terrain: number | null; surface_taxable: number | null; loyer: number | null }
+  produits: BilanProduit[]
+  postes: Record<string, BilanSaisie>
+  mode: 'marge' | 'prix'
+  marge_cible: number | null
+}
+export interface BilanLigne {
+  id: string; bloc: string; assiette_valeur: number | null; taux_ou_montant: number | null
+  etat: BilanEtat; ht: number | null; tva: number | null; ttc: number | null; manquant: boolean
+}
+export interface BilanResultat {
+  complet: boolean; manquants: string[]; total_postes: number; postes_renseignes: number
+  vraisemblance: { cible: string; message: string }[]
+  lignes: BilanLigne[]
+  blocs: { id: string; titre: string; ht: number; tva: number; ttc: number; complet: boolean; manquants: number }[]
+  produits: Record<string, unknown>[]
+  produits_totaux: { ok: boolean; lots: number | null; suv: number | null; ca_ttc: number | null; ca_ht: number | null; ca: (number | null)[] }
+  depenses_ht: number | null; depenses_tva: number | null; depenses_ttc: number | null
+  ca_ht: number | null; ca_tva: number | null; ca_ttc: number | null
+  tva_residuelle: number | null; resultat_net: number | null; marge_pct: number | null
+  cash_flow: number | null; aleas: number | null; resultat_sans_aleas: number | null; marge_sans_aleas_pct: number | null
+  ratios: [string, string][]
+  prix_max_terrain: number | null; prix_max_terrain_m2: number | null
+}
+export const getBilanModele = (idu: string) =>
+  j<BilanModele>(`/bilan/${encodeURIComponent(idu)}/modele`)
+export const calculerBilan = (idu: string, entrees: BilanEntrees) =>
+  j<BilanResultat>(`/bilan/${encodeURIComponent(idu)}/calcul`,
+    { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(entrees) })
+export const genererBilan = (idu: string, entrees: BilanEntrees) =>
+  j<{ doc_id: number; complet: boolean }>(`/bilan/${encodeURIComponent(idu)}/generer`,
+    { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(entrees) })
+export const getBilanRatios = () =>
+  j<Record<string, { valeur: number; tva: number | null }>>('/bilan-ratios')
+export const putBilanRatio = (posteId: string, valeur: number, tva: number | null = null) =>
+  j<{ poste_id: string }>(`/bilan-ratios/${encodeURIComponent(posteId)}`,
+    { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ valeur, tva }) })

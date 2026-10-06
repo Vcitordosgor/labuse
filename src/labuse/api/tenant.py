@@ -33,9 +33,12 @@ from sqlalchemy.orm import Session
 # DOCS-1 (Lot B) — documents_generes : la bibliothèque « Mes documents » (recette d'un document
 # généré par un compte). Données strictement privées (parcelle(s) regardée(s), hypothèses saisies) →
 # compte_id + FK cascade comme les autres ; un compte ne voit QUE ses lignes (test dédié).
+# BILAN-1 (Lot 4) — bilan_ratios : les ratios maison d'un compte (taux mémorisés qui
+# pré-remplissent ses bilans). Données strictement privées → compte_id + FK cascade comme
+# les autres ; un compte ne voit QUE ses ratios (test d'isolation dédié).
 SCOPED_TABLES = ("projets", "pipeline_entries", "saved_searches", "saved_filters",
                  "signalements", "event_log", "watched_parcels", "watch_zones", "alertes",
-                 "courrier_demandes", "documents_generes")
+                 "courrier_demandes", "documents_generes", "bilan_ratios")
 
 
 def ensure_scoping(db: Session) -> None:

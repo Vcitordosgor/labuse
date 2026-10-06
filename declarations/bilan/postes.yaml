@@ -1,0 +1,146 @@
+# ============================================================================
+# BILAN-1 — Catalogue des postes du bilan promoteur
+# ----------------------------------------------------------------------------
+# Source : le modèle Excel de la promotrice (feuille « BILAN », zone A1:G147).
+#   Le xlsx n'est jamais commité (docs/audit-2026-10/bilan-1/modele-promotrice.xlsx,
+#   gitignoré). Seuls les libellés, l'ordre, les assiettes et les formules en sont
+#   tirés — ici.
+#
+# Chaque poste porte `ligne_modele` = sa ligne dans le xlsx. Le test
+# test_bilan_catalogue.py recharge le xlsx et vérifie, SANS rien coder en dur :
+#   - `libelle_modele` == la cellule A{ligne_modele} du xlsx (société neutralisée) ;
+#   - les lignes sont strictement croissantes (ordre = modèle) ;
+#   - l'ensemble des 45 postes == les 45 lignes-postes détectées par un balayage
+#     indépendant du xlsx (aucun poste retiré ni ajouté).
+#
+# Doctrine (gravée, BILAN-1) : on ne pré-remplit QUE le Sourcé (public). Tout le
+# reste est vide ; un `repere` cliquable (public ou ratio de place) propose une
+# valeur mais N'ENTRE JAMAIS dans le calcul tant que le client ne l'adopte pas.
+# Un repère dont la source ne se résout pas à l'exécution ne s'affiche pas.
+#
+# Le nom de la société du modèle (« océanis », lignes 122/128 du xlsx, + chemin
+# SharePoint en métadonnée) n'apparaît nulle part : « Cash flow océanis » est
+# rendu « Cash flow ».
+# ============================================================================
+
+version: 1
+
+# --- Taux de TVA légaux (DOM / La Réunion) — « Sourcé », jamais inventés -------
+tva_legales:
+  dom_standard: 0.085    # taux normal DOM
+  logement_social: 0.021 # taux réduit logement social / LLI éligible
+  exonere: 0.0           # taxes, assurances, frais financiers, garanties
+
+# --- Assiettes reconnues par le moteur ---------------------------------------
+# (documentaire ; le moteur résout chaque assiette dans bilan/moteur.py)
+assiettes:
+  terrain:             "Surface du terrain (m²) — cadastre, ou union des géométries d'un assemblage"
+  surface_taxable:     "Surface taxable (m²)"
+  suv:                 "Surface utile vendable (m²) — somme des produits"
+  lots:                "Nombre de lots — somme des produits"
+  prix_terrain:        "Prix d'achat du terrain HT (poste « achat »)"
+  pret:                "Montant du prêt (saisie)"
+  valeur_ajoutee:      "Valeur ajoutée (saisie) — assiette CVAE"
+  ca_ttc:              "Chiffre d'affaires TTC total"
+  ca_produit_1:        "CA TTC du produit 1"
+  ca_produit_2:        "CA TTC du produit 2"
+  construction:        "Coût de construction HT (poste « constr »)"
+  demi_construction_ttc: "½ du coût de construction TTC"
+  total2_ttc:          "Total du bloc Construction & honoraires, TTC"
+  total2_ht:           "Total du bloc Construction & honoraires, HT"
+  total2_ttc_sol_imprevus: "Total (2) TTC + étude de sol TTC − imprévus TTC (assiette assurance D.O, modèle promotrice)"
+  total2_ht_sol_imprevus:  "Total (2) HT + étude de sol HT − imprévus HT (assiette assurance TRC, modèle promotrice)"
+  loyers_annuels:      "Loyer €/m² × SUV"
+  forfait:             "Montant forfaitaire (pas d'assiette)"
+
+# --- Programme : une ligne par produit (libre · PLS · LLI) -------------------
+# Repris de la fiche comme repère grisé, jamais comme valeur (mandat Lot 2.2).
+produit_modele:
+  lignes_modele: [112, 113]   # CA logements, deux produits dans le xlsx témoin
+  champs:
+    - {id: lots,    libelle: "Lots",                      unite: "lots"}
+    - {id: suv,     libelle: "SUV",                       unite: "m²"}
+    - {id: prix_ttc_m2_suv, libelle: "Prix TTC /m² SUV yc pkg", unite: "€"}
+    - {id: tva,     libelle: "TVA de vente",              unite: "%", tva: selon_produit}
+  repere: dvf_neuf   # DVF neuf au m² · n (échantillon) ; sinon rien
+
+# --- Entrées du programme (assiettes) — pré-remplies si Sourcé ---------------
+programme:
+  - {id: terrain, libelle: "Terrain",              unite: "m²",   sourcee: cadastre,     repere: null}
+  - {id: zonage,  libelle: "Zonage au PLU",        type: texte,   sourcee: plu,          repere: null}
+  - {id: shob,    libelle: "SHOB",                 unite: "m²",   facultatif: true,      repere: null}
+  - {id: sdp,     libelle: "Surface de plancher",  unite: "m²",   repere: faisabilite}
+  - {id: stax,    libelle: "Surface taxable",      unite: "m²",   repere: faisabilite}
+  - {id: pkg_aer, libelle: "Parkings aériens",     unite: "pl.",  facultatif: true,      repere: null}
+  - {id: pkg_cou, libelle: "Parkings couverts",    unite: "pl.",  repere: faisabilite}
+  - {id: loyer,   libelle: "Loyer au m² de SUV yc pkg", unite: "€/m²", facultatif: true,  repere: null}
+
+# --- Les 4 blocs, dans l'ordre du modèle -------------------------------------
+blocs:
+
+  - id: T
+    titre: "Charge foncière"
+    titre_modele: "TERRAIN"
+    postes:
+      - {id: achat,  libelle: "Achat terrain privé",       libelle_modele: "AchatTerrain privé",            ligne_modele: 43, mode: unit,    assiette: terrain,          unite: "€/m²", tva: a_saisir, repere: dvf_terrain_nu, note: "TVA selon le vendeur : à saisir"}
+      - {id: apport, libelle: "Commission apport",          libelle_modele: "Commission apport",             ligne_modele: 44, mode: pct, base: ttc, assiette: prix_terrain, tva: 0.085, tva_sourcee: true, repere: {type: ratio_place, valeur: 3.0}, note: "Commission toutes taxes (3 % du prix), ramenée HT"}
+      - {id: notT,   libelle: "Notaire terrain",            libelle_modele: "Notaire terrain",               ligne_modele: 45, mode: pct,     assiette: prix_terrain,     tva: a_saisir, repere: {type: ratio_place, valeur: 1.5}}
+      - {id: notP,   libelle: "Notaire prêt",               libelle_modele: "Notaire prêt",                  ligne_modele: 46, mode: pct,     assiette: pret, besoin_assiette: true, tva: a_saisir, repere: {type: ratio_place, valeur: 1.5}}
+      - {id: txLog,  libelle: "Taxe logements",             libelle_modele: "Taxe LOGEMENTS",                ligne_modele: 47, mode: unit,    assiette: surface_taxable,  unite: "€/m²", tva: 0.0, tva_sourcee: true, repere: outil_taxe}
+      # Repère « Outil Taxe » sur la seule ligne taxe d'aménagement (txLog) pour ne jamais
+      # compter deux fois : TA parkings/archéo et TRE sont des parts que LABUSE n'isole pas.
+      - {id: txPkg,  libelle: "TA parking extérieurs + archéo", libelle_modele: "TA Parking extérieurs + Archeo", ligne_modele: 48, mode: unit, assiette: surface_taxable, unite: "€/m²", tva: 0.0, tva_sourcee: true, repere: null}
+      - {id: tre,    libelle: "TRE",                        libelle_modele: "TRE",                           ligne_modele: 49, mode: unit,    assiette: surface_taxable,  unite: "€/m²", tva: 0.0, tva_sourcee: true, repere: null}
+      - {id: archeo, libelle: "Taxe d'archéologie préventive", libelle_modele: "Taxe d'Archéologie préventive", ligne_modele: 50, mode: unit, assiette: surface_taxable, unite: "€/m²", tva: 0.0, tva_sourcee: true, repere: redevance_archeologie}
+      - {id: topo,   libelle: "Relevé topo",                libelle_modele: "Relevé topo",                   ligne_modele: 51, mode: forfait, tva: 0.085, tva_sourcee: true, repere: {type: ratio_place, valeur: 3500}}
+      - {id: born,   libelle: "Géomètre bornage",           libelle_modele: "Géomêtre Bornage",              ligne_modele: 52, mode: forfait, tva: 0.085, tva_sourcee: true, repere: {type: ratio_place, valeur: 2000}}
+      - {id: sol,    libelle: "Étude de sol",               libelle_modele: "Etude de sol",                  ligne_modele: 53, mode: forfait, tva: 0.085, tva_sourcee: true, repere: {type: ratio_place, valeur: 12500}}
+      - {id: hydro,  libelle: "Étude hydraulique",          libelle_modele: "Etude hydraulique",             ligne_modele: 54, mode: forfait, tva: 0.085, tva_sourcee: true, repere: {type: ratio_place, valeur: 4500}, note: "PPR inondation sur la parcelle"}
+      - {id: affPC,  libelle: "Constat affichage PC",       libelle_modele: "Constat Affichage PC",          ligne_modele: 55, mode: forfait, tva: 0.085, tva_sourcee: true, repere: {type: ratio_place, valeur: 900}}
+      - {id: branch, libelle: "Branchements",               libelle_modele: "Branchements",                  ligne_modele: 56, mode: unit,    assiette: lots, unite: "€/lot", tva: 0.085, tva_sourcee: true, repere: {type: ratio_place, valeur: 900}}
+      - {id: edf,    libelle: "Transfo EDF",                libelle_modele: "Transfo EDF",                   ligne_modele: 57, mode: forfait, tva: 0.085, tva_sourcee: true, repere: null}
+      - {id: amiante,libelle: "Diag amiante",               libelle_modele: "Diag amiante",                  ligne_modele: 58, mode: forfait, tva: 0.085, tva_sourcee: true, repere: {type: ratio_place, valeur: 2000}, note: "Bâti existant avant 1997"}
+      - {id: demol,  libelle: "Défrichage · préparation terrain", libelle_modele: "Défrichage - préparation terrain", ligne_modele: 59, mode: forfait, tva: 0.085, tva_sourcee: true, repere: null, note: "Démolition et désamiantage"}
+      - {id: aleaT,  libelle: "Aléas",                      libelle_modele: "Aléas",                         ligne_modele: 60, mode: pct,     assiette: ca_ttc, tva: 0.085, tva_sourcee: true, alea: true, repere: null}
+
+  - id: C
+    titre: "Construction et honoraires"
+    titre_modele: "CONSTRUCTION & HONORAIRES TECHNIQUES"
+    postes:
+      - {id: constr, libelle: "Construction yc VRD",        libelle_modele: "Construction yc VRD",           ligne_modele: 66, mode: unit,    assiette: suv, unite: "€/m²", tva: 0.085, tva_sourcee: true, repere: cout_construction_ref}
+      - {id: deco,   libelle: "Déco et aménagement intérieur", libelle_modele: "Deco et amenagement intérieur", ligne_modele: 67, mode: forfait, tva: 0.085, tva_sourcee: true, repere: null}
+      - {id: archi,  libelle: "Hono. architecte conception", libelle_modele: "Hono. Architecte conception",  ligne_modele: 68, mode: pct,     assiette: construction, tva: 0.085, tva_sourcee: true, repere: {type: ratio_place, valeur: 2.0}}
+      - {id: pays,   libelle: "Honos paysagiste hydrau",    libelle_modele: "Honos paysagiste hydrau",       ligne_modele: 69, mode: pct,     assiette: construction, tva: 0.085, tva_sourcee: true, repere: {type: ratio_place, valeur: 0.2}}
+      - {id: moe,    libelle: "Hono MOE + BET",             libelle_modele: "Hono MOE + BET",                ligne_modele: 70, mode: pct,     assiette: construction, tva: 0.085, tva_sourcee: true, repere: {type: ratio_place, valeur: 3.8}}
+      - {id: opc,    libelle: "Honos OPC",                  libelle_modele: "Honos OPC",                     ligne_modele: 71, mode: pct,     assiette: construction, tva: 0.085, tva_sourcee: true, repere: {type: ratio_place, valeur: 0.6}}
+      - {id: labels, libelle: "Labels GIEP et NF",          libelle_modele: "LABELS GIEP et NF",             ligne_modele: 72, mode: forfait, tva: 0.085, tva_sourcee: true, repere: null}
+      - {id: sps,    libelle: "SPS",                        libelle_modele: "SPS",                           ligne_modele: 73, mode: pct,     assiette: construction, tva: 0.085, tva_sourcee: true, repere: {type: ratio_place, valeur: 0.26}}
+      - {id: ctrl,   libelle: "Bureau de contrôle",         libelle_modele: "Bureau de contrôle",            ligne_modele: 74, mode: pct,     assiette: construction, tva: 0.085, tva_sourcee: true, repere: {type: ratio_place, valeur: 0.86}}
+      - {id: aleaC,  libelle: "Imprévus (aléas techniques)", libelle_modele: "Imprévus (Aléas techniques)",  ligne_modele: 75, mode: pct,     assiette: construction, tva: 0.085, tva_sourcee: true, alea: true, repere: {type: ratio_place, valeur: 1.5}}
+
+  - id: G
+    titre: "Gestion"
+    titre_modele: "GESTION"
+    postes:
+      - {id: pub,    libelle: "Publicité commerciale",      libelle_modele: "Publicité commerciale",         ligne_modele: 81, mode: pct,     assiette: ca_ttc, tva: 0.085, tva_sourcee: true, repere: {type: ratio_place, valeur: 0.2}}
+      - {id: jur,    libelle: "Juridique / divers",         libelle_modele: "Juridique/Divers",              ligne_modele: 82, mode: pct,     assiette: ca_ttc, tva: 0.085, tva_sourcee: true, repere: {type: ratio_place, valeur: 0.04}}
+      - {id: cvae,   libelle: "CVAE (ex taxe pro)",         libelle_modele: "CVAE (ex Taxe pro)",            ligne_modele: 83, mode: pct,     assiette: valeur_ajoutee, besoin_assiette: true, tva: 0.0, tva_sourcee: true, repere: null}
+      - {id: mod,    libelle: "M.O.D. AMO",                 libelle_modele: "M.O.D. AMO",                    ligne_modele: 84, mode: pct,     assiette: ca_ttc, tva: 0.085, tva_sourcee: true, repere: {type: ratio_place, valeur: 5.0}}
+      - {id: gfa,    libelle: "Garantie achèvement",        libelle_modele: "Garantie achèvement",           ligne_modele: 85, mode: pct,     assiette: ca_ttc, tva: 0.0, tva_sourcee: true, repere: {type: ratio_place, valeur: 1.0}}
+      - {id: gp,     libelle: "Garantie de paiement",       libelle_modele: "Garantie de paiement",          ligne_modele: 86, mode: pct,     assiette: demi_construction_ttc, tva: 0.0, tva_sourcee: true, repere: null}
+      - {id: ff,     libelle: "Frais financiers",           libelle_modele: "Frais Financiers",              ligne_modele: 87, mode: pct,     assiette: ca_ttc, tva: 0.0, tva_sourcee: true, repere: {type: ratio_place, valeur: 0.5}}
+      - {id: do,     libelle: "Assurances D.O / C.N.R",     libelle_modele: "Assurances D.O / C.N.R",        ligne_modele: 88, mode: pct,     assiette: total2_ttc_sol_imprevus, tva: 0.0, tva_sourcee: true, repere: {type: ratio_place, valeur: 1.32}}
+      - {id: trc,    libelle: "Assurance TRC + GAREAT",     libelle_modele: "Assurance TRC + GAREAT",        ligne_modele: 89, mode: pct,     assiette: total2_ht_sol_imprevus, tva: 0.0, tva_sourcee: true, repere: {type: ratio_place, valeur: 0.34}}
+      - {id: aleaG,  libelle: "Aléas",                      libelle_modele: "Aléas",                         ligne_modele: 90, mode: pct,     assiette: ca_ttc, tva: 0.085, tva_sourcee: true, alea: true, repere: null}
+
+  - id: V
+    titre: "Commercialisation"
+    titre_modele: "FRAIS DE VENTE"
+    postes:
+      - {id: com1,   libelle: "Commercialisation logements", libelle_modele: "Commercialisation  logements", ligne_modele: 98, mode: pct,     assiette: ca_produit_1, tva: 0.085, tva_sourcee: true, repere: {type: ratio_place, valeur: 10.0}, sub: "Produit 1"}
+      - {id: com2,   libelle: "Commercialisation logements", libelle_modele: "Commercialisation  logements", ligne_modele: 99, mode: pct,     assiette: ca_produit_2, tva: 0.085, tva_sourcee: true, repere: {type: ratio_place, valeur: 10.0}, sub: "Produit 2"}
+      - {id: acte,   libelle: "Frais d'acte et de prêt",    libelle_modele: "Frais d'acte et de prêt",       ligne_modele: 100, mode: pct,    assiette: ca_produit_1, tva: 0.085, tva_sourcee: true, repere: null, sub: "Pack"}
+      - {id: pack,   libelle: "Frais package (int int)",    libelle_modele: "Frais package (int int)",       ligne_modele: 101, mode: pct,    assiette: ca_produit_1, tva: 0.085, tva_sourcee: true, repere: null, sub: "Pack"}
+      - {id: proc,   libelle: "Frais de proc et dossier bancaire", libelle_modele: "Frais de proc et frais de dossier bancaire", ligne_modele: 102, mode: unit, assiette: lots, unite: "€/lot", tva: 0.085, tva_sourcee: true, repere: null, sub: "Pack"}
+      - {id: gpl,    libelle: "Garantie premier locataire", libelle_modele: "Garantie premier locataire",    ligne_modele: 103, mode: pct,    assiette: loyers_annuels, tva: 0.085, tva_sourcee: true, repere: null, sub: "Pack"}
+      - {id: aleaV,  libelle: "Aléas",                      libelle_modele: "Aléas",                         ligne_modele: 104, mode: pct,    assiette: ca_ttc, tva: 0.085, tva_sourcee: true, alea: true, repere: null}
