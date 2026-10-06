@@ -80,6 +80,12 @@ def ensure_schema(conn) -> None:
           PRIMARY KEY (run_label, parcel_id))"""))
     conn.execute(text("CREATE INDEX IF NOT EXISTS score_labuse_run_bande "
                       "ON score_labuse (run_label, bande)"))
+    # VITESSE-FICHE-2 — la fiche lit `WHERE run_label = :r AND idu = :idu` (bloc analyse_labuse) ;
+    # la PK est sur (run_label, parcel_id), AUCUN index sur `idu` → Parallel Seq Scan de ~1 M lignes
+    # (mesuré 123-290 ms/fiche). Index exact sur la clé lue → recherche directe (~0,1 ms). Valeurs
+    # servies IDENTIQUES (même ligne).
+    conn.execute(text("CREATE INDEX IF NOT EXISTS score_labuse_run_idu "
+                      "ON score_labuse (run_label, idu)"))
 
 
 # ── lecture du Signal (p_raw d'un run p_score_v2, joint par IDU) ──────────────

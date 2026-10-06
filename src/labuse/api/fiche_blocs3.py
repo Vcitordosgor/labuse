@@ -141,12 +141,21 @@ def pm_voisines(db: Session, idu: str) -> dict:
     if not _has(db, "parcelle_personne_morale", "v_parcel_dvf_last"):
         return {"disponible": False, "rayon_m": PM_VOISIN_RAYON_M, "mois": PM_VOISIN_MOIS,
                 "acquereurs": [], "source": "DVF × DGFiP", "millesime": "DVF + DGFiP 2025"}
+    # VITESSE-FICHE-2 — on ne lit de la dernière mutation que SA DATE. L'ancien
+    # `JOIN v_parcel_dvf_last dl` matérialisait la vue ENTIÈRE (CTE multi-agrégats sur tout
+    # `dvf_mutations_parcelle` — seq scan 100 k lignes + planification ~56 ms) avant de n'en
+    # garder que les ~16 voisins (mesuré 137-236 ms/fiche). On remplace par un LATERAL corrélé
+    # qui lit la MÊME grandeur — `max(date_mutation)` par parcelle, = `v_parcel_dvf_last.date_mutation`
+    # (vue = `DISTINCT ON (id_parcelle) … ORDER BY date_mutation DESC`) — via l'index `ix_dvfp_parcelle`,
+    # uniquement pour les voisins retenus. Résultat IDENTIQUE (0 écart sur 300 parcelles, 94 non vides),
+    # ~8 ms/fiche.
     rows = db.execute(text(
         "SELECT pm.denomination, pm.siren, max(dl.date_mutation) AS derniere "
         "FROM parcels p0 "
         "JOIN parcels p2 ON p2.id <> p0.id AND ST_DWithin(p0.geom_2975, p2.geom_2975, :ray) "
         "JOIN parcelle_personne_morale pm ON pm.idu = p2.idu AND pm.siren IS NOT NULL "
-        "JOIN v_parcel_dvf_last dl ON dl.idu = p2.idu "
+        "JOIN LATERAL (SELECT max(date_mutation) AS date_mutation "
+        "              FROM dvf_mutations_parcelle WHERE id_parcelle = p2.idu) dl ON TRUE "
         "WHERE p0.idu = :idu "
         "  AND dl.date_mutation >= (CURRENT_DATE - make_interval(months => :mois)) "
         "GROUP BY pm.denomination, pm.siren ORDER BY derniere DESC LIMIT 20"),
