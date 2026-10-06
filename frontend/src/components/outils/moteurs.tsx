@@ -130,8 +130,12 @@ export function M15({ communeOverride }: { communeOverride?: string | null } = {
 const ASM_MAX = 8   // RECETTE-1 (H5, Vic) — 8 parcelles maximum pour un assemblage.
 
 export function M16() {
-  const { msel, setMsel, setModuleMap, parcelPrefill, setParcelPrefill } = useApp()
+  const { msel, setMsel, setModuleMap, parcelPrefill, setParcelPrefill, select } = useApp()
   const run = useMutation({ mutationFn: () => motAssemblage(msel) })
+  // RECETTE-PROD-1 (1) — ouvrir l'Assemblage FERME la fiche parcelle en cours : sinon une fiche « sans
+  // rapport » restait ouverte à droite (état résiduel). Le clic-carte en mode assemblage compose msel
+  // (MapView, module='assemblage') et n'ouvre PAS de fiche → l'ancienne ne « ressuscite » pas.
+  useEffect(() => { select(null) }, [])  // eslint-disable-line react-hooks/exhaustive-deps
   // RECETTE-1 (H5, Vic) — refonte en ÉTAPES (modèle Comparer communes). Étape 1 = choisir les parcelles
   // (EntreeParcelle + clic carte), 8 max. La section « parcelles voisines » (rings/voisines) est RETIRÉE.
   const [max8, setMax8] = useState(false)
@@ -166,6 +170,10 @@ export function M16() {
   }, [mselPrefill])
   useEffect(() => {
     setModuleMap({ idus: msel, extra: null })
+    // RECETTE-PROD-1 (1) — toute modification de la sélection PÉRIME le résultat précédent : on le
+    // réinitialise pour que le bouton « Vérifier l'assemblage » RÉAPPARAISSE (et qu'aucun résultat
+    // obsolète ne traîne sous une sélection qui a changé).
+    run.reset()
     return () => setModuleMap({ idus: [], extra: null })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [msel])
@@ -204,10 +212,15 @@ export function M16() {
         {msel.length === 0 && <span className="text-[11px] text-txt-dim">aucune parcelle sélectionnée</span>}
       </div>
       {max8 && <p data-asm-max className="text-[10.5px] text-st-creuser">{ASM_MAX} parcelles maximum pour un assemblage.</p>}
-      <Bouton niveau="primaire" ton="vert" data-asm-verifier onClick={() => msel.length >= 2 && run.mutate()} disabled={msel.length < 2 || run.isPending}
-        className="w-full">
-        {run.isPending ? 'Vérification…' : `Vérifier l'assemblage (${msel.length})`}
-      </Bouton>
+      {/* RECETTE-PROD-1 (1) — le bouton DISPARAÎT une fois l'assemblage vérifié (résultat `d` présent) :
+          il ne reste plus affiché sous le résultat. Il réapparaît dès que la sélection change (run.reset
+          dans l'effet [msel] ci-dessus) pour permettre une nouvelle vérification. */}
+      {!d && (
+        <Bouton niveau="primaire" ton="vert" data-asm-verifier onClick={() => msel.length >= 2 && run.mutate()} disabled={msel.length < 2 || run.isPending}
+          className="w-full">
+          {run.isPending ? 'Vérification…' : `Vérifier l'assemblage (${msel.length})`}
+        </Bouton>
+      )}
       {run.isError && <ErrorState message="Erreur — au moins 2 parcelles valides ?" retry={() => run.mutate()} />}
 
       {/* RECETTE-1 (H5, Vic) — ÉTAPE 2 « Assemblage ». NON contiguës → « pas d'assemblage possible » +
