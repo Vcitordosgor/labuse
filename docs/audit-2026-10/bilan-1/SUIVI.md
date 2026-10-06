@@ -17,9 +17,9 @@ Venv : `~/Desktop/labuse/.venv/bin/python` ; imports LABUSE depuis ce worktree a
 | 0 | Vérifs + pièces en place | **fini** | — |
 | 1 | Catalogue `postes.yaml` | **fini** | bfe82e8e |
 | 2 | Moteur `bilan/moteur.py` | **fini** | e3038bff |
-| 3 | Écran onglet Bilan + porte Docs | **porte backend fini** (d0d2bb27) ; écran React en cours | — |
+| 3 | Écran onglet Bilan + porte Docs | **fini** (porte backend d0d2bb27 ; écran ce commit) — recette navigateur = Lot 7 | — |
 | 4 | Ratios du compte `bilan_ratios` | **fini** | a1365142 |
-| 5 | Sorties PDF + Excel + documents_generes | **backend fini** (ce commit) ; boutons front avec l'écran | — |
+| 5 | Sorties PDF + Excel + documents_generes | **fini** (backend 6f0edc3a ; boutons front ce commit) | — |
 | 6 | Page Docs 8 cartes | **fini** | a0fcce8b |
 | 7 | Recette + rapport + captures | à faire | — |
 

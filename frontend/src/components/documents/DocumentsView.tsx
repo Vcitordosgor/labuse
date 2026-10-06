@@ -11,10 +11,10 @@ import { Badge } from '../ui/Badge'
 import { Bouton } from '../ui/Bouton'
 import { Chip } from '../ui/Chip'
 import { ParcelInput } from '../ParcelInput'
-import { FinancierQuestionnaire } from '../fiche/FinancierQuestionnaire'
+import { BilanEcran } from '../fiche/BilanEcran'
 import {
   getFiche, getGabarit,
-  docDossierUrl, docBilanUrl, docApporteurUrl, docPreDossierUrl, docGabaritUrl, docComparatifUrl, docEtudeZoneUrl,
+  docDossierUrl, docBilanUrl, docBilanExcelUrl, docApporteurUrl, docPreDossierUrl, docGabaritUrl, docComparatifUrl, docEtudeZoneUrl,
   listerDocuments, enregistrerDocument, rafraichirDocument,
   type DocType, type DocGenereRow,
 } from '../../lib/api'
@@ -24,11 +24,11 @@ import { supprimerDocument } from '../../lib/api'
 import { CATALOGUE, type DocCatalogue } from './catalogue'
 
 // l'URL du générateur d'une ligne de bibliothèque (régénération à la demande — « Ouvrir »).
-function urlDocument(r: Pick<DocGenereRow, 'doc_type' | 'idus' | 'rayon_km'>): string | null {
+function urlDocument(r: Pick<DocGenereRow, 'id' | 'doc_type' | 'idus' | 'rayon_km'>): string | null {
   const i0 = r.idus[0]
   switch (r.doc_type) {
     case 'dossier': return i0 ? docDossierUrl(i0) : null
-    case 'bilan': return i0 ? docBilanUrl(i0) : null
+    case 'bilan': return i0 ? docBilanUrl(i0, r.id) : null
     case 'apporteur': return i0 ? docApporteurUrl(i0) : null
     case 'pre-dossier': return i0 ? docPreDossierUrl(i0) : null
     case 'gabarit': return i0 ? docGabaritUrl(i0) : null
@@ -272,12 +272,12 @@ function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
         )}
       </div>
 
-      {/* Bilan (exception assumée) : l'écran d'hypothèses pré-rempli sur la parcelle, qui génère ensuite. */}
+      {/* Bilan (exception assumée) : le bilan promoteur pré-rempli sur la parcelle (BILAN-1). Il
+          s'enregistre lui-même dans « Mes documents » via /bilan/{idu}/generer ; on se contente de
+          rafraîchir la liste (plus d'inscription en double ni d'entrée fantôme). */}
       {bilanOuvert && idu && (
         <div onClick={(e) => e.stopPropagation()}>
-          {/* DOCS-FIX-1 (P7) — on inscrit le Bilan dans « Mes documents » SEULEMENT après génération
-              réelle du PDF (onGenerated), jamais à l'ouverture de l'écran (plus d'entrée fantôme). */}
-          <FinancierQuestionnaire idu={idu} onGenerated={() => enregistrer('bilan', [idu])}
+          <BilanEcran idu={idu} onGenerated={() => qc.invalidateQueries({ queryKey: ['documents'] })}
             onClose={() => { setBilanOuvert(false); onClose() }} />
         </div>
       )}
@@ -333,8 +333,9 @@ function LigneDoc({ r, onChange }: { r: DocGenereRow; onChange: () => void }) {
         <div className="flex justify-end gap-1.5">
           <Bouton niveau="secondaire" ton="vert" className={btn} disabled={busy} onClick={ouvrir}>{busy ? 'Ouverture…' : 'Ouvrir'}</Bouton>
           {/* Excel : seulement sur les lignes Bilan ET si l'export existe (sinon absent, pas grisé). */}
-          {r.doc_type === 'bilan' && r.excel && (
-            <Bouton niveau="secondaire" ton="vert" className={btn} disabled={busy} onClick={ouvrir}>Excel</Bouton>
+          {r.doc_type === 'bilan' && r.excel && r.idus[0] && (
+            <Bouton niveau="secondaire" ton="vert" className={btn} disabled={busy}
+              onClick={() => void ouvrirDoc(docBilanExcelUrl(r.idus[0], r.id), `xls-${r.id}`)}>Excel</Bouton>
           )}
           {r.etat === 'modifie' && (
             <Bouton niveau="secondaire" ton="vert" className={btn} disabled={busy} onClick={regenerer}>Régénérer</Bouton>
