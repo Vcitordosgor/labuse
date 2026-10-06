@@ -20,7 +20,7 @@ Venv : `~/Desktop/labuse/.venv/bin/python` ; imports LABUSE depuis ce worktree a
 | 3 | Écran onglet Bilan + porte Docs | à faire | — |
 | 4 | Ratios du compte `bilan_ratios` | **fini** | (ce commit) |
 | 5 | Sorties PDF + Excel + documents_generes | à faire | — |
-| 6 | Page Docs 8 cartes | à faire | — |
+| 6 | Page Docs 8 cartes | **fini** | (ce commit) |
 | 7 | Recette + rapport + captures | à faire | — |
 
 ## Étape 0 — faits
