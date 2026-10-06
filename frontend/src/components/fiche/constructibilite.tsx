@@ -559,7 +559,10 @@ export function FaisabiliteTab({ idu }: { idu: string; embedded?: boolean }) {
     // Grille du panneau : UN seul rythme — 24 px entre sections (gap-6), aucune section ne rajoute
     // de padding horizontal (le gutter de 16 px vient du conteneur), les titres passent tous par
     // GroupLabel (capitales espacées, comme la fiche parcelle).
-    <div data-faisa-panneau className="flex flex-col gap-6">
+    // RECETTE-PROD-1 (4) — `min-w-0` : sans lui, un enfant large (ligne de citation PLU « art. 10.2 ·
+    // p.176 (PLU, calibrage validé) ») force le panneau plus large que sa colonne flex → défilement
+    // horizontal. Avec `min-w-0`, le panneau peut rétrécir et le texte passe à la ligne (règle Gabarit).
+    <div data-faisa-panneau className="flex min-w-0 flex-col gap-6">
       {/* 1 · SCÉNARIO — deux cartes (« En gardant le bâti » visible seulement si bati_present) */}
       <div data-faisa-scenarios className="flex gap-2">
         <button data-sc="terrain_libere" onClick={() => chooseSc('terrain_libere')}
@@ -689,7 +692,9 @@ export function FaisabiliteTab({ idu }: { idu: string; embedded?: boolean }) {
                   <span className="shrink-0 font-mono text-[9px] text-txt-dim">{s.n}</span>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-baseline justify-between gap-2">
-                      <span className="min-w-0 text-txt">{s.label}</span>
+                      {/* RECETTE-PROD-1 (4) — `break-words` sur le libellé aussi (la citation l'avait
+                          déjà) : jamais de défilement horizontal, le texte passe à la ligne. */}
+                      <span className="min-w-0 break-words text-txt">{s.label}</span>
                       {/* RECETTE-2 (T4) — valeur mono : wrap plutôt que coupe/nowrap. */}
                       <b className="min-w-0 break-words text-right font-mono font-medium tnum text-txt-hi">{s.valeur}</b>
                     </div>
