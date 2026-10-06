@@ -365,6 +365,9 @@ export function MapView() {
   const measureRef = useRef(measure)
   measureRef.current = measure
   const labelMarker = useRef<maplibregl.Marker | null>(null)
+  // RECETTE-PROD-1 (6b) — dernier centroïde de la parcelle sélectionnée (celui qui a servi au vol 2D),
+  // pour RECENTRER correctement en entrant en 3D (sinon le pitch la pousse « vers la droite »).
+  const selCentroidRef = useRef<[number, number] | null>(null)
   const [tilesLoading, setTilesLoading] = useState(false)   // P5 : chargement des tuiles
   // COUCHES-2 point 2 — ÉTAT DE CHARGEMENT D'UNE COUCHE : quand on allume un overlay, sa requête
   // (queryKey ['layer', …]) est en vol ; sans témoin l'écran restait MUET jusqu'à l'arrivée des
@@ -1100,7 +1103,16 @@ export function MapView() {
     }
     if (terrain3d) {
       m.setTerrain({ source: 'dem', exaggeration: 1.35 })
-      if (m.getPitch() < 20) m.easeTo({ pitch: 55, duration: 800 })
+      // RECETTE-PROD-1 (6b) — en entrant en 3D avec une fiche ouverte, RECENTRER sur la parcelle avec
+      // le MÊME décalage que le vol 2D (−200 px pour la fiche de 400 px) : sinon le seul changement de
+      // pitch la laisse « décalée vers la droite », sous le panneau. Sans fiche/centroïde : simple pitch.
+      const centroid = selCentroidRef.current
+      const ficheOuverte = useApp.getState().selectedIdu != null
+      if (centroid && ficheOuverte) {
+        m.easeTo({ center: centroid, pitch: Math.max(m.getPitch(), 55), offset: [-200, 0], duration: 800 })
+      } else if (m.getPitch() < 20) {
+        m.easeTo({ pitch: 55, duration: 800 })
+      }
       chargerBati()
       m.on('moveend', chargerBati)
     } else {
@@ -1323,7 +1335,7 @@ export function MapView() {
     // FICHE-FIX-5 (Lot A) — désélection : on VIDE la source de sélection (plus de liseré fantôme).
     const selSrc = () => m.getSource('selection') as (maplibregl.GeoJSONSource | undefined)
     // PING SYSTÉMATIQUE : toute sélection/focus (liste, module, CRM, notification, outil) recentre + pulse
-    if (!cible) { selSrc()?.setData({ type: 'FeatureCollection', features: [] }); return }
+    if (!cible) { selCentroidRef.current = null; selSrc()?.setData({ type: 'FeatureCollection', features: [] }); return }
     const feat = geo.data?.features.find((f) => (f.properties as { idu?: string }).idu === cible)
     let cancelled = false
     // RETOURS-13 R27/R32 — ZOOM FRANC (Vic : « le zoom est un peu timide ») : la parcelle doit se
@@ -1339,6 +1351,7 @@ export function MapView() {
     const panelOffset: [number, number] = selectedIdu ? [-200, 0] : [0, 0]
     const centroidReady = (c: [number, number] | null, surface?: number | null) => {
       if (!c || cancelled) return
+      selCentroidRef.current = c   // RECETTE-PROD-1 (6b) — mémorisé pour le recentrage en 3D
       m.flyTo({ center: c, zoom: Math.max(m.getZoom(), zoomCible(surface)), offset: panelOffset, duration: 800 })
     }
     // FICHE-FIX-5 (Lot A) — on charge la GÉOMÉTRIE de la parcelle (une seule requête, cache react-
