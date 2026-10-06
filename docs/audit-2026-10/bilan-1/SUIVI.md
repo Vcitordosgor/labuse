@@ -29,7 +29,9 @@ Venv : `~/Desktop/labuse/.venv/bin/python` ; imports LABUSE depuis ce worktree a
 | 4 | Ratios du compte `bilan_ratios` | **fini** | a1365142 |
 | 5 | Sorties PDF + Excel + documents_generes | **fini** (backend 6f0edc3a ; boutons front ce commit) | — |
 | 6 | Page Docs 8 cartes | **fini** | a0fcce8b |
-| 7 | Recette + rapport + captures | **fini** (ce commit) — captures écran vivant restent à prendre sur la pile lancée | — |
+| 7 | Recette + rapport + captures | **fini** — pytest bilan 20 verts, écran=PDF=Excel, 9 captures (dont 5 écran vivant) | cccf8c14 |
+
+**Tous les lots + les 4 décisions Vic avant merge sont faits.** Branche prête (pas de merge par CC).
 
 ## Étape 0 — faits
 - `pwd` = /Users/openclaw/Desktop/labuse-bilan1 ; branche `feat/bilan-1` ; arbre propre (seul le dossier bilan-1 non suivi).
