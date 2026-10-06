@@ -629,6 +629,17 @@ def _construire_tuile(db: Session, c: CoucheTuyau, z: int, x: int, y: int) -> by
     # l'index GiST porte (cf. _srid_reel). Mêmes lignes (ST_SetSRID ne déplace aucune coordonnée,
     # && compare les mêmes boîtes), mêmes octets — seule la VITESSE change.
     g_filtre = f"m.{c.geom}" if _srid_reel(db, c.table, c.geom) == c.srid else g_src
+    # RECETTE-PROD-1 (#7, précision Vic) — À BAS ZOOM (vue île / aperçu), SIMPLIFIER la géométrie AVANT
+    # l'encodage MVT. Une couche détaillée (OCS GE « artificialisation » ~12 k polygones à bords fins,
+    # DPU…) produit sinon une tuile ÎLE ÉNORME (~0,9 Mo mesuré à z9) longue à générer : sous charge prod
+    # elle « n'apparaît qu'en zoomant ». Tolérance SOUS-PIXEL (largeur de tuile 3857 ÷ 1024 ≈ ¼ de pixel)
+    # → AUCUN changement visible, mais bien moins de sommets → tuile île légère, servie à tous les zooms.
+    # `ST_SimplifyPreserveTopology` (jamais de géométrie invalide qui ferait sauter des features).
+    # z ≥ 12 INCHANGÉ (même SQL → octets identiques → cache de détail et déterminisme VITESSE-PROD-1 intacts).
+    geom_in = g_3857
+    if z < 12:
+        tol = 40075016.686 / (2 ** z) / 1024
+        geom_in = f"ST_SimplifyPreserveTopology({g_3857}, {tol:.4f})"
     props_sql = "".join(f', {expr} AS "{nom}"' for nom, expr in c.props)
     sql = text(f"""
         WITH b AS (
@@ -636,7 +647,7 @@ def _construire_tuile(db: Session, c: CoucheTuyau, z: int, x: int, y: int) -> by
                    ST_TileEnvelope(:z, :x, :y, margin => 0.125) AS env_marge
         ),
         mvt AS (
-            SELECT ST_AsMVTGeom({g_3857}, b.env, 4096, 64, true) AS geom{props_sql}
+            SELECT ST_AsMVTGeom({geom_in}, b.env, 4096, 64, true) AS geom{props_sql}
             FROM {c.table} m, b
             WHERE {where}
               AND {g_filtre} && {filtre}
