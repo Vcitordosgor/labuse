@@ -224,9 +224,18 @@ export function BilanEcran({ idu, onClose, onGenerated }:
               <h3 className="mb-2 text-[13px] font-semibold text-txt-mut">Ratios</h3>
               <table className="w-full text-[13px]">
                 <tbody>
-                  {res.ratios.map(([k, v]) => (
-                    <tr key={k}><td className="py-0.5 text-txt-mut">{k}</td><td className="py-0.5 text-right tabular-nums text-txt">{v}</td></tr>
-                  ))}
+                  {res.ratios.map(([k, v]) => {
+                    const alerte = k.startsWith('Coût const') ? vrais['cout_const'] : undefined
+                    return (
+                      <tr key={k}>
+                        <td className="py-0.5 align-top">
+                          <span className={alerte ? 'text-amber' : 'text-txt-mut'}>{k}</span>
+                          {alerte && <small className="block text-amber">{alerte}</small>}
+                        </td>
+                        <td className={`py-0.5 text-right align-top tabular-nums ${alerte ? 'text-amber' : 'text-txt'}`}>{v}</td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </section>
@@ -266,6 +275,9 @@ export function BilanEcran({ idu, onClose, onGenerated }:
                 <ChampTexte label="Dernier prix DVF (info)" value={fmtEur(modele.sourcee.prix_achat_dvf.valeur)} source />
               )}
             </div>
+            {vrais['stax'] && (
+              <div className="border-l-2 border-amber px-3 pb-1 text-[12px] text-amber">{vrais['stax']}</div>
+            )}
             {(modele.reperes_publics['faisabilite'] || modele.reperes_publics['sitadel']) && (
               <div className="flex flex-wrap gap-x-4 gap-y-1 border-t border-line px-3 py-2 text-[12px] text-txt-dim">
                 {modele.reperes_publics['faisabilite']?.parkings != null && (
@@ -358,9 +370,11 @@ export function BilanEcran({ idu, onClose, onGenerated }:
 
 // ── sous-composants ──────────────────────────────────────────────────────
 function Overlay({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
+  // Fond OPAQUE (bg-bg, la base de l'app) : la fenêtre prend tout l'écran, on ne voit
+  // jamais la page en dessous.
   return (
-    <div className="fixed inset-0 z-50 overflow-auto bg-[rgba(6,10,8,0.92)]" onClick={onClose}>
-      <div className="mx-auto my-6 max-w-[1500px] rounded-lg border border-line bg-surface" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 overflow-auto bg-bg" onClick={onClose}>
+      <div className="mx-auto my-6 max-w-[1500px] rounded-lg border border-line bg-surface-1" onClick={(e) => e.stopPropagation()}>
         {children}
       </div>
     </div>

@@ -157,5 +157,15 @@ sur le nouveau bilan. Démontage = un chantier dédié.
    le repère Faisabilité est étiqueté « (estimation) ».
 4. **Alertes de vraisemblance non bloquantes** (moteur) : coût de construction hors
    1 000–5 000 €/m² SUV, marge > 25 % du CA HT → ligne ambrée « valeur inhabituelle,
-   à vérifier » (sur le poste et au résultat) ; le bilan se calcule quand même.
+   à vérifier » ; le bilan se calcule quand même.
 5. Nouvelle capture `ecran-bilan-vide.png` + `ecran-bilan-complet.png` (BC0343).
+
+### 9 bis. 2ᵉ tour de retours (capture BC0343)
+1. **Fenêtre opaque** : l'overlay du bilan passe de `rgba(…,.92)` à **`bg-bg`** (base
+   de l'app) — on ne voit plus la page Docs en dessous.
+2. **Le ratio « Coût const. m² SUV HT » porte l'alerte lui-même** : la borne
+   1 000–5 000 €/m² est désormais évaluée sur le **ratio servi** (construction +
+   imprévus ÷ SUV), et l'alerte ambrée s'affiche **sur la ligne du ratio** (plus
+   seulement la marge).
+3. **Surface taxable < 50 % de la SUV totale** → nouvelle alerte de vraisemblance
+   ambrée sous le champ Surface taxable.

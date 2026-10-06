@@ -407,7 +407,7 @@ class Moteur:
                 prix_max_m2 = prix_max / e.programme.terrain
 
         ratios = self._ratios(lignes, blocs_tot, pt, ctx, complet, res_net)
-        vrais = self._vraisemblance(lignes, marge, complet)
+        vrais = self._vraisemblance(lignes, pt, e.programme, marge, complet)
 
         return ResultatBilan(
             lignes=lignes,
@@ -437,18 +437,28 @@ class Moteur:
             vraisemblance=vrais,
         )
 
-    def _vraisemblance(self, lignes, marge, complet) -> list[dict[str, str]]:
+    def _vraisemblance(self, lignes, pt, programme, marge, complet) -> list[dict[str, str]]:
         """Alertes de vraisemblance NON bloquantes (le bilan se calcule quand même) :
         une valeur hors des bornes usuelles est signalée « à vérifier », jamais corrigée."""
         out: list[dict[str, str]] = []
+        suv = pt["suv"]
+        # Coût de construction au m² SUV (= le RATIO servi : construction + imprévus ÷ SUV)
         constr = next((ln for ln in lignes if ln.id == "constr"), None)
-        if constr and constr.etat != SANS_OBJET and constr.taux_ou_montant is not None:
-            v = constr.taux_ou_montant  # €/m² de SUV (poste en mode unit)
-            if v < 1000 or v > 5000:
+        aleaC = next((ln for ln in lignes if ln.id == "aleaC"), None)
+        if constr and constr.ht is not None and suv:
+            cout = (constr.ht + (aleaC.ht or 0.0 if aleaC else 0.0)) / suv
+            if cout < 1000 or cout > 5000:
                 out.append({
-                    "cible": "constr",
+                    "cible": "cout_const",
                     "message": "Coût de construction inhabituel (hors 1 000–5 000 €/m² SUV), à vérifier.",
                 })
+        # Surface taxable très basse par rapport à la SUV totale
+        stax = programme.surface_taxable
+        if stax is not None and suv and stax < 0.5 * suv:
+            out.append({
+                "cible": "stax",
+                "message": "Surface taxable inhabituellement basse (< 50 % de la SUV totale), à vérifier.",
+            })
         if complet and marge is not None and marge > 0.25:
             out.append({
                 "cible": "marge",

@@ -40,6 +40,12 @@ Venv : `~/Desktop/labuse/.venv/bin/python` ; imports LABUSE depuis ce worktree a
 4. Alertes de vraisemblance non bloquantes (moteur `vraisemblance`) : coût const. hors 1 000–5 000 €/m², marge > 25 % → ligne ambrée.
 5. Nouvelles captures BC0343 (vide + complet). Boot 8820 (8810 idle, pas de contention), serveur arrêté après, 8810 jamais touché. pytest bilan 62 · tsc0 · vitest237.
 
+## 2ᵉ tour de retours (capture BC0343) — FAITS
+1. Fenêtre du bilan OPAQUE (`bg-bg` au lieu de rgba .92) — on ne voit plus Docs dessous.
+2. Ratio « Coût const. m² SUV HT » porte l'alerte ambrée lui-même (borne 1 000–5 000 €/m² évaluée sur le ratio servi = constr+imprévus÷SUV, pas sur le poste).
+3. Alerte vraisemblance si surface taxable < 50 % de la SUV totale.
+pytest bilan 63 · tsc0 · vitest237. Boot 8820 (8810 idle), serveur arrêté, 8810 (200) jamais touché. Capture complète BC0343 régénérée.
+
 ## Étape 0 — faits
 - `pwd` = /Users/openclaw/Desktop/labuse-bilan1 ; branche `feat/bilan-1` ; arbre propre (seul le dossier bilan-1 non suivi).
 - Base `01965f44` = `origin/main` : contient DOCS-1 + DOCS-FIX-1. **TUILES-TX-1 (`2f6cf7ec`) n'est PAS mergé dans origin/main** (signalé à Vic) — sans effet sur ce mandat (fix tuiles MVT, hors périmètre bilan/docs).

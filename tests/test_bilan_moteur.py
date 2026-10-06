@@ -160,14 +160,26 @@ def test_vraisemblance_non_bloquante():
     base = EntreesBilan(
         programme=Programme(terrain=1746, surface_taxable=2560),
         produits=[Produit("Libre", 46, 2560, 4800, 0.085)],
-        postes={"constr": SaisiePoste(2300, SAISI)},  # dans les bornes
+        postes={"constr": SaisiePoste(2300, SAISI)},  # coût/m² dans les bornes
     )
     assert Moteur().calculer(base).vraisemblance == []
-    base.postes["constr"] = SaisiePoste(6000, SAISI)  # coût hors 1 000–5 000
-    v = Moteur().calculer(base).vraisemblance
-    assert any(a["cible"] == "constr" for a in v)
-    base.postes["constr"] = SaisiePoste(300, SAISI)  # trop bas
-    assert any(a["cible"] == "constr" for a in Moteur().calculer(base).vraisemblance)
+    # coût de construction au m² SUV hors 1 000–5 000 → alerte sur le RATIO
+    base.postes["constr"] = SaisiePoste(6000, SAISI)
+    assert any(a["cible"] == "cout_const" for a in Moteur().calculer(base).vraisemblance)
+    base.postes["constr"] = SaisiePoste(300, SAISI)
+    assert any(a["cible"] == "cout_const" for a in Moteur().calculer(base).vraisemblance)
+
+
+def test_vraisemblance_surface_taxable_basse():
+    """Surface taxable < 50 % de la SUV totale → alerte non bloquante."""
+    e = EntreesBilan(
+        programme=Programme(terrain=1746, surface_taxable=1000),  # < 50 % de 2560
+        produits=[Produit("Libre", 46, 2560, 4800, 0.085)],
+        postes={"constr": SaisiePoste(2300, SAISI)},
+    )
+    assert any(a["cible"] == "stax" for a in Moteur().calculer(e).vraisemblance)
+    e.programme.surface_taxable = 2000  # ≥ 50 %
+    assert not any(a["cible"] == "stax" for a in Moteur().calculer(e).vraisemblance)
 
 
 def test_apport_est_en_base_ttc():
