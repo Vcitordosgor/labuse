@@ -82,13 +82,12 @@ function BackBar({ onBack, titre }: { onBack: () => void; titre: string }) {
   )
 }
 
-// ── MODE PISCINES (pisciniste) — RECETTE-1 H13.3 : ASSISTANT EN 2 ÉTAPES. Étape 1 « Périmètre »
-// (toute l'île OU une commune, avec son compte) → étape 2 « Statut » (confirmées / à confirmer / les
-// deux) → résultat : compte, CARTE EN PARCELLES COLORÉES (plus des points/gouttes), liste paginée par
-// 50. Source UNIQUE fusionnée `piscines` (FLAIR ∪ CoSIA dédoublonnées, statut servie/à confirmer selon
-// la précision MESURÉE par classe). « pas une piscine » (correction de donnée) conservé en ICÔNE.
+// ── MODE PISCINES (pisciniste) — Étape 1 « Périmètre » (toute l'île OU une commune, avec son compte) →
+// résultat : compte, CARTE EN PARCELLES COLORÉES, liste paginée par 50. Source UNIQUE fusionnée
+// `piscines` (FLAIR ∪ CoSIA dédoublonnées). RECETTE-PROD-1 (#9, précision Vic) — UNE SEULE catégorie
+// « Piscines » : aucune notion de statut (ni « confirmées » ni « à confirmer »), une couleur, un compteur.
+// Le paramètre `statut='tous'` interne = « toutes les piscines » (la source agrège les deux bandes).
 type PiscStatut = 'servie' | 'a_confirmer' | 'tous'
-const STATUT_LBL: Record<PiscStatut, string> = { servie: 'Confirmées', a_confirmer: 'À confirmer', tous: 'Confirmées et à confirmer' }
 
 function ModePiscines({ onBack }: { onBack: () => void }) {
   const focusParcelle = useApp((s) => s.focusParcelle)
@@ -141,9 +140,11 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
     return () => { vivant = false }
   }, [step, commune, statut, setModuleMap])
 
+  // RECETTE-PROD-1 (#9, précision Vic) — UN SEUL compteur par périmètre (plus de « N conf · N à conf ») :
+  // la catégorie « Piscines » est unique, le total agrège les deux bandes de la source.
   const CompteBadge = ({ c, a }: { c: number; a: number }) => (
-    <span className="tnum shrink-0 text-[11px] text-txt">
-      <b style={{ color: TOKENS.mint }}>{fmtInt(c)}</b> conf.<span className="text-txt-dim"> · {fmtInt(a)} à conf.</span>
+    <span className="tnum shrink-0 text-[11px]">
+      <b style={{ color: TOKENS.mint }}>{fmtInt(c + a)}</b>
     </span>
   )
 
@@ -166,7 +167,7 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
               <b className="text-[12px] text-txt-hi">Toute l’île</b>
               <CompteBadge c={ileConf} a={ileAConf} />
             </button>
-            {/* RECETTE-1 H13.1 — les 24 communes, chacune « N conf · N à conf » (plus de top-8 tronqué). */}
+            {/* RECETTE-1 H13.1 — les 24 communes, chacune avec son compte unique de piscines (plus de top-8 tronqué). */}
             {agg.data.communes.map((c) => (
               <button key={c.commune} data-piscines-perim={c.commune} onClick={() => { setCommune(c.commune); setStep('resultat') }}
                 className="hover-fill flex items-center justify-between gap-2 rounded-lg border border-line-2 bg-surface-3 px-3 py-1.5 text-left transition-colors duration-quick">
@@ -192,23 +193,14 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
       <div className="flex items-center gap-2">
         <Retour data-piscines-back-perim label="Changer le périmètre" onClick={() => setStep('perimetre')} />
       </div>
-      {/* Compte + légende des couleurs de la carte */}
+      {/* Compte — RECETTE-PROD-1 (#9, précision Vic) : UNE SEULE catégorie « Piscines », un seul
+          compteur, aucune notion de statut (ni « confirmées » ni « à confirmer »), une seule couleur. */}
       <div className="rounded-lg border px-3 py-2.5" style={{ borderColor: `${TOKENS.mint}4d`, background: `${TOKENS.mint}0f` }}>
         <div>
           <b data-piscines-total className="tnum text-2xl font-semibold" style={{ color: TOKENS.mint }}>{fmtInt(nbStatut)}</b>
-          <span className="ml-2 text-[11px] text-txt-mut">piscines « {STATUT_LBL[statut].toLowerCase()} » {commune ? `à ${commune}` : 'à La Réunion'}</span>
-          {/* RECETTE-2 (D14f) — d'où vient « à confirmer » : polygone CoSIA « probable » (sans détection
-              ortho/FLAIR corroborante) d'au moins 8 m² ; précision mesurée 30–60 % sur audit (30/classe).
-              Les détections FLAIR, elles, sont toujours « confirmées ». */}
-          <span data-piscines-i tabIndex={0} title={'« À confirmer » = polygone CoSIA « probable » (sans détection ortho/FLAIR corroborante à ≤ 2 m) d\'au moins 8 m² — précision mesurée 30 à 60 % (audit 30/classe). Les détections FLAIR sont toujours « confirmées ».'}
-            className="ml-1.5 inline-flex h-[14px] w-[14px] cursor-help items-center justify-center rounded-full border border-line-2 text-[8.5px] text-txt-dim align-middle">i</span>
+          <span className="ml-2 text-[11px] text-txt-mut">piscines {commune ? `à ${commune}` : 'à La Réunion'}</span>
+          {carteBusy && <span className="ml-2 text-[9.5px] text-txt-dim">· carte en cours…</span>}
         </div>
-        {/* RECETTE-PROD-1 (9c) — mode unique : les DEUX légendes sont toujours affichées. */}
-        <span className="mr-3 mt-1 inline-flex items-center gap-1 text-[9.5px] text-txt-dim">
-          <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{ background: `${TOKENS.mint}66`, border: `1px solid ${TOKENS.mint}` }} />confirmées</span>
-        <span className="mt-1 inline-flex items-center gap-1 text-[9.5px] text-txt-dim">
-          <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{ background: '#E0A94F66', border: '1px solid #E0A94F' }} />à confirmer</span>
-        {carteBusy && <span className="ml-2 text-[9.5px] text-txt-dim">· carte en cours…</span>}
       </div>
 
       {/* LISTE paginée : IDU · commune · source · statut · Fiche → · « pas une piscine » (icône).
@@ -227,7 +219,7 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
                   <span className="font-mono text-[11px] text-txt-hi">{it.idu.slice(8)}</span>
                   <span className="shrink-0 text-[10.5px] text-txt-mut">{it.commune}</span>
                   <span className="ml-auto flex shrink-0 items-center gap-2">
-                    {it.statut === 'a_confirmer' && <span className="rounded bg-amber-500/15 px-1 text-[8.5px] font-medium text-amber-500">à confirmer</span>}
+                    {/* RECETTE-PROD-1 (#9, précision Vic) — badge « à confirmer » retiré : une seule catégorie. */}
                     <span className="text-[10px] text-mint hover:underline">Fiche →</span>
                   </span>
                 </div>

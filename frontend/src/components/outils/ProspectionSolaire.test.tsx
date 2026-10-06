@@ -86,14 +86,15 @@ describe('SOLAIRE — deux modes', () => {
     expect(document.body.textContent).toContain('Toute l’île')
     expect(screen.getByText('Saint-Pierre')).toBeTruthy()            // les communes sont listées
     expect(document.querySelector('[data-piscines-row]')).toBeNull() // pas de listing à l'étape périmètre
-    // RECETTE-PROD-1 (9c/9d) — l'étape « Statut » (3 choix) est SUPPRIMÉE : cliquer un périmètre mène
-    // DIRECTEMENT au résultat, en mode unique « confirmées et à confirmer ».
+    // RECETTE-PROD-1 (9c/9d + #9 précision Vic) — l'étape « Statut » est SUPPRIMÉE : cliquer un
+    // périmètre mène DIRECTEMENT au résultat. UNE SEULE catégorie « Piscines » : un compteur, aucune
+    // notion de statut (ni « confirmées » ni « à confirmer »).
     fireEvent.click(document.querySelector('[data-piscines-perim="ile"]')!)
     await waitFor(() => expect(document.querySelectorAll('[data-piscines-row]').length).toBe(2))
     expect(document.querySelector('[data-piscines-statut="servie"]')).toBeNull()   // plus d'étape statut
-    expect(document.body.textContent).toContain('confirmées et à confirmer')       // mode unique
-    expect(document.querySelector('[data-piscines-total]')?.textContent).toContain('980')  // 12 480 + 500
-    expect(document.body.textContent).toContain('à La Réunion')
+    expect(document.querySelector('[data-piscines-total]')?.textContent).toContain('980')  // 12 480 + 500 (total unique)
+    expect(document.body.textContent).toContain('piscines à La Réunion')
+    expect(document.body.textContent ?? '').not.toMatch(/confirmée|à confirmer/i)   // aucune notion de statut
     // RECETTE-PROD-1 (9b) — la phrase « la carte montre tout le périmètre » est retirée.
     expect(document.body.textContent ?? '').not.toContain('la carte montre')
   })

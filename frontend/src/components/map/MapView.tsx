@@ -709,17 +709,16 @@ export function MapView() {
         filter: ['==', ['get', 'kind'], 'zone-iso'],
         paint: { 'line-color': '#4ADE80', 'line-opacity': 0.6, 'line-width': 2 } })
       // RECETTE-1 H13.3 — PISCINES en PARCELLES COLORÉES (plus des gouttes/points) : le polygone de
-      // chaque parcelle à piscine du périmètre, teinté par STATUT (confirmées menthe · à confirmer ambre).
+      // chaque parcelle à piscine du périmètre. RECETTE-PROD-1 (#9, précision Vic) — UNE SEULE catégorie
+      // « Piscines », donc UNE SEULE COULEUR (menthe) : plus de distinction confirmées/à confirmer.
       // kind='piscine-parcelle' (source module-extra, servie par /prospection-piscines/parcelles). Le clic
       // ouvre la fiche via le handler parcels-fill sous-jacent (la parcelle vectorielle porte le vrai idu).
       m.addLayer({ id: 'module-piscine-fill', type: 'fill', source: 'module-extra',
         filter: ['==', ['get', 'kind'], 'piscine-parcelle'],
-        paint: { 'fill-color': ['match', ['get', 'statut'], 'a_confirmer', '#E0A94F', '#4ADE80'],
-                 'fill-opacity': ['match', ['get', 'statut'], 'a_confirmer', 0.28, 0.4] } })
+        paint: { 'fill-color': '#4ADE80', 'fill-opacity': 0.4 } })
       m.addLayer({ id: 'module-piscine-line', type: 'line', source: 'module-extra',
         filter: ['==', ['get', 'kind'], 'piscine-parcelle'],
-        paint: { 'line-color': ['match', ['get', 'statut'], 'a_confirmer', '#E0A94F', '#4ADE80'],
-                 'line-width': 1.4, 'line-opacity': 0.95 } })
+        paint: { 'line-color': '#4ADE80', 'line-width': 1.4, 'line-opacity': 0.95 } })
       m.addLayer({ id: 'module-pts', type: 'circle', source: 'module-extra',
         // LOT8b — la même couche de points sert les permis (radar) ET les piscines (« 💧 Voir sur la
         // carte » : toutes les piscines de l'île en marqueurs). Les deux ne coexistent jamais (outils
