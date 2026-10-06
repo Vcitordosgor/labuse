@@ -432,7 +432,10 @@ function popupAttenteNode(): HTMLElement {
 // COUCHES-STYLE-6 : le fond « Clair » est retiré du sélecteur → sa branche est retirée ici aussi.
 const PARCELLES_OUTLINE = 'tuyau-limites_parcelles-outline'
 type PaintParcelles = { color: string; width: unknown; opacity: unknown }
-function paintParcellesParFond(basemap: string): PaintParcelles {
+// G1 (lot 3) — exporté pour que le jumeau ÎLE du contour (`ile-limites`, servi par la source
+// `parcels-ile` déjà chargée) porte EXACTEMENT le même style par fond que l'overlay commune
+// `tuyau-limites_parcelles-outline`. Un seul endroit décrit le style du contour cadastral.
+export function paintParcellesParFond(basemap: string): PaintParcelles {
   if (basemap === 'ortho')
     return { color: '#0A0F0C',
       width: ['interpolate', ['linear'], ['zoom'], 13, 0.4, 15, 1.0, 17, 1.8, 19, 2.2],
@@ -450,7 +453,8 @@ export function CouchesTuyauLayers({ map, ready }: {
   map: React.MutableRefObject<maplibregl.Map | null>; ready: boolean
 }) {
   const { data: plan } = useTuyauPlan()
-  const { tuyauActives, setTuyauActives, setTuyauError, basemap } = useApp()
+  const { tuyauActives, setTuyauActives, setTuyauError, basemap, commune } = useApp()
+  const ile = commune == null   // G1 (lot 3) — en vue île le contour vient de `parcels-ile`
   const monte = useRef(false)
 
   // COUCHES-RECETTE-1 A5 : à l'initialisation, seuls les Repères (limites) sont cochés ; les autres
@@ -549,7 +553,11 @@ export function CouchesTuyauLayers({ map, ready }: {
     const m = map.current
     if (!m || !ready || !plan) return
     for (const c of plan) {
-      const vis = tuyauActives[c.kind] ? 'visible' : 'none'
+      // G1 (lot 3) — en vue ÎLE, `limites_parcelles` est RENDU par le jumeau `ile-limites`
+      // (source `parcels-ile`, DÉJÀ chargée) ; l'overlay du tuyau est éteint → MapLibre ne
+      // demande pas ses tuiles (seconde source en extent 4096, ~9,9 Mo/boot : le doublon de
+      // l'audit VITESSE-CARTE-1 G1). En vue commune il reste servi par le tuyau, inchangé.
+      const vis = (tuyauActives[c.kind] && !(ile && c.kind === 'limites_parcelles')) ? 'visible' : 'none'
       if (c.geometrie === 'raster') {   // RETOURS-13 P5 — le calque raster (courbes de niveau) suit son toggle
         const rid = `tuyau-${c.kind}-raster`
         if (m.getLayer(rid)) m.setLayoutProperty(rid, 'visibility', vis)
@@ -557,7 +565,7 @@ export function CouchesTuyauLayers({ map, ready }: {
       }
       for (const spec of calques(c)) if (m.getLayer(spec.id)) m.setLayoutProperty(spec.id, 'visibility', vis)
     }
-  }, [tuyauActives, ready, plan, map])
+  }, [tuyauActives, ready, plan, map, ile])
 
   // COUCHES-STYLE-5 : le contour des parcelles du tuyau suit le FOND actif (comme V1). Réappliqué à
   // chaque bascule de fond ET au montage (dép. plan) ; en Sombre les valeurs STYLE-2 sont ré-posées

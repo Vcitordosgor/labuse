@@ -13,7 +13,7 @@ import { communePastille } from '../../lib/communes'
 import { useApp, type Filters, type MapTool } from '../../store/useApp'
 import { BASEMAP_SOURCES, ORTHO_MONDE, activeBasemapKey } from './basemaps'
 import { Legend } from './Legend'
-import { CouchesTuyauLayers } from './CouchesTuyau'  // COUCHES-TUYAU-1 lot 2
+import { CouchesTuyauLayers, paintParcellesParFond } from './CouchesTuyau'  // COUCHES-TUYAU-1 lot 2 · G1 lot 3
 import { VefaDetail } from './VefaDetail'
 import { MapToolbar } from './MapToolbar'
 import { Chargement } from '../Loading'
@@ -357,6 +357,7 @@ export function MapView() {
   const [mapReady, setMapReady] = useState(false) // state : re-déclenche les effets APRÈS le load (remontage CRM→cartes)
   const { selectedIdu, select, filters, layers, basemap, orthoYear, terrain3d, batiVisible, tool, setTool, setProfilLigne, zone, setZone, moduleMap, flyTo, setFlyTo, commune, verdict, iaRestitution, module, comparePicking, view, focusIdu, focusNonce, fitCommuneNonce } = useApp()
   const bpeDomains = useApp((s) => s.bpeDomains)   // M137-V — filtre par domaine de la couche BPE
+  const tuyauActives = useApp((s) => s.tuyauActives)   // G1 lot 3 — état du toggle « Limites parcelles »
   const ile = commune == null
   // M55-G point 8 — décision Vic : sans analyse demandée, l'avis LABUSE ne s'affiche pas.
   // Les couleurs d'OPINION (palette tiers, lisérés promues/brûlantes, marqueurs « chauds »)
@@ -660,6 +661,13 @@ export function MapView() {
         paint: { 'fill-color': STATUS_COLOR, 'fill-opacity': STATUS_OPACITY } })
       m.addLayer({ id: 'ile-line', type: 'line', ...SL, layout: { visibility: 'none' },
         filter: PROMUES_FILTER, paint: { 'line-color': STATUS_COLOR, 'line-width': 0.6, 'line-opacity': 0.9 } })
+      // G1 (lot 3) — CONTOUR CADASTRAL NEUTRE en vue île, servi par `parcels-ile` (DÉJÀ chargée)
+      // au lieu de la 2ᵉ source `tuyau-limites_parcelles` en extent 4096 (~9,9 Mo/boot, doublon de
+      // l'audit VITESSE-CARTE-1 G1). Jumeau île de `tuyau-limites_parcelles-outline` : MÊME style
+      // par fond (paintParcellesParFond). Suit le toggle « Limites parcelles » (tuyauActives), île
+      // seule. Pas de filtre d'opinion : c'est le maillage neutre, visible à tous zooms (z9-15 + sur-zoom).
+      m.addLayer({ id: 'ile-limites', type: 'line', ...SL, layout: { visibility: 'none' },
+        paint: { 'line-color': '#8FA69A', 'line-width': 0.3, 'line-opacity': 0.4 } })
       // RECETTE-12 B1 — jumeau île du contour discret des non-promues (minzoom, mode analyse seul)
       m.addLayer({ id: 'ile-muet', type: 'line', ...SL, minzoom: 15, filter: NON_PROMUES_FILTER,
         layout: { visibility: 'none' }, paint: { 'line-color': '#5F7267', 'line-width': 0.3, 'line-opacity': 0.5 } })
@@ -1298,6 +1306,21 @@ export function MapView() {
       m.setPaintProperty(id, 'line-opacity', active ? 1 : 0.9)
     }
   }, [iaRestitution, mapReady, ile, verdict, filters, basemap])
+
+  // G1 (lot 3) — CONTOUR CADASTRAL NEUTRE en vue île (`ile-limites`, source `parcels-ile`). Visible
+  // quand le toggle « Limites parcelles » est coché ET qu'on est en vue île ; le style suit le fond
+  // actif, EXACTEMENT comme l'overlay commune `tuyau-limites_parcelles-outline` (même fonction). En
+  // commune c'est l'overlay du tuyau qui sert (inchangé) ; sur l'île c'est ce calque — plus de 2ᵉ source.
+  useEffect(() => {
+    const m = map.current
+    if (!m || !ready.current || !m.getLayer('ile-limites')) return
+    const on = !!tuyauActives['limites_parcelles'] && ile
+    m.setLayoutProperty('ile-limites', 'visibility', on ? 'visible' : 'none')
+    const p = paintParcellesParFond(basemap)
+    m.setPaintProperty('ile-limites', 'line-color', p.color as never)
+    m.setPaintProperty('ile-limites', 'line-width', p.width as never)
+    m.setPaintProperty('ile-limites', 'line-opacity', p.opacity as never)
+  }, [tuyauActives, ile, basemap, mapReady])
 
   // ── VAGUE 0 (île) : sous z10 les tuiles parcellaires ne servent rien — l'île raconte où
   // sont les cibles via UN marqueur par commune (nom + chaudes, dimensionné/coloré), cliquable

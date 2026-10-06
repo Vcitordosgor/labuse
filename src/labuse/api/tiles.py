@@ -17,6 +17,11 @@ import threading
 import time
 from collections import OrderedDict
 
+try:  # G1 lot 3 — brotli sur les tuiles vectorielles (repli gzip assuré par GZipMiddleware)
+    import brotli as _brotli
+except Exception:  # pragma: no cover — absent → on retombe sur gzip, rien ne casse
+    _brotli = None
+
 from fastapi import APIRouter, Depends, Request, Response
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -768,15 +773,35 @@ def _tile_response(request: Request, body: bytes, etag: str) -> Response:
     le navigateur, une fois max-age écoulé (ou en revalidation SWR), re-téléchargeait la tuile
     ENTIÈRE même inchangée. Avec l'ETag, un `If-None-Match` correspondant renvoie **304** sans corps
     (~0 octet réseau) ; l'ETag change au rebuild-mvt (le contenu change) → invalidation propre. Un
-    proxy amont (Caddy) peut de surcroît revalider/mettre en cache sur cette clé forte."""
+    proxy amont (Caddy) peut de surcroît revalider/mettre en cache sur cette clé forte.
+
+    G1 lot 3 — COMPRESSION. La tuile (protobuf) sort en **brotli** quand le client l'accepte
+    (`Accept-Encoding: br`) — meilleur ratio que gzip sur le MVT binaire ; sinon on laisse passer
+    le corps brut et le `GZipMiddleware` applique le **repli gzip**. On pose nous-même
+    `Content-Encoding: br` → le middleware gzip ne ré-encode pas, et Caddy transmet tel quel
+    (brotli bout-en-bout même sans module brotli côté Caddy). `Vary: Accept-Encoding` : les caches
+    (navigateur, Caddy) ne servent jamais une variante brotli à un client qui ne l'accepte pas.
+    L'ETag reste le hash du CONTENU (identique quelle que soit l'enveloppe de transport)."""
     quoted = f'"{etag}"'
-    headers = {**_TILE_HEADERS, "ETag": quoted}
+    headers = {**_TILE_HEADERS, "ETag": quoted, "Vary": "Accept-Encoding"}
     inm = request.headers.get("if-none-match", "")
     if inm:
         # If-None-Match peut lister plusieurs valeurs, un "*", ou des tags faibles (W/"…").
         tags = {t.strip().lstrip("W/").strip().strip('"') for t in inm.split(",")}
         if "*" in tags or etag in tags:
             return Response(status_code=304, headers=headers)
+    ae = request.headers.get("accept-encoding", "")
+    if _brotli is not None and body and "br" in ae:
+        # quality 5 : bon compromis ratio/CPU pour un corps 0,3–4 Mo servi derrière un cache
+        # agressif (max-age 3600 + SWR 24 h + 304) — la compression est payée une fois par variante.
+        comp = _brotli.compress(body, quality=5)
+        headers["Content-Encoding"] = "br"
+        return Response(content=comp, media_type="application/x-protobuf", headers=headers)
+    # repli : corps brut. Si le client accepte gzip, GZipMiddleware l'encode ET pose lui-même
+    # `Vary: Accept-Encoding` → on retire le nôtre pour ne pas le dupliquer. Sinon (identity) on
+    # garde le `Vary` pour les caches partagés.
+    if "gzip" in ae:
+        headers.pop("Vary", None)
     return Response(content=body, media_type="application/x-protobuf", headers=headers)
 
 
