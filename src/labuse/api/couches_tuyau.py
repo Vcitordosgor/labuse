@@ -668,52 +668,58 @@ def warm_overlay_tiles(db: Session, log=lambda *_: None, kinds: list[str] | None
 
 
 @router.get("/map/tiles/{kind}/{z}/{x}/{y}.pbf")
-def couche_tuile(kind: str, z: int, x: int, y: int,
-                 request: Request, db: Session = Depends(get_db)) -> Response:
+def couche_tuile(kind: str, z: int, x: int, y: int, request: Request) -> Response:
     """Tuile vectorielle MVT d'une couche déclarée. Chemin dédié `/map/tiles/{kind}/…` (4 segments
     — distinct de `/map/tiles/{z}/{x}/{y}.pbf` parcelles et `/map/tiles/ov/…`).
 
     VITESSE-CARTE-FIX-1 (G2) — mêmes 3 étages que les parcelles (tiles.mvt_tile), dans le même ordre :
     1) LRU en mémoire (par worker) ; 2) cache PERSISTANT `mvt_tile_cache` (z9-z11, traverse les 5
     workers et survit aux reboots/builds) ; 3) miss → génération à la volée + alimentation du cache.
-    ETag FORT (md5 du contenu) via `_tile_response` → 304 propre, invalidé au changement de contenu."""
+    ETag FORT (md5 du contenu) via `_tile_response` → 304 propre, invalidé au changement de contenu.
+
+    TUILES-TX-1 — session ouverte DANS le handler (`with api_session()`) et non via `Depends(get_db)` :
+    le close de session_scope (finally) s'exécute de façon synchrone à la sortie — succès, erreur ou
+    client qui annule. La dépendance `Depends` déférait la fermeture après réponse, sautée à la
+    déconnexion client → transaction « idle in transaction » jusqu'à saturer le pool (incident prod)."""
     reg = registre()
     c = reg.get(kind)
     if c is None:
-        return Response(status_code=404)  # kind non déclaré : jamais servi en silence
+        return Response(status_code=404)  # kind non déclaré : jamais servi en silence (aucune connexion)
     # COUCHES-TUYAU-1 retour §5 : PLUS de bornage par zoom_min — toutes les couches sont visibles
     # dès la vue île (safer compris). Aucune réponse 204 sous un « zoom minimum » : le tuyau sert
     # à tous les zooms valides. (Seuls les z hors plage physique sont refusés.)
     if z < 0 or z > 22:
         return Response(status_code=404)
-    version = _version(db)
-    key = (version, kind, z, x, y)
-    # 1) LRU en mémoire (par worker) — le plus rapide ; stocke (octets, ETag fort)
-    if key in _CACHE:
-        _CACHE.move_to_end(key)
-        body, etag = _CACHE[key]
+    from .app import api_session
+    with api_session() as db:            # transaction bornée au handler → fermée dans tous les cas
+        version = _version(db)
+        key = (version, kind, z, x, y)
+        # 1) LRU en mémoire (par worker) — le plus rapide ; stocke (octets, ETag fort)
+        if key in _CACHE:
+            _CACHE.move_to_end(key)
+            body, etag = _CACHE[key]
+            return _tile_response(request, body, etag)
+        body = None
+        etag = None
+        # 2) cache PERSISTANT (traverse les workers) — z9-z11, layer = kind (MÊME table que les parcelles)
+        if z in _WARM_ZOOMS:
+            got = _tile_cache_get(db, version, z, x, y, layer=kind)
+            if got is not None:
+                body, etag = got[0], got[1]
+        if body is None:                 # 3) miss : générer à la volée
+            if _table_manquante(db, c.table):
+                # source pas encore construite (ex. mvt_communes avant build) — vide gracieux, jamais 500.
+                return Response(status_code=204)
+            body = _construire_tuile(db, c, z, x, y)
+            etag = _etag(body)
+            if z in _WARM_ZOOMS:         # …et alimenter le cache persistant (best-effort)
+                _tile_cache_put(db, version, z, x, y, body, etag, layer=kind)
+        if etag is None:                 # cache persistant d'un schéma ancien sans etag : recalcul
+            etag = _etag(body)
+        _CACHE[key] = (body, etag)
+        if len(_CACHE) > _CACHE_MAX:
+            _CACHE.popitem(last=False)
         return _tile_response(request, body, etag)
-    body = None
-    etag = None
-    # 2) cache PERSISTANT (traverse les workers) — z9-z11, layer = kind (MÊME table que les parcelles)
-    if z in _WARM_ZOOMS:
-        got = _tile_cache_get(db, version, z, x, y, layer=kind)
-        if got is not None:
-            body, etag = got[0], got[1]
-    if body is None:                     # 3) miss : générer à la volée
-        if _table_manquante(db, c.table):
-            # source pas encore construite (ex. mvt_communes avant build) — vide gracieux, jamais 500.
-            return Response(status_code=204)
-        body = _construire_tuile(db, c, z, x, y)
-        etag = _etag(body)
-        if z in _WARM_ZOOMS:             # …et alimenter le cache persistant (best-effort)
-            _tile_cache_put(db, version, z, x, y, body, etag, layer=kind)
-    if etag is None:                     # cache persistant d'un schéma ancien sans etag : recalcul
-        etag = _etag(body)
-    _CACHE[key] = (body, etag)
-    if len(_CACHE) > _CACHE_MAX:
-        _CACHE.popitem(last=False)
-    return _tile_response(request, body, etag)
 
 
 @router.get("/map/tuyau/couches")

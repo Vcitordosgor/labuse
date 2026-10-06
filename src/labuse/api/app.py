@@ -17,7 +17,7 @@ import os
 import threading
 import time
 from collections.abc import Iterator
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, contextmanager
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
 from pathlib import Path
@@ -395,7 +395,19 @@ async def _auth_guard(request, call_next):
     return JSONResponse(status_code=401, content={"detail": "Authentification requise."})
 
 
-def get_db() -> Iterator[Session]:
+@contextmanager
+def api_session() -> Iterator[Session]:
+    """Portée de session d'une requête API : `session_scope` (commit si OK, rollback sinon, close
+    TOUJOURS dans un finally) + le plafond `statement_timeout` par transaction.
+
+    SOURCE UNIQUE utilisée de DEUX façons : (1) par `get_db` (dépendance FastAPI `Depends`) pour les
+    routes classiques ; (2) EN DIRECT (`with api_session() as db:`) par les routes de tuiles.
+    TUILES-TX-1 — la dépendance `Depends(get_db)` DÉFÈRE sa fermeture (commit/close) à la finalisation
+    APRÈS réponse ; à la déconnexion/annulation du client ce report est sauté, la transaction auto-
+    ouverte par un simple SELECT reste « idle in transaction » sur une connexion du pool → en prod 45
+    connexions bloquées jusqu'à saturer le pool (site figé). En ouvrant la session DANS le corps du
+    handler de tuile, le `finally` de close s'exécute de façon synchrone quoi qu'il arrive (succès,
+    erreur, client qui annule) — jamais plus de transaction en suspens sur la route des tuiles."""
     with session_scope() as s:
         # VITESSE-FIX-1 lot A — plafond « anti-emballement » posé UNIQUEMENT sur les requêtes de l'API,
         # par transaction (`SET LOCAL`), jamais sur le moteur partagé : les batchs CLI (ingestion,
@@ -406,6 +418,11 @@ def get_db() -> Iterator[Session]:
             # set_config(…, is_local=true) = SET LOCAL, mais paramétrable proprement (SET n'accepte pas
             # de placeholder). Valeur en millisecondes (texte) — statement_timeout lit un entier = ms.
             s.execute(text("SELECT set_config('statement_timeout', :ms, true)"), {"ms": str(int(_to))})
+        yield s
+
+
+def get_db() -> Iterator[Session]:
+    with api_session() as s:
         yield s
 
 

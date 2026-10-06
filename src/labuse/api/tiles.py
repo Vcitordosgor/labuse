@@ -753,38 +753,46 @@ def _tile_response(request: Request, body: bytes, etag: str) -> Response:
 
 
 @router.get("/map/tiles/{z}/{x}/{y}.pbf")
-def mvt_tile(z: int, x: int, y: int, request: Request, db: Session = Depends(get_db)) -> Response:
+def mvt_tile(z: int, x: int, y: int, request: Request) -> Response:
     """Tuile MVT couche `parcels` — mêmes propriétés que le GeoJSON commune.
     CARTE-VITESSE-2 lot A : z9-z11 servies depuis le cache PERSISTANT `mvt_tile_cache` (pré-générées
     par `warm_parcel_tiles`) ; à défaut (tuile non chauffée / première demande après un rebuild) on
     génère à la volée ET on met en cache. z≥12 : à la volée (l'index GiST porte).
-    Lot C : chaque réponse porte un ETag fort (304 si le client a déjà la même tuile)."""
+    Lot C : chaque réponse porte un ETag fort (304 si le client a déjà la même tuile).
+
+    TUILES-TX-1 — la session est ouverte DANS le corps du handler (`with api_session()`), pas via
+    `Depends(get_db)` : le commit/rollback/close est alors garanti par le `finally` de session_scope,
+    exécuté de façon synchrone à la sortie du handler — succès, erreur OU client qui annule. La
+    dépendance `Depends` déférait cette fermeture après la réponse ; à la déconnexion client ce report
+    était sauté → transaction « idle in transaction » tenue jusqu'à saturer le pool (incident prod)."""
     # FIX-CARTE C2 : bornes ALIGNÉES sur la source front (parcels-ile minzoom 9 / maxzoom 15) —
     # au-delà de z15 le client sur-zoome, il ne demande jamais z16+ ; on ne sert donc que z9-15.
     if z < 9 or z > 15:
-        return Response(status_code=204)
-    version = _mvt_version(db)          # FIX-CARTE T3 : clé versionnée → invalidation au rebuild
-    key = (version, z, x, y)
-    if key in _CACHE:                    # 1) LRU en mémoire (par worker) — le plus rapide
-        _CACHE.move_to_end(key)
-        body, etag = _CACHE[key]
+        return Response(status_code=204)  # hors plage : aucune connexion ouverte
+    from .app import api_session
+    with api_session() as db:            # transaction bornée au handler → fermée dans tous les cas
+        version = _mvt_version(db)       # FIX-CARTE T3 : clé versionnée → invalidation au rebuild
+        key = (version, z, x, y)
+        if key in _CACHE:                # 1) LRU en mémoire (par worker) — le plus rapide
+            _CACHE.move_to_end(key)
+            body, etag = _CACHE[key]
+            return _tile_response(request, body, etag)
+        body = None
+        etag = None
+        if z in _WARM_ZOOMS:             # 2) cache persistant (traverse les workers)
+            got = _tile_cache_get(db, version, z, x, y)
+            if got is not None:
+                body, etag = got[0], got[1]
+        if body is None:                 # 3) miss : générer à la volée
+            if not db.execute(text("SELECT to_regclass('mvt_parcels')")).scalar():
+                return Response(status_code=204)  # table pas encore construite (run en cours)
+            body = _parcel_tile_bytes(db, z, x, y)
+            etag = _etag(body)
+            if z in _WARM_ZOOMS:         # …et alimenter le cache persistant (best-effort)
+                _tile_cache_put(db, version, z, x, y, body, etag)
+        if etag is None:                 # cache persistant sans etag (schéma ancien) : recalcul
+            etag = _etag(body)
+        _CACHE[key] = (body, etag)
+        if len(_CACHE) > _CACHE_MAX:
+            _CACHE.popitem(last=False)
         return _tile_response(request, body, etag)
-    body = None
-    etag = None
-    if z in _WARM_ZOOMS:                 # 2) cache persistant (traverse les workers)
-        got = _tile_cache_get(db, version, z, x, y)
-        if got is not None:
-            body, etag = got[0], got[1]
-    if body is None:                     # 3) miss : générer à la volée
-        if not db.execute(text("SELECT to_regclass('mvt_parcels')")).scalar():
-            return Response(status_code=204)  # table pas encore construite (run en cours)
-        body = _parcel_tile_bytes(db, z, x, y)
-        etag = _etag(body)
-        if z in _WARM_ZOOMS:             # …et alimenter le cache persistant (best-effort)
-            _tile_cache_put(db, version, z, x, y, body, etag)
-    if etag is None:                     # cache persistant sans etag (schéma ancien) : recalcul
-        etag = _etag(body)
-    _CACHE[key] = (body, etag)
-    if len(_CACHE) > _CACHE_MAX:
-        _CACHE.popitem(last=False)
-    return _tile_response(request, body, etag)
