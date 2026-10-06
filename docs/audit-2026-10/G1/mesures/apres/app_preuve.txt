@@ -1,0 +1,18 @@
+G1 — PREUVE APP (vue île, z13, St-Denis) — après correctif ORDER BY
+====================================================================
+querySourceFeatures('parcels-ile', {sourceLayer:'parcels'})  = 30879   (AVANT le fix : 0 — audit VITESSE-CARTE-1 §6)
+querySourceFeatures('parcels-ile', {sourceLayer:'default'})   = 0       (AVANT le fix : 36361)
+
+CLIC PARCELLE EN VUE ÎLE (sans recherche) :
+  clic réel sur la toile au centre (parcelle 97411000AE0272)
+  → URL = #f=1&idu=97411000AE0272  (fiche ouverte)
+  → ile-sel filter = ["==",["get","idu"],"97411000AE0272"]  (surlignage blanc actif)
+  → capture captures/apres/02_ile_clic_fiche.png (fiche + liseré blanc)
+
+FOND COLORÉ PAR DÉFAUT (règle Vic) :
+  Analyse LABUSE OFF (défaut) : ile-fill fill-opacity = 0  (AUCUNE couleur de classement)
+                                ile-line visibility = none
+                                mesh dessiné par tuyau-limites_parcelles-outline (#8FA69A) = doublon (Lot 3)
+  Analyse LABUSE ON           : ile-fill fill-color/opacity = expressions par tier (STATUS_COLOR/opinionOpacity)
+                                ile-line visibility = visible
+                                parcelles coloriées (capture 03_ile_avec_analyse.png)

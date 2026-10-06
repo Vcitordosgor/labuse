@@ -1,0 +1,11 @@
+26 tuiles parcels en cache
+  9/335/286: layer=parcels extent=1024 feats=10069 etag_ok=True
+  9/335/287: layer=parcels extent=1024 feats=4562 etag_ok=True
+  10/670/572: layer=parcels extent=1024 feats=4888 etag_ok=True
+  10/670/573: layer=parcels extent=1024 feats=16467 etag_ok=True
+  10/670/574: layer=parcels extent=1024 feats=13202 etag_ok=True
+  11/1339/1145: layer=parcels extent=1024 feats=30149 etag_ok=True
+  11/1339/1146: layer=parcels extent=1024 feats=7276 etag_ok=True
+  11/1339/1147: layer=parcels extent=1024 feats=50872 etag_ok=True
+  11/1339/1148: layer=parcels extent=1024 feats=21098 etag_ok=True
+VERDICT: 24/26 tuiles cache = layer 'parcels' extent 1024 ; mauvaises=2
