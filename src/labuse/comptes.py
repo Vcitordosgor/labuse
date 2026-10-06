@@ -77,11 +77,18 @@ def ensure_tables(db: Session) -> None:
             created_at timestamptz NOT NULL DEFAULT now(),
             updated_at timestamptz NOT NULL DEFAULT now()
         )"""))
+    # BOOT-VERROU-1 — garde-catalogue (recette LIENS-1 lot 0, commit 9de46f6b). `comptes` est lue à
+    # CHAQUE requête authentifiée : un `DROP CONSTRAINT IF EXISTS` / `ADD COLUMN IF NOT EXISTS` no-op
+    # prend quand même un ACCESS EXCLUSIVE qui se met en file derrière un lecteur et gèle le boot. On
+    # teste pg_constraint / information_schema (lectures pures) et n'émet le DDL que si nécessaire.
     # refonte 22/07 : le CHECK historique (inde/pro) tombe — plan libre ('integral')
-    db.execute(text("ALTER TABLE comptes DROP CONSTRAINT IF EXISTS comptes_plan_check"))
+    if db.execute(text("SELECT 1 FROM pg_constraint WHERE conname = 'comptes_plan_check'")).scalar():
+        db.execute(text("ALTER TABLE comptes DROP CONSTRAINT comptes_plan_check"))
     # DASHBOARD-V1 · D9 — compte d'ESSAI 48 h : une date d'échéance (NULL = compte normal).
     # À l'échéance : bascule automatique sur le mécanisme de suspension (session_utilisateur).
-    db.execute(text("ALTER TABLE comptes ADD COLUMN IF NOT EXISTS essai_expire_at timestamptz"))
+    if not db.execute(text("SELECT 1 FROM information_schema.columns "
+                           "WHERE table_name = 'comptes' AND column_name = 'essai_expire_at'")).scalar():
+        db.execute(text("ALTER TABLE comptes ADD COLUMN essai_expire_at timestamptz"))
     db.execute(text("""
         CREATE TABLE IF NOT EXISTS utilisateurs (
             id serial PRIMARY KEY,
@@ -109,8 +116,13 @@ def ensure_tables(db: Session) -> None:
         )"""))
     # AUDIT COMPTES · A5 — empreinte HACHÉE de la session (jamais l'IP/UA en clair : RGPD) pour
     # OBSERVER le partage de compte (plusieurs postes simultanés). Signal seulement, aucun blocage.
-    db.execute(text("ALTER TABLE sessions_auth ADD COLUMN IF NOT EXISTS ip_hash text"))
-    db.execute(text("ALTER TABLE sessions_auth ADD COLUMN IF NOT EXISTS ua_hash text"))
+    # BOOT-VERROU-1 — `sessions_auth` est lue à CHAQUE requête authentifiée (résolution de session) :
+    # garde-catalogue avant l'ADD COLUMN pour ne pas poser d'ACCESS EXCLUSIVE no-op au boot.
+    for _col in ("ip_hash", "ua_hash"):
+        if not db.execute(text("SELECT 1 FROM information_schema.columns "
+                               "WHERE table_name = 'sessions_auth' AND column_name = :c"),
+                          {"c": _col}).scalar():
+            db.execute(text(f"ALTER TABLE sessions_auth ADD COLUMN {_col} text"))
     # audit MINIMAL (jamais de secret, jamais de données de carte — il n'y en a nulle part)
     db.execute(text("""
         CREATE TABLE IF NOT EXISTS evenements_compte (

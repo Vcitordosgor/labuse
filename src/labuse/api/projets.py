@@ -57,14 +57,20 @@ CREATE TABLE IF NOT EXISTS projets (
   derniere_execution_at timestamptz,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
-);
-ALTER TABLE projets ADD COLUMN IF NOT EXISTS identite jsonb NOT NULL DEFAULT '{}'::jsonb;
-ALTER TABLE projets ADD COLUMN IF NOT EXISTS shortlist_perimee boolean NOT NULL DEFAULT false;
-ALTER TABLE projets ADD COLUMN IF NOT EXISTS cadrage_total integer;
-ALTER TABLE projets ADD COLUMN IF NOT EXISTS cadrage_total_at timestamptz;
-ALTER TABLE pipeline_entries ADD COLUMN IF NOT EXISTS projet_id integer
-  REFERENCES projets(id) ON DELETE SET NULL
+)
 """
+
+# BOOT-VERROU-1 — colonnes additives sorties du bloc DDL : chacune (projets, lue par Copilote-projet ;
+# pipeline_entries, lue par le CRM) est posée par un `ADD COLUMN` qui, no-op, prend un ACCESS EXCLUSIVE
+# et gèle le boot derrière un lecteur. On teste le catalogue (lecture pure) et on n'émet l'ALTER que si
+# la colonne manque — recette LIENS-1 lot 0 (commit 9de46f6b). (table, colonne, définition) littéraux.
+_COLS = (
+    ("projets", "identite", "jsonb NOT NULL DEFAULT '{}'::jsonb"),
+    ("projets", "shortlist_perimee", "boolean NOT NULL DEFAULT false"),
+    ("projets", "cadrage_total", "integer"),
+    ("projets", "cadrage_total_at", "timestamptz"),
+    ("pipeline_entries", "projet_id", "integer REFERENCES projets(id) ON DELETE SET NULL"),
+)
 
 
 def ensure_tables(engine) -> None:
@@ -74,6 +80,11 @@ def ensure_tables(engine) -> None:
         for stmt in sql_statements(DDL):
             if stmt.strip():
                 c.execute(_t(stmt))
+        for table, col, defn in _COLS:   # BOOT-VERROU-1 — ADD COLUMN gardé par le catalogue
+            if not c.execute(_t("SELECT 1 FROM information_schema.columns "
+                                "WHERE table_name = :t AND column_name = :c"),
+                             {"t": table, "c": col}).scalar():
+                c.execute(_t(f"ALTER TABLE {table} ADD COLUMN {col} {defn}"))
         _migrer_fiche_vers_cadrage(c)
 
 

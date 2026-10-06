@@ -1287,10 +1287,15 @@ def ensure_promesses_index(engine) -> None:
     Sans lui, le filtre layer/result se fait sur le tas (~3,6 s) ; avec, probe pur (~0,6 s). Idempotent."""
     from sqlalchemy import text as _t
 
+    # BOOT-VERROU-1 — garde-catalogue (recette LIENS-1 lot 0). Un `CREATE INDEX IF NOT EXISTS` no-op
+    # prend un verrou SHARE sur dryrun_cascade_results (9,7 M lignes) qui se met en FILE derrière un
+    # run de cascade EN COURS (writers = ROW EXCLUSIVE) → boot gelé pendant un run. On ne crée l'index
+    # QUE s'il manque vraiment : chemin nominal = aucun verrou pris.
     with engine.begin() as c:
-        c.execute(_t("CREATE INDEX IF NOT EXISTS ix_dryrun_cascade_bati_exclude "
-                     "ON dryrun_cascade_results (run_label, parcel_id) "
-                     "WHERE layer_name = 'bati' AND result = 'HARD_EXCLUDE'"))
+        if not _index_present(c, "ix_dryrun_cascade_bati_exclude"):
+            c.execute(_t("CREATE INDEX ix_dryrun_cascade_bati_exclude "
+                         "ON dryrun_cascade_results (run_label, parcel_id) "
+                         "WHERE layer_name = 'bati' AND result = 'HARD_EXCLUDE'"))
 
 
 def ensure_parcel_flags(engine) -> None:
@@ -1315,10 +1320,13 @@ def ensure_flags_probe_index(engine) -> None:
     existante → ensure explicite. Idempotent."""
     from sqlalchemy import text as _t
 
+    # BOOT-VERROU-1 — garde-catalogue (idem ensure_promesses_index) : CREATE INDEX no-op = SHARE qui
+    # se met en file derrière un run écrivant dryrun_cascade_results. On ne crée que si l'index manque.
     with engine.begin() as c:
-        c.execute(_t("CREATE INDEX IF NOT EXISTS ix_dryrun_cascade_flag_probe "
-                     "ON dryrun_cascade_results (run_label, layer_name, parcel_id) "
-                     "WHERE result IN ('SOFT_FLAG', 'UNKNOWN')"))
+        if not _index_present(c, "ix_dryrun_cascade_flag_probe"):
+            c.execute(_t("CREATE INDEX ix_dryrun_cascade_flag_probe "
+                         "ON dryrun_cascade_results (run_label, layer_name, parcel_id) "
+                         "WHERE result IN ('SOFT_FLAG', 'UNKNOWN')"))
 
 
 def ensure_pipeline_projet(engine) -> None:
@@ -1326,10 +1334,14 @@ def ensure_pipeline_projet(engine) -> None:
     référence du projet d'où elle vient. Idempotent, durable au rebuild sur base existante."""
     from sqlalchemy import text as _t
 
+    # BOOT-VERROU-1 — garde-catalogue (recette LIENS-1 lot 0) : `pipeline_entries` est lue par le CRM /
+    # Copilote ; un ADD COLUMN no-op (ACCESS EXCLUSIVE) se met en file derrière un lecteur. On n'émet
+    # l'ALTER que si la colonne manque. Chemin nominal = zéro verrou.
     with engine.begin() as c:
-        c.execute(_t("ALTER TABLE pipeline_entries "
-                     "ADD COLUMN IF NOT EXISTS projet_id integer "
-                     "REFERENCES projets(id) ON DELETE SET NULL"))
+        if not _col_presente(c, "pipeline_entries", "projet_id"):
+            c.execute(_t("ALTER TABLE pipeline_entries "
+                         "ADD COLUMN projet_id integer "
+                         "REFERENCES projets(id) ON DELETE SET NULL"))
 
 
 def ensure_pipeline_prospection(engine) -> None:
@@ -1337,9 +1349,10 @@ def ensure_pipeline_prospection(engine) -> None:
     Idempotent ; ADD COLUMN IF NOT EXISTS → durable au rebuild sur base existante."""
     from sqlalchemy import text as _t
 
-    with engine.begin() as c:
-        c.execute(_t("ALTER TABLE pipeline_entries "
-                     "ADD COLUMN IF NOT EXISTS prospection jsonb NOT NULL DEFAULT '{}'::jsonb"))
+    with engine.begin() as c:   # BOOT-VERROU-1 — garde-catalogue (cf. ensure_pipeline_projet)
+        if not _col_presente(c, "pipeline_entries", "prospection"):
+            c.execute(_t("ALTER TABLE pipeline_entries "
+                         "ADD COLUMN prospection jsonb NOT NULL DEFAULT '{}'::jsonb"))
 
 
 def ensure_pipeline_archived(engine) -> None:
@@ -1347,9 +1360,11 @@ def ensure_pipeline_archived(engine) -> None:
     Idempotent ; ADD COLUMN IF NOT EXISTS → durable au rebuild sur base existante."""
     from sqlalchemy import text as _t
 
-    with engine.begin() as c:
-        c.execute(_t("ALTER TABLE pipeline_entries ADD COLUMN IF NOT EXISTS archived_at timestamptz"))
-        c.execute(_t("CREATE INDEX IF NOT EXISTS ix_pipeline_archived ON pipeline_entries (archived_at)"))
+    with engine.begin() as c:   # BOOT-VERROU-1 — garde-catalogue (cf. ensure_pipeline_projet)
+        if not _col_presente(c, "pipeline_entries", "archived_at"):
+            c.execute(_t("ALTER TABLE pipeline_entries ADD COLUMN archived_at timestamptz"))
+        if not _index_present(c, "ix_pipeline_archived"):
+            c.execute(_t("CREATE INDEX ix_pipeline_archived ON pipeline_entries (archived_at)"))
 
 
 def ensure_contact_etiquette(engine) -> None:
@@ -1359,11 +1374,11 @@ def ensure_contact_etiquette(engine) -> None:
     inter-comptes (doctrine L5.2, testée)."""
     from sqlalchemy import text as _t
 
-    with engine.begin() as c:
-        c.execute(_t("ALTER TABLE pipeline_entries ADD COLUMN IF NOT EXISTS "
-                     "contact_etiquette varchar(24)"))
-        c.execute(_t("ALTER TABLE pipeline_entries ADD COLUMN IF NOT EXISTS "
-                     "contact_etiquette_at timestamptz"))
+    with engine.begin() as c:   # BOOT-VERROU-1 — garde-catalogue (cf. ensure_pipeline_projet)
+        if not _col_presente(c, "pipeline_entries", "contact_etiquette"):
+            c.execute(_t("ALTER TABLE pipeline_entries ADD COLUMN contact_etiquette varchar(24)"))
+        if not _col_presente(c, "pipeline_entries", "contact_etiquette_at"):
+            c.execute(_t("ALTER TABLE pipeline_entries ADD COLUMN contact_etiquette_at timestamptz"))
         c.execute(_t("""
             CREATE TABLE IF NOT EXISTS contact_etiquette_log (
                 id serial PRIMARY KEY,
@@ -1743,8 +1758,15 @@ def ensure_watch_zones(engine) -> None:
             " compte_id integer,"
             " geom geometry(Polygon, 4326) NOT NULL,"
             " created_at timestamptz NOT NULL DEFAULT now(), last_run_at timestamptz)"))
-        c.execute(_t("CREATE INDEX IF NOT EXISTS idx_watch_zones_geom ON watch_zones USING gist (geom)"))
-        c.execute(_t("CREATE INDEX IF NOT EXISTS ix_watch_zones_commune ON watch_zones (commune)"))
+        # BOOT-VERROU-1 — garde-catalogue (recette LIENS-1 lot 0, commit 9de46f6b). watch_zones/alertes
+        # sont lues par la veille (cloche de nouveautés) ; chaque CREATE INDEX no-op (SHARE), ADD COLUMN
+        # no-op (ACCESS EXCLUSIVE) et surtout le `DROP INDEX IF EXISTS` d'une clé LEGACY déjà disparue
+        # (ACCESS EXCLUSIVE à vide, rejoué à CHAQUE boot) se mettent en file derrière un lecteur/écrivain.
+        # On teste le catalogue (lectures pures) et on n'émet que ce qui manque / existe vraiment.
+        if not _index_present(c, "idx_watch_zones_geom"):
+            c.execute(_t("CREATE INDEX idx_watch_zones_geom ON watch_zones USING gist (geom)"))
+        if not _index_present(c, "ix_watch_zones_commune"):
+            c.execute(_t("CREATE INDEX ix_watch_zones_commune ON watch_zones (commune)"))
         c.execute(_t(
             "CREATE TABLE IF NOT EXISTS alertes ("
             " id serial PRIMARY KEY, kind varchar(32) NOT NULL,"
@@ -1756,18 +1778,24 @@ def ensure_watch_zones(engine) -> None:
             " detected_at timestamptz NOT NULL DEFAULT now())"))
         # ALTER idempotent : les bases créées avant M-K n'ont pas la colonne (CREATE IF NOT
         # EXISTS ne la rajoute pas sur une table existante).
-        c.execute(_t("ALTER TABLE watch_zones ADD COLUMN IF NOT EXISTS compte_id integer"))
-        c.execute(_t("ALTER TABLE alertes ADD COLUMN IF NOT EXISTS compte_id integer"))
+        if not _col_presente(c, "watch_zones", "compte_id"):
+            c.execute(_t("ALTER TABLE watch_zones ADD COLUMN compte_id integer"))
+        if not _col_presente(c, "alertes", "compte_id"):
+            c.execute(_t("ALTER TABLE alertes ADD COLUMN compte_id integer"))
         # dvf_in_zone : la dédup par (zone_id, source_ref) est DÉJÀ cloisonnée — une zone
         # appartient à un seul compte, donc son zone_id ne fuit pas entre comptes.
-        c.execute(_t("CREATE UNIQUE INDEX IF NOT EXISTS uq_alertes_zone_dvf "
-                     "ON alertes (zone_id, source_ref) WHERE kind = 'dvf_in_zone'"))
+        if not _index_present(c, "uq_alertes_zone_dvf"):
+            c.execute(_t("CREATE UNIQUE INDEX uq_alertes_zone_dvf "
+                         "ON alertes (zone_id, source_ref) WHERE kind = 'dvf_in_zone'"))
         # permit_near_followed : la dédup DOIT inclure compte_id. Deux comptes suivant la MÊME
         # parcelle doivent chacun recevoir l'alerte ; l'ancienne clé (parcel_id, source_ref)
-        # faisait manger l'alerte du 2e compte par ON CONFLICT DO NOTHING.
-        c.execute(_t("DROP INDEX IF EXISTS uq_alertes_parcel_permit"))
-        c.execute(_t("CREATE UNIQUE INDEX IF NOT EXISTS uq_alertes_compte_parcel_permit "
-                     "ON alertes (compte_id, parcel_id, source_ref) WHERE kind = 'permit_near_followed'"))
+        # faisait manger l'alerte du 2e compte par ON CONFLICT DO NOTHING. Le DROP de la clé legacy
+        # n'est émis QUE si elle subsiste (sinon ACCESS EXCLUSIVE no-op à chaque boot).
+        if _index_present(c, "uq_alertes_parcel_permit"):
+            c.execute(_t("DROP INDEX uq_alertes_parcel_permit"))
+        if not _index_present(c, "uq_alertes_compte_parcel_permit"):
+            c.execute(_t("CREATE UNIQUE INDEX uq_alertes_compte_parcel_permit "
+                         "ON alertes (compte_id, parcel_id, source_ref) WHERE kind = 'permit_near_followed'"))
 
 
 def ensure_documents_generes(engine) -> None:
@@ -2044,25 +2072,38 @@ def ensure_schema(engine) -> None:
 def ensure_data_sources_millesime(engine) -> None:
     """M32 Phase B §2 (spec millésime amont) — 4 colonnes de fraîcheur AMONT sur data_sources,
     renseignées par les ingesters. `ADD COLUMN IF NOT EXISTS` → durable au rebuild, idempotent."""
-    with engine.begin() as c:
-        c.execute(text("ALTER TABLE data_sources ADD COLUMN IF NOT EXISTS source_millesime varchar(64)"))
-        c.execute(text("ALTER TABLE data_sources ADD COLUMN IF NOT EXISTS source_horizon_at date"))
-        c.execute(text("ALTER TABLE data_sources ADD COLUMN IF NOT EXISTS source_cadence varchar(32)"))
-        c.execute(text("ALTER TABLE data_sources ADD COLUMN IF NOT EXISTS prochain_millesime_at date"))
+    # BOOT-VERROU-1 — garde-catalogue (recette LIENS-1 lot 0, commit 9de46f6b). `data_sources` est
+    # lue en continu (vitrine sources, badges de fraîcheur, /accueil, dashboard) : chacun de ces 9
+    # `ADD COLUMN IF NOT EXISTS` + l'`ALTER COLUMN … TYPE`, même no-op, prend un ACCESS EXCLUSIVE et
+    # se met en file derrière le moindre lecteur — 10 verrous exclusifs inutiles à chaque boot. On
+    # teste le catalogue (lecture pure) et on n'émet le DDL QUE si la colonne manque / est trop
+    # courte. Chemin nominal (schéma posé) = zéro verrou. Noms issus d'un tuple littéral : pas d'injection.
+    _cols_add = (
+        ("source_millesime", "varchar(64)"),
+        ("source_horizon_at", "date"),
+        ("source_cadence", "varchar(32)"),
+        ("prochain_millesime_at", "date"),
         # CRON-2 — statut de fraîcheur servi aux badges (posé par le job sources-fraicheur ; ici aussi
         # pour que le schéma soit complet dès le heal, pas seulement au 1er passage du job).
-        c.execute(text("ALTER TABLE data_sources ADD COLUMN IF NOT EXISTS fraicheur_statut varchar(16)"))
-        c.execute(text("ALTER TABLE data_sources ADD COLUMN IF NOT EXISTS fraicheur_calcule_at timestamptz"))
+        ("fraicheur_statut", "varchar(16)"),
+        ("fraicheur_calcule_at", "timestamptz"),
         # CONNEXIONS-2 Lot 6.2 (KO-14) — date + motif du dernier échec d'ingestion (état « en erreur »).
-        c.execute(text("ALTER TABLE data_sources ADD COLUMN IF NOT EXISTS fraicheur_erreur_at timestamptz"))
-        c.execute(text("ALTER TABLE data_sources ADD COLUMN IF NOT EXISTS fraicheur_erreur_message text"))
+        ("fraicheur_erreur_at", "timestamptz"),
+        ("fraicheur_erreur_message", "text"),
         # CONNEXIONS-2 Lot 6.3 (M2) — flag « désactivée au dashboard » (remplace SOURCES_MASQUEES en dur).
-        c.execute(text("ALTER TABLE data_sources ADD COLUMN IF NOT EXISTS affichage_desactive "
-                       "boolean NOT NULL DEFAULT false"))
+        ("affichage_desactive", "boolean NOT NULL DEFAULT false"),
+        ("couverture_note", "text"),
+    )
+    with engine.begin() as c:
+        for col, typ in _cols_add:
+            if not _col_presente(c, "data_sources", col):
+                c.execute(text(f"ALTER TABLE data_sources ADD COLUMN {col} {typ}"))
         # REPARATIONS-1 lot 3 — le statut « partenariat_requis » (18 car.) dépasse le varchar(8)
-        # historique : on élargit (idempotent — un TYPE déjà large reste large, aucune perte).
-        c.execute(text("ALTER TABLE data_sources ALTER COLUMN status TYPE varchar(24)"))
-        c.execute(text("ALTER TABLE data_sources ADD COLUMN IF NOT EXISTS couverture_note text"))
+        # historique : on élargit (idempotent — un TYPE déjà large reste large, aucune perte). L'ALTER
+        # TYPE prend un ACCESS EXCLUSIVE même quand la colonne est déjà large → ne le rejouer que si
+        # elle est encore trop courte (patron ensure_constructibilite_cache).
+        if (_varchar_len(c, "data_sources", "status") or 0) < 24:
+            c.execute(text("ALTER TABLE data_sources ALTER COLUMN status TYPE varchar(24)"))
 
 
 def ensure_source_veille(engine) -> None:
@@ -2150,11 +2191,22 @@ def ensure_zone_filtre(engine) -> None:
     with engine.begin() as c:
         if not c.execute(text("SELECT to_regclass('parcel_zone_plu') IS NOT NULL")).scalar():
             return                       # table dérivée pas encore matérialisée — le builder l'écrira
-        c.execute(text("ALTER TABLE parcel_zone_plu ADD COLUMN IF NOT EXISTS zone_filtre varchar"))
-        c.execute(text("UPDATE parcel_zone_plu SET zone_filtre = upper(zone_lib) "
-                       "WHERE zone_filtre IS DISTINCT FROM upper(zone_lib)"))
-        c.execute(text("CREATE INDEX IF NOT EXISTS idx_pzp_zone_filtre "
-                       "ON parcel_zone_plu (zone_filtre)"))
+        # BOOT-VERROU-1 — garde-catalogue (recette LIENS-1 lot 0, commit 9de46f6b). L'incident du
+        # 06/10 : cet `ADD COLUMN IF NOT EXISTS` *no-op* prend un ACCESS EXCLUSIVE sur parcel_zone_plu
+        # (≈20 lecteurs vivants : patrimoine, marché, filtres, accueil, alertes…) ; derrière une seule
+        # transaction tenant un ACCESS SHARE il se met en FILE et gèle TOUT le boot — puis toutes les
+        # lectures s'empilent derrière lui. On teste donc le catalogue (lecture pure, sans verrou) et
+        # on n'émet le DDL QUE si l'objet manque vraiment. Chemin nominal (schéma posé) = zéro verrou.
+        # Le backfill `zone_filtre` ne sert QUE la table matérialisée AVANT que le builder ne l'écrive
+        # nativement (tiles.build_parcel_zone_plu) : il accompagne donc la POSE de la colonne. Ensuite
+        # le builder maintient la valeur → inutile de re-scanner la table à chaque boot.
+        if not _col_presente(c, "parcel_zone_plu", "zone_filtre"):
+            c.execute(text("ALTER TABLE parcel_zone_plu ADD COLUMN zone_filtre varchar"))
+            c.execute(text("UPDATE parcel_zone_plu SET zone_filtre = upper(zone_lib) "
+                           "WHERE zone_filtre IS DISTINCT FROM upper(zone_lib)"))
+        if not _index_present(c, "idx_pzp_zone_filtre"):
+            c.execute(text("CREATE INDEX idx_pzp_zone_filtre "
+                           "ON parcel_zone_plu (zone_filtre)"))
 
 
 def ensure_dvf_marche(engine) -> None:

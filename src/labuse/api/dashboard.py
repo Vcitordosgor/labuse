@@ -38,6 +38,14 @@ RETOUR_STATUTS = ("nouveau", "traite", "repondu")
 USAGE_KINDS = ("outil", "heartbeat")
 
 
+def _col_absent(c, table: str, col: str) -> bool:
+    """BOOT-VERROU-1 — lecture pure d'`information_schema` (aucun verrou de table) : vrai si la
+    colonne manque. Sert à ne PAS rejouer un `ALTER … ADD COLUMN` no-op (ACCESS EXCLUSIVE) au boot."""
+    return not c.execute(text("SELECT 1 FROM information_schema.columns "
+                              "WHERE table_name = :t AND column_name = :c"),
+                         {"t": table, "c": col}).scalar()
+
+
 def ensure_tables(engine) -> None:
     """Idempotent, appelé au boot (heal résilient FIX-GB-011)."""
     with engine.begin() as c:
@@ -67,12 +75,20 @@ def ensure_tables(engine) -> None:
             "CREATE TABLE IF NOT EXISTS ia_log ("
             " id serial PRIMARY KEY, ts timestamptz DEFAULT now(), kind varchar(24), model varchar(64),"
             " stub boolean, tokens_in integer, tokens_out integer, cout_eur numeric(8,5))"))
-        c.execute(text("ALTER TABLE ia_log ADD COLUMN IF NOT EXISTS compte_id integer"))
-        c.execute(text("CREATE INDEX IF NOT EXISTS ix_ia_log_compte_ts ON ia_log(compte_id, ts)"))
+        # BOOT-VERROU-1 — garde-catalogue (recette LIENS-1 lot 0, commit 9de46f6b). `comptes` est lue
+        # à CHAQUE requête authentifiée (garde d'auth) et `ia_log` à chaque appel IA : un `ADD COLUMN
+        # IF NOT EXISTS` no-op prend un ACCESS EXCLUSIVE qui se met en file derrière un lecteur et gèle
+        # le boot. On teste le catalogue (lecture pure) et on n'émet le DDL que si l'objet manque.
+        if _col_absent(c, "ia_log", "compte_id"):
+            c.execute(text("ALTER TABLE ia_log ADD COLUMN compte_id integer"))
+        if c.execute(text("SELECT to_regclass('ix_ia_log_compte_ts') IS NULL")).scalar():
+            c.execute(text("CREATE INDEX ix_ia_log_compte_ts ON ia_log(compte_id, ts)"))
         # quota Copilote PAR LICENCE (NULL = défaut config copilote_questions_jour_defaut)
-        c.execute(text("ALTER TABLE comptes ADD COLUMN IF NOT EXISTS copilote_quota_jour integer"))
+        if _col_absent(c, "comptes", "copilote_quota_jour"):
+            c.execute(text("ALTER TABLE comptes ADD COLUMN copilote_quota_jour integer"))
         # RETOURS-8 (R3) — plafond Copilote/IA en EUROS/jour PAR LICENCE (NULL = défaut config 2,00 €).
-        c.execute(text("ALTER TABLE comptes ADD COLUMN IF NOT EXISTS copilote_budget_eur numeric(6,2)"))
+        if _col_absent(c, "comptes", "copilote_budget_eur"):
+            c.execute(text("ALTER TABLE comptes ADD COLUMN copilote_budget_eur numeric(6,2)"))
         # D4 — séquence d'onboarding : statut + date d'envoi STOCKÉS par (compte, mail)
         c.execute(text(
             "CREATE TABLE IF NOT EXISTS licence_mails ("
