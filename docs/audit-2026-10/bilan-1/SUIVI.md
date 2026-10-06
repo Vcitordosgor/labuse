@@ -9,7 +9,7 @@ Modèle : Opus.
 1. Assiettes D.O / TRC recopiées à l'identique du tableur → **0 € d'écart**. **FAIT** (ce commit).
 2. Masquer les repères « ratio de place ». **FAIT** : `_repere_poste` ne sert que les repères `registre` ; front simplifié ; test de route.
 3. Câbler repères Taxe/archéo, Faisabilité (SDP, parkings), Sitadel. **FAIT** : résolus dans reperes.py, vérifiés sur base réelle (dvf 4730/n54, taxe 44,6, archéo 3,57, SDP 706/14pkg, Sitadel 9 mois). Outil Taxe sur txLog uniquement (pas de double compte).
-4. Captures de l'écran vivant (pile lancée). à faire.
+4. Captures de l'écran vivant (pile lancée). **FAIT** : 5 captures (Docs 8 cartes, bilan vide/repère/mes-ratios/complet) prises sur mon API 8820 (base réelle, compte dédié id 102), dans `captures/`. ⚠ INCIDENT : j'avais d'abord booté sur 8820 pendant que le serveur RECETTE-PROD-1 (8810) tournait sur la MÊME base → contention de verrou (ALTER no-op) + mon pkill a tué 8810 ; base restée SAINE (0 donnée changée), 8810 est revenu seul. 2ᵉ boot propre (8810 down) OK. Intro Docs « Sept documents » corrigée (8 cartes). Serveur 8820 arrêté après captures.
 
 Venv : `~/Desktop/labuse/.venv/bin/python` ; imports LABUSE depuis ce worktree avec
 `PYTHONPATH=src`. Le xlsx de la promotrice est copié en `docs/audit-2026-10/bilan-1/modele-promotrice.xlsx`

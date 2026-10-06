@@ -119,20 +119,26 @@ dans le calcul sans clic.
   sans lien avec ce mandat.
 
 ### Captures (`captures/`)
-- `bilan-temoin.pdf` + `bilan-pdf-p1-1.png` (page 1 : Charge foncière, badges d'état,
-  Total 2 271 464 € TTC) + `bilan-pdf-synthese-3.png` (résultat net 1 243 623 € · 10,2 %).
-- `bilan-temoin.xlsx` : l'export vivant (ouvrable dans LibreOffice — formules).
-- **Captures d'écran vivant** (écran vide, complet, repère cliqué, ratios, Docs 8 cartes) :
-  à faire sur la pile lancée (API 8820 + front 6020, base applicative + un compte).
-  Procédure dans `SUIVI.md`. Le comportement est couvert par tsc/vitest/build + les
-  routes testées ; il restait le budget pour les artefacts PDF/Excel, pas pour booter
-  la pile authentifiée.
+**Documents** : `bilan-temoin.pdf` + `bilan-pdf-p1-1.png` (page 1 : Charge foncière,
+badges d'état, Total 2 271 464 € TTC) + `bilan-pdf-synthese-3.png` (résultat net
+1 244 997 € · 10,2 %) + `bilan-temoin.xlsx` (export vivant, formules).
+
+**Écran vivant** (pile lancée sur 8820, base applicative réelle, compte dédié) :
+- `ecran-docs-8-cartes.png` — la page Docs, grille 2×4, Comparables DVF grisée « bientôt ».
+- `ecran-bilan-vide.png` — « 46 postes à renseigner · 0/45 », Sourcé (terrain, zonage),
+  repères Faisabilité 14 153 m² SDP · Sitadel 9 mois · DVF 54 ventes ; **aucun ratio de place**.
+- `ecran-bilan-repere-cliques.png` — Construction « Repère pris » 2 550 €/m² (le champ
+  reflète la valeur adoptée).
+- `ecran-bilan-mes-ratios.png` — Hono MOE + BET mémorisé → état « Mes ratios »
+  (persisté dans `bilan_ratios`, scopé au compte).
+- `ecran-bilan-complet.png` — 45/45 postes, résultat net calculé, « Générer le bilan »
+  actif (valeurs de démonstration).
 
 ## 8. Décisions de Vic — avant merge (un commit par point)
 1. **Assiettes D.O / TRC** — recopiées à l'identique du tableur → **0 € d'écart** (§4). ✓
 2. **Repères « ratio de place »** — masqués (pas de source publique → pas de repère). ✓
 3. **Repères câblés** — Taxe/archéo (€/m²), Faisabilité (SDP · parkings · logts), Sitadel. ✓ (§6)
-4. **Captures de l'écran vivant** — à prendre sur la pile lancée (§7).
+4. **Captures de l'écran vivant** — prises sur la pile (8820, base réelle). ✓ (§7)
 
 **Ancien Financier backend** (`financier_bilan.py`, `financier_questionnaire.py`, routes
 `/financier/*`) **laissé en place** (no élargissement) ; seule la porte client bascule
