@@ -1,0 +1,37 @@
+G1 — LOT 2 : état du fond coloré par défaut + sélection/clic (vérification)
+==========================================================================
+
+RÈGLE DE VIC : en vue île, les parcelles ne sont PAS colorées par défaut. Le fond coloré
+par classement ne s'affiche QUE lorsque le client active « Analyse LABUSE ».
+
+VERDICT : conforme APRÈS la réparation de parcels-ile — AUCUN code n'a dû être modifié
+          (aucun calque de couleur ne revient par défaut). Mesuré dans l'app (z13, St-Denis) :
+
+  Analyse LABUSE OFF (défaut, l'écran d'accueil) :
+    · ile-fill   : visibility=visible, fill-opacity = 0            → AUCUNE couleur de classement
+    · ile-line   : visibility=none                                → pas de liseré de tier
+    · ile-base   : visibility=none (baseVisible=false)            → pas de voile gris
+    → le maillage affiché = contours neutres seulement (capture 01_ile_z13_sans_analyse.png)
+
+  Analyse LABUSE ON (toggle filtres.analyseLabuse + verdict) :
+    · ile-fill   : fill-color/fill-opacity = expressions PAR TIER (STATUS_COLOR / opinionOpacity)
+    · ile-line   : visibility=visible
+    → les parcelles se colorient + le panneau d'analyse s'ouvre
+      (415 801 parcelles : 5 952 Excellente · 35 072 Bonne · 49 147 À étudier · 98 386 Faible
+       · 227 244 Non retenue) — capture 03_ile_avec_analyse.png
+
+POURQUOI c'est déjà correct : la couleur de classement est pilotée par `opinion`
+(MapView.tsx) = (verdict && filters.analyseLabuse) || layers.couleurs_verdict. Par défaut
+`opinion` est faux → ile-fill reste à opacité 0. La réparation de parcels-ile réalimente la
+source, mais ne force AUCUNE couleur : le gate `opinion` tient.
+
+CE QUI REVIENT (et que le bug masquait) :
+  · SÉLECTION : clic sur une parcelle → ile-sel filtré sur l'IDU → liseré blanc
+    (capture 02_ile_clic_fiche.png : fiche 97411000AE0272 + surlignage, ouverte AU CLIC carte).
+  · CLIC : vérifié en vue île z13 (fiche AE0272) ET en vue île zoomée z16/overzoom (fiche AL0074).
+
+CAPTURE « AVANT » (état cassé) : non reproductible proprement en direct — rejouer l'état
+cassé exige de reconstruire les tuiles au mauvais nom (cache) et un reboot API, qui a buté
+sur le verrou connu `parcel_zone_plu` (session concurrente, cf. rapport §0). L'état cassé est
+prouvé au niveau BASE (mesures/avant/sonde_base.txt : layer=default, extent=4096) et a été
+mesuré indépendamment par l'audit VITESSE-CARTE-1 §6 (featP=0 sur 'parcels' / 36 361 sur 'default').
