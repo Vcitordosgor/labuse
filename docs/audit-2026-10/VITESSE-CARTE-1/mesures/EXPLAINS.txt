@@ -1,0 +1,109 @@
+VITESSE-CARTE-1 — EXPLAIN (ANALYZE, BUFFERS) des tuiles les plus chères (z9 334/286 St-Denis)
+Base PARTAGÉE sous contention (temps absolus bruités ; buffers/plan = solides). jit off.
+==================================================================================
+
+### parcels z9 — ST_AsMVT à la volée sur mvt_parcels (ce que le cache persistant ÉVITE)
+SET
+                                                                                                                     QUERY PLAN                                                                                                                      
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Aggregate  (cost=7033214.04..7033214.05 rows=1 width=32) (actual rows=1.00 loops=1)
+   Buffers: shared hit=33435 read=735, temp read=23454 written=23479
+   ->  Sort  (cost=139295.93..139937.17 rows=256494 width=357) (actual rows=257361.00 loops=1)
+         Sort Key: (st_asmvtgeom(st_simplifypreservetopology(m.geom_3857, '60'::double precision), 'BOX(6105178.323193598 -2426417.025884635,6183449.840157618 -2348145.5089206146)'::box2d, 1024, 16, true))
+         Sort Method: external merge  Disk: 93840kB
+         Buffers: shared hit=30667 read=735, temp read=23454 written=23479
+         ->  Seq Scan on mvt_parcels m  (cost=0.00..32083.79 rows=256494 width=357) (actual rows=257361.00 loops=1)
+               Filter: (geom_3857 && '0103000020110F000001000000050000003334AF94164A57410E305083188342C13334AF94164A57418A4F24C138EA41C17524C575869657418A4F24C138EA41C17524C575869657410E305083188342C13334AF94164A57410E305083188342C1'::geometry)
+               Rows Removed by Filter: 174302
+               Buffers: shared hit=30659 read=735
+ Planning:
+   Buffers: shared hit=199 read=3
+ Planning Time: 12.670 ms
+ Execution Time: 10176.883 ms
+(14 rows)
+
+
+### alea_mvt z9 — tuyau_subdivise (le plus lent, 2,5 s / 2,7 Mo / 52k morceaux)
+SET
+                                                                                                                                                                                                                            QUERY PLAN                                                                                                                                                                                                                             
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Aggregate  (cost=34004.44..34004.45 rows=1 width=32) (actual rows=1.00 loops=1)
+   Buffers: shared hit=26064
+   ->  Gather  (cost=1052.84..33990.06 rows=1 width=474) (actual rows=33377.00 loops=1)
+         Workers Planned: 2
+         Workers Launched: 2
+         Buffers: shared hit=26064
+         ->  Parallel Bitmap Heap Scan on tuyau_subdivise m  (cost=52.84..32989.96 rows=1 width=474) (actual rows=11125.67 loops=3)
+               Recheck Cond: (((kind)::text = 'georisque_alea'::text) AND ((subtype)::text = 'mouvement_terrain'::text))
+               Filter: ((st_setsrid(geom_2975, 2975) && '01030000209F0B0000010000000500000030C4AADFAA501041AA5DA5E727205D417C618C8DC23C1041D1E12C1EE9785D41B09E8CA2C8D4154104E4538CE6795D414A7D21DFE2E015416C6FEF8E2D215D4130C4AADFAA501041AA5DA5E727205D41'::geometry) AND (st_asmvtgeom(st_transform(st_setsrid(geom_2975, 2975), 3857), 'BOX(6105178.323193598 -2426417.025884635,6183449.840157618 -2348145.5089206146)'::box2d, 4096, 64, true) IS NOT NULL))
+               Rows Removed by Filter: 14455
+               Heap Blocks: exact=3928
+               Buffers: shared hit=26064
+               Worker 0:  Heap Blocks: exact=9921
+               Worker 1:  Heap Blocks: exact=10655
+               ->  Bitmap Index Scan on tuyau_subdivise_kind  (cost=0.00..52.84 rows=3641 width=0) (actual rows=76742.00 loops=1)
+                     Index Cond: (((kind)::text = 'georisque_alea'::text) AND ((subtype)::text = 'mouvement_terrain'::text))
+                     Index Searches: 1
+                     Buffers: shared hit=70
+ Planning:
+   Buffers: shared hit=469 read=2
+ Planning Time: 41.046 ms
+ Execution Time: 1306.303 ms
+(22 rows)
+
+
+### batiment z9 — tuyau_subdivise (719k morceaux, 2,4 s / 2 Mo)
+SET
+                                                                                                                                                                                                                               QUERY PLAN                                                                                                                                                                                                                                
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Finalize Aggregate  (cost=4956182.95..4956182.96 rows=1 width=32) (actual rows=1.00 loops=1)
+   Buffers: shared hit=3112 read=43876
+   ->  Gather  (cost=4956179.61..4956179.82 rows=2 width=32) (actual rows=3.00 loops=1)
+         Workers Planned: 2
+         Workers Launched: 2
+         Buffers: shared hit=3112 read=43876
+         ->  Partial Aggregate  (cost=4955179.61..4955179.62 rows=1 width=32) (actual rows=1.00 loops=3)
+               Buffers: shared hit=3112 read=43876
+               ->  Parallel Index Scan using tuyau_subdivise_kind on tuyau_subdivise m  (cost=0.43..4954697.65 rows=35 width=474) (actual rows=24990.67 loops=3)
+                     Index Cond: ((kind)::text = 'batiment'::text)
+                     Filter: ((st_setsrid(geom_2975, 2975) && '01030000209F0B0000010000000500000030C4AADFAA501041AA5DA5E727205D417C618C8DC23C1041D1E12C1EE9785D41B09E8CA2C8D4154104E4538CE6795D414A7D21DFE2E015416C6FEF8E2D215D4130C4AADFAA501041AA5DA5E727205D41'::geometry) AND (st_asmvtgeom(st_transform(st_setsrid(geom_2975, 2975), 3857), 'BOX(6105178.323193598 -2426417.025884635,6183449.840157618 -2348145.5089206146)'::box2d, 4096, 64, true) IS NOT NULL))
+                     Rows Removed by Filter: 247513
+                     Index Searches: 1
+                     Buffers: shared hit=3014 read=43871
+ Planning:
+   Buffers: shared hit=471
+ Planning Time: 22.708 ms
+ Execution Time: 1461.809 ms
+(18 rows)
+
+
+### ppr z9 — tuyau_subdivise
+SET
+                                                                                                                                                                                                                               QUERY PLAN                                                                                                                                                                                                                                
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Finalize Aggregate  (cost=418050.40..418050.41 rows=1 width=32) (actual rows=1.00 loops=1)
+   Buffers: shared hit=1480 read=15862
+   ->  Gather  (cost=418047.07..418047.28 rows=2 width=32) (actual rows=3.00 loops=1)
+         Workers Planned: 2
+         Workers Launched: 2
+         Buffers: shared hit=1480 read=15862
+         ->  Partial Aggregate  (cost=417047.07..417047.08 rows=1 width=32) (actual rows=1.00 loops=3)
+               Buffers: shared hit=1480 read=15862
+               ->  Parallel Bitmap Heap Scan on tuyau_subdivise m  (cost=596.74..417018.94 rows=2 width=474) (actual rows=8625.00 loops=3)
+                     Recheck Cond: ((kind)::text = 'ppr'::text)
+                     Filter: ((st_setsrid(geom_2975, 2975) && '01030000209F0B0000010000000500000030C4AADFAA501041AA5DA5E727205D417C618C8DC23C1041D1E12C1EE9785D41B09E8CA2C8D4154104E4538CE6795D414A7D21DFE2E015416C6FEF8E2D215D4130C4AADFAA501041AA5DA5E727205D41'::geometry) AND (st_asmvtgeom(st_transform(st_setsrid(geom_2975, 2975), 3857), 'BOX(6105178.323193598 -2426417.025884635,6183449.840157618 -2348145.5089206146)'::box2d, 4096, 64, true) IS NOT NULL))
+                     Rows Removed by Filter: 9728
+                     Heap Blocks: exact=5468
+                     Buffers: shared hit=1480 read=15862
+                     Worker 0:  Heap Blocks: exact=5115
+                     Worker 1:  Heap Blocks: exact=5231
+                     ->  Bitmap Index Scan on tuyau_subdivise_kind  (cost=0.00..596.74 rows=53908 width=0) (actual rows=55059.00 loops=1)
+                           Index Cond: ((kind)::text = 'ppr'::text)
+                           Index Searches: 1
+                           Buffers: shared hit=2 read=48
+ Planning:
+   Buffers: shared hit=471
+ Planning Time: 39.457 ms
+ Execution Time: 922.279 ms
+(24 rows)
+
