@@ -67,6 +67,11 @@ export function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
           <p className="mt-0.5 text-[11px] leading-snug text-txt-dim">{pt.libelle}</p>
         </div>
       )}
+      {/* PPR-PARTIEL-FIX-1 (étape B) — quand la parcelle touche une zone rouge PPR (servie 0 par
+          prudence) et garde du foncier HORS rouge, le libellé ci-dessus (pt.libelle, source unique
+          phrase_hors_ppr_rouge) le dit déjà « à étudier ». Le BADGE chiffré est rendu par la fiche
+          sous la tuile SDP restante et dans le tiroir Potentiel (Fiche.tsx, data-hors-ppr-rouge*) —
+          on ne le re-pose pas ici (ce bloc est replié sous « Étudier quand même »). */}
       {/* PLU-EXCEPTIONS-1 Lot B — une exception du règlement peut changer l'enveloppe (bande depuis
           une limite, sous-secteur, majoration de hauteur…). On la SIGNALE ici « à vérifier » (jamais
           appliquée au calcul), avec renvoi vers le règlement de la zone (§Urbanisme). */}

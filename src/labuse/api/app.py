@@ -5910,16 +5910,30 @@ def _potentiel_transformation_block(db: Session, idu: str, commune: str | None =
     # EBC/portion/reculs — RECETTE-1 A1) n'est pas écrite au run : on la recalcule LIVE ici (une
     # seule parcelle) pour « servir la raison déjà calculée » sans toucher au run.
     exigu_raison = None
+    # PPR-PARTIEL-FIX-1 (étape B) — la partie HORS zone rouge d'une parcelle partiellement rouge
+    # servie à 0 (None sauf gisement). SOURCE UNIQUE lue ensuite par la fiche, le Dossier (via
+    # verdict_potentiel, qui imprime `libelle`) et le Copilote. Ne touche NI le score NI la SDP servie.
+    hors_ppr_rouge = None
     if cause:
         from ..faisabilite.engine import cause_certaine, cause_libelle
         if cause == "terrain_exigu":
             try:
-                from ..faisabilite.db import parcel_faisabilite
+                from ..faisabilite.db import parcel_faisabilite, surface_hors_ppr_rouge
                 _fres = parcel_faisabilite(db, row["pid"])
                 exigu_raison = _fres[1].exigu_raison if _fres else None
+                hors_ppr_rouge = surface_hors_ppr_rouge(db, row["pid"], faisa=_fres)
             except Exception:  # noqa: BLE001 — jamais de 500 sur la fiche ; repli « reculs »
                 exigu_raison = None
+                hors_ppr_rouge = None
         libelle = cause_libelle(cause, exigu_raison) or libelle
+        # PPR-PARTIEL-FIX-1 — quand il reste >= 200 m² hors rouge, le libellé « terrain trop étroit une
+        # fois retirée la zone rouge » (engine.py:313) est FAUX (il reste des milliers de m²). On sert
+        # alors la vérité (droits 0 par prudence ; X m² hors rouge, à étudier) — MÊME phrase, MÊME chiffre
+        # que le badge, via la source unique phrase_hors_ppr_rouge. En dessous de 200 m², l'ancien libellé
+        # reste (le terrain est réellement exigu, il est vrai).
+        if hors_ppr_rouge:
+            from ..faisabilite.db import phrase_hors_ppr_rouge
+            libelle = phrase_hors_ppr_rouge(hors_ppr_rouge)
         # CHASSE-FIX-2 (D03, arbitrage Vic) — deux familles :
         #  · CERTAINE (zone inconstructible, terrain exigu, habitat interdit, redhibitoire, capacité
         #    nulle) : verdict ferme → « exclu », on NOMME le 0 du run (jamais forcé : il est écrit) ;
@@ -6016,6 +6030,11 @@ def _potentiel_transformation_block(db: Session, idu: str, commune: str | None =
         # SERVIES (plus jamais None en présence d'une cause) ; `libelle` ci-dessus la nomme déjà.
         "cause": cause,
         "exigu_raison": exigu_raison,
+        # PPR-PARTIEL-FIX-1 (étape B) — {hors_rouge_m2, pct} ou None. Surface de foncier BRUT hors zone
+        # rouge PPR (reculs non appliqués, PAS une SDP) d'une parcelle partiellement rouge servie 0 pour
+        # le motif ppr_rouge. Alimente le badge « à étudier » (fiche/Dossier/Copilote). JAMAIS en listing/
+        # carte (non stockée) — c'est l'étape A qui décidera de la servir en masse, avec garde accès/tenant.
+        "hors_ppr_rouge": hors_ppr_rouge,
         "sous_densite": row["sous_densite"],
         # PLU-CALIBRAGE-5 — la capacité est « Estimé » (jamais « Sourcé ») dès qu'une exception du
         # règlement n'est pas modélisée (regles_non_modelisees), même sur un run servi calibré. On

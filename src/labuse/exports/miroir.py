@@ -1124,6 +1124,17 @@ def rendu_sections(valeurs: dict[str, Valeur], fiche: dict, *, plan_html: str = 
             continue
         frags: list[str] = []
         frags.append(_bandeau(sec["id"], valeurs))
+        # PPR-PARTIEL-FIX-1 (étape B) — sur une parcelle partiellement rouge servie 0 par prudence, le
+        # §risques dit AUSSI qu'il reste du foncier hors zone rouge (MÊME chiffre que le §potentiel et la
+        # fiche : source unique db.surface_hors_ppr_rouge, portée par potentiel_verdict.hors_ppr_rouge).
+        if sec["id"] == "risques":
+            _pv = valeurs.get("potentiel_verdict")
+            _hr = _pv.valeur.get("hors_ppr_rouge") if (_pv and isinstance(_pv.valeur, dict)) else None
+            if _hr:
+                from ..faisabilite.db import phrase_hors_ppr_rouge
+                frags.append(note(phrase_hors_ppr_rouge(_hr)
+                             + " Surface brute, reculs non appliqués ; accès et unité du terrain à "
+                               "vérifier. Ce n'est pas un certificat de constructibilité."))
         blocs_pleins: list[str] = []
         groupes: dict[str, list[str]] = {}           # libellé de groupe → lignes kv (ordre 1re vue)
         absents: list[tuple[str, str]] = []          # (quoi, phrase d'absence déclarée)

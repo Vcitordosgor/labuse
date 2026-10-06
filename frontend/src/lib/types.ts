@@ -919,6 +919,10 @@ export interface PotentielTransformation extends Indisponible {
   // null = parcelle calculée (potentiel disponible). Servi aussi en liste/Dossier/Copilote.
   cause?: string | null
   exigu_raison?: string | null
+  // PPR-PARTIEL-FIX-1 (étape B) — une parcelle partiellement rouge servie 0 par prudence garde du
+  // foncier HORS zone rouge. {hors_rouge_m2, pct} (foncier BRUT, reculs non appliqués, PAS une SDP)
+  // ou null. Alimente le badge « à étudier » (fiche/tuile SDP/tiroir Potentiel). Jamais en listing/carte.
+  hors_ppr_rouge?: { hors_rouge_m2: number; pct: number } | null
   // PLU-EXCEPTIONS-1 — exceptions du règlement qui POURRAIENT changer le calcul (à vérifier). Ne
   // sont PAS appliquées ; renvoient vers §Urbanisme.
   exceptions_calcul?: { regle: string; porte: string | null; article: string | null; page_pdf: number | null }[]
