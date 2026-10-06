@@ -11,7 +11,9 @@ côté client. La cloison par compte suit api/tenant (bilan_ratios ∈ SCOPED_TA
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+import json
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -288,3 +290,104 @@ def modele_bilan(idu: str, request: Request, db: Session = Depends(get_db)) -> d
     ).all()
     cat["ratios_compte"] = {r[0]: {"valeur": r[1], "tva": r[2]} for r in rows}
     return cat
+
+
+# ===========================================================================
+# Sorties — PDF + Excel vivant, enregistrés dans « Mes documents » (Lot 5)
+# ===========================================================================
+def _commune(db: Session, idu: str) -> str:
+    try:
+        v = db.execute(
+            text("SELECT commune FROM parcels WHERE idu = :i"), {"i": idu}
+        ).scalar()
+        return str(v or "")
+    except Exception:  # noqa: BLE001
+        return ""
+
+
+@router.post("/bilan/{idu}/generer")
+def generer_bilan(
+    idu: str, corps: CalculIn, request: Request, db: Session = Depends(get_db)
+) -> dict:
+    """Génère (enregistre la recette d') un bilan : exige qu'il soit COMPLET, puis
+    stocke ses saisies en JSON dans « Mes documents » (hypotheses). « Ouvrir »
+    régénère PDF/Excel à partir de ces mêmes saisies."""
+    r = Moteur().calculer(_entrees(corps))
+    if not r.complet:
+        raise HTTPException(
+            422,
+            detail={
+                "code": "bilan-incomplet",
+                "manques": r.manquants,
+                "message": f"{len(r.manquants)} poste(s) à renseigner avant de générer le bilan.",
+            },
+        )
+    from .documents_bibliotheque import millesimes_servis
+
+    cid = compte_ou_401(request)
+    row = db.execute(
+        text(
+            "INSERT INTO documents_generes (compte_id, doc_type, cible_idus, hypotheses, millesimes) "
+            "VALUES (:cid, 'bilan', :idus, :hyp, :mil) RETURNING id"
+        ),
+        {
+            "cid": cid,
+            "idus": [idu],
+            "hyp": json.dumps(corps.model_dump()),
+            "mil": json.dumps(millesimes_servis(db)),
+        },
+    ).scalar()
+    db.commit()
+    return {"doc_id": int(row), "complet": True}
+
+
+def _saisies_du_document(db: Session, idu: str, doc_id: int, request: Request) -> CalculIn:
+    """Relit les saisies d'un bilan enregistré (cloison par compte). 404 sinon."""
+    cid = current_compte(request)
+    row = db.execute(
+        text(
+            "SELECT hypotheses FROM documents_generes "
+            f"WHERE id = :id AND doc_type = 'bilan' AND {scope_clause()}"
+        ),
+        {"id": doc_id, "cid": cid},
+    ).scalar()
+    if row is None:
+        raise HTTPException(404, "Bilan introuvable pour ce compte.")
+    data = row if isinstance(row, dict) else json.loads(row)
+    return CalculIn.model_validate(data)
+
+
+@router.get("/bilan/{idu}.pdf")
+def bilan_pdf(
+    idu: str, request: Request, doc_id: int = Query(...), db: Session = Depends(get_db)
+) -> Response:
+    from ..bilan import pdf as _pdf
+
+    corps = _saisies_du_document(db, idu, doc_id, request)
+    r = Moteur().calculer(_entrees(corps))
+    if not r.complet:
+        raise HTTPException(422, "Bilan incomplet.")
+    octets = _pdf.construire_pdf(r, idu=idu, commune=_commune(db, idu))
+    return Response(
+        content=octets,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'inline; filename="bilan-{idu}.pdf"'},
+    )
+
+
+@router.get("/bilan/{idu}.xlsx")
+def bilan_xlsx(
+    idu: str, request: Request, doc_id: int = Query(...), db: Session = Depends(get_db)
+) -> Response:
+    from ..bilan.excel import classeur_bilan_bytes
+
+    corps = _saisies_du_document(db, idu, doc_id, request)
+    e = _entrees(corps)
+    if not Moteur().calculer(e).complet:
+        raise HTTPException(422, "Bilan incomplet.")
+    octets = classeur_bilan_bytes(e, titre=f"Bilan — {idu}")
+    return Response(
+        content=octets,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f'attachment; filename="bilan-{idu}.xlsx"'},
+    )

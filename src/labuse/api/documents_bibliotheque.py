@@ -39,9 +39,9 @@ DOC_LABEL = {
     "pre-dossier": "Pré-dossier PC", "gabarit": "Gabarit",
     "comparatif": "Comparatif", "etude-zone": "Étude de zone",
 }
-#: l'Excel n'existe pour aucun document aujourd'hui (il arrive avec le moteur Bilan — BILAN-1). La
-#: colonne « Excel » n'est servie que sur les lignes Bilan ET seulement si l'export existe : ici jamais.
-_EXCEL_DISPONIBLE: set[str] = set()
+#: l'Excel vivant existe désormais pour le Bilan (BILAN-1 Lot 5) : la colonne « Excel » est servie
+#: sur les lignes Bilan. Les autres documents n'ont pas d'export Excel.
+_EXCEL_DISPONIBLE: set[str] = {"bilan"}
 
 
 def millesimes_servis(db: Session) -> dict[str, str]:
