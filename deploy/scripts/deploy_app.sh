@@ -10,13 +10,26 @@ set -euo pipefail
 HOST="${1:-labuse-vps}"
 REPO="$(cd "$(dirname "$0")/../.." && pwd)"
 
-echo "── 1. Code → ${HOST}:/opt/labuse/app (rsync, sans secrets ni artefacts) ──"
-rsync -a --delete \
+echo "── 1. Code → ${HOST}:/opt/labuse/app (rsync DIRECT via sudo distant, sans transit /tmp) ──"
+# DISQUE-VPS-1 — on n'envoie QUE l'utile (cf. docs/audit-2026-10/DISQUE-VPS-1.md) :
+#   · rsync écrit DIRECTEMENT dans /opt/labuse/app via --rsync-path="sudo rsync" (plus de
+#     /tmp/labuse-app-sync : économise ~11 Go temporaires sous /tmp à chaque déploiement) ;
+#   · exclusions ANCRÉES (préfixe / = racine du transfert) des SOURCES d'ingestion brutes (jamais
+#     lues au runtime ni par un cron — ingérées une fois en base), de docs/ (barrière jouée côté Mac),
+#     et des artefacts de dev (qa/captures/audit_shots/tests/reports) ;
+#   · les exclusions PROTÈGENT AUSSI du --delete les caches/sorties écrits SUR le VPS
+#     (data/plu_reglements, data/ortho_tiles, data/ban régénéré par cron, outputs/) — à ne pas écraser.
+rsync -a --delete --rsync-path="sudo rsync" \
   --exclude .git --exclude .venv --exclude node_modules --exclude frontend/dist \
-  --exclude qa/captures --exclude exports --exclude "__pycache__" --exclude "*.pyc" \
-  --exclude .pytest_cache --exclude reports \
-  "$REPO/" "$HOST":/tmp/labuse-app-sync/
-ssh -o BatchMode=yes "$HOST" 'sudo rsync -a --delete /tmp/labuse-app-sync/ /opt/labuse/app/ && sudo chown -R labuse:labuse /opt/labuse/app'
+  --exclude "__pycache__" --exclude "*.pyc" --exclude .pytest_cache --exclude exports \
+  --exclude /reports --exclude /qa --exclude /captures --exclude /audit_shots \
+  --exclude /tests --exclude /docs --exclude /outputs \
+  --exclude /data/cosia --exclude /data/ortho_irc --exclude /data/ortho_tiles \
+  --exclude /data/rgealti --exclude /data/dvf_histo --exclude /data/ml \
+  --exclude /data/insee_rp --exclude /data/ban --exclude /data/edf_hta \
+  --exclude /data/tcsp --exclude /data/dvf --exclude /data/plu_reglements \
+  "$REPO/" "$HOST":/opt/labuse/app/
+ssh -o BatchMode=yes "$HOST" 'sudo chown -R labuse:labuse /opt/labuse/app'
 
 echo "── 2. venv + dépendances (sur le VPS, en labuse) ──"
 # Import-smoke de la CHAÎNE DE DÉMARRAGE (pas juste `import labuse`) : app servie + comptes +

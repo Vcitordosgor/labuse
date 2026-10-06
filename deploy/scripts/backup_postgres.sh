@@ -4,7 +4,7 @@
 # -----------------------------------------------------------------------------
 # - Dump format custom compressé (pg_dump -Fc), nommage daté.
 # - Écrit HORS du dossier applicatif (/var/backups/labuse par défaut).
-# - Rotation : ne garde que les N plus récents (défaut 7).
+# - Rotation : ne garde que les N plus récents (défaut 4) + garde-disque structurel (DISQUE-VPS-1).
 # - Recommandation : pousser ensuite vers OVH Object Storage (voir fin de script).
 # - AUCUNE suppression autre que la rotation des dumps datés de CE script.
 #
@@ -15,7 +15,9 @@
 set -euo pipefail
 
 BACKUP_DIR="${LABUSE_BACKUP_DIR:-/var/backups/labuse}"   # JAMAIS dans /opt/labuse/app
-KEEP="${LABUSE_BACKUP_KEEP:-7}"                          # nb de dumps conservés
+# DISQUE-VPS-1 — un dump « lean » pèse ~4,4 Go : défaut 7 → 4 (7×4,4 = 30 Go saturaient le disque).
+# LABUSE_BACKUP_KEEP (env) l'emporte toujours ; un garde-disque (ci-dessous) borne la rotation quoi qu'il arrive.
+KEEP="${LABUSE_BACKUP_KEEP:-4}"                          # nb de dumps quotidiens conservés
 DB="${LABUSE_DB_NAME:-labuse}"
 DB_USER="${LABUSE_DB_USER:-labuse}"
 DB_HOST="${LABUSE_DB_HOST:-localhost}"
@@ -36,6 +38,27 @@ for t in dryrun_cascade_results cascade_results p_model_dataset p_model_dataset_
          p_model_dataset_v2bis p_model_ext_dataset p_model_candidates score_snapshot_parcelles; do
     EXCLUDES="$EXCLUDES --exclude-table-data=$t"
 done
+
+# DISQUE-VPS-1 — GARDE-DISQUE avant dump : « tient dans le disque, garde toujours au moins le plus
+# récent ». Si l'espace libre < 1,3 × le plus gros dump existant, on supprime les dumps quotidiens
+# LES PLUS ANCIENS (jamais le plus récent) jusqu'à avoir la place. Structurel, indépendant de KEEP.
+ensure_space() {
+    local newest need_kb free_kb oldest
+    mapfile -t EXIST < <(ls -1t "$BACKUP_DIR"/labuse-"${DB}"-*.dump 2>/dev/null)
+    newest="${EXIST[0]:-}"
+    [ -z "$newest" ] && return 0                         # aucun dump : rien à élaguer
+    need_kb=$(( $(du -k "$newest" | cut -f1) * 13 / 10 ))
+    while :; do
+        free_kb=$(df -Pk "$BACKUP_DIR" | awk 'NR==2{print $4}')
+        (( free_kb >= need_kb )) && break
+        mapfile -t EXIST < <(ls -1t "$BACKUP_DIR"/labuse-"${DB}"-*.dump 2>/dev/null)
+        (( ${#EXIST[@]} <= 1 )) && break                 # ne JAMAIS supprimer le dernier restant
+        oldest="${EXIST[-1]}"
+        echo "  garde-disque : espace serré (libre $((free_kb/1024)) Mo < besoin $((need_kb/1024)) Mo) → suppression $oldest"
+        rm -f -- "$oldest"
+    done
+}
+ensure_space
 
 echo "▶ [$(date '+%F %T')] pg_dump $DB (lean) → $OUT"
 # J+2 (incident 22/07 : un échec d'auth laissait un dump de 0 octet, silencieux jusqu'au pull) :
@@ -67,8 +90,8 @@ echo "  $(ls -1 "$BACKUP_DIR"/labuse-"${DB}"-*.dump 2>/dev/null | wc -l) dump(s)
 # rotation propre à 4 exemplaires. Restauration : mêmes gestes que pour un dump quotidien.
 if [ "$(date +%u)" = "7" ]; then
     HEBDO="$BACKUP_DIR/hebdo-labuse-${DB}-${TS}.dump"
-    ln "$OUT" "$HEBDO" && echo "  hebdo : $HEBDO retenu (4 semaines)"
-    mapfile -t OLDH < <(ls -1t "$BACKUP_DIR"/hebdo-labuse-"${DB}"-*.dump 2>/dev/null | tail -n +5)
+    ln "$OUT" "$HEBDO" && echo "  hebdo : $HEBDO retenu (3 semaines)"
+    mapfile -t OLDH < <(ls -1t "$BACKUP_DIR"/hebdo-labuse-"${DB}"-*.dump 2>/dev/null | tail -n +4)
     ((${#OLDH[@]})) && rm -f -- "${OLDH[@]}"
 fi
 
