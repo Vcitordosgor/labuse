@@ -1,0 +1,13 @@
+=== OUVERTURE (z9.92) — octets gzip transférés ===
+  limites_parcelles (DOUBLON, z9 ×4)           3241221   3.091 MB
+  JS+CSS critiques (prod, gz)                   366436   0.349 MB
+  parcels-ile (z9 ×4)                           307864   0.294 MB
+  API/JSON (config,sources,couches…)             47841   0.046 MB
+  fond de carte raster (×4)                      27648   0.026 MB
+  limites_communes (z9 ×4)                        5078   0.005 MB
+  TOTAL X                                      3996088   3.811 MB
+
+X (aujourd'hui)          =   3996088 o = 3.81 MB
+Y (sans doublon)         =    754867 o = 0.72 MB
+doublon retiré           =   3241221 o = 3.09 MB
+GAIN Z                   = 81.1 %

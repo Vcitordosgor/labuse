@@ -1,0 +1,12 @@
+=== z9 ===
+parcels-ile          z=9   n=4  raw=  1068851  gz=   307864  (raw 1,02 MB / gz 0,29 MB)
+limites_parcelles    z=9   n=4  raw=  9928493  gz=  3241221  (raw 9,47 MB / gz 3,09 MB)
+limites_communes     z=9   n=4  raw=     5509  gz=     5078  (raw 0,01 MB / gz 0,00 MB)
+=== z12 ===
+parcels-ile          z=12  n=6  raw=  7168794  gz=  3336300  (raw 6,84 MB / gz 3,18 MB)
+limites_parcelles    z=12  n=6  raw=  3087373  gz=  1445677  (raw 2,94 MB / gz 1,38 MB)
+limites_communes     z=12  n=6  raw=      964  gz=      964  (raw 0,00 MB / gz 0,00 MB)
+=== z14 ===
+parcels-ile          z=14  n=9  raw=  2480362  gz=  1187748  (raw 2,37 MB / gz 1,13 MB)
+limites_parcelles    z=14  n=9  raw=  1300891  gz=   622840  (raw 1,24 MB / gz 0,59 MB)
+limites_communes     z=14  n=9  raw=      305  gz=      305  (raw 0,00 MB / gz 0,00 MB)
