@@ -581,6 +581,9 @@ def _parcel_tile_bytes(db: Session, z: int, x: int, y: int) -> bytes:
     # des entités n'a AUCUN effet sur le rendu (mêmes pixels) ; il rend les tuiles reproductibles et donc
     # comparables (pré-génération == calcul à la volée == entre workers). `geom` est la colonne
     # géométrie consommée par ST_AsMVT → ordonner dessus n'ajoute aucune propriété à la tuile.
+    # ⚠ G1 : le `ORDER BY` DOIT être en FIN d'arguments — `ST_AsMVT(mvt.* ORDER BY geom, 'parcels',
+    # extent, 'geom')` fait avaler 'parcels'/extent/'geom' comme clés de tri → la tuile retombe au nom
+    # `default` et extent 4096 (= le bug qui cassait `parcels-ile`, cf. docs/audit-2026-10/G1).
     data = db.execute(text(f"""
         WITH b AS (SELECT ST_TileEnvelope(:z, :x, :y) AS env),
         mvt AS (
@@ -589,7 +592,7 @@ SELECT ST_AsMVTGeom({geom_expr}, b.env, {extent}, {buffer}, true) AS geom,
           FROM mvt_parcels m, b
           WHERE m.geom_3857 && b.env
         )
-        SELECT ST_AsMVT(mvt.* ORDER BY mvt.geom, 'parcels', {extent}, 'geom') FROM mvt
+        SELECT ST_AsMVT(mvt.*, 'parcels', {extent}, 'geom' ORDER BY mvt.geom) FROM mvt
     """), {"z": z, "x": x, "y": y}).scalar()
     return bytes(data) if data else b""
 
