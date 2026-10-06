@@ -479,7 +479,11 @@ export function CouchesTuyauLayers({ map, ready }: {
         if (!m.getSource(rsrc)) {
           // RECETTE-1 (C7) — la source raster suit le zoom_min de la couche (EnR : rien avant z13) ;
           // les courbes de niveau gardent leur z11. En dessous : aucune tuile demandée, rien de dessiné.
-          m.addSource(rsrc, { type: 'raster', tileSize: 256, minzoom: zmin(c.kind, c.zoom_min, 6), maxzoom: 18,
+          // RECETTE-PROD-1 (8) — on ré-honore `c.zoom_min` ici : la régression RECETTE-2 C1 (`zmin`,
+          // pensé pour les tuiles VECTEUR île lourdes) renvoyait 0 pour les rasters non listés en
+          // CHARGE_LOURDE → EnR demandée dès l'échelle île (d'où « recouvre presque toute l'île »).
+          // Les rasters ne sont pas des tuiles vecteur lourdes : leur gate est leur zoom_min déclaré.
+          m.addSource(rsrc, { type: 'raster', tileSize: 256, minzoom: c.zoom_min ?? 6, maxzoom: 18,
             tiles: [`${window.location.origin}${c.tuiles_url}`] })
         }
         const rid = `tuyau-${c.kind}-raster`
