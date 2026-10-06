@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LABUSE — maquette « Bilan » v2</title>
+<style>
+:root{
+  --bg:#0f1613; --bg-2:#141d19; --panel:#182220; --line:#26332d; --line-2:#334539;
+  --text:#e7ede9; --muted:#97a69e; --dim:#6b7a72;
+  --mint:#4ade80; --mint-ink:#08170f; --yellow:#facc15; --amber:#f59e0b;
+  --r-4:4px; --r-6:6px; --pill:999px; --h-ctl:32px;
+  --font:Inter,"Helvetica Neue",Arial,system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 var(--font)}
+button,input{font:inherit;color:inherit}
+button{background:none;border:0;cursor:pointer}
+.num{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.top{height:56px;display:flex;align-items:center;gap:14px;padding:0 20px;border-bottom:1px solid var(--line);background:var(--bg-2);position:sticky;top:0;z-index:5}
+.btn{height:var(--h-ctl);padding:0 12px;border-radius:var(--r-6);display:inline-flex;align-items:center;gap:8px;font-weight:600;white-space:nowrap}
+.btn.primary{background:var(--mint);color:var(--mint-ink)}
+.btn.primary:hover{background:#7cf0a5}
+.btn.primary[disabled]{opacity:.4;cursor:not-allowed}
+.btn.secondary{border:1px solid var(--mint);color:var(--mint)}
+.btn.secondary:hover{background:var(--mint);color:var(--mint-ink)}
+.btn.small{height:24px;padding:0 8px;font-size:12px}
+.title{display:flex;flex-direction:column;line-height:1.2}
+.title b{font-size:16px}.title span{color:var(--muted);font-size:12px}
+.top .right{margin-left:auto;display:flex;gap:8px}
+.wrap{display:grid;grid-template-columns:330px minmax(0,1fr);gap:20px;padding:20px;max-width:1500px;margin:0 auto;align-items:start}
+.side{position:sticky;top:76px;display:grid;gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-6);padding:14px}
+.card h3{margin:0 0 10px;font-size:13px;font-weight:600;color:var(--muted)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{height:var(--h-ctl);padding:0 12px;border-radius:var(--pill);border:1px solid var(--line-2);color:var(--muted);display:inline-flex;align-items:center;font-weight:500}
+.chip:hover,.chip.on{background:var(--mint);border-color:var(--mint);color:var(--mint-ink)}
+.field{display:grid;gap:4px;margin-top:10px}
+.field label{font-size:12px;color:var(--muted)}
+.inp{height:var(--h-ctl);width:100%;border:1px solid var(--line-2);border-radius:var(--r-6);background:var(--bg);padding:0 10px;outline:none;text-align:right;font-variant-numeric:tabular-nums}
+.inp:focus{border-color:var(--mint)}
+.inp.empty{border-color:var(--amber)}
+.unit{display:grid;grid-template-columns:1fr auto;align-items:center;gap:8px}
+.unit span{color:var(--dim);font-size:12px;min-width:44px}
+.res .big{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1}
+.res .lab{color:var(--muted);font-size:12px;margin-bottom:2px}
+.res .sub{color:var(--muted);font-size:13px;margin-top:6px}
+.res .todo{color:var(--amber);font-weight:600;font-size:15px}
+.bar{height:6px;border-radius:var(--pill);background:var(--line);margin:10px 0 4px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--mint)}
+.kv{display:grid;grid-template-columns:1fr auto;gap:4px 10px}
+.kv .k{color:var(--muted);font-size:13px}.kv .v{font-variant-numeric:tabular-nums;text-align:right}
+.badge{display:inline-flex;align-items:center;height:18px;padding:0 7px;border-radius:var(--pill);font-size:11px;font-weight:600;border:1px solid;white-space:nowrap}
+.b-src{border-color:var(--mint);color:var(--mint)}
+.b-me{border-color:var(--text);color:var(--text)}
+.b-sai{border-color:var(--line-2);color:var(--muted)}
+.b-todo{border-color:var(--amber);color:var(--amber)}
+.b-so{border-color:var(--dim);color:var(--dim)}
+.rep{display:inline-flex;align-items:center;height:20px;padding:0 7px;border-radius:var(--pill);border:1px dashed var(--line-2);color:var(--muted);font-size:11px;white-space:nowrap}
+.rep:hover{background:var(--mint);color:var(--mint-ink);border-color:var(--mint);border-style:solid}
+.tablecard{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-6);overflow:hidden;margin-bottom:16px}
+.tablecard>h2{font-size:15px;margin:0;padding:12px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.tablecard>h2 small{color:var(--muted);font-weight:400;font-size:12px}
+table{width:100%;border-collapse:collapse;table-layout:fixed}
+th{font-size:12px;font-weight:600;color:var(--muted);text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);background:var(--bg-2)}
+th.num{text-align:right}
+td{padding:4px 10px;height:40px;border-bottom:1px solid var(--line);vertical-align:middle}
+td.lab{line-height:1.25}
+td.lab small{display:block;color:var(--dim);font-size:11px}
+.cell{display:flex;align-items:center;justify-content:flex-end;gap:6px}
+.tx{height:26px;width:86px;border:1px solid var(--line-2);border-radius:var(--r-4);background:var(--bg);text-align:right;padding:0 6px;outline:none;font-variant-numeric:tabular-nums}
+.tx:focus{border-color:var(--mint)}
+.tx.empty{border-color:var(--amber)}
+.u{color:var(--dim);font-size:11px;min-width:34px;text-align:left}
+tr.blk td{background:var(--bg-2);height:44px;cursor:pointer;font-weight:700}
+tr.blk:hover td{background:var(--mint);color:var(--mint-ink)}
+tr.blk:hover .badge{border-color:var(--mint-ink);color:var(--mint-ink)}
+tr.blk:hover .chev{border-color:var(--mint-ink)}
+.chev{display:inline-block;width:8px;height:8px;border-left:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);margin:0 10px 2px 2px}
+tr.blk.open .chev{transform:rotate(-45deg);border-color:var(--mint)}
+tr.tot td{font-weight:700;background:var(--bg-2)}
+tr.res-row td{font-weight:700;height:46px;font-size:15px}
+.state{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.lnk{color:var(--muted);font-size:12px;text-decoration:underline;text-underline-offset:2px}
+.lnk:hover{color:var(--mint)}
+.blkacts{display:flex;gap:10px;justify-content:flex-end;font-weight:400}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.cal td{height:36px}
+.legend{display:flex;gap:14px;align-items:center;color:var(--muted);font-size:12px;padding:10px 14px;flex-wrap:wrap}
+.note{margin:0 20px 20px;max-width:1460px;padding:12px 14px;border:1px solid var(--line);border-radius:var(--r-6);color:var(--muted);font-size:12px;background:var(--bg-2)}
+.note b{color:var(--text)}
+.muted{color:var(--muted)}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <button class="btn secondary">← Fiche</button>
+  <div class="title"><b>Bilan · 97415000BW0102</b><span>12 chemin Summer, 97460 Saint-Paul</span></div>
+  <div class="right">
+    <button class="btn secondary">Enregistrer dans un projet</button>
+    <button class="btn secondary" id="xls" disabled style="opacity:.4">Excel</button>
+    <button class="btn primary" id="gen" disabled>Générer le bilan</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <aside class="side">
+    <div class="card">
+      <h3>Que voulez-vous savoir ?</h3>
+      <div class="chips">
+        <button class="chip on" data-mode="marge">Ma marge à ce prix</button>
+        <button class="chip" data-mode="prix">Le prix max du terrain</button>
+      </div>
+      <div class="field" id="f-cible" hidden>
+        <label>Marge visée</label>
+        <div class="unit"><input class="inp empty" id="cible" placeholder="à saisir"><span>% CA HT</span></div>
+      </div>
+    </div>
+
+    <div class="card res">
+      <div class="lab" id="r-lab">Résultat net</div>
+      <div id="r-main"></div>
+      <div class="bar"><i id="r-bar"></i></div>
+      <div class="sub" id="r-prog"></div>
+    </div>
+
+    <div class="card">
+      <h3>Aller plus vite</h3>
+      <div style="display:grid;gap:8px">
+        <button class="btn secondary" id="mine">Remplir avec mes ratios</button>
+        <div class="muted" style="font-size:12px">Vos ratios mémorisés lors de vos bilans précédents. Aucun pour l'instant.</div>
+        <button class="lnk" id="demo" style="text-align:left">Démo : adopter tous les repères LABUSE</button>
+        <button class="lnk" id="clear" style="text-align:left">Tout vider</button>
+      </div>
+    </div>
+  </aside>
+
+  <main>
+    <!-- Programme -->
+    <div class="tablecard">
+      <h2>Programme <small>ce qui fixe les assiettes</small></h2>
+      <table>
+        <colgroup><col><col style="width:220px"><col style="width:260px"><col style="width:170px"></colgroup>
+        <tbody id="prog"></tbody>
+      </table>
+    </div>
+
+    <div class="tablecard">
+      <h2>Produits <small>une ligne par produit, comme votre grille</small></h2>
+      <table>
+        <colgroup><col><col style="width:110px"><col style="width:130px"><col style="width:190px"><col style="width:150px"><col style="width:130px"></colgroup>
+        <thead><tr><th>Produit</th><th class="num">Lots</th><th class="num">SUV m²</th><th class="num">Prix TTC /m² SUV yc pkg</th><th class="num">TVA de vente</th><th class="num">CA TTC</th></tr></thead>
+        <tbody id="prod"></tbody>
+      </table>
+    </div>
+
+    <!-- Bilan -->
+    <div class="tablecard">
+      <h2>Bilan <small>tout est modifiable · les repères n'entrent dans le calcul que si vous les cliquez</small></h2>
+      <table>
+        <colgroup><col><col style="width:150px"><col style="width:200px"><col style="width:110px"><col style="width:90px"><col style="width:110px"><col style="width:250px"></colgroup>
+        <thead><tr><th>Libellé</th><th>Assiette</th><th class="num">Taux</th><th class="num">HT</th><th class="num">TVA</th><th class="num">TTC</th><th>État</th></tr></thead>
+        <tbody id="tb"></tbody>
+      </table>
+      <div class="legend">
+        <span><span class="badge b-src">Sourcé</span> donnée publique, pré-remplie</span>
+        <span><span class="rep">repère 3 %</span> proposition LABUSE, cliquez pour l'adopter</span>
+        <span><span class="badge b-sai">Saisi</span> votre valeur</span>
+        <span><span class="badge b-me">Mes ratios</span> mémorisé</span>
+        <span><span class="badge b-so">Sans objet</span> 0 volontaire</span>
+        <span><span class="badge b-todo">À renseigner</span></span>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="tablecard">
+        <h2>Ratios</h2>
+        <table><tbody id="ratios"></tbody></table>
+      </div>
+      <div class="tablecard">
+        <h2>Calendrier prévisionnel</h2>
+        <table class="cal"><tbody id="cal"></tbody></table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="note"><b>Règle du Bilan (BILAN-1).</b> Rien n'entre dans le calcul que le client n'a pas posé. Pré-rempli seulement le Sourcé (surface cadastre, zonage, taux de TVA légaux), modifiable. Tout le reste est vide avec un repère LABUSE cliquable (Faisabilité, DVF neuf, outil Taxe, ratios de place). Aucune marge, aucun prix max, aucun export tant qu'un poste est vide : chaque poste est renseigné ou marqué « Sans objet ». Structure = le modèle promoteur, toutes ses lignes, dans son ordre. Le nom de la société du modèle n'apparaît nulle part. <b>Dans l'app, tout calcul est fait par le moteur ; le JavaScript de la maquette ne sert qu'à la démonstration.</b> Repères fictifs.</div>
+
+<script>
+/* ============ démonstration seulement : dans l'app, le moteur calcule ============ */
+const P=s=>{if(s===''||s==null)return null;const n=parseFloat(String(s).replace(/\s/g,'').replace(',','.'));return isNaN(n)?null:n};
+const E=n=>n==null?'':Math.round(n).toLocaleString('fr-FR').replace(/\u202f/g,' ');
+const F=(n,d=2)=>n==null?'':n.toLocaleString('fr-FR',{maximumFractionDigits:d});
+const TVA=.085;
+let mode='marge',cible=null;
+/* programme : st = src | sai | rep | null */
+const PROG=[
+ {id:'terrain',lab:'Terrain',u:'m²',v:10321,st:'src',src:'Cadastre'},
+ {id:'zon',lab:'Zonage au PLU',txt:'U6c · 72 % · A et N 28 %',st:'src',src:'PLU'},
+ {id:'shob',lab:'SHOB',u:'m²',rep:null},
+ {id:'sdp',lab:'Surface de plancher',u:'m²',rep:3200,repl:'Faisabilité 3 200'},
+ {id:'stax',lab:'Surface taxable',u:'m²',rep:3200,repl:'= SDP 3 200'},
+ {id:'pkgA',lab:'Parkings aériens',u:'pl.',rep:null},
+ {id:'pkgC',lab:'Parkings couverts',u:'pl.',rep:62,repl:'Faisabilité 62'},
+ {id:'loyer',lab:'Loyer au m² de SUV yc pkg',u:'€/m²',rep:null},
+];
+const PROD=[
+ {id:'p1',lab:'Produit 1',lots:null,suv:null,pv:null,tva:null,rep:{lots:26,suv:1940,pv:4750,tva:.085},repl:'DVF neuf 4 750'},
+ {id:'p2',lab:'Produit 2',lots:null,suv:null,pv:null,tva:null,rep:{lots:18,suv:1340,pv:4600,tva:.021},repl:'repère 4 600'},
+];
+/* lignes du modèle, dans son ordre. k: pct (assiette × %), unit (quantité × €), ff (montant). a: assiette */
+const B=[
+ {blk:'Terrain',key:'T'},
+ {id:'achat',lab:'Achat terrain privé',sub:'TVA selon le vendeur : à saisir',k:'unit',a:'terrain',tu:'€/m²',tva:null,rep:null,repl:'DVF terrain nu : 190 €/m²',repv:232},
+ {id:'apport',lab:'Commission apport',k:'pct',a:'prixT',tva:TVA,rep:3},
+ {id:'notT',lab:'Notaire terrain',k:'pct',a:'prixT',tva:null,rep:1.5},
+ {id:'notP',lab:'Notaire prêt',k:'pct',a:'pret',tva:null,rep:1.5,needA:true},
+ {id:'txLog',lab:'Taxe logements',k:'unit',a:'stax',tu:'€/m²',tva:0,tvaSrc:true,rep:null,repl:'Outil Taxe : 68,6 €/m²',repv:68.6},
+ {id:'txPkg',lab:'TA parking extérieurs + archéo',k:'unit',a:'stax',tu:'€/m²',tva:0,tvaSrc:true,rep:null},
+ {id:'tre',lab:'TRE',k:'unit',a:'stax',tu:'€/m²',tva:0,tvaSrc:true,rep:null},
+ {id:'archeo',lab:"Taxe d'archéologie préventive",k:'unit',a:'stax',tu:'€/m²',tva:0,tvaSrc:true,rep:null,repl:'Redevance : 6,2 €/m²',repv:6.2},
+ {id:'topo',lab:'Relevé topo',k:'ff',tva:TVA,rep:3500},
+ {id:'born',lab:'Géomètre bornage',k:'ff',tva:TVA,rep:2000},
+ {id:'sol',lab:'Étude de sol',k:'ff',tva:TVA,rep:12500},
+ {id:'hydro',lab:'Étude hydraulique',sub:'PPR inondation sur la parcelle',k:'ff',tva:TVA,rep:4500},
+ {id:'affPC',lab:'Constat affichage PC',k:'ff',tva:TVA,rep:900},
+ {id:'branch',lab:'Branchements',k:'unit',a:'lots',tu:'€/lot',tva:TVA,rep:900},
+ {id:'edf',lab:'Transfo EDF',k:'ff',tva:TVA,rep:null},
+ {id:'amiante',lab:'Diag amiante',sub:'Bâti existant avant 1997',k:'ff',tva:TVA,rep:2000},
+ {id:'demol',lab:'Défrichage · préparation terrain',sub:'Démolition et désamiantage · 420 m² de bâti (BD TOPO)',k:'ff',tva:TVA,rep:null},
+ {id:'aleaT',lab:'Aléas',k:'pct',a:'caTTC',tva:TVA,rep:null,alea:true},
+ {blk:'Construction & honoraires techniques',key:'C'},
+ {id:'constr',lab:'Construction yc VRD',k:'unit',a:'suv',tu:'€/m²',tva:TVA,rep:2300,repl:'Coût de référence 2 300 €/m²'},
+ {id:'deco',lab:'Déco et aménagement intérieur',k:'ff',tva:TVA,rep:null},
+ {id:'archi',lab:'Hono. architecte conception',k:'pct',a:'constr',tva:TVA,rep:2},
+ {id:'pays',lab:'Honos paysagiste hydrau',k:'pct',a:'constr',tva:TVA,rep:.2},
+ {id:'moe',lab:'Hono MOE + BET',k:'pct',a:'constr',tva:TVA,rep:3.8},
+ {id:'opc',lab:'Honos OPC',k:'pct',a:'constr',tva:TVA,rep:.6},
+ {id:'labels',lab:'Labels GIEP et NF',k:'ff',tva:TVA,rep:null},
+ {id:'sps',lab:'SPS',k:'pct',a:'constr',tva:TVA,rep:.26},
+ {id:'ctrl',lab:'Bureau de contrôle',k:'pct',a:'constr',tva:TVA,rep:.86},
+ {id:'aleaC',lab:'Imprévus (aléas techniques)',k:'pct',a:'constr',tva:TVA,rep:1.5,alea:true},
+ {blk:'Gestion',key:'G'},
+ {id:'pub',lab:'Publicité commerciale',k:'pct',a:'caTTC',tva:TVA,rep:.2},
+ {id:'jur',lab:'Juridique / divers',k:'pct',a:'caTTC',tva:TVA,rep:.04},
+ {id:'cvae',lab:'CVAE (ex taxe pro)',k:'pct',a:'va',tva:0,tvaSrc:true,rep:null,needA:true},
+ {id:'mod',lab:'M.O.D. AMO',k:'pct',a:'caTTC',tva:TVA,rep:5},
+ {id:'gfa',lab:'Garantie achèvement',k:'pct',a:'caTTC',tva:0,tvaSrc:true,rep:1},
+ {id:'gp',lab:'Garantie de paiement',k:'pct',a:'constrTTC2',tva:0,tvaSrc:true,rep:null},
+ {id:'ff',lab:'Frais financiers',k:'pct',a:'caTTC',tva:0,tvaSrc:true,rep:.5},
+ {id:'do',lab:'Assurances D.O / C.N.R',k:'pct',a:'constrTot',tva:0,tvaSrc:true,rep:1.32},
+ {id:'trc',lab:'Assurance TRC + GAREAT',k:'pct',a:'constrTotHT',tva:0,tvaSrc:true,rep:.34},
+ {id:'aleaG',lab:'Aléas',k:'pct',a:'caTTC',tva:TVA,rep:null,alea:true},
+ {blk:'Frais de vente',key:'V'},
+ {id:'com1',lab:'Commercialisation logements',sub:'Produit 1',k:'pct',a:'ca1',tva:TVA,rep:10},
+ {id:'com2',lab:'Commercialisation logements',sub:'Produit 2',k:'pct',a:'ca2',tva:TVA,rep:10},
+ {id:'acte',lab:"Frais d'acte et de prêt",sub:'Pack',k:'pct',a:'ca1',tva:TVA,rep:null},
+ {id:'pack',lab:'Frais package (int int)',sub:'Pack',k:'pct',a:'ca1',tva:TVA,rep:null},
+ {id:'proc',lab:'Frais de proc et dossier bancaire',sub:'Pack',k:'unit',a:'lots',tu:'€/lot',tva:TVA,rep:null},
+ {id:'gpl',lab:'Garantie premier locataire',sub:'Pack',k:'pct',a:'loyers',tva:TVA,rep:null},
+ {id:'aleaV',lab:'Aléas',k:'pct',a:'caTTC',tva:TVA,rep:null,alea:true},
+];
+const V={};           // valeurs des lignes : {v, st, tva, a}
+const PV={};          // programme
+const open={T:true};
+PROG.forEach(p=>{if(p.st==='src')PV[p.id]={v:p.v,st:'src'}});
+B.forEach(r=>{if(r.id)V[r.id]={v:null,st:null,tva:r.tvaSrc?r.tva:(r.tva===TVA?TVA:null),tvaSt:(r.tvaSrc||r.tva===TVA)?'src':null,a:null}});
+
+function pv(id){return PV[id]&&PV[id].v!=null?PV[id].v:null}
+function prodTot(){let lots=0,suv=0,caT=0,caH=0,ok=true,ca=[];PROD.forEach(p=>{if([p.lots,p.suv,p.pv,p.tva].some(x=>x==null)){ok=false;ca.push(null);return}
+ lots+=p.lots;suv+=p.suv;const t=p.suv*p.pv;caT+=t;caH+=t/(1+p.tva);ca.push(t)});return{ok,lots,suv,caT,caH,ca}}
+function assiette(r,ctx){switch(r.a){
+ case 'terrain':return pv('terrain');case 'stax':return pv('stax');case 'suv':return ctx.pt.ok?ctx.pt.suv:null;case 'lots':return ctx.pt.ok?ctx.pt.lots:null;
+ case 'prixT':return ctx.ht.achat;case 'pret':case 'va':return V[r.id].a;case 'caTTC':return ctx.pt.ok?ctx.pt.caT:null;
+ case 'ca1':return ctx.pt.ca[0];case 'ca2':return ctx.pt.ca[1];case 'constr':return ctx.ht.constr;
+ case 'constrTTC2':return ctx.ht.constr!=null?ctx.ht.constr*(1+TVA)/2:null;
+ case 'constrTot':return ctx.cTot!=null?ctx.cTot*(1+TVA):null;case 'constrTotHT':return ctx.cTot;
+ case 'loyers':{const l=pv('loyer');return l!=null&&ctx.pt.ok?l*ctx.pt.suv:null}
+ default:return null}}
+function lineHT(r,ctx){const x=V[r.id];if(x.st==='so')return 0;if(x.v==null)return null;
+ if(r.k==='ff')return x.v;const a=assiette(r,ctx);if(a==null)return null;return r.k==='pct'?a*x.v/100:a*x.v}
+function compute(){
+ const pt=prodTot(),ctx={pt,ht:{},cTot:null};
+ // ordre : terrain d'abord (prixT), construction, puis le reste
+ B.forEach(r=>{if(r.id==='achat')ctx.ht.achat=lineHT(r,ctx)});
+ B.forEach(r=>{if(r.id==='constr')ctx.ht.constr=lineHT(r,ctx)});
+ const cIds=B.filter((r,i)=>r.id&&B.slice(0,i).reverse().find(x=>x.blk).key==='C').map(r=>r.id);
+ let c=0,cok=true;cIds.forEach(id=>{const h=lineHT(B.find(r=>r.id===id),ctx);if(h==null)cok=false;else c+=h});ctx.cTot=cok?c:null;
+ const out={},blk={};let cur,missing=0,total=0,filled=0;
+ B.forEach(r=>{if(r.blk){cur=r.key;blk[cur]={ht:0,tva:0,ok:true,miss:0};return}
+  total++;const ht=lineHT(r,ctx),x=V[r.id];const tvaR=x.st==='so'?0:x.tva;
+  let tv=(ht!=null&&tvaR!=null)?ht*tvaR:null;if(ht===0)tv=0;
+  out[r.id]={ht,tva:tv,a:r.k==='ff'?null:assiette(r,ctx)};
+  if(ht==null||tv==null){missing++;blk[cur].ok=false;blk[cur].miss++}else{filled++;blk[cur].ht+=ht;blk[cur].tva+=tv}});
+ const progMiss=['sdp','stax'].filter(id=>pv(id)==null).length+(pt.ok?0:1);
+ return{ctx,out,blk,missing:missing+progMiss,total:total+3,filled,pt}}
+
+/* ---------- rendu ---------- */
+function stateBadge(st){return{src:'<span class="badge b-src">Sourcé</span>',sai:'<span class="badge b-sai">Saisi</span>',me:'<span class="badge b-me">Mes ratios</span>',rep:'<span class="badge b-sai">Repère adopté</span>',so:'<span class="badge b-so">Sans objet</span>'}[st]||'<span class="badge b-todo">À renseigner</span>'}
+function renderProg(){let h='';PROG.forEach(p=>{const x=PV[p.id];
+ const val=p.txt?`<span>${p.txt}</span>`:`<div class="cell"><input class="tx${x&&x.v!=null?'':' empty'}" data-p="${p.id}" value="${x&&x.v!=null?E(x.v):''}" placeholder="à saisir"><span class="u">${p.u}</span></div>`;
+ const rep=p.repl&&!(x&&x.v!=null)?`<button class="rep" data-prep="${p.id}">${p.repl}</button>`:'';
+ const opt=['shob','pkgA','loyer'].includes(p.id);
+ h+=`<tr><td class="lab">${p.lab}${p.src?'<small>'+p.src+'</small>':''}${opt?'<small>facultatif</small>':''}</td><td>${val}</td><td>${rep}</td><td><div class="state">${x&&x.v!=null||p.txt?stateBadge(x?x.st:'src'):(opt?'':stateBadge(null))}</div></td></tr>`});
+ document.getElementById('prog').innerHTML=h}
+function renderProd(pt){let h='';PROD.forEach((p,i)=>{
+ const inp=(f,u)=>`<div class="cell"><input class="tx${p[f]==null?' empty':''}" data-pr="${i}" data-f="${f}" value="${p[f]==null?'':(f==='tva'?F(p[f]*100,1):E(p[f]))}" placeholder="—">${u?'<span class="u">'+u+'</span>':''}</div>`;
+ const done=[p.lots,p.suv,p.pv,p.tva].every(x=>x!=null);
+ h+=`<tr><td class="lab"><input class="tx" style="width:150px;text-align:left" value="${p.lab}"> ${done?'':`<button class="rep" data-prod="${i}">${p.repl}</button>`}</td><td>${inp('lots')}</td><td>${inp('suv')}</td><td>${inp('pv','€')}</td><td>${inp('tva','%')}</td><td class="num">${done?E(p.suv*p.pv):''}</td></tr>`});
+ h+=`<tr class="tot"><td>Total <button class="lnk" style="margin-left:8px">+ ajouter un produit</button></td><td class="num">${pt.ok?pt.lots:''}</td><td class="num">${pt.ok?E(pt.suv):''}</td><td></td><td></td><td class="num">${pt.ok?E(pt.caT):''}</td></tr>`;
+ document.getElementById('prod').innerHTML=h}
+function aLabel(r,a){const m={terrain:'m² terrain',stax:'m² taxables',suv:'m² SUV',lots:'lots',prixT:'prix terrain',caTTC:'CA TTC',ca1:'CA produit 1',ca2:'CA produit 2',constr:'construction HT',constrTTC2:'½ construction TTC',constrTot:'total (2) TTC',constrTotHT:'total (2) HT',loyers:'loyers annuels'};
+ if(r.a==='pret'||r.a==='va')return `<div class="cell" style="justify-content:flex-start"><input class="tx${V[r.id].a==null?' empty':''}" data-a="${r.id}" value="${E(V[r.id].a)}" placeholder="${r.a==='pret'?'montant prêt':'valeur ajoutée'}"></div>`;
+ return `${a!=null?E(a):'<span class="muted">—</span>'}<small>${m[r.a]||''}</small>`}
+function renderB(R){let h='',cur;
+ B.forEach(r=>{
+  if(r.blk){cur=r.key;const b=R.blk[cur],o=!!open[cur];
+   h+=`<tr class="blk${o?' open':''}" data-blk="${cur}"><td colspan="3"><span class="chev"></span>${r.blk} ${b.ok?'':`<span class="badge b-todo" style="margin-left:8px">${b.miss} à renseigner</span>`}</td><td class="num">${b.ok?E(b.ht):''}</td><td class="num">${b.ok?E(b.tva):''}</td><td class="num">${b.ok?E(b.ht+b.tva):''}</td><td><div class="blkacts">${o?`<button class="lnk" data-adopt="${cur}">Adopter les repères du bloc</button>`:''}</div></td></tr>`;return}
+  if(!open[cur])return;
+  const x=V[r.id],o=R.out[r.id];
+  const unit=r.k==='pct'?'%':r.k==='unit'?r.tu:'€';
+  const tx=x.st==='so'?'<span class="muted">—</span>':`<div class="cell"><input class="tx${x.v==null?' empty':''}" data-id="${r.id}" value="${x.v==null?'':(r.k==='pct'?F(x.v):E(x.v))}" placeholder="à saisir"><span class="u">${unit}</span></div>`;
+  const repv=r.repv!=null?r.repv:r.rep;
+  const rep=(x.v==null&&x.st!=='so'&&repv!=null)?`<button class="rep" data-rep="${r.id}">${r.repl||('repère '+(r.k==='pct'?F(repv)+' %':E(repv)+' '+unit))}</button>`:'';
+  const tvaCell=x.st==='so'?'':(x.tva==null?`<div class="cell"><input class="tx empty" style="width:56px" data-tva="${r.id}" placeholder="%"></div>`:(o.tva!=null?E(o.tva):`<span class="muted">${x.tva?F(x.tva*100,1)+' %':'exonéré'}</span>`));
+  h+=`<tr><td class="lab">${r.lab}${r.sub?'<small>'+r.sub+'</small>':''}</td><td class="lab">${r.k==='ff'?'<span class="muted">Forfait</span>':aLabel(r,o.a)}</td><td>${tx}</td><td class="num">${o.ht!=null?E(o.ht):''}</td><td class="num">${tvaCell}</td><td class="num">${o.ht!=null&&o.tva!=null?E(o.ht+o.tva):''}</td>
+   <td><div class="state">${stateBadge(x.st)}${rep}${x.v==null&&x.st!=='so'?`<button class="lnk" data-so="${r.id}">Sans objet</button>`:''}${x.st==='sai'?`<button class="btn secondary small" data-mem="${r.id}">Mémoriser</button>`:''}${x.v!=null||x.st==='so'?`<button class="lnk" data-clr="${r.id}" title="Vider">↺</button>`:''}</div></td></tr>`});
+ // CA et résultat
+ const all=R.missing===0,pt=R.pt;
+ const dep={ht:0,tva:0};Object.values(R.blk).forEach(b=>{dep.ht+=b.ht;dep.tva+=b.tva});
+ h+=`<tr class="tot"><td colspan="3">Dépenses totales</td><td class="num">${all?E(dep.ht):''}</td><td class="num">${all?E(dep.tva):''}</td><td class="num">${all?E(dep.ht+dep.tva):''}</td><td></td></tr>`;
+ PROD.forEach((p,i)=>{const ok=pt.ca[i]!=null;const ht=ok?pt.ca[i]/(1+p.tva):null;
+  h+=`<tr><td class="lab">CA logements<small>${p.lab}</small></td><td class="lab">${ok?E(p.suv)+'<small>m² SUV</small>':''}</td><td class="num">${ok?E(p.pv)+' €':''}</td><td class="num">${ok?E(ht):''}</td><td class="num">${ok?E(pt.ca[i]-ht):''}</td><td class="num">${ok?E(pt.ca[i]):''}</td><td></td></tr>`});
+ const tvaRes=all?(pt.caT-pt.caH)-dep.tva:null,res=all?pt.caH-dep.ht:null;
+ h+=`<tr class="tot"><td colspan="3">Total chiffre d'affaires</td><td class="num">${pt.ok?E(pt.caH):''}</td><td class="num">${pt.ok?E(pt.caT-pt.caH):''}</td><td class="num">${pt.ok?E(pt.caT):''}</td><td></td></tr>`;
+ h+=`<tr><td class="lab" colspan="5">TVA résiduelle</td><td class="num">${all?E(-tvaRes):''}</td><td></td></tr>`;
+ if(all){const al=['aleaT','aleaC','aleaG','aleaV'].reduce((s,i)=>s+(R.out[i].ht||0),0),mod=R.out.mod.ht||0;
+  h+=`<tr class="res-row"><td colspan="3">Résultat net</td><td class="num" style="color:var(--mint)">${E(res)}</td><td class="num" colspan="2">${F(res/pt.caH*100,1)} % du CA HT</td><td></td></tr>`;
+  h+=`<tr><td class="lab" colspan="3">Cash flow <small>résultat + M.O.D.</small></td><td class="num">${E(res+mod)}</td><td class="num" colspan="2">${F((res+mod)/pt.caH*100,1)} %</td><td></td></tr>`;
+  h+=`<tr><td class="lab" colspan="3">Aléas</td><td class="num">${E(al)}</td><td colspan="3"></td></tr>`;
+  h+=`<tr><td class="lab" colspan="3">Résultat net sans aléas</td><td class="num">${E(res+al)}</td><td class="num" colspan="2">${F((res+al)/pt.caH*100,1)} %</td><td></td></tr>`;
+  h+=`<tr><td class="lab" colspan="3">Cash flow sans aléas</td><td class="num">${E(res+al+mod)}</td><td class="num" colspan="2">${F((res+al+mod)/pt.caH*100,1)} %</td><td></td></tr>`;
+ }else h+=`<tr class="res-row"><td colspan="7" style="color:var(--amber)">Résultat net : ${R.missing} poste${R.missing>1?'s':''} à renseigner avant tout calcul</td></tr>`;
+ document.getElementById('tb').innerHTML=h;
+ return{all,res,dep,tvaRes}}
+function renderSide(R,S){const pct=Math.round((R.total-R.missing)/R.total*100);
+ document.getElementById('r-bar').style.width=pct+'%';
+ document.getElementById('r-prog').textContent=`${R.total-R.missing} / ${R.total} postes renseignés`;
+ const m=document.getElementById('r-main');
+ if(!S.all){document.getElementById('r-lab').textContent=mode==='marge'?'Résultat net':'Prix maximum du terrain';m.innerHTML=`<div class="todo">${R.missing} poste${R.missing>1?'s':''} à renseigner</div><div class="sub">Aucun chiffre n'est calculé sur un bilan incomplet.</div>`}
+ else if(mode==='marge'){document.getElementById('r-lab').textContent='Résultat net';m.innerHTML=`<div class="big">${E(S.res)} €</div><div class="sub">${F(S.res/R.pt.caH*100,1)} % du CA HT</div>`}
+ else{ if(cible==null){m.innerHTML='<div class="todo">Saisissez la marge visée</div>';return}
+  // prix max : dépendance linéaire au prix du terrain (commission, notaire) — démo
+  const a=V.achat.v*pv('terrain');const k=((V.apport.st==='so'?0:V.apport.v)+(V.notT.st==='so'?0:V.notT.v))/100;
+  const other=S.dep.ht-a*(1+k);const pmax=(R.pt.caH*(1-cible/100)-other)/(1+k);
+  document.getElementById('r-lab').textContent='Prix maximum du terrain';
+  m.innerHTML=`<div class="big">${E(pmax)} €</div><div class="sub">pour ${F(cible,1)} % de marge · ${E(pmax/pv('terrain'))} €/m² de terrain</div>`}
+ ['gen','xls'].forEach(id=>{const b=document.getElementById(id);b.disabled=!S.all;b.style.opacity=S.all?'':'.4'})}
+function renderRatios(R,S){const pt=R.pt,all=S.all;const rows=[
+ ['Coût const. m² SUV HT',all&&R.out.constr.ht!=null?E((R.out.constr.ht+(R.out.aleaC.ht||0))/pt.suv)+' €':''],
+ ['Prix moyen au m² SUV HT',pt.ok?E(pt.caH/pt.suv)+' €':''],
+ ['Net promoteur au m² SUV TTC',all?E((pt.caH-(R.out.acte.ht||0)-(R.out.pack.ht||0)-(R.out.proc.ht||0))/pt.suv*(1+TVA))+' €':''],
+ ['CA TTC programme',pt.ok?E(pt.caT)+' €':''],
+ ['Renta nette / CA HT',all?F(S.res/pt.caH*100,1)+' %':''],
+ ['Nombre de lots',pt.ok?pt.lots:''],
+ ['Prix terrain y compris dation',R.ctx.ht.achat!=null?E(R.ctx.ht.achat)+' €':''],
+ ['Charge foncière / m² SUV',all?E(R.blk.T.ht/pt.suv)+' €':'']];
+ document.getElementById('ratios').innerHTML=rows.map(r=>`<tr><td class="lab">${r[0]}</td><td class="num">${r[1]||'<span class="muted">—</span>'}</td></tr>`).join('')}
+const CAL=['Compromis','Dépôt PC','Obtention PC','Purge PC','Mise en commercialisation','Réitération authentique','DROC','DAT','Réception travaux','Livraison'];
+document.getElementById('cal').innerHTML=CAL.map((c,i)=>`<tr><td class="lab">${c}</td><td style="width:140px"><input class="tx" style="width:120px" placeholder="${i===0?'J':'J+…'}"></td></tr>`).join('');
+
+function render(){renderProg();const R=compute();renderProd(R.pt);const S=renderB(R);renderSide(R,S);renderRatios(R,S);bind()}
+function bind(){
+ document.querySelectorAll('tr.blk').forEach(t=>t.onclick=e=>{if(e.target.dataset.adopt)return;open[t.dataset.blk]=!open[t.dataset.blk];render()});
+ document.querySelectorAll('[data-id]').forEach(i=>i.onchange=()=>{const v=P(i.value);V[i.dataset.id].v=v;V[i.dataset.id].st=v==null?null:'sai';render()});
+ document.querySelectorAll('[data-a]').forEach(i=>i.onchange=()=>{V[i.dataset.a].a=P(i.value);render()});
+ document.querySelectorAll('[data-tva]').forEach(i=>i.onchange=()=>{const v=P(i.value);V[i.dataset.tva].tva=v==null?null:v/100;render()});
+ document.querySelectorAll('[data-rep]').forEach(b=>b.onclick=()=>{const r=B.find(x=>x.id===b.dataset.rep);V[r.id].v=r.repv!=null?r.repv:r.rep;V[r.id].st='rep';render()});
+ document.querySelectorAll('[data-so]').forEach(b=>b.onclick=()=>{V[b.dataset.so].v=null;V[b.dataset.so].st='so';render()});
+ document.querySelectorAll('[data-clr]').forEach(b=>b.onclick=()=>{V[b.dataset.clr].v=null;V[b.dataset.clr].st=null;render()});
+ document.querySelectorAll('[data-mem]').forEach(b=>b.onclick=()=>{V[b.dataset.mem].st='me';render()});
+ document.querySelectorAll('[data-adopt]').forEach(b=>b.onclick=e=>{e.stopPropagation();adoptBlock(b.dataset.adopt);render()});
+ document.querySelectorAll('[data-p]').forEach(i=>i.onchange=()=>{const v=P(i.value);PV[i.dataset.p]={v,st:v==null?null:(PV[i.dataset.p]&&PV[i.dataset.p].st==='src'?'sai':'sai')};render()});
+ document.querySelectorAll('[data-prep]').forEach(b=>b.onclick=()=>{const p=PROG.find(x=>x.id===b.dataset.prep);PV[p.id]={v:p.rep,st:'rep'};render()});
+ document.querySelectorAll('[data-pr]').forEach(i=>i.onchange=()=>{const p=PROD[i.dataset.pr],f=i.dataset.f,v=P(i.value);p[f]=v==null?null:(f==='tva'?v/100:v);render()});
+ document.querySelectorAll('[data-prod]').forEach(b=>b.onclick=()=>{const p=PROD[b.dataset.prod];Object.assign(p,p.rep);render()});
+}
+function adoptBlock(key){let cur;B.forEach(r=>{if(r.blk){cur=r.key;return}if(cur!==key)return;const x=V[r.id];
+ if(x.v==null&&x.st!=='so'){const rv=r.repv!=null?r.repv:r.rep;if(rv!=null){x.v=rv;x.st='rep'}}})}
+document.querySelectorAll('[data-mode]').forEach(c=>c.onclick=()=>{document.querySelectorAll('[data-mode]').forEach(x=>x.classList.remove('on'));c.classList.add('on');mode=c.dataset.mode;document.getElementById('f-cible').hidden=mode!=='prix';render()});
+document.getElementById('cible').onchange=e=>{cible=P(e.target.value);e.target.classList.toggle('empty',cible==null);render()};
+document.getElementById('demo').onclick=()=>{
+ PROG.forEach(p=>{if(p.rep!=null&&!(PV[p.id]&&PV[p.id].v!=null))PV[p.id]={v:p.rep,st:'rep'}});PROD.forEach(p=>Object.assign(p,p.rep));
+ ['T','C','G','V'].forEach(adoptBlock);
+ B.forEach(r=>{if(!r.id)return;const x=V[r.id];if(x.v==null&&x.st!=='so'){x.st='so'}});
+ V.notP.st='so';V.cvae.st='so';V.notT.tva=0;V.achat.tva=0;Object.keys(open).forEach(k=>open[k]=true);open.C=open.G=open.V=true;render()};
+document.getElementById('clear').onclick=()=>location.reload();
+render();
+</script>
+</body>
+</html>
