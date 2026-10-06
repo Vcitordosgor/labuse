@@ -960,11 +960,17 @@ export function Fiche({ idu }: { idu: string }) {
                       zone rouge PPR (servie 0 par prudence) mais garde du foncier HORS rouge (≥ 200 m²).
                       On le RÉVÈLE « à étudier » (jamais « constructible »). Même chiffre que le tiroir
                       Potentiel, le Dossier et le Copilote (source unique db.surface_hors_ppr_rouge). */}
+                  {/* RECETTE-PROD-1 (3) — la pastille `<Badge>` (inline-flex, rounded-full, padding)
+                      débordait de la case « SDP RESTANTE » (grille 3 colonnes, cellule ~130 px) : son
+                      texte + le « i » ne tiennent pas dans la pilule sans sortir du cadre. Vic : « ligne
+                      compacte sous la valeur, dans la DA ». On remplace la pilule par une LIGNE de
+                      légende ambre (même échelle 9 px que `.stat-s`), qui passe à la ligne dans la
+                      cellule (`min-w-0`, pas de pilule) → plus de débordement. Chiffre/source inchangés. */}
                   {c.l === 'SDP restante' && horsRouge && (
-                    <div className="stat-s mt-1" data-hors-ppr-rouge>
-                      <Badge ton="ambre" className="!whitespace-normal leading-tight">Hors zone rouge : {fmtInt(horsRouge.hors_rouge_m2)} m² ({horsRouge.pct} %) — à étudier
-                        <InfoI aria="Sur la partie hors zone rouge"
-                          tip={`Les droits sont servis à 0 par prudence : la parcelle touche une zone rouge PPR. ${fmtInt(horsRouge.hors_rouge_m2)} m² restent hors de cette zone. Surface brute, reculs non appliqués, accès et unité du terrain à vérifier. Ce n'est pas un certificat de constructibilité.`} /></Badge>
+                    <div data-hors-ppr-rouge className="mt-1 flex items-start gap-1 text-[9px] leading-tight text-amber">
+                      <span className="min-w-0 break-words">Hors zone rouge : {fmtInt(horsRouge.hors_rouge_m2)} m² ({horsRouge.pct} %) — à étudier</span>
+                      <InfoI aria="Sur la partie hors zone rouge"
+                        tip={`Les droits sont servis à 0 par prudence : la parcelle touche une zone rouge PPR. ${fmtInt(horsRouge.hors_rouge_m2)} m² restent hors de cette zone. Surface brute, reculs non appliqués, accès et unité du terrain à vérifier. Ce n'est pas un certificat de constructibilité.`} />
                     </div>
                   )}
                 </div>
