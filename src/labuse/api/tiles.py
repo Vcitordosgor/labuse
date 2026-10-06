@@ -572,7 +572,19 @@ def _parcel_tile_bytes(db: Session, z: int, x: int, y: int) -> bytes:
     # (285 m/60 m) → même tolérance visuelle (~0,2 px) que z9, extension cohérente du même LOD. Mesuré
     # ≈ 0,10 Mo gz (cf. G1-MESURE §4), ride sur la tuile z8 unique de l'île (8/167/143), à la volée.
     simplify = {8: 120, 9: 60, 10: 30, 11: 15}.get(z, 0)
-    extent = 1024 if z <= 11 else 4096
+    # G1-LOT3 CORRECTIF « ZONES NOIRES » — extent 4096 dès z9 (était 1024 à z≤11). L'extent 1024
+    # (≈ 5–19 m/unité à z9–z11) QUANTIFIAIT les parcelles de taille moyenne jusqu'à les rendre
+    # dégénérées → ST_AsMVTGeom les ÉCARTE → dans les secteurs peu denses (hauts de l'île) une tuile
+    # de maillage pouvait perdre l'essentiel de ses parcelles : zone VIDE à frontière droite (bord de
+    # tuile), persistante, qui ne « s'affichait » qu'à z12 (où l'extent passait déjà à 4096). Ce
+    # maillage LOD ne portait l'île QUE depuis le lot 2 (overlay `limites_parcelles` éteint) → le trou
+    # n'existait pas sur main (overlay full-res). Couverture restaurée (overlay z11 9243 features vs
+    # parcels-ile 1024→7276 / **4096→8828**, z10 76 %→8 % de pertes, z9 89 %→29 % = reste sub-pixel).
+    # La simplification par palier RESTE (elle n'écarte que le détail sous le pixel → poids maîtrisé :
+    # ouverture z9 ≈ 0,3→1,4 Mo br, toujours << overlay doublon 3,2 Mo). z8 garde 1024 (dézoom
+    # extrême, tout y est sous-pixel : aucune parcelle visible n'est écartée). ⚠ purge du cache
+    # z9-z11 requise après ce changement (tuiles cachées encore en extent 1024).
+    extent = 1024 if z <= 8 else 4096
     buffer = max(extent // 64, 8)
     geom_expr = (f"ST_SimplifyPreserveTopology(m.geom_3857, {simplify})" if simplify
                  else "m.geom_3857")

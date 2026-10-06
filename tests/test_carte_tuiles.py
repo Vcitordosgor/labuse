@@ -162,9 +162,11 @@ def _mvt_layer_name_extent(buf: bytes):
 
 def test_layer_parcels_et_extent(engine):
     """G1 lot 1 — GARDE ANTI-RÉGRESSION : la tuile parcelles sort nommée `parcels` (jamais `default`)
-    et à l'extent attendu (1024 à z≤11, 4096 à z≥12). Le bug d'origine plaçait l'`ORDER BY` après le
-    1er argument de ST_AsMVT → 'parcels'/extent avalés comme clés de tri → layer `default`, extent 4096.
-    Skip si mvt_parcels absente/vide (jeu de données non semé en CI)."""
+    et à l'extent attendu. G1-LOT3 CORRECTIF : extent 1024 SEULEMENT à z8 (dézoom extrême) ; dès z9
+    l'extent est 4096 (l'ancien 1024 à z9-z11 quantifiait les parcelles de taille moyenne jusqu'à les
+    écarter → zones noires dans les hauts). Le bug d'origine plaçait l'`ORDER BY` après le 1er argument
+    de ST_AsMVT → 'parcels'/extent avalés comme clés de tri → layer `default`. Skip si mvt_parcels
+    absente/vide (jeu de données non semé en CI)."""
     from sqlalchemy import text
     from sqlalchemy.orm import Session
 
@@ -178,8 +180,8 @@ def test_layer_parcels_et_extent(engine):
         if not ext or ext[0] is None:
             pytest.skip("mvt_parcels vide")
         W = 20037508.342789244
-        # une tuile couvrant l'emprise, à z11 (extent attendu 1024) et z13 (4096)
-        for z, want_extent in ((11, 1024), (13, 4096)):
+        # G1-LOT3 : z8 → extent 1024 (dézoom extrême) ; z9/z11/z13 → extent 4096 (maillage complet).
+        for z, want_extent in ((8, 1024), (9, 4096), (11, 4096), (13, 4096)):
             span = (2 * W) / (2 ** z)
             x = int((ext[0] + W) // span); y = int((W - ext[3]) // span)
             body = tiles._parcel_tile_bytes(db, z, x, y)
