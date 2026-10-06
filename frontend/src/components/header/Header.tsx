@@ -639,8 +639,16 @@ function AccountMenu() {
   const close = () => { setOpen(false); setMarqueOpen(false) }
   return (
     <div className="relative">
+      {/* RECETTE-PROD-1 (13) — ICÔNE utilisateur générique (style feather/lucide de l'app, comme les
+          glyphes du Rail/LeftPanel) au lieu des initiales « VL » : plus aucune initiale calculée pour
+          le compte. Même bulle (h-8 w-8, rond, bord), même taille, même comportement au clic. */}
       <button data-account-btn onClick={() => setOpen((o) => !o)} aria-label="Mon compte"
-        className="flex h-8 w-8 items-center justify-center rounded-full border border-line-2 bg-surface-3 font-mono text-[11px] text-mint transition-colors duration-quick hover:border-mint/50">VL</button>
+        className="flex h-8 w-8 items-center justify-center rounded-full border border-line-2 bg-surface-3 text-mint transition-colors duration-quick hover:border-mint/50">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-[17px] w-[17px]" aria-hidden="true">
+          <path d="M19 21v-1a5 5 0 0 0-5-5h-4a5 5 0 0 0-5 5v1" />
+          <circle cx="12" cy="8" r="4" />
+        </svg>
+      </button>
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={close} />
@@ -687,7 +695,10 @@ function AccountMenu() {
                     </>
                   )}
                 </div>
-                {/* ACTIONS — compte réel uniquement (mot de passe, préférences, marque blanche). */}
+                {/* ACTIONS — compte réel uniquement. RECETTE-PROD-1 (14) — entrées « Préférences de
+                    notifications » et « Marque blanche » RETIRÉES DU MENU (sur demande Vic). Le code
+                    derrière reste en place (MarqueForm, événement labuse:open-notif-prefs via la
+                    cloche) : seul l'accès par ce menu est retiré. Reste « Changer mon mot de passe ». */}
                 {d?.mode === 'compte' && (
                   <>
                     {/* CHANGER MON MOT DE PASSE — self-service existant (/reset envoie un lien) */}
@@ -696,18 +707,6 @@ function AccountMenu() {
                       <svg viewBox="0 0 20 20" className="h-4 w-4 text-mint" fill="none" stroke="currentColor" strokeWidth="1.4"><rect x="4" y="9" width="12" height="8" rx="1.5" /><path d="M7 9V6.5a3 3 0 0 1 6 0V9" /></svg>
                       Changer mon mot de passe
                     </a>
-                    {/* PRÉFÉRENCES DE NOTIFICATIONS — ouvre la cloche sur son volet Préférences */}
-                    <button data-account-prefs onClick={() => { close(); window.dispatchEvent(new Event('labuse:open-notif-prefs')) }}
-                      className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-txt transition-colors duration-quick hover:bg-surface-3">
-                      <svg viewBox="0 0 20 20" className="h-4 w-4 text-mint" fill="none" stroke="currentColor" strokeWidth="1.4"><path d="M10 3a3.5 3.5 0 0 1 3.5 3.5v3l1.5 2.5h-10L6 9.5v-3A3.5 3.5 0 0 1 10 3Z" /><path d="M8.5 16a1.5 1.5 0 0 0 3 0" /></svg>
-                      Préférences de notifications
-                    </button>
-                    {/* MARQUE BLANCHE (M54-EXPO-2 A6) */}
-                    <button data-account-marque onClick={() => setMarqueOpen(true)}
-                      className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-txt transition-colors duration-quick hover:bg-surface-3">
-                      <svg viewBox="0 0 20 20" className="h-4 w-4 text-mint" fill="none" stroke="currentColor" strokeWidth="1.4"><rect x="3" y="4" width="14" height="12" rx="2" /><path d="M3 8h14M7 12h6" strokeLinecap="round" /></svg>
-                      Marque blanche <span className="ml-auto text-[10px] text-txt-dim">logo · coordonnées</span>
-                    </button>
                   </>
                 )}
                 {/* RETOURS-11 R4 — « Contact » : mailto contact@labuse.immo, sujet pré-rempli avec le
