@@ -16,7 +16,15 @@ from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from ..bilan.catalogue import charger_catalogue
+from ..bilan.catalogue import Poste, charger_catalogue
+from ..bilan.moteur import (
+    EntreesBilan,
+    Moteur,
+    Produit,
+    Programme,
+    ResultatBilan,
+    SaisiePoste,
+)
 from .tenant import compte_ou_401, current_compte, scope_clause
 
 router = APIRouter(tags=["bilan"])
@@ -86,3 +94,197 @@ def oublier_ratio(
     )
     db.commit()
     return {"poste_id": poste_id, "supprime": True}
+
+
+# ===========================================================================
+# Calcul — le front envoie les saisies, le moteur rend le bilan (doctrine 5)
+# ===========================================================================
+class ProduitIn(BaseModel):
+    libelle: str = "Produit"
+    lots: float | None = None
+    suv: float | None = None
+    prix_ttc_m2_suv: float | None = None
+    tva: float | None = None
+
+
+class ProgrammeIn(BaseModel):
+    terrain: float | None = None
+    surface_taxable: float | None = None
+    loyer: float | None = None
+
+
+class SaisieIn(BaseModel):
+    valeur: float | None = None
+    etat: str = "a_renseigner"
+    tva: float | None = None
+    assiette_valeur: float | None = None
+
+
+class CalculIn(BaseModel):
+    programme: ProgrammeIn = ProgrammeIn()
+    produits: list[ProduitIn] = []
+    postes: dict[str, SaisieIn] = {}
+    mode: str = "marge"
+    marge_cible: float | None = None
+
+
+def _entrees(corps: CalculIn) -> EntreesBilan:
+    return EntreesBilan(
+        programme=Programme(
+            terrain=corps.programme.terrain,
+            surface_taxable=corps.programme.surface_taxable,
+            loyer=corps.programme.loyer,
+        ),
+        produits=[
+            Produit(
+                libelle=p.libelle,
+                lots=p.lots,
+                suv=p.suv,
+                prix_ttc_m2_suv=p.prix_ttc_m2_suv,
+                tva=p.tva,
+            )
+            for p in corps.produits
+        ],
+        postes={
+            pid: SaisiePoste(
+                valeur=s.valeur, etat=s.etat, tva=s.tva, assiette_valeur=s.assiette_valeur
+            )
+            for pid, s in corps.postes.items()
+        },
+        mode=corps.mode,
+        marge_cible=corps.marge_cible,
+    )
+
+
+def _resultat_dict(r: ResultatBilan) -> dict:
+    return {
+        "complet": r.complet,
+        "manquants": r.manquants,
+        "total_postes": r.total_postes,
+        "postes_renseignes": r.postes_renseignes,
+        "lignes": [
+            {
+                "id": ln.id,
+                "bloc": ln.bloc,
+                "assiette_valeur": ln.assiette_valeur,
+                "taux_ou_montant": ln.taux_ou_montant,
+                "etat": ln.etat,
+                "ht": ln.ht,
+                "tva": ln.tva,
+                "ttc": ln.ttc,
+                "manquant": ln.manquant,
+            }
+            for ln in r.lignes
+        ],
+        "blocs": [
+            {
+                "id": b.id,
+                "titre": b.titre,
+                "ht": b.ht,
+                "tva": b.tva,
+                "ttc": b.ttc,
+                "complet": b.complet,
+                "manquants": b.manquants,
+            }
+            for b in r.blocs
+        ],
+        "produits": r.produits,
+        "produits_totaux": r.produits_totaux,
+        "depenses_ht": r.depenses_ht,
+        "depenses_tva": r.depenses_tva,
+        "depenses_ttc": r.depenses_ttc,
+        "ca_ht": r.ca_ht,
+        "ca_tva": r.ca_tva,
+        "ca_ttc": r.ca_ttc,
+        "tva_residuelle": r.tva_residuelle,
+        "resultat_net": r.resultat_net,
+        "marge_pct": r.marge_pct,
+        "cash_flow": r.cash_flow,
+        "aleas": r.aleas,
+        "resultat_sans_aleas": r.resultat_sans_aleas,
+        "marge_sans_aleas_pct": r.marge_sans_aleas_pct,
+        "ratios": r.ratios,
+        "prix_max_terrain": r.prix_max_terrain,
+        "prix_max_terrain_m2": r.prix_max_terrain_m2,
+    }
+
+
+@router.post("/bilan/{idu}/calcul")
+def calculer_bilan(idu: str, corps: CalculIn) -> dict:
+    """Calcule le bilan à partir des seules saisies du client. Aucune donnée n'est
+    inventée : un poste à renseigner laisse le bilan incomplet (ni marge ni export)."""
+    r = Moteur().calculer(_entrees(corps))
+    return _resultat_dict(r)
+
+
+# ===========================================================================
+# Modèle — la structure + le Sourcé pré-rempli + les repères (jamais appliqués)
+# ===========================================================================
+def _repere_poste(p: Poste) -> dict | None:
+    """Sérialise le repère DÉCLARÉ d'un poste (ratio de place : valeur connue
+    d'avance). Les repères « registre » (source publique) sont résolus à part,
+    par idu, et n'apparaissent que s'ils se résolvent (doctrine 2)."""
+    r = p.repere
+    if r is None:
+        return None
+    if r.kind == "ratio_place":
+        return {"kind": "ratio_place", "valeur": r.valeur}
+    return {"kind": "registre", "registre_id": r.registre_id}
+
+
+def _serialiser_catalogue() -> dict:
+    cat = charger_catalogue()
+    return {
+        "version": cat.version,
+        "tva_legales": cat.tva_legales,
+        "assiettes": cat.assiettes,
+        "produit_modele": cat.produit_modele,
+        "programme": list(cat.programme),
+        "blocs": [
+            {
+                "id": b.id,
+                "titre": b.titre,
+                "postes": [
+                    {
+                        "id": p.id,
+                        "libelle": p.libelle,
+                        "sub": p.sub,
+                        "note": p.note,
+                        "mode": p.mode,
+                        "base": p.base,
+                        "assiette": p.assiette,
+                        "unite": p.unite,
+                        "tva": p.tva,
+                        "tva_sourcee": p.tva_sourcee,
+                        "besoin_assiette": p.besoin_assiette,
+                        "alea": p.alea,
+                        "repere": _repere_poste(p),
+                    }
+                    for p in b.postes
+                ],
+            }
+            for b in cat.blocs
+        ],
+    }
+
+
+@router.get("/bilan/{idu}/modele")
+def modele_bilan(idu: str, request: Request, db: Session = Depends(get_db)) -> dict:
+    """La structure du bilan + le Sourcé pré-rempli (terrain, zonage, TVA légales)
+    + les repères publics résolus (DVF neuf, coût de référence…) + les ratios maison
+    du compte. Tout reste modifiable ; rien n'entre dans le calcul sans geste client."""
+    from ..bilan import reperes as _rep
+
+    cat = _serialiser_catalogue()
+    sourcee = _rep.sources_parcelle(db, idu)
+    cat["sourcee"] = sourcee  # {terrain, zonage, commune, parcel_id, prix_achat_dvf}
+    cat["reperes_publics"] = _rep.reperes_publics(db, idu, sourcee)
+
+    # ratios maison du compte (état « Mes ratios »)
+    cid = current_compte(request)
+    rows = db.execute(
+        text(f"SELECT poste_id, valeur, tva FROM bilan_ratios WHERE {scope_clause()}"),
+        {"cid": cid},
+    ).all()
+    cat["ratios_compte"] = {r[0]: {"valeur": r[1], "tva": r[2]} for r in rows}
+    return cat

@@ -1,0 +1,151 @@
+"""BILAN-1 — repères et Sourcé du bilan, résolus par parcelle.
+
+Doctrine : on ne pré-remplit que le Sourcé (public, sûr) — surface du terrain
+(cadastre), zonage PLU, taux de TVA légaux (dans le catalogue). Le reste est vide,
+avec un repère cliquable qui N'ENTRE PAS dans le calcul tant que le client ne
+l'adopte pas. **Un repère dont la source ne se résout pas ne s'affiche pas** : toute
+résolution est défensive (jamais un 500 sur une parcelle atypique) et renvoie None
+en cas d'échec, auquel cas la pastille n'est pas servie.
+"""
+
+from __future__ import annotations
+
+from typing import Any, Callable, TypeVar
+
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+
+T = TypeVar("T")
+
+
+def _sans_poison(db: Session, fn: Callable[[], T]) -> T | None:
+    """Exécute une lecture best-effort sous SAVEPOINT : si elle échoue (table
+    absente, parcelle atypique), le savepoint est annulé et la transaction de la
+    requête reste UTILISABLE (sinon psycopg empoisonne toute la transaction)."""
+    try:
+        with db.begin_nested():
+            return fn()
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _parcelle(db: Session, idu: str) -> tuple[int, str] | None:
+    def _q():
+        row = db.execute(
+            text("SELECT id, commune FROM parcels WHERE idu = :i"), {"i": idu}
+        ).one_or_none()
+        return (int(row[0]), str(row[1] or "")) if row else None
+
+    return _sans_poison(db, _q)
+
+
+def _surface(db: Session, idu: str) -> float | None:
+    def _q():
+        v = db.execute(
+            text("SELECT surface_m2 FROM parcels WHERE idu = :i"), {"i": idu}
+        ).scalar()
+        return float(v) if v is not None else None
+
+    return _sans_poison(db, _q)
+
+
+def _zonage(db: Session, parcel_id: int) -> str | None:
+    def _q():
+        from ..faisabilite.zone_servie import zone_dominante
+
+        z = zone_dominante(db, parcel_id)
+        if not z or not z.zone:
+            return None
+        parts = getattr(z, "parts", None) or []
+        if len(parts) > 1:
+            return " · ".join(f"{p['zone']} {round(p['pct'])} %" for p in parts)
+        return str(z.zone)
+
+    return _sans_poison(db, _q)
+
+
+def sources_parcelle(db: Session, idu: str) -> dict[str, Any]:
+    """Le Sourcé pré-rempli : surface du terrain (cadastre), zonage PLU, commune.
+    `prix_achat_dvf` (info, hors calcul) best-effort → None si indisponible."""
+    pc = _parcelle(db, idu)
+    parcel_id = pc[0] if pc else None
+    commune = pc[1] if pc else None
+    return {
+        "idu": idu,
+        "parcel_id": parcel_id,
+        "commune": commune,
+        "terrain": _surface(db, idu),  # m² — Sourcé (cadastre)
+        "zonage": _zonage(db, parcel_id) if parcel_id else None,  # Sourcé (PLU)
+        "prix_achat_dvf": _prix_achat_dvf(db, parcel_id) if parcel_id else None,
+    }
+
+
+def _prix_achat_dvf(db: Session, parcel_id: int) -> dict | None:
+    """Dernier prix d'achat connu de la parcelle (DVF), pour affichage INFO (hors
+    calcul, règle validée). Best-effort : None si aucune mutation lisible."""
+
+    def _q():
+        row = db.execute(
+            text(
+                "SELECT valeur_fonciere, date_mutation FROM dvf_mutations m "
+                "JOIN dvf_mutation_parcelles mp ON mp.mutation_id = m.id "
+                "WHERE mp.parcel_id = :p AND m.valeur_fonciere > 0 "
+                "ORDER BY m.date_mutation DESC LIMIT 1"
+            ),
+            {"p": parcel_id},
+        ).one_or_none()
+        if not row:
+            return None
+        return {"valeur": float(row[0]), "date": str(row[1]), "label": "Dernier prix DVF"}
+
+    return _sans_poison(db, _q)
+
+
+def reperes_publics(db: Session, idu: str, sourcee: dict) -> dict[str, dict]:
+    """Repères « registre » (source publique) résolus pour cette parcelle. Clé =
+    registre_id du catalogue ; valeur = {valeur, label, source} ou absente si la
+    source ne se résout pas (la pastille ne s'affiche alors pas)."""
+    out: dict[str, dict] = {}
+    parcel_id = sourcee.get("parcel_id")
+    commune = sourcee.get("commune")
+
+    # DVF neuf au m² — prix de sortie des produits (source unique LABUSE)
+    if parcel_id is not None:
+
+        def _dvf():
+            from ..faisabilite.bilan import resolve_prix_sortie_servi
+
+            d = resolve_prix_sortie_servi(db, parcel_id)
+            if d and d.get("prix") and not d.get("non_calculable"):
+                return {
+                    "valeur": float(d["prix"]),
+                    "n": d.get("n"),
+                    "label": d.get("label") or f"DVF neuf {round(d['prix'])} €/m²",
+                    "source": "DVF (ventes de logements neufs)",
+                }
+            return None
+
+        dvf = _sans_poison(db, _dvf)
+        if dvf:
+            out["dvf_neuf"] = dvf
+
+    # Coût de construction de référence (€/m² SDP) — calibrage par commune
+    def _cout():
+        from ..faisabilite.engine import Hypotheses
+
+        h = Hypotheses.charger(commune or None)
+        bas, haut = h.cout_construction_m2_bas, h.cout_construction_m2_haut
+        if bas and haut:
+            mid = round((bas + haut) / 2.0)
+            return {
+                "valeur": float(mid),
+                "label": f"Coût de référence {mid} €/m²",
+                "source": "calibrage de construction LABUSE",
+            }
+        return None
+
+    cout = _sans_poison(db, _cout)
+    if cout:
+        out["cout_construction_ref"] = cout
+
+    return out
