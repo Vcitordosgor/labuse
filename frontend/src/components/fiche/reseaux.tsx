@@ -12,7 +12,7 @@
  */
 import { useQuery } from '@tanstack/react-query'
 import { getOrthoEquipements } from '../../lib/api'
-import { fmtDistance as fmtDistanceM } from '../../lib/geo'
+import { fmtDist as fmtDistanceM } from '../../lib/format'
 import type { Fiche } from '../../lib/types'
 import { BlocIndisponible } from './BlocIndisponible'
 import { ViabilisationBlock, assainissementResume } from './ViabilisationBlock'

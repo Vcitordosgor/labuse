@@ -29,7 +29,6 @@ import { Retour } from '../ui/Retour'
 
 // A1 — plus de date « gelée » en dur : le millésime affiché à l'écran est celui SERVI par l'endpoint
 // (parcel_solar.source_millesime). Un seul millésime par écran, jamais deux dates contradictoires.
-const SOURCES_PIED = 'Détection FLAIR sur ortho · PVGIS v5.3 SARAH3 · RGE ALTI'
 const MOIS = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D']
 const num = (v: number | null | undefined, unit = '') => (v == null ? '—' : `${fmtInt(v)}${unit}`)
 
@@ -68,7 +67,7 @@ function EntreeSolaire({ onChoose }: { onChoose: (m: 'piscines' | 'ensoleillemen
           Ensoleillement en fait 2) ; le titre « Piscines » + l'icône disent déjà le sujet. */}
       <Carte k="piscines" ic="💧" titre="Piscines" desc="Pisciniste — rénovation, couverture, entretien" />
       <Carte k="ensoleillement" ic="☀️" titre="Ensoleillement" desc="Installateur PV — potentiel, orientation, toiture" />
-      <p className="mt-auto text-[9.5px] leading-snug text-txt-dim">{SOURCES_PIED}</p>
+      {/* RECETTE-3 (D13) — pied « Détection FLAIR … » retiré de l'écran d'entrée Solaire. */}
     </div>
   )
 }

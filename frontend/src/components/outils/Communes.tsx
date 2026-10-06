@@ -196,7 +196,7 @@ function AcquisitionsRecentes() {
 function Porte({ dataAttr, titre, sous, onClick }: { dataAttr: string; titre: string; sous: string; onClick: () => void }) {
   return (
     <button data-communes-porte={dataAttr} onClick={onClick}
-      className="door door-hot hover-fill mb-0 w-full text-left transition-colors duration-quick">
+      className="door hover-fill mb-0 w-full text-left transition-colors duration-quick">
       <div className="text-xs font-medium text-txt">{titre}</div>
       <div className="mt-0.5 text-[10.5px] leading-snug text-txt-dim">{sous}</div>
     </button>

@@ -70,13 +70,12 @@ describe('SOLAIRE — deux modes', () => {
   beforeEach(mockFetch)
   afterEach(() => vi.restoreAllMocks())
 
-  it('écran d\'entrée : deux cartes (Piscines / Ensoleillement) + sources', () => {
+  it('écran d\'entrée : deux cartes (Piscines / Ensoleillement), sans pied de sources', () => {
     renderTool()
     expect(document.querySelector('[data-solaire-mode="piscines"]')).toBeTruthy()
     expect(document.querySelector('[data-solaire-mode="ensoleillement"]')).toBeTruthy()
-    // A1 — les sources restent affichées, mais plus de date « gelée » en dur (millésime servi ailleurs).
-    expect(screen.getByText(/PVGIS v5\.3 SARAH3/)).toBeTruthy()
-    expect(screen.queryByText(/gelées 11\/07\/2026/)).toBeNull()
+    // RECETTE-3 (D13) — le pied « Détection FLAIR … PVGIS … » est retiré de l'écran d'entrée.
+    expect(screen.queryByText(/PVGIS v5\.3 SARAH3/)).toBeNull()
   })
 
   it('H13.3 — étape 1 Périmètre : toute l\'île + les communes avec leurs comptes (pas de liste encore)', async () => {

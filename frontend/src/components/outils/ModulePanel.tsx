@@ -755,7 +755,7 @@ export function M03() {
           // (MapView) ; si une fiche est restée ouverte sur une parcelle A (clic carte/liste), elle MASQUAIT
           // le focus B demandé ici → la carte ne bougeait pas (constat Vic). On lève la sélection stale pour
           // que la barre RECENTRE TOUJOURS sur la parcelle choisie, qu'une fiche soit ouverte ou non.
-          onSelect={(sel) => { if (sel.idu) { const c = iduComplet(sel.idu); select(null); focusParcelle(c); setParcelIdu(c); setSeg('cours') } else setFlyTo({ center: [sel.lon, sel.lat], zoom: 15 }) }}
+          onSelect={(sel) => { if (sel.idu) { const c = iduComplet(sel.idu); select(null); focusParcelle(c); setParcelIdu(c); setSeg('tous') } else setFlyTo({ center: [sel.lon, sel.lat], zoom: 15 }) }}
           // RETOURS-15 B1 — « le mot effacer disparaît ; vider le champ suffit » : vider la barre lève la
           // parcelle ciblée (et donc le bloc de proximité et les points de la carte).
           onClear={() => setParcelIdu(null)}
@@ -764,7 +764,7 @@ export function M03() {
             // RETOURS-12 O12.2 — IDU cadastral complet (14 car.) → la carte ZOOME et DÉLIMITE la parcelle
             // (focusParcelle, même geste que O1/J1) EN PLUS de chercher ses permis (O17 g).
             // pt 2 — `select(null)` d'abord : le focus barre prime sur une fiche stale (cf. onSelect).
-            if (v.length === 14 && estIdu(v)) { select(null); focusParcelle(v); setParcelIdu(v); setSeg('cours'); return }
+            if (v.length === 14 && estIdu(v)) { select(null); focusParcelle(v); setParcelIdu(v); setSeg('tous'); return }
             // sinon une référence Sitadel compacte → fiche permis
             if (/^[0-9][0-9a-z]{6,}$/i.test(v)) setOpen(v)
           }} />
@@ -773,7 +773,7 @@ export function M03() {
         {permisOwner && (
           <div className="mt-1.5">
             <OwnerParcelles siren={permisOwner.siren} nom={permisOwner.nom}
-              onPick={(idu) => { const c = iduComplet(idu); select(null); focusParcelle(c); setParcelIdu(c); setSeg('cours'); setPermisOwner(null) }}
+              onPick={(idu) => { const c = iduComplet(idu); select(null); focusParcelle(c); setParcelIdu(c); setSeg('tous'); setPermisOwner(null) }}
               onChanger={() => setPermisOwner(null)} />
           </div>
         )}
@@ -816,7 +816,7 @@ export function M03() {
               {/* RECETTE-2 (T3/T7) — « Revenir à l'île » → « Réinitialiser » (libellé par défaut, composant
                   partagé) ; seul sur sa ligne. L'effacement du champ adresse est traité en D2. */}
               <div className="mt-1 flex justify-end">
-                <Reinitialiser onReset={() => { setParcelIdu(null); setSeg('cours') }} />
+                <Reinitialiser onReset={() => { setParcelIdu(null); setSeg('tous') }} />
               </div>
             </>
           )
