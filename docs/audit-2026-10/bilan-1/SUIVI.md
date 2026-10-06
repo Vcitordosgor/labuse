@@ -11,8 +11,8 @@ Venv : `~/Desktop/labuse/.venv/bin/python` ; imports LABUSE depuis ce worktree a
 | Lot | Sujet | État | Commit |
 |-----|-------|------|--------|
 | 0 | Vérifs + pièces en place | **fini** | — |
-| 1 | Catalogue `postes.yaml` | **fini** | (ce commit) |
-| 2 | Moteur `bilan/moteur.py` | à faire | — |
+| 1 | Catalogue `postes.yaml` | **fini** | bfe82e8e |
+| 2 | Moteur `bilan/moteur.py` | **fini** | (ce commit) |
 | 3 | Écran onglet Bilan + porte Docs | à faire | — |
 | 4 | Ratios du compte `bilan_ratios` | à faire | — |
 | 5 | Sorties PDF + Excel + documents_generes | à faire | — |
@@ -37,4 +37,6 @@ Venv : `~/Desktop/labuse/.venv/bin/python` ; imports LABUSE depuis ce worktree a
 - Nom de société dans le modèle : « Cash flow océanis » (lignes 122/128) + chemin SharePoint en métadonnée (fichier non commité) → libellé rendu « Cash flow » / « Cash flow sans aléas ».
 
 ## Décisions / points pour Vic
-- (aucun bloquant pour l'instant)
+- **Repères « ratio de place ».** La doctrine écrite dit « un repère sans source publique ne s'affiche pas », mais la maquette v2 (validée) montre des repères de ratio (commission 3 %, notaire 1,5 %, honoraires…) et sa propre note liste « ratios de place » comme source de repère. J'ai tranché **selon la maquette** : deux familles de repères, `registre` (source publique : DVF, outil Taxe, archéo, coût de référence, Faisabilité) et `ratio_place` (ratio de place, étiqueté honnêtement). Aucun n'entre dans le calcul sans clic. À vetoer si tu préfères masquer les ratios de place.
+- **Non-régression — 2 écarts de convention assumés.** Le moteur reproduit le bilan de la promotrice **au centime sur 43 des 45 lignes**. Deux lignes diffèrent car elle a composé leur assiette à la main : assurances **D.O / C.N.R** et **TRC + GAREAT** ont pour base « total (2) + étude de sol − imprévus » ; la maquette validée a simplifié en « total (2) ». Écart : +1 109,96 € (DO) et +263,50 € (TRC) sur un bilan de 12,4 M€ → résultat net 1 243 623 € vs 1 244 997 € (−1 373 €). Résidu inexpliqué = 0. La commission d'apport (3 % TTC) est, elle, reproduite exactement via `base: ttc`.
+- **Cellule cassée du modèle non reproduite.** `E13` (coût construction / SHON) = `#DIV/0!` car la SHON `E6` est vide dans le modèle témoin ; c'est un ratio d'affichage, sans effet sur les totaux.

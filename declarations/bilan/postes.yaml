@@ -81,7 +81,7 @@ blocs:
     titre_modele: "TERRAIN"
     postes:
       - {id: achat,  libelle: "Achat terrain privé",       libelle_modele: "AchatTerrain privé",            ligne_modele: 43, mode: unit,    assiette: terrain,          unite: "€/m²", tva: a_saisir, repere: dvf_terrain_nu, note: "TVA selon le vendeur : à saisir"}
-      - {id: apport, libelle: "Commission apport",          libelle_modele: "Commission apport",             ligne_modele: 44, mode: pct,     assiette: prix_terrain,     tva: 0.085, tva_sourcee: true, repere: {type: ratio_place, valeur: 3.0}}
+      - {id: apport, libelle: "Commission apport",          libelle_modele: "Commission apport",             ligne_modele: 44, mode: pct, base: ttc, assiette: prix_terrain, tva: 0.085, tva_sourcee: true, repere: {type: ratio_place, valeur: 3.0}, note: "Commission toutes taxes (3 % du prix), ramenée HT"}
       - {id: notT,   libelle: "Notaire terrain",            libelle_modele: "Notaire terrain",               ligne_modele: 45, mode: pct,     assiette: prix_terrain,     tva: a_saisir, repere: {type: ratio_place, valeur: 1.5}}
       - {id: notP,   libelle: "Notaire prêt",               libelle_modele: "Notaire prêt",                  ligne_modele: 46, mode: pct,     assiette: pret, besoin_assiette: true, tva: a_saisir, repere: {type: ratio_place, valeur: 1.5}}
       - {id: txLog,  libelle: "Taxe logements",             libelle_modele: "Taxe LOGEMENTS",                ligne_modele: 47, mode: unit,    assiette: surface_taxable,  unite: "€/m²", tva: 0.0, tva_sourcee: true, repere: outil_taxe}

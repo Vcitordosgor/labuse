@@ -37,6 +37,7 @@ class Poste:
     ligne_modele: int
     bloc: str
     mode: str  # "pct" | "unit" | "forfait"
+    base: str = "ht"  # "ht" (taux sur HT, TVA en sus) | "ttc" (taux sur TTC, HT déduit)
     assiette: str | None = None
     unite: str | None = None
     tva: Any = None  # float (taux) | "a_saisir" | "selon_produit"
@@ -94,6 +95,7 @@ def _poste(bloc_id: str, d: dict[str, Any]) -> Poste:
         ligne_modele=int(d["ligne_modele"]),
         bloc=bloc_id,
         mode=d["mode"],
+        base=d.get("base", "ht"),
         assiette=d.get("assiette"),
         unite=d.get("unite"),
         tva=d.get("tva"),
