@@ -57,10 +57,16 @@ export function MapToolbar() {
   ]
 
   return (
-    <div className="absolute top-4 flex flex-col items-end gap-2"
+    /* RECETTE-PROD-1 (2) — le conteneur de la barre d'outils est `items-end` (colonne alignée à
+       droite) : sa boîte englobante déborde largement à GAUCHE des boutons de mesure (plus étroits que
+       la ligne Sombre/3D) et dans les espaces `gap-2`. Un div transparent garde `pointer-events: auto`
+       → cette « zone invisible » interceptait les clics sur les parcelles dessous. On neutralise le
+       conteneur (`pointer-events-none`) et on ré-active chaque GROUPE interactif (`pointer-events-auto`)
+       → seuls les boutons captent le clic, le reste laisse passer vers la carte. */
+    <div className="pointer-events-none absolute top-4 flex flex-col items-end gap-2"
       style={{ right: decalage, transition: 'right 180ms cubic-bezier(.2,0,0,1)' }}>
       {/* DA §11 — « Sombre » (fond de plan) et « 3D » ALIGNÉS sur une même ligne. */}
-      <div className="flex items-center gap-2">
+      <div className="pointer-events-auto flex items-center gap-2">
       {/* fond de plan */}
       <div className="relative">
         <button
@@ -149,7 +155,7 @@ export function MapToolbar() {
       </div>
 
       {/* outils de mesure */}
-      <div className="flex flex-col overflow-hidden rounded-lg border border-line-2 bg-surface-2 shadow-elev-1">
+      <div className="pointer-events-auto flex flex-col overflow-hidden rounded-lg border border-line-2 bg-surface-2 shadow-elev-1">
         {TOOLS.map((t) => (
           <div key={t.key} className="relative">
             {/* M62-P1 (c) / FINITIONS-1 (P1) : infobulle DA (Tip) à ~150 ms au survol — SEULE exception au
@@ -172,7 +178,7 @@ export function MapToolbar() {
       {zone && (
         <button
           onClick={() => setZone(null)}
-          className="flex h-8 items-center gap-2 rounded-full border border-mint bg-surface-2 px-3 text-[11px] text-mint shadow-elev-1 transition-colors duration-quick hover:bg-mint/10"
+          className="pointer-events-auto flex h-8 items-center gap-2 rounded-full border border-mint bg-surface-2 px-3 text-[11px] text-mint shadow-elev-1 transition-colors duration-quick hover:bg-mint/10"
           aria-label="Retirer le filtre de zone"
         >
           Zone active <span className="text-txt-dim">×</span>
