@@ -21,7 +21,7 @@ echo "── 1. Code → ${HOST}:/opt/labuse/app (rsync DIRECT via sudo distant,
 #     (data/plu_reglements, data/ortho_tiles, data/ban régénéré par cron, outputs/) — à ne pas écraser.
 rsync -a --delete --rsync-path="sudo rsync" \
   --exclude .git --exclude .venv --exclude node_modules --exclude frontend/dist \
-  --exclude "__pycache__" --exclude "*.pyc" --exclude .pytest_cache --exclude exports \
+  --exclude "__pycache__" --exclude "*.pyc" --exclude .pytest_cache --exclude /exports \
   --exclude /reports --exclude /qa --exclude /captures --exclude /audit_shots \
   --exclude /tests --exclude /docs --exclude /outputs \
   --exclude /data/cosia --exclude /data/ortho_irc --exclude /data/ortho_tiles \
