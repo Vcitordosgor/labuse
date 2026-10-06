@@ -127,8 +127,10 @@ else
   # part sur stderr) ; on canalise le seul stdout dans gzip. La décompression se fait sur le VPS.
   for t in "${RUN_TABLES[@]}"; do
     col="$(run_col "$t")"; lit="$(run_lit "$t")"
+    vcols=$(ssh -o BatchMode=yes "$HOST" "sudo -u postgres psql -d labuse -tAc \"SELECT string_agg(quote_ident(column_name), ',' ORDER BY ordinal_position) FROM information_schema.columns WHERE table_schema='public' AND table_name='$t'\"")
+    [ -n "$vcols" ] || { echo "colonnes VPS introuvables pour $t" >&2; exit 1; }
     "$PG/psql" "$LOCAL_DB" -c \
-      "\copy (SELECT * FROM $t WHERE $col = $lit) TO STDOUT CSV" | gzip -1 > "$COPYDIR/$t.csv.gz"
+      "\copy (SELECT $vcols FROM $t WHERE $col = $lit) TO STDOUT CSV" | gzip -1 > "$COPYDIR/$t.csv.gz"
     n=$("$PG/psql" "$LOCAL_DB" -tAc "SELECT count(*) FROM $t WHERE $col = $lit")
     printf "   %-28s %s (filtré)\n" "$t" "$n" | tee -a /tmp/sync_counts_local.txt
   done
