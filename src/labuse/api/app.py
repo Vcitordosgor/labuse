@@ -30,6 +30,8 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+from fastapi.concurrency import run_in_threadpool
+from sqlalchemy import event as sa_event
 from sqlalchemy import func, select, text
 from sqlalchemy.exc import DataError as _SA_DataError   # FIX-C5 — handler global 22xxx → 422
 from sqlalchemy.orm import Session, joinedload
@@ -377,7 +379,13 @@ async def _auth_guard(request, call_next):
     # AUDIT PAIEMENT · SEC-IDOR — résout le compte de la session et le pose sur request.state
     # (scope Starlette partagé jusqu'à l'endpoint) : la cloison multi-tenant s'applique partout.
     cookie = request.cookies.get(auth.COOKIE)
-    info = auth.session_info(cookie)
+    # VITESSE-PROD-1 — session_info ouvre une session BDD SYNCHRONE : exécutée dans le THREADPOOL,
+    # plus jamais sur l'event loop. Sur le loop, chaque requête authentifiée (cookie « u.… ») gelait
+    # TOUT le worker le temps du lookup — et jusqu'à 30 s (QueuePool timeout) quand le pool était
+    # saturé par une rafale de tuiles : plus AUCUNE réponse ne partait, même statique/publique
+    # (mesuré en prod 06/10 : SVG statique servi en 229 s, /moi en 319 s). Même résultat, même
+    # cookie, mêmes règles — seul le FIL d'exécution change.
+    info = await run_in_threadpool(auth.session_info, cookie)
     request.state.compte_id = info["compte_id"] if info else None
     # DASHBOARD-V1 · D1 — attribue le coût IA de la requête au compte (ledger ia_log) : le socle
     # IA lit ce ContextVar, jamais le cookie (direction de dépendance propre).
@@ -385,7 +393,7 @@ async def _auth_guard(request, call_next):
     _ia_core.poser_compte(request.state.compte_id)
     if not auth.enabled() or auth.is_public(path):
         return await call_next(request)
-    if info is not None or auth.token_ok(cookie):
+    if info is not None or await run_in_threadpool(auth.token_ok, cookie):
         return await call_next(request)
     if not auth.configured():
         return JSONResponse(status_code=503, content={
@@ -395,10 +403,32 @@ async def _auth_guard(request, call_next):
     return JSONResponse(status_code=401, content={"detail": "Authentification requise."})
 
 
+# VITESSE-PROD-1 — le plafond `statement_timeout` est posé par un ÉCOUTEUR after_begin, plus JAMAIS
+# par un execute dans le corps d'`api_session`. L'execute au setup prenait une connexion du pool
+# PENDANT la phase « dépendances » (jeton threadpool rendu ensuite), puis le handler devait RÉ-acquérir
+# un jeton derrière les setups des autres requêtes : sous rafale (> ~48 tuiles simultanées), TOUS les
+# jetons finissaient bloqués dans pool.connect() pendant que TOUTES les connexions étaient tenues par
+# des requêtes en attente de jeton — attente circulaire dénouée par cohortes de TimeoutError 30 s
+# (reproduit : piles faulthandler, 40/40 fils dans QueuePool._do_get ; en prod le 06/10 : 75 idle in
+# transaction = 5 workers × pool 15, tués par idle_in_transaction_session_timeout à 10 min, 224
+# QueuePool TimeoutError/6 h). L'écouteur s'exécute au PREMIER execute de CHAQUE transaction — même
+# jeton, zéro connexion tenue sans jeton, et le plafond est REPOSÉ après un commit intermédiaire (ex.
+# _tile_cache_put) alors qu'un SET LOCAL mourait au premier commit. `api_session` ne fait plus que
+# MARQUER la session (`s.info`) ; l'écouteur applique. SOURCE UNIQUE du plafond (plus de SET ailleurs).
+@sa_event.listens_for(Session, "after_begin")
+def _poser_statement_timeout_api(session: Session, transaction, connection) -> None:
+    if transaction.nested:  # SAVEPOINT : le plafond de la transaction externe s'applique déjà
+        return
+    ms = session.info.get("api_statement_timeout_ms")
+    if ms:
+        connection.exec_driver_sql(f"SET LOCAL statement_timeout = {int(ms)}")
+
+
 @contextmanager
 def api_session() -> Iterator[Session]:
     """Portée de session d'une requête API : `session_scope` (commit si OK, rollback sinon, close
-    TOUJOURS dans un finally) + le plafond `statement_timeout` par transaction.
+    TOUJOURS dans un finally) + le MARQUAGE du plafond `statement_timeout` (appliqué par l'écouteur
+    `_poser_statement_timeout_api` ci-dessus — source UNIQUE, VITESSE-PROD-1).
 
     SOURCE UNIQUE utilisée de DEUX façons : (1) par `get_db` (dépendance FastAPI `Depends`) pour les
     routes classiques ; (2) EN DIRECT (`with api_session() as db:`) par les routes de tuiles.
@@ -410,14 +440,12 @@ def api_session() -> Iterator[Session]:
     erreur, client qui annule) — jamais plus de transaction en suspens sur la route des tuiles."""
     with session_scope() as s:
         # VITESSE-FIX-1 lot A — plafond « anti-emballement » posé UNIQUEMENT sur les requêtes de l'API,
-        # par transaction (`SET LOCAL`), jamais sur le moteur partagé : les batchs CLI (ingestion,
-        # scoring, résiduel), qui n'empruntent pas cette dépendance, gardent leurs requêtes longues
-        # légitimes. 0 = désactivé. Réglable par LABUSE_API_STATEMENT_TIMEOUT_MS.
+        # jamais sur le moteur partagé : les batchs CLI (ingestion, scoring, résiduel), qui n'empruntent
+        # pas cette dépendance, gardent leurs requêtes longues légitimes. 0 = désactivé. Réglable par
+        # LABUSE_API_STATEMENT_TIMEOUT_MS. Posé dans `s.info`, appliqué par _poser_statement_timeout_api.
         _to = config.get_settings().api_statement_timeout_ms
         if _to and _to > 0:
-            # set_config(…, is_local=true) = SET LOCAL, mais paramétrable proprement (SET n'accepte pas
-            # de placeholder). Valeur en millisecondes (texte) — statement_timeout lit un entier = ms.
-            s.execute(text("SELECT set_config('statement_timeout', :ms, true)"), {"ms": str(int(_to))})
+            s.info["api_statement_timeout_ms"] = int(_to)
         yield s
 
 
@@ -6095,6 +6123,53 @@ def _potentiel_transformation_block(db: Session, idu: str, commune: str | None =
     }
 
 
+# VITESSE-PROD-1 — CACHE DE FICHE par parcelle, versionné. La fiche est run-scopée et DÉTERMINISTE
+# (vérifié : deux calculs successifs → md5 identiques) mais coûtait 238 requêtes SQL à CHAQUE clic
+# (p95 13,7 s sous charge, CHASSE-3). Ce qui ne change qu'au run/à l'ingestion est servi depuis la
+# mémoire : clé = (idu, run, run du score, VERSION DE FRAÎCHEUR). La version suit le mécanisme
+# existant (registre data_sources : toute ingestion bump last_sync_at/updated_at ; + sel `tuyau_rev`
+# des rebuilds de dérivées), relue au plus toutes les 60 s (single-flight, même motif que
+# tiles._mvt_version) → une bascule change `run` (clé), une ingestion change la version ≤ 60 s après.
+# LRU 128 fiches/worker (~75 Ko pièce ≈ ≤ 10 Mo). Sous pytest : cache INACTIF (les suites modifient
+# la base entre deux appels de la même fiche — même précédent que protection._actif_sous_pytest).
+_FICHE_CACHE: "_OrderedDict[tuple, dict]" = _OrderedDict()
+_FICHE_CACHE_MAX = 128
+_FICHE_LOCK = threading.Lock()
+_FICHE_VER = {"v": "", "at": -1.0}
+_FICHE_VER_TTL_S = 60.0
+_FICHE_VER_LOCK = threading.Lock()
+
+
+def _fiche_version(db: Session) -> str:
+    """Empreinte de fraîcheur des données de la fiche (cf. bloc ci-dessus). '' = indisponible
+    (on ne cache pas plutôt que de cacher faux)."""
+    now = time.monotonic()
+    if now - _FICHE_VER["at"] <= _FICHE_VER_TTL_S:
+        return _FICHE_VER["v"]
+    if not _FICHE_VER_LOCK.acquire(blocking=_FICHE_VER["at"] < 0):
+        return _FICHE_VER["v"]
+    try:
+        if time.monotonic() - _FICHE_VER["at"] > _FICHE_VER_TTL_S:
+            try:
+                ds = db.execute(text(
+                    "SELECT coalesce(to_char(max(COALESCE(last_sync_at, updated_at)), "
+                    "'YYYYMMDDHH24MISSMS'), '0') FROM data_sources")).scalar()
+                try:
+                    rev = db.execute(text(
+                        "SELECT value FROM mvt_meta WHERE key = 'tuyau_rev'")).scalar() or ""
+                except Exception:  # noqa: BLE001 — mvt_meta pas encore créée (base neuve)
+                    db.rollback()
+                    rev = ""
+                _FICHE_VER["v"] = f"{ds}.{rev}"
+            except Exception:  # noqa: BLE001 — data_sources absente : pas de version, pas de cache
+                db.rollback()
+                _FICHE_VER["v"] = ""
+            _FICHE_VER["at"] = time.monotonic()
+    finally:
+        _FICHE_VER_LOCK.release()
+    return _FICHE_VER["v"]
+
+
 @app.get("/parcels/{idu}")
 def parcel_fiche(idu: str, source: str | None = None, db: Session = Depends(get_db),
                  request: Request = None, trace: int = 0) -> dict:
@@ -6108,6 +6183,29 @@ def parcel_fiche(idu: str, source: str | None = None, db: Session = Depends(get_
     survit UNIQUEMENT pour /explain et /export (usages internes), plus jamais servi comme fiche."""
     idu = _check_idu(idu)   # garde O5 (octet nul / IDU malformé) → 404 propre AVANT tout accès DB
     run = source if (source and source.startswith("q_v")) else runs.current()
+    # VITESSE-PROD-1 — lecture du cache de fiche (cf. _FICHE_CACHE). La copie `dict(...)` protège
+    # l'entrée cachée des ajouts par requête (`_trace` admin) ; le contenu servi est IDENTIQUE.
+    version = "" if os.environ.get("PYTEST_CURRENT_TEST") else _fiche_version(db)
+    cle = (idu, run, _score_labuse_run(), version)
+    if version:
+        with _FICHE_LOCK:
+            hit = _FICHE_CACHE.get(cle)
+            if hit is not None:
+                _FICHE_CACHE.move_to_end(cle)
+                payload = dict(hit)
+            else:
+                payload = None
+    else:
+        payload = None
+    if payload is not None:
+        if trace:
+            from .. import registre
+            from .auth import exiger_admin
+            exiger_admin(request)
+            cids = sorted({cid for rid, r in registre.ROBINETS.items()
+                           if rid.startswith("fiche_parcelle") for cid in r.chiffres})
+            payload["_trace"] = registre.tampons_pour(db, cids)
+        return payload
     payload = _q_v2_fiche(db, idu, run_label=run)
     # ANALYSE-1 — le verdict du NOUVEAU moteur (Score LABUSE + Signal de mutation, run candidat) attaché
     # à la fiche : bande, Signal, contributions FR EN ENTIER, cause d'incomplétude. Servi TEL QUEL (le
@@ -6117,6 +6215,12 @@ def parcel_fiche(idu: str, source: str | None = None, db: Session = Depends(get_
            FROM score_labuse WHERE run_label = :r AND idu = :idu"""),
         {"r": _score_labuse_run(), "idu": idu}).mappings().first() if (db is not None and _score_labuse_ready(db)) else None
     payload["analyse_labuse"] = dict(sl) if sl else None
+    if version:
+        with _FICHE_LOCK:
+            _FICHE_CACHE[cle] = payload
+            while len(_FICHE_CACHE) > _FICHE_CACHE_MAX:
+                _FICHE_CACHE.popitem(last=False)
+        payload = dict(payload)   # l'appelant (trace) ne doit jamais muter l'entrée cachée
     if trace:
         # CIRCUIT-1 lot 1.4 — MODE TRAÇAGE (admin seulement, 403 sinon) : le tampon de chaque
         # chiffre déclaré pour les sections de la fiche parcelle (registre.robinets fiche_parcelle_*).

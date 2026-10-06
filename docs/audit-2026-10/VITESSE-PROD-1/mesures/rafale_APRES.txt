@@ -1,0 +1,3 @@
+vague1: 120 req (55 avortées) en 2.7s · p50=1228ms p95=2669ms max=2727ms · erreurs=0
+vague2 (re-pan, 24 req) en 0.1s · p50=104ms p95=116ms max=116ms · erreurs=0
+postgres: pic idle-in-transaction=7 · pic connexions=23

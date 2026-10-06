@@ -584,6 +584,9 @@ def _parcel_tile_bytes(db: Session, z: int, x: int, y: int) -> bytes:
     # ⚠ G1 : le `ORDER BY` DOIT être en FIN d'arguments — `ST_AsMVT(mvt.* ORDER BY geom, 'parcels',
     # extent, 'geom')` fait avaler 'parcels'/extent/'geom' comme clés de tri → la tuile retombe au nom
     # `default` et extent 4096 (= le bug qui cassait `parcels-ile`, cf. docs/audit-2026-10/G1).
+    # VITESSE-PROD-1 — départage TOTAL `mvt::text` après `mvt.geom` : le btree géométrie compare des
+    # BOÎTES (égalités possibles) et l'égalité se départageait par l'ordre de scan → octets instables
+    # sur certaines tuiles. Ordre total = octets reproductibles (cf. couches_tuyau._construire_tuile).
     data = db.execute(text(f"""
         WITH b AS (SELECT ST_TileEnvelope(:z, :x, :y) AS env),
         mvt AS (
@@ -592,7 +595,7 @@ SELECT ST_AsMVTGeom({geom_expr}, b.env, {extent}, {buffer}, true) AS geom,
           FROM mvt_parcels m, b
           WHERE m.geom_3857 && b.env
         )
-        SELECT ST_AsMVT(mvt.*, 'parcels', {extent}, 'geom' ORDER BY mvt.geom) FROM mvt
+        SELECT ST_AsMVT(mvt.*, 'parcels', {extent}, 'geom' ORDER BY mvt.geom, mvt::text) FROM mvt
     """), {"z": z, "x": x, "y": y}).scalar()
     return bytes(data) if data else b""
 
@@ -618,7 +621,14 @@ CREATE TABLE IF NOT EXISTS mvt_tile_cache (
     PRIMARY KEY (version, z, x, y, layer)
 )"""
 
-_WARM_ZOOMS = (9, 10, 11)
+# VITESSE-PROD-1 — z12-z13 rejoignent le cache persistant (pré-générés au build ET alimentés au
+# premier miss). Pourquoi : en prod (5 workers, LRU PAR process), chaque worker recalculait chaque
+# tuile z≥12 à la volée à son premier passage — un pan à z13 = des dizaines de ST_AsMVT concurrents
+# → pool saturé (effondrement du 06/10, cf. docs/audit-2026-10/VITESSE-PROD-1). z12-z13 = ~320
+# tuiles sur l'île (ensemble BORNÉ, +~15 s de warm) ; z14-z15 restent à la volée (tuiles minuscules,
+# ~1-30 ms après le correctif de prédicat SRID, et l'ensemble n'est plus borné raisonnablement).
+_WARM_ZOOMS = (9, 10, 11, 12, 13)
+_PERSIST_ZOOMS = _WARM_ZOOMS   # zooms lus/alimentés dans mvt_tile_cache par la route
 
 
 def _etag(body: bytes) -> str:
@@ -665,7 +675,8 @@ def _tile_cache_put(db: Session, version: str, z: int, x: int, y: int, body: byt
 
 
 def warm_parcel_tiles(db: Session, log=lambda *_: None) -> dict:
-    """CARTE-VITESSE-2 lot A — pré-génère les tuiles `parcels` z9-z11 couvrant l'île et les stocke
+    """CARTE-VITESSE-2 lot A — pré-génère les tuiles `parcels` _WARM_ZOOMS (z9-z13 depuis
+    VITESSE-PROD-1) couvrant l'île et les stocke
     dans `mvt_tile_cache` à la VERSION courante. Idempotente (ON CONFLICT DO NOTHING) et chronométrée.
     Appelée par `rebuild_mvt_servies` (après chaque build-mvt / bascule) et par `labuse tiles-warm`.
     Purge les versions périmées. Octets STRICTEMENT identiques à la route (même `_parcel_tile_bytes`)."""
@@ -755,9 +766,10 @@ def _tile_response(request: Request, body: bytes, etag: str) -> Response:
 @router.get("/map/tiles/{z}/{x}/{y}.pbf")
 def mvt_tile(z: int, x: int, y: int, request: Request) -> Response:
     """Tuile MVT couche `parcels` — mêmes propriétés que le GeoJSON commune.
-    CARTE-VITESSE-2 lot A : z9-z11 servies depuis le cache PERSISTANT `mvt_tile_cache` (pré-générées
-    par `warm_parcel_tiles`) ; à défaut (tuile non chauffée / première demande après un rebuild) on
-    génère à la volée ET on met en cache. z≥12 : à la volée (l'index GiST porte).
+    CARTE-VITESSE-2 lot A (z9-z11) puis VITESSE-PROD-1 (z12-z13) : zooms _PERSIST_ZOOMS servis depuis
+    le cache PERSISTANT `mvt_tile_cache` (pré-générés par `warm_parcel_tiles`) ; à défaut (tuile non
+    chauffée / première demande après un rebuild) on génère à la volée ET on met en cache.
+    z14-z15 : à la volée (l'index GiST porte, tuiles minuscules).
     Lot C : chaque réponse porte un ETag fort (304 si le client a déjà la même tuile).
 
     TUILES-TX-1 — la session est ouverte DANS le corps du handler (`with api_session()`), pas via
@@ -779,7 +791,7 @@ def mvt_tile(z: int, x: int, y: int, request: Request) -> Response:
             return _tile_response(request, body, etag)
         body = None
         etag = None
-        if z in _WARM_ZOOMS:             # 2) cache persistant (traverse les workers)
+        if z in _PERSIST_ZOOMS:          # 2) cache persistant (traverse les workers)
             got = _tile_cache_get(db, version, z, x, y)
             if got is not None:
                 body, etag = got[0], got[1]
@@ -788,7 +800,7 @@ def mvt_tile(z: int, x: int, y: int, request: Request) -> Response:
                 return Response(status_code=204)  # table pas encore construite (run en cours)
             body = _parcel_tile_bytes(db, z, x, y)
             etag = _etag(body)
-            if z in _WARM_ZOOMS:         # …et alimenter le cache persistant (best-effort)
+            if z in _PERSIST_ZOOMS:      # …et alimenter le cache persistant (best-effort)
                 _tile_cache_put(db, version, z, x, y, body, etag)
         if etag is None:                 # cache persistant sans etag (schéma ancien) : recalcul
             etag = _etag(body)

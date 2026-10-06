@@ -219,22 +219,51 @@ def _clean_risque(detail: str) -> str:
         return detail
 
 
+def _table_aleas(db: Session) -> str:
+    """VITESSE-PROD-1 — la source des requêtes d'intersection d'`aleas_parcelle` : `tuyau_subdivise`
+    (morceaux ≤ 256 sommets, index GiST) quand elle existe AVEC `data_source_id` (build postérieur à
+    VITESSE-PROD-1), sinon `spatial_layers` (chemin historique). Pourquoi : les PPR DEAL sont des
+    méga-polygones (millions de sommets) → `ST_Intersection` exacte = 1,75 s PAR requête, deux fois
+    par fiche (mesuré, 66 % du temps de la fiche). La subdivision est une PARTITION de la même
+    géométrie (dédoublonnée en amont par le build, union identique) : l'union des intersections par
+    morceau = l'intersection d'origine → MÊMES %, mêmes groupes, mêmes millésimes (égalité vérifiée
+    sur échantillon au rapport VITESSE-PROD-1), en ~30 ms."""
+    try:
+        if db.execute(text("SELECT to_regclass('tuyau_subdivise')")).scalar() is None:
+            return "spatial_layers"
+        ok = db.execute(text(
+            "SELECT 1 FROM information_schema.columns "
+            "WHERE table_name = 'tuyau_subdivise' AND column_name = 'data_source_id'")).scalar()
+        return "tuyau_subdivise" if ok else "spatial_layers"
+    except Exception:  # noqa: BLE001 — jamais une 500 pour un choix de table
+        db.rollback()
+        return "spatial_layers"
+
+
 def aleas_parcelle(db: Session, idu: str) -> list[dict]:
     """PIEGES-RISQUES-2 (Lot B/C) — PPR zoné (rouge/bleu) + aléas par niveau, EN DIRECT, avec le % de la
     parcelle touché. Point de vérité partagé : `contraintes_parcelle` en fait des lignes plates (outil)
     et la fiche §Pièges & risques en fait son bloc « aléas ». L'assiette SUP PM1 du PPR reste servie à
-    part (catégorie SUP). Retourne `[{nature, niveau, part_pct, libelle, redhibitoire, source, millesime}]`."""
+    part (catégorie SUP). Retourne `[{nature, niveau, part_pct, libelle, redhibitoire, source, millesime}]`.
+
+    VITESSE-PROD-1 — mémo PAR SESSION (db.info) : la fiche appelle cette fonction DEUX fois par requête
+    (_aleas_block §risques + contraintes_parcelle §pièges) → le second appel resservait les mêmes 1,75 s.
+    Portée = la session de LA requête (jamais partagé, jamais périmé)."""
+    memo = db.info.setdefault("_aleas_parcelle_memo", {})
+    if idu in memo:
+        return memo[idu]
     marg, excl, mincov = _risque_seuils()
+    srctable = _table_aleas(db)
     out: list[dict] = []
     # PPR zoné DEAL : INTERDICTION = rouge (3 paliers) / PRESCRIPTION = bleu. % = union sur la parcelle.
     for r in db.execute(text(
-        """WITH p AS (SELECT geom_2975 g, ST_Area(geom_2975) a FROM parcels WHERE idu = :idu)
+        f"""WITH p AS (SELECT geom_2975 g, ST_Area(geom_2975) a FROM parcels WHERE idu = :idu)
            SELECT upper(sl.subtype) AS zone, sl.attrs->>'risque' AS risque,
                   round((100 * ST_Area(ST_Union(ST_Intersection(sl.geom_2975, p.g))) / NULLIF(min(p.a), 0))::numeric)::int AS pct,
                   max(ds.name) AS source,
                   max(ds.source_millesime) AS source_millesime, max(ds.source_horizon_at) AS source_horizon_at,
                   max(COALESCE(ds.last_sync_at, ds.updated_at)::date)::text AS ingere_le
-           FROM spatial_layers sl CROSS JOIN p LEFT JOIN data_sources ds ON ds.id = sl.data_source_id
+           FROM {srctable} sl CROSS JOIN p LEFT JOIN data_sources ds ON ds.id = sl.data_source_id
            WHERE sl.kind = 'ppr' AND sl.geom_2975 IS NOT NULL AND ST_Intersects(sl.geom_2975, p.g)
              AND upper(sl.subtype) IN ('INTERDICTION', 'PRESCRIPTION')
            GROUP BY upper(sl.subtype), sl.attrs->>'risque'"""), {"idu": idu}).mappings().all():
@@ -268,13 +297,13 @@ def aleas_parcelle(db: Session, idu: str) -> list[dict]:
     # Aléas Géorisques : UN niveau (le plus fort) par type d'aléa, avec % touché (arbitrage M73).
     best: dict[str, tuple[int, dict]] = {}
     for a in db.execute(text(
-        """WITH p AS (SELECT geom_2975 g, ST_Area(geom_2975) a FROM parcels WHERE idu = :idu)
+        f"""WITH p AS (SELECT geom_2975 g, ST_Area(geom_2975) a FROM parcels WHERE idu = :idu)
            SELECT COALESCE(sl.attrs->>'type', sl.subtype) AS type, lower(sl.attrs->>'niveau') AS niveau,
                   round((100 * ST_Area(ST_Union(ST_Intersection(sl.geom_2975, p.g))) / NULLIF(min(p.a), 0))::numeric)::int AS pct,
                   max(ds.name) AS source,
                   max(ds.source_millesime) AS source_millesime, max(ds.source_horizon_at) AS source_horizon_at,
                   max(COALESCE(ds.last_sync_at, ds.updated_at)::date)::text AS ingere_le
-           FROM spatial_layers sl CROSS JOIN p LEFT JOIN data_sources ds ON ds.id = sl.data_source_id
+           FROM {srctable} sl CROSS JOIN p LEFT JOIN data_sources ds ON ds.id = sl.data_source_id
            WHERE sl.kind = 'georisque_alea' AND sl.geom_2975 IS NOT NULL AND ST_Intersects(sl.geom_2975, p.g)
            GROUP BY COALESCE(sl.attrs->>'type', sl.subtype), lower(sl.attrs->>'niveau')"""),
             {"idu": idu}).mappings().all():
@@ -292,6 +321,7 @@ def aleas_parcelle(db: Session, idu: str) -> list[dict]:
         out.append({"nature": f"Aléa {typ}", "niveau": niveau, "part_pct": pct,
                     "libelle": _clean_risque(f"Aléa {typ} — niveau {niveau}{pctxt}."), "redhibitoire": False,
                     "source": a["source"] or "DEAL Réunion / Géorisques", "millesime": mill})
+    memo[idu] = out
     return out
 
 

@@ -1,0 +1,12 @@
+banc de cohérence — 120 parcelles, 24 communes, mode échantillon
+  parcelles 20/120 (51s)
+  parcelles 40/120 (112s)
+  parcelles 60/120 (155s)
+  parcelles 80/120 (203s)
+  parcelles 100/120 (243s)
+  parcelles 120/120 (290s)
+parcelles faites (290s) ; communes…
+
+3306 comparaisons · 41 écarts : {'INCOHERENT': 35, 'TOLERABLE': 6}
+→ /Users/openclaw/Desktop/labuse-vitesseprod/docs/audit-2026-09/COHERENCE-1/ECARTS.csv (412s)
+V6B EXIT 0

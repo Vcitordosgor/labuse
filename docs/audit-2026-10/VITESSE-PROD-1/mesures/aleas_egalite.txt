@@ -1,0 +1,3 @@
+échantillon : 120 parcelles touchant PPR/aléa (bbox)
+120 parcelles · égales 120 · différentes 0
+temps cumulés : AVANT 47.2s · APRÈS 1.1s (x44 plus rapide)

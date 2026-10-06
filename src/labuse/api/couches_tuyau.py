@@ -233,11 +233,19 @@ _VER_LOCK = threading.Lock()
 
 # VITESSE-CARTE-FIX-1 (G2) — cache PERSISTANT des tuiles d'overlay, repris EXACTEMENT du mécanisme des
 # parcelles (table `mvt_tile_cache`, mêmes fonctions `_tile_cache_get/_tile_cache_put` de tiles.py,
-# même clé (version, z, x, y, layer) — ici `layer` = le kind-front). Seuls les zooms z9-z11 sont
-# persistés : ce sont les tuiles CHÈRES à froid (ST_AsMVTGeom 0,5–2,5 s sur l'île ; cf. audit G2), et
-# c'est un ensemble BORNÉ et figé entre deux builds (≈26 tuiles/couche). z≥12 reste en LRU par worker
-# (génération rapide, l'index GiST porte). MÊMES bornes que les parcelles (`tiles._WARM_ZOOMS`).
+# même clé (version, z, x, y, layer) — ici `layer` = le kind-front).
+# VITESSE-PROD-1 — la route lit/alimente désormais le cache persistant jusqu'à z13 (_PERSIST_ZOOMS) :
+# en prod (5 workers, LRU PAR process) chaque worker recalculait chaque tuile z≥12 à son premier
+# passage — un pan à z13 = des dizaines de ST_AsMVT concurrents → pool saturé (effondrement 06/10).
+# Le WARM au build reste z9-z11 pour les 57 couches (~26 tuiles/couche), étendu z12-z13 pour les
+# seuls REPÈRES cochés par défaut (limites_parcelles, limites_communes : frappés à chaque zoom par
+# 100 % des sessions) ; les autres couches se remplissent au premier miss (paresseux, borné ~320
+# tuiles/couche/run, purgé à chaque version). z14-z15 : à la volée (~1-30 ms après le correctif de
+# prédicat SRID, ensemble non borné).
 _WARM_ZOOMS = (9, 10, 11)
+_WARM_ZOOMS_REPERES = (12, 13)
+_REPERES_DEFAUT = ("limites_parcelles", "limites_communes")
+_PERSIST_ZOOMS = (9, 10, 11, 12, 13)
 
 
 def _invalider_cache_persistant_overlays(db: Session) -> None:
@@ -248,6 +256,8 @@ def _invalider_cache_persistant_overlays(db: Session) -> None:
     sans que spatial_layers.created_at ne bouge (cas rare), la `version` ne changerait pas → cette purge
     garantit qu'aucune tuile ne survit au changement de la donnée qu'elle dessine. Best-effort/silencieux
     (table absente sur base neuve)."""
+    # VITESSE-PROD-1 — une table rebâtie peut (théoriquement) changer de SRID : on oublie les sondes.
+    _SRID_REEL.clear()
     try:
         if db.execute(text("SELECT to_regclass('mvt_tile_cache')")).scalar():
             db.execute(text("DELETE FROM mvt_tile_cache WHERE layer <> 'parcels'"))
@@ -324,15 +334,19 @@ def build_tuyau_subdivise(db: Session) -> int:
     # = 123 géométries distinctes → chaque idass n'a qu'UNE géométrie, les autres lignes en sont des
     # copies exactes). On dédoublonne par (kind, subtype, idass) ; les lignes sans idass (les autres
     # kinds) retombent sur leur `id` (unique) → aucune dédup, aucune perte. Pas de hash de géométrie.
+    # VITESSE-PROD-1 — `data_source_id` embarqué : la fiche (servitudes.aleas_parcelle) lit désormais
+    # cette table À LA PLACE des méga-polygones de spatial_layers (2×1,75 s par fiche → ~ms, mêmes %
+    # car l'union des morceaux = la géométrie d'origine) et a besoin du millésime (data_sources).
+    # Tiebreaker `data_source_id` dans l'ORDER BY : la ligne retenue par DISTINCT ON est déterministe.
     db.execute(text("""
         CREATE TABLE tuyau_subdivise AS
         WITH uniques AS (
             SELECT DISTINCT ON (kind, subtype, COALESCE(attrs->>'idass', id::text))
-                   kind, subtype, name, commune, attrs, geom_2975
+                   kind, subtype, name, commune, attrs, data_source_id, geom_2975
             FROM spatial_layers
-            ORDER BY kind, subtype, COALESCE(attrs->>'idass', id::text)
+            ORDER BY kind, subtype, COALESCE(attrs->>'idass', id::text), data_source_id
         )
-        SELECT m.kind, m.subtype, m.name, m.commune, m.attrs, p.geom AS geom_2975
+        SELECT m.kind, m.subtype, m.name, m.commune, m.attrs, m.data_source_id, p.geom AS geom_2975
         FROM uniques m, LATERAL ST_Subdivide(m.geom_2975, 256) AS p(geom)"""))
     db.execute(text("CREATE INDEX tuyau_subdivise_gix ON tuyau_subdivise USING GIST (geom_2975)"))
     db.execute(text("CREATE INDEX tuyau_subdivise_kind ON tuyau_subdivise (kind, subtype)"))
@@ -565,6 +579,30 @@ def _table_manquante(db: Session, table: str) -> bool:
     return not existe
 
 
+# VITESSE-PROD-1 — SRID RÉEL de la colonne géométrie, sondé UNE fois par (table, colonne).
+# Pourquoi : le filtre d'emprise historique `ST_SetSRID(m.geom, srid) && env` enveloppe la colonne
+# dans une fonction → l'index GiST (posé sur la colonne NUE) ne matche jamais → Parallel Seq Scan
+# de TOUTE la table à CHAQUE tuile (mesuré : 30 022 buffers/85 ms sur mvt_parcels, contre 7 buffers/
+# 6 ms en prédicat nu — et 4 s de tuile froide en bout de chaîne). Quand le SRID réel de la colonne
+# vaut le SRID déclaré, le `ST_SetSRID` du FILTRE est un no-op sémantique : on compare la colonne
+# NUE (indexée) à la même emprise — mêmes lignes, mêmes octets de tuile (prouvé md5 au rapport).
+# La PROJECTION (`ST_AsMVTGeom(ST_Transform(ST_SetSRID(…)))`) reste inchangée. Si le SRID réel
+# diffère (table vide, donnée hétérogène), on garde le chemin historique.
+_SRID_REEL: dict[tuple[str, str], int | None] = {}
+
+
+def _srid_reel(db: Session, table: str, geom: str) -> int | None:
+    key = (table, geom)
+    if key not in _SRID_REEL:
+        try:
+            _SRID_REEL[key] = db.execute(
+                text(f"SELECT ST_SRID({geom}) FROM {table} LIMIT 1")).scalar()  # noqa: S608 — table/geom du registre, jamais utilisateur
+        except Exception:  # noqa: BLE001 — table absente/en rebuild : chemin historique
+            db.rollback()
+            _SRID_REEL[key] = None
+    return _SRID_REEL[key]
+
+
 def _construire_tuile(db: Session, c: CoucheTuyau, z: int, x: int, y: int) -> bytes:
     """L'UNIQUE requête. Filtre dans le SRID de la source (indexé), reprojette en 3857 une fois, MVT
     extent 4096. Le nom de couche MVT = le kind-front ; les propriétés = celles déclarées.
@@ -587,6 +625,10 @@ def _construire_tuile(db: Session, c: CoucheTuyau, z: int, x: int, y: int) -> by
     g_src = f"ST_SetSRID(m.{c.geom}, {c.srid})"
     g_3857 = g_src if c.srid == 3857 else f"ST_Transform({g_src}, 3857)"
     filtre = "b.env_marge" if c.srid == 3857 else f"ST_Transform(b.env_marge, {c.srid})"
+    # VITESSE-PROD-1 — prédicat d'emprise sur la colonne NUE quand son SRID réel == déclaré :
+    # l'index GiST porte (cf. _srid_reel). Mêmes lignes (ST_SetSRID ne déplace aucune coordonnée,
+    # && compare les mêmes boîtes), mêmes octets — seule la VITESSE change.
+    g_filtre = f"m.{c.geom}" if _srid_reel(db, c.table, c.geom) == c.srid else g_src
     props_sql = "".join(f', {expr} AS "{nom}"' for nom, expr in c.props)
     sql = text(f"""
         WITH b AS (
@@ -597,7 +639,7 @@ def _construire_tuile(db: Session, c: CoucheTuyau, z: int, x: int, y: int) -> by
             SELECT ST_AsMVTGeom({g_3857}, b.env, 4096, 64, true) AS geom{props_sql}
             FROM {c.table} m, b
             WHERE {where}
-              AND {g_src} && {filtre}
+              AND {g_filtre} && {filtre}
         )
         -- VITESSE-CARTE-FIX-1 (G2) : `ORDER BY mvt.geom` placé APRÈS TOUS les arguments (nom, extent,
         -- geom_name) → octets DÉTERMINISTES (le Parallel Seq Scan renvoyait les features dans un ordre
@@ -607,14 +649,21 @@ def _construire_tuile(db: Session, c: CoucheTuyau, z: int, x: int, y: int) -> by
         -- parcelles (tiles._parcel_tile_bytes). ⚠ le placement en fin d'arguments est OBLIGATOIRE :
         -- `ST_AsMVT(x ORDER BY g, 'nom', …)` ferait avaler 'nom'/extent comme clés de tri (→ layer
         -- « default »). Ici le nom (:layer = kind) et l'extent 4096 sont bien préservés.
-        SELECT ST_AsMVT(mvt.*, :layer, 4096, 'geom' ORDER BY mvt.geom) FROM mvt WHERE geom IS NOT NULL
+        -- VITESSE-PROD-1 — départage TOTAL `mvt::text` après `mvt.geom` : le btree géométrie compare
+        -- des BOÎTES (égalités fréquentes : points superposés, petits objets) et l'égalité se
+        -- départageait par l'ordre de scan → octets INSTABLES (mesuré : 3 calculs de la même tuile
+        -- amenite_bpe/batiment/trait_de_cote = 3 md5 ≠) → cache persistant ≠ à-la-volée → ETag qui
+        -- flappe. `mvt::text` (ligne entière, hex WKB + props) est un ordre total reproductible :
+        -- mêmes entités, mêmes propriétés, octets ENFIN déterministes.
+        SELECT ST_AsMVT(mvt.*, :layer, 4096, 'geom' ORDER BY mvt.geom, mvt::text) FROM mvt WHERE geom IS NOT NULL
     """)
     data = db.execute(sql, params).scalar()
     return bytes(data) if data else b""
 
 
 def warm_overlay_tiles(db: Session, log=lambda *_: None, kinds: list[str] | None = None) -> dict:
-    """VITESSE-CARTE-FIX-1 (G2) — pré-génère les tuiles d'overlay z9-z11 couvrant l'île et les stocke
+    """VITESSE-CARTE-FIX-1 (G2) — pré-génère les tuiles d'overlay z9-z11 (+ z12-z13 pour les repères
+    cochés par défaut, VITESSE-PROD-1) couvrant l'île et les stocke
     dans `mvt_tile_cache` (layer = kind) à la VERSION courante du tuyau. Repris EXACTEMENT de
     `warm_parcel_tiles` : mêmes zooms, même emprise, même table, octets STRICTEMENT identiques à la
     route (même `_construire_tuile`). Idempotente (ON CONFLICT DO NOTHING) et chronométrée. Purge les
@@ -649,7 +698,8 @@ def warm_overlay_tiles(db: Session, log=lambda *_: None, kinds: list[str] | None
         if c is None or _table_manquante(db, c.table):
             continue
         couches_ok += 1
-        for z in _WARM_ZOOMS:
+        zooms = _WARM_ZOOMS + (_WARM_ZOOMS_REPERES if kind in _REPERES_DEFAUT else ())
+        for z in zooms:
             span = (2 * W) / (2 ** z)
             x0 = int((xmin + W) // span); x1 = int((xmax + W) // span)
             y0 = int((W - ymax) // span); y1 = int((W - ymin) // span)
@@ -673,8 +723,9 @@ def couche_tuile(kind: str, z: int, x: int, y: int, request: Request) -> Respons
     — distinct de `/map/tiles/{z}/{x}/{y}.pbf` parcelles et `/map/tiles/ov/…`).
 
     VITESSE-CARTE-FIX-1 (G2) — mêmes 3 étages que les parcelles (tiles.mvt_tile), dans le même ordre :
-    1) LRU en mémoire (par worker) ; 2) cache PERSISTANT `mvt_tile_cache` (z9-z11, traverse les 5
-    workers et survit aux reboots/builds) ; 3) miss → génération à la volée + alimentation du cache.
+    1) LRU en mémoire (par worker) ; 2) cache PERSISTANT `mvt_tile_cache` (z9-z13 depuis
+    VITESSE-PROD-1, traverse les 5 workers et survit aux reboots/builds) ; 3) miss → génération à la
+    volée + alimentation du cache.
     ETag FORT (md5 du contenu) via `_tile_response` → 304 propre, invalidé au changement de contenu.
 
     TUILES-TX-1 — session ouverte DANS le handler (`with api_session()`) et non via `Depends(get_db)` :
@@ -701,8 +752,8 @@ def couche_tuile(kind: str, z: int, x: int, y: int, request: Request) -> Respons
             return _tile_response(request, body, etag)
         body = None
         etag = None
-        # 2) cache PERSISTANT (traverse les workers) — z9-z11, layer = kind (MÊME table que les parcelles)
-        if z in _WARM_ZOOMS:
+        # 2) cache PERSISTANT (traverse les workers) — z9-z13, layer = kind (MÊME table que les parcelles)
+        if z in _PERSIST_ZOOMS:
             got = _tile_cache_get(db, version, z, x, y, layer=kind)
             if got is not None:
                 body, etag = got[0], got[1]
@@ -712,7 +763,7 @@ def couche_tuile(kind: str, z: int, x: int, y: int, request: Request) -> Respons
                 return Response(status_code=204)
             body = _construire_tuile(db, c, z, x, y)
             etag = _etag(body)
-            if z in _WARM_ZOOMS:         # …et alimenter le cache persistant (best-effort)
+            if z in _PERSIST_ZOOMS:      # …et alimenter le cache persistant (best-effort)
                 _tile_cache_put(db, version, z, x, y, body, etag, layer=kind)
         if etag is None:                 # cache persistant d'un schéma ancien sans etag : recalcul
             etag = _etag(body)

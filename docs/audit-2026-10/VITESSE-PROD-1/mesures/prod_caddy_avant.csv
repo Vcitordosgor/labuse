@@ -1,0 +1,10 @@
+fenetre: 2026-08-27T14:50:47.630595 -> 2026-10-06T19:48:51.191383 UTC
+classe;n;p50_s;p95_s;max_s;octets_p50;pct_5xx
+/parcels/at (clic);5;0.03;0.12;0.12;12;0.0
+assets statiques;195;0.01;0.04;0.05;4485;0.0
+fiche /parcels/{idu};15;3.51;464.42;464.42;8577;20.0
+outils /modules/*;89;0.39;497.19;598.30;94;9.0
+tuile overlay (autres);214;0.20;2.39;63.75;0;0.0
+tuile overlay limites_communes;887;0.12;4.27;502.02;0;0.8
+tuile overlay limites_parcelles;976;0.19;5.64;502.02;0;1.0
+tuile parcelles;1247;0.16;3.61;501.51;0;0.6

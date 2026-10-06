@@ -1,0 +1,44 @@
+VITESSE-PROD-1 — état VPS relevé le 06/10/2026 (lecture seule, ssh labuse-vps)
+
+Matériel / OS
+  Ubuntu 6.8.0-106-generic · 6 vCPU · 11,7 Go RAM (8,3 Go dispo, 8,5 Go en page cache) · 0 swap
+  Disque / : 96 Go, 86 Go utilisés (90 %)
+
+Services
+  caddy (reverse proxy, TLS, HTTP/2 + h3 annoncé) — encode gzip SEUL (ni zstd ni brotli)
+  labuse.service : uvicorn 5 workers, port 8000, EnvironmentFile=/etc/labuse/labuse.env
+  postgresql@18-main : Postgres 18
+
+Postgres (réglages effectifs — SHOW)
+  shared_buffers                  128MB        ← DÉFAUT DEBIAN, base de 43 Go
+  effective_cache_size            4GB          ← réel page cache ≈ 8,5 Go
+  work_mem                        4MB
+  maintenance_work_mem            64MB
+  max_connections                 100
+  random_page_cost                4            ← défaut disque ROTATIF, le VPS est en SSD
+  jit                             on
+  max_parallel_workers_per_gather 2
+  wal_buffers                     4MB
+  checkpoint_completion_target    0.9
+  log_min_duration_statement      -1 (désactivé)
+  extensions : plpgsql SEUL — pg_stat_statements ABSENT
+
+Base labuse : 43 Go. Taux de cache global (pg_stat_database) : blks_hit/(hit+read) = 80,66 %
+  (sain ≥ 99 % ; chaque tuile overlay seq-scannait 30 022 buffers ≈ 245 Mo avant correctif)
+
+Incident observé EN DIRECT (22h16–22h50 heure Réunion, 06/10)
+  75 connexions « idle in transaction » (= 5 workers × pool 5+10 SATURÉ), dernière requête =
+  SQL de tuile (ST_TileEnvelope…) ; tuées par idle_in_transaction_session_timeout=10 min
+  (posé par l'app, db.py make_engine) puis re-fuitées en continu.
+  journalctl -u labuse : 224 « sqlalchemy TimeoutError QueuePool limit 5 overflow 10 » en 6 h.
+  Caddy access.log pendant l'incident : SVG statique servi en 229 s, /moi en 319 s,
+  fiche /parcels/NAN1508 en 464 s — voir prod_caddy_avant.csv (agrégat complet).
+
+mvt_tile_cache en prod : 51 couches, z9-z11 UNIQUEMENT, 1 335 tuiles, 138 Mo.
+  Tuiles limites_parcelles les plus lourdes : z10 669/573 = 5,8 Mo ; z9 334/286 = 5,5 Mo (brut).
+
+Relief / « Exposition — relief non disponible »
+  rgealti_mnt_5m : 2 lignes / mnt_tiles : 66 — IDENTIQUE au poste local (pas une table non migrée).
+  Cause RÉELLE : `gdaldem` ABSENT du VPS (`which gdaldem` → rien) alors que l'exposition
+  (faisabilite/exposition.py) l'exécute en sous-processus ; le service IGN (data.geopf.fr)
+  répond en 1,25 s depuis le VPS. → geste : apt install gdal-bin.
