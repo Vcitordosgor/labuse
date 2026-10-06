@@ -806,3 +806,77 @@ def fiche_payload(session: Session, parcel_id: int) -> dict | None:
             "er_deduit_m2": ctx.prescriptions_eco.get("er_deduit_m2") or 0,
         },
     }
+
+
+# ── PPR-PARTIEL-FIX-1 (lot 1) — la partie HORS zone rouge d'une parcelle partiellement rouge ─────
+# PPR-PARTIEL-1 a établi que la règle « touche du rouge → 0 » déduit l'enveloppe réglementaire PPR
+# ENTIÈRE (rouge + bleu), rayant à 0 des parcelles U/AU qui gardent des milliers de m² hors rouge
+# (AY0786 : 145 m² de rouge sur 4 877 → servie à 0). Cette fonction RÉVÈLE ce reste, sans toucher au
+# score ni à la SDP : elle est la SOURCE UNIQUE lue par la fiche, le Dossier et le Copilote (étape B).
+#
+# Au-dessous de ce seuil, on n'affiche RIEN : le `terrain_exigu` est alors CORRECT (rien à bâtir), et
+# l'ancien libellé « trop étroit une fois retirée la zone rouge » reste vrai (PPR-PARTIEL-1 §2).
+SEUIL_HORS_PPR_ROUGE_M2 = 200.0
+
+# Mesure géométrique du ROUGE SEUL dans la parcelle — MÊME découpage que le gabarit (builder.py:348-365,
+# exclusion `ppr-rouge`) : ST_ClipByBox2D → ST_MakeValid → ST_Union → ST_Intersection. On ne calcule
+# PAS une enveloppe, PAS une SDP : l'aire du rouge réel, à retrancher de l'aire de la parcelle.
+_HORS_PPR_ROUGE = text(
+    "SELECT ST_Area(p.geom_2975) AS parcelle_m2, "
+    "       ST_Area(ST_Intersection("
+    "         ST_Union(ST_MakeValid(ST_ClipByBox2D(sl.geom_2975, p.geom_2975))), p.geom_2975)) AS rouge_m2 "
+    "FROM spatial_layers sl, parcels p "
+    "WHERE p.id = :pid AND sl.kind = 'ppr' AND sl.subtype = 'INTERDICTION' "
+    "  AND ST_Intersects(sl.geom_2975, p.geom_2975) GROUP BY p.geom_2975"
+)
+
+
+def surface_hors_ppr_rouge(session: Session, parcel_id: int, *,
+                           faisa: tuple | None = None) -> dict | None:
+    """Surface de foncier BRUT hors zone rouge PPR d'une parcelle partiellement rouge servie à 0.
+
+    Rend `{"hors_rouge_m2": int, "pct": int}` (pct = part de la PARCELLE hors rouge) ou None.
+    Calculée À LA DEMANDE (pas de run, pas de stockage), elle n'est servie QUE si :
+      · la parcelle touche du rouge ET sa SDP servie est 0 POUR CE MOTIF — c.-à-d. le moteur
+        conclut `cause == terrain_exigu` / `exigu_raison == ppr_rouge` (la chaîne builder:334-339 →
+        db → engine → residuel:136 décrite par PPR-PARTIEL-1). Tout autre 0 (bâti saturé, zone A/N)
+        n'est pas un gisement et ne reçoit rien ;
+      · le reste hors rouge atteint SEUIL_HORS_PPR_ROUGE_M2 (200 m²) — en deçà, rien (le terrain est
+        réellement exigu).
+    C'est du FONCIER BRUT : les reculs ne sont PAS appliqués, ce n'est PAS une SDP ni un certificat de
+    constructibilité (le libellé le dit). Si le découpage rouge-seul échoue (géométrie invalide, PPR
+    superposés pathologiques), on rend None — jamais un chiffre douteux (le cas est compté au rapport).
+
+    `faisa` = (ctx, Faisabilite) déjà calculé par l'appelant (la fiche) → évite de relancer le moteur.
+    """
+    res = faisa if faisa is not None else parcel_faisabilite(session, parcel_id)
+    if res is None:
+        return None
+    _ctx, f = res
+    # Éligibilité = le MOTIF exact du gisement (touche rouge + servi 0 pour terrain_exigu/ppr_rouge).
+    if f.cause != "terrain_exigu" or f.exigu_raison != "ppr_rouge":
+        return None
+    # Découpage rouge-seul isolé dans un SAVEPOINT : une géométrie invalide ne doit JAMAIS casser la
+    # transaction de la fiche — on rend None (rien affiché) et le rapport compte l'échec à part.
+    try:
+        with session.begin_nested():
+            row = session.execute(_HORS_PPR_ROUGE, {"pid": parcel_id}).first()
+    except Exception:  # noqa: BLE001 — ST_* sur géométrie pathologique : on n'affiche rien, pas un faux
+        return None
+    if row is None or row.parcelle_m2 is None or float(row.parcelle_m2) <= 0:
+        return None
+    parcelle_m2 = float(row.parcelle_m2)
+    rouge_m2 = float(row.rouge_m2 or 0.0)
+    hors_rouge_m2 = max(0.0, parcelle_m2 - rouge_m2)
+    if hors_rouge_m2 < SEUIL_HORS_PPR_ROUGE_M2:
+        return None                               # < 200 m² hors rouge : terrain_exigu correct, rien
+    return {"hors_rouge_m2": round(hors_rouge_m2),
+            "pct": round(100.0 * hors_rouge_m2 / parcelle_m2)}
+
+
+def phrase_hors_ppr_rouge(hors: dict) -> str:
+    """Le libellé CLIENT du gisement — SOURCE UNIQUE (fiche, Dossier §potentiel via verdict_potentiel,
+    Copilote). Jamais le mot « constructible » pour cette partie : toujours « à étudier »."""
+    m2 = f"{hors['hors_rouge_m2']:,}".replace(",", " ")      # séparateur de milliers en espace (FR)
+    return (f"Parcelle touchée par une zone rouge PPR — droits servis à 0 par prudence ; "
+            f"partie hors zone rouge : {m2} m², à étudier.")
