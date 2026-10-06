@@ -86,16 +86,16 @@ describe('SOLAIRE — deux modes', () => {
     expect(document.body.textContent).toContain('Toute l’île')
     expect(screen.getByText('Saint-Pierre')).toBeTruthy()            // les communes sont listées
     expect(document.querySelector('[data-piscines-row]')).toBeNull() // pas de listing à l'étape périmètre
-    // étape 2 : statut (confirmées / à confirmer / les deux)
+    // RECETTE-PROD-1 (9c/9d) — l'étape « Statut » (3 choix) est SUPPRIMÉE : cliquer un périmètre mène
+    // DIRECTEMENT au résultat, en mode unique « confirmées et à confirmer ».
     fireEvent.click(document.querySelector('[data-piscines-perim="ile"]')!)
-    await waitFor(() => expect(document.querySelector('[data-piscines-statut="servie"]')).toBeTruthy())
-    expect(document.querySelector('[data-piscines-statut="a_confirmer"]')).toBeTruthy()
-    expect(document.querySelector('[data-piscines-statut="tous"]')).toBeTruthy()
-    // résultat : compte (confirmées de l'île = 12 480) + liste paginée
-    fireEvent.click(document.querySelector('[data-piscines-statut="servie"]')!)
     await waitFor(() => expect(document.querySelectorAll('[data-piscines-row]').length).toBe(2))
-    expect(document.querySelector('[data-piscines-total]')?.textContent).toContain('480')
+    expect(document.querySelector('[data-piscines-statut="servie"]')).toBeNull()   // plus d'étape statut
+    expect(document.body.textContent).toContain('confirmées et à confirmer')       // mode unique
+    expect(document.querySelector('[data-piscines-total]')?.textContent).toContain('980')  // 12 480 + 500
     expect(document.body.textContent).toContain('à La Réunion')
+    // RECETTE-PROD-1 (9b) — la phrase « la carte montre tout le périmètre » est retirée.
+    expect(document.body.textContent ?? '').not.toContain('la carte montre')
   })
 
   it('H13.3 — source « IGN FLAIR et CoSIA, 2025 », aucun potentiel solaire dans le chemin Piscines', async () => {
@@ -105,8 +105,6 @@ describe('SOLAIRE — deux modes', () => {
     expect(document.querySelector('[data-piscines-source]')?.textContent).toContain('IGN FLAIR et CoSIA, 2025')
     expect(document.body.textContent ?? '').not.toContain('précision ≥ 85 %')
     fireEvent.click(document.querySelector('[data-piscines-perim="ile"]')!)
-    await waitFor(() => expect(document.querySelector('[data-piscines-statut="servie"]')).toBeTruthy())
-    fireEvent.click(document.querySelector('[data-piscines-statut="servie"]')!)
     await waitFor(() => expect(document.querySelectorAll('[data-piscines-row]').length).toBe(2))
     expect((document.body.textContent ?? '').replace(/\s/g, '')).not.toContain('kWh/kWc')  // aucun potentiel solaire
   })
@@ -146,8 +144,6 @@ describe('SOLAIRE — deux modes', () => {
     fireEvent.click(document.querySelector('[data-solaire-mode="piscines"]')!)
     await waitFor(() => expect(document.querySelector('[data-piscines-perim="ile"]')).toBeTruthy())
     fireEvent.click(document.querySelector('[data-piscines-perim="ile"]')!)
-    await waitFor(() => expect(document.querySelector('[data-piscines-statut="servie"]')).toBeTruthy())
-    fireEvent.click(document.querySelector('[data-piscines-statut="servie"]')!)
     await waitFor(() => expect(document.querySelectorAll('[data-piscines-row]').length).toBe(2))
     const body = document.body.textContent ?? ''
     // plus de propriétaire dans la liste, plus de section Courrier ni de cases de sélection.

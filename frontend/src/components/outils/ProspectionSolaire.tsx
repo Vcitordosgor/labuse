@@ -88,14 +88,18 @@ function BackBar({ onBack, titre }: { onBack: () => void; titre: string }) {
 // 50. Source UNIQUE fusionnée `piscines` (FLAIR ∪ CoSIA dédoublonnées, statut servie/à confirmer selon
 // la précision MESURÉE par classe). « pas une piscine » (correction de donnée) conservé en ICÔNE.
 type PiscStatut = 'servie' | 'a_confirmer' | 'tous'
-const STATUT_LBL: Record<PiscStatut, string> = { servie: 'Confirmées', a_confirmer: 'À confirmer', tous: 'Confirmées + à confirmer' }
+const STATUT_LBL: Record<PiscStatut, string> = { servie: 'Confirmées', a_confirmer: 'À confirmer', tous: 'Confirmées et à confirmer' }
 
 function ModePiscines({ onBack }: { onBack: () => void }) {
   const focusParcelle = useApp((s) => s.focusParcelle)
   const setModuleMap = useApp((s) => s.setModuleMap)
-  const [step, setStep] = useState<'perimetre' | 'statut' | 'resultat'>('perimetre')
+  // RECETTE-PROD-1 (9c + 9d) — l'étape « Statut » (3 choix servie/à confirmer/les deux) est RETIRÉE :
+  // un seul mode « confirmées et à confirmer ». Cliquer une commune (ou « Toute l'île ») mène DIRECTEMENT
+  // au résultat de ce périmètre (comportement d'avant : clic commune → ses piscines), les deux statuts
+  // colorés distinctement sur la carte + listés. `statut` est donc constant ('tous').
+  const [step, setStep] = useState<'perimetre' | 'resultat'>('perimetre')
   const [commune, setCommune] = useState<string | null>(null)   // null = toute l'île
-  const [statut, setStatut] = useState<PiscStatut>('servie')
+  const statut: PiscStatut = 'tous'
   const [pasPiscine, setPasPiscine] = useState<Set<string>>(new Set())
   const [carteBusy, setCarteBusy] = useState(false)
 
@@ -109,7 +113,8 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
   const cRow = commune ? agg.data?.communes.find((c) => c.commune === commune) : null
   const nbConf = commune ? (cRow?.confirmees ?? 0) : ileConf
   const nbAConf = commune ? (cRow?.a_confirmer ?? 0) : ileAConf
-  const nbStatut = statut === 'servie' ? nbConf : statut === 'a_confirmer' ? nbAConf : nbConf + nbAConf
+  // RECETTE-PROD-1 (9c) — mode unique « confirmées et à confirmer » → total = les deux.
+  const nbStatut = nbConf + nbAConf
 
   const PAGE = 50
   const list = useInfiniteQuery({
@@ -156,14 +161,14 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
             {/* RECETTE-2 (T10) — l'ancien fond inline mint 0f (quasi transparent) ÉCRASAIT le survol
                 `.hover-fill` (style inline > règle :hover) : au survol, texte sombre sur fond sombre =
                 illisible. Fond neutre + bord mint en classes → survol = vert opaque, contenu sombre. */}
-            <button data-piscines-perim="ile" onClick={() => { setCommune(null); setStep('statut') }}
+            <button data-piscines-perim="ile" onClick={() => { setCommune(null); setStep('resultat') }}
               className="hover-fill flex items-center justify-between gap-2 rounded-lg border border-mint/40 bg-surface-3 px-3 py-2.5 text-left transition-colors duration-quick">
               <b className="text-[12px] text-txt-hi">Toute l’île</b>
               <CompteBadge c={ileConf} a={ileAConf} />
             </button>
             {/* RECETTE-1 H13.1 — les 24 communes, chacune « N conf · N à conf » (plus de top-8 tronqué). */}
             {agg.data.communes.map((c) => (
-              <button key={c.commune} data-piscines-perim={c.commune} onClick={() => { setCommune(c.commune); setStep('statut') }}
+              <button key={c.commune} data-piscines-perim={c.commune} onClick={() => { setCommune(c.commune); setStep('resultat') }}
                 className="hover-fill flex items-center justify-between gap-2 rounded-lg border border-line-2 bg-surface-3 px-3 py-1.5 text-left transition-colors duration-quick">
                 <span className="text-[11px] text-txt">{c.commune}</span>
                 <CompteBadge c={c.confirmees ?? c.n ?? 0} a={c.a_confirmer ?? 0} />
@@ -176,40 +181,16 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
     )
   }
 
-  // ── ÉTAPE 2 — STATUT ──
-  if (step === 'statut') {
-    const Choix = ({ v, n, desc }: { v: PiscStatut; n: number; desc: string }) => (
-      <button data-piscines-statut={v} onClick={() => { setStatut(v); setStep('resultat') }}
-        className="hover-fill flex items-center justify-between gap-2 rounded-lg border border-line-2 bg-surface-3 px-3 py-2.5 text-left transition-colors duration-quick">
-        <span className="min-w-0">
-          <b className="text-[12px] text-txt-hi">{STATUT_LBL[v]}</b>
-          <span className="mt-0.5 block text-[10px] leading-snug text-txt-dim">{desc}</span>
-        </span>
-        <b className="tnum shrink-0 text-[15px]" style={{ color: v === 'a_confirmer' ? '#E0A94F' : TOKENS.mint }}>{fmtInt(n)}</b>
-      </button>
-    )
-    return (
-      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
-        <BackBar onBack={onBack} titre="💧 Piscines" />
-        <Retour data-piscines-back-perim label="Changer le périmètre" onClick={() => setStep('perimetre')} />
-        <p className="text-[11px] font-medium text-txt-hi">Étape 2 · Statut</p>
-        <p className="text-[10px] text-txt-mut">Périmètre : <b className="text-txt">{commune ?? 'toute l’île'}</b></p>
-        <Choix v="servie" n={nbConf} desc="Précision mesurée ≥ 85 % — servies par défaut" />
-        <Choix v="a_confirmer" n={nbAConf} desc="Précision mesurée 30–60 % — à vérifier sur site" />
-        <Choix v="tous" n={nbConf + nbAConf} desc="Les deux, colorées distinctement sur la carte" />
-        <p className="mt-auto text-[9px] leading-snug text-txt-dim">Source : IGN FLAIR et CoSIA, 2025</p>
-      </div>
-    )
-  }
+  // RECETTE-PROD-1 (9c + 9d) — l'étape 2 « Statut » (3 choix) est SUPPRIMÉE : un seul mode (confirmées
+  // et à confirmer), le clic sur un périmètre mène directement au résultat ci-dessous.
 
   // ── RÉSULTAT — compte · carte (parcelles colorées) · liste paginée ──
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
       <BackBar onBack={onBack} titre="💧 Piscines" />
-      {/* RECETTE-2 (D14c) — Réinitialiser retiré (le parcours Piscines se reprend par « Changer le
-          périmètre/statut » ; rien à effacer de plus). */}
+      {/* RECETTE-PROD-1 (9d) — retour au choix du PÉRIMÈTRE (plus d'étape Statut). */}
       <div className="flex items-center gap-2">
-        <Retour data-piscines-back-statut label="Changer le statut" onClick={() => setStep('statut')} />
+        <Retour data-piscines-back-perim label="Changer le périmètre" onClick={() => setStep('perimetre')} />
       </div>
       {/* Compte + légende des couleurs de la carte */}
       <div className="rounded-lg border px-3 py-2.5" style={{ borderColor: `${TOKENS.mint}4d`, background: `${TOKENS.mint}0f` }}>
@@ -222,14 +203,11 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
           <span data-piscines-i tabIndex={0} title={'« À confirmer » = polygone CoSIA « probable » (sans détection ortho/FLAIR corroborante à ≤ 2 m) d\'au moins 8 m² — précision mesurée 30 à 60 % (audit 30/classe). Les détections FLAIR sont toujours « confirmées ».'}
             className="ml-1.5 inline-flex h-[14px] w-[14px] cursor-help items-center justify-center rounded-full border border-line-2 text-[8.5px] text-txt-dim align-middle">i</span>
         </div>
-        {(statut === 'tous' || statut === 'servie') && (
-          <span className="mr-3 mt-1 inline-flex items-center gap-1 text-[9.5px] text-txt-dim">
-            <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{ background: `${TOKENS.mint}66`, border: `1px solid ${TOKENS.mint}` }} />confirmées</span>
-        )}
-        {(statut === 'tous' || statut === 'a_confirmer') && (
-          <span className="mt-1 inline-flex items-center gap-1 text-[9.5px] text-txt-dim">
-            <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{ background: '#E0A94F66', border: '1px solid #E0A94F' }} />à confirmer</span>
-        )}
+        {/* RECETTE-PROD-1 (9c) — mode unique : les DEUX légendes sont toujours affichées. */}
+        <span className="mr-3 mt-1 inline-flex items-center gap-1 text-[9.5px] text-txt-dim">
+          <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{ background: `${TOKENS.mint}66`, border: `1px solid ${TOKENS.mint}` }} />confirmées</span>
+        <span className="mt-1 inline-flex items-center gap-1 text-[9.5px] text-txt-dim">
+          <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{ background: '#E0A94F66', border: '1px solid #E0A94F' }} />à confirmer</span>
         {carteBusy && <span className="ml-2 text-[9.5px] text-txt-dim">· carte en cours…</span>}
       </div>
 
@@ -262,11 +240,13 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
             )}
           </div>
           <div className="flex shrink-0 items-center justify-between gap-2 pt-1">
+            {/* RECETTE-PROD-1 (9b) — phrase « la carte montre tout le périmètre » retirée. */}
             <span data-piscines-cap className="text-[10.5px] text-txt-dim">
-              {fmtInt(items.length)} affichée(s) sur <b className="text-txt-mut">{fmtInt(total)}</b> — la carte montre tout le périmètre.
+              {fmtInt(items.length)} affichée(s) sur <b className="text-txt-mut">{fmtInt(total)}</b>
             </span>
+            {/* RECETTE-PROD-1 (9a) — « Voir plus (+50) » sur UNE seule ligne (shrink-0 + nowrap). */}
             {list.hasNextPage && (
-              <Bouton niveau="lien" data-piscines-voir-plus onClick={() => list.fetchNextPage()} disabled={list.isFetchingNextPage}>
+              <Bouton niveau="lien" data-piscines-voir-plus className="shrink-0 whitespace-nowrap" onClick={() => list.fetchNextPage()} disabled={list.isFetchingNextPage}>
                 {list.isFetchingNextPage ? 'Chargement…' : `Voir plus (+${PAGE})`}
               </Bouton>
             )}
