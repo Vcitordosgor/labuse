@@ -48,6 +48,8 @@ assiettes:
   demi_construction_ttc: "½ du coût de construction TTC"
   total2_ttc:          "Total du bloc Construction & honoraires, TTC"
   total2_ht:           "Total du bloc Construction & honoraires, HT"
+  total2_ttc_sol_imprevus: "Total (2) TTC + étude de sol TTC − imprévus TTC (assiette assurance D.O, modèle promotrice)"
+  total2_ht_sol_imprevus:  "Total (2) HT + étude de sol HT − imprévus HT (assiette assurance TRC, modèle promotrice)"
   loyers_annuels:      "Loyer €/m² × SUV"
   forfait:             "Montant forfaitaire (pas d'assiette)"
 
@@ -125,8 +127,8 @@ blocs:
       - {id: gfa,    libelle: "Garantie achèvement",        libelle_modele: "Garantie achèvement",           ligne_modele: 85, mode: pct,     assiette: ca_ttc, tva: 0.0, tva_sourcee: true, repere: {type: ratio_place, valeur: 1.0}}
       - {id: gp,     libelle: "Garantie de paiement",       libelle_modele: "Garantie de paiement",          ligne_modele: 86, mode: pct,     assiette: demi_construction_ttc, tva: 0.0, tva_sourcee: true, repere: null}
       - {id: ff,     libelle: "Frais financiers",           libelle_modele: "Frais Financiers",              ligne_modele: 87, mode: pct,     assiette: ca_ttc, tva: 0.0, tva_sourcee: true, repere: {type: ratio_place, valeur: 0.5}}
-      - {id: do,     libelle: "Assurances D.O / C.N.R",     libelle_modele: "Assurances D.O / C.N.R",        ligne_modele: 88, mode: pct,     assiette: total2_ttc, tva: 0.0, tva_sourcee: true, repere: {type: ratio_place, valeur: 1.32}}
-      - {id: trc,    libelle: "Assurance TRC + GAREAT",     libelle_modele: "Assurance TRC + GAREAT",        ligne_modele: 89, mode: pct,     assiette: total2_ht, tva: 0.0, tva_sourcee: true, repere: {type: ratio_place, valeur: 0.34}}
+      - {id: do,     libelle: "Assurances D.O / C.N.R",     libelle_modele: "Assurances D.O / C.N.R",        ligne_modele: 88, mode: pct,     assiette: total2_ttc_sol_imprevus, tva: 0.0, tva_sourcee: true, repere: {type: ratio_place, valeur: 1.32}}
+      - {id: trc,    libelle: "Assurance TRC + GAREAT",     libelle_modele: "Assurance TRC + GAREAT",        ligne_modele: 89, mode: pct,     assiette: total2_ht_sol_imprevus, tva: 0.0, tva_sourcee: true, repere: {type: ratio_place, valeur: 0.34}}
       - {id: aleaG,  libelle: "Aléas",                      libelle_modele: "Aléas",                         ligne_modele: 90, mode: pct,     assiette: ca_ttc, tva: 0.085, tva_sourcee: true, alea: true, repere: null}
 
   - id: V

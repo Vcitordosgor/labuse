@@ -66,22 +66,17 @@ qui remplace l'ancien `FinancierQuestionnaire` (supprimé, écran + test).
 ## 4. Non-régression : le moteur reproduit le bilan de la promotrice
 
 En rejouant **ses propres valeurs saisies**, le moteur retombe sur les totaux de son
-Excel **au centime sur 43 des 45 lignes**. Deux lignes diffèrent, **par convention
-qu'elle a composée à la main** et que la maquette validée a simplifiée :
+Excel **au centime sur les 45 lignes, 0 € d'écart**. Les assiettes d'assurances
+composées à la main dans le tableur sont **recopiées à l'identique** (décision Vic) :
 
-| Poste | Assiette de la promotrice | Assiette du moteur (maquette) | Écart HT |
-|-------|---------------------------|-------------------------------|----------|
-| Assurances D.O / C.N.R | total (2) TTC + étude de sol − imprévus | total (2) TTC | **+1 109,96 €** |
-| Assurance TRC + GAREAT | total (2) HT + étude de sol − imprévus | total (2) HT | **+263,50 €** |
+| Poste | Assiette (modèle = moteur) | HT modèle = moteur |
+|-------|----------------------------|--------------------|
+| Assurances D.O / C.N.R | total (2) TTC + étude de sol TTC − imprévus TTC | 91 570,06 € |
+| Assurance TRC + GAREAT | total (2) HT + étude de sol HT − imprévus HT | 21 738,46 € |
 
-Sur un bilan de **12,4 M€**, le résultat net du moteur est **1 243 623 €** contre
-**1 244 997 €** au modèle (**−1 373 €**, soit exactement la somme des deux écarts).
-Le test vérifie que ce **résidu est nul** : tout le reste est reproduit au centime,
-y compris la **commission d'apport** (3 % toutes taxes), traitée via `base: ttc`.
-
-> C'est une décision à confirmer par Vic (cf. SUIVI) : garder les assiettes propres
-> de la maquette (validée) et documenter ces 2 écarts, ou recopier à l'identique les
-> assiettes composées du tableur. Les deux sens restent cohérents entre eux.
+Résultat net du moteur = **1 244 996,78 €** = le modèle, à l'euro. La **commission
+d'apport** (3 % toutes taxes) est reproduite via `base: ttc`. Le test vérifie chaque
+ligne (HT·TVA·TTC) + chaque total de bloc + le résultat net contre le xlsx.
 
 ## 5. Les deux sens, sur le même écran
 
@@ -130,13 +125,12 @@ le bilan reste juste. Aucun n'entre jamais dans le calcul sans clic.
   routes testées ; il restait le budget pour les artefacts PDF/Excel, pas pour booter
   la pile authentifiée.
 
-## 8. Points pour Vic
-1. **Assiettes D.O / TRC** (§4) : garder les assiettes propres de la maquette (+2 écarts
-   documentés) ou recopier les assiettes composées du tableur ?
-2. **Repères « ratio de place »** : la doctrine écrite dit « pas de source publique → pas
-   de repère » ; la maquette validée les montre et nomme « ratios de place ». Tranché
-   **selon la maquette** (étiquetés honnêtement) — à vetoer si tu préfères les masquer.
-3. **Repères à finir** (§6) : Taxe/archéo en €/m², Faisabilité (SDP/parkings), Sitadel.
-4. **Ancien Financier backend** (`financier_bilan.py`, `financier_questionnaire.py`,
-   routes `/financier/*`) **laissé en place** (no élargissement) ; seule la porte client
-   bascule sur le nouveau bilan. Démontage = un chantier dédié.
+## 8. Décisions de Vic — avant merge (un commit par point)
+1. **Assiettes D.O / TRC** — recopiées à l'identique du tableur → **0 € d'écart** (§4). ✓
+2. **Repères « ratio de place »** — à masquer (pas de source publique → pas de repère).
+3. **Repères à câbler** — Taxe/archéo (€/m²), Faisabilité (SDP · parkings), Sitadel.
+4. **Captures de l'écran vivant** — à prendre sur la pile lancée (§7).
+
+**Ancien Financier backend** (`financier_bilan.py`, `financier_questionnaire.py`, routes
+`/financier/*`) **laissé en place** (no élargissement) ; seule la porte client bascule
+sur le nouveau bilan. Démontage = un chantier dédié.

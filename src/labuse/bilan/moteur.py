@@ -181,6 +181,14 @@ class Moteur:
             return ctx.get("total2_ttc")
         if a == "total2_ht":
             return ctx.get("total2_ht")
+        # Assiettes composées à la main dans le modèle de la promotrice (assurances) :
+        # base = total (2) + étude de sol − imprévus (techniques). Reproduites à l'identique.
+        if a == "total2_ttc_sol_imprevus":
+            t2, sol, imp = ctx.get("total2_ttc"), ctx.get("sol_ttc"), ctx.get("aleaC_ttc")
+            return None if None in (t2, sol, imp) else t2 - imp + sol
+        if a == "total2_ht_sol_imprevus":
+            t2, sol, imp = ctx.get("total2_ht"), ctx.get("sol_ht"), ctx.get("aleaC_ht")
+            return None if None in (t2, sol, imp) else t2 - imp + sol
         if a == "loyers_annuels":
             if prog.loyer is None or pt["suv"] is None:
                 return None
@@ -300,6 +308,19 @@ class Moteur:
                 c_tva += t
         ctx["total2_ht"] = (c_ht) if c_ok else None
         ctx["total2_ttc"] = (c_ht + c_tva) if c_ok else None
+
+        # Étude de sol & imprévus techniques : composent les assiettes d'assurances
+        # (D.O / C.N.R, TRC) comme dans le tableur de la promotrice (0 € d'écart).
+        def ligne_complete(pid: str) -> tuple[float | None, float | None]:
+            poste = self.cat.poste(pid)
+            s = e.saisie(pid)
+            a = self._assiette(poste, s, ctx)
+            taux = self._taux_tva(poste, s)
+            h, _, c = self._ligne_ht(poste, s, a, taux)
+            return h, c
+
+        ctx["sol_ht"], ctx["sol_ttc"] = ligne_complete("sol")
+        ctx["aleaC_ht"], ctx["aleaC_ttc"] = ligne_complete("aleaC")
 
         # Toutes les lignes
         lignes: list[LigneBilan] = []

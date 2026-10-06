@@ -1,7 +1,15 @@
 # BILAN-1 — Suivi d'exécution
 
 Branche `feat/bilan-1` · worktree `~/Desktop/labuse-bilan1` · ports 8820 / 6020.
-Base = `origin/main` du jour (`01965f44`). Modèle : Opus.
+Base = `origin/main` **rebasée sur `e60bf578`** (TUILES-TX-1 + VITESSE-PROD-1) le 06/10 :
+rebase SANS conflit (les 2 lignes bilan d'app.py sont loin des régions tuiles/get_db).
+Modèle : Opus.
+
+## Décisions Vic avant merge (un commit par point)
+1. Assiettes D.O / TRC recopiées à l'identique du tableur → **0 € d'écart**. **FAIT** (ce commit).
+2. Masquer les repères « ratio de place ». à faire.
+3. Câbler repères Taxe/archéo, Faisabilité (SDP, parkings), Sitadel. à faire.
+4. Captures de l'écran vivant (pile lancée). à faire.
 
 Venv : `~/Desktop/labuse/.venv/bin/python` ; imports LABUSE depuis ce worktree avec
 `PYTHONPATH=src`. Le xlsx de la promotrice est copié en `docs/audit-2026-10/bilan-1/modele-promotrice.xlsx`

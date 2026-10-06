@@ -122,10 +122,6 @@ def entrees_temoin_promotrice() -> EntreesBilan:
     )
 
 
-# Les deux seules conventions d'assiette composées à la main par la promotrice.
-_ECARTS_CONVENTION = {"do", "trc"}
-
-
 # ---------------------------------------------------------------------------
 # Mécanique du moteur (sans le modèle)
 # ---------------------------------------------------------------------------
@@ -187,22 +183,13 @@ def test_non_regression_lignes_au_centime():
     r = m.calculer(entrees_temoin_promotrice())
     assert r.complet, r.manquants
 
-    ecarts = {}
+    # TOUTES les lignes au centime — assiettes D.O/TRC recopiées à l'identique.
     for ln in r.lignes:
-        p = m.cat.poste(ln.id)
-        row = p.ligne_modele
+        row = m.cat.poste(ln.id).ligne_modele
         eX, fX, gX = cell(row, 5), cell(row, 6), cell(row, 7)
-        if ln.id in _ECARTS_CONVENTION:
-            ecarts[ln.id] = (ln.ht or 0) - eX
-            continue
         assert (ln.ht or 0) == pytest.approx(eX, abs=1.0), f"{ln.id} HT"
         assert (ln.tva or 0) == pytest.approx(fX, abs=1.0), f"{ln.id} TVA"
         assert (ln.ttc or 0) == pytest.approx(gX, abs=1.0), f"{ln.id} TTC"
-
-    # Les deux écarts de convention existent et sont du bon ordre de grandeur.
-    assert set(ecarts) == _ECARTS_CONVENTION
-    assert ecarts["do"] == pytest.approx(1109.96, abs=1.0)
-    assert ecarts["trc"] == pytest.approx(263.50, abs=1.0)
 
 
 @besoin_modele
@@ -220,18 +207,14 @@ def test_non_regression_totaux_et_residu_nul():
     assert r.ca_ht == pytest.approx(cell(115, 5), abs=1.0)
     assert r.ca_ttc == pytest.approx(cell(115, 7), abs=1.0)
 
-    # Totaux par bloc : T, C, V exacts ; G porte les deux écarts DO/TRC
-    htsX = {"T": cell(62, 5), "C": cell(77, 5), "V": cell(106, 5)}
+    # Tous les totaux de bloc exacts (DO/TRC recopiées → bloc G exact aussi)
+    htsX = {"T": cell(62, 5), "C": cell(77, 5), "G": cell(92, 5), "V": cell(106, 5)}
     hts = {b.id: b.ht for b in r.blocs}
     for bid, vx in htsX.items():
         assert hts[bid] == pytest.approx(vx, abs=1.0), f"bloc {bid}"
 
-    # Résultat : l'écart vs le modèle est EXACTEMENT la somme des deux écarts
-    # d'assiette (résidu nul = tout le reste reproduit la promotrice au centime).
-    do_line = next(ln for ln in r.lignes if ln.id == "do").ht - cell(88, 5)
-    trc_line = next(ln for ln in r.lignes if ln.id == "trc").ht - cell(89, 5)
-    residu = (r.resultat_net + do_line + trc_line) - cell(119, 5)
-    assert residu == pytest.approx(0.0, abs=1.0), f"résidu inexpliqué {residu}"
+    # Résultat net : IDENTIQUE au modèle, 0 € d'écart.
+    assert r.resultat_net == pytest.approx(cell(119, 5), abs=1.0)
 
 
 @besoin_modele

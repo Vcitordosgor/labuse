@@ -145,6 +145,13 @@ def classeur_bilan(
         if a == "total2_ttc":
             lo, hi = bloc_ht_cells["C"]
             return f"=SUM(F{lo}:F{hi})"
+        # assiettes d'assurances composées comme le tableur : total(2) + sol − imprévus
+        if a == "total2_ht_sol_imprevus":
+            lo, hi = bloc_ht_cells["C"]
+            return f"=SUM(D{lo}:D{hi})+D{ligne_poste['sol']}-D{ligne_poste['aleaC']}"
+        if a == "total2_ttc_sol_imprevus":
+            lo, hi = bloc_ht_cells["C"]
+            return f"=SUM(F{lo}:F{hi})+F{ligne_poste['sol']}-F{ligne_poste['aleaC']}"
         return None
 
     # première passe : réserver les lignes, poser libellé/taux/assiette-littérale
