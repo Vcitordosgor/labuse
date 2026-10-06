@@ -119,6 +119,11 @@ def test_modele_sert_structure_et_source(client_parc):
     assert j["ratios_compte"]["moe"]["valeur"] == 3.8
     # repères publics : clé présente (contenu best-effort, jamais un 500)
     assert "reperes_publics" in j
+    # doctrine (Vic) : AUCUN repère « ratio de place » n'est servi — seuls les
+    # repères « registre » (source publique) existent dans le modèle.
+    for b in j["blocs"]:
+        for p in b["postes"]:
+            assert p["repere"] is None or p["repere"]["kind"] == "registre", p["id"]
 
 
 def test_calcul_incomplet_sans_marge(client_parc):

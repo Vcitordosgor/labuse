@@ -110,24 +110,17 @@ export function BilanEcran({ idu, onClose, onGenerated }:
   const complet = !!res?.complet
   const prog = res ? `${res.postes_renseignes} / ${res.total_postes} postes` : ''
 
-  const adopterRepere = (p: BilanPoste) => {
-    if (!p.repere) return
-    if (p.repere.kind === 'ratio_place' && p.repere.valeur != null) {
-      majPoste(p.id, { valeur: p.repere.valeur, etat: 'repere' })
-    } else if (p.repere.kind === 'registre' && p.repere.registre_id) {
-      const r = modele.reperes_publics[p.repere.registre_id]
-      if (r) majPoste(p.id, { valeur: r.valeur, etat: 'repere' })
-    }
-  }
+  // Doctrine (Vic) : pas de source publique, pas de repère. Seuls les repères
+  // « registre » (source publique) qui se résolvent s'affichent ; les ratios de
+  // place ne sont pas des repères (le client saisit, ou reprend « Mes ratios »).
   const reperePoste = (p: BilanPoste): { valeur: number; label: string } | null => {
-    if (!p.repere) return null
-    if (p.repere.kind === 'ratio_place' && p.repere.valeur != null)
-      return { valeur: p.repere.valeur, label: `repère ${fmtNum(p.repere.valeur)} ${p.mode === 'pct' ? '%' : (p.unite ?? '')}`.trim() }
-    if (p.repere.kind === 'registre' && p.repere.registre_id) {
-      const r = modele.reperes_publics[p.repere.registre_id]
-      return r ? { valeur: r.valeur, label: r.label } : null  // pas de source → pas de pastille
-    }
-    return null
+    if (p.repere?.kind !== 'registre' || !p.repere.registre_id) return null
+    const r = modele.reperes_publics[p.repere.registre_id]
+    return r ? { valeur: r.valeur, label: r.label } : null
+  }
+  const adopterRepere = (p: BilanPoste) => {
+    const r = reperePoste(p)
+    if (r) majPoste(p.id, { valeur: r.valeur, etat: 'repere' })
   }
 
   const generer = async () => {

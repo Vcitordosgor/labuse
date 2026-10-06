@@ -223,14 +223,15 @@ def calculer_bilan(idu: str, corps: CalculIn) -> dict:
 # Modèle — la structure + le Sourcé pré-rempli + les repères (jamais appliqués)
 # ===========================================================================
 def _repere_poste(p: Poste) -> dict | None:
-    """Sérialise le repère DÉCLARÉ d'un poste (ratio de place : valeur connue
-    d'avance). Les repères « registre » (source publique) sont résolus à part,
-    par idu, et n'apparaissent que s'ils se résolvent (doctrine 2)."""
+    """Sérialise le repère d'un poste. Doctrine (décision Vic) : **pas de source
+    publique, pas de repère** — seuls les repères « registre » (source publique :
+    DVF, outil Taxe, archéo, coût de référence, Faisabilité) sont servis, et encore
+    uniquement s'ils se résolvent à l'exécution (cf. reperes_publics). Les ratios de
+    place (commission, notaire, honoraires…) NE sont PAS des repères : le client les
+    saisit, et peut mémoriser les siens (état « Mes ratios »)."""
     r = p.repere
-    if r is None:
+    if r is None or r.kind != "registre":
         return None
-    if r.kind == "ratio_place":
-        return {"kind": "ratio_place", "valeur": r.valeur}
     return {"kind": "registre", "registre_id": r.registre_id}
 
 
