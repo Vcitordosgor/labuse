@@ -284,15 +284,11 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
       {leftKey !== 'bm-ortho-now' && (
         <div data-temps-legende className="absolute left-3 top-3 z-10 flex max-w-[19rem] items-start gap-2 rounded-lg border border-line-2 bg-surface-2/95 px-3 py-2">
           <span aria-hidden className="mt-0.5 h-3 w-3 shrink-0 rounded-[3px] border border-line-2 bg-black" />
+          {/* RECETTE-PROD-1 (15) — l'addendum « Carte 1980 (EduGéo) » est retiré (la carte EduGéo n'est
+              plus proposée) : l'encart ne parle plus que de l'ortho ancienne. */}
           <span className="text-[10.5px] leading-snug text-txt-mut">
             <b className="text-txt">Zones noires</b> : secteurs non couverts par l'ortho ancienne (mer, limites
             de mission IGN) — ce n'est pas un défaut de chargement.
-            {/* RECETTE-1 H9.2 — la carte EduGéo 1980 est une couche IGN valide à COUVERTURE PARTIELLE
-                sur l'île (certains secteurs restent vides, en transparent) : on le dit, pas un bug. */}
-            {(leftKey === 'bm-edugeo-1980' || rightKey === 'bm-edugeo-1980') && (
-              <> <b className="text-txt">Carte 1980 (EduGéo)</b> : couverture partielle de l'île — là où elle
-              manque, le fond reste vide (ce n'est pas un défaut de chargement).</>
-            )}
           </span>
         </div>
       )}
