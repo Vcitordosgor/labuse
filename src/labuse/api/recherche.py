@@ -58,13 +58,25 @@ def ensure_index(engine) -> None:
       (« 1 bis … , 97417 Saint-Denis ») retrouve sa parcelle sans repasser en seq-scan."""
     from ..constants import ADRESSE_SUGGEST_EXPR, sql_plie_lit_suggest
     expr_full = sql_plie_lit_suggest(ADRESSE_SUGGEST_EXPR)
+
+    def _idx_absent(c, nom: str) -> bool:
+        # BOOT-VERROU-1 — lecture pure du catalogue (aucun verrou de table) : vrai si l'index manque.
+        return c.execute(text("SELECT to_regclass(:n) IS NULL"), {"n": nom}).scalar() is True
+
     with engine.begin() as c:
-        c.execute(text("CREATE INDEX IF NOT EXISTS ix_parcels_section_numero "
-                       "ON parcels (section, numero varchar_pattern_ops)"))
+        # BOOT-VERROU-1 — garde-catalogue (recette LIENS-1 lot 0, commit 9de46f6b). Un `CREATE INDEX
+        # IF NOT EXISTS` no-op prend un verrou SHARE sur `parcels` (≈431 k lignes, la table la plus
+        # lue) et `adresses` (≈340 k) ; derrière un run de cascade ou une ré-ingestion BAN (writers)
+        # il se met en FILE et gèle le boot. On ne crée l'index QUE s'il manque : chemin nominal =
+        # aucun verrou pris. (CREATE EXTENSION reste inconditionnel — il ne verrouille pas de table.)
+        if _idx_absent(c, "ix_parcels_section_numero"):
+            c.execute(text("CREATE INDEX ix_parcels_section_numero "
+                           "ON parcels (section, numero varchar_pattern_ops)"))
         c.execute(text("CREATE EXTENSION IF NOT EXISTS pg_trgm"))
-        c.execute(text(f"CREATE INDEX IF NOT EXISTS ix_adresses_suggest_full_trgm ON adresses "
-                       f"USING gin (({expr_full}) gin_trgm_ops) "
-                       f"WHERE idu IS NOT NULL AND geom IS NOT NULL"))
+        if _idx_absent(c, "ix_adresses_suggest_full_trgm"):
+            c.execute(text(f"CREATE INDEX ix_adresses_suggest_full_trgm ON adresses "
+                           f"USING gin (({expr_full}) gin_trgm_ops) "
+                           f"WHERE idu IS NOT NULL AND geom IS NOT NULL"))
 
 
 def get_db():   # branché sur la session app au moment de l'inclusion (cf. app.py, patron tiles)

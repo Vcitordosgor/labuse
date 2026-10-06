@@ -44,8 +44,19 @@ def ensure_scoping(db: Session) -> None:
     for t in SCOPED_TABLES:
         if not db.execute(text("SELECT to_regclass(:t)"), {"t": t}).scalar():
             continue  # table pas encore créée par son module — elle naîtra scopée au besoin
-        db.execute(text(f"ALTER TABLE {t} ADD COLUMN IF NOT EXISTS compte_id integer"))
-        db.execute(text(f"CREATE INDEX IF NOT EXISTS ix_{t}_compte ON {t}(compte_id)"))
+        # BOOT-VERROU-1 — garde-catalogue (recette LIENS-1 lot 0, commit 9de46f6b). Ces tables sont
+        # servies au client (pipeline_entries/CRM, watch_zones, alertes, documents_generes…) : un
+        # `ADD COLUMN IF NOT EXISTS compte_id` no-op (ACCESS EXCLUSIVE) ou un `CREATE INDEX IF NOT
+        # EXISTS` no-op (SHARE) se met en FILE derrière le moindre lecteur et gèle le boot — 11 tables
+        # × 2 DDL = 22 verrous inutiles par démarrage. On teste le catalogue (lectures pures) et on
+        # n'émet que ce qui manque vraiment. Chemin nominal (schéma posé) = zéro verrou.
+        if not db.execute(text("SELECT 1 FROM information_schema.columns "
+                               "WHERE table_name = :t AND column_name = 'compte_id'"),
+                          {"t": t}).scalar():
+            db.execute(text(f"ALTER TABLE {t} ADD COLUMN compte_id integer"))
+        if not db.execute(text("SELECT to_regclass(:i) IS NOT NULL"),
+                          {"i": f"ix_{t}_compte"}).scalar():
+            db.execute(text(f"CREATE INDEX ix_{t}_compte ON {t}(compte_id)"))
         # FK + ON DELETE CASCADE (posée ici, pas dans l'ORM : create_all n'a pas la table
         # comptes en dépendance). Idempotent : on n'ajoute que si absente. Vitale RGPD :
         # supprimer un compte emporte SES projets/pipeline/veilles/filtres/signalements.
