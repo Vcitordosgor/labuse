@@ -2077,7 +2077,14 @@ def ensure_au_statut_cache(engine) -> None:
             " motif text, computed_at timestamptz NOT NULL DEFAULT now())"))
         # AFFINÉ GPU-PILOTE : les libellés de statut se sont allongés (declasse_au_statut_inconnu = 26,
         # conditionnelle_operation = 24) — élargir une table déjà créée en varchar(20). Idempotent.
-        c.execute(_t("ALTER TABLE parcel_au_statut ALTER COLUMN classe TYPE varchar(40)"))
+        # RECETTE-PROD-1 — garde par catalogue (même motif que BOOT-VERROU-1 / point 11) : un `ALTER …
+        # TYPE` est un NO-OP quand la colonne fait déjà varchar(40), MAIS prend quand même un ACCESS
+        # EXCLUSIVE → sous lecteur concurrent (ex. un run `compare`), le boot se fige. On ne lance
+        # l'ALTER que si la largeur n'est pas déjà 40 (lecture catalogue sans verrou).
+        if not c.execute(_t(
+                "SELECT 1 FROM information_schema.columns WHERE table_name='parcel_au_statut' "
+                "AND column_name='classe' AND character_maximum_length=40")).first():
+            c.execute(_t("ALTER TABLE parcel_au_statut ALTER COLUMN classe TYPE varchar(40)"))
 
 
 def ensure_schema(engine) -> None:

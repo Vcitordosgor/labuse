@@ -38,6 +38,21 @@ type Row = {
   render?: (r: CompareRow) => JSX.Element
   noBadge?: boolean
 }
+// RECETTE-PROD-1 (12) — tag COURT de la cause (le code servi par /compare) pour la cellule SDP
+// résiduelle. La phrase longue (engine.cause_libelle) vit dans l'infobulle de la ligne.
+const CAUSE_COURT: Record<string, string> = {
+  terrain_exigu: 'terrain exigu',
+  hors_plu: 'hors PLU',
+  redhibitoire: 'rédhibitoire',
+  capacite_nulle: 'capacité nulle',
+  bati_non_ingere: 'bâti non estimé',
+}
+const causeCourt = (c?: string | null): string | null => {
+  if (!c) return null
+  if (c.startsWith('zone_non_constructible') || c.startsWith('zone_non_resolue')) return 'zone non constructible'
+  return CAUSE_COURT[c] ?? c.replace(/_/g, ' ')
+}
+
 const ROWS: Row[] = [
   { label: 'Surface', prov: 'source', val: (r) => r.surface_m2 != null ? `${fmtInt(r.surface_m2)} m²` : '—', num: (r) => r.surface_m2 ?? null, best: 'hi' },
   { label: 'Zone PLU', prov: 'source', val: (r) => r.zone || '—' },
@@ -56,11 +71,30 @@ const ROWS: Row[] = [
         </span>
       )
     } },
-  { label: 'Constructible', prov: 'source', val: (r) => r.constructible == null ? '—' : r.constructible ? 'oui' : 'non' },
+  // RECETTE-PROD-1 (12) — « Constructible : oui/non » (verdict faisabilité) MENTAIT : pour trois Um
+  // bâties côte à côte (EI0145/0146/0147), toutes zone constructible et toutes à 0 de potentiel
+  // résiduel, l'une affichait « oui » (emprise ≥ seuil) et deux « non » (terrain exigu) — incohérent
+  // à l'œil. On sépare : « Zone constructible » = constructibilité de la ZONE (famille ∉ A/N, honnête
+  // et IDENTIQUE pour les trois) ; le potentiel, lui, vit sur la ligne « SDP résiduelle » (0 pour les
+  // trois), suffixée de SA CAUSE (« terrain exigu », etc.). Plus de libellé qui ment.
+  { label: 'Zone constructible', prov: 'source',
+    val: (r) => r.zone_constructible == null ? '—' : r.zone_constructible ? 'oui' : 'non',
+    title: 'La ZONE du PLU autorise-t-elle de construire (famille U/AU) ? Distinct du potentiel résiduel restant (ligne SDP résiduelle) : une zone constructible peut n\'avoir aucun potentiel si la parcelle est déjà saturée ou trop exiguë.' },
   // O2-5 — chaque capacité porte son périmètre (source unique lib/perimetres) : la « max » suppose le
   // terrain libéré, la « résiduelle » suppose le bâti conservé — sinon les deux se contredisent à l'œil.
   { label: `SDP max estimée · ${PERIM_POTENTIEL_COURT}`, prov: 'estime', val: (r) => r.sdp_max_m2 != null ? `${fmtInt(r.sdp_max_m2)} m²` : '—', num: (r) => r.sdp_max_m2 ?? null, best: 'hi' },
-  { label: `SDP résiduelle · ${PERIM_RESIDUEL_COURT}`, prov: 'estime', val: (r) => r.sdp_residuelle_m2 != null ? `${fmtInt(r.sdp_residuelle_m2)} m²` : '—', num: (r) => r.sdp_residuelle_m2 ?? null, best: 'hi' },
+  { label: `SDP résiduelle · ${PERIM_RESIDUEL_COURT}`, prov: 'estime',
+    // RECETTE-PROD-1 (12) — potentiel résiduel + CAUSE COURTE quand il n'y a pas de potentiel (0/—) :
+    // le client voit POURQUOI (terrain exigu, zone non constructible…), pas un « 0 » muet. La phrase
+    // longue reste dans l'infobulle (title) ; la cellule porte un tag court.
+    val: (r) => {
+      if (r.sdp_residuelle_m2 != null && r.sdp_residuelle_m2 > 0) return `${fmtInt(r.sdp_residuelle_m2)} m²`
+      const base = r.sdp_residuelle_m2 === 0 ? '0 m²' : '—'
+      const sc = causeCourt(r.cause)
+      return sc ? `${base} · ${sc}` : base
+    },
+    title: 'Surface de plancher qui reste à bâtir en gardant le bâti existant. 0/— avec sa cause (terrain exigu, zone non constructible…) : la zone peut être constructible sans qu\'il reste de potentiel sur cette parcelle.',
+    num: (r) => r.sdp_residuelle_m2 ?? null, best: 'hi' },
   // COMPARER-2 §1 — la VRAIE CES du PLU (validée dans plu_destinations), badge Sourcé + citation au survol.
   // « non réglementée » quand la zone n'en fixe pas (ex. U3c/AU3c Saint-Paul) — jamais un dérivé sous ce titre.
   { label: 'Emprise au sol max (PLU)', prov: 'source', val: (r) => r.emprise_ces_pct != null ? `${fmtInt(r.emprise_ces_pct)} %` : 'non réglementée', num: (r) => r.emprise_ces_pct ?? null, best: 'hi', title: 'Emprise au sol maximale fixée par le règlement de la zone (CES) — « non réglementée » si le PLU n\'en fixe pas.' },

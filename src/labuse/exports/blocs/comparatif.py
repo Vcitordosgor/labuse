@@ -43,6 +43,32 @@ def _m2(r, k):
     return f"{x} m²" if x else None
 
 
+_CAUSE_COURT = {
+    "terrain_exigu": "terrain exigu", "hors_plu": "hors PLU", "redhibitoire": "rédhibitoire",
+    "capacite_nulle": "capacité nulle", "bati_non_ingere": "bâti non estimé",
+}
+
+
+def _cause_court(c):
+    # RECETTE-PROD-1 (12) — tag COURT de la cause (même règle qu'à l'écran ComparePanel).
+    if not c:
+        return None
+    if c.startswith("zone_non_constructible") or c.startswith("zone_non_resolue"):
+        return "zone non constructible"
+    return _CAUSE_COURT.get(c, c.replace("_", " "))
+
+
+def _sdp_residuelle_cause(r):
+    # RECETTE-PROD-1 (12) — potentiel résiduel + CAUSE COURTE quand il n'y en a pas (0/None) :
+    # « 0 m² · terrain exigu » / « — · zone non constructible » plutôt qu'un « 0 » muet.
+    x = _i(r.get("sdp_residuelle_m2"))
+    if x:
+        return f"{x} m²"
+    base = "0 m²" if r.get("sdp_residuelle_m2") == 0 else "—"
+    sc = _cause_court(r.get("cause"))
+    return esc(f"{base} · {sc}") if sc else (base if base != "—" else None)
+
+
 def _eur_m2(r, k):
     x = _i(r.get(k))
     return f"{x} €/m²" if x else None
@@ -61,9 +87,12 @@ _LIGNES = [
     # fiche) ; si aucune zone PLU ne couvre la parcelle, on écrit la RAISON en clair, pas un tiret.
     ("Zone PLU", "s", lambda r: esc(r.get("zone")) if r.get("zone") else "hors zonage PLU"),
     ("Classement LABUSE", None, _classement),
-    ("Constructible", "s", lambda r: _oui_non(r.get("constructible"))),
+    # RECETTE-PROD-1 (12) — « Constructible : oui/non » (verdict faisabilité) mentait (zone
+    # constructible mais 0 potentiel résiduel = « oui » trompeur). On sert la constructibilité de
+    # ZONE (famille ∉ A/N), le potentiel vivant sur la ligne « SDP résiduelle » suffixée de sa cause.
+    ("Zone constructible", "s", lambda r: _oui_non(r.get("zone_constructible"))),
     ("SDP max estimée", "e", lambda r: _m2(r, "sdp_max_m2")),
-    ("SDP résiduelle", "e", lambda r: _m2(r, "sdp_residuelle_m2")),
+    ("SDP résiduelle", "e", lambda r: _sdp_residuelle_cause(r)),
     ("Emprise au sol max (PLU)", "s", lambda r: (_pct(r, "emprise_ces_pct") or "non réglementée")),
     ("Taux d'occupation du gabarit", "e", lambda r: _pct(r, "taux_emprise_pct")),
     ("Sous-densité", "e", lambda r: _oui_non(r.get("sous_densite"))),

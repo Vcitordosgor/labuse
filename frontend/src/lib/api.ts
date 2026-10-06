@@ -1267,6 +1267,8 @@ export interface CompareRow {
   status?: string | null; tier_v2?: string | null; etage0?: boolean | null; rang_v2?: number | null
   label?: string | null; fraction?: string | null; raison?: string | null
   zone?: string | null; constructible?: boolean | null
+  // RECETTE-PROD-1 (12) — « zone constructible » (famille ∉ A/N) séparée du potentiel résiduel + cause servie.
+  zone_constructible?: boolean | null; cause?: string | null; cause_libelle?: string | null
   sdp_max_m2?: number | null; taux_emprise_pct?: number | null; sdp_residuelle_m2?: number | null; sous_densite?: boolean | null
   // COMPARER-2 §1 — CES PLU réelle (validée dans plu_destinations) ; null = zone sans CES → « non réglementée »
   emprise_ces_pct?: number | null; emprise_ces_source?: string | null

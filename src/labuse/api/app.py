@@ -2206,8 +2206,16 @@ def _ensure_contexte_cache(db: Session) -> None:
     # millésimes sources + version du code). Clé ≠ attendue → l'entrée est INVALIDE : l'endpoint la
     # recalcule à la lecture (et la re-stocke), `labuse rebuild` la régénère en lot. C'est le
     # correctif RACINE du FAUX-CLIENT n° 1 (aléa mvt de terrain servi 5 mois périmé sans le dire).
-    db.execute(text(
-        "ALTER TABLE commune_contexte_cache ADD COLUMN IF NOT EXISTS cle_fraicheur text"))
+    # RECETTE-PROD-1 (11) — garde par EXISTENCE de colonne (information_schema, lecture sans verrou)
+    # avant l'ALTER : un `ALTER … ADD COLUMN IF NOT EXISTS` reste un no-op MAIS exige quand même un
+    # ACCESS EXCLUSIVE ; cet endpoint est appelé à CHAQUE ouverture de fiche commune → en prod
+    # (workers + lecteurs concurrents sur la table) le no-op se met en file derrière un lecteur,
+    # atteint le statement_timeout API (60 s) et renvoie 500 (« fiche commune ne s'ouvre pas »).
+    # La colonne existant déjà partout, ce test rend la DDL morte au chemin chaud (cf. BOOT-VERROU-1).
+    if not db.execute(text(
+            "SELECT 1 FROM information_schema.columns WHERE table_name='commune_contexte_cache' "
+            "AND column_name='cle_fraicheur'")).first():
+        db.execute(text("ALTER TABLE commune_contexte_cache ADD COLUMN cle_fraicheur text"))
 
 
 def _contexte_cache_json(payload: dict) -> str:
@@ -7671,6 +7679,8 @@ def _compare_row(qv2: dict, faisab: dict | None) -> dict:
     de calcul (`fiche_payload` : zone/SDP/résiduel/bilan). Avant, le comparateur passait par la
     fiche legacy `_build_fiche` → `tier_v2`/`rang_v2` absents → puce « Classement historique » et
     rang muet ; ni fraction ni raison. Corrigé : on lit la source servie, comme la carte/la liste."""
+    from ..exports.robinet_fiche import _famille_zone   # RECETTE-PROD-1 (12) — zone → famille (U/AU/A/N)
+    from ..faisabilite.engine import cause_libelle       # RECETTE-PROD-1 (12) — libellé humain de la cause
     s2 = qv2.get("score_v2") or {}
     fa = faisab or {}
     fr = fa.get("fourchette") or {}
@@ -7722,6 +7732,15 @@ def _compare_row(qv2: dict, faisab: dict | None) -> dict:
         "raison": raison,                  # M135 P3 — chip court, ou None
         # faisabilité (fiche_payload — même bilan que la fiche)
         "zone": fa.get("zone"), "constructible": fa.get("constructible"),
+        # RECETTE-PROD-1 (12) — « Constructible : oui/non » (verdict faisabilité) MENTAIT : une Um
+        # bâtie sur-occupée est « oui » (zone constructible, emprise ≥ seuil) mais a 0 potentiel
+        # résiduel ; une voisine trop étroite est « non » (terrain_exigu). On sert donc SÉPARÉMENT
+        # la constructibilité de ZONE (famille ∉ {A, N}) et la CAUSE du résiduel — le potentiel
+        # résiduel, lui, a déjà sa propre ligne (`sdp_residuelle_m2`). Front : « Zone constructible »
+        # + « SDP résiduelle — <cause> ». Même logique que la tuile SDP de la fiche.
+        "zone_constructible": (lambda _zf: None if _zf is None else _zf not in ("A", "N"))(_famille_zone(fa.get("zone"))),
+        "cause": res.get("cause"),
+        "cause_libelle": cause_libelle(res.get("cause")) if res.get("cause") else None,
         "sdp_max_m2": fr.get("surface_plancher_m2"),
         "taux_emprise_pct": res.get("taux_emprise_pct") if res.get("disponible") else None,
         "sdp_residuelle_m2": res.get("sdp_residuelle_m2") if res.get("disponible") else None,
