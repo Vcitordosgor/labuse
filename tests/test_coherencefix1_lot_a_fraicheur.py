@@ -150,9 +150,13 @@ def test_etat_liste_les_perimes(monkeypatch):
     # rester déterministe quelle que soit l'année de la CI (sinon il périmerait au 1er janvier suivant).
     monkeypatch.setattr(fraicheur_caches, "_etat_defisc_bareme",
                         lambda: {"cache": "barème défiscalisation (config millésimée)", "perime": False})
+    # CHASSE-FIX-3 (C3-06/C3-07) — contrôle ajouté : version de règle des tables dérivées. Ici « frais »
+    # (règles gravées = code) → la liste des périmés ne change pas. Monkeypatché pour rester déterministe.
+    monkeypatch.setattr(fraicheur_caches, "_etat_derives_regle",
+                        lambda db: {"cache": "tables dérivées (version de règle)", "perime": False})
     e = fraicheur_caches.etat(None)
     assert e["perimes"] == ["commune_contexte_cache"]
-    assert len(e["caches"]) == 8
+    assert len(e["caches"]) == 9
 
 
 # ── PRE-DEPLOY-1 (lot C) — le manifeste ne peut plus mentir ──────────────────────────────────

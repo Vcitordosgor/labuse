@@ -30,7 +30,10 @@ def _resoudre_promoteur(db: Session, siren: str | None, nom: str | None) -> tupl
     sinon on garde le nom saisi. Le nom est TOUJOURS renseigné (jamais un promoteur anonyme)."""
     if siren:
         d = db.execute(text(
-            "SELECT denomination FROM parcelle_personne_morale WHERE siren = :s AND denomination IS NOT NULL LIMIT 1"),
+            # CHASSE-FIX-3 (C3-08) — ORDER BY explicite : un SIREN possède plusieurs parcelles ;
+            # sans départage la dénomination servie pouvait changer d'un appel à l'autre.
+            "SELECT denomination FROM parcelle_personne_morale WHERE siren = :s AND denomination IS NOT NULL "
+            "ORDER BY denomination ASC LIMIT 1"),
             {"s": siren}).scalar()
         if d:
             return siren, d

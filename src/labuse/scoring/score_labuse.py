@@ -44,6 +44,8 @@ NC_REGLE_PLU = "règle PLU non validée"
 NC_DONNEE = "donnée critique absente"
 NC_GEOMETRIE = "géométrie"
 NC_SDP = "capacité résiduelle non calculée"   # C26 (SCORING-8, arbitrage Vic) : SDP inconnue ≠ 0
+NC_HAUTEUR = "hauteur de référence indisponible"   # CHASSE-FIX-3 (C3-05) — ignorance, jamais bande 0
+NC_IGNORANCE = "analyse incomplète"   # CHASSE-FIX-3 (C3-04) — filet pour toute cause d'ignorance
 
 # Classes AU différées (capacité ×0,5) — mêmes codes que le résiduel/l'écran.
 _AU_DIFFEREE = {"declasse_au_fermee", "declasse_au_statut_inconnu"}
@@ -169,15 +171,26 @@ def _cause_nc(e: ScoreEntrees) -> str | None:
         return NC_ZONE
     if c.startswith("regle_plu_non_validee"):     # après merge PLU-CALIBRAGE-6/7 (geste Vic)
         return NC_REGLE_PLU
+    if c.startswith("hauteur_indispo"):           # CHASSE-FIX-3 (C3-05) — motif propre à la fiche
+        return NC_HAUTEUR
     # C26 (SCORING-8, arbitrage Vic) : une SDP résiduelle INCONNUE (non calculée) ne doit JAMAIS
     # être lue comme 0 dans l'éligibilité du classement. `sdp = NULL` = capacité non calculable →
     # NC « Analyse incomplète », jamais bande « 0 / Non retenue ». Un vrai zéro (`sdp = 0`, produit
     # par le moteur : terrain exigu, zone inconstructible, bâti saturé…) reste la bande « 0 ».
-    # C'est un filet CAUSE-INDÉPENDANT : aujourd'hui toute SDP NULL porte déjà une cause NC
-    # (hors_plu), mais un run futur (exception PLU non modélisée, trou de donnée) peut produire une
-    # SDP NULL SANS cause NC — elle doit alors tomber ici, pas en bande 0.
+    # Filet CAUSE-INDÉPENDANT, joué AVANT le filet d'ignorance ci-dessous pour garder le motif le plus
+    # juste (« capacité résiduelle non calculée ») quand c'est la SDP ELLE-MÊME qui manque (cause
+    # inconnue ou absente, cas d'un run futur).
     if e.sdp_residuelle_m2 is None:
         return NC_SDP
+    # CHASSE-FIX-3 (C3-04/C3-05) — FILET cause-indépendant : une cause présente mais NON certaine (au
+    # sens de faisabilite.engine.cause_certaine — source unique de la partition CERTAINE/IGNORANCE) est
+    # une IGNORANCE → NC « Analyse incomplète », jamais bande « 0 », MÊME quand le résiduel a stocké une
+    # SDP CONCRÈTE de 0 (le stock pollué de C3-04 : 10 778 ignorances à SDP=0). Les causes certaines
+    # (terrain_exigu, capacite_nulle, zone_non_constructible…) gardent leur vrai 0. Couvre indetermine,
+    # bati_non_ingere et toute cause d'ignorance future sans la réénumérer ici.
+    from ..faisabilite.engine import cause_certaine
+    if c and not cause_certaine(c):
+        return NC_IGNORANCE
     return None
 
 

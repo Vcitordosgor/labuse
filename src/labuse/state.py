@@ -108,8 +108,18 @@ def served_run_status(session: Session) -> dict:
         missing.append(f"scores parcel_p_score_v2 du run « {run_servi} »")
     if regclass("dryrun_parcel_evaluations") is None:
         missing.append("table dryrun_parcel_evaluations")
-    elif not scal("SELECT count(*) FROM dryrun_parcel_evaluations WHERE run_label = :r"):
-        missing.append(f"évaluations dryrun_parcel_evaluations du run « {run_servi} »")
+    else:
+        # CHASSE-FIX-3 (C3-01) — la cascade (dryrun) d'un run servi peut être EMPRUNTÉE à un étage 0
+        # réutilisé : q_v16 est scoré sur la cascade de q_v13_sources1 (`etage0_run` dans params),
+        # donc `dryrun_parcel_evaluations WHERE run_label='q_v16'` est VIDE alors que l'app sert juste.
+        # Les lecteurs clients résolvent déjà via `resoudre_cascade_run` (CHASSE-FIX-2 D05, _cascade_run
+        # app.py) ; la sonde doit lire le MÊME run de cascade résolu, sinon /readyz dit faussement
+        # « non matérialisé » et le healthcheck de déploiement (deploy_vps.sh) échoue à tort.
+        from .bascule_flux import resoudre_cascade_run
+        cascade_run, _ = resoudre_cascade_run(session, run_servi)
+        if cascade_run is None:
+            missing.append(f"évaluations dryrun_parcel_evaluations du run « {run_servi} » "
+                           f"(cascade résolue introuvable)")
     return {"ok": not missing, "run": run_servi, "missing": missing}
 
 

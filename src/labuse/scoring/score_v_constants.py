@@ -191,6 +191,14 @@ VEILLE_SUCCESSION_FORMES = frozenset({
     "SNC",    # société en nom collectif (responsabilité personnelle)
 })
 
+# CHASSE-FIX-3 (C3-07) — VERSION DE LA RÈGLE de veille succession (âge + formes retenues). DÉRIVÉE
+# des paramètres ci-dessus : toute modification (seuil d'âge, ajout/retrait d'une forme) la fait
+# bouger d'elle-même. Gravée dans `fraicheur_etat` au `score-v-compute` ; le contrôle de fraîcheur
+# signale « à reconstruire » si le code a bougé sans rebuild — le bug fondateur (table du 09/08,
+# AVANT la doctrine des formes du 25/09, servant encore des SA/SAS).
+VEILLE_SUCCESSION_RULE_VERSION = (
+    f"outils-s2-lotA:age{VEILLE_SUCCESSION_AGE_MIN}+formes[{','.join(sorted(VEILLE_SUCCESSION_FORMES))}]+sci")
+
 # Signaux du barème D1 NON calculables (fenêtre DVF) — flaggés au rapport, jamais émis.
 SIGNALS_NO_GO = {
     "DVF_TENURE_12": "millésimes DVF 2014-2020 retirés de la distribution officielle",

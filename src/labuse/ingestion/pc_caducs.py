@@ -33,6 +33,13 @@ from sqlalchemy.orm import Session
 
 DEFAULT_REF_YEAR = 2026        # Y+4 dépassé → caduc probable pour Y ≤ ref_year-4
 
+# CHASSE-FIX-3 (C3-06) — VERSION DE LA RÈGLE. À incrémenter dès qu'on touche la définition
+# « octroyé / réalisé / caduc » (les états Sitadel retenus). Gravée dans `fraicheur_etat` au rebuild ;
+# le contrôle de fraîcheur (fraicheur_caches._etat_derives_regle) signale « à reconstruire » quand la
+# version du CODE a bougé sans rebuild — EXACTEMENT le bug fondateur (table du 08/08, octroyé={4,6},
+# servie après ORACLE-FIX-1 qui l'a passée à {2,5,6} sans que pc_caducs soit rebâtie).
+RULE_VERSION = "oracle-fix-1:octroye{2,5,6}+realise{5,6|daact}+y4"
+
 DDL = """
 CREATE TABLE IF NOT EXISTS pc_caducs (
   idu                 varchar(14) PRIMARY KEY REFERENCES parcels (idu),
@@ -113,5 +120,11 @@ def build_pc_caducs(session: Session, *, ref_year: int = DEFAULT_REF_YEAR,
         return {"total": len(rows)}
 
     out = rebuild_swap(session, "pc_caducs", DDL, _populate, commit=commit)
+    # CHASSE-FIX-3 (C3-06) — grave la version de règle courante : le contrôle de fraîcheur la
+    # confrontera au code pour signaler « à reconstruire » si la règle bouge sans rebuild.
+    from ..fraicheur_caches import marquer_regle_derivee
+    marquer_regle_derivee(session, "pc_caducs")
+    if commit:
+        session.commit()
     log(f"pc_caducs : {out['total']} parcelles caduc probable (PC octroyé jamais achevé, Y ≤ {ref_year - 4})")
     return out

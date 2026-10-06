@@ -214,7 +214,9 @@ def promoteur_frise(siren: str, db: Session = Depends(get_db)) -> dict:
     le lien vers son Scan patrimoine (les deux outils se renvoient, ne se dupliquent pas)."""
     ops = [o for o in _operations(db, _TOUS_GROUPES, None, None) if o["siren"] == siren]
     denom = db.execute(text(
-        "SELECT denomination FROM parcelle_personne_morale WHERE siren = :s AND denomination IS NOT NULL LIMIT 1"),
+        # CHASSE-FIX-3 (C3-08) — ORDER BY explicite (plusieurs parcelles par SIREN → nom déterministe).
+        "SELECT denomination FROM parcelle_personne_morale WHERE siren = :s AND denomination IS NOT NULL "
+        "ORDER BY denomination ASC LIMIT 1"),
         {"s": siren}).scalar()
     par_annee: dict[int, dict] = {}
     for o in ops:
@@ -280,7 +282,9 @@ def promoteur_acquisitions(siren: str, db: Session = Depends(get_db)) -> dict:
     """Le patrimoine foncier détenu par le promoteur (Scan patrimoine, MÊME SIREN) : parcelles par commune.
     Comptes SQL — jamais une estimation. Renvoyé par la frise (les deux outils se renvoient)."""
     denom = db.execute(text(
-        "SELECT denomination FROM parcelle_personne_morale WHERE siren = :s AND denomination IS NOT NULL LIMIT 1"),
+        # CHASSE-FIX-3 (C3-08) — ORDER BY explicite (plusieurs parcelles par SIREN → nom déterministe).
+        "SELECT denomination FROM parcelle_personne_morale WHERE siren = :s AND denomination IS NOT NULL "
+        "ORDER BY denomination ASC LIMIT 1"),
         {"s": siren}).scalar()
     par_commune = db.execute(text(
         "SELECT p.commune, count(*) AS n FROM parcelle_personne_morale pm JOIN parcels p ON p.idu = pm.idu "

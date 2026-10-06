@@ -5599,9 +5599,13 @@ def _pm_etat_societe(db: Session, siren: str | None) -> dict | None:
 
 def _pm_identite(db: Session, siren: str | None) -> dict | None:
     """RETOURS-11F3 F11 — carte d'identité PUBLIQUE de la société propriétaire (PM only), lue de
-    SIRENE (open data) : activité (APE + libellé), siège (adresse), date de création, état actif.
-    Fait public d'entreprise, jamais une personne (RGPD). None si SIREN inconnu de SIRENE.
-    SAVEPOINT : table absente en base de test n'avorte pas la fiche."""
+    SIRENE (open data) : activité (APE + libellé), établissement (adresse), date de création, état
+    actif. Fait public d'entreprise, jamais une personne (RGPD). None si SIREN inconnu de SIRENE.
+    SAVEPOINT : table absente en base de test n'avorte pas la fiche.
+
+    CHASSE-FIX-3 (C3-08) — la clé `siege` porte l'ADRESSE de l'établissement 974 le plus ancien
+    actif (SIRENE géolocalisé ne couvre que La Réunion et n'a pas le drapeau établissement-siège) ;
+    départagée par SIRET pour être DÉTERMINISTE. Le front l'affiche « Établissement », pas « Siège »."""
     if not siren:
         return None
     try:
@@ -5609,7 +5613,10 @@ def _pm_identite(db: Session, siren: str | None) -> dict | None:
             row = db.execute(text(
                 "SELECT naf, adresse, commune, date_creation, actif, tranche_effectif "
                 "FROM sirene_etablissements WHERE siren = :s "
-                "ORDER BY actif DESC NULLS LAST, date_creation ASC NULLS LAST LIMIT 1"),
+                # CHASSE-FIX-3 (C3-08) — `siret` (clé primaire) en DERNIER départage : sans lui, une PM
+                # à plusieurs établissements ex æquo (EDF, 17 établissements, mêmes actif+date_creation)
+                # rendait un établissement DIFFÉRENT d'un appel à l'autre (fiche non déterministe).
+                "ORDER BY actif DESC NULLS LAST, date_creation ASC NULLS LAST, siret ASC LIMIT 1"),
                 {"s": siren}).mappings().first()
     except Exception:  # noqa: BLE001 — bloc additif, jamais bloquant pour la fiche
         return None

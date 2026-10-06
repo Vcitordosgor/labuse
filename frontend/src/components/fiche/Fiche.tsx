@@ -1397,7 +1397,10 @@ export function Fiche({ idu }: { idu: string }) {
                       <Tuiles items={tuiles} />
                       {(id?.siege || pm.groupe_label) && (
                         <Lignes>
-                          {id?.siege && <Ligne label="Siège" valeur={<>{id.siege}{id.siege_commune ? <small> · {id.siege_commune}</small> : null}</>} />}
+                          {/* CHASSE-FIX-3 (C3-08) — « Établissement » et non « Siège » : SIRENE géolocalisé
+                              ne couvre que La Réunion et ne porte pas le drapeau établissement-siège ; on sert
+                              l'établissement 974 le plus ancien actif (départagé par SIRET), pas le siège social. */}
+                          {id?.siege && <Ligne label="Établissement" valeur={<>{id.siege}{id.siege_commune ? <small> · {id.siege_commune}</small> : null}</>} />}
                           {pm.groupe_label && <Ligne label="Groupe" valeur={pm.groupe_label} />}
                         </Lignes>
                       )}

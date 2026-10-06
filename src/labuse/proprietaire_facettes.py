@@ -46,7 +46,9 @@ MILLESIME_DEFAUT = "2025"
 
 
 def _source_millesime(db: Session) -> str:
-    m = db.execute(text("SELECT millesime FROM parcelle_personne_morale WHERE millesime IS NOT NULL LIMIT 1")).scalar()
+    # CHASSE-FIX-3 (C3-08) — millésime le PLUS RÉCENT (déterministe), pas une ligne au hasard.
+    m = db.execute(text("SELECT millesime FROM parcelle_personne_morale WHERE millesime IS NOT NULL "
+                        "ORDER BY millesime DESC LIMIT 1")).scalar()
     return str(m or MILLESIME_DEFAUT)
 
 
