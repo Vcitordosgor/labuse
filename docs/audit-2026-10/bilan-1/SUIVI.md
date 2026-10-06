@@ -8,7 +8,7 @@ Modèle : Opus.
 ## Décisions Vic avant merge (un commit par point)
 1. Assiettes D.O / TRC recopiées à l'identique du tableur → **0 € d'écart**. **FAIT** (ce commit).
 2. Masquer les repères « ratio de place ». **FAIT** : `_repere_poste` ne sert que les repères `registre` ; front simplifié ; test de route.
-3. Câbler repères Taxe/archéo, Faisabilité (SDP, parkings), Sitadel. à faire.
+3. Câbler repères Taxe/archéo, Faisabilité (SDP, parkings), Sitadel. **FAIT** : résolus dans reperes.py, vérifiés sur base réelle (dvf 4730/n54, taxe 44,6, archéo 3,57, SDP 706/14pkg, Sitadel 9 mois). Outil Taxe sur txLog uniquement (pas de double compte).
 4. Captures de l'écran vivant (pile lancée). à faire.
 
 Venv : `~/Desktop/labuse/.venv/bin/python` ; imports LABUSE depuis ce worktree avec

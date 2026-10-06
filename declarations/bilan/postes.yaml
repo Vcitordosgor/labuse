@@ -87,8 +87,10 @@ blocs:
       - {id: notT,   libelle: "Notaire terrain",            libelle_modele: "Notaire terrain",               ligne_modele: 45, mode: pct,     assiette: prix_terrain,     tva: a_saisir, repere: {type: ratio_place, valeur: 1.5}}
       - {id: notP,   libelle: "Notaire prêt",               libelle_modele: "Notaire prêt",                  ligne_modele: 46, mode: pct,     assiette: pret, besoin_assiette: true, tva: a_saisir, repere: {type: ratio_place, valeur: 1.5}}
       - {id: txLog,  libelle: "Taxe logements",             libelle_modele: "Taxe LOGEMENTS",                ligne_modele: 47, mode: unit,    assiette: surface_taxable,  unite: "€/m²", tva: 0.0, tva_sourcee: true, repere: outil_taxe}
-      - {id: txPkg,  libelle: "TA parking extérieurs + archéo", libelle_modele: "TA Parking extérieurs + Archeo", ligne_modele: 48, mode: unit, assiette: surface_taxable, unite: "€/m²", tva: 0.0, tva_sourcee: true, repere: outil_taxe}
-      - {id: tre,    libelle: "TRE",                        libelle_modele: "TRE",                           ligne_modele: 49, mode: unit,    assiette: surface_taxable,  unite: "€/m²", tva: 0.0, tva_sourcee: true, repere: outil_taxe}
+      # Repère « Outil Taxe » sur la seule ligne taxe d'aménagement (txLog) pour ne jamais
+      # compter deux fois : TA parkings/archéo et TRE sont des parts que LABUSE n'isole pas.
+      - {id: txPkg,  libelle: "TA parking extérieurs + archéo", libelle_modele: "TA Parking extérieurs + Archeo", ligne_modele: 48, mode: unit, assiette: surface_taxable, unite: "€/m²", tva: 0.0, tva_sourcee: true, repere: null}
+      - {id: tre,    libelle: "TRE",                        libelle_modele: "TRE",                           ligne_modele: 49, mode: unit,    assiette: surface_taxable,  unite: "€/m²", tva: 0.0, tva_sourcee: true, repere: null}
       - {id: archeo, libelle: "Taxe d'archéologie préventive", libelle_modele: "Taxe d'Archéologie préventive", ligne_modele: 50, mode: unit, assiette: surface_taxable, unite: "€/m²", tva: 0.0, tva_sourcee: true, repere: redevance_archeologie}
       - {id: topo,   libelle: "Relevé topo",                libelle_modele: "Relevé topo",                   ligne_modele: 51, mode: forfait, tva: 0.085, tva_sourcee: true, repere: {type: ratio_place, valeur: 3500}}
       - {id: born,   libelle: "Géomètre bornage",           libelle_modele: "Géomêtre Bornage",              ligne_modele: 52, mode: forfait, tva: 0.085, tva_sourcee: true, repere: {type: ratio_place, valeur: 2000}}

@@ -63,6 +63,11 @@ export function BilanEcran({ idu, onClose, onGenerated }:
   })
   const [entrees, setEntrees] = useState<BilanEntrees | null>(null)
   const [res, setRes] = useState<BilanResultat | null>(null)
+  // `rev` ne bouge QUE sur une mise à jour PROGRAMMATIQUE (repère, « Sans objet »,
+  // vider, mémoriser) : on re-monte alors les champs (non contrôlés) pour qu'ils
+  // reflètent la nouvelle valeur. La saisie au clavier ne bump pas → focus conservé.
+  const [rev, setRev] = useState(0)
+  const bump = () => setRev((r) => r + 1)
   const [erreurGen, setErreurGen] = useState<string | null>(null)
   const [docId, setDocId] = useState<number | null>(null)
   const { ouvrir, enCours } = useOuvrirDocument(setErreurGen)
@@ -93,6 +98,8 @@ export function BilanEcran({ idu, onClose, onGenerated }:
       const prev: BilanSaisie = e.postes[id] ?? { valeur: null, etat: 'a_renseigner' }
       return { ...e, postes: { ...e.postes, [id]: { ...prev, ...patch } } }
     })
+  // version « programmatique » (repère/sans objet/vider/mémoriser) : re-monte les champs
+  const majPosteProg = (id: string, patch: Partial<BilanSaisie>) => { majPoste(id, patch); bump() }
   const majProduit = (i: number, patch: Partial<BilanEntrees['produits'][number]>) =>
     setEntrees((e) => e && ({ ...e, produits: e.produits.map((p, k) => k === i ? { ...p, ...patch } : p) }))
   const majProgramme = (patch: Partial<BilanEntrees['programme']>) =>
@@ -120,7 +127,7 @@ export function BilanEcran({ idu, onClose, onGenerated }:
   }
   const adopterRepere = (p: BilanPoste) => {
     const r = reperePoste(p)
-    if (r) majPoste(p.id, { valeur: r.valeur, etat: 'repere' })
+    if (r) majPosteProg(p.id, { valeur: r.valeur, etat: 'repere' })
   }
 
   const generer = async () => {
@@ -226,16 +233,28 @@ export function BilanEcran({ idu, onClose, onGenerated }:
           <Carte titre="Programme" sous="ce qui fixe les assiettes">
             <div className="grid grid-cols-2 gap-x-6 gap-y-2 p-3 md:grid-cols-3">
               <ChampNum label="Terrain (m²)" value={entrees.programme.terrain} source={modele.sourcee.terrain != null}
-                onChange={(v) => majProgramme({ terrain: v })} />
+                revKey={rev} onChange={(v) => majProgramme({ terrain: v })} />
               <ChampTexte label="Zonage au PLU" value={modele.sourcee.zonage ?? '—'} source />
-              <ChampNum label="Surface taxable (m²)" value={entrees.programme.surface_taxable}
-                onChange={(v) => majProgramme({ surface_taxable: v })} />
-              <ChampNum label="Loyer (€/m² SUV)" value={entrees.programme.loyer}
+              <ChampNum label="Surface taxable (m²)" value={entrees.programme.surface_taxable} revKey={rev}
+                repere={modele.reperes_publics['faisabilite'] ? { label: modele.reperes_publics['faisabilite'].label, valeur: modele.reperes_publics['faisabilite'].valeur } : null}
+                onChange={(v) => majProgramme({ surface_taxable: v })}
+                onPick={(v) => { majProgramme({ surface_taxable: v }); bump() }} />
+              <ChampNum label="Loyer (€/m² SUV)" value={entrees.programme.loyer} revKey={rev}
                 onChange={(v) => majProgramme({ loyer: v })} />
               {modele.sourcee.prix_achat_dvf && (
                 <ChampTexte label="Dernier prix DVF (info)" value={fmtEur(modele.sourcee.prix_achat_dvf.valeur)} source />
               )}
             </div>
+            {(modele.reperes_publics['faisabilite'] || modele.reperes_publics['sitadel']) && (
+              <div className="flex flex-wrap gap-x-4 gap-y-1 border-t border-line px-3 py-2 text-[12px] text-txt-dim">
+                {modele.reperes_publics['faisabilite']?.parkings != null && (
+                  <span>Faisabilité : ~{modele.reperes_publics['faisabilite'].parkings} places de stationnement</span>
+                )}
+                {modele.reperes_publics['sitadel'] && (
+                  <span>{modele.reperes_publics['sitadel'].label} (médiane commune)</span>
+                )}
+              </div>
+            )}
           </Carte>
 
           {/* Produits */}
@@ -252,16 +271,16 @@ export function BilanEcran({ idu, onClose, onGenerated }:
                   return (
                     <tr key={i} className="border-b border-line">
                       <td className="p-2"><input className="w-32 rounded border border-line-2 bg-surface px-1.5 py-1" defaultValue={p.libelle} onChange={(e) => majProduit(i, { libelle: e.target.value })} /></td>
-                      <td className="p-2"><CellNum value={p.lots} onChange={(v) => majProduit(i, { lots: v })} /></td>
-                      <td className="p-2"><CellNum value={p.suv} onChange={(v) => majProduit(i, { suv: v })} /></td>
+                      <td className="p-2"><CellNum revKey={rev} value={p.lots} onChange={(v) => majProduit(i, { lots: v })} /></td>
+                      <td className="p-2"><CellNum revKey={rev} value={p.suv} onChange={(v) => majProduit(i, { suv: v })} /></td>
                       <td className="p-2">
-                        <CellNum value={p.prix_ttc_m2_suv} onChange={(v) => majProduit(i, { prix_ttc_m2_suv: v })} />
+                        <CellNum revKey={rev} value={p.prix_ttc_m2_suv} onChange={(v) => majProduit(i, { prix_ttc_m2_suv: v })} />
                         {p.prix_ttc_m2_suv == null && dvf && (
                           <button className="ml-1 rounded-full border border-dashed border-line-2 px-1.5 text-[11px] text-txt-mut hover:bg-mint hover:text-mint-on"
-                            onClick={() => majProduit(i, { prix_ttc_m2_suv: dvf.valeur })} title={dvf.source}>{dvf.label}</button>
+                            onClick={() => { majProduit(i, { prix_ttc_m2_suv: dvf.valeur }); bump() }} title={dvf.source}>{dvf.label}</button>
                         )}
                       </td>
-                      <td className="p-2"><CellNum value={p.tva == null ? null : p.tva * 100} onChange={(v) => majProduit(i, { tva: v == null ? null : v / 100 })} /></td>{/* saisie en %, stockée en taux */}
+                      <td className="p-2"><CellNum revKey={rev} value={p.tva == null ? null : p.tva * 100} onChange={(v) => majProduit(i, { tva: v == null ? null : v / 100 })} /></td>{/* saisie en %, stockée en taux */}
                       <td className="p-2 text-right tabular-nums">{fmtEur(caTtc)}</td>
                     </tr>
                   )
@@ -286,8 +305,8 @@ export function BilanEcran({ idu, onClose, onGenerated }:
                 {modele.blocs.map((b) => {
                   const tot = res?.blocs.find((x) => x.id === b.id)
                   return (
-                    <BlocLignes key={b.id} bloc={b} tot={tot} entrees={entrees} ligne={ligne}
-                      reperePoste={reperePoste} adopterRepere={adopterRepere} majPoste={majPoste} />
+                    <BlocLignes key={b.id} bloc={b} tot={tot} entrees={entrees} ligne={ligne} rev={rev}
+                      reperePoste={reperePoste} adopterRepere={adopterRepere} majPoste={majPoste} majPosteProg={majPosteProg} />
                   )
                 })}
                 {/* Synthèse */}
@@ -338,12 +357,20 @@ function Carte({ titre, sous, children }: { titre: string; sous?: string; childr
   )
 }
 
-function ChampNum({ label, value, source, onChange }: { label: string; value: number | null; source?: boolean; onChange: (v: number | null) => void }) {
+function ChampNum({ label, value, source, repere, revKey, onChange, onPick }: {
+  label: string; value: number | null; source?: boolean; revKey?: number
+  repere?: { label: string; valeur: number } | null
+  onChange: (v: number | null) => void; onPick?: (v: number | null) => void
+}) {
   return (
     <label className="grid gap-1 text-[12px] text-txt-mut">{label}
-      <input className={`h-8 rounded-md border bg-surface px-2.5 text-right tabular-nums ${value == null ? 'border-amber' : 'border-line-2'}`}
+      <input key={revKey} className={`h-8 rounded-md border bg-surface px-2.5 text-right tabular-nums ${value == null ? 'border-amber' : 'border-line-2'}`}
         defaultValue={value ?? ''} placeholder="à saisir" onChange={(e) => onChange(parseNum(e.target.value))} />
       {source && <Badge ton="vert">Sourcé</Badge>}
+      {!source && value == null && repere && (
+        <button className="justify-self-start rounded-full border border-dashed border-line-2 px-1.5 text-[11px] text-txt-mut hover:bg-mint hover:text-mint-on"
+          onClick={(e) => { e.preventDefault(); (onPick ?? onChange)(repere.valeur) }}>{repere.label}</button>
+      )}
     </label>
   )
 }
@@ -355,21 +382,23 @@ function ChampTexte({ label, value, source }: { label: string; value: string; so
     </div>
   )
 }
-function CellNum({ value, onChange }: { value: number | null; onChange: (v: number | null) => void }) {
+function CellNum({ value, onChange, revKey }: { value: number | null; onChange: (v: number | null) => void; revKey?: number }) {
   return (
-    <input className={`w-24 rounded border bg-surface px-1.5 py-1 text-right tabular-nums ${value == null ? 'border-amber' : 'border-line-2'}`}
+    <input key={revKey} className={`w-24 rounded border bg-surface px-1.5 py-1 text-right tabular-nums ${value == null ? 'border-amber' : 'border-line-2'}`}
       defaultValue={value == null ? '' : fmtNum(value)} placeholder="—" onChange={(e) => onChange(parseNum(e.target.value))} />
   )
 }
 
-function BlocLignes({ bloc, tot, entrees, ligne, reperePoste, adopterRepere, majPoste }: {
+function BlocLignes({ bloc, tot, entrees, ligne, rev, reperePoste, adopterRepere, majPoste, majPosteProg }: {
   bloc: BilanModele['blocs'][number]
   tot: BilanResultat['blocs'][number] | undefined
   entrees: BilanEntrees
   ligne: Record<string, BilanResultat['lignes'][number]>
+  rev: number
   reperePoste: (p: BilanPoste) => { valeur: number; label: string } | null
   adopterRepere: (p: BilanPoste) => void
   majPoste: (id: string, patch: Partial<BilanSaisie>) => void
+  majPosteProg: (id: string, patch: Partial<BilanSaisie>) => void
 }) {
   const [ouvert, setOuvert] = useState(true)
   return (
@@ -391,7 +420,7 @@ function BlocLignes({ bloc, tot, entrees, ligne, reperePoste, adopterRepere, maj
             <td className="p-2">{p.libelle}{p.sub && <small className="block text-txt-dim"> {p.sub}</small>}</td>
             <td className="p-2 tabular-nums text-txt-mut">{l?.assiette_valeur != null ? fmtEur(l.assiette_valeur) : (p.mode === 'forfait' ? 'forfait' : '—')}
               {p.besoin_assiette && !estSansObjet && (
-                <input className="ml-1 w-24 rounded border border-amber bg-surface px-1 py-0.5 text-right"
+                <input key={rev} className="ml-1 w-24 rounded border border-amber bg-surface px-1 py-0.5 text-right"
                   defaultValue={s.assiette_valeur ?? ''} placeholder="assiette"
                   onChange={(e) => majPoste(p.id, { assiette_valeur: parseNum(e.target.value) })} />
               )}
@@ -399,7 +428,7 @@ function BlocLignes({ bloc, tot, entrees, ligne, reperePoste, adopterRepere, maj
             <td className="p-2 text-right">
               {estSansObjet ? <span className="text-txt-dim">—</span> : (
                 <span className="inline-flex items-center gap-1">
-                  <input className={`w-20 rounded border bg-surface px-1.5 py-1 text-right tabular-nums ${s.valeur == null ? 'border-amber' : 'border-line-2'}`}
+                  <input key={rev} className={`w-20 rounded border bg-surface px-1.5 py-1 text-right tabular-nums ${s.valeur == null ? 'border-amber' : 'border-line-2'}`}
                     defaultValue={s.valeur == null ? '' : fmtNum(s.valeur)} placeholder="à saisir"
                     onChange={(e) => majPoste(p.id, { valeur: parseNum(e.target.value), etat: 'saisi' })} />
                   <span className="text-[11px] text-txt-dim">{unite}</span>
@@ -409,7 +438,7 @@ function BlocLignes({ bloc, tot, entrees, ligne, reperePoste, adopterRepere, maj
             <td className="p-2 text-right tabular-nums">{fmtEur(l?.ht)}</td>
             <td className="p-2 text-right tabular-nums">
               {p.tva === 'a_saisir' && !estSansObjet
-                ? <input className={`w-14 rounded border bg-surface px-1 py-0.5 text-right ${s.tva == null ? 'border-amber' : 'border-line-2'}`}
+                ? <input key={rev} className={`w-14 rounded border bg-surface px-1 py-0.5 text-right ${s.tva == null ? 'border-amber' : 'border-line-2'}`}
                     defaultValue={s.tva == null ? '' : fmtNum(s.tva * 100)} placeholder="TVA %"
                     onChange={(e) => majPoste(p.id, { tva: pctToRate(e.target.value) })} />
                 : fmtEur(l?.tva)}
@@ -423,15 +452,15 @@ function BlocLignes({ bloc, tot, entrees, ligne, reperePoste, adopterRepere, maj
                     onClick={() => adopterRepere(p)}>{rep.label}</button>
                 )}
                 {s.valeur == null && !estSansObjet && (
-                  <button className="text-[11px] text-txt-mut underline" onClick={() => majPoste(p.id, { valeur: null, etat: 'sans_objet' })}>Sans objet</button>
+                  <button className="text-[11px] text-txt-mut underline" onClick={() => majPosteProg(p.id, { valeur: null, etat: 'sans_objet' })}>Sans objet</button>
                 )}
                 {s.etat === 'saisi' && s.valeur != null && (
                   <button className="text-[11px] text-mint underline"
-                    onClick={() => { void putBilanRatio(p.id, s.valeur!, s.tva ?? null); majPoste(p.id, { etat: 'ratios' }) }}>Mémoriser</button>
+                    onClick={() => { void putBilanRatio(p.id, s.valeur!, s.tva ?? null); majPosteProg(p.id, { etat: 'ratios' }) }}>Mémoriser</button>
                 )}
                 {(s.valeur != null || estSansObjet) && (
                   <button className="text-[11px] text-txt-mut underline" title="Vider"
-                    onClick={() => majPoste(p.id, { valeur: null, etat: 'a_renseigner' })}>↺</button>
+                    onClick={() => majPosteProg(p.id, { valeur: null, etat: 'a_renseigner' })}>↺</button>
                 )}
               </div>
             </td>

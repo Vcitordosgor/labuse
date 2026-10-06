@@ -2670,7 +2670,7 @@ export interface BilanModele {
   programme: Record<string, unknown>[]
   blocs: BilanBloc[]
   sourcee: { idu: string; parcel_id: number | null; commune: string | null; terrain: number | null; zonage: string | null; prix_achat_dvf: { valeur: number; date: string; label: string } | null }
-  reperes_publics: Record<string, { valeur: number; n?: number; label: string; source: string }>
+  reperes_publics: Record<string, { valeur: number; n?: number; label: string; source: string; parkings?: number | null; logements?: number[] | null }>
   ratios_compte: Record<string, { valeur: number; tva: number | null }>
 }
 export interface BilanSaisie { valeur: number | null; etat: BilanEtat; tva?: number | null; assiette_valeur?: number | null }

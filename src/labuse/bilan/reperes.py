@@ -129,6 +129,91 @@ def reperes_publics(db: Session, idu: str, sourcee: dict) -> dict[str, dict]:
         if dvf:
             out["dvf_neuf"] = dvf
 
+    # Outil Taxe — taxe d'aménagement (part communale) au m² de surface taxable
+    def _taxe():
+        from .. import taxe_amenagement as ta
+
+        cfg = ta.config()
+        vf = float(cfg["valeur_forfaitaire_m2"]["hors_idf"])
+        tp = ta.taux_parcelle(db, idu)
+        pct = tp.get("part_communale_pct") if tp else None
+        if not pct:
+            return None
+        val = round(vf * float(pct) / 100.0, 2)
+        return {
+            "valeur": val,
+            "label": f"Outil Taxe : {val:g} €/m²",
+            "source": f"taxe d'aménagement, part communale {pct} % × {vf:g} €/m²",
+        }
+
+    taxe = _sans_poison(db, _taxe)
+    if taxe:
+        out["outil_taxe"] = taxe
+
+    # Redevance d'archéologie préventive — 0,40 % de la valeur forfaitaire au m²
+    def _rap():
+        from .. import taxe_amenagement as ta
+
+        cfg = ta.config()
+        vf = float(cfg["valeur_forfaitaire_m2"]["hors_idf"])
+        val = round(vf * ta._RAP_PCT / 100.0, 2)
+        return {
+            "valeur": val,
+            "label": f"Redevance : {val:g} €/m²",
+            "source": "redevance d'archéologie préventive — 0,40 % de la valeur forfaitaire",
+        }
+
+    rap = _sans_poison(db, _rap)
+    if rap:
+        out["redevance_archeologie"] = rap
+
+    # Faisabilité LABUSE — SDP possible (+ parkings, logements) repris de la fiche
+    if parcel_id is not None:
+
+        def _fais():
+            from ..faisabilite.scenarios import faisabilite_scenario
+
+            d = faisabilite_scenario(db, parcel_id)
+            sdp = d.get("sdp_possible_m2") if isinstance(d, dict) else None
+            if not sdp:
+                return None
+            return {
+                "valeur": float(sdp),
+                "label": f"Faisabilité {round(float(sdp)):g} m² SDP",
+                "source": "faisabilité LABUSE",
+                "parkings": d.get("stationnement_places"),
+                "logements": d.get("logements"),
+            }
+
+        fais = _sans_poison(db, _fais)
+        if fais:
+            out["faisabilite"] = fais
+
+    # Sitadel — délai médian dépôt → autorisation (PC) de la commune
+    if commune:
+
+        def _sitadel():
+            row = db.execute(
+                text(
+                    "SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY delai_mois) "
+                    "FROM m10_permit_delais WHERE commune = :c AND nature = 'PC' "
+                    "AND valide AND delai_mois IS NOT NULL"
+                ),
+                {"c": commune},
+            ).scalar()
+            if row is None:
+                return None
+            m = round(float(row))
+            return {
+                "valeur": float(m),
+                "label": f"Sitadel : {m} mois dépôt → PC",
+                "source": "Sitadel — délai médian dépôt→autorisation (PC) de la commune",
+            }
+
+        sit = _sans_poison(db, _sitadel)
+        if sit:
+            out["sitadel"] = sit
+
     # Coût de construction de référence (€/m² SDP) — calibrage par commune
     def _cout():
         from ..faisabilite.engine import Hypotheses

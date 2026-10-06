@@ -87,19 +87,22 @@ ligne (HT·TVA·TTC) + chaque total de bloc + le résultat net contre le xlsx.
   **exactement** le prix d'achat saisi.
 - Le **prix d'achat historique DVF** est affiché **en information, hors calcul**.
 
-## 6. Repères — câblés vs à finir
+## 6. Repères — tous câblés (source publique uniquement)
 
-| Repère | État | Source |
-|--------|------|--------|
-| DVF neuf (produits) | **câblé** | `resolve_prix_sortie_servi` |
-| Coût de construction de référence | **câblé** | calibrage commune (`Hypotheses.charger`) |
-| Ratios de place (commission, notaire, honoraires…) | **câblés** | catalogue (`ratio_place`) |
-| Outil Taxe (taxe logements/pkg/TRE), Redevance archéo | à câbler | `taxe_amenagement` donne un % ; convertir en €/m² |
-| Faisabilité (SDP, surface taxable, parkings) | à câbler | lire la faisabilité de la fiche |
-| DVF terrain nu, Sitadel (délais) | à câbler | pas de profil « terrain nu » ; Sitadel = médiane commune |
+| Repère | Poste / champ | Source (vérifiée sur base réelle) |
+|--------|---------------|-----------------------------------|
+| DVF neuf | produits (prix/m²) | `resolve_prix_sortie_servi` — ex. 4 730 €/m² · n 54 |
+| Outil Taxe | Taxe logements (txLog) | taxe d'aménagement, part communale × valeur forfaitaire — ex. 44,6 €/m² |
+| Redevance archéo | Taxe d'archéologie (archeo) | 0,40 % × valeur forfaitaire — ex. 3,57 €/m² |
+| Faisabilité | Surface taxable (= SDP) | `faisabilite_scenario` — ex. 706 m² SDP (+ 14 parkings, 7-9 logts en info) |
+| Sitadel | info calendrier | médiane dépôt→PC de la commune — ex. 9 mois |
+| Coût de construction | Construction yc VRD (constr) | calibrage commune (`Hypotheses.charger`) — ex. 2 550 €/m² |
 
-Les repères non câblés **ne s'affichent pas** (doctrine 2) : le client saisit la valeur,
-le bilan reste juste. Aucun n'entre jamais dans le calcul sans clic.
+Un repère **ne s'affiche que s'il se résout** (doctrine 2) : sur une parcelle zone N,
+la Faisabilité ne propose rien ; sinon le client saisit. Le repère Taxe n'est posé que
+sur la ligne taxe d'aménagement (jamais sur TA parkings/TRE → pas de double compte).
+Les ratios de place **ne sont plus des repères** (décision Vic) ; aucun repère n'entre
+dans le calcul sans clic.
 
 ## 7. Recette — « écran = PDF = Excel au centime »
 
@@ -127,8 +130,8 @@ le bilan reste juste. Aucun n'entre jamais dans le calcul sans clic.
 
 ## 8. Décisions de Vic — avant merge (un commit par point)
 1. **Assiettes D.O / TRC** — recopiées à l'identique du tableur → **0 € d'écart** (§4). ✓
-2. **Repères « ratio de place »** — à masquer (pas de source publique → pas de repère).
-3. **Repères à câbler** — Taxe/archéo (€/m²), Faisabilité (SDP · parkings), Sitadel.
+2. **Repères « ratio de place »** — masqués (pas de source publique → pas de repère). ✓
+3. **Repères câblés** — Taxe/archéo (€/m²), Faisabilité (SDP · parkings · logts), Sitadel. ✓ (§6)
 4. **Captures de l'écran vivant** — à prendre sur la pile lancée (§7).
 
 **Ancien Financier backend** (`financier_bilan.py`, `financier_questionnaire.py`, routes
