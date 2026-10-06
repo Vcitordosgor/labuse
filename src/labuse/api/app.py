@@ -3042,8 +3042,13 @@ def _cascade_run(db: Session, run_label: str | None = None) -> str:
     demandé pour tout run qui possède sa propre cascade (cas normal)."""
     from ..bascule_flux import resoudre_cascade_run
     rl = run_label or runs.current()
-    resolu, _ = resoudre_cascade_run(db, rl)
-    return resolu or rl
+    # VITESSE-FICHE-2 — la résolution est une CONSTANTE du run (lit `p_score_v2_runs.params` +
+    # sonde la présence de cascade) qui ne change qu'à une bascule/rescoring, mais coûtait ~4
+    # requêtes/fiche dont 2 sondes `dryrun_parcel_evaluations` lentes (plan générique → 60-180 ms
+    # mesurés). Mémorisée par run (TTL 60 s, même cadence que le cache de fiche) : résultat
+    # IDENTIQUE, calculé une fois par run servi au lieu d'à chaque fiche.
+    return _mem_cached(("cascade-run", rl), 60.0,
+                       lambda: (resoudre_cascade_run(db, rl)[0] or rl))
 
 
 def _score_v2_run_id(db: Session) -> str | None:
@@ -4704,8 +4709,13 @@ def _dispositifs_block(db: Session, idu: str) -> dict | None:
     SUP par catégorie. Intersections LIVE des couches servies (registre `dispositifs_parcelle`),
     mêmes familles/typepsc que la cascade. None si aucune des couches n'est ingérée."""
     # VITESSE-FIX-1 lot B — table matérialisée si FRAÎCHE (version sources alignée), sinon calcul au vol.
+    # VITESSE-FICHE-2 — la clé de fraîcheur (`serv_version` : `max(created_at) || count(*)` sur
+    # spatial_layers + compte/max(id) parcels) est une CONSTANTE du jeu de données recalculée à chaque
+    # fiche (~35-80 ms, 2 agrégats). Mémorisée en process (TTL 60 s) : le choix table-matérialisée/vol
+    # est IDENTIQUE tant que les sources ne bougent pas (un rebuild de la dérivée est espacé de ≫ 60 s).
     from ..couche_intersection import fraiche as _inter_fraiche
-    _sql = _DISPOSITIFS_SQL_MAT if _inter_fraiche(db) else _DISPOSITIFS_SQL
+    _sql = _DISPOSITIFS_SQL_MAT if _mem_cached(("inter-fraiche",), 60.0,
+                                               lambda: _inter_fraiche(db)) else _DISPOSITIFS_SQL
     rows = db.execute(_sql, {"idu": idu}).mappings().all()
     kinds_presents = {k for (k,) in db.execute(text(
         "SELECT DISTINCT kind FROM spatial_layers "
@@ -5193,6 +5203,53 @@ SEUILS_PROXIMITE_M = {
 }
 
 
+# VITESSE-FICHE-2 — les 7 « plus proches » de kind distinct du bloc proximités étaient 7
+# allers-retours KNN (`plus_proche` une fois par kind). Chacun est un `ORDER BY geom_2975 <-> g
+# LIMIT 1` indépendant sur l'index GiST ; on les exécute EN UNE requête via `UNION ALL` de 7
+# branches identiques à `plus_proche` (cf. _plus_proche_multi — forme choisie pour préserver le
+# départage sur les égalités de distance). (sel, kind, subtype), littéraux du code.
+_PROX_KNN_SPECS = (
+    ("arret", "transport_arret", None),
+    ("pole", "pole_echange", None),
+    ("tele", "telepherique", "station"),
+    ("ht", "ligne_ht", None),
+    ("mt", "ligne_mt", None),
+    ("lgn", "transport_ligne", None),
+    ("poste", "poste_transformation", None),
+)
+
+
+def _plus_proche_multi(db: Session, idu: str,
+                       specs: tuple[tuple[str, str, str | None], ...]) -> dict[str, dict | None]:
+    """Les N plus-proches (un par kind) EN UNE SEULE requête. Chaque branche d'`UNION ALL` est, à
+    l'identique, la requête de `plus_proche` (même `FROM spatial_layers sl, parcels p … ORDER BY
+    geom_2975 <-> geom_2975 LIMIT 1`) → MÊME plan par kind, donc MÊME ligne choisie, y compris sur
+    les ÉGALITÉS de distance (plusieurs couches équidistantes : le départage implicite de l'index est
+    préservé — un LATERAL sur VALUES, lui, le changeait). Résultat octet-pour-octet IDENTIQUE à N
+    appels `plus_proche` (vérifié : 0 écart sur 300 parcelles, dont les 5 cas d'égalité repérés). Les
+    kind/subtype sont des littéraux du code (jamais une entrée client) → interpolation sûre."""
+    branches = []
+    params: dict = {"idu": idu}
+    for i, (_sel, kind, st) in enumerate(specs):
+        st_ok = "TRUE" if st is None else f"sl.subtype = :st{i}"
+        if st is not None:
+            params[f"st{i}"] = st
+        branches.append(
+            f"(SELECT {i} AS ord, sl.name, sl.subtype, sl.attrs, "
+            f"        round(ST_Distance(sl.geom_2975, p.geom_2975))::int AS d "
+            f" FROM spatial_layers sl, parcels p "
+            f" WHERE p.idu = :idu AND sl.kind = :k{i} AND sl.geom_2975 IS NOT NULL AND {st_ok} "
+            f" ORDER BY sl.geom_2975 <-> p.geom_2975 LIMIT 1)")
+        params[f"k{i}"] = kind
+    rows = db.execute(text("\nUNION ALL\n".join(branches)), params).mappings().all()
+    out: dict[str, dict | None] = {sel: None for sel, _k, _s in specs}
+    order = [sel for sel, _k, _s in specs]
+    for r in rows:
+        out[order[r["ord"]]] = {"nom": r["name"], "subtype": r["subtype"],
+                                "attrs": r["attrs"] or {}, "distance_m": r["d"]}
+    return out
+
+
 def _proximites_block(db: Session, idu: str) -> dict | None:
     """M106 P4 — proximité transport (arrêt / pôle d'échange / téléphérique) et ligne HT.
     Données absentes (base de test, ingestion pas passée) → None : l'absence ne casse pas.
@@ -5201,16 +5258,18 @@ def _proximites_block(db: Session, idu: str) -> dict | None:
     def _sous_seuil(obj, cle):
         return obj if (obj and obj["distance_m"] <= SEUILS_PROXIMITE_M[cle]) else None
     try:
-        arret = _sous_seuil(_plus_proche(db, idu, "transport_arret"), "arret")
-        pole = _sous_seuil(_plus_proche(db, idu, "pole_echange"), "pole")
-        tele = _sous_seuil(_plus_proche(db, idu, "telepherique", "station"), "telepherique")
-        ht = _sous_seuil(_plus_proche(db, idu, "ligne_ht"), "ligne_ht")
+        # VITESSE-FICHE-2 — 7 KNN en 1 requête (cf. _plus_proche_multi), au lieu de 7 allers-retours.
+        pp = _plus_proche_multi(db, idu, _PROX_KNN_SPECS)
+        arret = _sous_seuil(pp["arret"], "arret")
+        pole = _sous_seuil(pp["pole"], "pole")
+        tele = _sous_seuil(pp["tele"], "telepherique")
+        ht = _sous_seuil(pp["ht"], "ligne_ht")
         # FICHE-COUCHES-2 lot 1 — extension du même patron KNN : moyenne tension (HTA) et tracé de
         # transport public (desserte). Mêmes seuils de pertinence (SEUILS_PROXIMITE_M).
-        mt = _sous_seuil(_plus_proche(db, idu, "ligne_mt"), "ligne_mt")
-        lgn = _sous_seuil(_plus_proche(db, idu, "transport_ligne"), "transport_ligne")
+        mt = _sous_seuil(pp["mt"], "ligne_mt")
+        lgn = _sous_seuil(pp["lgn"], "transport_ligne")
         # GEOPF-3 — POSTE DE TRANSFORMATION le plus proche (BD TOPO) : signal de coût de raccordement.
-        poste = _sous_seuil(_plus_proche(db, idu, "poste_transformation"), "poste_transformation")
+        poste = _sous_seuil(pp["poste"], "poste_transformation")
         # RETOURS-13 R5 — le fait BAOBAB (distance à l'axe, seuil 500 m) est REMPLACÉ : la distance
         # se mesure À LA STATION TCSP EN SERVICE la plus proche (kind tcsp_station — arrêts GTFS sur
         # une voie bus en site propre OSM), À VOL D'OISEAU (Conseil d'État 2022), jamais au tracé ni
@@ -5486,7 +5545,11 @@ def _anc_block(db: Session, idu: str) -> dict:
     brut (RP2022), jamais proba_anc. Toujours un dict (Absent = état)."""
     from ..anc_service import couverture_anc, statut_anc
     out = statut_anc(db, idu)
-    out["couverture"] = couverture_anc(db)
+    # VITESSE-FICHE-2 — la couverture réglementaire (`count(DISTINCT commune) FROM parcels` +
+    # `count(DISTINCT left(idu,5)) FROM parcel_anc`) est une CONSTANTE du jeu de données (ni la
+    # parcelle ni le run), mais était recalculée à chaque fiche (~50-130 ms, 2 agrégats distincts).
+    # Mémorisée en process (TTL 60 s) : valeur IDENTIQUE, calculée une fois au lieu de par fiche.
+    out["couverture"] = _mem_cached(("anc-couverture",), 60.0, lambda: couverture_anc(db))
     return out
 
 
