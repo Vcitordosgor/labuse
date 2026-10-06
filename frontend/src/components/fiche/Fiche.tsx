@@ -617,6 +617,10 @@ export function Fiche({ idu }: { idu: string }) {
   // que le Pré-dossier et la garde SDP résiduelle. Le front ne dérive plus par regex sur le libellé.
   const zoneFamille = f?.reglement_plu?.zone_famille ?? null
   const reglesSdp = f?.potentiel_transformation?.sdp_residuelle_m2
+  // PPR-PARTIEL-FIX-1 (étape B) — partie HORS zone rouge d'une parcelle partiellement rouge servie 0
+  // par prudence (foncier brut, reculs non appliqués, PAS une SDP). null hors gisement. Badge « à
+  // étudier » sous la tuile SDP et au tiroir Potentiel — MÊME chiffre que le Dossier/Copilote.
+  const horsRouge = f?.potentiel_transformation?.hors_ppr_rouge
   // M19 réf. · faisabilité au niveau fiche pour la MICRO-PREUVE fermée (gabarit / logements /
   // charge). MÊME queryKey ['bilan', idu] que Faisabilité/Bilan → cache partagé, zéro requête en +.
   const faisa = useQuery({ queryKey: ['bilan', idu], queryFn: () => getFaisabilite(idu), enabled: !!f })
@@ -952,6 +956,17 @@ export function Fiche({ idu }: { idu: string }) {
                   </div>
                   <div className={`stat-v${c.vide ? ' vide' : ''}`}>{c.v}</div>
                   {c.s && <div className="stat-s">{c.s}</div>}
+                  {/* PPR-PARTIEL-FIX-1 (étape B) — sous la tuile SDP restante : la parcelle touche une
+                      zone rouge PPR (servie 0 par prudence) mais garde du foncier HORS rouge (≥ 200 m²).
+                      On le RÉVÈLE « à étudier » (jamais « constructible »). Même chiffre que le tiroir
+                      Potentiel, le Dossier et le Copilote (source unique db.surface_hors_ppr_rouge). */}
+                  {c.l === 'SDP restante' && horsRouge && (
+                    <div className="stat-s mt-1" data-hors-ppr-rouge>
+                      <Badge ton="ambre" className="!whitespace-normal leading-tight">Hors zone rouge : {fmtInt(horsRouge.hors_rouge_m2)} m² ({horsRouge.pct} %) — à étudier
+                        <InfoI aria="Sur la partie hors zone rouge"
+                          tip={`Les droits sont servis à 0 par prudence : la parcelle touche une zone rouge PPR. ${fmtInt(horsRouge.hors_rouge_m2)} m² restent hors de cette zone. Surface brute, reculs non appliqués, accès et unité du terrain à vérifier. Ce n'est pas un certificat de constructibilité.`} /></Badge>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -1915,6 +1930,17 @@ export function Fiche({ idu }: { idu: string }) {
                           : (reglesSdp != null && reglesSdp > 0 ? `${fmtInt(reglesSdp)} m² de SDP constructible restante · bâti conservé` : 'Pas de SDP résiduelle exploitable')}
                         contexte={!inconstructible && fo?.niveaux ? `capacité ${fo.niveaux}` : undefined} />
                       <ChiffreDissous l="SDP restante" t={tuileSdp} />
+                      {/* PPR-PARTIEL-FIX-1 (étape B) — tiroir Potentiel : la parcelle touche une zone
+                          rouge PPR (servie 0 par prudence) mais garde du foncier HORS rouge (≥ 200 m²).
+                          On le RÉVÈLE « à étudier » (jamais « constructible »). Même chiffre que la tuile
+                          SDP, le Dossier et le Copilote (source unique db.surface_hors_ppr_rouge). */}
+                      {horsRouge && (
+                        <div data-hors-ppr-rouge-tiroir>
+                          <Badge ton="ambre" className="!whitespace-normal leading-tight">Partie hors zone rouge : {fmtInt(horsRouge.hors_rouge_m2)} m² ({horsRouge.pct} %) — à étudier
+                            <InfoI aria="Sur la partie hors zone rouge"
+                              tip={`Les droits sont servis à 0 par prudence : la parcelle touche une zone rouge PPR. ${fmtInt(horsRouge.hors_rouge_m2)} m² restent hors de cette zone. Surface brute, reculs non appliqués, accès et unité du terrain à vérifier. Ce n'est pas un certificat de constructibilité.`} /></Badge>
+                        </div>
+                      )}
                       {sdpNulle && pourquoi && <p className="text-[11.5px] leading-snug text-txt-mut" data-potentiel-pourquoi>{pourquoi}</p>}
                       {faisa.data?.delaisse && <div data-delaisse><Vigilance title={faisa.data.delaisse.libelle} /></div>}
                       <OutilsSection outils={outils} />

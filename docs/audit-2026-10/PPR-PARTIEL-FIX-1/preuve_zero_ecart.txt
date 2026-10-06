@@ -1,0 +1,165 @@
+# PPR-PARTIEL-FIX-1 — preuve 0 écart · 54 parcelles (dont 6 témoins)
+# ÉCARTS score/bande/SDP/cause avant↔après : 0
+
+97406000AD0652
+    avant : {'score_labuse': [('labuse_v1+c5f9aa60', 10, 'D', None, 25), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+c5f9aa60', 10, 'D', None, 25), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97406000AL0019
+    avant : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97406000AM0464
+    avant : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97406000AO0360
+    avant : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97406000AO0437
+    avant : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97406000AP0210
+    avant : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97406000AR0097
+    avant : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97406000AT0496
+    avant : {'score_labuse': [('labuse_v1+c5f9aa60', 26, 'D', None, 284), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+c5f9aa60', 26, 'D', None, 284), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97406000AV1219
+    avant : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97406000AV1335
+    avant : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97406000AW1048
+    avant : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97409000AB0010  TÉMOIN
+    avant : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97409000AB0530
+    avant : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97409000AO0524
+    avant : {'score_labuse': [('labuse_v1+c5f9aa60', 90, 'A', None, 15347), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+c5f9aa60', 90, 'A', None, 15347), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97409000AW0052
+    avant : {'score_labuse': [('labuse_v1+c5f9aa60', 72, 'B', None, 1100), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+c5f9aa60', 72, 'B', None, 1100), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97409000AX0632
+    avant : {'score_labuse': [('labuse_v1+c5f9aa60', 60, 'B', None, 532), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+c5f9aa60', 60, 'B', None, 532), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97409000AY0786  TÉMOIN
+    avant : {'score_labuse': [('labuse_v1+1518ba79', 80, 'A', None, 2243), ('labuse_v1+1518ba79', 90, 'A', None, 3456), ('labuse_v1+c5f9aa60', 80, 'A', None, 2243), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+1518ba79', 80, 'A', None, 2243), ('labuse_v1+1518ba79', 90, 'A', None, 3456), ('labuse_v1+c5f9aa60', 80, 'A', None, 2243), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97409000AZ0548
+    avant : {'score_labuse': [('labuse_v1+c5f9aa60', 60, 'B', None, 754), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+c5f9aa60', 60, 'B', None, 754), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97409000BE0272
+    avant : {'score_labuse': [('labuse_v1+c5f9aa60', 23, 'D', None, 164), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+c5f9aa60', 23, 'D', None, 164), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97409000BM0449  TÉMOIN
+    avant : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97411000AT0045
+    avant : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97411000BX0318
+    avant : {'score_labuse': [('labuse_v1+c5f9aa60', 55, 'B', None, 6103), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+c5f9aa60', 55, 'B', None, 6103), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97411000BZ0307
+    avant : {'score_labuse': [('labuse_v1+c5f9aa60', 19, 'D', None, 92), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+c5f9aa60', 19, 'D', None, 92), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97411000BZ1065  TÉMOIN
+    avant : {'score_labuse': [('labuse_v1+c5f9aa60', 8, 'D', None, 26), ('labuse_v1+d07ec637', 8, 'D', None, 36)], 'parcel_residuel': [(None, 36)]}
+    après : {'score_labuse': [('labuse_v1+c5f9aa60', 8, 'D', None, 26), ('labuse_v1+d07ec637', 8, 'D', None, 36)], 'parcel_residuel': [(None, 36)]}
+97411000CD1318
+    avant : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97411000CM0646
+    avant : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97411000DY0008
+    avant : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97411000EO0146
+    avant : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97411000HI0449
+    avant : {'score_labuse': [('labuse_v1+c5f9aa60', 8, 'D', None, 78), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+c5f9aa60', 8, 'D', None, 78), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97411000HN0557
+    avant : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97411000HO0248
+    avant : {'score_labuse': [('labuse_v1+c5f9aa60', 22, 'D', None, 228), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+c5f9aa60', 22, 'D', None, 228), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97411000IK0471
+    avant : {'score_labuse': [('labuse_v1+c5f9aa60', 22, 'D', None, 330), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+c5f9aa60', 22, 'D', None, 330), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97411000IR0041
+    avant : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97411000IR0368  TÉMOIN
+    avant : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97411000IS0166
+    avant : {'score_labuse': [('labuse_v1+c5f9aa60', 33, 'C', None, 375), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+c5f9aa60', 33, 'C', None, 375), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97413000BH0491
+    avant : {'score_labuse': [('labuse_v1+c5f9aa60', 8, 'D', None, 72), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+c5f9aa60', 8, 'D', None, 72), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97414000CI0113
+    avant : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97414000CT1280
+    avant : {'score_labuse': [('labuse_v1+c5f9aa60', 14, 'D', None, 137), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+c5f9aa60', 14, 'D', None, 137), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97415000AY0850
+    avant : {'score_labuse': [('labuse_v1+1518ba79', 51, 'B', None, 650), ('labuse_v1+1518ba79', 51, 'B', None, 650), ('labuse_v1+1518ba79', 51, 'B', None, 650), ('labuse_v1+c5f9aa60', 51, 'B', None, 651), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+1518ba79', 51, 'B', None, 650), ('labuse_v1+1518ba79', 51, 'B', None, 650), ('labuse_v1+1518ba79', 51, 'B', None, 650), ('labuse_v1+c5f9aa60', 51, 'B', None, 651), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97415000AZ1096
+    avant : {'score_labuse': [('labuse_v1+1518ba79', 0, 'D', None, 0), ('labuse_v1+1518ba79', 19, 'D', None, 118), ('labuse_v1+1518ba79', 19, 'D', None, 118), ('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+1518ba79', 0, 'D', None, 0), ('labuse_v1+1518ba79', 19, 'D', None, 118), ('labuse_v1+1518ba79', 19, 'D', None, 118), ('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97415000BI0312
+    avant : {'score_labuse': [('labuse_v1+1518ba79', 80, 'A', None, 3270), ('labuse_v1+1518ba79', 80, 'A', None, 3270), ('labuse_v1+1518ba79', 80, 'A', None, 3270), ('labuse_v1+c5f9aa60', 80, 'A', None, 3270), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+1518ba79', 80, 'A', None, 3270), ('labuse_v1+1518ba79', 80, 'A', None, 3270), ('labuse_v1+1518ba79', 80, 'A', None, 3270), ('labuse_v1+c5f9aa60', 80, 'A', None, 3270), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97415000CZ1078
+    avant : {'score_labuse': [('labuse_v1+1518ba79', 0, 'D', None, 0), ('labuse_v1+1518ba79', 0, 'D', None, 0), ('labuse_v1+1518ba79', 0, 'D', None, 0), ('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+1518ba79', 0, 'D', None, 0), ('labuse_v1+1518ba79', 0, 'D', None, 0), ('labuse_v1+1518ba79', 0, 'D', None, 0), ('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97415000DT0842
+    avant : {'score_labuse': [('labuse_v1+1518ba79', 37, 'C', None, 353), ('labuse_v1+1518ba79', 51, 'B', None, 428), ('labuse_v1+1518ba79', 51, 'B', None, 428), ('labuse_v1+c5f9aa60', 37, 'C', None, 311), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+1518ba79', 37, 'C', None, 353), ('labuse_v1+1518ba79', 51, 'B', None, 428), ('labuse_v1+1518ba79', 51, 'B', None, 428), ('labuse_v1+c5f9aa60', 37, 'C', None, 311), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97415000EW0239
+    avant : {'score_labuse': [('labuse_v1+1518ba79', 15, 'D', None, 33), ('labuse_v1+1518ba79', 15, 'D', None, 33), ('labuse_v1+1518ba79', 15, 'D', None, 33), ('labuse_v1+c5f9aa60', 15, 'D', None, 33), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+1518ba79', 15, 'D', None, 33), ('labuse_v1+1518ba79', 15, 'D', None, 33), ('labuse_v1+1518ba79', 15, 'D', None, 33), ('labuse_v1+c5f9aa60', 15, 'D', None, 33), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97415000HL0001  TÉMOIN
+    avant : {'score_labuse': [('labuse_v1+1518ba79', 57, 'B', None, 894), ('labuse_v1+1518ba79', 76, 'B', None, 3190), ('labuse_v1+1518ba79', 76, 'B', None, 3190), ('labuse_v1+c5f9aa60', 57, 'B', None, 894), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+1518ba79', 57, 'B', None, 894), ('labuse_v1+1518ba79', 76, 'B', None, 3190), ('labuse_v1+1518ba79', 76, 'B', None, 3190), ('labuse_v1+c5f9aa60', 57, 'B', None, 894), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97416000CY0426
+    avant : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97418000AR1266
+    avant : {'score_labuse': [('labuse_v1+c5f9aa60', 19, 'D', None, 172), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+c5f9aa60', 19, 'D', None, 172), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97420000BH1936
+    avant : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97421000BN0196
+    avant : {'score_labuse': [('labuse_v1+c5f9aa60', 57, 'B', None, 874), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+c5f9aa60', 57, 'B', None, 874), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97422000BD3292
+    avant : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97423000AE0647
+    avant : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97423000AH1274
+    avant : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97423000AI0391
+    avant : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+c5f9aa60', 0, '0', None, 0), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+97423000AI0699
+    avant : {'score_labuse': [('labuse_v1+c5f9aa60', 57, 'B', None, 864), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
+    après : {'score_labuse': [('labuse_v1+c5f9aa60', 57, 'B', None, 864), ('labuse_v1+d07ec637', 0, '0', None, 0)], 'parcel_residuel': [('terrain_exigu', 0)]}
