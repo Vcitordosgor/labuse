@@ -391,8 +391,12 @@ export function Gabarit() {
 
           {/* RETOURS-15 D4 — bascule 2D / 3D DANS le panneau : le client n'a plus à passer par le menu
               3D en haut à droite. Même levier que ce menu (setTerrain3d), donc cohérent partout. */}
+          {/* RECETTE-PROD-1 (5) — `shrink-0` : sans lui, le bouton (dernier enfant d'une colonne flex
+              qui déborde) était ÉCRASÉ par flex-shrink → hauteur 15 px au lieu des 32 px de la DA
+              (« hors DA, mal aligné »). Avec shrink-0 il reprend sa hauteur de bouton standard,
+              aligné à gauche comme les cartes au-dessus. */}
           <Bouton niveau="secondaire" ton="vert" data-gabarit-3d
-            onClick={() => setTerrain3d(!terrain3d)} className="self-start">
+            onClick={() => setTerrain3d(!terrain3d)} className="shrink-0 self-start">
             {terrain3d ? 'Revenir en 2D' : 'Voir en 3D'}
           </Bouton>
         </>
