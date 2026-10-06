@@ -473,6 +473,13 @@ TABLES_EXPLOITATION: dict[str, str] = {
     "ingestion_delta": "journal des deltas d'ingestion (la vanne)",
     "mnt_tiles": "tuilage + point de reprise de l'ingestion RGE ALTI MNT (RECETTE-7 lot D)",
     "source_veille": "sentinelle des sources",
+    # CHASSE-FIX-3 (C3-06/C3-07, V1c) — état clé-valeur de la CHAÎNE DE FRAÎCHEUR (DVF lastmod,
+    # réveil DPE, et désormais la version de règle des tables dérivées : `derive:<table>:rule_version`).
+    # Écrite par ingestion/fraicheur.py + fraicheur_caches.marquer_regle_derivee, lue par fraicheur_caches.
+    # Table d'EXPLOITATION active (jamais une orpheline) : avant CHASSE-FIX-3 elle n'était matérialisée
+    # que lorsque la chaîne tournait ; la stamper au rebuild la rend permanente → la déclarer éteint V1c
+    # sans rien désactiver (même raison que coherence_runs ci-dessous).
+    "fraicheur_etat": "état de la chaîne de fraîcheur (lastmod, réveils, versions de règle des dérivés)",
     "source_checks": "contrôles de sources",
     "source_radar": "radar de sources",
     # CIRCUIT-1 lot 6 — rapports des agents de source (verdict + preuve datée par passage) ;

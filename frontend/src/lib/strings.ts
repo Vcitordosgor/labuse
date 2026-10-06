@@ -139,7 +139,11 @@ export const CLIENT = {
     lignes: {
       prix_ancien_median: 'Prix ancien médian (€/m²)',
       prix_terrain_nu_par_zone: 'Prix du terrain nu, par zone (U / AU)',
-      prix_sortie_neuf: 'Prix du neuf VEFA (€/m²)',
+      // CHASSE-FIX-3 (C3-03) — cle=prix_sortie_neuf = NEUF OBSERVÉ (ventes ≤3 ans post-achèvement,
+      // resolve_prix_neuf_marche), PAS la VEFA déclarée à l'acte. Le mot « VEFA » reste réservé à
+      // cette dernière (contexte/comparateur/baromètre/couche carte) pour ne pas coller deux
+      // chiffres différents sous le même mot. Aligné sur « Neuf observé » du ContextePanel.
+      prix_sortie_neuf: 'Prix du neuf observé (€/m²)',
       tendance_12m: 'Tendance 12 mois',
       liquidite: 'Liquidité (mutations/trimestre)',
       offre_engagee: 'Offre engagée (logements autorisés)',

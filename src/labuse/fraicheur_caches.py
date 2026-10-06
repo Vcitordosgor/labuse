@@ -328,13 +328,68 @@ def _etat_defisc_bareme() -> dict:
                        f"mettre à jour depuis le barème officiel de loi de finances {an}")}
 
 
+# ═══════ CHASSE-FIX-3 (C3-06/C3-07) — fraîcheur de la RÈGLE des tables dérivées ═══════
+# Une table dérivée (pc_caducs, veille succession) est rebâtie hors-run par un geste dédié ; le
+# jour où le CODE change sa règle sans qu'on rejoue ce geste, elle sert l'ancienne règle EN SILENCE
+# (le bug fondateur CHASSE-3 : pc_caducs du 08/08, veille du 09/08). Chaque table porte donc une
+# VERSION DE RÈGLE (constante du code), gravée dans `fraicheur_etat` à son rebuild ; on compare ici
+# version gravée vs version du code — même mécanisme « clé attendue / clé réelle » que les autres caches.
+
+def _derives_regles() -> dict:
+    """{table → (version de règle courante du CODE, remède)}. Importé paresseusement (les modules
+    de scoring/ingestion tirent de gros graphes)."""
+    from .ingestion.pc_caducs import RULE_VERSION as _PC
+    from .scoring.score_v_constants import VEILLE_SUCCESSION_RULE_VERSION as _VS
+    return {
+        "pc_caducs": {"version": _PC, "remede": "labuse pc-caducs"},
+        "parcel_veille_succession": {"version": _VS, "remede": "labuse score-v-compute"},
+    }
+
+
+def marquer_regle_derivee(session, table: str) -> None:
+    """À appeler à la FIN du rebuild d'une table dérivée : grave la version de règle courante
+    (clé `derive:<table>:rule_version` de `fraicheur_etat`). N'engage PAS le commit (l'appelant le fait)."""
+    from .ingestion.fraicheur import _etat_set
+    _etat_set(session, f"derive:{table}:rule_version", _derives_regles()[table]["version"])
+
+
+def _etat_derives_regle(db) -> dict:
+    """État de fraîcheur des tables DÉRIVÉES : version de règle gravée au dernier rebuild vs version
+    du code. Mismatch (ou jamais gravée) = PÉRIMÉ « à reconstruire »."""
+    from .ingestion.fraicheur import _etat_get
+    lignes: list[str] = []
+    perimes: list[str] = []
+    try:
+        for table, reg in _derives_regles().items():
+            gravee = _etat_get(db, f"derive:{table}:rule_version")
+            if gravee != reg["version"]:
+                perimes.append(f"{table} : règle gravée « {gravee or '∅ (jamais stampée)'} » ≠ "
+                               f"code « {reg['version']} » → {reg['remede']}")
+            else:
+                lignes.append(f"{table} : « {reg['version']} »")
+    except Exception as e:  # noqa: BLE001
+        try:
+            db.rollback()
+        except Exception:  # noqa: BLE001
+            pass
+        return {"cache": "tables dérivées (version de règle)", "perime": True,
+                "detail": str(e)[:120], "remede": "labuse pc-caducs ; labuse score-v-compute"}
+    return {"cache": "tables dérivées (version de règle)",
+            "porte_sur": f"{len(_derives_regles())} tables dérivées (pc_caducs, veille succession)",
+            "cle_attendue": "version de règle du code",
+            "cle_reelle": " ; ".join(perimes) if perimes else "règles gravées = code",
+            "perime": bool(perimes),
+            "detail": (" ; ".join(perimes)) if perimes else "chaque table porte la version de règle du code",
+            "remede": "rejouer le geste de rebuild de la table signalée (labuse pc-caducs / score-v-compute)"}
+
+
 def etat(db) -> dict:
     """L'ÉTAT DE FRAÎCHEUR de chaque cache : clé attendue / clé réelle / périmé. Servi par
     `/sante/fraicheur`, affiché page Données, joué par `labuse rebuild --dry-run` (fumée)."""
     attendue = empreinte_attendue(db)
     caches = [_etat_manifeste(db), _etat_commune_cache(db, attendue), _etat_tuiles(db),
               _etat_tile_cache(db), _etat_spatial_sub(db), _etat_ia_cache(db, empreinte_courte(db)),
-              _etat_intersections(db), _etat_defisc_bareme()]
+              _etat_intersections(db), _etat_defisc_bareme(), _etat_derives_regle(db)]
     return {"empreinte_attendue": attendue,
             "perimes": [c["cache"] for c in caches if c.get("perime")],
             "caches": caches}

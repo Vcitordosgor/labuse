@@ -1,0 +1,36 @@
+=== make -C scripts/chasse chasse (CHASSE-1 + CHASSE-2) — régression CHASSE-FIX-3 ===
+EXIT: MAKE_CHASSE_EXIT=0
+  OK   pct_bornes_score
+  OK   sdp_non_negative
+  OK   permis_caduc_borne
+  OK   au_fermee_differee_presentee
+  OK   cinquante_pas_distance_cote
+  OK   tfpb_taux_plausible
+  OK   ta_taux_bornes_legales
+  OK   dvf_valeurs_positives
+  OK   surfaces_positives
+  OK   pente_bornes
+  OK   zone_fam_domaine
+  OK   idu_prefixe_commune
+  OK   geom_valide
+  OK   bande_domaine
+  OK   tier_domaine
+  OK   rang_unique
+  OK   pm_un_seul_proprio
+15228 comparaisons · 230 écarts : {'INCOHERENT': 155, 'TOLERABLE': 75}
+33 tests · 0 écarts → /Users/openclaw/Desktop/labuse-chassefix3/docs/audit-2026-10/CHASSE-1/FILTRES.csv
+différé : 40 ok / 0 ko (sur 40)
+168 écarts : Counter({'INCOHERENT': 114, 'TOLERABLE': 54})
+
+Baselines committés 232/170 → rejeu 231/169 (−1 chacun) : DVF rafraîchi, 0 écart neuf hors classés.
+
+=== labuse circuit verrous (base servie, à froid) ===
+✓ V6b  Le banc de cohérence est permanent : tables de vérification bien formées, vocabulaire d'absence à cinq formes, toute donnée du registre a un lecteur et une tolérance, et les 7 témoins golden n'ont pas dérivé sans acceptation explicite.
+       19 checks parcelle + 19 commune bien formés, vocabulaire d'absence 5 formes, registre couvert, périmètres « secteur » nommés, emprise scoring cloisonnée · golden 7 témoins rejoués · manifeste = servi en base
+✗ G5   Pour chaque source, la date du dernier contrôle est affichée — et une source jamais contrôlée le dit, en rouge, jamais en silence.
+✗ G8   Aucune source vitrine sans contrôle depuis plus de 7 jours ; Radar sans dépôt depuis plus que son échéance. Avec l'agent plafonné à 0 €, une source hors sonde n'est contrôlée par personne — le verrou le dit, le Résumé la nomme.
+— 32 joués (22 verrous + 8 garanties) : 2 CASSÉ(S) — G5, G8
+EXIT=1
+
+=== durée recalcul Score LABUSE île (dry-run --no-persist) ===
+✓ run « q_v16_cf3_timing » : 431663 parcelles scorées · 115s (à blanc)

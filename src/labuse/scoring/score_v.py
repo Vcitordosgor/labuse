@@ -600,6 +600,10 @@ def compute_all(session: Session, limit: int | None = None, log=print) -> dict:
             "INSERT INTO parcel_veille_succession (parcelle_id, siren, dirigeant_age, sci_dormante) "
             "VALUES (:idu, :siren, :age, :sci)"),
             [{"idu": a, "siren": b, "age": c, "sci": d} for a, b, c, d in veille_rows[k:k + 5000]])
+    # CHASSE-FIX-3 (C3-07) — grave la version de règle de la veille : le contrôle de fraîcheur
+    # signalera « à reconstruire » si le code change les formes/l'âge sans rejouer score-v-compute.
+    from ..fraicheur_caches import marquer_regle_derivee
+    marquer_regle_derivee(session, "parcel_veille_succession")
     session.commit()
     counts["parcelles"] = len(rows)
     counts["veille_succession"] = len(veille_rows)
