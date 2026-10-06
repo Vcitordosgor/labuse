@@ -90,10 +90,37 @@ Tests ciblés : `test_fiche_blocs3 · test_servitudes · test_voisinage · test_
 
 Le reste du SQL (~520 ms) est dominé par `_data_sources_fiche` (**55 requêtes** de remplissage/existence par fiche, ~90 ms) et par les blocs d'intersection géométrique live — **non traités ici** (hors périmètre : refonte du remplisseur de sources, risque sur la sortie) ; signalés comme prochain gisement. `aleas_parcelle` (ex-plus gros poste, 1,75 s ×2) est **déjà corrigé par VITESSE-PROD-1** (mémo par session + `tuyau_subdivise`), confirmé à 15-26 ms ici.
 
-### Fichiers touchés
+### Fichiers touchés (commit 1)
 - `src/labuse/api/app.py` — mémo `_cascade_run`, mémo couverture ANC, mémo clé de fraîcheur, `_plus_proche_multi` + `_proximites_block`.
 - `src/labuse/api/fiche_blocs3.py` — `pm_voisines` (LATERAL).
 - `src/labuse/scoring/score_labuse_combine.py` — index `score_labuse (run_label, idu)`.
 - `scripts/vfiche2_{chrono,blocks,md5}.py` — harnais de mesure et de preuve (rejouables).
 
 Aucun calcul, aucun libellé, aucun seuil modifié. Aucune donnée écrite (index mis à part).
+
+---
+
+## 5. `_data_sources_fiche` — 55 → 14 requêtes (commit séparé)
+
+« Les données » liste les sources réellement utilisées sur la fiche, puis **filtre** celles sans valeur pour la parcelle via `remplissage.remplissage_source(slug, témoin)` — appelé une fois par source (~40). Chaque appel **réintrospectait le catalogue** (`to_regclass` + `information_schema.columns` par table de réservoir) → **~55 requêtes/fiche**, dont ~40 de pur catalogue.
+
+`remplissage_source` accepte déjà un paramètre `schema` (table→colonnes, cf. `schema_public`, ajouté pour `/admin/circuit`) qui supprime ces lectures catalogue ; la fiche ne le passait pas. Correctif :
+
+- on calcule le catalogue **une fois**, partagé par tous les appels de la boucle ;
+- **mémorisé** (TTL 60 s) car `schema_public` scanne TOUT `information_schema.columns` (coûteux) et le catalogue est une constante du jeu de données — sans le mémo, la fiche troquait 40 petites lectures catalogue contre un gros scan **par fiche** (mesuré : +40 ms, régression). Avec le mémo : le scan tourne une fois par 60 s.
+
+**Identité** : `schema_public` renvoie la même existence/colonnes (schéma public) que `to_regclass`/`information_schema` ; les `count(...)` réels sont inchangés → mêmes verdicts garder/écarter. **md5 20/20 IDENTIQUE.**
+
+| mesure (bout en bout, même machine) | avant | après |
+|---|--:|--:|
+| build froid médiane | 539 ms | **441 ms** (−18 %) |
+| dont SQL | 458 ms | 369 ms |
+| requêtes / fiche | 216 | **174** (−42) |
+| bloc `_data_sources_fiche` | 55 req | **14 req** |
+
+Tests : `test_fiche1_sources_attendues · test_circuit_provenance · test_circuit_p4_*` → **13 passed**.
+
+**Cumul des deux commits** : fiche froide **1 600 → 441 ms** (−72 %), **233 → 174 requêtes** (−59). Reste comme gisement les ~14 `count(...)` de remplissage (un par table-réservoir jointe) et les intersections géométriques live — batchables mais au prix d'une refonte de `remplissage_source` (partagé avec `/admin/circuit`), hors de la règle « md5 strict / risque minimal » de ce lot.
+
+### Fichiers touchés (commit 2)
+- `src/labuse/api/app.py` — `_data_sources_fiche` passe `schema_public` mémorisé à `remplissage_source`.

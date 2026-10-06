@@ -3205,11 +3205,21 @@ def _data_sources_fiche(db: Session, parcel_id: int, run_label: str) -> list[dic
                         {"pid": parcel_id}).first()
         if _p:
             _temoin = [(_p[0], _p[0][:5], _p[1] or "")]
+            # VITESSE-FICHE-2 — introspection du catalogue (table → colonnes du schéma public),
+            # PARTAGÉE par tous les appels remplissage_source. Sans elle, chaque source refaisait
+            # `to_regclass` + `information_schema.columns` PAR table de son réservoir (≈ 40 requêtes
+            # catalogue/fiche — le gros des 55 requêtes du bloc). C'est le chemin pour lequel le
+            # paramètre `schema` a été ajouté (mesurer_vitrine/admin). MÉMORISÉE (TTL 60 s) : le
+            # catalogue est une CONSTANTE du jeu de données et `schema_public` scanne TOUT
+            # `information_schema.columns` (coûteux) — inutile de le refaire par fiche. Valeurs servies
+            # IDENTIQUES : schema_public donne la même existence/colonnes que to_regclass et
+            # information_schema sur le schéma public ; les count(...) réels sont inchangés.
+            _schema = _mem_cached(("schema-public",), 60.0, lambda: _rempl_m.schema_public(db))
             _gardees = []
             for r in rows:
                 _slug = _nvs_m.get(r["name"])
                 if _slug:
-                    _m = _rempl_m.remplissage_source(db, _slug, _temoin, sans_carte=True)
+                    _m = _rempl_m.remplissage_source(db, _slug, _temoin, sans_carte=True, schema=_schema)
                     if _m["type"] in ("parcelle", "commune") and not _m["remplis"]:
                         continue        # branchée mais RIEN pour cette parcelle : pas au manifeste
                 _gardees.append(r)
