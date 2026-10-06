@@ -351,7 +351,7 @@ function AffinerRecherche() {
           <div>
             <p className="label-caps text-txt-dim">Emprise bâtie</p>
             <div className="mt-1 flex items-center gap-1.5"><NumField field="empriseMin" ph="min" /><span className="text-txt-dim">–</span><NumField field="empriseMax" ph="max" suffix="%" /></div>
-            <p className="mt-1 text-[10px] leading-snug text-txt-dim">Part de la parcelle déjà couverte par du bâti (run servi) — la même que « État du sol ».</p>
+            <p className="mt-1 text-[10px] leading-snug text-txt-dim">Part de l'emprise constructible déjà couverte par du bâti (run servi) — pas « de la parcelle » : sur un grand terrain la part du sol bâti est plus faible. La même que « État du sol ».</p>
           </div>
           {/* RECETTE-1 (E2) — « SDP restante » et « Déjà bâti » (part de l'encart Capacité) RETIRÉS
               de « Affiner la recherche » avec le reste de la Capacité. */}

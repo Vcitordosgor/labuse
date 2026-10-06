@@ -178,6 +178,34 @@ Partout où le `taux_emprise_pct` (29 %) est présenté, s'assurer qu'il est dit
 
 ---
 
+## Phase 2 (décision Vic 06/10) — libellés corrigés, calcul intact
+
+Le chiffre étant juste, phase 2 = **habillage seul**. 9 libellés reformulés en **« surface de
+plancher constructible restante (bâti conservé) »** (longueur adaptée : phrase pleine en
+PDF/verdict, « · bâti conservé » en ligne, sous-ligne « bâti conservé » en tuile), + le « 29 % »
+du filtre recadré. Le vocabulaire « bâti conservé » **réutilise la DA existante**
+(`frontend/src/lib/perimetres.ts`, `PERIM_RESIDUEL_COURT`). **Aucun calcul touché** : le dump
+`_q_v2_fiche` avant/après donne `sdp_residuelle_m2 = 5 050` à l'identique ; seul `libelle` change.
+
+Détail exhaustif (avant → après, 10 lignes) + captures : `captures/SDP-VERIF-1/LIBELLES-avant-apres.md`.
+Points saillants :
+- **`scoring/score_labuse.py:256`** — « *{sdp} m² de droits à construire restants* » (la phrase
+  exacte vue par Vic, contribution Analyse LABUSE) → « *… de surface de plancher constructible
+  restante (bâti conservé)* » ; test `test_scoring6_score_labuse.py:146` mis à jour.
+- **`api/app.py:5886`** (verdict §10) ; **`exports/verdicts.py:100`** (Dossier) ;
+  **`cascade/layers/etage0_ext.py:174`** (Analyse socle) ; **`copilote_v2/resume_fiche.py:34`** +
+  **`exports/miroir.py:1037`** (bandeaux Copilote/PDF) ; **`Fiche.tsx:935/1291/1912/1914`** (tuile +
+  §10 + verdict, sous-ligne « bâti conservé » + infobulle « ce n'est pas du terrain libre »).
+- **Le « 29 % » — `FiltreLabuse.tsx:354`** : « Part **de la parcelle** déjà couverte par du bâti »
+  → « Part **de l'emprise constructible**… pas « de la parcelle » ». C'est bien `taux_emprise_pct`
+  = emprise ÷ emprise constructible (app.py:1623/1818, residuel.py:215) = 29 % de l'emprise
+  constructible = **20,5 % de la parcelle**. Calcul inchangé. (`bati.py:68/78` « % de la parcelle »
+  = vraie part parcellaire, correcte, non touchée ; `ComparePanel.tsx:63` disait déjà « · bâti
+  conservé », laissé tel quel.)
+
+Vérifs phase 2 : **tsc 0 · vitest 243/243 · pytest ciblé 231 passed / 5 skipped (env)** · 0
+idle-in-transaction · captures avant/après crises (bandeau, filtre) + §10.
+
 ## Annexe — reproduire
 
 ```bash

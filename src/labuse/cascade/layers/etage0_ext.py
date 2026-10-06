@@ -171,9 +171,9 @@ class ResiduelSocleLayer(Layer):
         sdp = ctx.residuel_sdp(parcel.id)
         if sdp is None:
             return unknown(self.name,
-                           "SDP résiduelle non calculée — droits à construire inconnus (hors "
-                           "couverture parcel_residuel) ; à résoudre par extension du calcul, "
-                           "pas un signal d'absence de droits.")
+                           "SDP résiduelle non calculée — surface constructible restante (bâti "
+                           "conservé) inconnue (hors couverture parcel_residuel) ; à résoudre par "
+                           "extension du calcul, pas un signal d'absence de droits.")
         for seuil, socle, phrase in SOCLE_TIERS:
             if sdp >= seuil:
                 detail = f"SDP résiduelle {round(sdp)} m² — {phrase} (socle {socle:+d})."

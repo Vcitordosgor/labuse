@@ -31,7 +31,7 @@ _TUILES = [
     ("pente_deg", "Pente", "degre"),
     ("exposition_versant", "Exposition", "classe"),
     ("tfpb_taux_pct", "Taxe foncière", "pct"),
-    ("sdp_residuelle_m2", "SDP restante", "m2"),
+    ("sdp_residuelle_m2", "SDP restante (bâti conservé)", "m2"),
 ]
 
 _TAG = re.compile(r"<[^>]+>")
