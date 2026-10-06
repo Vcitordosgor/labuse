@@ -204,3 +204,53 @@ deploy/Caddyfile.prod/.example                 encode zstd gzip (lot 2)
 tests/test_carte_tuiles.py                     borne z8 + gardes brotli/layer-extent
 docs/audit-2026-10/G1-LOT3/…                   rapport, mesures/, captures/{avant,apres}/
 ```
+
+---
+
+## §8 — Correctif « zones noires dans les hauts » (retour Vic, après lot 3)
+
+**Symptôme (Vic) :** à certains crans de zoom, une zone des hauts de l'île (secteurs peu denses)
+restait noire **indéfiniment**, avec une **frontière droite** (bord de tuile) entre partie dessinée
+et partie vide ; **un cran de plus (z12) et tout s'affichait**. **Absent sur main au même endroit.**
+
+**Diagnostic (écarte d'abord les fausses pistes, mesuré) :** tuiles toutes **HTTP 200** (rien de
+manquant, ni 204 ni erreur) ; **brotli octet-parfait** (`decompress == brut`, `Content-Encoding: br`
++ `Content-Length` cohérents) ; **cache sans tuile vide sur du bâti** (les 102 tuiles vides du cache
+sont toutes en mer) ; **aucun gap minzoom/maxzoom** (`ile-limites` couvre z8-15 via la source +
+sur-zoom au-delà ; overlay éteint sur l'île ; en commune l'overlay reste servi). **Cause réelle :
+l'`extent 1024` à z9-z11** (≈ 5-19 m/unité) quantifiait les parcelles de **taille moyenne** jusqu'à
+les rendre dégénérées → `ST_AsMVTGeom` les **écarte**. Dans un secteur peu dense, une tuile de
+maillage perdait l'essentiel de ses parcelles → **tuile vide**. Ce maillage LOD ne portait l'île
+**que depuis le lot 2** (overlay retiré) ; sur main le maillage venait de l'overlay **full-res
+(extent 4096)** → pas de trou. Pertes mesurées vs full-res : **z9 89 %, z10 76 %, z11 19 %**.
+
+**Correctif :** **extent 1024 → 4096 dès z9** (`tiles.py`). z8 garde 1024 (dézoom extrême : tout y
+est sous le pixel, aucune parcelle *visible* n'est écartée). La simplification par palier **reste**
+(elle n'enlève que le détail sous-pixel → poids maîtrisé).
+
+**Preuve — parité de couverture avec main, z8→z17 (aucun cran noir) :**
+
+| zoom | `ile-limites` AVANT | `ile-limites` APRÈS | overlay main | 
+|---|---|---|---|
+| z9 (île entière) | — | **221 814** | dense |
+| z10 (Salazie) | 89 493 | **360 767** | 373 447 |
+| z11 (Palmistes) | 136 779 | **150 933+** | dense |
+| z12-z17 | inchangé (déjà 4096) | inchangé | ≈ |
+
+Captures `captures/correctif-zones-noires/` : **01 AVANT** (z10 maillage clairsemé) vs **02 MAIN**
+(dense) vs **03 APRÈS** (dense, = main) ; **04** z11 Palmistes complet ; **05** z9 île complète.
+Balayage 0,25 z10→z17 : toutes tuiles `loaded`, maillage dense à chaque cran.
+
+**Poids — gain honnête révisé :** l'ouverture z9 passe de **0,30 → 1,47 Mo br** (extent 4096). C'est
+**toujours ≈ 59 % plus léger que main** (parcels 0,3 + overlay doublon 3,2 = 3,5 Mo) — et **sans
+trou**. Le « −91,5 % » annoncé au §6 était l'artefact du maillage LOD trop agressif qui causait
+précisément les zones noires : **le gain réel, sans trou, est ~59 %** (doublon supprimé + brotli +
+propriétés maigres). La ligne « −39,5 % d'objets à z11 » du §3 **n'est plus** : le maillage z9-z11
+rejoint la densité de l'overlay.
+
+**⚠ Déploiement :** le cache tuiles (`mvt_tile_cache`, clé = version *donnée*) contient encore les
+tuiles z9-z11 en extent 1024 → **purger** (`DELETE FROM mvt_tile_cache WHERE layer='parcels'`,
+overlays intacts) puis laisser la route relancer en 4096 (ou `warm_parcel_tiles`). Fait en dev.
+
+**Recette :** tsc 0 · vitest 243/243 · pytest tuiles 11 passés/1 skip (extent attendu z8→1024,
+z9/z11/z13→4096 ; vérifié base réelle : z8 `parcels/1024`, z9/z11/z13 `parcels/4096`).
