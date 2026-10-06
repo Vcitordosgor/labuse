@@ -1,0 +1,12 @@
+G1-LOT3 — LOT 1 : poids réel de la tuile z8 île (après : parcels-ile servie dès z8, simplify 120 m)
+API 8721, base au repos.
+
+z8 île (8/167/143, 1 seule tuile couvre l'île) :
+  raw  = 0.384 Mo
+  gzip = 0.102 Mo    <- = chiffre G1-MESURE §4 (0,10 Mo), cohérent
+z7/1/1 -> HTTP 204 (sous la source minzoom 8)
+z8/1/1 (mer) -> HTTP 200, 0 octet (plus de 204 sur la borne, tuile vide normale)
+
+Comparaison au scénario overlay si z8 atteignable (G1-MESURE) : overlay z8 = 1.26 Mo gz.
+=> parcels-ile z8 (0.10) = 12× plus léger que l'overlay à z8, et ride sur une tuile DÉJÀ
+   chargée dès qu'on est en vue île → coût net ~0 (le maillage z8 remplace le trou qui noircissait).

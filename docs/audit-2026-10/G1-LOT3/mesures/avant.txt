@@ -1,0 +1,33 @@
+G1-LOT3 — MESURES AVANT (origin/main 0f36c913, overlay doublon ON, pas de brotli, z8→204)
+API 8721 / Vite 5921 · run servi q_v16 · base au repos
+
+== Zoom minimum atteignable (floor maxBounds, minZoom carte = 8) ==
+Fenêtre      Canvas(css px)   Floor(minZoom 0)   Floor réel(minZoom 8)   Tuiles
+1440x900     1030x844         z9.403             z9.403                  z9
+2560x1440    2150x1384        z10.464            z10.464                 z10
+3840x2160    3430x2104        z11.138            z11.138                 z11
+600x470*     530x414          z8.444             z8.444                  z8   <- pire cas, atteint le plancher dur
+* petite fenêtre OU zoom navigateur (≈240%) : canvas css réduit → floor plus bas.
+=> Le floor maxBounds MONTE avec le canvas. Le plus PETIT canvas atteint le zoom le plus BAS.
+   Plancher ABSOLU = minZoom:8 (carte), atteint quand le canvas est assez petit. z8 = tuile la plus basse jamais demandée.
+
+== Octets ouverture (vue île, tuiles z9 : 334/286,334/287,335/286,335/287) — gzip (prod) ==
+parcels-ile  (z9×4)  = 0.308 Mo gz
+overlay limites_parcelles (DOUBLON, z9×4) = 3.241 Mo gz
+overlay z8 1 tuile (8/167/143)  raw = 4.325 Mo
+
+== Objets maillage dessinés (queryRenderedFeatures overlay 'tuyau-limites_parcelles-outline', centre St-Denis) ==
+z9  = 308202
+z11 = 102345
+z12 = 49423
+z13 = 25751
+
+== Défauts vérifiés ==
+ile-fill fill-opacity = 0 (fond coloré éteint par défaut, règle Vic) OK
+overlay limites_parcelles coché par défaut (famille Repères) OK
+z8 parcels route -> HTTP 204, 0 octet (le trou)
+
+== Reproduction ÎLE NOIRE (essai 1 = a3482087) ==
+600x470, z8.44, overlay limites_parcelles ÉTEINT (= a3482087) + parcels-ile 0 feature à z8
+=> île = silhouette sombre sans maillage. Capture avant/z8_600x470_ESSAI1_ile_noire.png
+   (comparer avant/z8_600x470_overlayON_defaut.png = maillage présent)

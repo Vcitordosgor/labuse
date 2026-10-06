@@ -559,7 +559,14 @@ def _parcel_tile_bytes(db: Session, z: int, x: int, y: int) -> bytes:
     # pixel et l'extent descend à 1024 (4 unités/px : les parcelles sub-pixel se quantifient,
     # l'aspect de la trame est inchangé — vérifié capture avant/après). Mesures : z9 5,57 Mo
     # → 0,61 Mo · z10 5,68 → 1,33 · z11 2,73 → 1,59. z12+ inchangé (brut, extent 4096).
-    simplify = {9: 60, 10: 30, 11: 15}.get(z, 0)
+    # G1-LOT3 — palier z8 : la carte est bornée à minZoom 8 (MapView `minZoom: 8`, « sous z8 l'île
+    # déborde du cadre »). Le floor maxBounds MONTE avec le canvas (1440×900 → z9.4, 4K → z11.1), donc
+    # z8 n'est atteint que par un petit canvas (fenêtre réduite / zoom navigateur) — mais z8 EST le
+    # plancher dur, et sous z9 la route renvoyait 204 → l'île perdait parcelles+maillage = « île noire »
+    # (essai 1 du lot 3). On sert donc z8. Tolérance 120 m : à z8 1 px ≈ 570 m, soit le DOUBLE de z9
+    # (285 m/60 m) → même tolérance visuelle (~0,2 px) que z9, extension cohérente du même LOD. Mesuré
+    # ≈ 0,10 Mo gz (cf. G1-MESURE §4), ride sur la tuile z8 unique de l'île (8/167/143), à la volée.
+    simplify = {8: 120, 9: 60, 10: 30, 11: 15}.get(z, 0)
     extent = 1024 if z <= 11 else 4096
     buffer = max(extent // 64, 8)
     geom_expr = (f"ST_SimplifyPreserveTopology(m.geom_3857, {simplify})" if simplify
@@ -787,9 +794,12 @@ def mvt_tile(z: int, x: int, y: int, request: Request) -> Response:
     exécuté de façon synchrone à la sortie du handler — succès, erreur OU client qui annule. La
     dépendance `Depends` déférait cette fermeture après la réponse ; à la déconnexion client ce report
     était sauté → transaction « idle in transaction » tenue jusqu'à saturer le pool (incident prod)."""
-    # FIX-CARTE C2 : bornes ALIGNÉES sur la source front (parcels-ile minzoom 9 / maxzoom 15) —
-    # au-delà de z15 le client sur-zoome, il ne demande jamais z16+ ; on ne sert donc que z9-15.
-    if z < 9 or z > 15:
+    # FIX-CARTE C2 : bornes ALIGNÉES sur la source front (parcels-ile minzoom 8 / maxzoom 15) —
+    # au-delà de z15 le client sur-zoome, il ne demande jamais z16+ ; on ne sert donc que z8-15.
+    # G1-LOT3 : borne basse z9→z8. La carte est bornée à minZoom 8 ; z8 = plancher dur atteignable
+    # (petit canvas / zoom navigateur). Le servir évite l'« île noire » quand l'overlay doublon est
+    # retiré (lot 2). z8 n'est PAS pré-chauffée (hors _WARM_ZOOMS) : 1 tuile île, générée à la volée.
+    if z < 8 or z > 15:
         return Response(status_code=204)  # hors plage : aucune connexion ouverte
     from .app import api_session
     with api_session() as db:            # transaction bornée au handler → fermée dans tous les cas

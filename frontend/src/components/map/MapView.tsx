@@ -646,7 +646,11 @@ export function MapView() {
       })
 
       // ── mode ÎLE : calques jumeaux sur tuiles MVT (431k parcelles — le GeoJSON ne tient pas) ──
-      m.addSource('parcels-ile', { type: 'vector', minzoom: 9, maxzoom: 15,
+      // G1-LOT3 — minzoom 9→8 : la carte est bornée à `minZoom: 8` ; au dézoom maximal d'un petit
+      // canvas (fenêtre réduite / zoom navigateur) le floor maxBounds descend jusqu'à z8. Servir la
+      // source dès z8 évite l'« île noire » une fois l'overlay doublon `limites_parcelles` retiré
+      // (lot 2) : à z8 ce sont `ile-fill`/`ile-limites`/clic qui portent l'île. Route : z8 servie.
+      m.addSource('parcels-ile', { type: 'vector', minzoom: 8, maxzoom: 15,
         tiles: [`${window.location.origin}/map/tiles/{z}/{x}/{y}.pbf`] })
       const SL = { source: 'parcels-ile', 'source-layer': 'parcels' } as const
       // M55-G suite (point 1) : trame neutre jumelle côté île (cf. parcels-base)

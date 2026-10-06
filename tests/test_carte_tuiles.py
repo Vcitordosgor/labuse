@@ -17,10 +17,14 @@ def client(engine):
 
 
 def test_zoom_borne_a_15_comme_la_source(client):
-    """C2 — l'endpoint parcelles ne sert que z9-15 (la source front cape à z15) : z16/z22 → 204."""
+    """C2 — l'endpoint parcelles ne sert que z8-15 (la source front cape à z15) : z16/z22 → 204.
+    G1-LOT3 : borne basse z9→z8 (la carte est bornée à minZoom 8, atteignable au dézoom d'un petit
+    canvas) → z8 n'est PLUS 204 (sinon « île noire » quand l'overlay doublon est retiré) ; z7 reste 204."""
     assert client.get("/map/tiles/16/1/1.pbf").status_code == 204
     assert client.get("/map/tiles/22/1/1.pbf").status_code == 204
-    assert client.get("/map/tiles/8/1/1.pbf").status_code == 204   # sous la source (minzoom 9)
+    assert client.get("/map/tiles/7/1/1.pbf").status_code == 204    # sous la source (minzoom 8)
+    # z8 EST servie (plus de 204 sur la borne) ; 8/1/1 est en mer → corps vide mais 200, pas 204.
+    assert client.get("/map/tiles/8/1/1.pbf").status_code == 200
 
 
 
