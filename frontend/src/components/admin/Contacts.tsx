@@ -9,7 +9,7 @@ import {
   deleteCommuneContact, getContactsInstitutionnels, patchCommuneContact, postCommuneContact,
   type Mairie,
 } from '../../lib/api'
-import { Loading } from '../Loading'
+import { Chargement } from '../Loading'
 import { ActBtn, Chip } from './AdminView'
 import { CONTACT_VIDE, ContactEdit, contactToForm, trimContact, type ContactForm } from '../shared/ContactEdit'
 
@@ -97,7 +97,7 @@ export function ContactsSection() {
   const choisie = communes.find((m) => m.insee === insee)
     ?? communes.find((m) => (m.contacts?.length ?? 0) > 0) ?? communes[0] ?? null
 
-  if (q.isLoading) return <Loading label="Contacts…" className="mx-auto mt-6 text-xs" />
+  if (q.isLoading) return <Chargement variant="bloc" label="Contacts…" className="mx-auto mt-6" />
   const d = q.data
   if (!d) return null
 

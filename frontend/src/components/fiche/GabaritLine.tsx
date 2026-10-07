@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { getGabarit, type GabGeom } from '../../lib/api'
 import { fmtInt } from '../../lib/format'
 import { Vigilance } from './primitives'
+import { Chargement } from '../Loading'
 // FICHE-FIX-5 (Lot J) — le gabarit = vignette pleine largeur + 3 Lignes (valeurs nowrap) ; un seul
 // « Ouvrir le Gabarit » (celui du haut, dans les outils du Potentiel).
 import { Lignes, Ligne, InfoI } from './formes'
@@ -79,7 +80,7 @@ export function GabaritLine({ idu }: { idu: string }) {
   return (
     <div data-gabarit-fiche className="flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2/60 p-2.5">
       <p className="label-caps text-[9.5px] text-txt-dim">Gabarit réglementaire</p>
-      {q.isLoading && <span className="text-[11px] text-txt-dim">Calcul…</span>}
+      {q.isLoading && <Chargement variant="inline" label="Calcul…" />}
       {q.isError && <span className="text-[11px] text-st-ecartee">Gabarit indisponible.</span>}
       {r && r.status === 'incomplete' && (
         <Vigilance title="Calcul incomplet — donnée réglementaire manquante">

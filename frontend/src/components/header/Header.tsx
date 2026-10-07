@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Fragment, useEffect, useState } from 'react'
 import { banAutocomplete, deleteLogo, getCommunes, getEnteteCloche, getEvents, getMarque, getMoi, getNotifPrefs, getParcelsGeojson, markAllEventsRead, markEventRead, modPatrimoineSearch, parcelAt, patchDigestFrequence, patchNotifPref, postLogo, postMarque, postRetour, searchParcels, type LabuseEvent } from '../../lib/api'
 import { estIdu, estSectionNumero, iduComplet, normSectionNumero } from '../../lib/format'
+import { Chargement } from '../Loading'
 
 // M87 P5.1 — REGROUPER les notifications : une ligne par commune quand plusieurs événements de même
 // nature s'y produisent (« 8 nouveaux permis à Saint-Louis » + « Voir les 8 → »), au lieu de N lignes
@@ -200,8 +201,8 @@ export function Omnibox() {
         aria-label="Lancer la recherche" aria-busy={searching}
         className="flex h-5 w-5 shrink-0 items-center justify-center text-txt-faint transition-colors duration-quick hover:text-mint disabled:cursor-wait">
         {searching ? (
-          /* DA — plus de spinner rotatif : pastille menthe pulsante sobre pendant la résolution. */
-          <span className="h-2 w-2 animate-pulse rounded-full bg-mint" aria-hidden />
+          /* CHARGEMENT-1 — l'indicateur unique (points menthe) pendant la résolution de la recherche. */
+          <Chargement variant="inline" />
         ) : (
           <svg viewBox="0 0 20 20" className="h-[15px] w-[15px]">
             <circle cx="9" cy="9" r="5.5" fill="none" stroke="currentColor" strokeWidth="1.7" />

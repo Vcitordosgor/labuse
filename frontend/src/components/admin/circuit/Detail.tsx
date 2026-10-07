@@ -17,6 +17,7 @@ import {
   type SourceRattLigne,
 } from '../../../lib/api'
 import { useApp } from '../../../store/useApp'
+import { Chargement } from '../../Loading'
 
 import type { CircuitData, Couleur } from './types'
 
@@ -61,7 +62,7 @@ export function Detail({ type, id, data, onClose, onOpen, retour }: Props) {
 // ── COMPTEUR (lot 2.2) — les réservoirs par état + les lignes en base non servies ──────────────
 function DetailCompteur({ back, onOpen }: { back: JSX.Element; onOpen: Ouvrir }) {
   const q = useQuery({ queryKey: ['circuit-detail', 'compteur'], queryFn: getAdminCircuitCompteur })
-  if (q.isLoading || !q.data) return <div className="detail on">{back}<div className="muted">Chargement…</div></div>
+  if (q.isLoading || !q.data) return <div className="detail on">{back}<div className="muted"><Chargement variant="bloc" /></div></div>
   const { compteurs: cpt, definition, groupes, non_servies, carte } = q.data
   return (
     <div className="detail on">
@@ -149,7 +150,7 @@ function DetailReservoir({ id, data, back, onOpen, rafraichir }:
   // CIRCUIT-P7 (lot 2) — « Suspendre la veille » (ou la reprendre) : bascule source_veille.actif.
   const veille = useMutation({ mutationFn: (actif: boolean) => postAdminSourceVeilleActive(id, actif), onSuccess: rafraichir })
 
-  if (q.isLoading || !q.data) return <div className="detail on">{back}<div className="muted">Chargement…</div></div>
+  if (q.isLoading || !q.data) return <div className="detail on">{back}<div className="muted"><Chargement variant="bloc" /></div></div>
   const { reservoir: r, alimente, chiffres, rapport_agent, recalculs, historique } = q.data
   const [c, l] = r.etat as [Couleur, string]
   const f = r.filtre || {}
@@ -331,7 +332,7 @@ const estSondeMethode = (m?: string) => ['api', 'page', 'entete', 'temoin'].incl
 function DetailRobinet({ id, data, back, onOpen }:
   { id: string; data: CircuitData; back: JSX.Element; onOpen: Ouvrir; rafraichir: () => void }) {
   const q = useQuery({ queryKey: ['circuit-detail', 'robinet', id], queryFn: () => getAdminCircuitRobinet(id) })
-  if (q.isLoading || !q.data) return <div className="detail on">{back}<div className="muted">Chargement…</div></div>
+  if (q.isLoading || !q.data) return <div className="detail on">{back}<div className="muted"><Chargement variant="bloc" /></div></div>
   const { robinet: r, chiffres, amont, fuites, eau_ancienne, dernier_controle } = q.data
   const [c, l] = r.etat as [Couleur, string]
   const idReservoir = (slug: string) => data.reservoirs.find((x) => x.slug === slug)?.id
@@ -448,7 +449,7 @@ function DetailPompe({ back, rafraichir }: { back: JSX.Element; rafraichir: () =
   const basculer = useMutation({ mutationFn: (run: string) => postAdminFluxBascule(run), onSuccess: apresGeste })
   const revenir = useMutation({ mutationFn: postAdminCircuitRevenir, onSuccess: apresGeste })
 
-  if (q.isLoading || !q.data) return <div className="detail on">{back}<div className="muted">Chargement…</div></div>
+  if (q.isLoading || !q.data) return <div className="detail on">{back}<div className="muted"><Chargement variant="bloc" /></div></div>
   const p = q.data
   const candidat = p.candidat as string | null
   const precedent = p.precedent?.scoring_run as string | undefined

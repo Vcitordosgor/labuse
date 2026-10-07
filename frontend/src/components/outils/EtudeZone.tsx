@@ -26,7 +26,7 @@ import { etudeZone, etudeZoneEntreprises, nafFamilles, nafSearch, parcelAt, type
 import type { EtudeZoneDestinations, EtudeZoneResult, NafFamille, NafOption, ZoneEntreprises, ZoneFamille } from '../../lib/types'
 import { iduCourt } from '../../lib/format'
 import { useApp } from '../../store/useApp'
-import { Squelette } from '../Loading'
+import { Chargement, Squelette } from '../Loading'
 import { ErrorState } from '../States'
 import { DestinationBadge, DestinationSelect } from './DestinationSelect'
 import { Bouton } from '../ui/Bouton'
@@ -224,7 +224,7 @@ export function EtudeZone() {
           le bouton DISPARAÎT (l'étape 2 s'ouvre d'elle-même) ; il revient si l'on relance (mut.reset). */}
       {!res?.zone_disponible && (
         <Bouton niveau="primaire" ton="vert" onClick={() => mut.mutate()} disabled={!pretA || mut.isPending}>
-          {mut.isPending ? 'Calcul de la zone…' : 'Lire la zone'}
+          {mut.isPending ? <Chargement variant="inline" accent="courant" label="Calcul de la zone…" /> : 'Lire la zone'}
         </Bouton>
       )}
 

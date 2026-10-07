@@ -15,6 +15,7 @@ import { Legend } from './Legend'
 import { CouchesTuyauLayers } from './CouchesTuyau'  // COUCHES-TUYAU-1 lot 2
 import { VefaDetail } from './VefaDetail'
 import { MapToolbar } from './MapToolbar'
+import { Chargement } from '../Loading'
 
 // ── Fonds de plan : registre PARTAGÉ (carte principale + comparateur swipe). Voir ./basemaps.
 
@@ -878,8 +879,15 @@ export function MapView() {
           const prec = props?.geoloc ? 'Position approchée (adresse)' : 'Position de la parcelle rattachée'
           const br = document.createElement('br'); sub.appendChild(br); sub.appendChild(document.createTextNode(prec))
           box.appendChild(sub)
-          const det = document.createElement('div'); det.style.cssText = 'margin-top:9px;color:#c9d2cc;font-size:12px;line-height:1.6'
-          det.textContent = 'Chargement de la fiche…'; box.appendChild(det)
+          // CHARGEMENT-1 — l'indicateur unique (trois points menthe) même dans ce popup en DOM impératif.
+          const det = document.createElement('div'); det.style.cssText = 'margin-top:9px;color:#c9d2cc;font-size:12px;line-height:1.6;display:flex;align-items:center;gap:8px'
+          const pts = document.createElement('span'); pts.style.cssText = 'display:inline-flex;gap:4px'
+          for (let i = 0; i < 3; i++) {
+            const d = document.createElement('span'); d.className = 'labuse-dot'
+            d.style.cssText = `width:6px;height:6px;border-radius:9999px;background:#4ADE80;animation-delay:${i * 160}ms`
+            pts.appendChild(d)
+          }
+          det.appendChild(pts); det.appendChild(document.createTextNode('Chargement de la fiche…')); box.appendChild(det)
           const popup = new maplibregl.Popup({ offset: 12, className: 'labuse-popup', maxWidth: '320px' })
             .setLngLat((e as maplibregl.MapLayerMouseEvent).lngLat).setDOMContent(box).addTo(m)
           modPermisFiche(String(pid)).then((f) => {
@@ -1634,12 +1642,14 @@ export function MapView() {
           ne contenait qu'un Squelette 1 ligne (message en aria seulement) → visuellement un ovale
           vide. On affiche désormais le MESSAGE en clair (pastille dimensionnée à son contenu), avec
           un point qui pulse — plus de pilule vide, la largeur suit le texte. */}
+      {/* CHARGEMENT-1 — indicateur de tuiles DISCRET, dans un coin (bas-gauche), jamais au centre :
+          les trois points menthe de l'app + un libellé court. Priorité au message le plus précis :
+          parcelles > couche > carte. */}
       {(geo.isFetching || tilesLoading || layersFetching > 0) && (
-        <div data-carte-loading role="status" aria-live="polite"
-          className="pointer-events-none absolute left-1/2 top-4 flex -translate-x-1/2 items-center gap-2 rounded-full border border-mint/30 bg-surface-2 px-3.5 py-1.5 text-[11px] text-txt-dim shadow-elev-2">
-          {/* COUCHES-2 point 2 — priorité au message le plus précis : parcelles > couche > carte. */}
-          <span className="sk h-2.5 w-2.5 shrink-0 rounded-full" aria-hidden />
-          {geo.isFetching ? 'Chargement des parcelles…' : layersFetching > 0 ? 'Chargement de la couche…' : 'Chargement de la carte…'}
+        <div data-carte-loading
+          className="pointer-events-none absolute bottom-4 left-4 flex items-center rounded-full border border-line-2 bg-surface-2/90 px-3 py-1.5 shadow-elev-2">
+          <Chargement variant="inline"
+            label={geo.isFetching ? 'Parcelles…' : layersFetching > 0 ? 'Couche…' : 'Carte…'} />
         </div>
       )}
       {/* P3 : rappel de ce que signifie le violet pendant une recherche active */}

@@ -231,4 +231,7 @@ def page(titre: str, corps: str, *, w: int | None = None, legal: bool = False,
             f"family=Inter:wght@400;500;600&display=swap\" rel=\"stylesheet\">"
             f"<style>{CSS}</style>{head}</head>"
             f"<body{body_cls} style=\"{wvar}\"><main class=\"{cls} bloc\" role=\"main\" style=\"{wvar}\">"
-            f"<div class=\"top\">{corps}</div>{foot_html}</main></body></html>")
+            f"<div class=\"top\">{corps}</div>{foot_html}</main>"
+            # CHARGEMENT-1 (point 6) — gate téléphone/tablette, same-origin (CSP script-src 'self').
+            # Toutes les pages du tunnel (connexion, 2FA, légales, 404) renvoient vers l'ordinateur.
+            f"<script src=\"/ordinateur.js\" defer></script></body></html>")

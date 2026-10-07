@@ -14,7 +14,7 @@ import { AnalyseLabuseCard } from './AnalyseLabuseCard'   // RETOURS-14 P1 — c
 import { fmtInt, fmtM2, fmtDateNum, fmtLibelleBrut, fmtPctConsomme, iduComplet } from '../../lib/format'
 import { layerLabel } from '../../lib/layers'
 import { CLIENT } from '../../lib/strings'
-import { Squelette } from '../Loading'
+import { Chargement, Squelette } from '../Loading'
 import { EmptyState, ErrorState } from '../States'
 import { DeplacerMenu } from '../crm/DeplacerMenu'   // DA-FIX-5c — menu « Déplacer vers… » partagé (kanban CRM)
 import { AskBar } from './AskBar'
@@ -124,7 +124,7 @@ function SignalerErreur({ idu, section }: { idu: string; section?: string | null
       <div className="mt-2 flex items-center gap-2">
         <button data-signalement-submit onClick={() => m.mutate()} disabled={m.isPending}
           className="rounded-md bg-mint px-3 py-1 text-xs font-medium text-mint-ink">
-          {m.isPending ? 'Envoi…' : 'Envoyer'}
+          {m.isPending ? <Chargement variant="inline" accent="courant" label="Envoi…" /> : 'Envoyer'}
         </button>
         <button onClick={() => setOpen(false)} className="text-[11px] text-txt-mut hover:text-txt">Annuler</button>
         {m.isError && <span className="text-[11px] text-st-ecartee">Échec — réessayez.</span>}

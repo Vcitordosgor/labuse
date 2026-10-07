@@ -8,7 +8,7 @@ import { useState } from 'react'
 import { fusionnerProjets, getCourrierDemandes, getProjets, postCourrierClientStatut, type Cadrage, type Projet } from '../../lib/api'
 import { fmtEurCompact } from '../../lib/format'
 import { useApp } from '../../store/useApp'
-import { Skeleton } from '../Loading'
+import { Chargement, Skeleton } from '../Loading'
 import { EmptyState } from '../States'
 import { Bouton } from '../ui/Bouton'
 import { Chip } from '../ui/Chip'   // DA-FIX-5b — Actifs/Archivées/Mes courriers sont des FILTRES → Chip
@@ -121,7 +121,7 @@ function DedupBanner({ groupe }: { groupe: Projet[] }) {
         {!res && (
           <button data-dedup-fusionner onClick={() => fusion.mutate()} disabled={fusion.isPending}
             className="min-h-7 shrink-0 rounded-lg border border-mint px-3 py-1.5 text-[11px] font-semibold text-mint transition-colors duration-quick hover:bg-mint/10">
-            {fusion.isPending ? 'Fusion…' : `Fusionner les ${groupe.length} →`}</button>
+            {fusion.isPending ? <Chargement variant="inline" accent="courant" label="Fusion…" /> : `Fusionner les ${groupe.length} →`}</button>
         )}
       </div>
       {res && <p data-dedup-res className="mt-2 text-[11px] text-mint">{res}</p>}

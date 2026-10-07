@@ -22,7 +22,7 @@ import { TOKENS } from '../../lib/tokens'
 import { useApp } from '../../store/useApp'
 import { EntreeParcelle, type SourceParcelle } from './EntreeParcelle'   // RECETTE-1 F2
 import { Reinitialiser } from '../ui/Reinitialiser'   // RECETTE-1 F3
-import { Squelette } from '../Loading'
+import { Chargement, Squelette } from '../Loading'
 import { ErrorState } from '../States'
 import { Bouton } from '../ui/Bouton'
 import { Retour } from '../ui/Retour'
@@ -239,7 +239,7 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
             {/* RECETTE-PROD-1 (9a) — « Voir plus (+50) » sur UNE seule ligne (shrink-0 + nowrap). */}
             {list.hasNextPage && (
               <Bouton niveau="lien" data-piscines-voir-plus className="shrink-0 whitespace-nowrap" onClick={() => list.fetchNextPage()} disabled={list.isFetchingNextPage}>
-                {list.isFetchingNextPage ? 'Chargement…' : `Voir plus (+${PAGE})`}
+                {list.isFetchingNextPage ? <Chargement variant="inline" /> : `Voir plus (+${PAGE})`}
               </Bouton>
             )}
           </div>

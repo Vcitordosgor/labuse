@@ -4,6 +4,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { getAdminCron, getAdminCronLog, postAdminCronRun, type CronJob } from '../../lib/api'
+import { Chargement } from '../Loading'
 
 const TON: Record<string, { c: string; l: string }> = {
   ok: { c: 'text-mint bg-mint/12', l: 'OK' },
@@ -70,7 +71,7 @@ export function CronSection() {
       {msg && <p className="rounded-md bg-surface-2 px-3 py-1.5 text-[11.5px] text-txt-mut">{msg}</p>}
       <p className="text-[11px] text-txt-dim">{q.data?.note}</p>
       <div className="overflow-hidden rounded-xl border border-line-2">
-        {q.isLoading && <p className="p-4 text-[12px] text-txt-dim">Chargement…</p>}
+        {q.isLoading && <div className="p-4"><Chargement variant="bloc" /></div>}
         {jobs.map((j) => (
           <JobRow key={j.nom} j={j} onRun={() => run.mutate(j.nom)} ouvrirLog={() => setLogNom(j.nom)} />
         ))}
@@ -83,7 +84,7 @@ export function CronSection() {
             <button onClick={() => setLogNom(null)} className="text-txt-dim hover:text-txt">✕</button>
           </div>
           <pre className="max-h-64 overflow-auto px-3 py-2 font-mono text-[10.5px] leading-snug text-txt">
-            {logQ.isLoading ? 'Chargement…' : (logQ.data?.lignes?.length ? logQ.data.lignes.join('\n') : (logQ.data?.note ?? 'aucune ligne.'))}
+            {logQ.isLoading ? <Chargement variant="inline" /> : (logQ.data?.lignes?.length ? logQ.data.lignes.join('\n') : (logQ.data?.note ?? 'aucune ligne.'))}
           </pre>
         </div>
       )}

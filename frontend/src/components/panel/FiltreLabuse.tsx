@@ -16,6 +16,7 @@ import { countActiveFilters, resumeCriteres } from '../../lib/filters'
 import { BANDE_META, BANDE_ORDER } from '../../lib/status'
 import { CLIENT } from '../../lib/strings'
 import { EMPTY_FILTERS, useApp, type Filters } from '../../store/useApp'
+import { Chargement } from '../Loading'
 import { Tip } from '../Tip'
 import { Bouton } from '../ui/Bouton'
 import { Case } from '../ui/Case'
@@ -486,7 +487,7 @@ export function SectionProprietaire() {
         <div className="gcard mt-2 flex flex-col gap-3 p-3">
           {/* En-tête : source + millésime, et l'état de couverture (jamais un zéro muet). */}
           <p className="text-[10.5px] leading-snug text-txt-dim">
-            {fq.isLoading ? 'Chargement…'
+            {fq.isLoading ? <Chargement variant="inline" />
               : fac ? <>Source DGFiP · millésime {fac.millesime}</> : 'Données propriétaire indisponibles.'}
           </p>
           {fac && !couvert && (

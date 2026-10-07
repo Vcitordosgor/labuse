@@ -16,6 +16,7 @@ import { CourrierSection } from './Courrier'
 import { RadarSection } from './Radar'
 import { ContactsSection } from './Contacts'
 import { CronSection } from './Cron'
+import { Chargement } from '../Loading'
 
 // ADMIN-1 (AD2) — « sources »/« flux » ne sont plus des sections de menu : elles sont FUSIONNÉES
 // dans « donnees » (= le Circuit). CIRCUIT-P2 (lot 1.2) — « cron » redevient une page à part
@@ -225,7 +226,7 @@ function PilotageSection({ data, go, majAt }: { data: AdminPilotage | undefined;
     setDegel(sujet)
     try { await postAdminDegeler(sujet); qc.invalidateQueries({ queryKey: ['admin-pilotage'] }) } finally { setDegel(null) }
   }
-  if (!data) return <div className="py-10 text-center text-xs text-txt-mut">Chargement…</div>
+  if (!data) return <div className="py-10 text-center"><Chargement variant="bloc" /></div>
   const st = data.stripe
   const caCourant = Object.entries(st.ca_mois ?? {}).at(-1)?.[1] ?? 0
 

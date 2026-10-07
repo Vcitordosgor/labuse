@@ -10,6 +10,7 @@ import { useApp } from '../../store/useApp'
 import { Badge } from '../ui/Badge'
 import { Bouton } from '../ui/Bouton'
 import { Chip } from '../ui/Chip'
+import { Chargement } from '../Loading'
 import { ParcelInput } from '../ParcelInput'
 import { BilanEcran } from '../fiche/BilanEcran'
 import {
@@ -227,7 +228,7 @@ function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
             )}
             {erreur && <p className="my-3 border-l-2 border-amber pl-2.5 text-[13px] text-amber">{erreur}</p>}
             <Bouton niveau="primaire" ton="vert" className="w-full" disabled={!idu || gabaritBloque || !!enCours} onClick={generer}>
-              {enCours ? 'Génération…' : d.cta}
+              {enCours ? <Chargement variant="inline" accent="courant" label="Génération…" /> : d.cta}
             </Bouton>
           </div>
         )}
@@ -245,7 +246,7 @@ function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
             {erreur && <p className="my-3 border-l-2 border-amber pl-2.5 text-[13px] text-amber">{erreur}</p>}
             <Bouton niveau="primaire" ton="vert" className="w-full" disabled={idusValides.length < 2 || !!enCours}
               onClick={async () => { if (await ouvrir(docComparatifUrl(idusValides), 'comparatif')) { enregistrer('comparatif', idusValides); onClose() } }}>
-              {enCours ? 'Génération…' : d.cta}
+              {enCours ? <Chargement variant="inline" accent="courant" label="Génération…" /> : d.cta}
             </Bouton>
           </div>
         )}
@@ -266,7 +267,7 @@ function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
             {erreur && <p className="my-3 border-l-2 border-amber pl-2.5 text-[13px] text-amber">{erreur}</p>}
             <Bouton niveau="primaire" ton="vert" className="w-full" disabled={!idu || !!enCours}
               onClick={async () => { if (idu && await ouvrir(docEtudeZoneUrl(idu, rayon), 'etude-zone')) { enregistrer('etude-zone', [idu], rayon); onClose() } }}>
-              {enCours ? 'Génération…' : d.cta}
+              {enCours ? <Chargement variant="inline" accent="courant" label="Génération…" /> : d.cta}
             </Bouton>
           </div>
         )}
@@ -331,7 +332,7 @@ function LigneDoc({ r, onChange }: { r: DocGenereRow; onChange: () => void }) {
       </td>
       <td className="px-2.5">
         <div className="flex justify-end gap-1.5">
-          <Bouton niveau="secondaire" ton="vert" className={btn} disabled={busy} onClick={ouvrir}>{busy ? 'Ouverture…' : 'Ouvrir'}</Bouton>
+          <Bouton niveau="secondaire" ton="vert" className={btn} disabled={busy} onClick={ouvrir}>{busy ? <Chargement variant="inline" accent="courant" label="Ouverture…" /> : 'Ouvrir'}</Bouton>
           {/* Excel : seulement sur les lignes Bilan ET si l'export existe (sinon absent, pas grisé). */}
           {r.doc_type === 'bilan' && r.excel && r.idus[0] && (
             <Bouton niveau="secondaire" ton="vert" className={btn} disabled={busy}

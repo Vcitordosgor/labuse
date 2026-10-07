@@ -13,6 +13,7 @@ import {
 } from '../../lib/api'
 import { MODULES } from '../outils/registry'
 import { ActBtn, Chip, Panel, PHead } from './AdminView'
+import { Chargement } from '../Loading'
 
 const fmtReu = (iso?: string | null) => {
   if (!iso) return '—'
@@ -122,7 +123,7 @@ export function ProduitSection() {
     return MODULES.filter((m) => !m.hidden && !vus.has(m.label)).map((m) => m.label)
   }, [usageAgg])
 
-  if (!d) return <div className="py-10 text-center text-xs text-txt-mut">Chargement…</div>
+  if (!d) return <div className="py-10 text-center"><Chargement variant="bloc" /></div>
   const usageVues = voirTout ? usageAgg : usageAgg.slice(0, 15)
   const max = Math.max(...usageAgg.map((u) => u.n), 1)
 

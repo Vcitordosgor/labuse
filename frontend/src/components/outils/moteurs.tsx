@@ -8,7 +8,7 @@ import { CLIENT } from '../../lib/strings'
 import { fmtEurCompact, fmtInt } from '../../lib/format'
 import { TOKENS } from '../../lib/tokens'
 import { EMPTY_FILTERS, useApp } from '../../store/useApp'
-import { Squelette } from '../Loading'
+import { Chargement, Squelette } from '../Loading'
 import { EmptyState, ErrorState } from '../States'
 import { Tip } from '../Tip'
 import { CP_COMMUNES } from '../panel/FiltreLabuse'   // RETOURS-11 T6 — source unique des 24 communes
@@ -79,16 +79,14 @@ export function M15({ communeOverride }: { communeOverride?: string | null } = {
         ))}
       </div>
 
-      {/* UI DE CHARGEMENT HONNÊTE (Lot B) — squelettes de lignes + Annuler pendant le recalcul (~2 s). */}
+      {/* UI DE CHARGEMENT HONNÊTE (Lot B) — points menthe + Annuler pendant le recalcul (~2 s). */}
       {sim.isLoading && (
         <div data-m15-loading className="flex flex-col gap-1.5">
           <div className="flex items-center justify-between">
             <p className="text-[11px] text-txt-mut">Recalcul à blanc en cours…</p>
             <Bouton niveau="lien" data-m15-annuler onClick={annuler}>Annuler</Bouton>
           </div>
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="h-8 animate-pulse rounded-lg bg-surface-3" style={{ opacity: 1 - i * 0.12 }} />
-          ))}
+          <Chargement variant="bloc" />
         </div>
       )}
       {sim.isError && <ErrorState message="Recalcul indisponible — réessayez." retry={() => sim.refetch()} />}

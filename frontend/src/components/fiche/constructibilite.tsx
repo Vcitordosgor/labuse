@@ -11,7 +11,7 @@ import { getCalculetteDefaults, getFaisabilite, getModeB, getPipelineForParcel, 
 import { fmtEurCompact, fmtInt, fmtM2, fmtPctConsomme, fmtSup } from '../../lib/format'
 import { Chevron } from '../ui/Chevron'
 import { PERIM_POTENTIEL_COURT } from '../../lib/perimetres'
-import { Squelette } from '../Loading'
+import { Chargement, Squelette } from '../Loading'
 import { ErrorState } from '../States'
 import { BlocIndisponible } from './BlocIndisponible'
 import type { Fiche, PotentielTransformation } from '../../lib/types'
@@ -263,7 +263,7 @@ function CalculetteBody({ idu, defauts, hideSource = false, prixDemandeExterne, 
     <div data-calculette>
       <p className="label-caps mb-1 flex items-center gap-2">
         Calculette de charge foncière
-        {q.isFetching && <span data-calc-recalc className="animate-pulse text-[9px] normal-case tracking-normal text-mint">recalcul…</span>}
+        {q.isFetching && <span data-calc-recalc><Chargement variant="inline" label="recalcul…" /></span>}
       </p>
       <div className="card-elev px-3 py-2.5 text-[11px] leading-relaxed text-txt">
         {q.isLoading && <Squelette lignes={3} />}
@@ -585,7 +585,7 @@ export function FaisabiliteTab({ idu }: { idu: string; embedded?: boolean }) {
       <div data-faisa-verdict className="rounded-md border-2 border-mint/70 bg-mint/[0.05] px-4 py-3">
         <div className="text-[10.5px] uppercase tracking-[0.12em] text-txt-dim">
           Verdict · zone {pan.zone}{pan.a_cheval && pan.portion_zone ? ` (à cheval)` : ''} · <span className="whitespace-nowrap">{fmtM2(pan.surface_m2)}</span>
-          {q.isFetching && <span className="ml-2 animate-pulse normal-case tracking-normal text-mint">recalcul…</span>}
+          {q.isFetching && <Chargement variant="inline" label="recalcul…" className="ml-2" />}
         </div>
         <div data-faisa-verdict-phrase className="mt-2 text-[15px] font-medium leading-snug text-txt-hi">{pan.verdict}</div>
         <div className="mt-2.5 flex flex-wrap items-center gap-1.5">

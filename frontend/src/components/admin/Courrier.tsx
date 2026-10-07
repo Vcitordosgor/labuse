@@ -16,6 +16,7 @@ import {
 } from '../../lib/api'
 import { ActBtn, Chip, Panel } from './AdminView'
 import { Chip as ChipUi } from '../ui/Chip'
+import { Chargement } from '../Loading'
 
 const fmtReu = (iso?: string | null, avecHeure = true) => {
   if (!iso) return '—'
@@ -78,7 +79,7 @@ export function CourrierSection() {
   const lib = (s: string) => CHIP_LABEL[s] ?? libelles[s] ?? s
 
   const nMasques = useMemo(() => (demandes ?? []).filter(estTest).length, [demandes])
-  if (!demandes) return <div className="py-10 text-center text-xs text-txt-mut">Chargement…</div>
+  if (!demandes) return <div className="py-10 text-center"><Chargement variant="bloc" /></div>
 
   const visibles = voirTests ? demandes : demandes.filter((d) => !estTest(d))
   const compteurs: Record<string, number> = Object.fromEntries(ORDRE.map((s) => [s, 0]))

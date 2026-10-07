@@ -12,6 +12,7 @@ import { CP_COMMUNES } from '../panel/FiltreLabuse'
 import { FiltreFacettes } from '../panel/FiltreFacettes'
 import { FiltreProvider } from '../panel/filtreContext'
 import { Bouton } from '../ui/Bouton'
+import { Chargement } from '../Loading'
 import { EMPTY_FILTERS, useApp, type Filters } from '../../store/useApp'
 
 const MONO = 'ui-monospace, SFMono-Regular, Menlo, monospace'
@@ -172,7 +173,7 @@ export function ParcoursProjet({ prefill, onVoir, onFermer, accent }: {
         {erreur && <p style={{ fontSize: 12, color: '#E0B341', margin: '12px 0 0' }}>{erreur}</p>}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 18, marginTop: 18, borderTop: '.5px solid #1E2A23' }}>
           <button onClick={() => setPorte(null)} style={{ fontSize: 13, color: '#6F8578', background: 'none', border: 0, cursor: 'pointer' }}>← Retour</button>
-          <Bouton data-projet-creer-zero niveau="primaire" ton={accent === 'ia' ? 'ia' : 'vert'} disabled={envoi} onClick={() => void creer(true)}>{envoi ? 'Création…' : 'Créer le projet vide'}</Bouton>
+          <Bouton data-projet-creer-zero niveau="primaire" ton={accent === 'ia' ? 'ia' : 'vert'} disabled={envoi} onClick={() => void creer(true)}>{envoi ? <Chargement variant="inline" accent="courant" label="Création…" /> : 'Créer le projet vide'}</Bouton>
         </div>
       </div>
     )
@@ -290,7 +291,7 @@ export function ParcoursProjet({ prefill, onVoir, onFermer, accent }: {
             <Bouton data-projet-suivant niveau="primaire" ton={accent === 'ia' ? 'ia' : 'vert'} onClick={avancer}>Continuer →</Bouton>
           ) : (
             <Bouton data-projet-creer niveau="primaire" ton={accent === 'ia' ? 'ia' : 'vert'} disabled={envoi} onClick={() => void creer()}>
-              {envoi ? 'Création…' : 'Créer le projet'}</Bouton>
+              {envoi ? <Chargement variant="inline" accent="courant" label="Création…" /> : 'Créer le projet'}</Bouton>
           )}
         </div>
       </div>

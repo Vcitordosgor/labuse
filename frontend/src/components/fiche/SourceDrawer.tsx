@@ -3,6 +3,7 @@ import { useEffect } from 'react'
 import { getSources } from '../../lib/api'
 import { layerLabel } from '../../lib/layers'
 import { useApp } from '../../store/useApp'
+import { Chargement } from '../Loading'
 
 /** Drawer « source » (exigence : jamais un cul-de-sac). S'ouvre PAR-DESSUS la fiche, qui reste
  *  montée — fermeture par ✕, clic-extérieur et Échap. Montre l'extrait (la ligne), sa référence
@@ -58,7 +59,7 @@ export function SourceDrawer() {
             </div>
           ) : (
             <p className="text-[11px] leading-relaxed text-txt-dim">
-              {sources.isLoading ? 'Chargement…'
+              {sources.isLoading ? <Chargement variant="inline" />
                 : 'Donnée calculée par LABUSE (couche interne) — pas de connecteur externe associé.'}
             </p>
           )}

@@ -3,6 +3,8 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'
 import { ErrorBoundary } from './components/ErrorBoundary'
+import { EcranOrdinateur } from './components/EcranOrdinateur'
+import { estAppareilMobile } from './lib/appareil'
 import { _setServedRun, fetchServedRun, getSources, getSourcesCouverture, is429, SOURCE } from './lib/api'
 import './styles/index.css'
 
@@ -59,6 +61,14 @@ function _lancerPrefetch(): void {
 }
 
 function _rendre(): void {
+  // CHARGEMENT-1 (point 6) — téléphone/tablette : l'app NE s'ouvre PAS. Un écran unique renvoie vers
+  // l'ordinateur ; aucune autre page (ni App, ni admin) n'est montée. Décidé ici, avant tout le reste.
+  if (estAppareilMobile()) {
+    ReactDOM.createRoot(document.getElementById('root')!).render(
+      <React.StrictMode><EcranOrdinateur /></React.StrictMode>,
+    )
+    return
+  }
   if (SOURCE) _lancerPrefetch()
   ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>

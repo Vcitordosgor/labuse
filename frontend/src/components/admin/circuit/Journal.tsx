@@ -8,6 +8,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
 
 import { getAdminCircuitJournal } from '../../../lib/api'
+import { Chargement } from '../../Loading'
 
 import type { CircuitData } from './types'
 
@@ -90,7 +91,7 @@ export function Journal({ data, onOpen, onAujourdhui }:
         <button className={type === '' ? 'on' : ''} onClick={() => { setType(''); setPage(1) }}>tous</button>
       </div>
       <div className="jl h"><span>quand</span><span>geste</span><span>cible</span><span>par</span><span>résultat</span></div>
-      {q.isLoading ? <div className="muted" style={{ padding: 12 }}>Chargement…</div>
+      {q.isLoading ? <div className="muted" style={{ padding: 12 }}><Chargement variant="bloc" /></div>
         : entrees.length === 0 ? <div className="muted" style={{ padding: 12 }}>Aucune entrée.</div>
           : entrees.map((e: any) => {
             if (e.n > 1) {

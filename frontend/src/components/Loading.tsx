@@ -1,45 +1,91 @@
-// A4 (ajustements post-revue) — chargement VISIBLE et affirmé : de GROS points menthe qui
-// ondulent en séquence. Le critère de Vic : on doit comprendre de loin « ça charge, ce n'est
-// pas cassé ». Appliqué partout où un délai est perceptible (carte, fiche, entretien, outils…).
-export function Loading({ label, className = '', big = false, accent = 'mint' }:
-  { label?: string; className?: string; big?: boolean; accent?: 'mint' | 'violet' }) {
-  const dot = big ? 'h-3.5 w-3.5' : 'h-2.5 w-2.5'
-  // accent 'violet' (#B497F0) = charte de la partie OUTILS ; 'mint' partout ailleurs (défaut).
-  const tone = accent === 'violet'
-    ? 'bg-violet shadow-[0_0_8px_rgba(180,151,240,0.6)]'
-    : 'bg-mint shadow-[0_0_8px_rgba(92,230,161,0.6)]'
-  return (
-    <span className={`inline-flex items-center gap-2.5 text-txt-mut ${className}`} role="status" aria-live="polite" aria-busy="true">
-      <span className="flex items-center gap-1.5" aria-hidden>
-        {[0, 1, 2].map((i) => (
-          <span key={i} className={`labuse-dot ${dot} rounded-full ${tone}`}
-            style={{ animationDelay: `${i * 160}ms` }} />
-        ))}
-      </span>
-      {label && <span className={big ? 'text-sm' : 'text-xs'}>{label}</span>}
+import { useEffect, useState } from 'react'
+
+// CHARGEMENT-1 — L'UNIQUE indicateur de chargement de l'app. Trois petits points menthe (le vert de
+// marque) qui défilent en boucle. Deux variantes et RIEN d'autre :
+//   • `inline`  — dans un bouton, une case, une ligne de texte (flux horizontal, hauteur de ligne).
+//   • `bloc`    — centré dans un panneau vide le temps que la donnée arrive.
+// Il ne s'affiche QUE si l'attente dépasse un court délai (300 ms par défaut) : les actions rapides
+// ne clignotent pas. Il remplace tous les anciens indicateurs (spinners, « Chargement… » texte,
+// squelettes gris) — un seul langage visuel. `Loading`/`Skeleton`/`Squelette` ne sont plus que des
+// adaptateurs de compatibilité qui rendent CE composant (voir bas de fichier).
+
+// Délai avant d'AFFICHER : le composant est monté quand l'attente commence et démonté quand elle
+// finit. S'il est démonté avant `ms`, rien ne s'est jamais affiché (pas de clignotement). `ms=0`
+// affiche tout de suite (cas rares où l'on veut un retour immédiat).
+export function useDelai(ms = 300): boolean {
+  const [pret, setPret] = useState(ms <= 0)
+  useEffect(() => {
+    if (ms <= 0) return
+    const t = window.setTimeout(() => setPret(true), ms)
+    return () => window.clearTimeout(t)
+  }, [ms])
+  return pret
+}
+
+export function Chargement({
+  variant = 'bloc',
+  label,
+  className = '',
+  accent = 'mint',
+  delai = 300,
+}: {
+  variant?: 'inline' | 'bloc'
+  label?: string
+  className?: string
+  // Les points sont TOUJOURS menthe (le vert de marque) — Outils et Copilote compris. Seul 'courant'
+  // existe en plus : la couleur du texte courant, pour que les points restent visibles DANS un bouton
+  // plein (ex. menthe foncé sur fond menthe).
+  accent?: 'mint' | 'courant'
+  delai?: number
+}) {
+  const pret = useDelai(delai)
+  if (!pret) return null
+
+  const tone = accent === 'courant' ? 'bg-current' : 'bg-mint'
+  const dots = (
+    <span className="inline-flex items-center gap-1" aria-hidden>
+      {[0, 1, 2].map((i) => (
+        <span key={i} className={`labuse-dot h-1.5 w-1.5 rounded-full ${tone}`}
+          style={{ animationDelay: `${i * 160}ms` }} />
+      ))}
     </span>
   )
-}
 
-// Bloc squelette (listes, cartes) — pulse discret, complète les gros points.
-export function Skeleton({ className = '' }: { className?: string }) {
-  return <div className={`animate-pulse rounded-md bg-surface-3 ${className}`} />
-}
-
-// DA-FIX-4 Lot 2 (DA-036) — LE squelette de chargement unique. `lignes` (listes/panneaux) ou `bloc`
-// (carte, graphiques). Seule animation tolérée hors apparition : la pulsation d'opacité lente du
-// squelette (classe `.sk` = labuse-sk, 1 → 0,6, 1,2 s). Remplace Loading (gros points), les 2 spinners
-// rotatifs (App/Header), MapLoading et les « Chargement… » texte.
-export function Squelette({ lignes = 3, bloc = false, className = '', label }:
-  { lignes?: number; bloc?: boolean; className?: string; label?: string }) {
-  if (bloc) {
-    return <div className={`sk min-h-[80px] w-full flex-1 ${className}`} role="status" aria-busy="true" aria-label={label ?? 'Chargement'} />
+  if (variant === 'inline') {
+    return (
+      <span className={`inline-flex items-center gap-2 align-middle text-txt-mut ${className}`}
+        role="status" aria-live="polite" aria-busy="true">
+        {dots}
+        {label && <span className="text-xs">{label}</span>}
+      </span>
+    )
   }
+
   return (
-    <div className={`flex w-full flex-col gap-2 ${className}`} role="status" aria-busy="true" aria-label={label ?? 'Chargement'}>
-      {Array.from({ length: lignes }).map((_, i) => (
-        <div key={i} className="sk h-4" style={{ width: i === lignes - 1 ? '62%' : '100%' }} />
-      ))}
+    <div className={`flex min-h-[48px] w-full flex-col items-center justify-center gap-2 py-3 text-txt-mut ${className}`}
+      role="status" aria-live="polite" aria-busy="true">
+      {dots}
+      {label && <span className="text-xs">{label}</span>}
     </div>
   )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Adaptateurs de compatibilité — tous les anciens points d'appel (≈ 90) continuent
+// d'importer `Loading`/`Skeleton`/`Squelette`, mais rendent désormais le MÊME composant.
+// Le nouveau code doit utiliser `Chargement`. `lignes`/`bloc`/`big` sont tolérés et ignorés
+// (le dessin ne dépend plus du nombre de lignes : trois points, point final).
+
+export function Loading({ label, className = '' }:
+  { label?: string; className?: string; big?: boolean }) {
+  return <Chargement variant="inline" label={label} className={className} />
+}
+
+export function Skeleton({ className = '' }: { className?: string }) {
+  return <Chargement variant="bloc" className={className} />
+}
+
+export function Squelette({ bloc: _bloc, className = '', label }:
+  { lignes?: number; bloc?: boolean; className?: string; label?: string }) {
+  return <Chargement variant="bloc" label={label} className={className} />
 }

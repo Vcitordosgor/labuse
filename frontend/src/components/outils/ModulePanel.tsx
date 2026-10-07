@@ -19,7 +19,7 @@ import { TOKENS } from '../../lib/tokens'
 import { carteEtat, etatColor, type PermisEtat, type PermisEtatCarte } from '../../lib/permisEtats'
 import { ChevronSection } from '../panel/ChevronSection'
 import { useApp } from '../../store/useApp'
-import { Squelette } from '../Loading'
+import { Chargement, Squelette } from '../Loading'
 import { EmptyState, ErrorState } from '../States'
 import { CalculetteFonciere } from './CalculetteFonciere'
 import { CompareModule } from '../compare/ComparePanel'
@@ -141,7 +141,7 @@ function MoreButton({ q, loaded, total }: { q: { hasNextPage: boolean; isFetchin
   return (
     <Bouton niveau="secondaire" ton="vert" data-more onClick={() => q.fetchNextPage()} disabled={q.isFetchingNextPage}
       className="mt-1 min-h-8 shrink-0">
-      {q.isFetchingNextPage ? 'Chargement…' : total != null ? `Voir plus — ${fmt(loaded)} / ${fmt(total)} chargés` : `Voir plus — ${fmt(loaded)} chargés`}
+      {q.isFetchingNextPage ? <Chargement variant="inline" /> : total != null ? `Voir plus — ${fmt(loaded)} / ${fmt(total)} chargés` : `Voir plus — ${fmt(loaded)} chargés`}
     </Bouton>
   )
 }

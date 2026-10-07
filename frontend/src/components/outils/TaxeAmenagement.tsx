@@ -9,7 +9,7 @@ import { useApp } from '../../store/useApp'
 import { EntreeParcelle, type SourceParcelle } from './EntreeParcelle'   // RECETTE-1 F2
 import { Reinitialiser } from '../ui/Reinitialiser'   // RECETTE-1 F3
 import { Tip } from '../Tip'
-import { Squelette } from '../Loading'
+import { Chargement, Squelette } from '../Loading'
 import { ErrorState } from '../States'
 import { Case } from '../ui/Case'
 import { Chevron } from '../ui/Chevron'
@@ -196,7 +196,7 @@ export function TaxeAmenagement() {
       {/* RECETTE-2 (D12) — section « Le formulaire s'ouvrira quand une parcelle sera choisie … » retirée. */}
       {prefillIdu && (
         <div data-taxe-contexte className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[10.5px] text-txt-mut">
-          {prefill.isLoading && <span className="text-txt-dim">Chargement du contexte parcelle…</span>}
+          {prefill.isLoading && <Chargement variant="inline" label="Chargement du contexte parcelle…" />}
           {prefill.isError && <span className="text-st-ecartee">Contexte parcelle indisponible.</span>}
           {prefill.data && (
             <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5">

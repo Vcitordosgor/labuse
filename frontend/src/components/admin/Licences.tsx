@@ -13,6 +13,7 @@ import {
   type AdminLicence, type AdminLicences, type MailLigne,
 } from '../../lib/api'
 import { ActBtn } from './AdminView'
+import { Chargement } from '../Loading'
 
 const fmtReu = (iso?: string | null, avecHeure = false) => {
   if (!iso) return '—'
@@ -199,7 +200,7 @@ function ApercuOverlay({ compteId, mk, onClose }: { compteId: number; mk: string
           <button onClick={onClose} className="text-txt-mut hover:text-txt">✕</button>
         </div>
         <div className="max-h-[calc(80vh-52px)] overflow-y-auto px-4 py-3 text-[12.5px] text-txt">
-          {!a ? <div className="py-8 text-center text-xs text-txt-mut">Chargement de l'aperçu…</div>
+          {!a ? <div className="py-8 text-center"><Chargement variant="bloc" label="Chargement de l'aperçu…" /></div>
             : a.configure ? (
               <>
                 <div className="mb-2 text-txt-mut">Objet : <b className="text-txt">{a.subject || '—'}</b></div>
@@ -573,7 +574,7 @@ function ActiviteTab({ compteId }: { compteId: number }) {
   return (
     <div>
       <div className="mb-2 font-mono text-[10.5px] tracking-[0.22em] text-txt-dim">MAILS DE CE COMPTE</div>
-      {!q.data ? <div className="py-6 text-center text-xs text-txt-mut">Chargement…</div>
+      {!q.data ? <div className="py-6 text-center"><Chargement variant="bloc" /></div>
         : <MailList lignes={q.data.lignes} vide="Aucun mail pour ce compte pour l'instant." />}
       <div className="mt-3 text-[11.5px] text-txt-off">Le fil complet (connexions, outils ouverts, questions Copilote, signalements) arrive au lot Activité.</div>
     </div>
@@ -603,7 +604,7 @@ function FacturationTab({ l }: { l: AdminLicence }) {
         </div>
       </div>
       <div className="mb-2 mt-4 font-mono text-[10.5px] tracking-[0.22em] text-txt-dim">MAILS DE FACTURATION</div>
-      {!q.data ? <div className="py-6 text-center text-xs text-txt-mut">Chargement…</div>
+      {!q.data ? <div className="py-6 text-center"><Chargement variant="bloc" /></div>
         : <MailList lignes={facts} vide="Aucun mail de facturation pour ce compte." />}
     </div>
   )
@@ -650,7 +651,7 @@ export function LicencesSection() {
   // DASHBOARD-4 (K3) — « À toucher » = estAToucher (invitation sans réponse > 7 j · essai < 6 h · carte refusée).
   const aToucher = useMemo(() => clientes.filter((l) => estAToucher(l)), [clientes])
 
-  if (!d) return <div className="py-10 text-center text-xs text-txt-mut">Chargement…</div>
+  if (!d) return <div className="py-10 text-center"><Chargement variant="bloc" /></div>
 
   // DASHBOARD-4 (K1) — « Créer un client » / « Ouvrir un essai 48 h » sont de VRAIES pages.
   if (creer) return <CreerPage mode={creer} onBack={() => setCreer(null)} onCree={(id) => { setCreer(null); setSel(id) }} />

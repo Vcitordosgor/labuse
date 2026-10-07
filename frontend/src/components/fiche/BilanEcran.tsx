@@ -17,6 +17,7 @@ import {
 import { useOuvrirDocument } from '../../lib/ouvrirDocument'
 import { Bouton } from '../ui/Bouton'
 import { Badge } from '../ui/Badge'
+import { Chargement } from '../Loading'
 
 const fmtEur = (n: number | null | undefined) =>
   n == null ? '—' : `${Math.round(n).toLocaleString('fr-FR')} €`
@@ -143,7 +144,7 @@ export function BilanEcran({ idu, onClose, onGenerated }:
     return m
   }, [res])
 
-  if (isLoading) return <Overlay onClose={onClose}><div className="p-6 text-txt-mut">Chargement du bilan…</div></Overlay>
+  if (isLoading) return <Overlay onClose={onClose}><div className="p-6"><Chargement variant="bloc" label="Chargement du bilan…" /></div></Overlay>
   if (error || !modele || !entrees) return <Overlay onClose={onClose}><div className="p-6 text-amber">Bilan indisponible sur cette parcelle.</div></Overlay>
 
   const vides = res?.lignes_vides ?? 0
@@ -195,7 +196,7 @@ export function BilanEcran({ idu, onClose, onGenerated }:
             <a href={docBilanExcelUrl(idu, docId)} className="inline-flex h-8 items-center rounded-md border border-mint px-3 text-[13px] font-semibold text-mint hover:bg-mint hover:text-mint-on">Excel</a>
           )}
           <Bouton niveau="primaire" ton="vert" disabled={!!enCours} onClick={generer}>
-            {enCours ? 'Génération…' : 'Générer le bilan'}
+            {enCours ? <Chargement variant="inline" accent="courant" label="Génération…" /> : 'Générer le bilan'}
           </Bouton>
         </div>
       </div>

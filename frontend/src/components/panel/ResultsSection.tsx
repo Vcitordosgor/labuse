@@ -12,7 +12,7 @@ import { Badge } from '../ui/Badge'
 import { Chevron } from '../ui/Chevron'
 import { Tri } from '../ui/Tri'
 import { EmptyState, ErrorState } from '../States'
-import { Squelette } from '../Loading'
+import { Chargement, Squelette } from '../Loading'
 import { useApp, type Filters } from '../../store/useApp'
 import { usePagination, ListPaginationFooter } from '../ListPagination'
 
@@ -324,7 +324,7 @@ export function SegmentList({ segKey, rows, serverTotal, commune, serverHasMore,
           {serverHasMore && (
             <button data-segment-more={segKey} onClick={onServerMore} disabled={serverLoading}
               className="text-mint hover:underline">
-              {serverLoading ? 'Chargement…' : `Voir ${fmt(Math.min(RESULTS_PAGE, serverTotal - rows.length))} de plus`}
+              {serverLoading ? <Chargement variant="inline" /> : `Voir ${fmt(Math.min(RESULTS_PAGE, serverTotal - rows.length))} de plus`}
             </button>
           )}
         </div>
@@ -464,7 +464,7 @@ function AnalyseBandeGroup({ groupe, label, color, total, filters, commune, sign
             <div data-pagination className="flex flex-wrap items-center gap-3 border-t border-line pt-2 text-[11px] text-txt-mut">
               <span><b className="text-txt">{fmt(rows.length)} sur {fmt(total)}</b> affichées</span>
               <button onClick={() => q.fetchNextPage()} disabled={q.isFetchingNextPage} className="text-mint hover:underline">
-                {q.isFetchingNextPage ? 'Chargement…' : `Voir ${fmt(Math.min(RESULTS_PAGE, total - rows.length))} de plus`}
+                {q.isFetchingNextPage ? <Chargement variant="inline" /> : `Voir ${fmt(Math.min(RESULTS_PAGE, total - rows.length))} de plus`}
               </button>
             </div>
           )}
@@ -866,14 +866,14 @@ export function ResultsSection() {
             (analyseList.hasNextPage ?? false) && (
               <button data-results-more onClick={() => analyseList.fetchNextPage()} disabled={analyseList.isFetchingNextPage}
                 className="text-xs text-mint hover:underline">
-                {analyseList.isFetchingNextPage ? 'Chargement…' : `Voir ${fmt(RESULTS_PAGE)} de plus →`}
+                {analyseList.isFetchingNextPage ? <Chargement variant="inline" /> : `Voir ${fmt(RESULTS_PAGE)} de plus →`}
               </button>
             )
           ) : ile ? (
             serverList.hasNextPage && (
               <button data-results-more onClick={() => serverList.fetchNextPage()} disabled={serverList.isFetchingNextPage}
                 className="text-xs text-mint hover:underline">
-                {serverList.isFetchingNextPage ? 'Chargement…' : `Voir ${fmt(RESULTS_PAGE)} de plus →`}
+                {serverList.isFetchingNextPage ? <Chargement variant="inline" /> : `Voir ${fmt(RESULTS_PAGE)} de plus →`}
               </button>
             )
           ) : (

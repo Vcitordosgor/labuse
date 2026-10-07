@@ -4,6 +4,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { getAdminDestinations, type AdminDestinationsCommune } from '../../lib/api'
 import { Chip, Panel, PHead } from './AdminView'
+import { Chargement } from '../Loading'
 
 const fmtJJMM = (d?: string | null) => {
   if (!d) return null
@@ -34,7 +35,7 @@ export function DestinationsDetail({ onBack }: { onBack?: () => void }) {
   const q = useQuery({ queryKey: ['admin-destinations'], queryFn: getAdminDestinations })
   const d = q.data
   if (q.isError) return <div className="py-10 text-center text-xs text-st-ecartee">Indisponible — réessayez.</div>
-  if (!d) return <div className="py-10 text-center text-xs text-txt-mut">Chargement…</div>
+  if (!d) return <div className="py-10 text-center"><Chargement variant="bloc" /></div>
   return (
     <>
       {onBack && (

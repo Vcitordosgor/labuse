@@ -7,6 +7,7 @@ import { useState } from 'react'
 import { getAdminIa, postAdminLicenceQuota, type AdminIa } from '../../lib/api'
 import { ActBtn, Chip, Lbl, Panel, PHead } from './AdminView'
 import { Chevron } from '../ui/Chevron'
+import { Chargement } from '../Loading'
 
 const eur = (v?: number | null, dec = 2) =>
   v == null ? '—' : `${v.toLocaleString('fr-FR', { minimumFractionDigits: dec, maximumFractionDigits: dec })} €`
@@ -45,7 +46,7 @@ export function IaSection() {
   // DASHBOARD-2 (Lot 6) — la liste « modèle par surface » est REPLIÉE par défaut (résumé + voir la liste).
   const [voirModeles, setVoirModeles] = useState(false)
   const d = q.data
-  if (!d) return <div className="py-10 text-center text-xs text-txt-mut">Chargement…</div>
+  if (!d) return <div className="py-10 text-center"><Chargement variant="bloc" /></div>
   const maxJour = Math.max(...d.jours.map((x) => x.cout), 0.0001)
   const maxLic = Math.max(...d.par_licence.map((x) => x.cout), 0.0001)
   // ADMIN-1 AD6.2 — 30 jours (appels) + coût 30 j par compte, joints depuis par_licence.

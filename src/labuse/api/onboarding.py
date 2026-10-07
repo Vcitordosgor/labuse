@@ -109,6 +109,48 @@ def parcours_js():
                     headers={"Cache-Control": "public, max-age=3600"})
 
 
+# CHARGEMENT-1 (point 6) — même règle que le front (frontend/src/lib/appareil.ts), portée aux pages
+# HTML du tunnel (connexion, 2FA, légales, 404). Décidée UNE FOIS au chargement : une fenêtre de
+# bureau rétrécie n'est jamais bloquée si l'écran physique fait > 1 024 px. Si l'appareil est un
+# téléphone/tablette, on REMPLACE la page par un écran unique renvoyant vers l'ordinateur (plus
+# aucun formulaire ni lien d'accès). Même nuit « Coffre » (var(--mint)/--hi/--mut déjà en :root).
+_ORDINATEUR_JS = r"""
+(function(){
+  function mobile(){
+    var ua=navigator.userAgent||'';
+    var tactile=(navigator.maxTouchPoints||0)>1;
+    var plat=navigator.platform||'';
+    var iPadMac=plat==='MacIntel'&&tactile;              // iPad iOS13+ se dit « Mac »
+    var mobileUA=/Android|iPhone|iPod|iPad|Mobile|Tablet|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+    var coarse=(window.matchMedia&&window.matchMedia('(pointer: coarse)').matches)||false;
+    var w=(window.screen&&window.screen.width)?window.screen.width:9999;
+    return mobileUA||iPadMac||(tactile&&coarse)||w<1024;
+  }
+  if(!mobile())return;
+  var OISEAU='<svg viewBox="0 0 240 82" width="118" height="40" fill="var(--mint)" aria-hidden="true">'
+    +'<path d="M2 15 C58 10 100 18 120 27 C140 18 182 10 238 15 C202 29 162 40 135 46 '
+    +'C127 49 122 53 120 60 C118 53 113 49 105 46 C78 40 38 29 2 15 Z"/></svg>';
+  try{ document.title='LABUSE — disponible sur ordinateur'; }catch(e){}
+  document.body.innerHTML='<div data-ecran-ordinateur style="min-height:100vh;display:flex;'
+    +'flex-direction:column;align-items:center;justify-content:center;gap:20px;text-align:center;padding:28px">'
+    +'<div style="display:flex;flex-direction:column;align-items:center;gap:12px">'+OISEAU
+    +'<span style="font:700 26px \'Space Grotesk\',system-ui,sans-serif;letter-spacing:.1em;color:var(--hi)">LABUSE</span></div>'
+    +'<p style="font-size:17px;font-weight:600;color:var(--hi);margin:0">LABUSE est disponible sur ordinateur.</p>'
+    +'<p style="font-size:14px;color:var(--mut);max-width:360px;margin:0;line-height:1.6">Ouvrez '
+    +'<span style="color:var(--mint);font-weight:600">app.labuse.immo</span> depuis votre ordinateur.</p>'
+    +'<a href="mailto:contact@labuse.immo?subject=Contact%20LABUSE" style="color:var(--mint);'
+    +'font-size:14px;font-weight:600;text-decoration:none">Contact</a></div>';
+})();
+"""
+
+
+@router.get("/ordinateur.js", include_in_schema=False)
+def ordinateur_js():
+    from fastapi.responses import Response
+    return Response(_ORDINATEUR_JS, media_type="application/javascript",
+                    headers={"Cache-Control": "public, max-age=3600"})
+
+
 # E3 — le POLLING de la page /flash/retour (attente de génération du PDF) était lui aussi un
 # script INLINE : bloqué par la CSP en prod → l'acheteur restait sur « votre rapport arrive… »
 # sans jamais voir le bouton de téléchargement. Porté en fichier same-origin (session_id lu
