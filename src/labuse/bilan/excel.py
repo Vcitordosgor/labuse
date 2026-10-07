@@ -22,11 +22,18 @@ from openpyxl import Workbook
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 
-from .catalogue import Catalogue, charger_catalogue
+from .catalogue import Catalogue, assiette_unite, charger_catalogue
 from .moteur import EntreesBilan
 
 _EUR = '#,##0 €'
 _PCT = '0.00 %'
+_M2 = '#,##0 "m²"'
+_LOTS = '#,##0 "lots"'
+
+
+def _assiette_fmt(poste) -> str:
+    """Format de l'assiette selon sa nature (m² · lots · €) — retour Vic BILAN-2."""
+    return {"m²": _M2, "lots": _LOTS}.get(assiette_unite(poste.assiette), _EUR)
 _GRAS = Font(bold=True)
 _ENTETE = Font(bold=True, color="FFFFFF")
 _FOND = PatternFill("solid", fgColor="2F4F3E")
@@ -194,9 +201,9 @@ def classeur_bilan(
             # Assiette (B)
             aref = assiette_ref(poste, s)
             if poste.assiette in ("pret", "valeur_ajoutee"):
-                ws.cell(rr, 2, s.assiette_valeur)
+                ws.cell(rr, 2, s.assiette_valeur).number_format = _assiette_fmt(poste)
             elif aref:
-                ws.cell(rr, 2, aref).number_format = _EUR if poste.mode != "unit" else '#,##0.00'
+                ws.cell(rr, 2, aref).number_format = _assiette_fmt(poste)
             # Taux / montant (C)
             val = 0.0 if s.etat == "sans_objet" else (s.valeur if s.valeur is not None else None)
             cC = ws.cell(rr, 3, val)
@@ -264,7 +271,6 @@ def classeur_bilan(
     # ---- Haut de feuille : ratios & programme (ordre du modèle) + calendrier ----
     # Rempli ici car il référence des cellules du corps, maintenant connues.
     d = {k: ligne_poste.get(k) for k in ("constr", "aleaC", "acte", "pack", "proc")}
-    _M2 = '#,##0 "m²"'
     ratios_tete = [
         ("Terrain", f"={cell_terrain}", _M2),
         ("Surface de plancher", f"={cell_sdp}", _M2),

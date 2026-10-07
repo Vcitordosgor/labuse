@@ -78,6 +78,25 @@ class Catalogue:
         raise KeyError(pid)
 
 
+# Unité « de nature » d'une assiette (BILAN-2, retour Vic) : une assiette s'affiche
+# avec l'unité de ce qu'elle MESURE (m² de surface, nombre de lots, € de montant),
+# jamais en € par défaut. Partagé par l'écran (via le front), le PDF et l'Excel.
+_ASSIETTE_M2 = {"terrain", "surface_taxable", "suv"}
+_ASSIETTE_LOTS = {"lots"}
+
+
+def assiette_unite(assiette: str | None) -> str | None:
+    """'m²' | 'lots' | '€' selon la nature de l'assiette ; None pour un forfait
+    (pas d'assiette). Tout le reste (prix, CA, construction, loyers annuels…) est en €."""
+    if assiette in _ASSIETTE_M2:
+        return "m²"
+    if assiette in _ASSIETTE_LOTS:
+        return "lots"
+    if assiette in (None, "forfait"):
+        return None
+    return "€"
+
+
 def _repere(val: Any) -> Repere | None:
     if val is None:
         return None

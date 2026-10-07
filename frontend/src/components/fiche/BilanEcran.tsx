@@ -24,6 +24,16 @@ const fmtPct = (n: number | null | undefined, d = 1) =>
   n == null ? '—' : `${(n * 100).toFixed(d).replace('.', ',')} %`
 const fmtNum = (n: number | null | undefined) =>
   n == null ? '' : n.toLocaleString('fr-FR', { maximumFractionDigits: 2 })
+// Unité « de nature » d'une assiette (m² · lots · €), comme le back (catalogue.assiette_unite).
+const assietteUnite = (a: string | null): string | null =>
+  a === 'terrain' || a === 'surface_taxable' || a === 'suv' ? 'm²'
+    : a === 'lots' ? 'lots'
+      : a == null || a === 'forfait' ? null : '€'
+const fmtAssiette = (v: number | null | undefined, a: string | null, mode: string): string => {
+  if (!v) return mode === 'forfait' ? 'forfait' : '—'
+  const u = assietteUnite(a)
+  return u == null || u === '€' ? fmtEur(v) : `${Math.round(v).toLocaleString('fr-FR')} ${u}`
+}
 const parseNum = (s: string): number | null => {
   if (!s.trim()) return null
   const n = parseFloat(s.replace(/\s/g, '').replace(',', '.'))
@@ -209,7 +219,7 @@ export function BilanEcran({ idu, onClose, onGenerated }:
         {/* ── Tête : ratios & programme · calendrier · résultat (ordre de l'Excel) ── */}
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_300px]">
           {/* Ratios & données du programme */}
-          <Carte titre="Ratios &amp; programme" sous="dans l'ordre de l'Excel">
+          <Carte titre="Ratios &amp; programme">
             <table className="w-full text-[13px]">
               <tbody>
                 <TeteInput label="Terrain" unite="m²" value={entrees.programme.terrain} revKey={rev}
@@ -415,7 +425,7 @@ function TeteInput({ label, unite, value, source, repere, revKey, onChange, onPi
 }) {
   return (
     <tr className="border-b border-line">
-      <td className="py-1 pl-3 text-txt-mut">{label}{source && <Badge ton="vert">Sourcé</Badge>}</td>
+      <td className="py-1 pl-3 text-txt-mut"><span className="inline-flex items-center gap-1.5">{label}{source && <Badge ton="vert">Sourcé</Badge>}</span></td>
       <td className="py-1 pr-3 text-right">
         <span className="inline-flex items-center gap-1">
           <input key={revKey} className="h-7 w-24 rounded border border-line-2 bg-surface px-1.5 text-right tabular-nums"
@@ -479,7 +489,7 @@ function BlocLignes({ bloc, tot, entrees, ligne, rev, vrais, reperePoste, adopte
           <tr key={p.id} className="border-b border-line">
             <td className="p-2">{p.libelle}{p.sub && <small className="block text-txt-dim"> {p.sub}</small>}
               {vrais[p.id] && <small className="block text-amber">{vrais[p.id]}</small>}</td>
-            <td className="p-2 tabular-nums text-txt-mut">{l?.assiette_valeur ? fmtEur(l.assiette_valeur) : (p.mode === 'forfait' ? 'forfait' : '—')}
+            <td className="p-2 tabular-nums text-txt-mut">{fmtAssiette(l?.assiette_valeur, p.assiette, p.mode)}
               {p.besoin_assiette && !estSansObjet && (
                 <input key={rev} className="ml-1 w-24 rounded border border-line-2 bg-surface px-1 py-0.5 text-right"
                   defaultValue={s.assiette_valeur ?? ''} placeholder="assiette"

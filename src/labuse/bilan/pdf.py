@@ -18,7 +18,7 @@ from datetime import date
 
 from ..exports import numeros
 from ..exports.rendu import Cartouche, esc, page_html, render_pdf
-from .catalogue import Catalogue, charger_catalogue
+from .catalogue import Catalogue, assiette_unite, charger_catalogue
 from .moteur import ResultatBilan
 
 _ETAT_LABEL = {
@@ -70,6 +70,18 @@ def _eur(x: float | None) -> str:
 
 def _pct(x: float | None) -> str:
     return "—" if x is None else f"{x * 100:.1f} %".replace(".", ",")
+
+
+def _assiette(ln, poste) -> str:
+    """Assiette affichée avec l'unité de sa nature (m² · lots · €) — jamais en €
+    par défaut. Un forfait n'a pas d'assiette ; une assiette vide → « — »."""
+    v = ln.assiette_valeur
+    if not v:
+        return "forfait" if poste.mode == "forfait" else "—"
+    u = assiette_unite(poste.assiette)
+    if u in (None, "€"):
+        return _eur(v)
+    return f"{round(v):,}".replace(",", " ") + f" {u}"
 
 
 def _taux(ln, poste) -> str:
@@ -183,7 +195,7 @@ def construire_html(
             etat = _ETAT_LABEL.get(ln.etat, ln.etat)
             corps.append(
                 f"<tr><td>{lib}</td>"
-                f"<td class='num'>{_eur(ln.assiette_valeur) if ln.assiette_valeur else '—'}</td>"
+                f"<td class='num'>{_assiette(ln, poste)}</td>"
                 f"<td class='num'>{_taux(ln, poste)}</td>"
                 f"<td class='num'>{'' if vide else _eur(ln.ht)}</td>"
                 f"<td class='num'>{'' if vide else _eur(ln.tva)}</td>"

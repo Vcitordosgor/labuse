@@ -78,6 +78,17 @@ def test_colonnes_sont_des_formules_pas_des_valeurs():
     assert isinstance(res, str) and re.fullmatch(r"=D\d+-D\d+", res), res
 
 
+def test_assiette_a_le_format_de_sa_nature():
+    """Retour Vic BILAN-2 : l'assiette s'affiche dans l'unité de sa nature — « Achat
+    terrain privé » est assis sur le TERRAIN (m²), pas sur des euros."""
+    ws = _ws_temoin()
+    lignes = {ws.cell(row, 1).value: row for row in range(1, ws.max_row + 1) if ws.cell(row, 1).value}
+    achat = ws.cell(lignes["Achat terrain privé"], 2)
+    assert "m²" in (achat.number_format or ""), achat.number_format
+    archi = ws.cell(lignes["Hono. architecte conception"], 2)  # assis sur la construction (€)
+    assert "€" in (archi.number_format or ""), archi.number_format
+
+
 def test_excel_egale_le_moteur_au_centime():
     ws = _ws_temoin()
     ev = _evaluateur(_grille(ws))

@@ -50,3 +50,10 @@ def test_ecran_pdf_excel_au_centime():
     assert ca_excel == pytest.approx(ca_moteur, abs=1.0)
     # et la marge affichée (PDF) = celle du moteur
     assert f"{r.marge_pct * 100:.1f}".replace(".", ",") in html
+
+
+def test_assiette_affiche_unite_de_sa_nature():
+    """Retour Vic BILAN-2 : l'assiette « Achat terrain privé » (terrain) est en m²."""
+    r = Moteur().calculer(entrees_temoin_promotrice())
+    html, _ = construire_html(r, idu="97415000BZ1065", commune="Saint-Paul")
+    assert "1 746 m²" in html  # 1 746 m² de terrain, jamais « 1 746 € »
