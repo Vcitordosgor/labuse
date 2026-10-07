@@ -2670,6 +2670,7 @@ export interface BilanModele {
   tva_legales: Record<string, number>
   produit_modele: { champs: { id: string; libelle: string; unite: string; tva?: string }[]; repere: string }
   programme: Record<string, unknown>[]
+  calendrier: { id: string; libelle: string; defaut: number | null; repere?: string }[]
   blocs: BilanBloc[]
   sourcee: {
     idu: string; parcel_id: number | null; commune: string | null
@@ -2684,18 +2685,19 @@ export interface BilanModele {
 export interface BilanSaisie { valeur: number | null; etat: BilanEtat; tva?: number | null; assiette_valeur?: number | null }
 export interface BilanProduit { libelle: string; lots: number | null; suv: number | null; prix_ttc_m2_suv: number | null; tva: number | null }
 export interface BilanEntrees {
-  programme: { terrain: number | null; surface_taxable: number | null; loyer: number | null }
+  programme: { terrain: number | null; surface_taxable: number | null; loyer: number | null; sdp: number | null }
   produits: BilanProduit[]
   postes: Record<string, BilanSaisie>
   mode: 'marge' | 'prix'
   marge_cible: number | null
+  calendrier: Record<string, number | null>  // BILAN-2 : étape → J+n (info)
 }
 export interface BilanLigne {
   id: string; bloc: string; assiette_valeur: number | null; taux_ou_montant: number | null
   etat: BilanEtat; ht: number | null; tva: number | null; ttc: number | null; manquant: boolean
 }
 export interface BilanResultat {
-  complet: boolean; manquants: string[]; total_postes: number; postes_renseignes: number
+  complet: boolean; manquants: string[]; lignes_vides: number; total_postes: number; postes_renseignes: number
   vraisemblance: { cible: string; message: string }[]
   lignes: BilanLigne[]
   blocs: { id: string; titre: string; ht: number; tva: number; ttc: number; complet: boolean; manquants: number }[]
@@ -2714,7 +2716,7 @@ export const calculerBilan = (idu: string, entrees: BilanEntrees) =>
   j<BilanResultat>(`/bilan/${encodeURIComponent(idu)}/calcul`,
     { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(entrees) })
 export const genererBilan = (idu: string, entrees: BilanEntrees) =>
-  j<{ doc_id: number; complet: boolean }>(`/bilan/${encodeURIComponent(idu)}/generer`,
+  j<{ doc_id: number; complet: boolean; lignes_vides: number }>(`/bilan/${encodeURIComponent(idu)}/generer`,
     { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(entrees) })
 export const getBilanRatios = () =>
   j<Record<string, { valeur: number; tva: number | null }>>('/bilan-ratios')

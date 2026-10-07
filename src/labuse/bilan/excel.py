@@ -1,10 +1,14 @@
-"""BILAN-1 Lot 5 — export Excel VIVANT du bilan.
+"""BILAN-1 Lot 5 / BILAN-2 — export Excel VIVANT du bilan.
 
 Pas de valeurs figées : les colonnes HT / TVA / TTC et les totaux sont des
 FORMULES qui recalculent à partir des saisies (taux, assiettes, programme). Une
-seule feuille, colonnes Libellé · Assiette · Taux · HT · TVA · TTC. Ouvert dans
-un tableur, le fichier se recalcule tout seul ; ses totaux sont identiques au
-moteur (recette « écran = PDF = Excel »).
+seule feuille, colonnes Libellé · Assiette · Taux · HT · TVA · TTC. En haut, comme
+dans le modèle de la promotrice, le bloc de ratios & données du programme (ordre de
+l'Excel) et le calendrier prévisionnel. Ouvert dans un tableur, le fichier se
+recalcule tout seul ; ses totaux sont identiques au moteur (recette « écran = PDF =
+Excel »).
+
+BILAN-2 : le classeur se génère à TOUT MOMENT (calcul en continu, case vide = 0).
 
 On n'utilise QUE un vocabulaire de formules simple (références de cellules,
 `+ - * /`, parenthèses, `SUM(plage)`) : le test évalue ce graphe sans tableur.
@@ -43,9 +47,12 @@ def classeur_bilan(
     for col, w in widths.items():
         ws.column_dimensions[col].width = w
 
-    r = 1
-    ws.cell(r, 1, titre).font = Font(bold=True, size=14)
-    r += 2
+    ws.cell(1, 1, titre).font = Font(bold=True, size=14)
+    # BILAN-2 : le haut de feuille (lignes 3..24) reçoit le bloc de ratios &
+    # programme + le calendrier (comme le modèle). Il est REMPLI à la fin, une fois
+    # connues les adresses des cellules du corps ; le corps démarre donc plus bas.
+    _HEAD_FIN = 25
+    r = _HEAD_FIN + 1
 
     def entete(label):
         nonlocal r
@@ -57,6 +64,10 @@ def classeur_bilan(
     cell_terrain = f"B{r}"
     ws.cell(r, 1, "Terrain (m²)")
     ws.cell(r, 2, entrees.programme.terrain)
+    r += 1
+    cell_sdp = f"B{r}"
+    ws.cell(r, 1, "Surface de plancher (m²)")
+    ws.cell(r, 2, entrees.programme.sdp)
     r += 1
     cell_stax = f"B{r}"
     ws.cell(r, 1, "Surface taxable (m²)")
@@ -249,6 +260,40 @@ def classeur_bilan(
     ws.cell(row_res, 5).font = _GRAS
     mod_row = ligne_poste["mod"]
     ligne("Cash flow", d=f"=D{row_res}+D{mod_row}")
+
+    # ---- Haut de feuille : ratios & programme (ordre du modèle) + calendrier ----
+    # Rempli ici car il référence des cellules du corps, maintenant connues.
+    d = {k: ligne_poste.get(k) for k in ("constr", "aleaC", "acte", "pack", "proc")}
+    _M2 = '#,##0 "m²"'
+    ratios_tete = [
+        ("Terrain", f"={cell_terrain}", _M2),
+        ("Surface de plancher", f"={cell_sdp}", _M2),
+        ("Surface taxable", f"={cell_stax}", _M2),
+        ("SUV", f"={cell_suv}", _M2),
+        ("Coût const. m² SUV HT", f"=(D{d['constr']}+D{d['aleaC']})/{cell_suv}", _EUR),
+        ("Prix moyen m² SUV HT", f"={cell_ca_ht}/{cell_suv}", _EUR),
+        (
+            "Net promoteur m² SUV TTC",
+            f"=(({cell_ca_ht}-D{d['acte']}-D{d['pack']}-D{d['proc']})/{cell_suv})*(1+{tva_dom})",
+            _EUR,
+        ),
+        ("CA TTC programme", f"={cell_ca_ttc}", _EUR),
+        ("Renta nette / CA HT", f"=D{row_res}/{cell_ca_ht}", _PCT),
+        ("Nombre de lots", f"={cell_lots}", '#,##0'),
+    ]
+    ws.cell(3, 1, "Ratios & programme").font = _GRAS
+    for i, (lib, frm, fmt) in enumerate(ratios_tete):
+        rr = 4 + i
+        ws.cell(rr, 1, lib)
+        ws.cell(rr, 5, frm).number_format = fmt
+
+    ws.cell(15, 1, "Calendrier prévisionnel").font = _GRAS
+    for i, etape in enumerate(cat.calendrier):
+        rr = 16 + i
+        off = entrees.calendrier.get(etape["id"], etape.get("defaut"))
+        txt = "" if off is None else (f"J+{off}" if off else "J")
+        ws.cell(rr, 1, etape["libelle"])
+        ws.cell(rr, 5, txt)
 
     return wb
 

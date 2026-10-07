@@ -126,7 +126,9 @@ def test_modele_sert_structure_et_source(client_parc):
             assert p["repere"] is None or p["repere"]["kind"] == "registre", p["id"]
 
 
-def test_calcul_incomplet_sans_marge(client_parc):
+def test_calcul_en_continu_moitie_rempli(client_parc):
+    """BILAN-2 : un bilan à moitié rempli CALCULE (case vide = 0) ; les lignes vides
+    sont seulement comptées (``lignes_vides``), jamais bloquantes."""
     c, idu = client_parc
     corps = {
         "programme": {"terrain": 1746},
@@ -137,6 +139,7 @@ def test_calcul_incomplet_sans_marge(client_parc):
     r = c.post(f"/bilan/{idu}/calcul", json=corps)
     assert r.status_code == 200, r.text
     j = r.json()
-    assert j["complet"] is False
-    assert j["resultat_net"] is None and j["marge_pct"] is None
-    assert j["manquants"]  # beaucoup de postes à renseigner
+    assert j["complet"] is False  # il reste des lignes vides
+    assert j["lignes_vides"] > 0 and j["manquants"]
+    assert j["resultat_net"] is not None and j["marge_pct"] is not None  # calcule quand même
+    assert j["ca_ht"] and j["ca_ht"] > 0

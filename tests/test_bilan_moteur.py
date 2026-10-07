@@ -125,16 +125,34 @@ def entrees_temoin_promotrice() -> EntreesBilan:
 # ---------------------------------------------------------------------------
 # Mécanique du moteur (sans le modèle)
 # ---------------------------------------------------------------------------
-def test_bilan_vide_ne_calcule_rien():
-    """Doctrine 3 : aucune marge tant qu'un poste est à renseigner."""
+def test_calcul_en_continu_moitie_rempli():
+    """BILAN-2 : calcul EN CONTINU (comme l'Excel) — une case vide vaut 0, la marge
+    et les totaux s'affichent dès la première saisie ; les lignes vides sont juste
+    COMPTÉES (information), jamais bloquantes."""
     e = EntreesBilan(
         programme=Programme(terrain=1000),
         produits=[Produit("Libre", 10, 800, 5000, 0.085)],
+        postes={"achat": SaisiePoste(1000, SAISI, tva=0.0)},
     )
     r = Moteur().calculer(e)
-    assert not r.complet
-    assert r.resultat_net is None and r.marge_pct is None
-    assert r.manquants  # des postes restent à renseigner
+    assert r.resultat_net is not None  # le bilan calcule malgré des lignes vides
+    assert r.ca_ht is not None and r.ca_ht > 0
+    assert r.marge_pct is not None
+    assert r.lignes_vides > 0 and not r.complet  # compteur informatif, non bloquant
+    # achat posé → entre dans les dépenses (1 000 m² × 1 000 €/m²)
+    achat = next(ln for ln in r.lignes if ln.id == "achat")
+    assert achat.ht == pytest.approx(1_000_000)
+    # une ligne vide vaut 0 (jamais None), et reste marquée « vide »
+    topo = next(ln for ln in r.lignes if ln.id == "topo")
+    assert topo.ht == 0 and topo.manquant
+
+
+def test_bilan_totalement_vide_vaut_zero():
+    """Rien saisi → CA 0, dépenses 0, résultat 0 (comme l'Excel à blanc)."""
+    r = Moteur().calculer(EntreesBilan())
+    assert r.ca_ht == 0 and r.depenses_ht == 0 and r.resultat_net == 0
+    assert r.marge_pct is None  # CA nul → pas de pourcentage
+    assert r.lignes_vides == r.total_postes  # toutes les lignes sont vides
 
 
 def test_ht_tva_ttc_coherents_et_sans_objet():

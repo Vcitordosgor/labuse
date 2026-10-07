@@ -75,6 +75,22 @@ programme:
   - {id: pkg_cou, libelle: "Parkings couverts",    unite: "pl.",  repere: faisabilite}
   - {id: loyer,   libelle: "Loyer au m² de SUV yc pkg", unite: "€/m²", facultatif: true,  repere: null}
 
+# --- Calendrier prévisionnel (Compromis → Livraison) -------------------------
+# BILAN-2 : repris du modèle (feuille BILAN, A27:E37). Saisissable en J+n (mois) ;
+# pré-rempli avec les décalages du modèle témoin. L'étape « Obtention PC » porte le
+# repère Sitadel (délai médian dépôt→PC de la commune), cliquable comme les autres
+# repères — informatif, n'entre pas dans le calcul.
+calendrier:
+  - {id: compromis,    libelle: "Compromis",                 defaut: 0}
+  - {id: depot_pc,     libelle: "Dépôt PC",                  defaut: 2}
+  - {id: obtention_pc, libelle: "Obtention PC",              defaut: 6, repere: sitadel}
+  - {id: purge_pc,     libelle: "Purge PC",                  defaut: 9}
+  - {id: reiteration,  libelle: "Réitération authentique",   defaut: 18}
+  - {id: droc,         libelle: "DROC",                      defaut: 18}
+  - {id: dat,          libelle: "DAT",                       defaut: 36}
+  - {id: reception,    libelle: "Réception travaux",         defaut: 36}
+  - {id: livraison,    libelle: "Livraison",                 defaut: 36}
+
 # --- Les 4 blocs, dans l'ordre du modèle -------------------------------------
 blocs:
 

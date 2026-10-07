@@ -71,9 +71,11 @@ def test_colonnes_sont_des_formules_pas_des_valeurs():
     g = _grille(ws)
     formules = [v for v in g.values() if isinstance(v, str) and v.startswith("=")]
     assert len(formules) > 150  # HT/TVA/TTC + totaux + synthèse
-    # la ligne Résultat net est bien une formule (jamais une valeur figée)
-    res = [k for k, v in g.items() if isinstance(v, str) and "D66-D65" in v]
-    assert res, "résultat net doit être une formule CA HT − dépenses HT"
+    # la ligne Résultat net est bien une formule (jamais une valeur figée) :
+    # CA HT − dépenses HT, soit « =D{ca}-D{dep} » sur deux lignes consécutives.
+    lignes = {ws.cell(row, 1).value: row for row in range(1, ws.max_row + 1) if ws.cell(row, 1).value}
+    res = ws.cell(lignes["Résultat net"], 4).value
+    assert isinstance(res, str) and re.fullmatch(r"=D\d+-D\d+", res), res
 
 
 def test_excel_egale_le_moteur_au_centime():

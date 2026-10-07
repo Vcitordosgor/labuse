@@ -64,6 +64,7 @@ class Catalogue:
     assiettes: dict[str, str]
     produit_modele: dict[str, Any]
     programme: tuple[dict[str, Any], ...]
+    calendrier: tuple[dict[str, Any], ...]
     blocs: tuple[Bloc, ...]
 
     def postes(self) -> list[Poste]:
@@ -127,5 +128,6 @@ def charger_catalogue(chemin: str | None = None) -> Catalogue:
         assiettes=dict(data["assiettes"]),
         produit_modele=dict(data["produit_modele"]),
         programme=tuple(data["programme"]),
+        calendrier=tuple(data.get("calendrier", ())),
         blocs=blocs,
     )

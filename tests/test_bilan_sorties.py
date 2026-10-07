@@ -1,7 +1,8 @@
 """BILAN-1 Lot 5 — sorties : génération, PDF, Excel, round-trip des saisies.
 
-Un bilan complet s'enregistre (saisies en JSON), puis PDF et Excel se régénèrent
-depuis ces mêmes saisies. Un bilan incomplet ne se génère pas (422).
+Un bilan s'enregistre (saisies en JSON), puis PDF et Excel se régénèrent depuis
+ces mêmes saisies. BILAN-2 : un bilan À MOITIÉ rempli se génère et s'exporte aussi
+(calcul en continu, case vide = 0) ; plus de porte « bilan complet » (422).
 """
 
 from __future__ import annotations
@@ -124,12 +125,25 @@ def client_parc(app_client):
             s.commit()
 
 
-def test_generer_incomplet_422(client_parc):
+def test_generer_moitie_rempli_puis_exports(client_parc):
+    """BILAN-2 : un bilan à moitié rempli se génère ET s'exporte (PDF + Excel)."""
     c, idu = client_parc
-    corps = {"programme": {"terrain": 1746}, "produits": [], "postes": {}, "mode": "marge"}
-    r = c.post(f"/bilan/{idu}/generer", json=corps)
-    assert r.status_code == 422
-    assert r.json()["detail"]["code"] == "bilan-incomplet"
+    corps = {
+        "programme": {"terrain": 1746},
+        "produits": [{"libelle": "Libre", "lots": 46, "suv": 2560, "prix_ttc_m2_suv": 4800, "tva": 0.085}],
+        "postes": {"achat": {"valeur": 1000, "etat": "saisi", "tva": 0.0}},
+        "mode": "marge",
+    }
+    g = c.post(f"/bilan/{idu}/generer", json=corps)
+    assert g.status_code == 200, g.text
+    body = g.json()
+    doc_id = body["doc_id"]
+    assert body["complet"] is False and body["lignes_vides"] > 0  # non bloquant
+    # PDF et Excel se régénèrent malgré les lignes vides
+    pdf = c.get(f"/bilan/{idu}.pdf", params={"doc_id": doc_id})
+    assert pdf.status_code == 200 and pdf.content[:4] == b"%PDF"
+    xlsx = c.get(f"/bilan/{idu}.xlsx", params={"doc_id": doc_id})
+    assert xlsx.status_code == 200 and xlsx.content[:2] == b"PK"
 
 
 def test_generer_puis_pdf_et_excel(client_parc):

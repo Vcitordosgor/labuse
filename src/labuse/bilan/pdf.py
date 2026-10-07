@@ -1,10 +1,15 @@
-"""BILAN-1 Lot 5 — le PDF du Bilan.
+"""BILAN-1 Lot 5 / BILAN-2 — le PDF du Bilan.
 
 Même couverture/en-tête/pied que les autres documents (marque LABUSE, cartouche
-@page lu par le rendu), puis une page par bloc (Libellé · Assiette · Taux · HT ·
-TVA · TTC · État, avec badges d'état) et une page de synthèse (dépenses, CA, TVA
-résiduelle, résultat net, marge, cash flow). Les nombres sont CEUX du moteur :
-écran = PDF par construction. Généré seulement si le bilan est complet.
+@page lu par le rendu). En tête : le bloc de ratios & données du programme (ordre
+de l'Excel) et le calendrier prévisionnel. Puis UN seul tableau aligné — Libellé ·
+Assiette · Taux · HT · TVA · TTC — avec un sous-total « TOTAL (n) » par bloc, et la
+synthèse (dépenses, CA, TVA résiduelle, résultat net, marge, cash flow).
+
+BILAN-2 : le document se génère À TOUT MOMENT (calcul en continu, case vide = 0).
+Une ligne vide ne porte pas de montant (elle compte pour 0 dans les totaux) ; les
+états sont une simple pastille (Sourcé / Saisi / Repère pris / Mes ratios / Sans
+objet), jamais « À renseigner ». Les nombres sont CEUX du moteur : écran = PDF.
 """
 
 from __future__ import annotations
@@ -22,21 +27,39 @@ _ETAT_LABEL = {
     "repere": "Repère pris",
     "ratios": "Mes ratios",
     "sans_objet": "Sans objet",
-    "a_renseigner": "À renseigner",
+    "a_renseigner": "",  # BILAN-2 : une ligne vide ne porte plus de pastille orange
 }
 
+# Les 4 blocs sont numérotés comme dans le modèle : TOTAL (1) … TOTAL (4).
+_NUM_BLOC = {"T": 1, "C": 2, "G": 3, "V": 4}
+
 _CSS = """
-.bilan h2{font-size:13px;margin:18px 0 6px;color:#2F4F3E}
-.bilan table{width:100%;border-collapse:collapse;font-size:11px}
+.bilan h2{font-size:13px;margin:16px 0 6px;color:#2F4F3E}
+.bilan table{width:100%;border-collapse:collapse;font-size:11px;table-layout:fixed}
 .bilan th{text-align:left;color:#6b7a72;border-bottom:1px solid #cdd6d0;padding:4px 6px}
-.bilan td{padding:4px 6px;border-bottom:1px solid #e6ece8;vertical-align:top}
+.bilan td{padding:4px 6px;border-bottom:1px solid #e6ece8;vertical-align:top;overflow-wrap:anywhere}
 .bilan .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .bilan tr.tot td{font-weight:700;background:#eaf2ec}
 .bilan .bloc{page-break-inside:avoid;margin-bottom:10px}
 .bilan .synth{page-break-before:always}
 .bilan .badge{font-size:10px;border:1px solid #9bb0a4;border-radius:9px;padding:1px 6px;color:#44584c}
 .bilan .res{font-size:16px;font-weight:700;color:#0a6b38}
+.bilan .tete{display:flex;gap:26px;margin:4px 0 6px}
+.bilan .tete table{font-size:11px}
+.bilan .tete td{border:0;padding:2px 6px}
+.bilan .tete .k{color:#6b7a72}
+.bilan .tete .v{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.bilan .vides{color:#6b7a72;font-size:10px;margin:2px 0 8px}
 """
+
+# Colonne « Libellé · Assiette · Taux · HT · TVA · TTC · État » — largeurs fixes
+# (en-tête et lignes partagent la même grille, chiffres calés à droite).
+_COLGROUP = (
+    "<colgroup>"
+    "<col style='width:26%'><col style='width:15%'><col style='width:11%'>"
+    "<col style='width:14%'><col style='width:12%'><col style='width:14%'>"
+    "<col style='width:8%'></colgroup>"
+)
 
 
 def _eur(x: float | None) -> str:
@@ -51,13 +74,63 @@ def _pct(x: float | None) -> str:
 
 def _taux(ln, poste) -> str:
     v = ln.taux_ou_montant
-    if ln.etat == "sans_objet" or v is None:
+    if ln.etat == "sans_objet":
         return "—"
+    if v is None:  # ligne vide (BILAN-2) : rien à afficher, compte pour 0
+        return ""
     if poste.mode == "pct":
         return f"{v:.2f} %".replace(".", ",")
     if poste.mode == "unit":
         return f"{round(v):,}".replace(",", " ") + f" {poste.unite or ''}".rstrip()
     return _eur(v)
+
+
+def _tete(
+    r: ResultatBilan, programme: dict | None, calendrier: dict | None, cat: Catalogue
+) -> str:
+    """Le bloc de tête : ratios & données du programme (ordre de l'Excel) + le
+    calendrier prévisionnel. Valeurs issues du moteur (ratios) et des saisies."""
+    programme = programme or {}
+    ratios = {k: v for k, v in r.ratios}
+    pt = r.produits_totaux
+
+    def m2(x):
+        return "—" if x in (None, "") else f"{round(float(x)):,}".replace(",", " ") + " m²"
+
+    # Ordre du modèle (A4, A9, A10, A11, A14, A15, A16, A18, A21, A22).
+    lignes_g = [
+        ("Terrain", m2(programme.get("terrain"))),
+        ("Surface de plancher", m2(programme.get("sdp"))),
+        ("Surface taxable", m2(programme.get("surface_taxable"))),
+        ("SUV", m2(pt.get("suv"))),
+        ("Coût const. m² SUV HT", ratios.get("Coût const. m² SUV HT", "—")),
+        ("Prix moyen m² SUV HT", ratios.get("Prix moyen au m² SUV HT", "—")),
+        ("Net promoteur m² SUV TTC", ratios.get("Net promoteur m² SUV TTC", "—")),
+        ("CA TTC programme", _eur(r.ca_ttc)),
+        ("Renta nette / CA HT", _pct(r.marge_pct)),
+        ("Nombre de lots", str(round(pt.get("lots") or 0)) if pt.get("lots") else "—"),
+    ]
+    g = "".join(
+        f"<tr><td class='k'>{esc(k)}</td><td class='v'>{esc(str(v))}</td></tr>"
+        for k, v in lignes_g
+    )
+
+    cal = calendrier or {}
+    lignes_c = []
+    for etape in cat.calendrier:
+        off = cal.get(etape["id"], etape.get("defaut"))
+        txt = "—" if off is None else (f"J+{off}" if off else "J")
+        lignes_c.append(
+            f"<tr><td class='k'>{esc(etape['libelle'])}</td><td class='v'>{txt}</td></tr>"
+        )
+    c = "".join(lignes_c)
+
+    return (
+        "<div class='tete'>"
+        f"<table><tr><th colspan='2'>Ratios &amp; programme</th></tr>{g}</table>"
+        f"<table><tr><th colspan='2'>Calendrier prévisionnel</th></tr>{c}</table>"
+        "</div>"
+    )
 
 
 def construire_html(
@@ -66,6 +139,8 @@ def construire_html(
     idu: str,
     adresse: str = "",
     commune: str = "",
+    programme: dict | None = None,
+    calendrier: dict | None = None,
     cat: Catalogue | None = None,
     jour: date | None = None,
 ) -> tuple[str, Cartouche]:
@@ -83,6 +158,12 @@ def construire_html(
     )
 
     corps = ['<div class="bilan">', tete]
+    corps.append(_tete(r, programme, calendrier, cat))
+    if r.lignes_vides:
+        corps.append(
+            f"<p class='vides'>{r.lignes_vides} ligne(s) vide(s) — comptées pour 0, "
+            "comme dans l'Excel.</p>"
+        )
     postes = {p.id: p for p in cat.postes()}
     lignes = {ln.id: ln for ln in r.lignes}
     for b in cat.blocs:
@@ -90,24 +171,29 @@ def construire_html(
         corps.append('<div class="bloc">')
         corps.append(f"<h2>{esc(b.titre)}</h2>")
         corps.append(
-            "<table><thead><tr><th>Libellé</th><th>Assiette</th>"
+            "<table>" + _COLGROUP + "<thead><tr><th>Libellé</th><th>Assiette</th>"
             "<th class='num'>Taux</th><th class='num'>HT</th><th class='num'>TVA</th>"
             "<th class='num'>TTC</th><th>État</th></tr></thead><tbody>"
         )
         for poste in b.postes:
             ln = lignes[poste.id]
             lib = esc(poste.libelle) + (f" <small>{esc(poste.sub)}</small>" if poste.sub else "")
+            # Une ligne vide ne porte pas de montant (elle vaut 0 dans le total).
+            vide = ln.manquant
+            etat = _ETAT_LABEL.get(ln.etat, ln.etat)
             corps.append(
                 f"<tr><td>{lib}</td>"
-                f"<td class='num'>{_eur(ln.assiette_valeur) if ln.assiette_valeur is not None else '—'}</td>"
+                f"<td class='num'>{_eur(ln.assiette_valeur) if ln.assiette_valeur else '—'}</td>"
                 f"<td class='num'>{_taux(ln, poste)}</td>"
-                f"<td class='num'>{_eur(ln.ht)}</td>"
-                f"<td class='num'>{_eur(ln.tva)}</td>"
-                f"<td class='num'>{_eur(ln.ttc)}</td>"
-                f"<td><span class='badge'>{_ETAT_LABEL.get(ln.etat, ln.etat)}</span></td></tr>"
+                f"<td class='num'>{'' if vide else _eur(ln.ht)}</td>"
+                f"<td class='num'>{'' if vide else _eur(ln.tva)}</td>"
+                f"<td class='num'>{'' if vide else _eur(ln.ttc)}</td>"
+                f"<td>{f'<span class=badge>{esc(etat)}</span>' if etat else ''}</td></tr>"
             )
+        n = _NUM_BLOC.get(b.id)
+        lib_tot = f"TOTAL ({n})" if n else f"Total — {esc(b.titre)}"
         corps.append(
-            f"<tr class='tot'><td colspan='3'>Total — {esc(b.titre)}</td>"
+            f"<tr class='tot'><td colspan='3'>{lib_tot} — {esc(b.titre)}</td>"
             f"<td class='num'>{_eur(tot.ht)}</td><td class='num'>{_eur(tot.tva)}</td>"
             f"<td class='num'>{_eur(tot.ttc)}</td><td></td></tr>"
         )

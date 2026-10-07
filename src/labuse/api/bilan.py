@@ -113,6 +113,7 @@ class ProgrammeIn(BaseModel):
     terrain: float | None = None
     surface_taxable: float | None = None
     loyer: float | None = None
+    sdp: float | None = None  # surface de plancher (m²) — info / repère faisabilité
 
 
 class SaisieIn(BaseModel):
@@ -128,6 +129,7 @@ class CalculIn(BaseModel):
     postes: dict[str, SaisieIn] = {}
     mode: str = "marge"
     marge_cible: float | None = None
+    calendrier: dict[str, int | None] = {}  # étape → J+n (mois), info seulement
 
 
 def _entrees(corps: CalculIn) -> EntreesBilan:
@@ -136,6 +138,7 @@ def _entrees(corps: CalculIn) -> EntreesBilan:
             terrain=corps.programme.terrain,
             surface_taxable=corps.programme.surface_taxable,
             loyer=corps.programme.loyer,
+            sdp=corps.programme.sdp,
         ),
         produits=[
             Produit(
@@ -155,6 +158,7 @@ def _entrees(corps: CalculIn) -> EntreesBilan:
         },
         mode=corps.mode,
         marge_cible=corps.marge_cible,
+        calendrier=dict(corps.calendrier),
     )
 
 
@@ -162,6 +166,7 @@ def _resultat_dict(r: ResultatBilan) -> dict:
     return {
         "complet": r.complet,
         "manquants": r.manquants,
+        "lignes_vides": r.lignes_vides,
         "vraisemblance": r.vraisemblance,
         "total_postes": r.total_postes,
         "postes_renseignes": r.postes_renseignes,
@@ -214,8 +219,10 @@ def _resultat_dict(r: ResultatBilan) -> dict:
 
 @router.post("/bilan/{idu}/calcul")
 def calculer_bilan(idu: str, corps: CalculIn) -> dict:
-    """Calcule le bilan à partir des seules saisies du client. Aucune donnée n'est
-    inventée : un poste à renseigner laisse le bilan incomplet (ni marge ni export)."""
+    """Calcule le bilan à partir des seules saisies du client. BILAN-2 : calcul EN
+    CONTINU (comme l'Excel) — une case vide vaut 0, la marge et les totaux
+    s'affichent dès la première saisie. Les lignes vides sont seulement comptées
+    (``lignes_vides``). Aucune donnée n'est inventée."""
     r = Moteur().calculer(_entrees(corps))
     return _resultat_dict(r)
 
@@ -244,6 +251,7 @@ def _serialiser_catalogue() -> dict:
         "assiettes": cat.assiettes,
         "produit_modele": cat.produit_modele,
         "programme": list(cat.programme),
+        "calendrier": [dict(c) for c in cat.calendrier],
         "blocs": [
             {
                 "id": b.id,
@@ -311,19 +319,11 @@ def _commune(db: Session, idu: str) -> str:
 def generer_bilan(
     idu: str, corps: CalculIn, request: Request, db: Session = Depends(get_db)
 ) -> dict:
-    """Génère (enregistre la recette d') un bilan : exige qu'il soit COMPLET, puis
-    stocke ses saisies en JSON dans « Mes documents » (hypotheses). « Ouvrir »
-    régénère PDF/Excel à partir de ces mêmes saisies."""
+    """Génère (enregistre la recette d') un bilan : BILAN-2 — se génère À TOUT
+    MOMENT (plus de porte « bilan complet »). Stocke ses saisies en JSON dans
+    « Mes documents » (hypotheses). « Ouvrir » régénère PDF/Excel à partir de ces
+    mêmes saisies. ``lignes_vides`` est remonté pour information."""
     r = Moteur().calculer(_entrees(corps))
-    if not r.complet:
-        raise HTTPException(
-            422,
-            detail={
-                "code": "bilan-incomplet",
-                "manques": r.manquants,
-                "message": f"{len(r.manquants)} poste(s) à renseigner avant de générer le bilan.",
-            },
-        )
     from .documents_bibliotheque import millesimes_servis
 
     cid = compte_ou_401(request)
@@ -340,7 +340,7 @@ def generer_bilan(
         },
     ).scalar()
     db.commit()
-    return {"doc_id": int(row), "complet": True}
+    return {"doc_id": int(row), "complet": r.complet, "lignes_vides": r.lignes_vides}
 
 
 def _saisies_du_document(db: Session, idu: str, doc_id: int, request: Request) -> CalculIn:
@@ -367,9 +367,13 @@ def bilan_pdf(
 
     corps = _saisies_du_document(db, idu, doc_id, request)
     r = Moteur().calculer(_entrees(corps))
-    if not r.complet:
-        raise HTTPException(422, "Bilan incomplet.")
-    octets = _pdf.construire_pdf(r, idu=idu, commune=_commune(db, idu))
+    octets = _pdf.construire_pdf(
+        r,
+        idu=idu,
+        commune=_commune(db, idu),
+        programme=corps.programme.model_dump(),
+        calendrier=dict(corps.calendrier),
+    )
     return Response(
         content=octets,
         media_type="application/pdf",
@@ -385,8 +389,6 @@ def bilan_xlsx(
 
     corps = _saisies_du_document(db, idu, doc_id, request)
     e = _entrees(corps)
-    if not Moteur().calculer(e).complet:
-        raise HTTPException(422, "Bilan incomplet.")
     octets = classeur_bilan_bytes(e, titre=f"Bilan — {idu}")
     return Response(
         content=octets,

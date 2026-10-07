@@ -1,12 +1,15 @@
-"""BILAN-1 Lot 2 — moteur du bilan promoteur.
+"""BILAN-1 Lot 2 / BILAN-2 — moteur du bilan promoteur.
 
 Tout le calcul du bilan vit ICI (doctrine 5 : aucun calcul dans le front). Le
 front envoie les saisies, le moteur rend HT / TVA / TTC par poste, les totaux par
 bloc, le CA par produit, la marge (€ et % du CA HT), et — au choix — la marge au
 prix d'achat saisi OU le prix maximal du terrain pour une marge cible.
 
-Doctrine : rien n'entre dans le calcul que le client n'a pas posé. Un poste sans
-valeur et non « Sans objet » laisse le bilan incomplet → ni marge ni export.
+BILAN-2 — CALCUL EN CONTINU (comme l'Excel de la promotrice) : une case vide vaut
+0. La marge, les ratios et les totaux s'affichent dès la première saisie ; il n'y
+a plus de « aucun chiffre tant qu'un poste reste à renseigner ». Les postes vides
+sont seulement COMPTÉS (``lignes_vides``), information discrète jamais bloquante.
+Un poste « Sans objet » vaut 0 volontaire (il n'est pas compté comme vide).
 """
 
 from __future__ import annotations
@@ -70,6 +73,7 @@ class Programme:
     terrain: float | None = None  # m² (cadastre / union d'un assemblage) — Sourcé
     surface_taxable: float | None = None  # m²
     loyer: float | None = None  # €/m² de SUV (assiette de la garantie locataire)
+    sdp: float | None = None  # surface de plancher (m²) — info / repère faisabilité
 
 
 @dataclass
@@ -79,6 +83,7 @@ class EntreesBilan:
     postes: dict[str, SaisiePoste] = field(default_factory=dict)
     mode: str = "marge"  # "marge" | "prix"
     marge_cible: float | None = None  # % du CA HT (saisie, sans défaut)
+    calendrier: dict[str, int | None] = field(default_factory=dict)  # étape → J+n (info)
 
     def saisie(self, pid: str) -> SaisiePoste:
         return self.postes.get(pid, SaisiePoste())
@@ -96,7 +101,7 @@ class LigneBilan:
     ht: float | None
     tva: float | None
     ttc: float | None
-    manquant: bool
+    manquant: bool  # BILAN-2 : « ligne vide » (valeur non posée, hors « Sans objet »)
 
 
 @dataclass
@@ -135,11 +140,17 @@ class ResultatBilan:
     prix_achat_dvf: float | None
     total_postes: int
     postes_renseignes: int
-    manquants: list[str]
+    manquants: list[str]  # BILAN-2 : postes vides (information, jamais bloquant)
     vraisemblance: list[dict[str, str]]  # alertes non bloquantes [{cible, message}]
 
     @property
+    def lignes_vides(self) -> int:
+        return len(self.manquants)
+
+    @property
     def complet(self) -> bool:
+        # BILAN-2 : « complet » = aucune ligne vide. N'est PLUS une condition de
+        # calcul ni d'export — le bilan se calcule et s'exporte à tout moment.
         return not self.manquants
 
 
@@ -210,54 +221,62 @@ class Moteur:
 
     def _ligne_ht(
         self, poste: Poste, saisie: SaisiePoste, assiette: float | None, taux_tva: float | None
-    ) -> tuple[float | None, float | None, float | None]:
-        """Retourne (ht, tva, ttc) ; None si indéterminable (→ poste à renseigner)."""
+    ) -> tuple[float, float, float]:
+        """Retourne (ht, tva, ttc) — CALCUL EN CONTINU (BILAN-2) : une case vide vaut
+        0 (valeur, assiette ou taux de TVA non posés comptent pour 0), comme dans
+        l'Excel. La ligne rend donc toujours des nombres ; le fait qu'elle soit
+        « vide » est porté séparément (cf. ``_est_vide``), pour le compteur."""
         if saisie.etat == SANS_OBJET:
             return 0.0, 0.0, 0.0
-        if saisie.valeur is None:
-            return None, None, None
+        val = saisie.valeur if saisie.valeur is not None else 0.0
+        a = assiette if assiette is not None else 0.0
         # montant brut selon le mode (en HT ou en TTC selon poste.base)
         if poste.mode == "forfait":
-            brut = saisie.valeur
+            brut = val
         elif poste.mode == "pct":
-            if assiette is None:
-                return None, None, None
-            brut = assiette * saisie.valeur / 100.0
+            brut = a * val / 100.0
         elif poste.mode == "unit":
-            if assiette is None:
-                return None, None, None
-            brut = assiette * saisie.valeur
+            brut = a * val
         else:  # pragma: no cover - mode inconnu
-            return None, None, None
-        if taux_tva is None:
-            return None, None, None
+            return 0.0, 0.0, 0.0
+        taux = taux_tva if taux_tva is not None else 0.0
         if poste.base == "ttc":
             ttc = brut
-            ht = ttc / (1.0 + taux_tva)
+            ht = ttc / (1.0 + taux)
             tva = ttc - ht
         else:
             ht = brut
-            tva = ht * taux_tva
+            tva = ht * taux
             ttc = ht + tva
         return ht, tva, ttc
 
+    @staticmethod
+    def _est_vide(saisie: SaisiePoste) -> bool:
+        """Une ligne est « vide » si sa valeur n'est pas posée et qu'elle n'est pas
+        « Sans objet » (0 volontaire). Sert au seul compteur ``lignes_vides``."""
+        return saisie.valeur is None and saisie.etat != SANS_OBJET
+
     # -- calcul principal ---------------------------------------------------
     def calculer(self, e: EntreesBilan, _achat_ht_force: float | None = None) -> ResultatBilan:
-        # Totaux produits
+        # Totaux produits — EN CONTINU (BILAN-2) : une case vide vaut 0, le CA se
+        # cumule dès la première saisie (`ok` reste pour dire si tout est posé).
         produits_vue = []
         lots = suv = ca_ttc = ca_ht = 0.0
-        ca = []
+        ca: list[float] = []
         prod_ok = bool(e.produits)
         for p in e.produits:
             if not p.complet:
                 prod_ok = False
-                ca.append(None)
-            else:
-                lots += p.lots  # type: ignore[arg-type]
-                suv += p.suv  # type: ignore[arg-type]
-                ca_ttc += p.ca_ttc  # type: ignore[operator]
-                ca_ht += p.ca_ht  # type: ignore[operator]
-                ca.append(p.ca_ttc)
+            p_suv = p.suv or 0.0
+            p_prix = p.prix_ttc_m2_suv or 0.0
+            p_tva = p.tva or 0.0
+            p_ca_ttc = p_suv * p_prix
+            p_ca_ht = p_ca_ttc / (1.0 + p_tva)
+            lots += p.lots or 0.0
+            suv += p_suv
+            ca_ttc += p_ca_ttc
+            ca_ht += p_ca_ht
+            ca.append(p_ca_ttc)
             produits_vue.append(
                 {
                     "libelle": p.libelle,
@@ -265,17 +284,17 @@ class Moteur:
                     "suv": p.suv,
                     "prix_ttc_m2_suv": p.prix_ttc_m2_suv,
                     "tva": p.tva,
-                    "ca_ttc": p.ca_ttc,
-                    "ca_ht": p.ca_ht,
+                    "ca_ttc": p_ca_ttc,
+                    "ca_ht": p_ca_ht,
                     "complet": p.complet,
                 }
             )
         pt = {
             "ok": prod_ok,
-            "lots": lots if prod_ok else None,
-            "suv": suv if prod_ok else None,
-            "ca_ttc": ca_ttc if prod_ok else None,
-            "ca_ht": ca_ht if prod_ok else None,
+            "lots": lots,
+            "suv": suv,
+            "ca_ttc": ca_ttc,
+            "ca_ht": ca_ht,
             "ca": ca,
         }
 
@@ -293,26 +312,22 @@ class Moteur:
         # Étapes de dépendance : achat (prix terrain) -> construction -> bloc C
         ctx["prix_terrain"] = ht_de("achat")
         ctx["construction"] = ht_de("constr")
-        # total du bloc Construction & honoraires (pour DO/TRC)
+        # total du bloc Construction & honoraires (pour DO/TRC) — continu
         c_ht = 0.0
         c_tva = 0.0
-        c_ok = True
         for poste in self.cat.blocs[1].postes:  # bloc C
             s = e.saisie(poste.id)
             a = self._assiette(poste, s, ctx)
             taux = self._taux_tva(poste, s)
             h, t, _ = self._ligne_ht(poste, s, a, taux)
-            if h is None or t is None:
-                c_ok = False
-            else:
-                c_ht += h
-                c_tva += t
-        ctx["total2_ht"] = (c_ht) if c_ok else None
-        ctx["total2_ttc"] = (c_ht + c_tva) if c_ok else None
+            c_ht += h
+            c_tva += t
+        ctx["total2_ht"] = c_ht
+        ctx["total2_ttc"] = c_ht + c_tva
 
         # Étude de sol & imprévus techniques : composent les assiettes d'assurances
         # (D.O / C.N.R, TRC) comme dans le tableur de la promotrice (0 € d'écart).
-        def ligne_complete(pid: str) -> tuple[float | None, float | None]:
+        def ligne_complete(pid: str) -> tuple[float, float]:
             poste = self.cat.poste(pid)
             s = e.saisie(pid)
             a = self._assiette(poste, s, ctx)
@@ -330,7 +345,7 @@ class Moteur:
         renseignes = 0
         for bloc in self.cat.blocs:
             b_ht = b_tva = 0.0
-            b_manq = 0
+            b_vides = 0
             for poste in bloc.postes:
                 s = e.saisie(poste.id)
                 if poste.id == "achat" and _achat_ht_force is not None:
@@ -340,7 +355,7 @@ class Moteur:
                     a = self._assiette(poste, s, ctx)
                     taux = self._taux_tva(poste, s)
                     h, t, c = self._ligne_ht(poste, s, a, taux)
-                manquant = h is None or t is None
+                vide = self._est_vide(s)
                 lignes.append(
                     LigneBilan(
                         id=poste.id,
@@ -353,17 +368,17 @@ class Moteur:
                         ht=h,
                         tva=t,
                         ttc=c,
-                        manquant=manquant,
+                        manquant=vide,
                     )
                 )
-                if manquant:
+                # EN CONTINU : la ligne entre TOUJOURS dans le total (vide = 0).
+                b_ht += h
+                b_tva += t
+                if vide:
                     manquants.append(poste.id)
-                    b_manq += 1
-                else:
-                    b_ht += h  # type: ignore[arg-type]
-                    b_tva += t  # type: ignore[arg-type]
-                    if s.etat in _RENSEIGNES or s.etat == SANS_OBJET:
-                        renseignes += 1
+                    b_vides += 1
+                elif s.etat in _RENSEIGNES or s.etat == SANS_OBJET:
+                    renseignes += 1
             blocs_tot.append(
                 TotalBloc(
                     id=bloc.id,
@@ -371,43 +386,36 @@ class Moteur:
                     ht=b_ht,
                     tva=b_tva,
                     ttc=b_ht + b_tva,
-                    complet=b_manq == 0,
-                    manquants=b_manq,
+                    complet=b_vides == 0,
+                    manquants=b_vides,
                 )
             )
 
-        if not pt["ok"]:
-            manquants.append("produits")
-
         total_postes = len(self._postes)
-        complet = not manquants
 
-        dep_ht = sum(b.ht for b in blocs_tot) if complet else None
-        dep_tva = sum(b.tva for b in blocs_tot) if complet else None
-        dep_ttc = (dep_ht + dep_tva) if complet else None
+        # Synthèse — calculée en continu (plus de porte « bilan complet »).
+        dep_ht = sum(b.ht for b in blocs_tot)
+        dep_tva = sum(b.tva for b in blocs_tot)
+        dep_ttc = dep_ht + dep_tva
+        ca_ht = pt["ca_ht"]
+        tva_res = (pt["ca_ttc"] - ca_ht) - dep_tva
+        res_net = ca_ht - dep_ht
+        marge = res_net / ca_ht if ca_ht else None  # % du CA HT (— si CA nul)
+        mod = next((ln.ht for ln in lignes if ln.id == "mod"), 0.0) or 0.0
+        cash = res_net + mod
+        aleas_tot = sum((ln.ht or 0.0) for ln in lignes if self.cat.poste(ln.id).alea)
+        res_sa = res_net + aleas_tot
+        marge_sa = res_sa / ca_ht if ca_ht else None
 
-        res_net = tva_res = marge = cash = aleas_tot = res_sa = marge_sa = None
-        if complet:
-            tva_res = (pt["ca_ttc"] - pt["ca_ht"]) - dep_tva  # type: ignore[operator]
-            res_net = pt["ca_ht"] - dep_ht  # type: ignore[operator]
-            marge = res_net / pt["ca_ht"] if pt["ca_ht"] else None
-            mod = next((ln.ht for ln in lignes if ln.id == "mod"), 0.0) or 0.0
-            cash = res_net + mod
-            aleas_tot = sum(
-                (ln.ht or 0.0) for ln in lignes if self.cat.poste(ln.id).alea
-            )
-            res_sa = res_net + aleas_tot
-            marge_sa = res_sa / pt["ca_ht"] if pt["ca_ht"] else None
-
-        # Prix max du terrain (sens « prix ») — modèle linéaire exact
+        # Prix max du terrain (sens « prix ») — modèle linéaire exact, en continu
         prix_max = prix_max_m2 = None
-        if _achat_ht_force is None and e.mode == "prix" and e.marge_cible is not None and pt["ok"]:
-            prix_max = self._prix_max_terrain(e, pt["ca_ht"])
+        if _achat_ht_force is None and e.mode == "prix" and e.marge_cible is not None and ca_ht:
+            prix_max = self._prix_max_terrain(e, ca_ht)
             if prix_max is not None and e.programme.terrain:
                 prix_max_m2 = prix_max / e.programme.terrain
 
-        ratios = self._ratios(lignes, blocs_tot, pt, ctx, complet, res_net)
-        vrais = self._vraisemblance(lignes, pt, e.programme, marge, complet)
+        ratios = self._ratios(lignes, blocs_tot, pt, ctx, res_net)
+        vrais = self._vraisemblance(lignes, pt, e.programme, marge, not manquants)
 
         return ResultatBilan(
             lignes=lignes,
@@ -418,7 +426,7 @@ class Moteur:
             depenses_tva=dep_tva,
             depenses_ttc=dep_ttc,
             ca_ht=pt["ca_ht"],
-            ca_tva=(pt["ca_ttc"] - pt["ca_ht"]) if pt["ok"] else None,
+            ca_tva=pt["ca_ttc"] - pt["ca_ht"],
             ca_ttc=pt["ca_ttc"],
             tva_residuelle=tva_res,
             resultat_net=res_net,
@@ -439,13 +447,16 @@ class Moteur:
 
     def _vraisemblance(self, lignes, pt, programme, marge, complet) -> list[dict[str, str]]:
         """Alertes de vraisemblance NON bloquantes (le bilan se calcule quand même) :
-        une valeur hors des bornes usuelles est signalée « à vérifier », jamais corrigée."""
+        une valeur hors des bornes usuelles est signalée « à vérifier », jamais
+        corrigée. L'alerte « marge élevée » n'a de sens que sur un bilan sans ligne
+        vide (un bilan partiel affiche naturellement une marge proche de 100 %)."""
         out: list[dict[str, str]] = []
         suv = pt["suv"]
         # Coût de construction au m² SUV (= le RATIO servi : construction + imprévus ÷ SUV)
         constr = next((ln for ln in lignes if ln.id == "constr"), None)
         aleaC = next((ln for ln in lignes if ln.id == "aleaC"), None)
-        if constr and constr.ht is not None and suv:
+        constr_saisie = constr is not None and not constr.manquant
+        if constr_saisie and constr.ht is not None and suv:
             cout = (constr.ht + (aleaC.ht or 0.0 if aleaC else 0.0)) / suv
             if cout < 1000 or cout > 5000:
                 out.append({
@@ -473,14 +484,11 @@ class Moteur:
         postes assis sur le prix du terrain. On mesure `other` et `(1+K)` par deux
         évaluations (achat = 0 et achat = 1) ; exige que tout le reste soit posé.
         """
-        if ca_ht is None:
+        if not ca_ht:
             return None
-        # tout sauf « achat » doit être résolu
-        test = self.calculer(e, _achat_ht_force=0.0)
-        reste = [m for m in test.manquants if m != "achat"]
-        if reste:
-            return None
-        dep0 = test.depenses_ht
+        # EN CONTINU : les postes vides valent 0 ; la dépense reste linéaire en
+        # « achat », on mesure donc `other` et `(1+K)` par deux évaluations.
+        dep0 = self.calculer(e, _achat_ht_force=0.0).depenses_ht
         dep1 = self.calculer(e, _achat_ht_force=1.0).depenses_ht
         if dep0 is None or dep1 is None:
             return None
@@ -491,7 +499,11 @@ class Moteur:
         achat = (ca_ht * (1.0 - cible) - dep0) / un_plus_k
         return achat
 
-    def _ratios(self, lignes, blocs, pt, ctx, complet, res_net):
+    def _ratios(self, lignes, blocs, pt, ctx, res_net):
+        """Ratios du programme — calculés EN CONTINU (BILAN-2) : dès que la grandeur
+        existe (SUV, CA HT non nuls) le ratio s'affiche ; « — » seulement quand le
+        dénominateur est encore vide (division impossible)."""
+
         def ht(pid):
             return next((ln.ht for ln in lignes if ln.id == pid), None)
 
@@ -500,39 +512,39 @@ class Moteur:
 
         suv = pt["suv"]
         rows: list[tuple[str, str]] = []
-        constr = ht("constr")
+        constr = ht("constr") or 0.0
         aleaC = ht("aleaC") or 0.0
         rows.append(
             (
                 "Coût const. m² SUV HT",
-                euro((constr + aleaC) / suv) if complet and constr is not None and suv else "—",
+                euro((constr + aleaC) / suv) if suv else "—",
             )
         )
         rows.append(
-            ("Prix moyen au m² SUV HT", euro(pt["ca_ht"] / suv) if pt["ok"] and suv else "—")
+            ("Prix moyen au m² SUV HT", euro(pt["ca_ht"] / suv) if suv else "—")
         )
-        if complet and suv:
+        if suv:
             net = (pt["ca_ht"] - (ht("acte") or 0) - (ht("pack") or 0) - (ht("proc") or 0))
             rows.append(("Net promoteur m² SUV TTC", euro(net / suv * (1 + self._tva_dom()))))
         else:
             rows.append(("Net promoteur m² SUV TTC", "—"))
-        rows.append(("CA TTC programme", euro(pt["ca_ttc"]) if pt["ok"] else "—"))
+        rows.append(("CA TTC programme", euro(pt["ca_ttc"])))
         rows.append(
             (
                 "Renta nette / CA HT",
                 f"{res_net / pt['ca_ht'] * 100:.1f} %".replace(".", ",")
-                if complet and pt["ca_ht"]
+                if pt["ca_ht"]
                 else "—",
             )
         )
-        rows.append(("Nombre de lots", str(round(pt["lots"])) if pt["ok"] else "—"))
+        rows.append(("Nombre de lots", str(round(pt["lots"])) if pt["lots"] else "—"))
         rows.append(
             ("Prix terrain y compris dation", euro(ctx.get("prix_terrain")))
         )
         rows.append(
             (
                 "Charge foncière / m² SUV",
-                euro(blocs[0].ht / suv) if complet and suv else "—",
+                euro(blocs[0].ht / suv) if suv else "—",
             )
         )
         return rows

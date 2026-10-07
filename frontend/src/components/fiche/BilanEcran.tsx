@@ -1,7 +1,12 @@
-// BILAN-1 Lot 3 — l'écran du bilan promoteur (maquette v2). Un moteur, deux portes.
+// BILAN-1 Lot 3 / BILAN-2 — l'écran du bilan promoteur, calé sur l'Excel de la
+// promotrice. Un moteur, deux portes.
 // Doctrine : AUCUN calcul ici. Le front tient les saisies, les envoie au moteur
-// (/bilan/{idu}/calcul) et affiche le résultat. On ne pré-remplit que le Sourcé ;
-// les repères sont cliquables et n'entrent dans le calcul qu'une fois adoptés.
+// (/bilan/{idu}/calcul) et affiche le résultat.
+// BILAN-2 : CALCUL EN CONTINU — une case vide vaut 0, la marge et les totaux
+// s'affichent dès la première saisie ; plus de « aucun chiffre tant qu'un poste
+// reste à renseigner ». Un compteur discret « N lignes vides » informe, sans
+// jamais bloquer. Les repères LABUSE restent cliquables à droite de la case et
+// n'entrent dans le calcul qu'une fois adoptés.
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -29,14 +34,17 @@ const pctToRate = (s: string): number | null => {
   return v == null ? null : v / 100
 }
 
+// Pastilles d'état (BILAN-2) : plus d'« À renseigner » orange par ligne — une
+// ligne vide ne porte pas de pastille (elle est juste comptée en haut).
 const ETAT_LABEL: Record<string, string> = {
   source: 'Sourcé', saisi: 'Saisi', repere: 'Repère pris',
-  ratios: 'Mes ratios', sans_objet: 'Sans objet', a_renseigner: 'À renseigner',
+  ratios: 'Mes ratios', sans_objet: 'Sans objet',
 }
-const ETAT_TON: Record<string, 'vert' | 'neutre' | 'ambre'> = {
-  source: 'vert', saisi: 'neutre', repere: 'neutre', ratios: 'neutre',
-  sans_objet: 'neutre', a_renseigner: 'ambre',
+const ETAT_TON: Record<string, 'vert' | 'neutre'> = {
+  source: 'vert', saisi: 'neutre', repere: 'neutre', ratios: 'neutre', sans_objet: 'neutre',
 }
+// Numérotation des blocs comme le modèle : TOTAL (1) … TOTAL (4).
+const NUM_BLOC: Record<string, number> = { T: 1, C: 2, G: 3, V: 4 }
 
 function entreesInitiales(m: BilanModele): BilanEntrees {
   const postes: Record<string, BilanSaisie> = {}
@@ -44,8 +52,10 @@ function entreesInitiales(m: BilanModele): BilanEntrees {
   for (const [pid, r] of Object.entries(m.ratios_compte)) {
     postes[pid] = { valeur: r.valeur, etat: 'ratios', tva: r.tva }
   }
+  const calendrier: Record<string, number | null> = {}
+  for (const c of m.calendrier ?? []) calendrier[c.id] = c.defaut
   return {
-    programme: { terrain: m.sourcee.terrain ?? null, surface_taxable: null, loyer: null },
+    programme: { terrain: m.sourcee.terrain ?? null, surface_taxable: null, loyer: null, sdp: null },
     produits: [
       { libelle: 'Produit 1', lots: null, suv: null, prix_ttc_m2_suv: null, tva: null },
       { libelle: 'Produit 2', lots: null, suv: null, prix_ttc_m2_suv: null, tva: null },
@@ -53,6 +63,7 @@ function entreesInitiales(m: BilanModele): BilanEntrees {
     postes,
     mode: 'marge',
     marge_cible: null,
+    calendrier,
   }
 }
 
@@ -64,8 +75,8 @@ export function BilanEcran({ idu, onClose, onGenerated }:
   const [entrees, setEntrees] = useState<BilanEntrees | null>(null)
   const [res, setRes] = useState<BilanResultat | null>(null)
   // `rev` ne bouge QUE sur une mise à jour PROGRAMMATIQUE (repère, « Sans objet »,
-  // vider, mémoriser) : on re-monte alors les champs (non contrôlés) pour qu'ils
-  // reflètent la nouvelle valeur. La saisie au clavier ne bump pas → focus conservé.
+  // vider, mémoriser, calendrier) : on re-monte alors les champs (non contrôlés)
+  // pour qu'ils reflètent la nouvelle valeur. La saisie clavier ne bump pas → focus.
   const [rev, setRev] = useState(0)
   const bump = () => setRev((r) => r + 1)
   const [erreurGen, setErreurGen] = useState<string | null>(null)
@@ -98,34 +109,37 @@ export function BilanEcran({ idu, onClose, onGenerated }:
       const prev: BilanSaisie = e.postes[id] ?? { valeur: null, etat: 'a_renseigner' }
       return { ...e, postes: { ...e.postes, [id]: { ...prev, ...patch } } }
     })
-  // version « programmatique » (repère/sans objet/vider/mémoriser) : re-monte les champs
   const majPosteProg = (id: string, patch: Partial<BilanSaisie>) => { majPoste(id, patch); bump() }
   const majProduit = (i: number, patch: Partial<BilanEntrees['produits'][number]>) =>
     setEntrees((e) => e && ({ ...e, produits: e.produits.map((p, k) => k === i ? { ...p, ...patch } : p) }))
   const majProgramme = (patch: Partial<BilanEntrees['programme']>) =>
     setEntrees((e) => e && ({ ...e, programme: { ...e.programme, ...patch } }))
+  const majCalendrier = (id: string, v: number | null) =>
+    setEntrees((e) => e && ({ ...e, calendrier: { ...e.calendrier, [id]: v } }))
 
   const ligne = useMemo(() => {
     const m: Record<string, BilanResultat['lignes'][number]> = {}
     for (const l of res?.lignes ?? []) m[l.id] = l
     return m
   }, [res])
-  // alertes de vraisemblance (non bloquantes) par cible
   const vrais = useMemo(() => {
     const m: Record<string, string> = {}
     for (const v of res?.vraisemblance ?? []) m[v.cible] = v.message
+    return m
+  }, [res])
+  const ratioMap = useMemo(() => {
+    const m: Record<string, string> = {}
+    for (const [k, v] of res?.ratios ?? []) m[k] = v
     return m
   }, [res])
 
   if (isLoading) return <Overlay onClose={onClose}><div className="p-6 text-txt-mut">Chargement du bilan…</div></Overlay>
   if (error || !modele || !entrees) return <Overlay onClose={onClose}><div className="p-6 text-amber">Bilan indisponible sur cette parcelle.</div></Overlay>
 
-  const complet = !!res?.complet
-  const prog = res ? `${res.postes_renseignes} / ${res.total_postes} postes` : ''
+  const vides = res?.lignes_vides ?? 0
 
   // Doctrine (Vic) : pas de source publique, pas de repère. Seuls les repères
-  // « registre » (source publique) qui se résolvent s'affichent ; les ratios de
-  // place ne sont pas des repères (le client saisit, ou reprend « Mes ratios »).
+  // « registre » (source publique) qui se résolvent s'affichent.
   const reperePoste = (p: BilanPoste): { valeur: number; label: string } | null => {
     if (p.repere?.kind !== 'registre' || !p.repere.registre_id) return null
     const r = modele.reperes_publics[p.repere.registre_id]
@@ -145,33 +159,110 @@ export function BilanEcran({ idu, onClose, onGenerated }:
       await ouvrir(docBilanUrl(idu, doc_id), 'bilan')
     } catch (e) {
       const d = (e as { detail?: { message?: string } })?.detail
-      setErreurGen(d?.message ?? 'Génération impossible — un poste reste à renseigner.')
+      setErreurGen(d?.message ?? 'Génération impossible.')
     }
   }
 
+  const suvTot = res?.produits_totaux.suv ?? null
+  const lotsTot = res?.produits_totaux.lots ?? null
+  const faisa = modele.reperes_publics['faisabilite'] ?? null
+  const sitadel = modele.reperes_publics['sitadel'] ?? null
+
   return (
     <Overlay onClose={onClose}>
-      <div className="flex h-14 items-center gap-3 border-b border-line bg-surface-2 px-5">
+      <div className="sticky top-0 z-10 flex h-14 items-center gap-3 border-b border-line bg-surface-2 px-5">
         <Bouton niveau="secondaire" ton="vert" onClick={onClose}>← Fermer</Bouton>
         <div className="leading-tight">
           <div className="text-[16px] font-bold text-txt">Bilan · {idu}</div>
           {modele.sourcee.commune && <div className="text-[12px] text-txt-mut">{modele.sourcee.commune}</div>}
         </div>
+        {/* compteur discret « N lignes vides » — information, jamais bloquant */}
+        <span className="ml-3 text-[12px] text-txt-mut" title="Comme dans l'Excel, une case vide vaut 0.">
+          {vides === 0 ? 'Toutes les lignes sont renseignées' : `${vides} ligne${vides > 1 ? 's' : ''} vide${vides > 1 ? 's' : ''}`}
+        </span>
         <div className="ml-auto flex gap-2">
-          {complet && docId != null && (
+          {docId != null && (
             <a href={docBilanExcelUrl(idu, docId)} className="inline-flex h-8 items-center rounded-md border border-mint px-3 text-[13px] font-semibold text-mint hover:bg-mint hover:text-mint-on">Excel</a>
           )}
-          <Bouton niveau="primaire" ton="vert" disabled={!complet || !!enCours} onClick={generer}>
+          <Bouton niveau="primaire" ton="vert" disabled={!!enCours} onClick={generer}>
             {enCours ? 'Génération…' : 'Générer le bilan'}
           </Bouton>
         </div>
       </div>
 
-      <div className="grid grid-cols-[320px_minmax(0,1fr)] items-start gap-5 p-5">
-        {/* colonne latérale */}
-        <aside className="sticky top-5 grid gap-3.5">
-          <section className="rounded-md border border-line bg-surface-1 p-3.5">
-            <h3 className="mb-2.5 text-[13px] font-semibold text-txt-mut">Que voulez-vous savoir ?</h3>
+      <div className="grid gap-4 p-5">
+        {/* Bandeau zone à cheval : partie non constructible (familles ≠ U/AU) */}
+        {modele.sourcee.non_constructible_pct > 0 && (
+          <div className="rounded-md border border-amber bg-surface-1 p-3 text-[13px]">
+            <b className="text-amber">Parcelle à {fmtNum(modele.sourcee.non_constructible_pct)} % en zone non constructible (N/A)</b>
+            <span className="text-txt"> : le programme ne peut porter que sur la partie constructible{modele.sourcee.constructible_m2 != null ? ` (${fmtNum(modele.sourcee.constructible_m2)} m²)` : ''}.</span>
+            {modele.sourcee.zonage && <div className="mt-1 text-[12px] text-txt-mut">{modele.sourcee.zonage}</div>}
+            {modele.sourcee.constructible_m2 != null && (
+              <button className="mt-2 rounded-full border border-dashed border-amber px-2 py-0.5 text-[12px] text-amber hover:bg-amber hover:text-mint-on"
+                onClick={() => { majProgramme({ terrain: modele.sourcee.constructible_m2 }); bump() }}>
+                Utiliser {fmtNum(modele.sourcee.constructible_m2)} m² comme terrain
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* ── Tête : ratios & programme · calendrier · résultat (ordre de l'Excel) ── */}
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_300px]">
+          {/* Ratios & données du programme */}
+          <Carte titre="Ratios &amp; programme" sous="dans l'ordre de l'Excel">
+            <table className="w-full text-[13px]">
+              <tbody>
+                <TeteInput label="Terrain" unite="m²" value={entrees.programme.terrain} revKey={rev}
+                  source={modele.sourcee.terrain != null} onChange={(v) => majProgramme({ terrain: v })} />
+                <TeteInput label="Surface de plancher" unite="m²" value={entrees.programme.sdp} revKey={rev}
+                  repere={faisa ? { label: faisa.label, valeur: faisa.valeur } : null}
+                  onChange={(v) => majProgramme({ sdp: v })} onPick={(v) => { majProgramme({ sdp: v }); bump() }} />
+                <TeteInput label="Surface taxable" unite="m²" value={entrees.programme.surface_taxable} revKey={rev}
+                  repere={faisa ? { label: faisa.label, valeur: faisa.valeur } : null}
+                  onChange={(v) => majProgramme({ surface_taxable: v })} onPick={(v) => { majProgramme({ surface_taxable: v }); bump() }}
+                  alerte={vrais['stax']} />
+                <TeteCalc label="SUV" value={suvTot != null ? `${fmtNum(suvTot)} m²` : '—'} />
+                <TeteCalc label="Coût const. m² SUV HT" value={ratioMap['Coût const. m² SUV HT'] ?? '—'} alerte={vrais['cout_const']} />
+                <TeteCalc label="Prix moyen m² SUV HT" value={ratioMap['Prix moyen au m² SUV HT'] ?? '—'} />
+                <TeteCalc label="Net promoteur m² SUV TTC" value={ratioMap['Net promoteur m² SUV TTC'] ?? '—'} />
+                <TeteCalc label="CA TTC programme" value={fmtEur(res?.ca_ttc)} />
+                <TeteCalc label="Renta nette / CA HT" value={fmtPct(res?.marge_pct)} />
+                <TeteCalc label="Nombre de lots" value={lotsTot != null ? String(Math.round(lotsTot)) : '—'} />
+              </tbody>
+            </table>
+          </Carte>
+
+          {/* Calendrier prévisionnel */}
+          <Carte titre="Calendrier prévisionnel" sous="Compromis → Livraison, en J+n">
+            <table className="w-full text-[13px]">
+              <tbody>
+                {(modele.calendrier ?? []).map((c) => (
+                  <tr key={c.id} className="border-b border-line last:border-0">
+                    <td className="py-1 pl-3 text-txt-mut">{c.libelle}</td>
+                    <td className="py-1 pr-3 text-right">
+                      <span className="inline-flex items-center gap-1">
+                        <span className="text-[11px] text-txt-dim">J+</span>
+                        <input key={rev} className="h-7 w-16 rounded border border-line-2 bg-surface px-1.5 text-right tabular-nums"
+                          defaultValue={entrees.calendrier[c.id] ?? ''} placeholder="0"
+                          onChange={(ev) => majCalendrier(c.id, parseNum(ev.target.value))} />
+                        <span className="text-[11px] text-txt-dim">mois</span>
+                      </span>
+                      {c.repere === 'sitadel' && sitadel && (
+                        <button className="ml-1 rounded-full border border-dashed border-line-2 px-1.5 text-[11px] text-txt-mut hover:bg-mint hover:text-mint-on"
+                          title={sitadel.source}
+                          onClick={() => { majCalendrier(c.id, (entrees.calendrier['depot_pc'] ?? 0) + Math.round(sitadel.valeur)); bump() }}>
+                          Sitadel {Math.round(sitadel.valeur)} mois
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Carte>
+
+          {/* Résultat + sens (marge / prix max terrain) */}
+          <section className="grid content-start gap-3 rounded-md border border-line bg-surface-1 p-3.5">
             <div className="flex flex-wrap gap-1.5">
               {(['marge', 'prix'] as const).map((mode) => (
                 <button key={mode} onClick={() => setEntrees((e) => e && ({ ...e, mode }))}
@@ -181,188 +272,114 @@ export function BilanEcran({ idu, onClose, onGenerated }:
               ))}
             </div>
             {entrees.mode === 'prix' && (
-              <label className="mt-2.5 grid gap-1 text-[12px] text-txt-mut">Marge visée
+              <label className="grid gap-1 text-[12px] text-txt-mut">Marge visée
                 <span className="flex items-center gap-2">
-                  <input className={`h-8 w-full rounded-md border bg-surface px-2.5 text-right tabular-nums ${entrees.marge_cible == null ? 'border-amber' : 'border-line-2'}`}
+                  <input className="h-8 w-full rounded-md border border-line-2 bg-surface px-2.5 text-right tabular-nums"
                     defaultValue={entrees.marge_cible ?? ''} placeholder="à saisir"
                     onChange={(ev) => setEntrees((e) => e && ({ ...e, marge_cible: parseNum(ev.target.value) }))} />
                   <span className="min-w-[44px] text-[12px] text-txt-dim">% CA HT</span>
                 </span>
               </label>
             )}
-          </section>
-
-          <section className="rounded-md border border-line bg-surface-1 p-3.5">
-            <div className="text-[12px] text-txt-mut">{entrees.mode === 'marge' ? 'Résultat net' : 'Prix maximum du terrain'}</div>
-            {!complet ? (
-              <>
-                <div className="text-[15px] font-semibold text-amber">{res ? `${res.manquants.length} poste${res.manquants.length > 1 ? 's' : ''} à renseigner` : '…'}</div>
-                <div className="mt-1.5 text-[13px] text-txt-mut">Aucun chiffre n'est calculé sur un bilan incomplet.</div>
-              </>
-            ) : entrees.mode === 'marge' ? (
-              <>
-                <div className="text-[26px] font-bold leading-none tabular-nums text-txt">{fmtEur(res!.resultat_net)}</div>
-                <div className="mt-1.5 text-[13px] text-txt-mut">{fmtPct(res!.marge_pct)} du CA HT</div>
-              </>
-            ) : entrees.marge_cible == null ? (
-              <div className="text-[15px] font-semibold text-amber">Saisissez la marge visée</div>
-            ) : (
-              <>
-                <div className="text-[26px] font-bold leading-none tabular-nums text-txt">{fmtEur(res!.prix_max_terrain)}</div>
-                <div className="mt-1.5 text-[13px] text-txt-mut">{fmtEur(res!.prix_max_terrain_m2)}/m² de terrain</div>
-              </>
-            )}
-            <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-line">
-              <div className="h-full bg-mint" style={{ width: res ? `${Math.round((res.postes_renseignes / Math.max(1, res.total_postes)) * 100)}%` : '0%' }} />
-            </div>
-            <div className="mt-1 text-[12px] text-txt-mut">{prog}</div>
-            {vrais['marge'] && <div className="mt-2 border-l-2 border-amber pl-2 text-[12px] text-amber">{vrais['marge']}</div>}
-          </section>
-
-          {res?.ratios && (
-            <section className="rounded-md border border-line bg-surface-1 p-3.5">
-              <h3 className="mb-2 text-[13px] font-semibold text-txt-mut">Ratios</h3>
-              <table className="w-full text-[13px]">
-                <tbody>
-                  {res.ratios.map(([k, v]) => {
-                    const alerte = k.startsWith('Coût const') ? vrais['cout_const'] : undefined
-                    return (
-                      <tr key={k}>
-                        <td className="py-0.5 align-top">
-                          <span className={alerte ? 'text-amber' : 'text-txt-mut'}>{k}</span>
-                          {alerte && <small className="block text-amber">{alerte}</small>}
-                        </td>
-                        <td className={`py-0.5 text-right align-top tabular-nums ${alerte ? 'text-amber' : 'text-txt'}`}>{v}</td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </section>
-          )}
-          {erreurGen && <p className="rounded-md border-l-2 border-amber bg-surface-1 p-2.5 text-[12px] text-amber">{erreurGen}</p>}
-        </aside>
-
-        {/* corps */}
-        <main className="grid gap-4">
-          {/* Bandeau zone à cheval : partie non constructible (familles ≠ U/AU) */}
-          {modele.sourcee.non_constructible_pct > 0 && (
-            <div className="rounded-md border border-amber bg-surface-1 p-3 text-[13px]">
-              <b className="text-amber">Parcelle à {fmtNum(modele.sourcee.non_constructible_pct)} % en zone non constructible (N/A)</b>
-              <span className="text-txt"> : le programme ne peut porter que sur la partie constructible{modele.sourcee.constructible_m2 != null ? ` (${fmtNum(modele.sourcee.constructible_m2)} m²)` : ''}.</span>
-              {modele.sourcee.zonage && <div className="mt-1 text-[12px] text-txt-mut">{modele.sourcee.zonage}</div>}
-              {modele.sourcee.constructible_m2 != null && (
-                <button className="mt-2 rounded-full border border-dashed border-amber px-2 py-0.5 text-[12px] text-amber hover:bg-amber hover:text-mint-on"
-                  onClick={() => { majProgramme({ terrain: modele.sourcee.constructible_m2 }); bump() }}>
-                  Utiliser {fmtNum(modele.sourcee.constructible_m2)} m² comme terrain
-                </button>
+            <div>
+              <div className="text-[12px] text-txt-mut">{entrees.mode === 'marge' ? 'Résultat net' : 'Prix maximum du terrain'}</div>
+              {entrees.mode === 'marge' ? (
+                <>
+                  <div className="text-[26px] font-bold leading-none tabular-nums text-txt">{fmtEur(res?.resultat_net)}</div>
+                  <div className="mt-1.5 text-[13px] text-txt-mut">{fmtPct(res?.marge_pct)} du CA HT</div>
+                </>
+              ) : entrees.marge_cible == null ? (
+                <div className="text-[15px] font-semibold text-amber">Saisissez la marge visée</div>
+              ) : (
+                <>
+                  <div className="text-[26px] font-bold leading-none tabular-nums text-txt">{fmtEur(res?.prix_max_terrain)}</div>
+                  <div className="mt-1.5 text-[13px] text-txt-mut">{fmtEur(res?.prix_max_terrain_m2)}/m² de terrain</div>
+                </>
               )}
             </div>
-          )}
-          {/* Programme */}
-          <Carte titre="Programme" sous="ce qui fixe les assiettes">
-            <div className="grid grid-cols-2 gap-x-6 gap-y-2 p-3 md:grid-cols-3">
-              <ChampNum label="Terrain (m²)" value={entrees.programme.terrain} source={modele.sourcee.terrain != null}
-                revKey={rev} onChange={(v) => majProgramme({ terrain: v })} />
-              <ChampTexte label="Zonage au PLU" value={modele.sourcee.zonage ?? '—'} source />
-              <ChampNum label="Surface taxable (m²)" value={entrees.programme.surface_taxable} revKey={rev}
-                repere={modele.reperes_publics['faisabilite'] ? { label: modele.reperes_publics['faisabilite'].label, valeur: modele.reperes_publics['faisabilite'].valeur } : null}
-                onChange={(v) => majProgramme({ surface_taxable: v })}
-                onPick={(v) => { majProgramme({ surface_taxable: v }); bump() }} />
-              <ChampNum label="Loyer (€/m² SUV)" value={entrees.programme.loyer} revKey={rev}
-                onChange={(v) => majProgramme({ loyer: v })} />
-              {modele.sourcee.prix_achat_dvf && (
-                <ChampTexte label="Dernier prix DVF (info)" value={fmtEur(modele.sourcee.prix_achat_dvf.valeur)} source />
-              )}
-            </div>
-            {vrais['stax'] && (
-              <div className="border-l-2 border-amber px-3 pb-1 text-[12px] text-amber">{vrais['stax']}</div>
-            )}
-            {(modele.reperes_publics['faisabilite'] || modele.reperes_publics['sitadel']) && (
-              <div className="flex flex-wrap gap-x-4 gap-y-1 border-t border-line px-3 py-2 text-[12px] text-txt-dim">
-                {modele.reperes_publics['faisabilite']?.parkings != null && (
-                  <span>Faisabilité : ~{modele.reperes_publics['faisabilite'].parkings} places de stationnement</span>
-                )}
-                {modele.reperes_publics['sitadel'] && (
-                  <span>{modele.reperes_publics['sitadel'].label} (médiane commune)</span>
-                )}
-              </div>
-            )}
-          </Carte>
+            {vrais['marge'] && <div className="border-l-2 border-amber pl-2 text-[12px] text-amber">{vrais['marge']}</div>}
+            {erreurGen && <p className="rounded-md border-l-2 border-amber bg-surface p-2.5 text-[12px] text-amber">{erreurGen}</p>}
+          </section>
+        </div>
 
-          {/* Produits */}
-          <Carte titre="Produits" sous="une ligne par produit (libre · PLS · LLI)">
-            <table className="w-full text-[13px]">
-              <thead><tr className="border-b border-line text-left text-txt-mut">
-                <th className="p-2">Produit</th><th className="p-2 text-right">Lots</th><th className="p-2 text-right">SUV m²</th>
-                <th className="p-2 text-right">Prix TTC/m²</th><th className="p-2 text-right">TVA %</th><th className="p-2 text-right">CA TTC</th>
-              </tr></thead>
-              <tbody>
-                {entrees.produits.map((p, i) => {
-                  const dvf = modele.reperes_publics['dvf_neuf']
-                  const caTtc = p.suv != null && p.prix_ttc_m2_suv != null ? p.suv * p.prix_ttc_m2_suv : null
-                  return (
-                    <tr key={i} className="border-b border-line">
-                      <td className="p-2"><input className="w-32 rounded border border-line-2 bg-surface px-1.5 py-1" defaultValue={p.libelle} onChange={(e) => majProduit(i, { libelle: e.target.value })} /></td>
-                      <td className="p-2"><CellNum revKey={rev} value={p.lots} onChange={(v) => majProduit(i, { lots: v })} /></td>
-                      <td className="p-2"><CellNum revKey={rev} value={p.suv} onChange={(v) => majProduit(i, { suv: v })} /></td>
-                      <td className="p-2">
+        {/* Produits */}
+        <Carte titre="Produits" sous="une ligne par produit (libre · PLS · LLI)">
+          <table className="w-full text-[13px]">
+            <thead><tr className="border-b border-line text-left text-txt-mut">
+              <th className="p-2">Produit</th><th className="p-2 text-right">Lots</th><th className="p-2 text-right">SUV m²</th>
+              <th className="p-2 text-right">Prix TTC/m²</th><th className="p-2 text-right">TVA %</th><th className="p-2 text-right">CA TTC</th>
+            </tr></thead>
+            <tbody>
+              {entrees.produits.map((p, i) => {
+                const dvf = modele.reperes_publics['dvf_neuf']
+                const caTtc = (p.suv ?? 0) * (p.prix_ttc_m2_suv ?? 0)
+                return (
+                  <tr key={i} className="border-b border-line">
+                    <td className="p-2"><input className="w-32 rounded border border-line-2 bg-surface px-1.5 py-1" defaultValue={p.libelle} onChange={(e) => majProduit(i, { libelle: e.target.value })} /></td>
+                    <td className="p-2"><CellNum revKey={rev} value={p.lots} onChange={(v) => majProduit(i, { lots: v })} /></td>
+                    <td className="p-2"><CellNum revKey={rev} value={p.suv} onChange={(v) => majProduit(i, { suv: v })} /></td>
+                    <td className="p-2">
+                      <span className="inline-flex items-center gap-1">
                         <CellNum revKey={rev} value={p.prix_ttc_m2_suv} onChange={(v) => majProduit(i, { prix_ttc_m2_suv: v })} />
                         {p.prix_ttc_m2_suv == null && dvf && (
-                          <button className="ml-1 rounded-full border border-dashed border-line-2 px-1.5 text-[11px] text-txt-mut hover:bg-mint hover:text-mint-on"
+                          <button className="rounded-full border border-dashed border-line-2 px-1.5 text-[11px] text-txt-mut hover:bg-mint hover:text-mint-on"
                             onClick={() => { majProduit(i, { prix_ttc_m2_suv: dvf.valeur }); bump() }} title={dvf.source}>{dvf.label}</button>
                         )}
-                      </td>
-                      <td className="p-2"><CellNum revKey={rev} value={p.tva == null ? null : p.tva * 100} onChange={(v) => majProduit(i, { tva: v == null ? null : v / 100 })} /></td>{/* saisie en %, stockée en taux */}
-                      <td className="p-2 text-right tabular-nums">{fmtEur(caTtc)}</td>
-                    </tr>
-                  )
-                })}
-                <tr className="font-semibold"><td className="p-2">Total</td>
-                  <td className="p-2 text-right tabular-nums">{res?.produits_totaux.lots ?? ''}</td>
-                  <td className="p-2 text-right tabular-nums">{res?.produits_totaux.suv ?? ''}</td>
-                  <td /><td /><td className="p-2 text-right tabular-nums">{fmtEur(res?.produits_totaux.ca_ttc)}</td>
-                </tr>
-              </tbody>
-            </table>
-          </Carte>
+                      </span>
+                    </td>
+                    <td className="p-2"><CellNum revKey={rev} value={p.tva == null ? null : p.tva * 100} onChange={(v) => majProduit(i, { tva: v == null ? null : v / 100 })} /></td>
+                    <td className="p-2 text-right tabular-nums">{fmtEur(caTtc)}</td>
+                  </tr>
+                )
+              })}
+              <tr className="font-semibold"><td className="p-2">Total</td>
+                <td className="p-2 text-right tabular-nums">{lotsTot != null ? Math.round(lotsTot) : ''}</td>
+                <td className="p-2 text-right tabular-nums">{suvTot != null ? fmtNum(suvTot) : ''}</td>
+                <td /><td /><td className="p-2 text-right tabular-nums">{fmtEur(res?.produits_totaux.ca_ttc)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </Carte>
 
-          {/* Bilan par blocs */}
-          <Carte titre="Bilan" sous="les repères n'entrent dans le calcul que si vous les cliquez">
-            <table className="w-full text-[13px]">
-              <thead><tr className="border-b border-line text-left text-txt-mut">
-                <th className="p-2">Libellé</th><th className="p-2">Assiette</th><th className="p-2 text-right">Taux</th>
-                <th className="p-2 text-right">HT</th><th className="p-2 text-right">TVA</th><th className="p-2 text-right">TTC</th><th className="p-2">État</th>
-              </tr></thead>
-              <tbody>
-                {modele.blocs.map((b) => {
-                  const tot = res?.blocs.find((x) => x.id === b.id)
-                  return (
-                    <BlocLignes key={b.id} bloc={b} tot={tot} entrees={entrees} ligne={ligne} rev={rev} vrais={vrais}
-                      reperePoste={reperePoste} adopterRepere={adopterRepere} majPoste={majPoste} majPosteProg={majPosteProg} />
-                  )
-                })}
-                {/* Synthèse */}
-                <tr className="bg-surface-2 font-semibold"><td className="p-2" colSpan={3}>Dépenses totales</td>
-                  <td className="p-2 text-right tabular-nums">{fmtEur(res?.depenses_ht)}</td>
-                  <td className="p-2 text-right tabular-nums">{fmtEur(res?.depenses_tva)}</td>
-                  <td className="p-2 text-right tabular-nums">{fmtEur(res?.depenses_ttc)}</td><td /></tr>
-                <tr className="font-semibold"><td className="p-2" colSpan={3}>Chiffre d'affaires</td>
-                  <td className="p-2 text-right tabular-nums">{fmtEur(res?.ca_ht)}</td>
-                  <td className="p-2 text-right tabular-nums">{fmtEur(res?.ca_tva)}</td>
-                  <td className="p-2 text-right tabular-nums">{fmtEur(res?.ca_ttc)}</td><td /></tr>
-                <tr><td className="p-2" colSpan={5}>TVA résiduelle</td>
-                  <td className="p-2 text-right tabular-nums">{fmtEur(res?.tva_residuelle)}</td><td /></tr>
-                <tr className="text-[15px] font-bold"><td className="p-2" colSpan={3}>Résultat net</td>
-                  <td className="p-2 text-right tabular-nums text-mint">{complet ? fmtEur(res!.resultat_net) : ''}</td>
-                  <td className="p-2 text-right tabular-nums" colSpan={2}>{complet ? `${fmtPct(res!.marge_pct)} du CA HT` : ''}</td><td /></tr>
-                <tr><td className="p-2" colSpan={3}>Cash flow</td>
-                  <td className="p-2 text-right tabular-nums">{complet ? fmtEur(res!.cash_flow) : ''}</td><td colSpan={3} /></tr>
-              </tbody>
-            </table>
-            <Legende />
-          </Carte>
-        </main>
+        {/* ── Le tableau unique du bilan ── */}
+        <Carte titre="Bilan" sous="les repères n'entrent dans le calcul que si vous les cliquez">
+          <table className="w-full table-fixed text-[13px]">
+            <colgroup>
+              <col className="w-[28%]" /><col className="w-[16%]" /><col className="w-[16%]" />
+              <col className="w-[12%]" /><col className="w-[11%]" /><col className="w-[12%]" /><col className="w-[5%]" />
+            </colgroup>
+            <thead><tr className="border-b border-line text-left text-txt-mut">
+              <th className="p-2">Libellé</th><th className="p-2">Assiette</th><th className="p-2 text-right">Taux</th>
+              <th className="p-2 text-right">HT</th><th className="p-2 text-right">TVA</th><th className="p-2 text-right">TTC</th><th className="p-2">État</th>
+            </tr></thead>
+            <tbody>
+              {modele.blocs.map((b) => {
+                const tot = res?.blocs.find((x) => x.id === b.id)
+                return (
+                  <BlocLignes key={b.id} bloc={b} tot={tot} entrees={entrees} ligne={ligne} rev={rev} vrais={vrais}
+                    reperePoste={reperePoste} adopterRepere={adopterRepere} majPoste={majPoste} majPosteProg={majPosteProg} />
+                )
+              })}
+              {/* Synthèse : CA et marge en bas */}
+              <tr className="bg-surface-2 font-semibold"><td className="p-2" colSpan={3}>Dépenses totales</td>
+                <td className="p-2 text-right tabular-nums">{fmtEur(res?.depenses_ht)}</td>
+                <td className="p-2 text-right tabular-nums">{fmtEur(res?.depenses_tva)}</td>
+                <td className="p-2 text-right tabular-nums">{fmtEur(res?.depenses_ttc)}</td><td /></tr>
+              <tr className="font-semibold"><td className="p-2" colSpan={3}>Chiffre d'affaires</td>
+                <td className="p-2 text-right tabular-nums">{fmtEur(res?.ca_ht)}</td>
+                <td className="p-2 text-right tabular-nums">{fmtEur(res?.ca_tva)}</td>
+                <td className="p-2 text-right tabular-nums">{fmtEur(res?.ca_ttc)}</td><td /></tr>
+              <tr><td className="p-2" colSpan={5}>TVA résiduelle</td>
+                <td className="p-2 text-right tabular-nums">{fmtEur(res?.tva_residuelle)}</td><td /></tr>
+              <tr className="text-[15px] font-bold"><td className="p-2" colSpan={3}>Résultat net</td>
+                <td className="p-2 text-right tabular-nums text-mint">{fmtEur(res?.resultat_net)}</td>
+                <td className="p-2 text-right tabular-nums" colSpan={2}>{fmtPct(res?.marge_pct)} du CA HT</td><td /></tr>
+              <tr><td className="p-2" colSpan={3}>Cash flow</td>
+                <td className="p-2 text-right tabular-nums">{fmtEur(res?.cash_flow)}</td><td colSpan={3} /></tr>
+            </tbody>
+          </table>
+          <Legende />
+        </Carte>
       </div>
     </Overlay>
   )
@@ -370,11 +387,9 @@ export function BilanEcran({ idu, onClose, onGenerated }:
 
 // ── sous-composants ──────────────────────────────────────────────────────
 function Overlay({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
-  // Fond OPAQUE (bg-bg, la base de l'app) : la fenêtre prend tout l'écran, on ne voit
-  // jamais la page en dessous.
   return (
     <div className="fixed inset-0 z-50 overflow-auto bg-bg" onClick={onClose}>
-      <div className="mx-auto my-6 max-w-[1500px] rounded-lg border border-line bg-surface-1" onClick={(e) => e.stopPropagation()}>
+      <div className="mx-auto my-6 max-w-[1400px] rounded-lg border border-line bg-surface-1" onClick={(e) => e.stopPropagation()}>
         {children}
       </div>
     </div>
@@ -385,42 +400,51 @@ function Carte({ titre, sous, children }: { titre: string; sous?: string; childr
   return (
     <section className="overflow-hidden rounded-md border border-line bg-surface-1">
       <h2 className="flex items-center gap-2.5 border-b border-line px-3.5 py-3 text-[15px] font-semibold text-txt">
-        {titre}{sous && <small className="font-normal text-txt-mut">{sous}</small>}
+        <span dangerouslySetInnerHTML={{ __html: titre }} />{sous && <small className="font-normal text-txt-mut">{sous}</small>}
       </h2>
       {children}
     </section>
   )
 }
 
-function ChampNum({ label, value, source, repere, revKey, onChange, onPick }: {
-  label: string; value: number | null; source?: boolean; revKey?: number
-  repere?: { label: string; valeur: number } | null
+// Ligne de tête éditable (Terrain / SDP / Surface taxable) : repère à droite.
+function TeteInput({ label, unite, value, source, repere, revKey, onChange, onPick, alerte }: {
+  label: string; unite: string; value: number | null; source?: boolean; revKey?: number
+  repere?: { label: string; valeur: number } | null; alerte?: string
   onChange: (v: number | null) => void; onPick?: (v: number | null) => void
 }) {
   return (
-    <label className="grid gap-1 text-[12px] text-txt-mut">{label}
-      <input key={revKey} className={`h-8 rounded-md border bg-surface px-2.5 text-right tabular-nums ${value == null ? 'border-amber' : 'border-line-2'}`}
-        defaultValue={value == null ? '' : fmtNum(value)} placeholder="à saisir" onChange={(e) => onChange(parseNum(e.target.value))} />
-      {source && <Badge ton="vert">Sourcé</Badge>}
-      {!source && value == null && repere && (
-        <button className="justify-self-start rounded-full border border-dashed border-line-2 px-1.5 text-[11px] text-txt-mut hover:bg-mint hover:text-mint-on"
-          onClick={(e) => { e.preventDefault(); (onPick ?? onChange)(repere.valeur) }}>{repere.label}</button>
-      )}
-    </label>
+    <tr className="border-b border-line">
+      <td className="py-1 pl-3 text-txt-mut">{label}{source && <Badge ton="vert">Sourcé</Badge>}</td>
+      <td className="py-1 pr-3 text-right">
+        <span className="inline-flex items-center gap-1">
+          <input key={revKey} className="h-7 w-24 rounded border border-line-2 bg-surface px-1.5 text-right tabular-nums"
+            defaultValue={value == null ? '' : fmtNum(value)} placeholder="0" onChange={(e) => onChange(parseNum(e.target.value))} />
+          <span className="text-[11px] text-txt-dim">{unite}</span>
+          {value == null && repere && (
+            <button className="rounded-full border border-dashed border-line-2 px-1.5 text-[11px] text-txt-mut hover:bg-mint hover:text-mint-on"
+              onClick={() => (onPick ?? onChange)(repere.valeur)} title={repere.label}>repère</button>
+          )}
+        </span>
+        {alerte && <div className="text-[11px] text-amber">{alerte}</div>}
+      </td>
+    </tr>
   )
 }
-function ChampTexte({ label, value, source }: { label: string; value: string; source?: boolean }) {
+// Ligne de tête calculée (lecture seule).
+function TeteCalc({ label, value, alerte }: { label: string; value: string; alerte?: string }) {
   return (
-    <div className="grid gap-1 text-[12px] text-txt-mut">{label}
-      <div className="flex h-8 items-center text-[13px] text-txt">{value}</div>
-      {source && <Badge ton="vert">Sourcé</Badge>}
-    </div>
+    <tr className="border-b border-line last:border-0">
+      <td className="py-1 pl-3 text-txt-mut">{label}{alerte && <small className="block text-amber">{alerte}</small>}</td>
+      <td className={`py-1 pr-3 text-right tabular-nums font-semibold ${alerte ? 'text-amber' : 'text-txt'}`}>{value}</td>
+    </tr>
   )
 }
+
 function CellNum({ value, onChange, revKey }: { value: number | null; onChange: (v: number | null) => void; revKey?: number }) {
   return (
-    <input key={revKey} className={`w-24 rounded border bg-surface px-1.5 py-1 text-right tabular-nums ${value == null ? 'border-amber' : 'border-line-2'}`}
-      defaultValue={value == null ? '' : fmtNum(value)} placeholder="—" onChange={(e) => onChange(parseNum(e.target.value))} />
+    <input key={revKey} className="w-24 rounded border border-line-2 bg-surface px-1.5 py-1 text-right tabular-nums"
+      defaultValue={value == null ? '' : fmtNum(value)} placeholder="0" onChange={(e) => onChange(parseNum(e.target.value))} />
   )
 }
 
@@ -437,13 +461,11 @@ function BlocLignes({ bloc, tot, entrees, ligne, rev, vrais, reperePoste, adopte
   majPosteProg: (id: string, patch: Partial<BilanSaisie>) => void
 }) {
   const [ouvert, setOuvert] = useState(true)
+  const n = NUM_BLOC[bloc.id]
   return (
     <>
       <tr className="cursor-pointer bg-surface-2 font-bold hover:bg-mint hover:text-mint-on" onClick={() => setOuvert((o) => !o)}>
-        <td className="p-2" colSpan={3}>{ouvert ? '▾' : '▸'} {bloc.titre} {tot && !tot.complet && <Badge ton="ambre">{tot.manquants} à renseigner</Badge>}</td>
-        <td className="p-2 text-right tabular-nums">{tot?.complet ? fmtEur(tot.ht) : ''}</td>
-        <td className="p-2 text-right tabular-nums">{tot?.complet ? fmtEur(tot.tva) : ''}</td>
-        <td className="p-2 text-right tabular-nums">{tot?.complet ? fmtEur(tot.ttc) : ''}</td><td />
+        <td className="p-2" colSpan={7}>{ouvert ? '▾' : '▸'} {n ? `(${n}) ` : ''}{bloc.titre}</td>
       </tr>
       {ouvert && bloc.postes.map((p) => {
         const s = entrees.postes[p.id] ?? { valeur: null, etat: 'a_renseigner' as const }
@@ -451,43 +473,46 @@ function BlocLignes({ bloc, tot, entrees, ligne, rev, vrais, reperePoste, adopte
         const rep = reperePoste(p)
         const unite = p.mode === 'pct' ? '%' : p.mode === 'unit' ? (p.unite ?? '') : '€'
         const estSansObjet = s.etat === 'sans_objet'
+        const vide = !!l?.manquant  // ligne vide (BILAN-2) : vaut 0, affichée à blanc
+        const etatLabel = ETAT_LABEL[s.etat]
         return (
           <tr key={p.id} className="border-b border-line">
             <td className="p-2">{p.libelle}{p.sub && <small className="block text-txt-dim"> {p.sub}</small>}
               {vrais[p.id] && <small className="block text-amber">{vrais[p.id]}</small>}</td>
-            <td className="p-2 tabular-nums text-txt-mut">{l?.assiette_valeur != null ? fmtEur(l.assiette_valeur) : (p.mode === 'forfait' ? 'forfait' : '—')}
+            <td className="p-2 tabular-nums text-txt-mut">{l?.assiette_valeur ? fmtEur(l.assiette_valeur) : (p.mode === 'forfait' ? 'forfait' : '—')}
               {p.besoin_assiette && !estSansObjet && (
-                <input key={rev} className="ml-1 w-24 rounded border border-amber bg-surface px-1 py-0.5 text-right"
+                <input key={rev} className="ml-1 w-24 rounded border border-line-2 bg-surface px-1 py-0.5 text-right"
                   defaultValue={s.assiette_valeur ?? ''} placeholder="assiette"
                   onChange={(e) => majPoste(p.id, { assiette_valeur: parseNum(e.target.value) })} />
               )}
             </td>
             <td className="p-2 text-right">
               {estSansObjet ? <span className="text-txt-dim">—</span> : (
-                <span className="inline-flex items-center gap-1">
-                  <input key={rev} className={`w-20 rounded border bg-surface px-1.5 py-1 text-right tabular-nums ${s.valeur == null ? 'border-amber' : 'border-line-2'}`}
-                    defaultValue={s.valeur == null ? '' : fmtNum(s.valeur)} placeholder="à saisir"
+                <span className="inline-flex items-center justify-end gap-1">
+                  <input key={rev} className="w-20 rounded border border-line-2 bg-surface px-1.5 py-1 text-right tabular-nums"
+                    defaultValue={s.valeur == null ? '' : fmtNum(s.valeur)} placeholder="0"
                     onChange={(e) => majPoste(p.id, { valeur: parseNum(e.target.value), etat: 'saisi' })} />
                   <span className="text-[11px] text-txt-dim">{unite}</span>
+                  {/* repère LABUSE, cliquable À DROITE de la case (n'entre qu'au clic) */}
+                  {s.valeur == null && rep && (
+                    <button className="rounded-full border border-dashed border-line-2 px-1.5 text-[11px] text-txt-mut hover:bg-mint hover:text-mint-on"
+                      onClick={() => adopterRepere(p)} title={rep.label}>repère</button>
+                  )}
                 </span>
               )}
             </td>
-            <td className="p-2 text-right tabular-nums">{fmtEur(l?.ht)}</td>
+            <td className="p-2 text-right tabular-nums text-txt">{vide ? <span className="text-txt-dim">—</span> : fmtEur(l?.ht)}</td>
             <td className="p-2 text-right tabular-nums">
               {p.tva === 'a_saisir' && !estSansObjet
-                ? <input key={rev} className={`w-14 rounded border bg-surface px-1 py-0.5 text-right ${s.tva == null ? 'border-amber' : 'border-line-2'}`}
+                ? <input key={rev} className="w-14 rounded border border-line-2 bg-surface px-1 py-0.5 text-right"
                     defaultValue={s.tva == null ? '' : fmtNum(s.tva * 100)} placeholder="TVA %"
                     onChange={(e) => majPoste(p.id, { tva: pctToRate(e.target.value) })} />
-                : fmtEur(l?.tva)}
+                : (vide ? <span className="text-txt-dim">—</span> : fmtEur(l?.tva))}
             </td>
-            <td className="p-2 text-right tabular-nums">{fmtEur(l?.ttc)}</td>
+            <td className="p-2 text-right tabular-nums">{vide ? <span className="text-txt-dim">—</span> : fmtEur(l?.ttc)}</td>
             <td className="p-2">
               <div className="flex flex-wrap items-center gap-1.5">
-                <Badge ton={ETAT_TON[s.etat] ?? 'ambre'}>{ETAT_LABEL[s.etat] ?? 'À renseigner'}</Badge>
-                {s.valeur == null && !estSansObjet && rep && (
-                  <button className="rounded-full border border-dashed border-line-2 px-1.5 text-[11px] text-txt-mut hover:bg-mint hover:text-mint-on"
-                    onClick={() => adopterRepere(p)}>{rep.label}</button>
-                )}
+                {etatLabel && <Badge ton={ETAT_TON[s.etat] ?? 'neutre'}>{etatLabel}</Badge>}
                 {s.valeur == null && !estSansObjet && (
                   <button className="text-[11px] text-txt-mut underline" onClick={() => majPosteProg(p.id, { valeur: null, etat: 'sans_objet' })}>Sans objet</button>
                 )}
@@ -504,6 +529,13 @@ function BlocLignes({ bloc, tot, entrees, ligne, rev, vrais, reperePoste, adopte
           </tr>
         )
       })}
+      {/* sous-total du bloc : « TOTAL (n) » comme le modèle */}
+      <tr className="border-b-2 border-line font-semibold text-txt-mut">
+        <td className="p-2" colSpan={3}>{n ? `TOTAL (${n})` : 'Total'} — {bloc.titre}</td>
+        <td className="p-2 text-right tabular-nums">{fmtEur(tot?.ht)}</td>
+        <td className="p-2 text-right tabular-nums">{fmtEur(tot?.tva)}</td>
+        <td className="p-2 text-right tabular-nums">{fmtEur(tot?.ttc)}</td><td />
+      </tr>
     </>
   )
 }
@@ -511,12 +543,12 @@ function BlocLignes({ bloc, tot, entrees, ligne, rev, vrais, reperePoste, adopte
 function Legende() {
   return (
     <div className="flex flex-wrap items-center gap-3.5 px-3.5 py-2.5 text-[12px] text-txt-mut">
+      <span>Comme dans l'Excel, une case vide vaut 0 — la marge et les totaux s'affichent dès la première saisie.</span>
       <span><Badge ton="vert">Sourcé</Badge> donnée publique</span>
       <span><span className="rounded-full border border-dashed border-line-2 px-1.5">repère</span> proposition, cliquez pour l'adopter</span>
       <span><Badge ton="neutre">Saisi</Badge> votre valeur</span>
       <span><Badge ton="neutre">Mes ratios</Badge> mémorisé</span>
       <span><Badge ton="neutre">Sans objet</Badge> 0 volontaire</span>
-      <span><Badge ton="ambre">À renseigner</Badge></span>
     </div>
   )
 }
