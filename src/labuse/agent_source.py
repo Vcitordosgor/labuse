@@ -98,9 +98,12 @@ def _appel_reel(db, fiche: dict) -> str:
     from .ai_models import model_for
     model = model_for("agent_source")
     client = anthropic.Anthropic(timeout=120, max_retries=1)
+    # CORRECTIFS-1 B4 — PLAFOND de tokens par agent + lecture RESSERRÉE : la tâche est de citer une
+    # date/version, pas de lire des pages entières. `max_uses` 6→2 (moins de pages chargées = moins de
+    # tokens d'entrée), `max_tokens` 900→500 (la réponse est un petit JSON). Modèle = Haiku (B4).
     msg = client.messages.create(
-        model=model, max_tokens=900, system=SYSTEM,
-        tools=[{"type": "web_search_20250305", "name": "web_search", "max_uses": 6}],
+        model=model, max_tokens=500, system=SYSTEM,
+        tools=[{"type": "web_search_20250305", "name": "web_search", "max_uses": 2}],
         messages=[{"role": "user", "content": json.dumps(fiche, ensure_ascii=False, default=str)}])
     texte = "".join(b.text for b in msg.content if getattr(b, "type", None) == "text")
     try:

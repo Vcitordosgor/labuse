@@ -89,7 +89,10 @@ SURFACES: dict[str, dict] = {
     "promo_collecte":    {"label": "Parseur programmes promoteur",       "model": MODEL_FACTUAL},
     "vision_pige":       {"label": "Radar — lecture d'image (PIGE)",     "model": MODEL_VISION},
     # CIRCUIT-1 lot 6 — l'agent de veille d'une source (web_search natif, JSON strict 6.2).
-    "agent_source":      {"label": "Agent de source (veille amont)",      "model": MODEL_REASONING},
+    # CORRECTIFS-1 B4 — le MOINS CHER du registre (Haiku) : la tâche est factuelle (trouver une
+    # date/version et la citer), pas du raisonnement. Lecture resserrée (max_uses) + plafond tokens
+    # côté agent_source.py. Relevable à Sonnet via LABUSE_IA_MODELE_AGENT_SOURCE si la mesure l'exige.
+    "agent_source":      {"label": "Agent de source (veille amont)",      "model": MODEL_FACTUAL},
     # CIRCUIT-4 lot 2 — l'agent « règle » : va lire la référence d'un calcul (Légifrance, INSEE,
     # service-public, ADEME, DEAL…) et ramène l'extrait daté ; même anti-invention qu'agent_source.
     "agent_regle":       {"label": "Agent de règle (références des calculs)", "model": MODEL_REASONING},
