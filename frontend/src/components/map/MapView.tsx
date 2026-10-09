@@ -147,8 +147,10 @@ function toExpr(f: Filters): maplibregl.FilterSpecification {
   const c: maplibregl.ExpressionSpecification[] = []
   if (f.tiers.length) c.push(['in', EFFECTIVE_TIER, ['literal', f.tiers]])
   // M129-B : q_score (matrice) mort — plus de filtre carte scoreMin.
-  if (f.surfaceMin != null) c.push(['>=', ['coalesce', ['get', 'surface_m2'], 0], f.surfaceMin])
-  if (f.surfaceMax != null) c.push(['<=', ['coalesce', ['get', 'surface_m2'], 0], f.surfaceMax])
+  // CONTENANCE-1 (Lot B) : le filtre carte porte sur la surface de TERRAIN (contenance si présente,
+  // sinon dessin), comme la fiche/liste. Le geojson porte `surface_terrain_m2` ; repli sur surface_m2.
+  if (f.surfaceMin != null) c.push(['>=', ['coalesce', ['get', 'surface_terrain_m2'], ['get', 'surface_m2'], 0], f.surfaceMin])
+  if (f.surfaceMax != null) c.push(['<=', ['coalesce', ['get', 'surface_terrain_m2'], ['get', 'surface_m2'], 0], f.surfaceMax])
   if (f.sdpMin != null) c.push(['>=', ['coalesce', ['get', 'sdp_residuelle_m2'], -1], f.sdpMin])
   if (f.evenement) c.push(['==', ['get', 'evenement'], 'rouge'])
   if (f.veille) c.push(['==', ['coalesce', ['get', 'veille'], false], true])
@@ -1364,7 +1366,8 @@ export function MapView() {
     // FICHE-FIX-5 (Lot A) — on charge la GÉOMÉTRIE de la parcelle (une seule requête, cache react-
     // query côté outils) : elle alimente la source `selection` (liseré garanti) ET donne le centroïde
     // exact pour le vol. Le liseré ne dépend plus de la présence de la parcelle dans une autre source.
-    const surfaceHint = feat ? (feat.properties as { surface_m2?: number }).surface_m2 : undefined
+    const surfaceHint = feat ? ((feat.properties as { surface_terrain_m2?: number; surface_m2?: number }).surface_terrain_m2
+                                 ?? (feat.properties as { surface_m2?: number }).surface_m2) : undefined
     getParcelGeojson(cible).then((fc) => {
       if (cancelled) return
       selSrc()?.setData({ type: 'FeatureCollection', features: [{ type: 'Feature', geometry: fc.geometry as GeoJSON.Geometry, properties: {} }] })
@@ -1376,7 +1379,7 @@ export function MapView() {
       if (feat) { centroidReady(roughCentroid(feat.geometry), surfaceHint); return }
       getFiche(cible).then((f) => {
         const c = (f as unknown as { coords?: [number, number] }).coords
-        if (Array.isArray(c) && c.length === 2) centroidReady([c[0], c[1]], (f as unknown as { surface_m2?: number }).surface_m2)
+        if (Array.isArray(c) && c.length === 2) centroidReady([c[0], c[1]], (f as unknown as { surface_terrain_m2?: number; surface_m2?: number }).surface_terrain_m2 ?? (f as unknown as { surface_m2?: number }).surface_m2)
       }).catch(() => undefined)
     })
     const pingId = geo.data && feat ? 'parcels-ping' : 'ile-ping'

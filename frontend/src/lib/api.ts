@@ -374,7 +374,10 @@ export const getContexteCommune = (commune: string) =>
 export const parcelAt = (lon: number, lat: number) =>
   j<{ idu: string | null }>(`/parcels/at?lon=${lon}&lat=${lat}`)
 export const searchParcels = (needle: string, opts?: { ileEntiere?: boolean }) =>
-  j<{ idu: string; commune: string; surface_m2: number | null; status: string | null; q_score: number | null;
+  j<{ idu: string; commune: string; surface_m2: number | null;
+      surface_terrain_m2?: number | null; surface_source?: 'cadastre' | 'plan' | null;
+      surface_dessin_m2?: number | null; contenance_m2?: number | null;
+      status: string | null; q_score: number | null;
       tier_v2: string | null; rang_v2: number | null; etage0: boolean;
       adresse?: string | null }[]>(
     `/parcels/search?q=${encodeURIComponent(needle)}${!opts?.ileEntiere && commune() ? `&commune=${encodeURIComponent(commune()!)}` : ''}`)
@@ -2158,6 +2161,8 @@ export interface ParcoursCounts { proposee: number; retenue: number; ecartee: nu
 export interface ParcoursItem {
   idu: string; commune: string; statut: StatutParcelle; tier: string | null
   center: [number, number] | null; surface_m2?: number | null
+  // CONTENANCE-1 (Lot B) : surface de terrain servie (contenance si présente).
+  surface_terrain_m2?: number | null; contenance_m2?: number | null
   adresse?: string | null; pourquoi?: string[]; evenement?: boolean; marche_eur_m2?: number | null
   proprietaire_public?: ProprietairePublic | null; hors_criteres?: boolean; defisc?: boolean; caduc?: boolean
   etat_bien?: string | null   // M131 P3 : nu | bati_encore | bati_max (affichage)
@@ -2185,6 +2190,7 @@ export interface ParcoursEtat {
 }
 export interface CarteDecision {
   idu: string; adresse: string | null; commune: string; surface_m2: number | null
+  surface_terrain_m2?: number | null; contenance_m2?: number | null
   tier: string | null; statut: string | null; q_score: number | null; a_score: number | null
   completeness: number | null; center: [number, number] | null
   forces: { titre: string; detail: string }[]; attentions: { titre: string; detail: string }[]

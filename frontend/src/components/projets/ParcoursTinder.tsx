@@ -5,6 +5,7 @@ import {
   type ParcoursEtat, type ParcoursItem, type StatutParcelle,
 } from '../../lib/api'
 import { fmtInt, fmtM2, iduComplet } from '../../lib/format'
+import { surfaceTerrain } from '../../lib/surface'
 import { CLIENT } from '../../lib/strings'
 import { useApp } from '../../store/useApp'
 import { Squelette } from '../Loading'
@@ -168,7 +169,7 @@ function DecisionCard({ pid, item, onDecide, onFiche }: {
         <TierBadge tier={item.tier} etage0={null} statut={null} />
       </div>
       <p className="mt-1 font-display text-sm font-bold text-txt-hi">{d?.adresse ?? item.commune}</p>
-      <p className="tnum text-[11px] text-txt-mut">{d?.commune ?? item.commune}{d?.surface_m2 ? ` · ${fmtM2(d.surface_m2)}` : ''}</p>
+      <p className="tnum text-[11px] text-txt-mut">{d?.commune ?? item.commune}{surfaceTerrain(d) ? ` · ${fmtM2(surfaceTerrain(d))}` : ''}</p>
 
       <div className="mt-3 flex gap-2">
         {/* M36 Lot B : la puce Complétude est retirée (quasi-constante — M35 D3). */}
@@ -227,7 +228,7 @@ function SectionsDrawer({ etat, onClose, onFiche, onStatut }: {
       <div className="min-w-0 flex-1">
         <div className="text-[11px] text-txt-hi">{p.adresse || p.commune}
           <span className="ml-1.5 font-mono text-[9.5px] text-txt-dim">{iduComplet(p.idu)}</span></div>
-        <div className="tnum text-[10px] text-txt-mut">{p.commune} · {p.tier ?? '—'}{p.surface_m2 != null ? ` · ${fmtM2(p.surface_m2)}` : ''}</div>
+        <div className="tnum text-[10px] text-txt-mut">{p.commune} · {p.tier ?? '—'}{surfaceTerrain(p) != null ? ` · ${fmtM2(surfaceTerrain(p))}` : ''}</div>
       </div>
       <Bouton niveau="lien" onClick={() => onFiche(p.idu)}>fiche</Bouton>
       {actions}

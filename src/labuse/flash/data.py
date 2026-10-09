@@ -19,6 +19,7 @@ from sqlalchemy.orm import Session
 
 from ..api.export_commun import nettoyer_libelle_client  # M127-A3 — meme hygiene de libelle que la fiche
 from .. import runs  # S3 : run servi relu à la requête
+from .. import surface as _surface  # CONTENANCE-1 (Lot B) — surface de terrain = contenance|dessin
 
 log = logging.getLogger("labuse.flash")
 
@@ -118,7 +119,7 @@ def _i(v: Any) -> int | None:
 
 def _parcelle(db: Session, idu: str) -> dict | None:
     row = db.execute(text(
-        """SELECT p.idu, p.commune, p.section, p.numero, p.surface_m2,
+        """SELECT p.idu, p.commune, p.section, p.numero, p.surface_m2, p.contenance_m2,
                   ST_Y(ST_Transform(ST_Centroid(p.geom_2975), 4326)) AS lat,
                   ST_X(ST_Transform(ST_Centroid(p.geom_2975), 4326)) AS lon,
                   ST_AsGeoJSON(p.geom, 7) AS geojson,
@@ -129,7 +130,9 @@ def _parcelle(db: Session, idu: str) -> dict | None:
     return {
         "idu": row["idu"], "commune": row["commune"], "insee": idu[:5],
         "section": row["section"], "numero": row["numero"],
-        "surface_m2": _i(row["surface_m2"]),
+        "surface_m2": _i(row["surface_m2"]),   # DESSIN (compat)
+        # CONTENANCE-1 (Lot B) : surface de terrain (contenance si présente, sinon dessin).
+        **_surface.champs_terrain(row["surface_m2"], row["contenance_m2"]),
         "surface_geom_m2": _i(row["surface_geom_m2"]),
         "lat": round(row["lat"], 6), "lon": round(row["lon"], 6),
         "geojson": row["geojson"],

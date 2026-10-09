@@ -214,7 +214,8 @@ def _financier_contexte(db, idu: str, fiche: dict, compte_id: int | None) -> dic
     pot = fiche.get("potentiel_transformation") or {}
     cap = pot.get("capacite_estimee")
     program = {
-        "surface_terrain": fiche.get("surface_m2"),
+        # CONTENANCE-1 (Lot B) : surface de terrain = contenance si présente, sinon dessin.
+        "surface_terrain": fiche.get("surface_terrain_m2") or fiche.get("surface_m2"),
         "logements": rv("logements_vises_saisi") or (cap if (cap and not isinstance(cap, bool)) else None),
         "surface_vendable": pot.get("surface_vendable_m2"),
         "surface_plancher": pot.get("surface_plancher_m2"),
@@ -336,9 +337,13 @@ def _apporteur_voisines(db, idu: str) -> dict:
     from sqlalchemy import text
     try:
         rows = db.execute(text(
+            # CONTENANCE-1 (Lot B) : surface des voisines du bloc = terrain (contenance si présente,
+            # sinon le dessin stocké sur le membre). Jointure parcels pour la contenance.
             """WITH b AS (SELECT bloc_id FROM parcel_bloc_membres WHERE idu = :idu LIMIT 1)
-               SELECT m.idu, m.surface_m2 FROM parcel_bloc_membres m JOIN b ON b.bloc_id = m.bloc_id
-               WHERE m.idu <> :idu ORDER BY m.surface_m2 DESC NULLS LAST, m.idu"""),
+               SELECT m.idu, COALESCE(p.contenance_m2, m.surface_m2) AS surface_m2
+               FROM parcel_bloc_membres m JOIN b ON b.bloc_id = m.bloc_id
+               LEFT JOIN parcels p ON p.idu = m.idu
+               WHERE m.idu <> :idu ORDER BY COALESCE(p.contenance_m2, m.surface_m2) DESC NULLS LAST, m.idu"""),
             {"idu": idu}).mappings().all()
     except Exception:  # noqa: BLE001 — table absente / base de test : pas de voisines, jamais d'erreur
         return {"n": 0, "membres": [], "surface_totale_m2": None}

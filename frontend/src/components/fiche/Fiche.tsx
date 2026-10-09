@@ -12,6 +12,7 @@ import { useOuvrirDocument } from '../../lib/ouvrirDocument'
 import { verdictMeta } from '../../lib/status'
 import { AnalyseLabuseCard } from './AnalyseLabuseCard'   // RETOURS-14 P1 — carte « Analyse LABUSE » extraite (testable), affiche la version servie
 import { fmtInt, fmtM2, fmtDateNum, fmtLibelleBrut, fmtPctConsomme, iduComplet } from '../../lib/format'
+import { surfaceTerrain, surfaceDessin, surfaceSource, montrerDessin } from '../../lib/surface'
 import { layerLabel } from '../../lib/layers'
 import { CLIENT } from '../../lib/strings'
 import { Chargement, Squelette } from '../Loading'
@@ -914,8 +915,19 @@ export function Fiche({ idu }: { idu: string }) {
             : vigils.length > 0 ? `vigilance${vigils.length > 1 ? 's' : ''}` : 'rien à signaler'
           type Tuile = { l: string; v: string; s?: string; i?: string; vide?: boolean }
           const tuiles: Tuile[] = [
-            { l: 'Surface', v: f.surface_m2 != null ? fmtM2(f.surface_m2) : '—', vide: f.surface_m2 == null,
-              i: 'Aire de la parcelle calculée sur le contour cadastral (géométrie). La contenance cadastrale officielle (DGFiP) peut en différer de quelques %.' },
+            (() => {
+              // CONTENANCE-1 (Lot B) — la Surface affichée = contenance cadastrale (chiffre de
+              // l'acte) si présente, sinon dessin du plan (repli). B3 : ligne discrète « Dessin du
+              // plan » quand l'écart dépasse 1 % ; B4 : mention « mesurée sur le plan » en repli.
+              const st = surfaceTerrain(f)
+              const cadastre = surfaceSource(f) === 'cadastre'
+              const sous = montrerDessin(f) ? `Dessin du plan : ${fmtM2(surfaceDessin(f))}`
+                : !cadastre ? 'surface mesurée sur le plan' : undefined
+              const info = cadastre
+                ? 'Surface mesurée sur le plan cadastral. Elle diffère souvent un peu de la contenance inscrite au cadastre, qui est celle de l’acte.'
+                : 'Contenance cadastrale indisponible : surface mesurée sur le contour du plan cadastral (géométrie).'
+              return { l: 'Surface', v: st != null ? fmtM2(st) : '—', s: sous, vide: st == null, i: info } as Tuile
+            })(),
             { l: 'Zone', v: reglesZone ?? 'Non publié au GPU', s: zoneSous, vide: reglesZone == null,
               i: 'Zone du PLU au point de la parcelle (règlement communal, archive GPU). « Non publié au GPU » : la commune n’a pas déposé de document opposable.' },
             { l: 'Pente', v: pente != null ? `${nf(pente)} °` : '—', s: penteSous, vide: pente == null,

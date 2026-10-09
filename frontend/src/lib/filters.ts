@@ -1,4 +1,5 @@
 import type { Filters } from '../store/useApp'
+import { surfaceTerrain } from './surface'
 import { pointInPolygon, type LngLat } from './geo'
 import { ALL_TIER_META, effectiveTier, filterableTier, type FilterTier } from './status'
 import type { Statut } from './types'
@@ -6,7 +7,12 @@ import type { Statut } from './types'
 export interface ParcelProps {
   idu: string
   adresse?: string | null   // M6 2a (§1.8) : adresse postale BAN (properties geojson)
-  surface_m2: number | null
+  surface_m2: number | null  // DESSIN du plan (ST_Area)
+  // CONTENANCE-1 (Lot B) : surface de terrain servie (contenance si présente) + provenance + dessin.
+  surface_terrain_m2?: number | null
+  surface_source?: 'cadastre' | 'plan' | null
+  surface_dessin_m2?: number | null
+  contenance_m2?: number | null
   status: Statut
   q_score: number
   a_score: number
@@ -77,8 +83,10 @@ export function matchScope(p: ParcelProps, f: Filters, zone: LngLat[] | null): b
   // FILTRES-FIX-1 (lot 2) : on compare la surface ARRONDIE — la même valeur que la fiche affiche
   // (fmtM2→fmtInt=Math.round) et que le SQL (round(::numeric)) ; régler la borne sur le nombre lu
   // sur la fiche fait donc ressortir la parcelle (avant : 4 500,50 affiché « 4 501 » mais < 4501).
-  if (f.surfaceMin != null && Math.round(p.surface_m2 ?? 0) < f.surfaceMin) return false
-  if (f.surfaceMax != null && Math.round(p.surface_m2 ?? Infinity) > f.surfaceMax) return false
+  // CONTENANCE-1 (Lot B) : le filtre de surface porte sur la surface de TERRAIN (contenance si
+  // présente, sinon dessin) — le même chiffre que la fiche et le SQL (COALESCE côté serveur).
+  if (f.surfaceMin != null && Math.round(surfaceTerrain(p) ?? 0) < f.surfaceMin) return false
+  if (f.surfaceMax != null && Math.round(surfaceTerrain(p) ?? Infinity) > f.surfaceMax) return false
   // RECETTE-1 (E2, Vic 04/10) — l'encart « Capacité » (SDP restante / logements / destination) est
   // RETIRÉ : plus de prédicat sdpMin ici (les champs restent inertes pour qu'un vieux hash/vue s'ouvre
   // sans erreur — cf. NUM_KEYS, la clé est simplement ignorée).

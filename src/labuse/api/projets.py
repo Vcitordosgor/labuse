@@ -19,6 +19,7 @@ from sqlalchemy.orm import Session
 
 from .. import models
 from .. import runs
+from .. import surface as _surface  # CONTENANCE-1 (Lot B) — surface de terrain = contenance|dessin
 from .ia import SECTEURS
 from .tenant import current_compte
 
@@ -1154,7 +1155,7 @@ def projet_parcelles(pid: int, request: Request, db: Session = Depends(get_db),
     all_idus = decided_idus + page_idus
     # 5) enrichissement BATCH — sur la PAGE + les décidées SEULEMENT (jamais toute la population).
     rows = db.execute(text(
-        f"""SELECT par.idu, par.commune, par.surface_m2, s2.tier, {_ETAT_BIEN_SQL} AS etat_bien,
+        f"""SELECT par.idu, par.commune, par.surface_m2, par.contenance_m2, s2.tier, {_ETAT_BIEN_SQL} AS etat_bien,
                   s2.top5_contributions AS top5,   -- OUTILS-5 (P1) : le signal qui a classé la parcelle
                   ST_X(ST_Transform(ST_Centroid(par.geom_2975), 4326)) AS lng,
                   ST_Y(ST_Transform(ST_Centroid(par.geom_2975), 4326)) AS lat
@@ -1204,6 +1205,7 @@ def projet_parcelles(pid: int, request: Request, db: Session = Depends(get_db),
         groups.setdefault(statut, []).append({
             "idu": r["idu"], "commune": r["commune"], "statut": statut,
             "tier": r["tier"], "surface_m2": r["surface_m2"],
+            **_surface.champs_terrain(r["surface_m2"], r["contenance_m2"]),  # CONTENANCE-1 (B)
             "etat_bien": r["etat_bien"],   # M131 P3 : nu | bati_encore | bati_max (affichage)
             "adresse": adrs.get(r["idu"]), "evenement": evt,
             "marche_eur_m2": marche.get(r["commune"]),
@@ -1259,6 +1261,7 @@ def projet_carte_decision(pid: int, idu: str, request: Request, db: Session = De
     return {
         "idu": f["idu"], "adresse": f.get("adresse"), "commune": f.get("commune"),
         "surface_m2": f.get("surface_m2"), "tier": sv.get("tier"), "statut": f.get("statut"),
+        **_surface.champs_terrain(f.get("surface_dessin_m2") or f.get("surface_m2"), f.get("contenance_m2")),  # CONTENANCE-1 (B)
         "q_score": f.get("q_score"), "a_score": f.get("a_score"),
         "completeness": f.get("completeness_score"), "center": f.get("coords"),
         "forces": [{"titre": t, "detail": d} for _, t, d in forces],

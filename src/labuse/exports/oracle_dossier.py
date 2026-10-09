@@ -20,7 +20,9 @@ from typing import Any
 #: donnée → chemins `f` (dotted) où le COMPOSANT React lit la valeur (relevé DONNEES-4, deux
 #: traçages front indépendants). Plusieurs chemins = repli (a ?? b). Liste → présence = non-vide.
 ORACLE: dict[str, tuple[str, ...]] = {
-    "surface_parcelle_m2": ("surface_m2",),
+    # CONTENANCE-1 (Lot B) : la « contenance cadastrale » du Dossier = surface de terrain
+    # (contenance si présente, sinon dessin). Repli sur surface_m2 (payload ancien / base nue).
+    "surface_parcelle_m2": ("surface_terrain_m2", "surface_m2"),
     "adresse_ban": ("adresse",),
     "pente_deg": ("terrain.pente_moy_deg",),
     "emprise_batie_m2": ("le_bien.emprise_batie_m2",),

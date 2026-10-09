@@ -499,7 +499,9 @@ def api_v1_parcels(key: str | None = None, statut: str | None = None, min_q: int
     # plus la matrice historique. `statut` (filtre + payload) = tier. Bascule faite MAINTENANT
     # (zéro partenaire actif — gratuite aujourd'hui, coûteuse après le premier client).
     rows = db.execute(text("""
-        SELECT p.idu, p.commune, round(p.surface_m2) AS surface_m2, s2.tier AS statut,
+        -- CONTENANCE-1 (Lot B) : surface de TERRAIN (contenance si présente, sinon dessin) — le
+        -- partenaire voit le chiffre de l'acte, cohérent avec la fiche.
+        SELECT p.idu, p.commune, round(COALESCE(p.contenance_m2, p.surface_m2)) AS surface_m2, s2.tier AS statut,
                d.opportunity_score AS q_score, d.opportunity_score AS a_score,  -- M129-B : matrice
                -- morte — le contrat v1 garde ses CLÉS, alimentées par le score cascade (vivant).
                d.completeness_score, r.sdp_residuelle_m2

@@ -37,6 +37,7 @@ from sqlalchemy.exc import DataError as _SA_DataError   # FIX-C5 — handler glo
 from sqlalchemy.orm import Session, joinedload
 
 from .. import config, models, prospection
+from .. import surface as _surface   # CONTENANCE-1 (Lot B) — surface de terrain = contenance|dessin
 from .. import bati as _bati   # FICHE-1 lot 1 — bloc « Le bien » (producteur unique)
 from .. import rnu as _rnu
 from ..db import session_scope
@@ -1542,11 +1543,13 @@ def _q_v2_where(run_label: str,
     # la borne sur le nombre lu sur la fiche pouvait écarter la parcelle (ex. 4 500,50 m² affiché
     # « 4 501 » mais `>= 4501` faux). Une seule valeur, la même des deux côtés (front matchScope idem).
     # Pas d'index sur surface_m2 (aucune régression de plan) ; le miroir client vit dans matchScope.
+    # CONTENANCE-1 (Lot B) : le filtre de surface porte sur la surface de TERRAIN (contenance si
+    # présente, sinon dessin) — le client filtre sur le chiffre qu'il voit, cohérent fiche↔liste.
     if surface_min is not None:
-        conds.append("round(p.surface_m2::numeric) >= :f_smin")
+        conds.append(f"round({_surface.SURFACE_TERRAIN_SQL('p')}::numeric) >= :f_smin")
         params["f_smin"] = surface_min
     if surface_max is not None:
-        conds.append("round(p.surface_m2::numeric) <= :f_smax")
+        conds.append(f"round({_surface.SURFACE_TERRAIN_SQL('p')}::numeric) <= :f_smax")
         params["f_smax"] = surface_max
     if sdp_min is not None:
         conds.append("EXISTS (SELECT 1 FROM parcel_residuel r0 WHERE r0.parcel_id = p.id"
@@ -2559,20 +2562,20 @@ def parcel_geojson(idu: str, db: Session = Depends(get_db)) -> dict:
 @app.get("/parcels/{idu}.kmz")
 def parcel_kmz(idu: str, db: Session = Depends(get_db)) -> Response:
     """LIENS-1 (lot 1) — contour de la parcelle en KMZ (KML zippé), à ouvrir dans Google Earth.
-    MÊME géométrie que la carte (`parcels.geom`, 4326) : le KML est produit par PostGIS
-    (`ST_AsKML`), jamais reconstruit à la main. Nom = IDU ; description = commune + surface servie
-    (`surface_m2`, identique à la fiche). Téléchargé au clic (Content-Disposition attachment)."""
+    MÊME géométrie que la carte (`parcels.geom`, 4326, le DESSIN) : le KML est produit par PostGIS
+    (`ST_AsKML`), jamais reconstruit à la main. Nom = IDU ; description = commune + surface de TERRAIN
+    (contenance si présente, sinon dessin — identique à la fiche, CONTENANCE-1). Téléchargé au clic."""
     from xml.sax.saxutils import escape as _xesc
 
     row = db.execute(text(
-        """SELECT commune, surface_m2, ST_AsKML(geom, 7) AS kml
+        """SELECT commune, surface_m2, contenance_m2, ST_AsKML(geom, 7) AS kml
            FROM parcels WHERE idu = :idu LIMIT 1"""), {"idu": idu}).mappings().first()
     if not row or not row["kml"]:
         raise HTTPException(404, "parcelle introuvable")
-    surface = row["surface_m2"]
+    surface = _surface.surface_terrain(row["surface_m2"], row["contenance_m2"]).valeur
     desc = row["commune"] or ""
     if surface:
-        desc = f"{desc} — {round(surface):d} m²" if desc else f"{round(surface):d} m²"
+        desc = f"{desc} — {surface:d} m²" if desc else f"{surface:d} m²"
     kml = (
         '<?xml version="1.0" encoding="UTF-8"?>\n'
         '<kml xmlns="http://www.opengis.net/kml/2.2"><Document>'
@@ -2661,10 +2664,10 @@ def search_parcels(q: str = Query(..., min_length=2), commune: str | None = None
     ban_join = _ban_lateral("s.idu") if ban_ok else ""
     rows = db.execute(text(
         f"""
-        SELECT s.idu, s.commune, s.surface_m2, s.status, s.tier_v2, s.rang_v2, s.etage0
+        SELECT s.idu, s.commune, s.surface_m2, s.contenance_m2, s.status, s.tier_v2, s.rang_v2, s.etage0
                {ban_cols}
         FROM (
-            SELECT p.idu, p.commune, p.surface_m2,  -- RETOURS-12 T1 : surface pour désambiguïser une réf. courte
+            SELECT p.idu, p.commune, p.surface_m2, p.contenance_m2,  -- RETOURS-12 T1 : surface pour désambiguïser une réf. courte
                    d.status AS status, d.opportunity_score,  -- M129-B : matrice morte → statut cascade
                    s2.tier AS tier_v2, s2.rang AS rang_v2,
                    {_ETAGE0_SQL} AS etage0,
@@ -2684,6 +2687,7 @@ def search_parcels(q: str = Query(..., min_length=2), commune: str | None = None
         """), {"pat": f"%{needle}", "c": commune, "run": source, "lim": limit,
                "v2run": _score_v2_run_id(db)}).mappings().all()
     return [{"idu": r["idu"], "commune": r["commune"], "surface_m2": r["surface_m2"],
+             **_surface.champs_terrain(r["surface_m2"], r["contenance_m2"]),  # CONTENANCE-1 (B)
              "status": r["status"], "tier_v2": r["tier_v2"],
              "rang_v2": r["rang_v2"], "etage0": bool(r["etage0"]),
              "adresse": _fmt_ban(r["ban_voie"], r["ban_cp"], r["ban_commune"])} for r in rows]
@@ -2960,7 +2964,9 @@ def taxe_amenagement_prefill(idu: str, db: Session = Depends(get_db)) -> dict:
     # parcel_residuel_bati. `deja_batie` (emprise > 0) est servi pour que l'écran nomme le
     # chiffre pour ce qu'il est : une SDP RESTANTE (résiduel), pas le gabarit entier.
     row = db.execute(text(
-        "SELECT p.commune, round(p.surface_m2) AS surface_terrain_m2, z.zone_libelle, z.zone_fam,"
+        # CONTENANCE-1 (Lot B) : la surface de terrain (base taxable pré-remplie) = contenance si
+        # présente, sinon dessin.
+        "SELECT p.commune, round(COALESCE(p.contenance_m2, p.surface_m2)) AS surface_terrain_m2, z.zone_libelle, z.zone_fam,"
         "       r.sdp_residuelle_m2 AS sdp_gabarit_m2, r.taux_emprise_pct"
         " FROM parcels p LEFT JOIN parcel_zone_plu z ON z.idu = p.idu"
         " LEFT JOIN parcel_residuel r ON r.parcel_id = p.id"
@@ -3307,7 +3313,7 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str |
     _geo_sql = text(
         f"""
         WITH {geo_pro_cte}base AS (
-        SELECT p.idu, p.surface_m2,
+        SELECT p.idu, p.surface_m2, p.contenance_m2,
                ST_AsGeoJSON(ST_SimplifyPreserveTopology(p.geom, 0.00002)) AS g,
                s2.tier AS tier_v2, s2.rang AS rang_v2, s2.mult_base AS mult_v2,
                s2.p_raw AS p_raw, s2.top5_contributions AS top5,   -- M135 : fraction + raison (carte)
@@ -3370,6 +3376,11 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str |
               'idu', b.idu,
               'surface_m2', CASE WHEN b.surface_m2 IS NULL OR b.surface_m2 = 0 THEN NULL
                                  ELSE round(b.surface_m2)::int END,
+              -- CONTENANCE-1 (Lot B) : surface de terrain (contenance si présente, sinon dessin) —
+              -- le filtre carte et le survol portent sur ce chiffre, cohérent avec la fiche/liste.
+              'surface_terrain_m2', CASE WHEN COALESCE(b.contenance_m2, b.surface_m2) IS NULL
+                                              OR COALESCE(b.contenance_m2, b.surface_m2) = 0 THEN NULL
+                                         ELSE round(COALESCE(b.contenance_m2, b.surface_m2))::int END,
               'adresse', CASE WHEN b.ban_voie IS NULL OR b.ban_voie = '' THEN NULL
                               ELSE b.ban_voie || CASE
                                 WHEN NULLIF(concat_ws(' ', b.ban_cp, b.ban_commune), '') IS NOT NULL
@@ -3456,10 +3467,11 @@ _Q_V2_ORDERS = {
     "labuse": (f"{_BANDE_RANG_SQL} ASC, sl.signal_p DESC NULLS LAST, "
                "COALESCE(sl.sdp_residuelle_m2,0) DESC, p.idu ASC"),
     "mult": "s2.mult_base DESC NULLS LAST, s2.rang ASC NULLS LAST",
-    "surface": "p.surface_m2 DESC NULLS LAST, s2.rang ASC NULLS LAST",
+    # CONTENANCE-1 (Lot B) : tri Surface = surface de TERRAIN (contenance si présente, sinon dessin).
+    "surface": "COALESCE(p.contenance_m2, p.surface_m2) DESC NULLS LAST, s2.rang ASC NULLS LAST",
     # M55-H point 4 : le tri Surface gagne son sens INVERSE (re-clic sur la pill) —
     # même clé, ordre ASC (les slivers < 2 m² restent masqués par MIN_DISPLAY_SURFACE_M2).
-    "surface_asc": "p.surface_m2 ASC NULLS LAST, s2.rang ASC NULLS LAST",
+    "surface_asc": "COALESCE(p.contenance_m2, p.surface_m2) ASC NULLS LAST, s2.rang ASC NULLS LAST",
     "commune": "p.commune ASC, s2.rang ASC NULLS LAST",
     # RECETTE-3 (T3, décision Vic) — le tri « Potentiel » du listing FACTUEL : les parcelles
     # ADRESSÉES d'abord (l'ancien « surface » remontait des emprises géantes sans adresse), puis
@@ -3481,8 +3493,8 @@ _Q_V2_ORDERS_PAGE = {
     "labuse": (f"{_BANDE_RANG_PAGE_SQL} ASC, pg.signal_p DESC NULLS LAST, "
                "COALESCE(pg.sdp_residuelle_m2,0) DESC, pg.idu ASC"),
     "mult": "pg.mult_v2 DESC NULLS LAST, pg.rang_v2 ASC NULLS LAST",
-    "surface": "pg.surface_m2 DESC NULLS LAST, pg.rang_v2 ASC NULLS LAST",
-    "surface_asc": "pg.surface_m2 ASC NULLS LAST, pg.rang_v2 ASC NULLS LAST",
+    "surface": "COALESCE(pg.contenance_m2, pg.surface_m2) DESC NULLS LAST, pg.rang_v2 ASC NULLS LAST",
+    "surface_asc": "COALESCE(pg.contenance_m2, pg.surface_m2) ASC NULLS LAST, pg.rang_v2 ASC NULLS LAST",
     "commune": "pg.commune ASC, pg.rang_v2 ASC NULLS LAST",
     # RECETTE-3 (T3) — même ordre au niveau page (adresse via parcel_adresse `pa_o`, résiduel via `rb`).
     "potentiel": "(pa_o.idu IS NOT NULL) DESC, COALESCE(rb.sdp_residuelle_m2, 0) DESC NULLS LAST, "
@@ -3624,7 +3636,7 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
     # rejoue l'ordre historique + un tiebreaker p.idu explicite qui rend TOTAL un ordre
     # que l'ancien plan laissait flotter sur les égalités de queue (constaté au garde-fou
     # avant/après). Les autres tris (mult/surface/commune/v) gardent la requête historique.
-    _page_cols = f"""p.id, p.idu, p.commune, p.surface_m2, p.section,
+    _page_cols = f"""p.id, p.idu, p.commune, p.surface_m2, p.contenance_m2, p.section,
                    d.status AS status, d.opportunity_score,  -- M129-B : matrice morte → statut cascade
                    d.completeness_score,
                    s2.tier AS tier_v2, s2.rang AS rang_v2, s2.mult_base AS mult_v2, s2.p_raw AS p_raw,
@@ -3743,6 +3755,7 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
     from ..faisabilite.engine import cause_libelle as _cause_libelle   # D04 — badge de cause de liste
     return [{
         "idu": r["idu"], "commune": r["commune"], "surface_m2": round(r["surface_m2"]) if r["surface_m2"] else None,
+        **_surface.champs_terrain(r["surface_m2"], r["contenance_m2"]),  # CONTENANCE-1 (B)
         "adresse": _fmt_ban(r["ban_voie"], r["ban_cp"], r["ban_commune"]),
         "lieu_dit": r["commune"], "status": r["status"],  # M129-B : q/a (matrice morte) retirés
         "completeness_score": r["completeness_score"],
@@ -4097,7 +4110,7 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
     source cliquable, date), flags, événement. « La traçabilité EST le produit »."""
     run_label = _cascade_run(db, run_label)   # C1 : résout la cascade (empruntée si étage 0 réutilisé)
     head = db.execute(text(
-        """SELECT p.id, p.idu, p.commune, p.surface_m2,
+        """SELECT p.id, p.idu, p.commune, p.surface_m2, p.contenance_m2,
                   ST_Y(ST_Transform(ST_Centroid(p.geom_2975), 4326)) AS lat,
                   ST_X(ST_Transform(ST_Centroid(p.geom_2975), 4326)) AS lon,
                   d.status AS status, d.completeness_score,  -- M129-B : matrice morte
@@ -4108,6 +4121,7 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
         # M102 P1.4 — jamais un identifiant de run dans un message susceptible d'atteindre
         # l'écran (mesuré : servi brut via le Copilote). Le run reste dans les logs serveur.
         raise HTTPException(404, f"Parcelle {idu} inconnue de l'analyse en cours.")
+    _st_head = _surface.surface_terrain(head["surface_m2"], head["contenance_m2"])  # CONTENANCE-1 (B)
 
     # Correctif M5 (verdict d'en-tête) : tier v2 du run SERVI (`_score_v2_run_id` = Q_A_RUN_LABEL,
     # épinglé — PAS « le dernier run par timestamp ») — pilote la bannière/badge quand il existe ;
@@ -4280,7 +4294,10 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
     # arithmétique exacte : round(surface) × médiane entière) pour une source unique ; estimé, pas vénal.
     _terr_med = next((r for r in dvf_secteur
                       if r.get("type_bien") == "terrain" and r.get("mediane_prix_m2")), None)
-    _surf_i = round(head["surface_m2"]) if head.get("surface_m2") else None
+    # CONTENANCE-1 (Lot C) : « valeur au prix du secteur » = surface de TERRAIN (contenance si
+    # présente) × médiane — c'est un prix, donc un ratio du terrain, pas du dessin. Le commentaire
+    # F46 disait déjà « contenance × médiane » ; c'est désormais exact.
+    _surf_i = _st_head.valeur
     valeur_terrain_secteur_eur = (_surf_i * int(_terr_med["mediane_prix_m2"])
                                   if _surf_i and _terr_med else None)
     dvf_parcelle = None
@@ -4440,7 +4457,10 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
         "proprietaire_historique": pm_historique,   # L1 KF-2 : timeline millésimes + diff (constat)
         "anru": {"quartier": anru["name"], "interet": anru["interet"],
                  "position": "dans" if anru["dans"] else "adjacente"} if anru else None,
-        "surface_m2": round(head["surface_m2"]) if head["surface_m2"] else None,
+        "surface_m2": round(head["surface_m2"]) if head["surface_m2"] else None,  # DESSIN (compat)
+        # CONTENANCE-1 (Lot B) : la surface de terrain affichée = contenance si présente, sinon
+        # dessin. `surface_dessin_m2` sert la ligne discrète « Dessin du plan » (B3).
+        **_surface.champs_terrain(head["surface_m2"], head["contenance_m2"]),
         # M48 (F4) : le champ mort `statut` (matrice_statut v1, éteinte M37) est RETIRÉ du payload —
         # il contredisait le tier (71 115 parcelles) et a servi de munition à l'IA (F1). Le classement
         # se lit sur `score_v2.tier` (via verdictMeta au front) ; la matrice reste un signal interne.

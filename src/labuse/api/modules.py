@@ -45,6 +45,7 @@ from ..faisabilite.bilan import (  # défauts calculette dérivés de la source 
     CALCULETTE_VRD_DEFAUT_M2,
 )
 from .. import runs  # S3 : run servi relu à la requête (bascule à chaud)
+from .. import surface as _surface  # CONTENANCE-1 (Lot B) — surface de terrain = contenance|dessin
 from ..exports import miroir as _miroir  # F32 — note d'incohérence dépôt/autorisation (source unique)
 from ..scoring import score_v_constants  # OUTILS-S2 Lot A : formes retenues du signal succession
 
@@ -304,7 +305,7 @@ def patrimoine(siren: str, fmt: str = "json",
     limit = limit if isinstance(limit, int) else 200
     offset = offset if isinstance(offset, int) else 0
     rows = db.execute(text("""
-        SELECT p.id, p.idu, p.commune, p.surface_m2, z.zone_fam, r.sdp_residuelle_m2,
+        SELECT p.id, p.idu, p.commune, p.surface_m2, p.contenance_m2, z.zone_fam, r.sdp_residuelle_m2,
                s2.tier AS tier_v2, s2.rang AS rang_v2,
                COALESCE(pb.emprise_bati_m2, 0) AS emprise_bati,   -- RETOURS-15 B5 : bâti / nu
                (d.status IN ('exclue', 'faux_positif_probable')) AS etage0
@@ -398,8 +399,10 @@ def patrimoine(siren: str, fmt: str = "json",
     n_valorisables = 0
     for r in rows:
         px = prix_zone.get((r["commune"], r["zone_fam"])) if r["zone_fam"] in ("U", "AU") else None
-        if px and r["surface_m2"]:
-            val_nu += r["surface_m2"] * px
+        # CONTENANCE-1 (Lot C) : valeur nue = surface de TERRAIN (contenance si présente) × prix/m².
+        _surf_t = _surface.surface_terrain(r["surface_m2"], r["contenance_m2"]).valeur
+        if px and _surf_t:
+            val_nu += _surf_t * px
             n_valorisables += 1
     # #5 ASSIETTE CONTIGUË : parcelles du portefeuille d'un seul tenant (contact cadastral ADJ_BUFFER_M)
     # → « Analyser en assiette ». Fréquent (79 % des portefeuilles multi-parcelles). Plus gros bloc ≥ 2.
@@ -502,7 +505,9 @@ def patrimoine(siren: str, fmt: str = "json",
         "tronquee": offset + limit < len(rows),
         "items": [{"idu": r["idu"], "commune": r["commune"],
                    "tier_v2": r["tier_v2"], "rang_v2": r["rang_v2"], "etage0": bool(r["etage0"]),
-                   "surface_m2": round(r["surface_m2"] or 0), "sdp": r["sdp_residuelle_m2"],
+                   "surface_m2": round(r["surface_m2"] or 0),  # DESSIN (compat)
+                   **_surface.champs_terrain(r["surface_m2"], r["contenance_m2"]),  # CONTENANCE-1 (B)
+                   "sdp": r["sdp_residuelle_m2"],
                    "n_etablissements": etab_count.get(r["idu"], 0),   # KELFONCIER-FIX-1 (Lot H)
                    "geom": json.loads(geoms[r["idu"]]) if geoms.get(r["idu"]) else None} for r in page],
     }

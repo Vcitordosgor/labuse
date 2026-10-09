@@ -117,8 +117,14 @@ def assistant_facts(fiche: dict) -> dict[str, Any]:
         if r.get("result") in ("HARD_EXCLUDE", "SOFT_FLAG", "POSITIVE")
     ]
     return {
+        # CONTENANCE-1 (Lot B) : la surface citée au client = surface de TERRAIN (contenance si
+        # présente, sinon dessin). `surface_source` permet à l'IA de dire « contenance cadastrale »
+        # vs « mesurée sur le plan » sans jamais inventer.
         "parcelle": {"idu": p.get("idu"), "commune": p.get("commune"),
-                     "surface_m2": _num(p.get("surface_m2"))},
+                     "surface_m2": _num(p.get("surface_terrain_m2")
+                                        if p.get("surface_terrain_m2") is not None
+                                        else p.get("surface_m2")),
+                     "surface_source": p.get("surface_source")},
         # M34 (dette #14) : statut = TRADUCTION du tier servi (verdict_servi). Le motif legacy
         # (`signaux_vigilance`) est un signal non-franc informatif, plus jamais un déclassement.
         # M36 Lot B : score_opportunite/score_completude RETIRÉS des faits (l'IA cite les
