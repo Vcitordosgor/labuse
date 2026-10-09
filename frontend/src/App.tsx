@@ -401,7 +401,7 @@ export default function App() {
   if (view === 'admin') {
     return (
       <div className="flex h-screen w-screen overflow-hidden bg-bg font-sans text-txt">
-        {montre && <LogoIntro onFini={fini} />}
+        {/* feat/ouverture — l'ouverture ne joue QUE dans l'app client, jamais dans la Tour de contrôle. */}
         <Suspense fallback={<PanelLoading />}><AdminView /></Suspense>
         <Toast />
         <TraceTiroir />
