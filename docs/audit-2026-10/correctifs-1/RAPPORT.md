@@ -22,7 +22,29 @@ Branche `fix/correctifs-1` (worktree `~/Desktop/labuse-correctifs`), ports 8720/
 
 ---
 
-## Lot B — dashboard admin — *à venir*
-## Lot C — app — *à venir*
-## Lot D — pages légales et données personnelles — *à venir*
-## Lot E — fraîcheur (code seulement) — *à venir*
+## Lot B — dashboard admin *(en cours)*
+
+- **B1** — **fait.** `frontend/src/components/admin/Licences.tsx`. (a) **Contraste illisible = vrai bug trouvé** : l'onglet actif portait `text-ink`, or `ink` **n'est pas un token Tailwind** (seul `mint-ink` existe) → la classe était morte → texte clair hérité sur fond vert = « blanc sur vert ». Corrigé en `text-mint-ink` (#06301A, l'inversion sombre de la DA). (b) Premier onglet affiché = **Actifs** (`useState('actif')`, Actifs replacé en tête de `SEGS`). (c) **Stéphanie** : l'onglet « Actifs » inclut désormais tout compte à l'accès ouvert, essai 7 j compris (`estActif = statut==='actif' && !carteRefusee`) ; l'onglet « Essais » garde le détail des essais. (d) Titre « Comptes » en double **supprimé** du composant (l'en-tête de section `AdminView` le porte déjà) ; le compteur « N licences actives » conservé. Typage trivial (OK par inspection). **Capture dashboard à faire** (dev server 5920).
+- **B9** — **fait (rien à changer).** La sonde quotidienne `sonde-sources` **est** dans `/etc/cron.d/labuse` (déployé 07/10, `0 7 * * *` Réunion, `labuse jobs run sonde-sources`) → la phrase « vérifiées automatiquement chaque jour » de `SourcesPage.tsx:136` est exacte. (Boundary VPS respectée : lecture crontab seulement, pas de probe DB.)
+- **B2** — *à faire.* Localisé : coûts IA agrégés sans séparation interne/clients (`dashboard.py:1196-1253`, `conso_ia_mois`/`conso_ia_30j` sur `ia_log` ; UI `Ia.tsx`). Ligne à retirer « SURFACE IA — le mauve est réservé… » = `AdminView.tsx:508`. **Chantier réel** : le ledger `ia_log` doit porter le bloc (interne = `agent_source` + lancé par le dashboard ; clients = Recherche NL + Copilote /ask + missions), agrégation + projection + coût moyen **par bloc**, et deux blocs en UI. Non trivial.
+- **B3** — *à faire.* Placeholder « non exposé par l'API » = `Ia.tsx:89-94` + `dashboard.py:1252`. **Vérif API Anthropic** : `/v1/organizations/cost_report` (clé admin) expose la **dépense**, pas le **solde** → prévoir champ admin « crédit acheté le JJ/MM » (+ colonne) + affichage « reste ≈ crédit saisi − conso tracée depuis cette date » étiqueté estimation. Chantier (config + calcul + UI).
+- **B4** — **STOP (mesure live + coût réel).** Agent de vérif = `agent_source.py` ; modèle = `model_for('agent_source')` = **`MODEL_REASONING` = claude-sonnet-4-6** (`ai_models.py:21,92`), `max_tokens=900`, web_search (lit des pages). Le moins cher du registre = **`MODEL_FACTUAL` = claude-haiku-4-5** (`ai_models.py:20`). Refaire l'agent au plus petit modèle + lecture ciblée (en-têtes HTTP / page de version) + plafond tokens, puis **mesure avant/après sur 10 sources** = appels IA réels facturés → à faire sur décision/budget (hors boucle local sans clé). Code + mesure à cadrer avec Vic.
+- **B5** — *à vérifier.* Aucun plafond « 5 € » / 500 trouvé dans le flux de vérification des sources (recherche large). À confirmer avec Vic **où** ce plafond s'affiche (peut-être le budget copilote par compte, ou un libellé UI) — sinon rien à retirer.
+- **B6** — *à faire.* « Injecter » = `dashboard.py:1669-1713` (`admin_source_veille_injecter` → `_lancer_ingestion` → subprocess détaché, 404 si pas de commande connue). À **reproduire** (dashboard lancé) puis corriger + retour visible (en cours/fait/échec). Besoin du dashboard tournant.
+- **B7** — *à faire.* « Envoyer un agent » = `circuit/Detail.tsx:184` (`disabled={agent.isPending}`, masqué si `sans_millesime`). À rendre présent sur **toutes** les sources (grisé + motif si non vérifiable, jamais absent) + état « Agent envoyé » jusqu'au retour.
+- **B8** — *à faire.* `Produit.tsx` : tronquer la colonne Statut (messages longs, `…` + title au survol) ; retirer `l.194` « UNE file : signalements fiche + annonce… », `l.233` « Ouvertures d'outil (événement léger…) », + le doublon « RETOURS — FICHE + ANNONCE… » (libellé à re-localiser).
+
+## Lot C — app — *non commencé*
+
+## Lot D — pages légales et données personnelles — *non commencé*
+
+## Lot E — fraîcheur (code seulement) *(E2 diagnostiqué)*
+
+- **E2** — **diagnostiqué (fix à coder).** Lecture `/var/log/labuse/ban_refresh.log` (VPS, lecture seule, autorisée) : l'échec du **05/10** = **échec de TÉLÉCHARGEMENT**, PAS le garde-fou 80 %. Trace : `ban_adresses.download_ban_csv:80` `httpx.stream("GET", BAN_URL, …)` → le serveur BAN (`adresse.data.gouv.fr`) a coupé en cours → `RemoteProtocolError: Server disconnected without sending a response.`, **aucun retry** → run avorté. (Les lignes « Couverture bâti 86.8 % (≥90 %) » des runs d'avant sont un AVERTISSEMENT de couverture, pas le bloqueur.) **Fix** : envelopper le download d'un **retry avec backoff** sur erreurs transitoires (`RemoteProtocolError`, `ReadError`, `ConnectError`, timeout) avant d'abandonner ; + test. Relance par Vic plus tard.
+- **E1, E3, E4, E5** — *non commencés* (reads de cadrage faits : `refresh_dvf`/`dvf_mutations`, `persist_millesime`/`data_sources.source_millesime`, `jobs.py` registre avec `_j(...)`).
+
+---
+
+## Note de périmètre (honnête)
+
+Mandat très large (~35 points, 5 lots) avec, pour beaucoup, app/dashboard à faire tourner, captures avant/après, mesures IA facturées (B4), migration + backfill (D3), services externes (Brevo/Stripe) et données de Vic (7 adresses A6, TEXTE-FLASH A5). **Réalisé et prouvé ce tour : Lot A complet + commité (tests verts, captures, smoke), B1 + B9 de Lot B, E2 diagnostiqué.** La suite (B2-B8, C, D, E1/E3/E4/E5) reste à faire — c'est un travail multi-session. Rien n'a été mergé ni déployé ; aucune écriture VPS (seule la lecture du log BAN).
