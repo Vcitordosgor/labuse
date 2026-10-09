@@ -51,14 +51,17 @@ def parcel_assemblage(session: Session, parcel_id: int) -> dict:
         """
         -- M37 : le statut du voisin = TIER SERVI (parcel_p_score_v2), plus le rail legacy
         -- parcel_evaluations.status (éteint). Même source de vérité que voisinage.py (M34).
-        SELECT n.id, n.idu, n.surface_m2, p.surface_m2 AS surf_p,
-               (p.surface_m2 + n.surface_m2) AS cumul,
+        -- CONTENANCE-1 (Lot C) : le seuil de taille et les surfaces cumulées portent sur la surface
+        -- de TERRAIN (contenance si présente, sinon dessin) — la même que la fiche.
+        SELECT n.id, n.idu, COALESCE(n.contenance_m2, n.surface_m2) AS surface_m2,
+               COALESCE(p.contenance_m2, p.surface_m2) AS surf_p,
+               (COALESCE(p.contenance_m2, p.surface_m2) + COALESCE(n.contenance_m2, n.surface_m2)) AS cumul,
                s.tier AS status
         FROM parcels p
         JOIN parcels n ON n.id <> p.id AND ST_DWithin(p.geom_2975, n.geom_2975, :buf)
         LEFT JOIN parcel_p_score_v2 s ON s.parcelle_id = n.idu AND s.run_id = :run
-        WHERE p.id = :pid AND p.surface_m2 < :seuil          -- la parcelle est sous le seuil seule
-          AND (p.surface_m2 + n.surface_m2) >= :seuil        -- mais l'assemblage franchit le seuil
+        WHERE p.id = :pid AND COALESCE(p.contenance_m2, p.surface_m2) < :seuil   -- parcelle sous le seuil seule
+          AND (COALESCE(p.contenance_m2, p.surface_m2) + COALESCE(n.contenance_m2, n.surface_m2)) >= :seuil
         ORDER BY cumul DESC LIMIT 5
         """
     ), {"pid": parcel_id, "buf": ADJ_BUFFER_M, "seuil": p["min_surface_m2"],

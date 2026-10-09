@@ -29,7 +29,11 @@ from .zone_servie import FAMILLES_CONSTRUCTIBLES
 
 _CTX = text("""
 SELECT p.idu, p.commune,
-       ST_Area(p.geom_2975)                               AS surface_m2,
+       -- CONTENANCE-1 (Lot C) : la surface servant aux RATIOS (emprise CES, pleine terre, densité,
+       -- seuils de taille) = CONTENANCE si présente (chiffre de l'acte), sinon dessin. Le DESSIN
+       -- (ST_Area) reste disponible pour les formes et pour le facteur de ré-échelle C3.
+       COALESCE(p.contenance_m2, ST_Area(p.geom_2975))    AS surface_m2,
+       ST_Area(p.geom_2975)                               AS surface_dessin_m2,
        (SELECT max((pl.attrs->>'slope_pct')::float) FROM spatial_layers pl
           WHERE pl.commune = p.commune AND pl.kind = 'pente'
             AND ST_Intersects(pl.geom_2975, p.geom_2975))  AS pente_pct,
@@ -50,9 +54,12 @@ class ParcelContext:
     parcel_id: int
     idu: str
     commune: str
-    surface_m2: float
+    surface_m2: float          # CONTENANCE-1 : surface de terrain (contenance si présente, sinon dessin)
     zone: str | None
     contraintes: Contraintes
+    # CONTENANCE-1 (Lot C) : aire du DESSIN (ST_Area). Sert au facteur de ré-échelle C3 des aires
+    # géométriques (zone d'implantation, déductions) : aire × surface_m2 / surface_dessin_m2.
+    surface_dessin_m2: float = 0.0
     # Prescriptions à effet économique (mixité sociale, eaux pluviales) + ER déduits,
     # renseignées par parcel_faisabilite() pour alimenter badges fiche et bilan.
     prescriptions_eco: dict = field(default_factory=dict)
@@ -65,6 +72,13 @@ class ParcelContext:
     # ne sait pas modéliser (bandes/voies nommées/destination…) : la parcelle les PORTE plutôt que
     # de les approximer. Chaque item : {regle, porte, article, page_pdf}. Renseigné par parcel_faisabilite.
     regles_non_modelisees: list = field(default_factory=list)
+
+    @property
+    def terrain_sur_dessin(self) -> float:
+        """Facteur de ré-échelle C3 : contenance/dessin (1.0 si pas de contenance ou dessin nul).
+        Toute aire tirée du dessin et affichée/utilisée dans un ratio est multipliée par ce facteur
+        → rien ne dépasse la surface du terrain et les proportions tiennent."""
+        return (self.surface_m2 / self.surface_dessin_m2) if self.surface_dessin_m2 else 1.0
 
 
 def _layer_params(name: str) -> dict:
@@ -172,6 +186,7 @@ def parcel_context(session: Session, parcel_id: int) -> ParcelContext | None:
     from .zone_servie import zone_dominante
     zs = zone_dominante(session, parcel_id)
     return ParcelContext(parcel_id, r.idu, r.commune, float(r.surface_m2), zs.zone, c,
+                         surface_dessin_m2=float(r.surface_dessin_m2 or 0.0),
                          zone_fam=zs.zone_fam, a_cheval=zs.a_cheval, zone_parts=zs.parts)
 
 
@@ -451,6 +466,11 @@ def parcel_faisabilite(session: Session, parcel_id: int,
     # provenance est ÉCRITE (`assiette_source`) — pas de trou, pas de mensonge.
     gab = _assiette_gabarit(session, ctx.idu) if assiette_clippee else None
     assiette_source = "gabarit" if gab is not None else "residuel_legacy"
+    # CONTENANCE-1 (Lot C3) — toute aire tirée du DESSIN (zone d'implantation, déductions ER/EBC/
+    # greve) est ramenée à l'échelle de la CONTENANCE par ce facteur, pour que rien ne dépasse la
+    # surface du terrain et que les proportions tiennent. Les FORMES (GeoJSON, reculs, intersections)
+    # restent calculées sur le dessin ; seules leurs AIRES scalaires sont ré-échelonnées ici.
+    k_cont = ctx.terrain_sur_dessin
     if gab is not None:
         gbuild, gres = gab
         emprise_brute = float(gres.zoneImplantationM2 or 0.0)
@@ -468,6 +488,9 @@ def parcel_faisabilite(session: Session, parcel_id: int,
             ebc_a = float(grow.ebc_area or 0.0)
             greve_cert = float(grow.cert_area or 0.0)
             greve_tot = float(grow.greve_total or 0.0)
+        # C3 : aires géométriques → échelle contenance (emprise_brute = zone d'implantation).
+        emprise_brute *= k_cont
+        er_a *= k_cont; ebc_a *= k_cont; greve_cert *= k_cont; greve_tot *= k_cont
         emprise = max(0.0, emprise_brute - greve_tot)
         racc = gbuild.raccordement or {}
         ppr_rouge = bool((racc.get("ppr") or {}).get("rouge"))
@@ -514,11 +537,12 @@ def parcel_faisabilite(session: Session, parcel_id: int,
                 vide_raison = "reculs"
     else:
         row = session.execute(_EMPRISE, args).one()
-        full_a = float(row.full_area or 0.0)
-        uau_a = float(row.uau_area) if row.uau_area is not None else None
-        er_a = float(row.er_area or 0.0)
-        ebc_a = float(row.ebc_area or 0.0)
-        greve_a = float(row.greve_area or 0.0)
+        # C3 : aires géométriques (inset reculs, portion U/AU, ER/EBC) → échelle contenance.
+        full_a = float(row.full_area or 0.0) * k_cont
+        uau_a = (float(row.uau_area) * k_cont) if row.uau_area is not None else None
+        er_a = float(row.er_area or 0.0) * k_cont
+        ebc_a = float(row.ebc_area or 0.0) * k_cont
+        greve_a = float(row.greve_area or 0.0) * k_cont
 
         base = full_a if uau_a is None else min(full_a, uau_a)
         plancher = float(zonage.get("an_mixte_min_pct", 5)) / 100.0
@@ -530,7 +554,7 @@ def parcel_faisabilite(session: Session, parcel_id: int,
         if er_a >= 0.5:
             for r in session.execute(_ER_DETAILS, {"pid": parcel_id, "d": recul,
                                                    "pkind": pkind, "er_types": er_types}):
-                m2 = float(r.m2 or 0.0)
+                m2 = float(r.m2 or 0.0) * k_cont   # C3 : aire ER affichée à l'échelle contenance
                 if m2 < 0.5:
                     continue
                 m = _ER_LIB.match((r.libelle or "").strip())
@@ -551,7 +575,7 @@ def parcel_faisabilite(session: Session, parcel_id: int,
         # aux plafonds CES/pleine terre à la seule portion U/AU. OPT-IN — servi inchangé sinon.
         greve_cert = 0.0
         if assiette_clippee:
-            greve_cert = _greve_certaine_m2(session, parcel_id, recul, ctx.commune)
+            greve_cert = _greve_certaine_m2(session, parcel_id, recul, ctx.commune) * k_cont  # C3
             if greve_cert > 0.5:
                 emprise = max(0.0, emprise - greve_cert)
                 ctx.contraintes.libelles.append(

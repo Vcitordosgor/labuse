@@ -175,7 +175,11 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
     """Assemble l'entrée réelle. Renvoie None si la parcelle est inconnue.
     `BuildResult.blocking` liste les données réglementaires nécessaires manquantes."""
     row = session.execute(text(
-        "SELECT id, commune, ST_Area(geom_2975) AS surface_m2, "
+        # CONTENANCE-1 (Lot C) : surface de la parcelle pour le PLAFOND d'emprise (CES × surface) =
+        # contenance si présente, sinon dessin. La ZONE d'implantation (zone_m.area) reste la forme
+        # géométrique réelle (C2) ; son aire est ramenée à l'échelle contenance là où elle alimente
+        # une capacité client (faisabilite/db.py, facteur C3).
+        "SELECT id, commune, COALESCE(contenance_m2, ST_Area(geom_2975)) AS surface_m2, "
         "ST_AsGeoJSON(geom) AS geojson FROM parcels WHERE idu = :i"
     ), {"i": idu}).mappings().first()
     if not row:
