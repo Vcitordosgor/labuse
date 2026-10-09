@@ -693,6 +693,74 @@ def ingest_island_cmd(
     typer.echo(f"TOTAL EN BASE : {total_p} parcelles sur {communes_db} commune(s).")
 
 
+@app.command("backfill-contenance")
+def backfill_contenance_cmd(
+    only: str = typer.Option(None, help="INSEE ou noms (virgule) ; défaut = toutes les communes en base."),
+    spacing: float = typer.Option(2.0, help="Pause (s) entre communes — politesse API Etalab."),
+) -> None:
+    """CONTENANCE-1 (Lot A) — remplit `parcels.contenance_m2` depuis le cadastre bulk Etalab.
+
+    Re-télécharge le GeoJSON bulk de chaque commune DÉJÀ en base, lit le champ `contenance` et
+    met à jour les parcelles PAR IDU. UPDATE SEULEMENT : jamais d'INSERT, jamais la géométrie ni
+    surface_m2 (le `SET` ne touche que contenance_m2). Idempotent, reprenable. La colonne est créée
+    par `ensure_parcel_contenance` au boot/doctor si absente (ici on la garantit d'abord)."""
+    import time
+
+    from .ingestion import cadastre_bulk, run_all
+
+    models.ensure_parcel_contenance(engine())  # garantit la colonne (sans verrou si déjà là)
+
+    with session_scope() as s:
+        communes_db = {r[0] for r in s.execute(text("SELECT DISTINCT commune FROM parcels")).all()}
+    # Associe INSEE↔nom : on ne télécharge que les communes effectivement en base.
+    cibles = [(insee, name) for (insee, name) in run_all.REUNION_COMMUNES if name in communes_db]
+    if only:
+        wanted = {x.strip() for x in only.split(",")}
+        cibles = [(i, n) for (i, n) in cibles if i in wanted or n in wanted]
+    if not cibles:
+        typer.echo("Aucune commune ciblée (vérifier --only / l'état de la base).")
+        raise typer.Exit(1)
+
+    t_all = time.monotonic()
+    total_maj = 0
+    total_abs = 0  # contenance absente à la source
+    for k, (insee, name) in enumerate(cibles, 1):
+        t0 = time.monotonic()
+        typer.echo(f"▶ [{k}/{len(cibles)}] {name} ({insee}) …")
+        try:
+            parcels = cadastre_bulk.parse_etalab(cadastre_bulk.download_parcelles(insee))
+        except Exception as exc:  # noqa: BLE001 — on isole la commune, on continue
+            typer.echo(f"  ✗ {name} : téléchargement ÉCHEC {type(exc).__name__}: {exc}")
+            continue
+        maj = 0
+        abs_src = 0
+        with session_scope() as s:
+            for p in parcels:
+                c = p.get("contenance")
+                if c is None:
+                    abs_src += 1
+                    continue
+                n = s.execute(
+                    text("UPDATE parcels SET contenance_m2 = :c WHERE idu = :idu"),
+                    {"c": int(c), "idu": p["idu"]},
+                ).rowcount
+                maj += n or 0
+        total_maj += maj
+        total_abs += abs_src
+        dt = time.monotonic() - t0
+        typer.echo(f"  ✓ {name} : {maj} parcelles mises à jour · {abs_src} sans contenance source · {dt:.0f}s")
+        time.sleep(spacing)
+
+    with session_scope() as s:
+        tot, couv = s.execute(
+            text("SELECT count(*), count(contenance_m2) FROM parcels")).one()
+    dt_all = time.monotonic() - t_all
+    typer.echo("\n" + "═" * 60)
+    typer.echo(f"CONTENANCE — {total_maj} parcelles renseignées · {total_abs} sans contenance source · {dt_all:.0f}s")
+    pct = (100.0 * couv / tot) if tot else 0.0
+    typer.echo(f"COUVERTURE EN BASE : {couv}/{tot} parcelles ont une contenance ({pct:.1f} %).")
+
+
 @app.command("evaluate")
 def evaluate_cmd(
     commune: str = typer.Option(None, help="Commune (nom ou INSEE ; défaut = pilote)."),

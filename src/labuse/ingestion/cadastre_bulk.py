@@ -38,6 +38,18 @@ def download_parcelles(insee: str, timeout: float | None = None) -> dict:
         return json.loads(gzip.decompress(r.content))
 
 
+def _contenance_int(v) -> int | None:
+    """Contenance Etalab → entier m² (ou None). Le champ est normalement un entier ; on tolère
+    une chaîne numérique et on ignore une valeur absurde (négative). CONTENANCE-1."""
+    if v is None:
+        return None
+    try:
+        n = int(float(v))
+    except (TypeError, ValueError):
+        return None
+    return n if n >= 0 else None
+
+
 def parse_etalab(fc: dict) -> list[dict]:
     """FeatureCollection Etalab → parcelles normalisées (idu = `id`)."""
     out: list[dict] = []
@@ -51,7 +63,7 @@ def parse_etalab(fc: dict) -> list[dict]:
             "commune": p.get("commune"),
             "section": p.get("section"),
             "numero": str(p["numero"]) if p.get("numero") is not None else None,
-            "contenance": p.get("contenance"),
+            "contenance": _contenance_int(p.get("contenance")),  # CONTENANCE-1 : entier m² cadastral
             "geometry": f["geometry"],
         })
     return out

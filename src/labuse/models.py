@@ -74,7 +74,11 @@ class Parcel(Base, TimestampMixin):
     geom: Mapped[object] = mapped_column(Geometry("GEOMETRY", srid=SRID, spatial_index=True))
     geom_2975: Mapped[object | None] = mapped_column(  # pré-projeté (perf cascade), auto-maintenu par trigger
         Geometry("GEOMETRY", srid=SRID_M, spatial_index=False))
-    surface_m2: Mapped[float | None] = mapped_column(Float)  # calculée en 2975
+    surface_m2: Mapped[float | None] = mapped_column(Float)  # DESSIN du plan : ST_Area(geom) en 2975
+    # CONTENANCE cadastrale (champ Etalab `contenance`) : la surface inscrite au cadastre, celle de
+    # l'acte. C'est elle que le client connaît. CONTENANCE-1 : surface_terrain = contenance_m2 si
+    # présente, sinon surface_m2. Nullable (quelques parcelles n'ont pas de contenance à la source).
+    contenance_m2: Mapped[int | None] = mapped_column(Integer)
     centroid: Mapped[object | None] = mapped_column(Geometry("POINT", srid=SRID, spatial_index=False))
     bbox: Mapped[object | None] = mapped_column(Geometry("POLYGON", srid=SRID, spatial_index=False))
     # Provenance : NULL/'referentiel' = ingestion en masse ; 'audit' = ajoutée à la demande
@@ -1109,6 +1113,23 @@ def ensure_sitadel_depot(engine) -> None:
         c.execute(_t("ALTER TABLE sitadel_permits ADD COLUMN IF NOT EXISTS date_depot date"))
 
 
+def ensure_parcel_contenance(engine) -> None:
+    """CONTENANCE-1 (Lot A) — colonne `contenance_m2` sur parcels : surface cadastrale du titre
+    foncier (champ Etalab `contenance`). Remplie à l'ingestion (cadastre_ingest.ingest_parcels) et
+    par le backfill CLI `backfill-contenance`. Jamais lue par le scoring tant qu'absente (repli sur
+    surface_m2). Ne touche à AUCUNE géométrie — colonne scalaire additive, nullable.
+
+    SCORING-8 (lot A bis) — sans verrou au boot : l'ALTER (ACCESS EXCLUSIVE même no-op) n'est émis
+    que si la colonne manque, pour ne pas geler le boot derrière un lecteur de `parcels` (table
+    chaude). Cf. BOOT-VERROU-1."""
+    from sqlalchemy import text as _t
+    with engine.connect() as c:
+        if _col_presente(c, "parcels", "contenance_m2"):
+            return
+    with engine.begin() as c:
+        c.execute(_t("ALTER TABLE parcels ADD COLUMN IF NOT EXISTS contenance_m2 integer"))
+
+
 def _ensure_schema_steps(engine, *, geom_backfill: bool) -> None:
     """P2-37 — LISTE UNIQUE des réconciliations de schéma idempotentes, partagée par `create_all`
     (première création, backfill geom) et `ensure_schema` (boot/doctor, sans backfill). Avant, les
@@ -1118,6 +1139,7 @@ def _ensure_schema_steps(engine, *, geom_backfill: bool) -> None:
     ICI, une seule fois → plus de dérive possible. Seul `backfill` du geom_2975 diffère (paramétré)."""
     ensure_parcel_eval_status_dropped(engine)    # M46 (Lot C) : rail legacy status SUPPRIMÉ (à froid)
     ensure_sitadel_depot(engine)                 # M38 : date de dépôt Sitadel (DR_DEPOT)
+    ensure_parcel_contenance(engine)             # CONTENANCE-1 : surface cadastrale (Etalab)
     ensure_geom_2975(engine, backfill=geom_backfill)
     ensure_parcel_origine(engine)
     ensure_residuel_cache(engine)

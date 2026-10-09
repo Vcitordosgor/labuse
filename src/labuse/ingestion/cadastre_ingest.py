@@ -33,23 +33,25 @@ def ingest_parcels(session: Session, parcels: list[dict], commune_name: str | No
         session.execute(
             text(
                 """
-                INSERT INTO parcels (idu, commune, section, numero, geom, surface_m2, centroid, bbox, ingestion_run_id, origine)
+                INSERT INTO parcels (idu, commune, section, numero, geom, surface_m2, contenance_m2, centroid, bbox, ingestion_run_id, origine)
                 VALUES (
                     :idu, :commune, :section, :numero,
                     ST_MakeValid(ST_SetSRID(ST_GeomFromGeoJSON(:gj), 4326)),
                     ST_Area(ST_Transform(ST_MakeValid(ST_SetSRID(ST_GeomFromGeoJSON(:gj), 4326)), 2975)),
+                    :contenance,
                     ST_Centroid(ST_MakeValid(ST_SetSRID(ST_GeomFromGeoJSON(:gj), 4326))),
                     ST_Envelope(ST_MakeValid(ST_SetSRID(ST_GeomFromGeoJSON(:gj), 4326))),
                     :run, :origine
                 )
                 ON CONFLICT (idu) DO UPDATE SET
                     geom = EXCLUDED.geom, surface_m2 = EXCLUDED.surface_m2,
+                    contenance_m2 = EXCLUDED.contenance_m2,
                     centroid = EXCLUDED.centroid, bbox = EXCLUDED.bbox, updated_at = now()
                 """
             ),
             {"idu": p["idu"], "commune": commune_name or p.get("commune"),
              "section": p.get("section"), "numero": p.get("numero"), "gj": gj, "run": run_id,
-             "origine": origine},
+             "origine": origine, "contenance": p.get("contenance")},
         )
         n += 1
     session.flush()
