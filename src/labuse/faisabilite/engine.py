@@ -261,6 +261,7 @@ class Faisabilite:
     # rouge, un emplacement réservé ou une portion U/AU réduite — jamais par les reculs). Renseigné
     # par parcel_faisabilite depuis la base ; None ⇒ repli « reculs » (tests purs, assemblage).
     #   'reculs' | 'ppr_rouge' | 'emplacement_reserve' | 'ebc' | 'contraintes' | 'portion_reduite'
+    #   | 'hors_rouge_trop_petit' | 'hors_rouge_sans_acces' | 'hors_rouge_invalide'  (PPR-PARTIEL-A lot 2)
     exigu_raison: str | None = None
 
 
@@ -294,6 +295,16 @@ _ASSIETTE_VIDE_LIB = {
     "portion_reduite": ("Portion constructible U/AU trop réduite sur cette parcelle à cheval — "
                         "l'assiette constructible se vide une fois les reculs appliqués.",
                         "≈ 0 m² (portion U/AU réduite)"),
+    # PPR-PARTIEL-A lot 2 — garde-fous de la partie hors zone rouge (motif explicite, jamais un 0 muet).
+    "hors_rouge_trop_petit": ("Parcelle touchée par une zone rouge PPR — la partie hors zone rouge "
+                              "d'un seul tenant est inférieure à 200 m², trop exiguë pour un projet.",
+                              "0 m² (partie hors zone rouge < 200 m²)"),
+    "hors_rouge_sans_acces": ("Parcelle touchée par une zone rouge PPR — la partie hors zone rouge, "
+                              "enclavée derrière le rouge, n'a pas d'accès à la voie.",
+                              "0 m² (partie hors zone rouge sans accès à la voie)"),
+    "hors_rouge_invalide": ("Parcelle touchée par une zone rouge PPR — la partie hors zone rouge n'a "
+                            "pas pu être découpée de façon fiable (géométrie invalide), servie à 0.",
+                            "0 m² (découpage hors zone rouge indisponible)"),
 }
 
 
@@ -316,6 +327,10 @@ _EXIGU_LIB = {
     "contraintes": "terrain trop étroit une fois retirées les contraintes géométriques certaines",
     "portion_reduite": "portion constructible U/AU trop réduite sur cette parcelle à cheval (terrain exigu)",
     "reculs": "terrain trop étroit une fois appliqués les reculs réglementaires",
+    # PPR-PARTIEL-A lot 2 — la partie hors zone rouge existe mais n'est pas exploitable.
+    "hors_rouge_trop_petit": "partie hors zone rouge d'un seul tenant inférieure à 200 m² (terrain exigu)",
+    "hors_rouge_sans_acces": "partie hors zone rouge sans accès à la voie (enclavée derrière le rouge)",
+    "hors_rouge_invalide": "partie hors zone rouge non découpable de façon fiable (géométrie invalide)",
 }
 
 

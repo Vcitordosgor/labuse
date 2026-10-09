@@ -509,6 +509,17 @@ def parcel_faisabilite(session: Session, parcel_id: int,
         emprise = max(0.0, emprise_brute - greve_tot)
         racc = gbuild.raccordement or {}
         ppr_rouge = bool((racc.get("ppr") or {}).get("rouge"))
+        # PPR-PARTIEL-A lot 2 — garde-fous : la règle (lot 1) calcule désormais l'emprise sur la
+        # partie hors zone rouge, mais on ne la SERT que si cette partie est exploitable. On vérifie
+        # que le plus grand morceau d'un seul tenant hors rouge fait ≥ 200 m² ET touche une voie ;
+        # sinon on ramène l'emprise à 0 AVEC MOTIF (jamais un 0 muet, traité au bloc vide_raison).
+        # Ne s'applique qu'aux parcelles dont le 0 tiendrait au PPR rouge (ppr_rouge) : celles bloquées
+        # par un ER / EBC / portion U/AU minuscule (FIX-1 §6) gardent leur propre motif plus bas.
+        hors_rouge_vide = None
+        if ppr_rouge and emprise >= SEUIL_EXIGU_M2:
+            servable, hors_rouge_vide = _hors_rouge_fragment_servable(session, parcel_id)
+            if not servable:
+                emprise = 0.0
         ctx.contraintes.libelles.append(
             "Assiette = zone d'implantation réglementaire (moteur gabarit) : reculs par côté "
             "voie/limites" + (", PPR zone rouge découpée" if ppr_rouge else "") + ".")
@@ -541,7 +552,9 @@ def parcel_faisabilite(session: Session, parcel_id: int,
         # RECETTE-1 A1 — raison réelle du vidage (message « trop exigu » ciblé, pas « reculs » partout).
         vide_raison = None
         if emprise < SEUIL_EXIGU_M2:
-            if ppr_rouge:
+            if hors_rouge_vide:
+                vide_raison = hors_rouge_vide     # garde-fou PPR-PARTIEL-A : partie hors rouge inexploitable
+            elif ppr_rouge:
                 vide_raison = "ppr_rouge"
             elif emprise_brute >= SEUIL_EXIGU_M2 and greve_tot >= 0.9 * emprise_brute:
                 vide_raison = ("emplacement_reserve" if er_a >= max(ebc_a, greve_cert)
@@ -919,3 +932,55 @@ def phrase_hors_ppr_rouge(hors: dict) -> str:
     m2 = f"{hors['hors_rouge_m2']:,}".replace(",", " ")      # séparateur de milliers en espace (FR)
     return (f"Parcelle touchée par une zone rouge PPR — droits servis à 0 par prudence ; "
             f"partie hors zone rouge : {m2} m², à étudier.")
+
+
+# ── PPR-PARTIEL-A lot 2 — garde-fous de la partie hors zone rouge ────────────────────────────────
+# La règle (lot 1) calcule la SDP sur la partie hors rouge ; mais les 588 ha de foncier BRUT ne sont
+# pas tous exploitables. On ne sert QUE si la partie hors rouge forme UN SEUL TENANT (ST_Dump, plus
+# grand fragment — les confettis sont ignorés) d'au moins SEUIL_HORS_PPR_ROUGE_M2 (200 m²) ET que ce
+# fragment TOUCHE une voie (classification d'arêtes du Gabarit, limites.py). Une partie saine mais
+# enclavée derrière le rouge reste à 0. L'emprise max PLU s'applique déjà à la portion hors rouge via
+# le gabarit (pm1 n'est plus re-soustraite ; le rouge seul est découpé, builder.py:348-365).
+# Le plus grand fragment hors rouge = parcelle − union(INTERDICTION) (PPR superposés déjà unionnés).
+_HORS_ROUGE_FRAGMENT = text(
+    "WITH rouge AS ("
+    "  SELECT ST_Union(ST_MakeValid(ST_ClipByBox2D(sl.geom_2975, p.geom_2975))) AS g "
+    "  FROM spatial_layers sl, parcels p WHERE p.id = :pid AND sl.kind='ppr' "
+    "  AND sl.subtype='INTERDICTION' AND ST_Intersects(sl.geom_2975, p.geom_2975)), "
+    "hr AS (SELECT ST_Difference(p.geom_2975, COALESCE((SELECT g FROM rouge), "
+    "       ST_GeomFromText('POLYGON EMPTY', 2975))) AS g FROM parcels p WHERE p.id = :pid), "
+    "dump AS (SELECT (ST_Dump(ST_CollectionExtract(ST_MakeValid(g), 3))).geom AS part FROM hr) "
+    "SELECT ST_AsText(part) AS wkt, ST_Area(part) AS m2 "
+    "FROM dump ORDER BY ST_Area(part) DESC LIMIT 1"
+)
+
+
+def _hors_rouge_fragment_servable(session: Session, parcel_id: int) -> tuple[bool, str | None]:
+    """Garde-fous PPR-PARTIEL-A lot 2 sur la partie hors zone rouge d'une parcelle partiellement rouge.
+
+    Rend (True, None) si le plus grand morceau d'un seul tenant hors rouge est exploitable, sinon
+    (False, motif) — où motif ∈ {hors_rouge_trop_petit, hors_rouge_sans_acces, hors_rouge_invalide},
+    qui alimente `vide_raison` et donc le libellé client (jamais un 0 muet). Isolé dans un SAVEPOINT :
+    une géométrie pathologique (ST_Difference invalide, PPR superposés) garde 0 et compte le cas.
+    """
+    from ..gabarit.limites import classify_parcel_limits
+    try:
+        with session.begin_nested():
+            row = session.execute(_HORS_ROUGE_FRAGMENT, {"pid": parcel_id}).first()
+    except Exception:  # noqa: BLE001 — géométrie pathologique : 0 conservé, cas compté
+        return False, "hors_rouge_invalide"
+    if row is None or row.wkt is None or row.m2 is None:
+        return False, "hors_rouge_trop_petit"   # hors rouge vide (parcelle ~100 % rouge) → rien à servir
+    # 1+2. TENANT + SURFACE : le plus grand fragment d'un seul tenant atteint-il 200 m² ?
+    if float(row.m2) < SEUIL_HORS_PPR_ROUGE_M2:
+        return False, "hors_rouge_trop_petit"
+    # 3. ACCÈS : ce fragment touche-t-il une voie (BD TOPO / emprise publique / voie privée) ?
+    try:
+        with session.begin_nested():
+            lim = classify_parcel_limits(session, parcel_id, sub_geom_wkt=row.wkt,
+                                         emprises_publiques=True, voies_privees=True)
+    except Exception:  # noqa: BLE001
+        return False, "hors_rouge_invalide"
+    if lim is None or not lim.has_voie:
+        return False, "hors_rouge_sans_acces"
+    return True, None

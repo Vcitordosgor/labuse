@@ -396,19 +396,21 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
     # lecture, incohérente, du même PPR. On ne la lit plus qu'une fois (bloc PPR → INTERDICTION). Les
     # autres SUP (ac1/ac2/ac3/ac4 monuments·sites, el10, pm2/pm3) restent des exclusions réelles.
     #
-    # Pré-merge (choix Vic) — on ne retire pm1 que si la parcelle n'est dans AUCUNE zone rouge
-    # (INTERDICTION). Si elle TOUCHE du rouge, le verdict (cascade) la dit « inconstructible PPR rouge »
-    # et le gabarit reste à 0 (cohérence gabarit↔verdict ; aucune parcelle rouge ne bouge — check
-    # pré-merge). CHANTIER POST-DÉPLOIEMENT : les parcelles PARTIELLEMENT en rouge devraient à terme
-    # être calculées sur leur portion HORS rouge, dans la cascade ET le gabarit ensemble, avec le
-    # verdict « constructible sur la partie hors zone rouge » (ici on préfère 0 à une incohérence).
+    # PPR-PARTIEL-A (règle de Vic, 06/10/2026) — REMPLACE le « 0 par prudence » pré-merge. L'enveloppe
+    # `pm1` (rouge + bleu indistinctement) n'est JAMAIS re-soustraite : le ROUGE SEUL est déjà découpé
+    # ci-dessus (exclusion `ppr-rouge`, :348-365), et le BLEU reste constructible sous prescriptions
+    # comme partout ailleurs dans l'app. On supprime donc la sur-déduction `OR EXISTS(... INTERDICTION)`
+    # qui, dès qu'une parcelle touchait du rouge, retranchait l'enveloppe entière → 3 888 parcelles U/AU
+    # servies à 0 (588 ha, PPR-PARTIEL-1). Le gabarit vaut désormais > 0 sur la partie hors rouge ; la
+    # cascade lit la MÊME partie hors rouge (faisabilite : SOFT_FLAG « constructible sur la partie hors
+    # zone rouge », plus HARD_EXCLUDE) — une seule géométrie, deux lecteurs, plus d'incohérence. Les
+    # garde-fous (tenant / surface / accès voie / emprise) décident si ce > 0 est servi ou ramené à 0
+    # AVEC MOTIF (jamais un 0 muet). Les autres SUP (ac1..el10, pm2/pm3) restent des exclusions réelles.
     sup_gj = session.execute(text(
         "SELECT ST_AsGeoJSON(ST_CollectionExtract(ST_Transform(ST_Intersection("
         "  ST_Union(ST_MakeValid(ST_ClipByBox2D(sl.geom_2975, p.geom_2975))), p.geom_2975), 4326), 3)) "
         "FROM spatial_layers sl, parcels p WHERE p.id = :pid AND sl.kind = 'sup' "
-        "AND (sl.subtype <> 'pm1' "         # enveloppe PPR : retirée du SUP…
-        "     OR EXISTS (SELECT 1 FROM spatial_layers r WHERE r.kind='ppr' AND r.subtype='INTERDICTION' "
-        "                AND ST_Intersects(r.geom_2975, p.geom_2975))) "  # …SAUF si la parcelle touche du rouge
+        "AND sl.subtype <> 'pm1' "          # enveloppe PPR : JAMAIS re-soustraite (rouge seul déjà déduit)
         "AND sl.commune = p.commune "
         "AND ST_Intersects(sl.geom_2975, p.geom_2975) GROUP BY p.geom_2975"
     ), {"pid": pid}).first()
