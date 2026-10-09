@@ -363,6 +363,10 @@ export function MapView() {
   const toolRef = useRef<MapTool | null>(null)
   toolRef.current = tool
   const [measure, setMeasure] = useState<Measure>({ pts: [], alti: null })
+  // CORRECTIFS-1 C1 — la 3D échoue parfois (WebGL, tuile de relief/DEM, timeout) : on loggue le motif
+  // et on l'AFFICHE (« 3D indisponible : … ») au lieu d'un écran vide. null = pas d'erreur 3D.
+  const [erreur3d, setErreur3d] = useState<string | null>(null)
+  const terrain3dCleanup = useRef<(() => void) | null>(null)
   const measureRef = useRef(measure)
   measureRef.current = measure
   const labelMarker = useRef<maplibregl.Marker | null>(null)
@@ -1109,7 +1113,41 @@ export function MapView() {
       }).catch(() => { /* le bâti 3D ne casse jamais la carte */ })
     }
     if (terrain3d) {
-      m.setTerrain({ source: 'dem', exaggeration: 1.35 })
+      // CORRECTIFS-1 C1 — instrumentation : WebGL absent OU setTerrain qui lève → on loggue et on
+      // affiche « 3D indisponible : motif » (jamais un écran vide), et on retombe en 2D proprement.
+      setErreur3d(null)
+      const gl = (m.painter && (m.painter as unknown as { context?: { gl?: unknown } }).context?.gl) ?? null
+      if (!gl) {
+        console.error('[LABUSE 3D] contexte WebGL indisponible')
+        setErreur3d('votre navigateur/GPU ne fournit pas de contexte WebGL')
+        useApp.getState().setTerrain3d(false)
+        return
+      }
+      // Écoute les erreurs de la source de relief (tuiles DEM terrarium) tant que la 3D est active.
+      const onErr = (e: { sourceId?: string; error?: { message?: string } }) => {
+        if (e?.sourceId === 'dem' || /terrain|dem|elevation/i.test(String(e?.error?.message || ''))) {
+          console.error('[LABUSE 3D] tuile de relief en échec', e?.error || e)
+          setErreur3d('tuiles de relief indisponibles (réseau)')
+        }
+      }
+      m.on('error', onErr as never)
+      // Garde-fou timeout : si le relief n'est pas posé en 8 s (tuiles bloquées), on le dit.
+      const t3d = window.setTimeout(() => {
+        if (useApp.getState().terrain3d && !m.getTerrain()) {
+          console.error('[LABUSE 3D] relief non chargé après 8 s (timeout tuiles DEM)')
+          setErreur3d('relief trop lent à charger (délai dépassé)')
+        }
+      }, 8000)
+      terrain3dCleanup.current = () => { m.off('error', onErr); window.clearTimeout(t3d) }
+      try {
+        m.setTerrain({ source: 'dem', exaggeration: 1.35 })
+      } catch (e) {
+        console.error('[LABUSE 3D] setTerrain a échoué', e)
+        setErreur3d('moteur de relief indisponible')
+        useApp.getState().setTerrain3d(false)
+        terrain3dCleanup.current?.(); terrain3dCleanup.current = null
+        return
+      }
       // RECETTE-PROD-1 (6b) — en entrant en 3D avec une fiche ouverte, RECENTRER sur la parcelle avec
       // le MÊME décalage que le vol 2D (−200 px pour la fiche de 400 px) : sinon le seul changement de
       // pitch la laisse « décalée vers la droite », sous le panneau. Sans fiche/centroïde : simple pitch.
@@ -1126,8 +1164,11 @@ export function MapView() {
       m.setTerrain(null)
       m.easeTo({ pitch: 0, duration: 600 })
       if (m.getLayer('batiments-3d')) m.setLayoutProperty('batiments-3d', 'visibility', 'none')
+      // CORRECTIFS-1 C1 — retour en 2D : on nettoie les écoutes 3D et le message d'erreur éventuel.
+      setErreur3d(null)
+      terrain3dCleanup.current?.(); terrain3dCleanup.current = null
     }
-    return () => { m.off('moveend', chargerBati) }
+    return () => { m.off('moveend', chargerBati); terrain3dCleanup.current?.(); terrain3dCleanup.current = null }
   }, [terrain3d, batiVisible])
 
   // ───────────────────────── couches / filtres / mode ─────────────────────────
@@ -1620,6 +1661,12 @@ export function MapView() {
           l'étire plus, ses enfants sont absolus → hauteur 0 → carte clippée (noir). Les dimensions
           explicites survivent quel que soit le `position` gagnant. Cf. RAPPORT_M_W_CARTE_NOIRE.md. */}
       <div ref={ref} className="absolute inset-0 h-full w-full" />
+      {/* CORRECTIFS-1 C1 — message VISIBLE quand la 3D échoue (jamais un écran vide). */}
+      {erreur3d && (
+        <div data-erreur-3d className="absolute left-1/2 top-4 z-20 -translate-x-1/2 rounded-lg border border-amber/40 bg-surface-2/95 px-4 py-2 text-[12.5px] text-amber shadow-lg">
+          3D indisponible : {erreur3d}. <button className="ml-1 underline" onClick={() => { useApp.getState().setTerrain3d(false); setErreur3d(null) }}>revenir en 2D</button>
+        </div>
+      )}
       {/* M65 P5 : gap entre les deux boutons réduit au prorata (8→6 px). */}
       <div className="absolute left-4 top-4 flex flex-col gap-1.5">
         {(['+', '−'] as const).map((s) => (
