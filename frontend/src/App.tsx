@@ -8,6 +8,7 @@ import { SourceDrawer } from './components/fiche/SourceDrawer'
 import { Header } from './components/header/Header'
 import { LeftPanel } from './components/panel/LeftPanel'
 import { Rail } from './components/Rail'
+import { LogoIntro, useOuvertureUneFois } from './components/LogoIntro'
 import { filtersFromHash, filtersToHash, hasOpinion, resumeCriteres } from './lib/filters'
 import { CLIENT } from './lib/strings'
 import { SCORE_TIP } from './lib/status'
@@ -282,6 +283,9 @@ function Toast() {
 
 export default function App() {
   const { view, selectedIdu, select, setView, filters, setFilters, zone, setZone, module, setModule, setFlyTo, flyTo, commune, setCommune, verdict, setVerdict, outilsOpen, parcours, setMsel, setPermitToOpen, setIaRestitution, compareOpen, contexteCommune, setContexteCommune, togglePanel, setTuyauActives, toggleTuyau, setModuleMap } = useApp()
+  // feat/ouverture — le voile d'ouverture (oiseau LABUSE) monté AU-DESSUS de l'app ; `montre` est vrai
+  // à chaque chargement de page (Cmd+R), `fini` le retire. L'app se charge DERRIÈRE le voile.
+  const [montre, fini] = useOuvertureUneFois()
 
   // Hook d'auto-QA (stable, sans effet produit) : sélection directe d'une parcelle / d'une vue.
   // RECETTE-10 — + setContexteCommune / togglePanel / setFilters exposés pour piloter les captures
@@ -397,6 +401,7 @@ export default function App() {
   if (view === 'admin') {
     return (
       <div className="flex h-screen w-screen overflow-hidden bg-bg font-sans text-txt">
+        {montre && <LogoIntro onFini={fini} />}
         <Suspense fallback={<PanelLoading />}><AdminView /></Suspense>
         <Toast />
         <TraceTiroir />
@@ -406,6 +411,8 @@ export default function App() {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-bg font-sans text-txt">
+      {/* feat/ouverture — l'ouverture (oiseau) par-dessus l'app, retirée à la fin de l'animation. */}
+      {montre && <LogoIntro onFini={fini} />}
       {/* CIRCUIT-1 lot 7.2 — le tiroir de trace (un seul, admin, invisible traçage éteint). */}
       <TraceTiroir />
       <Rail />
