@@ -96,7 +96,10 @@ def scoreur_adresse(body: ScoreurIn, db: Session = Depends(get_db)) -> dict:
     # M82 (CAS E) : si l'autocomplétion interne a DÉJÀ rattaché une parcelle (idu), on l'utilise
     # directement — le re-géocodage BAN du label formaté (« 12 Rue…, Saint-Paul (97460) ») pouvait
     # retomber hors de la parcelle et fabriquer un « aucune parcelle » fantôme.
-    _sel = """SELECT p.idu, p.commune, p.section, p.numero, round(p.surface_m2) AS surface_m2,
+    # CONTENANCE-1 (Lot B/C) : surface de terrain (contenance si présente) — affichée ET divisant le
+    # prix saisi pour le « prix au m² terrain » (_prix_constat).
+    _sel = """SELECT p.idu, p.commune, p.section, p.numero,
+                     round(COALESCE(p.contenance_m2, p.surface_m2)) AS surface_m2,
                      s2.tier, s2.rang, s2.percentile
               FROM parcels p
               LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :run """

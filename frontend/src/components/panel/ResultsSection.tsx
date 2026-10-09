@@ -2,6 +2,7 @@ import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { Fragment, useEffect, useMemo, useState } from 'react'
 import { getAnalyse, getAnalyseStats, getCommunes, getFiltre, getParcelsGeojson, getResults, getScoringFraction, type BandeGroupe, type QualiteKey, type SignalNiveauKey, type SortKey } from '../../lib/api'
 import { hasScopeFilters, matchAll, type ParcelProps } from '../../lib/filters'
+import { surfaceTerrain } from '../../lib/surface'
 import { roughCentroid } from '../../lib/geo'
 import { fmtInt as fmt } from '../../lib/format'
 import { ALL_TIER_META, BANDE_META, bandeMeta, etatBienMeta, signalMeta, type Bande, verdictMeta } from '../../lib/status'
@@ -51,7 +52,7 @@ function ResultCard({ p, communeLabel, factual = false }: { p: ParcelProps & { c
           <div data-card-adresse className={`truncate text-[10.5px] text-txt-dim ${p.adresse ? '' : 'opacity-60'}`}>
             {p.adresse ?? 'Adresse non disponible'}
           </div>
-          <div className="truncate text-[11px] text-txt-mut tnum">{p.surface_m2 ? `${fmt(p.surface_m2)} m²` : '—'} · {p.commune ?? communeLabel}</div>
+          <div className="truncate text-[11px] text-txt-mut tnum">{surfaceTerrain(p) ? `${fmt(surfaceTerrain(p))} m²` : '—'} · {p.commune ?? communeLabel}</div>
         </div>
       </button>
     )
@@ -141,7 +142,7 @@ function ResultCard({ p, communeLabel, factual = false }: { p: ParcelProps & { c
         <div data-card-adresse className={`truncate text-[10.5px] text-txt-dim ${p.adresse ? '' : 'opacity-60'}`}>
           {p.adresse ?? 'Adresse non disponible'}
         </div>
-        <div className="truncate text-[11px] text-txt-mut tnum">{p.surface_m2 ? `${fmt(p.surface_m2)} m²` : '—'} · {p.commune ?? communeLabel}</div>
+        <div className="truncate text-[11px] text-txt-mut tnum">{surfaceTerrain(p) ? `${fmt(surfaceTerrain(p))} m²` : '—'} · {p.commune ?? communeLabel}</div>
       </div>
       <div className="ml-2 flex shrink-0 flex-col items-end">
         {/* M135 P2 — la PROBABILITÉ en FRACTION humaine (« 1/5 sous 1 an »), jamais un « ×N ».
@@ -216,7 +217,8 @@ const GROUPE_ORDER = (p: Pick<ParcelProps, 'etage0' | 'tier_v2'>): number => {
 // n'est appliqué QUE si `groupes` (tri « Probabilité de vente »/rang en mode analyse) ; les tris
 // de COLONNE (Surface ↓/↑) s'appliquent GLOBALEMENT → ordre monotone garanti sur tout le jeu.
 // Même sémantique que le serveur (_q_v2_list) : un seul comportement de tri, client et serveur.
-export type SortableRow = Pick<ParcelProps, 'etage0' | 'tier_v2' | 'mult_v2' | 'surface_m2' | 'rang_v2'>
+export type SortableRow = Pick<ParcelProps, 'etage0' | 'tier_v2' | 'mult_v2' | 'surface_m2'
+  | 'surface_terrain_m2' | 'contenance_m2' | 'rang_v2'>
   & { commune?: string; adresse?: string | null; sdp_residuelle_m2?: number | null }
 export function sortRows<T extends SortableRow>(rows: T[], sort: SortKey, groupes: boolean): T[] {
   return rows.slice().sort((a, b) => {
@@ -230,7 +232,7 @@ export function sortRows<T extends SortableRow>(rows: T[], sort: SortKey, groupe
     if (sort === 'adresse') {
       const aa = a.adresse ? 1 : 0, ba = b.adresse ? 1 : 0
       if (aa !== ba) return ba - aa
-      return (b.surface_m2 ?? -1) - (a.surface_m2 ?? -1)
+      return (surfaceTerrain(b) ?? -1) - (surfaceTerrain(a) ?? -1)
     }
     // RECETTE-3 (T3) — « Potentiel » (analyse seulement désormais) : adressées d'abord, puis SDP
     // résiduelle, puis surface. Même sémantique que le serveur (_Q_V2_ORDERS['potentiel']).
@@ -239,11 +241,12 @@ export function sortRows<T extends SortableRow>(rows: T[], sort: SortKey, groupe
       if (aa !== ba) return ba - aa
       const as = a.sdp_residuelle_m2 ?? 0, bs = b.sdp_residuelle_m2 ?? 0
       if (as !== bs) return bs - as
-      return (b.surface_m2 ?? -1) - (a.surface_m2 ?? -1)
+      return (surfaceTerrain(b) ?? -1) - (surfaceTerrain(a) ?? -1)
     }
     if (sort === 'mult') return (b.mult_v2 ?? -1) - (a.mult_v2 ?? -1)
-    if (sort === 'surface') return (b.surface_m2 ?? -1) - (a.surface_m2 ?? -1)
-    if (sort === 'surface_asc') return (a.surface_m2 ?? Infinity) - (b.surface_m2 ?? Infinity)
+    // CONTENANCE-1 (Lot B) : tri Surface = surface de TERRAIN (contenance si présente, sinon dessin).
+    if (sort === 'surface') return (surfaceTerrain(b) ?? -1) - (surfaceTerrain(a) ?? -1)
+    if (sort === 'surface_asc') return (surfaceTerrain(a) ?? Infinity) - (surfaceTerrain(b) ?? Infinity)
     if (sort === 'commune') return String(a.commune ?? '').localeCompare(String(b.commune ?? ''))
     const ra = a.rang_v2 ?? Infinity
     const rb = b.rang_v2 ?? Infinity
@@ -417,7 +420,7 @@ function AnalyseCard({ p, communeLabel }: { p: ParcelProps & { commune?: string 
           )}
         </div>
         <div data-card-adresse className={`truncate text-[10.5px] text-txt-dim ${p.adresse ? '' : 'opacity-60'}`}>{p.adresse ?? 'Adresse non disponible'}</div>
-        <div className="truncate text-[11px] text-txt-mut tnum">{p.surface_m2 ? `${fmt(p.surface_m2)} m²` : '—'} · {p.commune ?? communeLabel}</div>
+        <div className="truncate text-[11px] text-txt-mut tnum">{surfaceTerrain(p) ? `${fmt(surfaceTerrain(p))} m²` : '—'} · {p.commune ?? communeLabel}</div>
         {/* CHASSE-FIX-2 (D04) — on NOMME la cause (libellé serveur « Non retenue — … ») au lieu du
             code brut (« terrain_exigu »). Vaut pour la bande NC (« Analyse incomplète ») ET la bande
             0 (« terrain trop étroit… ») : plus jamais une bande 0 muette. Repli sur le code brut si

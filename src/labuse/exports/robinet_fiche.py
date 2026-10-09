@@ -53,7 +53,11 @@ def _nz(v):
 
 @extracteur("surface_parcelle_m2")
 def _c_surface(db, idu, f):
-    s = f.get("surface_m2")
+    # CONTENANCE-1 (Lot B) : surface de TERRAIN (contenance si présente, sinon dessin). Repli sur
+    # surface_m2 pour une base/payload sans la colonne contenance.
+    s = f.get("surface_terrain_m2")
+    if s is None:
+        s = f.get("surface_m2")
     return round(float(s)) if s is not None else None
 
 

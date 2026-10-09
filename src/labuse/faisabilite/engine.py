@@ -371,7 +371,19 @@ def cause_libelle(cause: str | None, exigu_raison: str | None = None) -> str | N
         return "Analyse incomplète — hauteur de référence indisponible."
     if head == "bati_non_ingere":
         return "Analyse incomplète — couche bâtiments non ingérée."
+    if head == "surface_incertaine":
+        return "Analyse incomplète — surface incertaine : le plan et le cadastre ne concordent pas."
     return "Analyse incomplète — potentiel non calculable."
+
+
+def faisabilite_surface_incertaine(zone: str | None) -> "Faisabilite":
+    """CONTENANCE-1 (garde-fou) — contenance < moitié du dessin : la surface est INDÉTERMINÉE, on ne
+    calcule NI sur la contenance NI sur le dessin. Renvoie une faisabilité « Analyse incomplète » :
+    SDP ∅ (fourchette sans surface_plancher_m2), aucune capacité. Cause d'IGNORANCE (pas certaine)
+    → bande NC au scoring. Les deux chiffres restent affichés par la fiche (payload)."""
+    return Faisabilite(zone or "?", zone, False, cause_libelle("surface_incertaine"),
+                       [], [], [], [], {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)},
+                       _BANDEAU, calibree=True, cause="surface_incertaine")
 
 
 def estimate_capacity(rules: ZoneRules, surface_m2: float,

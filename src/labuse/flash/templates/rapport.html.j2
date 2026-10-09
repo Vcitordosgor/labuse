@@ -43,7 +43,16 @@
     <tr><td>Date de génération</td><td>{{ data.date_generation }}</td></tr>
     <tr><td>Commune</td><td>{{ p.commune }} ({{ p.insee }})</td></tr>
     <tr><td>Références cadastrales</td><td>{{ p.reference }}</td></tr>
-    <tr><td>Surface (aire cadastrale calculée)</td><td>{{ p.surface_m2 }} m²</td></tr>
+    {# CONTENANCE-1 (Lot B) : surface de terrain = contenance (chiffre de l'acte) si présente, sinon
+       dessin du plan. Ligne « Dessin du plan » ajoutée quand les deux diffèrent. #}
+    {% if p.surface_source == 'cadastre' %}
+    <tr><td>Surface (contenance cadastrale)</td><td>{{ p.surface_terrain_m2 }} m²</td></tr>
+    {% if p.surface_dessin_m2 and p.surface_dessin_m2 != p.surface_terrain_m2 %}
+    <tr><td>Dessin du plan</td><td>{{ p.surface_dessin_m2 }} m²</td></tr>
+    {% endif %}
+    {% else %}
+    <tr><td>Surface (mesurée sur le plan)</td><td>{{ p.surface_terrain_m2 or p.surface_m2 }} m²</td></tr>
+    {% endif %}
     <tr><td>Version du modèle de rapport</td><td>{{ template_version }}</td></tr>
   </table>
 </section>
@@ -53,8 +62,9 @@
 <section class="saut">
   <h2><span class="num">01</span>Identité parcellaire</h2>
   <div class="cartouches">
-    <div class="cartouche"><div class="titre">Surface (aire calculée)</div>
-      <div class="valeur">{{ p.surface_m2 }} <small>m²</small></div></div>
+    <div class="cartouche"><div class="titre">{% if p.surface_source == 'cadastre' %}Contenance cadastrale{% else %}Surface (mesurée sur le plan){% endif %}</div>
+      <div class="valeur">{{ p.surface_terrain_m2 or p.surface_m2 }} <small>m²</small></div>
+      {% if p.surface_source == 'cadastre' and p.surface_dessin_m2 and p.surface_dessin_m2 != p.surface_terrain_m2 %}<div class="note">Dessin du plan : {{ p.surface_dessin_m2 }} m²</div>{% endif %}</div>
     {# MANDAT RNU (ajout Vic) : en commune sans document local, les règles de capacité
        affichent « non applicable — RNU » — JAMAIS des cartouches absentes qui laisseraient
        croire à une absence de contrainte. #}

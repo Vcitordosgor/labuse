@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { modPatrimoine } from '../lib/api'
 import { fmtM2, iduCourt } from '../lib/format'
+import { surfaceTerrain } from '../lib/surface'
 
 // RECHERCHE-2 Lot 2 — SOUS-PANNEAU PARTAGÉ « propriétaire → ses parcelles ». Quand une barre reçoit
 // un pick PROPRIÉTAIRE/SIREN dans un contexte qui part d'une parcelle, on liste ses parcelles (mêmes
@@ -9,7 +10,8 @@ import { fmtM2, iduCourt } from '../lib/format'
 // (ParcelInput → onPick ; barres carte → recentrage/sélection). Un seul rendu, partout pareil.
 const OWNER_PAGE = 200
 
-type Parcelle = { idu: string; commune: string; surface_m2: number | null; geom?: unknown }
+type Parcelle = { idu: string; commune: string; surface_m2: number | null
+  surface_terrain_m2?: number | null; contenance_m2?: number | null; geom?: unknown }
 
 // Centre (bbox) d'une géométrie GeoJSON — pour recentrer une carte sur la parcelle choisie. null si absente.
 function centreDeGeom(geom: unknown): { lon: number; lat: number } | null {
@@ -42,7 +44,7 @@ export function OwnerParcelles({ siren, nom, onPick, onChanger }: {
     setErr(null); setBusy(true)
     try {
       const p = await modPatrimoine(siren, OWNER_PAGE, offset) as { nom?: string; n_parcelles?: number; items?: Parcelle[] }
-      const items = (p.items ?? []).map((i) => ({ idu: String(i.idu), commune: String(i.commune ?? ''), surface_m2: i.surface_m2 ?? null, geom: i.geom }))
+      const items = (p.items ?? []).map((i) => ({ idu: String(i.idu), commune: String(i.commune ?? ''), surface_m2: i.surface_m2 ?? null, surface_terrain_m2: i.surface_terrain_m2 ?? null, contenance_m2: i.contenance_m2 ?? null, geom: i.geom }))
       setTotal(p.n_parcelles ?? items.length)
       setParcelles((prev) => (offset === 0 ? items : [...prev, ...items]))
       if (p.nom) setTitre(p.nom)
@@ -74,7 +76,7 @@ export function OwnerParcelles({ siren, nom, onPick, onChanger }: {
           className="hover-fill flex items-baseline justify-between gap-2 rounded px-2 py-1 text-left text-[11px] text-txt transition-colors duration-quick">
           <span className="font-medium text-txt-hi">{p.commune}</span>
           <span className="flex items-baseline gap-2 text-[10px] text-txt-dim">
-            <span>{fmtM2(p.surface_m2)}</span>
+            <span>{fmtM2(surfaceTerrain(p))}</span>
             <span className="font-mono">{iduCourt(p.idu)}</span>
           </span>
         </button>

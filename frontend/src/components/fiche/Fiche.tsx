@@ -12,6 +12,7 @@ import { useOuvrirDocument } from '../../lib/ouvrirDocument'
 import { verdictMeta } from '../../lib/status'
 import { AnalyseLabuseCard } from './AnalyseLabuseCard'   // RETOURS-14 P1 — carte « Analyse LABUSE » extraite (testable), affiche la version servie
 import { fmtInt, fmtM2, fmtDateNum, fmtLibelleBrut, fmtPctConsomme, iduComplet } from '../../lib/format'
+import { surfaceTerrain, surfaceDessin, surfaceSource, montrerDessin } from '../../lib/surface'
 import { layerLabel } from '../../lib/layers'
 import { CLIENT } from '../../lib/strings'
 import { Chargement, Squelette } from '../Loading'
@@ -925,8 +926,27 @@ export function Fiche({ idu }: { idu: string }) {
             : vigils.length > 0 ? `vigilance${vigils.length > 1 ? 's' : ''}` : 'rien à signaler'
           type Tuile = { l: string; v: string; s?: string; i?: string; vide?: boolean }
           const tuiles: Tuile[] = [
-            { l: 'Surface', v: f.surface_m2 != null ? fmtM2(f.surface_m2) : '—', vide: f.surface_m2 == null,
-              i: 'Aire de la parcelle calculée sur le contour cadastral (géométrie). La contenance cadastrale officielle (DGFiP) peut en différer de quelques %.' },
+            (() => {
+              // CONTENANCE-1 (garde-fou) — contenance < moitié du dessin : surface INDÉTERMINÉE.
+              // On montre les DEUX chiffres + le badge, aucune valeur unique (ni contenance ni dessin).
+              if (f.surface_incertaine) {
+                return { l: 'Surface', v: `Plan ${fmtM2(surfaceDessin(f))} · Cadastre ${fmtM2(f.contenance_m2)}`,
+                  s: f.surface_incertaine_libelle ?? 'surface incertaine : le plan et le cadastre ne concordent pas',
+                  vide: true,
+                  i: 'Le plan cadastral et la contenance inscrite au cadastre diffèrent de plus du double — surface indéterminée. Aucune capacité ni prix au m² n’est calculé tant que la source n’est pas tranchée.' } as Tuile
+              }
+              // CONTENANCE-1 (Lot B) — la Surface affichée = contenance cadastrale (chiffre de
+              // l'acte) si présente, sinon dessin du plan (repli). B3 : ligne discrète « Dessin du
+              // plan » quand l'écart dépasse 1 % ; B4 : mention « mesurée sur le plan » en repli.
+              const st = surfaceTerrain(f)
+              const cadastre = surfaceSource(f) === 'cadastre'
+              const sous = montrerDessin(f) ? `Dessin du plan : ${fmtM2(surfaceDessin(f))}`
+                : !cadastre ? 'surface mesurée sur le plan' : undefined
+              const info = cadastre
+                ? 'Surface mesurée sur le plan cadastral. Elle diffère souvent un peu de la contenance inscrite au cadastre, qui est celle de l’acte.'
+                : 'Contenance cadastrale indisponible : surface mesurée sur le contour du plan cadastral (géométrie).'
+              return { l: 'Surface', v: st != null ? fmtM2(st) : '—', s: sous, vide: st == null, i: info } as Tuile
+            })(),
             { l: 'Zone', v: reglesZone ?? 'Non publié au GPU', s: zoneSous, vide: reglesZone == null,
               i: 'Zone du PLU au point de la parcelle (règlement communal, archive GPU). « Non publié au GPU » : la commune n’a pas déposé de document opposable.' },
             { l: 'Pente', v: pente != null ? `${nf(pente)} °` : '—', s: penteSous, vide: pente == null,
@@ -947,7 +967,11 @@ export function Fiche({ idu }: { idu: string }) {
             })(),
             { l: 'Risques', v: vigils.length > 0 ? `${vigils.length}` : '—', s: risqueNiveau, vide: vigils.length === 0,
               i: 'Vigilances évaluées sur la parcelle (aléas, servitudes, sols…) — compteur et niveau, comme le badge de §5. Le détail est dans « Risques et environnement ».' },
-            { l: 'SDP restante', v: reglesSdp != null && reglesSdp > 0 ? `${fmtInt(reglesSdp)} m²` : '—',
+            // CONTENANCE-1 (garde-fou) : surface incertaine → aucune capacité affichée.
+            f.surface_incertaine
+              ? { l: 'SDP restante', v: '—', s: 'surface incertaine', vide: true,
+                  i: 'Capacité non calculée : la surface du terrain est indéterminée (le plan et le cadastre ne concordent pas).' } as Tuile
+              : { l: 'SDP restante', v: reglesSdp != null && reglesSdp > 0 ? `${fmtInt(reglesSdp)} m²` : '—',
               s: reglesSdp != null && reglesSdp > 0 ? 'bâti conservé' : (nonConstructible ? 'zone non constructible' : 'pas de potentiel résiduel'),
               vide: !(reglesSdp != null && reglesSdp > 0),
               i: 'Surface de plancher constructible qui reste à bâtir EN GARDANT les bâtiments existants (le bâti existant est déjà déduit) — ce n’est pas du terrain libre. Pour la capacité après démolition, voir l’outil Faisabilité (« terrain libéré »). « — » : zone non constructible ou plus de potentiel.' },

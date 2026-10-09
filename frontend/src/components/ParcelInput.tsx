@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { estIdu, estSectionNumero, iduComplet, iduCourt, normSectionNumero } from '../lib/format'
 import { fmtM2 } from '../lib/format'
+import { surfaceTerrain } from '../lib/surface'
 import { searchParcels, type SuggestItem, type SuggestType } from '../lib/api'
 import { useApp } from '../store/useApp'
 import { AddressAutocomplete } from './AddressAutocomplete'
@@ -32,7 +33,8 @@ import { OwnerParcelles } from './OwnerParcelles'
 // au-delà de 200) : l'utilisateur en choisit une, `onPick(idu)` est appelé comme un clic carte.
 //   • onProprietaire(siren) : un outil qui part du PROPRIÉTAIRE (Scan patrimoine) le fournit → le
 //     pick propriétaire lui est remonté DIRECTEMENT (pas de sous-panneau parcelle). Absent → sous-panneau.
-type Candidate = { idu: string; commune: string; surface_m2: number | null }
+type Candidate = { idu: string; commune: string; surface_m2: number | null
+  surface_terrain_m2?: number | null; contenance_m2?: number | null }
 
 // Les 4 grammaires du mandat, en CONSTANTE de module (référence stable → pas de relance d'effet).
 // GEOPF-3 — 5ᵉ grammaire « lieu_dit » (BD NYME) active par défaut dans toutes les barres.
@@ -116,7 +118,8 @@ export function ParcelInput({ onPick, onAddress, onProprietaire, placeholder, au
       const tri = [...exacts].sort((a, b) =>
         (b.commune === commune ? 1 : 0) - (a.commune === commune ? 1 : 0) || a.commune.localeCompare(b.commune))
       setMsg(null)
-      setCandidats(tri.map((r) => ({ idu: iduComplet(r.idu), commune: r.commune, surface_m2: r.surface_m2 })))
+      setCandidats(tri.map((r) => ({ idu: iduComplet(r.idu), commune: r.commune, surface_m2: r.surface_m2,
+        surface_terrain_m2: r.surface_terrain_m2, contenance_m2: r.contenance_m2 })))
     } catch {
       setMsg('Recherche indisponible pour le moment — réessayez.')
     }
@@ -168,7 +171,7 @@ export function ParcelInput({ onPick, onAddress, onProprietaire, placeholder, au
               className="hover-fill flex items-baseline justify-between gap-2 rounded px-2 py-1 text-left text-[11px] text-txt transition-colors duration-quick">
               <span className="font-medium text-txt-hi">{c.commune}</span>
               <span className="flex items-baseline gap-2 text-[10px] text-txt-dim">
-                <span>{fmtM2(c.surface_m2)}</span>
+                <span>{fmtM2(surfaceTerrain(c))}</span>
                 <span className="font-mono">{iduCourt(c.idu)}</span>
               </span>
             </button>
