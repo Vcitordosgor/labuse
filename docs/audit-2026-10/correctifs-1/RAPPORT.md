@@ -72,7 +72,14 @@ Branche `fix/correctifs-1` (worktree `~/Desktop/labuse-correctifs`), ports 8720/
 
 Recette Lot C : tsc 0 erreur ; tests front map/outils verts (depuis `frontend/` — `cwd` requis par `zonage-regression.test.ts`).
 
-## Lot D — pages légales et données personnelles — *non commencé*
+## Lot D — pages légales et données personnelles
+
+- **D1** — **fait.** `/mentions-legales` et `/confidentialite` de l'app → **301** vers `https://labuse.immo/mentions-legales/` et `…/confidentialite/` (smoke OK). CGV : **identité éditeur complète** (`_EDITEUR` = « Victor Lagane, entrepreneur individuel · 3 chemin de la Citerne, La Montagne, 97417 Saint-Denis · SIRET 987 641 917 00016 · contact@labuse.immo ») affichée en tête ; art. 5 (résiliation) et art. 8 (RGPD) → **contact@labuse.immo** (plus de kampusreunion@gmail.com, 0 résiduel) ; art. 8 renvoie vers `labuse.immo/confidentialite/`. 3 tests légaux mis à jour pour le nouveau comportement (301).
+- **D2** — **fait.** Courriers propriétaires : après `_PIED_STOP`, nouvelle ligne de pied `_PIED_DROITS` « D'où viennent ces informations et quels sont vos droits : labuse.immo/confidentialite/#courriers » (`courrier_compose.py` + rendu `api/courrier.py`).
+- **D3** — **fait (migration + test).** (a) **Chemin vivant** : `inpi_rne._parse_pouvoir` ne conserve `pm_dirigeants.raw` que si l'entreprise est **diffusible** (sinon `None`) ; `score_v_fetch._sans_nationalite` retire la **nationalité** des dirigeants de `owner_enrichment.payload` avant stockage (2 points d'écriture). (b) **Backfill de l'existant** : `labuse/rgpd_dirigeants.purger_nationalite_et_raw(engine)` — retire `nationalite` (racine + chaque dirigeant du payload) et **vide `raw`** des `pm_dirigeants` non diffusibles (`diffusible IS DISTINCT FROM TRUE`). **Idempotent.** Test `tests/test_d3_rgpd_dirigeants.py` (2 verts) : nationalité retirée partout, `raw` vidé pour FALSE **et** NULL, conservé pour TRUE, rejeu = 0 ligne. *(Exécution du backfill en prod = geste Vic, hors périmètre VPS.)*
+- **D4** — **fait.** La doc annonçait « 7 quotidiens + 4 hebdo » ; le code (`backup_postgres.sh` `LABUSE_BACKUP_KEEP:-4`) garde **4** quotidiens + 4 hebdo. Doc alignée **sur le code** : `DEPLOYMENT_OVH_VPS.md` et `EXPLOITATION-CRON.md` → « 4 dumps quotidiens + 4 hebdomadaires ».
+
+Recette Lot D : smoke 301 + CGV vérifiés ; `pytest` D3 + 3 tests légaux mis à jour = verts.
 
 ## Lot E — fraîcheur (code seulement) *(E2 diagnostiqué)*
 

@@ -669,9 +669,11 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
 # M-P (point 5) : identité EI renseignée — SIRET connu 987 641 917 00016 (→ SIREN 987 641 917) ;
 # établissement à SAINT-PAUL (Réunion), pas Saint-Denis. ⚠ RELIQUAT Vic : rue + code postal précis
 # à compléter (l'adresse de rue exacte n'était pas fournie) ; e-mail de contact à brander ou assumer.
-_EDITEUR = ("Victor L. — entrepreneur individuel (EI) · Saint-Paul, Île de La Réunion, France.<br>"
+# CORRECTIFS-1 D1 — identité éditeur COMPLÈTE (CGV art. 5 et 8) : nom légal, adresse, SIRET, contact.
+_EDITEUR = ("<b>Victor Lagane</b>, entrepreneur individuel · 3 chemin de la Citerne, La Montagne, "
+            "97417 Saint-Denis, La Réunion.<br>"
             "SIREN : <b>987&nbsp;641&nbsp;917</b> · SIRET : <b>987&nbsp;641&nbsp;917&nbsp;00016</b> · "
-            "contact : kampusreunion@gmail.com")
+            "contact : contact@labuse.immo")
 
 
 @router.get("/cgv", include_in_schema=False)
@@ -685,6 +687,7 @@ def cgv_page():
 <p class="sous">version {s.cgv_version} — service LABUSE</p>
 <p class="maj">Contrat B2B entre professionnels. L'acceptation est recueillie à la création du
 compte (case à cocher horodatée, version consignée).</p>
+<p class="maj">Éditeur : {_EDITEUR}</p>
 <nav class="toc" aria-label="Sommaire"><b>Sommaire</b><ol>
 <li><a href="#a1">Objet</a></li>
 <li><a href="#a2">Nature des analyses</a></li>
@@ -742,7 +745,7 @@ rapport par tout moyen ou rembourse le paiement.</p>
 <p>L'abonnement Intégral est <b>mensuel et sans engagement de durée</b> : il se reconduit tacitement
 de mois en mois par prélèvement automatique, tant que le Client ne l'a pas résilié.</p>
 <p>Le Client peut résilier <b>à tout moment</b> par <b>demande écrite adressée à LABUSE</b>
-(e-mail à kampusreunion@gmail.com). La résiliation prend effet <b>à la fin de la période mensuelle
+(e-mail à contact@labuse.immo). La résiliation prend effet <b>à la fin de la période mensuelle
 en cours</b> : le mois entamé reste dû et l'accès est maintenu jusqu'au terme de la période déjà payée.
 Aucun engagement au-delà du mois en cours n'est requis.</p>
 <p>LABUSE peut de son côté résilier l'abonnement avec un <b>préavis de 30 jours</b> ; en cas d'arrêt
@@ -764,9 +767,9 @@ rediffusion systématique des contenus du service.</p>
 <p>Données traitées : email, nom du compte, journal technique de connexion, données de
 facturation (chez Stripe). Aucune donnée de carte chez LABUSE. Finalités : fourniture du
 service, facturation, sécurité. Durée : la vie du compte, puis effacement sous 30 jours de
-la demande (droit d'accès, de rectification et d'effacement : kampusreunion@gmail.com).
+la demande (droit d'accès, de rectification et d'effacement : contact@labuse.immo).
 Sous-traitants : Stripe (paiement), hébergeur du serveur (UE), service d'acheminement des
-e-mails (SMTP).</p>
+e-mails (SMTP). Politique complète : <a href="https://labuse.immo/confidentialite/">labuse.immo/confidentialite/</a>.</p>
 <p><b>E-mails envoyés.</b> LABUSE adresse des e-mails <b>transactionnels</b>, nécessaires au service
 et sans consentement requis : réinitialisation de mot de passe (à votre demande). LABUSE peut aussi
 adresser une <b>lettre récapitulative périodique</b> (« le point de la semaine ») liée à votre usage :
@@ -786,33 +789,17 @@ après tentative de résolution amiable (30 jours).</p>
 </div>""", large=True, gate=False), status_code=200)
 
 
+# CORRECTIFS-1 D1 — /mentions-legales et /confidentialite de l'app renvoient (301 permanent) vers
+# les pages de référence du site vitrine labuse.immo (source unique du légal, tenue à jour là-bas).
+# L'identité éditeur COMPLÈTE reste portée par les CGV (`_EDITEUR`, art. 5/8), servies par l'app.
 @router.get("/mentions-legales", include_in_schema=False)
 def mentions_page():
-    return HTMLResponse(_page("mentions légales", f"""
-<div class="legal"><h1>Mentions légales</h1>
-<h2>Éditeur</h2><p>{_EDITEUR}</p>
-<h2>Hébergement</h2><p>Serveur dédié dans l'Union européenne (OVHcloud). Paiements :
-Stripe Payments Europe Ltd.</p>
-<h2>E-mails</h2><p>LABUSE envoie des e-mails <b>transactionnels</b> (réinitialisation de mot de
-passe à votre demande) et, le cas échéant, une <b>lettre récapitulative périodique opt-out</b>
-(désinscription en un clic, en-tête <i>List-Unsubscribe</i>). Détail à l'<a href="/cgv">article 8
-des CGV</a>. Aucune prospection commerciale, aucune revente.</p>
-<h2>Propriété</h2><p>Marque, interface et traitements LABUSE — tous droits réservés. Les
-données publiques agrégées restent soumises à leurs licences d'origine.</p></div>""", large=True))
+    return RedirectResponse("https://labuse.immo/mentions-legales/", status_code=301)
 
 
 @router.get("/confidentialite", include_in_schema=False)
 def confidentialite_page():
-    return HTMLResponse(_page("confidentialité", """
-<div class="legal"><h1>Confidentialité & cookies</h1>
-<h2>Cookies</h2><p>LABUSE utilise un <b>unique cookie strictement fonctionnel</b>
-(session de connexion, httpOnly, Secure). Aucun cookie publicitaire, aucune mesure
-d'audience tierce — c'est pourquoi <b>aucun bandeau de consentement n'est requis</b>
-(exemption CNIL des traceurs strictement nécessaires, documentée ici).</p>
-<h2>Données</h2><p>Voir l'article 8 des <a href="/cgv">CGV</a> (RGPD) : données minimales,
-finalités limitées, droit d'accès et d'effacement sur simple email.</p>
-<h2>Journalisation</h2><p>Les journaux techniques (connexions, erreurs) ne contiennent ni
-mot de passe, ni token, ni donnée de carte ; ils servent la sécurité du service.</p></div>""", large=True))
+    return RedirectResponse("https://labuse.immo/confidentialite/", status_code=301)
 
 
 # ── /moi — l'app lit qui je suis + l'état d'abonnement (bandeau « paiement requis ») ──

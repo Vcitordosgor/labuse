@@ -33,11 +33,15 @@ def test_cgv_sommaire_cliquable_et_ancres(client):
 
 
 def test_pages_legales_en_mode_lecture(client):
-    """Les 3 pages légales rendent en mode « legalpage » (colonne de lecture, pas bloc 400px)."""
-    for url in ("/cgv", "/mentions-legales", "/confidentialite"):
-        html = client.get(url).text
-        assert 'class="legalpage"' in html, f"{url} pas en mode lecture"
-        assert 'class="legal"' in html
+    """Les CGV rendent en mode « legalpage » (colonne de lecture). CORRECTIFS-1 D1 :
+    /mentions-legales et /confidentialite renvoient (301) vers le site vitrine labuse.immo."""
+    html = client.get("/cgv").text
+    assert 'class="legalpage"' in html, "/cgv pas en mode lecture"
+    assert 'class="legal"' in html
+    for url, cible in (("/mentions-legales", "https://labuse.immo/mentions-legales/"),
+                       ("/confidentialite", "https://labuse.immo/confidentialite/")):
+        r = client.get(url, follow_redirects=False)
+        assert r.status_code == 301 and r.headers["location"] == cible, f"{url} doit renvoyer 301 vers {cible}"
 
 
 def test_css_colonne_de_lecture_confortable():
