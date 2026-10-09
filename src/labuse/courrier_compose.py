@@ -41,6 +41,9 @@ _PIED = ("Analyse réalisée avec LABUSE, plateforme d'intelligence foncière sp
          "ni un conseil juridique.")
 _PIED_STOP = ("Vous ne souhaitez plus recevoir de courrier de notre part : écrivez à stop@labuse.immo en "
               "indiquant la référence cadastrale {reference}.")
+# CORRECTIFS-1 D2 — droit à l'information (provenance des données + droits RGPD) en pied de courrier.
+_PIED_DROITS = ("D'où viennent ces informations et quels sont vos droits : "
+                "labuse.immo/confidentialite/#courriers")
 
 # ── OUVERTURES A→E (Vic — ne pas reformuler ; [adresse] manquante → « La parcelle [référence] ») ──
 _A = ("La parcelle {situee}, d'une surface cadastrale de {surface} m², est actuellement identifiée comme non "

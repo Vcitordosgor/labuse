@@ -30,7 +30,10 @@ def test_editeur_identite_renseignee():
 
 def test_cgv_et_mentions_declarent_les_emails():
     from labuse.api import onboarding
-    for fn in ("cgv_page", "mentions_page"):
+    # CORRECTIFS-1 D1 : /mentions-legales renvoie (301) vers labuse.immo — la déclaration e-mails
+    # vit désormais dans les CGV (art. 8) et sur le site vitrine.
+    assert onboarding.mentions_page().status_code == 301
+    for fn in ("cgv_page",):
         html = getattr(onboarding, fn)().body.decode()
         assert "Aucun email automatique" not in html
         assert "Aucun envoi d'email automatique" not in html      # déclaration RGPD inexacte retirée

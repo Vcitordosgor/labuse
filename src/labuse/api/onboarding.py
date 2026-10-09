@@ -173,7 +173,7 @@ _FLASH_RETOUR_JS = """
         return;
       }
       if(d.statut==='erreur'){
-        el.innerHTML='<p style="color:var(--err)">La g\\u00e9n\\u00e9ration a rencontr\\u00e9 un probl\\u00e8me \\u2014 elle va \\u00eatre retent\\u00e9e automatiquement. Si rien ne vient, \\u00e9crivez \\u00e0 votre contact LABUSE avec votre re\\u00e7u Stripe : le rapport vous sera fourni.</p>';
+        el.innerHTML='<p style="color:var(--err)">La g\\u00e9n\\u00e9ration a rencontr\\u00e9 un probl\\u00e8me \\u2014 elle va \\u00eatre retent\\u00e9e automatiquement. Si rien ne vient, \\u00e9crivez \\u00e0 contact@labuse.immo avec votre re\\u00e7u Stripe : le rapport vous sera fourni.</p>';
       }
       relance();
     }).catch(function(){ relance(); });
@@ -184,7 +184,7 @@ _FLASH_RETOUR_JS = """
       document.getElementById('mark').innerHTML='!';
       document.getElementById('hero').textContent='Votre paiement est bien confirm\\u00e9';
       document.getElementById('sub').textContent='la g\\u00e9n\\u00e9ration prend plus de temps que pr\\u00e9vu';
-      document.getElementById('etat').innerHTML='<p style="font-size:12.5px;line-height:1.6">Votre paiement est confirm\\u00e9 chez Stripe \\u2014 rien n\\'est perdu. La g\\u00e9n\\u00e9ration prend plus de temps que pr\\u00e9vu : le lien vous parviendra par e-mail, ou rouvrez cette page un peu plus tard. En cas de doute, \\u00e9crivez \\u00e0 votre contact LABUSE avec votre re\\u00e7u Stripe, le rapport vous sera fourni.</p>';
+      document.getElementById('etat').innerHTML='<p style="font-size:12.5px;line-height:1.6">Votre paiement est confirm\\u00e9 chez Stripe \\u2014 rien n\\'est perdu. La g\\u00e9n\\u00e9ration prend plus de temps que pr\\u00e9vu : le lien vous parviendra par e-mail, ou rouvrez cette page un peu plus tard. En cas de doute, \\u00e9crivez \\u00e0 contact@labuse.immo avec votre re\\u00e7u Stripe, le rapport vous sera fourni.</p>';
       return;
     }
     setTimeout(poll, 2000);
@@ -201,13 +201,96 @@ def flash_retour_js():
                     headers={"Cache-Control": "public, max-age=3600"})
 
 
+# CORRECTIFS-1 A6 — complétion d'adresse PENDANT LA FRAPPE sur /flash, MÊME source que l'omnibox
+# de la carte : l'endpoint interne `/adresses/autocomplete` (table BAN rattachée aux parcelles,
+# chaque suggestion porte déjà son IDU). Fichier SAME-ORIGIN (CSP script-src 'self', comme
+# flash-retour.js) ; choisir une suggestion → /flash?idu=... (écran de validation A7).
+_FLASH_OMNIBOX_JS = """
+(function(){
+  var form=document.querySelector('[data-flash-omnibox]'); if(!form)return;
+  var inp=form.querySelector('#q'), box=document.getElementById('q-sugg');
+  if(!inp||!box)return;
+  // CORRECTIFS-1 A5 — « dès qu'un champ est rempli, l'autre disparaît ».
+  var ref=form.querySelector('#idu'), fq=form.querySelector('[data-field="q"]'),
+      fidu=form.querySelector('[data-field="idu"]'), sep=form.querySelector('[data-sep]');
+  function montre(el,on){ if(el)el.style.display=on?'':'none'; }
+  function sync(){
+    var aQ=inp.value.trim()!=='', aRef=ref&&ref.value.trim()!=='';
+    montre(fidu,!aQ); montre(fq,!aRef); montre(sep,!aQ&&!aRef);
+  }
+  if(ref)ref.addEventListener('input',sync);
+  var items=[], active=-1, timer=null, lastQ='';
+  function hide(){ box.hidden=true; box.innerHTML=''; items=[]; active=-1; inp.setAttribute('aria-expanded','false'); }
+  function pick(it){ if(it&&it.idu){ window.location.href='/flash?idu='+encodeURIComponent(it.idu); } }
+  function render(){
+    if(!items.length){ hide(); return; }
+    box.innerHTML='';
+    items.forEach(function(it,i){
+      var d=document.createElement('div');
+      d.setAttribute('role','option'); d.id='q-opt-'+i;
+      d.textContent=it.label||it.idu;
+      d.style.cssText='padding:10px 14px;font-size:13.5px;cursor:pointer;color:var(--txt,#e8eef3);'+(i===active?'background:rgba(127,224,185,.14)':'');
+      d.addEventListener('mousedown',function(e){ e.preventDefault(); pick(it); });
+      box.appendChild(d);
+    });
+    box.hidden=false; inp.setAttribute('aria-expanded','true');
+  }
+  function fetchSugg(q){
+    fetch('/adresses/autocomplete?q='+encodeURIComponent(q)).then(function(r){return r.ok?r.json():{features:[]};}).then(function(d){
+      if(inp.value.trim()!==q)return;  // réponse obsolète
+      items=(d.features||d.suggestions||[]).map(function(f){
+        var p=f.properties||f; return {label:p.label||p.libelle||p.nom, idu:p.idu||p.id};
+      }).filter(function(x){return x.idu;});
+      active=-1; render();
+    }).catch(function(){ /* silencieux : la soumission libre reste possible */ });
+  }
+  inp.addEventListener('input',function(){
+    sync();
+    var q=inp.value.trim();
+    if(q===lastQ)return; lastQ=q;
+    if(timer)clearTimeout(timer);
+    if(q.length<3){ hide(); return; }
+    timer=setTimeout(function(){ fetchSugg(q); },160);
+  });
+  inp.addEventListener('keydown',function(e){
+    if(box.hidden)return;
+    if(e.key==='ArrowDown'){ e.preventDefault(); active=Math.min(active+1,items.length-1); render(); }
+    else if(e.key==='ArrowUp'){ e.preventDefault(); active=Math.max(active-1,0); render(); }
+    else if(e.key==='Enter'){ if(active>=0){ e.preventDefault(); pick(items[active]); } }
+    else if(e.key==='Escape'){ hide(); }
+  });
+  document.addEventListener('click',function(e){ if(!form.contains(e.target))hide(); });
+})();
+"""
+
+
+@router.get("/flash-omnibox.js", include_in_schema=False)
+def flash_omnibox_js():
+    from fastapi.responses import Response
+    return Response(_FLASH_OMNIBOX_JS, media_type="application/javascript",
+                    headers={"Cache-Control": "public, max-age=3600"})
+
+
 # ── le gabarit Coffre serveur — délègue au design system validé (coffre_ui, partie E) ──
 
-def _page(titre: str, corps: str, large: bool = False, head: str = "", pied: bool = True) -> str:
+# CORRECTIFS-1 A5 — pied de page PROPRE au Flash (texte fourni par Vic) : vendeur, mention fiscale
+# 293 B (franchise en base, une seule fois en pied, jamais « HT »), et clause d'aide à la décision.
+_FLASH_PIED = (
+    'Vendu par LABUSE (CLOSING CREST) · <a href="mailto:contact@labuse.immo">contact@labuse.immo</a><br>'
+    'Prix total, sans TVA à ajouter — TVA non applicable, article 293 B du CGI.<br>'
+    "Document d'aide à la décision établi à partir des données publiques. Il ne remplace ni le "
+    "certificat d'urbanisme délivré par la mairie, ni le conseil d'un notaire.")
+
+
+def _page(titre: str, corps: str, large: bool = False, head: str = "", pied: bool = True,
+          gate: bool = True, foot: str | None = None) -> str:
     # O1 — le pied légal passe par `foot=` (collé en bas), plus empilé dans le corps.
+    # CORRECTIFS-1 A1 — `gate=False` sur les pages Flash publiques (payables au téléphone).
+    # CORRECTIFS-1 A5 — `foot=` surcharge le pied (le Flash a le sien).
+    foot_html = foot if foot is not None else (coffre_ui.FOOTER_LEGAL if pied else "")
     return coffre_ui.page(titre, coffre_ui.OISEAU + corps,
                           w=760 if large else None, legal=large, head=head,
-                          foot=coffre_ui.FOOTER_LEGAL if pied else "")
+                          foot=foot_html, gate=gate)
 
 
 # ── E4 · invitation → mot de passe + CGV → Checkout ──
@@ -586,9 +669,11 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
 # M-P (point 5) : identité EI renseignée — SIRET connu 987 641 917 00016 (→ SIREN 987 641 917) ;
 # établissement à SAINT-PAUL (Réunion), pas Saint-Denis. ⚠ RELIQUAT Vic : rue + code postal précis
 # à compléter (l'adresse de rue exacte n'était pas fournie) ; e-mail de contact à brander ou assumer.
-_EDITEUR = ("Victor L. — entrepreneur individuel (EI) · Saint-Paul, Île de La Réunion, France.<br>"
+# CORRECTIFS-1 D1 — identité éditeur COMPLÈTE (CGV art. 5 et 8) : nom légal, adresse, SIRET, contact.
+_EDITEUR = ("<b>Victor Lagane</b>, entrepreneur individuel · 3 chemin de la Citerne, La Montagne, "
+            "97417 Saint-Denis, La Réunion.<br>"
             "SIREN : <b>987&nbsp;641&nbsp;917</b> · SIRET : <b>987&nbsp;641&nbsp;917&nbsp;00016</b> · "
-            "contact : kampusreunion@gmail.com")
+            "contact : contact@labuse.immo")
 
 
 @router.get("/cgv", include_in_schema=False)
@@ -602,6 +687,7 @@ def cgv_page():
 <p class="sous">version {s.cgv_version} — service LABUSE</p>
 <p class="maj">Contrat B2B entre professionnels. L'acceptation est recueillie à la création du
 compte (case à cocher horodatée, version consignée).</p>
+<p class="maj">Éditeur : {_EDITEUR}</p>
 <nav class="toc" aria-label="Sommaire"><b>Sommaire</b><ol>
 <li><a href="#a1">Objet</a></li>
 <li><a href="#a2">Nature des analyses</a></li>
@@ -642,24 +728,24 @@ partage d'accès, contournement technique).</p>
 <h2 id="a4">4. Prix et paiement</h2>
 <p><b>Intégral</b> : abonnement mensuel de {oi['eur_mois']} € par licence, accès complet au service.
 <b>Flash</b> : {of['eur']} € par rapport — paiement unique donnant droit à UN rapport PDF portant
-sur UNE parcelle, téléchargeable pendant {of['validite_lien_jours']} jours (article 4 bis). Prix hors taxes le cas
-échéant — le régime de TVA applicable figure sur les factures. Paiement par carte via
+sur UNE parcelle, téléchargeable pendant {of['validite_lien_jours']} jours (article 4 bis).
+<b>TVA non applicable, art. 293 B du CGI</b> (franchise en base). Paiement par carte via
 <b>Stripe</b> (paiement hébergé : aucune donnée de carte ne transite par LABUSE), factures
 et reçus émis par Stripe.</p>
 
 <h2 id="a4bis">4 bis. Le rapport Flash</h2>
 <p>Le rapport Flash est un document numérique généré et livré immédiatement après paiement.
-<b>L'exécution commence dès le paiement, à la demande expresse de l'acheteur, qui renonce
-le cas échéant à son droit de rétractation</b> (contenu numérique fourni immédiatement).
-Le rapport porte exclusivement sur la parcelle confirmée par l'acheteur avant paiement ;
-l'article 2 (nature des analyses) s'y applique intégralement. En cas d'échec technique de
-génération, LABUSE fournit le rapport par tout moyen ou rembourse le paiement.</p>
+<b>L'acceptation des présentes conditions est recueillie avant le paiement</b> (case à cocher
+obligatoire sur l'écran de confirmation, version et horodatage consignés). Le rapport porte
+exclusivement sur la parcelle confirmée par l'acheteur avant paiement ; l'article 2 (nature des
+analyses) s'y applique intégralement. En cas d'échec technique de génération, LABUSE fournit le
+rapport par tout moyen ou rembourse le paiement.</p>
 
 <h2 id="a5">5. Durée et résiliation</h2>
 <p>L'abonnement Intégral est <b>mensuel et sans engagement de durée</b> : il se reconduit tacitement
 de mois en mois par prélèvement automatique, tant que le Client ne l'a pas résilié.</p>
 <p>Le Client peut résilier <b>à tout moment</b> par <b>demande écrite adressée à LABUSE</b>
-(e-mail à kampusreunion@gmail.com). La résiliation prend effet <b>à la fin de la période mensuelle
+(e-mail à contact@labuse.immo). La résiliation prend effet <b>à la fin de la période mensuelle
 en cours</b> : le mois entamé reste dû et l'accès est maintenu jusqu'au terme de la période déjà payée.
 Aucun engagement au-delà du mois en cours n'est requis.</p>
 <p>LABUSE peut de son côté résilier l'abonnement avec un <b>préavis de 30 jours</b> ; en cas d'arrêt
@@ -681,9 +767,9 @@ rediffusion systématique des contenus du service.</p>
 <p>Données traitées : email, nom du compte, journal technique de connexion, données de
 facturation (chez Stripe). Aucune donnée de carte chez LABUSE. Finalités : fourniture du
 service, facturation, sécurité. Durée : la vie du compte, puis effacement sous 30 jours de
-la demande (droit d'accès, de rectification et d'effacement : kampusreunion@gmail.com).
+la demande (droit d'accès, de rectification et d'effacement : contact@labuse.immo).
 Sous-traitants : Stripe (paiement), hébergeur du serveur (UE), service d'acheminement des
-e-mails (SMTP).</p>
+e-mails (SMTP). Politique complète : <a href="https://labuse.immo/confidentialite/">labuse.immo/confidentialite/</a>.</p>
 <p><b>E-mails envoyés.</b> LABUSE adresse des e-mails <b>transactionnels</b>, nécessaires au service
 et sans consentement requis : réinitialisation de mot de passe (à votre demande). LABUSE peut aussi
 adresser une <b>lettre récapitulative périodique</b> (« le point de la semaine ») liée à votre usage :
@@ -700,36 +786,20 @@ d'exploitation, décision d'investissement) sont exclus — dans le prolongement
 <p>Droit français. Compétence : les tribunaux dans le ressort de Saint-Denis de La Réunion,
 après tentative de résolution amiable (30 jours).</p>
 <p><a class="haut" href="#haut">↑ Haut de page</a></p>
-</div>""", large=True), status_code=200)
+</div>""", large=True, gate=False), status_code=200)
 
 
+# CORRECTIFS-1 D1 — /mentions-legales et /confidentialite de l'app renvoient (301 permanent) vers
+# les pages de référence du site vitrine labuse.immo (source unique du légal, tenue à jour là-bas).
+# L'identité éditeur COMPLÈTE reste portée par les CGV (`_EDITEUR`, art. 5/8), servies par l'app.
 @router.get("/mentions-legales", include_in_schema=False)
 def mentions_page():
-    return HTMLResponse(_page("mentions légales", f"""
-<div class="legal"><h1>Mentions légales</h1>
-<h2>Éditeur</h2><p>{_EDITEUR}</p>
-<h2>Hébergement</h2><p>Serveur dédié dans l'Union européenne (OVHcloud). Paiements :
-Stripe Payments Europe Ltd.</p>
-<h2>E-mails</h2><p>LABUSE envoie des e-mails <b>transactionnels</b> (réinitialisation de mot de
-passe à votre demande) et, le cas échéant, une <b>lettre récapitulative périodique opt-out</b>
-(désinscription en un clic, en-tête <i>List-Unsubscribe</i>). Détail à l'<a href="/cgv">article 8
-des CGV</a>. Aucune prospection commerciale, aucune revente.</p>
-<h2>Propriété</h2><p>Marque, interface et traitements LABUSE — tous droits réservés. Les
-données publiques agrégées restent soumises à leurs licences d'origine.</p></div>""", large=True))
+    return RedirectResponse("https://labuse.immo/mentions-legales/", status_code=301)
 
 
 @router.get("/confidentialite", include_in_schema=False)
 def confidentialite_page():
-    return HTMLResponse(_page("confidentialité", """
-<div class="legal"><h1>Confidentialité & cookies</h1>
-<h2>Cookies</h2><p>LABUSE utilise un <b>unique cookie strictement fonctionnel</b>
-(session de connexion, httpOnly, Secure). Aucun cookie publicitaire, aucune mesure
-d'audience tierce — c'est pourquoi <b>aucun bandeau de consentement n'est requis</b>
-(exemption CNIL des traceurs strictement nécessaires, documentée ici).</p>
-<h2>Données</h2><p>Voir l'article 8 des <a href="/cgv">CGV</a> (RGPD) : données minimales,
-finalités limitées, droit d'accès et d'effacement sur simple email.</p>
-<h2>Journalisation</h2><p>Les journaux techniques (connexions, erreurs) ne contiennent ni
-mot de passe, ni token, ni donnée de carte ; ils servent la sécurité du service.</p></div>""", large=True))
+    return RedirectResponse("https://labuse.immo/confidentialite/", status_code=301)
 
 
 # ── /moi — l'app lit qui je suis + l'état d'abonnement (bandeau « paiement requis ») ──
@@ -822,28 +892,129 @@ lit en trois minutes.</p>
 # unique, email collecté par Stripe) → /flash/retour (poll de génération, spinner sobre)
 # → lien de téléchargement signé (30 jours). Sans compte, sans abonnement, sans email maison.
 
+# CORRECTIFS-1 A6 — le champ « référence » accepte l'IDU 14 caractères ET une référence
+# cadastrale lisible « Commune SECTION NUMÉRO » (ex. « Saint-Paul CW 658 »). La commune est
+# résolue par la table `parcels` elle-même (pliage accents/casse partagé), section+numéro
+# comparés aux positions fixes de l'IDU (insee5 · préfixe3 · section2 · numéro4).
+def _flash_resoudre_ref(db, ref: str) -> str | None:
+    import re
+
+    from sqlalchemy import text as _t
+    s = (ref or "").strip().upper()
+    if not s:
+        return None
+    compact = s.replace(" ", "")
+    if len(compact) == 14 and compact.isalnum():
+        return db.execute(_t("SELECT idu FROM parcels WHERE idu = :i"), {"i": compact}).scalar()
+    m = re.match(r"^(.+?)[\s,]+([A-Z]{1,2})\s*0*(\d{1,4})$", s)
+    if not m:
+        return None
+    commune, section, numero = m.group(1).strip(), m.group(2), m.group(3)
+    secnum = section.zfill(2) + numero.zfill(4)   # ex. « CW », « 658 » → « CW0658 » = idu[8:14]
+    from ..constants import params_pliage, sql_plie
+    col = sql_plie("commune")
+    return db.execute(_t(
+        f"SELECT idu FROM parcels WHERE {col} = {sql_plie(':c')} "
+        "AND substr(idu, 9, 6) = :secnum LIMIT 1"),
+        {"c": commune, "secnum": secnum, **params_pliage()}).scalar()
+
+
+# CORRECTIFS-1 A7 — écran de validation : vue aérienne IGN (couche HR.ORTHOIMAGERY.ORTHOPHOTOS,
+# WMS Géoplateforme, même source que la carte, autorisée par la CSP img-src data.geopf.fr) +
+# contour cadastral de la parcelle, assombrissement autour, trait vert. Tout est rendu SERVEUR :
+# l'ortho est une balise <img> (pas de JS), le contour un calque SVG calculé ici en pixels.
+def _flash_apercu_ortho(gj3857: str | None) -> str:
+    import json
+    if not gj3857:
+        return ""
+    try:
+        geom = json.loads(gj3857)
+    except Exception:  # noqa: BLE001
+        return ""
+    polys = geom.get("coordinates") or []
+    if geom.get("type") == "Polygon":
+        polys = [polys]
+    elif geom.get("type") != "MultiPolygon":
+        return ""
+    rings = [ring for poly in polys for ring in poly if ring]
+    pts = [(x, y) for ring in rings for x, y in ring]
+    if not pts:
+        return ""
+    xs = [p[0] for p in pts]
+    ys = [p[1] for p in pts]
+    minx, maxx, miny, maxy = min(xs), max(xs), min(ys), max(ys)
+    cx, cy = (minx + maxx) / 2, (miny + maxy) / 2
+    span = max(maxx - minx, maxy - miny, 1.0) * 1.8   # marge autour de la parcelle
+    half = span / 2
+    bminx, bmaxx, bminy, bmaxy = cx - half, cx + half, cy - half, cy + half
+    W = H = 640
+
+    def px(x, y):
+        return ((x - bminx) / span * W, (bmaxy - y) / span * H)
+
+    def ring_path(ring):
+        d = ""
+        for i, (x, y) in enumerate(ring):
+            a, b = px(x, y)
+            d += f"{'M' if i == 0 else 'L'}{a:.1f} {b:.1f}"
+        return d + "Z"
+
+    subpaths = "".join(ring_path(r) for r in rings)
+    wms = ("https://data.geopf.fr/wms-r/wms?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap"
+           "&LAYERS=HR.ORTHOIMAGERY.ORTHOPHOTOS&STYLES=&FORMAT=image/jpeg&CRS=EPSG:3857"
+           f"&WIDTH={W}&HEIGHT={H}&BBOX={bminx:.1f},{bminy:.1f},{bmaxx:.1f},{bmaxy:.1f}")
+    # masque sombre : grand rectangle + la parcelle en « trou » (fill-rule evenodd) ; trait vert au-dessus.
+    return (
+        '<div class="flash-apercu" style="position:relative;width:100%;aspect-ratio:1;border-radius:14px;'
+        'overflow:hidden;border:1px solid var(--line,#26323c);background:#0c1116;margin:2px 0 4px">'
+        f'<img src="{html.escape(wms)}" alt="Vue aérienne IGN de la parcelle" width="{W}" height="{H}" '
+        'loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">'
+        f'<svg viewBox="0 0 {W} {H}" style="position:absolute;inset:0;width:100%;height:100%" '
+        'aria-hidden="true" preserveAspectRatio="xMidYMid slice">'
+        f'<path d="M0 0H{W}V{H}H0Z{subpaths}" fill="rgba(5,8,11,.55)" fill-rule="evenodd"/>'
+        f'<path d="{subpaths}" fill="none" stroke="#7fe0b9" stroke-width="3" stroke-linejoin="round"/>'
+        '</svg></div>')
+
+
 @router.get("/flash", include_in_schema=False)
-def flash_page(idu: str = "", q: str = "", annule: int = 0, db: Session = Depends(get_db)):
+def flash_page(idu: str = "", q: str = "", annule: int = 0, cgv: str = "",
+               db: Session = Depends(get_db)):
     from sqlalchemy import text
 
     from ..offres import offre_flash
     of = offre_flash()
     note_annule = ('<p class="err">Paiement interrompu — rien n\'a été débité.</p>' if annule else "")
+    # CORRECTIFS-1 A3 — retour serveur quand on a tenté de payer sans cocher les CGV.
+    cgv_err = ('<p class="err">Vous devez accepter les conditions générales de vente avant de '
+               'payer.</p>' if cgv == "manquante" else "")
     # ÉTUDE DE ZONE Z5 — un commerçant a une ADRESSE, pas un IDU. La recherche par adresse (BAN) trouve
     # la parcelle qui contient le point ; échec/point sans parcelle → message honnête, jamais un 500.
+    # CORRECTIFS-1 A6 — le champ référence accepte l'IDU OU « Saint-Paul CW 658 ».
+    if idu.strip() and len(idu.strip()) != 14:
+        idu = _flash_resoudre_ref(db, idu) or idu
     adresse_msg = ""
     if q.strip() and not idu:
         from .scoreur import _geocode
         try:
             geo = _geocode(q)
+            pt = "ST_SetSRID(ST_MakePoint(:lon,:lat),4326)"
             row = db.execute(text(
-                "SELECT idu FROM parcels WHERE ST_Contains(geom, ST_SetSRID(ST_MakePoint(:lon,:lat),4326)) "
-                "LIMIT 1"), {"lon": geo["lon"], "lat": geo["lat"]}).scalar()
+                f"SELECT idu FROM parcels WHERE ST_Contains(geom, {pt}) LIMIT 1"),
+                {"lon": geo["lon"], "lat": geo["lat"]}).scalar()
+            if not row:
+                # A6 — le point BAN tombe hors parcelle (voie, trottoir) : on propose la parcelle
+                # la plus proche dans un rayon court (40 m), l'acheteur la VALIDE à l'écran suivant.
+                row = db.execute(text(
+                    f"SELECT idu FROM parcels WHERE geom IS NOT NULL "
+                    f"AND ST_DWithin(geom::geography, {pt}::geography, 40) "
+                    f"ORDER BY geom <-> {pt} LIMIT 1"),
+                    {"lon": geo["lon"], "lat": geo["lat"]}).scalar()
             if row:
                 idu = row
             else:
-                adresse_msg = ('<p class="err">Adresse trouvée, mais aucune parcelle cadastrale à ce '
-                               'point. Essayez l\'IDU.</p>')
+                adresse_msg = ('<p class="err">Adresse trouvée, mais aucune parcelle cadastrale à '
+                               'proximité. Saisissez la référence cadastrale ci-dessous '
+                               '(IDU ou « Saint-Paul CW 658 »).</p>')
         except Exception as exc:  # noqa: BLE001 — géocodage indisponible/introuvable → dit honnêtement
             from fastapi import HTTPException as _HX
             detail = exc.detail if isinstance(exc, _HX) else "service d'adresses momentanément indisponible"
@@ -851,57 +1022,78 @@ def flash_page(idu: str = "", q: str = "", annule: int = 0, db: Session = Depend
     parcelle = None
     if idu and len(idu) == 14:
         parcelle = db.execute(text(
-            "SELECT idu, commune, round(surface_m2) AS m2 FROM parcels WHERE idu = :i"),
+            "SELECT idu, commune, round(surface_m2) AS m2, "
+            # CORRECTIFS-1 A7 — géométrie simplifiée en 3857 pour l'aperçu ortho (écran de validation).
+            " ST_AsGeoJSON(ST_Transform(ST_SimplifyPreserveTopology(geom, 0.5), 3857), 5) AS gj3857 "
+            "FROM parcels WHERE idu = :i"),
             {"i": idu.upper()}).mappings().first()
     if parcelle:
+        _apercu = _flash_apercu_ortho(parcelle.get("gj3857"))
+        _legende = (f"{html.escape(parcelle['idu'][8:10])} {html.escape(parcelle['idu'][10:])} — "
+                    f"{html.escape(parcelle['commune'])} · {('%d' % (parcelle['m2'] or 0))} m² · "
+                    "Vue aérienne IGN")
         return HTMLResponse(_page("rapport Flash", f"""
-<h1>Votre rapport Flash</h1><p class="sub">tout sur cette parcelle, en un PDF sourcé</p>
-<div class="recap"><div style="font:600 13px ui-monospace,monospace;color:var(--hi)">{html.escape(parcelle['idu'][8:10])} {html.escape(parcelle['idu'][10:])} · {html.escape(parcelle['commune'])} · {('%d' % (parcelle['m2'] or 0))} m²</div>
-<div class="quoi" style="margin-top:10px"><b style="color:var(--txt)">Dans votre PDF :</b> identité et plan,
-zonage et <b style="color:var(--txt)">règles d'urbanisme calibrées</b> (hauteur, emprise, ce qu'on peut y
-construire), risques (Géorisques, PPR, littoral), marché DVF du secteur, permis voisins et
-<b style="color:var(--txt)">potentiel de transformation</b> — chaque donnée avec sa source (Sourcé /
-Estimé) et son millésime.</div></div>
-<div class="trust" role="list">
-  <div role="listitem"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="var(--mint)" stroke-width="1.5" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M10 6v4l2.5 1.5"/></svg> Livré en <b style="color:var(--txt)">quelques secondes</b>, lien valable {of['validite_lien_jours']} jours.</div>
-  <div role="listitem"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="var(--mint)" stroke-width="1.5" aria-hidden="true"><path d="M4 10l4 4 8-9"/></svg> Ce qu'une simple fiche cadastrale ne dit pas : <b style="color:var(--txt)">les règles PLU traduites</b> et le potentiel constructible chiffré.</div>
-  <div role="listitem">{coffre_ui.LOCK_SVG} Paiement unique — <b style="color:var(--txt)">aucune donnée de carte</b> ne transite par LABUSE.</div>
-</div>
-<div class="recap" style="margin-top:6px"><div class="prix">{of['eur']} € <span style="font-size:13px;color:var(--mut);font-weight:400">paiement unique, sans abonnement</span></div></div>
+<h1>Est-ce le bon terrain ?</h1>
+{_apercu}
+<p class="note" style="margin:0 0 16px;font-weight:600;color:var(--txt)">{_legende}</p>
+<p class="note">Livré dès le paiement. Le lien de téléchargement reste valable {of['validite_lien_jours']} jours.</p>
+<p class="note">Paiement unique de {of['eur']} €. Pas d'abonnement, pas de compte à créer.</p>
+<p class="note">Aucune donnée bancaire ne passe par LABUSE : le paiement est traité par Stripe.</p>
 <form method="post" action="/flash"><input type="hidden" name="idu" value="{html.escape(parcelle['idu'])}">
+{cgv_err}
+<label class="cgv" style="display:flex;gap:10px;align-items:flex-start;text-align:left;font-size:12.5px;color:var(--mut);margin:14px 0;line-height:1.5;cursor:pointer">
+<input type="checkbox" name="cgv" value="1" required style="margin-top:2px;flex:0 0 auto;accent-color:var(--mint);width:16px;height:16px">
+<span>J'agis pour les besoins de mon activité professionnelle et j'accepte les <a href="/cgv" target="_blank" rel="noopener" style="color:var(--mint)">conditions générales de vente</a>.</span></label>
 <button type="submit">Payer {of['eur']} € et recevoir mon rapport →</button></form>
-<p class="linkrow"><a href="/flash">← changer de parcelle</a></p>
-<p class="note">Pré-analyse sur données publiques officielles — ne remplace ni certificat d'urbanisme ni
-conseil notarial. Le lien de téléchargement ({of['validite_lien_jours']} jours) s'affiche dès la génération.</p>"""))
+<p class="linkrow"><a href="/flash">← changer de parcelle</a></p>""", gate=False, foot=_FLASH_PIED))
     introuvable = ('<p class="err">Parcelle introuvable — vérifiez l\'IDU (14 caractères).</p>'
                    if idu and not parcelle else "")
     return HTMLResponse(_page("rapport Flash", f"""
-<h1>Rapport Flash</h1><p class="sub">le dossier complet d'une parcelle, en PDF</p>
+<h1>Rapport Flash</h1>
+<p class="sub">Tout ce qu'il faut savoir sur un terrain, dans un seul PDF.</p>
 <div class="pricewrap"><div class="price"><b>{of['eur']} €</b><span>paiement unique</span></div></div>
 {note_annule}{adresse_msg}{introuvable}
 <div class="list">
-<div><i>▸</i><span>Zonage et règles d'urbanisme calibrées — hauteur, emprise, ce qu'on peut y construire</span></div>
-<div><i>▸</i><span>Risques : Géorisques, PPR, littoral</span></div>
-<div><i>▸</i><span>Marché DVF du secteur et permis voisins</span></div>
-<div><i>▸</i><span>Potentiel de transformation chiffré</span></div>
-<div><i>▸</i><span>Chaque donnée avec sa source et sa fraîcheur</span></div>
+<div><i>▸</i><span><b style="color:var(--txt)">Le terrain</b> : surface, bâti, plan cadastral et vue aérienne. Et quand le propriétaire est une société, sa dénomination et son SIREN.</span></div>
+<div><i>▸</i><span><b style="color:var(--txt)">Le droit du sol</b> : la zone du PLU, les règles qui s'y appliquent, la hauteur et l'emprise autorisées, les servitudes repérées.</span></div>
+<div><i>▸</i><span><b style="color:var(--txt)">Les risques</b> : inondation, mouvement de terrain, littoral, et les plans de prévention qui couvrent la parcelle.</span></div>
+<div><i>▸</i><span><b style="color:var(--txt)">Le marché</b> : les ventes faites autour, le prix au m² du secteur, les permis déposés par les voisins.</span></div>
+<div><i>▸</i><span><b style="color:var(--txt)">Le quartier et le projet</b> : équipements, réseaux, fiscalité locale, et ce que les règles permettent d'envisager.</span></div>
 </div>
-<form method="get" action="/flash">
+<p class="note">Chaque information porte sa source et sa date. Quand c'est une estimation, c'est écrit.</p>
+<p class="note">Onze volets, du plan cadastral au potentiel du terrain.</p>
+<p class="sub" style="margin-top:20px;text-align:left;color:var(--txt);font-weight:600">Quelle parcelle ?</p>
+<form method="get" action="/flash" data-flash-omnibox>
+<div data-field="q">
 <label for="q">Adresse du bien</label>
-<div class="field"><input id="q" name="q" type="text" inputmode="text" autofocus
-  placeholder="12 rue de la Gare, Saint-André" aria-describedby="qhint"></div>
-<p class="hint" id="qhint">Un commerçant a une adresse — on retrouve la parcelle pour vous.</p>
+<div class="field" style="position:relative"><input id="q" name="q" type="text" inputmode="text" autofocus
+  autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false"
+  aria-controls="q-sugg" placeholder="Commencez à taper une adresse…" aria-describedby="qhint">
+  <div id="q-sugg" role="listbox" aria-label="Suggestions d'adresses" hidden
+       style="position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:30;background:var(--card,#141b22);border:1px solid var(--line,#26323c);border-radius:10px;overflow:hidden;box-shadow:0 14px 36px rgba(0,0,0,.4)"></div></div>
+<p class="hint" id="qhint">On retrouve la parcelle pour vous.</p>
+</div>
+<p class="note" data-sep style="margin:14px 0 6px">— ou —</p>
+<div data-field="idu">
+<label for="idu">Référence cadastrale</label>
+<div class="field"><input id="idu" name="idu" type="text" maxlength="40"
+  inputmode="text" placeholder="97415000AS0772" aria-describedby="iduhint"
+  style="font-family:ui-monospace,monospace"></div>
+<p class="hint" id="iduhint">L'IDU (14 caractères, sur cadastre.gouv.fr) ou « Saint-Paul CW 658 ».</p>
+</div>
 <button type="submit">Voir ma parcelle <span class="arr" aria-hidden="true">→</span></button>
 </form>
-<p class="note" style="margin:14px 0 6px">— ou —</p>
-<form method="get" action="/flash">
-<label for="idu">Identifiant de parcelle (IDU)</label>
-<div class="field"><input id="idu" name="idu" type="text" minlength="14" maxlength="14"
-  inputmode="text" placeholder="97415000CW0658" aria-describedby="iduhint"
-  style="font-family:ui-monospace,monospace"></div>
-<p class="hint" id="iduhint">14 caractères — il figure sur cadastre.gouv.fr.</p>
-<button type="submit">Voir ma parcelle <span class="arr" aria-hidden="true">→</span></button>
-<p class="note">Vous vérifiez la parcelle avant de payer.</p></form>"""))
+<p class="note">Vous verrez la parcelle avant de payer. Rien n'est débité à cette étape.</p>
+<script src="/flash-omnibox.js" defer></script>""", gate=False, foot=_FLASH_PIED))
+
+
+# CORRECTIFS-1 A2 — la barre finale `/flash/` renvoie en 308 (permanent, méthode préservée)
+# vers `/flash` (query conservée). Route EXPLICITE pour garantir 308 plutôt que le 307 par
+# défaut de Starlette `redirect_slashes`.
+@router.get("/flash/", include_in_schema=False)
+def flash_slash(request: Request):
+    q = request.url.query
+    return RedirectResponse(f"/flash{('?' + q) if q else ''}", status_code=308)
 
 
 @router.post("/flash", include_in_schema=False)
@@ -914,16 +1106,20 @@ async def flash_submit(request: Request, db: Session = Depends(get_db)):
     ok = db.execute(_text("SELECT 1 FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
     if not ok:
         return RedirectResponse("/flash", status_code=303)
+    # CORRECTIFS-1 A3 — CGV obligatoires AVANT paiement : sans la case cochée, on NE crée PAS de
+    # checkout (le `required` HTML garde le navigateur ; ce contrôle serveur garde tout le reste).
+    if not (q.get("cgv") or [""])[0].strip():
+        return RedirectResponse(f"/flash?idu={idu}&cgv=manquante", status_code=303)
     try:
         from ..facturation import creer_checkout_flash
-        url = creer_checkout_flash(db, idu)
+        url = creer_checkout_flash(db, idu, cgv_version=get_settings().cgv_version)
         return RedirectResponse(url, status_code=303)
     except Exception as e:  # noqa: BLE001 — pas de clé/prix : page honnête, jamais un bouton mort
         log.warning("flash checkout indisponible (%s)", e)
         return HTMLResponse(_page("paiement indisponible", """
 <h1>Paiement indisponible</h1><p class="sous">réessayez dans quelques minutes</p>
 <p style="text-align:center;font-size:12.5px">Le paiement en ligne ne répond pas. Rien n'a été
-débité — réessayez, ou écrivez à votre contact LABUSE.</p>"""), status_code=503)
+débité — réessayez, ou écrivez à contact@labuse.immo.</p>"""), status_code=503)
 
 
 @router.get("/flash/retour", include_in_schema=False)
@@ -934,7 +1130,7 @@ def flash_retour(session_id: str = ""):
 <p class="sub" id="sub">paiement reçu · nous assemblons votre PDF</p></div>
 <div id="etat" role="status" aria-live="polite" style="text-align:center;margin-top:12px;font-size:13px;color:var(--mut)">
 Quelques secondes — le téléchargement s'affiche ici.</div>
-<script src="/flash-retour.js" defer></script>"""))
+<script src="/flash-retour.js" defer></script>""", gate=False))
 
 
 @router.get("/flash/statut", include_in_schema=False)
@@ -955,7 +1151,8 @@ def flash_telecharger(token: str = "", db: Session = Depends(get_db)):
         return HTMLResponse(_page("lien expiré", """
 <h1>Lien expiré</h1><p class="sous">le téléchargement n'est plus disponible</p>
 <p style="text-align:center;font-size:12.5px">Les liens Flash sont valables 30 jours.
-Écrivez à votre contact LABUSE avec votre reçu Stripe — le rapport vous sera renvoyé.</p>"""),
+Écrivez à contact@labuse.immo avec votre reçu Stripe — le rapport vous sera renvoyé.</p>""",
+                                    gate=False),
                             status_code=404)
     return FileResponse(p, media_type="application/pdf",
                         filename=f"labuse_flash_{Path(p).stem}.pdf")

@@ -89,12 +89,32 @@ SURFACES: dict[str, dict] = {
     "promo_collecte":    {"label": "Parseur programmes promoteur",       "model": MODEL_FACTUAL},
     "vision_pige":       {"label": "Radar — lecture d'image (PIGE)",     "model": MODEL_VISION},
     # CIRCUIT-1 lot 6 — l'agent de veille d'une source (web_search natif, JSON strict 6.2).
-    "agent_source":      {"label": "Agent de source (veille amont)",      "model": MODEL_REASONING},
+    # CORRECTIFS-1 B4 — le MOINS CHER du registre (Haiku) : la tâche est factuelle (trouver une
+    # date/version et la citer), pas du raisonnement. Lecture resserrée (max_uses) + plafond tokens
+    # côté agent_source.py. Relevable à Sonnet via LABUSE_IA_MODELE_AGENT_SOURCE si la mesure l'exige.
+    "agent_source":      {"label": "Agent de source (veille amont)",      "model": MODEL_FACTUAL},
     # CIRCUIT-4 lot 2 — l'agent « règle » : va lire la référence d'un calcul (Légifrance, INSEE,
     # service-public, ADEME, DEAL…) et ramène l'extrait daté ; même anti-invention qu'agent_source.
     "agent_regle":       {"label": "Agent de règle (références des calculs)", "model": MODEL_REASONING},
     "juge_vlm":          {"label": "Juge VLM (ML, hors service)",        "model": MODEL_VISION},
 }
+
+
+# CORRECTIFS-1 B2 — répartition des coûts IA en DEUX blocs DISJOINTS (jamais un total mélangé) :
+#  · interne = ce que LABUSE dépense pour SON fonctionnement — agents de vérification des sources
+#    (agent_source, agent_regle) + outils lancés par le dashboard (collecte programmes, lecture
+#    d'image Radar/pige, juge VLM) ;
+#  · clients = ce que DÉCLENCHE un client — Recherche NL, Copilote /ask (ses chemins), missions,
+#    et toutes les surfaces de fiche (synthèse, explication…).
+# Le `kind` journalisé dans `ia_log` est la clé : facturation et registre parlent le même langage.
+INTERNE_KINDS = frozenset({
+    "agent_source", "agent_regle", "promo_collecte", "vision_pige", "juge_vlm",
+})
+
+
+def bloc_ia(kind: str | None) -> str:
+    """« interne » (fonctionnement LABUSE) ou « clients » (déclenché par un client)."""
+    return "interne" if (kind in INTERNE_KINDS) else "clients"
 
 
 def _surface_env_key(kind: str) -> str:

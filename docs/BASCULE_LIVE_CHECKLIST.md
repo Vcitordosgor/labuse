@@ -38,7 +38,8 @@
 - [ ] `/healthz/crons` : la **sentinelle webhook** ne signale pas d'anomalie.
 
 ## 6. Smoke LIVE (un vrai paiement, petit d'abord)
-- [ ] **Flash 79 €** avec une **vraie carte** → retour → **PDF téléchargé** ; dashboard → paiement **succeeded** + webhook **Delivered 200**.
+- [ ] **Confirmer qu'on est bien en LIVE** : au clic « Payer 79 € », l'URL Stripe Checkout doit commencer par **`https://checkout.stripe.com/c/pay/cs_live_…`** (un `cs_test_…` = encore en test → la clé `sk_live_` n'est pas prise en compte). Même marqueur dans le `session_id` du retour `/flash/retour`.
+- [ ] **Flash 79 €** avec une **vraie carte** → retour → **PDF téléchargé** + **e-mail « Flash prêt »** reçu ; dashboard → paiement **succeeded** + webhook **Delivered 200**.
 - [ ] (optionnel) **Intégral 349 €** réel → `actif` → accès.
 - [ ] **Rembourse/annule** ensuite si c'était un test (dashboard → Refund / Cancel subscription).
 

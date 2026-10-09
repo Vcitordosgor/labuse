@@ -641,7 +641,8 @@ type Seg = 'toucher' | 'actif' | 'essai' | 'invite' | 'susp' | 'tous'
 export function LicencesSection() {
   const q = useQuery({ queryKey: ['admin-licences'], queryFn: getAdminLicences, refetchInterval: 120_000 })
   const offres = useQuery({ queryKey: ['offres'], queryFn: getOffres, staleTime: Infinity })
-  const [seg, setSeg] = useState<Seg>('toucher')
+  // CORRECTIFS-1 B1 — premier onglet affiché = « Actifs » (était « À toucher »).
+  const [seg, setSeg] = useState<Seg>('actif')
   const [recherche, setRecherche] = useState('')
   const [sel, setSel] = useState<number | null>(null)
   const [creer, setCreer] = useState<'client' | 'essai' | null>(null)
@@ -672,21 +673,29 @@ export function LicencesSection() {
   }
 
   const par = (p: Pastille) => clientes.filter((l) => pastille(l) === p)
-  const nb = { toucher: aToucher.length, actif: par('actif').length, essai: par('essai').length,
+  // CORRECTIFS-1 B1 — « Actifs » = tout compte à l'accès OUVERT (statut calculé = « Actif »), essai 7 j
+  // en cours COMPRIS (Stéphanie est un compte actif), mais PAS les essais EXPIRÉS ni les suspendus.
+  // On réutilise `statut5` (le même qui peint la pastille) → l'onglet et la colonne Statut concordent.
+  const estActif = (l: AdminLicence) => statut5(l) === 'actif'
+  const actifs = clientes.filter(estActif)
+  const nb = { toucher: aToucher.length, actif: actifs.length, essai: par('essai').length,
     invite: par('invite').length, susp: par('susp').length, tous: clientes.length }
+  // CORRECTIFS-1 B1 — « Actifs » en tête.
   const SEGS: [Seg, string][] = [
-    ['toucher', 'À toucher'], ['actif', 'Actifs'], ['essai', 'Essais'],
+    ['actif', 'Actifs'], ['toucher', 'À toucher'], ['essai', 'Essais'],
     ['invite', 'Invités'], ['susp', 'Suspendus'], ['tous', 'Tous'],
   ]
-  const base = seg === 'toucher' ? aToucher : seg === 'tous' ? clientes : clientes.filter((l) => pastille(l) === seg)
+  const base = seg === 'toucher' ? aToucher : seg === 'actif' ? actifs
+    : seg === 'tous' ? clientes : clientes.filter((l) => pastille(l) === seg)
   const rech = recherche.trim().toLowerCase()
   const lignes = rech ? base.filter((l) => (l.nom || '').toLowerCase().includes(rech) || (l.email || '').toLowerCase().includes(rech)) : base
 
   return (
     <>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        {/* CORRECTIFS-1 B1 — plus de titre « Comptes » en double : l'en-tête de section (AdminView)
+            le porte déjà. On ne garde ici que le compteur de licences actives. */}
         <div className="flex items-baseline gap-3">
-          <h1 className="font-display text-xl font-semibold text-txt-hi">Comptes</h1>
           <span className="text-[13px] text-txt-mut">{actives} licence{actives > 1 ? 's' : ''} active{actives > 1 ? 's' : ''}{mrr > 0 && ` · ${mrr.toLocaleString('fr-FR')} € par mois`}</span>
         </div>
         {/* DASHBOARD-4 (K1) — deux entrées en haut à droite, vraies pages (plus d'accordéon). */}
@@ -715,7 +724,7 @@ export function LicencesSection() {
           {SEGS.map(([k, label], i) => (
             <button key={k} onClick={() => setSeg(k)}
               className={`px-3 py-1.5 text-[13px] transition-colors duration-quick ${i > 0 ? 'border-l border-line-2' : ''} ${
-                seg === k ? 'bg-mint text-ink font-medium' : 'text-txt-mut hover:text-txt'}`}>
+                seg === k ? 'bg-mint text-mint-ink font-medium' : 'text-txt-mut hover:text-txt'}`}>
               {label} <span className="font-mono text-[11px] opacity-70">{nb[k]}</span>
             </button>
           ))}

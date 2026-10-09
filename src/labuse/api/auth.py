@@ -41,8 +41,11 @@ DEFI_2FA_ESSAIS_MAX = 5        # tentatives par défi ; épuisé → défi inval
 _PUBLIC = {"/health", "/healthz", "/healthz/crons", "/readyz", "/login", "/login/2fa", "/logout", "/favicon.ico",
            "/invitation", "/reset", "/reset-demande", "/cgv", "/mentions-legales", "/confidentialite",
            "/onboarding/retour", "/onboarding/paiement", "/stripe/webhook", "/guide",
-           "/flash", "/flash/retour", "/flash/statut", "/flash/telecharger", "/api/offres",
-           "/parcours.js", "/flash-retour.js", "/ordinateur.js",   # E3/CHARGEMENT-1 : JS same-origin (CSP-safe)
+           "/flash", "/flash/", "/flash/retour", "/flash/statut", "/flash/telecharger", "/api/offres",
+           # CORRECTIFS-1 A6 — complétion d'adresse (public, données BAN/cadastre publiques) +
+           # son JS same-origin ; A2 — la barre finale « /flash/ » (redirection 308).
+           "/adresses/autocomplete",
+           "/parcours.js", "/flash-retour.js", "/flash-omnibox.js", "/ordinateur.js",   # E3/CHARGEMENT-1 : JS same-origin (CSP-safe)
            # M21-B3 : désinscription du digest e-mail en 1 clic (lien public jeton — sécurité = le jeton).
            "/events/desabonner"}
 # Documentation auto (surface de découverte de l'API) : publique en local seulement.

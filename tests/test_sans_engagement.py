@@ -79,9 +79,12 @@ def test_art9_responsabilite_conserve_le_12_mois(client):
 
 
 def test_mentions_et_paiement_sans_avis_echeance(client):
-    for url in ("/mentions-legales",):
-        html = client.get(url).text
-        assert "avis d'échéance" not in html.lower() and "215-1" not in html
+    # CORRECTIFS-1 D1 : /mentions-legales renvoie (301) vers labuse.immo ; les CGV (servies) ne
+    # parlent ni d'avis d'échéance ni de l'article 215-1.
+    r = client.get("/mentions-legales", follow_redirects=False)
+    assert r.status_code == 301 and "labuse.immo/mentions-legales" in r.headers["location"]
+    html_cgv = client.get("/cgv").text.lower()
+    assert "avis d'échéance" not in html_cgv and "215-1" not in html_cgv
 
 
 def test_avis_echeance_commande_neutralisee():

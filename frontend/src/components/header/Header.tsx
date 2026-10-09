@@ -670,7 +670,10 @@ function AccountMenu() {
                   {d?.mode === 'compte' ? (
                     <>
                       {d.email && <p className="mt-0.5 truncate text-txt">{d.email}</p>}
-                      {d.nom && d.nom !== d.email && <p className="mt-0.5 truncate text-[11px] text-txt-mut">{d.nom}</p>}
+                      {/* CORRECTIFS-1 C3 — le nom ne s'affiche QUE s'il diffère de l'e-mail ET n'est pas
+                          une valeur de test/placeholder (ex. « ton-email@test.com » : email-like ou « test »). */}
+                      {d.nom && d.nom !== d.email && !d.nom.includes('@') && !/\btest\b/i.test(d.nom)
+                        && <p className="mt-0.5 truncate text-[11px] text-txt-mut">{d.nom}</p>}
                     </>
                   ) : d ? (
                     <p className="mt-0.5 text-txt-dim">Session locale (dev) — aucun compte connecté.</p>
@@ -688,11 +691,11 @@ function AccountMenu() {
                     <>
                       <p className="mt-0.5 text-txt">Plan <b className="text-mint">{d?.plan_label ?? '…'}</b>
                         {d?.plan_eur_mois != null && <span className="text-txt-dim"> · {d.plan_eur_mois} €/mois</span>}</p>
+                      {/* CORRECTIFS-1 C3 — ligne « [Plan] depuis le [date] » retirée (date d'ouverture
+                          non fiable comme date d'abonnement). On garde l'échéance d'essai, utile. */}
                       {d?.essai_jusqu
                         ? <p className="mt-0.5 text-[10.5px] text-amber">Essai jusqu'au {dateFr(d.essai_jusqu)}</p>
-                        : d?.depuis
-                          ? <p className="mt-0.5 text-[10.5px] text-txt-dim">{d.plan_label ?? 'Abonné'} depuis le {dateFr(d.depuis)}</p>
-                          : null}
+                        : null}
                     </>
                   )}
                 </div>

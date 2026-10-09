@@ -496,6 +496,9 @@ def courrier_pdf(body: PdfIn, request: Request, db: Session = Depends(get_db)) -
                     cc._PIED.format(societe=comp["expediteur"]["societe"])), new_x=XPos.LMARGIN, new_y=YPos.NEXT, align="L")
                 self.multi_cell(self.epw, 3.3, _pdf_safe(
                     cc._PIED_STOP.format(reference=ref_pied)), new_x=XPos.LMARGIN, new_y=YPos.NEXT, align="L")
+                # CORRECTIFS-1 D2 — droit à l'information (provenance + droits) en pied, après le STOP.
+                self.multi_cell(self.epw, 3.3, _pdf_safe(cc._PIED_DROITS),
+                                new_x=XPos.LMARGIN, new_y=YPos.NEXT, align="L")
             else:
                 self.multi_cell(self.epw, 3.3, _pdf_safe(
                     "Courrier préparé avec LABUSE — à partir de données publiques (cadastre, PLU, DVF…). "

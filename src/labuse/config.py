@@ -284,7 +284,7 @@ class Settings(BaseSettings):
     # Version des CGV en vigueur — l'acceptation est horodatée AVEC cette version.
     # Bump 2026-07-23 : retrait du sous-traitant « Resend » de l'art. 8 (aucun email auto ;
     # la version DOIT suivre tout changement du texte pour garder l'unicité version→texte).
-    cgv_version: str = "2026-07-23"
+    cgv_version: str = "2026-10-09"
     # LEX-D — mention fiscale du pied de facture Stripe. DÉFAUT = franchise en base (art. 293 B
     # du CGI) ; à BASCULER par Vic dès l'assujettissement TVA (décision comptable). Signalé au
     # rapport : le MRR visé dépasse le seuil de franchise dans l'année.

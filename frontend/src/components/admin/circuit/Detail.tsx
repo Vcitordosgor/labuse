@@ -144,7 +144,16 @@ function DetailReservoir({ id, data, back, onOpen, rafraichir }:
       else { setMsgAgent(r?.message || 'Agent envoyé — le retour arrive au journal.'); rafraichir() }
     },
   })
-  const injecter = useMutation({ mutationFn: () => postAdminSourceVeilleInjecter(id), onSuccess: rafraichir })
+  // CORRECTIFS-1 B6 — « Injecter » affichait un retour INVISIBLE (juste un refresh) : on montre
+  // désormais en cours / fait / échec. Le job part détaché (même commande que le cron) ; son
+  // exécution se suit au panneau CRON / ingestion_runs — le message le dit.
+  const [msgInjecter, setMsgInjecter] = useState<string | null>(null)
+  const injecter = useMutation({
+    mutationFn: () => postAdminSourceVeilleInjecter(id),
+    onMutate: () => setMsgInjecter('Injection en cours…'),
+    onSuccess: (r: any) => { setMsgInjecter(`Injection lancée (job « ${r?.label ?? '?'} ») — suivi au panneau CRON.`); rafraichir() },
+    onError: (e: any) => setMsgInjecter(`Échec du lancement : ${e?.message || 'erreur inconnue'}.`),
+  })
   const servir = useMutation({ mutationFn: (src: string) => postAdminCircuitFiltreServir(src, 'geste page Circuit'), onSuccess: rafraichir })
   const filtreRevenir = useMutation({ mutationFn: (src: string) => postAdminCircuitFiltreRevenir(src), onSuccess: rafraichir })
   // CIRCUIT-P7 (lot 2) — « Suspendre la veille » (ou la reprendre) : bascule source_veille.actif.
@@ -180,11 +189,21 @@ function DetailReservoir({ id, data, back, onOpen, rafraichir }:
                 : r.dernier_controle ? dateFr(r.dernier_controle) : <span style={{ color: 'var(--ambre)' }}>jamais</span>}</div>
             </div>
             <div className="actions">
-              {/* CIRCUIT-P6 — sans millésime : rien à vérifier chez le producteur, pas d'agent. */}
-              {!r.sans_millesime && <button className="btn mauve" disabled={agent.isPending}
-                onClick={() => agent.mutate()}>{agent.isPending ? 'Agent en route…' : 'Envoyer un agent'}</button>}
-              {r.vanne?.type === 'injecter' && <button className="btn ambre" disabled={injecter.isPending}
-                onClick={() => injecter.mutate()}>Ouvrir la vanne, injecter</button>}
+              {/* CORRECTIFS-1 B7 — le bouton « Envoyer un agent » existe sur TOUTES les sources, au même
+                  endroit : grisé avec le motif si la source ne peut pas être vérifiée par agent (sans
+                  millésime), jamais absent ; « Agent envoyé » grisé après l'envoi (plus de double-clic). */}
+              {(() => {
+                const envoye = agent.isSuccess && !(msgAgent && /(indisponible|épuisé|erreur)/i.test(msgAgent))
+                const bloque = !!r.sans_millesime
+                return (
+                  <button className="btn mauve" disabled={bloque || agent.isPending || envoye}
+                    title={bloque ? `Sans millésime (${r.sans_millesime}) — rien à vérifier chez le producteur` : undefined}
+                    onClick={() => { if (!bloque && !envoye) agent.mutate() }}>
+                    {bloque ? 'Agent — sans objet' : agent.isPending ? 'Agent en route…' : envoye ? 'Agent envoyé' : 'Envoyer un agent'}</button>
+                )
+              })()}
+              {r.vanne?.type === 'injecter' && <button className="btn ambre" disabled={injecter.isPending || injecter.isSuccess}
+                onClick={() => injecter.mutate()}>{injecter.isPending ? 'Injection en cours…' : injecter.isSuccess ? 'Injecté ✓' : 'Ouvrir la vanne, injecter'}</button>}
               {f.verdict === 'quarantaine' && <>
                 <button className="btn ambre" disabled={servir.isPending}
                   onClick={() => { if (confirm(`Servir « ${f.source} » malgré la quarantaine ?`)) servir.mutate(f.source) }}>Servir quand même</button>
@@ -197,6 +216,7 @@ function DetailReservoir({ id, data, back, onOpen, rafraichir }:
                 {r.veille.actif === false ? 'Reprendre la veille' : 'Suspendre la veille'}</button>}
             </div>
             {msgAgent && <div className="muted" style={{ marginTop: 8 }}>{msgAgent}</div>}
+            {msgInjecter && <div className="muted" style={{ marginTop: 8 }}>{msgInjecter}</div>}
           </div>
           {/* CIRCUIT-P7 (lot 2) — « Si cette version entre » : les recalculs lus du registre. */}
           {recalculs && recalculs.length > 0 && (

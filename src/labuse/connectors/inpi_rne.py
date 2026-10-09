@@ -171,7 +171,9 @@ def _parse_pouvoir(p: dict, diffusible: bool | None) -> dict | None:
         "diffusible": diffusible,
         "nom": None, "prenoms": None, "date_naissance": None,
         "date_prise_fonction": None, "gerant_siren": None,
-        "raw": p,
+        # CORRECTIFS-1 D3 (RGPD) — on NE conserve le payload BRUT (données personnelles : nom, prénoms,
+        # naissance, nationalité…) que si l'entreprise est DIFFUSIBLE ; sinon `raw` reste vide.
+        "raw": p if diffusible else None,
     }
     if type_personne == "INDIVIDU":
         desc = (p.get("individu") or {}).get("descriptionPersonne") or {}

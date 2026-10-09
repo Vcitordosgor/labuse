@@ -21,9 +21,10 @@ log = logging.getLogger("labuse.jobs.impl")
 
 # taille minimale d'un dump sain : un dump anormalement petit = échec (base vide, coupure). Constante.
 BACKUP_MIN_MO = 1.0
-# CRON-2 — rotation en CONSTANTE : on garde les N dumps les plus récents (7 par défaut). Le pull-mac de
-# Vic archive plus loin (disque externe) ; le VPS ne conserve qu'une fenêtre courte.
-BACKUP_ROTATION_N = 7
+# CRON-2 — rotation en CONSTANTE : on garde les N dumps les plus récents. Le pull-mac de Vic archive
+# plus loin (disque externe) ; le VPS ne conserve qu'une fenêtre courte. CORRECTIFS-1 : aligné sur le
+# shell de prod (`backup_postgres.sh` `LABUSE_BACKUP_KEEP:-4`) → 4 quotidiens (+ 4 hebdo côté shell).
+BACKUP_ROTATION_N = 4
 
 
 def _libpq_url(url: str) -> str:
@@ -495,11 +496,23 @@ def ingest_sitadel(ctx: JobContext) -> None:
     # aware). La bascule reste manuelle (`labuse golden promote`). Ne touche JAMAIS le run servi.
     from . import golden_ops
     ctx.compte(candidat=golden_ops.rapport_candidat(dry_run=ctx.dry_run))
+    _persist_millesime(ctx, "sitadel")   # E3
+
+
+def _persist_millesime(ctx: JobContext, key: str) -> None:
+    """CORRECTIFS-1 E3 — branche le magasin UNIQUE des millésimes (data_sources.source_millesime,
+    via `persist_millesime`) à la fin d'une ingestion. Best-effort : ne fait jamais échouer le job."""
+    try:
+        from .ingestion.fraicheur import persist_millesime
+        persist_millesime(ctx.db, only=key)
+    except Exception as exc:  # noqa: BLE001
+        log.warning("persist_millesime(%s) a échoué (non bloquant) : %s", key, exc)
 
 
 def ingest_dpe(ctx: JobContext) -> None:
     """DPE ADEME mensuel."""
     _ingest_via_cli(ctx, "ingest-dpe")
+    _persist_millesime(ctx, "dpe")   # E3 — millésime vivant à la fin de l'ingestion
 
 
 def ingest_bdnb(ctx: JobContext) -> None:
@@ -507,6 +520,30 @@ def ingest_bdnb(ctx: JobContext) -> None:
     tables bdnb_* + couverture parcelle mesurée. Idempotent par millésime (skip si déjà ingéré).
     N'inscrit AUCUNE variable au modèle : les candidates passent au banc K0 d'abord (L3.2)."""
     _ingest_via_cli(ctx, "ingest-bdnb")
+
+
+# ── CORRECTIFS-1 E5 — jobs manquants du registre (ban / dvf / abuse / sessions). Chaque impl
+#    délègue à la commande CLI EXISTANTE (même patron que les autres ingestions) ; le crontab
+#    n'est PAS posé ici (geste Vic via `labuse jobs crontab`). ──
+def ingest_ban(ctx: JobContext) -> None:
+    """Adresses BAN 974 (géocodage interne), refresh MENSUEL."""
+    _ingest_via_cli(ctx, "ingest-ban")
+    _persist_millesime(ctx, "ban")   # E3
+
+
+def ingest_dvf(ctx: JobContext) -> None:
+    """DVF — détecte une nouvelle livraison Etalab (Last-Modified) et recharge. Hebdomadaire."""
+    _ingest_via_cli(ctx, "refresh-dvf")
+
+
+def abuse_scan(ctx: JobContext) -> None:
+    """Détection d'abus (usage anormal / partage de compte), quotidienne."""
+    _ingest_via_cli(ctx, "abuse-scan")
+
+
+def purge_sessions(ctx: JobContext) -> None:
+    """Supprime les sessions d'authentification EXPIRÉES (minimisation), quotidienne."""
+    _ingest_via_cli(ctx, "purge-sessions")
 
 
 def sync_gpu(ctx: JobContext) -> None:

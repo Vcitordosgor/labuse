@@ -107,7 +107,6 @@ export function ProduitSection() {
 
   const nMasques = items.filter((r) => r.interne).length
   const baseVisibles = voirTests ? items : items.filter((r) => !r.interne)
-  const nNouveaux = baseVisibles.filter((r) => r.statut === 'nouveau').length
   const retours = baseVisibles.filter((r) =>
     (fStatut === 'tous' || (fStatut === 'nouveau' ? r.statut === 'nouveau' : r.statut !== 'nouveau'))
     && (fType === 'tous' || r.type === fType))
@@ -133,7 +132,7 @@ export function ProduitSection() {
       <Panel>
         <PHead>
           Retours
-          <span className="text-txt-dim">— fiche + annonce + « Signaler » global · {nNouveaux} nouveau{nNouveaux > 1 ? 'x' : ''}</span>
+          {/* CORRECTIFS-1 B8 — sous-titre « fiche + annonce + Signaler global · N » retiré (doublon des filtres). */}
           <span className="ml-auto flex flex-wrap items-center gap-1.5">
             {(['nouveau', 'traite', 'tous'] as const).map((f) => (
               <Chip key={f} tone={fStatut === f ? 'ok' : 'off'} onClick={() => setFStatut(f)}>
@@ -178,7 +177,8 @@ export function ProduitSection() {
                       ? <a href={`/socle/${r.lien}`} className="text-mint hover:underline">{r.ou} ↗</a>
                       : <span className="text-txt-dim">{r.ou}</span>}
                   </td>
-                  <td className="max-w-[380px] px-4 py-2.5 text-txt-mut">« {r.message} »</td>
+                  {/* CORRECTIFS-1 B8 — message tronqué (…) pour ne pas déborder sur Statut ; texte complet au survol. */}
+                  <td className="px-4 py-2.5 text-txt-mut"><div className="max-w-[360px] truncate" title={r.message}>« {r.message} »</div></td>
                   <td className="px-4 py-2.5 text-right">
                     {r.statut === 'nouveau'
                       ? <ActBtn tone="ghost" onClick={() => maj.mutate({ id: r.id, s: 'traite' })}>Traiter</ActBtn>
@@ -190,10 +190,7 @@ export function ProduitSection() {
             {!retours.length && <tr><td colSpan={6} className="px-4 py-6 text-center text-xs text-txt-mut">Aucun retour {fStatut !== 'tous' || fType !== 'tous' ? 'pour ce filtre' : ''} — « Signaler » vit dans la fiche, sur les annonces Radar et en haut de l'app.</td></tr>}
           </tbody>
         </table>
-        <div className="border-t border-line bg-surface-1 px-4 py-2.5 text-xs text-txt-mut">
-          UNE file : signalements fiche + annonce + « Signaler » global. Le même nombre de nouveaux qu'à la
-          jauge Produit du Pilotage (comptes de test/interne masqués, hors de tout chiffre).
-        </div>
+        {/* CORRECTIFS-1 B8 — légende « UNE file : signalements fiche + annonce… » retirée (redondante). */}
       </Panel>
 
       {/* ── Usage par outil — clients seulement, noms du menu Outils ── */}
@@ -229,10 +226,7 @@ export function ProduitSection() {
             ? <span className="text-txt-mut">{jamais.join(' · ')} — à montrer en démo, ou à repenser.</span>
             : <span className="text-txt-mut">aucun — tous les outils du menu ont été ouverts.</span>}
         </div>
-        <div className="border-t border-line bg-surface-1 px-4 py-2.5 text-xs text-txt-mut">
-          Ouvertures d'outil (événement léger, par licence). Noms = ceux du menu Outils ; l'admin et les
-          surfaces internes (Tour de contrôle, Sources) sont exclus. « Jamais ouverts » = menu moins les outils captés.
-        </div>
+        {/* CORRECTIFS-1 B8 — légende « Ouvertures d'outil (événement léger…) » retirée. */}
       </Panel>
     </>
   )

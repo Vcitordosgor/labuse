@@ -36,7 +36,7 @@ def test_crontab_deploy_contient_les_25_jobs_utc():
     assert sorted(lances) == attendus, (
         f"crontab ≠ registre — manquants {set(attendus) - set(lances)}, "
         f"en trop {set(lances) - set(attendus)}")
-    assert len(lances) == len(JOBS) == 25   # 25 horloges, aucune en double
+    assert len(lances) == len(JOBS) == 29   # 25 horloges, aucune en double
 
 
 def test_crontab_deploy_contient_les_25_jobs_reunion():

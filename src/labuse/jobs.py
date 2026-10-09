@@ -343,11 +343,25 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
        raison="Le diff des 24 documents PLU (GPU) fait remonter une révision opposable en événement de "
               "veille + bandeau. Mensuel le 15.",
        test="tests/test_cron1_registre.py::test_job_a_une_raison"),
+    # CORRECTIFS-1 E5 — jobs manquants au registre : adresses BAN (mensuel), DVF (hebdo). Le crontab
+    # n'est PAS posé ici ; ces entrées servent à ce qu'un futur `labuse jobs crontab --tz reunion`
+    # les porte. Les ingestions lourdes restent le pipeline existant (délégation CLI).
+    _j("ingest-ban", "Adresses BAN 974 (géocodage interne) — refresh mensuel",
+       "mensuel (5)", "0 1 5 * *", "05:00 le 5", touche="eau", timeout_s=3600,
+       raison="La table `adresses` (BAN 974) est LA référence de géocodage du produit (Flash, courrier, "
+              "omnibox). L'export départemental bouge lentement : refresh MENSUEL (le 5), résilient aux "
+              "coupures de téléchargement (retry).",
+       test="tests/test_cron1_registre.py::test_job_a_une_raison"),
+    _j("ingest-dvf", "DVF — recharge à la nouvelle livraison Etalab",
+       "hebdo (mar)", "0 1 * * 2", "05:00 mardi", touche="eau", timeout_s=3600,
+       raison="DVF (mutations) nourrit le marché (prix secteur, radar). Détection J+2 (Last-Modified) : "
+              "contrôle HEBDOMADAIRE (mardi) qui ne recharge QUE si une nouvelle livraison est publiée.",
+       test="tests/test_cron1_registre.py::test_job_a_une_raison"),
 
     # ══════════════════ L'EXPLOITATION — faire tourner le serveur ══════════════════
-    _j("backup-postgres", "Sauvegarde PostgreSQL (dump + rotation, 7 conservés)", "quotidien",
+    _j("backup-postgres", "Sauvegarde PostgreSQL (dump + rotation, 4 conservés)", "quotidien",
        "30 9 * * *", "13:30", touche="exploitation", timeout_s=1800, besoin_db=False,
-       raison="La seule sauvegarde : sans elle, une panne disque perd toute la base. Quotidien, 7 dumps "
+       raison="La seule sauvegarde : sans elle, une panne disque perd toute la base. Quotidien, 4 dumps "
               "conservés. RECOUPEMENT tranché : l'expression LEGACY (`30 9 * * *`) est reprise à "
               "l'identique — c'est le job réellement actif en prod ; garder l'horaire exact garantit un "
               "remplacement SANS TROU (le nouveau tourne au même instant que l'ancien ; deploy.sh pose "
@@ -372,6 +386,17 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
        "quotidien", "30 23 * * *", "03:30", touche="exploitation", timeout_s=300,
        raison="Les conversations Copilote au-delà de la rétention (défaut 7 j) sont purgées : coût de "
               "stockage + minimisation des données.",
+       test="tests/test_cron1_registre.py::test_job_a_une_raison"),
+    # CORRECTIFS-1 E5 — maintenance quotidienne : détection d'abus + purge des sessions expirées.
+    _j("abuse-scan", "Détection d'abus (usage anormal / partage de compte)", "quotidien",
+       "0 4 * * *", "08:00", touche="exploitation", timeout_s=300,
+       raison="Repère chaque jour les usages anormaux (extraction massive, partage de compte : IP "
+              "distinctes simultanées) et les signale — jamais de blocage automatique, informatif.",
+       test="tests/test_cron1_registre.py::test_job_a_une_raison"),
+    _j("purge-sessions", "Purge des sessions d'authentification expirées", "quotidien",
+       "30 4 * * *", "08:30", touche="exploitation", timeout_s=120,
+       raison="Supprime les sessions_auth EXPIRÉES (expire_at < now) : minimisation des données et "
+              "hygiène de la table de sessions. Aucune session active touchée.",
        test="tests/test_cron1_registre.py::test_job_a_une_raison"),
     # VEILLE-2 (Lot 5) — plus d'ALERTE Radar séparée : le Radar alimente la CLOCHE (kind radar), et le
     # digest du matin (07:15) l'e-maile avec le reste. Ce job (07:05) POSE les événements Radar à la cloche

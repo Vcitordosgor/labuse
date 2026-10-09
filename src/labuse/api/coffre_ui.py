@@ -54,6 +54,14 @@ def pay_cid(token: str) -> int | None:
 # tokens = variables CSS (mêmes valeurs que la DA de l'app ; on ne pose pas d'hex en dur ailleurs).
 # Le vert de marque (--mint/-dim/-ink + rgba) est injecté depuis la source unique brand.py.
 CSS = ("""
+/* CORRECTIFS-1 C7 — polices AUTO-HÉBERGÉES pour les pages SERVEUR (flash, légales, auth). Les woff2
+   sont servis par le socle statique (/socle/fonts/, @fontsource), plus aucun appel à Google Fonts. */
+@font-face{font-family:'Space Grotesk';font-style:normal;font-weight:500;font-display:swap;src:url(/socle/fonts/space-grotesk-latin-500-normal.woff2) format('woff2')}
+@font-face{font-family:'Space Grotesk';font-style:normal;font-weight:600;font-display:swap;src:url(/socle/fonts/space-grotesk-latin-600-normal.woff2) format('woff2')}
+@font-face{font-family:'Space Grotesk';font-style:normal;font-weight:700;font-display:swap;src:url(/socle/fonts/space-grotesk-latin-700-normal.woff2) format('woff2')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:400;font-display:swap;src:url(/socle/fonts/inter-latin-400-normal.woff2) format('woff2')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:500;font-display:swap;src:url(/socle/fonts/inter-latin-500-normal.woff2) format('woff2')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:600;font-display:swap;src:url(/socle/fonts/inter-latin-600-normal.woff2) format('woff2')}
 :root{
   --bg:#050706; --s1:#0B100D; --s2:#0D120F; --s3:#111814; --line:#1B2620; --line2:#1E2A23;
   /* O3 — le vert du parcours s'aligne sur la maquette validée (et sur l'oiseau) : valeurs injectées
@@ -200,13 +208,16 @@ LOCK_SVG = ('<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke=
 
 
 # Pied de page légal PARTAGÉ (tous les écrans du parcours l'affichent en bas — O1).
-FOOTER_LEGAL = ('Radar foncier · La Réunion — <a href="/cgv">CGV</a> · '
+FOOTER_LEGAL = ('LABUSE · La Réunion — <a href="/cgv">CGV</a> · '
                 '<a href="/mentions-legales">mentions légales</a> · '
                 '<a href="/confidentialite">confidentialité</a>')
 
 
 def page(titre: str, corps: str, *, w: int | None = None, legal: bool = False,
-         head: str = "", foot: str = "") -> str:
+         head: str = "", foot: str = "", gate: bool = True) -> str:
+    # CORRECTIFS-1 A1 — `gate=False` pour les pages PUBLIQUES de vente (/flash, /flash/retour,
+    # « Lien expiré ») : le blocage « disponible sur ordinateur » ne concerne QUE l'app du tunnel,
+    # pas le commerce Flash qu'un client doit pouvoir payer depuis son téléphone.
     wvar = f"--w:{w}px;" if w else ""
     cls = "legal" if legal else ""
     # S3 — les pages légales sont de LONGS documents : le corps se lit du HAUT (pas centré
@@ -226,12 +237,11 @@ def page(titre: str, corps: str, *, w: int | None = None, legal: bool = False,
             f"<link rel=\"icon\" type=\"image/png\" sizes=\"32x32\" href=\"/socle/favicon-32.png\">"
             f"<link rel=\"icon\" type=\"image/png\" sizes=\"16x16\" href=\"/socle/favicon-16.png\">"
             f"<title>LABUSE — {html.escape(titre)}</title>"
-            f"<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">"
-            f"<link href=\"https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&"
-            f"family=Inter:wght@400;500;600&display=swap\" rel=\"stylesheet\">"
+            # CORRECTIFS-1 C7 — plus de lien Google Fonts : les @font-face auto-hébergés sont dans CSS.
             f"<style>{CSS}</style>{head}</head>"
             f"<body{body_cls} style=\"{wvar}\"><main class=\"{cls} bloc\" role=\"main\" style=\"{wvar}\">"
             f"<div class=\"top\">{corps}</div>{foot_html}</main>"
             # CHARGEMENT-1 (point 6) — gate téléphone/tablette, same-origin (CSP script-src 'self').
             # Toutes les pages du tunnel (connexion, 2FA, légales, 404) renvoient vers l'ordinateur.
-            f"<script src=\"/ordinateur.js\" defer></script></body></html>")
+            + (f"<script src=\"/ordinateur.js\" defer></script>" if gate else "")
+            + "</body></html>")

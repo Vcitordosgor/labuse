@@ -367,7 +367,7 @@ sudo -u labuse bash -c 'set -a; . /etc/labuse/labuse.env; set +a; /opt/labuse/ve
 - **Quotidien 09:30 Réunion** : `deploy/scripts/backup_postgres.sh` → `pg_dump -Fc` **LEAN**
   (VP-002, cf. §5), **vérifié par `pg_restore --list` dans le job** (un dump vide ou
   illisible est supprimé et le job échoue bruyamment).
-- **Rotation** : 7 dumps quotidiens + **4 hebdomadaires** (les dumps du dimanche sont
+- **Rotation** : 4 dumps quotidiens + **4 hebdomadaires** (les dumps du dimanche sont
   hardlinkés avec le préfixe `hebdo-`), dans `/var/backups/labuse`.
 - **Avant chaque déploiement** : `deploy.sh` refait un dump automatiquement (étape 0).
 - **Restauration** : `labuse restore-db --file <dump>` (ou

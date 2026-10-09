@@ -43,6 +43,20 @@ def eligible_sirens(session: Session) -> list[str]:
     return [r[0] for r in rows]
 
 
+def _sans_nationalite(rec: dict) -> dict:
+    """CORRECTIFS-1 D3 (RGPD) — retire la NATIONALITÉ des dirigeants (et au niveau racine) du payload
+    recherche-entreprises AVANT stockage dans owner_enrichment. Donnée personnelle sensible, non servie."""
+    if not isinstance(rec, dict):
+        return rec
+    out = dict(rec)
+    dirs = out.get("dirigeants")
+    if isinstance(dirs, list):
+        out["dirigeants"] = [{k: v for k, v in d.items() if k != "nationalite"}
+                             if isinstance(d, dict) else d for d in dirs]
+    out.pop("nationalite", None)
+    return out
+
+
 _UPSERT_ENRICH = text(
     "INSERT INTO owner_enrichment (siren, denomination, source, payload, fetched_at) "
     "VALUES (:siren, :denom, :source, CAST(:payload AS jsonb), now()) "
@@ -74,7 +88,7 @@ def fetch_owner_enrichment(session: Session, connector: RechercheEntreprisesConn
             session.execute(_UPSERT_ENRICH, {
                 "siren": siren, "denom": parsed["denomination"],
                 "source": "recherche_entreprises",
-                "payload": json.dumps(rec, ensure_ascii=False)})
+                "payload": json.dumps(_sans_nationalite(rec), ensure_ascii=False)})
             n_ok += 1
         if i % 200 == 0:
             session.commit()
@@ -131,7 +145,7 @@ def fetch_denom_lookups(session: Session, connector: RechercheEntreprisesConnect
                 "norm": norm, "status": "found", "siren": c.get("siren"), "cands": None})
             session.execute(_UPSERT_ENRICH, {
                 "siren": c.get("siren"), "denom": parse_result(c)["denomination"],
-                "source": "recherche_entreprises", "payload": json.dumps(c, ensure_ascii=False)})
+                "source": "recherche_entreprises", "payload": json.dumps(_sans_nationalite(c), ensure_ascii=False)})
             counts["found"] += 1
         elif len(exacts) > 1:
             slim = [{"siren": c.get("siren"), "nom": c.get("nom_complet"),

@@ -440,7 +440,7 @@ export function M17() {
       <p className="label-caps">Signal ZAN par parcelle</p>
       {/* RECHERCHE-2 Lot 2 — la barre ZAN passe sur le MOTEUR UNIQUE (ParcelInput) : les 4 familles
           (propriétaire · adresse · IDU · référence courte) + le clic-carte, comme le reste de l'app. */}
-      <ParcelInput dataAttr="zan-idu" placeholder="Propriétaire, adresse, IDU ou référence (BW0917)"
+      <ParcelInput dataAttr="zan-idu" placeholder="Propriétaire, adresse ou IDU"
         onPick={(i) => setIdu(i)} />
       {s && (
         <div data-zan-signal className="flex flex-col gap-1.5 rounded-lg border px-3 py-2" style={{ borderColor: `${sigColor}55` }}>

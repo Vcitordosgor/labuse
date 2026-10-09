@@ -368,19 +368,31 @@ def refresh_dvf(session: Session, *, commit: bool = True, log_fn=print) -> dict:
         log_fn("DVF : aucune nouvelle livraison (Last-Modified inchangés) — no-op")
         return {"recharges": [], "no_op": True}
     recharges = []
+    # CORRECTIFS-1 E1 — on recharge `dvf_mutations` (la table SERVIE par la fiche, maille mutation),
+    # avec les COLONNES de load_dvf_geo (mutation_id, commune, geom, raw…) ; l'ancien code ciblait
+    # `dvf_mutations_parcelle` dont ces colonnes N'EXISTENT PAS → INSERT en échec, et la table lue
+    # jamais rafraîchie. La date de livraison (lastmod) n'est gravée qu'APRÈS succès (plus bas).
+    reussis: list[tuple[int, str]] = []
     for m in check["modifies"]:
         year = m["annee"]
         n_avant = session.execute(text(
-            "SELECT count(*) FROM dvf_mutations_parcelle WHERE extract(year FROM date_mutation) = :y"),
+            "SELECT count(*) FROM dvf_mutations WHERE extract(year FROM date_mutation) = :y"),
             {"y": year}).scalar()
         session.execute(text(
-            "DELETE FROM dvf_mutations_parcelle WHERE extract(year FROM date_mutation) = :y"), {"y": year})
-        n = load_dvf_geo(session, target="dvf_mutations_parcelle", years=(year,))
-        _etat_set(session, f"dvf:lastmod:{year}", m["lastmod"])
+            "DELETE FROM dvf_mutations WHERE extract(year FROM date_mutation) = :y"), {"y": year})
+        n = load_dvf_geo(session, target="dvf_mutations", years=(year,))
+        reussis.append((year, m["lastmod"]))
         recharges.append({"annee": year, "avant": n_avant, "apres": n})
         log_fn(f"DVF {year} : livraison {m['lastmod']!r} — {n_avant} → {n} mutations")
+    # CORRECTIFS-1 E1 — la date de livraison n'est enregistrée qu'une fois TOUS les millésimes
+    # modifiés rechargés sans erreur (sinon un load qui lève laisse 0 lastmod gravé → re-tenté).
+    for year, lastmod in reussis:
+        _etat_set(session, f"dvf:lastmod:{year}", lastmod)
     session.execute(text(
         "UPDATE data_sources SET last_sync_at = now() WHERE name = 'DVF / valeurs foncières'"))
+    # CORRECTIFS-1 E3 — on branche le magasin VIVANT des millésimes (data_sources.source_millesime,
+    # via persist_millesime) À LA FIN de l'ingestion DVF : un seul magasin, tenu par l'ingester.
+    persist_millesime(session, only="dvf", commit=False)
     if commit:
         session.commit()
     return {"recharges": recharges, "no_op": False}
@@ -397,6 +409,8 @@ def ingest_bodacc_quotidien(session: Session, *, commit: bool = True, log_fn=pri
     with trace_ingestion(session, "974 (BODACC quotidien)", DS_NAMES["bodacc"]):
         sirens = distinct_sirens(session)
         stats = ingest_bodacc(session, sirens, connector=BodaccConnector())
+        # CORRECTIFS-1 E3 — magasin vivant des millésimes à la fin de l'ingestion BODACC.
+        persist_millesime(session, only="bodacc", commit=False)
         if commit:
             session.commit()
         apres = session.execute(text("SELECT max(date_annonce)::date FROM bodacc_procedures")).scalar()
