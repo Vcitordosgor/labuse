@@ -517,7 +517,7 @@ def parcel_faisabilite(session: Session, parcel_id: int,
         # par un ER / EBC / portion U/AU minuscule (FIX-1 §6) gardent leur propre motif plus bas.
         hors_rouge_vide = None
         if ppr_rouge and emprise >= SEUIL_EXIGU_M2:
-            servable, hors_rouge_vide = _hors_rouge_fragment_servable(session, parcel_id)
+            servable, hors_rouge_vide = _hors_rouge_fragment_servable(session, parcel_id, k_cont)
             if not servable:
                 emprise = 0.0
         ctx.contraintes.libelles.append(
@@ -919,11 +919,17 @@ def surface_hors_ppr_rouge(session: Session, parcel_id: int, *,
         return None
     parcelle_m2 = float(row.parcelle_m2)
     rouge_m2 = float(row.rouge_m2 or 0.0)
-    hors_rouge_m2 = max(0.0, parcelle_m2 - rouge_m2)
+    hors_rouge_dessin = max(0.0, parcelle_m2 - rouge_m2)
+    # CONTENANCE-1 (règle C3) — la surface hors rouge AFFICHÉE est tirée du dessin : on la ramène à
+    # l'échelle de la contenance (× contenance/dessin), comme l'emprise et le seuil servable. Le `pct`
+    # (part de la PARCELLE hors rouge) est un rapport de deux aires du dessin → invariant par l'échelle.
+    # `getattr` : repli 1.0 (aucune ré-échelle) si le contexte n'expose pas le facteur (pas de contenance).
+    k = getattr(_ctx, "terrain_sur_dessin", 1.0)
+    hors_rouge_m2 = hors_rouge_dessin * k
     if hors_rouge_m2 < SEUIL_HORS_PPR_ROUGE_M2:
         return None                               # < 200 m² hors rouge : terrain_exigu correct, rien
     return {"hors_rouge_m2": round(hors_rouge_m2),
-            "pct": round(100.0 * hors_rouge_m2 / parcelle_m2)}
+            "pct": round(100.0 * hors_rouge_dessin / parcelle_m2)}
 
 
 def phrase_hors_ppr_rouge(hors: dict) -> str:
@@ -955,13 +961,18 @@ _HORS_ROUGE_FRAGMENT = text(
 )
 
 
-def _hors_rouge_fragment_servable(session: Session, parcel_id: int) -> tuple[bool, str | None]:
+def _hors_rouge_fragment_servable(session: Session, parcel_id: int,
+                                  k_cont: float = 1.0) -> tuple[bool, str | None]:
     """Garde-fous PPR-PARTIEL-A lot 2 sur la partie hors zone rouge d'une parcelle partiellement rouge.
 
     Rend (True, None) si le plus grand morceau d'un seul tenant hors rouge est exploitable, sinon
     (False, motif) — où motif ∈ {hors_rouge_trop_petit, hors_rouge_sans_acces, hors_rouge_invalide},
     qui alimente `vide_raison` et donc le libellé client (jamais un 0 muet). Isolé dans un SAVEPOINT :
     une géométrie pathologique (ST_Difference invalide, PPR superposés) garde 0 et compte le cas.
+
+    CONTENANCE-1 (règle C3) — `k_cont` = contenance/dessin : l'AIRE du fragment est tirée du dessin,
+    on la ramène à l'échelle de la contenance (aire_dessin × contenance/dessin) AVANT de la comparer
+    au seuil 200 m², comme l'emprise. L'ACCÈS (toucher une voie) reste un test de FORME, sur le dessin.
     """
     from ..gabarit.limites import classify_parcel_limits
     try:
@@ -971,8 +982,9 @@ def _hors_rouge_fragment_servable(session: Session, parcel_id: int) -> tuple[boo
         return False, "hors_rouge_invalide"
     if row is None or row.wkt is None or row.m2 is None:
         return False, "hors_rouge_trop_petit"   # hors rouge vide (parcelle ~100 % rouge) → rien à servir
-    # 1+2. TENANT + SURFACE : le plus grand fragment d'un seul tenant atteint-il 200 m² ?
-    if float(row.m2) < SEUIL_HORS_PPR_ROUGE_M2:
+    # 1+2. TENANT + SURFACE : le plus grand fragment d'un seul tenant atteint-il 200 m² (à l'échelle
+    # de la contenance — règle C3) ?
+    if float(row.m2) * k_cont < SEUIL_HORS_PPR_ROUGE_M2:
         return False, "hors_rouge_trop_petit"
     # 3. ACCÈS : ce fragment touche-t-il une voie (BD TOPO / emprise publique / voie privée) ?
     try:
