@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useLayoutEffect, useRef, useState } from 'react'
 
 /**
  * L'ouverture de LABUSE — l'oiseau arrive, se pose, « LABUSE » s'écrit, puis il
@@ -38,7 +38,9 @@ export function LogoIntro({ onFini }: { onFini?: () => void }) {
   const voile = useRef<HTMLDivElement>(null)
   const [parti, setParti] = useState(false)
 
-  useEffect(() => {
+  // CORRECTIF (premières images) — useLayoutEffect : la toute première image peinte doit DÉJÀ porter
+  // la bonne transformation (pas l'oiseau en haut à gauche, taille réelle, l'espace d'une frame).
+  useLayoutEffect(() => {
     const fini = () => { setParti(true); onFini?.() }
 
     // Système réglé sur « animations réduites » : on n'impose rien.
@@ -106,11 +108,12 @@ export function LogoIntro({ onFini }: { onFini?: () => void }) {
     }
 
     const image = (maintenant: number) => {
-      const t = (maintenant - debut) / 1000
+      const t = Math.max(0, (maintenant - debut) / 1000)   // CORRECTIF : jamais de t négatif (frame 0)
       if (t >= FIN) { fini(); return }
       dessine(t)
       brut = requestAnimationFrame(image)
     }
+    dessine(0)   // CORRECTIF : peint la position de départ AVANT la première frame (plus de saut)
     brut = requestAnimationFrame(image)
 
     const ecourter = () => fini()
@@ -141,7 +144,8 @@ export function LogoIntro({ onFini }: { onFini?: () => void }) {
         height={82}
         overflow="visible"
         aria-hidden
-        style={{ position: 'absolute', left: 0, top: 0, transformOrigin: '120px 30px' }}
+        // CORRECTIF : hors écran tant que la 1re transformation n'est pas appliquée (ceinture + bretelles).
+        style={{ position: 'absolute', left: 0, top: 0, transformOrigin: '120px 30px', transform: 'translate(-9999px, 0)' }}
       >
         <defs>
           {/* Chaque aile pivote dans sa moitié : les deux moitiés se recouvrent d'un cheveu
