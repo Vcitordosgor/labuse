@@ -118,9 +118,10 @@ function Cartes({ data, tacheSonde, tacheAgents, onSonder, onAgents }: {
                 {a.dernier_passage
                   ? <>Dernier passage {quandCourt(a.dernier_passage)} : {a.sources} source{(a.sources ?? 0) > 1 ? 's' : ''}, {eur(a.cout_eur)}, {a.nouvelles} nouvelle{a.nouvelles > 1 ? 's' : ''} version{a.nouvelles > 1 ? 's' : ''} trouvée{a.nouvelles > 1 ? 's' : ''}.</>
                   : <>Aucun passage encore.</>}{' '}
+                {/* CORRECTIFS-1 B5 — plus de plafond « 5 € par passage » : chaque agent est borné par son plafond de tokens. */}
                 {a.actif
-                  ? <>Plafond {eur(a.plafond_eur)} par passage{a.prochain_dimanche ? `, prochain passage dimanche ${jour(a.prochain_dimanche)}` : ''}.</>
-                  : <>Plafond à <b>0 €</b> — aucun agent ne tourne (fixer {a.cle_env} pour les activer).</>}</>
+                  ? <>Chaque agent est borné par son plafond de tokens{a.prochain_dimanche ? `, prochain passage dimanche ${jour(a.prochain_dimanche)}` : ''}.</>
+                  : <>Crédit API indisponible — recharge pour lancer un agent.</>}</>
                 : 'Agents indisponibles.'}
             </div>
           </div>
@@ -140,8 +141,7 @@ function Cartes({ data, tacheSonde, tacheAgents, onSonder, onAgents }: {
         {pending && (
           <div className="menu-liste confirm">
             <div className="cf-txt">Agent LLM sur <b>{pending.n}</b> source{pending.n > 1 ? 's' : ''} —
-              coût estimé <b>≈ {eur(pending.cout)}</b>. Plafond <b>{eur(a?.plafond_eur)}</b> par passage :
-              l'envoi s'arrête dès qu'il est atteint.</div>
+              coût estimé <b>≈ {eur(pending.cout)}</b>. Chaque agent est borné par son plafond de tokens.</div>
             <div className="cf-acts">
               <button className="btn" onClick={() => setPending(null)}>Annuler</button>
               <button className="btn mauve" onClick={confirmer}>Envoyer les agents</button>

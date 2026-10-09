@@ -503,11 +503,7 @@ export function AdminView() {
             {/* DASHBOARD-4 (P3) — l'horodatage Stripe du haut disparaît : la fraîcheur est dite en pied
                 du Pilotage (« Chiffres relevés en direct »), pas en bandeau d'en-tête. */}
           </header>
-          {section === 'ia' && (
-            <div className="mb-4 rounded-r-xl border-l-[3px] border-cp-ia bg-gradient-to-r from-cp-ia-bg/60 to-transparent px-4 py-2.5 font-mono text-[11px] tracking-[0.1em] text-cp-ia">
-              SURFACE IA — le mauve est réservé à cette section, comme dans l'app
-            </div>
-          )}
+          {/* CORRECTIFS-1 B2 — bandeau « SURFACE IA — le mauve est réservé… » retiré. */}
           {section === 'pilotage' && <PilotageSection data={d} go={setSection} majAt={pilotage.dataUpdatedAt} />}
           {section === 'licences' && <LicencesSection />}
           {section === 'ia' && <IaSection />}

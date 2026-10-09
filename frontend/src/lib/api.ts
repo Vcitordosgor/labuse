@@ -1777,9 +1777,23 @@ export interface AdminIa {
     depense_eur: number; equiv_questions: number | null; appels_aujourdhui: number }>
   // RETOURS-7 Z7 — quel modèle sert chaque surface IA (lu depuis la config, jamais un nom en dur)
   modeles_par_surface: Array<{ kind: string; label: string; model: string }>
-  note: string
+  // CORRECTIFS-1 B2 — deux blocs DISJOINTS (interne = fonctionnement LABUSE ; clients).
+  blocs: { interne: IaBloc; clients: IaBloc }
+  // CORRECTIFS-1 B3 — crédit Anthropic (estimation ; solde non exposé par l'API).
+  credit_anthropic: CreditAnthropic
+}
+// CORRECTIFS-1 B2 — un bloc de coûts IA (interne OU clients), jamais mélangés.
+export interface IaBloc { cout_eur: number; appels: number; projection_fin_mois_eur: number; cout_moyen_eur: number | null }
+// CORRECTIFS-1 B3 — crédit Anthropic : le solde n'est pas exposé par l'API → estimation = montant
+// saisi par l'admin − conso tracée (ledger) depuis la date d'achat.
+export interface CreditAnthropic {
+  expose_par_api: boolean; montant_eur: number | null; achete_le: string | null
+  conso_depuis_eur: number | null; reste_estime_eur: number | null
 }
 export const getAdminIa = () => j<AdminIa>('/admin/ia')
+// CORRECTIFS-1 B3 — enregistre le crédit Anthropic (montant + date d'achat).
+export const postAdminIaCredit = (montantEur: number | null, acheteLe: string | null) =>
+  j<CreditAnthropic>('/admin/ia/credit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ montant_eur: montantEur, achete_le: acheteLe }) })
 // CONNEXIONS-2 Lot 3 (KO-4) — file UNIQUE des signalements (fiche + annonce), traitée au dashboard
 export interface Signalement {
   id: number; type: 'fiche' | 'annonce'; parcelle_id: string | null; bien_id: number | null

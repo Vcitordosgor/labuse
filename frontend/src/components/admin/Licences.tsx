@@ -673,9 +673,10 @@ export function LicencesSection() {
   }
 
   const par = (p: Pastille) => clientes.filter((l) => pastille(l) === p)
-  // CORRECTIFS-1 B1 — « Actifs » = tout compte à l'accès OUVERT, essai 7 j COMPRIS (Stéphanie est un
-  // compte actif, pas « seulement un essai »). L'onglet « Essais » reste pour le détail des essais.
-  const estActif = (l: AdminLicence) => l.statut === 'actif' && !carteRefusee(l)
+  // CORRECTIFS-1 B1 — « Actifs » = tout compte à l'accès OUVERT (statut calculé = « Actif »), essai 7 j
+  // en cours COMPRIS (Stéphanie est un compte actif), mais PAS les essais EXPIRÉS ni les suspendus.
+  // On réutilise `statut5` (le même qui peint la pastille) → l'onglet et la colonne Statut concordent.
+  const estActif = (l: AdminLicence) => statut5(l) === 'actif'
   const actifs = clientes.filter(estActif)
   const nb = { toucher: aToucher.length, actif: actifs.length, essai: par('essai').length,
     invite: par('invite').length, susp: par('susp').length, tous: clientes.length }

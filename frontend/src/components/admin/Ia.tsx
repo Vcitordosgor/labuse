@@ -4,7 +4,7 @@
 // Note honnête : le solde Anthropic n'est pas exposé par l'API — conso trackée localement.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { getAdminIa, postAdminLicenceQuota, type AdminIa } from '../../lib/api'
+import { getAdminIa, postAdminLicenceQuota, postAdminIaCredit, type AdminIa, type IaBloc, type CreditAnthropic } from '../../lib/api'
 import { ActBtn, Chip, Lbl, Panel, PHead } from './AdminView'
 import { Chevron } from '../ui/Chevron'
 import { Chargement } from '../Loading'
@@ -39,6 +39,57 @@ function BudgetEdit({ id, budget, defaut }: { id: number; budget: number | null;
   )
 }
 
+// CORRECTIFS-1 B2 — un bloc de coûts (interne OU clients) : mois · projection · coût moyen, jamais mélangés.
+function BlocCard({ titre, sous, b, moisNom }: { titre: string; sous: string; b: IaBloc; moisNom: string }) {
+  return (
+    <div className="rounded-xl border border-line bg-surface-2 px-4 py-4">
+      <div className="flex items-baseline justify-between gap-2">
+        <Lbl>{titre}</Lbl>
+        <span className="text-[11px] text-txt-dim">{b.appels.toLocaleString('fr-FR')} appels</span>
+      </div>
+      <div className="mt-2 grid grid-cols-3 gap-3">
+        <div><div className="font-display text-xl font-semibold text-cp-ia">{eur(b.cout_eur)}</div><div className="mt-0.5 text-[10.5px] text-txt-mut">{moisNom}</div></div>
+        <div><div className="font-display text-xl font-semibold text-cp-ia">≈ {eur(b.projection_fin_mois_eur, 0)}</div><div className="mt-0.5 text-[10.5px] text-txt-mut">projection</div></div>
+        <div><div className="font-display text-xl font-semibold text-cp-ia">{eurUne(b.cout_moyen_eur)}</div><div className="mt-0.5 text-[10.5px] text-txt-mut">coût moyen</div></div>
+      </div>
+      <div className="mt-1.5 text-[11px] text-txt-dim">{sous}</div>
+    </div>
+  )
+}
+
+// CORRECTIFS-1 B3 — crédit Anthropic : l'API n'expose PAS le solde (seulement la dépense). L'admin
+// saisit « crédit acheté le JJ/MM » ; on affiche « reste ≈ saisi − conso tracée depuis » (estimation).
+function CreditCard({ credit }: { credit: CreditAnthropic }) {
+  const qc = useQueryClient()
+  const [montant, setMontant] = useState(credit.montant_eur == null ? '' : String(credit.montant_eur))
+  const [date, setDate] = useState(credit.achete_le ?? '')
+  const save = useMutation({
+    mutationFn: () => postAdminIaCredit(montant.trim() === '' ? null : Number(montant.replace(',', '.')), date.trim() || null),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-ia'] }),
+  })
+  return (
+    <div className="rounded-xl border border-line bg-surface-2 px-4 py-4">
+      <Lbl>Crédit Anthropic (estimation)</Lbl>
+      {credit.reste_estime_eur != null ? (
+        <>
+          <div className="font-display text-2xl font-semibold text-cp-ia">≈ {eur(credit.reste_estime_eur)}</div>
+          <div className="mt-1 text-[11.5px] text-txt-mut">reste estimé — {eur(credit.montant_eur)} achetés le {credit.achete_le}, {eur(credit.conso_depuis_eur)} consommés depuis (ledger)</div>
+        </>
+      ) : (
+        <div className="mt-1 text-[11.5px] text-txt-mut">Solde non exposé par l'API — saisissez le crédit acheté pour une estimation.</div>
+      )}
+      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+        <input value={montant} onChange={(e) => setMontant(e.target.value.replace(/[^0-9.,]/g, ''))} placeholder="montant €"
+          className="w-24 rounded-md border border-line-2 bg-bg px-2 py-1 text-right font-mono text-xs text-txt outline-none focus:border-cp-ia" />
+        <input type="date" value={date} onChange={(e) => setDate(e.target.value)}
+          className="rounded-md border border-line-2 bg-bg px-2 py-1 font-mono text-xs text-txt outline-none focus:border-cp-ia" />
+        <ActBtn tone="ia" onClick={() => save.mutate()} disabled={save.isPending}>Enregistrer</ActBtn>
+        <a href="https://console.anthropic.com/settings/billing" target="_blank" rel="noreferrer" className="text-[11px] text-cp-ia hover:underline">recharger ↗</a>
+      </div>
+    </div>
+  )
+}
+
 export function IaSection() {
   const q = useQuery({ queryKey: ['admin-ia'], queryFn: getAdminIa, refetchInterval: 120_000 })
   // DASHBOARD-2 (Lot 6) — filtre de la table plafond : clients / avec conso / tous (tests compris).
@@ -62,37 +113,18 @@ export function IaSection() {
     : fPlafond === 'conso' ? d.quotas.filter(aConso) : d.quotas
   return (
     <>
-      {/* DASHBOARD-2 (Lot 6) — CINQ repères : mois · projection · coût moyen · plafond défaut · crédit. */}
-      <div className="grid grid-cols-5 gap-3 max-[1100px]:grid-cols-2">
-        <div className="rounded-xl border border-line bg-surface-2 px-4 py-4">
-          <Lbl>{moisNom}</Lbl>
-          <div className="font-display text-2xl font-semibold text-cp-ia">{eur(d.mois.cout_eur)}</div>
-          <div className="mt-1 text-[11.5px] text-txt-mut">{d.mois.appels.toLocaleString('fr-FR')} questions servies</div>
-        </div>
-        <div className="rounded-xl border border-line bg-surface-2 px-4 py-4">
-          <Lbl>Projection fin de mois</Lbl>
-          <div className="font-display text-2xl font-semibold text-cp-ia">≈ {eur(d.projection_fin_mois_eur, 0)}</div>
-          <div className="mt-1 text-[11.5px] text-txt-mut">au rythme des 7 derniers jours</div>
-        </div>
-        <div className="rounded-xl border border-line bg-surface-2 px-4 py-4">
-          <Lbl>Coût moyen</Lbl>
-          {/* Une SEULE formule : c'est ce coût qui donne le « ≈ N questions » de la table ci-dessous. */}
-          <div className="font-display text-2xl font-semibold text-cp-ia">{eurUne(d.cout_unitaire_question_eur)}</div>
-          <div className="mt-1 text-[11.5px] text-txt-mut">par question ({moisNom}, ledger ia_log)</div>
-        </div>
+      {/* CORRECTIFS-1 B2 — DEUX blocs DISJOINTS (jamais un total mélangé) : mois · projection · coût moyen par bloc. */}
+      <div className="grid grid-cols-2 gap-3 max-[1100px]:grid-cols-1">
+        <BlocCard titre="IA interne" sous="Agents de vérification des sources + ce que lance le dashboard." b={d.blocs.interne} moisNom={moisNom} />
+        <BlocCard titre="IA clients" sous="Recherche NL + Copilote /ask + missions." b={d.blocs.clients} moisNom={moisNom} />
+      </div>
+      <div className="mt-3 grid grid-cols-2 gap-3 max-[1100px]:grid-cols-1">
         <div className="rounded-xl border border-line bg-surface-2 px-4 py-4">
           <Lbl>Plafond défaut / jour</Lbl>
           <div className="font-display text-2xl font-semibold text-txt-hi">{eur(d.budget_defaut_eur)}</div>
           <div className="mt-1 text-[11.5px] text-txt-mut">par compte, modifiable ci-dessous</div>
         </div>
-        <div className="rounded-xl border border-line bg-surface-2 px-4 py-4">
-          <Lbl>Crédit Anthropic</Lbl>
-          <div className="font-display text-2xl font-semibold text-txt-mut">—</div>
-          <div className="mt-1 text-[11.5px] text-txt-mut">
-            non exposé par l'API ·{' '}
-            <a href="https://console.anthropic.com/settings/billing" target="_blank" rel="noreferrer" className="text-cp-ia hover:underline">recharger ↗</a>
-          </div>
-        </div>
+        <CreditCard credit={d.credit_anthropic} />
       </div>
 
       <div className="mt-3.5 grid grid-cols-2 gap-3.5 max-[1100px]:grid-cols-1">
@@ -129,7 +161,7 @@ export function IaSection() {
             {!d.par_licence.length && <div className="py-4 text-center text-xs text-txt-mut">Aucun appel IA sur 30 jours.</div>}
           </div>
           <div className="border-t border-line bg-surface-1 px-4 py-2.5 text-xs text-txt-mut">
-            Repère un client qui surconsomme (candidat à un forfait supérieur) — ou un usage anormal. {d.note}
+            Repère un client qui surconsomme (candidat à un forfait supérieur) — ou un usage anormal.
           </div>
         </Panel>
       </div>

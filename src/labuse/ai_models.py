@@ -100,6 +100,23 @@ SURFACES: dict[str, dict] = {
 }
 
 
+# CORRECTIFS-1 B2 — répartition des coûts IA en DEUX blocs DISJOINTS (jamais un total mélangé) :
+#  · interne = ce que LABUSE dépense pour SON fonctionnement — agents de vérification des sources
+#    (agent_source, agent_regle) + outils lancés par le dashboard (collecte programmes, lecture
+#    d'image Radar/pige, juge VLM) ;
+#  · clients = ce que DÉCLENCHE un client — Recherche NL, Copilote /ask (ses chemins), missions,
+#    et toutes les surfaces de fiche (synthèse, explication…).
+# Le `kind` journalisé dans `ia_log` est la clé : facturation et registre parlent le même langage.
+INTERNE_KINDS = frozenset({
+    "agent_source", "agent_regle", "promo_collecte", "vision_pige", "juge_vlm",
+})
+
+
+def bloc_ia(kind: str | None) -> str:
+    """« interne » (fonctionnement LABUSE) ou « clients » (déclenché par un client)."""
+    return "interne" if (kind in INTERNE_KINDS) else "clients"
+
+
 def _surface_env_key(kind: str) -> str:
     """`copilote-select` → `LABUSE_IA_MODELE_COPILOTE_SELECT` (override par surface)."""
     return "LABUSE_IA_MODELE_" + kind.upper().replace("-", "_")

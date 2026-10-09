@@ -101,6 +101,31 @@ def set_int(cle: str, valeur: int) -> None:
     _cache.pop(cle, None)
 
 
+def get_str(cle: str, defaut: str = "") -> str:
+    """CORRECTIFS-1 B3 — valeur TEXTE d'un réglage (cache 5 s). Absent → `defaut`."""
+    now = time.time()
+    hit = _cache.get(cle)
+    if hit and hit[0] > now:
+        return hit[1]
+    brut = _lire_brut(cle)
+    val = defaut if brut is None else str(brut)
+    _cache[cle] = (now + _CACHE_TTL_S, val)
+    return val
+
+
+def set_str(cle: str, valeur: str) -> None:
+    """Écrit un réglage texte (admin) et INVALIDE le cache."""
+    from .db import session_scope
+    with session_scope() as s:
+        s.execute(text(_DDL))
+        s.execute(text(
+            "INSERT INTO app_reglages (cle, valeur, updated_at) VALUES (:k, :v, now()) "
+            "ON CONFLICT (cle) DO UPDATE SET valeur = EXCLUDED.valeur, updated_at = now()"),
+            {"k": cle, "v": str(valeur)})
+        s.commit()
+    _cache.pop(cle, None)
+
+
 def copilote_retention_jours() -> int:
     """RETOURS-8 (R11) — la rétention EFFECTIVE des conversations Copilote : réglage base s'il existe,
     sinon défaut config (7 jours). Lue par le job de purge ET par le bandeau front (via /copilote-v2)."""

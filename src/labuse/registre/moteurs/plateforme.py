@@ -50,12 +50,25 @@ def comptes_actifs(c) -> int:
     return int(c.execute(text("SELECT COUNT(*) FROM comptes WHERE statut = 'actif'")).scalar() or 0)
 
 
+def _bloc_case() -> str:
+    """CORRECTIFS-1 B2 — fragment SQL « interne / clients » à partir de `kind` (liste depuis ai_models,
+    valeurs contrôlées → pas d'injection)."""
+    from ...ai_models import INTERNE_KINDS
+    liste = ",".join(f"'{k}'" for k in sorted(INTERNE_KINDS))
+    return f"CASE WHEN kind IN ({liste}) THEN 'interne' ELSE 'clients' END"
+
+
 def conso_ia_mois(c) -> dict:
-    """ia_cout_eur — somme des coûts du ledger ia_log sur le mois courant (+ nombre d'appels).
-    Extraction de api/dashboard.py (admin_pilotage + admin_ia, MÊME requête des deux côtés)."""
-    return c.execute(text(
-        "SELECT COALESCE(SUM(cout_eur), 0) AS cout, COUNT(*) AS appels FROM ia_log"
-        " WHERE ts >= date_trunc('month', now())")).mappings().one()
+    """ia_cout_eur — coûts du ledger ia_log sur le mois courant. CORRECTIFS-1 B2 : rend le total
+    (compat `admin_pilotage`) ET la répartition par bloc (`blocs.interne` / `blocs.clients`),
+    jamais un total mélangé côté section IA."""
+    blocs = {"interne": {"cout": 0.0, "appels": 0}, "clients": {"cout": 0.0, "appels": 0}}
+    for r in c.execute(text(
+            f"SELECT {_bloc_case()} AS bloc, COALESCE(SUM(cout_eur), 0) AS cout, COUNT(*) AS appels"
+            " FROM ia_log WHERE ts >= date_trunc('month', now()) GROUP BY 1")).mappings():
+        blocs[r["bloc"]] = {"cout": float(r["cout"]), "appels": int(r["appels"])}
+    return {"cout": blocs["interne"]["cout"] + blocs["clients"]["cout"],
+            "appels": blocs["interne"]["appels"] + blocs["clients"]["appels"], "blocs": blocs}
 
 
 def conso_ia_30j(c) -> dict:
@@ -72,10 +85,14 @@ def conso_ia_30j(c) -> dict:
         " FROM ia_log l LEFT JOIN comptes k ON k.id = l.compte_id"
         " WHERE l.ts > now() - interval '30 days'"
         " GROUP BY l.compte_id, k.nom ORDER BY SUM(l.cout_eur) DESC")).mappings()]
-    cout_7j = float(c.execute(text(
-        "SELECT COALESCE(SUM(cout_eur), 0) FROM ia_log"
-        " WHERE ts > now() - interval '7 days'")).scalar() or 0)
-    return {"jours": jours, "par_licence": par_licence, "cout_7j": cout_7j}
+    # CORRECTIFS-1 B2 — cumul 7 jours PAR BLOC (projection fin de mois calculée par bloc).
+    cout_7j_bloc = {"interne": 0.0, "clients": 0.0}
+    for r in c.execute(text(
+            f"SELECT {_bloc_case()} AS bloc, COALESCE(SUM(cout_eur), 0) AS c FROM ia_log"
+            " WHERE ts > now() - interval '7 days' GROUP BY 1")).mappings():
+        cout_7j_bloc[r["bloc"]] = float(r["c"])
+    cout_7j = cout_7j_bloc["interne"] + cout_7j_bloc["clients"]
+    return {"jours": jours, "par_licence": par_licence, "cout_7j": cout_7j, "cout_7j_bloc": cout_7j_bloc}
 
 
 def usage_par_outil(c, jours: int) -> list[dict]:

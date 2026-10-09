@@ -1216,6 +1216,20 @@ def admin_ia(request: Request) -> dict:
     jours_restants = calendar.monthrange(today.year, today.month)[1] - today.day
     projection = float(mois["cout"]) + (cout_7j / 7.0) * jours_restants
     appels = int(mois["appels"])
+    # CORRECTIFS-1 B2 — mois / projection / coût moyen PAR BLOC (interne vs clients), jamais mélangés.
+    _blocs_mois = mois.get("blocs") or {"interne": {"cout": 0.0, "appels": 0},
+                                        "clients": {"cout": 0.0, "appels": 0}}
+    _c7b = _c30.get("cout_7j_bloc") or {"interne": 0.0, "clients": 0.0}
+
+    def _bloc_metrics(b: str) -> dict:
+        cm = _blocs_mois[b]
+        proj = float(cm["cout"]) + (float(_c7b.get(b, 0.0)) / 7.0) * jours_restants
+        moy = (float(cm["cout"]) / cm["appels"]) if cm["appels"] else None
+        return {"cout_eur": round(float(cm["cout"]), 4), "appels": int(cm["appels"]),
+                "projection_fin_mois_eur": round(proj, 2),
+                "cout_moyen_eur": (round(moy, 5) if moy is not None else None)}
+
+    blocs = {"interne": _bloc_metrics("interne"), "clients": _bloc_metrics("clients")}
     # DASHBOARD-2 (Lot 6) — UNE SEULE formule pour « ≈ N questions » : budget € ÷ coût moyen d'UNE
     # question (le MÊME `cout_unitaire` que le repère « coût moyen / question »). Fini l'incohérence
     # « 2 € ≈ 335 questions » (qui venait d'un coût moyen PAR COMPTE) vs « 0,008 € » affiché (= 250).
@@ -1243,14 +1257,72 @@ def admin_ia(request: Request) -> dict:
                  "cout_moyen_question": (float(mois["cout"]) / appels) if appels else None},
         "cout_unitaire_question_eur": round(cout_unitaire, 5),
         "projection_fin_mois_eur": round(projection, 2),
+        # CORRECTIFS-1 B2 — deux blocs DISJOINTS (interne = fonctionnement LABUSE ; clients).
+        "blocs": blocs,
         "jours": jours,
         "par_licence": par_licence,
         # RETOURS-8 (R3) — le plafond par défaut est en EUROS/jour (défaut config), éditable par licence.
         "budget_defaut_eur": round(float(config.get_settings().copilote_budget_eur_defaut), 2),
         "quotas": quotas,
         "modeles_par_surface": surfaces,
-        "note": "Solde Anthropic non exposé par l'API — consommation trackée localement (ledger ia_log).",
+        # CORRECTIFS-1 B3 — le solde Anthropic n'est PAS exposé par l'API (/v1/organizations/cost_report
+        # ne donne que la DÉPENSE) : à défaut, estimation « reste ≈ crédit saisi − conso depuis la date ».
+        "credit_anthropic": _credit_anthropic_estime(),
     }
+
+
+# CORRECTIFS-1 B3 — clés de réglage du crédit Anthropic saisi par l'admin.
+_CLE_CREDIT_EUR = "credit_anthropic_eur"       # montant acheté (euros, texte)
+_CLE_CREDIT_DATE = "credit_anthropic_date"     # date d'achat (ISO AAAA-MM-JJ)
+
+
+def _credit_anthropic_estime() -> dict:
+    """Le crédit prépayé Anthropic n'est pas lisible par l'API (seule la dépense l'est). L'admin
+    saisit le montant acheté et sa date ; on estime le reste = montant − conso tracée (ledger) depuis
+    cette date. CLAIREMENT une estimation (la conso tracée peut différer de la facturation Anthropic)."""
+    from .. import reglages
+    from ..db import engine
+    montant = reglages.get_str(_CLE_CREDIT_EUR, "").strip()
+    date_achat = reglages.get_str(_CLE_CREDIT_DATE, "").strip()
+    out: dict = {"expose_par_api": False, "montant_eur": None, "achete_le": None,
+                 "conso_depuis_eur": None, "reste_estime_eur": None}
+    try:
+        m = float(montant) if montant else None
+    except ValueError:
+        m = None
+    if m is None or not date_achat:
+        return out
+    with engine().connect() as conn:
+        conso = float(conn.execute(text(
+            "SELECT COALESCE(SUM(cout_eur), 0) FROM ia_log WHERE ts >= :d"),
+            {"d": date_achat}).scalar() or 0)
+    out.update({"montant_eur": round(m, 2), "achete_le": date_achat,
+                "conso_depuis_eur": round(conso, 4), "reste_estime_eur": round(m - conso, 2)})
+    return out
+
+
+class CreditAnthropicIn(BaseModel):
+    montant_eur: float | None = Field(default=None, ge=0.0, le=100_000.0)
+    achete_le: str | None = Field(default=None, max_length=10)   # ISO AAAA-MM-JJ
+
+
+@router.post("/admin/ia/credit", include_in_schema=False)
+def admin_ia_credit(body: CreditAnthropicIn, request: Request) -> dict:
+    """CORRECTIFS-1 B3 — enregistre le crédit Anthropic saisi (montant + date d'achat)."""
+    from fastapi import HTTPException
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from .. import reglages
+    import datetime as _dt
+    date_s = (body.achete_le or "").strip()
+    if date_s:
+        try:
+            _dt.date.fromisoformat(date_s)   # valide le format AAAA-MM-JJ
+        except ValueError:
+            raise HTTPException(422, "Date invalide (attendu AAAA-MM-JJ).")
+    reglages.set_str(_CLE_CREDIT_EUR, "" if body.montant_eur is None else str(body.montant_eur))
+    reglages.set_str(_CLE_CREDIT_DATE, date_s)
+    return _credit_anthropic_estime()
 
 
 class QuotaIn(BaseModel):
@@ -2485,11 +2557,19 @@ def carte_agents(c, plafond_eur: float) -> dict:
                 cout = None
     except Exception:  # noqa: BLE001 — pas de journal : carte vide (jamais un crash)
         pass
+    # CORRECTIFS-1 B5 — plus de plafond « 5 € par passage » : chaque agent est borné par son plafond
+    # de tokens (B4). `actif` ne dépend plus d'un plafond configuré ; l'envoi est gouverné par le
+    # crédit API (vérifié à l'envoi). `plafond_eur` = None → le front n'affiche plus de ligne plafond.
+    from ..ai import core as _ai
+    try:
+        actif = _ai.has_key()
+    except Exception:  # noqa: BLE001
+        actif = True
     return {"dernier_passage": dernier, "sources": n, "cout_eur": cout, "nouvelles": nouvelles,
             "cadence": "tous les 15 jours (dimanche)",   # CIRCUIT-P7 — cron une semaine sur deux
             "prochain_dimanche": prochain_dimanche_quinzaine(),
-            "plafond_eur": plafond_eur, "actif": plafond_eur > 0,
-            "cle_env": "LABUSE_AGENT_PLAFOND_EUR",
+            "plafond_eur": None, "actif": actif,
+            "cle_env": None,
             "credit_eur": None, "credit_url": "https://console.anthropic.com/settings/billing"}
 
 
@@ -2783,22 +2863,18 @@ def admin_circuit(request: Request) -> dict:
         "verrous": len(_verrous_mod.VERROUS),
         "garanties": len(_garanties) if _garanties is not None else None,
     }
-    # ── DASHBOARD-4 (D7) — plafond des agents (LABUSE_AGENT_PLAFOND_EUR, défaut 0 = aucun agent ne
-    #    tourne) et crédit API. À 0, c'est DIT (jamais grisé sans raison). Le crédit Anthropic n'est
-    #    pas exposé par l'API du fournisseur : il se lit sur la console (lien), on l'annonce ainsi. ──
-    import os as _os
-    _plafond = float(_os.environ.get("LABUSE_AGENT_PLAFOND_EUR", "0") or 0)
+    # CORRECTIFS-1 B5 — plus de plafond « 5 € par passage » (chaque agent borné par ses tokens, B4).
     # CIRCUIT-P7 (lot 1) — les deux cartes de l'onglet Sources : la Sonde de nuit (interrogées / en
     # panne / nouvelles vues, lues des réservoirs) et les Agents (dernier passage + coût du ledger).
     carte_sonde_data = carte_sonde(reservoirs, _etats_compte.get("nouvelle version", 0))
     try:
         with engine().begin() as _ca:
-            agents_info = carte_agents(_ca, _plafond)
+            agents_info = carte_agents(_ca, 0.0)
     except Exception:  # noqa: BLE001 — la carte Agents ne bloque jamais la page (repli minimal)
         agents_info = {
             "dernier_passage": None, "sources": 0, "cout_eur": None, "nouvelles": 0,
-            "prochain_dimanche": None, "plafond_eur": _plafond, "actif": _plafond > 0,
-            "cle_env": "LABUSE_AGENT_PLAFOND_EUR", "credit_eur": None,
+            "prochain_dimanche": None, "plafond_eur": None, "actif": True,
+            "cle_env": None, "credit_eur": None,
             "credit_url": "https://console.anthropic.com/settings/billing"}
     # CIRCUIT-P7 — les portées du bouton « Envoyer les agents » (comptes lus, jamais recomptés au
     # front) : la PORTÉE PAR DÉFAUT « sans amont lisible » (= le cron du dimanche), le verrou G8, toute
@@ -3062,7 +3138,6 @@ def admin_circuit_agents(request: Request, source_id: int | None = None,
     sans clé API ou plafond à 0 → message, rien de lancé. La PORTÉE : `source_id` (une source, depuis
     sa fiche), ou `portee` ∈ {jamais, g8, tous} ; défaut = `tous` (toute la vitrine interrogeable).
     La confirmation (coût estimé + plafond) est demandée AVANT par le front (carte Agents)."""
-    import os as _os
     import threading
     from .auth import exiger_admin
     exiger_admin(request)
@@ -3070,10 +3145,9 @@ def admin_circuit_agents(request: Request, source_id: int | None = None,
     from ..ai import core as _ai
     from ..db import engine
     qui = getattr(getattr(request, "state", None), "compte_email", None) or "admin"
-    _plafond = float(_os.environ.get("LABUSE_AGENT_PLAFOND_EUR", "0") or 0)
-    if _plafond <= 0:
-        return {"ok": False, "plafond": 0.0,
-                "message": "Plafond agents à 0 € — fixe LABUSE_AGENT_PLAFOND_EUR pour les activer."}
+    # CORRECTIFS-1 B5 — plus de plafond de dépense « 5 € par passage » : chaque agent est borné par
+    # son plafond de TOKENS (B4). On ne bloque plus sur LABUSE_AGENT_PLAFOND_EUR=0 ; seul le crédit
+    # API gouverne l'envoi.
     if not _ai.has_key():
         return {"ok": False, "credit": False,
                 "message": "Crédit API épuisé — recharge, puis relance."}
@@ -3091,8 +3165,9 @@ def admin_circuit_agents(request: Request, source_id: int | None = None,
     noms = {r["id"]: r["nom"] for r in cibles}
     circuit_taches.demarrer("agents", total=len(ids), par=str(qui),
                             message=f"0 / {len(ids)} agents · 0,00 €")
-    threading.Thread(target=_executer_agents, args=(str(qui), ids, noms, _plafond), daemon=True).start()
-    return {"ok": True, "lance": True, "n": len(ids), "plafond_eur": _plafond}
+    # plafond=0.0 → aucun arrêt sur coût (B5) ; _executer_agents n'applique plus de cap.
+    threading.Thread(target=_executer_agents, args=(str(qui), ids, noms, 0.0), daemon=True).start()
+    return {"ok": True, "lance": True, "n": len(ids)}
 
 
 @router.get("/admin/circuit/taches")
