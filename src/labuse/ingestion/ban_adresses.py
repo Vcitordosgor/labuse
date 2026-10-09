@@ -72,21 +72,46 @@ _CSV_COLS = ("id, id_fantoir, numero, rep, nom_voie, code_postal, code_insee, no
              " source_position, source_nom_voie, certification_commune, cad_parcelles")
 
 
-def download_ban_csv(dest_dir: Path, timeout_s: float = 120.0) -> Path:
-    """Télécharge et décompresse l'export BAN 974 → chemin du CSV."""
+# CORRECTIFS-1 E2 — le refresh BAN du 05/10 a planté sur une COUPURE de téléchargement (serveur
+# data.gouv déconnecté en cours de flux : httpx.RemoteProtocolError), SANS aucun retry → run avorté.
+# On enveloppe le download d'un RETRY avec backoff sur les erreurs réseau TRANSITOIRES ; un fichier
+# partiel (tmp) est jeté entre deux tentatives. Le garde-fou 80 % (couverture) est inchangé.
+_BAN_RETRY_ERRORS = (httpx.RemoteProtocolError, httpx.ReadError, httpx.ConnectError,
+                     httpx.ReadTimeout, httpx.ConnectTimeout, httpx.RemoteProtocolError)
+
+
+def download_ban_csv(dest_dir: Path, timeout_s: float = 120.0, essais: int = 4) -> Path:
+    """Télécharge et décompresse l'export BAN 974 → chemin du CSV. RÉSILIENT : réessaie (backoff)
+    si le serveur coupe le flux en cours (motif de l'échec du 05/10)."""
+    import time as _time
     dest_dir.mkdir(parents=True, exist_ok=True)
     gz = dest_dir / "adresses-974.csv.gz"
     csv = dest_dir / "adresses-974.csv"
-    with httpx.stream("GET", BAN_URL, timeout=timeout_s, follow_redirects=True) as resp:
-        resp.raise_for_status()
-        with tempfile.NamedTemporaryFile(dir=dest_dir, delete=False) as tmp:
-            for chunk in resp.iter_bytes():
-                tmp.write(chunk)
-    Path(tmp.name).replace(gz)
-    with gzip.open(gz, "rb") as fin, open(csv, "wb") as fout:
-        shutil.copyfileobj(fin, fout)
-    log.info("BAN 974 téléchargée : %s (%.1f Mo)", csv, csv.stat().st_size / 1e6)
-    return csv
+    derniere_exc: Exception | None = None
+    for tentative in range(1, essais + 1):
+        tmp_name: str | None = None
+        try:
+            with httpx.stream("GET", BAN_URL, timeout=timeout_s, follow_redirects=True) as resp:
+                resp.raise_for_status()
+                with tempfile.NamedTemporaryFile(dir=dest_dir, delete=False) as tmp:
+                    tmp_name = tmp.name
+                    for chunk in resp.iter_bytes():
+                        tmp.write(chunk)
+            Path(tmp_name).replace(gz)
+            with gzip.open(gz, "rb") as fin, open(csv, "wb") as fout:
+                shutil.copyfileobj(fin, fout)
+            log.info("BAN 974 téléchargée : %s (%.1f Mo)", csv, csv.stat().st_size / 1e6)
+            return csv
+        except (*_BAN_RETRY_ERRORS, gzip.BadGzipFile) as exc:
+            derniere_exc = exc
+            if tmp_name:
+                Path(tmp_name).unlink(missing_ok=True)   # fichier partiel/corrompu → jeté
+            if tentative < essais:
+                attente = min(60.0, 3.0 * 2 ** (tentative - 1))   # 3, 6, 12 s
+                log.warning("BAN 974 : téléchargement interrompu (%s) — tentative %d/%d, nouvel essai dans %.0fs",
+                            type(exc).__name__, tentative, essais, attente)
+                _time.sleep(attente)
+    raise RuntimeError(f"BAN 974 : téléchargement échoué après {essais} tentatives") from derniere_exc
 
 
 def _copy_staging(session: Session, csv_path: Path) -> int:

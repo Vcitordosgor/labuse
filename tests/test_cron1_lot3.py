@@ -11,7 +11,7 @@ def test_crontab_genere_une_ligne_par_job():
     # RADAR-AUTO-1 (Lot C) planifie radar-cycle / -dvf / -mensuel → 23 ;
     # VEILLE-FIX-2 (Lot D) ajoute mail-queue-consommer (worker de la file, 5 min) → 24 ;
     # COHERENCE-FIX-1 (lot G) ajoute coherence-banc (banc de cohérence nocturne, 03:45) → 25.
-    assert len(lignes_job) == len(JOBS) == 25, "une ligne par job du registre, ni plus ni moins"
+    assert len(lignes_job) == len(JOBS) == 29, "une ligne par job du registre, ni plus ni moins"
     for nom in JOBS:
         assert f"jobs run {nom}'" in c, f"{nom} absent du crontab généré"
     # jamais écrit à la main : en-tête d'avertissement + shell/mailto
