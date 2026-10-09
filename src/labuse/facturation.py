@@ -161,12 +161,19 @@ def ensure_flash_table(db: Session) -> None:
             created_at timestamptz NOT NULL DEFAULT now(),
             updated_at timestamptz NOT NULL DEFAULT now()
         )"""))
+    # CORRECTIFS-1 A3 — acceptation des CGV recueillie AVANT paiement (case obligatoire) :
+    # on consigne la version du contrat et l'horodatage de la coche. ADD COLUMN IF NOT EXISTS
+    # (no-op sur table déjà à jour ; table minuscule, hors chemin de boot → verrou sans effet).
+    db.execute(text("ALTER TABLE flash_commandes ADD COLUMN IF NOT EXISTS cgv_version text"))
+    db.execute(text("ALTER TABLE flash_commandes ADD COLUMN IF NOT EXISTS cgv_accepte_at timestamptz"))
     db.commit()
 
 
-def creer_checkout_flash(db: Session, idu: str) -> str:
+def creer_checkout_flash(db: Session, idu: str, cgv_version: str | None = None) -> str:
     """Checkout PAIEMENT UNIQUE 79 € pour un rapport Flash sur `idu` (parcelle validée par
-    l'appelant). L'email est collecté par Stripe ; le retour porte le session_id."""
+    l'appelant). L'email est collecté par Stripe ; le retour porte le session_id.
+    CORRECTIFS-1 A3 — `cgv_version` : version des CGV acceptée par la case obligatoire juste
+    avant ce checkout ; consignée avec l'horodatage de la coche (now())."""
     stripe = _stripe()
     s = get_settings()
     if not s.stripe_price_flash:
@@ -184,11 +191,35 @@ def creer_checkout_flash(db: Session, idu: str) -> str:
         # (à compléter par Vic) ; le pied porte la mention fiscale (art. 293 B ou TVA).
         invoice_creation={"enabled": True, "invoice_data": {"footer": s.facture_mention}},
         locale="fr")
-    db.execute(text("INSERT INTO flash_commandes (stripe_session_id, idu) VALUES (:s, :i)"
-                    " ON CONFLICT (stripe_session_id) DO NOTHING"), {"s": session.id, "i": idu})
+    db.execute(text("INSERT INTO flash_commandes (stripe_session_id, idu, cgv_version, cgv_accepte_at)"
+                    " VALUES (:s, :i, :v, now()) ON CONFLICT (stripe_session_id) DO NOTHING"),
+               {"s": session.id, "i": idu, "v": cgv_version})
     audit(db, "flash_checkout_cree", None, None, f"idu={idu}")
     db.commit()
     return session.url
+
+
+def _flash_envoyer_mail_pret(db: Session, session_id: str, cmd_id: int, idu: str) -> None:
+    """CORRECTIFS-1 A4 — e-mail « Flash prêt ». BEST-EFFORT ABSOLU : n'élève JAMAIS (sinon le
+    fulfillment, déjà en base `generee`, basculerait à tort en `erreur`). Dédup sur le session_id."""
+    try:
+        from sqlalchemy import text as _t
+        row = db.execute(_t("SELECT email, commune FROM flash_commandes fc"
+                            " LEFT JOIN parcels p ON p.idu = fc.idu WHERE fc.id = :i"),
+                         {"i": cmd_id}).mappings().first()
+        email = row and row["email"]
+        if not email:
+            return  # pas d'email collecté (rare) : rien à envoyer, le /flash/retour reste la voie
+        s = get_settings()
+        commune = (row and row["commune"]) or ""
+        lien = f"{s.public_base_url}/flash/retour?session_id={session_id}"
+        from .mail import envoyer_mail
+        envoyer_mail(key="flash_pret", to=email, demandeur="flash",
+                     dedup=f"flash_pret:{session_id}",
+                     params={"LIEN_PDF": lien, "VALIDITE": str(s.flash_token_days),
+                             "IDU": idu, "COMMUNE": commune})
+    except Exception as e:  # noqa: BLE001 — best-effort, jamais bloquant
+        log.warning("flash %s : mail « prêt » non parti (%s)", session_id, e)
 
 
 def _flash_fulfill(db: Session, session_id: str, email: str | None) -> None:
@@ -230,6 +261,11 @@ def _flash_fulfill(db: Session, session_id: str, email: str | None) -> None:
             {"p": pdf.name, "j": get_settings().flash_token_days, "i": row["id"]})
         audit(db, "flash_genere", None, None, f"idu={row['idu']} cmd={row['id']}")
         db.commit()
+        # CORRECTIFS-1 A4 — mail « Flash prêt » (template Brevo `flash_pret`, id 17) à l'acheteur.
+        # LIEN_PDF pointe vers /flash/retour?session_id : page de récupération ré-ouvrable qui
+        # frappe un token de téléchargement frais à chaque visite (valable 30 j) — robuste même
+        # si le navigateur de l'acheteur a entretemps fait tourner le token (flash_statut).
+        _flash_envoyer_mail_pret(db, session_id, row["id"], row["idu"])
     except Exception as e:  # noqa: BLE001
         log.error("flash %s : génération en échec (%s)", session_id, e)
         db.execute(text("UPDATE flash_commandes SET statut = 'erreur', updated_at = now()"

@@ -200,13 +200,16 @@ LOCK_SVG = ('<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke=
 
 
 # Pied de page légal PARTAGÉ (tous les écrans du parcours l'affichent en bas — O1).
-FOOTER_LEGAL = ('Radar foncier · La Réunion — <a href="/cgv">CGV</a> · '
+FOOTER_LEGAL = ('LABUSE · La Réunion — <a href="/cgv">CGV</a> · '
                 '<a href="/mentions-legales">mentions légales</a> · '
                 '<a href="/confidentialite">confidentialité</a>')
 
 
 def page(titre: str, corps: str, *, w: int | None = None, legal: bool = False,
-         head: str = "", foot: str = "") -> str:
+         head: str = "", foot: str = "", gate: bool = True) -> str:
+    # CORRECTIFS-1 A1 — `gate=False` pour les pages PUBLIQUES de vente (/flash, /flash/retour,
+    # « Lien expiré ») : le blocage « disponible sur ordinateur » ne concerne QUE l'app du tunnel,
+    # pas le commerce Flash qu'un client doit pouvoir payer depuis son téléphone.
     wvar = f"--w:{w}px;" if w else ""
     cls = "legal" if legal else ""
     # S3 — les pages légales sont de LONGS documents : le corps se lit du HAUT (pas centré
@@ -234,4 +237,5 @@ def page(titre: str, corps: str, *, w: int | None = None, legal: bool = False,
             f"<div class=\"top\">{corps}</div>{foot_html}</main>"
             # CHARGEMENT-1 (point 6) — gate téléphone/tablette, same-origin (CSP script-src 'self').
             # Toutes les pages du tunnel (connexion, 2FA, légales, 404) renvoient vers l'ordinateur.
-            f"<script src=\"/ordinateur.js\" defer></script></body></html>")
+            + (f"<script src=\"/ordinateur.js\" defer></script>" if gate else "")
+            + "</body></html>")

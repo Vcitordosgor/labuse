@@ -173,7 +173,7 @@ _FLASH_RETOUR_JS = """
         return;
       }
       if(d.statut==='erreur'){
-        el.innerHTML='<p style="color:var(--err)">La g\\u00e9n\\u00e9ration a rencontr\\u00e9 un probl\\u00e8me \\u2014 elle va \\u00eatre retent\\u00e9e automatiquement. Si rien ne vient, \\u00e9crivez \\u00e0 votre contact LABUSE avec votre re\\u00e7u Stripe : le rapport vous sera fourni.</p>';
+        el.innerHTML='<p style="color:var(--err)">La g\\u00e9n\\u00e9ration a rencontr\\u00e9 un probl\\u00e8me \\u2014 elle va \\u00eatre retent\\u00e9e automatiquement. Si rien ne vient, \\u00e9crivez \\u00e0 contact@labuse.immo avec votre re\\u00e7u Stripe : le rapport vous sera fourni.</p>';
       }
       relance();
     }).catch(function(){ relance(); });
@@ -184,7 +184,7 @@ _FLASH_RETOUR_JS = """
       document.getElementById('mark').innerHTML='!';
       document.getElementById('hero').textContent='Votre paiement est bien confirm\\u00e9';
       document.getElementById('sub').textContent='la g\\u00e9n\\u00e9ration prend plus de temps que pr\\u00e9vu';
-      document.getElementById('etat').innerHTML='<p style="font-size:12.5px;line-height:1.6">Votre paiement est confirm\\u00e9 chez Stripe \\u2014 rien n\\'est perdu. La g\\u00e9n\\u00e9ration prend plus de temps que pr\\u00e9vu : le lien vous parviendra par e-mail, ou rouvrez cette page un peu plus tard. En cas de doute, \\u00e9crivez \\u00e0 votre contact LABUSE avec votre re\\u00e7u Stripe, le rapport vous sera fourni.</p>';
+      document.getElementById('etat').innerHTML='<p style="font-size:12.5px;line-height:1.6">Votre paiement est confirm\\u00e9 chez Stripe \\u2014 rien n\\'est perdu. La g\\u00e9n\\u00e9ration prend plus de temps que pr\\u00e9vu : le lien vous parviendra par e-mail, ou rouvrez cette page un peu plus tard. En cas de doute, \\u00e9crivez \\u00e0 contact@labuse.immo avec votre re\\u00e7u Stripe, le rapport vous sera fourni.</p>';
       return;
     }
     setTimeout(poll, 2000);
@@ -201,13 +201,75 @@ def flash_retour_js():
                     headers={"Cache-Control": "public, max-age=3600"})
 
 
+# CORRECTIFS-1 A6 — complétion d'adresse PENDANT LA FRAPPE sur /flash, MÊME source que l'omnibox
+# de la carte : l'endpoint interne `/adresses/autocomplete` (table BAN rattachée aux parcelles,
+# chaque suggestion porte déjà son IDU). Fichier SAME-ORIGIN (CSP script-src 'self', comme
+# flash-retour.js) ; choisir une suggestion → /flash?idu=... (écran de validation A7).
+_FLASH_OMNIBOX_JS = """
+(function(){
+  var form=document.querySelector('[data-flash-omnibox]'); if(!form)return;
+  var inp=form.querySelector('#q'), box=document.getElementById('q-sugg');
+  if(!inp||!box)return;
+  var items=[], active=-1, timer=null, lastQ='';
+  function hide(){ box.hidden=true; box.innerHTML=''; items=[]; active=-1; inp.setAttribute('aria-expanded','false'); }
+  function pick(it){ if(it&&it.idu){ window.location.href='/flash?idu='+encodeURIComponent(it.idu); } }
+  function render(){
+    if(!items.length){ hide(); return; }
+    box.innerHTML='';
+    items.forEach(function(it,i){
+      var d=document.createElement('div');
+      d.setAttribute('role','option'); d.id='q-opt-'+i;
+      d.textContent=it.label||it.idu;
+      d.style.cssText='padding:10px 14px;font-size:13.5px;cursor:pointer;color:var(--txt,#e8eef3);'+(i===active?'background:rgba(127,224,185,.14)':'');
+      d.addEventListener('mousedown',function(e){ e.preventDefault(); pick(it); });
+      box.appendChild(d);
+    });
+    box.hidden=false; inp.setAttribute('aria-expanded','true');
+  }
+  function fetchSugg(q){
+    fetch('/adresses/autocomplete?q='+encodeURIComponent(q)).then(function(r){return r.ok?r.json():{features:[]};}).then(function(d){
+      if(inp.value.trim()!==q)return;  // réponse obsolète
+      items=(d.features||d.suggestions||[]).map(function(f){
+        var p=f.properties||f; return {label:p.label||p.libelle||p.nom, idu:p.idu||p.id};
+      }).filter(function(x){return x.idu;});
+      active=-1; render();
+    }).catch(function(){ /* silencieux : la soumission libre reste possible */ });
+  }
+  inp.addEventListener('input',function(){
+    var q=inp.value.trim();
+    if(q===lastQ)return; lastQ=q;
+    if(timer)clearTimeout(timer);
+    if(q.length<3){ hide(); return; }
+    timer=setTimeout(function(){ fetchSugg(q); },160);
+  });
+  inp.addEventListener('keydown',function(e){
+    if(box.hidden)return;
+    if(e.key==='ArrowDown'){ e.preventDefault(); active=Math.min(active+1,items.length-1); render(); }
+    else if(e.key==='ArrowUp'){ e.preventDefault(); active=Math.max(active-1,0); render(); }
+    else if(e.key==='Enter'){ if(active>=0){ e.preventDefault(); pick(items[active]); } }
+    else if(e.key==='Escape'){ hide(); }
+  });
+  document.addEventListener('click',function(e){ if(!form.contains(e.target))hide(); });
+})();
+"""
+
+
+@router.get("/flash-omnibox.js", include_in_schema=False)
+def flash_omnibox_js():
+    from fastapi.responses import Response
+    return Response(_FLASH_OMNIBOX_JS, media_type="application/javascript",
+                    headers={"Cache-Control": "public, max-age=3600"})
+
+
 # ── le gabarit Coffre serveur — délègue au design system validé (coffre_ui, partie E) ──
 
-def _page(titre: str, corps: str, large: bool = False, head: str = "", pied: bool = True) -> str:
+def _page(titre: str, corps: str, large: bool = False, head: str = "", pied: bool = True,
+          gate: bool = True) -> str:
     # O1 — le pied légal passe par `foot=` (collé en bas), plus empilé dans le corps.
+    # CORRECTIFS-1 A1 — `gate=False` sur les pages Flash publiques (payables au téléphone).
     return coffre_ui.page(titre, coffre_ui.OISEAU + corps,
                           w=760 if large else None, legal=large, head=head,
-                          foot=coffre_ui.FOOTER_LEGAL if pied else "")
+                          foot=coffre_ui.FOOTER_LEGAL if pied else "", gate=gate)
 
 
 # ── E4 · invitation → mot de passe + CGV → Checkout ──
@@ -642,18 +704,18 @@ partage d'accès, contournement technique).</p>
 <h2 id="a4">4. Prix et paiement</h2>
 <p><b>Intégral</b> : abonnement mensuel de {oi['eur_mois']} € par licence, accès complet au service.
 <b>Flash</b> : {of['eur']} € par rapport — paiement unique donnant droit à UN rapport PDF portant
-sur UNE parcelle, téléchargeable pendant {of['validite_lien_jours']} jours (article 4 bis). Prix hors taxes le cas
-échéant — le régime de TVA applicable figure sur les factures. Paiement par carte via
+sur UNE parcelle, téléchargeable pendant {of['validite_lien_jours']} jours (article 4 bis).
+<b>TVA non applicable, art. 293 B du CGI</b> (franchise en base). Paiement par carte via
 <b>Stripe</b> (paiement hébergé : aucune donnée de carte ne transite par LABUSE), factures
 et reçus émis par Stripe.</p>
 
 <h2 id="a4bis">4 bis. Le rapport Flash</h2>
 <p>Le rapport Flash est un document numérique généré et livré immédiatement après paiement.
-<b>L'exécution commence dès le paiement, à la demande expresse de l'acheteur, qui renonce
-le cas échéant à son droit de rétractation</b> (contenu numérique fourni immédiatement).
-Le rapport porte exclusivement sur la parcelle confirmée par l'acheteur avant paiement ;
-l'article 2 (nature des analyses) s'y applique intégralement. En cas d'échec technique de
-génération, LABUSE fournit le rapport par tout moyen ou rembourse le paiement.</p>
+<b>L'acceptation des présentes conditions est recueillie avant le paiement</b> (case à cocher
+obligatoire sur l'écran de confirmation, version et horodatage consignés). Le rapport porte
+exclusivement sur la parcelle confirmée par l'acheteur avant paiement ; l'article 2 (nature des
+analyses) s'y applique intégralement. En cas d'échec technique de génération, LABUSE fournit le
+rapport par tout moyen ou rembourse le paiement.</p>
 
 <h2 id="a5">5. Durée et résiliation</h2>
 <p>L'abonnement Intégral est <b>mensuel et sans engagement de durée</b> : il se reconduit tacitement
@@ -700,7 +762,7 @@ d'exploitation, décision d'investissement) sont exclus — dans le prolongement
 <p>Droit français. Compétence : les tribunaux dans le ressort de Saint-Denis de La Réunion,
 après tentative de résolution amiable (30 jours).</p>
 <p><a class="haut" href="#haut">↑ Haut de page</a></p>
-</div>""", large=True), status_code=200)
+</div>""", large=True, gate=False), status_code=200)
 
 
 @router.get("/mentions-legales", include_in_schema=False)
@@ -822,28 +884,129 @@ lit en trois minutes.</p>
 # unique, email collecté par Stripe) → /flash/retour (poll de génération, spinner sobre)
 # → lien de téléchargement signé (30 jours). Sans compte, sans abonnement, sans email maison.
 
+# CORRECTIFS-1 A6 — le champ « référence » accepte l'IDU 14 caractères ET une référence
+# cadastrale lisible « Commune SECTION NUMÉRO » (ex. « Saint-Paul CW 658 »). La commune est
+# résolue par la table `parcels` elle-même (pliage accents/casse partagé), section+numéro
+# comparés aux positions fixes de l'IDU (insee5 · préfixe3 · section2 · numéro4).
+def _flash_resoudre_ref(db, ref: str) -> str | None:
+    import re
+
+    from sqlalchemy import text as _t
+    s = (ref or "").strip().upper()
+    if not s:
+        return None
+    compact = s.replace(" ", "")
+    if len(compact) == 14 and compact.isalnum():
+        return db.execute(_t("SELECT idu FROM parcels WHERE idu = :i"), {"i": compact}).scalar()
+    m = re.match(r"^(.+?)[\s,]+([A-Z]{1,2})\s*0*(\d{1,4})$", s)
+    if not m:
+        return None
+    commune, section, numero = m.group(1).strip(), m.group(2), m.group(3)
+    secnum = section.zfill(2) + numero.zfill(4)   # ex. « CW », « 658 » → « CW0658 » = idu[8:14]
+    from ..constants import params_pliage, sql_plie
+    col = sql_plie("commune")
+    return db.execute(_t(
+        f"SELECT idu FROM parcels WHERE {col} = {sql_plie(':c')} "
+        "AND substr(idu, 9, 6) = :secnum LIMIT 1"),
+        {"c": commune, "secnum": secnum, **params_pliage()}).scalar()
+
+
+# CORRECTIFS-1 A7 — écran de validation : vue aérienne IGN (couche HR.ORTHOIMAGERY.ORTHOPHOTOS,
+# WMS Géoplateforme, même source que la carte, autorisée par la CSP img-src data.geopf.fr) +
+# contour cadastral de la parcelle, assombrissement autour, trait vert. Tout est rendu SERVEUR :
+# l'ortho est une balise <img> (pas de JS), le contour un calque SVG calculé ici en pixels.
+def _flash_apercu_ortho(gj3857: str | None) -> str:
+    import json
+    if not gj3857:
+        return ""
+    try:
+        geom = json.loads(gj3857)
+    except Exception:  # noqa: BLE001
+        return ""
+    polys = geom.get("coordinates") or []
+    if geom.get("type") == "Polygon":
+        polys = [polys]
+    elif geom.get("type") != "MultiPolygon":
+        return ""
+    rings = [ring for poly in polys for ring in poly if ring]
+    pts = [(x, y) for ring in rings for x, y in ring]
+    if not pts:
+        return ""
+    xs = [p[0] for p in pts]
+    ys = [p[1] for p in pts]
+    minx, maxx, miny, maxy = min(xs), max(xs), min(ys), max(ys)
+    cx, cy = (minx + maxx) / 2, (miny + maxy) / 2
+    span = max(maxx - minx, maxy - miny, 1.0) * 1.8   # marge autour de la parcelle
+    half = span / 2
+    bminx, bmaxx, bminy, bmaxy = cx - half, cx + half, cy - half, cy + half
+    W = H = 640
+
+    def px(x, y):
+        return ((x - bminx) / span * W, (bmaxy - y) / span * H)
+
+    def ring_path(ring):
+        d = ""
+        for i, (x, y) in enumerate(ring):
+            a, b = px(x, y)
+            d += f"{'M' if i == 0 else 'L'}{a:.1f} {b:.1f}"
+        return d + "Z"
+
+    subpaths = "".join(ring_path(r) for r in rings)
+    wms = ("https://data.geopf.fr/wms-r/wms?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap"
+           "&LAYERS=HR.ORTHOIMAGERY.ORTHOPHOTOS&STYLES=&FORMAT=image/jpeg&CRS=EPSG:3857"
+           f"&WIDTH={W}&HEIGHT={H}&BBOX={bminx:.1f},{bminy:.1f},{bmaxx:.1f},{bmaxy:.1f}")
+    # masque sombre : grand rectangle + la parcelle en « trou » (fill-rule evenodd) ; trait vert au-dessus.
+    return (
+        '<div class="flash-apercu" style="position:relative;width:100%;aspect-ratio:1;border-radius:14px;'
+        'overflow:hidden;border:1px solid var(--line,#26323c);background:#0c1116;margin:2px 0 4px">'
+        f'<img src="{html.escape(wms)}" alt="Vue aérienne IGN de la parcelle" width="{W}" height="{H}" '
+        'loading="lazy" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">'
+        f'<svg viewBox="0 0 {W} {H}" style="position:absolute;inset:0;width:100%;height:100%" '
+        'aria-hidden="true" preserveAspectRatio="xMidYMid slice">'
+        f'<path d="M0 0H{W}V{H}H0Z{subpaths}" fill="rgba(5,8,11,.55)" fill-rule="evenodd"/>'
+        f'<path d="{subpaths}" fill="none" stroke="#7fe0b9" stroke-width="3" stroke-linejoin="round"/>'
+        '</svg></div>')
+
+
 @router.get("/flash", include_in_schema=False)
-def flash_page(idu: str = "", q: str = "", annule: int = 0, db: Session = Depends(get_db)):
+def flash_page(idu: str = "", q: str = "", annule: int = 0, cgv: str = "",
+               db: Session = Depends(get_db)):
     from sqlalchemy import text
 
     from ..offres import offre_flash
     of = offre_flash()
     note_annule = ('<p class="err">Paiement interrompu — rien n\'a été débité.</p>' if annule else "")
+    # CORRECTIFS-1 A3 — retour serveur quand on a tenté de payer sans cocher les CGV.
+    cgv_err = ('<p class="err">Vous devez accepter les conditions générales de vente avant de '
+               'payer.</p>' if cgv == "manquante" else "")
     # ÉTUDE DE ZONE Z5 — un commerçant a une ADRESSE, pas un IDU. La recherche par adresse (BAN) trouve
     # la parcelle qui contient le point ; échec/point sans parcelle → message honnête, jamais un 500.
+    # CORRECTIFS-1 A6 — le champ référence accepte l'IDU OU « Saint-Paul CW 658 ».
+    if idu.strip() and len(idu.strip()) != 14:
+        idu = _flash_resoudre_ref(db, idu) or idu
     adresse_msg = ""
     if q.strip() and not idu:
         from .scoreur import _geocode
         try:
             geo = _geocode(q)
+            pt = "ST_SetSRID(ST_MakePoint(:lon,:lat),4326)"
             row = db.execute(text(
-                "SELECT idu FROM parcels WHERE ST_Contains(geom, ST_SetSRID(ST_MakePoint(:lon,:lat),4326)) "
-                "LIMIT 1"), {"lon": geo["lon"], "lat": geo["lat"]}).scalar()
+                f"SELECT idu FROM parcels WHERE ST_Contains(geom, {pt}) LIMIT 1"),
+                {"lon": geo["lon"], "lat": geo["lat"]}).scalar()
+            if not row:
+                # A6 — le point BAN tombe hors parcelle (voie, trottoir) : on propose la parcelle
+                # la plus proche dans un rayon court (40 m), l'acheteur la VALIDE à l'écran suivant.
+                row = db.execute(text(
+                    f"SELECT idu FROM parcels WHERE geom IS NOT NULL "
+                    f"AND ST_DWithin(geom::geography, {pt}::geography, 40) "
+                    f"ORDER BY geom <-> {pt} LIMIT 1"),
+                    {"lon": geo["lon"], "lat": geo["lat"]}).scalar()
             if row:
                 idu = row
             else:
-                adresse_msg = ('<p class="err">Adresse trouvée, mais aucune parcelle cadastrale à ce '
-                               'point. Essayez l\'IDU.</p>')
+                adresse_msg = ('<p class="err">Adresse trouvée, mais aucune parcelle cadastrale à '
+                               'proximité. Saisissez la référence cadastrale ci-dessous '
+                               '(IDU ou « Saint-Paul CW 658 »).</p>')
         except Exception as exc:  # noqa: BLE001 — géocodage indisponible/introuvable → dit honnêtement
             from fastapi import HTTPException as _HX
             detail = exc.detail if isinstance(exc, _HX) else "service d'adresses momentanément indisponible"
@@ -851,11 +1014,20 @@ def flash_page(idu: str = "", q: str = "", annule: int = 0, db: Session = Depend
     parcelle = None
     if idu and len(idu) == 14:
         parcelle = db.execute(text(
-            "SELECT idu, commune, round(surface_m2) AS m2 FROM parcels WHERE idu = :i"),
+            "SELECT idu, commune, round(surface_m2) AS m2, "
+            # CORRECTIFS-1 A7 — géométrie simplifiée en 3857 pour l'aperçu ortho (écran de validation).
+            " ST_AsGeoJSON(ST_Transform(ST_SimplifyPreserveTopology(geom, 0.5), 3857), 5) AS gj3857 "
+            "FROM parcels WHERE idu = :i"),
             {"i": idu.upper()}).mappings().first()
     if parcelle:
+        _apercu = _flash_apercu_ortho(parcelle.get("gj3857"))
+        _legende = (f"{html.escape(parcelle['idu'][8:10])} {html.escape(parcelle['idu'][10:])} — "
+                    f"{html.escape(parcelle['commune'])} · {('%d' % (parcelle['m2'] or 0))} m² · "
+                    "Vue aérienne IGN")
         return HTMLResponse(_page("rapport Flash", f"""
 <h1>Votre rapport Flash</h1><p class="sub">tout sur cette parcelle, en un PDF sourcé</p>
+{_apercu}
+<p class="note" style="margin:0 0 10px;font-weight:600;color:var(--txt)">{_legende}</p>
 <div class="recap"><div style="font:600 13px ui-monospace,monospace;color:var(--hi)">{html.escape(parcelle['idu'][8:10])} {html.escape(parcelle['idu'][10:])} · {html.escape(parcelle['commune'])} · {('%d' % (parcelle['m2'] or 0))} m²</div>
 <div class="quoi" style="margin-top:10px"><b style="color:var(--txt)">Dans votre PDF :</b> identité et plan,
 zonage et <b style="color:var(--txt)">règles d'urbanisme calibrées</b> (hauteur, emprise, ce qu'on peut y
@@ -869,10 +1041,14 @@ Estimé) et son millésime.</div></div>
 </div>
 <div class="recap" style="margin-top:6px"><div class="prix">{of['eur']} € <span style="font-size:13px;color:var(--mut);font-weight:400">paiement unique, sans abonnement</span></div></div>
 <form method="post" action="/flash"><input type="hidden" name="idu" value="{html.escape(parcelle['idu'])}">
+{cgv_err}
+<label class="cgv" style="display:flex;gap:10px;align-items:flex-start;text-align:left;font-size:12.5px;color:var(--mut);margin:4px 0 14px;line-height:1.5;cursor:pointer">
+<input type="checkbox" name="cgv" value="1" required style="margin-top:2px;flex:0 0 auto;accent-color:var(--mint);width:16px;height:16px">
+<span>J'agis pour les besoins de mon activité professionnelle et j'accepte les <a href="/cgv" target="_blank" rel="noopener" style="color:var(--mint)">conditions générales de vente</a>.</span></label>
 <button type="submit">Payer {of['eur']} € et recevoir mon rapport →</button></form>
 <p class="linkrow"><a href="/flash">← changer de parcelle</a></p>
 <p class="note">Pré-analyse sur données publiques officielles — ne remplace ni certificat d'urbanisme ni
-conseil notarial. Le lien de téléchargement ({of['validite_lien_jours']} jours) s'affiche dès la génération.</p>"""))
+conseil notarial. Le lien de téléchargement ({of['validite_lien_jours']} jours) s'affiche dès la génération.</p>""", gate=False))
     introuvable = ('<p class="err">Parcelle introuvable — vérifiez l\'IDU (14 caractères).</p>'
                    if idu and not parcelle else "")
     return HTMLResponse(_page("rapport Flash", f"""
@@ -886,22 +1062,35 @@ conseil notarial. Le lien de téléchargement ({of['validite_lien_jours']} jours
 <div><i>▸</i><span>Potentiel de transformation chiffré</span></div>
 <div><i>▸</i><span>Chaque donnée avec sa source et sa fraîcheur</span></div>
 </div>
-<form method="get" action="/flash">
+<form method="get" action="/flash" data-flash-omnibox>
 <label for="q">Adresse du bien</label>
-<div class="field"><input id="q" name="q" type="text" inputmode="text" autofocus
-  placeholder="12 rue de la Gare, Saint-André" aria-describedby="qhint"></div>
+<div class="field" style="position:relative"><input id="q" name="q" type="text" inputmode="text" autofocus
+  autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false"
+  aria-controls="q-sugg" placeholder="Commencez à taper une adresse…" aria-describedby="qhint">
+  <div id="q-sugg" role="listbox" aria-label="Suggestions d'adresses" hidden
+       style="position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:30;background:var(--card,#141b22);border:1px solid var(--line,#26323c);border-radius:10px;overflow:hidden;box-shadow:0 14px 36px rgba(0,0,0,.4)"></div></div>
 <p class="hint" id="qhint">Un commerçant a une adresse — on retrouve la parcelle pour vous.</p>
 <button type="submit">Voir ma parcelle <span class="arr" aria-hidden="true">→</span></button>
 </form>
 <p class="note" style="margin:14px 0 6px">— ou —</p>
 <form method="get" action="/flash">
-<label for="idu">Identifiant de parcelle (IDU)</label>
-<div class="field"><input id="idu" name="idu" type="text" minlength="14" maxlength="14"
-  inputmode="text" placeholder="97415000CW0658" aria-describedby="iduhint"
+<label for="idu">Référence cadastrale</label>
+<div class="field"><input id="idu" name="idu" type="text" maxlength="40"
+  inputmode="text" placeholder="97415000CW0658  ·  ou  Saint-Paul CW 658" aria-describedby="iduhint"
   style="font-family:ui-monospace,monospace"></div>
-<p class="hint" id="iduhint">14 caractères — il figure sur cadastre.gouv.fr.</p>
+<p class="hint" id="iduhint">L'IDU (14 caractères, sur cadastre.gouv.fr) ou « Commune Section Numéro ».</p>
 <button type="submit">Voir ma parcelle <span class="arr" aria-hidden="true">→</span></button>
-<p class="note">Vous vérifiez la parcelle avant de payer.</p></form>"""))
+<p class="note">Vous vérifiez la parcelle avant de payer.</p></form>
+<script src="/flash-omnibox.js" defer></script>""", gate=False))
+
+
+# CORRECTIFS-1 A2 — la barre finale `/flash/` renvoie en 308 (permanent, méthode préservée)
+# vers `/flash` (query conservée). Route EXPLICITE pour garantir 308 plutôt que le 307 par
+# défaut de Starlette `redirect_slashes`.
+@router.get("/flash/", include_in_schema=False)
+def flash_slash(request: Request):
+    q = request.url.query
+    return RedirectResponse(f"/flash{('?' + q) if q else ''}", status_code=308)
 
 
 @router.post("/flash", include_in_schema=False)
@@ -914,16 +1103,20 @@ async def flash_submit(request: Request, db: Session = Depends(get_db)):
     ok = db.execute(_text("SELECT 1 FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
     if not ok:
         return RedirectResponse("/flash", status_code=303)
+    # CORRECTIFS-1 A3 — CGV obligatoires AVANT paiement : sans la case cochée, on NE crée PAS de
+    # checkout (le `required` HTML garde le navigateur ; ce contrôle serveur garde tout le reste).
+    if not (q.get("cgv") or [""])[0].strip():
+        return RedirectResponse(f"/flash?idu={idu}&cgv=manquante", status_code=303)
     try:
         from ..facturation import creer_checkout_flash
-        url = creer_checkout_flash(db, idu)
+        url = creer_checkout_flash(db, idu, cgv_version=get_settings().cgv_version)
         return RedirectResponse(url, status_code=303)
     except Exception as e:  # noqa: BLE001 — pas de clé/prix : page honnête, jamais un bouton mort
         log.warning("flash checkout indisponible (%s)", e)
         return HTMLResponse(_page("paiement indisponible", """
 <h1>Paiement indisponible</h1><p class="sous">réessayez dans quelques minutes</p>
 <p style="text-align:center;font-size:12.5px">Le paiement en ligne ne répond pas. Rien n'a été
-débité — réessayez, ou écrivez à votre contact LABUSE.</p>"""), status_code=503)
+débité — réessayez, ou écrivez à contact@labuse.immo.</p>"""), status_code=503)
 
 
 @router.get("/flash/retour", include_in_schema=False)
@@ -934,7 +1127,7 @@ def flash_retour(session_id: str = ""):
 <p class="sub" id="sub">paiement reçu · nous assemblons votre PDF</p></div>
 <div id="etat" role="status" aria-live="polite" style="text-align:center;margin-top:12px;font-size:13px;color:var(--mut)">
 Quelques secondes — le téléchargement s'affiche ici.</div>
-<script src="/flash-retour.js" defer></script>"""))
+<script src="/flash-retour.js" defer></script>""", gate=False))
 
 
 @router.get("/flash/statut", include_in_schema=False)
@@ -955,7 +1148,8 @@ def flash_telecharger(token: str = "", db: Session = Depends(get_db)):
         return HTMLResponse(_page("lien expiré", """
 <h1>Lien expiré</h1><p class="sous">le téléchargement n'est plus disponible</p>
 <p style="text-align:center;font-size:12.5px">Les liens Flash sont valables 30 jours.
-Écrivez à votre contact LABUSE avec votre reçu Stripe — le rapport vous sera renvoyé.</p>"""),
+Écrivez à contact@labuse.immo avec votre reçu Stripe — le rapport vous sera renvoyé.</p>""",
+                                    gate=False),
                             status_code=404)
     return FileResponse(p, media_type="application/pdf",
                         filename=f"labuse_flash_{Path(p).stem}.pdf")
