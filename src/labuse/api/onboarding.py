@@ -210,6 +210,15 @@ _FLASH_OMNIBOX_JS = """
   var form=document.querySelector('[data-flash-omnibox]'); if(!form)return;
   var inp=form.querySelector('#q'), box=document.getElementById('q-sugg');
   if(!inp||!box)return;
+  // CORRECTIFS-1 A5 — « dès qu'un champ est rempli, l'autre disparaît ».
+  var ref=form.querySelector('#idu'), fq=form.querySelector('[data-field="q"]'),
+      fidu=form.querySelector('[data-field="idu"]'), sep=form.querySelector('[data-sep]');
+  function montre(el,on){ if(el)el.style.display=on?'':'none'; }
+  function sync(){
+    var aQ=inp.value.trim()!=='', aRef=ref&&ref.value.trim()!=='';
+    montre(fidu,!aQ); montre(fq,!aRef); montre(sep,!aQ&&!aRef);
+  }
+  if(ref)ref.addEventListener('input',sync);
   var items=[], active=-1, timer=null, lastQ='';
   function hide(){ box.hidden=true; box.innerHTML=''; items=[]; active=-1; inp.setAttribute('aria-expanded','false'); }
   function pick(it){ if(it&&it.idu){ window.location.href='/flash?idu='+encodeURIComponent(it.idu); } }
@@ -236,6 +245,7 @@ _FLASH_OMNIBOX_JS = """
     }).catch(function(){ /* silencieux : la soumission libre reste possible */ });
   }
   inp.addEventListener('input',function(){
+    sync();
     var q=inp.value.trim();
     if(q===lastQ)return; lastQ=q;
     if(timer)clearTimeout(timer);
@@ -263,13 +273,24 @@ def flash_omnibox_js():
 
 # ── le gabarit Coffre serveur — délègue au design system validé (coffre_ui, partie E) ──
 
+# CORRECTIFS-1 A5 — pied de page PROPRE au Flash (texte fourni par Vic) : vendeur, mention fiscale
+# 293 B (franchise en base, une seule fois en pied, jamais « HT »), et clause d'aide à la décision.
+_FLASH_PIED = (
+    'Vendu par LABUSE (CLOSING CREST) · <a href="mailto:contact@labuse.immo">contact@labuse.immo</a><br>'
+    'Prix total, sans TVA à ajouter — TVA non applicable, article 293 B du CGI.<br>'
+    "Document d'aide à la décision établi à partir des données publiques. Il ne remplace ni le "
+    "certificat d'urbanisme délivré par la mairie, ni le conseil d'un notaire.")
+
+
 def _page(titre: str, corps: str, large: bool = False, head: str = "", pied: bool = True,
-          gate: bool = True) -> str:
+          gate: bool = True, foot: str | None = None) -> str:
     # O1 — le pied légal passe par `foot=` (collé en bas), plus empilé dans le corps.
     # CORRECTIFS-1 A1 — `gate=False` sur les pages Flash publiques (payables au téléphone).
+    # CORRECTIFS-1 A5 — `foot=` surcharge le pied (le Flash a le sien).
+    foot_html = foot if foot is not None else (coffre_ui.FOOTER_LEGAL if pied else "")
     return coffre_ui.page(titre, coffre_ui.OISEAU + corps,
                           w=760 if large else None, legal=large, head=head,
-                          foot=coffre_ui.FOOTER_LEGAL if pied else "", gate=gate)
+                          foot=foot_html, gate=gate)
 
 
 # ── E4 · invitation → mot de passe + CGV → Checkout ──
@@ -1025,63 +1046,58 @@ def flash_page(idu: str = "", q: str = "", annule: int = 0, cgv: str = "",
                     f"{html.escape(parcelle['commune'])} · {('%d' % (parcelle['m2'] or 0))} m² · "
                     "Vue aérienne IGN")
         return HTMLResponse(_page("rapport Flash", f"""
-<h1>Votre rapport Flash</h1><p class="sub">tout sur cette parcelle, en un PDF sourcé</p>
+<h1>Est-ce le bon terrain ?</h1>
 {_apercu}
-<p class="note" style="margin:0 0 10px;font-weight:600;color:var(--txt)">{_legende}</p>
-<div class="recap"><div style="font:600 13px ui-monospace,monospace;color:var(--hi)">{html.escape(parcelle['idu'][8:10])} {html.escape(parcelle['idu'][10:])} · {html.escape(parcelle['commune'])} · {('%d' % (parcelle['m2'] or 0))} m²</div>
-<div class="quoi" style="margin-top:10px"><b style="color:var(--txt)">Dans votre PDF :</b> identité et plan,
-zonage et <b style="color:var(--txt)">règles d'urbanisme calibrées</b> (hauteur, emprise, ce qu'on peut y
-construire), risques (Géorisques, PPR, littoral), marché DVF du secteur, permis voisins et
-<b style="color:var(--txt)">potentiel de transformation</b> — chaque donnée avec sa source (Sourcé /
-Estimé) et son millésime.</div></div>
-<div class="trust" role="list">
-  <div role="listitem"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="var(--mint)" stroke-width="1.5" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M10 6v4l2.5 1.5"/></svg> Livré en <b style="color:var(--txt)">quelques secondes</b>, lien valable {of['validite_lien_jours']} jours.</div>
-  <div role="listitem"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="var(--mint)" stroke-width="1.5" aria-hidden="true"><path d="M4 10l4 4 8-9"/></svg> Ce qu'une simple fiche cadastrale ne dit pas : <b style="color:var(--txt)">les règles PLU traduites</b> et le potentiel constructible chiffré.</div>
-  <div role="listitem">{coffre_ui.LOCK_SVG} Paiement unique — <b style="color:var(--txt)">aucune donnée de carte</b> ne transite par LABUSE.</div>
-</div>
-<div class="recap" style="margin-top:6px"><div class="prix">{of['eur']} € <span style="font-size:13px;color:var(--mut);font-weight:400">paiement unique, sans abonnement</span></div></div>
+<p class="note" style="margin:0 0 16px;font-weight:600;color:var(--txt)">{_legende}</p>
+<p class="note">Livré dès le paiement. Le lien de téléchargement reste valable {of['validite_lien_jours']} jours.</p>
+<p class="note">Paiement unique de {of['eur']} €. Pas d'abonnement, pas de compte à créer.</p>
+<p class="note">Aucune donnée bancaire ne passe par LABUSE : le paiement est traité par Stripe.</p>
 <form method="post" action="/flash"><input type="hidden" name="idu" value="{html.escape(parcelle['idu'])}">
 {cgv_err}
-<label class="cgv" style="display:flex;gap:10px;align-items:flex-start;text-align:left;font-size:12.5px;color:var(--mut);margin:4px 0 14px;line-height:1.5;cursor:pointer">
+<label class="cgv" style="display:flex;gap:10px;align-items:flex-start;text-align:left;font-size:12.5px;color:var(--mut);margin:14px 0;line-height:1.5;cursor:pointer">
 <input type="checkbox" name="cgv" value="1" required style="margin-top:2px;flex:0 0 auto;accent-color:var(--mint);width:16px;height:16px">
 <span>J'agis pour les besoins de mon activité professionnelle et j'accepte les <a href="/cgv" target="_blank" rel="noopener" style="color:var(--mint)">conditions générales de vente</a>.</span></label>
 <button type="submit">Payer {of['eur']} € et recevoir mon rapport →</button></form>
-<p class="linkrow"><a href="/flash">← changer de parcelle</a></p>
-<p class="note">Pré-analyse sur données publiques officielles — ne remplace ni certificat d'urbanisme ni
-conseil notarial. Le lien de téléchargement ({of['validite_lien_jours']} jours) s'affiche dès la génération.</p>""", gate=False))
+<p class="linkrow"><a href="/flash">← changer de parcelle</a></p>""", gate=False, foot=_FLASH_PIED))
     introuvable = ('<p class="err">Parcelle introuvable — vérifiez l\'IDU (14 caractères).</p>'
                    if idu and not parcelle else "")
     return HTMLResponse(_page("rapport Flash", f"""
-<h1>Rapport Flash</h1><p class="sub">le dossier complet d'une parcelle, en PDF</p>
+<h1>Rapport Flash</h1>
+<p class="sub">Tout ce qu'il faut savoir sur un terrain, dans un seul PDF.</p>
 <div class="pricewrap"><div class="price"><b>{of['eur']} €</b><span>paiement unique</span></div></div>
 {note_annule}{adresse_msg}{introuvable}
 <div class="list">
-<div><i>▸</i><span>Zonage et règles d'urbanisme calibrées — hauteur, emprise, ce qu'on peut y construire</span></div>
-<div><i>▸</i><span>Risques : Géorisques, PPR, littoral</span></div>
-<div><i>▸</i><span>Marché DVF du secteur et permis voisins</span></div>
-<div><i>▸</i><span>Potentiel de transformation chiffré</span></div>
-<div><i>▸</i><span>Chaque donnée avec sa source et sa fraîcheur</span></div>
+<div><i>▸</i><span><b style="color:var(--txt)">Le terrain</b> : surface, bâti, plan cadastral et vue aérienne. Et quand le propriétaire est une société, sa dénomination et son SIREN.</span></div>
+<div><i>▸</i><span><b style="color:var(--txt)">Le droit du sol</b> : la zone du PLU, les règles qui s'y appliquent, la hauteur et l'emprise autorisées, les servitudes repérées.</span></div>
+<div><i>▸</i><span><b style="color:var(--txt)">Les risques</b> : inondation, mouvement de terrain, littoral, et les plans de prévention qui couvrent la parcelle.</span></div>
+<div><i>▸</i><span><b style="color:var(--txt)">Le marché</b> : les ventes faites autour, le prix au m² du secteur, les permis déposés par les voisins.</span></div>
+<div><i>▸</i><span><b style="color:var(--txt)">Le quartier et le projet</b> : équipements, réseaux, fiscalité locale, et ce que les règles permettent d'envisager.</span></div>
 </div>
+<p class="note">Chaque information porte sa source et sa date. Quand c'est une estimation, c'est écrit.</p>
+<p class="note">Onze volets, du plan cadastral au potentiel du terrain.</p>
+<p class="sub" style="margin-top:20px;text-align:left;color:var(--txt);font-weight:600">Quelle parcelle ?</p>
 <form method="get" action="/flash" data-flash-omnibox>
+<div data-field="q">
 <label for="q">Adresse du bien</label>
 <div class="field" style="position:relative"><input id="q" name="q" type="text" inputmode="text" autofocus
   autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false"
   aria-controls="q-sugg" placeholder="Commencez à taper une adresse…" aria-describedby="qhint">
   <div id="q-sugg" role="listbox" aria-label="Suggestions d'adresses" hidden
        style="position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:30;background:var(--card,#141b22);border:1px solid var(--line,#26323c);border-radius:10px;overflow:hidden;box-shadow:0 14px 36px rgba(0,0,0,.4)"></div></div>
-<p class="hint" id="qhint">Un commerçant a une adresse — on retrouve la parcelle pour vous.</p>
-<button type="submit">Voir ma parcelle <span class="arr" aria-hidden="true">→</span></button>
-</form>
-<p class="note" style="margin:14px 0 6px">— ou —</p>
-<form method="get" action="/flash">
+<p class="hint" id="qhint">On retrouve la parcelle pour vous.</p>
+</div>
+<p class="note" data-sep style="margin:14px 0 6px">— ou —</p>
+<div data-field="idu">
 <label for="idu">Référence cadastrale</label>
 <div class="field"><input id="idu" name="idu" type="text" maxlength="40"
-  inputmode="text" placeholder="97415000CW0658  ·  ou  Saint-Paul CW 658" aria-describedby="iduhint"
+  inputmode="text" placeholder="97415000AS0772" aria-describedby="iduhint"
   style="font-family:ui-monospace,monospace"></div>
-<p class="hint" id="iduhint">L'IDU (14 caractères, sur cadastre.gouv.fr) ou « Commune Section Numéro ».</p>
+<p class="hint" id="iduhint">L'IDU (14 caractères, sur cadastre.gouv.fr) ou « Saint-Paul CW 658 ».</p>
+</div>
 <button type="submit">Voir ma parcelle <span class="arr" aria-hidden="true">→</span></button>
-<p class="note">Vous vérifiez la parcelle avant de payer.</p></form>
-<script src="/flash-omnibox.js" defer></script>""", gate=False))
+</form>
+<p class="note">Vous verrez la parcelle avant de payer. Rien n'est débité à cette étape.</p>
+<script src="/flash-omnibox.js" defer></script>""", gate=False, foot=_FLASH_PIED))
 
 
 # CORRECTIFS-1 A2 — la barre finale `/flash/` renvoie en 308 (permanent, méthode préservée)
