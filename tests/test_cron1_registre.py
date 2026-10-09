@@ -23,7 +23,7 @@ def test_backup_sans_trou():
     b = JOBS["backup-postgres"]
     assert b.cron_utc == "30 9 * * *", "l'horaire doit rester identique au legacy (sans trou)"
     assert b.cadence == "quotidien" and b.touche == "exploitation"
-    assert "7" in b.titre and "sans trou" in b.raison.lower()
+    assert "4" in b.titre and "sans trou" in b.raison.lower()   # CORRECTIFS-1 : rotation 4 (shell prod)
 
 
 def test_recoupements_arbitres():

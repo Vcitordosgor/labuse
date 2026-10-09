@@ -21,9 +21,10 @@ log = logging.getLogger("labuse.jobs.impl")
 
 # taille minimale d'un dump sain : un dump anormalement petit = échec (base vide, coupure). Constante.
 BACKUP_MIN_MO = 1.0
-# CRON-2 — rotation en CONSTANTE : on garde les N dumps les plus récents (7 par défaut). Le pull-mac de
-# Vic archive plus loin (disque externe) ; le VPS ne conserve qu'une fenêtre courte.
-BACKUP_ROTATION_N = 7
+# CRON-2 — rotation en CONSTANTE : on garde les N dumps les plus récents. Le pull-mac de Vic archive
+# plus loin (disque externe) ; le VPS ne conserve qu'une fenêtre courte. CORRECTIFS-1 : aligné sur le
+# shell de prod (`backup_postgres.sh` `LABUSE_BACKUP_KEEP:-4`) → 4 quotidiens (+ 4 hebdo côté shell).
+BACKUP_ROTATION_N = 4
 
 
 def _libpq_url(url: str) -> str:

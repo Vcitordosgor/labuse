@@ -6,6 +6,16 @@ import { ErrorBoundary } from './components/ErrorBoundary'
 import { EcranOrdinateur } from './components/EcranOrdinateur'
 import { estAppareilMobile } from './lib/appareil'
 import { _setServedRun, fetchServedRun, getSources, getSourcesCouverture, is429, SOURCE } from './lib/api'
+// CORRECTIFS-1 C7 — polices AUTO-HÉBERGÉES (@fontsource, bundlées par Vite) : plus aucun appel à
+// Google Fonts (ni au runtime, ni au build). Poids = ceux chargés auparavant.
+import '@fontsource/inter/400.css'
+import '@fontsource/inter/500.css'
+import '@fontsource/inter/600.css'
+import '@fontsource/space-grotesk/500.css'
+import '@fontsource/space-grotesk/700.css'
+import '@fontsource/jetbrains-mono/400.css'
+import '@fontsource/jetbrains-mono/500.css'
+import '@fontsource/jetbrains-mono/600.css'
 import './styles/index.css'
 
 // M-Q P2-70 — GARDE DE DÉMARRAGE : le run servi (SOURCE) est injecté au build depuis

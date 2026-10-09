@@ -54,6 +54,14 @@ def pay_cid(token: str) -> int | None:
 # tokens = variables CSS (mêmes valeurs que la DA de l'app ; on ne pose pas d'hex en dur ailleurs).
 # Le vert de marque (--mint/-dim/-ink + rgba) est injecté depuis la source unique brand.py.
 CSS = ("""
+/* CORRECTIFS-1 C7 — polices AUTO-HÉBERGÉES pour les pages SERVEUR (flash, légales, auth). Les woff2
+   sont servis par le socle statique (/socle/fonts/, @fontsource), plus aucun appel à Google Fonts. */
+@font-face{font-family:'Space Grotesk';font-style:normal;font-weight:500;font-display:swap;src:url(/socle/fonts/space-grotesk-latin-500-normal.woff2) format('woff2')}
+@font-face{font-family:'Space Grotesk';font-style:normal;font-weight:600;font-display:swap;src:url(/socle/fonts/space-grotesk-latin-600-normal.woff2) format('woff2')}
+@font-face{font-family:'Space Grotesk';font-style:normal;font-weight:700;font-display:swap;src:url(/socle/fonts/space-grotesk-latin-700-normal.woff2) format('woff2')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:400;font-display:swap;src:url(/socle/fonts/inter-latin-400-normal.woff2) format('woff2')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:500;font-display:swap;src:url(/socle/fonts/inter-latin-500-normal.woff2) format('woff2')}
+@font-face{font-family:'Inter';font-style:normal;font-weight:600;font-display:swap;src:url(/socle/fonts/inter-latin-600-normal.woff2) format('woff2')}
 :root{
   --bg:#050706; --s1:#0B100D; --s2:#0D120F; --s3:#111814; --line:#1B2620; --line2:#1E2A23;
   /* O3 — le vert du parcours s'aligne sur la maquette validée (et sur l'oiseau) : valeurs injectées
@@ -229,9 +237,7 @@ def page(titre: str, corps: str, *, w: int | None = None, legal: bool = False,
             f"<link rel=\"icon\" type=\"image/png\" sizes=\"32x32\" href=\"/socle/favicon-32.png\">"
             f"<link rel=\"icon\" type=\"image/png\" sizes=\"16x16\" href=\"/socle/favicon-16.png\">"
             f"<title>LABUSE — {html.escape(titre)}</title>"
-            f"<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">"
-            f"<link href=\"https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&"
-            f"family=Inter:wght@400;500;600&display=swap\" rel=\"stylesheet\">"
+            # CORRECTIFS-1 C7 — plus de lien Google Fonts : les @font-face auto-hébergés sont dans CSS.
             f"<style>{CSS}</style>{head}</head>"
             f"<body{body_cls} style=\"{wvar}\"><main class=\"{cls} bloc\" role=\"main\" style=\"{wvar}\">"
             f"<div class=\"top\">{corps}</div>{foot_html}</main>"

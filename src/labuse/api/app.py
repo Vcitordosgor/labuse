@@ -309,15 +309,17 @@ async def _security_headers(request, call_next):
     resp.headers.setdefault("X-Frame-Options", "DENY")
     resp.headers.setdefault("Referrer-Policy", "same-origin")
     # REVUE · R4 — Content-Security-Policy RAISONNABLE (le front est servi same-origin ; seules
-    # sources externes RÉELLES : Google Fonts (styles+polices), tuiles IGN data.geopf.fr et MNT 3D
-    # S3 terrarium en img/connect ; maplibre crée ses workers via blob:). script-src 'self' suffit
+    # sources externes RÉELLES : tuiles IGN data.geopf.fr et MNT 3D S3 terrarium en img/connect ;
+    # maplibre crée ses workers via blob:). CORRECTIFS-1 C7 : polices auto-hébergées (@fontsource),
+    # plus de Google Fonts. script-src 'self' suffit
     # (bundle local, zéro script inline) ; style-src autorise l'inline (styles React/maplibre au
     # runtime + pages serveur onboarding/pack) ; img-src data:/blob: pour les logos & photos base64.
     resp.headers.setdefault("Content-Security-Policy",
         "default-src 'self'; "
         "script-src 'self'; "
-        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
-        "font-src 'self' https://fonts.gstatic.com data:; "
+        # CORRECTIFS-1 C7 — polices auto-hébergées (@fontsource) : plus de domaines Google Fonts.
+        "style-src 'self' 'unsafe-inline'; "
+        "font-src 'self' data:; "
         "img-src 'self' data: blob: https://data.geopf.fr https://s3.amazonaws.com; "
         "connect-src 'self' https://data.geopf.fr https://s3.amazonaws.com; "
         "worker-src 'self' blob:; "

@@ -359,9 +359,9 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
        test="tests/test_cron1_registre.py::test_job_a_une_raison"),
 
     # ══════════════════ L'EXPLOITATION — faire tourner le serveur ══════════════════
-    _j("backup-postgres", "Sauvegarde PostgreSQL (dump + rotation, 7 conservés)", "quotidien",
+    _j("backup-postgres", "Sauvegarde PostgreSQL (dump + rotation, 4 conservés)", "quotidien",
        "30 9 * * *", "13:30", touche="exploitation", timeout_s=1800, besoin_db=False,
-       raison="La seule sauvegarde : sans elle, une panne disque perd toute la base. Quotidien, 7 dumps "
+       raison="La seule sauvegarde : sans elle, une panne disque perd toute la base. Quotidien, 4 dumps "
               "conservés. RECOUPEMENT tranché : l'expression LEGACY (`30 9 * * *`) est reprise à "
               "l'identique — c'est le job réellement actif en prod ; garder l'horaire exact garantit un "
               "remplacement SANS TROU (le nouveau tourne au même instant que l'ancien ; deploy.sh pose "
