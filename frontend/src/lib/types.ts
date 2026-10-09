@@ -310,6 +310,13 @@ export interface Fiche {
     changements: { de_millesime: number; a_millesime: number; siren_avant: string | null; denomination_avant: string | null; siren_apres: string | null; denomination_apres: string | null; non_identifiable?: boolean }[]
   } | null
   surface_m2: number | null
+  // CONTENANCE-1 : surface de terrain (contenance|dessin) + provenance + dessin + garde-fou.
+  surface_terrain_m2?: number | null
+  surface_source?: 'cadastre' | 'plan' | null
+  surface_dessin_m2?: number | null
+  contenance_m2?: number | null
+  surface_incertaine?: boolean          // contenance < moitié du dessin → « Analyse incomplète »
+  surface_incertaine_libelle?: string | null
   statut?: Statut   // M48 (F4) : retiré du payload (matrice morte) — le tier vient de score_v2 ; repli legacy seulement
   mode_b?: ModeB
   q_score: number

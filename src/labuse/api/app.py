@@ -4122,6 +4122,10 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
         # l'écran (mesuré : servi brut via le Copilote). Le run reste dans les logs serveur.
         raise HTTPException(404, f"Parcelle {idu} inconnue de l'analyse en cours.")
     _st_head = _surface.surface_terrain(head["surface_m2"], head["contenance_m2"])  # CONTENANCE-1 (B)
+    # CONTENANCE-1 (garde-fou) — contenance < moitié du dessin : surface indéterminée. La fiche
+    # montre les deux chiffres + badge, aucune capacité ni prix au m² (cf. faisabilité « Analyse
+    # incomplète » et suppression de `valeur_terrain_secteur_eur` plus bas).
+    _surf_incertaine = _surface.surface_incertaine(head["surface_m2"], head["contenance_m2"])
 
     # Correctif M5 (verdict d'en-tête) : tier v2 du run SERVI (`_score_v2_run_id` = Q_A_RUN_LABEL,
     # épinglé — PAS « le dernier run par timestamp ») — pilote la bannière/badge quand il existe ;
@@ -4298,8 +4302,9 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
     # présente) × médiane — c'est un prix, donc un ratio du terrain, pas du dessin. Le commentaire
     # F46 disait déjà « contenance × médiane » ; c'est désormais exact.
     _surf_i = _st_head.valeur
+    # Garde-fou surface incertaine : pas de prix au m² (on ne multiplie pas une surface indéterminée).
     valeur_terrain_secteur_eur = (_surf_i * int(_terr_med["mediane_prix_m2"])
-                                  if _surf_i and _terr_med else None)
+                                  if _surf_i and _terr_med and not _surf_incertaine else None)
     dvf_parcelle = None
     if dvf_last or dvf_secteur:
         # EXPORTS-1 (1.4, arbitrage Q3) : UN SEUL « neuf » servi — `resolve_prix_neuf_marche`
@@ -4461,6 +4466,10 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
         # CONTENANCE-1 (Lot B) : la surface de terrain affichée = contenance si présente, sinon
         # dessin. `surface_dessin_m2` sert la ligne discrète « Dessin du plan » (B3).
         **_surface.champs_terrain(head["surface_m2"], head["contenance_m2"]),
+        # CONTENANCE-1 (garde-fou) : surface indéterminée (contenance < moitié du dessin) → la fiche
+        # affiche les deux chiffres + ce libellé, aucune capacité ni prix au m².
+        "surface_incertaine": _surf_incertaine,
+        "surface_incertaine_libelle": (_surface.MSG_SURFACE_INCERTAINE if _surf_incertaine else None),
         # M48 (F4) : le champ mort `statut` (matrice_statut v1, éteinte M37) est RETIRÉ du payload —
         # il contredisait le tier (71 115 parcelles) et a servi de munition à l'IA (F1). Le classement
         # se lit sur `score_v2.tier` (via verdictMeta au front) ; la matrice reste un signal interne.

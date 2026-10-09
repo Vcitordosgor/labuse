@@ -80,6 +80,15 @@ class ParcelContext:
         → rien ne dépasse la surface du terrain et les proportions tiennent."""
         return (self.surface_m2 / self.surface_dessin_m2) if self.surface_dessin_m2 else 1.0
 
+    @property
+    def surface_incertaine(self) -> bool:
+        """Garde-fou CONTENANCE-1 : la contenance (surface_m2 quand elle est présente, donc < dessin)
+        est inférieure à la moitié du dessin. `surface_m2 < surface_dessin_m2` n'est vrai QUE si une
+        contenance plus petite existe (sinon surface_m2 == dessin) → on lui applique le seuil moitié."""
+        from .. import surface as _s
+        cont = self.surface_m2 if self.surface_m2 < self.surface_dessin_m2 else None
+        return _s.surface_incertaine(self.surface_dessin_m2, cont)
+
 
 def _layer_params(name: str) -> dict:
     """Params d'une couche de config/cascade_rules.yaml (source UNIQUE des seuils/typepsc)."""
@@ -408,6 +417,12 @@ def parcel_faisabilite(session: Session, parcel_id: int,
     ctx = parcel_context(session, parcel_id)
     if ctx is None or not ctx.zone:
         return None
+    # CONTENANCE-1 (garde-fou) — contenance < moitié du dessin : surface indéterminée, on ne calcule
+    # NI sur la contenance NI sur le dessin → « Analyse incomplète », aucune capacité. Court-circuit
+    # AVANT toute géométrie (inutile ici). La fiche affiche quand même les deux chiffres (payload).
+    if ctx.surface_incertaine:
+        from .engine import faisabilite_surface_incertaine
+        return ctx, faisabilite_surface_incertaine(ctx.zone)
     rules = resolve_zone(ctx.zone, ctx.commune)
     # SCORING-6 lot A — assiette clippée : si la zone DOMINANTE n'est pas constructible mais
     # qu'une portion U/AU subsiste, on résout la sous-zone U/AU et on calcule la capacité sur

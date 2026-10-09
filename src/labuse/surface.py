@@ -36,6 +36,22 @@ def surface_terrain(dessin_m2, contenance_m2) -> SurfaceTerrain:
     return SurfaceTerrain(des, SOURCE_PLAN, des, None)
 
 
+# CONTENANCE-1 (garde-fou) — quand la contenance est < la MOITIÉ du dessin (écart dessin > 100 %),
+# le plan et le cadastre se contredisent trop : la surface est INDÉTERMINÉE. On ne calcule NI sur la
+# contenance NI sur le dessin → « Analyse incomplète », les deux chiffres affichés, aucune capacité
+# ni prix au m². Vérifié sur 40 parcelles (ECARTS.md) : l'incohérence est DANS le cadastre IGN.
+MSG_SURFACE_INCERTAINE = "surface incertaine : le plan et le cadastre ne concordent pas"
+
+
+def surface_incertaine(dessin_m2, contenance_m2) -> bool:
+    """True si la contenance est présente ET inférieure à la moitié du dessin (dessin > 2×contenance).
+    Garde-fou : la parcelle bascule en « Analyse incomplète ». Symétrie volontairement NON couverte
+    (le mandat ne vise que la contenance anormalement petite devant un plan énorme)."""
+    if not dessin_m2 or contenance_m2 is None or float(contenance_m2) <= 0:
+        return False
+    return float(contenance_m2) < float(dessin_m2) / 2.0
+
+
 def ecart_pct(dessin_m2, contenance_m2) -> float | None:
     """Écart relatif dessin↔contenance, en % de la contenance (None si l'une manque)."""
     if not dessin_m2 or not contenance_m2:
