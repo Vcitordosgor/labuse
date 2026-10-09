@@ -1065,7 +1065,8 @@ export const getPiscinesListe = (f: PiscinesFiltres) =>
 export interface SuccessionItem {
   idu: string; commune: string; surface_m2: number | null; zone: string | null
   sdp_residuelle_m2: number | null   // Estimé — moteur de la fiche (p_model_ext_dataset)
-  dirigeant_age: number | null; sci_dormante: boolean
+  // CORRECTIFS-1 C5 (RGPD) — tranche d'âge (« plus de 70 ans »), jamais l'âge exact.
+  dirigeant_tranche: string | null; sci_dormante: boolean
   // DONNEES-1 lot 2.3 — dernier dépôt de comptes BODACC du propriétaire PM (null = aucun publié).
   depot_comptes: { annee: number | null; depuis_ans: number | null; muet?: boolean } | null
   proprio: SolaireProprio

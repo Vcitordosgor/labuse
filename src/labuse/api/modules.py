@@ -1136,6 +1136,13 @@ def successions_liste(commune: str | None = None,
         # Signal « dépôt de comptes » du propriétaire PM (public) : renforce le radar succession
         # (une SCI sans dépôt récent = en sommeil). None (pas de clé) = aucun dépôt publié.
         d_["depot_comptes"] = depots.get(r["siren"]) if r["siren"] else None
+        # CORRECTIFS-1 C5 (RGPD) — l'ÂGE EXACT du dirigeant ne sort plus : on sert une TRANCHE
+        # (« plus de 70/80/90 ans »). Le signal « dirigeant âgé » reste, sans donnée personnelle fine.
+        _age = d_.pop("dirigeant_age", None)
+        d_["dirigeant_tranche"] = (None if _age is None
+                                   else "plus de 90 ans" if _age >= 90
+                                   else "plus de 80 ans" if _age >= 80
+                                   else "plus de 70 ans")
         d_.pop("denomination", None); d_.pop("siren", None)
         items.append(d_)
     # Millésime du SIGNAL = date du calcul Score V (globale — la table est un snapshot mono-run) ;

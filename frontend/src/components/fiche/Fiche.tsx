@@ -448,6 +448,9 @@ export function Fiche({ idu }: { idu: string }) {
   const [ficheQuery, setFicheQuery] = useState('')
   // KELFONCIER-FIX-1 (Lot G) — panneau Street View (jamais en pleine page) ; ouvert au clic « Voir la rue ».
   const [streetViewOpen, setStreetViewOpen] = useState(false)
+  // CORRECTIFS-1 C6 — on NE crée l'iframe Google qu'après un consentement explicite (petite fenêtre
+  // « Afficher la vue Google ? »). Tant que `streetViewConfirmed` est faux, aucun appel Google.
+  const [streetViewConfirmed, setStreetViewConfirmed] = useState(false)
   // RETOURS-8 (R7) — la fiche en ONGLETS : Analyse (la fiche détaillée), Autour (le voisinage isochrone),
   // Actions (CRM · Projet · Courrier · exports) — accès direct aux actions sans faire défiler l'analyse.
   // RETOURS-9 (Q8.1) — onglets de fiche retirés : plus d'état d'onglet, la fiche défile d'un tenant.
@@ -805,7 +808,7 @@ export function Fiche({ idu }: { idu: string }) {
                   fiche) → côté droit. */}
               {f?.street_view?.embed_url && (
                 <Tip side="bottom" tip="Voir la rue" garder>
-                  <button data-street-view-btn className="hbtn" onClick={() => setStreetViewOpen((o) => !o)}
+                  <button data-street-view-btn className="hbtn" onClick={() => setStreetViewOpen((o) => { if (o) setStreetViewConfirmed(false); return !o })}
                     style={streetViewOpen ? { borderColor: 'var(--mint)', color: 'var(--mint)' } : undefined}
                     aria-label="Voir la rue (Street View)">
                     <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
@@ -842,14 +845,22 @@ export function Fiche({ idu }: { idu: string }) {
             <div data-street-view-panel className="mt-2 overflow-hidden rounded-lg border border-line-2 bg-surface-2">
               <div className="flex items-center justify-between px-3 py-1.5">
                 <span className="label-caps text-txt-mut">Vue de la rue</span>
-                <button className="hbtn" onClick={() => setStreetViewOpen(false)} aria-label="Fermer la vue de la rue">
+                <button className="hbtn" onClick={() => { setStreetViewOpen(false); setStreetViewConfirmed(false) }} aria-label="Fermer la vue de la rue">
                   <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
                 </button>
               </div>
-              <iframe data-street-view-iframe title="Vue de la rue (Google Street View)"
-                src={f.street_view.embed_url} loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade" allowFullScreen
-                className="block h-[220px] w-full border-0" />
+              {/* CORRECTIFS-1 C6 — consentement avant de charger Google (l'iframe n'existe qu'après). */}
+              {streetViewConfirmed ? (
+                <iframe data-street-view-iframe title="Vue de la rue (Google Street View)"
+                  src={f.street_view.embed_url} loading="lazy"
+                  referrerPolicy="no-referrer" allowFullScreen
+                  className="block h-[220px] w-full border-0" />
+              ) : (
+                <div className="px-3 pb-3 pt-1 text-[12.5px] text-txt-mut">
+                  <p className="mb-2">Afficher la vue Google ? La vue de la rue est fournie par Google Maps : l'ouvrir charge un contenu Google.</p>
+                  <button className="btn mauve" data-street-view-confirm onClick={() => setStreetViewConfirmed(true)}>Afficher la vue Google →</button>
+                </div>
+              )}
             </div>
           )}
 

@@ -79,9 +79,9 @@ export const CATALOGUE: DocCatalogue[] = [
   },
   {
     key: 'comparatif', nom: 'Comparatif', kind: 'multi', formats: ['PDF'],
-    desc: 'Deux ou trois parcelles côte à côte sur les 17 lignes de Comparer, en page paysage.',
+    desc: 'Deux ou trois parcelles côte à côte sur les 19 lignes de Comparer, en page paysage.',
     cta: 'Générer le comparatif',
-    explication: 'Les 17 lignes de Comparer, côte à côte.',
+    explication: 'Les 19 lignes de Comparer, côte à côte.',
   },
   {
     key: 'etude-zone', nom: 'Étude de zone', kind: 'zone', formats: ['PDF'],

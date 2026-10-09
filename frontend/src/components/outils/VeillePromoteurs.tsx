@@ -219,7 +219,7 @@ export function VeillePromoteurs({ embedded, focusSiren, onVoirPatrimoine, onCou
           {/* RETOURS-3 R4.2 — barre de recherche adresse/IDU (se positionner sur la carte).
               RECHERCHE-2 Lot 2 — + propriétaire/SIREN : un pick propriétaire déroule ses parcelles ;
               en choisir une recentre la carte et la sélectionne. */}
-          <AddressAutocomplete placeholder="Propriétaire, adresse, IDU… (se positionner sur la carte)"
+          <AddressAutocomplete placeholder="Propriétaire, adresse ou IDU"
             className="h-8 w-full rounded-md border border-line-2 bg-surface-1 px-2 text-[11.5px] text-txt placeholder:text-txt-dim focus:border-mint focus:outline-none"
             grammaires={['adresse', 'cadastre', 'proprietaire', 'siren']}
             onPick={(it) => { if ((it.type === 'proprietaire' || it.type === 'siren') && it.siren) setVeilleOwner({ siren: it.siren, nom: it.label }) }}

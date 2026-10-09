@@ -68,7 +68,7 @@ export function VeillePortes() {
           resume={<>{suivis} parcelle{suivis > 1 ? 's' : ''} suivie{suivis > 1 ? 's' : ''}</>}
           onClick={() => setRadarEcran('veille-foncier')} />
         <PorteCard data="veille-porte-annonces" ic={<IcoMaison />} titre="Les annonces"
-          desc="Vos alertes Radar : une nouvelle annonce, une baisse de prix ou un retour, selon vos critères."
+          desc="Vos alertes Radar : une nouvelle annonce, une baisse de prix ou un retrait, selon vos critères."
           resume={<>{alertes} alerte{alertes > 1 ? 's' : ''} · {nouveaux} nouveau{nouveaux > 1 ? 'x' : ''} bien{nouveaux > 1 ? 's' : ''}</>}
           onClick={() => setRadarEcran('veille-annonces')} />
       </div>
@@ -301,7 +301,7 @@ export function VeilleAnnonces() {
      <div className="mx-auto w-full max-w-[1060px] px-8 py-10">
       <div className="mb-6 flex items-start justify-between gap-4">
         <EcranTete surtitre="VEILLE · LES ANNONCES" titre="Vos alertes"
-          sous="Une nouvelle annonce, une baisse de prix ou un retour, selon vos critères."
+          sous="Une nouvelle annonce, une baisse de prix ou un retrait, selon vos critères."
           retour={<Retour label="Veille" data-veille-retour onClick={() => setRadarEcran('veille')} />} />
         <Bouton niveau="primaire" ton="vert" data-veille-nouvelle-alerte className="mt-10 shrink-0" onClick={() => setFormOuvert((v) => !v)}>
           + Nouvelle alerte

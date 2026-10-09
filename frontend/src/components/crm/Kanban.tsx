@@ -485,7 +485,7 @@ export function Kanban() {
           <h2 className="font-display text-lg font-bold text-txt-hi">CRM — pipeline de prospection</h2>
           <p className="mt-0.5 text-[11px] text-txt-dim">
             {(entries.data ?? []).length} parcelle{(entries.data ?? []).length > 1 ? 's' : ''} suivie{(entries.data ?? []).length > 1 ? 's' : ''} ·
-            glisser une carte pour changer d'étape · ajout depuis la fiche (+ Pipeline)
+            glisser une carte pour changer d'étape · ajout depuis la fiche (+ CRM)
           </p>
         </div>
         {/* H (M12) : barre d'édition des colonnes (personnaliser/ajouter/réinitialiser). */}
