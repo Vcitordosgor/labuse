@@ -1126,6 +1126,13 @@ def successions_liste(commune: str | None = None,
                coalesce(z.zone_lib, z.zone_fam) AS zone,
                {sdp_expr} AS sdp_residuelle_m2,
                v.dirigeant_age, v.sci_dormante,
+               -- Nom de l'aîné (personne physique) des dirigeants RNE de la société, pour afficher
+               -- « Nom · N ans » : même dirigeant que l'âge du signal (le plus âgé daté).
+               (SELECT NULLIF(trim(coalesce(dd.prenoms,'') || ' ' || coalesce(dd.nom,'')), '')
+                  FROM pm_dirigeants dd
+                 WHERE dd.siren = pm.siren AND dd.type_personne = 'INDIVIDU'
+                   AND dd.date_naissance IS NOT NULL
+                 ORDER BY dd.date_naissance ASC LIMIT 1) AS dirigeant_nom,
                pm.denomination, pm.siren
         {base} {where}
         ORDER BY {ordre}

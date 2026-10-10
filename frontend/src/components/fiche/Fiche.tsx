@@ -883,12 +883,12 @@ export function Fiche({ idu }: { idu: string }) {
           const tuiles: Tuile[] = [
             (() => {
               // CONTENANCE-1 (garde-fou) — contenance < moitié du dessin : surface INDÉTERMINÉE.
-              // La tuile affiche « Surface incertaine » EN ENTIER (plus de double chiffre tronqué) ;
-              // les deux mesures (plan vs cadastre) passent dans l'infobulle.
+              // Valeur COURTE (« Incertaine ») pour ne jamais tronquer ; sous-titre « plan ≠ cadastre » ;
+              // l'explication complète (les deux mesures + la conséquence) vit dans l'infobulle.
               if (f.surface_incertaine) {
-                return { l: 'Surface', v: 'Surface incertaine',
+                return { l: 'Surface', v: 'Incertaine', s: 'plan ≠ cadastre',
                   vide: true,
-                  i: `Plan : ${fmtM2(surfaceDessin(f))} · Cadastre : ${fmtM2(f.contenance_m2)} — le plan et le cadastre ne concordent pas` } as Tuile
+                  i: `Plan : ${fmtM2(surfaceDessin(f))} · Cadastre : ${fmtM2(f.contenance_m2)}. Le plan cadastral et la contenance inscrite au cadastre diffèrent de plus du double — surface indéterminée, aucune capacité ni prix au m² n’est calculé tant que la source n’est pas tranchée.` } as Tuile
               }
               // CONTENANCE-1 (Lot B) — la Surface affichée = contenance cadastrale (chiffre de
               // l'acte) si présente, sinon dessin du plan (repli). B3 : ligne discrète « Dessin du
@@ -1406,12 +1406,15 @@ export function Fiche({ idu }: { idu: string }) {
                         </div>
                       )}
                       <Tuiles items={tuiles} />
-                      {(id?.siege || pm.groupe_label) && (
+                      {(id?.siege || pm.groupe_label || pm.dirigeant) && (
                         <Lignes>
                           {/* CHASSE-FIX-3 (C3-08) — « Établissement » et non « Siège » : SIRENE géolocalisé
                               ne couvre que La Réunion et ne porte pas le drapeau établissement-siège ; on sert
                               l'établissement 974 le plus ancien actif (départagé par SIRET), pas le siège social. */}
                           {id?.siege && <Ligne label="Établissement" valeur={<>{id.siege}{id.siege_commune ? <small> · {id.siege_commune}</small> : null}</>} />}
+                          {/* Dirigeant aîné au RNE (INPI) : nom + âge exact. Servi pour TOUTE société qui en a
+                              un de connu (pas seulement les cibles Successions) ; âge inconnu → rien (pas de tiret). */}
+                          {pm.dirigeant && <Ligne label="Dirigeant" valeur={<>{pm.dirigeant.nom}<small> · {pm.dirigeant.age} ans</small></>} />}
                           {pm.groupe_label && <Ligne label="Groupe" valeur={pm.groupe_label} />}
                         </Lignes>
                       )}

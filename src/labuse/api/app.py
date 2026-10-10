@@ -4233,6 +4233,7 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
     if pm and pm.get("siren"):
         pm["etat_societe"] = _pm_etat_societe(db, pm["siren"])   # M43 — fait public société (PM only)
         pm["identite"] = _pm_identite(db, pm["siren"])           # RETOURS-11F3 F11 — activité/siège/date/état
+        pm["dirigeant"] = _pm_dirigeant(db, pm["siren"])         # dirigeant aîné RNE (nom + âge exact)
     if pm:
         # CHASSE-FIX-2 (C35) — propriétaire PUBLIC (badge fiche), MÊME règle DGFiP (groupes 1-4/9)
         # que la liste et le filtre d'exclusion : un seul endroit décide « public ».
@@ -5699,6 +5700,32 @@ def _radar_proc(idu: str, tier: str | None) -> dict | None:
         return radar_parcelle(idu, tier)
     except Exception:  # noqa: BLE001 - le radar ne bloque jamais la fiche
         return _bloc_indisponible("radar_procedure")   # M125 — panne ≠ absence
+
+
+def _pm_dirigeant(db: Session, siren: str | None) -> dict | None:
+    """Dirigeant AÎNÉ (personne physique) de la société au RNE (INPI, table `pm_dirigeants`) :
+    nom + âge EXACT, pour la ligne « Dirigeant » de la fiche §1 Identité. On prend l'individu daté
+    le plus âgé (date de naissance la plus ancienne) — le même qui porte le signal succession.
+    None si aucun individu daté connu : la fiche n'affiche alors RIEN (jamais un tiret). SAVEPOINT :
+    table absente en base de test n'avorte pas la fiche."""
+    if not siren:
+        return None
+    try:
+        with db.begin_nested():
+            r = db.execute(text(
+                "SELECT nom, prenoms, "
+                "       date_part('year', age(to_date(date_naissance, 'YYYY-MM')))::int AS age "
+                "FROM pm_dirigeants "
+                "WHERE siren = :s AND type_personne = 'INDIVIDU' AND date_naissance IS NOT NULL "
+                "ORDER BY date_naissance ASC LIMIT 1"), {"s": siren}).mappings().first()
+    except Exception:  # noqa: BLE001 — table absente / base de test : pas de dirigeant, jamais un 500
+        return None
+    if not r or r["age"] is None:
+        return None
+    nom = " ".join(x for x in [(r["prenoms"] or "").strip(), (r["nom"] or "").strip()] if x).strip()
+    if not nom:
+        return None
+    return {"nom": nom, "age": int(r["age"])}
 
 
 def _pm_etat_societe(db: Session, siren: str | None) -> dict | None:
