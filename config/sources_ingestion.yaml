@@ -41,6 +41,9 @@ commandes:
   - motif: "INPI RNE (dirigeants)"
     label: inpi_rne
     argv: ["labuse", "ingest-inpi-rne"]
+  - motif: "Annuaire de l'administration%"
+    label: annuaire_services
+    argv: ["labuse", "ingest-annuaire-services"]
   - motif: "Géorisques — sites et sols pollués"
     label: georisques_ssp
     argv: ["labuse", "ingest-georisques"]

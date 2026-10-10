@@ -447,11 +447,6 @@ export function Fiche({ idu }: { idu: string }) {
   // CONTENU de la fiche (toutes les lignes tracées, tous onglets), pas le dashboard.
   const [ficheSearchOpen, setFicheSearchOpen] = useState(false)
   const [ficheQuery, setFicheQuery] = useState('')
-  // KELFONCIER-FIX-1 (Lot G) — panneau Street View (jamais en pleine page) ; ouvert au clic « Voir la rue ».
-  const [streetViewOpen, setStreetViewOpen] = useState(false)
-  // CORRECTIFS-1 C6 — on NE crée l'iframe Google qu'après un consentement explicite (petite fenêtre
-  // « Afficher la vue Google ? »). Tant que `streetViewConfirmed` est faux, aucun appel Google.
-  const [streetViewConfirmed, setStreetViewConfirmed] = useState(false)
   // RETOURS-8 (R7) — la fiche en ONGLETS : Analyse (la fiche détaillée), Autour (le voisinage isochrone),
   // Actions (CRM · Projet · Courrier · exports) — accès direct aux actions sans faire défiler l'analyse.
   // RETOURS-9 (Q8.1) — onglets de fiche retirés : plus d'état d'onglet, la fiche défile d'un tenant.
@@ -742,7 +737,7 @@ export function Fiche({ idu }: { idu: string }) {
           {/* LIENS-1 (maquette Vic) — UNE ligne de boutons sur TOUTE la largeur, en deux groupes :
               à GAUCHE les liens vers l'extérieur (nouvel onglet) Cadastre · Pages Jaunes · Google Maps ·
               État des risques (Errial) · Google Earth ; à DROITE, séparées par un trait vertical fin,
-              les actions sur la fiche (Voir la rue si servie) · cloche · loupe · croix. La ligne
+              les actions sur la fiche : cloche · loupe · croix. La ligne
               « PARCELLE · COMMUNE » est RETIRÉE (doublon avec l'adresse, ci-dessous). Chaque bouton a
               son infobulle au survol (Tip). Mêmes boutons carrés, même taille, même style (.hbtn) ;
               les deux nouveaux (Errial, Earth) sans style particulier (monochrome, comme loupe/croix). */}
@@ -804,20 +799,6 @@ export function Fiche({ idu }: { idu: string }) {
             <div className="hbtns hbtns-act">
               {/* trait vertical fin : sépare les liens externes (gauche) des actions sur la fiche (droite). */}
               <span className="hsep" aria-hidden />
-              {/* KELFONCIER-FIX-1 (Lot G) — « Voir la rue » : n'apparaît QUE si le serveur sert un embed
-                  Street View (clé GOOGLE_MAPS_EMBED_KEY posée). Ouvre un panneau inline (action sur la
-                  fiche) → côté droit. */}
-              {f?.street_view?.embed_url && (
-                <Tip side="bottom" tip="Voir la rue" garder>
-                  <button data-street-view-btn className="hbtn" onClick={() => setStreetViewOpen((o) => { if (o) setStreetViewConfirmed(false); return !o })}
-                    style={streetViewOpen ? { borderColor: 'var(--mint)', color: 'var(--mint)' } : undefined}
-                    aria-label="Voir la rue (Street View)">
-                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="8" r="3" /><path d="M6 20c0-3 3-5 6-5s6 2 6 5" /><path d="M3 12h2M19 12h2" />
-                    </svg>
-                  </button>
-                </Tip>
-              )}
               <Tip side="bottom" tip="Suivre cette parcelle" garder>
                 <WatchButton idu={idu} />
               </Tip>
@@ -838,32 +819,6 @@ export function Fiche({ idu }: { idu: string }) {
           {/* IDU complet (mono) en grand + copier, sous la ligne de boutons (RETOURS-15 : l'adresse
               et le secteur suivent en rangées pleine largeur). */}
           <div className="ref ref-sous-actions" data-fiche-idu>{iduComplet(idu) || 'Absent'}{iduComplet(idu) && <CopyIdu value={iduComplet(idu)} />}</div>
-
-          {/* KELFONCIER-FIX-1 (Lot G) — panneau Street View INLINE (jamais en pleine page) : l'embed
-              Google Maps (mode panorama) centré sur le centroïde de la parcelle. Rendu seulement quand
-              ouvert ET que le serveur a servi une URL (clé posée). */}
-          {streetViewOpen && f?.street_view?.embed_url && (
-            <div data-street-view-panel className="mt-2 overflow-hidden rounded-lg border border-line-2 bg-surface-2">
-              <div className="flex items-center justify-between px-3 py-1.5">
-                <span className="label-caps text-txt-mut">Vue de la rue</span>
-                <button className="hbtn" onClick={() => { setStreetViewOpen(false); setStreetViewConfirmed(false) }} aria-label="Fermer la vue de la rue">
-                  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
-                </button>
-              </div>
-              {/* CORRECTIFS-1 C6 — consentement avant de charger Google (l'iframe n'existe qu'après). */}
-              {streetViewConfirmed ? (
-                <iframe data-street-view-iframe title="Vue de la rue (Google Street View)"
-                  src={f.street_view.embed_url} loading="lazy"
-                  referrerPolicy="no-referrer" allowFullScreen
-                  className="block h-[220px] w-full border-0" />
-              ) : (
-                <div className="px-3 pb-3 pt-1 text-[12.5px] text-txt-mut">
-                  <p className="mb-2">Afficher la vue Google ? La vue de la rue est fournie par Google Maps : l'ouvrir charge un contenu Google.</p>
-                  <button className="btn mauve" data-street-view-confirm onClick={() => setStreetViewConfirmed(true)}>Afficher la vue Google →</button>
-                </div>
-              )}
-            </div>
-          )}
 
           {/* RETOURS-15 U7 — ADRESSE en rangée PLEINE LARGEUR (moins l'icône copier) : une ligne
               tant que ça tient, ellipse avec l'adresse complète au survol (title) sinon. Elle ne
@@ -928,12 +883,12 @@ export function Fiche({ idu }: { idu: string }) {
           const tuiles: Tuile[] = [
             (() => {
               // CONTENANCE-1 (garde-fou) — contenance < moitié du dessin : surface INDÉTERMINÉE.
-              // On montre les DEUX chiffres + le badge, aucune valeur unique (ni contenance ni dessin).
+              // La tuile affiche « Surface incertaine » EN ENTIER (plus de double chiffre tronqué) ;
+              // les deux mesures (plan vs cadastre) passent dans l'infobulle.
               if (f.surface_incertaine) {
-                return { l: 'Surface', v: `Plan ${fmtM2(surfaceDessin(f))} · Cadastre ${fmtM2(f.contenance_m2)}`,
-                  s: f.surface_incertaine_libelle ?? 'surface incertaine : le plan et le cadastre ne concordent pas',
+                return { l: 'Surface', v: 'Surface incertaine',
                   vide: true,
-                  i: 'Le plan cadastral et la contenance inscrite au cadastre diffèrent de plus du double — surface indéterminée. Aucune capacité ni prix au m² n’est calculé tant que la source n’est pas tranchée.' } as Tuile
+                  i: `Plan : ${fmtM2(surfaceDessin(f))} · Cadastre : ${fmtM2(f.contenance_m2)} — le plan et le cadastre ne concordent pas` } as Tuile
               }
               // CONTENANCE-1 (Lot B) — la Surface affichée = contenance cadastrale (chiffre de
               // l'acte) si présente, sinon dessin du plan (repli). B3 : ligne discrète « Dessin du

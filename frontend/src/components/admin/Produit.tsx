@@ -9,7 +9,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import {
   getAdminProduit, getAdminSignalements, postAdminRetourStatut, postAdminSignalementStatut,
-  postAdminSignalementsTraiterInternes,
 } from '../../lib/api'
 import { MODULES } from '../outils/registry'
 import { ActBtn, Chip, Panel, PHead } from './AdminView'
@@ -65,7 +64,6 @@ export function ProduitSection() {
   const sig = useQuery({ queryKey: ['admin-signalements'], queryFn: () => getAdminSignalements(), refetchInterval: 120_000 })
   const [fStatut, setFStatut] = useState<'tous' | 'nouveau' | 'traite'>('nouveau')
   const [fType, setFType] = useState<TypeFiltre>('tous')
-  const [voirTests, setVoirTests] = useState(false)
 
   // invalide TOUT ce qui porte un compteur Produit (les deux tables + le Pilotage).
   const invalider = () => {
@@ -79,7 +77,6 @@ export function ProduitSection() {
   const majRetour = useMutation({
     mutationFn: ({ id, s }: { id: number; s: 'nouveau' | 'traite' }) => postAdminRetourStatut(id, s), onSuccess: invalider,
   })
-  const traiterInternes = useMutation({ mutationFn: postAdminSignalementsTraiterInternes, onSuccess: invalider })
 
   const d = q.data
   // ── file UNIQUE : signalements (fiche + annonce) + retours « Signaler » global ──
@@ -105,8 +102,8 @@ export function ProduitSection() {
     return out.sort((a, b) => (b.ts ?? '').localeCompare(a.ts ?? ''))
   }, [sig.data, d])
 
-  const nMasques = items.filter((r) => r.interne).length
-  const baseVisibles = voirTests ? items : items.filter((r) => !r.interne)
+  // Les retours internes / de test ne sont jamais montrés dans la file Produit (file clients).
+  const baseVisibles = items.filter((r) => !r.interne)
   const retours = baseVisibles.filter((r) =>
     (fStatut === 'tous' || (fStatut === 'nouveau' ? r.statut === 'nouveau' : r.statut !== 'nouveau'))
     && (fType === 'tous' || r.type === fType))
@@ -145,16 +142,6 @@ export function ProduitSection() {
             ))}
           </span>
         </PHead>
-        <div className="flex flex-wrap items-center gap-2 border-b border-line px-4 py-2">
-          {nMasques > 0 && (
-            <Chip tone="off" onClick={() => setVoirTests((v) => !v)}>
-              {voirTests ? 'masquer les tests' : `${nMasques} retour${nMasques > 1 ? 's' : ''} de test masqué${nMasques > 1 ? 's' : ''}`}
-            </Chip>
-          )}
-          <ActBtn tone="ghost" onClick={() => traiterInternes.mutate()} disabled={traiterInternes.isPending}>
-            {traiterInternes.isSuccess ? `✓ ${traiterInternes.data?.traites ?? 0} internes traités` : 'Traiter les internes/test'}
-          </ActBtn>
-        </div>
         <table className="w-full text-[13px]">
           <thead>
             <tr>

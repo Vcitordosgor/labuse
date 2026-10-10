@@ -1206,7 +1206,7 @@ def admin_ia(request: Request) -> dict:
     with engine().begin() as c:
         mois = conso_ia_mois(c)
         _c30 = conso_ia_30j(c)
-        jours, par_licence, cout_7j = _c30["jours"], _c30["par_licence"], _c30["cout_7j"]
+        par_licence, cout_7j = _c30["par_licence"], _c30["cout_7j"]
         quotas = [dict(r) for r in c.execute(text(
             "SELECT id, nom, plan, copilote_quota_jour, copilote_budget_eur FROM comptes"
             " WHERE statut NOT IN ('resilie') ORDER BY created_at DESC")).mappings()]
@@ -1242,9 +1242,6 @@ def admin_ia(request: Request) -> dict:
         q["depense_eur"] = round(depense_eur_aujourdhui(int(q["id"])), 4)
         q["equiv_questions"] = int(round(b / cout_unitaire)) if cout_unitaire > 0 else None
         q["appels_aujourdhui"] = consomme_copilote_aujourdhui(int(q["id"]))
-    for r in jours:
-        r["jour"] = r["jour"].isoformat()
-        r["cout"] = float(r["cout"])
     for r in par_licence:
         r["cout"] = float(r["cout"])
     # RETOURS-7 Z7 — TABLEAU « surface → modèle » : quel modèle sert chaque usage IA, LU depuis la
@@ -1259,70 +1256,12 @@ def admin_ia(request: Request) -> dict:
         "projection_fin_mois_eur": round(projection, 2),
         # CORRECTIFS-1 B2 — deux blocs DISJOINTS (interne = fonctionnement LABUSE ; clients).
         "blocs": blocs,
-        "jours": jours,
         "par_licence": par_licence,
         # RETOURS-8 (R3) — le plafond par défaut est en EUROS/jour (défaut config), éditable par licence.
         "budget_defaut_eur": round(float(config.get_settings().copilote_budget_eur_defaut), 2),
         "quotas": quotas,
         "modeles_par_surface": surfaces,
-        # CORRECTIFS-1 B3 — le solde Anthropic n'est PAS exposé par l'API (/v1/organizations/cost_report
-        # ne donne que la DÉPENSE) : à défaut, estimation « reste ≈ crédit saisi − conso depuis la date ».
-        "credit_anthropic": _credit_anthropic_estime(),
     }
-
-
-# CORRECTIFS-1 B3 — clés de réglage du crédit Anthropic saisi par l'admin.
-_CLE_CREDIT_EUR = "credit_anthropic_eur"       # montant acheté (euros, texte)
-_CLE_CREDIT_DATE = "credit_anthropic_date"     # date d'achat (ISO AAAA-MM-JJ)
-
-
-def _credit_anthropic_estime() -> dict:
-    """Le crédit prépayé Anthropic n'est pas lisible par l'API (seule la dépense l'est). L'admin
-    saisit le montant acheté et sa date ; on estime le reste = montant − conso tracée (ledger) depuis
-    cette date. CLAIREMENT une estimation (la conso tracée peut différer de la facturation Anthropic)."""
-    from .. import reglages
-    from ..db import engine
-    montant = reglages.get_str(_CLE_CREDIT_EUR, "").strip()
-    date_achat = reglages.get_str(_CLE_CREDIT_DATE, "").strip()
-    out: dict = {"expose_par_api": False, "montant_eur": None, "achete_le": None,
-                 "conso_depuis_eur": None, "reste_estime_eur": None}
-    try:
-        m = float(montant) if montant else None
-    except ValueError:
-        m = None
-    if m is None or not date_achat:
-        return out
-    with engine().connect() as conn:
-        conso = float(conn.execute(text(
-            "SELECT COALESCE(SUM(cout_eur), 0) FROM ia_log WHERE ts >= :d"),
-            {"d": date_achat}).scalar() or 0)
-    out.update({"montant_eur": round(m, 2), "achete_le": date_achat,
-                "conso_depuis_eur": round(conso, 4), "reste_estime_eur": round(m - conso, 2)})
-    return out
-
-
-class CreditAnthropicIn(BaseModel):
-    montant_eur: float | None = Field(default=None, ge=0.0, le=100_000.0)
-    achete_le: str | None = Field(default=None, max_length=10)   # ISO AAAA-MM-JJ
-
-
-@router.post("/admin/ia/credit", include_in_schema=False)
-def admin_ia_credit(body: CreditAnthropicIn, request: Request) -> dict:
-    """CORRECTIFS-1 B3 — enregistre le crédit Anthropic saisi (montant + date d'achat)."""
-    from fastapi import HTTPException
-    from .auth import exiger_admin
-    exiger_admin(request)
-    from .. import reglages
-    import datetime as _dt
-    date_s = (body.achete_le or "").strip()
-    if date_s:
-        try:
-            _dt.date.fromisoformat(date_s)   # valide le format AAAA-MM-JJ
-        except ValueError:
-            raise HTTPException(422, "Date invalide (attendu AAAA-MM-JJ).")
-    reglages.set_str(_CLE_CREDIT_EUR, "" if body.montant_eur is None else str(body.montant_eur))
-    reglages.set_str(_CLE_CREDIT_DATE, date_s)
-    return _credit_anthropic_estime()
 
 
 class QuotaIn(BaseModel):

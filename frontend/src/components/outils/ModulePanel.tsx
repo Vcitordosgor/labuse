@@ -738,7 +738,7 @@ export function M03() {
           F3 : enveloppe NON-flex — le wrapper interne `flex-1` d'AddressAutocomplete grandissait
           VERTICALEMENT dans ce flex-col (vide de ~300 px). */}
       <div className="shrink-0">
-        <AddressAutocomplete data-testid="permis-recherche" placeholder="Adresse, commune ou n° de permis"
+        <AddressAutocomplete data-testid="permis-recherche" placeholder="Adresse, n° de permis ou parcelle"
           // RETOURS-16 V5 — la barre permis accepte adresse + parcelle + COMMUNE : le suggest
           // unifié propose les trois à la frappe ; choisir une commune pose le filtre commune.
           // RECHERCHE-2 Lot 2 — + PROPRIÉTAIRE / SIREN : un pick propriétaire déroule ses parcelles

@@ -202,8 +202,15 @@ function DetailReservoir({ id, data, back, onOpen, rafraichir }:
                     {bloque ? 'Agent — sans objet' : agent.isPending ? 'Agent en route…' : envoye ? 'Agent envoyé' : 'Envoyer un agent'}</button>
                 )
               })()}
-              {r.vanne?.type === 'injecter' && <button className="btn ambre" disabled={injecter.isPending || injecter.isSuccess}
-                onClick={() => injecter.mutate()}>{injecter.isPending ? 'Injection en cours…' : injecter.isSuccess ? 'Injecté ✓' : 'Ouvrir la vanne, injecter'}</button>}
+              {/* Le bouton Injecter existe sur TOUTES les sources, au même endroit : actif quand un job
+                  d'ingestion est connu, sinon grisé avec le motif (dépôt de fichier, en direct, aucun
+                  job…) — jamais absent, pour qu'un clic ne reste jamais sans retour (item recette 8). */}
+              {r.vanne?.type === 'injecter'
+                ? <button className="btn ambre" disabled={injecter.isPending || injecter.isSuccess}
+                    onClick={() => injecter.mutate()}>{injecter.isPending ? 'Injection en cours…' : injecter.isSuccess ? 'Injecté ✓' : 'Ouvrir la vanne, injecter'}</button>
+                : <button className="btn" disabled
+                    title={r.vanne?.motif || (r.vanne?.type === 'depot' ? 'Source alimentée par dépôt de fichier.' : 'Aucun job d’ingestion identifié pour cette source.')}>
+                    {r.vanne?.type === 'depot' ? 'Injection — dépôt de fichier' : 'Injection — sans objet'}</button>}
               {f.verdict === 'quarantaine' && <>
                 <button className="btn ambre" disabled={servir.isPending}
                   onClick={() => { if (confirm(`Servir « ${f.source} » malgré la quarantaine ?`)) servir.mutate(f.source) }}>Servir quand même</button>

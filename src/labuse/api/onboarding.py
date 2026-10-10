@@ -1024,7 +1024,10 @@ def flash_page(idu: str = "", q: str = "", annule: int = 0, cgv: str = "",
         parcelle = db.execute(text(
             "SELECT idu, commune, round(surface_m2) AS m2, "
             # CORRECTIFS-1 A7 — géométrie simplifiée en 3857 pour l'aperçu ortho (écran de validation).
-            " ST_AsGeoJSON(ST_Transform(ST_SimplifyPreserveTopology(geom, 0.5), 3857), 5) AS gj3857 "
+            # CONTENANCE-FIX : on simplifie APRÈS le passage en mètres (3857). Simplifier `geom` (SRID
+            # 4326, en degrés) avec une tolérance de 0,5 revenait à 0,5° ≈ 55 km → le contour s'écrasait
+            # sur un squelette décalé de ~26 m (constaté terrain sur BZ1065). 0,5 m en 3857 = résolution écran.
+            " ST_AsGeoJSON(ST_SimplifyPreserveTopology(ST_Transform(geom, 3857), 0.5), 5) AS gj3857 "
             "FROM parcels WHERE idu = :i"),
             {"i": idu.upper()}).mappings().first()
     if parcelle:
@@ -1060,7 +1063,6 @@ def flash_page(idu: str = "", q: str = "", annule: int = 0, cgv: str = "",
 <div><i>▸</i><span><b style="color:var(--txt)">Le marché</b> : les ventes faites autour, le prix au m² du secteur, les permis déposés par les voisins.</span></div>
 <div><i>▸</i><span><b style="color:var(--txt)">Le quartier et le projet</b> : équipements, réseaux, fiscalité locale, et ce que les règles permettent d'envisager.</span></div>
 </div>
-<p class="note">Chaque information porte sa source et sa date. Quand c'est une estimation, c'est écrit.</p>
 <p class="note">Onze volets, du plan cadastral au potentiel du terrain.</p>
 <p class="sub" style="margin-top:20px;text-align:left;color:var(--txt);font-weight:600">Quelle parcelle ?</p>
 <form method="get" action="/flash" data-flash-omnibox>
@@ -1068,10 +1070,9 @@ def flash_page(idu: str = "", q: str = "", annule: int = 0, cgv: str = "",
 <label for="q">Adresse du bien</label>
 <div class="field" style="position:relative"><input id="q" name="q" type="text" inputmode="text" autofocus
   autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false"
-  aria-controls="q-sugg" placeholder="Commencez à taper une adresse…" aria-describedby="qhint">
+  aria-controls="q-sugg" placeholder="Commencez à taper une adresse…">
   <div id="q-sugg" role="listbox" aria-label="Suggestions d'adresses" hidden
        style="position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:30;background:var(--card,#141b22);border:1px solid var(--line,#26323c);border-radius:10px;overflow:hidden;box-shadow:0 14px 36px rgba(0,0,0,.4)"></div></div>
-<p class="hint" id="qhint">On retrouve la parcelle pour vous.</p>
 </div>
 <p class="note" data-sep style="margin:14px 0 6px">— ou —</p>
 <div data-field="idu">

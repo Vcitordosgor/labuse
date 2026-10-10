@@ -186,7 +186,7 @@ def test_ia_conso_et_plafond_euros_editable(client, engine, compte_test):
     from labuse.api.dashboard import quota_du_compte, quota_nl_du_compte, budget_eur_du_compte
     assert quota_nl_du_compte is quota_du_compte           # l'alias pointe la fonction unifiée
     d = client.get("/admin/ia").json()
-    assert d["budget_defaut_eur"] == 2.0 and "mois" in d and "jours" in d and "par_licence" in d
+    assert d["budget_defaut_eur"] == 2.0 and "mois" in d and "par_licence" in d
     assert "cout_unitaire_question_eur" in d               # « 0,008 € / question »
     ligne = next(k for k in d["quotas"] if k["id"] == compte_test)
     assert "budget_eur" in ligne and "depense_eur" in ligne and "equiv_questions" in ligne

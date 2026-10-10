@@ -1068,8 +1068,7 @@ export const getPiscinesListe = (f: PiscinesFiltres) =>
 export interface SuccessionItem {
   idu: string; commune: string; surface_m2: number | null; zone: string | null
   sdp_residuelle_m2: number | null   // Estimé — moteur de la fiche (p_model_ext_dataset)
-  // CORRECTIFS-1 C5 (RGPD) — tranche d'âge (« plus de 70 ans »), jamais l'âge exact.
-  dirigeant_tranche: string | null; sci_dormante: boolean
+  dirigeant_age: number | null; sci_dormante: boolean
   // DONNEES-1 lot 2.3 — dernier dépôt de comptes BODACC du propriétaire PM (null = aucun publié).
   depot_comptes: { annee: number | null; depuis_ans: number | null; muet?: boolean } | null
   proprio: SolaireProprio
@@ -1771,7 +1770,6 @@ export interface AdminIa {
   // RETOURS-8 (R3) — coût unitaire d'UNE question (« 0,008 € / question »).
   cout_unitaire_question_eur: number
   projection_fin_mois_eur: number
-  jours: Array<{ jour: string; cout: number; appels: number }>
   par_licence: Array<{ compte_id: number | null; nom: string; cout: number; appels: number }>
   // RETOURS-8 (R3) — le plafond par défaut est en EUROS/jour, éditable par licence.
   budget_defaut_eur: number
@@ -1783,21 +1781,10 @@ export interface AdminIa {
   modeles_par_surface: Array<{ kind: string; label: string; model: string }>
   // CORRECTIFS-1 B2 — deux blocs DISJOINTS (interne = fonctionnement LABUSE ; clients).
   blocs: { interne: IaBloc; clients: IaBloc }
-  // CORRECTIFS-1 B3 — crédit Anthropic (estimation ; solde non exposé par l'API).
-  credit_anthropic: CreditAnthropic
 }
 // CORRECTIFS-1 B2 — un bloc de coûts IA (interne OU clients), jamais mélangés.
 export interface IaBloc { cout_eur: number; appels: number; projection_fin_mois_eur: number; cout_moyen_eur: number | null }
-// CORRECTIFS-1 B3 — crédit Anthropic : le solde n'est pas exposé par l'API → estimation = montant
-// saisi par l'admin − conso tracée (ledger) depuis la date d'achat.
-export interface CreditAnthropic {
-  expose_par_api: boolean; montant_eur: number | null; achete_le: string | null
-  conso_depuis_eur: number | null; reste_estime_eur: number | null
-}
 export const getAdminIa = () => j<AdminIa>('/admin/ia')
-// CORRECTIFS-1 B3 — enregistre le crédit Anthropic (montant + date d'achat).
-export const postAdminIaCredit = (montantEur: number | null, acheteLe: string | null) =>
-  j<CreditAnthropic>('/admin/ia/credit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ montant_eur: montantEur, achete_le: acheteLe }) })
 // CONNEXIONS-2 Lot 3 (KO-4) — file UNIQUE des signalements (fiche + annonce), traitée au dashboard
 export interface Signalement {
   id: number; type: 'fiche' | 'annonce'; parcelle_id: string | null; bien_id: number | null
@@ -1811,9 +1798,6 @@ export const getAdminSignalements = (statut?: 'nouveau' | 'traite') =>
   j<{ signalements: Signalement[]; n_ouverts: number }>(`/admin/signalements${statut ? `?statut=${statut}` : ''}`)
 export const postAdminSignalementStatut = (id: number, statut: 'nouveau' | 'traite') =>
   j<{ ok: boolean }>(`/admin/signalements/${id}/statut`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ statut }) })
-// RETOURS-8 (R13) — traite en masse les signalements venus d'un compte interne/test (rien supprimé).
-export const postAdminSignalementsTraiterInternes = () =>
-  j<{ ok: boolean; traites: number }>('/admin/signalements/traiter-internes', { method: 'POST' })
 // RETOURS-8 (R3) — le plafond s'édite en EUROS/jour (`budget_eur`, null = défaut config).
 export const postAdminLicenceQuota = (compteId: number, budgetEur: number | null) =>
   j<{ ok: boolean }>(`/admin/licences/${compteId}/quota`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ budget_eur: budgetEur }) })

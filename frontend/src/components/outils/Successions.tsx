@@ -162,7 +162,7 @@ function Motif({ it }: { it: SuccessionItem }) {
   // ne recalcule plus l'ancienneté du silence de dépôt.
   const depotMuet = it.depot_comptes?.muet ?? false
   const base = it.sci_dormante ? 'SCI dormante'
-    : it.dirigeant_tranche != null ? `dirigeant ${it.dirigeant_tranche}` : null
+    : it.dirigeant_age != null ? `dirigeant ${it.dirigeant_age} ans` : null
   if (!base && !depotMuet) return null
   return (
     <span className="shrink-0 text-txt-dim">
