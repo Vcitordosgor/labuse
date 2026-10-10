@@ -50,7 +50,11 @@ def _commune_nom(insee: str) -> str | None:
 
 
 def _parcel_ids(session, commune: str | None) -> list[int]:
-    stmt = select(models.Parcel.id).order_by(models.Parcel.idu)
+    # SOURCES-MAJ-1 — une parcelle sortie du cadastre (cadastre_disparue_le) n'entre dans AUCUN
+    # run (résiduel/score) ni export : elle n'est plus servie. Exclusion au point d'entrée unique.
+    stmt = (select(models.Parcel.id)
+            .where(text("parcels.cadastre_disparue_le IS NULL"))
+            .order_by(models.Parcel.idu))
     if commune:
         stmt = stmt.where(models.Parcel.commune == commune)
     return [r[0] for r in session.execute(stmt).all()]

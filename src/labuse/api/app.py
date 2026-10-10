@@ -2680,6 +2680,7 @@ def search_parcels(q: str = Query(..., min_length=2), commune: str | None = None
             LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
             LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
             WHERE p.idu ILIKE :pat AND (CAST(:c AS text) IS NULL OR p.commune = :c)
+              AND p.cadastre_disparue_le IS NULL   -- SOURCES-MAJ-1 : jamais une disparue dans l'omnibox
             ORDER BY ord, s2.rang ASC NULLS LAST, p.idu
             LIMIT :lim
         ) s
