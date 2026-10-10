@@ -276,6 +276,13 @@ export interface QualiteCommune {
 export interface Fiche {
   idu: string
   commune: string
+  // SOURCES-MAJ-1 — si posé, la parcelle est sortie de la trame cadastrale : la fiche affiche un
+  // bandeau « disparue — remplacée par […] » au lieu du contenu normal (jamais une erreur).
+  cadastre_disparue?: {
+    disparue_le: string | null
+    message: string
+    remplacee_par: { idu: string; commune: string | null; recouvrement: number | string | null }[]
+  }
   // ── ANALYSE-1 — le verdict du NOUVEAU moteur (Score LABUSE + Signal de mutation, run candidat) ──
   // Servi tel quel : bande (BANDE_META), Signal de mutation (SIGNAL_META), contributions FR EN ENTIER,
   // cause d'incomplétude. null = parcelle absente du run candidat.
