@@ -622,6 +622,9 @@ def ingest_island_cmd(
     force: bool = typer.Option(False, help="Réingère même les communes déjà « ok »."),
     limit: int = typer.Option(None, help="Cap de parcelles par commune (tests)."),
     spacing: float = typer.Option(4.0, help="Pause (s) entre communes — politesse API."),
+    force_disparues: bool = typer.Option(
+        False, "--force-disparues",
+        help="Outrepasse le verrou « parcelles disparues » (DÉTRUIT les marques cadastre)."),
 ) -> None:
     """Ingestion + évaluation des 24 communes, EN SÉRIE et REPRENABLE.
 
@@ -632,6 +635,21 @@ def ingest_island_cmd(
     import time
 
     from .ingestion import run_all, seed_sources
+
+    # SOURCES-MAJ-1 — VERROU : `ingest-island` purge parcels par commune (run_all.purge_commune :
+    # DELETE FROM parcels) → effacerait les parcelles marquées « disparue du cadastre » ET leurs
+    # liens de remplacement. Refus net tant qu'il en existe. Pour RE-JOUER la cascade sans purger
+    # (couche rafraîchie, cadastre différentiel), utiliser `labuse reevaluer-cascade`.
+    with session_scope() as _s:
+        n_disp = _s.execute(text(
+            "SELECT count(*) FROM parcels WHERE cadastre_disparue_le IS NOT NULL")).scalar() or 0
+    if n_disp and not force_disparues:
+        typer.echo(
+            f"⛔ REFUS : {n_disp} parcelle(s) marquée(s) « disparue du cadastre ». ingest-island "
+            "PURGE parcels par commune et les effacerait (+ liens de remplacement). Pour re-jouer "
+            "la cascade SANS purger parcels : `labuse reevaluer-cascade --ile`. "
+            "Pour forcer malgré tout (destructif) : --force-disparues.")
+        raise typer.Exit(2)
 
     targets = run_all.REUNION_COMMUNES
     if only:
@@ -695,6 +713,66 @@ def ingest_island_cmd(
     for name, err, dt in failed:
         typer.echo(f"  ✗ {name:24} {err}")
     typer.echo(f"TOTAL EN BASE : {total_p} parcelles sur {communes_db} commune(s).")
+
+
+@app.command("reevaluer-cascade")
+def reevaluer_cascade_cmd(
+    commune: str = typer.Option(None, help="Commune (nom/INSEE) — ignoré si --ile."),
+    ile: bool = typer.Option(False, "--ile", help="Toute l'île (les 24 communes)."),
+    chunk: int = typer.Option(2000, help="Taille des lots d'évaluation (commit par lot)."),
+) -> None:
+    """SOURCES-MAJ-1 — RE-JOUE la cascade (`evaluate_commune`) SANS purger parcels (≠ ingest-island,
+    qui fait DELETE FROM parcels). Évalue toutes les parcelles COURANTES de la/les commune(s), donc
+    COUVRE les nouvelles parcelles du cadastre différentiel, et prend en compte les couches
+    rafraîchies (PPR, érosion, RPG…). À lancer AVANT `compute-residuel` quand le cadastre/les
+    couches ont changé. N'écrit jamais parcels ; n'efface jamais les marques « disparue »."""
+    import time
+
+    from .ingestion import run_all
+
+    if ile:
+        targets = run_all.REUNION_COMMUNES
+    else:
+        if not commune:
+            typer.echo("Préciser --commune <nom/INSEE> OU --ile.")
+            raise typer.Exit(2)
+        nom = _resolve_commune(commune)
+        targets = [(i, n) for (i, n) in run_all.REUNION_COMMUNES if n == nom]
+    if not targets:
+        typer.echo("Aucune commune ciblée.")
+        raise typer.Exit(1)
+    models.ensure_geom_2975(engine())   # geom_2975 valide+indexé avant la cascade (nouvelles parcelles)
+    tot = 0
+    t_all = time.monotonic()
+    for k, (insee, name) in enumerate(targets, 1):
+        t0 = time.monotonic()
+        with session_scope() as s:
+            n = run_all.evaluate_commune(s, name, chunk=chunk)
+        tot += n
+        typer.echo(f"  [{k}/{len(targets)}] {name} : {n} évaluées ({time.monotonic() - t0:.0f}s)")
+    typer.echo(f"✓ cascade re-jouée SANS purge : {tot} parcelles · {len(targets)} commune(s) · "
+               f"{time.monotonic() - t_all:.0f}s. (parcels & marques disparues intactes)")
+
+
+@app.command("refresh-rpg")
+def refresh_rpg_cmd() -> None:
+    """SOURCES-MAJ-1 — rafraîchit la couche RPG agricole (WFS `RPG.LATEST` = campagne courante)
+    EN DATA-ONLY : purge `spatial_layers` kind='safer'/subtype='rpg' + ré-insertion par commune,
+    SANS toucher parcels. Prise en compte au score au prochain `reevaluer-cascade` + run."""
+    from .ingestion import run_all
+    from .ingestion.layers_ingest import _source_ids, ingest_rpg_agricole
+
+    with session_scope() as s:
+        s.execute(text("DELETE FROM spatial_layers WHERE kind = 'safer' AND subtype = 'rpg'"))
+        sids = _source_ids(s)
+        tot = 0
+        for insee, name in run_all.REUNION_COMMUNES:
+            bbox = run_all._commune_bbox(s, name)
+            if not bbox:
+                continue
+            tot += ingest_rpg_agricole(s, bbox, name, None, sids)
+        s.commit()
+    typer.echo(f"✓ RPG rafraîchi (data-only, WFS RPG.LATEST) : {tot} parcelles agricoles safer/rpg.")
 
 
 @app.command("backfill-contenance")
