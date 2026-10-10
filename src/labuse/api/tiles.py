@@ -195,6 +195,7 @@ def build_mvt_table(db: Session, run_label: str | None = None) -> int:
                    WHERE run_label = :run AND (result = 'SOFT_FLAG'
                          OR (layer_name = 'abf' AND result = 'UNKNOWN'))
                    GROUP BY parcel_id) fl ON fl.parcel_id = p.id
+        WHERE p.cadastre_disparue_le IS NULL   -- SOURCES-MAJ-1 : une parcelle sortie du cadastre ne peint plus
     """), {"run": cascade_run, "v2run": v2run})  # C1 : :run = cascade (étage 0/flags), :v2run = score
     db.execute(text("CREATE INDEX mvt_parcels_gix ON mvt_parcels USING GIST (geom_3857)"))
     # M-L : index `mvt_parcels_status` SUPPRIMÉ — la colonne `status` n'est plus bakée depuis M48

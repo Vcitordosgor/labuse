@@ -683,6 +683,47 @@ export function Fiche({ idu }: { idu: string }) {
   // VALEUR UNIQUE ici (un critère, un seul endroit). `max-w-full` garde la fiche dans l'écran
   // aux petites largeurs (aucun débordement horizontal). Ne PAS toucher les tailles de texte
   // ni les paddings (calés en M56-B3 : panneau 14, .gr 10 vertical, .gr partagée).
+  // SOURCES-MAJ-1 — parcelle sortie du cadastre : bandeau de courtoisie + liens cliquables vers les
+  // remplaçantes (ouverte depuis un projet / le CRM / un suivi, elle ne doit JAMAIS donner une erreur).
+  if (f?.cadastre_disparue) {
+    const cd = f.cadastre_disparue
+    return (
+      <aside className="fiche-v6 apparition absolute right-0 top-0 z-10 flex h-full w-[400px] max-w-full flex-col border-l border-line shadow-2xl">
+        <div className="flex shrink-0 items-center justify-between border-b border-line px-5 py-3">
+          <div className="text-sm font-medium">{iduComplet(idu)}{f.commune ? ` · ${f.commune}` : ''}</div>
+          <button type="button" onClick={() => select(null)} aria-label="Fermer la fiche" className="text-sm">✕</button>
+        </div>
+        <div className="space-y-4 p-5 text-sm">
+          <div className="border border-st-ecartee/40 bg-st-ecartee/15 px-4 py-3 text-st-ecartee">
+            <div className="font-medium">Parcelle disparue du cadastre</div>
+            <div className="mt-1 text-[12px] leading-snug">{cd.message}</div>
+          </div>
+          {cd.remplacee_par && cd.remplacee_par.length > 0 ? (
+            <div>
+              <div className="mb-1 text-[12px] font-medium" style={{ color: 'var(--txt-dim)' }}>Remplacée par</div>
+              <ul className="space-y-1">
+                {cd.remplacee_par.map((r) => (
+                  <li key={r.idu}>
+                    <button type="button" className="underline" onClick={() => select(r.idu)}>
+                      {iduComplet(r.idu)}{r.commune ? ` · ${r.commune}` : ''}
+                    </button>
+                    {r.recouvrement != null && (
+                      <span className="ml-1 text-[11px]" style={{ color: 'var(--txt-dim)' }}>
+                        ({Math.round(Number(r.recouvrement) * 100)} %)
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : (
+            <div className="text-[12px]" style={{ color: 'var(--txt-dim)' }}>Aucune parcelle de remplacement identifiée.</div>
+          )}
+        </div>
+      </aside>
+    )
+  }
+
   return (
     <FicheAccordionCtx.Provider value={accValueF}>
     <aside className="fiche-v6 apparition absolute right-0 top-0 z-10 flex h-full w-[400px] max-w-full flex-col border-l border-line shadow-2xl">
