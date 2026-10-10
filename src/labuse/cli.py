@@ -720,12 +720,18 @@ def reevaluer_cascade_cmd(
     commune: str = typer.Option(None, help="Commune (nom/INSEE) — ignoré si --ile."),
     ile: bool = typer.Option(False, "--ile", help="Toute l'île (les 24 communes)."),
     chunk: int = typer.Option(2000, help="Taille des lots d'évaluation (commit par lot)."),
+    label: str = typer.Option(
+        None, "--label",
+        help="Écrit un ÉTAGE 0 LABELLISÉ (dryrun_cascade_results/dryrun_parcel_evaluations) que le "
+             "scoring lit via --cascade-label (ex. q_v18_sources), EN UNE PASSE. Sans --label : met "
+             "à jour la cascade LIVE (cascade_results/parcel_evaluations). Dans les deux cas : SANS "
+             "purger parcels, et en EXCLUANT les parcelles disparues."),
 ) -> None:
-    """SOURCES-MAJ-1 — RE-JOUE la cascade (`evaluate_commune`) SANS purger parcels (≠ ingest-island,
-    qui fait DELETE FROM parcels). Évalue toutes les parcelles COURANTES de la/les commune(s), donc
-    COUVRE les nouvelles parcelles du cadastre différentiel, et prend en compte les couches
-    rafraîchies (PPR, érosion, RPG…). À lancer AVANT `compute-residuel` quand le cadastre/les
-    couches ont changé. N'écrit jamais parcels ; n'efface jamais les marques « disparue »."""
+    """SOURCES-MAJ-1 — RE-JOUE la cascade SANS purger parcels (≠ ingest-island, qui fait DELETE FROM
+    parcels). Évalue toutes les parcelles COURANTES (hors disparues), donc COUVRE les nouvelles
+    parcelles du cadastre différentiel + les couches rafraîchies (PPR, RPG…). Avec `--label`, écrit
+    directement l'étage 0 labellisé que le SCORE consomme (pas de passe supplémentaire). N'écrit
+    jamais parcels ; n'efface jamais les marques « disparue »."""
     import time
 
     from .ingestion import run_all
@@ -742,16 +748,31 @@ def reevaluer_cascade_cmd(
         typer.echo("Aucune commune ciblée.")
         raise typer.Exit(1)
     models.ensure_geom_2975(engine())   # geom_2975 valide+indexé avant la cascade (nouvelles parcelles)
+    if label:
+        from .cascade import evaluate_parcels
     tot = 0
     t_all = time.monotonic()
     for k, (insee, name) in enumerate(targets, 1):
         t0 = time.monotonic()
-        with session_scope() as s:
-            n = run_all.evaluate_commune(s, name, chunk=chunk)
+        if label:
+            # Étage 0 LABELLISÉ en une passe (dryrun_label) — exclut les disparues du snapshot.
+            with session_scope() as s:
+                ids = [r[0] for r in s.execute(text(
+                    "SELECT id FROM parcels WHERE commune = :c AND cadastre_disparue_le IS NULL "
+                    "ORDER BY idu"), {"c": name}).all()]
+                for j in range(0, len(ids), chunk):
+                    evaluate_parcels(ids[j:j + chunk], s, persist=True, dryrun_label=label)
+                    s.commit()
+                    s.expunge_all()
+                n = len(ids)
+        else:
+            with session_scope() as s:
+                n = run_all.evaluate_commune(s, name, chunk=chunk)
         tot += n
         typer.echo(f"  [{k}/{len(targets)}] {name} : {n} évaluées ({time.monotonic() - t0:.0f}s)")
-    typer.echo(f"✓ cascade re-jouée SANS purge : {tot} parcelles · {len(targets)} commune(s) · "
-               f"{time.monotonic() - t_all:.0f}s. (parcels & marques disparues intactes)")
+    cible = f"étage 0 labellisé « {label} »" if label else "cascade LIVE"
+    typer.echo(f"✓ cascade re-jouée SANS purge ({cible}) : {tot} parcelles · {len(targets)} "
+               f"commune(s) · {time.monotonic() - t_all:.0f}s. (parcels & marques disparues intactes)")
 
 
 @app.command("refresh-rpg")
