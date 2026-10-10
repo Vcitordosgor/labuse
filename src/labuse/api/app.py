@@ -6291,6 +6291,30 @@ def _fiche_version(db: Session) -> str:
     return _FICHE_VER["v"]
 
 
+def _fiche_cadastre_disparue(db: Session, idu: str, row) -> dict:
+    """SOURCES-MAJ-1 — une parcelle marquée `cadastre_disparue_le` (sortie de la trame cadastrale
+    à un millésime récent) n'est plus servie (carte/recherche/filtres/listes), mais un client peut
+    encore l'ouvrir depuis un projet / le CRM / un suivi. On rend alors une fiche de COURTOISIE
+    (HTTP 200) qui dit « Parcelle disparue du cadastre (version du …) — remplacée par […] » au lieu
+    d'une 404. Les remplaçantes = recouvrement ≥ 50 % (table `parcel_cadastre_remplacement`)."""
+    dt = row.get("cadastre_disparue_le")
+    remp = db.execute(text(
+        "SELECT r.nouvelle_idu AS idu, p.commune, r.taux_couv_ancienne AS recouvrement "
+        "FROM parcel_cadastre_remplacement r JOIN parcels p ON p.idu = r.nouvelle_idu "
+        "WHERE r.ancienne_idu = :idu AND p.cadastre_disparue_le IS NULL "
+        "ORDER BY r.taux_couv_ancienne DESC NULLS LAST"), {"idu": idu}).mappings().all()
+    ds = dt.isoformat() if dt else None
+    return {
+        "idu": idu, "commune": row.get("commune"),
+        "cadastre_disparue": {
+            "disparue_le": ds,
+            "message": (f"Parcelle disparue du cadastre (version du {ds})."
+                        if ds else "Parcelle disparue du cadastre."),
+            "remplacee_par": [dict(x) for x in remp],
+        },
+    }
+
+
 @app.get("/parcels/{idu}")
 def parcel_fiche(idu: str, source: str | None = None, db: Session = Depends(get_db),
                  request: Request = None, trace: int = 0) -> dict:
@@ -6303,6 +6327,14 @@ def parcel_fiche(idu: str, source: str | None = None, db: Session = Depends(get_
     direct). Le front envoie de toute façon `source=q_v*` (api.ts `getFiche`). Le builder legacy
     survit UNIQUEMENT pour /explain et /export (usages internes), plus jamais servi comme fiche."""
     idu = _check_idu(idu)   # garde O5 (octet nul / IDU malformé) → 404 propre AVANT tout accès DB
+    # SOURCES-MAJ-1 — parcelle sortie du cadastre : fiche de courtoisie (jamais une erreur) même si
+    # le run servi ne la porte plus. Lookup PK indexé, filtré sur le marqueur (≈0 ligne hors disparues).
+    if db is not None:
+        _disp = db.execute(text("SELECT commune, cadastre_disparue_le FROM parcels "
+                                "WHERE idu = :idu AND cadastre_disparue_le IS NOT NULL"),
+                           {"idu": idu}).mappings().first()
+        if _disp:
+            return _fiche_cadastre_disparue(db, idu, _disp)
     run = source if (source and source.startswith("q_v")) else runs.current()
     # VITESSE-PROD-1 — lecture du cache de fiche (cf. _FICHE_CACHE). La copie `dict(...)` protège
     # l'entrée cachée des ajouts par requête (`_trace` admin) ; le contenu servi est IDENTIQUE.

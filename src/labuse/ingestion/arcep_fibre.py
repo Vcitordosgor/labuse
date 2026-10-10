@@ -3,7 +3,7 @@
 Source vérifiée live 07/09/2026 : data.arcep.fr sert un DÉCOUPAGE DÉPARTEMENTAL (pas besoin
 du national) — `base_imb/last/departement/base_imb_974.csv.gz` (330 051 immeubles, 13,8 Mo)
 et `eligibilite/last/departement/actuel_974.csv.gz` (2 859 733 lignes immeuble × opérateur ×
-techno, 13,2 Mo). Dernier millésime du répertoire : 2026_T1. Coordonnées `imb_x/imb_y` en
+techno, 13,2 Mo). Dernier millésime du répertoire : 2026_T2 (SOURCES-MAJ-1, 2026-10-10). Coordonnées `imb_x/imb_y` en
 EPSG:3857 (vérifié : x≈6,17 M, y≈−2,38 M sur Saint-Denis).
 
 Table `arcep_immeubles` : un immeuble = raccordable FttH (≥ 1 ligne éligibilité FO) +
@@ -28,7 +28,7 @@ URL_BASE_IMB = ("https://data.arcep.fr/fixe/maconnexioninternet/base_imb/last/"
                 "departement/base_imb_974.csv.gz")
 URL_ELIG = ("https://data.arcep.fr/fixe/maconnexioninternet/eligibilite/last/"
             "departement/actuel_974.csv.gz")
-MILLESIME = "2026_T1"
+MILLESIME = "2026_T2"
 
 DDL = """
 CREATE TABLE IF NOT EXISTS arcep_immeubles (
