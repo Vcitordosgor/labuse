@@ -36,20 +36,26 @@ def surface_terrain(dessin_m2, contenance_m2) -> SurfaceTerrain:
     return SurfaceTerrain(des, SOURCE_PLAN, des, None)
 
 
-# CONTENANCE-1 (garde-fou) — quand la contenance est < la MOITIÉ du dessin (écart dessin > 100 %),
-# le plan et le cadastre se contredisent trop : la surface est INDÉTERMINÉE. On ne calcule NI sur la
-# contenance NI sur le dessin → « Analyse incomplète », les deux chiffres affichés, aucune capacité
-# ni prix au m². Vérifié sur 40 parcelles (ECARTS.md) : l'incohérence est DANS le cadastre IGN.
+# CONTENANCE-1 (garde-fou) — quand la contenance s'écarte d'un facteur > 2 du dessin (dans un sens
+# OU l'autre : contenance < dessin/2 ou contenance > 2×dessin), le plan et le cadastre se contredisent
+# trop : la surface est INDÉTERMINÉE. On ne calcule NI sur la contenance NI sur le dessin → « Analyse
+# incomplète », les deux chiffres affichés, aucune capacité ni prix au m². Vérifié sur 40 parcelles
+# (ECARTS.md) : l'incohérence est DANS le cadastre IGN. La borne HAUTE (contenance ≫ dessin) évite
+# qu'une contenance aberrante (erreur d'unité) ne gonfle l'assiette via la ré-échelle C3.
 MSG_SURFACE_INCERTAINE = "surface incertaine : le plan et le cadastre ne concordent pas"
 
 
 def surface_incertaine(dessin_m2, contenance_m2) -> bool:
-    """True si la contenance est présente ET inférieure à la moitié du dessin (dessin > 2×contenance).
-    Garde-fou : la parcelle bascule en « Analyse incomplète ». Symétrie volontairement NON couverte
-    (le mandat ne vise que la contenance anormalement petite devant un plan énorme)."""
+    """True si la contenance est présente ET s'écarte d'un facteur > 2 du dessin, dans UN SENS OU
+    L'AUTRE : contenance < dessin/2 (plan énorme devant un petit acte) OU contenance > 2×dessin
+    (contenance anormalement grande, p.ex. erreur d'unité ×10 000 : BP2028, dessin 813 m² ↔
+    contenance 8 130 000). Garde-fou : la parcelle bascule en « Analyse incomplète ». Le garde-fou
+    est désormais SYMÉTRIQUE — aucune ré-échelle C3 ne peut gonfler l'assiette à partir d'une
+    contenance aberrante."""
     if not dessin_m2 or contenance_m2 is None or float(contenance_m2) <= 0:
         return False
-    return float(contenance_m2) < float(dessin_m2) / 2.0
+    c, d = float(contenance_m2), float(dessin_m2)
+    return c < d / 2.0 or c > 2.0 * d
 
 
 def ecart_pct(dessin_m2, contenance_m2) -> float | None:

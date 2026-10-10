@@ -1,6 +1,8 @@
-"""CONTENANCE-1 (garde-fou) — contenance < moitié du dessin ⇒ « Analyse incomplète ».
+"""CONTENANCE-1 (garde-fou SYMÉTRIQUE) — contenance qui s'écarte d'un facteur > 2 du dessin, dans
+un sens OU l'autre (contenance < dessin/2, ou contenance > 2×dessin) ⇒ « Analyse incomplète ».
 
-Quand le plan et le cadastre se contredisent trop (dessin > 2×contenance), la parcelle n'est
+Quand le plan et le cadastre se contredisent trop (dessin > 2×contenance, OU contenance > 2×dessin
+— p.ex. erreur d'unité ×10 000 comme BP2028), la parcelle n'est
 calculée NI sur la contenance NI sur le dessin : faisabilité « Analyse incomplète », cause
 `surface_incertaine` (IGNORANCE → bande NC au scoring), SDP ∅, aucune capacité. Les deux chiffres
 restent affichés par la fiche (payload). Les autres parcelles restent sur la contenance.
@@ -22,13 +24,17 @@ from labuse.scoring.score_labuse import ScoreEntrees, _cause_nc, charger_bareme,
 # ───────────────────────── pur : prédicat + helpers ─────────────────────────
 
 @pytest.mark.parametrize("dessin,cont,attendu", [
-    (117505, 1, True),       # DV0285 — port de Saint-Pierre
-    (966633, 9657, True),    # BH0010
+    (117505, 1, True),       # DV0285 — port de Saint-Pierre (borne basse)
+    (966633, 9657, True),    # BH0010 (borne basse)
     (2138, 2142, False),     # écart minime (contenance ≈ dessin)
-    (664, 694, False),       # contenance > dessin (reverse — non couvert par le mandat)
+    (664, 694, False),       # contenance > dessin mais facteur ≈ 1,05 → sous la borne haute
     (4000, 2000, False),     # pile la moitié → PAS strictement inférieur
-    (4000, 1999, True),      # juste sous la moitié
+    (4000, 1999, True),      # juste sous la moitié (borne basse)
     (100, None, False),      # pas de contenance → repli dessin, jamais incertain
+    # ── borne HAUTE symétrique (contenance > 2×dessin) ──
+    (813, 8130000, True),    # BP2028 — contenance ×10 000 (erreur d'unité) → incertaine
+    (1000, 2000, False),     # pile le double → PAS strictement supérieur
+    (1000, 2001, True),      # juste au-dessus du double
 ])
 def test_predicat_surface_incertaine(dessin, cont, attendu):
     assert S.surface_incertaine(dessin, cont) is attendu
@@ -49,6 +55,10 @@ def test_faisabilite_surface_incertaine_est_analyse_incomplete():
 def test_ctx_surface_incertaine_property():
     inc = ParcelContext(1, "x", "Saint-Pierre", 1.0, "U", None, surface_dessin_m2=117505.0)
     assert inc.surface_incertaine is True
+    # borne HAUTE : BP2028 — surface_m2 = contenance (8 130 000) ≫ 2×dessin (813)
+    haut = ParcelContext(1, "97422000BP2028", "Le Tampon", 8130000.0, "U", None,
+                         surface_dessin_m2=813.0)
+    assert haut.surface_incertaine is True
     ok = ParcelContext(1, "x", "Saint-Paul", 2142.0, "U", None, surface_dessin_m2=2138.0)
     assert ok.surface_incertaine is False
     sans_cont = ParcelContext(1, "x", "Y", 500.0, "U", None, surface_dessin_m2=500.0)

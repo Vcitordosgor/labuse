@@ -82,11 +82,13 @@ class ParcelContext:
 
     @property
     def surface_incertaine(self) -> bool:
-        """Garde-fou CONTENANCE-1 : la contenance (surface_m2 quand elle est présente, donc < dessin)
-        est inférieure à la moitié du dessin. `surface_m2 < surface_dessin_m2` n'est vrai QUE si une
-        contenance plus petite existe (sinon surface_m2 == dessin) → on lui applique le seuil moitié."""
+        """Garde-fou CONTENANCE-1 (SYMÉTRIQUE) : la contenance s'écarte d'un facteur > 2 du dessin,
+        dans un sens OU l'autre (contenance < dessin/2 ou contenance > 2×dessin). `surface_m2` vaut
+        la contenance quand elle est présente (COALESCE(contenance, ST_Area)), sinon le dessin — donc
+        `surface_m2 != surface_dessin_m2` isole précisément « contenance présente et différente du
+        dessin » (dans un sens comme dans l'autre). On passe alors cette contenance au prédicat."""
         from .. import surface as _s
-        cont = self.surface_m2 if self.surface_m2 < self.surface_dessin_m2 else None
+        cont = self.surface_m2 if self.surface_m2 != self.surface_dessin_m2 else None
         return _s.surface_incertaine(self.surface_dessin_m2, cont)
 
 
