@@ -49,20 +49,27 @@ def _has_table(session: Session, name: str) -> bool:
 
 
 def build_frame(session: Session) -> None:
-    """Socle parcelles : mvt_parcels (le parc de référence, 431 663) si présente et
-    non vide, sinon parcels (base de test)."""
-    use_mvt = _has_table(session, "mvt_parcels") and bool(
-        session.execute(text("SELECT EXISTS (SELECT 1 FROM mvt_parcels)")).scalar())
-    if use_mvt:
-        frame_src = """
-            SELECT DISTINCT ON (m.idu) m.idu, p.id AS parcel_id,
-                   coalesce(m.surface_m2, p.surface_m2) AS surface_m2, p.centroid
-            FROM mvt_parcels m LEFT JOIN parcels p ON p.idu = m.idu
-            ORDER BY m.idu, p.id"""
-    else:
-        frame_src = """
-            SELECT DISTINCT ON (p.idu) p.idu, p.id AS parcel_id, p.surface_m2, p.centroid
-            FROM parcels p ORDER BY p.idu, p.id"""
+    """Socle parcelles : 1 ligne par parcelle VIVANTE du cadastre (IDU dédupliqué).
+
+    SOURCES-MAJ-1 (univers du Signal) — l'univers EST le parc vivant courant : `parcels` moins les
+    parcelles sorties du cadastre (`cadastre_disparue_le IS NOT NULL`). Ce filtre donne EXACTEMENT
+    l'univers d'un run résiduel île (`compute-residuel --ile` score les mêmes parcelles vivantes —
+    vérifié run 15/q_v18 : 433 229, écart nul dans les deux sens).
+
+    On ne lit PLUS `mvt_parcels` : c'est un cache de TUILES (api/tiles.build_mvt_table), DÉRIVÉ et
+    recalé sur une cascade quelconque — il gelait l'univers du Signal à un parc PÉRIMÉ (les parcelles
+    cadastrales nouvelles n'y entraient jamais ; les disparues y restaient scorées). C'était la cause
+    du « 431 663 au lieu de 433 229 » : le frame était bâti depuis un mvt périmé, et `rebuild=True`
+    ne reconstruit QUE les features ext — jamais le frame. Le filtre disparues est gardé par présence
+    de colonne (`cadastre_disparue_le` posée hors ORM à l'ingestion différentielle) : base de test
+    sans la colonne → tout `parcels`, comportement d'avant."""
+    has_disparue = bool(session.execute(text(
+        "SELECT 1 FROM information_schema.columns "
+        "WHERE table_name = 'parcels' AND column_name = 'cadastre_disparue_le'")).scalar())
+    where_vivant = "WHERE p.cadastre_disparue_le IS NULL" if has_disparue else ""
+    frame_src = f"""
+        SELECT DISTINCT ON (p.idu) p.idu, p.id AS parcel_id, p.surface_m2, p.centroid
+        FROM parcels p {where_vivant} ORDER BY p.idu, p.id"""
     _exec(session, f"""
         DROP TABLE IF EXISTS p_model_frame;
         CREATE TABLE p_model_frame AS
