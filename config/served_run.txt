@@ -1,4 +1,4 @@
 # config/served_run.txt — VUE DÉRIVÉE du run servi (le point de vérité est
 # config/served_manifest.json). Bascule : `bascule_flux.basculer()` (page Circuit /
 # bouton admin, ou l'alias `labuse golden promote <run>`). Écrit par la bascule seule.
-q_v16
+q_v18
