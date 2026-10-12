@@ -3297,6 +3297,32 @@ def _data_sources_fiche(db: Session, parcel_id: int, run_label: str) -> list[dic
             "millesime": mill,
             "fiabilite": _FIAB.get(r["reliability_level"], r["reliability_level"]),
         })
+    # CHASSE-DONNEES-FIX-1 (suite 2d, D-58) — le SOCLE hors-cascade RÉELLEMENT servi sur CHAQUE fiche
+    # (Cadastre = contenance/géométrie, BAN = adresse, CatNat = arrêtés commune) : jamais dans la
+    # cascade donc jamais listé ici, son millésime jamais montré alors que le docstring promet « les
+    # sources RÉELLEMENT utilisées ». On l'ajoute (dédup par nom). SAVEPOINT : jamais bloquant.
+    try:
+        with db.begin_nested():
+            _vus = {o["nom"] for o in out}
+            _socle = db.execute(text(
+                "SELECT name, category, provider, source_millesime, source_horizon_at, "
+                "       reliability_level, last_sync_at FROM data_sources "
+                "WHERE lower(name) LIKE 'cadastre%' OR lower(name) LIKE '%adresse nationale%' "
+                "   OR lower(name) LIKE 'catnat%' OR lower(name) LIKE 'ban%' "
+                "ORDER BY category, name")).mappings().all()
+        for r in _socle:
+            if r["name"] in _vus:
+                continue
+            out.append({
+                "nom": r["name"], "categorie": r["category"],
+                "fournisseur": nettoyer_notes_internes(r["provider"]),
+                "millesime": _composer_mill(r["source_millesime"], source_horizon_at=r["source_horizon_at"],
+                                            dernier_vu=None, last_sync_at=r["last_sync_at"]),
+                "fiabilite": _FIAB.get(r["reliability_level"], r["reliability_level"]),
+                "socle": True,   # hors cascade : fondation de la fiche (contenance, adresse, aléas)
+            })
+    except Exception:  # noqa: BLE001 — ajout additif, jamais bloquant pour la fiche
+        pass
     return out
 
 
@@ -5676,6 +5702,13 @@ def _plu_fraicheur(idu: str) -> dict | None:
     statut = c.get("statut")
     horizon = c.get("date_mairie")
     note = c.get("note")
+    # CHASSE-DONNEES-FIX-1 (suite 2d, D-59) — si la commune est DÉPUBLIÉE du GPU (plu_depublies.yaml,
+    # acté CHASSE-FIX-1 C27), la note M40 « PLU présent au GPU (vérifié) » est PÉRIMÉE et contredit
+    # reglement_plu.depublie_note servi sur la MÊME fiche. On la neutralise : une seule vérité
+    # (« retiré du GPU, LABUSE sert le dernier état connu »), plus deux notes opposées côte à côte.
+    if _plu_depublie(c.get("commune")):
+        note = ("PLU retiré du Géoportail de l'urbanisme : LABUSE sert les règles du dernier état "
+                "connu (voir §Urbanisme). La mention « présent au GPU » n'est plus d'actualité.")
     # M40 — les TROIS choses distinctes, jamais mélangées : (1) quel document LABUSE SERT,
     # (2) qu'il est bien celui qui FAIT FOI à ce jour, (3) ce qui est EN COURS et non servi.
     # `en_cours` dit UNIQUEMENT ce qui est pendant/non servi (jamais ne répète le document servi) ;
