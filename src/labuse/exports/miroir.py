@@ -1098,7 +1098,11 @@ def cover_dossier(idu: str, fiche: dict, numero: str, jour, valeurs: dict[str, V
         '<div class="gm-meta">'
         f'<div><b>{esc(numero)}</b>n° de rapport</div>'
         f'<div><b>{jour:%d/%m/%Y}</b>généré le</div>'
-        f'<div><b>{fmt_m2(valeurs["surface_parcelle_m2"].valeur) if valeurs.get("surface_parcelle_m2") else "—"}</b>contenance</div>'
+        # CHASSE-DONNEES-FIX-1 (Lot 1) — « contenance » UNIQUEMENT si la valeur servie est la
+        # contenance cadastrale ; sinon « surface (plan) » (dessin, repli). Jamais « contenance »
+        # sur une parcelle dont la contenance est absente (BC9999 : 600 m² source=plan).
+        f'<div><b>{fmt_m2(valeurs["surface_parcelle_m2"].valeur) if valeurs.get("surface_parcelle_m2") else "—"}</b>'
+        f'{"contenance" if (valeurs.get("surface_source") and valeurs["surface_source"].valeur == "cadastre") else "surface (plan)"}</div>'
         # EXPORTS-FIX-1 A2 — plus de « Modèle 3.0 · miroir de la fiche » en page de garde.
         '</div>'
         f'<div class="cover-tiles">{"".join(tuiles_html)}</div>'

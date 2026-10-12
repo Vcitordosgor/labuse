@@ -79,6 +79,25 @@ def champs_terrain(dessin_m2, contenance_m2) -> dict:
             "surface_dessin_m2": st.dessin_m2, "contenance_m2": st.contenance_m2}
 
 
+def _fmt_m2(x) -> str:
+    """Format « 25 633 m² » (espace fine milliers), « — » si None. Identique à export._m2."""
+    return "—" if x is None else f"{float(x):,.0f} m²".replace(",", " ")
+
+
+def phrase_surface(dessin_m2, contenance_m2, *, prefixe: str = "Surface") -> str:
+    """CHASSE-DONNEES-FIX-1 (Lot 1) — LA phrase de surface de terrain, partagée par TOUS les
+    documents (export md/html, courrier, Dossier, Comparatif). Le mot « cadastrale » n'apparaît
+    QUE si la valeur servie est la contenance. Une surface incertaine n'est JAMAIS imprimée seule :
+    les deux chiffres + la réserve, partout (décision Vic)."""
+    st = surface_terrain(dessin_m2, contenance_m2)
+    if surface_incertaine(dessin_m2, contenance_m2):
+        return (f"{prefixe} : {_fmt_m2(st.contenance_m2)} (contenance cadastrale) / "
+                f"{_fmt_m2(st.dessin_m2)} (dessin du plan) — {MSG_SURFACE_INCERTAINE}")
+    if st.source == SOURCE_CADASTRE:
+        return f"{prefixe} cadastrale : {_fmt_m2(st.valeur)}"
+    return f"{prefixe} : {_fmt_m2(st.valeur)} (mesurée sur le plan)"
+
+
 def enrichir_payload(d: dict) -> dict:
     """Ajoute `surface_terrain_m2` + `surface_source` (+ expose `surface_dessin_m2`) à un dict de
     parcelle qui porte déjà `surface_m2` (dessin) et éventuellement `contenance_m2`. Mutation en

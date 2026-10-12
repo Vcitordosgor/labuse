@@ -1609,7 +1609,7 @@ def projet_export_csv(pid: int, request: Request, db: Session = Depends(get_db))
     ban_join = _ban_lateral("p.idu") if ban_ok else ""
     sql = text(
         f"""SELECT p.idu, p.commune, substr(p.idu, 9, 2) AS section, substr(p.idu, 11) AS numero,
-                   round(p.surface_m2) AS surface_m2, {_ETAT_BIEN_SQL} AS etat_bien,
+                   round(COALESCE(p.contenance_m2, p.surface_m2)) AS surface_m2, {_ETAT_BIEN_SQL} AS etat_bien,  -- FIX-1 Lot 1 : surface terrain
                    round(rb.sdp_residuelle_m2) AS sdp_residuelle_m2, rb.cause AS sdp_indispo,
                    (d.status IN ('exclue', 'faux_positif_probable')) AS etage0 {ban_sel}
             FROM parcels p

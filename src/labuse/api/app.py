@@ -7458,7 +7458,9 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
 
     # Assemblage foncier (Phase 5) — voisines adjacentes + drapeau prudent (requête indexée).
     from .voisinage import compute_voisinage
-    voisinage = compute_voisinage(db, p.id, p.surface_m2, verdict_block["status"])
+    voisinage = compute_voisinage(
+        db, p.id, _surface.surface_terrain(p.surface_m2, p.contenance_m2).valeur,
+        verdict_block["status"])
 
     # Autorisations d'urbanisme à proximité (Lot C4) — historique SITADEL < 300 m.
     try:
@@ -7599,6 +7601,11 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
         "parcel": {
             "idu": p.idu, "commune": p.commune, "section": p.section, "numero": p.numero,
             "surface_m2": p.surface_m2, "centroid": {"lon": lon, "lat": lat},
+            # CHASSE-DONNEES-FIX-1 (Lot 1) — la surface de terrain servie (contenance|dessin) + son
+            # drapeau d'incertitude portés sur le payload legacy : export md/html, Copilote (fiche_ask)
+            # et page de partage lisent désormais surface_terrain_m2, plus jamais p.surface_m2 (dessin).
+            **_surface.champs_terrain(p.surface_m2, p.contenance_m2),
+            "surface_incertaine": _surface.surface_incertaine(p.surface_m2, p.contenance_m2),
             "adresse": _ban_adresse(db, p.idu),   # M6 2a (§1.8) — meilleure adresse BAN
             "origine": p.origine,  # 'audit' → bandeau « audit à la demande » sur la fiche
         },
@@ -7795,7 +7802,11 @@ def _compare_row(qv2: dict, faisab: dict | None) -> dict:
     prix_bati = max(bati_rows, key=lambda s: s.get("n_ventes") or 0)["mediane_prix_m2"] if bati_rows else None
     return {
         "idu": qv2["idu"], "commune": qv2.get("commune"),
-        "surface_m2": qv2.get("surface_m2"),
+        # CHASSE-DONNEES-FIX-1 (Lot 1) — le Comparatif sert la surface de TERRAIN (contenance|dessin)
+        # + le drapeau d'incertitude, comme la fiche/le Dossier (était le dessin brut : +5,9 % CW0658).
+        "surface_m2": qv2.get("surface_terrain_m2") if qv2.get("surface_terrain_m2") is not None
+        else qv2.get("surface_m2"),
+        "surface_incertaine": bool(qv2.get("surface_incertaine")),
         # verdict SERVI (M135/M137) : la puce d'action dérive de tier_v2 + étage 0 (verdictMeta) ;
         # rang + fraction (« 1/5 sous 1 an ») + raison dominante, comme partout ailleurs.
         "tier_v2": s2.get("tier"), "rang_v2": s2.get("rang"), "etage0": bool(qv2.get("etage0")),

@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import html
 
+from .. import surface as _surface  # CHASSE-DONNEES-FIX-1 (Lot 1) — surface de terrain = contenance|dessin
 from ..ai.avis import AVIS_IA  # EXPRESS-01 · Volet B — avis IA (source unique)
 # M34 (dette #14) : libellés du POINT DE TRADUCTION UNIQUE (tier servi) — plus de table
 # locale de statuts legacy. Le verdict affiché ici est celui de verdict_servi.
@@ -31,7 +32,7 @@ def fiche_markdown(fiche: dict) -> str:
         "",
         f"> {fiche['disclaimer']}",
         "",
-        f"**Commune :** {p.get('commune') or '—'}  ·  **Surface :** {_m2(p.get('surface_m2'))}  ·  "
+        f"**Commune :** {p.get('commune') or '—'}  ·  **{_surface.phrase_surface(p.get('surface_m2'), p.get('contenance_m2'))}**  ·  "
         f"**Section/№ :** {p.get('section') or '—'} {p.get('numero') or ''}",
         "",
         "## Verdict",
@@ -149,7 +150,7 @@ def fiche_markdown(fiche: dict) -> str:
         for v in vz["voisines"]:
             lines.append(f"| {v['idu']} | {TIER_LABELS.get(v.get('status'), v.get('status') or '—')} | "
                          f"{v.get('rang') if v.get('rang') is not None and v.get('status') in ('brulante', 'chaude', 'priorite', 'a_suivre') else '—'} | "
-                         f"{v.get('plu_zone') or '—'} | {_m2(v.get('surface_m2'))} |")
+                         f"{v.get('plu_zone') or '—'} | {_m2(v.get('surface_terrain_m2', v.get('surface_m2')))} |")
         lines += ["", "_Adjacence géométrique uniquement — propriétaires, accords et faisabilité d'un "
                   "assemblage restent à vérifier._", ""]
 
@@ -272,7 +273,7 @@ def fiche_html(fiche: dict) -> str:
             f"<td>{html.escape(TIER_LABELS.get(v.get('status'), v.get('status') or '—'))}</td>"
             f"<td>{v.get('rang') if v.get('rang') is not None and v.get('status') in ('brulante', 'chaude', 'priorite', 'a_suivre') else '—'}</td>"
             f"<td>{html.escape(v.get('plu_zone') or '—')}</td>"
-            f"<td>{_m2(v.get('surface_m2'))}</td></tr>"
+            f"<td>{_m2(v.get('surface_terrain_m2', v.get('surface_m2')))}</td></tr>"
             for v in vz["voisines"])
         vz_html = ("<h2>Parcelles voisines (contiguïté)</h2>"
                    + (f"<p class='disc'>{html.escape(note)}</p>" if note else "")
@@ -309,7 +310,7 @@ def fiche_html(fiche: dict) -> str:
 <h1>LABUSE — Fiche parcelle {html.escape(p['idu'])}</h1>
 <p class="disc">{html.escape(fiche['disclaimer'])}</p>
 <p><strong>Commune :</strong> {html.escape(p.get('commune') or '—')} ·
-   <strong>Surface :</strong> {_m2(p.get('surface_m2'))} ·
+   <strong>{html.escape(_surface.phrase_surface(p.get('surface_m2'), p.get('contenance_m2')))}</strong> ·
    <strong>Section/№ :</strong> {html.escape((p.get('section') or '—'))} {html.escape(p.get('numero') or '')}</p>
 <h2>Verdict</h2>
 <p><span class="badge">{html.escape(_verdict_label(v))}</span>{f" <span class='src'>rang {v['rang']}</span>" if v.get('rang') and v.get('tier') in ('brulante', 'chaude', 'priorite', 'a_suivre') else ''}{' <span class="badge-micro">micro-opportunité</span>' if v.get('micro_opportunite') else ''}</p>

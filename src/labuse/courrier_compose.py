@@ -14,6 +14,7 @@ import re
 from sqlalchemy import text
 
 from . import courrier_adressage as ca
+from . import surface as _surface
 
 X_ANNEES_DVF = 3          # fenêtre DVF « secteur actif » (aligne marche_service : 500 m / 3 ans)
 RAYON_DVF_M = 500
@@ -69,19 +70,26 @@ def _synthese(db, idu: str) -> dict:
     """Faits réels de la parcelle pour l'ouverture + le verso. Défensif : une source absente dégrade
     (zone None, n_mutations 0, risques []) — jamais une exception, jamais une valeur inventée."""
     row = db.execute(text("""
-        SELECT p.id, p.idu, p.section, p.numero, p.commune, round(p.surface_m2)::int AS surface,
+        SELECT p.id, p.idu, p.section, p.numero, p.commune, p.surface_m2, p.contenance_m2,
                (fb.idu IS NOT NULL) AS batie, (pm.idu IS NOT NULL) AS pm
         FROM parcels p
         LEFT JOIN parcel_filtre_bati fb ON fb.idu = p.idu
         LEFT JOIN parcelle_personne_morale pm ON pm.idu = p.idu
         WHERE p.idu = :i"""), {"i": idu}).mappings().first()
     reference = idu
-    d = {"idu": idu, "reference": idu, "commune": None, "surface": None, "batie": False,
+    d = {"idu": idu, "reference": idu, "commune": None, "surface": None, "surface_source": None,
+         "surface_dessin_m2": None, "contenance_m2": None, "surface_incertaine": False, "batie": False,
          "pm": False, "adresse": None, "zone": None, "zone_document": None, "zone_calibree": False,
          "n_mutations": 0, "x_annees": X_ANNEES_DVF, "risques": []}
     if row:
         reference = " ".join(x for x in (row["section"], row["numero"]) if x) or idu
-        d.update(reference=reference, commune=row["commune"], surface=row["surface"],
+        # CHASSE-DONNEES-FIX-1 (Lot 1) — « surface cadastrale » = la CONTENANCE de l'acte
+        # (surface_terrain), plus le dessin brut : le propriétaire lit son acte, pas le ST_Area.
+        st = _surface.surface_terrain(row["surface_m2"], row["contenance_m2"])
+        d.update(reference=reference, commune=row["commune"], surface=st.valeur,
+                 surface_source=st.source, surface_dessin_m2=st.dessin_m2,
+                 contenance_m2=st.contenance_m2,
+                 surface_incertaine=_surface.surface_incertaine(row["surface_m2"], row["contenance_m2"]),
                  batie=bool(row["batie"]), pm=bool(row["pm"]))
     d["adresse"] = ca.courrier.adresse_ban_parcelle(db, idu)
     # zone PLU + calibration
@@ -125,8 +133,12 @@ def _synthese(db, idu: str) -> dict:
 def choisir_ouverture(d: dict) -> tuple[str, str]:
     """Une seule ouverture, première applicable dans l'ordre A→E (règles Vic)."""
     situee, commune, zone = _situee(d), d.get("commune") or "votre commune", d.get("zone")
-    if d.get("pm") and not d.get("batie") and zone:                       # A — terrain non bâti (PM)
-        return "A", _A.format(situee=situee, surface=d.get("surface") or "—", zone=zone)
+    # FIX-1 (Lot 1) : l'ouverture A affirme une « surface cadastrale de {surface} m² » — on ne la
+    # choisit QUE si la surface de terrain est connue ET fiable (sinon le propriétaire lirait une
+    # valeur incertaine seule : DV0285 1 m²/117 505 m²). Incertaine → ouverture neutre (B→E).
+    if (d.get("pm") and not d.get("batie") and zone
+            and d.get("surface") is not None and not d.get("surface_incertaine")):  # A — terrain non bâti (PM)
+        return "A", _A.format(situee=situee, surface=d["surface"], zone=zone)
     if d.get("batie") and d.get("zone_calibree"):                          # B — bâtie, zone calibrée
         return "B", _B.format(situee=situee)
     if (d.get("n_mutations") or 0) >= SEUIL_SECTEUR_ACTIF:                  # C — secteur actif
@@ -193,9 +205,12 @@ def composer_verso(d: dict) -> list[str]:
     lignes: list[str] = ["Synthèse de la parcelle"]
     id_lignes = [("Référence cadastrale", d.get("reference")),
                  ("Commune", d.get("commune")),
-                 ("Adresse", d.get("adresse")),
-                 ("Surface cadastrale", f"{d['surface']} m²" if d.get("surface") is not None else None)]
+                 ("Adresse", d.get("adresse"))]
     lignes += [f"{k} : {v}" for k, v in id_lignes if v]
+    # FIX-1 (Lot 1) — « Surface cadastrale » UNIQUEMENT si c'est la contenance ; incertaine → les deux
+    # chiffres + réserve, jamais une surface seule (source unique _surface.phrase_surface).
+    if d.get("surface") is not None or d.get("surface_dessin_m2") is not None:
+        lignes.append(_surface.phrase_surface(d.get("surface_dessin_m2"), d.get("contenance_m2")))
     if d.get("zone"):
         doc = d.get("zone_document")
         doc_txt = f" — {doc}" if doc and doc.strip() and doc.strip() != d["zone"] else ""

@@ -23,6 +23,10 @@ ORACLE: dict[str, tuple[str, ...]] = {
     # CONTENANCE-1 (Lot B) : la « contenance cadastrale » du Dossier = surface de terrain
     # (contenance si présente, sinon dessin). Repli sur surface_m2 (payload ancien / base nue).
     "surface_parcelle_m2": ("surface_terrain_m2", "surface_m2"),
+    # CHASSE-DONNEES-FIX-1 (Lot 1) — source de la surface servie (cadastre|plan) + drapeau
+    # d'incertitude : la couverture n'étiquette « contenance » que si c'est bien la contenance.
+    "surface_source": ("surface_source",),
+    "surface_incertaine": ("surface_incertaine",),
     "adresse_ban": ("adresse",),
     "pente_deg": ("terrain.pente_moy_deg",),
     "emprise_batie_m2": ("le_bien.emprise_batie_m2",),

@@ -1149,7 +1149,8 @@ def _digest_data(db: Session, cid: int | None = None, jours: int = 7) -> dict:
     # TOP 5 sur les TIERS SERVIS (plus jamais matrice_statut morte M37 — comme /reperes en M36).
     # « chaudes » = les deux tiers les plus chauds servis (brulante + chaude), run ÉPINGLÉ.
     top = db.execute(text("""
-        SELECT p.idu, p.commune, d.q_score, d.a_score, round(p.surface_m2) AS surface_m2,
+        SELECT p.idu, p.commune, d.q_score, d.a_score,
+               round(COALESCE(p.contenance_m2, p.surface_m2)) AS surface_m2,  -- FIX-1 Lot 1 : surface terrain servie
                r.sdp_residuelle_m2, s.tier
         FROM parcel_p_score_v2 s
         JOIN parcels p ON p.idu = s.parcelle_id

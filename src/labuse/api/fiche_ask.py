@@ -169,7 +169,10 @@ def _ask_context(db: Session, idu: str) -> tuple[dict, dict]:
         # ── identité / zonage (SOURCÉ) ──
         "idu": _F(f.get("idu")),
         "commune": _F(f.get("commune")),
-        "surface_m2": _F(f.get("surface_m2")),
+        # CHASSE-DONNEES-FIX-1 (Lot 1) — le Copilote énonce la surface de TERRAIN servie à l'écran
+        # (contenance|dessin), plus le dessin brut : il citait 117 505 m² quand la fiche sert 1 m².
+        "surface_m2": _F(f.get("surface_terrain_m2") if f.get("surface_terrain_m2") is not None
+                         else f.get("surface_m2")),
         "statut_tier": _F(vs.get("label")),   # M48 (F1) : verdict SERVI (« Brûlante »…), pas la matrice morte
         "rang_classement": _F(vs.get("rang")),
         "zone_plu": _F(zone_str),                     # toutes les zones jointes (« U4b + UD » si bizone)

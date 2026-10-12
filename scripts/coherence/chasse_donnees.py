@@ -300,6 +300,29 @@ def g13_cloche_fraicheur():
     return "ECART", f"detect_events jamais rejoué pour {run} — {detail}"
 
 
+def g15_courrier_surface():
+    """Lot 1 (C-04/05) : le Courrier étiquetait « surface cadastrale » un dessin brut (27 156 m²
+    pour CW0658 dont l'acte dit 25 633). Après FIX-1 le courrier sert la contenance."""
+    import urllib.request
+    import urllib.error
+    req = urllib.request.Request(
+        API + "/courrier/composer", data=json.dumps({"idu": CW0658}).encode(),
+        headers={"Content-Type": "application/json"}, method="POST")
+    try:
+        with urllib.request.urlopen(req, timeout=60) as r:
+            doc = json.loads(r.read())
+    except (urllib.error.HTTPError, urllib.error.URLError, ValueError) as exc:
+        return "SKIP", f"courrier indisponible ({type(exc).__name__})"
+    texte = json.dumps(doc, ensure_ascii=False)
+    if "27156" in texte.replace(" ", "") and "cadastrale" in texte:
+        # le dessin 27 156 apparaît sous une étiquette « cadastrale »
+        if "27156" in texte.replace(" ", "") and "25633" not in texte.replace(" ", ""):
+            return "ECART", "courrier sert le dessin 27 156 m² (étiquette « cadastrale »)"
+    if "25633" in texte.replace(" ", ""):
+        return "OK", "courrier sert la contenance 25 633 m²"
+    return "SKIP", "aucune des deux surfaces repérée dans le courrier"
+
+
 def g14_digest_vs_cloche():
     """C : le top du digest est recalculé à l'envoi (runs.current()) quand la cloche
     relit event_log — les deux doivent se recouvrir."""
@@ -333,6 +356,7 @@ GARDES = [
     ("zero-menteur-nu", g12_zero_menteur_nu),
     ("cloche-fraicheur", g13_cloche_fraicheur),
     ("digest-vs-cloche", g14_digest_vs_cloche),
+    ("courrier-surface", g15_courrier_surface),
 ]
 
 

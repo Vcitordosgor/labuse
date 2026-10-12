@@ -40,11 +40,14 @@ def _parcelle(db: Session, idu: str) -> tuple[int, str] | None:
 
 
 def _surface(db: Session, idu: str) -> int | None:
-    """Surface du terrain, ARRONDIE au m² (le cadastre la sert en flottant)."""
+    """Surface du terrain, ARRONDIE au m² (le cadastre la sert en flottant).
+
+    CHASSE-DONNEES-FIX-1 (Lot 1) — surface de TERRAIN servie (contenance|dessin), comme la fiche et
+    les calculs (CONTENANCE-1) : le repère « terrain » du Bilan lisait le dessin brut (+5,9 % CW0658)."""
 
     def _q():
         v = db.execute(
-            text("SELECT surface_m2 FROM parcels WHERE idu = :i"), {"i": idu}
+            text("SELECT COALESCE(contenance_m2, surface_m2) FROM parcels WHERE idu = :i"), {"i": idu}
         ).scalar()
         return round(float(v)) if v is not None else None
 
