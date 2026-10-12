@@ -21,6 +21,16 @@ zones:
           citation: 'La hauteur maximale des constructions est fixée à : - 9 mètres à l’égout du toit ou au
             sommet de l’acrotère, - 12 mètres au faitage.'
           statut: valide
+          # CHASSE-DONNEES-FIX-1 (Lot 6, D-49) — second palier (règle générale, pas une exception
+          # ponctuelle) : porté à 11/14 m pour un terrain d'assiette ≥ 2 500 m² (cœur de cible des
+          # opérations d'ensemble). Ni servi ni listé avant ce correctif. Servi VERBATIM.
+          exceptions:
+            - texte: 'La hauteur maximale est portée à 11 mètres à l’égout / 14 mètres au faîtage lorsque
+                le terrain d’assiette de l’opération a une superficie au moins égale à 2 500 m² (UA 10.2, p. 15).'
+              article: UA 10.2
+              page_pdf: 15
+              porte: operation_ensemble
+              modifie_calcul: false
         egout:
           m: 9.0
           article: UA 10
@@ -596,6 +606,15 @@ zones:
           statut: valide
           raison: valeur 12 absente de la citation (harmonisation ≠ texte)
           note: "PLU-VERIF-1 : page corrigée 55→15 (art. UA 10)."
+          # CHASSE-DONNEES-FIX-1 (Lot 6, D-49) — second palier ≥ 2 500 m² (11/14 m), règle générale
+          # UA 10.2 appliquée en 1AUa. Témoin AL1115. Servi VERBATIM, jamais recomposé.
+          exceptions:
+            - texte: 'La hauteur maximale est portée à 11 mètres à l’égout / 14 mètres au faîtage lorsque
+                le terrain d’assiette de l’opération a une superficie au moins égale à 2 500 m² (UA 10.2, p. 15).'
+              article: UA 10.2
+              page_pdf: 15
+              porte: operation_ensemble
+              modifie_calcul: false
         egout:
           m: 9.0
           article: UA 10

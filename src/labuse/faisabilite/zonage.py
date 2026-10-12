@@ -43,6 +43,10 @@ class ZoneRules:
     emprise_sol_pct: float | str | None = None
     recul_voirie_m: float | str | None = None
     recul_limites_sep_m: float | str | None = None
+    # CHASSE-DONNEES-FIX-1 (Lot 6, D-50) — la FORMULE du recul (« H/2, minimum 3 m ») quand le YAML
+    # la porte : la fiche affichait le seul plancher (3 m) comme LA valeur, alors que pour une façade
+    # de 15 m le retrait réel exigé est 7,5 m. Servie À CÔTÉ du plancher, jamais à sa place.
+    recul_limites_formule: str | None = None
     stat_logement: str | None = None         # ex. "1,5 place / logement"
     pleine_terre_pct: float | str | None = None
     # provenance / contexte
@@ -232,6 +236,12 @@ def _stat_from_regles(reg: dict):
     leaf = (reg.get("stationnement") or {}).get("par_logement")
     if not isinstance(leaf, dict) or leaf.get("absent"):
         return None
+    # CHASSE-DONNEES-FIX-1 (Lot 6, D-52) — un BARÈME chiffré par type de logement (ex. L'Étang-Salé
+    # UC 2.7.3 : individuel 2 / collectif 1-2 p. 1, 3-4 p. 1,5, ≥5 p. 2) n'est PAS un nombre unique
+    # mais EST chiffré au règlement : servi comme texte au lieu de « à vérifier » (feuille `bareme`).
+    bareme = leaf.get("bareme")
+    if isinstance(bareme, str) and bareme.strip():
+        return bareme.strip()
     p = leaf.get("places")
     # PLU-CALIBRAGE-6 : la VALEUR numérique ne branche que si la feuille est validée (validées-only,
     # comme l'overlay). L'exemption (non numérique, cf. ci-dessous) reste reconnue quel que soit le
@@ -315,6 +325,7 @@ def _zone_rules_from_regles(commune: str | None, code: str, zmeta: dict) -> Zone
         emprise_sol_pct=_val(reg, "emprise_sol", "ces", "pct"),
         recul_voirie_m=_val(reg, "retraits", "voie", "min_m"),
         recul_limites_sep_m=_val(reg, "retraits", "limites_separatives", "min_m"),
+        recul_limites_formule=_val(reg, "retraits", "limites_separatives", "formule"),
         recul_voirie_alignement=_recul_alignement(reg, "voie"),
         recul_limites_alignement=_recul_alignement(reg, "limites_separatives"),
         stat_logement=_stat_from_regles(reg),

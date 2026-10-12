@@ -420,6 +420,29 @@ def g20_millesime_derive():
         if not faux else ("ECART", f"millésime RPLS figé {faux} ≠ table {annee_rpls}")
 
 
+def g21_regles_plu():
+    """Lot 6 (D-48/50/52) : la fiche sert la règle PLU COMPLÈTE/EXACTE. Saint-Joseph U2 (BW2262) :
+    la hauteur graduée est servie (exception) + le recul montre la formule « H/2 » (pas le seul
+    plancher 3 m). L'Étang-Salé UC (AE1391) : le stationnement est le barème chiffré, plus « à vérifier »."""
+    manques = []
+    f1 = _api("/parcels/97412000BW2262")
+    zones1 = (f1.get("reglement_plu") or {}).get("zones", []) if isinstance(f1, dict) else []
+    rv1 = {rv["cle"]: rv for z in zones1 for rv in z.get("regles_valeurs", [])}
+    h = rv1.get("hauteur") or {}
+    if not any("gradu" in (e.get("texte") or "").lower() for e in h.get("exceptions", [])):
+        manques.append("U2 hauteur sans gradation (D-48)")
+    rl = rv1.get("recul_limites") or {}
+    if "H/2" not in (rl.get("valeur") or ""):
+        manques.append("U2 recul sans formule H/2 (D-50)")
+    f2 = _api("/parcels/97404000AE1391")
+    zones2 = (f2.get("reglement_plu") or {}).get("zones", []) if isinstance(f2, dict) else []
+    stat = next((rv for z in zones2 for rv in z.get("regles_valeurs", []) if rv["cle"] == "stationnement"), {})
+    if stat.get("etat") == "a_verifier" or "vérifier" in (stat.get("valeur") or ""):
+        manques.append("UC stationnement « à vérifier » alors que le barème existe (D-52)")
+    return ("OK", "règles PLU servies complètes (gradation + formule H/2 + barème stationnement)") \
+        if not manques else ("ECART", " ; ".join(manques))
+
+
 def g14_digest_vs_cloche():
     """C (C-45) : le top digest est recalculé à l'ENVOI sur le run servi, quand la cloche relit
     event_log. Le symptôme de staleness était que la cloche vivait dans un AUTRE monde (dernière
@@ -472,6 +495,7 @@ GARDES = [
     ("simulplu-non-calculable", g18_simulplu_non_calculable),
     ("catnat-source-vs-zero", g19_catnat_source_vs_zero),
     ("millesime-derive", g20_millesime_derive),
+    ("regles-plu-completes", g21_regles_plu),
 ]
 
 

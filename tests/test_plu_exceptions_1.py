@@ -17,7 +17,9 @@ from labuse.plu import destinations as D
 
 DEST = os.path.join(os.path.dirname(__file__), "..", "config", "plu_destinations")
 
-N_ATTENDU = 147            # feuilles JUSTE+exception (cf. docs/audit-2026-09/PLU-VERIF-1)
+N_ATTENDU = 150            # feuilles JUSTE+exception (cf. docs/audit-2026-09/PLU-VERIF-1 ;
+#                           CHASSE-DONNEES-FIX-1 Lot 6 : +3 — gradation hauteur U2 Saint-Joseph (D-48)
+#                           + palier ≥ 2 500 m² Ua & 1AUa Sainte-Rose (D-49))
 PORTE_VALIDES = {
     "sous_secteur", "bande_limite", "hauteur_alternative", "majoration_conditionnelle",
     "voie_specifique", "destination", "operation_ensemble", "exclusion_generique", "autre",
