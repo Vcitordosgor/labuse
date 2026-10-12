@@ -4384,7 +4384,7 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
            WHERE ST_Contains(f.geom, ST_Transform(p2.centroid, 2975)) LIMIT 1"""),
         {"idu": idu}).mappings().first()
     rpls = db.execute(text(
-        "SELECT nb_logements, construct_median, pct_qpv FROM rpls_commune "
+        "SELECT nb_logements, construct_median, pct_qpv, millesime FROM rpls_commune "
         "WHERE insee = substring(:idu FROM 1 FOR 5)"), {"idu": idu}).mappings().first()
     marche_secteur = None
     if carreau or rpls:
@@ -4394,8 +4394,10 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
         # vrai % QPV du parc social exige un croisement RPLS↔polygones QPV non disponible ici (noté).
         rpls_dict = None
         if rpls:
-            rpls_dict = {k: v for k, v in dict(rpls).items() if k != "pct_qpv"}
-            rpls_dict["millesime"] = "RPLS 01/01/2025"
+            rpls_dict = {k: v for k, v in dict(rpls).items() if k not in ("pct_qpv", "millesime")}
+            # CHASSE-DONNEES-FIX-1 (Lot 5, D-54) — millésime DÉRIVÉ de rpls_commune.millesime.
+            _rmill = (rpls["millesime"] or "")[:4]
+            rpls_dict["millesime"] = f"RPLS 01/01/{_rmill}" if _rmill else "RPLS"
         marche_secteur = {
             "filosofi_200m": ({**dict(carreau),
                                "taux_pauvrete_pct": round(100 * carreau["men_pauv"] / carreau["men"])
@@ -5765,20 +5767,31 @@ def _pm_etat_societe(db: Session, siren: str | None) -> dict | None:
     try:
         with db.begin_nested():
             etats = []
-            # SOURCES-3 lot 0.1 — l'état « cessée » venait du cache DINUM (owner_enrichment), désormais
-            # réservé au Score V. SIRENE (sirene_etablissements) n'ingère que les établissements ACTIFS :
-            # l'état administratif « C » d'une unité légale n'y est pas lisible. On ne DÉDUIT pas une
-            # cessation d'une absence. Les états publics DATÉS restent servis par le BODACC ci-dessous.
-            for b in db.execute(text(
-                "SELECT famille, max(date_annonce)::text AS d FROM bodacc_annonces_owner "
-                "WHERE siren = :s AND famille IN ('radiation','pcl') GROUP BY famille"),
-                    {"s": siren}).mappings().all():
-                if b["famille"] == "radiation":
-                    etats.append({"type": "radiée", "date": b["d"],
-                                  "libelle": f"radiée le {b['d']}", "source": "BODACC", "etiquette": "Sourcé"})
+            # CHASSE-DONNEES-FIX-1 (Lot 5, D-46) — l'état « cessée » de l'UNITÉ LÉGALE (état
+            # administratif C, recherche-entreprises) est désormais servi : SIRENE n'ingère que les
+            # établissements actifs, on ne pouvait pas le lire là. Fait public, daté de la dernière
+            # mise à jour INSEE.
+            _etat_ul, _etat_maj = _etat_unite_legale(db, siren)
+            if _etat_ul == "C":
+                etats.append({"type": "cessée", "date": (_etat_maj or "")[:10] or None,
+                              "libelle": ("société cessée"
+                                          + (f" (état administratif C, mise à jour INSEE {_etat_maj[:10]})"
+                                             if _etat_maj else " (état administratif C)")),
+                              "source": "recherche-entreprises (INSEE)", "etiquette": "Sourcé"})
+            # CHASSE-DONNEES-FIX-1 (Lot 5, D-47/D-51) — radiation / procédure collective lues de la
+            # table BODACC VIVANTE (`bodacc_procedures`, resynchronisée) et PLUS de `bodacc_annonces_owner`
+            # (gelée au 2026-07-09) : l'état société retardait de 22 mois (SCI FREYNEAU 820034122).
+            _bp = db.execute(text(
+                "SELECT lower(string_agg(DISTINCT coalesce(famille_jugement,''), ' ')) AS familles, "
+                "       max(date_annonce)::text AS d FROM bodacc_procedures WHERE siren = :s"),
+                {"s": siren}).mappings().first()
+            if _bp and _bp["d"]:
+                if "radiation" in (_bp["familles"] or ""):
+                    etats.append({"type": "radiée", "date": _bp["d"],
+                                  "libelle": f"radiée le {_bp['d']}", "source": "BODACC", "etiquette": "Sourcé"})
                 else:
-                    etats.append({"type": "procédure collective", "date": b["d"],
-                                  "libelle": f"procédure collective (dernière annonce {b['d']})",
+                    etats.append({"type": "procédure collective", "date": _bp["d"],
+                                  "libelle": f"procédure collective (dernière annonce {_bp['d']})",
                                   "source": "BODACC", "etiquette": "Sourcé"})
     except Exception:  # noqa: BLE001 — jamais bloquant pour la fiche
         return None
@@ -5787,6 +5800,24 @@ def _pm_etat_societe(db: Session, siren: str | None) -> dict | None:
     return {"etats": etats,
             "libelle": "Société propriétaire : " + " ; ".join(e["libelle"] for e in etats) + ".",
             "note": "Fait public d'entreprise (état de la société) — information de contexte, aucune déduction."}
+
+
+def _etat_unite_legale(db: Session, siren: str | None) -> tuple[str | None, str | None]:
+    """CHASSE-DONNEES-FIX-1 (Lot 5, D-46) — l'état administratif de l'UNITÉ LÉGALE (A actif / C cessé)
+    lu du cache recherche-entreprises (`owner_enrichment.payload.etat_administratif`), seul endroit
+    qui porte le « C ». SIRENE (sirene_etablissements) n'ingère que les établissements ACTIFS → son
+    `actif=t` n'est PAS la preuve que la société vit. Rend (etat, date_maj) ou (None, None)."""
+    if not siren:
+        return None, None
+    try:
+        with db.begin_nested():
+            row = db.execute(text(
+                "SELECT payload->>'etat_administratif' AS etat, payload->>'date_mise_a_jour' AS maj "
+                "FROM owner_enrichment WHERE siren = :s ORDER BY fetched_at DESC LIMIT 1"),
+                {"s": siren}).mappings().first()
+    except Exception:  # noqa: BLE001 — cache optionnel, jamais bloquant
+        return None, None
+    return (row["etat"], row["maj"]) if row else (None, None)
 
 
 def _pm_identite(db: Session, siren: str | None) -> dict | None:
@@ -5815,14 +5846,26 @@ def _pm_identite(db: Session, siren: str | None) -> dict | None:
     if not row:
         return None
     from ..naf_labels import label as _naf_label
+    # CHASSE-DONNEES-FIX-1 (Lot 5, D-46) — « actif » = état de l'UNITÉ LÉGALE (owner_enrichment),
+    # pas la présence d'un établissement SIRENE (qui n'ingère que les actifs → ne peut jamais dire
+    # « cessée »). État C connu → actif=False. État inconnu → on retombe sur sirene_etablissements.
+    _etat_ul, _etat_maj = _etat_unite_legale(db, siren)
+    if _etat_ul == "C":
+        actif = False
+    elif _etat_ul == "A":
+        actif = True
+    else:
+        actif = bool(row["actif"]) if row["actif"] is not None else None
     return {
         "ape": row["naf"],
         "activite": _naf_label(row["naf"]) if row["naf"] else None,
         "siege": row["adresse"], "siege_commune": row["commune"],
         "date_creation": row["date_creation"].isoformat() if row["date_creation"] else None,
-        "actif": bool(row["actif"]) if row["actif"] is not None else None,
+        "actif": actif,
+        "etat_administratif": _etat_ul,   # 'A' | 'C' | None (unité légale, recherche-entreprises)
+        "etat_maj": _etat_maj,
         "annuaire_url": f"https://annuaire-entreprises.data.gouv.fr/entreprise/{siren}",
-        "source": "SIRENE (INSEE, open data)",
+        "source": "SIRENE (INSEE, open data) · état société : recherche-entreprises",
     }
 
 

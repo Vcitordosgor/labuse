@@ -20,7 +20,18 @@ SOURCE = "DGFiP — parcelles des personnes morales (millésimes annuels, Licenc
 # Millésime servi (table de prod), ajouté à la volée SI la table versionnée ne le porte pas encore
 # (KF-101 : l'ingestion M2 précède la publication amont du 2025). Le NOT EXISTS évite tout doublon
 # le jour où un 2025 versionné serait ingéré.
-_MILLESIME_SERVI = 2025
+# CHASSE-DONNEES-FIX-1 (Lot 5, D-57) — le millésime servi est DÉRIVÉ de la table
+# (max(parcelle_personne_morale.millesime)), comme zone.py et proprietaire_facettes.py : plus un
+# littéral « 2025 » qui resterait figé au millésime PM suivant. Repli sur l'ancien littéral si vide.
+_MILLESIME_SERVI_REPLI = 2025
+
+
+def _millesime_servi(db: Session) -> int:
+    try:
+        m = db.execute(text("SELECT max(millesime) FROM parcelle_personne_morale")).scalar()
+        return int(m) if m is not None else _MILLESIME_SERVI_REPLI
+    except Exception:  # noqa: BLE001 — jamais bloquant
+        return _MILLESIME_SERVI_REPLI
 
 # Situation au 1ᵉʳ janvier de l'année (date sémantique de chaque source, affichée en fiche).
 def situation_le(millesime: int) -> str:
@@ -86,7 +97,7 @@ def historique(db: Session, idu: str) -> dict | None:
     connu — on n'affiche rien plutôt qu'un bloc vide). RGPD : PM uniquement, par construction.
     """
     rows = [dict(r) for r in db.execute(
-        _TIMELINE_SQL, {"idu": idu, "servi": _MILLESIME_SERVI}).mappings().all()]
+        _TIMELINE_SQL, {"idu": idu, "servi": _millesime_servi(db)}).mappings().all()]
     if not rows:
         return None
 
@@ -160,9 +171,10 @@ def acquisitions_recentes(db: Session, commune_insee: str, depuis_millesime: int
       ON b.idu = a.idu AND b.millesime = a.millesime + 1
     WHERE a.siren IS DISTINCT FROM b.siren AND b.millesime >= :depuis
     """)
-    n_total = db.execute(count_sql, {"insee": commune_insee, "servi": _MILLESIME_SERVI,
+    _servi = _millesime_servi(db)
+    n_total = db.execute(count_sql, {"insee": commune_insee, "servi": _servi,
                                      "depuis": depuis_millesime}).scalar() or 0
-    rows = db.execute(sql, {"insee": commune_insee, "servi": _MILLESIME_SERVI,
+    rows = db.execute(sql, {"insee": commune_insee, "servi": _servi,
                             "depuis": depuis_millesime, "lim": limit}).mappings().all()
     items = [{
         "idu": r["idu"],

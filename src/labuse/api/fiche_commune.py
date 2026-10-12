@@ -383,13 +383,16 @@ def parc_social(db: Session, insee: str | None) -> dict | None:
     if not insee:
         return None
     r = db.execute(text(
-        "SELECT nb_logements, construct_median FROM rpls_commune WHERE insee = :i"),
+        "SELECT nb_logements, construct_median, millesime FROM rpls_commune WHERE insee = :i"),
         {"i": insee}).mappings().first()
     if not r or r["nb_logements"] is None:
         return None
+    # CHASSE-DONNEES-FIX-1 (Lot 5, D-54) — millésime DÉRIVÉ de la table (rpls_commune.millesime,
+    # « 2025-01 »), plus le littéral « 01/01/2025 » (figé à l'ingestion du RPLS 2026).
+    _mill = (r["millesime"] or "")[:4]
     return {"logements": int(r["nb_logements"]),
             "construct_median": int(r["construct_median"]) if r["construct_median"] is not None else None,
-            "millesime": "RPLS 01/01/2025",
+            "millesime": f"RPLS 01/01/{_mill}" if _mill else "RPLS",
             "source": "SDES — Répertoire des logements locatifs sociaux (RPLS)"}
 
 

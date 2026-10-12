@@ -240,20 +240,24 @@ def g10_sirene_etat():
 
 
 def g11_bodacc_fraicheur():
-    """D : la fiche lit bodacc_annonces_owner, gelée (max 09/07) derrière
-    bodacc_procedures (max 21/08) — plus de 30 j d'écart = gel."""
+    """D (D-47/D-51) : la fiche lisait bodacc_annonces_owner (gelée au 09/07) → état société en
+    retard de 22 mois (SCI FREYNEAU 820034122 : « dernière annonce 2024-10-08 »). Après FIX-1 la
+    fiche lit bodacc_procedures (vivante). On teste la SORTIE SERVIE : la date d'annonce servie =
+    la plus récente de bodacc_procedures (2026-08-21), pas la date figée de la table owner."""
     with _db() as cx:
-        owner = cx.execute("SELECT max(date_annonce) FROM bodacc_annonces_owner").fetchone()[0]
-        try:
-            proc = cx.execute("SELECT max(date_annonce) FROM bodacc_procedures").fetchone()[0]
-        except psycopg.errors.UndefinedColumn:
-            cx.rollback()
-            proc = cx.execute("SELECT max(date_jugement) FROM bodacc_procedures").fetchone()[0]
-    if owner is None or proc is None:
-        return "SKIP", "tables BODACC vides"
-    retard = (proc - owner).days
-    return ("OK", f"owner à {retard} j de procedures") if retard <= 30 else \
-        ("ECART", f"bodacc_annonces_owner gelée au {owner} vs procedures {proc} ({retard} j)")
+        proc = cx.execute(
+            "SELECT max(date_annonce)::text FROM bodacc_procedures WHERE siren = '820034122'").fetchone()[0]
+    if proc is None:
+        return "SKIP", "FREYNEAU absente de bodacc_procedures"
+    fiche = json.dumps(_api("/parcels/97409000BO0383"), ensure_ascii=False)
+    if "820034122" not in fiche:
+        return "SKIP", "SCI FREYNEAU absente de la fiche BO0383"
+    # la fiche doit servir la date VIVANTE (procedures), plus la date gelée 2024-10-08.
+    if proc[:7] in fiche:
+        return "OK", f"fiche sert l'annonce vivante ({proc}) de bodacc_procedures"
+    if "2024-10-08" in fiche or "2024" in json.dumps(_api("/parcels/97409000BO0383")).split("etat_societe")[-1][:200]:
+        return "ECART", "fiche sert encore la date gelée (bodacc_annonces_owner)"
+    return "ECART", f"fiche ne porte pas l'annonce vivante {proc}"
 
 
 def g12_zero_menteur_nu():
@@ -395,9 +399,35 @@ def g19_catnat_source_vs_zero():
     return "ECART", f"catnat disponible={c.get('disponible')} total={c.get('total')} (source présente)"
 
 
+def g20_millesime_derive():
+    """Lot 5 (D-54/D-57) : les millésimes servis sont DÉRIVÉS des tables, plus des littéraux figés.
+    RPLS : l'année affichée (fiche commune) = l'année de rpls_commune.millesime. PM : le millésime
+    servi (timeline) = max(parcelle_personne_morale.millesime)."""
+    with _db() as cx:
+        rpls_mill = cx.execute("SELECT max(millesime) FROM rpls_commune").fetchone()
+        pm_mill = cx.execute("SELECT max(millesime) FROM parcelle_personne_morale").fetchone()
+    annee_rpls = (rpls_mill[0] or "")[:4] if rpls_mill and rpls_mill[0] else None
+    if not annee_rpls:
+        return "SKIP", "rpls_commune sans millésime"
+    fc = _api("/communes/Saint-Paul/contexte")
+    servis = [v for _, v in _chercher(fc if isinstance(fc, dict) else {},
+                                      lambda k, v: k == "millesime" and isinstance(v, str) and "RPLS" in v)]
+    if not servis:
+        return "SKIP", "millésime RPLS non trouvé dans le contexte commune"
+    # aucun millésime RPLS servi ne doit contenir une AUTRE année que celle de la table.
+    faux = [s for s in servis if annee_rpls not in s]
+    return ("OK", f"RPLS servi dérivé de la table ({annee_rpls}) · PM max {pm_mill[0] if pm_mill else '—'}") \
+        if not faux else ("ECART", f"millésime RPLS figé {faux} ≠ table {annee_rpls}")
+
+
 def g14_digest_vs_cloche():
-    """C : le top du digest est recalculé à l'envoi (runs.current()) quand la cloche
-    relit event_log — les deux doivent se recouvrir."""
+    """C (C-45) : le top digest est recalculé à l'ENVOI sur le run servi, quand la cloche relit
+    event_log. Le symptôme de staleness était que la cloche vivait dans un AUTRE monde (dernière
+    bascule q_v10) que le digest (q_v18). L'invariant SAIN n'est pas « les mêmes IDU » (le top =
+    les plus chaudes, les bascules = celles qui ont CHANGÉ de tier : concepts distincts) mais « le
+    MÊME monde » : la bascule cloche la plus récente porte sur le run servi (digest ⇄ cloche
+    cohérents). Le recouvrement d'IDU, s'il existe, est un bonus."""
+    run = _manifest()["scoring_run"]
     digest = _api("/events/digest")
     if not isinstance(digest, dict):
         return "SKIP", "digest non JSON"
@@ -405,12 +435,20 @@ def g14_digest_vs_cloche():
     if not idus_digest:
         return "SKIP", "digest sans IDU"
     with _db() as cx:
-        idus_cloche = {r[0] for r in cx.execute(
-            "SELECT DISTINCT idu FROM event_log WHERE idu IS NOT NULL "
-            "ORDER BY idu LIMIT 500").fetchall()}
-    commun = idus_digest & idus_cloche
-    return ("OK", f"{len(commun)} IDU communs digest/cloche") if commun else \
-        ("ECART", f"0 recouvrement : digest {len(idus_digest)} IDU, cloche {len(idus_cloche)}")
+        dernier_run_to = cx.execute(
+            "SELECT run_to FROM event_log WHERE kind = 'bascule' AND NOT demo AND run_to IS NOT NULL "
+            "ORDER BY ts DESC LIMIT 1").fetchone()
+        idus_cloche_run = {r[0] for r in cx.execute(
+            "SELECT DISTINCT idu FROM event_log WHERE kind = 'bascule' AND run_to = %s "
+            "AND idu IS NOT NULL", (run,)).fetchall()}
+    if not dernier_run_to:
+        return "ECART", "aucune bascule cloche — cloche muette"
+    if dernier_run_to[0] != run:
+        return "ECART", (f"cloche dans un autre monde : dernière bascule run_to={dernier_run_to[0]} "
+                         f"≠ run servi {run}")
+    commun = idus_digest & idus_cloche_run
+    return "OK", (f"digest et cloche sur le même run servi {run} "
+                  f"({len(idus_cloche_run)} bascules servies, {len(commun)} IDU communs au top)")
 
 
 GARDES = [
@@ -433,6 +471,7 @@ GARDES = [
     ("comparatif-zone-dominante", g17_comparatif_zone),
     ("simulplu-non-calculable", g18_simulplu_non_calculable),
     ("catnat-source-vs-zero", g19_catnat_source_vs_zero),
+    ("millesime-derive", g20_millesime_derive),
 ]
 
 
