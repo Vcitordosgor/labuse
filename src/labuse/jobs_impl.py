@@ -46,7 +46,11 @@ def backup_postgres(ctx: JobContext) -> None:
     out = dst / f"labuse-{dbname}-{ts}.sql.gz"
     pg_dump = str(Path(s.pg_bin_dir) / "pg_dump") if s.pg_bin_dir else "pg_dump"
     with gzip.open(out, "wb") as gz:
-        proc = subprocess.run([pg_dump, "--no-owner", "--no-privileges", db_url],
+        # Exclut les schémas de RELIQUAT (ex. sauvegarde_20261006, posé par schema-parité-1) : le rôle
+        # de dump ne les lit pas → pg_dump cassait sur « permission denied for schema » (cron KO 07→12/10).
+        # Argument de liste → pas de globbing shell ; le schéma est écarté du dump, PAS supprimé.
+        proc = subprocess.run([pg_dump, "--no-owner", "--no-privileges",
+                               "--exclude-schema=sauvegarde_*", db_url],
                               stdout=gz, stderr=subprocess.PIPE, check=False)
     if proc.returncode != 0:
         out.unlink(missing_ok=True)
