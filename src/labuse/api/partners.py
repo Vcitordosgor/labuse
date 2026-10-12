@@ -507,12 +507,17 @@ def api_v1_parcels(key: str | None = None, statut: str | None = None, min_q: int
                d.completeness_score, r.sdp_residuelle_m2
         FROM parcels p
         JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
-        LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :run
+        -- CHASSE-DONNEES-FIX-1 (Lot 3, C-11) — le tier se lit au run SCORING (:v2run = q_v18), pas
+        -- au run CASCADE (:run = q_v18_sources, 0 ligne dans parcel_p_score_v2) → statut null partout
+        -- et filtre ?statut= cassé. Même séparation que le builder tuiles (:run vs :v2run).
+        LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
         LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
         WHERE p.commune = :c AND d.opportunity_score >= :q
           AND (CAST(:s AS text) IS NULL OR s2.tier = :s)
-        ORDER BY d.opportunity_score DESC LIMIT :lim OFFSET :off"""),
-        {"run": runs.cascade(), "c": commune, "q": min_q, "s": statut, "lim": limit, "off": offset}).mappings().all()
+        -- C-27 : départage déterministe par p.idu (539 ex æquo à Cilaos) → pagination stable.
+        ORDER BY d.opportunity_score DESC, p.idu ASC LIMIT :lim OFFSET :off"""),
+        {"run": runs.cascade(), "v2run": runs.current(), "c": commune, "q": min_q,
+         "s": statut, "lim": limit, "off": offset}).mappings().all()
     return {"count": len(rows), "offset": offset, "demo": demo,
             # M37 : étiquette VRAIE — le robinet sert le classement servi (tiers).
             "mention": (f"Démonstration LABUSE — données RÉELLES, commune {_DEMO_COMMUNE}, "

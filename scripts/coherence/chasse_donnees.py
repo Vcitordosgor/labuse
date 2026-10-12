@@ -130,27 +130,19 @@ def g04_export_disparue():
 
 
 def g05_partner_statut():
-    """C : /api/v1/parcels joint parcel_p_score_v2 sur runs.cascade() (0 ligne) au lieu
-    du run scoring → statut null partout (partners.py)."""
-    m = _manifest()
-    with _db() as cx:
-        col = cx.execute(
-            "SELECT column_name FROM information_schema.columns "
-            "WHERE table_name = 'parcel_p_score_v2' AND column_name LIKE 'run%' LIMIT 1"
-        ).fetchone()
-        if not col:
-            return "SKIP", "parcel_p_score_v2 sans colonne run*"
-        n_casc = cx.execute(
-            f"SELECT count(*) FROM parcel_p_score_v2 WHERE {col[0]} = %s",  # noqa: S608
-            (m["cascade_run"],)).fetchone()[0]
-        n_scor = cx.execute(
-            f"SELECT count(*) FROM parcel_p_score_v2 WHERE {col[0]} = %s",  # noqa: S608
-            (m["scoring_run"],)).fetchone()[0]
-    if n_scor == 0:
-        return "SKIP", f"run scoring {m['scoring_run']} sans lignes p_score_v2"
-    return ("OK", f"jointure cascade peuplée ({n_casc})") if n_casc > 0 else \
-        ("ECART", f"jointure partner au run cascade {m['cascade_run']} = 0 ligne "
-                  f"(scoring {m['scoring_run']} = {n_scor}) → statut null")
+    """C (C-11) : /api/v1/parcels joignait parcel_p_score_v2 sur runs.cascade() (q_v18_sources,
+    0 ligne) au lieu du run SCORING → statut null partout. Après FIX-1 la jointure est au run
+    scoring : on teste la SORTIE RÉELLE de l'API (statut non-null servi)."""
+    rep = _api("/api/v1/parcels?key=demo-labuse-partner-key&commune=Cilaos&limit=50")
+    if not isinstance(rep, dict):
+        return "SKIP", "endpoint partenaire indisponible"
+    items = rep.get("items") or []
+    if not items:
+        return "SKIP", "aucun item partenaire (commune vide ?)"
+    statuts = [it.get("statut") for it in items]
+    non_null = [s for s in statuts if s is not None]
+    return ("OK", f"{len(non_null)}/{len(items)} items avec statut servi") if non_null else \
+        ("ECART", f"statut null sur {len(items)}/{len(items)} items (jointure au mauvais run)")
 
 
 def g06_courrier_zone():
@@ -345,6 +337,24 @@ def g16_disparue_documents():
     return "ECART", "courrier compose une parcelle disparue (pas de refus)"
 
 
+def g17_comparatif_zone():
+    """Lot 3 (C-06) : le Comparatif servait la sous-zone de CALCUL (Usdu 2,4 %) au lieu de la zone
+    DOMINANTE de la fiche (A 70 %) sur la bizone BZ0005 → « Zone Usdu, constructible oui » à côté
+    de « Zone A inconstructible ». Après FIX-1 : la dominante + parts, constructibilité cohérente."""
+    rep = _api(f"/compare?idus=97415000BZ0007,{BZ0005}")
+    if not isinstance(rep, dict):
+        return "SKIP", "comparateur indisponible"
+    row = next((p for p in (rep.get("parcels") or []) if p.get("idu") == BZ0005), None)
+    if not row:
+        return "SKIP", f"{BZ0005} absente du comparatif"
+    zone = (row.get("zone") or "").upper()
+    if zone.startswith("USDU"):
+        return "ECART", f"comparatif sert la sous-zone de calcul « {row.get('zone')} » (pas la dominante)"
+    if zone.startswith("A"):
+        return "OK", f"comparatif sert la zone dominante « {row.get('zone')} » (constructible={row.get('zone_constructible')})"
+    return "SKIP", f"zone comparatif inattendue « {row.get('zone')} »"
+
+
 def g14_digest_vs_cloche():
     """C : le top du digest est recalculé à l'envoi (runs.current()) quand la cloche
     relit event_log — les deux doivent se recouvrir."""
@@ -380,6 +390,7 @@ GARDES = [
     ("digest-vs-cloche", g14_digest_vs_cloche),
     ("courrier-surface", g15_courrier_surface),
     ("disparue-documents", g16_disparue_documents),
+    ("comparatif-zone-dominante", g17_comparatif_zone),
 ]
 
 

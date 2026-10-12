@@ -7352,7 +7352,10 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
                FROM dryrun_cascade_results cr LEFT JOIN data_sources ds ON ds.id = cr.data_source_id
                WHERE cr.run_label = :run AND cr.parcel_id = :pid
                ORDER BY abs(COALESCE(cr.weight_applied, 0)) DESC, cr.layer_name, cr.id"""  # cr.id : tiebreaker déterministe (cf. _q_v2_fiche)
-        ), {"pid": p.id, "run": runs.current()}
+        # CHASSE-DONNEES-FIX-1 (Lot 3) — la MÊME cascade servie que _q_v2_fiche : le run CASCADE
+        # résolu (q_v18_sources), pas runs.current()=q_v18 scoring (0 ligne) → l'export md/html
+        # servait « Cascade vide / Ont répondu : — » sur une fiche à cascade peuplée (C-03).
+        ), {"pid": p.id, "run": _cascade_run(db, runs.current())}
     ).mappings().all()
     from .risques_arbitrage import arbitrer_risques
     _seen: set = set()
@@ -8191,14 +8194,19 @@ def compare(idus: str = Query(..., description="2 à 3 IDU séparés par des vir
             row = _compare_row(_q_v2_fiche(db, idu), fiche_payload(db, pid))
         except HTTPException:
             continue
-        # DOCS-FIX-1 (P5, arbitrage Vic) — la « Zone PLU » du Comparatif = celle de la fiche (zone
-        # dominante par surface, zone_servie.zone_dominante). fiche_payload.zone est None pour une
-        # parcelle EXCLUE (forêt domaniale…) alors que l'écran/Dossier dérivent bien « N » → on
-        # retombe sur zone_dominante, jamais un « — » trompeur. (Une parcelle hors run servi est déjà
-        # écartée au-dessus par _q_v2_fiche → HTTPException ; ici la parcelle EST servie.)
-        if not row.get("zone"):
-            from ..faisabilite.zone_servie import zone_dominante
-            row["zone"] = zone_dominante(db, pid).zone
+        # DOCS-FIX-1 (P5) + CHASSE-DONNEES-FIX-1 (Lot 3, C-06) — la « Zone PLU » du Comparatif =
+        # TOUJOURS celle de la fiche (zone DOMINANTE par surface + parts sur bizone), JAMAIS la
+        # sous-zone de CALCUL de la faisabilité (fiche_payload.zone). Sur BZ0005 (bizone A 70 % /
+        # N 28 %), fa.zone bascule sur le liseré « Usdu » (2,4 %) → le PDF affichait « Zone Usdu,
+        # constructible : oui » À CÔTÉ de la contrainte « Zone A inconstructible ». On sert la
+        # dominante et on en dérive la constructibilité, comme l'écran.
+        from ..faisabilite.zone_servie import zone_dominante as _zone_dom
+        _zs = _zone_dom(db, pid)
+        if _zs.zone:
+            row["zone"] = _zs.zone
+            row["zone_constructible"] = (None if _zs.zone_fam is None else _zs.zone_fam not in ("A", "N"))
+            # parts sur une bizone (« A 70 % · N 28 % »), comme la fiche ; None hors bizone.
+            row["zone_parts"] = (_zs.parts if _zs.a_cheval and _zs.parts else None)
         # M82 — prix terrain nu PAR ZONE (point de calcul M79 unique, comme la fiche et l'outil Marché).
         commune, zone = row.get("commune"), (row.get("zone") or "")
         fam = "AU" if zone.upper().startswith("AU") else (zone[:1].upper() if zone else "")

@@ -118,11 +118,19 @@ def _synthese(db, idu: str) -> dict:
         except Exception:  # noqa: BLE001 — DVF optionnel
             d["n_mutations"] = 0
         # risques CERTAINS (HARD_EXCLUDE des couches d'aléas)
+        # CHASSE-DONNEES-FIX-1 (Lot 3, C-07) — la cascade SERVIE (dryrun_cascade_results au run
+        # cascade résolu), plus la table legacy `cascade_results` (figée au 2026-06-29) : le courrier
+        # affirmait « PPR zone rouge (inconstructible) » alors que la fiche q_v18 ne sert aucun
+        # rédhibitoire (PPR-PARTIEL-A recalculé). Même source que la fiche écran.
         try:
+            from .bascule_flux import resoudre_cascade_run
+            from . import runs as _runs
+            _casc = resoudre_cascade_run(db, _runs.current())[0] or _runs.current()
             rows = db.execute(text(
-                "SELECT DISTINCT layer_name, detail FROM cascade_results "
-                "WHERE parcel_id = :pid AND result = 'HARD_EXCLUDE' AND layer_name = ANY(:ls)"),
-                {"pid": row["id"], "ls": list(_RISK_LAYERS)}).mappings().all()
+                "SELECT DISTINCT layer_name, detail FROM dryrun_cascade_results "
+                "WHERE parcel_id = :pid AND run_label = :run "
+                "AND result = 'HARD_EXCLUDE' AND layer_name = ANY(:ls)"),
+                {"pid": row["id"], "run": _casc, "ls": list(_RISK_LAYERS)}).mappings().all()
             d["risques"] = [re.sub(r"^(Exclue?|Exclu)\s*:\s*", "", (r["detail"] or r["layer_name"]).strip())
                             for r in rows if (r["detail"] or r["layer_name"])]
         except Exception:  # noqa: BLE001 — risques optionnels

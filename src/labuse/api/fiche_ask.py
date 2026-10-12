@@ -81,13 +81,14 @@ def _ask_context(db: Session, idu: str) -> tuple[dict, dict]:
         if pid is not None:
             from ..faisabilite.db import fiche_payload
             fp = fiche_payload(db, pid) or {}
-            fr = fp.get("fourchette") or fp.get("capacite") or {}
             bil = fp.get("bilan") or {}
+            # CHASSE-DONNEES-FIX-1 (Lot 3, C-23) — UN SEUL moteur de capacité dans le contexte IA :
+            # le RÉSIDUEL servi (`potentiel_*`/`sdp_residuelle_m2` ci-dessous, bâti conservé, plafonné
+            # par la cause). La fourchette faisabilité legacy (bâti RASÉ, ignore la cause) SORT du
+            # contexte : le Copilote citait 0 (résiduel) ET 430 m² (fourchette) sur la même parcelle.
+            # On ne garde ici que le hors-capacité (zone de calcul, charge foncière, fiabilité bilan).
             faisa = {
                 "zone_resolue": fp.get("zone_resolue") or fp.get("zone"),
-                "niveaux": fr.get("niveaux"), "hauteur_m": fr.get("hauteur_m"),
-                "surface_plancher_m2": fr.get("surface_plancher_m2"),
-                "logements_au_sol": fr.get("logements_au_sol"),
                 "charge_fonciere_centrale": (bil.get("charge_fonciere") or {}).get("central")
                 if isinstance(bil.get("charge_fonciere"), dict) else None,
                 "bilan_fiable": bil.get("fiable"),
