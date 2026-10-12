@@ -1,0 +1,1822 @@
+idu;notion;lecteur;valeur;detail
+97402000AE0513;presence;fiche;servie (200);
+97402000AE0513;surface_terrain;fiche;464;"source=cadastre;dessin=464;contenance=464;incertaine=False"
+97402000AE0513;zone_plu;fiche;Ud;"famille=U;parts=[('Ud', 1.0)]"
+97402000AE0513;bande;fiche;0;"signal=faible;nc=False"
+97402000AE0513;sdp_residuelle;fiche;0;
+97402000AE0513;cause_bande0;fiche;;
+97402000AE0513;tier;fiche;sans_signal;
+97402000AE0513;adresse;fiche;;
+97402000AE0513;commune;fiche;Bras-Panon;
+97402000AE0513;etage0_completude;fiche;False;completeness=92
+97402000AE0513;badge_ppr_partiel;fiche;;"exigu_raison=None;cause=None"
+97402000AE0513;presence;listing_filtre;presente (mode=defaut);"/filtre?source=q_v18&commune=Bras-Panon&surface±2 autour 464;essais=[('defaut', 200)]"
+97402000AE0513;surface_terrain;listing_filtre;464;"surface_m2(dessin)=464;contenance_m2=464"
+97402000AE0513;zone_plu;listing_filtre;Ud;zone_fam=U
+97402000AE0513;bande;listing_filtre;0;signal=faible
+97402000AE0513;sdp_residuelle;listing_filtre;0;score_labuse via liste
+97402000AE0513;cause_bande0;listing_filtre;;
+97402000AE0513;tier;listing_filtre;sans_signal;
+97402000AE0513;adresse;listing_filtre;;
+97402000AE0513;commune;listing_filtre;Bras-Panon;
+97402000AE0513;etage0_completude;listing_filtre;False;completeness=92
+97402000AE0513;presence;export_md;servie (200);
+97402000AE0513;commune;export_md;Bras-Panon;export.py:34
+97402000AE0513;surface_terrain;export_md;464;ligne « Surface » (= _build_fiche surface_m2, DESSIN)
+97402000AE0513;tier;export_md;Sans signal;verdict export
+97402000AE0513;badge_ppr_partiel;export_md;;
+97402000AE0513;presence;kmz;servie (200);
+97402000AE0513;surface_terrain;kmz;464;description=Bras-Panon — 464 m²
+97402000AE0513;commune;kmz;Bras-Panon;app.py:2563-2599
+97402000AE0513;presence;geojson_commune;feature presente;
+97402000AE0513;surface_terrain;geojson_commune;464;surface_m2(dessin)=464
+97402000AE0513;zone_plu;geojson_commune;Ud;zone_fam=U
+97402000AE0513;tier;geojson_commune;sans_signal;
+97402000AE0513;sdp_residuelle;geojson_commune;0;
+97402000AE0513;adresse;geojson_commune;;
+97402000AE0513;etage0_completude;geojson_commune;False;completeness=92
+97402000AE0513;presence;api_partenaire;non testable sans cle;"cle demo bridee Cilaos (partners.py:490-496) ; vraie cle = convention (partners.py:481 _check_key)"
+97407000AO1886;presence;fiche;servie (200);
+97407000AO1886;surface_terrain;fiche;17;"source=cadastre;dessin=17;contenance=17;incertaine=False"
+97407000AO1886;zone_plu;fiche;Ud;"famille=U;parts=[('Ud', 1.0)]"
+97407000AO1886;bande;fiche;D;"signal=faible;nc=False"
+97407000AO1886;sdp_residuelle;fiche;43;
+97407000AO1886;cause_bande0;fiche;;
+97407000AO1886;tier;fiche;ecartee;
+97407000AO1886;adresse;fiche;;
+97407000AO1886;commune;fiche;Le Port;
+97407000AO1886;etage0_completude;fiche;True;completeness=74
+97407000AO1886;badge_ppr_partiel;fiche;;"exigu_raison=None;cause=None"
+97407000AO1886;presence;export_md;servie (200);
+97407000AO1886;commune;export_md;Le Port;export.py:34
+97407000AO1886;surface_terrain;export_md;17;ligne « Surface » (= _build_fiche surface_m2, DESSIN)
+97407000AO1886;tier;export_md;Écartée;verdict export
+97407000AO1886;badge_ppr_partiel;export_md;;
+97407000AO1886;presence;kmz;servie (200);
+97407000AO1886;surface_terrain;kmz;17;description=Le Port — 17 m²
+97407000AO1886;commune;kmz;Le Port;app.py:2563-2599
+97407000AO1886;presence;geojson_commune;feature presente;
+97407000AO1886;surface_terrain;geojson_commune;17;surface_m2(dessin)=17
+97407000AO1886;zone_plu;geojson_commune;;zone_fam=None
+97407000AO1886;tier;geojson_commune;ecartee;
+97407000AO1886;sdp_residuelle;geojson_commune;43;
+97407000AO1886;adresse;geojson_commune;;
+97407000AO1886;etage0_completude;geojson_commune;True;completeness=74
+97407000AO1886;presence;api_partenaire;non testable sans cle;"cle demo bridee Cilaos (partners.py:490-496) ; vraie cle = convention (partners.py:481 _check_key)"
+97408000AP1582;presence;fiche;servie (200);
+97408000AP1582;surface_terrain;fiche;461;"source=cadastre;dessin=461;contenance=461;incertaine=False"
+97408000AP1582;zone_plu;fiche;UEm;"famille=U;parts=[('UEm', 0.9991)]"
+97408000AP1582;bande;fiche;D;"signal=faible;nc=False"
+97408000AP1582;sdp_residuelle;fiche;90;
+97408000AP1582;cause_bande0;fiche;;
+97408000AP1582;tier;fiche;sans_signal;
+97408000AP1582;adresse;fiche;10 d Rue Mahatma Gandhi, 97419 La Possession;
+97408000AP1582;commune;fiche;La Possession;
+97408000AP1582;etage0_completude;fiche;False;completeness=92
+97408000AP1582;badge_ppr_partiel;fiche;;"exigu_raison=None;cause=None"
+97408000AP1582;presence;listing_filtre;presente (mode=defaut);"/filtre?source=q_v18&commune=La Possession&surface±2 autour 461;essais=[('defaut', 200)]"
+97408000AP1582;surface_terrain;listing_filtre;461;"surface_m2(dessin)=461;contenance_m2=461"
+97408000AP1582;zone_plu;listing_filtre;UEm;zone_fam=U
+97408000AP1582;bande;listing_filtre;D;signal=faible
+97408000AP1582;sdp_residuelle;listing_filtre;90;score_labuse via liste
+97408000AP1582;cause_bande0;listing_filtre;;
+97408000AP1582;tier;listing_filtre;sans_signal;
+97408000AP1582;adresse;listing_filtre;;
+97408000AP1582;commune;listing_filtre;La Possession;
+97408000AP1582;etage0_completude;listing_filtre;False;completeness=92
+97408000AP1582;presence;export_md;servie (200);
+97408000AP1582;commune;export_md;La Possession;export.py:34
+97408000AP1582;surface_terrain;export_md;461;ligne « Surface » (= _build_fiche surface_m2, DESSIN)
+97408000AP1582;tier;export_md;Sans signal;verdict export
+97408000AP1582;badge_ppr_partiel;export_md;;
+97408000AP1582;presence;kmz;servie (200);
+97408000AP1582;surface_terrain;kmz;461;description=La Possession — 461 m²
+97408000AP1582;commune;kmz;La Possession;app.py:2563-2599
+97408000AP1582;presence;geojson_commune;feature presente;
+97408000AP1582;surface_terrain;geojson_commune;461;surface_m2(dessin)=461
+97408000AP1582;zone_plu;geojson_commune;UEm;zone_fam=U
+97408000AP1582;tier;geojson_commune;sans_signal;
+97408000AP1582;sdp_residuelle;geojson_commune;90;
+97408000AP1582;adresse;geojson_commune;10 d Rue Mahatma Gandhi, 97419 La Possession;
+97408000AP1582;etage0_completude;geojson_commune;False;completeness=92
+97408000AP1582;presence;api_partenaire;non testable sans cle;"cle demo bridee Cilaos (partners.py:490-496) ; vraie cle = convention (partners.py:481 _check_key)"
+97409000AB0521;presence;fiche;servie (200);"disparue: ""2026-09-01"""
+97409000AB0521;surface_terrain;fiche;;"source=None;dessin=None;contenance=None;incertaine=None"
+97409000AB0521;zone_plu;fiche;;"famille=None;parts=[]"
+97409000AB0521;bande;fiche;;"signal=None;nc=None"
+97409000AB0521;sdp_residuelle;fiche;;
+97409000AB0521;cause_bande0;fiche;;
+97409000AB0521;tier;fiche;;
+97409000AB0521;adresse;fiche;;
+97409000AB0521;commune;fiche;Saint-André;
+97409000AB0521;etage0_completude;fiche;;completeness=None
+97409000AB0521;badge_ppr_partiel;fiche;;"exigu_raison=None;cause=None"
+97409000AB0521;presence;listing_filtre;ABSENTE;"/filtre?source=q_v18&commune=Saint-André&surface±2 autour 29489;essais=[('defaut', 200), ('zero', 200), ('nc', 200)]"
+97409000AB0521;presence;export_md;servie (200);
+97409000AB0521;commune;export_md;Saint-André;export.py:34
+97409000AB0521;surface_terrain;export_md;29489;ligne « Surface » (= _build_fiche surface_m2, DESSIN)
+97409000AB0521;tier;export_md;Non évaluée au run servi;verdict export
+97409000AB0521;badge_ppr_partiel;export_md;;
+97409000AB0521;presence;kmz;servie (200);
+97409000AB0521;surface_terrain;kmz;29489;description=Saint-André — 29489 m²
+97409000AB0521;commune;kmz;Saint-André;app.py:2563-2599
+97409000AB0521;presence;geojson_commune;ABSENTE;/map/parcels.geojson?commune=Saint-André&source=q_v18
+97409000AB0521;presence;api_partenaire;non testable sans cle;"cle demo bridee Cilaos (partners.py:490-496) ; vraie cle = convention (partners.py:481 _check_key)"
+97409000AB0993;presence;fiche;servie (200);
+97409000AB0993;surface_terrain;fiche;664663;"source=cadastre;dessin=663221;contenance=664663;incertaine=False"
+97409000AB0993;zone_plu;fiche;Acu+2AUe+UE;"famille=A;parts=[('Acu', 0.7846), ('2AUe', 0.1398), ('UE', 0.0571)]"
+97409000AB0993;bande;fiche;0;"signal=faible;nc=False"
+97409000AB0993;sdp_residuelle;fiche;0;
+97409000AB0993;cause_bande0;fiche;;
+97409000AB0993;tier;fiche;ecartee;
+97409000AB0993;adresse;fiche;;
+97409000AB0993;commune;fiche;Saint-André;
+97409000AB0993;etage0_completude;fiche;True;completeness=74
+97409000AB0993;badge_ppr_partiel;fiche;;"exigu_raison=None;cause=redhibitoire"
+97409000AB0993;presence;listing_filtre;presente (mode=zero);"/filtre?source=q_v18&commune=Saint-André&surface±2 autour 664663;essais=[('defaut', 200), ('zero', 200)]"
+97409000AB0993;surface_terrain;listing_filtre;664663;"surface_m2(dessin)=663221;contenance_m2=664663"
+97409000AB0993;zone_plu;listing_filtre;;zone_fam=None
+97409000AB0993;bande;listing_filtre;0;signal=faible
+97409000AB0993;sdp_residuelle;listing_filtre;0;score_labuse via liste
+97409000AB0993;cause_bande0;listing_filtre;;
+97409000AB0993;tier;listing_filtre;ecartee;
+97409000AB0993;adresse;listing_filtre;;
+97409000AB0993;commune;listing_filtre;Saint-André;
+97409000AB0993;etage0_completude;listing_filtre;True;completeness=74
+97409000AB0993;presence;export_md;servie (200);
+97409000AB0993;commune;export_md;Saint-André;export.py:34
+97409000AB0993;surface_terrain;export_md;663221;ligne « Surface » (= _build_fiche surface_m2, DESSIN)
+97409000AB0993;tier;export_md;Écartée;verdict export
+97409000AB0993;badge_ppr_partiel;export_md;;
+97409000AB0993;presence;kmz;servie (200);
+97409000AB0993;surface_terrain;kmz;664663;description=Saint-André — 664663 m²
+97409000AB0993;commune;kmz;Saint-André;app.py:2563-2599
+97409000AB0993;presence;geojson_commune;feature presente;
+97409000AB0993;surface_terrain;geojson_commune;664663;surface_m2(dessin)=663221
+97409000AB0993;zone_plu;geojson_commune;;zone_fam=None
+97409000AB0993;tier;geojson_commune;ecartee;
+97409000AB0993;sdp_residuelle;geojson_commune;;
+97409000AB0993;adresse;geojson_commune;;
+97409000AB0993;etage0_completude;geojson_commune;True;completeness=74
+97409000AB0993;presence;api_partenaire;non testable sans cle;"cle demo bridee Cilaos (partners.py:490-496) ; vraie cle = convention (partners.py:481 _check_key)"
+97409000AK0804;presence;fiche;servie (200);
+97409000AK0804;surface_terrain;fiche;27862;"source=cadastre;dessin=28258;contenance=27862;incertaine=False"
+97409000AK0804;zone_plu;fiche;UB;"famille=U;parts=[('UB', 1.0)]"
+97409000AK0804;bande;fiche;A;"signal=faible;nc=False"
+97409000AK0804;sdp_residuelle;fiche;34223;
+97409000AK0804;cause_bande0;fiche;;
+97409000AK0804;tier;fiche;sans_signal;
+97409000AK0804;adresse;fiche;524 Rue Jean Jacques Rousseau, 97440 Saint-André;
+97409000AK0804;commune;fiche;Saint-André;
+97409000AK0804;etage0_completude;fiche;False;completeness=92
+97409000AK0804;badge_ppr_partiel;fiche;;"exigu_raison=None;cause=None"
+97409000AK0804;presence;listing_filtre;presente (mode=defaut);"/filtre?source=q_v18&commune=Saint-André&surface±2 autour 27862;essais=[('defaut', 200)]"
+97409000AK0804;surface_terrain;listing_filtre;27862;"surface_m2(dessin)=28258;contenance_m2=27862"
+97409000AK0804;zone_plu;listing_filtre;UB;zone_fam=U
+97409000AK0804;bande;listing_filtre;A;signal=faible
+97409000AK0804;sdp_residuelle;listing_filtre;34223;score_labuse via liste
+97409000AK0804;cause_bande0;listing_filtre;;
+97409000AK0804;tier;listing_filtre;sans_signal;
+97409000AK0804;adresse;listing_filtre;;
+97409000AK0804;commune;listing_filtre;Saint-André;
+97409000AK0804;etage0_completude;listing_filtre;False;completeness=92
+97409000AK0804;presence;export_md;servie (200);
+97409000AK0804;commune;export_md;Saint-André;export.py:34
+97409000AK0804;surface_terrain;export_md;28258;ligne « Surface » (= _build_fiche surface_m2, DESSIN)
+97409000AK0804;tier;export_md;Sans signal;verdict export
+97409000AK0804;badge_ppr_partiel;export_md;;
+97409000AK0804;presence;kmz;servie (200);
+97409000AK0804;surface_terrain;kmz;27862;description=Saint-André — 27862 m²
+97409000AK0804;commune;kmz;Saint-André;app.py:2563-2599
+97409000AK0804;presence;geojson_commune;feature presente;
+97409000AK0804;surface_terrain;geojson_commune;27862;surface_m2(dessin)=28258
+97409000AK0804;zone_plu;geojson_commune;UB;zone_fam=U
+97409000AK0804;tier;geojson_commune;sans_signal;
+97409000AK0804;sdp_residuelle;geojson_commune;34223;
+97409000AK0804;adresse;geojson_commune;524 Rue Jean Jacques Rousseau, 97440 Saint-André;
+97409000AK0804;etage0_completude;geojson_commune;False;completeness=92
+97409000AK0804;presence;api_partenaire;non testable sans cle;"cle demo bridee Cilaos (partners.py:490-496) ; vraie cle = convention (partners.py:481 _check_key)"
+97409000AS1381;presence;fiche;servie (200);
+97409000AS1381;surface_terrain;fiche;928;"source=cadastre;dessin=953;contenance=928;incertaine=False"
+97409000AS1381;zone_plu;fiche;A;"famille=A;parts=[('A', 0.9999)]"
+97409000AS1381;bande;fiche;0;"signal=faible;nc=False"
+97409000AS1381;sdp_residuelle;fiche;0;
+97409000AS1381;cause_bande0;fiche;;
+97409000AS1381;tier;fiche;ecartee;
+97409000AS1381;adresse;fiche;52 Rue du Grand Large, 97440 Saint-André;
+97409000AS1381;commune;fiche;Saint-André;
+97409000AS1381;etage0_completude;fiche;True;completeness=74
+97409000AS1381;badge_ppr_partiel;fiche;;"exigu_raison=portion_reduite;cause=terrain_exigu"
+97409000AS1381;presence;listing_filtre;presente (mode=zero);"/filtre?source=q_v18&commune=Saint-André&surface±2 autour 928;essais=[('defaut', 200), ('zero', 200)]"
+97409000AS1381;surface_terrain;listing_filtre;928;"surface_m2(dessin)=953;contenance_m2=928"
+97409000AS1381;zone_plu;listing_filtre;A;zone_fam=A
+97409000AS1381;bande;listing_filtre;0;signal=faible
+97409000AS1381;sdp_residuelle;listing_filtre;0;score_labuse via liste
+97409000AS1381;cause_bande0;listing_filtre;;
+97409000AS1381;tier;listing_filtre;ecartee;
+97409000AS1381;adresse;listing_filtre;;
+97409000AS1381;commune;listing_filtre;Saint-André;
+97409000AS1381;etage0_completude;listing_filtre;True;completeness=74
+97409000AS1381;presence;export_md;servie (200);
+97409000AS1381;commune;export_md;Saint-André;export.py:34
+97409000AS1381;surface_terrain;export_md;953;ligne « Surface » (= _build_fiche surface_m2, DESSIN)
+97409000AS1381;tier;export_md;Écartée;verdict export
+97409000AS1381;badge_ppr_partiel;export_md;;
+97409000AS1381;presence;kmz;servie (200);
+97409000AS1381;surface_terrain;kmz;928;description=Saint-André — 928 m²
+97409000AS1381;commune;kmz;Saint-André;app.py:2563-2599
+97409000AS1381;presence;geojson_commune;feature presente;
+97409000AS1381;surface_terrain;geojson_commune;928;surface_m2(dessin)=953
+97409000AS1381;zone_plu;geojson_commune;A;zone_fam=A
+97409000AS1381;tier;geojson_commune;ecartee;
+97409000AS1381;sdp_residuelle;geojson_commune;;
+97409000AS1381;adresse;geojson_commune;52 Rue du Grand Large, 97440 Saint-André;
+97409000AS1381;etage0_completude;geojson_commune;True;completeness=74
+97409000AS1381;presence;api_partenaire;non testable sans cle;"cle demo bridee Cilaos (partners.py:490-496) ; vraie cle = convention (partners.py:481 _check_key)"
+97409000AY0786;presence;fiche;servie (200);
+97409000AY0786;surface_terrain;fiche;4936;"source=cadastre;dessin=4877;contenance=4936;incertaine=False"
+97409000AY0786;zone_plu;fiche;UC+A;"famille=U;parts=[('UC', 0.6934), ('A', 0.3066)]"
+97409000AY0786;bande;fiche;A;"signal=faible;nc=False"
+97409000AY0786;sdp_residuelle;fiche;2302;
+97409000AY0786;cause_bande0;fiche;;
+97409000AY0786;tier;fiche;sans_signal;
+97409000AY0786;adresse;fiche;514 Rue des Cafeiers, 97440 Saint-André;
+97409000AY0786;commune;fiche;Saint-André;
+97409000AY0786;etage0_completude;fiche;False;completeness=92
+97409000AY0786;badge_ppr_partiel;fiche;;"exigu_raison=None;cause=None"
+97409000AY0786;presence;listing_filtre;presente (mode=defaut);"/filtre?source=q_v18&commune=Saint-André&surface±2 autour 4936;essais=[('defaut', 200)]"
+97409000AY0786;surface_terrain;listing_filtre;4936;"surface_m2(dessin)=4877;contenance_m2=4936"
+97409000AY0786;zone_plu;listing_filtre;UC;zone_fam=U
+97409000AY0786;bande;listing_filtre;A;signal=faible
+97409000AY0786;sdp_residuelle;listing_filtre;2302;score_labuse via liste
+97409000AY0786;cause_bande0;listing_filtre;;
+97409000AY0786;tier;listing_filtre;sans_signal;
+97409000AY0786;adresse;listing_filtre;;
+97409000AY0786;commune;listing_filtre;Saint-André;
+97409000AY0786;etage0_completude;listing_filtre;False;completeness=92
+97409000AY0786;presence;export_md;servie (200);
+97409000AY0786;commune;export_md;Saint-André;export.py:34
+97409000AY0786;surface_terrain;export_md;4877;ligne « Surface » (= _build_fiche surface_m2, DESSIN)
+97409000AY0786;tier;export_md;Sans signal;verdict export
+97409000AY0786;badge_ppr_partiel;export_md;;
+97409000AY0786;presence;kmz;servie (200);
+97409000AY0786;surface_terrain;kmz;4936;description=Saint-André — 4936 m²
+97409000AY0786;commune;kmz;Saint-André;app.py:2563-2599
+97409000AY0786;presence;geojson_commune;feature presente;
+97409000AY0786;surface_terrain;geojson_commune;4936;surface_m2(dessin)=4877
+97409000AY0786;zone_plu;geojson_commune;UC;zone_fam=U
+97409000AY0786;tier;geojson_commune;sans_signal;
+97409000AY0786;sdp_residuelle;geojson_commune;2302;
+97409000AY0786;adresse;geojson_commune;514 Rue des Cafeiers, 97440 Saint-André;
+97409000AY0786;etage0_completude;geojson_commune;False;completeness=92
+97409000AY0786;presence;api_partenaire;non testable sans cle;"cle demo bridee Cilaos (partners.py:490-496) ; vraie cle = convention (partners.py:481 _check_key)"
+97409000BO0383;presence;fiche;servie (200);
+97409000BO0383;surface_terrain;fiche;1403;"source=cadastre;dessin=1388;contenance=1403;incertaine=False"
+97409000BO0383;zone_plu;fiche;A+UD+Ntvb;"famille=A;parts=[('A', 0.6087), ('UD', 0.2787), ('Ntvb', 0.1126)]"
+97409000BO0383;bande;fiche;0;"signal=faible;nc=False"
+97409000BO0383;sdp_residuelle;fiche;0;
+97409000BO0383;cause_bande0;fiche;;
+97409000BO0383;tier;fiche;ecartee;
+97409000BO0383;adresse;fiche;736 Route de Salazie, 97440 Saint-André;
+97409000BO0383;commune;fiche;Saint-André;
+97409000BO0383;etage0_completude;fiche;True;completeness=74
+97409000BO0383;badge_ppr_partiel;fiche;;"exigu_raison=None;cause=None"
+97409000BO0383;presence;listing_filtre;presente (mode=zero);"/filtre?source=q_v18&commune=Saint-André&surface±2 autour 1403;essais=[('defaut', 200), ('zero', 200)]"
+97409000BO0383;surface_terrain;listing_filtre;1403;"surface_m2(dessin)=1388;contenance_m2=1403"
+97409000BO0383;zone_plu;listing_filtre;A;zone_fam=A
+97409000BO0383;bande;listing_filtre;0;signal=faible
+97409000BO0383;sdp_residuelle;listing_filtre;0;score_labuse via liste
+97409000BO0383;cause_bande0;listing_filtre;;
+97409000BO0383;tier;listing_filtre;ecartee;
+97409000BO0383;adresse;listing_filtre;;
+97409000BO0383;commune;listing_filtre;Saint-André;
+97409000BO0383;etage0_completude;listing_filtre;True;completeness=74
+97409000BO0383;presence;export_md;servie (200);
+97409000BO0383;commune;export_md;Saint-André;export.py:34
+97409000BO0383;surface_terrain;export_md;1388;ligne « Surface » (= _build_fiche surface_m2, DESSIN)
+97409000BO0383;tier;export_md;Écartée;verdict export
+97409000BO0383;badge_ppr_partiel;export_md;;
+97409000BO0383;presence;kmz;servie (200);
+97409000BO0383;surface_terrain;kmz;1403;description=Saint-André — 1403 m²
+97409000BO0383;commune;kmz;Saint-André;app.py:2563-2599
+97409000BO0383;presence;geojson_commune;feature presente;
+97409000BO0383;surface_terrain;geojson_commune;1403;surface_m2(dessin)=1388
+97409000BO0383;zone_plu;geojson_commune;A;zone_fam=A
+97409000BO0383;tier;geojson_commune;ecartee;
+97409000BO0383;sdp_residuelle;geojson_commune;0;
+97409000BO0383;adresse;geojson_commune;736 Route de Salazie, 97440 Saint-André;
+97409000BO0383;etage0_completude;geojson_commune;True;completeness=74
+97409000BO0383;presence;api_partenaire;non testable sans cle;"cle demo bridee Cilaos (partners.py:490-496) ; vraie cle = convention (partners.py:481 _check_key)"
+97410000AB0212;presence;fiche;servie (200);
+97410000AB0212;surface_terrain;fiche;40930;"source=cadastre;dessin=40478;contenance=40930;incertaine=False"
+97410000AB0212;zone_plu;fiche;AUp1;"famille=AU;parts=[('AUp1', 0.9999)]"
+97410000AB0212;bande;fiche;0;"signal=faible;nc=False"
+97410000AB0212;sdp_residuelle;fiche;0;
+97410000AB0212;cause_bande0;fiche;;
+97410000AB0212;tier;fiche;sans_signal;
+97410000AB0212;adresse;fiche;;
+97410000AB0212;commune;fiche;Saint-Benoît;
+97410000AB0212;etage0_completude;fiche;False;completeness=92
+97410000AB0212;badge_ppr_partiel;fiche;;"exigu_raison=None;cause=zone_non_constructible:AUp1"
+97410000AB0212;presence;listing_filtre;presente (mode=defaut);"/filtre?source=q_v18&commune=Saint-Benoît&surface±2 autour 40930;essais=[('defaut', 200)]"
+97410000AB0212;surface_terrain;listing_filtre;40930;"surface_m2(dessin)=40478;contenance_m2=40930"
+97410000AB0212;zone_plu;listing_filtre;AUp1;zone_fam=AU
+97410000AB0212;bande;listing_filtre;0;signal=faible
+97410000AB0212;sdp_residuelle;listing_filtre;0;score_labuse via liste
+97410000AB0212;cause_bande0;listing_filtre;;
+97410000AB0212;tier;listing_filtre;sans_signal;
+97410000AB0212;adresse;listing_filtre;;
+97410000AB0212;commune;listing_filtre;Saint-Benoît;
+97410000AB0212;etage0_completude;listing_filtre;False;completeness=92
+97410000AB0212;presence;export_md;servie (200);
+97410000AB0212;commune;export_md;Saint-Benoît;export.py:34
+97410000AB0212;surface_terrain;export_md;40478;ligne « Surface » (= _build_fiche surface_m2, DESSIN)
+97410000AB0212;tier;export_md;Sans signal;verdict export
+97410000AB0212;badge_ppr_partiel;export_md;;
+97410000AB0212;presence;kmz;servie (200);
+97410000AB0212;surface_terrain;kmz;40930;description=Saint-Benoît — 40930 m²
+97410000AB0212;commune;kmz;Saint-Benoît;app.py:2563-2599
+97410000AB0212;presence;geojson_commune;feature presente;
+97410000AB0212;surface_terrain;geojson_commune;40930;surface_m2(dessin)=40478
+97410000AB0212;zone_plu;geojson_commune;AUp1;zone_fam=AU
+97410000AB0212;tier;geojson_commune;sans_signal;
+97410000AB0212;sdp_residuelle;geojson_commune;;
+97410000AB0212;adresse;geojson_commune;;
+97410000AB0212;etage0_completude;geojson_commune;False;completeness=92
+97410000AB0212;presence;api_partenaire;non testable sans cle;"cle demo bridee Cilaos (partners.py:490-496) ; vraie cle = convention (partners.py:481 _check_key)"
+97410000AC0157;presence;fiche;servie (200);
+97410000AC0157;surface_terrain;fiche;31486;"source=cadastre;dessin=31572;contenance=31486;incertaine=False"
+97410000AC0157;zone_plu;fiche;A;"famille=A;parts=[('A', 1.0)]"
+97410000AC0157;bande;fiche;0;"signal=faible;nc=False"
+97410000AC0157;sdp_residuelle;fiche;0;
+97410000AC0157;cause_bande0;fiche;;
+97410000AC0157;tier;fiche;ecartee;
+97410000AC0157;adresse;fiche;;
+97410000AC0157;commune;fiche;Saint-Benoît;
+97410000AC0157;etage0_completude;fiche;True;completeness=74
+97410000AC0157;badge_ppr_partiel;fiche;;"exigu_raison=portion_reduite;cause=terrain_exigu"
+97410000AC0157;presence;listing_filtre;presente (mode=zero);"/filtre?source=q_v18&commune=Saint-Benoît&surface±2 autour 31486;essais=[('defaut', 200), ('zero', 200)]"
+97410000AC0157;surface_terrain;listing_filtre;31486;"surface_m2(dessin)=31572;contenance_m2=31486"
+97410000AC0157;zone_plu;listing_filtre;A;zone_fam=A
+97410000AC0157;bande;listing_filtre;0;signal=faible
+97410000AC0157;sdp_residuelle;listing_filtre;0;score_labuse via liste
+97410000AC0157;cause_bande0;listing_filtre;;
+97410000AC0157;tier;listing_filtre;ecartee;
+97410000AC0157;adresse;listing_filtre;;
+97410000AC0157;commune;listing_filtre;Saint-Benoît;
+97410000AC0157;etage0_completude;listing_filtre;True;completeness=74
+97410000AC0157;presence;export_md;servie (200);
+97410000AC0157;commune;export_md;Saint-Benoît;export.py:34
+97410000AC0157;surface_terrain;export_md;31572;ligne « Surface » (= _build_fiche surface_m2, DESSIN)
+97410000AC0157;tier;export_md;Écartée;verdict export
+97410000AC0157;badge_ppr_partiel;export_md;;
+97410000AC0157;presence;kmz;servie (200);
+97410000AC0157;surface_terrain;kmz;31486;description=Saint-Benoît — 31486 m²
+97410000AC0157;commune;kmz;Saint-Benoît;app.py:2563-2599
+97410000AC0157;presence;geojson_commune;feature presente;
+97410000AC0157;surface_terrain;geojson_commune;31486;surface_m2(dessin)=31572
+97410000AC0157;zone_plu;geojson_commune;A;zone_fam=A
+97410000AC0157;tier;geojson_commune;ecartee;
+97410000AC0157;sdp_residuelle;geojson_commune;;
+97410000AC0157;adresse;geojson_commune;;
+97410000AC0157;etage0_completude;geojson_commune;True;completeness=74
+97410000AC0157;presence;api_partenaire;non testable sans cle;"cle demo bridee Cilaos (partners.py:490-496) ; vraie cle = convention (partners.py:481 _check_key)"
+97411000AB0061;presence;fiche;servie (200);
+97411000AB0061;surface_terrain;fiche;790;"source=cadastre;dessin=792;contenance=790;incertaine=False"
+97411000AB0061;zone_plu;fiche;Uavap;"famille=U;parts=[('Uavap', 1.0)]"
+97411000AB0061;bande;fiche;0;"signal=faible;nc=False"
+97411000AB0061;sdp_residuelle;fiche;0;
+97411000AB0061;cause_bande0;fiche;;
+97411000AB0061;tier;fiche;sans_signal;
+97411000AB0061;adresse;fiche;;
+97411000AB0061;commune;fiche;Saint-Denis;
+97411000AB0061;etage0_completude;fiche;False;completeness=92
+97411000AB0061;badge_ppr_partiel;fiche;;"exigu_raison=None;cause=None"
+97411000AB0061;presence;listing_filtre;presente (mode=defaut);"/filtre?source=q_v18&commune=Saint-Denis&surface±2 autour 790;essais=[('defaut', 200)]"
+97411000AB0061;surface_terrain;listing_filtre;790;"surface_m2(dessin)=792;contenance_m2=790"
+97411000AB0061;zone_plu;listing_filtre;Uavap;zone_fam=U
+97411000AB0061;bande;listing_filtre;0;signal=faible
+97411000AB0061;sdp_residuelle;listing_filtre;0;score_labuse via liste
+97411000AB0061;cause_bande0;listing_filtre;;
+97411000AB0061;tier;listing_filtre;sans_signal;
+97411000AB0061;adresse;listing_filtre;;
+97411000AB0061;commune;listing_filtre;Saint-Denis;
+97411000AB0061;etage0_completude;listing_filtre;False;completeness=92
+97411000AB0061;presence;export_md;servie (200);
+97411000AB0061;commune;export_md;Saint-Denis;export.py:34
+97411000AB0061;surface_terrain;export_md;792;ligne « Surface » (= _build_fiche surface_m2, DESSIN)
+97411000AB0061;tier;export_md;Sans signal;verdict export
+97411000AB0061;badge_ppr_partiel;export_md;;
+97411000AB0061;presence;kmz;servie (200);
+97411000AB0061;surface_terrain;kmz;790;description=Saint-Denis — 790 m²
+97411000AB0061;commune;kmz;Saint-Denis;app.py:2563-2599
+97411000AB0061;presence;geojson_commune;feature presente;
+97411000AB0061;surface_terrain;geojson_commune;790;surface_m2(dessin)=792
+97411000AB0061;zone_plu;geojson_commune;Uavap;zone_fam=U
+97411000AB0061;tier;geojson_commune;sans_signal;
+97411000AB0061;sdp_residuelle;geojson_commune;0;
+97411000AB0061;adresse;geojson_commune;;
+97411000AB0061;etage0_completude;geojson_commune;False;completeness=92
+97411000AB0061;presence;api_partenaire;non testable sans cle;"cle demo bridee Cilaos (partners.py:490-496) ; vraie cle = convention (partners.py:481 _check_key)"
+97411000AB0318;presence;fiche;servie (200);
+97411000AB0318;surface_terrain;fiche;270;"source=cadastre;dessin=271;contenance=270;incertaine=False"
+97411000AB0318;zone_plu;fiche;Uavap;"famille=U;parts=[('Uavap', 1.0)]"
+97411000AB0318;bande;fiche;0;"signal=faible;nc=False"
+97411000AB0318;sdp_residuelle;fiche;0;
+97411000AB0318;cause_bande0;fiche;;
+97411000AB0318;tier;fiche;sans_signal;
+97411000AB0318;adresse;fiche;15 Ruelle de la Délivrance, 97400 Saint-Denis;
+97411000AB0318;commune;fiche;Saint-Denis;
+97411000AB0318;etage0_completude;fiche;False;completeness=92
+97411000AB0318;badge_ppr_partiel;fiche;;"exigu_raison=None;cause=None"
+97411000AB0318;presence;listing_filtre;presente (mode=defaut);"/filtre?source=q_v18&commune=Saint-Denis&surface±2 autour 270;essais=[('defaut', 200)]"
+97411000AB0318;surface_terrain;listing_filtre;270;"surface_m2(dessin)=271;contenance_m2=270"
+97411000AB0318;zone_plu;listing_filtre;Uavap;zone_fam=U
+97411000AB0318;bande;listing_filtre;0;signal=faible
+97411000AB0318;sdp_residuelle;listing_filtre;0;score_labuse via liste
+97411000AB0318;cause_bande0;listing_filtre;;
+97411000AB0318;tier;listing_filtre;sans_signal;
+97411000AB0318;adresse;listing_filtre;;
+97411000AB0318;commune;listing_filtre;Saint-Denis;
+97411000AB0318;etage0_completude;listing_filtre;False;completeness=92
+97411000AB0318;presence;export_md;servie (200);
+97411000AB0318;commune;export_md;Saint-Denis;export.py:34
+97411000AB0318;surface_terrain;export_md;271;ligne « Surface » (= _build_fiche surface_m2, DESSIN)
+97411000AB0318;tier;export_md;Sans signal;verdict export
+97411000AB0318;badge_ppr_partiel;export_md;;
+97411000AB0318;presence;kmz;servie (200);
+97411000AB0318;surface_terrain;kmz;270;description=Saint-Denis — 270 m²
+97411000AB0318;commune;kmz;Saint-Denis;app.py:2563-2599
+97411000AB0318;presence;geojson_commune;feature presente;
+97411000AB0318;surface_terrain;geojson_commune;270;surface_m2(dessin)=271
+97411000AB0318;zone_plu;geojson_commune;Uavap;zone_fam=U
+97411000AB0318;tier;geojson_commune;sans_signal;
+97411000AB0318;sdp_residuelle;geojson_commune;0;
+97411000AB0318;adresse;geojson_commune;15 Ruelle de la Délivrance, 97400 Saint-Denis;
+97411000AB0318;etage0_completude;geojson_commune;False;completeness=92
+97411000AB0318;presence;api_partenaire;non testable sans cle;"cle demo bridee Cilaos (partners.py:490-496) ; vraie cle = convention (partners.py:481 _check_key)"
+97411000AC0069;presence;fiche;servie (200);
+97411000AC0069;surface_terrain;fiche;9315;"source=cadastre;dessin=9221;contenance=9315;incertaine=False"
+97411000AC0069;zone_plu;fiche;Uavap;"famille=U;parts=[('Uavap', 1.0)]"
+97411000AC0069;bande;fiche;B;"signal=faible;nc=False"
+97411000AC0069;sdp_residuelle;fiche;1133;
+97411000AC0069;cause_bande0;fiche;;
+97411000AC0069;tier;fiche;sans_signal;
+97411000AC0069;adresse;fiche;1 Rue de la Boulangerie, 97400 Saint-Denis;
+97411000AC0069;commune;fiche;Saint-Denis;
+97411000AC0069;etage0_completude;fiche;False;completeness=92
+97411000AC0069;badge_ppr_partiel;fiche;;"exigu_raison=None;cause=None"
+97411000AC0069;presence;listing_filtre;presente (mode=defaut);"/filtre?source=q_v18&commune=Saint-Denis&surface±2 autour 9315;essais=[('defaut', 200)]"
+97411000AC0069;surface_terrain;listing_filtre;9315;"surface_m2(dessin)=9221;contenance_m2=9315"
+97411000AC0069;zone_plu;listing_filtre;Uavap;zone_fam=U
+97411000AC0069;bande;listing_filtre;B;signal=faible
+97411000AC0069;sdp_residuelle;listing_filtre;1133;score_labuse via liste
+97411000AC0069;cause_bande0;listing_filtre;;
+97411000AC0069;tier;listing_filtre;sans_signal;
+97411000AC0069;adresse;listing_filtre;;
+97411000AC0069;commune;listing_filtre;Saint-Denis;
+97411000AC0069;etage0_completude;listing_filtre;False;completeness=92
+97411000AC0069;presence;export_md;servie (200);
+97411000AC0069;commune;export_md;Saint-Denis;export.py:34
+97411000AC0069;surface_terrain;export_md;9221;ligne « Surface » (= _build_fiche surface_m2, DESSIN)
+97411000AC0069;tier;export_md;Sans signal;verdict export
+97411000AC0069;badge_ppr_partiel;export_md;;
+97411000AC0069;presence;kmz;servie (200);
+97411000AC0069;surface_terrain;kmz;9315;description=Saint-Denis — 9315 m²
+97411000AC0069;commune;kmz;Saint-Denis;app.py:2563-2599
+97411000AC0069;presence;geojson_commune;feature presente;
+97411000AC0069;surface_terrain;geojson_commune;9315;surface_m2(dessin)=9221
+97411000AC0069;zone_plu;geojson_commune;Uavap;zone_fam=U
+97411000AC0069;tier;geojson_commune;sans_signal;
+97411000AC0069;sdp_residuelle;geojson_commune;1133;
+97411000AC0069;adresse;geojson_commune;1 Rue de la Boulangerie, 97400 Saint-Denis;
+97411000AC0069;etage0_completude;geojson_commune;False;completeness=92
+97411000AC0069;presence;api_partenaire;non testable sans cle;"cle demo bridee Cilaos (partners.py:490-496) ; vraie cle = convention (partners.py:481 _check_key)"
+97411000AE0013;presence;fiche;servie (200);"disparue: ""2026-09-01"""
+97411000AE0013;surface_terrain;fiche;;"source=None;dessin=None;contenance=None;incertaine=None"
+97411000AE0013;zone_plu;fiche;;"famille=None;parts=[]"
+97411000AE0013;bande;fiche;;"signal=None;nc=None"
+97411000AE0013;sdp_residuelle;fiche;;
+97411000AE0013;cause_bande0;fiche;;
+97411000AE0013;tier;fiche;;
+97411000AE0013;adresse;fiche;;
+97411000AE0013;commune;fiche;Saint-Denis;
+97411000AE0013;etage0_completude;fiche;;completeness=None
+97411000AE0013;badge_ppr_partiel;fiche;;"exigu_raison=None;cause=None"
+97411000AE0013;presence;listing_filtre;ABSENTE;"/filtre?source=q_v18&commune=Saint-Denis&surface±2 autour 774;essais=[('defaut', 200), ('zero', 200), ('nc', 200)]"
+97411000AE0013;presence;export_md;servie (200);
+97411000AE0013;commune;export_md;Saint-Denis;export.py:34
+97411000AE0013;surface_terrain;export_md;774;ligne « Surface » (= _build_fiche surface_m2, DESSIN)
+97411000AE0013;tier;export_md;Non évaluée au run servi;verdict export
+97411000AE0013;badge_ppr_partiel;export_md;;
+97411000AE0013;presence;kmz;servie (200);
+97411000AE0013;surface_terrain;kmz;774;description=Saint-Denis — 774 m²
+97411000AE0013;commune;kmz;Saint-Denis;app.py:2563-2599
+97411000AE0013;presence;geojson_commune;ABSENTE;/map/parcels.geojson?commune=Saint-Denis&source=q_v18
+97411000AE0013;presence;api_partenaire;non testable sans cle;"cle demo bridee Cilaos (partners.py:490-496) ; vraie cle = convention (partners.py:481 _check_key)"
+97411000AW0692;presence;fiche;servie (200);
+97411000AW0692;surface_terrain;fiche;991;"source=cadastre;dessin=991;contenance=991;incertaine=False"
+97411000AW0692;zone_plu;fiche;Ud;"famille=U;parts=[('Ud', 1.0)]"
+97411000AW0692;bande;fiche;D;"signal=faible;nc=False"
+97411000AW0692;sdp_residuelle;fiche;118;
+97411000AW0692;cause_bande0;fiche;;
+97411000AW0692;tier;fiche;sans_signal;
+97411000AW0692;adresse;fiche;93 Route de Bois de Nèfles (C.D. 49), 97400 Saint-Denis;
+97411000AW0692;commune;fiche;Saint-Denis;
+97411000AW0692;etage0_completude;fiche;False;completeness=92
+97411000AW0692;badge_ppr_partiel;fiche;;"exigu_raison=None;cause=None"
+97411000AW0692;presence;listing_filtre;presente (mode=defaut);"/filtre?source=q_v18&commune=Saint-Denis&surface±2 autour 991;essais=[('defaut', 200)]"
+97411000AW0692;surface_terrain;listing_filtre;991;"surface_m2(dessin)=991;contenance_m2=991"
+97411000AW0692;zone_plu;listing_filtre;Ud;zone_fam=U
+97411000AW0692;bande;listing_filtre;D;signal=faible
+97411000AW0692;sdp_residuelle;listing_filtre;118;score_labuse via liste
+97411000AW0692;cause_bande0;listing_filtre;;
+97411000AW0692;tier;listing_filtre;sans_signal;
+97411000AW0692;adresse;listing_filtre;;
+97411000AW0692;commune;listing_filtre;Saint-Denis;
+97411000AW0692;etage0_completude;listing_filtre;False;completeness=92
+97411000AW0692;presence;export_md;servie (200);
+97411000AW0692;commune;export_md;Saint-Denis;export.py:34
+97411000AW0692;surface_terrain;export_md;991;ligne « Surface » (= _build_fiche surface_m2, DESSIN)
+97411000AW0692;tier;export_md;Sans signal;verdict export
+97411000AW0692;badge_ppr_partiel;export_md;;
+97411000AW0692;presence;kmz;servie (200);
+97411000AW0692;surface_terrain;kmz;991;description=Saint-Denis — 991 m²
+97411000AW0692;commune;kmz;Saint-Denis;app.py:2563-2599
+97411000AW0692;presence;geojson_commune;feature presente;
+97411000AW0692;surface_terrain;geojson_commune;991;surface_m2(dessin)=991
+97411000AW0692;zone_plu;geojson_commune;Ud;zone_fam=U
+97411000AW0692;tier;geojson_commune;sans_signal;
+97411000AW0692;sdp_residuelle;geojson_commune;118;
+97411000AW0692;adresse;geojson_commune;93 Route de Bois de Nèfles (C.D. 49), 97400 Saint-Denis;
+97411000AW0692;etage0_completude;geojson_commune;False;completeness=92
+97411000AW0692;presence;api_partenaire;non testable sans cle;"cle demo bridee Cilaos (partners.py:490-496) ; vraie cle = convention (partners.py:481 _check_key)"
+97411000BK0101;presence;fiche;servie (200);
+97411000BK0101;surface_terrain;fiche;574;"source=cadastre;dessin=589;contenance=574;incertaine=False"
+97411000BK0101;zone_plu;fiche;Ud;"famille=U;parts=[('Ud', 1.0)]"
+97411000BK0101;bande;fiche;B;"signal=faible;nc=False"
+97411000BK0101;sdp_residuelle;fiche;460;
+97411000BK0101;cause_bande0;fiche;;
+97411000BK0101;tier;fiche;sans_signal;
+97411000BK0101;adresse;fiche;;
+97411000BK0101;commune;fiche;Saint-Denis;
+97411000BK0101;etage0_completude;fiche;False;completeness=92
+97411000BK0101;badge_ppr_partiel;fiche;;"exigu_raison=None;cause=None"
+97411000BK0101;presence;listing_filtre;presente (mode=defaut);"/filtre?source=q_v18&commune=Saint-Denis&surface±2 autour 574;essais=[('defaut', 200)]"
+97411000BK0101;surface_terrain;listing_filtre;574;"surface_m2(dessin)=589;contenance_m2=574"
+97411000BK0101;zone_plu;listing_filtre;Ud;zone_fam=U
+97411000BK0101;bande;listing_filtre;B;signal=faible
+97411000BK0101;sdp_residuelle;listing_filtre;460;score_labuse via liste
+97411000BK0101;cause_bande0;listing_filtre;;
+97411000BK0101;tier;listing_filtre;sans_signal;
+97411000BK0101;adresse;listing_filtre;;
+97411000BK0101;commune;listing_filtre;Saint-Denis;
+97411000BK0101;etage0_completude;listing_filtre;False;completeness=92
+97411000BK0101;presence;export_md;servie (200);
+97411000BK0101;commune;export_md;Saint-Denis;export.py:34
+97411000BK0101;surface_terrain;export_md;589;ligne « Surface » (= _build_fiche surface_m2, DESSIN)
+97411000BK0101;tier;export_md;Sans signal;verdict export
+97411000BK0101;badge_ppr_partiel;export_md;;
+97411000BK0101;presence;kmz;servie (200);
+97411000BK0101;surface_terrain;kmz;574;description=Saint-Denis — 574 m²
+97411000BK0101;commune;kmz;Saint-Denis;app.py:2563-2599
+97411000BK0101;presence;geojson_commune;feature presente;
+97411000BK0101;surface_terrain;geojson_commune;574;surface_m2(dessin)=589
+97411000BK0101;zone_plu;geojson_commune;Ud;zone_fam=U
+97411000BK0101;tier;geojson_commune;sans_signal;
+97411000BK0101;sdp_residuelle;geojson_commune;460;
+97411000BK0101;adresse;geojson_commune;;
+97411000BK0101;etage0_completude;geojson_commune;False;completeness=92
+97411000BK0101;presence;api_partenaire;non testable sans cle;"cle demo bridee Cilaos (partners.py:490-496) ; vraie cle = convention (partners.py:481 _check_key)"
+97411000BZ1065;presence;fiche;servie (200);
+97411000BZ1065;surface_terrain;fiche;1567;"source=cadastre;dessin=1625;contenance=1567;incertaine=False"
+97411000BZ1065;zone_plu;fiche;Uh;"famille=U;parts=[('Uh', 1.0)]"
+97411000BZ1065;bande;fiche;D;"signal=faible;nc=False"
+97411000BZ1065;sdp_residuelle;fiche;35;
+97411000BZ1065;cause_bande0;fiche;;
+97411000BZ1065;tier;fiche;sans_signal;
+97411000BZ1065;adresse;fiche;3 Chemin de la Citerne, 97417 Saint-Denis;
+97411000BZ1065;commune;fiche;Saint-Denis;
+97411000BZ1065;etage0_completude;fiche;False;completeness=92
+97411000BZ1065;badge_ppr_partiel;fiche;;"exigu_raison=None;cause=None"
+97411000BZ1065;presence;listing_filtre;presente (mode=defaut);"/filtre?source=q_v18&commune=Saint-Denis&surface±2 autour 1567;essais=[('defaut', 200)]"
+97411000BZ1065;surface_terrain;listing_filtre;1567;"surface_m2(dessin)=1625;contenance_m2=1567"
+97411000BZ1065;zone_plu;listing_filtre;Uh;zone_fam=U
+97411000BZ1065;bande;listing_filtre;D;signal=faible
+97411000BZ1065;sdp_residuelle;listing_filtre;35;score_labuse via liste
+97411000BZ1065;cause_bande0;listing_filtre;;
+97411000BZ1065;tier;listing_filtre;sans_signal;
+97411000BZ1065;adresse;listing_filtre;;
+97411000BZ1065;commune;listing_filtre;Saint-Denis;
+97411000BZ1065;etage0_completude;listing_filtre;False;completeness=92
+97411000BZ1065;presence;export_md;servie (200);
+97411000BZ1065;commune;export_md;Saint-Denis;export.py:34
+97411000BZ1065;surface_terrain;export_md;1625;ligne « Surface » (= _build_fiche surface_m2, DESSIN)
+97411000BZ1065;tier;export_md;Sans signal;verdict export
+97411000BZ1065;badge_ppr_partiel;export_md;;
+97411000BZ1065;presence;kmz;servie (200);
+97411000BZ1065;surface_terrain;kmz;1567;description=Saint-Denis — 1567 m²
+97411000BZ1065;commune;kmz;Saint-Denis;app.py:2563-2599
+97411000BZ1065;presence;geojson_commune;feature presente;
+97411000BZ1065;surface_terrain;geojson_commune;1567;surface_m2(dessin)=1625
+97411000BZ1065;zone_plu;geojson_commune;Uh;zone_fam=U
+97411000BZ1065;tier;geojson_commune;sans_signal;
+97411000BZ1065;sdp_residuelle;geojson_commune;35;
+97411000BZ1065;adresse;geojson_commune;3 Chemin de la Citerne, 97417 Saint-Denis;
+97411000BZ1065;etage0_completude;geojson_commune;False;completeness=92
+97411000BZ1065;presence;api_partenaire;non testable sans cle;"cle demo bridee Cilaos (partners.py:490-496) ; vraie cle = convention (partners.py:481 _check_key)"
+97411000CR0650;presence;fiche;servie (200);
+97411000CR0650;surface_terrain;fiche;459920;"source=cadastre;dessin=459134;contenance=459920;incertaine=False"
+97411000CR0650;zone_plu;fiche;N+Uh;"famille=N;parts=[('N', 0.9737), ('Uh', 0.0263)]"
+97411000CR0650;bande;fiche;0;"signal=faible;nc=False"
+97411000CR0650;sdp_residuelle;fiche;0;
+97411000CR0650;cause_bande0;fiche;;
+97411000CR0650;tier;fiche;ecartee;
+97411000CR0650;adresse;fiche;35 bis Chemin de la Glacière, 97400 Saint-Denis;
+97411000CR0650;commune;fiche;Saint-Denis;
+97411000CR0650;etage0_completude;fiche;True;completeness=74
+97411000CR0650;badge_ppr_partiel;fiche;;"exigu_raison=None;cause=None"
+97411000CR0650;presence;listing_filtre;presente (mode=zero);"/filtre?source=q_v18&commune=Saint-Denis&surface±2 autour 459920;essais=[('defaut', 200), ('zero', 200)]"
+97411000CR0650;surface_terrain;listing_filtre;459920;"surface_m2(dessin)=459134;contenance_m2=459920"
+97411000CR0650;zone_plu;listing_filtre;;zone_fam=None
+97411000CR0650;bande;listing_filtre;0;signal=faible
+97411000CR0650;sdp_residuelle;listing_filtre;0;score_labuse via liste
+97411000CR0650;cause_bande0;listing_filtre;;
+97411000CR0650;tier;listing_filtre;ecartee;
+97411000CR0650;adresse;listing_filtre;;
+97411000CR0650;commune;listing_filtre;Saint-Denis;
+97411000CR0650;etage0_completude;listing_filtre;True;completeness=74
+97411000CR0650;presence;export_md;servie (200);
+97411000CR0650;commune;export_md;Saint-Denis;export.py:34
+97411000CR0650;surface_terrain;export_md;459134;ligne « Surface » (= _build_fiche surface_m2, DESSIN)
+97411000CR0650;tier;export_md;Écartée;verdict export
+97411000CR0650;badge_ppr_partiel;export_md;;
+97411000CR0650;presence;kmz;servie (200);
+97411000CR0650;surface_terrain;kmz;459920;description=Saint-Denis — 459920 m²
+97411000CR0650;commune;kmz;Saint-Denis;app.py:2563-2599
+97411000CR0650;presence;geojson_commune;feature presente;
+97411000CR0650;surface_terrain;geojson_commune;459920;surface_m2(dessin)=459134
+97411000CR0650;zone_plu;geojson_commune;;zone_fam=None
+97411000CR0650;tier;geojson_commune;ecartee;
+97411000CR0650;sdp_residuelle;geojson_commune;0;
+97411000CR0650;adresse;geojson_commune;35 bis Chemin de la Glacière, 97400 Saint-Denis;
+97411000CR0650;etage0_completude;geojson_commune;True;completeness=74
+97411000CR0650;presence;api_partenaire;non testable sans cle;"cle demo bridee Cilaos (partners.py:490-496) ; vraie cle = convention (partners.py:481 _check_key)"
+97411000DR0219;presence;fiche;servie (200);
+97411000DR0219;surface_terrain;fiche;953;"source=cadastre;dessin=942;contenance=953;incertaine=False"
+97411000DR0219;zone_plu;fiche;Ui;"famille=U;parts=[('Ui', 1.0)]"
+97411000DR0219;bande;fiche;C;"signal=faible;nc=False"
+97411000DR0219;sdp_residuelle;fiche;635;
+97411000DR0219;cause_bande0;fiche;;
+97411000DR0219;tier;fiche;sans_signal;
+97411000DR0219;adresse;fiche;32 Boulevard du Chaudron, 97490 Saint-Denis;
+97411000DR0219;commune;fiche;Saint-Denis;
+97411000DR0219;etage0_completude;fiche;False;completeness=92
+97411000DR0219;badge_ppr_partiel;fiche;;"exigu_raison=None;cause=None"
+97411000DR0219;presence;listing_filtre;presente (mode=defaut);"/filtre?source=q_v18&commune=Saint-Denis&surface±2 autour 953;essais=[('defaut', 200)]"
+97411000DR0219;surface_terrain;listing_filtre;953;"surface_m2(dessin)=942;contenance_m2=953"
+97411000DR0219;zone_plu;listing_filtre;Ui;zone_fam=U
+97411000DR0219;bande;listing_filtre;C;signal=faible
+97411000DR0219;sdp_residuelle;listing_filtre;635;score_labuse via liste
+97411000DR0219;cause_bande0;listing_filtre;;
+97411000DR0219;tier;listing_filtre;sans_signal;
+97411000DR0219;adresse;listing_filtre;;
+97411000DR0219;commune;listing_filtre;Saint-Denis;
+97411000DR0219;etage0_completude;listing_filtre;False;completeness=92
+97411000DR0219;presence;export_md;servie (200);
+97411000DR0219;commune;export_md;Saint-Denis;export.py:34
+97411000DR0219;surface_terrain;export_md;942;ligne « Surface » (= _build_fiche surface_m2, DESSIN)
+97411000DR0219;tier;export_md;Sans signal;verdict export
+97411000DR0219;badge_ppr_partiel;export_md;;
+97411000DR0219;presence;kmz;servie (200);
+97411000DR0219;surface_terrain;kmz;953;description=Saint-Denis — 953 m²
+97411000DR0219;commune;kmz;Saint-Denis;app.py:2563-2599
+97411000DR0219;presence;geojson_commune;feature presente;
+97411000DR0219;surface_terrain;geojson_commune;953;surface_m2(dessin)=942
+97411000DR0219;zone_plu;geojson_commune;Ui;zone_fam=U
+97411000DR0219;tier;geojson_commune;sans_signal;
+97411000DR0219;sdp_residuelle;geojson_commune;635;
+97411000DR0219;adresse;geojson_commune;32 Boulevard du Chaudron, 97490 Saint-Denis;
+97411000DR0219;etage0_completude;geojson_commune;False;completeness=92
+97411000DR0219;presence;api_partenaire;non testable sans cle;"cle demo bridee Cilaos (partners.py:490-496) ; vraie cle = convention (partners.py:481 _check_key)"
+97411000HM0136;presence;fiche;servie (200);
+97411000HM0136;surface_terrain;fiche;150;"source=cadastre;dessin=140;contenance=150;incertaine=False"
+97411000HM0136;zone_plu;fiche;Ui;"famille=U;parts=[('Ui', 1.0)]"
+97411000HM0136;bande;fiche;0;"signal=faible;nc=False"
+97411000HM0136;sdp_residuelle;fiche;0;
+97411000HM0136;cause_bande0;fiche;;
+97411000HM0136;tier;fiche;ecartee;
+97411000HM0136;adresse;fiche;;
+97411000HM0136;commune;fiche;Saint-Denis;
+97411000HM0136;etage0_completude;fiche;True;completeness=74
+97411000HM0136;badge_ppr_partiel;fiche;;"exigu_raison=reculs;cause=terrain_exigu"
+97411000HM0136;presence;listing_filtre;presente (mode=zero);"/filtre?source=q_v18&commune=Saint-Denis&surface±2 autour 150;essais=[('defaut', 200), ('zero', 200)]"
+97411000HM0136;surface_terrain;listing_filtre;150;"surface_m2(dessin)=140;contenance_m2=150"
+97411000HM0136;zone_plu;listing_filtre;Ui;zone_fam=U
+97411000HM0136;bande;listing_filtre;0;signal=faible
+97411000HM0136;sdp_residuelle;listing_filtre;0;score_labuse via liste
+97411000HM0136;cause_bande0;listing_filtre;;
+97411000HM0136;tier;listing_filtre;ecartee;
+97411000HM0136;adresse;listing_filtre;;
+97411000HM0136;commune;listing_filtre;Saint-Denis;
+97411000HM0136;etage0_completude;listing_filtre;True;completeness=74
+97411000HM0136;presence;export_md;servie (200);
+97411000HM0136;commune;export_md;Saint-Denis;export.py:34
+97411000HM0136;surface_terrain;export_md;140;ligne « Surface » (= _build_fiche surface_m2, DESSIN)
+97411000HM0136;tier;export_md;Écartée;verdict export
+97411000HM0136;badge_ppr_partiel;export_md;;
+97411000HM0136;presence;kmz;servie (200);
+97411000HM0136;surface_terrain;kmz;150;description=Saint-Denis — 150 m²
+97411000HM0136;commune;kmz;Saint-Denis;app.py:2563-2599
+97411000HM0136;presence;geojson_commune;feature presente;
+97411000HM0136;surface_terrain;geojson_commune;150;surface_m2(dessin)=140
+97411000HM0136;zone_plu;geojson_commune;Ui;zone_fam=U
+97411000HM0136;tier;geojson_commune;ecartee;
+97411000HM0136;sdp_residuelle;geojson_commune;;
+97411000HM0136;adresse;geojson_commune;;
+97411000HM0136;etage0_completude;geojson_commune;True;completeness=74
+97411000HM0136;presence;api_partenaire;non testable sans cle;"cle demo bridee Cilaos (partners.py:490-496) ; vraie cle = convention (partners.py:481 _check_key)"
+97411000ID0002;presence;fiche;servie (200);
+97411000ID0002;surface_terrain;fiche;2552;"source=cadastre;dessin=2556;contenance=2552;incertaine=False"
+97411000ID0002;zone_plu;fiche;N;"famille=N;parts=[('N', 1.0)]"
+97411000ID0002;bande;fiche;0;"signal=faible;nc=False"
+97411000ID0002;sdp_residuelle;fiche;0;
+97411000ID0002;cause_bande0;fiche;;
+97411000ID0002;tier;fiche;ecartee;
+97411000ID0002;adresse;fiche;;
+97411000ID0002;commune;fiche;Saint-Denis;
+97411000ID0002;etage0_completude;fiche;True;completeness=74
+97411000ID0002;badge_ppr_partiel;fiche;;"exigu_raison=portion_reduite;cause=terrain_exigu"
+97411000ID0002;presence;listing_filtre;presente (mode=zero);"/filtre?source=q_v18&commune=Saint-Denis&surface±2 autour 2552;essais=[('defaut', 200), ('zero', 200)]"
+97411000ID0002;surface_terrain;listing_filtre;2552;"surface_m2(dessin)=2556;contenance_m2=2552"
+97411000ID0002;zone_plu;listing_filtre;N;zone_fam=N
+97411000ID0002;bande;listing_filtre;0;signal=faible
+97411000ID0002;sdp_residuelle;listing_filtre;0;score_labuse via liste
+97411000ID0002;cause_bande0;listing_filtre;;
+97411000ID0002;tier;listing_filtre;ecartee;
+97411000ID0002;adresse;listing_filtre;;
+97411000ID0002;commune;listing_filtre;Saint-Denis;
+97411000ID0002;etage0_completude;listing_filtre;True;completeness=74
+97411000ID0002;presence;export_md;servie (200);
+97411000ID0002;commune;export_md;Saint-Denis;export.py:34
+97411000ID0002;surface_terrain;export_md;2556;ligne « Surface » (= _build_fiche surface_m2, DESSIN)
+97411000ID0002;tier;export_md;Écartée;verdict export
+97411000ID0002;badge_ppr_partiel;export_md;;
+97411000ID0002;presence;kmz;servie (200);
+97411000ID0002;surface_terrain;kmz;2552;description=Saint-Denis — 2552 m²
+97411000ID0002;commune;kmz;Saint-Denis;app.py:2563-2599
+97411000ID0002;presence;geojson_commune;feature presente;
+97411000ID0002;surface_terrain;geojson_commune;2552;surface_m2(dessin)=2556
+97411000ID0002;zone_plu;geojson_commune;N;zone_fam=N
+97411000ID0002;tier;geojson_commune;ecartee;
+97411000ID0002;sdp_residuelle;geojson_commune;;
+97411000ID0002;adresse;geojson_commune;;
+97411000ID0002;etage0_completude;geojson_commune;True;completeness=74
+97411000ID0002;presence;api_partenaire;non testable sans cle;"cle demo bridee Cilaos (partners.py:490-496) ; vraie cle = convention (partners.py:481 _check_key)"
+97413000AC0009;presence;fiche;servie (200);
+97413000AC0009;surface_terrain;fiche;330;"source=cadastre;dessin=312;contenance=330;incertaine=False"
+97413000AC0009;zone_plu;fiche;UD;"famille=U;parts=[('UD', 1.0)]"
+97413000AC0009;bande;fiche;0;"signal=faible;nc=False"
+97413000AC0009;sdp_residuelle;fiche;0;
+97413000AC0009;cause_bande0;fiche;;
+97413000AC0009;tier;fiche;sans_signal;
+97413000AC0009;adresse;fiche;69 Rue Leconte Delisle, 97416 Saint-Leu;
+97413000AC0009;commune;fiche;Saint-Leu;
+97413000AC0009;etage0_completude;fiche;False;completeness=92
+97413000AC0009;badge_ppr_partiel;fiche;;"exigu_raison=None;cause=None"
+97413000AC0009;presence;listing_filtre;presente (mode=defaut);"/filtre?source=q_v18&commune=Saint-Leu&surface±2 autour 330;essais=[('defaut', 200)]"
+97413000AC0009;surface_terrain;listing_filtre;330;"surface_m2(dessin)=312;contenance_m2=330"
+97413000AC0009;zone_plu;listing_filtre;UD;zone_fam=U
+97413000AC0009;bande;listing_filtre;0;signal=faible
+97413000AC0009;sdp_residuelle;listing_filtre;0;score_labuse via liste
+97413000AC0009;cause_bande0;listing_filtre;;
+97413000AC0009;tier;listing_filtre;sans_signal;
+97413000AC0009;adresse;listing_filtre;;
+97413000AC0009;commune;listing_filtre;Saint-Leu;
+97413000AC0009;etage0_completude;listing_filtre;False;completeness=92
+97413000AC0009;presence;export_md;servie (200);
+97413000AC0009;commune;export_md;Saint-Leu;export.py:34
+97413000AC0009;surface_terrain;export_md;312;ligne « Surface » (= _build_fiche surface_m2, DESSIN)
+97413000AC0009;tier;export_md;Sans signal;verdict export
+97413000AC0009;badge_ppr_partiel;export_md;;
+97413000AC0009;presence;kmz;servie (200);
+97413000AC0009;surface_terrain;kmz;330;description=Saint-Leu — 330 m²
+97413000AC0009;commune;kmz;Saint-Leu;app.py:2563-2599
+97413000AC0009;presence;geojson_commune;feature presente;
+97413000AC0009;surface_terrain;geojson_commune;330;surface_m2(dessin)=312
+97413000AC0009;zone_plu;geojson_commune;UD;zone_fam=U
+97413000AC0009;tier;geojson_commune;sans_signal;
+97413000AC0009;sdp_residuelle;geojson_commune;0;
+97413000AC0009;adresse;geojson_commune;69 Rue Leconte Delisle, 97416 Saint-Leu;
+97413000AC0009;etage0_completude;geojson_commune;False;completeness=92
+97413000AC0009;presence;api_partenaire;non testable sans cle;"cle demo bridee Cilaos (partners.py:490-496) ; vraie cle = convention (partners.py:481 _check_key)"
+97413000CA0243;presence;fiche;servie (200);
+97413000CA0243;surface_terrain;fiche;12550;"source=cadastre;dessin=12697;contenance=12550;incertaine=False"
+97413000CA0243;zone_plu;fiche;AUE+UE;"famille=AU;parts=[('AUE', 0.9076), ('UE', 0.0887)]"
+97413000CA0243;bande;fiche;A;"signal=faible;nc=False"
+97413000CA0243;sdp_residuelle;fiche;9977;
+97413000CA0243;cause_bande0;fiche;;
+97413000CA0243;tier;fiche;sans_signal;
+97413000CA0243;adresse;fiche;;
+97413000CA0243;commune;fiche;Saint-Leu;
+97413000CA0243;etage0_completude;fiche;False;completeness=92
+97413000CA0243;badge_ppr_partiel;fiche;;"exigu_raison=None;cause=None"
+97413000CA0243;presence;listing_filtre;presente (mode=defaut);"/filtre?source=q_v18&commune=Saint-Leu&surface±2 autour 12550;essais=[('defaut', 200)]"
+97413000CA0243;surface_terrain;listing_filtre;12550;"surface_m2(dessin)=12697;contenance_m2=12550"
+97413000CA0243;zone_plu;listing_filtre;AUE;zone_fam=AU
+97413000CA0243;bande;listing_filtre;A;signal=faible
+97413000CA0243;sdp_residuelle;listing_filtre;9977;score_labuse via liste
+97413000CA0243;cause_bande0;listing_filtre;;
+97413000CA0243;tier;listing_filtre;sans_signal;
+97413000CA0243;adresse;listing_filtre;;
+97413000CA0243;commune;listing_filtre;Saint-Leu;
+97413000CA0243;etage0_completude;listing_filtre;False;completeness=92
+97413000CA0243;presence;export_md;servie (200);
+97413000CA0243;commune;export_md;Saint-Leu;export.py:34
+97413000CA0243;surface_terrain;export_md;12697;ligne « Surface » (= _build_fiche surface_m2, DESSIN)
+97413000CA0243;tier;export_md;Sans signal;verdict export
+97413000CA0243;badge_ppr_partiel;export_md;;
+97413000CA0243;presence;kmz;servie (200);
+97413000CA0243;surface_terrain;kmz;12550;description=Saint-Leu — 12550 m²
+97413000CA0243;commune;kmz;Saint-Leu;app.py:2563-2599
+97413000CA0243;presence;geojson_commune;feature presente;
+97413000CA0243;surface_terrain;geojson_commune;12550;surface_m2(dessin)=12697
+97413000CA0243;zone_plu;geojson_commune;AUE;zone_fam=AU
+97413000CA0243;tier;geojson_commune;sans_signal;
+97413000CA0243;sdp_residuelle;geojson_commune;9977;
+97413000CA0243;adresse;geojson_commune;;
+97413000CA0243;etage0_completude;geojson_commune;False;completeness=92
+97413000CA0243;presence;api_partenaire;non testable sans cle;"cle demo bridee Cilaos (partners.py:490-496) ; vraie cle = convention (partners.py:481 _check_key)"
+97413000CX0730;presence;fiche;servie (200);
+97413000CX0730;surface_terrain;fiche;257;"source=cadastre;dessin=246;contenance=257;incertaine=False"
+97413000CX0730;zone_plu;fiche;UC;"famille=U;parts=[('UC', 1.0)]"
+97413000CX0730;bande;fiche;D;"signal=faible;nc=False"
+97413000CX0730;sdp_residuelle;fiche;17;
+97413000CX0730;cause_bande0;fiche;;
+97413000CX0730;tier;fiche;sans_signal;
+97413000CX0730;adresse;fiche;;
+97413000CX0730;commune;fiche;Saint-Leu;
+97413000CX0730;etage0_completude;fiche;False;completeness=92
+97413000CX0730;badge_ppr_partiel;fiche;;"exigu_raison=None;cause=None"
+97413000CX0730;presence;listing_filtre;presente (mode=defaut);"/filtre?source=q_v18&commune=Saint-Leu&surface±2 autour 257;essais=[('defaut', 200)]"
+97413000CX0730;surface_terrain;listing_filtre;257;"surface_m2(dessin)=246;contenance_m2=257"
+97413000CX0730;zone_plu;listing_filtre;UC;zone_fam=U
+97413000CX0730;bande;listing_filtre;D;signal=faible
+97413000CX0730;sdp_residuelle;listing_filtre;17;score_labuse via liste
+97413000CX0730;cause_bande0;listing_filtre;;
+97413000CX0730;tier;listing_filtre;sans_signal;
+97413000CX0730;adresse;listing_filtre;;
+97413000CX0730;commune;listing_filtre;Saint-Leu;
+97413000CX0730;etage0_completude;listing_filtre;False;completeness=92
+97413000CX0730;presence;export_md;servie (200);
+97413000CX0730;commune;export_md;Saint-Leu;export.py:34
+97413000CX0730;surface_terrain;export_md;246;ligne « Surface » (= _build_fiche surface_m2, DESSIN)
+97413000CX0730;tier;export_md;Sans signal;verdict export
+97413000CX0730;badge_ppr_partiel;export_md;;
+97413000CX0730;presence;kmz;servie (200);
+97413000CX0730;surface_terrain;kmz;257;description=Saint-Leu — 257 m²
+97413000CX0730;commune;kmz;Saint-Leu;app.py:2563-2599
+97413000CX0730;presence;geojson_commune;feature presente;
+97413000CX0730;surface_terrain;geojson_commune;257;surface_m2(dessin)=246
+97413000CX0730;zone_plu;geojson_commune;UC;zone_fam=U
+97413000CX0730;tier;geojson_commune;sans_signal;
+97413000CX0730;sdp_residuelle;geojson_commune;17;
+97413000CX0730;adresse;geojson_commune;;
+97413000CX0730;etage0_completude;geojson_commune;False;completeness=92
+97413000CX0730;presence;api_partenaire;non testable sans cle;"cle demo bridee Cilaos (partners.py:490-496) ; vraie cle = convention (partners.py:481 _check_key)"
+97414000CH1970;presence;fiche;servie (200);
+97414000CH1970;surface_terrain;fiche;515;"source=cadastre;dessin=507;contenance=515;incertaine=False"
+97414000CH1970;zone_plu;fiche;UD1;"famille=U;parts=[('UD1', 1.0)]"
+97414000CH1970;bande;fiche;D;"signal=faible;nc=False"
+97414000CH1970;sdp_residuelle;fiche;185;
+97414000CH1970;cause_bande0;fiche;;
+97414000CH1970;tier;fiche;sans_signal;
+97414000CH1970;adresse;fiche;67 Rue de la Pépinière, 97421 Saint-Louis;
+97414000CH1970;commune;fiche;Saint-Louis;
+97414000CH1970;etage0_completude;fiche;False;completeness=92
+97414000CH1970;badge_ppr_partiel;fiche;;"exigu_raison=None;cause=None"
+97414000CH1970;presence;listing_filtre;presente (mode=defaut);"/filtre?source=q_v18&commune=Saint-Louis&surface±2 autour 515;essais=[('defaut', 200)]"
+97414000CH1970;surface_terrain;listing_filtre;515;"surface_m2(dessin)=507;contenance_m2=515"
+97414000CH1970;zone_plu;listing_filtre;UD1;zone_fam=U
+97414000CH1970;bande;listing_filtre;D;signal=faible
+97414000CH1970;sdp_residuelle;listing_filtre;185;score_labuse via liste
+97414000CH1970;cause_bande0;listing_filtre;;
+97414000CH1970;tier;listing_filtre;sans_signal;
+97414000CH1970;adresse;listing_filtre;;
+97414000CH1970;commune;listing_filtre;Saint-Louis;
+97414000CH1970;etage0_completude;listing_filtre;False;completeness=92
+97414000CH1970;presence;export_md;servie (200);
+97414000CH1970;commune;export_md;Saint-Louis;export.py:34
+97414000CH1970;surface_terrain;export_md;507;ligne « Surface » (= _build_fiche surface_m2, DESSIN)
+97414000CH1970;tier;export_md;Sans signal;verdict export
+97414000CH1970;badge_ppr_partiel;export_md;;
+97414000CH1970;presence;kmz;servie (200);
+97414000CH1970;surface_terrain;kmz;515;description=Saint-Louis — 515 m²
+97414000CH1970;commune;kmz;Saint-Louis;app.py:2563-2599
+97414000CH1970;presence;geojson_commune;feature presente;
+97414000CH1970;surface_terrain;geojson_commune;515;surface_m2(dessin)=507
+97414000CH1970;zone_plu;geojson_commune;UD1;zone_fam=U
+97414000CH1970;tier;geojson_commune;sans_signal;
+97414000CH1970;sdp_residuelle;geojson_commune;185;
+97414000CH1970;adresse;geojson_commune;67 Rue de la Pépinière, 97421 Saint-Louis;
+97414000CH1970;etage0_completude;geojson_commune;False;completeness=92
+97414000CH1970;presence;api_partenaire;non testable sans cle;"cle demo bridee Cilaos (partners.py:490-496) ; vraie cle = convention (partners.py:481 _check_key)"
+97414000CV0938;presence;fiche;servie (200);
+97414000CV0938;surface_terrain;fiche;197;"source=cadastre;dessin=197;contenance=197;incertaine=False"
+97414000CV0938;zone_plu;fiche;1AUd;"famille=AU;parts=[('1AUd', 1.0)]"
+97414000CV0938;bande;fiche;0;"signal=faible;nc=False"
+97414000CV0938;sdp_residuelle;fiche;0;
+97414000CV0938;cause_bande0;fiche;;
+97414000CV0938;tier;fiche;sans_signal;
+97414000CV0938;adresse;fiche;;
+97414000CV0938;commune;fiche;Saint-Louis;
+97414000CV0938;etage0_completude;fiche;False;completeness=92
+97414000CV0938;badge_ppr_partiel;fiche;;"exigu_raison=None;cause=None"
+97414000CV0938;presence;listing_filtre;presente (mode=defaut);"/filtre?source=q_v18&commune=Saint-Louis&surface±2 autour 197;essais=[('defaut', 200)]"
+97414000CV0938;surface_terrain;listing_filtre;197;"surface_m2(dessin)=197;contenance_m2=197"
+97414000CV0938;zone_plu;listing_filtre;1AUd;zone_fam=AU
+97414000CV0938;bande;listing_filtre;0;signal=faible
+97414000CV0938;sdp_residuelle;listing_filtre;0;score_labuse via liste
+97414000CV0938;cause_bande0;listing_filtre;;
+97414000CV0938;tier;listing_filtre;sans_signal;
+97414000CV0938;adresse;listing_filtre;;
+97414000CV0938;commune;listing_filtre;Saint-Louis;
+97414000CV0938;etage0_completude;listing_filtre;False;completeness=92
+97414000CV0938;presence;export_md;servie (200);
+97414000CV0938;commune;export_md;Saint-Louis;export.py:34
+97414000CV0938;surface_terrain;export_md;197;ligne « Surface » (= _build_fiche surface_m2, DESSIN)
+97414000CV0938;tier;export_md;Sans signal;verdict export
+97414000CV0938;badge_ppr_partiel;export_md;;
+97414000CV0938;presence;kmz;servie (200);
+97414000CV0938;surface_terrain;kmz;197;description=Saint-Louis — 197 m²
+97414000CV0938;commune;kmz;Saint-Louis;app.py:2563-2599
+97414000CV0938;presence;geojson_commune;feature presente;
+97414000CV0938;surface_terrain;geojson_commune;197;surface_m2(dessin)=197
+97414000CV0938;zone_plu;geojson_commune;1AUd;zone_fam=AU
+97414000CV0938;tier;geojson_commune;sans_signal;
+97414000CV0938;sdp_residuelle;geojson_commune;0;
+97414000CV0938;adresse;geojson_commune;;
+97414000CV0938;etage0_completude;geojson_commune;False;completeness=92
+97414000CV0938;presence;api_partenaire;non testable sans cle;"cle demo bridee Cilaos (partners.py:490-496) ; vraie cle = convention (partners.py:481 _check_key)"
+97415000AB0001;presence;fiche;servie (200);
+97415000AB0001;surface_terrain;fiche;116225;"source=cadastre;dessin=115449;contenance=116225;incertaine=False"
+97415000AB0001;zone_plu;fiche;Nerl+N;"famille=N;parts=[('Nerl', 0.6098), ('N', 0.3902)]"
+97415000AB0001;bande;fiche;NC;"signal=faible;nc=True"
+97415000AB0001;sdp_residuelle;fiche;;
+97415000AB0001;cause_bande0;fiche;zone non résolue;
+97415000AB0001;tier;fiche;ecartee;
+97415000AB0001;adresse;fiche;;
+97415000AB0001;commune;fiche;Saint-Paul;
+97415000AB0001;etage0_completude;fiche;True;completeness=74
+97415000AB0001;badge_ppr_partiel;fiche;;"exigu_raison=None;cause=zone_non_resolue:Nerl"
+97415000AB0001;presence;listing_filtre;presente (mode=nc);"/filtre?source=q_v18&commune=Saint-Paul&surface±2 autour 116225;essais=[('defaut', 200), ('zero', 200), ('nc', 200)]"
+97415000AB0001;surface_terrain;listing_filtre;116225;"surface_m2(dessin)=115449;contenance_m2=116225"
+97415000AB0001;zone_plu;listing_filtre;Nerl;zone_fam=N
+97415000AB0001;bande;listing_filtre;NC;signal=faible
+97415000AB0001;sdp_residuelle;listing_filtre;;score_labuse via liste
+97415000AB0001;cause_bande0;listing_filtre;zone non résolue;
+97415000AB0001;tier;listing_filtre;ecartee;
+97415000AB0001;adresse;listing_filtre;;
+97415000AB0001;commune;listing_filtre;Saint-Paul;
+97415000AB0001;etage0_completude;listing_filtre;True;completeness=74
+97415000AB0001;presence;export_md;servie (200);
+97415000AB0001;commune;export_md;Saint-Paul;export.py:34
+97415000AB0001;surface_terrain;export_md;115449;ligne « Surface » (= _build_fiche surface_m2, DESSIN)
+97415000AB0001;tier;export_md;Écartée;verdict export
+97415000AB0001;badge_ppr_partiel;export_md;;
+97415000AB0001;presence;kmz;servie (200);
+97415000AB0001;surface_terrain;kmz;116225;description=Saint-Paul — 116225 m²
+97415000AB0001;commune;kmz;Saint-Paul;app.py:2563-2599
+97415000AB0001;presence;geojson_commune;feature presente;
+97415000AB0001;surface_terrain;geojson_commune;116225;surface_m2(dessin)=115449
+97415000AB0001;zone_plu;geojson_commune;Nerl;zone_fam=N
+97415000AB0001;tier;geojson_commune;ecartee;
+97415000AB0001;sdp_residuelle;geojson_commune;;
+97415000AB0001;adresse;geojson_commune;;
+97415000AB0001;etage0_completude;geojson_commune;True;completeness=74
+97415000AB0001;presence;api_partenaire;non testable sans cle;"cle demo bridee Cilaos (partners.py:490-496) ; vraie cle = convention (partners.py:481 _check_key)"
+97415000AB0899;presence;fiche;servie (200);
+97415000AB0899;surface_terrain;fiche;378320;"source=cadastre;dessin=380494;contenance=378320;incertaine=False"
+97415000AB0899;zone_plu;fiche;AU1e+N+Nerl;"famille=AU;parts=[('AU1e', 0.6048), ('N', 0.3585), ('Nerl', 0.0366)]"
+97415000AB0899;bande;fiche;0;"signal=faible;nc=False"
+97415000AB0899;sdp_residuelle;fiche;0;
+97415000AB0899;cause_bande0;fiche;;
+97415000AB0899;tier;fiche;ecartee;
+97415000AB0899;adresse;fiche;1 Rue Henri Cornu, 97460 Saint-Paul;
+97415000AB0899;commune;fiche;Saint-Paul;
+97415000AB0899;etage0_completude;fiche;True;completeness=74
+97415000AB0899;badge_ppr_partiel;fiche;;"exigu_raison=None;cause=habitat_interdit:AU1e"
+97415000AB0899;presence;listing_filtre;presente (mode=zero);"/filtre?source=q_v18&commune=Saint-Paul&surface±2 autour 378320;essais=[('defaut', 200), ('zero', 200)]"
+97415000AB0899;surface_terrain;listing_filtre;378320;"surface_m2(dessin)=380494;contenance_m2=378320"
+97415000AB0899;zone_plu;listing_filtre;AU1e;zone_fam=AU
+97415000AB0899;bande;listing_filtre;0;signal=faible
+97415000AB0899;sdp_residuelle;listing_filtre;0;score_labuse via liste
+97415000AB0899;cause_bande0;listing_filtre;;
+97415000AB0899;tier;listing_filtre;ecartee;
+97415000AB0899;adresse;listing_filtre;;
+97415000AB0899;commune;listing_filtre;Saint-Paul;
+97415000AB0899;etage0_completude;listing_filtre;True;completeness=74
+97415000AB0899;presence;export_md;servie (200);
+97415000AB0899;commune;export_md;Saint-Paul;export.py:34
+97415000AB0899;surface_terrain;export_md;380494;ligne « Surface » (= _build_fiche surface_m2, DESSIN)
+97415000AB0899;tier;export_md;Écartée;verdict export
+97415000AB0899;badge_ppr_partiel;export_md;;
+97415000AB0899;presence;kmz;servie (200);
+97415000AB0899;surface_terrain;kmz;378320;description=Saint-Paul — 378320 m²
+97415000AB0899;commune;kmz;Saint-Paul;app.py:2563-2599
+97415000AB0899;presence;geojson_commune;feature presente;
+97415000AB0899;surface_terrain;geojson_commune;378320;surface_m2(dessin)=380494
+97415000AB0899;zone_plu;geojson_commune;AU1e;zone_fam=AU
+97415000AB0899;tier;geojson_commune;ecartee;
+97415000AB0899;sdp_residuelle;geojson_commune;;
+97415000AB0899;adresse;geojson_commune;1 Rue Henri Cornu, 97460 Saint-Paul;
+97415000AB0899;etage0_completude;geojson_commune;True;completeness=74
+97415000AB0899;presence;api_partenaire;non testable sans cle;"cle demo bridee Cilaos (partners.py:490-496) ; vraie cle = convention (partners.py:481 _check_key)"
+97415000BZ0005;presence;fiche;servie (200);
+97415000BZ0005;surface_terrain;fiche;19500;"source=cadastre;dessin=19371;contenance=19500;incertaine=False"
+97415000BZ0005;zone_plu;fiche;A+N+Usdu;"famille=A;parts=[('A', 0.7004), ('N', 0.2758), ('Usdu', 0.0238)]"
+97415000BZ0005;bande;fiche;0;"signal=faible;nc=False"
+97415000BZ0005;sdp_residuelle;fiche;0;
+97415000BZ0005;cause_bande0;fiche;;
+97415000BZ0005;tier;fiche;ecartee;
+97415000BZ0005;adresse;fiche;205 Chemin Lebot, 97411 Saint-Paul;
+97415000BZ0005;commune;fiche;Saint-Paul;
+97415000BZ0005;etage0_completude;fiche;True;completeness=74
+97415000BZ0005;badge_ppr_partiel;fiche;;"exigu_raison=portion_reduite;cause=terrain_exigu"
+97415000BZ0005;presence;listing_filtre;presente (mode=zero);"/filtre?source=q_v18&commune=Saint-Paul&surface±2 autour 19500;essais=[('defaut', 200), ('zero', 200)]"
+97415000BZ0005;surface_terrain;listing_filtre;19500;"surface_m2(dessin)=19371;contenance_m2=19500"
+97415000BZ0005;zone_plu;listing_filtre;A;zone_fam=A
+97415000BZ0005;bande;listing_filtre;0;signal=faible
+97415000BZ0005;sdp_residuelle;listing_filtre;0;score_labuse via liste
+97415000BZ0005;cause_bande0;listing_filtre;;
+97415000BZ0005;tier;listing_filtre;ecartee;
+97415000BZ0005;adresse;listing_filtre;;
+97415000BZ0005;commune;listing_filtre;Saint-Paul;
+97415000BZ0005;etage0_completude;listing_filtre;True;completeness=74
+97415000BZ0005;presence;export_md;servie (200);
+97415000BZ0005;commune;export_md;Saint-Paul;export.py:34
+97415000BZ0005;surface_terrain;export_md;19371;ligne « Surface » (= _build_fiche surface_m2, DESSIN)
+97415000BZ0005;tier;export_md;Écartée;verdict export
+97415000BZ0005;badge_ppr_partiel;export_md;;
+97415000BZ0005;presence;kmz;servie (200);
+97415000BZ0005;surface_terrain;kmz;19500;description=Saint-Paul — 19500 m²
+97415000BZ0005;commune;kmz;Saint-Paul;app.py:2563-2599
+97415000BZ0005;presence;geojson_commune;feature presente;
+97415000BZ0005;surface_terrain;geojson_commune;19500;surface_m2(dessin)=19371
+97415000BZ0005;zone_plu;geojson_commune;A;zone_fam=A
+97415000BZ0005;tier;geojson_commune;ecartee;
+97415000BZ0005;sdp_residuelle;geojson_commune;;
+97415000BZ0005;adresse;geojson_commune;205 Chemin Lebot, 97411 Saint-Paul;
+97415000BZ0005;etage0_completude;geojson_commune;True;completeness=74
+97415000BZ0005;presence;api_partenaire;non testable sans cle;"cle demo bridee Cilaos (partners.py:490-496) ; vraie cle = convention (partners.py:481 _check_key)"
+97415000BZ0007;presence;fiche;servie (200);
+97415000BZ0007;surface_terrain;fiche;5600;"source=cadastre;dessin=5519;contenance=5600;incertaine=False"
+97415000BZ0007;zone_plu;fiche;Usdu+N;"famille=U;parts=[('Usdu', 0.7316), ('N', 0.2684)]"
+97415000BZ0007;bande;fiche;0;"signal=faible;nc=False"
+97415000BZ0007;sdp_residuelle;fiche;0;
+97415000BZ0007;cause_bande0;fiche;;
+97415000BZ0007;tier;fiche;ecartee;
+97415000BZ0007;adresse;fiche;241 Chemin Lebot, 97411 Saint-Paul;
+97415000BZ0007;commune;fiche;Saint-Paul;
+97415000BZ0007;etage0_completude;fiche;True;completeness=74
+97415000BZ0007;badge_ppr_partiel;fiche;;"exigu_raison=None;cause=None"
+97415000BZ0007;presence;listing_filtre;presente (mode=zero);"/filtre?source=q_v18&commune=Saint-Paul&surface±2 autour 5600;essais=[('defaut', 200), ('zero', 200)]"
+97415000BZ0007;surface_terrain;listing_filtre;5600;"surface_m2(dessin)=5519;contenance_m2=5600"
+97415000BZ0007;zone_plu;listing_filtre;Usdu;zone_fam=U
+97415000BZ0007;bande;listing_filtre;0;signal=faible
+97415000BZ0007;sdp_residuelle;listing_filtre;0;score_labuse via liste
+97415000BZ0007;cause_bande0;listing_filtre;;
+97415000BZ0007;tier;listing_filtre;ecartee;
+97415000BZ0007;adresse;listing_filtre;;
+97415000BZ0007;commune;listing_filtre;Saint-Paul;
+97415000BZ0007;etage0_completude;listing_filtre;True;completeness=74
+97415000BZ0007;presence;export_md;servie (200);
+97415000BZ0007;commune;export_md;Saint-Paul;export.py:34
+97415000BZ0007;surface_terrain;export_md;5519;ligne « Surface » (= _build_fiche surface_m2, DESSIN)
+97415000BZ0007;tier;export_md;Écartée;verdict export
+97415000BZ0007;badge_ppr_partiel;export_md;;
+97415000BZ0007;presence;kmz;servie (200);
+97415000BZ0007;surface_terrain;kmz;5600;description=Saint-Paul — 5600 m²
+97415000BZ0007;commune;kmz;Saint-Paul;app.py:2563-2599
+97415000BZ0007;presence;geojson_commune;feature presente;
+97415000BZ0007;surface_terrain;geojson_commune;5600;surface_m2(dessin)=5519
+97415000BZ0007;zone_plu;geojson_commune;Usdu;zone_fam=U
+97415000BZ0007;tier;geojson_commune;ecartee;
+97415000BZ0007;sdp_residuelle;geojson_commune;0;
+97415000BZ0007;adresse;geojson_commune;241 Chemin Lebot, 97411 Saint-Paul;
+97415000BZ0007;etage0_completude;geojson_commune;True;completeness=74
+97415000BZ0007;presence;api_partenaire;non testable sans cle;"cle demo bridee Cilaos (partners.py:490-496) ; vraie cle = convention (partners.py:481 _check_key)"
+97415000CW0658;presence;fiche;servie (200);
+97415000CW0658;surface_terrain;fiche;25633;"source=cadastre;dessin=27156;contenance=25633;incertaine=False"
+97415000CW0658;zone_plu;fiche;AU3a+AU3h+N;"famille=AU;parts=[('AU3a', 0.6472), ('AU3h', 0.1897), ('N', 0.1542)]"
+97415000CW0658;bande;fiche;A;"signal=faible;nc=False"
+97415000CW0658;sdp_residuelle;fiche;38619;
+97415000CW0658;cause_bande0;fiche;;
+97415000CW0658;tier;fiche;sans_signal;
+97415000CW0658;adresse;fiche;;
+97415000CW0658;commune;fiche;Saint-Paul;
+97415000CW0658;etage0_completude;fiche;False;completeness=92
+97415000CW0658;badge_ppr_partiel;fiche;;"exigu_raison=None;cause=None"
+97415000CW0658;presence;listing_filtre;presente (mode=defaut);"/filtre?source=q_v18&commune=Saint-Paul&surface±2 autour 25633;essais=[('defaut', 200)]"
+97415000CW0658;surface_terrain;listing_filtre;25633;"surface_m2(dessin)=27156;contenance_m2=25633"
+97415000CW0658;zone_plu;listing_filtre;AU3a;zone_fam=AU
+97415000CW0658;bande;listing_filtre;A;signal=faible
+97415000CW0658;sdp_residuelle;listing_filtre;38619;score_labuse via liste
+97415000CW0658;cause_bande0;listing_filtre;;
+97415000CW0658;tier;listing_filtre;sans_signal;
+97415000CW0658;adresse;listing_filtre;;
+97415000CW0658;commune;listing_filtre;Saint-Paul;
+97415000CW0658;etage0_completude;listing_filtre;False;completeness=92
+97415000CW0658;presence;export_md;servie (200);
+97415000CW0658;commune;export_md;Saint-Paul;export.py:34
+97415000CW0658;surface_terrain;export_md;27156;ligne « Surface » (= _build_fiche surface_m2, DESSIN)
+97415000CW0658;tier;export_md;Sans signal;verdict export
+97415000CW0658;badge_ppr_partiel;export_md;;
+97415000CW0658;presence;kmz;servie (200);
+97415000CW0658;surface_terrain;kmz;25633;description=Saint-Paul — 25633 m²
+97415000CW0658;commune;kmz;Saint-Paul;app.py:2563-2599
+97415000CW0658;presence;geojson_commune;feature presente;
+97415000CW0658;surface_terrain;geojson_commune;25633;surface_m2(dessin)=27156
+97415000CW0658;zone_plu;geojson_commune;AU3a;zone_fam=AU
+97415000CW0658;tier;geojson_commune;sans_signal;
+97415000CW0658;sdp_residuelle;geojson_commune;38619;
+97415000CW0658;adresse;geojson_commune;;
+97415000CW0658;etage0_completude;geojson_commune;False;completeness=92
+97415000CW0658;presence;api_partenaire;non testable sans cle;"cle demo bridee Cilaos (partners.py:490-496) ; vraie cle = convention (partners.py:481 _check_key)"
+97415000CW1073;presence;fiche;servie (200);
+97415000CW1073;surface_terrain;fiche;5509;"source=cadastre;dessin=5469;contenance=5509;incertaine=False"
+97415000CW1073;zone_plu;fiche;AU3a;"famille=AU;parts=[('AU3a', 0.9932)]"
+97415000CW1073;bande;fiche;A;"signal=faible;nc=False"
+97415000CW1073;sdp_residuelle;fiche;9847;
+97415000CW1073;cause_bande0;fiche;;
+97415000CW1073;tier;fiche;sans_signal;
+97415000CW1073;adresse;fiche;;
+97415000CW1073;commune;fiche;Saint-Paul;
+97415000CW1073;etage0_completude;fiche;False;completeness=92
+97415000CW1073;badge_ppr_partiel;fiche;;"exigu_raison=None;cause=None"
+97415000CW1073;presence;listing_filtre;presente (mode=defaut);"/filtre?source=q_v18&commune=Saint-Paul&surface±2 autour 5509;essais=[('defaut', 200)]"
+97415000CW1073;surface_terrain;listing_filtre;5509;"surface_m2(dessin)=5469;contenance_m2=5509"
+97415000CW1073;zone_plu;listing_filtre;AU3a;zone_fam=AU
+97415000CW1073;bande;listing_filtre;A;signal=faible
+97415000CW1073;sdp_residuelle;listing_filtre;9847;score_labuse via liste
+97415000CW1073;cause_bande0;listing_filtre;;
+97415000CW1073;tier;listing_filtre;sans_signal;
+97415000CW1073;adresse;listing_filtre;;
+97415000CW1073;commune;listing_filtre;Saint-Paul;
+97415000CW1073;etage0_completude;listing_filtre;False;completeness=92
+97415000CW1073;presence;export_md;servie (200);
+97415000CW1073;commune;export_md;Saint-Paul;export.py:34
+97415000CW1073;surface_terrain;export_md;5469;ligne « Surface » (= _build_fiche surface_m2, DESSIN)
+97415000CW1073;tier;export_md;Sans signal;verdict export
+97415000CW1073;badge_ppr_partiel;export_md;;
+97415000CW1073;presence;kmz;servie (200);
+97415000CW1073;surface_terrain;kmz;5509;description=Saint-Paul — 5509 m²
+97415000CW1073;commune;kmz;Saint-Paul;app.py:2563-2599
+97415000CW1073;presence;geojson_commune;feature presente;
+97415000CW1073;surface_terrain;geojson_commune;5509;surface_m2(dessin)=5469
+97415000CW1073;zone_plu;geojson_commune;AU3a;zone_fam=AU
+97415000CW1073;tier;geojson_commune;sans_signal;
+97415000CW1073;sdp_residuelle;geojson_commune;9847;
+97415000CW1073;adresse;geojson_commune;;
+97415000CW1073;etage0_completude;geojson_commune;False;completeness=92
+97415000CW1073;presence;api_partenaire;non testable sans cle;"cle demo bridee Cilaos (partners.py:490-496) ; vraie cle = convention (partners.py:481 _check_key)"
+97416000DV0285;presence;fiche;servie (200);
+97416000DV0285;surface_terrain;fiche;1;"source=cadastre;dessin=117505;contenance=1;incertaine=True"
+97416000DV0285;zone_plu;fiche;Ue+N;"famille=U;parts=[('Ue', 0.6553), ('N', 0.3447)]"
+97416000DV0285;bande;fiche;NC;"signal=faible;nc=True"
+97416000DV0285;sdp_residuelle;fiche;;
+97416000DV0285;cause_bande0;fiche;analyse incomplète;
+97416000DV0285;tier;fiche;sans_signal;
+97416000DV0285;adresse;fiche;1 h Place Napoleon Hoarau, 97410 Saint-Pierre;
+97416000DV0285;commune;fiche;Saint-Pierre;
+97416000DV0285;etage0_completude;fiche;False;completeness=92
+97416000DV0285;badge_ppr_partiel;fiche;;"exigu_raison=None;cause=surface_incertaine"
+97416000DV0285;presence;listing_filtre;presente (mode=defaut);"/filtre?source=q_v18&commune=Saint-Pierre&surface±2 autour 1;essais=[('defaut', 200)]"
+97416000DV0285;surface_terrain;listing_filtre;1;"surface_m2(dessin)=117505;contenance_m2=1"
+97416000DV0285;zone_plu;listing_filtre;Ue;zone_fam=U
+97416000DV0285;bande;listing_filtre;NC;signal=faible
+97416000DV0285;sdp_residuelle;listing_filtre;;score_labuse via liste
+97416000DV0285;cause_bande0;listing_filtre;analyse incomplète;
+97416000DV0285;tier;listing_filtre;sans_signal;
+97416000DV0285;adresse;listing_filtre;;
+97416000DV0285;commune;listing_filtre;Saint-Pierre;
+97416000DV0285;etage0_completude;listing_filtre;False;completeness=92
+97416000DV0285;presence;export_md;servie (200);
+97416000DV0285;commune;export_md;Saint-Pierre;export.py:34
+97416000DV0285;surface_terrain;export_md;117505;ligne « Surface » (= _build_fiche surface_m2, DESSIN)
+97416000DV0285;tier;export_md;Sans signal;verdict export
+97416000DV0285;badge_ppr_partiel;export_md;;
+97416000DV0285;presence;kmz;servie (200);
+97416000DV0285;surface_terrain;kmz;1;description=Saint-Pierre — 1 m²
+97416000DV0285;commune;kmz;Saint-Pierre;app.py:2563-2599
+97416000DV0285;presence;geojson_commune;feature presente;
+97416000DV0285;surface_terrain;geojson_commune;1;surface_m2(dessin)=117505
+97416000DV0285;zone_plu;geojson_commune;Ue;zone_fam=U
+97416000DV0285;tier;geojson_commune;sans_signal;
+97416000DV0285;sdp_residuelle;geojson_commune;;
+97416000DV0285;adresse;geojson_commune;1 h Place Napoleon Hoarau, 97410 Saint-Pierre;
+97416000DV0285;etage0_completude;geojson_commune;False;completeness=92
+97416000DV0285;presence;api_partenaire;non testable sans cle;"cle demo bridee Cilaos (partners.py:490-496) ; vraie cle = convention (partners.py:481 _check_key)"
+97416000DX8001;presence;fiche;servie (200);
+97416000DX8001;surface_terrain;fiche;49;"source=plan;dessin=49;contenance=None;incertaine=False"
+97416000DX8001;zone_plu;fiche;Ud;"famille=U;parts=[('Ud', 1.0)]"
+97416000DX8001;bande;fiche;0;"signal=faible;nc=False"
+97416000DX8001;sdp_residuelle;fiche;0;
+97416000DX8001;cause_bande0;fiche;;
+97416000DX8001;tier;fiche;ecartee;
+97416000DX8001;adresse;fiche;;
+97416000DX8001;commune;fiche;Saint-Pierre;
+97416000DX8001;etage0_completude;fiche;True;completeness=74
+97416000DX8001;badge_ppr_partiel;fiche;;"exigu_raison=reculs;cause=terrain_exigu"
+97416000DX8001;presence;listing_filtre;presente (mode=zero);"/filtre?source=q_v18&commune=Saint-Pierre&surface±2 autour 49;essais=[('defaut', 200), ('zero', 200)]"
+97416000DX8001;surface_terrain;listing_filtre;49;"surface_m2(dessin)=49;contenance_m2=None"
+97416000DX8001;zone_plu;listing_filtre;Ud;zone_fam=U
+97416000DX8001;bande;listing_filtre;0;signal=faible
+97416000DX8001;sdp_residuelle;listing_filtre;0;score_labuse via liste
+97416000DX8001;cause_bande0;listing_filtre;;
+97416000DX8001;tier;listing_filtre;ecartee;
+97416000DX8001;adresse;listing_filtre;;
+97416000DX8001;commune;listing_filtre;Saint-Pierre;
+97416000DX8001;etage0_completude;listing_filtre;True;completeness=74
+97416000DX8001;presence;export_md;servie (200);
+97416000DX8001;commune;export_md;Saint-Pierre;export.py:34
+97416000DX8001;surface_terrain;export_md;49;ligne « Surface » (= _build_fiche surface_m2, DESSIN)
+97416000DX8001;tier;export_md;Écartée;verdict export
+97416000DX8001;badge_ppr_partiel;export_md;;
+97416000DX8001;presence;kmz;servie (200);
+97416000DX8001;surface_terrain;kmz;49;description=Saint-Pierre — 49 m²
+97416000DX8001;commune;kmz;Saint-Pierre;app.py:2563-2599
+97416000DX8001;presence;geojson_commune;feature presente;
+97416000DX8001;surface_terrain;geojson_commune;49;surface_m2(dessin)=49
+97416000DX8001;zone_plu;geojson_commune;Ud;zone_fam=U
+97416000DX8001;tier;geojson_commune;ecartee;
+97416000DX8001;sdp_residuelle;geojson_commune;;
+97416000DX8001;adresse;geojson_commune;;
+97416000DX8001;etage0_completude;geojson_commune;True;completeness=74
+97416000DX8001;presence;api_partenaire;non testable sans cle;"cle demo bridee Cilaos (partners.py:490-496) ; vraie cle = convention (partners.py:481 _check_key)"
+97416000ES2238;presence;fiche;servie (200);
+97416000ES2238;surface_terrain;fiche;291;"source=cadastre;dessin=280;contenance=291;incertaine=False"
+97416000ES2238;zone_plu;fiche;Ug;"famille=U;parts=[('Ug', 1.0)]"
+97416000ES2238;bande;fiche;D;"signal=faible;nc=False"
+97416000ES2238;sdp_residuelle;fiche;3;
+97416000ES2238;cause_bande0;fiche;;
+97416000ES2238;tier;fiche;sans_signal;
+97416000ES2238;adresse;fiche;18 ter Avenue du Général de Gaulle Rn2, 97410 Saint-Pierre;
+97416000ES2238;commune;fiche;Saint-Pierre;
+97416000ES2238;etage0_completude;fiche;False;completeness=92
+97416000ES2238;badge_ppr_partiel;fiche;;"exigu_raison=None;cause=None"
+97416000ES2238;presence;export_md;servie (200);
+97416000ES2238;commune;export_md;Saint-Pierre;export.py:34
+97416000ES2238;surface_terrain;export_md;280;ligne « Surface » (= _build_fiche surface_m2, DESSIN)
+97416000ES2238;tier;export_md;Sans signal;verdict export
+97416000ES2238;badge_ppr_partiel;export_md;;
+97416000ES2238;presence;kmz;servie (200);
+97416000ES2238;surface_terrain;kmz;291;description=Saint-Pierre — 291 m²
+97416000ES2238;commune;kmz;Saint-Pierre;app.py:2563-2599
+97416000ES2238;presence;geojson_commune;feature presente;
+97416000ES2238;surface_terrain;geojson_commune;291;surface_m2(dessin)=280
+97416000ES2238;zone_plu;geojson_commune;Ug;zone_fam=U
+97416000ES2238;tier;geojson_commune;sans_signal;
+97416000ES2238;sdp_residuelle;geojson_commune;3;
+97416000ES2238;adresse;geojson_commune;18 ter Avenue du Général de Gaulle Rn2, 97410 Saint-Pierre;
+97416000ES2238;etage0_completude;geojson_commune;False;completeness=92
+97416000ES2238;presence;api_partenaire;non testable sans cle;"cle demo bridee Cilaos (partners.py:490-496) ; vraie cle = convention (partners.py:481 _check_key)"
+97417000BN0002;presence;fiche;servie (200);
+97417000BN0002;surface_terrain;fiche;515500;"source=cadastre;dessin=514606;contenance=515500;incertaine=False"
+97417000BN0002;zone_plu;fiche;;"famille=None;parts=[]"
+97417000BN0002;bande;fiche;NC;"signal=faible;nc=True"
+97417000BN0002;sdp_residuelle;fiche;;
+97417000BN0002;cause_bande0;fiche;zone non résolue;
+97417000BN0002;tier;fiche;ecartee;
+97417000BN0002;adresse;fiche;;
+97417000BN0002;commune;fiche;Saint-Philippe;
+97417000BN0002;etage0_completude;fiche;True;completeness=74
+97417000BN0002;badge_ppr_partiel;fiche;;"exigu_raison=None;cause=hors_plu"
+97417000BN0002;presence;listing_filtre;presente (mode=nc);"/filtre?source=q_v18&commune=Saint-Philippe&surface±2 autour 515500;essais=[('defaut', 200), ('zero', 200), ('nc', 200)]"
+97417000BN0002;surface_terrain;listing_filtre;515500;"surface_m2(dessin)=514606;contenance_m2=515500"
+97417000BN0002;zone_plu;listing_filtre;;zone_fam=None
+97417000BN0002;bande;listing_filtre;NC;signal=faible
+97417000BN0002;sdp_residuelle;listing_filtre;;score_labuse via liste
+97417000BN0002;cause_bande0;listing_filtre;zone non résolue;
+97417000BN0002;tier;listing_filtre;ecartee;
+97417000BN0002;adresse;listing_filtre;;
+97417000BN0002;commune;listing_filtre;Saint-Philippe;
+97417000BN0002;etage0_completude;listing_filtre;True;completeness=74
+97417000BN0002;presence;export_md;servie (200);
+97417000BN0002;commune;export_md;Saint-Philippe;export.py:34
+97417000BN0002;surface_terrain;export_md;514606;ligne « Surface » (= _build_fiche surface_m2, DESSIN)
+97417000BN0002;tier;export_md;Écartée;verdict export
+97417000BN0002;badge_ppr_partiel;export_md;;
+97417000BN0002;presence;kmz;servie (200);
+97417000BN0002;surface_terrain;kmz;515500;description=Saint-Philippe — 515500 m²
+97417000BN0002;commune;kmz;Saint-Philippe;app.py:2563-2599
+97417000BN0002;presence;geojson_commune;feature presente;
+97417000BN0002;surface_terrain;geojson_commune;515500;surface_m2(dessin)=514606
+97417000BN0002;zone_plu;geojson_commune;;zone_fam=None
+97417000BN0002;tier;geojson_commune;ecartee;
+97417000BN0002;sdp_residuelle;geojson_commune;;
+97417000BN0002;adresse;geojson_commune;;
+97417000BN0002;etage0_completude;geojson_commune;True;completeness=74
+97417000BN0002;presence;api_partenaire;non testable sans cle;"cle demo bridee Cilaos (partners.py:490-496) ; vraie cle = convention (partners.py:481 _check_key)"
+97418000AV2114;presence;fiche;servie (200);"disparue: ""2026-09-01"""
+97418000AV2114;surface_terrain;fiche;;"source=None;dessin=None;contenance=None;incertaine=None"
+97418000AV2114;zone_plu;fiche;;"famille=None;parts=[]"
+97418000AV2114;bande;fiche;;"signal=None;nc=None"
+97418000AV2114;sdp_residuelle;fiche;;
+97418000AV2114;cause_bande0;fiche;;
+97418000AV2114;tier;fiche;;
+97418000AV2114;adresse;fiche;;
+97418000AV2114;commune;fiche;Sainte-Marie;
+97418000AV2114;etage0_completude;fiche;;completeness=None
+97418000AV2114;badge_ppr_partiel;fiche;;"exigu_raison=None;cause=None"
+97418000AV2114;presence;listing_filtre;ABSENTE;"/filtre?source=q_v18&commune=Sainte-Marie&surface±2 autour 2853;essais=[('defaut', 200), ('zero', 200), ('nc', 200)]"
+97418000AV2114;presence;export_md;servie (200);
+97418000AV2114;commune;export_md;Sainte-Marie;export.py:34
+97418000AV2114;surface_terrain;export_md;2853;ligne « Surface » (= _build_fiche surface_m2, DESSIN)
+97418000AV2114;tier;export_md;Non évaluée au run servi;verdict export
+97418000AV2114;badge_ppr_partiel;export_md;;
+97418000AV2114;presence;kmz;servie (200);
+97418000AV2114;surface_terrain;kmz;2853;description=Sainte-Marie — 2853 m²
+97418000AV2114;commune;kmz;Sainte-Marie;app.py:2563-2599
+97418000AV2114;presence;geojson_commune;ABSENTE;/map/parcels.geojson?commune=Sainte-Marie&source=q_v18
+97418000AV2114;presence;api_partenaire;non testable sans cle;"cle demo bridee Cilaos (partners.py:490-496) ; vraie cle = convention (partners.py:481 _check_key)"
+97420000BC9999;presence;fiche;servie (200);
+97420000BC9999;surface_terrain;fiche;600;"source=plan;dessin=600;contenance=None;incertaine=False"
+97420000BC9999;zone_plu;fiche;UB;"famille=U;parts=[('UB', 1.0)]"
+97420000BC9999;bande;fiche;D;"signal=faible;nc=False"
+97420000BC9999;sdp_residuelle;fiche;189;
+97420000BC9999;cause_bande0;fiche;;
+97420000BC9999;tier;fiche;sans_signal;
+97420000BC9999;adresse;fiche;14 Chemin Cimendef, 97441 Sainte-Suzanne;
+97420000BC9999;commune;fiche;Sainte-Suzanne;
+97420000BC9999;etage0_completude;fiche;False;completeness=92
+97420000BC9999;badge_ppr_partiel;fiche;;"exigu_raison=None;cause=None"
+97420000BC9999;presence;listing_filtre;presente (mode=defaut);"/filtre?source=q_v18&commune=Sainte-Suzanne&surface±2 autour 600;essais=[('defaut', 200)]"
+97420000BC9999;surface_terrain;listing_filtre;600;"surface_m2(dessin)=600;contenance_m2=None"
+97420000BC9999;zone_plu;listing_filtre;;zone_fam=None
+97420000BC9999;bande;listing_filtre;D;signal=faible
+97420000BC9999;sdp_residuelle;listing_filtre;189;score_labuse via liste
+97420000BC9999;cause_bande0;listing_filtre;;
+97420000BC9999;tier;listing_filtre;sans_signal;
+97420000BC9999;adresse;listing_filtre;;
+97420000BC9999;commune;listing_filtre;Sainte-Suzanne;
+97420000BC9999;etage0_completude;listing_filtre;False;completeness=92
+97420000BC9999;presence;export_md;servie (200);
+97420000BC9999;commune;export_md;Sainte-Suzanne;export.py:34
+97420000BC9999;surface_terrain;export_md;600;ligne « Surface » (= _build_fiche surface_m2, DESSIN)
+97420000BC9999;tier;export_md;Sans signal;verdict export
+97420000BC9999;badge_ppr_partiel;export_md;;
+97420000BC9999;presence;kmz;servie (200);
+97420000BC9999;surface_terrain;kmz;600;description=Sainte-Suzanne — 600 m²
+97420000BC9999;commune;kmz;Sainte-Suzanne;app.py:2563-2599
+97420000BC9999;presence;geojson_commune;feature presente;
+97420000BC9999;surface_terrain;geojson_commune;600;surface_m2(dessin)=600
+97420000BC9999;zone_plu;geojson_commune;;zone_fam=None
+97420000BC9999;tier;geojson_commune;sans_signal;
+97420000BC9999;sdp_residuelle;geojson_commune;189;
+97420000BC9999;adresse;geojson_commune;14 Chemin Cimendef, 97441 Sainte-Suzanne;
+97420000BC9999;etage0_completude;geojson_commune;False;completeness=92
+97420000BC9999;presence;api_partenaire;non testable sans cle;"cle demo bridee Cilaos (partners.py:490-496) ; vraie cle = convention (partners.py:481 _check_key)"
+97423000AB1908;presence;fiche;servie (200);
+97423000AB1908;surface_terrain;fiche;318;"source=cadastre;dessin=313;contenance=318;incertaine=False"
+97423000AB1908;zone_plu;fiche;1AUb;"famille=AU;parts=[('1AUb', 1.0)]"
+97423000AB1908;bande;fiche;0;"signal=faible;nc=False"
+97423000AB1908;sdp_residuelle;fiche;0;
+97423000AB1908;cause_bande0;fiche;;
+97423000AB1908;tier;fiche;sans_signal;
+97423000AB1908;adresse;fiche;27 Impasse des Pétrels, 97426 Les Trois-Bassins;
+97423000AB1908;commune;fiche;Les Trois-Bassins;
+97423000AB1908;etage0_completude;fiche;False;completeness=92
+97423000AB1908;badge_ppr_partiel;fiche;;"exigu_raison=None;cause=None"
+97423000AB1908;presence;listing_filtre;presente (mode=defaut);"/filtre?source=q_v18&commune=Les Trois-Bassins&surface±2 autour 318;essais=[('defaut', 200)]"
+97423000AB1908;surface_terrain;listing_filtre;318;"surface_m2(dessin)=313;contenance_m2=318"
+97423000AB1908;zone_plu;listing_filtre;1AUb;zone_fam=AU
+97423000AB1908;bande;listing_filtre;0;signal=faible
+97423000AB1908;sdp_residuelle;listing_filtre;0;score_labuse via liste
+97423000AB1908;cause_bande0;listing_filtre;;
+97423000AB1908;tier;listing_filtre;sans_signal;
+97423000AB1908;adresse;listing_filtre;;
+97423000AB1908;commune;listing_filtre;Les Trois-Bassins;
+97423000AB1908;etage0_completude;listing_filtre;False;completeness=92
+97423000AB1908;presence;export_md;servie (200);
+97423000AB1908;commune;export_md;Les Trois-Bassins;export.py:34
+97423000AB1908;surface_terrain;export_md;313;ligne « Surface » (= _build_fiche surface_m2, DESSIN)
+97423000AB1908;tier;export_md;Sans signal;verdict export
+97423000AB1908;badge_ppr_partiel;export_md;;
+97423000AB1908;presence;kmz;servie (200);
+97423000AB1908;surface_terrain;kmz;318;description=Les Trois-Bassins — 318 m²
+97423000AB1908;commune;kmz;Les Trois-Bassins;app.py:2563-2599
+97423000AB1908;presence;geojson_commune;feature presente;
+97423000AB1908;surface_terrain;geojson_commune;318;surface_m2(dessin)=313
+97423000AB1908;zone_plu;geojson_commune;1AUb;zone_fam=AU
+97423000AB1908;tier;geojson_commune;sans_signal;
+97423000AB1908;sdp_residuelle;geojson_commune;0;
+97423000AB1908;adresse;geojson_commune;27 Impasse des Pétrels, 97426 Les Trois-Bassins;
+97423000AB1908;etage0_completude;geojson_commune;False;completeness=92
+97423000AB1908;presence;api_partenaire;non testable sans cle;"cle demo bridee Cilaos (partners.py:490-496) ; vraie cle = convention (partners.py:481 _check_key)"
+97424000AL1244;presence;fiche;servie (200);
+97424000AL1244;surface_terrain;fiche;168;"source=cadastre;dessin=168;contenance=168;incertaine=False"
+97424000AL1244;zone_plu;fiche;Ub;"famille=U;parts=[('Ub', 0.9948)]"
+97424000AL1244;bande;fiche;D;"signal=faible;nc=False"
+97424000AL1244;sdp_residuelle;fiche;30;
+97424000AL1244;cause_bande0;fiche;;
+97424000AL1244;tier;fiche;sans_signal;
+97424000AL1244;adresse;fiche;;
+97424000AL1244;commune;fiche;Cilaos;
+97424000AL1244;etage0_completude;fiche;False;completeness=92
+97424000AL1244;badge_ppr_partiel;fiche;;"exigu_raison=None;cause=None"
+97424000AL1244;presence;listing_filtre;presente (mode=defaut);"/filtre?source=q_v18&commune=Cilaos&surface±2 autour 168;essais=[('defaut', 200)]"
+97424000AL1244;surface_terrain;listing_filtre;168;"surface_m2(dessin)=168;contenance_m2=168"
+97424000AL1244;zone_plu;listing_filtre;;zone_fam=None
+97424000AL1244;bande;listing_filtre;D;signal=faible
+97424000AL1244;sdp_residuelle;listing_filtre;30;score_labuse via liste
+97424000AL1244;cause_bande0;listing_filtre;;
+97424000AL1244;tier;listing_filtre;sans_signal;
+97424000AL1244;adresse;listing_filtre;;
+97424000AL1244;commune;listing_filtre;Cilaos;
+97424000AL1244;etage0_completude;listing_filtre;False;completeness=92
+97424000AL1244;presence;export_md;servie (200);
+97424000AL1244;commune;export_md;Cilaos;export.py:34
+97424000AL1244;surface_terrain;export_md;168;ligne « Surface » (= _build_fiche surface_m2, DESSIN)
+97424000AL1244;tier;export_md;Sans signal;verdict export
+97424000AL1244;badge_ppr_partiel;export_md;;
+97424000AL1244;presence;kmz;servie (200);
+97424000AL1244;surface_terrain;kmz;168;description=Cilaos — 168 m²
+97424000AL1244;commune;kmz;Cilaos;app.py:2563-2599
+97424000AL1244;presence;geojson_commune;feature presente;
+97424000AL1244;surface_terrain;geojson_commune;168;surface_m2(dessin)=168
+97424000AL1244;zone_plu;geojson_commune;;zone_fam=None
+97424000AL1244;tier;geojson_commune;sans_signal;
+97424000AL1244;sdp_residuelle;geojson_commune;30;
+97424000AL1244;adresse;geojson_commune;;
+97424000AL1244;etage0_completude;geojson_commune;False;completeness=92
+97424000AL1244;presence;api_partenaire;presente (cle demo);offset≤400
+97424000AL1244;surface_terrain;api_partenaire;168;partners.py:506 COALESCE(contenance,dessin)
+97424000AL1244;tier;api_partenaire;;"q_score=47;completeness=92;sdp=30"
+97424000AL1244;sdp_residuelle;api_partenaire;30;
+97424000AL1244;commune;api_partenaire;Cilaos;
+97402000AE0513;presence;tuile_z14;feature presente;"tuile z14/10725/9169;layer=parcels"
+97402000AE0513;surface_terrain;tuile_z14;464;"tuile z14/10725/9169;prop=surface_m2 brut=464.30920350540146 (DESSIN bake, tiles.py:168)"
+97402000AE0513;zone_plu;tuile_z14;Ud;zone_fam=U
+97402000AE0513;tier;tuile_z14;sans_signal;
+97402000AE0513;sdp_residuelle;tuile_z14;0;null quand parcel_residuel.cause non nulle (tiles.py:185)
+97402000AE0513;etage0_completude;tuile_z14;0;completeness=92
+97402000AE0513;badge_ppr_partiel;tuile_z14;;notion jamais servie en tuile (PPR-PARTIEL-FIX-1)
+97402000AE0513;adresse;tuile_z14;;notion absente des tuiles
+97402000AE0513;commune;tuile_z14;Bras-Panon;
+97407000AO1886;presence;tuile_z14;feature presente;"tuile z14/10709/9168;layer=parcels"
+97407000AO1886;surface_terrain;tuile_z14;17;"tuile z14/10709/9168;prop=surface_m2 brut=16.953372413217622 (DESSIN bake, tiles.py:168)"
+97407000AO1886;zone_plu;tuile_z14;;zone_fam=None
+97407000AO1886;tier;tuile_z14;ecartee;
+97407000AO1886;sdp_residuelle;tuile_z14;43;null quand parcel_residuel.cause non nulle (tiles.py:185)
+97407000AO1886;etage0_completude;tuile_z14;1;completeness=74
+97407000AO1886;badge_ppr_partiel;tuile_z14;;notion jamais servie en tuile (PPR-PARTIEL-FIX-1)
+97407000AO1886;adresse;tuile_z14;;notion absente des tuiles
+97407000AO1886;commune;tuile_z14;Le Port;
+97408000AP1582;presence;tuile_z14;feature presente;"tuile z14/10709/9167;layer=parcels"
+97408000AP1582;surface_terrain;tuile_z14;461;"tuile z14/10709/9167;prop=surface_m2 brut=460.6416459745907 (DESSIN bake, tiles.py:168)"
+97408000AP1582;zone_plu;tuile_z14;UEm;zone_fam=U
+97408000AP1582;tier;tuile_z14;sans_signal;
+97408000AP1582;sdp_residuelle;tuile_z14;90;null quand parcel_residuel.cause non nulle (tiles.py:185)
+97408000AP1582;etage0_completude;tuile_z14;0;completeness=92
+97408000AP1582;badge_ppr_partiel;tuile_z14;;notion jamais servie en tuile (PPR-PARTIEL-FIX-1)
+97408000AP1582;adresse;tuile_z14;;notion absente des tuiles
+97408000AP1582;commune;tuile_z14;La Possession;
+97409000AB0521;presence;tuile_z14;ABSENTE de la tuile;"tuile z14/10725/9166;1063 features decodees"
+97409000AB0993;presence;tuile_z14;feature presente;"tuile z14/10723/9166;layer=parcels"
+97409000AB0993;surface_terrain;tuile_z14;663221;"tuile z14/10723/9166;prop=surface_m2 brut=663221.3124803656 (DESSIN bake, tiles.py:168)"
+97409000AB0993;zone_plu;tuile_z14;;zone_fam=None
+97409000AB0993;tier;tuile_z14;ecartee;
+97409000AB0993;sdp_residuelle;tuile_z14;;null quand parcel_residuel.cause non nulle (tiles.py:185)
+97409000AB0993;etage0_completude;tuile_z14;1;completeness=74
+97409000AB0993;badge_ppr_partiel;tuile_z14;;notion jamais servie en tuile (PPR-PARTIEL-FIX-1)
+97409000AB0993;adresse;tuile_z14;;notion absente des tuiles
+97409000AB0993;commune;tuile_z14;Saint-André;
+97409000AK0804;presence;tuile_z14;feature presente;"tuile z14/10725/9166;layer=parcels"
+97409000AK0804;surface_terrain;tuile_z14;28258;"tuile z14/10725/9166;prop=surface_m2 brut=28257.633221272117 (DESSIN bake, tiles.py:168)"
+97409000AK0804;zone_plu;tuile_z14;UB;zone_fam=U
+97409000AK0804;tier;tuile_z14;sans_signal;
+97409000AK0804;sdp_residuelle;tuile_z14;34223;null quand parcel_residuel.cause non nulle (tiles.py:185)
+97409000AK0804;etage0_completude;tuile_z14;0;completeness=92
+97409000AK0804;badge_ppr_partiel;tuile_z14;;notion jamais servie en tuile (PPR-PARTIEL-FIX-1)
+97409000AK0804;adresse;tuile_z14;;notion absente des tuiles
+97409000AK0804;commune;tuile_z14;Saint-André;
+97409000AS1381;presence;tuile_z14;feature presente;"tuile z14/10725/9166;layer=parcels"
+97409000AS1381;surface_terrain;tuile_z14;953;"tuile z14/10725/9166;prop=surface_m2 brut=953.0073545186134 (DESSIN bake, tiles.py:168)"
+97409000AS1381;zone_plu;tuile_z14;A;zone_fam=A
+97409000AS1381;tier;tuile_z14;ecartee;
+97409000AS1381;sdp_residuelle;tuile_z14;;null quand parcel_residuel.cause non nulle (tiles.py:185)
+97409000AS1381;etage0_completude;tuile_z14;1;completeness=74
+97409000AS1381;badge_ppr_partiel;tuile_z14;;notion jamais servie en tuile (PPR-PARTIEL-FIX-1)
+97409000AS1381;adresse;tuile_z14;;notion absente des tuiles
+97409000AS1381;commune;tuile_z14;Saint-André;
+97409000AY0786;presence;tuile_z14;feature presente;"tuile z14/10726/9168;layer=parcels"
+97409000AY0786;surface_terrain;tuile_z14;4877;"tuile z14/10726/9168;prop=surface_m2 brut=4876.675187936543 (DESSIN bake, tiles.py:168)"
+97409000AY0786;zone_plu;tuile_z14;UC;zone_fam=U
+97409000AY0786;tier;tuile_z14;sans_signal;
+97409000AY0786;sdp_residuelle;tuile_z14;2302;null quand parcel_residuel.cause non nulle (tiles.py:185)
+97409000AY0786;etage0_completude;tuile_z14;0;completeness=92
+97409000AY0786;badge_ppr_partiel;tuile_z14;;notion jamais servie en tuile (PPR-PARTIEL-FIX-1)
+97409000AY0786;adresse;tuile_z14;;notion absente des tuiles
+97409000AY0786;commune;tuile_z14;Saint-André;
+97409000BO0383;presence;tuile_z14;feature presente;"tuile z14/10723/9168;layer=parcels"
+97409000BO0383;surface_terrain;tuile_z14;1388;"tuile z14/10723/9168;prop=surface_m2 brut=1387.687018734956 (DESSIN bake, tiles.py:168)"
+97409000BO0383;zone_plu;tuile_z14;A;zone_fam=A
+97409000BO0383;tier;tuile_z14;ecartee;
+97409000BO0383;sdp_residuelle;tuile_z14;0;null quand parcel_residuel.cause non nulle (tiles.py:185)
+97409000BO0383;etage0_completude;tuile_z14;1;completeness=74
+97409000BO0383;badge_ppr_partiel;tuile_z14;;notion jamais servie en tuile (PPR-PARTIEL-FIX-1)
+97409000BO0383;adresse;tuile_z14;;notion absente des tuiles
+97409000BO0383;commune;tuile_z14;Saint-André;
+97410000AB0212;presence;tuile_z14;feature presente;"tuile z14/10726/9170;layer=parcels"
+97410000AB0212;surface_terrain;tuile_z14;40478;"tuile z14/10726/9170;prop=surface_m2 brut=40478.4191294996 (DESSIN bake, tiles.py:168)"
+97410000AB0212;zone_plu;tuile_z14;AUp1;zone_fam=AU
+97410000AB0212;tier;tuile_z14;sans_signal;
+97410000AB0212;sdp_residuelle;tuile_z14;;null quand parcel_residuel.cause non nulle (tiles.py:185)
+97410000AB0212;etage0_completude;tuile_z14;0;completeness=92
+97410000AB0212;badge_ppr_partiel;tuile_z14;;notion jamais servie en tuile (PPR-PARTIEL-FIX-1)
+97410000AB0212;adresse;tuile_z14;;notion absente des tuiles
+97410000AB0212;commune;tuile_z14;Saint-Benoît;
+97410000AC0157;presence;tuile_z14;feature presente;"tuile z14/10726/9170;layer=parcels"
+97410000AC0157;surface_terrain;tuile_z14;31572;"tuile z14/10726/9170;prop=surface_m2 brut=31571.542030420285 (DESSIN bake, tiles.py:168)"
+97410000AC0157;zone_plu;tuile_z14;A;zone_fam=A
+97410000AC0157;tier;tuile_z14;ecartee;
+97410000AC0157;sdp_residuelle;tuile_z14;;null quand parcel_residuel.cause non nulle (tiles.py:185)
+97410000AC0157;etage0_completude;tuile_z14;1;completeness=74
+97410000AC0157;badge_ppr_partiel;tuile_z14;;notion jamais servie en tuile (PPR-PARTIEL-FIX-1)
+97410000AC0157;adresse;tuile_z14;;notion absente des tuiles
+97410000AC0157;commune;tuile_z14;Saint-Benoît;
+97411000AB0061;presence;tuile_z14;feature presente;"tuile z14/10715/9164;layer=parcels"
+97411000AB0061;surface_terrain;tuile_z14;792;"tuile z14/10715/9164;prop=surface_m2 brut=791.7065795238437 (DESSIN bake, tiles.py:168)"
+97411000AB0061;zone_plu;tuile_z14;Uavap;zone_fam=U
+97411000AB0061;tier;tuile_z14;sans_signal;
+97411000AB0061;sdp_residuelle;tuile_z14;0;null quand parcel_residuel.cause non nulle (tiles.py:185)
+97411000AB0061;etage0_completude;tuile_z14;0;completeness=92
+97411000AB0061;badge_ppr_partiel;tuile_z14;;notion jamais servie en tuile (PPR-PARTIEL-FIX-1)
+97411000AB0061;adresse;tuile_z14;;notion absente des tuiles
+97411000AB0061;commune;tuile_z14;Saint-Denis;
+97411000AB0318;presence;tuile_z14;feature presente;"tuile z14/10715/9163;layer=parcels"
+97411000AB0318;surface_terrain;tuile_z14;271;"tuile z14/10715/9163;prop=surface_m2 brut=270.9359697277106 (DESSIN bake, tiles.py:168)"
+97411000AB0318;zone_plu;tuile_z14;Uavap;zone_fam=U
+97411000AB0318;tier;tuile_z14;sans_signal;
+97411000AB0318;sdp_residuelle;tuile_z14;0;null quand parcel_residuel.cause non nulle (tiles.py:185)
+97411000AB0318;etage0_completude;tuile_z14;0;completeness=92
+97411000AB0318;badge_ppr_partiel;tuile_z14;;notion jamais servie en tuile (PPR-PARTIEL-FIX-1)
+97411000AB0318;adresse;tuile_z14;;notion absente des tuiles
+97411000AB0318;commune;tuile_z14;Saint-Denis;
+97411000AC0069;presence;tuile_z14;feature presente;"tuile z14/10715/9163;layer=parcels"
+97411000AC0069;surface_terrain;tuile_z14;9221;"tuile z14/10715/9163;prop=surface_m2 brut=9220.826012023386 (DESSIN bake, tiles.py:168)"
+97411000AC0069;zone_plu;tuile_z14;Uavap;zone_fam=U
+97411000AC0069;tier;tuile_z14;sans_signal;
+97411000AC0069;sdp_residuelle;tuile_z14;1133;null quand parcel_residuel.cause non nulle (tiles.py:185)
+97411000AC0069;etage0_completude;tuile_z14;0;completeness=92
+97411000AC0069;badge_ppr_partiel;tuile_z14;;notion jamais servie en tuile (PPR-PARTIEL-FIX-1)
+97411000AC0069;adresse;tuile_z14;;notion absente des tuiles
+97411000AC0069;commune;tuile_z14;Saint-Denis;
+97411000AE0013;presence;tuile_z14;ABSENTE de la tuile;"tuile z14/10715/9163;1312 features decodees"
+97411000AW0692;presence;tuile_z14;feature presente;"tuile z14/10716/9164;layer=parcels"
+97411000AW0692;surface_terrain;tuile_z14;991;"tuile z14/10716/9164;prop=surface_m2 brut=990.5471249804194 (DESSIN bake, tiles.py:168)"
+97411000AW0692;zone_plu;tuile_z14;Ud;zone_fam=U
+97411000AW0692;tier;tuile_z14;sans_signal;
+97411000AW0692;sdp_residuelle;tuile_z14;118;null quand parcel_residuel.cause non nulle (tiles.py:185)
+97411000AW0692;etage0_completude;tuile_z14;0;completeness=92
+97411000AW0692;badge_ppr_partiel;tuile_z14;;notion jamais servie en tuile (PPR-PARTIEL-FIX-1)
+97411000AW0692;adresse;tuile_z14;;notion absente des tuiles
+97411000AW0692;commune;tuile_z14;Saint-Denis;
+97411000BK0101;presence;tuile_z14;feature presente;"tuile z14/10717/9164;layer=parcels"
+97411000BK0101;surface_terrain;tuile_z14;589;"tuile z14/10717/9164;prop=surface_m2 brut=588.6421974703162 (DESSIN bake, tiles.py:168)"
+97411000BK0101;zone_plu;tuile_z14;Ud;zone_fam=U
+97411000BK0101;tier;tuile_z14;sans_signal;
+97411000BK0101;sdp_residuelle;tuile_z14;460;null quand parcel_residuel.cause non nulle (tiles.py:185)
+97411000BK0101;etage0_completude;tuile_z14;0;completeness=92
+97411000BK0101;badge_ppr_partiel;tuile_z14;;notion jamais servie en tuile (PPR-PARTIEL-FIX-1)
+97411000BK0101;adresse;tuile_z14;;notion absente des tuiles
+97411000BK0101;commune;tuile_z14;Saint-Denis;
+97411000BZ1065;presence;tuile_z14;feature presente;"tuile z14/10714/9164;layer=parcels"
+97411000BZ1065;surface_terrain;tuile_z14;1625;"tuile z14/10714/9164;prop=surface_m2 brut=1624.9987767026141 (DESSIN bake, tiles.py:168)"
+97411000BZ1065;zone_plu;tuile_z14;Uh;zone_fam=U
+97411000BZ1065;tier;tuile_z14;sans_signal;
+97411000BZ1065;sdp_residuelle;tuile_z14;35;null quand parcel_residuel.cause non nulle (tiles.py:185)
+97411000BZ1065;etage0_completude;tuile_z14;0;completeness=92
+97411000BZ1065;badge_ppr_partiel;tuile_z14;;notion jamais servie en tuile (PPR-PARTIEL-FIX-1)
+97411000BZ1065;adresse;tuile_z14;;notion absente des tuiles
+97411000BZ1065;commune;tuile_z14;Saint-Denis;
+97411000CR0650;presence;tuile_z14;feature presente;"tuile z14/10715/9165;layer=parcels"
+97411000CR0650;surface_terrain;tuile_z14;459134;"tuile z14/10715/9165;prop=surface_m2 brut=459134.28425496875 (DESSIN bake, tiles.py:168)"
+97411000CR0650;zone_plu;tuile_z14;;zone_fam=None
+97411000CR0650;tier;tuile_z14;ecartee;
+97411000CR0650;sdp_residuelle;tuile_z14;0;null quand parcel_residuel.cause non nulle (tiles.py:185)
+97411000CR0650;etage0_completude;tuile_z14;1;completeness=74
+97411000CR0650;badge_ppr_partiel;tuile_z14;;notion jamais servie en tuile (PPR-PARTIEL-FIX-1)
+97411000CR0650;adresse;tuile_z14;;notion absente des tuiles
+97411000CR0650;commune;tuile_z14;Saint-Denis;
+97411000DR0219;presence;tuile_z14;feature presente;"tuile z14/10717/9164;layer=parcels"
+97411000DR0219;surface_terrain;tuile_z14;942;"tuile z14/10717/9164;prop=surface_m2 brut=941.7356198193335 (DESSIN bake, tiles.py:168)"
+97411000DR0219;zone_plu;tuile_z14;Ui;zone_fam=U
+97411000DR0219;tier;tuile_z14;sans_signal;
+97411000DR0219;sdp_residuelle;tuile_z14;635;null quand parcel_residuel.cause non nulle (tiles.py:185)
+97411000DR0219;etage0_completude;tuile_z14;0;completeness=92
+97411000DR0219;badge_ppr_partiel;tuile_z14;;notion jamais servie en tuile (PPR-PARTIEL-FIX-1)
+97411000DR0219;adresse;tuile_z14;;notion absente des tuiles
+97411000DR0219;commune;tuile_z14;Saint-Denis;
+97411000HM0136;presence;tuile_z14;feature presente;"tuile z14/10717/9165;layer=parcels"
+97411000HM0136;surface_terrain;tuile_z14;140;"tuile z14/10717/9165;prop=surface_m2 brut=139.88939119256707 (DESSIN bake, tiles.py:168)"
+97411000HM0136;zone_plu;tuile_z14;Ui;zone_fam=U
+97411000HM0136;tier;tuile_z14;ecartee;
+97411000HM0136;sdp_residuelle;tuile_z14;;null quand parcel_residuel.cause non nulle (tiles.py:185)
+97411000HM0136;etage0_completude;tuile_z14;1;completeness=74
+97411000HM0136;badge_ppr_partiel;tuile_z14;;notion jamais servie en tuile (PPR-PARTIEL-FIX-1)
+97411000HM0136;adresse;tuile_z14;;notion absente des tuiles
+97411000HM0136;commune;tuile_z14;Saint-Denis;
+97411000ID0002;presence;tuile_z14;feature presente;"tuile z14/10717/9166;layer=parcels"
+97411000ID0002;surface_terrain;tuile_z14;2556;"tuile z14/10717/9166;prop=surface_m2 brut=2555.6175754411424 (DESSIN bake, tiles.py:168)"
+97411000ID0002;zone_plu;tuile_z14;N;zone_fam=N
+97411000ID0002;tier;tuile_z14;ecartee;
+97411000ID0002;sdp_residuelle;tuile_z14;;null quand parcel_residuel.cause non nulle (tiles.py:185)
+97411000ID0002;etage0_completude;tuile_z14;1;completeness=74
+97411000ID0002;badge_ppr_partiel;tuile_z14;;notion jamais servie en tuile (PPR-PARTIEL-FIX-1)
+97411000ID0002;adresse;tuile_z14;;notion absente des tuiles
+97411000ID0002;commune;tuile_z14;Saint-Denis;
+97413000AC0009;presence;tuile_z14;feature presente;"tuile z14/10709/9176;layer=parcels"
+97413000AC0009;surface_terrain;tuile_z14;312;"tuile z14/10709/9176;prop=surface_m2 brut=311.7340813189109 (DESSIN bake, tiles.py:168)"
+97413000AC0009;zone_plu;tuile_z14;UD;zone_fam=U
+97413000AC0009;tier;tuile_z14;sans_signal;
+97413000AC0009;sdp_residuelle;tuile_z14;0;null quand parcel_residuel.cause non nulle (tiles.py:185)
+97413000AC0009;etage0_completude;tuile_z14;0;completeness=92
+97413000AC0009;badge_ppr_partiel;tuile_z14;;notion jamais servie en tuile (PPR-PARTIEL-FIX-1)
+97413000AC0009;adresse;tuile_z14;;notion absente des tuiles
+97413000AC0009;commune;tuile_z14;Saint-Leu;
+97413000CA0243;presence;tuile_z14;feature presente;"tuile z14/10707/9176;layer=parcels"
+97413000CA0243;surface_terrain;tuile_z14;12697;"tuile z14/10707/9176;prop=surface_m2 brut=12697.314111087411 (DESSIN bake, tiles.py:168)"
+97413000CA0243;zone_plu;tuile_z14;AUE;zone_fam=AU
+97413000CA0243;tier;tuile_z14;sans_signal;
+97413000CA0243;sdp_residuelle;tuile_z14;9977;null quand parcel_residuel.cause non nulle (tiles.py:185)
+97413000CA0243;etage0_completude;tuile_z14;0;completeness=92
+97413000CA0243;badge_ppr_partiel;tuile_z14;;notion jamais servie en tuile (PPR-PARTIEL-FIX-1)
+97413000CA0243;adresse;tuile_z14;;notion absente des tuiles
+97413000CA0243;commune;tuile_z14;Saint-Leu;
+97413000CX0730;presence;tuile_z14;feature presente;"tuile z14/10708/9179;layer=parcels"
+97413000CX0730;surface_terrain;tuile_z14;246;"tuile z14/10708/9179;prop=surface_m2 brut=245.7155983340914 (DESSIN bake, tiles.py:168)"
+97413000CX0730;zone_plu;tuile_z14;UC;zone_fam=U
+97413000CX0730;tier;tuile_z14;sans_signal;
+97413000CX0730;sdp_residuelle;tuile_z14;17;null quand parcel_residuel.cause non nulle (tiles.py:185)
+97413000CX0730;etage0_completude;tuile_z14;0;completeness=92
+97413000CX0730;badge_ppr_partiel;tuile_z14;;notion jamais servie en tuile (PPR-PARTIEL-FIX-1)
+97413000CX0730;adresse;tuile_z14;;notion absente des tuiles
+97413000CX0730;commune;tuile_z14;Saint-Leu;
+97414000CH1970;presence;tuile_z14;feature presente;"tuile z14/10713/9179;layer=parcels"
+97414000CH1970;surface_terrain;tuile_z14;507;"tuile z14/10713/9179;prop=surface_m2 brut=506.55659634558333 (DESSIN bake, tiles.py:168)"
+97414000CH1970;zone_plu;tuile_z14;UD1;zone_fam=U
+97414000CH1970;tier;tuile_z14;sans_signal;
+97414000CH1970;sdp_residuelle;tuile_z14;185;null quand parcel_residuel.cause non nulle (tiles.py:185)
+97414000CH1970;etage0_completude;tuile_z14;0;completeness=92
+97414000CH1970;badge_ppr_partiel;tuile_z14;;notion jamais servie en tuile (PPR-PARTIEL-FIX-1)
+97414000CH1970;adresse;tuile_z14;;notion absente des tuiles
+97414000CH1970;commune;tuile_z14;Saint-Louis;
+97414000CV0938;presence;tuile_z14;feature presente;"tuile z14/10714/9181;layer=parcels"
+97414000CV0938;surface_terrain;tuile_z14;197;"tuile z14/10714/9181;prop=surface_m2 brut=196.7393253543111 (DESSIN bake, tiles.py:168)"
+97414000CV0938;zone_plu;tuile_z14;1AUd;zone_fam=AU
+97414000CV0938;tier;tuile_z14;sans_signal;
+97414000CV0938;sdp_residuelle;tuile_z14;0;null quand parcel_residuel.cause non nulle (tiles.py:185)
+97414000CV0938;etage0_completude;tuile_z14;0;completeness=92
+97414000CV0938;badge_ppr_partiel;tuile_z14;;notion jamais servie en tuile (PPR-PARTIEL-FIX-1)
+97414000CV0938;adresse;tuile_z14;;notion absente des tuiles
+97414000CV0938;commune;tuile_z14;Saint-Louis;
+97415000AB0001;presence;tuile_z14;feature presente;"tuile z14/10707/9168;layer=parcels"
+97415000AB0001;surface_terrain;tuile_z14;115449;"tuile z14/10707/9168;prop=surface_m2 brut=115448.84628045517 (DESSIN bake, tiles.py:168)"
+97415000AB0001;zone_plu;tuile_z14;Nerl;zone_fam=N
+97415000AB0001;tier;tuile_z14;ecartee;
+97415000AB0001;sdp_residuelle;tuile_z14;;null quand parcel_residuel.cause non nulle (tiles.py:185)
+97415000AB0001;etage0_completude;tuile_z14;1;completeness=74
+97415000AB0001;badge_ppr_partiel;tuile_z14;;notion jamais servie en tuile (PPR-PARTIEL-FIX-1)
+97415000AB0001;adresse;tuile_z14;;notion absente des tuiles
+97415000AB0001;commune;tuile_z14;Saint-Paul;
+97415000AB0899;presence;tuile_z14;feature presente;"tuile z14/10708/9167;layer=parcels"
+97415000AB0899;surface_terrain;tuile_z14;380494;"tuile z14/10708/9167;prop=surface_m2 brut=380494.2512686581 (DESSIN bake, tiles.py:168)"
+97415000AB0899;zone_plu;tuile_z14;AU1e;zone_fam=AU
+97415000AB0899;tier;tuile_z14;ecartee;
+97415000AB0899;sdp_residuelle;tuile_z14;;null quand parcel_residuel.cause non nulle (tiles.py:185)
+97415000AB0899;etage0_completude;tuile_z14;1;completeness=74
+97415000AB0899;badge_ppr_partiel;tuile_z14;;notion jamais servie en tuile (PPR-PARTIEL-FIX-1)
+97415000AB0899;adresse;tuile_z14;;notion absente des tuiles
+97415000AB0899;commune;tuile_z14;Saint-Paul;
+97415000BZ0005;presence;tuile_z14;feature presente;"tuile z14/10710/9170;layer=parcels"
+97415000BZ0005;surface_terrain;tuile_z14;19371;"tuile z14/10710/9170;prop=surface_m2 brut=19370.913040893352 (DESSIN bake, tiles.py:168)"
+97415000BZ0005;zone_plu;tuile_z14;A;zone_fam=A
+97415000BZ0005;tier;tuile_z14;ecartee;
+97415000BZ0005;sdp_residuelle;tuile_z14;;null quand parcel_residuel.cause non nulle (tiles.py:185)
+97415000BZ0005;etage0_completude;tuile_z14;1;completeness=74
+97415000BZ0005;badge_ppr_partiel;tuile_z14;;notion jamais servie en tuile (PPR-PARTIEL-FIX-1)
+97415000BZ0005;adresse;tuile_z14;;notion absente des tuiles
+97415000BZ0005;commune;tuile_z14;Saint-Paul;
+97415000BZ0007;presence;tuile_z14;feature presente;"tuile z14/10710/9170;layer=parcels"
+97415000BZ0007;surface_terrain;tuile_z14;5519;"tuile z14/10710/9170;prop=surface_m2 brut=5518.586062618842 (DESSIN bake, tiles.py:168)"
+97415000BZ0007;zone_plu;tuile_z14;Usdu;zone_fam=U
+97415000BZ0007;tier;tuile_z14;ecartee;
+97415000BZ0007;sdp_residuelle;tuile_z14;0;null quand parcel_residuel.cause non nulle (tiles.py:185)
+97415000BZ0007;etage0_completude;tuile_z14;1;completeness=74
+97415000BZ0007;badge_ppr_partiel;tuile_z14;;notion jamais servie en tuile (PPR-PARTIEL-FIX-1)
+97415000BZ0007;adresse;tuile_z14;;notion absente des tuiles
+97415000BZ0007;commune;tuile_z14;Saint-Paul;
+97415000CW0658;presence;tuile_z14;feature presente;"tuile z14/10706/9171;layer=parcels"
+97415000CW0658;surface_terrain;tuile_z14;27156;"tuile z14/10706/9171;prop=surface_m2 brut=27155.518428622894 (DESSIN bake, tiles.py:168)"
+97415000CW0658;zone_plu;tuile_z14;AU3a;zone_fam=AU
+97415000CW0658;tier;tuile_z14;sans_signal;
+97415000CW0658;sdp_residuelle;tuile_z14;38619;null quand parcel_residuel.cause non nulle (tiles.py:185)
+97415000CW0658;etage0_completude;tuile_z14;0;completeness=92
+97415000CW0658;badge_ppr_partiel;tuile_z14;;notion jamais servie en tuile (PPR-PARTIEL-FIX-1)
+97415000CW0658;adresse;tuile_z14;;notion absente des tuiles
+97415000CW0658;commune;tuile_z14;Saint-Paul;
+97415000CW1073;presence;tuile_z14;feature presente;"tuile z14/10707/9171;layer=parcels"
+97415000CW1073;surface_terrain;tuile_z14;5469;"tuile z14/10707/9171;prop=surface_m2 brut=5469.02277236954 (DESSIN bake, tiles.py:168)"
+97415000CW1073;zone_plu;tuile_z14;AU3a;zone_fam=AU
+97415000CW1073;tier;tuile_z14;sans_signal;
+97415000CW1073;sdp_residuelle;tuile_z14;9847;null quand parcel_residuel.cause non nulle (tiles.py:185)
+97415000CW1073;etage0_completude;tuile_z14;0;completeness=92
+97415000CW1073;badge_ppr_partiel;tuile_z14;;notion jamais servie en tuile (PPR-PARTIEL-FIX-1)
+97415000CW1073;adresse;tuile_z14;;notion absente des tuiles
+97415000CW1073;commune;tuile_z14;Saint-Paul;
+97416000DV0285;presence;tuile_z14;feature presente;"tuile z14/10716/9186;layer=parcels"
+97416000DV0285;surface_terrain;tuile_z14;117505;"tuile z14/10716/9186;prop=surface_m2 brut=117504.70912886782 (DESSIN bake, tiles.py:168)"
+97416000DV0285;zone_plu;tuile_z14;Ue;zone_fam=U
+97416000DV0285;tier;tuile_z14;sans_signal;
+97416000DV0285;sdp_residuelle;tuile_z14;;null quand parcel_residuel.cause non nulle (tiles.py:185)
+97416000DV0285;etage0_completude;tuile_z14;0;completeness=92
+97416000DV0285;badge_ppr_partiel;tuile_z14;;notion jamais servie en tuile (PPR-PARTIEL-FIX-1)
+97416000DV0285;adresse;tuile_z14;;notion absente des tuiles
+97416000DV0285;commune;tuile_z14;Saint-Pierre;
+97416000DX8001;presence;tuile_z14;feature presente;"tuile z14/10716/9186;layer=parcels"
+97416000DX8001;surface_terrain;tuile_z14;49;"tuile z14/10716/9186;prop=surface_m2 brut=48.52825898318621 (DESSIN bake, tiles.py:168)"
+97416000DX8001;zone_plu;tuile_z14;Ud;zone_fam=U
+97416000DX8001;tier;tuile_z14;ecartee;
+97416000DX8001;sdp_residuelle;tuile_z14;;null quand parcel_residuel.cause non nulle (tiles.py:185)
+97416000DX8001;etage0_completude;tuile_z14;1;completeness=74
+97416000DX8001;badge_ppr_partiel;tuile_z14;;notion jamais servie en tuile (PPR-PARTIEL-FIX-1)
+97416000DX8001;adresse;tuile_z14;;notion absente des tuiles
+97416000DX8001;commune;tuile_z14;Saint-Pierre;
+97416000ES2238;presence;tuile_z14;feature presente;"tuile z14/10718/9187;layer=parcels"
+97416000ES2238;surface_terrain;tuile_z14;280;"tuile z14/10718/9187;prop=surface_m2 brut=280.2044547991242 (DESSIN bake, tiles.py:168)"
+97416000ES2238;zone_plu;tuile_z14;Ug;zone_fam=U
+97416000ES2238;tier;tuile_z14;sans_signal;
+97416000ES2238;sdp_residuelle;tuile_z14;3;null quand parcel_residuel.cause non nulle (tiles.py:185)
+97416000ES2238;etage0_completude;tuile_z14;0;completeness=92
+97416000ES2238;badge_ppr_partiel;tuile_z14;;notion jamais servie en tuile (PPR-PARTIEL-FIX-1)
+97416000ES2238;adresse;tuile_z14;;notion absente des tuiles
+97416000ES2238;commune;tuile_z14;Saint-Pierre;
+97417000BN0002;presence;tuile_z14;feature presente;"tuile z14/10728/9184;layer=parcels"
+97417000BN0002;surface_terrain;tuile_z14;514606;"tuile z14/10728/9184;prop=surface_m2 brut=514605.9744709444 (DESSIN bake, tiles.py:168)"
+97417000BN0002;zone_plu;tuile_z14;;zone_fam=None
+97417000BN0002;tier;tuile_z14;ecartee;
+97417000BN0002;sdp_residuelle;tuile_z14;;null quand parcel_residuel.cause non nulle (tiles.py:185)
+97417000BN0002;etage0_completude;tuile_z14;1;completeness=74
+97417000BN0002;badge_ppr_partiel;tuile_z14;;notion jamais servie en tuile (PPR-PARTIEL-FIX-1)
+97417000BN0002;adresse;tuile_z14;;notion absente des tuiles
+97417000BN0002;commune;tuile_z14;Saint-Philippe;
+97418000AV2114;presence;tuile_z14;ABSENTE de la tuile;"tuile z14/10718/9165;3515 features decodees"
+97420000BC9999;presence;tuile_z14;feature presente;"tuile z14/10724/9166;layer=parcels"
+97420000BC9999;surface_terrain;tuile_z14;600;"tuile z14/10724/9166;prop=surface_m2 brut=600.2209690413455 (DESSIN bake, tiles.py:168)"
+97420000BC9999;zone_plu;tuile_z14;;zone_fam=None
+97420000BC9999;tier;tuile_z14;sans_signal;
+97420000BC9999;sdp_residuelle;tuile_z14;189;null quand parcel_residuel.cause non nulle (tiles.py:185)
+97420000BC9999;etage0_completude;tuile_z14;0;completeness=92
+97420000BC9999;badge_ppr_partiel;tuile_z14;;notion jamais servie en tuile (PPR-PARTIEL-FIX-1)
+97420000BC9999;adresse;tuile_z14;;notion absente des tuiles
+97420000BC9999;commune;tuile_z14;Sainte-Suzanne;
+97423000AB1908;presence;tuile_z14;feature presente;"tuile z14/10707/9175;layer=parcels"
+97423000AB1908;surface_terrain;tuile_z14;313;"tuile z14/10707/9175;prop=surface_m2 brut=313.0204256214733 (DESSIN bake, tiles.py:168)"
+97423000AB1908;zone_plu;tuile_z14;1AUb;zone_fam=AU
+97423000AB1908;tier;tuile_z14;sans_signal;
+97423000AB1908;sdp_residuelle;tuile_z14;0;null quand parcel_residuel.cause non nulle (tiles.py:185)
+97423000AB1908;etage0_completude;tuile_z14;0;completeness=92
+97423000AB1908;badge_ppr_partiel;tuile_z14;;notion jamais servie en tuile (PPR-PARTIEL-FIX-1)
+97423000AB1908;adresse;tuile_z14;;notion absente des tuiles
+97423000AB1908;commune;tuile_z14;Les Trois-Bassins;
+97424000AL1244;presence;tuile_z14;feature presente;"tuile z14/10717/9176;layer=parcels"
+97424000AL1244;surface_terrain;tuile_z14;168;"tuile z14/10717/9176;prop=surface_m2 brut=167.97545169446312 (DESSIN bake, tiles.py:168)"
+97424000AL1244;zone_plu;tuile_z14;;zone_fam=None
+97424000AL1244;tier;tuile_z14;sans_signal;
+97424000AL1244;sdp_residuelle;tuile_z14;30;null quand parcel_residuel.cause non nulle (tiles.py:185)
+97424000AL1244;etage0_completude;tuile_z14;0;completeness=92
+97424000AL1244;badge_ppr_partiel;tuile_z14;;notion jamais servie en tuile (PPR-PARTIEL-FIX-1)
+97424000AL1244;adresse;tuile_z14;;notion absente des tuiles
+97424000AL1244;commune;tuile_z14;Cilaos;
+97416000ES2238;presence;listing_filtre;presente (mode=defaut, page>200);retrouvee par pagination offset (harnais lot C: 1re page seulement a l'origine)
+97416000ES2238;surface_terrain;listing_filtre;291;"surface_m2(dessin)=280;contenance_m2=291"
+97416000ES2238;zone_plu;listing_filtre;Ug;zone_fam=U
+97416000ES2238;bande;listing_filtre;D;signal=faible
+97416000ES2238;sdp_residuelle;listing_filtre;3;
+97416000ES2238;cause_bande0;listing_filtre;;
+97416000ES2238;tier;listing_filtre;sans_signal;
+97416000ES2238;adresse;listing_filtre;;
+97416000ES2238;commune;listing_filtre;Saint-Pierre;
+97416000ES2238;etage0_completude;listing_filtre;False;completeness=92
+97407000AO1886;presence;listing_filtre;presente (mode=bande=D seulement);defaut: compte=205 mais page VIDE (etage0 exclu de la page, compte dans le compteur)
+97407000AO1886;surface_terrain;listing_filtre;17;"surface_m2(dessin)=17;contenance_m2=17"
+97407000AO1886;zone_plu;listing_filtre;;zone_fam=None
+97407000AO1886;bande;listing_filtre;D;signal=faible
+97407000AO1886;sdp_residuelle;listing_filtre;43;
+97407000AO1886;cause_bande0;listing_filtre;;
+97407000AO1886;tier;listing_filtre;ecartee;
+97407000AO1886;adresse;listing_filtre;;
+97407000AO1886;commune;listing_filtre;Le Port;
+97407000AO1886;etage0_completude;listing_filtre;True;completeness=74

@@ -1,0 +1,143 @@
+LABUSE       Étude de zone
+
+
+
+
+Étude de zone
+Le territoire autour de la parcelle, dans le rayon choisi.
+
+Rayon 2.0 km autour de 97416000DV0285 · EZ-20261012-0285 · 12/10/2026
+
+
+
+  Étude de zone
+
+
+
+
+© IGN — BD ORTHO
+Rayon 2.0 km autour de 97416000DV0285 · 1 249 ha
+
+
+Population
+
+Habitants                              26 583
+
+Ménages                                11 299
+
+Revenu médian                          19 812 € (estimé)
+
+Moins de 25 ans                        32 %
+
+Taux de pauvreté                       38 %
+
+
+Économie
+
+Emplois salariés                       postes salariés déclarés dans la zone
+
+Établissements                         6 806
+
+                                                                               Généré via LABUSE
+
+
+
+
+                                                                                           1/3
+Immobilier
+
+Ventes (12 mois)                     39
+
+Prix médian du bâti                  3 555 €/m²
+
+Annonces actives                     0
+
+Permis (36 mois)                     194
+
+
+Foncier
+
+COMMUNE DE SAINT PIERRE              1 420 316 m²
+
+ETAT PAR DIRECTION DE L IMMOBILIER   244 244 m²
+DE L ETAT
+
+GROUPE HOSPITALIER SUD REUNION       193 976 m²
+
+SOCIETE ANONYME                   163 835 m²
+D&#x27;HABITATIONS A LOYER MODERE
+DE LA REUNION
+
+SOCIETE IMMOBILIERE DEPARTEMENT      133 559 m²
+REUNION
+
+Logements autorisés (36 mois)        297
+
+Zones AU                             0 · 0 ha
+
+
+Contraintes
+
+Ud · Saint-Pierre                    22 %
+
+Ug · Saint-Pierre                    9%
+
+Ucv · Saint-Pierre                   5%
+
+A · Saint-Pierre                     4%
+
+N · Saint-Pierre                     4%
+
+Up · Saint-Pierre                    3%
+
+Ue · Saint-Pierre                    2%
+
+Uazc · Saint-Pierre                  1%
+
+
+Équipements
+
+Enseignement                         SARL GEM FORMATION CONSEIL
+
+Commerces                            AMORINO
+
+Santé et action sociale              SELARL DU DR ARTAULT LOIC
+
+Services aux particuliers            EM
+
+                                                                  Généré via LABUSE
+
+
+
+
+                                                                              2/3
+Sports, loisirs et culture                  LA JETEE DU PORT
+
+
+Dynamique
+
+Acquisitions récentes (personnes            108
+morales)
+
+Loyer médian (à l'échelle de la             10 €/m²
+commune)
+
+Trafic N2                                   28 700 véh./j
+
+Trafic N3                                   27 263 véh./j
+
+Trafic N3B                                  24 025 véh./j
+
+Agrégats de sources publiques dans le périmètre. Les mailles « à l'échelle de la commune » portent sur toute la commune, pas
+sur le seul rayon.
+
+
+
+
+                                                                                                            Généré via LABUSE
+
+
+
+
+                                                                                                                        3/3
+
