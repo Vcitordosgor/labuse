@@ -506,6 +506,28 @@ def g24_ventes_12m_ancree():
         ("ECART", f"seulement {v} ventes — fenêtre probablement encore calendaire")
 
 
+def g25_filtre_carte_page():
+    """Lot 7 (C-12/C-29) : la liste d'IDU (ce que la CARTE peint) doit avoir le MÊME périmètre que
+    la PAGE — hors étage 0 par défaut (C-12 : Le Port 205 écartées → idus=205 vs page=[]) et filtrée
+    par bande/signal (C-29 : bande=A → toute la commune peinte). Après FIX-1 : idus = page."""
+    # C-12 : commune 100 % écartée → idus (carte) vide comme la page
+    f = _api("/filtre?source=%s&commune=Le+Port&surface_min=15&surface_max=19&limit=200&idus=1" % _manifest()["scoring_run"])
+    if not isinstance(f, dict):
+        return "SKIP", "filtre indisponible"
+    page_n = len(f.get("page") or [])
+    idus = f.get("idus")
+    if idus is not None and len(idus) != page_n:
+        return "ECART", f"C-12 : carte {len(idus)} ≠ page {page_n} (étage 0 peint par la carte seule)"
+    # C-29 : bande=A → idus restreint à la bande, pas toute la commune
+    fb = _api("/filtre?source=%s&commune=Saint-Andr%%C3%%A9&bande=A&idus=1&limit=0" % _manifest()["scoring_run"])
+    if isinstance(fb, dict):
+        bande_a = (fb.get("bandes") or {}).get("A")
+        iv = fb.get("idus")
+        if iv is not None and bande_a is not None and len(iv) != bande_a:
+            return "ECART", f"C-29 : idus {len(iv)} ≠ bande A {bande_a} (bande non appliquée aux idus)"
+    return "OK", f"carte = page (C-12 : idus={len(idus) if idus is not None else '—'}=page {page_n} ; C-29 : bande filtre les idus)"
+
+
 def g14_digest_vs_cloche():
     """C (C-45) : le top digest est recalculé à l'ENVOI sur le run servi, quand la cloche relit
     event_log. Le symptôme de staleness était que la cloche vivait dans un AUTRE monde (dernière
@@ -562,6 +584,7 @@ GARDES = [
     ("ventes-100m-nature", g22_ventes_100m_nature),
     ("etude-zone-perimetre", g23_etude_zone_perimetre),
     ("ventes-12m-ancree", g24_ventes_12m_ancree),
+    ("filtre-carte-page", g25_filtre_carte_page),
 ]
 
 

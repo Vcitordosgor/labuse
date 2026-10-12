@@ -2893,17 +2893,37 @@ def filtre(c: FiltreCriteres = Depends(),
         # la jointure sur `c.source` brut (q_v16) ne matchait AUCUNE ligne → carte peinte à 0
         # pendant que le compteur (lui résolu) disait N. Régression née de la bascule q_v15→q_v16.
         run_idus = _cascade_run(db, c.source)
+        # CHASSE-DONNEES-FIX-1 (suite 2d, C-12 + C-29) — la liste d'IDU (ce que la CARTE peint) doit
+        # avoir EXACTEMENT le périmètre de la PAGE d'aperçu : (1) hors étage 0 par défaut (C-12 : sinon
+        # idus=205 contre page=[] sur une commune 100 % écartée → carte pleine / liste vide) ; (2) les
+        # filtres Analyse `bande`/`signal` appliqués ICI aussi (C-29 : sinon un appelant idus=1&bande=A
+        # peignait TOUTE la commune). Même gate et mêmes prédicats `sl` que _q_v2_list.
+        _idus_base = "" if ("f_tiers" in (extra_params or {}) or "s2.tier" in extra
+                            or _ETAGE0_SQL in extra) else f"AND NOT {_ETAGE0_SQL}"
+        _sl_rdy = _score_labuse_ready(db)
+        _idus_sl_join = ("LEFT JOIN score_labuse sl ON sl.parcel_id = p.id AND sl.run_label = :sl_run"
+                         if _sl_rdy else "")
+        _idus_sl = []
+        _idus_params = {"c": c.commune, "run": run_idus, "v2run": _score_v2_run_id(db),
+                        "minsurf": MIN_DISPLAY_SURFACE_M2, **extra_params}
+        if _sl_rdy and signal in ("fort", "moyen", "faible"):
+            _idus_sl.append("sl.signal_niveau = :sig"); _idus_params["sig"] = signal
+        if _sl_rdy and bande in _BANDE_GROUPES_SQL:
+            _idus_sl.append(_BANDE_GROUPES_SQL[bande]); _idus_base = ""   # la bande pilote seule (lève étage 0)
+        if _sl_rdy:
+            _idus_params["sl_run"] = _score_labuse_run()
+        _idus_sl_where = ("AND " + " AND ".join(_idus_sl)) if _idus_sl else ""
         rows = db.execute(text(
             f"""
             SELECT p.idu
             FROM dryrun_parcel_evaluations d JOIN parcels p ON p.id = d.parcel_id
             LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
+            {_idus_sl_join}
             WHERE d.run_label = :run AND (CAST(:c AS text) IS NULL OR p.commune = :c)
               AND (p.surface_m2 IS NULL OR p.surface_m2 >= :minsurf)
-              {extra}
+              {extra} {_idus_base} {_idus_sl_where}
             LIMIT {_FILTRE_IDUS_CAP + 1}
-            """), {"c": c.commune, "run": run_idus, "v2run": _score_v2_run_id(db),
-                   "minsurf": MIN_DISPLAY_SURFACE_M2, **extra_params}).scalars().all()
+            """), _idus_params).scalars().all()
         tronque = len(rows) > _FILTRE_IDUS_CAP
         out["idus"] = None if tronque else list(rows)
         out["idus_tronque"] = tronque

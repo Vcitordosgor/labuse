@@ -97,8 +97,12 @@ def emprunteur_seed(engine):
 def test_d05_filtre_idus_resout_la_cascade(client, emprunteur_seed):
     from labuse.faisabilite.db import parcel_context  # noqa: F401 (assure l'import du moteur)
 
+    # CHASSE-DONNEES-FIX-1 (suite 2d, C-12) — la parcelle du seed est en ÉTAGE 0 (status 'exclue') :
+    # la PAGE et la CARTE l'excluent par DÉFAUT (une écartée n'est pas peinte en vue par défaut). Pour
+    # tester que /filtre?idus=1 RÉSOUT bien la cascade (intention D05), on OPTE pour l'étage 0
+    # (tiers=ecartee) — alors la parcelle DOIT apparaître dans la liste d'IDU (carte = page = compteur).
     r = client.get("/filtre", params={"source": RUN_SERVI, "commune": "Saint-Paul",
-                                       "idus": 1, "limit": 20})
+                                       "tiers": "ecartee", "idus": 1, "limit": 20})
     assert r.status_code == 200, r.text
     out = r.json()
     # le parcel servi (score v2 sous le run servi) DOIT être peint sur la carte : s'il manque,
@@ -107,7 +111,7 @@ def test_d05_filtre_idus_resout_la_cascade(client, emprunteur_seed):
     assert IDU in out["idus"], (
         "D05 régression : /filtre?idus=1 ne résout pas la cascade — la carte reçoit 0 parcelle "
         f"alors que le compteur en voit (idus={out['idus']}, compte={out.get('compte')})")
-    # invariant du mandat : compteur = parcelles peintes.
+    # invariant du mandat : compteur = parcelles peintes (sur le périmètre demandé).
     assert out["compte"] == len(out["idus"]) == 1, out
 
 

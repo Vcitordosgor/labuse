@@ -157,12 +157,16 @@ def projet_reperes(dimension: str = Query("secteur", pattern="^(secteur|commune)
     # M36 Lot A (famille M35 Lot D) : « opportunités » = parcelles SERVIES au classement
     # (tiers actifs du run servi) — plus jamais la matrice historique (compteur produit,
     # échappé à l'inventaire M35 ; même dérive que /communes).
-    from ..verdict_servi import TIERS_SERVABLES
+    # CHASSE-DONNEES-FIX-1 (suite 2d, C-39) — « opportunités » = LA MÊME notion que la fiche / le
+    # comparateur / le /filtre : brûlante + chaude (+ leurs alias priorite/a_suivre), PLUS l'ensemble
+    # TIERS_SERVABLES (qui incluait sans_signal/réserve/à-creuser → 14 465 vs 29 à Saint-Leu, même
+    # mot pour deux périmètres ×500). Un seul chiffre par notion.
+    _TIERS_OPPORTUNITE = ("brulante", "chaude", "priorite", "a_suivre")
     opp = {r["commune"]: r["n"] for r in db.execute(text(
         "SELECT p.commune, count(*) n FROM parcels p "
         "JOIN parcel_p_score_v2 s ON s.parcelle_id = p.idu AND s.run_id = :runref "
-        " AND s.tier = ANY(:servables) "
-        "GROUP BY p.commune"), {"runref": runs.current(), "servables": list(TIERS_SERVABLES)}).mappings()}
+        " AND s.tier = ANY(:opp) "
+        "GROUP BY p.commune"), {"runref": runs.current(), "opp": list(_TIERS_OPPORTUNITE)}).mappings()}
     # prix médian ancien DVF (€/m²) — CHASSE-DONNEES-FIX-1 (Lot 7, C-20) : source UNIQUE du baromètre
     # (moteurs.prix_ancien_communes), plus la 2e formule maison [200,8000] toutes natures.
     from .moteurs import prix_ancien_communes

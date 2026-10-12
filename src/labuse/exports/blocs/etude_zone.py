@@ -167,6 +167,11 @@ def rendu(zone, *, map_html: str, idu: str, rayon_km) -> str:
     corps += "</p>"
     corps += (_population(z) + _economie(z) + _immobilier(z) + _foncier(z)
               + _contraintes(z) + _equipements(z) + _dynamique(z))
-    corps += note("Agrégats de sources publiques dans le périmètre. Les mailles « " + ECHELLE_COMMUNE
-                  + " » portent sur toute la commune, pas sur le seul rayon.")
+    # CHASSE-DONNEES-FIX-1 (suite 2d, C-42) — la note RELAIE les sources DATÉES servies (zone['note'] :
+    # « INSEE Filosofi 2021 · SIRENE · BPE 2025 · DVF · isochrones IGN · Arcep… »), plus une note
+    # statique muette : les millésimes calculés côté outil s'impriment enfin dans le PDF.
+    _note_servie = (z.get("note") or "").strip()
+    _rappel = ("Les mailles « " + ECHELLE_COMMUNE + " » portent sur toute la commune, pas sur le seul rayon.")
+    corps += note((f"Sources : {_note_servie}. {_rappel}" if _note_servie
+                   else "Agrégats de sources publiques dans le périmètre. " + _rappel))
     return section("Étude de zone", corps)
