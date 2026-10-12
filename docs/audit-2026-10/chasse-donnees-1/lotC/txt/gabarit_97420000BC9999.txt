@@ -1,0 +1,92 @@
+LABUSE      Gabarit
+
+
+
+
+Gabarit
+L'enveloppe réglementaire de la parcelle : zone d'implantation, plafond d'emprise, hauteur.
+
+97420000BC9999 · GA-20261012-9999 · 12/10/2026
+
+
+
+  Enveloppe réglementaire (gabarit)
+
+  Vérifié : reculs, emprise, hauteur, risques · non modélisé : Stationnement, Espaces
+  libres, Servitudes d'utilité publique
+
+
+
+
+      Zone d'implantation réglementaire (schéma — pas un plan de masse)
+
+          Zone d'implantation                         Retraits
+          Bâti existant                               Contour cadastral
+
+
+
+
+Zone d'implantation                304 m²                                                     sourcé
+
+
+Plafond d'emprise                  Non réglementé                                             sourcé
+
+
+Hauteur réglementaire              12,0 m                                                     sourcé
+
+
+
+
+                                                                                     Généré via LABUSE
+
+
+
+
+                                                                                                 1/2
+Règles appliquées
+
+Limites séparatives : 3,0 m
+BD TOPO® — troncon_de_route (voirie) + cadastre · BD TOPO® V3 (IGN) — édition non enregistrée · LABUSE — adjacence cadastre +
+BD TOPO BD TOPO® V3 (IGN) — édition non enregistrée
+
+
+Emprise au sol — non réglementée — PLU Sainte-Suzanne zone UB : silence du règlement
+PLU — Sainte-Suzanne · UB · LABUSE — règlement PLU validé (config/plu_destinations)
+
+
+Hauteur maximale : 12,0 m
+PLU — Sainte-Suzanne · UB · LABUSE — règlement PLU validé (config/plu_destinations)
+
+
+
+Règles non intégrées
+
+Stationnement — Règle connue, non chiffrée
+PLU — Sainte-Suzanne · UB · LABUSE — règlement PLU validé (config/plu_destinations)
+
+
+Espaces libres — Règle connue, non chiffrée
+PLU — Sainte-Suzanne · UB · LABUSE — règlement PLU validé (config/plu_destinations)
+
+
+PPR — analyse — Aucune zone rouge PPR sur la parcelle
+PPR — zonage réglementaire · DEAL Réunion — PPR (zonage réglementaire)
+
+
+Servitudes d'utilité publique — Aucune SUP sur la parcelle
+SUP — servitudes d'utilité publique · GPU / API Carto — servitudes d'utilité publique (assiettes)
+
+Gabarit réglementaire 2D, pré-faisabilité sur règlement public. Une étude par un professionnel peut modifier ces valeurs.
+
+Sources : Cadastre (API Carto PCI) · Urbanisme PLU/GPU (API Carto) · DEAL Réunion — PPR / aléas
+
+
+
+
+                                                                                                               Généré via LABUSE
+
+
+
+
+                                                                                                                            2/2
+

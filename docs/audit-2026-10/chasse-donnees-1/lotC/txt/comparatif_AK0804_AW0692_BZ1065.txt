@@ -1,0 +1,83 @@
+LABUSE       Comparatif
+
+
+
+
+Comparatif
+Deux à trois parcelles côte à côte, sur les lignes de Comparer.
+
+3 parcelles · CO-20261012-0804 · 12/10/2026
+
+
+
+  Comparatif
+                                              AK 0804             AW 0692             BZ 1065
+                                              Saint-André         Saint-Denis         Saint-Denis
+
+ Surface    sourcé                            28 258 m²           991 m²              1 625 m²
+
+ Zone PLU    sourcé                           UB                  Ud                  Uh
+
+ Classement LABUSE                            A · signal faible   D · signal faible   D · signal faible
+
+ Zone constructible       sourcé              oui                 oui                 oui
+
+ SDP max estimée        estimé                34 243 m²           879 m²              212 m²
+
+ SDP résiduelle      estimé                   34 223 m²           118 m²              35 m²
+
+ Emprise au sol max (PLU)          sourcé     non réglementée     80 %                30 %
+
+ Taux d'occupation du gabarit                 0%                  164 %               40 %
+   estimé
+
+
+ Sous-densité     estimé                      oui                 non                 oui
+
+ Charge foncière /m² terrain         estimé   7 €/m²              -35 €/m²            -20 €/m²
+
+                                                                                                 Généré via LABUSE
+
+
+
+
+                                                                                                             1/2
+                                      AK 0804                                                    AW 0692                                 BZ 1065
+                                      Saint-André                                                Saint-Denis                             Saint-Denis
+
+Prix terrain nu zone      estimé      264 €/m²                                                   485 €/m²                                485 €/m²
+
+Prix bâti (section cadastrale)        2 506 €/m²                                                 2 104 €/m²                              3 494 €/m²
+  estimé
+
+
+Logements possibles          estimé   334 à 335                                                  8 à 11                                  1à2
+
+Bâti existant    sourcé               0 % du terrain                                             81 % du terrain                         11 % du terrain
+
+Gabarit max     sourcé                R+3                                                        R+3                                     R+0
+
+Accès & réseaux      sourcé           Viabilisation confirmée par les faits                      Viabilisation confirmée par les faits   Viabilisation
+                                                                                                                                         confirmée par les
+                                                                                                                                         faits
+
+Assainissement      estimé            51 % des logements du secteur ne sont pas raccordés au     16 % des logements du secteur ne sont   Assainissement non
+                                      réseau collectif                                           pas raccordés au réseau collectif       collectif
+
+Propriétaire    sourcé                personne morale                                            personne morale                         particulier
+
+Contrainte majeure        sourcé      Zone bleue PPR inondation+MOUVEMENTS_DE_TERRAIN            Secteur affecté par le bruit routier    SDP résiduelle 35 m²
+                                      (~88% de la parcelle) — constructible SOUS PRESCRIPTIONS   (classement sonore cat. 2, bande 250    — rien à construire.
+                                      (règlement DEAL).                                          m) — isolement acoustique renforcé
+                                                                                                 obligatoire (R.571-32 CE).
+
+
+
+
+                                                                                                                                                 Généré via LABUSE
+
+
+
+
+                                                                                                                                                             2/2
+

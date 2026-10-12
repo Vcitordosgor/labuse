@@ -1,0 +1,2 @@
+﻿# cadrage NON figé (jamais exécuté) · valeurs au 2026-10-11 · export généré le 2026-10-12 · ordre géographique · aucune sélection ni classement interne
+idu;commune;section;numero;surface_m2;adresse;code_postal;ville;etat_bien;sdp_residuelle_m2;sdp_indispo;etage0

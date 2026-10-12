@@ -1,0 +1,82 @@
+LABUSE       Comparatif
+
+
+
+
+Comparatif
+Deux à trois parcelles côte à côte, sur les lignes de Comparer.
+
+2 parcelles · CO-20261012-0007 · 12/10/2026
+
+
+
+  Comparatif
+                                              BZ 0007             BZ 0005
+                                              Saint-Paul          Saint-Paul
+
+ Surface    sourcé                            5 519 m²            19 371 m²
+
+ Zone PLU    sourcé                           Usdu                Usdu
+
+ Classement LABUSE                            0 · signal faible   0 · signal faible
+
+ Zone constructible       sourcé              oui                 oui
+
+ SDP max estimée        estimé                430 m²              —
+
+ SDP résiduelle      estimé                   0 m²                — · terrain exigu
+
+ Emprise au sol max (PLU)          sourcé     non réglementée     non réglementée
+
+ Taux d'occupation du gabarit                 607 %               —
+   estimé
+
+
+ Sous-densité     estimé                      non                 —
+
+ Charge foncière /m² terrain         estimé   2 €/m²              —
+
+                                                                                      Généré via LABUSE
+
+
+
+
+                                                                                                  1/2
+                                      BZ 0007                                                                                    BZ 0005
+                                      Saint-Paul                                                                                 Saint-Paul
+
+Prix terrain nu zone      estimé      479 €/m²                                                                                   479 €/m²
+
+Prix bâti (section cadastrale)        1 168 €/m²                                                                                 1 168 €/m²
+  estimé
+
+
+Logements possibles          estimé   1à3                                                                                        0
+
+Bâti existant    sourcé               52 % du terrain                                                                            —
+
+Gabarit max     sourcé                R+1                                                                                        —
+
+Accès & réseaux      sourcé           Viabilisation confirmée par les faits                                                      Viabilisation confirmée par les
+                                                                                                                                 faits
+
+Assainissement      estimé            96 % des logements du secteur ne sont pas raccordés au réseau collectif                    96 % des logements du secteur ne
+                                                                                                                                 sont pas raccordés au réseau
+                                                                                                                                 collectif
+
+Propriétaire    sourcé                particulier                                                                                particulier
+
+Contrainte majeure        sourcé      Domaine public fluvial (DPF à ~2.8 m) — servitude de marchepied de 3,25 m (art. L2131-2    Zone A PLU — inconstructible
+                                      CGPPP) : bande grevée d'un passage public, inconstructible ; lit du cours d'eau domanial   (recouvrement 98 %).
+                                      inaliénable (arrêté préfectoral n°06-3077 du 21/08/2006).
+
+
+
+
+                                                                                                                                                        Généré via LABUSE
+
+
+
+
+                                                                                                                                                                    2/2
+

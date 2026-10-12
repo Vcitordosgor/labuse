@@ -1,0 +1,80 @@
+LABUSE       Comparatif
+
+
+
+
+Comparatif
+Deux à trois parcelles côte à côte, sur les lignes de Comparer.
+
+2 parcelles · CO-20261012-0002 · 12/10/2026
+
+
+
+  Comparatif
+                                              BN 0002              BC 9999
+                                              Saint-Philippe       Sainte-Suzanne
+
+ Surface    sourcé                            514 606 m²           600 m²
+
+ Zone PLU    sourcé                           hors zonage PLU      UB
+
+ Classement LABUSE                            NC · signal faible   D · signal faible
+
+ Zone constructible       sourcé              —                    oui
+
+ SDP max estimée        estimé                —                    411 m²
+
+ SDP résiduelle      estimé                   —                    189 m²
+
+ Emprise au sol max (PLU)          sourcé     non réglementée      non réglementée
+
+ Taux d'occupation du gabarit                 —                    77 %
+   estimé
+
+
+ Sous-densité     estimé                      —                    non
+
+ Charge foncière /m² terrain         estimé   —                    -37 €/m²
+
+                                                                                       Généré via LABUSE
+
+
+
+
+                                                                                                   1/2
+                                      BN 0002                                                                      BC 9999
+                                      Saint-Philippe                                                               Sainte-Suzanne
+
+Prix terrain nu zone      estimé      —                                                                            321 €/m²
+
+Prix bâti (section cadastrale)        —                                                                            2 490 €/m²
+  estimé
+
+
+Logements possibles          estimé   —                                                                            4à6
+
+Bâti existant    sourcé               —                                                                            39 % du terrain
+
+Gabarit max     sourcé                —                                                                            R+2
+
+Accès & réseaux      sourcé           Viabilisation lourde probable                                                —
+
+Assainissement      estimé            95 % des logements du secteur ne sont pas raccordés au réseau                31 % des logements du secteur ne sont pas
+                                      collectif                                                                    raccordés au réseau collectif
+
+Propriétaire    sourcé                personne morale                                                              particulier
+
+Contrainte majeure        sourcé      Espace protégé à protection forte : Réserve biologique — Hauts de            Secteur affecté par le bruit routier (classement
+                                      Saint-Philippe (des) (réserve biologique, 100 % de la parcelle) —            sonore cat. 1, bande 300 m) — isolement
+                                      construction exclue (réserve naturelle / arrêté de protection de biotope).   acoustique renforcé obligatoire (R.571-32 CE).
+
+
+
+
+                                                                                                                                                         Généré via LABUSE
+
+
+
+
+                                                                                                                                                                      2/2
+

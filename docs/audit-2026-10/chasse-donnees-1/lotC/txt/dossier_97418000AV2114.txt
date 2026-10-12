@@ -1,0 +1,288 @@
+D O S S I E R PA R C E L L E
+
+97418000AV2114
+Sainte-Marie
+
+
+DP-20261012-2114               12/10/2026        —
+n° de rapport                  généré le         contenance
+
+
+
+   Nord-Est
+   EXPOSITION
+
+
+
+
+1. Identité                                                          7. Fiscalité et dispositifs
+2. Terrain                                                           8. Marché
+3. Bâti                                                              9. Quartier
+4. Urbanisme                                                         10. Potentiel
+5. Risques et environnement                                          11. Simulation
+6. Réseaux et desserte                                               12. Limites et sources
+
+ sourcé      lu dans la source · ƒ dérivé calculé · estimé hypothèse dite · projet saisi par vous
+
+
+
+
+                                                         Généré via LABUSE                          1/6
+ 1. Identité
+
+
+
+
+Plan de situation — la parcelle (contour) et ses voisines · © IGN — BD ORTHO
+
+
+
+VÉRIFIÉ : RIEN
+   • Copropriétés : aucune copropriété immatriculée sur la parcelle.
+   • Filiation cadastrale : aucune filiation connue (parcelle stable).
+   • Dernière vente : aucune mutation DVF publiée sur cette parcelle (fenêtre 2014-2025).
+   • Aucun permis recensé sur cette parcelle (Sitadel).
+   • Historique de détention : aucun millésime de détention connu.
+
+
+
+NON DISPONIBLE ICI
+   • Adresse non disponible — parcelle non rattachée à une voie (BAN).
+   • Type de propriétaire : non déterminé.
+
+
+
+
+ 2. Terrain
+VÉRIFIÉ : RIEN
+   • Part artificialisée : hors couverture OCS GE pour cette parcelle.
+   • Usage du sol dominant : hors couverture OCS GE pour cette parcelle.
+   • Part imperméabilisée (CoSIA) : parcelle hors couverture CoSIA.
+   • Part végétalisée/boisée (CoSIA) : parcelle hors couverture CoSIA.
+   • Part sol nu (CoSIA) : parcelle hors couverture CoSIA.
+   • Piscine détectée : aucune piscine repérée sur la parcelle.
+
+
+
+NON DISPONIBLE ICI
+   • Surface au sol libre : non calculable (emprise ou surface parcelle manquante).
+
+
+
+
+ 3. Bâti
+
+Parcelle non bâtie (aucun bâtiment cartographié).
+
+
+
+
+                                                           Généré via LABUSE                2/6
+  VÉRIFIÉ : RIEN
+    • Bâtiments : aucun bâtiment détecté (parcelle nue au bâti cartographié).
+    • Emprise bâtie : aucun bâti au sol détecté sur cette parcelle.
+    • Hauteur du bâti : non mesurée (ni LiDAR ni hauteur BD TOPO sur ce bâti).
+    • Bâti détecté par IA (CoSIA) : cohérent avec la cartographie IGN, rien à signaler.
+    • Identifiants RNB : aucun bâtiment rattaché au RNB sur cette parcelle.
+    • Adresses BAN PLUS : aucun lien adresse↔bâtiment sur cette parcelle.
+
+
+
+  NON DISPONIBLE ICI
+    • Pente du toit : non relevée (LiDAR toiture non calculé sur ce bâti).
+    • Forme du toit : non déterminée (pans non nets ou LiDAR indisponible).
+
+
+
+
+  4. Urbanisme
+Rappel RTAA DOM                                Conception réglementée pour tout logement neuf                          sourcé
+                                               (aération traversante, protection solaire, eau chaude
+                                               solaire) — à intégrer au projet.
+
+
+  VÉRIFIÉ : RIEN
+    • Aucune servitude d'utilité publique (SUP) intersectant la parcelle, sur les assiettes publiées pour la commune (GPU).
+    • SCOT : la parcelle n'est couverte par aucun schéma de cohérence territoriale.
+    • PLU : document d'urbanisme non résolu pour cette commune.
+    • Hors emplacement réservé du PLU.
+    • Hors espace boisé classé du PLU.
+    • Hors périmètre de préemption urbaine publié.
+    • Hors zones du plan d'exposition au bruit.
+
+
+
+  NON DISPONIBLE ICI
+    • Règlement de la zone : extraits non disponibles pour cette zone.
+    • Mixité sociale : seuils de la zone non renseignés à ce jour.
+
+
+
+
+  5. Risques et environnement
+  VÉRIFIÉ : RIEN
+    • Aléas : aucun aléa réglementaire ne touche cette parcelle.
+    • Sols pollués (SIS) : la parcelle n'est dans aucun secteur d'information sur les sols.
+    • Système d'endiguement : la parcelle n'est dans aucune zone protégée déclarée.
+    • Anciens sites industriels (CASIAS) : aucun site recensé sur ou près de la parcelle.
+    • EnR au sol interdites (APER) : la parcelle n'est dans aucune zone d'exclusion.
+    • Mesure compensatoire (GéoMCE) : aucune mesure ne recoupe la parcelle.
+    • Aucun secteur d'information sur les sols ni site CASIAS à proximité.
+
+
+
+  NON DISPONIBLE ICI
+    • Points de risque : non évalués (parcelle hors run servi).
+
+
+
+
+                                                         Généré via LABUSE                                                    3/6
+   6. Réseaux et desserte
+  VÉRIFIÉ : RIEN
+     • Fibre : aucune information de déploiement à l'adresse.
+     • Arrêt de transport : aucun arrêt à proximité mesurable.
+     • Hors rayon de 800 m d'une station TCSP.
+
+
+
+  NON DISPONIBLE ICI
+     • Viabilisation : non évaluée sur cette parcelle.
+     • Taux de raccordement à l'égout non disponible pour ce secteur.
+     • Productible solaire : non calculé sur cette toiture.
+
+
+
+
+   7. Fiscalité et dispositifs
+  VÉRIFIÉ : RIEN
+     • Dispositifs : la parcelle n'est dans aucun dispositif territorial repéré.
+
+
+
+  NON DISPONIBLE ICI
+     • Taxe foncière : taux non disponible pour cette commune.
+     • Taxe d'aménagement : taux communal non renseigné pour cette commune.
+
+
+
+
+   8. Marché
+Affiché — neuf déclaré (VEFA)
+
+Neuf VEFA — commune                              4 190 €/m² — VEFA déclaré à l'acte, 83 ventes (commune,   sourcé
+                                                 5 ans)
+
+
+  VÉRIFIÉ : RIEN
+     • Terrain nu — section cadastrale : échantillon DVF insuffisant pour une médiane fiable.
+     • Ancien bâti — secteur : échantillon DVF insuffisant pour une médiane fiable.
+     • Ventes retenues : aucune vente DVF exploitable dans le secteur.
+     • Ventes écartées : aucune vente écartée (toutes vraisemblables).
+     • Ventes de cette parcelle : aucune mutation DVF connue sur la parcelle.
+     • Annonces en cours (Radar) : aucune annonce active repérée dans le secteur.
+     • Aucune vente DVF recensée à moins de 100 m sur 36 mois.
+
+
+Sources : DVF / valeurs foncières
+
+
+
+   9. Quartier
+Le secteur
+
+Permis à proximité                               15 permis (< 500 m, 24 mois)                              sourcé
+
+
+
+
+                                                           Généré via LABUSE                                  4/6
+  VÉRIFIÉ : RIEN
+     • Quartier (IRIS) : parcelle hors découpage IRIS connu.
+
+
+
+  NON DISPONIBLE ICI
+     • Équipements du quotidien non renseignés autour de cette parcelle.
+
+
+Sources : SITADEL (autorisations d'urbanisme)
+
+
+
+   10. Potentiel
+Gabarit réglementaire
+
+Zone d'implantation                                 2 225 m²                                                       sourcé
+
+
+Plafond d'emprise                                   1 997 m²                                                       sourcé
+
+
+Hauteur réglementaire                               15,0 m                                                         sourcé
+
+
+Couverture réglementaire                            Vérifié : reculs, emprise, hauteur, risques · non modélisé :   sourcé
+                                                    Stationnement, Espaces libres, Servitudes d'utilité
+                                                    publique
+
+
+
+
+                                 Zone d'implantation réglementaire (schéma — pas un plan de masse)
+
+                                    Zone d'implantation                    Retraits
+                                    Bâti existant                          Contour cadastral
+
+
+
+
+  NON DISPONIBLE ICI
+     • Potentiel : rien d'évaluable (données manquantes).
+     • Capacité (logements) : non estimable sur cette parcelle.
+     • Surface de plancher non calculable (capacité nulle).
+     • Surface vendable non calculable pour cette parcelle.
+     • Marge de surélévation non calculable (bâti non déterminé).
+
+
+Sources : Cadastre (API Carto PCI) · Urbanisme PLU/GPU (API Carto) · DEAL Réunion — PPR / aléas
+
+
+
+
+                                                               Généré via LABUSE                                      5/6
+   11. Simulation
+
+  Renseignez votre opération pour obtenir le bilan
+  Le bilan dépend de chiffres que vous seul connaissez : prix demandé par le vendeur, coût de construction,
+  marge visée. LABUSE ne les suppose pas à votre place. Le document Bilan les recueille et imprime le chiffre
+  d'affaires, la charge foncière supportable, l'écart au prix demandé et la sensibilité au coût de construction.
+
+
+
+
+   12. Limites et sources
+
+Ce que ce document ne peut pas dire
+
+Constructibilité définitive                 Certificat d'urbanisme — mairie, service instructeur
+
+Valeur vénale                               Avis de valeur — notaire, expert
+
+État du bâti, servitudes privées            Visite et acte notarié
+
+Coût de démolition, de dépollution          Devis d'entreprise
+
+Réseaux et raccordements chiffrés           Gestionnaires, DT-DICT
+
+Position du propriétaire, prix demandé Contact direct ou apporteur d'affaires
+
+Document d'information établi à partir de données publiques. Il ne constitue ni un document d'urbanisme opposable, ni une
+étude de faisabilité réglementaire, ni un conseil juridique, et ne remplace pas un certificat d'urbanisme. Fonds
+cartographiques : © IGN, © contributeurs OpenStreetMap (ODbL).
+
+
+
+
+                                                      Généré via LABUSE                                                6/6
+

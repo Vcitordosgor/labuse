@@ -1,0 +1,97 @@
+LABUSE      Gabarit
+
+
+
+
+Gabarit
+L'enveloppe réglementaire de la parcelle : zone d'implantation, plafond d'emprise, hauteur.
+
+97418000AV2114 · GA-20261012-2114 · 12/10/2026
+
+
+
+  Enveloppe réglementaire (gabarit)
+
+  Vérifié : reculs, emprise, hauteur, risques · non modélisé : Stationnement, Espaces
+  libres, Servitudes d'utilité publique
+
+
+
+
+      Zone d'implantation réglementaire (schéma — pas un plan de masse)
+
+          Zone d'implantation                         Retraits
+          Bâti existant                               Contour cadastral
+
+
+
+
+Zone d'implantation                2 225 m²                                                   sourcé
+
+
+Plafond d'emprise                  1 997 m²                                                   sourcé
+
+
+Hauteur réglementaire              15,0 m                                                     sourcé
+
+
+
+
+                                                                                     Généré via LABUSE
+
+
+
+
+                                                                                                 1/2
+Règles appliquées
+
+Recul voie : 3,0 m
+BD TOPO® — troncon_de_route (voirie) + cadastre · BD TOPO® V3 (IGN) — édition non enregistrée · LABUSE — adjacence cadastre +
+BD TOPO BD TOPO® V3 (IGN) — édition non enregistrée
+
+
+Limites séparatives : 3,0 m
+BD TOPO® — troncon_de_route (voirie) + cadastre · BD TOPO® V3 (IGN) — édition non enregistrée · LABUSE — adjacence cadastre +
+BD TOPO BD TOPO® V3 (IGN) — édition non enregistrée
+
+
+Emprise maximale : 70.0
+PLU — Sainte-Marie · UB · LABUSE — règlement PLU validé (config/plu_destinations)
+
+
+Hauteur maximale : 15,0 m
+PLU — Sainte-Marie · UB · LABUSE — règlement PLU validé (config/plu_destinations)
+
+
+
+Règles non intégrées
+
+Stationnement — Règle connue, non chiffrée
+PLU — Sainte-Marie · UB · LABUSE — règlement PLU validé (config/plu_destinations)
+
+
+Espaces libres — Règle connue, non chiffrée
+PLU — Sainte-Marie · UB · LABUSE — règlement PLU validé (config/plu_destinations)
+
+
+PPR — analyse — Aucun risque PPR/aléa intersecté.
+PPR — zonage réglementaire · DEAL Réunion — PPR (zonage réglementaire)
+
+
+Servitudes d'utilité publique — Aucune SUP sur la parcelle
+SUP — servitudes d'utilité publique · GPU / API Carto — servitudes d'utilité publique (assiettes)
+
+Gabarit réglementaire 2D, pré-faisabilité sur règlement public. Une étude par un professionnel peut modifier ces valeurs.
+
+Sources : Cadastre (API Carto PCI) · Urbanisme PLU/GPU (API Carto) · DEAL Réunion — PPR / aléas
+
+
+
+
+                                                                                                               Généré via LABUSE
+
+
+
+
+                                                                                                                            2/2
+

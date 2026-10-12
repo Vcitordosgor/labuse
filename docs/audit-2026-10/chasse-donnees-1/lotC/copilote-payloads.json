@@ -1,0 +1,131 @@
+{
+ "97409000AK0804": {
+  "premium": {
+   "surface_m2": 28258,
+   "surface_terrain_m2": 27862,
+   "contenance_m2": 27862,
+   "zones": [
+    "UB"
+   ],
+   "sdp_residuelle_m2": 34223.0,
+   "bande": null,
+   "tier_v2": "sans_signal",
+   "rang_v2": 3742
+  },
+  "legacy": {
+   "surface_m2": 28257.633221272117,
+   "zone_resolue": "UB",
+   "surface_plancher_m2": 34243,
+   "niveaux": "R+3",
+   "tier": "sans_signal",
+   "rang": 3742,
+   "status": "sans_signal",
+   "opportunity_score": 0,
+   "faisa_surface_terrain": 27862
+  }
+ },
+ "97415000CW0658": {
+  "premium": {
+   "surface_m2": 27156,
+   "surface_terrain_m2": 25633,
+   "contenance_m2": 25633,
+   "zones": [
+    "AU3a",
+    "AU3h",
+    "N"
+   ],
+   "sdp_residuelle_m2": 38619.0,
+   "bande": null,
+   "tier_v2": "sans_signal",
+   "rang_v2": 106607
+  },
+  "legacy": {
+   "surface_m2": 27155.518428622894,
+   "zone_resolue": "AU3a → règles de U3a (renvoi du règlement, Règles de U3 de même indice. Source: p.154.)",
+   "surface_plancher_m2": 38619,
+   "niveaux": "R+4",
+   "tier": "sans_signal",
+   "rang": 106607,
+   "status": "sans_signal",
+   "opportunity_score": 71,
+   "faisa_surface_terrain": 25633
+  }
+ },
+ "97415000BZ0007": {
+  "premium": {
+   "surface_m2": 5519,
+   "surface_terrain_m2": 5600,
+   "contenance_m2": 5600,
+   "zones": [
+    "Usdu",
+    "N"
+   ],
+   "sdp_residuelle_m2": 0.0,
+   "bande": null,
+   "tier_v2": "ecartee",
+   "rang_v2": 278162
+  },
+  "legacy": {
+   "surface_m2": 5518.586062618842,
+   "zone_resolue": "Usdu",
+   "surface_plancher_m2": 430,
+   "niveaux": "R+1",
+   "tier": "ecartee",
+   "rang": 278162,
+   "status": "ecartee",
+   "opportunity_score": 0,
+   "faisa_surface_terrain": 5600
+  }
+ },
+ "97416000DV0285": {
+  "premium": {
+   "surface_m2": 117505,
+   "surface_terrain_m2": 1,
+   "contenance_m2": 1,
+   "zones": [
+    "Ue",
+    "N"
+   ],
+   "sdp_residuelle_m2": null,
+   "bande": null,
+   "tier_v2": "sans_signal",
+   "rang_v2": 106292
+  },
+  "legacy": {
+   "surface_m2": 117504.70912886782,
+   "zone_resolue": "Ue",
+   "surface_plancher_m2": null,
+   "niveaux": null,
+   "tier": "sans_signal",
+   "rang": 106292,
+   "status": "sans_signal",
+   "opportunity_score": 0,
+   "faisa_surface_terrain": 1
+  }
+ },
+ "97411000BZ1065": {
+  "premium": {
+   "surface_m2": 1625,
+   "surface_terrain_m2": 1567,
+   "contenance_m2": 1567,
+   "zones": [
+    "Uh"
+   ],
+   "sdp_residuelle_m2": 35.0,
+   "bande": null,
+   "tier_v2": "sans_signal",
+   "rang_v2": 282107
+  },
+  "legacy": {
+   "surface_m2": 1624.9987767026141,
+   "zone_resolue": "Uh",
+   "surface_plancher_m2": 212,
+   "niveaux": "R+0",
+   "tier": "sans_signal",
+   "rang": 282107,
+   "status": "sans_signal",
+   "opportunity_score": 48,
+   "faisa_surface_terrain": 1567
+  }
+ }
+}

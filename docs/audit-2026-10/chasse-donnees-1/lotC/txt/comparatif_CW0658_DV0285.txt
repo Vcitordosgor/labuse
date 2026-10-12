@@ -1,0 +1,79 @@
+LABUSE       Comparatif
+
+
+
+
+Comparatif
+Deux à trois parcelles côte à côte, sur les lignes de Comparer.
+
+2 parcelles · CO-20261012-0658 · 12/10/2026
+
+
+
+  Comparatif
+                                              CW 0658             DV 0285
+                                              Saint-Paul          Saint-Pierre
+
+ Surface    sourcé                            27 156 m²           117 505 m²
+
+ Zone PLU    sourcé                           AU3a                Ue
+
+ Classement LABUSE                            A · signal faible   NC · signal faible
+
+ Zone constructible       sourcé              oui                 oui
+
+ SDP max estimée        estimé                38 619 m²           —
+
+ SDP résiduelle      estimé                   38 619 m²           — · surface incertaine
+
+ Emprise au sol max (PLU)          sourcé     non réglementée     75 %
+
+ Taux d'occupation du gabarit                 0%                  —
+   estimé
+
+
+ Sous-densité     estimé                      oui                 —
+
+ Charge foncière /m² terrain         estimé   -94 €/m²            —
+
+                                                                                           Généré via LABUSE
+
+
+
+
+                                                                                                       1/2
+                                      CW 0658                                                                          DV 0285
+                                      Saint-Paul                                                                       Saint-Pierre
+
+Prix terrain nu zone      estimé      328 €/m²                                                                         422 €/m²
+
+Prix bâti (section cadastrale)        4 421 €/m²                                                                       3 724 €/m²
+  estimé
+
+
+Logements possibles          estimé   225 à 226                                                                        0
+
+Bâti existant    sourcé               0 % du terrain                                                                   —
+
+Gabarit max     sourcé                R+4                                                                              —
+
+Accès & réseaux      sourcé           Viabilisation confirmée par les faits                                            Viabilisation confirmée par les faits
+
+Assainissement      estimé            6 % des logements du secteur ne sont pas raccordés au réseau collectif           46 % des logements du secteur ne sont pas
+                                                                                                                       raccordés au réseau collectif
+
+Propriétaire    sourcé                personne morale                                                                  personne morale
+
+Contrainte majeure        sourcé      Secteur affecté par le bruit routier (classement sonore cat. 1, bande 300 m) —   SDP résiduelle 0 m² — rien à construire.
+                                      isolement acoustique renforcé obligatoire (R.571-32 CE).
+
+
+
+
+                                                                                                                                                         Généré via LABUSE
+
+
+
+
+                                                                                                                                                                     2/2
+
