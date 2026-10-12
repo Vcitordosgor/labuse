@@ -39,6 +39,12 @@ for t in dryrun_cascade_results cascade_results p_model_dataset p_model_dataset_
     EXCLUDES="$EXCLUDES --exclude-table-data=$t"
 done
 
+# Schémas de RELIQUAT (snapshots de maintenance, ex. sauvegarde_20261006 posé par schema-parité-1) :
+# le rôle de dump (labuse) n'a pas les droits dessus → pg_dump casse sur « permission denied for schema »
+# (incident 07→12/10 : plus aucun dump produit). On les EXCLUT du dump — on NE les supprime PAS.
+# Motif quoté (le `*` ne doit PAS être globé par le shell) ; passé en argument explicite à pg_dump.
+EXCLUDE_SCHEMAS='--exclude-schema=sauvegarde_*'
+
 # DISQUE-VPS-1 — GARDE-DISQUE avant dump : « tient dans le disque, garde toujours au moins le plus
 # récent ». Si l'espace libre < 1,3 × le plus gros dump existant, on supprime les dumps quotidiens
 # LES PLUS ANCIENS (jamais le plus récent) jusqu'à avoir la place. Structurel, indépendant de KEEP.
@@ -64,7 +70,7 @@ echo "▶ [$(date '+%F %T')] pg_dump $DB (lean) → $OUT"
 # J+2 (incident 22/07 : un échec d'auth laissait un dump de 0 octet, silencieux jusqu'au pull) :
 # le fichier raté est SUPPRIMÉ et le script échoue BRUYAMMENT ; un dump vide/illisible ne survit pas.
 # shellcheck disable=SC2086 — $EXCLUDES est une liste d'options construite ci-dessus.
-if ! pg_dump -Fc --no-owner $EXCLUDES -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB" -f "$OUT"; then
+if ! pg_dump -Fc --no-owner "$EXCLUDE_SCHEMAS" $EXCLUDES -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB" -f "$OUT"; then
     rm -f -- "$OUT"
     echo "✗ pg_dump A ÉCHOUÉ — dump supprimé, rien de corrompu ne reste" >&2
     exit 1
