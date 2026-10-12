@@ -65,7 +65,12 @@ def simulplu(zone: str, commune: str | None = None, offset: int = Query(0, ge=0)
         JOIN parcel_residuel r ON r.parcel_id = p.id AND r.sdp_residuelle_m2 > 0
         WHERE cr.run_label = :run AND cr.layer_name = 'zonage_plu_gpu'
           AND cr.detail LIKE 'Zone PLU « U%'"""),
-        {"c": commune, "run": runs.cascade()}).scalar() or 0.0
+        {"c": commune, "run": runs.cascade()}).scalar()
+    # CHASSE-DONNEES-FIX-1 (Lot 4, E-83) — percentile_cont renvoie NULL quand AUCUNE parcelle U
+    # comparable n'existe (RNU, ou 0 parcelle U dans la cascade) : l'analogie est NON CALCULABLE,
+    # jamais un ratio 0.0 présenté comme mesuré (qui rendait « SDP estimée 0 m² » sur tout le listing).
+    ratio_connu = ratio is not None
+    ratio_f = float(ratio) if ratio_connu else 0.0
     # M137-O — le plafond de liste sort du DUR (config/moteurs.yaml) ; on sert AUSSI le total réel pour
     # que l'écran DISE « les N premières sur M » (un plafond muet ment — leçon M120-B).
     # PLU Lot A (pagination SOCLE) : `offset` pagine la liste (cap par page) → « Voir N de plus » jusqu'à
@@ -83,7 +88,7 @@ def simulplu(zone: str, commune: str | None = None, offset: int = Query(0, ge=0)
         LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
         WHERE cr.run_label = :run AND cr.layer_name = 'zonage_plu_gpu'
           AND cr.detail ILIKE ('%« ' || :z || ' »%') AND p.surface_m2 >= 300"""),
-        {"c": commune, "z": zone, "run": runs.cascade(), "v2run": _v2run(db), "ratio": float(ratio)}).mappings().one()
+        {"c": commune, "z": zone, "run": runs.cascade(), "v2run": _v2run(db), "ratio": ratio_f}).mappings().one()
     n_total = int(agg["n_total"])
     rows = db.execute(text("""
         SELECT p.idu, round(p.surface_m2) AS surface_m2, s2.tier AS statut_actuel,
@@ -102,24 +107,31 @@ def simulplu(zone: str, commune: str | None = None, offset: int = Query(0, ge=0)
         {"c": commune, "z": zone, "run": runs.cascade(), "v2run": _v2run(db), "cap": cap, "off": max(0, offset)}).mappings().all()
     items = []
     for r in rows:
-        sdp_est = round(float(r["surface_m2"] or 0) * float(ratio))
+        # E-83 : sans corpus d'analogie, pas de SDP estimée (None), jamais un « 0 m² » trompeur.
+        sdp_est = round(float(r["surface_m2"] or 0) * ratio_f) if ratio_connu else None
         # bandes du socle v2 : ≥300 m² = un signal positif s'ouvre (bascule potentielle)
-        bascule = sdp_est >= 300 and r["statut_actuel"] in ("ecartee", "a_creuser")
+        bascule = bool(ratio_connu and sdp_est is not None and sdp_est >= 300
+                       and r["statut_actuel"] in ("ecartee", "a_creuser"))
         items.append({"idu": r["idu"], "surface_m2": r["surface_m2"], "statut_actuel": r["statut_actuel"],
                       "tier_v2": r["tier_v2"], "rang_v2": r["rang_v2"], "etage0": bool(r["etage0"]),
                       "sdp_estimee_m2": sdp_est, "bascule_potentielle": bascule,
                       "geom": json.loads(r["g"])})
     servis = max(0, offset) + len(items)
     return {
-        "zone": zone, "commune": commune or "Toute l'île", "ratio_analogie": round(float(ratio), 3),
-        "methode": ("SIMULATION À BLANC (rien n'est persisté) — SDP estimée par ANALOGIE : "
-                    f"surface × ratio médian SDP/surface des parcelles U de {commune or 'toute l’île'} "
-                    f"({round(float(ratio), 3)}). Le vrai recalcul = règlement U appliqué au moteur "
-                    "de faisabilité (prochain cycle)."),
+        "zone": zone, "commune": commune or "Toute l'île",
+        "calculable": ratio_connu,
+        "ratio_analogie": round(ratio_f, 3) if ratio_connu else None,
+        "methode": (("SIMULATION À BLANC (rien n'est persisté) — SDP estimée par ANALOGIE : "
+                     f"surface × ratio médian SDP/surface des parcelles U de {commune or 'toute l’île'} "
+                     f"({round(ratio_f, 3)}). Le vrai recalcul = règlement U appliqué au moteur "
+                     "de faisabilité (prochain cycle).") if ratio_connu else
+                    ("SIMULATION NON CALCULABLE : aucune parcelle U avec résiduel comparable à "
+                     f"{commune or 'toute l’île'} — pas d'analogie possible, aucune SDP estimée.")),
         "n_parcelles": len(items), "n_total": n_total, "cap": cap, "offset": max(0, offset),
         "tronquee": n_total > servis,
-        "bascules_potentielles": int(agg["bascules"]),           # TOTAL (tout le zonage), stable
-        "sdp_totale_estimee_m2": int(agg["sdp_totale"]),         # TOTAL (tout le zonage), stable
+        # TOTAUX (tout le zonage, stables) — None si l'analogie n'est pas calculable (jamais 0 mesuré).
+        "bascules_potentielles": int(agg["bascules"]) if ratio_connu else 0,
+        "sdp_totale_estimee_m2": int(agg["sdp_totale"]) if ratio_connu else None,
         "items": items,
     }
 

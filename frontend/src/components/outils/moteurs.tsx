@@ -94,9 +94,17 @@ export function M15({ communeOverride }: { communeOverride?: string | null } = {
       {meta && !sim.isLoading && (
         <>
           <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] text-txt-mut">
-            <div><b className="text-txt">{fmt(total)}</b> parcelles en {meta.zone} · ratio analogie <b className="text-txt">{meta.ratio_analogie}</b></div>
-            <div className="mt-1">SDP estimée totale <b className="tnum text-mint">{fmt(meta.sdp_totale_estimee_m2)} m²</b> ·{' '}
-              <b className="tnum text-mint">{fmt(meta.bascules_potentielles)}</b> bascules potentielles (surlignées)</div>
+            {/* CHASSE-DONNEES-FIX-1 (Lot 4, E-83) — sans parcelle U comparable, l'analogie est NON
+                CALCULABLE : on le DIT, jamais un ratio 0 / « SDP estimée 0 m² » présenté comme mesuré. */}
+            {meta.calculable === false ? (
+              <div><b className="text-txt">{fmt(total)}</b> parcelles en {meta.zone} · simulation <b className="text-txt">non calculable</b> — aucune parcelle U comparable dans le périmètre (pas d'analogie possible, aucune SDP estimée).</div>
+            ) : (
+              <>
+                <div><b className="text-txt">{fmt(total)}</b> parcelles en {meta.zone} · ratio analogie <b className="text-txt">{meta.ratio_analogie}</b></div>
+                <div className="mt-1">SDP estimée totale <b className="tnum text-mint">{fmt(meta.sdp_totale_estimee_m2)} m²</b> ·{' '}
+                  <b className="tnum text-mint">{fmt(meta.bascules_potentielles)}</b> bascules potentielles (surlignées)</div>
+              </>
+            )}
           </div>
           <div className="flex flex-col gap-1">
             {items.map((i) => (

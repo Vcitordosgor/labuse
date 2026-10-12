@@ -257,22 +257,32 @@ def g11_bodacc_fraicheur():
 
 
 def g12_zero_menteur_nu():
-    """E : taux_emprise_pct NULL rendu 0 → badge « Nu » sur parcelle bâtie (IC0434,
-    fiche « déjà bâtie »)."""
-    m = _manifest()
+    """E (E-67/68) : taux_emprise_pct NULL (jamais mesuré, cause écarte la parcelle) était rendu 0
+    → badge « Nu » + filtre « Terrain nu » sur une parcelle bâtie (IC0434). Après FIX-1, l'absence
+    de mesure = 'non_mesure' (jamais 'nu'), et le filtre etat_sol=nu NE renvoie PLUS IC0434.
+    On teste la SORTIE SERVIE : le CASE _ETAT_BIEN_SQL + le prédicat du filtre."""
     with _db() as cx:
         taux = cx.execute(
-            "SELECT r.taux_emprise_pct FROM parcel_residuel_runs r "
-            "JOIN parcels p ON p.id = r.parcel_id "
-            "WHERE r.run_seq = %s AND p.idu = %s", (m["residuel_run_seq"], IC0434)).fetchone()
-    if taux is None:
-        return "SKIP", "IC0434 absente du résiduel servi"
-    fiche = json.dumps(_api(f"/parcels/{IC0434}"), ensure_ascii=False).lower()
-    batie = "bâtie" in fiche or '"nb_batiments"' in fiche
-    if taux[0] is not None:
-        return "OK", f"taux_emprise renseigné ({taux[0]})"
-    return ("ECART", "taux_emprise NULL (rendu 0 → « Nu ») sur parcelle que la fiche dit bâtie") \
-        if batie else ("SKIP", "fiche ne confirme pas le bâti")
+            "SELECT r.taux_emprise_pct FROM parcel_residuel r "
+            "JOIN parcels p ON p.id = r.parcel_id WHERE p.idu = %s", (IC0434,)).fetchone()
+        if taux is None:
+            return "SKIP", "IC0434 absente du résiduel"
+        if taux[0] is not None:
+            return "SKIP", f"taux_emprise désormais mesuré ({taux[0]}) — témoin obsolète"
+        # l'état servi (même CASE que _ETAT_BIEN_SQL) : taux NULL → 'non_mesure', plus 'nu'.
+        etat = cx.execute(
+            "SELECT CASE WHEN r.taux_emprise_pct IS NULL THEN 'non_mesure' "
+            "WHEN r.taux_emprise_pct < 5 THEN 'nu' ELSE 'bati' END "
+            "FROM parcel_residuel r JOIN parcels p ON p.id = r.parcel_id "
+            "WHERE p.idu = %s", (IC0434,)).fetchone()[0]
+        # le filtre « Terrain nu » (etat_sol=nu) exige désormais taux NON NULL < 5 → IC0434 exclue.
+        nu_match = cx.execute(
+            "SELECT EXISTS (SELECT 1 FROM parcel_residuel rs JOIN parcels p ON p.id = rs.parcel_id "
+            "WHERE p.idu = %s AND rs.taux_emprise_pct IS NOT NULL AND rs.taux_emprise_pct < 5)",
+            (IC0434,)).fetchone()[0]
+    if etat == "nu" or nu_match:
+        return "ECART", f"IC0434 rendue « nu » (etat={etat}, filtre_nu={nu_match}) alors que taux non mesuré"
+    return "OK", f"taux non mesuré → etat='{etat}', hors filtre « Terrain nu »"
 
 
 def g13_cloche_fraicheur():
@@ -355,6 +365,36 @@ def g17_comparatif_zone():
     return "SKIP", f"zone comparatif inattendue « {row.get('zone')} »"
 
 
+def g18_simulplu_non_calculable():
+    """Lot 4 (E-83) : SimulPLU servait ratio 0.0 (percentile NULL) comme une estimation → « SDP
+    estimée 0 m² » sur tout le listing. Après FIX-1 : calculable=False + ratio None quand aucune
+    parcelle U comparable (Saint-Philippe Ub, RNU)."""
+    rep = _api("/moteurs/simulplu?zone=Ub&commune=Saint-Philippe")
+    if not isinstance(rep, dict):
+        return "SKIP", "simulplu indisponible"
+    if rep.get("ratio_analogie") == 0.0:
+        return "ECART", "ratio_analogie servi 0.0 (absence présentée comme mesure)"
+    if rep.get("calculable") is False and rep.get("ratio_analogie") is None:
+        return "OK", "analogie non calculable servie comme telle (ratio None)"
+    return "SKIP", f"corpus U présent (calculable={rep.get('calculable')}) — témoin obsolète"
+
+
+def g19_catnat_source_vs_zero():
+    """Lot 4 (E-82) : CatNat renvoyait disponible=False quand une commune avait 0 arrêté, confondu
+    avec la source indisponible → front « aucun arrêté ». Après FIX-1 : source présente ⇒
+    disponible=True (0 arrêté = vrai 0 mesuré), « disponible=False » réservé à la table absente."""
+    fiche = _api(f"/parcels/{CW0658}")
+    if not isinstance(fiche, dict):
+        return "SKIP", "fiche indisponible"
+    c = fiche.get("catnat")
+    if not isinstance(c, dict):
+        return "SKIP", "pas de bloc catnat"
+    # la table existe (témoin à 23 arrêtés) → disponible doit être True (jamais False masquant un 0).
+    if c.get("disponible") is True and (c.get("total") or 0) > 0:
+        return "OK", f"source disponible, {c.get('total')} arrêtés (0 ne pourra plus être « indisponible »)"
+    return "ECART", f"catnat disponible={c.get('disponible')} total={c.get('total')} (source présente)"
+
+
 def g14_digest_vs_cloche():
     """C : le top du digest est recalculé à l'envoi (runs.current()) quand la cloche
     relit event_log — les deux doivent se recouvrir."""
@@ -391,6 +431,8 @@ GARDES = [
     ("courrier-surface", g15_courrier_surface),
     ("disparue-documents", g16_disparue_documents),
     ("comparatif-zone-dominante", g17_comparatif_zone),
+    ("simulplu-non-calculable", g18_simulplu_non_calculable),
+    ("catnat-source-vs-zero", g19_catnat_source_vs_zero),
 ]
 
 

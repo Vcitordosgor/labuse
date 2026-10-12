@@ -151,6 +151,10 @@ export const ETAT_BIEN_META: Record<string, { label: string; short: string; colo
   nu: { label: 'Nu', short: 'Nu', color: '#6FA8DC' },
   bati_encore: { label: 'Bâtie — on peut encore construire', short: 'Bâtie · encore', color: '#5CE6A1' },
   bati_max: { label: 'Bâtie — construite au maximum', short: 'Bâtie · au max', color: '#8C7468' },
+  // CHASSE-DONNEES-FIX-1 (Lot 4, E-67) — l'emprise non MESURÉE (taux jamais calculé quand une
+  // cause écarte la parcelle) n'est plus rendue « Nu » : badge discret « non mesurée », jamais un
+  // faux terrain nu sur une parcelle que la fiche dit bâtie.
+  non_mesure: { label: 'Occupation du sol non mesurée', short: 'Occupation n.c.', color: '#9AA0A6' },
 }
 export function etatBienMeta(e: string | null | undefined) {
   return (e && ETAT_BIEN_META[e]) || null

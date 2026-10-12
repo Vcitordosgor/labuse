@@ -1668,12 +1668,15 @@ def _q_v2_where(run_label: str,
         if cl & {"bati_marginal", "bati_sature", "bati_revele"}:
             cl = (cl - {"bati_marginal", "bati_sature", "bati_revele"}) | {"bati"}
         sub = []
+        # CHASSE-DONNEES-FIX-1 (Lot 4, E-68) — « nu » = emprise RÉELLEMENT mesurée < 5 % (taux NON
+        # NULL), plus « NOT EXISTS taux≥5 » qui avalait l'inconnu (taux NULL) comme du nu : le filtre
+        # « Terrain nu » renvoyait des parcelles bâties à 85-132 % (taux jamais calculé).
         if "nu" in cl:
-            sub.append("NOT EXISTS (SELECT 1 FROM parcel_residuel rs WHERE rs.parcel_id = p.id"
-                       " AND COALESCE(rs.taux_emprise_pct,0) >= 5)")
+            sub.append("EXISTS (SELECT 1 FROM parcel_residuel rs WHERE rs.parcel_id = p.id"
+                       " AND rs.taux_emprise_pct IS NOT NULL AND rs.taux_emprise_pct < 5)")
         if "bati" in cl:
             sub.append("EXISTS (SELECT 1 FROM parcel_residuel rs WHERE rs.parcel_id = p.id"
-                       " AND COALESCE(rs.taux_emprise_pct,0) >= 5)")
+                       " AND rs.taux_emprise_pct IS NOT NULL AND rs.taux_emprise_pct >= 5)")
         if sub:
             conds.append("(" + " OR ".join(sub) + ")")
         elif cl:
@@ -1863,13 +1866,15 @@ def _q_v2_where(run_label: str,
         conds.append("EXISTS (SELECT 1 FROM batiment_hauteur_lidar bhl1 WHERE bhl1.idu = p.idu"
                      " AND bhl1.faitage_m <= :f_hmax)")
         params["f_hmax"] = hauteur_max
+    # CHASSE-DONNEES-FIX-1 (Lot 4, E-81) — l'emprise non MESURÉE (taux NULL) ne passe plus les
+    # bornes basses comme si elle valait 0 % : le filtre exige une valeur RÉELLE (IS NOT NULL).
     if emprise_min is not None:
         conds.append("EXISTS (SELECT 1 FROM parcel_residuel re0 WHERE re0.parcel_id = p.id"
-                     " AND COALESCE(re0.taux_emprise_pct,0) >= :f_empmin)")
+                     " AND re0.taux_emprise_pct IS NOT NULL AND re0.taux_emprise_pct >= :f_empmin)")
         params["f_empmin"] = emprise_min
     if emprise_max is not None:
         conds.append("EXISTS (SELECT 1 FROM parcel_residuel re1 WHERE re1.parcel_id = p.id"
-                     " AND COALESCE(re1.taux_emprise_pct,0) <= :f_empmax)")
+                     " AND re1.taux_emprise_pct IS NOT NULL AND re1.taux_emprise_pct <= :f_empmax)")
         params["f_empmax"] = emprise_max
     # ── M45-B (Lot 1) — tiroir ÉCONOMIE (câblage sur données existantes ; étiquettes Sourcé/Estimé) ──
     if budget_max is not None:
@@ -3403,7 +3408,8 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str |
               'completeness_score', b.completeness_score,
               'sdp_residuelle_m2', b.sdp_residuelle_m2, 'sous_densite', b.sous_densite,
               -- RECETTE-3 (T4) : état du bien + signal « pro a déposé un permis » (segmentation client)
-              'etat_bien', CASE WHEN COALESCE(b.taux_emprise_pct, 0) < 5 THEN 'nu'
+              'etat_bien', CASE WHEN b.taux_emprise_pct IS NULL THEN 'non_mesure'  -- FIX-1 Lot 4 (E-67)
+                                WHEN b.taux_emprise_pct < 5 THEN 'nu'
                                 WHEN COALESCE(b.sdp_residuelle_m2, 0) > 0 THEN 'bati_encore'
                                 ELSE 'bati_max' END,
               'permis_pro', b.permis_pro,
@@ -3536,7 +3542,12 @@ _TIER_GROUPE_PAGE_SQL = (
 # résiduelle (cause NULL) : « encore construire » (>0) / « construite au maximum » (=0).
 # Mesuré sur le vivier servi : nu 67 250 · encore 110 053 · maximum 108 478 = 285 781.
 _ETAT_BIEN_SQL = (
-    "CASE WHEN COALESCE(rb.taux_emprise_pct, 0) < 5 THEN 'nu' "
+    # CHASSE-DONNEES-FIX-1 (Lot 4, E-67) — l'ABSENCE de mesure (taux_emprise_pct NULL, jamais
+    # calculé quand une cause écarte la parcelle) n'est PLUS confondue avec un vrai 0 : 'non_mesure'
+    # au lieu de 'nu' (la fiche de la même parcelle dit « Parcelle déjà bâtie »). Seul un taux
+    # RÉELLEMENT mesuré < 5 % fait « nu ».
+    "CASE WHEN rb.taux_emprise_pct IS NULL THEN 'non_mesure' "
+    "WHEN rb.taux_emprise_pct < 5 THEN 'nu' "
     "WHEN COALESCE(rb.sdp_residuelle_m2, 0) > 0 THEN 'bati_encore' ELSE 'bati_max' END")
 
 
@@ -3571,7 +3582,12 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
     # colonnes/jointures CONDITIONNELLES : NULL typé si la table manque (base de test nue) → jamais une 500.
     _sl_cols = ("""sl.bande AS bande, sl.signal_niveau AS signal_niveau, sl.signal_p AS signal_p,
                    sl.contributions AS contributions, sl.cause AS cause,
-                   sl.non_calculable AS non_calculable, sl.sdp_residuelle_m2 AS sdp_residuelle_m2"""
+                   sl.non_calculable AS non_calculable,
+                   -- CHASSE-DONNEES-FIX-1 (Lot 4, C-13) — UNE convention partout : une parcelle
+                   -- écartée (cause présente) sert « — » (null) + la cause, comme la tuile/le geojson
+                   -- (règle M125). Le listing servait 0, la carte « — » : deux conventions. La cause
+                   -- (sl.cause) accompagne toujours la valeur.
+                   CASE WHEN sl.cause IS NULL THEN sl.sdp_residuelle_m2 END AS sdp_residuelle_m2"""
                 if _sl_ready else
                 """NULL::text AS bande, NULL::text AS signal_niveau, NULL::double precision AS signal_p,
                    NULL::jsonb AS contributions, NULL::text AS cause,
@@ -3618,7 +3634,7 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
         # pro_pc est MATÉRIALISÉ en tête du WITH (voir _pro_cte_prefix) → on le RÉUTILISE ici plutôt
         # qu'une sous-requête inline (qui, non matérialisée, faisait 4,5 s à froid sur l'île entière).
         _pro = "(prpc2.idu IS NOT NULL AND coalesce(vs.owner_type,'pp') = 'pp')" if _permits else "false"
-        _nu = "COALESCE(rp.taux_emprise_pct, 0) < 5"                  # etat = 'nu'
+        _nu = "(rp.taux_emprise_pct IS NOT NULL AND rp.taux_emprise_pct < 5)"  # etat='nu' RÉEL (FIX-1 Lot 4 E-68)
         _sdp = "COALESCE(rp.sdp_residuelle_m2, 0) > 0"               # etat = 'bati_encore'
         if segment == "permis_pro":
             # permis_pro est RARE (~518/430 000) : un ORDER BY rang qui scanne l'index profondément
@@ -3986,7 +4002,8 @@ def _q_v2_stats(db: Session, commune: str | None, run_label: str | None = None,
           count(*) FILTER (WHERE NOT permis_pro AND etat NOT IN ('nu', 'bati_encore')) AS s_reste
         FROM (
           SELECT {_seg_pro} AS permis_pro,
-                 CASE WHEN COALESCE(rb.taux_emprise_pct, 0) < 5 THEN 'nu'
+                 CASE WHEN rb.taux_emprise_pct IS NULL THEN 'non_mesure'  -- FIX-1 Lot 4 (E-67)
+                      WHEN rb.taux_emprise_pct < 5 THEN 'nu'
                       WHEN COALESCE(rb.sdp_residuelle_m2, 0) > 0 THEN 'bati_encore'
                       ELSE 'bati_max' END AS etat
           FROM dryrun_parcel_evaluations d JOIN parcels p ON p.id = d.parcel_id
@@ -6374,7 +6391,31 @@ def parcel_fiche(idu: str, source: str | None = None, db: Session = Depends(get_
         """SELECT bande, signal_niveau, contributions, cause, non_calculable, sdp_residuelle_m2
            FROM score_labuse WHERE run_label = :r AND idu = :idu"""),
         {"r": _score_labuse_run(), "idu": idu}).mappings().first() if (db is not None and _score_labuse_ready(db)) else None
-    payload["analyse_labuse"] = dict(sl) if sl else None
+    # CHASSE-DONNEES-FIX-1 (Lot 4, C-13 + arbitrage Vic AC0157) — MÊME convention que le listing/la
+    # tuile : SDP « — » (None) + la cause dès qu'une cause écarte la parcelle (plus un 0 à côté du
+    # « — » de la carte). Si score_labuse n'a PAS de cause (0 muet) mais que parcel_residuel en porte
+    # une (terrain_exigu/portion_reduite…), on la REMONTE + son libellé → jamais un 0 sans pourquoi.
+    if sl:
+        _sl = dict(sl)
+        if _sl.get("cause") is None and db is not None:
+            try:
+                _rc = db.execute(text(
+                    "SELECT r.cause FROM parcel_residuel r JOIN parcels p ON p.id = r.parcel_id "
+                    "WHERE p.idu = :i AND r.cause IS NOT NULL"), {"i": idu}).scalar()
+                if _rc:
+                    _sl["cause"] = _rc
+            except Exception:  # noqa: BLE001 — enrichissement additif, jamais bloquant
+                pass
+        if _sl.get("cause") is not None:
+            _sl["sdp_residuelle_m2"] = None
+            try:
+                from ..faisabilite.engine import cause_libelle as _cl
+                _sl["cause_libelle"] = _cl(_sl["cause"])
+            except Exception:  # noqa: BLE001
+                _sl["cause_libelle"] = None
+        payload["analyse_labuse"] = _sl
+    else:
+        payload["analyse_labuse"] = None
     if version:
         with _FICHE_LOCK:
             _FICHE_CACHE[cle] = payload
