@@ -8,7 +8,7 @@ chemin de code par notion, verrouillé par une garde du banc `scripts.coherence.
 ## Verdict en 5 lignes (après les 7 lots + 2 suites)
 
 1. **Banc : 25 OK · 0 ECART · 0 SKIP (25 gardes)** — exit 0.
-2. **74/83 écarts FERMÉS** en code (14 commits), chacun vérifié sur son témoin + garde. 9 restants = gestes PROD (voir plan de déploiement) + 1 libellé assumé (C-38).
+2. **76/83 écarts FERMÉS en code** + **D-64 fermé par décision** (dates des sources réservées à l'admin). 6 restants = gestes PROD (voir plan de déploiement) dont C-38 (libellé RNU assumé, aucune valeur fausse).
 3. **Suite 1 (PLU au moteur)** : les 4 règles du Lot 6 appliquées au MOTEUR (D-49 majoration ≥2 500 m², D-48/D-50 portées « non modélisées », D-52 hors-SDP). Run q_v19 (run_seq 16 = copie run 15 + delta 1 545) ⇒ **0 parcelle change SDP/cause/score** vs q_v18 (D-49 ne franchit aucun palier d'étage ; D-48/D-50 non modélisables sans sur/sous-estimer). **q_v19 ≡ q_v18, rien servi/basculé.**
 4. **Suite 2** : 19 des 28 motifs fermés en code (PDF pied qui s'imprime enfin + date de donnée, propriétaire PM en export, /filtre carte=page, étiquettes/bornes front servies, socle de sources, digest, note GPU…). Front : `npm install` + `tsc -b` = **0 erreur**.
 5. **AUCUN correctif livré (lots + suites) ne change le résiduel ni le score** — tout est lecture/affichage/fenêtre/étiquette/moteur-sans-effet. **Pas de q_v19 à déployer.**
@@ -278,13 +278,25 @@ Joués en local, à refaire sur le VPS après déploiement du code :
 | # | Reste | Geste prod requis |
 |---|-------|-------------------|
 | C-44 | cache point mort nocturne (dérive ≤ 5 permis/j) | job nocturne / purge `commune_contexte_cache` (fait en A4) ; date du cache affichée (honnête). |
-| D-53 | CatNat dédoublonnage avale 1 arrêté multi-événements (23 vs 24, Saint-Paul) | corriger `ingestion/catnat.py` (clé de dédup) **puis re-moissonner CatNat** (GASPAR). |
-| D-55 | OCS GE « 2022 » en dur (ingestion) | lire le millésime en ingestion **au prochain OCS GE** (re-ingestion). |
 | D-60 | BAN synchro (54 j) | rejouer le job de synchro BAN (aucune divergence de valeur constatée). |
 | D-61 | DPE fraîcheur (ADEME) | rejouer le sync DPE ADEME. |
 | D-62 | CatNat `source_millesime` étiquette | rafraîchir `data_sources.source_millesime` id 97 (ou le dériver de `max(ingested_at)`) — UPDATE table de référence. |
 | D-63 | AZI/TRI `source_millesime` étiquette | idem id 114 (`max(maj_at)`). |
-| D-64 | 17 vitrines sans millésime | **décision Vic** (afficher ou non les millésimes en table) — hors mandat. |
+
+### B.bis — CODE corrigé avant déploiement (re-moisson en prod = Phase 9.4), TESTÉ en local
+- **D-53 — FERMÉ (code)** : `ingestion/catnat.py` dédoublonne désormais sur `(code, péril, date_arrete,
+  date_debut_evt)` = identité de ligne GASPAR. Vérifié par ré-ingestion locale : Saint-Paul **23→24**
+  (= GASPAR, l'arrêté multi-événements INTE0600904A conservé), Saint-Denis 19→21 ; les « doublons »
+  à même `date_debut` (noise GASPAR, ex. INTE1401216A) restent dédoublonnés (plus juste que GASPAR).
+  **Prod : re-moissonner (`labuse ingest-catnat`).**
+- **D-55 — FERMÉ (code)** : `ingestion/ocsge.py` lit le millésime le PLUS RÉCENT (`dernier_millesime_sol`
+  = `max`) au lieu de « 2022 » figé (`precalcul_parcelles` + `construire_couche`, subtype/libellés
+  dérivés) → un OCS GE ultérieur sera LU. Vérifié : en dynamique (max=2022) la couche est **identique**
+  à la version figée (12 107 polygones, mêmes subtypes). **Prod : re-ingérer au prochain OCS GE.**
+
+- **D-64 — FERMÉ (décision)** : les 17 vitrines sans millésime restent telles quelles — les **dates
+  des sources sont réservées à l'ADMIN** (circuit/registre), pas exposées au client, **rien à changer
+  côté client**.
 
 ### C. Libellé assumé (pas un geste prod, pas une valeur fausse)
 - **C-38** : le Comparatif dit « hors zonage PLU », la fiche « commune au RNU » — MÊME fait (pas de

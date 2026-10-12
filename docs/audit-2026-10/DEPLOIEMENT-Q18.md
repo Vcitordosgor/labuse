@@ -4,6 +4,11 @@
 > Architecture : **le Mac CALCULE, le VPS SERT.** Le run q_v18 est déjà calculé et servi EN LOCAL
 > (`config/served_manifest.json` : scoring `q_v18`, cascade `q_v18_sources`, résiduel `run_seq=15`).
 > Ce plan **porte en prod** le code mergé dans `main` + les données (cadastre différentiel + sortie du run).
+>
+> **Màj 12/10** : ajout de la **Phase 9 — CHASSE-DONNEES-FIX-1** (gestes prod du fix données servies,
+> SUIT q_v18) : build-mvt + purge cache tuiles, fiche-commune-cache, detect-events, refresh
+> owner_enrichment, sync BAN/DPE, ré-ingestions CatNat/OCS GE, millésimes CatNat/AZI. **Le servi reste
+> q_v18** ; le run `run_seq=16`/`q_v19` du fix n'est PAS déployé.
 
 ## Règles non négociables (rappel + où elles sont appliquées)
 
@@ -315,6 +320,104 @@ curl -sS https://app.labuse.immo/healthz/crons | python3 -m json.tool
 
 ---
 
+## Phase 9 — CHASSE-DONNEES-FIX-1 (SUIT q_v18 — gestes prod après le déploiement du code fix)
+
+> Déploiement SÉPARÉ, APRÈS que q_v18 est servi en prod (Phases 1-8). CHASSE-DONNEES-FIX-1 (branche
+> `fix/chasse-donnees-1`, 15 commits, cf. `docs/audit-2026-10/chasse-donnees-1/RAPPORT-FIX.md §SUITES`)
+> corrige 74/83 écarts de données SERVIES **sans toucher le résiduel ni le score**.
+>
+> **Le run servi RESTE q_v18.** Le run `run_seq=16` / `q_v19` de la suite 1 (règles PLU au moteur) est
+> un CANDIDAT local, `is_served=false` : **il n'est PAS déployé** (il a prouvé que les règles PLU
+> appliquées fidèlement ne changent AUCUNE valeur servie → q_v19 ≡ q_v18). Ne rien synchroniser de
+> `run_seq=16`, ne pas basculer le résiduel, ne pas le `sync-run`.
+
+### 9.0 — Code du fix (`deploy_app.sh` — JAMAIS `deploy.sh`)
+```bash
+cd ~/Desktop/labuse   # après merge de fix/chasse-donnees-1 dans main
+VITE_RUN_LABEL=q_v18 deploy/scripts/deploy_app.sh labuse-vps
+```
+**Vérif** : `chaîne de démarrage importable ✓`. Le fix ne touche aucune donnée ; les gestes 9.1-9.4
+reconstruisent des caches, 9.5-9.7 rafraîchissent des sources tierces.
+
+### 9.1 — Caches dérivés RECONSTRUCTIBLES (joués en local, à refaire en prod — PAS des runs)
+Préfixe VPS : `ssh labuse-vps 'sudo -u labuse /opt/labuse/venv/bin/labuse <cmd>'`.
+
+| Geste | Commande (VPS, user labuse) | Pourquoi (écart) | Vérif |
+|---|---|---|---|
+| **Tuiles** (surface terrain bakée + drapeau incertaine) | `labuse build-mvt` | L1 C-09/C-10 : `mvt_parcels.surface_m2` = `COALESCE(contenance, dessin)` + `surface_incertaine`. `build-mvt` bumpe `mvt_meta.updated_at` → **invalide la version du cache tuiles** (les octets périmés ne sont plus retrouvés). | `mvt_meta.run_label=q_v18` ; survol carte CW0658 = 25 633 (plus 27 156). |
+| **Purge cache tuiles parcels** (libère le disque périmé) | `sudo -u postgres psql -d labuse -c "DELETE FROM mvt_tile_cache WHERE layer='parcels';"` | idem — le bump de version suffit à l'invalidation, la purge récupère l'espace. | `SELECT count(*) FROM mvt_tile_cache WHERE layer='parcels';` → 0 (se re-remplit à la demande). |
+| **Fiches communes** (fenêtre permis ancrée + socle) | `labuse jobs exec fiche-commune-cache` | L7 C-21 (ventilation permis sur la fenêtre ancrée du total) + clôt C-44 (dérive cache nocturne). Reconstruit `commune_contexte_cache` (24 communes). | `labuse jobs status` → vert + date du jour ; Le Tampon permis total = ventilation + annulés. |
+| **Cloche sur le run servi** | `labuse detect-events --rattrapage` | L5 C-45 : `detect_events` jamais rejoué depuis q_v10 → cloche dans un autre monde que le digest. `--rattrapage` lit `run_from` = run PRÉCÉDENT de la table des runs (q_v16), `run_to` = servi (q_v18). Idempotent (clé `kind,idu,run_from,run_to`), écrit `event_log` (notifications), jamais le score. | `SELECT max(ts) FROM event_log WHERE kind='bascule' AND run_to='q_v18';` non nul. |
+
+### 9.2 — Cache SIRENE/état des sociétés (recherche-entreprises)
+```bash
+# L5 D-46 : le cache owner_enrichment date de juillet → des SCI CESSÉES sont servies « actives ».
+# score-v-fetch --passe owners ne REMPLIT que les SIREN ABSENTS du cache ; pour RAFRAÎCHIR l'existant
+# (états cessée/radiée), purger d'abord le cache (reconstructible) PUIS re-moissonner.
+ssh labuse-vps "sudo -u postgres psql -d labuse -c \"DELETE FROM owner_enrichment WHERE source='recherche_entreprises';\""
+ssh labuse-vps 'sudo -u labuse /opt/labuse/venv/bin/labuse score-v-fetch --passe owners'
+```
+**Durée** : réseau (recherche-entreprises, throttle 0,2 s/SIREN ; quelques centaines de PM servies →
+~qq min). **Vérif** : fiche prod d'une PM cessée → `proprietaire_moral.identite.actif=false` +
+`etat_societe` « société cessée ». ⚠ geste RÉSEAU (API gouv) : hors heures creuses si possible.
+
+### 9.3 — Sources tierces à re-synchroniser (fraîcheur — aucune divergence de VALEUR côté témoins)
+```bash
+ssh labuse-vps 'sudo -u labuse /opt/labuse/venv/bin/labuse ingest-ban-plus'   # D-60 : BAN non synchro depuis 19/08
+ssh labuse-vps 'sudo -u labuse /opt/labuse/venv/bin/labuse ingest-dpe'        # D-61 : DPE ADEME (dernier sync 19/09)
+```
+**Vérif** : `data_sources` BAN/DPE `last_sync_at` du jour ; `max(adresses.refreshed_at)` / `max(dpe_records.date_etablissement)` avancés.
+
+### 9.4 — Ré-ingestions CatNat / OCS GE (⚠ nécessitent le correctif de code AVANT, cf. RAPPORT-FIX §B)
+> Ces deux écarts gardent un défaut DANS LE CODE D'INGESTION, non corrigé par cette chasse (laissés
+> « motif » : ils ne changent effet qu'à la ré-ingestion). **Corriger le code PUIS ré-ingérer.**
+```bash
+# D-53 — le dédoublonnage CatNat avale un arrêté multi-événements (Saint-Paul 23 vs 24 GASPAR) :
+#   corriger la clé de dédup dans src/labuse/ingestion/catnat.py (code), PUIS :
+ssh labuse-vps 'sudo -u labuse /opt/labuse/venv/bin/labuse ingest-catnat'
+# D-55 — OCS GE a le millésime « 2022 » EN DUR (src/labuse/ingestion/ocsge.py :186/:250 + filtres/sources.py) :
+#   lire le millésime de la source au lieu du littéral (code), PUIS ré-ingérer OCS GE au prochain millésime.
+```
+**Vérif** CatNat : `SELECT count(*) FROM catnat_arretes WHERE insee='97415';` = 24 (plus 23).
+
+### 9.5 — Étiquettes de millésime CatNat / AZI (`data_sources.source_millesime`)
+> D-62/D-63 : la re-moisson (`job_sur_clic`) met la TABLE à jour mais pas le texte `source_millesime`
+> → la vitrine affiche une date plus vieille que la donnée. Deux options :
+```bash
+# (a) rafraîchir le libellé depuis la date réelle de la table (UPDATE ciblé sur data_sources = table de RÉFÉRENCE) :
+ssh labuse-vps "sudo -u postgres psql -v ON_ERROR_STOP=1 -d labuse <<'SQL'
+UPDATE data_sources SET source_millesime =
+  'GASPAR — arrêtés CatNat 974 (paginés, ' || to_char((SELECT max(ingested_at) FROM catnat_arretes),'DD/MM/YYYY') || ')'
+  WHERE id = 97;
+UPDATE data_sources SET source_millesime =
+  'GASPAR azi+tri par commune (' || to_char((SELECT max(maj_at) FROM azi_communes),'DD/MM/YYYY') || ')'
+  WHERE id = 114;
+SQL"
+# (b) alternative pérenne : faire DÉRIVER le millésime de la table au point de lecture (code) — à cadrer.
+```
+**Vérif** : page Sources prod → CatNat « …28/09/2026 », AZI « …14/09/2026 » (= `max()` des tables).
+
+### 9.6 — Décisions actées (aucun geste technique)
+- **D-64 — FERMÉ par décision (Vic)** : les 17 vitrines sans `source_millesime` restent telles
+  quelles. Les **dates des sources sont réservées à l'ADMIN** (circuit/registre), pas exposées au
+  client — **rien à changer côté client**. La donnée reste datée en table pour l'exploitation interne.
+- **C-38 — gardé tel quel** : le Comparatif dit « hors zonage PLU », la fiche « commune au RNU »
+  (même fait, phrasé différent, **aucune valeur fausse**) — choix assumé DOCS-FIX-1 P5, non rouvert.
+
+### 9.7 — Vérification du fix (banc rejouable)
+```bash
+# en local (le banc frappe une API) — après déploiement, viser l'API prod si le réseau le permet :
+LABUSE_DATABASE_URL="postgresql+psycopg://openclaw@localhost:5432/labuse" PYTHONPATH=src \
+  ~/Desktop/labuse/.venv/bin/python -m scripts.coherence.chasse_donnees --api http://127.0.0.1:8750
+```
+**Critère** : `Bilan : 25 OK · 0 ECART · 0 SKIP (25 gardes)`. Témoins prod : export md CW0658 « Surface
+cadastrale : 25 633 m² » ; PDF (gabarit/dossier/comparatif/étude-zone) portent le pied « Données LABUSE
+au <date du run servi> » ; une parcelle disparue refuse ses documents.
+
+> **Rien du `run_seq=16`/q_v19 n'est déployé.** Le résiduel servi reste `run_seq=15`, le scoring `q_v18`.
+
+---
+
 ## Annexe A — Tables clients JAMAIS touchées (hors périmètre)
 
 Aucun dump/restore de ce plan ne les cible (tous les `pg_restore` sont `-t <table>` sur la liste des phases 3–4) :
@@ -334,4 +437,7 @@ Les 1 353 disparues sont **marquées** (`cadastre_disparue_le`), **jamais suppri
 - **Sources 28 (érosion) / 46 (classement sonore) / 10 (RPG)** : non entrées dans q_v18 (URL/parseur à adapter, cf. RAPPORT §5.4) — report à un run ultérieur.
 - **Source 86 SIRENE** : ingestion en échec (INSEE orphelin 97454) — hors périmètre.
 - **Tables de travail locales** `_cad_sm1_staging`/`_cad_sm1_*` : **non expédiées**, droppables en local après coup.
+- **Run `run_seq=16` / `q_v19`** (CHASSE-DONNEES-FIX-1 suite 1, PLU au moteur) : CANDIDAT local
+  `is_served=false`, **NON déployé** (il prouve que q_v19 ≡ q_v18). Le servi reste `run_seq=15` / `q_v18`.
+  Ne pas `sync-run`, ne pas `residuel-serve 16`, ne pas `golden promote q_v19`. Cf. Phase 9.
 - Durées = **estimations** (set-based SQL + transferts) ; chaque commande imprime sa durée réelle, et les gardes (import-smoke, comptages sync-run, golden) sont les vrais critères d'arrêt.
