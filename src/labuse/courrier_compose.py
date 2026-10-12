@@ -183,6 +183,15 @@ def composer(db, idu: str, *, resolution: dict, marque: dict | None = None) -> d
     Retourne {recto, verso, ouverture, reference, situee, expediteur, synthese}. Le recto est le
     texte prêt à imprimer (objet + phrase d'entrée éventuelle + corps + signature) ; `verso` est la
     liste de lignes de la synthèse. Aucun placeholder {…} ne subsiste (garde de dépôt Lot 3)."""
+    # CHASSE-DONNEES-FIX-1 (Lot 2) — parcelle disparue du cadastre : refus de composer (point unique
+    # qui protège l'aperçu /composer ET le PDF /pdf). Jamais une donnée servie sur une disparue.
+    from . import cadastre_disparue as _cd
+    _disp = _cd.info_disparue(db, idu)
+    if _disp:
+        _ph = _cd.phrase_disparue(_disp)
+        return {"recto": _ph, "verso": [_ph], "ouverture": None, "reference": idu,
+                "situee": idu, "expediteur": expediteur_du_compte(marque, _disp.get("commune")),
+                "synthese": {"idu": idu, "disparue": True}}
     d = _synthese(db, idu)
     exp = expediteur_du_compte(marque, d.get("commune"))
     ref, commune = d["reference"], d.get("commune") or ""

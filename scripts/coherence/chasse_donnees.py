@@ -323,6 +323,28 @@ def g15_courrier_surface():
     return "SKIP", "aucune des deux surfaces repérée dans le courrier"
 
 
+def g16_disparue_documents():
+    """Lot 2 (C-08) : une parcelle disparue du cadastre (AV2114) était composée comme vivante par
+    le Courrier (« Surface cadastrale : 2 853 m², zone UB »). Après FIX-1 le courrier REFUSE."""
+    import urllib.request
+    import urllib.error
+    fiche = json.dumps(_api(f"/parcels/{AV2114}"), ensure_ascii=False).lower()
+    if "disparu" not in fiche:
+        return "SKIP", "la fiche ne mentionne plus la disparition (recadastrage ?)"
+    req = urllib.request.Request(
+        API + "/courrier/composer", data=json.dumps({"idu": AV2114}).encode(),
+        headers={"Content-Type": "application/json"}, method="POST")
+    try:
+        with urllib.request.urlopen(req, timeout=60) as r:
+            doc = json.loads(r.read())
+    except (urllib.error.HTTPError, urllib.error.URLError, ValueError) as exc:
+        return "SKIP", f"courrier indisponible ({type(exc).__name__})"
+    texte = json.dumps(doc, ensure_ascii=False).lower()
+    if doc.get("bloque") and "disparu" in texte:
+        return "OK", "courrier refuse une parcelle disparue"
+    return "ECART", "courrier compose une parcelle disparue (pas de refus)"
+
+
 def g14_digest_vs_cloche():
     """C : le top du digest est recalculé à l'envoi (runs.current()) quand la cloche
     relit event_log — les deux doivent se recouvrir."""
@@ -357,6 +379,7 @@ GARDES = [
     ("cloche-fraicheur", g13_cloche_fraicheur),
     ("digest-vs-cloche", g14_digest_vs_cloche),
     ("courrier-surface", g15_courrier_surface),
+    ("disparue-documents", g16_disparue_documents),
 ]
 
 

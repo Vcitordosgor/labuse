@@ -130,7 +130,14 @@ def gabarit_pdf(idu: str, request: Request, db: Session = Depends(get_db)) -> Re
     """Le Gabarit, sortie seule de l'enveloppe réglementaire. 422 + message si « Calcul incomplet »."""
     from ..exports import builder
     from ..quota import porte_export
+    from .. import cadastre_disparue as _cd
     porte_export(request, db)
+    # CHASSE-DONNEES-FIX-1 (Lot 2) — parcelle disparue du cadastre : le Gabarit REFUSE (jamais une
+    # enveloppe réglementaire sur une parcelle sortie du cadastre).
+    _disp = _cd.info_disparue(db, idu)
+    if _disp:
+        raise HTTPException(status_code=422, detail={
+            "erreur": "parcelle_disparue", "message": _cd.phrase_disparue(_disp)})
     try:
         res = builder.construire_gabarit(db, idu)
     except builder.DocumentNonEtablissable as exc:
@@ -153,10 +160,19 @@ def comparatif_pdf(idus: str, request: Request, db: Session = Depends(get_db)) -
     séparés par des virgules (2 obligatoires)."""
     from ..exports import builder
     from ..quota import porte_export
+    from .. import cadastre_disparue as _cd
     ids = [x.strip() for x in (idus or "").split(",") if x.strip()][:3]
     if len(ids) < 2:
         raise HTTPException(422, "au moins deux parcelles sont requises")
     porte_export(request, db)
+    # CHASSE-DONNEES-FIX-1 (Lot 2) — le Comparatif REFUSE de composer si l'une des parcelles est
+    # disparue du cadastre (il la présentait comme vivante, ou servait sa remplaçante en silence).
+    _disparues = [i for i in ids if _cd.info_disparue(db, i)]
+    if _disparues:
+        raise HTTPException(status_code=422, detail={
+            "erreur": "parcelle_disparue",
+            "message": "Parcelle(s) disparue(s) du cadastre : " + ", ".join(_disparues)
+                       + " — le comparatif ne peut pas être composé."})
     try:
         from .app import compare as _compare_fn
         data = _compare_fn(idus=",".join(ids), db=db)

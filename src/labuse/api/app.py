@@ -38,6 +38,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from .. import config, models, prospection
 from .. import surface as _surface   # CONTENANCE-1 (Lot B) — surface de terrain = contenance|dessin
+from .. import cadastre_disparue as _cadastre_disparue   # CHASSE-DONNEES-FIX-1 (Lot 2) — garde unique
 from .. import bati as _bati   # FICHE-1 lot 1 — bloc « Le bien » (producteur unique)
 from .. import rnu as _rnu
 from ..db import session_scope
@@ -2088,8 +2089,9 @@ def _communes_data(db: Session, source: str) -> list[dict]:
     M35 Lot D : « chaudes » = brûlantes + chaudes du run servi (même convention que /stats) ;
     `evaluees` = parcelles présentes au run servi."""
     def _compute() -> list[dict]:
+        _vivant = _cadastre_disparue.filtre_vivant_sql(db, "p")  # FIX-1 Lot 2 : parc vivant (résilient test)
         rows = db.execute(text(
-            """
+            f"""
             SELECT p.commune,
                    substring(min(p.idu) from 1 for 5)                       AS insee,
                    count(*)                                                 AS parcelles,
@@ -2104,6 +2106,7 @@ def _communes_data(db: Session, source: str) -> list[dict]:
             FROM parcels p
             LEFT JOIN parcel_p_score_v2 s ON s.parcelle_id = p.idu AND s.run_id = :run
             LEFT JOIN parcelle_personne_morale pm ON pm.idu = p.idu
+            WHERE true{_vivant}   -- FIX-1 Lot 2 : sélecteur = parc vivant (comme la carte)
             GROUP BY p.commune ORDER BY 4 DESC, 3 DESC
             """), {"run": source}).mappings().all()
         # cas documenté (pré-vol île) : Saint-Philippe est au RNU — pas de PLU opposable,
@@ -2569,7 +2572,7 @@ def parcel_kmz(idu: str, db: Session = Depends(get_db)) -> Response:
     from xml.sax.saxutils import escape as _xesc
 
     row = db.execute(text(
-        """SELECT commune, surface_m2, contenance_m2, ST_AsKML(geom, 7) AS kml
+        """SELECT commune, surface_m2, contenance_m2, cadastre_disparue_le, ST_AsKML(geom, 7) AS kml
            FROM parcels WHERE idu = :idu LIMIT 1"""), {"idu": idu}).mappings().first()
     if not row or not row["kml"]:
         raise HTTPException(404, "parcelle introuvable")
@@ -2577,6 +2580,11 @@ def parcel_kmz(idu: str, db: Session = Depends(get_db)) -> Response:
     desc = row["commune"] or ""
     if surface:
         desc = f"{desc} — {surface:d} m²" if desc else f"{surface:d} m²"
+    # CHASSE-DONNEES-FIX-1 (Lot 2) — parcelle disparue du cadastre : le contour reste utile mais la
+    # description PORTE la disparition (comme la fiche), plus une surface servie sans mention (C-35).
+    _disp = _cadastre_disparue.info_disparue(db, idu)
+    if _disp:
+        desc = _cadastre_disparue.phrase_disparue(_disp)
     kml = (
         '<?xml version="1.0" encoding="UTF-8"?>\n'
         '<kml xmlns="http://www.opengis.net/kml/2.2"><Document>'
@@ -6297,21 +6305,19 @@ def _fiche_cadastre_disparue(db: Session, idu: str, row) -> dict:
     à un millésime récent) n'est plus servie (carte/recherche/filtres/listes), mais un client peut
     encore l'ouvrir depuis un projet / le CRM / un suivi. On rend alors une fiche de COURTOISIE
     (HTTP 200) qui dit « Parcelle disparue du cadastre (version du …) — remplacée par […] » au lieu
-    d'une 404. Les remplaçantes = recouvrement ≥ 50 % (table `parcel_cadastre_remplacement`)."""
-    dt = row.get("cadastre_disparue_le")
-    remp = db.execute(text(
-        "SELECT r.nouvelle_idu AS idu, p.commune, r.taux_couv_ancienne AS recouvrement "
-        "FROM parcel_cadastre_remplacement r JOIN parcels p ON p.idu = r.nouvelle_idu "
-        "WHERE r.ancienne_idu = :idu AND p.cadastre_disparue_le IS NULL "
-        "ORDER BY r.taux_couv_ancienne DESC NULLS LAST"), {"idu": idu}).mappings().all()
-    ds = dt.isoformat() if dt else None
+    d'une 404. Les remplaçantes = recouvrement ≥ 50 % (table `parcel_cadastre_remplacement`).
+
+    CHASSE-DONNEES-FIX-1 (Lot 2) — SQL déplacé dans `cadastre_disparue.info_disparue` (point unique
+    partagé par tous les documents). Ce helper n'est plus qu'une mise en forme du payload fiche."""
+    info = _cadastre_disparue.info_disparue(db, idu) or {
+        "commune": row.get("commune"), "disparue_le": None,
+        "message": "Parcelle disparue du cadastre.", "remplacee_par": []}
     return {
-        "idu": idu, "commune": row.get("commune"),
+        "idu": idu, "commune": info.get("commune"),
         "cadastre_disparue": {
-            "disparue_le": ds,
-            "message": (f"Parcelle disparue du cadastre (version du {ds})."
-                        if ds else "Parcelle disparue du cadastre."),
-            "remplacee_par": [dict(x) for x in remp],
+            "disparue_le": info.get("disparue_le"),
+            "message": info.get("message"),
+            "remplacee_par": info.get("remplacee_par") or [],
         },
     }
 
@@ -7726,9 +7732,23 @@ def export_fiche(idu: str, format: str = Query("md", pattern="^(md|html)$"),
     compte via `_build_fiche`) — distincte des documents PDF (builder exports). EXPORTS-2 lot 8
     ne touche PAS cet export : seul l'export PDF (`/export.pdf`) est redirigé (RECETTE-3 T2 : vers
     le Dossier depuis la suppression du Résumé)."""
+    import html as html_mod
+
     from fastapi.responses import HTMLResponse, PlainTextResponse
 
     from .export import fiche_html, fiche_markdown
+
+    _check_idu(idu)
+    # CHASSE-DONNEES-FIX-1 (Lot 2) — une parcelle disparue du cadastre : l'export REFUSE de composer
+    # une fiche vivante (l'écran route déjà vers le stub, pas _build_fiche) et sert le message.
+    _disp = _cadastre_disparue.info_disparue(db, idu)
+    if _disp:
+        _ph = _cadastre_disparue.phrase_disparue(_disp)
+        if format == "html":
+            return HTMLResponse(f"<!doctype html><html lang=fr><meta charset=utf-8>"
+                                f"<title>{html_mod.escape(idu)}</title><body>"
+                                f"<h1>{html_mod.escape(idu)}</h1><p>{html_mod.escape(_ph)}</p></body></html>")
+        return PlainTextResponse(f"# {idu}\n\n{_ph}\n", media_type="text/markdown")
 
     fiche = _build_fiche(db, idu)
     if format == "html":

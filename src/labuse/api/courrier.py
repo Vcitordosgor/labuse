@@ -408,6 +408,16 @@ def courrier_composer(body: ComposerIn, request: Request, db: Session = Depends(
     PDF, donc aperçu = PDF. Renvoie {recto, verso, ouverture, reference, destinataire, adresse_envoi,
     bloque, motif}."""
     from .. import courrier_adressage as ca, courrier_compose as cc
+    from .. import cadastre_disparue as _cd
+    # CHASSE-DONNEES-FIX-1 (Lot 2) — parcelle disparue du cadastre : le courrier REFUSE de composer
+    # (il composait « Votre parcelle AV 2114… Surface cadastrale : 2853 m², zone UB » sur une parcelle
+    # sortie du cadastre). On bloque avec le message, jamais une donnée servie.
+    _disp = _cd.info_disparue(db, body.idu)
+    if _disp:
+        _ph = _cd.phrase_disparue(_disp)
+        return {"recto": [_ph], "verso": [_ph], "ouverture": None,
+                "reference": body.idu, "destinataire": None, "adresse_envoi": None,
+                "bloque": True, "motif": "parcelle disparue du cadastre"}
     res = ca.resoudre_destinataire(db, body.idu)
     comp = cc.composer(db, body.idu, resolution=res, marque=_marque_du_compte(db, request))
     return {"recto": comp["recto"], "verso": comp["verso"], "ouverture": comp["ouverture"],

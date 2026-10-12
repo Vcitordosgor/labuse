@@ -186,7 +186,13 @@ def accueil_fraicheur(db: Session = Depends(get_db)) -> dict:
     except Exception:  # noqa: BLE001 — la ligne d'accueil ne casse jamais la page
         pass
     try:
-        n_parcelles = int(db.execute(text("SELECT count(*) FROM parcels")).scalar() or 0)
+        # CHASSE-DONNEES-FIX-1 (Lot 2) — le parc VIVANT (disparues du cadastre exclues), comme
+        # /accueil/chiffres (run servi) et la carte : la ligne fraîcheur affichait 434 582 (1 353
+        # disparues incluses) à côté de 433 229 servies — deux « parcelles » sur le même écran.
+        from .. import cadastre_disparue as _cd
+        _vivant = _cd.filtre_vivant_sql(db, "parcels")
+        n_parcelles = int(db.execute(text(
+            f"SELECT count(*) FROM parcels WHERE true{_vivant}")).scalar() or 0)  # noqa: S608
     except Exception:  # noqa: BLE001
         pass
     try:
