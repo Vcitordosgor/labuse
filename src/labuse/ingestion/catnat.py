@@ -78,16 +78,19 @@ def ingest_catnat(session, *, connector=None, insee_list: list[str] | None = Non
             erreurs[insee] = f"{type(exc).__name__}: {exc}"
             continue
         n_commune = 0
-        # COHERENCE-FIX-1 (lot F) — UN ARRÊTÉ = UN CODE NATIONAL (par péril) : GASPAR sert parfois
-        # le même arrêté en PLUSIEURS lignes qui ne diffèrent que par date_debut/fin_evt (constaté :
-        # INTE1401216A doublé à Saint-Joseph ; Saint-Denis 21 lignes pour 19 arrêtés distincts).
-        # L'ancien upsert (clé … + date_debut) gardait ces doublons → la fiche sur-comptait de 1-2.
-        # On dédoublonne ICI par (code national, péril, date d'arrêté) — la ligne la plus longue
-        # (date_fin la plus tardive) gagne.
+        # CHASSE-DONNEES-FIX-1 (D-53) — la clé de dédoublonnage inclut désormais date_debut_evt :
+        # un même code national (par péril, même date d'arrêté) peut couvrir PLUSIEURS événements à
+        # dates DISTINCTES (ex. INTE0600904A du 10/11/2006 couvre les inondations 17-18/02 ET 04-06/03
+        # 2006). L'ancienne clé (code, péril, date_arrete) SANS la date d'événement avalait le 2ᵉ
+        # événement → fiche 23 contre GASPAR 24 à Saint-Paul (vérifié : 0 doublon byte sur les 24
+        # communes, les « doublons » de COHERENCE-FIX-1 étaient TOUS des multi-événements légitimes).
+        # La clé = l'identité de ligne GASPAR = la contrainte DB (insee, péril, date_arrete, date_debut).
+        # Les vrais doublons byte (même date_debut) restent dédoublonnés — la date_fin la plus tardive gagne.
         vus: dict[tuple, dict] = {}
         for it in items:
             cle = (it.get("code_national_catnat") or f"sans-code:{it.get('date_publication_arrete')}",
-                   it.get("libelle_risque_jo"), it.get("date_publication_arrete"))
+                   it.get("libelle_risque_jo"), it.get("date_publication_arrete"),
+                   it.get("date_debut_evt"))
             deja = vus.get(cle)
             if deja is None or (it.get("date_fin_evt") or "") > (deja.get("date_fin_evt") or ""):
                 vus[cle] = it

@@ -79,6 +79,15 @@ def ensure_tables(session) -> None:
         session.execute(text(stmt))
 
 
+def dernier_millesime_sol(session) -> str:
+    """CHASSE-DONNEES-FIX-1 (D-55) — le millésime OCS GE le PLUS RÉCENT présent en table (`max`),
+    plus le littéral « 2022 » figé : un OCS GE ultérieur (2025…) ingéré dans `ocsge_sol` serait alors
+    LU par `parcel_ocsge` et la couche artificialisation (avant, il n'était lu nulle part). Repli sur
+    le dernier de MILLESIMES si la table est vide (base de test nue)."""
+    m = session.execute(text("SELECT max(millesime) FROM ocsge_sol")).scalar()
+    return m or MILLESIMES[-1]
+
+
 def artif_decret(code_cs: str, code_us: str) -> bool:
     """Étape 1 de la fiche officielle (décret 2023-1096) — affectation couverture × usage."""
     cs, us = (code_cs or ""), (code_us or "")
@@ -177,15 +186,16 @@ def precalcul_parcelles(session, *, log_fn=print) -> dict:
     tournait encore après 1 h sur 431 663 parcelles et VERROUILLAIT parcels (annulée).
     Idempotent (TRUNCATE + INSERT)."""
     ensure_tables(session)
+    mil = dernier_millesime_sol(session)   # D-55 : millésime le plus récent, plus '2022' figé
     session.execute(text("DROP TABLE IF EXISTS tmp_ocsge_x"))
     session.execute(text("""
         CREATE TEMP TABLE tmp_ocsge_x AS
         SELECT p.idu, o.code_cs, o.code_us, o.artif,
                ST_Area(ST_Intersection(o.geom_2975, p.geom_2975)) AS aire
         FROM parcels p
-        JOIN ocsge_sol o ON o.millesime = '2022'
+        JOIN ocsge_sol o ON o.millesime = :mil
           AND o.geom_2975 && p.geom_2975 AND ST_Intersects(o.geom_2975, p.geom_2975)
-        WHERE p.geom_2975 IS NOT NULL"""))
+        WHERE p.geom_2975 IS NOT NULL"""), {"mil": mil})
     session.execute(text("CREATE INDEX ON tmp_ocsge_x (idu)"))
     session.execute(text("""
         CREATE TEMP TABLE tmp_ocsge_evol AS
@@ -207,14 +217,14 @@ def precalcul_parcelles(session, *, log_fn=print) -> dict:
                LEAST(100.0, GREATEST(0.0,
                    100.0 * a.artif_m2 / NULLIF(ST_Area(p.geom_2975), 0)))::real,
                a.cs_dominant, a.us_dominant, a.artif_m2::real,
-               COALESCE(e.artif_m2, 0)::real, COALESCE(e.renat_m2, 0)::real, '2022'
+               COALESCE(e.artif_m2, 0)::real, COALESCE(e.renat_m2, 0)::real, :mil
         FROM (SELECT idu,
                      sum(aire) FILTER (WHERE artif) AS artif_m2,
                      (array_agg(code_cs ORDER BY aire DESC))[1] AS cs_dominant,
                      (array_agg(code_us ORDER BY aire DESC))[1] AS us_dominant
               FROM tmp_ocsge_x GROUP BY idu) a
         JOIN parcels p ON p.idu = a.idu
-        LEFT JOIN tmp_ocsge_evol e ON e.idu = a.idu"""))
+        LEFT JOIN tmp_ocsge_evol e ON e.idu = a.idu"""), {"mil": mil})
     session.execute(text("""
         UPDATE parcel_ocsge SET artif_m2 = COALESCE(artif_m2, 0),
                                 part_artif_pct = COALESCE(part_artif_pct, 0)"""))
@@ -235,20 +245,23 @@ def construire_couche(session, *, log_fn=print) -> dict:
       · evolution_artificialisation / evolution_renaturation — le produit DIFF officiel IGN.
     Désactivée par défaut au panneau. Idempotent (DELETE kind + INSERT)."""
     ensure_tables(session)
+    mil = dernier_millesime_sol(session)   # D-55 : millésime le plus récent (subtype/libellés dérivés)
     sid = session.execute(text(
         "SELECT id FROM data_sources WHERE name LIKE 'OCS GE (IGN)%'")).scalar()
     session.execute(text("DELETE FROM spatial_layers WHERE kind = 'artificialisation'"))
     n1 = session.execute(text("""
         INSERT INTO spatial_layers (kind, subtype, name, geom, geom_2975, data_source_id, attrs)
-        SELECT 'artificialisation', 'artificialise_2022',
-               'Artificialisé (OCS GE 2022)',
+        SELECT 'artificialisation', CAST(:subtype AS text), CAST(:nom AS text),
                ST_Transform(d.geom, 4326), d.geom, :sid,
                jsonb_build_object('classe', 'artificialise',
                                   'surface_m2', round(ST_Area(d.geom)),
-                                  'source', 'OCS GE 2022 (IGN) — dissous, pièces ≥ 2 500 m²')
+                                  'source', CAST(:src AS text))
         FROM (SELECT (ST_Dump(ST_Union(geom_2975))).geom AS geom
-              FROM ocsge_sol WHERE millesime = '2022' AND artif) d
-        WHERE ST_Area(d.geom) >= 2500"""), {"sid": sid}).rowcount
+              FROM ocsge_sol WHERE millesime = :mil AND artif) d
+        WHERE ST_Area(d.geom) >= 2500"""),
+        {"sid": sid, "mil": mil, "subtype": f"artificialise_{mil}",
+         "nom": f"Artificialisé (OCS GE {mil})",
+         "src": f"OCS GE {mil} (IGN) — dissous, pièces ≥ 2 500 m²"}).rowcount
     session.commit()
     n2 = session.execute(text("""
         INSERT INTO spatial_layers (kind, subtype, name, geom, geom_2975, data_source_id, attrs)
