@@ -155,8 +155,20 @@ def fiche_markdown(fiche: dict) -> str:
                   "assemblage restent à vérifier._", ""]
 
     pv = _prospection_view(fiche)
-    lines += ["## Prospection propriétaire", "",
-              f"- **Statut propriétaire :** {pv['statut']}",
+    lines += ["## Prospection propriétaire", ""]
+    # CHASSE-DONNEES-FIX-1 (C-19) — propriétaire PERSONNE MORALE connu (DGFiP/SIRENE) : on le NOMME,
+    # plus « Propriétaire inconnu » (qui ne parlait que du contact CRM saisi).
+    _pm = fiche.get("proprietaire_moral") or {}
+    if _pm.get("denomination") or _pm.get("siren"):
+        _idn = (_pm.get("identite") or {})
+        _etat = ("active" if _idn.get("actif") else ("cessée" if _idn.get("actif") is False else "état inconnu"))
+        lines.append(f"- **Propriétaire (société) :** {_pm.get('denomination') or '—'}"
+                     + (f" — SIREN {_pm['siren']}" if _pm.get("siren") else "")
+                     + (f" ({_idn.get('activite')})" if _idn.get("activite") else "")
+                     + f" · {_etat}")
+        if (_pm.get("etat_societe") or {}).get("libelle"):
+            lines.append(f"- **État société :** {_pm['etat_societe']['libelle']}")
+    lines += [f"- **Statut propriétaire :** {pv['statut']}",
               f"- **Source :** {pv['source']}  ·  **Niveau de confiance :** {pv['confiance']}"]
     lines.append(f"- **Contact (saisi manuellement) :** {pv['contact']}" if pv["contact"]
                  else "- **Contact :** Propriétaire à identifier — aucune donnée nominative disponible dans LABUSE.")
@@ -286,9 +298,23 @@ def fiche_html(fiche: dict) -> str:
                   if pv["contact"] else
                   "<li><strong>Contact :</strong> Propriétaire à identifier — aucune donnée nominative "
                   "disponible dans LABUSE.</li>")
+    # CHASSE-DONNEES-FIX-1 (C-19) — propriétaire PERSONNE MORALE connu : on le NOMME.
+    _pm = fiche.get("proprietaire_moral") or {}
+    _pm_li = ""
+    if _pm.get("denomination") or _pm.get("siren"):
+        _idn = (_pm.get("identite") or {})
+        _etat = ("active" if _idn.get("actif") else ("cessée" if _idn.get("actif") is False else "état inconnu"))
+        _pm_li = ("<li><strong>Propriétaire (société) :</strong> "
+                  + html.escape(_pm.get("denomination") or "—")
+                  + (f" — SIREN {html.escape(str(_pm['siren']))}" if _pm.get("siren") else "")
+                  + (f" ({html.escape(_idn.get('activite'))})" if _idn.get("activite") else "")
+                  + f" · {_etat}</li>")
+        if (_pm.get("etat_societe") or {}).get("libelle"):
+            _pm_li += f"<li><strong>État société :</strong> {html.escape(_pm['etat_societe']['libelle'])}</li>"
     prosp_html = (
         "<h2>Prospection propriétaire</h2><ul>"
-        f"<li><strong>Statut propriétaire :</strong> {html.escape(pv['statut'])}</li>"
+        + _pm_li
+        + f"<li><strong>Statut propriétaire :</strong> {html.escape(pv['statut'])}</li>"
         f"<li><strong>Source :</strong> {html.escape(pv['source'])} · "
         f"<strong>Niveau de confiance :</strong> {html.escape(pv['confiance'])}</li>"
         + contact_li

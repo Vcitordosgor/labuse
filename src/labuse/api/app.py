@@ -4259,24 +4259,7 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
     flags = [l for l in lines
              if l["weight"] in (None, 0) and l["result"] in ("SOFT_FLAG", "HARD_EXCLUDE", "UNKNOWN")]
 
-    pm = db.execute(text(
-        "SELECT denomination, siren, groupe, groupe_label FROM parcelle_personne_morale WHERE idu = :idu"),
-        {"idu": idu}).mappings().first()
-    pm = dict(pm) if pm else None
-    if pm and pm.get("siren"):
-        pm["etat_societe"] = _pm_etat_societe(db, pm["siren"])   # M43 — fait public société (PM only)
-        pm["identite"] = _pm_identite(db, pm["siren"])           # RETOURS-11F3 F11 — activité/siège/date/état
-        pm["dirigeant"] = _pm_dirigeant(db, pm["siren"])         # dirigeant aîné RNE (nom + âge exact)
-    if pm:
-        # CHASSE-FIX-2 (C35) — propriétaire PUBLIC (badge fiche), MÊME règle DGFiP (groupes 1-4/9)
-        # que la liste et le filtre d'exclusion : un seul endroit décide « public ».
-        from ..proprietaire_type import PUBLIC_DGFIP_GROUPES
-        pm["proprietaire_public"] = pm.get("groupe") in PUBLIC_DGFIP_GROUPES
-        # RETOURS-11F3 F11 — « Personnes morales non remarquables » est le NOM du fichier DGFiP, pas une
-        # phrase client. On sert une étiquette humaine ; le nom de fichier ne s'affiche jamais.
-        gl = (pm.get("groupe_label") or "")
-        if "non remarquable" in gl.lower():
-            pm["groupe_label"] = "Personne morale — fichier DGFiP"
+    pm = _pm_block(db, idu)   # CHASSE-DONNEES-FIX-1 (C-19) — point UNIQUE PM (fiche premium + export legacy)
     # L1 (KF-2) — historique propriétaire PM par millésime + diff annuel CONSTATÉ (hors scoring,
     # PM uniquement). None si la parcelle n'a jamais eu de propriétaire moral connu.
     from ..proprietaire_historique import historique as _pm_historique
@@ -5825,6 +5808,32 @@ def _etat_unite_legale(db: Session, siren: str | None) -> tuple[str | None, str 
     except Exception:  # noqa: BLE001 — cache optionnel, jamais bloquant
         return None, None
     return (row["etat"], row["maj"]) if row else (None, None)
+
+
+def _pm_block(db: Session, idu: str) -> dict | None:
+    """CHASSE-DONNEES-FIX-1 (C-19) — LE bloc propriétaire PERSONNE MORALE (DGFiP + SIRENE/BODACC),
+    point unique partagé par la fiche premium (_q_v2_fiche) ET le payload legacy (_build_fiche →
+    export md/html, Copilote). L'export affichait « Propriétaire inconnu » (prospection CRM) alors
+    que la PM était connue — désormais il lit CE bloc. None si aucune PM. RGPD : PM uniquement."""
+    pm = db.execute(text(
+        "SELECT denomination, siren, groupe, groupe_label FROM parcelle_personne_morale WHERE idu = :idu"),
+        {"idu": idu}).mappings().first()
+    pm = dict(pm) if pm else None
+    if pm and pm.get("siren"):
+        pm["etat_societe"] = _pm_etat_societe(db, pm["siren"])   # M43 — fait public société (PM only)
+        pm["identite"] = _pm_identite(db, pm["siren"])           # RETOURS-11F3 F11 — activité/siège/date/état
+        pm["dirigeant"] = _pm_dirigeant(db, pm["siren"])         # dirigeant aîné RNE (nom + âge exact)
+    if pm:
+        # CHASSE-FIX-2 (C35) — propriétaire PUBLIC (badge fiche), MÊME règle DGFiP (groupes 1-4/9)
+        # que la liste et le filtre d'exclusion : un seul endroit décide « public ».
+        from ..proprietaire_type import PUBLIC_DGFIP_GROUPES
+        pm["proprietaire_public"] = pm.get("groupe") in PUBLIC_DGFIP_GROUPES
+        # RETOURS-11F3 F11 — « Personnes morales non remarquables » est le NOM du fichier DGFiP, pas une
+        # phrase client. On sert une étiquette humaine ; le nom de fichier ne s'affiche jamais.
+        gl = (pm.get("groupe_label") or "")
+        if "non remarquable" in gl.lower():
+            pm["groupe_label"] = "Personne morale — fichier DGFiP"
+    return pm
 
 
 def _pm_identite(db: Session, siren: str | None) -> dict | None:
@@ -7739,6 +7748,10 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
         "permits": permits,
         "depots": depots,   # M38 — activité de dépôt (permis aboutis, datés au dépôt) ; informatif
         "prospection": prosp_block,
+        # CHASSE-DONNEES-FIX-1 (C-19) — propriétaire PERSONNE MORALE (DGFiP/SIRENE) sur le payload
+        # legacy aussi : l'export md/html disait « Propriétaire inconnu » (CRM) alors que la PM est
+        # connue (SCI ALOE…). Point unique _pm_block, comme la fiche premium.
+        "proprietaire_moral": _pm_block(db, idu),
         # Le bloc « promoteur » (altimétrie/façade/PLU détaillé/réseaux) est servi À PART, en
         # LAZY-LOAD, par GET /parcels/{idu}/enrichment : il fait des appels externes lents
         # (RGE ALTI, prescriptions GPU) qui ne doivent jamais bloquer l'ouverture de la fiche.
