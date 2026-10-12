@@ -61,6 +61,18 @@ def _c_surface(db, idu, f):
     return round(float(s)) if s is not None else None
 
 
+@extracteur("surface_source")
+def _c_surface_source(db, idu, f):
+    # CHASSE-DONNEES-FIX-1 (Lot 1) — « cadastre » (contenance de l'acte) ou « plan » (dessin, repli) :
+    # la couverture du Dossier n'étiquette « contenance » QUE si c'est réellement la contenance.
+    return _nz(f.get("surface_source"))
+
+
+@extracteur("surface_incertaine")
+def _c_surface_incertaine(db, idu, f):
+    return bool(f.get("surface_incertaine"))
+
+
 @extracteur("adresse_ban")
 def _c_adresse(db, idu, f):
     return _nz(f.get("adresse"))

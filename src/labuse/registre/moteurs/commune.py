@@ -100,9 +100,17 @@ def composite_communes(rows: list[dict], poids: dict) -> list[dict]:
 # ── le foncier de la commune (extraction de api/app.py:_foncier_commune) ────────────────────────
 
 def compte_parcelles_commune(db, commune: str) -> int:
-    """n_parcelles_commune — count parcels par commune."""
-    return int(db.execute(text("SELECT count(*) FROM parcels WHERE commune = :c"),
-                          {"c": commune}).scalar() or 0)
+    """n_parcelles_commune — count du parc VIVANT par commune.
+
+    CHASSE-DONNEES-FIX-1 (Lot 2) — exclut les parcelles disparues du cadastre
+    (`cadastre_disparue_le`), comme l'accueil, la carte et le run servi : la fiche commune comptait
+    38 557 à Saint-Denis (262 disparues incluses) quand tout le reste du produit sert 38 295.
+    Garde de colonne (filtre_vivant_sql) : résilient aux schémas de test sans la colonne."""
+    from ...cadastre_disparue import filtre_vivant_sql
+    vivant = filtre_vivant_sql(db, "parcels")
+    return int(db.execute(text(
+        f"SELECT count(*) FROM parcels WHERE commune = :c{vivant}"),  # noqa: S608 — fragment interne
+        {"c": commune}).scalar() or 0)
 
 
 def mutations_12m(db, commune: str) -> int:

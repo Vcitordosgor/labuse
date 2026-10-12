@@ -365,8 +365,12 @@ zones:
           page_pdf: 42
           citation: Logement individuel Par logement 2 / Logement collectif 1 et 2 pièces 1 / 3 et 4 pièces
             1,5 / 5 pièces et plus 2
-          statut: propose
-          raison: stationnement non chiffrable par logement ('a_verifier')
+          statut: valide
+          # CHASSE-DONNEES-FIX-1 (Lot 6, D-52) — l'article UC 2.7.3 (p. 42) EXISTE et est chiffré :
+          # servi comme barème texte (pas un nombre unique) au lieu de « à vérifier » (feuille manquante
+          # = défaut systémique n°1 d'ORACLE-1, sur une zone non couverte par ORACLE-1).
+          bareme: 'logement individuel : 2 places/logt · collectif : 1 pl. (1-2 pièces), 1,5 pl. (3-4 pièces),
+            2 pl. (≥5 pièces) — bureaux 3 pl./100 m² SP (UC 2.7.3)'
       pleine_terre:
         pct:
           pct: 40.0

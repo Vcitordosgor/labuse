@@ -90,6 +90,18 @@ def dossier_pdf(idu: str, request: Request, carte: bool = True,
     from ..exports.rendu import render_pdf
     from .app import parcel_fiche
     from .tenant import current_compte
+    # CHASSE-DONNEES-FIX-1 (Lot 2) — parcelle disparue du cadastre : le builder relit les tables en
+    # direct et composait un Dossier 6 pages (« Filiation : parcelle stable », « Surface : 2 853 m² »)
+    # sur une parcelle sortie du cadastre. On REFUSE : un PDF d'une page portant le message.
+    from .. import cadastre_disparue as _cd
+    _disp = _cd.info_disparue(db, idu)
+    if _disp:
+        import html as _h
+        _ph = _cd.phrase_disparue(_disp)
+        _html = (f"<!doctype html><html lang=fr><meta charset=utf-8><body>"
+                 f"<h1>{_h.escape(idu)}</h1><p>{_h.escape(_ph)}</p></body></html>")
+        return Response(content=render_pdf(_html), media_type="application/pdf",
+                        headers={"Content-Disposition": f'inline; filename="dossier-{idu}.pdf"'})
     try:
         fiche = parcel_fiche(idu, db=db, request=request)
     except ValueError as exc:                    # parcelle inconnue

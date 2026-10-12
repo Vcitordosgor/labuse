@@ -305,13 +305,17 @@ def permis_bloc(db: Session, commune: str) -> dict:
     # KELFONCIER-FIX-1 (Lot C) — compteurs PC / PA / DP (+ PD) et ANNULÉS sur 12 mois, à la maille
     # commune (Sitadel). L'état ANNULÉ (ETAT_DAU=4) est SÉPARÉ des autorisés (avant, il les gonflait).
     # Purement descriptif : ne touche NI le point mort (Signal) NI les variables pc_*.
+    # CHASSE-DONNEES-FIX-1 (Lot 7, C-21) — MÊME fenêtre « 12 mois » que le TOTAL (ligne6_offre_engagee,
+    # ancrée sur max(date) des données Sitadel), plus une fenêtre CALENDAIRE (CURRENT_DATE-12m) : la
+    # même carte « Permis et rythme » portait deux fenêtres différentes (Le Tampon 290 total vs 250
+    # ventilé), sept. 2025 compté dans l'une pas dans l'autre.
     type_rows = db.execute(text(
         """SELECT type,
                   count(*) FILTER (WHERE raw->>'etat' IS DISTINCT FROM '4') AS n,
                   count(*) FILTER (WHERE raw->>'etat' = '4')                 AS n_annules
              FROM sitadel_permits
             WHERE (CAST(:c AS text) IS NULL OR commune = :c)
-              AND date >= (CURRENT_DATE - interval '12 months')
+              AND date > (SELECT max(date) FROM sitadel_permits) - interval '12 months'
             GROUP BY type"""), {"c": commune}).mappings().all()
     par_type = {r["type"]: int(r["n"] or 0) for r in type_rows if int(r["n"] or 0)}
     annules_12m = sum(int(r["n_annules"] or 0) for r in type_rows)
@@ -383,13 +387,16 @@ def parc_social(db: Session, insee: str | None) -> dict | None:
     if not insee:
         return None
     r = db.execute(text(
-        "SELECT nb_logements, construct_median FROM rpls_commune WHERE insee = :i"),
+        "SELECT nb_logements, construct_median, millesime FROM rpls_commune WHERE insee = :i"),
         {"i": insee}).mappings().first()
     if not r or r["nb_logements"] is None:
         return None
+    # CHASSE-DONNEES-FIX-1 (Lot 5, D-54) — millésime DÉRIVÉ de la table (rpls_commune.millesime,
+    # « 2025-01 »), plus le littéral « 01/01/2025 » (figé à l'ingestion du RPLS 2026).
+    _mill = (r["millesime"] or "")[:4]
     return {"logements": int(r["nb_logements"]),
             "construct_median": int(r["construct_median"]) if r["construct_median"] is not None else None,
-            "millesime": "RPLS 01/01/2025",
+            "millesime": f"RPLS 01/01/{_mill}" if _mill else "RPLS",
             "source": "SDES — Répertoire des logements locatifs sociaux (RPLS)"}
 
 

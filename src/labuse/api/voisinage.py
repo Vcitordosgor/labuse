@@ -20,6 +20,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from .. import runs
+from ..surface import surface_terrain
 from ..verdict_servi import TIERS_SERVABLES
 
 # Adjacence = contact à ≤ 0,5 m en 2975 (tolère les micro-jeux du cadastre sans franchir
@@ -44,7 +45,7 @@ def compute_voisinage(session: Session, parcel_id: int,
     `parcel_status` = statut TRADUIT de la parcelle courante (verdict_servi)."""
     rows = session.execute(text(
         """
-        SELECT n.idu, n.surface_m2, s.tier AS status, s.rang,
+        SELECT n.idu, n.surface_m2, n.contenance_m2, s.tier AS status, s.rang,
                (SELECT string_agg(DISTINCT sl.subtype, ', ')
                   FROM spatial_layers sl
                  WHERE sl.kind = 'plu_gpu_zone' AND ST_Intersects(sl.geom_2975, n.geom_2975)) AS plu_zone,
@@ -70,6 +71,9 @@ def compute_voisinage(session: Session, parcel_id: int,
     voisines = [{
         "idu": r["idu"],
         "surface_m2": round(r["surface_m2"]) if r["surface_m2"] is not None else None,
+        # CHASSE-DONNEES-FIX-1 (Lot 1) — surface de terrain servie (contenance|dessin) pour
+        # l'affichage (colonne « Surface » des voisines + cumul d'assemblage), comme la fiche.
+        "surface_terrain_m2": surface_terrain(r["surface_m2"], r["contenance_m2"]).valeur,
         "status": r["status"],
         "rang": r["rang"],
         "plu_zone": r["plu_zone"],
@@ -88,7 +92,7 @@ def compute_voisinage(session: Session, parcel_id: int,
     # mobilisable (jamais une affirmation de faisabilité).
     possible = cur_interessante and len(retenues) >= ASSEMBLAGE_MIN_VOISINES
     n_total = len(retenues) + (1 if cur_interessante else 0)
-    surface_cumulee = (parcel_surface or 0.0) + sum(v["surface_m2"] or 0 for v in retenues)
+    surface_cumulee = (parcel_surface or 0.0) + sum(v["surface_terrain_m2"] or 0 for v in retenues)
     note = None
     if possible:
         surf_str = f"{surface_cumulee:,.0f}".replace(",", " ")   # espace fine, sans toucher au texte

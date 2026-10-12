@@ -127,7 +127,11 @@ def catnat(db: Session, idu: str) -> dict:
     def _d(x):
         return x.isoformat() if isinstance(x, date) else (str(x) if x else None)
     return {
-        "disponible": bool(rows), "total": int(total),
+        # CHASSE-DONNEES-FIX-1 (Lot 4, E-82) — la SOURCE est disponible (table présente) dès qu'on
+        # arrive ici : disponible=True même à 0 arrêté. « disponible=False » est réservé à la source
+        # INDISPONIBLE (table absente, early-return ci-dessus) → le front distingue « non renseigné »
+        # (panne d'ingestion) de « aucun arrêté » (0 mesuré). À La Réunion « aucun » n'est jamais vrai.
+        "disponible": True, "total": int(total),
         "arretes": [{"peril": r["type_peril"], "date_arrete": _d(r["date_arrete"]),
                      "debut": _d(r["date_debut"]), "fin": _d(r["date_fin"])} for r in rows],
         "source": "GASPAR / Géorisques — arrêtés CatNat (au grain commune)", "millesime": "GASPAR",

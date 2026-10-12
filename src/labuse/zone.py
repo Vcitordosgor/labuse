@@ -426,10 +426,20 @@ def marche_zone(session: Session, geom_geojson: dict) -> dict:
         # vente d'immeuble répétée sur N parcelles gonflait le compte des ventes et faisait exploser
         # la médiane (artefact du « 100 888 €/m² »). Même table, même filtres, même borne, même
         # fenêtre que `prix_par_type_zone` → une seule médiane à périmètre égal.
+        # CHASSE-DONNEES-FIX-1 (Lot 7, E-66) — fenêtre « 12 mois » ANCRÉE sur la dernière date de
+        # données servie (max(date_mutation)), plus now()-12 mois : DVF s'arrêtant au 2025-12-30, le
+        # calendaire ne couvrait que ~2,5 mois publiés et sous-comptait les ventes d'un facteur ~4,4
+        # (CW0658 13 vs 57). Même ancrage que le registre commune (commune.py « une fenêtre
+        # calendaire serait trompeuse »).
+        # L'ancre exclut la ligne parasite D-65 (1 enregistrement 2026-08-10 avec HEURE ≠ minuit, hors
+        # du flux qui s'arrête au 2025-12-31) : sinon la fenêtre glissait d'un an et sous-comptait.
         ventes = session.execute(text(
             f"""SELECT count(*) FROM dvf_mutations dm
                 WHERE dm.geom IS NOT NULL AND dm.nature_mutation ILIKE 'vente%'
-                  AND dm.date_mutation >= (now() - interval '12 months')
+                  AND dm.date_mutation >= (
+                        (SELECT max(date_mutation) FROM dvf_mutations
+                          WHERE date_mutation = date_trunc('day', date_mutation)) - interval '12 months')
+                  AND dm.date_mutation = date_trunc('day', dm.date_mutation)
                   AND ST_Contains({z}, ST_Transform(dm.geom, 2975))"""), p).scalar()
         from .dvf_mediane import mediane_bati
         prix = mediane_bati(session, geom_geojson=geom_geojson)["median"]

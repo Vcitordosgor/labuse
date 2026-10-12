@@ -1,0 +1,29 @@
+sujet;notion;lecteur;valeur;detail
+radar;suivis_n;GET /events/suivis;9;watched_parcels compte_id NULL = 9 (14 au total, 5 scopés comptes 18/31) — cloison compte correcte (events.py:910 IS NOT DISTINCT FROM)
+radar;suivi_temoin;GET /events/suivis 97411000BZ1065;depuis 2026-07-22, Saint-Denis, la Vigie, dernier_evenement=null;= watched_parcels (2026-07-22) ; event_log=0 ligne pour les 14 suivies ; 0 DVF / 0 permis nouveau sur les suivies (BW0633/CR0441 : permis 2013/2016, antérieurs au suivi) → null honnête
+radar;watch_get;GET /events/watch/97411000BZ1065;{"watched":true};= base (ligne watched_parcels présente)
+crm;pipeline_temoin;GET /pipeline/parcel/97414000CV0938;reperee, 2026-07-12;= pipeline_entries (status=reperee, created_at 2026-07-12) — identique
+radar;brief;GET /events/brief;vide, cause « aucun secteur », permis figés 2026-08-31 donnee_perimee=true;sitadel max(date_depot)=2026-08-31 en base — honnête ; MAIS cause_vide « vous ne suivez aucun secteur » alors que 9 suivis existent (cid NULL → _mes_communes=[] events.py:1106) → écart E9
+digest;evenements;GET /events/digest;[];_DIGEST_KINDS=parcelle_suivie/radar/radar_baisse/radar_retrait ; event_log 7 j = pige.*/systeme uniquement → vide exact
+digest;marche_resume;GET /events/digest;total 0;_MARKET_KINDS=bascule/bodacc/match : 0 ligne sur 7 j en base → exact
+digest;top_chaudes;GET /events/digest + digest.html;AL0497,ET2242,ET2243,BL0332,BL0226;= parcel_p_score_v2 run q_v18 rang 1-5 = fiche score_v2 (AL0497 tier priorite rang 1, BL0332 rang 4) — recalculé à la demande sur runs.current() (events.py:1151-1160)
+digest;top_q_score;GET /events/digest;null partout;dryrun_parcel_evaluations q_v18_sources : q_score NULL sur 433 229/433 229 lignes → champ mort servi (écart E7) ; non rendu au mail (emails.py n'affiche que idu/commune/surface)
+digest;top_surface;digest.html « AL0497 — 353 m² »;353;events.py:1152 round(p.surface_m2)=dessin ; fiche écran surface_terrain_m2=359 (contenance) → écart E3bis
+cloche;bascules;GET /events (event_log);dernière bascule réelle 21/08/2026 q_v9_m81→q_v10_m129 (1204 lignes);digest top = q_v18 : les deux listes NE coïncident PAS (écart E1 FRAICHEUR) ; témoin AI0706 cloche « Priorité → À suivre » vs q_v18 sans_signal
+digest;fenetre_apercu_vs_mail;digest.html vs envoyer_digests;7 j vs J-1 (quotidien)/7 j (hebdo);C41 toujours en place (events.py:1264-65 aperçu jours=7 ; :1381-83 mail jours=1 « hier ») ; MAIS param periode jamais rendu dans le HTML (emails.py:172-212) → écart E6
+copilote;surface;fiche_ask facts.surface_m2 / _build_fiche parcel.surface_m2;dessin (ex. DV0285=117 505);fiche écran surface_terrain_m2=contenance (DV0285=1) → écart E3 ; CW0658 : 27 156 vs 25 633 (+5,9 %)
+copilote;zone;fiche_ask zone_plu (premium);BZ0007 « Usdu + N » (multi-zones jointes);= plu_gpu_zone (Usdu 73 %/N 27 %) — honnête côté fiche premium
+copilote;zone_outil;outil destination_zone (outils.py:622-628);BZ0007 → zone=« Usdu » seule;SQL direct parcel_zone_plu.zone_lib (1 ligne, dominante) : la part N (27 %) ignorée du verdict → écart E4
+copilote;sdp_premium;_q_v2_fiche potentiel_transformation.sdp_residuelle_m2;AK0804=34223, CW0658=38619, BZ0007=0, DV0285=null(surface_incertaine), BZ1065=35;= score_labuse q_v18 (AK0804 bande A sdp 34223 — Q7 TEMOINS) ; moteur residuel (bâti conservé)
+copilote;sdp_legacy;_build_fiche faisabilite.fourchette.surface_plancher_m2;AK0804=34243, CW0658=38619, BZ0007=430 (R+1), DV0285=null, BZ1065=212 (R+0);moteur faisabilité (bâti rasé) servi À CÔTÉ du potentiel premium dans fiche_ask → écart E2 (BZ0007 : 0 vs 430 ; BZ1065 : 35 vs 212)
+copilote;score;premium score_v2.tier/rang vs legacy verdict.tier/rang;identiques sur les 5 témoins (ex. AK0804 sans_signal/3742, BZ0007 ecartee/278162);verdict_servi = point unique → PAS d'écart tier/rang entre les deux payloads
+copilote;zone_resolue_legacy;_build_fiche faisabilite.zone_resolue;AK0804=UB, BZ0007=Usdu, CW0658=« AU3a → règles de U3a (renvoi…) »;zone unique (dominante) vs premium multi-zones — même racine que E4
+dashboard;sources;GET /accueil/chiffres vs /admin/sources vs SQL WHERE_AFFICHEES;99 = 99 = 99;les trois lecteurs identiques (sources_catalog.WHERE_AFFICHEES, masquées=[])
+dashboard;parcelles_run;GET /accueil/chiffres;433 229 (q_v18);= p_score_v2_runs.n_parcelles = count(parcel_p_score_v2 run q_v18) = count(parcels vivantes) — exact
+dashboard;parcelles_fraicheur;GET /accueil/fraicheur;434 582;count(*) FROM parcels SANS filtre disparues (1 353 disparues incluses) vs 433 229 ailleurs → écart E5
+dashboard;compteurs_bloc3;GET /accueil/chiffres;pc_caducs 4822, defisc 797, run q_v18;= base (4822, 797) ; run_label = served_run q_v18 ✓
+partage;tokens;share_links;50 tokens, 0 valide (50 expirés, 0 révoqué);aucun token valide en base → /p/{token} non testable à vif (preuve SQL) ; GET token expiré → 410 propre
+partage;payload;code /p/{token} (partners.py:358-426);sert _q_v2_fiche live (même builder que la fiche);parité par construction SAUF surface affichée = f['surface_m2'] dessin (partners.py:426) → écart E3 (latent, aucun token valide)
+mails;dry_run_eml;outputs/mails_dryrun (dépôt principal);4 .eml du 10/10 (suspension id 10 / retablissement id 11, d4@test.re);fixtures cycle de vie SANS chiffre de donnée → rien à comparer aux tables
+mails;radar_alerte;brevo.py:75 (template 13) + pige/digests.py:543-546;variables PRENOM/VEILLE/NB_BIENS/CRITERES/CARTES/LIENS;cartes = pige_biens + signaux.badges_pour_biens — MÊME moteur que l'UI Radar (client.py:214-219) → pas de double chemin fiche/mail
+mails;digest_quotidien;envoyer_digests (events.py:1399-1402);texte digest_notifications + HTML digest_html_email;même gabarit que l'aperçu digest.html (fonction unique) ; fenêtre différente (E6) ; mail __raw via mail_queue, dry_run supporté

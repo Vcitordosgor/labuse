@@ -1,0 +1,306 @@
+spatial_layers;GPU;src/labuse/ingestion/signals.py:30;zone-plu-dominante-parcelle;kind=plu_gpu_zone ST_Intersects(p.geom,sl.geom) 4326, DISTINCT ON parcelle ORDER BY aire intersection 2975 DESC;LATENT: zone dominante recalculee en direct alors que parcel_zone_plu precalcule existe ailleurs
+spatial_layers;GPU;src/labuse/ingestion/anc.py:269;commune-a-un-plu;EXISTS kind=plu_gpu_zone commune=X (garde bonus rural);
+spatial_layers;GPU;src/labuse/ingestion/anc.py:272;eloignement-zone-u;NOT EXISTS kind=plu_gpu_zone subtype=U ST_DWithin(zone,centroide parcelle,cfg distance_zone_u_m);LATENT: proximite zone U par DWithin centroide, les autres lecteurs PLU travaillent en Intersects surface
+spatial_layers;INSEE IRIS;src/labuse/ingestion/anc.py:278;iris-de-parcelle;kind=iris_insee ST_Contains(sl.geom_2975,centroide parcelle) LIMIT 1 (taux ANC);LATENT: parcelle vers IRIS = Contains(centroide) ici, Intersects(PointOnSurface) iris_rp.py:179, Intersects(geom entiere) oll_loyers.py:191 - parcelles multi-IRIS tranchees differemment
+spatial_layers;communes zonage assainissement;src/labuse/ingestion/anc.py:312;zonage-anc-officiel;kind=zonage_assainissement ST_Contains(sl,centroide) ORDER BY subtype=anc DESC LIMIT 1;
+spatial_layers;INSEE IRIS;src/labuse/ingestion/oll_loyers.py:191;iris-de-parcelle;kind=iris_insee ST_Intersects(p.geom_2975,sl.geom_2975) LIMIT 1 (zone loyer OLL);LATENT: Intersects sur la geom ENTIERE - une parcelle a cheval sur 2 IRIS prend un IRIS arbitraire, cf anc.py:278 et iris_rp.py:179
+spatial_layers;Georisques;src/labuse/ingestion/layers_ingest.py:504;reclassification-aleas;kind=georisque_alea attrs?degre, DISTINCT degre/niveau/classe (recalcul attrs stocke);
+spatial_layers;ODS parc national;src/labuse/ingestion/layers_ingest.py:535;marqueur-run-parc-national;kind=parc_national LIMIT 1 (ingestion_run_id, idempotence re-tirage);
+spatial_layers;IGN BD TOPO bati;src/labuse/ingestion/rnb.py:153;rattachement-rnb-bdtopo;kind=batiment LEFT JOIN LATERAL && + ST_Intersects, pct=aire inter/aire bati, rattache si >= seuil_pct 30 pour cent;
+spatial_layers;Merimee ABF;src/labuse/ingestion/abf_merimee.py:73;stat-parcelles-abf;kind=abf EXISTS ST_Intersects(p.geom_2975,l.geom_2975) count distinct (indicateur);
+spatial_layers;Merimee ABF;src/labuse/ingestion/abf_merimee.py:79;stats-bilan-abf;count kind=abf + group by commune LIMIT 6 (l81);
+spatial_layers;IGN BD TOPO hydro;src/labuse/ingestion/ortho_piscines.py:216;rejet-detection-eau;kind IN (water,ravine) && + ST_Intersects(detection) (filtre piscines);
+spatial_layers;IGN BD TOPO bati;src/labuse/ingestion/ortho_piscines.py:228;rejet-toit-bleu;kind=batiment ratio aire inter/aire detection > 0.25 (toit_bleu_recouvrement_bati);
+spatial_layers;IGN BD TOPO voirie;src/labuse/ingestion/ortho_piscines.py:242;rejet-voiture-voirie;kind=voirie ST_DWithin(voirie,centroide detection,4 m exclusion_voirie_m);
+spatial_layers;OSM;src/labuse/ingestion/ortho_piscines.py:249;rejet-parking-osm;kind=osm_faux_positif subtype IN (parking,pitch) ST_Intersects(centroide detection);
+spatial_layers;IGN BD TOPO bati;src/labuse/ingestion/ortho_piscines.py:263;contexte-bati-piscine;kind=batiment ST_DWithin(bati,detection,cfg contexte_bati_m) score 0.7;
+spatial_layers;ANCT QPV;src/labuse/ingestion/dispositifs.py:46;bande-tva-primo;kind=qpv ST_Union par commune + ST_Buffer 500 m + ST_Difference, INSERT kind=tva_primo;
+spatial_layers;ANCT QPV;src/labuse/ingestion/dispositifs.py:112;stats-qpv-anru;count kind=qpv (l112) et kind=anru (l113);
+spatial_layers;OSM POI;src/labuse/ingestion/amenites.py:112;distance-amenites;kind=amenite subtype=categorie KNN <-> plus proche ST_Distance 2975, INSERT parcel_amenites;
+spatial_layers;OSM POI;src/labuse/ingestion/amenites.py:129;stats-amenites-commune;count par subtype kind=amenite commune=X;
+spatial_layers;GTFS transport;src/labuse/ingestion/transport_reseaux.py:219;poles-echange-gtfs;kind=transport_arret ST_ClusterDBSCAN eps=150 m (rayon_grappe_m) seuil 12 lignes, INSERT pole_echange;
+spatial_layers;derivee GTFS/OSM;src/labuse/ingestion/transport_reseaux.py:293;concordance-poles;self-join kind=pole_echange subtype osm vs gtfs ST_DWithin geography 300 m (rayon_concordance_m);
+spatial_layers;derivee GTFS/OSM;src/labuse/ingestion/transport_reseaux.py:299;stats-concordance;kind=pole_echange group by subtype,concordance;
+spatial_layers;OSM;src/labuse/ingestion/transport_reseaux.py:345;purge-stations-orphelines;self-read kind=telepherique subtype=ligne ST_DWithin geography 500 m (DELETE stations sans ligne);
+spatial_layers;GTFS + OSM;src/labuse/ingestion/transport_reseaux.py:403;stations-tcsp;kind=transport_arret EXISTS kind=tcsp_troncon subtype=site_propre ST_DWithin geography 60 m + ClusterDBSCAN 60, INSERT tcsp_station;
+spatial_layers;derivee OSM TCSP;src/labuse/ingestion/transport_reseaux.py:436;zone-tcsp-rayon;kind=tcsp_station ST_Buffer geography 800 m ST_Union Simplify 0.0001, INSERT tcsp_zone subtype=rayon;
+spatial_layers;derivee OSM TCSP;src/labuse/ingestion/transport_reseaux.py:442;zone-tcsp-parcelles;parcels EXISTS kind=tcsp_station ST_DWithin 2975 800 m, INSERT tcsp_zone subtype=parcelles;LATENT: meme rayon 800 m mais buffer geography (l436) vs DWithin planaire 2975 (l442) - bords de zone legerement differents
+spatial_layers;IGN BD TOPO bati;src/labuse/ingestion/ortho_pente.py:62;pente-hors-bati;kind=batiment ST_Intersects(parcelle) ST_Union puis ST_Difference (stats pente MNT);
+spatial_layers;IGN BD TOPO bati;src/labuse/ingestion/ortho_pv.py:51;masque-bati-tuile;kind=batiment && ST_MakeEnvelope tuile 2975 + ST_Intersection;
+spatial_layers;IGN BD TOPO bati;src/labuse/ingestion/ortho_tiles.py:110;tuiles-ortho-utiles;kind=batiment && cell + ST_Intersects (grille carree);
+spatial_layers;GPU;src/labuse/ingestion/fraicheur.py:79;fraicheur-plu;max(created_at) kind LIKE plu_gpu pour cent;
+spatial_layers;Georisques;src/labuse/ingestion/fraicheur.py:89;fraicheur-georisques;max(created_at) kind IN (georisque_alea,cavite,mvt,sol_pollue);
+spatial_layers;IGN BD TOPO bati;src/labuse/ingestion/ban_adresses.py:202;adresse-bati-partage;kind=batiment ST_Intersects + aire intersection > 15 m2 sur CHACUNE des 2 parcelles, INSERT adresse_parcelles;LATENT: seuil bati significatif 15 m2 ici vs 10 m2 division_or.py:229 vs 20 m2 solaire.py:260
+spatial_layers;multi-fournisseurs (foret ONF, ocs_ge);src/labuse/ingestion/remise_m123.py:74;stats-dedup-couche;count kind=X avant/apres dedup (l81) - le DELETE USING self-join l76 est une ecriture;
+spatial_layers;ANCT QPV;src/labuse/ingestion/qpv.py:61;stat-parcelles-qpv;kind=qpv EXISTS ST_Intersects(p.geom_2975,l.geom_2975) count distinct;
+spatial_layers;ANCT QPV;src/labuse/ingestion/qpv.py:66;stats-bilan-qpv;count kind=qpv + count distinct commune (l68);
+spatial_layers;IGN BD TOPO bati;src/labuse/ingestion/solaire.py:260;azimut-bati-principal;kind=batiment ST_Intersects, principal=max aire inter, retenu si inter >= 20 m2;LATENT: cf seuils 10/15 m2 division_or et ban_adresses
+spatial_layers;IGN BD TOPO bati;src/labuse/ingestion/division_or.py:224;candidats-division-batis;kind=batiment EXISTS ST_Intersects(parcelle);
+spatial_layers;IGN BD TOPO bati;src/labuse/ingestion/division_or.py:229;emprises-bati-parcelle;kind=batiment ST_Intersects DISTINCT geom, aire intersection, nb_bat=count si aire >= 10 m2;LATENT: seuil bati 10 m2 (aligne cascade bati.stats_batch) vs 15 m2 ban_adresses vs 20 m2 solaire
+spatial_layers;IGN BD TOPO voirie;src/labuse/ingestion/division_or.py:257;facade-voirie-lot;kind=voirie ST_DWithin(voirie,lot,2 m) longueur ST_Intersection(buffer voirie 1.5 m,boundary lot);
+spatial_layers;GPU;src/labuse/ingestion/division_or.py:278;zone-plu-dominante-lot;kind=plu_gpu_zone ST_Intersects(lot) ORDER BY aire inter DESC LIMIT 1;LATENT: zone du LOT recalculee directe (spatial_layers) vs parcel_zone_plu precalcule pour la parcelle
+spatial_layers;DEAL 50 pas;src/labuse/ingestion/division_or.py:327;exclusion-cinquante-pas;NOT EXISTS kind=cinquante_pas ST_Intersects(lot) - touche = exclu;
+spatial_layers;ONF foret publique;src/labuse/ingestion/division_or.py:329;exclusion-foret-domaniale;NOT EXISTS kind=foret_publique subtype=domaniale ST_Intersects(lot);
+spatial_layers;ODS parc national;src/labuse/ingestion/division_or.py:331;exclusion-parc-national;NOT EXISTS kind=parc_national subtype=coeur ST_Intersects(lot);
+spatial_layers;IGN trait de cote;src/labuse/ingestion/division_or.py:333;exclusion-trait-de-cote;NOT EXISTS kind=trait_de_cote ST_DWithin(lot,1 m);LATENT: littoral = DWithin 1 m du trait ici alors que cinquante_pas = Intersects strict (maille complementaire assumee en commentaire)
+spatial_layers;IGN BD TOPO bati;src/labuse/ingestion/division_or.py:373;candidats-division-batis;idem l224 (variante decoupe partielle);
+spatial_layers;IGN BD TOPO bati;src/labuse/ingestion/division_or.py:376;emprises-bati-parcelle;idem l229 sans DISTINCT geom, nb_bat aire >= 10 m2;LATENT: variante partielle SANS le dedup DISTINCT geom de C05 - double compte possible en bande frontaliere
+spatial_layers;IGN BD TOPO voirie;src/labuse/ingestion/division_or.py:395;facade-contigue-residuel;kind=voirie ST_DWithin 2 m, ST_LineMerge plus long segment >= 12 m;
+spatial_layers;IGN BD TOPO voirie;src/labuse/ingestion/division_or.py:439;facade-lot-et-reste;kind=voirie ST_DWithin 2 m buffer 1.5 m, max segment LineMerge, lot (l439) et reste (l442) >= 12 m;
+spatial_layers;IGN BD TOPO bati;src/labuse/ingestion/division_or.py:448;bati-dans-lot;kind=batiment ST_Intersects(lot) somme aire inter, exige <= 1 m2 (lot nu);
+spatial_layers;IGN BD TOPO voirie;src/labuse/ingestion/division_or.py:452;facade-voirie-qualifiee;kind=voirie subtype IN (Route a 1 chaussee,Route a 2 chaussees,Rond-point) ST_DWithin 2 m, >= 12 m;LATENT: la famille residuelle (l257) accepte TOUTE voirie, la decoupe partielle exige voirie qualifiee
+spatial_layers;GPU;src/labuse/ingestion/division_or.py:462;zone-plu-dominante-lot;idem l278 (variante partielle);
+spatial_layers;IGN BD TOPO bati;src/labuse/ingestion/division_or.py:490;garde-distance-bati;NOT EXISTS kind=batiment ST_DWithin(lot,dist_bati_min 1 m);
+spatial_layers;DEAL 50 pas + ONF + ODS + IGN;src/labuse/ingestion/division_or.py:506;exclusions-littoral-protege;l506-512 idem l327-333 (cinquante_pas/foret domaniale/parc coeur Intersects, trait de cote DWithin 1 m) sur lot_geom;
+spatial_layers;Georisques;src/labuse/ingestion/georisques_layers.py:305;parcelles-croisees-risque;kind IN API_KINDS (icpe,sol_pollue,cavite,mvt...) ST_DWithin(p,l,50 m defaut) par commune - indicateur rapport PAS un flag score;LATENT: croisement risque a 50 m DWithin ici vs Intersects strict dans la cascade servie
+spatial_layers;Georisques;src/labuse/ingestion/georisques_layers.py:318;stats-volumetrie-risques;count par kind+commune (l318) + exemples name non null (l328);
+spatial_layers;INSEE IRIS;src/labuse/ingestion/iris_rp.py:165;nom-iris;kind=iris_insee subtype=code_iris LIMIT 1 (libelle);
+spatial_layers;INSEE IRIS;src/labuse/ingestion/iris_rp.py:179;iris-de-parcelle;kind=iris_insee ST_Intersects(sl.geom_2975,ST_PointOnSurface(p.geom_2975)) LIMIT 1;LATENT: cf anc.py:278 (Contains centroide) et oll_loyers.py:191 (Intersects geom entiere)
+spatial_layers;IGN BD TOPO bati;src/labuse/ingestion/vegetation.py:226;canopee-hors-bati;kind=batiment && + ST_Intersects(parcelle) ST_MakeValid ST_Union, buffer cfg autour du bati;
+spatial_layers;IGN BD TOPO bati;src/labuse/ingestion/vegetation.py:341;bati-voisin-10m;kind=batiment ST_DWithin(bati,parcelle,cfg bati_voisin_m=10) NOT ST_Contains(parcelle,centroide bati);
+spatial_layers;Cerema Cartofriches;src/labuse/ingestion/cartofriches.py:98;friche-refcad-exact;kind=friche attrs->refcad contient idu (rattachement exact);
+spatial_layers;Cerema Cartofriches;src/labuse/ingestion/cartofriches.py:104;friche-polygone;kind=friche ST_Intersects(p.geom_2975,l.geom_2975) (fallback);LATENT: deux rattachements friche cote a cote - exact refcad vs Intersects polygone sans seuil de recouvrement
+spatial_layers;Cerema Cartofriches;src/labuse/ingestion/cartofriches.py:112;stats-friches-commune;count kind=friche commune (l112) + exemples tries par surface (l118);
+spatial_layers;multi-fournisseurs (GPU, DEAL, INPN, Georisques...);src/labuse/api/app.py:988;presence-couches;SELECT DISTINCT kind, aucun predicat spatial (bandeau couverture);
+spatial_layers;ANRU/ANCT;src/labuse/api/app.py:4418;perimetre-anru-fiche;kind=anru ST_DWithin 100 m + ORDER BY ST_Intersects DESC LIMIT 1 (dans/adjacente);LATENT: meme couche anru lue en Intersects strict sans rayon a app.py:5102
+spatial_layers;Georisques;src/labuse/api/app.py:4589;sols-pollues-fiche;kind=sol_pollue ST_DWithin 100 m, part=aire inter/aire parcelle (SIS si part>0), tri distance;
+spatial_layers;Georisques;src/labuse/api/app.py:4631;presence-sol-pollue;EXISTS kind=sol_pollue;
+spatial_layers;GPU;src/labuse/api/app.py:4709;dispositifs-parcelle;kinds dpu, peb, sup + plu_gpu_prescription subtype 01/05, ST_Intersects, part aire inter/parcelle, ER/EBC affiches si part>=0.1 pct;
+spatial_layers;GPU;src/labuse/api/app.py:4730;dispositifs-parcelle-materialise;variante via parcel_couche_intersection (area_m2 range) JOIN spatial_layers par id (attrs frais), memes kinds;
+spatial_layers;GPU;src/labuse/api/app.py:4754;presence-kinds-dispositifs;DISTINCT kind IN (dpu, peb, sup, plu_gpu_prescription);
+spatial_layers;GPU;src/labuse/api/app.py:4797;dpu-publie-commune;kind=dpu AND commune=:c LIMIT 1 (publication, pas spatial);
+spatial_layers;GPU;src/labuse/api/app.py:4814;sup-publie-commune;kind=sup AND commune=:c LIMIT 1;
+spatial_layers;DEAL PPR;src/labuse/api/app.py:4964;reference-arrete-ppr;kind=ppr attrs code_insee=:i, max(approbation) GROUP BY document (citation, pas spatial);
+spatial_layers;ANCT (QPV);src/labuse/api/app.py:5094;perimetre-qpv-fiche;kind=qpv ST_Intersects(parcelle) LIMIT 1;
+spatial_layers;derivee QPV (zonage TVA);src/labuse/api/app.py:5098;perimetre-tva-primo;kind=tva_primo ST_Intersects LIMIT 1;
+spatial_layers;ANRU/ANCT;src/labuse/api/app.py:5102;perimetre-anru-fin;kind=anru ST_Intersects LIMIT 1 (M134 perimetres fins);LATENT: app.py:4418 sert la meme couche avec DWithin 100 m
+spatial_layers;OSM/GTFS/BD TOPO;src/labuse/api/app.py:5273;proximites-knn-multi;7 branches UNION ALL, kind arret/pole/telepherique/ligne_ht/ligne_mt/transport_ligne/poste, KNN <-> LIMIT 1 sans cap SQL, seuils SEUILS_PROXIMITE_M appliques apres;
+spatial_layers;GTFS/OSM;src/labuse/api/app.py:5313;proximite-tcsp-station;kind=tcsp_station KNN <-> LIMIT 1, distance geography, affiche si <=1500 m (seuil legal 800);
+spatial_layers;GPU;src/labuse/api/app.py:5968;zones-plu-reglement-fiche;kind=plu_gpu_zone ST_Intersects, part par TOKEN de attrs.libelle, zone dominante + parts >=2 pct;LATENT: seuil 2 pct ici vs 5 pct projets.py:1469 vs dominante seule parcel_zone_plu vs toutes zones sans seuil enrichment.py:307
+spatial_layers;multi-fournisseurs (GPU, DEAL, INPN, Georisques...);src/labuse/api/app.py:6764;source-reelle-couche;kind=:k (+subtype ANY) GROUP BY data_source ORDER BY count DESC LIMIT 1;
+spatial_layers;IGN BD TOPO;src/labuse/api/app.py:7025;batiments-3d-bbox;kind=batiment attrs.hauteur NOT NULL geom && bbox 4326 LIMIT 8000;
+spatial_layers;GPU;src/labuse/api/voisinage.py:49;zone-plu-voisine;kind=plu_gpu_zone ST_Intersects, string_agg DISTINCT subtype (toutes zones, familles, sans seuil ni dominance);LATENT: zone par subtype agrege vs token libelle dominant (parcel_zone_plu, app.py:5968)
+spatial_layers;GPU;src/labuse/api/voisinage.py:52;zone-plu-parcelle-courante;idem kind=plu_gpu_zone ST_Intersects string_agg subtype sur la parcelle;
+spatial_layers;IGN BD TOPO;src/labuse/api/enrichment.py:239;facade-par-voie;kind=voirie ST_DWithin(segment limite, 6 m) + ecart angulaire < FACADE_ANGLE_MAX, voie la plus proche par segment;
+spatial_layers;GPU;src/labuse/api/enrichment.py:307;zonage-plu-enrichment;kind=plu_gpu_zone ST_Intersects DISTINCT attrs.libelle (toutes zones intersectees, sans seuil);LATENT: pas de part minimale, un lisere 0.1 pct liste a egalite avec la zone dominante
+spatial_layers;IGN BD TOPO;src/labuse/api/enrichment.py:455;viabilisation-distance-voirie;kind=voirie commune=p.commune KNN <-> LIMIT 1, contact si dist<=1 m;LATENT: distance d acces voirie = 1/5/10/30/75 m selon lecteur (cf phase1, modules, division_review, served_cascade)
+spatial_layers;GPU;src/labuse/api/moteurs.py:50;simulplu-zones-au;kind=plu_gpu_zone subtype LIKE AU pct, GROUP BY subtype (compte ilots, pas spatial);
+spatial_layers;IGN BD CARTO V5 (proxy OCS-GE);src/labuse/api/moteurs.py:644;zan-ocs-dominant;kind=ocs_ge ST_Intersects, sum aire inter GROUP BY subtype ORDER BY DESC LIMIT 1 (dominant);
+spatial_layers;Cerema Cartofriches;src/labuse/api/moteurs.py:648;zan-friche;EXISTS kind=friche ST_Intersects;
+spatial_layers;IGN BD CARTO V5 (proxy OCS-GE);src/labuse/api/moteurs.py:688;zan-commune-artif;kind=ocs_ge commune NOT NULL, GROUP BY commune (aires ha, pas de jointure parcelle);
+spatial_layers;GPU;src/labuse/api/tiles.py:71;build-parcel-zone-plu;CREATE TABLE AS kind=plu_gpu_zone ST_MakeValid + && + ST_Intersects, dominante = ORDER BY aire intersection DESC, code = 1er token attrs.libelle (repli name);
+spatial_layers;INPN;src/labuse/api/fiche_commune.py:105;parc-national-commune;EXISTS kind=parc_national ST_Intersects sur les parcelles de la commune;
+spatial_layers;GPU;src/labuse/api/fiche_commune.py:281;scot-commune;kind=scot ST_Contains(scot, centroide commune) LIMIT 1;LATENT: blocs3.scot rattache la PARCELLE en ST_Intersects (debordements de bord admis) vs Contains centroide ici
+spatial_layers;Cerema Cartofriches;src/labuse/api/fiche_blocs3.py:46;cartofriches-parcelle;kind=friche ST_Intersects;
+spatial_layers;OFB/INPN APER;src/labuse/api/fiche_blocs3.py:215;enr-exclue-toiture;kind=enr_exclue_hors_toiture ST_Intersects DISTINCT;
+spatial_layers;GeoMCE (MTE/OFB);src/labuse/api/fiche_blocs3.py:239;mesures-compensatoires;kind=mesures_compensatoires ST_Intersects;
+spatial_layers;GPU;src/labuse/api/fiche_blocs3.py:262;scot-parcelle;kind=scot ST_Intersects(parcelle) LIMIT 1;LATENT: fiche_commune.py:281 = ST_Contains centroide commune pour la meme couche
+spatial_layers;IGN BD TOPO;src/labuse/api/gabarit.py:48;batiments-gabarit;kind=batiment ST_Intersects ET (aire inter >= 50 pct emprise bat OU >= 20 m2);LATENT: seul lecteur bati avec seuil de rattachement, les autres prennent tout ST_Intersects (debords de voisins comptes)
+spatial_layers;multi-fournisseurs (GPU, DEAL, INPN, Georisques...);src/labuse/api/servitudes.py:341;contraintes-dormantes-parcelle;kind=ANY(_KINDS) ST_Intersects, filtres zonage_assainissement subtype=anc + prescription dans _PRESCRIPTION_PIEGE, dedup (kind, detail);
+spatial_layers;Georisques;src/labuse/api/served_cascade.py:118;icpe-sur-parcelle;kind=icpe ST_Contains(parcelle, point), tous regimes;
+spatial_layers;Georisques;src/labuse/api/served_cascade.py:125;icpe-proximite-detail;kind=icpe ST_DWithin 500 m NOT Contains, tous regimes, plus proche LIMIT 1;LATENT: cascade etage1.py:272 = cap 300 m ET exclut subtype Non ICPE (alerte) vs 500 m tous regimes ici (detail)
+spatial_layers;IGN BD TOPO;src/labuse/api/pre_dossier.py:608;bati-geojson-pcmi;kind=batiment ST_Intersects, ST_Union;
+spatial_layers;IGN BD TOPO;src/labuse/api/pre_dossier.py:634;emprise-batie-repli;kind=batiment ST_Intersects sum aire inter (sans dedup geometrique);LATENT: pas de ST_Union ni DISTINCT geom, chevauchements comptes double vs p_model/modules/context
+spatial_layers;IGN BD TOPO;src/labuse/api/pre_dossier.py:689;plan-masse-bati;kind=batiment ST_Intersects, ST_Collect des intersections clippees;
+spatial_layers;IGN BD TOPO;src/labuse/api/pre_dossier.py:904;points-de-vue-proches;kind=voirie ST_DWithin 70 m, ClosestPoint, dedup grille 10 m, LIMIT n;
+spatial_layers;IGN BD TOPO;src/labuse/api/pre_dossier.py:925;points-de-vue-lointains;kind=voirie anneau DWithin<=500 NOT DWithin<=120 depuis centroide, un par quadrant;
+spatial_layers;multi-fournisseurs (GPU, DEAL, INPN, Georisques...);src/labuse/api/couches_tuyau.py:304;version-cache-tuiles;max(created_at) global (sel de cache);
+spatial_layers;multi-fournisseurs (GPU, DEAL, INPN, Georisques...);src/labuse/api/couches_tuyau.py:346;build-tuyau-subdivise;CREATE TABLE AS tous kinds, dedup DISTINCT ON (kind, subtype, idass|id), ST_Subdivide 256;
+spatial_layers;IGN CoSIA;src/labuse/api/couches_tuyau.py:382;build-tuyau-piscines;kind=piscine_cosia ST_ClusterDBSCAN eps 1.5 m dedup, point representatif;
+spatial_layers;GPU SUP;src/labuse/api/couches_tuyau.py:439;build-tuyau-sup;kind=sup ST_Union par subtype (dissolution famille) + ST_Subdivide 256;
+spatial_layers;Georisques;src/labuse/api/couches_tuyau.py:472;build-tuyau-icpe;kind=icpe ST_Contains(parcelle, point), agrege par parcelle, emprise parcelle servie;
+spatial_layers;Georisques;src/labuse/api/couches_tuyau.py:485;compte-icpe-total;count kind=icpe;
+spatial_layers;Georisques;src/labuse/api/couches_tuyau.py:487;compte-icpe-rattachees;count kind=icpe EXISTS ST_Contains(parcelle, point);
+spatial_layers;OSM;src/labuse/api/couches_tuyau.py:510;build-tuyau-telepherique;kind=telepherique copie + segment projet Payanke UNION ALL;
+spatial_layers;GPU SUP;src/labuse/api/couches_tuyau.py:877;servitude-detail-clic;kind=:k (detail_kind autorise) ST_Contains(geom, point clique) LIMIT 12;
+spatial_layers;IGN BD TOPO;src/labuse/api/modules.py:123;division-bati-candidats;kind=batiment ST_Intersects DISTINCT geom (dedup frontaliere), emprise ratio 0.05-0.40, buffer bati 3 m;
+spatial_layers;GPU;src/labuse/api/modules.py:127;division-zone-dominante;kind=plu_gpu_zone ST_Intersects ORDER BY aire inter DESC LIMIT 1 (subtype dominant, filtre LIKE U pct);LATENT: dominante par subtype ici vs token attrs.libelle ailleurs (tiles, app.py:5968)
+spatial_layers;IGN BD TOPO;src/labuse/api/modules.py:153;division-acces-voirie;EXISTS kind=voirie ST_DWithin 5 m (critere C5 + bonus score);LATENT: acces voirie 5 m ici vs 10 m cascade phase1 vs 75 m served_cascade vs 30 m division_review
+spatial_layers;OFB/INPN APER;src/labuse/api/modules.py:1022;solaire-enr-exclue-sol;kind=enr_exclue_hors_toiture ST_Intersects LIMIT 1;
+spatial_layers;ANCT (QPV);src/labuse/api/modules.py:1633;qpv-listing;JOIN kind=qpv ST_Intersects (listing parcelles en QPV, LIMIT 500);
+spatial_layers;ANCT (QPV);src/labuse/api/modules.py:1645;qpv-compte-total;EXISTS kind=qpv ST_Intersects;
+spatial_layers;ANCT (QPV);src/labuse/api/modules.py:1889;qpv-fiscal-bilan;EXISTS kind=qpv ST_Intersects LIMIT 1 (TVA 2.1 pct LLS);
+spatial_layers;multi-fournisseurs (GPU, DEAL, INPN, Georisques...);src/labuse/cascade/context.py:118;intersections-batch-cascade;tous kinds sauf batiment, && bbox lot + ST_Subdivide 256 + ST_Intersects, coverage = sum aire inter / aire parcelle;
+spatial_layers;DEAL Carmen (eau);src/labuse/cascade/context.py:150;centroide-dans-eau;kind param eau, ST_Contains(sl.geom, centroid) (geom 4326, pas geom_2975);
+spatial_layers;DEAL Carmen (ravines/DPF);src/labuse/cascade/context.py:174;distance-ravine-dpf-batch;kinds ravine/berges/dpf, ST_DWithin cap search_cap_m (60 m defaut, max des couches), MIN distance;LATENT: repli unitaire min_distance_m (context.py:376) cap FIXE 200 m pour la meme notion
+spatial_layers;Georisques;src/labuse/cascade/context.py:259;plus-proche-poi-georisques;kinds sol_pollue/cavite/icpe/mvt, ST_DWithin cap = proximite_m ou max bandes_m, DISTINCT ON plus proche;
+spatial_layers;multi-fournisseurs (GPU, DEAL, INPN, Georisques...);src/labuse/cascade/context.py:355;intersections-unitaire-cascade;kind=:kind ST_Intersects, coverage aire inter / aire parcelle (repli hors prime, meme calcul que batch);
+spatial_layers;DEAL Carmen (ravines/DPF);src/labuse/cascade/context.py:376;distance-min-unitaire;kind=:k ST_DWithin cap 200 m code en dur, MIN distance;LATENT: cap 200 m vs cap parametre 60 m du batch (context.py:174) pour les memes couches
+spatial_layers;multi-fournisseurs (GPU, DEAL, INPN, Georisques...);src/labuse/cascade/context.py:392;presence-kind;EXISTS kind=:k;
+spatial_layers;multi-fournisseurs (GPU, DEAL, INPN, Georisques...);src/labuse/cascade/context.py:407;presence-kind-commune;EXISTS kind=:k AND commune=:c;
+spatial_layers;DEAL Carmen (eau);src/labuse/cascade/context.py:426;centroide-dans-kind-unitaire;kind=:kind ST_Contains(sl.geom, centroid) (geom 4326);
+spatial_layers;IGN BD TOPO;src/labuse/cascade/context.py:568;emprise-routiere-signaux;kind=voirie subtypes carrossables probe && puis ST_Intersects dedup md5(geom), longueur clippee + kind=batiment ST_Intersects dedup md5, aire clippee;
+spatial_layers;multi-fournisseurs (GPU, DEAL, INPN, Georisques...);src/labuse/cascade/cablage.py:115;presence-kinds-cablage;SELECT DISTINCT kind;
+spatial_layers;IGN BD TOPO;src/labuse/cascade/layers/phase1.py:1054;acces-voirie-cascade;kind=voirie commune=p.commune ST_DWithin 10 m EXISTS;LATENT: filtre commune= ici mais PAS dans modules.py:153 ni declassement.py:152 (frontalieres) + seuils 5/10/30/75 m divergents
+spatial_layers;OSM;src/labuse/cascade/layers/fiche_couches4.py:37;cimetiere-proximite;kind param cimetiere ST_DWithin cap 100 m, plus proche LIMIT 1;
+spatial_layers;Georisques;src/labuse/cascade/layers/etage1.py:272;icpe-alerte-cascade;kind=icpe subtype NOT IN (Non ICPE, vide), ST_DWithin cap 300 m (bandes faible), plus proche;LATENT: served_cascade.py:125 = 500 m TOUS regimes pour le detail de la meme notion
+spatial_layers;derivee MNT (pente);src/labuse/scoring/declassement.py:114;pente-max-parcelle;kind=pente commune=p.commune ST_Intersects, max slope_pct;
+spatial_layers;OSM;src/labuse/scoring/declassement.py:126;osm-faux-positif-dominant;kind=osm_faux_positif commune= ST_Intersects, coverage aire inter/parcelle, rn=1 dominant;
+spatial_layers;IGN BD TOPO;src/labuse/scoring/declassement.py:144;presence-voirie;EXISTS kind=voirie;
+spatial_layers;IGN BD TOPO;src/labuse/scoring/declassement.py:152;acces-distance-voirie-scoring;kind=voirie KNN <-> LIMIT 1 distance exacte sans cap ni filtre commune;LATENT: enrichment.py:455 meme notion avec commune=, phase1 avec DWithin 10
+spatial_layers;Cerema Cartofriches;src/labuse/scoring/score_v.py:161;friche-rattachement-refcad;kind=friche attrs.refcad jsonb_array_elements (exact, non spatial), ORDER BY deterministe site_id;
+spatial_layers;Cerema Cartofriches;src/labuse/scoring/score_v.py:167;friche-rattachement-geometrique;kind=friche ST_Intersects DISTINCT ON idu ORDER BY site_id;LATENT: union refcad+Intersects ici vs Intersects seul (moteurs.py:648, fiche_blocs3.py:46)
+spatial_layers;IGN BD TOPO;src/labuse/scoring/score_v.py:203;terrain-nu-ratio-bati;kind=batiment ST_Intersects, sum aire inter/aire parcelle < NU_RATIO_MAX (5 pct);LATENT: sans ST_Union, chevauchements comptes double vs p_model_bati (Union)
+spatial_layers;IGN BD TOPO;src/labuse/scoring/p_model/sql.py:185;p-model-emprise-bati-cosia;kind=batiment && + ST_Intersects, ST_Area(ST_Union(intersections)) par idu (dedup chevauchements);
+spatial_layers;IGN BD TOPO;src/labuse/scoring/p_model/sql.py:206;p-model-emprise-bati-repli;idem sans CoSIA, ST_Union avant ST_Area;
+spatial_layers;GPU;src/labuse/scoring/p_model/sql.py:238;p-model-layers-sub-build;CREATE TABLE AS kinds plu_gpu_zone/qpv/friche, ST_Subdivide(MakeValid(geom), 64), AUc/AUs regroupes en AU;
+spatial_layers;multi-fournisseurs (GPU, DEAL, INPN, Georisques...);src/labuse/registre/remplissage.py:145;couverture-communes-registre;count DISTINCT upper(commune) kind=ANY(couches), pas spatial;
+spatial_layers;OSM/GTFS/BD TOPO;src/labuse/registre/moteurs/parcelle.py:16;plus-proche-kind-registre;kind=:k (+subtype) KNN <-> LIMIT 1, distance servie sans cap;
+spatial_layers;multi-fournisseurs (GPU, DEAL, INPN, Georisques...);src/labuse/registre/moteurs/commune.py:136;part-parcelles-touchees-commune;kind=:k (+subtype) ST_Intersects count DISTINCT idu / total commune;LATENT: appartenance = touche-du-tout (0 pct) vs coverage seuillee de la cascade pour les memes couches (ppr, aleas)
+spatial_layers;ANCT (QPV);src/labuse/registre/moteurs/commune.py:152;qpv-noms-commune;kind=qpv AND commune=:c (attribut commune, pas spatial);
+spatial_layers;MNT IGN (pente);src/labuse/faisabilite/db.py:37;pente-parcelle;kind=pente commune ST_Intersects, max slope_pct;
+spatial_layers;DEAL trait de cote;src/labuse/faisabilite/db.py:40;bande-littorale;kind=trait_de_cote subtype IN (bande_courte,bande_longue) commune, EXISTS ST_Intersects;
+spatial_layers;RPG (IGN/ASP);src/labuse/faisabilite/db.py:44;agricole-rpg;kind=safer commune, EXISTS ST_Intersects;
+spatial_layers;GPU;src/labuse/faisabilite/db.py:113;portion-uau-emprise;kind=plu_gpu_zone commune, labuse_zone_famille IN uau_fams, ST_Intersects(z, geom PLEINE p.g), aires sur buffer(-recul);LATENT: union U/AU testee contre la geom pleine ici vs contre le buffer insete p.b dans _GREVE_CERTAINE (db.py:273) et assemblage
+spatial_layers;GPU;src/labuse/faisabilite/db.py:118;er-emprise;kind=plu_gpu_prescription subtype IN er_types commune, ST_Intersects(p.g), union puis aire inter buffer(-d);
+spatial_layers;GPU;src/labuse/faisabilite/db.py:124;ebc-emprise;kind=plu_gpu_prescription subtype IN ebc_types commune, ST_Intersects(p.g), union ER+EBC sans double compte;
+spatial_layers;GPU;src/labuse/faisabilite/db.py:152;er-detail;kind=plu_gpu_prescription subtype IN er_types commune, ST_Intersects(parcelle), m2=inter avec buffer(-d);
+spatial_layers;GPU;src/labuse/faisabilite/db.py:165;er-detail-assiette;idem er_types mais m2 mesure sur l assiette GABARIT (GeoJSON), ClipByBox2D;
+spatial_layers;GPU;src/labuse/faisabilite/db.py:173;prescriptions-eco;kind=plu_gpu_prescription subtype ANY types commune, ST_Intersects;
+spatial_layers;IGN BD TOPO;src/labuse/faisabilite/db.py:218;largeur-voie-desserte;kind=voirie commune, ST_DWithin 25 m, max(largeur);LATENT: voie proche = 25 m ici vs 12 m limites.py:443 vs 6 m touch limites.py:418 vs 10/75 m viabilisation_build
+spatial_layers;GPU;src/labuse/faisabilite/db.py:273;portion-uau-greve;kind=plu_gpu_zone commune famille IN uau_fams, ST_Intersects(z, buffer insete p.b), ClipByBox2D;LATENT: cf db.py:113 (p.g vs p.b)
+spatial_layers;DEAL PPR;src/labuse/faisabilite/db.py:281;greve-ppr-rouge;kind=ppr commune subtype IN ppr_red (INTERDICTION), ST_Intersects(p.b), ClipByBox2D union;LATENT: scope commune present ici, ABSENT dans builder.py:361 et db.py:882/956 (meme couche PPR INTERDICTION)
+spatial_layers;DGAC PEB;src/labuse/faisabilite/db.py:285;greve-peb;kind=peb lower(subtype) IN (a,b), ST_Intersects(p.b), SANS filtre commune (couche ile);
+spatial_layers;DEAL DPF;src/labuse/faisabilite/db.py:289;greve-dpf;kind=dpf commune, ST_DWithin 3.25 m + ST_Buffer 3.25 (marchepied);
+spatial_layers;IGN BD TOPO (ravines);src/labuse/faisabilite/db.py:292;greve-ravine;kind=ravine commune, ST_DWithin 10 m + ST_Buffer 10;LATENT: ravine 10 m ici vs 8 m DWithin flag builder.py:169
+spatial_layers;DEAL 50 pas;src/labuse/faisabilite/db.py:295;greve-cinquante-pas;kind=cinquante_pas commune, ST_Intersects(p.b), ClipByBox2D;
+spatial_layers;GPU;src/labuse/faisabilite/db.py:334;greve-er-ebc-assiette;kind=plu_gpu_prescription subtypes er_types/ebc_types commune, ST_Intersects(assiette gabarit GeoJSON), ClipByBox2D union;
+spatial_layers;multi-fournisseurs (PEB DGAC, DPF/50 pas DEAL, ravines);src/labuse/faisabilite/db.py:342;greve-certaines-assiette;peb a/b + dpf DWithin 3.25 + ravine DWithin 10 + cinquante_pas ST_Intersects, sur assiette gabarit, memes seuils que db.py:281-295;
+spatial_layers;DEAL PPR;src/labuse/faisabilite/db.py:882;surface-hors-ppr-rouge;kind=ppr subtype=INTERDICTION ST_Intersects(parcelle), SANS commune, aire rouge union/clip, servi si reste >= 200 m2;LATENT: seuil 200 m2 propre a ce chemin + pas de scope commune (cf db.py:281)
+spatial_layers;DEAL PPR;src/labuse/faisabilite/db.py:956;fragment-hors-ppr-rouge;kind=ppr subtype=INTERDICTION ST_Intersects SANS commune, ST_Difference puis plus grand fragment (ST_Dump) >= 200 m2 + acces voie;
+spatial_layers;IGN BD TOPO;src/labuse/faisabilite/hauteur_lidar_dalles.py:166;bati-principal-dalle;kind=batiment ST_Intersects LATERAL plus grand (ORDER ST_Area DESC LIMIT 1), bbox dalle + centroide ST_Contains;
+spatial_layers;IGN BD TOPO;src/labuse/faisabilite/hauteur_lidar_dalles.py:302;date-survol-bati;UPDATE batiment_hauteur_lidar FROM SELECT bati principal (plus grand, ST_Intersects) centroide ST_Contains grille;
+spatial_layers;IGN BD TOPO;src/labuse/faisabilite/hauteur_lidar.py:86;hauteur-bati-lidar;kind=batiment ST_Intersects, plus grand seul (LIMIT 1), hauteur attrs;LATENT: hauteur bati = plus grand batiment seul ici vs max TOUS batiments (residuel.py:63, potentiel.py:31, vue_mer.py:116)
+spatial_layers;IGN BD TOPO;src/labuse/faisabilite/hauteur_lidar.py:267;hauteur-bati-bdtopo;kind=batiment ST_Intersects, plus grand seul LIMIT 1, attrs hauteur;LATENT: idem plus-grand vs max-tous
+spatial_layers;IGN BD TOPO;src/labuse/faisabilite/residuel.py:63;niveaux-existants;kind=batiment ST_Intersects, max(nombre_d_etages) et max(hauteur) sur TOUS les batiments;LATENT: max tous batiments vs plus grand seul (hauteur_lidar)
+spatial_layers;GPU;src/labuse/faisabilite/residuel.py:91;portion-uau-bati;kind=plu_gpu_zone commune famille IN uau_fams, ST_Intersects(p.g), union SANS ClipByBox2D;
+spatial_layers;IGN BD TOPO;src/labuse/faisabilite/residuel.py:98;emprise-batie-assiette;kind=batiment ST_Intersects(assiette), SUM(ST_Area(ST_Intersection)) SANS ST_Union;LATENT: SUM sans union (double compte chevauchements) vs ST_Union avant aire (bati.py:148, bati_revele, au_ouverture)
+spatial_layers;IGN BD TOPO;src/labuse/faisabilite/potentiel.py:31;hauteur-bati-max;kind=batiment ST_Intersects, max(hauteur) tous batiments;
+spatial_layers;GPU;src/labuse/faisabilite/zone_servie.py:60;nb-zones-plu-parcelle;kind=plu_gpu_zone ST_Intersects, count DISTINCT (token,famille), SANS commune ni seuil;
+spatial_layers;GPU;src/labuse/faisabilite/zone_servie.py:70;parts-zones-plu;kind=plu_gpu_zone ST_Intersects, pct=aire inter/aire parcelle, HAVING aire > 0 (tout sliver compte);LATENT: dominante retient tout recouvrement > 0 vs seuil 5 pct du gabarit (builder.py:135/147) vs centroide (circuit_verrous.py:498)
+spatial_layers;IGN BD TOPO;src/labuse/faisabilite/viabilisation_build.py:81;voirie-proximite-viab;kind=voirie commune, EXISTS ST_DWithin 10 m et 75 m (voie10/voie75);LATENT: cf rayons voirie 25/12/6 m ailleurs
+spatial_layers;IGN BD TOPO;src/labuse/faisabilite/viabilisation_build.py:83;bati-proximite-viab;kind=batiment commune, EXISTS ST_DWithin 10/30/75 m;
+spatial_layers;GPU;src/labuse/faisabilite/viabilisation_build.py:86;zonage-assainissement-parcelle;kind=zonage_assainissement commune, ST_Intersects, 1 subtype ORDER collectif d abord (tout-ou-rien);LATENT: appartenance tout-ou-rien au premier zonage touche vs pct de surface zone.py:778
+spatial_layers;IGN BD TOPO;src/labuse/faisabilite/vue_mer.py:116;hauteur-oeil-bati;kind=batiment ST_Intersects, max(hauteur) tous batiments;
+spatial_layers;IGN BD TOPO;src/labuse/faisabilite/bati_revele.py:59;emprise-bdtopo-vs-cosia;kind=batiment && + ST_Intersects, ST_Union avant aire, seuils 20 m2 (couche vide);
+spatial_layers;IGN BD TOPO;src/labuse/faisabilite/au_ouverture.py:152;bati-voisin-contigu;kind=batiment ST_Intersects(voisin), ST_Union avant aire, contiguite >= 3 m et >= 2 pct perimetre, delaisse <= 50 m2;
+spatial_layers;IGN BD TOPO;src/labuse/gabarit/builder.py:63;millesime-bdtopo;kind=voirie data_source_id LIMIT 1 (metadonnee, non spatial);
+spatial_layers;GPU;src/labuse/gabarit/builder.py:135;zones-plu-gabarit-precalc;JOIN parcel_couche_intersection kind=plu_gpu_zone (aires pre-calculees), pct < 5 pct ecarte (bandes);LATENT: seuil 5 pct pour classer la zone vs tout > 0 dans zone_servie._PARTS
+spatial_layers;GPU;src/labuse/gabarit/builder.py:147;zones-plu-gabarit-direct;fallback kind=plu_gpu_zone ST_Intersects, pct=inter/aire parcelle, meme seuil 5 pct;LATENT: idem seuil 5 pct
+spatial_layers;multi-fournisseurs (ravines BD TOPO, DEAL trait de cote);src/labuse/gabarit/builder.py:169;touche-ravine;kind IN (ravine,trait_de_cote), ST_DWithin 8 m, EXISTS;LATENT: 8 m ici vs ravine DWithin+buffer 10 m db.py:292 et trait_de_cote ST_Intersects db.py:40
+spatial_layers;DEAL PPR;src/labuse/gabarit/builder.py:361;geom-ppr-rouge-exclusion;kind=ppr subtype=INTERDICTION ST_Intersects(parcelle) SANS commune, ClipByBox2D union, geom exclue du gabarit;LATENT: sans scope commune vs db.py:281 commune-scope
+spatial_layers;GPU SUP;src/labuse/gabarit/builder.py:412;exclusion-sup;kind=sup subtype <> pm1 commune, ST_Intersects, ClipByBox2D union;
+spatial_layers;IGN BD TOPO;src/labuse/gabarit/limites.py:397;voisin-parcelle-voirie;kind=voirie subtype NOT IN (Sentier,Escalier) ST_Intersects(voisin) ET NOT EXISTS batiment ST_Intersects;
+spatial_layers;IGN BD TOPO;src/labuse/gabarit/limites.py:418;voie-privee-candidats;batiment EXISTS ST_Intersects, voirie ST_DWithin 6 m (touch) + SUM longueur axe ST_Intersection;LATENT: rayon voie 6 m vs 10/12/25/75 ailleurs
+spatial_layers;IGN BD TOPO;src/labuse/gabarit/limites.py:443;troncons-voirie-proches;kind=voirie subtype NOT IN (Sentier,Escalier), ST_DWithin 12 m;LATENT: 12 m vs 25 m db.py:218
+spatial_layers;GPU;src/labuse/flash/data.py:187;prescriptions-plu-flash;kind=plu_gpu_prescription ST_Intersects, DISTINCT libelle (tous subtypes, sans seuil);
+spatial_layers;Georisques ICPE;src/labuse/flash/data.py:412;icpe-proches;kind=icpe ST_DWithin 500 m, top 5 par ST_Distance;
+spatial_layers;multi-fournisseurs (DEAL, ANCT, Cerema, ONF);src/labuse/flash/data.py:429;patrimoine-perimetres;kind IN (ens,qpv,friche,parc_national,foret_publique), ST_Intersects DISTINCT;
+spatial_layers;ANCT QPV;src/labuse/flash/data.py:808;qpv-flag;kind=qpv ST_Intersects LIMIT 1;
+spatial_layers;multi-fournisseurs (GPU, DEAL, INPN, Georisques...);src/labuse/filtres/sources.py:478;controle-couverture-communes;DISTINCT commune WHERE kind=:k (+subtype ANY), non spatial;
+spatial_layers;GPU;src/labuse/filtres/sources.py:498;controle-er-hors-code;kind=plu_gpu_prescription subtype <> 05 + regex libelle ER, count;
+spatial_layers;DGAC PEB;src/labuse/filtres/sources.py:563;controle-peb-aerodromes;kind=peb DISTINCT lower(libelle|name);
+spatial_layers;DEAL Carmen;src/labuse/filtres/sources.py:666;controle-reserve-marine;kind=ens subtype=reserve_naturelle name ILIKE marine, NOT EXISTS + min(id);
+spatial_layers;interne (ilots potentiel foncier);src/labuse/filtres/sources.py:807;controle-ilots-potentiel;kind=potentiel_foncier ST_Intersects(parcelles) + scores run;
+spatial_layers;INSEE IRIS;src/labuse/filtres/sources.py:1073;controle-iris-contours;kind=iris_insee subtype = iris_rp.iris, NOT EXISTS (jointure attributaire);
+spatial_layers;INSEE IRIS;src/labuse/anc_service.py:67;iris-parcelle-anc;kind=iris_insee ST_Contains(iris, ST_Centroid(parcelle));LATENT: rattachement IRIS par centroide ici vs ST_Intersects (zone.py:196/599) et jointure attributaire (filtres:1073)
+spatial_layers;GPU;src/labuse/assemblage.py:136;portion-uau-assemblage;kind=plu_gpu_zone commune famille IN uau_fams, ST_Intersects(union insetee u.b), ClipByBox2D;
+spatial_layers;multi-fournisseurs (GPU, DEAL PPR, DGAC, ravines);src/labuse/assemblage.py:145;greves-assemblage;er/ebc/ppr INTERDICTION/peb a-b/dpf 3.25/ravine 10/cinquante_pas sur union insetee, MEMES seuils que db.py _GREVE_CERTAINE;
+spatial_layers;GPU;src/labuse/bascule_gardes.py:520;idurba-par-commune;kind=plu_gpu_zone attrs idurba GROUP BY insee (non spatial);
+spatial_layers;multi-fournisseurs (GPU, DEAL, INPN, Georisques...);src/labuse/bascule_gardes.py:643;comptage-kinds-orphelins;GROUP BY kind + count data_source_id NULL (non spatial);
+spatial_layers;IGN BD TOPO;src/labuse/bati.py:95;presence-couche-batiment;EXISTS kind=batiment (non spatial);
+spatial_layers;IGN BD TOPO;src/labuse/bati.py:125;stats-bati-batch;kind=batiment ST_Intersects, ratio=SUM via ST_Union, nb FILTER inter >= 10 m2, max aire inter;
+spatial_layers;IGN BD TOPO;src/labuse/bati.py:148;emprise-batie-client;kind=batiment ST_Intersects, ST_Union AVANT ST_Area (producteur unique client);LATENT: ST_Union ici vs SUM sans union residuel.py:98 (scoring) - divergence documentee mais vivante
+spatial_layers;GPU;src/labuse/circuit_verrous.py:498;zone-plu-centroide-sonde;kind=plu_gpu_zone ST_Contains(sl.geom, ST_Centroid(p.geom)) sur geom 4326, attrs partition, LIMIT 1;LATENT: zone par CENTROIDE (et colonne geom pas geom_2975) vs dominante par surface zone_servie - le motif banni par ZONE-1 survit dans la sonde
+spatial_layers;multi-fournisseurs (GPU, DEAL, INPN, Georisques...);src/labuse/couche_intersection.py:51;empreinte-fraicheur-couches;max(created_at)+count WHERE kind=ANY(kinds) (non spatial);
+spatial_layers;multi-fournisseurs (GPU, DEAL, INPN, Georisques...);src/labuse/couche_intersection.py:135;precalcul-intersections;INSERT staging SELECT ST_Intersects + ST_Intersection (ordre zone/parcelle pour plu_gpu_zone, parcelle/couche sinon);
+spatial_layers;INPN ZNIEFF;src/labuse/cli.py:298;garde-purge-source-znieff;DELETE data_sources si NOT EXISTS spatial_layers.data_source_id;
+spatial_layers;Georisques;src/labuse/cli.py:2077;garde-georisques-deja-la;count commune kind=ANY(api_kinds), saute si present;
+spatial_layers;DEAL aleas;src/labuse/cli.py:2088;garde-alea-deja-la;count commune kind=georisque_alea;
+spatial_layers;Cerema Cartofriches;src/labuse/cli.py:2168;garde-friches-deja-la;count commune kind=friche;
+spatial_layers;Georisques MVT;src/labuse/cli.py:2264;garde-mvt-deja-la;count commune kind=mvt;
+spatial_layers;OSM Overpass;src/labuse/cli.py:2306;garde-amenites-deja-la;count commune kind=amenite;
+spatial_layers;multi-fournisseurs (DEAL PPR, SAR, OSM, BD TOPO);src/labuse/demo.py:162;controle-presence-couches;count commune kind IN (ppr,sar,osm_faux_positif,batiment);
+spatial_layers;OSM;src/labuse/demo.py:178;controle-faux-positifs-top20;kind=osm_faux_positif commune, aire inter / aire parcelle >= 50 pct;LATENT: seuil de recouvrement 50 pct propre a ce controle (declassement scoring a ses propres seuils)
+spatial_layers;multi-fournisseurs (GPU, DEAL, INPN, Georisques...);src/labuse/demo.py:183;kinds-presents-badge;DISTINCT kind (non spatial);
+spatial_layers;multi-fournisseurs (GPU, DEAL, INPN, Georisques...);src/labuse/fraicheur_caches.py:174;fraicheur-subdivision;kind <> batiment id > max(lid) OU lid orphelin (non spatial);
+spatial_layers;multi-fournisseurs (GPU, DEAL, INPN, Georisques...);src/labuse/models.py:2037;fraicheur-subdivision;meme predicat que fraicheur_caches.py:174 (duplique);
+spatial_layers;multi-fournisseurs (GPU, DEAL, INPN, Georisques...);src/labuse/models.py:2048;construction-spatial-layers-sub;CREATE TABLE AS SELECT kind <> batiment, ST_Subdivide(geom_2975,256) si dim=2 sinon geom brute;
+spatial_layers;IGN BD TOPO + CoSIA;src/labuse/rnu.py:160;clusters-bati-rnu;kind=batiment commune UNION batiment_cosia dedup NOT EXISTS ST_Intersects, ClusterDBSCAN;
+spatial_layers;Cerema Cartofriches;src/labuse/signaux_vie.py:68;signal-friche;INSERT SELECT kind=friche && + ST_Intersects(parcelle);
+spatial_layers;IGN BD TOPO;src/labuse/solaire_toiture.py:173;toit-principal-solaire;kind=batiment ST_Intersects, plus grand seul (ORDER ST_Area DESC LIMIT 1);
+spatial_layers;IGN BD TOPO;src/labuse/sonde_circuit.py:294;sonde-emprise-batie;kind=batiment ST_Intersects, ST_Union avant aire (recompute temoin vs HTTP);
+spatial_layers;DEAL aleas;src/labuse/sonde_circuit.py:736;sonde-alea-distribution;kind=georisque_alea attrs degre/niveau (non spatial);
+spatial_layers;multi-fournisseurs (SAR, OSM);src/labuse/state.py:69;presence-couches-commune;count commune kind IN (sar,osm_faux_positif);
+spatial_layers;multi-fournisseurs (DEAL PPR, aleas);src/labuse/state.py:71;presence-ppr-alea;count commune kind IN (ppr,georisque_alea);
+spatial_layers;ANCT FRR;src/labuse/territoire_fiscal.py:80;presence-frr;count kind=frr geom non nulle;
+spatial_layers;ANCT FRR;src/labuse/territoire_fiscal.py:84;frr-position-parcelle;kind=frr EXISTS ST_Intersects(parcelle);
+spatial_layers;INSEE IRIS;src/labuse/zone.py:196;iris-stats-zone;kind=iris_insee subtype=iris_rp.iris, ST_Intersects(zone 2975);
+spatial_layers;INSEE BPE;src/labuse/zone.py:378;bpe-plus-proche-zone;kind=amenite_bpe subtype=dom, ST_Contains(zone, point), KNN <-> LIMIT 1;
+spatial_layers;INSEE BPE;src/labuse/zone.py:396;bpe-enseignement-compte;kind=amenite_bpe subtype=C, count ST_Contains(zone);
+spatial_layers;OSM/GTFS;src/labuse/zone.py:402;arrets-transport-compte;kind IN (pole_echange,transport_arret), count ST_Contains(zone);
+spatial_layers;GPU;src/labuse/zone.py:514;zones-plu-zone;kind=plu_gpu_zone ST_Intersects(zone), clip + part_pct > 0, LIMIT 12;
+spatial_layers;GPU;src/labuse/zone.py:564;zones-au-zone;kind=plu_gpu_zone subtype LIKE AU pct ST_Intersects(zone), union ha;LATENT: detection AU par subtype LIKE AU pct - rate les AU phasees (1AUb) que labuse_zone_famille() attrape partout ailleurs (db.py, residuel, assemblage)
+spatial_layers;INSEE IRIS;src/labuse/zone.py:599;population-iris-zone;kind=iris_insee subtype=iris, ST_Intersects, frac = aire inter / aire IRIS;
+spatial_layers;DEAL PPR;src/labuse/zone.py:739;ppr-zone-pct;kind=ppr subtype IN (INTERDICTION,PRESCRIPTION), clip + pct union/aire zone, SANS commune;
+spatial_layers;DEAL aleas;src/labuse/zone.py:753;alea-zone-pct;kind=georisque_alea clip + pct union/aire zone;
+spatial_layers;GPU;src/labuse/zone.py:778;assainissement-zone-pct;kind=zonage_assainissement subtype IN (collectif,anc), pct ST_Union inter / aire zone;LATENT: pct de surface ici vs tout-ou-rien premier subtype touche viabilisation_build.py:86
+spatial_layers;multi-fournisseurs (INPN, DEAL, ANCT, Legifrance);src/labuse/zone.py:804;espaces-zonages-zone;kind IN (znieff,ens,parc_national,zfang,frr,qpv), pct ST_Union inter / aire, seuil > 0 pct;
+spatial_layers;INSEE BPE;src/labuse/zone.py:832;bpe-domaines-zone;kind=amenite_bpe subtype=dom, ST_Contains(zone), KNN top 3;
+spatial_layers_sub;multi-fournisseurs (GPU, DEAL, INPN, Georisques...);src/labuse/models.py:2038;fraicheur-cache-subdivise;sonde peremption: EXISTS spatial_layers.id > max(lid) OR lid orphelin, kind<>batiment;
+spatial_layers_sub;multi-fournisseurs (GPU, DEAL, INPN, Georisques...);src/labuse/models.py:2043;compte-cache-subdivise;count(*) (aussi ligne 2054 apres rebuild);
+spatial_layers_sub;multi-fournisseurs (GPU, DEAL, INPN, Georisques...);src/labuse/fraicheur_caches.py:175;etat-cache-dashboard;meme sonde peremption que models.py:2038 (max lid + orphelins);
+spatial_layers_sub;multi-fournisseurs (GPU, DEAL, INPN, Georisques...);src/labuse/cascade/context.py:101;couverture-couches-cascade;JOIN && + ST_Intersects(parcelle, piece), coverage = SUM(ST_Area(ST_Intersection))/aire parcelle, kind<>batiment, repli spatial_layers+ST_Subdivide(256) a la volee si table absente (coverage identique);
+parcel_zone_plu;derivee spatial_layers (GPU PLU);src/labuse/alertes.py:256;veille-zonage-snapshot;INSERT snap SELECT, JOIN parcels ST_Intersects(watch_zone.geom, p.geom) + pz.idu=p.idu, zone_lib;
+parcel_zone_plu;derivee spatial_layers (GPU PLU);src/labuse/alertes.py:272;alerte-changement-zonage;INSERT alertes SELECT, LEFT JOIN pz.idu=snap.idu, diff zone_lib IS DISTINCT FROM snap;
+parcel_zone_plu;derivee spatial_layers (GPU PLU);src/labuse/alertes.py:281;maj-snapshot-zonage;UPDATE snap SET zone_lib FROM pz (lecture zone_lib par idu);
+parcel_zone_plu;derivee spatial_layers (GPU PLU);src/labuse/verdict_servi.py:137;garde-zone-verdict-servi;LEFT JOIN zp.idu=parcelle_id, zone_fam+zone_lib (garde lecture residuel A/N);
+parcel_zone_plu;derivee spatial_layers (GPU PLU);src/labuse/blocs.py:108;zone-blocs-fonciers;COALESCE(zone_lib, zone_fam) WHERE idu=ANY;
+parcel_zone_plu;derivee spatial_layers (GPU PLU);src/labuse/courrier_compose.py:89;zone-courrier;zone_lib+zone_libelle par idu (puis resolve_reglement);
+parcel_zone_plu;derivee spatial_layers (GPU PLU);src/labuse/copilote_v2/outils.py:624;zone-copilote-destination;LEFT JOIN par idu, zone_lib (verdict sous-destination);
+parcel_zone_plu;derivee spatial_layers (GPU PLU);src/labuse/pige/signaux.py:89;dvf-terrain-nu-ile;JOIN dvf_mutations par id_parcelle, zone_fam IN (U,AU), vente terrain nu, mediane eur/m2;
+parcel_zone_plu;derivee spatial_layers (GPU PLU);src/labuse/pige/api.py:590;zone-pige-fiche;zone_libelle par idu;
+parcel_zone_plu;derivee spatial_layers (GPU PLU);src/labuse/api/accueil.py:92;communes-calibrees-accueil;JOIN parcels USING(idu), GROUP BY commune HAVING count>=100;
+parcel_zone_plu;derivee spatial_layers (GPU PLU);src/labuse/api/moteurs.py:307;voisins-assemblage;voisins ST_DWithin(a,b, ADJ_BUFFER_M=0.5 m), LEFT JOIN zone COALESCE(zone_lib,zone_fam);LATENT: 3 definitions de voisin/adjacence - ST_DWithin 0.5 m ici vs frontiere partagee >=3 m (lignee_tete) vs >=3 m + >=2 pct du perimetre (au_ouverture)
+parcel_zone_plu;derivee spatial_layers (GPU PLU);src/labuse/api/moteurs.py:651;zone-fam-signal-zan;zone_fam par idu;
+parcel_zone_plu;derivee spatial_layers (GPU PLU);src/labuse/api/partners.py:139;compatibilite-profils;LEFT JOIN par idu, constructible = zone_fam IN (U,AU);
+parcel_zone_plu;derivee spatial_layers (GPU PLU);src/labuse/scoring/lignee_tete.py:94;acquerabilite-voisins;JOIN vz.zone_lib=sp.zone_lib + parcels v frontiere ST_Length(ST_Intersection lignes)>=3.0 m, SIREN compare;LATENT: voisin = frontiere >=3 m sans condition de part de perimetre (au_ouverture exige en plus >=2 pct du perimetre et delaisse <=50 m2)
+parcel_zone_plu;derivee spatial_layers (GPU PLU);src/labuse/api/tiles.py:100;compte-post-build;count(*) apres build;
+parcel_zone_plu;derivee spatial_layers (GPU PLU);src/labuse/api/tiles.py:149;garde-build-mvt;EXISTS LIMIT 1 (stub vide declenche vrai build);
+parcel_zone_plu;derivee spatial_layers (GPU PLU);src/labuse/api/tiles.py:189;tuiles-mvt-parcels;LEFT JOIN par idu, zone_lib+zone_fam bakees dans mvt_parcels;
+parcel_zone_plu;derivee spatial_layers (GPU PLU);src/labuse/api/app.py:1591;filtre-zonage-famille;EXISTS zone_fam = ANY(upper(params)) (familles U/AU/A/N);LATENT: famille AU = zone_fam seul ici vs au_statut/au_ouverture qui ajoutent zone_lib ~ ^[0-9]?AU - une zone 1AU mal famillee passe au moteur AU mais echappe au filtre
+parcel_zone_plu;derivee spatial_layers (GPU PLU);src/labuse/api/app.py:1655;filtre-constructibilite-rnu;rnu = NOT EXISTS (aucune zone au parcellaire);
+parcel_zone_plu;derivee spatial_layers (GPU PLU);src/labuse/api/app.py:1701;filtre-zone-plu-exacte;EXISTS zone_filtre = ANY(upper(params)) (cle normalisee M99, pliage en PG);
+parcel_zone_plu;derivee spatial_layers (GPU PLU);src/labuse/api/app.py:2158;fiche-commune-sans-zonage;count parcelles commune NOT EXISTS zone;
+parcel_zone_plu;derivee spatial_layers (GPU PLU);src/labuse/api/app.py:2798;destination-interdite-couples;SELECT DISTINCT commune+zone_lib (zone_lib NOT NULL), verdicts plu_destinations memorises 300 s;
+parcel_zone_plu;derivee spatial_layers (GPU PLU);src/labuse/api/app.py:2850;filtre-destination-interdite;NOT EXISTS commune||zone_lib = ANY(couples interdits);
+parcel_zone_plu;derivee spatial_layers (GPU PLU);src/labuse/api/app.py:2973;outil-taxe-prefill;LEFT JOIN par idu, zone_libelle+zone_fam + surface COALESCE(contenance,dessin);
+parcel_zone_plu;derivee spatial_layers (GPU PLU);src/labuse/api/app.py:3291;geojson-carte-commune;LEFT JOIN par idu, zone_lib+zone_fam (NULL si table absente);
+parcel_zone_plu;derivee spatial_layers (GPU PLU);src/labuse/api/app.py:3574;liste-filtre-colonnes;LEFT JOIN par idu, zone_fam+zone_lib;
+parcel_zone_plu;derivee spatial_layers (GPU PLU);src/labuse/api/app.py:6039;fiche-potentiel-transformation;LEFT JOIN par idu, zone_fam+zone_lib + parcel_residuel avec cause;
+parcel_zone_plu;derivee spatial_layers (GPU PLU);src/labuse/api/modules.py:317;parcelles-siren;LEFT JOIN par idu, zone (portefeuille PM);
+parcel_zone_plu;derivee spatial_layers (GPU PLU);src/labuse/api/modules.py:1118;veille-succession-liste;LEFT JOIN par parcelle_id, zone;
+parcel_zone_plu;derivee spatial_layers (GPU PLU);src/labuse/registre/moteurs/zonage.py:28;parts-zonage-surface;JOIN parcels par idu, commune, GROUP BY zone_fam, sum(surface_m2);
+parcel_zone_plu;derivee spatial_layers (GPU PLU);src/labuse/registre/moteurs/zonage.py:61;compte-parcelles-par-zone;GROUP BY zone_fam+zone_filtre, zone_filtre NOT NULL, option communes;
+parcel_zone_plu;derivee spatial_layers (GPU PLU);src/labuse/faisabilite/au_statut.py:163;marquage-au-statut;JOIN par idu, zone_fam=AU OR zone_lib ~ ^[0-9]?AU;LATENT: critere AU elargi (regex zone_lib) vs filtres carte/listing qui ne lisent que zone_fam
+parcel_zone_plu;derivee spatial_layers (GPU PLU);src/labuse/faisabilite/filtre_bati.py:109;etage-bati-en-uau;LEFT JOIN par idu, en_uau = zone_fam IN (U,AU);
+parcel_zone_plu;derivee spatial_layers (GPU PLU);src/labuse/faisabilite/au_ouverture.py:155;voisins-assemblables-au;JOIN vz.zone_lib=:zl + voisins frontiere >=3.0 m ET >=2 pct du perimetre, delaisse <=50 m2, bati voisin via spatial_layers batiment ST_Union(ST_Intersection);LATENT: 3e definition de voisin (cf. moteurs.py:307 et lignee_tete.py:94)
+parcel_zone_plu;derivee spatial_layers (GPU PLU);src/labuse/faisabilite/au_ouverture.py:216;build-au-ouverture;JOIN par idu, insee=ANY, zone_fam=AU OR zone_lib ~ ^[0-9]?AU;
+parcel_zone_plu;derivee spatial_layers (GPU PLU);src/labuse/faisabilite/zone_servie.py:77;zone-dominante-ecran;zone_lib+zone_fam par parcel_id (source ecran), repli calcul direct spatial_layers plu_gpu_zone meme regle + flag a_cheval si aucune zone >=90 pct;LATENT: le flag a_cheval (SEUIL_A_CHEVAL_PCT=90) n existe qu en repli - la table precalculee sert la dominante SANS aucun seuil minimal de recouvrement (DISTINCT ON aire max, une zone qui effleure suffit)
+parcel_zone_plu;derivee spatial_layers (GPU PLU);src/labuse/faisabilite/zone_servie.py:165;zone-fam-ecran-garde;zone_fam+zone_lib par idu (garde pt2 points de service);
+parcel_zone_plu;derivee spatial_layers (GPU PLU);src/labuse/faisabilite/viabilisation_build.py:90;score-viabilisation;LEFT JOIN par idu, zone_fam bake dans via_scores (INSERT SELECT);
+parcel_zone_plu;derivee spatial_layers (GPU PLU);src/labuse/faisabilite/marche_commune.py:116;dvf-terrain-nu-commune;JOIN dvf par id_parcelle + parcels commune, zone_fam IN (U,AU), mediane par zone_fam;
+plu_reglement_extrait;GPU reglement;src/labuse/ingestion/plu_ingest.py:224;recherche-reglement-plu;WHERE insee + upper(zone)=upper(param) + tsv websearch_to_tsquery french, ORDER BY rang, LIMIT;
+plu_reglement_extrait;GPU reglement;src/labuse/ingestion/plu_ingest.py:243;etat-corpus-reglement;GROUP BY insee+commune, comptes extraits/doutes/pagination;
+tuyau_piscines;derivee CoSIA + detection ortho interne;src/labuse/ingestion/piscines_fusion.py:90;fusion-piscines-flair;INSERT piscines SELECT, EXISTS ST_DWithin(t.geom, detection flair, DEDUP_M=5.0 m) -> source flair+cosia + millesime (2 EXISTS lignes 90 et 96);LATENT: meme notion (meme piscine vue par 2 detecteurs) - rayon 5.0 m ici vs 2.0 m dans build_tuyau_piscines (couches_tuyau.py:455) et cluster DBSCAN eps 1.5 m
+tuyau_piscines;derivee CoSIA + detection ortho interne;src/labuse/ingestion/piscines_fusion.py:121;fusion-piscines-cosia-seules;FROM tuyau_piscines, rattachement parcelle ST_Intersects(p.geom, ST_Centroid(t.geom)), NOT EXISTS flair a ST_DWithin 5.0 m, statut par subtype + plancher surface 8.0 m2;
+tuyau_piscines;derivee CoSIA + detection ortho interne;src/labuse/api/couches_tuyau.py:417;compte-post-build;count(*) apres build;
+tuyau_piscines;derivee CoSIA + detection ortho interne;src/labuse/api/couches_tuyau.py:651;couches-carte-mvt;table dynamique du registre (repoint :205), WHERE kind/subtype + && ST_TileEnvelope marge 0.125, ST_AsMVTGeom 4096/64, simplif sous-pixel z<12;
+tuyau_sup;derivee GPU SUP (spatial_layers kind=sup dissous ST_Union par famille);src/labuse/api/couches_tuyau.py:448;compte-post-build;count(*) apres build;
+tuyau_sup;derivee GPU SUP (spatial_layers kind=sup dissous ST_Union par famille);src/labuse/api/couches_tuyau.py:651;couches-carte-mvt;table dynamique du registre (repoint :213), WHERE kind/subtype + && env marge 0.125, simplif z<12;LATENT: la couche carte SUP est dissoute par famille (detail par assiette perdu, assume) tandis que la fiche/servitudes lit spatial_layers kind=sup par assiette
+tuyau_telepherique;derivee OSM + ligne projet CINOR (segment indicatif ajoute);src/labuse/api/couches_tuyau.py:523;compte-post-build;count(*) apres build;
+tuyau_telepherique;derivee OSM + ligne projet CINOR (segment indicatif ajoute);src/labuse/api/couches_tuyau.py:651;couches-carte-mvt;table dynamique du registre (repoint :209), WHERE kind + && env marge 0.125;
+tuyau_subdivise;derivee spatial_layers (toutes couches ST_Subdivide 256, dedoublonnees par idass);src/labuse/api/couches_tuyau.py:194;registre-couches-subdivisees;SELECT DISTINCT kind (decide quelles couches repointer vers la table subdivisee);
+tuyau_subdivise;derivee spatial_layers (toutes couches ST_Subdivide 256, dedoublonnees par idass);src/labuse/api/couches_tuyau.py:354;compte-post-build;count(*) apres build;
+tuyau_subdivise;derivee spatial_layers (toutes couches ST_Subdivide 256, dedoublonnees par idass);src/labuse/api/couches_tuyau.py:651;couches-carte-mvt;table dynamique du registre, WHERE (kind=:k AND subtype=:s)... + && env marge 0.125, simplif z<12, ST_SRID sonde :599;
+tuyau_icpe;derivee Georisques ICPE (points rattaches parcelle ST_Contains, aggreges, subdivises);src/labuse/api/couches_tuyau.py:651;couches-carte-mvt;table dynamique du registre (repoint :217), WHERE kind=icpe + && env marge 0.125;LATENT: rattachement ICPE->parcelle = ST_Contains(parcelle, point) ici et en fiche (coherents) mais piscines->parcelle = ST_Intersects(parcelle, centroide) - deux conventions de rattachement point-dans-parcelle

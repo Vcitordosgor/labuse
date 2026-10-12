@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import html
 
+from .. import surface as _surface  # CHASSE-DONNEES-FIX-1 (Lot 1) — surface de terrain = contenance|dessin
 from ..ai.avis import AVIS_IA  # EXPRESS-01 · Volet B — avis IA (source unique)
 # M34 (dette #14) : libellés du POINT DE TRADUCTION UNIQUE (tier servi) — plus de table
 # locale de statuts legacy. Le verdict affiché ici est celui de verdict_servi.
@@ -31,7 +32,7 @@ def fiche_markdown(fiche: dict) -> str:
         "",
         f"> {fiche['disclaimer']}",
         "",
-        f"**Commune :** {p.get('commune') or '—'}  ·  **Surface :** {_m2(p.get('surface_m2'))}  ·  "
+        f"**Commune :** {p.get('commune') or '—'}  ·  **{_surface.phrase_surface(p.get('surface_m2'), p.get('contenance_m2'))}**  ·  "
         f"**Section/№ :** {p.get('section') or '—'} {p.get('numero') or ''}",
         "",
         "## Verdict",
@@ -149,13 +150,25 @@ def fiche_markdown(fiche: dict) -> str:
         for v in vz["voisines"]:
             lines.append(f"| {v['idu']} | {TIER_LABELS.get(v.get('status'), v.get('status') or '—')} | "
                          f"{v.get('rang') if v.get('rang') is not None and v.get('status') in ('brulante', 'chaude', 'priorite', 'a_suivre') else '—'} | "
-                         f"{v.get('plu_zone') or '—'} | {_m2(v.get('surface_m2'))} |")
+                         f"{v.get('plu_zone') or '—'} | {_m2(v.get('surface_terrain_m2', v.get('surface_m2')))} |")
         lines += ["", "_Adjacence géométrique uniquement — propriétaires, accords et faisabilité d'un "
                   "assemblage restent à vérifier._", ""]
 
     pv = _prospection_view(fiche)
-    lines += ["## Prospection propriétaire", "",
-              f"- **Statut propriétaire :** {pv['statut']}",
+    lines += ["## Prospection propriétaire", ""]
+    # CHASSE-DONNEES-FIX-1 (C-19) — propriétaire PERSONNE MORALE connu (DGFiP/SIRENE) : on le NOMME,
+    # plus « Propriétaire inconnu » (qui ne parlait que du contact CRM saisi).
+    _pm = fiche.get("proprietaire_moral") or {}
+    if _pm.get("denomination") or _pm.get("siren"):
+        _idn = (_pm.get("identite") or {})
+        _etat = ("active" if _idn.get("actif") else ("cessée" if _idn.get("actif") is False else "état inconnu"))
+        lines.append(f"- **Propriétaire (société) :** {_pm.get('denomination') or '—'}"
+                     + (f" — SIREN {_pm['siren']}" if _pm.get("siren") else "")
+                     + (f" ({_idn.get('activite')})" if _idn.get("activite") else "")
+                     + f" · {_etat}")
+        if (_pm.get("etat_societe") or {}).get("libelle"):
+            lines.append(f"- **État société :** {_pm['etat_societe']['libelle']}")
+    lines += [f"- **Statut propriétaire :** {pv['statut']}",
               f"- **Source :** {pv['source']}  ·  **Niveau de confiance :** {pv['confiance']}"]
     lines.append(f"- **Contact (saisi manuellement) :** {pv['contact']}" if pv["contact"]
                  else "- **Contact :** Propriétaire à identifier — aucune donnée nominative disponible dans LABUSE.")
@@ -272,7 +285,7 @@ def fiche_html(fiche: dict) -> str:
             f"<td>{html.escape(TIER_LABELS.get(v.get('status'), v.get('status') or '—'))}</td>"
             f"<td>{v.get('rang') if v.get('rang') is not None and v.get('status') in ('brulante', 'chaude', 'priorite', 'a_suivre') else '—'}</td>"
             f"<td>{html.escape(v.get('plu_zone') or '—')}</td>"
-            f"<td>{_m2(v.get('surface_m2'))}</td></tr>"
+            f"<td>{_m2(v.get('surface_terrain_m2', v.get('surface_m2')))}</td></tr>"
             for v in vz["voisines"])
         vz_html = ("<h2>Parcelles voisines (contiguïté)</h2>"
                    + (f"<p class='disc'>{html.escape(note)}</p>" if note else "")
@@ -285,9 +298,23 @@ def fiche_html(fiche: dict) -> str:
                   if pv["contact"] else
                   "<li><strong>Contact :</strong> Propriétaire à identifier — aucune donnée nominative "
                   "disponible dans LABUSE.</li>")
+    # CHASSE-DONNEES-FIX-1 (C-19) — propriétaire PERSONNE MORALE connu : on le NOMME.
+    _pm = fiche.get("proprietaire_moral") or {}
+    _pm_li = ""
+    if _pm.get("denomination") or _pm.get("siren"):
+        _idn = (_pm.get("identite") or {})
+        _etat = ("active" if _idn.get("actif") else ("cessée" if _idn.get("actif") is False else "état inconnu"))
+        _pm_li = ("<li><strong>Propriétaire (société) :</strong> "
+                  + html.escape(_pm.get("denomination") or "—")
+                  + (f" — SIREN {html.escape(str(_pm['siren']))}" if _pm.get("siren") else "")
+                  + (f" ({html.escape(_idn.get('activite'))})" if _idn.get("activite") else "")
+                  + f" · {_etat}</li>")
+        if (_pm.get("etat_societe") or {}).get("libelle"):
+            _pm_li += f"<li><strong>État société :</strong> {html.escape(_pm['etat_societe']['libelle'])}</li>"
     prosp_html = (
         "<h2>Prospection propriétaire</h2><ul>"
-        f"<li><strong>Statut propriétaire :</strong> {html.escape(pv['statut'])}</li>"
+        + _pm_li
+        + f"<li><strong>Statut propriétaire :</strong> {html.escape(pv['statut'])}</li>"
         f"<li><strong>Source :</strong> {html.escape(pv['source'])} · "
         f"<strong>Niveau de confiance :</strong> {html.escape(pv['confiance'])}</li>"
         + contact_li
@@ -309,7 +336,7 @@ def fiche_html(fiche: dict) -> str:
 <h1>LABUSE — Fiche parcelle {html.escape(p['idu'])}</h1>
 <p class="disc">{html.escape(fiche['disclaimer'])}</p>
 <p><strong>Commune :</strong> {html.escape(p.get('commune') or '—')} ·
-   <strong>Surface :</strong> {_m2(p.get('surface_m2'))} ·
+   <strong>{html.escape(_surface.phrase_surface(p.get('surface_m2'), p.get('contenance_m2')))}</strong> ·
    <strong>Section/№ :</strong> {html.escape((p.get('section') or '—'))} {html.escape(p.get('numero') or '')}</p>
 <h2>Verdict</h2>
 <p><span class="badge">{html.escape(_verdict_label(v))}</span>{f" <span class='src'>rang {v['rang']}</span>" if v.get('rang') and v.get('tier') in ('brulante', 'chaude', 'priorite', 'a_suivre') else ''}{' <span class="badge-micro">micro-opportunité</span>' if v.get('micro_opportunite') else ''}</p>

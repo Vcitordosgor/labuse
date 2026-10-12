@@ -1,0 +1,1048 @@
+commune;notion;lecteur;valeur;detail
+Bras-Panon;n_parcelles;fiche commune GET /communes/{c}/contexte foncier.n_parcelles;6066;table parcels ENTIERE (disparues incluses)
+Bras-Panon;n_parcelles;selecteur GET /communes .parcelles;6066;meme moteur compte_parcelles_commune
+Bras-Panon;n_parcelles;SQL count(*) parcels;6066;dont 10 cadastre_disparue_le NOT NULL
+Bras-Panon;n_parcelles_vivantes;fiche classement.evaluees;6056;parcelles presentes au run q_v18
+Bras-Panon;n_parcelles_vivantes;SQL parcel_p_score_v2 q_v18;6056;
+Bras-Panon;n_parcelles_vivantes;carte SQL mvt_parcels;6056;table bakee tuiles
+Bras-Panon;n_parcelles_vivantes;SQL dryrun_parcel_evaluations q_v18_sources;6056;cascade servie
+Bras-Panon;surface_ha;fiche foncier.surface_ha;8360;
+Bras-Panon;surface_ha;SQL sum(surface_m2)/10000 parcels;8360;
+Bras-Panon;stock_opportunites;fiche foncier.stock_opportunites.n;8;ha=2
+Bras-Panon;stock_opportunites;fiche comparable.stock_opportunites_n;8;moteur comparateur raw_rows (live)
+Bras-Panon;stock_opportunites;selecteur /communes .chaudes;8;
+Bras-Panon;stock_opportunites;/filtre .opportunites;8;
+Bras-Panon;stock_opportunites;/stats .opportunites;8;
+Bras-Panon;stock_opportunites;/stats/entonnoir .opportunites;8;
+Bras-Panon;stock_opportunites;SQL tiers brulante/chaude/priorite/a_suivre q_v18;8;ha=2
+Bras-Panon;filtre_compte;/filtre?communes sans critere .compte;6048;idus=6048 (CAP=20000 honnete au-dela)
+Bras-Panon;filtre_compte;/stats .total;6048;
+Bras-Panon;filtre_compte;/stats/entonnoir .analysees;6048;
+Bras-Panon;filtre_compte;SQL run q_v18_sources surface>=2;6048;slivers<2m2 masques=8
+Bras-Panon;filtre_compte;somme ventilation bandes /filtre;6048;= somme tiers = bande_total
+Bras-Panon;filtre_criteres;/filtre surface_min=1000 .compte;1704;longueur idus=1704 (egalite)
+Bras-Panon;filtre_criteres;/filtre surface_min=1000+tiers servis .compte;5;longueur idus=5 (egalite)
+Bras-Panon;bande_A;/filtre .bandes.A;58;
+Bras-Panon;bande_A;SQL score_labuse q_v18 surface>=2;58;
+Bras-Panon;densifiables;fiche densifiables.parcelles + outils.densifiables;2447;sdp=634295
+Bras-Panon;densifiables;SQL parcel_residuel sdp>0 tiers servables q_v18;2447;sdp=634295
+Bras-Panon;prix_m2_ancien;fiche comparable.ancien_median_eur_m2;1880;n=295
+Bras-Panon;prix_m2_ancien;SQL formule moteurs (Vente stricte, >1000, 100-12000, >=100);1880;n=295
+Bras-Panon;prix_m2_ancien_projets;SQL formule projets.py (toutes natures dont VEFA, 200-8000);1869;n=299
+Bras-Panon;prix_m2_ancien_projets;/projets/reperes dvf_median_eur_m2 (sans appelant front);1868;nb_opportunites=4293 (etiquette)
+Bras-Panon;prix_m2_ancien_projets;kanban projet marche_eur_m2 (meme SQL projets.py:1194);1869;affiche « marche ancien ~N €/m² »
+Bras-Panon;permis_12m;fiche foncier.permis_12m.n + permis_bloc.permis_12m;47;fenetre ancree max(date) Sitadel=2026-08-31
+Bras-Panon;permis_12m;SQL ligne6 fenetre donnees;47;logements=139
+Bras-Panon;permis_12m;fiche permis_bloc.permis_type_12m (somme);44;fenetre CALENDAIRE CURRENT_DATE-12m + annules=0
+Bras-Panon;permis_12m;SQL fenetre calendaire hors etat=4;44;annules=0
+Bras-Panon;point_mort;fiche permis_bloc.point_mort + outils.permis_point_mort;230;cache du 2026-10-11
+Bras-Panon;point_mort;SQL permis_point_mort (36m sans DAACT, run servi);230;recalcul 12/10 (fenetre glisse d un jour)
+Bras-Panon;sans_zonage;fiche classement.sans_zonage;25;
+Bras-Panon;sans_zonage;SQL parcels sans parcel_zone_plu;25;
+Bras-Panon;mutations_12m;fiche foncier.mutations_12m;61;12 derniers mois DE DONNEES de la commune
+Bras-Panon;mutations_12m;SQL dvf_mutations fenetre donnees commune;61;
+Bras-Panon;ppr_pct;fiche risques.ppr_pct;26.8;intersection spatiale directe (cache nocturne, cle fraicheur)
+Bras-Panon;ppr_pct;SQL recalcul ST_Intersects kind=ppr;26.8;echantillon 4 communes recalcule, identique
+Cilaos;n_parcelles;fiche commune GET /communes/{c}/contexte foncier.n_parcelles;6591;table parcels ENTIERE (disparues incluses)
+Cilaos;n_parcelles;selecteur GET /communes .parcelles;6591;meme moteur compte_parcelles_commune
+Cilaos;n_parcelles;SQL count(*) parcels;6591;dont 8 cadastre_disparue_le NOT NULL
+Cilaos;n_parcelles_vivantes;fiche classement.evaluees;6583;parcelles presentes au run q_v18
+Cilaos;n_parcelles_vivantes;SQL parcel_p_score_v2 q_v18;6583;
+Cilaos;n_parcelles_vivantes;carte SQL mvt_parcels;6583;table bakee tuiles
+Cilaos;n_parcelles_vivantes;SQL dryrun_parcel_evaluations q_v18_sources;6583;cascade servie
+Cilaos;surface_ha;fiche foncier.surface_ha;8241;
+Cilaos;surface_ha;SQL sum(surface_m2)/10000 parcels;8241;
+Cilaos;stock_opportunites;fiche foncier.stock_opportunites.n;1;ha=0
+Cilaos;stock_opportunites;fiche comparable.stock_opportunites_n;1;moteur comparateur raw_rows (live)
+Cilaos;stock_opportunites;selecteur /communes .chaudes;1;
+Cilaos;stock_opportunites;/filtre .opportunites;1;
+Cilaos;stock_opportunites;/stats .opportunites;1;
+Cilaos;stock_opportunites;/stats/entonnoir .opportunites;1;
+Cilaos;stock_opportunites;SQL tiers brulante/chaude/priorite/a_suivre q_v18;1;ha=0
+Cilaos;filtre_compte;/filtre?communes sans critere .compte;6576;idus=6576 (CAP=20000 honnete au-dela)
+Cilaos;filtre_compte;/stats .total;6576;
+Cilaos;filtre_compte;/stats/entonnoir .analysees;6576;
+Cilaos;filtre_compte;SQL run q_v18_sources surface>=2;6576;slivers<2m2 masques=7
+Cilaos;filtre_compte;somme ventilation bandes /filtre;6576;= somme tiers = bande_total
+Cilaos;filtre_criteres;/filtre surface_min=1000 .compte;2884;longueur idus=2884 (egalite)
+Cilaos;filtre_criteres;/filtre surface_min=1000+tiers servis .compte;0;longueur idus=0 (egalite)
+Cilaos;bande_A;/filtre .bandes.A;33;
+Cilaos;bande_A;SQL score_labuse q_v18 surface>=2;33;
+Cilaos;densifiables;fiche densifiables.parcelles + outils.densifiables;2270;sdp=642757
+Cilaos;densifiables;SQL parcel_residuel sdp>0 tiers servables q_v18;2270;sdp=642757
+Cilaos;prix_m2_ancien;fiche comparable.ancien_median_eur_m2;1622;n=125
+Cilaos;prix_m2_ancien;SQL formule moteurs (Vente stricte, >1000, 100-12000, >=100);1622;n=125
+Cilaos;prix_m2_ancien_projets;SQL formule projets.py (toutes natures dont VEFA, 200-8000);1648;n=123
+Cilaos;prix_m2_ancien_projets;/projets/reperes dvf_median_eur_m2 (sans appelant front);1648;nb_opportunites=3208 (etiquette)
+Cilaos;prix_m2_ancien_projets;kanban projet marche_eur_m2 (meme SQL projets.py:1194);1648;affiche « marche ancien ~N €/m² »
+Cilaos;permis_12m;fiche foncier.permis_12m.n + permis_bloc.permis_12m;25;fenetre ancree max(date) Sitadel=2026-08-31
+Cilaos;permis_12m;SQL ligne6 fenetre donnees;25;logements=27
+Cilaos;permis_12m;fiche permis_bloc.permis_type_12m (somme);24;fenetre CALENDAIRE CURRENT_DATE-12m + annules=0
+Cilaos;permis_12m;SQL fenetre calendaire hors etat=4;24;annules=0
+Cilaos;point_mort;fiche permis_bloc.point_mort + outils.permis_point_mort;160;cache du 2026-10-11
+Cilaos;point_mort;SQL permis_point_mort (36m sans DAACT, run servi);160;recalcul 12/10 (fenetre glisse d un jour)
+Cilaos;sans_zonage;fiche classement.sans_zonage;31;
+Cilaos;sans_zonage;SQL parcels sans parcel_zone_plu;31;
+Cilaos;mutations_12m;fiche foncier.mutations_12m;40;12 derniers mois DE DONNEES de la commune
+Cilaos;mutations_12m;SQL dvf_mutations fenetre donnees commune;40;
+Cilaos;ppr_pct;fiche risques.ppr_pct;68.2;intersection spatiale directe (cache nocturne, cle fraicheur)
+Entre-Deux;n_parcelles;fiche commune GET /communes/{c}/contexte foncier.n_parcelles;6361;table parcels ENTIERE (disparues incluses)
+Entre-Deux;n_parcelles;selecteur GET /communes .parcelles;6361;meme moteur compte_parcelles_commune
+Entre-Deux;n_parcelles;SQL count(*) parcels;6361;dont 20 cadastre_disparue_le NOT NULL
+Entre-Deux;n_parcelles_vivantes;fiche classement.evaluees;6341;parcelles presentes au run q_v18
+Entre-Deux;n_parcelles_vivantes;SQL parcel_p_score_v2 q_v18;6341;
+Entre-Deux;n_parcelles_vivantes;carte SQL mvt_parcels;6341;table bakee tuiles
+Entre-Deux;n_parcelles_vivantes;SQL dryrun_parcel_evaluations q_v18_sources;6341;cascade servie
+Entre-Deux;surface_ha;fiche foncier.surface_ha;4891;
+Entre-Deux;surface_ha;SQL sum(surface_m2)/10000 parcels;4891;
+Entre-Deux;stock_opportunites;fiche foncier.stock_opportunites.n;5;ha=1
+Entre-Deux;stock_opportunites;fiche comparable.stock_opportunites_n;5;moteur comparateur raw_rows (live)
+Entre-Deux;stock_opportunites;selecteur /communes .chaudes;5;
+Entre-Deux;stock_opportunites;/filtre .opportunites;5;
+Entre-Deux;stock_opportunites;/stats .opportunites;5;
+Entre-Deux;stock_opportunites;/stats/entonnoir .opportunites;5;
+Entre-Deux;stock_opportunites;SQL tiers brulante/chaude/priorite/a_suivre q_v18;5;ha=1
+Entre-Deux;filtre_compte;/filtre?communes sans critere .compte;6336;idus=6336 (CAP=20000 honnete au-dela)
+Entre-Deux;filtre_compte;/stats .total;6336;
+Entre-Deux;filtre_compte;/stats/entonnoir .analysees;6336;
+Entre-Deux;filtre_compte;SQL run q_v18_sources surface>=2;6336;slivers<2m2 masques=5
+Entre-Deux;filtre_compte;somme ventilation bandes /filtre;6336;= somme tiers = bande_total
+Entre-Deux;filtre_criteres;/filtre surface_min=1000 .compte;2789;longueur idus=2789 (egalite)
+Entre-Deux;filtre_criteres;/filtre surface_min=1000+tiers servis .compte;2;longueur idus=2 (egalite)
+Entre-Deux;bande_A;/filtre .bandes.A;36;
+Entre-Deux;bande_A;SQL score_labuse q_v18 surface>=2;36;
+Entre-Deux;densifiables;fiche densifiables.parcelles + outils.densifiables;2235;sdp=679398
+Entre-Deux;densifiables;SQL parcel_residuel sdp>0 tiers servables q_v18;2235;sdp=679398
+Entre-Deux;prix_m2_ancien;fiche comparable.ancien_median_eur_m2;2689;n=224
+Entre-Deux;prix_m2_ancien;/moteurs/barometre top_communes_prix;2689;n=224 (top tronque a 8/24, drapeau tronquee)
+Entre-Deux;prix_m2_ancien;SQL formule moteurs (Vente stricte, >1000, 100-12000, >=100);2689;n=224
+Entre-Deux;prix_m2_ancien_projets;SQL formule projets.py (toutes natures dont VEFA, 200-8000);2679;n=226
+Entre-Deux;prix_m2_ancien_projets;/projets/reperes dvf_median_eur_m2 (sans appelant front);2678;nb_opportunites=3024 (etiquette)
+Entre-Deux;prix_m2_ancien_projets;kanban projet marche_eur_m2 (meme SQL projets.py:1194);2679;affiche « marche ancien ~N €/m² »
+Entre-Deux;permis_12m;fiche foncier.permis_12m.n + permis_bloc.permis_12m;57;fenetre ancree max(date) Sitadel=2026-08-31
+Entre-Deux;permis_12m;SQL ligne6 fenetre donnees;57;logements=121
+Entre-Deux;permis_12m;fiche permis_bloc.permis_type_12m (somme);53;fenetre CALENDAIRE CURRENT_DATE-12m + annules=1
+Entre-Deux;permis_12m;SQL fenetre calendaire hors etat=4;53;annules=1
+Entre-Deux;point_mort;fiche permis_bloc.point_mort + outils.permis_point_mort;196;cache du 2026-10-11
+Entre-Deux;point_mort;SQL permis_point_mort (36m sans DAACT, run servi);196;recalcul 12/10 (fenetre glisse d un jour)
+Entre-Deux;sans_zonage;fiche classement.sans_zonage;49;
+Entre-Deux;sans_zonage;SQL parcels sans parcel_zone_plu;49;
+Entre-Deux;mutations_12m;fiche foncier.mutations_12m;46;12 derniers mois DE DONNEES de la commune
+Entre-Deux;mutations_12m;SQL dvf_mutations fenetre donnees commune;46;
+Entre-Deux;ppr_pct;fiche risques.ppr_pct;54.4;intersection spatiale directe (cache nocturne, cle fraicheur)
+L'Étang-Salé;n_parcelles;fiche commune GET /communes/{c}/contexte foncier.n_parcelles;9167;table parcels ENTIERE (disparues incluses)
+L'Étang-Salé;n_parcelles;selecteur GET /communes .parcelles;9167;meme moteur compte_parcelles_commune
+L'Étang-Salé;n_parcelles;SQL count(*) parcels;9167;dont 34 cadastre_disparue_le NOT NULL
+L'Étang-Salé;n_parcelles_vivantes;fiche classement.evaluees;9133;parcelles presentes au run q_v18
+L'Étang-Salé;n_parcelles_vivantes;SQL parcel_p_score_v2 q_v18;9133;
+L'Étang-Salé;n_parcelles_vivantes;carte SQL mvt_parcels;9133;table bakee tuiles
+L'Étang-Salé;n_parcelles_vivantes;SQL dryrun_parcel_evaluations q_v18_sources;9133;cascade servie
+L'Étang-Salé;surface_ha;fiche foncier.surface_ha;3649;
+L'Étang-Salé;surface_ha;SQL sum(surface_m2)/10000 parcels;3649;
+L'Étang-Salé;stock_opportunites;fiche foncier.stock_opportunites.n;9;ha=1
+L'Étang-Salé;stock_opportunites;fiche comparable.stock_opportunites_n;9;moteur comparateur raw_rows (live)
+L'Étang-Salé;stock_opportunites;selecteur /communes .chaudes;9;
+L'Étang-Salé;stock_opportunites;/filtre .opportunites;9;
+L'Étang-Salé;stock_opportunites;/stats .opportunites;9;
+L'Étang-Salé;stock_opportunites;/stats/entonnoir .opportunites;9;
+L'Étang-Salé;stock_opportunites;SQL tiers brulante/chaude/priorite/a_suivre q_v18;9;ha=1
+L'Étang-Salé;filtre_compte;/filtre?communes sans critere .compte;9117;idus=9117 (CAP=20000 honnete au-dela)
+L'Étang-Salé;filtre_compte;/stats .total;9117;
+L'Étang-Salé;filtre_compte;/stats/entonnoir .analysees;9117;
+L'Étang-Salé;filtre_compte;SQL run q_v18_sources surface>=2;9117;slivers<2m2 masques=16
+L'Étang-Salé;filtre_compte;somme ventilation bandes /filtre;9117;= somme tiers = bande_total
+L'Étang-Salé;filtre_criteres;/filtre surface_min=1000 .compte;2693;longueur idus=2693 (egalite)
+L'Étang-Salé;filtre_criteres;/filtre surface_min=1000+tiers servis .compte;4;longueur idus=4 (egalite)
+L'Étang-Salé;bande_A;/filtre .bandes.A;77;
+L'Étang-Salé;bande_A;SQL score_labuse q_v18 surface>=2;77;
+L'Étang-Salé;densifiables;fiche densifiables.parcelles + outils.densifiables;3839;sdp=1124120
+L'Étang-Salé;densifiables;SQL parcel_residuel sdp>0 tiers servables q_v18;3839;sdp=1124120
+L'Étang-Salé;prix_m2_ancien;fiche comparable.ancien_median_eur_m2;3737;n=416
+L'Étang-Salé;prix_m2_ancien;/moteurs/barometre top_communes_prix;3737;n=416 (top tronque a 8/24, drapeau tronquee)
+L'Étang-Salé;prix_m2_ancien;SQL formule moteurs (Vente stricte, >1000, 100-12000, >=100);3737;n=416
+L'Étang-Salé;prix_m2_ancien_projets;SQL formule projets.py (toutes natures dont VEFA, 200-8000);3938;n=469
+L'Étang-Salé;prix_m2_ancien_projets;/projets/reperes dvf_median_eur_m2 (sans appelant front);3937;nb_opportunites=5561 (etiquette)
+L'Étang-Salé;prix_m2_ancien_projets;kanban projet marche_eur_m2 (meme SQL projets.py:1194);3938;affiche « marche ancien ~N €/m² »
+L'Étang-Salé;permis_12m;fiche foncier.permis_12m.n + permis_bloc.permis_12m;102;fenetre ancree max(date) Sitadel=2026-08-31
+L'Étang-Salé;permis_12m;SQL ligne6 fenetre donnees;102;logements=155
+L'Étang-Salé;permis_12m;fiche permis_bloc.permis_type_12m (somme);94;fenetre CALENDAIRE CURRENT_DATE-12m + annules=2
+L'Étang-Salé;permis_12m;SQL fenetre calendaire hors etat=4;94;annules=2
+L'Étang-Salé;point_mort;fiche permis_bloc.point_mort + outils.permis_point_mort;227;cache du 2026-10-11
+L'Étang-Salé;point_mort;SQL permis_point_mort (36m sans DAACT, run servi);229;recalcul 12/10 (fenetre glisse d un jour)
+L'Étang-Salé;sans_zonage;fiche classement.sans_zonage;97;
+L'Étang-Salé;sans_zonage;SQL parcels sans parcel_zone_plu;97;
+L'Étang-Salé;mutations_12m;fiche foncier.mutations_12m;79;12 derniers mois DE DONNEES de la commune
+L'Étang-Salé;mutations_12m;SQL dvf_mutations fenetre donnees commune;79;
+L'Étang-Salé;ppr_pct;fiche risques.ppr_pct;40.3;intersection spatiale directe (cache nocturne, cle fraicheur)
+La Plaine-des-Palmistes;n_parcelles;fiche commune GET /communes/{c}/contexte foncier.n_parcelles;6475;table parcels ENTIERE (disparues incluses)
+La Plaine-des-Palmistes;n_parcelles;selecteur GET /communes .parcelles;6475;meme moteur compte_parcelles_commune
+La Plaine-des-Palmistes;n_parcelles;SQL count(*) parcels;6475;dont 10 cadastre_disparue_le NOT NULL
+La Plaine-des-Palmistes;n_parcelles_vivantes;fiche classement.evaluees;6465;parcelles presentes au run q_v18
+La Plaine-des-Palmistes;n_parcelles_vivantes;SQL parcel_p_score_v2 q_v18;6465;
+La Plaine-des-Palmistes;n_parcelles_vivantes;carte SQL mvt_parcels;6465;table bakee tuiles
+La Plaine-des-Palmistes;n_parcelles_vivantes;SQL dryrun_parcel_evaluations q_v18_sources;6465;cascade servie
+La Plaine-des-Palmistes;surface_ha;fiche foncier.surface_ha;8127;
+La Plaine-des-Palmistes;surface_ha;SQL sum(surface_m2)/10000 parcels;8127;
+La Plaine-des-Palmistes;stock_opportunites;fiche foncier.stock_opportunites.n;11;ha=1
+La Plaine-des-Palmistes;stock_opportunites;fiche comparable.stock_opportunites_n;11;moteur comparateur raw_rows (live)
+La Plaine-des-Palmistes;stock_opportunites;selecteur /communes .chaudes;11;
+La Plaine-des-Palmistes;stock_opportunites;/filtre .opportunites;11;
+La Plaine-des-Palmistes;stock_opportunites;/stats .opportunites;11;
+La Plaine-des-Palmistes;stock_opportunites;/stats/entonnoir .opportunites;11;
+La Plaine-des-Palmistes;stock_opportunites;SQL tiers brulante/chaude/priorite/a_suivre q_v18;11;ha=1
+La Plaine-des-Palmistes;filtre_compte;/filtre?communes sans critere .compte;6463;idus=6463 (CAP=20000 honnete au-dela)
+La Plaine-des-Palmistes;filtre_compte;/stats .total;6463;
+La Plaine-des-Palmistes;filtre_compte;/stats/entonnoir .analysees;6463;
+La Plaine-des-Palmistes;filtre_compte;SQL run q_v18_sources surface>=2;6463;slivers<2m2 masques=2
+La Plaine-des-Palmistes;filtre_compte;somme ventilation bandes /filtre;6463;= somme tiers = bande_total
+La Plaine-des-Palmistes;filtre_criteres;/filtre surface_min=1000 .compte;2815;longueur idus=2815 (egalite)
+La Plaine-des-Palmistes;filtre_criteres;/filtre surface_min=1000+tiers servis .compte;3;longueur idus=3 (egalite)
+La Plaine-des-Palmistes;bande_A;/filtre .bandes.A;85;
+La Plaine-des-Palmistes;bande_A;SQL score_labuse q_v18 surface>=2;85;
+La Plaine-des-Palmistes;densifiables;fiche densifiables.parcelles + outils.densifiables;2986;sdp=952795
+La Plaine-des-Palmistes;densifiables;SQL parcel_residuel sdp>0 tiers servables q_v18;2986;sdp=952795
+La Plaine-des-Palmistes;prix_m2_ancien;fiche comparable.ancien_median_eur_m2;2071;n=266
+La Plaine-des-Palmistes;prix_m2_ancien;SQL formule moteurs (Vente stricte, >1000, 100-12000, >=100);2071;n=266
+La Plaine-des-Palmistes;prix_m2_ancien_projets;SQL formule projets.py (toutes natures dont VEFA, 200-8000);2059;n=270
+La Plaine-des-Palmistes;prix_m2_ancien_projets;/projets/reperes dvf_median_eur_m2 (sans appelant front);2059;nb_opportunites=4295 (etiquette)
+La Plaine-des-Palmistes;prix_m2_ancien_projets;kanban projet marche_eur_m2 (meme SQL projets.py:1194);2059;affiche « marche ancien ~N €/m² »
+La Plaine-des-Palmistes;permis_12m;fiche foncier.permis_12m.n + permis_bloc.permis_12m;64;fenetre ancree max(date) Sitadel=2026-08-31
+La Plaine-des-Palmistes;permis_12m;SQL ligne6 fenetre donnees;64;logements=67
+La Plaine-des-Palmistes;permis_12m;fiche permis_bloc.permis_type_12m (somme);55;fenetre CALENDAIRE CURRENT_DATE-12m + annules=2
+La Plaine-des-Palmistes;permis_12m;SQL fenetre calendaire hors etat=4;55;annules=2
+La Plaine-des-Palmistes;point_mort;fiche permis_bloc.point_mort + outils.permis_point_mort;366;cache du 2026-10-11
+La Plaine-des-Palmistes;point_mort;SQL permis_point_mort (36m sans DAACT, run servi);366;recalcul 12/10 (fenetre glisse d un jour)
+La Plaine-des-Palmistes;sans_zonage;fiche classement.sans_zonage;25;
+La Plaine-des-Palmistes;sans_zonage;SQL parcels sans parcel_zone_plu;25;
+La Plaine-des-Palmistes;mutations_12m;fiche foncier.mutations_12m;52;12 derniers mois DE DONNEES de la commune
+La Plaine-des-Palmistes;mutations_12m;SQL dvf_mutations fenetre donnees commune;52;
+La Plaine-des-Palmistes;ppr_pct;fiche risques.ppr_pct;100.0;intersection spatiale directe (cache nocturne, cle fraicheur)
+La Possession;n_parcelles;fiche commune GET /communes/{c}/contexte foncier.n_parcelles;13450;table parcels ENTIERE (disparues incluses)
+La Possession;n_parcelles;selecteur GET /communes .parcelles;13450;meme moteur compte_parcelles_commune
+La Possession;n_parcelles;SQL count(*) parcels;13450;dont 43 cadastre_disparue_le NOT NULL
+La Possession;n_parcelles_vivantes;fiche classement.evaluees;13407;parcelles presentes au run q_v18
+La Possession;n_parcelles_vivantes;SQL parcel_p_score_v2 q_v18;13407;
+La Possession;n_parcelles_vivantes;carte SQL mvt_parcels;13407;table bakee tuiles
+La Possession;n_parcelles_vivantes;SQL dryrun_parcel_evaluations q_v18_sources;13407;cascade servie
+La Possession;surface_ha;fiche foncier.surface_ha;11363;
+La Possession;surface_ha;SQL sum(surface_m2)/10000 parcels;11363;
+La Possession;stock_opportunites;fiche foncier.stock_opportunites.n;54;ha=16
+La Possession;stock_opportunites;fiche comparable.stock_opportunites_n;54;moteur comparateur raw_rows (live)
+La Possession;stock_opportunites;selecteur /communes .chaudes;54;
+La Possession;stock_opportunites;/filtre .opportunites;54;
+La Possession;stock_opportunites;/stats .opportunites;54;
+La Possession;stock_opportunites;/stats/entonnoir .opportunites;54;
+La Possession;stock_opportunites;SQL tiers brulante/chaude/priorite/a_suivre q_v18;54;ha=16
+La Possession;filtre_compte;/filtre?communes sans critere .compte;13383;idus=13383 (CAP=20000 honnete au-dela)
+La Possession;filtre_compte;/stats .total;13383;
+La Possession;filtre_compte;/stats/entonnoir .analysees;13383;
+La Possession;filtre_compte;SQL run q_v18_sources surface>=2;13383;slivers<2m2 masques=24
+La Possession;filtre_compte;somme ventilation bandes /filtre;13383;= somme tiers = bande_total
+La Possession;filtre_criteres;/filtre surface_min=1000 .compte;3348;longueur idus=3348 (egalite)
+La Possession;filtre_criteres;/filtre surface_min=1000+tiers servis .compte;32;longueur idus=32 (egalite)
+La Possession;bande_A;/filtre .bandes.A;210;
+La Possession;bande_A;SQL score_labuse q_v18 surface>=2;210;
+La Possession;densifiables;fiche densifiables.parcelles + outils.densifiables;7886;sdp=3593829
+La Possession;densifiables;SQL parcel_residuel sdp>0 tiers servables q_v18;7886;sdp=3593829
+La Possession;prix_m2_ancien;fiche comparable.ancien_median_eur_m2;2843;n=1433
+La Possession;prix_m2_ancien;/moteurs/barometre top_communes_prix;2843;n=1433 (top tronque a 8/24, drapeau tronquee)
+La Possession;prix_m2_ancien;SQL formule moteurs (Vente stricte, >1000, 100-12000, >=100);2843;n=1433
+La Possession;prix_m2_ancien_projets;SQL formule projets.py (toutes natures dont VEFA, 200-8000);2901;n=1515
+La Possession;prix_m2_ancien_projets;/projets/reperes dvf_median_eur_m2 (sans appelant front);2901;nb_opportunites=9967 (etiquette)
+La Possession;prix_m2_ancien_projets;kanban projet marche_eur_m2 (meme SQL projets.py:1194);2901;affiche « marche ancien ~N €/m² »
+La Possession;permis_12m;fiche foncier.permis_12m.n + permis_bloc.permis_12m;80;fenetre ancree max(date) Sitadel=2026-08-31
+La Possession;permis_12m;SQL ligne6 fenetre donnees;80;logements=111
+La Possession;permis_12m;fiche permis_bloc.permis_type_12m (somme);69;fenetre CALENDAIRE CURRENT_DATE-12m + annules=0
+La Possession;permis_12m;SQL fenetre calendaire hors etat=4;69;annules=0
+La Possession;point_mort;fiche permis_bloc.point_mort + outils.permis_point_mort;458;cache du 2026-10-11
+La Possession;point_mort;SQL permis_point_mort (36m sans DAACT, run servi);458;recalcul 12/10 (fenetre glisse d un jour)
+La Possession;sans_zonage;fiche classement.sans_zonage;112;
+La Possession;sans_zonage;SQL parcels sans parcel_zone_plu;112;
+La Possession;mutations_12m;fiche foncier.mutations_12m;233;12 derniers mois DE DONNEES de la commune
+La Possession;mutations_12m;SQL dvf_mutations fenetre donnees commune;233;
+La Possession;ppr_pct;fiche risques.ppr_pct;32.3;intersection spatiale directe (cache nocturne, cle fraicheur)
+Le Port;n_parcelles;fiche commune GET /communes/{c}/contexte foncier.n_parcelles;10277;table parcels ENTIERE (disparues incluses)
+Le Port;n_parcelles;selecteur GET /communes .parcelles;10277;meme moteur compte_parcelles_commune
+Le Port;n_parcelles;SQL count(*) parcels;10277;dont 35 cadastre_disparue_le NOT NULL
+Le Port;n_parcelles_vivantes;fiche classement.evaluees;10242;parcelles presentes au run q_v18
+Le Port;n_parcelles_vivantes;SQL parcel_p_score_v2 q_v18;10242;
+Le Port;n_parcelles_vivantes;carte SQL mvt_parcels;10242;table bakee tuiles
+Le Port;n_parcelles_vivantes;SQL dryrun_parcel_evaluations q_v18_sources;10242;cascade servie
+Le Port;surface_ha;fiche foncier.surface_ha;1405;
+Le Port;surface_ha;SQL sum(surface_m2)/10000 parcels;1405;
+Le Port;stock_opportunites;fiche foncier.stock_opportunites.n;21;ha=8
+Le Port;stock_opportunites;fiche comparable.stock_opportunites_n;21;moteur comparateur raw_rows (live)
+Le Port;stock_opportunites;selecteur /communes .chaudes;21;
+Le Port;stock_opportunites;/filtre .opportunites;21;
+Le Port;stock_opportunites;/stats .opportunites;21;
+Le Port;stock_opportunites;/stats/entonnoir .opportunites;21;
+Le Port;stock_opportunites;SQL tiers brulante/chaude/priorite/a_suivre q_v18;21;ha=8
+Le Port;filtre_compte;/filtre?communes sans critere .compte;10155;idus=10155 (CAP=20000 honnete au-dela)
+Le Port;filtre_compte;/stats .total;10155;
+Le Port;filtre_compte;/stats/entonnoir .analysees;10155;
+Le Port;filtre_compte;SQL run q_v18_sources surface>=2;10155;slivers<2m2 masques=87
+Le Port;filtre_compte;somme ventilation bandes /filtre;10155;= somme tiers = bande_total
+Le Port;filtre_criteres;/filtre surface_min=1000 .compte;1289;longueur idus=1289 (egalite)
+Le Port;filtre_criteres;/filtre surface_min=1000+tiers servis .compte;12;longueur idus=12 (egalite)
+Le Port;bande_A;/filtre .bandes.A;229;
+Le Port;bande_A;SQL score_labuse q_v18 surface>=2;229;
+Le Port;densifiables;fiche densifiables.parcelles + outils.densifiables;3269;sdp=4033511
+Le Port;densifiables;SQL parcel_residuel sdp>0 tiers servables q_v18;3269;sdp=4033511
+Le Port;prix_m2_ancien;fiche comparable.ancien_median_eur_m2;1943;n=510
+Le Port;prix_m2_ancien;SQL formule moteurs (Vente stricte, >1000, 100-12000, >=100);1943;n=510
+Le Port;prix_m2_ancien_projets;SQL formule projets.py (toutes natures dont VEFA, 200-8000);1944;n=513
+Le Port;prix_m2_ancien_projets;/projets/reperes dvf_median_eur_m2 (sans appelant front);1944;nb_opportunites=8007 (etiquette)
+Le Port;prix_m2_ancien_projets;kanban projet marche_eur_m2 (meme SQL projets.py:1194);1944;affiche « marche ancien ~N €/m² »
+Le Port;permis_12m;fiche foncier.permis_12m.n + permis_bloc.permis_12m;64;fenetre ancree max(date) Sitadel=2026-08-31
+Le Port;permis_12m;SQL ligne6 fenetre donnees;64;logements=38
+Le Port;permis_12m;fiche permis_bloc.permis_type_12m (somme);59;fenetre CALENDAIRE CURRENT_DATE-12m + annules=1
+Le Port;permis_12m;SQL fenetre calendaire hors etat=4;59;annules=1
+Le Port;point_mort;fiche permis_bloc.point_mort + outils.permis_point_mort;297;cache du 2026-10-11
+Le Port;point_mort;SQL permis_point_mort (36m sans DAACT, run servi);297;recalcul 12/10 (fenetre glisse d un jour)
+Le Port;sans_zonage;fiche classement.sans_zonage;82;
+Le Port;sans_zonage;SQL parcels sans parcel_zone_plu;82;
+Le Port;mutations_12m;fiche foncier.mutations_12m;121;12 derniers mois DE DONNEES de la commune
+Le Port;mutations_12m;SQL dvf_mutations fenetre donnees commune;121;
+Le Port;ppr_pct;fiche risques.ppr_pct;8.2;intersection spatiale directe (cache nocturne, cle fraicheur)
+Le Port;ppr_pct;SQL recalcul ST_Intersects kind=ppr;8.2;echantillon 4 communes recalcule, identique
+Le Tampon;n_parcelles;fiche commune GET /communes/{c}/contexte foncier.n_parcelles;42974;table parcels ENTIERE (disparues incluses)
+Le Tampon;n_parcelles;selecteur GET /communes .parcelles;42974;meme moteur compte_parcelles_commune
+Le Tampon;n_parcelles;SQL count(*) parcels;42974;dont 97 cadastre_disparue_le NOT NULL
+Le Tampon;n_parcelles_vivantes;fiche classement.evaluees;42877;parcelles presentes au run q_v18
+Le Tampon;n_parcelles_vivantes;SQL parcel_p_score_v2 q_v18;42877;
+Le Tampon;n_parcelles_vivantes;carte SQL mvt_parcels;42877;table bakee tuiles
+Le Tampon;n_parcelles_vivantes;SQL dryrun_parcel_evaluations q_v18_sources;42877;cascade servie
+Le Tampon;surface_ha;fiche foncier.surface_ha;17673;
+Le Tampon;surface_ha;SQL sum(surface_m2)/10000 parcels;17673;
+Le Tampon;stock_opportunites;fiche foncier.stock_opportunites.n;42;ha=16
+Le Tampon;stock_opportunites;fiche comparable.stock_opportunites_n;42;moteur comparateur raw_rows (live)
+Le Tampon;stock_opportunites;selecteur /communes .chaudes;42;
+Le Tampon;stock_opportunites;/filtre .opportunites;42;
+Le Tampon;stock_opportunites;/stats .opportunites;42;
+Le Tampon;stock_opportunites;/stats/entonnoir .opportunites;42;
+Le Tampon;stock_opportunites;SQL tiers brulante/chaude/priorite/a_suivre q_v18;42;ha=16
+Le Tampon;filtre_compte;/filtre?communes sans critere .compte;42832;idus=CAP (CAP=20000 honnete au-dela)
+Le Tampon;filtre_compte;/stats .total;42832;
+Le Tampon;filtre_compte;/stats/entonnoir .analysees;42832;
+Le Tampon;filtre_compte;SQL run q_v18_sources surface>=2;42832;slivers<2m2 masques=45
+Le Tampon;filtre_compte;somme ventilation bandes /filtre;42832;= somme tiers = bande_total
+Le Tampon;filtre_criteres;/filtre surface_min=1000 .compte;12418;longueur idus=12418 (egalite)
+Le Tampon;filtre_criteres;/filtre surface_min=1000+tiers servis .compte;29;longueur idus=29 (egalite)
+Le Tampon;bande_A;/filtre .bandes.A;1316;
+Le Tampon;bande_A;SQL score_labuse q_v18 surface>=2;1316;
+Le Tampon;densifiables;fiche densifiables.parcelles + outils.densifiables;23434;sdp=16297025
+Le Tampon;densifiables;SQL parcel_residuel sdp>0 tiers servables q_v18;23434;sdp=16297025
+Le Tampon;prix_m2_ancien;fiche comparable.ancien_median_eur_m2;2259;n=2691
+Le Tampon;prix_m2_ancien;SQL formule moteurs (Vente stricte, >1000, 100-12000, >=100);2259;n=2691
+Le Tampon;prix_m2_ancien_projets;SQL formule projets.py (toutes natures dont VEFA, 200-8000);2288;n=2796
+Le Tampon;prix_m2_ancien_projets;/projets/reperes dvf_median_eur_m2 (sans appelant front);2287;nb_opportunites=28482 (etiquette)
+Le Tampon;prix_m2_ancien_projets;kanban projet marche_eur_m2 (meme SQL projets.py:1194);2288;affiche « marche ancien ~N €/m² »
+Le Tampon;permis_12m;fiche foncier.permis_12m.n + permis_bloc.permis_12m;290;fenetre ancree max(date) Sitadel=2026-08-31
+Le Tampon;permis_12m;SQL ligne6 fenetre donnees;290;logements=431
+Le Tampon;permis_12m;fiche permis_bloc.permis_type_12m (somme);250;fenetre CALENDAIRE CURRENT_DATE-12m + annules=0
+Le Tampon;permis_12m;SQL fenetre calendaire hors etat=4;250;annules=0
+Le Tampon;point_mort;fiche permis_bloc.point_mort + outils.permis_point_mort;1315;cache du 2026-10-11
+Le Tampon;point_mort;SQL permis_point_mort (36m sans DAACT, run servi);1315;recalcul 12/10 (fenetre glisse d un jour)
+Le Tampon;sans_zonage;fiche classement.sans_zonage;218;
+Le Tampon;sans_zonage;SQL parcels sans parcel_zone_plu;218;
+Le Tampon;mutations_12m;fiche foncier.mutations_12m;510;12 derniers mois DE DONNEES de la commune
+Le Tampon;mutations_12m;SQL dvf_mutations fenetre donnees commune;510;
+Le Tampon;ppr_pct;fiche risques.ppr_pct;29.1;intersection spatiale directe (cache nocturne, cle fraicheur)
+Les Avirons;n_parcelles;fiche commune GET /communes/{c}/contexte foncier.n_parcelles;8655;table parcels ENTIERE (disparues incluses)
+Les Avirons;n_parcelles;selecteur GET /communes .parcelles;8655;meme moteur compte_parcelles_commune
+Les Avirons;n_parcelles;SQL count(*) parcels;8655;dont 19 cadastre_disparue_le NOT NULL
+Les Avirons;n_parcelles_vivantes;fiche classement.evaluees;8636;parcelles presentes au run q_v18
+Les Avirons;n_parcelles_vivantes;SQL parcel_p_score_v2 q_v18;8636;
+Les Avirons;n_parcelles_vivantes;carte SQL mvt_parcels;8636;table bakee tuiles
+Les Avirons;n_parcelles_vivantes;SQL dryrun_parcel_evaluations q_v18_sources;8636;cascade servie
+Les Avirons;surface_ha;fiche foncier.surface_ha;2518;
+Les Avirons;surface_ha;SQL sum(surface_m2)/10000 parcels;2518;
+Les Avirons;stock_opportunites;fiche foncier.stock_opportunites.n;30;ha=6
+Les Avirons;stock_opportunites;fiche comparable.stock_opportunites_n;30;moteur comparateur raw_rows (live)
+Les Avirons;stock_opportunites;selecteur /communes .chaudes;30;
+Les Avirons;stock_opportunites;/filtre .opportunites;30;
+Les Avirons;stock_opportunites;/stats .opportunites;30;
+Les Avirons;stock_opportunites;/stats/entonnoir .opportunites;30;
+Les Avirons;stock_opportunites;SQL tiers brulante/chaude/priorite/a_suivre q_v18;30;ha=6
+Les Avirons;filtre_compte;/filtre?communes sans critere .compte;8620;idus=8620 (CAP=20000 honnete au-dela)
+Les Avirons;filtre_compte;/stats .total;8620;
+Les Avirons;filtre_compte;/stats/entonnoir .analysees;8620;
+Les Avirons;filtre_compte;SQL run q_v18_sources surface>=2;8620;slivers<2m2 masques=16
+Les Avirons;filtre_compte;somme ventilation bandes /filtre;8620;= somme tiers = bande_total
+Les Avirons;filtre_criteres;/filtre surface_min=1000 .compte;2959;longueur idus=2959 (egalite)
+Les Avirons;filtre_criteres;/filtre surface_min=1000+tiers servis .compte;14;longueur idus=14 (egalite)
+Les Avirons;bande_A;/filtre .bandes.A;32;
+Les Avirons;bande_A;SQL score_labuse q_v18 surface>=2;32;
+Les Avirons;densifiables;fiche densifiables.parcelles + outils.densifiables;3768;sdp=1031523
+Les Avirons;densifiables;SQL parcel_residuel sdp>0 tiers servables q_v18;3768;sdp=1031523
+Les Avirons;prix_m2_ancien;fiche comparable.ancien_median_eur_m2;3041;n=431
+Les Avirons;prix_m2_ancien;/moteurs/barometre top_communes_prix;3041;n=431 (top tronque a 8/24, drapeau tronquee)
+Les Avirons;prix_m2_ancien;SQL formule moteurs (Vente stricte, >1000, 100-12000, >=100);3041;n=431
+Les Avirons;prix_m2_ancien_projets;SQL formule projets.py (toutes natures dont VEFA, 200-8000);3032;n=429
+Les Avirons;prix_m2_ancien_projets;/projets/reperes dvf_median_eur_m2 (sans appelant front);3031;nb_opportunites=5041 (etiquette)
+Les Avirons;prix_m2_ancien_projets;kanban projet marche_eur_m2 (meme SQL projets.py:1194);3032;affiche « marche ancien ~N €/m² »
+Les Avirons;permis_12m;fiche foncier.permis_12m.n + permis_bloc.permis_12m;54;fenetre ancree max(date) Sitadel=2026-08-31
+Les Avirons;permis_12m;SQL ligne6 fenetre donnees;54;logements=49
+Les Avirons;permis_12m;fiche permis_bloc.permis_type_12m (somme);47;fenetre CALENDAIRE CURRENT_DATE-12m + annules=1
+Les Avirons;permis_12m;SQL fenetre calendaire hors etat=4;47;annules=1
+Les Avirons;point_mort;fiche permis_bloc.point_mort + outils.permis_point_mort;349;cache du 2026-10-11
+Les Avirons;point_mort;SQL permis_point_mort (36m sans DAACT, run servi);349;recalcul 12/10 (fenetre glisse d un jour)
+Les Avirons;sans_zonage;fiche classement.sans_zonage;44;
+Les Avirons;sans_zonage;SQL parcels sans parcel_zone_plu;44;
+Les Avirons;mutations_12m;fiche foncier.mutations_12m;84;12 derniers mois DE DONNEES de la commune
+Les Avirons;mutations_12m;SQL dvf_mutations fenetre donnees commune;84;
+Les Avirons;ppr_pct;fiche risques.ppr_pct;45.0;intersection spatiale directe (cache nocturne, cle fraicheur)
+Les Trois-Bassins;n_parcelles;fiche commune GET /communes/{c}/contexte foncier.n_parcelles;5358;table parcels ENTIERE (disparues incluses)
+Les Trois-Bassins;n_parcelles;selecteur GET /communes .parcelles;5358;meme moteur compte_parcelles_commune
+Les Trois-Bassins;n_parcelles;SQL count(*) parcels;5358;dont 17 cadastre_disparue_le NOT NULL
+Les Trois-Bassins;n_parcelles_vivantes;fiche classement.evaluees;5341;parcelles presentes au run q_v18
+Les Trois-Bassins;n_parcelles_vivantes;SQL parcel_p_score_v2 q_v18;5341;
+Les Trois-Bassins;n_parcelles_vivantes;carte SQL mvt_parcels;5341;table bakee tuiles
+Les Trois-Bassins;n_parcelles_vivantes;SQL dryrun_parcel_evaluations q_v18_sources;5341;cascade servie
+Les Trois-Bassins;surface_ha;fiche foncier.surface_ha;4088;
+Les Trois-Bassins;surface_ha;SQL sum(surface_m2)/10000 parcels;4088;
+Les Trois-Bassins;stock_opportunites;fiche foncier.stock_opportunites.n;7;ha=1
+Les Trois-Bassins;stock_opportunites;fiche comparable.stock_opportunites_n;7;moteur comparateur raw_rows (live)
+Les Trois-Bassins;stock_opportunites;selecteur /communes .chaudes;7;
+Les Trois-Bassins;stock_opportunites;/filtre .opportunites;7;
+Les Trois-Bassins;stock_opportunites;/stats .opportunites;7;
+Les Trois-Bassins;stock_opportunites;/stats/entonnoir .opportunites;7;
+Les Trois-Bassins;stock_opportunites;SQL tiers brulante/chaude/priorite/a_suivre q_v18;7;ha=1
+Les Trois-Bassins;filtre_compte;/filtre?communes sans critere .compte;5333;idus=5333 (CAP=20000 honnete au-dela)
+Les Trois-Bassins;filtre_compte;/stats .total;5333;
+Les Trois-Bassins;filtre_compte;/stats/entonnoir .analysees;5333;
+Les Trois-Bassins;filtre_compte;SQL run q_v18_sources surface>=2;5333;slivers<2m2 masques=8
+Les Trois-Bassins;filtre_compte;somme ventilation bandes /filtre;5333;= somme tiers = bande_total
+Les Trois-Bassins;filtre_criteres;/filtre surface_min=1000 .compte;2025;longueur idus=2025 (egalite)
+Les Trois-Bassins;filtre_criteres;/filtre surface_min=1000+tiers servis .compte;2;longueur idus=2 (egalite)
+Les Trois-Bassins;bande_A;/filtre .bandes.A;24;
+Les Trois-Bassins;bande_A;SQL score_labuse q_v18 surface>=2;24;
+Les Trois-Bassins;densifiables;fiche densifiables.parcelles + outils.densifiables;2002;sdp=616154
+Les Trois-Bassins;densifiables;SQL parcel_residuel sdp>0 tiers servables q_v18;2002;sdp=616154
+Les Trois-Bassins;prix_m2_ancien;fiche comparable.ancien_median_eur_m2;2444;n=136
+Les Trois-Bassins;prix_m2_ancien;SQL formule moteurs (Vente stricte, >1000, 100-12000, >=100);2444;n=136
+Les Trois-Bassins;prix_m2_ancien_projets;SQL formule projets.py (toutes natures dont VEFA, 200-8000);2618;n=148
+Les Trois-Bassins;prix_m2_ancien_projets;/projets/reperes dvf_median_eur_m2 (sans appelant front);2618;nb_opportunites=3023 (etiquette)
+Les Trois-Bassins;prix_m2_ancien_projets;kanban projet marche_eur_m2 (meme SQL projets.py:1194);2618;affiche « marche ancien ~N €/m² »
+Les Trois-Bassins;permis_12m;fiche foncier.permis_12m.n + permis_bloc.permis_12m;44;fenetre ancree max(date) Sitadel=2026-08-31
+Les Trois-Bassins;permis_12m;SQL ligne6 fenetre donnees;44;logements=39
+Les Trois-Bassins;permis_12m;fiche permis_bloc.permis_type_12m (somme);34;fenetre CALENDAIRE CURRENT_DATE-12m + annules=3
+Les Trois-Bassins;permis_12m;SQL fenetre calendaire hors etat=4;34;annules=3
+Les Trois-Bassins;point_mort;fiche permis_bloc.point_mort + outils.permis_point_mort;265;cache du 2026-10-11
+Les Trois-Bassins;point_mort;SQL permis_point_mort (36m sans DAACT, run servi);265;recalcul 12/10 (fenetre glisse d un jour)
+Les Trois-Bassins;sans_zonage;fiche classement.sans_zonage;44;
+Les Trois-Bassins;sans_zonage;SQL parcels sans parcel_zone_plu;44;
+Les Trois-Bassins;mutations_12m;fiche foncier.mutations_12m;22;12 derniers mois DE DONNEES de la commune
+Les Trois-Bassins;mutations_12m;SQL dvf_mutations fenetre donnees commune;22;
+Les Trois-Bassins;ppr_pct;fiche risques.ppr_pct;99.0;intersection spatiale directe (cache nocturne, cle fraicheur)
+Les Trois-Bassins;ppr_pct;SQL recalcul ST_Intersects kind=ppr;99.0;echantillon 4 communes recalcule, identique
+Petite-Île;n_parcelles;fiche commune GET /communes/{c}/contexte foncier.n_parcelles;13246;table parcels ENTIERE (disparues incluses)
+Petite-Île;n_parcelles;selecteur GET /communes .parcelles;13246;meme moteur compte_parcelles_commune
+Petite-Île;n_parcelles;SQL count(*) parcels;13246;dont 50 cadastre_disparue_le NOT NULL
+Petite-Île;n_parcelles_vivantes;fiche classement.evaluees;13196;parcelles presentes au run q_v18
+Petite-Île;n_parcelles_vivantes;SQL parcel_p_score_v2 q_v18;13196;
+Petite-Île;n_parcelles_vivantes;carte SQL mvt_parcels;13196;table bakee tuiles
+Petite-Île;n_parcelles_vivantes;SQL dryrun_parcel_evaluations q_v18_sources;13196;cascade servie
+Petite-Île;surface_ha;fiche foncier.surface_ha;3288;
+Petite-Île;surface_ha;SQL sum(surface_m2)/10000 parcels;3288;
+Petite-Île;stock_opportunites;fiche foncier.stock_opportunites.n;7;ha=1
+Petite-Île;stock_opportunites;fiche comparable.stock_opportunites_n;7;moteur comparateur raw_rows (live)
+Petite-Île;stock_opportunites;selecteur /communes .chaudes;7;
+Petite-Île;stock_opportunites;/filtre .opportunites;7;
+Petite-Île;stock_opportunites;/stats .opportunites;7;
+Petite-Île;stock_opportunites;/stats/entonnoir .opportunites;7;
+Petite-Île;stock_opportunites;SQL tiers brulante/chaude/priorite/a_suivre q_v18;7;ha=1
+Petite-Île;filtre_compte;/filtre?communes sans critere .compte;13173;idus=13173 (CAP=20000 honnete au-dela)
+Petite-Île;filtre_compte;/stats .total;13173;
+Petite-Île;filtre_compte;/stats/entonnoir .analysees;13173;
+Petite-Île;filtre_compte;SQL run q_v18_sources surface>=2;13173;slivers<2m2 masques=23
+Petite-Île;filtre_compte;somme ventilation bandes /filtre;13173;= somme tiers = bande_total
+Petite-Île;filtre_criteres;/filtre surface_min=1000 .compte;5076;longueur idus=5076 (egalite)
+Petite-Île;filtre_criteres;/filtre surface_min=1000+tiers servis .compte;2;longueur idus=2 (egalite)
+Petite-Île;bande_A;/filtre .bandes.A;25;
+Petite-Île;bande_A;SQL score_labuse q_v18 surface>=2;25;
+Petite-Île;densifiables;fiche densifiables.parcelles + outils.densifiables;3354;sdp=756919
+Petite-Île;densifiables;SQL parcel_residuel sdp>0 tiers servables q_v18;3354;sdp=756919
+Petite-Île;prix_m2_ancien;fiche comparable.ancien_median_eur_m2;2458;n=413
+Petite-Île;prix_m2_ancien;SQL formule moteurs (Vente stricte, >1000, 100-12000, >=100);2458;n=413
+Petite-Île;prix_m2_ancien_projets;SQL formule projets.py (toutes natures dont VEFA, 200-8000);2512;n=439
+Petite-Île;prix_m2_ancien_projets;/projets/reperes dvf_median_eur_m2 (sans appelant front);2512;nb_opportunites=6071 (etiquette)
+Petite-Île;prix_m2_ancien_projets;kanban projet marche_eur_m2 (meme SQL projets.py:1194);2512;affiche « marche ancien ~N €/m² »
+Petite-Île;permis_12m;fiche foncier.permis_12m.n + permis_bloc.permis_12m;61;fenetre ancree max(date) Sitadel=2026-08-31
+Petite-Île;permis_12m;SQL ligne6 fenetre donnees;61;logements=52
+Petite-Île;permis_12m;fiche permis_bloc.permis_type_12m (somme);48;fenetre CALENDAIRE CURRENT_DATE-12m + annules=1
+Petite-Île;permis_12m;SQL fenetre calendaire hors etat=4;48;annules=1
+Petite-Île;point_mort;fiche permis_bloc.point_mort + outils.permis_point_mort;308;cache du 2026-10-11
+Petite-Île;point_mort;SQL permis_point_mort (36m sans DAACT, run servi);308;recalcul 12/10 (fenetre glisse d un jour)
+Petite-Île;sans_zonage;fiche classement.sans_zonage;109;
+Petite-Île;sans_zonage;SQL parcels sans parcel_zone_plu;109;
+Petite-Île;mutations_12m;fiche foncier.mutations_12m;81;12 derniers mois DE DONNEES de la commune
+Petite-Île;mutations_12m;SQL dvf_mutations fenetre donnees commune;81;
+Petite-Île;ppr_pct;fiche risques.ppr_pct;42.9;intersection spatiale directe (cache nocturne, cle fraicheur)
+Saint-André;n_parcelles;fiche commune GET /communes/{c}/contexte foncier.n_parcelles;22759;table parcels ENTIERE (disparues incluses)
+Saint-André;n_parcelles;selecteur GET /communes .parcelles;22759;meme moteur compte_parcelles_commune
+Saint-André;n_parcelles;SQL count(*) parcels;22759;dont 64 cadastre_disparue_le NOT NULL
+Saint-André;n_parcelles_vivantes;fiche classement.evaluees;22695;parcelles presentes au run q_v18
+Saint-André;n_parcelles_vivantes;SQL parcel_p_score_v2 q_v18;22695;
+Saint-André;n_parcelles_vivantes;carte SQL mvt_parcels;22695;table bakee tuiles
+Saint-André;n_parcelles_vivantes;SQL dryrun_parcel_evaluations q_v18_sources;22695;cascade servie
+Saint-André;surface_ha;fiche foncier.surface_ha;5198;
+Saint-André;surface_ha;SQL sum(surface_m2)/10000 parcels;5198;
+Saint-André;stock_opportunites;fiche foncier.stock_opportunites.n;18;ha=3
+Saint-André;stock_opportunites;fiche comparable.stock_opportunites_n;18;moteur comparateur raw_rows (live)
+Saint-André;stock_opportunites;selecteur /communes .chaudes;18;
+Saint-André;stock_opportunites;/filtre .opportunites;18;
+Saint-André;stock_opportunites;/stats .opportunites;18;
+Saint-André;stock_opportunites;/stats/entonnoir .opportunites;18;
+Saint-André;stock_opportunites;SQL tiers brulante/chaude/priorite/a_suivre q_v18;18;ha=3
+Saint-André;filtre_compte;/filtre?communes sans critere .compte;22665;idus=CAP (CAP=20000 honnete au-dela)
+Saint-André;filtre_compte;/stats .total;22665;
+Saint-André;filtre_compte;/stats/entonnoir .analysees;22665;
+Saint-André;filtre_compte;SQL run q_v18_sources surface>=2;22665;slivers<2m2 masques=30
+Saint-André;filtre_compte;somme ventilation bandes /filtre;22665;= somme tiers = bande_total
+Saint-André;filtre_criteres;/filtre surface_min=1000 .compte;4434;longueur idus=4434 (egalite)
+Saint-André;filtre_criteres;/filtre surface_min=1000+tiers servis .compte;7;longueur idus=7 (egalite)
+Saint-André;bande_A;/filtre .bandes.A;612;
+Saint-André;bande_A;SQL score_labuse q_v18 surface>=2;612;
+Saint-André;densifiables;fiche densifiables.parcelles + outils.densifiables;13275;sdp=6200000
+Saint-André;densifiables;SQL parcel_residuel sdp>0 tiers servables q_v18;13275;sdp=6200000
+Saint-André;prix_m2_ancien;fiche comparable.ancien_median_eur_m2;1949;n=911
+Saint-André;prix_m2_ancien;SQL formule moteurs (Vente stricte, >1000, 100-12000, >=100);1949;n=911
+Saint-André;prix_m2_ancien_projets;SQL formule projets.py (toutes natures dont VEFA, 200-8000);1924;n=918
+Saint-André;prix_m2_ancien_projets;/projets/reperes dvf_median_eur_m2 (sans appelant front);1923;nb_opportunites=18326 (etiquette)
+Saint-André;prix_m2_ancien_projets;kanban projet marche_eur_m2 (meme SQL projets.py:1194);1924;affiche « marche ancien ~N €/m² »
+Saint-André;permis_12m;fiche foncier.permis_12m.n + permis_bloc.permis_12m;166;fenetre ancree max(date) Sitadel=2026-08-31
+Saint-André;permis_12m;SQL ligne6 fenetre donnees;166;logements=217
+Saint-André;permis_12m;fiche permis_bloc.permis_type_12m (somme);141;fenetre CALENDAIRE CURRENT_DATE-12m + annules=3
+Saint-André;permis_12m;SQL fenetre calendaire hors etat=4;141;annules=3
+Saint-André;point_mort;fiche permis_bloc.point_mort + outils.permis_point_mort;1107;cache du 2026-10-11
+Saint-André;point_mort;SQL permis_point_mort (36m sans DAACT, run servi);1107;recalcul 12/10 (fenetre glisse d un jour)
+Saint-André;sans_zonage;fiche classement.sans_zonage;159;
+Saint-André;sans_zonage;SQL parcels sans parcel_zone_plu;159;
+Saint-André;mutations_12m;fiche foncier.mutations_12m;176;12 derniers mois DE DONNEES de la commune
+Saint-André;mutations_12m;SQL dvf_mutations fenetre donnees commune;176;
+Saint-André;ppr_pct;fiche risques.ppr_pct;92.4;intersection spatiale directe (cache nocturne, cle fraicheur)
+Saint-Benoît;n_parcelles;fiche commune GET /communes/{c}/contexte foncier.n_parcelles;21804;table parcels ENTIERE (disparues incluses)
+Saint-Benoît;n_parcelles;selecteur GET /communes .parcelles;21804;meme moteur compte_parcelles_commune
+Saint-Benoît;n_parcelles;SQL count(*) parcels;21804;dont 56 cadastre_disparue_le NOT NULL
+Saint-Benoît;n_parcelles_vivantes;fiche classement.evaluees;21748;parcelles presentes au run q_v18
+Saint-Benoît;n_parcelles_vivantes;SQL parcel_p_score_v2 q_v18;21748;
+Saint-Benoît;n_parcelles_vivantes;carte SQL mvt_parcels;21748;table bakee tuiles
+Saint-Benoît;n_parcelles_vivantes;SQL dryrun_parcel_evaluations q_v18_sources;21748;cascade servie
+Saint-Benoît;surface_ha;fiche foncier.surface_ha;22148;
+Saint-Benoît;surface_ha;SQL sum(surface_m2)/10000 parcels;22148;
+Saint-Benoît;stock_opportunites;fiche foncier.stock_opportunites.n;20;ha=4
+Saint-Benoît;stock_opportunites;fiche comparable.stock_opportunites_n;20;moteur comparateur raw_rows (live)
+Saint-Benoît;stock_opportunites;selecteur /communes .chaudes;20;
+Saint-Benoît;stock_opportunites;/filtre .opportunites;20;
+Saint-Benoît;stock_opportunites;/stats .opportunites;20;
+Saint-Benoît;stock_opportunites;/stats/entonnoir .opportunites;20;
+Saint-Benoît;stock_opportunites;SQL tiers brulante/chaude/priorite/a_suivre q_v18;20;ha=4
+Saint-Benoît;filtre_compte;/filtre?communes sans critere .compte;21727;idus=CAP (CAP=20000 honnete au-dela)
+Saint-Benoît;filtre_compte;/stats .total;21727;
+Saint-Benoît;filtre_compte;/stats/entonnoir .analysees;21727;
+Saint-Benoît;filtre_compte;SQL run q_v18_sources surface>=2;21727;slivers<2m2 masques=21
+Saint-Benoît;filtre_compte;somme ventilation bandes /filtre;21727;= somme tiers = bande_total
+Saint-Benoît;filtre_criteres;/filtre surface_min=1000 .compte;7007;longueur idus=7007 (egalite)
+Saint-Benoît;filtre_criteres;/filtre surface_min=1000+tiers servis .compte;3;longueur idus=3 (egalite)
+Saint-Benoît;bande_A;/filtre .bandes.A;716;
+Saint-Benoît;bande_A;SQL score_labuse q_v18 surface>=2;716;
+Saint-Benoît;densifiables;fiche densifiables.parcelles + outils.densifiables;12111;sdp=6801907
+Saint-Benoît;densifiables;SQL parcel_residuel sdp>0 tiers servables q_v18;12111;sdp=6801907
+Saint-Benoît;prix_m2_ancien;fiche comparable.ancien_median_eur_m2;1838;n=634
+Saint-Benoît;prix_m2_ancien;SQL formule moteurs (Vente stricte, >1000, 100-12000, >=100);1838;n=634
+Saint-Benoît;prix_m2_ancien_projets;SQL formule projets.py (toutes natures dont VEFA, 200-8000);1818;n=642
+Saint-Benoît;prix_m2_ancien_projets;/projets/reperes dvf_median_eur_m2 (sans appelant front);1818;nb_opportunites=12980 (etiquette)
+Saint-Benoît;prix_m2_ancien_projets;kanban projet marche_eur_m2 (meme SQL projets.py:1194);1818;affiche « marche ancien ~N €/m² »
+Saint-Benoît;permis_12m;fiche foncier.permis_12m.n + permis_bloc.permis_12m;173;fenetre ancree max(date) Sitadel=2026-08-31
+Saint-Benoît;permis_12m;SQL ligne6 fenetre donnees;173;logements=323
+Saint-Benoît;permis_12m;fiche permis_bloc.permis_type_12m (somme);150;fenetre CALENDAIRE CURRENT_DATE-12m + annules=1
+Saint-Benoît;permis_12m;SQL fenetre calendaire hors etat=4;150;annules=1
+Saint-Benoît;point_mort;fiche permis_bloc.point_mort + outils.permis_point_mort;567;cache du 2026-10-11
+Saint-Benoît;point_mort;SQL permis_point_mort (36m sans DAACT, run servi);567;recalcul 12/10 (fenetre glisse d un jour)
+Saint-Benoît;sans_zonage;fiche classement.sans_zonage;133;
+Saint-Benoît;sans_zonage;SQL parcels sans parcel_zone_plu;133;
+Saint-Benoît;mutations_12m;fiche foncier.mutations_12m;111;12 derniers mois DE DONNEES de la commune
+Saint-Benoît;mutations_12m;SQL dvf_mutations fenetre donnees commune;111;
+Saint-Benoît;ppr_pct;fiche risques.ppr_pct;32.9;intersection spatiale directe (cache nocturne, cle fraicheur)
+Saint-Denis;n_parcelles;fiche commune GET /communes/{c}/contexte foncier.n_parcelles;38557;table parcels ENTIERE (disparues incluses)
+Saint-Denis;n_parcelles;selecteur GET /communes .parcelles;38557;meme moteur compte_parcelles_commune
+Saint-Denis;n_parcelles;SQL count(*) parcels;38557;dont 262 cadastre_disparue_le NOT NULL
+Saint-Denis;n_parcelles_vivantes;fiche classement.evaluees;38295;parcelles presentes au run q_v18
+Saint-Denis;n_parcelles_vivantes;SQL parcel_p_score_v2 q_v18;38295;
+Saint-Denis;n_parcelles_vivantes;carte SQL mvt_parcels;38295;table bakee tuiles
+Saint-Denis;n_parcelles_vivantes;SQL dryrun_parcel_evaluations q_v18_sources;38295;cascade servie
+Saint-Denis;surface_ha;fiche foncier.surface_ha;13490;
+Saint-Denis;surface_ha;SQL sum(surface_m2)/10000 parcels;13490;
+Saint-Denis;stock_opportunites;fiche foncier.stock_opportunites.n;196;ha=53
+Saint-Denis;stock_opportunites;fiche comparable.stock_opportunites_n;196;moteur comparateur raw_rows (live)
+Saint-Denis;stock_opportunites;selecteur /communes .chaudes;196;
+Saint-Denis;stock_opportunites;/filtre .opportunites;196;
+Saint-Denis;stock_opportunites;/stats .opportunites;196;
+Saint-Denis;stock_opportunites;/stats/entonnoir .opportunites;196;
+Saint-Denis;stock_opportunites;SQL tiers brulante/chaude/priorite/a_suivre q_v18;196;ha=53
+Saint-Denis;filtre_compte;/filtre?communes sans critere .compte;38175;idus=CAP (CAP=20000 honnete au-dela)
+Saint-Denis;filtre_compte;/stats .total;38175;
+Saint-Denis;filtre_compte;/stats/entonnoir .analysees;38175;
+Saint-Denis;filtre_compte;SQL run q_v18_sources surface>=2;38175;slivers<2m2 masques=120
+Saint-Denis;filtre_compte;somme ventilation bandes /filtre;38175;= somme tiers = bande_total
+Saint-Denis;filtre_criteres;/filtre surface_min=1000 .compte;8532;longueur idus=8532 (egalite)
+Saint-Denis;filtre_criteres;/filtre surface_min=1000+tiers servis .compte;142;longueur idus=142 (egalite)
+Saint-Denis;bande_A;/filtre .bandes.A;402;
+Saint-Denis;bande_A;SQL score_labuse q_v18 surface>=2;402;
+Saint-Denis;densifiables;fiche densifiables.parcelles + outils.densifiables;12954;sdp=7771605
+Saint-Denis;densifiables;SQL parcel_residuel sdp>0 tiers servables q_v18;12954;sdp=7771605
+Saint-Denis;prix_m2_ancien;fiche comparable.ancien_median_eur_m2;2469;n=7707
+Saint-Denis;prix_m2_ancien;SQL formule moteurs (Vente stricte, >1000, 100-12000, >=100);2469;n=7707
+Saint-Denis;prix_m2_ancien_projets;SQL formule projets.py (toutes natures dont VEFA, 200-8000);2500;n=8006
+Saint-Denis;prix_m2_ancien_projets;/projets/reperes dvf_median_eur_m2 (sans appelant front);2500;nb_opportunites=28657 (etiquette)
+Saint-Denis;prix_m2_ancien_projets;kanban projet marche_eur_m2 (meme SQL projets.py:1194);2500;affiche « marche ancien ~N €/m² »
+Saint-Denis;permis_12m;fiche foncier.permis_12m.n + permis_bloc.permis_12m;223;fenetre ancree max(date) Sitadel=2026-08-31
+Saint-Denis;permis_12m;SQL ligne6 fenetre donnees;223;logements=348
+Saint-Denis;permis_12m;fiche permis_bloc.permis_type_12m (somme);194;fenetre CALENDAIRE CURRENT_DATE-12m + annules=1
+Saint-Denis;permis_12m;SQL fenetre calendaire hors etat=4;194;annules=1
+Saint-Denis;point_mort;fiche permis_bloc.point_mort + outils.permis_point_mort;1208;cache du 2026-10-11
+Saint-Denis;point_mort;SQL permis_point_mort (36m sans DAACT, run servi);1209;recalcul 12/10 (fenetre glisse d un jour)
+Saint-Denis;sans_zonage;fiche classement.sans_zonage;419;
+Saint-Denis;sans_zonage;SQL parcels sans parcel_zone_plu;419;
+Saint-Denis;mutations_12m;fiche foncier.mutations_12m;1323;12 derniers mois DE DONNEES de la commune
+Saint-Denis;mutations_12m;SQL dvf_mutations fenetre donnees commune;1323;
+Saint-Denis;ppr_pct;fiche risques.ppr_pct;72.2;intersection spatiale directe (cache nocturne, cle fraicheur)
+Saint-Joseph;n_parcelles;fiche commune GET /communes/{c}/contexte foncier.n_parcelles;29081;table parcels ENTIERE (disparues incluses)
+Saint-Joseph;n_parcelles;selecteur GET /communes .parcelles;29081;meme moteur compte_parcelles_commune
+Saint-Joseph;n_parcelles;SQL count(*) parcels;29081;dont 54 cadastre_disparue_le NOT NULL
+Saint-Joseph;n_parcelles_vivantes;fiche classement.evaluees;29027;parcelles presentes au run q_v18
+Saint-Joseph;n_parcelles_vivantes;SQL parcel_p_score_v2 q_v18;29027;
+Saint-Joseph;n_parcelles_vivantes;carte SQL mvt_parcels;29027;table bakee tuiles
+Saint-Joseph;n_parcelles_vivantes;SQL dryrun_parcel_evaluations q_v18_sources;29027;cascade servie
+Saint-Joseph;surface_ha;fiche foncier.surface_ha;16824;
+Saint-Joseph;surface_ha;SQL sum(surface_m2)/10000 parcels;16824;
+Saint-Joseph;stock_opportunites;fiche foncier.stock_opportunites.n;32;ha=3
+Saint-Joseph;stock_opportunites;fiche comparable.stock_opportunites_n;32;moteur comparateur raw_rows (live)
+Saint-Joseph;stock_opportunites;selecteur /communes .chaudes;32;
+Saint-Joseph;stock_opportunites;/filtre .opportunites;32;
+Saint-Joseph;stock_opportunites;/stats .opportunites;32;
+Saint-Joseph;stock_opportunites;/stats/entonnoir .opportunites;32;
+Saint-Joseph;stock_opportunites;SQL tiers brulante/chaude/priorite/a_suivre q_v18;32;ha=3
+Saint-Joseph;filtre_compte;/filtre?communes sans critere .compte;28997;idus=CAP (CAP=20000 honnete au-dela)
+Saint-Joseph;filtre_compte;/stats .total;28997;
+Saint-Joseph;filtre_compte;/stats/entonnoir .analysees;28997;
+Saint-Joseph;filtre_compte;SQL run q_v18_sources surface>=2;28997;slivers<2m2 masques=30
+Saint-Joseph;filtre_compte;somme ventilation bandes /filtre;28997;= somme tiers = bande_total
+Saint-Joseph;filtre_criteres;/filtre surface_min=1000 .compte;10957;longueur idus=10957 (egalite)
+Saint-Joseph;filtre_criteres;/filtre surface_min=1000+tiers servis .compte;7;longueur idus=7 (egalite)
+Saint-Joseph;bande_A;/filtre .bandes.A;175;
+Saint-Joseph;bande_A;SQL score_labuse q_v18 surface>=2;175;
+Saint-Joseph;densifiables;fiche densifiables.parcelles + outils.densifiables;9879;sdp=2299052
+Saint-Joseph;densifiables;SQL parcel_residuel sdp>0 tiers servables q_v18;9879;sdp=2299052
+Saint-Joseph;prix_m2_ancien;fiche comparable.ancien_median_eur_m2;2035;n=1246
+Saint-Joseph;prix_m2_ancien;SQL formule moteurs (Vente stricte, >1000, 100-12000, >=100);2035;n=1246
+Saint-Joseph;prix_m2_ancien_projets;SQL formule projets.py (toutes natures dont VEFA, 200-8000);2032;n=1246
+Saint-Joseph;prix_m2_ancien_projets;/projets/reperes dvf_median_eur_m2 (sans appelant front);2032;nb_opportunites=15184 (etiquette)
+Saint-Joseph;prix_m2_ancien_projets;kanban projet marche_eur_m2 (meme SQL projets.py:1194);2032;affiche « marche ancien ~N €/m² »
+Saint-Joseph;permis_12m;fiche foncier.permis_12m.n + permis_bloc.permis_12m;183;fenetre ancree max(date) Sitadel=2026-08-31
+Saint-Joseph;permis_12m;SQL ligne6 fenetre donnees;183;logements=414
+Saint-Joseph;permis_12m;fiche permis_bloc.permis_type_12m (somme);157;fenetre CALENDAIRE CURRENT_DATE-12m + annules=0
+Saint-Joseph;permis_12m;SQL fenetre calendaire hors etat=4;157;annules=0
+Saint-Joseph;point_mort;fiche permis_bloc.point_mort + outils.permis_point_mort;1016;cache du 2026-10-11
+Saint-Joseph;point_mort;SQL permis_point_mort (36m sans DAACT, run servi);1016;recalcul 12/10 (fenetre glisse d un jour)
+Saint-Joseph;sans_zonage;fiche classement.sans_zonage;122;
+Saint-Joseph;sans_zonage;SQL parcels sans parcel_zone_plu;122;
+Saint-Joseph;mutations_12m;fiche foncier.mutations_12m;192;12 derniers mois DE DONNEES de la commune
+Saint-Joseph;mutations_12m;SQL dvf_mutations fenetre donnees commune;192;
+Saint-Joseph;ppr_pct;fiche risques.ppr_pct;34.3;intersection spatiale directe (cache nocturne, cle fraicheur)
+Saint-Leu;n_parcelles;fiche commune GET /communes/{c}/contexte foncier.n_parcelles;23114;table parcels ENTIERE (disparues incluses)
+Saint-Leu;n_parcelles;selecteur GET /communes .parcelles;23114;meme moteur compte_parcelles_commune
+Saint-Leu;n_parcelles;SQL count(*) parcels;23114;dont 68 cadastre_disparue_le NOT NULL
+Saint-Leu;n_parcelles_vivantes;fiche classement.evaluees;23046;parcelles presentes au run q_v18
+Saint-Leu;n_parcelles_vivantes;SQL parcel_p_score_v2 q_v18;23046;
+Saint-Leu;n_parcelles_vivantes;carte SQL mvt_parcels;23046;table bakee tuiles
+Saint-Leu;n_parcelles_vivantes;SQL dryrun_parcel_evaluations q_v18_sources;23046;cascade servie
+Saint-Leu;surface_ha;fiche foncier.surface_ha;11512;
+Saint-Leu;surface_ha;SQL sum(surface_m2)/10000 parcels;11512;
+Saint-Leu;stock_opportunites;fiche foncier.stock_opportunites.n;29;ha=6
+Saint-Leu;stock_opportunites;fiche comparable.stock_opportunites_n;29;moteur comparateur raw_rows (live)
+Saint-Leu;stock_opportunites;selecteur /communes .chaudes;29;
+Saint-Leu;stock_opportunites;/filtre .opportunites;29;
+Saint-Leu;stock_opportunites;/stats .opportunites;29;
+Saint-Leu;stock_opportunites;/stats/entonnoir .opportunites;29;
+Saint-Leu;stock_opportunites;SQL tiers brulante/chaude/priorite/a_suivre q_v18;29;ha=6
+Saint-Leu;filtre_compte;/filtre?communes sans critere .compte;22986;idus=CAP (CAP=20000 honnete au-dela)
+Saint-Leu;filtre_compte;/stats .total;22986;
+Saint-Leu;filtre_compte;/stats/entonnoir .analysees;22986;
+Saint-Leu;filtre_compte;SQL run q_v18_sources surface>=2;22986;slivers<2m2 masques=60
+Saint-Leu;filtre_compte;somme ventilation bandes /filtre;22986;= somme tiers = bande_total
+Saint-Leu;filtre_criteres;/filtre surface_min=1000 .compte;7172;longueur idus=7172 (egalite)
+Saint-Leu;filtre_criteres;/filtre surface_min=1000+tiers servis .compte;14;longueur idus=14 (egalite)
+Saint-Leu;bande_A;/filtre .bandes.A;125;
+Saint-Leu;bande_A;SQL score_labuse q_v18 surface>=2;125;
+Saint-Leu;densifiables;fiche densifiables.parcelles + outils.densifiables;8028;sdp=2700341
+Saint-Leu;densifiables;SQL parcel_residuel sdp>0 tiers servables q_v18;8028;sdp=2700341
+Saint-Leu;prix_m2_ancien;fiche comparable.ancien_median_eur_m2;3822;n=1119
+Saint-Leu;prix_m2_ancien;/moteurs/barometre top_communes_prix;3822;n=1119 (top tronque a 8/24, drapeau tronquee)
+Saint-Leu;prix_m2_ancien;SQL formule moteurs (Vente stricte, >1000, 100-12000, >=100);3822;n=1119
+Saint-Leu;prix_m2_ancien_projets;SQL formule projets.py (toutes natures dont VEFA, 200-8000);3989;n=1238
+Saint-Leu;prix_m2_ancien_projets;/projets/reperes dvf_median_eur_m2 (sans appelant front);3988;nb_opportunites=14465 (etiquette)
+Saint-Leu;prix_m2_ancien_projets;kanban projet marche_eur_m2 (meme SQL projets.py:1194);3989;affiche « marche ancien ~N €/m² »
+Saint-Leu;permis_12m;fiche foncier.permis_12m.n + permis_bloc.permis_12m;118;fenetre ancree max(date) Sitadel=2026-08-31
+Saint-Leu;permis_12m;SQL ligne6 fenetre donnees;118;logements=143
+Saint-Leu;permis_12m;fiche permis_bloc.permis_type_12m (somme);100;fenetre CALENDAIRE CURRENT_DATE-12m + annules=2
+Saint-Leu;permis_12m;SQL fenetre calendaire hors etat=4;100;annules=2
+Saint-Leu;point_mort;fiche permis_bloc.point_mort + outils.permis_point_mort;667;cache du 2026-10-11
+Saint-Leu;point_mort;SQL permis_point_mort (36m sans DAACT, run servi);667;recalcul 12/10 (fenetre glisse d un jour)
+Saint-Leu;sans_zonage;fiche classement.sans_zonage;246;
+Saint-Leu;sans_zonage;SQL parcels sans parcel_zone_plu;246;
+Saint-Leu;mutations_12m;fiche foncier.mutations_12m;188;12 derniers mois DE DONNEES de la commune
+Saint-Leu;mutations_12m;SQL dvf_mutations fenetre donnees commune;188;
+Saint-Leu;ppr_pct;fiche risques.ppr_pct;32.8;intersection spatiale directe (cache nocturne, cle fraicheur)
+Saint-Louis;n_parcelles;fiche commune GET /communes/{c}/contexte foncier.n_parcelles;29342;table parcels ENTIERE (disparues incluses)
+Saint-Louis;n_parcelles;selecteur GET /communes .parcelles;29342;meme moteur compte_parcelles_commune
+Saint-Louis;n_parcelles;SQL count(*) parcels;29342;dont 38 cadastre_disparue_le NOT NULL
+Saint-Louis;n_parcelles_vivantes;fiche classement.evaluees;29304;parcelles presentes au run q_v18
+Saint-Louis;n_parcelles_vivantes;SQL parcel_p_score_v2 q_v18;29304;
+Saint-Louis;n_parcelles_vivantes;carte SQL mvt_parcels;29304;table bakee tuiles
+Saint-Louis;n_parcelles_vivantes;SQL dryrun_parcel_evaluations q_v18_sources;29304;cascade servie
+Saint-Louis;surface_ha;fiche foncier.surface_ha;9234;
+Saint-Louis;surface_ha;SQL sum(surface_m2)/10000 parcels;9234;
+Saint-Louis;stock_opportunites;fiche foncier.stock_opportunites.n;25;ha=3
+Saint-Louis;stock_opportunites;fiche comparable.stock_opportunites_n;25;moteur comparateur raw_rows (live)
+Saint-Louis;stock_opportunites;selecteur /communes .chaudes;25;
+Saint-Louis;stock_opportunites;/filtre .opportunites;25;
+Saint-Louis;stock_opportunites;/stats .opportunites;25;
+Saint-Louis;stock_opportunites;/stats/entonnoir .opportunites;25;
+Saint-Louis;stock_opportunites;SQL tiers brulante/chaude/priorite/a_suivre q_v18;25;ha=3
+Saint-Louis;filtre_compte;/filtre?communes sans critere .compte;29248;idus=CAP (CAP=20000 honnete au-dela)
+Saint-Louis;filtre_compte;/stats .total;29248;
+Saint-Louis;filtre_compte;/stats/entonnoir .analysees;29248;
+Saint-Louis;filtre_compte;SQL run q_v18_sources surface>=2;29248;slivers<2m2 masques=56
+Saint-Louis;filtre_compte;somme ventilation bandes /filtre;29248;= somme tiers = bande_total
+Saint-Louis;filtre_criteres;/filtre surface_min=1000 .compte;7426;longueur idus=7426 (egalite)
+Saint-Louis;filtre_criteres;/filtre surface_min=1000+tiers servis .compte;6;longueur idus=6 (egalite)
+Saint-Louis;bande_A;/filtre .bandes.A;325;
+Saint-Louis;bande_A;SQL score_labuse q_v18 surface>=2;325;
+Saint-Louis;densifiables;fiche densifiables.parcelles + outils.densifiables;12736;sdp=4728620
+Saint-Louis;densifiables;SQL parcel_residuel sdp>0 tiers servables q_v18;12736;sdp=4728620
+Saint-Louis;prix_m2_ancien;fiche comparable.ancien_median_eur_m2;2253;n=1118
+Saint-Louis;prix_m2_ancien;SQL formule moteurs (Vente stricte, >1000, 100-12000, >=100);2253;n=1118
+Saint-Louis;prix_m2_ancien_projets;SQL formule projets.py (toutes natures dont VEFA, 200-8000);2243;n=1129
+Saint-Louis;prix_m2_ancien_projets;/projets/reperes dvf_median_eur_m2 (sans appelant front);2242;nb_opportunites=19154 (etiquette)
+Saint-Louis;prix_m2_ancien_projets;kanban projet marche_eur_m2 (meme SQL projets.py:1194);2243;affiche « marche ancien ~N €/m² »
+Saint-Louis;permis_12m;fiche foncier.permis_12m.n + permis_bloc.permis_12m;213;fenetre ancree max(date) Sitadel=2026-08-31
+Saint-Louis;permis_12m;SQL ligne6 fenetre donnees;213;logements=259
+Saint-Louis;permis_12m;fiche permis_bloc.permis_type_12m (somme);188;fenetre CALENDAIRE CURRENT_DATE-12m + annules=0
+Saint-Louis;permis_12m;SQL fenetre calendaire hors etat=4;188;annules=0
+Saint-Louis;point_mort;fiche permis_bloc.point_mort + outils.permis_point_mort;1004;cache du 2026-10-11
+Saint-Louis;point_mort;SQL permis_point_mort (36m sans DAACT, run servi);1005;recalcul 12/10 (fenetre glisse d un jour)
+Saint-Louis;sans_zonage;fiche classement.sans_zonage;101;
+Saint-Louis;sans_zonage;SQL parcels sans parcel_zone_plu;101;
+Saint-Louis;mutations_12m;fiche foncier.mutations_12m;218;12 derniers mois DE DONNEES de la commune
+Saint-Louis;mutations_12m;SQL dvf_mutations fenetre donnees commune;218;
+Saint-Louis;ppr_pct;fiche risques.ppr_pct;28.1;intersection spatiale directe (cache nocturne, cle fraicheur)
+Saint-Paul;n_parcelles;fiche commune GET /communes/{c}/contexte foncier.n_parcelles;51597;table parcels ENTIERE (disparues incluses)
+Saint-Paul;n_parcelles;selecteur GET /communes .parcelles;51597;meme moteur compte_parcelles_commune
+Saint-Paul;n_parcelles;SQL count(*) parcels;51597;dont 238 cadastre_disparue_le NOT NULL
+Saint-Paul;n_parcelles_vivantes;fiche classement.evaluees;51359;parcelles presentes au run q_v18
+Saint-Paul;n_parcelles_vivantes;SQL parcel_p_score_v2 q_v18;51359;
+Saint-Paul;n_parcelles_vivantes;carte SQL mvt_parcels;51359;table bakee tuiles
+Saint-Paul;n_parcelles_vivantes;SQL dryrun_parcel_evaluations q_v18_sources;51359;cascade servie
+Saint-Paul;surface_ha;fiche foncier.surface_ha;23080;
+Saint-Paul;surface_ha;SQL sum(surface_m2)/10000 parcels;23080;
+Saint-Paul;stock_opportunites;fiche foncier.stock_opportunites.n;120;ha=47
+Saint-Paul;stock_opportunites;fiche comparable.stock_opportunites_n;120;moteur comparateur raw_rows (live)
+Saint-Paul;stock_opportunites;selecteur /communes .chaudes;120;
+Saint-Paul;stock_opportunites;/filtre .opportunites;120;
+Saint-Paul;stock_opportunites;/stats .opportunites;120;
+Saint-Paul;stock_opportunites;/stats/entonnoir .opportunites;120;
+Saint-Paul;stock_opportunites;SQL tiers brulante/chaude/priorite/a_suivre q_v18;120;ha=47
+Saint-Paul;filtre_compte;/filtre?communes sans critere .compte;51229;idus=CAP (CAP=20000 honnete au-dela)
+Saint-Paul;filtre_compte;/stats .total;51229;
+Saint-Paul;filtre_compte;/stats/entonnoir .analysees;51229;
+Saint-Paul;filtre_compte;SQL run q_v18_sources surface>=2;51229;slivers<2m2 masques=130
+Saint-Paul;filtre_compte;somme ventilation bandes /filtre;51229;= somme tiers = bande_total
+Saint-Paul;filtre_criteres;/filtre surface_min=1000 .compte;16235;longueur idus=16235 (egalite)
+Saint-Paul;filtre_criteres;/filtre surface_min=1000+tiers servis .compte;77;longueur idus=77 (egalite)
+Saint-Paul;bande_A;/filtre .bandes.A;664;
+Saint-Paul;bande_A;SQL score_labuse q_v18 surface>=2;664;
+Saint-Paul;densifiables;fiche densifiables.parcelles + outils.densifiables;24011;sdp=12913439
+Saint-Paul;densifiables;SQL parcel_residuel sdp>0 tiers servables q_v18;24011;sdp=12913439
+Saint-Paul;prix_m2_ancien;fiche comparable.ancien_median_eur_m2;4278;n=3197
+Saint-Paul;prix_m2_ancien;/moteurs/barometre top_communes_prix;4278;n=3197 (top tronque a 8/24, drapeau tronquee)
+Saint-Paul;prix_m2_ancien;SQL formule moteurs (Vente stricte, >1000, 100-12000, >=100);4278;n=3197
+Saint-Paul;prix_m2_ancien_projets;SQL formule projets.py (toutes natures dont VEFA, 200-8000);4292;n=3304
+Saint-Paul;prix_m2_ancien_projets;/projets/reperes dvf_median_eur_m2 (sans appelant front);4291;nb_opportunites=33589 (etiquette)
+Saint-Paul;prix_m2_ancien_projets;kanban projet marche_eur_m2 (meme SQL projets.py:1194);4292;affiche « marche ancien ~N €/m² »
+Saint-Paul;permis_12m;fiche foncier.permis_12m.n + permis_bloc.permis_12m;329;fenetre ancree max(date) Sitadel=2026-08-31
+Saint-Paul;permis_12m;SQL ligne6 fenetre donnees;329;logements=509
+Saint-Paul;permis_12m;fiche permis_bloc.permis_type_12m (somme);292;fenetre CALENDAIRE CURRENT_DATE-12m + annules=2
+Saint-Paul;permis_12m;SQL fenetre calendaire hors etat=4;292;annules=2
+Saint-Paul;point_mort;fiche permis_bloc.point_mort + outils.permis_point_mort;2576;cache du 2026-10-11
+Saint-Paul;point_mort;SQL permis_point_mort (36m sans DAACT, run servi);2576;recalcul 12/10 (fenetre glisse d un jour)
+Saint-Paul;sans_zonage;fiche classement.sans_zonage;468;
+Saint-Paul;sans_zonage;SQL parcels sans parcel_zone_plu;468;
+Saint-Paul;mutations_12m;fiche foncier.mutations_12m;228;12 derniers mois DE DONNEES de la commune
+Saint-Paul;mutations_12m;SQL dvf_mutations fenetre donnees commune;228;
+Saint-Paul;ppr_pct;fiche risques.ppr_pct;34.5;intersection spatiale directe (cache nocturne, cle fraicheur)
+Saint-Philippe;n_parcelles;fiche commune GET /communes/{c}/contexte foncier.n_parcelles;4180;table parcels ENTIERE (disparues incluses)
+Saint-Philippe;n_parcelles;selecteur GET /communes .parcelles;4180;meme moteur compte_parcelles_commune
+Saint-Philippe;n_parcelles;SQL count(*) parcels;4180;dont 7 cadastre_disparue_le NOT NULL
+Saint-Philippe;n_parcelles_vivantes;fiche classement.evaluees;4173;parcelles presentes au run q_v18
+Saint-Philippe;n_parcelles_vivantes;SQL parcel_p_score_v2 q_v18;4173;
+Saint-Philippe;n_parcelles_vivantes;carte SQL mvt_parcels;4173;table bakee tuiles
+Saint-Philippe;n_parcelles_vivantes;SQL dryrun_parcel_evaluations q_v18_sources;4173;cascade servie
+Saint-Philippe;surface_ha;fiche foncier.surface_ha;11453;
+Saint-Philippe;surface_ha;SQL sum(surface_m2)/10000 parcels;11453;
+Saint-Philippe;stock_opportunites;fiche foncier.stock_opportunites.n;3;ha=6
+Saint-Philippe;stock_opportunites;fiche comparable.stock_opportunites_n;3;moteur comparateur raw_rows (live)
+Saint-Philippe;stock_opportunites;selecteur /communes .chaudes;3;
+Saint-Philippe;stock_opportunites;/filtre .opportunites;3;
+Saint-Philippe;stock_opportunites;/stats .opportunites;3;
+Saint-Philippe;stock_opportunites;/stats/entonnoir .opportunites;3;
+Saint-Philippe;stock_opportunites;SQL tiers brulante/chaude/priorite/a_suivre q_v18;3;ha=6
+Saint-Philippe;filtre_compte;/filtre?communes sans critere .compte;4171;idus=4171 (CAP=20000 honnete au-dela)
+Saint-Philippe;filtre_compte;/stats .total;4171;
+Saint-Philippe;filtre_compte;/stats/entonnoir .analysees;4171;
+Saint-Philippe;filtre_compte;SQL run q_v18_sources surface>=2;4171;slivers<2m2 masques=2
+Saint-Philippe;filtre_compte;somme ventilation bandes /filtre;4171;= somme tiers = bande_total
+Saint-Philippe;filtre_criteres;/filtre surface_min=1000 .compte;1855;longueur idus=1855 (egalite)
+Saint-Philippe;filtre_criteres;/filtre surface_min=1000+tiers servis .compte;3;longueur idus=3 (egalite)
+Saint-Philippe;bande_A;/filtre .bandes.A;0;
+Saint-Philippe;bande_A;SQL score_labuse q_v18 surface>=2;0;
+Saint-Philippe;densifiables;fiche densifiables.parcelles + outils.densifiables;0/null;sdp=
+Saint-Philippe;densifiables;SQL parcel_residuel sdp>0 tiers servables q_v18;0;sdp=0
+Saint-Philippe;prix_m2_ancien;fiche comparable.ancien_median_eur_m2;1875;n=163
+Saint-Philippe;prix_m2_ancien;SQL formule moteurs (Vente stricte, >1000, 100-12000, >=100);1875;n=163
+Saint-Philippe;prix_m2_ancien_projets;SQL formule projets.py (toutes natures dont VEFA, 200-8000);1875;n=162
+Saint-Philippe;prix_m2_ancien_projets;/projets/reperes dvf_median_eur_m2 (sans appelant front);1875;nb_opportunites=3331 (etiquette)
+Saint-Philippe;prix_m2_ancien_projets;kanban projet marche_eur_m2 (meme SQL projets.py:1194);1875;affiche « marche ancien ~N €/m² »
+Saint-Philippe;permis_12m;fiche foncier.permis_12m.n + permis_bloc.permis_12m;28;fenetre ancree max(date) Sitadel=2026-08-31
+Saint-Philippe;permis_12m;SQL ligne6 fenetre donnees;28;logements=49
+Saint-Philippe;permis_12m;fiche permis_bloc.permis_type_12m (somme);24;fenetre CALENDAIRE CURRENT_DATE-12m + annules=0
+Saint-Philippe;permis_12m;SQL fenetre calendaire hors etat=4;24;annules=0
+Saint-Philippe;point_mort;fiche permis_bloc.point_mort + outils.permis_point_mort;94;cache du 2026-10-11
+Saint-Philippe;point_mort;SQL permis_point_mort (36m sans DAACT, run servi);94;recalcul 12/10 (fenetre glisse d un jour)
+Saint-Philippe;sans_zonage;fiche classement.sans_zonage;4171;
+Saint-Philippe;sans_zonage;SQL parcels sans parcel_zone_plu;4171;
+Saint-Philippe;mutations_12m;fiche foncier.mutations_12m;36;12 derniers mois DE DONNEES de la commune
+Saint-Philippe;mutations_12m;SQL dvf_mutations fenetre donnees commune;36;
+Saint-Philippe;ppr_pct;fiche risques.ppr_pct;29.6;intersection spatiale directe (cache nocturne, cle fraicheur)
+Saint-Pierre;n_parcelles;fiche commune GET /communes/{c}/contexte foncier.n_parcelles;42654;table parcels ENTIERE (disparues incluses)
+Saint-Pierre;n_parcelles;selecteur GET /communes .parcelles;42654;meme moteur compte_parcelles_commune
+Saint-Pierre;n_parcelles;SQL count(*) parcels;42654;dont 96 cadastre_disparue_le NOT NULL
+Saint-Pierre;n_parcelles_vivantes;fiche classement.evaluees;42558;parcelles presentes au run q_v18
+Saint-Pierre;n_parcelles_vivantes;SQL parcel_p_score_v2 q_v18;42558;
+Saint-Pierre;n_parcelles_vivantes;carte SQL mvt_parcels;42558;table bakee tuiles
+Saint-Pierre;n_parcelles_vivantes;SQL dryrun_parcel_evaluations q_v18_sources;42558;cascade servie
+Saint-Pierre;surface_ha;fiche foncier.surface_ha;8994;
+Saint-Pierre;surface_ha;SQL sum(surface_m2)/10000 parcels;8994;
+Saint-Pierre;stock_opportunites;fiche foncier.stock_opportunites.n;134;ha=27
+Saint-Pierre;stock_opportunites;fiche comparable.stock_opportunites_n;134;moteur comparateur raw_rows (live)
+Saint-Pierre;stock_opportunites;selecteur /communes .chaudes;134;
+Saint-Pierre;stock_opportunites;/filtre .opportunites;134;
+Saint-Pierre;stock_opportunites;/stats .opportunites;134;
+Saint-Pierre;stock_opportunites;/stats/entonnoir .opportunites;134;
+Saint-Pierre;stock_opportunites;SQL tiers brulante/chaude/priorite/a_suivre q_v18;134;ha=27
+Saint-Pierre;filtre_compte;/filtre?communes sans critere .compte;42435;idus=CAP (CAP=20000 honnete au-dela)
+Saint-Pierre;filtre_compte;/stats .total;42435;
+Saint-Pierre;filtre_compte;/stats/entonnoir .analysees;42435;
+Saint-Pierre;filtre_compte;SQL run q_v18_sources surface>=2;42435;slivers<2m2 masques=123
+Saint-Pierre;filtre_compte;somme ventilation bandes /filtre;42435;= somme tiers = bande_total
+Saint-Pierre;filtre_criteres;/filtre surface_min=1000 .compte;9884;longueur idus=9884 (egalite)
+Saint-Pierre;filtre_criteres;/filtre surface_min=1000+tiers servis .compte;61;longueur idus=61 (egalite)
+Saint-Pierre;bande_A;/filtre .bandes.A;425;
+Saint-Pierre;bande_A;SQL score_labuse q_v18 surface>=2;425;
+Saint-Pierre;densifiables;fiche densifiables.parcelles + outils.densifiables;16883;sdp=5361580
+Saint-Pierre;densifiables;SQL parcel_residuel sdp>0 tiers servables q_v18;16883;sdp=5361580
+Saint-Pierre;prix_m2_ancien;fiche comparable.ancien_median_eur_m2;3015;n=3059
+Saint-Pierre;prix_m2_ancien;/moteurs/barometre top_communes_prix;3015;n=3059 (top tronque a 8/24, drapeau tronquee)
+Saint-Pierre;prix_m2_ancien;SQL formule moteurs (Vente stricte, >1000, 100-12000, >=100);3015;n=3059
+Saint-Pierre;prix_m2_ancien_projets;SQL formule projets.py (toutes natures dont VEFA, 200-8000);3047;n=3207
+Saint-Pierre;prix_m2_ancien_projets;/projets/reperes dvf_median_eur_m2 (sans appelant front);3047;nb_opportunites=31350 (etiquette)
+Saint-Pierre;prix_m2_ancien_projets;kanban projet marche_eur_m2 (meme SQL projets.py:1194);3047;affiche « marche ancien ~N €/m² »
+Saint-Pierre;permis_12m;fiche foncier.permis_12m.n + permis_bloc.permis_12m;347;fenetre ancree max(date) Sitadel=2026-08-31
+Saint-Pierre;permis_12m;SQL ligne6 fenetre donnees;347;logements=611
+Saint-Pierre;permis_12m;fiche permis_bloc.permis_type_12m (somme);290;fenetre CALENDAIRE CURRENT_DATE-12m + annules=0
+Saint-Pierre;permis_12m;SQL fenetre calendaire hors etat=4;290;annules=0
+Saint-Pierre;point_mort;fiche permis_bloc.point_mort + outils.permis_point_mort;1577;cache du 2026-10-11
+Saint-Pierre;point_mort;SQL permis_point_mort (36m sans DAACT, run servi);1582;recalcul 12/10 (fenetre glisse d un jour)
+Saint-Pierre;sans_zonage;fiche classement.sans_zonage;229;
+Saint-Pierre;sans_zonage;SQL parcels sans parcel_zone_plu;229;
+Saint-Pierre;mutations_12m;fiche foncier.mutations_12m;542;12 derniers mois DE DONNEES de la commune
+Saint-Pierre;mutations_12m;SQL dvf_mutations fenetre donnees commune;542;
+Saint-Pierre;ppr_pct;fiche risques.ppr_pct;23.2;intersection spatiale directe (cache nocturne, cle fraicheur)
+Sainte-Marie;n_parcelles;fiche commune GET /communes/{c}/contexte foncier.n_parcelles;16832;table parcels ENTIERE (disparues incluses)
+Sainte-Marie;n_parcelles;selecteur GET /communes .parcelles;16832;meme moteur compte_parcelles_commune
+Sainte-Marie;n_parcelles;SQL count(*) parcels;16832;dont 48 cadastre_disparue_le NOT NULL
+Sainte-Marie;n_parcelles_vivantes;fiche classement.evaluees;16784;parcelles presentes au run q_v18
+Sainte-Marie;n_parcelles_vivantes;SQL parcel_p_score_v2 q_v18;16784;
+Sainte-Marie;n_parcelles_vivantes;carte SQL mvt_parcels;16784;table bakee tuiles
+Sainte-Marie;n_parcelles_vivantes;SQL dryrun_parcel_evaluations q_v18_sources;16784;cascade servie
+Sainte-Marie;surface_ha;fiche foncier.surface_ha;8612;
+Sainte-Marie;surface_ha;SQL sum(surface_m2)/10000 parcels;8612;
+Sainte-Marie;stock_opportunites;fiche foncier.stock_opportunites.n;28;ha=6
+Sainte-Marie;stock_opportunites;fiche comparable.stock_opportunites_n;28;moteur comparateur raw_rows (live)
+Sainte-Marie;stock_opportunites;selecteur /communes .chaudes;28;
+Sainte-Marie;stock_opportunites;/filtre .opportunites;28;
+Sainte-Marie;stock_opportunites;/stats .opportunites;28;
+Sainte-Marie;stock_opportunites;/stats/entonnoir .opportunites;28;
+Sainte-Marie;stock_opportunites;SQL tiers brulante/chaude/priorite/a_suivre q_v18;28;ha=6
+Sainte-Marie;filtre_compte;/filtre?communes sans critere .compte;16751;idus=16751 (CAP=20000 honnete au-dela)
+Sainte-Marie;filtre_compte;/stats .total;16751;
+Sainte-Marie;filtre_compte;/stats/entonnoir .analysees;16751;
+Sainte-Marie;filtre_compte;SQL run q_v18_sources surface>=2;16751;slivers<2m2 masques=33
+Sainte-Marie;filtre_compte;somme ventilation bandes /filtre;16751;= somme tiers = bande_total
+Sainte-Marie;filtre_criteres;/filtre surface_min=1000 .compte;4895;longueur idus=4895 (egalite)
+Sainte-Marie;filtre_criteres;/filtre surface_min=1000+tiers servis .compte;17;longueur idus=17 (egalite)
+Sainte-Marie;bande_A;/filtre .bandes.A;209;
+Sainte-Marie;bande_A;SQL score_labuse q_v18 surface>=2;209;
+Sainte-Marie;densifiables;fiche densifiables.parcelles + outils.densifiables;7833;sdp=3529385
+Sainte-Marie;densifiables;SQL parcel_residuel sdp>0 tiers servables q_v18;7833;sdp=3529385
+Sainte-Marie;prix_m2_ancien;fiche comparable.ancien_median_eur_m2;2481;n=867
+Sainte-Marie;prix_m2_ancien;/moteurs/barometre top_communes_prix;2481;n=867 (top tronque a 8/24, drapeau tronquee)
+Sainte-Marie;prix_m2_ancien;SQL formule moteurs (Vente stricte, >1000, 100-12000, >=100);2481;n=867
+Sainte-Marie;prix_m2_ancien_projets;SQL formule projets.py (toutes natures dont VEFA, 200-8000);2638;n=946
+Sainte-Marie;prix_m2_ancien_projets;/projets/reperes dvf_median_eur_m2 (sans appelant front);2637;nb_opportunites=11287 (etiquette)
+Sainte-Marie;prix_m2_ancien_projets;kanban projet marche_eur_m2 (meme SQL projets.py:1194);2638;affiche « marche ancien ~N €/m² »
+Sainte-Marie;permis_12m;fiche foncier.permis_12m.n + permis_bloc.permis_12m;109;fenetre ancree max(date) Sitadel=2026-08-31
+Sainte-Marie;permis_12m;SQL ligne6 fenetre donnees;109;logements=390
+Sainte-Marie;permis_12m;fiche permis_bloc.permis_type_12m (somme);98;fenetre CALENDAIRE CURRENT_DATE-12m + annules=1
+Sainte-Marie;permis_12m;SQL fenetre calendaire hors etat=4;98;annules=1
+Sainte-Marie;point_mort;fiche permis_bloc.point_mort + outils.permis_point_mort;776;cache du 2026-10-11
+Sainte-Marie;point_mort;SQL permis_point_mort (36m sans DAACT, run servi);776;recalcul 12/10 (fenetre glisse d un jour)
+Sainte-Marie;sans_zonage;fiche classement.sans_zonage;86;
+Sainte-Marie;sans_zonage;SQL parcels sans parcel_zone_plu;86;
+Sainte-Marie;mutations_12m;fiche foncier.mutations_12m;152;12 derniers mois DE DONNEES de la commune
+Sainte-Marie;mutations_12m;SQL dvf_mutations fenetre donnees commune;152;
+Sainte-Marie;ppr_pct;fiche risques.ppr_pct;37.3;intersection spatiale directe (cache nocturne, cle fraicheur)
+Sainte-Rose;n_parcelles;fiche commune GET /communes/{c}/contexte foncier.n_parcelles;6302;table parcels ENTIERE (disparues incluses)
+Sainte-Rose;n_parcelles;selecteur GET /communes .parcelles;6302;meme moteur compte_parcelles_commune
+Sainte-Rose;n_parcelles;SQL count(*) parcels;6302;dont 7 cadastre_disparue_le NOT NULL
+Sainte-Rose;n_parcelles_vivantes;fiche classement.evaluees;6295;parcelles presentes au run q_v18
+Sainte-Rose;n_parcelles_vivantes;SQL parcel_p_score_v2 q_v18;6295;
+Sainte-Rose;n_parcelles_vivantes;carte SQL mvt_parcels;6295;table bakee tuiles
+Sainte-Rose;n_parcelles_vivantes;SQL dryrun_parcel_evaluations q_v18_sources;6295;cascade servie
+Sainte-Rose;surface_ha;fiche foncier.surface_ha;14230;
+Sainte-Rose;surface_ha;SQL sum(surface_m2)/10000 parcels;14230;
+Sainte-Rose;stock_opportunites;fiche foncier.stock_opportunites.n;0;ha=0
+Sainte-Rose;stock_opportunites;fiche comparable.stock_opportunites_n;0;moteur comparateur raw_rows (live)
+Sainte-Rose;stock_opportunites;selecteur /communes .chaudes;0;
+Sainte-Rose;stock_opportunites;/filtre .opportunites;0;
+Sainte-Rose;stock_opportunites;/stats .opportunites;0;
+Sainte-Rose;stock_opportunites;/stats/entonnoir .opportunites;0;
+Sainte-Rose;stock_opportunites;SQL tiers brulante/chaude/priorite/a_suivre q_v18;0;ha=0
+Sainte-Rose;filtre_compte;/filtre?communes sans critere .compte;6291;idus=6291 (CAP=20000 honnete au-dela)
+Sainte-Rose;filtre_compte;/stats .total;6291;
+Sainte-Rose;filtre_compte;/stats/entonnoir .analysees;6291;
+Sainte-Rose;filtre_compte;SQL run q_v18_sources surface>=2;6291;slivers<2m2 masques=4
+Sainte-Rose;filtre_compte;somme ventilation bandes /filtre;6291;= somme tiers = bande_total
+Sainte-Rose;filtre_criteres;/filtre surface_min=1000 .compte;2958;longueur idus=2958 (egalite)
+Sainte-Rose;filtre_criteres;/filtre surface_min=1000+tiers servis .compte;0;longueur idus=0 (egalite)
+Sainte-Rose;bande_A;/filtre .bandes.A;75;
+Sainte-Rose;bande_A;SQL score_labuse q_v18 surface>=2;75;
+Sainte-Rose;densifiables;fiche densifiables.parcelles + outils.densifiables;2182;sdp=840531
+Sainte-Rose;densifiables;SQL parcel_residuel sdp>0 tiers servables q_v18;2182;sdp=840531
+Sainte-Rose;prix_m2_ancien;fiche comparable.ancien_median_eur_m2;1707;n=122
+Sainte-Rose;prix_m2_ancien;SQL formule moteurs (Vente stricte, >1000, 100-12000, >=100);1707;n=122
+Sainte-Rose;prix_m2_ancien_projets;SQL formule projets.py (toutes natures dont VEFA, 200-8000);1718;n=119
+Sainte-Rose;prix_m2_ancien_projets;/projets/reperes dvf_median_eur_m2 (sans appelant front);1718;nb_opportunites=3098 (etiquette)
+Sainte-Rose;prix_m2_ancien_projets;kanban projet marche_eur_m2 (meme SQL projets.py:1194);1718;affiche « marche ancien ~N €/m² »
+Sainte-Rose;permis_12m;fiche foncier.permis_12m.n + permis_bloc.permis_12m;27;fenetre ancree max(date) Sitadel=2026-08-31
+Sainte-Rose;permis_12m;SQL ligne6 fenetre donnees;27;logements=31
+Sainte-Rose;permis_12m;fiche permis_bloc.permis_type_12m (somme);23;fenetre CALENDAIRE CURRENT_DATE-12m + annules=0
+Sainte-Rose;permis_12m;SQL fenetre calendaire hors etat=4;23;annules=0
+Sainte-Rose;point_mort;fiche permis_bloc.point_mort + outils.permis_point_mort;200;cache du 2026-10-11
+Sainte-Rose;point_mort;SQL permis_point_mort (36m sans DAACT, run servi);200;recalcul 12/10 (fenetre glisse d un jour)
+Sainte-Rose;sans_zonage;fiche classement.sans_zonage;15;
+Sainte-Rose;sans_zonage;SQL parcels sans parcel_zone_plu;15;
+Sainte-Rose;mutations_12m;fiche foncier.mutations_12m;18;12 derniers mois DE DONNEES de la commune
+Sainte-Rose;mutations_12m;SQL dvf_mutations fenetre donnees commune;18;
+Sainte-Rose;ppr_pct;fiche risques.ppr_pct;48.2;intersection spatiale directe (cache nocturne, cle fraicheur)
+Sainte-Suzanne;n_parcelles;fiche commune GET /communes/{c}/contexte foncier.n_parcelles;12677;table parcels ENTIERE (disparues incluses)
+Sainte-Suzanne;n_parcelles;selecteur GET /communes .parcelles;12677;meme moteur compte_parcelles_commune
+Sainte-Suzanne;n_parcelles;SQL count(*) parcels;12677;dont 62 cadastre_disparue_le NOT NULL
+Sainte-Suzanne;n_parcelles_vivantes;fiche classement.evaluees;12615;parcelles presentes au run q_v18
+Sainte-Suzanne;n_parcelles_vivantes;SQL parcel_p_score_v2 q_v18;12615;
+Sainte-Suzanne;n_parcelles_vivantes;carte SQL mvt_parcels;12615;table bakee tuiles
+Sainte-Suzanne;n_parcelles_vivantes;SQL dryrun_parcel_evaluations q_v18_sources;12615;cascade servie
+Sainte-Suzanne;surface_ha;fiche foncier.surface_ha;5596;
+Sainte-Suzanne;surface_ha;SQL sum(surface_m2)/10000 parcels;5596;
+Sainte-Suzanne;stock_opportunites;fiche foncier.stock_opportunites.n;5;ha=0
+Sainte-Suzanne;stock_opportunites;fiche comparable.stock_opportunites_n;5;moteur comparateur raw_rows (live)
+Sainte-Suzanne;stock_opportunites;selecteur /communes .chaudes;5;
+Sainte-Suzanne;stock_opportunites;/filtre .opportunites;5;
+Sainte-Suzanne;stock_opportunites;/stats .opportunites;5;
+Sainte-Suzanne;stock_opportunites;/stats/entonnoir .opportunites;5;
+Sainte-Suzanne;stock_opportunites;SQL tiers brulante/chaude/priorite/a_suivre q_v18;5;ha=0
+Sainte-Suzanne;filtre_compte;/filtre?communes sans critere .compte;12589;idus=12589 (CAP=20000 honnete au-dela)
+Sainte-Suzanne;filtre_compte;/stats .total;12589;
+Sainte-Suzanne;filtre_compte;/stats/entonnoir .analysees;12589;
+Sainte-Suzanne;filtre_compte;SQL run q_v18_sources surface>=2;12589;slivers<2m2 masques=26
+Sainte-Suzanne;filtre_compte;somme ventilation bandes /filtre;12589;= somme tiers = bande_total
+Sainte-Suzanne;filtre_criteres;/filtre surface_min=1000 .compte;3827;longueur idus=3827 (egalite)
+Sainte-Suzanne;filtre_criteres;/filtre surface_min=1000+tiers servis .compte;1;longueur idus=1 (egalite)
+Sainte-Suzanne;bande_A;/filtre .bandes.A;193;
+Sainte-Suzanne;bande_A;SQL score_labuse q_v18 surface>=2;193;
+Sainte-Suzanne;densifiables;fiche densifiables.parcelles + outils.densifiables;5481;sdp=2076716
+Sainte-Suzanne;densifiables;SQL parcel_residuel sdp>0 tiers servables q_v18;5481;sdp=2076716
+Sainte-Suzanne;prix_m2_ancien;fiche comparable.ancien_median_eur_m2;2262;n=369
+Sainte-Suzanne;prix_m2_ancien;SQL formule moteurs (Vente stricte, >1000, 100-12000, >=100);2262;n=369
+Sainte-Suzanne;prix_m2_ancien_projets;SQL formule projets.py (toutes natures dont VEFA, 200-8000);2230;n=369
+Sainte-Suzanne;prix_m2_ancien_projets;/projets/reperes dvf_median_eur_m2 (sans appelant front);2229;nb_opportunites=7682 (etiquette)
+Sainte-Suzanne;prix_m2_ancien_projets;kanban projet marche_eur_m2 (meme SQL projets.py:1194);2230;affiche « marche ancien ~N €/m² »
+Sainte-Suzanne;permis_12m;fiche foncier.permis_12m.n + permis_bloc.permis_12m;70;fenetre ancree max(date) Sitadel=2026-08-31
+Sainte-Suzanne;permis_12m;SQL ligne6 fenetre donnees;70;logements=250
+Sainte-Suzanne;permis_12m;fiche permis_bloc.permis_type_12m (somme);60;fenetre CALENDAIRE CURRENT_DATE-12m + annules=1
+Sainte-Suzanne;permis_12m;SQL fenetre calendaire hors etat=4;60;annules=1
+Sainte-Suzanne;point_mort;fiche permis_bloc.point_mort + outils.permis_point_mort;330;cache du 2026-10-11
+Sainte-Suzanne;point_mort;SQL permis_point_mort (36m sans DAACT, run servi);331;recalcul 12/10 (fenetre glisse d un jour)
+Sainte-Suzanne;sans_zonage;fiche classement.sans_zonage;150;
+Sainte-Suzanne;sans_zonage;SQL parcels sans parcel_zone_plu;150;
+Sainte-Suzanne;mutations_12m;fiche foncier.mutations_12m;68;12 derniers mois DE DONNEES de la commune
+Sainte-Suzanne;mutations_12m;SQL dvf_mutations fenetre donnees commune;68;
+Sainte-Suzanne;ppr_pct;fiche risques.ppr_pct;45.1;intersection spatiale directe (cache nocturne, cle fraicheur)
+Salazie;n_parcelles;fiche commune GET /communes/{c}/contexte foncier.n_parcelles;7063;table parcels ENTIERE (disparues incluses)
+Salazie;n_parcelles;selecteur GET /communes .parcelles;7063;meme moteur compte_parcelles_commune
+Salazie;n_parcelles;SQL count(*) parcels;7063;dont 10 cadastre_disparue_le NOT NULL
+Salazie;n_parcelles_vivantes;fiche classement.evaluees;7053;parcelles presentes au run q_v18
+Salazie;n_parcelles_vivantes;SQL parcel_p_score_v2 q_v18;7053;
+Salazie;n_parcelles_vivantes;carte SQL mvt_parcels;7053;table bakee tuiles
+Salazie;n_parcelles_vivantes;SQL dryrun_parcel_evaluations q_v18_sources;7053;cascade servie
+Salazie;surface_ha;fiche foncier.surface_ha;10084;
+Salazie;surface_ha;SQL sum(surface_m2)/10000 parcels;10084;
+Salazie;stock_opportunites;fiche foncier.stock_opportunites.n;0;ha=0
+Salazie;stock_opportunites;fiche comparable.stock_opportunites_n;0;moteur comparateur raw_rows (live)
+Salazie;stock_opportunites;selecteur /communes .chaudes;0;
+Salazie;stock_opportunites;/filtre .opportunites;0;
+Salazie;stock_opportunites;/stats .opportunites;0;
+Salazie;stock_opportunites;/stats/entonnoir .opportunites;0;
+Salazie;stock_opportunites;SQL tiers brulante/chaude/priorite/a_suivre q_v18;0;ha=0
+Salazie;filtre_compte;/filtre?communes sans critere .compte;7050;idus=7050 (CAP=20000 honnete au-dela)
+Salazie;filtre_compte;/stats .total;7050;
+Salazie;filtre_compte;/stats/entonnoir .analysees;7050;
+Salazie;filtre_compte;SQL run q_v18_sources surface>=2;7050;slivers<2m2 masques=3
+Salazie;filtre_compte;somme ventilation bandes /filtre;7050;= somme tiers = bande_total
+Salazie;filtre_criteres;/filtre surface_min=1000 .compte;3938;longueur idus=3938 (egalite)
+Salazie;filtre_criteres;/filtre surface_min=1000+tiers servis .compte;0;longueur idus=0 (egalite)
+Salazie;bande_A;/filtre .bandes.A;161;
+Salazie;bande_A;SQL score_labuse q_v18 surface>=2;161;
+Salazie;densifiables;fiche densifiables.parcelles + outils.densifiables;1801;sdp=1666056
+Salazie;densifiables;SQL parcel_residuel sdp>0 tiers servables q_v18;1801;sdp=1666056
+Salazie;prix_m2_ancien;fiche comparable.ancien_median_eur_m2;1474;n=106
+Salazie;prix_m2_ancien;SQL formule moteurs (Vente stricte, >1000, 100-12000, >=100);1474;n=106
+Salazie;prix_m2_ancien_projets;SQL formule projets.py (toutes natures dont VEFA, 200-8000);1474;n=106
+Salazie;prix_m2_ancien_projets;/projets/reperes dvf_median_eur_m2 (sans appelant front);1474;nb_opportunites=2212 (etiquette)
+Salazie;prix_m2_ancien_projets;kanban projet marche_eur_m2 (meme SQL projets.py:1194);1474;affiche « marche ancien ~N €/m² »
+Salazie;permis_12m;fiche foncier.permis_12m.n + permis_bloc.permis_12m;45;fenetre ancree max(date) Sitadel=2026-08-31
+Salazie;permis_12m;SQL ligne6 fenetre donnees;45;logements=48
+Salazie;permis_12m;fiche permis_bloc.permis_type_12m (somme);36;fenetre CALENDAIRE CURRENT_DATE-12m + annules=3
+Salazie;permis_12m;SQL fenetre calendaire hors etat=4;36;annules=3
+Salazie;point_mort;fiche permis_bloc.point_mort + outils.permis_point_mort;278;cache du 2026-10-11
+Salazie;point_mort;SQL permis_point_mort (36m sans DAACT, run servi);278;recalcul 12/10 (fenetre glisse d un jour)
+Salazie;sans_zonage;fiche classement.sans_zonage;28;
+Salazie;sans_zonage;SQL parcels sans parcel_zone_plu;28;
+Salazie;mutations_12m;fiche foncier.mutations_12m;24;12 derniers mois DE DONNEES de la commune
+Salazie;mutations_12m;SQL dvf_mutations fenetre donnees commune;24;
+Salazie;ppr_pct;fiche risques.ppr_pct;79.5;intersection spatiale directe (cache nocturne, cle fraicheur)
+Salazie;ppr_pct;SQL recalcul ST_Intersects kind=ppr;79.5;echantillon 4 communes recalcule, identique
+(ile);total_parcelles;/accueil/chiffres .parcelles;433229;= run q_v18 (p_score_v2_runs.n_parcelles)
+(ile);total_parcelles;SQL somme 24 communes evaluees run q_v18;433229;= somme mvt_parcels = somme cascade
+(ile);total_parcelles;SQL somme 24 communes table parcels;434582;dont 1353 disparues (hors run, hors carte)

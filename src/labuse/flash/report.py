@@ -78,6 +78,13 @@ def render_report_html(db: Session, idu: str, *, order_ref: str, adresse: str | 
     EXPORTS-1 (6.2) : `data` peut être FOURNI (archive JSON d'un document payé) — le rendu
     est alors REPRODUIT depuis les données figées, sans relire la base (test doré de la
     reproductibilité : même data → même HTML)."""
+    # CHASSE-DONNEES-FIX-1 (Lot 2) — parcelle disparue du cadastre : le Flash REFUSE de composer
+    # (data est relu en base). Jamais un rapport payé sur une parcelle sortie du cadastre.
+    if data is None:
+        from .. import cadastre_disparue as _cd
+        _disp = _cd.info_disparue(db, idu)
+        if _disp:
+            raise ValueError(_cd.phrase_disparue(_disp))
     data = data if data is not None else collect_report_data(db, idu, adresse=adresse)
     # M23-A : marque CLIENT — documents ABONNÉ uniquement (dossier.py). Le FLASH 79 €
     # n'alimente JAMAIS ce champ : produit LABUSE, aucun logo client.

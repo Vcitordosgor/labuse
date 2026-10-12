@@ -97,7 +97,10 @@ export function AutourSection({ f, idu }: { f: Fiche; idu: string }) {
       {/* FICHE-FIX-4 (Lot K) — Proximité en 3 tuiles (École · Commerces · Santé). Bus vit dans Réseaux. */}
       {eqItems0.length > 0 && (
         <div data-proximites-equip>
-          <GroupLabel>À proximité (à pied)</GroupLabel>
+          {/* CHASSE-DONNEES-FIX-1 (Lot 7, E-74) — distance à VOL D'OISEAU (KNN), pas un temps de marche :
+              300 m à vol d'oiseau peuvent faire 600+ m à pied (ravines, pentes). Le payload source dit
+              « vol d'oiseau » ; on ne revendique plus « à pied ». */}
+          <GroupLabel>À proximité (à vol d'oiseau)</GroupLabel>
           <Tuiles cols={eqItems0.length >= 3 ? 3 : 2}
             items={eqItems0.slice(0, 3).map((e): Tuile => ({ label: e.cat, valeur: fmtDist(e.distance_m) }))} />
         </div>

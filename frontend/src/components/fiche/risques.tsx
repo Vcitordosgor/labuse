@@ -167,8 +167,14 @@ export function RisquesSection({ f }: { f: Fiche; idu: string }) {
               <FactNote>{f.catnat.total} arrêté{f.catnat.total > 1 ? 's' : ''} au total (commune) · {f.catnat.source}</FactNote>
             </Repli>
           </div>
-        ) : f.catnat && !f.catnat.disponible ? (
+        ) : f.catnat?.disponible ? (
+          /* CHASSE-DONNEES-FIX-1 (Lot 4, E-82) — source DISPONIBLE, 0 arrêté : « aucun arrêté »
+             est un vrai 0 mesuré. */
           <div data-catnat><Lignes><Ligne label="Catastrophes naturelles (commune)" valeur="aucun arrêté" ton="gris" /></Lignes></div>
+        ) : f.catnat ? (
+          /* source INDISPONIBLE (table absente / panne d'ingestion) : « non renseigné », JAMAIS
+             « aucun arrêté » (à La Réunion aucune commune n'a zéro arrêté CatNat). */
+          <div data-catnat><Lignes><Ligne label="Catastrophes naturelles (commune)" valeur="non renseigné" ton="gris" /></Lignes></div>
         ) : null}
         {/* AUTRES VIGILANCES (hors aléas structurés) — chaque ligne marquée d'une puce ambre.
             RETOURS-20 Z1·02 — le titre encadré (font-mono caps) devient un KICKER partagé (GroupLabel). */}

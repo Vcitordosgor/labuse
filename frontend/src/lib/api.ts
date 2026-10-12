@@ -557,6 +557,15 @@ export interface TaxeConfig {
 }
 export const getTaxeConfig = () => j<TaxeConfig>('/outils/taxe-amenagement/config')
 
+// CHASSE-DONNEES-FIX-1 (suite 2, E-77/E-78) — seuils d'écran SERVIS (source unique config/moteurs.yaml) :
+// plafond d'assemblage écran, plafond API, rayons d'Étude de zone. Le front ne code plus ces bornes en dur.
+export interface MoteursConfig {
+  assemblage_max_ecran: number
+  assemblage_max_parcelles: number
+  rayons_etude_zone: number[]
+}
+export const getMoteursConfig = () => j<MoteursConfig>('/moteurs/config')
+
 export interface TaxeLigne { poste: string; detail: string; assiette_eur: number }
 export interface TaxeResult {
   annee: number; source: string; url: string; note: string

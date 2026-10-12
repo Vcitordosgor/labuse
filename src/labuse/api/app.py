@@ -38,6 +38,7 @@ from sqlalchemy.orm import Session, joinedload
 
 from .. import config, models, prospection
 from .. import surface as _surface   # CONTENANCE-1 (Lot B) — surface de terrain = contenance|dessin
+from .. import cadastre_disparue as _cadastre_disparue   # CHASSE-DONNEES-FIX-1 (Lot 2) — garde unique
 from .. import bati as _bati   # FICHE-1 lot 1 — bloc « Le bien » (producteur unique)
 from .. import rnu as _rnu
 from ..db import session_scope
@@ -1521,6 +1522,13 @@ def _q_v2_where(run_label: str,
         params["f_communes"] = [c.strip() for c in communes.split(",") if c.strip()]
     if tiers:
         tset = [t.strip() for t in tiers.split(",") if t.strip()]
+        # CHASSE-DONNEES-FIX-1 (Lot 7, C-30) — `tiers=` accepte les DEUX vocabulaires : la ventilation
+        # relabellise les codes STOCKÉS (priorite/a_suivre) en clés d'affichage legacy (brulante/chaude),
+        # mais le filtre matchait les codes stockés → `tiers=brulante` rendait 0. On étend chaque clé
+        # demandée à son équivalent stocké/legacy (le front envoyait déjà les deux ; piège API direct).
+        _ALIAS_TIERS = {"brulante": "priorite", "chaude": "a_suivre",
+                        "priorite": "brulante", "a_suivre": "chaude"}
+        tset = sorted({t for x in tset for t in (x, _ALIAS_TIERS.get(x, x))})
         actifs = [t for t in tset if t != "ecartee"]
         sub: list[str] = []
         if actifs:
@@ -1667,12 +1675,15 @@ def _q_v2_where(run_label: str,
         if cl & {"bati_marginal", "bati_sature", "bati_revele"}:
             cl = (cl - {"bati_marginal", "bati_sature", "bati_revele"}) | {"bati"}
         sub = []
+        # CHASSE-DONNEES-FIX-1 (Lot 4, E-68) — « nu » = emprise RÉELLEMENT mesurée < 5 % (taux NON
+        # NULL), plus « NOT EXISTS taux≥5 » qui avalait l'inconnu (taux NULL) comme du nu : le filtre
+        # « Terrain nu » renvoyait des parcelles bâties à 85-132 % (taux jamais calculé).
         if "nu" in cl:
-            sub.append("NOT EXISTS (SELECT 1 FROM parcel_residuel rs WHERE rs.parcel_id = p.id"
-                       " AND COALESCE(rs.taux_emprise_pct,0) >= 5)")
+            sub.append("EXISTS (SELECT 1 FROM parcel_residuel rs WHERE rs.parcel_id = p.id"
+                       " AND rs.taux_emprise_pct IS NOT NULL AND rs.taux_emprise_pct < 5)")
         if "bati" in cl:
             sub.append("EXISTS (SELECT 1 FROM parcel_residuel rs WHERE rs.parcel_id = p.id"
-                       " AND COALESCE(rs.taux_emprise_pct,0) >= 5)")
+                       " AND rs.taux_emprise_pct IS NOT NULL AND rs.taux_emprise_pct >= 5)")
         if sub:
             conds.append("(" + " OR ".join(sub) + ")")
         elif cl:
@@ -1862,13 +1873,15 @@ def _q_v2_where(run_label: str,
         conds.append("EXISTS (SELECT 1 FROM batiment_hauteur_lidar bhl1 WHERE bhl1.idu = p.idu"
                      " AND bhl1.faitage_m <= :f_hmax)")
         params["f_hmax"] = hauteur_max
+    # CHASSE-DONNEES-FIX-1 (Lot 4, E-81) — l'emprise non MESURÉE (taux NULL) ne passe plus les
+    # bornes basses comme si elle valait 0 % : le filtre exige une valeur RÉELLE (IS NOT NULL).
     if emprise_min is not None:
         conds.append("EXISTS (SELECT 1 FROM parcel_residuel re0 WHERE re0.parcel_id = p.id"
-                     " AND COALESCE(re0.taux_emprise_pct,0) >= :f_empmin)")
+                     " AND re0.taux_emprise_pct IS NOT NULL AND re0.taux_emprise_pct >= :f_empmin)")
         params["f_empmin"] = emprise_min
     if emprise_max is not None:
         conds.append("EXISTS (SELECT 1 FROM parcel_residuel re1 WHERE re1.parcel_id = p.id"
-                     " AND COALESCE(re1.taux_emprise_pct,0) <= :f_empmax)")
+                     " AND re1.taux_emprise_pct IS NOT NULL AND re1.taux_emprise_pct <= :f_empmax)")
         params["f_empmax"] = emprise_max
     # ── M45-B (Lot 1) — tiroir ÉCONOMIE (câblage sur données existantes ; étiquettes Sourcé/Estimé) ──
     if budget_max is not None:
@@ -2088,8 +2101,9 @@ def _communes_data(db: Session, source: str) -> list[dict]:
     M35 Lot D : « chaudes » = brûlantes + chaudes du run servi (même convention que /stats) ;
     `evaluees` = parcelles présentes au run servi."""
     def _compute() -> list[dict]:
+        _vivant = _cadastre_disparue.filtre_vivant_sql(db, "p")  # FIX-1 Lot 2 : parc vivant (résilient test)
         rows = db.execute(text(
-            """
+            f"""
             SELECT p.commune,
                    substring(min(p.idu) from 1 for 5)                       AS insee,
                    count(*)                                                 AS parcelles,
@@ -2104,6 +2118,7 @@ def _communes_data(db: Session, source: str) -> list[dict]:
             FROM parcels p
             LEFT JOIN parcel_p_score_v2 s ON s.parcelle_id = p.idu AND s.run_id = :run
             LEFT JOIN parcelle_personne_morale pm ON pm.idu = p.idu
+            WHERE true{_vivant}   -- FIX-1 Lot 2 : sélecteur = parc vivant (comme la carte)
             GROUP BY p.commune ORDER BY 4 DESC, 3 DESC
             """), {"run": source}).mappings().all()
         # cas documenté (pré-vol île) : Saint-Philippe est au RNU — pas de PLU opposable,
@@ -2569,7 +2584,7 @@ def parcel_kmz(idu: str, db: Session = Depends(get_db)) -> Response:
     from xml.sax.saxutils import escape as _xesc
 
     row = db.execute(text(
-        """SELECT commune, surface_m2, contenance_m2, ST_AsKML(geom, 7) AS kml
+        """SELECT commune, surface_m2, contenance_m2, cadastre_disparue_le, ST_AsKML(geom, 7) AS kml
            FROM parcels WHERE idu = :idu LIMIT 1"""), {"idu": idu}).mappings().first()
     if not row or not row["kml"]:
         raise HTTPException(404, "parcelle introuvable")
@@ -2577,6 +2592,11 @@ def parcel_kmz(idu: str, db: Session = Depends(get_db)) -> Response:
     desc = row["commune"] or ""
     if surface:
         desc = f"{desc} — {surface:d} m²" if desc else f"{surface:d} m²"
+    # CHASSE-DONNEES-FIX-1 (Lot 2) — parcelle disparue du cadastre : le contour reste utile mais la
+    # description PORTE la disparition (comme la fiche), plus une surface servie sans mention (C-35).
+    _disp = _cadastre_disparue.info_disparue(db, idu)
+    if _disp:
+        desc = _cadastre_disparue.phrase_disparue(_disp)
     kml = (
         '<?xml version="1.0" encoding="UTF-8"?>\n'
         '<kml xmlns="http://www.opengis.net/kml/2.2"><Document>'
@@ -2873,17 +2893,37 @@ def filtre(c: FiltreCriteres = Depends(),
         # la jointure sur `c.source` brut (q_v16) ne matchait AUCUNE ligne → carte peinte à 0
         # pendant que le compteur (lui résolu) disait N. Régression née de la bascule q_v15→q_v16.
         run_idus = _cascade_run(db, c.source)
+        # CHASSE-DONNEES-FIX-1 (suite 2d, C-12 + C-29) — la liste d'IDU (ce que la CARTE peint) doit
+        # avoir EXACTEMENT le périmètre de la PAGE d'aperçu : (1) hors étage 0 par défaut (C-12 : sinon
+        # idus=205 contre page=[] sur une commune 100 % écartée → carte pleine / liste vide) ; (2) les
+        # filtres Analyse `bande`/`signal` appliqués ICI aussi (C-29 : sinon un appelant idus=1&bande=A
+        # peignait TOUTE la commune). Même gate et mêmes prédicats `sl` que _q_v2_list.
+        _idus_base = "" if ("f_tiers" in (extra_params or {}) or "s2.tier" in extra
+                            or _ETAGE0_SQL in extra) else f"AND NOT {_ETAGE0_SQL}"
+        _sl_rdy = _score_labuse_ready(db)
+        _idus_sl_join = ("LEFT JOIN score_labuse sl ON sl.parcel_id = p.id AND sl.run_label = :sl_run"
+                         if _sl_rdy else "")
+        _idus_sl = []
+        _idus_params = {"c": c.commune, "run": run_idus, "v2run": _score_v2_run_id(db),
+                        "minsurf": MIN_DISPLAY_SURFACE_M2, **extra_params}
+        if _sl_rdy and signal in ("fort", "moyen", "faible"):
+            _idus_sl.append("sl.signal_niveau = :sig"); _idus_params["sig"] = signal
+        if _sl_rdy and bande in _BANDE_GROUPES_SQL:
+            _idus_sl.append(_BANDE_GROUPES_SQL[bande]); _idus_base = ""   # la bande pilote seule (lève étage 0)
+        if _sl_rdy:
+            _idus_params["sl_run"] = _score_labuse_run()
+        _idus_sl_where = ("AND " + " AND ".join(_idus_sl)) if _idus_sl else ""
         rows = db.execute(text(
             f"""
             SELECT p.idu
             FROM dryrun_parcel_evaluations d JOIN parcels p ON p.id = d.parcel_id
             LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
+            {_idus_sl_join}
             WHERE d.run_label = :run AND (CAST(:c AS text) IS NULL OR p.commune = :c)
               AND (p.surface_m2 IS NULL OR p.surface_m2 >= :minsurf)
-              {extra}
+              {extra} {_idus_base} {_idus_sl_where}
             LIMIT {_FILTRE_IDUS_CAP + 1}
-            """), {"c": c.commune, "run": run_idus, "v2run": _score_v2_run_id(db),
-                   "minsurf": MIN_DISPLAY_SURFACE_M2, **extra_params}).scalars().all()
+            """), _idus_params).scalars().all()
         tronque = len(rows) > _FILTRE_IDUS_CAP
         out["idus"] = None if tronque else list(rows)
         out["idus_tronque"] = tronque
@@ -3257,6 +3297,32 @@ def _data_sources_fiche(db: Session, parcel_id: int, run_label: str) -> list[dic
             "millesime": mill,
             "fiabilite": _FIAB.get(r["reliability_level"], r["reliability_level"]),
         })
+    # CHASSE-DONNEES-FIX-1 (suite 2d, D-58) — le SOCLE hors-cascade RÉELLEMENT servi sur CHAQUE fiche
+    # (Cadastre = contenance/géométrie, BAN = adresse, CatNat = arrêtés commune) : jamais dans la
+    # cascade donc jamais listé ici, son millésime jamais montré alors que le docstring promet « les
+    # sources RÉELLEMENT utilisées ». On l'ajoute (dédup par nom). SAVEPOINT : jamais bloquant.
+    try:
+        with db.begin_nested():
+            _vus = {o["nom"] for o in out}
+            _socle = db.execute(text(
+                "SELECT name, category, provider, source_millesime, source_horizon_at, "
+                "       reliability_level, last_sync_at FROM data_sources "
+                "WHERE lower(name) LIKE 'cadastre%' OR lower(name) LIKE '%adresse nationale%' "
+                "   OR lower(name) LIKE 'catnat%' OR lower(name) LIKE 'ban%' "
+                "ORDER BY category, name")).mappings().all()
+        for r in _socle:
+            if r["name"] in _vus:
+                continue
+            out.append({
+                "nom": r["name"], "categorie": r["category"],
+                "fournisseur": nettoyer_notes_internes(r["provider"]),
+                "millesime": _composer_mill(r["source_millesime"], source_horizon_at=r["source_horizon_at"],
+                                            dernier_vu=None, last_sync_at=r["last_sync_at"]),
+                "fiabilite": _FIAB.get(r["reliability_level"], r["reliability_level"]),
+                "socle": True,   # hors cascade : fondation de la fiche (contenance, adresse, aléas)
+            })
+    except Exception:  # noqa: BLE001 — ajout additif, jamais bloquant pour la fiche
+        pass
     return out
 
 
@@ -3395,7 +3461,8 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str |
               'completeness_score', b.completeness_score,
               'sdp_residuelle_m2', b.sdp_residuelle_m2, 'sous_densite', b.sous_densite,
               -- RECETTE-3 (T4) : état du bien + signal « pro a déposé un permis » (segmentation client)
-              'etat_bien', CASE WHEN COALESCE(b.taux_emprise_pct, 0) < 5 THEN 'nu'
+              'etat_bien', CASE WHEN b.taux_emprise_pct IS NULL THEN 'non_mesure'  -- FIX-1 Lot 4 (E-67)
+                                WHEN b.taux_emprise_pct < 5 THEN 'nu'
                                 WHEN COALESCE(b.sdp_residuelle_m2, 0) > 0 THEN 'bati_encore'
                                 ELSE 'bati_max' END,
               'permis_pro', b.permis_pro,
@@ -3528,7 +3595,12 @@ _TIER_GROUPE_PAGE_SQL = (
 # résiduelle (cause NULL) : « encore construire » (>0) / « construite au maximum » (=0).
 # Mesuré sur le vivier servi : nu 67 250 · encore 110 053 · maximum 108 478 = 285 781.
 _ETAT_BIEN_SQL = (
-    "CASE WHEN COALESCE(rb.taux_emprise_pct, 0) < 5 THEN 'nu' "
+    # CHASSE-DONNEES-FIX-1 (Lot 4, E-67) — l'ABSENCE de mesure (taux_emprise_pct NULL, jamais
+    # calculé quand une cause écarte la parcelle) n'est PLUS confondue avec un vrai 0 : 'non_mesure'
+    # au lieu de 'nu' (la fiche de la même parcelle dit « Parcelle déjà bâtie »). Seul un taux
+    # RÉELLEMENT mesuré < 5 % fait « nu ».
+    "CASE WHEN rb.taux_emprise_pct IS NULL THEN 'non_mesure' "
+    "WHEN rb.taux_emprise_pct < 5 THEN 'nu' "
     "WHEN COALESCE(rb.sdp_residuelle_m2, 0) > 0 THEN 'bati_encore' ELSE 'bati_max' END")
 
 
@@ -3563,7 +3635,12 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
     # colonnes/jointures CONDITIONNELLES : NULL typé si la table manque (base de test nue) → jamais une 500.
     _sl_cols = ("""sl.bande AS bande, sl.signal_niveau AS signal_niveau, sl.signal_p AS signal_p,
                    sl.contributions AS contributions, sl.cause AS cause,
-                   sl.non_calculable AS non_calculable, sl.sdp_residuelle_m2 AS sdp_residuelle_m2"""
+                   sl.non_calculable AS non_calculable,
+                   -- CHASSE-DONNEES-FIX-1 (Lot 4, C-13) — UNE convention partout : une parcelle
+                   -- écartée (cause présente) sert « — » (null) + la cause, comme la tuile/le geojson
+                   -- (règle M125). Le listing servait 0, la carte « — » : deux conventions. La cause
+                   -- (sl.cause) accompagne toujours la valeur.
+                   CASE WHEN sl.cause IS NULL THEN sl.sdp_residuelle_m2 END AS sdp_residuelle_m2"""
                 if _sl_ready else
                 """NULL::text AS bande, NULL::text AS signal_niveau, NULL::double precision AS signal_p,
                    NULL::jsonb AS contributions, NULL::text AS cause,
@@ -3610,7 +3687,7 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
         # pro_pc est MATÉRIALISÉ en tête du WITH (voir _pro_cte_prefix) → on le RÉUTILISE ici plutôt
         # qu'une sous-requête inline (qui, non matérialisée, faisait 4,5 s à froid sur l'île entière).
         _pro = "(prpc2.idu IS NOT NULL AND coalesce(vs.owner_type,'pp') = 'pp')" if _permits else "false"
-        _nu = "COALESCE(rp.taux_emprise_pct, 0) < 5"                  # etat = 'nu'
+        _nu = "(rp.taux_emprise_pct IS NOT NULL AND rp.taux_emprise_pct < 5)"  # etat='nu' RÉEL (FIX-1 Lot 4 E-68)
         _sdp = "COALESCE(rp.sdp_residuelle_m2, 0) > 0"               # etat = 'bati_encore'
         if segment == "permis_pro":
             # permis_pro est RARE (~518/430 000) : un ORDER BY rang qui scanne l'index profondément
@@ -3978,7 +4055,8 @@ def _q_v2_stats(db: Session, commune: str | None, run_label: str | None = None,
           count(*) FILTER (WHERE NOT permis_pro AND etat NOT IN ('nu', 'bati_encore')) AS s_reste
         FROM (
           SELECT {_seg_pro} AS permis_pro,
-                 CASE WHEN COALESCE(rb.taux_emprise_pct, 0) < 5 THEN 'nu'
+                 CASE WHEN rb.taux_emprise_pct IS NULL THEN 'non_mesure'  -- FIX-1 Lot 4 (E-67)
+                      WHEN rb.taux_emprise_pct < 5 THEN 'nu'
                       WHEN COALESCE(rb.sdp_residuelle_m2, 0) > 0 THEN 'bati_encore'
                       ELSE 'bati_max' END AS etat
           FROM dryrun_parcel_evaluations d JOIN parcels p ON p.id = d.parcel_id
@@ -4227,24 +4305,7 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
     flags = [l for l in lines
              if l["weight"] in (None, 0) and l["result"] in ("SOFT_FLAG", "HARD_EXCLUDE", "UNKNOWN")]
 
-    pm = db.execute(text(
-        "SELECT denomination, siren, groupe, groupe_label FROM parcelle_personne_morale WHERE idu = :idu"),
-        {"idu": idu}).mappings().first()
-    pm = dict(pm) if pm else None
-    if pm and pm.get("siren"):
-        pm["etat_societe"] = _pm_etat_societe(db, pm["siren"])   # M43 — fait public société (PM only)
-        pm["identite"] = _pm_identite(db, pm["siren"])           # RETOURS-11F3 F11 — activité/siège/date/état
-        pm["dirigeant"] = _pm_dirigeant(db, pm["siren"])         # dirigeant aîné RNE (nom + âge exact)
-    if pm:
-        # CHASSE-FIX-2 (C35) — propriétaire PUBLIC (badge fiche), MÊME règle DGFiP (groupes 1-4/9)
-        # que la liste et le filtre d'exclusion : un seul endroit décide « public ».
-        from ..proprietaire_type import PUBLIC_DGFIP_GROUPES
-        pm["proprietaire_public"] = pm.get("groupe") in PUBLIC_DGFIP_GROUPES
-        # RETOURS-11F3 F11 — « Personnes morales non remarquables » est le NOM du fichier DGFiP, pas une
-        # phrase client. On sert une étiquette humaine ; le nom de fichier ne s'affiche jamais.
-        gl = (pm.get("groupe_label") or "")
-        if "non remarquable" in gl.lower():
-            pm["groupe_label"] = "Personne morale — fichier DGFiP"
+    pm = _pm_block(db, idu)   # CHASSE-DONNEES-FIX-1 (C-19) — point UNIQUE PM (fiche premium + export legacy)
     # L1 (KF-2) — historique propriétaire PM par millésime + diff annuel CONSTATÉ (hors scoring,
     # PM uniquement). None si la parcelle n'a jamais eu de propriétaire moral connu.
     from ..proprietaire_historique import historique as _pm_historique
@@ -4359,7 +4420,7 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
            WHERE ST_Contains(f.geom, ST_Transform(p2.centroid, 2975)) LIMIT 1"""),
         {"idu": idu}).mappings().first()
     rpls = db.execute(text(
-        "SELECT nb_logements, construct_median, pct_qpv FROM rpls_commune "
+        "SELECT nb_logements, construct_median, pct_qpv, millesime FROM rpls_commune "
         "WHERE insee = substring(:idu FROM 1 FOR 5)"), {"idu": idu}).mappings().first()
     marche_secteur = None
     if carreau or rpls:
@@ -4369,8 +4430,10 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str | None = None) -> dict:
         # vrai % QPV du parc social exige un croisement RPLS↔polygones QPV non disponible ici (noté).
         rpls_dict = None
         if rpls:
-            rpls_dict = {k: v for k, v in dict(rpls).items() if k != "pct_qpv"}
-            rpls_dict["millesime"] = "RPLS 01/01/2025"
+            rpls_dict = {k: v for k, v in dict(rpls).items() if k not in ("pct_qpv", "millesime")}
+            # CHASSE-DONNEES-FIX-1 (Lot 5, D-54) — millésime DÉRIVÉ de rpls_commune.millesime.
+            _rmill = (rpls["millesime"] or "")[:4]
+            rpls_dict["millesime"] = f"RPLS 01/01/{_rmill}" if _rmill else "RPLS"
         marche_secteur = {
             "filosofi_200m": ({**dict(carreau),
                                "taux_pauvrete_pct": round(100 * carreau["men_pauv"] / carreau["men"])
@@ -5639,6 +5702,13 @@ def _plu_fraicheur(idu: str) -> dict | None:
     statut = c.get("statut")
     horizon = c.get("date_mairie")
     note = c.get("note")
+    # CHASSE-DONNEES-FIX-1 (suite 2d, D-59) — si la commune est DÉPUBLIÉE du GPU (plu_depublies.yaml,
+    # acté CHASSE-FIX-1 C27), la note M40 « PLU présent au GPU (vérifié) » est PÉRIMÉE et contredit
+    # reglement_plu.depublie_note servi sur la MÊME fiche. On la neutralise : une seule vérité
+    # (« retiré du GPU, LABUSE sert le dernier état connu »), plus deux notes opposées côte à côte.
+    if _plu_depublie(c.get("commune")):
+        note = ("PLU retiré du Géoportail de l'urbanisme : LABUSE sert les règles du dernier état "
+                "connu (voir §Urbanisme). La mention « présent au GPU » n'est plus d'actualité.")
     # M40 — les TROIS choses distinctes, jamais mélangées : (1) quel document LABUSE SERT,
     # (2) qu'il est bien celui qui FAIT FOI à ce jour, (3) ce qui est EN COURS et non servi.
     # `en_cours` dit UNIQUEMENT ce qui est pendant/non servi (jamais ne répète le document servi) ;
@@ -5740,20 +5810,31 @@ def _pm_etat_societe(db: Session, siren: str | None) -> dict | None:
     try:
         with db.begin_nested():
             etats = []
-            # SOURCES-3 lot 0.1 — l'état « cessée » venait du cache DINUM (owner_enrichment), désormais
-            # réservé au Score V. SIRENE (sirene_etablissements) n'ingère que les établissements ACTIFS :
-            # l'état administratif « C » d'une unité légale n'y est pas lisible. On ne DÉDUIT pas une
-            # cessation d'une absence. Les états publics DATÉS restent servis par le BODACC ci-dessous.
-            for b in db.execute(text(
-                "SELECT famille, max(date_annonce)::text AS d FROM bodacc_annonces_owner "
-                "WHERE siren = :s AND famille IN ('radiation','pcl') GROUP BY famille"),
-                    {"s": siren}).mappings().all():
-                if b["famille"] == "radiation":
-                    etats.append({"type": "radiée", "date": b["d"],
-                                  "libelle": f"radiée le {b['d']}", "source": "BODACC", "etiquette": "Sourcé"})
+            # CHASSE-DONNEES-FIX-1 (Lot 5, D-46) — l'état « cessée » de l'UNITÉ LÉGALE (état
+            # administratif C, recherche-entreprises) est désormais servi : SIRENE n'ingère que les
+            # établissements actifs, on ne pouvait pas le lire là. Fait public, daté de la dernière
+            # mise à jour INSEE.
+            _etat_ul, _etat_maj = _etat_unite_legale(db, siren)
+            if _etat_ul == "C":
+                etats.append({"type": "cessée", "date": (_etat_maj or "")[:10] or None,
+                              "libelle": ("société cessée"
+                                          + (f" (état administratif C, mise à jour INSEE {_etat_maj[:10]})"
+                                             if _etat_maj else " (état administratif C)")),
+                              "source": "recherche-entreprises (INSEE)", "etiquette": "Sourcé"})
+            # CHASSE-DONNEES-FIX-1 (Lot 5, D-47/D-51) — radiation / procédure collective lues de la
+            # table BODACC VIVANTE (`bodacc_procedures`, resynchronisée) et PLUS de `bodacc_annonces_owner`
+            # (gelée au 2026-07-09) : l'état société retardait de 22 mois (SCI FREYNEAU 820034122).
+            _bp = db.execute(text(
+                "SELECT lower(string_agg(DISTINCT coalesce(famille_jugement,''), ' ')) AS familles, "
+                "       max(date_annonce)::text AS d FROM bodacc_procedures WHERE siren = :s"),
+                {"s": siren}).mappings().first()
+            if _bp and _bp["d"]:
+                if "radiation" in (_bp["familles"] or ""):
+                    etats.append({"type": "radiée", "date": _bp["d"],
+                                  "libelle": f"radiée le {_bp['d']}", "source": "BODACC", "etiquette": "Sourcé"})
                 else:
-                    etats.append({"type": "procédure collective", "date": b["d"],
-                                  "libelle": f"procédure collective (dernière annonce {b['d']})",
+                    etats.append({"type": "procédure collective", "date": _bp["d"],
+                                  "libelle": f"procédure collective (dernière annonce {_bp['d']})",
                                   "source": "BODACC", "etiquette": "Sourcé"})
     except Exception:  # noqa: BLE001 — jamais bloquant pour la fiche
         return None
@@ -5762,6 +5843,50 @@ def _pm_etat_societe(db: Session, siren: str | None) -> dict | None:
     return {"etats": etats,
             "libelle": "Société propriétaire : " + " ; ".join(e["libelle"] for e in etats) + ".",
             "note": "Fait public d'entreprise (état de la société) — information de contexte, aucune déduction."}
+
+
+def _etat_unite_legale(db: Session, siren: str | None) -> tuple[str | None, str | None]:
+    """CHASSE-DONNEES-FIX-1 (Lot 5, D-46) — l'état administratif de l'UNITÉ LÉGALE (A actif / C cessé)
+    lu du cache recherche-entreprises (`owner_enrichment.payload.etat_administratif`), seul endroit
+    qui porte le « C ». SIRENE (sirene_etablissements) n'ingère que les établissements ACTIFS → son
+    `actif=t` n'est PAS la preuve que la société vit. Rend (etat, date_maj) ou (None, None)."""
+    if not siren:
+        return None, None
+    try:
+        with db.begin_nested():
+            row = db.execute(text(
+                "SELECT payload->>'etat_administratif' AS etat, payload->>'date_mise_a_jour' AS maj "
+                "FROM owner_enrichment WHERE siren = :s ORDER BY fetched_at DESC LIMIT 1"),
+                {"s": siren}).mappings().first()
+    except Exception:  # noqa: BLE001 — cache optionnel, jamais bloquant
+        return None, None
+    return (row["etat"], row["maj"]) if row else (None, None)
+
+
+def _pm_block(db: Session, idu: str) -> dict | None:
+    """CHASSE-DONNEES-FIX-1 (C-19) — LE bloc propriétaire PERSONNE MORALE (DGFiP + SIRENE/BODACC),
+    point unique partagé par la fiche premium (_q_v2_fiche) ET le payload legacy (_build_fiche →
+    export md/html, Copilote). L'export affichait « Propriétaire inconnu » (prospection CRM) alors
+    que la PM était connue — désormais il lit CE bloc. None si aucune PM. RGPD : PM uniquement."""
+    pm = db.execute(text(
+        "SELECT denomination, siren, groupe, groupe_label FROM parcelle_personne_morale WHERE idu = :idu"),
+        {"idu": idu}).mappings().first()
+    pm = dict(pm) if pm else None
+    if pm and pm.get("siren"):
+        pm["etat_societe"] = _pm_etat_societe(db, pm["siren"])   # M43 — fait public société (PM only)
+        pm["identite"] = _pm_identite(db, pm["siren"])           # RETOURS-11F3 F11 — activité/siège/date/état
+        pm["dirigeant"] = _pm_dirigeant(db, pm["siren"])         # dirigeant aîné RNE (nom + âge exact)
+    if pm:
+        # CHASSE-FIX-2 (C35) — propriétaire PUBLIC (badge fiche), MÊME règle DGFiP (groupes 1-4/9)
+        # que la liste et le filtre d'exclusion : un seul endroit décide « public ».
+        from ..proprietaire_type import PUBLIC_DGFIP_GROUPES
+        pm["proprietaire_public"] = pm.get("groupe") in PUBLIC_DGFIP_GROUPES
+        # RETOURS-11F3 F11 — « Personnes morales non remarquables » est le NOM du fichier DGFiP, pas une
+        # phrase client. On sert une étiquette humaine ; le nom de fichier ne s'affiche jamais.
+        gl = (pm.get("groupe_label") or "")
+        if "non remarquable" in gl.lower():
+            pm["groupe_label"] = "Personne morale — fichier DGFiP"
+    return pm
 
 
 def _pm_identite(db: Session, siren: str | None) -> dict | None:
@@ -5790,14 +5915,26 @@ def _pm_identite(db: Session, siren: str | None) -> dict | None:
     if not row:
         return None
     from ..naf_labels import label as _naf_label
+    # CHASSE-DONNEES-FIX-1 (Lot 5, D-46) — « actif » = état de l'UNITÉ LÉGALE (owner_enrichment),
+    # pas la présence d'un établissement SIRENE (qui n'ingère que les actifs → ne peut jamais dire
+    # « cessée »). État C connu → actif=False. État inconnu → on retombe sur sirene_etablissements.
+    _etat_ul, _etat_maj = _etat_unite_legale(db, siren)
+    if _etat_ul == "C":
+        actif = False
+    elif _etat_ul == "A":
+        actif = True
+    else:
+        actif = bool(row["actif"]) if row["actif"] is not None else None
     return {
         "ape": row["naf"],
         "activite": _naf_label(row["naf"]) if row["naf"] else None,
         "siege": row["adresse"], "siege_commune": row["commune"],
         "date_creation": row["date_creation"].isoformat() if row["date_creation"] else None,
-        "actif": bool(row["actif"]) if row["actif"] is not None else None,
+        "actif": actif,
+        "etat_administratif": _etat_ul,   # 'A' | 'C' | None (unité légale, recherche-entreprises)
+        "etat_maj": _etat_maj,
         "annuaire_url": f"https://annuaire-entreprises.data.gouv.fr/entreprise/{siren}",
-        "source": "SIRENE (INSEE, open data)",
+        "source": "SIRENE (INSEE, open data) · état société : recherche-entreprises",
     }
 
 
@@ -6297,21 +6434,19 @@ def _fiche_cadastre_disparue(db: Session, idu: str, row) -> dict:
     à un millésime récent) n'est plus servie (carte/recherche/filtres/listes), mais un client peut
     encore l'ouvrir depuis un projet / le CRM / un suivi. On rend alors une fiche de COURTOISIE
     (HTTP 200) qui dit « Parcelle disparue du cadastre (version du …) — remplacée par […] » au lieu
-    d'une 404. Les remplaçantes = recouvrement ≥ 50 % (table `parcel_cadastre_remplacement`)."""
-    dt = row.get("cadastre_disparue_le")
-    remp = db.execute(text(
-        "SELECT r.nouvelle_idu AS idu, p.commune, r.taux_couv_ancienne AS recouvrement "
-        "FROM parcel_cadastre_remplacement r JOIN parcels p ON p.idu = r.nouvelle_idu "
-        "WHERE r.ancienne_idu = :idu AND p.cadastre_disparue_le IS NULL "
-        "ORDER BY r.taux_couv_ancienne DESC NULLS LAST"), {"idu": idu}).mappings().all()
-    ds = dt.isoformat() if dt else None
+    d'une 404. Les remplaçantes = recouvrement ≥ 50 % (table `parcel_cadastre_remplacement`).
+
+    CHASSE-DONNEES-FIX-1 (Lot 2) — SQL déplacé dans `cadastre_disparue.info_disparue` (point unique
+    partagé par tous les documents). Ce helper n'est plus qu'une mise en forme du payload fiche."""
+    info = _cadastre_disparue.info_disparue(db, idu) or {
+        "commune": row.get("commune"), "disparue_le": None,
+        "message": "Parcelle disparue du cadastre.", "remplacee_par": []}
     return {
-        "idu": idu, "commune": row.get("commune"),
+        "idu": idu, "commune": info.get("commune"),
         "cadastre_disparue": {
-            "disparue_le": ds,
-            "message": (f"Parcelle disparue du cadastre (version du {ds})."
-                        if ds else "Parcelle disparue du cadastre."),
-            "remplacee_par": [dict(x) for x in remp],
+            "disparue_le": info.get("disparue_le"),
+            "message": info.get("message"),
+            "remplacee_par": info.get("remplacee_par") or [],
         },
     }
 
@@ -6368,7 +6503,31 @@ def parcel_fiche(idu: str, source: str | None = None, db: Session = Depends(get_
         """SELECT bande, signal_niveau, contributions, cause, non_calculable, sdp_residuelle_m2
            FROM score_labuse WHERE run_label = :r AND idu = :idu"""),
         {"r": _score_labuse_run(), "idu": idu}).mappings().first() if (db is not None and _score_labuse_ready(db)) else None
-    payload["analyse_labuse"] = dict(sl) if sl else None
+    # CHASSE-DONNEES-FIX-1 (Lot 4, C-13 + arbitrage Vic AC0157) — MÊME convention que le listing/la
+    # tuile : SDP « — » (None) + la cause dès qu'une cause écarte la parcelle (plus un 0 à côté du
+    # « — » de la carte). Si score_labuse n'a PAS de cause (0 muet) mais que parcel_residuel en porte
+    # une (terrain_exigu/portion_reduite…), on la REMONTE + son libellé → jamais un 0 sans pourquoi.
+    if sl:
+        _sl = dict(sl)
+        if _sl.get("cause") is None and db is not None:
+            try:
+                _rc = db.execute(text(
+                    "SELECT r.cause FROM parcel_residuel r JOIN parcels p ON p.id = r.parcel_id "
+                    "WHERE p.idu = :i AND r.cause IS NOT NULL"), {"i": idu}).scalar()
+                if _rc:
+                    _sl["cause"] = _rc
+            except Exception:  # noqa: BLE001 — enrichissement additif, jamais bloquant
+                pass
+        if _sl.get("cause") is not None:
+            _sl["sdp_residuelle_m2"] = None
+            try:
+                from ..faisabilite.engine import cause_libelle as _cl
+                _sl["cause_libelle"] = _cl(_sl["cause"])
+            except Exception:  # noqa: BLE001
+                _sl["cause_libelle"] = None
+        payload["analyse_labuse"] = _sl
+    else:
+        payload["analyse_labuse"] = None
     if version:
         with _FICHE_LOCK:
             _FICHE_CACHE[cle] = payload
@@ -6603,7 +6762,8 @@ def etude_zone(inp: EtudeZoneIn, db: Session = Depends(get_db)) -> dict:
     # RETOURS-15 B9 — AMPLEUR PAR RAYON (défaut de l'outil) : on fabrique un cercle exact (buffer en
     # mètres via geography) autour du point et on le passe comme zone (court-circuite l'isochrone, comme
     # un polygone dessiné) → même moteur, aucun cercle « approximatif » masqué. Sans rayon → isochrone.
-    rayon_km = inp.rayon_km if inp.rayon_km in (0.5, 1, 2, 5) else None
+    from .moteurs import rayons_etude_zone as _rayons_ez  # FIX-1 E-77 : source unique config
+    rayon_km = inp.rayon_km if inp.rayon_km in set(_rayons_ez()) else None
     is_rayon = rayon_km is not None and geom is None
     if is_rayon:
         gj = db.execute(text(
@@ -6617,6 +6777,15 @@ def etude_zone(inp: EtudeZoneIn, db: Session = Depends(get_db)) -> dict:
     out["adresse"] = adresse            # LOT D — periment réellement mesuré (point) : « depuis {adresse} »
     out["entree"] = "rayon" if is_rayon else ("polygone" if geom is not None else "point")
     out["rayon_km"] = rayon_km if is_rayon else None
+    # CHASSE-DONNEES-FIX-1 (Lot 7, E-69) — le PÉRIMÈTRE RÉELLEMENT calculé est exposé, pour que le
+    # document imprime ce qui a été mesuré (isochrone) et non le rayon DEMANDÉ : un rayon hors
+    # {0,5 ; 1 ; 2 ; 5} km retombe silencieusement sur l'isochrone 10 min voiture.
+    if not is_rayon and geom is None:
+        out["isochrone_minutes"] = minutes
+        out["isochrone_mode"] = mode
+    # rayon demandé mais NON retenu (hors whitelist) : on le dit, pour que rien n'affirme « Rayon 10 km ».
+    if inp.rayon_km is not None and not is_rayon:
+        out["rayon_demande_non_retenu_km"] = inp.rayon_km
     out["naf_label"] = naf_label(naf) if naf else None
     if out.get("zone_disponible"):
         out["marche"] = out.get("marche")   # déjà posé par etude_de_zone
@@ -6670,7 +6839,8 @@ def etude_zone_entreprises(inp: EtudeZoneIn, db: Session = Depends(get_db)) -> d
             raise HTTPException(404, "parcelle introuvable ou sans géométrie")
         lon, lat = float(pt["lon"]), float(pt["lat"])
     # RETOURS-15 B9 — même emprise que l'étude : rayon (cercle) prioritaire, sinon polygone, sinon isochrone.
-    rayon_km = inp.rayon_km if inp.rayon_km in (0.5, 1, 2, 5) else None
+    from .moteurs import rayons_etude_zone as _rayons_ez  # FIX-1 E-77 : source unique config
+    rayon_km = inp.rayon_km if inp.rayon_km in set(_rayons_ez()) else None
     if geom is None and rayon_km is not None and lon is not None and lat is not None:
         gj = db.execute(text(
             "SELECT ST_AsGeoJSON(ST_Buffer(ST_SetSRID(ST_MakePoint(:lon, :lat), 4326)::geography, :r)::geometry) AS g"),
@@ -7346,7 +7516,10 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
                FROM dryrun_cascade_results cr LEFT JOIN data_sources ds ON ds.id = cr.data_source_id
                WHERE cr.run_label = :run AND cr.parcel_id = :pid
                ORDER BY abs(COALESCE(cr.weight_applied, 0)) DESC, cr.layer_name, cr.id"""  # cr.id : tiebreaker déterministe (cf. _q_v2_fiche)
-        ), {"pid": p.id, "run": runs.current()}
+        # CHASSE-DONNEES-FIX-1 (Lot 3) — la MÊME cascade servie que _q_v2_fiche : le run CASCADE
+        # résolu (q_v18_sources), pas runs.current()=q_v18 scoring (0 ligne) → l'export md/html
+        # servait « Cascade vide / Ont répondu : — » sur une fiche à cascade peuplée (C-03).
+        ), {"pid": p.id, "run": _cascade_run(db, runs.current())}
     ).mappings().all()
     from .risques_arbitrage import arbitrer_risques
     _seen: set = set()
@@ -7458,7 +7631,9 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
 
     # Assemblage foncier (Phase 5) — voisines adjacentes + drapeau prudent (requête indexée).
     from .voisinage import compute_voisinage
-    voisinage = compute_voisinage(db, p.id, p.surface_m2, verdict_block["status"])
+    voisinage = compute_voisinage(
+        db, p.id, _surface.surface_terrain(p.surface_m2, p.contenance_m2).valeur,
+        verdict_block["status"])
 
     # Autorisations d'urbanisme à proximité (Lot C4) — historique SITADEL < 300 m.
     try:
@@ -7599,6 +7774,11 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
         "parcel": {
             "idu": p.idu, "commune": p.commune, "section": p.section, "numero": p.numero,
             "surface_m2": p.surface_m2, "centroid": {"lon": lon, "lat": lat},
+            # CHASSE-DONNEES-FIX-1 (Lot 1) — la surface de terrain servie (contenance|dessin) + son
+            # drapeau d'incertitude portés sur le payload legacy : export md/html, Copilote (fiche_ask)
+            # et page de partage lisent désormais surface_terrain_m2, plus jamais p.surface_m2 (dessin).
+            **_surface.champs_terrain(p.surface_m2, p.contenance_m2),
+            "surface_incertaine": _surface.surface_incertaine(p.surface_m2, p.contenance_m2),
             "adresse": _ban_adresse(db, p.idu),   # M6 2a (§1.8) — meilleure adresse BAN
             "origine": p.origine,  # 'audit' → bandeau « audit à la demande » sur la fiche
         },
@@ -7623,6 +7803,10 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
         "permits": permits,
         "depots": depots,   # M38 — activité de dépôt (permis aboutis, datés au dépôt) ; informatif
         "prospection": prosp_block,
+        # CHASSE-DONNEES-FIX-1 (C-19) — propriétaire PERSONNE MORALE (DGFiP/SIRENE) sur le payload
+        # legacy aussi : l'export md/html disait « Propriétaire inconnu » (CRM) alors que la PM est
+        # connue (SCI ALOE…). Point unique _pm_block, comme la fiche premium.
+        "proprietaire_moral": _pm_block(db, idu),
         # Le bloc « promoteur » (altimétrie/façade/PLU détaillé/réseaux) est servi À PART, en
         # LAZY-LOAD, par GET /parcels/{idu}/enrichment : il fait des appels externes lents
         # (RGE ALTI, prescriptions GPU) qui ne doivent jamais bloquer l'ouverture de la fiche.
@@ -7719,9 +7903,23 @@ def export_fiche(idu: str, format: str = Query("md", pattern="^(md|html)$"),
     compte via `_build_fiche`) — distincte des documents PDF (builder exports). EXPORTS-2 lot 8
     ne touche PAS cet export : seul l'export PDF (`/export.pdf`) est redirigé (RECETTE-3 T2 : vers
     le Dossier depuis la suppression du Résumé)."""
+    import html as html_mod
+
     from fastapi.responses import HTMLResponse, PlainTextResponse
 
     from .export import fiche_html, fiche_markdown
+
+    _check_idu(idu)
+    # CHASSE-DONNEES-FIX-1 (Lot 2) — une parcelle disparue du cadastre : l'export REFUSE de composer
+    # une fiche vivante (l'écran route déjà vers le stub, pas _build_fiche) et sert le message.
+    _disp = _cadastre_disparue.info_disparue(db, idu)
+    if _disp:
+        _ph = _cadastre_disparue.phrase_disparue(_disp)
+        if format == "html":
+            return HTMLResponse(f"<!doctype html><html lang=fr><meta charset=utf-8>"
+                                f"<title>{html_mod.escape(idu)}</title><body>"
+                                f"<h1>{html_mod.escape(idu)}</h1><p>{html_mod.escape(_ph)}</p></body></html>")
+        return PlainTextResponse(f"# {idu}\n\n{_ph}\n", media_type="text/markdown")
 
     fiche = _build_fiche(db, idu)
     if format == "html":
@@ -7795,7 +7993,11 @@ def _compare_row(qv2: dict, faisab: dict | None) -> dict:
     prix_bati = max(bati_rows, key=lambda s: s.get("n_ventes") or 0)["mediane_prix_m2"] if bati_rows else None
     return {
         "idu": qv2["idu"], "commune": qv2.get("commune"),
-        "surface_m2": qv2.get("surface_m2"),
+        # CHASSE-DONNEES-FIX-1 (Lot 1) — le Comparatif sert la surface de TERRAIN (contenance|dessin)
+        # + le drapeau d'incertitude, comme la fiche/le Dossier (était le dessin brut : +5,9 % CW0658).
+        "surface_m2": qv2.get("surface_terrain_m2") if qv2.get("surface_terrain_m2") is not None
+        else qv2.get("surface_m2"),
+        "surface_incertaine": bool(qv2.get("surface_incertaine")),
         # verdict SERVI (M135/M137) : la puce d'action dérive de tier_v2 + étage 0 (verdictMeta) ;
         # rang + fraction (« 1/5 sous 1 an ») + raison dominante, comme partout ailleurs.
         "tier_v2": s2.get("tier"), "rang_v2": s2.get("rang"), "etage0": bool(qv2.get("etage0")),
@@ -8160,14 +8362,19 @@ def compare(idus: str = Query(..., description="2 à 3 IDU séparés par des vir
             row = _compare_row(_q_v2_fiche(db, idu), fiche_payload(db, pid))
         except HTTPException:
             continue
-        # DOCS-FIX-1 (P5, arbitrage Vic) — la « Zone PLU » du Comparatif = celle de la fiche (zone
-        # dominante par surface, zone_servie.zone_dominante). fiche_payload.zone est None pour une
-        # parcelle EXCLUE (forêt domaniale…) alors que l'écran/Dossier dérivent bien « N » → on
-        # retombe sur zone_dominante, jamais un « — » trompeur. (Une parcelle hors run servi est déjà
-        # écartée au-dessus par _q_v2_fiche → HTTPException ; ici la parcelle EST servie.)
-        if not row.get("zone"):
-            from ..faisabilite.zone_servie import zone_dominante
-            row["zone"] = zone_dominante(db, pid).zone
+        # DOCS-FIX-1 (P5) + CHASSE-DONNEES-FIX-1 (Lot 3, C-06) — la « Zone PLU » du Comparatif =
+        # TOUJOURS celle de la fiche (zone DOMINANTE par surface + parts sur bizone), JAMAIS la
+        # sous-zone de CALCUL de la faisabilité (fiche_payload.zone). Sur BZ0005 (bizone A 70 % /
+        # N 28 %), fa.zone bascule sur le liseré « Usdu » (2,4 %) → le PDF affichait « Zone Usdu,
+        # constructible : oui » À CÔTÉ de la contrainte « Zone A inconstructible ». On sert la
+        # dominante et on en dérive la constructibilité, comme l'écran.
+        from ..faisabilite.zone_servie import zone_dominante as _zone_dom
+        _zs = _zone_dom(db, pid)
+        if _zs.zone:
+            row["zone"] = _zs.zone
+            row["zone_constructible"] = (None if _zs.zone_fam is None else _zs.zone_fam not in ("A", "N"))
+            # parts sur une bizone (« A 70 % · N 28 % »), comme la fiche ; None hors bizone.
+            row["zone_parts"] = (_zs.parts if _zs.a_cheval and _zs.parts else None)
         # M82 — prix terrain nu PAR ZONE (point de calcul M79 unique, comme la fiche et l'outil Marché).
         commune, zone = row.get("commune"), (row.get("zone") or "")
         fam = "AU" if zone.upper().startswith("AU") else (zone[:1].upper() if zone else "")

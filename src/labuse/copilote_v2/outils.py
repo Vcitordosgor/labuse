@@ -618,14 +618,21 @@ def destination_zone(db: Session, *, idu: str | None = None, commune: str | None
         return ToolResult("destination_zone", ok=False,
                           refus=f"activité « {activite} » non rattachable à une sous-destination "
                                 "R151-28 — préciser (ex. restaurant, hôtel, commerce, bureau)")
+    # CHASSE-DONNEES-FIX-1 (Lot 3, C-25) — la zone = celle de la FICHE : dominante + parts sur une
+    # bizone (zone_servie.zone_dominante), plus un SELECT direct de parcel_zone_plu. Sur BZ0007
+    # (Usdu 73 % / N 27 %) le verdict d'implantation ignorait la part N ; on la surface désormais.
+    _parts = None
     if idu and not (commune and zone):
-        row = db.execute(text(
-            "SELECT p.commune, zp.zone_lib FROM parcels p "
-            "LEFT JOIN parcel_zone_plu zp ON zp.idu = p.idu WHERE p.idu = :idu"),
-            {"idu": idu.strip().upper()}).mappings().first()
-        if not row:
+        pid = db.execute(text("SELECT id, commune FROM parcels WHERE idu = :idu"),
+                         {"idu": idu.strip().upper()}).mappings().first()
+        if not pid:
             return ToolResult("destination_zone", ok=False, refus="parcelle introuvable")
-        commune, zone = commune or row["commune"], zone or row["zone_lib"]
+        from ..faisabilite.zone_servie import zone_dominante
+        zs = zone_dominante(db, pid["id"])
+        commune = commune or pid["commune"]
+        zone = zone or zs.zone
+        if zs.a_cheval and zs.parts:
+            _parts = zs.parts
     if commune and not zone:
         return ToolResult("destination_zone", ok=False,
                           refus="zone PLU inconnue pour cette parcelle — verdict impossible sans zone")
@@ -633,8 +640,15 @@ def destination_zone(db: Session, *, idu: str | None = None, commune: str | None
         return ToolResult("destination_zone", ok=False,
                           refus="préciser une parcelle (IDU) ou une commune + zone")
     v = verdict(commune, zone, sd)
+    _phrase = v.get("phrase")
+    if _parts:
+        _autres = ", ".join(f"{p['zone']} {round(p['pct'])} %" for p in _parts
+                            if p.get("zone") and p.get("zone") != zone)
+        if _autres:
+            _phrase = (f"{_phrase} Parcelle à cheval sur plusieurs zones ({_autres}) : "
+                       "le verdict porte sur la zone dominante, vérifier la partie restante.")
     return ToolResult("destination_zone", valeur=v.get("statut_effectif"),
-                      data={"phrase": v.get("phrase"), "verdict": v,
+                      data={"phrase": _phrase, "verdict": v, "zone_parts": _parts,
                             "prefill": {"idu": idu, "commune": commune, "zone": zone,
                                         "sous_destination": sd}},
                       source=("calibration destinations du règlement PLU — "

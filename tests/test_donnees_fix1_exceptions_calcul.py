@@ -24,15 +24,19 @@ def _calib():
 
 def test_calibrage_couvre_les_81_exceptions():
     entries = _calib()
-    assert len(entries) == 81, f"{len(entries)} entrées, attendu 81 (A_CALIBRER.csv)"
+    # CHASSE-DONNEES-FIX-1 (suite 1) : 81 (A_CALIBRER.csv) + 5 ajoutées au moteur —
+    # 4 majorations ≥2 500 m² Sainte-Rose Ua/1AUa (D-49, applique) + 1 gradation U2 Saint-Joseph
+    # (D-48, non_modelisee).
+    assert len(entries) == 86, f"{len(entries)} entrées, attendu 86 (81 A_CALIBRER + 5 CHASSE-FIX)"
     from collections import Counter
     dec = Counter(e["decision"] for e in entries.values())
     assert set(dec) <= {"applique", "deja_couvert", "hors_sdp", "non_modelisee"}
-    # répartition figée (revue manuelle DONNEES-FIX-1 point 4)
-    assert dec["applique"] == 4
+    # répartition figée (revue manuelle DONNEES-FIX-1 point 4 ; CHASSE-DONNEES-FIX-1 : +4 applique
+    # D-49 Sainte-Rose ≥2 500 m², +1 non_modelisee D-48 gradation U2 Saint-Joseph).
+    assert dec["applique"] == 8
     assert dec["hors_sdp"] == 9
     assert dec["deja_couvert"] == 21
-    assert dec["non_modelisee"] == 47
+    assert dec["non_modelisee"] == 48
     # toute décision `applique` porte un effet exploitable ; toute non_modelisee porte article/page
     for e in entries.values():
         if e["decision"] == "applique":

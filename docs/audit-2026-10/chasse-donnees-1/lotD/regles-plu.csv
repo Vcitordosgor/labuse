@@ -1,0 +1,51 @@
+zone;commune;regle;valeur_servie;valeur_reglement;source;verdict
+UA;Sainte-Marie;hauteur_max;18 m au faîtage · 15 m à l'égout;U8.2 p.22 : zone UA 15 m égout / 18 m faîtage (16 m acrotère toiture-terrasse);97418_reglement_20251126.pdf (GPU) p.22, témoin 97418000AV1095;ok
+UA;Sainte-Marie;emprise_max;non réglementé;U7.2 p.21 : « Sans objet en zone UA » (silence prouvé);97418_reglement_20251126.pdf p.21;ok
+UA;Sainte-Marie;recul_voie;3 m;U4.2 p.19 : alignement OU recul min 3,00 m (zones UA et UB);97418_reglement_20251126.pdf p.19;ok
+UA;Sainte-Marie;recul_limites;3 m;U5.2 p.20 : H/2 sans pouvoir être inférieure à 3 m;97418_reglement_20251126.pdf p.20;ok_mineur (plancher 3 m affiché, formule H/2 non montrée à l'écran)
+UA;Sainte-Marie;pleine_terre;20 %;U12 p.25 : « en zone UA : 20% de la surface » perméable;97418_reglement_20251126.pdf p.25;ok
+UA;Sainte-Marie;stationnement;1,5 places / logement;U13.2 p.26 : barème (1 pl. <100 m² SDP ; 1,5 ≥100 m² multi-logts ; 2 individuel ≥100 m² ; 0,5-1 près TC);97418_reglement_20251126.pdf p.26;ok_simplifie (cas multi-logts ≥100 m² servi, barème plus fin au PDF)
+U2;Saint-Joseph;hauteur_max;13 m au faîtage · 11 m à l'égout;U2 10.2 p.35 : GRADUÉE par profondeur depuis l'alignement — ≤6 m : 8/10 ; 6-12 m : 10/12 ; >12 m : 11/13 (CINOR/pers. âgées : 13/15);97412_Reglement_20251210.pdf p.35, témoin 97412000BW2262;ecart_mineur (palier max servi comme plafond unique — dans la bande 0-6 m le vrai plafond est 8/10 m)
+U2;Saint-Joseph;emprise_max;80 %;U2 9.2 p.35 : « ne doit pas excéder 80% de la superficie de l'unité foncière »;97412_Reglement_20251210.pdf p.35;ok
+U2;Saint-Joseph;recul_voie;3 m;U2 6.2 p.32 : alignement OU retrait min 3 m;97412_Reglement_20251210.pdf p.32;ok
+U2;Saint-Joseph;recul_limites;3 m;U2 7.2 p.33 : H/2 avec un minimum de 3 m;97412_Reglement_20251210.pdf p.33;ok_mineur (plancher affiché, formule H/2 non montrée)
+U2;Saint-Joseph;pleine_terre;15 %;U2 13.1 p.41 : « Au minimum 15% … espace vert et perméable »;97412_Reglement_20251210.pdf p.41;ok
+U2;Saint-Joseph;stationnement;1 place / logement;U2 12.2 : « 1 place de stationnement minimum par logement »;97412_Reglement_20251210.pdf;ok
+Ua;Entre-Deux;hauteur_max;11 m au faîtage · 7 m à l'égout;U7.2 p.21 : zone Ua et Ub1 — 7 m égout/acrotère, 11 m faîtage;97403_reglement_20240924.pdf p.21, témoin 97403000AS1653;ok
+Ua;Entre-Deux;emprise_max;60 %;U6.2 p.21 : « En zone Ua, l'emprise maximale … 60% de la superficie du terrain »;97403_reglement_20240924.pdf p.21;ok
+Ua;Entre-Deux;recul_voie;4 m;U3.2 p.19 : implantation en recul, distance au moins égale à 4 m;97403_reglement_20240924.pdf p.19;ok
+Ua;Entre-Deux;recul_limites;3 m;U4.2 p.20 : retrait au moins égal à 3 m (Ua = retrait obligatoire);97403_reglement_20240924.pdf p.20;ok
+Ua;Entre-Deux;pleine_terre;40 %;U11.1 p.26 : « Au minimum 40% … espace vert et perméable »;97403_reglement_20240924.pdf p.26;ok
+Ua;Entre-Deux;stationnement;2 places / logement;U12.2 : « Autres logements : 2 places par logement » (locatif aidé : 1 max);97403_reglement_20240924.pdf p.27;ok_simplifie (cas général servi)
+UC;L'Étang-Salé;hauteur_max;9 m au faîtage · 6 m à l'égout;UC 2.5.2 p.39 : 6,00 m égout / 9,00 m faîtage;97404_reglement_20250917.pdf p.39, témoin 97404000AE1391;ok
+UC;L'Étang-Salé;emprise_max;60 %;UC 2.4 p.38 : emprise cumulée max 60%;97404_reglement_20250917.pdf p.38;ok
+UC;L'Étang-Salé;recul_voie;4 m;UC 2.1 p.37 : retrait de l'alignement, recul minimum 4,00 m;97404_reglement_20250917.pdf p.37;ok
+UC;L'Étang-Salé;recul_limites;3 m;UC 2.2 p.37 : marge d'isolement minimale 3 m en cas de retrait;97404_reglement_20250917.pdf p.37;ok
+UC;L'Étang-Salé;pleine_terre;40 %;UC 2.6 p.41 : « Au moins 40% de la surface de la parcelle doit être perméable »;97404_reglement_20250917.pdf p.41;ok
+UC;L'Étang-Salé;stationnement;« à vérifier au règlement »;UC 2.7.3 p.42 : barème CHIFFRÉ — logt individuel 2 pl. ; collectif 1 pl. (1-2 pièces), 1,5 (3-4 p.), 2 (≥5 p.) ; bureaux 3/100 m² SP, etc.;97404_reglement_20250917.pdf p.42;ECART (règle chiffrée au règlement servie « à vérifier » — défaut systémique n°1 d'ORACLE-1)
+Ub;Les Trois-Bassins;hauteur_max;12 m au faîtage · 8 m à l'égout;Ub 10.2 p.33 : 8 m égout/acrotère, 12 m faîtage;97423_reglement_20220602.pdf p.33, témoin 97423000AK0829;ok
+Ub;Les Trois-Bassins;emprise_max;50 %;Ub 9.2 p.32 : ne doit pas excéder 50% (annexes 10%);97423_reglement_20220602.pdf p.32;ok
+Ub;Les Trois-Bassins;recul_voie;4 m;Ub 6.2 p.29 : retrait minimum 4,00 m (17 m axe RN1a, 10 m ravines DPF);97423_reglement_20220602.pdf p.29;ok
+Ub;Les Trois-Bassins;recul_limites;3 m;Ub 7.2-7.3 p.30 : retrait minimum 3 m;97423_reglement_20220602.pdf p.30;ok
+Ub;Les Trois-Bassins;pleine_terre;30 %;Ub 13.1 p.38 : minimum 30% espace vert et perméable (20% si terrain ≤150 m²);97423_reglement_20220602.pdf p.38;ok
+Ub;Les Trois-Bassins;stationnement;1,5 places / logement;Ub 12.2 : habitation 1,5 pl./logt (collectif : 1,25 ou 1/35 m² SDP, plafond 2);97423_reglement_20220602.pdf p.36;ok_simplifie
+Ub;La Plaine-des-Palmistes;hauteur_max;9 m au faîtage · 6 m à l'égout;Ub 10.1 p.30 : 6 m égout/acrotère, 9 m faîtage, R+1+C (majorations mixte +1 m, commerce ≥800 m² +4 m);97406_reglement_20230527.pdf p.30, témoin 97406000AD0233;ok
+Ub;La Plaine-des-Palmistes;emprise_max;50 %;Ub 9.2 p.30 : ne doit pas excéder 50% (annexes comprises);97406_reglement_20230527.pdf p.30;ok
+Ub;La Plaine-des-Palmistes;recul_voie;4 m;Ub 6.2 p.27 : 4,00 m minimum (5 m voie de délestage, 10 m commerce ≥800 m²);97406_reglement_20230527.pdf p.27;ok
+Ub;La Plaine-des-Palmistes;recul_limites;3,5 m;Ub 7.2 p.28 : minimum 3,50 m en cas de retrait;97406_reglement_20230527.pdf p.28;ok
+Ub;La Plaine-des-Palmistes;pleine_terre;40 %;Ub 13.3 p.34 : minimum 40% espace vert et perméable (20% commerce ≥800 m²);97406_reglement_20230527.pdf p.34;ok
+Ub;La Plaine-des-Palmistes;stationnement;1,5 places / logement;annexe du règlement (12.2 y renvoie) : 1 pl. logt <30 m², 1,5 pl. logt >30 m²;97406_reglement_20230527.pdf annexe;ok_simplifie
+1AUa;Sainte-Rose;hauteur_max;12 m au faîtage · 9 m à l'égout;UA 10.2 p.15 (renvoi 1AU→U écrit p.7) : 9 m égout / 12 m faîtage — porté à 11/14 m si terrain d'assiette ≥2 500 m²;97419_reglement_20190504.pdf p.15, témoin 97419000AL1115;ok_mineur (palier ≥2 500 m² absent de la fiche — exceptions=[])
+1AUa;Sainte-Rose;emprise_max;70 %;UA 9 p.14 : emprise maximale 70% de la superficie du terrain;97419_reglement_20190504.pdf p.14;ok
+1AUa;Sainte-Rose;recul_voie;4 m;UA 6.2 p.13 : recul au moins égal à 4 m (7 m le long de la RN2);97419_reglement_20190504.pdf p.13;ok
+1AUa;Sainte-Rose;recul_limites;3 m;UA 7.2 p.13 : H/2 sans pouvoir être inférieure à 3 m;97419_reglement_20190504.pdf p.13;ok_mineur (plancher affiché, formule H/2 non montrée)
+1AUa;Sainte-Rose;pleine_terre;25 %;UA 13.1 p.17 : « Au minimum 25% … espace perméable »;97419_reglement_20190504.pdf p.17;ok
+1AUa;Sainte-Rose;stationnement;1,5 places / logement;UA 12.2 : 1,5 pl./logt ≥50 m² SDP (1 pl. <50 m², 1 pl. locatif aidé);97419_reglement_20190504.pdf p.16;ok_simplifie
+AUb;Cilaos;hauteur_max;11 m au faîtage · 7 m à l'égout;Ub 10.2 p.37 (renvoi AUb→Ub écrit : « règles correspondantes à savoir Ub pour AUb ») : 7 m égout/acrotère, 11 m faîtage;97424_reglement_20240213.pdf p.37, témoin 97424000AO1046;ok
+AUb;Cilaos;emprise_max;50 %;Ub 9.2 p.37 : ne doit pas excéder 50% (dépendances comprises, 40 m²/logt);97424_reglement_20240213.pdf p.37;ok
+AUb;Cilaos;recul_voie;3 m;Ub 6.2 p.34 : alignement OU retrait, recul minimum 3 m;97424_reglement_20240213.pdf p.34;ok
+AUb;Cilaos;recul_limites;3 m;Ub 7.2/7.3 p.35 : minimum 3 m (latérales et fond);97424_reglement_20240213.pdf p.35;ok
+AUb;Cilaos;pleine_terre;40 %;Ub 13.1 p.41 : minimum 40% espace vert;97424_reglement_20240213.pdf p.41;ok
+AUb;Cilaos;stationnement;1,5 places / logement;Ub 12.2 p.40 : habitation 1,5 place par logement;97424_reglement_20240213.pdf p.40;ok
+A;Sainte-Marie;zone_constructible;« Zone A PLU — inconstructible » + destinations : logement/exploitation agricole sous conditions, 14 destinations interdites;A1.2 : « sont interdits toutes les constructions … non nécessaires à une exploitation agricole » ; A2.2 : logement d'exploitant ≤120 m² SDP, extensions +30 %/60 m² plafond 150 m²;97418_reglement_20251126.pdf (titre VI), témoin 97418000AT2016;ok (habitat ordinaire effectivement interdit ; conditions reprises dans le bloc destinations)
+N;Salazie;zone_constructible;« Zone N PLU — inconstructible (recouvrement 100 %) »;N1.2 : « sont interdits toutes les constructions, ouvrages et travaux » sauf N2.2 (gestion des sites, extensions limitées de l'existant);97421_reglement_20220524.pdf p.48, témoin 97421000AZ0144;ok

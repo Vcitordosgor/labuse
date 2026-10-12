@@ -1102,12 +1102,14 @@ def searches_rename(sid: int, body: SearchRenameIn, request: Request, db: Sessio
 
 def _mes_communes(db: Session, cid: int | None) -> list[str]:
     """Communes des parcelles SUIVIES/en veille du compte (« dont M dans vos communes »).
-    Vide (ou pilote) → le résumé marché montre le total seul."""
-    if cid is None:
-        return []
+    Vide (ou pilote) → le résumé marché montre le total seul.
+
+    CHASSE-DONNEES-FIX-1 (suite 2d, C-32) — en mode pilote/dev (cid None) on lit les suivis du
+    compte NULL (`IS NOT DISTINCT FROM`), comme suivis_liste : avant, le brief disait « vous ne
+    suivez aucun secteur » alors que /events/suivis listait 9 parcelles suivies (cid NULL)."""
     rows = db.execute(text(
         "SELECT DISTINCT p.commune FROM watched_parcels w JOIN parcels p ON p.idu = w.idu "
-        "WHERE w.compte_id = :c AND p.commune IS NOT NULL"), {"c": cid}).all()
+        "WHERE w.compte_id IS NOT DISTINCT FROM :c AND p.commune IS NOT NULL"), {"c": cid}).all()
     return [r[0] for r in rows]
 
 
@@ -1148,14 +1150,23 @@ def _digest_data(db: Session, cid: int | None = None, jours: int = 7) -> dict:
                      "par_kind": {r["kind"]: r["n"] for r in marche}}
     # TOP 5 sur les TIERS SERVIS (plus jamais matrice_statut morte M37 — comme /reperes en M36).
     # « chaudes » = les deux tiers les plus chauds servis (brulante + chaude), run ÉPINGLÉ.
+    # CHASSE-DONNEES-FIX-1 (suite 2d) :
+    #  · C-43 — q_score/a_score RETIRÉS (colonnes matrice v1 éteintes M129-B, null sur 433 229 lignes,
+    #    jamais rendues au mail) ; plus de jointure sur du mort.
+    #  · C-41 — le top digest n'envoie que de VRAIS prospects : on exclut l'étage 0 (écartées) et les
+    #    parcelles sans potentiel résiduel (SDP 0 / cause présente). Avant, une déclassée bande 0 SDP 0
+    #    (BL0332, tier « priorite ») apparaissait en « priorités » du mail — un faux signal.
     top = db.execute(text("""
-        SELECT p.idu, p.commune, d.q_score, d.a_score, round(p.surface_m2) AS surface_m2,
+        SELECT p.idu, p.commune,
+               round(COALESCE(p.contenance_m2, p.surface_m2)) AS surface_m2,  -- FIX-1 Lot 1 : surface terrain servie
                r.sdp_residuelle_m2, s.tier
         FROM parcel_p_score_v2 s
         JOIN parcels p ON p.idu = s.parcelle_id
         LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :cascade
         LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
         WHERE s.run_id = :run AND s.tier IN ('brulante', 'chaude', 'priorite', 'a_suivre')
+          AND NOT (d.status IN ('exclue', 'faux_positif_probable'))
+          AND r.cause IS NULL AND COALESCE(r.sdp_residuelle_m2, 0) > 0
         ORDER BY s.rang NULLS LAST LIMIT 5"""),
         {"run": runs.current(), "cascade": runs.cascade()}).mappings().all()  # C1 : score vs cascade
     return {"evenements": [dict(r) for r in events], "marche_resume": marche_resume,

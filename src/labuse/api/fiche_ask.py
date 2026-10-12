@@ -81,13 +81,14 @@ def _ask_context(db: Session, idu: str) -> tuple[dict, dict]:
         if pid is not None:
             from ..faisabilite.db import fiche_payload
             fp = fiche_payload(db, pid) or {}
-            fr = fp.get("fourchette") or fp.get("capacite") or {}
             bil = fp.get("bilan") or {}
+            # CHASSE-DONNEES-FIX-1 (Lot 3, C-23) — UN SEUL moteur de capacité dans le contexte IA :
+            # le RÉSIDUEL servi (`potentiel_*`/`sdp_residuelle_m2` ci-dessous, bâti conservé, plafonné
+            # par la cause). La fourchette faisabilité legacy (bâti RASÉ, ignore la cause) SORT du
+            # contexte : le Copilote citait 0 (résiduel) ET 430 m² (fourchette) sur la même parcelle.
+            # On ne garde ici que le hors-capacité (zone de calcul, charge foncière, fiabilité bilan).
             faisa = {
                 "zone_resolue": fp.get("zone_resolue") or fp.get("zone"),
-                "niveaux": fr.get("niveaux"), "hauteur_m": fr.get("hauteur_m"),
-                "surface_plancher_m2": fr.get("surface_plancher_m2"),
-                "logements_au_sol": fr.get("logements_au_sol"),
                 "charge_fonciere_centrale": (bil.get("charge_fonciere") or {}).get("central")
                 if isinstance(bil.get("charge_fonciere"), dict) else None,
                 "bilan_fiable": bil.get("fiable"),
@@ -169,7 +170,10 @@ def _ask_context(db: Session, idu: str) -> tuple[dict, dict]:
         # ── identité / zonage (SOURCÉ) ──
         "idu": _F(f.get("idu")),
         "commune": _F(f.get("commune")),
-        "surface_m2": _F(f.get("surface_m2")),
+        # CHASSE-DONNEES-FIX-1 (Lot 1) — le Copilote énonce la surface de TERRAIN servie à l'écran
+        # (contenance|dessin), plus le dessin brut : il citait 117 505 m² quand la fiche sert 1 m².
+        "surface_m2": _F(f.get("surface_terrain_m2") if f.get("surface_terrain_m2") is not None
+                         else f.get("surface_m2")),
         "statut_tier": _F(vs.get("label")),   # M48 (F1) : verdict SERVI (« Brûlante »…), pas la matrice morte
         "rang_classement": _F(vs.get("rang")),
         "zone_plu": _F(zone_str),                     # toutes les zones jointes (« U4b + UD » si bizone)

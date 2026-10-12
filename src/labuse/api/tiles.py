@@ -165,7 +165,16 @@ def build_mvt_table(db: Session, run_label: str | None = None) -> int:
             "lancer `labuse score-v2` ou vérifier LABUSE_SERVED_RUN.")
     db.execute(text("""
         CREATE TABLE mvt_parcels AS
-        SELECT p.id, p.idu, p.commune, p.surface_m2,
+        SELECT p.id, p.idu, p.commune,
+               -- CHASSE-DONNEES-FIX-1 (Lot 1) — la tuile bake la surface de TERRAIN servie
+               -- (contenance|dessin, comme fiche/liste/geojson/KMZ/partenaire), plus le dessin brut :
+               -- le survol carte disait 27 156 m² quand la fiche sert 25 633 (CW0658, +5,9 %).
+               round(COALESCE(p.contenance_m2, p.surface_m2))::int AS surface_m2,
+               -- le drapeau d'incertitude (contenance ≷ ×2 du dessin) porté par la tuile aussi —
+               -- aucun lecteur de masse ne le portait (DV0285 : carte 117 505 m², fiche 1 m²).
+               (p.contenance_m2 IS NOT NULL AND p.surface_m2 IS NOT NULL AND p.surface_m2 > 0
+                AND (p.contenance_m2 < p.surface_m2 / 2.0
+                     OR p.contenance_m2 > 2.0 * p.surface_m2)) AS surface_incertaine,
                ST_Transform(p.geom, 3857) AS geom_3857,
                -- M48 (F4) : `matrice_statut` (v1 morte) N'EST PLUS bakée comme `status` — elle
                -- contredisait tier_v2. La carte colore par tier_v2 (+ etage0). `d.status` ci-dessous
@@ -572,7 +581,7 @@ def _parcel_tile_bytes(db: Session, z: int, x: int, y: int) -> bytes:
     # plus lourde). Le filtre flags de la carte passe désormais par le repli serveur (getFiltreIdus,
     # motif M55-G) qui peint les IDU EXACTS ; la fiche/liste portent déjà les flags.
     props = (f"{v2_props}{zone_props}m.commune" if z <= 11 else
-             "m.idu, m.commune, m.surface_m2, "  # M129-B : q/a retirés · M137-D : a_completude aussi (vestige matrice, absent de mvt_parcels)
+             "m.idu, m.commune, m.surface_m2, m.surface_incertaine, "  # M129-B : q/a retirés · M137-D : a_completude aussi · FIX-1 Lot 1 : surface terrain + drapeau
              f"{v2_props_full}{zone_props_full}"
              "m.completeness_score, m.sdp_residuelle_m2, "
              "m.sous_densite, m.evenement")

@@ -334,8 +334,13 @@ def reference_locale(db: Session, idu: str | None, type_bien: str | None,
     _label, kept, _ecartees, radius, _commune, sub, _periode = chosen
     prices = [s["prix"] for s in kept]
     annees = [s["annee"] for s in kept]
+    # CHASSE-DONNEES-FIX-1 (suite 2, E-73) — la médiane locale porte la PÉRIODE réelle (min–max),
+    # plus la seule année la plus récente : la médiane est calculée sur ~5 ans (2021–2025), afficher
+    # « 2025 » laissait croire à une médiane d'une seule année (comme signaux.py _periode_annees).
+    _mill = (f"{min(annees)}–{max(annees)}" if annees and min(annees) != max(annees)
+             else (str(max(annees)) if annees else None))
     return {"eur_m2": float(statistics.median(prices)), "n": len(kept),
-            "millesime": str(max(annees)),
+            "millesime": _mill,
             "perimetre": f"{'maisons' if tl == 'maison' else 'appartements'} · {int(radius)} m autour de la parcelle",
             "meme_type": True, "locale": True, "rayon_m": int(radius),
             "distribution": {"avant": distribution_secteur([s["prix"] for s in sub]),

@@ -88,6 +88,12 @@ def _regles_valeurs(rules, base_url: str | None, offset: int) -> list[dict]:
         ("stationnement", "Stationnement", rules.stat_logement, "", "stat"),
     ):
         txt, etat = _fmt_valeur(val, unite)
+        # CHASSE-DONNEES-FIX-1 (Lot 6, D-50) — quand le recul limites sépar. porte une FORMULE
+        # (H/2…), on la montre AVEC le plancher : « H/2, minimum 3 m » plutôt que le seul « 3 m ».
+        if cle == "recul_limites" and getattr(rules, "recul_limites_formule", None):
+            formule = str(rules.recul_limites_formule)
+            txt = formule if etat != "chiffre" else f"{formule} (plancher {txt})"
+            etat = "formule"
         ref = src.get(skey)
         out.append({"cle": cle, "libelle": libelle, "valeur": txt, "etat": etat,
                     "reference": ref, "url": _url(ref), "exceptions": _exc(cle)})

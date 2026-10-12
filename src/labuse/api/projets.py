@@ -157,19 +157,20 @@ def projet_reperes(dimension: str = Query("secteur", pattern="^(secteur|commune)
     # M36 Lot A (famille M35 Lot D) : « opportunités » = parcelles SERVIES au classement
     # (tiers actifs du run servi) — plus jamais la matrice historique (compteur produit,
     # échappé à l'inventaire M35 ; même dérive que /communes).
-    from ..verdict_servi import TIERS_SERVABLES
+    # CHASSE-DONNEES-FIX-1 (suite 2d, C-39) — « opportunités » = LA MÊME notion que la fiche / le
+    # comparateur / le /filtre : brûlante + chaude (+ leurs alias priorite/a_suivre), PLUS l'ensemble
+    # TIERS_SERVABLES (qui incluait sans_signal/réserve/à-creuser → 14 465 vs 29 à Saint-Leu, même
+    # mot pour deux périmètres ×500). Un seul chiffre par notion.
+    _TIERS_OPPORTUNITE = ("brulante", "chaude", "priorite", "a_suivre")
     opp = {r["commune"]: r["n"] for r in db.execute(text(
         "SELECT p.commune, count(*) n FROM parcels p "
         "JOIN parcel_p_score_v2 s ON s.parcelle_id = p.idu AND s.run_id = :runref "
-        " AND s.tier = ANY(:servables) "
-        "GROUP BY p.commune"), {"runref": runs.current(), "servables": list(TIERS_SERVABLES)}).mappings()}
-    # prix médian bâti DVF (€/m² habitable) — bornes anti-aberration comme l'affichage marché
-    dvf = {r["commune"]: int(r["m"]) for r in db.execute(text(
-        "SELECT commune, percentile_cont(0.5) WITHIN GROUP ("
-        "  ORDER BY valeur_fonciere / NULLIF(surface_reelle_bati,0)) m "
-        "FROM dvf_mutations WHERE surface_reelle_bati > 0 AND valeur_fonciere > 0 "
-        "  AND valeur_fonciere / surface_reelle_bati BETWEEN 200 AND 8000 "
-        "GROUP BY commune")).mappings() if r["m"]}
+        " AND s.tier = ANY(:opp) "
+        "GROUP BY p.commune"), {"runref": runs.current(), "opp": list(_TIERS_OPPORTUNITE)}).mappings()}
+    # prix médian ancien DVF (€/m²) — CHASSE-DONNEES-FIX-1 (Lot 7, C-20) : source UNIQUE du baromètre
+    # (moteurs.prix_ancien_communes), plus la 2e formule maison [200,8000] toutes natures.
+    from .moteurs import prix_ancien_communes
+    dvf = {c: int(v["median"]) for c, v in prix_ancien_communes(db).items() if v.get("median")}
     carencees = {r["commune"] for r in db.execute(text(
         "SELECT commune FROM commune_contexte_sru WHERE statut = 'carencee'")).mappings()}
 
@@ -1187,12 +1188,13 @@ def projet_parcelles(pid: int, request: Request, db: Session = Depends(get_db),
             "WHERE cr.run_label = :r AND cr.evenement = 'rouge' AND p.idu = ANY(:ids)"),
             {"r": runs.cascade(), "ids": all_idus})}
     communes_lst = list({r["commune"] for r in rows if r["commune"]})
-    marche = {r["commune"]: int(r["m"]) for r in db.execute(text(
-        "SELECT commune, percentile_cont(0.5) WITHIN GROUP ("
-        "  ORDER BY valeur_fonciere / NULLIF(surface_reelle_bati,0)) m "
-        "FROM dvf_mutations WHERE surface_reelle_bati > 0 AND valeur_fonciere > 0 "
-        "  AND valeur_fonciere / surface_reelle_bati BETWEEN 200 AND 8000 AND commune = ANY(:cs) "
-        "GROUP BY commune"), {"cs": communes_lst}).mappings() if r["m"]} if communes_lst else {}
+    # CHASSE-DONNEES-FIX-1 (Lot 7, C-20) — le « marché ancien ~N €/m² » du kanban vient de la SOURCE
+    # UNIQUE du baromètre (moteurs.prix_ancien_communes : Vente stricte, €/m² [100,12000], ≥100 ventes),
+    # plus une 2e formule maison (toutes natures VEFA incluse, [200,8000], sans seuil) qui divergeait
+    # de 4-7 % de la fiche commune/du comparateur. Un seul €/m² ancien par commune dans tout le produit.
+    from .moteurs import prix_ancien_communes
+    _bar = prix_ancien_communes(db) if communes_lst else {}
+    marche = {c: int(_bar[c]["median"]) for c in communes_lst if c in _bar and _bar[c].get("median")}
     carencees = {x[0] for x in db.execute(text(
         "SELECT commune FROM commune_contexte_sru WHERE statut = 'carencee'")).all()}
     # PROJETS-V5 (E4) — jusqu'à 2 signaux de vie SOURCÉS par ligne (batch), le fort en rouge côté front.
@@ -1609,7 +1611,7 @@ def projet_export_csv(pid: int, request: Request, db: Session = Depends(get_db))
     ban_join = _ban_lateral("p.idu") if ban_ok else ""
     sql = text(
         f"""SELECT p.idu, p.commune, substr(p.idu, 9, 2) AS section, substr(p.idu, 11) AS numero,
-                   round(p.surface_m2) AS surface_m2, {_ETAT_BIEN_SQL} AS etat_bien,
+                   round(COALESCE(p.contenance_m2, p.surface_m2)) AS surface_m2, {_ETAT_BIEN_SQL} AS etat_bien,  -- FIX-1 Lot 1 : surface terrain
                    round(rb.sdp_residuelle_m2) AS sdp_residuelle_m2, rb.cause AS sdp_indispo,
                    (d.status IN ('exclue', 'faux_positif_probable')) AS etage0 {ban_sel}
             FROM parcels p

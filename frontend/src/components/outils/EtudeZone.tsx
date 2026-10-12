@@ -22,7 +22,7 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 
 import { ParcelInput } from '../ParcelInput'
 import { ListPaginationFooter, usePagination } from '../ListPagination'
-import { etudeZone, etudeZoneEntreprises, nafFamilles, nafSearch, parcelAt, type EtudeZoneInput } from '../../lib/api'
+import { etudeZone, etudeZoneEntreprises, getMoteursConfig, nafFamilles, nafSearch, parcelAt, type EtudeZoneInput } from '../../lib/api'
 import type { EtudeZoneDestinations, EtudeZoneResult, NafFamille, NafOption, ZoneEntreprises, ZoneFamille } from '../../lib/types'
 import { iduCourt } from '../../lib/format'
 import { useApp } from '../../store/useApp'
@@ -33,10 +33,8 @@ import { Bouton } from '../ui/Bouton'
 import { Reinitialiser } from '../ui/Reinitialiser'   // RECETTE-1 F3
 import { Chevron } from '../ui/Chevron'
 
-// RECETTE-1 H8.2/H8.3 — fusion des deux chemins : UNE seule entrée (depuis une parcelle), un rayon en
-// km réglable par + / − ; l'entrée « temps de trajet » (minutes/mode) et l'entrée « zone dessinée »
-// (polygone) sont RETIRÉES. Bornes du rayon (km) : pas de 0,5 km, de 0,5 à 10 km.
-const RAYON_MIN = 0.5, RAYON_MAX = 10, RAYON_PAS = 0.5
+// RECETTE-1 H8.2/H8.3 — UNE seule entrée (depuis une parcelle) + un rayon en km. CHASSE-DONNEES-FIX-1
+// (E-77) : les rayons offerts sont SERVIS par /moteurs/config (plus de bornes en dur divergentes).
 // minutes/mode restent requis par le type EtudeZoneInput mais sont IGNORÉS par le back dès que rayon_km
 // est fourni (cercle exact) — on envoie des constantes neutres, plus aucune UI de temps de trajet.
 const MINUTES_NEUTRE = 10, MODE_NEUTRE = 'voiture' as const
@@ -72,6 +70,11 @@ export function EtudeZone() {
   const [porteZone] = useState<'chalandise' | 'particuliere'>('chalandise')
   const [cible, setCible] = useState<{ idu: string; label: string } | null>(null)
   const [rayonKm, setRayonKm] = useState(1)
+  // CHASSE-DONNEES-FIX-1 (suite 2, E-77) — rayons SERVIS (config/moteurs.yaml), plus une liste en dur
+  // divergente du back : on n'offre QUE les rayons que le back calcule en cercle (sinon il retombe sur
+  // l'isochrone — un rayon affiché « 3 km » donnerait un périmètre ≠ cercle, cf. E-69).
+  const cfgMot = useQuery({ queryKey: ['moteurs-config'], queryFn: getMoteursConfig, staleTime: 3600_000 })
+  const rayonsServis = cfgMot.data?.rayons_etude_zone ?? [0.5, 1, 2, 5]
   // DESTINATIONS-1 (X4.1) — sous-destination R151-28 choisie (facultative) : verdict par zone PLU.
   const [sousDest, setSousDest] = useState<string | null>(null)
 
@@ -202,16 +205,16 @@ export function EtudeZone() {
         withCarte onPick={(idu) => setCible({ idu, label: iduCourt(idu) })} />
       {cible && <div className="text-[10.5px] text-txt-mut">Parcelle : {cible.label}</div>}
       {/* RECETTE-1 H8.3 — AMPLEUR : rayon en km réglable par + / − (cercle exact tracé sur la carte). */}
+      {/* CHASSE-DONNEES-FIX-1 (E-77) — rayons SERVIS (discrets), plus un stepper 0,5-10 proposant des
+          rayons que le back ne calcule pas en cercle. */}
       <div data-zone-rayons className="flex items-center justify-between rounded-lg border border-line-2 bg-surface-2 px-3 py-2">
         <span className="text-[11px] text-txt-mut">Rayon</span>
-        <div className="flex items-center gap-2">
-          <button data-zone-rayon-moins aria-label="Réduire le rayon" disabled={rayonKm <= RAYON_MIN}
-            onClick={() => setRayonKm((r) => Math.max(RAYON_MIN, Math.round((r - RAYON_PAS) * 10) / 10))}
-            className="flex h-7 w-7 items-center justify-center rounded-md border border-line-2 text-txt-hi transition-colors duration-quick hover:border-mint hover:text-mint disabled:opacity-40">−</button>
-          <span className="tnum w-16 text-center font-mono text-[13px] text-txt-hi">{String(rayonKm).replace('.', ',')} km</span>
-          <button data-zone-rayon-plus aria-label="Agrandir le rayon" disabled={rayonKm >= RAYON_MAX}
-            onClick={() => setRayonKm((r) => Math.min(RAYON_MAX, Math.round((r + RAYON_PAS) * 10) / 10))}
-            className="flex h-7 w-7 items-center justify-center rounded-md border border-line-2 text-txt-hi transition-colors duration-quick hover:border-mint hover:text-mint disabled:opacity-40">+</button>
+        <div className="flex items-center gap-1.5">
+          {rayonsServis.map((r) => (
+            <button key={r} data-zone-rayon={r} aria-pressed={rayonKm === r} onClick={() => setRayonKm(r)}
+              className={`h-7 min-w-[3rem] rounded-md border px-2 font-mono text-[12px] transition-colors duration-quick ${rayonKm === r ? 'border-mint text-mint' : 'border-line-2 text-txt-hi hover:border-mint hover:text-mint'}`}>
+              {String(r).replace('.', ',')} km</button>
+          ))}
         </div>
       </div>
 
@@ -254,10 +257,12 @@ export function EtudeZone() {
                 <Stat v={nb(res.population?.menages)} k="ménages" />
                 {/* O19(c) — revenu médian = carreau Filosofi (INSEE), donnée SOURCÉE, pas une estimation.
                     Le badge « imputé » ne s'affiche que si le backend a comblé la MAJORITÉ des carreaux. */}
+                {/* CHASSE-DONNEES-FIX-1 (Lot 7, E-71) — sum(ind_snv)/sum(ind) = niveau de vie MOYEN par
+                    individu, ni un revenu ni une médiane (l'alias SQL revenu_median_eur est trompeur). */}
                 <Stat v={res.population?.revenu_median_eur != null ? `${nb(res.population.revenu_median_eur)} €` : '—'}
                   k={res.population?.revenu_majorite_imputee
-                    ? `revenu médian / an · valeur approchée (${nb(res.population.revenu_impute_n)}/${nb(res.population.revenu_carreaux_n)} carreaux)`
-                    : 'revenu médian / an · source Filosofi (INSEE)'}
+                    ? `niveau de vie moyen / an · valeur approchée (${nb(res.population.revenu_impute_n)}/${nb(res.population.revenu_carreaux_n)} carreaux)`
+                    : 'niveau de vie moyen / an · source Filosofi (INSEE)'}
                   variante={res.population?.revenu_majorite_imputee ? 'approche' : 'source'} />
               </div>
             )}

@@ -24,7 +24,10 @@ def test_where_bati_construit_hauteur_emprise():
     assert "batiment_hauteur_lidar" in w
     assert "faitage_m >= :f_hmin" in w and "faitage_m <= :f_hmax" in w
     assert p["f_hmin"] == 3.0 and p["f_hmax"] == 10.0
-    assert "taux_emprise_pct,0) >= :f_empmin" in w and "taux_emprise_pct,0) <= :f_empmax" in w
+    # CHASSE-DONNEES-FIX-1 (Lot 4, E-81) — l'emprise non MESURÉE (taux NULL) ne passe plus les bornes
+    # comme un 0 : le filtre exige une valeur RÉELLE (IS NOT NULL), plus COALESCE(...,0).
+    assert "taux_emprise_pct IS NOT NULL AND re0.taux_emprise_pct >= :f_empmin" in w
+    assert "taux_emprise_pct IS NOT NULL AND re1.taux_emprise_pct <= :f_empmax" in w
     assert p["f_empmin"] == 5 and p["f_empmax"] == 80
 
 

@@ -141,6 +141,18 @@ zones:
             comptés depuis la limite de l’alignement de la voie ou de l’emprise publique, la hauteur maximale
             ne peut excéder : - 11 mètres à l’égout du toit ou au sommet de l’acrotère, - 13 mètres au faîtage.'
           statut: valide
+          # CHASSE-DONNEES-FIX-1 (Lot 6, D-48) — la hauteur U2 est GRADUÉE par profondeur depuis
+          # l'alignement : la fiche affichait le seul palier >12 m (13/11) comme plafond unique, alors
+          # que dans la bande 0-6 m de la voie le plafond réel est 8/10 m. Gradation servie VERBATIM
+          # avec la règle (exception), jamais recomposée.
+          exceptions:
+            - texte: 'Hauteur maximale graduée par profondeur depuis l’alignement de la voie (U2 10.2,
+                p. 35) : 0 à 6 m → 8 m à l’égout / 10 m au faîtage ; 6 à 12 m → 10 m à l’égout / 12 m au
+                faîtage ; au-delà de 12 m → 11 m à l’égout / 13 m au faîtage.'
+              article: U2 10.2
+              page_pdf: 35
+              porte: bande_limite
+              modifie_calcul: false
         egout:
           m: 11.0
           article: U2 10.2

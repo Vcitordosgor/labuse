@@ -95,6 +95,12 @@ class Cartouche:
     doc_foot: str         # la mention de bas de page
 
 
+def _css_str(s: str) -> str:
+    """Échappe une chaîne pour un `content: "…"` CSS (double-quote) : antislash, guillemets, sauts
+    de ligne retirés. CHASSE-DONNEES-FIX-1 (C-28)."""
+    return (s or "").replace("\\", "\\\\").replace('"', '\\"').replace("\n", " ").replace("\r", " ")
+
+
 def _spans_cartouche(c: Cartouche) -> str:
     return (f'<span class="doc-title" style="display:none">{esc(c.doc_title)}</span>'
             f'<span class="doc-ref" style="display:none">{esc(c.doc_ref)}</span>'
@@ -108,10 +114,17 @@ def page_html(titre_html: str, cartouche: Cartouche, corps_html: str, *, lang: s
     paysage de theme.css) : le Comparatif met ses parcelles en colonnes. Rien d'autre ne change —
     même couverture/en-tête/pied/tableaux/badges."""
     corps = f'<div class="paysage">{corps_html}</div>' if paysage else corps_html
+    # CHASSE-DONNEES-FIX-1 (suite 2c, C-28) — le pied @bottom-left utilisait `content: string(doc-foot)`
+    # que CE WeasyPrint NE REND PAS (0 « Données LABUSE au » dans les PDF testés). On INJECTE le pied en
+    # CONTENU LITTÉRAL dans une règle @page par document (chaque PDF est rendu une fois, la valeur est
+    # connue) : un content string statique SE REND (le @bottom-center du Dossier le prouve). La mention
+    # légale + la date de donnée s'impriment enfin sur chaque page.
+    foot_css = ('@page { @bottom-left { content: "' + _css_str(cartouche.doc_foot) + '"; '
+                'font: 7.2pt "Inter","DejaVu Sans",sans-serif; color:#6B746E } }')
     return (f'<!doctype html><html lang="{lang}"><head><meta charset="utf-8">'
             f'<title>{esc(titre_html)}</title>'
             f'<link rel="stylesheet" href="theme.css">'
-            f'<style>{_FONT_FACE}</style></head><body>'
+            f'<style>{_FONT_FACE}</style><style>{foot_css}</style></head><body>'
             f'{_spans_cartouche(cartouche)}{corps}</body></html>')
 
 

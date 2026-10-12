@@ -1,0 +1,198 @@
+idu;notion;lecteur;valeur;detail
+97415000CW0658;surface_terrain;fiche GET /parcels/{idu};25633;source=cadastre dessin=27156 incertaine=False
+97415000CW0658;bande_sdp;fiche;bande A · SDP 38619;
+97415000CW0658;prix_ancien;fiche;3035 EUR/m2;appartement n=13 r=500.0m [2022, 2025]
+97415000CW0658;proprietaire;fiche;SOCIETE D'EQUIPEMENT DU DEPARTEMENT DE LA REUNION;siren=310863378
+97415000CW0658;risques;fiche;1 aleas;Aléa mouvement de terrain — niveau faible (toute la parcelle
+97415000CW0658;zone;fiche (parcel_zone_plu=ecran);AU3a;
+97415000CW0658;surface_terrain;dossier PDF (couverture);25 633 m²;etiquette fixe « contenance » (miroir.py:1101)
+97415000CW0658;zone;dossier PDF (couverture);AU3a;
+97415000CW0658;bande_sdp;dossier PDF;SDP restante 38 619 m²;
+97415000CW0658;prix_ancien;dossier PDF;3 035 EUR/m2;13 ventes
+97415000CW0658;proprietaire;dossier PDF;Personne morale — SOCIETE D'EQUIPEMENT DU                          sou;
+97415000CW0658;pied_donnees_au;dossier PDF;ABSENT du PDF;0 occurrence « Données LABUSE au » (theme.css:33 string(doc-foot) non rendu WeasyPrint 70)
+97415000CW0658;surface_terrain;export md/html GET /parcels/{idu}/export;27 156 m²;app.py:7601 p.surface_m2 = DESSIN (models.py:77)
+97415000CW0658;verdict;export md;Sans signal;
+97415000CW0658;proprietaire;export md;Propriétaire inconnu;ne lit jamais parcelle_personne_morale
+97415000CW0658;prix_ancien;export md;3 035 EUR/m2;
+97415000CW0658;surface_terrain;courrier (POST /courrier/composer);27156;libelle « Surface cadastrale » = round(p.surface_m2) DESSIN (courrier_compose.py:72,197)
+97415000CW0658;zone;courrier;AU3a;parcel_zone_plu.zone_lib lu en direct (courrier_compose.py:89-92)
+97415000CW0658;surface_terrain;CSV projet (/projets/235/export.csv);27156.0;projets.py:1612 round(p.surface_m2) = DESSIN
+97415000CW0658;bande_sdp;CSV projet;SDP 38619.0;
+97416000DV0285;surface_terrain;fiche GET /parcels/{idu};1;source=cadastre dessin=117505 incertaine=True
+97416000DV0285;bande_sdp;fiche;bande NC · SDP None;analyse incomplète
+97416000DV0285;prix_ancien;fiche;3788 EUR/m2;appartement n=23 r=500.0m [2022, 2025]
+97416000DV0285;proprietaire;fiche;COMMUNE DE SAINT PIERRE;siren=219740164
+97416000DV0285;risques;fiche;7 aleas;Aléa inondation — niveau fort (~7% de la parcelle). | Aléa mouvement de terrain — niveau fort (~1% de la parcelle) | Aléa submersion marine — niveau fort (~22% de la parcelle).
+97416000DV0285;zone;fiche (parcel_zone_plu=ecran);Ue;
+97416000DV0285;surface_terrain;dossier PDF (couverture);1 m²;etiquette fixe « contenance » (miroir.py:1101)
+97416000DV0285;zone;dossier PDF (couverture);Ue;
+97416000DV0285;prix_ancien;dossier PDF;3 788 EUR/m2;23 ventes
+97416000DV0285;proprietaire;dossier PDF;Personne morale — COMMUNE DE SAINT PIERRE (SIREN                   sou;
+97416000DV0285;pied_donnees_au;dossier PDF;ABSENT du PDF;0 occurrence « Données LABUSE au » (theme.css:33 string(doc-foot) non rendu WeasyPrint 70)
+97416000DV0285;surface_terrain;export md/html GET /parcels/{idu}/export;117 505 m²;app.py:7601 p.surface_m2 = DESSIN (models.py:77)
+97416000DV0285;verdict;export md;Sans signal;
+97416000DV0285;proprietaire;export md;Propriétaire inconnu;ne lit jamais parcelle_personne_morale
+97416000DV0285;surface_terrain;courrier (POST /courrier/composer);117505;libelle « Surface cadastrale » = round(p.surface_m2) DESSIN (courrier_compose.py:72,197)
+97416000DV0285;zone;courrier;Ue;parcel_zone_plu.zone_lib lu en direct (courrier_compose.py:89-92)
+97416000DV0285;risques;courrier;PPR zone rouge (inconstructible).;cascade_results legacy HARD_EXCLUDE sans run (courrier_compose.py:113-121)
+97416000DV0285;surface_terrain;CSV projet (/projets/235/export.csv);117505.0;projets.py:1612 round(p.surface_m2) = DESSIN
+97416000DV0285;bande_sdp;CSV projet;SDP 0.0 surface_incertaine;
+97409000AK0804;surface_terrain;fiche GET /parcels/{idu};27862;source=cadastre dessin=28258 incertaine=False
+97409000AK0804;bande_sdp;fiche;bande A · SDP 34223;
+97409000AK0804;prix_ancien;fiche;1519 EUR/m2;appartement n=27 r=1000.0m [2022, 2025]
+97409000AK0804;proprietaire;fiche;COMMUNE DE SAINT ANDRE;siren=219740099
+97409000AK0804;risques;fiche;4 aleas;Aléa inondation — niveau fort (~12% de la parcelle). | Aléa mouvement de terrain — niveau moyen (~12% de la parcell | PPR inondation+MOUVEMENTS_DE_TERRAIN — zone rouge sur 12 % d
+97409000AK0804;zone;fiche (parcel_zone_plu=ecran);UB;
+97409000AK0804;surface_terrain;dossier PDF (couverture);27 862 m²;etiquette fixe « contenance » (miroir.py:1101)
+97409000AK0804;zone;dossier PDF (couverture);UB;
+97409000AK0804;bande_sdp;dossier PDF;SDP restante 34 223 m²;
+97409000AK0804;prix_ancien;dossier PDF;1 519 EUR/m2;27 ventes
+97409000AK0804;proprietaire;dossier PDF;Personne morale — COMMUNE DE SAINT ANDRE (SIREN                    sou;
+97409000AK0804;pied_donnees_au;dossier PDF;ABSENT du PDF;0 occurrence « Données LABUSE au » (theme.css:33 string(doc-foot) non rendu WeasyPrint 70)
+97409000AK0804;surface_terrain;export md/html GET /parcels/{idu}/export;28 258 m²;app.py:7601 p.surface_m2 = DESSIN (models.py:77)
+97409000AK0804;verdict;export md;Sans signal;
+97409000AK0804;proprietaire;export md;Propriétaire inconnu;ne lit jamais parcelle_personne_morale
+97409000AK0804;prix_ancien;export md;1 519 EUR/m2;
+97409000AK0804;surface_terrain;courrier (POST /courrier/composer);28258;libelle « Surface cadastrale » = round(p.surface_m2) DESSIN (courrier_compose.py:72,197)
+97409000AK0804;zone;courrier;UB;parcel_zone_plu.zone_lib lu en direct (courrier_compose.py:89-92)
+97409000AK0804;risques;courrier;PPR zone rouge (inconstructible).;cascade_results legacy HARD_EXCLUDE sans run (courrier_compose.py:113-121)
+97409000AK0804;surface_terrain;CSV projet (/projets/235/export.csv);28258.0;projets.py:1612 round(p.surface_m2) = DESSIN
+97409000AK0804;bande_sdp;CSV projet;SDP 34223.0;
+97415000BZ0007;surface_terrain;fiche GET /parcels/{idu};5600;source=cadastre dessin=5519 incertaine=False
+97415000BZ0007;bande_sdp;fiche;bande 0 · SDP 0;
+97415000BZ0007;prix_ancien;fiche;2963 EUR/m2;mixte (appart+maison) n=16 r=1000.0m [2022, 2025]
+97415000BZ0007;proprietaire;fiche;particulier/non diffuse;siren=None
+97415000BZ0007;risques;fiche;3 aleas;PPR inondation et mouvement de terrain — zone rouge (inconst | Aléa inondation — niveau fort (~16% de la parcelle). | Aléa mouvement de terrain — niveau fort (~27% de la parcelle
+97415000BZ0007;zone;fiche (parcel_zone_plu=ecran);Usdu;
+97415000BZ0007;surface_terrain;dossier PDF (couverture);5 600 m²;etiquette fixe « contenance » (miroir.py:1101)
+97415000BZ0007;zone;dossier PDF (couverture);Usdu;
+97415000BZ0007;prix_ancien;dossier PDF;2 963 EUR/m2;16 ventes
+97415000BZ0007;proprietaire;dossier PDF;: non déterminé.;
+97415000BZ0007;pied_donnees_au;dossier PDF;ABSENT du PDF;0 occurrence « Données LABUSE au » (theme.css:33 string(doc-foot) non rendu WeasyPrint 70)
+97415000BZ0007;surface_terrain;export md/html GET /parcels/{idu}/export;5 519 m²;app.py:7601 p.surface_m2 = DESSIN (models.py:77)
+97415000BZ0007;verdict;export md;Écartée;
+97415000BZ0007;proprietaire;export md;Propriétaire inconnu;ne lit jamais parcelle_personne_morale
+97415000BZ0007;prix_ancien;export md;2 963 EUR/m2;
+97415000BZ0007;surface_terrain;courrier (POST /courrier/composer);5519;libelle « Surface cadastrale » = round(p.surface_m2) DESSIN (courrier_compose.py:72,197)
+97415000BZ0007;zone;courrier;Usdu;parcel_zone_plu.zone_lib lu en direct (courrier_compose.py:89-92)
+97415000BZ0007;risques;courrier;PPR zone rouge (inconstructible).;cascade_results legacy HARD_EXCLUDE sans run (courrier_compose.py:113-121)
+97415000BZ0005;surface_terrain;fiche GET /parcels/{idu};19500;source=cadastre dessin=19371 incertaine=False
+97415000BZ0005;bande_sdp;fiche;bande 0 · SDP 0;
+97415000BZ0005;prix_ancien;fiche;3128 EUR/m2;mixte (appart+maison) n=20 r=1000.0m [2022, 2025]
+97415000BZ0005;proprietaire;fiche;particulier/non diffuse;siren=None
+97415000BZ0005;risques;fiche;3 aleas;PPR inondation et mouvement de terrain — zone rouge (inconst | Aléa inondation — niveau fort (~3% de la parcelle). | Aléa mouvement de terrain — niveau fort (~30% de la parcelle
+97415000BZ0005;zone;fiche (parcel_zone_plu=ecran);A;
+97415000BZ0005;surface_terrain;dossier PDF (couverture);19 500 m²;etiquette fixe « contenance » (miroir.py:1101)
+97415000BZ0005;zone;dossier PDF (couverture);A;
+97415000BZ0005;prix_ancien;dossier PDF;3 128 EUR/m2;20 ventes
+97415000BZ0005;proprietaire;dossier PDF;: non déterminé.;
+97415000BZ0005;pied_donnees_au;dossier PDF;ABSENT du PDF;0 occurrence « Données LABUSE au » (theme.css:33 string(doc-foot) non rendu WeasyPrint 70)
+97415000BZ0005;surface_terrain;export md/html GET /parcels/{idu}/export;19 371 m²;app.py:7601 p.surface_m2 = DESSIN (models.py:77)
+97415000BZ0005;verdict;export md;Écartée;
+97415000BZ0005;proprietaire;export md;Propriétaire inconnu;ne lit jamais parcelle_personne_morale
+97415000BZ0005;surface_terrain;courrier (POST /courrier/composer);19371;libelle « Surface cadastrale » = round(p.surface_m2) DESSIN (courrier_compose.py:72,197)
+97415000BZ0005;zone;courrier;A;parcel_zone_plu.zone_lib lu en direct (courrier_compose.py:89-92)
+97415000BZ0005;risques;courrier;PPR zone rouge (inconstructible).;cascade_results legacy HARD_EXCLUDE sans run (courrier_compose.py:113-121)
+97418000AV2114;existence;fiche GET /parcels/{idu};disparue le 2026-09-01;remplacee_par AV2932/AV2930/AV2931
+97418000AV2114;surface_terrain;dossier PDF (couverture);—;etiquette fixe « contenance » (miroir.py:1101)
+97418000AV2114;proprietaire;dossier PDF;: non déterminé.;
+97418000AV2114;pied_donnees_au;dossier PDF;ABSENT du PDF;0 occurrence « Données LABUSE au » (theme.css:33 string(doc-foot) non rendu WeasyPrint 70)
+97418000AV2114;surface_terrain;export md/html GET /parcels/{idu}/export;2 853 m²;app.py:7601 p.surface_m2 = DESSIN (models.py:77)
+97418000AV2114;verdict;export md;Non évaluée au run servi;
+97418000AV2114;proprietaire;export md;Propriétaire inconnu;ne lit jamais parcelle_personne_morale
+97418000AV2114;prix_ancien;export md;3 103 EUR/m2;
+97418000AV2114;existence;export md;AUCUNE mention disparue;Surface 2 853 m2 servie comme vivante
+97418000AV2114;surface_terrain;courrier (POST /courrier/composer);2853;libelle « Surface cadastrale » = round(p.surface_m2) DESSIN (courrier_compose.py:72,197)
+97418000AV2114;zone;courrier;UB;parcel_zone_plu.zone_lib lu en direct (courrier_compose.py:89-92)
+97418000AV2114;existence;courrier;compose normalement (bloque=False);« Votre parcelle AV 2114 » adressee au proprietaire d une parcelle disparue
+97420000BC9999;surface_terrain;fiche GET /parcels/{idu};600;source=plan dessin=600 incertaine=False
+97420000BC9999;bande_sdp;fiche;bande D · SDP 189;
+97420000BC9999;prix_ancien;fiche;2143 EUR/m2;appartement n=21 r=1000.0m [2022, 2025]
+97420000BC9999;proprietaire;fiche;particulier/non diffuse;siren=None
+97420000BC9999;risques;fiche;1 aleas;Aléa mouvement de terrain — niveau faible (toute la parcelle
+97420000BC9999;zone;fiche (parcel_zone_plu=ecran);-;
+97420000BC9999;surface_terrain;dossier PDF (couverture);600 m²;etiquette fixe « contenance » (miroir.py:1101)
+97420000BC9999;prix_ancien;dossier PDF;2 143 EUR/m2;21 ventes
+97420000BC9999;proprietaire;dossier PDF;: non déterminé.;
+97420000BC9999;pied_donnees_au;dossier PDF;ABSENT du PDF;0 occurrence « Données LABUSE au » (theme.css:33 string(doc-foot) non rendu WeasyPrint 70)
+97420000BC9999;surface_terrain;export md/html GET /parcels/{idu}/export;600 m²;app.py:7601 p.surface_m2 = DESSIN (models.py:77)
+97420000BC9999;verdict;export md;Sans signal;
+97420000BC9999;proprietaire;export md;Propriétaire inconnu;ne lit jamais parcelle_personne_morale
+97420000BC9999;prix_ancien;export md;2 143 EUR/m2;
+97420000BC9999;surface_terrain;courrier (POST /courrier/composer);600;libelle « Surface cadastrale » = round(p.surface_m2) DESSIN (courrier_compose.py:72,197)
+97420000BC9999;surface_terrain;CSV projet (/projets/235/export.csv);600.0;projets.py:1612 round(p.surface_m2) = DESSIN
+97420000BC9999;bande_sdp;CSV projet;SDP 189.0;
+97417000BN0002;surface_terrain;fiche GET /parcels/{idu};515500;source=cadastre dessin=514606 incertaine=False
+97417000BN0002;bande_sdp;fiche;bande NC · SDP None;zone non résolue
+97417000BN0002;prix_ancien;fiche;2158 EUR/m2;mixte (appart+maison) n=98 r=1500.0m [2022, 2025]
+97417000BN0002;proprietaire;fiche;ETAT PAR DIRECTION DE L IMMOBILIER DE L ETAT;siren=U23691569
+97417000BN0002;risques;fiche;2 aleas;Aléa inondation — niveau fort (~7% de la parcelle). | Aléa mouvement de terrain — niveau fort (~7% de la parcelle)
+97417000BN0002;zone;fiche;RNU;Commune au règlement national d'urbanisme — pas de PLU local
+97417000BN0002;surface_terrain;dossier PDF (couverture);515 500 m²;etiquette fixe « contenance » (miroir.py:1101)
+97417000BN0002;prix_ancien;dossier PDF;2 158 EUR/m2;98 ventes
+97417000BN0002;proprietaire;dossier PDF;Personne morale — ETAT PAR DIRECTION DE L IMMOBILIER    sourcé;
+97417000BN0002;pied_donnees_au;dossier PDF;ABSENT du PDF;0 occurrence « Données LABUSE au » (theme.css:33 string(doc-foot) non rendu WeasyPrint 70)
+97417000BN0002;surface_terrain;export md/html GET /parcels/{idu}/export;514 606 m²;app.py:7601 p.surface_m2 = DESSIN (models.py:77)
+97417000BN0002;verdict;export md;Écartée;
+97417000BN0002;proprietaire;export md;Propriétaire inconnu;ne lit jamais parcelle_personne_morale
+97417000BN0002;surface_terrain;courrier (POST /courrier/composer);514606;libelle « Surface cadastrale » = round(p.surface_m2) DESSIN (courrier_compose.py:72,197)
+97411000AW0692;surface_terrain;fiche GET /parcels/{idu};991;source=cadastre dessin=991 incertaine=False
+97411000AW0692;bande_sdp;fiche;bande D · SDP 118;
+97411000AW0692;prix_ancien;fiche;2369 EUR/m2;appartement n=561 r=500.0m [2022, 2025]
+97411000AW0692;proprietaire;fiche;SCI ALOE;siren=913037362
+97411000AW0692;risques;fiche;None aleas;
+97411000AW0692;zone;fiche (parcel_zone_plu=ecran);Ud;
+97411000AW0692;surface_terrain;dossier PDF (couverture);991 m²;etiquette fixe « contenance » (miroir.py:1101)
+97411000AW0692;zone;dossier PDF (couverture);Ud;
+97411000AW0692;bande_sdp;dossier PDF;SDP restante 118 m²;
+97411000AW0692;prix_ancien;dossier PDF;2 369 EUR/m2;561 ventes
+97411000AW0692;proprietaire;dossier PDF;Personne morale — SCI ALOE (SIREN 913037362)                       sou;
+97411000AW0692;pied_donnees_au;dossier PDF;ABSENT du PDF;0 occurrence « Données LABUSE au » (theme.css:33 string(doc-foot) non rendu WeasyPrint 70)
+97411000AW0692;surface_terrain;export md/html GET /parcels/{idu}/export;991 m²;app.py:7601 p.surface_m2 = DESSIN (models.py:77)
+97411000AW0692;verdict;export md;Sans signal;
+97411000AW0692;proprietaire;export md;Propriétaire inconnu;ne lit jamais parcelle_personne_morale
+97411000AW0692;prix_ancien;export md;2 356 EUR/m2;
+97411000AW0692;surface_terrain;courrier (POST /courrier/composer);991;libelle « Surface cadastrale » = round(p.surface_m2) DESSIN (courrier_compose.py:72,197)
+97411000AW0692;zone;courrier;Ud;parcel_zone_plu.zone_lib lu en direct (courrier_compose.py:89-92)
+97411000AW0692;surface_terrain;CSV projet (/projets/235/export.csv);991.0;projets.py:1612 round(p.surface_m2) = DESSIN
+97411000AW0692;bande_sdp;CSV projet;SDP 118.0;
+97411000BZ1065;surface_terrain;fiche GET /parcels/{idu};1567;source=cadastre dessin=1625 incertaine=False
+97411000BZ1065;bande_sdp;fiche;bande D · SDP 35;
+97411000BZ1065;prix_ancien;fiche;2365 EUR/m2;appartement n=34 r=1000.0m [2022, 2025]
+97411000BZ1065;proprietaire;fiche;particulier/non diffuse;siren=None
+97411000BZ1065;risques;fiche;1 aleas;Zone bleue PPR inondation et mouvement de terrain (toute la 
+97411000BZ1065;zone;fiche (parcel_zone_plu=ecran);Uh;
+97411000BZ1065;surface_terrain;dossier PDF (couverture);1 567 m²;etiquette fixe « contenance » (miroir.py:1101)
+97411000BZ1065;zone;dossier PDF (couverture);Uh;
+97411000BZ1065;bande_sdp;dossier PDF;SDP restante 35 m²;
+97411000BZ1065;prix_ancien;dossier PDF;2 365 EUR/m2;34 ventes
+97411000BZ1065;proprietaire;dossier PDF;: non déterminé.;
+97411000BZ1065;pied_donnees_au;dossier PDF;ABSENT du PDF;0 occurrence « Données LABUSE au » (theme.css:33 string(doc-foot) non rendu WeasyPrint 70)
+97411000BZ1065;surface_terrain;export md/html GET /parcels/{idu}/export;1 625 m²;app.py:7601 p.surface_m2 = DESSIN (models.py:77)
+97411000BZ1065;verdict;export md;Sans signal;
+97411000BZ1065;proprietaire;export md;Propriétaire inconnu;ne lit jamais parcelle_personne_morale
+97411000BZ1065;prix_ancien;export md;2 365 EUR/m2;
+97411000BZ1065;surface_terrain;courrier (POST /courrier/composer);1625;libelle « Surface cadastrale » = round(p.surface_m2) DESSIN (courrier_compose.py:72,197)
+97411000BZ1065;zone;courrier;Uh;parcel_zone_plu.zone_lib lu en direct (courrier_compose.py:89-92)
+97411000BZ1065;surface_terrain;CSV projet (/projets/235/export.csv);1625.0;projets.py:1612 round(p.surface_m2) = DESSIN
+97411000BZ1065;bande_sdp;CSV projet;SDP 35.0;
+97415000CW0658;surface_terrain;comparatif PDF;27 156 m2;badge « sourcé » — _compare_row app.py:7788 qv2.surface_m2 = DESSIN
+97416000DV0285;surface_terrain;comparatif PDF;117 505 m2;badge « sourcé » — DESSIN (fiche sert 1 m2 contenance)
+97409000AK0804;surface_terrain;comparatif PDF;28 258 m2;DESSIN
+97411000AW0692;surface_terrain;comparatif PDF;991 m2;dessin=contenance ici
+97411000BZ1065;surface_terrain;comparatif PDF;1 625 m2;DESSIN (fiche 1 567)
+97417000BN0002;surface_terrain;comparatif PDF;514 606 m2;DESSIN (fiche 515 500)
+97420000BC9999;surface_terrain;comparatif PDF;600 m2;sans contenance : = dessin
+97415000BZ0007;zone;comparatif PDF;Usdu;= fiche
+97415000BZ0005;zone;comparatif PDF;Usdu;"FAUX : fiche/dossier/courrier = A (70 %) ; Usdu = 2,4 % de la parcelle — fa.zone (app.py:7807, _sous_zone_constructible db.py:383)"
+97415000BZ0005;risques;comparatif PDF;« Zone A PLU — inconstructible » (contrainte majeure);contradiction interne : Zone PLU affichee Usdu + Zone constructible oui
+97417000BN0002;zone;comparatif PDF;hors zonage PLU;fiche dit RNU explicite
+97415000CW0658;millesimes;etude-zone PDF;AUCUN millesime imprime;"JSON note = « INSEE Filosofi 2021 · SIRENE · BPE 2025 · Arcep (2026_T1) » (app.py:6650) ; blocs/etude_zone.py:154 imprime une note statique"
+97416000DV0285;millesimes;etude-zone PDF;AUCUN millesime imprime;idem
+97417000BN0002;millesimes;etude-zone PDF;AUCUN millesime imprime;idem
+97415000CW0658;flash_vs_dossier;"flash (builder construire ""flash"")";HTML strictement identique au Dossier (True, 156196 o);"builder.py:472 document=dossier si flash ; numero DP-20261012-0658 (prefixe Dossier, pas FL) ; facturation.py:249"
+97415000CW0658;surface_terrain;bilan /bilan/{idu}/modele (reperes);27156;reperes.py:44-46 SELECT surface_m2 = DESSIN (fiche 25 633)
+97416000DV0285;surface_terrain;bilan /bilan/{idu}/modele (reperes);117505;DESSIN (fiche 1)
+97418000AV2114;existence;gabarit PDF;genere 200 enveloppe reglementaire;aucune mention disparue
+97418000AV2114;existence;dossier PDF;genere 200 (6 pages);dit « Filiation cadastrale : aucune filiation connue (parcelle stable) » — FAUX, disparue 2026-09-01 remplacee par AV2932/30/31

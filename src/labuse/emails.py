@@ -202,7 +202,10 @@ def digest_html_email(evenements: list[dict], marche: dict | None, top_chaudes: 
     return (f"<!doctype html><html><body style=\"margin:0;background:#ffffff;color:#1a1a1a;"
             f"font:14px/1.55 -apple-system,Segoe UI,Roboto,sans-serif\">"
             f"<div style=\"max-width:600px;padding:20px\">"
-            f"<p style=\"margin:0 0 14px;color:#666;font-size:13px\">LABUSE — votre point du jour</p>"
+            # CHASSE-DONNEES-FIX-1 (suite 2d, C-31) — la FENÊTRE est ÉCRITE (param `periode` jusqu'ici
+            # reçu mais jamais rendu) : l'aperçu (7 jours) et l'envoi (J-1) ne peuvent plus paraître
+            # identiques en silence — le client lit sur quelle période porte le point.
+            f"<p style=\"margin:0 0 14px;color:#666;font-size:13px\">LABUSE — votre point ({periode})</p>"
             f"{corps}{top}"
             f"<p style=\"margin:22px 0 0;color:#888;font-size:12px\">"
             f"<a href=\"{lien_prefs}\" style=\"color:{V}\">Régler la fréquence et vos préférences</a> "

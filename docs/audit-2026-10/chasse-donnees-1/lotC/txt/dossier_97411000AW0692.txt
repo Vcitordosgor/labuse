@@ -1,0 +1,548 @@
+D O S S I E R PA R C E L L E
+
+97411000AW0692
+93 Route de Bois de Nèfles (C.D. 49), 97400 Saint-Denis
+Saint-Denis
+
+
+DP-20261012-0692                12/10/2026         991 m²
+n° de rapport                   généré le          contenance
+
+
+
+   991 m²                                      Ud                                          5,5°
+   SURFACE                                     ZONE                                        PENTE
+
+
+
+
+   Nord                                        118 m²
+   EXPOSITION                                  SDP RESTANTE (BÂTI CONSERVÉ)
+
+
+
+
+1. Identité                                                          7. Fiscalité et dispositifs
+2. Terrain                                                           8. Marché
+3. Bâti                                                              9. Quartier
+4. Urbanisme                                                         10. Potentiel
+5. Risques et environnement                                          11. Simulation
+6. Réseaux et desserte                                               12. Limites et sources
+
+ sourcé      lu dans la source · ƒ dérivé calculé · estimé hypothèse dite · projet saisi par vous
+
+
+
+
+                                                         Généré via LABUSE                          1 / 10
+   1. Identité
+
+  Personne morale — SCI ALOE — propriétaire depuis au moins 2019.
+
+
+Adresse                                           93 Route de Bois de Nèfles (C.D. 49), 97400 Saint-Denis            sourcé
+
+
+Qui détient
+
+Type de propriétaire                              Personne morale — SCI ALOE (SIREN 913037362)                       sourcé
+
+
+Historique de détention (PM)                      ALOE VERA (2019–2025)                                              sourcé
+
+
+Historique cadastral
+
+Filiation cadastrale                              Issue de 97411000AW0123 (document d’arpentage,                     sourcé
+                                                  22/07/1993)
+
+Sur la parcelle
+
+Dernière vente (DVF)                              1 573 250 € — vente, 2024                                          sourcé
+
+
+Sur cette parcelle (permis)                       2 permis sur la parcelle (Sitadel) — PC — déposé                   sourcé
+                                                  2022-01-01, autorisé 2022-12-19 ; PC — déposé
+                                                  2013-01-01, autorisé 2014-02-11
+
+
+
+
+  Plan de situation — la parcelle (contour) et ses voisines · © IGN — BD ORTHO
+
+
+
+  VÉRIFIÉ : RIEN
+     • Copropriétés : aucune copropriété immatriculée sur la parcelle.
+
+
+Sources : Base Adresse Nationale · DGFiP — parcelles des personnes morales · DFI — documents de filiation informatisés
+(DGFiP) · DVF / valeurs foncières · SITADEL (autorisations d'urbanisme) · cadastre_epoque
+
+
+
+   2. Terrain
+
+  Pente 5,5° · 986 m² de sol libre.
+
+
+
+
+                                                             Généré via LABUSE                                           2 / 10
+Ce qu'il reste à bâtir
+
+Surface au sol libre                           986 m²                                                                     ƒ dérivé
+
+
+Couverture du sol
+
+Part artificialisée (OCS GE)                   89,1 %                                                                      sourcé
+
+
+Usage du sol dominant (OCS GE)                 Usage résidentiel                                                           sourcé
+
+
+Part imperméabilisée (CoSIA)                   99,9 %                                                                      sourcé
+
+
+Part végétalisée/boisée (CoSIA)                0,0 %                                                                       sourcé
+
+
+Part sol nu (CoSIA)                            0,0 %                                                                       sourcé
+
+
+
+  VÉRIFIÉ : RIEN
+     • Piscine détectée : aucune piscine repérée sur la parcelle.
+
+
+Sources : BD TOPO IGN · CoSIA (couverture du sol IA, IGN) · Cadastre (API Carto PCI) · OCS GE — occupation du sol et
+artificialisation (IGN)
+
+
+
+   3. Bâti
+
+   Parcelle non bâtie (aucun bâtiment cartographié).
+
+
+Ce qu'il y a dessus
+
+Bâtiments                                      0                                                                           sourcé
+
+
+Emprise bâtie                                  5 m²                                                                        sourcé
+
+
+Hauteur du bâti                                3,0 m                                                                       estimé
+
+
+Couverture du sol
+
+Bâti détecté CoSIA (hors BD TOPO)              801 m²                                                                      sourcé
+
+
+Identifiants et références
+
+Identifiants RNB                               3 identifiants RNB                                                          sourcé
+
+
+Adresses liées au bâti (BAN PLUS)              1                                                                           sourcé
+
+
+
+  NON DISPONIBLE ICI
+     • Pente du toit : non relevée (LiDAR toiture non calculé sur ce bâti).
+     • Forme du toit : non déterminée (pans non nets ou LiDAR indisponible).
+
+
+Sources : BD TOPO IGN · CoSIA (couverture du sol IA, IGN) · LiDAR HD — MNH 50 cm (IGN) · RNB — Référentiel national des
+bâtiments (IGN) · BAN PLUS — liens adresse-bâtiment (IGN)
+
+
+
+
+                                                         Généré via LABUSE                                                   3 / 10
+   4. Urbanisme
+
+  Zone Ud (famille U) — urbaine, constructible. Le document opposable du
+  Géoportail de l'urbanisme fait foi ; les valeurs de règle ci-dessous sont une aide à
+  la lecture.
+
+
+Rappel RTAA DOM                         Conception réglementée pour tout logement neuf              sourcé
+                                        (aération traversante, protection solaire, eau chaude
+                                        solaire) — à intégrer au projet.
+
+Droit des sols (ER · EBC · DPU · PEB)
+
+SCOT                                    DE LA CINOR                                                 sourcé
+
+
+Emplacement réservé (ER)                ER - Mise à l'alignement de la route de Bois de Nèfles en   sourcé
+                                        partie basse -14 m — 3,2 % de la parcelle
+
+Droit de préemption urbain (DPU)        Parcelle dans le périmètre du droit de préemption           sourcé
+                                        urbain (DPU) : la commune peut préempter à la vente
+
+Règlement
+
+PLU                                     PLU approuvé le 26/10/2013 — dernière évolution             sourcé
+                                        engagée le 29/11/2013 — version publiée au Géoportail
+                                        de l'urbanisme le 05/08/2026 (document opposable).
+
+
+Ce que le règlement fixe ici
+
+Règle                                   Valeur retenue
+
+Hauteur max                             non réglementé Art. Ud.10 · p.44                            sourcé
+
+
+Emprise au sol max                      80 % Art. Ud.9 · p.43                                       sourcé
+
+
+Recul sur voie                          3 m Art. Ud.6 · p.40                                        sourcé
+
+
+Recul limites séparatives               4 m Art. Ud.7 · p.42                                        sourcé
+
+
+Pleine terre min                        non réglementé                                              estimé
+
+
+Stationnement                           1 place / logement                                          sourcé
+
+
+
+
+                                                  Généré via LABUSE                                   4 / 10
+Ce que le règlement autorise ici
+
+Autorisées                                    Hébergement · Artisanat et commerce de détail ·                          sourcé
+                                              Restauration · Commerce de gros · Activités de services
+                                              où s'effectue l'accueil d'une clientèle · Cinéma · Hôtels ·
+                                              Autres hébergements touristiques · Locaux et bureaux
+                                              accueillant du public des administrations publiques et
+                                              assimilés · Locaux techniques et industriels des
+                                              administrations publiques et assimilés · Établissements
+                                              d'enseignement, de santé et d'action sociale · Salles
+                                              d'art et de spectacles · Équipements sportifs · Lieux de
+                                              culte · Autres équipements recevant du public · Bureau ·
+                                              Centre de congrès et d'exposition · Cuisine dédiée à la
+                                              vente en ligne
+
+Sous conditions                               Logement · Entrepôt                                                      sourcé
+
+
+Interdites                                    Exploitation agricole · Exploitation forestière · Industrie              sourcé
+
+
+Surface commerciale                           Au-delà de 1000 m² de surface de vente : autorisation                    sourcé
+                                              d'exploitation commerciale (CDAC)
+
+Règlement complet : 97411_PLU_20260805 sur le Géoportail de l'urbanisme. Les valeurs ci-dessus sont une aide à la lecture ;
+le règlement fait foi.
+
+
+  VÉRIFIÉ : RIEN
+    • Aucune servitude d'utilité publique (SUP) intersectant la parcelle, sur les assiettes publiées pour la commune (GPU).
+    • Hors espace boisé classé du PLU.
+    • Hors zones du plan d'exposition au bruit.
+
+
+
+  NON DISPONIBLE ICI
+    • Mixité sociale : seuils de la zone non renseignés à ce jour.
+
+
+Sources : Urbanisme PLU/GPU (API Carto) · Sudocuh (procédures d'urbanisme) · SCOT (GPU) · GPU — emplacements réservés
+(prescriptions CNIG) · GPU — droit de préemption urbain (info-surf)
+
+
+
+   5. Risques et environnement
+  VÉRIFIÉ : RIEN
+    • Aléas : aucun aléa réglementaire ne touche cette parcelle.
+    • Sols pollués (SIS) : la parcelle n'est dans aucun secteur d'information sur les sols.
+    • Système d'endiguement : la parcelle n'est dans aucune zone protégée déclarée.
+    • Anciens sites industriels (CASIAS) : aucun site recensé sur ou près de la parcelle.
+    • EnR au sol interdites (APER) : la parcelle n'est dans aucune zone d'exclusion.
+    • Mesure compensatoire (GéoMCE) : aucune mesure ne recoupe la parcelle.
+    • Aucun secteur d'information sur les sols ni site CASIAS à proximité.
+    • ABF / Monuments historiques : hors périmètre de protection.
+    • Cavités souterraines : aucune recensée à proximité.
+
+
+Sources : ABF / Monuments historiques · DEAL Réunion — PPR / aléas · Géorisques — mouvements de terrain · Géorisques — ICPE
+· Géorisques — cavités souterraines · Géorisques — sites et sols pollués · ZNIEFF (INPN/MNHN)
+
+
+
+
+                                                         Généré via LABUSE                                                5 / 10
+   6. Réseaux et desserte
+
+  Viabilisation probable — le tracé et la capacité exacts des réseaux ne sont pas
+  relevés à cette échelle : à confirmer auprès des gestionnaires par une DT-DICT.
+
+
+Fibre
+
+Fibre (FTTH)                                   Immeuble raccordable (Arcep)                                           sourcé
+
+
+Viabilisation
+
+Viabilisation                                  Viabilisation probable                                                 estimé
+
+
+Logements raccordés à l'égout                  Dans ce secteur IRIS « Clinique Sainte-Clotilde », 16 %                sourcé
+                                               des logements ne sont pas raccordés au réseau
+                                               collectif (INSEE RP2022). C'est un taux de SECTEUR, pas
+                                               l'état de cette parcelle. À vérifier auprès du SPANC.
+
+Accès
+
+Arrêt de transport le plus proche              Arrêt Les Hirondelles (Citalis) à 19 m · Collège                       sourcé
+                                               Montgaillard à 789 m · N6 à 37 m
+
+Stationnement allégé (TCSP, L151-36)           Station de transport en site propre à 927 m — hors                     sourcé
+                                               rayon de 800 m (pas d'allègement L151-36)
+
+
+  NON DISPONIBLE ICI
+    • Productible solaire : non calculé sur cette toiture.
+
+
+Sources : Fibre Arcep — Ma connexion internet (immeuble) · BD TOPO IGN · RGE ALTI (altimétrie) · Parkings OSM (loi APER) ·
+Transport public — GTFS (PAN, 7 réseaux) · OSM — transport (pôles d'échange & téléphérique) · INSEE RP2022 — fichier détail
+Logements (EGOUL) · GPU — zonages d'assainissement
+
+
+
+   7. Fiscalité et dispositifs
+
+  Zonage d'investissement locatif : B1 · 4 dispositifs territoriaux.
+
+
+Taxes
+
+Taxe foncière (bâti)                           part communale 36,73 % · TEOM 15,80 % · hors part                      sourcé
+                                               départementale et taxes spéciales
+
+Taxe d'aménagement — taux                      Taux communal 3,0 % — Taux communal en vigueur                         sourcé
+communal                                       depuis le 01/01/2022 (délibération communale). Se
+                                               calcule sur la surface de plancher créée par le projet —
+                                               montant chiffré dans le document Bilan.
+
+
+Zonage du logement                             Zonage d'investissement locatif : B1                                   sourcé
+
+
+
+
+                                                         Généré via LABUSE                                              6 / 10
+TVA outre-mer                                TVA outre-mer : 8,5 % (taux normal DOM) · 2,1 %                         sourcé
+                                             logement locatif social
+
+ZFANG                                        Régime standard (ZFANG, art. 44 quaterdecies CGI) —                     sourcé
+                                             sous réserve d'éligibilité de l'activité, abattement
+                                             d'environ 50 % sur les bénéfices — à confirmer auprès
+                                             d'un fiscaliste.
+
+FRR (ex-ZRR)                                 Commune classée FRR en partie — zone spéciale                           sourcé
+                                             d'action rurale des Hauts (décret 1978) ; position de
+                                             cette parcelle dans le périmètre non vérifiée
+                                             géométriquement. À La Réunion, ce classement n'ouvre
+                                             que les mesures NON FISCALES (FAQ FRR DGCL, juillet
+                                             2025) : l'exonération d'impôt de l'art. 44 quindecies A
+                                             CGI ne s'y applique pas — à confirmer par un fiscaliste.
+
+Quartier prioritaire (QPV)                   Bande autour d'un quartier prioritaire (TVA réduite                     sourcé
+                                             accession)
+
+Sources : Taux de taxe foncière — fichier REI (DGFiP) · QPV 2024 (ANCT) · NPNRU (DEAL Réunion / ANCT) · ZFANG — zone franche
+d'activité nouvelle génération (Légifrance) · FRR ex-ZRR — zone spéciale d'action rurale (Légifrance) · Taxe d'aménagement —
+barème public (DGFiP/DELTA)
+
+
+
+   8. Marché
+
+  Prix ancien médian 2 369 €/m² (561 ventes à moins de 500 m).
+
+
+Constaté — ventes actées (DVF)
+
+Ancien bâti — secteur                        2 369 €/m² — ancien, 561 ventes à moins de 500 m                        sourcé
+
+
+Ventes retenues                              561                                                                     sourcé
+
+
+Ventes écartées                              28                                                                      sourcé
+
+
+Affiché — neuf déclaré (VEFA)
+
+Neuf VEFA — commune                          4 878 €/m² — VEFA déclaré à l'acte, 355 ventes                          sourcé
+                                             (commune, 5 ans)
+
+Le secteur
+
+Ventes à moins de 100 m (36 mois)            26 ventes DVF · 2 permis (< 100 m, 36 mois)                             sourcé
+
+
+
+Appartement                                  2 104 €/m² — 247 ventes · secteur cadastral, 2021-2025                  sourcé
+
+
+Maison                                       2 454 €/m² — 12 ventes · secteur cadastral, 2021-2025                   sourcé
+
+
+
+  VÉRIFIÉ : RIEN
+    • Terrain nu — section cadastrale : échantillon DVF insuffisant pour une médiane fiable.
+    • Annonces en cours (Radar) : aucune annonce active repérée dans le secteur.
+
+
+
+
+                                                       Généré via LABUSE                                                7 / 10
+Sources : DVF / valeurs foncières
+
+
+
+   9. Quartier
+
+   Clinique Sainte-Clotilde — 5 750 habitants (RP2022 (parution 16/10/2025,
+   géographie 01/01/2024)).
+
+
+Le secteur
+
+Permis à proximité                             9 permis (< 500 m, 24 mois)                                                  sourcé
+
+
+À proximité
+
+À proximité (équipements)                      École : CAB EXPERT (40 m) · Commerces : TAMOIL FINETTE                       sourcé
+                                               (92 m) · Santé : SELARL DE CARDIOLOGIE DE LA CLINIQUE
+                                               SAINTE-CLOTILDE (71 m) · Arrêt de bus : Les Hirondelles
+                                               (19 m)
+
+
+
+  5 750                                        10,9 %                                       84,5 %
+  habitants, 3 014 ménages                     de 60 ans et plus                            de locataires
+
+
+
+Parc de logements du quartier                  3 441 logements, 9,0 % de vacance                                            sourcé
+
+
+Sources : INSEE RP2022 — bases IRIS (logement, population) · Contours IRIS (IGN/INSEE) · SITADEL (autorisations d'urbanisme) ·
+BPE INSEE · OpenStreetMap / Overpass
+
+
+
+   10. Potentiel
+
+   Potentiel de construction : Potentiel faible — parcelle proche de sa densité
+   autorisée — surface de plancher constructible restante (bâti conservé) ≈ 118 m².
+
+
+Ce qui est constructible
+
+Potentiel (verdict)                            Potentiel faible — parcelle proche de sa densité                             estimé
+                                               autorisée
+
+Capacité (logements)                           1                                                                            estimé
+
+
+
+  NON DISPONIBLE ICI
+     • Gabarit réglementaire : Limites de la parcelle non qualifiées (voie / limite séparative) — desservie par une voie privée :
+       le règlement ne précise pas le recul — non chiffré ici.
+     • Surface vendable non calculable pour cette parcelle.
+     • Marge de surélévation non calculable (hauteur de règle non déterminée).
+
+
+Sources : BD TOPO IGN · CoSIA (couverture du sol IA, IGN) · Urbanisme PLU/GPU (API Carto)
+
+
+
+
+                                                          Généré via LABUSE                                                    8 / 10
+   11. Simulation
+
+  Renseignez votre opération pour obtenir le bilan
+  Le bilan dépend de chiffres que vous seul connaissez : prix demandé par le vendeur, coût de construction,
+  marge visée. LABUSE ne les suppose pas à votre place. Le document Bilan les recueille et imprime le chiffre
+  d'affaires, la charge foncière supportable, l'écart au prix demandé et la sensibilité au coût de construction.
+
+
+
+
+   12. Limites et sources
+
+Ce que ce document ne peut pas dire
+
+Constructibilité définitive               Certificat d'urbanisme — mairie, service instructeur
+
+Valeur vénale                             Avis de valeur — notaire, expert
+
+État du bâti, servitudes privées          Visite et acte notarié
+
+Coût de démolition, de dépollution        Devis d'entreprise
+
+Réseaux et raccordements chiffrés         Gestionnaires, DT-DICT
+
+Position du propriétaire, prix demandé Contact direct ou apporteur d'affaires
+
+
+Sources
+
+SITADEL (autorisations d'urbanisme)       SDES (Dido)
+
+DVF / valeurs foncières                   DGFiP / Etalab — géo-DVF
+
+ABF / Monuments historiques               Base Mérimée (Ministère Culture)
+
+DGFiP — parcelles des personnes           DGFiP
+morales
+
+Géorisques — ICPE                         BRGM / Géorisques
+
+Géorisques — cavités souterraines         BRGM / Géorisques
+
+Géorisques — mouvements de terrain        BRGM / Géorisques
+
+OpenStreetMap / Overpass                  OSM
+
+BD TOPO IGN                               IGN / Géoplateforme
+
+RGE ALTI (altimétrie)                     IGN / Géoplateforme
+
+GPU — droit de préemption urbain          IGN / Géoportail de l'urbanisme (informations des PLU)
+(info-surf)
+
+GPU — emplacements réservés               IGN / Géoportail de l'urbanisme (prescriptions des PLU)
+(prescriptions CNIG)
+
+Urbanisme PLU/GPU (API Carto)             IGN / API Carto GPU
+
+
+
+
+                                                     Généré via LABUSE                                             9 / 10
+Document d'information établi à partir de données publiques. Il ne constitue ni un document d'urbanisme opposable, ni une
+étude de faisabilité réglementaire, ni un conseil juridique, et ne remplace pas un certificat d'urbanisme. Fonds
+cartographiques : © IGN, © contributeurs OpenStreetMap (ODbL).
+
+
+
+
+                                                      Généré via LABUSE                                              10 / 10
+

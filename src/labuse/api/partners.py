@@ -423,7 +423,7 @@ def share_public(token: str, db: Session = Depends(get_db)) -> str:
   {ev}
   <h1 style="font:600 18px monospace;color:#8FA69A;margin:16px 0 2px">{f['idu']}</h1>
   {f'''<p style="font:600 17px sans-serif;color:#ECF5EF;margin:2px 0 0">{f["adresse"]}</p>''' if f.get("adresse") else ""}
-  <p style="color:#8FA69A;font-size:12px;margin:3px 0 0">{f['surface_m2'] or '?'} m² · {f['commune']}</p>
+  <p style="color:#8FA69A;font-size:12px;margin:3px 0 0">{(f.get('surface_terrain_m2') if f.get('surface_terrain_m2') is not None else f.get('surface_m2')) or '?'} m² · {f['commune']}</p>
   {photo}
   <div style="display:flex;gap:10px;margin:14px 0">
     <div style="flex:1;background:#111814;border-radius:8px;padding:10px 14px">
@@ -507,12 +507,17 @@ def api_v1_parcels(key: str | None = None, statut: str | None = None, min_q: int
                d.completeness_score, r.sdp_residuelle_m2
         FROM parcels p
         JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
-        LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :run
+        -- CHASSE-DONNEES-FIX-1 (Lot 3, C-11) — le tier se lit au run SCORING (:v2run = q_v18), pas
+        -- au run CASCADE (:run = q_v18_sources, 0 ligne dans parcel_p_score_v2) → statut null partout
+        -- et filtre ?statut= cassé. Même séparation que le builder tuiles (:run vs :v2run).
+        LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
         LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
         WHERE p.commune = :c AND d.opportunity_score >= :q
           AND (CAST(:s AS text) IS NULL OR s2.tier = :s)
-        ORDER BY d.opportunity_score DESC LIMIT :lim OFFSET :off"""),
-        {"run": runs.cascade(), "c": commune, "q": min_q, "s": statut, "lim": limit, "off": offset}).mappings().all()
+        -- C-27 : départage déterministe par p.idu (539 ex æquo à Cilaos) → pagination stable.
+        ORDER BY d.opportunity_score DESC, p.idu ASC LIMIT :lim OFFSET :off"""),
+        {"run": runs.cascade(), "v2run": runs.current(), "c": commune, "q": min_q,
+         "s": statut, "lim": limit, "off": offset}).mappings().all()
     return {"count": len(rows), "offset": offset, "demo": demo,
             # M37 : étiquette VRAIE — le robinet sert le classement servi (tiers).
             "mention": (f"Démonstration LABUSE — données RÉELLES, commune {_DEMO_COMMUNE}, "

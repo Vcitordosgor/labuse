@@ -89,6 +89,10 @@ def voisinage_proche(db: Session, idu: str) -> dict | None:
           SELECT m.id_mutation, max(m.valeur_fonciere) AS valeur
           FROM dvf_mutations_parcelle m JOIN parcels dp ON dp.idu = m.id_parcelle, a, since
           WHERE m.date_mutation >= since.d AND m.id_parcelle <> :idu
+            -- CHASSE-DONNEES-FIX-1 (Lot 7, E-75) — « ventes » = VENTES (nature ILIKE 'vente%'),
+            -- plus les échanges/adjudications/expropriations comptés comme ventes (AD0220 : « 1 vente »
+            -- là où il y a 1 échange). Même prédicat que zone.py (le reste du produit filtre la nature).
+            AND m.nature_mutation ILIKE 'vente%'
             AND ST_DWithin(a.g, dp.geom_2975, {RAYON_M})
           GROUP BY m.id_mutation)
         SELECT
