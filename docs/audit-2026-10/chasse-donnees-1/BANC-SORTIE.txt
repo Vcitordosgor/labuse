@@ -1,0 +1,16 @@
+[ECART] surface-tuile-vs-fiche — fiche 25633 m² (contenance) vs tuile 27156 m² (dessin)
+[ECART] export-surface — export sert le dessin 27 156 m², fiche = contenance 25 633
+[ECART] export-cascade — export « Ont répondu : — » (cascade vide, mauvais run)
+[ECART] export-disparue — fiche dit « disparue », export muet
+[ECART] partner-statut — jointure partner au run cascade q_v18_sources = 0 ligne (scoring q_v18 = 433229) → statut null
+[OK] courrier-zone-bizone — zone unique « A »
+[OK] compteurs-commune — compte = idus = stats sur 3 communes
+[ECART] accueil-totaux — chiffres 433229 vs fraicheur [434582] (disparues non filtrées)
+[ECART] prix-ancien-unique — 6/24 communes divergent — L'Étang-Salé: fiche 3737 vs kanban 3938 ; La Possession: fiche 2843 vs kanban 2901 ; Les Trois-Bassins: fiche 2444 vs kanban 2618
+[ECART] sirene-etat — SCI cessée 08/07/2026 servie active (proprietaire_moral.identite.actif)
+[ECART] bodacc-fraicheur — bodacc_annonces_owner gelée au 2026-07-09 vs procedures 2026-08-21 (43 j)
+[ECART] zero-menteur-nu — taux_emprise NULL (rendu 0 → « Nu ») sur parcelle que la fiche dit bâtie
+[ECART] cloche-fraicheur — detect_events jamais rejoué pour q_v18 — dernière bascule cloche : q_v2_demo du 26/08/2026
+[ECART] digest-vs-cloche — 0 recouvrement : digest 5 IDU, cloche 500
+
+Bilan : 2 OK · 12 ECART · 0 SKIP (14 gardes)
