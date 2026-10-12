@@ -397,12 +397,12 @@ SQL"
 ```
 **Vérif** : page Sources prod → CatNat « …28/09/2026 », AZI « …14/09/2026 » (= `max()` des tables).
 
-### 9.6 — Décision Vic (hors geste technique)
-- **D-64** — 17 vitrines sans `source_millesime` (SIRENE, INPI, SRU, RP Logement…) : la donnée est
-  datée EN TABLE mais la vitrine n'affiche rien. **Afficher ou non** = arbitrage Vic (doctrine
-  PAGE-SOURCES-1) — hors de ce déploiement.
-- **C-38** — libellé RNU : le Comparatif dit « hors zonage PLU », la fiche « commune au RNU » (même
-  fait, phrasé différent, **aucune valeur fausse**) — laissé tel quel (choix assumé DOCS-FIX-1 P5).
+### 9.6 — Décisions actées (aucun geste technique)
+- **D-64 — FERMÉ par décision (Vic)** : les 17 vitrines sans `source_millesime` restent telles
+  quelles. Les **dates des sources sont réservées à l'ADMIN** (circuit/registre), pas exposées au
+  client — **rien à changer côté client**. La donnée reste datée en table pour l'exploitation interne.
+- **C-38 — gardé tel quel** : le Comparatif dit « hors zonage PLU », la fiche « commune au RNU »
+  (même fait, phrasé différent, **aucune valeur fausse**) — choix assumé DOCS-FIX-1 P5, non rouvert.
 
 ### 9.7 — Vérification du fix (banc rejouable)
 ```bash
