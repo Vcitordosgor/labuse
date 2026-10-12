@@ -1,0 +1,631 @@
+parcels;DGFiP-Etalab cadastre;src/labuse/api/projets.py:162;opportunites-par-commune;JOIN parcel_p_score_v2 run servi tier servables, GROUP BY p.commune;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/projets.py:299;page-shortlist-cadrage;WHERE surface_m2>=MIN_DISPLAY, run cascade+v2, ORDER BY rang LIMIT OFFSET;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/projets.py:330;compte-triables-cadrage;run_label cascade, NOT etage0, cadrage;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/projets.py:350;total-cadrage;surface_m2>=minsurf, FILTER etage0, run cascade+v2;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/projets.py:684;statuts-shortlist-projet;WHERE pp.projet_id=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/projets.py:689;lookup-id-parcelle;WHERE idu=ANY(param);
+parcels;DGFiP-Etalab cadastre;src/labuse/api/projets.py:698;exclues-run-precedent;run_label=prev, status exclue, idu=ANY;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/projets.py:718;maj-hors-criteres;UPDATE projet_parcelles FROM parcels, par.id=pp.parcel_id;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/projets.py:831;projets-de-parcelle;WHERE par.idu=param + cloison compte_id;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/projets.py:1014;compteurs-tiers-cadrage;surface_m2>=minsurf, FILTER tier brulante/chaude;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/projets.py:1031;decidees-par-tier;pp.projet_id=param, statut retenue/ecartee;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/projets.py:1134;decidees-projet;pp.projet_id=param, statut<>proposee;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/projets.py:1162;enrichissement-shortlist;idu=ANY, lit surface_m2+contenance_m2, centroide ST_Centroid(geom_2975)→4326;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/projets.py:1186;evenement-rouge-batch;run cascade, evenement=rouge, idu=ANY;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/projets.py:1283;lookup-id-parcelle;WHERE idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/projets.py:1333;lookup-id-parcelle;WHERE idu=ANY(param);
+parcels;DGFiP-Etalab cadastre;src/labuse/api/projets.py:1357;lookup-id-parcelle;WHERE idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/projets.py:1447;shortlist-pdf;pp.projet_id, statut<>ecartee, surface=round(surface_m2);LATENT: surface servie = surface_m2 (dessin) sans contenance_m2
+parcels;DGFiP-Etalab cadastre;src/labuse/api/projets.py:1468;parts-zone-plu-shortlist;ST_Intersects(sl.geom_2975,par.geom_2975), pct=ST_Area(intersection)/ST_Area(par.geom_2975);LATENT: denominateur part = ST_Area(geom_2975) jamais contenance
+parcels;DGFiP-Etalab cadastre;src/labuse/api/projets.py:1615;export-csv-cadrage;surface_m2>=minsurf, surface=round(surface_m2), run cascade+v2;LATENT: surface servie = surface_m2 (dessin) sans contenance_m2
+parcels;DGFiP-Etalab cadastre;src/labuse/api/modules.py:114;recalcul-division-commune;INSERT module_division SELECT, p.commune=param, emprise=ST_Area(ST_Intersection bati)/ST_Area(geom_2975);
+parcels;DGFiP-Etalab cadastre;src/labuse/api/modules.py:186;listing-division;m.score>=param, p.commune=param optionnel, NOT etage0, ORDER score LIMIT;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/modules.py:194;compte-division;m.score>=param, commune optionnel, FILTER etage0;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/modules.py:231;autocomplete-proprietaire;JOIN p.idu=pm.idu, denomination LIKE param, LIMIT 12;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/modules.py:313;patrimoine-siren;pm.siren=param, lit surface_m2+contenance_m2, run cascade+v2, ORDER rang;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/modules.py:365;ecartees-par-compte-projets;compte_id, statut ecartee, idu=ANY;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/modules.py:372;ecartees-par-compte-pipeline;compte_id, archived_at NOT NULL, idu=ANY;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/modules.py:413;assiette-contigue-portefeuille;self-join parcels a/b ST_DWithin(geom_2975, ADJ_BUFFER_M), id=ANY;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/modules.py:475;geometrie-page-patrimoine;idu=ANY, ST_AsGeoJSON(geom_2975→4326);
+parcels;DGFiP-Etalab cadastre;src/labuse/api/modules.py:539;filtre-permis-etat-autre;EXISTS JOIN idu_codes sitadel, run cascade, pas bati HARD_EXCLUDE;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/modules.py:740;permis-voisins-via;WHERE idu=param puis ST_DWithin(geom_2975, w.g, 200);
+parcels;DGFiP-Etalab cadastre;src/labuse/api/modules.py:804;promesses-pc-dormants;JOIN idu_codes sitadel, run cascade, surface=round(surface_m2);LATENT: surface servie = surface_m2 (dessin) sans contenance_m2
+parcels;DGFiP-Etalab cadastre;src/labuse/api/modules.py:920;compte-solaire;p.commune=param optionnel, filtres parcel_solar;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/modules.py:1026;fiche-solaire-parcelle;ps.idu=param, ST_Intersects enr_exclue(geom_2975);
+parcels;DGFiP-Etalab cadastre;src/labuse/api/modules.py:1116;veille-succession-liste;commune optionnel, sdp_min, surface=round(surface_m2);LATENT: surface servie = surface_m2 (dessin) sans contenance_m2
+parcels;DGFiP-Etalab cadastre;src/labuse/api/modules.py:1559;societes-dormantes-liste;commune optionnel, run cascade+v2, tier NOT etage0, ORDER rang LIMIT 600;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/modules.py:1575;societes-dormantes-total;commune optionnel, run cascade+v2, memes filtres;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/modules.py:1630;qpv-liste;ST_Intersects(p.geom_2975, q.geom_2975) kind=qpv, commune optionnel, surface=round(surface_m2), geom_2975→4326, LIMIT 500;LATENT: surface servie = surface_m2 (dessin) sans contenance_m2
+parcels;DGFiP-Etalab cadastre;src/labuse/api/modules.py:1640;qpv-total;EXISTS ST_Intersects qpv, commune optionnel, run+v2;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/modules.py:1711;lookup-refs-cadastrales;idu=param OR section||numero=param, surface=round(surface_m2), LIMIT 1;LATENT: surface servie = surface_m2 (dessin) sans contenance_m2
+parcels;DGFiP-Etalab cadastre;src/labuse/api/modules.py:1821;lookup-parcelle-bilan;WHERE idu=param, surface=round(surface_m2);LATENT: surface servie = surface_m2 (dessin) sans contenance_m2
+parcels;DGFiP-Etalab cadastre;src/labuse/api/modules.py:1889;qpv-parcelle;idu=param, ST_Intersects(p.geom_2975, q.geom_2975) LIMIT 1;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/modules.py:1925;lookup-id-parcelle;WHERE idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/modules.py:1964;lookup-id-parcelle;WHERE idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/modules.py:2004;lookup-calculette;WHERE idu=param, surface=round(surface_m2);LATENT: surface servie = surface_m2 (dessin) sans contenance_m2
+parcels;DGFiP-Etalab cadastre;src/labuse/api/modules.py:2142;lookup-faisa-explain;WHERE idu=param, surface=round(surface_m2);LATENT: surface servie = surface_m2 (dessin) sans contenance_m2
+parcels;DGFiP-Etalab cadastre;src/labuse/api/modules.py:2195;lookup-idu-commune;WHERE idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:2104;stats-communes-classement;GROUP BY p.commune, ST_Extent(p.geom) 4326, LEFT JOIN score v2;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:2147;surface-commune-ha;WHERE commune=param, sum(surface_m2);LATENT: surface commune = somme dessin surface_m2, pas contenance
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:2155;compte-evaluees-commune;commune=param JOIN score v2 run;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:2157;compte-sans-zonage;commune=param, NOT EXISTS parcel_zone_plu;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:2173;stock-opportunites-commune;commune=param, tier chauds, sum(surface_m2);LATENT: somme dessin surface_m2, pas contenance
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:2541;parcelle-au-point;ST_Contains(geom 4326, ST_MakePoint(lon,lat)) LIMIT 1;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:2555;geojson-parcelle;WHERE idu=param, geom 4326 + ST_Centroid;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:2573;kmz-parcelle;idu=param, ST_AsKML(geom), surface=surface_terrain(COALESCE contenance_m2,surface_m2);
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:2679;omnibox-recherche-idu;idu ILIKE pattern, commune optionnel, cadastre_disparue_le IS NULL, LIMIT;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:2798;zones-interdites-destination;DISTINCT p.commune + z.zone_lib, JOIN parcel_zone_plu;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:2879;filtre-idus-carte;run resolu cascade, commune optionnel, surface_m2>=minsurf, CAP;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:2973;prefill-taxe-amenagement;idu=param, surface=COALESCE(contenance_m2,surface_m2);
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:3220;lookup-idu-par-id;WHERE id=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:3336;geojson-listing-parcelles;commune optionnel, surface_m2>=minsurf, run cascade+v2;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:3346;cluster-meme-proprietaire;run, tier chauds, GROUP BY siren HAVING>1;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:3364;flags-par-parcelle;scope commune=param, SOFT_FLAG + abf UNKNOWN;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:3661;page-listing-rapide-rang;s2.run_id=param, commune optionnel, ORDER rang LIMIT;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:3693;page-listing-general;run cascade, commune optionnel, tris param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:3722;cluster-meme-proprietaire;MATERIALIZED, run, tier chauds, siren HAVING>1;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:3929;compteurs-listing-tiers;run cascade, commune optionnel, FILTER par tier;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:3942;dossiers-listing;run, tier chauds, commune optionnel, count DISTINCT siren;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:3984;segments-listing;run, NOT etage0, commune optionnel, etat nu/bati;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:4006;bandes-score-labuse;run + sl_run, commune optionnel, GROUP BY bande;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:4026;croisement-bande-signal;run + sl_run, commune optionnel, GROUP BY bande+signal;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:4106;tete-fiche-parcelle;idu=param + run_label, lit surface_m2+contenance_m2 (surface_terrain), centroide geom_2975→4326;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:4358;carreau-filosofi-fiche;idu=param, ST_Contains(f.geom, ST_Transform(p2.centroid,2975)) LIMIT 1;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:4418;anru-proximite-fiche;idu=param, ST_DWithin(geom_2975, a.geom_2975, 100);
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:4588;sols-pollues-fiche;idu=param, ST_DWithin 100m, part=ST_Area(intersection)/ST_Area(geom_2975);
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:4708;dispositifs-dpu-peb-sup;idu=param, ST_Intersects, part=ST_Area(intersection)/ST_Area(geom_2975);
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:4725;dispositifs-materialise;idu=param, part=pci.area_m2/ST_Area(geom_2975);
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:4791;commune-de-parcelle;WHERE idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:5094;qpv-fiche;idu=param, ST_Intersects(p.geom_2975, sl.geom_2975) LIMIT 1;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:5098;tva-primo-fiche;idu=param, ST_Intersects LIMIT 1;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:5102;anru-fiche;idu=param, ST_Intersects LIMIT 1;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:5968;zones-plu-fiche;idu=param, part=sum(ST_Area(intersection))/ST_Area(geom_2975), GROUP BY zone;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:5999;lookup-id-parcelle;WHERE idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:6037;potentiel-transformation-fiche;idu=param, LEFT JOIN parcel_residuel + zone_plu;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:6304;remplacantes-parcelle-disparue;r.ancienne_idu=param, p.cadastre_disparue_le IS NULL, ORDER recouvrement;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:6334;marqueur-parcelle-disparue;idu=param AND cadastre_disparue_le IS NOT NULL;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:6413;lookup-id-exposition;WHERE idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:6431;lookup-id-hauteur-lidar;WHERE idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:6456;lookup-id-profil-alti;WHERE idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:6499;centroide-isochrone;idu=param, ST_Centroid(centroid) colonne centroid;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:6519;revenu-filosofi-isochrone;idu=param, ST_Contains(f.geom, ST_Transform(p.centroid,2975)) LIMIT 1;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:6586;centroide-etude-marche;idu=param, ST_Centroid(centroid);
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:6668;centroide-etude;idu=param, ST_Centroid(centroid);
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:6708;lookup-calculette;idu=param, surface=round(surface_m2);LATENT: surface servie = surface_m2 (dessin) sans contenance_m2
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:6989;ids-commune-bati-ratio;WHERE commune=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:7015;hauteur-lidar-batiments-carte;LATERAL ST_Intersects(p.geom_2975, sl.geom_2975), bhl.idu=p.idu LIMIT 1;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:7069;contiguite-assemblage;id=ANY, ST_NumGeometries(ST_Union(ST_Buffer(geom_2975, ADJ_BUFFER_M/2)))=1;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:7112;export-servables;JOIN score v2 run servi, tier servables;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:7192;renouvellement-geojson;r.run_label=run servi, commune optionnel, ST_AsGeoJSON(p.geom 4326), LIMIT;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:7197;renouvellement-meta;r.run_label=run servi, commune optionnel, count+max;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:7255;renouvellement-liste;run servi + cascade resolu, commune optionnel, tri param LIMIT OFFSET;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:7266;renouvellement-meta2;r.run_label, commune optionnel;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:7442;piscine-ratio-ortho;idu=param, ratio=ST_Area(ST_Intersection MakeValid)/ST_Area(detection), ST_Contains centroide;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:8154;lookup-id-comparer;WHERE idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/app.py:8524;statut-cascade-parcelle;run resolu cascade, d.parcel_id=param, LEFT JOIN parcels;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/scoreur.py:104;verdict-parcelle-adresse;WHERE idu=param OU ST_Contains(geom,point BAN) ORDER BY surface_m2 DESC LIMIT 1, surface=round(COALESCE(contenance_m2,surface_m2));
+parcels;DGFiP-Etalab cadastre;src/labuse/api/scoreur.py:141;lookup-parcelle;WHERE idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/scoreur.py:199;lookup-parcelle;WHERE idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/enrichment.py:82;surface-parcelle;surface=ST_Area(geom_2975) WHERE id=param (densité d'échantillonnage);
+parcels;DGFiP-Etalab cadastre;src/labuse/api/enrichment.py:89;echantillon-points-parcelle;ST_GeneratePoints(geom) WHERE id=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/enrichment.py:90;centroide-parcelle;ST_Centroid(geom) WHERE id=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/enrichment.py:102;geometrie-parcelle;contour ST_Boundary(ST_Simplify geom 0.00003) WHERE id=param LIMIT 80;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/enrichment.py:163;exposition-parcelle;centroid + sqrt(ST_Area(geom_2975)) WHERE id=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/enrichment.py:198;forme-parcelle;ST_Area/ConvexHull/OrientedEnvelope(geom_2975) WHERE id=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/enrichment.py:228;perimetre-parcelle;ST_Perimeter(geom_2975) WHERE id=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/enrichment.py:236;facade-rue;segments ST_Boundary(geom_2975) JOIN voirie ST_DWithin tol param, plus proche par segment, WHERE id=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/enrichment.py:289;geometrie-parcelle;ST_AsGeoJSON(geom) WHERE id=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/enrichment.py:375;proprietaire-parcelle;JOIN parcelle_personne_morale ON idu WHERE p.id=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/enrichment.py:454;distance-voirie;LATERAL voirie WHERE commune=p.commune KNN <-> LIMIT 1, WHERE id=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/enrichment.py:558;prechauffe-enrichissement;centroid, JOIN score run servi, WHERE commune=param AND tier servable;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/ortho.py:36;equipements-parcelle;LEFT JOIN parcel_equipements/parcel_terrain ON idu WHERE idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/accueil.py:81;compteur-communes;count(DISTINCT commune) sans filtre;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/accueil.py:92;compteur-communes-calibrees;JOIN parcel_zone_plu USING(idu) GROUP BY commune HAVING count>=100;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/accueil.py:189;compteur-parcelles;count(*) sans filtre;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/nl_aggregate.py:45;agregat-tiers;base _BASE LEFT JOIN dryrun evals (run cascade) + score v2 (run servi), filtres commune/tier dynamiques;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/partners.py:110;match-partenaires;JOIN event_log bascules chaude + match_profiles bornes surface sur p.surface_m2;LATENT: criteres surface_min/max compares au dessin surface_m2 alors que le robinet partenaire sert COALESCE(contenance_m2,surface_m2)
+parcels;DGFiP-Etalab cadastre;src/labuse/api/partners.py:137;compatibilite-profil;WHERE idu=param, surface=round(surface_m2);LATENT: surface servie=surface_m2 dessin (fiche sert contenance)
+parcels;DGFiP-Etalab cadastre;src/labuse/api/partners.py:217;existence-parcelle;WHERE idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/partners.py:390;geometrie-parcelle;ST_AsGeoJSON(ST_Transform(geom_2975,4326)) WHERE idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/partners.py:508;liste-partenaire;WHERE commune=param AND score>=q, surface=round(COALESCE(contenance_m2,surface_m2)), LIMIT/OFFSET;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/traducteur.py:119;lookup-parcelle;WHERE idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/voisinage.py:54;parcelles-voisines;parcelle courante WHERE id=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/voisinage.py:55;parcelles-voisines;JOIN parcels n ST_DWithin(geom_2975) 0.5m (ADJ_BUFFER_M), n.surface_m2>=100, LIMIT 8;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/carnet.py:71;stock-secteurs;JOIN score v2 run servi, commune optionnelle, GROUP BY left(idu,10);
+parcels;DGFiP-Etalab cadastre;src/labuse/api/carnet.py:90;commune-secteur;WHERE left(idu,10)=param LIMIT 1;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/carnet.py:119;signaux-secteur;JOIN parcel_signals, WHERE left(idu,10)=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/moteurs.py:64;ratio-sdp-zone;JOIN cascade run, commune optionnelle, mediane sdp_residuelle/surface_m2;LATENT: ratio calcule sur surface_m2 dessin (pas contenance)
+parcels;DGFiP-Etalab cadastre;src/labuse/api/moteurs.py:82;agregat-zone-plu;JOIN cascade run, detail ILIKE zone, surface_m2>=300, commune optionnelle;LATENT: seuil 300 m2 sur surface_m2 dessin
+parcels;DGFiP-Etalab cadastre;src/labuse/api/moteurs.py:94;liste-zone-plu;memes filtres + geojson, surface=round(surface_m2), pagination;LATENT: surface servie=surface_m2 dessin
+parcels;DGFiP-Etalab cadastre;src/labuse/api/moteurs.py:173;assiette-assemblage;WHERE idu=ANY(param), surface=round(surface_m2);LATENT: surface servie=surface_m2 dessin
+parcels;DGFiP-Etalab cadastre;src/labuse/api/moteurs.py:184;contiguite-assemblage;self-join ST_DWithin(geom_2975) 0.5m (ADJ_BUFFER_M), ids ANY(param);
+parcels;DGFiP-Etalab cadastre;src/labuse/api/moteurs.py:286;lookup-parcelle;WHERE idu=param + siren PM;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/moteurs.py:305;parcelles-voisines;parcelle courante WHERE a.id=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/moteurs.py:306;parcelles-voisines;JOIN parcels b ST_DWithin(geom_2975) 0.5m (ADJ_BUFFER_M), surface=round(b.surface_m2);
+parcels;DGFiP-Etalab cadastre;src/labuse/api/moteurs.py:367;existence-parcelle;WHERE idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/moteurs.py:541;existence-parcelle;WHERE idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/moteurs.py:639;lookup-parcelle;WHERE idu=param (id+commune);
+parcels;DGFiP-Etalab cadastre;src/labuse/api/moteurs.py:644;occupation-sol-parcelle;JOIN spatial_layers ocs_ge ST_Intersects, somme aire intersection, pp.id=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/moteurs.py:648;friche-parcelle;EXISTS spatial_layers friche ST_Intersects, pp.id=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/moteurs.py:697;liste-zan;JOIN cascade ocs_ge weight>0, tiers servis, surface=round(surface_m2), LIMIT 400;LATENT: surface servie=surface_m2 dessin
+parcels;DGFiP-Etalab cadastre;src/labuse/api/moteurs.py:807;commune-par-insee;WHERE left(idu,5)=param LIMIT 1;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/recherche.py:128;suggestion-parcelle;WHERE section=param AND numero=param/LIKE, surface_m2 + ST_Centroid(geom), LIMIT n;LATENT: surface affichee=surface_m2 dessin (fiche sert contenance)
+parcels;DGFiP-Etalab cadastre;src/labuse/api/recherche.py:134;suggestion-parcelle;WHERE idu LIKE prefixe%, surface_m2 + ST_Centroid(geom), LIMIT n;LATENT: surface affichee=surface_m2 dessin
+parcels;DGFiP-Etalab cadastre;src/labuse/api/documents_bibliotheque.py:92;projet-parcelle;JOIN projet_parcelles/projets, WHERE pa.idu=param + scope compte;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/documents_bibliotheque.py:102;commune-parcelle;WHERE idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/fiche_blocs3.py:46;friche-parcelle;JOIN spatial_layers friche ST_Intersects(geom_2975), idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/fiche_blocs3.py:98;trafic-rn-proche;ST_DWithin(centroid::geography) 300m (TMJA_RAYON_M) ORDER BY dist LIMIT 1, idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/fiche_blocs3.py:154;acquereurs-voisins;parcelle p0 WHERE idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/fiche_blocs3.py:155;acquereurs-voisins;JOIN parcels p2 ST_DWithin(geom_2975) 300m (PM_VOISIN_RAYON_M) + DVF fenetre mois param, LIMIT 20;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/fiche_blocs3.py:215;zones-enr-exclues;JOIN spatial_layers enr_exclue_hors_toiture ST_Intersects, idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/fiche_blocs3.py:239;mesures-compensatoires;JOIN spatial_layers mesures_compensatoires ST_Intersects, idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/fiche_blocs3.py:262;scot-parcelle;JOIN spatial_layers scot ST_Intersects, idu=param, LIMIT 1;LATENT: SCOT parcelle par ST_Intersects vs SCOT commune par ST_Contains du centroide (fiche_commune.py:278) - debordements de bord admis ici
+parcels;DGFiP-Etalab cadastre;src/labuse/api/tiles.py:94;zone-plu-dominante;build parcel_zone_plu, JOIN zones && + ST_Intersects(geom_2975), DISTINCT ON idu ORDER BY aire intersection DESC;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/tiles.py:186;tuiles-parcelles;build mvt_parcels, JOIN evals cascade run + score v2 + residuel, WHERE cadastre_disparue_le IS NULL, porte p.surface_m2;LATENT: tuile porte surface_m2 dessin (pas contenance)
+parcels;DGFiP-Etalab cadastre;src/labuse/api/tiles.py:375;compteur-parcelles;count(*) sans filtre;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/tiles.py:378;commune-defaut;GROUP BY commune ORDER BY count DESC LIMIT 1;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/tiles.py:381;compteur-parcelles-commune;count(*) WHERE commune=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/tiles.py:395;banc-tuiles;table temporaire, meme requete mvt scopee WHERE commune=param (mesure seule);
+parcels;DGFiP-Etalab cadastre;src/labuse/api/gabarit.py:48;bati-parcelle;JOIN spatial_layers batiment ST_Intersects + aire intersection >=50% ou >=20 m2, idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/veille_promoteurs.py:290;parcelles-promoteur;JOIN parcelle_personne_morale WHERE siren=param GROUP BY commune LIMIT 20;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/division_review.py:26;geometrie-division;WHERE idu=param, bati ST_Intersects, voirie ST_DWithin 30m, lot run servi;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/events.py:522;bascules-tier;JOIN score v2 runs from/to, tiers prioritaires, p.idu;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/events.py:541;evenements-bodacc;JOIN cascade runs from/to, evenement=rouge;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/events.py:572;bascules-suivies;JOIN score runs + watched_parcels, tiers prioritaires;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/events.py:747;notifications-cloche;LEFT JOIN p ON idu + evals cascade run, LIMIT/OFFSET;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/events.py:845;existence-parcelle;WHERE idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/events.py:886;existence-parcelle;WHERE idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/events.py:915;parcelles-suivies;watched_parcels LEFT JOIN p ON idu, compte_id=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/events.py:1109;communes-suivies;DISTINCT commune JOIN watched_parcels WHERE compte_id=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/events.py:1126;digest-evenements;LEFT JOIN p ON idu, fenetre jours param, kinds digest, LIMIT 20;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/events.py:1143;digest-marche;LEFT JOIN p ON idu, commune=ANY(communes suivies), 7 jours;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/events.py:1155;top-opportunites;JOIN score run servi tiers chauds, surface=round(surface_m2), ORDER rang LIMIT 5;LATENT: surface servie=surface_m2 dessin
+parcels;DGFiP-Etalab cadastre;src/labuse/api/events.py:1203;brief-quotidien;LEFT JOIN p ON idu, 24h, GROUP BY commune;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/bilan.py:311;commune-parcelle;WHERE idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/onboarding.py:908;lookup-parcelle;WHERE idu=param (ref compactee);
+parcels;DGFiP-Etalab cadastre;src/labuse/api/onboarding.py:917;lookup-parcelle-reference;WHERE commune pliee=param AND substr(idu,9,6)=section+numero LIMIT 1;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/onboarding.py:1002;parcelle-par-point;ST_Contains(geom, point BAN) LIMIT 1 sans tri;LATENT: rattachement point-parcelle divergent du scoreur (ORDER BY surface_m2 DESC la-bas, premier venu ici)
+parcels;DGFiP-Etalab cadastre;src/labuse/api/onboarding.py:1008;parcelle-par-point;repli ST_DWithin(geom::geography) 40m KNN <-> LIMIT 1;LATENT: repli 40 m absent du chemin scoreur (adresse hors parcelle = echec la-bas)
+parcels;DGFiP-Etalab cadastre;src/labuse/api/onboarding.py:1031;apercu-parcelle;WHERE idu=param, surface=round(surface_m2), geom simplifiee 0.5m en 3857;LATENT: m2 affiches=surface_m2 dessin (fiche sert contenance)
+parcels;DGFiP-Etalab cadastre;src/labuse/api/onboarding.py:1107;existence-parcelle;WHERE idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/fiche_commune.py:83;compteur-parcelles-commune;count(*) WHERE commune=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/fiche_commune.py:105;parc-national-commune;EXISTS JOIN spatial_layers parc_national ST_Intersects WHERE commune=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/fiche_commune.py:147;niveau-vie-commune;EXISTS parcelle WHERE commune=param ST_Intersects centroide carreau Filosofi;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/fiche_commune.py:278;scot-commune;ST_Centroid(ST_Collect(geom_2975)) WHERE commune=param puis ST_Contains par le SCOT;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/fiche_commune.py:501;compteur-piscines-commune;JOIN parcel_equipements ON idu WHERE commune=param AND piscine;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/rarete.py:37;stock-foncier-zan;sum(surface_m2)/10000 par left(idu,5), JOIN score run servi tiers chauds;LATENT: stock ha somme sur surface_m2 dessin (pas contenance)
+parcels;DGFiP-Etalab cadastre;src/labuse/api/site_voisinage.py:86;ventes-voisines;parcelle de reference WHERE idu=param (geom_2975);
+parcels;DGFiP-Etalab cadastre;src/labuse/api/site_voisinage.py:90;ventes-voisines;JOIN parcels dp via DVF id_parcelle, ST_DWithin 100m (profil voisinage_100m), 36 mois, parcelle exclue;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/anti_fiche.py:45;lookup-parcelle;WHERE idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/servitudes.py:260;risques-ppr-parcelle;WHERE idu=param, pct=aire intersection PPR / ST_Area(geom_2975), ST_Intersects;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/servitudes.py:300;aleas-parcelle;WHERE idu=param, pct=aire intersection alea / ST_Area(geom_2975), ST_Intersects;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/servitudes.py:337;contraintes-parcelle;WHERE idu=param, spatial_layers kinds ANY ST_Intersects(geom_2975);
+parcels;DGFiP-Etalab cadastre;src/labuse/api/servitudes.py:400;existence-parcelle;WHERE idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/mon_secteur.py:80;lookup-parcelle;WHERE idu=param (id+commune);
+parcels;DGFiP-Etalab cadastre;src/labuse/api/mon_secteur.py:136;annonces-radar;distance centroid::geography a la parcelle WHERE idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/mon_secteur.py:138;annonces-radar;JOIN parcels pb ON idu du bien pige;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/mon_secteur.py:142;annonces-radar;ST_DWithin(centroid::geography) 1500m, ORDER BY dist LIMIT 30;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/served_cascade.py:42;cascade-parcelle;JOIN cascade run servi WHERE p.idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/served_cascade.py:114;icpe-parcelle;ST_Contains(geom_2975, point ICPE) WHERE idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/served_cascade.py:122;icpe-proche;ST_DWithin(geom_2975) 500m hors ST_Contains, ORDER BY dist LIMIT 1, idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/vefa.py:26;insee-par-commune;substring(idu,1,5) WHERE commune=param LIMIT 1;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/pre_dossier.py:380;lookup-parcelle;WHERE idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/pre_dossier.py:608;bati-parcelle;JOIN spatial_layers batiment ST_Intersects(geom_2975), union, idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/pre_dossier.py:624;dimensions-terrain;bbox geom_2975 + surface repli=round(ST_Area(geom_2975)) WHERE idu=param;LATENT: surface repli=ST_Area(geom_2975) quand la fiche (COALESCE contenance) n'est pas fournie
+parcels;DGFiP-Etalab cadastre;src/labuse/api/pre_dossier.py:634;emprise-batie;sum(ST_Area(ST_Intersection(batiment, parcelle))) WHERE idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/pre_dossier.py:682;geometrie-parcelle;ST_AsGeoJSON(geom_2975,2) WHERE idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/pre_dossier.py:689;bati-parcelle;ST_Collect intersections batiment (batiments distincts), idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/pre_dossier.py:901;points-de-vue;voirie ST_DWithin 70m du contour, dedup grille 10m, ORDER BY dist LIMIT n, idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/pre_dossier.py:922;points-de-vue;voirie anneau ST_DWithin centroide 120-500m, un point par quadrant, idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/pre_dossier.py:1034;fiche-parcelle-zip;WHERE idu=param, surface=round(surface_m2), geojson;LATENT: surface servie=surface_m2 dessin (pas COALESCE contenance)
+parcels;DGFiP-Etalab cadastre;src/labuse/api/couches_tuyau.py:472;rattachement-icpe;build tuyau_icpe, JOIN ST_Contains(p.geom_2975, point ICPE) toute l'ile;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/couches_tuyau.py:488;rattachement-icpe;count EXISTS ST_Contains(p.geom_2975, point ICPE);
+parcels;DGFiP-Etalab cadastre;src/labuse/api/fiche_ask.py:80;lookup-parcelle;WHERE idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/fiche_ask.py:104;amenites-parcelle;JOIN parcel_amenites ON parcel_id WHERE idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/sante.py:33;sonde-sante;SELECT idu LIMIT 1 sans filtre;
+parcels;DGFiP-Etalab cadastre;src/labuse/api/sante.py:36;sonde-sante;WHERE idu=param (relecture sonde);
+parcels;DGFiP-Etalab cadastre;src/labuse/alertes.py:241;alertes-bodacc-zone;INSERT alertes SELECT, JOIN ST_Intersects(watch_zones.geom, p.geom) geom 4326, z.commune=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/alertes.py:255;photo-zonage-zone;INSERT snap SELECT, ST_Intersects(z.geom, p.geom) geom 4326, z.commune=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/alertes.py:323;liste-alertes;LEFT JOIN p.id=a.parcel_id, filtre p.commune=param, LIMIT param;
+parcels;DGFiP-Etalab cadastre;src/labuse/alertes.py:350;acquitter-alertes;UPDATE alertes via sous-SELECT LEFT JOIN p.id=a.parcel_id, p.commune=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/anc_service.py:35;lookup-commune-parcelle;SELECT commune WHERE idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/anc_service.py:66;secteur-anc-iris;JOIN iris ST_Contains(sl.geom_2975, ST_Centroid(p.geom_2975)), WHERE idu=param LIMIT 1;
+parcels;DGFiP-Etalab cadastre;src/labuse/anc_service.py:117;couverture-anc-communes;count(DISTINCT commune) sans filtre;
+parcels;DGFiP-Etalab cadastre;src/labuse/audit.py:59;lookup-ids-parcelles;SELECT id WHERE idu=ANY(param);
+parcels;DGFiP-Etalab cadastre;src/labuse/audit.py:91;surface-parcelle;surface=coalesce(surface_m2,0) WHERE idu=param;LATENT: surface_m2 seul (dessin), pas COALESCE(contenance_m2,...) comme assemblage.py:60
+parcels;DGFiP-Etalab cadastre;src/labuse/audit.py:108;cache-audit-parcelle;WHERE p.idu=param LIMIT 1, LATERAL parcel_evaluations + LEFT JOIN score run courant;
+parcels;DGFiP-Etalab cadastre;src/labuse/audit.py:138;lookup-par-reference;WHERE commune=param AND upper(section)=param AND numero (brut ou lpad 4) LIMIT 1;
+parcels;DGFiP-Etalab cadastre;src/labuse/blocs.py:76;blocs-pm-ile;TEMP TABLE SELECT JOIN pa.idu=pm.idu, surface=round(surface_m2), toute l'ile;LATENT: surface_m2 seul, pas contenance
+parcels;DGFiP-Etalab cadastre;src/labuse/bascule_gardes.py:458;compte-parcelles-garde;count(*) sans filtre;
+parcels;DGFiP-Etalab cadastre;src/labuse/assemblage.py:60;assemblage-fiche;WHERE p.id=param, surface=COALESCE(contenance_m2,surface_m2), seuil param, LIMIT 5;
+parcels;DGFiP-Etalab cadastre;src/labuse/assemblage.py:61;parcelles-voisines;self-JOIN ST_DWithin(geom_2975, 0.5m), surface=COALESCE(contenance_m2,surface_m2);
+parcels;DGFiP-Etalab cadastre;src/labuse/assemblage.py:101;assemblage-liste-commune;WHERE a.commune=param AND b.commune=param, surface=surface_m2 brut, LIMIT param;LATENT: surface_m2 brut alors que parcel_assemblage (meme seuil) prend COALESCE(contenance_m2,surface_m2)
+parcels;DGFiP-Etalab cadastre;src/labuse/assemblage.py:102;parcelles-voisines;self-JOIN ST_DWithin(geom_2975, 0.5m), surface=surface_m2 brut;LATENT: idem ligne 101
+parcels;DGFiP-Etalab cadastre;src/labuse/assemblage.py:133;emprise-assemblage-union;WHERE id=ANY(param), surface=ST_Area(ST_Union(geom_2975));
+parcels;DGFiP-Etalab cadastre;src/labuse/bati.py:124;ratio-bati-parcelle;WHERE id=ANY(param), JOIN batiments ST_Intersects geom_2975, denominateur=ST_Area(p.geom_2975);LATENT: denominateur ratio=ST_Area(geom_2975), pas contenance ni surface_m2
+parcels;DGFiP-Etalab cadastre;src/labuse/bati.py:148;emprise-batie-servie;p.id=param, ST_Union(ST_Intersection) bati geom_2975;
+parcels;DGFiP-Etalab cadastre;src/labuse/bati.py:231;surface-parcelle;surface=round(surface_m2) WHERE idu=param (tiroir Le bien);LATENT: surface_m2 seul, pas contenance
+parcels;DGFiP-Etalab cadastre;src/labuse/bati.py:283;batiments-rnb-parcelle;p.id=param, && + ST_Intersects(shape_2975, geom_2975), tri ST_Area DESC LIMIT 12;
+parcels;DGFiP-Etalab cadastre;src/labuse/circuit_verrous.py:501;zone-parcelle-temoin;WHERE idu=param, sous-SELECT ST_Contains(sl.geom, ST_Centroid(p.geom)) geom 4326;LATENT: centroide sur geom 4326 alors que anc_service/rnu rattachent en geom_2975
+parcels;DGFiP-Etalab cadastre;src/labuse/couche_intersection.py:52;empreinte-cadastre;count(*) + max(id) sans filtre (version cache);
+parcels;DGFiP-Etalab cadastre;src/labuse/couche_intersection.py:119;bornes-id-parcelles;min(id), max(id) sans filtre;
+parcels;DGFiP-Etalab cadastre;src/labuse/couche_intersection.py:134;intersections-couches;INSERT staging SELECT, ST_Intersects(p.geom_2975, sl.geom_2975), tranches id, area=ST_Area(intersection);
+parcels;DGFiP-Etalab cadastre;src/labuse/courrier_compose.py:74;synthese-parcelle-courrier;WHERE idu=param, surface=round(surface_m2);LATENT: surface_m2 seul, pas contenance
+parcels;DGFiP-Etalab cadastre;src/labuse/courrier_compose.py:106;mutations-dvf-voisines;JOIN pp.idu=m.id_parcelle, ST_DWithin geom_2975 rayon 500m, fenetre 3 ans;
+parcels;DGFiP-Etalab cadastre;src/labuse/courrier_compose.py:107;geometrie-parcelle;sous-SELECT geom_2975 WHERE idu=param (centre du rayon DVF);
+parcels;DGFiP-Etalab cadastre;src/labuse/courrier.py:246;backfill-courrier-pipeline;UPDATE courrier_demandes FROM SELECT, JOIN par.idu=parcelles->>0;
+parcels;DGFiP-Etalab cadastre;src/labuse/cli.py:110;bbox-parcelles;ST_Extent(geom) 4326 sans filtre;
+parcels;DGFiP-Etalab cadastre;src/labuse/cli.py:645;compte-disparues;count(*) WHERE cadastre_disparue_le IS NOT NULL;
+parcels;DGFiP-Etalab cadastre;src/labuse/cli.py:705;compte-parcelles;count(*) sans filtre (bilan ingestion);
+parcels;DGFiP-Etalab cadastre;src/labuse/cli.py:706;compte-communes;count(DISTINCT commune);
+parcels;DGFiP-Etalab cadastre;src/labuse/cli.py:761;ids-commune-vivantes;SELECT id WHERE commune=param AND cadastre_disparue_le IS NULL ORDER BY idu;
+parcels;DGFiP-Etalab cadastre;src/labuse/cli.py:817;liste-communes;DISTINCT commune;
+parcels;DGFiP-Etalab cadastre;src/labuse/cli.py:859;couverture-contenance;count(*) + count(contenance_m2);
+parcels;DGFiP-Etalab cadastre;src/labuse/cli.py:2326;compte-amenites-commune;JOIN parcel_amenites, WHERE p.commune=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/cli.py:2682;lookup-idus;SELECT idu WHERE id=ANY(param);
+parcels;DGFiP-Etalab cadastre;src/labuse/cli.py:2785;compte-parcelles-commune;count(*) WHERE commune=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/cli.py:2800;bbox-commune;ST_Extent(geom) 4326 WHERE commune=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/cli.py:2845;centroide-parcelle;ST_X/ST_Y(centroid) WHERE id=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/financier_questionnaire.py:286;lookup-id-parcelle;SELECT id WHERE idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/courrier_adressage.py:64;destinataire-courrier;WHERE idu=param, surface_m2 + jointures bati/PM;LATENT: surface_m2 seul, pas contenance
+parcels;DGFiP-Etalab cadastre;src/labuse/fraicheur_caches.py:115;compte-communes;count(DISTINCT commune) WHERE commune IS NOT NULL;
+parcels;DGFiP-Etalab cadastre;src/labuse/fraicheur_caches.py:459;liste-communes;DISTINCT commune WHERE commune IS NOT NULL ORDER BY commune;
+parcels;DGFiP-Etalab cadastre;src/labuse/facturation.py:208;email-flash-commune;LEFT JOIN p.idu=fc.idu WHERE fc.id=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/jobs_impl.py:143;liste-communes;DISTINCT commune WHERE commune IS NOT NULL ORDER BY commune;
+parcels;DGFiP-Etalab cadastre;src/labuse/demo.py:63;verdict-demo-parcelle;WHERE p.idu=param, LEFT JOIN score run courant + LATERAL evaluations;
+parcels;DGFiP-Etalab cadastre;src/labuse/demo.py:109;seed-pipeline-demo;WHERE commune=param AND idu=ANY(param) ORDER BY array_position LIMIT param;
+parcels;DGFiP-Etalab cadastre;src/labuse/demo.py:113;repli-opportunites-demo;WHERE commune=param, tri tier servi, LIMIT param;
+parcels;DGFiP-Etalab cadastre;src/labuse/demo.py:142;compte-parcelles-commune;count(*) WHERE commune=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/demo.py:146;sante-geom-2975;count(*) WHERE commune=param AND NOT ST_IsValid(geom_2975);
+parcels;DGFiP-Etalab cadastre;src/labuse/demo.py:147;sante-geom-2975;count(*) WHERE commune=param AND geom_2975 IS NULL;
+parcels;DGFiP-Etalab cadastre;src/labuse/demo.py:165;compte-declassees-commune;JOIN score run courant, WHERE commune=param AND tier LIKE declasse_%;
+parcels;DGFiP-Etalab cadastre;src/labuse/demo.py:173;top-opportunites-qa;WHERE commune=param, surface=ST_Area(geom_2975), tri rang + aire DESC LIMIT 20;LATENT: surface seuil 100 m2 = ST_Area(geom_2975), pas surface_m2 ni contenance
+parcels;DGFiP-Etalab cadastre;src/labuse/proprietaire_facettes.py:58;scope-commune-pm;JOIN p.idu=pm.idu AND p.commune=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/proprietaire_facettes.py:76;facettes-ape-pm;JOIN p.idu=pm.idu AND p.commune=param (si commune);
+parcels;DGFiP-Etalab cadastre;src/labuse/proprietaire_facettes.py:85;couverture-pm-commune;JOIN p.idu=pm.idu AND p.commune=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/proprietaire_facettes.py:86;compte-parcelles-commune;count(*) WHERE commune=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/proprietaire_facettes.py:89;compte-parcelles;count(*) sans filtre;
+parcels;DGFiP-Etalab cadastre;src/labuse/proprietaire_facettes.py:111;autocomplete-pm;JOIN p.idu=pm.idu AND p.commune=param, LIMIT 12;
+parcels;DGFiP-Etalab cadastre;src/labuse/proprietaire_facettes.py:112;autocomplete-pm;JOIN p.idu=pm.idu (sans commune), LIMIT 12;
+parcels;DGFiP-Etalab cadastre;src/labuse/signaux_vie.py:58;signal-permis-actif;INSERT signaux SELECT, JOIN p.idu=pc.idu (existence parcelle), fenetre annees param;
+parcels;DGFiP-Etalab cadastre;src/labuse/signaux_vie.py:67;signal-friche;INSERT signaux SELECT, && + ST_Intersects(p.geom_2975, friche.geom_2975);
+parcels;DGFiP-Etalab cadastre;src/labuse/rnu.py:200;parcelles-dans-pau;INSERT parcel_pau SELECT, left(idu,5)=insee + ST_Intersects(ST_PointOnSurface(geom_2975), pau);LATENT: rattachement point par ST_PointOnSurface(geom_2975) vs ST_Centroid ailleurs (anc_service, zone.py centroid stocke)
+parcels;DGFiP-Etalab cadastre;src/labuse/sonde_circuit.py:160;liste-communes;DISTINCT commune ORDER BY commune;
+parcels;DGFiP-Etalab cadastre;src/labuse/sonde_circuit.py:224;lookup-id-parcelle;SELECT id WHERE idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/sonde_circuit.py:266;surface-parcelle;surface=surface_m2 WHERE idu=param (sonde HTTP=SQL);
+parcels;DGFiP-Etalab cadastre;src/labuse/sonde_circuit.py:294;emprise-batie-recompute;WHERE p.idu=param, ST_Union(ST_Intersection) geom_2975 (controle canonique);
+parcels;DGFiP-Etalab cadastre;src/labuse/sonde_circuit.py:681;echantillon-idus;SELECT idu ORDER BY idu LIMIT 46;
+parcels;DGFiP-Etalab cadastre;src/labuse/sonde_circuit.py:775;compte-parcelles;count(*) vs table geom_simple materialisee;
+parcels;DGFiP-Etalab cadastre;src/labuse/verdict_servi.py:141;verdict-servi-batch;LEFT JOIN prc.idu=s.parcelle_id (pont vers parcel_residuel par id), WHERE run_id=param AND parcelle_id=ANY(param);
+parcels;DGFiP-Etalab cadastre;src/labuse/solaire_toiture.py:174;plus-grand-batiment-parcelle;JOIN p.idu=param, ST_Intersects(b.geom_2975, p.geom_2975), tri ST_Area(b) DESC LIMIT 1;
+parcels;DGFiP-Etalab cadastre;src/labuse/territoire_fiscal.py:84;zonage-frr-parcelle;EXISTS JOIN p.idu=param, ST_Intersects(frr.geom_2975, p.geom_2975);
+parcels;DGFiP-Etalab cadastre;src/labuse/marche_service.py:32;lookup-id-parcelle;SELECT id WHERE idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/marche_service.py:247;ventes-dvf-voisines;CTE geom_2975 WHERE idu=param, rayon profil (defaut 500m) fenetre 3 ans, ST_Distance;
+parcels;DGFiP-Etalab cadastre;src/labuse/zone.py:438;annonces-pige-zone;JOIN p.idu=b.idu, ST_Contains(zone2975, ST_Transform(p.centroid, 2975));
+parcels;DGFiP-Etalab cadastre;src/labuse/zone.py:703;proprietaires-zone;JOIN p.idu=pm.idu, ST_Contains(zone, centroid transforme), surface=sum(surface_m2);LATENT: surface_m2 seul, pas contenance
+parcels;DGFiP-Etalab cadastre;src/labuse/zone.py:859;acquereurs-zone;JOIN p.idu=pm.idu, millesime=param, ST_Contains(zone, centroid transforme), LIMIT param;
+parcels;DGFiP-Etalab cadastre;src/labuse/zone.py:871;acquereurs-zone;JOIN p.idu=pm.idu, millesime=param, ST_Contains(zone, centroid transforme) (total);
+parcels;DGFiP-Etalab cadastre;src/labuse/zone.py:889;commune-dominante-zone;left(idu,5) + commune, ST_Contains(zone, centroid transforme), GROUP BY LIMIT 1;
+parcels;DGFiP-Etalab cadastre;src/labuse/renouvellement.py:143;compteur-zone-u-au;JOIN p.id=b.parcel_id (pont id vers idu), run_label=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/renouvellement.py:149;compteur-capacite;JOIN p.id=b.parcel_id, run_label=param, seuils sdp/surface param;
+parcels;DGFiP-Etalab cadastre;src/labuse/renouvellement.py:169;veille-bati-x;JOIN p.id=cr.parcel_id, run_label=param, layer bati SOFT_FLAG;
+parcels;DGFiP-Etalab cadastre;src/labuse/renouvellement.py:177;veille-foncier-public;JOIN p.id=cr.parcel_id, run_label=param, layer foncier_public SOFT_FLAG;
+parcels;DGFiP-Etalab cadastre;src/labuse/renouvellement.py:188;veille-ppr-rouge;JOIN p.id=cr.parcel_id, run_label=param, layer risques HARD_EXCLUDE;
+parcels;DGFiP-Etalab cadastre;src/labuse/renouvellement.py:194;veille-ravine;JOIN p.id=cr.parcel_id, run_label=param, layer ravine SOFT_FLAG;
+parcels;DGFiP-Etalab cadastre;src/labuse/renouvellement.py:198;veille-mvt;JOIN p.id=cr.parcel_id, run_label=param, layer mvt SOFT_FLAG;
+parcels;DGFiP-Etalab cadastre;src/labuse/state.py:63;compte-parcelles-commune;count(*) WHERE commune=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/state.py:66;sante-geom-2975;count(*) WHERE commune=param AND geom_2975 IS NULL;
+parcels;DGFiP-Etalab cadastre;src/labuse/state.py:76;compte-evaluations-commune;JOIN parcel_evaluations p.id, WHERE p.commune=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/state.py:176;compte-enrichment-warm;JOIN parcel_enrichment p.id, WHERE p.idu=ANY(param);
+parcels;DGFiP-Etalab cadastre;src/labuse/filtres/sources.py:805;convergence-ilots-potentiel;JOIN score run majoritaire + ST_Intersects(p.geom_2975, ilots.geom_2975);
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/permits_sdes.py:90;referentiel-communes;SELECT DISTINCT left(idu,5)+commune sans filtre;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/permits_sdes.py:107;centroide-parcelle;INSERT sitadel SELECT centroid WHERE idu=ANY(liste) LIMIT 1;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/permits_sdes.py:270;existence-section-cadastrale;NOT EXISTS idu LIKE insee+000+section+pct;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/signals.py:30;zone-plu-parcelle;WHERE commune=param, ST_Intersects(geom 4326), dominante par ST_Area(ST_Intersection transform 2975) DESC;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/signals.py:38;mutations-dvf-voisines;WHERE commune=param, ST_DWithin centroid transform 2975 rayon param (defaut 200m);LATENT: rayon voisinage DVF 200m (veille) vs 500m courrier/marche/flash
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/signals.py:45;permis-voisins;WHERE commune=param, ST_DWithin centroid 2975 rayon param (defaut 200m);LATENT: rayon permis voisins 200m (veille) vs 300m permits.py:277 (fiche)
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/signals.py:62;snapshots-veille-commune;JOIN watch_snapshots ON p.id WHERE commune=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/dfi.py:150;filiation-parcelle-courante;JOIN idu=idu_fille, geom ST_PointOnSurface(ST_Union(geom_2975));
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/oll_loyers.py:190;zone-oll-parcelle;WHERE idu=param, IRIS par ST_Intersects(p.geom_2975 ENTIERE, sl.geom_2975) LIMIT 1;LATENT: IRIS par geom entiere (plusieurs IRIS possibles) vs ST_PointOnSurface dans iris_rp.py:179
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/ocsge.py:185;occupation-sol-parcelle;JOIN ocsge_sol && + ST_Intersects geom_2975, WHERE geom_2975 NOT NULL;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/ocsge.py:197;evolution-artif-parcelle;JOIN ocsge_evolution && + ST_Intersects geom_2975;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/ocsge.py:216;part-artificialisee-parcelle;JOIN idu, pct = artif_m2/ST_Area(geom_2975);LATENT: surface=ST_Area(geom_2975) (pas contenance_m2)
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/sup_gpu.py:95;emprise-commune;ST_Extent(geom 4326) WHERE commune=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/ortho_equipements.py:126;signal-piscine-parcelle;JOIN idu (recupere p.id) WHERE pe.piscine;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/anc.py:261;proba-anc-parcelle;JOIN parcel_residuel_bati idu, NOT EXISTS parcel_anc, LIMIT batch, centroide ST_Centroid(geom_2975), bonus si pas de zone U a ST_DWithin dist cfg;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/anc.py:310;zonage-anc-parcelle;UPDATE parcel_anc FROM parcels, ST_Contains(zonage, ST_Centroid(geom_2975)) WHERE idu=pa.idu;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/anc.py:398;signal-vente-anc;JOIN idu + LATERAL dvf_mutations_parcelle id_parcelle=idu fenetre mois cfg;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/anc.py:420;couverture-anc-commune;JOIN idu GROUP BY commune;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/dvf_detail.py:73;referentiel-idu;SELECT idu sans filtre (set complet);
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/rnb.py:177;rattachement-rnb-bati;UPDATE lidar FROM parcels WHERE idu=h.idu, LATERAL rnb ST_Intersects shape/geom_2975 ORDER BY aire intersection DESC LIMIT 1;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/dvf_prix_neuf.py:186;prix-sortie-neuf-parcelle;WHERE pa.id=param, LEFT JOIN prix cle IN (left(idu,10), left(idu,5)) secteur puis commune;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/vefa_neuf.py:143;nom-commune-insee;WHERE substring(idu,1,5)=param LIMIT 1;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/abf_merimee.py:33;commune-du-point;ST_Contains(geom 4326, point) LIMIT 1;LATENT: commune d un point par ST_Contains 4326 vs KNN geom_2975 dans bd_nyme.py:71
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/abf_merimee.py:72;parcelles-intersectant-couche;EXISTS abf ST_Intersects geom_2975, count DISTINCT;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/amenites.py:118;distance-amenites-parcelle;WHERE commune=param AND geom_2975 NOT NULL, KNN <-> geom_2975 LIMIT 1 par categorie;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/amenites.py:137;rapport-amenites-commune;JOIN parcel_amenites ON p.id WHERE commune=param, medianes;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/gpu_infos.py:53;emprise-commune;ST_Extent(geom 4326) WHERE commune=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/bdnb.py:278;couverture-bdnb;JOIN bdnb_rel_parcelle parcelle_idu=idu, count DISTINCT;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/bdnb.py:281;taille-parc;count(*) sans filtre;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/ortho_pente.py:60;pente-non-batie-parcelle;JOIN lot idu, ST_Difference(geom_2975, bati ST_Union), stats raster;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/cadastre_historique.py:92;existence-idu;NOT EXISTS idu=param (cibles hors referentiel);
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/cadastre_historique.py:268;rattachement-parcelle-historique;JOIN ST_Intersects(geom 4326, geom historique), part = ST_Area intersection/ST_Area(g_old) en 4326, seuil 0.10;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/pc_caducs.py:77;filtre-univers-servi;JOIN idu (restreint pc_caducs au parc courant);
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/ortho_pv.py:218;rattachement-detection-parcelle;ST_Contains(geom_2975, centroide detection) LIMIT 1;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/ortho_pv.py:220;rattachement-detection-parcelle;fallback ST_Intersects geom_2975 ORDER BY aire intersection DESC LIMIT 1;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/ortho_piscines.py:173;filtre-detection-cadastre;EXISTS ST_DWithin(geom_2975, centroide candidat, dist cfg contexte_bati_m);
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/ortho_piscines.py:198;rattachement-detection-parcelle;ST_Contains(geom_2975, centroide detection) LIMIT 1;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/ortho_piscines.py:200;rattachement-detection-parcelle;fallback ST_Intersects geom_2975 ORDER BY aire intersection DESC LIMIT 1;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/surface_d.py:66;filtre-univers-parcelles;parcelle_idu IN (SELECT idu) evenements DPE;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/surface_d.py:76;filtre-univers-parcelles;idu permis IN (SELECT idu) fenetre 36 mois;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/bd_nyme.py:71;commune-du-point;KNN geom_2975 <-> point LIMIT 1 SANS borne distance;LATENT: commune du point = parcelle la plus proche sans ST_Contains ni rayon max
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/transport_reseaux.py:442;parcelles-proches-tcsp;EXISTS station ST_DWithin(geom_2975, 800m), ST_Union(geom);
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/rgealti_mnt.py:71;emprise-ile;ST_Extent(geom_2975) sans filtre;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/rgealti_mnt.py:82;emprise-communes;ST_Extent(geom_2975) WHERE commune=ANY(param);
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/ortho_tiles.py:71;vignette-ortho-parcelle;WHERE idu=param, ST_Envelope(ST_Buffer(geom_2975, marge 25m));
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/ortho_tiles.py:106;grille-tuiles-ile;ST_SquareGrid(taille cfg, ST_Extent(geom_2975));
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/piscines_fusion.py:99;commune-parcelle;LEFT JOIN idu (commune de la detection FLAIR);
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/piscines_fusion.py:122;rattachement-detection-parcelle;LEFT JOIN ST_Intersects(geom_2975, ST_Centroid(piscine));
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/dpe.py:203;parcelle-du-point;ST_Contains(geom_2975, point 2975) LIMIT 1;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/run_all.py:53;emprise-commune;ST_Extent(geom 4326) WHERE commune=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/run_all.py:118;ids-parcelles-commune;WHERE commune=param ORDER BY idu;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/score_e.py:102;estimation-marge-parcelle;JOIN idu=parcelle_id WHERE run+tier, terrain via p.surface_m2;LATENT: surface=parcels.surface_m2 precalculee (pas contenance_m2 ni ST_Area live)
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/score_e.py:185;liste-insee;SELECT DISTINCT left(idu,5) sans filtre;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/layers_ingest.py:998;referentiel-communes;SELECT commune, min(idu) GROUP BY commune;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/ban_adresses.py:136;rattachement-adresse-parcelle;passe 1 ST_Contains(p.geom_2975, a.geom_2975);
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/ban_adresses.py:145;rattachement-adresse-parcelle;passe 2 JOIN idu=cad_parcelles BAN;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/ban_adresses.py:151;rattachement-adresse-parcelle;passe 3 KNN ST_DWithin(geom_2975, 20m) ORDER <-> LIMIT 1;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/ban_adresses.py:182;index-inverse-adresse;JOIN idu=cad_parcelles BAN (adresse_parcelles source ban_cad);
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/ban_adresses.py:199;index-inverse-adresse;JOIN idu=rb.idu bati >= 20 m2 sans adresse;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/ban_adresses.py:205;index-inverse-adresse;JOIN p2.idu<>s.idu, bati a cheval ST_Area intersection > 15 m2 des 2 cotes;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/arcep_fibre.py:174;fibre-parcelle;WHERE idu=param, ST_DWithin(geom_2975, rayon param defaut 100m) ORDER <-> LIMIT 1;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/solaire.py:104;grille-solaire-ile;ST_SquareGrid(step cfg, ST_Extent(geom_2975));
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/solaire.py:109;filtre-grille-cadastre;EXISTS ST_DWithin(geom_2975, centre maille, halo=step*0.75);
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/solaire.py:198;prod-solaire-parcelle;CROSS LATERAL solar_grid KNN <-> centroid LIMIT 4, IDW sur distance geography;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/solaire.py:219;profil-solaire-mensuel;LATERAL solar_grid KNN <-> centroid LIMIT 1 WHERE idu=ps.idu;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/solaire.py:240;mediane-solaire-commune;JOIN idu GROUP BY commune;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/solaire.py:244;flag-ombrage-topo;UPDATE FROM parcels + med WHERE idu=ps.idu, commune=med.commune;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/solaire.py:259;azimut-bati-parcelle;JOIN batiment ST_Intersects geom_2975, principal = aire intersection max >= 20 m2;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/solaire.py:293;flag-abf-parcelle;JOIN dryrun_cascade_results parcel_id=p.id, run_label=cascade servie, layer abf;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/solaire.py:336;proba-proprio-occupant;FROM parcels, filosofi ST_Contains(carreau, ST_Transform(centroid,2975)), repli left(idu,5);
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/division_or.py:220;detection-division-parcelle;WHERE commune=param AND surface_m2 BETWEEN bornes cfg + EXISTS batiment;LATENT: surface=parcels.surface_m2 (pas contenance_m2)
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/division_or.py:370;detection-division-partielle;WHERE commune=param AND surface_m2 BETWEEN bornes cfg + EXISTS batiment;LATENT: surface=parcels.surface_m2 (pas contenance_m2)
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/vegetation.py:213;zones-vegetation-tuile;&& + ST_Intersects(geom_2975, tuile) AND surface_m2 >= 2;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/vegetation.py:326;canopee-parcelle;JOIN idu (insert parcel_vegetation depuis accumulateur zonal);
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/vegetation.py:346;bati-voisin-parcelle;UPDATE FROM parcels WHERE idu=v.idu, ST_DWithin(bati, geom_2975, dist cfg bati_voisin_m);
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/vegetation.py:371;signal-vegetation-limite;JOIN idu WHERE canopee_limite > seuil cfg;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/vegetation.py:389;sanity-ndvi-est;JOIN idu WHERE commune=ANY(communes est);
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/vegetation.py:392;sanity-ndvi-ouest;JOIN idu WHERE commune=ANY(communes ouest);
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/vegetation.py:420;vignettes-validation-vegetation;JOIN idu, surface_m2 copiee, plus grand anneau ST_Dump ORDER aire DESC LIMIT 1;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/rnic.py:122;rattachement-copro-parcelle;JOIN idu=ref cadastrale copro, min(idu);
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/rnic.py:126;rattachement-copro-parcelle;ST_Contains(geom 4326, point copro);LATENT: contains en geom 4326 vs geom_2975 ailleurs (dpe.py:203)
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/rnic.py:146;rattachement-copro-parcelle;KNN ST_DWithin(geom_2975, 20m defaut) ORDER <-> LIMIT 1;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/iris_rp.py:179;iris-parcelle;WHERE idu=param, ST_Intersects(iris, ST_PointOnSurface(geom_2975)) LIMIT 1;LATENT: IRIS par point representatif vs geom entiere dans oll_loyers.py:190
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/cosia_couverture.py:99;couverture-cosia-parcelle;JOIN tuile && + ST_Intersects geom_2975, SUM aires intersection;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/cosia_couverture.py:207;rattachement-piscine-cosia;ST_Contains(geom_2975, ST_PointOnSurface(piscine));
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/qpv.py:60;parcelles-intersectant-couche;EXISTS qpv ST_Intersects geom_2975, count DISTINCT;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/georisques_layers.py:303;parcelles-proches-couche;WHERE commune=param, EXISTS ST_DWithin(geom_2975, rayon param defaut 50m);
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/cartofriches.py:96;parcelles-friche-exact;WHERE commune=param, idu IN refcad friche;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/cartofriches.py:102;parcelles-friche-polygone;WHERE commune=param, EXISTS friche ST_Intersects geom_2975;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/permits.py:70;centroide-parcelle;INSERT sitadel SELECT centroid WHERE idu=ANY(liste) LIMIT 1;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/permits.py:137;depots-permis-parcelle;WHERE id=param, parcelle idu exact + secteur left(idu,10), fenetre mois param;
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/permits.py:277;permis-voisins;WHERE id=param, ST_DWithin centroid transform 2975 rayon param defaut 300m LIMIT 12;LATENT: rayon permis voisins 300m (fiche) vs 200m signals.py:45 (veille)
+parcels;DGFiP-Etalab cadastre;src/labuse/ingestion/permits.py:310;dynamique-permis-secteur;WHERE id=param, ST_DWithin centroid 2975 rayon param defaut 300m, fenetre mois;
+parcels;DGFiP-Etalab cadastre;src/labuse/scoring/score_labuse.py:315;entrees-score-labuse;toutes parcelles, LATERAL parcel_residuel/lidar/terrain, aire=ST_Area(geom_2975)+ST_Perimeter;LATENT: surface=ST_Area seul (ni contenance_m2 ni surface_m2)
+parcels;DGFiP-Etalab cadastre;src/labuse/scoring/score_labuse_combine.py:94;signal-p-raw;JOIN parcel_p_score_v2 ON idu, WHERE run_id=param AND id=ANY(ids);
+parcels;DGFiP-Etalab cadastre;src/labuse/scoring/declassement.py:108;surface-parcelle;WHERE id=ANY(ids), surface=ST_Area(geom_2975);LATENT: ST_Area seul vs COALESCE(contenance_m2,ST_Area) de faisabilite/db.py
+parcels;DGFiP-Etalab cadastre;src/labuse/scoring/declassement.py:114;pente-parcelle;JOIN spatial_layers kind=pente commune+ST_Intersects geom_2975, max slope_pct;
+parcels;DGFiP-Etalab cadastre;src/labuse/scoring/declassement.py:126;faux-positif-osm;ST_Intersects, coverage=ST_Area(inter)/ST_Area(geom_2975), rn=1;
+parcels;DGFiP-Etalab cadastre;src/labuse/scoring/declassement.py:150;acces-voirie;CROSS JOIN LATERAL KNN <-> voirie LIMIT 1, sans cap;LATENT: distance voirie sans cap vs cap 200 m (context.py:376) et desserte 25 m (db.py:218)
+parcels;DGFiP-Etalab cadastre;src/labuse/scoring/cascade_v2.py:135;ocsge-parcelle;JOIN parcel_ocsge ON idu, WHERE id=ANY(ids);
+parcels;DGFiP-Etalab cadastre;src/labuse/scoring/arene.py:98;statut-cascade-arene;JOIN dryrun_parcel_evaluations, WHERE run_label=param AND idu=ANY;
+parcels;DGFiP-Etalab cadastre;src/labuse/scoring/dryrun.py:61;calcul-matrice;JOIN dryrun_cascade_results, WHERE run_label=param AND p.commune=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/scoring/dryrun.py:86;repartition-matrice;JOIN dryrun_parcel_evaluations, run_label+commune=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/scoring/dryrun.py:94;top-matrice;run_label+commune+matrice_statut=param, ORDER q+a DESC LIMIT n;
+parcels;DGFiP-Etalab cadastre;src/labuse/scoring/dryrun.py:100;motifs-parcelle;sous-SELECT id WHERE idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/scoring/dryrun.py:105;evenement-rouge;sous-SELECT id WHERE idu=param, evenement=rouge;
+parcels;DGFiP-Etalab cadastre;src/labuse/scoring/dryrun.py:114;repartition-matrice;run_label+commune=param GROUP BY statut;
+parcels;DGFiP-Etalab cadastre;src/labuse/scoring/dryrun.py:127;compte-parcelles-run;run_label+commune=param count(*);
+parcels;DGFiP-Etalab cadastre;src/labuse/scoring/dryrun.py:131;statuts-run;run_label+commune=param GROUP BY status;
+parcels;DGFiP-Etalab cadastre;src/labuse/scoring/dryrun.py:138;histogramme-opportunite;run_label+commune=param tranches de 10;
+parcels;DGFiP-Etalab cadastre;src/labuse/scoring/dryrun.py:147;stats-opportunite;run_label+commune=param percentiles;
+parcels;DGFiP-Etalab cadastre;src/labuse/scoring/dryrun.py:152;verdicts-par-couche;run_label+commune=param GROUP layer/result LIMIT 25;
+parcels;DGFiP-Etalab cadastre;src/labuse/scoring/dryrun.py:157;unknown-abf;run_label+commune=param, layer=abf result=UNKNOWN;
+parcels;DGFiP-Etalab cadastre;src/labuse/scoring/dryrun.py:165;top-opportunites;run_label+commune=param ORDER opportunity DESC LIMIT n;
+parcels;DGFiP-Etalab cadastre;src/labuse/scoring/dryrun.py:171;motifs-parcelle;run_label=param AND p.idu=param LIMIT 4;
+parcels;DGFiP-Etalab cadastre;src/labuse/scoring/dryrun.py:184;tracabilite-score;run_label+commune=param, base+somme=score;
+parcels;DGFiP-Etalab cadastre;src/labuse/scoring/dryrun.py:190;compte-non-exclues;run_label+commune=param, opportunity>0;
+parcels;DGFiP-Etalab cadastre;src/labuse/scoring/dryrun.py:221;base-simulation-matrice;CREATE TEMP TABLE, JOIN evaluations run_label=param, toutes communes;
+parcels;DGFiP-Etalab cadastre;src/labuse/scoring/dryrun.py:278;liste-communes;SELECT DISTINCT commune sans filtre;LATENT: sans filtre geom_2975 IS NOT NULL vs viabilisation_build.py:201 qui l'exige
+parcels;DGFiP-Etalab cadastre;src/labuse/scoring/dryrun.py:284;canari-matrice;run_label=param AND idu=canari;
+parcels;DGFiP-Etalab cadastre;src/labuse/scoring/dryrun.py:336;entonnoir-ecartees;INSERT entonnoir_motifs SELECT, run_label=param statut=ecartee;
+parcels;DGFiP-Etalab cadastre;src/labuse/scoring/lignee_tete.py:82;acquerabilite-au;INSERT SELECT, JOIN parcel_au_statut classe=au_sous_plancher;
+parcels;DGFiP-Etalab cadastre;src/labuse/scoring/lignee_tete.py:95;voisins-meme-zone;JOIN parcel_zone_plu zone_lib, frontiere commune ST_Length(inter)>=3.0 m fixe;LATENT: contiguite 3 m fixe sans part de perimetre vs au_ouverture.py:156 (min_m + part perimetre + delaisse)
+parcels;DGFiP-Etalab cadastre;src/labuse/scoring/p_model/sql.py:72;univers-signal;DISTINCT ON idu, surface=colonne surface_m2, WHERE cadastre_disparue_le IS NULL, commune=left(idu,5);LATENT: commune derivee de l'idu (insee) vs colonne parcels.commune (nom) ailleurs
+parcels;DGFiP-Etalab cadastre;src/labuse/scoring/p_model/sql.py:184;emprise-bati-pmodel;JOIN batiment ST_Intersects, emprise=ST_Area(ST_Union(inter));
+parcels;DGFiP-Etalab cadastre;src/labuse/scoring/p_model/sql.py:205;emprise-bati-pmodel;repli sans CoSIA, meme calcul ST_Union;
+parcels;DGFiP-Etalab cadastre;src/labuse/scoring/p_model/sql.py:380;residuel-vers-static;UPDATE p_model_static FROM parcel_residuel JOIN parcels ON id;
+parcels;DGFiP-Etalab cadastre;src/labuse/scoring/score_v.py:167;friche-parcelle;DISTINCT ON idu, ST_Intersects kind=friche;
+parcels;DGFiP-Etalab cadastre;src/labuse/scoring/score_v.py:206;ratio-bati-nu;WHERE idu=ANY(chunk 5000), ratio=SUM(inter)/ST_Area(geom_2975), seuil <5 pct;
+parcels;DGFiP-Etalab cadastre;src/labuse/scoring/score_v.py:470;liste-idus;SELECT idu ORDER BY idu, table entiere;LATENT: univers sans filtre cadastre_disparue_le vs p_model frame (sql.py:72)
+parcels;DGFiP-Etalab cadastre;src/labuse/scoring/score_v.py:634;snapshot-score-v;INSERT SELECT, JOIN dryrun_parcel_evaluations run_label=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/scoring/p_v2/potentiel.py:70;vue-contact-compte;CREATE VIEW pipeline_entries JOIN parcels ON id;
+parcels;DGFiP-Etalab cadastre;src/labuse/scoring/p_v2/potentiel.py:124;backfill-valeur-creee;UPDATE p_score_v2 FROM parcels LEFT JOIN parcel_residuel, prix par left(idu,5);
+parcels;DGFiP-Etalab cadastre;src/labuse/scoring/p_v2/pipeline.py:225;ponderation-au;JOIN parcel_au_statut classe=param, surf=ST_Area(geom_2975);
+parcels;DGFiP-Etalab cadastre;src/labuse/scoring/p_v2/pipeline.py:381;ecartees-etage0;JOIN dryrun_parcel_evaluations run_label=param status IN (exclue,faux_positif);
+parcels;DGFiP-Etalab cadastre;src/labuse/scoring/p_v2/pipeline.py:405;declassement-dataset;JOIN parcel_constructibilite ON parcel_id;
+parcels;DGFiP-Etalab cadastre;src/labuse/scoring/p_v2/pipeline.py:419;statut-au-dataset;JOIN parcel_au_statut ON parcel_id;
+parcels;DGFiP-Etalab cadastre;src/labuse/scoring/p_v2/pipeline.py:451;bati-sature-dataset;NOT EXISTS parcels JOIN parcel_residuel cause NULL ET sdp>0, par idu;
+parcels;DGFiP-Etalab cadastre;src/labuse/scoring/p_v2/qv12.py:245;residuel-dataset;JOIN parcel_residuel ON parcel_id, table entiere;
+parcels;DGFiP-Etalab cadastre;src/labuse/scoring/p_v2/qv12.py:276;geom-mutations;JOIN par idu, geom_2975 des parcelles mutees;
+parcels;DGFiP-Etalab cadastre;src/labuse/scoring/p_v2/qv12.py:290;ventes-voisines;ST_DWithin 150 m et 400 m, fenetres 12/24 mois;LATENT: rayons DVF 150/400 m (p_model) vs 200 m (veille) vs 500 m (courrier/marche/flash)
+parcels;DGFiP-Etalab cadastre;src/labuse/scoring/p_v2/qv12.py:302;geom-permis;JOIN p_model_permits par idu;
+parcels;DGFiP-Etalab cadastre;src/labuse/scoring/p_v2/qv12.py:312;permis-voisins;ST_DWithin 100 m (permis) et 400 m (operations PA);LATENT: rayons permis 100/400 m (p_model) vs 200 m (veille) vs 300 m (fiche)
+parcels;DGFiP-Etalab cadastre;src/labuse/cascade/context.py:100;intersections-couches-batch;spatial_layers_sub ST_Intersects, coverage=SUM(ST_Area inter)/ST_Area(geom_2975), id=ANY(ids);
+parcels;DGFiP-Etalab cadastre;src/labuse/cascade/context.py:113;intersections-couches-batch;repli ST_Subdivide 256, bbox lot, meme coverage;
+parcels;DGFiP-Etalab cadastre;src/labuse/cascade/context.py:149;centroide-dans-couche;ST_Contains(sl.geom, p.centroid) kind=eau, id=ANY;LATENT: teste sur sl.geom (4326) quand le reste du fichier mesure en geom_2975
+parcels;DGFiP-Etalab cadastre;src/labuse/cascade/context.py:174;distance-min-couche;ST_DWithin cap=search_cap_m (60 defaut, max avec dpf), MIN ST_Distance geom_2975;
+parcels;DGFiP-Etalab cadastre;src/labuse/cascade/context.py:192;dvf-voisinage;ST_DWithin centroid rayons param radii_m (250/500/1000), lookback 5 ans;
+parcels;DGFiP-Etalab cadastre;src/labuse/cascade/context.py:206;sitadel-voisinage;ST_DWithin centroid rayon param radius_m (200 defaut), 36 mois;
+parcels;DGFiP-Etalab cadastre;src/labuse/cascade/context.py:234;feedback-zone;sous-req fb: centroid des parcelles avec feedback;
+parcels;DGFiP-Etalab cadastre;src/labuse/cascade/context.py:239;feedback-zone;ST_DWithin centroid rayon zone_radius_m (300 defaut), id=ANY;
+parcels;DGFiP-Etalab cadastre;src/labuse/cascade/context.py:259;poi-plus-proche;DISTINCT ON parcelle, ST_DWithin cap=proximite_m ou max bandes_m, ORDER ST_Distance;
+parcels;DGFiP-Etalab cadastre;src/labuse/cascade/context.py:279;bodacc-pression;JOIN v_foncier_sous_pression par idu, id=ANY;
+parcels;DGFiP-Etalab cadastre;src/labuse/cascade/context.py:284;propension-vendre;JOIN v_foncier_propension_vendre par idu, id=ANY;
+parcels;DGFiP-Etalab cadastre;src/labuse/cascade/context.py:293;bodacc-sondage;JOIN parcelle_personne_morale par idu, id=ANY;
+parcels;DGFiP-Etalab cadastre;src/labuse/cascade/context.py:327;feedback-zone;repli unitaire, sous-req fb centroid;
+parcels;DGFiP-Etalab cadastre;src/labuse/cascade/context.py:331;feedback-zone;repli unitaire ST_DWithin rayon 300, id=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/cascade/context.py:354;intersections-couches;unitaire, coverage=ST_Area(inter)/ST_Area(geom_2975), id=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/cascade/context.py:376;distance-min-couche;repli unitaire ST_DWithin cap 200 m code en dur;LATENT: cap 200 m en unitaire vs cap param 60 m en batch (context.py:174) pour la meme notion
+parcels;DGFiP-Etalab cadastre;src/labuse/cascade/context.py:425;centroide-dans-couche;repli unitaire ST_Contains(sl.geom, centroid);
+parcels;DGFiP-Etalab cadastre;src/labuse/cascade/context.py:447;dvf-voisinage;repli unitaire ST_DWithin centroid rayon param;
+parcels;DGFiP-Etalab cadastre;src/labuse/cascade/context.py:487;sitadel-voisinage;repli unitaire ST_DWithin centroid rayon param;
+parcels;DGFiP-Etalab cadastre;src/labuse/cascade/context.py:541;proprietaire-pm;JOIN parcelle_personne_morale par idu, id=param LIMIT 1;
+parcels;DGFiP-Etalab cadastre;src/labuse/cascade/context.py:548;enveloppe-orientee;ST_OrientedEnvelope(geom_2975), id=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/cascade/context.py:573;sonde-voirie-emprise;EXISTS && bbox geom_2975 voirie carrossable, id=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/cascade/context.py:581;emprise-routiere;surf=coalesce(surface_m2, ST_Area(geom_2975)), clip voirie/bati dedoublonnes md5;LATENT: surface=COALESCE(surface_m2,ST_Area) vs COALESCE(contenance_m2,ST_Area) (db.py) vs ST_Area seul (declassement)
+parcels;DGFiP-Etalab cadastre;src/labuse/cascade/layers/fiche_couches4.py:35;cimetiere-proche;ST_DWithin cap param cap_m (100 defaut), ORDER dist LIMIT 1;
+parcels;DGFiP-Etalab cadastre;src/labuse/cascade/layers/etage1.py:269;icpe-proche;ST_DWithin cap param, subtype hors Non ICPE, ORDER dist LIMIT 1;
+parcels;DGFiP-Etalab cadastre;src/labuse/faisabilite/db.py:47;contexte-faisabilite;WHERE id=param, surface=COALESCE(contenance_m2, ST_Area(geom_2975)) + dessin=ST_Area, pente/littoral/safer par intersects;
+parcels;DGFiP-Etalab cadastre;src/labuse/faisabilite/db.py:107;emprise-constructible;ST_Buffer(geom_2975, -recul), clip U/AU, soustraction ER/EBC, id=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/faisabilite/db.py:151;emplacements-reserves-detail;ST_Buffer(-recul) inter ER par commune, id=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/faisabilite/db.py:164;emplacements-reserves-detail;assiette gabarit GeoJSON 4326 vers 2975, inter ER, id=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/faisabilite/db.py:172;prescriptions-eco;ST_Intersects subtypes eco par commune, id=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/faisabilite/db.py:218;largeur-voie-desserte;ST_DWithin 25 m voirie commune (seuil=cascade direct_access_m), id=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/faisabilite/db.py:271;greve-certaine;ST_Buffer(-recul), PPR INTERDICTION + PEB a/b + dpf buffer 3.25 m + ravine buffer 10 m + 50 pas, id=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/faisabilite/db.py:332;greve-sur-assiette;memes contraintes sur assiette gabarit GeoJSON, sans PPR (deja decoupe), id=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/faisabilite/db.py:674;empreintes-gabarit-3d;geom_2975 + buffer(-recul) recentres sur centroide, id=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/faisabilite/db.py:959;fragment-hors-ppr-rouge;ST_Difference(geom_2975, union PPR INTERDICTION), plus grand fragment, id=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/faisabilite/profil_altimetrique.py:129;profil-altimetrique;ST_LongestLine(geom_2975), WHERE idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/faisabilite/residuel.py:49;egout-lidar;JOIN batiment_hauteur_lidar par idu, id=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/faisabilite/residuel.py:63;niveaux-bati-bdtopo;batiments ST_Intersects geom_2975, max etages/hauteur, id=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/faisabilite/residuel.py:89;bati-sur-assiette-uau;emprise batie clippee a la portion U/AU (labuse_zone_famille), id=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/faisabilite/hauteur_lidar_dalles.py:163;bati-principal-dalle;bbox 2975 ST_MakeEnvelope, LATERAL plus gros batiment (ORDER ST_Area DESC LIMIT 1), centroide dans box;
+parcels;DGFiP-Etalab cadastre;src/labuse/faisabilite/hauteur_lidar_dalles.py:300;date-survol-lidar;UPDATE batiment_hauteur_lidar FROM cible (JOIN parcels par idu, bati principal);
+parcels;DGFiP-Etalab cadastre;src/labuse/faisabilite/exposition.py:106;centroide-parcelle;ST_X/ST_Y(ST_Centroid(geom_2975)), WHERE id=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/faisabilite/au_statut.py:162;statut-au;JOIN parcel_zone_plu par idu, idu=ANY, zone_fam=AU ou regex AU;
+parcels;DGFiP-Etalab cadastre;src/labuse/faisabilite/au_statut.py:180;purge-statut-au;JOIN parcel_au_statut, idu=ANY et idu<>ALL(vus);
+parcels;DGFiP-Etalab cadastre;src/labuse/faisabilite/potentiel.py:31;hauteur-bati-bdtopo;max(attrs hauteur) batiments ST_Intersects, id=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/faisabilite/hauteur_lidar.py:86;bati-principal;plus gros batiment intersectant (ORDER ST_Area DESC LIMIT 1), id=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/faisabilite/hauteur_lidar.py:132;id-parcelle;WHERE idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/faisabilite/hauteur_lidar.py:267;hauteur-bati-bdtopo;plus gros batiment intersectant, join par idu;
+parcels;DGFiP-Etalab cadastre;src/labuse/faisabilite/viabilisation_build.py:89;score-viabilisation;WHERE commune=param AND geom_2975 NOT NULL, ST_DWithin permis 100/200 m, voirie 10/75 m, bati 10/30/75 m, zonage assainissement;
+parcels;DGFiP-Etalab cadastre;src/labuse/faisabilite/viabilisation_build.py:201;liste-communes;DISTINCT commune WHERE geom_2975 IS NOT NULL;
+parcels;DGFiP-Etalab cadastre;src/labuse/faisabilite/zone_servie.py:60;nb-zones-plu;ST_Intersects plu_gpu_zone, id=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/faisabilite/zone_servie.py:66;parts-zones-plu;pct=ST_Area(inter)/ST_Area(geom_2975), id=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/faisabilite/zone_servie.py:78;zone-ecran;JOIN parcel_zone_plu par idu, WHERE id=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/faisabilite/filtre_bati.py:77;dpe-vers-parcelle;ST_Contains(geom_2975, point DPE transforme 2975);
+parcels;DGFiP-Etalab cadastre;src/labuse/faisabilite/filtre_bati.py:106;filtre-bati-ratio;ratio=emprise p_model_bati/ST_Area(geom_2975), p_surf=ST_Area, JOIN residuel+zone_plu;
+parcels;DGFiP-Etalab cadastre;src/labuse/faisabilite/filtre_bati.py:111;filtre-bati-ratio;re-JOIN parcels ON id=base.pid pour l'INSERT;
+parcels;DGFiP-Etalab cadastre;src/labuse/faisabilite/bilan.py:325;id-parcelle;WHERE idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/faisabilite/bilan.py:1041;id-parcelle;WHERE idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/faisabilite/bilan.py:1082;surface-parcelle;SELECT surface_m2 (colonne stockee) WHERE idu=param;LATENT: colonne surface_m2 vs COALESCE(contenance_m2,ST_Area) (db.py) vs ST_Area seul (declassement.py:108)
+parcels;DGFiP-Etalab cadastre;src/labuse/faisabilite/vue_mer.py:110;centroide-parcelle;ST_X/ST_Y(ST_Centroid(geom_2975)), id=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/faisabilite/vue_mer.py:116;hauteur-bati-bdtopo;max(attrs hauteur) batiments ST_Intersects, id=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/faisabilite/vue_mer.py:135;temoins-commune;WHERE commune=param ORDER BY ST_Y(centroid) ASC LIMIT n;
+parcels;DGFiP-Etalab cadastre;src/labuse/faisabilite/marche_commune.py:58;parcelle-representative;WHERE commune=param AND geom_2975 NOT NULL, KNN centroid <-> centroide commune LIMIT 1;
+parcels;DGFiP-Etalab cadastre;src/labuse/faisabilite/marche_commune.py:59;centroide-commune;ST_Centroid(ST_Collect(centroid)) WHERE commune=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/faisabilite/marche_commune.py:115;terrain-nu-par-zone;JOIN dvf_mutations_parcelle par idu AND commune=param, JOIN parcel_zone_plu U/AU;
+parcels;DGFiP-Etalab cadastre;src/labuse/faisabilite/marche_commune.py:257;gisement-sdp;JOIN parcel_residuel + parcel_p_score_v2 run servi, commune=param, tiers servables, sdp>0;
+parcels;DGFiP-Etalab cadastre;src/labuse/faisabilite/marche_commune.py:279;insee-commune;left(min(idu),5) WHERE commune=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/faisabilite/marche_commune.py:315;insee-commune;left(min(idu),5) WHERE commune=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/faisabilite/bati_revele.py:54;bati-revele-cosia;INSERT SELECT JOIN p_model_bati_cosia par idu, emprise=ST_Area(ST_Union(inter batiment));
+parcels;DGFiP-Etalab cadastre;src/labuse/faisabilite/au_ouverture.py:147;voisins-assemblables;cible: geom_2975 + surf=ST_Area(geom_2975), WHERE idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/faisabilite/au_ouverture.py:156;voisins-assemblables;JOIN parcel_zone_plu zone_lib=param, frontiere >= min_m ET >= part perimetre, delaisses exclus;
+parcels;DGFiP-Etalab cadastre;src/labuse/faisabilite/au_ouverture.py:163;surface-parcelle;ST_Area(geom_2975) WHERE idu=param;LATENT: ST_Area seul vs contenance (db.py) et surface_m2 (bilan.py:1082)
+parcels;DGFiP-Etalab cadastre;src/labuse/faisabilite/au_ouverture.py:216;parcelles-au-communes;substring(idu,1,5)=ANY(insee), JOIN parcel_zone_plu AU, surf=ST_Area(geom_2975);
+parcels;DGFiP-Etalab cadastre;src/labuse/registre/remplissage.py:53;temoins-echantillon;WHERE md5(idu||jour)<'0002' AND geom IS NOT NULL LIMIT 200;
+parcels;DGFiP-Etalab cadastre;src/labuse/registre/moteurs/zonage.py:27;parts-zonage-commune;JOIN parcel_zone_plu par idu, WHERE commune=param, sum(surface_m2);LATENT: surface agregee = surface_m2 brut (dessin), pas COALESCE(contenance_m2,...) comme gabarit/exports
+parcels;DGFiP-Etalab cadastre;src/labuse/registre/moteurs/zonage.py:56;compte-parcelles-zone;JOIN parcel_zone_plu par idu, WHERE commune=ANY(param);
+parcels;DGFiP-Etalab cadastre;src/labuse/registre/moteurs/commune.py:28;indicateurs-communes;DISTINCT left(idu,5)+commune (univers des communes);
+parcels;DGFiP-Etalab cadastre;src/labuse/registre/moteurs/commune.py:104;compte-parcelles-commune;count(*) WHERE commune=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/registre/moteurs/commune.py:136;part-parcelles-couche;JOIN spatial_layers ST_Intersects(geom_2975), WHERE commune=param, count DISTINCT idu;
+parcels;DGFiP-Etalab cadastre;src/labuse/registre/moteurs/commune.py:173;couverture-parcelles;count(*) sans filtre;
+parcels;DGFiP-Etalab cadastre;src/labuse/registre/moteurs/commune.py:184;couverture-parcelles-filtrables;count(*) WHERE surface_m2 IS NULL OR surface_m2>=2;LATENT: seuil sliver sur surface_m2 (dessin), pas la contenance
+parcels;DGFiP-Etalab cadastre;src/labuse/registre/moteurs/commune.py:185;couverture-communes;count(DISTINCT commune);
+parcels;DGFiP-Etalab cadastre;src/labuse/registre/moteurs/commune.py:302;permis-point-mort;JOIN sitadel_permits via idu_codes + dryrun_parcel_evaluations run_label=run, WHERE type=PC sans DAACT;
+parcels;DGFiP-Etalab cadastre;src/labuse/registre/moteurs/commune.py:362;zan-ocsge-commune;JOIN parcel_ocsge par idu, GROUP BY commune, denominateur sum(ST_Area(geom_2975));LATENT: part artificialisee rapportee a ST_Area(geom_2975), pas a la contenance
+parcels;DGFiP-Etalab cadastre;src/labuse/pige/rattachement_html.py:73;rattachement-annonce-surface;WHERE commune=param AND surface_m2 BETWEEN plus ou moins 10 pct annonce AND ST_DWithin(geom_2975) rayon 150 m;LATENT: surface comparee = surface_m2 alors que pige/rattachement.py:65 (meme notion) compare ST_Area(geom_2975) a 5 pct pres
+parcels;DGFiP-Etalab cadastre;src/labuse/pige/rattachement_html.py:96;rattachement-annonce-emprise;JOIN p_model_bati par idu, WHERE commune=param AND emprise BETWEEN bornes AND ST_DWithin(geom_2975) rayon 150 m;
+parcels;DGFiP-Etalab cadastre;src/labuse/pige/rattachement_html.py:149;distance-candidates;ST_Distance(geom_2975, point), WHERE idu=ANY(param);
+parcels;DGFiP-Etalab cadastre;src/labuse/pige/rattachement_html.py:245;criteres-candidate;WHERE idu=param, surface_m2 + LEFT JOIN p_model_bati/parcel_equipements;LATENT: surface=surface_m2 (dessin)
+parcels;DGFiP-Etalab cadastre;src/labuse/pige/client.py:129;centroide-bien-radar;LEFT JOIN par idu (b.idu), ST_X/ST_Y(centroid);
+parcels;DGFiP-Etalab cadastre;src/labuse/flash/data.py:127;identite-parcelle-flash;WHERE idu=param, sert surface_m2 + contenance_m2 (champs_terrain) + ST_Area(geom_2975), centroide geom_2975, GeoJSON geom;
+parcels;DGFiP-Etalab cadastre;src/labuse/flash/data.py:170;id-parcelle;WHERE idu=param (id pour zone_dominante);
+parcels;DGFiP-Etalab cadastre;src/labuse/flash/data.py:185;prescriptions-parcelle;CTE geom_2975 WHERE idu=param, ST_Intersects spatial_layers kind=plu_gpu_prescription;
+parcels;DGFiP-Etalab cadastre;src/labuse/flash/data.py:200;commune-parcelle;WHERE idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/flash/data.py:213;commune-parcelle;WHERE idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/flash/data.py:245;id-parcelle;WHERE idu=param (id pour parcel_faisabilite);
+parcels;DGFiP-Etalab cadastre;src/labuse/flash/data.py:285;verdict-etage0-flash;JOIN dryrun_parcel_evaluations par parcel_id, WHERE idu=param AND run_label=runs.cascade();
+parcels;DGFiP-Etalab cadastre;src/labuse/flash/data.py:356;constructibilite-parcelle;JOIN parcel_constructibilite par parcel_id, WHERE idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/flash/data.py:372;statut-au-parcelle;JOIN parcel_au_statut par parcel_id, WHERE idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/flash/data.py:409;icpe-proximite;CTE geom_2975 WHERE idu=param, ST_DWithin spatial_layers kind=icpe rayon 500 m, ORDER dist LIMIT 5;
+parcels;DGFiP-Etalab cadastre;src/labuse/flash/data.py:427;patrimoine-parcelle;CTE geom_2975 WHERE idu=param, ST_Intersects kinds ens/qpv/friche/parc_national/foret_publique;
+parcels;DGFiP-Etalab cadastre;src/labuse/flash/data.py:464;commune-parcelle;WHERE idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/flash/data.py:478;dvf-secteur-stats;CTE geom_2975 WHERE idu=param, ST_DWithin dvf rayon profil secteur_dossier (repli 500 m), fenetre 3 ans;
+parcels;DGFiP-Etalab cadastre;src/labuse/flash/data.py:507;dvf-comparables;CTE geom_2975 WHERE idu=param, ST_DWithin meme rayon/fenetre, ORDER date DESC LIMIT 15;
+parcels;DGFiP-Etalab cadastre;src/labuse/flash/data.py:597;permis-proximite;CTE geom_2975 WHERE idu=param, ST_DWithin sitadel rayon 500 m, fenetre 24 mois (agregat);LATENT: rayon permis 500 m (flash) vs 300 m (fiche) vs 200 m (veille)
+parcels;DGFiP-Etalab cadastre;src/labuse/flash/data.py:619;permis-proximite;CTE geom_2975 WHERE idu=param, ST_DWithin 500 m / 24 mois, ORDER nb_lgt DESC LIMIT 3;
+parcels;DGFiP-Etalab cadastre;src/labuse/flash/data.py:807;qpv-parcelle;CTE geom_2975 WHERE idu=param, ST_Intersects kind=qpv LIMIT 1;
+parcels;DGFiP-Etalab cadastre;src/labuse/pige/signaux.py:137;parcelle-centrale-commune;WHERE commune=param AND geom_2975 NOT NULL, KNN centroid <-> centroide commune LIMIT 1;
+parcels;DGFiP-Etalab cadastre;src/labuse/pige/signaux.py:138;centroide-commune;sous-requete ST_Centroid(ST_Collect(centroid)) WHERE commune=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/pige/rattachement.py:24;parcelle-contenante-point;WHERE commune=param AND ST_Contains(geom, point 4326) LIMIT 1;LATENT: teste geom 4326 la ou le reste de la pige travaille en geom_2975
+parcels;DGFiP-Etalab cadastre;src/labuse/pige/rattachement.py:65;candidates-morphologie;WHERE commune=param, abs(ST_Area(geom_2975)-terrain)<=greatest(50, 5 pct), joins p_model_bati/parcel_equipements, LIMIT 10;LATENT: surface terrain = ST_Area(geom_2975) a 5 pct vs rattachement_html.py:73 surface_m2 a 10 pct (meme notion, 2 expressions et 2 tolerances)
+parcels;DGFiP-Etalab cadastre;src/labuse/gabarit/builder.py:136;zones-plu-parcelle;JOIN parcel_couche_intersection par parcel_id, pct=area_m2/ST_Area(geom_2975);
+parcels;DGFiP-Etalab cadastre;src/labuse/gabarit/builder.py:170;touche-ravine;ST_DWithin(geom_2975 WHERE id=param, ravine/trait_de_cote, 8 m);
+parcels;DGFiP-Etalab cadastre;src/labuse/gabarit/builder.py:183;surface-terrain-gabarit;WHERE idu=param, COALESCE(contenance_m2, ST_Area(geom_2975)) + GeoJSON geom;
+parcels;DGFiP-Etalab cadastre;src/labuse/gabarit/limites.py:385;geometrie-parcelle;WHERE id=param, ST_AsText(geom_2975);
+parcels;DGFiP-Etalab cadastre;src/labuse/gabarit/limites.py:390;geometrie-parcelle;sous-expression geom_2975 WHERE id=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/gabarit/limites.py:402;voisins-cadastres;WHERE id<>param AND ST_DWithin(geom_2975, parcelle, 0.5 m) + flags voirie/bati;
+parcels;DGFiP-Etalab cadastre;src/labuse/gabarit/limites.py:427;voies-privees-collees;WHERE id<>param AND ST_DWithin(geom_2975, parcelle, 0.5 m), morphologie OBB;
+parcels;DGFiP-Etalab cadastre;src/labuse/exports/builder.py:345;voisines-bloc-proprietaire;LEFT JOIN par idu, surface=COALESCE(contenance_m2, membre.surface_m2);
+parcels;DGFiP-Etalab cadastre;src/labuse/exports/builder.py:384;geometrie-parcelle;WHERE idu=param, ST_AsGeoJSON(geom);
+parcels;DGFiP-Etalab cadastre;src/labuse/exports/builder.py:393;geometrie-voisines;WHERE idu=ANY(param), ST_AsGeoJSON(ST_Collect(geom));
+parcels;DGFiP-Etalab cadastre;src/labuse/exports/robinet_fiche.py:113;id-parcelle;WHERE idu=param (id pour exposition_parcelle);
+parcels;DGFiP-Etalab cadastre;src/labuse/exports/robinet_fiche.py:633;id-parcelle;WHERE idu=param (id pour nearby_permits rayon 500 m / 24 mois);
+parcels;DGFiP-Etalab cadastre;src/labuse/pige/api.py:582;faits-sol-annonce;WHERE idu=param, surface_m2 servie comme surface_cadastrale;LATENT: surface=surface_m2 (dessin), pas contenance
+parcels;DGFiP-Etalab cadastre;src/labuse/pige/api.py:704;verif-parcelle-commune;WHERE idu=param AND commune=param (garde rattachement manuel);
+parcels;DGFiP-Etalab cadastre;src/labuse/copilote_v2/answering.py:1085;resolution-ref-parcelle;WHERE commune=param AND idu LIKE pct+ref LIMIT 2;
+parcels;DGFiP-Etalab cadastre;src/labuse/bilan/reperes.py:35;id-commune-parcelle;WHERE idu=param;
+parcels;DGFiP-Etalab cadastre;src/labuse/bilan/reperes.py:47;surface-parcelle;WHERE idu=param, surface_m2;LATENT: repere Bilan = surface_m2 (dessin), pas COALESCE(contenance_m2,...)
+parcels;DGFiP-Etalab cadastre;src/labuse/copilote_v2/outils.py:623;zone-plu-parcelle;LEFT JOIN parcel_zone_plu par idu, WHERE idu=param;
+adresses;BAN;src/labuse/ingestion/permits_sdes.py:315;geocodage-permis-adresse;UPDATE sitadel SET geom FROM adresses, match exact insee+numero+voie unaccent, geom NOT NULL;
+adresses;BAN;src/labuse/ingestion/permits_sdes.py:331;geocodage-permis-adresse;JOIN insee+numero exacts, similarity(voie)>=0.8, voie candidate unique;
+adresses;BAN;src/labuse/ingestion/permits_sdes.py:364;geocodage-permis-interpolation;sous-req geom borne basse: insee+sim(voie)>=0.8, numero<cible, ORDER numero DESC LIMIT 1;
+adresses;BAN;src/labuse/ingestion/permits_sdes.py:369;geocodage-permis-interpolation;sous-req numero borne basse (memes filtres);
+adresses;BAN;src/labuse/ingestion/permits_sdes.py:374;geocodage-permis-interpolation;sous-req geom borne haute: numero>cible, ORDER numero ASC LIMIT 1;
+adresses;BAN;src/labuse/ingestion/permits_sdes.py:379;geocodage-permis-interpolation;sous-req numero borne haute (memes filtres);
+adresses;BAN;src/labuse/ingestion/etablissement_parcelle.py:55;rattachement-siret-parcelle;INSERT etablissement_parcelle SELECT, LATERAL KNN geom_2975 <-> point SIRENE LIMIT 1, d<=25 m, idu NOT NULL;
+adresses;BAN;src/labuse/ingestion/fraicheur.py:69;fraicheur-ban;max(refreshed_at);
+adresses;BAN;src/labuse/ingestion/dpe.py:193;index-adresses-commune;WHERE insee=param AND idu NOT NULL (index numero+voie normalises);
+adresses;BAN;src/labuse/ingestion/dpe.py:215;adresse-par-idban;WHERE id_ban=param AND idu NOT NULL;
+adresses;BAN;src/labuse/ingestion/dpe.py:303;insee-par-code-postal;DISTINCT insee WHERE code_postal=param;
+adresses;BAN;src/labuse/ingestion/dpe.py:391;insee-par-code-postal;DISTINCT insee WHERE code_postal=param;
+adresses;BAN;src/labuse/ingestion/ban_adresses.py:175;inversion-adresse-parcelle;INSERT adresse_parcelles SELECT id_ban+idu source=principal WHERE idu NOT NULL;
+adresses;BAN;src/labuse/ingestion/ban_adresses.py:183;inversion-ban-cad;JOIN adresses ON id_ban=staging.id (assiette cad_parcelles vers parcels);
+adresses;BAN;src/labuse/ingestion/ban_adresses.py:230;garde-plausibilite-ban;count(*) avant DELETE (seuil 80 pct du staging);
+adresses;BAN;src/labuse/ingestion/ban_adresses.py:250;stats-ingestion-ban;count(*);
+adresses;BAN;src/labuse/ingestion/ban_adresses.py:257;stats-ingestion-ban;count(*) WHERE idu NOT NULL;
+adresses;BAN;src/labuse/ingestion/ban_adresses.py:319;rattachement-copro-adresse;DISTINCT voie+idu WHERE insee=param AND numero=param AND idu NOT NULL;
+adresses;BAN;src/labuse/pige/api.py:605;adresse-parcelle;WHERE idu=param ORDER BY (numero IS NULL), id_ban LIMIT 1;LATENT: lit adresses.idu en direct (pas adresse_parcelles) et ignore source=principal + tri numerique de _BAN_ORDER - l'adresse servie au Radar peut differer de la fiche
+adresses;BAN;src/labuse/api/recherche.py:175;suggestion-adresse;WHERE idu NOT NULL AND geom NOT NULL, jetons LIKE plies (GIN trgm), ORDER prefixe LIMIT n;
+adresses;BAN;src/labuse/api/app.py:1436;adresse-parcelle;JOIN adresse_parcelles par id_ban, WHERE ap.idu=param, ORDER _BAN_ORDER (principal, numero num) LIMIT 1;
+adresses;BAN;src/labuse/api/app.py:2627;geocodage-suggestion;WHERE idu NOT NULL AND geom NOT NULL, LIKE plie (sql_plie), ORDER prefixe LIMIT param;
+adresses;BAN;src/labuse/api/pre_dossier.py:1039;adresse-parcelle;JOIN par id_ban via adresse_parcelles, ORDER (source=principal) DESC, a.id_ban LIMIT 1;LATENT: tri sans (numero IS NULL)+numero::int de _BAN_ORDER malgre le commentaire app.py:1299 MEME regle que pre_dossier
+adresse_parcelles;BAN;src/labuse/ingestion/ban_adresses.py:201;inversion-bati-partage;NOT EXISTS ap.idu=rb.idu (parcelles baties sans adresse);
+adresse_parcelles;BAN;src/labuse/ingestion/ban_adresses.py:208;inversion-bati-partage;JOIN ap.idu=parcelle voisine partageant le bati (seuil 15 m2);
+adresse_parcelles;BAN;src/labuse/ingestion/ban_adresses.py:272;couverture-bati-adresse;EXISTS ap.idu=rb.idu sur parcel_residuel_bati emprise>=20 m2;
+adresse_parcelles;BAN;src/labuse/api/export_commun.py:227;adresse-parcelle;DISTINCT ON (ap.idu) JOIN adresses par id_ban, WHERE idu=ANY(param), ORDER (source=principal) DESC, a.id_ban;LATENT: tri sans (numero IS NULL)+numero::int de _BAN_ORDER - exports peuvent servir un numero different de la fiche
+adresse_parcelles;BAN;src/labuse/api/tiles.py:120;build-parcel-adresse;CREATE TABLE parcel_adresse AS DISTINCT ON (ap.idu) JOIN adresses, ORDER principal + (numero IS NULL) + numero::int (= _BAN_ORDER);
+adresse_parcelles;BAN;src/labuse/api/pre_dossier.py:1038;adresse-parcelle;FROM adresse_parcelles WHERE ap.idu=param (CERFA pre-dossier);
+adresse_parcelles;BAN;src/labuse/api/app.py:1311;adresse-parcelle;LATERAL JOIN adresses par id_ban, WHERE ap.idu=ligne, ORDER _BAN_ORDER LIMIT 1 (listes paginees);
+adresse_parcelles;BAN;src/labuse/api/app.py:1374;pret-table-adresse;count(DISTINCT idu) compare au snapshot parcel_adresse;
+adresse_parcelles;BAN;src/labuse/api/app.py:1839;filtre-adresse-absente;NOT EXISTS ap.idu=p.idu (filtre veille);
+adresse_parcelles;BAN;src/labuse/api/app.py:8480;adresse-parcelle-batch;DISTINCT ON (ap.idu) JOIN adresses, WHERE idu=ANY(param), ORDER _BAN_ORDER;
+lieux_dits;IGN BD NYME;src/labuse/api/recherche.py:235;suggestion-lieu-dit;jetons unaccent+lower LIKE, ORDER prefixe puis habite DESC LIMIT n;
+lieux_dits;IGN BD NYME;src/labuse/api/recherche.py:244;suggestion-lieu-dit;repli sans unaccent (lower seul), ORDER habite DESC LIMIT n;
+lieux_dits;IGN BD NYME;src/labuse/api/app.py:1448;secteur-lieu-dit;avec parcels p WHERE p.idu=param, ST_DWithin(geom_2975, 600 m) + KNN <-> LIMIT 1;
+cadastre_historique;Etalab PCI millesimes;src/labuse/ingestion/cadastre_historique.py:93;cibles-parcelles-disparues;NOT EXISTS h.idu=t.idu (anti-doublon idus permis absents du cadastre courant);
+cadastre_historique;Etalab PCI millesimes;src/labuse/ingestion/cadastre_historique.py:260;geolocalisation-permis-parcelle-disparue;JOIN h.idu=idu_codes permis, puis JOIN parcels ST_Intersects(geom) part>50 pct ou >=10 pct (UPDATE sitadel_permits);
+cadastre_historique;Etalab PCI millesimes;src/labuse/api/moteurs.py:550;parcelle-mere-historique;JOIN dfi_filiation idu_mere=ch.idu WHERE idu_fille=param AND geom NOT NULL, GeoJSON;
+ban_plus_liens;IGN BAN PLUS;src/labuse/bati.py:300;adresses-desservant-bati;count liens + DISTINCT id_adr/id_bat WHERE idu=param;
