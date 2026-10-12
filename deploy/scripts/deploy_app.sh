@@ -19,6 +19,9 @@ echo "── 1. Code → ${HOST}:/opt/labuse/app (rsync DIRECT via sudo distant,
 #     et des artefacts de dev (qa/captures/audit_shots/tests/reports) ;
 #   · les exclusions PROTÈGENT AUSSI du --delete les caches/sorties écrits SUR le VPS
 #     (data/plu_reglements, data/ortho_tiles, data/ban régénéré par cron, outputs/) — à ne pas écraser.
+#   · ⛔ ÉTAT SERVI (config/served_manifest.json + served_run.txt) JAMAIS expédié : c'est le POINTEUR
+#     de bascule, propre à la prod (écrit par la bascule seule). Incident 13/10 : le manifeste local
+#     (q_v18) rsync'd ici a basculé prod sur un run sans données → /readyz=false. Exclu définitivement.
 rsync -a --delete --rsync-path="sudo rsync" \
   --exclude .git --exclude .venv --exclude node_modules --exclude frontend/dist \
   --exclude "__pycache__" --exclude "*.pyc" --exclude .pytest_cache --exclude /exports \
@@ -28,6 +31,7 @@ rsync -a --delete --rsync-path="sudo rsync" \
   --exclude /data/rgealti --exclude /data/dvf_histo --exclude /data/ml \
   --exclude /data/insee_rp --exclude /data/ban --exclude /data/edf_hta \
   --exclude /data/tcsp --exclude /data/dvf --exclude /data/plu_reglements \
+  --exclude /config/served_manifest.json --exclude /config/served_run.txt \
   "$REPO/" "$HOST":/opt/labuse/app/
 ssh -o BatchMode=yes "$HOST" 'sudo chown -R labuse:labuse /opt/labuse/app'
 
