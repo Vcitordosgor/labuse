@@ -3,7 +3,7 @@ import { Siren } from '../shared/Siren'   // RETOURS-12 T2 — SIREN cliquable P
 import { useEffect, useState } from 'react'
 import { ListPaginationFooter } from '../ListPagination'
 import { ParcelInput } from '../ParcelInput'   // OUTILS-MUSCLER-1 B1 — entrée par parcelle (omnibox)
-import { addProfile, getCommunes, getProfiles, getResults, motAssemblage, motBarometre, motMarcheCommune, motSimulPlu, motSimulPluZones, motZan, promoteursActifs, zanParcelle } from '../../lib/api'
+import { addProfile, getCommunes, getMoteursConfig, getProfiles, getResults, motAssemblage, motBarometre, motMarcheCommune, motSimulPlu, motSimulPluZones, motZan, promoteursActifs, zanParcelle } from '../../lib/api'
 import { CLIENT } from '../../lib/strings'
 import { fmtEurCompact, fmtInt } from '../../lib/format'
 import { TOKENS } from '../../lib/tokens'
@@ -133,10 +133,14 @@ export function M15({ communeOverride }: { communeOverride?: string | null } = {
 
 /* ───────────── M16 — ASSEMBLAGE ───────────── */
 
-const ASM_MAX = 8   // RECETTE-1 (H5, Vic) — 8 parcelles maximum pour un assemblage.
+const ASM_MAX_DEFAUT = 8   // repli ; CHASSE-DONNEES-FIX-1 (E-78) la valeur vient de /moteurs/config.
 
 export function M16() {
   const { msel, setMsel, setModuleMap, parcelPrefill, setParcelPrefill, select } = useApp()
+  // CHASSE-DONNEES-FIX-1 (suite 2, E-78) — plafond d'écran SERVI (config/moteurs.yaml), plus codé en
+  // dur : un seul endroit décide « 8 max » (décision Vic RECETTE-1 H5), le back plafonne à 30 (API).
+  const cfgMot = useQuery({ queryKey: ['moteurs-config'], queryFn: getMoteursConfig, staleTime: 3600_000 })
+  const ASM_MAX = cfgMot.data?.assemblage_max_ecran ?? ASM_MAX_DEFAUT
   const run = useMutation({ mutationFn: () => motAssemblage(msel) })
   // RECETTE-PROD-1 (1) — ouvrir l'Assemblage FERME la fiche parcelle en cours : sinon une fiche « sans
   // rapport » restait ouverte à droite (état résiduel). Le clic-carte en mode assemblage compose msel

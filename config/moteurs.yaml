@@ -8,3 +8,10 @@ barometre_top_communes: 8
 # Assemblage : nombre max de parcelles dans une assiette étudiée. Au-delà, l'écran DIT « les N
 # premières » (jamais une coupe muette). L'agrégation lit un fiche_payload par parcelle → borné.
 assemblage_max_parcelles: 30
+# CHASSE-DONNEES-FIX-1 (suite 2, E-78) — plafond d'ÉCRAN de la sélection d'assemblage (décision Vic
+# RECETTE-1 H5), SERVI au front (plus codé en dur dans moteurs.tsx ASM_MAX=8) : un seul endroit.
+assemblage_max_ecran: 8
+# CHASSE-DONNEES-FIX-1 (suite 2, E-77) — rayons acceptés par l'Étude de zone (km), SERVIS au front
+# (plus trois listes en dur divergentes EtudeZone/DocumentsView/back). Le back ne calcule un cercle
+# QUE pour ces rayons (sinon isochrone, cf. E-69).
+rayons_etude_zone: [0.5, 1, 2, 5]

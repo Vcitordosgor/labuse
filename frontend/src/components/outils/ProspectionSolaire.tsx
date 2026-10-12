@@ -177,7 +177,7 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
             ))}
           </div>
         )}
-        <div data-piscines-source className="text-[9px] leading-snug text-txt-dim">Source : IGN FLAIR et CoSIA, 2025</div>
+        <div data-piscines-source className="text-[9px] leading-snug text-txt-dim">Source : IGN FLAIR et CoSIA (millésime servi en page Sources)</div>
       </div>
     )
   }
@@ -245,7 +245,7 @@ function ModePiscines({ onBack }: { onBack: () => void }) {
           </div>
         </>
       )}
-      <p className="text-[9.5px] leading-snug text-txt-dim">Source unique fusionnée FLAIR ∪ CoSIA (IGN 20 cm 2025) · propriétaire DGFiP</p>
+      <p className="text-[9.5px] leading-snug text-txt-dim">Source unique fusionnée FLAIR ∪ CoSIA (IGN 20 cm, millésime en page Sources) · propriétaire DGFiP</p>
     </div>
   )
 }

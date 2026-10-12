@@ -37,6 +37,29 @@ def _moteurs_cap(name: str, defaut: int) -> int:
         return defaut
 
 
+def rayons_etude_zone() -> list[float]:
+    """CHASSE-DONNEES-FIX-1 (E-77) — rayons (km) acceptés par l'Étude de zone, lus de la config
+    (source UNIQUE back ↔ front). Repli sur l'historique si la config est absente."""
+    try:
+        from ..config import load_yaml_config
+        v = load_yaml_config("moteurs").get("rayons_etude_zone")
+        return [float(x) for x in v] if v else [0.5, 1, 2, 5]
+    except Exception:  # noqa: BLE001
+        return [0.5, 1, 2, 5]
+
+
+@router.get("/config")
+def moteurs_config() -> dict:
+    """CHASSE-DONNEES-FIX-1 (suite 2, E-77/E-78) — seuils d'écran SERVIS (source unique config/
+    moteurs.yaml) : plafond d'assemblage écran, plafond API, rayons d'Étude de zone. Le front ne
+    code plus ces bornes en dur (ASM_MAX=8, RAYON_MIN/MAX/PAS, listes divergentes)."""
+    return {
+        "assemblage_max_ecran": _moteurs_cap("assemblage_max_ecran", 8),
+        "assemblage_max_parcelles": _moteurs_cap("assemblage_max_parcelles", 30),
+        "rayons_etude_zone": rayons_etude_zone(),
+    }
+
+
 # ───────────────────────── M15 — SIMULATEUR PLU ─────────────────────────
 # « Et si cette zone AU passait en U ? » — recalcul À BLANC, JAMAIS persisté.
 # Méthode (documentée, honnête) : ESTIMATION PAR ANALOGIE — la SDP estimée des parcelles AU

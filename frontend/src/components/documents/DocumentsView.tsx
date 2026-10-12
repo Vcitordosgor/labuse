@@ -21,7 +21,7 @@ import {
 } from '../../lib/api'
 import { fmtM2, iduComplet } from '../../lib/format'
 import { useOuvrirDocument } from '../../lib/ouvrirDocument'
-import { supprimerDocument } from '../../lib/api'
+import { supprimerDocument, getMoteursConfig } from '../../lib/api'
 import { CATALOGUE, type DocCatalogue } from './catalogue'
 
 // l'URL du générateur d'une ligne de bibliothèque (régénération à la demande — « Ouvrir »).
@@ -157,7 +157,10 @@ function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
   // variante parcelle / multi / zone
   const [idu, setIdu] = useState<string | null>(null)                // parcelle & zone
   const [idus, setIdus] = useState<(string | null)[]>([null, null, null])  // multi (2 à 3)
-  const [rayon, setRayon] = useState(2)                              // zone : 1..20 km, défaut 2
+  const [rayon, setRayon] = useState(2)                              // zone : rayon servi, défaut 2
+  // CHASSE-DONNEES-FIX-1 (suite 2, E-77) — rayons SERVIS (config/moteurs.yaml), plus la liste 1..20 en dur.
+  const cfgMot = useQuery({ queryKey: ['moteurs-config'], queryFn: getMoteursConfig, staleTime: 3600_000 })
+  const rayonsServis = cfgMot.data?.rayons_etude_zone ?? [0.5, 1, 2, 5]
   const [bilanOuvert, setBilanOuvert] = useState(false)
   // DOCS-FIX-1 (P3/P4) — ouverture propre (fetch + blob + attente + erreur FR), comme le Bilan :
   // plus de window.open qui laisse l'onglet blanc puis affiche du JSON. L'erreur est rendue INLINE
@@ -258,10 +261,12 @@ function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
             <ParcelInput placeholder={placeholder} withCarte={false} autoFocus onPick={setIdu} />
             {idu && <ParcelleResolue idu={idu} onFiche={() => ouvrirFiche(idu)} />}
             <div className="mb-2 mt-2 text-[13px] font-medium text-txt-mut">Rayon autour de la parcelle</div>
-            <div className="flex items-center gap-2.5">
-              <Bouton niveau="secondaire" ton="vert" icone aria-label="Réduire" disabled={rayon <= 1} onClick={() => setRayon((r) => Math.max(1, r - 1))}>−</Bouton>
-              <div className="h-8 flex-1 rounded-md border border-line-2 text-center leading-8"><b className="text-txt">{rayon}</b> km</div>
-              <Bouton niveau="secondaire" ton="vert" icone aria-label="Augmenter" disabled={rayon >= 20} onClick={() => setRayon((r) => Math.min(20, r + 1))}>+</Bouton>
+            {/* CHASSE-DONNEES-FIX-1 (E-77) — rayons SERVIS (discrets), plus un stepper 1..20 divergent du back. */}
+            <div className="flex items-center gap-1.5">
+              {rayonsServis.map((r) => (
+                <Bouton key={r} niveau={rayon === r ? 'primaire' : 'secondaire'} ton="vert"
+                  aria-pressed={rayon === r} onClick={() => setRayon(r)}>{String(r).replace('.', ',')} km</Bouton>
+              ))}
             </div>
             <p className="my-3 border-l-2 border-line-2 pl-2.5 text-[13px] text-txt-dim">{d.explication}</p>
             {erreur && <p className="my-3 border-l-2 border-amber pl-2.5 text-[13px] text-amber">{erreur}</p>}

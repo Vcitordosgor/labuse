@@ -6709,7 +6709,8 @@ def etude_zone(inp: EtudeZoneIn, db: Session = Depends(get_db)) -> dict:
     # RETOURS-15 B9 — AMPLEUR PAR RAYON (défaut de l'outil) : on fabrique un cercle exact (buffer en
     # mètres via geography) autour du point et on le passe comme zone (court-circuite l'isochrone, comme
     # un polygone dessiné) → même moteur, aucun cercle « approximatif » masqué. Sans rayon → isochrone.
-    rayon_km = inp.rayon_km if inp.rayon_km in (0.5, 1, 2, 5) else None
+    from .moteurs import rayons_etude_zone as _rayons_ez  # FIX-1 E-77 : source unique config
+    rayon_km = inp.rayon_km if inp.rayon_km in set(_rayons_ez()) else None
     is_rayon = rayon_km is not None and geom is None
     if is_rayon:
         gj = db.execute(text(
@@ -6785,7 +6786,8 @@ def etude_zone_entreprises(inp: EtudeZoneIn, db: Session = Depends(get_db)) -> d
             raise HTTPException(404, "parcelle introuvable ou sans géométrie")
         lon, lat = float(pt["lon"]), float(pt["lat"])
     # RETOURS-15 B9 — même emprise que l'étude : rayon (cercle) prioritaire, sinon polygone, sinon isochrone.
-    rayon_km = inp.rayon_km if inp.rayon_km in (0.5, 1, 2, 5) else None
+    from .moteurs import rayons_etude_zone as _rayons_ez  # FIX-1 E-77 : source unique config
+    rayon_km = inp.rayon_km if inp.rayon_km in set(_rayons_ez()) else None
     if geom is None and rayon_km is not None and lon is not None and lat is not None:
         gj = db.execute(text(
             "SELECT ST_AsGeoJSON(ST_Buffer(ST_SetSRID(ST_MakePoint(:lon, :lat), 4326)::geography, :r)::geometry) AS g"),
