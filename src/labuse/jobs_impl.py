@@ -35,38 +35,43 @@ def _libpq_url(url: str) -> str:
 # ═══════════════════════════ K3 — quotidiens ═══════════════════════════
 
 def backup_postgres(ctx: JobContext) -> None:
-    """pg_dump | gzip vers backup_dir, rotation 14 j, taille minimale contrôlée (dump trop petit = échec)."""
+    """UNE SEULE méthode de sauvegarde : le job DÉLÈGUE au script de prod `deploy/scripts/backup_postgres.sh`
+    (dump LEAN `pg_dump -Fc` ~6,5 Go — data reconstructible + schémas reliquat `sauvegarde_*` exclus,
+    contrôle `pg_restore --list`, rotation locale). Plus de pg_dump propre au job (qui produisait un
+    `.sql.gz` FULL ~31 Go saturant le disque). Verrou / log / état / alerte restent portés par le runner
+    (jobs.py). Rotation : BACKUP_ROTATION_N dumps quotidiens gardés (via LABUSE_BACKUP_KEEP)."""
     s = get_settings()
-    dst = Path(s.backup_dir)
-    dst.mkdir(parents=True, exist_ok=True)
-    db_url = _libpq_url(s.database_url)
-    # nom de base depuis l'URL (dernier segment)
-    dbname = db_url.rsplit("/", 1)[-1].split("?")[0]
-    ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    out = dst / f"labuse-{dbname}-{ts}.sql.gz"
-    pg_dump = str(Path(s.pg_bin_dir) / "pg_dump") if s.pg_bin_dir else "pg_dump"
-    with gzip.open(out, "wb") as gz:
-        # Exclut les schémas de RELIQUAT (ex. sauvegarde_20261006, posé par schema-parité-1) : le rôle
-        # de dump ne les lit pas → pg_dump cassait sur « permission denied for schema » (cron KO 07→12/10).
-        # Argument de liste → pas de globbing shell ; le schéma est écarté du dump, PAS supprimé.
-        proc = subprocess.run([pg_dump, "--no-owner", "--no-privileges",
-                               "--exclude-schema=sauvegarde_*", db_url],
-                              stdout=gz, stderr=subprocess.PIPE, check=False)
+    script = Path(__file__).resolve().parents[2] / "deploy" / "scripts" / "backup_postgres.sh"
+    if not script.is_file():
+        raise RuntimeError(f"script de sauvegarde introuvable : {script}")
+    env = dict(os.environ)
+    env["LABUSE_BACKUP_KEEP"] = str(BACKUP_ROTATION_N)          # 4 dumps quotidiens gardés
+    env.setdefault("LABUSE_BACKUP_DIR", s.backup_dir)
+    if s.pg_bin_dir:                                            # pg_dump/pg_restore du bon PostgreSQL
+        env["PATH"] = f"{s.pg_bin_dir}:{env.get('PATH', '')}"
+    proc = subprocess.run(["bash", str(script)], env=env, capture_output=True, text=True, check=False)
+    sortie = (proc.stdout or "") + (proc.stderr or "")
+    for ligne in sortie.splitlines():                          # le détail du script va dans le log du job
+        log.info("backup_postgres.sh | %s", ligne)
     if proc.returncode != 0:
-        out.unlink(missing_ok=True)
-        raise RuntimeError(f"pg_dump a échoué : {proc.stderr.decode('utf-8', 'replace')[:300]}")
-    taille_mo = round(out.stat().st_size / 1e6, 2)
-    if taille_mo < BACKUP_MIN_MO:
-        out.unlink(missing_ok=True)
+        raise RuntimeError(f"backup_postgres.sh a échoué (code {proc.returncode}) : {sortie.strip()[-400:]}")
+    # Retrouver le dump produit : ligne « … → /chemin.dump » du script ; repli = le plus récent du dossier.
+    dump = None
+    for ligne in sortie.splitlines():
+        if "→" in ligne and ligne.rstrip().endswith(".dump"):
+            dump = Path(ligne.split("→", 1)[1].strip())
+            break
+    if dump is None or not dump.is_file():
+        dumps = sorted(Path(env["LABUSE_BACKUP_DIR"]).glob("labuse-*.dump"),
+                       key=lambda f: f.stat().st_mtime, reverse=True)
+        dump = dumps[0] if dumps else None
+    if dump is None or not dump.is_file():
+        raise RuntimeError("backup_postgres.sh terminé sans dump localisable")
+    taille_mo = round(dump.stat().st_size / 1e6, 2)
+    if taille_mo < BACKUP_MIN_MO:                               # garde-fou : un dump minuscule = suspect
         raise RuntimeError(f"dump anormalement petit ({taille_mo} Mo < {BACKUP_MIN_MO}) — suspect, rejeté")
-    # rotation : garder les BACKUP_ROTATION_N dumps les plus récents, supprimer les plus anciens.
-    tous = sorted(dst.glob("labuse-*.sql.gz"), key=lambda f: f.stat().st_mtime, reverse=True)
-    supprimes = 0
-    for f in tous[BACKUP_ROTATION_N:]:
-        f.unlink(missing_ok=True)
-        supprimes += 1
-    ctx.compte(dump=out.name, taille_mo=taille_mo, gardes=min(len(tous), BACKUP_ROTATION_N),
-               rotation_supprimes=supprimes)
+    ctx.compte(dump=dump.name, taille_mo=taille_mo, methode="backup_postgres.sh (lean)",
+               rotation_gardes=BACKUP_ROTATION_N)
 
 
 def sources_fraicheur(ctx: JobContext) -> None:
