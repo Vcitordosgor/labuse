@@ -495,7 +495,9 @@ export function ContextePanel() {
                 <div className="flex flex-col gap-0.5 text-[12px]">
                   <RowT lbl="Ancien médian (commune entière)" val={`${fmt(d.comparable?.ancien_median_eur_m2)} €/m²`} strong />
                   <RowT lbl="Prix VEFA commune" val={`${fmt(d.comparable?.neuf_eur_m2)} €/m²`} />
-                  <RowT lbl="Neuf observé (ventes récentes)" val={d.prix_neuf_observe?.eur_m2 != null ? `${fmt(d.prix_neuf_observe.eur_m2)} €/m²` : '—'} />
+                  {/* CHASSE-DONNEES-FIX-1 (Lot 7, E-72) — « récentes » = ≤ 3 ans après l'ACHÈVEMENT du
+                      bâtiment (pas récent dans le temps) : une vente 2015 d'un immeuble achevé 2014 compte. */}
+                  <RowT lbl="Neuf observé (ventes ≤ 3 ans après achèvement)" val={d.prix_neuf_observe?.eur_m2 != null ? `${fmt(d.prix_neuf_observe.eur_m2)} €/m²` : '—'} />
                   {tendPct != null && <RowT lbl="Tendance 12 mois" val={`${Number(tendPct) > 0 ? '+' : ''}${fmtDec(tendPct)} %`} />}
                 </div>
                 {d.foncier?.prix_terrain_nu.par_zone && (

@@ -200,31 +200,30 @@ def g08_accueil_totaux():
 
 
 def g09_prix_ancien_unique():
-    """C : deux formules de prix m² ancien servies au client — fiche commune/baromètre
-    (moteurs.prix_ancien_communes : nature Vente stricte, €/m² [100,12000], ≥100 ventes)
-    vs kanban projets (projets.py : toutes natures VEFA incluse, [200,8000]).
-    Reproduit les DEUX SQL ; divergent à Trois-Bassins (2 444 vs 2 618) tant que FIX-1
-    n'a pas unifié."""
+    """C (C-20) : deux formules de €/m² ancien étaient servies — fiche commune/baromètre
+    (moteurs.prix_ancien_communes : Vente stricte, [100,12000], ≥100 ventes) vs kanban/repères
+    projets (toutes natures VEFA, [200,8000], sans seuil). Après FIX-1, le kanban/les repères LISENT
+    la source UNIQUE. On teste la SORTIE SERVIE : /projets/reperes.dvf_median_eur_m2 == baromètre.
+    La formule de référence reste calculée ici pour prouver que la VALEUR SERVIE la suit."""
     with _db() as cx:
-        stricte = {c: int(v) for c, v in cx.execute(
+        bar = {c: int(v) for c, v in cx.execute(
             "SELECT commune, round(percentile_cont(0.5) WITHIN GROUP ("
             "  ORDER BY valeur_fonciere / NULLIF(surface_reelle_bati,0))) "
             "FROM dvf_mutations WHERE nature_mutation = 'Vente' "
             "  AND valeur_fonciere > 1000 AND surface_reelle_bati > 0 "
             "  AND valeur_fonciere / surface_reelle_bati BETWEEN 100 AND 12000 "
             "GROUP BY commune HAVING count(*) >= 100").fetchall() if v}
-        kanban = {c: int(v) for c, v in cx.execute(
-            "SELECT commune, round(percentile_cont(0.5) WITHIN GROUP ("
-            "  ORDER BY valeur_fonciere / NULLIF(surface_reelle_bati,0))) "
-            "FROM dvf_mutations WHERE surface_reelle_bati > 0 AND valeur_fonciere > 0 "
-            "  AND valeur_fonciere / surface_reelle_bati BETWEEN 200 AND 8000 "
-            "GROUP BY commune").fetchall() if v}
-    communs = sorted(set(stricte) & set(kanban))
+    rep = _api("/projets/reperes?dimension=commune")
+    options = rep.get("options") if isinstance(rep, dict) else None
+    if not options:
+        return "SKIP", "repères projets indisponibles"
+    servi = {o["key"]: o.get("dvf_median_eur_m2") for o in options if o.get("dvf_median_eur_m2")}
+    communs = sorted(set(bar) & set(servi))
     if not communs:
-        return "SKIP", "aucune commune commune aux deux formules"
-    divergents = [f"{c}: fiche {stricte[c]} vs kanban {kanban[c]}"
-                  for c in communs if abs(stricte[c] - kanban[c]) / stricte[c] > 0.02]
-    return ("OK", f"formules alignées sur {len(communs)} communes") if not divergents else \
+        return "SKIP", "aucune commune comparable servie"
+    divergents = [f"{c}: baromètre {bar[c]} vs projets {servi[c]}"
+                  for c in communs if abs(bar[c] - servi[c]) / bar[c] > 0.02]
+    return ("OK", f"projets = baromètre sur {len(communs)} communes (source unique)") if not divergents else \
         ("ECART", f"{len(divergents)}/{len(communs)} communes divergent — " + " ; ".join(divergents[:3]))
 
 
@@ -443,6 +442,70 @@ def g21_regles_plu():
         if not manques else ("ECART", " ; ".join(manques))
 
 
+def g22_ventes_100m_nature():
+    """Lot 7 (E-75) : « ventes < 100 m » comptait TOUTES les natures (échanges/adjudications) comme
+    des ventes (AD0220 : « 1 vente » pour 1 échange). Après FIX-1 : nature ILIKE 'vente%'."""
+    with _db() as cx:
+        natures = cx.execute(
+            "SELECT DISTINCT nature_mutation FROM dvf_mutations_parcelle m "
+            "JOIN parcels dp ON dp.idu = m.id_parcelle "
+            "JOIN parcels a ON a.idu = '97401000AD0220' "
+            "WHERE m.date_mutation >= (now() - interval '36 months') AND m.id_parcelle <> '97401000AD0220' "
+            "AND ST_DWithin(a.geom_2975, dp.geom_2975, 100)").fetchall()
+    noms = {(n[0] or "").lower() for n in natures}
+    f = _api("/parcels/97401000AD0220")
+    vp = (f.get("voisinage_proche") or {}) if isinstance(f, dict) else {}
+    n_servi = vp.get("ventes_dvf")
+    # s'il n'y a QUE des non-ventes autour, le servi ne doit PAS afficher de vente (None/0).
+    que_non_ventes = noms and not any(x.startswith("vente") for x in noms)
+    if que_non_ventes and n_servi:
+        return "ECART", f"{n_servi} « vente(s) » servie(s) alors que le voisinage ne porte que {noms}"
+    return "OK", f"voisinage proche : natures {noms or '∅'}, ventes servies={n_servi}"
+
+
+def g23_etude_zone_perimetre():
+    """Lot 7 (E-69) : un rayon hors {0,5;1;2;5} km retombait sur l'isochrone mais le document
+    affichait « Rayon N km ». Après FIX-1, le payload dit le périmètre RÉELLEMENT calculé."""
+    import urllib.request
+    import urllib.error
+    req = urllib.request.Request(
+        API + "/outils/etude-zone", data=json.dumps({"idu": CW0658, "rayon_km": 10}).encode(),
+        headers={"Content-Type": "application/json"}, method="POST")
+    try:
+        with urllib.request.urlopen(req, timeout=60) as r:
+            z = json.loads(r.read())
+    except (urllib.error.HTTPError, urllib.error.URLError, ValueError) as exc:
+        return "SKIP", f"étude-zone indisponible ({type(exc).__name__})"
+    if z.get("entree") == "rayon" and z.get("rayon_km") == 10:
+        return "SKIP", "rayon 10 km désormais accepté — témoin obsolète"
+    if z.get("rayon_km") is None and z.get("isochrone_minutes"):
+        return "OK", f"rayon 10 km non retenu → isochrone {z['isochrone_minutes']} min servie (périmètre honnête)"
+    return "ECART", f"périmètre ambigu : entree={z.get('entree')} rayon_km={z.get('rayon_km')}"
+
+
+def g24_ventes_12m_ancree():
+    """Lot 7 (E-66) : « ventes / 12 mois » de l'Étude de zone était CALENDAIRE (now-12m) alors que
+    DVF s'arrête fin 2025 → ~2,5 mois couverts (13 au lieu de 57). Après FIX-1 : fenêtre ancrée sur
+    la dernière date de données (parasite D-65 exclu)."""
+    import urllib.request
+    import urllib.error
+    req = urllib.request.Request(
+        API + "/outils/etude-zone", data=json.dumps({"idu": CW0658, "rayon_km": 2}).encode(),
+        headers={"Content-Type": "application/json"}, method="POST")
+    try:
+        with urllib.request.urlopen(req, timeout=60) as r:
+            z = json.loads(r.read())
+    except (urllib.error.HTTPError, urllib.error.URLError, ValueError) as exc:
+        return "SKIP", f"étude-zone indisponible ({type(exc).__name__})"
+    m = z.get("marche") or {}
+    v = m.get("ventes_12m") or m.get("ventes")
+    if v is None:
+        return "SKIP", "ventes non servies"
+    # la fenêtre calendaire donnait ~13 ; l'ancrée ~57. On exige nettement plus que le calendaire.
+    return ("OK", f"fenêtre ancrée : {v} ventes (≫ 13 du calendaire)") if v >= 30 else \
+        ("ECART", f"seulement {v} ventes — fenêtre probablement encore calendaire")
+
+
 def g14_digest_vs_cloche():
     """C (C-45) : le top digest est recalculé à l'ENVOI sur le run servi, quand la cloche relit
     event_log. Le symptôme de staleness était que la cloche vivait dans un AUTRE monde (dernière
@@ -496,6 +559,9 @@ GARDES = [
     ("catnat-source-vs-zero", g19_catnat_source_vs_zero),
     ("millesime-derive", g20_millesime_derive),
     ("regles-plu-completes", g21_regles_plu),
+    ("ventes-100m-nature", g22_ventes_100m_nature),
+    ("etude-zone-perimetre", g23_etude_zone_perimetre),
+    ("ventes-12m-ancree", g24_ventes_12m_ancree),
 ]
 
 

@@ -1522,6 +1522,13 @@ def _q_v2_where(run_label: str,
         params["f_communes"] = [c.strip() for c in communes.split(",") if c.strip()]
     if tiers:
         tset = [t.strip() for t in tiers.split(",") if t.strip()]
+        # CHASSE-DONNEES-FIX-1 (Lot 7, C-30) — `tiers=` accepte les DEUX vocabulaires : la ventilation
+        # relabellise les codes STOCKÉS (priorite/a_suivre) en clés d'affichage legacy (brulante/chaude),
+        # mais le filtre matchait les codes stockés → `tiers=brulante` rendait 0. On étend chaque clé
+        # demandée à son équivalent stocké/legacy (le front envoyait déjà les deux ; piège API direct).
+        _ALIAS_TIERS = {"brulante": "priorite", "chaude": "a_suivre",
+                        "priorite": "brulante", "a_suivre": "chaude"}
+        tset = sorted({t for x in tset for t in (x, _ALIAS_TIERS.get(x, x))})
         actifs = [t for t in tset if t != "ecartee"]
         sub: list[str] = []
         if actifs:
@@ -6707,6 +6714,15 @@ def etude_zone(inp: EtudeZoneIn, db: Session = Depends(get_db)) -> dict:
     out["adresse"] = adresse            # LOT D — periment réellement mesuré (point) : « depuis {adresse} »
     out["entree"] = "rayon" if is_rayon else ("polygone" if geom is not None else "point")
     out["rayon_km"] = rayon_km if is_rayon else None
+    # CHASSE-DONNEES-FIX-1 (Lot 7, E-69) — le PÉRIMÈTRE RÉELLEMENT calculé est exposé, pour que le
+    # document imprime ce qui a été mesuré (isochrone) et non le rayon DEMANDÉ : un rayon hors
+    # {0,5 ; 1 ; 2 ; 5} km retombe silencieusement sur l'isochrone 10 min voiture.
+    if not is_rayon and geom is None:
+        out["isochrone_minutes"] = minutes
+        out["isochrone_mode"] = mode
+    # rayon demandé mais NON retenu (hors whitelist) : on le dit, pour que rien n'affirme « Rayon 10 km ».
+    if inp.rayon_km is not None and not is_rayon:
+        out["rayon_demande_non_retenu_km"] = inp.rayon_km
     out["naf_label"] = naf_label(naf) if naf else None
     if out.get("zone_disponible"):
         out["marche"] = out.get("marche")   # déjà posé par etude_de_zone

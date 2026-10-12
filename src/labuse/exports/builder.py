@@ -594,7 +594,10 @@ def construire_etude_zone(idu: str, rayon_km, zone: dict, map_html: str, *,
     from .blocs import etude_zone as bloc_zone
     j = jour or date.today()
     numero = numeros.numero_rapport("etude-zone", idu, j)
-    suffixe = f"Rayon {rayon_km} km autour de {idu}"
+    # CHASSE-DONNEES-FIX-1 (Lot 7, E-69) — le titre dit le périmètre RÉELLEMENT calculé (lu de `zone`),
+    # plus le rayon DEMANDÉ (un rayon hors whitelist retombe sur l'isochrone).
+    from .blocs import etude_zone as bloc_zone
+    suffixe = bloc_zone._echelle_label(zone or {}, idu, rayon_km)
     cart = _cart("etude-zone", suffixe, idu, numero, j)
     corps = (_entete_doc("etude-zone", suffixe, numero, j)
              + bloc_zone.rendu(zone, map_html=map_html, idu=idu, rayon_km=rayon_km))

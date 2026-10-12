@@ -25,7 +25,9 @@ export function MarcheSecteurBlock({ ms }: { ms: MarcheSecteur }) {
       {f && (
         <>
           {/* RETOURS-11F4 F9 — Filosofi = carreau INSEE 200 m : Sourcé (jamais « estimé »). */}
-          <FactRow label="Niveau de vie médian" value={eur(f.nivvie_moyen_eur)}
+          {/* CHASSE-DONNEES-FIX-1 (Lot 7, E-70) — c'est la MOYENNE du carreau Filosofi (nivvie_moyen_eur),
+              jamais une médiane : « moyen » (comme le PDF corrigé C11 et la fiche commune). */}
+          <FactRow label="Niveau de vie moyen" value={eur(f.nivvie_moyen_eur)}
             src={<><span className="b s">sourcé</span>{f.millesime}</>} />
           {partProp != null && (
             <FactRow label="Propriétaires" value={<>{partProp} <small>%</small></>} />

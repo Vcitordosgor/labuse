@@ -85,9 +85,11 @@ export function AutourZoneBlock({ idu }: { idu: string }) {
                 <FactRow label="habitants" value={nombre(data.population?.habitants)} />
                 <FactRow label="ménages" value={nombre(data.population?.menages)} />
                 <FactRow
+                  /* CHASSE-DONNEES-FIX-1 (Lot 7, E-71) — niveau de vie MOYEN (sum(ind_snv)/sum(ind)),
+                     ni revenu ni médiane (alias SQL revenu_median_eur trompeur). */
                   label={data.population?.revenu_majorite_imputee
-                    ? `revenu médian / an · valeur approchée (${nombre(data.population.revenu_impute_n)}/${nombre(data.population.revenu_carreaux_n)} carreaux)`
-                    : 'revenu médian / an'}
+                    ? `niveau de vie moyen / an · valeur approchée (${nombre(data.population.revenu_impute_n)}/${nombre(data.population.revenu_carreaux_n)} carreaux)`
+                    : 'niveau de vie moyen / an'}
                   value={data.population?.revenu_median_eur != null ? <>{nombre(data.population.revenu_median_eur)} <small>€</small></> : '—'}
                   src={data.population?.revenu_majorite_imputee ? <StepProv prov="estimee" /> : <StepProv prov="sourcee" />} />
                 <FactRow label="moins de 25 ans" value={data.population?.pct_moins_25 != null ? <>{data.population.pct_moins_25} <small>%</small></> : '—'} />

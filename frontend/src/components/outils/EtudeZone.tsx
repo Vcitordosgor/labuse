@@ -254,10 +254,12 @@ export function EtudeZone() {
                 <Stat v={nb(res.population?.menages)} k="ménages" />
                 {/* O19(c) — revenu médian = carreau Filosofi (INSEE), donnée SOURCÉE, pas une estimation.
                     Le badge « imputé » ne s'affiche que si le backend a comblé la MAJORITÉ des carreaux. */}
+                {/* CHASSE-DONNEES-FIX-1 (Lot 7, E-71) — sum(ind_snv)/sum(ind) = niveau de vie MOYEN par
+                    individu, ni un revenu ni une médiane (l'alias SQL revenu_median_eur est trompeur). */}
                 <Stat v={res.population?.revenu_median_eur != null ? `${nb(res.population.revenu_median_eur)} €` : '—'}
                   k={res.population?.revenu_majorite_imputee
-                    ? `revenu médian / an · valeur approchée (${nb(res.population.revenu_impute_n)}/${nb(res.population.revenu_carreaux_n)} carreaux)`
-                    : 'revenu médian / an · source Filosofi (INSEE)'}
+                    ? `niveau de vie moyen / an · valeur approchée (${nb(res.population.revenu_impute_n)}/${nb(res.population.revenu_carreaux_n)} carreaux)`
+                    : 'niveau de vie moyen / an · source Filosofi (INSEE)'}
                   variante={res.population?.revenu_majorite_imputee ? 'approche' : 'source'} />
               </div>
             )}

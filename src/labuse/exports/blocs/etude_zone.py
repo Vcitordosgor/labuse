@@ -141,10 +141,26 @@ def _dynamique(z) -> str:
     return _sec("Dynamique", lignes)
 
 
+def _echelle_label(z: dict, idu: str, rayon_km) -> str:
+    """CHASSE-DONNEES-FIX-1 (Lot 7, E-69) — le périmètre IMPRIMÉ = celui RÉELLEMENT calculé (lu de
+    `zone`), plus le rayon DEMANDÉ : un rayon hors {0,5 ; 1 ; 2 ; 5} km retombe sur l'isochrone 10
+    min voiture, et le document affichait quand même « Rayon 10 km »."""
+    if z.get("entree") == "rayon" and z.get("rayon_km"):
+        return f"Rayon {esc(str(z['rayon_km']))} km autour de {esc(idu)}"
+    mins, mode = z.get("isochrone_minutes"), z.get("isochrone_mode")
+    if mins:
+        return f"Isochrone {esc(str(mins))} min ({esc(str(mode or 'voiture'))}) autour de {esc(idu)}"
+    if z.get("entree") == "polygone":
+        return f"Périmètre dessiné autour de {esc(idu)}"
+    # repli : le rayon demandé s'il a été retenu, sinon libellé neutre (jamais un rayon non calculé)
+    return (f"Rayon {esc(str(rayon_km))} km autour de {esc(idu)}" if rayon_km
+            else f"Périmètre autour de {esc(idu)}")
+
+
 def rendu(zone, *, map_html: str, idu: str, rayon_km) -> str:
     z = zone or {}
     corps = map_html
-    corps += f'<p class="zone-echelle">Rayon {esc(str(rayon_km))} km autour de {esc(idu)}'
+    corps += f'<p class="zone-echelle">{_echelle_label(z, idu, rayon_km)}'
     sa = z.get("surface_ha")
     if sa:
         corps += f" · {_i(sa)} ha"
