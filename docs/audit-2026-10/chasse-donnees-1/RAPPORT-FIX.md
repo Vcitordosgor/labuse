@@ -1,17 +1,20 @@
 # CHASSE-DONNEES-FIX-1 — RAPPORT (verdict)
 
 Branche `fix/chasse-donnees-1`, worktree `~/Desktop/labuse-chasse-fix`, local q_v18, ports 8750/5950.
-Exécution du `MANDAT-FIX.md` sur les 83 écarts de `ECARTS.md`. **On a corrigé les CAUSES, pas les
-lignes** : chaque lot supprime une cause (un seul chemin de code par notion) et la verrouille par
-une garde du banc `scripts.coherence.chasse_donnees`.
+Exécution du `MANDAT-FIX.md` sur les 83 écarts de `ECARTS.md`, PUIS deux suites (règles PLU au
+moteur + q_v19 ; fermeture des 28 motifs). **On a corrigé les CAUSES, pas les lignes** : un seul
+chemin de code par notion, verrouillé par une garde du banc `scripts.coherence.chasse_donnees`.
 
-## Verdict en 5 lignes
+## Verdict en 5 lignes (après les 7 lots + 2 suites)
 
-1. **Banc `scripts.coherence.chasse_donnees` : 24 OK · 0 ECART · 0 SKIP (24 gardes)** — exit 0.
-2. **55/83 écarts FERMÉS** par correctif de cause (7 commits, un par lot), chacun vérifié sur son témoin + garde.
-3. **28/83 LAISSÉS avec motif** : latents (corrects aujourd'hui, le front se protège), limites WeasyPrint, caches/jobs opérationnels, millésimes-en-dur front (tsc non vérifiable dans le worktree), ou hors liste explicite du mandat.
-4. **AUCUN correctif livré ne change le résiduel ni le score** — tout est lecture/affichage/fenêtre/étiquette. **Pas de q_v19 requis** pour déployer cette chasse.
-5. Seule l'APPLICATION MOTEUR des règles PLU du Lot 6 (gradation hauteur / recul H/2, `modifie_calcul:false` donc NON faite) demanderait un q_v19 — ~1 545 parcelles — décision séparée.
+1. **Banc : 25 OK · 0 ECART · 0 SKIP (25 gardes)** — exit 0.
+2. **74/83 écarts FERMÉS** en code (14 commits), chacun vérifié sur son témoin + garde. 9 restants = gestes PROD (voir plan de déploiement) + 1 libellé assumé (C-38).
+3. **Suite 1 (PLU au moteur)** : les 4 règles du Lot 6 appliquées au MOTEUR (D-49 majoration ≥2 500 m², D-48/D-50 portées « non modélisées », D-52 hors-SDP). Run q_v19 (run_seq 16 = copie run 15 + delta 1 545) ⇒ **0 parcelle change SDP/cause/score** vs q_v18 (D-49 ne franchit aucun palier d'étage ; D-48/D-50 non modélisables sans sur/sous-estimer). **q_v19 ≡ q_v18, rien servi/basculé.**
+4. **Suite 2** : 19 des 28 motifs fermés en code (PDF pied qui s'imprime enfin + date de donnée, propriétaire PM en export, /filtre carte=page, étiquettes/bornes front servies, socle de sources, digest, note GPU…). Front : `npm install` + `tsc -b` = **0 erreur**.
+5. **AUCUN correctif livré (lots + suites) ne change le résiduel ni le score** — tout est lecture/affichage/fenêtre/étiquette/moteur-sans-effet. **Pas de q_v19 à déployer.**
+
+> Note : le corps ci-dessous est le verdict des 7 LOTS initiaux (24 gardes). Les SUITES et le plan
+> de déploiement sont en fin de document (« ## SUITES » et « ## PLAN DE DÉPLOIEMENT »).
 
 ## Sortie du banc (finale)
 
@@ -210,3 +213,86 @@ du plancher) — explicitement NON fait ici (`modifie_calcul:false`). Si Vic le 
 ## Hors mandat (chasses suivantes)
 49 champs morts du payload · endpoints orphelins · `pdf_premium.py` · outil ZAN dormant (chasse
 architecture) · 17 vitrines sans millésime D-64 (décision Vic) · PLU-MOTEUR (q_v19, cf. ci-dessus).
+
+---
+
+# SUITES (12/10, même branche)
+
+## SUITE 1 — règles PLU AU MOTEUR + run q_v19 (commit `bbfd4fc4`)
+
+Les 4 règles du Lot 6 (affichage seul) sont entrées au MOTEUR de capacité, pour que la fiche ne
+montre jamais une règle en calculant avec une autre. Mécanisme = `plu_exceptions_effet.json`
+(déjà en place pour 81 exceptions) + `faisabilite/zonage.py` + `faisabilite/db.py`.
+
+| Règle | Traitement moteur | Effet SDP |
+|-------|-------------------|-----------|
+| D-49 Sainte-Rose Ua/1AUa ≥ 2 500 m² | `majoration_surface` he_m 9→11, hf_m 12→14 (decision=applique) | APPLIQUÉE mais +2 m ne franchit AUCUN palier d'étage (3 m) → 0 |
+| D-48 Saint-Joseph U2 (gradation profondeur) | `non_modelisee` : moteur à hauteur UNIQUE ; PORTÉE sur la fiche, garde le palier >12 m (13/11 = headline) | 0 |
+| D-50 recul H/2 | NON couplé : inseter H/2 sur TOUTES les limites effondre la SDP (BW2262 503→131, AL1115 →exigu) car la mitoyenneté par limite est inconnue → PORTÉE « non modélisée », recul = plancher 3 m (borne haute) | 0 |
+| D-52 stationnement | hors-SDP | 0 |
+
+**Run q_v19** = `run_seq 16` : copie intégrale de run 15 (433 229 lignes) + recompute en delta des
+**1 545** parcelles (U2 Saint-Joseph 442 + Sainte-Rose Ua/1AUa 1 103), `--into-run 16
+--assiette-clippee` (comme le run 5 = copie run 3 + delta). **Comparaison à q_v18 (run 15)** :
+
+- **SDP qui change : 0 · cause : 0 · score : 0** (le scoring ne lit que sdp/cause/taux/capacité, pas `regles_non_modelisees`).
+- Seul delta : **412** parcelles portent la MÉTADONNÉE « règle non modélisée » (transparence fiche, SDP identique). 5 exemples : 97412000BO0219 (13 029 m²), BO0528 (2 939), BO0085 (466), BO0086 (682), BO0082 (226) — tous SDP INCHANGÉE.
+- `run_seq 16` is_served=**false**, manifeste toujours sur run 15. **RIEN servi, RIEN basculé.**
+
+**Verdict run** : appliquée FIDÈLEMENT, la règle PLU ne change aucune valeur servie. q_v19 ≡ q_v18.
+Capture : `captures/CHASSE-DONNEES-FIX-1/suite1/RESULTAT.md`.
+
+## SUITE 2 — fermeture des 28 motifs (commits `fd123682`, `c13471c3`, `d37eeb51`, `514565e9`, `c0e1dbfb`)
+
+**19 fermés en code**, 9 restants (gestes prod + 1 libellé assumé).
+
+| Écart | Fix |
+|-------|-----|
+| C-12 /filtre compteur vs page | la liste d'IDU (carte) = périmètre de la PAGE (hors étage 0 par défaut). Garde `filtre-carte-page`. |
+| C-19 propriétaire PM export | `_pm_block` partagé → l'export md/html NOMME la société (SCI ALOE…) + état. |
+| C-28 pied PDF non rendu | pied INJECTÉ en contenu LITTÉRAL `@page` (string() non rendu par WeasyPrint) → s'imprime sur les 4 PDF. |
+| C-29 bande/signal page seule | bande/signal appliqués aussi à la liste d'IDU (bande=A → 612, plus 22 665). |
+| C-31 digest période | la fenêtre est ÉCRITE dans le mail (param `periode` enfin rendu). |
+| C-32 brief vs suivis (cid None) | `_mes_communes` lit les suivis du compte NULL (IS NOT DISTINCT FROM). |
+| C-36 pied « Données au » | = date de la DONNÉE servie (`served_manifest.promoted_at` = 11/10/2026), plus la génération. |
+| C-39 opportunités 2 périmètres | `/projets/reperes` = brûlante+chaude (Saint-Leu 14 465→29), notion unique. |
+| C-41 digest déclassée / C-43 q_score mort | top digest = vrais prospects (hors étage 0, SDP>0, cause nulle) ; q_score/a_score retirés. |
+| C-42 millésimes Étude de zone PDF | la note relaie les sources DATÉES servies (Filosofi 2021 · BPE 2025…). |
+| D-56 / E-80 millésimes front | BPE/ZNIEFF (layers.ts) + CoSIA (ProspectionSolaire) : année en dur retirée, renvoi au millésime servi (page Sources). |
+| D-58 socle fiche | Cadastre/BAN/CatNat ajoutés au panneau Sources (drapeau `socle`). |
+| D-59 note GPU M40 | neutralisée quand la commune est dépubliée (Saint-André/Saint-Leu) — plus deux notes opposées. |
+| E-73 millésime médiane locale | période réelle « 2022–2025 », plus l'année max seule. |
+| E-77 / E-78 bornes front | NOUVEL endpoint `/moteurs/config` (source unique) sert rayons + plafond assemblage ; le front les lit. |
+| E-79 corpus modèle (strings.ts) | contradiction « 2017-2025 » vs « 2017-2024 » levée (= /v2/modele). |
+
+## PLAN DE DÉPLOIEMENT
+
+### A. Gestes DATA/caches à rejouer en PROD (reconstructibles — PAS des runs de scoring)
+Joués en local, à refaire sur le VPS après déploiement du code :
+1. `build-mvt` (surface terrain bakée) + purge `mvt_tile_cache` layer parcels — L1.
+2. refresh `owner_enrichment` (cache recherche-entreprises de juillet → état sociétés à jour) — L5 (D-46).
+3. `detect_events q_v16 → q_v18` (repeuple la cloche sur le run servi) — L5 (C-45).
+4. purge `commune_contexte_cache` (se reconstruit à la lecture) — L7 (C-21) / clôt C-44.
+
+### B. Écarts RESTANTS — chacun dépend d'un geste PROD (aucun n'est un défaut de code servi)
+| # | Reste | Geste prod requis |
+|---|-------|-------------------|
+| C-44 | cache point mort nocturne (dérive ≤ 5 permis/j) | job nocturne / purge `commune_contexte_cache` (fait en A4) ; date du cache affichée (honnête). |
+| D-53 | CatNat dédoublonnage avale 1 arrêté multi-événements (23 vs 24, Saint-Paul) | corriger `ingestion/catnat.py` (clé de dédup) **puis re-moissonner CatNat** (GASPAR). |
+| D-55 | OCS GE « 2022 » en dur (ingestion) | lire le millésime en ingestion **au prochain OCS GE** (re-ingestion). |
+| D-60 | BAN synchro (54 j) | rejouer le job de synchro BAN (aucune divergence de valeur constatée). |
+| D-61 | DPE fraîcheur (ADEME) | rejouer le sync DPE ADEME. |
+| D-62 | CatNat `source_millesime` étiquette | rafraîchir `data_sources.source_millesime` id 97 (ou le dériver de `max(ingested_at)`) — UPDATE table de référence. |
+| D-63 | AZI/TRI `source_millesime` étiquette | idem id 114 (`max(maj_at)`). |
+| D-64 | 17 vitrines sans millésime | **décision Vic** (afficher ou non les millésimes en table) — hors mandat. |
+
+### C. Libellé assumé (pas un geste prod, pas une valeur fausse)
+- **C-38** : le Comparatif dit « hors zonage PLU », la fiche « commune au RNU » — MÊME fait (pas de
+  PLU local), phrasé différent, aucune valeur fausse. Choix assumé DOCS-FIX-1 P5 ; laissé tel quel
+  pour ne pas rouvrir une décision réglée.
+
+### D. PLU au moteur (q_v19) — décision séparée
+Le run q_v19 (suite 1) prouve que les règles PLU, appliquées fidèlement, ne changent AUCUNE valeur
+servie. **Aucun q_v19 à servir.** Si un jour la gradation/le recul H/2 devaient entrer dans la SDP,
+il faudrait d'abord doter le moteur d'une géométrie par limite (mitoyenneté) et d'un band-ing de
+hauteur par profondeur — un chantier « PLU-MOTEUR » distinct, pas un simple recalcul.
