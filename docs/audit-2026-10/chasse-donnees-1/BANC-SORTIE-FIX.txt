@@ -1,0 +1,26 @@
+[OK] surface-tuile-vs-fiche — fiche=tuile=25633
+[OK] export-surface — export sert la contenance 25 633
+[OK] export-cascade — export sert une cascade peuplée
+[OK] export-disparue — export mentionne la disparition
+[OK] partner-statut — 50/50 items avec statut servi
+[OK] courrier-zone-bizone — zone unique « A »
+[OK] compteurs-commune — compte = idus = stats sur 3 communes
+[OK] accueil-totaux — accueil cohérent (433229)
+[OK] prix-ancien-unique — projets = baromètre sur 24 communes (source unique)
+[OK] sirene-etat — plus d'« actif » servi pour la SCI cessée
+[OK] bodacc-fraicheur — fiche sert l'annonce vivante (2026-08-21) de bodacc_procedures
+[OK] zero-menteur-nu — taux non mesuré → etat='non_mesure', hors filtre « Terrain nu »
+[OK] cloche-fraicheur — cloche rejouée pour q_v18 (12/10)
+[OK] digest-vs-cloche — digest et cloche sur le même run servi q_v18 (54 bascules servies, 0 IDU communs au top)
+[OK] courrier-surface — courrier sert la contenance 25 633 m²
+[OK] disparue-documents — courrier refuse une parcelle disparue
+[OK] comparatif-zone-dominante — comparatif sert la zone dominante « A » (constructible=False)
+[OK] simulplu-non-calculable — analogie non calculable servie comme telle (ratio None)
+[OK] catnat-source-vs-zero — source disponible, 23 arrêtés (0 ne pourra plus être « indisponible »)
+[OK] millesime-derive — RPLS servi dérivé de la table (2025) · PM max 2025
+[OK] regles-plu-completes — règles PLU servies complètes (gradation + formule H/2 + barème stationnement)
+[OK] ventes-100m-nature — voisinage proche : natures {'echange'}, ventes servies=None
+[OK] etude-zone-perimetre — rayon 10 km non retenu → isochrone 10 min servie (périmètre honnête)
+[OK] ventes-12m-ancree — fenêtre ancrée : 57 ventes (≫ 13 du calendaire)
+
+Bilan : 24 OK · 0 ECART · 0 SKIP (24 gardes)
