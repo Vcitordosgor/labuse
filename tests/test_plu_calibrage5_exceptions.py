@@ -34,7 +34,7 @@ def _entries():
 def test_verbatim_present_sur_les_81():
     """Chaque exception porte son texte verbatim (PLU-CALIBRAGE-5) — pour l'affichage fiche."""
     entries = _entries()
-    assert len(entries) == 81
+    assert len(entries) == 86   # CHASSE-DONNEES-FIX-1 : +5 (D-49 ×4 applique + D-48 non_modelisee)
     for k, e in entries.items():
         assert e.get("texte"), f"entrée {k} sans verbatim `texte`"
         assert len(e["texte"]) > 10

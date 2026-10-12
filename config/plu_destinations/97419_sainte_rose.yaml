@@ -30,7 +30,7 @@ zones:
               article: UA 10.2
               page_pdf: 15
               porte: operation_ensemble
-              modifie_calcul: false
+              modifie_calcul: true
         egout:
           m: 9.0
           article: UA 10
@@ -614,7 +614,7 @@ zones:
               article: UA 10.2
               page_pdf: 15
               porte: operation_ensemble
-              modifie_calcul: false
+              modifie_calcul: true
         egout:
           m: 9.0
           article: UA 10

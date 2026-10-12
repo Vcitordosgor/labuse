@@ -467,6 +467,22 @@ def parcel_faisabilite(session: Session, parcel_id: int,
     recul = (float(rules.recul_limites_sep_m)
              if isinstance(rules.recul_limites_sep_m, (int, float))
              else hyp.recul_limites_defaut_m)
+    # CHASSE-DONNEES-FIX-1 (suite 1, D-50) — recul limites séparatives EN FORMULE « H/2, minimum X » :
+    # on NE couple PAS mécaniquement recul=H/2 au moteur. Mesuré (BW2262 503→131, AL1115 313→exigu,
+    # AV1095 376→55) : inseter H/2 sur TOUTES les limites effondre la SDP de 74-85 %, car la géométrie
+    # de l'enveloppe insète chaque limite, alors que les constructions sont souvent MITOYENNES (recul
+    # réel par limite = inconnu). Le moteur garde donc le PLANCHER servi (3 m, affiché « minimum 3 m »)
+    # comme borne HAUTE de capacité, et PORTE la formule en « règle non modélisée » : la fiche montre
+    # « H/2, minimum 3 m » ET dit que le couplage H/2↔hauteur n'entre pas dans l'estimation (jamais une
+    # valeur inventée dans un sens ni dans l'autre).
+    _formule_recul = (getattr(rules, "recul_limites_formule", None) or "")
+    if "H/2" in _formule_recul and isinstance(rules.hf_m, (int, float)):
+        ctx.regles_non_modelisees = list(ctx.regles_non_modelisees or []) + [{
+            "regle": "retraits.limites_separatives", "porte": "recul_formule",
+            "article": None, "page_pdf": None,
+            "texte": (f"Recul limites séparatives = H/2, minimum {recul:g} m (H = hauteur de façade). "
+                      "La capacité est estimée au recul minimum (borne haute) : le couplage H/2↔hauteur "
+                      "par limite n'est pas modélisé (mitoyenneté inconnue).")}]
 
     zonage = _layer_params("zonage_plu_gpu")
     presc = _layer_params("prescription_plu")
