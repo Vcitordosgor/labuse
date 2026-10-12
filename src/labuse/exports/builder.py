@@ -13,6 +13,25 @@ from datetime import date
 
 from ..registre.valeur import Valeur
 from . import archive, numeros
+
+
+def _donnees_labuse_au() -> str | None:
+    """CHASSE-DONNEES-FIX-1 (suite 2c, C-36) — « Données LABUSE au » = date de la DONNÉE servie (la
+    dernière bascule du run servi, config/served_manifest.json `promoted_at`), PAS la date de
+    génération du PDF. None si le manifeste est illisible (le builder retombe alors sur la date du
+    jour, comportement historique)."""
+    try:
+        import json
+        import pathlib
+        racine = pathlib.Path(__file__).resolve().parents[3]   # src/labuse/exports/builder.py → racine
+        m = json.loads((racine / "config" / "served_manifest.json").read_text())
+        p = (m.get("promoted_at") or "")[:10]   # 'YYYY-MM-DD'
+        if len(p) == 10:
+            a, mo, d = p.split("-")
+            return f"{d}/{mo}/{a}"
+    except Exception:  # noqa: BLE001 — jamais bloquant
+        return None
+    return None
 # EXPORTS-REBRANCHEMENT-1 lot 1 — le Dossier miroir ne consomme plus les anciens blocs de
 # section ; restent les blocs-documents (financier, apporteur) et la clôture (sources).
 from .blocs import apporteur, financier
@@ -478,7 +497,7 @@ def construire(db, idu: str, document: str = "dossier", *, fiche: dict | None = 
         valeurs = collecte(db, idu, ids, fiche=f)
         label, _st = _LABEL["dossier"]
         adresse = f.get("adresse") or ""
-        au = f.get("donnees_labuse_au") or f"{j:%d/%m/%Y}"
+        au = f.get("donnees_labuse_au") or _donnees_labuse_au() or f"{j:%d/%m/%Y}"
         cart = Cartouche(
             doc_title=f"LABUSE — {label}" + (f" · {adresse}" if adresse else ""),
             doc_ref=f"{idu} · {numero}",
@@ -507,7 +526,7 @@ def construire(db, idu: str, document: str = "dossier", *, fiche: dict | None = 
         ctx = _apporteur_contexte(db, idu, f, j, compte_id)
     label, _ = _LABEL.get(document, (document, ""))
     adresse = f.get("adresse") or ""
-    au = f.get("donnees_labuse_au") or f"{j:%d/%m/%Y}"
+    au = f.get("donnees_labuse_au") or _donnees_labuse_au() or f"{j:%d/%m/%Y}"
     cart = Cartouche(
         doc_title=f"LABUSE — {label}" + (f" · {adresse}" if adresse else ""),
         doc_ref=f"{idu} · {numero}",
@@ -538,7 +557,9 @@ def _entete_doc(document: str, ref_ligne: str, numero: str, jour: date) -> str:
 
 def _cart(document: str, titre_suffixe: str, idu_ref: str, numero: str, jour: date) -> Cartouche:
     label, _ = _LABEL.get(document, (document, ""))
-    au = f"{jour:%d/%m/%Y}"
+    # CHASSE-DONNEES-FIX-1 (suite 2c, C-36) — « Données au » = date de la DONNÉE servie (run servi),
+    # plus la date de GÉNÉRATION du PDF (gabarit/comparatif/étude-zone).
+    au = _donnees_labuse_au() or f"{jour:%d/%m/%Y}"
     return Cartouche(
         doc_title=f"LABUSE — {label}" + (f" · {titre_suffixe}" if titre_suffixe else ""),
         doc_ref=f"{idu_ref} · {numero}",
