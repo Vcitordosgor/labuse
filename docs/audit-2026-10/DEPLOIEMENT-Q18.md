@@ -18,6 +18,13 @@
 | **Cron DVF commenté pendant le test de Stéphanie** | Phase 0.3 le commente (`/etc/cron.d/labuse-dvf`), Phase 8 le ré-active. Tant que le test tourne, `refresh-dvf` (mer. 09:00) ne doit PAS écrire. |
 | **Tables clients jamais touchées** | Tous les dumps/restores sont `-t <table>` CIBLÉS (jamais `--clean` global). Liste des tables clients protégées en annexe A. Les disparues sont **marquées, pas supprimées** (sinon FK CASCADE → `pipeline_entries`/`projet_parcelles`/`alertes`/`module_division`). |
 | **Sauvegarde de la prod avant** | Phase 0.2 (dump lean prod + vérif `pg_restore --list`). Rollback en annexe B. |
+| **Tout CLI `labuse` sur le VPS : sourcer `labuse.env` + `cd /opt/labuse/app`** | Sinon `fe_sendauth: no password supplied` (creds DB dans `labuse.env`) et chemins `config/` cassés (relatifs au cwd). Pattern OBLIGATOIRE ci-dessous. Découvert 13/10 (Phases 5/6 et §8bis). |
+
+> **Pattern CLI VPS (toute commande `labuse` manuelle)** — le raccourci `sudo -u labuse /opt/labuse/venv/bin/labuse <cmd>` **ne suffit PAS** :
+> ```bash
+> ssh labuse-vps "sudo -u labuse bash -c 'set -a; . /etc/labuse/labuse.env; set +a; cd /opt/labuse/app && /opt/labuse/venv/bin/labuse <cmd>'"
+> ```
+> Pour les CRONS (qui sourcent déjà `labuse.env`), le seul manque était le PATH : corrigé en **§8bis** (ligne `PATH=/opt/labuse/venv/bin:…` dans le registre + gabarit CRON-1 `cli.py`).
 
 ## Fenêtre de déploiement (⚠ créneaux à éviter — heure Réunion)
 
