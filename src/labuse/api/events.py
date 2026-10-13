@@ -444,7 +444,7 @@ def evaluer_suivis(db: Session) -> dict:
                 db, kind="parcelle_suivie", compte_id=cid, source="Mutation", idu=idu,
                 titre=f"Vente : votre parcelle {court(idu)} a changé de mains",
                 detail=f"Mutation du {m['date_mutation']}{prix} ({m['nature_mutation'] or 'vente'}).",
-                lien=f"/socle/#parcelle={idu}", dedup=f"suivi:mut:{idu}:{m['id_mutation']}") else 0
+                lien=f"/socle/#idu={idu}", dedup=f"suivi:mut:{idu}:{m['id_mutation']}") else 0
         # 2) PERMIS SUR la parcelle (idu_codes contient l'idu) — jamais la proximité (secteur = veille).
         for p in db.execute(text(
                 "SELECT permit_id, type, date_depot FROM sitadel_permits "
@@ -454,7 +454,7 @@ def evaluer_suivis(db: Session) -> dict:
                 db, kind="parcelle_suivie", compte_id=cid, source="Permis", idu=idu,
                 titre=f"Nouveau permis sur votre parcelle {court(idu)}",
                 detail=f"{p['type']} {p['permit_id']} déposé le {p['date_depot']}.",
-                lien=f"/socle/#parcelle={idu}",
+                lien=f"/socle/#idu={idu}",
                 # #3 — fait UNIQUE (idu, permit_id) : dédup PERMANENTE, un rejeu ne recrée jamais le doublon.
                 dedup=f"suivi:permis:{idu}:{p['permit_id']}", permanent=True) else 0
         # 3) BODACC sur le propriétaire (personne morale) de la parcelle.
@@ -467,7 +467,7 @@ def evaluer_suivis(db: Session) -> dict:
                 db, kind="parcelle_suivie", compte_id=cid, source="BODACC", idu=idu,
                 titre=f"Procédure sur le propriétaire de {court(idu)}",
                 detail=f"{b['type_procedure']} publiée le {b['date_annonce']} — {b['denomination'] or 'propriétaire'}.",
-                lien=f"/socle/#parcelle={idu}", dedup=f"suivi:bodacc:{idu}:{b['annonce_id']}") else 0
+                lien=f"/socle/#idu={idu}", dedup=f"suivi:bodacc:{idu}:{b['annonce_id']}") else 0
         # 4) CHANGEMENT DE PROPRIÉTAIRE PM — comparaison d'empreinte (le propriétaire n'a pas de date
         #    fiable ; on compare au dernier SIREN vu). Un SIREN différent = la parcelle a changé de mains
         #    morales. Snapshot posé au premier passage → jamais d'alerte de rattrapage sur la pose du suivi.
@@ -481,7 +481,7 @@ def evaluer_suivis(db: Session) -> dict:
                 db, kind="parcelle_suivie", compte_id=cid, source="Propriétaire", idu=idu,
                 titre=f"Changement de propriétaire sur votre parcelle {court(idu)}",
                 detail=f"La société propriétaire a changé — désormais {pm['denomination'] or siren} ({siren}).",
-                lien=f"/socle/#parcelle={idu}", dedup=f"suivi:pm:{idu}:{siren}") else 0
+                lien=f"/socle/#idu={idu}", dedup=f"suivi:pm:{idu}:{siren}") else 0
         if siren is not None and siren != snap:              # mémorise l'empreinte propriétaire courante
             db.execute(text("UPDATE watched_parcels SET pm_snap = :p WHERE idu = :idu AND compte_id IS NOT DISTINCT FROM :c"),
                        {"p": siren, "idu": idu, "c": cid})
@@ -582,7 +582,7 @@ def detect_events(db: Session, run_from: str, run_to: str, demo: bool = False,
             detail=("Suite à une mise à jour de NOS données, votre parcelle est "
                     f"{sens} « {_tier_court(r['vers'])} » (auparavant « {_tier_court(r['de'])} »). Ce n'est pas "
                     f"un événement extérieur : c'est notre analyse qui a changé.{_tag}"),
-            lien=f"/socle/#parcelle={r['idu']}", dedup=f"suivi:tier:{r['idu']}:{run_to}", demo=demo,
+            lien=f"/socle/#idu={r['idu']}", dedup=f"suivi:tier:{r['idu']}:{run_to}", demo=demo,
             envoi_statut=_es)
     db.flush()
     # M23-C : reprises de veille ÉCHUES → le MÊME canal que les veilles (event_log kind='veille',
