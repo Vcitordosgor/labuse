@@ -62,6 +62,11 @@ jobs:
           # teste un autre code que celui servi (routes/représentation différentes, nuée de warnings).
           # [ai]=anthropic (pin léger, IMPORTÉ puis mocké par des tests ; aucune clé requise).
           pip install -e ".[dev,ci,ai]" -c requirements.lock
+      - name: Socle stub (frontend/dist) pour que le montage StaticFiles /socle s'enregistre
+        # Le front n'est PAS bâti dans ce job (c'est le job `frontend`) ; or app.py ne monte « /socle »
+        # que si frontend/dist existe. Un index.html minimal suffit à enregistrer la route → le garde
+        # d'allowlist du proxy (test_allowlist_sans_entree_morte) voit /socle comme en dev/prod.
+        run: mkdir -p frontend/dist && printf '<!doctype html><title>ci-stub</title>' > frontend/dist/index.html
       - name: Suite (exclut données réelles / réseau — famille banc de nuit)
         # `python -m pytest` (pas `pytest` nu) : ajoute le CWD au sys.path → les tests qui importent
         # `scripts.*` (banc) résolvent, comme en local (docs/TESTS.md) et dans le hook pre-push.
