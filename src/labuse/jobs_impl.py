@@ -188,10 +188,22 @@ def coherence_banc(ctx: JobContext) -> None:
     res = journaliser_passage(ctx.db, mode="ile")
     ctx.db.commit()
     ctx.compte(**res)
+    # SOLIDITE-1 (Lot 2) — PUIS les 25 gardes CHASSE-DONNÉES, en-process contre la prod. Toute garde en
+    # écart ouvre un incident par la porte unique (chasse_journal → ops_alertes) ; retour au vert = résolu.
+    from . import chasse_banc, chasse_journal
+    resultats = chasse_banc.jouer_gardes_en_process()
+    res2 = chasse_journal.journaliser_passage(ctx.db, resultats)
+    ctx.db.commit()
+    ctx.compte(chasse_gardes=res2["n_gardes"], chasse_ok=res2["ok"], chasse_ecart=res2["ecart"],
+               chasse_skip=res2["skip"], chasse_ecart_nouveaux=res2["ecart_nouveaux"])
     # un banc qui n'a rien pu lire (tout en « erreur lecteur ») est un ÉCHEC bruyant, jamais un
     # passage vert par vacuité (app non démarrable, base coupée…).
     if res["ecarts"] == 0 and res["erreurs_lecteur"] > 100:
         raise RuntimeError(f"banc illisible : {res['erreurs_lecteur']} lecteurs en erreur "
+                           "(app non démarrable en-process ou base coupée) — passage non probant.")
+    # pareil pour la chasse : tout en SKIP = banc non probant (app/DB inatteignables en-process).
+    if res2["n_gardes"] and res2["skip"] == res2["n_gardes"]:
+        raise RuntimeError(f"banc chasse illisible : {res2['skip']}/{res2['n_gardes']} gardes en SKIP "
                            "(app non démarrable en-process ou base coupée) — passage non probant.")
 
 

@@ -498,8 +498,9 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
        "quotidien", "45 23 * * *", "03:45", touche="exploitation", timeout_s=7200,
        raison="COHERENCE-1 a prouvé que deux caches périmés en silence faisaient mentir 70 % des "
               "écrans concernés pendant des jours. Le banc rejoue chaque nuit les comparaisons "
-              "multi-lecteurs (fiche/SQL/tuiles/outils) sur l'échantillon gelé + les 24 communes ; "
-              "un FAUX-CLIENT nouveau sonne la cloche admin à J+1 — plus jamais des mois.",
+              "multi-lecteurs (fiche/SQL/tuiles/outils) sur l'échantillon gelé + les 24 communes, PUIS "
+              "les 25 gardes CHASSE-DONNÉES (chasse_donnees) en-process contre la prod (SOLIDITE-1 Lot 2) ; "
+              "un FAUX-CLIENT nouveau / une garde en écart ouvre un incident à J+1 — plus jamais des mois.",
        test="tests/verrous/test_v6b_coherence.py::test_v6b_coherence_banc"),
     # SOLIDITE-1 (Lot 1.4) — LE RÉCAP DU MATIN : un seul mail à 07:30 Réunion (03:30 UTC), APRÈS le
     # digest (07:15). Tout vert en une ligne, ou la liste de ce qui ne va pas. Évalue aussi les quatre

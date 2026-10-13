@@ -4967,6 +4967,24 @@ def ops_incidents_cmd() -> None:
                    f"({inc['rappels']} rappel(s))")
 
 
+@ops_app.command("chasse")
+def ops_chasse_cmd() -> None:
+    """SOLIDITE-1 (Lot 2) — joue les 25 gardes CHASSE-DONNÉES EN-PROCESS contre la base servie, journalise
+    le passage (chasse_runs) et ouvre un incident par garde en écart. C'est ce que `coherence-banc` fait
+    chaque nuit, à la demande. Une ligne par garde, puis le bilan ; exit 1 s'il reste un écart."""
+    from .db import session_scope
+    from . import chasse_banc, chasse_journal
+    resultats = chasse_banc.jouer_gardes_en_process()
+    for nom, verdict, detail in resultats:
+        typer.echo(f"[{verdict}] {nom} — {detail}")
+    with session_scope() as db:
+        res = chasse_journal.journaliser_passage(db, resultats)
+        db.commit()
+    typer.echo(f"\nBilan : {res['ok']} OK · {res['ecart']} ECART · {res['skip']} SKIP "
+               f"({res['n_gardes']} gardes) · {res['ecart_nouveaux']} écart(s) nouveau(x)")
+    raise typer.Exit(1 if res["ecart"] else 0)
+
+
 @ops_app.command("test-alerte")
 def ops_test_alerte_cmd() -> None:
     """PREUVE (SOLIDITE-1 Lot 1.6) — joue un ÉCHEC réel (job jetable qui lève → incident + alerte) et un
