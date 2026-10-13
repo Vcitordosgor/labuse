@@ -51,13 +51,17 @@ jobs:
         with:
           python-version: '3.12'
           cache: pip
-          cache-dependency-path: pyproject.toml
-      - name: Installer (dev + ci + ai, SANS ML lourd)
+          cache-dependency-path: |
+            pyproject.toml
+            requirements.lock
+      - name: Installer (dev + ci + ai, SANS ML lourd ; CŒUR figé = PARITÉ PROD)
         run: |
           python -m pip install --upgrade pip
-          # [ai] = anthropic (pin léger) : plusieurs tests l'IMPORTENT puis le mockent (ils n'appellent
-          # jamais l'API — pas de clé requise). Sans lui, ModuleNotFoundError + routeurs non montés.
-          pip install -e ".[dev,ci,ai]"
+          # -c requirements.lock : le CŒUR est CONTRAINT aux versions EXACTES de la prod (fastapi/
+          # starlette/pydantic…), SINON `pip install -e .` flotte vers les dernières versions et la CI
+          # teste un autre code que celui servi (routes/représentation différentes, nuée de warnings).
+          # [ai]=anthropic (pin léger, IMPORTÉ puis mocké par des tests ; aucune clé requise).
+          pip install -e ".[dev,ci,ai]" -c requirements.lock
       - name: Suite (exclut données réelles / réseau — famille banc de nuit)
         # `python -m pytest` (pas `pytest` nu) : ajoute le CWD au sys.path → les tests qui importent
         # `scripts.*` (banc) résolvent, comme en local (docs/TESTS.md) et dans le hook pre-push.
