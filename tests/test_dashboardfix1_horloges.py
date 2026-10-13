@@ -32,11 +32,12 @@ def test_crontab_deploy_contient_les_25_jobs_utc():
     registre, une fois et une seule."""
     contenu = _crontab_du_registre("utc")
     lances = _lignes_jobs(contenu)
-    attendus = sorted(JOBS.keys())
+    # le crontab porte les jobs PLANIFIÉS (agents-sources est manuel-seul, planifie=False → absent).
+    attendus = sorted(n for n, j in JOBS.items() if j.planifie)
     assert sorted(lances) == attendus, (
-        f"crontab ≠ registre — manquants {set(attendus) - set(lances)}, "
+        f"crontab ≠ registre (planifiés) — manquants {set(attendus) - set(lances)}, "
         f"en trop {set(lances) - set(attendus)}")
-    assert len(lances) == len(JOBS) == 29   # 25 horloges, aucune en double
+    assert len(lances) == len(attendus)
 
 
 def test_crontab_deploy_contient_les_25_jobs_reunion():
@@ -44,8 +45,9 @@ def test_crontab_deploy_contient_les_25_jobs_reunion():
     ne doit perdre ni dédoubler aucun job."""
     contenu = _crontab_du_registre("reunion")
     lances = _lignes_jobs(contenu)
-    assert sorted(lances) == sorted(JOBS.keys())
-    assert len(lances) == len(JOBS)
+    attendus = sorted(n for n, j in JOBS.items() if j.planifie)
+    assert sorted(lances) == attendus
+    assert len(lances) == len(attendus)
 
 
 def test_horloges_csv_reflete_le_registre():

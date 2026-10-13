@@ -109,22 +109,36 @@ def _ping_temoin(nom: str, ok: bool) -> None:
         log.warning("ping témoin %s injoignable (%s) — sans conséquence sur le job", nom, exc)
 
 
-def _alerte_admin(job: Job, etat: dict) -> None:
-    """Mail à l'admin en cas d'échec. Respecte la règle dry-run : sans SMTP, on logue, on ne bloque pas."""
-    s = get_settings()
-    dest = s.admin_email or s.contact_email
-    if not dest:
-        return
-    corps = (f"Le job « {job.nom} » ({job.titre}) a échoué.\n\n"
-             f"Statut : {etat.get('statut')}\n"
-             f"Début : {etat.get('debut')}\nFin : {etat.get('fin')}\n"
-             f"Durée : {etat.get('duree_s')} s\n"
-             f"Erreur : {etat.get('erreur')}\n"
-             f"Compteurs : {json.dumps(etat.get('compteurs') or {}, ensure_ascii=False)}\n\n"
-             f"— LABUSE, exploitation planifiée")
-    from .mail import send_email
-    r = send_email(dest, f"[LABUSE] échec du job {job.nom}", corps, settings=s)
-    log.info("alerte admin job=%s envoyée=%s (%s)", job.nom, r.sent, r.detail)
+def _journaliser_et_alerter(job: Job, etat: dict, ok: bool) -> None:
+    """SOLIDITE-1 (Lot 1.1/1.2) — après chaque passage : pose la ligne d'HISTORIQUE durable (`job_runs`)
+    ET ouvre/referme l'incident `job-echec:<nom>` par la PORTE D'ALERTE UNIQUE (ops_alertes — mail + cloche,
+    dry-run respecté, un seul envoi puis rappel quotidien, mail « résolu » au retour au vert).
+
+    Session courte dédiée, jamais bloquante : une trace ou une alerte qui rate ne transforme pas un job
+    réussi en échec, et ne masque pas un échec déjà capturé par le runner."""
+    try:
+        from . import jobs_journal, ops_alertes
+        from .db import session_scope
+        with session_scope() as db:
+            try:
+                jobs_journal.enregistrer(db, etat)
+            except Exception:  # noqa: BLE001 — l'historique qui rate ne casse rien
+                log.error("historique job_runs impossible pour %s", job.nom)
+            cle = f"job-echec:{job.nom}"
+            if ok:
+                ops_alertes.resoudre(db, cle)
+            else:
+                ops_alertes.signaler(
+                    db, cle, f"Job en échec : {job.nom}",
+                    f"« {job.titre} » a échoué.\n"
+                    f"Statut : {etat.get('statut')}\n"
+                    f"Début : {etat.get('debut')}  Fin : {etat.get('fin')}  "
+                    f"Durée : {etat.get('duree_s')} s\n"
+                    f"Erreur : {etat.get('erreur')}\n"
+                    f"Compteurs : {json.dumps(etat.get('compteurs') or {}, ensure_ascii=False)}")
+            db.commit()
+    except Exception as exc:  # noqa: BLE001 — base injoignable au moment de tracer : on logue, on n'échoue pas
+        log.error("journal/alerte impossible pour le job %s (%s)", job.nom, exc)
 
 
 def exec_one(nom: str) -> int:
@@ -188,8 +202,9 @@ def exec_one(nom: str) -> int:
                 _db.commit()
         except Exception:  # noqa: BLE001
             log.error("trace circuit_journal impossible pour le job %s", nom)
-    if not ok:
-        _alerte_admin(job, etat)
+    # SOLIDITE-1 (Lot 1) — historique durable + alerte par la porte unique (échec → incident ; succès →
+    # résolution). Remplace l'ancien `_alerte_admin` (mail seul, sans dédup ni « résolu »).
+    _journaliser_et_alerter(job, etat, ok)
     _ping_temoin(nom, ok)
     return 0 if ok else 1
 
@@ -366,6 +381,14 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
               "remplacement SANS TROU (le nouveau tourne au même instant que l'ancien ; deploy.sh pose "
               "avant de retirer le legacy).",
        test="tests/test_cron1_registre.py::test_backup_sans_trou"),
+    # SOLIDITE-1 (Lot 3.2) — la copie hors-VPS, chiffrée, hebdomadaire (dimanche, après le backup du jour).
+    _j("backup-offsite", "Copie chiffrée de la dernière sauvegarde hors du VPS (stockage objet)",
+       "hebdo (dim)", "30 10 * * 0", "14:30 dim", touche="exploitation", timeout_s=3600, besoin_db=False,
+       raison="Un VPS perdu ne doit pas emporter les sauvegardes. Chaque dimanche, le dernier dump est "
+              "CHIFFRÉ (clé détenue par Vic) et poussé vers un stockage objet (rétention 8 hebdomadaires). "
+              "Tant que le compte/la clé manquent : le job n'échoue pas, il RAPPELLE (incident « sauvegarde "
+              "distante non configurée ») — jamais d'envoi en clair, jamais un silence.",
+       test="tests/test_solidite1_lot3.py::test_backup_offsite_au_registre"),
     _j("pg-maintenance", "VACUUM ANALYZE des tables chaudes", "hebdo (dim)",
        "0 0 * * 0", "04:00 dim", touche="exploitation", timeout_s=3600, besoin_db=False,
        raison="Sans VACUUM ANALYZE, le planner PostgreSQL dérive et les requêtes chaudes ralentissent. "
@@ -483,9 +506,31 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
        "quotidien", "45 23 * * *", "03:45", touche="exploitation", timeout_s=7200,
        raison="COHERENCE-1 a prouvé que deux caches périmés en silence faisaient mentir 70 % des "
               "écrans concernés pendant des jours. Le banc rejoue chaque nuit les comparaisons "
-              "multi-lecteurs (fiche/SQL/tuiles/outils) sur l'échantillon gelé + les 24 communes ; "
-              "un FAUX-CLIENT nouveau sonne la cloche admin à J+1 — plus jamais des mois.",
+              "multi-lecteurs (fiche/SQL/tuiles/outils) sur l'échantillon gelé + les 24 communes, PUIS "
+              "les 25 gardes CHASSE-DONNÉES (chasse_donnees) en-process contre la prod (SOLIDITE-1 Lot 2) ; "
+              "un FAUX-CLIENT nouveau / une garde en écart ouvre un incident à J+1 — plus jamais des mois.",
        test="tests/verrous/test_v6b_coherence.py::test_v6b_coherence_banc"),
+    # SOLIDITE-1 (Lot 1.4) — LE RÉCAP DU MATIN : un seul mail à 07:30 Réunion (03:30 UTC), APRÈS le
+    # digest (07:15). Tout vert en une ligne, ou la liste de ce qui ne va pas. Évalue aussi les quatre
+    # vigies sans point d'appel naturel (disque, /readyz, sauvegarde, jobs en retard) → ouvre/referme
+    # les incidents par la porte unique. Un seul mail par jour, jamais le déluge.
+    _j("recap-matin", "Récapitulatif d'exploitation du matin (un seul mail : vert, ou la liste des soucis)",
+       "quotidien", "30 3 * * *", "07:30", touche="exploitation", timeout_s=600, envoie_mail=True,
+       raison="Le point d'exploitation du jour, en un mail : disque, /readyz, sauvegarde, jobs en retard, "
+              "incidents ouverts. Tout vert = une ligne ; sinon la liste. Évalue les vigies qui n'ont pas "
+              "de point d'appel naturel ailleurs et ouvre/referme leurs incidents (une alerte, un rappel "
+              "par jour, un « résolu »). C'est l'anti-silence du 07/10.",
+       test="tests/test_solidite1_lot1.py::test_recap_matin_au_registre"),
+    # SOLIDITE-1 (Lot 5) — la vérité face aux sources, chaque mois : 20 parcelles au hasard (stratifiées)
+    # comparées aux sources officielles EN LIGNE (cadastre IGN, Géorisques, DVF, bâtiments). Le 15 à 06:00.
+    _j("verite-sources", "Vérité sources — 20 parcelles au hasard confrontées aux sources officielles en ligne",
+       "mensuel (15)", "0 2 15 * *", "06:00 le 15", touche="exploitation", timeout_s=3600,
+       raison="Une fois par mois, on confronte ce que LABUSE SERT aux sources officielles en ligne "
+              "(cadastre IGN API Carto, GPU/Géorisques, DVF, bâtiments) sur 20 parcelles tirées au hasard "
+              "et stratifiées (bizone, zone rouge, nouvelle, contenance ≠ dessin). Tout écart servi↔source "
+              "ouvre un incident (parcelle + les deux valeurs). Séquentiel et espacé (quotas respectés), "
+              "aucune écriture en base hors le rapport. L'œil extérieur qui ne dépend pas de nos propres caches.",
+       test="tests/test_solidite1_lot5.py::test_verite_sources_au_registre"),
     _j("restore-test", "Restaure le dernier dump dans une base jetable et vérifie (puis DROP)",
        "mensuel (1er)", "0 1 1 * *", "05:00 le 1er", touche="exploitation", timeout_s=3600,
        envoie_mail=True, besoin_db=False,

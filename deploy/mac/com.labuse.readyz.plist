@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SOLIDITE-1 (Lot 1.5) — garde externe launchd. Toutes les 15 min, sonde /readyz hors du VPS.
+     Installation (voir README.md) : adapter les chemins/identifiants, copier dans
+     ~/Library/LaunchAgents/, puis `launchctl load`. -->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.labuse.readyz</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <!-- ADAPTER ce chemin au dépôt local -->
+    <string>/Users/VIC/Desktop/labuse/deploy/mac/readyz_watch.sh</string>
+  </array>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>LABUSE_READYZ_URL</key>
+    <string>https://app.labuse.immo/readyz</string>
+    <!-- Mail Brevo : fournis par Vic. Laisser vide = notification macOS + log seuls. -->
+    <key>LABUSE_BREVO_API_KEY</key>
+    <string></string>
+    <key>LABUSE_ALERT_TO</key>
+    <string>victor@labuse.immo</string>
+    <key>LABUSE_ALERT_FROM</key>
+    <string>labuse@app.labuse.immo</string>
+  </dict>
+
+  <!-- toutes les 15 minutes (900 s) ; lance aussi une fois au chargement -->
+  <key>StartInterval</key>
+  <integer>900</integer>
+  <key>RunAtLoad</key>
+  <true/>
+
+  <key>StandardOutPath</key>
+  <string>/Users/VIC/.labuse/readyz_watch.out.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/VIC/.labuse/readyz_watch.err.log</string>
+</dict>
+</plist>

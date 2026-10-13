@@ -4,7 +4,6 @@ qui remplit `ctx.compteurs` (compteurs métier remontés dans l'état + le mail 
 """
 from __future__ import annotations
 
-import gzip
 import logging
 import os
 import shutil
@@ -188,10 +187,22 @@ def coherence_banc(ctx: JobContext) -> None:
     res = journaliser_passage(ctx.db, mode="ile")
     ctx.db.commit()
     ctx.compte(**res)
+    # SOLIDITE-1 (Lot 2) — PUIS les 25 gardes CHASSE-DONNÉES, en-process contre la prod. Toute garde en
+    # écart ouvre un incident par la porte unique (chasse_journal → ops_alertes) ; retour au vert = résolu.
+    from . import chasse_banc, chasse_journal
+    resultats = chasse_banc.jouer_gardes_en_process()
+    res2 = chasse_journal.journaliser_passage(ctx.db, resultats)
+    ctx.db.commit()
+    ctx.compte(chasse_gardes=res2["n_gardes"], chasse_ok=res2["ok"], chasse_ecart=res2["ecart"],
+               chasse_skip=res2["skip"], chasse_ecart_nouveaux=res2["ecart_nouveaux"])
     # un banc qui n'a rien pu lire (tout en « erreur lecteur ») est un ÉCHEC bruyant, jamais un
     # passage vert par vacuité (app non démarrable, base coupée…).
     if res["ecarts"] == 0 and res["erreurs_lecteur"] > 100:
         raise RuntimeError(f"banc illisible : {res['erreurs_lecteur']} lecteurs en erreur "
+                           "(app non démarrable en-process ou base coupée) — passage non probant.")
+    # pareil pour la chasse : tout en SKIP = banc non probant (app/DB inatteignables en-process).
+    if res2["n_gardes"] and res2["skip"] == res2["n_gardes"]:
+        raise RuntimeError(f"banc chasse illisible : {res2['skip']}/{res2['n_gardes']} gardes en SKIP "
                            "(app non démarrable en-process ou base coupée) — passage non probant.")
 
 
@@ -320,14 +331,18 @@ def copilote_purge(ctx: JobContext) -> None:
 
 
 def healthcheck(ctx: JobContext) -> None:
-    """Sonde /health locale ; deux échecs consécutifs → alerte (compteur dans l'état). Vérifie AUSSI
-    l'espace disque : au-delà de disque_seuil_pct, UNE alerte par jour (l'état mémorise la dernière)."""
+    """Dead-man LOCAL toutes les 15 min — la sonde rapide. Vérifie le process (/health), la disponibilité
+    réelle (/readyz) et l'espace disque. SOLIDITE-1 (Lot 1.2) : DISQUE et /readyz passent par la PORTE
+    D'ALERTE UNIQUE (ops_alertes — un incident par panne, un rappel/jour, un « résolu » au retour), au lieu
+    de l'ancienne alerte mail « une fois par jour » faite ici. /health à DEUX échecs consécutifs (dampe un
+    faux positif au redémarrage) : au-delà, le job LÈVE → le runner ouvre l'incident `job-echec:healthcheck`."""
     import urllib.request
     s = get_settings()
+    port = os.environ.get("LABUSE_HEALTH_PORT", "8000")
     etat = lire_etat("healthcheck") or {}
     echecs = (etat.get("compteurs") or {}).get("echecs_consecutifs", 0)
     try:
-        with urllib.request.urlopen("http://127.0.0.1:8000/health", timeout=10) as resp:
+        with urllib.request.urlopen(f"http://127.0.0.1:{port}/health", timeout=10) as resp:
             ok = resp.status == 200
     except Exception:  # noqa: BLE001
         ok = False
@@ -339,21 +354,66 @@ def healthcheck(ctx: JobContext) -> None:
         pct = round(100 * usage.used / usage.total, 1)
     except OSError:
         pct = None
-    alerte_disque = None
-    if pct is not None and pct >= s.disque_seuil_pct:
-        derniere = (etat.get("compteurs") or {}).get("disque_alerte_jour")
-        aujourdhui = date.today().isoformat()
-        if derniere != aujourdhui:               # UNE alerte par jour, pas toutes les 15 min
-            _envoyer_alerte(f"Disque à {pct}% (seuil {s.disque_seuil_pct}%) — faire de la place.")
-            alerte_disque = aujourdhui
-        else:
-            alerte_disque = derniere
+    from . import ops_alertes
+    ready, motif = ops_alertes._readyz_local()
+    # tout par la porte unique (session courte ; base injoignable → on logue, jamais bloquant).
+    try:
+        from .db import session_scope
+        with session_scope() as db:
+            if pct is not None and pct >= s.disque_seuil_pct:
+                ops_alertes.signaler(db, "disque", f"Disque à {pct}% (seuil {s.disque_seuil_pct}%)",
+                                     f"Le disque du serveur est à {pct}% (seuil {s.disque_seuil_pct}%). "
+                                     "Faire de la place (cf. inventaire SOLIDITE-1 Lot 3).")
+            elif pct is not None:
+                ops_alertes.resoudre(db, "disque")
+            if not ready:
+                ops_alertes.signaler(db, "readyz", "/readyz répond « pas prêt »",
+                                     f"La sonde /readyz locale dit le service NON prêt : {motif}.")
+            else:
+                ops_alertes.resoudre(db, "readyz")
+            db.commit()
+    except Exception as exc:  # noqa: BLE001 — l'alerte qui rate ne casse pas la sonde
+        log.error("healthcheck : alerte ops impossible (%s)", exc)
+    ctx.compte(health_ok=ok, readyz_ok=ready, readyz_motif=motif,
+               echecs_consecutifs=echecs, disque_pct=pct)
     if not ok and echecs >= 2:
-        _envoyer_alerte(f"/health injoignable {echecs} fois de suite.")
-    ctx.compte(health_ok=ok, echecs_consecutifs=echecs, disque_pct=pct,
-               disque_alerte_jour=alerte_disque)
-    if not ok:
         raise RuntimeError(f"/health injoignable ({echecs} échec(s) consécutif(s))")
+
+
+def recap_matin(ctx: JobContext) -> None:
+    """SOLIDITE-1 (Lot 1.4) — LE RÉCAP DU MATIN : un seul mail. Évalue les vigies (disque, /readyz,
+    sauvegarde, jobs en retard) via la porte unique (ouvre/referme les incidents), puis envoie le point
+    du jour : tout vert en UNE ligne, sinon la liste de ce qui ne va pas. Respecte dry-run."""
+    from . import ops_alertes
+    etat = ops_alertes.verifier_declencheurs(ctx.db)
+    ctx.db.commit()
+    ouverts = etat.get("incidents_ouverts") or []
+    pct = etat.get("disque_pct")
+    sb = etat.get("sauvegarde") or {}
+    ready = (etat.get("readyz") or {}).get("ready")
+    ligne_vigies = (
+        f"Disque {pct}% · /readyz {'prêt' if ready else 'PAS prêt'} · "
+        f"sauvegarde {sb.get('dernier','absente')}"
+        + (f" ({sb.get('taille_mo')} Mo)" if sb.get("taille_mo") else "")
+        + f" · {len(etat.get('retards') or [])} job(s) en retard")
+    date_run = datetime.now(timezone.utc).astimezone().strftime("%d/%m")
+    if not ouverts:
+        sujet = "[LABUSE] récap du matin — tout vert"
+        corps = (f"RÉCAP D'EXPLOITATION — {date_run}\n\n"
+                 f"✓ Tout vert. {ligne_vigies}.\n\n— LABUSE, exploitation")
+    else:
+        sujet = f"[LABUSE] récap du matin — {len(ouverts)} souci(s)"
+        lignes = []
+        for inc in ouverts:
+            rap = f" · {inc['rappels']} rappel(s)" if inc.get("rappels") else ""
+            lignes.append(f"  • {inc['sujet']} (depuis {inc['ouvert_at'][:16]}{rap})")
+        corps = (f"RÉCAP D'EXPLOITATION — {date_run}\n\n"
+                 f"⚠ {len(ouverts)} incident(s) ouvert(s) :\n" + "\n".join(lignes)
+                 + f"\n\nÉtat des vigies : {ligne_vigies}.\n\n— LABUSE, exploitation")
+    _envoyer_alerte(corps, sujet=sujet, ctx=ctx)
+    ctx.compte(incidents_ouverts=len(ouverts), disque_pct=pct, readyz_ok=bool(ready),
+               jobs_en_retard=len(etat.get("retards") or []),
+               sauvegarde=sb.get("dernier"))
 
 
 def sante_endpoints(ctx: JobContext) -> None:
@@ -675,58 +735,88 @@ def sentinelle_dvf_cadastre(ctx: JobContext) -> None:
 
 # ═══════════════════════════ K9 — robustesse ═══════════════════════════
 
-def restore_test(ctx: JobContext) -> None:
-    """Restaure le dump le plus récent dans une base jetable `labuse_restore_test`, vérifie (nombre de
-    tables + comptes témoins sur parcels/veilles/pige_biens), puis DROP. Échec → alerte. Une sauvegarde
-    jamais restaurée n'est pas une sauvegarde."""
+def verite_sources(ctx: JobContext) -> None:
+    """SOLIDITE-1 (Lot 5) — confronte 20 parcelles tirées au hasard (stratifiées) aux sources officielles
+    en ligne, journalise le rapport (verite_sources_runs) et ouvre un incident agrégé par écart servi↔source.
+    Échantillon vide (base/API injoignables) → note, pas d'échec (le passage suivant réessaiera)."""
+    from . import verite_sources as vs
+    res = vs.jouer(n=20)
+    r = vs.journaliser_passage(ctx.db, res)
+    ctx.db.commit()
+    ctx.compte(**r, parcelles_echantillon=len(res.get("echantillon") or []))
+
+
+def backup_offsite(ctx: JobContext) -> None:
+    """SOLIDITE-1 (Lot 3.2) — DÉLÈGUE à deploy/scripts/backup_offsite.sh (chiffre le dernier dump + le
+    pousse vers un stockage objet, rétention 8 hebdo). Le code 3 (« non configuré ») n'est PAS un échec :
+    il ouvre/entretient l'incident « sauvegarde distante non configurée » (rappel à Vic) par la porte
+    unique, et le job reste VERT (on ne veut pas qu'un compte manquant fasse un faux échec chaque semaine).
+    Succès → l'incident est refermé. Tout autre code → échec bruyant (le runner alerte)."""
     s = get_settings()
-    dumps = sorted(Path(s.backup_dir).glob("labuse-*.sql.gz"), key=lambda p: p.stat().st_mtime, reverse=True)
+    script = Path(__file__).resolve().parents[2] / "deploy" / "scripts" / "backup_offsite.sh"
+    if not script.is_file():
+        raise RuntimeError(f"script introuvable : {script}")
+    env = dict(os.environ)
+    env.setdefault("LABUSE_BACKUP_DIR", s.backup_dir)
+    if s.pg_bin_dir:
+        env["PATH"] = f"{s.pg_bin_dir}:{env.get('PATH', '')}"
+    proc = subprocess.run(["bash", str(script)], env=env, capture_output=True, text=True, check=False)
+    sortie = (proc.stdout or "") + (proc.stderr or "")
+    for ligne in sortie.splitlines():
+        log.info("backup_offsite.sh | %s", ligne)
+    from .db import session_scope
+    from . import ops_alertes
+    cle = "sauvegarde-distante"
+    if proc.returncode == 3:        # non configuré : rappel, PAS un échec
+        with session_scope() as db:
+            ops_alertes.signaler(db, cle, "Sauvegarde hors-VPS non configurée",
+                                 "La copie chiffrée des sauvegardes hors du VPS n'est pas active : "
+                                 "compte de stockage objet et/ou clé de chiffrement manquants. "
+                                 "Tant que ce n'est pas posé, un VPS perdu emporte les sauvegardes. "
+                                 "Détail : deploy/scripts/backup_offsite.sh (SOLIDITE-1 Lot 3.2).")
+            db.commit()
+        ctx.compte(etat="non_configure", note=sortie.strip()[-300:])
+        return
+    if proc.returncode != 0:
+        raise RuntimeError(f"backup_offsite.sh a échoué (code {proc.returncode}) : {sortie.strip()[-300:]}")
+    with session_scope() as db:
+        ops_alertes.resoudre(db, cle)
+        db.commit()
+    ctx.compte(etat="ok", detail=sortie.strip()[-300:])
+
+
+def restore_test(ctx: JobContext) -> None:
+    """SOLIDITE-1 (Lot 3.3) — sur le VPS, on ne restaure PLUS un dump complet (45 Go) : il n'y a pas la
+    place (6,6 Go libres) et ce serait dangereux. Ce job vérifie seulement que le dernier dump est
+    RESTAURABLE sans le restaurer (`pg_restore --list` lit la table des matières : un dump tronqué/corrompu
+    est pris ici), et contrôle sa taille. Le VRAI test de restauration (restauration réelle + comparaison
+    des comptages) tourne sur le MAC, une fois par mois : deploy/mac/restore_test.sh."""
+    s = get_settings()
+    dumps = sorted(Path(s.backup_dir).glob("labuse-*.dump"), key=lambda p: p.stat().st_mtime, reverse=True)
     if not dumps:
-        raise RuntimeError(f"aucun dump à restaurer dans {s.backup_dir}")
+        raise RuntimeError(f"aucun dump .dump à vérifier dans {s.backup_dir}")
     dump = dumps[0]
-    base = "labuse_restore_test"
-    base_url = _libpq_url(s.database_url)
-    admin_url = base_url.rsplit("/", 1)[0] + "/postgres"
-    psql = str(Path(s.pg_bin_dir) / "psql") if s.pg_bin_dir else "psql"
-
-    def _psql(url, sql):
-        return subprocess.run([psql, url, "-v", "ON_ERROR_STOP=1", "-c", sql],
-                              capture_output=True, text=True)
-
-    _psql(admin_url, f"DROP DATABASE IF EXISTS {base}")
-    cr = _psql(admin_url, f"CREATE DATABASE {base}")
-    if cr.returncode != 0:
-        raise RuntimeError(f"création base jetable impossible : {cr.stderr[:300]}")
-    try:
-        cible_url = base_url.rsplit("/", 1)[0] + f"/{base}"
-        # gunzip | psql
-        with gzip.open(dump, "rb") as gz:
-            restore = subprocess.run([psql, cible_url, "-v", "ON_ERROR_STOP=0"],
-                                     stdin=gz, capture_output=True, text=False)
-        if restore.returncode != 0:
-            raise RuntimeError(f"restauration en échec : {restore.stderr.decode('utf-8','replace')[:300]}")
-        n_tables = int(_psql(cible_url, "SELECT count(*) FROM information_schema.tables "
-                             "WHERE table_schema='public'").stdout.strip().splitlines()[-2].strip())
-        temoins = {}
-        for t in ("parcels", "veilles", "pige_biens"):
-            out = _psql(cible_url, f"SELECT count(*) FROM {t}")
-            temoins[t] = out.stdout.strip().splitlines()[-2].strip() if out.returncode == 0 else "absente"
-        if n_tables < 50:
-            raise RuntimeError(f"restauration douteuse : seulement {n_tables} tables (attendu ≫ 50)")
-        ctx.compte(dump=dump.name, n_tables=n_tables, temoins=temoins)
-    finally:
-        _psql(admin_url, f"DROP DATABASE IF EXISTS {base}")   # toujours nettoyer la base jetable
+    taille_mo = round(dump.stat().st_size / 1e6, 1)
+    pg_restore = str(Path(s.pg_bin_dir) / "pg_restore") if s.pg_bin_dir else "pg_restore"
+    proc = subprocess.run([pg_restore, "--list", str(dump)], capture_output=True, text=True, check=False)
+    if proc.returncode != 0:
+        raise RuntimeError(f"dump illisible par pg_restore --list ({dump.name}) : {proc.stderr[:300]}")
+    n_objets = sum(1 for l in proc.stdout.splitlines() if l.strip() and not l.lstrip().startswith(";"))
+    if n_objets < 50:
+        raise RuntimeError(f"table des matières maigre ({n_objets} objets) — dump douteux {dump.name}")
+    ctx.compte(dump=dump.name, taille_mo=taille_mo, objets_toc=n_objets,
+               note="contrôle lisibilité VPS ; restauration réelle = deploy/mac/restore_test.sh (mensuel Mac)")
 
 
 # ═══════════════════════════ utilitaire d'alerte (respecte dry-run) ═══════════════════════════
 
 def _envoyer_alerte(corps: str, *, sujet: str = "[LABUSE] alerte exploitation", ctx: JobContext | None = None) -> None:
-    from .mail import send_email
+    from .mail import envoyer_ops
     s = get_settings()
     dest = s.admin_email or s.contact_email
     if not dest:
         return
-    r = send_email(dest, sujet, corps, settings=s)
+    r = envoyer_ops(dest, sujet, corps, settings=s)
     if ctx is not None and not r.sent:
         ctx.compte(mail=r.detail)   # « no-config » = dry-run, tracé dans l'état
     log.info("alerte exploitation envoyée=%s (%s)", r.sent, r.detail)

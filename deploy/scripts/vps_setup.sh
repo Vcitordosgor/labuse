@@ -27,7 +27,7 @@ sudo systemctl enable --now fail2ban
 
 echo "── 3. Utilisateur applicatif `labuse` (sans shell de login interactif distant) ──"
 id labuse >/dev/null 2>&1 || sudo useradd -m -s /bin/bash labuse
-sudo mkdir -p /opt/labuse /var/log/labuse /var/backups/labuse /etc/labuse
+sudo mkdir -p /opt/labuse /var/log/labuse /var/log/labuse/jobs /var/backups/labuse /etc/labuse
 sudo chown -R labuse:labuse /opt/labuse /var/log/labuse /var/backups/labuse
 
 echo "── 4. PostgreSQL 18 + PostGIS (dépôt PGDG — le dump -Fc 18.x l'exige) ──"

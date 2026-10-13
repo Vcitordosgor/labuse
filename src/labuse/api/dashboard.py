@@ -2538,10 +2538,48 @@ def admin_coherence(request: Request) -> dict:
         passages = derniers_passages(s)
     golden_dir = Path(__file__).resolve().parents[3] / "tests" / "golden" / "coherence"
     n_golden = len(list(golden_dir.glob("*.json"))) if golden_dir.exists() else 0
+    # SOLIDITE-1 (Lot 2) — le banc des 25 gardes CHASSE-DONNÉES (joué chaque nuit par coherence-banc)
+    # est consultable ICI même (page Données), à côté de la cohérence multi-lecteurs.
+    try:
+        from ..chasse_journal import derniers_passages as _chasse_passages
+        with _ss() as s:
+            chasse = _chasse_passages(s)
+    except Exception:  # noqa: BLE001 — la page ne casse jamais sur l'historique chasse
+        chasse = []
     return {"passages": passages,
             "fichier_ecarts": str(ECARTS_CSV),
             "golden_temoins": n_golden,
+            "chasse": chasse,
             "commande": "labuse coherence [--ile] · accepter une dérive : labuse coherence --accepter"}
+
+
+@router.get("/admin/chasse")
+def admin_chasse(request: Request) -> dict:
+    """SOLIDITE-1 (Lot 2) — l'historique du banc des 25 gardes CHASSE-DONNÉES (joué chaque nuit par
+    `coherence-banc`, en-process contre la prod) : par passage, OK/ECART/SKIP et le détail des écarts
+    (garde + parcelle témoin). Tout écart a déjà ouvert un incident (page Pilotage / mail)."""
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from ..chasse_journal import derniers_passages
+    from ..db import session_scope as _ss
+    with _ss() as s:
+        passages = derniers_passages(s, n=30)
+    return {"passages": passages,
+            "commande": "labuse jobs run coherence-banc (joue cohérence + les 25 gardes chasse)"}
+
+
+@router.get("/admin/verite-sources")
+def admin_verite_sources(request: Request) -> dict:
+    """SOLIDITE-1 (Lot 5) — l'historique du contrôle mensuel « vérité face aux sources » : par passage,
+    vrai/faux/non-vérifiable et le détail des écarts servi↔source officielle (parcelle + les deux valeurs)."""
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from ..verite_sources import derniers_passages
+    from ..db import session_scope as _ss
+    with _ss() as s:
+        passages = derniers_passages(s, n=24)
+    return {"passages": passages,
+            "commande": "labuse ops verite-sources (20 parcelles au hasard vs sources officielles)"}
 
 
 @router.get("/admin/circuit")

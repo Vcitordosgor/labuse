@@ -24,7 +24,9 @@ mail-queue-consommer;5 min;toutes les 5 min;exploitation;deploy.sh → /etc/cron
 fiche-commune-cache;quotidien;03:00;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run fiche-commune-cache
 coherence-banc;quotidien;03:45;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run coherence-banc
 restore-test;mensuel (1er);05:00 le 1er;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run restore-test
-ingest-ban;mensuel (5);05:00 le 5;eau;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run ingest-ban
+recap-matin;quotidien;07:30;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run recap-matin
+backup-offsite;hebdo (dim);14:30 dim;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run backup-offsite
+verite-sources;mensuel (15);06:00 le 15;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run verite-sources
 ingest-dvf;hebdo (mar);05:00 mardi;eau;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run ingest-dvf
 abuse-scan;quotidien;08:00;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run abuse-scan
 purge-sessions;quotidien;08:30;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run purge-sessions

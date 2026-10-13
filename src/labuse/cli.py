@@ -270,16 +270,26 @@ def vefa_neuf_build_cmd() -> None:
 
 @app.command("parite")
 def parite_cmd(
+    host: str = typer.Option("labuse-vps", "--host", help="Alias SSH du VPS."),
+    communes: bool = typer.Option(False, "--communes", help="Détaille les parcelles par commune."),
     tables_quotidien: bool = typer.Option(False, "--tables-quotidien",
         help="N'imprime QUE les tables des flux quotidiens (une par ligne) — pour les scripts."),
     tables_fond: bool = typer.Option(False, "--tables-fond",
         help="N'imprime QUE les tables de fond (une par ligne)."),
 ) -> None:
-    """Parité des données Mac↔prod PAR SENS (décision flux 13/10) : quelles tables sont QUOTIDIENNES
-    (prod fait foi, le Mac récupère) et lesquelles sont de FOND (Mac fait foi, poussées en prod).
-    Référence de la récupération prod→Mac (cf. docs/EXPLOITATION.md §11)."""
+    """Parité des données Mac⟷prod PAR SENS (décision flux 13/10 + SOLIDITE-1 Lot 4.3). Les COMPTAGES
+    locaux et prod (SSH), classés par sens (flux_sens) :
+      · FOND (cadastre/BAN/PLU/couches) — le MAC fait foi, poussé en prod : un écart = À CORRIGER ;
+      · QUOTIDIEN (BODACC/Sitadel/DPE/SIRENE/DVF) — la PROD fait foi, le Mac récupère : prod ≥ Mac
+        attendu, l'écart est INFORMATIF (le Mac rattrapera à la prochaine récupération, cf. §11).
+    `--communes` détaille les parcelles par commune. `--tables-quotidien`/`--tables-fond` : listes à plat
+    (scripts). Sort en erreur (1) UNIQUEMENT si une table de FOND diverge."""
+    import subprocess
+    from sqlalchemy import text as _text
+    from .db import session_scope
     from .flux_sens import FLUX_QUOTIDIEN_PROD, SOURCES_FOND_MAC, tables_quotidiennes
     from .flux_sens import tables_fond as _tf
+
     if tables_quotidien:
         for t in tables_quotidiennes():
             typer.echo(t)
@@ -288,13 +298,56 @@ def parite_cmd(
         for t in _tf():
             typer.echo(t)
         return
-    typer.echo("FLUX QUOTIDIENS — ingérés EN PROD la nuit · PROD fait foi · sens prod→Mac :")
-    for flux, tables in FLUX_QUOTIDIEN_PROD.items():
-        typer.echo(f"  {flux:9s} → {', '.join(tables)}")
-    typer.echo("\nSOURCES DE FOND — construites sur le MAC · MAC fait foi · sens Mac→prod :")
-    for dom, tables in SOURCES_FOND_MAC.items():
-        typer.echo(f"  {dom:9s} → {', '.join(tables)}")
-    typer.echo("\n(scoring/résiduel/cascade + dérivés = CALCULÉS sur le Mac → poussés par sync-run.)")
+
+    def _prod(sql: str) -> str:
+        r = subprocess.run(["ssh", "-o", "BatchMode=yes", host,
+                            f"sudo -u postgres psql -At -d labuse -c \"{sql}\""],
+                           capture_output=True, text=True)
+        return r.stdout.strip() if r.returncode == 0 else "ERR"
+
+    ecart_fond = False
+    with session_scope() as db:
+        def _compter(tables: list[str], foi: str) -> None:
+            nonlocal ecart_fond
+            for t in tables:
+                try:
+                    loc = str(db.execute(_text(f"SELECT count(*) FROM {t}")).scalar())
+                except Exception:  # noqa: BLE001 — table absente en local
+                    loc = "—"
+                pr = _prod(f"SELECT count(*) FROM {t}")
+                if loc == pr:
+                    etat = "="
+                elif foi == "prod":
+                    etat = "~ (prod≥Mac attendu)"       # flux quotidien : la prod devance, informatif
+                else:
+                    etat = "≠ À CORRIGER"
+                    ecart_fond = True
+                typer.echo(f"  {t:34s} {loc:>12s} {pr:>12s}  {etat}")
+
+        typer.echo(f"PARITÉ  local ⟷ {host}   ({'TABLE':32s} {'LOCAL':>12s} {'PROD':>12s})\n")
+        typer.echo("FOND — le Mac fait foi (poussé en prod) · écart = à corriger :")
+        _compter([t for tables in SOURCES_FOND_MAC.values() for t in tables], foi="mac")
+        typer.echo("\nQUOTIDIEN — la prod fait foi (le Mac récupère) · écart informatif :")
+        _compter(tables_quotidiennes(), foi="prod")
+        if communes:
+            typer.echo("\nPARCELLES PAR COMMUNE (local ⟷ prod) :")
+            loc_c = dict(db.execute(_text(
+                "SELECT commune, count(*) FROM parcels GROUP BY commune ORDER BY commune")).all())
+            brut = _prod("SELECT commune, count(*) FROM parcels GROUP BY commune ORDER BY commune")
+            prod_c = {}
+            for ligne in brut.splitlines():
+                if "|" in ligne:
+                    k, _, v = ligne.partition("|")
+                    prod_c[k.strip()] = v.strip()
+            for com in sorted(set(loc_c) | set(prod_c)):
+                lv, pv = str(loc_c.get(com, "—")), prod_c.get(com, "—")
+                etat = "=" if lv == pv else "≠"
+                if etat == "≠":
+                    ecart_fond = True
+                typer.echo(f"  {com:34s} {lv:>12s} {pv:>12s}  {etat}")
+    typer.echo("\n" + ("✗ ÉCART(S) de FOND — le Mac et la prod divergent sur une source Mac-fait-foi."
+                       if ecart_fond else "✓ parité de fond : local == prod (le quotidien peut devancer)."))
+    raise typer.Exit(1 if ecart_fond else 0)
 
 
 @app.command("ingest-cosia")
@@ -4891,10 +4944,13 @@ def _crontab_du_registre(tz: str) -> str:
         "# GÉNÉRÉ depuis le registre labuse.jobs (CRON-1) — NE PAS ÉDITER À LA MAIN.",
         f"#   deploy.sh régénère et refuse tout écart. Heures en {'Réunion' if tz == 'reunion' else 'UTC'}.",
         "# ─────────────────────────────────────────────────────────────────────────────",
-        "SHELL=/bin/sh", "MAILTO=root",
+        # SOLIDITE-1 (Lot 1.1) — MAILTO VIDE : plus de mail cron « vers le vide » (root sans relais sur le
+        # VPS = silence). Les échecs/retards passent par la porte d'alerte UNIQUE (labuse.ops_alertes :
+        # mail Brevo à Vic + cloche admin), pas par le MTA local inexistant.
+        "SHELL=/bin/sh", 'MAILTO=""',
         # §8bis (13/10) — le cron a un PATH minimal (/usr/bin:/bin) où `labuse` (venv) n'existe PAS :
-        # sans ça, `exec labuse …` → « labuse: not found », échec SILENCIEUX (MAILTO=root sans MTA).
-        # On met le venv en tête de PATH pour que le `labuse` nu résolve sur tous les jobs.
+        # sans ça, `exec labuse …` → « labuse: not found », échec SILENCIEUX. On met le venv en tête de
+        # PATH pour que le `labuse` nu résolve sur tous les jobs.
         "PATH=/opt/labuse/venv/bin:/usr/local/bin:/usr/bin:/bin", "",
     ]
     for nom, j in JOBS.items():
@@ -4928,6 +4984,166 @@ def jobs_crontab_cmd(
         typer.echo(f"✓ {verifier} == registre (aucun écart, tz={tz})")
         return
     typer.echo(contenu, nl=False)
+
+
+# ═══════════════════════ SOLIDITE-1 (Lot 1) — exploitation : les alertes, les incidents ═══════════════════════
+ops_app = typer.Typer(add_completion=False,
+                      help="Exploitation (SOLIDITE-1) : vigies, incidents, alertes — plus de panne en silence.")
+app.add_typer(ops_app, name="ops")
+
+
+@ops_app.command("verifier")
+def ops_verifier_cmd() -> None:
+    """Évalue les quatre vigies (disque, /readyz, sauvegarde, jobs en retard), ouvre/referme les incidents
+    par la porte unique, et affiche l'état. C'est ce que fait le récap du matin, à la demande."""
+    import json as _json
+    from .db import session_scope
+    from . import ops_alertes
+    with session_scope() as db:
+        etat = ops_alertes.verifier_declencheurs(db)
+        db.commit()
+    typer.echo(_json.dumps(etat, ensure_ascii=False, indent=2, default=str))
+
+
+@ops_app.command("incidents")
+def ops_incidents_cmd() -> None:
+    """Les incidents d'exploitation encore OUVERTS (clé, sujet, depuis quand, nb de rappels)."""
+    from .db import session_scope
+    from . import ops_alertes
+    with session_scope() as db:
+        ouverts = ops_alertes.incidents_ouverts(db)
+    if not ouverts:
+        typer.echo("✓ aucun incident ouvert")
+        return
+    for inc in ouverts:
+        typer.echo(f"• [{inc['cle']}] {inc['sujet']} — depuis {inc['ouvert_at'][:16]} "
+                   f"({inc['rappels']} rappel(s))")
+
+
+@ops_app.command("chasse")
+def ops_chasse_cmd() -> None:
+    """SOLIDITE-1 (Lot 2) — joue les 25 gardes CHASSE-DONNÉES EN-PROCESS contre la base servie, journalise
+    le passage (chasse_runs) et ouvre un incident par garde en écart. C'est ce que `coherence-banc` fait
+    chaque nuit, à la demande. Une ligne par garde, puis le bilan ; exit 1 s'il reste un écart."""
+    from .db import session_scope
+    from . import chasse_banc, chasse_journal
+    resultats = chasse_banc.jouer_gardes_en_process()
+    for nom, verdict, detail in resultats:
+        typer.echo(f"[{verdict}] {nom} — {detail}")
+    with session_scope() as db:
+        res = chasse_journal.journaliser_passage(db, resultats)
+        db.commit()
+    typer.echo(f"\nBilan : {res['ok']} OK · {res['ecart']} ECART · {res['skip']} SKIP "
+               f"({res['n_gardes']} gardes) · {res['ecart_nouveaux']} écart(s) nouveau(x)")
+    raise typer.Exit(1 if res["ecart"] else 0)
+
+
+@ops_app.command("verite-sources")
+def ops_verite_sources_cmd(
+    n: int = typer.Option(20, "--n", help="Nombre de parcelles tirées au hasard."),
+) -> None:
+    """SOLIDITE-1 (Lot 5) — confronte N parcelles au hasard (stratifiées) aux sources officielles en ligne,
+    journalise le rapport et ouvre un incident par écart. Une ligne par comparaison, puis le bilan."""
+    from .db import session_scope
+    from . import verite_sources as vs
+    res = vs.jouer(n=n)
+    for l in res["lignes"]:
+        marque = {"vrai": "OK", "faux": "ECART", "non_verifiable": "SKIP"}.get(l["verdict"], "?")
+        typer.echo(f"[{marque}] {l['objet']} {l['notion']} — servi={l['valeur_labuse']} "
+                   f"oracle={l['valeur_oracle']} ({l['source_oracle']})")
+    with session_scope() as db:
+        r = vs.journaliser_passage(db, res)
+        db.commit()
+    b = res["bilan"]
+    typer.echo(f"\nBilan : {b['vrai']} vrai · {b['faux']} faux · {b['non_verifiable']} non vérifiable "
+               f"({len(res['echantillon'])} parcelles)")
+    raise typer.Exit(1 if r["faux"] else 0)
+
+
+@ops_app.command("test-alerte")
+def ops_test_alerte_cmd() -> None:
+    """PREUVE (SOLIDITE-1 Lot 1.6) — joue un ÉCHEC réel (job jetable qui lève → incident + alerte) et un
+    RETARD simulé (détecteur réel sur une entrée job_runs ancienne), puis RÉSOUT les deux. Sans SMTP :
+    les mails partent en dry-run (.eml) — les chemins sont affichés. Nettoie tout derrière lui."""
+    import json
+    from datetime import datetime, timedelta, timezone
+    from sqlalchemy import text
+    from .db import session_scope
+    from . import jobs as _jobs, jobs_journal, ops_alertes
+    from .jobs import Job, JobContext
+
+    NOM = "solidite-test"
+    CLE_ECHEC = f"job-echec:{NOM}"
+    CLE_RETARD = f"job-retard:{NOM}"
+
+    def _echo_eml():
+        import glob, os
+        from .mail import _dryrun_dir
+        try:
+            d = _dryrun_dir(get_settings())
+            fichiers = sorted(glob.glob(os.path.join(str(d), "*.eml")), key=os.path.getmtime)
+            if fichiers:
+                typer.echo(f"    dernier .eml : {fichiers[-1]}")
+        except Exception:  # noqa: BLE001 — l'emplacement .eml est un confort, pas un dû
+            pass
+
+    typer.echo("── 1) ÉCHEC d'un job jetable (chemin réel exec_one → incident + alerte) ──")
+    # job jetable injecté le temps du test (jamais au crontab) : le runner l'exécute pour de vrai.
+    _jobs.JOBS[NOM] = Job(NOM, "Job de test SOLIDITE-1 (jetable)", "quotidien", "0 0 * * *", "04:00",
+                          lambda ctx: (_ for _ in ()).throw(RuntimeError("échec VOLONTAIRE de démonstration")),
+                          raison="preuve", touche="exploitation", test="n/a", besoin_db=False)
+    try:
+        code = _jobs.exec_one(NOM)
+        typer.echo(f"   exec_one({NOM}) → code {code} (1 = échec attendu)")
+        with session_scope() as db:
+            ouverts = {i["cle"] for i in ops_alertes.incidents_ouverts(db)}
+        typer.echo(f"   incident ouvert : {'OUI' if CLE_ECHEC in ouverts else 'NON (⚠)'}")
+        _echo_eml()
+
+        typer.echo("── 2) RETARD simulé (détecteur réel sur job_runs ancien) ──")
+        with session_scope() as db:
+            jobs_journal.ensure_table(db)
+            vieux = (datetime.now(timezone.utc) - timedelta(days=3)).isoformat()
+            db.execute(text(
+                "INSERT INTO job_runs (nom, debut, fin, statut, duree_s, dry_run) "
+                "VALUES (:n, :d, :d, 'ok', 1, false)"), {"n": NOM, "d": vieux})
+            db.commit()
+            retards = {r["nom"] for r in ops_alertes._jobs_en_retard(db)}
+            typer.echo(f"   détecteur voit {NOM} en retard : {'OUI' if NOM in retards else 'NON (⚠)'}")
+            r = next((x for x in ops_alertes._jobs_en_retard(db) if x["nom"] == NOM), None)
+            if r:
+                ops_alertes.signaler(db, CLE_RETARD, f"Job en retard : {NOM}",
+                                     f"« {r['titre']} » ({r['cadence']}) n'a plus réussi depuis "
+                                     f"{r['dernier_succes']} (âge {r['age_h']} h > seuil {r['seuil_h']} h).")
+            db.commit()
+        _echo_eml()
+
+        typer.echo("── 3) RÉSOLUTION des deux incidents (mail « résolu ») ──")
+        with session_scope() as db:
+            # le job jetable « redevient vert » : on efface le vieux run et on en pose un frais.
+            db.execute(text("DELETE FROM job_runs WHERE nom = :n"), {"n": NOM})
+            db.execute(text(
+                "INSERT INTO job_runs (nom, debut, fin, statut, duree_s, dry_run) "
+                "VALUES (:n, now(), now(), 'ok', 1, false)"), {"n": NOM})
+            db.commit()
+            a = ops_alertes.resoudre(db, CLE_ECHEC)
+            b = ops_alertes.resoudre(db, CLE_RETARD)
+            db.commit()
+            typer.echo(f"   résolu échec : {a} · résolu retard : {b}")
+        _echo_eml()
+    finally:
+        _jobs.JOBS.pop(NOM, None)
+        try:
+            with session_scope() as db:
+                db.execute(text("DELETE FROM job_runs WHERE nom = :n"), {"n": NOM})
+                db.execute(text("DELETE FROM ops_incidents WHERE cle IN (:a, :b)"),
+                           {"a": CLE_ECHEC, "b": CLE_RETARD})
+                db.commit()
+        except Exception as exc:  # noqa: BLE001
+            typer.echo(f"   (nettoyage partiel : {exc})", err=True)
+    typer.echo("✓ scénario joué. Vérifie les mails (ou les .eml ci-dessus) : 1 échec + 1 retard + 2 résolus.")
+
+
 
 
 # ═══════════════════════ CIRCUIT-1 (lot 1.5) — registre : le miroir en base ═══════════════════════
