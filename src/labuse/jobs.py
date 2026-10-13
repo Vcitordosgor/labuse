@@ -56,6 +56,10 @@ class Job:
     timeout_s: int = 900
     envoie_mail: bool = False       # concerné par la règle dry-run
     besoin_db: bool = True
+    # planifie=False : job RETIRÉ du crontab généré ET du monitoring healthz, mais toujours
+    # exécutable (bouton admin / `labuse jobs run`). Ex. agents-sources (pas de crédit API, choix
+    # assumé — le bouton manuel reste). Décision 13/10.
+    planifie: bool = True
 
 
 # ─────────────────────────────── le runner commun ───────────────────────────────
@@ -283,11 +287,11 @@ def _impl(nom: str) -> Callable[[JobContext], None]:
 
 
 def _j(nom, titre, cadence, cron_utc, heure_reunion, *, raison, touche, test,
-       timeout_s=900, envoie_mail=False, besoin_db=True):
+       timeout_s=900, envoie_mail=False, besoin_db=True, planifie=True):
     assert raison and test and touche in ("eau", "exploitation"), f"job {nom} : raison/touche/test obligatoires"
     return Job(nom, titre, cadence, cron_utc, heure_reunion, _impl(nom),
                raison=raison, touche=touche, test=test,
-               timeout_s=timeout_s, envoie_mail=envoie_mail, besoin_db=besoin_db)
+               timeout_s=timeout_s, envoie_mail=envoie_mail, besoin_db=besoin_db, planifie=planifie)
 
 
 JOBS: dict[str, Job] = {j.nom: j for j in [
@@ -305,7 +309,7 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
               "réellement consultée). Un passage TOUS LES 15 JOURS (dimanche nuit, semaines ISO paires), "
               "sous PLAFOND de dépense (LABUSE_AGENT_PLAFOND_EUR, défaut 0 = ne dépense rien) qui arrête "
               "proprement et signale les sources non traitées.",
-       test="tests/test_cron1_registre.py::test_agents_sources_dimanche"),
+       test="tests/test_cron1_registre.py::test_agents_sources_dimanche", planifie=False),
     _j("filtres-sources", "Filtres des sources : rejoue les contrôles qualité sur les versions servies",
        "quotidien", "5 3 * * *", "07:05", touche="eau", timeout_s=1800,
        raison="Le filtre de nuit : rejoue les contrôles qualité sur les versions RÉELLEMENT servies (une "
@@ -343,15 +347,10 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
        raison="Le diff des 24 documents PLU (GPU) fait remonter une révision opposable en événement de "
               "veille + bandeau. Mensuel le 15.",
        test="tests/test_cron1_registre.py::test_job_a_une_raison"),
-    # CORRECTIFS-1 E5 — jobs manquants au registre : adresses BAN (mensuel), DVF (hebdo). Le crontab
-    # n'est PAS posé ici ; ces entrées servent à ce qu'un futur `labuse jobs crontab --tz reunion`
-    # les porte. Les ingestions lourdes restent le pipeline existant (délégation CLI).
-    _j("ingest-ban", "Adresses BAN 974 (géocodage interne) — refresh mensuel",
-       "mensuel (5)", "0 1 5 * *", "05:00 le 5", touche="eau", timeout_s=3600,
-       raison="La table `adresses` (BAN 974) est LA référence de géocodage du produit (Flash, courrier, "
-              "omnibox). L'export départemental bouge lentement : refresh MENSUEL (le 5), résilient aux "
-              "coupures de téléchargement (retry).",
-       test="tests/test_cron1_registre.py::test_job_a_une_raison"),
+    # flux-13-10 — DVF (hebdo) reste au registre : flux QUOTIDIEN-DE-NUIT côté prod (prod fait foi,
+    # le Mac récupère ensuite — cf. docs/EXPLOITATION.md). `ingest-ban` a été RETIRÉ du registre le
+    # 13/10 : la table `adresses` (BAN) est une source de FOND Mac→prod (copiée par sources-maj-1 /
+    # Phase 3a), jamais ingérée en prod → plus de cron ni de monitoring healthz pour elle.
     _j("ingest-dvf", "DVF — recharge à la nouvelle livraison Etalab",
        "hebdo (mar)", "0 1 * * 2", "05:00 mardi", touche="eau", timeout_s=3600,
        raison="DVF (mutations) nourrit le marché (prix secteur, radar). Détection J+2 (Last-Modified) : "

@@ -45,6 +45,8 @@ def _crons_du_registre() -> dict:
     for nom, job in JOBS.items():
         if nom not in TOUCHE_EAU and nom != "backup-postgres":
             continue
+        if not job.planifie:          # job manuel-seul (ex. agents-sources) : hors monitoring healthz
+            continue
         trace, motif = _TRACES.get(nom, ("etat_json", None))
         out[nom] = {"trace": trace, "motif": motif,
                     "attendu_jours": _CADENCE_JOURS.get(job.cadence, 9),

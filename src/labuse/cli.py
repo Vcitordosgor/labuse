@@ -4869,6 +4869,8 @@ def _crontab_du_registre(tz: str) -> str:
         "PATH=/opt/labuse/venv/bin:/usr/local/bin:/usr/bin:/bin", "",
     ]
     for nom, j in JOBS.items():
+        if not j.planifie:                 # job manuel-seul (ex. agents-sources) : hors crontab
+            continue
         lignes.append(f"# {j.cadence} · {j.heure_reunion} Réunion · {j.touche} — {j.titre}")
         lignes.append(f"{conv(j.cron_utc)}   labuse  sh -c '. /etc/labuse/labuse.env; exec labuse jobs run {nom}'")
         lignes.append("")
