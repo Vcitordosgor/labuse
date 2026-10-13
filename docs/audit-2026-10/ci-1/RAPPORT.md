@@ -4,7 +4,7 @@ Branche `feat/ci-1`, worktree `~/Desktop/labuse-ci`. Rien sur le VPS. Aucune éc
 applicative `labuse` (deux autres sessions tournaient) : la suite tourne sur une base de test DÉDIÉE
 `labuse_test_ci`, isolée du `labuse_test` partagé des autres worktrees.
 
-> État : Lot 1 ✅ · Lot 2 ✅ · Lot 3 ✅ · Lot 4 ✅ · Lot 5 ⏳ (ce rapport se remplit lot par lot).
+> État : Lot 1 ✅ · Lot 2 ✅ · Lot 3 ✅ · Lot 4 ✅ · Lot 5 ✅ · Preuve ⏳ (push à confirmer).
 
 ---
 
@@ -236,3 +236,18 @@ scan. Mécanisme de **refus prouvé** (une étape qui échoue → `✗ PUSH REFU
 > Non installé pendant cette session : `core.hooksPath` est une config git PARTAGÉE (elle
 > toucherait les autres worktrees des sessions en cours). C'est **à Vic** de lancer
 > `bash scripts/ci/install-hooks.sh` dans son dépôt principal.
+
+---
+
+## Lot 5 — l'alerte
+
+**Choix : notification native GitHub** (mail à l'auteur du push quand sa CI échoue). C'est le « au
+plus simple » du mandat ET le seul respectant « aucun secret dans GitHub » : l'alerte unique de
+SOLIDITE-1 (SMTP Brevo) exigerait de poser `SMTP_*`/`ADMIN_EMAIL` en secrets GitHub — écarté.
+
+Comme Vic est celui qui pousse sur `main`, il reçoit le mail à chaque croix rouge. Réglage à cocher
+une fois (documenté dans `docs/EXPLOITATION.md` § « L'alerte ») :
+**GitHub → Settings → Notifications → Actions → Email + « failed workflows only ».**
+
+Aucun changement de workflow nécessaire (la notification est native). Le mail pointe le run ; le
+détail (job, test) est sur la page du run.
