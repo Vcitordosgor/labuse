@@ -134,9 +134,19 @@ def send_email(to: str, subject: str, body_text: str, *,
         return SendResult(False, "dry-run")
 
     if not s.smtp_host:
-        # A2 — pas de config : on JOURNALISE le mail (debug) et on retourne non-envoyé.
-        log.info("MAIL NON ENVOYÉ (SMTP non configuré) — to=%s subject=%r\n%s",
-                 to, subject, body_text)
+        # TRANSPORT UNIQUE (13/10) — pas de SMTP sur le VPS → Brevo porte le mail (texte brut), LE MÊME
+        # transport que les alertes (`brevo.envoyer_texte`, appelé QUE d'ici). L'étanchéité dry-run (.eml)
+        # est déjà assurée au-dessus par `envoi_reel_autorise`. (Avant : « no-config » → la file ne partait
+        # jamais sans SMTP — les mails RAW restaient bloqués alors que Brevo était dispo.)
+        from . import brevo
+        if brevo._api_key():
+            r = brevo.envoyer_texte(to, subject, body_text)
+            if r.get("envoye"):
+                log.info("MAIL envoyé (Brevo, sans SMTP) — to=%s subject=%r", to, subject)
+                return SendResult(True, "ok")
+            return SendResult(False, r.get("raison") or "error: brevo")
+        # ni SMTP ni Brevo : on JOURNALISE (debug) et on retourne non-envoyé.
+        log.info("MAIL NON ENVOYÉ (ni SMTP ni Brevo) — to=%s subject=%r\n%s", to, subject, body_text)
         return SendResult(False, "no-config")
 
     msg = _build_message(to, subject, body_text, from_addr, headers=headers, body_html=body_html)
@@ -199,8 +209,14 @@ def _journaliser_echec_admin(to: str, subject: str, detail: str, contexte: str) 
 
 
 def mail_configured(settings=None) -> bool:
-    """True si un transport SMTP est réellement configuré (sinon mode journal/dev)."""
-    return bool((settings or get_settings()).smtp_host)
+    """True si un transport RÉEL est configuré : SMTP (`smtp_host`) OU Brevo (`BREVO_API_KEY`).
+    TRANSPORT UNIQUE (13/10) — le VPS n'a pas de SMTP mais a Brevo ; ne tester que SMTP marquait à tort
+    `mail-queue-consommer`/digests en « dry-run » (statut du job) alors que Brevo pouvait envoyer."""
+    s = settings or get_settings()
+    if s.smtp_host:
+        return True
+    from . import brevo
+    return bool(brevo._api_key())
 
 
 def envoyer_template(to: str, key: str, params: dict | None = None) -> dict:
