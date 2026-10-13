@@ -265,7 +265,7 @@ def vefa_neuf_build_cmd() -> None:
 
     with session_scope() as s:
         r = build_vefa_neuf(s, log=typer.echo)
-        typer.echo(f"vefa_neuf : {r['communes']} communes peintes, {r['absentes']} sous le seuil.")
+        typer.echo(f"vefa_neuf : {r['communes']} communes peintes, {r['hachurees']} hachurées (sous le seuil).")
 
 
 @app.command("ingest-cosia")
@@ -4862,7 +4862,11 @@ def _crontab_du_registre(tz: str) -> str:
         "# GÉNÉRÉ depuis le registre labuse.jobs (CRON-1) — NE PAS ÉDITER À LA MAIN.",
         f"#   deploy.sh régénère et refuse tout écart. Heures en {'Réunion' if tz == 'reunion' else 'UTC'}.",
         "# ─────────────────────────────────────────────────────────────────────────────",
-        "SHELL=/bin/sh", "MAILTO=root", "",
+        "SHELL=/bin/sh", "MAILTO=root",
+        # §8bis (13/10) — le cron a un PATH minimal (/usr/bin:/bin) où `labuse` (venv) n'existe PAS :
+        # sans ça, `exec labuse …` → « labuse: not found », échec SILENCIEUX (MAILTO=root sans MTA).
+        # On met le venv en tête de PATH pour que le `labuse` nu résolve sur tous les jobs.
+        "PATH=/opt/labuse/venv/bin:/usr/local/bin:/usr/bin:/bin", "",
     ]
     for nom, j in JOBS.items():
         lignes.append(f"# {j.cadence} · {j.heure_reunion} Réunion · {j.touche} — {j.titre}")
