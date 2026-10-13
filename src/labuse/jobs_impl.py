@@ -320,14 +320,18 @@ def copilote_purge(ctx: JobContext) -> None:
 
 
 def healthcheck(ctx: JobContext) -> None:
-    """Sonde /health locale ; deux échecs consécutifs → alerte (compteur dans l'état). Vérifie AUSSI
-    l'espace disque : au-delà de disque_seuil_pct, UNE alerte par jour (l'état mémorise la dernière)."""
+    """Dead-man LOCAL toutes les 15 min — la sonde rapide. Vérifie le process (/health), la disponibilité
+    réelle (/readyz) et l'espace disque. SOLIDITE-1 (Lot 1.2) : DISQUE et /readyz passent par la PORTE
+    D'ALERTE UNIQUE (ops_alertes — un incident par panne, un rappel/jour, un « résolu » au retour), au lieu
+    de l'ancienne alerte mail « une fois par jour » faite ici. /health à DEUX échecs consécutifs (dampe un
+    faux positif au redémarrage) : au-delà, le job LÈVE → le runner ouvre l'incident `job-echec:healthcheck`."""
     import urllib.request
     s = get_settings()
+    port = os.environ.get("LABUSE_HEALTH_PORT", "8000")
     etat = lire_etat("healthcheck") or {}
     echecs = (etat.get("compteurs") or {}).get("echecs_consecutifs", 0)
     try:
-        with urllib.request.urlopen("http://127.0.0.1:8000/health", timeout=10) as resp:
+        with urllib.request.urlopen(f"http://127.0.0.1:{port}/health", timeout=10) as resp:
             ok = resp.status == 200
     except Exception:  # noqa: BLE001
         ok = False
@@ -339,21 +343,66 @@ def healthcheck(ctx: JobContext) -> None:
         pct = round(100 * usage.used / usage.total, 1)
     except OSError:
         pct = None
-    alerte_disque = None
-    if pct is not None and pct >= s.disque_seuil_pct:
-        derniere = (etat.get("compteurs") or {}).get("disque_alerte_jour")
-        aujourdhui = date.today().isoformat()
-        if derniere != aujourdhui:               # UNE alerte par jour, pas toutes les 15 min
-            _envoyer_alerte(f"Disque à {pct}% (seuil {s.disque_seuil_pct}%) — faire de la place.")
-            alerte_disque = aujourdhui
-        else:
-            alerte_disque = derniere
+    from . import ops_alertes
+    ready, motif = ops_alertes._readyz_local()
+    # tout par la porte unique (session courte ; base injoignable → on logue, jamais bloquant).
+    try:
+        from .db import session_scope
+        with session_scope() as db:
+            if pct is not None and pct >= s.disque_seuil_pct:
+                ops_alertes.signaler(db, "disque", f"Disque à {pct}% (seuil {s.disque_seuil_pct}%)",
+                                     f"Le disque du serveur est à {pct}% (seuil {s.disque_seuil_pct}%). "
+                                     "Faire de la place (cf. inventaire SOLIDITE-1 Lot 3).")
+            elif pct is not None:
+                ops_alertes.resoudre(db, "disque")
+            if not ready:
+                ops_alertes.signaler(db, "readyz", "/readyz répond « pas prêt »",
+                                     f"La sonde /readyz locale dit le service NON prêt : {motif}.")
+            else:
+                ops_alertes.resoudre(db, "readyz")
+            db.commit()
+    except Exception as exc:  # noqa: BLE001 — l'alerte qui rate ne casse pas la sonde
+        log.error("healthcheck : alerte ops impossible (%s)", exc)
+    ctx.compte(health_ok=ok, readyz_ok=ready, readyz_motif=motif,
+               echecs_consecutifs=echecs, disque_pct=pct)
     if not ok and echecs >= 2:
-        _envoyer_alerte(f"/health injoignable {echecs} fois de suite.")
-    ctx.compte(health_ok=ok, echecs_consecutifs=echecs, disque_pct=pct,
-               disque_alerte_jour=alerte_disque)
-    if not ok:
         raise RuntimeError(f"/health injoignable ({echecs} échec(s) consécutif(s))")
+
+
+def recap_matin(ctx: JobContext) -> None:
+    """SOLIDITE-1 (Lot 1.4) — LE RÉCAP DU MATIN : un seul mail. Évalue les vigies (disque, /readyz,
+    sauvegarde, jobs en retard) via la porte unique (ouvre/referme les incidents), puis envoie le point
+    du jour : tout vert en UNE ligne, sinon la liste de ce qui ne va pas. Respecte dry-run."""
+    from . import ops_alertes
+    etat = ops_alertes.verifier_declencheurs(ctx.db)
+    ctx.db.commit()
+    ouverts = etat.get("incidents_ouverts") or []
+    pct = etat.get("disque_pct")
+    sb = etat.get("sauvegarde") or {}
+    ready = (etat.get("readyz") or {}).get("ready")
+    ligne_vigies = (
+        f"Disque {pct}% · /readyz {'prêt' if ready else 'PAS prêt'} · "
+        f"sauvegarde {sb.get('dernier','absente')}"
+        + (f" ({sb.get('taille_mo')} Mo)" if sb.get("taille_mo") else "")
+        + f" · {len(etat.get('retards') or [])} job(s) en retard")
+    date_run = datetime.now(timezone.utc).astimezone().strftime("%d/%m")
+    if not ouverts:
+        sujet = "[LABUSE] récap du matin — tout vert"
+        corps = (f"RÉCAP D'EXPLOITATION — {date_run}\n\n"
+                 f"✓ Tout vert. {ligne_vigies}.\n\n— LABUSE, exploitation")
+    else:
+        sujet = f"[LABUSE] récap du matin — {len(ouverts)} souci(s)"
+        lignes = []
+        for inc in ouverts:
+            rap = f" · {inc['rappels']} rappel(s)" if inc.get("rappels") else ""
+            lignes.append(f"  • {inc['sujet']} (depuis {inc['ouvert_at'][:16]}{rap})")
+        corps = (f"RÉCAP D'EXPLOITATION — {date_run}\n\n"
+                 f"⚠ {len(ouverts)} incident(s) ouvert(s) :\n" + "\n".join(lignes)
+                 + f"\n\nÉtat des vigies : {ligne_vigies}.\n\n— LABUSE, exploitation")
+    _envoyer_alerte(corps, sujet=sujet, ctx=ctx)
+    ctx.compte(incidents_ouverts=len(ouverts), disque_pct=pct, readyz_ok=bool(ready),
+               jobs_en_retard=len(etat.get("retards") or []),
+               sauvegarde=sb.get("dernier"))
 
 
 def sante_endpoints(ctx: JobContext) -> None:

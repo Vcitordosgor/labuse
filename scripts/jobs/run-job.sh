@@ -7,7 +7,8 @@
 #      (code 200 = « tour sauté », jamais confondu avec un échec du job) et le dit dans le log.
 #      → `flock` sur le serveur (Linux, kernel, relâché à la mort du process) ;
 #      → repli `mkdir` atomique quand flock est absent (macOS de dev) — testable partout.
-#   2. LOG daté : toute la sortie va dans <LOG_DIR>/<nom>.log (logrotate 30 j fourni) ;
+#   2. LOG daté : toute la sortie va dans <LOG_DIR>/<nom>.log (SOLIDITE-1 : /var/log/labuse/jobs,
+#      logrotate 12 mois fourni) ;
 #   3. délègue à `labuse jobs exec <nom>` : timeout par job, fichier d'état JSON, alerte mail à l'échec,
 #      règle dry-run (sans SMTP : calcule/logue, n'envoie rien), ping témoin externe.
 #
@@ -18,7 +19,7 @@
 set -eu
 
 BIN="${LABUSE_BIN:-labuse}"
-LOG_DIR="${LABUSE_JOBS_LOG_DIR:-/var/log/labuse}"
+LOG_DIR="${LABUSE_JOBS_LOG_DIR:-/var/log/labuse/jobs}"
 LOCK_DIR="${LABUSE_LOCK_DIR:-/run/lock}"
 
 # Corps VERROUILLÉ : ré-invocation de ce script (évite tout enfer de quoting dans flock -c).

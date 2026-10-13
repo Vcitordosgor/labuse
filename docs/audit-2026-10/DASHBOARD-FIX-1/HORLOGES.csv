@@ -24,6 +24,7 @@ mail-queue-consommer;5 min;toutes les 5 min;exploitation;deploy.sh → /etc/cron
 fiche-commune-cache;quotidien;03:00;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run fiche-commune-cache
 coherence-banc;quotidien;03:45;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run coherence-banc
 restore-test;mensuel (1er);05:00 le 1er;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run restore-test
+recap-matin;quotidien;07:30;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run recap-matin
 ingest-ban;mensuel (5);05:00 le 5;eau;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run ingest-ban
 ingest-dvf;hebdo (mar);05:00 mardi;eau;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run ingest-dvf
 abuse-scan;quotidien;08:00;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run abuse-scan
