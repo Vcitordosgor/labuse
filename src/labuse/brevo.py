@@ -341,5 +341,50 @@ def envoyer_template(to: str, key: str, params: dict | None = None) -> dict:
         return {"envoye": False, "raison": f"Brevo injoignable ({type(exc).__name__})."}
 
 
+def envoyer_texte(to: str, subject: str, texte: str) -> dict:
+    """SOLIDITE-1 (Lot 1) — envoi transactionnel Brevo d'un mail TEXTE BRUT (sans template), pour les
+    alertes d'exploitation + le récap du matin : le VPS a BREVO_API_KEY mais PAS de relais SMTP. Mêmes
+    gardes qu'`envoyer_template` : étanchéité dry-run (.eml, 0 réseau) hors prod, clé absente = raison
+    explicite, jamais une levée ni un envoi silencieux. N'est appelé QUE par la façade `mail`."""
+    from .config import envoi_reel_autorise, get_settings
+    if not envoi_reel_autorise():
+        try:
+            from email.message import EmailMessage
+            from . import mail
+            msg = EmailMessage()
+            msg["From"] = getattr(get_settings(), "mail_from", "LABUSE <contact@labuse.immo>")
+            msg["To"] = to
+            msg["Subject"] = subject
+            msg.set_content(texte)
+            path = mail._ecrire_eml(msg)
+            log.info("BREVO-TEXTE DRY-RUN (.eml écrit, 0 réseau) → %s fichier=%s", to, path)
+        except Exception as exc:  # noqa: BLE001 — la trace ne doit jamais faire échouer l'appel
+            log.warning("BREVO-TEXTE DRY-RUN — trace .eml impossible (%s)", exc)
+        return {"envoye": False, "raison": "dry-run"}
+    api_key = _api_key()
+    if not api_key:
+        return {"envoye": False, "raison": "no-config"}
+    import email.utils as _eu
+    nom, adr = _eu.parseaddr(getattr(get_settings(), "mail_from", "LABUSE <contact@labuse.immo>"))
+    sender = {"email": adr or "contact@labuse.immo"}
+    if nom:
+        sender["name"] = nom
+    try:
+        import httpx
+        r = httpx.post(
+            f"{_API}/smtp/email",
+            headers={"api-key": api_key, "content-type": "application/json"},
+            json={"sender": sender, "to": [{"email": to}], "subject": subject,
+                  "textContent": texte, "disableTracking": True},
+            timeout=15.0)
+        if r.status_code // 100 == 2:
+            return {"envoye": True}
+        log.warning("Brevo texte → HTTP %s : %s", r.status_code, r.text[:200])
+        return {"envoye": False, "raison": f"error: HTTP {r.status_code}"}
+    except Exception as exc:  # noqa: BLE001
+        log.warning("Brevo texte injoignable : %s", exc)
+        return {"envoye": False, "raison": f"error: {type(exc).__name__}"}
+
+
 # `field` importé pour l'API dataclass (défauts mutables éventuels) — gardé pour extensions futures.
 _ = field

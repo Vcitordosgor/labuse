@@ -811,12 +811,12 @@ def restore_test(ctx: JobContext) -> None:
 # ═══════════════════════════ utilitaire d'alerte (respecte dry-run) ═══════════════════════════
 
 def _envoyer_alerte(corps: str, *, sujet: str = "[LABUSE] alerte exploitation", ctx: JobContext | None = None) -> None:
-    from .mail import send_email
+    from .mail import envoyer_ops
     s = get_settings()
     dest = s.admin_email or s.contact_email
     if not dest:
         return
-    r = send_email(dest, sujet, corps, settings=s)
+    r = envoyer_ops(dest, sujet, corps, settings=s)
     if ctx is not None and not r.sent:
         ctx.compte(mail=r.detail)   # « no-config » = dry-run, tracé dans l'état
     log.info("alerte exploitation envoyée=%s (%s)", r.sent, r.detail)

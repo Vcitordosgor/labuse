@@ -71,8 +71,8 @@ def _sink(db, sujet: str, corps: str, *, dedup: str) -> str:
     dest = _destinataire(s)
     if dest:
         try:
-            from .mail import send_email
-            detail_mail = send_email(dest, sujet, corps, settings=s).detail
+            from .mail import envoyer_ops
+            detail_mail = envoyer_ops(dest, sujet, corps, settings=s).detail
         except Exception as exc:  # noqa: BLE001 — l'échec d'envoi ne casse pas la vigie
             detail_mail = f"error: {type(exc).__name__}"
             log.warning("alerte ops : mail impossible (%s)", exc)

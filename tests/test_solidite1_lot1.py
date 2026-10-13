@@ -130,6 +130,20 @@ def test_intervalle_cadences():
     assert abs(ops_alertes._intervalle_s("0 0 * * 0") - 7 * 86400) < 120      # hebdo (dimanche)
 
 
+def test_envoyer_ops_passe_par_brevo_sans_smtp(monkeypatch):
+    """SOLIDITE-1 — le VPS n'a pas de SMTP mais a BREVO_API_KEY : les alertes doivent partir par Brevo
+    (pas rester « no-config »). envoyer_ops choisit Brevo quand smtp_host est vide."""
+    from labuse import mail, brevo, config
+    s = config.get_settings()
+    monkeypatch.setattr(s, "smtp_host", None)
+    monkeypatch.setattr(brevo, "_api_key", lambda: "clef-test")
+    vu = {}
+    monkeypatch.setattr(brevo, "envoyer_texte",
+                        lambda to, subject, texte: vu.update(to=to, subject=subject) or {"envoye": True})
+    r = mail.envoyer_ops("kampusreunion@gmail.com", "[LABUSE] test", "corps", settings=s)
+    assert r.sent is True and vu["to"] == "kampusreunion@gmail.com"
+
+
 def test_verifier_declencheurs_rend_les_vigies(db_session):
     """verifier_declencheurs tourne sans réseau et renvoie les quatre vigies + les incidents ouverts."""
     from labuse import ops_alertes

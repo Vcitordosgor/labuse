@@ -214,6 +214,22 @@ def envoyer_template(to: str, key: str, params: dict | None = None) -> dict:
     return brevo.envoyer_template(to, key, params)
 
 
+def envoyer_ops(to: str, subject: str, body: str, *, settings=None) -> SendResult:
+    """SOLIDITE-1 (Lot 1) — FAÇADE des mails d'EXPLOITATION en texte brut (alertes + récap du matin).
+    Choisit le transport RÉELLEMENT configuré, dans l'ordre : relais SMTP (si `smtp_host`) sinon API
+    Brevo (si `BREVO_API_KEY`) sinon journal. L'étanchéité dry-run (.eml) est portée par chaque transport.
+    Le VPS n'a pas de SMTP mais a BREVO_API_KEY : c'est donc Brevo qui porte l'alerte."""
+    s = settings or get_settings()
+    if s.smtp_host:
+        return send_email(to, subject, body, settings=s)
+    from . import brevo
+    if brevo._api_key():
+        r = brevo.envoyer_texte(to, subject, body)
+        return SendResult(bool(r.get("envoye")), "ok" if r.get("envoye") else (r.get("raison") or "error"))
+    log.info("MAIL OPS NON ENVOYÉ (ni SMTP ni Brevo) — to=%s subject=%r", to, subject)
+    return SendResult(False, "no-config")
+
+
 def envoyer_mail(engine=None, *, key: str, to: str, params: dict | None = None,
                  compte_id: int | None = None, demandeur: str = "systeme",
                  prevu_at=None, dedup: str | None = None, fenetre_doublon_s: int | None = None) -> dict:
