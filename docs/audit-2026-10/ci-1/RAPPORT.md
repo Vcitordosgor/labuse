@@ -4,7 +4,7 @@ Branche `feat/ci-1`, worktree `~/Desktop/labuse-ci`. Rien sur le VPS. Aucune éc
 applicative `labuse` (deux autres sessions tournaient) : la suite tourne sur une base de test DÉDIÉE
 `labuse_test_ci`, isolée du `labuse_test` partagé des autres worktrees.
 
-> État : Lot 1 ✅ · Lot 2 ✅ · Lot 3 ✅ · Lot 4 ⏳ · Lot 5 ⏳ (ce rapport se remplit lot par lot).
+> État : Lot 1 ✅ · Lot 2 ✅ · Lot 3 ✅ · Lot 4 ✅ · Lot 5 ⏳ (ce rapport se remplit lot par lot).
 
 ---
 
@@ -212,3 +212,27 @@ Décisions :
 > La **preuve de bout en bout** (push → coche verte / commit cassé → croix rouge + mail) est au §
 > « Preuve » en fin de rapport : elle nécessite un push sur GitHub (action sortante) — effectuée
 > après les lots 4 et 5, en confirmant avec Vic.
+
+---
+
+## Lot 4 — le filet local avant envoi
+
+Hook `scripts/git-hooks/pre-push`, installé par **une commande unique** :
+`bash scripts/ci/install-hooks.sh` (pose `core.hooksPath=scripts/git-hooks` — hook versionné,
+partagé par tous les worktrees). Documenté dans `docs/EXPLOITATION.md` § « Vérification avant envoi ».
+
+À chaque `git push`, en < 2 min et **sans base** (famille unitaire) :
+1. scan de secrets (`scripts/ci/scan_secrets.sh`, réutilisé du Lot 3) ;
+2. front : `tsc -b` + `vitest` (pas `vite build` : trop lent pour un pre-push) ;
+3. Python : `pytest -m "not db and not local and not reel and not network"`.
+
+Échec → **push refusé**, message clair + rappel `git push --no-verify` (urgence seulement — la CI
+GitHub re-vérifie après l'envoi). Le hook retrouve le `.venv` même depuis un worktree lié (via
+`git rev-parse --git-common-dir`) et exige `pytest` (jamais un python système nu).
+
+**Mesuré** (poste, arbre propre) : **EXIT 0 en 94 s** — 2326 unitaires (41 s) + front (tsc+vitest) +
+scan. Mécanisme de **refus prouvé** (une étape qui échoue → `✗ PUSH REFUSÉ` + exit 1).
+
+> Non installé pendant cette session : `core.hooksPath` est une config git PARTAGÉE (elle
+> toucherait les autres worktrees des sessions en cours). C'est **à Vic** de lancer
+> `bash scripts/ci/install-hooks.sh` dans son dépôt principal.
