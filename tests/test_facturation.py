@@ -14,6 +14,8 @@ from labuse.config import get_settings
 from labuse.db import session_scope
 from labuse.facturation import ConfigError, traiter_webhook
 
+pytestmark = pytest.mark.db  # CI-1 Lot 2 : webhooks Stripe / cycle facturation sur la base de test
+
 SECRET = "whsec_test_premier_euro"
 
 

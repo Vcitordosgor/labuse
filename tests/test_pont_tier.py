@@ -69,6 +69,7 @@ def _compte_carte(db, tiers: str) -> int:
     ("reserve_fonciere", "reserve_fonciere"),
     ("reserve", "reserve_fonciere"),          # alias historique → doit résoudre au tier RÉEL
 ])
+@pytest.mark.db  # CI-1 Lot 2 : compte annonces/carte par tier lu en base de test
 def test_compte_annonce_egale_compte_carte(cle, canonique):
     with session_scope() as db:
         r = compter_parcelles(db, tier=cle)

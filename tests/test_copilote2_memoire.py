@@ -28,6 +28,7 @@ def _tour(db, sujet, msg, cid=None):
                                   reponse={"text": "ok", "intent": "QUESTION"}, sujet=sujet)
 
 
+@pytest.mark.db  # CI-1 Lot 2 : mémoire Copilote stockée en base (fixture db)
 def test_deux_anonymes_ne_se_lisent_pas(db):
     """Le cœur du lot : session A et session B (toutes deux anonymes, compte_id NULL) sont ISOLÉES."""
     cid_a = _tour(db, "s:aaaaaaaaaaaaaaaaaaaa", "conversation de A")
@@ -44,6 +45,7 @@ def test_deux_anonymes_ne_se_lisent_pas(db):
     assert historique.charger(db, None, cid_a, sujet="s:aaaaaaaaaaaaaaaaaaaa") is not None
 
 
+@pytest.mark.db  # CI-1 Lot 2 : mémoire Copilote stockée en base (fixture db)
 def test_meme_anonyme_retrouve_son_fil(db):
     """Fermer le bucket ne casse pas la continuité : la MÊME session retrouve son fil."""
     cid = _tour(db, "s:cccccccccccccccccccc", "premier tour")
@@ -57,6 +59,7 @@ def test_meme_anonyme_retrouve_son_fil(db):
     assert hist_x == []
 
 
+@pytest.mark.db  # CI-1 Lot 2 : mémoire Copilote stockée en base (fixture db)
 def test_faits_ne_fuient_pas_entre_anonymes(db):
     from labuse.copilote_v2 import historique, registre_faits
     cid = _tour(db, "s:eeeeeeeeeeeeeeeeeeee", "avec un fait")

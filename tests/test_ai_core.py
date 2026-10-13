@@ -90,6 +90,7 @@ def test_normalisation_question():
     assert core.normalize_question("RISQUE inondation") == "risque inondation"
 
 
+@pytest.mark.db  # CI-1 Lot 2 : cache IA en base (roundtrip SQL)
 def test_cache_roundtrip_et_normalisation():
     from sqlalchemy import text
 

@@ -8,6 +8,8 @@ import pytest
 
 from labuse.db import session_factory
 
+pytestmark = pytest.mark.db  # CI-1 Lot 2 : tous les tests utilisent la fixture `db` (base de test)
+
 IDU = "97410000AN0347"   # Saint-Benoît, propriété communale, zone N, PPR rouge — parcelle témoin de l'audit
 
 

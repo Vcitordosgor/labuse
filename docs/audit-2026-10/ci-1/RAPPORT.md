@@ -4,7 +4,7 @@ Branche `feat/ci-1`, worktree `~/Desktop/labuse-ci`. Rien sur le VPS. Aucune éc
 applicative `labuse` (deux autres sessions tournaient) : la suite tourne sur une base de test DÉDIÉE
 `labuse_test_ci`, isolée du `labuse_test` partagé des autres worktrees.
 
-> État : Lot 1 ✅ · Lot 2 ⏳ · Lot 3 ⏳ · Lot 4 ⏳ · Lot 5 ⏳ (ce rapport se remplit lot par lot).
+> État : Lot 1 ✅ · Lot 2 ✅ · Lot 3 ⏳ · Lot 4 ⏳ · Lot 5 ⏳ (ce rapport se remplit lot par lot).
 
 ---
 
@@ -143,3 +143,39 @@ déselectionnés (joués au banc de nuit en prod).
 Front : `tsc -b` ✅ · `vitest` **256/256** ✅ · `vite build` ✅.
 
 Aucune écriture dans la base applicative `labuse` : tout sur `labuse_test_ci` (auto-créée, isolée).
+
+---
+
+## Lot 2 — trier les tests (3 familles par marqueur)
+
+### Taxonomie retenue
+
+| Famille | Marqueur | Base | CI ? |
+|---|---|---|---|
+| **unitaires** | *(aucun)* | AUCUNE | oui |
+| **base de test** | `db` | PostGIS **vide** + petites fixtures | oui (conteneur PostGIS) |
+| **données réelles** | `reel` (+ `local`) | base complète | **non** (banc de nuit en prod) |
+
+`network` (sortant) exclu de la CI. Documenté dans `docs/TESTS.md` § « Familles de tests ».
+Cibles ajoutées au `Makefile` : `test-unit`, `test-db`, `test-ci`, `test-reel`, `test-front`.
+
+### Tri effectué
+
+La famille « unitaires » devait être **sans base** (socle du hook pre-push rapide, Lot 4). Or ~36
+tests NON marqués touchaient en réalité la base. Détectés en pointant la base sur un port mort
+(5999) et marqués `db` :
+
+- **module entier `db`** (tous les tests passent par la base) : `test_comptes`, `test_facturation`,
+  `test_fiche_ask`, `test_rebranchement1_lot3`, `test_copilote2_fiche`, `test_partners_api_v1`,
+  `verrous/test_v6b_coherence` (composé avec `verrous`).
+- **par fonction** (fichiers mixtes — seuls les tests qui touchent la base) : `test_copilote2_memoire`
+  (3), `test_ai_core` (1), `test_sources_fix1` (1), `test_veille_fix1` (1), `test_retours11f3`
+  (`test_avenant_r11`, que le fork front avait signalé), `test_pont_tier` (1 paramétré),
+  `verrous/test_garanties` (g3/g4/g7 « prouve casse » — lecture seule, 0 écriture dans `labuse`).
+
+### Résultat Lot 2
+
+- **unitaires SANS base** (`make test-unit`, base pointée sur port mort) : **2326 passed, 146 skipped,
+  6 xfailed, 0 failed, 0 error** → la famille « unitaires » tourne vraiment sans base.
+- **base de test AVEC base** (`make test-db`, `labuse_test_ci`) : **1260 passed, 32 skipped, 0 failed**.
+- Sélection CI (`make test-ci` = unitaires + base de test) : inchangée vs Lot 1 → verte.

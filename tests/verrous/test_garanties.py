@@ -129,6 +129,7 @@ def test_g2_vert_sur_la_base_reelle():
 
 
 # ── G3 — je sais ce qui nourrit le score ───────────────────────────────────────────────
+@pytest.mark.db  # CI-1 Lot 2 : la preuve « ça casse » insère/retire en base de test
 def test_g3_prouve_casse_feature_sans_source():
     """Une variable du modèle absente de la carte FEATURE_RESERVOIRS → casse (liste fermée)."""
     from sqlalchemy import create_engine
@@ -148,6 +149,7 @@ def test_g3_toutes_les_features_du_modele_sont_cartographiees():
     assert manquantes == [], f"features sans source déclarée : {manquantes}"
 
 
+@pytest.mark.db  # CI-1 Lot 2 : la preuve « ça casse » insère/retire en base de test
 def test_g3_prouve_casse_source_retiree(monkeypatch):
     """Si une feature pointait un réservoir RETIRÉ (mobpro), G3 casse."""
     from sqlalchemy import create_engine
@@ -175,6 +177,7 @@ def test_g3_vert_sur_la_base_reelle():
 
 
 # ── G4 — dernière version ou pas ───────────────────────────────────────────────────────
+@pytest.mark.db  # CI-1 Lot 2 : la preuve « ça casse » insère/retire en base de test
 def test_g4_prouve_casse_source_nue(monkeypatch):
     """Une source connectée SANS sonde NI raison → casse. On retire une raison du dict
     (le trou vécu le 13/09 : 6 sources nues avant que les raisons soient écrites).
@@ -277,6 +280,7 @@ def test_g6_les_deux_sens_sont_calcules():
 
 
 # ── G7 — la même donnée partout (+ les fuites du lot 7) ────────────────────────────────
+@pytest.mark.db  # CI-1 Lot 2 : la preuve « ça casse » écrit une sonde en base de test
 def test_g7_prouve_casse_sonde_vieille(monkeypatch):
     """Sonde plus vieille que 48 h → casse (vécu : dernier passage 09/09, 3 jours)."""
     from sqlalchemy import create_engine

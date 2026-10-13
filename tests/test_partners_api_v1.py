@@ -13,6 +13,8 @@ from sqlalchemy import text
 from labuse.api.partners import _DEMO_COMMUNE, _DEMO_QUOTA, api_v1_parcels, ensure_tables
 from labuse.db import engine, session_scope
 
+pytestmark = pytest.mark.db  # CI-1 Lot 2 : API partenaires v1 (clés/quotas) sur la base de test
+
 
 def _seed_keys(s):
     for k, q, demo in (("demo-labuse-partner-key", 50, True), ("real-key-test", 500, False)):

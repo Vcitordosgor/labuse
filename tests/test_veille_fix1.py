@@ -7,6 +7,8 @@ from __future__ import annotations
 
 import inspect
 
+import pytest
+
 from labuse.jobs import JOBS
 
 
@@ -71,6 +73,7 @@ def test_v8a_casse_si_un_job_est_retire(monkeypatch):
 
 # ─────────────────────── LOT 4 — la cloche d'un compte neuf ───────────────────────
 
+@pytest.mark.db  # CI-1 Lot 2 : compteur de cloche lu en base de test
 def test_cloche_compte_neuf_a_zero():
     """VEILLE-FIX-1 (lot 4) — un compte NEUF ouvre la cloche à 0 : les événements de marché diffusés
     AVANT sa création ne comptent pas en non-lus ; un événement de marché postérieur, si."""

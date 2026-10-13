@@ -6,6 +6,8 @@ base sont marquées `db` (skippées sans PostGIS).
 """
 from __future__ import annotations
 
+import pytest
+
 
 # ─────────────────────────── M9 — Densifier : capacité NETTE + surélévation ───────────────────────────
 
@@ -264,6 +266,7 @@ def test_avenant_r11_listing_piscines_aligne_sur_le_compteur():
     assert 'lim = total if piscine == "oui"' in src, "la limite de 500 doit être levée en mode piscines"
 
 
+@pytest.mark.db  # CI-1 Lot 2 : avenant R11 relu en base de test (session_scope)
 def test_avenant_r11_alignement_mesure():
     """PISCINES-2 — la LISTE et le COMPTEUR lisent la MÊME source unique `piscines` : leurs totaux
     (statut servie) coïncident, île entière."""
