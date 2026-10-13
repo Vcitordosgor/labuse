@@ -5069,6 +5069,63 @@ def ops_test_alerte_cmd() -> None:
     typer.echo("✓ scénario joué. Vérifie les mails (ou les .eml ci-dessus) : 1 échec + 1 retard + 2 résolus.")
 
 
+@app.command("parite")
+def parite_cmd(
+    host: str = typer.Option("labuse-vps", "--host", help="Alias SSH du VPS."),
+    communes: bool = typer.Option(False, "--communes", help="Détaille les parcelles par commune."),
+) -> None:
+    """SOLIDITE-1 (Lot 4.3) — contrôle de PARITÉ Mac == prod, à la demande. Compare les comptages des
+    tables clés (et, avec --communes, les parcelles par commune) entre la base LOCALE et la prod (SSH).
+    Sortie lisible ; sort en erreur (1) au moindre écart sur une table de référence."""
+    import subprocess
+    from sqlalchemy import text as _text
+    from .db import session_scope
+
+    # Tables de RÉFÉRENCE synchronisées Mac → prod (écart = vrai problème). On NE compare PAS les tables
+    # CLIENT vivantes (comptes, veilles, sessions : propres à la prod, jamais synchronisées) ni score_labuse
+    # (multi-runs : le Mac en garde l'historique, la prod seulement servi+précédent).
+    TABLES = ["parcels", "adresses", "data_sources", "parcel_couche_intersection", "dvf_mutations"]
+
+    def _prod(sql: str) -> str:
+        r = subprocess.run(["ssh", "-o", "BatchMode=yes", host,
+                            f"sudo -u postgres psql -At -d labuse -c \"{sql}\""],
+                           capture_output=True, text=True)
+        return r.stdout.strip() if r.returncode == 0 else "ERR"
+
+    ecart = False
+    with session_scope() as db:
+        typer.echo(f"PARITÉ  local ⟷ {host}\n{'TABLE':30s} {'LOCAL':>12s} {'PROD':>12s}  ÉTAT")
+        for t in TABLES:
+            try:
+                loc = str(db.execute(_text(f"SELECT count(*) FROM {t}")).scalar())
+            except Exception:  # noqa: BLE001 — table absente en local
+                loc = "—"
+            pr = _prod(f"SELECT count(*) FROM {t}")
+            etat = "=" if loc == pr else "≠"
+            if etat == "≠":
+                ecart = True
+            typer.echo(f"{t:30s} {loc:>12s} {pr:>12s}  {etat}")
+        if communes:
+            typer.echo("\nPARCELLES PAR COMMUNE (local ⟷ prod)")
+            loc_c = dict(db.execute(_text(
+                "SELECT commune, count(*) FROM parcels GROUP BY commune ORDER BY commune")).all())
+            brut = _prod("SELECT commune, count(*) FROM parcels GROUP BY commune ORDER BY commune")
+            prod_c = {}
+            for ligne in brut.splitlines():
+                if "|" in ligne:
+                    k, _, v = ligne.partition("|")
+                    prod_c[k.strip()] = v.strip()
+            for com in sorted(set(loc_c) | set(prod_c)):
+                lv, pv = str(loc_c.get(com, "—")), prod_c.get(com, "—")
+                etat = "=" if lv == pv else "≠"
+                if etat == "≠":
+                    ecart = True
+                typer.echo(f"  {com:26s} {lv:>10s} {pv:>10s}  {etat}")
+    typer.echo("\n" + ("✗ ÉCART(S) détecté(s) — local et prod divergent." if ecart
+                       else "✓ parité : local == prod sur les tables clés."))
+    raise typer.Exit(1 if ecart else 0)
+
+
 # ═══════════════════════ CIRCUIT-1 (lot 1.5) — registre : le miroir en base ═══════════════════════
 registre_app = typer.Typer(add_completion=False,
                            help="Registre des chiffres/robinets (CIRCUIT-1) : le code est la vérité.")
