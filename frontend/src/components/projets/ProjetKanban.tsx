@@ -209,7 +209,7 @@ function facetteLabels(c: Cadrage): { key: keyof Filters; label: string }[] {
 /** VUE PROJET V5 — quatre étages (identité · analyse · progression · tri), lisibles d'un coup d'œil. */
 export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
   const qc = useQueryClient()
-  const { setOpenProjet, select, algoModale, setAlgoModale, focusParcelle } = useApp()
+  const { setOpenProjet, algoModale, setAlgoModale, focusParcelle } = useApp()
   const [drag, setDrag] = useState<{ idu: string; from: StatutParcelle } | null>(null)
   const [overCol, setOverCol] = useState<StatutParcelle | null>(null)
   const [editing, setEditing] = useState(false)
@@ -452,12 +452,12 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
                       onRetenir={() => decide.mutate({ idu: it.idu, statut: 'retenue' })}
                       onEcarter={() => decide.mutate({ idu: it.idu, statut: 'ecartee' })}
                       onVoir={() => focusParcelle(it.idu, { ortho: true })}
-                      onFiche={() => select(it.idu)} />
+                      onFiche={() => focusParcelle(it.idu, { fiche: true })} />
                   ) : (
                     <MiniLigne key={it.idu} it={it} col={col.key}
                       onDragStart={() => setDrag({ idu: it.idu, from: col.key })}
                       onRetour={() => decide.mutate({ idu: it.idu, statut: 'proposee' })}
-                      onFiche={() => select(it.idu)} />
+                      onFiche={() => focusParcelle(it.idu, { fiche: true })} />
                   )))}
                 </div>
 

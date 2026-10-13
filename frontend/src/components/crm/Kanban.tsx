@@ -79,7 +79,7 @@ function Card({ e, onDragStart, newEvents, onArchive, onEdit, columns, onMove, o
   onMove: (status: string) => void
   onNote: (notes: string) => void
 }) {
-  const { select, setView } = useApp()
+  const { focusParcelle } = useApp()   // CHASSE-NAV-FIX-1 (C-obs1) — ouvrir une fiche = recentrer la carte + fiche
   const clos = e.courrier?.statut === 'repondu' || e.courrier?.statut === 'sans_reponse'
   // M137 — indicateur de relance CONDITIONNEL : visible seulement si la relance est
   // échue OU due aujourd'hui. Sinon rien. Un point ambre discret + l'échéance, à gauche du titre.
@@ -118,7 +118,7 @@ function Card({ e, onDragStart, newEvents, onArchive, onEdit, columns, onMove, o
             </Tip>
           )}
           <button
-            onClick={() => { setView('cartes'); select(e.idu) }}
+            onClick={() => focusParcelle(e.idu, { fiche: true })}
             className="truncate font-mono text-xs font-medium text-txt-hi transition-colors duration-quick hover:text-mint"
           >
             {e.idu}
@@ -227,7 +227,7 @@ function CardEditPanel({ e, meta, onCancel, onSave, onMove, saving }: {
   e: PipelineEntry; meta: PipelineMeta | undefined; onCancel: () => void
   onSave: (body: Record<string, unknown>) => void; onMove: (status: string) => void; saving: boolean
 }) {
-  const { select, setView } = useApp()
+  const { focusParcelle } = useApp()   // CHASSE-NAV-FIX-1 (C-obs1) — ouvrir une fiche = recentrer la carte + fiche
   const pr = e.prospection ?? {}
   const [priority, setPriority] = useState(e.priority)
   const [reminder, setReminder] = useState(e.reminder_date ?? '')
@@ -248,7 +248,7 @@ function CardEditPanel({ e, meta, onCancel, onSave, onMove, saving }: {
       <div className="flex max-h-[85vh] w-full max-w-md flex-col rounded-xl border border-line-2 bg-surface-1 shadow-elev-2"
         onClick={(ev) => ev.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-line-2 px-5 py-3">
-          <button onClick={() => { setView('cartes'); select(e.idu) }}
+          <button onClick={() => focusParcelle(e.idu, { fiche: true })}
             className="font-mono text-xs font-medium text-txt-hi hover:text-mint">{e.idu}</button>
           <button onClick={onCancel} className="text-txt-dim hover:text-txt" aria-label="Fermer">✕</button>
         </div>

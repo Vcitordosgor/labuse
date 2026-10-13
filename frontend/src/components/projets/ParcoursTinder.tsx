@@ -17,7 +17,7 @@ import { Bouton } from '../ui/Bouton'
  *  les proposées, flyTo centre la courante), une carte de décision flotte par-dessus. Écarter est
  *  RÉVERSIBLE (pile écartées récupérable). Lot 3 (tri) + Lot 4 (sections) du parcours projet. */
 export function ParcoursTinder() {
-  const { parcours, setView, setOpenProjet, setModuleMap, setFlyTo, select } = useApp()
+  const { parcours, setView, setOpenProjet, setModuleMap, setFlyTo, focusParcelle } = useApp()   // CHASSE-NAV-FIX-1 (C-obs1)
   // retour du tri → on revient sur le KANBAN du projet (pas la liste) : une seule source de vérité,
   // les statuts qu'on vient de poser s'y reflètent immédiatement (query ['parcours', pid] partagée).
   const retourProjet = () => (parcours ? setOpenProjet({ id: parcours.id, nom: parcours.nom }) : setView('projets'))
@@ -110,13 +110,13 @@ export function ParcoursTinder() {
           )}
           {current && <DecisionCard pid={pid} item={current}
             onDecide={(statut) => decide.mutate({ idu: current.idu, statut })}
-            onFiche={() => select(current.idu)} />}
+            onFiche={() => focusParcelle(current.idu, { fiche: true })} />}
         </div>
       </div>
 
       {sectionsOpen && etat && (
         <SectionsDrawer etat={etat} onClose={() => setSectionsOpen(false)}
-          onFiche={(idu) => select(idu)}
+          onFiche={(idu) => focusParcelle(idu, { fiche: true })}
           onStatut={(idu, statut) => decide.mutate({ idu, statut })} />
       )}
     </div>

@@ -22,7 +22,7 @@ const KICKER: Record<string, string> = {
 
 export function ReponseInline({ v2 }: { v2: CopiloteV2Reponse }) {
   const { setModule, setParcelPrefill, setCalcPrefill, setPluPrefill, chercherParCapacite, setEtudeZonePrefill,
-    setCommunePrefill, setView, setFilters, setVerdict, openListing, openSurveillance, toggleOutils, outilsOpen, select } = useApp()
+    setCommunePrefill, setView, setFilters, setVerdict, openListing, openSurveillance, toggleOutils, outilsOpen, focusParcelle } = useApp()
   // M118 — la VOIE d'un refus-voie : NAVIGATION pure vers la surface qui fait le travail (jamais une
   // exécution). Chaque cible mène à son écran ; la fiche/courrier ouvre la parcelle si l'IDU est connu.
   const allerVoie = () => {
@@ -31,7 +31,7 @@ export function ReponseInline({ v2 }: { v2: CopiloteV2Reponse }) {
     else if (v.cible === 'surveillance') openSurveillance('secteurs')
     else if (v.cible === 'outils') { if (!outilsOpen) toggleOutils() }
     else if (v.cible === 'fiche' || v.cible === 'courriers') {
-      if (v.idu) { setView('cartes'); select(v.idu) } else if (v.cible === 'courriers') setModule('courriers')
+      if (v.idu) { focusParcelle(v.idu, { fiche: true }) } else if (v.cible === 'courriers') setModule('courriers')
       else setView('cartes')
     }
   }
