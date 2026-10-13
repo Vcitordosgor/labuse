@@ -88,6 +88,20 @@ Objectif : plus de panne en silence, donnée juste dans le temps, mises à jour 
 - Tables créées à la première exécution : `job_runs`, `ops_incidents`, `chasse_runs`, `verite_sources_runs`
   (CREATE TABLE IF NOT EXISTS, sans verrou — BOOT-VERROU-1).
 
+## Journal des gestes VPS (montrés avant, vérifiés après)
+
+- **13/10 ~16:45 UTC — ménage disque** (`menage_disque.sh --execute --rm-vieux-app --drop-schema`, approuvé Vic « complet ») :
+  TRUNCATE p_model_dataset/_v2/_v2bis (~4,2 Go), rm `/opt/labuse/app-avant-0610` (4,2 Go),
+  DROP SCHEMA `sauvegarde_20261006` (21 objets), DELETE 1 726 660 lignes mortes de `parcel_p_score_v2`
+  (q_v8_calibre_pre_* + q_v2_demo) + VACUUM FULL. **Résultat vérifié : disque 94 % → 76 % (24 Go libres),
+  `/readyz` = 200, `p_model_ext_dataset` intact (4 316 630 lignes).** `score_labuse`/`dryrun_cascade_results`
+  déjà au plancher (0 ligne morte). `BREVO_API_KEY` + `LABUSE_ADMIN_EMAIL` (kampusreunion@gmail.com) déjà
+  posés ; `LABUSE_SMTP_HOST` vide → alertes routées par l'API Brevo (commit `5490ad9d`).
+- **EN ATTENTE — crontab** : `deploy_app.sh` jamais lancé (règle « pas de merge » + risque front
+  `VITE_RUN_LABEL`). La pose ciblée est prête (`poser_crontab_solidite.sh`, idempotent, refuse si le code
+  n'est pas déployé) : `MAILTO=""` + 3 lignes, gel DVF et 6 jobs commentés préservés. À poser APRÈS un
+  déploiement du code, **jamais via deploy.sh**.
+
 ## Réserve
 
 - 1 échec de test **PRÉ-EXISTANT** hors périmètre : `test_circuit_p_lot1::…pompe_rapides` attend 9 jobs
