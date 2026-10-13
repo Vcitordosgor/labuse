@@ -11,10 +11,16 @@ def test_crontab_genere_une_ligne_par_job():
     # RADAR-AUTO-1 (Lot C) planifie radar-cycle / -dvf / -mensuel → 23 ;
     # VEILLE-FIX-2 (Lot D) ajoute mail-queue-consommer (worker de la file, 5 min) → 24 ;
     # COHERENCE-FIX-1 (lot G) ajoute coherence-banc (banc de cohérence nocturne, 03:45) → 25.
-    # SOLIDITE-1 : recap-matin → 30 ; backup-offsite → 31 ; verite-sources → 32.
-    assert len(lignes_job) == len(JOBS) == 32, "une ligne par job du registre, ni plus ni moins"
-    for nom in JOBS:
+    # SOLIDITE-1 ajoute recap-matin + backup-offsite + verite-sources ; main retire ingest-ban et
+    # désactive agents-sources (planifie=False → HORS crontab). Le crontab porte UNE ligne par job
+    # PLANIFIÉ (pas les manuels-seuls), jamais plus.
+    planifies = [n for n, j in JOBS.items() if j.planifie]
+    assert len(lignes_job) == len(planifies), "une ligne par job planifié, ni plus ni moins"
+    for nom in planifies:
         assert f"jobs run {nom}'" in c, f"{nom} absent du crontab généré"
+    for nom, j in JOBS.items():
+        if not j.planifie:
+            assert f"jobs run {nom}'" not in c, f"{nom} (manuel-seul) ne doit PAS être au crontab"
     # jamais écrit à la main : en-tête d'avertissement + shell/mailto
     assert "GÉNÉRÉ depuis le registre" in c and "NE PAS ÉDITER" in c
     # SOLIDITE-1 (1.1) — MAILTO VIDE (plus de mail cron « vers le vide ») ; alertes via ops_alertes.

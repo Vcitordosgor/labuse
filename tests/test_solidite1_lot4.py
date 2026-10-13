@@ -19,10 +19,15 @@ def test_parite_commande_existe_et_cible_les_references():
     from labuse import cli
     assert hasattr(cli, "parite_cmd")
     src = _lire("src/labuse/cli.py")
+    # une SEULE définition de parite_cmd (fusion de la version sens/foi de main et de la comparaison live)
+    assert src.count("def parite_cmd(") == 1
     deb = src.index("def parite_cmd(")
-    corps = src[deb:deb + 2000]
-    # tables de référence synchronisées ; PAS les tables client vivantes
-    assert "parcels" in corps and "parcel_couche_intersection" in corps
+    corps = src[deb:deb + 3500]
+    # pilotée PAR SENS (flux_sens : FOND Mac-fait-foi vs QUOTIDIEN prod-fait-foi)
+    assert "flux_sens" in corps and "SOURCES_FOND_MAC" in corps
+    # comparaison live par commune + listes pour scripts
+    assert "--communes" in corps and "tables_quotidien" in corps
+    # on NE compare PAS les tables client vivantes
     assert '"comptes"' not in corps and '"veilles"' not in corps
 
 

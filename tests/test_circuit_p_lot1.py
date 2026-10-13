@@ -211,9 +211,9 @@ def test_detail_reservoir_robinet_pompe_rapides(client, engine):
     t0 = time.perf_counter()
     pp = client.get("/admin/circuit/pompe").json()
     dt_pp = time.perf_counter() - t0
-    # SOURCES-CORRECTION-2 lot 3 : 13 → 9 ; CORRECTIFS-1 E5 ajoute ingest-ban + ingest-dvf → TOUCHE_EAU = 11.
-    # (SOLIDITE-1 n'ajoute que des jobs touche=exploitation : le compte « eau » reste 11.)
-    assert pp["run_servi"] and len(pp["jobs_eau"]) == 11 and pp["n_moteurs"] >= 1
+    # SOURCES-CORRECTION-2 lot 3 : 13 → 9 ; CORRECTIFS-1 E5 ajoute ingest-ban + ingest-dvf → 11 ;
+    # main retire ingest-ban (474eff54) → TOUCHE_EAU = 10. (SOLIDITE-1 n'ajoute que des jobs exploitation.)
+    assert pp["run_servi"] and len(pp["jobs_eau"]) == 10 and pp["n_moteurs"] >= 1
 
     # 1.3 — un appel chacun, < 500 ms sur la base réelle
     assert dt_res < 0.5 and dt_rob < 0.5 and dt_pp < 0.5
