@@ -29,7 +29,9 @@ export function pagesJaunes(adresse: string | null | undefined, commune: string 
   const a = (adresse ?? '').trim()
   const c = (commune ?? '').trim()
   if (!a && !c) return { url: null, commune_seule: true } // ni adresse ni commune → pas de lien
-  const ou = a ? `${a} ${c}`.trim() : c
+  // CHASSE-NAV-FIX-1 (N-3) — n'ajouter la commune QUE si l'adresse ne la contient pas déjà : l'adresse
+  // servie par l'API inclut souvent la commune (« … 97417 Saint-Denis ») → sinon « … Saint-Denis Saint-Denis ».
+  const ou = a ? (c && !a.includes(c) ? `${a} ${c}` : a) : c
   return {
     url: `https://www.pagesjaunes.fr/annuaire/chercherlespros?ou=${encodeURIComponent(ou)}`,
     commune_seule: !a,
