@@ -53,10 +53,13 @@ function AcquisitionsRecentes() {
   // (module='communes'), la fiche s'ouvre en superposition à droite.
   const ouvrirParcelle = (idu: string) => useApp.getState().focusParcelle(idu, { fiche: true })
   // O16(e) — Scan patrimoine d'un acquéreur : même idiome que « Voir le patrimoine » (m02Prefill + module).
+  // CHASSE-NAV-FIX-1 (N-4) — pose le FIL DE RETOUR « ← Communes » (comme Blocs/Permis/Remonter le temps),
+  // APRÈS setModule (qui vide la pile via CLOSE_OVERLAYS) : l'utilisateur peut revenir à Communes.
   const ouvrirScanPatrimoine = (siren: string) => {
     const s = useApp.getState()
     s.setM02Prefill(siren)
     s.setModule('patrimoine')
+    s.pushOutilRetour({ module: 'communes', label: 'Communes' })
   }
   // millésimes d'arrivée réellement présents dans les lignes chargées (jamais une année inventée)
   const anneesDispo = d
