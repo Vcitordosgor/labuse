@@ -480,7 +480,9 @@ export const etudeZone = (body: EtudeZoneInput) =>
 export const etudeZoneEntreprises = (body: EtudeZoneInput) =>
   j<import('./types').ZoneEntreprises>('/outils/etude-zone/entreprises', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
-export const etudeZonePdfUrl = '/outils/etude-zone/export.pdf'
+// CHASSE-NAV-FIX-1 (N-5) — constante morte `etudeZonePdfUrl` SUPPRIMÉE : elle pointait
+// '/outils/etude-zone/export.pdf' (404) alors que la route servie est '/etude-zone.pdf', et
+// elle n'était câblée à aucun bouton. Le PDF Étude de zone passe par le builder /etude-zone.pdf.
 
 // M41 (Phase 2.6) — outil « Vérif procédure » : un IDU → procédure PLU en cours OUI/NON + conséquences.
 // L'outil LIT le radar (point de calcul unique), il ne calcule rien. L'absence est datée elle aussi.

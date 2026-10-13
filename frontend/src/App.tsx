@@ -75,7 +75,7 @@ function PanelLoading() {
 // R2/V3 : la restitution du copilote — compteur animé + top cliquables. En mode PROJET, chaque
 // parcelle porte son « pourquoi » (moteur) et l'utilisateur peut ENREGISTRER + exporter le PDF.
 function IaRestitution() {
-  const { iaRestitution, setIaRestitution, select, chercherParCapacite, togglePanel, selectedIdu, setVerdict, setOpenProjet } = useApp()
+  const { iaRestitution, setIaRestitution, focusParcelle, chercherParCapacite, togglePanel, selectedIdu, setVerdict, setOpenProjet } = useApp()   // CHASSE-NAV-FIX-1 (C-obs1) — Copilote : ouvrir une fiche recentre la carte
   const apply = useApplySearch()   // ajout C (UX V1) : relance sans le critère le plus serré
   const [count, setCount] = useState(0)
   const [projetId, setProjetId] = useState<number | null>(null)
@@ -190,7 +190,7 @@ function IaRestitution() {
       {wide ? (
         <div className="mt-2.5 space-y-2">
           {iaRestitution.top.map((t, i) => (
-            <button key={t.idu} data-ia-top onClick={() => select(t.idu)}
+            <button key={t.idu} data-ia-top onClick={() => focusParcelle(t.idu, { fiche: true })}
               className="block w-full rounded-lg border border-line-2 bg-surface-3 px-3 py-2.5 text-left transition-colors hover:border-mint">
               {/* en-tête lisible : rang (pastille) · IDU en avant · commune alignée à droite */}
               <div className="flex items-baseline gap-2">
@@ -213,7 +213,7 @@ function IaRestitution() {
       ) : (
         <div className="mt-2 flex gap-1.5">
           {iaRestitution.top.map((t, i) => (
-            <button key={t.idu} data-ia-top onClick={() => select(t.idu)}
+            <button key={t.idu} data-ia-top onClick={() => focusParcelle(t.idu, { fiche: true })}
               className="min-w-0 flex-1 rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 text-left hover:border-mint">
               <span className="font-mono text-[11px] text-mint"
                 title={t.mult_v2 != null ? 'position au classement (probabilité de vente sous 1 an)' : SCORE_TIP.q}>

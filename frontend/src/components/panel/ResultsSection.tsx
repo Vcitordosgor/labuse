@@ -33,7 +33,7 @@ const OWNER_BADGE: Record<string, { label: string; title: string }> = {
 
 
 function ResultCard({ p, communeLabel, factual = false }: { p: ParcelProps & { commune?: string }; communeLabel: string; factual?: boolean }) {
-  const { selectedIdu, select } = useApp()
+  const { selectedIdu, focusParcelle } = useApp()   // CHASSE-NAV-FIX-1 (C-obs1) — clic listing = recentrer carte + fiche
   // M5.1 : le VERDICT v2 pilote la carte de résultat — chip tier EN PREMIER (couleur
   // verdictMeta), rang + ×N ; l'étage 0 du run servi prime.
   const meta = verdictMeta(p.status, p.tier_v2, p.etage0)
@@ -44,7 +44,7 @@ function ResultCard({ p, communeLabel, factual = false }: { p: ParcelProps & { c
   if (factual) {
     return (
       // RECETTE-1 R32 — survol vert opaque (hover-fill) sur les lignes du listing, comme le reste de l'app.
-      <button onClick={() => select(p.idu)}
+      <button onClick={() => focusParcelle(p.idu, { fiche: true })}
         className={`hover-fill relative flex w-full shrink-0 items-center overflow-hidden rounded-[10px] border bg-surface-3 py-2.5 px-4 text-left ${
           on ? 'border-mint' : 'border-line-2'}`}>
         <div className="min-w-0 flex-1">
@@ -59,7 +59,7 @@ function ResultCard({ p, communeLabel, factual = false }: { p: ParcelProps & { c
   }
   return (
     <button
-      onClick={() => select(p.idu)}
+      onClick={() => focusParcelle(p.idu, { fiche: true })}
       className={`hover-fill relative flex w-full shrink-0 items-center overflow-hidden rounded-[10px] border bg-surface-3 py-2.5 pl-4 pr-3 text-left ${
         on ? 'border-mint' : 'border-line-2'}`}
     >
@@ -393,13 +393,13 @@ function ContributionsRow({ contributions }: { contributions?: ParcelProps['cont
 // (SECONDAIRE) · surface · zone · 2-3 contributions. « Analyse incomplète » (NC) montre sa CAUSE et
 // n'affiche ni signal ni contributions (elle n'est pas une parcelle « mauvaise », juste incomplète).
 function AnalyseCard({ p, communeLabel }: { p: ParcelProps & { commune?: string }; communeLabel: string }) {
-  const { selectedIdu, select } = useApp()
+  const { selectedIdu, focusParcelle } = useApp()   // CHASSE-NAV-FIX-1 (C-obs1) — clic listing = recentrer carte + fiche
   const bm = bandeMeta(p.bande)
   const sm = signalMeta(p.signal_niveau)
   const on = selectedIdu === p.idu
   const nc = p.bande === 'NC'
   return (
-    <button onClick={() => select(p.idu)}
+    <button onClick={() => focusParcelle(p.idu, { fiche: true })}
       className={`hover-fill relative flex w-full shrink-0 items-start overflow-hidden rounded-[10px] border bg-surface-3 py-2.5 pl-4 pr-3 text-left ${on ? 'border-mint' : 'border-line-2'}`}>
       {bm && <span className="absolute left-0 top-0 h-full w-[3px]" style={{ background: bm.color }} />}
       <div className="min-w-0 flex-1">

@@ -58,7 +58,9 @@ def digest_notifications(evenements: list[dict], lien_desabo: str, *,
     lignes = []
     for e in evenements:
         idu = e.get("idu") or ""
-        lien = f"{base_url}/socle/#parcelle={idu}" if (idu and base_url) else (f"parcelle {idu}" if idu else "")
+        # CHASSE-NAV-FIX-1 (N-1) : le front réhydrate la fiche depuis la clé de hash `idu` (App.tsx),
+        # jamais l'ancienne clé `parcelle` (qui laissait le client sur l'accueil).
+        lien = f"{base_url}/socle/#idu={idu}" if (idu and base_url) else (f"parcelle {idu}" if idu else "")
         detail = (e.get("detail") or "").strip()
         lignes.append(f"• {e.get('titre', '')}" + (f"\n  {detail}" if detail else "") + (f"\n  {lien}" if lien else ""))
     if n:
@@ -178,11 +180,15 @@ def digest_html_email(evenements: list[dict], marche: dict | None, top_chaudes: 
     vert #1E9E58 ne sert QUE d'accent de lien. Le texte brut reste le repli (multipart/alternative)."""
     V = "#1E9E58"
 
-    def _ligne(titre: str, detail: str = "") -> str:
+    def _ligne(titre: str, detail: str = "", idu: str = "") -> str:
         d = f" <span style='color:#555'>— {detail}</span>" if detail else ""
-        return f"<p style='margin:0 0 8px'>{titre}{d}</p>"
+        # CHASSE-NAV-FIX-1 (N-1) — lien parcelle CLIQUABLE dans le digest HTML (en `#idu=`, lu par le front).
+        # Avant : les parcelles n'étaient que du texte (aucun deep-link depuis l'e-mail HTML).
+        lien = (f" <a href=\"{base_url}/socle/#idu={idu}\" style=\"color:{V}\">voir la parcelle</a>"
+                if (idu and base_url) else "")
+        return f"<p style='margin:0 0 8px'>{titre}{d}{lien}</p>"
 
-    corps = "".join(_ligne(e.get("titre") or "", (e.get("detail") or "").replace("\n", " ").strip())
+    corps = "".join(_ligne(e.get("titre") or "", (e.get("detail") or "").replace("\n", " ").strip(), e.get("idu") or "")
                     for e in evenements)
     mr = marche or {}
     if mr.get("total"):
@@ -195,9 +201,14 @@ def digest_html_email(evenements: list[dict], marche: dict | None, top_chaudes: 
         corps += f"<p style='margin:12px 0 0;color:#333'>{secteurs_ligne}</p>"
     top = ""
     if top_chaudes:
-        items = "".join(f"<p style='margin:0 0 4px'>{(t.get('idu') or '')[8:]} — "
-                        f"{t.get('commune') or ''}, {round(t.get('surface_m2') or 0)} m²</p>"
-                        for t in top_chaudes[:5])
+        def _prio(t: dict) -> str:
+            idu = t.get("idu") or ""
+            tail = f" — {t.get('commune') or ''}, {round(t.get('surface_m2') or 0)} m²"
+            # CHASSE-NAV-FIX-1 (N-1) — l'IDU court des priorités devient un lien `#idu=` quand on a base_url.
+            tete = (f"<a href=\"{base_url}/socle/#idu={idu}\" style=\"color:{V}\">{idu[8:]}</a>"
+                    if (idu and base_url) else idu[8:])
+            return f"<p style='margin:0 0 4px'>{tete}{tail}</p>"
+        items = "".join(_prio(t) for t in top_chaudes[:5])
         top = f"<p style='margin:16px 0 6px;font-weight:600'>Les priorités</p>{items}"
     return (f"<!doctype html><html><body style=\"margin:0;background:#ffffff;color:#1a1a1a;"
             f"font:14px/1.55 -apple-system,Segoe UI,Roboto,sans-serif\">"

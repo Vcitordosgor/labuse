@@ -398,6 +398,7 @@ function ProjetButton({ idu }: { idu: string }) {
  *  le bilan en LECTURE (capacité, gabarit, SDP) + une PORTE pré-remplie (rendue au pied du tiroir). */
 export function Fiche({ idu }: { idu: string }) {
   const select = useApp((s) => s.select)
+  const focusParcelle = useApp((s) => s.focusParcelle)   // CHASSE-NAV-FIX-1 (N-2/C-obs1) — ouvrir une parcelle = recentrer la carte + fiche
   // M55-L point 5 — verdict à la demande : mémoire par parcelle pour la session (store).
   const verdictRevele = useApp((s) => !!s.verdictRevele[idu])
   const revelerVerdict = useApp((s) => s.revelerVerdict)
@@ -553,6 +554,55 @@ export function Fiche({ idu }: { idu: string }) {
   // Correctif M5 (verdict d'en-tête) : étage 0 prime (bannière écartée + motifs, inchangé) ;
   // sinon un run v2 présent pilote bannière + badge (tier, rang, ×N) ; le statut matrice
   // legacy descend en « historique » dans la section Qualité — plus jamais verdict principal.
+  // CHASSE-NAV-FIX-1 (N-2) — ces deux requêtes montent ICI (avant les dérivés) pour que le GARDE
+  // « parcelle disparue » ci-dessous puisse retourner tôt sans violer les règles des hooks (tous les
+  // hooks de Fiche sont désormais au-dessus du retour anticipé).
+  const faisa = useQuery({ queryKey: ['bilan', idu], queryFn: () => getFaisabilite(idu), enabled: !!f })
+  const gab = useQuery({ queryKey: ['gabarit', idu], queryFn: () => getGabarit(idu), retry: false, enabled: !!f })
+  // CHASSE-NAV-FIX-1 (N-2) — GARDE « parcelle disparue » placé AVANT tout calcul dérivé : une disparue
+  // a un payload {idu, commune, cadastre_disparue} SANS `lines`, or les dérivés plus bas (hardLines,
+  // proprioLines…) lisent `f.lines.filter(...)` et plantaient l'app (ErrorBoundary) avant d'atteindre
+  // ce garde. Le back renvoie `cadastre_disparue` (message + remplacee_par) ; on l'affiche, les
+  // remplaçantes sont cliquables (focusParcelle → fiche + recentrage carte, cf. C-obs1).
+  if (f?.cadastre_disparue) {
+    const cd = f.cadastre_disparue
+    return (
+      <aside className="fiche-v6 apparition absolute right-0 top-0 z-10 flex h-full w-[400px] max-w-full flex-col border-l border-line shadow-2xl">
+        <div className="flex shrink-0 items-center justify-between border-b border-line px-5 py-3">
+          <div className="text-sm font-medium">{iduComplet(idu)}{f.commune ? ` · ${f.commune}` : ''}</div>
+          <button type="button" onClick={() => select(null)} aria-label="Fermer la fiche" className="text-sm">✕</button>
+        </div>
+        <div className="space-y-4 p-5 text-sm">
+          <div className="border border-st-ecartee/40 bg-st-ecartee/15 px-4 py-3 text-st-ecartee">
+            <div className="font-medium">Parcelle disparue du cadastre</div>
+            <div className="mt-1 text-[12px] leading-snug">{cd.message}</div>
+          </div>
+          {cd.remplacee_par && cd.remplacee_par.length > 0 ? (
+            <div>
+              <div className="mb-1 text-[12px] font-medium" style={{ color: 'var(--txt-dim)' }}>Remplacée par</div>
+              <ul className="space-y-1">
+                {cd.remplacee_par.map((r) => (
+                  <li key={r.idu}>
+                    <button type="button" className="underline" onClick={() => focusParcelle(r.idu, { fiche: true })}>
+                      {iduComplet(r.idu)}{r.commune ? ` · ${r.commune}` : ''}
+                    </button>
+                    {r.recouvrement != null && (
+                      <span className="ml-1 text-[11px]" style={{ color: 'var(--txt-dim)' }}>
+                        ({Math.round(Number(r.recouvrement) * 100)} %)
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : (
+            <div className="text-[12px]" style={{ color: 'var(--txt-dim)' }}>Aucune parcelle de remplacement identifiée.</div>
+          )}
+        </div>
+      </aside>
+    )
+  }
+
   const verdict = f ? verdictMeta(f.statut, f.score_v2?.tier, f.etage0) : null
   const v2Pilote = !!(f?.score_v2 && !f.etage0)
   const verdictEcartee = f ? (f.etage0 || (v2Pilote ? f.score_v2!.tier === 'ecartee' : f.statut === 'ecartee')) : false
@@ -622,14 +672,14 @@ export function Fiche({ idu }: { idu: string }) {
   const horsRouge = f?.potentiel_transformation?.hors_ppr_rouge
   // M19 réf. · faisabilité au niveau fiche pour la MICRO-PREUVE fermée (gabarit / logements /
   // charge). MÊME queryKey ['bilan', idu] que Faisabilité/Bilan → cache partagé, zéro requête en +.
-  const faisa = useQuery({ queryKey: ['bilan', idu], queryFn: () => getFaisabilite(idu), enabled: !!f })
+  // CHASSE-NAV-FIX-1 (N-2) : la requête `faisa` est montée plus haut (avant le garde disparue).
   const cap = faisa.data?.capacite
   const fo = cap?.fourchette
   // GABARIT-6 (P1) — l'en-tête « Urbanisme » lit la HAUTEUR RÉGLEMENTAIRE SOURCÉE par la MÊME fonction
   // que le tiroir §10 et l'outil (endpoint /outils/gabarit ; MÊME clé react-query que <GabaritLine>, cache
   // partagé, zéro requête en plus). Corrige GABARIT-AUDIT-1 : l'en-tête servait niveaux × 3 m (une
   // estimation d'étages présentée comme un « max »), qui contredisait le règlement cité et le tiroir §10.
-  const gab = useQuery({ queryKey: ['gabarit', idu], queryFn: () => getGabarit(idu), retry: false, enabled: !!f })
+  // CHASSE-NAV-FIX-1 (N-2) : la requête `gab` est montée plus haut (avant le garde disparue).
   // FRONT-CHIFFRES-2 (F01a) — verdict de constructibilité NEUVE servi par la cascade (famille ∉
   // A/N). Remplace la regex front `/^(A(?!U)|N)/` : la famille GPU (subtype) prime sur le libellé,
   // ce qui corrige les libellés-collision (cf. CHANGEMENTS.csv). `null` (famille inconnue) ≠ non
@@ -685,45 +735,6 @@ export function Fiche({ idu }: { idu: string }) {
   // ni les paddings (calés en M56-B3 : panneau 14, .gr 10 vertical, .gr partagée).
   // SOURCES-MAJ-1 — parcelle sortie du cadastre : bandeau de courtoisie + liens cliquables vers les
   // remplaçantes (ouverte depuis un projet / le CRM / un suivi, elle ne doit JAMAIS donner une erreur).
-  if (f?.cadastre_disparue) {
-    const cd = f.cadastre_disparue
-    return (
-      <aside className="fiche-v6 apparition absolute right-0 top-0 z-10 flex h-full w-[400px] max-w-full flex-col border-l border-line shadow-2xl">
-        <div className="flex shrink-0 items-center justify-between border-b border-line px-5 py-3">
-          <div className="text-sm font-medium">{iduComplet(idu)}{f.commune ? ` · ${f.commune}` : ''}</div>
-          <button type="button" onClick={() => select(null)} aria-label="Fermer la fiche" className="text-sm">✕</button>
-        </div>
-        <div className="space-y-4 p-5 text-sm">
-          <div className="border border-st-ecartee/40 bg-st-ecartee/15 px-4 py-3 text-st-ecartee">
-            <div className="font-medium">Parcelle disparue du cadastre</div>
-            <div className="mt-1 text-[12px] leading-snug">{cd.message}</div>
-          </div>
-          {cd.remplacee_par && cd.remplacee_par.length > 0 ? (
-            <div>
-              <div className="mb-1 text-[12px] font-medium" style={{ color: 'var(--txt-dim)' }}>Remplacée par</div>
-              <ul className="space-y-1">
-                {cd.remplacee_par.map((r) => (
-                  <li key={r.idu}>
-                    <button type="button" className="underline" onClick={() => select(r.idu)}>
-                      {iduComplet(r.idu)}{r.commune ? ` · ${r.commune}` : ''}
-                    </button>
-                    {r.recouvrement != null && (
-                      <span className="ml-1 text-[11px]" style={{ color: 'var(--txt-dim)' }}>
-                        ({Math.round(Number(r.recouvrement) * 100)} %)
-                      </span>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : (
-            <div className="text-[12px]" style={{ color: 'var(--txt-dim)' }}>Aucune parcelle de remplacement identifiée.</div>
-          )}
-        </div>
-      </aside>
-    )
-  }
-
   return (
     <FicheAccordionCtx.Provider value={accValueF}>
     <aside className="fiche-v6 apparition absolute right-0 top-0 z-10 flex h-full w-[400px] max-w-full flex-col border-l border-line shadow-2xl">

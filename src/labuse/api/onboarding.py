@@ -309,7 +309,8 @@ def invitation_page(token: str = "", db: Session = Depends(get_db)):
 <p style="text-align:center;font-size:12.5px">Si vous avez <b>déjà créé votre accès</b>, connectez-vous —
 c'est peut-être que ce lien a déjà servi.</p>
 <p style="text-align:center;margin-top:16px"><a class="btn" href="/login">Se connecter <span class="arr" aria-hidden="true">→</span></a></p>
-<p class="note">Sinon, demandez un nouveau lien à votre contact LABUSE — les invitations expirent après 7 jours.</p>"""),
+<p class="note">Sinon, demandez un nouveau lien à votre contact LABUSE — les invitations expirent après 7 jours.</p>""",
+                                  gate=False),  # CHASSE-NAV-FIX-1 (F-obs1) — accessible mobile
                             status_code=404)
     # E2 — un compte INTERNE (admin nominatif, `labuse creer-admin`) ne passe JAMAIS par le
     # tunnel client (offre, prix, CGV commerciales, Stripe) : écran d'activation dédié.
@@ -337,7 +338,7 @@ Choisissez un mot de passe : à votre première connexion, LABUSE vous fera acti
 <p class="meterlbl" id="cgverr" role="status" aria-live="polite" style="display:none;text-align:center;margin-top:8px;color:var(--warn)">Pour continuer : 10 caractères minimum et les deux mots de passe identiques.</p>
 </form>
 <p class="note">Accès interne LABUSE — aucun paiement, aucun abonnement.</p>
-<script src="/parcours.js" defer></script>""", pied=False))
+<script src="/parcours.js" defer></script>""", pied=False, gate=False))  # CHASSE-NAV-FIX-1 (F-obs1) — création d'accès accessible mobile
     # Le tunnel client sert TOUJOURS l'offre Intégral (source de vérité offres.py).
     p = offre_integral()
     # PARCOURS-FIX-1 (Lot 2.3) — un ESSAI n'a RIEN à payer : le CTA le dit (« Commencer mon essai »)
@@ -375,7 +376,7 @@ Choisissez un mot de passe : à votre première connexion, LABUSE vous fera acti
 <p class="meterlbl" id="cgverr" role="status" aria-live="polite" style="display:none;text-align:center;margin-top:8px;color:var(--warn)">Pour continuer : 10 caractères minimum, les deux mots de passe identiques, et les conditions générales cochées.</p>
 </form>
 <p class="note">{note}</p>
-<script src="/parcours.js" defer></script>""", pied=True))
+<script src="/parcours.js" defer></script>""", pied=True, gate=False))  # CHASSE-NAV-FIX-1 (F-obs1) — création d'accès accessible mobile
 
 
 @router.post("/invitation", include_in_schema=False)
@@ -393,7 +394,8 @@ async def invitation_submit(request: Request, db: Session = Depends(get_db)):
     if password2 and password2 != password:
         return HTMLResponse(_page("mot de passe", "<h1>Les mots de passe diffèrent</h1>"
                                   "<p class='sous'>la confirmation ne correspond pas au mot de passe choisi</p>"
-                                  f"<p style='text-align:center'><a href='/invitation?token={html.escape(token)}'>revenir</a></p>"),
+                                  f"<p style='text-align:center'><a href='/invitation?token={html.escape(token)}'>revenir</a></p>",
+                                  gate=False),  # CHASSE-NAV-FIX-1 (F-obs1)
                             status_code=400)
     # E2 — un compte interne (admin) n'a pas de CGV commerciales : la case n'existe pas sur son
     # écran. On confirme via le PLAN de l'invitation (source serveur), jamais via le champ caché
@@ -404,14 +406,16 @@ async def invitation_submit(request: Request, db: Session = Depends(get_db)):
         # M18-A2 : plus de cul-de-sac — un retour vers le formulaire existe toujours.
         return HTMLResponse(_page("conditions", f"<h1>Conditions requises</h1>"
                                   f"<p class='sous'>vous devez d'abord accepter les conditions générales pour continuer</p>"
-                                  f"<p style='text-align:center;margin-top:18px'><a class='pill' href='/invitation?token={html.escape(token)}'>← Revenir</a></p>"),
+                                  f"<p style='text-align:center;margin-top:18px'><a class='pill' href='/invitation?token={html.escape(token)}'>← Revenir</a></p>",
+                                  gate=False),  # CHASSE-NAV-FIX-1 (F-obs1)
                             status_code=400)
     s = get_settings()
     try:
         inv = activer_par_invitation(db, token, password, s.cgv_version)
     except ValueError as e:
         return HTMLResponse(_page("mot de passe", f"<h1>Mot de passe refusé</h1><p class='sous'>{html.escape(str(e))}</p>"
-                                  f"<p style='text-align:center'><a href='/invitation?token={html.escape(token)}'>revenir</a></p>"),
+                                  f"<p style='text-align:center'><a href='/invitation?token={html.escape(token)}'>revenir</a></p>",
+                                  gate=False),  # CHASSE-NAV-FIX-1 (F-obs1)
                             status_code=400)
     if not inv:
         return RedirectResponse("/invitation", status_code=303)
@@ -430,14 +434,14 @@ async def invitation_submit(request: Request, db: Session = Depends(get_db)):
 <div class="big"><div class="mark ok" aria-hidden="true">✓</div></div>
 <h1>Votre accès est ouvert</h1><p class="sub">votre compte est actif</p>
 <p class="lede">Mot de passe enregistré — rien à régler.</p>
-<a href="/login" class="btn">Entrer dans LABUSE <span class="arr" aria-hidden="true">→</span></a>"""))
+<a href="/login" class="btn">Entrer dans LABUSE <span class="arr" aria-hidden="true">→</span></a>""", gate=False))  # CHASSE-NAV-FIX-1 (F-obs1) — fin de création accessible mobile (l'app, via /login, reste gatée)
     if row and row["statut"] == "actif" and row["essai_expire_at"] is not None:
         return HTMLResponse(_page("essai", """
 <div class="big"><div class="mark ok" aria-hidden="true">✓</div></div>
 <h1>Votre accès d'essai est ouvert</h1><p class="sub">accès complet pendant l'essai</p>
 <p class="lede">À l'échéance, l'accès se met en pause — vos données restent intactes — et un
 abonnement vous est proposé.</p>
-<a href="/login" class="btn">Entrer dans LABUSE <span class="arr" aria-hidden="true">→</span></a>"""))
+<a href="/login" class="btn">Entrer dans LABUSE <span class="arr" aria-hidden="true">→</span></a>""", gate=False))  # CHASSE-NAV-FIX-1 (F-obs1) — fin de création accessible mobile
     # → ÉCRAN DE BASCULE Checkout (partie E) : le moment d'anxiété est adressé par une page
     # de confiance AVANT Stripe. La mécanique de paiement (creer_checkout/webhook) est
     # inchangée — seul un écran présentational + un jeton signé s'ajoutent.
@@ -532,7 +536,7 @@ def reset_page(token: str = ""):
   placeholder="prenom.nom@cabinet.re" aria-required="true"></div>
 <button type="submit">Recevoir le lien <span class="arr" aria-hidden="true">→</span></button>
 <p class="note">Le lien est valable une heure et ne sert qu'une fois.</p></form>
-<p class="linkrow"><a href="/login">← Retour à la connexion</a></p>"""))
+<p class="linkrow"><a href="/login">← Retour à la connexion</a></p>""", gate=False))  # CHASSE-NAV-FIX-1 (F-obs1) — réinitialisation accessible mobile
     return HTMLResponse(_page("nouveau mot de passe", f"""
 <h1>Nouveau mot de passe</h1><p class="sub">choisissez-le soigneusement</p>
 <form method="post" action="/reset">
@@ -544,7 +548,7 @@ def reset_page(token: str = ""):
 <div class="meterlbl" id="rules" role="status" aria-live="polite">10 caractères minimum.</div>
 <button type="submit">Enregistrer</button></form>
 <p class="note">Par sécurité, toutes vos sessions ouvertes seront fermées.</p>
-<script src="/parcours.js" defer></script>"""))
+<script src="/parcours.js" defer></script>""", gate=False))  # CHASSE-NAV-FIX-1 (F-obs1) — réinitialisation accessible mobile
 
 
 def _prenom_de(nom: str | None, email: str) -> str:
@@ -600,7 +604,7 @@ réinitialisation vient de lui être envoyé. Pensez à vérifier vos indésirab
 réinitialisation lui est destiné. <b style="color:var(--warn)">L'envoi automatique par e-mail n'est pas
 actif sur cet environnement</b> — votre contact LABUSE peut vous le transmettre.</p>
 <p style="margin-top:18px"><a class="pill" href="/login">← Retour à la connexion</a></p></div>"""
-    return HTMLResponse(_page("demande enregistrée", corps))
+    return HTMLResponse(_page("demande enregistrée", corps, gate=False))  # CHASSE-NAV-FIX-1 (F-obs1)
 
 
 @router.post("/reset", include_in_schema=False)
@@ -614,12 +618,13 @@ async def reset_submit(request: Request, db: Session = Depends(get_db)):
     try:
         ok = appliquer_reset(db, token, (q.get("password") or [""])[0])
     except ValueError as e:
-        return HTMLResponse(_page("mot de passe", f"<h1>Refusé</h1><p class='sous'>{html.escape(str(e))}</p>"),
+        return HTMLResponse(_page("mot de passe", f"<h1>Refusé</h1><p class='sous'>{html.escape(str(e))}</p>",
+                                  gate=False),  # CHASSE-NAV-FIX-1 (F-obs1)
                             status_code=400)
     if not ok:
         return HTMLResponse(_page("lien expiré", "<h1>Lien expiré</h1><p class='sous'>"
                                   "demandez un nouveau lien</p><p style='text-align:center'>"
-                                  "<a href='/reset'>mot de passe oublié</a></p>"), status_code=400)
+                                  "<a href='/reset'>mot de passe oublié</a></p>", gate=False), status_code=400)  # CHASSE-NAV-FIX-1 (F-obs1)
     # COMPTE-2 (Lot 4) — confirmation « mot de passe modifié » (template 15) par la file, best-effort :
     # une confirmation qui ne part pas ne bloque JAMAIS un reset réussi (sécurité avant tout).
     if infos:
