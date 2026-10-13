@@ -16,9 +16,11 @@ from labuse.api import ops
 def test_82_crons_alignes_sur_le_registre_des_jobs():
     """CHAQUE entrée de healthz est un job du REGISTRE (touche l'eau + backup) ; les cadences
     en dérivent. Les anciens noms legacy (ban/dvf/abuse — sans job wrapper) ont disparu :
-    leur fraîcheur de SOURCE vit sur la page Circuit (cadence 1.7 + « à vérifier » 8.4)."""
+    leur fraîcheur de SOURCE vit sur la page Circuit (cadence 1.7 + « à vérifier » 8.4).
+    Décision 13/10 : un job `planifie=False` (ex. agents-sources, manuel-seul — pas de crédit API)
+    est EXCLU du monitoring healthz (comme du crontab), bien qu'il reste dans le registre."""
     from labuse.jobs import JOBS, TOUCHE_EAU
-    attendu = (TOUCHE_EAU | {"backup-postgres"}) & set(JOBS)
+    attendu = {n for n in (TOUCHE_EAU | {"backup-postgres"}) & set(JOBS) if JOBS[n].planifie}
     assert set(ops.CRONS) == attendu
     for nom, c in ops.CRONS.items():
         assert c["attendu_jours"] >= 1, nom
