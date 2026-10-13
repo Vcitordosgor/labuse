@@ -1,0 +1,84 @@
+# CI-1 — la vérification GitHub : aucun code cassé ne reste invisible.
+# Déclenchée à CHAQUE push (main et toute branche). Trois jobs parallèles, < 10 min grâce au cache :
+#   · python  : unitaires + base de test, sur un conteneur PostGIS de la MÊME majeure que la prod (18).
+#   · frontend: npm ci · tsc -b · vitest · vite build.
+#   · secrets : recherche de secrets commités (clés/mots de passe/.env) — aucun secret requis ici.
+# N'a accès NI à la prod, NI au .env, NI à la base réelle : tout tourne sur une base de test éphémère.
+name: CI
+
+on:
+  push:
+    branches: ['**']        # main ET chaque branche (Vic pousse sur main)
+
+concurrency:                # un seul run par ref ; les pushes successifs annulent le précédent
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python:
+    name: Python (unitaires + base de test)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgis/postgis:18-3.5          # MÊME majeure que la prod (PostgreSQL 18 / PostGIS 3)
+        env:
+          POSTGRES_USER: labuse
+          POSTGRES_PASSWORD: labuse
+          POSTGRES_DB: labuse_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U labuse -d labuse_test"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      # La base de test ÉPHÉMÈRE du conteneur. Aucune prod, aucun .env, aucune base réelle.
+      LABUSE_DATABASE_URL: postgresql+psycopg://labuse:labuse@localhost:5432/labuse_test
+      LABUSE_TEST_DATABASE_URL: postgresql+psycopg://labuse:labuse@localhost:5432/labuse_test
+      LABUSE_CONFIG_DIR: config
+    steps:
+      - uses: actions/checkout@v4
+      - name: Libs système (weasyprint → pango/cairo ; rendu PDF des tests exports)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf-2.0-0 libcairo2 \
+            libffi8 fonts-dejavu-core
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - name: Installer (dev + ci, SANS ML lourd)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,ci]"
+      - name: Suite (exclut données réelles / réseau — famille banc de nuit)
+        run: pytest -m "not local and not reel and not network" -q -p no:cacheprovider
+
+  frontend:
+    name: Front (tsc · vitest · build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npx tsc -b
+      - run: npx vitest run
+      - run: npx vite build
+
+  secrets:
+    name: Secrets (clés / mots de passe / .env)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Recherche de secrets commités
+        run: bash scripts/ci/scan_secrets.sh

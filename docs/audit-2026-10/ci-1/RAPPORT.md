@@ -4,7 +4,7 @@ Branche `feat/ci-1`, worktree `~/Desktop/labuse-ci`. Rien sur le VPS. Aucune éc
 applicative `labuse` (deux autres sessions tournaient) : la suite tourne sur une base de test DÉDIÉE
 `labuse_test_ci`, isolée du `labuse_test` partagé des autres worktrees.
 
-> État : Lot 1 ✅ · Lot 2 ✅ · Lot 3 ⏳ · Lot 4 ⏳ · Lot 5 ⏳ (ce rapport se remplit lot par lot).
+> État : Lot 1 ✅ · Lot 2 ✅ · Lot 3 ✅ · Lot 4 ⏳ · Lot 5 ⏳ (ce rapport se remplit lot par lot).
 
 ---
 
@@ -179,3 +179,36 @@ tests NON marqués touchaient en réalité la base. Détectés en pointant la ba
   6 xfailed, 0 failed, 0 error** → la famille « unitaires » tourne vraiment sans base.
 - **base de test AVEC base** (`make test-db`, `labuse_test_ci`) : **1260 passed, 32 skipped, 0 failed**.
 - Sélection CI (`make test-ci` = unitaires + base de test) : inchangée vs Lot 1 → verte.
+
+---
+
+## Lot 3 — la vérification GitHub
+
+Fichier `.github/workflows/ci.yml` — déclenché à **chaque push (main et toute branche)**,
+3 jobs **parallèles**, `concurrency` annule les runs superposés, caches pip/npm pour tenir < 10 min.
+Aucun secret, aucun accès prod/.env/base réelle : tout sur une base de test éphémère.
+
+| Job | Contenu |
+|---|---|
+| **python** | conteneur `postgis/postgis:18-3.5` (MÊME majeure que la prod, PostgreSQL 18) ; libs système weasyprint (pango/cairo) pour les tests PDF ; `pip install -e ".[dev,ci]"` ; `pytest -m "not local and not reel and not network"` |
+| **frontend** | `npm ci` · `npx tsc -b` · `npx vitest run` · `npx vite build` (cache npm) |
+| **secrets** | `scripts/ci/scan_secrets.sh` |
+
+Décisions :
+- **PostGIS 18** = majeure de la prod (`deploy/scripts/vps_setup.sh` installe PostgreSQL 18/PostGIS 3) —
+  le docker-compose DEV est en 16, mais la CI doit refléter la PROD.
+- **Pas de torch en CI** : la sélection CI importe `pandas`/`scikit-learn` (via scoring p_model/p_v2)
+  et `openpyxl` (Bilan xlsx), jamais `torch`/segmentation-models (ML lourd, hors chaîne servie).
+  Nouvel extra `pyproject [ci]` = pandas/scikit-learn/joblib/openpyxl (léger, rapide, cacheable).
+- **weasyprint** importé paresseusement (pango requis au rendu seulement) → apt des libs pango/cairo
+  pour les tests qui génèrent un PDF.
+- **Scan de secrets maison** (`scripts/ci/scan_secrets.sh`, bash 3.2, `git grep`, zéro dépendance ni
+  licence) : interdit tout `.env` suivi (hors `*.example`) + motifs à forte confiance (PEM, Stripe
+  LIVE, Anthropic, AWS, Google, Slack, GitHub, URL avec mot de passe). Allowliste intégrée pour ne
+  PAS flaguer les clés de TEST (`sk_test_`…), les placeholders `.env.example`, les URLs base locale.
+  **Prouvé** : 0 trouvé sur l'arbre ; attrape un `sk_live_`/`sk-ant-` planté (exit 1). Réutilisé par
+  le hook pre-push (Lot 4).
+
+> La **preuve de bout en bout** (push → coche verte / commit cassé → croix rouge + mail) est au §
+> « Preuve » en fin de rapport : elle nécessite un push sur GitHub (action sortante) — effectuée
+> après les lots 4 et 5, en confirmant avec Vic.
