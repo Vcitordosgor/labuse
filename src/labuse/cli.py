@@ -4957,7 +4957,11 @@ def _crontab_du_registre(tz: str) -> str:
         if not j.planifie:                 # job manuel-seul (ex. agents-sources) : hors crontab
             continue
         lignes.append(f"# {j.cadence} · {j.heure_reunion} Réunion · {j.touche} — {j.titre}")
-        lignes.append(f"{conv(j.cron_utc)}   labuse  sh -c '. /etc/labuse/labuse.env; exec labuse jobs run {nom}'")
+        # set -a : `labuse.env` n'a que des `VAR=` nus (pas d'`export`) → sans auto-export, le `. env`
+        # du cron ne passe RIEN au process (ni DB, ni Brevo) et les jobs échouent/dérivent en silence
+        # (constat 13/10 : mail-queue-consommer en échec, alerte dry-run). Chemin COMPLET du venv (pas de
+        # `labuse` nu qui dépend du PATH). Les crons legacy font déjà pareil.
+        lignes.append(f"{conv(j.cron_utc)}   labuse  sh -c 'set -a; . /etc/labuse/labuse.env; set +a; exec /opt/labuse/venv/bin/labuse jobs run {nom}'")
         lignes.append("")
     return "\n".join(lignes).rstrip("\n") + "\n"
 
