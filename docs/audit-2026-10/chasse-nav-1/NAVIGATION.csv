@@ -1,0 +1,183 @@
+ecran_depart,element_libelle_exact,destination_attendue,contexte_transmis,retour_possible,fichier:ligne,note_doublon
+RAIL,"Carte",vue cartes,aucun,"setView vide la sélection avant passage",frontend/src/components/Rail.tsx:200,
+RAIL,"Outils",tiroir Outils (16 outils),aucun,"toggleOutils referme",frontend/src/components/Rail.tsx:197,
+RAIL,"Docs",vue documents,aucun,"setView autre",frontend/src/components/Rail.tsx:200,
+RAIL,"Copilote",vue copilote,aucun,"setView autre",frontend/src/components/Rail.tsx:200,
+RAIL,"Radar",vue radar (radarEcran=portes),aucun,"openRadar réinit portes",frontend/src/components/Rail.tsx:199,
+RAIL,"Projets",vue projets,aucun,"setView autre",frontend/src/components/Rail.tsx:200,
+RAIL,"CRM",vue crm,aucun,"setView autre",frontend/src/components/Rail.tsx:200,
+RAIL,"Sources",page Sources (fraîcheur),sourcesFocus=null,"openSources referme",frontend/src/components/Rail.tsx:221,
+RAIL,"Admin",vue admin (admin seulement),adminSection=null,"setView cartes",frontend/src/components/Rail.tsx:144,"visible si rôle admin"
+RAIL,"(carte outil)",setModule(m.key) → outil,module=m.key,"setModule(null) ferme",frontend/src/components/Rail.tsx:OutilCard,"16 portes outils"
+HEADER,"Rechercher : IDU, SIREN, propriétaire, adresse…",fiche parcelle OU Scan patrimoine,idu/siren résolu,"select(null) ferme fiche",frontend/src/components/header/Header.tsx:120-197,"omnibox multi-type"
+HEADER,"Lancer la recherche",idem omnibox,idu/siren,"idem",frontend/src/components/header/Header.tsx:197,
+HEADER,"Toute l’île",périmètre entier (commune=null),commune=null,"menu ferme, carte dézoome",frontend/src/components/header/Header.tsx:283,
+HEADER,"(commune du menu)",setCommune(c) zoom + pré-coche filtre,commune,"menu referme",frontend/src/components/header/Header.tsx:302,
+HEADER,"voir la fiche →",fiche commune (volet contexte),commune,"setContexteCommune(null)",frontend/src/components/header/Header.tsx:306,"DOUBLON fiche commune (cf Fiche §Autour)"
+HEADER,"Fiche commune",focusCommune (zoom + volet),commune,"setContexteCommune(null)",frontend/src/components/header/Header.tsx:327,"DOUBLON fiche commune"
+HEADER,"Notifications (cloche)",dropdown notifications,aucun,"backdrop/Échap",frontend/src/components/header/Header.tsx:441,
+HEADER,"(événement cloche → parcelle)",fiche parcelle,idu de l'event,"select(null)",frontend/src/components/header/Header.tsx:391,
+HEADER,"(événement cloche → annonce Radar)",portail externe (window.open),bien_id (http),"onglet externe",frontend/src/components/header/Header.tsx:395,
+HEADER,"(événement cloche → Copilote)",vue copilote,aucun,"setView autre",frontend/src/components/header/Header.tsx:396,
+HEADER,"(événement cloche → Surveillance)",Radar/Veille (openSurveillance),volet critères/parcelles,"toggleSurveillance referme",frontend/src/components/header/Header.tsx:401,
+HEADER,"(événement cloche → Sources)",page Sources,sourcesFocus=null,"openSources referme",frontend/src/components/header/Header.tsx:393,
+HEADER,"tout lire",markAllEventsRead,aucun,"—",frontend/src/components/header/Header.tsx:471,
+HEADER,"préférences",volet préférences notifs,prefsOpen,"toggle",frontend/src/components/header/Header.tsx:470,
+HEADER,"Personnaliser les notifications →",Radar/Veille,setModule,"quitte cloche",frontend/src/components/header/Header.tsx:568,
+HEADER,"Signaler",panneau rapport,contexte (idu/url/page/outil/écran),"panel ferme",frontend/src/components/header/Header.tsx:790,
+HEADER,"Envoyer (Signaler)",postRetour (feedback),type+message+contexte,"toast, panel ferme",frontend/src/components/header/Header.tsx:768,"IRRÉVERSIBLE (feedback) — relevé, non déclenché"
+HEADER,"Mon compte",dropdown compte,aucun,"backdrop/Échap",frontend/src/components/header/Header.tsx:646,
+MON_COMPTE,"Marque blanche",écran config marque,aucun,"formulaire",frontend/src/components/header/Header.tsx:662,
+MON_COMPTE,"Ajouter un logo / Remplacer le logo",upload logo (postLogo),fichier ≤512Ko,"preview",frontend/src/components/header/Header.tsx:613,
+MON_COMPTE,"Retirer (logo)",deleteLogo,aucun,"preview vide",frontend/src/components/header/Header.tsx:615,"IRRÉVERSIBLE (suppression) — relevé, non déclenché"
+MON_COMPTE,"Enregistrer (marque)",postMarque,raison_sociale+coordonnées+mention,"toast",frontend/src/components/header/Header.tsx:623,
+MON_COMPTE,"Changer mon mot de passe",/reset (self-service),aucun,"onglet",frontend/src/components/header/Header.tsx:709,
+MON_COMPTE,"Contact",mailto:contact@labuse.immo,email+nom compte,"client mail",frontend/src/components/header/Header.tsx:718,
+MON_COMPTE,"Se déconnecter",/logout,aucun,"déconnecte",frontend/src/components/header/Header.tsx:724,"IRRÉVERSIBLE (session) — relevé, non déclenché"
+PANNEAU_ACCUEIL,"Explorer la carte",onCommencer (Couches),accueilVu,"retour accueil",frontend/src/components/panel/LeftPanel.tsx:334,
+PANNEAU_ACCUEIL,"Suivre le marché — Radar",vue radar (portes),view=radar,"setView autre",frontend/src/components/panel/LeftPanel.tsx:338,
+PANNEAU_ACCUEIL,"Demander au Copilote",vue copilote,view=copilote,"setView autre",frontend/src/components/panel/LeftPanel.tsx:340,
+PANNEAU_ACCUEIL,"Ouvrir un outil",tiroir Outils,outilsOpen,"toggleOutils referme",frontend/src/components/panel/LeftPanel.tsx:343,
+PANNEAU_ACCUEIL,"voir les données →",page Sources,view=sources,"setView autre",frontend/src/components/panel/LeftPanel.tsx:354,
+PANNEAU,"Couches",section Couches,panneauSection=couches,"section listing/filtres",frontend/src/components/panel/LeftPanel.tsx:164,
+PANNEAU,"(couche cochable)",toggleLayer(k),layer k ON/OFF,"re-cocher",frontend/src/components/panel/LeftPanel.tsx,
+PANNEAU,"Filtres",section Filtres,panneauSection=filtres,"section couches/listing",frontend/src/components/panel/LeftPanel.tsx:200,
+PANNEAU,"Comprendre (i verdict)",modale explication,algoModale=comprendre,"setAlgoModale(null)",frontend/src/components/panel/LeftPanel.tsx:250,
+PANNEAU,"Retour (verdict hero)",retourFiltres,panneauSection=filtres,"ferme",frontend/src/components/panel/LeftPanel.tsx:257,
+PANNEAU_LISTING,"(parcelle de la liste)",fiche parcelle,selectedIdu,"select(null)",frontend/src/components/panel/ResultsSection.tsx,"DOUBLON ouvrir fiche"
+FICHE,"✕",ferme fiche,select(null),"ouvert",frontend/src/components/fiche/Fiche.tsx:694,"DOUBLON fermer (cf Fermer)"
+FICHE,"Cadastre ↗",Géoportail parcellaire,coords centroïde z19,"onglet externe",frontend/src/components/fiche/liensExternes.ts:12,"lien externe vérifié"
+FICHE,"Voir sur Pages Jaunes",pagesjaunes.fr,adresse exacte ou commune,"onglet externe",frontend/src/components/fiche/liensExternes.ts:27,"lien externe vérifié"
+FICHE,"État des risques (Errial)",errial.georisques.gouv.fr,adresse (hash #/?adresse=),"onglet externe",frontend/src/components/fiche/liensExternes.ts:44,"lien externe vérifié (Errial lit ?adresse= seulement)"
+FICHE,"Google Maps",maps query lat,lon,coords épingle,"onglet externe",frontend/src/components/fiche/liensExternes.ts:20,"lien externe vérifié"
+FICHE,"Ouvrir dans Google Earth",/parcels/{idu}.kmz,idu (géométrie servie),"téléchargement",frontend/src/components/fiche/liensExternes.ts:58,"KMZ 200 vérifié"
+FICHE,"(cloche suivre cette parcelle)",Veille › Parcelles (toggleWatch),idu,"retour onglet Fiche",frontend/src/components/fiche/Fiche.tsx:159,
+FICHE,"Ajouter dans… / ✓ Dans le CRM",CRM colonne,idu+status,"retour Fiche",frontend/src/components/fiche/Fiche.tsx:243-257,"DOUBLON Ajouter au CRM"
+FICHE,"Déplacer vers…",CRM colonne cible,idu+status,"retour Fiche",frontend/src/components/fiche/Fiche.tsx:264,
+FICHE,"Ajouter cette parcelle à…",Projet kanban › Retenues,idu+projet.id,"retour Fiche",frontend/src/components/fiche/Fiche.tsx:334-376,"DOUBLON Ajouter au projet"
+FICHE,"Nouveau projet avec cette parcelle",Projet neuf,idu,"retour Fiche",frontend/src/components/fiche/Fiche.tsx:372,
+FICHE,"Ouvrir dans le projet…",kanban projet,idu+projet.id,"setOpenProjet(null)",frontend/src/components/fiche/Fiche.tsx:361,
+FICHE,"Scan patrimoine du propriétaire",outil Patrimoine (SIREN),siren,"retour Fiche",frontend/src/components/fiche/Fiche.tsx:1497,"DOUBLON Scan patrimoine (4 pts)"
+FICHE,"Courrier SPF",outil Courriers,idu,"retour Fiche",frontend/src/components/fiche/Fiche.tsx:1500,"DOUBLON Courrier (3 pts)"
+FICHE,"Vérification d'une zone au Géoportail",Géoportail + outil PLU (changement),insee+zone,"retour Fiche",frontend/src/components/fiche/Fiche.tsx:1715,
+FICHE,"Annuaire PLU",outil PLU (annuaire),insee+zone,"retour Fiche",frontend/src/components/fiche/Fiche.tsx:1738,
+FICHE,"Vérif procédure",outil PLU (procédure),insee+zone,"retour Fiche",frontend/src/components/fiche/Fiche.tsx:1740,
+FICHE,"Calculer la taxe d'aménagement",outil Taxe d'aménagement,idu,"retour Fiche",frontend/src/components/fiche/Fiche.tsx:1877,"DOUBLON Taxe (2 pts)"
+FICHE,"Densifier l'existant",listing filtré (renouvellement+sdpMin200),commune,"retour Fiche",frontend/src/components/fiche/Fiche.tsx:1955,"DOUBLON interne (§Quartier + §Potentiel, même handler)"
+FICHE,"Étude de zone",outil Étude de zone,idu+commune+zone,"retour Fiche",frontend/src/components/fiche/autour.tsx:81,
+FICHE,"Permis commune",outil Permis,commune,"retour Fiche",frontend/src/components/fiche/autour.tsx:85,
+FICHE,"Fiche commune",volet fiche commune,commune,"setContexteCommune(null)",frontend/src/components/fiche/autour.tsx:87,"DOUBLON fiche commune"
+FICHE,"Pièges & risques",outil Risques,idu implicite,"retour Fiche",frontend/src/components/fiche/risques.tsx:244,
+FICHE,"Ouvrir le Gabarit",outil Programme (gabarit),idu,"retour Fiche",frontend/src/components/fiche/constructibilite.tsx:1119,
+FICHE,"Faisabilité",outil Programme (faisabilité),idu,"retour Fiche",frontend/src/components/fiche/constructibilite.tsx:1115,
+FICHE,"Calculette foncière",outil Calculette foncière,idu,"retour Fiche",frontend/src/components/fiche/constructibilite.tsx:1122,
+FICHE,"Assemblage",outil Assemblage (1er lot),idu,"retour Fiche",frontend/src/components/fiche/constructibilite.tsx:1125,
+FICHE,"Remonter le temps",outil Temps + flyTo z18,idu+coords,"retour Fiche",frontend/src/components/fiche/Fiche.tsx:2079,
+FICHE,"Voir le marché de X / Outil Communes — X",outil Communes,commune,"retour Fiche",frontend/src/components/fiche/marche.tsx:271,
+FICHE,"Voir ses annonces / Voir la fiche annonce",Radar (bien),bien_id,"setRadarToOpen(null)",frontend/src/components/fiche/marche.tsx:215,
+FICHE,"Annonce sur {portail} ↗",portail annonce externe,url_sortante,"onglet externe",frontend/src/components/fiche/marche.tsx:219,
+FICHE,"Dossier",export Dossier PDF,idu,"téléchargement (fetch+blob)",frontend/src/components/fiche/Fiche.tsx:2146,"grisé si indisponible (raison affichée)"
+FICHE,"Apporteur",export Note apporteur PDF,idu,"téléchargement",frontend/src/components/fiche/Fiche.tsx:2162,
+FICHE,"Pré-dossier PC",export Pack CERFA,idu,"téléchargement",frontend/src/components/fiche/Fiche.tsx:2183,"grisé si plan Intégral absent"
+FICHE,"Bilan",modale Bilan promoteur,idu,"modale ferme",frontend/src/components/fiche/Fiche.tsx:2200,
+FICHE,"Courrier",outil Courriers,idu,"retour Fiche",frontend/src/components/fiche/Fiche.tsx:2072,"DOUBLON Courrier"
+FICHE,"détail des sources / Voir la source",drawer Sources,ligne source,"closeSourceDrawer",frontend/src/components/fiche/primitives.tsx:274,
+FICHE_COMMUNE,"✕",ferme fiche commune,contexteCommune=null,"ferme",frontend/src/components/contexte/ContextePanel.tsx,
+FICHE_COMMUNE,"Voir les acquéreurs",modale table 24 communes,aucun,"setCommunesTableOpen(false)",frontend/src/components/contexte/ContextePanel.tsx,
+OUTIL_REMONTER_TEMPS,"Voir dans Permis →",outil Permis (frise),permit_id,"pushOutilRetour (dépile)",frontend/src/components/outils/HistoireFrise.tsx:119,
+OUTIL_REMONTER_TEMPS,"Voir la fiche — ventes →",fiche parcelle (tiroir marché),idu,"select(null)",frontend/src/components/outils/HistoireFrise.tsx:125,"DOUBLON ouvrir fiche"
+OUTIL_REMONTER_TEMPS,"Scan patrimoine →",outil Patrimoine,siren,"pushOutilRetour (dépile)",frontend/src/components/outils/HistoireFrise.tsx:129,"DOUBLON Scan patrimoine"
+OUTIL_COMMUNES,"Scan patrimoine →",outil Patrimoine,siren,"pas de retour",frontend/src/components/outils/Communes.tsx:156,"DOUBLON Scan patrimoine; pas de pushOutilRetour"
+OUTIL_COMMUNES,"(ligne parcelle)",fiche parcelle (overlay),idu,"pas de retour explicite",frontend/src/components/outils/Communes.tsx:160,"DOUBLON ouvrir fiche"
+OUTIL_PLU_ANNUAIRE,"Lire le règlement national d'urbanisme … Légifrance ↗",Légifrance,aucun,"onglet externe",frontend/src/components/outils/PluAnnuaire.tsx:134,"lien externe"
+OUTIL_PLU_ANNUAIRE,"(clic commune)",PLU intégral ou recherche,insee,"retour Les 24 communes",frontend/src/components/outils/PluAnnuaire.tsx:93,
+OUTIL_PLU_ANNUAIRE,"PLU du YYYY",téléchargement Pack GPU .zip,insee+source_url,"onglet externe",frontend/src/components/outils/PluAnnuaire.tsx:150,"lien externe"
+OUTIL_PROCEDURE,"Simuler ce que ça changerait →",simulation AU→U,commune,"retour bandeau procédures",frontend/src/components/outils/ProcedureChangement.tsx:110,
+OUTIL_PIEGES,"(saisie adresse/IDU)",fiche parcelle (surbrillance),idu,"pas de retour",frontend/src/components/outils/blocB.tsx:55,
+OUTIL_COMPARATEUR_COMMUNES,"(ligne commune)",fiche commune,commune,"pas de retour",frontend/src/components/outils/blocB.tsx:245,
+OUTIL_SUCCESSIONS,"(ligne parcelle)",fiche parcelle (overlay),idu,"pas de retour",frontend/src/components/outils/Successions.tsx:113,"DOUBLON ouvrir fiche"
+OUTIL_BLOCS,"(clic parcelle)",fiche parcelle,idu,"pas de retour",frontend/src/components/outils/Blocs.tsx,"DOUBLON ouvrir fiche"
+OUTIL_BLOCS,"Ouvrir Assemblage →",outil Assemblage,idu[],"pushOutilRetour → retourOutil",frontend/src/components/outils/Blocs.tsx,
+OUTIL_BLOCS,"Scan patrimoine →",outil Patrimoine,siren,"pushOutilRetour → retourOutil",frontend/src/components/outils/Blocs.tsx,"DOUBLON Scan patrimoine"
+OUTIL_PROSPECTION_SOLAIRE,"(ligne parcelle / saisie)",fiche parcelle (overlay),idu,"pas de retour",frontend/src/components/outils/ProspectionSolaire.tsx:215,"DOUBLON ouvrir fiche"
+OUTIL_PERMIS,"(ParcelPicker / saisie IDU)",localisation parcelle,idu,"pas de retour",frontend/src/components/outils/ModulePanel.tsx:758-776,
+OUTIL_PERMIS,"Scan patrimoine →",outil Patrimoine,siren,"pushOutilRetour",frontend/src/components/outils/ModulePanel.tsx,"DOUBLON Scan patrimoine"
+OUTIL_CALCULETTE,"(saisie adresse/IDU)",fiche parcelle (overlay),idu,"pas de retour",frontend/src/components/outils/CalculetteFonciere.tsx:54,
+OUTIL_GABARIT,"(saisie adresse/IDU)",localisation parcelle,idu,"pas de retour",frontend/src/components/outils/Gabarit.tsx:241,
+OUTIL_TAXE,"(saisie adresse/IDU)",fiche parcelle (overlay),idu,"pas de retour",frontend/src/components/outils/TaxeAmenagement.tsx:195,
+OUTIL_ETUDE_ZONE,"(clic concurrent/isochrone)",fiche parcelle (carte),idu,"pas de retour",frontend/src/components/outils/EtudeZone.tsx,
+OUTIL_VERIF_PROCEDURE,"(saisie adresse/IDU)",lancement vérification,idu,"—",frontend/src/components/outils/VerifProcedure.tsx:49,
+OUTIL_SCAN_PATRIMOINE,"(ParcelInput / exemple)",résolution propriétaire,idu→siren,"—",frontend/src/components/outils/ScanPatrimoine.tsx:169,
+COPILOTE,"Étude de zone →",outil Étude de zone (préfillé),idu+sous_destination,"aucun",frontend/src/components/copilote/ReponseInline.tsx:126,
+COPILOTE,"Ouvrir l'outil →",outil variable (préfillé),variable,"aucun",frontend/src/components/copilote/ReponseInline.tsx:126,
+COPILOTE,"Voir sur la carte {libelle} →",carte + filtres capacité,filtres,"aucun",frontend/src/components/copilote/ReponseInline.tsx:132,
+COPILOTE,"Ouvrir la Veille →",Veille (openSurveillance),volet,"aucun",frontend/src/components/copilote/ReponseInline.tsx:136,
+COPILOTE,"Éditer le {doc} →",PDF (pre-dossier/dossier/argumentaire),idu,"onglet externe",frontend/src/components/copilote/ReponseInline.tsx:143,
+COPILOTE,"Voir les outils d'analyse →",menu Outils,aucun,"toggleOutils",frontend/src/components/copilote/ReponseInline.tsx:150,
+COPILOTE,"(badge parcelle top résultats)",fiche parcelle,idu,"autres parcelles",frontend/src/App.tsx (IaRestitution),"DOUBLON ouvrir fiche"
+COPILOTE,"Voir les N résultats →",listing filtré (verdict),filtres,"retourFiltres",frontend/src/App.tsx (IaRestitution),
+COPILOTE,"Ouvrir le projet",kanban projet créé,projet.id,"setOpenProjet(null)",frontend/src/App.tsx (IaRestitution),
+PROJETS,"(ligne projet)",kanban projet,projet.id+nom,"setOpenProjet(null)",frontend/src/components/projets/ProjetsPanel.tsx:54,
+PROJETS,"Nouveau projet",parcours création,aucun,"retour liste",frontend/src/components/projets/ProjetsPanel.tsx:210,
+PROJET_KANBAN,"Voir le projet →",kanban projet neuf,projet.id+nom,"onFermer",frontend/src/components/projets/ParcoursProjet.tsx:128,
+PROJET_KANBAN,"+ Ajouter des parcelles",vue cartes,projet.id,"retour kanban",frontend/src/components/projets/ProjetKanban.tsx:311,
+PROJET_KANBAN,"(ligne parcelle)",fiche parcelle,idu,"retour colonne",frontend/src/components/projets/ProjetKanban.tsx:455-460,"DOUBLON ouvrir fiche"
+PROJET_KANBAN,"(œil) voir aérienne",carte ortho (focus),idu,"retour colonne",frontend/src/components/projets/ProjetKanban.tsx:454,
+PROJET_KANBAN,"→ CRM / Aller au CRM",CRM kanban,idus retenues,"retour kanban",frontend/src/components/projets/ProjetKanban.tsx:476,
+PROJET_KANBAN,"✉ Courrier (N) / Nouveau courrier →",vue cartes + module courriers,idus retenues,"setModule(null)",frontend/src/components/projets/ProjetKanban.tsx:480,"DOUBLON Courrier"
+PROJET_KANBAN,"Archiver",liste projets (patch statut),projet.id,"retour kanban",frontend/src/components/projets/ProjetKanban.tsx:310,"IRRÉVERSIBLE (réversible via archive) — relevé"
+PARCOURS_TINDER,"✕ Quitter",kanban projet,projet.id+nom,"—",frontend/src/components/projets/ParcoursTinder.tsx:92,
+PARCOURS_TINDER,"Voir la fiche complète →",fiche parcelle,idu,"drawer reste",frontend/src/components/projets/ParcoursTinder.tsx:113,"DOUBLON ouvrir fiche"
+CRM_KANBAN,"(clic IDU carte)",fiche parcelle,idu,"kanban reste",frontend/src/components/crm/Kanban.tsx:121,"DOUBLON ouvrir fiche"
+CRM_KANBAN,"(IDU panneau édition)",fiche parcelle,idu,"panneau reste",frontend/src/components/crm/Kanban.tsx:251,"DOUBLON ouvrir fiche"
+RADAR_HUB,"Radar (porte)",écran Radar (liste+marché),aucun,"Retour Radar → portes",frontend/src/components/radar/RadarHub.tsx:85,
+RADAR_HUB,"Veille (porte)",écran Veille (portes),aucun,"retour portes",frontend/src/components/radar/RadarHub.tsx:88,
+RADAR_ECRAN,"(carte bien/annonce)",bloc Ce bien + marché commune,bien_id,"re-clic ferme",frontend/src/components/radar/RadarEcran.tsx:180,
+RADAR_ECRAN,"Voir l'annonce ↗",portail externe (window.open),bien_id (analytics),"onglet externe",frontend/src/components/radar/RadarEcran.tsx:92,
+RADAR_ECRAN,"Retour Radar",portes Veille,aucun,"—",frontend/src/components/radar/RadarEcran.tsx:136,
+VEILLE_PORTES,"Le foncier",tableau parcelles suivies,aucun,"Retour Veille",frontend/src/components/radar/VeilleEcrans.tsx:69,
+VEILLE_PORTES,"Les annonces",tableau alertes,aucun,"Retour Veille",frontend/src/components/radar/VeilleEcrans.tsx:73,
+VEILLE_FONCIER,"(IDU cliquable)",fiche parcelle (focus),idu,"tableau reste",frontend/src/components/radar/VeilleEcrans.tsx:145,"DOUBLON ouvrir fiche"
+VEILLE_FONCIER,"Retour Veille",portes Veille,aucun,"—",frontend/src/components/radar/VeilleEcrans.tsx:115,
+VEILLE_ANNONCES,"Voir dans Radar",écran Radar (prefill filtres),critères alerte,"Retour Veille",frontend/src/components/radar/VeilleEcrans.tsx:297,
+VEILLE_ANNONCES,"Retour Veille",portes Veille,aucun,"—",frontend/src/components/radar/VeilleEcrans.tsx:305,
+DOCUMENTS,"Ouvrir (DocCard porte)",porte document (sélection parcelle),modal,"✕/Échap",frontend/src/components/documents/DocumentsView.tsx:435,
+DOCUMENTS,"Générer le dossier/bilan/apporteur/pré-dossier/gabarit/comparatif/étude de zone",génère document,parcelle(s)+rayon,"modal reste si erreur",frontend/src/components/documents/DocumentsView.tsx:233-275,
+DOCUMENTS,"Ouvrir (LigneDoc)",PDF généré (fetch+blob),document_id,"biblio reste",frontend/src/components/documents/DocumentsView.tsx:340,
+DOCUMENTS,"Régénérer",rafraîchit document,document_id,"biblio reste",frontend/src/components/documents/DocumentsView.tsx:347,
+DOCUMENTS,"Supprimer → Confirmer",DELETE /documents/{id},document_id,"biblio rafraîchie",frontend/src/components/documents/DocumentsView.tsx:351-355,"IRRÉVERSIBLE (suppression) — relevé, non déclenché"
+DOCUMENTS,"Excel",export Excel bilan,document_id,"biblio reste",frontend/src/components/documents/DocumentsView.tsx:344,
+DOCUMENTS,"Voir 200 de plus",pagination,limite+200,"—",frontend/src/components/documents/DocumentsView.tsx:409,
+DOCUMENTS,"Fiche →",fiche parcelle,parcelle.idu,"porte ferme",frontend/src/components/documents/DocumentsView.tsx:140,"DOUBLON ouvrir fiche"
+SOURCES,"(lien source documentation)",documentation_url externe,documentation_url,"fiche source reste",frontend/src/components/sources/SourcesPage.tsx:76,"lien externe"
+SOURCES,"Filtrer par thème",accordéon thèmes,themeOuvert,"—",frontend/src/components/sources/SourcesPage.tsx:196,
+ADMIN_PILOTAGE,"(tuiles CA/Licences/Coût IA/Courrier/Tâches)",section admin ciblée,cible,"section change",frontend/src/components/admin/AdminView.tsx:331,
+ADMIN_PILOTAGE,"À faire (Voir/Déposer/Envoyer/Ouvrir)",section demandée,section,"section change",frontend/src/components/admin/AdminView.tsx:338,
+ADMIN_PILOTAGE,"Dégeler (journal)",postAdminDegeler,sujet,"gel retiré",frontend/src/components/admin/AdminView.tsx:191,
+ADMIN_PILOTAGE,"Ouvrir l'app cliente →",vue cartes,aucun,"sort de admin",frontend/src/components/admin/AdminView.tsx:493,
+ADMIN_LICENCES,"Créer et envoyer l'invitation",crée compte + mail invitation,email+nom,"fiche compte",frontend/src/components/admin/Licences.tsx:244,"IRRÉVERSIBLE (compte+mail) — relevé, non déclenché"
+ADMIN_LICENCES,"Créer sans envoyer",crée compte (sans mail),email+nom,"fiche compte + lien",frontend/src/components/admin/Licences.tsx:244,"IRRÉVERSIBLE (compte) — relevé, non déclenché"
+ADMIN_LICENCES,"Renvoyer l'invitation",postAdminLicenceMail,mk=souscription,"mail log",frontend/src/components/admin/Licences.tsx:461,"IRRÉVERSIBLE (mail) — relevé, non déclenché"
+ADMIN_LICENCES,"Copier le lien d'invitation",postAdminLienInvitation,compte_id,"lien affiché",frontend/src/components/admin/Licences.tsx:467,
+ADMIN_LICENCES,"Transformer en client",postAdminLicenceConvertir,compte_id,"rafraîchit",frontend/src/components/admin/Licences.tsx:476,"IRRÉVERSIBLE (facturation) — relevé, non déclenché"
+ADMIN_LICENCES,"Suspendre / Rétablir",postAdminSuspendre/Retablir,compte_id,"état change",frontend/src/components/admin/Licences.tsx:479-480,"réversible — relevé, non déclenché"
+ADMIN_LICENCES,"Envoyer → (aperçu mail)",postAdminLicenceMail,mk template,"mail log",frontend/src/components/admin/Licences.tsx:528,"IRRÉVERSIBLE (mail) — relevé, non déclenché"
+ADMIN_LICENCES,"Déconnecter partout",postAdminDeconnecter,compte_id,"sessions fermées",frontend/src/components/admin/Licences.tsx:560,"relevé, non déclenché"
+ADMIN_CIRCUIT,"(chip/lien réservoir)",détail réservoir,reservoir_id,"← Retour au circuit",frontend/src/components/admin/circuit/Detail.tsx:79,
+ADMIN_CIRCUIT,"← Retour au circuit",Circuit (accueil),aucun,"—",frontend/src/components/admin/circuit/Detail.tsx:54,
+ADMIN_CIRCUIT,"Couche carte (robinet)",allume couche + carte,kind,"quitte admin",frontend/src/components/admin/circuit/Detail.tsx:28,
+ADMIN_CIRCUIT,"Envoyer un agent",postAdminCircuitAgents,source_id,"journal",frontend/src/components/admin/circuit/Detail.tsx:199,"relevé, non déclenché"
+ADMIN_CIRCUIT,"Servir quand même / Revenir à la précédente",filtre run,source,"filtre appliqué",frontend/src/components/admin/circuit/Detail.tsx,"IRRÉVERSIBLE (run servi) — relevé, non déclenché"
+MAIL,"Reset mot de passe (LIEN_RESET)",/reset?token=…,token SHA-256 60 min,"lien expiré → message neutre",src/labuse/comptes.py:563,"base = public_base_url (127.0.0.1 en local seulement, garde config.py:383)"
+MAIL,"Invitation (LIEN_INVITATION)",/invitation?token=…,token SHA-256 7j,"expiré → None honnête",src/labuse/comptes.py:298,"base = public_base_url"
+MAIL,"Essai 48h (Brevo id 4)",/invitation?token=…,token+FIN_ESSAI,"expire 48h",src/labuse/brevo.py:49,
+MAIL,"Bienvenue (Brevo id 6)",/invitation?token=…,token,"—",src/labuse/brevo.py:55,
+MAIL,"Flash prêt (Brevo id 17, LIEN_PDF)",/flash/retour?session_id=…,session Stripe 30j,"ré-ouvrable",src/labuse/facturation.py:215,
+MAIL,"Téléchargement Flash",/flash/telecharger?token=…,token SHA-256 30j,"expiré géré",src/labuse/facturation.py:305,
+MAIL,"Digest notifications",/socle/#parcelle={idu},base_url param,"—",src/labuse/emails.py:61,"base_url vide si non fourni → liens relatifs"
+MAIL,"List-Unsubscribe (RFC 8058)",LIEN_DESABO,optionnel,"—",src/labuse/brevo.py:314,
+PDF,"Pied de page (tous exports)",aucun lien (mention LABUSE),N/A,"N/A",src/labuse/api/export_commun.py:181,"pas de lien cliquable"
+PAGE_PARTAGE,"Partage public apporteur",/p/{token},token URL-safe 16c 30j,"révocable",src/labuse/api/partners.py:231,"page read-only sans login"
+PAGE_FLASH,"Flash (recherche → CGV → Stripe)",/flash → Stripe → /flash/retour,session_id,"poll statut",src/labuse/facturation.py:186-194,
+VITRINE,"Se connecter",/login,aucun,"—",frontend/src/App.tsx,"domaine implicite app.labuse.immo"
+VITRINE,"Commander un Flash",/flash,aucun,"—",frontend/src/App.tsx,
