@@ -80,7 +80,7 @@ ml = [
 # RETOURS-15 U5 — l'extra `lidar` (R31) est SUPPRIMÉ : rasterio/scipy sont des dépendances de
 # série (voir dependencies) — l'optionnel, que rien n'installait, rendait la toiture muette.
 # Outils de dev / CI (tests + lint).
-dev = ["pytest>=8.0", "ruff>=0.5"]
+dev = ["pytest>=8.0", "ruff>=0.5", "freezegun>=1.5"]  # freezegun : banc horloge (scripts/chasse/horloge.py)
 
 [project.scripts]
 labuse = "labuse.cli:app"
@@ -105,5 +105,6 @@ markers = [
   "db: tests nécessitant une base PostGIS accessible (voir conftest)",
   "network: tests nécessitant un accès réseau sortant (souvent bloqué en CI sandbox)",
   "local: tests joués sur la BASE RÉELLE locale (labuse), hors CI — `pytest -m local` (CIRCUIT-P3 3.2)",
+  "reel: tests exigeant des DONNÉES RÉELLES seedées/servies (run servi, DVF, PLU, scoring, identité éditeur…) qu'une base PostGIS vierge + petites fixtures ne reproduit pas — JAMAIS en CI (base vide), rejoués au banc de nuit en prod (CI-1 Lot 1/2)",
   "verrous: les verrous CIRCUIT-5 (tests/verrous/) — aussi joués par `labuse circuit verrous`",
 ]

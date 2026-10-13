@@ -136,23 +136,51 @@ def engine():
     from labuse.db import ensure_postgis
     ensure_postgis(eng)
     models.create_all(eng)
-    # AUDIT PAIEMENT · SEC-IDOR — comptes + cloison multi-tenant (compte_id + FK cascade sur
-    # les tables à données client). Reproductible en base de test fraîche (comme au boot).
+    # CI-1 (Lot 1) — REPRODUIT LA SÉQUENCE DE HEAL DU BOOT (`api/app.py::_lifespan`, tuple
+    # `_heal_steps`) pour qu'une base de test FRAÎCHE porte le MÊME schéma qu'une app fraîchement
+    # bootée. Sur un poste, `labuse_test` garde ces tables d'un run à l'autre, ce qui MASQUAIT le
+    # trou ; une base vierge (la CI) le révèle (modules/ia/partners/protection/courrier/crm_columns/
+    # veilles/copilote_v2/dashboard/promo/zone absents → UndefinedTable en cascade). Tout est
+    # idempotent (IF NOT EXISTS). ORDRE identique au boot : comptes+scoping APRÈS les tables des
+    # modules (scoping ajoute compte_id à celles-ci), et AVANT crm_columns (FK crm_columns.compte_id).
+    from labuse.api.courrier import ensure_tables as _courrier_ens
+    from labuse.api.crm_columns import ensure_tables as _crm_columns_ens
+    from labuse.api.dashboard import ensure_tables as _dashboard_ens
     from labuse.api.events import ensure_tables as _events_ens
+    from labuse.api.ia import ensure_tables as _ia_ens
+    from labuse.api.modules import ensure_tables as _modules_ens
+    from labuse.api.partners import ensure_tables as _partners_ens
+    from labuse.api.projets import ensure_tables as _projets_ens
+    from labuse.api.protection import ensure_tables as _protection_ens
     from labuse.api.tenant import ensure_scoping
     from labuse.comptes import ensure_tables as _comptes_ens
+    from labuse.copilote_v2.historique import ensure_tables as _copv2_hist_ens
+    from labuse.copilote_v2.telemetrie import ensure_tables as _copv2_tel_ens
+    from labuse.copilote_v2.veilles import ensure_tables as _veilles_ens
     from labuse.db import session_scope as _ss
-    _events_ens(eng)   # event_log / watched_parcels / saved_searches (créées avec compte_id)
-    with _ss() as _s:
+    from labuse.pige.tables import ensure_tables as _pige_ens
+    from labuse.promo.tables import ensure_tables as _promo_ens
+    _modules_ens(eng)
+    _ia_ens(eng)
+    _events_ens(eng)      # event_log / watched_parcels / saved_searches (créées avec compte_id)
+    _partners_ens(eng)    # match_profiles / share_links / api_keys
+    _projets_ens(eng)     # M120 — projets (+ migration fiche→cadrage)
+    _protection_ens(eng)
+    _courrier_ens(eng)
+    with _ss() as _s:     # AUDIT PAIEMENT · SEC-IDOR — comptes + cloison multi-tenant (compte_id + FK)
         _comptes_ens(_s)
         ensure_scoping(_s)   # migre compte_id + FK cascade + unique (compte_id, idu) — comme au boot
-    # COPILOTE-2 lot 4 — le moteur v1 (agent_runs/agent_events/agent_run_parcels) est retiré ; plus de DDL.
-    # M120 — projets : ALTER ADD COLUMN identite/shortlist_perimee + migration fiche→cadrage (comme au boot).
-    from labuse.api.projets import ensure_tables as _projets_ens
-    _projets_ens(eng)
-    # RADAR (pige) · P0 — schéma isolé pige_* (comme au boot).
-    from labuse.pige.tables import ensure_tables as _pige_ens
-    _pige_ens(eng)
+    _crm_columns_ens(eng)
+    _veilles_ens(eng)
+    _copv2_hist_ens(eng); _copv2_tel_ens(eng)
+    _dashboard_ens(eng)
+    _pige_ens(eng)        # RADAR (pige) · P0 — schéma isolé pige_*
+    _promo_ens(eng)       # PROMO-1 P1 — table programmes
+    with _ss() as _s:     # ÉTUDE DE ZONE Z1 — sirene_etablissements + mobpro_commune + cache isochrones
+        from labuse.ingestion.mobpro import ensure_tables as _mo_ens
+        from labuse.ingestion.sirene_etablissements import ensure_tables as _se_ens
+        from labuse.zone import ensure_tables as _iso_ens
+        _se_ens(_s); _mo_ens(_s); _iso_ens(_s)
     # CHASSE-FIX-1 (Lot 3) — la base de test sert `parcel_residuel` comme la PROD : une VUE
     # sur parcel_residuel_runs filtrée par le run servi (migration M135, idempotente). Avant,
     # la base de test gardait la TABLE historique vide → les tests ne voyaient jamais le
@@ -322,6 +350,19 @@ def engine():
             "  statut_caducite text DEFAULT 'Estimé',"
             "  libelle_court text, detail text,"
             "  updated_at timestamptz DEFAULT now())"))
+        # CI-1 (Lot 1) — artefacts posés HORS ORM par l'ingestion (jamais par create_all/boot), que
+        # du code requête SANS garde de catalogue → UndefinedTable/Column sur base vierge (la CI).
+        # Matérialisés VIDES = contrat data-gap (0 ligne, jamais une erreur SQL), fidèle à la prod.
+        # `parcels.cadastre_disparue_le` (SOURCES-MAJ-1) : la garde `cadastre_disparue.colonne_presente`
+        # couvre la plupart des lecteurs, mais tiles.py / l'omnibox / le KMZ la lisent en direct.
+        _c.execute(text("ALTER TABLE parcels ADD COLUMN IF NOT EXISTS cadastre_disparue_le date"))
+        from labuse.ingestion import division_or as _divor   # division_or_candidates (revue divisions)
+        _c.exec_driver_sql(_divor.DDL)                        # DDL multi-instructions (CREATE + ALTER)
+        _c.execute(text(                                      # mairies (annuaire communes) — ingest-mairies
+            "CREATE TABLE IF NOT EXISTS mairies ("
+            "  insee text PRIMARY KEY, commune text NOT NULL, nom text, adresse text,"
+            "  code_postal text, telephone text, email text, site_officiel text,"
+            "  url_annuaire text, source text NOT NULL, date_import timestamptz NOT NULL DEFAULT now())"))
     return eng
 
 

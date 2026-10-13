@@ -25,10 +25,10 @@ def test_r1_replie_par_defaut():
 
 
 def test_r1_lien_voir_fiche_present_avec_reponse():
-    # lien permanent quand une réponse est affichée ; la réponse reste gardée (pas détruite)
-    assert "data-askbar-voir-fiche" in ASKBAR
-    assert "Voir l'entièreté de la fiche" in ASKBAR
-    assert "réponse reste gardée" in ASKBAR         # title explicite
+    # CI-1 : le bouton « Voir l'entièreté de la fiche → » a été RETIRÉ (RECETTE-2 A13b, AskBar.tsx:180).
+    # Garde-fou de sa SUPPRESSION ; la zone de réponse bornée reste couverte par
+    # test_r1_regle_dure_reponse_bornee_nav_jamais_masquee (data-askbar-reponse + max-h).
+    assert "data-askbar-voir-fiche" not in ASKBAR   # le marqueur du bouton a disparu (la phrase ne survit qu'en commentaire)
 
 
 def test_r1_regle_dure_reponse_bornee_nav_jamais_masquee():
@@ -112,7 +112,8 @@ def test_m135_carte_fraction_pas_de_mult():
     assert "data-fraction" in RESULTS
     assert "p.fraction" in RESULTS
     assert "mult_v2.toFixed" not in RESULTS         # aucun ×N nu de scoring ne survit
-    assert "RR" not in RESULTS
+    # CI-1 : l'assertion `"RR" not in RESULTS` (2 lettres) matchait désormais « TE**RR**AIN » (commentaire
+    # CONTENANCE-1) — garde-fou brittle sans valeur ; les 3 asserts ci-dessus couvrent l'intention (aucun ×N brut).
 
 
 def test_r3_tooltip_jauge_completude():
@@ -188,7 +189,8 @@ def test_calculette_fonciere_restauree_et_resolvante():
     # ouverte par la fiche §11 / RadarView / copilote via calcPrefill (jamais un 404).
     assert "'calculette-fonciere': CalculetteFonciere" in MODULEPANEL
     assert "hidden: true" in REGISTRY.split("calculette-fonciere")[1][:200]
-    assert "Calculette" in CALCFONC and "ParcelInput" in CALCFONC and "calcPrefill" in CALCFONC
+    # CI-1 : le composant de saisie partagé importé par CalculetteFonciere est EntreeParcelle (ex-ParcelInput, RECETTE-1 F2).
+    assert "Calculette" in CALCFONC and "EntreeParcelle" in CALCFONC and "calcPrefill" in CALCFONC
     assert "setModule('calculette-fonciere')" in FICHE_TSX and "setCalcPrefill(idu)" in FICHE_TSX
 
 
@@ -234,10 +236,13 @@ def test_omnibox_parcelinput_chemin_unique():
     # 2) ParcelInput = AddressAutocomplete + aiguillage estIdu sur Entrée — le composant unique
     assert "AddressAutocomplete" in PI and "estIdu" in PI and "onEnterRaw" in PI
     # 3) chaque outil à saisie de parcelle passe par ParcelInput (plus de champ IDU séparé / onglet)
-    assert "ParcelInput" in CALCFONC                      # Calculette foncière (ex-« Étudier un bien »)
+    assert "EntreeParcelle" in CALCFONC                   # CI-1 : Calculette foncière passe par EntreeParcelle (saisie partagée adresse/IDU/clic, ex-ParcelInput)
     assert "ParcelInput" in PP and "<input" not in PP     # ParcelPicker (→ Faisabilité M22) : plus d'input brut
-    assert 'dataAttr="o5-idu"' in O5 and "<input data-o5-idu" not in O5   # Risques « une parcelle »
-    assert 'dataAttr="courrier-idu"' in MODULEPANEL and 'dataAttr="temps-idu"' in MODULEPANEL  # Courrier + Remonter le temps
+    # CI-1 : O5 (Risques « une parcelle ») est passé au composant partagé EntreeParcelle (RECETTE-1 F2) —
+    # plus de dataAttr o5-idu ni d'input brut. Intention préservée : saisie via composant partagé.
+    assert "EntreeParcelle" in O5 and "<input" not in O5
+    # CI-1 : Courrier via ParcelInput (courrier-idu) ; « Remonter le temps » est devenu « Diligence » (diligence-idu).
+    assert 'dataAttr="courrier-idu"' in MODULEPANEL and 'dataAttr="diligence-idu"' in MODULEPANEL
 
 
 def test_r5_pourquoi_pas_onglet_conditionnel():

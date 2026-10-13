@@ -56,6 +56,7 @@ def test_naf_sans_concurrent_reste_digne(monkeypatch):
     assert out["habitants_par_concurrent"] is None, "pas de ratio quand il n'y a personne à diviser"
 
 
+@pytest.mark.reel  # CI-1 : résolution adresse→parcelle sur données BAN/parcelles réelles — pas reproduit sur base vierge
 def test_flash_par_adresse_trouve_la_parcelle(monkeypatch):
     idu = "ZONETEST000013"
     with session_scope() as s:

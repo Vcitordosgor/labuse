@@ -38,10 +38,12 @@ def test_faitage_negatif_est_aberrant():
 
 
 def test_discordance_egout_meme_grandeur():
-    """BD TOPO dit 28,9 m mais LiDAR mesure ~6 m au faîtage ET à l'égout → une source est fausse
-    sur la MÊME grandeur (écart 23,3 m > 15 m)."""
-    d = discordance_hauteur({"faitage_m": 6.4, "egout_m": 5.6, "hauteur_bdtopo_m": 28.9,
-                             "ecart_faitage_bdtopo_m": -22.5})
+    """CI-1 : depuis RECETTE-2 A4, un faîtage nettement SOUS BD TOPO a son propre motif prioritaire
+    (« faîtage sous la hauteur BD TOPO »). Pour exercer le motif « égout ↔ BD TOPO » (l'ÉGOUT LiDAR
+    en désaccord avec BD TOPO sur la MÊME grandeur), on garde un faîtage cohérent avec BD TOPO
+    (28,0 ≈ 28,9, écart 0,9 < seuil 3 m) et un égout LiDAR faux (5,6) : écart égout↔BD TOPO 23,3 m > 15 m."""
+    d = discordance_hauteur({"faitage_m": 28.0, "egout_m": 5.6, "hauteur_bdtopo_m": 28.9,
+                             "ecart_faitage_bdtopo_m": -0.9})
     assert d["discordante"] is True
     assert d["motif"] == "égout ↔ BD TOPO"
     assert d["ecart_egout_bdtopo_m"] == -23.3

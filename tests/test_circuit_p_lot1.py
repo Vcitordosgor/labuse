@@ -190,6 +190,7 @@ def test_journal_filtrable_pagine(client):
 
 
 @pytest.mark.db
+@pytest.mark.reel  # CI-1 : compte des jobs eau servis (appliquer_modes_cadences) — registre/run réel, pas reproduit sur base vierge
 def test_detail_reservoir_robinet_pompe_rapides(client, engine):
     from labuse.ingestion.seed_sources import appliquer_modes_cadences
     with engine.begin() as c:

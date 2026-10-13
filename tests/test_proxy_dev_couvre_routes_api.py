@@ -35,7 +35,9 @@ NON_PROXIFIE = {
     "/cgv", "/confidentialite", "/mentions-legales",   # pages légales (liens, rendu serveur)
     "/demo", "/demo-status",               # parcours démo (rendu serveur)
     "/docs", "/redoc", "/openapi.json",    # auto-doc FastAPI
-    "/flash", "/flash-retour.js", "/parcours.js",      # campagne Flash (page + scripts servis)
+    "/flash", "/flash-retour.js", "/flash-omnibox.js", "/parcours.js",   # campagne Flash (page + scripts servis)
+    "/ordinateur.js",                      # CHARGEMENT-1 — script de la porte « ordinateur seulement » (servi, pas fetch)
+    "/socle",                              # Socle V1 — montage StaticFiles de la SPA + assets (src/href, jamais un fetch)
     "/invitation", "/login", "/logout",    # auth : navigations plein écran (rendu serveur)
     "/reset", "/reset-demande",            # réinitialisation mot de passe (rendu serveur)
     "/onboarding",                         # bienvenue post-invitation (rendu serveur)

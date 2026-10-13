@@ -245,7 +245,7 @@ def test_f11_wording_client_non_remarquable():
     client → remplacé par « Personne morale — fichier DGFiP » au point de service de la fiche."""
     import inspect as _i
     from labuse.api import app
-    src = _i.getsource(app._q_v2_fiche)
+    src = _i.getsource(app._pm_block)   # CI-1 : le wording PM vit au point de service PM de la fiche (_pm_block), pas _q_v2_fiche
     assert "non remarquable" in src and "Personne morale — fichier DGFiP" in src
 
 

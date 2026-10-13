@@ -90,6 +90,7 @@ def _seed_medianes(s, secteur, terrain=200, neuf=5000):
 
 
 @pytest.mark.db
+@pytest.mark.reel  # CI-1 : Score É sur parcelles scorées (dryrun/p_score_v2 servis) — base réelle, pas reproduit sur base vierge
 def test_build_ecartee_exclue_et_non_estimable(db_session):
     s = db_session
     _ensure_sources(s)

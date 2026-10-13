@@ -15,11 +15,15 @@ from __future__ import annotations
 import pytest
 from sqlalchemy import text
 
+from labuse import runs
 from labuse.api import projets
 from labuse.api.projets import CadrageIn, _cadrage_page_idus, _cadrage_total, clean_cadrage, projet_compteur
 from labuse.scoring.score_v_constants import Q_A_RUN_LABEL
 
-RUN = Q_A_RUN_LABEL   # `_cadrage_total` joint dryrun ET score sur le run servi (épinglé au label)
+RUN = Q_A_RUN_LABEL   # score v2 : `_cadrage_total` joint parcel_p_score_v2 sur _score_v2_run_id == runs.current() == Q_A_RUN_LABEL
+# CI-1 : le dryrun, lui, est joint sur `runs.cascade()` (q_v18_sources ≠ q_v18) — le seed DOIT insérer
+# dryrun_parcel_evaluations sous le label CASCADE, sinon la jointure est vide (vivier 0) sur base vierge.
+CASCADE = runs.cascade()
 
 _WKT = ("POLYGON((55.45 -20.90, 55.451 -20.90, 55.451 -20.901, "
         "55.45 -20.901, 55.45 -20.90))")
@@ -51,7 +55,7 @@ def _seed(session):
                 "INSERT INTO dryrun_parcel_evaluations (run_label, parcel_id, completeness_score, "
                 "opportunity_score, status, q_score, a_score, matrice_statut) "
                 "VALUES (:r, :p, 70, 10, 'a_creuser', 60, 40, 'a_creuser')"),
-                {"r": RUN, "p": pid})
+                {"r": CASCADE, "p": pid})
             rang += 1
             session.execute(text(
                 "INSERT INTO parcel_p_score_v2 (run_id, parcelle_id, p_raw, mult_base, percentile, "
@@ -149,7 +153,7 @@ def test_r8_chips_comptent_le_restant_a_trier(db_session):
         db_session.execute(text(
             "INSERT INTO dryrun_parcel_evaluations (run_label, parcel_id, completeness_score, "
             "opportunity_score, status, q_score, a_score, matrice_statut) "
-            "VALUES (:r, :p, 70, 10, 'a_creuser', 60, 40, 'a_creuser')"), {"r": RUN, "p": pid})
+            "VALUES (:r, :p, 70, 10, 'a_creuser', 60, 40, 'a_creuser')"), {"r": CASCADE, "p": pid})
         rang += 1
         db_session.execute(text(
             "INSERT INTO parcel_p_score_v2 (run_id, parcelle_id, p_raw, mult_base, percentile, rang, "

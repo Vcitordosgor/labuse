@@ -270,6 +270,7 @@ def test_courrier_demande_cloison(deux_comptes):
 
 
 # ─────────────────────────── COPILOTE : questions + plafond ───────────────────────────
+@pytest.mark.reel  # CI-1 : ia_log/quota Copilote sur comptes seedés + données réelles — pas reproduit sur base vierge
 def test_copilote_questions_et_plafond_cloison(deux_comptes):
     ca, cb, cid_a, cid_b, _, _ = deux_comptes
     # A pose 2 questions → 1 conversation persistée
