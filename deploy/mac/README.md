@@ -31,6 +31,25 @@ dernier filet : « le serveur répond-il, oui ou non ».
 
 Pour retirer : `launchctl unload ~/Library/LaunchAgents/com.labuse.readyz.plist`.
 
+## Test de restauration mensuel (SOLIDITE-1 Lot 3.3)
+
+**Pourquoi.** Une sauvegarde jamais restaurée n'en est pas une. Le VPS n'a pas la place de restaurer
+45 Go (6,6 Go libres) — le Mac, si. `restore_test.sh` rapatrie le dernier dump, le restaure dans une base
+jetable locale (`labuse_restore_test`, supprimée à la fin), compare les comptages des tables clés à la prod,
+et alerte au moindre écart. Le job VPS `restore-test`, lui, ne fait plus qu'un contrôle de LISIBILITÉ
+(`pg_restore --list`, sans restaurer) — safe sur le VPS plein.
+
+Installation :
+```sh
+# éditer com.labuse.restore-test.plist (chemins /Users/VIC, clé Brevo), puis :
+cp deploy/mac/com.labuse.restore-test.plist ~/Library/LaunchAgents/
+launchctl load  ~/Library/LaunchAgents/com.labuse.restore-test.plist
+launchctl start com.labuse.restore-test       # pour tester tout de suite
+tail -f ~/.labuse/restore_test.log
+```
+Pré-requis : `pg_restore`/`psql` ≥ la majeure PostgreSQL du VPS (sinon le dump est refusé), et l'accès SSH
+`labuse-vps` (le même que la garde externe).
+
 ## Alternative sans Mac allumé
 
 Si le Mac n'est pas toujours allumé, un service de veille **gratuit** (UptimeRobot, BetterStack free…)

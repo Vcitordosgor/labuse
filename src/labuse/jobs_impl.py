@@ -4,7 +4,6 @@ qui remplit `ctx.compteurs` (compteurs métier remontés dans l'état + le mail 
 """
 from __future__ import annotations
 
-import gzip
 import logging
 import os
 import shutil
@@ -736,47 +735,66 @@ def sentinelle_dvf_cadastre(ctx: JobContext) -> None:
 
 # ═══════════════════════════ K9 — robustesse ═══════════════════════════
 
-def restore_test(ctx: JobContext) -> None:
-    """Restaure le dump le plus récent dans une base jetable `labuse_restore_test`, vérifie (nombre de
-    tables + comptes témoins sur parcels/veilles/pige_biens), puis DROP. Échec → alerte. Une sauvegarde
-    jamais restaurée n'est pas une sauvegarde."""
+def backup_offsite(ctx: JobContext) -> None:
+    """SOLIDITE-1 (Lot 3.2) — DÉLÈGUE à deploy/scripts/backup_offsite.sh (chiffre le dernier dump + le
+    pousse vers un stockage objet, rétention 8 hebdo). Le code 3 (« non configuré ») n'est PAS un échec :
+    il ouvre/entretient l'incident « sauvegarde distante non configurée » (rappel à Vic) par la porte
+    unique, et le job reste VERT (on ne veut pas qu'un compte manquant fasse un faux échec chaque semaine).
+    Succès → l'incident est refermé. Tout autre code → échec bruyant (le runner alerte)."""
     s = get_settings()
-    dumps = sorted(Path(s.backup_dir).glob("labuse-*.sql.gz"), key=lambda p: p.stat().st_mtime, reverse=True)
+    script = Path(__file__).resolve().parents[2] / "deploy" / "scripts" / "backup_offsite.sh"
+    if not script.is_file():
+        raise RuntimeError(f"script introuvable : {script}")
+    env = dict(os.environ)
+    env.setdefault("LABUSE_BACKUP_DIR", s.backup_dir)
+    if s.pg_bin_dir:
+        env["PATH"] = f"{s.pg_bin_dir}:{env.get('PATH', '')}"
+    proc = subprocess.run(["bash", str(script)], env=env, capture_output=True, text=True, check=False)
+    sortie = (proc.stdout or "") + (proc.stderr or "")
+    for ligne in sortie.splitlines():
+        log.info("backup_offsite.sh | %s", ligne)
+    from .db import session_scope
+    from . import ops_alertes
+    cle = "sauvegarde-distante"
+    if proc.returncode == 3:        # non configuré : rappel, PAS un échec
+        with session_scope() as db:
+            ops_alertes.signaler(db, cle, "Sauvegarde hors-VPS non configurée",
+                                 "La copie chiffrée des sauvegardes hors du VPS n'est pas active : "
+                                 "compte de stockage objet et/ou clé de chiffrement manquants. "
+                                 "Tant que ce n'est pas posé, un VPS perdu emporte les sauvegardes. "
+                                 "Détail : deploy/scripts/backup_offsite.sh (SOLIDITE-1 Lot 3.2).")
+            db.commit()
+        ctx.compte(etat="non_configure", note=sortie.strip()[-300:])
+        return
+    if proc.returncode != 0:
+        raise RuntimeError(f"backup_offsite.sh a échoué (code {proc.returncode}) : {sortie.strip()[-300:]}")
+    with session_scope() as db:
+        ops_alertes.resoudre(db, cle)
+        db.commit()
+    ctx.compte(etat="ok", detail=sortie.strip()[-300:])
+
+
+def restore_test(ctx: JobContext) -> None:
+    """SOLIDITE-1 (Lot 3.3) — sur le VPS, on ne restaure PLUS un dump complet (45 Go) : il n'y a pas la
+    place (6,6 Go libres) et ce serait dangereux. Ce job vérifie seulement que le dernier dump est
+    RESTAURABLE sans le restaurer (`pg_restore --list` lit la table des matières : un dump tronqué/corrompu
+    est pris ici), et contrôle sa taille. Le VRAI test de restauration (restauration réelle + comparaison
+    des comptages) tourne sur le MAC, une fois par mois : deploy/mac/restore_test.sh."""
+    s = get_settings()
+    dumps = sorted(Path(s.backup_dir).glob("labuse-*.dump"), key=lambda p: p.stat().st_mtime, reverse=True)
     if not dumps:
-        raise RuntimeError(f"aucun dump à restaurer dans {s.backup_dir}")
+        raise RuntimeError(f"aucun dump .dump à vérifier dans {s.backup_dir}")
     dump = dumps[0]
-    base = "labuse_restore_test"
-    base_url = _libpq_url(s.database_url)
-    admin_url = base_url.rsplit("/", 1)[0] + "/postgres"
-    psql = str(Path(s.pg_bin_dir) / "psql") if s.pg_bin_dir else "psql"
-
-    def _psql(url, sql):
-        return subprocess.run([psql, url, "-v", "ON_ERROR_STOP=1", "-c", sql],
-                              capture_output=True, text=True)
-
-    _psql(admin_url, f"DROP DATABASE IF EXISTS {base}")
-    cr = _psql(admin_url, f"CREATE DATABASE {base}")
-    if cr.returncode != 0:
-        raise RuntimeError(f"création base jetable impossible : {cr.stderr[:300]}")
-    try:
-        cible_url = base_url.rsplit("/", 1)[0] + f"/{base}"
-        # gunzip | psql
-        with gzip.open(dump, "rb") as gz:
-            restore = subprocess.run([psql, cible_url, "-v", "ON_ERROR_STOP=0"],
-                                     stdin=gz, capture_output=True, text=False)
-        if restore.returncode != 0:
-            raise RuntimeError(f"restauration en échec : {restore.stderr.decode('utf-8','replace')[:300]}")
-        n_tables = int(_psql(cible_url, "SELECT count(*) FROM information_schema.tables "
-                             "WHERE table_schema='public'").stdout.strip().splitlines()[-2].strip())
-        temoins = {}
-        for t in ("parcels", "veilles", "pige_biens"):
-            out = _psql(cible_url, f"SELECT count(*) FROM {t}")
-            temoins[t] = out.stdout.strip().splitlines()[-2].strip() if out.returncode == 0 else "absente"
-        if n_tables < 50:
-            raise RuntimeError(f"restauration douteuse : seulement {n_tables} tables (attendu ≫ 50)")
-        ctx.compte(dump=dump.name, n_tables=n_tables, temoins=temoins)
-    finally:
-        _psql(admin_url, f"DROP DATABASE IF EXISTS {base}")   # toujours nettoyer la base jetable
+    taille_mo = round(dump.stat().st_size / 1e6, 1)
+    pg_restore = str(Path(s.pg_bin_dir) / "pg_restore") if s.pg_bin_dir else "pg_restore"
+    proc = subprocess.run([pg_restore, "--list", str(dump)], capture_output=True, text=True, check=False)
+    if proc.returncode != 0:
+        raise RuntimeError(f"dump illisible par pg_restore --list ({dump.name}) : {proc.stderr[:300]}")
+    n_objets = sum(1 for l in proc.stdout.splitlines() if l.strip() and not l.lstrip().startswith(";"))
+    if n_objets < 50:
+        raise RuntimeError(f"table des matières maigre ({n_objets} objets) — dump douteux {dump.name}")
+    ctx.compte(dump=dump.name, taille_mo=taille_mo, objets_toc=n_objets,
+               note="contrôle lisibilité VPS ; restauration réelle = deploy/mac/restore_test.sh (mensuel Mac)")
 
 
 # ═══════════════════════════ utilitaire d'alerte (respecte dry-run) ═══════════════════════════

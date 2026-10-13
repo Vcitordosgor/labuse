@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SOLIDITE-1 (Lot 3.3) — test de restauration MENSUEL sur le Mac (jamais sur le VPS).
+     Le 1er de chaque mois à 09:00. Installation : voir deploy/mac/README.md. -->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.labuse.restore-test</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <!-- ADAPTER ce chemin au dépôt local -->
+    <string>/Users/VIC/Desktop/labuse/deploy/mac/restore_test.sh</string>
+  </array>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>LABUSE_VPS_SSH</key>
+    <string>labuse-vps</string>
+    <!-- pg_restore/psql >= la majeure PostgreSQL du VPS (ex. 18). Adapter si le PATH est ancien. -->
+    <key>PG_RESTORE_BIN</key>
+    <string>pg_restore</string>
+    <key>PSQL_BIN</key>
+    <string>psql</string>
+    <!-- Mail d'alerte (sinon notif macOS + log) -->
+    <key>LABUSE_BREVO_API_KEY</key>
+    <string></string>
+    <key>LABUSE_ALERT_TO</key>
+    <string>victor@labuse.immo</string>
+  </dict>
+
+  <!-- le 1er de chaque mois à 09:00 -->
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Day</key><integer>1</integer>
+    <key>Hour</key><integer>9</integer>
+    <key>Minute</key><integer>0</integer>
+  </dict>
+
+  <key>StandardOutPath</key>
+  <string>/Users/VIC/.labuse/restore_test.out.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/VIC/.labuse/restore_test.err.log</string>
+</dict>
+</plist>

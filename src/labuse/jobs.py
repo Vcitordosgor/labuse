@@ -381,6 +381,14 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
               "remplacement SANS TROU (le nouveau tourne au même instant que l'ancien ; deploy.sh pose "
               "avant de retirer le legacy).",
        test="tests/test_cron1_registre.py::test_backup_sans_trou"),
+    # SOLIDITE-1 (Lot 3.2) — la copie hors-VPS, chiffrée, hebdomadaire (dimanche, après le backup du jour).
+    _j("backup-offsite", "Copie chiffrée de la dernière sauvegarde hors du VPS (stockage objet)",
+       "hebdo (dim)", "30 10 * * 0", "14:30 dim", touche="exploitation", timeout_s=3600, besoin_db=False,
+       raison="Un VPS perdu ne doit pas emporter les sauvegardes. Chaque dimanche, le dernier dump est "
+              "CHIFFRÉ (clé détenue par Vic) et poussé vers un stockage objet (rétention 8 hebdomadaires). "
+              "Tant que le compte/la clé manquent : le job n'échoue pas, il RAPPELLE (incident « sauvegarde "
+              "distante non configurée ») — jamais d'envoi en clair, jamais un silence.",
+       test="tests/test_solidite1_lot3.py::test_backup_offsite_au_registre"),
     _j("pg-maintenance", "VACUUM ANALYZE des tables chaudes", "hebdo (dim)",
        "0 0 * * 0", "04:00 dim", touche="exploitation", timeout_s=3600, besoin_db=False,
        raison="Sans VACUUM ANALYZE, le planner PostgreSQL dérive et les requêtes chaudes ralentissent. "
