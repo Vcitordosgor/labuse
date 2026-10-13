@@ -26,6 +26,10 @@ jobs:
           POSTGRES_USER: labuse
           POSTGRES_PASSWORD: labuse
           POSTGRES_DB: labuse_test
+          # trust : comme le poste dev (auth peer/trust) → les tests qui ouvrent une connexion psycopg
+          # brute sans mot de passe (ex. test_boot_verrou_1) se connectent comme en local. Base de
+          # test éphémère, jamais exposée : aucun risque.
+          POSTGRES_HOST_AUTH_METHOD: trust
         ports: ['5432:5432']
         options: >-
           --health-cmd "pg_isready -U labuse -d labuse_test"
@@ -48,10 +52,12 @@ jobs:
           python-version: '3.12'
           cache: pip
           cache-dependency-path: pyproject.toml
-      - name: Installer (dev + ci, SANS ML lourd)
+      - name: Installer (dev + ci + ai, SANS ML lourd)
         run: |
           python -m pip install --upgrade pip
-          pip install -e ".[dev,ci]"
+          # [ai] = anthropic (pin léger) : plusieurs tests l'IMPORTENT puis le mockent (ils n'appellent
+          # jamais l'API — pas de clé requise). Sans lui, ModuleNotFoundError + routeurs non montés.
+          pip install -e ".[dev,ci,ai]"
       - name: Suite (exclut données réelles / réseau — famille banc de nuit)
         # `python -m pytest` (pas `pytest` nu) : ajoute le CWD au sys.path → les tests qui importent
         # `scripts.*` (banc) résolvent, comme en local (docs/TESTS.md) et dans le hook pre-push.
