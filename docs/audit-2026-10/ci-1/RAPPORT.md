@@ -4,7 +4,7 @@ Branche `feat/ci-1`, worktree `~/Desktop/labuse-ci`. Rien sur le VPS. Aucune éc
 applicative `labuse` (deux autres sessions tournaient) : la suite tourne sur une base de test DÉDIÉE
 `labuse_test_ci`, isolée du `labuse_test` partagé des autres worktrees.
 
-> État : Lot 1 ✅ · Lot 2 ✅ · Lot 3 ✅ · Lot 4 ✅ · Lot 5 ✅ · Preuve ⏳ (push à confirmer).
+> État : Lot 1 ✅ · Lot 2 ✅ · Lot 3 ✅ · Lot 4 ✅ · Lot 5 ✅ · Preuve ✅ (CI verte + rouge prouvés sur GitHub).
 
 ---
 
@@ -251,3 +251,51 @@ une fois (documenté dans `docs/EXPLOITATION.md` § « L'alerte ») :
 
 Aucun changement de workflow nécessaire (la notification est native). Le mail pointe le run ; le
 détail (job, test) est sur la page du run.
+
+---
+
+## Preuve (bout en bout sur GitHub)
+
+`feat/ci-1` a été poussée (branche, PAS mergée). Dépôt : `github.com/Vcitordosgor/labuse`.
+
+### a) Vert — `feat/ci-1`
+
+Run **38475032453** → **success** : Python ✅ · Front ✅ · Secrets ✅.
+(`https://github.com/Vcitordosgor/labuse/actions/runs/38475032453`)
+
+### b) Le filet LOCAL refuse un commit cassé
+
+Branche jetable `ci-1-preuve-cassee` + `frontend/src/_ci_preuve_cassee.ts` :
+`export const preuve: number = "pas un nombre"`. Le hook pre-push, joué sur ce commit :
+
+```
+▶ Front — tsc -b
+src/_ci_preuve_cassee.ts(1,14): error TS2322: Type 'string' is not assignable to type 'number'.
+…
+✗ PUSH REFUSÉ — une vérification a échoué (détail ci-dessus).
+```
+`exit 1` → le push est bloqué en local.
+
+### c) Rouge + mail — contournement `--no-verify`
+
+Poussé avec `git push --no-verify` (le cas d'urgence documenté). Run **38475959465** →
+**failure** : **Front → failure** (tsc TS2322), Python ✅, Secrets ✅.
+(`https://github.com/Vcitordosgor/labuse/actions/runs/38475959465`) La croix rouge déclenche la
+notification native GitHub (mail à l'auteur du push). Branche jetable **supprimée** ensuite
+(local + distant) ; `feat/ci-1` n'a jamais porté le commit cassé.
+
+### d) Ce que la preuve a VRAIMENT prouvé — la CI attrape le « marche sur ma machine »
+
+Avant même le commit cassé volontaire, les premiers runs ont attrapé **7 écarts réels** invisibles
+en local (c'est tout l'intérêt du mandat) ; chacun corrigé puis re-vérifié vert :
+
+1. `postgis/postgis:18-3.5` **inexistant** → `18-3.6` (image PG18 publiée).
+2. 2 **snapshots** front sensibles au fuseau (Mac UTC+2 vs CI UTC) → `TZ=Indian/Reunion` forcé + snapshots régénérés.
+3. `pytest` nu n'ajoute pas le CWD → `import scripts` KO → `python -m pytest`.
+4. Base PostGIS **vierge** (ce que la CI a, pas le poste) → conftest réécrit en **parité boot convergé** (scoping en dernier + `compte_id` R9 + colonnes Filosofi).
+5. `anthropic` absent (`[ai]`) → routeurs non montés → `pip install .[dev,ci,ai]` ; Postgres CI exigeait un mot de passe → `POSTGRES_HOST_AUTH_METHOD=trust` ; tuiles servies → test `reel`.
+6. `pip install -e .` flottait vers les **dernières** versions (561 warnings, routes différentes) → `-c requirements.lock` = **parité PROD** (warnings 561→15).
+7. `/socle` (montage conditionné à `frontend/dist`) absent dans le job Python → **stub `dist`**.
+
+> C'est la démonstration la plus forte : la suite était « verte » en local pour chacun de ces points,
+> et rouge en CI. Désormais la CI (base vierge, versions figées, env propre) voit ce que le poste cache.
