@@ -270,16 +270,26 @@ def vefa_neuf_build_cmd() -> None:
 
 @app.command("parite")
 def parite_cmd(
+    host: str = typer.Option("labuse-vps", "--host", help="Alias SSH du VPS."),
+    communes: bool = typer.Option(False, "--communes", help="Détaille les parcelles par commune."),
     tables_quotidien: bool = typer.Option(False, "--tables-quotidien",
         help="N'imprime QUE les tables des flux quotidiens (une par ligne) — pour les scripts."),
     tables_fond: bool = typer.Option(False, "--tables-fond",
         help="N'imprime QUE les tables de fond (une par ligne)."),
 ) -> None:
-    """Parité des données Mac↔prod PAR SENS (décision flux 13/10) : quelles tables sont QUOTIDIENNES
-    (prod fait foi, le Mac récupère) et lesquelles sont de FOND (Mac fait foi, poussées en prod).
-    Référence de la récupération prod→Mac (cf. docs/EXPLOITATION.md §11)."""
+    """Parité des données Mac⟷prod PAR SENS (décision flux 13/10 + SOLIDITE-1 Lot 4.3). Les COMPTAGES
+    locaux et prod (SSH), classés par sens (flux_sens) :
+      · FOND (cadastre/BAN/PLU/couches) — le MAC fait foi, poussé en prod : un écart = À CORRIGER ;
+      · QUOTIDIEN (BODACC/Sitadel/DPE/SIRENE/DVF) — la PROD fait foi, le Mac récupère : prod ≥ Mac
+        attendu, l'écart est INFORMATIF (le Mac rattrapera à la prochaine récupération, cf. §11).
+    `--communes` détaille les parcelles par commune. `--tables-quotidien`/`--tables-fond` : listes à plat
+    (scripts). Sort en erreur (1) UNIQUEMENT si une table de FOND diverge."""
+    import subprocess
+    from sqlalchemy import text as _text
+    from .db import session_scope
     from .flux_sens import FLUX_QUOTIDIEN_PROD, SOURCES_FOND_MAC, tables_quotidiennes
     from .flux_sens import tables_fond as _tf
+
     if tables_quotidien:
         for t in tables_quotidiennes():
             typer.echo(t)
@@ -288,13 +298,56 @@ def parite_cmd(
         for t in _tf():
             typer.echo(t)
         return
-    typer.echo("FLUX QUOTIDIENS — ingérés EN PROD la nuit · PROD fait foi · sens prod→Mac :")
-    for flux, tables in FLUX_QUOTIDIEN_PROD.items():
-        typer.echo(f"  {flux:9s} → {', '.join(tables)}")
-    typer.echo("\nSOURCES DE FOND — construites sur le MAC · MAC fait foi · sens Mac→prod :")
-    for dom, tables in SOURCES_FOND_MAC.items():
-        typer.echo(f"  {dom:9s} → {', '.join(tables)}")
-    typer.echo("\n(scoring/résiduel/cascade + dérivés = CALCULÉS sur le Mac → poussés par sync-run.)")
+
+    def _prod(sql: str) -> str:
+        r = subprocess.run(["ssh", "-o", "BatchMode=yes", host,
+                            f"sudo -u postgres psql -At -d labuse -c \"{sql}\""],
+                           capture_output=True, text=True)
+        return r.stdout.strip() if r.returncode == 0 else "ERR"
+
+    ecart_fond = False
+    with session_scope() as db:
+        def _compter(tables: list[str], foi: str) -> None:
+            nonlocal ecart_fond
+            for t in tables:
+                try:
+                    loc = str(db.execute(_text(f"SELECT count(*) FROM {t}")).scalar())
+                except Exception:  # noqa: BLE001 — table absente en local
+                    loc = "—"
+                pr = _prod(f"SELECT count(*) FROM {t}")
+                if loc == pr:
+                    etat = "="
+                elif foi == "prod":
+                    etat = "~ (prod≥Mac attendu)"       # flux quotidien : la prod devance, informatif
+                else:
+                    etat = "≠ À CORRIGER"
+                    ecart_fond = True
+                typer.echo(f"  {t:34s} {loc:>12s} {pr:>12s}  {etat}")
+
+        typer.echo(f"PARITÉ  local ⟷ {host}   ({'TABLE':32s} {'LOCAL':>12s} {'PROD':>12s})\n")
+        typer.echo("FOND — le Mac fait foi (poussé en prod) · écart = à corriger :")
+        _compter([t for tables in SOURCES_FOND_MAC.values() for t in tables], foi="mac")
+        typer.echo("\nQUOTIDIEN — la prod fait foi (le Mac récupère) · écart informatif :")
+        _compter(tables_quotidiennes(), foi="prod")
+        if communes:
+            typer.echo("\nPARCELLES PAR COMMUNE (local ⟷ prod) :")
+            loc_c = dict(db.execute(_text(
+                "SELECT commune, count(*) FROM parcels GROUP BY commune ORDER BY commune")).all())
+            brut = _prod("SELECT commune, count(*) FROM parcels GROUP BY commune ORDER BY commune")
+            prod_c = {}
+            for ligne in brut.splitlines():
+                if "|" in ligne:
+                    k, _, v = ligne.partition("|")
+                    prod_c[k.strip()] = v.strip()
+            for com in sorted(set(loc_c) | set(prod_c)):
+                lv, pv = str(loc_c.get(com, "—")), prod_c.get(com, "—")
+                etat = "=" if lv == pv else "≠"
+                if etat == "≠":
+                    ecart_fond = True
+                typer.echo(f"  {com:34s} {lv:>12s} {pv:>12s}  {etat}")
+    typer.echo("\n" + ("✗ ÉCART(S) de FOND — le Mac et la prod divergent sur une source Mac-fait-foi."
+                       if ecart_fond else "✓ parité de fond : local == prod (le quotidien peut devancer)."))
+    raise typer.Exit(1 if ecart_fond else 0)
 
 
 @app.command("ingest-cosia")
@@ -5091,61 +5144,6 @@ def ops_test_alerte_cmd() -> None:
     typer.echo("✓ scénario joué. Vérifie les mails (ou les .eml ci-dessus) : 1 échec + 1 retard + 2 résolus.")
 
 
-@app.command("parite")
-def parite_cmd(
-    host: str = typer.Option("labuse-vps", "--host", help="Alias SSH du VPS."),
-    communes: bool = typer.Option(False, "--communes", help="Détaille les parcelles par commune."),
-) -> None:
-    """SOLIDITE-1 (Lot 4.3) — contrôle de PARITÉ Mac == prod, à la demande. Compare les comptages des
-    tables clés (et, avec --communes, les parcelles par commune) entre la base LOCALE et la prod (SSH).
-    Sortie lisible ; sort en erreur (1) au moindre écart sur une table de référence."""
-    import subprocess
-    from sqlalchemy import text as _text
-    from .db import session_scope
-
-    # Tables de RÉFÉRENCE synchronisées Mac → prod (écart = vrai problème). On NE compare PAS les tables
-    # CLIENT vivantes (comptes, veilles, sessions : propres à la prod, jamais synchronisées) ni score_labuse
-    # (multi-runs : le Mac en garde l'historique, la prod seulement servi+précédent).
-    TABLES = ["parcels", "adresses", "data_sources", "parcel_couche_intersection", "dvf_mutations"]
-
-    def _prod(sql: str) -> str:
-        r = subprocess.run(["ssh", "-o", "BatchMode=yes", host,
-                            f"sudo -u postgres psql -At -d labuse -c \"{sql}\""],
-                           capture_output=True, text=True)
-        return r.stdout.strip() if r.returncode == 0 else "ERR"
-
-    ecart = False
-    with session_scope() as db:
-        typer.echo(f"PARITÉ  local ⟷ {host}\n{'TABLE':30s} {'LOCAL':>12s} {'PROD':>12s}  ÉTAT")
-        for t in TABLES:
-            try:
-                loc = str(db.execute(_text(f"SELECT count(*) FROM {t}")).scalar())
-            except Exception:  # noqa: BLE001 — table absente en local
-                loc = "—"
-            pr = _prod(f"SELECT count(*) FROM {t}")
-            etat = "=" if loc == pr else "≠"
-            if etat == "≠":
-                ecart = True
-            typer.echo(f"{t:30s} {loc:>12s} {pr:>12s}  {etat}")
-        if communes:
-            typer.echo("\nPARCELLES PAR COMMUNE (local ⟷ prod)")
-            loc_c = dict(db.execute(_text(
-                "SELECT commune, count(*) FROM parcels GROUP BY commune ORDER BY commune")).all())
-            brut = _prod("SELECT commune, count(*) FROM parcels GROUP BY commune ORDER BY commune")
-            prod_c = {}
-            for ligne in brut.splitlines():
-                if "|" in ligne:
-                    k, _, v = ligne.partition("|")
-                    prod_c[k.strip()] = v.strip()
-            for com in sorted(set(loc_c) | set(prod_c)):
-                lv, pv = str(loc_c.get(com, "—")), prod_c.get(com, "—")
-                etat = "=" if lv == pv else "≠"
-                if etat == "≠":
-                    ecart = True
-                typer.echo(f"  {com:26s} {lv:>10s} {pv:>10s}  {etat}")
-    typer.echo("\n" + ("✗ ÉCART(S) détecté(s) — local et prod divergent." if ecart
-                       else "✓ parité : local == prod sur les tables clés."))
-    raise typer.Exit(1 if ecart else 0)
 
 
 # ═══════════════════════ CIRCUIT-1 (lot 1.5) — registre : le miroir en base ═══════════════════════
