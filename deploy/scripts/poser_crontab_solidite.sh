@@ -48,8 +48,10 @@ if [ "$APPLY" = 0 ]; then
 fi
 
 # garde prérequis : les 3 jobs doivent exister dans le code déployé
+# (le CLI exige labuse.env + cwd app — sinon il échoue au chargement et la garde refuse à tort).
+JOBS_LIST="$(sudo -u labuse bash -c 'set -a; . /etc/labuse/labuse.env 2>/dev/null; set +a; cd /opt/labuse/app && /opt/labuse/venv/bin/labuse jobs list 2>/dev/null')"
 for j in recap-matin backup-offsite verite-sources; do
-  sudo -u labuse /opt/labuse/venv/bin/labuse jobs list 2>/dev/null | grep -q "^$j " \
+  printf '%s\n' "$JOBS_LIST" | grep -q "^$j " \
     || { echo "✗ REFUS : le job « $j » n'existe pas dans le code déployé — déployer le code d'abord."; exit 1; }
 done
 
