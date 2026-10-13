@@ -4985,6 +4985,28 @@ def ops_chasse_cmd() -> None:
     raise typer.Exit(1 if res["ecart"] else 0)
 
 
+@ops_app.command("verite-sources")
+def ops_verite_sources_cmd(
+    n: int = typer.Option(20, "--n", help="Nombre de parcelles tirées au hasard."),
+) -> None:
+    """SOLIDITE-1 (Lot 5) — confronte N parcelles au hasard (stratifiées) aux sources officielles en ligne,
+    journalise le rapport et ouvre un incident par écart. Une ligne par comparaison, puis le bilan."""
+    from .db import session_scope
+    from . import verite_sources as vs
+    res = vs.jouer(n=n)
+    for l in res["lignes"]:
+        marque = {"vrai": "OK", "faux": "ECART", "non_verifiable": "SKIP"}.get(l["verdict"], "?")
+        typer.echo(f"[{marque}] {l['objet']} {l['notion']} — servi={l['valeur_labuse']} "
+                   f"oracle={l['valeur_oracle']} ({l['source_oracle']})")
+    with session_scope() as db:
+        r = vs.journaliser_passage(db, res)
+        db.commit()
+    b = res["bilan"]
+    typer.echo(f"\nBilan : {b['vrai']} vrai · {b['faux']} faux · {b['non_verifiable']} non vérifiable "
+               f"({len(res['echantillon'])} parcelles)")
+    raise typer.Exit(1 if r["faux"] else 0)
+
+
 @ops_app.command("test-alerte")
 def ops_test_alerte_cmd() -> None:
     """PREUVE (SOLIDITE-1 Lot 1.6) — joue un ÉCHEC réel (job jetable qui lève → incident + alerte) et un

@@ -2568,6 +2568,20 @@ def admin_chasse(request: Request) -> dict:
             "commande": "labuse jobs run coherence-banc (joue cohérence + les 25 gardes chasse)"}
 
 
+@router.get("/admin/verite-sources")
+def admin_verite_sources(request: Request) -> dict:
+    """SOLIDITE-1 (Lot 5) — l'historique du contrôle mensuel « vérité face aux sources » : par passage,
+    vrai/faux/non-vérifiable et le détail des écarts servi↔source officielle (parcelle + les deux valeurs)."""
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from ..verite_sources import derniers_passages
+    from ..db import session_scope as _ss
+    with _ss() as s:
+        passages = derniers_passages(s, n=24)
+    return {"passages": passages,
+            "commande": "labuse ops verite-sources (20 parcelles au hasard vs sources officielles)"}
+
+
 @router.get("/admin/circuit")
 def admin_circuit(request: Request) -> dict:
     """CIRCUIT-1 (lot 5.1) — LA structure de la page Circuit, calculée EN DIRECT et en UN appel :

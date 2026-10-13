@@ -521,6 +521,16 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
               "de point d'appel naturel ailleurs et ouvre/referme leurs incidents (une alerte, un rappel "
               "par jour, un « résolu »). C'est l'anti-silence du 07/10.",
        test="tests/test_solidite1_lot1.py::test_recap_matin_au_registre"),
+    # SOLIDITE-1 (Lot 5) — la vérité face aux sources, chaque mois : 20 parcelles au hasard (stratifiées)
+    # comparées aux sources officielles EN LIGNE (cadastre IGN, Géorisques, DVF, bâtiments). Le 15 à 06:00.
+    _j("verite-sources", "Vérité sources — 20 parcelles au hasard confrontées aux sources officielles en ligne",
+       "mensuel (15)", "0 2 15 * *", "06:00 le 15", touche="exploitation", timeout_s=3600,
+       raison="Une fois par mois, on confronte ce que LABUSE SERT aux sources officielles en ligne "
+              "(cadastre IGN API Carto, GPU/Géorisques, DVF, bâtiments) sur 20 parcelles tirées au hasard "
+              "et stratifiées (bizone, zone rouge, nouvelle, contenance ≠ dessin). Tout écart servi↔source "
+              "ouvre un incident (parcelle + les deux valeurs). Séquentiel et espacé (quotas respectés), "
+              "aucune écriture en base hors le rapport. L'œil extérieur qui ne dépend pas de nos propres caches.",
+       test="tests/test_solidite1_lot5.py::test_verite_sources_au_registre"),
     _j("restore-test", "Restaure le dernier dump dans une base jetable et vérifie (puis DROP)",
        "mensuel (1er)", "0 1 1 * *", "05:00 le 1er", touche="exploitation", timeout_s=3600,
        envoie_mail=True, besoin_db=False,

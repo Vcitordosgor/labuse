@@ -735,6 +735,17 @@ def sentinelle_dvf_cadastre(ctx: JobContext) -> None:
 
 # ═══════════════════════════ K9 — robustesse ═══════════════════════════
 
+def verite_sources(ctx: JobContext) -> None:
+    """SOLIDITE-1 (Lot 5) — confronte 20 parcelles tirées au hasard (stratifiées) aux sources officielles
+    en ligne, journalise le rapport (verite_sources_runs) et ouvre un incident agrégé par écart servi↔source.
+    Échantillon vide (base/API injoignables) → note, pas d'échec (le passage suivant réessaiera)."""
+    from . import verite_sources as vs
+    res = vs.jouer(n=20)
+    r = vs.journaliser_passage(ctx.db, res)
+    ctx.db.commit()
+    ctx.compte(**r, parcelles_echantillon=len(res.get("echantillon") or []))
+
+
 def backup_offsite(ctx: JobContext) -> None:
     """SOLIDITE-1 (Lot 3.2) — DÉLÈGUE à deploy/scripts/backup_offsite.sh (chiffre le dernier dump + le
     pousse vers un stockage objet, rétention 8 hebdo). Le code 3 (« non configuré ») n'est PAS un échec :
