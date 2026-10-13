@@ -53,7 +53,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[dev,ci]"
       - name: Suite (exclut données réelles / réseau — famille banc de nuit)
-        run: pytest -m "not local and not reel and not network" -q -p no:cacheprovider
+        # `python -m pytest` (pas `pytest` nu) : ajoute le CWD au sys.path → les tests qui importent
+        # `scripts.*` (banc) résolvent, comme en local (docs/TESTS.md) et dans le hook pre-push.
+        run: python -m pytest -m "not local and not reel and not network" -q -p no:cacheprovider
 
   frontend:
     name: Front (tsc · vitest · build)
