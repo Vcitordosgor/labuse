@@ -268,6 +268,35 @@ def vefa_neuf_build_cmd() -> None:
         typer.echo(f"vefa_neuf : {r['communes']} communes peintes, {r['hachurees']} hachurées (sous le seuil).")
 
 
+@app.command("parite")
+def parite_cmd(
+    tables_quotidien: bool = typer.Option(False, "--tables-quotidien",
+        help="N'imprime QUE les tables des flux quotidiens (une par ligne) — pour les scripts."),
+    tables_fond: bool = typer.Option(False, "--tables-fond",
+        help="N'imprime QUE les tables de fond (une par ligne)."),
+) -> None:
+    """Parité des données Mac↔prod PAR SENS (décision flux 13/10) : quelles tables sont QUOTIDIENNES
+    (prod fait foi, le Mac récupère) et lesquelles sont de FOND (Mac fait foi, poussées en prod).
+    Référence de la récupération prod→Mac (cf. docs/EXPLOITATION.md §11)."""
+    from .flux_sens import FLUX_QUOTIDIEN_PROD, SOURCES_FOND_MAC, tables_quotidiennes
+    from .flux_sens import tables_fond as _tf
+    if tables_quotidien:
+        for t in tables_quotidiennes():
+            typer.echo(t)
+        return
+    if tables_fond:
+        for t in _tf():
+            typer.echo(t)
+        return
+    typer.echo("FLUX QUOTIDIENS — ingérés EN PROD la nuit · PROD fait foi · sens prod→Mac :")
+    for flux, tables in FLUX_QUOTIDIEN_PROD.items():
+        typer.echo(f"  {flux:9s} → {', '.join(tables)}")
+    typer.echo("\nSOURCES DE FOND — construites sur le MAC · MAC fait foi · sens Mac→prod :")
+    for dom, tables in SOURCES_FOND_MAC.items():
+        typer.echo(f"  {dom:9s} → {', '.join(tables)}")
+    typer.echo("\n(scoring/résiduel/cascade + dérivés = CALCULÉS sur le Mac → poussés par sync-run.)")
+
+
 @app.command("ingest-cosia")
 def ingest_cosia_cmd(extract_dir: str = typer.Option(None, help="Dossier des tuiles .gpkg CoSIA "
                      "(défaut : data/cosia/extract/COSIA_*)")) -> None:
