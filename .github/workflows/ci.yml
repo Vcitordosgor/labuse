@@ -21,7 +21,7 @@ jobs:
     timeout-minutes: 15
     services:
       postgres:
-        image: postgis/postgis:18-3.5          # MÊME majeure que la prod (PostgreSQL 18 / PostGIS 3)
+        image: postgis/postgis:18-3.6          # MÊME majeure que la prod (PostgreSQL 18) ; 3.6 = image PG18 publiée
         env:
           POSTGRES_USER: labuse
           POSTGRES_PASSWORD: labuse
