@@ -6200,6 +6200,7 @@ def _potentiel_transformation_block(db: Session, idu: str, commune: str | None =
     estimation_simplifiee = (row["assiette_source"] == "residuel_legacy")
     if estimation_simplifiee and pct is not None and pct > 100:
         pct = None   # un « % consommé » > 100 du moteur simplifié n'est pas un fait servable
+    if pct is None:
         niveau, libelle = "indetermine", "Marge SDP non calculée"
     elif pct < 40:
         niveau, libelle = "fort", "Fort potentiel — parcelle en forte sous-densité"

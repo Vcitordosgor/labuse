@@ -223,11 +223,13 @@ def _bilan_rebours(bilan: dict, resolved: dict | None = None) -> str:
     # CHASSE-CALCULS-FIX-1 Lot 2 (E-A2) — quand la taxe d'aménagement est chiffrée, DIRE ce que son
     # barème ne couvre pas (exonérations communales facultatives, stationnement majoré sur délibération).
     if bilan["postes"].get("taxe_amenagement", {}).get("montant") is not None:
+        # E-A2 — mention SANS nombre nu (crible de provenance Z5 : seuls les chiffres du registre
+        # sont imprimables). Les seuils chiffrés (abris ≤ 20 m², commerces < 400 m², tarif majoré)
+        # restent dans l'outil Taxe, non soumis au crible ; ici on NOMME les exclusions, sans grandeur.
         corps += note(
             "Taxe d'aménagement — non pris en compte : les exonérations facultatives votées par la "
-            "commune (abris de jardin ≤ 20 m², commerces de détail < 400 m² — CGI art. 1635 quater E) "
-            "et le stationnement extérieur au tarif majoré sur délibération. À vérifier dans la "
-            "délibération de la commune.")
+            "commune (abris de jardin, petits commerces — CGI art. 1635 quater E) et le stationnement "
+            "extérieur au tarif majoré sur délibération. À vérifier dans la délibération de la commune.")
     return corps
 
 

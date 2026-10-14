@@ -49,27 +49,55 @@ Deux correctifs ont une partie **code (faite, testée)** et une partie **donnée
 - Surface recalculée / SDP : toute parcelle dont la **contenance a changé** depuis `run_seq 15` (cadastre d'octobre) voit sa SDP recalculée sur la nouvelle surface — ordre de grandeur : les 2 919 parcelles « nouvelles » + les parcelles à contenance révisée (cf. CHASSE-DONNEES-1).
 - Migration legacy→gabarit : **~1 100** (bascule d'`assiette_source`), SDP modifiée pour celles-ci (assiette gabarit ≠ inset legacy) ; effet bande = franchissements de seuils, **comptable seulement après scoring**.
 
-### Commandes exactes du run q_v19 (ordre), durée indicative
+### Commandes exactes du run q_v19 — séquence q_v18 reprise à l'identique
+
+**La cascade n'est PAS rejouée** : les sources sont inchangées depuis q_v18 → on **réutilise `q_v18_sources`** comme étage 0. (Pas de `flux-run`, pas de recette `m36` — `m36` était une ancienne recette ; la recette servie du Signal est `q_v15`.) Le `run_seq` du nouveau résiduel est **attribué par `compute-residuel`** et **relevé par `residuel-runs`** (ne pas présumer « 16 »).
+
+**Préfixe d'environnement (à exporter une fois par shell) :**
 ```bash
-# 0. pré-vol : arbre propre, base à jour, sauvegarde (hors scope ici)
-# 1. CASCADE + SIGNAL + SCORING (recette servie m36) — nouveau run de flux
-labuse flux-run --label q_v19_sources --recette m36                 # ~plusieurs heures (île)
-# 2. RÉSIDUEL — run NEUF (peuple surface_terrain_m2 + réaffecte assiette_source gabarit/legacy)
-labuse compute-residuel --ile --new-run q_v19                       # ~1-2 h (431k parcelles, chunk 500)
-labuse residuel-runs                                                # relève le run_seq neuf (attendu : 16)
-# 3. TUILES MVT (carte) du nouveau run
-labuse build-mvt --label q_v19                                      # ~30-60 min
-# 4. FICHES COMMUNES / caches dérivés (rafraîchir après bascule)
-#    (purge du cache de fiche automatique : la clé inclut désormais updated_at+contenance ;
-#     les fiches communes se régénèrent à la demande sur le run servi)
-# 5. BASCULE (geste de Vic, réversible)
-labuse residuel-serve 16                                            # bascule le résiduel sur run_seq 16
-labuse golden promote q_v19                                         # bascule le manifeste servi (cascade/scoring/mvt)
-# 6. CONTRÔLE post-bascule
-PYTHONPATH=src python -m scripts.coherence.recalcul.banc_calcul     # 0 écart neuf attendu
-labuse parite                                                       # cohérence servie
+export DYLD_FALLBACK_LIBRARY_PATH=/opt/homebrew/lib
+export LABUSE_DATABASE_URL=postgresql+psycopg://openclaw@localhost:5432/labuse
+cd ~/Desktop/labuse-calculs-fix
+export PYTHONPATH=$PWD/src
+PY=/Users/openclaw/Desktop/labuse/.venv/bin/python     # interpréteur du venv projet
+LABUSE="$PY -m labuse.cli"                              # = la commande `labuse`
 ```
-**Durée totale** : une nuit (dominée par flux-run + compute-residuel). **À lancer par Vic** ; je n'ai rien lancé. La bascule (étape 5) est réversible (`residuel-serve <ancien>` / `golden promote <ancien>`).
+
+**CE SOIR — étape 1 seule (résiduel île), sous `caffeinate`, avec journal :**
+```bash
+mkdir -p logs
+caffeinate -i $LABUSE compute-residuel --ile --assiette-clippee --new-run q_v19 --chunk 500 \
+  2>&1 | tee logs/qv19-1-residuel-$(date +%Y%m%d-%H%M).log
+# ~1-2 h (431k parcelles). Peuple parcel_residuel_runs.surface_terrain_m2 (E-B1) et
+# réaffecte assiette_source gabarit/residuel_legacy (E-B3). NON servi — aucune bascule.
+```
+
+**DEMAIN MATIN — étapes 2 à 5 :**
+```bash
+# 2. relever le run_seq neuf, puis BASCULER le résiduel servi dessus (le Signal lit le résiduel servi)
+$LABUSE residuel-runs                                   # note le run_seq de q_v19 (ex. N)
+$LABUSE residuel-serve <N>                              # bascule le résiduel (réversible : residuel-serve 15)
+
+# 3. SOCLE + SIGNAL p_v2 (purge candidate puis run ; étage 0 = q_v18_sources, socle reconstruit)
+$PY scripts/audit/scoring/purge_qv19.py
+caffeinate -i $PY scripts/audit/scoring/run_qv19.py \
+  2>&1 | tee logs/qv19-3-signal-$(date +%Y%m%d-%H%M).log   # build_all ≈2 h + Signal
+
+# 4. SCORE LABUSE (cascade réutilisée q_v18_sources, Signal = q_v19)
+caffeinate -i $LABUSE score-labuse --run q_v19 --cascade-label q_v18_sources --signal-run q_v19 \
+  2>&1 | tee logs/qv19-4-score-$(date +%Y%m%d-%H%M).log
+
+# 5. BASCULE servie + tuiles + cache fiches communes
+$LABUSE golden promote q_v19                            # bascule le manifeste servi (réversible : golden promote q_v18)
+$LABUSE build-mvt --label q_v19                         # tuiles MVT du run servi (~30-60 min)
+$LABUSE jobs exec fiche-commune-cache                   # précalcul du contexte des 24 communes
+
+# 6. CONTRÔLE post-bascule
+$PY -m scripts.coherence.recalcul.banc_calcul           # 0 écart neuf attendu
+$LABUSE parite                                          # cohérence servie
+```
+
+**Durée** : étape 1 ≈ 1-2 h (ce soir) ; étapes 2-5 ≈ une matinée (dominée par `run_qv19.py` build_all ≈ 2 h + score-labuse). **Réversible** : `residuel-serve 15` / `golden promote q_v18`. **À lancer par Vic — rien n'a été lancé.**
 
 ## Captures
 Les correctifs touchent l'outil Taxe (encart « nb logements » + « Non pris en compte »), la fiche §Potentiel (note surface datée + « estimation simplifiée »), le Dossier/Bilan (mêmes mentions) et le 3D (note terrain plat). **Les captures pixel avant/après n'ont pas été produites cette passe** (pile front+back à lancer, hors budget) : la preuve fournie est fonctionnelle (gardes rejouables exit 0, endpoints vérifiés, PDF extrait en texte, `tsc`/tests verts). À produire avant merge.

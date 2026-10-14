@@ -31,25 +31,34 @@ def _commit_pointeurs(arbre: Path, run: str) -> dict:
     N'ajoute QUE ces trois fichiers (jamais `git add -A` : l'arbre peut porter d'autres changements).
     Retour : {ok: True, sha|rien_a_committer} si commité (ou déjà propre), sinon {ok: False, motif} —
     et c'est le dashboard qui, sur ok:False, lève le bandeau rouge « 3 fichiers à commiter »."""
+    import os
     import subprocess
     fichiers = list(_POINTEURS_CONFIG)
     base = ["git", "-C", str(arbre)]
+    # CHASSE-CALCULS-FIX-1 — `git -C <arbre>` doit TOUJOURS viser <arbre>. Or les variables
+    # d'environnement git (GIT_DIR, GIT_WORK_TREE, GIT_INDEX_FILE…) PRIMENT sur `-C` : si elles
+    # sont posées par un APPELANT git (ex. un hook pre-push exécute ses outils avec GIT_DIR défini),
+    # tous ces git retomberaient sur le dépôt de l'appelant au lieu de <arbre>, écrasant sa config
+    # (vécu : core.bare=true sur le dépôt réel). On les retire de l'environnement des sous-processus.
+    env = {k: v for k, v in os.environ.items()
+           if k not in ("GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_COMMON_DIR",
+                        "GIT_OBJECT_DIRECTORY", "GIT_PREFIX", "GIT_NAMESPACE")}
     try:
-        add = subprocess.run([*base, "add", "--", *fichiers], capture_output=True, text=True, timeout=30)
+        add = subprocess.run([*base, "add", "--", *fichiers], capture_output=True, text=True, timeout=30, env=env)
         if add.returncode != 0:
             return {"ok": False, "fichiers": fichiers,
                     "motif": (add.stderr or "git add a échoué").strip()[:200]}
         # rien d'indexé (réexécution, pointeurs déjà commités) → considéré fait, pas de commit vide.
-        diff = subprocess.run([*base, "diff", "--cached", "--quiet", "--", *fichiers])
+        diff = subprocess.run([*base, "diff", "--cached", "--quiet", "--", *fichiers], env=env)
         if diff.returncode == 0:
             return {"ok": True, "fichiers": fichiers, "rien_a_committer": True,
                     "message": f"bascule: {run}"}
         com = subprocess.run([*base, "commit", "-m", f"bascule: {run}", "--", *fichiers],
-                             capture_output=True, text=True, timeout=30)
+                             capture_output=True, text=True, timeout=30, env=env)
         if com.returncode != 0:
             return {"ok": False, "fichiers": fichiers,
                     "motif": (com.stderr or com.stdout or "git commit a échoué").strip()[:200]}
-        sha = subprocess.run([*base, "rev-parse", "HEAD"], capture_output=True, text=True, timeout=30)
+        sha = subprocess.run([*base, "rev-parse", "HEAD"], capture_output=True, text=True, timeout=30, env=env)
         return {"ok": True, "fichiers": fichiers, "message": f"bascule: {run}",
                 "sha": sha.stdout.strip() if sha.returncode == 0 else None}
     except FileNotFoundError:
