@@ -4961,12 +4961,7 @@ def _crontab_du_registre(tz: str) -> str:
         # du cron ne passe RIEN au process (ni DB, ni Brevo) et les jobs échouent/dérivent en silence
         # (constat 13/10 : mail-queue-consommer en échec, alerte dry-run). Chemin COMPLET du venv (pas de
         # `labuse` nu qui dépend du PATH). Les crons legacy font déjà pareil.
-        # MAIL-QUEUE-BUDGET-1 (14/10) — flock PAR JOB : deux passages du MÊME job ne peuvent jamais se
-        # chevaucher (incident 14/10 : mail-queue-consommer, cron 5 min, pris de retard → deux passages
-        # sur la connexion partagée → « another command is already in progress »). `-n` = non bloquant :
-        # si le passage précédent tourne encore, celui-ci s'efface SANS s'empiler. Verrou nommé PAR job
-        # dans /run/lock (tmpfs, 1777, créé par flock) → un job n'en verrouille jamais un autre.
-        lignes.append(f"{conv(j.cron_utc)}   labuse  flock -n /run/lock/labuse-{nom}.lock sh -c 'set -a; . /etc/labuse/labuse.env; set +a; exec /opt/labuse/venv/bin/labuse jobs run {nom}'")
+        lignes.append(f"{conv(j.cron_utc)}   labuse  sh -c 'set -a; . /etc/labuse/labuse.env; set +a; exec /opt/labuse/venv/bin/labuse jobs run {nom}'")
         lignes.append("")
     return "\n".join(lignes).rstrip("\n") + "\n"
 

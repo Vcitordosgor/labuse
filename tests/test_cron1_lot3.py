@@ -29,21 +29,9 @@ def test_crontab_genere_une_ligne_par_job():
 
 def test_crontab_backup_horaire_legacy_sans_trou():
     """Le backup garde l'expression EXACTE du legacy (30 9 * * *) en UTC → remplacement sans trou."""
-    assert "30 9 * * *   labuse  flock -n /run/lock/labuse-backup-postgres.lock sh -c" in _crontab_du_registre("utc")
+    assert "30 9 * * *   labuse  sh -c" in _crontab_du_registre("utc")
     # tz Réunion : +4 h → 30 13
-    assert "30 13 * * *   labuse  flock -n /run/lock/labuse-backup-postgres.lock sh -c" in _crontab_du_registre("reunion")
-
-
-def test_crontab_flock_par_job():
-    """MAIL-QUEUE-BUDGET-1 — CHAQUE ligne de job porte un flock non bloquant nommé par le job :
-    deux passages d'un même job ne se chevauchent jamais, un job n'en bloque jamais un autre."""
-    c = _crontab_du_registre("utc")
-    for nom, j in JOBS.items():
-        if not j.planifie:
-            continue
-        attendu = (f"labuse  flock -n /run/lock/labuse-{nom}.lock sh -c 'set -a; "
-                   f". /etc/labuse/labuse.env; set +a; exec /opt/labuse/venv/bin/labuse jobs run {nom}'")
-        assert attendu in c, f"{nom} : flock par job manquant dans le crontab"
+    assert "30 13 * * *   labuse  sh -c" in _crontab_du_registre("reunion")
 
 
 def test_crontab_tz_reunion_convertit_les_heures():
