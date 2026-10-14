@@ -438,6 +438,16 @@ export function TaxeAmenagement() {
             )}
           </div>
 
+          {/* CHASSE-CALCULS-FIX-1 Lot 2 (E-A2) — dire ce que le barème NE couvre PAS (toujours visible). */}
+          {r.non_couvert && r.non_couvert.length > 0 && (
+            <div data-taxe-non-couvert className="rounded-lg border border-line-2 bg-surface-3/40 p-2 text-[9.5px] leading-snug text-txt-dim">
+              <p className="label-caps mb-1 text-[9.5px] text-txt-mut">Non pris en compte par cette estimation</p>
+              <ul className="list-disc pl-3.5 space-y-0.5">
+                {r.non_couvert.map((s, i) => <li key={i}>{s}</li>)}
+              </ul>
+            </div>
+          )}
+
           {/* RETOURS-11 O4c : le rappel « estimation indicative » (r.note) est déjà dit dans l'intro
               en tête de page → on ne garde ici que la provenance datée (année + source), non redondante. */}
           <p className="text-[10px] leading-snug text-txt-dim">

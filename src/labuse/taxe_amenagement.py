@@ -225,6 +225,7 @@ def calculer(
     ab = cfg["abattement"]
     fo = cfg["forfaits"]
     taux = cfg["taux"]
+    _station_max = fo.get("stationnement_ext_place_max_delib")
     if taux_departemental_pct is None:
         taux_departemental_pct = taux.get("part_departementale_defaut")
 
@@ -329,6 +330,18 @@ def calculer(
     # (art. L524-7 c. patrimoine). Ligne à part, sous le total TA ; ne dépend pas du taux communal.
     rap_eur = _eur(assiette * _RAP_PCT / 100.0)
 
+    # CHASSE-CALCULS-FIX-1 Lot 2 (E-A2) — ce que le barème ne couvre pas (servi à l'outil ET au PDF).
+    _non_couvert = [s for s in (
+        "Exonérations facultatives votées par la commune (abris de jardin ≤ 20 m², commerces de "
+        "détail < 400 m², etc. — CGI art. 1635 quater E) : non appliquées ici — à vérifier dans la "
+        "délibération de la commune.",
+        (f"Stationnement extérieur au tarif majoré sur délibération (jusqu'à {int(_station_max):g} "
+         f"€/place au lieu de {int(fo['stationnement_ext_place']):g}) : non appliqué sauf saisie."
+         ) if _station_max else None,
+        "Hors barème : taxe d'aménagement à taux majoré sectoriel (au-delà des secteurs ingérés), "
+        "versement pour sous-densité (VSD) et participations d'urbanisme (PVR/PFAC).",
+    ) if s]
+
     return {
         "annee": cfg["meta"]["annee"],
         "source": cfg["meta"]["source"],
@@ -347,6 +360,9 @@ def calculer(
         "nb_logements": nb_rp,                       # nombre de logements RP retenu (None hors RP)
         "nb_logements_precise": nb_logements_precise,  # True si saisi par l'appelant
         "message_nb_logements": msg_nb_logements,    # invite à saisir si collectif (sinon None)
+        # CHASSE-CALCULS-FIX-1 Lot 2 (E-A2) — ce que le barème ne modélise PAS, dit explicitement
+        # (même liste servie à l'outil ET au PDF ; une notion, un chemin).
+        "non_couvert": _non_couvert,
         # TAXE-FIX-1 point 2 — redevance d'archéologie préventive (0,40 % de l'assiette).
         "rap_pct": _RAP_PCT,
         "rap_eur": rap_eur,

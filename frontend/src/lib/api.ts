@@ -584,6 +584,8 @@ export interface TaxeResult {
   nb_logements?: number | null
   nb_logements_precise?: boolean
   message_nb_logements?: string | null
+  // CHASSE-CALCULS-FIX-1 Lot 2 (E-A2) — ce que le barème ne couvre pas (exonérations facultatives, etc.).
+  non_couvert?: string[]
   // TAXE-FIX-1 point 2 — redevance d'archéologie préventive (0,40 % de la même assiette, art. L524-7).
   rap_pct?: number
   rap_eur?: number
