@@ -115,6 +115,40 @@ def test_brevo_revient_avant_echec(monkeypatch):
             c.execute(text("DELETE FROM mail_queue WHERE dedup=:d"), {"d": f"vf2dr:{tag}"})
 
 
+def test_worker_respecte_le_budget(monkeypatch):
+    """MAIL-QUEUE-BUDGET-1 — le worker S'ARRÊTE une fois le budget écoulé et ne lance PLUS d'envoi
+    (incident 14/10 09:40 : l'alarme du job à 300 s frappait EN PLEINE requête → connexion « command in
+    progress » → « another command is already in progress »). Budget 0 → aucun envoi tenté, tout en
+    reliquat : jamais d'alarme en pleine requête ; le reliquat part au passage suivant."""
+    eng = engine()
+    mailfile.ensure_tables(eng)
+    _purge_non_terminaux(eng)
+    tag = uuid.uuid4().hex[:8]
+    appels = {"n": 0}
+
+    def _compte_envoi(*a, **k):
+        appels["n"] += 1
+        return _fake(True)
+
+    try:
+        for i in range(3):
+            mailfile.envoyer_mail(eng, **_raw(f"budg-{tag}-{i}@labuse.immo"),
+                                  dedup=f"vf2dbudg:{tag}:{i}", differe=True)
+        monkeypatch.setattr(mail, "send_email", _compte_envoi)
+
+        # budget épuisé d'emblée → la boucle casse AVANT le 1er envoi : 0 envoi, 3 en reliquat
+        r = mailfile.consommer(eng, budget_s=0.0)
+        assert appels["n"] == 0, "aucun envoi ne doit être lancé une fois le budget écoulé"
+        assert r["traites"] == 0 and r["envoyes"] == 0 and r["restants"] == 3
+
+        # budget illimité → les 3 partent (le reliquat du passage précédent est bien repris)
+        r = mailfile.consommer(eng, budget_s=None)
+        assert appels["n"] == 3 and r["envoyes"] == 3 and r["restants"] == 0
+    finally:
+        with eng.begin() as c:
+            c.execute(text("DELETE FROM mail_queue WHERE dedup LIKE :d"), {"d": f"vf2dbudg:{tag}:%"})
+
+
 def test_digest_passe_par_la_file(monkeypatch):
     """envoyer_digests (non dry-run) ENFILE le digest (en_attente) sans envoi synchrone ; le worker le
     livre. Prouve « le digest passe par la file »."""

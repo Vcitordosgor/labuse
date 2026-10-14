@@ -24,6 +24,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import time
 from datetime import datetime, timezone
 
 from sqlalchemy import text
@@ -33,6 +34,13 @@ from . import brevo
 log = logging.getLogger("labuse.mailfile")
 
 TENTATIVES_MAX = 3
+#: BUDGET DE TEMPS du worker (`consommer`). Le job `mail-queue-consommer` a un timeout de 300 s imposé
+#: par `signal.alarm` (jobs.py) : si l'alarme frappe PENDANT une requête psycopg, la connexion reste
+#: « command in progress » et le rollback lève « another command is already in progress » (incident du
+#: 14/10, 09:40). On s'arrête donc BIEN avant (240 s) : la boucle ne lance plus de nouveau mail une fois
+#: le budget écoulé — le dernier envoi en cours (SMTP timeout 15 s) + l'écriture finissent sous 300 s, et
+#: le reliquat part au passage suivant (toutes les 5 min). Plus jamais d'alarme en pleine requête.
+BUDGET_CONSOMMER_S = 240.0
 #: fenêtre anti-doublon par défaut (double-clic) : deux enfilages identiques sous ce délai = un seul.
 FENETRE_DOUBLON_S = 30
 
@@ -284,28 +292,40 @@ def annuler(engine, mail_id: int, demandeur: str = "systeme") -> dict:
     return _ligne(row)
 
 
-def consommer(engine, demandeur: str = "job:mail-queue-consommer", limite: int = 200) -> dict:
+def consommer(engine, demandeur: str = "job:mail-queue-consommer", limite: int = 200,
+              budget_s: float | None = BUDGET_CONSOMMER_S) -> dict:
     """VEILLE-FIX-2 (Lot D) — LE WORKER DE LA FILE (cron 5 min). Fait partir tout ce qui est DÛ :
       · `en_attente` sans `prevu_at` (immédiats différés, ex. digest) OU `prevu_at ≤ now` (programmés
         J+3 / J+10) ;
       · `a_rejouer` dont l'heure de rejeu est venue (`prevu_at ≤ now`).
     Idempotent, jamais d'envoi en double (`_tenter_depart` verrouille FOR UPDATE et ne retente pas un
-    `recu`). Retourne un compte-rendu {traites, envoyes, a_rejouer, echecs}."""
+    `recu`). S'ARRÊTE après `budget_s` (ne lance plus de nouveau mail) pour ne JAMAIS se faire couper
+    par le timeout du job en pleine requête (cf. BUDGET_CONSOMMER_S) ; le reliquat part au passage
+    suivant. Retourne {traites, envoyes, a_rejouer, echecs, restants} — `restants` > 0 = budget atteint."""
     with engine.begin() as c:
         ids = [r[0] for r in c.execute(text(
             "SELECT id FROM mail_queue WHERE etat IN ('en_attente','a_rejouer') "
             "AND (prevu_at IS NULL OR prevu_at <= now()) "
             "ORDER BY prevu_at NULLS FIRST, id LIMIT :l"), {"l": int(limite)}).all()]
-    envoyes = rejeu = echecs = 0
+    envoyes = rejeu = echecs = traites = 0
+    debut = time.monotonic()
     for mid in ids:
+        if budget_s is not None and (time.monotonic() - debut) >= budget_s:
+            break  # budget écoulé : on ne lance PAS de nouvel envoi → jamais d'alarme en pleine requête
         r = _tenter_depart(engine, mid)
+        traites += 1
         if r["etat"] == "recu":
             envoyes += 1
         elif r["etat"] == "a_rejouer":
             rejeu += 1
         elif r["etat"] == "echec":
             echecs += 1
-    return {"traites": len(ids), "envoyes": envoyes, "a_rejouer": rejeu, "echecs": echecs}
+    restants = len(ids) - traites
+    if restants:
+        log.info("mail-queue : budget %.0fs atteint — %d traité(s), %d reliquat(s) au prochain passage",
+                 budget_s or 0, traites, restants)
+    return {"traites": traites, "envoyes": envoyes, "a_rejouer": rejeu, "echecs": echecs,
+            "restants": restants}
 
 
 def depart_des_programmes(engine, demandeur: str = "job:mail-queue") -> int:
