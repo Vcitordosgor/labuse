@@ -212,6 +212,10 @@ class Settings(BaseSettings):
     # n'a ni /var/log/labuse ni /run/lock écrivables — sinon le job échoue silencieusement).
     jobs_lock_dir: str = ".local/lock"               # LABUSE_LOCK_DIR
     disque_seuil_pct: int = 85                        # K9 — alerte disque au-delà (constante nommée)
+    # DISQUE-EXTERNE-1 (14/10) — fraîcheur de la copie hors-VPS sur le disque externe du Mac. Le Mac
+    # dépose un marqueur `.copie-externe.json` dans backup_dir après chaque copie vérifiée ; au-delà de
+    # ce seuil (jours), le récap ouvre l'incident « branche le disque ». LABUSE_COPIE_EXTERNE_SEUIL_J.
+    copie_externe_seuil_j: int = 10
     # VP-001 (mandat VPS) — dossier des binaires pg_dump/pg_restore quand le PATH sert une
     # MAUVAISE version (Mac : Homebrew 16 devant le client 18). Absent → PATH, avec garde de
     # version (backup-db refuse un pg_dump plus vieux que le serveur au lieu d'échouer cryptique).

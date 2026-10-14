@@ -4998,7 +4998,7 @@ app.add_typer(ops_app, name="ops")
 
 @ops_app.command("verifier")
 def ops_verifier_cmd() -> None:
-    """Évalue les quatre vigies (disque, /readyz, sauvegarde, jobs en retard), ouvre/referme les incidents
+    """Évalue les cinq vigies (disque, /readyz, sauvegarde, copie externe, jobs en retard), ouvre/referme les incidents
     par la porte unique, et affiche l'état. C'est ce que fait le récap du matin, à la demande."""
     import json as _json
     from .db import session_scope

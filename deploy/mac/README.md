@@ -50,6 +50,35 @@ tail -f ~/.labuse/restore_test.log
 Pré-requis : `pg_restore`/`psql` ≥ la majeure PostgreSQL du VPS (sinon le dump est refusé), et l'accès SSH
 `labuse-vps` (le même que la garde externe).
 
+## Copie des sauvegardes hors du VPS, sur le disque externe (DISQUE-EXTERNE-1)
+
+**Pourquoi.** Un VPS perdu (feu, rançongiciel) ne doit pas emporter les sauvegardes. On a abandonné la
+copie vers un stockage objet chiffré (ancien `deploy/scripts/backup_offsite.sh`, retiré) au profit d'une
+copie sur le **disque externe de Vic** — volume `MUSIQUE-VIDEO`, dossier dédié `LABUSE-SAUVEGARDES`
+(non chiffré, choix assumé). Le script tourne **sur le Mac** : il tire le dernier dump du VPS par ssh
+(sens tiré), vérifie l'**empreinte sha256** (calculée sur le VPS) et la **lisibilité** (`pg_restore
+--list`), puis range le dump. Jamais d'écrasement sans vérification réussie (copie dans un `.part`,
+vérification, puis renommage atomique).
+
+- **Déclencheurs** (plist) : à **chaque montage de volume** (`StartOnMount` — le script ne fait rien si
+  ce n'est pas le bon disque) **et** chaque **dimanche 14:30** s'il est branché.
+- **Rétention** : les **8 dernières hebdomadaires + 1 par mois sur 12 mois**, sur le seul dossier dédié.
+- **Jamais** le volume Time Machine « SAUVEGARDE HD » (garde dure en tête de script, non surchargeable).
+- Après chaque copie vérifiée, le Mac **inscrit la date sur le VPS** (`/var/backups/labuse/.copie-externe.json`,
+  via `sudo -n -u labuse tee`). Le **récap du matin** affiche cette date, et une alerte **« branche le
+  disque »** part si elle a **plus de 10 jours** (vigie `ops_alertes`).
+
+Installation :
+```sh
+# éditer com.labuse.backup-offsite.plist (chemins /Users/VIC, clé Brevo éventuelle), puis :
+cp deploy/mac/com.labuse.backup-offsite.plist ~/Library/LaunchAgents/
+launchctl load  ~/Library/LaunchAgents/com.labuse.backup-offsite.plist
+launchctl start com.labuse.backup-offsite      # pour forcer une copie tout de suite
+tail -f ~/.labuse/backup_offsite_disque.log
+```
+Pré-requis : `pg_restore` ≥ la majeure PostgreSQL du VPS, l'accès ssh `labuse-vps`, et le disque branché.
+Pour retirer : `launchctl unload ~/Library/LaunchAgents/com.labuse.backup-offsite.plist`.
+
 ## Alternative sans Mac allumé
 
 Si le Mac n'est pas toujours allumé, un service de veille **gratuit** (UptimeRobot, BetterStack free…)
