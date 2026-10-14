@@ -1,0 +1,41 @@
+{
+  "label": "v4",
+  "base": "http://localhost:8745/socle/",
+  "diag": {
+    "webglRenderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M1, Unspecified Version)",
+    "hardwareConcurrency": 8,
+    "devicePixelRatio": 2,
+    "canvasPixelRatio": 2,
+    "workerScriptLoads": 0
+  },
+  "workerCount": 1,
+  "workersCDP": 1,
+  "idleRendersIn2s": 0,
+  "framesAnim": {
+    "n": 2387,
+    "medianMs": 16.7,
+    "p95Ms": 17.5,
+    "p99Ms": 17.7,
+    "slowOver33ms": 15,
+    "pctSlow": 0.6
+  },
+  "framesInteract": {
+    "n": 308,
+    "medianMs": 16.7,
+    "p95Ms": 16.8,
+    "p99Ms": 17.5,
+    "slowOver33ms": 0,
+    "pctSlow": 0
+  },
+  "longtasksInteract": {
+    "n": 0,
+    "totalMs": 0,
+    "maxMs": 0
+  },
+  "parcours_ms": {
+    "zoom": 22164,
+    "pan": 3131,
+    "zoomOutIn": 40249,
+    "layers": 686
+  }
+}

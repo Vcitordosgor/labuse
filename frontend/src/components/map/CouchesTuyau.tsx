@@ -3,7 +3,7 @@
 // dès la vue île (aucun bandeau d'attente, aucun « Zoomez »). Un échec de tuile est signalé sur la
 // ligne de la couche, jamais muet. ADDITIF : ne touche à aucune couche existante.
 import { useEffect, useMemo, useRef, useState } from 'react'
-import maplibregl from 'maplibre-gl'
+import * as maplibregl from 'maplibre-gl'   // MAPLIBRE-1 Lot B — v6 ESM : plus d'export par défaut
 import { useQuery } from '@tanstack/react-query'
 import { useApp } from '../../store/useApp'
 import { LayerRowUI } from '../panel/LayerRowUI'   // COUCHES-RECETTE-2 B2 : composant de ligne partagé
@@ -182,9 +182,15 @@ function dimensions(geo: string): Set<'poly' | 'line' | 'point'> {
 // ligne) → « un rond par sommet ». Règle : un polygone = remplissage + contour ; une ligne = trait ;
 // SEULS les vrais points portent un cercle. On restreint donc chaque calque à sa dimension réelle
 // (Point / LineString / Polygon — MultiX renvoie le même type de base côté MapLibre).
-const F_POINT = ['==', ['geometry-type'], 'Point'] as unknown
-const F_LINE = ['==', ['geometry-type'], 'LineString'] as unknown
-const F_POLY = ['==', ['geometry-type'], 'Polygon'] as unknown
+// MAPLIBRE-1 Lot B — depuis maplibre 5, l'expression `geometry-type` renvoie le type EXACT, « Multi- »
+// compris (MultiPolygon, MultiLineString, MultiPoint) ; avant elle repliait sur le type de base. Un
+// `['==', ['geometry-type'], 'Polygon']` ne matchait donc PLUS les MultiPolygon des tuiles (SUP, zonage,
+// risques) → couches « instables »/disparues. On teste par SOUS-CHAÎNE : 'Polygon' est contenu dans
+// 'Polygon' ET 'MultiPolygon' (idem Point/MultiPoint, LineString/MultiLineString). Rendu IDENTIQUE à
+// maplibre 4 (où `==Polygon` matchait déjà les deux via le repli) — l'ensemble des features visé ne change pas.
+const F_POINT = ['in', 'Point', ['geometry-type']] as unknown
+const F_LINE = ['in', 'LineString', ['geometry-type']] as unknown
+const F_POLY = ['in', 'Polygon', ['geometry-type']] as unknown
 
 // RECETTE-2 (C1, Vic 05/10) — le minzoom « 04/10 » qui masquait des couches en vue île est RETIRÉ :
 // toutes les couches à pastille redeviennent visibles à TOUS les zooms (île comprise) ; la source et

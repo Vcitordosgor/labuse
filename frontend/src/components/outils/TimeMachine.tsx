@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
-import maplibregl from 'maplibre-gl'
+import * as maplibregl from 'maplibre-gl'   // MAPLIBRE-1 Lot B — v6 ESM : plus d'export par défaut
 import { useEffect, useRef, useState } from 'react'
+import { reglerWorkerMaplibre } from '../map/maplibreWorker'   // MAPLIBRE-1 Lot B — worker Vite (dev + build)
 import { getParcelGeojson, getParcelsGeojson, getParcellaireEpoque, parcelAt } from '../../lib/api'
 import { useApp } from '../../store/useApp'
 import { BASEMAP_SOURCES, basemapLabel, TEMPS_MILLESIMES, type BasemapDef } from '../map/basemaps'
@@ -14,6 +15,7 @@ const SP_BOUNDS: [number, number, number, number] = [55.21, -21.14, 55.35, -20.9
 
 /** Carte nue (fond sombre) — le fond de plan est posé/échangé ensuite par applyBasemap. */
 function mkMap(el: HTMLDivElement) {
+  reglerWorkerMaplibre()   // MAPLIBRE-1 Lot B — URL du worker AVANT la carte (dev + build)
   return new maplibregl.Map({
     container: el,
     style: {
@@ -41,7 +43,7 @@ function applyBasemap(m: maplibregl.Map, def: BasemapDef) {
 
 function muteTileErrors(m: maplibregl.Map) {
   m.on('error', (e) => {
-    const msg = String((e as { error?: Error }).error?.message ?? '')
+    const msg = String(e.error?.message ?? '')   // MAPLIBRE-1 Lot B — v6 type l'event error (ErrorLike)
     if (/AJAXError|40[04]/.test(msg)) return
     console.error(e.error ?? e)
   })

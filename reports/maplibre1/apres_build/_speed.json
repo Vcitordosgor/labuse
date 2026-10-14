@@ -1,0 +1,42 @@
+{
+  "ouverture_ile": {
+    "runs": [
+      4769,
+      4006,
+      3925
+    ],
+    "median_ms": 4006
+  },
+  "zoom_stpaul": {
+    "runs": [
+      2505,
+      2123,
+      1985
+    ],
+    "median_ms": 2123
+  },
+  "depl_5_z15": {
+    "runs": [
+      12418,
+      12416,
+      12420
+    ],
+    "median_ms": 12418
+  },
+  "activ_3_couches": {
+    "runs": [
+      1652,
+      1223,
+      1147
+    ],
+    "median_ms": 1223
+  },
+  "clic_fiche": {
+    "runs": [
+      100,
+      99,
+      75
+    ],
+    "median_ms": 99
+  }
+}

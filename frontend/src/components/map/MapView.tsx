@@ -1,6 +1,7 @@
 import { useQuery, useIsFetching } from '@tanstack/react-query'
-import maplibregl from 'maplibre-gl'
+import * as maplibregl from 'maplibre-gl'   // MAPLIBRE-1 Lot B — v6 ESM : plus d'export par défaut
 import 'maplibre-gl/dist/maplibre-gl.css'
+import { reglerWorkerMaplibre } from './maplibreWorker'   // MAPLIBRE-1 Lot B — worker Vite (dev + build)
 import { useEffect, useRef, useState } from 'react'
 import { getBatiments, getCommunes, getFiche, getFiltreIdus, getParcelGeojson, getParcelsGeojson, getTilesMeta, modPermisFiche, parcelAt } from '../../lib/api'
 import { ALL_TIER_META, ZONE_FAM_META, ZONE_FAM_ORDER } from '../../lib/status'
@@ -470,6 +471,7 @@ export function MapView() {
   // ───────────────────────── init ─────────────────────────
   useEffect(() => {
     if (!ref.current || map.current) return
+    reglerWorkerMaplibre()   // MAPLIBRE-1 Lot B — v6 ESM : URL du worker maplibre 6 AVANT la 1ʳᵉ carte (dev + build)
     // RECETTE-1 B (vitesse carte) — maplibre-gl v4 n'utilise QU'UN worker par défaut hors Safari
     // (getWorkerCount()===1) : tout le décodage des tuiles vectorielles (parcelles MVT z9-15, zonage,
     // SUP…) est sérialisé sur un seul thread → la carte met plusieurs secondes à « se poser » après un
@@ -506,7 +508,7 @@ export function MapView() {
     // tuiles hors-emprise (océan) : l'IGN répond 400 → bruit inévitable, avalé ici pour que la
     // console ne montre que les VRAIES erreurs (règle d'inspection : zéro ligne rouge parasite)
     m.on('error', (e) => {
-      const msg = String((e as { error?: Error }).error?.message ?? '')
+      const msg = String(e.error?.message ?? '')   // MAPLIBRE-1 Lot B — v6 type l'event error (ErrorLike)
       if (/AJAXError|40[04]/.test(msg)) return
       console.error(e.error ?? e)
     })

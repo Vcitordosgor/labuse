@@ -20,7 +20,10 @@ vi.mock('maplibre-gl', () => {
     getLayer() { return null } getSource() { return undefined }
     addSource() {} addLayer() {} removeLayer() {} removeSource() {} setFilter() {}
   }
-  return { default: { Map }, Map }
+  // MAPLIBRE-1 — reglerWorkerMaplibre() appelle setWorkerUrl + setWorkerCount ; le stub doit les exposer.
+  const setWorkerUrl = () => {}
+  const setWorkerCount = () => {}
+  return { default: { Map, setWorkerUrl, setWorkerCount }, Map, setWorkerUrl, setWorkerCount }
 })
 
 const qc = () => new QueryClient({ defaultOptions: { queries: { retry: false } } })
