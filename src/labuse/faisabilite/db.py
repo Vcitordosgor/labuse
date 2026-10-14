@@ -748,8 +748,18 @@ def volume3d_payload(session: Session, parcel_id: int,
         "surface_plancher_m2": fr.get("surface_plancher_m2"),
         "volume_m3": round((emprise_m2 or 0) * (hauteur or 0)),   # ← recette : emprise × hauteur
         "recul_m": recul,
+        # CHASSE-CALCULS-FIX-1 Lot 6 (E-C1) — le volume est une EXTRUSION À PLAT (emprise × hauteur) :
+        # le terrain naturel (RGE ALTI) n'entre pas dans le volume. On le DIT (pas de mensonge), avec
+        # la pente quand elle est connue (sur terrain pentu, le volume réel diffère du bloc affiché).
+        "terrain_plat": True,
+        "pente_pct": (round(ctx.pente_pct) if getattr(ctx, "pente_pct", None) is not None else None),
+        "terrain_note": ("Volume indicatif — terrain supposé plat"
+                         + (f" (pente ~{round(ctx.pente_pct)} % non reprise dans le volume)"
+                            if getattr(ctx, "pente_pct", None) else "")
+                         + "."),
         "note": "Gabarit-enveloppe indicatif : emprise constructible insetée du recul, extrudée à "
-                "la hauteur PLU (niveaux × étage). Ni architecture ni implantation réelle.",
+                "la hauteur PLU (niveaux × étage). Ni architecture ni implantation réelle ; "
+                "terrain supposé plat (le relief n'entre pas dans le volume).",
     }
 
 
