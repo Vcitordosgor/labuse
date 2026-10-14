@@ -22,6 +22,8 @@ from sqlalchemy import text
 
 from labuse.ingestion.dvf_marche import neuf_vefa_commune
 
+pytestmark = pytest.mark.db  # CI-1 : utilise db_session (DB)
+
 VEFA = "Vente en l'état futur d'achèvement"
 INSEE = "97499"   # commune de test, hors des 24 réelles
 

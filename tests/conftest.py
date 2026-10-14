@@ -401,8 +401,14 @@ def _clear_mem_caches():
 
 @pytest.fixture
 def db_session(engine):
-    """Session transactionnelle rollback-ée après chaque test (pas de pollution)."""
-    connection = engine.connect()
+    """Session transactionnelle rollback-ée après chaque test (pas de pollution).
+
+    CI-1 (rebase) — on FORCE `isolation_level=READ COMMITTED` sur la connexion : un test antérieur
+    peut rendre au pool une connexion laissée en AUTOCOMMIT (sonde admin, `execution_options`…) ;
+    réutilisée telle quelle, db_session verrait ses INSERT auto-committés (fuite → collisions d'IDU
+    figés sur base vierge) et `begin_nested()` échouerait (« SAVEPOINT can only be used in transaction
+    blocks »). Forcer un niveau transactionnel RÉEL à la prise guérit le pool, quel que soit le leak."""
+    connection = engine.connect().execution_options(isolation_level="READ COMMITTED")
     trans = connection.begin()
     Session = sessionmaker(bind=connection, expire_on_commit=False)
     session = Session()

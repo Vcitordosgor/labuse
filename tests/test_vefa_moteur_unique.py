@@ -12,6 +12,8 @@ import pytest
 from sqlalchemy import text
 
 from labuse.ingestion import vefa_neuf
+
+pytestmark = pytest.mark.db  # CI-1 : utilise engine/session_scope (commit) ; nettoyage par plage d'id dans le seed
 from labuse.ingestion.dvf_marche import NEUF_VEFA_FENETRE_ANS, neuf_vefa_commune
 from labuse.marche_service import DVF_NEUF_VEFA, marche_dvf, neuf_vefa_seuil
 
@@ -46,7 +48,8 @@ def test_convergence_fiche_table_carte_a_l_euro_pres(engine):
     from labuse.db import session_scope
     insee = "97499"          # commune de test, hors des 24 réelles
     with session_scope() as db:
-        db.execute(text("DELETE FROM dvf_mutations_parcelle WHERE code_commune = :i"), {"i": insee})
+        db.execute(text("DELETE FROM dvf_mutations_parcelle WHERE code_commune = :i "
+                        "OR id BETWEEN 990000 AND 990009"), {"i": insee})  # CI-1 : purge la plage d'id
         base = dt.date.today() - dt.timedelta(days=180)
         # 10 mutations VEFA, bâti renseigné, prix étalés autour de 5000 €/m² → médiane calculable.
         for k in range(10):
@@ -66,4 +69,5 @@ def test_convergence_fiche_table_carte_a_l_euro_pres(engine):
         assert moteur["n"] == 10
         assert moteur["mediane_prix_m2_bati"] == detail["mediane_eur_m2"]
         assert moteur["mediane_prix_m2_bati"] == fiche["mediane_prix_m2_bati"]
-        db.execute(text("DELETE FROM dvf_mutations_parcelle WHERE code_commune = :i"), {"i": insee})
+        db.execute(text("DELETE FROM dvf_mutations_parcelle WHERE code_commune = :i "
+                        "OR id BETWEEN 990000 AND 990009"), {"i": insee})  # CI-1 : purge la plage d'id

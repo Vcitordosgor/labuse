@@ -4,7 +4,29 @@ Branche `feat/ci-1`, worktree `~/Desktop/labuse-ci`. Rien sur le VPS. Aucune éc
 applicative `labuse` (deux autres sessions tournaient) : la suite tourne sur une base de test DÉDIÉE
 `labuse_test_ci`, isolée du `labuse_test` partagé des autres worktrees.
 
-> État : Lot 1 ✅ · Lot 2 ✅ · Lot 3 ✅ · Lot 4 ✅ · Lot 5 ✅ · Preuve ✅ (CI verte + rouge prouvés sur GitHub).
+> État : Lot 1 ✅ · Lot 2 ✅ · Lot 3 ✅ · Lot 4 ✅ · Lot 5 ✅ · Preuve ✅ · Rebase sur main ✅.
+
+## Rebase sur main (SOLIDITE-1) — conflits + isolation
+
+`feat/ci-1` rebasée sur `origin/main` (qui a reçu SOLIDITE-1 : registre des jobs modifié — `ingest-ban`
+retiré, `agents-sources` manuel, +3 jobs). Résolution :
+
+- **Conflits de registre** (`HORLOGES.csv`, `test_cron1_lot3`, `test_dashboardfix1_horloges`,
+  `test_ops_healthz`) : résolus en prenant **la version de main** (le registre de main fait vérité ;
+  ses tests sont déjà « planifiés-dynamiques », même intention que mon Lot 1). Vérifiés verts contre
+  le registre de main.
+- **Isolation de suite (dette pré-existante de main, exposée par la CI base-vierge)** : sur base
+  PostGIS vierge, 14 tests tombaient par POLLUTION inter-tests (collisions d'IDU figés `97499000ZZ0001`…).
+  **Cause racine trouvée** : un test rendait au pool une connexion en **AUTOCOMMIT** → `db_session` la
+  réutilisait → ses INSERT étaient auto-committés (fuite) et `begin_nested()` cassait (« SAVEPOINT can
+  only be used in transaction blocks »). **Correctif racine (1 ligne)** : `db_session` force
+  `isolation_level="READ COMMITTED"` à la prise de connexion → transaction réelle, pool guéri quel que
+  soit le leak → les 14 disparaissent. (Pistes écartées car cassant d'autres tests : savepoint global,
+  TRUNCATE avant chaque test.) + 2 robustesses ciblées : `test_vefa_moteur_unique` purge sa plage d'id
+  (il committe via `session_scope`), `test_lot4_communes::test_v4a` marqué `reel` (enforcement FK
+  dépendant du référentiel commune).
+
+Validé sur base NEUVE (miroir exact CI) : **3702 passed, 6 xfailed, 0 failed/0 error**.
 
 ---
 
