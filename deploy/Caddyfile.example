@@ -3,7 +3,9 @@
 # et redirection HTTP → HTTPS : comportements PAR DÉFAUT de Caddy.
 
 {$LABUSE_DOMAIN} {
-	encode gzip
+	# G1 lot 3 — zstd+gzip (build standard) ; les tuiles vectorielles sortent déjà en brotli depuis
+	# l'API (Content-Encoding: br), transmis tel quel. `encode zstd br gzip` si build Caddy+brotli.
+	encode zstd gzip
 
 	# L'authentification est APPLICATIVE (session LA BUSE) : Caddy ne fait que
 	# le TLS et le proxy. /healthz et /readyz (réduit) restent publics par design ;

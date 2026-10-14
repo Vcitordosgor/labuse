@@ -1,0 +1,50 @@
+G1-LOT3 — MESURES APRÈS (fix/g1-lot3 : z8 servie + overlay doublon retiré sur l'île + brotli)
+API 8721 / Vite 5921 · base au repos
+
+== Ouverture (vue île, tuiles z9 : 334/286,334/287,335/286,335/287) ==
+                         AVANT (gzip)      APRÈS
+parcels-ile maillage   0.308 Mo gz        0.303 Mo br
+overlay doublon         3.241 Mo gz        0  (éteint sur l'île)
+---------------------------------------------------------------
+TOTAL maillage ouverture 3.549 Mo    →    0.303 Mo    GAIN 3.246 Mo (−91.5 %)
+
+Ouverture COMPLÈTE estimée (maillage + JS 0.35 + API 0.05 + fond 0.03 + communes 0.005, méthode G1-MESURE) :
+  AVANT ≈ 3.99 Mo  →  APRÈS ≈ 0.74 Mo   (cf. G1-MESURE : 3.81 → 0.72, même ordre)
+
+== Tuile z8 île (nouvelle, 8/167/143) ==
+  raw 0.384 Mo · gzip 0.102 Mo · brotli 0.100 Mo    (= chiffre G1-MESURE §4 : 0,10 Mo)
+  Décodage MVT : layer=parcels, extent=1024 (consistant z9-z11). z8/1/1 mer → 200 vide. z7 → 204.
+
+== Brotli bout-en-bout ==
+  z9 335/286 : raw 301368 → gzip 91285 → brotli 89553   (Content-Encoding: br, Vary: Accept-Encoding)
+  304 préservé ; repli gzip (GZipMiddleware) sans br ; identity garde Vary.
+
+== Objets maillage dessinés (queryRenderedFeatures, centre St-Denis) ==
+zoom   overlay AVANT   ile-limites APRÈS   écart
+z9     308202          36292              −88.2 %  (parcels-ile z9 = simplify 60 m/extent 1024 vs overlay full-res 4096)
+z11    102345          61885              −39.5 %  (= chiffre G1 §3 : parcelles sub-pixel écartées par l'extent 1024)
+z12    49423           49419              ≈ 0  (−4)      <- identique (parcels-ile y est aussi en 4096)
+z13    25751           25907              ≈ 0  (+156, bruit de mesure)
+=> Différence visuelle : identique à z12+, maillage plus léger à z9-z11 (LOD de l'aplat parcelles).
+
+== Zoom minimum atteignable (rappel, inchangé par le lot) ==
+1440x900 → z9.40 (z9) · 2560x1440 → z10.46 (z10) · 3840x2160 → z11.14 (z11) · 600x470 → z8.44 (z8, plancher dur minZoom:8)
+Le floor MONTE avec le canvas : un grand écran ne descend jamais sous z9 ; le plancher z8 n'est atteint
+qu'avec un petit canvas (fenêtre réduite / zoom navigateur). z8 désormais servie → aucune île noire.
+
+== Recette ==
+tsc -b : 0 erreur
+vitest : 243/243 (53 fichiers)
+pytest tuiles : test_carte_tuiles + retours14/16_carte = 11 passés, 1 skip (layer/extent : mvt_parcels
+  absente en base de test ; vérifié contre la base réelle : z8/z9/z11 = parcels/1024, z13 = parcels/4096)
+
+== Vérifications app (Playwright, hook window.__labuse_map / window.__labuse) ==
+- île noire : AVANT 600x470/z8 overlay éteint = silhouette sombre (parcels-ile 0 feature) ;
+              APRÈS 600x470/z8 = maillage présent (parcels-ile 29376 features, ile-limites visible).
+- clic parcelle z17 : #f=1&idu=97411000AL0479, fiche ouverte, ile-sel filtré sur l'IDU (liseré blanc).
+- vue commune (Saint-Denis) : overlay tuyau-limites_parcelles-outline = VISIBLE (inchangé), ile-limites = none.
+- fond coloré : ile-fill opacity = 0 par défaut ; avec Analyse LABUSE → expression (0.72 tiers chauds / 0 sinon), ile-line visible.
+- couches « zoomez pour voir mieux » : sup (zoom_min 0) ET amenite_bpe (zoom_min 12) restent visibles à z10 île
+  (toggle honoré) ; seul limites_parcelles est special-casé sur l'île.
+- clic dézoom z≤11 : tuiles maigres sans idu → pas de fiche au clic parcelle (navigation par marqueurs
+  commune), comportement PRÉ-EXISTANT non modifié par ce lot.

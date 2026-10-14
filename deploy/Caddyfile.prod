@@ -21,7 +21,13 @@
 # =============================================================================
 
 {$LABUSE_DOMAIN} {
-	encode gzip
+	# G1 lot 3 — compression. `zstd gzip` : codecs du build standard (zstd > gzip, repli gzip
+	# universel). Les TUILES VECTORIELLES sortent déjà en **brotli** depuis l'API (api/tiles pose
+	# `Content-Encoding: br`) ; Caddy transmet tel quel (il ne ré-encode pas un corps déjà encodé),
+	# donc brotli est actif bout-en-bout sur les tuiles SANS exiger le module brotli côté Caddy.
+	# Pour forcer brotli AUSSI sur le reste du trafic, utiliser un build Caddy avec l'encodeur
+	# brotli et écrire `encode zstd br gzip`.
+	encode zstd gzip
 
 	# ── journal d'accès (JSON) : matière de fail2ban (deploy/fail2ban/) et des
 	# autopsies. Rotation par logrotate (/var/log/caddy géré par le paquet). ──

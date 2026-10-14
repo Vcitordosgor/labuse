@@ -17,6 +17,11 @@ import threading
 import time
 from collections import OrderedDict
 
+try:  # G1 lot 3 — brotli sur les tuiles vectorielles (repli gzip assuré par GZipMiddleware)
+    import brotli as _brotli
+except Exception:  # pragma: no cover — absent → on retombe sur gzip, rien ne casse
+    _brotli = None
+
 from fastapi import APIRouter, Depends, Request, Response
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -559,8 +564,27 @@ def _parcel_tile_bytes(db: Session, z: int, x: int, y: int) -> bytes:
     # pixel et l'extent descend à 1024 (4 unités/px : les parcelles sub-pixel se quantifient,
     # l'aspect de la trame est inchangé — vérifié capture avant/après). Mesures : z9 5,57 Mo
     # → 0,61 Mo · z10 5,68 → 1,33 · z11 2,73 → 1,59. z12+ inchangé (brut, extent 4096).
-    simplify = {9: 60, 10: 30, 11: 15}.get(z, 0)
-    extent = 1024 if z <= 11 else 4096
+    # G1-LOT3 — palier z8 : la carte est bornée à minZoom 8 (MapView `minZoom: 8`, « sous z8 l'île
+    # déborde du cadre »). Le floor maxBounds MONTE avec le canvas (1440×900 → z9.4, 4K → z11.1), donc
+    # z8 n'est atteint que par un petit canvas (fenêtre réduite / zoom navigateur) — mais z8 EST le
+    # plancher dur, et sous z9 la route renvoyait 204 → l'île perdait parcelles+maillage = « île noire »
+    # (essai 1 du lot 3). On sert donc z8. Tolérance 120 m : à z8 1 px ≈ 570 m, soit le DOUBLE de z9
+    # (285 m/60 m) → même tolérance visuelle (~0,2 px) que z9, extension cohérente du même LOD. Mesuré
+    # ≈ 0,10 Mo gz (cf. G1-MESURE §4), ride sur la tuile z8 unique de l'île (8/167/143), à la volée.
+    simplify = {8: 120, 9: 60, 10: 30, 11: 15}.get(z, 0)
+    # G1-LOT3 CORRECTIF « ZONES NOIRES » — extent 4096 dès z9 (était 1024 à z≤11). L'extent 1024
+    # (≈ 5–19 m/unité à z9–z11) QUANTIFIAIT les parcelles de taille moyenne jusqu'à les rendre
+    # dégénérées → ST_AsMVTGeom les ÉCARTE → dans les secteurs peu denses (hauts de l'île) une tuile
+    # de maillage pouvait perdre l'essentiel de ses parcelles : zone VIDE à frontière droite (bord de
+    # tuile), persistante, qui ne « s'affichait » qu'à z12 (où l'extent passait déjà à 4096). Ce
+    # maillage LOD ne portait l'île QUE depuis le lot 2 (overlay `limites_parcelles` éteint) → le trou
+    # n'existait pas sur main (overlay full-res). Couverture restaurée (overlay z11 9243 features vs
+    # parcels-ile 1024→7276 / **4096→8828**, z10 76 %→8 % de pertes, z9 89 %→29 % = reste sub-pixel).
+    # La simplification par palier RESTE (elle n'écarte que le détail sous le pixel → poids maîtrisé :
+    # ouverture z9 ≈ 0,3→1,4 Mo br, toujours << overlay doublon 3,2 Mo). z8 garde 1024 (dézoom
+    # extrême, tout y est sous-pixel : aucune parcelle visible n'est écartée). ⚠ purge du cache
+    # z9-z11 requise après ce changement (tuiles cachées encore en extent 1024).
+    extent = 1024 if z <= 8 else 4096
     buffer = max(extent // 64, 8)
     geom_expr = (f"ST_SimplifyPreserveTopology(m.geom_3857, {simplify})" if simplify
                  else "m.geom_3857")
@@ -761,15 +785,35 @@ def _tile_response(request: Request, body: bytes, etag: str) -> Response:
     le navigateur, une fois max-age écoulé (ou en revalidation SWR), re-téléchargeait la tuile
     ENTIÈRE même inchangée. Avec l'ETag, un `If-None-Match` correspondant renvoie **304** sans corps
     (~0 octet réseau) ; l'ETag change au rebuild-mvt (le contenu change) → invalidation propre. Un
-    proxy amont (Caddy) peut de surcroît revalider/mettre en cache sur cette clé forte."""
+    proxy amont (Caddy) peut de surcroît revalider/mettre en cache sur cette clé forte.
+
+    G1 lot 3 — COMPRESSION. La tuile (protobuf) sort en **brotli** quand le client l'accepte
+    (`Accept-Encoding: br`) — meilleur ratio que gzip sur le MVT binaire ; sinon on laisse passer
+    le corps brut et le `GZipMiddleware` applique le **repli gzip**. On pose nous-même
+    `Content-Encoding: br` → le middleware gzip ne ré-encode pas, et Caddy transmet tel quel
+    (brotli bout-en-bout même sans module brotli côté Caddy). `Vary: Accept-Encoding` : les caches
+    (navigateur, Caddy) ne servent jamais une variante brotli à un client qui ne l'accepte pas.
+    L'ETag reste le hash du CONTENU (identique quelle que soit l'enveloppe de transport)."""
     quoted = f'"{etag}"'
-    headers = {**_TILE_HEADERS, "ETag": quoted}
+    headers = {**_TILE_HEADERS, "ETag": quoted, "Vary": "Accept-Encoding"}
     inm = request.headers.get("if-none-match", "")
     if inm:
         # If-None-Match peut lister plusieurs valeurs, un "*", ou des tags faibles (W/"…").
         tags = {t.strip().lstrip("W/").strip().strip('"') for t in inm.split(",")}
         if "*" in tags or etag in tags:
             return Response(status_code=304, headers=headers)
+    ae = request.headers.get("accept-encoding", "")
+    if _brotli is not None and body and "br" in ae:
+        # quality 5 : bon compromis ratio/CPU pour un corps 0,3–4 Mo servi derrière un cache
+        # agressif (max-age 3600 + SWR 24 h + 304) — la compression est payée une fois par variante.
+        comp = _brotli.compress(body, quality=5)
+        headers["Content-Encoding"] = "br"
+        return Response(content=comp, media_type="application/x-protobuf", headers=headers)
+    # repli : corps brut. Si le client accepte gzip, GZipMiddleware l'encode ET pose lui-même
+    # `Vary: Accept-Encoding` → on retire le nôtre pour ne pas le dupliquer. Sinon (identity) on
+    # garde le `Vary` pour les caches partagés.
+    if "gzip" in ae:
+        headers.pop("Vary", None)
     return Response(content=body, media_type="application/x-protobuf", headers=headers)
 
 
@@ -787,9 +831,12 @@ def mvt_tile(z: int, x: int, y: int, request: Request) -> Response:
     exécuté de façon synchrone à la sortie du handler — succès, erreur OU client qui annule. La
     dépendance `Depends` déférait cette fermeture après la réponse ; à la déconnexion client ce report
     était sauté → transaction « idle in transaction » tenue jusqu'à saturer le pool (incident prod)."""
-    # FIX-CARTE C2 : bornes ALIGNÉES sur la source front (parcels-ile minzoom 9 / maxzoom 15) —
-    # au-delà de z15 le client sur-zoome, il ne demande jamais z16+ ; on ne sert donc que z9-15.
-    if z < 9 or z > 15:
+    # FIX-CARTE C2 : bornes ALIGNÉES sur la source front (parcels-ile minzoom 8 / maxzoom 15) —
+    # au-delà de z15 le client sur-zoome, il ne demande jamais z16+ ; on ne sert donc que z8-15.
+    # G1-LOT3 : borne basse z9→z8. La carte est bornée à minZoom 8 ; z8 = plancher dur atteignable
+    # (petit canvas / zoom navigateur). Le servir évite l'« île noire » quand l'overlay doublon est
+    # retiré (lot 2). z8 n'est PAS pré-chauffée (hors _WARM_ZOOMS) : 1 tuile île, générée à la volée.
+    if z < 8 or z > 15:
         return Response(status_code=204)  # hors plage : aucune connexion ouverte
     from .app import api_session
     with api_session() as db:            # transaction bornée au handler → fermée dans tous les cas
