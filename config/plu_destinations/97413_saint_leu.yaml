@@ -1638,6 +1638,15 @@ zones:
           citation: 'Dans le secteur AUe, la hauteur maximale des constructions est limitée
             à : - 10,00m à l''égout du toit'
           statut: valide
+        faitage:
+          absent: true
+          article: AU 10
+          page_pdf: 91
+          citation: 'Dans le secteur AUe, la hauteur maximale des constructions (…) est limitée
+            à 10,00m à l''égout du toit. Pour la zone AUe de la ZAC du Portail, la hauteur totale
+            maximale des bâtiments est portée à 12,00m.'
+          statut: valide
+          note: "PLU-CALIBRAGE-8 (oct.) Lot D : l'Art. AU 10 ne fixe QUE l'égout (10 m) pour le secteur AUe ; aucun faîtage, aucun renvoi écrit vers la zone UE. Silence prouvé → le moteur s'en tient à l'égout (pas de faîtage emprunté à UE)."
       emprise_sol:
         ces:
           pct: 60.0

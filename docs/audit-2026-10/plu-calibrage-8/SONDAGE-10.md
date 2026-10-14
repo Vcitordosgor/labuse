@@ -27,8 +27,8 @@
 - Valeur servie : `hauteur.faitage.m = 9.0` (+ égout 6 m).
 - Extrait relu p.91 : « Dans les secteurs AUc , la hauteur maximale des constructions est limitée à : - 6,00m à l'égout du toit - 9,00m au faîtage - R+1+combles ».
 
-**6. Saint-Leu — secteur AUe — hauteur à l'égout = 10 m (pas de faîtage au règlement)** · Art. AU 10 · p.91
-- Valeur servie : `hauteur.egout.m = 10.0` ; **pas de faîtage** transcrit (le règlement ne fixe que l'égout pour AUe ; les 12 m cités visent la seule ZAC du Portail, écartés). Le faîtage servi (10 m) est complété depuis la zone mère UE via le renvoi AU→U existant.
+**6. Saint-Leu — secteur AUe — hauteur à l'égout = 10 m, faîtage ABSENT (silence prouvé)** · Art. AU 10 · p.91
+- Valeur servie : `hauteur.egout.m = 10.0` ; **faîtage `absent: true`** — l'Art. AU 10 ne fixe QUE l'égout pour AUe, et le règlement **ne contient aucun renvoi écrit vers la zone UE** (vérifié). Le moteur s'en tient donc à l'égout (gabarit « Hauteur réglementaire — à l'égout : 10 m »), **aucun faîtage emprunté**. Les 12 m cités visent la seule ZAC du Portail (hauteur totale), écartés.
 - Extrait relu p.91 : « Dans le secteur AUe, la hauteur maximale des constructions (…) est limitée à 10,00m à l'égout du toit. Pour la zone AUe de la ZAC du Portail, la hauteur totale maximale des bâtiments est portée à 12,00m. »
 
 **7. Saint-Leu — secteur AUd — recul voie = 4 m** · Art. AU 6 · p.87

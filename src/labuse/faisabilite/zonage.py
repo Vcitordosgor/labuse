@@ -718,10 +718,29 @@ def _completer_renvoi(rules: "ZoneRules | None", code: str, commune: str | None)
     if ov is None:
         return rules
     champs, src = ov
+    # PLU-CALIBRAGE-8 (oct.) Lot D — ne JAMAIS emprunter à la zone U un champ que le règlement de la
+    # zone AU prouve ABSENT (silence prouvé = affirmation « pas de règle ici », pas un trou). Sans quoi
+    # la complétion par motif AU→U inventerait une valeur contre le texte (ex. Saint-Leu AUe : l'Art.
+    # AU 10 ne fixe QUE l'égout → le faîtage ne doit pas être emprunté à UE, aucun renvoi écrit).
+    au_reg = D.regles_zone(ins, code) or {}
+
+    def _prouve_absent(rub: str, feu: str) -> bool:
+        leaf = (au_reg.get(rub) or {}).get(feu)
+        return isinstance(leaf, dict) and leaf.get("absent") is True and leaf.get("statut") == "valide"
+
+    _ABSENT_FEUILLE = {
+        "he_m": ("hauteur", "egout"), "hf_m": ("hauteur", "faitage"),
+        "emprise_sol_pct": ("emprise_sol", "ces"), "recul_voirie_m": ("retraits", "voie"),
+        "recul_limites_sep_m": ("retraits", "limites_separatives"),
+        "pleine_terre_pct": ("pleine_terre", "pct"), "stat_logement": ("stationnement", "par_logement"),
+    }
     fill: dict = {}
     new_src = dict(rules.sources or {})
     for champ, (cle_src, aux) in _SDP_RENVOI.items():
         if getattr(rules, champ, None) is None and champ in champs:
+            rc = _ABSENT_FEUILLE.get(champ)
+            if rc and _prouve_absent(*rc):
+                continue                       # silence prouvé par le règlement de la zone AU
             fill[champ] = champs[champ]
             for a in aux:
                 if a in champs:

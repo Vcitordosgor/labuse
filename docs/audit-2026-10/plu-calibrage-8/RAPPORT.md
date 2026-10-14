@@ -57,13 +57,21 @@ Additif (ces codes ne trouvaient aucun hit avant). **Débloque Saint-André** (A
 1AUd/2AUc/2AUd + 2AUb/2AUe/1AUe) **et Saint-Louis** (1AUb1/1AUb2/2AUb1/2AUb2, renvoi `UB` déjà au YAML)
 — **sans toucher au YAML ni recopier une valeur**.
 
+**Garde « silence prouvé »** (`_completer_renvoi`, affinée en Lot D sur question de Vic) : la complétion
+AU→U par motif **ne reprend JAMAIS** à la zone U un champ que le règlement de la zone AU prouve
+**absent** (`absent: true` validé). Cas Saint-Leu AUe : l'Art. AU 10 ne fixe QUE l'égout (10 m) et le
+règlement **ne contient aucun renvoi écrit vers UE** → le faîtage n'est **pas** emprunté à UE ; le
+gabarit s'en tient à l'égout (« Hauteur réglementaire — à l'égout : 10 m »), fidèle au texte. La
+complétion reste active pour les champs simplement NON fixés d'une zone à renvoi réel (ex. Saint-André
+AUb/AUc/AUd, renvoi écrit p.89).
+
 ### B.2 — transcription AU à chapitre propre (propose/relecteur)
 Méthode PLU-CALIBRAGE-5 : agent proposeur lit le règlement md5-vérifié, **chaque citation est relue
 à la page PDF citée** avant insertion (`scripts/plu8_appliquer_regles.py`, insertion sans reparse).
 - **Saint-Denis** (md5 `43426a8f…`) : AUm (faîtage 10 / égout 7 / CES 50 %), AUj (13/10/60 %),
   AUh (7/4,5/30 %) — reculs voie 4 m + limites alignement. Art. AU*.6/.7/.9/.10, p.92-103.
 - **Saint-Leu** (md5 `d74416f9…`) : AUa (12/9/80 %), AUb (10/7/60 %), AUc (9/6/50 %), AUd (6/4/40 %),
-  AUe (égout 10, faîtage complété par UE / 60 %). Art. AU 6/7/9/10, p.87-91.
+  AUe (**égout 10, faîtage `absent` — silence prouvé, voir Lot D** / CES 60 %). Art. AU 6/7/9/10, p.87-91.
 
 ### B.3 — feuilles `propose` validées + Usdu corrigée
 - **Saint-Joseph U5cvd** : `min_m 5 m` (inventé) → **3 m valide** + formule H/2 (Art. U5 7.2 p.78,
