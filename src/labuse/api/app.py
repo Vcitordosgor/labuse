@@ -6171,7 +6171,9 @@ def _potentiel_transformation_block(db: Session, idu: str, commune: str | None =
         # deux discours (71 225 parcelles bâties). On lit r.cause et on NOMME la raison (D04).
         row = db.execute(text(
             """SELECT p.id AS pid, r.pct_potentiel, r.sdp_residuelle_m2, r.sous_densite,
-                      r.capacite_estimee, r.cause, zp.zone_fam, zp.zone_lib
+                      r.capacite_estimee, r.cause, zp.zone_fam, zp.zone_lib,
+                      r.surface_terrain_m2 AS surface_run, r.computed_at AS run_computed_at,
+                      p.contenance_m2 AS contenance_live, p.updated_at AS parcel_updated_at
                  FROM parcels p
                  LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
                  LEFT JOIN parcel_zone_plu zp ON zp.idu = p.idu
@@ -6320,8 +6322,29 @@ def _potentiel_transformation_block(db: Session, idu: str, commune: str | None =
     except Exception:  # noqa: BLE001 — jamais de 500 sur la fiche
         exceptions_calcul = []
         regles_non_modelisees = []
+    # CHASSE-CALCULS-FIX-1 Lot 3 (E-B1) — JAMAIS de mélange vif/gelé : la SDP est servie avec LA
+    # surface qu'a utilisée le run (`surface_run`), pas la contenance vive. Si la contenance cadastrale
+    # a changé depuis le calcul, on le DIT (ligne datée), sans retoucher la SDP (recalcul au prochain run).
+    _surf_run = row.get("surface_run") if row else None
+    _surf_live = row.get("contenance_live") if row else None
+    _run_at = row.get("run_computed_at") if row else None
+    _maj_at = row.get("parcel_updated_at") if row else None
+    surface_calcul_note = None
+    if _surf_run is not None and _surf_live is not None and int(_surf_run) != int(_surf_live):
+        _d = _run_at.strftime("%d/%m/%Y") if _run_at else "?"
+        surface_calcul_note = (f"Calcul du {_d} sur {int(_surf_run):g} m² ; surface cadastrale "
+                               f"mise à jour depuis : {int(_surf_live):g} m² (recalcul au prochain run).")
+    elif _surf_run is None and _run_at is not None and _maj_at is not None and _maj_at > _run_at:
+        # run antérieur au lot (surface non écrite) : on signale la péremption via les horodatages.
+        surface_calcul_note = (f"Calcul du {_run_at.strftime('%d/%m/%Y')} ; parcelle mise à jour "
+                               f"le {_maj_at.strftime('%d/%m/%Y')} — chiffres susceptibles d'avoir "
+                               "changé, recalcul au prochain run.")
     return {
         "niveau": niveau, "libelle": libelle,
+        # CHASSE-CALCULS-FIX-1 Lot 3 (E-B1) — surface DU RUN servie à côté de la SDP + note de péremption.
+        "surface_calcul_m2": (int(_surf_run) if _surf_run is not None else None),
+        "surface_actuelle_m2": (int(_surf_live) if _surf_live is not None else None),
+        "surface_calcul_note": surface_calcul_note,
         # CHASSE-FIX-1 (C06) — capacité DIFFÉRÉE (zone AU non ouverte) : drapeau + détail de la
         # règle unique au_differe ; la SDP reste servie (≈ m² APRÈS ouverture), jamais « disponible ».
         "capacite_differee": capacite_differee,
@@ -6476,7 +6499,19 @@ def parcel_fiche(idu: str, source: str | None = None, db: Session = Depends(get_
     # VITESSE-PROD-1 — lecture du cache de fiche (cf. _FICHE_CACHE). La copie `dict(...)` protège
     # l'entrée cachée des ajouts par requête (`_trace` admin) ; le contenu servi est IDENTIQUE.
     version = "" if os.environ.get("PYTEST_CURRENT_TEST") else _fiche_version(db)
-    cle = (idu, run, _score_labuse_run(), version)
+    # CHASSE-CALCULS-FIX-1 Lot 3 (E-B1) — le cache de fiche est invalidé DÈS QU'UNE PARCELLE CHANGE :
+    # `_fiche_version` est GLOBAL (data_sources) et ne capte pas une édition parcellaire (contenance,
+    # géométrie → `updated_at`). On ajoute un jeton PAR PARCELLE à la clé : toute modification de la
+    # ligne `parcels` (donc de `updated_at`) OU de la contenance fait changer la clé → recalcul.
+    jeton_parcelle = None
+    if db is not None:
+        try:
+            jeton_parcelle = db.execute(text(
+                "SELECT to_char(updated_at, 'YYYYMMDDHH24MISSUS') || ':' || "
+                "coalesce(contenance_m2::text, '-') FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
+        except Exception:  # noqa: BLE001 — pas de jeton → on ne cache pas plutôt que de cacher faux
+            jeton_parcelle = None
+    cle = (idu, run, _score_labuse_run(), version, jeton_parcelle)
     if version:
         with _FICHE_LOCK:
             hit = _FICHE_CACHE.get(cle)
