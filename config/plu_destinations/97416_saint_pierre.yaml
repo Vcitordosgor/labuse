@@ -4217,8 +4217,8 @@ zones:
           page_pdf: 192
           citation: En zone Uep, l’emprise au sol est limitée au maximum à 20 m² par ha (calculée au prorata
             de la superficie de l’unité foncière).
-          statut: propose
-          raison: valeur 0.2 absente de la citation (harmonisation ≠ texte)
+          statut: valide
+          note: "PLU-CALIBRAGE-8 (oct.) Lot B : 20 m²/ha = 0,2 % (conversion d'unité EXACTE et transparente du texte « 20 m² par ha … au prorata de la superficie »), relu au règlement md5-vérifié, Art. Ue3.4 p.192. Zone d'équipement très restrictive (emprise quasi nulle) — valeur servie fidèle au règlement."
       retraits:
         voie:
           min_m: 4.0

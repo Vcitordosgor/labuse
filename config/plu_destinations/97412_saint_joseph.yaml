@@ -944,15 +944,16 @@ zones:
             mètres.'
           statut: valide
         limites_separatives:
-          min_m: 5.0
+          min_m: 3.0
+          formule: H/2, minimum 3 m (ou sur limites)
           article: U5 7.2
           page_pdf: 78
           citation: Dans les secteurs U5cv et U5cvd, les constructions peuvent être implantées sur deux limites
             séparatives. En cas de retrait de la construction, la distance comptée horizontalement de tout
             point de la façade au point le plus proche de la limite séparative, doit être au moins égale à
             la moitié de la hauteur (H) de la façade concernée, avec un minimum de 3 mètres.
-          statut: propose
-          note: "PLU-VERIF-1 : valeur passée en propose (non servie) — lue au PDF : 3 m (minimum, ou moitie de la hauteur H de la facade). Dans les secteurs U5cv et U5cvd, les constructions peuvent etre implantees sur deux limites separatives. En cas de retrait [...] au moins egale a la moitie de la hauteur (H) [...] avec un minimum de 3 metres."
+          statut: valide
+          note: "PLU-CALIBRAGE-8 (oct.) Lot B : la valeur 5 m (invention, passée propose par PLU-VERIF-1) est remplacée par 3 m — le règlement fixe « avec un minimum de 3 mètres » (lu au règlement md5-vérifié, Art. U5 7.2 p.78). Formule H/2 min 3 m ou implantation sur deux limites. IDENTIQUE à la feuille VALIDÉE de la zone sœur U5cv (même phrase du règlement couvre « U5cv et U5cvd »)."
       stationnement:
         par_logement:
           places: 2.0
