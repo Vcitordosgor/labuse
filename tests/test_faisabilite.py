@@ -1,20 +1,14 @@
 """Tests du moteur de pré-faisabilité (ÉTAPE B). Purs (sans DB)."""
-import pytest
-
 from labuse.faisabilite import estimate_capacity, resolve_zone
 from labuse.faisabilite.engine import Contraintes, Hypotheses
 
-# CI-1 (Lot 1) — ARBITRAGE PRODUIT EN ATTENTE : la zone U1pru est devenue NON-calculable depuis
-# PLU-CALIBRAGE-6 (son retrait `retraits.limites_separatives` est resté feuille « propose »), comme
-# U3a/U6a (cf. commentaires des tests voisins, retargetés vers U1c). Ces deux tests exercent des
-# capacités (stationnement EXEMPT Art.12, plafond de densité R+9) que SEULE U1pru portait → plus
-# exerçables via une zone calculable. Le MOTEUR est correct (régime exempt + plafond densité existent
-# toujours, engine.py:753/711) ; c'est la couverture de test qui n'a plus de zone-support. xfail en
-# attendant l'arbitrage de Vic : soit recalibrer U1pru (décision PLU, hors CI), soit retirer ces deux
-# tests. Détaillé dans docs/audit-2026-10/ci-1/RAPPORT.md.
-_U1PRU_XFAIL = pytest.mark.xfail(
-    reason="U1pru non-calculable depuis PLU-CALIBRAGE-6 — capacité exempt/plafond-densité plus exerçable (arbitrage Vic)",
-    strict=False)
+# PLU-CALIBRAGE-8 (oct.) Lot C — U1pru REDEVENUE calculable : son `retraits.limites_separatives`
+# était resté feuille « propose » depuis PLU-CALIBRAGE-6 à cause d'une valeur min_m 3 m inventée (que
+# PLU-VERIF-1 avait à juste titre dégradée). Le règlement en vigueur (Saint-Paul, md5 vérifié, Art. 7
+# p.21) autorise l'implantation EN LIMITE séparative = recul 0 : la feuille est désormais
+# `forme: alignement` / `valide` (de même la voie, Art. 6 p.19). U1pru est calculable → ces deux tests
+# (stationnement EXEMPT Art.12, plafond de densité R+9) redeviennent des tests verts, plus d'xfail.
+# Détail : docs/audit-2026-10/plu-calibrage-8/RAPPORT.md (Lot C).
 
 
 def test_resolution_zone_directe():
@@ -75,7 +69,6 @@ def test_deux_scenarios_stationnement():
     assert "au sol" in f.verdict and "sous-sol" in f.verdict
 
 
-@_U1PRU_XFAIL
 def test_u1pru_stationnement_exempte_non_borne():
     f = estimate_capacity(resolve_zone("U1pru"), 3000)
     assert f.fourchette["stationnement_regime"] == "exempt"
@@ -140,7 +133,6 @@ def test_etapes_rendement_et_occupation():
     assert "rendement" in txt and "occupation" in txt and "densité" in txt
 
 
-@_U1PRU_XFAIL
 def test_plafond_densite_borne_les_zones_denses():
     # U1pru R+9 sans plafond exploserait ; le plafond densité doit le borner et le signaler.
     f = estimate_capacity(resolve_zone("U1pru"), 4000, emprise_geo=(3200.0, 3.0))
