@@ -1241,6 +1241,48 @@ zones:
       AU « divisée en sept secteurs » mais n''en listent que six (AUs, AUa, AUb, AUc, AUe, AUt), sans AUd ni les
       secteurs -rc et (slo) nommés au Titre III (p. 81).'
   AUa:
+    regles:
+      hauteur:
+        egout:
+          m: 9.0
+          article: AU 10
+          page_pdf: 91
+          citation: 'Dans le secteur AUa, la hauteur maximale des constructions est limitée
+            à : - 9,00m à l’égout du toit'
+          statut: valide
+        faitage:
+          m: 12.0
+          article: AU 10
+          page_pdf: 91
+          citation: 'Dans le secteur AUa, la hauteur maximale des constructions est limitée
+            à : - 12,00m au faîtage'
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 80.0
+          article: AU 9
+          page_pdf: 90
+          citation: Dans le secteur AUa et AUa-rc, l’emprise au sol maximale autorisée
+            (...) ne doit pas excéder 80% de l’unité foncière.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 2.0
+          article: AU 6
+          page_pdf: 87
+          citation: Dans le secteur AUa, les constructions peuvent s’implanter soit à
+            l’alignement, soit avec un recul minimum de 2,00m par rapport à l’alignement.
+          note: Alignement OU recul min 2 m ; plancher 2 m retenu.
+          statut: valide
+        limites_separatives:
+          forme: alignement
+          article: AU 7
+          page_pdf: 88
+          citation: 'Dans les secteurs AUa, AUa-rc, AUb et Aub-rc : Les constructions
+            peuvent joindre une ou deux limites séparatives qui touchent la voie'
+          note: Implantation EN LIMITE admise (recul 0) ; sinon marge d'isolement minimale
+            (non modélisée).
+          statut: valide
     silence: interdit
     silence_src: Art. AU 1 (p. 81) — liste fermée, règle de la zone AU (voir entrée AU)
     sous_destinations:
@@ -1326,6 +1368,48 @@ zones:
       « AUb » écrit deux fois. « services », « activités », « équipements publics compatibles » non mappés (termes
       trop larges).'
   AUb:
+    regles:
+      hauteur:
+        egout:
+          m: 7.0
+          article: AU 10
+          page_pdf: 91
+          citation: 'Dans le secteur AUb, la hauteur maximale des constructions est limitée
+            à : - 7,00m à l’égout du toit'
+          statut: valide
+        faitage:
+          m: 10.0
+          article: AU 10
+          page_pdf: 91
+          citation: 'Dans le secteur AUb, la hauteur maximale des constructions est limitée
+            à : - 10,00m au faîtage'
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 60.0
+          article: AU 9
+          page_pdf: 90
+          citation: Dans les secteurs AUb, Aub-rc et AUe, l’emprise au sol maximale autorisée
+            (...) ne doit pas excéder 60% de l’unité foncière.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 2.0
+          article: AU 6
+          page_pdf: 87
+          citation: Dans le secteur AUb, les constructions doivent s’implanter avec un
+            recul minimum de 2,00m par rapport à l’alignement.
+          note: Recul minimum 2 m.
+          statut: valide
+        limites_separatives:
+          forme: alignement
+          article: AU 7
+          page_pdf: 88
+          citation: 'Dans les secteurs AUa, AUa-rc, AUb et Aub-rc : Les constructions
+            peuvent joindre une ou deux limites séparatives qui touchent la voie'
+          note: Implantation EN LIMITE admise (recul 0) ; sinon marge d'isolement minimale
+            (non modélisée).
+          statut: valide
     silence: interdit
     silence_src: Art. AU 1 (p. 81) — liste fermée, règle de la zone AU (voir entrée AU)
     sous_destinations:
@@ -1406,6 +1490,49 @@ zones:
     note: « services », « activités », « équipements publics compatibles » non mappés (termes trop larges pour une
       sous-destination R151-28).
   AUc:
+    regles:
+      hauteur:
+        egout:
+          m: 6.0
+          article: AU 10
+          page_pdf: 91
+          citation: 'Dans le secteur AUc, la hauteur maximale des constructions est limitée
+            à : - 6,00m à l’égout du toit'
+          statut: valide
+        faitage:
+          m: 9.0
+          article: AU 10
+          page_pdf: 91
+          citation: 'Dans le secteur AUc, la hauteur maximale des constructions est limitée
+            à : - 9,00m au faîtage'
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 50.0
+          article: AU 9
+          page_pdf: 90
+          citation: Dans le secteur AUc, l’emprise au sol des bâtiments ne doit pas excéder
+            50% de l’unité foncière.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: AU 6
+          page_pdf: 87
+          citation: Dans le secteur AUc et AUd, les constructions doivent s’implanter
+            avec un recul minimum de 4,00m par rapport à l’alignement.
+          note: Recul minimum 4 m.
+          statut: valide
+        limites_separatives:
+          forme: alignement
+          article: AU 7
+          page_pdf: 88
+          citation: 'Dans les secteurs AUc et AUd : Les constructions peuvent être implantées
+            sur une limite séparative (ou les deux limites, si celles-ci sont distantes
+            de moins de 18 mètres l’une de l’autre)'
+          note: Implantation EN LIMITE admise (recul 0) ; sinon marge d'isolement minimale
+            (non modélisée).
+          statut: valide
     silence: interdit
     silence_src: Art. AU 1 (p. 81) — liste fermée, règle de la zone AU (voir entrée AU)
     sous_destinations:
@@ -1443,6 +1570,49 @@ zones:
     note: « services », « activités », « équipements publics compatibles » non mappés (termes trop larges pour une
       sous-destination R151-28).
   AUd:
+    regles:
+      hauteur:
+        egout:
+          m: 4.0
+          article: AU 10
+          page_pdf: 91
+          citation: 'Dans le secteur AUd, la hauteur maximale des constructions est limitée
+            à : - 4,00m à l’égout du toit'
+          statut: valide
+        faitage:
+          m: 6.0
+          article: AU 10
+          page_pdf: 91
+          citation: 'Dans le secteur AUd, la hauteur maximale des constructions est limitée
+            à : - 6,00m au faîtage'
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 40.0
+          article: AU 9
+          page_pdf: 90
+          citation: Dans le secteur AUd, l’emprise au sol des bâtiments ne doit pas excéder
+            40% de l’unité foncière.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: AU 6
+          page_pdf: 87
+          citation: Dans le secteur AUc et AUd, les constructions doivent s’implanter
+            avec un recul minimum de 4,00m par rapport à l’alignement.
+          note: Recul minimum 4 m.
+          statut: valide
+        limites_separatives:
+          forme: alignement
+          article: AU 7
+          page_pdf: 88
+          citation: 'Dans les secteurs AUc et AUd : Les constructions peuvent être implantées
+            sur une limite séparative (ou les deux limites, si celles-ci sont distantes
+            de moins de 18 mètres l’une de l’autre)'
+          note: Implantation EN LIMITE admise (recul 0) ; sinon marge d'isolement minimale
+            (non modélisée).
+          statut: valide
     silence: interdit
     silence_src: Art. AU 1 (p. 81) — liste fermée, règle de la zone AU (voir entrée AU)
     sous_destinations:
@@ -1459,6 +1629,43 @@ zones:
       au Titre III (caractère de zone p. 81 : « zones de faible densité (secteur des Camélias à La Chaloupe) »)
       : anomalie signalée.'
   AUe:
+    regles:
+      hauteur:
+        egout:
+          m: 10.0
+          article: AU 10
+          page_pdf: 91
+          citation: 'Dans le secteur AUe, la hauteur maximale des constructions est limitée
+            à : - 10,00m à l''égout du toit'
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 60.0
+          article: AU 9
+          page_pdf: 90
+          citation: Dans les secteurs AUb, Aub-rc et AUe, l’emprise au sol maximale autorisée
+            (...) ne doit pas excéder 60% de l’unité foncière.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 5.0
+          article: AU 6
+          page_pdf: 87
+          citation: Dans le secteur AUe, les constructions doivent s’implanter en retrait
+            par rapport à l’alignement en respectant un prospect L=1/2H(*) avec un minimum
+            de 5,00m.
+          note: Prospect L=1/2H, plancher 5 m (10 m si ICPE) ; recul 55 m le long de la
+            route des Tamarins — non modélisés.
+          statut: valide
+        limites_separatives:
+          forme: alignement
+          article: AU 7
+          page_pdf: 88
+          citation: Dans le secteur AUe, la mitoyenneté sur une limite séparative peut
+            être admise sous réserve de la construction d’un mur coupe-feu.
+          note: Implantation EN LIMITE admise (recul 0) ; sinon marge d'isolement minimale
+            (non modélisée).
+          statut: valide
     silence: interdit
     silence_src: Art. AU 1 (p. 81) — liste fermée, règle de la zone AU (voir entrée AU)
     sous_destinations:

@@ -1742,6 +1742,49 @@ zones:
       renouvelable » — occupations non mappées vers une sous-destination R151-28 (rattachement douteux, non écrit).'
     sous_destinations: {}
   AUj:
+    regles:
+      hauteur:
+        faitage:
+          m: 13.0
+          article: AUj.10
+          page_pdf: 93
+          citation: 'La hauteur des constructions n’excèdera pas : - 13 m pour la hauteur
+            maximale H'
+          statut: valide
+        egout:
+          m: 10.0
+          article: AUj.10
+          page_pdf: 93
+          citation: 'La hauteur des constructions n’excèdera pas : (...) - 10 m pour la
+            hauteur d’égout he'
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 60.0
+          article: AUj.9
+          page_pdf: 93
+          citation: L’emprise au sol des constructions est limitée à 60% de la superficie
+            de l’unité foncière.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: AUj.6
+          page_pdf: 92
+          citation: Les constructions principales seront implantées avec un recul de 4
+            m minimum par rapport à l’alignement.
+          note: 'Règle générale ; exceptions (non modélisées) : prospect L ≥ H à l''axe,
+            3 m en voies étroites, annexes à l''alignement.'
+          statut: valide
+        limites_separatives:
+          forme: alignement
+          article: AUj.7
+          page_pdf: 92
+          citation: Chaque construction pourra s'implanter sur 1 ou 2 limites séparatives
+            sur une longueur maximale de 18 mètres par limite.
+          note: Implantation EN LIMITE admise (recul 0) ; sinon retrait L ≥ h/2 avec minimum
+            4 m (non modélisé).
+          statut: valide
     silence: autorise
     silence_src: 'Art. AUj.1 « Occupations et utilisations du sol interdites — Sont interdits : … » (liste fermée
       de six tirets, p. 90) et art. AUj.2 « Occupations et utilisations du sol soumises à des conditions particulières
@@ -1785,6 +1828,49 @@ zones:
         citation: « les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve qu'elles comportent
           un minimum de15% de logements sociaux et/ou intermédiaires dans le respect de la mixité sociale »
   AUm:
+    regles:
+      hauteur:
+        faitage:
+          m: 10.0
+          article: AUm.10
+          page_pdf: 98
+          citation: 'La hauteur des constructions n’excèdera pas : - 10 m pour la hauteur
+            maximale H'
+          statut: valide
+        egout:
+          m: 7.0
+          article: AUm.10
+          page_pdf: 98
+          citation: 'La hauteur des constructions n’excèdera pas : (...) - 7 m pour la
+            hauteur d’égout he'
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 50.0
+          article: AUm.9
+          page_pdf: 98
+          citation: L'emprise au sol des constructions est limitée à 50 % de la superficie
+            de l'unité foncière.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: AUm.6
+          page_pdf: 97
+          citation: Les constructions seront implantées avec un recul de 4 m minimum par
+            rapport à l’alignement.
+          note: 'Exceptions (non modélisées) : 3 m mini en bordure de voies d''emprise
+            < 3,50 m ; annexes de stationnement à l''alignement.'
+          statut: valide
+        limites_separatives:
+          forme: alignement
+          article: AUm.7
+          page_pdf: 98
+          citation: Chaque construction pourra s'implanter sur 1 ou 2 limites séparatives
+            sur une longueur maximale de 10 m par limite.
+          note: Implantation EN LIMITE admise (recul 0) ; sinon retrait L ≥ h/2 avec minimum
+            4 m (non modélisé).
+          statut: valide
     silence: autorise
     silence_src: 'Art. AUm.1 « Occupations et utilisations du sol interdites — Sont interdits : … » (liste fermée
       de six tirets, p. 96) et art. AUm.2 « Occupations et utilisations du sol soumises à des conditions particulières
@@ -1851,6 +1937,49 @@ zones:
         citation: « les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve qu'elles comportent
           un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité sociale »
   AUh:
+    regles:
+      hauteur:
+        faitage:
+          m: 7.0
+          article: AUh.10
+          page_pdf: 103
+          citation: 'La hauteur des constructions n’excèdera pas : - 7 m pour la hauteur
+            maximale H'
+          statut: valide
+        egout:
+          m: 4.5
+          article: AUh.10
+          page_pdf: 103
+          citation: 'La hauteur des constructions n’excèdera pas : (...) - 4,5 m pour
+            la hauteur d’égout he'
+          statut: valide
+      emprise_sol:
+        ces:
+          pct: 30.0
+          article: AUh.9
+          page_pdf: 103
+          citation: L’emprise au sol des constructions est limitée à 30% de la superficie
+            de l’unité foncière.
+          statut: valide
+      retraits:
+        voie:
+          min_m: 4.0
+          article: AUh.6
+          page_pdf: 102
+          citation: Les constructions seront implantées avec un recul de 4 m minimum par
+            rapport à l’alignement.
+          note: 'Exceptions (non modélisées) : 3 m mini en voies étroites ; annexes de
+            stationnement à l''alignement.'
+          statut: valide
+        limites_separatives:
+          forme: alignement
+          article: AUh.7
+          page_pdf: 103
+          citation: Chaque construction pourra s'implanter sur 1 limite séparative sur
+            une longueur maximale de 10 mètres et sur une hauteur maximale H de 4,5m.
+          note: Implantation EN LIMITE admise (recul 0) ; sinon retrait L ≥ h/2 avec minimum
+            4 m (non modélisé).
+          statut: valide
     silence: autorise
     silence_src: 'Art. AUh.1 « Occupations et utilisations du sol interdites — Sont interdits : … » (liste fermée
       de six tirets, p. 101) et art. AUh.2 « Occupations et utilisations du sol soumises à des conditions particulières
