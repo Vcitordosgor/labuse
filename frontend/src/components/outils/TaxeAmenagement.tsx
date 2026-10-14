@@ -71,6 +71,7 @@ export function TaxeAmenagement() {
   // ── saisie ──
   const [surface, setSurface] = useState<number | null>(null)
   const [residencePrincipale, setResidencePrincipale] = useState(false)
+  const [nbLogements, setNbLogements] = useState<number | null>(null)   // E-A1 — abattement 100 m² PAR logement
   const [logementAide, setLogementAide] = useState(false)
   // TAXE-FIX-1 point 1 — nature du projet EXONÉRÉE de plein droit (CGI 1635 quater D). Une seule
   // nature à la fois (une surface est agricole OU PLAI OU reconstruction) : cases à cocher qui se
@@ -145,6 +146,8 @@ export function TaxeAmenagement() {
       surface_exoneree_m2: motifExo ? surface : undefined,
       motif_exoneration: motifExo ?? undefined,
       residence_principale: (!motifExo && residencePrincipale) || undefined,
+      // E-A1 — l'abattement 100 m² vaut PAR logement : on transmet le nombre quand il est saisi (RP).
+      nb_logements: (!motifExo && residencePrincipale && nbLogements && nbLogements > 0) ? nbLogements : undefined,
       logement_aide: (!motifExo && logementAide) || undefined,
       piscine_m2: piscine ?? undefined,
       pv_sol_m2: pvSol ?? undefined,
@@ -158,7 +161,7 @@ export function TaxeAmenagement() {
       // TAXE-FIX-1 point 3 — l'IDU permet au back de servir le taux du SECTEUR à taux majoré s'il y en a un.
       idu: prefillIdu ?? undefined,
     }
-  }, [surface, motifExo, residencePrincipale, logementAide, piscine, pvSol, stationnement, eoliennes, tauxCommunal, tauxDepEffectif, insee, prefillIdu])
+  }, [surface, motifExo, residencePrincipale, nbLogements, logementAide, piscine, pvSol, stationnement, eoliennes, tauxCommunal, tauxDepEffectif, insee, prefillIdu])
 
   const calc = useQuery({
     queryKey: ['taxe-calc', params],
@@ -231,7 +234,14 @@ export function TaxeAmenagement() {
         <div className="flex flex-col gap-1.5">
           <CheckField dataAttr="residence" label="Résidence principale"
             checked={residencePrincipale} onChange={setResidencePrincipale}
-            hint={`Abattement ${fmtInt(c.abattement.taux_pct)} % sur les ${fmtInt(c.abattement.plafond_m2_residence_principale)} premiers m².`} />
+            hint={`Abattement ${fmtInt(c.abattement.taux_pct)} % sur les ${fmtInt(c.abattement.plafond_m2_residence_principale)} premiers m² de CHAQUE logement.`} />
+          {/* E-A1 — l'abattement 100 m² est dû logement par logement : le nombre de logements est demandé
+              dès que « Résidence principale » est coché (défaut vide → 1 logement, dit par le message). */}
+          {residencePrincipale && !motifExo && (
+            <NumField dataAttr="nb-logements" label="Nombre de logements (résidences principales)" unit="logt"
+              value={nbLogements} onChange={setNbLogements}
+              hint={`Abattement de ${fmtInt(c.abattement.taux_pct)} % sur les ${fmtInt(c.abattement.plafond_m2_residence_principale)} premiers m² de CHAQUE logement (CGI 1635 quater I). Vide = 1 logement (maison).`} />
+          )}
           <CheckField dataAttr="aide" label="Logement aidé"
             checked={logementAide} onChange={setLogementAide}
             hint={`Abattement ${fmtInt(c.abattement.taux_pct)} % (logement locatif social / aidé) — PLUS/PLS. Un PLAI est EXONÉRÉ (ci-dessous), pas seulement abattu.`} />
@@ -363,6 +373,14 @@ export function TaxeAmenagement() {
               <span className="text-right font-mono font-semibold tabular-nums text-txt-hi">{fmtEur(r.assiette_eur)}</span>
             </div>
           </div>
+
+          {/* E-A1 — nombre de logements non précisé : l'abattement 100 m² a été appliqué pour 1 logement.
+              On le DIT et on invite à saisir, on ne suppose jamais un collectif. */}
+          {r.message_nb_logements && (
+            <p data-taxe-nb-logements className="rounded-md border border-line-2 bg-surface-3/50 px-2 py-1.5 text-[10px] leading-snug text-st-creuser">
+              {r.message_nb_logements}
+            </p>
+          )}
 
           {/* Parts + total */}
           <div className="flex flex-col gap-1 rounded-lg border border-line-2 bg-surface-2 p-2.5 text-[11px]">

@@ -52,7 +52,9 @@ RAP vérifiée au centime sur les 10 cas (0,40 % × assiette). **9/10 identiques
 
 \* Cas 5 : l'arithmétique par défaut est juste (un abri > 5 m² est taxable de plein droit). Mais l'outil **ne modélise pas** l'exonération **facultative** que la commune peut voter pour les abris de jardin ≤ 20 m² (CGI art. 1635 quater E) — voir écart **E-A2**.
 
-**Cas 3 — le seul écart métier.** L'endpoint `/outils/taxe-amenagement` (`app.py:3047`) et `calculer()` (`taxe_amenagement.py:245-252`) n'ont **aucun paramètre `nb_logements`** : le plafond de 100 m² de l'abattement RP est appliqué **une seule fois au total saisi**, alors que le texte l'accorde **logement par logement**. Pour un collectif de 20 résidences principales, l'outil ne décote que 100 m² au lieu de 20×100 → **assiette 1 204 200 € au lieu de 624 400 €, total 66 231 € au lieu de 34 342 €**. Direction prudente (sur-estimation), mais faux vs la règle et non signalé.
+**Cas 3 — le seul écart métier.** L'endpoint `/outils/taxe-amenagement` (`app.py:3047`) et `calculer()` (`taxe_amenagement.py:245-252`) n'avaient **aucun paramètre `nb_logements`** : le plafond de 100 m² de l'abattement RP était appliqué **une seule fois au total saisi**, alors que le texte l'accorde **logement par logement**. Pour un collectif de 20 résidences principales, l'outil ne décotait que 100 m² au lieu de 20×100 → **assiette 1 204 200 € au lieu de 624 400 €, total 66 231 € au lieu de 34 342 €**.
+
+> **✅ FERMÉ — CHASSE-CALCULS-FIX-1 Lot 1.** `calculer(nb_logements=…)` applique désormais l'abattement 100 m² **par logement** (`taxe_amenagement.py`, endpoint + front `TaxeAmenagement.tsx` + `api.ts`). Collectif 20 logements, nb=20 : assiette **624 400 €**, total **34 342 €** = recalcul manuel (vérifié outil + endpoint + banc). Si le nombre de logements n'est **pas** saisi, l'outil applique **1 logement** (maison) et **le dit** (`message_nb_logements` + encart front), il ne suppose jamais un collectif. Test `tests/test_taxe_amenagement.py::test_abattement_par_logement_collectif_e_a1`, banc `banc_chasse_calculs.py` (10 cas exacts + garde message), front `tsc` 0.
 
 ### A4 — Ce que l'outil déclare NE PAS couvrir
 

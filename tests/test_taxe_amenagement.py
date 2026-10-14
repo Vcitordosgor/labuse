@@ -67,6 +67,25 @@ def test_abattement_50pct_100_premiers_m2():
     assert r2["assiette_eur"] > r["assiette_eur"]
 
 
+def test_abattement_par_logement_collectif_e_a1():
+    """E-A1 — l'abattement 100 m² vaut PAR logement RP (CGI 1635 quater I, logement par logement).
+    Collectif 20 logements, 1400 m² : chaque logement (70 m² < 100) entièrement abattu → 1400 m² à −50 %."""
+    vf = config()["valeur_forfaitaire_m2"]["hors_idf"]
+    r = calculer(surface_taxable_m2=1400, residence_principale=True, nb_logements=20, taux_communal_pct=3.0)
+    assert abs(r["assiette_eur"] - 1400 * vf * 0.5) < 1          # tout abattu : 624 400
+    assert r["nb_logements"] == 20 and r["nb_logements_precise"] is True
+    assert r["message_nb_logements"] is None                     # nombre précisé → pas d'invite
+    # sans nb_logements : abattement pour 1 logement SEULEMENT + message d'invite (ne suppose rien)
+    r1 = calculer(surface_taxable_m2=1400, residence_principale=True, taux_communal_pct=3.0)
+    assert abs(r1["assiette_eur"] - (100 * vf * 0.5 + 1300 * vf)) < 1
+    assert r1["nb_logements"] == 1 and r1["nb_logements_precise"] is False
+    assert r1["message_nb_logements"] and "logement" in r1["message_nb_logements"].lower()
+    assert r1["assiette_eur"] > r["assiette_eur"]                # 1 logt sur-taxe vs 20 logts
+    # une maison (1 logement) est inchangée par la nouveauté
+    maison = calculer(surface_taxable_m2=150, residence_principale=True, nb_logements=1, taux_communal_pct=3.0)
+    assert abs(maison["assiette_eur"] - (100 * vf * 0.5 + 50 * vf)) < 1
+
+
 def test_detail_ligne_par_ligne_et_forfaits():
     r = calculer(surface_taxable_m2=100, piscine_m2=30, stationnement_ext_places=2, taux_communal_pct=5.0)
     postes = {l["poste"] for l in r["lignes"]}

@@ -203,6 +203,7 @@ def calculer(
     surface_taxable_m2: float = 0.0,
     residence_principale: bool = False,
     logement_aide: bool = False,
+    nb_logements: int | None = None,
     surface_exoneree_m2: float = 0.0,
     motif_exoneration: str | None = None,
     piscine_m2: float = 0.0,
@@ -229,8 +230,25 @@ def calculer(
 
     lignes: list[dict] = []
     seuil_exo = float(cfg.get("exoneration_surface_min_m2") or 0)
+    plafond_rp = float(ab["plafond_m2_residence_principale"])
 
-    # 1) surface de construction : valeur forfaitaire, avec abattement 50 % (100 premiers m² RP / aidé).
+    # CHASSE-CALCULS-FIX-1 Lot 1 (E-A1) — l'abattement « 100 premiers m² » de résidence principale est dû
+    # LOGEMENT PAR LOGEMENT (CGI art. 1635 quater I, I-2° ; BOFiP BOI-IF-TU-10-30-20 : non mutualisable).
+    # Pour un collectif de N résidences principales, l'assiette abattue est min(surface, 100 × N), pas
+    # 100 une seule fois. `nb_logements` inconnu → on applique 1 logement (cas maison) et on LE DIT
+    # (message + drapeau) ; on ne suppose JAMAIS un collectif sans que le nombre soit saisi.
+    nb_rp = None
+    nb_logements_precise = bool(nb_logements and int(nb_logements) > 0)
+    msg_nb_logements = None
+    if residence_principale and not logement_aide:
+        nb_rp = int(nb_logements) if nb_logements_precise else 1
+        if not nb_logements_precise:
+            msg_nb_logements = (
+                "Abattement « 100 premiers m² » appliqué pour 1 logement (résidence principale). "
+                "Pour un collectif, saisissez le nombre de logements : l'abattement de 50 % vaut sur "
+                "les 100 premiers m² de CHAQUE logement (CGI art. 1635 quater I).")
+
+    # 1) surface de construction : valeur forfaitaire, avec abattement 50 % (100 premiers m² par logement RP / aidé).
     surf = max(0.0, float(surface_taxable_m2 or 0))
     if surf > 0 and seuil_exo and surf < seuil_exo:
         # RV2-V2 — exonération de PLEIN DROIT des petites surfaces (CGI art. 1635 quater D, 10°) :
@@ -242,19 +260,22 @@ def calculer(
     elif surf > 0:
         abattue = 0.0
         pleine = surf
-        if residence_principale or logement_aide:
-            # 100 premiers m² à −50 % (RP) ; les logements aidés bénéficient de l'abattement sur toute
-            # leur surface. On applique le cas le plus favorable exprimable simplement.
-            if logement_aide:
-                abattue, pleine = surf, 0.0
-            else:
-                abattue = min(surf, float(ab["plafond_m2_residence_principale"]))
-                pleine = surf - abattue
+        if logement_aide:
+            # logements aidés : abattement de 50 % sur TOUTE la surface (CGI 1635 quater I, I-1°).
+            abattue, pleine = surf, 0.0
+        elif residence_principale:
+            # 100 premiers m² de CHAQUE logement à −50 % (E-A1) : plafond = 100 × nombre de logements.
+            abattue = min(surf, plafond_rp * nb_rp)
+            pleine = surf - abattue
         taux_ab = float(ab["taux_pct"]) / 100.0
         assiette_surf = pleine * vf + abattue * vf * (1 - taux_ab)
         detail = f"{surf:g} m² × {vf:g} €/m²"
         if abattue:
-            detail += f" (dont {abattue:g} m² à −{ab['taux_pct']}%)"
+            if residence_principale and not logement_aide:
+                detail += (f" (dont {abattue:g} m² à −{ab['taux_pct']}% : 100 m² × {nb_rp} logement"
+                           f"{'s' if nb_rp > 1 else ''})")
+            else:
+                detail += f" (dont {abattue:g} m² à −{ab['taux_pct']}%)"
         lignes.append({"poste": "Surface de construction", "detail": detail, "assiette_eur": _eur(assiette_surf)})
     else:
         assiette_surf = 0.0
@@ -322,6 +343,10 @@ def calculer(
         "part_communale_eur": part_com,
         "part_departementale_eur": part_dep,
         "total_eur": total,
+        # CHASSE-CALCULS-FIX-1 Lot 1 (E-A1) — abattement RP au grain logement.
+        "nb_logements": nb_rp,                       # nombre de logements RP retenu (None hors RP)
+        "nb_logements_precise": nb_logements_precise,  # True si saisi par l'appelant
+        "message_nb_logements": msg_nb_logements,    # invite à saisir si collectif (sinon None)
         # TAXE-FIX-1 point 2 — redevance d'archéologie préventive (0,40 % de l'assiette).
         "rap_pct": _RAP_PCT,
         "rap_eur": rap_eur,

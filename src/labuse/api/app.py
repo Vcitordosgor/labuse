@@ -3045,6 +3045,7 @@ def taxe_amenagement_prefill(idu: str, db: Session = Depends(get_db)) -> dict:
 @app.get("/outils/taxe-amenagement")
 def taxe_amenagement(
     surface_taxable_m2: float = 0.0, residence_principale: bool = False, logement_aide: bool = False,
+    nb_logements: int | None = None,
     surface_exoneree_m2: float = 0.0, motif_exoneration: str | None = None,
     piscine_m2: float = 0.0, pv_sol_m2: float = 0.0, stationnement_ext_places: int = 0,
     eoliennes_mats: int = 0, taux_communal_pct: float | None = None,
@@ -3062,7 +3063,7 @@ def taxe_amenagement(
     pub = taux_parcelle(db, idu) if idu else (taux_communal_public(db, insee) if insee else None)
     return calculer(
         surface_taxable_m2=surface_taxable_m2, residence_principale=residence_principale,
-        logement_aide=logement_aide, surface_exoneree_m2=surface_exoneree_m2,
+        logement_aide=logement_aide, nb_logements=nb_logements, surface_exoneree_m2=surface_exoneree_m2,
         motif_exoneration=motif_exoneration, piscine_m2=piscine_m2, pv_sol_m2=pv_sol_m2,
         stationnement_ext_places=stationnement_ext_places, eoliennes_mats=eoliennes_mats,
         taux_communal_pct=taux_communal_pct, taux_departemental_pct=taux_departemental_pct,

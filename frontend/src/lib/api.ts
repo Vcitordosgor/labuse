@@ -580,6 +580,10 @@ export interface TaxeResult {
   part_communale_eur: number | null
   part_departementale_eur: number | null
   total_eur: number | null
+  // CHASSE-CALCULS-FIX-1 Lot 1 (E-A1) — abattement RP au grain logement.
+  nb_logements?: number | null
+  nb_logements_precise?: boolean
+  message_nb_logements?: string | null
   // TAXE-FIX-1 point 2 — redevance d'archéologie préventive (0,40 % de la même assiette, art. L524-7).
   rap_pct?: number
   rap_eur?: number
@@ -597,6 +601,7 @@ export interface TaxeResult {
 export interface TaxeParams {
   surface_taxable_m2: number
   residence_principale?: boolean
+  nb_logements?: number   // E-A1 — abattement 100 m² par logement (résidence principale)
   logement_aide?: boolean
   // TAXE-FIX-1 point 1 — exonération de plein droit (CGI 1635 quater D) : la surface portée ici ne
   // produit aucune part (0 €), le motif nomme l'article (agricole 3° / plai 2° / reconstruction 9°).
@@ -614,6 +619,7 @@ export interface TaxeParams {
 export const getTaxeAmenagement = (p: TaxeParams) => {
   const params = new URLSearchParams({ surface_taxable_m2: String(p.surface_taxable_m2) })
   if (p.residence_principale) params.set('residence_principale', 'true')
+  if (p.nb_logements) params.set('nb_logements', String(p.nb_logements))
   if (p.logement_aide) params.set('logement_aide', 'true')
   if (p.surface_exoneree_m2) params.set('surface_exoneree_m2', String(p.surface_exoneree_m2))
   if (p.motif_exoneration) params.set('motif_exoneration', p.motif_exoneration)
