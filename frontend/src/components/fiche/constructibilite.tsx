@@ -57,6 +57,18 @@ export function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
             valeur={<>~{pt.hauteur_marge_m} <small>m sous la règle</small></>} />
         )}
       </Lignes>
+      {/* CHASSE-CALCULS-FIX-1 Lot 3 (E-B1) — jamais de mélange vif/gelé : la SDP est calculée sur la
+          surface DU RUN ; si la surface cadastrale vive a changé depuis, on le DIT (ligne datée). */}
+      {pt.surface_calcul_note && (
+        <p className="mt-1 rounded-md border border-ambre/30 bg-ambre/5 px-2 py-1 text-[10.5px] leading-snug text-txt-dim">
+          {pt.surface_calcul_note}
+        </p>
+      )}
+      {/* CHASSE-CALCULS-FIX-1 Lot 5 (E-B3) — moteur de secours : mention « estimation simplifiée »
+          (aucun pourcentage > 100 % impossible n'est servi). */}
+      {pt.estimation_simplifiee_note && (
+        <p className="mt-1 text-[10px] leading-snug text-txt-dim italic">{pt.estimation_simplifiee_note}</p>
+      )}
       {/* CHASSE-FIX-2 (D03/D04) — la parcelle porte une CAUSE : on la NOMME en clair (le libellé
           serveur porte la vraie raison). Deux familles (arbitrage Vic) : CERTAINE (« exclu ») →
           badge « Non retenue » (verdict ferme, SDP 0 nommée) ; IGNORANCE (« indetermine ») → badge

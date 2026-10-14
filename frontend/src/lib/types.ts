@@ -927,6 +927,15 @@ export interface ReglementPlu extends Indisponible { zones: ReglementZone[]; dis
 export interface PotentielTransformation extends Indisponible {
   niveau: 'fort' | 'modere' | 'faible' | 'nul' | 'indetermine' | 'differe' | 'exclu'
   libelle: string
+  // CHASSE-CALCULS-FIX-1 Lot 3 (E-B1) — surface (contenance) QU'A UTILISÉE le run pour la SDP, la
+  // surface cadastrale actuelle, et une note datée si elles divergent (jamais de ratio vif/gelé muet).
+  surface_calcul_m2?: number | null
+  surface_actuelle_m2?: number | null
+  surface_calcul_note?: string | null
+  // CHASSE-CALCULS-FIX-1 Lot 5 (E-B3) — chiffres du moteur de secours (gabarit indisponible) :
+  // mention « estimation simplifiée » ; aucun intermédiaire impossible (> 100 %) n'est servi.
+  estimation_simplifiee?: boolean
+  estimation_simplifiee_note?: string | null
   // CHASSE-FIX-2 (D03/D04) — cause STRUCTURÉE de non-retenue (terrain_exigu, redhibitoire,
   // zone_non_constructible:…) + raison fine du terrain exigu. `libelle` ci-dessus la NOMME ;
   // null = parcelle calculée (potentiel disponible). Servi aussi en liste/Dossier/Copilote.

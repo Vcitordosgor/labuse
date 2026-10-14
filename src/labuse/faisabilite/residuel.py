@@ -238,6 +238,9 @@ def compute_residuel(session: Session, parcel_id: int,
         "sdp_max_m2": round(sdp_max),
         "sdp_existante_m2": round(sdp_existante),
         "sdp_residuelle_m2": round(sdp_residuelle),
+        # CHASSE-CALCULS-FIX-1 Lot 3 (E-B1) — la surface (contenance) SUR LAQUELLE ce résiduel est
+        # calculé, écrite au run pour être servie À CÔTÉ de la SDP (jamais une surface vive discordante).
+        "surface_terrain_m2": round(surface),
         "niveaux_max": fr.get("niveaux_max"),
         "niveaux_existants": round(niveaux_exist, 1),
         "niveaux_reels": niveaux_reels,
@@ -269,14 +272,16 @@ def compute_residuel(session: Session, parcel_id: int,
 _UPSERT = text(
     """INSERT INTO parcel_residuel_runs
          (run_seq, parcel_id, taux_emprise_pct, pct_potentiel, sous_densite, sdp_residuelle_m2,
-          capacite_estimee, cause, assiette_source, hauteur_source, regles_non_modelisees, computed_at)
-       VALUES (:rs, :p, :t, :pp, :sd, :sr, :ce, :cz, :asrc, :hsrc, :rnm, now())
+          capacite_estimee, cause, assiette_source, hauteur_source, regles_non_modelisees,
+          surface_terrain_m2, computed_at)
+       VALUES (:rs, :p, :t, :pp, :sd, :sr, :ce, :cz, :asrc, :hsrc, :rnm, :sfc, now())
        ON CONFLICT (run_seq, parcel_id) DO UPDATE SET
          taux_emprise_pct=EXCLUDED.taux_emprise_pct, pct_potentiel=EXCLUDED.pct_potentiel,
          sous_densite=EXCLUDED.sous_densite, sdp_residuelle_m2=EXCLUDED.sdp_residuelle_m2,
          capacite_estimee=EXCLUDED.capacite_estimee, cause=EXCLUDED.cause,
          assiette_source=EXCLUDED.assiette_source, hauteur_source=EXCLUDED.hauteur_source,
          regles_non_modelisees=EXCLUDED.regles_non_modelisees,
+         surface_terrain_m2=EXCLUDED.surface_terrain_m2,
          computed_at=now()""")
 
 
@@ -317,7 +322,8 @@ def compute_residuel_batch(session: Session, parcel_ids: list[int], run_seq: int
                 "sd": r["sous_densite"], "sr": r["sdp_residuelle_m2"],
                 "ce": r["capacite_estimee"], "cz": None, "asrc": r.get("assiette_source"),
                 "hsrc": r.get("hauteur_source"),
-                "rnm": (_json.dumps(rnm, ensure_ascii=False) if rnm else None)})
+                "rnm": (_json.dumps(rnm, ensure_ascii=False) if rnm else None),
+                "sfc": r.get("surface_terrain_m2")})
             res["calcules"] += 1
             continue
         cause = r.get("cause") or "indetermine"
@@ -326,7 +332,8 @@ def compute_residuel_batch(session: Session, parcel_ids: list[int], run_seq: int
             continue
         session.execute(_UPSERT, {"rs": run_seq, "p": pid, "t": None, "pp": None, "sd": None,
                                   "sr": r.get("sdp_ecrite"), "ce": None, "cz": cause,
-                                  "asrc": None, "hsrc": None, "rnm": None})
+                                  "asrc": None, "hsrc": None, "rnm": None,
+                                  "sfc": r.get("surface_terrain_m2")})
         res["causes"][cause] = res["causes"].get(cause, 0) + 1
     session.flush()
     return res

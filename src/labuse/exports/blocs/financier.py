@@ -219,7 +219,16 @@ def _bilan_rebours(bilan: dict, resolved: dict | None = None) -> str:
     # (valeur, HTML non échappé) ; la clé redevient du texte simple.
     lignes.append(ligne_kv("Charge foncière supportable",
                   f'<span class="num"><strong>{_keur(charge)}</strong></span>', _chip_nat("derive")))
-    return "<h2>Le bilan à rebours (HT)</h2>" + table_kv(lignes)
+    corps = "<h2>Le bilan à rebours (HT)</h2>" + table_kv(lignes)
+    # CHASSE-CALCULS-FIX-1 Lot 2 (E-A2) — quand la taxe d'aménagement est chiffrée, DIRE ce que son
+    # barème ne couvre pas (exonérations communales facultatives, stationnement majoré sur délibération).
+    if bilan["postes"].get("taxe_amenagement", {}).get("montant") is not None:
+        corps += note(
+            "Taxe d'aménagement — non pris en compte : les exonérations facultatives votées par la "
+            "commune (abris de jardin ≤ 20 m², commerces de détail < 400 m² — CGI art. 1635 quater E) "
+            "et le stationnement extérieur au tarif majoré sur délibération. À vérifier dans la "
+            "délibération de la commune.")
+    return corps
 
 
 def _sensibilite(bilan: dict) -> str:

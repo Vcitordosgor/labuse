@@ -103,6 +103,18 @@ def gabarit_detail(idu: str, db: Session = Depends(get_db)) -> GabaritResult:
 
     res = compute_gabarit(build.input)
     res.raccordement = _racc
+    # CHASSE-CALCULS-FIX-1 Lot 4 (E-B2) — UNE SEULE zone d'implantation : son AIRE est servie dans le
+    # MÊME repère que la Faisabilité (échelle CONTENANCE, règle CONTENANCE-1 C3 = contenance/dessin,
+    # identique à ctx.terrain_sur_dessin). La FORME (GeoJSON, reculs, PPR découpé) reste sur le dessin ;
+    # seule l'aire scalaire `zoneImplantationM2` est ré-échelonnée → même valeur au m² près que l'outil
+    # Faisabilité, fin du doublon (ex. AK0804 : 19 294 → 19 024, = faisabilité). surfaceParcelleM2 est
+    # déjà la contenance ; le plafond d'emprise (CES × contenance) l'est aussi → rien d'autre à toucher.
+    if res.zoneImplantationM2 and res.surfaceParcelleM2:
+        _dessin = db.execute(text("SELECT ST_Area(geom_2975) FROM parcels WHERE idu = :i"),
+                             {"i": idu}).scalar()
+        if _dessin and float(_dessin) > 0:
+            res.zoneImplantationM2 = round(
+                float(res.zoneImplantationM2) * float(res.surfaceParcelleM2) / float(_dessin), 1)
     # FRONT-CHIFFRES-2 (F57/F50) — % « à cheval » calculé ICI, une seule fois : round(portion / cadastre
     # × 100), même arithmétique que les deux sites front qui le recomputaient (GabaritLine + panneau).
     _rac = build.raccordement or {}
@@ -110,4 +122,8 @@ def gabarit_detail(idu: str, db: Session = Depends(get_db)) -> GabaritResult:
     if (_rac.get("zone") or {}).get("a_cheval") and _cad and res.surfaceParcelleM2 is not None:
         res.pctPortionZone = round(res.surfaceParcelleM2 / _cad * 100)
     res.batiExistantGeoJSON = _bati_existant(db, idu)
+    # CHASSE-CALCULS-FIX-1 Lot 6 (E-C1) — l'extrusion 3D est posée à plat : on le DIT dès qu'une
+    # hauteur réglementaire permet un volume (le mode 3D l'affiche).
+    if res.hauteurReglementaireM is not None:
+        res.terrainNote = "Volume 3D indicatif — terrain supposé plat (le relief n'entre pas dans le volume)."
     return res

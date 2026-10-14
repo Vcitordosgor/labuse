@@ -22,7 +22,11 @@ from sqlalchemy import text
 # GEOMETRIE-1 : assiette_source ajoutée EN FIN (CREATE OR REPLACE VIEW n'accepte que ça).
 _VIEW_COLS = ("parcel_id", "taux_emprise_pct", "pct_potentiel", "sous_densite",
               "sdp_residuelle_m2", "computed_at", "capacite_estimee", "cause",
-              "assiette_source", "hauteur_source", "regles_non_modelisees")
+              "assiette_source", "hauteur_source", "regles_non_modelisees",
+              # CHASSE-CALCULS-FIX-1 Lot 3 (E-B1) — la surface de terrain QU'A UTILISÉE le run
+              # (contenance au moment du calcul). Permet de montrer la SDP avec SA surface, et de
+              # signaler si la surface cadastrale vive a changé depuis. NULL = run antérieur au lot.
+              "surface_terrain_m2")
 
 
 class ServedRunWriteError(RuntimeError):
@@ -72,6 +76,10 @@ def ensure_runs_schema(conn) -> None:
     for col in ("assiette_source", "hauteur_source", "regles_non_modelisees"):
         if not _colonne_presente(conn, "parcel_residuel_runs", col):
             conn.execute(text(f"ALTER TABLE parcel_residuel_runs ADD COLUMN {col} text"))
+    # CHASSE-CALCULS-FIX-1 Lot 3 (E-B1) — surface_terrain_m2 (integer) : surface utilisée par le run.
+    # Même garde catalogue (ALTER émis seulement si la colonne manque → aucun ACCESS EXCLUSIVE no-op).
+    if not _colonne_presente(conn, "parcel_residuel_runs", "surface_terrain_m2"):
+        conn.execute(text("ALTER TABLE parcel_residuel_runs ADD COLUMN surface_terrain_m2 integer"))
     # index lecteurs-par-parcelle (les EXISTS/JOIN sur parcel_id) : (parcel_id, run_seq)
     if not _regclass_present(conn, "parcel_residuel_runs_pid"):
         conn.execute(text("CREATE INDEX parcel_residuel_runs_pid "
@@ -102,7 +110,8 @@ def ensure_runs_schema(conn) -> None:
         # CREATE OR REPLACE VIEW n'accepte que des AJOUTS en fin de liste : assiette_source,
         # hauteur_source puis regles_non_modelisees sont toutes en fin de `_VIEW_COLS` → OR REPLACE
         # suffit. Idempotent.
-        if not {"assiette_source", "hauteur_source", "regles_non_modelisees"} <= cols:
+        if not {"assiette_source", "hauteur_source", "regles_non_modelisees",
+                "surface_terrain_m2"} <= cols:
             conn.execute(text(_view_sql(or_replace=True)))
 
 
