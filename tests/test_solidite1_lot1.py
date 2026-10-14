@@ -21,6 +21,26 @@ def test_recap_matin_au_registre():
     assert j.cron_utc == "30 3 * * *" and j.heure_reunion == "07:30"
 
 
+def test_recap_sujet_porte_la_date(monkeypatch):
+    """SOLIDITE-1 / incident 14/10 — le sujet du récap porte LA DATE du jour (sujet unique chaque jour)
+    pour que Gmail ne regroupe/replie plus le récap quotidien (Brevo l'avait pourtant livré)."""
+    import types
+    from labuse import jobs_impl, ops_alertes
+    monkeypatch.setattr(ops_alertes, "verifier_declencheurs",
+                        lambda db: {"incidents_ouverts": [], "disque_pct": 50.0,
+                                    "sauvegarde": {"dernier": "x.dump"}, "readyz": {"ready": True},
+                                    "retards": []})
+    capte = {}
+    monkeypatch.setattr(jobs_impl, "_envoyer_alerte",
+                        lambda corps, *, sujet, ctx=None: capte.update(sujet=sujet))
+    ctx = types.SimpleNamespace(db=types.SimpleNamespace(commit=lambda: None),
+                                dry_run=False, compte=lambda **k: None)
+    jobs_impl.recap_matin(ctx)
+    jour = datetime.now(timezone.utc).astimezone().strftime("%d/%m")
+    assert jour in capte["sujet"], f"la date {jour} doit figurer dans le sujet : {capte.get('sujet')!r}"
+    assert "récap du matin" in capte["sujet"] and "tout vert" in capte["sujet"]
+
+
 def test_mailto_vide_dans_crontab():
     """SOLIDITE-1 (1.1) — fin du MAILTO « vers le vide » : plus de MAILTO=root, un MAILTO vide."""
     for tz in ("utc", "reunion"):

@@ -397,12 +397,14 @@ def recap_matin(ctx: JobContext) -> None:
         + (f" ({sb.get('taille_mo')} Mo)" if sb.get("taille_mo") else "")
         + f" · {len(etat.get('retards') or [])} job(s) en retard")
     date_run = datetime.now(timezone.utc).astimezone().strftime("%d/%m")
+    # Le sujet porte LA DATE : identique chaque jour, Gmail regroupait/repliait le récap (incident
+    # 14/10 : « récap non reçu » alors que Brevo l'avait livré). Un sujet daté unique le fait ressortir.
     if not ouverts:
-        sujet = "[LABUSE] récap du matin — tout vert"
+        sujet = f"[LABUSE] récap du matin {date_run} — tout vert"
         corps = (f"RÉCAP D'EXPLOITATION — {date_run}\n\n"
                  f"✓ Tout vert. {ligne_vigies}.\n\n— LABUSE, exploitation")
     else:
-        sujet = f"[LABUSE] récap du matin — {len(ouverts)} souci(s)"
+        sujet = f"[LABUSE] récap du matin {date_run} — {len(ouverts)} souci(s)"
         lignes = []
         for inc in ouverts:
             rap = f" · {inc['rappels']} rappel(s)" if inc.get("rappels") else ""
