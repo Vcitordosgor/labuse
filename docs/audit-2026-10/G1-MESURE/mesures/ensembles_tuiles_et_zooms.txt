@@ -1,0 +1,17 @@
+G1-MESURE — ensembles de tuiles observés (navigateur, 1440×900, canvas 1030×844)
+================================================================================
+Ouverture : zoom carte = 9.921 (floor → tuiles z9)
+  parcels-ile / limites_parcelles / limites_communes : 9/334/286 9/334/287 9/335/286 9/335/287  (4)
+Commune (z12, centre 55.448,-20.883 Saint-Denis) : 6 tuiles/source
+  12/2677/2290 12/2677/2291 12/2678/2290 12/2678/2291 12/2679/2290 12/2679/2291
+Quartier (z14, même centre) : 9 tuiles/source
+  14/10714/9163..9165 × 14/10715/9163..9165 × 14/10716/9163..9165
+
+ZOOMS MINIMUM
+  parcels-ile  : source minzoom 9 / maxzoom 15 (MapView.tsx:637) ; route 204 si z<9 (tiles.py:761)
+  limites_parcelles : overlay zoom_min 0 (CouchesTuyau.tsx:496 ; /map/tuyau/couches) → sert sous z9
+
+DÉZOOM COMPLET RÉEL (mesuré)
+  maxBounds=REUNION_MAXBOUNDS [55,-21.62,56.07,-20.65] (MapView.tsx:491)
+  Même setMinZoom(1)+jumpTo(zoom:4) → la carte se bloque à z9.403 (floor 9).
+  => la vue île n'atteint JAMAIS z8 à 1440×900 ; parcels-ile couvre tout l'intervalle atteignable.
