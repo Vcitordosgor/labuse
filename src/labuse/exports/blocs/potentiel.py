@@ -63,6 +63,10 @@ def _scenarios(valeurs) -> str:
         _note_surf = p.get("surface_calcul_note") if isinstance(p, dict) else None
         if _note_surf:
             detail += f' <span class="note" style="display:block">{esc(_note_surf)}</span>'
+        # CHASSE-CALCULS-FIX-1 Lot 5 (E-B3) — moteur de secours : mention « estimation simplifiée ».
+        _note_simpl = p.get("estimation_simplifiee_note") if isinstance(p, dict) else None
+        if _note_simpl:
+            detail += f' <span class="note" style="display:block">{esc(_note_simpl)}</span>'
         lignes.append(ligne_kv(SCENARIO_AU_SOL, detail, ""))
     # en hauteur — RECETTE-7 (E1) : comparé au FAÎTAGE (le bâti BD TOPO est mesuré au faîtage) ;
     # omise si les hauteurs ne sont pas servies (parcelle non bâtie).

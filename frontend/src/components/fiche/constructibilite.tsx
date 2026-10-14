@@ -64,6 +64,11 @@ export function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
           {pt.surface_calcul_note}
         </p>
       )}
+      {/* CHASSE-CALCULS-FIX-1 Lot 5 (E-B3) — moteur de secours : mention « estimation simplifiée »
+          (aucun pourcentage > 100 % impossible n'est servi). */}
+      {pt.estimation_simplifiee_note && (
+        <p className="mt-1 text-[10px] leading-snug text-txt-dim italic">{pt.estimation_simplifiee_note}</p>
+      )}
       {/* CHASSE-FIX-2 (D03/D04) — la parcelle porte une CAUSE : on la NOMME en clair (le libellé
           serveur porte la vraie raison). Deux familles (arbitrage Vic) : CERTAINE (« exclu ») →
           badge « Non retenue » (verdict ferme, SDP 0 nommée) ; IGNORANCE (« indetermine ») → badge

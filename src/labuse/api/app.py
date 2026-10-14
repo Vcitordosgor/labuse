@@ -6173,6 +6173,7 @@ def _potentiel_transformation_block(db: Session, idu: str, commune: str | None =
             """SELECT p.id AS pid, r.pct_potentiel, r.sdp_residuelle_m2, r.sous_densite,
                       r.capacite_estimee, r.cause, zp.zone_fam, zp.zone_lib,
                       r.surface_terrain_m2 AS surface_run, r.computed_at AS run_computed_at,
+                      r.assiette_source,
                       p.contenance_m2 AS contenance_live, p.updated_at AS parcel_updated_at
                  FROM parcels p
                  LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
@@ -6192,7 +6193,13 @@ def _potentiel_transformation_block(db: Session, idu: str, commune: str | None =
     # TEL QUEL (l'assiette clippée du run servi porte déjà la portion U/AU des parcelles à cheval).
     sdp_servie = float(row["sdp_residuelle_m2"]) if row["sdp_residuelle_m2"] is not None else None
     pct = row["pct_potentiel"]
-    if pct is None:
+    # CHASSE-CALCULS-FIX-1 Lot 5 (E-B3) — MOTEUR DE SECOURS (`residuel_legacy`, parcelle que le
+    # gabarit ne sert pas) : (1) AUCUN intermédiaire impossible n'est servi — un taux/pourcentage
+    # > 100 % (ex. 607 %, 640 % vus à l'audit) est SUPPRIMÉ (None), jamais affiché comme un fait ;
+    # (2) chaque chiffre de ce moteur porte la mention « estimation simplifiée ».
+    estimation_simplifiee = (row["assiette_source"] == "residuel_legacy")
+    if estimation_simplifiee and pct is not None and pct > 100:
+        pct = None   # un « % consommé » > 100 du moteur simplifié n'est pas un fait servable
         niveau, libelle = "indetermine", "Marge SDP non calculée"
     elif pct < 40:
         niveau, libelle = "fort", "Fort potentiel — parcelle en forte sous-densité"
@@ -6345,6 +6352,11 @@ def _potentiel_transformation_block(db: Session, idu: str, commune: str | None =
         "surface_calcul_m2": (int(_surf_run) if _surf_run is not None else None),
         "surface_actuelle_m2": (int(_surf_live) if _surf_live is not None else None),
         "surface_calcul_note": surface_calcul_note,
+        # CHASSE-CALCULS-FIX-1 Lot 5 (E-B3) — chiffres issus du moteur de secours : mention explicite.
+        "estimation_simplifiee": estimation_simplifiee,
+        "estimation_simplifiee_note": ("Estimation simplifiée — le gabarit réglementaire (reculs par "
+                                       "côté) n'est pas disponible pour cette parcelle ; capacité "
+                                       "approchée, à affiner par une étude." if estimation_simplifiee else None),
         # CHASSE-FIX-1 (C06) — capacité DIFFÉRÉE (zone AU non ouverte) : drapeau + détail de la
         # règle unique au_differe ; la SDP reste servie (≈ m² APRÈS ouverture), jamais « disponible ».
         "capacite_differee": capacite_differee,
