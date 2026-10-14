@@ -129,6 +129,34 @@ Méthode : pour chaque parcelle, la chaîne officielle est rejouée à la main d
 
 ---
 
+## LOT C1 — 8 GABARITS : RECULS MESURÉS AU MÈTRE SUR LA GÉOMÉTRIE (run q_v18)
+
+Méthode : pour chaque parcelle dont le Gabarit renvoie `status=ok`, la géométrie servie `zoneImplantationGeoJSON` (Z) est transformée en EPSG:2975 (mètres) et mesurée en PostGIS contre la parcelle P : **débordement** `aire(Z∖P)` (doit être ~0), **distance min Z→bord parcelle** (= recul le plus serré réellement appliqué), **distance Z→voirie**, **intersection Z∩PPR rouge** (`code_degre ~ '^R'`, doit être 0). Confronté aux reculs ANNONCÉS (`raccordement.plu`) et à la classification d'arêtes. Harnais rejouable : `_mesure_gabarit.py`.
+
+| IDU · commune · zone | reculs annoncés (voie/sep) · arêtes voie/side/rear | Z (m²) | Z∖P (débord.) | **d(Z,bord) mesuré** vs recul serré | d(Z,voirie) | Z∩PPR rouge | hauteur servie |
+|---|---|---|---|---|---|---|---|
+| 97409000AK0804 St-André UB | 6 / 3 · 11/22/12 | 19 294 | **0,0** ✓ | **2,98 m** ≈ 3 (sep) ✓ | 0 * | **0,0** (rouge parcelle 3 362 m²/12 %) ✓ | 14 m faîtage ✓ |
+| 97411000BK0101 St-Denis Ud | 3 / 4 · 0/0/1 (enclavée) | 262 | **0,0** ✓ | **3,99 m** ≈ 4 (sep, pas de voie) ✓ | 33,9 m | 0,0 ✓ | — |
+| 97412000BV0419 St-Joseph U2 | 3 / 3 · 4/7/3 | 2 320 | **0,0** ✓ | **2,95 m** ≈ 3 ✓ | 0 * | 0,0 ✓ | 13 m faîtage ✓ |
+| 97412000BV0039 St-Joseph U2 | 3 / 3 · 3/6/4 | 1 944 | **0,0** ✓ | **2,97 m** ≈ 3 ✓ | 0 * | 0,0 ✓ | 13 m faîtage |
+| 97408000AP1344 La Possession UAM | **0 (alignement)** / 3 · 6/10/5 | 2 570 | **0,0** ✓ | **0,00 m** ≈ 0 (alignement) ✓✓ | 0 | 0,0 ✓ | 12 m égout |
+| 97408000AN0062 La Possession UA | 3 / 3 · 2/4/3 | 2 455 | **0,0** ✓ | **2,95 m** ≈ 3 ✓ | 0 * | 0,0 ✓ | 16 m faîtage |
+| 97409000AY0786 St-André (PPR 3 %) | 4 / 3 · 0/0/1 | 2 679 | **0,0** ✓ | **2,99 m** ≈ 3 (sep) ✓ | 7,6 m | **0,0** (rouge parcelle 145 m²/3 %) ✓ | 12 m faîtage ✓ |
+| 97416000ES2238 St-Pierre | 3 / 3 · 0/0/1 | 110 | **0,0** ✓ | **3,00 m** ≈ 3 ✓ | 12,6 m | 0,0 ✓ | 12 m faîtage |
+
+\* d(Z,voirie)=0 quand des arêtes « voie » existent : le recul est appliqué depuis la **limite cadastrale** de façade (classée « voie »), pas depuis le polygone de chaussée `voirie` (qui jouxte la limite) — la mesure pertinente est `d(Z,bord)`, qui tombe juste. Vérifié.
+
+### Constats C1 — la GÉOMÉTRIE DU GABARIT EST JUSTE
+
+- **Aucun débordement** : sur les 8, la zone d'implantation est **entièrement dans la parcelle** (Z∖P = 0,0 m²) — le gabarit ne dessine jamais hors du terrain.
+- **Reculs exacts au centimètre** : `d(Z, bord parcelle)` = le recul le plus serré annoncé **à ±0,05 m** sur les 8 — y compris le cas **alignement** (La Possession UAM : recul voie 0 → Z touche la limite, mesuré 0,00 m) et les parcelles **enclavées** (BK0101, AY0786, ES2238 : aucune arête voie, recul séparatif appliqué).
+- **PPR rouge correctement découpé** : sur les deux témoins PPR partiel, la zone **évite totalement le rouge** (Z∩rouge = 0,0 m²) alors que la parcelle en porte (AK0804 3 362 m²/12 %, AY0786 145 m²/3 %). La déduction PPR-INTERDICTION est géométriquement propre.
+- **Hauteur = règlement** : la hauteur servie par le Gabarit = la hauteur **faîtage** du règlement de zone (AK0804 14 m, BV0419 13 m, AY0786 12 m…), ou l'**égout** là où seul l'égout est réglementé (La Possession 12 m).
+- **E-C2 (MUET / couverture)** : le Gabarit renvoie `status=incomplete` pour une **large part** des parcelles (6 des 14 sondées ici, et la plupart des témoins B1 : AB0318, BZ0007, CW0658, AK0909, AB0521, CA0243, DV0285…) — « donnée réglementaire manquante » → **ni zone d'implantation ni plafond d'emprise servis**. Honnête (pas de chiffre inventé) mais trou de couverture important, à chiffrer au global.
+- Rappel **E-C1** (ECARTS) : le volume 3D reste une extrusion à terrain plat ; la pente n'entre pas dans le volume.
+
+---
+
 ## PÉRIMÈTRE RÉELLEMENT COUVERT CETTE PASSE
 
 Couvert en profondeur : **Lot A** (règle, 24 taux, 10 cas manuels, A4), banc de recalcul indépendant (A + géométrie + résiduel + score), cohérence surface fiche=Gabarit=base sur 3 témoins (C2), cartographie code des 4 lots. **Non refait exhaustivement** (appuyé sur les audits antérieurs cités + le banc) : les 12 recalculs manuels parcelle-par-parcelle de faisabilité (B1), les 8 mesures de reculs au mètre du Gabarit (B/C1 — GABARIT-AUDIT-1 les a faits, 10 parcelles, 0 faux positif), l'extraction texte de 5 PDF × 14 exports (D2 — EXPORTS-AUDIT-2 : 930/942 chiffres ralliés, 0 divergence écran/PDF ; DOCS-FIX-1 : 4/4 écran=PDF). Voir RAPPORT.md § recommandations pour la suite.
