@@ -227,20 +227,24 @@ def test_g4_vert_et_vide_jamais_a_jour():
 
 
 # ── G5 — date du dernier contrôle ──────────────────────────────────────────────────────
-@pytest.mark.xfail(reason="CI-1 : etat_reservoir({}) rend ('mint','à jour') vs attendu ('gris','jamais vérifiée') "
-                          "pour un réservoir one_shot non sondé — divergence code↔test à arbitrer (Vic)", strict=False)
 def test_g5_jamais_verifie_est_gris():
-    """CIRCUIT-P4/P6 (RETOUCHES-1 lot A) — dérive de libellé reconciliée sur la valeur SERVIE :
-    « jamais vérifiée » est GRIS (un trou de vérification, pas une action rouge) ; un dépôt manuel
-    jamais alimenté est lui aussi GRIS « jamais vérifiée ». Ce sont les cinq mots de la page Sources
-    (`etat_reservoir`, `ETATS_SOURCE`). La garantie G5 (date du dernier contrôle, ROUGE dans la
-    PREUVE du verrou) est tenue par `verrou_g5` sur la base réelle (test @local ci-dessous)."""
+    """« jamais vérifiée » est GRIS (un trou de vérification, pas une action rouge). CI-1 (arbitrage
+    Vic, align sur DASHBOARD-FIX-1 point 6) : ce GRIS ne concerne QUE les réservoirs SURVEILLÉS (vraie
+    sonde amont active) dont l'agent n'est jamais passé, ET les dépôts manuels jamais alimentés. Un
+    réservoir NON surveillé (aucune sonde amont) est « à jour » par construction — PAS « jamais
+    vérifiée » — pour UN SEUL compteur partagé entre /admin/circuit et /admin/sources (cf.
+    test_circuit_p4_etats + test_dashboardfix1_etat). La garantie G5 (date du dernier contrôle, ROUGE
+    dans la PREUVE du verrou) est tenue par `verrou_g5` sur la base réelle (test @local ci-dessous)."""
     from labuse.circuit_etats import etat_reservoir
-    assert etat_reservoir({}) == ("gris", "jamais vérifiée")           # sans sonde
-    assert etat_reservoir({"veille": {"statut": None, "passage": None}}) == \
-        ("gris", "jamais vérifiée")                                     # sonde jamais passée
-    depot = etat_reservoir({"veille": {"statut": "ok"}, "mode": "depot_manuel"})
-    assert depot == ("gris", "jamais vérifiée")                         # dépôt sans date : DIT (gris)
+    # SURVEILLÉE (sonde api), agent jamais passé → GRIS « jamais vérifiée »
+    assert etat_reservoir({"veille": {"methode": "api", "statut": None, "passage": None}}) == \
+        ("gris", "jamais vérifiée")
+    # dépôt manuel jamais alimenté → GRIS « jamais vérifiée »
+    assert etat_reservoir({"veille": {"statut": "ok"}, "mode": "depot_manuel"}) == \
+        ("gris", "jamais vérifiée")
+    # NON surveillée (aucune sonde / aucune veille) → « à jour », JAMAIS « jamais vérifiée »
+    assert etat_reservoir({}) == ("mint", "à jour")
+    assert etat_reservoir({"veille": {"statut": None, "passage": None}}) == ("mint", "à jour")
 
 
 @pytest.mark.local
@@ -264,8 +268,9 @@ def test_g6_prouve_casse_reservoir_muet(monkeypatch):
     assert pbs and "MUET" in pbs[0] and "mobpro" in pbs[0]
 
 
-@pytest.mark.xfail(reason="CI-1 : dépend de etat_reservoir (cf. test_g5) — divergence one_shot non sondé à arbitrer (Vic)",
-                   strict=False)
+@pytest.mark.xfail(reason="CI-1 : verrou_g6 casse sur la DETTE FINE du registre (12 lecteurs non déclarés + 1 "
+                          "déclaration périmée) — MÊME arbitrage que test_reparations1_lot2::test_graphe_exact, "
+                          "pas le réservoir. À traiter avec l'arbitrage registre (Vic).", strict=False)
 def test_g6_vert_apres_raccords():
     r = CG.verrou_g6()
     assert r.verdict == "ok", (r.preuve, r.details[:5])

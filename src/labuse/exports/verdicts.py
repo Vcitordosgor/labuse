@@ -76,7 +76,12 @@ def verdict_potentiel(valeurs: dict[str, Valeur]) -> Verdict | None:
         # CHASSE-FIX-2 (D04) — on NOMME la vraie raison : le libellé du bloc potentiel la porte déjà
         # (terrain exigu/PPR rouge/ER/EBC/zone fermée…). L'ancien « nul par la règle de zonage »
         # MENTAIT pour un terrain_exigu GÉOMÉTRIQUE (jamais un zonage). Repli générique si absent.
-        if libelle:
+        # CI-1 (arbitrage faux-constructible) — EXCEPTION pour le ZONAGE PUR (A/N) : là, le `libelle`
+        # du bloc potentiel reste le POTENTIEL du modèle (« fort potentiel sous-densité ») — le servir
+        # trahirait justement un faux constructible. Pour cette cause, on sert TOUJOURS le message de
+        # zonage, jamais le libelle. Les autres causes (géométriques/réglementaires) gardent le leur.
+        cause_base = cause.partition(":")[0]
+        if libelle and cause_base != "zone_non_constructible":
             return (f"{libelle}", "warn", "")
         fam = _val(valeurs, "zone_plu_famille")
         z = f" (zone {fam})" if fam else ""
