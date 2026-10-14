@@ -358,21 +358,20 @@ zones:
           statut: valide
       retraits:
         voie:
-          min_m: null
+          forme: alignement
           article: '6'
           page_pdf: 19
           citation: 'en zone U1pru — Cas général : Les constructions pourront s''implanter à l''alignement.
             En cas de retrait, celui-ci ne pourra excéder 6 mètres.'
-          statut: propose
-          raison: valeur non numérique ('a_verifier')
+          statut: valide
+          note: "PLU-CALIBRAGE-8 (oct.) Lot C : forme alignement = implantation possible À L'ALIGNEMENT (recul 0 explicite, Art. 6 Cas général). Le « retrait <= 6 m » est un PLAFOND permissif (maximum), pas un minimum — non modélisé (ne réduit pas l'enveloppe). Citation relue au règlement en vigueur (md5 0aee72989399..., p.19)."
         limites_separatives:
-          min_m: 3.0
-          article: '7.2'
+          forme: alignement
+          article: '7'
           page_pdf: 21
-          citation: en zone U1pru — ... En cas de retrait, celui-ci ne pourra excéder 5 mètres (recul <=3
-            m INTROUVABLE tel quel).
-          statut: propose
-          note: "PLU-VERIF-1 : valeur passée en propose (non servie) — lue au PDF : recul <= 5 m (maximum), et non 3 m minimum. en zone U1pru Chaque construction pourra s'implanter sur une limite separative sans limitation de longueur. En cas de retrait, celui-ci ne pourra exceder 5 metres"
+          citation: "en zone U1pru — Chaque construction pourra s'implanter sur une limite séparative sans limitation de longueur. En cas de retrait, celui-ci ne pourra excéder 5 mètres."
+          statut: valide
+          note: "PLU-CALIBRAGE-8 (oct.) Lot C : la valeur min_m 3 m (invention, passée propose à juste titre par PLU-VERIF-1) est remplacée par forme alignement — l'Art. 7 autorise l'implantation EN LIMITE séparative (recul 0). Le « retrait <= 5 m » est un PLAFOND permissif (maximum), pas un minimum, donc non modélisé. Citation relue au règlement en vigueur (md5 0aee72989399..., Article 7 p.21). Lève le blocage regle_non_validee qui rendait U1pru non calculable depuis PLU-CALIBRAGE-6."
       stationnement:
         par_logement:
           places: null
@@ -1518,9 +1517,9 @@ zones:
           pct: null
           article: '9'
           page_pdf: 133
-          citation: INTROUVABLE
+          citation: 'Article 9 — Emprise au sol : 1. habitation et commerce : l''emprise au sol ne doit pas dépasser 150 m² ; 2. annexe non habitable : 25 m² ; 3. équipements d''intérêt collectif : 200 m² ; 4. hébergement hôtelier : module principal 150 m², secondaires 80 m², maximum 300 m².'
           statut: propose
-          raison: valeur non numérique ('a_verifier')
+          raison: "emprise réglementée en m² ABSOLUS par destination (Art. 9), non exprimable en CES % — forme hors schéma actuel (PLU-CALIBRAGE-8 oct. Lot B : vérifié au règlement md5 0aee72989399..., p.133). Reste `propose` : la servir en CES % surestimerait (le plafond 150 m² est bien plus bas qu'une emprise calculée sur les reculs)."
       retraits:
         voie:
           min_m: 4.0
