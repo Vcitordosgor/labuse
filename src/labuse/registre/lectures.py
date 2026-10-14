@@ -119,8 +119,6 @@ LECTURES: tuple[Lecture, ...] = (
       "_dvf_couverture : min/max/n de date_mutation = libellé de couverture (« ventes jusqu'à … ») affiché comme métadonnée de fraîcheur, jamais un chiffre du registre."),
     L("dvf_secteur_medianes", "api/mon_secteur.py", "prix_terrain_secteur_eur_m2", "fiche_parcelle_marche",
       "_terrain_section (ETUDIER-BIEN-2 Lot B) : médiane du terrain nu de la SECTION cadastrale (table pré-agrégée `dvf_secteur_medianes`, clé left(idu,10)) — MÊME méthode que la fiche §Marché ; remplace l'ancien `_terrain_local` (rayon géographique) qui divergeait."),
-    L("dvf_mutations", "api/projets.py", "prix_ancien_median_eur_m2", "outil_communes",
-      "Médiane €/m² bâti DVF par commune (bornes 200-8000) servie sous les chips de l'entretien Projets et dans le « pourquoi » des listes — écran réel = outil Projets."),
     L("dvf_mutations", "cascade/context.py", "tier_opportunite", "couche_verdict",
       "Médianes DVF par rayon (n, valeur, €/m²) pré-calculées comme signaux de la cascade d'évaluation → classement servi (tier)."),
     L("dvf_mutations", "demo.py", None, None,
@@ -566,6 +564,36 @@ LECTURES: tuple[Lecture, ...] = (
       "geom_2975 de la parcelle pour dériver les limites (voie/fond/séparatives) du gabarit — machinerie de géométrie du moteur gabarit."),
     L("pige_passes", "pige/api.py", None, None,
       "état interne du Radar : dernier passage et compteurs de pige (n_pages/nouvelles/maj) pour l'écran admin — état de collecte, aucune donnée de fiche servie."),
+
+    # ── REGISTRE-DETTE-1 — les 12 arêtes restées en dette (CI-1 : scan statique vs registre) ont été
+    #    RELUES une à une : celles qui SERVENT un chiffre du registre portent (chiffre, robinet, au plus
+    #    proche quand l'écran n'a pas de robinet propre — cf. en-tête), les autres sont de la machinerie
+    #    (résolution/jointure/écriture RGPD/garde/témoins). La déclaration périmée de api/projets.py
+    #    (dvf_mutations, désormais délégué à moteurs.prix_ancien_communes) a été retirée en regard.
+    L("parcels", "bilan/reperes.py", "surface_parcelle_m2", "outil_etudier_bien",
+      "BILAN-1 sources_parcelle : _surface lit COALESCE(contenance_m2, surface_m2) pour le « terrain » Sourcé du Bilan (CONTENANCE-1, contenance|dessin comme la fiche/les calculs) + _parcelle résout idu→id/commune — même surface que surface_parcelle_m2 ; le Bilan n'a pas de robinet propre, rattaché au plus proche (outil Étudier le bien d'où il s'ouvre)."),
+    L("dvf_mutations", "bilan/reperes.py", "prix_achat_historique_eur", "pdf_dossier_expert",
+      "BILAN-1 _prix_achat_dvf : dernière mutation DVF de la parcelle (valeur_fonciere + date, JOIN dvf_mutation_parcelles) servie en INFO hors-calcul « Dernier prix DVF » du Bilan — même donnée que prix_achat_historique_eur (dernière mutation) ; le Bilan n'ayant pas de robinet, rattaché au plus proche (pdf_dossier_expert porte ce chiffre)."),
+    L("pm_dirigeants", "api/app.py", "dirigeant_pm_signal", "outil_scan_patrimoine",
+      "_pm_dirigeant : dirigeant AÎNÉ (nom + âge, personne physique datée la plus ancienne au RNE INPI) servi à la ligne « Dirigeant » de la fiche §1 Identité — même donnée RNE que le signal dirigeant du Scan patrimoine (seul robinet portant dirigeant_pm_signal) ; la fiche n'a pas de robinet dédié, rattachée au plus proche."),
+    L("dvf_mutations_parcelle", "api/fiche_blocs3.py", None, None,
+      "pm_voisines (§Marché) : lit UNIQUEMENT max(date_mutation) par parcelle voisine (LATERAL corrélé = v_parcel_dvf_last.date_mutation) pour dater et filtrer sur 36 mois les acquisitions de personnes morales voisines — jointure de datation ; le fait servi (acquéreurs PM) vient de parcelle_personne_morale × DGFiP, aucun chiffre DVF produit ici."),
+    L("owner_enrichment", "rgpd_dirigeants.py", None, None,
+      "Purge RGPD : UPDATE owner_enrichment pour retirer la nationalité des dirigeants (recherche-entreprises) du payload — écriture de conformité, aucune lecture servie."),
+    L("pm_dirigeants", "rgpd_dirigeants.py", None, None,
+      "Purge RGPD : UPDATE pm_dirigeants SET raw = NULL pour vider le brut RNE des entreprises non diffusibles — écriture de conformité, aucun robinet."),
+    L("parcel_anc", "api/app.py", None, None,
+      "parcel_anc n'est cité qu'en COMMENTAIRE de _anc_block (qui décrit le count de couverture) ; la lecture réelle (count DISTINCT département) vit dans anc_service.couverture_anc, dont _anc_block mémorise le résultat (TTL 60 s) — aucune requête parcel_anc dans ce fichier."),
+    L("parcels", "api/bilan.py", None, None,
+      "_commune : résolution idu→commune pour l'entête des sorties PDF/Excel du Bilan (BILAN-2) — jointure de libellé, aucun chiffre servi."),
+    L("parcels", "cadastre_disparue.py", None, None,
+      "CHASSE-DONNEES-FIX-1 Lot 2 — garde « parcelle disparue » : lit le marqueur parcels.cadastre_disparue_le (+ parcel_cadastre_remplacement) pour REFUSER de composer un document et servir un message de courtoisie — le fichier le dit : « jamais une donnée servie »."),
+    L("parcels", "facturation.py", None, None,
+      "_flash_envoyer_mail_pret : LEFT JOIN parcels par idu pour la commune de la commande dans l'e-mail « Flash prêt » (best-effort) — jointure de libellé d'un mail transactionnel, aucun chiffre servi."),
+    L("parcels", "financier_questionnaire.py", None, None,
+      "prix_sortie_neuf_servi : résolution idu→parcels.id avant resolve_prix_sortie_servi (le prix de sortie NEUF vient de DVF, pas de parcels) — jointure technique, aucun chiffre de parcels servi."),
+    L("parcels", "verite_sources.py", None, None,
+      "SOLIDITE-1 Lot 5 — echantillon_stratifie : tire des idu/commune au hasard (strates contenance≠dessin/bizone/nouvelle/zone rouge) pour la sonde mensuelle « vérité face aux sources » — tirage de témoins, aucune écriture hors le rapport, aucune donnée servie."),
 )
 
 

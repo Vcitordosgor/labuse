@@ -268,9 +268,8 @@ def test_g6_prouve_casse_reservoir_muet(monkeypatch):
     assert pbs and "MUET" in pbs[0] and "mobpro" in pbs[0]
 
 
-@pytest.mark.xfail(reason="CI-1 : verrou_g6 casse sur la DETTE FINE du registre (12 lecteurs non déclarés + 1 "
-                          "déclaration périmée) — MÊME arbitrage que test_reparations1_lot2::test_graphe_exact, "
-                          "pas le réservoir. À traiter avec l'arbitrage registre (Vic).", strict=False)
+# REGISTRE-DETTE-1 — la dette fine (12 lecteurs non déclarés + 1 déclaration périmée) est soldée dans
+# registre/lectures.py : verrou_g6 est de nouveau vert (0 réservoir muet, dette 0, périmées 0). Plus de xfail.
 def test_g6_vert_apres_raccords():
     r = CG.verrou_g6()
     assert r.verdict == "ok", (r.preuve, r.details[:5])
