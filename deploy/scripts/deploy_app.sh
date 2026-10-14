@@ -41,6 +41,9 @@ echo "── 1. Code → ${HOST}:/opt/labuse/app (rsync DIRECT via sudo distant,
 #     (q_v18) rsync'd ici a basculé prod sur un run sans données → /readyz=false. Exclu définitivement.
 rsync -a --delete --rsync-path="sudo rsync" \
   --exclude .git --exclude .venv --exclude node_modules --exclude frontend/dist \
+  --exclude /.env \
+  `# /.env = config LOCALE de dev (chemins Mac, ex. LABUSE_PIGE_CAPTURES_DIR=/Users/...) : JAMAIS` \
+  `# expédiée en prod — elle y fuyait des valeurs Mac. La config prod vit dans /etc/labuse/labuse.env.` \
   --exclude "__pycache__" --exclude "*.pyc" --exclude .pytest_cache --exclude /exports \
   --exclude /reports --exclude /qa --exclude /captures --exclude /audit_shots \
   --exclude /tests --exclude /docs --exclude /outputs \

@@ -410,13 +410,15 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
               "stockage + minimisation des données.",
        test="tests/test_cron1_registre.py::test_job_a_une_raison"),
     # CORRECTIFS-1 E5 — maintenance quotidienne : détection d'abus + purge des sessions expirées.
+    # Horaires REPRIS À L'IDENTIQUE des fichiers cron legacy (labuse-abuse 10:00 Réunion, labuse-sessions
+    # 08:00 Réunion) → remplacement sans trou avant retrait des fichiers legacy (réconciliation 14/10).
     _j("abuse-scan", "Détection d'abus (usage anormal / partage de compte)", "quotidien",
-       "0 4 * * *", "08:00", touche="exploitation", timeout_s=300,
+       "0 6 * * *", "10:00", touche="exploitation", timeout_s=300,
        raison="Repère chaque jour les usages anormaux (extraction massive, partage de compte : IP "
               "distinctes simultanées) et les signale — jamais de blocage automatique, informatif.",
        test="tests/test_cron1_registre.py::test_job_a_une_raison"),
     _j("purge-sessions", "Purge des sessions d'authentification expirées", "quotidien",
-       "30 4 * * *", "08:30", touche="exploitation", timeout_s=120,
+       "0 4 * * *", "08:00", touche="exploitation", timeout_s=120,
        raison="Supprime les sessions_auth EXPIRÉES (expire_at < now) : minimisation des données et "
               "hygiène de la table de sessions. Aucune session active touchée.",
        test="tests/test_cron1_registre.py::test_job_a_une_raison"),
