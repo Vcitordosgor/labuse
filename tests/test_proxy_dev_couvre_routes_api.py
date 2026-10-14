@@ -23,6 +23,7 @@ from pathlib import Path
 
 _ROOT = Path(__file__).resolve().parents[1]
 _VITE = _ROOT / "frontend" / "vite.config.ts"
+_APP = _ROOT / "src" / "labuse" / "api" / "app.py"
 
 # Routes exposées par l'API mais que la SPA n'appelle JAMAIS en `fetch` cross-origin en dev :
 # pages RENDUES PAR LE SERVEUR (navigations plein écran, mêmes-origine en prod), assets de
@@ -74,6 +75,15 @@ def _segments_api() -> set[str]:
     return segs
 
 
+def _mounts_source() -> set[str]:
+    """Racines montées par `app.mount(...)` DANS LE CODE, même quand le montage est CONDITIONNEL
+    au runtime. `/socle` (StaticFiles de la SPA) n'est monté que si `frontend/dist` existe
+    (app.py : `if FRONTEND_DIST.exists()`) : absent du hook local (front non buildé), bien présent
+    en prod/CI. Une racine ainsi déclarée dans la source n'est PAS une entrée morte."""
+    txt = _APP.read_text(encoding="utf-8")
+    return {"/" + m for m in re.findall(r"""\.mount\(\s*["']/([^"'/]+)""", txt)}
+
+
 def test_apiPaths_bien_lu():
     paths = _api_paths()
     # garde-fou du garde-fou : l'extraction fonctionne (sinon le test serait vide → faux vert).
@@ -100,6 +110,8 @@ def test_toute_route_api_est_proxifiee_ou_allowlistee():
 def test_allowlist_sans_entree_morte():
     """L'allowlist ne doit pas pourrir : toute racine allowlistée existe encore côté API
     (sauf '/', la SPA). Une entrée morte masquerait une vraie route le jour où elle renaît."""
-    segs = _segments_api()
+    # routes vivantes + montages déclarés dans la source (dont les montages CONDITIONNELS comme
+    # /socle, présents en prod/CI mais pas dans le hook local sans front buildé).
+    segs = _segments_api() | _mounts_source()
     mortes = sorted(s for s in NON_PROXIFIE if s != "/" and s not in segs)
     assert not mortes, f"entrées NON_PROXIFIE sans route API correspondante : {mortes}"
