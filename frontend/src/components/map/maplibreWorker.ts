@@ -28,7 +28,11 @@ export function reglerWorkerMaplibre(): void {
   // suffisait. On donne donc à v6 le parallélisme de décodage qu'il lui faut. setWorkerCount DOIT être
   // appelé avant la 1ʳᵉ carte (pool de workers créé paresseusement au 1ᵉʳ Map).
   const hc = (typeof navigator !== 'undefined' && navigator.hardwareConcurrency) || 8
-  maplibregl.setWorkerCount(Math.max(Math.floor(hc / 2), 2))   // M1 (8 cœurs) → 4 workers
+  // Réconciliation post-rebase sur main : on respecte la doctrine cap-4 du bloc RECETTE-1 B de MapView
+  // (« évite d'oversouscrire »). Ainsi les DEUX cartes (MapView + TimeMachine) partagent le même réglage
+  // moitié-des-cœurs borné [2,4] ; dans MapView le bloc RECETTE-1 B calcule alors la même valeur → son
+  // garde `getWorkerCount() !== voulu` devient un no-op (plus de double réglage sur machine à 8 cœurs).
+  maplibregl.setWorkerCount(Math.max(2, Math.min(4, Math.floor(hc / 2))))   // M1 (8 cœurs) → 4 workers
   // diagnostic (sans effet produit, utile au débogage) : accès à maplibre-gl pour introspecter la config.
   ;(window as unknown as Record<string, unknown>).__mlgl = maplibregl
   fait = true
