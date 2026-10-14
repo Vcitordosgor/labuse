@@ -83,6 +83,52 @@ Résultat 2026-10-14 : **494 comparaisons · 1 écart** (`mult_base` 0,86 vs 0,8
 
 ---
 
+---
+
+## LOT B1 — 12 FAISABILITÉS RECALCULÉES À LA MAIN (passe 2, run q_v18 / run_seq 15)
+
+Méthode : pour chaque parcelle, la chaîne officielle est rejouée à la main depuis le **règlement de zone** (article + page citées, tels que servis par l'outil `GET /modules/faisabilite/{idu}` dans `steps[].source`, miroir du YAML `config/plu_destinations/{insee}.yaml`), puis les trois lectures sont confrontées : **outil Faisabilité** (live), **fiche** `/parcels/{idu}` (`potentiel_transformation.sdp_residuelle_m2`, SERVIE depuis le run gelé) et **Gabarit** `/outils/gabarit/{idu}`. Harnais rejouable : `_harness.py B1`. Constantes du moteur (toutes exposées en `hypotheses`) : étage 3 m, occupation 0,45, rendement 0,80, logement 65–80 m², densité-filet 30 logts/ha/niveau, place 25 m².
+
+**Chaîne** : `emprise_constructible = min(zone_implantation(reculs), CES×contenance, (1−pleine_terre%)×contenance)` → `emprise_bâtie = emprise_constructible × 0,45` → `SDP = emprise_bâtie × niveaux` → `shab = SDP × 0,80` → `logements = min(shab / logt_moyen, densité×ha×niveaux)`.
+
+### Les 12 parcelles
+
+| # | IDU · commune | zone | contenance (=surface servie) | règlement (CES · Hégout · recul voie/sep · article/page) | outil : emprise→SDP→niveaux→logts | hand-check chaîne | fiche SDP servie | Gabarit zone impl. |
+|---|---|---|---|---|---|---|---|---|
+| 1 | 97411000BK0101 St-Denis | Ud | 574 | 80 % · 12 m · 3/4 m · Art. Ud.9 p.43 / Ud.10 p.44 | 255→460→R+3→4-6 | 255×0,45=115 ✓ ; 115×4=460 ✓ | **460 =** outil | 262 (⚠ ≠ 255) |
+| 2 | 97411000AB0318 St-Denis | Uavap (non calibré) | 270 | Art. 9 silence · R+2 générique | 105→142→R+2→1-2 | 105×0,45=47 ✓ ; 47×3=141≈142 ✓ | **0** (85-91 % bâti ⇒ résiduel saturé, OK) | incomplet |
+| 3 | 97410000AB0212 St-Benoît | AUp1 | 40 930 | AU fermée — construction neuve non autorisée | — (verdict « non autorisée ») | n/a (0 cohérent) | **0** (cause `zone_non_constructible:AUp1`) ✓ | incomplet |
+| 4 | 97415000BZ0007 St-Paul | Usdu (bizone 73 %/N) | 5 600 | Art. 7.2 p.132 · R+1 Art 10.2 p.134 · PT Art 13.1 p.143 ; ER/EBC −3 077 | 477→430→R+1→1-3 | 477×0,45=215 ✓ ; 215×2=430 ✓ | **0** (85 % bâti ⇒ résiduel saturé, OK) | incomplet (clip Usdu 4 037) |
+| 5 | 97417000BN0002 St-Philippe | — (RNU) | 515 500 | RNU — pas de PLU opposable | **muet** (zone None) | n/a | **None** (cause `hors_plu`) | incomplet |
+| 6 | 97409000AK0804 St-André | UB | 27 862 | silence CES (Art. 9) · R+3 Art. UB 10 p.29 · PT Art. UB 13.1 p.32 · recul 6/3 | 19 024→34 243→R+3→334-335 | 19 024×0,45=8 561 ✓ ; 8 561×4=34 244≈34 243 ✓ | **34 223** (⚠ ≠ 34 243 : −20, run gelé) | 19 294 (⚠ ≠ 19 024) |
+| 7 | 97415000CW0658 St-Paul | AU3a (renvoi AU→U) | 25 633 | Art. 7.2 p.112 · R+4 Art 10.2 p.114 · PT Art 13.1 p.124 | 17 164→38 619→R+4→176-177 | 17 164×0,45=7 724 ✓ ; 7 724×5=38 620≈38 619 ✓ | **38 619 =** outil | incomplet |
+| 8 | 97412000BV0419 St-Joseph | U2 | 2 983 | 80 % Art. U2 9.2 p.35 · R+2 Art. U2 10.2 p.35 · PT Art. U2 13.1 p.41 · 3/3 m | 2 305→3 112→R+2→26-27 | 2 983×0,80=2 386 (CES) ; min(2 305,2 386)=2 305 ✓ ; ×0,45=1 037 ✓ ; ×3=3 111≈3 112 ✓ | **3 095** (⚠ ≠ 3 112 : −17, run gelé) | 2 320 (⚠ ≠ 2 305) |
+| 9 | 97419000AK0909 Ste-Rose | Ua | 2 737 | 70 % Art. UA 9 p.14 · R+2 Art. UA 10 p.15 · PT Art. UA 13 p.17 · 4/3 m | 1 916→2 586→R+2→17-18 | 2 737×0,70=1 916 (CES **lie**) ; ×0,45=862 ✓ ; ×3=2 586 ✓ | **2 586 =** outil | incomplet |
+| 10 | 97409000AB0521 St-André | UB (GPU dépublié) | **NULL** (dessin 29 489) | Art. UB 7 p.27 · R+3 Art. UB 10 p.29 | 20 622→37 119→R+3→0 (rédhibitoire) | outil calcule sur le **dessin** ; fiche sert None | **None** (contenance absente) | incomplet |
+| 11 | 97413000CA0243 St-Leu | AUE (GPU dépublié, non calibré) | 12 550 | Art. 7 non calibré · R+2 générique | 7 390→9 977→R+2→69-79 | 7 390×0,45=3 326 ✓ ; ×3=9 978≈9 977 ✓ | **9 977 =** outil | incomplet |
+| 12 | 97416000DV0285 St-Pierre | Ue | **1** (dessin 117 505) | contenance absurde (acte=1 m²) | **muet** (« surface incertaine ») | n/a | **None** (cause `surface_incertaine`) ✓ | incomplet |
+
+### Deux recalculs détaillés (preuve que la règle est appliquée, article cité)
+
+**#9 Sainte-Rose 97419000AK0909, zone Ua** — règlement servi : CES 70 % (**Art. UA 9, p.14**), hauteur égout 9 m (**Art. UA 10, p.15**), reculs voie 4 m / séparatif 3 m (**Art. UA 7, p.13**).
+- CES : 2 737 × 70 % = **1 916 m²** (= `emprise_sol_max` servi). Reculs → zone d'implantation 1 971 > 1 916, donc **le CES lie** : emprise constructible = 1 916 ✓.
+- Niveaux : 9 ÷ 3 = **3 niveaux = R+2** ✓. Emprise bâtie : 1 916 × 0,45 = **862 m²** ✓. SDP : 862 × 3 = **2 586 m²** ✓ (exact). Logements : plafond densité 0,2737 ha × 30 × 3 = 24,6 → **25** ; shab 2 069 ÷ 80 = 25,9 ⇒ bornés à 25, retenus au sol 17-18 (stationnement). **Toute la chaîne tombe juste, fiche = outil = 2 586.**
+
+**#8 Saint-Joseph 97412000BV0419, zone U2** — CES 80 % (**Art. U2 9.2, p.35**), hauteur égout 11 m (**Art. U2 10.2, p.35**), reculs 3/3.
+- CES : 2 983 × 80 % = 2 386 m² ; zone implantation 2 305 < 2 386 ⇒ **les reculs lient**, emprise 2 305 ✓. Niveaux 11 ÷ 3 = 3 → R+2. Emprise bâtie 2 305 × 0,45 = 1 037 ✓. SDP 1 037 × 3 = 3 112 ✓. **Chaîne juste** ; seule la **fiche servie dit 3 095** (−17 m² vs 3 112 : décalage du run gelé, E-B1).
+
+### Constats B1
+
+- **Calcul JUSTE sur les parcelles constructibles** : sur BK0101, BV0419, AK0909, AK0804, CW0658, CA0243, chaque maillon (CES, hauteur→niveaux, occupation, SDP) se reconstitue à la main depuis le **règlement cité (article + page)**, et les hypothèses de modélisation sont toutes affichées. La contenance cadastrale est bien la surface d'assise partout (CONTENANCE-1 LIVE).
+- **E-B1 (PÉRIMÉ, faible)** : la SDP **servie** (fiche, run gelé) retarde de ~0,05 % sur l'outil live — AK0804 34 223 vs 34 243, BV0419 3 095 vs 3 112. Confirme que la fiche sert un instantané de run, pas le calcul courant.
+- **E-B2 (DIVERGENT, faible)** : le **Gabarit** et l'**outil Faisabilité** affichent une « zone d'implantation réglementaire » **différente** pour la même parcelle, bien que la faisabilité déclare utiliser « le moteur gabarit » : BK0101 **262 vs 255** (+2,7 %), AK0804 **19 294 vs 19 024** (+1,4 %), BV0419 **2 320 vs 2 305** (+0,6 %). Deux outils, même grandeur nommée, deux valeurs.
+- **E-B3 (DIVERGENT / donnée, à instruire)** : deux moteurs cohabitent dans le run servi (`parcel_residuel.assiette_source` = **`gabarit`** 204 k parcelles vs **`residuel_legacy`** 53 925). Les parcelles où le gabarit échoue (status `incomplete`) basculent sur le legacy, qui sert des **intermédiaires impossibles** (`taux_emprise_pct` 607 et 233, `pct_potentiel` 640 — > 100 % n'a pas de sens) ; la SDP finale 0 reste défendable quand la parcelle est dense (BZ0007 85 % bâti, AB0318 91 %), mais les intermédiaires sont faux et la **source de calcul n'est pas la même pour tous les clients**.
+- **Contenance absente (AB0521)** : la fiche sert `None` (honnête) mais l'outil calcule sur le **dessin** (29 489 m²) → incohérence de surface d'assise quand `contenance_m2 IS NULL`.
+- **RNU Saint-Philippe (BN0002)** : l'outil est **muet** (zone None, `hors_plu`) — honnête, mais la méthode PAU (enveloppe urbanisée RNU) n'est pas servie dans l'outil.
+- **Résiduel vs enveloppe (rappel)** : sur parcelles denses la fiche sert la SDP **résiduelle bâti-conservé** (0) quand l'outil montre l'**enveloppe table-rase** — c'est le design à deux scénarios (SDP-VERIF-1), pas un écart, mais l'écart de libellé peut dérouter.
+
+---
+
 ## PÉRIMÈTRE RÉELLEMENT COUVERT CETTE PASSE
 
 Couvert en profondeur : **Lot A** (règle, 24 taux, 10 cas manuels, A4), banc de recalcul indépendant (A + géométrie + résiduel + score), cohérence surface fiche=Gabarit=base sur 3 témoins (C2), cartographie code des 4 lots. **Non refait exhaustivement** (appuyé sur les audits antérieurs cités + le banc) : les 12 recalculs manuels parcelle-par-parcelle de faisabilité (B1), les 8 mesures de reculs au mètre du Gabarit (B/C1 — GABARIT-AUDIT-1 les a faits, 10 parcelles, 0 faux positif), l'extraction texte de 5 PDF × 14 exports (D2 — EXPORTS-AUDIT-2 : 930/942 chiffres ralliés, 0 divergence écran/PDF ; DOCS-FIX-1 : 4/4 écran=PDF). Voir RAPPORT.md § recommandations pour la suite.
