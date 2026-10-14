@@ -155,6 +155,8 @@ $GARDES" in *"
 $f
 "*) : ;; *) rm -f "$f" && log "rétention : retiré $(basename "$f")" ;; esac
 done
-ngardes="$(printf '%s' "$GARDES" | grep -c .)"
+# un fichier peut figurer DEUX fois dans GARDES (il est à la fois une hebdomadaire ET une mensuelle) :
+# on compte les dumps RÉELLEMENT présents dans le dossier, pas les lignes de l'ensemble à garder.
+ngardes="$(ls -1 "$DEST"/labuse-labuse-*.dump 2>/dev/null | grep -c .)"
 log "✓ copie externe OK — $ngardes dump(s) conservé(s) dans $DEST ($disk_label)."
 echo "$now  ✓ copie externe vérifiée et rangée : $NAME" >> "$LOG"
