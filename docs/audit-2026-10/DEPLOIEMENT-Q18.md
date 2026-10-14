@@ -18,6 +18,13 @@
 | **Cron DVF commenté pendant le test de Stéphanie** | Phase 0.3 le commente (`/etc/cron.d/labuse-dvf`), Phase 8 le ré-active. Tant que le test tourne, `refresh-dvf` (mer. 09:00) ne doit PAS écrire. |
 | **Tables clients jamais touchées** | Tous les dumps/restores sont `-t <table>` CIBLÉS (jamais `--clean` global). Liste des tables clients protégées en annexe A. Les disparues sont **marquées, pas supprimées** (sinon FK CASCADE → `pipeline_entries`/`projet_parcelles`/`alertes`/`module_division`). |
 | **Sauvegarde de la prod avant** | Phase 0.2 (dump lean prod + vérif `pg_restore --list`). Rollback en annexe B. |
+| **Tout CLI `labuse` sur le VPS : sourcer `labuse.env` + `cd /opt/labuse/app`** | Sinon `fe_sendauth: no password supplied` (creds DB dans `labuse.env`) et chemins `config/` cassés (relatifs au cwd). Pattern OBLIGATOIRE ci-dessous. Découvert 13/10 (Phases 5/6 et §8bis). |
+
+> **Pattern CLI VPS (toute commande `labuse` manuelle)** — le raccourci `sudo -u labuse /opt/labuse/venv/bin/labuse <cmd>` **ne suffit PAS** :
+> ```bash
+> ssh labuse-vps "sudo -u labuse bash -c 'set -a; . /etc/labuse/labuse.env; set +a; cd /opt/labuse/app && /opt/labuse/venv/bin/labuse <cmd>'"
+> ```
+> Pour les CRONS (qui sourcent déjà `labuse.env`), le seul manque était le PATH : corrigé en **§8bis** (ligne `PATH=/opt/labuse/venv/bin:…` dans le registre + gabarit CRON-1 `cli.py`).
 
 ## Fenêtre de déploiement (⚠ créneaux à éviter — heure Réunion)
 
@@ -89,6 +96,13 @@ VITE_RUN_LABEL=q_v18 deploy/scripts/deploy_app.sh labuse-vps
 
 > `deploy_app.sh` **ne touche aucune donnée** (DB intacte). C'est voulu : les données passent par les phases 3–4.
 
+> 🔴 **INCIDENT 13/10 (corrigé)** : `deploy_app.sh` rsync'd `config/served_manifest.json` local (q_v18) par-dessus
+> celui de prod → la prod a basculé sur q_v18 **sans données** (`/readyz=false`, site exposé en test). Rollback
+> manuel du manifeste sur `precedent` (q_v16 / q_v13_sources1 / seq 13) → `/readyz=true`. **Correctif** :
+> `deploy_app.sh` **exclut désormais `config/served_manifest.json` et `config/served_run.txt`** (fichiers d'état
+> servi, écrits par la bascule SEULE, propres à la prod). **La bascule vers q_v18 se fait en Phase 5, pas par le
+> déploiement du code.** ⚠ La Phase 5.3 re-lance `deploy_app.sh` : vérifier que le manifeste prod reste intact après.
+
 ---
 
 ## Phase 2 — Schéma DDL sur prod (AVANT les données — colonnes nouvelles de `parcels` d'abord)
@@ -129,11 +143,17 @@ ssh labuse-vps "sudo -u postgres psql -d labuse -c \
 ```bash
 PG=~/miniforge3/envs/labusedb/bin ; L=postgresql://openclaw@localhost:5432/labuse ; S=/tmp/sm1 ; mkdir -p $S
 # On expédie les 3 jeux de staging + le cadastre complet staging, PAS la table parcels elle-même.
-for T in _cad_sm1_nouvelles _cad_sm1_geommodif _cad_sm1_disparues _cad_sm1_staging parcel_cadastre_remplacement adresse_parcelles ; do
+# ⚠ `adresses` AVANT `adresse_parcelles` : le BAN (`adresses`) est MIRROIR Mac→prod (Mac = source de vérité ;
+#   prod ne ré-ingère JAMAIS le BAN seul — cf. 9.3 supprimée). Mis à jour sur le Mac PUIS copié ici, sinon la
+#   FK `adresse_parcelles_id_ban_fkey` → adresses(id_ban) ne valide pas (divergence constatée au déploiement :
+#   1202 id_ban orphelins). `adresses` : 0 FK/vue dépendante sur prod (vérifié) → `--clean` sûr.
+for T in _cad_sm1_nouvelles _cad_sm1_geommodif _cad_sm1_disparues _cad_sm1_staging parcel_cadastre_remplacement adresses adresse_parcelles ; do
   $PG/pg_dump -Fc -t "$T" -d "$L" -f "$S/$T.dump"
   rsync -a --partial "$S/$T.dump" labuse-vps:/tmp/$T.dump
-  ssh labuse-vps "sudo -u postgres pg_restore --clean --if-exists --no-owner --role=labuse -d labuse /tmp/$T.dump 2>&1 | tail -1"
+  ssh labuse-vps "sudo -u postgres pg_restore --clean --if-exists --no-owner --no-acl --role=labuse -d labuse /tmp/$T.dump 2>&1 | tail -1"
 done
+# Contrôle propriété (toute table copiée doit appartenir à labuse) :
+ssh labuse-vps "sudo -u postgres psql labuse -c \"SELECT tablename,tableowner FROM pg_tables WHERE tablename IN ('_cad_sm1_nouvelles','_cad_sm1_geommodif','_cad_sm1_disparues','_cad_sm1_staging','parcel_cadastre_remplacement','adresses','adresse_parcelles') AND tableowner<>'labuse';\""
 # Application du delta EN UNE TRANSACTION (INSERT nouvelles · UPDATE géom+contenance · MARQUE disparues).
 # `_cad_sm1_staging` porte le cadastre 2026-09 complet (idu, geom, contenance) ; on n'agit QUE sur les idu listés.
 ssh labuse-vps "sudo -u postgres psql -v ON_ERROR_STOP=1 -d labuse" <<'SQL'
@@ -159,9 +179,11 @@ ssh labuse-vps 'sudo -u postgres psql -d labuse -c "ANALYZE parcels;"'
 for T in sitadel_permits spatial_layers arcep_immeubles rnic_coproprietes data_sources ; do
   $PG/pg_dump -Fc -t "$T" -d "$L" -f "$S/$T.dump"
   rsync -a --partial "$S/$T.dump" labuse-vps:/tmp/$T.dump
-  ssh labuse-vps "sudo -u postgres pg_restore --clean --if-exists --no-owner --role=labuse -d labuse /tmp/$T.dump 2>&1 | tail -1"
+  ssh labuse-vps "sudo -u postgres pg_restore --clean --if-exists --no-owner --no-acl --role=labuse -d labuse /tmp/$T.dump 2>&1 | tail -1"
 done
 ssh labuse-vps 'sudo -u postgres psql -d labuse -c "ANALYZE spatial_layers;"'
+# Contrôle propriété (= labuse) pour toutes les tables 3b :
+ssh labuse-vps "sudo -u postgres psql labuse -c \"SELECT tablename,tableowner FROM pg_tables WHERE tablename IN ('sitadel_permits','spatial_layers','arcep_immeubles','rnic_coproprietes','data_sources') AND tableowner<>'labuse';\""
 ```
 **Durée** : ~15–30 min (delta parcels ~2–5 min ; spatial_layers ~51 Mo ~3–6 min ; staging `_cad_sm1_staging` ~181 Mo dump/transfert ~3–5 min ; autres petits). Le trigger `geom_2975` recalcule à l'INSERT/UPDATE. **`parcels.id` préservés** (nécessaire pour la copie des intersections en Phase 4bis).
 **Vérif** (prod, requêtes ciblées) :
@@ -170,7 +192,9 @@ ssh labuse-vps 'sudo -u postgres psql -d labuse -c "
   SELECT count(*) total, count(*) FILTER (WHERE cadastre_disparue_le IS NULL) vivantes,
          count(*) FILTER (WHERE cadastre_disparue_le IS NOT NULL) marquees FROM parcels;"'
 # attendu : total 434582 · vivantes 433229 · marquees 1353
-ssh labuse-vps 'sudo -u postgres psql -d labuse -c "SELECT count(*) FROM parcel_cadastre_remplacement;"'  # ~1292
+ssh labuse-vps 'sudo -u postgres psql -d labuse -c "SELECT count(*) FROM parcel_cadastre_remplacement;"'  # 3007 lignes (mapping N:N ; 1292 anciennes distinctes / 1353 disparues ; 61 sans remplacement)
+# adresses mirror + FK validée (0 orphelin) :
+ssh labuse-vps "sudo -u postgres psql -d labuse -c \"SELECT count(*) AS adresses FROM adresses\" -c \"SELECT convalidated FROM pg_constraint WHERE conname='adresse_parcelles_id_ban_fkey'\""  # 339915 (= Mac) · t
 ```
 
 ---
@@ -312,11 +336,33 @@ with session_scope() as s: print(\"fraiche =\", ci.fraiche(s))"'            # fr
 ## Phase 8 — Ré-activer le cron DVF (APRÈS le test de Stéphanie)
 
 ```bash
-ssh labuse-vps 'sudo sed -i "s/^# GELÉ test Stéphanie //" /etc/cron.d/labuse-dvf && sudo systemctl reload cron'
+# ⚠ Le gel 0.3 a été posé avec le préfixe « # GELÉ deploiement-q18 » (pas « test Stéphanie »).
+ssh labuse-vps 'sudo sed -i "s/^# GELÉ deploiement-q18 //" /etc/cron.d/labuse-dvf'
 ssh labuse-vps 'cat /etc/cron.d/labuse-dvf'      # la ligne refresh-dvf est redevenue active
+# NB : `systemctl reload cron` N'EXISTE PAS sur ce VPS (« reload non applicable à cron.service »).
+# Inutile : cron relit /etc/cron.d/* automatiquement (mtime). Ne PAS tenter de reload.
 curl -sS https://app.labuse.immo/healthz/crons | python3 -m json.tool
 ```
 **Durée** : < 1 min. **À ne faire qu'une fois le test de Stéphanie terminé.**
+
+### 8bis — Réparer les crons du registre (PATH) pour atteindre `healthz/crons: ok:true`
+> **Diagnostic 13/10 (lecture seule)** : `sonde-sources`/`coherence-robinets` (dernier OK 22/09) et
+> `ingest-bodacc` (dernier OK 06/10) sont en retard. **Cause** : le registre `/etc/cron.d/labuse`
+> (généré par `deploy.sh`) lance `sh -c '. /etc/labuse/labuse.env; exec labuse jobs run <nom>'`, mais
+> `labuse` NU n'est pas sur le `PATH` (ni cron, ni `labuse.env` n'ajoute `/opt/labuse/venv/bin`) →
+> `labuse: not found`, **silencieux** (MAILTO=root sans MTA, aucune redirection). 25 jobs exposés ;
+> seuls ceux SANS cron legacy de secours tombent (backup/sitadel/dpe ont un legacy à chemin complet).
+> **Rien à voir avec le disque/la sauvegarde** (backup-postgres OK).
+>
+> **Correctif pérenne (dans le gabarit CRON-1, pas le fichier généré — `deploy.sh` régénère)** : soit
+> appeler `/opt/labuse/venv/bin/labuse`, soit préfixer le venv au `PATH` dans `/etc/labuse/labuse.env`.
+> Puis relancer les 3 jobs à la main une fois pour rattraper :
+```bash
+for J in sonde-sources coherence-robinets ingest-bodacc ; do
+  ssh labuse-vps "sudo -u labuse sh -c '. /etc/labuse/labuse.env; /opt/labuse/venv/bin/labuse jobs run $J'"
+done
+curl -sS https://app.labuse.immo/healthz/crons | python3 -m json.tool   # attendu : ok:true
+```
 
 ---
 
@@ -362,11 +408,16 @@ ssh labuse-vps 'sudo -u labuse /opt/labuse/venv/bin/labuse score-v-fetch --passe
 `etat_societe` « société cessée ». ⚠ geste RÉSEAU (API gouv) : hors heures creuses si possible.
 
 ### 9.3 — Sources tierces à re-synchroniser (fraîcheur — aucune divergence de VALEUR côté témoins)
+> **⛔ BAN SUPPRIMÉ de la prod (décision 13/10).** On ne lance **jamais** `ingest-ban-plus` sur le VPS :
+> le BAN (`adresses` + `adresse_parcelles`) se met à jour **sur le Mac** puis se **copie** Mac→prod en
+> **Phase 3a** (mirror `adresses`, FK `adresse_parcelles_id_ban_fkey` validée). Raison : une ré-ingestion BAN
+> en prod seule fait diverger `adresses` du Mac (constaté : 1202 id_ban orphelins → FK impossible). Mac = source
+> de vérité unique du BAN. *(D-60 traité par la copie de Phase 3, pas par une ingestion prod.)*
 ```bash
-ssh labuse-vps 'sudo -u labuse /opt/labuse/venv/bin/labuse ingest-ban-plus'   # D-60 : BAN non synchro depuis 19/08
 ssh labuse-vps 'sudo -u labuse /opt/labuse/venv/bin/labuse ingest-dpe'        # D-61 : DPE ADEME (dernier sync 19/09)
 ```
-**Vérif** : `data_sources` BAN/DPE `last_sync_at` du jour ; `max(adresses.refreshed_at)` / `max(dpe_records.date_etablissement)` avancés.
+**Vérif** : `data_sources` DPE `last_sync_at` du jour ; `max(dpe_records.date_etablissement)` avancé.
+(BAN : vérifié en Phase 3a — `adresses` = Mac, FK validée, 0 orphelin.)
 
 ### 9.4 — Ré-ingestions CatNat / OCS GE (⚠ nécessitent le correctif de code AVANT, cf. RAPPORT-FIX §B)
 > Ces deux écarts gardent un défaut DANS LE CODE D'INGESTION, non corrigé par cette chasse (laissés
