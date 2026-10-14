@@ -157,6 +157,33 @@ Méthode : pour chaque parcelle dont le Gabarit renvoie `status=ok`, la géomét
 
 ---
 
+## LOT D2 — 5 TÉMOINS × CHAQUE EXPORT, PDF EXTRAIT EN TEXTE, CONFRONTÉ À LA FICHE
+
+Méthode : chaque export est généré **en-process** (aucune écriture), le PDF extrait au texte (`pdftotext`), et confronté aux chiffres **servis par la fiche à l'instant de la génération** (surface terrain, SDP, taux TA, commune). Harnais rejouable : `_exports_d2.py`. Témoins : AK0804 (St-André PPR), BV0419 (St-Joseph U2), CA0243 (St-Leu), ES2238 (St-Pierre), BZ1065 (St-Denis, prix connu).
+
+| export | AK0804 | BV0419 | CA0243 | ES2238 | BZ1065 | lecture |
+|---|---|---|---|---|---|---|
+| **Dossier** | ✓ surf+SDP | ✓ surf+SDP | ✓ surf+SDP | ✓ surf+SDP | ✓ surf+SDP | surface (`27 862 m²`) **et** SDP servie présentes **à l'identique** dans le PDF ; millésime + sources + mention ; 0 None/null/nan réel |
+| **Bilan** (financier) | 422 * | 422 * | 422 * | 422 * | ✓ surf | 422 `document_non_etablissable` tant qu'achat/revente non saisis (garde [[bilan-2]]) — attendu, pas un écart |
+| **Apporteur** | ✓ surf | ✓ surf | ✓ surf | ✓ surf+SDP | ✓ surf | teaser court ; surface présente ; SDP non imprimée (doc volontairement bref) |
+| **Gabarit** | ✓ | ✓ | **422** † | ✓ | ✓ | 422 quand gabarit `incomplete` (CA0243) — **propagation de E-C2** |
+| **Comparatif** | — | — | — | — | — | 422 à 1 IDU (≥2 requises) ; **OK à 2 IDU** (200, surface + pied présents) |
+| **Étude-zone** | ✓ | ✓ | ✓ | ✓ | ✓ | document de zone (agrégat), pas de surface parcelle — normal |
+| **KMZ** | ✓ idu+commune | ✓ | ✓ | ✓ | ✓ | contour `ST_AsKML`, porte l'IDU et la commune |
+
+\* Bilan : garde d'établissabilité (achat **ou** revente requis). † Gabarit : même donnée réglementaire manquante que le Gabarit outil.
+
+### Constats D2 — « MÊME DONNÉE » TENU
+
+- **Les chiffres de l'export = la fiche** : sur les 5 Dossiers, la surface servie (ex. `27 862 m²`) **et** la SDP résiduelle servie apparaissent **telles quelles** dans le PDF (le builder lit le payload fiche partagé). Aucune divergence export↔fiche trouvée sur les nombres confrontés.
+- **Millésime = date de la donnée, pas de génération** : tous les PDF portent « Données LABUSE au **11/10/2026** » = `served_manifest.promoted_at` (run q_v18 promu le 11/10), **pas** la date de génération (14/10). Conforme à D4.
+- **Sources par section** : chaque bloc liste ses sources **par nom** (« Sources : BD TOPO IGN · CoSIA · … ») **sans millésime par source** (doctrine PAGE-SOURCES-1). Donc la « date de la donnée » servie est **unique et globale** (le run), pas un millésime par source — choix produit assumé, à garder en tête pour D4.
+- **Rendu propre** : 0 token `None`/`null`/`nan`/`undefined` isolé dans les PDF (le « nan » d'un premier passage était un sous-mot de « finance/gouvernance » — faux positif de l'outil, écarté).
+- **Garde-fous légitimes** (pas des écarts) : Bilan 422 sans achat/revente ; Comparatif exige ≥ 2 parcelles ; Gabarit 422 quand le gabarit est `incomplete` (propagation **E-C2**).
+- Caveat outillage : les cases « surface✗ » sur Gabarit/Étude-zone et « IDU absent » du Comparatif viennent du **format d'affichage** (ha, IDU découpé section/numéro, espace fine) — vérifié, la donnée est bien là ; pas d'écart.
+
+---
+
 ## PÉRIMÈTRE RÉELLEMENT COUVERT CETTE PASSE
 
 Couvert en profondeur : **Lot A** (règle, 24 taux, 10 cas manuels, A4), banc de recalcul indépendant (A + géométrie + résiduel + score), cohérence surface fiche=Gabarit=base sur 3 témoins (C2), cartographie code des 4 lots. **Non refait exhaustivement** (appuyé sur les audits antérieurs cités + le banc) : les 12 recalculs manuels parcelle-par-parcelle de faisabilité (B1), les 8 mesures de reculs au mètre du Gabarit (B/C1 — GABARIT-AUDIT-1 les a faits, 10 parcelles, 0 faux positif), l'extraction texte de 5 PDF × 14 exports (D2 — EXPORTS-AUDIT-2 : 930/942 chiffres ralliés, 0 divergence écran/PDF ; DOCS-FIX-1 : 4/4 écran=PDF). Voir RAPPORT.md § recommandations pour la suite.
