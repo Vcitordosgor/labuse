@@ -385,7 +385,11 @@ export function Gabarit() {
             {res.hauteurReglementaireM == null
               ? <p className="mt-1.5 text-st-creuser">3D indisponible — hauteur non chiffrée (prospect).</p>
               : terrain3d
-                ? <p className="mt-1.5 text-txt-mut">3D active — <b className="text-txt">Enveloppe réglementaire selon les règles intégrées</b> (hauteur sourcée {res.hauteurReglementaireM} m).</p>
+                ? <>
+                    <p className="mt-1.5 text-txt-mut">3D active — <b className="text-txt">Enveloppe réglementaire selon les règles intégrées</b> (hauteur sourcée {res.hauteurReglementaireM} m).</p>
+                    {/* CHASSE-CALCULS-FIX-1 Lot 6 (E-C1) — l'extrusion est posée à plat : le dire. */}
+                    {res.terrainNote && <p data-gabarit-terrain className="mt-1 text-[10px] italic text-txt-dim">{res.terrainNote}</p>}
+                  </>
                 : <p className="mt-1.5">Bascule 2D / 3D : bouton <b className="text-txt">3D</b> de la carte.</p>}
           </div>
 

@@ -122,4 +122,8 @@ def gabarit_detail(idu: str, db: Session = Depends(get_db)) -> GabaritResult:
     if (_rac.get("zone") or {}).get("a_cheval") and _cad and res.surfaceParcelleM2 is not None:
         res.pctPortionZone = round(res.surfaceParcelleM2 / _cad * 100)
     res.batiExistantGeoJSON = _bati_existant(db, idu)
+    # CHASSE-CALCULS-FIX-1 Lot 6 (E-C1) — l'extrusion 3D est posée à plat : on le DIT dès qu'une
+    # hauteur réglementaire permet un volume (le mode 3D l'affiche).
+    if res.hauteurReglementaireM is not None:
+        res.terrainNote = "Volume 3D indicatif — terrain supposé plat (le relief n'entre pas dans le volume)."
     return res

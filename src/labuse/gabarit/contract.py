@@ -162,6 +162,9 @@ class GabaritResult(BaseModel):
     hauteurStatus: Optional[str] = None          # 'not_integrated' → « Non chiffrée » (prospect)
     hauteurBase: Optional[str] = None            # 'faitage' | 'egout' — ce que porte hauteurReglementaireM
     hauteurEgoutM: Optional[float] = None        # égout, en sous-ligne, quand la règle distingue faîtage/égout
+    # CHASSE-CALCULS-FIX-1 Lot 6 (E-C1) — l'extrusion 3D est posée À PLAT (le relief n'entre pas dans
+    # le volume) : on le DIT quand une hauteur permet un 3D. `terrainNote` est affichée en mode 3D.
+    terrainNote: Optional[str] = None
 
     coverage: Optional[Coverage] = None
     appliedRules: list[AppliedRule] = Field(default_factory=list)
