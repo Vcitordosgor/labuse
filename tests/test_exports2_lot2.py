@@ -122,15 +122,10 @@ def test_flash_est_dossier_identique():
     assert "Rapport Flash" not in f
 
 
-# CI-1 (Lot 1) — ARBITRAGE PRODUIT EN ATTENTE : CHASSE-FIX-2 (D04) fait désormais imprimer le `libelle`
-# du bloc potentiel (exports/verdicts.py:79-80) à la place du générique « Terrain non constructible (zone
-# N) ». Ce test injecte VOLONTAIREMENT un libelle POSITIF (« Fort potentiel sous-densité ») pour vérifier
-# qu'un non-constructible ne l'affiche JAMAIS (garde anti « faux-constructible »). Sous le code actuel, ce
-# libelle positif FUITERAIT. Le « réparer » pour le faire passer bénirait peut-être une vraie régression →
-# xfail + signalement : Vic doit trancher si verdicts.py doit filtrer un libelle positif sur cause de
-# non-constructibilité. Détaillé dans docs/audit-2026-10/ci-1/RAPPORT.md.
-@pytest.mark.xfail(reason="CHASSE-FIX-2 D04 imprime le libelle du potentiel ; garde faux-constructible à arbitrer (Vic)",
-                   strict=False)
+# CI-1 (fix/ci-arbitrages) — CORRIGÉ : pour une cause de ZONAGE pur (`zone_non_constructible`),
+# `verdict_potentiel` ne sert plus le `libelle` du modèle (potentiel positif trompeur) mais le message
+# de zonage → un non-constructible n'affiche JAMAIS « Fort potentiel ». Les causes géométriques gardent
+# leur libelle (CHASSE-FIX-2 D04). Ce test redevient un garde-fou actif (plus de xfail).
 def test_faux_constructible_jamais(zone="N"):
     fiche = dict(FICHE)
     fiche["reglement_plu"] = {"zones": [{"zone": "N", "regles_valeurs": [], "destinations": {}}]}
