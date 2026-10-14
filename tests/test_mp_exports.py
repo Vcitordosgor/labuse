@@ -24,7 +24,9 @@ def test_pdf_premium_pas_de_matrice_morte_et_exclut_age_dirigeant():
 def test_editeur_identite_renseignee():
     from labuse.api.onboarding import _EDITEUR
     assert "987" in _EDITEUR and "917" in _EDITEUR                 # SIREN/SIRET posés
-    assert "Saint-Paul" in _EDITEUR and "Saint-Denis" not in _EDITEUR
+    # CI-1 : l'identité éditeur a été mise à jour — Victor Lagane, La Montagne, 97417 Saint-Denis
+    # (l'ancien « Saint-Paul » était périmé). On vérifie la ville SERVIE actuelle + l'absence de placeholder.
+    assert "Saint-Denis" in _EDITEUR
     assert "à confirmer" not in _EDITEUR                           # plus de placeholder SIREN
 
 

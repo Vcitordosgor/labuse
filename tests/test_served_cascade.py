@@ -36,6 +36,7 @@ def _seed_cascade(s, pid, run, layer, result, detail):
         {"run": run, "p": pid, "l": layer, "r": result, "d": detail})
 
 
+@pytest.mark.reel  # CI-1 : exige la cascade du run SERVI (données réelles) — pas reproduite sur base vierge
 def test_default_run_est_le_run_servi_pas_q_v8(db_session):
     s = db_session
     idu = "97499000SC0001"

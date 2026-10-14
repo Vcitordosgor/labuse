@@ -10,6 +10,8 @@ from sqlalchemy import text
 
 from labuse.ai import core
 
+pytestmark = pytest.mark.db  # CI-1 Lot 2 : fiche-ask (client TestClient + quota/cache en base de test)
+
 IDU = "97423000AB1908"   # parcelle réelle servie (fiche premium disponible)
 
 

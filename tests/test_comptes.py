@@ -9,6 +9,8 @@ from sqlalchemy import text
 from labuse import comptes
 from labuse.db import session_scope
 
+pytestmark = pytest.mark.db  # CI-1 Lot 2 : intégration comptes/licences/invitations sur la base de test
+
 
 @pytest.fixture()
 def db():

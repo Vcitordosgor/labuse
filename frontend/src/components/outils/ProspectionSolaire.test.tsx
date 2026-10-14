@@ -99,11 +99,13 @@ describe('SOLAIRE — deux modes', () => {
     expect(document.body.textContent ?? '').not.toContain('la carte montre')
   })
 
-  it('H13.3 — source « IGN FLAIR et CoSIA, 2025 », aucun potentiel solaire dans le chemin Piscines', async () => {
+  // CHASSE-DONNEES-FIX-1 (E-80) — l'année codée en dur « 2025 » a été retirée du pied de source : la
+  // source renvoie désormais au millésime SERVI (page Sources), source unique de vérité du millésime.
+  it('H13.3 — source « IGN FLAIR et CoSIA (millésime servi en page Sources) », aucun potentiel solaire dans le chemin Piscines', async () => {
     renderTool()
     fireEvent.click(document.querySelector('[data-solaire-mode="piscines"]')!)
     await waitFor(() => expect(document.querySelector('[data-piscines-perim="ile"]')).toBeTruthy())
-    expect(document.querySelector('[data-piscines-source]')?.textContent).toContain('IGN FLAIR et CoSIA, 2025')
+    expect(document.querySelector('[data-piscines-source]')?.textContent).toContain('IGN FLAIR et CoSIA (millésime servi en page Sources)')
     expect(document.body.textContent ?? '').not.toContain('précision ≥ 85 %')
     fireEvent.click(document.querySelector('[data-piscines-perim="ile"]')!)
     await waitFor(() => expect(document.querySelectorAll('[data-piscines-row]').length).toBe(2))

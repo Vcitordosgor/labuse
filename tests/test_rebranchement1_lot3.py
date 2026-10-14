@@ -12,6 +12,8 @@ from __future__ import annotations
 import pytest
 from sqlalchemy import text
 
+pytestmark = pytest.mark.db  # CI-1 Lot 2 : pré-dossier/zonage relus en base de test
+
 IDU = "97410000AN0347"
 
 

@@ -117,4 +117,33 @@ Nécessite l'API locale démarrée sur la base applicative. Invariant des tiers 
 > rate-limit + quota ; ou (b) espacer les requêtes (le golden pourrait throttler à < 60/min) ; ou
 > (c) allowlister l'IP QA (`qa_allowlist`, voie M7). Pour prouver un rollback/une bascule, se fier
 > à la **face DB du golden** (déterministe), pas au compte brut PASS/FAIL bruité par l'API.
+
+## Familles de tests & sélection CI (CI-1, Lot 2)
+
+Les tests se trient en **trois familles, par marqueur pytest** (la CI et le hook pre-push s'en servent) :
+
+| Famille | Marqueur | Base | Où elle tourne |
+|---|---|---|---|
+| **unitaires** | *(aucun)* | AUCUNE base | CI + pre-push local (rapide, < 2 min) |
+| **base de test** | `db` | PostGIS **vide** + petites fixtures (`conftest`) | CI (conteneur PostGIS) |
+| **données réelles** | `reel` *(et `local`)* | base COMPLÈTE (run servi, DVF, PLU, scoring…) | **JAMAIS en CI** — banc de nuit en prod |
+
+`network` (accès sortant, souvent bloqué en CI) est aussi exclu de la CI. `verrous` est orthogonal
+(sous-ensemble joué aussi par `labuse circuit verrous`).
+
+**Sélections canoniques** (voir aussi les cibles `make test-*`) :
+
+```bash
+# CI (conteneur PostGIS) — unitaires + base de test :
+pytest -m "not local and not reel and not network"
+# pre-push local, SANS base, rapide — unitaires seules :
+pytest -m "not db and not local and not reel and not network"
+# banc de nuit (prod) — données réelles :
+pytest -m "reel or local"
+```
+
+Règle : un test qui ouvre `session_scope()`/`db_session`/`engine`/`client` (donc touche la base)
+porte `db` ; s'il exige des **données réelles** non reproductibles sur PostGIS vide + fixtures, il
+porte `reel` (jamais en CI). La famille « unitaires » DOIT rester verte **sans aucune base**
+(vérifiable en pointant la base sur un port mort, cf. `make test-unit`).
 </content>

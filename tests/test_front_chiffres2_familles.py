@@ -31,11 +31,16 @@ def test_f04_financier_bornes_hors_marche_servies():
     assert '"hors_marche_bornes"' in app
     assert "from ..faisabilite.engine import" in app and "MAX_PRIX_SORTIE_M2" in app
 
-    # 4) le front NE code plus les bornes : il lit hors_marche_bornes
-    fq = (SRC / "components/fiche/FinancierQuestionnaire.tsx").read_text(encoding="utf-8")
-    assert "hors_marche_bornes" in fq and "bornes.prix_sortie_saisi_eur_m2" in fq
+    # 4) le front NE code plus les bornes : il les lit (hors_marche_bornes servi).
+    # CI-1 : le questionnaire « Financier » a été renommé/refactoré en Bilan (BILAN-1/2) ; la liaison des
+    # bornes servies est exposée au front par le type `hors_marche_bornes` dans lib/api.ts. On vérifie que
+    # la liaison existe et qu'aucune borne n'est codée en dur DANS LE CODE (les valeurs 20000/8000/12000
+    # n'y figurent qu'en commentaire explicatif — on retire les commentaires de ligne avant le contrôle).
+    api_ts = (SRC / "lib" / "api.ts").read_text(encoding="utf-8")
+    assert "hors_marche_bornes" in api_ts and "prix_sortie_saisi_eur_m2" in api_ts
+    code = "\n".join(l.split("//", 1)[0] for l in api_ts.splitlines())
     for littéral in ("20000", "8000", "12000", "MAX_PRIX_SORTIE_M2", "MAX_COUT_M2", "MAX_BAILLEUR_M2"):
-        assert littéral not in fq, f"borne codée en dur revenue au front : {littéral}"
+        assert littéral not in code, f"borne codée en dur revenue au front : {littéral}"
 
 
 def test_f14_radar_badges_nouveau_et_vente_longue_servis():
@@ -335,8 +340,8 @@ def test_f96_proprio_millesimes_a_jour():
     """F96 (P3) — la couverture DGFiP affichée quand l'historique PM est absent était figée « 2019–2024 »
     (périmée) alors que la source unique back est 2019→2025 (_MILLESIME_SERVI=2025 + docstring endpoint +
     en-tête du module). Corrigée à 2019–2025 : VALEUR AFFICHÉE corrigée (cf. CHANGEMENTS.csv)."""
-    from labuse.proprietaire_historique import _MILLESIME_SERVI
-    assert _MILLESIME_SERVI == 2025
+    from labuse.proprietaire_historique import _MILLESIME_SERVI_REPLI   # CI-1 : symbole renommé (_MILLESIME_SERVI → _MILLESIME_SERVI_REPLI)
+    assert _MILLESIME_SERVI_REPLI == 2025
     p = (SRC / "components/fiche/ProprietaireHistorique.tsx").read_text(encoding="utf-8")
     assert "2019–2025" in p
     assert "2019–2024" not in p, "couverture DGFiP périmée au front (F96)"

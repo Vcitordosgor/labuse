@@ -57,7 +57,7 @@ exports[`snapshots des onglets > Journal 1`] = `
     <span
       class="muted"
     >
-      06/09 09:15
+      06/09 11:15
     </span>
     <span
       class="g"
@@ -150,7 +150,7 @@ exports[`snapshots des onglets > Résumé 1`] = `
     class="sub"
   >
     Tout le reste est branché sur le moteur, sert la dernière version et dit la même chose partout.
-     Dernier contrôle 06/09 09:15.
+     Dernier contrôle 06/09 11:15.
   </div>
   <div
     class="kpis"

@@ -10,7 +10,7 @@ import pytest
 
 from labuse.circuit_verrous import verrou_coherence_banc
 
-pytestmark = pytest.mark.verrous
+pytestmark = [pytest.mark.verrous, pytest.mark.db]  # CI-1 Lot 2 : banc de cohérence v6b sur la base de test
 
 
 def test_v6b_coherence_banc():

@@ -20,6 +20,10 @@ def _stub_settings(monkeypatch, rep):
 
 def test_repertoire_absent_dit_non_configure(monkeypatch, tmp_path):
     _stub_settings(monkeypatch, str(tmp_path / "nexiste-pas"))
+    # CI-1 : _age_backup retombe sur le MIROIR LOCAL ~/labuse-backups (DASHBOARD-FIX-1) s'il existe →
+    # « local » sur un poste qui a ce miroir. On isole HOME pour que le miroir n'existe pas non plus →
+    # « non_configure » déterministe (CI comme poste). Sinon le test dépend de l'environnement local.
+    monkeypatch.setenv("HOME", str(tmp_path))
     assert dashboard._age_backup()["etat"] == "non_configure"
 
 

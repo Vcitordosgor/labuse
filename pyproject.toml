@@ -80,7 +80,11 @@ ml = [
 # RETOURS-15 U5 — l'extra `lidar` (R31) est SUPPRIMÉ : rasterio/scipy sont des dépendances de
 # série (voir dependencies) — l'optionnel, que rien n'installait, rendait la toiture muette.
 # Outils de dev / CI (tests + lint).
-dev = ["pytest>=8.0", "ruff>=0.5"]
+dev = ["pytest>=8.0", "ruff>=0.5", "freezegun>=1.5"]  # freezegun : banc horloge (scripts/chasse/horloge.py)
+# CI-1 (Lot 3) — sous-ensemble ml « léger » que la sélection CI (unitaires + base de test) importe
+# vraiment (pandas/sklearn via scoring p_model/p_v2 ; openpyxl via Bilan xlsx) SANS torch ni
+# segmentation-models (ML lourd, jamais en CI — cf. [ml]). Installé en CI : `pip install -e .[dev,ci]`.
+ci = ["pandas>=2.0", "scikit-learn>=1.4", "joblib>=1.3", "openpyxl>=3.1"]
 
 [project.scripts]
 labuse = "labuse.cli:app"
@@ -105,5 +109,6 @@ markers = [
   "db: tests nécessitant une base PostGIS accessible (voir conftest)",
   "network: tests nécessitant un accès réseau sortant (souvent bloqué en CI sandbox)",
   "local: tests joués sur la BASE RÉELLE locale (labuse), hors CI — `pytest -m local` (CIRCUIT-P3 3.2)",
+  "reel: tests exigeant des DONNÉES RÉELLES seedées/servies (run servi, DVF, PLU, scoring, identité éditeur…) qu'une base PostGIS vierge + petites fixtures ne reproduit pas — JAMAIS en CI (base vide), rejoués au banc de nuit en prod (CI-1 Lot 1/2)",
   "verrous: les verrous CIRCUIT-5 (tests/verrous/) — aussi joués par `labuse circuit verrous`",
 ]

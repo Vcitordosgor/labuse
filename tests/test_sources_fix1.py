@@ -19,6 +19,7 @@ def _has_table(s, t: str) -> bool:
     return s.execute(text("SELECT to_regclass(:t)"), {"t": t}).scalar() is not None
 
 
+@pytest.mark.db  # CI-1 Lot 2 : médiane DVF calculée en base de test
 def test_dvf_une_seule_mediane_meme_table_sur_3_communes():
     """E1 — l'Étude de zone (`marche_zone`) et le point de calcul unique (`dvf_mediane.mediane_bati`)
     donnent la MÊME médiane €/m² bâti au MÊME périmètre, sur 3 communes témoins ; et le périmètre

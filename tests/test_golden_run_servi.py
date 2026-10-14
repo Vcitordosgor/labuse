@@ -12,10 +12,13 @@ tant que le golden n'est pas regravé sur le run servi. LECTURE SEULE (aucune DB
 """
 from __future__ import annotations
 
+import pytest
+
 from labuse.bascule_gardes import check_golden_regenere
 from labuse.scoring.score_v_constants import Q_A_RUN_LABEL
 
 
+@pytest.mark.reel  # CI-1 : golden gravé sur le run SERVI réel (régénéré à la bascule) — pas reproductible en CI
 def test_golden_grave_sur_le_run_servi():
     # GOLDEN_PATH par défaut = reports/m6-audit/golden/golden-parcelles.json (le VRAI golden versionné).
     # Lève GoldenPerimeError si le golden cite un autre run que Q_A_RUN_LABEL (bascule ratée).

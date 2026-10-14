@@ -60,11 +60,13 @@ def test_v2_etat_permis_par_fonction_partagee(client):
 
 
 def test_v2_puce_localisation_avant_les_autres_chips():
-    """La puce de localisation (badge-nongeo) est rendue AVANT le délai et l'état dans le
-    span des badges — elle s'affiche en entier, jamais poussée hors de la ligne."""
-    assert MP.index("data-permis-badge-nongeo") < MP.index("data-permis-etat")
-    badges = MP[MP.index("data-permis-badge-nongeo"):]
-    assert badges.index("delai_mois") < badges.index("data-permis-etat")
+    """CI-1 : les chips de ligne « non localisé » (badge-nongeo) et « état » (etat_libelle) qui
+    DÉBORDAIENT ont été RETIRÉS de la ligne (RECETTE-1 H2) — la précision du géocodage est passée dans
+    la bulle du point carte, et l'état de la ligne est porté par la pastille `data-permis-row-etat`
+    (source unique lib/permisEtats). Le « puce coupée » constaté par Vic est résolu PAR la suppression.
+    Garde-fou de cette suppression (les chips débordants ne reviennent pas sur la ligne)."""
+    assert "data-permis-badge-nongeo" not in MP and "data-permis-etat" not in MP
+    assert "data-permis-row-etat" in MP   # l'état de ligne vit sur la pastille (couleur = carte)
 
 
 def test_v3_dormant_partout_plus_de_point_mort_visible():

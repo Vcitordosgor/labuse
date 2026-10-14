@@ -136,23 +136,66 @@ def engine():
     from labuse.db import ensure_postgis
     ensure_postgis(eng)
     models.create_all(eng)
-    # AUDIT PAIEMENT · SEC-IDOR — comptes + cloison multi-tenant (compte_id + FK cascade sur
-    # les tables à données client). Reproductible en base de test fraîche (comme au boot).
+    # CI-1 (Lot 1) — REPRODUIT LA SÉQUENCE DE HEAL DU BOOT (`api/app.py::_lifespan`, tuple
+    # `_heal_steps`) pour qu'une base de test FRAÎCHE porte le MÊME schéma qu'une app fraîchement
+    # bootée. Sur un poste, `labuse_test` garde ces tables d'un run à l'autre, ce qui MASQUAIT le
+    # trou ; une base vierge (la CI) le révèle (modules/ia/partners/protection/courrier/crm_columns/
+    # veilles/copilote_v2/dashboard/promo/zone absents → UndefinedTable en cascade). Tout est
+    # idempotent (IF NOT EXISTS). ORDRE identique au boot : comptes+scoping APRÈS les tables des
+    # modules (scoping ajoute compte_id à celles-ci), et AVANT crm_columns (FK crm_columns.compte_id).
+    from labuse.api.courrier import ensure_tables as _courrier_ens
+    from labuse.api.crm_columns import ensure_tables as _crm_columns_ens
+    from labuse.api.dashboard import ensure_tables as _dashboard_ens
     from labuse.api.events import ensure_tables as _events_ens
+    from labuse.api.ia import ensure_tables as _ia_ens
+    from labuse.api.modules import ensure_tables as _modules_ens
+    from labuse.api.partners import ensure_tables as _partners_ens
+    from labuse.api.projets import ensure_tables as _projets_ens
+    from labuse.api.protection import ensure_tables as _protection_ens
     from labuse.api.tenant import ensure_scoping
     from labuse.comptes import ensure_tables as _comptes_ens
+    from labuse.copilote_v2.historique import ensure_tables as _copv2_hist_ens
+    from labuse.copilote_v2.telemetrie import ensure_tables as _copv2_tel_ens
+    from labuse.copilote_v2.veilles import ensure_tables as _veilles_ens
     from labuse.db import session_scope as _ss
-    _events_ens(eng)   # event_log / watched_parcels / saved_searches (créées avec compte_id)
-    with _ss() as _s:
-        _comptes_ens(_s)
-        ensure_scoping(_s)   # migre compte_id + FK cascade + unique (compte_id, idu) — comme au boot
-    # COPILOTE-2 lot 4 — le moteur v1 (agent_runs/agent_events/agent_run_parcels) est retiré ; plus de DDL.
-    # M120 — projets : ALTER ADD COLUMN identite/shortlist_perimee + migration fiche→cadrage (comme au boot).
-    from labuse.api.projets import ensure_tables as _projets_ens
-    _projets_ens(eng)
-    # RADAR (pige) · P0 — schéma isolé pige_* (comme au boot).
     from labuse.pige.tables import ensure_tables as _pige_ens
-    _pige_ens(eng)
+    from labuse.promo.tables import ensure_tables as _promo_ens
+    _modules_ens(eng)
+    _ia_ens(eng)
+    _events_ens(eng)      # event_log / watched_parcels / saved_searches (créées avec compte_id)
+    _partners_ens(eng)    # match_profiles / share_links / api_keys
+    _projets_ens(eng)     # M120 — projets (+ migration fiche→cadrage)
+    _protection_ens(eng)
+    _courrier_ens(eng)
+    with _ss() as _s:     # AUDIT PAIEMENT · SEC-IDOR — la TABLE comptes (requise par la FK de
+        _comptes_ens(_s)  # crm_columns + l'ALTER comptes de dashboard). Le scoping vient PLUS BAS.
+    _crm_columns_ens(eng)
+    _veilles_ens(eng)
+    _copv2_hist_ens(eng); _copv2_tel_ens(eng)
+    _dashboard_ens(eng)
+    _pige_ens(eng)        # RADAR (pige) · P0 — schéma isolé pige_*
+    _promo_ens(eng)       # PROMO-1 P1 — table programmes
+    with _ss() as _s:     # ÉTUDE DE ZONE Z1 — sirene_etablissements + mobpro_commune + cache isochrones
+        from labuse.ingestion.mobpro import ensure_tables as _mo_ens
+        from labuse.ingestion.sirene_etablissements import ensure_tables as _se_ens
+        from labuse.zone import ensure_tables as _iso_ens
+        _se_ens(_s); _mo_ens(_s); _iso_ens(_s)
+    # CI-1 : ensure_scoping EN DERNIER (pas juste après comptes comme l'ORDRE du boot). Sa partie R9
+    # purge les orphelins + pose la FK cascade sur ia_log/share_links/veilles/copilote_conversations…
+    # — qui exigent que `compte_id` existe DÉJÀ sur ces tables. En prod, ces colonnes sont posées par
+    # des migrations lazy (ex. share_links.compte_id par `_share_colonnes`, appelée à la 1re requête),
+    # et scoping ne CONVERGE qu'après, sur plusieurs boots (chaque étape du heal est en try/except).
+    # conftest tourne en UNE passe stricte, sans requête → on REPRODUIT l'état convergé : on pose
+    # `compte_id` (idempotent) sur toutes les tables R9 existantes AVANT scoping, sinon un seul
+    # `DELETE ... WHERE compte_id` sur une table sans la colonne fait rollback de TOUT le scoping.
+    with eng.begin() as _c:
+        for _t in ("copilote_conversations", "veilles", "veille_reprise", "ia_log", "usage_events",
+                   "retours", "licence_mails", "notif_prefs", "notif_canaux", "share_links",
+                   "lettre_zonage_refs"):
+            if _c.execute(text("SELECT to_regclass(:t)"), {"t": _t}).scalar():
+                _c.execute(text(f"ALTER TABLE {_t} ADD COLUMN IF NOT EXISTS compte_id integer"))
+    with _ss() as _s:
+        ensure_scoping(_s)   # migre compte_id + FK cascade — comme l'état CONVERGÉ du boot
     # CHASSE-FIX-1 (Lot 3) — la base de test sert `parcel_residuel` comme la PROD : une VUE
     # sur parcel_residuel_runs filtrée par le run servi (migration M135, idempotente). Avant,
     # la base de test gardait la TABLE historique vide → les tests ne voyaient jamais le
@@ -212,7 +255,12 @@ def engine():
         _c.execute(text(
             "CREATE TABLE IF NOT EXISTS filosofi_carreaux_200m ("
             "  geom geometry, ind double precision, men double precision,"
-            "  men_pauv double precision, men_prop double precision, ind_snv double precision)"))
+            "  men_pauv double precision, men_prop double precision, ind_snv double precision,"
+            # CI-1 : tranches d'âge lues SANS garde par zone.population_zone (part des < 25 ans) —
+            # leur absence faisait une ProgrammingError qui abortait la transaction du flash (étude
+            # de zone), puis cascade InFailedSqlTransaction. `i_est_200` reste optionnelle (gardée).
+            "  ind_0_3 double precision, ind_4_5 double precision, ind_6_10 double precision,"
+            "  ind_11_17 double precision, ind_18_24 double precision)"))
         _c.execute(text(
             "CREATE TABLE IF NOT EXISTS rpls_commune ("
             "  insee varchar, commune varchar, millesime varchar, nb_logements integer,"
@@ -322,6 +370,19 @@ def engine():
             "  statut_caducite text DEFAULT 'Estimé',"
             "  libelle_court text, detail text,"
             "  updated_at timestamptz DEFAULT now())"))
+        # CI-1 (Lot 1) — artefacts posés HORS ORM par l'ingestion (jamais par create_all/boot), que
+        # du code requête SANS garde de catalogue → UndefinedTable/Column sur base vierge (la CI).
+        # Matérialisés VIDES = contrat data-gap (0 ligne, jamais une erreur SQL), fidèle à la prod.
+        # `parcels.cadastre_disparue_le` (SOURCES-MAJ-1) : la garde `cadastre_disparue.colonne_presente`
+        # couvre la plupart des lecteurs, mais tiles.py / l'omnibox / le KMZ la lisent en direct.
+        _c.execute(text("ALTER TABLE parcels ADD COLUMN IF NOT EXISTS cadastre_disparue_le date"))
+        from labuse.ingestion import division_or as _divor   # division_or_candidates (revue divisions)
+        _c.exec_driver_sql(_divor.DDL)                        # DDL multi-instructions (CREATE + ALTER)
+        _c.execute(text(                                      # mairies (annuaire communes) — ingest-mairies
+            "CREATE TABLE IF NOT EXISTS mairies ("
+            "  insee text PRIMARY KEY, commune text NOT NULL, nom text, adresse text,"
+            "  code_postal text, telephone text, email text, site_officiel text,"
+            "  url_annuaire text, source text NOT NULL, date_import timestamptz NOT NULL DEFAULT now())"))
     return eng
 
 
@@ -340,8 +401,14 @@ def _clear_mem_caches():
 
 @pytest.fixture
 def db_session(engine):
-    """Session transactionnelle rollback-ée après chaque test (pas de pollution)."""
-    connection = engine.connect()
+    """Session transactionnelle rollback-ée après chaque test (pas de pollution).
+
+    CI-1 (rebase) — on FORCE `isolation_level=READ COMMITTED` sur la connexion : un test antérieur
+    peut rendre au pool une connexion laissée en AUTOCOMMIT (sonde admin, `execution_options`…) ;
+    réutilisée telle quelle, db_session verrait ses INSERT auto-committés (fuite → collisions d'IDU
+    figés sur base vierge) et `begin_nested()` échouerait (« SAVEPOINT can only be used in transaction
+    blocks »). Forcer un niveau transactionnel RÉEL à la prise guérit le pool, quel que soit le leak."""
+    connection = engine.connect().execution_options(isolation_level="READ COMMITTED")
     trans = connection.begin()
     Session = sessionmaker(bind=connection, expire_on_commit=False)
     session = Session()

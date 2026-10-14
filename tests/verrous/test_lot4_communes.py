@@ -19,6 +19,7 @@ pytestmark = pytest.mark.verrous
 # ── V4a — la clé étrangère interdit l'entrée ────────────────────────────────────────────
 
 @pytest.mark.db
+@pytest.mark.reel  # CI-1 : l'enforcement FK dépend du référentiel commune (ensure_referentiel) — hors CI, banc de nuit
 def test_v4a_un_code_fantome_ne_peut_plus_entrer(db_session):
     """PREUVE VIVANTE : après `poser_fks`, un INSERT avec un code hors référentiel est
     REJETÉ par Postgres (l'avertissement de CIRCUIT-3 est devenu une interdiction)."""

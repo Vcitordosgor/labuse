@@ -73,6 +73,7 @@ def test_bundle_front_construit_sur_le_run_servi():
             "bundle périmé : relancer `npm run build` après la bascule")
 
 
+@pytest.mark.reel  # CI-1 : interroge la base APPLICATIVE réelle (tuiles mvt servies par build-mvt) — hors CI
 def test_tuiles_mvt_materialisees_sur_le_run_servi():
     """mvt_meta.run_label (écrit par build-mvt) doit valoir Q_A_RUN_LABEL.
 

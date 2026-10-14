@@ -21,10 +21,17 @@ def _bloc(commune):
 
 
 def _has_data(commune):
+    # Évalué au niveau MODULE (décorateur skipif) → AVANT toute fixture. Sur une base vierge (CI, ou
+    # base de test CI fraîche), ni la base ni la table `dvf_mutations` n'existent encore : toute
+    # erreur (base/table absente, connexion) = « pas de données » → le test SKIPPE proprement au lieu
+    # d'ERRORer à la collecte. Ce test lit des données DVF RÉELLES (marqueur `reel`), jamais en CI.
     from sqlalchemy import text
-    with session_scope() as s:
-        return bool(s.execute(text("SELECT 1 FROM dvf_mutations WHERE commune=:c LIMIT 1"),
-                              {"c": commune}).scalar())
+    try:
+        with session_scope() as s:
+            return bool(s.execute(text("SELECT 1 FROM dvf_mutations WHERE commune=:c LIMIT 1"),
+                                  {"c": commune}).scalar())
+    except Exception:
+        return False
 
 
 @pytest.mark.skipif(not _has_data("Saint-Paul"), reason="base sans données DVF Saint-Paul")

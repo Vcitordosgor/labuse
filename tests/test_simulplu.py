@@ -67,6 +67,7 @@ def _seed(s):
     s.flush()
 
 
+@pytest.mark.reel  # CI-1 : SimulPLU exige PLU/zonage + parcelles AUc servis — pas reproduit sur base vierge
 def test_simulplu_ne_leve_pas_et_dit_son_total(db_session):
     _seed(db_session)
     out = moteurs.simulplu(zone="AUc", commune="Testville", offset=0, db=db_session)   # ne lève pas
@@ -80,6 +81,7 @@ def test_simulplu_ne_leve_pas_et_dit_son_total(db_session):
     assert it["bascule_potentielle"] is True                   # 2000 × 0,2 = 400 ≥ 300, tier a_creuser
 
 
+@pytest.mark.reel  # CI-1 : SimulPLU exige PLU/zonage + parcelles AUc servis — pas reproduit sur base vierge
 def test_simulplu_dit_la_troncature_quand_plafonnee(db_session, monkeypatch):
     _seed(db_session)
     monkeypatch.setattr(moteurs, "_moteurs_cap", lambda name, defaut: 1)   # plafond forcé à 1

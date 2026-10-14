@@ -176,4 +176,4 @@ def test_lotS_f7_parc_social_pct_qpv_pas_servi():
     # La fiche ne sert plus ce champ (doctrine : jamais un stat faux). Garde au point de service.
     from labuse.api import app
     src = inspect.getsource(app._q_v2_fiche)
-    assert 'k != "pct_qpv"' in src   # rpls servi SANS pct_qpv
+    assert 'k not in ("pct_qpv", "millesime")' in src   # CI-1 : forme actuelle du filtre (rpls servi SANS pct_qpv ni millesime)

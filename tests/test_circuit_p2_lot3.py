@@ -77,6 +77,7 @@ def test_agents_sans_credit_message_clair(client, seed, monkeypatch):
 
 
 @pytest.mark.db
+@pytest.mark.reel  # CI-1 : appelle le vrai SDK Anthropic (ANTHROPIC_API_KEY absente en CI) — jamais en CI
 def test_agents_avec_credit_journalise(client, seed, engine, tmp_path, monkeypatch):
     monkeypatch.setenv("LABUSE_RUN_STATE_DIR", str(tmp_path))
     monkeypatch.setattr("labuse.ai.core.has_key", lambda: True)

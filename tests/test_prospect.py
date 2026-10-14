@@ -102,6 +102,13 @@ def _ctx():
     c.contraintes, c.prescriptions_eco = Contraintes(), {}
     # ZONE-1 : champs de la résolution de zone unique (stub aligné sur ParcelContext)
     c.zone_fam, c.a_cheval, c.zone_parts = "U", False, []
+    # CI-1 : CONTENANCE-1 a ajouté à ParcelContext (lus par parcel_faisabilite) : `surface_incertaine`
+    # (garde-fou, db.py:425) → False ici (surface claire, chemin nominal) ; `terrain_sur_dessin`
+    # (facteur de ré-échelle C3 contenance/dessin, db.py:506) → 1.0 (pas de ré-échelle) ;
+    # `regles_non_modelisees` (liste des exceptions de calcul) → [] initial.
+    c.surface_incertaine = False
+    c.terrain_sur_dessin = 1.0
+    c.regles_non_modelisees = []
     return c
 
 

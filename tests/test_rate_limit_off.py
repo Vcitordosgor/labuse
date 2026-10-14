@@ -30,9 +30,27 @@ def test_middleware_court_circuite_sur_le_flag_comme_dev_mode():
 
 
 def test_banc_ne_depend_pas_de_dev_mode():
-    """PRE-DEPLOY-1 — garde-fou : le banc de cohérence ne référence JAMAIS LABUSE_DEV_MODE / dev_mode
-    (il a son propre levier local, LABUSE_RATE_LIMIT_OFF)."""
+    """PRE-DEPLOY-1 — garde-fou : le banc de cohérence ne DÉPEND JAMAIS de LABUSE_DEV_MODE / dev_mode
+    (il a son propre levier local, LABUSE_RATE_LIMIT_OFF).
+
+    CI-1 : on vérifie l'absence de DÉPENDANCE DE CODE, pas du simple mot — les docstrings de banc.py /
+    lib.py mentionnent légitimement « LABUSE_DEV_MODE » pour EXPLIQUER qu'elles ne s'en servent pas.
+    On retire donc commentaires ET chaînes (tokenize) avant de chercher le token dans le CODE restant."""
+    import io
+    import tokenize
+
+    def _code_nu(src: str) -> str:
+        toks = []
+        try:
+            for t in tokenize.generate_tokens(io.StringIO(src).readline):
+                if t.type in (tokenize.COMMENT, tokenize.STRING):
+                    continue
+                toks.append(t.string)
+        except tokenize.TokenError:
+            return src                      # fichier tronqué improbable → repli prudent (texte brut)
+        return " ".join(toks)
+
     banc_dir = Path(__file__).resolve().parents[1] / "scripts/coherence"
     for py in banc_dir.glob("*.py"):
-        t = py.read_text(encoding="utf-8")
-        assert "LABUSE_DEV_MODE" not in t and "dev_mode" not in t, f"{py.name} dépend de dev_mode"
+        code = _code_nu(py.read_text(encoding="utf-8"))
+        assert "LABUSE_DEV_MODE" not in code and "dev_mode" not in code, f"{py.name} dépend de dev_mode"

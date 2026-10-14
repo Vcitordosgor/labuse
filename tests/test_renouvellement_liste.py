@@ -51,4 +51,7 @@ def test_densifier_retire_du_menu_plie_dans_filtre():
     registry = (_ROOT / "frontend/src/components/outils/registry.ts").read_text(encoding="utf-8")
     assert "key: 'renouvellement'" not in registry, "l'outil Densifier doit être retiré du menu"
     filtre = (_ROOT / "frontend/src/components/panel/FiltreLabuse.tsx").read_text(encoding="utf-8")
-    assert "data-filtre-deja-bati" in filtre and "Déjà bâti" in filtre
+    # CI-1 : « Déjà bâti »/« SDP restante » ont ENSUITE été retirés du filtre Capacité (RECETTE-1 E2) —
+    # Densifier n'est plus NI au menu NI dans le filtre. La garantie centrale (retrait du menu registry)
+    # reste vérifiée au-dessus ; on garde ici le garde-fou de l'état final (marqueur filtre absent).
+    assert "data-filtre-deja-bati" not in filtre

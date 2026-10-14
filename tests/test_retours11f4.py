@@ -78,8 +78,9 @@ def test_f5_prix_de_sortie_renvoie_vers_marche():
     c = _read("constructibilite.tsx")
     assert "Prix de sortie retenu (bilan)" in c
     assert "« Marché et secteur »" in c
-    # le fait vit dans Marché.
-    assert "Prix de sortie — bâti secteur" in _read("marche.tsx")
+    # CI-1 : le fait « prix du bâti secteur » est rendu dans Marché sous le libellé « Prix de l'ancien
+    # (secteur) » (FICHE-FIX-4 Lot J) ; la Constructibilité y renvoie (asserts ci-dessus). Le fait vit bien dans Marché.
+    assert "Prix de l'ancien (secteur)" in _read("marche.tsx")
 
 
 # ── F6 Risques : vigilances d'abord + « sans objet » repliés ─────────────────────────────────────
