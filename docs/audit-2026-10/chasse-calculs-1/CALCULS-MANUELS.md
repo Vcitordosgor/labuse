@@ -184,6 +184,28 @@ Méthode : chaque export est généré **en-process** (aucune écriture), le PDF
 
 ---
 
+## LOT D3 — RÉACTIVITÉ DES EXPORTS À UN CHANGEMENT DE DONNÉE (transaction annulée)
+
+Méthode : le `get_db` de l'app est surchargé vers une session liée à une **transaction jamais commitée** ; on modifie la contenance de `97412000BV0419` (+10 000 m²) **dans cette transaction**, on régénère fiche + Dossier, puis **ROLLBACK** (vérifié : contenance revenue à 2 983 m², aucune écriture durable). Harnais rejouable : `_reactivite_d3.py`.
+
+| ce qui est lu | avant | après (+10 000, non commité) | réagit ? |
+|---|---|---|---|
+| **surface terrain** (fiche, lecture vive de `parcels`) | 2 983 | **12 983** | ✅ **RÉAGIT** immédiatement |
+| **surface dans le Dossier PDF** | 2 983 | **12 983** | ✅ RÉAGIT (le builder lit le payload vif) |
+| **cache de fiche** (sans éviction) | 2 983 | **2 983** | ❌ **STALE** — sert la version d'avant |
+| **SDP / potentiel** (fiche + Dossier, `parcel_residuel` run gelé) | 3 095 | **3 095** | ❌ **NE BOUGE PAS** (run figé) |
+
+### Constats D3 — « lequel ne bouge pas »
+
+1. **La SDP / faisabilité / potentiel de transformation ne bouge dans AUCUN export** tant qu'un run n'a pas été rejoué : elle vient de `parcel_residuel` (vue sur le run servi `run_seq 15`, figé). Modifier la contenance, le bâti ou une règle PLU **ne change pas** la SDP servie (fiche, Dossier, Flash, Copilote). C'est **E-B1** prouvé en direct.
+2. **Incohérence interne après un changement** : dans le **même** Dossier régénéré, la surface affiche **12 983 m²** (à jour) pendant que la SDP affiche **3 095 m²** — SDP calculée sur l'ancienne surface 2 983. Le document mélange une donnée fraîche et un chiffre dérivé périmé ⇒ le ratio SDP/terrain devient faux jusqu'au prochain run. **C'est le vrai risque client de D3.**
+3. **Le cache de fiche sert périmé** dans un même run (clé `(idu, run, score_run, version)` **sans le contenu** ni TTL) : une donnée changée n'est pas reprise avant éviction LRU (128 entrées). Un export régénéré juste après une correction peut servir l'ancienne valeur.
+4. **Lecture vive = réagit** : surface terrain (contenance), zone, et (par architecture) `n_permis_proximite` (robinet live) et le prix DVF (requête vive) réagissent immédiatement. Le **millésime** change globalement quand le run est rebasculé (`served_manifest.promoted_at`).
+
+**Synthèse D3** : ce qui « ne bouge pas » = tout ce qui est **dérivé du run gelé** (SDP, bandes, score, potentiel) + ce qui reste dans le **cache de fiche** non évincé ; ce qui bouge = les champs en **lecture vive** (surface, zone, permis, prix). Le danger n'est pas qu'un export fige — c'est qu'un même export **mélange** du vif et du gelé, donc peut s'auto-contredire après une mise à jour de donnée tant que le run n'a pas été rejoué.
+
+---
+
 ## PÉRIMÈTRE RÉELLEMENT COUVERT CETTE PASSE
 
 Couvert en profondeur : **Lot A** (règle, 24 taux, 10 cas manuels, A4), banc de recalcul indépendant (A + géométrie + résiduel + score), cohérence surface fiche=Gabarit=base sur 3 témoins (C2), cartographie code des 4 lots. **Non refait exhaustivement** (appuyé sur les audits antérieurs cités + le banc) : les 12 recalculs manuels parcelle-par-parcelle de faisabilité (B1), les 8 mesures de reculs au mètre du Gabarit (B/C1 — GABARIT-AUDIT-1 les a faits, 10 parcelles, 0 faux positif), l'extraction texte de 5 PDF × 14 exports (D2 — EXPORTS-AUDIT-2 : 930/942 chiffres ralliés, 0 divergence écran/PDF ; DOCS-FIX-1 : 4/4 écran=PDF). Voir RAPPORT.md § recommandations pour la suite.
