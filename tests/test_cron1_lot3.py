@@ -11,8 +11,9 @@ def test_crontab_genere_une_ligne_par_job():
     # RADAR-AUTO-1 (Lot C) planifie radar-cycle / -dvf / -mensuel → 23 ;
     # VEILLE-FIX-2 (Lot D) ajoute mail-queue-consommer (worker de la file, 5 min) → 24 ;
     # COHERENCE-FIX-1 (lot G) ajoute coherence-banc (banc de cohérence nocturne, 03:45) → 25.
-    # SOLIDITE-1 ajoute recap-matin + backup-offsite + verite-sources ; main retire ingest-ban et
-    # désactive agents-sources (planifie=False → HORS crontab). Le crontab porte UNE ligne par job
+    # SOLIDITE-1 ajoute recap-matin + verite-sources ; main retire ingest-ban et désactive
+    # agents-sources (planifie=False → HORS crontab) ; DISQUE-EXTERNE-1 (14/10) retire backup-offsite
+    # (copie hors-VPS passée sur le disque externe du Mac). Le crontab porte UNE ligne par job
     # PLANIFIÉ (pas les manuels-seuls), jamais plus.
     planifies = [n for n, j in JOBS.items() if j.planifie]
     assert len(lignes_job) == len(planifies), "une ligne par job planifié, ni plus ni moins"

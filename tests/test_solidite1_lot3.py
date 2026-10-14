@@ -1,6 +1,8 @@
-"""SOLIDITE-1 (Lot 3) — disque & sauvegardes. On prouve, sans VPS : le job de copie hors-VPS est au
-registre, le contrôle de sauvegarde (absente / rétrécie) mord, les scripts ont une syntaxe saine et la
-copie hors-VPS s'arrête PROPREMENT (code 3) quand elle n'est pas configurée (jamais d'envoi en clair)."""
+"""SOLIDITE-1 (Lot 3) — disque & sauvegardes. On prouve, sans VPS : le contrôle de sauvegarde
+(absente / rétrécie) mord, les scripts ont une syntaxe saine. DISQUE-EXTERNE-1 (14/10) : la copie
+hors-VPS n'est plus un job VPS (plus de backup-offsite au registre) — elle est portée par le Mac
+(deploy/mac/backup_offsite_disque.sh) ; la fraîcheur de cette copie est une vigie du récap (cf.
+tests/test_disque_externe_1.py)."""
 import subprocess
 from pathlib import Path
 
@@ -9,9 +11,9 @@ from labuse.jobs import JOBS
 RACINE = Path(__file__).resolve().parents[1]
 
 
-def test_backup_offsite_au_registre():
-    j = JOBS.get("backup-offsite")
-    assert j is not None and j.cadence.startswith("hebdo") and j.besoin_db is False
+def test_backup_offsite_retire_du_registre():
+    # DISQUE-EXTERNE-1 — la copie hors-VPS est passée sur le disque externe du Mac : plus de job VPS.
+    assert JOBS.get("backup-offsite") is None
 
 
 def test_restore_test_ne_restaure_plus_sur_le_vps():
@@ -26,18 +28,10 @@ def test_restore_test_ne_restaure_plus_sur_le_vps():
 
 
 def test_scripts_syntaxe_bash():
-    for rel in ("deploy/scripts/backup_offsite.sh", "deploy/scripts/menage_disque.sh",
-                "deploy/mac/restore_test.sh"):
+    for rel in ("deploy/scripts/menage_disque.sh", "deploy/mac/restore_test.sh",
+                "deploy/mac/backup_offsite_disque.sh"):
         r = subprocess.run(["bash", "-n", str(RACINE / rel)], capture_output=True, text=True)
         assert r.returncode == 0, f"{rel} : {r.stderr}"
-
-
-def test_offsite_sarrete_proprement_si_non_configure():
-    """Sans stockage objet (ni clé) configuré : code 3 (ni envoi, ni échec dur), message explicite."""
-    env = {"PATH": "/usr/bin:/bin:/usr/local/bin"}
-    r = subprocess.run(["bash", str(RACINE / "deploy/scripts/backup_offsite.sh")],
-                       capture_output=True, text=True, env=env)
-    assert r.returncode == 3 and "NON configur" in r.stdout
 
 
 def test_menage_dry_run_par_defaut():

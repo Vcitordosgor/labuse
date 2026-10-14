@@ -391,10 +391,13 @@ def recap_matin(ctx: JobContext) -> None:
     pct = etat.get("disque_pct")
     sb = etat.get("sauvegarde") or {}
     ready = (etat.get("readyz") or {}).get("ready")
+    ce = etat.get("copie_externe") or {}
+    copie_ext = ce.get("derniere") or "jamais"            # date de la dernière copie hors-VPS (disque Mac)
     ligne_vigies = (
         f"Disque {pct}% · /readyz {'prêt' if ready else 'PAS prêt'} · "
         f"sauvegarde {sb.get('dernier','absente')}"
         + (f" ({sb.get('taille_mo')} Mo)" if sb.get("taille_mo") else "")
+        + f" · copie externe {copie_ext}"
         + f" · {len(etat.get('retards') or [])} job(s) en retard")
     date_run = datetime.now(timezone.utc).astimezone().strftime("%d/%m")
     # Le sujet porte LA DATE : identique chaque jour, Gmail regroupait/repliait le récap (incident
@@ -415,7 +418,7 @@ def recap_matin(ctx: JobContext) -> None:
     _envoyer_alerte(corps, sujet=sujet, ctx=ctx)
     ctx.compte(incidents_ouverts=len(ouverts), disque_pct=pct, readyz_ok=bool(ready),
                jobs_en_retard=len(etat.get("retards") or []),
-               sauvegarde=sb.get("dernier"))
+               sauvegarde=sb.get("dernier"), copie_externe=copie_ext)
 
 
 def sante_endpoints(ctx: JobContext) -> None:
@@ -746,45 +749,6 @@ def verite_sources(ctx: JobContext) -> None:
     r = vs.journaliser_passage(ctx.db, res)
     ctx.db.commit()
     ctx.compte(**r, parcelles_echantillon=len(res.get("echantillon") or []))
-
-
-def backup_offsite(ctx: JobContext) -> None:
-    """SOLIDITE-1 (Lot 3.2) — DÉLÈGUE à deploy/scripts/backup_offsite.sh (chiffre le dernier dump + le
-    pousse vers un stockage objet, rétention 8 hebdo). Le code 3 (« non configuré ») n'est PAS un échec :
-    il ouvre/entretient l'incident « sauvegarde distante non configurée » (rappel à Vic) par la porte
-    unique, et le job reste VERT (on ne veut pas qu'un compte manquant fasse un faux échec chaque semaine).
-    Succès → l'incident est refermé. Tout autre code → échec bruyant (le runner alerte)."""
-    s = get_settings()
-    script = Path(__file__).resolve().parents[2] / "deploy" / "scripts" / "backup_offsite.sh"
-    if not script.is_file():
-        raise RuntimeError(f"script introuvable : {script}")
-    env = dict(os.environ)
-    env.setdefault("LABUSE_BACKUP_DIR", s.backup_dir)
-    if s.pg_bin_dir:
-        env["PATH"] = f"{s.pg_bin_dir}:{env.get('PATH', '')}"
-    proc = subprocess.run(["bash", str(script)], env=env, capture_output=True, text=True, check=False)
-    sortie = (proc.stdout or "") + (proc.stderr or "")
-    for ligne in sortie.splitlines():
-        log.info("backup_offsite.sh | %s", ligne)
-    from .db import session_scope
-    from . import ops_alertes
-    cle = "sauvegarde-distante"
-    if proc.returncode == 3:        # non configuré : rappel, PAS un échec
-        with session_scope() as db:
-            ops_alertes.signaler(db, cle, "Sauvegarde hors-VPS non configurée",
-                                 "La copie chiffrée des sauvegardes hors du VPS n'est pas active : "
-                                 "compte de stockage objet et/ou clé de chiffrement manquants. "
-                                 "Tant que ce n'est pas posé, un VPS perdu emporte les sauvegardes. "
-                                 "Détail : deploy/scripts/backup_offsite.sh (SOLIDITE-1 Lot 3.2).")
-            db.commit()
-        ctx.compte(etat="non_configure", note=sortie.strip()[-300:])
-        return
-    if proc.returncode != 0:
-        raise RuntimeError(f"backup_offsite.sh a échoué (code {proc.returncode}) : {sortie.strip()[-300:]}")
-    with session_scope() as db:
-        ops_alertes.resoudre(db, cle)
-        db.commit()
-    ctx.compte(etat="ok", detail=sortie.strip()[-300:])
 
 
 def restore_test(ctx: JobContext) -> None:

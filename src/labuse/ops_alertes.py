@@ -8,8 +8,9 @@ unique par laquelle toute panne d'exploitation devient visible le jour même :
     n'est pas résolu : AU PLUS un rappel par jour (pas de déluge). `cle` identifie l'incident (ex.
     'job-echec:backup-postgres', 'disque', 'readyz') : deux appels pour la même panne ne font qu'un.
   · `resoudre(cle)` — si l'incident était ouvert, envoie UN mail « résolu » et le referme. Sinon : rien.
-  · `verifier_declencheurs(db)` — évalue d'un coup les quatre vigies qui n'ont pas de point d'appel
-    naturel ailleurs (disque, /readyz, sauvegarde, jobs en retard) et ouvre/referme les incidents. Les
+  · `verifier_declencheurs(db)` — évalue d'un coup les cinq vigies qui n'ont pas de point d'appel
+    naturel ailleurs (disque, /readyz, sauvegarde, copie externe, jobs en retard) et ouvre/referme les
+    incidents. Les
     ÉCHECS de job, eux, sont signalés en direct par `jobs.exec_one` (une alerte à l'instant de l'échec).
 
 RÈGLE DRY-RUN (comme tout le reste de LABUSE) : sans SMTP, le mail est écrit en `.eml` (preuve), marqué
@@ -18,6 +19,7 @@ fonctionne, seule la notification est différée).
 """
 from __future__ import annotations
 
+import json
 import logging
 import os
 import shutil
@@ -191,6 +193,33 @@ def _dumps(backup_dir: str) -> list[Path]:
         return []
 
 
+# DISQUE-EXTERNE-1 (14/10) — la copie hors-VPS vit sur le disque externe du Mac. Après chaque copie
+# VÉRIFIÉE (sha256 + pg_restore --list), le Mac dépose ce marqueur dans backup_dir (via ssh, utilisateur
+# labuse). Le VPS ne fait que le LIRE : il ne pousse plus rien lui-même. C'est volontairement un fichier
+# (pas la DB) pour que l'écriture par le Mac ne dépende d'aucun code applicatif déployé.
+MARQUEUR_COPIE_EXTERNE = ".copie-externe.json"
+
+
+def lire_copie_externe(backup_dir: str) -> dict | None:
+    """Le marqueur de la dernière copie hors-VPS, ou None s'il est absent/illisible/mal formé.
+    Renvoie {copie_at: datetime (tz-aware), dump, sha256, taille_mo, disque}. Jamais d'exception."""
+    try:
+        p = Path(backup_dir) / MARQUEUR_COPIE_EXTERNE
+        if not p.exists():
+            return None
+        d = json.loads(p.read_text(encoding="utf-8"))
+        brut = d.get("copie_at")
+        if not brut:
+            return None
+        quand = datetime.fromisoformat(str(brut).replace("Z", "+00:00"))
+        if quand.tzinfo is None:
+            quand = quand.replace(tzinfo=timezone.utc)
+        return {"copie_at": quand, "dump": d.get("dump"), "sha256": d.get("sha256"),
+                "taille_mo": d.get("taille_mo"), "disque": d.get("disque")}
+    except (OSError, ValueError, TypeError):
+        return None
+
+
 def _intervalle_s(cron_utc: str) -> float | None:
     """Secondes entre deux exécutions consécutives d'une planif cron (via le parseur du registre).
     None si on ne peut pas trouver deux occurrences sous l'horizon (planif très rare)."""
@@ -249,7 +278,7 @@ def _jobs_en_retard(db) -> list[dict]:
 
 
 def verifier_declencheurs(db) -> dict:
-    """Évalue les quatre vigies sans point d'appel naturel, ouvre/referme les incidents, et renvoie un
+    """Évalue les cinq vigies sans point d'appel naturel, ouvre/referme les incidents, et renvoie un
     état lisible (consommé par le récap du matin + `labuse ops verifier`)."""
     s = get_settings()
     out: dict = {}
@@ -305,7 +334,30 @@ def verifier_declencheurs(db) -> dict:
         elif prec:
             resoudre(db, "sauvegarde-retrecie")
 
-    # 4) jobs en retard (ont tourné, se sont tus)
+    # 4) copie externe (hors-VPS, sur le disque du Mac) — fraîcheur : « branche le disque » au-delà du seuil
+    seuil_j = getattr(s, "copie_externe_seuil_j", 10)
+    ce = lire_copie_externe(s.backup_dir)
+    if not ce:
+        out["copie_externe"] = {"present": False, "derniere": None, "seuil_j": seuil_j}
+        signaler(db, "copie-externe-ancienne", "Aucune copie externe — branche le disque",
+                 "Aucune copie des sauvegardes hors du VPS n'a encore été enregistrée. Un VPS perdu "
+                 "emporterait tout : branche le disque externe pour que le Mac en fasse une.")
+    else:
+        quand = ce["copie_at"]
+        age_j = (datetime.now(timezone.utc) - quand).days
+        out["copie_externe"] = {"present": True, "derniere": quand.astimezone().strftime("%d/%m"),
+                                "copie_at": quand.isoformat(), "dump": ce.get("dump"),
+                                "age_j": age_j, "disque": ce.get("disque"), "seuil_j": seuil_j}
+        if age_j > seuil_j:
+            signaler(db, "copie-externe-ancienne",
+                     f"Copie externe ancienne ({age_j} j) — branche le disque",
+                     f"La dernière copie des sauvegardes hors du VPS date du "
+                     f"{quand.astimezone().strftime('%d/%m à %H:%M')} ({age_j} j, seuil {seuil_j} j). "
+                     f"Branche le disque externe : le Mac rapatriera et rangera le dernier dump.")
+        else:
+            resoudre(db, "copie-externe-ancienne")
+
+    # 5) jobs en retard (ont tourné, se sont tus)
     retards = _jobs_en_retard(db)
     out["retards"] = retards
     noms_retard = {r["nom"] for r in retards}

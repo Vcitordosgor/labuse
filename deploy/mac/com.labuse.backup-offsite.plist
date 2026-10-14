@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- DISQUE-EXTERNE-1 (14/10) — copie des sauvegardes hors du VPS, sur le disque externe du Mac.
+     Déclenché (1) à CHAQUE montage de volume (StartOnMount : le script filtre le bon disque et
+     ne fait rien si ce n'est pas lui), et (2) chaque DIMANCHE à 14:30 (s'il est branché).
+     Installation : voir deploy/mac/README.md. ADAPTER les chemins /Users/VIC au dépôt/home réels. -->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.labuse.backup-offsite</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <!-- ADAPTER ce chemin au dépôt local -->
+    <string>/Users/VIC/Desktop/labuse/deploy/mac/backup_offsite_disque.sh</string>
+  </array>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>LABUSE_VPS_SSH</key>
+    <string>labuse-vps</string>
+    <key>LABUSE_REMOTE_BACKUP</key>
+    <string>/var/backups/labuse</string>
+    <!-- Disque externe (non chiffré, choix assumé de Vic) + dossier DÉDIÉ à sa racine. -->
+    <key>LABUSE_OFFSITE_DISK</key>
+    <string>/Volumes/MUSIQUE-VIDEO</string>
+    <key>LABUSE_OFFSITE_DIRNAME</key>
+    <string>LABUSE-SAUVEGARDES</string>
+    <!-- pg_restore >= la majeure PostgreSQL du VPS (ex. 18). Adapter si le PATH est ancien. -->
+    <key>PG_RESTORE_BIN</key>
+    <string>pg_restore</string>
+    <!-- Rétention : 8 hebdomadaires + 1 par mois sur 12 mois. -->
+    <key>LABUSE_OFFSITE_KEEP_WEEKLY</key>
+    <string>8</string>
+    <key>LABUSE_OFFSITE_KEEP_MONTHLY</key>
+    <string>12</string>
+    <!-- Mail d'alerte en cas de copie invérifiable (sinon notif macOS + log). -->
+    <key>LABUSE_BREVO_API_KEY</key>
+    <string></string>
+    <key>LABUSE_ALERT_TO</key>
+    <string>kampusreunion@gmail.com</string>
+  </dict>
+
+  <!-- (1) à chaque montage d'un volume : le script ne fait rien si ce n'est pas le bon disque -->
+  <key>StartOnMount</key>
+  <true/>
+
+  <!-- (2) chaque dimanche à 14:30 (Weekday 0 = dimanche), s'il est branché -->
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Weekday</key><integer>0</integer>
+    <key>Hour</key><integer>14</integer>
+    <key>Minute</key><integer>30</integer>
+  </dict>
+
+  <key>StandardOutPath</key>
+  <string>/Users/VIC/.labuse/backup_offsite_disque.out.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/VIC/.labuse/backup_offsite_disque.err.log</string>
+</dict>
+</plist>
