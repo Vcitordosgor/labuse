@@ -601,6 +601,13 @@ def _zone_regles_brut(doc: dict, zone: str) -> dict:
     norm = {_norm_zone(z): z for z in zones}
     hit = norm.get(_norm_zone(zone))
     if hit is None:
+        # PLU-CALIBRAGE-8 (oct.) Lot B — zone AU PHASÉE « <n>AU<indice> » sans entrée propre : 1AU/2AU
+        # = phasage (ouverture immédiate/différée), MÊMES règles par indice. On retombe sur « AU<indice> »
+        # pour que les silences/citations (lus ici) soient cohérents avec resolve_zone (phase-aware).
+        m = re.fullmatch(r"\d+(AU\w+)", (zone or "").strip(), re.I)
+        if m:
+            hit = norm.get(_norm_zone(m.group(1)))
+    if hit is None:
         return {}
     v = zones[hit]
     if isinstance(v, dict) and v.get("regles"):
@@ -640,6 +647,22 @@ def regles_commune(commune: str) -> list[dict]:
             out.append({"zone": zone, "rubrique": chemin[0],
                         "feuille": chemin[1] if len(chemin) > 1 else None,
                         "chemin": ".".join(chemin), **feuille})
+    return out
+
+
+def renvois_commune(commune: str) -> dict:
+    """Zones qui tirent leurs règles d'un `renvoi` (pas de bloc `regles` propre) → {zone: cible}.
+    PLU-CALIBRAGE-8 (oct.) Lot B : le moteur de zonage reconnaît ces zones comme CALIBRÉES via
+    renvoi (les valeurs chiffrées viennent déjà de la zone mère par `_zone_regles_brut`, qui suit
+    le renvoi). Seules les zones SANS `regles` propre figurent ici (une zone qui porte ses règles
+    n'est pas un renvoi)."""
+    doc = _doc(commune)
+    if not doc:
+        return {}
+    out: dict = {}
+    for zone, zv in (doc.get("zones") or {}).items():
+        if isinstance(zv, dict) and zv.get("renvoi") and not zv.get("regles"):
+            out[zone] = zv["renvoi"]
     return out
 
 

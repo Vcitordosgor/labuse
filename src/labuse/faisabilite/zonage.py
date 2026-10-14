@@ -357,24 +357,45 @@ def _resolve_zone_base(code: str, commune: str | None = None) -> ZoneRules | Non
     # « commune outillée » = elle a une métadonnée de zonage OU des regles (les communes extraites
     # par l'agent interne n'ont pas d'entrée plu_zonage mais ont des regles).
     reg_zones = {r["zone"] for r in D.regles_commune(ins)} if ins else set()
-    outillee = (zc is not None) or bool(reg_zones)
+    # PLU-CALIBRAGE-8 (oct.) Lot B — les zones qui tirent leurs règles d'un `renvoi` (sans `regles`
+    # propre) sont RÉSOLVABLES et CALIBRÉES : `_zone_regles_brut` suit déjà le renvoi pour les valeurs,
+    # il ne manquait que de les reconnaître ici (sinon repli générique → gabarit bloqué « non calibré »).
+    renvois = D.renvois_commune(ins) if ins else {}
+    outillee = (zc is not None) or bool(reg_zones) or bool(renvois)
     if outillee:
         zc = zc or {}
         strict = (zc.get("mode") == "strict")
-        zones = set(reg_zones) | set((zc.get("zones") or {}).keys())
+        zones = set(reg_zones) | set(renvois) | set((zc.get("zones") or {}).keys())
         norm = {normalize_key(c): c for c in zones}
+
+        def _resolu_direct(hit: str, lib: str, prefixe_phase: str | None = None):
+            """Construit le ZoneRules d'une zone calibrée (ou renvoi), avec garde `propose` et via_renvoi."""
+            nv = _regles_sdp_non_validees(D.regles_zone(ins, hit)) if ins else []
+            if nv:
+                return _zone_regle_non_validee(lib, nv)    # règle PLU non validée → non calculable
+            r = _zone_rules_from_regles(commune, hit, zc)
+            r.code = lib
+            if hit in renvois:
+                r.via_renvoi = f"{lib} → règles de {renvois[hit]} (renvoi du règlement)"
+            elif prefixe_phase:
+                r.via_renvoi = f"{lib} → règles de {hit} (zone AU phasée « {prefixe_phase} »)"
+            if strict or _has_usable_height(r):
+                return r
+            return _zone_generique(lib)
 
         # 1) correspondance directe (normalisée)
         hit = norm.get(normalize_key(code))
         if hit is not None:
-            nv = _regles_sdp_non_validees(D.regles_zone(ins, hit)) if ins else []
-            if nv:
-                return _zone_regle_non_validee(code, nv)   # règle PLU non validée → non calculable
-            r = _zone_rules_from_regles(commune, hit, zc)
-            r.code = code
-            if strict or _has_usable_height(r):
-                return r
-            return _zone_generique(code)
+            return _resolu_direct(hit, code)
+
+        # 1bis) zone AU PHASÉE « <n>AU<indice> » (1AU/2AU = phasage, mêmes règles par indice) : si
+        #   « AU<indice> » existe (clé directe ou renvoi), on l'utilise. Additif — ces codes ne
+        #   trouvaient aucun hit auparavant (le renvoi pattern étape 3 exige « AU<chiffre> »).
+        mph = re.fullmatch(r"(\d+)(AU\w+)", code, re.I)
+        if mph is not None:
+            hit_ph = norm.get(normalize_key(mph.group(2)))
+            if hit_ph is not None:
+                return _resolu_direct(hit_ph, code, prefixe_phase=mph.group(1) + "AU")
 
         # 2) zones AU*st — pas de construction neuve
         st = zc.get("zones_au_st") or {}

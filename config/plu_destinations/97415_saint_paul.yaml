@@ -1517,9 +1517,9 @@ zones:
           pct: null
           article: '9'
           page_pdf: 133
-          citation: INTROUVABLE
+          citation: 'Article 9 — Emprise au sol : 1. habitation et commerce : l''emprise au sol ne doit pas dépasser 150 m² ; 2. annexe non habitable : 25 m² ; 3. équipements d''intérêt collectif : 200 m² ; 4. hébergement hôtelier : module principal 150 m², secondaires 80 m², maximum 300 m².'
           statut: propose
-          raison: valeur non numérique ('a_verifier')
+          raison: "emprise réglementée en m² ABSOLUS par destination (Art. 9), non exprimable en CES % — forme hors schéma actuel (PLU-CALIBRAGE-8 oct. Lot B : vérifié au règlement md5 0aee72989399..., p.133). Reste `propose` : la servir en CES % surestimerait (le plafond 150 m² est bien plus bas qu'une emprise calculée sur les reculs)."
       retraits:
         voie:
           min_m: 4.0
