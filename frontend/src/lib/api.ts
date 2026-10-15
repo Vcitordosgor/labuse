@@ -136,6 +136,8 @@ export const filterParams = (f: Filters): Record<string, string | number> => ({
   ...(f.hauteurMax != null ? { hauteur_max: f.hauteurMax } : {}),
   ...(f.empriseMin != null ? { emprise_min: f.empriseMin } : {}),
   ...(f.empriseMax != null ? { emprise_max: f.empriseMax } : {}),
+  // CHASSE-INVARIANTS-FIX-1 (Lot 1, E-01) — « Saturé » (emprise bâtie > 100 %) : valeur de filtre à part entière.
+  ...(f.empriseSature ? { emprise_sature: 'true' } : {}),
   ...(f.caMin != null ? { ca_min: f.caMin } : {}),
   // mode B rentable : porte AUSSI les paramètres du curseur SESSION partagé (L2)
   ...(f.modeBRentable ? {

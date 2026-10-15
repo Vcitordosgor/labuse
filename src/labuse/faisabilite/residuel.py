@@ -215,7 +215,11 @@ def compute_residuel(session: Session, parcel_id: int,
     taux_emprise = (100.0 * emprise_batie / emprise_max) if emprise_max else None
     pct_potentiel = (100.0 * sdp_existante / sdp_max) if sdp_max else None
     seuil = float(hyp.sous_densite_seuil_pct)
-    sous_densite = (taux_emprise < seuil) if taux_emprise is not None else None
+    # CHASSE-INVARIANTS-FIX-1 (Lot 1, E-13) — sous_densite et taux_emprise_pct lisent la MÊME valeur
+    # ARRONDIE (celle servie). L'ancien `taux_emprise < seuil` sur le flottant (39,6 %) contredisait
+    # la colonne arrondie à 40 % : « 40 % + sous-densité » au bord. Un seul nombre, un seul verdict.
+    taux_emprise_arrondi = round(taux_emprise) if taux_emprise is not None else None
+    sous_densite = (taux_emprise_arrondi < seuil) if taux_emprise_arrondi is not None else None
 
     # CHASSE-FIX-1 (C06) — le moteur lit parcel_au_statut et POSE LE DRAPEAU « capacité
     # différée » (zone AU à ouverture bloquée) : la SDP est calculée (doctrine « différée,
@@ -229,7 +233,7 @@ def compute_residuel(session: Session, parcel_id: int,
         "disponible": True,
         "capacite_differee": _au_differe is not None,
         "capacite_differee_detail": _au_differe,
-        "taux_emprise_pct": round(taux_emprise) if taux_emprise is not None else None,
+        "taux_emprise_pct": taux_emprise_arrondi,
         "pct_potentiel": round(pct_potentiel) if pct_potentiel is not None else None,
         "sous_densite": sous_densite,
         "sous_densite_seuil_pct": round(seuil),
@@ -372,6 +376,24 @@ def fmt_pct_consomme(pct: float | int | None) -> str | None:
     return "> 300" if float(pct) > SEUIL_PCT_AFFICHAGE else str(round(float(pct)))
 
 
+# CHASSE-INVARIANTS-FIX-1 (Lot 1, E-01) — le TAUX D'OCCUPATION DU GABARIT (emprise bâtie ÷ emprise
+# constructible) reste calculé TEL QUEL en base : du bâti antérieur à la règle dépasse réellement
+# le plafond d'emprise actuel (c'est une vérité, pas un bug de division). Mais AUCUN lecteur n'affiche
+# jamais un pourcentage brut au-delà de 100 % — une SEULE fonction de rendu (miroir TS `fmtTauxEmprise`
+# dans format.ts) que lisent fiche, Comparatif, Dossier, carte, filtres et Copilote.
+TAUX_EMPRISE_SATURE = "Saturé : le bâti existant dépasse déjà le plafond d'emprise du PLU actuel"
+
+
+def fmt_taux_emprise(taux: float | int | None) -> str | None:
+    """Rendu UNIQUE du taux d'occupation du gabarit : None si absent, le message « Saturé … »
+    au-delà de 100 % (jamais un % brut, si grand soit-il), sinon « X % ». On compare la valeur
+    ARRONDIE (celle servie) : ce qui s'arrondit à 100 reste « 100 % », 101+ devient « Saturé »."""
+    if taux is None:
+        return None
+    arrondi = round(float(taux))
+    return TAUX_EMPRISE_SATURE if arrondi > 100 else f"{arrondi} %"
+
+
 def _libelle(taux: float | None, sdp_res: float, niveaux_reels: bool) -> str:
     # M36 Lot C (Q1, arbitrage Vic) : au-delà de 100 % on ne plafonne PAS et on ne déduit
     # RIEN (pas d'« antériorité probable ») — libellé factuel seul.
@@ -379,10 +401,9 @@ def _libelle(taux: float | None, sdp_res: float, niveaux_reels: bool) -> str:
     if taux is None:
         etat = "taux d'emprise non calculable (emprise constructible inconnue)"
     elif taux > 100:
-        # COHERENCE-FIX-1 (lot B) : au-delà de 300 %, le chiffre exact n'apporte rien au client
-        # (bâti très au-delà du plafond de zone) — même règle d'affichage que la fiche.
-        etat = (f"bâti existant supérieur à l'emprise constructible actuelle "
-                f"({'> 300' if taux > 300 else f'~{round(taux)}'} % — à vérifier)")
+        # CHASSE-INVARIANTS-FIX-1 (Lot 1, E-01) : au-delà de 100 %, jamais un % brut — le message
+        # « Saturé … » unique (fmt_taux_emprise), le même que la fiche/Comparatif/carte/Copilote.
+        etat = TAUX_EMPRISE_SATURE
     elif taux < 2:
         etat = "terrain nu — potentiel quasi intégral"
     else:

@@ -44,6 +44,16 @@ export const PCT_CONSOMME_SEUIL = 300
 export const fmtPctConsomme = (n: number | null | undefined): string =>
   n == null ? '—' : n > PCT_CONSOMME_SEUIL ? '> 300' : String(Math.round(n))
 
+/** CHASSE-INVARIANTS-FIX-1 (Lot 1, E-01) — TAUX D'OCCUPATION DU GABARIT (emprise bâtie ÷ emprise
+ *  constructible). Au-delà de 100 % on n'affiche JAMAIS le pourcentage brut (c'était le « 19 569 % »
+ *  de l'export) : le message « Saturé … » unique, mirroir du Python `fmt_taux_emprise`. '—' si absent. */
+export const TAUX_EMPRISE_SATURE = 'Saturé : le bâti existant dépasse déjà le plafond d\'emprise du PLU actuel'
+export const fmtTauxEmprise = (n: number | null | undefined): string => {
+  if (n == null) return '—'
+  const r = Math.round(n)              // on compare la valeur ARRONDIE (celle servie), comme le Python
+  return r > 100 ? TAUX_EMPRISE_SATURE : `${r} %`
+}
+
 /** date courte lisible : 12 juil. 2026 (jamais un ISO brut à l'écran) */
 export const fmtDate = (d: string | Date | null | undefined): string => {
   if (!d) return '—'

@@ -130,7 +130,8 @@ const F_NUMS: (keyof Filters)[] = ['surfaceMin', 'surfaceMax',
   'prixMarcheMin', 'prixMarcheMax', 'caMin', 'pmDirigMin', 'pmDirigMax',
   'hauteurMin', 'hauteurMax', 'empriseMin', 'empriseMax']   // KELFONCIER-FIX-1 (Lot D) — filtres bâti
 const F_BOOLS: (keyof Filters)[] = ['evenement', 'veille', 'horsCopro', 'personneMorale',
-  'sousDensite', 'npnru', 'adresseAbsente', 'marcheFiable', 'modeBRentable']
+  'sousDensite', 'npnru', 'adresseAbsente', 'marcheFiable', 'modeBRentable',
+  'empriseSature']   // CHASSE-INVARIANTS-FIX-1 (Lot 1, E-01) — « Saturé » (emprise > 100 %)
 // KF1 — champs texte libres (dénomination, SIREN) : comptés/persistés comme les autres.
 const F_STRS: (keyof Filters)[] = ['pmDenom', 'pmSiren']
 
@@ -151,7 +152,7 @@ const TERRAIN_FIELDS = new Set<keyof Filters>(['surfaceMin', 'surfaceMax', 'zona
   'signaux',   // M55-D stage 6 : les Signaux de vie = ÉVÉNEMENTS SOURCÉS, filtrables sans analyse
   // RECETTE-1 (E2) — la Capacité (SDP restante / logements / destination) est retirée du panneau.
   'pmForme', 'pmApe', 'pmAge', 'pmDirigMin', 'pmDirigMax',   // KF1 — critères propriétaire = faits (DGFiP/INPI), pas une opinion LABUSE
-  'hauteurMin', 'hauteurMax', 'empriseMin', 'empriseMax',   // KELFONCIER-FIX-1 (Lot D) — le bâti mesuré = un FAIT (LiDAR/run servi), pas une opinion
+  'hauteurMin', 'hauteurMax', 'empriseMin', 'empriseMax', 'empriseSature',   // KELFONCIER-FIX-1 (Lot D) + CHASSE-INVARIANTS-FIX-1 (Lot 1) — le bâti mesuré = un FAIT (LiDAR/run servi), pas une opinion
   'zfangRegime', 'frrClassement'])   // FILTRES-FIX-1 (lot 1) — statut fiscal de la commune = un FAIT (territoire_fiscal), pas une opinion
 export function hasOpinion(f: Filters): boolean {
   for (const k of F_ARRAYS) if (!TERRAIN_FIELDS.has(k) && (f[k] as unknown[]).length) return true
@@ -238,6 +239,7 @@ const BOOL_KEYS: [keyof Filters, string][] = [
   ['evenement', 'ev'], ['veille', 'vs2'], ['horsCopro', 'hc'], ['personneMorale', 'pm'],
   ['sousDensite', 'sd'], ['npnru', 'np'],
   ['adresseAbsente', 'aa'], ['marcheFiable', 'mf'], ['modeBRentable', 'mb'],
+  ['empriseSature', 'esa'],   // CHASSE-INVARIANTS-FIX-1 (Lot 1, E-01) — « Saturé » (emprise > 100 %)
 ]
 // M55-D stage 7 : la clé legacy `fl` (flags contraintes de secteur) n'est PLUS lue ni écrite —
 // la sous-section a quitté le panneau (les flags restent en fiche/couches). Un vieux lien
