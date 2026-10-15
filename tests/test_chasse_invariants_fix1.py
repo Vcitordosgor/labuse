@@ -138,3 +138,45 @@ def test_lot2_cascade_exclut_le_rouge_majoritaire_en_union():
             assert "PPR zone rouge" in he[0].detail and "%" in he[0].detail
         o_g = outcomes[ids[garder]]
         assert not any(v.layer_name == "risques" and v.is_hard_exclude() for v in o_g.verdicts)
+
+
+# ───────────────────────────── Lot 3 — E-10 : cascade_exclue → « Hors classement » ─────────────
+def test_lot3_bande_rang_place_hc_en_fin():
+    from labuse.scoring.score_labuse_combine import BANDE_RANG
+    assert BANDE_RANG["HC"] == 6                         # après NC (5) et 0 (4)
+    assert BANDE_RANG["HC"] > max(BANDE_RANG[b] for b in ("A", "B", "C", "D", "0", "NC"))
+
+
+def test_lot3_cause_libelle_traduit_hors_classement():
+    from labuse.faisabilite.engine import cause_libelle
+    assert cause_libelle("hors_classement:forêt publique (domaine inacquérable)") == \
+        "Exclue : forêt publique (domaine inacquérable)."
+    assert cause_libelle("hors_classement:") == "Exclue : hors classement (écartée par la cascade)."
+    # une cause normale n'est pas affectée
+    assert cause_libelle("terrain_exigu").startswith("Non retenue")
+
+
+@pytest.mark.reel
+def test_lot3_cascade_exclue_sort_du_classement_avec_raison():
+    """E-10 — une parcelle bande A ET exclue en dur bascule en « HC » (Hors classement) avec sa
+    raison ; une parcelle A NON exclue reste A."""
+    from labuse.scoring.score_labuse_combine import combiner
+    from labuse.faisabilite.engine import cause_libelle
+    from sqlalchemy import text
+    with app_session() as s:
+        exclues = s.execute(text("""SELECT parcel_id FROM score_labuse
+            WHERE run_label='q_v18' AND bande='A' AND cascade_exclue=true LIMIT 3""")).fetchall()
+        gardees = s.execute(text("""SELECT parcel_id FROM score_labuse
+            WHERE run_label='q_v18' AND bande='A' AND cascade_exclue=false LIMIT 2""")).fetchall()
+        if not exclues or not gardees:
+            pytest.skip("pas de témoin bande A exclu/gardé dans le run servi")
+        pids = [r[0] for r in exclues] + [r[0] for r in gardees]
+        lignes = {l.parcel_id: l for l in combiner(s, pids, "q_v18_test", cascade_label="q_v18_sources")}
+        for r in exclues:
+            l = lignes[r[0]]
+            assert l.bande == "HC", "une parcelle exclue en dur ne reste jamais en A/B/C/D"
+            assert l.cause and l.cause.startswith("hors_classement:")
+            assert cause_libelle(l.cause).startswith("Exclue :")
+            assert l.score is not None            # le score reste écrit (band = un ordre, pas un score nul)
+        for r in gardees:
+            assert lignes[r[0]].bande == "A"      # pas de faux positif : une A non exclue reste A

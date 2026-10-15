@@ -28,7 +28,7 @@ from .signal_mutation import signal_niveau, signal_version
 # Ordre des bandes pour le classement lexicographique (le Signal départage à l'intérieur).
 # SCORING-7 §1 : « 0 » (sans potentiel constructible) se classe SOUS D et AU-DESSUS de NC
 # (un vrai 0 est une réponse, NC est une analyse incomplète) — ordre Vic A·B·C·D·0·NC.
-BANDE_RANG = {"A": 0, "B": 1, "C": 2, "D": 3, "0": 4, "NC": 5}
+BANDE_RANG = {"A": 0, "B": 1, "C": 2, "D": 3, "0": 4, "NC": 5, "HC": 6}  # HC = Hors classement (E-10), en fin de liste
 
 
 @dataclass
@@ -121,9 +121,21 @@ def combiner(session: Session, parcel_ids: list[int], run_label: str, *,
             continue
         p = signal.get(pid)
         r = recl.get(pid)
+        # CHASSE-INVARIANTS-FIX-1 Lot 3 (E-10) — une parcelle écartée EN DUR par la cascade (route,
+        # DPF, forêt publique, cœur de Parc…) ne remonte JAMAIS en bande constructible : le score
+        # la croyait belle (bande A : surface + zone U), la cascade la sait hors marché. On la sort
+        # du classement (bande « HC ») AVEC sa raison, au lieu de laisser cohabiter bande A et
+        # cascade_exclue=true sans fusion. Les bandes 0/NC (déjà « non retenues ») gardent leur
+        # libellé ; seul le cas trompeur (bande A/B/C/D + exclusion dure) bascule. Le score reste
+        # écrit (band HC = un ordre, pas un score nul) → la cohérence bande⇔score tient.
+        bande, cause = sc.bande, sc.cause
+        if r and r.exclue and bande in ("A", "B", "C", "D"):
+            raison = r.raison_exclusion()
+            bande = "HC"
+            cause = f"hors_classement:{raison}" if raison else "hors_classement:exclue par la cascade"
         lignes.append(LigneScoreLabuse(
             run_label=run_label, parcel_id=pid, idu=sc.idu, commune=sc.commune,
-            score=sc.score, bande=sc.bande, non_calculable=sc.non_calculable, cause=sc.cause,
+            score=sc.score, bande=bande, non_calculable=sc.non_calculable, cause=cause,
             couverture_pct=sc.couverture.get("pct"),
             couverture_manquantes=sc.couverture.get("manquantes", []),
             confiance_niveau=sc.confiance.get("niveau"),

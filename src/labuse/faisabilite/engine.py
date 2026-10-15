@@ -360,6 +360,10 @@ def cause_libelle(cause: str | None, exigu_raison: str | None = None) -> str | N
     if not cause:
         return None
     head, _, zone = cause.partition(":")
+    # CHASSE-INVARIANTS-FIX-1 Lot 3 (E-10) — parcelle « Hors classement » : écartée en dur par la
+    # cascade (route, DPF, forêt publique…). La raison est portée APRÈS les « : » par le scoring.
+    if head == "hors_classement":
+        return f"Exclue : {zone}." if zone else "Exclue : hors classement (écartée par la cascade)."
     # ── causes CERTAINES (« Non retenue ») ──
     if cause == "terrain_exigu":
         return "Non retenue — " + _EXIGU_LIB.get(exigu_raison or "reculs", _EXIGU_LIB["reculs"]) + "."

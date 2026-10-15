@@ -591,7 +591,7 @@ export function ResultsSection() {
   }
   // total « analysé » de l'encart = les 5 catégories montrées (4 bandes + Non retenue) ; « Analyse
   // incomplète » (NC) est à part (l'analyse n'a PAS pu conclure), surfacée dans son groupe de fin.
-  const encartTotal = bandes.A + bandes.B + bandes.C + bandes.D + bandes['0']
+  const encartTotal = (bandes.A ?? 0) + (bandes.B ?? 0) + (bandes.C ?? 0) + (bandes.D ?? 0) + (bandes['0'] ?? 0)
   const bandeTotal = bandesQ.data?.bande_total ?? 0
   // groupes de fin (Non retenue / Analyse incomplète) : montrés seulement quand Classement = Tous
   // (sinon on a demandé une bande précise, ces catégories n'en font pas partie).

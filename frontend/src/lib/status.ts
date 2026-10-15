@@ -112,7 +112,9 @@ export function tierChipLabel(key: string): string {
 // (jamais au même niveau visuel que la bande). Aucun chiffre brut de score ni de probabilité au client.
 // La bande vient du moteur TELLE QUELLE (aucun quota, rang ni percentile côté écran) ; « Sans potentiel
 // constructible » (score 0) est une catégorie À PART, jamais confondue avec « Faible ».
-export type Bande = 'A' | 'B' | 'C' | 'D' | '0' | 'NC'
+// CHASSE-INVARIANTS-FIX-1 Lot 3 (E-10) — « HC » (Hors classement) : parcelle écartée EN DUR par la
+// cascade (route, DPF, forêt publique…), jamais une bande constructible. Catégorie à part, en fin.
+export type Bande = 'A' | 'B' | 'C' | 'D' | '0' | 'NC' | 'HC'
 export const BANDE_META: Record<Bande, { label: string; long: string; color: string }> = {
   A: { label: 'Excellente', long: 'Excellente — le meilleur potentiel constructible', color: '#5CE6A1' }, // menthe vive
   B: { label: 'Bonne', long: 'Bonne — potentiel constructible solide', color: '#46A0E0' },                // bleu franc
@@ -120,9 +122,10 @@ export const BANDE_META: Record<Bande, { label: string; long: string; color: str
   D: { label: 'Faible', long: 'Faible — potentiel constructible limité', color: '#C4653C' },               // terracotta
   '0': { label: 'Non retenue', long: 'Non retenue — aucun droit à bâtir résiduel identifié', color: '#5C7268' }, // gris-vert neutre (catégorie à part) — ANALYSE-2 : ex « Sans potentiel constructible »
   NC: { label: 'Analyse incomplète', long: 'Analyse incomplète — une donnée manque pour conclure', color: '#8A8FA0' },                   // gris-bleu neutre
+  HC: { label: 'Hors classement', long: 'Hors classement — parcelle écartée (domaine public, voirie, forêt publique…), hors du marché constructible', color: '#6B7280' }, // gris neutre
 }
-// ordre lexicographique d'affichage (identique au moteur) : bandes de qualité, incomplète, sans potentiel.
-export const BANDE_ORDER: Bande[] = ['A', 'B', 'C', 'D', 'NC', '0']
+// ordre lexicographique d'affichage (identique au moteur) : bandes de qualité, incomplète, sans potentiel, hors classement.
+export const BANDE_ORDER: Bande[] = ['A', 'B', 'C', 'D', 'NC', '0', 'HC']
 export const BANDE_QUALITE: Bande[] = ['A', 'B', 'C', 'D']
 export function bandeMeta(b: string | null | undefined) {
   return (b && BANDE_META[b as Bande]) || null

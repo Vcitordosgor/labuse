@@ -1,0 +1,11 @@
+CHASSE-INVARIANTS-FIX-1 Lot 3 (E-10) — cascade_exclue en bande A → « Hors classement » + raison
+
+AVANT (run servi q_v18) : bande=A, cascade_exclue=true, raison JAMAIS servie
+APRÈS (logique q_v19) :
+  97420000BE0108: bande A → HC  | Exclue : domaine public fluvial (inconstructible).
+  97420000BH0611: bande A → HC  | Exclue : équipement public (faux positif géométrique).
+  97420000AZ0146: bande A → HC  | Exclue : équipement public (faux positif géométrique).
+  97420000AZ0498: bande A → HC  | Exclue : emprise routière (voirie publique).
+Témoins NON exclus (restent A, aucun faux positif) :
+  97420000BE0055: bande=A
+  97413000CX1498: bande=A
