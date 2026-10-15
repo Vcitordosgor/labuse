@@ -57,6 +57,19 @@ zones:
           citation: 'La superficie totale de l''unité foncière doit être traité en espace perméable à hauteur
             minimum de : en zone UA : 20%'
           statut: valide
+      mixite:
+        seuil_m2: 4000
+        seuil_type: surface_plancher
+        quota_pct: 40
+        quota_base: surface_plancher
+        portee: zone
+        produits: ["logements aidés", "logements locatifs sociaux", "logements intermédiaires"]
+        article: U3
+        page_pdf: 11
+        citation: « En cas de réalisation d'un programme de logements représentant une surface de plancher supérieure
+          à 4 000 m², au minimum 40% de ce programme doit être affecté à des logements aidés (logements locatifs
+          sociaux, logements intermédiaires…). »
+        statut: valide
     silence: autorise
     silence_src: 'Art. U2, p. 10 : « Sont admises toutes les occupations et utilisations du sol non citées à l''article
       U 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes »'
@@ -152,6 +165,18 @@ zones:
           page_pdf: 16
           citation: 'traité en espace perméable à hauteur minimum de : ... en zone UB : 30%'
           statut: valide
+      mixite:
+        seuil_m2: 4000
+        seuil_type: surface_plancher
+        quota_pct: 40
+        quota_base: surface_plancher
+        portee: zone
+        produits: ["logements aidés"]
+        article: U3
+        page_pdf: 11
+        citation: « En cas de réalisation d'un programme de logements représentant une surface de plancher supérieure
+          à 4 000 m², au minimum 40% de ce programme doit être affecté à des logements aidés »
+        statut: valide
     silence: autorise
     silence_src: 'Art. U2, p. 10 : « Sont admises toutes les occupations et utilisations du sol non citées à l''article
       U 1.2 » (chapitre commun « ZONES UA, UB et UC », p. 10)'
@@ -238,6 +263,18 @@ zones:
           page_pdf: 16
           citation: 'traité en espace perméable à hauteur minimum de : ... en zone UC : 40%'
           statut: valide
+      mixite:
+        seuil_m2: 4000
+        seuil_type: surface_plancher
+        quota_pct: 40
+        quota_base: surface_plancher
+        portee: zone
+        produits: ["logements aidés"]
+        article: U3
+        page_pdf: 11
+        citation: « En cas de réalisation d'un programme de logements représentant une surface de plancher supérieure
+          à 4 000 m², au minimum 40% de ce programme doit être affecté à des logements aidés »
+        statut: valide
     silence: autorise
     silence_src: 'Art. U2, p. 10 : « Sont admises toutes les occupations et utilisations du sol non citées à l''article
       U 1.2 » (chapitre commun « ZONES UA, UB et UC », p. 10)'

@@ -64,9 +64,10 @@ class ZoneRules:
     recul_limites_alignement: bool = False    #  (idem « en limite séparative ») — 0 EXPLICITE, ≠ absent
     pleine_terre_compose: dict | None = None  # PLU-CALIBRAGE-7 forme 2 : {espaces_verts_pct, part_pct}
     #  pleine_terre_pct = espaces_verts_pct × part_pct / 100 (calculé, JAMAIS stocké — les 2 chiffres sourcés)
-    # FICHE-FIX-2 P4 — clause de mixité sociale de la zone (LLS), lue des `regles` calibrées :
-    #  {seuil_logements, quota_pct, portee, article, page_pdf, citation, statut}. None si la zone n'en
-    #  porte pas. `statut` = 'valide' → branchée (11e étape sourcée) ; 'propose'/None → non modélisée.
+    # FICHE-FIX-2 P4 / PLU-CALIBRAGE-9 — clause de mixité sociale de la zone (LLS), lue des `regles`
+    #  calibrées : {seuil_m2|seuil_logements, quota_pct, quota_base?, produits?, portee, article,
+    #  page_pdf, citation, statut}. None si la zone n'en porte pas. `statut` = 'valide' → branchée
+    #  (11e étape sourcée : seuil en m² de SDP ou en logements) ; 'propose'/None → non modélisée.
     mixite: dict | None = None
     # PLU-EXCEPTIONS-1 — exceptions au règlement portées par les feuilles `regles` (verbatim + article +
     #  page + `porte`). Servies AVEC leur règle (id `<cle_regle>.exception`), jamais recomposées. Une
@@ -260,13 +261,23 @@ def _stat_from_regles(reg: dict):
 
 
 def _mixite_leaf(reg: dict) -> dict | None:
-    """FICHE-FIX-2 P4 — clause de mixité sociale (LLS) de la zone, lue TELLE QUELLE des regles
-    calibrées (seuil de logements, quota %, article/page/citation, statut). None si absente."""
+    """FICHE-FIX-2 P4 / PLU-CALIBRAGE-9 — clause de mixité sociale (LLS) de la zone, lue TELLE
+    QUELLE des regles calibrées. None si absente.
+
+    Deux formes de SEUIL de déclenchement, lues toutes deux (le moteur choisit celle présente) :
+      · `seuil_m2`        — surface de plancher en m² (forme PLU-CALIBRAGE-9, majoritaire à La
+                            Réunion : « programme > N m² de SDP → X % de logement aidé ») ;
+      · `seuil_logements` — nombre de logements (forme FICHE-FIX-2, Saint-Denis).
+    `quota_pct` = part aidée au-delà du seuil ; `quota_base` = assiette du quota (`surface_plancher`
+    ou `logements`, informatif) ; `produits` = liste des produits visés (LLS/LLTS/PLS/LLI…) si cités.
+    Rien n'est fabriqué : chaque champ relaie le YAML."""
     m = reg.get("mixite") if isinstance(reg, dict) else None
     if not isinstance(m, dict):
         return None
-    return {"seuil_logements": m.get("seuil_logements"), "quota_pct": m.get("quota_pct"),
-            "portee": m.get("portee"), "article": m.get("article"), "page_pdf": m.get("page_pdf"),
+    return {"seuil_logements": m.get("seuil_logements"), "seuil_m2": m.get("seuil_m2"),
+            "quota_pct": m.get("quota_pct"), "quota_base": m.get("quota_base"),
+            "produits": m.get("produits"), "portee": m.get("portee"),
+            "article": m.get("article"), "page_pdf": m.get("page_pdf"),
             "citation": m.get("citation"), "statut": m.get("statut")}
 
 

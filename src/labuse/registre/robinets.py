@@ -266,7 +266,7 @@ ROBINETS: dict[str, Robinet] = {
  # FICHE-RANGEMENT-1 Lot 2 — + rtaa_exigences : le rappel RTAA DOM (RtaaBlock du bilan) est SERVI
  # par le tiroir Constructibilité de la fiche, pas seulement par l'outil Faisabilité → entre au graphe.
  "fiche_parcelle_constructibilite": _r("fiche", "Constructibilité", "fiche_parcelle",
-    "/parcels/{idu}", "json_puis_js", chiffres=("capacite_logements", "sdp_residuelle_m2", "charge_fonciere_eur", "potentiel_verdict", "prix_neuf_observe_eur_m2", "mixite_clause", "surface_vendable_m2", "surface_plancher_m2", "marge_surelevation_m", "taxe_amenagement_estimee_eur", "rtaa_exigences",)),
+    "/parcels/{idu}", "json_puis_js", chiffres=("capacite_logements", "sdp_residuelle_m2", "charge_fonciere_eur", "potentiel_verdict", "prix_neuf_observe_eur_m2", "mixite_clause", "mixite_seuil_m2", "mixite_quota_pct", "surface_vendable_m2", "surface_plancher_m2", "marge_surelevation_m", "taxe_amenagement_estimee_eur", "rtaa_exigences",)),
  # FICHE-RANGEMENT-1 Lot 3 — + cosia_detecte_m2 : le tiroir « Le bien » sert le bâti CoSIA hors
  # BD TOPO (orpheline du registre déclarée).
  "fiche_parcelle_le_bien": _r("fiche", "Le bien", "fiche_parcelle",

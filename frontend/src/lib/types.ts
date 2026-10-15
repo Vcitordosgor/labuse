@@ -910,10 +910,15 @@ export interface FicheZoneDestinations {
   lignes?: FicheDestinationLigne[]; referentiel?: string
   phrase?: string   // non calibrée / zone non lue — affichée telle quelle
 }
-// FICHE-FIX-2 P4 — clause de mixité sociale (LLS) de la zone dominante, servie par _reglement_plu_block.
+// FICHE-FIX-2 P4 / PLU-CALIBRAGE-9 — clause de mixité sociale (LLS) de la zone dominante, servie par
+// _reglement_plu_block. Seuil en m² de SDP (seuil_m2, forme majoritaire 974) OU en logements.
 export interface MixiteRegle {
+  seuil_m2?: number | null
   seuil_logements?: number | null
   quota_pct?: number | null
+  quota_base?: string | null
+  produits?: string[] | null
+  seuil_type?: string | null
   portee?: string | null
   article?: string | null
   page_pdf?: number | null

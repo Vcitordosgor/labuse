@@ -62,6 +62,18 @@ zones:
             planté intégralement en pleine terre comprenant au minimum trois strates, arborescente, arbustive
             et herbacée, - soit avec une plantation en pleine terre comprenant au minimum trois strates...'
           statut: valide
+      mixite:
+        seuil_m2: 1500
+        seuil_type: surface_plancher
+        quota_pct: 20
+        quota_base: surface_plancher
+        portee: zone
+        article: UA 2.2 7°
+        page_pdf: 11
+        citation: « A l'exception des secteurs UAm et UAv, en cas de réalisation d'un programme de logements représentant
+          une surface de plancher supérieure à 1 500 m², au minimum 20% de ce programme doit être affecté à des
+          logement locatifs financés par un prêt aidé de l'État »
+        statut: valide
     silence: autorise
     silence_src: 'Art. UA 2, 2.2, p. 11 : « Sont admises toutes les occupations et utilisations du sol non citées
       à l''article UA 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes »'
@@ -537,6 +549,18 @@ zones:
             UBpsfr2. Pour les terrains d’une superficie inférieure ou égale à 300 m², ce pourcentage est réduit
             à 35%.
           statut: valide
+      mixite:
+        seuil_m2: 1500
+        seuil_type: surface_plancher
+        quota_pct: 20
+        quota_base: surface_plancher
+        portee: zone
+        article: UB 2.2 4°
+        page_pdf: 27
+        citation: « A l'exception des secteurs UBa, UBb et UBc, en cas de réalisation d'un programme de logements
+          représentant une surface de plancher supérieure à 1 500 m², au minimum 20% de ce programme doit être affecté
+          à des logement locatifs financés par un prêt aidé de l'État »
+        statut: valide
     silence: autorise
     silence_src: 'Art. UB 2, 2.2, p. 27 : « Sont admises toutes les occupations et utilisations du sol non citées
       à l''article UB 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes »'

@@ -1,0 +1,10 @@
+  97404000AW0099: 501 m²
+  97404000AW0451: 586 m²
+  97404000AW0624: 274 m²
+  97404000AW0625: 385 m²
+ASSEMBLAGE AW 99+451+624+625 = 1746 m² (zone UA)
+Fourchette logements au sol: (20, 21)
+STEP LLS valeur : ~4-5 logements aidés imposés
+STEP LLS formule: 20 % du programme dès 1000 m² SDP — sur ~20-21 logts
+STEP LLS source : UA 1.3 (1) (clause de mixité sociale) | prov sourcee
+SDP brute: ~2200 m²

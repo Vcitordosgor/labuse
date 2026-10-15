@@ -520,7 +520,16 @@ def referentiel() -> dict:
 #   emprise_sol   → ces                            (% d'emprise au sol, ou coefficient CES)
 #   retraits      → voie · limites_separatives     (chacune : formule texte + min_m)
 #   stationnement → par_logement · par_m2_sdp · par_typologie
-#   mixite        → feuille plate : seuil_logements|seuil_m2 + quota_pct + portee
+#   mixite        → feuille plate (PLU-CALIBRAGE-9). Formes AUTORISÉES, et elles seules :
+#                   · seuil_m2 | seuil_logements  (seuil de déclenchement : SDP en m² — forme
+#                     majoritaire 974 — OU nombre de logements ; l'un OU l'autre, pas les deux)
+#                   · quota_pct                    (part aidée imposée au-delà du seuil, %)
+#                   · quota_base                   (assiette du quota : 'surface_plancher' | 'logements',
+#                                                   informatif — la capacité applique le % au nb de logts)
+#                   · produits                     (liste des produits visés cités : LLS/LLTS/PLS/LLI…)
+#                   · seuil_type                   (nature du seuil, ex. 'surface_plancher', informatif)
+#                   · portee                       ('zone' | secteur graphique…)
+#                   Toute autre clé de mixité = STOP (forme non prévue : proposer avant d'ajouter).
 REGLES_STATUTS = ("propose", "valide")
 
 REGLES_RUBRIQUES: dict[str, tuple[str, ...]] = {
