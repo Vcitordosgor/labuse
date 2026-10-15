@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Maquette v3 — LABUSE Faisabilité : écran + document</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --ink:#1F2A24; --mute:#6B7280; --line:#E5E7EB; --soft:#F6F7F6;
+  --mint:#4ADE80; --mint-d:#15803D; --mint-l:#ECFDF3;
+  --ambre:#B45309; --ambre-l:#FEF3C7; --rouge:#DC2626;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#D9DDDA;font-family:Inter,system-ui,sans-serif;color:var(--ink);font-size:10pt;line-height:1.45}
+.note{max-width:1100px;margin:16px auto;background:#FFFBEB;border:1px solid #F59E0B;border-radius:6px;padding:12px 16px;font-size:9.5pt}
+.note h2{margin:0 0 6px;font-size:11pt}
+.note ul{margin:4px 0 0;padding-left:18px}
+.mq{background:#FFFBEB;outline:1px dashed #F59E0B;font-size:8pt;padding:2px 6px;margin:6px 0;color:#92400E}
+h1.part{max-width:1100px;margin:28px auto 8px;font-size:15pt}
+/* ÉCRAN */
+.app{max-width:1100px;margin:0 auto 24px;background:#fff;border:1px solid var(--line);border-radius:8px;overflow:hidden;display:grid;grid-template-columns:320px 1fr;min-height:640px;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.panel{border-right:1px solid var(--line);padding:12px 14px;font-size:9pt}
+.panel h3{font-size:11pt;margin:0;display:flex;justify-content:space-between;align-items:center}
+.reset{font-size:8pt;color:var(--mute);border:1px solid var(--line);border-radius:4px;padding:2px 7px}
+.lbl{font-size:8pt;color:var(--mute);margin:12px 0 4px}
+.seg{display:flex;flex-wrap:wrap;gap:4px}
+.seg span{border:1px solid var(--line);border-radius:4px;padding:4px 8px;font-size:8.5pt}
+.seg .on{background:var(--mint);border-color:var(--mint);font-weight:600}
+.seg .off{color:#9CA3AF;border-style:dashed}
+.in{border:1px solid var(--line);border-radius:4px;padding:6px 8px;color:var(--mute);margin-top:4px}
+.btn{display:block;width:100%;text-align:center;background:var(--mint);border-radius:4px;padding:9px;font-weight:600;margin-top:14px}
+.btn.sec{background:#fff;border:1px solid var(--line);font-weight:500;margin-top:8px}
+.card{border:1px solid var(--line);border-radius:6px;padding:8px 10px;margin:6px 0}
+.card.sel{border-color:var(--mint-d);background:var(--mint-l)}
+.card .t{display:flex;justify-content:space-between;font-weight:600}
+.card .k{font-size:8.5pt;color:var(--ink);margin-top:2px}
+.card .c{font-size:7.5pt;color:var(--mute);margin-top:2px}
+.st{font-size:7pt;font-weight:600;border-radius:3px;padding:1px 5px;white-space:nowrap}
+.st.ok{background:var(--mint-l);color:var(--mint-d)} .st.cp{background:var(--ambre-l);color:var(--ambre)} .st.im{background:#FEF2F2;color:var(--rouge)}
+.key{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:10px 0 4px}
+.key div{border:1px solid var(--line);border-radius:4px;padding:6px;text-align:center}
+.key b{display:block;font-size:13pt} .key span{font-size:7.5pt;color:var(--mute)}
+details{border-top:1px solid var(--line);padding:6px 0}
+details:last-of-type{border-bottom:1px solid var(--line)}
+summary{cursor:pointer;font-weight:600;font-size:9pt;list-style:none;display:flex;justify-content:space-between}
+summary::after{content:"›";color:var(--mute);transform:rotate(90deg)}
+details[open] summary::after{transform:rotate(-90deg)}
+.row{padding:5px 0;border-bottom:1px solid var(--soft)}
+.row .l{font-size:8pt;color:var(--mute)} .row .v{font-weight:600;font-size:9.5pt} .row .s{font-size:7.5pt;color:var(--mute)}
+.chip{display:inline-block;font-size:7pt;font-weight:600;border-radius:3px;padding:1px 5px;white-space:nowrap}
+.s{background:var(--mint-l);color:var(--mint-d)} .d{background:var(--soft);color:var(--ink)} .p{background:var(--ambre-l);color:var(--ambre)} .e{background:#F3F4F6;color:#4B5563} .nm{background:#fff;color:var(--mute);border:1px dashed #9CA3AF}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}
+.tiles span{border:1px solid var(--line);border-radius:4px;padding:8px;text-align:center;font-size:8.5pt;font-weight:500}
+.map{position:relative;background:#EEF1EE}
+.map svg{width:100%;height:100%;display:block}
+.maplegend{position:absolute;left:12px;bottom:12px;background:#fff;border:1px solid var(--line);border-radius:4px;padding:6px 10px;font-size:8pt;display:flex;gap:12px;flex-wrap:wrap;max-width:70%}
+.maplegend i,.leg i{display:inline-block;width:12px;height:9px;margin-right:4px;vertical-align:middle;border:1px solid #9CA3AF}
+.tabs{position:absolute;top:12px;left:12px;display:flex;gap:4px}
+.tabs span{background:#fff;border:1px solid var(--line);border-radius:4px;padding:4px 10px;font-size:8.5pt}
+.tabs .on{background:var(--mint);border-color:var(--mint);font-weight:600}
+.layers{position:absolute;top:12px;right:12px;background:#fff;border:1px solid var(--line);border-radius:4px;padding:6px 10px;font-size:8pt;line-height:1.7}
+.okv{color:var(--mint-d);font-weight:700} .kov{color:var(--rouge);font-weight:700} .nev{color:var(--ambre);font-weight:700}
+.tbd{display:inline-block;border:1px dashed #9CA3AF;color:var(--mute);font-weight:500;padding:0 5px;border-radius:3px;font-size:8.5pt}
+/* PDF */
+.page{width:210mm;min-height:297mm;margin:16px auto;background:#fff;padding:16mm 15mm 20mm;position:relative;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.foot{position:absolute;left:15mm;right:15mm;bottom:9mm;display:flex;justify-content:space-between;font-size:7.5pt;color:var(--mute);border-top:1px solid var(--line);padding-top:4px}
+h1{font-size:24pt;margin:0;font-weight:700;letter-spacing:-.01em}
+h2.sec{font-size:14pt;margin:0 0 4px}
+.verdict{border-left:4px solid var(--mint);background:var(--mint-l);padding:8px 12px;margin:6px 0 14px;font-weight:500}
+.verdict.gris{border-color:#9CA3AF;background:var(--soft)}
+table{width:100%;border-collapse:collapse;margin:6px 0 12px}
+th{text-align:left;font-size:8pt;font-weight:600;color:var(--mute);border-bottom:1px solid var(--ink);padding:4px 6px}
+td{border-bottom:1px solid var(--line);padding:5px 6px;vertical-align:top}
+td.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:600}
+.cite{display:block;font-size:7.5pt;color:var(--mute);font-weight:400}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0}
+.tile{border:1px solid var(--line);border-radius:4px;padding:8px 10px}
+.tile b{display:block;font-size:14pt} .tile span{font-size:8pt;color:var(--mute)}
+.fig{border:1px solid var(--line);border-radius:4px;background:#FBFCFB;margin:6px 0 10px}
+.leg{display:flex;gap:14px;flex-wrap:wrap;font-size:8pt;color:var(--mute);margin:4px 0 10px}
+.warn{font-size:8.5pt;color:var(--mute);border:1px solid var(--line);padding:6px 10px;border-radius:4px;margin-top:10px}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.status2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0 12px}
+.status2 div{border:1px solid var(--line);border-radius:4px;padding:8px 10px;font-size:9pt}
+.status2 b{display:block;font-size:8pt;color:var(--mute);font-weight:600;margin-bottom:2px}
+@media print{body{background:#fff}.note,.mq,.app,h1.part{display:none}.page{margin:0;box-shadow:none;page-break-after:always}}
+</style>
+</head>
+<body>
+
+<div class="note">
+  <h2>Maquette v3 — LABUSE Faisabilité (corrige la v2)</h2>
+  Témoin : L'Étang-Salé AW 99 + 451 + 624 + 625, zone UA, collectif, stationnement aérien seul. Valeurs réglementaires écrites = celles confirmées par l'audit. <b>Les chiffres de scénarios sont des exemples de rendu, mais cohérents entre eux : chaque place et chaque logement annoncés sont dessinés.</b> Ce que le moteur calculera est en pointillé <span class="tbd">calculé</span>.
+  <ul>
+    <li><b>Règle gravée</b> : tout ce qui est compté est dessiné (places, allées, accès, modules de logement). Un chiffre sans géométrie ne s'affiche pas. Verrou de test : nb annoncé = nb d'objets dans la géométrie.</li>
+    <li><b>Deux niveaux de statut</b> : contrôles automatisés (réussis · échoués · non effectués) et statut de l'étude (exploitable en pré-faisabilité · à compléter · simulation impossible). Le mot « conforme » n'existe pas.</li>
+    <li><b>Répartition T2/T3/T4</b> : proposée par le moteur selon l'objectif et la géométrie, toujours « Estimé », modifiable, aucun défaut universel.</li>
+    <li>Ajouts : objectif d'optimisation, panneau replié (3 chiffres + sections), distribution des logements par niveau, Gabarit 3D qui montre le bâtiment proposé.</li>
+    <li>Aérien seul : la capacité sera sûrement bien sous les 29 logements de l'archi, qui met 30 places en sous-sol. Écart attendu et expliqué ; l'option « en ouvrage » viendra plus tard.</li>
+    <li>Première version du moteur (IMPLANTATION-1) : un seul scénario. Les cartes B et C n'apparaissent que si le moteur trouve des implantations distinctes.</li>
+  </ul>
+</div>
+
+<h1 class="part">Partie 1 — L'outil · état 1 : configuration</h1>
+<div class="app" style="min-height:560px">
+  <div class="panel">
+    <h3>Faisabilité <span class="reset">Réinitialiser</span></h3>
+    <div class="lbl">Terrain</div>
+    <div class="in">AW 99 · 451 · 624 · 625 — L'Étang-Salé <span style="float:right;color:var(--mint-d)">changer</span></div>
+    <div style="font-size:8pt;color:var(--mute);margin-top:3px">1 746 m² · zone UA · PLU 17/09/2025 · règles modélisées <span class="tbd">n / n</span></div>
+    <div class="lbl">Type de projet</div>
+    <div class="seg"><span class="on">Collectif</span><span class="off">Maisons groupées · bientôt</span><span class="off">Lotissement · bientôt</span></div>
+    <div class="lbl">Objectif</div>
+    <div class="seg"><span class="on">Équilibre</span><span>Plus de logements</span><span>Plus de surface habitable</span><span>Projet plus simple</span></div>
+    <div class="lbl">Programme</div>
+    <div class="seg"><span class="on">LABUSE propose</span><span>Je saisis mon programme</span></div>
+    <div class="mq">« LABUSE propose » : le moteur teste plusieurs répartitions et garde celle qui sert l'objectif ; affichée « Estimé », modifiable. « Je saisis » : lignes T2 / T3 / T4 / commerce (nombre, surface), dont aidés ; le moteur cherche une implantation ou dit pourquoi ça ne tient pas.</div>
+    <div class="lbl">Stationnement</div>
+    <div class="seg"><span class="on">Aérien</span><span class="off">En ouvrage · bientôt</span></div>
+    <div class="lbl">Terrain étudié</div>
+    <div class="seg"><span class="on">Terrain libéré</span><span>En gardant le bâti</span></div>
+    <div class="btn">Générer les scénarios</div>
+  </div>
+  <div class="map">
+    <svg viewBox="0 0 760 640">
+      <rect width="760" height="640" fill="#EEF1EE"/>
+      <rect x="0" y="575" width="760" height="50" fill="#DDE1DE"/>
+      <text x="330" y="605" font-size="12" fill="#6B7280">Avenue Raymond Barre</text>
+      <rect x="40" y="160" width="170" height="160" fill="#DDE1DE"/><rect x="560" y="140" width="150" height="190" fill="#DDE1DE"/>
+      <polygon points="240,560 520,560 500,120 290,120" fill="#fff" stroke="#DC2626" stroke-width="2.5" stroke-dasharray="7 4"/>
+      <line x1="290" y1="240" x2="510" y2="240" stroke="#E5E7EB"/><line x1="280" y1="360" x2="510" y2="360" stroke="#E5E7EB"/><line x1="400" y1="360" x2="400" y2="560" stroke="#E5E7EB"/>
+      <text x="370" y="185" font-size="11" fill="#6B7280">AW 625</text><text x="370" y="305" font-size="11" fill="#6B7280">AW 624</text><text x="300" y="470" font-size="11" fill="#6B7280">AW 99</text><text x="430" y="470" font-size="11" fill="#6B7280">AW 451</text>
+    </svg>
+    <div class="maplegend"><span><i style="border:2px dashed #DC2626;background:#fff"></i>Terrain sélectionné (assiette fusionnée)</span></div>
+  </div>
+</div>
+
+<h1 class="part">Partie 1 — L'outil · état 2 : scénarios</h1>
+<div class="app">
+  <div class="panel">
+    <h3>Faisabilité <span class="reset">Réinitialiser</span></h3>
+    <div style="font-size:8pt;color:var(--mute);margin-top:2px">AW 99-451-624-625 · collectif · équilibre · aérien · terrain libéré</div>
+
+    <div class="lbl">Scénarios trouvés</div>
+    <div class="card"><div class="t"><span>A · une barre</span><span class="st ok">Exploitable</span></div><div class="k">12 logements · R+2 · 12 places</div><div class="c">Contrôles : 7 réussis · 0 échoué · 3 non effectués</div></div>
+    <div class="card sel"><div class="t"><span>B · barre + aile commerce</span><span class="st ok">Exploitable</span></div><div class="k">16 logements · R+2 · 16 places</div><div class="c">Contrôles : 7 réussis · 0 échoué · 3 non effectués</div></div>
+    <div class="card"><div class="t"><span>C · barre R+3</span><span class="st cp">À compléter</span></div><div class="k">20 logements · R+3 · 20 places</div><div class="c">Contrôles : 6 réussis · 0 échoué · 4 non effectués (barème stationnement non calibré pour T4)</div></div>
+    <div class="mq">Exemples cohérents avec le dessin : 16 places annoncées = 16 places dessinées. IMPLANTATION-1 ne sort qu'un scénario ; B et C n'existent que s'ils sont géométriquement distincts.</div>
+
+    <div class="key"><div><b>16</b><span>logements</span></div><div><b>16</b><span>places dessinées</span></div><div><b><span class="tbd">ƒ</span></b><span>m² SDP</span></div></div>
+
+    <details open><summary>Programme</summary>
+      <div class="row"><div class="l">Répartition proposée</div><div class="v">T2 ×12 · T3 ×4</div><div class="s"><span class="chip e">Estimé</span> choisie par le moteur pour l'objectif « équilibre », modifiable</div></div>
+      <div class="row"><div class="l">Dont logements aidés imposés</div><div class="v"><span class="tbd">calculé</span></div><div class="s"><span class="chip s">Sourcé</span> PLU mixité</div></div>
+      <div class="row"><div class="l">Commerce RDC</div><div class="v"><span class="tbd">ƒ m²</span></div><div class="s"><span class="chip d">Dérivé ƒ</span> géométrie de l'aile</div></div>
+    </details>
+    <details><summary>Distribution par niveau</summary><div class="row"><div class="v">RDC 4 + commerce · R+1 6 · R+2 6</div><div class="s">plan de principe sur la carte (couche « Modules »)</div></div></details>
+    <details><summary>Stationnement et accès</summary>
+      <div class="row"><div class="l">Places dessinées · imposées</div><div class="v">16 · <span class="tbd">calculé</span></div><div class="s"><span class="chip e">Estimé · convention</span> place 2,5 × 5 m, allée 5 m</div></div>
+      <div class="row"><div class="l">Accès véhicule</div><div class="v">sud, depuis l'avenue</div><div class="s"><span class="chip d">Dérivé ƒ</span> limite classée voie — faisabilité réelle à confirmer</div></div>
+    </details>
+    <details><summary>Contrôles (7 réussis · 3 non effectués)</summary>
+      <div class="row"><div class="v"><span class="okv">Réussi</span> emprise · hauteur · reculs · perméabilité · espaces verts · places ≥ imposées · destination</div></div>
+      <div class="row"><div class="v"><span class="nev">Non effectué</span> distance entre constructions · locaux vélos/déchets · prescriptions PPR bleue</div></div>
+    </details>
+    <details><summary>Hypothèses modifiables</summary>
+      <div class="row"><div class="l">Profondeur de bâtiment</div><div class="v">13 m</div><div class="s"><span class="chip e">Estimé · convention</span></div></div>
+      <div class="row"><div class="l">Surface moyenne T2 / T3 / T4</div><div class="v">50 / 65 / 80 m²</div><div class="s"><span class="chip e">Estimé</span></div></div>
+      <div class="row"><div class="l">Plancher → habitable</div><div class="v">0,80</div><div class="s"><span class="chip e">Estimé</span></div></div>
+      <div class="btn sec">Recalculer</div><div class="btn sec">Revenir aux valeurs LABUSE</div>
+    </details>
+    <div class="tiles"><span>Étude de faisabilité (PDF)</span><span>Voir en 3D dans le gabarit</span><span>Bilan</span><span>Comparer les scénarios</span></div>
+  </div>
+  <div class="map">
+    <div class="tabs"><span>A</span><span class="on">B</span><span>C</span></div>
+    <div class="layers">☑ Bâtiments<br>☑ Places<br>☑ Accès<br>☑ Reculs<br>☐ Modules logements<br>☐ PPR<br>☑ Espaces libres</div>
+    <svg viewBox="0 0 760 640">
+      <rect width="760" height="640" fill="#EEF1EE"/>
+      <rect x="0" y="575" width="760" height="50" fill="#DDE1DE"/>
+      <text x="80" y="605" font-size="12" fill="#6B7280">Avenue Raymond Barre</text>
+      <rect x="40" y="160" width="170" height="160" fill="#DDE1DE"/><rect x="560" y="140" width="150" height="190" fill="#DDE1DE"/>
+      <polygon points="240,560 520,560 500,120 290,120" fill="#fff" stroke="#DC2626" stroke-width="2.5" stroke-dasharray="7 4"/>
+      <polygon points="262,540 498,540 482,135 305,135" fill="#4ADE80" fill-opacity=".15" stroke="#15803D" stroke-dasharray="4 3"/>
+      <!-- espaces libres -->
+      <rect x="380" y="362" width="36" height="100" fill="#BBF7D0"/><rect x="446" y="362" width="40" height="100" fill="#BBF7D0"/>
+      <!-- barre -->
+      <rect x="305" y="150" width="60" height="370" fill="#1F2A24" fill-opacity=".88"/>
+      <text x="340" y="380" font-size="11" fill="#fff" transform="rotate(-90 340 380)">R+2 · 16 logements</text>
+      <!-- aile commerce -->
+      <rect x="365" y="470" width="45" height="50" fill="#1F2A24" fill-opacity=".7"/>
+      <text x="369" y="499" font-size="9" fill="#fff">comm.</text>
+      <!-- allée -->
+      <rect x="416" y="160" width="30" height="415" fill="#D1D5DB"/>
+      <!-- places : 2 colonnes x 8 = 16 -->
+      <g fill="#fff" stroke="#6B7280" stroke-width="1">
+        <rect x="380" y="170" width="36" height="20"/><rect x="380" y="192" width="36" height="20"/><rect x="380" y="214" width="36" height="20"/><rect x="380" y="236" width="36" height="20"/>
+        <rect x="380" y="258" width="36" height="20"/><rect x="380" y="280" width="36" height="20"/><rect x="380" y="302" width="36" height="20"/><rect x="380" y="324" width="36" height="20"/>
+        <rect x="446" y="170" width="36" height="20"/><rect x="446" y="192" width="36" height="20"/><rect x="446" y="214" width="36" height="20"/><rect x="446" y="236" width="36" height="20"/>
+        <rect x="446" y="258" width="36" height="20"/><rect x="446" y="280" width="36" height="20"/><rect x="446" y="302" width="36" height="20"/><rect x="446" y="324" width="36" height="20"/>
+      </g>
+      <g font-size="8" fill="#6B7280"><text x="392" y="184">1</text><text x="458" y="184">9</text><text x="390" y="338">8</text><text x="454" y="338">16</text></g>
+      <text x="520" y="260" font-size="10" fill="#6B7280">16 places · allée 5 m</text>
+      <!-- accès -->
+      <path d="M 431 600 L 431 548" stroke="#B45309" stroke-width="4" marker-end="url(#ar)"/>
+      <defs><marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#B45309"/></marker></defs>
+      <text x="440" y="566" font-size="10" fill="#B45309">accès</text>
+      <text x="262" y="556" font-size="10">recul 4 m</text>
+    </svg>
+    <div class="maplegend"><span><i style="background:rgba(74,222,128,.15);border-color:#15803D"></i>Zone d'implantation</span><span><i style="background:#1F2A24"></i>Bâtiment proposé</span><span><i style="background:#fff"></i>Place (comptée)</span><span><i style="background:#D1D5DB"></i>Allée</span><span><i style="background:#BBF7D0"></i>Espaces libres</span><span><i style="background:#B45309"></i>Accès</span></div>
+  </div>
+</div>
+<div class="mq" style="max-width:1100px;margin:0 auto 24px">Le plan masse sort de la géométrie du moteur, géoréférencé sur le vrai cadastre (pas un SVG dessiné). Ce croquis est schématique. Même panneau dans l'onglet Faisabilité de la fiche : un moteur, deux portes.</div>
+
+<h1 class="part">Partie 2 — Le document « Étude de faisabilité » (8 pages)</h1>
+
+<!-- P1 -->
+<section class="page">
+  <div style="font-size:9pt;color:var(--mute)">LABUSE · Document n° EF-20261015-0099</div>
+  <h1 style="margin-top:16mm">Étude de faisabilité</h1>
+  <div style="font-size:13pt;margin-top:4px">156-158 avenue Raymond Barre, L'Étang-Salé</div>
+  <div style="color:var(--mute)">Parcelles AW 99 · 451 · 624 · 625 — 1 746 m² — zone UA — collectif, stationnement aérien</div>
+  <div class="verdict" style="margin-top:10mm">Selon nos hypothèses d'implantation, ce terrain peut recevoir entre 12 et 16 logements en collectif avec stationnement aérien. Un scénario à 20 logements reste à compléter.</div>
+  <div class="status2">
+    <div><b>Contrôles automatisés (scénario B)</b>7 réussis · 0 échoué · 3 non effectués</div>
+    <div><b>Statut de l'étude</b>Exploitable en pré-faisabilité — à faire confirmer par un architecte</div>
+  </div>
+  <table>
+    <tr><th>Scénario</th><th>Forme</th><th>Logements</th><th>Niveaux</th><th>SDP</th><th>Places</th><th>Étude</th></tr>
+    <tr><td>A</td><td>une barre</td><td class="num">12</td><td class="num">R+2</td><td class="num"><span class="tbd">ƒ</span></td><td class="num">12</td><td><span class="st ok">Exploitable</span></td></tr>
+    <tr style="background:var(--mint-l)"><td><b>B (retenu)</b></td><td>barre + aile commerce</td><td class="num">16</td><td class="num">R+2</td><td class="num"><span class="tbd">ƒ</span></td><td class="num">16</td><td><span class="st ok">Exploitable</span></td></tr>
+    <tr><td>C</td><td>barre R+3</td><td class="num">20</td><td class="num">R+3</td><td class="num"><span class="tbd">ƒ</span></td><td class="num">20</td><td><span class="st cp">À compléter</span></td></tr>
+  </table>
+  <div class="mq">Fourchette = scénarios « Exploitable » seulement. Jamais « ce terrain permet N logements », jamais « conforme ».</div>
+  <div class="grid3">
+    <div class="tile"><b>1 746 m²</b><span>Contenance cadastrale</span></div>
+    <div class="tile"><b>1 222 m²</b><span>Emprise au sol max (70 %)</span></div>
+    <div class="tile"><b>12 m</b><span>Hauteur à l'égout · faîtage 15 m</span></div>
+    <div class="tile"><b><span class="tbd">calculé</span></b><span>Logements aidés imposés</span></div>
+    <div class="tile"><b><span class="tbd">calculé</span></b><span>Places imposées (scénario B)</span></div>
+    <div class="tile"><b>3</b><span>Contrôles non effectués</span></div>
+  </div>
+  <div class="warn">Pré-faisabilité automatisée : scénarios indicatifs d'implantation établis à partir des règles publiées du PLU et des données publiques. Ce document n'est ni une étude d'architecte, ni une preuve de conformité, ni un dossier de permis.</div>
+  <div class="foot"><span>Étude de faisabilité · AW 99-451-624-625 · scénario B</span><span>Généré via LABUSE le 15/10/2026</span><span>1 / 8</span></div>
+</section>
+
+<!-- P2 -->
+<section class="page">
+  <h2 class="sec">1. Le terrain</h2>
+  <div class="verdict">Quatre parcelles contiguës, 1 746 m² au cadastre ; limite sud sur l'avenue Raymond Barre.</div>
+  <div class="cols">
+    <div class="fig" style="height:64mm;display:flex;align-items:center;justify-content:center;color:var(--mute)">Plan de situation (bloc Apporteur / Dossier)</div>
+    <div class="fig" style="height:64mm;display:flex;align-items:center;justify-content:center;color:var(--mute)">Extrait cadastral, parcelles surlignées</div>
+  </div>
+  <table>
+    <tr><th>Parcelle</th><th>Contenance</th><th>Bâti existant</th><th>Propriétaire (personne morale)</th></tr>
+    <tr><td>AW 99</td><td class="num">501 m²</td><td><span class="tbd">calculé</span></td><td><span class="tbd">si PM, sinon ligne absente</span></td></tr>
+    <tr><td>AW 451</td><td class="num">586 m²</td><td><span class="tbd">calculé</span></td><td></td></tr>
+    <tr><td>AW 624</td><td class="num">274 m²</td><td><span class="tbd">calculé</span></td><td></td></tr>
+    <tr><td>AW 625</td><td class="num">385 m²</td><td><span class="tbd">calculé</span></td><td></td></tr>
+    <tr><td><b>Assiette fusionnée</b></td><td class="num">1 746 m²</td><td></td><td></td></tr>
+  </table>
+  <table>
+    <tr><th>Terrain</th><th>Valeur</th><th>Nature</th></tr>
+    <tr><td>Pente moyenne · dénivelé</td><td class="num"><span class="tbd">calculé</span></td><td><span class="chip s">Sourcé · LiDAR HD</span></td></tr>
+    <tr><td>Limites classées voie / séparative</td><td><span class="tbd">calculé</span></td><td><span class="chip s">Sourcé · BD TOPO + cadastre</span></td></tr>
+    <tr><td>Accès véhicule</td><td>possible côté sud (limite classée voie) — à confirmer</td><td><span class="chip d">Dérivé ƒ</span></td></tr>
+  </table>
+  <div class="foot"><span>Étude de faisabilité · AW 99-451-624-625 · scénario B</span><span>Généré via LABUSE le 15/10/2026</span><span>2 / 8</span></div>
+</section>
+
+<!-- P3 -->
+<section class="page">
+  <h2 class="sec">2. Règles et contraintes</h2>
+  <div class="verdict">Zone UA du PLU de L'Étang-Salé, millésime 17/09/2025. Chaque valeur est citée.</div>
+  <table>
+    <tr><th style="width:34%">Règle</th><th>Valeur</th><th>Sur ce terrain</th><th>Nature</th></tr>
+    <tr><td>Recul sur voie<span class="cite">PLU art. — · p. —</span></td><td>4 m</td><td>dessiné p. 4</td><td><span class="chip s">Sourcé</span></td></tr>
+    <tr><td>Limites séparatives<span class="cite">PLU art. — · p. —</span></td><td><span class="tbd">calculé</span></td><td>dessiné p. 4</td><td><span class="chip s">Sourcé</span></td></tr>
+    <tr><td>Emprise au sol<span class="cite">PLU art. — · p. —</span></td><td>70 %</td><td class="num">1 222 m²</td><td><span class="chip s">Sourcé</span></td></tr>
+    <tr><td>Hauteur<span class="cite">PLU art. — · p. —</span></td><td>12 m égout · 15 m faîtage · 13 m acrotère</td><td>coupe p. 6</td><td><span class="chip s">Sourcé</span></td></tr>
+    <tr><td>Perméabilité<span class="cite">PLU art. — · p. —</span></td><td>30 %</td><td class="num">524 m²</td><td><span class="chip s">Sourcé</span></td></tr>
+    <tr><td>Espaces verts<span class="cite">PLU art. — · p. —</span></td><td>20 %</td><td class="num">349 m²</td><td><span class="chip s">Sourcé</span></td></tr>
+    <tr><td>Stationnement<span class="cite">PLU art. — · p. —</span></td><td><span class="tbd">barème par typologie</span></td><td>p. 7</td><td><span class="chip s">Sourcé</span></td></tr>
+    <tr><td>Mixité sociale<span class="cite">PLU art. — · p. —</span></td><td><span class="tbd">seuil · quota</span></td><td>p. 7</td><td><span class="chip s">Sourcé</span></td></tr>
+    <tr><td>Destinations autorisées</td><td><span class="tbd">calculé</span></td><td>logement, commerce</td><td><span class="chip s">Sourcé</span></td></tr>
+    <tr><td>Distance entre constructions</td><td colspan="2">non modélisée — contrôle non effectué</td><td><span class="chip nm">Non modélisée</span></td></tr>
+    <tr><td>Local vélos · déchets</td><td colspan="2">non modélisés — contrôle non effectué</td><td><span class="chip nm">Non modélisée</span></td></tr>
+  </table>
+  <h2 class="sec" style="font-size:11pt;margin-top:6px">Contraintes cartographiées</h2>
+  <table>
+    <tr><th>Contrainte</th><th>Sur le terrain</th><th>Traitement</th><th>Nature</th></tr>
+    <tr><td>PPR zone rouge</td><td><span class="tbd">% · m²</span></td><td>retirée de l'implantation (hypothèse prudente ; prescriptions à lire)</td><td><span class="chip s">Sourcé</span></td></tr>
+    <tr><td>PPR zone bleue</td><td><span class="tbd">% · m²</span></td><td>signalée, non interprétée ; si elle touche l'implantation, l'étude passe « à compléter »</td><td><span class="chip s">Sourcé</span></td></tr>
+    <tr><td>Emplacement réservé · EBC</td><td><span class="tbd">calculé</span></td><td>retirés de l'implantation</td><td><span class="chip s">Sourcé</span></td></tr>
+    <tr><td>Servitudes d'utilité publique</td><td><span class="tbd">calculé</span></td><td>retirée seulement si elle interdit de construire ; sinon signalée</td><td><span class="chip s">Sourcé</span></td></tr>
+  </table>
+  <div class="mq">Ligne absente quand la contrainte ne touche pas le terrain.</div>
+  <div class="foot"><span>Étude de faisabilité · AW 99-451-624-625 · scénario B</span><span>Généré via LABUSE le 15/10/2026</span><span>3 / 8</span></div>
+</section>
+
+<!-- P4 -->
+<section class="page">
+  <h2 class="sec">3. Enveloppe constructible</h2>
+  <div class="verdict">Zone d'implantation de <span class="tbd">calculé</span> m² après reculs et contraintes ; emprise plafonnée à 1 222 m². Ce plafond n'est pas ce qu'on peut construire : c'est le scénario (p. 5) qui le dit.</div>
+  <svg class="fig" viewBox="0 0 600 420" width="100%">
+    <rect width="600" height="420" fill="#FBFCFB"/>
+    <rect x="0" y="380" width="600" height="40" fill="#E5E7EB"/>
+    <polygon points="160,370 420,370 400,30 200,30" fill="#fff" stroke="#DC2626" stroke-width="2" stroke-dasharray="6 3"/>
+    <polygon points="178,352 402,352 388,46 214,46" fill="#4ADE80" fill-opacity=".35" stroke="#15803D" stroke-width="1.5"/>
+    <rect x="270" y="190" width="50" height="35" fill="#9CA3AF"/>
+    <text x="180" y="366" font-size="10">4 m</text>
+    <g transform="translate(560,40)"><polygon points="0,-16 6,6 0,2 -6,6" fill="#1F2A24"/><text x="-4" y="20" font-size="10">N</text></g>
+  </svg>
+  <div class="leg"><span><i style="border:2px dashed #DC2626;background:#fff"></i>Parcelles</span><span><i style="background:rgba(74,222,128,.35);border-color:#15803D"></i>Zone d'implantation réglementaire</span><span><i style="background:#9CA3AF"></i>Bâti existant (démoli dans le scénario)</span></div>
+  <table>
+    <tr><th>Surface</th><th>m²</th><th>Nature</th></tr>
+    <tr><td>Terrain (contenance)</td><td class="num">1 746</td><td><span class="chip s">Sourcé</span></td></tr>
+    <tr><td>Retiré par les reculs</td><td class="num"><span class="tbd">calculé</span></td><td><span class="chip d">Dérivé ƒ</span></td></tr>
+    <tr><td>Retiré par PPR rouge · ER · EBC · SUP inconstructibles</td><td class="num"><span class="tbd">calculé</span></td><td><span class="chip d">Dérivé ƒ</span></td></tr>
+    <tr><td>Zone d'implantation réglementaire</td><td class="num"><span class="tbd">calculé</span></td><td><span class="chip d">Dérivé ƒ</span></td></tr>
+    <tr><td>Plafond d'emprise (70 %)</td><td class="num">1 222</td><td><span class="chip d">Dérivé ƒ</span></td></tr>
+  </table>
+  <div class="foot"><span>Étude de faisabilité · AW 99-451-624-625 · scénario B</span><span>Généré via LABUSE le 15/10/2026</span><span>4 / 8</span></div>
+</section>
+
+<!-- P5 -->
+<section class="page">
+  <h2 class="sec">4. Plan masse du scénario B</h2>
+  <div class="verdict">Une barre de 13 m d'épaisseur en R+2 le long de la limite ouest, une aile commerce sur l'avenue, 16 places aériennes desservies par une allée de 5 m, accès au sud.</div>
+  <svg class="fig" viewBox="0 0 600 440" width="100%">
+    <rect width="600" height="440" fill="#FBFCFB"/>
+    <rect x="0" y="400" width="600" height="40" fill="#E5E7EB"/>
+    <text x="30" y="424" font-size="10" fill="#6B7280">Avenue Raymond Barre</text>
+    <polygon points="160,390 420,390 400,40 200,40" fill="#fff" stroke="#DC2626" stroke-width="2" stroke-dasharray="6 3"/>
+    <polygon points="178,372 402,372 388,56 214,56" fill="#4ADE80" fill-opacity=".15" stroke="#15803D" stroke-dasharray="4 3"/>
+    <rect x="275" y="240" width="30" height="85" fill="#BBF7D0"/><rect x="330" y="240" width="45" height="85" fill="#BBF7D0"/>
+    <rect x="214" y="70" width="48" height="285" fill="#1F2A24" fill-opacity=".88"/>
+    <text x="243" y="250" font-size="10" fill="#fff" transform="rotate(-90 243 250)">R+2 · 16 logts</text>
+    <rect x="262" y="330" width="38" height="40" fill="#1F2A24" fill-opacity=".7"/><text x="265" y="354" font-size="8" fill="#fff">comm.</text>
+    <rect x="305" y="70" width="25" height="330" fill="#D1D5DB"/>
+    <g fill="#fff" stroke="#6B7280" stroke-width=".8">
+      <rect x="275" y="78" width="30" height="17"/><rect x="275" y="97" width="30" height="17"/><rect x="275" y="116" width="30" height="17"/><rect x="275" y="135" width="30" height="17"/>
+      <rect x="275" y="154" width="30" height="17"/><rect x="275" y="173" width="30" height="17"/><rect x="275" y="192" width="30" height="17"/><rect x="275" y="211" width="30" height="17"/>
+      <rect x="330" y="78" width="30" height="17"/><rect x="330" y="97" width="30" height="17"/><rect x="330" y="116" width="30" height="17"/><rect x="330" y="135" width="30" height="17"/>
+      <rect x="330" y="154" width="30" height="17"/><rect x="330" y="173" width="30" height="17"/><rect x="330" y="192" width="30" height="17"/><rect x="330" y="211" width="30" height="17"/>
+    </g>
+    <path d="M 317 432 L 317 380" stroke="#B45309" stroke-width="3"/><text x="324" y="396" font-size="9" fill="#B45309">accès</text>
+    <text x="180" y="386" font-size="9">4 m</text>
+    <text x="370" y="150" font-size="9" fill="#6B7280">16 places</text>
+    <g transform="translate(560,40)"><polygon points="0,-16 6,6 0,2 -6,6" fill="#1F2A24"/><text x="-4" y="20" font-size="10">N</text></g>
+  </svg>
+  <div class="leg"><span><i style="background:#1F2A24"></i>Bâtiment proposé</span><span><i style="background:#fff"></i>Place 2,5 × 5 m (16)</span><span><i style="background:#D1D5DB"></i>Allée 5 m</span><span><i style="background:#BBF7D0"></i>Espaces libres</span><span><i style="background:#B45309"></i>Accès</span></div>
+  <table>
+    <tr><th>Élément</th><th>Valeur</th><th>Hypothèse</th><th>Nature</th></tr>
+    <tr><td>Emprise des bâtiments</td><td class="num"><span class="tbd">ƒ</span></td><td>profondeur 13 m</td><td><span class="chip e">Estimé · convention</span></td></tr>
+    <tr><td>Places dessinées</td><td class="num">16</td><td>2,5 × 5 m, allée 5 m</td><td><span class="chip e">Estimé · convention</span></td></tr>
+    <tr><td>Espaces libres · dont pleine terre</td><td class="num"><span class="tbd">ƒ</span></td><td>surface restante mesurée</td><td><span class="chip d">Dérivé ƒ</span></td></tr>
+    <tr><td>Accès</td><td>sud, sur l'avenue</td><td>limite classée voie</td><td><span class="chip d">Dérivé ƒ</span></td></tr>
+  </table>
+  <div class="mq">Chaque nombre de ce tableau = nombre d'objets dans la géométrie (verrou de test). Scénarios A et C : même page en annexe.</div>
+  <div class="foot"><span>Étude de faisabilité · AW 99-451-624-625 · scénario B</span><span>Généré via LABUSE le 15/10/2026</span><span>5 / 8</span></div>
+</section>
+
+<!-- P6 -->
+<section class="page">
+  <h2 class="sec">5. Distribution et coupe</h2>
+  <div class="verdict">R+2 sous 12 m à l'égout : 4 logements et le commerce au rez-de-chaussée, 6 par étage.</div>
+  <table>
+    <tr><th>Niveau</th><th>Usage</th><th>T2</th><th>T3</th><th>SDP</th></tr>
+    <tr><td>R+2</td><td>logements</td><td class="num">4</td><td class="num">2</td><td class="num"><span class="tbd">ƒ</span></td></tr>
+    <tr><td>R+1</td><td>logements</td><td class="num">4</td><td class="num">2</td><td class="num"><span class="tbd">ƒ</span></td></tr>
+    <tr><td>RDC</td><td>logements + commerce + hall + locaux</td><td class="num">4</td><td class="num">0</td><td class="num"><span class="tbd">ƒ</span></td></tr>
+    <tr><td><b>Total</b></td><td></td><td class="num">12</td><td class="num">4</td><td class="num"><span class="tbd">ƒ</span></td></tr>
+  </table>
+  <h3 style="font-size:10pt;margin:6px 0 2px">Plan de principe — étage courant</h3>
+  <svg class="fig" viewBox="0 0 600 120" width="100%">
+    <rect width="600" height="120" fill="#FBFCFB"/>
+    <rect x="20" y="20" width="560" height="14" fill="#E5E7EB"/><text x="26" y="31" font-size="8" fill="#6B7280">coursive</text>
+    <g stroke="#1F2A24" fill="#ECFDF3">
+      <rect x="20" y="34" width="80" height="66"/><rect x="100" y="34" width="80" height="66"/><rect x="180" y="34" width="104" height="66"/>
+      <rect x="284" y="34" width="40" height="66" fill="#D1D5DB"/>
+      <rect x="324" y="34" width="104" height="66"/><rect x="428" y="34" width="76" height="66"/><rect x="504" y="34" width="76" height="66"/>
+    </g>
+    <g font-size="9" fill="#1F2A24"><text x="45" y="70">T2</text><text x="125" y="70">T2</text><text x="220" y="70">T3</text><text x="288" y="70">noyau</text><text x="364" y="70">T3</text><text x="452" y="70">T2</text><text x="528" y="70">T2</text></g>
+  </svg>
+  <div class="mq">Modules et noyau placés par le moteur : 6 modules dessinés = 6 logements comptés. Pas de plan par pièce.</div>
+  <svg class="fig" viewBox="0 0 600 240" width="100%">
+    <rect width="600" height="240" fill="#FBFCFB"/>
+    <polygon points="30,205 570,180 570,235 30,235" fill="#E5E7EB"/>
+    <line x1="30" y1="205" x2="570" y2="180" stroke="#DC2626" stroke-width="1.5"/>
+    <text x="40" y="199" font-size="9" fill="#DC2626">Terrain naturel (LiDAR)</text>
+    <line x1="90" y1="30" x2="90" y2="235" stroke="#DC2626" stroke-dasharray="6 3"/><line x1="520" y1="30" x2="520" y2="235" stroke="#DC2626" stroke-dasharray="6 3"/>
+    <polygon points="130,202 130,92 495,75 495,185" fill="#4ADE80" fill-opacity=".2" stroke="#15803D" stroke-dasharray="4 3"/>
+    <text x="300" y="88" font-size="9" fill="#15803D">égout 12 m · faîtage 15 m</text>
+    <polygon points="150,201 150,127 300,120 300,194" fill="#1F2A24" fill-opacity=".85"/>
+    <g stroke="#fff"><line x1="150" y1="176" x2="300" y2="169"/><line x1="150" y1="151" x2="300" y2="144"/></g>
+    <g font-size="8" fill="#fff"><text x="155" y="192">RDC</text><text x="155" y="167">R+1</text><text x="155" y="142">R+2</text></g>
+    <rect x="330" y="186" width="140" height="6" fill="#fff" stroke="#6B7280"/><text x="335" y="182" font-size="8" fill="#6B7280">stationnement aérien</text>
+    <text x="96" y="230" font-size="9">4 m</text>
+    <text x="40" y="20" font-size="9" fill="#6B7280">Coupe A-A perpendiculaire à l'avenue</text>
+  </svg>
+  <div class="mq">La vue 3D de l'outil montre ce bâtiment dans l'enveloppe du Gabarit, pas seulement le maximum théorique.</div>
+  <div class="foot"><span>Étude de faisabilité · AW 99-451-624-625 · scénario B</span><span>Généré via LABUSE le 15/10/2026</span><span>6 / 8</span></div>
+</section>
+
+<!-- P7 -->
+<section class="page">
+  <h2 class="sec">6. Capacité et contrôles</h2>
+  <div class="verdict">Scénario B : 7 contrôles réussis, aucun échec, 3 non effectués. Ce n'est pas une validation réglementaire.</div>
+  <table>
+    <tr><th>Programme</th><th>Nombre</th><th>Surface moyenne</th><th>SHAB estimée</th><th>Nature</th></tr>
+    <tr><td>T2</td><td class="num">12</td><td class="num">50 m²</td><td class="num"><span class="tbd">ƒ</span></td><td><span class="chip e">Estimé · modifiable</span></td></tr>
+    <tr><td>T3</td><td class="num">4</td><td class="num">65 m²</td><td class="num"><span class="tbd">ƒ</span></td><td><span class="chip e">Estimé · modifiable</span></td></tr>
+    <tr><td>Commerce</td><td class="num">1</td><td class="num"><span class="tbd">ƒ</span></td><td></td><td><span class="chip d">Dérivé ƒ</span></td></tr>
+    <tr><td>Dont logements aidés</td><td class="num"><span class="tbd">calculé</span></td><td colspan="2">quota PLU appliqué au programme</td><td><span class="chip s">Sourcé</span></td></tr>
+  </table>
+  <div class="mq">Répartition proposée par le moteur pour l'objectif choisi. Programme saisi par le client : mêmes lignes en chip Projet (ambre).</div>
+  <table>
+    <tr><th>Contrôle</th><th>Règle</th><th>Scénario B</th><th>Écart</th><th>Résultat</th></tr>
+    <tr><td>Emprise au sol</td><td class="num">≤ 1 222 m²</td><td class="num"><span class="tbd">ƒ</span></td><td class="num"><span class="tbd">ƒ</span></td><td><span class="okv">Réussi</span></td></tr>
+    <tr><td>Hauteur</td><td class="num">≤ 12 m égout</td><td class="num">R+2</td><td class="num"><span class="tbd">ƒ</span></td><td><span class="okv">Réussi</span></td></tr>
+    <tr><td>Reculs</td><td>voie 4 m · séparatives</td><td>dans la zone</td><td></td><td><span class="okv">Réussi</span></td></tr>
+    <tr><td>Perméabilité</td><td class="num">≥ 524 m²</td><td class="num"><span class="tbd">ƒ</span></td><td class="num"><span class="tbd">ƒ</span></td><td><span class="okv">Réussi</span></td></tr>
+    <tr><td>Espaces verts</td><td class="num">≥ 349 m²</td><td class="num"><span class="tbd">ƒ</span></td><td class="num"><span class="tbd">ƒ</span></td><td><span class="okv">Réussi</span></td></tr>
+    <tr><td>Stationnement</td><td class="num">≥ <span class="tbd">ƒ barème</span></td><td class="num">16 dessinées</td><td class="num"><span class="tbd">ƒ</span></td><td><span class="okv">Réussi</span></td></tr>
+    <tr><td>Destination</td><td>logement, commerce</td><td>logement + commerce</td><td></td><td><span class="okv">Réussi</span></td></tr>
+    <tr><td>Distance entre constructions</td><td>non modélisée</td><td>—</td><td></td><td><span class="nev">Non effectué</span></td></tr>
+    <tr><td>Locaux vélos · déchets</td><td>non modélisés</td><td>—</td><td></td><td><span class="nev">Non effectué</span></td></tr>
+    <tr><td>Prescriptions PPR bleue</td><td>non interprétées</td><td>—</td><td></td><td><span class="nev">Non effectué</span></td></tr>
+  </table>
+  <div class="mq">Résultats d'exemple. Un contrôle « Échoué » retire le scénario des « Exploitable ». « Non effectué » ne vaut jamais « Réussi ».</div>
+  <div class="foot"><span>Étude de faisabilité · AW 99-451-624-625 · scénario B</span><span>Généré via LABUSE le 15/10/2026</span><span>7 / 8</span></div>
+</section>
+
+<!-- P8 -->
+<section class="page">
+  <h2 class="sec">7. Hypothèses, limites, sources</h2>
+  <div class="verdict gris">Ce que l'étude suppose, ce qu'elle ne sait pas, d'où viennent les chiffres.</div>
+  <table>
+    <tr><th>Hypothèse</th><th>Valeur</th><th>Convention</th></tr>
+    <tr><td>Profondeur de bâtiment</td><td class="num">13 m</td><td>logements traversants, coursive extérieure</td></tr>
+    <tr><td>Surface moyenne T2 / T3 / T4</td><td class="num">50 / 65 / 80 m²</td><td>modifiable</td></tr>
+    <tr><td>Plancher → habitable</td><td class="num">0,80</td><td>circulations et noyaux</td></tr>
+    <tr><td>Place · allée</td><td class="num">2,5 × 5 m · 5 m</td><td>dimensions usuelles</td></tr>
+    <tr><td>Hauteur de niveau</td><td class="num">3 m</td><td>RDC commerce 3,5 m</td></tr>
+    <tr><td>Stationnement</td><td>aérien seul</td><td>pas de sous-sol dans cette version</td></tr>
+  </table>
+  <table>
+    <tr><th>À faire confirmer par l'architecte</th><th>Pourquoi</th></tr>
+    <tr><td>Distance entre constructions · locaux vélos et déchets</td><td>règles non modélisées</td></tr>
+    <tr><td>Prescriptions PPR bleue · servitudes signalées</td><td>signalées, non interprétées</td></tr>
+    <tr><td>Accès véhicule</td><td>limite classée voie ; visibilité et autorisation non vérifiées</td></tr>
+    <tr><td>Sous-sol ou stationnement en ouvrage</td><td>non simulé : la capacité peut être plus haute avec un parking enterré</td></tr>
+    <tr><td>Sol, réseaux, arbres, vues, voisinage</td><td>aucune donnée publique fiable à la parcelle</td></tr>
+    <tr><td>Conception</td><td>plans de logements, façades : métier de l'architecte</td></tr>
+  </table>
+  <table>
+    <tr><th>Source</th><th>Date</th></tr>
+    <tr><td>PLU de L'Étang-Salé (règlement, zonage, prescriptions)</td><td>millésime 17/09/2025</td></tr>
+    <tr><td>Cadastre DGFiP · propriétaires personnes morales</td><td><span class="tbd">calculé</span></td></tr>
+    <tr><td>PPR, servitudes (GPU, Géorisques)</td><td><span class="tbd">calculé</span></td></tr>
+    <tr><td>LiDAR HD IGN · BD TOPO</td><td><span class="tbd">calculé</span></td></tr>
+    <tr><td>Version du moteur d'implantation · jeu d'hypothèses</td><td><span class="tbd">calculé</span></td></tr>
+  </table>
+  <div class="mq">Entrées, version des règles, hypothèses et contrôles archivés avec le document : le scénario se rejoue à l'identique.</div>
+  <div class="foot"><span>Étude de faisabilité · AW 99-451-624-625 · scénario B</span><span>Généré via LABUSE le 15/10/2026</span><span>8 / 8</span></div>
+</section>
+
+</body>
+</html>
