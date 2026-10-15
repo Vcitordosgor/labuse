@@ -37,6 +37,16 @@ def get_db():  # branché sur la session app au moment de l'inclusion (cf. app.p
     yield from _g()
 
 
+def tuile_hors_grille(z: int, x: int, y: int) -> bool:
+    """CHASSE-INVARIANTS-FIX-1 Lot 8 (E-14) — x ou y hors de la grille du zoom [0, 2^z) (ou négatif).
+    `ST_TileEnvelope` lève « Invalid tile x value » sur ces coordonnées → HTTP 500 nu. On les détecte
+    AVANT (un seul correctif, lu par les DEUX routes de tuiles) pour renvoyer une tuile vide (204)."""
+    if z < 0:
+        return True
+    n = 1 << z
+    return not (0 <= x < n and 0 <= y < n)
+
+
 def _parcel_zone_plu_signature(db: Session) -> str:
     """CHASSE-INVARIANTS-FIX-1 Lot 4 (E-02) — signature des ENTRÉES de `parcel_zone_plu` (parcelles +
     zones PLU GPU). Quand elle change (ré-ingestion cadastre OU zonage), la dérivée est PÉRIMÉE et
@@ -876,6 +886,8 @@ def mvt_tile(z: int, x: int, y: int, request: Request) -> Response:
     # retiré (lot 2). z8 n'est PAS pré-chauffée (hors _WARM_ZOOMS) : 1 tuile île, générée à la volée.
     if z < 8 or z > 15:
         return Response(status_code=204)  # hors plage : aucune connexion ouverte
+    if tuile_hors_grille(z, x, y):
+        return Response(status_code=204)  # E-14 — x/y hors grille [0,2^z) → tuile vide, jamais 500
     from .app import api_session
     with api_session() as db:            # transaction bornée au handler → fermée dans tous les cas
         version = _mvt_version(db)       # FIX-CARTE T3 : clé versionnée → invalidation au rebuild

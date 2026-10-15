@@ -2169,8 +2169,13 @@ def _foncier_commune(db: Session, commune: str) -> dict:
     # (id registre n_parcelles_commune) : ce robinet ne calcule plus, il appelle.
     from ..registre.moteurs.commune import compte_parcelles_commune
     n_parcelles = compte_parcelles_commune(db, commune)
+    # CHASSE-INVARIANTS-FIX-1 Lot 8 (E-12) — surface_ha sur le MÊME parc que n_parcelles : le PARC
+    # VIVANT. Sans ce filtre, la surface sommait aussi les parcelles disparues (fusionnées/redécoupées)
+    # → +153 ha fantômes à Saint-Paul, +120 à Saint-André (22/24 communes), alors que n_parcelles les
+    # excluait. Même garde-fou (filtre_vivant_sql) que le compteur.
+    _vivant = _cadastre_disparue.filtre_vivant_sql(db, "parcels")
     surface_ha = db.execute(text(
-        "SELECT round((sum(surface_m2) / 10000.0)::numeric)::int FROM parcels WHERE commune = :c"),
+        f"SELECT round((sum(surface_m2) / 10000.0)::numeric)::int FROM parcels WHERE commune = :c{_vivant}"),
         {"c": commune}).scalar()
     # OUTILS-6 C1 → CIRCUIT-1 lot 2.1 — la RÉPARTITION DU ZONAGE (parts de SURFACE, somme = 100 %)
     # est désormais calculée par LE moteur unique registre/moteurs/zonage.py (ids part_zone_*_pct) :

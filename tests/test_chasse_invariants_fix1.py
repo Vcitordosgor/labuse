@@ -327,3 +327,30 @@ def test_lot7_score_e_row_grande_parcelle_hors_estimation():
     # une parcelle normale reste estimée
     petite = _row("x", surface_m2=800, sdp=600, terrain=200, prix_vente=3000, niveau_prix="secteur")
     assert petite["estimable"] is True and petite["marge"] is not None
+
+
+# ───────────────────────────── Lot 8 — E-12 / E-14 : les petits ─────────────────────────────────
+def test_lot8_e14_tuile_hors_grille():
+    from labuse.api.tiles import tuile_hors_grille
+    assert tuile_hors_grille(12, 999999, 999999) is True
+    assert tuile_hors_grille(12, -5, -5) is True
+    assert tuile_hors_grille(14, 999999, 999999) is True
+    assert tuile_hors_grille(12, 2110, 2110) is False      # dans la grille 2^12=4096
+    assert tuile_hors_grille(0, 0, 0) is False
+
+
+@pytest.mark.reel
+def test_lot8_e12_surface_ha_parc_vivant():
+    """E-12 — surface_ha compte le MÊME parc que n_parcelles (vivant) : plus de hectares fantômes."""
+    from labuse.api.app import _foncier_commune
+    from labuse.registre.moteurs.commune import compte_parcelles_commune
+    from sqlalchemy import text
+    with app_session() as s:
+        f = _foncier_commune(s, "Saint-Paul")
+        vivant_ha = s.execute(text("""SELECT round((sum(surface_m2)/10000.0)::numeric)::int
+            FROM parcels WHERE commune='Saint-Paul' AND cadastre_disparue_le IS NULL""")).scalar()
+        assert abs(f["surface_ha"] - vivant_ha) <= 1       # surface = parc vivant
+        # et strictement moins que « toutes parcelles » (les disparues existent bien)
+        tout_ha = s.execute(text("SELECT round((sum(surface_m2)/10000.0)::numeric)::int "
+                                 "FROM parcels WHERE commune='Saint-Paul'")).scalar()
+        assert f["surface_ha"] <= tout_ha
