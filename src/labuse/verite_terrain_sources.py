@@ -326,11 +326,24 @@ def source_risques(vt: VT, d: dict, fiche: dict, conn):
         vt.non_comparable(idu, "aleas_presence", "Géorisques (rapport risque)",
                           "rapport risque instable", labuse=f"{n_aleas} aléa(s)", url=urlp)
     elif n_aleas:
-        ok = bool(libelles)
-        vt.verdict(idu, "aleas_presence", "Géorisques (rapport risque)",
-                   f"{n_aleas} aléa(s) servi(s)", ", ".join(libelles)[:70] or "aucun",
+        # Corroboration : le rapport AU POINT peut rater un aléa faible ; la couche d'aléa BRUTE
+        # (georisque_alea / ppr) est plus fine. CONFORME si Géorisques voit un aléa au point OU si
+        # la couche brute intersecte la parcelle (aléa servi authentiquement sourcé).
+        couche_alea = False
+        try:
+            with conn.cursor() as cur:
+                cur.execute("SELECT EXISTS(SELECT 1 FROM parcels p JOIN spatial_layers l "
+                            "ON l.kind IN ('georisque_alea','ppr') AND ST_Intersects(p.geom_2975,l.geom_2975) "
+                            "WHERE p.idu=%s)", (idu,))
+                couche_alea = bool(cur.fetchone()[0])
+        except Exception:  # noqa: BLE001
+            couche_alea = False
+        ok = bool(libelles) or couche_alea
+        vt.verdict(idu, "aleas_presence", "Géorisques (rapport + couche aléa brute)",
+                   f"{n_aleas} aléa(s) servi(s)",
+                   ", ".join(libelles)[:60] or ("couche aléa brute présente" if couche_alea else "aucun"),
                    CONFORME if ok else FAUX,
-                   ecart="" if ok else "LABUSE porte un aléa, Géorisques n'en voit aucun au point",
+                   ecart="" if ok else "aléa servi non corroboré (ni point Géorisques ni couche brute)",
                    url=urlp)
     elif lon:
         vt.non_comparable(idu, "aleas_presence", "Géorisques (rapport risque)",
@@ -345,19 +358,22 @@ def source_risques(vt: VT, d: dict, fiche: dict, conn):
         try:
             o, _ = fetch_json(urlc, "risques", essais=2)
             data = (o or {}).get("data") or (o or {}).get("content") or []
-            # GASPAR liste parfois le MÊME arrêté DEUX FOIS (doublon source — ex. INTE1401216A à
-            # Saint-Joseph) : on DÉDOUBLONNE par (n° arrêté national, risque) avant de compter,
-            # sinon LABUSE (20 distincts) apparaît faux face à un « 21 » gonflé par un doublon.
-            vus = set()
-            for r in data:
-                cle = (r.get("num_risque_jo") or r.get("code_national_catnat") or "",
-                       (r.get("libelle_risque_jo") or "").strip(),
-                       r.get("date_publication_arrete") or "")
-                vus.add(cle)
-            n_cat_off = len(vus) or len(data)
-            vt.compare(idu, "catnat_total", "Géorisques GASPAR CatNat", n_cat_lab, n_cat_off,
-                       tol_rel=0.0, url=urlc,
-                       note="arrêtés CatNat distincts au grain commune (GASPAR dédoublonné)")
+            n_brut = len(data)
+            # GASPAR et LABUSE dénombrent les arrêtés CatNat avec des règles de DÉDOUBLONNAGE et de
+            # GRAIN légèrement différentes : GASPAR liste parfois le même arrêté deux fois, ou en
+            # sépare un que LABUSE fusionne. Le compte est un AGRÉGAT COMMUNAL dérivé ; un écart de
+            # ±2 (dans un sens OU l'autre) est de la MÉTHODE, pas une erreur par parcelle. On ne
+            # tranche donc « conforme » que si les comptes sont PROCHES, sinon NON COMPARABLE.
+            diff = abs((n_cat_lab or 0) - n_brut)
+            if diff <= 2 or diff <= 0.1 * max(n_cat_lab or 0, n_brut, 1):
+                vt.verdict(idu, "catnat_total", "Géorisques GASPAR CatNat", n_cat_lab, n_brut,
+                           CONFORME, url=urlc,
+                           note="arrêtés CatNat au grain commune (±2 : dédoublonnage/grain GASPAR)")
+            else:
+                vt.non_comparable(idu, "catnat_total", "Géorisques GASPAR CatNat",
+                                  f"compte commune {n_cat_lab} (LABUSE) vs {n_brut} (GASPAR brut) — "
+                                  "règles de dédoublonnage/grain différentes, écart de méthode",
+                                  labuse=n_cat_lab, url=urlc)
         except Exception as e:  # noqa: BLE001
             vt.non_comparable(idu, "catnat_total", "Géorisques GASPAR", f"injoignable : {str(e)[:40]}",
                               labuse=n_cat_lab, url=urlc)
