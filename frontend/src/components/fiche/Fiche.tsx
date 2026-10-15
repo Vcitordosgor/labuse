@@ -1466,7 +1466,8 @@ export function Fiche({ idu }: { idu: string }) {
                           {id?.siege && <Ligne label="Établissement" valeur={<>{id.siege}{id.siege_commune ? <small> · {id.siege_commune}</small> : null}</>} />}
                           {/* Dirigeant aîné au RNE (INPI) : nom + âge exact. Servi pour TOUTE société qui en a
                               un de connu (pas seulement les cibles Successions) ; âge inconnu → rien (pas de tiret). */}
-                          {pm.dirigeant && <Ligne label="Dirigeant" valeur={<>{pm.dirigeant.nom}<small> · {pm.dirigeant.age} ans</small></>} />}
+                          {/* CHASSE-INVARIANTS-FIX-1 Lot 6 (E-05) — âge hors [18;110] (date INPI aberrante) → « âge inconnu », jamais 117 ans. */}
+                          {pm.dirigeant && <Ligne label="Dirigeant" valeur={<>{pm.dirigeant.nom}<small> · {pm.dirigeant.age != null ? `${pm.dirigeant.age} ans` : 'âge inconnu'}</small></>} />}
                           {pm.groupe_label && <Ligne label="Groupe" valeur={pm.groupe_label} />}
                         </Lignes>
                       )}

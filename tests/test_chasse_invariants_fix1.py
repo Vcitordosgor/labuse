@@ -270,3 +270,38 @@ def test_lot5_ancrage_recupere_les_ventes_jetees():
             pytest.skip("pas de DVF pour le témoin")
         assert anc >= cur       # l'ancrage ne perd jamais de ventes
         assert anc > cur        # et en récupère ici (témoin 97411000AK0182)
+
+
+# ───────────────────────────── Lot 6 — E-05 / E-06 : âge dirigeant borné [18;110] ──────────────
+@pytest.mark.reel
+def test_lot6_pm_dirigeant_borne_age():
+    """E-05 — _pm_dirigeant ne sert jamais un âge hors [18;110] : soit l'aîné plausible, soit « âge
+    inconnu » (age=None), jamais 0/4/13/114/117."""
+    from labuse.api.app import _pm_dirigeant
+    from sqlalchemy import text
+    with app_session() as s:
+        # sociétés dont l'aîné brut est aberrant (date INPI 1909/1911 ou future)
+        sirens = s.execute(text("""
+            SELECT siren FROM (
+              SELECT DISTINCT ON (siren) siren,
+                date_part('year', age(to_date(date_naissance,'YYYY-MM')))::int AS age
+              FROM pm_dirigeants WHERE type_personne='INDIVIDU' AND date_naissance IS NOT NULL
+              ORDER BY siren, date_naissance ASC) t
+            WHERE age < 18 OR age > 110 LIMIT 5""")).scalars().all()
+        if not sirens:
+            pytest.skip("aucune société à aîné aberrant")
+        for siren in sirens:
+            d = _pm_dirigeant(s, siren)
+            if d is None:
+                continue
+            assert d["age"] is None or 18 <= d["age"] <= 110   # jamais un âge impossible servi
+
+
+@pytest.mark.reel
+def test_lot6_vue_propension_sans_age_aberrant():
+    """E-06 — la vue v_pm_propension_vendre ne porte plus d'âge hors [18;110] (succession/filtre 70+)."""
+    from sqlalchemy import text
+    with app_session() as s:
+        n = s.execute(text("SELECT count(*) FROM v_pm_propension_vendre "
+                           "WHERE age_max_dirigeant < 18 OR age_max_dirigeant > 110")).scalar()
+        assert n == 0

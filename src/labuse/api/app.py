@@ -5796,20 +5796,29 @@ def _pm_dirigeant(db: Session, siren: str | None) -> dict | None:
         return None
     try:
         with db.begin_nested():
+            # CHASSE-INVARIANTS-FIX-1 Lot 6 (E-05) — garde-fou de bornes [18;110] à la SOURCE. Les
+            # dates de naissance INPI aberrantes (1909/1911, ou futures) produisaient des âges 0/4/
+            # 13/114/117 servis bruts. On préfère l'aîné PLAUSIBLE (18-110) ; à défaut, on garde le
+            # nom mais l'âge devient inconnu (NULL → « âge inconnu » à l'affichage, jamais un chiffre
+            # impossible). ORDER BY « âge plausible d'abord, puis le plus âgé ».
             r = db.execute(text(
-                "SELECT nom, prenoms, "
-                "       date_part('year', age(to_date(date_naissance, 'YYYY-MM')))::int AS age "
-                "FROM pm_dirigeants "
-                "WHERE siren = :s AND type_personne = 'INDIVIDU' AND date_naissance IS NOT NULL "
-                "ORDER BY date_naissance ASC LIMIT 1"), {"s": siren}).mappings().first()
+                "SELECT nom, prenoms, age FROM ("
+                "  SELECT nom, prenoms, "
+                "         date_part('year', age(to_date(date_naissance, 'YYYY-MM')))::int AS age "
+                "  FROM pm_dirigeants "
+                "  WHERE siren = :s AND type_personne = 'INDIVIDU' AND date_naissance IS NOT NULL) d "
+                "ORDER BY (age BETWEEN 18 AND 110) DESC, date_naissance ASC LIMIT 1"),
+                {"s": siren}).mappings().first()
     except Exception:  # noqa: BLE001 — table absente / base de test : pas de dirigeant, jamais un 500
         return None
-    if not r or r["age"] is None:
+    if not r:
         return None
     nom = " ".join(x for x in [(r["prenoms"] or "").strip(), (r["nom"] or "").strip()] if x).strip()
     if not nom:
         return None
-    return {"nom": nom, "age": int(r["age"])}
+    age = r["age"]
+    age = int(age) if age is not None and 18 <= age <= 110 else None   # hors bornes → « âge inconnu »
+    return {"nom": nom, "age": age}
 
 
 def _pm_etat_societe(db: Session, siren: str | None) -> dict | None:
