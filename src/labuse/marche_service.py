@@ -16,6 +16,8 @@ from __future__ import annotations
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from .dvf_fenetre import fenetre_dvf_sql  # E-04 — fenêtre DVF ancrée sur max(date_mutation)
+
 # ── Profils DVF (paramètres provisoires — cf. MANDAT_DVF) ─────────────────────────────────────────
 DVF_SECTEUR_DOSSIER = "secteur_dossier"        # 500 m / 3 ans, bâti + terrain nu (flash/_marche)
 DVF_BANQUIER_ADAPTATIF = "banquier_adaptatif"  # rayon adaptatif 500→1500→commune, Q1/méd/Q3 (bilan/sector_price)
@@ -252,7 +254,8 @@ def comparables(db: Session, idu: str, *, profil: str = COMPARABLES_PREMIUM) -> 
         "  round(dm.valeur_fonciere / NULLIF(dm.surface_reelle_bati, 0))::int AS prix_m2 "
         "FROM dvf_mutations dm, p "
         "WHERE dm.geom IS NOT NULL AND dm.date_mutation IS NOT NULL "
-        "  AND dm.date_mutation >= (CURRENT_DATE - make_interval(years => :ans)) "
+        # CHASSE-INVARIANTS-FIX-1 Lot 5 (E-04) — fenêtre ancrée sur la dernière vente, pas CURRENT_DATE.
+        "  AND " + fenetre_dvf_sql("dm.date_mutation", annees_param="ans") + " "
         "  AND dm.nature_mutation ILIKE 'vente%' AND dm.valeur_fonciere > 0 "
         "  AND dm.surface_reelle_bati >= 20 "
         "  AND ST_DWithin(ST_Transform(dm.geom, 2975), p.geom_2975, :r) "

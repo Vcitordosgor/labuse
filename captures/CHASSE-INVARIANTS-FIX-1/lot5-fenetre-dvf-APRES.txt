@@ -1,0 +1,10 @@
+CHASSE-INVARIANTS-FIX-1 Lot 5 (E-04) — fenêtre DVF ancrée sur max(date_mutation), pas CURRENT_DATE
+
+Helper unique dvf_fenetre.fenetre_dvf_sql (fiche « Mon secteur », Flash, Dossier, PDF, comparables).
+Fragment : date_mutation >= ( (SELECT max(date_mutation) … ligne minuit) - make_interval(...) )
+            AND date_mutation = date_trunc('day', date_mutation)   -- exclut la ligne parasite
+
+Témoin 97411000AK0182 (rayon marché, fenêtre registre) :
+  CURRENT_DATE (avant) : 129 ventes
+  ancré max (après)    : 167 ventes   → +38 ventes récupérées (l'horloge qui avance les jetait)
+L'ancrage ne perd JAMAIS de ventes (anc ≥ cur partout).

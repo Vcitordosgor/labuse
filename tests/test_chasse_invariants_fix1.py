@@ -236,3 +236,37 @@ def test_lot4_e08_orpheline_non_servie_et_servi_clippe():
         servi = s.execute(text("""SELECT count(*) FROM parcel_bati_revele b JOIN parcels p ON p.id=b.parcel_id
             WHERE GREATEST(b.emprise_bdtopo_m2, b.emprise_cosia_m2) > ST_Area(p.geom_2975)+1""")).scalar()
         assert servi == 0, "le bâti servi est clippé à la parcelle"
+
+
+# ───────────────────────────── Lot 5 — E-04 : fenêtre DVF ancrée sur la dernière vente ─────────
+def test_lot5_helper_fenetre_dvf_ancree_pas_current_date():
+    from labuse.dvf_fenetre import ANCRE_DVF_SQL, fenetre_dvf_sql
+    frag = fenetre_dvf_sql("dm.date_mutation", annees_param="annees")
+    assert "max(date_mutation)" in frag and "CURRENT_DATE" not in frag
+    assert ":annees" in frag and "date_trunc('day'" in frag   # exclut la ligne parasite
+    assert "max(date_mutation)" in ANCRE_DVF_SQL
+    import pytest as _pt
+    with _pt.raises(ValueError):
+        fenetre_dvf_sql("x")   # il faut préciser une fenêtre
+
+
+@pytest.mark.reel
+def test_lot5_ancrage_recupere_les_ventes_jetees():
+    """E-04 — la fenêtre ancrée récupère des ventes que CURRENT_DATE jetait (l'horloge qui avance)."""
+    from sqlalchemy import text
+    from labuse.flash.data import FENETRE_MARCHE_ANNEES, RAYON_MARCHE_M
+    from labuse.dvf_fenetre import fenetre_dvf_sql
+    with app_session() as s:
+        def n(cond):
+            return s.execute(text(f"""WITH p AS (SELECT geom_2975 FROM parcels WHERE idu=:i)
+                SELECT count(*) FROM dvf_mutations dm, p WHERE dm.geom IS NOT NULL AND {cond}
+                  AND dm.nature_mutation ILIKE 'vente%' AND dm.valeur_fonciere>0
+                  AND ST_DWithin(ST_Transform(dm.geom,2975), p.geom_2975, :r)"""),
+                {"i": "97411000AK0182", "a": FENETRE_MARCHE_ANNEES, "annees": FENETRE_MARCHE_ANNEES,
+                 "r": RAYON_MARCHE_M}).scalar()
+        cur = n("dm.date_mutation >= (CURRENT_DATE - make_interval(years => :a))")
+        anc = n(fenetre_dvf_sql("dm.date_mutation", annees_param="annees"))
+        if cur == 0 and anc == 0:
+            pytest.skip("pas de DVF pour le témoin")
+        assert anc >= cur       # l'ancrage ne perd jamais de ventes
+        assert anc > cur        # et en récupère ici (témoin 97411000AK0182)
