@@ -113,6 +113,37 @@ def rapport() -> None:
                 L.append(f"- {nb}× {raison}")
             L.append("")
 
+    # ── volet règles chiffrées du PLU (schéma propre) ──
+    regles_fp = SORTIE / "comparaisons_plu_regles.csv"
+    regles_faux = []
+    if regles_fp.exists():
+        with open(regles_fp, newline="") as f:
+            rg = list(csv.DictReader(f))
+        from collections import Counter as _C, defaultdict as _dd
+        vc = _C(r["verdict"] for r in rg)
+        par_regle = _dd(lambda: [0, 0, 0])
+        for r in rg:
+            a = par_regle[r["regle"]]
+            a[0] += r["verdict"] == CONFORME
+            a[1] += r["verdict"] == FAUX
+            a[2] += r["verdict"] == NC
+        n_parc_rg = len({r["parcelle"] for r in rg})
+        L.append("## 3 bis. PLU — règles chiffrées relues au règlement (100 parcelles)")
+        L.append("")
+        L.append(f"{n_parc_rg} parcelles, {len(rg)} règles (hauteur/emprise/reculs) relues au règlement "
+                 f"officiel à la page citée (verbatim + PDF officiel). "
+                 f"**CONFORME {vc[CONFORME]} · LABUSE FAUX {vc[FAUX]} · NON COMPARABLE {vc[NC]}**.")
+        L.append("")
+        L.append("| Règle | Conformes | LABUSE FAUX | Non comparable |")
+        L.append("|---|---|---|---|")
+        for k, v in sorted(par_regle.items()):
+            L.append(f"| {k} | {v[0]} | {v[1]} | {v[2]} |")
+        L.append("")
+        L.append("Non comparable = reculs dérivés d'une règle de prospect (H/2…), valeur calculée non "
+                 "littérale. Détail complet : `PLU-REGLES-100.md`.")
+        L.append("")
+        regles_faux = [r for r in rg if r["verdict"] == FAUX]
+
     (SORTIE / "RAPPORT.md").write_text("\n".join(L) + "\n")
     print(f"→ {SORTIE / 'RAPPORT.md'} ({n_parcelles} parcelles, {len(rows)} comparaisons)")
 
