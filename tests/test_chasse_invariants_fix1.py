@@ -305,3 +305,25 @@ def test_lot6_vue_propension_sans_age_aberrant():
         n = s.execute(text("SELECT count(*) FROM v_pm_propension_vendre "
                            "WHERE age_max_dirigeant < 18 OR age_max_dirigeant > 110")).scalar()
         assert n == 0
+
+
+# ───────────────────────────── Lot 7 — E-15 : > 2 ha = opération d'aménagement ──────────────────
+def test_lot7_seuil_amenagement_2ha():
+    from labuse.amenagement import est_amenagement, SEUIL_AMENAGEMENT_M2, LIBELLE_AMENAGEMENT
+    assert SEUIL_AMENAGEMENT_M2 == 20_000
+    assert not est_amenagement(19_999) and est_amenagement(20_001)
+    assert not est_amenagement(None) and not est_amenagement(0)
+    assert "aménagement" in LIBELLE_AMENAGEMENT
+
+
+def test_lot7_score_e_row_grande_parcelle_hors_estimation():
+    """E-15 — _row ne sert ni marge ni charge au-delà de 2 ha : « opération d'aménagement »."""
+    from labuse.ingestion.score_e import _row
+    from labuse.amenagement import LIBELLE_AMENAGEMENT
+    grande = _row("97415000DK1169", surface_m2=348_000, sdp=50_000, terrain=200, prix_vente=3000, niveau_prix="secteur")
+    assert grande["estimable"] is False
+    assert grande["marge"] is None and grande["charge"] is None
+    assert grande["court"] == LIBELLE_AMENAGEMENT
+    # une parcelle normale reste estimée
+    petite = _row("x", surface_m2=800, sdp=600, terrain=200, prix_vente=3000, niveau_prix="secteur")
+    assert petite["estimable"] is True and petite["marge"] is not None

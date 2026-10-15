@@ -7799,7 +7799,18 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
                 "SELECT estimable, marge_estimee, charge_supportable, prix_probable, niveau_prix, "
                 "hypotheses_version, libelle_court, detail FROM score_e WHERE idu = :i"), {"i": p.idu}).mappings().first()
             score_e_block = dict(_se) if _se else None
-            if score_e_block and score_e_block.get("estimable"):
+            # CHASSE-INVARIANTS-FIX-1 Lot 7 (E-15) — au-delà de 2 ha, on sert « opération d'aménagement »
+            # TOUT DE SUITE (sans attendre le rebuild score_e) : jamais une marge en dizaines de M€.
+            from ..amenagement import DETAIL_AMENAGEMENT, LIBELLE_AMENAGEMENT, est_amenagement
+            _surf_terrain = db.execute(text(
+                "SELECT COALESCE(contenance_m2, surface_m2) FROM parcels WHERE idu = :i"),
+                {"i": p.idu}).scalar()
+            if est_amenagement(_surf_terrain):
+                score_e_block = {"estimable": False, "marge_estimee": None, "charge_supportable": None,
+                                 "prix_probable": None, "niveau_prix": None, "hypotheses_version": None,
+                                 "libelle_court": LIBELLE_AMENAGEMENT, "detail": DETAIL_AMENAGEMENT,
+                                 "amenagement": True}
+            elif score_e_block and score_e_block.get("estimable"):
                 # Exigence Vic (flag levé) : le niveau du prix DOIT être visible côté client (tooltip/détail).
                 from ..ingestion.score_e import niveau_label
                 score_e_block["niveau_label"] = niveau_label(score_e_block.get("niveau_prix"))
