@@ -37,6 +37,44 @@ def get_db():  # branché sur la session app au moment de l'inclusion (cf. app.p
     yield from _g()
 
 
+def tuile_hors_grille(z: int, x: int, y: int) -> bool:
+    """CHASSE-INVARIANTS-FIX-1 Lot 8 (E-14) — x ou y hors de la grille du zoom [0, 2^z) (ou négatif).
+    `ST_TileEnvelope` lève « Invalid tile x value » sur ces coordonnées → HTTP 500 nu. On les détecte
+    AVANT (un seul correctif, lu par les DEUX routes de tuiles) pour renvoyer une tuile vide (204)."""
+    if z < 0:
+        return True
+    n = 1 << z
+    return not (0 <= x < n and 0 <= y < n)
+
+
+def _parcel_zone_plu_signature(db: Session) -> str:
+    """CHASSE-INVARIANTS-FIX-1 Lot 4 (E-02) — signature des ENTRÉES de `parcel_zone_plu` (parcelles +
+    zones PLU GPU). Quand elle change (ré-ingestion cadastre OU zonage), la dérivée est PÉRIMÉE et
+    doit être reconstruite — pas seulement « quand elle est vide ». spatial_layers n'a pas d'updated_at
+    → on signe par le compte, le max(id) et l'aire totale des zones (toute ré-ingestion les bouge)."""
+    row = db.execute(text("""
+        SELECT (SELECT count(*) FROM parcels),
+               (SELECT COALESCE(max(updated_at)::text, '') FROM parcels),
+               (SELECT count(*) FROM spatial_layers WHERE kind = 'plu_gpu_zone'),
+               (SELECT COALESCE(max(id), 0) FROM spatial_layers WHERE kind = 'plu_gpu_zone'),
+               (SELECT COALESCE(round(sum(ST_Area(geom_2975)))::bigint, 0)
+                  FROM spatial_layers WHERE kind = 'plu_gpu_zone')
+    """)).first()
+    return "|".join(str(x) for x in row)
+
+
+def parcel_zone_plu_perimee(db: Session) -> bool:
+    """E-02 — vrai si `parcel_zone_plu` est ABSENTE, VIDE, ou PÉRIMÉE (signature des entrées changée)."""
+    if not db.execute(text("SELECT to_regclass('parcel_zone_plu')")).scalar():
+        return True
+    if not db.execute(text("SELECT EXISTS(SELECT 1 FROM parcel_zone_plu LIMIT 1)")).scalar():
+        return True
+    stored = None
+    if db.execute(text("SELECT to_regclass('parcel_zone_plu_version')")).scalar():
+        stored = db.execute(text("SELECT sig FROM parcel_zone_plu_version LIMIT 1")).scalar()
+    return stored != _parcel_zone_plu_signature(db)
+
+
 def build_parcel_zone_plu(db: Session) -> int:
     """M6.1 item 1 — table dérivée `parcel_zone_plu` (idu PK, zone_lib, zone_fam) : la zone
     PLU DOMINANTE par surface d'intersection (spatial_layers kind='plu_gpu_zone', dédoublonné
@@ -103,6 +141,14 @@ def build_parcel_zone_plu(db: Session) -> int:
     db.execute(text("ALTER TABLE parcel_zone_plu ADD PRIMARY KEY (idu)"))
     db.execute(text("ANALYZE parcel_zone_plu"))
     n = db.execute(text("SELECT count(*) FROM parcel_zone_plu")).scalar() or 0
+    # CHASSE-INVARIANTS-FIX-1 Lot 4 (E-02) — mémorise la signature des entrées : la prochaine
+    # construction de tuiles saura si parcels/zones PLU ont bougé (péremption), au lieu de ne jamais
+    # reconstruire tant que la table n'est pas vide.
+    db.execute(text("CREATE TABLE IF NOT EXISTS parcel_zone_plu_version "
+                    "(sig text, built_at timestamptz NOT NULL DEFAULT now())"))
+    db.execute(text("DELETE FROM parcel_zone_plu_version"))
+    db.execute(text("INSERT INTO parcel_zone_plu_version (sig) VALUES (:v)"),
+               {"v": _parcel_zone_plu_signature(db)})
     db.commit()
     return int(n)
 
@@ -150,8 +196,10 @@ def build_mvt_table(db: Session, run_label: str | None = None) -> int:
     # FIX-C6 (GB-049 étendu) — le heal crée un STUB VIDE de parcel_zone_plu (pour qu'une base
     # neuve ne 500 pas sur les ~20 lecteurs) ; on déclenche donc le vrai build si la table est
     # absente OU VIDE (le build fait DROP+CREATE AS, le stub est remplacé sans dommage).
-    if not db.execute(text("SELECT to_regclass('parcel_zone_plu')")).scalar() \
-            or not db.execute(text("SELECT EXISTS(SELECT 1 FROM parcel_zone_plu LIMIT 1)")).scalar():
+    # CHASSE-INVARIANTS-FIX-1 Lot 4 (E-02) — ET SI ELLE EST PÉRIMÉE : parcels ou zones PLU ont
+    # changé depuis le dernier build (signature des entrées) → 2 901 parcelles zonables restaient
+    # orphelines (carte ≠ fiche). On reconstruit sur le vrai signal, plus seulement « table vide ».
+    if parcel_zone_plu_perimee(db):
         build_parcel_zone_plu(db)
     # M6.2 : adresse BAN matérialisée (rapide) — reconstruite à chaque build-mvt (suit la BAN).
     build_parcel_adresse(db)
@@ -838,6 +886,8 @@ def mvt_tile(z: int, x: int, y: int, request: Request) -> Response:
     # retiré (lot 2). z8 n'est PAS pré-chauffée (hors _WARM_ZOOMS) : 1 tuile île, générée à la volée.
     if z < 8 or z > 15:
         return Response(status_code=204)  # hors plage : aucune connexion ouverte
+    if tuile_hors_grille(z, x, y):
+        return Response(status_code=204)  # E-14 — x/y hors grille [0,2^z) → tuile vide, jamais 500
     from .app import api_session
     with api_session() as db:            # transaction bornée au handler → fermée dans tous les cas
         version = _mvt_version(db)       # FIX-CARTE T3 : clé versionnée → invalidation au rebuild

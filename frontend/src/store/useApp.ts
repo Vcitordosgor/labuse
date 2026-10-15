@@ -143,6 +143,9 @@ export interface Filters {
   hauteurMax: number | null      // hauteur LiDAR faîtage maximale (m) → hauteur_max
   empriseMin: number | null      // emprise bâtie minimale (%) → emprise_min
   empriseMax: number | null      // emprise bâtie maximale (%) → emprise_max
+  // CHASSE-INVARIANTS-FIX-1 (Lot 1, E-01) — « Saturé » (bâti dépasse le plafond d'emprise, taux > 100 %)
+  // est une VALEUR à part entière : le range 0–100 ne peut pas l'atteindre, cette case la retrouve.
+  empriseSature: boolean         // emprise bâtie saturée (> 100 %) → emprise_sature
 }
 
 export const EMPTY_FILTERS: Filters = {
@@ -160,7 +163,7 @@ export const EMPTY_FILTERS: Filters = {
   signaux: [],
   pmDenom: null, pmSiren: null, pmForme: [], pmApe: [], pmDirigMin: null, pmDirigMax: null,
   pmAge: [],
-  hauteurMin: null, hauteurMax: null, empriseMin: null, empriseMax: null,
+  hauteurMin: null, hauteurMax: null, empriseMin: null, empriseMax: null, empriseSature: false,
 }
 
 // M45-B (Lot 2) — curseur mode B PARTAGÉ (session unique, rien persisté) : travaux + loyer +

@@ -364,6 +364,31 @@ class EvalContext:
             for r in rows
         ]
 
+    def union_coverage(self, parcel_id: int, kind: str, subtypes) -> tuple[float, float]:
+        """CHASSE-INVARIANTS-FIX-1 Lot 2 (E-03/E-11) — couverture UNIONNÉE (fraction, m² 2975) de la
+        parcelle par les entités `kind` dont le subtype ∈ `subtypes` : ST_Union AVANT le ratio, donc
+        des polygones de même nature qui se chevauchent/jointoient comptent une SEULE fois. MÊME
+        formule que la fiche (api/servitudes.py `ST_Area(ST_Union(ST_Intersection(...)))`) — fiche et
+        cascade s'accordent enfin sur le PPR rouge. (0,0) si rien n'intersecte."""
+        row = self.session.execute(
+            text(
+                """
+                SELECT ST_Area(ST_Union(ST_Intersection(sl.geom_2975, p.geom_2975))),
+                       ST_Area(p.geom_2975)
+                FROM parcels p
+                JOIN spatial_layers sl ON sl.kind = :kind AND upper(sl.subtype) = ANY(:subtypes)
+                  AND ST_Intersects(p.geom_2975, sl.geom_2975)
+                WHERE p.id = :pid
+                GROUP BY p.geom_2975
+                """
+            ),
+            {"kind": kind, "subtypes": [str(s).upper() for s in subtypes], "pid": parcel_id},
+        ).first()
+        if not row or not row[1]:
+            return (0.0, 0.0)
+        area = float(row[0] or 0.0)
+        return (area / float(row[1]), area)
+
     def min_distance_m(self, parcel_id: int, kind: str) -> float | None:
         """Distance min (m, 2975) de la parcelle à une entité de ce `kind`, ou None si au-delà
         du rayon de garde (cf. prime). Pour les couches linéaires (ravine) où la PROXIMITÉ

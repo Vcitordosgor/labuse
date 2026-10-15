@@ -70,6 +70,29 @@ class ReclassementParcelle:
                             "detail": v.detail})
         return out
 
+    def raison_exclusion(self) -> str | None:
+        """CHASSE-INVARIANTS-FIX-1 Lot 3 (E-10) — libellé CLIENT court de l'exclusion DURE (classe A
+        HARD_EXCLUDE) qui sort la parcelle du classement (« Hors classement »). None si aucune."""
+        for v in self.exclusions:
+            if v.exclusion:   # le HARD_EXCLUDE de classe A (assiette nulle / terrain hors marché)
+                return _HC_LIBELLE.get(v.layer_name, (v.layer_name or "exclue").replace("_", " "))
+        return None
+
+
+#: CHASSE-INVARIANTS-FIX-1 Lot 3 (E-10) — raison CLIENT courte par couche d'exclusion dure.
+_HC_LIBELLE = {
+    "dpf": "domaine public fluvial (inconstructible)",
+    "foret_publique": "forêt publique (domaine inacquérable)",
+    "parc_national": "cœur de Parc National",
+    "emprise_routiere": "emprise routière (voirie publique)",
+    "emprise_lineaire": "délaissé / voirie (emprise linéaire)",
+    "osm_faux_positif": "équipement public (faux positif géométrique)",
+    "eau": "hydrographie (cours d'eau / plan d'eau)",
+    "risques": "PPR zone rouge (inconstructible)",
+    "zonage_plu_gpu": "zone inconstructible au PLU",
+    "prescription_plu": "espace boisé classé (EBC)",
+}
+
 
 def classer_verdict(layer_name: str, result: str, detail: str | None = None,
                     recouvrement_pct: float | None = None, cfg: dict | None = None) -> VerdictV2:

@@ -752,6 +752,9 @@ def couche_tuile(kind: str, z: int, x: int, y: int, request: Request) -> Respons
     # à tous les zooms valides. (Seuls les z hors plage physique sont refusés.)
     if z < 0 or z > 22:
         return Response(status_code=404)
+    from .tiles import tuile_hors_grille
+    if tuile_hors_grille(z, x, y):
+        return Response(status_code=204)  # E-14 — x/y hors grille [0,2^z) → tuile vide, jamais 500
     from .app import api_session
     with api_session() as db:            # transaction bornée au handler → fermée dans tous les cas
         version = _version(db)

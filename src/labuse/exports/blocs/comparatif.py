@@ -1,10 +1,12 @@
 """DOCS-1 (Lot C) — bloc « Comparatif » : 2 à 3 parcelles EN COLONNES sur les lignes de Comparer, en
 page paysage. Aucun calcul : on rend les CompareRow servis par /compare (le MÊME endpoint que l'écran).
-Badges Sourcé/Estimé par ligne et ligne « Classement LABUSE » comme à l'écran. Les valeurs extrêmes de
-% sont imprimées BRUTES (le plafond d'affichage « > 300 » de l'écran n'est pas appliqué au tableau :
-le test « écran = PDF » compare la valeur servie, pas sa présentation)."""
+Badges Sourcé/Estimé par ligne et ligne « Classement LABUSE » comme à l'écran. CHASSE-INVARIANTS-FIX-1
+(Lot 1, E-01) : le « Taux d'occupation du gabarit » passe par le rendu unique `fmt_taux_emprise`
+(au-delà de 100 % → « Saturé … », jamais un % brut — c'était le 19 569 % de l'export) ; écran et PDF
+rendent donc la même chaîne."""
 from __future__ import annotations
 
+from ...faisabilite.residuel import fmt_taux_emprise
 from ..registre_fmt import groupe
 from ..rendu import chip_span, esc, section
 
@@ -94,7 +96,7 @@ _LIGNES = [
     ("SDP max estimée", "e", lambda r: _m2(r, "sdp_max_m2")),
     ("SDP résiduelle", "e", lambda r: _sdp_residuelle_cause(r)),
     ("Emprise au sol max (PLU)", "s", lambda r: (_pct(r, "emprise_ces_pct") or "non réglementée")),
-    ("Taux d'occupation du gabarit", "e", lambda r: _pct(r, "taux_emprise_pct")),
+    ("Taux d'occupation du gabarit", "e", lambda r: esc(fmt_taux_emprise(r.get("taux_emprise_pct")))),
     ("Sous-densité", "e", lambda r: _oui_non(r.get("sous_densite"))),
     ("Charge foncière /m² terrain", "e", lambda r: (f"{_i(r.get('charge_fonciere_m2'))} €/m²" if r.get("charge_fonciere_m2") is not None else None)),
     ("Prix terrain nu zone", "e", lambda r: _eur_m2(r, "terrain_zone_eur_m2")),

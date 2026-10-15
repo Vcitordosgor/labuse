@@ -1,0 +1,15 @@
+CHASSE-INVARIANTS-FIX-1 Lot 4 — tables dérivées (E-02 / E-07 / E-08)
+
+E-02 parcel_zone_plu reconstruite (contrôle de version) — 427 419 → 430 320 lignes (+2 901 orphelines)
+  témoin 97401000AH0371 : AVANT 0 ligne (zone-less à la carte) → APRÈS zone « Ud1 » (famille U)
+  signature des entrées mémorisée (parcel_zone_plu_version) → rebuild au vrai signal, plus « table vide »
+  garde E-02 : parcelles zonables sans ligne = 0 ; SDP positive sans zone à la carte = 0
+
+E-07 centroïde ST_PointOnSurface (toujours DANS la parcelle) — 9 792 → 0 hors géométrie
+  témoin 97414000CK0122 : AVANT 236 m hors → APRÈS DANS la parcelle
+  ingestion bascule ST_Centroid → ST_PointOnSurface ; lecteurs du point = zone/distances/amenités
+  cascade (context.py) → l'effet calcul arrive au run q_v19
+
+E-08 parcel_residuel_bati : ORPHELINE (builder retiré 24/07, 0 lecteur servi ; seul ban_adresses
+  l'utilise en seuil ≥20). Le bâti SERVI (parcel_bati_revele / bati.py) est déjà clippé : 0 infraction.
+  → aucun code d'ingestion à corriger ; garde reciblée sur la table servie ; DROP recommandé en prod.

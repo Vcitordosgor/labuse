@@ -1503,7 +1503,8 @@ def _q_v2_where(run_label: str,
                 pm_age: str | None = None,
                 zfang: str | None = None, frr: str | None = None,
                 hauteur_min: float | None = None, hauteur_max: float | None = None,
-                emprise_min: int | None = None, emprise_max: int | None = None) -> tuple[str, dict]:
+                emprise_min: int | None = None, emprise_max: int | None = None,
+                emprise_sature: bool = False) -> tuple[str, dict]:
     """Fragment WHERE partagé liste/stats — les MÊMES filtres que les chips du front. Mode
     « Toute l'île » : le client ne détient plus les 431k features en mémoire, le serveur
     filtre en SQL (chiffres SQL-exacts, mêmes clés que matchScope côté front).
@@ -1883,6 +1884,13 @@ def _q_v2_where(run_label: str,
         conds.append("EXISTS (SELECT 1 FROM parcel_residuel re1 WHERE re1.parcel_id = p.id"
                      " AND re1.taux_emprise_pct IS NOT NULL AND re1.taux_emprise_pct <= :f_empmax)")
         params["f_empmax"] = emprise_max
+    # CHASSE-INVARIANTS-FIX-1 (Lot 1, E-01) — « Saturé » est une VALEUR de filtre à part entière :
+    # le bâti existant dépasse le plafond d'emprise (taux_emprise_pct > 100). Le même seuil que le
+    # rendu « Saturé … » (fmt_taux_emprise) — la borne haute 0–100 du range ne peut donc jamais les
+    # attraper ; cette case les retrouve explicitement.
+    if emprise_sature:
+        conds.append("EXISTS (SELECT 1 FROM parcel_residuel res WHERE res.parcel_id = p.id"
+                     " AND res.taux_emprise_pct IS NOT NULL AND res.taux_emprise_pct > 100)")
     # ── M45-B (Lot 1) — tiroir ÉCONOMIE (câblage sur données existantes ; étiquettes Sourcé/Estimé) ──
     if budget_max is not None:
         # « Mon budget » : prix d'achat max admissible (charge foncière SUPPORTABLE, M22-A) ≤ budget.
@@ -2014,6 +2022,7 @@ class FiltreCriteres:
     hauteur_max: float | None = None
     emprise_min: int | None = None
     emprise_max: int | None = None
+    emprise_sature: bool = False   # CHASSE-INVARIANTS-FIX-1 (Lot 1, E-01) — « Saturé » (taux > 100 %)
 
     def where(self) -> tuple[str, dict]:
         return _q_v2_where(self.source, self.surface_min, self.surface_max,
@@ -2034,7 +2043,8 @@ class FiltreCriteres:
                            pm_age=self.pm_age,
                            zfang=self.zfang, frr=self.frr,
                            hauteur_min=self.hauteur_min, hauteur_max=self.hauteur_max,
-                           emprise_min=self.emprise_min, emprise_max=self.emprise_max)
+                           emprise_min=self.emprise_min, emprise_max=self.emprise_max,
+                           emprise_sature=self.emprise_sature)
 
     def cache_key(self) -> tuple:
         return ("filtre", self.source, self.commune, self.surface_min,
@@ -2051,6 +2061,7 @@ class FiltreCriteres:
                 self.pm_denom, self.pm_siren, self.pm_forme, self.pm_ape,
                 self.pm_dirig_min, self.pm_dirig_max, self.pm_age, self.zfang, self.frr,
                 self.hauteur_min, self.hauteur_max, self.emprise_min, self.emprise_max,   # KELFONCIER-FIX-1 Lot D
+                self.emprise_sature,   # CHASSE-INVARIANTS-FIX-1 (Lot 1, E-01) — « Saturé »
                 self.destination)   # FAISABILITE-1 lot B — la destination reste le DERNIER élément de la clé (test faisabilite1_capacite)
 
 
@@ -2158,8 +2169,13 @@ def _foncier_commune(db: Session, commune: str) -> dict:
     # (id registre n_parcelles_commune) : ce robinet ne calcule plus, il appelle.
     from ..registre.moteurs.commune import compte_parcelles_commune
     n_parcelles = compte_parcelles_commune(db, commune)
+    # CHASSE-INVARIANTS-FIX-1 Lot 8 (E-12) — surface_ha sur le MÊME parc que n_parcelles : le PARC
+    # VIVANT. Sans ce filtre, la surface sommait aussi les parcelles disparues (fusionnées/redécoupées)
+    # → +153 ha fantômes à Saint-Paul, +120 à Saint-André (22/24 communes), alors que n_parcelles les
+    # excluait. Même garde-fou (filtre_vivant_sql) que le compteur.
+    _vivant = _cadastre_disparue.filtre_vivant_sql(db, "parcels")
     surface_ha = db.execute(text(
-        "SELECT round((sum(surface_m2) / 10000.0)::numeric)::int FROM parcels WHERE commune = :c"),
+        f"SELECT round((sum(surface_m2) / 10000.0)::numeric)::int FROM parcels WHERE commune = :c{_vivant}"),
         {"c": commune}).scalar()
     # OUTILS-6 C1 → CIRCUIT-1 lot 2.1 — la RÉPARTITION DU ZONAGE (parts de SURFACE, somme = 100 %)
     # est désormais calculée par LE moteur unique registre/moteurs/zonage.py (ids part_zone_*_pct) :
@@ -3889,7 +3905,8 @@ _HASH_NUM = {"smin": "surface_min", "smax": "surface_max", "sdp": "sdp_min", "sd
 _HASH_FLOAT = {"hmin": "hauteur_min", "hmax": "hauteur_max"}
 _HASH_BOOL = {"ev": "evenement", "vs2": "veille", "hc": "hors_copro", "pm": "personne_morale",
               "sd": "sous_densite", "rnv": "renouvellement", "np": "npnru", "aa": "adresse_absente",
-              "mf": "marche_fiable", "mb": "mode_b_rentable"}
+              "mf": "marche_fiable", "mb": "mode_b_rentable",
+              "esa": "emprise_sature"}   # CHASSE-INVARIANTS-FIX-1 (Lot 1, E-01) — « Saturé » (emprise > 100 %)
 _HASH_STR = {"fx": "flags_exclus", "cs": "communes", "zf": "zonage", "sv": "signaux",
              "cst": "constructibilite", "es": "etat_sol", "zpx": "zone_plu",
              "pt": "proprietaire_type", "soc": "etat_societe", "cp": "copro",
@@ -5784,20 +5801,29 @@ def _pm_dirigeant(db: Session, siren: str | None) -> dict | None:
         return None
     try:
         with db.begin_nested():
+            # CHASSE-INVARIANTS-FIX-1 Lot 6 (E-05) — garde-fou de bornes [18;110] à la SOURCE. Les
+            # dates de naissance INPI aberrantes (1909/1911, ou futures) produisaient des âges 0/4/
+            # 13/114/117 servis bruts. On préfère l'aîné PLAUSIBLE (18-110) ; à défaut, on garde le
+            # nom mais l'âge devient inconnu (NULL → « âge inconnu » à l'affichage, jamais un chiffre
+            # impossible). ORDER BY « âge plausible d'abord, puis le plus âgé ».
             r = db.execute(text(
-                "SELECT nom, prenoms, "
-                "       date_part('year', age(to_date(date_naissance, 'YYYY-MM')))::int AS age "
-                "FROM pm_dirigeants "
-                "WHERE siren = :s AND type_personne = 'INDIVIDU' AND date_naissance IS NOT NULL "
-                "ORDER BY date_naissance ASC LIMIT 1"), {"s": siren}).mappings().first()
+                "SELECT nom, prenoms, age FROM ("
+                "  SELECT nom, prenoms, "
+                "         date_part('year', age(to_date(date_naissance, 'YYYY-MM')))::int AS age "
+                "  FROM pm_dirigeants "
+                "  WHERE siren = :s AND type_personne = 'INDIVIDU' AND date_naissance IS NOT NULL) d "
+                "ORDER BY (age BETWEEN 18 AND 110) DESC, date_naissance ASC LIMIT 1"),
+                {"s": siren}).mappings().first()
     except Exception:  # noqa: BLE001 — table absente / base de test : pas de dirigeant, jamais un 500
         return None
-    if not r or r["age"] is None:
+    if not r:
         return None
     nom = " ".join(x for x in [(r["prenoms"] or "").strip(), (r["nom"] or "").strip()] if x).strip()
     if not nom:
         return None
-    return {"nom": nom, "age": int(r["age"])}
+    age = r["age"]
+    age = int(age) if age is not None and 18 <= age <= 110 else None   # hors bornes → « âge inconnu »
+    return {"nom": nom, "age": age}
 
 
 def _pm_etat_societe(db: Session, siren: str | None) -> dict | None:
@@ -7778,7 +7804,18 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
                 "SELECT estimable, marge_estimee, charge_supportable, prix_probable, niveau_prix, "
                 "hypotheses_version, libelle_court, detail FROM score_e WHERE idu = :i"), {"i": p.idu}).mappings().first()
             score_e_block = dict(_se) if _se else None
-            if score_e_block and score_e_block.get("estimable"):
+            # CHASSE-INVARIANTS-FIX-1 Lot 7 (E-15) — au-delà de 2 ha, on sert « opération d'aménagement »
+            # TOUT DE SUITE (sans attendre le rebuild score_e) : jamais une marge en dizaines de M€.
+            from ..amenagement import DETAIL_AMENAGEMENT, LIBELLE_AMENAGEMENT, est_amenagement
+            _surf_terrain = db.execute(text(
+                "SELECT COALESCE(contenance_m2, surface_m2) FROM parcels WHERE idu = :i"),
+                {"i": p.idu}).scalar()
+            if est_amenagement(_surf_terrain):
+                score_e_block = {"estimable": False, "marge_estimee": None, "charge_supportable": None,
+                                 "prix_probable": None, "niveau_prix": None, "hypotheses_version": None,
+                                 "libelle_court": LIBELLE_AMENAGEMENT, "detail": DETAIL_AMENAGEMENT,
+                                 "amenagement": True}
+            elif score_e_block and score_e_block.get("estimable"):
                 # Exigence Vic (flag levé) : le niveau du prix DOIT être visible côté client (tooltip/détail).
                 from ..ingestion.score_e import niveau_label
                 score_e_block["niveau_label"] = niveau_label(score_e_block.get("niveau_prix"))

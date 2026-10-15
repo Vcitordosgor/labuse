@@ -39,7 +39,11 @@ def ingest_parcels(session: Session, parcels: list[dict], commune_name: str | No
                     ST_MakeValid(ST_SetSRID(ST_GeomFromGeoJSON(:gj), 4326)),
                     ST_Area(ST_Transform(ST_MakeValid(ST_SetSRID(ST_GeomFromGeoJSON(:gj), 4326)), 2975)),
                     :contenance,
-                    ST_Centroid(ST_MakeValid(ST_SetSRID(ST_GeomFromGeoJSON(:gj), 4326))),
+                    -- CHASSE-INVARIANTS-FIX-1 Lot 4 (E-07) — le point « centre » doit TOUJOURS tomber
+                    -- DANS la parcelle (épingle carte, recherche de zone/distances au point). ST_Centroid
+                    -- (barycentre) sort des géométries concaves/en L (jusqu'à 236 m dehors, 9 792 cas) ;
+                    -- ST_PointOnSurface garantit un point intérieur.
+                    ST_PointOnSurface(ST_MakeValid(ST_SetSRID(ST_GeomFromGeoJSON(:gj), 4326))),
                     ST_Envelope(ST_MakeValid(ST_SetSRID(ST_GeomFromGeoJSON(:gj), 4326))),
                     :run, :origine
                 )

@@ -659,10 +659,50 @@ class RisquesLayer(Layer):
                             "(PPR DEAL / aléas Géorisques non ingérés ici).", source=SRC_GEORISQUES)]
 
         verdicts: list[Verdict] = []
-        red = set(params.get("ppr_red_subtypes", []))
-        for i in ctx.intersections(parcel.id, kind_ppr):
-            if i.coverage <= 0:
-                continue
+        # CHASSE-INVARIANTS-FIX-1 Lot 2 (E-03/E-11) — on uppercase pour coller à la fiche
+        # (api/servitudes.py `upper(sl.subtype)`), sinon un 'interdiction' minuscule échapperait au seuil.
+        red = {str(s).upper() for s in params.get("ppr_red_subtypes", [])}
+        inters = [i for i in ctx.intersections(parcel.id, kind_ppr) if i.coverage > 0]
+
+        # CHASSE-INVARIANTS-FIX-1 Lot 2 (E-03/E-11) — le PPR ROUGE se juge sur l'UNION des polygones
+        # INTERDICTION, JAMAIS polygone par polygone : plusieurs rouges < 50 % chacun mais ≥ 50 %
+        # CUMULÉS laissaient passer une parcelle majoritairement rouge comme constructible (pire
+        # témoin : score B / 8 297 m² SDP sur 65 % rouge). Union AVANT le seuil — la MÊME que la fiche
+        # (ctx.union_coverage) — donc fiche et cascade s'accordent enfin. Un seul verdict rouge, les
+        # 3 paliers (M-I, arbitrage Vic 08/08) lus sur la couverture unionnée :
+        #   < marginal (2 %)   : servi NORMALEMENT + mention discrète ;
+        #   marginal..exclusion: FLAG FORT (vigilance, jamais une exclusion) ;
+        #   >= exclusion (50 %): ÉCARTÉE (motif + % de surface).
+        red_inters = [i for i in inters if (i.subtype or "").upper() in red]
+        if red_inters:
+            marg_pct = float(params.get("ppr_red_marginal_pct", 2))
+            excl_pct = float(params.get("ppr_red_exclude_pct", 50))
+            # un seul polygone rouge → l'union EST sa couverture (aucune requête de plus) ; sinon on
+            # unionne en base (borné aux ~rares parcelles multi-rouges).
+            red_cov = (red_inters[0].coverage if len(red_inters) == 1
+                       else ctx.union_coverage(parcel.id, kind_ppr, red)[0])
+            cov_pct = red_cov * 100
+            red_m2 = round((parcel.surface_m2 or 0) * red_cov)
+            if cov_pct >= excl_pct:
+                verdicts.append(hard_exclude(
+                    self.name,
+                    f"Exclue : PPR zone rouge (inconstructible) — {cov_pct:.0f} % de la surface.",
+                    kind="exclue", source=SRC_DEAL_PPR))
+            elif cov_pct >= marg_pct:
+                verdicts.append(soft_flag(
+                    self.name,
+                    f"PPR zone rouge sur {cov_pct:.0f} % de la surface — vigilance forte ; "
+                    "constructibilité à vérifier au règlement (pas d'exclusion automatique).",
+                    Severity.FORT, source=SRC_DEAL_PPR))
+            else:
+                verdicts.append(soft_flag(
+                    self.name,
+                    f"PPR rouge marginal : {red_m2} m² ({cov_pct:.1f} %), hors emprise probable.",
+                    Severity.INFO, source=SRC_DEAL_PPR))
+
+        for i in inters:
+            if (i.subtype or "").upper() in red:
+                continue  # zone rouge DEAL : jugée EN UNION ci-dessus (E-03/E-11)
             attrs = i.attrs or {}
             # M-G : distinguer l'ASSIETTE SUP PM1 (API Carto GPU, périmètre — zonage interne inconnu)
             # du PPR ZONÉ réglementaire DEAL (rouge INTERDICTION / bleu PRESCRIPTION). Le zoné DEAL a
@@ -673,34 +713,6 @@ class RisquesLayer(Layer):
             risque = attrs.get("risque") or "risque naturel"
             cov_pct = i.coverage * 100
             pct = f" (~{cov_pct:.0f}% de la parcelle)" if i.coverage < 0.99 else ""
-            if i.subtype in red:   # 'INTERDICTION' = zone rouge DEAL (jamais une assiette PM1)
-                # M-I (arbitrage Vic 08/08) : le PPR rouge n'est plus binaire. TROIS PALIERS selon la
-                # PART DE SURFACE en zone rouge (i.coverage — point de calcul UNIQUE, déjà en 2975) :
-                #   < marginal (2 %)   : servi NORMALEMENT (rouge hors exclusion ET hors score) + une
-                #                        mention discrète en fiche — « rien n'est invisible » ;
-                #   marginal..exclusion: servi avec FLAG FORT (vigilance, jamais une exclusion) ;
-                #   >= exclusion (50 %): ÉCARTÉE comme avant (motif ventilé + % de surface).
-                # La zone rouge (INTERDICTION) n'est JAMAIS une assiette PM1 → aucune PM1 n'est graduée.
-                marg_pct = float(params.get("ppr_red_marginal_pct", 2))
-                excl_pct = float(params.get("ppr_red_exclude_pct", 50))
-                red_m2 = round((parcel.surface_m2 or 0) * i.coverage)
-                if cov_pct >= excl_pct:
-                    verdicts.append(hard_exclude(
-                        self.name,
-                        f"Exclue : PPR zone rouge (inconstructible) — {cov_pct:.0f} % de la surface.",
-                        kind="exclue", source=src))
-                elif cov_pct >= marg_pct:
-                    verdicts.append(soft_flag(
-                        self.name,
-                        f"PPR zone rouge sur {cov_pct:.0f} % de la surface — vigilance forte ; "
-                        "constructibilité à vérifier au règlement (pas d'exclusion automatique).",
-                        Severity.FORT, source=src))
-                else:
-                    verdicts.append(soft_flag(
-                        self.name,
-                        f"PPR rouge marginal : {red_m2} m² ({cov_pct:.1f} %), hors emprise probable.",
-                        Severity.INFO, source=src))
-                continue
             # Intersection MARGINALE (< min_coverage_pct) → note informative FAIBLE (bord rogné ≠ zone
             # critique) ; sinon FORT prudent. Sévérité INCHANGÉE (score intact) ; seul le LIBELLÉ et la
             # SOURCE changent selon PM1/zoné (M-G).

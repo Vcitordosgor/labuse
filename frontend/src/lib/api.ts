@@ -136,6 +136,8 @@ export const filterParams = (f: Filters): Record<string, string | number> => ({
   ...(f.hauteurMax != null ? { hauteur_max: f.hauteurMax } : {}),
   ...(f.empriseMin != null ? { emprise_min: f.empriseMin } : {}),
   ...(f.empriseMax != null ? { emprise_max: f.empriseMax } : {}),
+  // CHASSE-INVARIANTS-FIX-1 (Lot 1, E-01) — « Saturé » (emprise bâtie > 100 %) : valeur de filtre à part entière.
+  ...(f.empriseSature ? { emprise_sature: 'true' } : {}),
   ...(f.caMin != null ? { ca_min: f.caMin } : {}),
   // mode B rentable : porte AUSSI les paramètres du curseur SESSION partagé (L2)
   ...(f.modeBRentable ? {
@@ -173,11 +175,13 @@ export interface FiltreReponse {
   segments?: { permis_pro: number; terrain_nu: number; bati_densifier: number; reste: number }
   // ANALYSE-1 — ventilation par BANDE du run candidat (Excellente A / Bonne B / À étudier C / Faible D /
   // Sans potentiel 0 / Analyse incomplète NC), comptes bruts du moteur (aucun quota/rang/percentile).
-  bandes?: Record<'A' | 'B' | 'C' | 'D' | '0' | 'NC', number>
+  // CHASSE-INVARIANTS-FIX-1 Lot 3 (E-10) — « HC » (Hors classement) ajouté : les comptes peuvent
+  // désormais porter cette catégorie à part (parcelles écartées en dur par la cascade).
+  bandes?: Partial<Record<'A' | 'B' | 'C' | 'D' | '0' | 'NC' | 'HC', number>>
   bande_total?: number
   // ANALYSE-2/3 — croisement bande × Signal sur TOUTES les bandes (compteur filtré + preuve 20 combos
   // + cross-filtrage des 5 pastilles de l'encart par le Signal).
-  bandes_signal?: Record<'A' | 'B' | 'C' | 'D' | '0' | 'NC', Record<'fort' | 'moyen' | 'faible', number>>
+  bandes_signal?: Partial<Record<'A' | 'B' | 'C' | 'D' | '0' | 'NC' | 'HC', Record<'fort' | 'moyen' | 'faible', number>>>
   opportunites: number
   opportunites_evenement: number
   dossiers_opportunites: number

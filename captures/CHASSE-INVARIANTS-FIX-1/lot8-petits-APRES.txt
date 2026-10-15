@@ -1,0 +1,9 @@
+CHASSE-INVARIANTS-FIX-1 Lot 8 — E-12 / E-14
+
+E-12 surface_ha = parc vivant (même filtre que n_parcelles) :
+  garde : 24/24 communes, surface_ha = parc vivant (0 écart) — fin des « hectares fantômes »
+  (Saint-Paul +153 ha, Saint-André +120 ha avant).
+
+E-14 tuile MVT x/y hors [0, 2^z) → 204 (jamais 500), sur les DEUX routes :
+  helper unique tuile_hors_grille, lu par /map/tiles/{z}/{x}/{y}.pbf ET /map/tiles/{kind}/{z}/{x}/{y}.pbf
+  garde : 6 tuiles hors grille servies proprement (204), 0 × HTTP 500.

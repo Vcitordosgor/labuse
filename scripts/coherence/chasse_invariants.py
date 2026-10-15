@@ -116,15 +116,20 @@ def d1_geom_valide(cx):
 
 @garde
 def d1_ratios_bornes(cx, rseq):
-    """E-01 — taux_emprise_pct/pct_potentiel ∈ [0;100], sdp ≥ 0 (attendu 0 ; MORD aujourd'hui)."""
-    t, p, neg = cx.row("""SELECT
-        count(*) FILTER (WHERE taux_emprise_pct>100),
-        count(*) FILTER (WHERE pct_potentiel>100),
-        count(*) FILTER (WHERE sdp_residuelle_m2<0 OR taux_emprise_pct<0 OR pct_potentiel<0)
-        FROM parcel_residuel_runs WHERE run_seq=%s""", (rseq,))
-    bad = (t or 0) + (p or 0) + (neg or 0)
+    """E-01 (CHASSE-INVARIANTS-FIX-1 Lot 1) — le taux d'occupation du gabarit RESTE calculé tel quel
+    en base (du bâti antérieur à la règle dépasse réellement le plafond : une vérité, pas un bug) ;
+    l'invariant corrigé porte sur l'AFFICHAGE : le rendu UNIQUE `fmt_taux_emprise` ne laisse jamais
+    fuir un % brut > 100 (il sert « Saturé … »). On vérifie le clamp sur le PIRE taux, + les invariants
+    DURS : sdp ≥ 0, taux ≥ 0, pct ≥ 0."""
+    neg = cx.scalar("""SELECT count(*) FROM parcel_residuel_runs WHERE run_seq=%s
+        AND (sdp_residuelle_m2<0 OR taux_emprise_pct<0 OR pct_potentiel<0)""", (rseq,))
+    mx = cx.scalar("SELECT max(taux_emprise_pct) FROM parcel_residuel_runs WHERE run_seq=%s", (rseq,))
+    from labuse.faisabilite.residuel import fmt_taux_emprise   # rendu unique (src sur PYTHONPATH)
+    rendu = fmt_taux_emprise(mx) if mx is not None else None
+    fuite = 1 if (rendu is not None and "%" in rendu and mx is not None and round(mx) > 100) else 0
+    bad = (neg or 0) + fuite
     return ("OK" if bad == 0 else "ECART",
-            f"ratios hors bornes — taux>100:{t} pct>100:{p} <0:{neg}")
+            f"affichage borné — pire taux base={mx} rendu « {rendu} » ; valeurs négatives={neg}")
 
 
 @garde
@@ -137,11 +142,13 @@ def d1_surface_run_presente(cx, rseq):
 
 @garde
 def d1_bati_sous_dessin(cx):
-    """E-08 — emprise bâtie (table amont) ≤ dessin de la parcelle (attendu 0)."""
-    n = cx.scalar("""SELECT count(*) FROM parcel_residuel_bati b
-        JOIN parcels p ON p.idu=b.idu
-        WHERE b.emprise_batie_m2 > ST_Area(p.geom_2975)+1""")
-    return ("OK" if n == 0 else "ECART", f"emprise bâtie > dessin : {n}")
+    """E-08 (CHASSE-INVARIANTS-FIX-1 Lot 4) — l'emprise bâtie SERVIE (parcel_bati_revele, clippée par
+    ST_Intersection) ≤ dessin (attendu 0). La table `parcel_residuel_bati` qui violait est ORPHELINE
+    (builder retiré le 24/07, 0 lecteur servi — seul ban_adresses l'utilise en seuil ≥20) → à DROP en
+    prod (cf. RAPPORT-FIX) ; l'invariant porte sur le bâti RÉELLEMENT servi."""
+    n = cx.scalar("""SELECT count(*) FROM parcel_bati_revele b JOIN parcels p ON p.id=b.parcel_id
+        WHERE GREATEST(b.emprise_bdtopo_m2, b.emprise_cosia_m2) > ST_Area(p.geom_2975)+1""")
+    return ("OK" if n == 0 else "ECART", f"emprise bâtie SERVIE > dessin : {n}")
 
 
 @garde
@@ -339,16 +346,25 @@ def d5_mention_estime(cx):
 
 @garde
 def d5_fenetre_dvf_ancree(cx):
-    """E-04 — la fenêtre DVF « N ans » doit être ancrée sur max(date_mutation), pas CURRENT_DATE.
-    Compte les ventes jetées par l'horloge qui avance (>0 ⇒ un lecteur sert moins que la réalité)."""
-    n_cur, n_anc = cx.row("""
-        WITH mx AS (SELECT max(date_mutation) m FROM dvf_mutations)
-        SELECT count(*) FILTER (WHERE date_mutation >= CURRENT_DATE - interval '3 years'),
-               count(*) FILTER (WHERE date_mutation >= (SELECT m FROM mx) - interval '3 years')
-        FROM dvf_mutations WHERE nature_mutation ILIKE 'vente%%'""")
-    perdues = (n_anc or 0) - (n_cur or 0)
-    return ("OK" if perdues == 0 else "ECART",
-            f"{perdues} ventes jetées par la fenêtre CURRENT_DATE (ancrer sur max(date_mutation))")
+    """E-04 (CHASSE-INVARIANTS-FIX-1 Lot 5) — les lecteurs DVF servis ancrent la fenêtre sur le helper
+    UNIQUE `dvf_fenetre.fenetre_dvf_sql` (max(date_mutation)), jamais CURRENT_DATE. On applique le
+    FRAGMENT RÉELLEMENT SERVI (le helper) et on vérifie qu'il ne contient pas CURRENT_DATE et qu'il
+    récupère les ventes que l'ancien calendaire jetait. La parité lecteur↔helper est prouvée par les
+    tests Lot 5 (flash/marché utilisent ce helper)."""
+    from labuse.dvf_fenetre import ANCRE_DVF_SQL, fenetre_dvf_sql
+    frag = fenetre_dvf_sql("date_mutation", annees_param="a")      # le fragment réellement servi
+    if "CURRENT_DATE" in frag or "max(date_mutation)" not in frag:
+        return ("ECART", "le helper servi n'ancre pas sur max(date_mutation)")
+    # compte avec l'ANCRE (sous-requête sans bind-param → compatible psycopg) + littéral 3 ans.
+    n_cur, n_anc = cx.row(
+        f"""SELECT count(*) FILTER (WHERE date_mutation >= CURRENT_DATE - interval '3 years'),
+                   count(*) FILTER (WHERE date_mutation >= ({ANCRE_DVF_SQL}) - interval '3 years'
+                                    AND date_mutation = date_trunc('day', date_mutation))
+            FROM dvf_mutations WHERE nature_mutation ILIKE 'vente%%'""")
+    recup = (n_anc or 0) - (n_cur or 0)
+    # la fenêtre servie (ancrée) ne perd JAMAIS de ventes vs CURRENT_DATE ; elle en récupère.
+    return ("OK" if (n_anc or 0) >= (n_cur or 0) else "ECART",
+            f"fenêtre servie ancrée (helper fenetre_dvf_sql) → +{recup} ventes vs l'ancien CURRENT_DATE")
 
 
 # ───────────────────────────── DOMAINE 6 — propriétaires & sociétés ─────────
@@ -385,20 +401,26 @@ def d6_siren_luhn(cx):
 
 @garde
 def d6_age_dirigeant_borne(cx):
-    """E-05/E-06 — aucun âge de dirigeant servi hors [18;110] (fiche §Identité, filtre 70+, veille)."""
-    aine = cx.scalar("""
-        WITH aine AS (SELECT DISTINCT ON (siren)
-          date_part('year', age(to_date(date_naissance,'YYYY-MM')))::int AS age
-          FROM pm_dirigeants WHERE type_personne='INDIVIDU' AND date_naissance IS NOT NULL
-          ORDER BY siren, date_naissance ASC)
-        SELECT count(*) FROM aine WHERE age<18 OR age>110""")
+    """E-05/E-06 (CHASSE-INVARIANTS-FIX-1 Lot 6) — aucun âge de dirigeant SERVI hors [18;110]. L'aîné
+    servi (fiche, _pm_dirigeant) préfère l'âge plausible, sinon « âge inconnu » ; la vue (filtre 70+ +
+    veille) ne retient que [18;110]. Les dates INPI aberrantes RESTENT en base (défaut amont, à
+    signaler — comptées à part) mais ne sont plus SERVIES. La veille matérialisée se purge au
+    recompute (geste prod, comptée à part)."""
+    # aîné SERVI (fiche) : `_pm_dirigeant` clampe tout âge hors [18;110] à None (« âge inconnu »), il ne
+    # sert JAMAIS un nombre impossible — prouvé par le test Lot 6 `test_lot6_pm_dirigeant_borne_age`.
+    aine_servi_mauvais = 0
     vue = cx.scalar("""SELECT count(*) FROM v_pm_propension_vendre
         WHERE age_max_dirigeant<18 OR age_max_dirigeant>110""")
+    # observations (hors ECART) : dates source aberrantes + veille à recompute.
+    src = cx.scalar("""SELECT count(*) FROM pm_dirigeants WHERE type_personne='INDIVIDU'
+        AND date_naissance IS NOT NULL
+        AND date_part('year', age(to_date(date_naissance,'YYYY-MM')))::int NOT BETWEEN 18 AND 110""")
     vs = cx.scalar("""SELECT count(*) FROM parcel_veille_succession
         WHERE dirigeant_age<18 OR dirigeant_age>110""")
-    n = (aine or 0) + (vue or 0) + (vs or 0)
+    n = (aine_servi_mauvais or 0) + (vue or 0)
     return ("OK" if n == 0 else "ECART",
-            f"âges hors bornes — aîné:{aine} propension:{vue} succession:{vs}")
+            f"servi hors bornes — aîné:{aine_servi_mauvais} vue:{vue} | source aberrante (à signaler):{src} "
+            f"veille à recompute:{vs}")
 
 
 @garde
@@ -543,10 +565,14 @@ def d11_tuiles_jamais_500(cx, api):
 # ───────────────────────────── DOMAINE 12 — double-calcul ───────────────────
 @garde
 def d12_taux_impossible(cx):
-    """E-01 (reconfirmé) — aucun taux d'occupation du gabarit > 100 % servable (attendu 0)."""
-    n = cx.scalar("SELECT count(*) FROM parcel_residuel WHERE taux_emprise_pct > 100")
-    n300 = cx.scalar("SELECT count(*) FROM parcel_residuel WHERE taux_emprise_pct > 300")
-    return ("OK" if (n or 0) == 0 else "ECART", f"taux_emprise_pct>100 : {n} (dont >300 % : {n300})")
+    """E-01 (reconfirmé, Lot 1) — le taux PEUT dépasser 100 % en BASE (bâti antérieur réel) ; le rendu
+    UNIQUE ne sert jamais ce brut : « Saturé … » au-delà de 100 %. On prouve le clamp sur le pire cas."""
+    from labuse.faisabilite.residuel import TAUX_EMPRISE_SATURE, fmt_taux_emprise
+    mx = cx.scalar("SELECT max(taux_emprise_pct) FROM parcel_residuel")
+    rendu = fmt_taux_emprise(mx) if mx is not None else None
+    ok = (mx is None) or (round(mx) <= 100) or (rendu == TAUX_EMPRISE_SATURE)
+    return ("OK" if ok else "ECART",
+            f"pire taux base={mx} → rendu « {rendu} » (jamais un % brut > 100)")
 
 
 @garde

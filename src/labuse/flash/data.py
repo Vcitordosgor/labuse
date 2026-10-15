@@ -18,6 +18,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from ..api.export_commun import nettoyer_libelle_client  # M127-A3 — meme hygiene de libelle que la fiche
+from ..dvf_fenetre import fenetre_dvf_sql  # E-04 — fenêtre DVF ancrée sur max(date_mutation)
 from .. import runs  # S3 : run servi relu à la requête
 from .. import surface as _surface  # CONTENANCE-1 (Lot B) — surface de terrain = contenance|dessin
 
@@ -475,7 +476,7 @@ def _marche(db: Session, idu: str, avail: set[str]) -> dict | None:
     except Exception:  # noqa: BLE001 — le prix parcellaire ne casse jamais le bloc marché
         pass
     stats = db.execute(text(
-        """WITH p AS (SELECT geom_2975 FROM parcels WHERE idu = :idu)
+        f"""WITH p AS (SELECT geom_2975 FROM parcels WHERE idu = :idu)
            SELECT count(*) AS n,
                   percentile_cont(0.5) WITHIN GROUP (ORDER BY dm.valeur_fonciere
                       / NULLIF(dm.surface_reelle_bati, 0))
@@ -486,7 +487,7 @@ def _marche(db: Session, idu: str, avail: set[str]) -> dict | None:
                               AND COALESCE(dm.surface_reelle_bati, 0) < 20) AS med_m2_terrain
            FROM dvf_mutations dm, p
            WHERE dm.geom IS NOT NULL
-             AND dm.date_mutation >= (CURRENT_DATE - make_interval(years => :annees))
+             AND {fenetre_dvf_sql('dm.date_mutation', annees_param='annees')}
              AND dm.nature_mutation ILIKE 'vente%'
              AND dm.valeur_fonciere > 0
              AND ST_DWithin(ST_Transform(dm.geom, 2975), p.geom_2975, :r)"""),
@@ -504,7 +505,7 @@ def _marche(db: Session, idu: str, avail: set[str]) -> dict | None:
     # prix/m² ABERRANT, MÊME DOCTRINE que la fiche (z-score modifié médiane/MAD > 3,5) — écarte les
     # mutations multi-parcelles (ex. 6,2 M€ / 70 m²). On lit un vivier (≤ 15), on filtre, on affiche 5.
     comps = db.execute(text(
-        """WITH p AS (SELECT geom_2975 FROM parcels WHERE idu = :idu)
+        f"""WITH p AS (SELECT geom_2975 FROM parcels WHERE idu = :idu)
            SELECT dm.type_local, dm.surface_reelle_bati, dm.surface_terrain,
                   dm.valeur_fonciere, to_char(dm.date_mutation, 'MM/YYYY') AS mois,
                   CASE WHEN dm.surface_reelle_bati >= 20
@@ -512,7 +513,7 @@ def _marche(db: Session, idu: str, avail: set[str]) -> dict | None:
                        END AS prix_m2_bati
            FROM dvf_mutations dm, p
            WHERE dm.geom IS NOT NULL
-             AND dm.date_mutation >= (CURRENT_DATE - make_interval(years => :annees))
+             AND {fenetre_dvf_sql('dm.date_mutation', annees_param='annees')}
              AND dm.nature_mutation ILIKE 'vente%'
              AND dm.valeur_fonciere > 0 AND dm.type_local IS NOT NULL
              AND ST_DWithin(ST_Transform(dm.geom, 2975), p.geom_2975, :r)

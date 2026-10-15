@@ -1686,15 +1686,23 @@ def ensure_pm_propension_view(engine) -> None:
             "    count(*) AS nb_dirigeants, "
             "    count(*) FILTER (WHERE d.type_personne = 'INDIVIDU') AS nb_individus, "
             # âge = plancher en années depuis 'YYYY-MM' (jour inconnu → 1er du mois) ; l'AÎNÉ = max
+            # CHASSE-INVARIANTS-FIX-1 Lot 6 (E-05/E-06) — garde-fou de bornes [18;110] à la SOURCE :
+            # les dates INPI aberrantes (1909/1911, ou futures) donnaient des âges 114/117 qui
+            # entraient en « Succession à venir » (band tres_eleve) et passaient le filtre 70+. On
+            # ne retient que les âges PLAUSIBLES pour l'aîné ; une SCI dont TOUS les dirigeants ont
+            # une date aberrante a age_max_dirigeant NULL → hors succession, hors filtre 70+.
             "    max(date_part('year', age(to_date(d.date_naissance, 'YYYY-MM')))::int) "
-            "      FILTER (WHERE d.type_personne = 'INDIVIDU' AND d.date_naissance IS NOT NULL) "
+            "      FILTER (WHERE d.type_personne = 'INDIVIDU' AND d.date_naissance IS NOT NULL "
+            "              AND date_part('year', age(to_date(d.date_naissance, 'YYYY-MM')))::int BETWEEN 18 AND 110) "
             "      AS age_direct "
             "  FROM pm_dirigeants d GROUP BY d.siren"
             "), "
             # depth-1 : dirigeants physiques du gérant-société (pm_dirigeant_gigogne), fallback
             "gigogne AS ("
             "  SELECT g.siren, "
-            "    max(date_part('year', age(to_date(g.date_naissance, 'YYYY-MM')))::int) AS age_gigogne "
+            "    max(date_part('year', age(to_date(g.date_naissance, 'YYYY-MM')))::int) "
+            "      FILTER (WHERE date_part('year', age(to_date(g.date_naissance, 'YYYY-MM')))::int BETWEEN 18 AND 110) "
+            "      AS age_gigogne "
             "  FROM pm_dirigeant_gigogne g WHERE g.date_naissance IS NOT NULL GROUP BY g.siren"
             ") "
             "SELECT direct.siren, direct.nb_dirigeants, direct.nb_individus, "

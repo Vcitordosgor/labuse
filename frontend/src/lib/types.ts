@@ -307,8 +307,9 @@ export interface Fiche {
       ape: string | null; activite: string | null; siege: string | null; siege_commune: string | null
       date_creation: string | null; actif: boolean | null; annuaire_url: string; source: string
     } | null
-    // Dirigeant aîné (personne physique) connu au RNE : nom + âge exact. null = inconnu → rien affiché.
-    dirigeant?: { nom: string; age: number } | null
+    // Dirigeant aîné (personne physique) connu au RNE : nom + âge. null = inconnu → rien affiché.
+    // CHASSE-INVARIANTS-FIX-1 Lot 6 (E-05) : age peut être null (date INPI aberrante) → « âge inconnu ».
+    dirigeant?: { nom: string; age: number | null } | null
   } | null
   // L1 (KF-2) — historique du propriétaire PM par millésime + diff CONSTATÉ (hors scoring, PM only)
   proprietaire_historique?: {

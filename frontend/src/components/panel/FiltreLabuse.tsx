@@ -353,6 +353,12 @@ function AffinerRecherche() {
             <p className="label-caps text-txt-dim">Emprise bâtie</p>
             <div className="mt-1 flex items-center gap-1.5"><NumField field="empriseMin" ph="min" /><span className="text-txt-dim">–</span><NumField field="empriseMax" ph="max" suffix="%" /></div>
             <p className="mt-1 text-[10px] leading-snug text-txt-dim">Part de l'emprise constructible déjà couverte par du bâti (run servi) — pas « de la parcelle » : sur un grand terrain la part du sol bâti est plus faible. La même que « État du sol ».</p>
+            {/* CHASSE-INVARIANTS-FIX-1 (Lot 1, E-01) — « Saturé » (> 100 %) est une valeur à part entière :
+                le bâti existant dépasse le plafond d'emprise du PLU, le range 0–100 ne l'atteint jamais. */}
+            <Case data-filtre-emprise-sature className="mt-2"
+              checked={filters.empriseSature}
+              onChange={(e) => setFilter('empriseSature', e.target.checked)}
+              label="Saturé (bâti au-delà du plafond)" />
           </div>
           {/* RECETTE-1 (E2) — « SDP restante » et « Déjà bâti » (part de l'encart Capacité) RETIRÉS
               de « Affiner la recherche » avec le reste de la Capacité. */}

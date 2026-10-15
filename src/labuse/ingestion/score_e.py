@@ -143,6 +143,13 @@ def _eur(x: int) -> str:
 
 
 def _row(idu, surface_m2, sdp, terrain, prix_vente, niveau_prix) -> dict:
+    # CHASSE-INVARIANTS-FIX-1 Lot 7 (E-15) — au-delà de 2 ha, aucune estimation promoteur : c'est
+    # une opération d'aménagement, pas une promotion. Jamais une marge en dizaines de M€ servable.
+    from ..amenagement import DETAIL_AMENAGEMENT, LIBELLE_AMENAGEMENT, est_amenagement
+    if est_amenagement(surface_m2):
+        return {"idu": idu, "estimable": False, "marge": None, "charge": None, "prix": None,
+                "niveau": None, "hv": HYP_VERSION, "court": LIBELLE_AMENAGEMENT,
+                "detail": DETAIL_AMENAGEMENT, "amenagement": True}
     if not sdp or sdp <= 0 or not terrain or not prix_vente or not surface_m2:
         court = "Marge estimée : non estimable"
         detail = ("Marge non estimable : données de marché sectorielles insuffisantes "
