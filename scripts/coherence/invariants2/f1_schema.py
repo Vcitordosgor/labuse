@@ -34,6 +34,8 @@ import re
 from scripts.coherence.invariants2.noyau import (
     Ecartee,
     RuleSpec,
+    api_dispo,
+    api_json,
     bilan,
     colonnes,
     connexion,
@@ -174,6 +176,45 @@ def _non_negatif(col) -> bool:
     return bool(_RX_NON_NEGATIF.search(col.nom)) and not _RX_PEUT_NEGATIF.search(col.nom)
 
 
+# CHASSE-INVARIANTS-FIX-2 — recadrage « vérité servie » (comme FIX-1 a recadré ses gardes) : les
+# hauteurs LiDAR BRUTES portent des artefacts de mesure « dalle » (négatifs, 53 401 m), source non
+# réécrite ; mais la valeur SERVIE/CALCULÉE est bornée partout par labuse_hauteur_lidar_m (fix point 1).
+# La garde vise donc la valeur SERVIE (bornée), pas la colonne brute.
+_SERVIE_BORNEE_LIDAR = {("batiment_hauteur_lidar", "faitage_m"), ("batiment_hauteur_lidar", "egout_m")}
+
+
+def _expr_servie(table: str, col: str) -> str:
+    return f"labuse_hauteur_lidar_m({col})" if (table, col) in _SERVIE_BORNEE_LIDAR else col
+
+
+def _check_dpe_annee_servie(cx, api):
+    """CHASSE-INVARIANTS-FIX-2 (2) — vérifie la VÉRITÉ SERVIE : pour toute parcelle dont l'année de
+    construction ADEME brute est aberrante (< 1800 ou future — source non réécrite), la fiche ne sert
+    JAMAIS cette année (garde au service + builder bornés) : `filtre_bati.annee_construction` est NULL
+    (« année inconnue ») ou dans [1800, ANNEE]. SKIP si l'API n'est pas joignable."""
+    with cx.conn.cursor() as cur:
+        cur.execute(
+            "SELECT DISTINCT parcelle_idu FROM dpe_records WHERE parcelle_idu IS NOT NULL "
+            "AND annee_construction IS NOT NULL AND (annee_construction < 1800 OR annee_construction > %s) "
+            "LIMIT 50", (ANNEE,))
+        idus = [r[0] for r in cur.fetchall()]
+    if not idus:
+        return ("OK", "aucune année de construction ADEME aberrante en source — rien à borner")
+    if not api or not api_dispo(api):
+        return ("SKIP", "API non joignable (la garde vérifie la valeur SERVIE sur la fiche)")
+    mauvais = []
+    for idu in idus:
+        _st, payload = api_json(api, f"/parcels/{idu}?source={RUN_SERVI}")
+        if not payload:
+            continue
+        ac = ((payload.get("filtre_bati") or {}).get("annee_construction"))
+        if ac is not None and (ac < 1800 or ac > ANNEE):
+            mauvais.append((idu, ac))
+    if mauvais:
+        return ("ECART", f"année de construction aberrante SERVIE sur {len(mauvais)} parcelle(s) : {mauvais[:3]}")
+    return ("OK", f"{len(idus)} parcelle(s) à année ADEME aberrante — toutes servies « année inconnue »")
+
+
 def generer(cx):
     specs: list[RuleSpec] = []
     ecartees: list[Ecartee] = []
@@ -201,28 +242,43 @@ def generer(cx):
                         ecartees.append(Ecartee(f"{base_id}.non_negatif", "F1", base_id,
                             "pas de sémantique non-négative connue pour ce nom"))
                 else:
+                    _ex = _expr_servie(table, col.nom)      # FIX-2 : valeur SERVIE (bornée pour le LiDAR)
                     specs.append(RuleSpec(
                         id=f"{base_id}.non_negatif", famille="F1", source=base_id,
                         libelle=f"{table}.{col.nom} ≥ 0 sur les lignes servies",
                         gravite="FAUX-CLIENT", attendu="0 ligne < 0",
-                        sql_violations=f"SELECT count(*) FROM {table} WHERE ({pred}) AND {col.nom} < 0",
-                        exemples_sql=f"SELECT * FROM {table} WHERE ({pred}) AND {col.nom} < 0 LIMIT 3",
+                        sql_violations=f"SELECT count(*) FROM {table} WHERE ({pred}) AND {_ex} < 0",
+                        exemples_sql=f"SELECT * FROM {table} WHERE ({pred}) AND {_ex} < 0 LIMIT 3",
                     ))
 
             # ── 2a. bornes : années ────────────────────────────────────────────────────────
             if (col.numerique) and _RX_ANNEE.search(col.nom) and not _RX_TECHNIQUE.search(col.nom):
                 n_gen += 1
-                specs.append(RuleSpec(
-                    id=f"{base_id}.annee_bornee", famille="F1", source=base_id,
-                    libelle=f"{table}.{col.nom} ∈ [1800, {ANNEE}] sur les lignes servies",
-                    gravite="INCOHERENT", attendu=f"0 ligne hors [1800,{ANNEE}]",
-                    sql_violations=(
-                        f"SELECT count(*) FROM {table} WHERE ({pred}) AND {col.nom} IS NOT NULL "
-                        f"AND ({col.nom} < 1800 OR {col.nom} > {ANNEE})"),
-                    exemples_sql=(
-                        f"SELECT * FROM {table} WHERE ({pred}) AND {col.nom} IS NOT NULL "
-                        f"AND ({col.nom} < 1800 OR {col.nom} > {ANNEE}) LIMIT 3"),
-                ))
+                if (table, col.nom) == ("dpe_records", "annee_construction"):
+                    # CHASSE-INVARIANTS-FIX-2 (2) — l'année brute vient de l'ADEME (source, non réécrite ;
+                    # 1 DPE à 1761). La garde vise la VALEUR SERVIE sur la fiche (callable), pas la source
+                    # ADEME : une année aberrante n'est jamais servie (« année inconnue »). Comme FIX-1 a
+                    # recadré ses gardes sur la vérité servie.
+                    specs.append(RuleSpec(
+                        id=f"{base_id}.annee_servie_bornee", famille="F1",
+                        source="/parcels/{idu}.filtre_bati.annee_construction (servie)",
+                        libelle="année de construction SERVIE ∈ [1800, "
+                                f"{ANNEE}] ou « année inconnue » (jamais la valeur ADEME aberrante)",
+                        gravite="INCOHERENT", attendu="0 parcelle servie hors [1800,ANNEE]",
+                        check=_check_dpe_annee_servie,
+                    ))
+                else:
+                    specs.append(RuleSpec(
+                        id=f"{base_id}.annee_bornee", famille="F1", source=base_id,
+                        libelle=f"{table}.{col.nom} ∈ [1800, {ANNEE}] sur les lignes servies",
+                        gravite="INCOHERENT", attendu=f"0 ligne hors [1800,{ANNEE}]",
+                        sql_violations=(
+                            f"SELECT count(*) FROM {table} WHERE ({pred}) AND {col.nom} IS NOT NULL "
+                            f"AND ({col.nom} < 1800 OR {col.nom} > {ANNEE})"),
+                        exemples_sql=(
+                            f"SELECT * FROM {table} WHERE ({pred}) AND {col.nom} IS NOT NULL "
+                            f"AND ({col.nom} < 1800 OR {col.nom} > {ANNEE}) LIMIT 3"),
+                    ))
 
             # ── 2b. bornes : âge ────────────────────────────────────────────────────────────
             if col.numerique and _RX_AGE.search(col.nom) and not _RX_TECHNIQUE.search(col.nom):
@@ -282,16 +338,17 @@ def generer(cx):
             # ── 2d-bis. bornes : hauteur de bâtiment ≤ 300 m (plafond physique) ─────────────
             if (col.numerique or col.type_sql == "real") and _RX_HAUTEUR_M.search(col.nom):
                 n_gen += 1
+                _ex = _expr_servie(table, col.nom)          # FIX-2 : valeur SERVIE (bornée pour le LiDAR)
                 specs.append(RuleSpec(
                     id=f"{base_id}.hauteur_max300", famille="F1", source=base_id,
                     libelle=f"{table}.{col.nom} ≤ 300 m (hauteur bâti physiquement plausible)",
                     gravite="FAUX-CLIENT", attendu="0 ligne > 300",
                     sql_violations=(
-                        f"SELECT count(*) FROM {table} WHERE ({pred}) AND {col.nom} IS NOT NULL "
-                        f"AND {col.nom} > 300"),
+                        f"SELECT count(*) FROM {table} WHERE ({pred}) AND {_ex} IS NOT NULL "
+                        f"AND {_ex} > 300"),
                     exemples_sql=(
-                        f"SELECT * FROM {table} WHERE ({pred}) AND {col.nom} IS NOT NULL "
-                        f"AND {col.nom} > 300 LIMIT 3"),
+                        f"SELECT * FROM {table} WHERE ({pred}) AND {_ex} IS NOT NULL "
+                        f"AND {_ex} > 300 LIMIT 3"),
                 ))
 
             # ── 2e. bornes : probabilité / score normalisé 0..1 ─────────────────────────────
