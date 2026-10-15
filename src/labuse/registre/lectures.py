@@ -596,6 +596,29 @@ LECTURES: tuple[Lecture, ...] = (
       "prix_sortie_neuf_servi : résolution idu→parcels.id avant resolve_prix_sortie_servi (le prix de sortie NEUF vient de DVF, pas de parcels) — jointure technique, aucun chiffre de parcels servi."),
     L("parcels", "verite_sources.py", None, None,
       "SOLIDITE-1 Lot 5 — echantillon_stratifie : tire des idu/commune au hasard (strates contenance≠dessin/bizone/nouvelle/zone rouge) pour la sonde mensuelle « vérité face aux sources » — tirage de témoins, aucune écriture hors le rapport, aucune donnée servie."),
+    # ── VERITE-TERRAIN-1 — comparateur « LABUSE face aux sources officielles » sur 500 parcelles.
+    # MACHINERIE : outil de contrôle en LECTURE SEULE (confronte la valeur servie à la source
+    # officielle interrogée en direct) ; ne produit aucune donnée servie au client, aucun robinet,
+    # aucune écriture en base. Les tables sont lues soit pour TIRER l'échantillon stratifié, soit
+    # pour COMPARER le servi à l'officiel.
+    L("parcels", "verite_terrain.py", None, None,
+      "VERITE-TERRAIN-1 (contrôle LECTURE SEULE) — tirage de l'échantillon 500 reproductible : commune/contenance/surface/geom pour les strates (contenance≠dessin, surface incertaine, cadastre d'octobre, bizone/PPR/littoral par intersection) + complément prorata communal. Tirage de témoins, aucun robinet servi, aucune écriture."),
+    L("parcels", "verite_terrain_sources.py", None, None,
+      "VERITE-TERRAIN-1 (contrôle LECTURE SEULE) — lit surface_m2/geom (bbox RNB, aire projetée vs API Carto, intersections PPR/aléa/zone GPU) pour comparer contenance/aire/bâti/risques/PLU aux sources officielles. Comparaison d'audit, aucun robinet, aucune écriture."),
+    L("dvf_mutations_parcelle", "verite_terrain.py", None, None,
+      "VERITE-TERRAIN-1 (contrôle LECTURE SEULE) — strate « ventes récentes » du tirage (idu ayant une mutation ≥ 2024). Échantillonnage d'audit, aucun robinet servi, aucune écriture."),
+    L("parcelle_personne_morale", "verite_terrain.py", None, None,
+      "VERITE-TERRAIN-1 (contrôle LECTURE SEULE) — strate « propriétaire société » du tirage (idu avec SIREN). Échantillonnage d'audit, aucun robinet servi, aucune écriture."),
+    L("plu_reglement_extrait", "verite_terrain.py", None, None,
+      "VERITE-TERRAIN-1 (contrôle LECTURE SEULE) — strate « zones calibrées PLU » du tirage (jointure zone servie ↔ extrait de règlement par INSEE). Échantillonnage d'audit, aucun robinet servi, aucune écriture."),
+    L("plu_reglement_extrait", "verite_terrain_plu_regles.py", None, None,
+      "VERITE-TERRAIN-1 (contrôle LECTURE SEULE) — relit le verbatim officiel du règlement à la page citée pour vérifier les règles chiffrées servies (hauteur/emprise/reculs) contre le texte opposable. Relecture d'audit, aucun robinet servi, aucune écriture."),
+    L("sitadel_permits", "verite_terrain.py", None, None,
+      "VERITE-TERRAIN-1 (contrôle LECTURE SEULE) — strate « permis » du tirage (idu présent dans idu_codes). Échantillonnage d'audit, aucun robinet servi, aucune écriture."),
+    L("sitadel_permits", "verite_terrain_sources.py", None, None,
+      "VERITE-TERRAIN-1 (contrôle LECTURE SEULE) — compte les permis rattachés à la parcelle (source 8, documentaire : pas d'API Sitadel au point pour un contrôle vif). Comparaison d'audit, aucun robinet servi, aucune écriture."),
+    L("dpe_records", "verite_terrain_sources.py", None, None,
+      "VERITE-TERRAIN-1 (contrôle LECTURE SEULE) — lit numero_dpe/etiquette_dpe/parcelle_idu pour vérifier chaque DPE rattaché à la parcelle contre l'ADEME (par numéro de DPE). Comparaison d'audit, aucun robinet servi, aucune écriture."),
 )
 
 
