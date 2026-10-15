@@ -323,7 +323,9 @@ LEFT JOIN LATERAL (
 -- faîtage = MAX des mesures LiDAR de la parcelle (le bâtiment le plus HAUT → cran R+2 déclenché
 -- dès qu'un bâtiment ≥ faitage_r2_m, quel que soit l'ordre).
 LEFT JOIN LATERAL (
-    SELECT max(h0.faitage_m) AS faitage_m FROM batiment_hauteur_lidar h0 WHERE h0.idu = p.idu) h ON TRUE
+    -- CHASSE-INVARIANTS-FIX-2 (1) — le CALCUL n'utilise jamais une hauteur aberrante : borne unique
+    -- labuse_hauteur_lidar_m (≤ 0 ou > plafond ⇒ NULL) avant le max (effet au prochain run).
+    SELECT max(labuse_hauteur_lidar_m(h0.faitage_m)) AS faitage_m FROM batiment_hauteur_lidar h0 WHERE h0.idu = p.idu) h ON TRUE
 -- terrain : pente la plus CONTRAIGNANTE (la plus forte) si plusieurs mesures.
 LEFT JOIN LATERAL (
     SELECT max(t0.pente_moy_deg) AS pente_moy_deg FROM parcel_terrain t0 WHERE t0.idu = p.idu) t ON TRUE

@@ -22,7 +22,10 @@ def test_where_bati_construit_hauteur_emprise():
     w, p = _q_v2_where("q_v11_m137", None, None, None, False, None,
                        hauteur_min=3.0, hauteur_max=10.0, emprise_min=5, emprise_max=80)
     assert "batiment_hauteur_lidar" in w
-    assert "faitage_m >= :f_hmin" in w and "faitage_m <= :f_hmax" in w
+    # CHASSE-INVARIANTS-FIX-2 (1) — le filtre hauteur lit la valeur BORNÉE (labuse_hauteur_lidar_m) :
+    # une mesure aberrante (≤ 0 ou > plafond) ⇒ NULL, jamais dans la fourchette.
+    assert "labuse_hauteur_lidar_m(bhl0.faitage_m) >= :f_hmin" in w
+    assert "labuse_hauteur_lidar_m(bhl1.faitage_m) <= :f_hmax" in w
     assert p["f_hmin"] == 3.0 and p["f_hmax"] == 10.0
     # CHASSE-DONNEES-FIX-1 (Lot 4, E-81) — l'emprise non MESURÉE (taux NULL) ne passe plus les bornes
     # comme un 0 : le filtre exige une valeur RÉELLE (IS NOT NULL), plus COALESCE(...,0).

@@ -46,7 +46,9 @@ def _niveaux_existants(session: Session, parcel_id: int, defaut: float) -> tuple
     #    (base sans ingestion LiDAR) → repli BD TOPO, jamais une erreur.
     try:
         egout = session.execute(text(
-            "SELECT l.egout_m FROM batiment_hauteur_lidar l JOIN parcels p ON p.idu = l.idu "
+            # CHASSE-INVARIANTS-FIX-2 (1) — même borne unique : un égout ≤ 0 ou > plafond ⇒ NULL, le
+            # calcul de surélévation ne l'utilise pas (repli BD TOPO, comme une mesure absente).
+            "SELECT labuse_hauteur_lidar_m(l.egout_m) FROM batiment_hauteur_lidar l JOIN parcels p ON p.idu = l.idu "
             "WHERE p.id = :pid"), {"pid": parcel_id}).scalar()
     except Exception:  # noqa: BLE001 — table/colonnes absentes → repli BD TOPO
         try:

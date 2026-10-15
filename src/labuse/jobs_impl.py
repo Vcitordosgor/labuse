@@ -204,6 +204,23 @@ def coherence_banc(ctx: JobContext) -> None:
     if res2["n_gardes"] and res2["skip"] == res2["n_gardes"]:
         raise RuntimeError(f"banc chasse illisible : {res2['skip']}/{res2['n_gardes']} gardes en SKIP "
                            "(app non démarrable en-process ou base coupée) — passage non probant.")
+    # CHASSE-INVARIANTS-FIX-2 (3) — PUIS le banc des 1 000+ invariants GÉNÉRÉS (vague 2). Chaque nuit
+    # le sous-ensemble RAPIDE (`--nuit` : SQL île + moteur, ~4 min, sans les 2 boucles API cadencées) ;
+    # le DIMANCHE, TOUT (`--tout`, ~18 min, inclut F2 valeur inter-surfaces et F5 API). Lecture seule.
+    import os
+    from datetime import datetime
+    try:
+        from scripts.coherence.invariants2.banc2 import executer as _banc2
+    except Exception as e:  # noqa: BLE001 — le banc fait partie du produit : introuvable = échec
+        raise RuntimeError(f"banc2 (invariants générés) introuvable : {e}") from e
+    _mode = "tout" if datetime.now().weekday() == 6 else "nuit"   # dimanche = l'intégrale hebdo
+    _api = os.environ.get("LABUSE_BANC2_API") or "http://127.0.0.1:8793"
+    _bil = _banc2(mode=_mode, api=_api, base=True)
+    ctx.compte(banc2_mode=_mode, banc2_ok=_bil["ok"], banc2_ecart=_bil["ecart"],
+               banc2_skip=_bil["skip"], banc2_regles=_bil["n"], banc2_duree_s=_bil["duree_s"])
+    # banc2 n'a rien pu exécuter (0 règle) = passage non probant (modules introuvables / DB coupée).
+    if _bil["n"] == 0:
+        raise RuntimeError("banc2 non probant : 0 règle exécutée (modules invariants2 ou base inatteignables).")
 
 
 def radar_cycle(ctx: JobContext) -> None:

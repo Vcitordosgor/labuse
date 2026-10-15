@@ -168,7 +168,11 @@ def hauteur_lidar_servie(db, idu: str) -> dict | None:
     from sqlalchemy import text
     try:
         row = db.execute(text(
-            "SELECT faitage_m, egout_m, hauteur_bdtopo_m, ecart_faitage_bdtopo_m, n_cellules, "
+            # CHASSE-INVARIANTS-FIX-2 (1) — borne UNIQUE à la source : une mesure ≤ 0 ou > plafond
+            # réaliste (labuse_hauteur_lidar_m) devient NULL ⇒ « hauteur non mesurée », jamais servie.
+            "SELECT labuse_hauteur_lidar_m(faitage_m) AS faitage_m, "
+            "labuse_hauteur_lidar_m(egout_m) AS egout_m, "
+            "hauteur_bdtopo_m, ecart_faitage_bdtopo_m, n_cellules, "
             "date_fin_survol, code_mission "
             "FROM batiment_hauteur_lidar WHERE idu = :i"), {"i": idu}).mappings().first()
     except Exception:  # noqa: BLE001 — table/colonnes absentes (pas encore d'ingestion) → repli BD TOPO

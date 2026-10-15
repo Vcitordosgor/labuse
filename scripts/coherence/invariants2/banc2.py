@@ -63,6 +63,70 @@ def _run_base_v1(cx, api):
     return n_ok, n_ec, n_sk, ecarts
 
 
+def executer(mode: str = "nuit", api: str = "http://127.0.0.1:8793", base: bool = True,
+             vouloir: set | None = None, imprimer: bool = False) -> dict:
+    """Joue le banc (mode 'nuit' = sous-ensemble rapide, 'tout' = toutes les règles) et rend un bilan
+    {ok, ecart, skip, n, ecarts, duree_s, par_famille}. Lecture seule. Ne lève pas (sauf DSN mort) ;
+    utilisable en-process par le job de nuit `coherence-banc` comme en CLI."""
+    tout = (mode == "tout")
+    run, rseq, cascade = _served_run()
+    if imprimer:
+        lib = "TOUT (hebdo)" if tout else "NUIT (rapide)"
+        print(f"CHASSE-INVARIANTS-2 — banc de nuit · run servi {run}/seq{rseq}/{cascade} · mode {lib}")
+        print(f"DSN={_dsn_defaut()}  API={api}\n")
+    cx = Cx(_dsn_defaut())
+    t0 = time.time()
+    tot_ok = tot_ec = tot_sk = 0
+    tous_ecarts: list[str] = []
+    par_famille: dict[str, dict] = {}
+    try:
+        if base and (vouloir is None):
+            tb = time.time()
+            ok, ec, sk, ecs = _run_base_v1(cx, api)
+            tot_ok += ok; tot_ec += ec; tot_sk += sk; tous_ecarts += ecs
+            par_famille["BASE"] = {"ok": ok, "ecart": ec, "skip": sk}
+            if imprimer:
+                print(f"── BASE vague-1 (97 repris) : {ok} OK · {ec} ECART · {sk} SKIP  [{time.time()-tb:.0f}s]")
+        for code, modname, lourde in FAMILLES:
+            if vouloir is not None and code.upper() not in vouloir:
+                continue
+            if not tout and lourde:
+                if imprimer:
+                    print(f"── {code} : sauté en mode NUIT (lourd/cadencé — rejoué en --tout)")
+                continue
+            try:
+                mod = importlib.import_module(modname)
+            except Exception as e:  # noqa: BLE001
+                if imprimer:
+                    print(f"── {code} : INDISPONIBLE ({type(e).__name__}: {e})")
+                continue
+            tf = time.time()
+            _res = mod.generer(cx)            # F1 rend (specs, ecartees, n_gen) ; les autres (specs, ecartees)
+            specs = _res[0]
+            res = run_specs(cx, specs, api)
+            b = bilan(res)
+            tot_ok += b["OK"]; tot_ec += b["ECART"]; tot_sk += b["SKIP"]
+            par_famille[code] = {"ok": b["OK"], "ecart": b["ECART"], "skip": b["SKIP"], "n": len(specs)}
+            for r in res:
+                if r.statut == "ECART":
+                    tous_ecarts.append(f"{code} :: {r.spec.id} [{r.spec.gravite}] — {r.message}")
+            if imprimer:
+                print(f"── {code} : {len(specs)} retenues ({len(_res[1])} écartées) → "
+                      f"{b['OK']} OK · {b['ECART']} ECART · {b['SKIP']} SKIP  [{time.time()-tf:.0f}s]")
+    finally:
+        cx.close()
+    bil = {"ok": tot_ok, "ecart": tot_ec, "skip": tot_sk, "n": tot_ok + tot_ec + tot_sk,
+           "ecarts": tous_ecarts, "duree_s": round(time.time() - t0, 1), "par_famille": par_famille}
+    if imprimer:
+        print(f"\nBILAN vague 2 : {tot_ok} OK · {tot_ec} ECART · {tot_sk} SKIP  "
+              f"(règles exécutées : {bil['n']})  [{bil['duree_s']:.0f}s]")
+        if tous_ecarts:
+            print("ECARTS :")
+            for e in tous_ecarts:
+                print("  - " + e)
+    return bil
+
+
 def main():
     ap = argparse.ArgumentParser(description="CHASSE-INVARIANTS-2 — banc de nuit (lecture seule)")
     ap.add_argument("--api", default="http://127.0.0.1:8793")
@@ -72,58 +136,10 @@ def main():
     ap.add_argument("--no-base", dest="base", action="store_false", help="ne pas rejouer les 97 de la vague 1")
     ap.set_defaults(base=True)
     args = ap.parse_args()
-    tout = args.tout and not args.nuit
     vouloir = set(f.strip().upper() for f in args.famille.split(",")) if args.famille else None
-
-    run, rseq, cascade = _served_run()
-    mode = "TOUT (hebdo)" if tout else "NUIT (rapide)"
-    print(f"CHASSE-INVARIANTS-2 — banc de nuit · run servi {run}/seq{rseq}/{cascade} · mode {mode}")
-    print(f"DSN={_dsn_defaut()}  API={args.api}\n")
-
-    cx = Cx(_dsn_defaut())
-    t0 = time.time()
-    tot_ok = tot_ec = tot_sk = 0
-    tous_ecarts = []
-
-    try:
-        if args.base and (vouloir is None):
-            tb = time.time()
-            ok, ec, sk, ecs = _run_base_v1(cx, args.api)
-            tot_ok += ok; tot_ec += ec; tot_sk += sk; tous_ecarts += ecs
-            print(f"── BASE vague-1 (97 repris) : {ok} OK · {ec} ECART · {sk} SKIP  [{time.time()-tb:.0f}s]")
-
-        for code, modname, lourde in FAMILLES:
-            if vouloir is not None and code.upper() not in vouloir:
-                continue
-            if not tout and lourde:
-                print(f"── {code} : sauté en mode NUIT (lourd/cadencé — rejoué en --tout)")
-                continue
-            try:
-                mod = importlib.import_module(modname)
-            except Exception as e:  # noqa: BLE001
-                print(f"── {code} : INDISPONIBLE ({type(e).__name__}: {e})")
-                continue
-            tf = time.time()
-            _res = mod.generer(cx)            # F1 rend (specs, ecartees, n_gen) ; les autres (specs, ecartees)
-            specs, ecartees = _res[0], _res[1]
-            res = run_specs(cx, specs, args.api)
-            b = bilan(res)
-            tot_ok += b["OK"]; tot_ec += b["ECART"]; tot_sk += b["SKIP"]
-            for r in res:
-                if r.statut == "ECART":
-                    tous_ecarts.append(f"{code} :: {r.spec.id} [{r.spec.gravite}] — {r.message}")
-            print(f"── {code} : {len(specs)} retenues ({len(ecartees)} écartées) → "
-                  f"{b['OK']} OK · {b['ECART']} ECART · {b['SKIP']} SKIP  [{time.time()-tf:.0f}s]")
-    finally:
-        cx.close()
-
-    print(f"\nBILAN vague 2 : {tot_ok} OK · {tot_ec} ECART · {tot_sk} SKIP  "
-          f"(règles exécutées : {tot_ok + tot_ec + tot_sk})  [{time.time()-t0:.0f}s]")
-    if tous_ecarts:
-        print("ECARTS :")
-        for e in tous_ecarts:
-            print("  - " + e)
-    sys.exit(1 if tot_ec else 0)
+    bil = executer(mode=("tout" if (args.tout and not args.nuit) else "nuit"),
+                   api=args.api, base=args.base, vouloir=vouloir, imprimer=True)
+    sys.exit(1 if bil["ecart"] else 0)
 
 
 if __name__ == "__main__":

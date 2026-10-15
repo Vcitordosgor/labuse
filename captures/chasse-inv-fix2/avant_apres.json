@@ -1,0 +1,109 @@
+{
+  "point1_lidar": {
+    "97413000DC1454": {
+      "AVANT_brut_table": {
+        "faitage_m": -11.6,
+        "egout_m": -15.7,
+        "hauteur_bdtopo_m": 4.5
+      },
+      "APRES_servi_fiche": {
+        "hauteur_faitage_lidar_m": null,
+        "hauteur_egout_lidar_m": null,
+        "hauteur_source_lidar": null
+      }
+    },
+    "97418000AZ0417": {
+      "AVANT_brut_table": {
+        "faitage_m": 53401.6,
+        "egout_m": 4.3,
+        "hauteur_bdtopo_m": 6.1
+      },
+      "APRES_servi_fiche": {
+        "hauteur_faitage_lidar_m": null,
+        "hauteur_egout_lidar_m": null,
+        "hauteur_source_lidar": null
+      }
+    },
+    "97412000AM2014": {
+      "AVANT_brut_table": {
+        "faitage_m": 4.1,
+        "egout_m": -0.7,
+        "hauteur_bdtopo_m": 3.5
+      },
+      "APRES_servi_fiche": {
+        "hauteur_faitage_lidar_m": null,
+        "hauteur_egout_lidar_m": null,
+        "hauteur_source_lidar": null
+      }
+    },
+    "gabarit_97418000AZ0417_bati_existant": {
+      "parcelle": {
+        "idu": "97418000AZ0417",
+        "commune": "Sainte-Marie",
+        "surface_m2": 10945.0
+      },
+      "zone": {
+        "code": "UR",
+        "famille": "U",
+        "a_cheval": false,
+        "via_renvoi": null
+      },
+      "plu": {
+        "emprise_pct": 75.0,
+        "hauteur_faitage_m": 24.0,
+        "hauteur_egout_m": null,
+        "recul_voie_m": 5.0,
+        "recul_sep_m": 4.0,
+        "source": "PLU — Sainte-Marie"
+      },
+      "ppr": {
+        "result": "PASS",
+        "detail": "Aucun risque PPR/aléa intersecté.",
+        "rouge": false
+      },
+      "citation_voie": {
+        "emprises_publiques": false,
+        "voies_privees": false,
+        "article": "Art. U4.2 « activités »",
+        "citation": "en zones UEa et UR : 5 mètres"
+      },
+      "classification": {
+        "provider": "LABUSE — adjacence cadastre + BD TOPO BD TOPO® V3 (IGN) — édition non enregistrée",
+        "voie": 4,
+        "side": 6,
+        "rear": 3,
+        "emprise_publique": 0,
+        "voie_privee": 0,
+        "aretes_residuelles_rattachees": 0,
+        "non_classees": []
+      }
+    }
+  },
+  "point2_dpe": {
+    "AVANT_brut_dpe_records": [
+      {
+        "parcelle_idu": "97418000AW0434",
+        "annee_construction": 1761,
+        "etiquette_dpe": "G"
+      }
+    ],
+    "cache_filtre_bati_table": [
+      {
+        "annee_construction": 1761,
+        "annee_etiquette": "Sourcé",
+        "motif": "bâtie saturée — ratio 60 % (emprise 611 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))"
+      }
+    ],
+    "APRES_servi_fiche_filtre_bati": {
+      "ratio_pct": 59.7,
+      "etage": 3,
+      "annee_construction": null,
+      "annee_etiquette": "Absent",
+      "passoire": true,
+      "divisible": false,
+      "decision": "saturee",
+      "motif": "bâtie saturée — ratio 60 % (emprise 611 m², source max(BD TOPO éd. 2026-06-15, CoSIA PVA 2025))",
+      "source": "max(BD TOPO éd. 2026-06-15, CoSIA PVA juil.-août 2025)"
+    }
+  }
+}

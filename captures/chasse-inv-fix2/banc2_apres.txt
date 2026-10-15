@@ -1,0 +1,17 @@
+CHASSE-INVARIANTS-2 — banc de nuit · run servi q_v18/seq15/q_v18_sources · mode TOUT (hebdo)
+DSN=postgresql://openclaw@localhost:5432/labuse  API=http://127.0.0.1:8793
+
+── BASE vague-1 (97 repris) : 36 OK · 3 ECART · 0 SKIP  [298s]
+── F1 : 238 retenues (65 écartées) → 238 OK · 0 ECART · 0 SKIP  [9s]
+── F2 : 59 retenues (234 écartées) → 59 OK · 0 ECART · 0 SKIP  [411s]
+── F2b : 253 retenues (4 écartées) → 253 OK · 0 ECART · 0 SKIP  [0s]
+── F3 : 72 retenues (2 écartées) → 72 OK · 0 ECART · 0 SKIP  [5s]
+── F4 : 218 retenues (131 écartées) → 218 OK · 0 ECART · 0 SKIP  [0s]
+── F5 : 162 retenues (3 écartées) → 162 OK · 0 ECART · 0 SKIP  [318s]
+── F6 : 33 retenues (11 écartées) → 33 OK · 0 ECART · 0 SKIP  [6s]
+
+BILAN vague 2 : 1071 OK · 3 ECART · 0 SKIP  (règles exécutées : 1074)  [1046s]
+ECARTS :
+  - BASE/1 géométrie & surfaces :: surface du run présente [E-09] — surface_terrain_m2 du run nulle/<=0 : 433229
+  - BASE/4 risques & servitudes :: PPR rouge union vs cascade [E-03] — 224 parcelles ≥50 % PPR rouge (union) sans HARD_EXCLUDE (ex. ids [3030, 3046, 3049, 3050, 3051])
+  - BASE/12 double-calcul :: sous-densité cohérente [E-13] — sous_densite=true mais taux_emprise_pct≥40 : 1148 (bord d'arrondi)
