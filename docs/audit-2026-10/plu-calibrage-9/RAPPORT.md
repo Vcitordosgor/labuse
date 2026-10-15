@@ -88,3 +88,67 @@ automatiquement leur zone mère (pas de feuille dupliquée).
   servitude de zone, et reste donc hors du périmètre d'un `regles.mixite` (déjà déduit comme
   overlay). → servies « **mixité non imposée par le règlement de zone** », jamais 0.
 - **Saint-Philippe** : « sans objet — RNU ».
+
+---
+
+## LOT B — CALIBRAGE
+
+**Schéma** (`plu/destinations.py`, `faisabilite/zonage.py`) : le bloc `regles.<zone>.mixite` accepte
+désormais, et elles seules (toute autre clé = STOP), les formes nécessaires à la mixité —
+`seuil_m2 | seuil_logements`, `quota_pct`, `quota_base`, `produits`, `seuil_type`, `portee` +
+le triplet V6a `article`/`page_pdf`/`citation` + `statut`. `_mixite_leaf` lit ces champs tels quels.
+
+**Calibrage** : **43 zones / 14 communes texte** reçoivent un bloc `mixite` `statut: valide`, la
+citation **copiée verbatim** du règlement déjà transcrit (sous_destinations.logement ou notes de
+zone), article + page cités. Seuil majoritaire **en m² de SDP** (forme 974 : « programme > N m² SDP
+→ X % de logement aidé »), quota 20-40 %. Saint-Denis (7 zones, seuil **en logements**) était déjà
+structuré. Secteur graphique L.151-15 (Saint-Paul, typepsc 17) laissé au moteur bilan existant
+(`_clause_mixite`, piloté par `eco["mixite"]`) — hors périmètre de la règle de zone.
+
+**Silence prouvé = « non imposé » / « sans objet », jamais 0** : les 8 introuvables et les parcelles
+sous le seuil ne reçoivent AUCUN bloc valide → la capacité le dit (cf. Lot C), sans fabriquer de 0.
+
+Vérification automatique (43/43 zones) : parse YAML OK, `statut: valide`, seuil + quota présents,
+V6a complet, **aucune clé hors schéma**, aucune entité HTML, chaque citation parle bien de mixité.
+
+## LOT C — BRANCHEMENT ET PREUVE
+
+**Moteur** (`faisabilite/engine.py`, 11ᵉ étape « Logements sociaux imposés (LLS) ») : la clause
+valide sort désormais, selon le programme,
+- **« ~N logements aidés imposés »** (Sourcé) au-delà du seuil — comparaison **SDP vs `seuil_m2`**
+  (forme 974) ou **logements vs `seuil_logements`** (Saint-Denis) ;
+- **« non imposé »** sous le seuil (clause connue, non déclenchée) ;
+- **« sans objet »** si la zone n'a pas de clause validée.
+
+**Registre** : `mixite_seuil_m2` / `mixite_quota_pct` ne sont **plus `en_attente`** — servis au robinet
+fiche (`robinet_fiche._c_mixite_seuil/_c_mixite_quota`, lus de `reglement_plu.mixite`, **même source
+que l'écran**, seulement si `statut: valide`). Oracle Dossier, section fiche (V5d) et oracle de
+couverture déclarés. `moteur=plu_destinations`. L'invariant « en_attente ⇒ non servie » tient.
+
+**Fiche** (front) : le tiroir Mixité rend le **seuil en m² de SDP** (ou en logements) + les **produits
+visés**, badge **Sourcé** + citation (article/page). Type `MixiteRegle` étendu, double-guillemet corrigé.
+
+**Témoin L'Étang-Salé AW 99+451+624+625 (UA, PLU 17/09/2025)** — captures `captures/` :
+- **Fiche** AVANT (« non modélisée ») → APRÈS (« Sourcé · 20 % · 1000 m² de SDP · UA 1.3 (1) p.17 »).
+- **Capacité** sur l'assemblage (1 746 m², SDP ~2 200 m² > 1 000) → **« ~4-5 logements aidés imposés »**
+  (Sourcé, UA 1.3 (1)). Sur une parcelle seule (501 m², SDP < 1 000) → **« non imposé »**.
+  Écart assumé avec l'archi (29 logts × 20 % = 5,8) : différence de **modèle de densité**, pas de la
+  clause — la règle « > 1 000 m² SDP → 20 % » est appliquée et sourcée à l'identique.
+
+**Preuve automatisée** : `tests/test_plu_calibrage9_mixite.py` (7 tests) — témoin, « non imposé »,
+« sans objet », rétro-compat Saint-Denis (seuil logements), robinet, en_attente levée.
+
+## RENDU — synthèse
+
+| Statut mixité | Communes | Zones servant la mixité |
+|---|---|---|
+| **Structuré** (déjà) | 1 (Saint-Denis) | 7 |
+| **Texte → calibré (Lot B)** | 14 | **43** |
+| **Introuvable** (silence prouvé — servi « non imposé / sans objet ») | 8 (dont 2 avec ER logement géométrique) | 0 |
+| **RNU — sans objet** | 1 (Saint-Philippe) | 0 |
+| **Total** | **24** | **50** |
+
+**Tests verts** : pytest unitaire `2 479 passed` (suite `not db/local/reel/network`, les 2 verrous
+Dossier/section résorbés) + `tests/test_plu_calibrage9_mixite.py` 7/7 ; front `tsc -b` 0 erreur,
+`vitest` 256/256. **Commits par lot** : Lot A `2c935049` · Lot B `a99f07bd` · Lot C `f5ad00be` · preuve
+(ce fichier + captures + SONDAGE-10).

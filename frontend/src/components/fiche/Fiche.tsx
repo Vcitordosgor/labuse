@@ -1791,7 +1791,11 @@ export function Fiche({ idu }: { idu: string }) {
                           )}
                           <FactNote>
                             {mx!.article ? `${mx!.article}${mx!.page_pdf ? ` (p. ${mx!.page_pdf})` : ''} — ` : ''}
-                            {mx!.citation ? `« ${mx!.citation} »` : 'clause de mixité sociale validée au règlement de zone.'}
+                            {/* PLU-CALIBRAGE-9 — citation déjà entre guillemets dans le règlement calibré :
+                                ne pas re-wrapper (évite «« … »»). */}
+                            {mx!.citation
+                              ? (/^\s*[«"]/.test(mx!.citation) ? mx!.citation : `« ${mx!.citation} »`)
+                              : 'clause de mixité sociale validée au règlement de zone.'}
                           </FactNote>
                         </>
                       ) : (
