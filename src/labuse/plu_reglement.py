@@ -28,8 +28,13 @@ _GPU_CONSULT = "https://www.geoportail-urbanisme.gouv.fr/"
 
 
 def _page_imprimee(reference: str) -> int | None:
-    """Première page imprimée citée dans une référence (« Art. 10.2, p.20-21 » → 20)."""
-    m = re.search(r"p\.?\s*(\d+)", reference or "")
+    """Première page imprimée citée dans une référence (« Art. 10.2, p.20-21 » → 20).
+
+    Le « p » de la pagination doit être un MOT (précédé d'un non-lettre) : sinon le « p » du NOM
+    d'article le capte à tort (« Art. Up3.4 · p.147 » renvoyait 3, le « p3 » de « Up3 », au lieu de
+    147 — l'ancre `#page=3` pointait le préambule au lieu de l'article d'emprise). Le lookbehind
+    `(?<![A-Za-z])` ignore les « p » collés à une lettre (Up, AUp, UCp…) ; `p+` gère « pp. »."""
+    m = re.search(r"(?<![A-Za-z])p+\.?\s*(\d+)", reference or "")
     return int(m.group(1)) if m else None
 
 
