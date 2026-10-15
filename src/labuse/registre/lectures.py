@@ -123,6 +123,8 @@ LECTURES: tuple[Lecture, ...] = (
       "Médianes DVF par rayon (n, valeur, €/m²) pré-calculées comme signaux de la cascade d'évaluation → classement servi (tier)."),
     L("dvf_mutations", "demo.py", None, None,
       "Healthcheck rebuild-demo : compte + période des mutations de la commune pour vérifier l'ingestion — diagnostic CLI, rien servi au client."),
+    L("dvf_mutations", "dvf_fenetre.py", "prix_terrain_secteur_eur_m2", "fiche_parcelle_marche",
+      "CHASSE-INVARIANTS-FIX-1 (Lot 5, E-04) — fenetre_dvf_sql/ANCRE_DVF_SQL : helper UNIQUE qui lit max(date_mutation) pour ANCRER la fenêtre des ventes DVF (médianes bâti/terrain + comparables) sur la dernière vente servie, jamais CURRENT_DATE — borne temporelle du bloc Marché secteur (fiche §Marché + Flash + Dossier), consommée par flash/data.py et marche_service.py."),
     L("dvf_mutations", "flash/data.py", "prix_terrain_secteur_eur_m2", "pdf_flash",
       "_marche : médianes bâti/terrain + comparables anonymisés dans le rayon autour de la parcelle pour le bloc Marché du PDF Flash."),
     L("dvf_mutations", "pige/signaux.py", "ecart_demande_acte_pct", "outil_radar_marche",
