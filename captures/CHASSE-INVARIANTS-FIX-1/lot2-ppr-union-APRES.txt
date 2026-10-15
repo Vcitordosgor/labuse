@@ -1,0 +1,10 @@
+CHASSE-INVARIANTS-FIX-1 Lot 2 (E-03/E-11) — PPR rouge jugé EN UNION (cascade live, persist=False)
+
+97401000AK0138: polygones rouges=[25%, 41%]  → UNION=65%
+
+97401000AM1179: polygones rouges=[43%, 49%]  → UNION=92%
+
+97401000AI1157: polygones rouges=[—]  → UNION=0%
+97401000AK0138: HARD_EXCLUDE=True — "Exclue : PPR zone rouge (inconstructible) — 65 % de la surface."
+97401000AM1179: HARD_EXCLUDE=True — "Exclue : PPR zone rouge (inconstructible) — 92 % de la surface."
+97401000AI1157: HARD_EXCLUDE=False  (reste au classement)
