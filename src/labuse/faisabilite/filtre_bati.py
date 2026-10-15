@@ -71,7 +71,12 @@ def build_parcel_filtre_bati(session) -> dict:
     # quadratique (250 k parcelles × 914 points).
     session.execute(text("""
         CREATE TEMP TABLE IF NOT EXISTS tmp_dpe_parcel AS
-        SELECT p.idu, max(d.annee_construction) annee,
+        -- CHASSE-INVARIANTS-FIX-2 (2) — borne à la source : une année de construction ADEME aberrante
+        -- (< 1800 ou future) n'est JAMAIS servie — le FILTER la retire du max ⇒ NULL ⇒ annee_etiquette
+        -- « Absent » et motif « d'année Absente » = « année inconnue » (chemin NULL déjà géré en aval).
+        SELECT p.idu,
+               max(d.annee_construction) FILTER (
+                 WHERE d.annee_construction BETWEEN 1800 AND extract(year FROM now())::int) annee,
                bool_or(d.etiquette_dpe IN ('F','G')) passoire
         FROM dpe_records d
         JOIN parcels p ON d.lon IS NOT NULL

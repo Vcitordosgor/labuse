@@ -1393,7 +1393,15 @@ def _m28_badges(db: Session, idu: str) -> dict:
         "SELECT ratio_pct, etage, annee_construction, annee_etiquette, passoire, divisible, "
         "decision, motif FROM parcel_filtre_bati WHERE idu = :i"), {"i": idu}).mappings().first()
     if fb:
-        out["filtre_bati"] = {**dict(fb), "ratio_pct": round(fb["ratio_pct"], 1),
+        _fb = dict(fb)
+        # CHASSE-INVARIANTS-FIX-2 (2) — garde au service : une année de construction aberrante
+        # (< 1800 ou future) n'est JAMAIS servie, même si le cache n'a pas encore été reconstruit
+        # (le builder la borne déjà) → « année inconnue » (annee_construction NULL, étiquette Absent).
+        _ac = _fb.get("annee_construction")
+        if _ac is not None and (_ac < 1800 or _ac > datetime.now().year):
+            _fb["annee_construction"] = None
+            _fb["annee_etiquette"] = "Absent"
+        out["filtre_bati"] = {**_fb, "ratio_pct": round(_fb["ratio_pct"], 1),
                               "source": "max(BD TOPO éd. 2026-06-15, CoSIA PVA juil.-août 2025)"}
     # M29 (b)/(b) : signaux mérite/héritage (#9) + acquérabilité assemblage (#11) — fiche
     # seulement, AUCUN effet de classement. Libellés factuels arbitrés Vic 05/08.
