@@ -38,9 +38,10 @@ def test_les_quinze_ids_existent_et_sont_declares():
 def test_en_attente_jusqu_au_builder():
     """Lot 0.4 : créés en_attente ; l'attente est LEVÉE au fil des documents qui les servent —
     lot 2 : `prix_achat_historique_eur` (D-a, Dossier) ; lot 5 : les postes du bilan à rebours
-    (Financier). Restent en_attente : la mixité seuil/quota (chantier ultérieur)."""
+    (Financier) ; PLU-CALIBRAGE-9 : la mixité seuil/quota est désormais SERVIE (robinet fiche,
+    lue du règlement de zone calibré) — plus aucun id en attente ici."""
     sers = {cid for r in ROBINETS.values() for cid in r.chiffres}
-    encore_en_attente = {"mixite_seuil_m2", "mixite_quota_pct"}
+    encore_en_attente: set[str] = set()
     for cid in IDS_FINANCIER:
         if cid in encore_en_attente:
             assert DONNEES[cid].en_attente and cid not in sers, f"{cid} : doit rester en_attente"

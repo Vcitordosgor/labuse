@@ -56,6 +56,10 @@ ORACLE: dict[str, tuple[str, ...]] = {
     "ebc_classe": ("dispositifs.ebc",),
     "dispositifs_parcelle": ("dispositifs.sup",),
     "mixite_clause": ("mixite_clause",),
+    # PLU-CALIBRAGE-9 — seuil/quota de mixité LUS du règlement de zone, rendus par le tiroir
+    # Urbanisme depuis reglement_plu.mixite (Fiche.tsx) : même chemin pour l'oracle.
+    "mixite_seuil_m2": ("reglement_plu.mixite.seuil_m2",),
+    "mixite_quota_pct": ("reglement_plu.mixite.quota_pct",),
     "aleas_parcelle_liste": ("aleas.liste",),
     "sis_classe": ("sols.sis",),
     "casias_statut": ("sols.casias",),

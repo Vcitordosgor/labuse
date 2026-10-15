@@ -121,6 +121,26 @@ donnees:
     absence_type: non_ingeree
     statut_juridique: opposable
     pourquoi: "La clause de mixité impose un quota de logements sociaux ; change le programme."
+  - quoi:  mixite_seuil_m2
+    ou:    { rang: 51, etat: replie, section: "Mixité sociale" }
+    comment:
+      libelle: "Mixité sociale — seuil de déclenchement"
+      format:  m2
+      i:       "Surface de plancher au-delà de laquelle la clause de mixité s'applique (règlement de zone calibré)."
+    absence: "Mixité sociale : pas de seuil en m² (zone sans clause validée, ou seuil exprimé en logements)."
+    absence_type: non_ingeree
+    statut_juridique: opposable
+    pourquoi: "PLU-CALIBRAGE-9 — seuil LU du règlement : au-delà, N logements aidés sont imposés."
+  - quoi:  mixite_quota_pct
+    ou:    { rang: 52, etat: replie, section: "Mixité sociale" }
+    comment:
+      libelle: "Mixité sociale — quota de logements aidés"
+      format:  pct
+      i:       "Part de logements aidés imposée au-delà du seuil (règlement de zone calibré)."
+    absence: "Mixité sociale : quota non renseigné (zone sans clause validée)."
+    absence_type: non_ingeree
+    statut_juridique: opposable
+    pourquoi: "PLU-CALIBRAGE-9 — quota LU du règlement : détermine le nombre de logements aidés imposés."
   - quoi:  sar_divergence
     ou:    { rang: 60, etat: replie, section: "Ce qui contraint" }
     comment:

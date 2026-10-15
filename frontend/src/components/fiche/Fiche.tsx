@@ -1780,8 +1780,15 @@ export function Fiche({ idu }: { idu: string }) {
                       {valide ? (
                         <>
                           <FactRow label="Quota de logements sociaux" value={<>{mx!.quota_pct} <small>%</small></>} />
+                          {/* PLU-CALIBRAGE-9 — seuil en m² de SDP (forme majoritaire 974) OU en logements
+                              (Saint-Denis) : on rend celui qui est posé, jamais « — » muet quand l'autre existe. */}
                           <FactRow label="Seuil de déclenchement"
-                            value={mx!.seuil_logements != null ? <>{mx!.seuil_logements} <small>logements</small></> : '—'} />
+                            value={mx!.seuil_m2 != null
+                              ? <>{mx!.seuil_m2} <small>m² de surface de plancher</small></>
+                              : (mx!.seuil_logements != null ? <>{mx!.seuil_logements} <small>logements</small></> : '—')} />
+                          {mx!.produits && mx!.produits.length > 0 && (
+                            <FactRow label="Produits visés" value={mx!.produits.join(', ')} />
+                          )}
                           <FactNote>
                             {mx!.article ? `${mx!.article}${mx!.page_pdf ? ` (p. ${mx!.page_pdf})` : ''} — ` : ''}
                             {mx!.citation ? `« ${mx!.citation} »` : 'clause de mixité sociale validée au règlement de zone.'}

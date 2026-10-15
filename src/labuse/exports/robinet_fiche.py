@@ -302,6 +302,28 @@ def _c_mixite(db, idu, f):
     return _nz(f.get("mixite_clause"))
 
 
+def _mixite_valide(f):
+    """Clause de mixité de la zone dominante, UNIQUEMENT si validée (même source que l'écran :
+    `reglement_plu.mixite`, posée par `_reglement_plu_block`). None sinon."""
+    mx = (f.get("reglement_plu") or {}).get("mixite")
+    return mx if isinstance(mx, dict) and mx.get("statut") == "valide" else None
+
+
+@extracteur("mixite_seuil_m2")
+def _c_mixite_seuil(db, idu, f):
+    # PLU-CALIBRAGE-9 — seuil de SDP (m²) déclenchant la clause, LU du règlement calibré de la zone.
+    # None si la zone n'a pas de clause validée OU si son seuil est exprimé en logements (Saint-Denis).
+    mx = _mixite_valide(f)
+    return _nz(mx.get("seuil_m2")) if mx else None
+
+
+@extracteur("mixite_quota_pct")
+def _c_mixite_quota(db, idu, f):
+    # PLU-CALIBRAGE-9 — quota de logements aidés imposé au-delà du seuil, LU du règlement calibré.
+    mx = _mixite_valide(f)
+    return _nz(mx.get("quota_pct")) if mx else None
+
+
 @extracteur("rtaa_exigences")
 def _c_rtaa(db, idu, f):
     return _nz(f.get("rtaa_exigences"))

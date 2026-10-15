@@ -1436,19 +1436,18 @@ DONNEES: dict[str, Donnee] = {
     fonction="src/labuse/exports/robinet_fiche.py (EXPORTS-2 lot 2 — D-a, dvf_parcelle.derniere_mutation)",
     reservoirs=("dvf",), portee="live"),
  "mixite_seuil_m2": C("Mixité sociale — seuil de déclenchement", "m²", "parcelle",
-    "seuil de surface de plancher au-delà duquel la clause de mixité sociale s'applique (source "
-    "règlement de zone si déclarée, sinon Estimé) — distinct du quota et du déclenchement",
-    moteur="bilan_promoteur", calcul="moteur",
-    fonction="src/labuse/faisabilite/bilan.py (EXPORTS-2 lot 5 — seuil de mixité, à câbler)",
-    reservoirs=("gpu_plu_api_carto",), portee="live",
-    en_attente="EXPORTS-2 — servi au chantier du Financier (lot 5)"),
+    "seuil de surface de plancher au-delà duquel la clause de mixité sociale s'applique, LU du "
+    "règlement de zone calibré (regles.mixite.seuil_m2) — distinct du quota et du déclenchement ; "
+    "absent si la zone n'a pas de clause validée ou si le seuil est exprimé en logements",
+    moteur="plu_destinations", calcul="moteur",
+    fonction="src/labuse/exports/robinet_fiche.py (PLU-CALIBRAGE-9 — reglement_plu.mixite, zone dominante)",
+    reservoirs=("gpu_plu_api_carto",), portee="live"),
  "mixite_quota_pct": C("Mixité sociale — quota de logements aidés", "%", "parcelle",
-    "part de logements aidés imposée par la clause de mixité au-delà du seuil (source règlement "
-    "de zone si déclarée, sinon Estimé) — distinct du seuil et du déclenchement",
-    moteur="bilan_promoteur", calcul="moteur",
-    fonction="src/labuse/faisabilite/bilan.py (EXPORTS-2 lot 5 — quota de mixité, à câbler)",
-    reservoirs=("gpu_plu_api_carto",), portee="live",
-    en_attente="EXPORTS-2 — servi au chantier du Financier (lot 5)"),
+    "part de logements aidés imposée par la clause de mixité au-delà du seuil, LUE du règlement "
+    "de zone calibré (regles.mixite.quota_pct) — distinct du seuil et du déclenchement",
+    moteur="plu_destinations", calcul="moteur",
+    fonction="src/labuse/exports/robinet_fiche.py (PLU-CALIBRAGE-9 — reglement_plu.mixite, zone dominante)",
+    reservoirs=("gpu_plu_api_carto",), portee="live"),
  # FICHE-1 lot 1 — tiroir « Le bien » : le bâti EXISTANT servi à la fiche (était en_attente
  # « maquettes d'exports »). Producteur unique bati.le_bien_block (aucun calcul au front).
  "emprise_batie_m2": C("Emprise bâtie", "m²", "parcelle",

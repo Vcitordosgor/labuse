@@ -70,7 +70,7 @@ def test_lignes_manquantes_ajoutees():
     """Lot D + FICHE-FIX-2 P4 — `extras` ajoute « Espaces inconstructibles déduits » (ER/EBC/greve)
     SANS changer le calcul ; l'étape « Logements sociaux imposés (LLS) » est TOUJOURS présente,
     branchée sur la règle VALIDÉE de la zone (`rules.mixite`), pas sur `extras`. U1c (Saint-Paul)
-    n'en porte pas → « non modélisée pour cette zone » (jamais un 0 muet, jamais « non renseigné »)."""
+    n'en porte pas → « sans objet » (PLU-CALIBRAGE-9 ; jamais un 0 muet, jamais « non renseigné »)."""
     from labuse.faisabilite.engine import estimate_capacity
     from labuse.faisabilite.zonage import resolve_zone
     base = estimate_capacity(resolve_zone("U1c"), 2000, emprise_geo=(1200.0, 3.0))
@@ -82,7 +82,7 @@ def test_lignes_manquantes_ajoutees():
     # la fourchette (le calcul) est INCHANGÉE — les lignes sont informatives
     assert avec.fourchette["logements_au_sol"] == base.fourchette["logements_au_sol"]
     mix = next(s for s in avec.steps if s.label == "Logements sociaux imposés (LLS)")
-    assert mix.valeur == "non modélisée pour cette zone"
+    assert mix.valeur == "sans objet"
 
 
 def test_mixite_lls_branchee_regle_validee():

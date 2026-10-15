@@ -80,10 +80,11 @@ def test_couches_et_fonds_tous_declares():
 
 def test_en_attente_jamais_servie():
     """Une donnée `en_attente` (1.8 — maquettes exports, réglementaires CIRCUIT-3) n'est
-    servie par AUCUN robinet tant que son chantier n'est pas passé."""
+    servie par AUCUN robinet tant que son chantier n'est pas passé. L'INVARIANT tenu est
+    « en_attente ⇒ non servie » ; le lot peut être vide (PLU-CALIBRAGE-9 a levé la dernière
+    attente — mixité seuil/quota, désormais servies du règlement de zone calibré)."""
     servies = {cid for r in registre.ROBINETS.values() for cid in r.chiffres}
     en_attente = {cid for cid, d in DONNEES.items() if d.en_attente}
-    assert en_attente, "le lot 1.8 déclare des données en attente"
     assert not (en_attente & servies), en_attente & servies
 
 

@@ -810,27 +810,42 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
     steps.append(Step("Logements retenus au sol",
                       f"plafond de densité ∩ stationnement au sol{_mod_note}",
                       f"~{_fin_lo} à {_fin_hi}", "dérivé", prov="derive"))
-    # FICHE-FIX-2 P4 — 11e étape : clause de mixité sociale (LLS), branchée sur la règle VALIDÉE de la
-    # zone (`rules.mixite`, lue des regles calibrées : seuil de logements + quota %, article cité). La
-    # ligne s'affiche TOUJOURS (la capacité a 11 étapes, plus 10) : validée → seuil, part, nombre de LLS
-    # résultant, badge Sourcé ; `propose`/absente → « non modélisée pour cette zone » (jamais « non
-    # renseigné », jamais un 0 muet — corrige FAISABILITE-1 lot D qui restait bloqué sur pct_lls=0).
+    # FICHE-FIX-2 P4 / PLU-CALIBRAGE-9 — 11e étape : clause de mixité sociale (LLS), branchée sur la
+    # règle VALIDÉE de la zone (`rules.mixite`, lue des regles calibrées). Deux formes de seuil, lues
+    # au même endroit : `seuil_m2` (SDP, forme majoritaire 974 : « programme > N m² SDP → X % aidé »)
+    # OU `seuil_logements` (nb de logements, Saint-Denis). La ligne s'affiche TOUJOURS : validée au-delà
+    # du seuil → « ~N logements aidés imposés » (Sourcé) ; validée sous le seuil → « non imposé » ;
+    # `propose` → « non modélisée » ; absente → « sans objet » (jamais un 0 muet, jamais « non renseigné »).
     _mx = rules.mixite if isinstance(rules.mixite, dict) else None
     if _mx and _mx.get("statut") == "valide" and _mx.get("quota_pct"):
-        _mx_seuil = _mx.get("seuil_logements")
         _mx_quota = float(_mx["quota_pct"])
+        _mx_seuil_m2 = _mx.get("seuil_m2")
+        _mx_seuil_log = _mx.get("seuil_logements")
         _mx_src = (_mx.get("article") or "règlement PLU") + " (clause de mixité sociale)"
-        if _mx_seuil is not None and _fin_hi < float(_mx_seuil):
+        _prod = _mx.get("produits")
+        _prod_txt = (" (" + ", ".join(str(p) for p in _prod) + ")"
+                     if isinstance(_prod, (list, tuple)) and _prod else "")
+        # Déclenchement : seuil en m² de SDP prioritaire (sdp = plancher brut calculé plus haut),
+        # sinon seuil en logements (sur la fourchette finale), sinon clause sans seuil (toujours due).
+        if _mx_seuil_m2 is not None:
+            _declenchee = sdp >= float(_mx_seuil_m2)
+            _seuil_desc = f"dès {int(_mx_seuil_m2)} m² SDP"
+            _seuil_non = f"SDP projetée ~{sdp:.0f} m² < {int(_mx_seuil_m2)} m²"
+        elif _mx_seuil_log is not None:
+            _declenchee = _fin_hi >= float(_mx_seuil_log)
+            _seuil_desc = f"dès {int(_mx_seuil_log)} logts"
+            _seuil_non = f"programme ~{_fin_lo}-{_fin_hi} logts < {int(_mx_seuil_log)}"
+        else:
+            _declenchee, _seuil_desc, _seuil_non = True, "sans seuil", ""
+        if not _declenchee:
             steps.append(Step("Logements sociaux imposés (LLS)",
-                              f"clause « {_mx_quota:.0f} % dès {int(_mx_seuil)} logements » — programme "
-                              f"~{_fin_lo}-{_fin_hi} logts : seuil non atteint",
-                              "0 imposé au seuil", _mx_src, prov="sourcee"))
+                              f"clause « {_mx_quota:.0f} % {_seuil_desc} »{_prod_txt} — {_seuil_non} : seuil non atteint",
+                              "non imposé", _mx_src, prov="sourcee"))
         else:
             _lls_lo, _lls_hi = math.ceil(_mx_quota / 100.0 * _fin_lo), math.ceil(_mx_quota / 100.0 * _fin_hi)
-            _seuil_txt = f" dès {int(_mx_seuil)} logts" if _mx_seuil is not None else ""
             steps.append(Step("Logements sociaux imposés (LLS)",
-                              f"{_mx_quota:.0f} % du programme{_seuil_txt} — sur ~{_fin_lo}-{_fin_hi} logts",
-                              f"~{_lls_lo}-{_lls_hi} LLS", _mx_src, prov="sourcee"))
+                              f"{_mx_quota:.0f} % du programme {_seuil_desc}{_prod_txt} — sur ~{_fin_lo}-{_fin_hi} logts",
+                              f"~{_lls_lo}-{_lls_hi} logements aidés imposés", _mx_src, prov="sourcee"))
     elif _mx and _mx.get("statut") == "propose":
         steps.append(Step("Logements sociaux imposés (LLS)",
                           "clause détectée au règlement mais non validée (feuille « propose »)",
@@ -838,7 +853,7 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
     else:
         steps.append(Step("Logements sociaux imposés (LLS)",
                           "aucune clause de mixité validée pour cette zone",
-                          "non modélisée pour cette zone", "règlement PLU", prov="absent"))
+                          "sans objet", "règlement PLU", prov="absent"))
 
     rp = f"R+{max(0, niveaux - 1)}"     # logt_moyen défini plus haut (chemin central du vendable, §1)
     fourch = {"niveaux": rp, "niveaux_max": niveaux,
