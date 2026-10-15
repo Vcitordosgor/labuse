@@ -501,6 +501,7 @@ def main(argv: list[str] | None = None) -> None:
     pc.add_argument("--source", required=True)
     pc.add_argument("--n", type=int, default=0, help="0 = tout l'échantillon")
     pc.add_argument("--rafraichir", action="store_true")
+    sub.add_parser("fusionner", help="concatène comparaisons_<source>.csv → COMPARAISONS.csv")
     a = p.parse_args(argv)
     if str(RACINE) not in sys.path:
         sys.path.insert(0, str(RACINE))
@@ -509,6 +510,9 @@ def main(argv: list[str] | None = None) -> None:
     elif a.cmd == "comparer":
         from .verite_terrain_sources import cmd_comparer
         cmd_comparer(a.source, a.n, a.rafraichir)
+    elif a.cmd == "fusionner":
+        from .verite_terrain_sources import cmd_fusionner
+        cmd_fusionner()
 
 
 if __name__ == "__main__":

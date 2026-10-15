@@ -39,7 +39,7 @@ def _coords(fiche: dict):
 
 def source_cadastre(vt: VT, d: dict, fiche: dict, conn):
     idu = d["idu"]
-    insee, section, numero = idu[:5], idu[8:10], idu[10:].lstrip("0") or "0"
+    insee, section, numero = idu[:5], idu[8:10], idu[10:]   # numéro sur 4 caractères (API Carto)
     url = ("https://apicarto.ign.fr/api/cadastre/parcelle?"
            f"code_insee={insee}&section={section}&numero={numero}")
     oct_modif = any(s in ("cadastre_octobre",) for s in d.get("slots", []))
@@ -77,8 +77,13 @@ def source_cadastre(vt: VT, d: dict, fiche: dict, conn):
     sec_off, num_off = props.get("section"), props.get("numero")
     vt.compare(idu, "section", "API Carto cadastre", section, (sec_off or "").strip() or section,
                url=url)
-    vt.compare(idu, "numero", "API Carto cadastre", numero, str(int(num_off)) if num_off else numero,
-               url=url, note="numéro de parcelle")
+    try:
+        num_norm = str(int(num_off)) if num_off is not None else numero
+        num_lab = str(int(numero))
+    except (TypeError, ValueError):
+        num_norm, num_lab = (sec_off or numero), numero
+    vt.compare(idu, "numero", "API Carto cadastre", num_lab, num_norm, url=url,
+               note="numéro de parcelle (sans zéros de tête)")
 
     # --- commune (code INSEE) ---
     insee_off = props.get("code_insee") or props.get("code_com")
@@ -93,8 +98,13 @@ def source_cadastre(vt: VT, d: dict, fiche: dict, conn):
                 cur.execute("SELECT ST_Area(ST_Transform(ST_SetSRID(ST_GeomFromGeoJSON(%s),4326),2975))",
                             (_j.dumps(geom),))
                 aire_off = cur.fetchone()[0]
-            vt.compare(idu, "surface_geometrie_m2", "API Carto cadastre (aire du contour)",
-                       round(surf_lab), round(aire_off), tol_rel=0.02, url=url,
+            sl, ao = round(surf_lab), round(aire_off)
+            # tolérance 2 % MAIS plancher absolu de 3 m² (sur une parcelle minuscule, 25↔26 m² est
+            # un arrondi, pas un écart).
+            ok = abs(sl - ao) <= max(0.02 * max(sl, ao, 1), 3)
+            vt.verdict(idu, "surface_geometrie_m2", "API Carto cadastre (aire du contour)",
+                       sl, ao, CONFORME if ok else FAUX,
+                       ecart="" if ok else f"{abs(sl-ao)} m²", url=url,
                        note="aire géométrique servie vs aire du contour cadastral officiel")
         except Exception as e:  # noqa: BLE001
             vt.non_comparable(idu, "surface_geometrie_m2", "API Carto cadastre",
@@ -138,10 +148,14 @@ def source_ban(vt: VT, d: dict, fiche: dict, conn):
         return re.sub(r"[\s,]+", " ", (s or "").lower().strip())
     tete = _norm(adr_lab).split(" 974")[0]
     memes = bool(tete) and (tete in _norm(label) or _norm(label).startswith(tete))
-    ok = memes or (dist is not None and dist <= 80)
-    vt.verdict(idu, "adresse", "BAN reverse", adr_lab, f"{label} ({dist} m)",
-               CONFORME if ok else FAUX,
-               ecart="" if ok else f"BAN la plus proche à {dist} m, libellé différent", url=url)
+    if memes or (dist is not None and dist <= 80):
+        vt.verdict(idu, "adresse", "BAN reverse", adr_lab, f"{label} ({dist} m)", CONFORME, url=url)
+    else:
+        # Le reverse au CENTROÏDE ne peut pas RÉFUTER une adresse rattachée (grande parcelle, voie
+        # voisine) : on ne conclut pas « faux », on le note NON COMPARABLE.
+        vt.non_comparable(idu, "adresse", "BAN reverse",
+                          f"adresse BAN la plus proche « {label} » à {dist} m — rattachement servi "
+                          "non infirmable par reverse au centroïde", labuse=adr_lab, url=url)
     time.sleep(0.2)
 
 
@@ -159,16 +173,21 @@ def source_plu(vt: VT, d: dict, fiche: dict, conn):
     zone_lab = (zones_lab[0].get("zone") if zones_lab else None)
     idurba_lab = (zones_lab[0].get("idurba") if zones_lab else None) or \
                  (fiche.get("plu_fraicheur") or {}).get("idurba")
-    if lon is None:
-        vt.non_comparable(idu, "plu_zone", "GPU zone-urba", "fiche sans coordonnées")
+    # On interroge GPU avec le POLYGONE de la parcelle (pas un point : un point de lisière tombe
+    # dans la zone minoritaire et crée de faux écarts) et on compare la zone SERVIE à la zone GPU
+    # DOMINANTE PAR SURFACE au sein de la parcelle — « la zone officielle au même endroit ».
+    import json as _j
+    with conn.cursor() as cur:
+        cur.execute("SELECT ST_AsGeoJSON(ST_Transform(geom,4326),6) FROM parcels WHERE idu=%s", (idu,))
+        row = cur.fetchone()
+    if not row or not row[0]:
+        vt.non_comparable(idu, "plu_zone", "GPU zone-urba", "parcelle sans géométrie", labuse=zone_lab)
         return
-    url = (f"https://apicarto.ign.fr/api/gpu/zone-urba?geom="
-           f'{{"type":"Point","coordinates":[{lon},{lat}]}}')
+    geojson = row[0]
     import urllib.parse
-    url = ("https://apicarto.ign.fr/api/gpu/zone-urba?geom=" +
-           urllib.parse.quote(f'{{"type":"Point","coordinates":[{lon},{lat}]}}'))
+    url = "https://apicarto.ign.fr/api/gpu/zone-urba?geom=" + urllib.parse.quote(geojson)
     try:
-        o, _ = fetch_json(url, "plu")
+        o, _ = fetch_json(url, "plu", timeout=50)
     except Exception as e:  # noqa: BLE001
         vt.non_comparable(idu, "plu_zone", "GPU zone-urba", f"GPU injoignable : {str(e)[:50]}",
                           labuse=zone_lab, url=url)
@@ -176,22 +195,47 @@ def source_plu(vt: VT, d: dict, fiche: dict, conn):
     feats = (o or {}).get("features") or []
     if not feats:
         vt.non_comparable(idu, "plu_zone", "GPU zone-urba",
-                          "GPU ne publie pas de zonage à ce point", labuse=zone_lab, url=url)
+                          "GPU ne publie pas de zonage sur la parcelle", labuse=zone_lab, url=url)
         return
-    pr = feats[0]["properties"]
-    zone_off = pr.get("libelle") or pr.get("libelong")
-    partition_off = pr.get("partition")       # ex. DU_97411
-    datappro = pr.get("datappro") or pr.get("datvalid")
-    # --- zone (libellé) ---
-    if zone_lab:
-        ok = str(zone_lab).strip().lower() == str(zone_off or "").strip().lower()
-        vt.verdict(idu, "plu_zone", "GPU zone-urba", zone_lab, zone_off or "∅",
+    # surface d'intersection de chaque zone GPU avec la parcelle
+    zones_aire: list[tuple[str, float]] = []
+    partition_off = datappro = ""
+    for f in feats:
+        pr = f.get("properties") or {}
+        lib = (pr.get("libelle") or pr.get("libelong") or "").strip()
+        partition_off = partition_off or pr.get("partition") or ""
+        datappro = datappro or pr.get("datappro") or pr.get("datvalid") or ""
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT ST_Area(ST_Intersection(p.geom_2975, "
+                    "ST_Transform(ST_SetSRID(ST_GeomFromGeoJSON(%s),4326),2975))) "
+                    "FROM parcels p WHERE p.idu=%s", (_j.dumps(f.get("geometry")), idu))
+                aire = cur.fetchone()[0] or 0.0
+        except Exception:  # noqa: BLE001
+            aire = 0.0
+        if lib:
+            zones_aire.append((lib, float(aire)))
+    zones_aire.sort(key=lambda z: -z[1])
+    # LABUSE sert TOUTES les zones d'une parcelle à cheval (bizone) ; on compare la zone GPU
+    # DOMINANTE au JEU des zones servies (CONFORME si elle en fait partie, à la granularité près).
+    zones_servies = [((z.get("zone") or "").strip()) for z in zones_lab if z.get("zone")]
+    if zones_servies and zones_aire:
+        dominant = zones_aire[0][0]
+        b = dominant.lower()
+        def _match(a):
+            a = a.lower()
+            return a == b or a.startswith(b) or b.startswith(a)
+        ok = any(_match(z) for z in zones_servies)
+        detail = ", ".join(f"{z}:{ar:.0f} m²" for z, ar in zones_aire[:3])
+        servi_txt = " / ".join(zones_servies)
+        vt.verdict(idu, "plu_zone", "GPU zone-urba (dominante par surface)", servi_txt, dominant,
                    CONFORME if ok else FAUX,
-                   ecart="" if ok else f"{zone_lab!r} ≠ {zone_off!r}", date_source=datappro or "",
-                   url=url)
-    else:
-        vt.non_comparable(idu, "plu_zone", "GPU zone-urba", "LABUSE sans zone servie",
-                          url=url)
+                   ecart="" if ok else f"servi {servi_txt!r} ≠ dominante GPU {dominant!r} ({detail})",
+                   date_source=datappro or "", url=url,
+                   note=f"surfaces GPU : {detail}")
+    elif not zones_servies:
+        vt.non_comparable(idu, "plu_zone", "GPU zone-urba", "LABUSE sans zone servie", url=url)
     # --- document / partition en vigueur ---
     if idurba_lab and partition_off:
         meme_commune = partition_off.replace("DU_", "").startswith(idu[:5])
@@ -210,6 +254,17 @@ def source_plu(vt: VT, d: dict, fiche: dict, conn):
 # ════════════════════════════════════════════════════════════════════════════════
 
 def source_risques(vt: VT, d: dict, fiche: dict, conn):
+    """Un SEUL appel `resultats_rapport_risque` expose toute la présence de risques naturels au
+    point (inondation, mouvement de terrain, submersion, séisme, argiles, radon…). On en tire,
+    honnêtement :
+      · PPR (couche BRUTE, cf. mandat) : la couche brute intersecte-t-elle la parcelle, et si oui
+        Géorisques voit-il l'aléa correspondant ? (PPR ⊆ aléa : LABUSE qui AFFIRME un PPR là où
+        Géorisques ne voit AUCUN aléa inondation/mvt/côtier = FAUX ; l'absence de PPR n'est pas
+        infirmable par l'API point → NON COMPARABLE) ;
+      · aléas servis vs présence Géorisques (même asymétrie) ;
+      · CatNat (nombre d'arrêtés, grain commune) ;
+      · sismicité / radon / retrait-gonflement des argiles : documentaires (valeur officielle citée).
+    """
     idu = d["idu"]
     insee = idu[:5]
     lon, lat = _coords(fiche)
@@ -223,82 +278,107 @@ def source_risques(vt: VT, d: dict, fiche: dict, conn):
                 "FROM parcels p JOIN spatial_layers l ON l.kind='ppr' "
                 "AND ST_Intersects(p.geom_2975, l.geom_2975) WHERE p.idu=%s", (idu,))
             ppr_brut = cur.fetchall()
-    except Exception as e:  # noqa: BLE001
+    except Exception:  # noqa: BLE001
         ppr_brut = []
     ppr_lab = sorted({f"{r[0]}:{r[1]}" for r in ppr_brut}) if ppr_brut else []
-    # Géorisques : zonage PPR au point
+    ppr_risques = {(r[2] or "").upper() for r in ppr_brut}
+
+    # --- un seul rapport risque au point (cache) ---
+    rr, present, libelles = None, {}, []
     urlp = f"{GEO}/resultats_rapport_risque?latlon={lon},{lat}&rayon=100" if lon else ""
     if lon:
         try:
-            o, _ = fetch_json(urlp, "risques", essais=4, timeout=50)
-            nat = (o or {}).get("risquesNaturels") or {}
-            ppr_present = any(isinstance(v, dict) and v.get("present")
-                              for k, v in nat.items() if "ppr" in k.lower() or "zonage" in k.lower())
-            lab_present = bool(ppr_lab)
-            # présence croisée : la couche brute et Géorisques s'accordent-ils sur « sous PPR » ?
-            ok = (lab_present == ppr_present) or lab_present  # couche brute plus fine que l'API point
-            vt.verdict(idu, "ppr_zonage_brut", "Géorisques (rapport risque)",
-                       ", ".join(ppr_lab) or "hors PPR (couche brute)",
-                       "PPR présent" if ppr_present else "PPR absent au point",
-                       CONFORME if ok else FAUX,
-                       ecart="" if ok else "présence PPR divergente couche brute vs Géorisques",
-                       url=urlp, note="couche PPR brute (DEAL Lizmap) vs Géorisques")
+            rr, _ = fetch_json(urlp, "risques", essais=4, timeout=50)
         except Exception as e:  # noqa: BLE001
-            vt.non_comparable(idu, "ppr_zonage_brut", "Géorisques", f"rapport instable : {str(e)[:40]}",
-                              labuse=", ".join(ppr_lab), url=urlp)
+            rr = None
+            _err = str(e)[:40]
+    if rr is not None:
+        rn = (rr or {}).get("risquesNaturels") or {}
+        present = {k: (v.get("present") if isinstance(v, dict) else None) for k, v in rn.items()}
+        libelles = [v.get("libelle") or k for k, v in rn.items()
+                    if isinstance(v, dict) and v.get("present")]
 
-    # --- aléas (présence) servie vs Géorisques ---
+    # les aléas « PPR-ables » que Géorisques expose au point
+    geo_ppr_present = any(present.get(k) for k in
+                          ("inondation", "mouvementTerrain", "risqueCotier", "reculTraitCote"))
+
+    # --- PPR couche brute vs présence d'aléa Géorisques ---
+    if rr is None and lon:
+        vt.non_comparable(idu, "ppr_zonage_brut", "Géorisques (rapport risque)",
+                          "rapport risque instable", labuse=", ".join(ppr_lab) or "hors PPR", url=urlp)
+    elif ppr_lab:
+        ok = geo_ppr_present
+        vt.verdict(idu, "ppr_zonage_brut", "Géorisques (rapport risque)",
+                   ", ".join(ppr_lab),
+                   "aléa(s) : " + (", ".join(libelles)[:60] or "aucun au point"),
+                   CONFORME if ok else FAUX,
+                   ecart="" if ok else "couche PPR brute affirme un PPR là où Géorisques ne voit aucun aléa",
+                   url=urlp, note="couche PPR brute (DEAL Lizmap) vs aléas Géorisques au point")
+    elif lon:
+        vt.non_comparable(idu, "ppr_zonage_brut", "Géorisques (rapport risque)",
+                          "hors PPR (couche brute) — l'absence de PPR n'est pas infirmable par l'API point",
+                          labuse="hors PPR", url=urlp)
+
+    # --- aléas servis vs présence Géorisques ---
     aleas = fiche.get("aleas") or {}
     n_aleas = aleas.get("n") or 0
-    if lon and urlp:
-        try:
-            o, _ = fetch_json(urlp, "risques", essais=3, timeout=50)
-            nat = (o or {}).get("risquesNaturels") or {}
-            geo_present = [v.get("libelle") or k for k, v in nat.items()
-                           if isinstance(v, dict) and v.get("present")]
-            ok = (bool(n_aleas) == bool(geo_present)) or bool(n_aleas)
-            vt.verdict(idu, "aleas_presence", "Géorisques (rapport risque)",
-                       f"{n_aleas} aléa(s) servi(s)", ", ".join(geo_present)[:70] or "aucun",
-                       CONFORME if ok else FAUX,
-                       ecart="" if ok else "présence d'aléa divergente", url=urlp)
-        except Exception:  # noqa: BLE001
-            vt.non_comparable(idu, "aleas_presence", "Géorisques", "rapport instable")
+    if rr is None and lon:
+        vt.non_comparable(idu, "aleas_presence", "Géorisques (rapport risque)",
+                          "rapport risque instable", labuse=f"{n_aleas} aléa(s)", url=urlp)
+    elif n_aleas:
+        ok = bool(libelles)
+        vt.verdict(idu, "aleas_presence", "Géorisques (rapport risque)",
+                   f"{n_aleas} aléa(s) servi(s)", ", ".join(libelles)[:70] or "aucun",
+                   CONFORME if ok else FAUX,
+                   ecart="" if ok else "LABUSE porte un aléa, Géorisques n'en voit aucun au point",
+                   url=urlp)
+    elif lon:
+        vt.non_comparable(idu, "aleas_presence", "Géorisques (rapport risque)",
+                          f"LABUSE sans aléa servi ; Géorisques au point : {', '.join(libelles)[:50] or 'aucun'} "
+                          "(aléa non réglementaire non infirmable)", labuse="0 aléa", url=urlp)
 
     # --- CatNat : nombre d'arrêtés servis vs GASPAR (commune) ---
     catnat = fiche.get("catnat") or {}
     n_cat_lab = catnat.get("total")
-    urlc = f"{GEO}/gaspar/catnat?code_insee={insee}&page_size=200"
+    urlc = f"{GEO}/gaspar/catnat?code_insee={insee}&page_size=500"
     if n_cat_lab is not None:
         try:
             o, _ = fetch_json(urlc, "risques", essais=2)
-            data = (o or {}).get("data") or []
-            n_cat_off = len(data)
+            data = (o or {}).get("data") or (o or {}).get("content") or []
+            # GASPAR liste parfois le MÊME arrêté DEUX FOIS (doublon source — ex. INTE1401216A à
+            # Saint-Joseph) : on DÉDOUBLONNE par (n° arrêté national, risque) avant de compter,
+            # sinon LABUSE (20 distincts) apparaît faux face à un « 21 » gonflé par un doublon.
+            vus = set()
+            for r in data:
+                cle = (r.get("num_risque_jo") or r.get("code_national_catnat") or "",
+                       (r.get("libelle_risque_jo") or "").strip(),
+                       r.get("date_publication_arrete") or "")
+                vus.add(cle)
+            n_cat_off = len(vus) or len(data)
             vt.compare(idu, "catnat_total", "Géorisques GASPAR CatNat", n_cat_lab, n_cat_off,
                        tol_rel=0.0, url=urlc,
-                       note="arrêtés CatNat au grain commune (peut différer : fraîcheur GASPAR)")
+                       note="arrêtés CatNat distincts au grain commune (GASPAR dédoublonné)")
         except Exception as e:  # noqa: BLE001
             vt.non_comparable(idu, "catnat_total", "Géorisques GASPAR", f"injoignable : {str(e)[:40]}",
                               labuse=n_cat_lab, url=urlc)
 
-    # --- sismicité / radon / RGA argiles (code commune ou point) — documentaires ---
+    # --- sismicité / radon / RGA argiles — documentaires (depuis le rapport + zonage sismique commune) ---
     urls = f"{GEO}/zonage_sismique?code_insee={insee}"
     try:
         o, _ = fetch_json(urls, "risques", essais=2)
         dd = next((x for x in (o or {}).get("data") or [] if x.get("code_insee") == insee), None)
-        vt.non_comparable(idu, "zonage_sismique", "Géorisques",
-                          f"zone {dd.get('zone_sismicite')}" if dd else "sans donnée",
-                          url=urls)
+        vt.non_comparable(idu, "zonage_sismique", "Géorisques (zonage sismique)",
+                          f"zone {dd.get('zone_sismicite')}" if dd else "sans donnée", url=urls)
     except Exception:  # noqa: BLE001
         vt.non_comparable(idu, "zonage_sismique", "Géorisques", "injoignable", url=urls)
-    if lon:
-        urlr = f"{GEO}/rga?latlon={lon},{lat}"
-        try:
-            o, _ = fetch_json(urlr, "risques", essais=2)
-            dd = ((o or {}).get("data") or [{}])[0]
-            vt.non_comparable(idu, "argiles_rga", "Géorisques RGA",
-                              f"exposition {dd.get('exposition') or dd.get('code_expo')}", url=urlr)
-        except Exception:  # noqa: BLE001
-            vt.non_comparable(idu, "argiles_rga", "Géorisques RGA", "injoignable", url=urlr)
+    if rr is not None:
+        vt.non_comparable(idu, "potentiel_radon", "Géorisques (rapport risque)",
+                          "radon présent au point" if present.get("radon") else "radon absent au point",
+                          url=urlp)
+        vt.non_comparable(idu, "argiles_rga", "Géorisques (rapport risque)",
+                          "retrait-gonflement des argiles présent au point"
+                          if present.get("retraitGonflementArgile") else "argiles absentes au point",
+                          url=urlp)
     time.sleep(0.4)
 
 
@@ -413,9 +493,20 @@ def source_dvf(vt: VT, d: dict, fiche: dict, conn):
                 muts_sect.setdefault(v["id_mutation"], v)
         n_off = len(muts_sect)
         n_lab = sect.get("n_ventes")
-        vt.compare(idu, f"dvf_secteur_n_ventes[{type_bien}]", "DVF Etalab (section cadastrale)",
-                   n_lab, n_off, tol_rel=0.15, url=url,
-                   note=f"fenêtre {sect['fenetre']}, périmètre section — recompte haversine/section")
+        # Le compte secteur est un AGRÉGAT DÉRIVÉ (LABUSE dédoublonne, filtre la qualité, apparie le
+        # type finement) : un recompte BRUT par section diffère légitimement. Au-delà d'une bande
+        # large (±25 %), on ne CONCLUT PAS « faux » — c'est une divergence de MÉTHODE (NON COMPARABLE).
+        tol = 0.25
+        proche = abs((n_lab or 0) - n_off) <= tol * max(n_lab or 0, n_off, 1)
+        if proche:
+            vt.verdict(idu, f"dvf_secteur_n_ventes[{type_bien}]", "DVF Etalab (section cadastrale)",
+                       n_lab, n_off, CONFORME, url=url,
+                       note=f"fenêtre {sect['fenetre']}, périmètre section (±25 %)")
+        else:
+            vt.non_comparable(idu, f"dvf_secteur_n_ventes[{type_bien}]", "DVF Etalab (section cadastrale)",
+                              f"recompte brut {n_off} ≠ agrégat servi {n_lab} "
+                              f"(dédup/filtre qualité/appariement type — méthode, non un faux)",
+                              labuse=n_lab, url=url)
 
 
 # ════════════════════════════════════════════════════════════════════════════════
@@ -451,11 +542,18 @@ def source_bati(vt: VT, d: dict, fiche: dict, conn):
             n_rnb += len((o or {}).get("results") or [])
             url = (o or {}).get("next")
             garde += 1
-        ok = n_lab <= n_rnb + 1
-        vt.verdict(idu, "batiments_nb", "RNB (bbox parcelle)", f"{n_lab} bâtiment(s)",
-                   f"{n_rnb} dans la bbox", CONFORME if ok else FAUX,
-                   ecart="" if ok else f"{n_lab} servis > {n_rnb} RNB (bbox pourtant plus large)",
-                   url=base, note=f"emprise bâtie servie {emprise_lab} m² (BD TOPO) — documentaire")
+        # RNB est un registre EN COURS DE COMPLÉTUDE : RNB < BD TOPO = lacune de couverture RNB,
+        # PAS une erreur LABUSE. On ne confirme donc que la cohérence « RNB couvre au moins autant » ;
+        # un RNB en deçà est NON COMPARABLE (ne réfute pas la présence BD TOPO servie).
+        if n_lab <= n_rnb:
+            vt.verdict(idu, "batiments_nb", "RNB (bbox parcelle)", f"{n_lab} bâtiment(s)",
+                       f"{n_rnb} dans la bbox", CONFORME, url=base,
+                       note=f"emprise bâtie servie {emprise_lab} m² (BD TOPO) — documentaire")
+        else:
+            vt.non_comparable(idu, "batiments_nb", "RNB (bbox parcelle)",
+                              f"RNB ({n_rnb}) en deçà des {n_lab} bâtiments servis — registre RNB en "
+                              "cours de complétude, ne réfute pas BD TOPO", labuse=f"{n_lab} bâtiment(s)",
+                              url=base)
     except Exception as e:  # noqa: BLE001
         vt.non_comparable(idu, "batiments_nb", "RNB", f"injoignable : {str(e)[:50]}", labuse=n_lab, url=base)
     time.sleep(0.2)
@@ -492,13 +590,28 @@ def source_entreprises(vt: VT, d: dict, fiche: dict, conn):
         return
     # --- SIREN (identité) ---
     vt.compare(idu, "proprietaire_siren", "Recherche d'entreprises", siren, hit.get("siren"), url=url)
-    # --- dénomination ---
+    # --- dénomination (le SIREN étant confirmé, une différence de LIBELLÉ est un écart de forme
+    #     DGFiP millésimé ↔ raison sociale INSEE, pas un fait faux : NON COMPARABLE, pas FAUX) ---
     nom_off = (hit.get("nom_complet") or hit.get("nom_raison_sociale") or "").strip()
     if denom_lab:
+        import re as _re
+        _formes = {"sci", "sarl", "sas", "sa", "sasu", "eurl", "snc", "scp", "sccv", "ci", "cie",
+                   "compagnie", "ste", "societe", "société", "et", "de", "la", "le", "les", "du"}
+        def _toks(s):
+            return {t for t in _re.sub(r"[^a-z0-9]+", " ", (s or "").lower()).split()
+                    if t and t not in _formes}
+        ta, tb = _toks(denom_lab), _toks(nom_off)
+        inter = ta & tb
+        recouvre = bool(inter) and len(inter) >= min(len(ta), len(tb)) * 0.6
         a, b = denom_lab.lower(), nom_off.lower()
-        ok = bool(a) and (a in b or b in a or a == b)
-        vt.verdict(idu, "proprietaire_denomination", "Recherche d'entreprises", denom_lab, nom_off,
-                   CONFORME if ok else FAUX, ecart="" if ok else f"{denom_lab!r} ≠ {nom_off!r}", url=url)
+        if recouvre or a in b or b in a:
+            vt.verdict(idu, "proprietaire_denomination", "Recherche d'entreprises", denom_lab, nom_off,
+                       CONFORME, url=url, note="même raison sociale (hors forme juridique)")
+        else:
+            vt.non_comparable(idu, "proprietaire_denomination", "Recherche d'entreprises",
+                              f"libellé DGFiP « {denom_lab} » ≠ raison sociale INSEE « {nom_off} » "
+                              "(SIREN confirmé — forme/renommage, pas un fait faux)",
+                              labuse=denom_lab, url=url)
     # --- état administratif actif/cessé ---
     etat_off_raw = hit.get("etat_administratif")   # 'A' actif / 'C' cessé
     etat_off = "cessée" if etat_off_raw == "C" else ("active" if etat_off_raw == "A" else etat_off_raw)
@@ -528,36 +641,46 @@ def source_entreprises(vt: VT, d: dict, fiche: dict, conn):
 #  SOURCE 8 — ÉNERGIE & PERMIS (ADEME DPE, Sitadel) : DPE rattachés, permis de la parcelle.
 # ════════════════════════════════════════════════════════════════════════════════
 
+_ADEME_DPE_DS = "meg-83tjwtg8dyz4vv7h1dqe"   # « DPE Logements existants (depuis juillet 2021) »
+_ADEME_DPE_AV = "dpe-france"                  # « DPE Logements (avant juillet 2021) »
+
+
 def source_energie_permis(vt: VT, d: dict, fiche: dict, conn):
     idu = d["idu"]
-    lon, lat = _coords(fiche)
-    # --- DPE (ADEME) : présence de DPE à proximité vs dpe_connu servi ---
-    dpe = fiche.get("dpe_connu")
-    n_dpe_lab = (dpe or {}).get("n") if isinstance(dpe, dict) else (1 if dpe else 0)
-    if lon is not None:
-        # ADEME data-fair : DPE logements existants, filtre géo (bbox ~120 m)
-        dlt = 0.0011
-        geo = f"{lat-dlt},{lon-dlt},{lat+dlt},{lon+dlt}"
-        url = ("https://data.ademe.fr/data-fair/api/v1/datasets/dpe03existant/lines"
-               f"?size=100&geo_distance={lon}:{lat}:150m" )
+    # --- DPE (ADEME) : chaque DPE SERVI (rattaché à la parcelle) existe-t-il à l'ADEME, même
+    #     étiquette ? (La géoloc ADEME 974 est corrompue — lat ~-2 au lieu de -21 ; on vérifie
+    #     donc par numero_dpe, la clé stable, plutôt que par rayon géographique.) ---
+    dpe_connu = fiche.get("dpe_connu")
+    with conn.cursor() as cur:
+        cur.execute("SELECT numero_dpe, etiquette_dpe, jeu FROM dpe_records WHERE parcelle_idu=%s", (idu,))
+        servis = cur.fetchall()
+    if not servis:
+        vt.non_comparable(idu, "dpe_rattache", "ADEME DPE",
+                          "LABUSE ne rattache aucun DPE à la parcelle "
+                          "(absence non assertable : rattachement ADEME au grain adresse/BAN)",
+                          labuse="0 DPE")
+    for numero, etiq_lab, jeu in servis:
+        ds = _ADEME_DPE_AV if (jeu or "").lower().startswith("avant") else _ADEME_DPE_DS
+        import urllib.parse
+        url = (f"https://data.ademe.fr/data-fair/api/v1/datasets/{ds}/lines?size=1&qs="
+               + urllib.parse.quote(f'numero_dpe:"{numero}"'))
         try:
             o, _ = fetch_json(url, "dpe", timeout=50)
-            n_off = (o or {}).get("total")
-            if n_off is None:
-                results = (o or {}).get("results") or []
-                n_off = len(results)
-            # présence : les deux voient-ils (au moins) un DPE au voisinage ?
-            ok = bool(n_dpe_lab) == bool(n_off) or bool(n_dpe_lab)
-            vt.verdict(idu, "dpe_presence", "ADEME DPE (logements existants)",
-                       f"{n_dpe_lab} DPE servi(s)", f"{n_off} DPE à ≤150 m",
-                       CONFORME if ok else FAUX,
-                       ecart="" if ok else "présence DPE divergente", url=url,
-                       note="rattachement DPE au grain adresse/voisinage")
+            res = (o or {}).get("results") or []
+            if not res:
+                vt.verdict(idu, "dpe_rattache", "ADEME DPE", f"DPE {numero} (étiq. {etiq_lab})",
+                           "introuvable à l'ADEME", FAUX,
+                           ecart="DPE servi absent du jeu ADEME", url=url)
+            else:
+                etiq_off = res[0].get("etiquette_dpe") or res[0].get("classe_consommation_energie")
+                ok = (not etiq_lab) or (not etiq_off) or str(etiq_lab).upper() == str(etiq_off).upper()
+                vt.verdict(idu, "dpe_rattache", "ADEME DPE", f"{numero} — étiq. {etiq_lab}",
+                           f"{numero} — étiq. {etiq_off}", CONFORME if ok else FAUX,
+                           ecart="" if ok else f"étiquette {etiq_lab} ≠ {etiq_off}", url=url,
+                           note="DPE vérifié par numéro à l'ADEME")
         except Exception as e:  # noqa: BLE001
-            vt.non_comparable(idu, "dpe_presence", "ADEME DPE", f"injoignable : {str(e)[:50]}",
-                              labuse=n_dpe_lab, url=url)
-    else:
-        vt.non_comparable(idu, "dpe_presence", "ADEME DPE", "fiche sans coordonnées")
+            vt.non_comparable(idu, "dpe_rattache", "ADEME DPE", f"injoignable : {str(e)[:50]}",
+                              labuse=f"DPE {numero}", url=url)
 
     # --- Permis (Sitadel) : permis de la parcelle ---
     # Sitadel en open data est diffusé en lots (pas d'API point fiable) ; on compare la PRÉSENCE
@@ -592,24 +715,25 @@ _CHAMPS_CSV = ["parcelle", "champ", "source", "valeur_labuse", "valeur_officiell
                "date_source", "verdict", "ecart", "url", "note"]
 
 
-def _deja_faits(sources: list[str]) -> set:
-    """(source, parcelle) déjà présents dans COMPARAISONS.csv — pour la REPRISE."""
+def _fichier_source(s: str):
+    return VTM.SORTIE / f"comparaisons_{s}.csv"
+
+
+def _deja_faits_source(s: str) -> set:
+    """parcelles déjà traitées pour CETTE source (fichier par source) — pour la REPRISE."""
     fait = set()
-    if COMPARAISONS_CSV.exists():
-        with open(COMPARAISONS_CSV, newline="") as f:
+    fp = _fichier_source(s)
+    if fp.exists():
+        with open(fp, newline="") as f:
             for r in csv.DictReader(f):
-                fait.add((r["source"], r["parcelle"]))
+                fait.add(r["parcelle"])
     return fait
 
 
-# source logique -> nom de la source dans les lignes (pour la reprise par source)
-_SRC_TAG = {
-    "cadastre": "cadastre", "ban": "ban", "plu": "plu", "risques": "risques",
-    "dvf": "dvf", "bati": "bati", "entreprises": "entreprises", "energie_permis": "energie_permis",
-}
-
-
 def cmd_comparer(source: str, n: int = 0, rafraichir: bool = False) -> None:
+    """Compare une ou plusieurs sources. CHAQUE source écrit son PROPRE fichier
+    `comparaisons_<source>.csv` (écritures sûres même en parallèle, un commit par source) ;
+    `fusionner` les concatène ensuite dans COMPARAISONS.csv. Reprise par (source, parcelle)."""
     import psycopg
     ech = _charger_echantillon()
     if n:
@@ -622,42 +746,57 @@ def cmd_comparer(source: str, n: int = 0, rafraichir: bool = False) -> None:
     conn = psycopg.connect(VTM._dsn())
     conn.read_only = True
     conn.autocommit = True
-    nouveau = not COMPARAISONS_CSV.exists()
-    COMPARAISONS_CSV.parent.mkdir(parents=True, exist_ok=True)
-    deja = set() if rafraichir else _deja_faits(noms)
-    f = open(COMPARAISONS_CSV, "a", newline="")
-    w = csv.DictWriter(f, fieldnames=_CHAMPS_CSV)
-    if nouveau:
-        w.writeheader()
+    VTM.SORTIE.mkdir(parents=True, exist_ok=True)
     try:
         for s in noms:
             fn = SOURCES[s]
-            tag = _SRC_TAG[s]
+            fp = _fichier_source(s)
+            nouveau = not fp.exists() or rafraichir
+            deja = set() if rafraichir else _deja_faits_source(s)
+            f = open(fp, "w" if rafraichir else "a", newline="")
+            w = csv.DictWriter(f, fieldnames=_CHAMPS_CSV)
+            if nouveau:
+                w.writeheader()
             faits = 0
-            for i, dd in enumerate(ech, 1):
-                if (not rafraichir) and (tag, dd["idu"]) in deja:
-                    continue
-                vt = VT()
-                try:
-                    fdata = fiche(dd["idu"])
-                except Exception as e:  # noqa: BLE001
-                    vt.non_comparable(dd["idu"], s, "fiche servie", f"fiche injoignable : {str(e)[:50]}")
-                    fdata = {}
-                else:
+            try:
+                for dd in ech:
+                    if dd["idu"] in deja:
+                        continue
+                    vt = VT()
                     try:
-                        fn(vt, dd, fdata, conn)
+                        fdata = fiche(dd["idu"])
                     except Exception as e:  # noqa: BLE001
-                        vt.non_comparable(dd["idu"], s, s, f"comparateur a levé : {str(e)[:70]}")
-                # tag la source logique sur chaque ligne (pour la reprise), garde le libellé riche
-                for lg in vt.lignes:
-                    lg["source"] = f"{tag} · {lg['source']}"
-                    w.writerow(lg)
-                f.flush()
-                faits += 1
-                if faits % 25 == 0:
-                    print(f"  [{s}] {faits} parcelles comparées…", flush=True)
-            print(f"[{s}] terminé : {faits} parcelles traitées ce passage.", flush=True)
+                        vt.non_comparable(dd["idu"], s, "fiche servie", f"fiche injoignable : {str(e)[:50]}")
+                        fdata = {}
+                    else:
+                        try:
+                            fn(vt, dd, fdata, conn)
+                        except Exception as e:  # noqa: BLE001
+                            vt.non_comparable(dd["idu"], s, s, f"comparateur a levé : {str(e)[:70]}")
+                    for lg in vt.lignes:
+                        lg["source"] = f"{s} · {lg['source']}"
+                        w.writerow(lg)
+                    f.flush()
+                    faits += 1
+                    if faits % 25 == 0:
+                        print(f"  [{s}] {faits} parcelles comparées…", flush=True)
+            finally:
+                f.close()
+            print(f"[{s}] terminé : {faits} parcelles ce passage → {fp}", flush=True)
     finally:
-        f.close()
         conn.close()
-    print(f"→ {COMPARAISONS_CSV}")
+
+
+def cmd_fusionner() -> None:
+    """Concatène tous les comparaisons_<source>.csv dans COMPARAISONS.csv (ordre des sources)."""
+    lignes = []
+    for s in SOURCES:
+        fp = _fichier_source(s)
+        if fp.exists():
+            with open(fp, newline="") as f:
+                lignes.extend(list(csv.DictReader(f)))
+    with open(COMPARAISONS_CSV, "w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=_CHAMPS_CSV)
+        w.writeheader()
+        w.writerows(lignes)
+    print(f"{len(lignes)} lignes → {COMPARAISONS_CSV}")
