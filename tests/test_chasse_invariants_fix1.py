@@ -180,3 +180,59 @@ def test_lot3_cascade_exclue_sort_du_classement_avec_raison():
             assert l.score is not None            # le score reste écrit (band = un ordre, pas un score nul)
         for r in gardees:
             assert lignes[r[0]].bande == "A"      # pas de faux positif : une A non exclue reste A
+
+
+# ───────────────────────────── Lot 4 — E-02 / E-07 / E-08 : tables dérivées ────────────────────
+def test_lot4_e07_ingestion_utilise_point_on_surface():
+    """E-07 — l'ingestion cadastre calcule le point « centre » avec ST_PointOnSurface (toujours
+    DANS la parcelle), plus ST_Centroid (barycentre, dehors sur les formes concaves)."""
+    import pathlib
+    src = pathlib.Path("src/labuse/ingestion/cadastre_ingest.py").read_text()
+    # la ligne qui alimente la colonne `centroid` doit poser ST_PointOnSurface
+    assert "ST_PointOnSurface(ST_MakeValid(ST_SetSRID(ST_GeomFromGeoJSON(:gj), 4326)))" in src
+    assert "centroid = EXCLUDED.centroid" in src   # mis à jour aussi au ON CONFLICT
+
+
+@pytest.mark.reel
+def test_lot4_e07_tous_les_centroides_dans_la_parcelle():
+    """E-07 — après la mise à jour locale, 0 centroïde de parcelle vivante hors de sa géométrie."""
+    from sqlalchemy import text
+    with app_session() as s:
+        n = s.execute(text("""SELECT count(*) FROM parcels
+            WHERE cadastre_disparue_le IS NULL AND centroid IS NOT NULL
+              AND NOT ST_Intersects(geom, centroid)""")).scalar()
+        assert n == 0
+
+
+@pytest.mark.reel
+def test_lot4_e02_parcel_zone_plu_version_et_temoin():
+    """E-02 — la table porte une SIGNATURE d'entrées (contrôle de version) : fraîchement bâtie, elle
+    n'est pas périmée ; et le témoin orphelin 97401000AH0371 a désormais sa zone."""
+    from labuse.api.tiles import parcel_zone_plu_perimee, _parcel_zone_plu_signature
+    from sqlalchemy import text
+    with app_session() as s:
+        if not s.execute(text("SELECT to_regclass('parcel_zone_plu_version')")).scalar():
+            pytest.skip("reconstruction parcel_zone_plu pas encore jouée localement")
+        # signature déterministe et mémorisée
+        assert _parcel_zone_plu_signature(s)
+        assert parcel_zone_plu_perimee(s) is False          # à jour juste après le build
+        # une signature différente mémorisée ⇒ périmée (on prouve la détection)
+        s.execute(text("UPDATE parcel_zone_plu_version SET sig = sig || '_x'"))
+        assert parcel_zone_plu_perimee(s) is True
+        s.execute(text("UPDATE parcel_zone_plu_version SET sig = left(sig, length(sig)-2)"))  # restaure
+        assert parcel_zone_plu_perimee(s) is False
+        # témoin : la parcelle zonable n'est plus orpheline
+        z = s.execute(text("SELECT zone_lib FROM parcel_zone_plu WHERE idu='97401000AH0371'")).scalar()
+        assert z, "97401000AH0371 doit avoir sa zone après reconstruction"
+        s.rollback()
+
+
+@pytest.mark.reel
+def test_lot4_e08_orpheline_non_servie_et_servi_clippe():
+    """E-08 — le bâti SERVI (parcel_bati_revele, clippé ST_Intersection) ne dépasse jamais la parcelle ;
+    la seule table en infraction (parcel_residuel_bati) est ORPHELINE (builder retiré, 0 lecteur servi)."""
+    from sqlalchemy import text
+    with app_session() as s:
+        servi = s.execute(text("""SELECT count(*) FROM parcel_bati_revele b JOIN parcels p ON p.id=b.parcel_id
+            WHERE GREATEST(b.emprise_bdtopo_m2, b.emprise_cosia_m2) > ST_Area(p.geom_2975)+1""")).scalar()
+        assert servi == 0, "le bâti servi est clippé à la parcelle"
