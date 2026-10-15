@@ -185,6 +185,20 @@ def test_f4_reglement_valeurs_de_zone_pas_seulement_references():
     assert rv["emprise"]["etat"] == "absent" and rv["emprise"]["valeur"] == "non réglementé"
 
 
+def test_f4_page_imprimee_ne_confond_pas_le_p_du_nom_d_article():
+    """VERITE-TERRAIN-1 — l'ancre `#page=N` d'une citation vient de la PAGE, pas du « p » du nom
+    d'article. « Art. Up3.4 · p.147 » doit donner 147 : le « p3 » de « Up3 » renvoyait 3, et l'ancre
+    `#page=3` pointait le préambule au lieu de l'article d'emprise de la zone Up (Saint-Pierre).
+    Sans page citée → None (jamais une page inventée)."""
+    from labuse.plu_reglement import _page_imprimee
+    assert _page_imprimee("Art. Up3.4 · p.147 (PLU, calibrage validé)") == 147
+    assert _page_imprimee("Art. Up3.1 · p.146") == 146
+    assert _page_imprimee("Art. 10.2, p.20-21") == 20     # cas historique préservé
+    assert _page_imprimee("Art. Ui.9 · p.56") == 56
+    assert _page_imprimee("Art. AUp.2 · p.30") == 30      # autre nom d'article à « p » collé
+    assert _page_imprimee("Art. Up3.4 (sans page citée)") is None
+
+
 def test_f4_zone_non_outillee_pas_de_valeurs_fabriquees():
     """Une commune/zone non calibrée ne fabrique AUCUNE valeur (regles_valeurs vide)."""
     from labuse.plu_reglement import resolve_reglement
