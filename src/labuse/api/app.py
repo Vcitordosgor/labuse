@@ -1866,13 +1866,15 @@ def _q_v2_where(run_label: str,
     # (hauteur_bati_m, id registre le_bien.hauteur_bati_m, faîtage LiDAR HD). Filtre min/max en mètres :
     # la parcelle doit porter un bâti mesuré au LiDAR dans la fourchette. Emprise bâtie en % = la colonne
     # taux_emprise_pct du RUN SERVI (parcel_residuel) — exactement celle qui partitionne « État du sol ».
+    # CHASSE-INVARIANTS-FIX-2 (1) — le filtre hauteur lit la MÊME borne : une mesure aberrante
+    # (≤ 0 ou > plafond) devient NULL et ne matche jamais la fourchette (pas une « hauteur »).
     if hauteur_min is not None:
         conds.append("EXISTS (SELECT 1 FROM batiment_hauteur_lidar bhl0 WHERE bhl0.idu = p.idu"
-                     " AND bhl0.faitage_m >= :f_hmin)")
+                     " AND labuse_hauteur_lidar_m(bhl0.faitage_m) >= :f_hmin)")
         params["f_hmin"] = hauteur_min
     if hauteur_max is not None:
         conds.append("EXISTS (SELECT 1 FROM batiment_hauteur_lidar bhl1 WHERE bhl1.idu = p.idu"
-                     " AND bhl1.faitage_m <= :f_hmax)")
+                     " AND labuse_hauteur_lidar_m(bhl1.faitage_m) <= :f_hmax)")
         params["f_hmax"] = hauteur_max
     # CHASSE-DONNEES-FIX-1 (Lot 4, E-81) — l'emprise non MESURÉE (taux NULL) ne passe plus les
     # bornes basses comme si elle valait 0 % : le filtre exige une valeur RÉELLE (IS NOT NULL).
@@ -7256,8 +7258,10 @@ def map_batiments_geojson(bbox: str = Query(..., description="minLon,minLat,maxL
     _h_expr = ("round(COALESCE(hl.faitage_m::numeric, (attrs->>'hauteur')::numeric), 1)"
                if _lid_ok else "round((attrs->>'hauteur')::numeric, 1)")
     _lid_col = "(hl.faitage_m IS NOT NULL)" if _lid_ok else "false"
+    # CHASSE-INVARIANTS-FIX-2 (1) — l'extrusion 3D lit la MÊME borne : un faîtage aberrant devient NULL,
+    # l'extrusion retombe sur la hauteur BD TOPO (COALESCE) et le flag `lidar` passe à false (jamais 53 km).
     _lid_join = ("""LEFT JOIN LATERAL (
-            SELECT bhl.faitage_m FROM parcels p JOIN batiment_hauteur_lidar bhl ON bhl.idu = p.idu
+            SELECT labuse_hauteur_lidar_m(bhl.faitage_m) AS faitage_m FROM parcels p JOIN batiment_hauteur_lidar bhl ON bhl.idu = p.idu
             WHERE ST_Intersects(p.geom_2975, sl.geom_2975) LIMIT 1) hl ON true""" if _lid_ok else "")
     fc = db.execute(text(f"""
       SELECT jsonb_build_object('type','FeatureCollection','features',

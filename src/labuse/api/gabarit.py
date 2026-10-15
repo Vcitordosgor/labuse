@@ -40,7 +40,9 @@ def _bati_existant(db: Session, idu: str) -> dict | None:
     intersectée ≥ 20 m² — écarte les débords de voisins. Emprise entière servie (schéma fidèle).
     Renvoie une FeatureCollection (4326) ou None si la parcelle ne porte aucun bâti."""
     lid = db.execute(text(
-        "SELECT faitage_m FROM batiment_hauteur_lidar WHERE idu = :i"), {"i": idu}).scalar()
+        # CHASSE-INVARIANTS-FIX-2 (1) — même borne unique : faîtage ≤ 0 ou > plafond ⇒ NULL (non mesuré).
+        "SELECT labuse_hauteur_lidar_m(faitage_m) FROM batiment_hauteur_lidar WHERE idu = :i"),
+        {"i": idu}).scalar()
     lidar_faitage = float(lid) if lid is not None else None
     rows = db.execute(text(
         "SELECT ST_AsGeoJSON(ST_Transform(s.geom_2975, 4326)) AS gj, "

@@ -1204,10 +1204,36 @@ def ensure_zone_famille_fn(engine) -> None:
         c.execute(_t(ZONE_FAMILLE_FN))
 
 
+# CHASSE-INVARIANTS-FIX-2 (point 1) — BORNE UNIQUE des hauteurs mesurées au LiDAR (faîtage/égout,
+# table `batiment_hauteur_lidar`). La mesure MNS−MNT « dalle » devient négative quand le modèle de sol
+# passe au-dessus du bâti (remblai/débord/glitch vertical) et, sur 2 cellules mal géoréférencées, atteint
+# 53 401 m. Une valeur ≤ 0 ou au-delà d'un plafond RÉALISTE pour La Réunion n'est JAMAIS une hauteur
+# mesurée : la fonction la ramène à NULL (« hauteur non mesurée »), et le calcul ne l'utilise pas.
+# Plafond 60 m : le plus haut bâtiment de l'île est un R+15 (~45–50 m) ; la plus haute mesure LiDAR
+# plausible observée est 55 m ; au-delà de 60 m, 0 bâti réel, seulement les 2 aberrations de coordonnée.
+# IMMUTABLE → utilisable en WHERE/COALESCE ; `CREATE OR REPLACE` ne prend pas de verrou de table.
+# Même valeur que `faisabilite.hauteur_lidar.PLAFOND_FAITAGE_ABERRANT_M` (badge « faîtage aberrant »).
+PLAFOND_HAUTEUR_LIDAR_M = 60.0
+HAUTEUR_LIDAR_FN = (
+    "CREATE OR REPLACE FUNCTION labuse_hauteur_lidar_m(h real) RETURNS real "
+    "LANGUAGE sql IMMUTABLE PARALLEL SAFE AS $$ "
+    f"SELECT CASE WHEN $1 IS NULL OR $1 <= 0 OR $1 > {PLAFOND_HAUTEUR_LIDAR_M} THEN NULL "
+    "ELSE $1 END $$"
+)
+
+
+def ensure_hauteur_lidar_fn(engine) -> None:
+    """Crée/actualise la borne SQL unique `labuse_hauteur_lidar_m`. Idempotent, sans verrou lourd."""
+    from sqlalchemy import text as _t
+    with engine.begin() as c:
+        c.execute(_t(HAUTEUR_LIDAR_FN))
+
+
 def create_all(engine) -> None:
     Base.metadata.create_all(engine)
     _ensure_schema_steps(engine, geom_backfill=True)
     ensure_zone_famille_fn(engine)
+    ensure_hauteur_lidar_fn(engine)
 
 
 def ensure_icd_columns(engine) -> None:
