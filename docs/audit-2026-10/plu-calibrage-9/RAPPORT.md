@@ -64,13 +64,15 @@ l'est, et uniquement à Saint-Paul : 188 polygones « Clause logements aidés »
 | 19 | 97420 | Sainte-Suzanne | **TEXTE** | `sous_destinations.logement` (U3, p.11) — 4 000 m² SDP → 40 % aidé (UA/UB/UC) | UA·UB·UC | 3 |
 | 20 | 97421 | Salazie | **INTROUVABLE** *(hors-texte partiel)* | Silence au **règlement** : seule clause voisine = **densité** (20/10 log/ha), renvois OAP. Hors-texte : **ER « logement social / mixité sociale » ×8 en base** (typepsc 05, L.151-41 4° — géométrique) | — | 0 |
 | 21 | 97422 | Le Tampon | **TEXTE** | `sous_destinations.logement` (Ua/Ub/Uc 2.2 3°, p.13/28/43) — 3 000/1 000/1 000 m² SDP → 30 % aidé | Ua·Ub·Uc | 3 |
-| 22 | 97423 | Les Trois-Bassins | **TEXTE** | `notes` de zone (Ua/Ub/Uc/AU 2.2, p.11/26/40/66) — 1 000 m² SDP → 40 % dont 25 % LLS ; opérations ≥ 1 200 m² → 40 % global | Ua·Ub·Uc·1AU* | 4 |
+| 22 | 97423 | Les Trois-Bassins | **TEXTE** | `notes` de zone (Ua/Ub/Uc 2.2, p.11/26/40) — 1 000 m² SDP → 40 % dont 25 % LLS ; opérations ≥ 1 200 m² → 40 % global. Taux communal unique (Ua 2.2 p.11) ; les notes Ub/Uc ne citent que le seuil → citation = note de zone + renvoi Ua pour le taux | Ua·Ub·Uc | 3 |
 | 23 | 97424 | Cilaos | **INTROUVABLE** | Silence total : aucune mention mixité/aidé/social/LLS dans toutes les zones. Hors-texte : **aucun** secteur/ER en base | — | 0 |
 | 24 | 97417 | Saint-Philippe | **SANS OBJET — RNU** | Aucun PLU (`config/plu_destinations/rnu.yaml`, communes `["97417"]`) : pas de zonage, donc pas de clause de mixité de zone opposable | — | 0 |
 
-**Totaux** : 1 structurée (déjà servie) · 14 texte **à calibrer (Lot B)** · 8 introuvables
+**Totaux** : 1 structurée (déjà servie, 7 zones) · 14 texte **calibrées (Lot B)** · 8 introuvables
 (dont 2 — Saint-Pierre, Salazie — avec un **ER logement géométrique** hors règlement de zone) ·
-1 RNU. **≈ 51 zones** à calibrer sur les 14 communes texte.
+1 RNU. **43 zones calibrées** sur les 14 communes texte (+ 7 zones St-Denis déjà structurées
+= 50 zones servant la mixité). Les secteurs AU/renvois sans bloc `regles` propre suivent
+automatiquement leur zone mère (pas de feuille dupliquée).
 
 ### Issue par commune (synthèse)
 

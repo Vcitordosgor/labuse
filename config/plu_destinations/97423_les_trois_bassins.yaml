@@ -85,6 +85,18 @@ zones:
           citation: Au minimum 20% de la superficie totale de l’unité foncière doit être traité en espace
             vert et perméable comprenant des plantations et devant recevoir un traitement paysager.
           statut: valide
+      mixite:
+        seuil_m2: 1000
+        seuil_type: surface_plancher
+        quota_pct: 40
+        quota_base: surface_plancher
+        portee: zone
+        produits: ["logements aidés", "LLS (25% min)"]
+        article: Ua 2.2
+        page_pdf: 11
+        citation: 'clause logement social : > 1000 m² de surface de plancher d''habitation → 40 % logement aidé dont 25
+          % LLS ; opérations d''aménagement > 1200 m² SDP → 40 % global (Ua 2.2, p. 11).'
+        statut: valide
     silence: autorise
     silence_src: 'Art. Ua 2.2, p. 11 : « Sont admises toutes les occupations et utilisations du sol non citées à
       l''article Ua 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes » — liste
@@ -261,6 +273,18 @@ zones:
           citation: Au minimum 30% de la superficie totale de l’unité foncière doit être traité en espace
             vert et perméable comprenant des plantations et devant recevoir un traitement paysager.
           statut: valide
+      mixite:
+        seuil_m2: 1000
+        seuil_type: surface_plancher
+        quota_pct: 40
+        quota_base: surface_plancher
+        portee: zone
+        produits: ["logements aidés", "LLS (25% min)"]
+        article: Ub 2.2
+        page_pdf: 26
+        citation: 'Clause densité 30 log/ha et clause logement social (1000 m² / 1200 m² SDP) : Ub 2.2, p. 26-27. (Taux
+          communal unique : > 1000 m² SDP d''habitation → 40 % logement aidé dont 25 % LLS, cf. Ua 2.2, p. 11.)'
+        statut: valide
     silence: autorise
     silence_src: 'Art. Ub 2.2, p. 26 : « Sont admises toutes les occupations et utilisations du sol non citées à
       l''article Ub 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes » — liste
@@ -368,6 +392,18 @@ zones:
           citation: Au minimum 40% de la superficie totale de l’unité foncière doit être traité en espace
             vert et perméable comprenant des plantations et devant recevoir un traitement paysager.
           statut: valide
+      mixite:
+        seuil_m2: 1000
+        seuil_type: surface_plancher
+        quota_pct: 40
+        quota_base: surface_plancher
+        portee: zone
+        produits: ["logements aidés", "LLS (25% min)"]
+        article: Uc 2.2
+        page_pdf: 40
+        citation: 'clause logement social (1000 m² / 1200 m² SDP) : Uc 2.2, p. 40. (Taux communal unique : > 1000 m²
+          SDP d''habitation → 40 % logement aidé dont 25 % LLS, cf. Ua 2.2, p. 11.)'
+        statut: valide
     silence: autorise
     silence_src: 'Art. Uc 2.2, p. 40 : « Sont admises toutes les occupations et utilisations du sol non citées à
       l''article Uc 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes » — liste

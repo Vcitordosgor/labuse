@@ -203,6 +203,18 @@ zones:
           citation: Au minimum 15% de la superficie totale de l’unité foncière doit être traité en espace
             vert et perméable comprenant des plantations
           statut: valide
+      mixite:
+        seuil_m2: 2000
+        seuil_type: surface_plancher
+        quota_pct: 20
+        quota_base: surface_plancher
+        portee: zone
+        produits: [logements locatifs sociaux]
+        article: U2 2.2 (4)
+        page_pdf: 30
+        citation: 'U2 2.2 (4), p. 30 : programme de logements > 2 000 m² de surface de plancher → 20 % minimum de logements
+          locatifs sociaux (condition de programme, pas un plafond de destination → pas de seuil_m2).'
+        statut: valide
     silence: autorise
     silence_src: 'Art. U2 2.2, p. 30 : « Sont admises toutes les occupations et utilisations du sol non citées à
       l''article U2 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes »'
@@ -393,6 +405,18 @@ zones:
           citation: Au minimum 15% de la superficie totale de l’unité foncière doit être traité en espace
             vert et perméable comprenant des plantations
           statut: valide
+      mixite:
+        seuil_m2: 2000
+        seuil_type: surface_plancher
+        quota_pct: 20
+        quota_base: surface_plancher
+        portee: zone
+        produits: [logements locatifs sociaux]
+        article: U3 2.2 (4)
+        page_pdf: 45
+        citation: 'U3 2.2 (4), p. 45 : programme de logements > 2 000 m² → 20 % minimum de logements locatifs sociaux (condition
+          de programme).'
+        statut: valide
     silence: autorise
     silence_src: 'Art. U3 2.2, p. 44 : « Sont admises toutes les occupations et utilisations du sol non citées à
       l''article U3 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes »'
@@ -780,6 +804,18 @@ zones:
           citation: Au minimum 35% de la superficie totale de l’unité foncière doit être traité en espace
             vert et perméable comprenant des plantations
           statut: valide
+      mixite:
+        seuil_m2: 2000
+        seuil_type: surface_plancher
+        quota_pct: 20
+        quota_base: surface_plancher
+        portee: zone
+        produits: [logements locatifs sociaux]
+        article: U5 2.2 (4)
+        page_pdf: 74
+        citation: 'U5 2.2 (4), p. 74 : programme de logements > 2 000 m² → 20 % minimum de logements locatifs sociaux (condition
+          de programme).'
+        statut: valide
     silence: autorise
     silence_src: 'Art. U5 2.2, p. 74 : « Sont admises toutes les occupations et utilisations du sol non citées à
       l''article U5 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes »'

@@ -72,6 +72,18 @@ zones:
             page_pdf: 35
             porte: "majoration_conditionnelle"
             modifie_calcul: true
+      mixite:
+        seuil_m2: 1800
+        seuil_type: surface_plancher
+        quota_pct: 30
+        quota_base: surface_plancher
+        portee: zone
+        article: Zones U1a à U1pso, Art. 2, § 2.2 (3)
+        page_pdf: 14
+        citation: « En cas de réalisation d'un programme de logements représentant une surface de plancher supérieure
+          ou égale à 1 800 m², un minimum de 30 % de la programmation logement doit être affecté à des logements
+          aidés »
+        statut: valide
     silence: autorise
     silence_src: Art. 1, § 1.2 "Sont interdits" = liste fermée de 3 occupations (entrepôt exclusif, agricole, campeurs/caravanes),
       p. 14 ; tout le reste n'est ni interdit ni conditionné par les articles 1 et 2.
@@ -848,6 +860,18 @@ zones:
           citation: Le pourcentage minimal d’espaces libres perméables sera de 30% de la surface totale du
             terrain d’assiette du projet.
           statut: valide
+      mixite:
+        seuil_m2: 1800
+        seuil_type: surface_plancher
+        quota_pct: 30
+        quota_base: surface_plancher
+        portee: zone
+        article: U2a-U2h, Art. 2.2
+        page_pdf: 67
+        citation: « En cas de réalisation d'un programme de logements représentant une surface de plancher supérieure
+          ou égale à 1 800 m², un minimum de 30 % de la programmation logement doit être affecté à des logements
+          aidés »
+        statut: valide
     silence: autorise
     silence_src: U2a-U2h, Art. 1.2 « Sont interdits » = liste fermée d'interdictions (p. 66) ; ce qui n'y figure
       pas et n'est pas conditionné à l'Art. 2 est admis
@@ -928,6 +952,18 @@ zones:
           citation: Le pourcentage minimal d’espaces libres perméables sera de 30% de la surface totale du
             terrain d’assiette du projet.
           statut: valide
+      mixite:
+        seuil_m2: 1800
+        seuil_type: surface_plancher
+        quota_pct: 30
+        quota_base: surface_plancher
+        portee: zone
+        article: U2a-U2h, Art. 2.2
+        page_pdf: 67
+        citation: « En cas de réalisation d'un programme de logements représentant une surface de plancher supérieure
+          ou égale à 1 800 m², un minimum de 30 % de la programmation logement doit être affecté à des logements
+          aidés »
+        statut: valide
     silence: autorise
     silence_src: U2a-U2h, Art. 1.2 « Sont interdits » = liste fermée d'interdictions (p. 66) ; ce qui n'y figure
       pas et n'est pas conditionné à l'Art. 2 est admis
@@ -1002,6 +1038,18 @@ zones:
             pourcentage minimal d’espaces libres perméables sera de 50% de la surface totale du terrain d’assiette
             du projet.
           statut: valide
+      mixite:
+        seuil_m2: 1800
+        seuil_type: surface_plancher
+        quota_pct: 30
+        quota_base: surface_plancher
+        portee: zone
+        article: U2a-U2h, Art. 2.2
+        page_pdf: 67
+        citation: « En cas de réalisation d'un programme de logements représentant une surface de plancher supérieure
+          ou égale à 1 800 m², un minimum de 30 % de la programmation logement doit être affecté à des logements
+          aidés »
+        statut: valide
     silence: autorise
     silence_src: U2a-U2h, Art. 1.2 « Sont interdits » = liste fermée d'interdictions (p. 66) ; ce qui n'y figure
       pas et n'est pas conditionné à l'Art. 2 est admis

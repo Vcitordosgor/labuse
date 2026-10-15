@@ -71,6 +71,18 @@ zones:
 
             • en zone UA : 20% de la surface'
           statut: valide
+      mixite:
+        seuil_m2: 2500
+        seuil_type: surface_plancher
+        quota_pct: 20
+        quota_base: surface_plancher
+        portee: zone
+        produits: [logement social]
+        article: U3
+        page_pdf: 17
+        citation: « En zones UA, UB et UC… tout projet visant à créer plus de 2 500 m² de surface de plancher destinée
+          à l'habitation doit prévoir d'affecter au logement social… au moins 20 % »
+        statut: valide
     silence: autorise
     silence_src: 'Art. U2, p. 17 : « Sont admises toutes les occupations et utilisations du sol non citées à l''article
       U 1.2 »'
@@ -321,6 +333,18 @@ zones:
 
             • en zone UB : 25% de la surface'
           statut: valide
+      mixite:
+        seuil_m2: 2500
+        seuil_type: surface_plancher
+        quota_pct: 20
+        quota_base: surface_plancher
+        portee: zone
+        produits: [logement social]
+        article: U3
+        page_pdf: 17
+        citation: « En zones UA, UB et UC… tout projet visant à créer plus de 2 500 m² de surface de plancher destinée
+          à l'habitation doit prévoir d'affecter au logement social… au moins 20 % »
+        statut: valide
     silence: autorise
     silence_src: 'Art. U2, p. 17 : « Sont admises toutes les occupations et utilisations du sol non citées à l''article
       U 1.2 »'
@@ -431,6 +455,18 @@ zones:
 
             • en zones UC (y compris UC1 et UC2) et UD (y compris UD1) : 30% de la surface'
           statut: valide
+      mixite:
+        seuil_m2: 2500
+        seuil_type: surface_plancher
+        quota_pct: 20
+        quota_base: surface_plancher
+        portee: zone
+        produits: [logement social]
+        article: U3
+        page_pdf: 17
+        citation: « En zones UA, UB et UC… tout projet visant à créer plus de 2 500 m² de surface de plancher destinée
+          à l'habitation doit prévoir d'affecter au logement social… au moins 20 % »
+        statut: valide
     silence: autorise
     silence_src: 'Art. U2, p. 17 : « Sont admises toutes les occupations et utilisations du sol non citées à l''article
       U 1.2 »'

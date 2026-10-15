@@ -83,6 +83,19 @@ zones:
             perméable, dont une partie (au minimum 15% de la superficie totale de l’unité foncière) doit être
             plantée intégralement en pleine terre
           statut: valide
+      mixite:
+        seuil_m2: 3000
+        seuil_type: surface_plancher
+        quota_pct: 30
+        quota_base: surface_plancher
+        portee: zone
+        produits: ["logements aidés", "logements locatifs sociaux", "logements intermédiaires"]
+        article: Ua2.2 3°
+        page_pdf: 13
+        citation: « En cas de réalisation d'un programme de logements représentant une surface de plancher supérieure
+          à 3 000 m², au minimum 30% de ce programme doit être affecté à des logements aidés (logements locatifs
+          sociaux, logements intermédiaires…). »
+        statut: valide
     silence: autorise
     silence_src: 'Art. Ua2, 2.2, p. 12 : « Sont admises toutes les occupations et utilisations du sol non citées
       à l''article Ua1.2 » — structure en liste fermée d''interdictions (Ua1.2), tout le reste est admis.'
@@ -407,6 +420,19 @@ zones:
             perméable, dont une partie (au minimum 25% de la superficie totale de l’unité foncière) doit être
             plantée intégralement en pleine terre
           statut: valide
+      mixite:
+        seuil_m2: 1000
+        seuil_type: surface_plancher
+        quota_pct: 30
+        quota_base: surface_plancher
+        portee: zone
+        produits: ["logements aidés", "logements locatifs sociaux", "logements intermédiaires"]
+        article: Ub2.2 3°
+        page_pdf: 28
+        citation: « En cas de réalisation d'un programme de logements représentant une surface de plancher supérieure
+          à 1000 m², au minimum 30% de ce programme doit être affecté à des logements aidés (logements locatifs
+          sociaux, logements intermédiaires…). »
+        statut: valide
     silence: autorise
     silence_src: 'Art. Ub2, 2.2, p. 27 : « Sont admises toutes les occupations et utilisations du sol non citées
       à l''article Uc1.2 » (sic — le renvoi vise « Uc1.2 », erreur matérielle probable pour Ub1.2, seul article
@@ -670,6 +696,19 @@ zones:
             perméable, dont une partie (au minimum 30% de la superficie totale de l’unité foncière) doit être
             plantée intégralement en pleine terre
           statut: valide
+      mixite:
+        seuil_m2: 1000
+        seuil_type: surface_plancher
+        quota_pct: 30
+        quota_base: surface_plancher
+        portee: zone
+        produits: ["logements aidés", "logements locatifs sociaux", "logements intermédiaires"]
+        article: Uc2.2 (3)
+        page_pdf: 43
+        citation: « En cas de réalisation d'un programme de logements représentant une surface de plancher supérieure
+          à 1000 m², au minimum 30% de ce programme doit être affecté à des logements aidés (logements locatifs
+          sociaux, logements intermédiaires…). »
+        statut: valide
     silence: autorise
     silence_src: 'Art. Uc2.2, p. 42 : « Sont admises toutes les occupations et utilisations du sol non citées à
       l''article Uc1.2 »'

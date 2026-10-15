@@ -69,6 +69,19 @@ zones:
             INDIVIDUEL 2 places par logement
           statut: valide
           raison: citation non retrouvée (recouvrement 44%)
+      mixite:
+        seuil_m2: 600
+        seuil_type: surface_plancher_shon
+        quota_pct: 20
+        quota_base: surface_plancher
+        portee: zone_deficit_graphique
+        produits: [logement social]
+        article: UA2 (2.2, 5)
+        page_pdf: 19
+        citation: « tout projet visant à créer plus de 600m2 de surface hors œuvre nette (SHON) destinée à l'habitation
+          doit prévoir d'affecter au logement social au moins 20% de la surface hors œuvre nette d'habitation prévue
+          dans l'opération »
+        statut: valide
     silence: autorise
     silence_src: 'Structure ancien format : art. UA1 « OCCUPATIONS ET UTILISATIONS DU SOL INTERDITES » (liste limitative,
       p. 18) et art. UA2 « SOUMISES A DES CONDITIONS PARTICULIERES » (p. 19-20) ; ce qui ne figure dans aucune des
@@ -386,6 +399,19 @@ zones:
           citation: 30 % au moins de la surface de la parcelle doivent être perméables ; le sol des aires
             de stationnement sera donc, si nécessaire, traité de façon à le rester.
           statut: valide
+      mixite:
+        seuil_m2: 600
+        seuil_type: surface_plancher_shon
+        quota_pct: 20
+        quota_base: surface_plancher
+        portee: zone_deficit_graphique
+        produits: [logement social]
+        article: UB2 (2.2, 4)
+        page_pdf: 29
+        citation: « tout projet visant à créer plus de 600m2 de surface hors œuvre nette (SHON) destinée à l'habitation
+          doit prévoir d'affecter au logement social au moins 20% de la surface hors œuvre nette d'habitation prévue
+          dans l'opération »
+        statut: valide
     silence: autorise
     silence_src: 'Structure ancien format : art. UB1 « OCCUPATIONS ET UTILISATIONS DU SOL INTERDITES » (liste limitative,
       p. 28) et art. UB2 « SOUMISES A DES CONDITIONS PARTICULIERES » (p. 28-29) ; ce qui n''y figure pas n''est
@@ -491,6 +517,19 @@ zones:
           citation: 30 % au moins de la surface de la parcelle doivent être perméables ; le sol des aires
             de stationnement sera donc, si nécessaire, traité de façon à le rester.
           statut: valide
+      mixite:
+        seuil_m2: 600
+        seuil_type: surface_plancher_shon
+        quota_pct: 20
+        quota_base: surface_plancher
+        portee: zone_deficit_graphique
+        produits: [logement social]
+        article: UC2 (2.2, 5)
+        page_pdf: 39
+        citation: « tout projet visant à créer plus de 600m2 de surface hors œuvre nette (SHON) destinée à l'habitation
+          doit prévoir d'affecter au logement social au moins 20% de la surface hors œuvre nette d'habitation prévue
+          dans l'opération »
+        statut: valide
     silence: autorise
     silence_src: 'Structure ancien format : art. UC1 « OCCUPATIONS ET UTILISATIONS DU SOL INTERDITES » (liste limitative,
       p. 38) et art. UC2 « SOUMISES A DES CONDITIONS PARTICULIERES » (p. 38-39) ; ce qui n''y figure pas n''est
@@ -758,6 +797,19 @@ zones:
           citation: 40 % au moins de la surface de la parcelle doivent être perméables ; le sol des aires
             de stationnement sera donc, si nécessaire, traité de façon à le rester.
           statut: valide
+      mixite:
+        seuil_m2: 600
+        seuil_type: surface_plancher_shon
+        quota_pct: 20
+        quota_base: surface_plancher
+        portee: zone_deficit_graphique
+        produits: [logement social]
+        article: UD2 (2.2, 4)
+        page_pdf: 49
+        citation: « tout projet visant à créer plus de 600m2 de surface hors œuvre nette (SHON) destinée à l'habitation
+          doit prévoir d'affecter au logement social au moins 20% de la surface hors œuvre nette d'habitation prévue
+          dans l'opération »
+        statut: valide
     silence: autorise
     silence_src: 'Structure ancien format : art. UD1 « OCCUPATIONS ET UTILISATIONS DU SOL INTERDITES » (liste limitative,
       p. 48) et art. UD2 « SOUMISES A DES CONDITIONS PARTICULIERES » (p. 48-49) ; ce qui n''y figure pas n''est

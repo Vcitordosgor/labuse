@@ -207,6 +207,18 @@ zones:
           citation: Au minimum 30% de la superficie totale de l'unite fonciere doit etre traite en espace
             libre dont au moins la moitie en espace permeable.
           statut: valide
+      mixite:
+        seuil_m2: 2000
+        seuil_type: surface_plancher
+        quota_pct: 40
+        quota_base: surface_plancher
+        portee: zone
+        produits: [logements aidés, logements locatifs sociaux, logements intermédiaires]
+        article: UB 2.2
+        page_pdf: 24
+        citation: « En cas de réalisation d'un programme de logements représentant une surface de plancher supérieure
+          à 2 000 m², au minimum 40% de ce programme doit être affecté à des logements aidés »
+        statut: valide
     silence: autorise
     silence_src: 'Art. UB 2.2, p.24 : « Sont admises toutes les occupations et utilisations du sol non citées à
       l''article UB 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes » — liste
@@ -304,6 +316,17 @@ zones:
           citation: Au minimum 40% de la superficie totale de l'unite fonciere doit etre traite en espace
             libre dont au moins la moitie en espace permeable.
           statut: valide
+      mixite:
+        seuil_m2: 2000
+        seuil_type: surface_plancher
+        quota_pct: 40
+        quota_base: surface_plancher
+        portee: zone
+        article: UC 2.2
+        page_pdf: 35
+        citation: « En cas de réalisation d'un programme de logements représentant une surface de plancher supérieure
+          à 2 000 m², au minimum 40% de ce programme doit être affecté à des logements aidés »
+        statut: valide
     silence: autorise
     silence_src: 'Art. UC 2.2, p.35 : « Sont admises toutes les occupations et utilisations du sol non citées à
       l''article UC 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes » — liste
@@ -409,6 +432,17 @@ zones:
           citation: Au minimum 50% de la superficie totale de l'unite fonciere doit etre traite en espace
             libre dont au moins la moitie en espace permeable.
           statut: valide
+      mixite:
+        seuil_m2: 2000
+        seuil_type: surface_plancher
+        quota_pct: 40
+        quota_base: surface_plancher
+        portee: zone
+        article: UD 2.2
+        page_pdf: 46
+        citation: « En cas de réalisation d'un programme de logements représentant une surface de plancher supérieure
+          à 2 000 m², au minimum 40% de ce programme doit être affecté à des logements aidés »
+        statut: valide
     silence: autorise
     silence_src: 'Art. UD 2.2, p.46 : « Sont admises toutes les occupations et utilisations du sol non citées à
       l''article UD 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes » — liste

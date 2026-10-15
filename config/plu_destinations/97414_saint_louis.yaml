@@ -69,6 +69,19 @@ zones:
           citation: Au minimum 15% de la superficie totale de l'unité foncière doit être traité en espace
             vert et perméable comprenant des plantations
           statut: valide
+      mixite:
+        seuil_m2: 2000
+        seuil_type: surface_plancher
+        quota_pct: 30
+        quota_base: surface_plancher
+        portee: zone
+        produits: [logements locatifs sociaux, logements intermédiaires]
+        article: UA 2.2 (4.)
+        page_pdf: 13
+        citation: « En cas de réalisation d'un programme de logements représentant une surface de plancher supérieure
+          à 2000 m², au minimum 30% de ce programme doit être affecté à des logements aidés (logements locatifs
+          sociaux, logements intermédiaires…). »
+        statut: valide
     silence: autorise
     silence_src: 'art. UA 2.2, p. 13 : « Sont admises toutes les occupations et utilisations du sol non citées à
       l''article U A 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes » —
@@ -208,6 +221,19 @@ zones:
           citation: Au minimum 20% de la superficie totale de l'unité foncière doit être traité en espace
             vert et perméable comprenant des plantations
           statut: valide
+      mixite:
+        seuil_m2: 1500
+        seuil_type: surface_plancher
+        quota_pct: 30
+        quota_base: surface_plancher
+        portee: zone
+        produits: [logements locatifs sociaux, logements intermédiaires]
+        article: UB 2.2 (5.)
+        page_pdf: 27
+        citation: « En cas de réalisation d'un programme de logements représentant une surface de plancher supérieure
+          à 1500 m², au minimum 30% de ce programme doit être affecté à des logements aidés (logements locatifs
+          sociaux, logements intermédiaires…). »
+        statut: valide
     silence: autorise
     silence_src: 'art. UB 2.2, p. 27 : « Sont admises toutes les occupations et utilisations du sol non citées à
       l''article U B 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes » —
@@ -308,6 +334,19 @@ zones:
           citation: Au minimum 25% de la superficie totale de l'unité foncière doit être traité en espace
             vert et perméable comprenant des plantations
           statut: valide
+      mixite:
+        seuil_m2: 1500
+        seuil_type: surface_plancher
+        quota_pct: 30
+        quota_base: surface_plancher
+        portee: zone
+        produits: [logements locatifs sociaux, logements intermédiaires]
+        article: UC 2.2 (4.)
+        page_pdf: 41
+        citation: « En cas de réalisation d'un programme de logements représentant une surface de plancher supérieure
+          à 1500 m², au minimum 30% de ce programme doit être affecté à des logements aidés (logements locatifs
+          sociaux, logements intermédiaires…). »
+        statut: valide
     silence: autorise
     silence_src: 'art. UC 2.2, p. 41 : « Sont admises toutes les occupations et utilisations du sol non citées à
       l''article U C 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes » —
@@ -519,6 +558,19 @@ zones:
           citation: Au minimum 30% de la superficie totale de l'unité foncière doit être traité en espace
             vert et perméable (...). Dans le secteur UD1, ce seuil est porté à 35% minimum.
           statut: valide
+      mixite:
+        seuil_m2: 1000
+        seuil_type: surface_plancher
+        quota_pct: 20
+        quota_base: surface_plancher
+        portee: zone
+        produits: [logements locatifs sociaux, logements intermédiaires]
+        article: UD 2.2 (4.)
+        page_pdf: 56
+        citation: « En cas de réalisation d'un programme de logements représentant une surface de plancher supérieure
+          à 1000 m², au minimum 20% de ce programme doit être affecté à des logements aidés (logements locatifs
+          sociaux, logements intermédiaires…). »
+        statut: valide
     silence: autorise
     silence_src: 'art. UD 2.2, p. 56 : « Sont admises toutes les occupations et utilisations du sol non citées à
       l''article U D 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes » —

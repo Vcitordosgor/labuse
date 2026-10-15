@@ -73,6 +73,18 @@ zones:
             vert et perméable comprenant des plantations, afin d'améliorer le cadre de vie et d'optimiser
             la gestion des eaux pluviales
           statut: valide
+      mixite:
+        seuil_m2: 4000
+        seuil_type: surface_plancher
+        quota_pct: 25
+        quota_base: surface_plancher
+        portee: zone
+        produits: ["logements locatifs sociaux", "logements intermédiaires"]
+        article: UA 2.2 (3.)
+        page_pdf: 13
+        citation: « En cas de réalisation d'un programme de logements représentant une surface de plancher supérieure
+          à 4 000m², au minimum 25% de ce programme doit être affecté à des logements aidés »
+        statut: valide
     silence: autorise
     silence_src: 'Art. UA 2.2, page_pdf 13 : « Sont admises toutes les occupations et utilisations du sol non citées
       à l''article UA 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes » —
@@ -215,6 +227,19 @@ zones:
             vert et perméable comprenant des plantations, afin d'améliorer le cadre de vie et d'optimiser
             la gestion des eaux pluviales
           statut: valide
+      mixite:
+        seuil_m2: 2000
+        seuil_type: surface_plancher
+        quota_pct: 25
+        quota_base: surface_plancher
+        portee: zone
+        produits: ["logements locatifs sociaux", "logements intermédiaires"]
+        article: UB 2.2 (3.)
+        page_pdf: 26
+        citation: « En cas de réalisation d'un programme de logements représentant une surface de plancher supérieure
+          à 2 000m², au minimum 25% de ce programme doit être affecté à des logements aidés (logements locatifs
+          sociaux, logements intermédiaires…). »
+        statut: valide
     silence: autorise
     silence_src: 'Art. UB 2.2, page_pdf 26 : « Sont admises toutes les occupations et utilisations du sol non citées
       à l''article UB 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes » —
