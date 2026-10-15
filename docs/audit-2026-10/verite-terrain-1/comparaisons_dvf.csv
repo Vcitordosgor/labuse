@@ -1,0 +1,974 @@
+parcelle,champ,source,valeur_labuse,valeur_officielle,date_source,verdict,ecart,url,note
+97401000AB0001,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97401000AB0005,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97401000AB0007,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97401000AB0008,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97401000AB0009,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97401000AB0015,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97401000AC0005,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97401000AC0007,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97401000AC0016,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97401000AC0023,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97401000AC0026,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97401000AC0040,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97401000AC0064,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97401000AC0068,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97401000AC0103,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97401000AC0106,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97401000AC0116,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97401000AC0117,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97401000AC0160,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97401000AC0196,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97401000AC0553,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97401000AC0569,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97401000AP0011,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97401000AP0011,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),21,19,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97401000AS0401,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97401000AS0401,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),90,91,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97401000AT0016,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97401000AT0016,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),8,9,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97401000AT0404,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97401000AT0404,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),8,9,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97401000AT0412,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97401000AT0412,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),8,9,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97401000AT0447,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97401000AT0447,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),8,9,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97401000AT0536,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97401000AT0536,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),8,9,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97401000AT0538,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97401000AT0538,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),8,9,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97401000AT0572,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97401000AT0572,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),8,9,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97401000AT0628,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97401000AT0628,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),8,9,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97401000AT0680,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97401000AT0680,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),8,9,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97401000AT0681,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97401000AT0681,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),8,9,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97401000AT0691,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97401000AT0691,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),8,9,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97402000AB1017,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97402000AB1017,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),26,27,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97402000AC0445,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97402000AC0445,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),3,,,NON COMPARABLE,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","recompte brut 5 ≠ agrégat servi 3 (dédup/filtre qualité/appariement type — méthode, non un faux)"
+97402000AI0716,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97402000AI0716,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),111,114,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97402000AK1914,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97402000AK1914,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),56,58,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97402000AL0073,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97402000AL0073,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),4,4,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97402000AN0241,dvf_derniere_mutation,dvf · DVF Etalab,2025-03-28 — 315000.0 €,2025-03-28 — 315000 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97402000AN0241,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),11,12,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97403000AO0629,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97403000AO0629,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),18,19,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97403000AP1847,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97403000AP1847,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),70,72,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97403000AP2323,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97403000AP2323,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),70,72,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97403000AS0238,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97403000AS0238,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),58,58,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97403000AS0907,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97403000AS0907,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),58,58,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97403000AS1233,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97403000AS1233,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),58,58,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97403000AS1794,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97403000AS1794,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),58,58,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97404000AC0508,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97404000AC0508,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),13,13,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97404000AC1083,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97404000AC1083,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),13,13,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97404000AL0940,dvf_derniere_mutation,dvf · DVF Etalab,2022-05-02 — 532100.0 €,2022-05-02 — 532100 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97404000AL0940,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),40,40,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97404000AL1630,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97404000AL1630,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),40,40,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97404000AM0708,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97404000AM0708,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),28,33,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97404000AV0342,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97404000AV0342,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),23,23,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97404000AV0443,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97404000AV0443,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),23,23,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97404000AW0178,dvf_derniere_mutation,dvf · DVF Etalab,2023-02-15 — 205000.0 €,2023-02-15 — 205000 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97404000AW0178,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),22,22,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97404000AX0623,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97404000AX0623,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),18,20,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97405000AE0590,dvf_derniere_mutation,dvf · DVF Etalab,2025-12-12 — 72000.0 €,2025-12-12 — 72000 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97405000AE0590,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),15,,,NON COMPARABLE,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","recompte brut 21 ≠ agrégat servi 15 (dédup/filtre qualité/appariement type — méthode, non un faux)"
+97405000AI1209,dvf_derniere_mutation,dvf · DVF Etalab,2025-09-29 — 60000.0 €,2025-09-29 — 60000 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97405000AI1209,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),21,25,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97405000AK0910,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97405000AK0910,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),54,54,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97405000AK1010,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97405000AK1010,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),54,54,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97405000AK1439,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97405000AK1439,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),54,54,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97405000AM0819,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97405000AM0819,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),22,27,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97405000AO0400,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97405000AO0400,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),15,15,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97405000AZ0434,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97405000AZ0434,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),15,16,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97405000AZ0609,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97405000AZ0609,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),15,16,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97405000AZ0700,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97405000AZ0700,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),15,16,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97405000BC0174,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97405000BC0174,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),7,7,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97405000BE0839,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97405000BE0839,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),41,42,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97405000BE1392,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97405000BE1392,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),41,42,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97406000AD0337,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97406000AD0337,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),26,29,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97406000AD0554,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97406000AD0554,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),26,29,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97406000AK0079,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97406000AK0079,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),7,7,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97406000AM0227,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97406000AM0227,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),34,34,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97406000AS0280,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97406000AS0280,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),7,8,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97406000AT0796,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97406000AT0796,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),16,17,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97406000AV1019,dvf_derniere_mutation,dvf · DVF Etalab,2024-06-03 — 270000.0 €,2024-06-03 — 270000 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97406000AV1019,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),49,50,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97407000AD0087,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97407000AD0087,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),2,,,NON COMPARABLE,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","recompte brut 3 ≠ agrégat servi 2 (dédup/filtre qualité/appariement type — méthode, non un faux)"
+97407000AH8017,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97407000AH8017,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),17,17,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97407000AI1282,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97407000AI1282,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),18,18,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97407000AI1549,dvf_derniere_mutation,dvf · DVF Etalab,2025-11-17 — 294400.0 €,2025-11-17 — 294400 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97407000AI1549,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),18,18,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97407000AK1227,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97407000AK1227,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),45,45,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97407000AK1781,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97407000AK1781,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),45,45,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97407000AL0616,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97407000AL0616,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),44,45,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97407000AO0644,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97407000AO0644,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),28,30,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97407000AS0763,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97407000AS0763,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),79,80,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97407000BA0183,dvf_derniere_mutation,dvf · DVF Etalab,2024-01-25 — 37600.0 €,2024-01-25 — 37600 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97407000BA0183,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),14,14,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97407000BE0248,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97407000BE0248,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),26,26,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97408000AB0390,dvf_derniere_mutation,dvf · DVF Etalab,2024-08-30 — 205000.0 €,2024-08-30 — 205000 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97408000AB0390,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),29,32,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97408000AC0253,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97408000AC0253,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),111,111,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97408000AC3249,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97408000AC3249,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),111,111,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97408000AH0250,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97408000AH0250,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),7,7,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97408000AM1363,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97408000AM1363,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),72,73,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97408000AR8001,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97408000AR8001,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),41,43,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97408000AV1432,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97408000AV1432,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),32,39,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97408000AW0043,dvf_derniere_mutation,dvf · DVF Etalab,2024-07-18 — 200000.0 €,2024-07-18 — 200000 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97408000AW0043,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),24,24,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97408000AW0164,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97408000AW0164,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),24,24,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97408000BD0074,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97408000BL0110,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97408000BL0110,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),89,93,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97408000BM0222,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97408000BM0222,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),89,104,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97408000BN0142,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97408000BN0142,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),22,22,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97408000BO0281,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97408000BO0281,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),30,,,NON COMPARABLE,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","recompte brut 81 ≠ agrégat servi 30 (dédup/filtre qualité/appariement type — méthode, non un faux)"
+97409000AB0188,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97409000AB0188,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),15,15,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97409000AI0417,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97409000AI0417,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),23,24,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97409000AI0538,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97409000AI0538,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),23,24,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97409000AI1204,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97409000AI1204,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),23,24,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97409000AI1631,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97409000AI1631,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),23,24,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97409000AK0195,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97409000AK0195,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),28,32,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97409000AK0804,dvf_derniere_mutation,dvf · DVF Etalab,2024-12-26 — 1.0 €,2024-12-26 — 1 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97409000AK0804,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),28,32,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97409000AL0211,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97409000AL0211,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),75,79,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97409000AM0602,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97409000AM0602,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),19,19,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97409000AO0158,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97409000AO0158,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),18,18,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97409000AO0285,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97409000AO0285,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),18,18,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97409000AP0982,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97409000AP0982,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),41,43,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97409000AP1192,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97409000AP1192,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),41,43,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97409000AP1637,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97409000AP1637,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),41,43,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97409000AS0337,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97409000AS0337,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),61,61,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97409000AT0307,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97409000AT0307,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),29,29,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97409000AT1410,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97409000AT1410,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),29,29,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97409000AV0417,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97409000AV0417,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),18,19,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97409000AX0835,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97409000AX0835,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),43,42,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97409000BH0545,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97409000BH0545,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),10,10,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97409000BK0287,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97409000BK0287,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),38,38,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97409000BM0535,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97409000BM0535,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),34,34,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97409000BR0194,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97409000BR0194,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),5,6,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97410000AB0339,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97410000AB0339,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),24,25,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97410000AC0436,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97410000AC0436,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),17,19,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97410000AD0654,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97410000AD0654,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),32,30,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97410000AD0701,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97410000AD0701,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),32,30,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97410000AH0274,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97410000AH0274,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),31,37,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97410000AH0480,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97410000AH0480,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),31,37,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97410000AI0666,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97410000AI0666,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),36,36,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97410000AO0642,dvf_derniere_mutation,dvf · DVF Etalab,2025-11-04 — 172000.0 €,2025-11-04 — 172000 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97410000AO0642,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),48,49,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97410000AR0634,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97410000AR0634,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),34,34,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97410000AR0727,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97410000AR0727,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),34,34,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97410000AR1650,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97410000AR1650,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),34,34,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97410000AW0019,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97410000AW0019,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),16,18,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97410000AW0954,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97410000AW0954,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),16,18,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97410000BE0451,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97410000BE0451,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),41,51,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97410000BI0590,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97410000BI0590,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),15,17,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97410000BK0323,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97410000BK0323,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),14,14,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97410000BT0073,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97410000BT0073,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),3,3,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97410000BX0299,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97410000BX0299,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),35,37,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97410000BX1260,dvf_derniere_mutation,dvf · DVF Etalab,2021-06-24 — 77720.0 €,2021-06-24 — 77720 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97410000BX1260,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),35,37,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97410000BZ0294,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97410000BZ0294,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),4,5,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97410000CL0525,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97410000CL0525,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),13,14,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97411000AB0565,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97411000AB0565,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),12,13,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97411000AE0356,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97411000AE0356,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),81,86,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97411000AI0154,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97411000AI0154,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),4,4,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97411000AK0082,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97411000AK0082,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),56,56,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97411000AZ0522,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97411000AZ0522,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),45,45,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97411000BD1455,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97411000BD1455,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),329,340,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97411000BK0430,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97411000BK0430,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),68,68,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97411000BN0509,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97411000BN0509,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),49,49,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97411000BP0620,dvf_derniere_mutation,dvf · DVF Etalab,2024-02-03 — 5500000.0 €,2024-02-03 — 5500000 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97411000BP0620,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),36,36,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97411000BZ0895,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97411000BZ0895,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),79,79,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97411000CD0701,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97411000CD0701,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),57,57,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97411000CM0220,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97411000CM0220,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),28,29,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97411000CV0511,dvf_derniere_mutation,dvf · DVF Etalab,2022-07-11 — 530000.0 €,2022-07-11 — 530000 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97411000CV0511,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),20,23,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97411000CX1762,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97411000CX1762,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),11,11,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97411000DL0077,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97411000DL0077,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),82,82,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97411000DL0142,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97411000DL0142,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),82,82,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97411000DM0639,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97411000DM0639,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),39,40,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97411000DM0744,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97411000DM0744,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),39,40,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97411000DR0878,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97411000DR0878,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),22,22,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97411000DS0410,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97411000DS0410,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),41,43,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97411000EO0135,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97411000EO0135,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),93,93,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97411000ER0022,dvf_derniere_mutation,dvf · DVF Etalab,2025-08-14 — 192000.0 €,2025-08-14 — 192000 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97411000ER0022,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),19,19,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97411000EY0145,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97411000EY0145,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),9,9,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97411000HD0070,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97411000HD0070,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),25,27,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97411000HI0541,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97411000HI0541,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),60,60,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97411000HI0592,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97411000HI0592,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),60,60,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97411000HS0322,dvf_derniere_mutation,dvf · DVF Etalab,2021-06-04 — 600000.0 €,2021-06-04 — 600000 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97411000HS0322,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),50,51,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97411000HT0045,dvf_derniere_mutation,dvf · DVF Etalab,2025-07-25 — 109100.0 €,2025-07-25 — 109100 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97411000HT0045,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),277,,,NON COMPARABLE,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","recompte brut 384 ≠ agrégat servi 277 (dédup/filtre qualité/appariement type — méthode, non un faux)"
+97411000HT0116,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97411000HT0116,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),277,,,NON COMPARABLE,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","recompte brut 384 ≠ agrégat servi 277 (dédup/filtre qualité/appariement type — méthode, non un faux)"
+97411000HW0179,dvf_derniere_mutation,dvf · DVF Etalab,2025-02-19 — 450000.0 €,2025-02-19 — 450000 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97411000HW0179,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),18,19,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97411000HZ0349,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97411000HZ0349,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),8,8,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97411000HZ0391,dvf_derniere_mutation,dvf · DVF Etalab,2021-01-14 — 190000.0 €,2021-01-14 — 190000 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97411000HZ0391,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),8,8,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97411000IB0339,dvf_derniere_mutation,dvf · DVF Etalab,2024-10-16 — 320000.0 €,2024-10-16 — 320000 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97411000IB0339,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),18,22,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97411000IE0157,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97411000IE0157,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),25,25,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97411000IK0289,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97411000IK0289,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),12,12,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97411000IR0063,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97411000IR0063,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),53,53,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97411000IR0418,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97411000IR0418,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),53,53,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97411000IS0284,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97411000IS0284,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),22,22,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97411000IZ0157,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97411000IZ0157,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),19,23,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97411000IZ0349,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97411000IZ0349,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),19,23,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97411000KC0030,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97411000KC0030,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),34,34,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97412000AH1018,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97412000AH1018,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),37,37,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97412000AM0093,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97412000AM0093,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),67,67,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97412000AM1460,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97412000AM1460,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),67,67,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97412000AN0186,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97412000AN0186,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),15,17,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97412000AO0395,dvf_derniere_mutation,dvf · DVF Etalab,2025-01-29 — 3500.0 €,2025-01-29 — 3500 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97412000AO0395,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),39,41,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97412000AP0354,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97412000AP0354,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),15,14,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97412000AR8002,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97412000AR8002,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),6,7,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97412000AT0558,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97412000AT0558,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),14,15,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97412000AV0315,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97412000AV0315,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),26,33,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97412000AV0401,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97412000AV0401,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),26,33,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97412000AV0779,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97412000AV0779,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),26,33,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97412000AZ0324,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97412000AZ0324,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),31,40,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97412000AZ0765,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97412000AZ0765,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),31,40,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97412000BH0363,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97412000BH0363,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),12,12,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97412000BH0744,dvf_derniere_mutation,dvf · DVF Etalab,2025-08-20 — 208110.0 €,2025-08-20 — 208110 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97412000BH0744,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),12,12,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97412000BN1117,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97412000BN1117,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),27,27,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97412000BO0144,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97412000BO0144,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),10,10,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97412000BY0117,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97412000BY0117,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),60,61,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97412000CD0500,dvf_derniere_mutation,dvf · DVF Etalab,2025-11-01 — 2400.0 €,2025-11-01 — 2400 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97412000CD0500,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),43,43,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97412000CE2316,dvf_derniere_mutation,dvf · DVF Etalab,2024-11-06 — 233000.0 €,2024-11-06 — 233000 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97412000CE2316,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),59,59,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97412000CE2686,dvf_derniere_mutation,dvf · DVF Etalab,2024-03-27 — 290000.0 €,2024-03-27 — 290000 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97412000CE2686,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),59,59,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97412000CI0083,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97412000CI0083,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),14,15,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97412000CM0014,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97412000CM0015,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97412000CN0144,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97412000CN0144,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),2,2,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97412000CV0413,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97412000CV0413,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),15,15,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97412000CW0987,dvf_derniere_mutation,dvf · DVF Etalab,2025-11-24 — 162000.0 €,2025-11-24 — 162000 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97412000CW0987,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),29,30,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97412000CW1154,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97412000CW1154,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),29,30,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97412000CY1092,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97412000CY1092,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),26,26,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97412000CZ0965,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97412000CZ0965,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),16,20,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97413000AC0521,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97413000AC0521,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),13,13,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97413000AC0892,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97413000AC0892,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),13,13,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97413000AV0080,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97413000AV0080,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),131,,,NON COMPARABLE,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","recompte brut 176 ≠ agrégat servi 131 (dédup/filtre qualité/appariement type — méthode, non un faux)"
+97413000CC0897,dvf_derniere_mutation,dvf · DVF Etalab,2023-09-04 — 176500.0 €,2023-09-04 — 176500 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97413000CC0897,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),19,20,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97413000CD0313,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97413000CD0313,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),28,28,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97413000CD0387,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97413000CD0387,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),28,28,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97413000CF0445,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97413000CF0445,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),8,,,NON COMPARABLE,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","recompte brut 12 ≠ agrégat servi 8 (dédup/filtre qualité/appariement type — méthode, non un faux)"
+97413000CL0049,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97413000CL0049,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),9,9,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97413000CN0142,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97413000CN0142,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),36,36,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97413000CO0040,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97413000CO0040,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),20,20,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97413000CO0349,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97413000CO0349,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),20,20,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97413000CQ0708,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97413000CQ0708,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),20,24,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97413000CU0448,dvf_derniere_mutation,dvf · DVF Etalab,2023-07-04 — 620000.0 €,2023-07-04 — 620000 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97413000CU0448,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),60,66,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97413000CU1014,dvf_derniere_mutation,dvf · DVF Etalab,2022-08-31 — 231400.0 €,2022-08-31 — 231400 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97413000CU1014,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),60,66,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97413000CX0267,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97413000CX0267,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),78,,,NON COMPARABLE,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","recompte brut 110 ≠ agrégat servi 78 (dédup/filtre qualité/appariement type — méthode, non un faux)"
+97413000CX1218,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97413000CX1218,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),78,,,NON COMPARABLE,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","recompte brut 110 ≠ agrégat servi 78 (dédup/filtre qualité/appariement type — méthode, non un faux)"
+97413000CX1920,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97413000CX1920,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),78,,,NON COMPARABLE,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","recompte brut 110 ≠ agrégat servi 78 (dédup/filtre qualité/appariement type — méthode, non un faux)"
+97413000CX2174,dvf_derniere_mutation,dvf · DVF Etalab,2021-06-24 — 487947.0 €,2021-06-24 — 487947 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97413000CX2174,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),78,,,NON COMPARABLE,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","recompte brut 110 ≠ agrégat servi 78 (dédup/filtre qualité/appariement type — méthode, non un faux)"
+97413000DB0040,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97413000DB0040,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),12,12,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97413000DD1288,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97413000DD1288,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),17,,,NON COMPARABLE,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","recompte brut 26 ≠ agrégat servi 17 (dédup/filtre qualité/appariement type — méthode, non un faux)"
+97413000DE0341,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97413000DE0341,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),97,97,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97413000DE1308,dvf_derniere_mutation,dvf · DVF Etalab,2024-02-26 — 429500.0 €,2024-02-26 — 429500 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97413000DE1308,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),97,97,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97413000DE1540,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97413000DE1540,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),97,97,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97413000DM0224,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97413000DM0224,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),24,24,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97414000CH1250,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97414000CH1250,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),62,64,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97414000CI0752,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97414000CI0752,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),22,22,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97414000CN0740,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97414000CN0740,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),9,11,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97414000CV0028,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97414000CV0028,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),17,19,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97414000CV0743,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97414000CV0743,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),17,19,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97414000CW0487,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97414000CW0487,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),14,14,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97414000DE1475,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97414000DE1475,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),27,28,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97414000DH0913,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97414000DH0913,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),14,,,NON COMPARABLE,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","recompte brut 24 ≠ agrégat servi 14 (dédup/filtre qualité/appariement type — méthode, non un faux)"
+97414000DS0897,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97414000DS0897,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),29,29,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97414000DT0102,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97414000DT0102,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),45,60,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97414000DY0500,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97414000DY0500,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),10,11,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97414000EL0959,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97414000EL0959,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),65,66,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97414000EL1365,dvf_derniere_mutation,dvf · DVF Etalab,2023-05-12 — 122650.0 €,2023-05-12 — 122650 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97414000EL1365,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),65,66,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97414000EL2601,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97414000EL2601,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),65,66,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97414000EM0566,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97414000EM0566,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),22,23,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97414000EN0578,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97414000EN0578,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),99,131,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97414000EN2004,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97414000EN2004,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),99,131,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97414000EN2442,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97414000EN2442,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),99,131,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97414000EN3268,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97414000EN3268,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),99,131,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97414000EN3630,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97414000EN3630,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),99,131,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97414000EN3639,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97414000EN3639,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),99,131,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97414000EN4183,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97414000EN4183,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),99,131,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97414000EO0103,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97414000EO0103,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),41,43,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97414000ER0541,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97414000ER0541,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),23,24,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97414000ET0484,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97414000ET0484,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),81,83,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97414000EX0548,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97414000EX0548,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),38,37,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97414000EX0755,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97414000EX0755,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),38,37,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97414000EZ0044,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97414000EZ0044,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),23,23,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97414000EZ0443,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97414000EZ0443,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),23,23,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97414000HI0735,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97414000HI0735,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),43,44,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97415000AV8002,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97415000AV8002,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),22,22,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97415000AW0061,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97415000AW0061,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),86,86,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97415000AW0763,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97415000AW0763,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),86,86,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97415000AX0316,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97415000AX0316,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),30,30,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97415000AX0960,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97415000AX0960,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),30,30,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97415000BI0633,dvf_derniere_mutation,dvf · DVF Etalab,2025-04-15 — 78178.0 €,2025-04-15 — 78178 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97415000BI0633,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),98,,,NON COMPARABLE,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","recompte brut 138 ≠ agrégat servi 98 (dédup/filtre qualité/appariement type — méthode, non un faux)"
+97415000BO0025,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97415000BO0025,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),36,,,NON COMPARABLE,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","recompte brut 67 ≠ agrégat servi 36 (dédup/filtre qualité/appariement type — méthode, non un faux)"
+97415000BO0828,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97415000BO0828,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),36,,,NON COMPARABLE,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","recompte brut 67 ≠ agrégat servi 36 (dédup/filtre qualité/appariement type — méthode, non un faux)"
+97415000BS0019,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97415000BS0019,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),5,,,NON COMPARABLE,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","recompte brut 25 ≠ agrégat servi 5 (dédup/filtre qualité/appariement type — méthode, non un faux)"
+97415000BS0165,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97415000BS0165,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),5,,,NON COMPARABLE,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","recompte brut 25 ≠ agrégat servi 5 (dédup/filtre qualité/appariement type — méthode, non un faux)"
+97415000BV1410,dvf_derniere_mutation,dvf · DVF Etalab,2025-12-11 — 380000.0 €,2025-12-11 — 380000 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97415000BV1410,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),41,52,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97415000BX0025,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97415000BX0025,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),5,6,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97415000BY0330,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97415000BY0330,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),13,16,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97415000BY0409,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97415000BY0409,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),13,16,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97415000BZ0169,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97415000BZ0169,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),24,30,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97415000CK0785,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97415000CK0785,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),18,24,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97415000CL0700,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97415000CL0700,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),18,17,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97415000CM0582,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97415000CM0582,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),48,49,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97415000CR0069,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97415000CR0069,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),18,18,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97415000CR0445,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97415000CR0445,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),18,18,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97415000CR1272,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97415000CR1272,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),18,18,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97415000CS0590,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97415000CS0590,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),45,45,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97415000CT3018,dvf_derniere_mutation,dvf · DVF Etalab,2025-09-29 — 8000.0 €,2025-09-29 — 8000 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97415000CT3018,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),75,76,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97415000CV0270,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97415000CV0270,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),55,57,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97415000CV0451,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97415000CV0451,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),55,57,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97415000CW0603,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97415000CW0603,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),20,22,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97415000CW1051,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97415000CW1051,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),20,22,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97415000CZ1234,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97415000CZ1234,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),90,91,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97415000CZ1292,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97415000CZ1292,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),90,91,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97415000DE0943,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97415000DE0943,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),176,176,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97415000DI0143,dvf_derniere_mutation,dvf · DVF Etalab,2022-06-30 — 1100000.0 €,2022-06-30 — 1100000 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97415000DI0143,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),50,50,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97415000DM0933,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97415000DM0933,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),52,52,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97415000DM1338,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97415000DM1338,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),52,52,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97415000DT0773,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97415000DT0773,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),29,33,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97415000DT0867,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97415000DT0867,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),29,33,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97415000DV0348,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97415000DV0348,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),8,8,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97415000DV0537,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97415000DV0537,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),8,8,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97415000DY0119,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97415000DY0119,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),4,5,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97415000DZ0119,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97415000DZ0119,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),4,4,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97415000EK0228,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97415000EK0228,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),4,4,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97415000EM0041,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97415000EM0041,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),14,14,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97415000EM0459,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97415000EM0459,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),14,14,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97415000EO0928,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97415000EO0928,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),30,,,NON COMPARABLE,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","recompte brut 42 ≠ agrégat servi 30 (dédup/filtre qualité/appariement type — méthode, non un faux)"
+97415000ER0318,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97415000ER0318,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),38,40,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97415000EV0814,dvf_derniere_mutation,dvf · DVF Etalab,2023-04-26 — 333.6 €,2023-04-26 — 334 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97415000EV0814,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),69,69,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97415000EW0263,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97415000EW0263,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),159,161,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97415000EW0949,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97415000EW0949,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),159,161,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97415000EX0416,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97415000EX0416,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),13,13,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97415000EY1769,dvf_derniere_mutation,dvf · DVF Etalab,2022-02-01 — 429520.0 €,2022-02-01 — 429520 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97415000EY1769,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),94,94,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97415000HI0539,dvf_derniere_mutation,dvf · DVF Etalab,2024-02-28 — 660000.0 €,2024-02-28 — 660000 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97415000HI0539,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),15,13,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97415000HM0151,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97415000HM0151,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),118,118,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97415000HO1036,dvf_derniere_mutation,dvf · DVF Etalab,2024-01-30 — 140760.0 €,2024-01-30 — 140760 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97415000HO1036,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),23,,,NON COMPARABLE,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","recompte brut 32 ≠ agrégat servi 23 (dédup/filtre qualité/appariement type — méthode, non un faux)"
+97415000HP0221,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97415000HP0221,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),9,,,NON COMPARABLE,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","recompte brut 18 ≠ agrégat servi 9 (dédup/filtre qualité/appariement type — méthode, non un faux)"
+97415000HP0363,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97415000HP0363,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),9,,,NON COMPARABLE,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","recompte brut 18 ≠ agrégat servi 9 (dédup/filtre qualité/appariement type — méthode, non un faux)"
+97416000CV1189,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97416000CV1189,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),52,54,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97416000CV1270,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97416000CV1270,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),52,54,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97416000CV1578,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97416000CV1578,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),52,54,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97416000CV2315,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97416000CV2315,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),52,54,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97416000CW1220,dvf_derniere_mutation,dvf · DVF Etalab,2025-11-20 — 260000.0 €,2025-11-20 — 260000 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97416000CW1220,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),88,90,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97416000CY0116,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97416000CY0116,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),28,28,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97416000CZ0204,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97416000CZ0204,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),85,86,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97416000CZ1597,dvf_derniere_mutation,dvf · DVF Etalab,2024-09-06 — 357640.0 €,2024-09-06 — 357640 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97416000CZ1597,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),85,86,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97416000DE1279,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97416000DE1279,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),36,38,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97416000DE1672,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97416000DE1672,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),36,38,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97416000DE1762,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97416000DE1762,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),36,38,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97416000DH1928,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97416000DH1928,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),15,15,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97416000DM0500,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97416000DM0500,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),24,26,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97416000DM0785,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97416000DM0785,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),24,26,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97416000DT0190,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97416000DT0190,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),80,89,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97416000DW0102,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97416000DW0102,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),88,,,NON COMPARABLE,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","recompte brut 136 ≠ agrégat servi 88 (dédup/filtre qualité/appariement type — méthode, non un faux)"
+97416000DX0271,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97416000DX0271,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),88,92,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97416000DX8001,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97416000DX8001,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),88,92,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97416000DX8002,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97416000DX8002,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),88,92,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97416000DZ0853,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97416000DZ0853,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),9,11,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97416000EH0727,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97416000EH0727,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),21,20,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97416000EK0496,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97416000EK0496,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),36,37,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97416000EL0327,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97416000EL0327,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),43,43,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97416000EM0018,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97416000EM0018,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),29,28,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97416000EO0022,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97416000EO0022,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),3,4,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97416000ER0306,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97416000ER0306,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),29,35,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97416000ET0021,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97416000ET0021,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),69,81,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97416000ET0700,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97416000ET0700,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),69,81,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97416000EV1102,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97416000EV1102,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),35,43,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97416000EW1130,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97416000EW1130,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),34,34,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97416000EX0314,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97416000EX0314,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),56,56,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97416000EZ0676,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97416000EZ0676,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),21,22,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97416000HN0211,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97416000HN0211,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),54,54,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97416000HN1233,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97416000HN1233,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),54,54,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97416000HO0545,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97416000HO0545,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),40,40,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97416000HP0016,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97416000HP0016,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),28,28,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97416000HW0156,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97416000HW0156,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),27,28,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97416000HX0334,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97416000HX0334,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),62,65,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97416000IA1447,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97416000IA1447,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),40,40,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97416000IB0278,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97416000IB0278,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),24,25,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97416000IC0174,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97416000IC0174,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),7,8,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97416000IE0838,dvf_derniere_mutation,dvf · DVF Etalab,2024-12-09 — 450000.0 €,2024-12-09 — 450000 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97416000IE0838,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),74,75,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97416000IM0125,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97416000IM0125,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),33,34,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97416000IM0285,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97416000IM0285,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),33,34,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97417000AN0137,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97417000AN0137,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),12,13,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97417000AS0129,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97417000AS0129,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),11,12,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97417000AS0294,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97417000AS0294,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),11,12,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97417000BN0002,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97418000AC0733,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97418000AC0733,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),14,,,NON COMPARABLE,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","recompte brut 23 ≠ agrégat servi 14 (dédup/filtre qualité/appariement type — méthode, non un faux)"
+97418000AC1332,dvf_derniere_mutation,dvf · DVF Etalab,2021-06-30 — 12633787.0 €,2021-06-30 — 12633787 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97418000AC1332,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),14,,,NON COMPARABLE,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","recompte brut 23 ≠ agrégat servi 14 (dédup/filtre qualité/appariement type — méthode, non un faux)"
+97418000AE0256,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97418000AE0256,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),9,9,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97418000AE0502,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97418000AE0502,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),9,9,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97418000AP2264,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97418000AP2264,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),47,47,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97418000AR2073,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97418000AR2073,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),63,63,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97418000AR2589,dvf_derniere_mutation,dvf · DVF Etalab,2025-07-15 — 220000.0 €,2025-07-15 — 220000 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97418000AR2589,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),63,63,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97418000AS0338,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97418000AS0338,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),103,,,NON COMPARABLE,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","recompte brut 138 ≠ agrégat servi 103 (dédup/filtre qualité/appariement type — méthode, non un faux)"
+97418000AT1832,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97418000AT1832,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),91,100,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97418000AT2033,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97418000AT2033,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),91,100,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97418000AX0278,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97418000AX0278,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),6,6,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97418000AX0451,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97418000AX0451,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),6,6,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97418000AY0519,dvf_derniere_mutation,dvf · DVF Etalab,2023-12-19 — 500000.0 €,2023-12-19 — 500000 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97418000AY0519,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),33,33,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97418000BH0637,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97418000BH0637,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),134,134,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97418000BH0755,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97418000BH0755,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),134,134,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97418000BP0036,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97418000BP0036,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),9,9,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97418000BT0865,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97418000BT0865,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),21,21,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97419000AC0362,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97419000AC0362,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),9,9,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97419000AN0292,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97419000AN0292,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),9,9,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97419000AO0131,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97419000AO0131,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),10,10,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97419000AR0146,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97419000AR0146,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),20,20,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97419000AW0148,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97419000AW0148,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),3,3,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97419000AZ0031,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97420000AB0822,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97420000AB0822,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),29,30,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97420000AC1075,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97420000AC1075,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),19,19,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97420000AH0134,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97420000AH0134,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),6,6,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97420000AM0218,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97420000AM0218,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),1,1,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97420000AR0683,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97420000AR0683,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),10,10,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97420000AS0646,dvf_derniere_mutation,dvf · DVF Etalab,2021-08-18 — 206800.0 €,2021-08-18 — 206800 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97420000AS0646,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),25,26,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97420000AZ0385,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97420000AZ0385,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),35,37,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97420000BC0899,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97420000BC0899,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),58,67,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97420000BC1198,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97420000BC1198,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),58,67,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97420000BC9999,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97420000BC9999,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),58,67,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97420000BD0961,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97420000BD0961,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),53,61,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97420000BH0346,dvf_derniere_mutation,dvf · DVF Etalab,2024-05-23 — 150000.0 €,2024-05-23 — 150000 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97420000BH0346,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),46,56,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97420000BH1606,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97420000BH1606,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),46,56,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97421000AC0269,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97421000AC0269,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),3,3,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97421000AC0308,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97421000AC0308,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),3,3,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97421000AH0557,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97421000AH0557,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),10,10,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97421000AL0321,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97421000AL0321,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),27,28,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97421000AP0068,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97421000AP0068,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),8,,,NON COMPARABLE,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","recompte brut 12 ≠ agrégat servi 8 (dédup/filtre qualité/appariement type — méthode, non un faux)"
+97421000AP0147,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97421000AP0147,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),8,,,NON COMPARABLE,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","recompte brut 12 ≠ agrégat servi 8 (dédup/filtre qualité/appariement type — méthode, non un faux)"
+97421000AV0372,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97421000AV0372,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),33,37,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97421000AV0536,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97421000AV0536,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),33,37,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97421000BD0331,dvf_derniere_mutation,dvf · DVF Etalab,2024-10-21 — 50000.0 €,2024-10-21 — 50000 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97421000BD0331,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),7,7,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97421000BL0089,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97421000BL0089,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),1,1,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97421000BM0064,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97421000BM0064,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),8,,,NON COMPARABLE,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","recompte brut 11 ≠ agrégat servi 8 (dédup/filtre qualité/appariement type — méthode, non un faux)"
+97421000BN0042,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97421000BN0042,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),5,6,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97421000BO0266,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97421000BO0266,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),3,4,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97421000BO0430,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97421000BO0430,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),3,4,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97422000AB0049,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97422000AB0049,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),2,2,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97422000AD0661,dvf_derniere_mutation,dvf · DVF Etalab,2021-03-25 — 184800.0 €,2021-03-25 — 184800 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97422000AD0661,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),28,29,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97422000AD1061,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97422000AD1061,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),28,29,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97422000AE8001,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97422000AE8001,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),21,22,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97422000AK0991,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97422000AK0991,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),44,45,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97422000AX0956,dvf_derniere_mutation,dvf · DVF Etalab,2023-11-29 — 122500.0 €,2023-11-29 — 122500 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97422000AX0956,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),37,37,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97422000AX1448,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97422000AX1448,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),37,37,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97422000AY0017,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97422000AY0017,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),38,38,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97422000BD1172,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97422000BD1172,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),130,131,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97422000BD3213,dvf_derniere_mutation,dvf · DVF Etalab,2021-06-03 — 330000.0 €,2021-06-03 — 330000 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97422000BD3213,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),130,131,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97422000BH0078,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97422000BH0078,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),64,66,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97422000BH1561,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97422000BH1561,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),64,66,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97422000BI1005,dvf_derniere_mutation,dvf · DVF Etalab,2025-11-27 — 1481025.0 €,2025-11-27 — 1481025 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97422000BI1005,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),29,29,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97422000BL0028,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97422000BL0028,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),33,34,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97422000BL1219,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97422000BL1219,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),33,34,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97422000BM0501,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97422000BM0501,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),34,36,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97422000BN2291,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97422000BN2291,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),68,69,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97422000BN2704,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97422000BN2704,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),68,69,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97422000BO1094,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97422000BO1094,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),29,29,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97422000BP1864,dvf_derniere_mutation,dvf · DVF Etalab,2025-10-06 — 130000.0 €,2025-10-06 — 130000 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97422000BP1864,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),50,50,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97422000BP2028,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97422000BP2028,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),50,50,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97422000BR1554,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97422000BR1554,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),38,38,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97422000BV0523,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97422000BV0523,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),87,89,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97422000BV1983,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97422000BV1983,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),87,89,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97422000BW0709,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97422000BW0709,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),168,,,NON COMPARABLE,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","recompte brut 260 ≠ agrégat servi 168 (dédup/filtre qualité/appariement type — méthode, non un faux)"
+97422000BW1117,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97422000BW1117,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),168,,,NON COMPARABLE,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","recompte brut 260 ≠ agrégat servi 168 (dédup/filtre qualité/appariement type — méthode, non un faux)"
+97422000BW3474,dvf_derniere_mutation,dvf · DVF Etalab,2024-12-24 — 45000.0 €,2024-12-24 — 45000 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97422000BW3474,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),168,,,NON COMPARABLE,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","recompte brut 260 ≠ agrégat servi 168 (dédup/filtre qualité/appariement type — méthode, non un faux)"
+97422000BX0497,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97422000BX0497,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),32,32,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97422000CD0352,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97422000CD0352,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),18,18,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97422000CL1438,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97422000CL1438,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),33,34,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97422000CM0181,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97422000CM0181,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),35,35,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97422000CM0592,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97422000CM0592,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),35,35,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97422000CO0386,dvf_derniere_mutation,dvf · DVF Etalab,2024-06-28 — 300000.0 €,2024-06-28 — 300000 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97422000CO0386,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),13,13,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97422000CR0409,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97422000CR0409,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),6,7,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97422000CS0365,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97422000CS0365,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),43,43,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97422000CS0690,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97422000CS0690,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),43,43,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97422000DE0532,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97422000DE0532,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),26,27,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97422000DE0563,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97422000DE0563,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),26,27,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97422000DH0793,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97422000DH0793,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),24,25,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97422000DI0036,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97422000DI0036,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),9,9,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97422000DM0562,dvf_derniere_mutation,dvf · DVF Etalab,2021-06-10 — 8820.0 €,2021-06-10 — 8820 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97422000DM0562,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),21,21,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97422000EH0118,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97422000EH0118,dvf_secteur_n_ventes[appartement],dvf · DVF Etalab (section cadastrale),26,26,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97422000EI0240,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97422000EI0240,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),25,25,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97422000EI0316,dvf_derniere_mutation,dvf · DVF Etalab,2022-06-21 — 234000.0 €,2022-06-21 — 234000 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97422000EI0316,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),25,25,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97422000EM0178,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97422000EM0178,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),16,16,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97423000AE0142,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97423000AE0142,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),35,37,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97423000AE0220,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97423000AE0220,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),35,37,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97423000AE0238,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97423000AE0238,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),35,37,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97423000AE0261,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97423000AE0261,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),35,37,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97423000AE0275,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97423000AE0275,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),35,37,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97423000AE0289,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97423000AE0289,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),35,37,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97423000AE0561,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97423000AE0561,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),35,37,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97423000AE1118,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97423000AE1118,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),35,37,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97423000AE1119,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97423000AE1119,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),35,37,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97423000AK1937,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97423000AK1937,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),71,78,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97424000AE0468,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97424000AE0468,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),40,49,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97424000AE2248,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97424000AE2248,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),40,49,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97424000AH0251,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97424000AH0251,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),25,25,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97424000AI2357,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97424000AI2357,dvf_secteur_n_ventes[maison],dvf · DVF Etalab (section cadastrale),44,44,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97424000AP0456,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97424000AP0456,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),3,4,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97424000AP0464,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97424000AP0464,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),3,4,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97424000AP0468,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97424000AP0468,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),3,4,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97424000AP0483,dvf_derniere_mutation,dvf · DVF Etalab,2022-05-25 — 3500.0 €,2022-05-25 — 3500 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97424000AP0483,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),3,4,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97424000AP0495,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97424000AP0495,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),3,4,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97424000AP0522,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97424000AP0522,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),3,4,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97424000AP0528,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97424000AP0528,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),3,4,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97424000AR0036,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97424000AR0036,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),6,6,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97424000AR0040,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97424000AR0040,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),6,6,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97424000AR0041,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97424000AR0041,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),6,6,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97424000AR0045,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97424000AR0045,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),6,6,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97424000AR0075,dvf_derniere_mutation,dvf · DVF Etalab,2025-01-16 — 6480.0 €,2025-01-16 — 6480 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97424000AR0075,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),6,6,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97424000AR0076,dvf_derniere_mutation,dvf · DVF Etalab,2025-01-16 — 6970.0 €,2025-01-16 — 6970 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97424000AR0076,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),6,6,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97424000AR0078,dvf_derniere_mutation,dvf · DVF Etalab,2025-01-16 — 9651.0 €,2025-01-16 — 9651 €,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",
+97424000AR0078,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),6,6,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97424000AR0085,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97424000AR0085,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),6,6,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97424000AR0086,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97424000AR0086,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),6,6,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97424000AR0101,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97424000AR0101,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),6,6,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"
+97424000AR0111,dvf_ventes_parcelle,dvf · DVF Etalab,0,0,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)",LABUSE ne sert aucune mutation ; DVF en compte 0
+97424000AR0111,dvf_secteur_n_ventes[terrain],dvf · DVF Etalab (section cadastrale),6,6,,CONFORME,,"files.data.gouv.fr/geo-dvf/latest/csv (974, 2020-2025)","fenêtre 2021-2025, périmètre section (±25 %)"

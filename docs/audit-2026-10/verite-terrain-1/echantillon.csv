@@ -1,0 +1,501 @@
+idu,commune,insee,slots
+97401000AB0001,Les Avirons,97401,bizone
+97401000AB0005,Les Avirons,97401,ppr_rouge_partiel
+97401000AB0007,Les Avirons,97401,bizone
+97401000AB0008,Les Avirons,97401,ppr_rouge_partiel
+97401000AB0009,Les Avirons,97401,bizone
+97401000AB0015,Les Avirons,97401,ppr_rouge_partiel
+97401000AC0005,Les Avirons,97401,bizone
+97401000AC0007,Les Avirons,97401,ppr_rouge_partiel
+97401000AC0016,Les Avirons,97401,bizone
+97401000AC0023,Les Avirons,97401,ppr_rouge_partiel
+97401000AC0026,Les Avirons,97401,ppr_rouge_partiel
+97401000AC0040,Les Avirons,97401,ppr_rouge_partiel
+97401000AC0064,Les Avirons,97401,ppr_rouge_partiel
+97401000AC0068,Les Avirons,97401,ppr_rouge_partiel
+97401000AC0103,Les Avirons,97401,ppr_rouge_partiel
+97401000AC0106,Les Avirons,97401,bizone|ppr_rouge_partiel
+97401000AC0116,Les Avirons,97401,ppr_rouge_partiel
+97401000AC0117,Les Avirons,97401,bizone
+97401000AC0160,Les Avirons,97401,bizone
+97401000AC0196,Les Avirons,97401,bizone
+97401000AC0553,Les Avirons,97401,bizone
+97401000AC0569,Les Avirons,97401,bizone
+97401000AP0011,Les Avirons,97401,surface_incertaine
+97401000AS0401,Les Avirons,97401,permis
+97401000AT0016,Les Avirons,97401,littoral
+97401000AT0404,Les Avirons,97401,littoral
+97401000AT0412,Les Avirons,97401,littoral
+97401000AT0447,Les Avirons,97401,littoral
+97401000AT0536,Les Avirons,97401,littoral
+97401000AT0538,Les Avirons,97401,littoral
+97401000AT0572,Les Avirons,97401,littoral
+97401000AT0628,Les Avirons,97401,littoral
+97401000AT0680,Les Avirons,97401,littoral
+97401000AT0681,Les Avirons,97401,littoral
+97401000AT0691,Les Avirons,97401,littoral
+97402000AB1017,Bras-Panon,97402,prorata
+97402000AC0445,Bras-Panon,97402,prorata
+97402000AI0716,Bras-Panon,97402,contenance_vs_dessin
+97402000AK1914,Bras-Panon,97402,prorata
+97402000AL0073,Bras-Panon,97402,prorata
+97402000AN0241,Bras-Panon,97402,ventes_recentes
+97403000AO0629,Entre-Deux,97403,prorata
+97403000AP1847,Entre-Deux,97403,les_Hauts
+97403000AP2323,Entre-Deux,97403,prorata
+97403000AS0238,Entre-Deux,97403,les_Hauts
+97403000AS0907,Entre-Deux,97403,les_Hauts
+97403000AS1233,Entre-Deux,97403,prorata
+97403000AS1794,Entre-Deux,97403,les_Hauts
+97404000AC0508,L'Étang-Salé,97404,prorata
+97404000AC1083,L'Étang-Salé,97404,prorata
+97404000AL0940,L'Étang-Salé,97404,prorata
+97404000AL1630,L'Étang-Salé,97404,prorata
+97404000AM0708,L'Étang-Salé,97404,prorata
+97404000AV0342,L'Étang-Salé,97404,prorata
+97404000AV0443,L'Étang-Salé,97404,prorata
+97404000AW0178,L'Étang-Salé,97404,prorata
+97404000AX0623,L'Étang-Salé,97404,bande_A
+97405000AE0590,Petite-Île,97405,ventes_recentes
+97405000AI1209,Petite-Île,97405,ventes_recentes
+97405000AK0910,Petite-Île,97405,prorata
+97405000AK1010,Petite-Île,97405,prorata
+97405000AK1439,Petite-Île,97405,prorata
+97405000AM0819,Petite-Île,97405,prorata
+97405000AO0400,Petite-Île,97405,prorata
+97405000AZ0434,Petite-Île,97405,prorata
+97405000AZ0609,Petite-Île,97405,prorata
+97405000AZ0700,Petite-Île,97405,prorata
+97405000BC0174,Petite-Île,97405,prorata
+97405000BE0839,Petite-Île,97405,prorata
+97405000BE1392,Petite-Île,97405,contenance_vs_dessin
+97406000AD0337,La Plaine-des-Palmistes,97406,les_Hauts
+97406000AD0554,La Plaine-des-Palmistes,97406,bande_A
+97406000AK0079,La Plaine-des-Palmistes,97406,permis
+97406000AM0227,La Plaine-des-Palmistes,97406,les_Hauts
+97406000AS0280,La Plaine-des-Palmistes,97406,les_Hauts
+97406000AT0796,La Plaine-des-Palmistes,97406,prorata
+97406000AV1019,La Plaine-des-Palmistes,97406,ventes_recentes
+97407000AD0087,Le Port,97407,prorata
+97407000AH8017,Le Port,97407,surface_incertaine
+97407000AI1282,Le Port,97407,prorata
+97407000AI1549,Le Port,97407,ventes_recentes
+97407000AK1227,Le Port,97407,contenance_vs_dessin
+97407000AK1781,Le Port,97407,prorata
+97407000AL0616,Le Port,97407,proprietaire_societe
+97407000AO0644,Le Port,97407,proprietaire_societe
+97407000AS0763,Le Port,97407,prorata
+97407000BA0183,Le Port,97407,ventes_recentes
+97407000BE0248,Le Port,97407,prorata
+97408000AB0390,La Possession,97408,permis
+97408000AC0253,La Possession,97408,prorata
+97408000AC3249,La Possession,97408,prorata
+97408000AH0250,La Possession,97408,prorata
+97408000AM1363,La Possession,97408,prorata
+97408000AR8001,La Possession,97408,surface_incertaine
+97408000AV1432,La Possession,97408,prorata
+97408000AW0043,La Possession,97408,ventes_recentes
+97408000AW0164,La Possession,97408,prorata
+97408000BD0074,La Possession,97408,surface_incertaine
+97408000BL0110,La Possession,97408,proprietaire_societe
+97408000BM0222,La Possession,97408,prorata
+97408000BN0142,La Possession,97408,prorata
+97408000BO0281,La Possession,97408,proprietaire_societe
+97409000AB0188,Saint-André,97409,prorata
+97409000AI0417,Saint-André,97409,prorata
+97409000AI0538,Saint-André,97409,prorata
+97409000AI1204,Saint-André,97409,prorata
+97409000AI1631,Saint-André,97409,prorata
+97409000AK0195,Saint-André,97409,prorata
+97409000AK0804,Saint-André,97409,bande_A
+97409000AL0211,Saint-André,97409,prorata
+97409000AM0602,Saint-André,97409,prorata
+97409000AO0158,Saint-André,97409,prorata
+97409000AO0285,Saint-André,97409,prorata
+97409000AP0982,Saint-André,97409,contenance_vs_dessin
+97409000AP1192,Saint-André,97409,prorata
+97409000AP1637,Saint-André,97409,permis
+97409000AS0337,Saint-André,97409,prorata
+97409000AT0307,Saint-André,97409,prorata
+97409000AT1410,Saint-André,97409,prorata
+97409000AV0417,Saint-André,97409,prorata
+97409000AX0835,Saint-André,97409,bande_A
+97409000BH0545,Saint-André,97409,prorata
+97409000BK0287,Saint-André,97409,prorata
+97409000BM0535,Saint-André,97409,prorata
+97409000BR0194,Saint-André,97409,prorata
+97410000AB0339,Saint-Benoît,97410,prorata
+97410000AC0436,Saint-Benoît,97410,prorata
+97410000AD0654,Saint-Benoît,97410,bande_A
+97410000AD0701,Saint-Benoît,97410,prorata
+97410000AH0274,Saint-Benoît,97410,prorata
+97410000AH0480,Saint-Benoît,97410,prorata
+97410000AI0666,Saint-Benoît,97410,prorata
+97410000AO0642,Saint-Benoît,97410,prorata
+97410000AR0634,Saint-Benoît,97410,prorata
+97410000AR0727,Saint-Benoît,97410,prorata
+97410000AR1650,Saint-Benoît,97410,prorata
+97410000AW0019,Saint-Benoît,97410,prorata
+97410000AW0954,Saint-Benoît,97410,prorata
+97410000BE0451,Saint-Benoît,97410,prorata
+97410000BI0590,Saint-Benoît,97410,prorata
+97410000BK0323,Saint-Benoît,97410,prorata
+97410000BT0073,Saint-Benoît,97410,prorata
+97410000BX0299,Saint-Benoît,97410,prorata
+97410000BX1260,Saint-Benoît,97410,prorata
+97410000BZ0294,Saint-Benoît,97410,prorata
+97410000CL0525,Saint-Benoît,97410,prorata
+97411000AB0565,Saint-Denis,97411,prorata
+97411000AE0356,Saint-Denis,97411,proprietaire_societe
+97411000AI0154,Saint-Denis,97411,prorata
+97411000AK0082,Saint-Denis,97411,prorata
+97411000AZ0522,Saint-Denis,97411,prorata
+97411000BD1455,Saint-Denis,97411,cadastre_octobre
+97411000BK0430,Saint-Denis,97411,contenance_vs_dessin
+97411000BN0509,Saint-Denis,97411,cadastre_octobre
+97411000BP0620,Saint-Denis,97411,ventes_recentes
+97411000BZ0895,Saint-Denis,97411,cadastre_octobre
+97411000CD0701,Saint-Denis,97411,contenance_vs_dessin
+97411000CM0220,Saint-Denis,97411,cadastre_octobre
+97411000CV0511,Saint-Denis,97411,prorata
+97411000CX1762,Saint-Denis,97411,prorata
+97411000DL0077,Saint-Denis,97411,prorata
+97411000DL0142,Saint-Denis,97411,cadastre_octobre
+97411000DM0639,Saint-Denis,97411,prorata
+97411000DM0744,Saint-Denis,97411,cadastre_octobre
+97411000DR0878,Saint-Denis,97411,prorata
+97411000DS0410,Saint-Denis,97411,proprietaire_societe
+97411000EO0135,Saint-Denis,97411,prorata
+97411000ER0022,Saint-Denis,97411,prorata
+97411000EY0145,Saint-Denis,97411,permis
+97411000HD0070,Saint-Denis,97411,cadastre_octobre
+97411000HI0541,Saint-Denis,97411,cadastre_octobre
+97411000HI0592,Saint-Denis,97411,prorata
+97411000HS0322,Saint-Denis,97411,bande_A
+97411000HT0045,Saint-Denis,97411,ventes_recentes
+97411000HT0116,Saint-Denis,97411,surface_incertaine
+97411000HW0179,Saint-Denis,97411,cadastre_octobre
+97411000HZ0349,Saint-Denis,97411,prorata
+97411000HZ0391,Saint-Denis,97411,permis
+97411000IB0339,Saint-Denis,97411,ventes_recentes
+97411000IE0157,Saint-Denis,97411,prorata
+97411000IK0289,Saint-Denis,97411,prorata
+97411000IR0063,Saint-Denis,97411,prorata
+97411000IR0418,Saint-Denis,97411,contenance_vs_dessin
+97411000IS0284,Saint-Denis,97411,prorata
+97411000IZ0157,Saint-Denis,97411,prorata
+97411000IZ0349,Saint-Denis,97411,permis
+97411000KC0030,Saint-Denis,97411,bande_A
+97412000AH1018,Saint-Joseph,97412,prorata
+97412000AM0093,Saint-Joseph,97412,bande_A
+97412000AM1460,Saint-Joseph,97412,prorata
+97412000AN0186,Saint-Joseph,97412,prorata
+97412000AO0395,Saint-Joseph,97412,zones_calibrees_plu8
+97412000AP0354,Saint-Joseph,97412,prorata
+97412000AR8002,Saint-Joseph,97412,surface_incertaine
+97412000AT0558,Saint-Joseph,97412,surface_incertaine
+97412000AV0315,Saint-Joseph,97412,prorata
+97412000AV0401,Saint-Joseph,97412,prorata
+97412000AV0779,Saint-Joseph,97412,prorata
+97412000AZ0324,Saint-Joseph,97412,proprietaire_societe
+97412000AZ0765,Saint-Joseph,97412,zones_calibrees_plu8
+97412000BH0363,Saint-Joseph,97412,prorata
+97412000BH0744,Saint-Joseph,97412,prorata
+97412000BN1117,Saint-Joseph,97412,contenance_vs_dessin
+97412000BO0144,Saint-Joseph,97412,prorata
+97412000BY0117,Saint-Joseph,97412,surface_incertaine
+97412000CD0500,Saint-Joseph,97412,ventes_recentes
+97412000CE2316,Saint-Joseph,97412,ventes_recentes
+97412000CE2686,Saint-Joseph,97412,ventes_recentes
+97412000CI0083,Saint-Joseph,97412,surface_incertaine
+97412000CM0014,Saint-Joseph,97412,surface_incertaine
+97412000CM0015,Saint-Joseph,97412,surface_incertaine
+97412000CN0144,Saint-Joseph,97412,prorata
+97412000CV0413,Saint-Joseph,97412,prorata
+97412000CW0987,Saint-Joseph,97412,prorata
+97412000CW1154,Saint-Joseph,97412,prorata
+97412000CY1092,Saint-Joseph,97412,prorata
+97412000CZ0965,Saint-Joseph,97412,prorata
+97413000AC0521,Saint-Leu,97413,contenance_vs_dessin
+97413000AC0892,Saint-Leu,97413,prorata
+97413000AV0080,Saint-Leu,97413,prorata
+97413000CC0897,Saint-Leu,97413,prorata
+97413000CD0313,Saint-Leu,97413,prorata
+97413000CD0387,Saint-Leu,97413,contenance_vs_dessin
+97413000CF0445,Saint-Leu,97413,prorata
+97413000CL0049,Saint-Leu,97413,prorata
+97413000CN0142,Saint-Leu,97413,permis
+97413000CO0040,Saint-Leu,97413,prorata
+97413000CO0349,Saint-Leu,97413,prorata
+97413000CQ0708,Saint-Leu,97413,prorata
+97413000CU0448,Saint-Leu,97413,prorata
+97413000CU1014,Saint-Leu,97413,prorata
+97413000CX0267,Saint-Leu,97413,contenance_vs_dessin
+97413000CX1218,Saint-Leu,97413,prorata
+97413000CX1920,Saint-Leu,97413,cadastre_octobre
+97413000CX2174,Saint-Leu,97413,prorata
+97413000DB0040,Saint-Leu,97413,cadastre_octobre
+97413000DD1288,Saint-Leu,97413,prorata
+97413000DE0341,Saint-Leu,97413,prorata
+97413000DE1308,Saint-Leu,97413,ventes_recentes
+97413000DE1540,Saint-Leu,97413,prorata
+97413000DM0224,Saint-Leu,97413,proprietaire_societe
+97414000CH1250,Saint-Louis,97414,prorata
+97414000CI0752,Saint-Louis,97414,prorata
+97414000CN0740,Saint-Louis,97414,contenance_vs_dessin
+97414000CV0028,Saint-Louis,97414,prorata
+97414000CV0743,Saint-Louis,97414,prorata
+97414000CW0487,Saint-Louis,97414,zones_calibrees_plu8
+97414000DE1475,Saint-Louis,97414,prorata
+97414000DH0913,Saint-Louis,97414,prorata
+97414000DS0897,Saint-Louis,97414,cadastre_octobre
+97414000DT0102,Saint-Louis,97414,prorata
+97414000DY0500,Saint-Louis,97414,prorata
+97414000EL0959,Saint-Louis,97414,prorata
+97414000EL1365,Saint-Louis,97414,zones_calibrees_plu8
+97414000EL2601,Saint-Louis,97414,prorata
+97414000EM0566,Saint-Louis,97414,zones_calibrees_plu8
+97414000EN0578,Saint-Louis,97414,prorata
+97414000EN2004,Saint-Louis,97414,prorata
+97414000EN2442,Saint-Louis,97414,prorata
+97414000EN3268,Saint-Louis,97414,zones_calibrees_plu8
+97414000EN3630,Saint-Louis,97414,prorata
+97414000EN3639,Saint-Louis,97414,prorata
+97414000EN4183,Saint-Louis,97414,prorata
+97414000EO0103,Saint-Louis,97414,bande_A
+97414000ER0541,Saint-Louis,97414,prorata
+97414000ET0484,Saint-Louis,97414,prorata
+97414000EX0548,Saint-Louis,97414,proprietaire_societe
+97414000EX0755,Saint-Louis,97414,prorata
+97414000EZ0044,Saint-Louis,97414,prorata
+97414000EZ0443,Saint-Louis,97414,prorata
+97414000HI0735,Saint-Louis,97414,prorata
+97415000AV8002,Saint-Paul,97415,surface_incertaine
+97415000AW0061,Saint-Paul,97415,prorata
+97415000AW0763,Saint-Paul,97415,contenance_vs_dessin
+97415000AX0316,Saint-Paul,97415,prorata
+97415000AX0960,Saint-Paul,97415,proprietaire_societe
+97415000BI0633,Saint-Paul,97415,ventes_recentes
+97415000BO0025,Saint-Paul,97415,prorata
+97415000BO0828,Saint-Paul,97415,permis
+97415000BS0019,Saint-Paul,97415,prorata
+97415000BS0165,Saint-Paul,97415,bande_A
+97415000BV1410,Saint-Paul,97415,prorata
+97415000BX0025,Saint-Paul,97415,prorata
+97415000BY0330,Saint-Paul,97415,prorata
+97415000BY0409,Saint-Paul,97415,zones_calibrees_plu8
+97415000BZ0169,Saint-Paul,97415,cadastre_octobre
+97415000CK0785,Saint-Paul,97415,prorata
+97415000CL0700,Saint-Paul,97415,zones_calibrees_plu8
+97415000CM0582,Saint-Paul,97415,surface_incertaine
+97415000CR0069,Saint-Paul,97415,prorata
+97415000CR0445,Saint-Paul,97415,prorata
+97415000CR1272,Saint-Paul,97415,prorata
+97415000CS0590,Saint-Paul,97415,contenance_vs_dessin
+97415000CT3018,Saint-Paul,97415,prorata
+97415000CV0270,Saint-Paul,97415,prorata
+97415000CV0451,Saint-Paul,97415,prorata
+97415000CW0603,Saint-Paul,97415,cadastre_octobre
+97415000CW1051,Saint-Paul,97415,proprietaire_societe
+97415000CZ1234,Saint-Paul,97415,prorata
+97415000CZ1292,Saint-Paul,97415,permis
+97415000DE0943,Saint-Paul,97415,bande_A
+97415000DI0143,Saint-Paul,97415,prorata
+97415000DM0933,Saint-Paul,97415,prorata
+97415000DM1338,Saint-Paul,97415,proprietaire_societe
+97415000DT0773,Saint-Paul,97415,permis
+97415000DT0867,Saint-Paul,97415,prorata
+97415000DV0348,Saint-Paul,97415,prorata
+97415000DV0537,Saint-Paul,97415,prorata
+97415000DY0119,Saint-Paul,97415,surface_incertaine
+97415000DZ0119,Saint-Paul,97415,contenance_vs_dessin
+97415000EK0228,Saint-Paul,97415,contenance_vs_dessin
+97415000EM0041,Saint-Paul,97415,zones_calibrees_plu8
+97415000EM0459,Saint-Paul,97415,cadastre_octobre
+97415000EO0928,Saint-Paul,97415,permis
+97415000ER0318,Saint-Paul,97415,prorata
+97415000EV0814,Saint-Paul,97415,proprietaire_societe
+97415000EW0263,Saint-Paul,97415,prorata
+97415000EW0949,Saint-Paul,97415,prorata
+97415000EX0416,Saint-Paul,97415,prorata
+97415000EY1769,Saint-Paul,97415,permis
+97415000HI0539,Saint-Paul,97415,ventes_recentes
+97415000HM0151,Saint-Paul,97415,prorata
+97415000HO1036,Saint-Paul,97415,permis
+97415000HP0221,Saint-Paul,97415,prorata
+97415000HP0363,Saint-Paul,97415,prorata
+97416000CV1189,Saint-Pierre,97416,prorata
+97416000CV1270,Saint-Pierre,97416,prorata
+97416000CV1578,Saint-Pierre,97416,zones_calibrees_plu8
+97416000CV2315,Saint-Pierre,97416,prorata
+97416000CW1220,Saint-Pierre,97416,prorata
+97416000CY0116,Saint-Pierre,97416,prorata
+97416000CZ0204,Saint-Pierre,97416,surface_incertaine
+97416000CZ1597,Saint-Pierre,97416,proprietaire_societe
+97416000DE1279,Saint-Pierre,97416,prorata
+97416000DE1672,Saint-Pierre,97416,permis
+97416000DE1762,Saint-Pierre,97416,prorata
+97416000DH1928,Saint-Pierre,97416,prorata
+97416000DM0500,Saint-Pierre,97416,prorata
+97416000DM0785,Saint-Pierre,97416,prorata
+97416000DT0190,Saint-Pierre,97416,prorata
+97416000DW0102,Saint-Pierre,97416,prorata
+97416000DX0271,Saint-Pierre,97416,prorata
+97416000DX8001,Saint-Pierre,97416,surface_incertaine
+97416000DX8002,Saint-Pierre,97416,surface_incertaine
+97416000DZ0853,Saint-Pierre,97416,prorata
+97416000EH0727,Saint-Pierre,97416,prorata
+97416000EK0496,Saint-Pierre,97416,prorata
+97416000EL0327,Saint-Pierre,97416,permis
+97416000EM0018,Saint-Pierre,97416,prorata
+97416000EO0022,Saint-Pierre,97416,cadastre_octobre
+97416000ER0306,Saint-Pierre,97416,zones_calibrees_plu8
+97416000ET0021,Saint-Pierre,97416,prorata
+97416000ET0700,Saint-Pierre,97416,prorata
+97416000EV1102,Saint-Pierre,97416,cadastre_octobre
+97416000EW1130,Saint-Pierre,97416,prorata
+97416000EX0314,Saint-Pierre,97416,zones_calibrees_plu8
+97416000EZ0676,Saint-Pierre,97416,prorata
+97416000HN0211,Saint-Pierre,97416,zones_calibrees_plu8
+97416000HN1233,Saint-Pierre,97416,prorata
+97416000HO0545,Saint-Pierre,97416,prorata
+97416000HP0016,Saint-Pierre,97416,prorata
+97416000HW0156,Saint-Pierre,97416,prorata
+97416000HX0334,Saint-Pierre,97416,contenance_vs_dessin
+97416000IA1447,Saint-Pierre,97416,zones_calibrees_plu8
+97416000IB0278,Saint-Pierre,97416,prorata
+97416000IC0174,Saint-Pierre,97416,prorata
+97416000IE0838,Saint-Pierre,97416,ventes_recentes
+97416000IM0125,Saint-Pierre,97416,prorata
+97416000IM0285,Saint-Pierre,97416,prorata
+97417000AN0137,Saint-Philippe,97417,prorata
+97417000AS0129,Saint-Philippe,97417,prorata
+97417000AS0294,Saint-Philippe,97417,permis
+97417000BN0002,Saint-Philippe,97417,prorata
+97418000AC0733,Sainte-Marie,97418,prorata
+97418000AC1332,Sainte-Marie,97418,permis
+97418000AE0256,Sainte-Marie,97418,prorata
+97418000AE0502,Sainte-Marie,97418,prorata
+97418000AP2264,Sainte-Marie,97418,zones_calibrees_plu8
+97418000AR2073,Sainte-Marie,97418,prorata
+97418000AR2589,Sainte-Marie,97418,ventes_recentes
+97418000AS0338,Sainte-Marie,97418,prorata
+97418000AT1832,Sainte-Marie,97418,prorata
+97418000AT2033,Sainte-Marie,97418,prorata
+97418000AX0278,Sainte-Marie,97418,prorata
+97418000AX0451,Sainte-Marie,97418,permis
+97418000AY0519,Sainte-Marie,97418,bande_A
+97418000BH0637,Sainte-Marie,97418,prorata
+97418000BH0755,Sainte-Marie,97418,prorata
+97418000BP0036,Sainte-Marie,97418,prorata
+97418000BT0865,Sainte-Marie,97418,prorata
+97419000AC0362,Sainte-Rose,97419,prorata
+97419000AN0292,Sainte-Rose,97419,prorata
+97419000AO0131,Sainte-Rose,97419,prorata
+97419000AR0146,Sainte-Rose,97419,prorata
+97419000AW0148,Sainte-Rose,97419,prorata
+97419000AZ0031,Sainte-Rose,97419,prorata
+97420000AB0822,Sainte-Suzanne,97420,prorata
+97420000AC1075,Sainte-Suzanne,97420,bande_A
+97420000AH0134,Sainte-Suzanne,97420,proprietaire_societe
+97420000AM0218,Sainte-Suzanne,97420,proprietaire_societe
+97420000AR0683,Sainte-Suzanne,97420,prorata
+97420000AS0646,Sainte-Suzanne,97420,prorata
+97420000AZ0385,Sainte-Suzanne,97420,prorata
+97420000BC0899,Sainte-Suzanne,97420,prorata
+97420000BC1198,Sainte-Suzanne,97420,prorata
+97420000BC9999,Sainte-Suzanne,97420,surface_incertaine
+97420000BD0961,Sainte-Suzanne,97420,zones_calibrees_plu8
+97420000BH0346,Sainte-Suzanne,97420,ventes_recentes
+97420000BH1606,Sainte-Suzanne,97420,cadastre_octobre
+97421000AC0269,Salazie,97421,les_Hauts
+97421000AC0308,Salazie,97421,les_Hauts
+97421000AH0557,Salazie,97421,les_Hauts
+97421000AL0321,Salazie,97421,cadastre_octobre
+97421000AP0068,Salazie,97421,bande_A
+97421000AP0147,Salazie,97421,les_Hauts
+97421000AV0372,Salazie,97421,les_Hauts
+97421000AV0536,Salazie,97421,cadastre_octobre
+97421000BD0331,Salazie,97421,bande_A
+97421000BL0089,Salazie,97421,surface_incertaine
+97421000BM0064,Salazie,97421,les_Hauts
+97421000BN0042,Salazie,97421,les_Hauts
+97421000BO0266,Salazie,97421,bande_A
+97421000BO0430,Salazie,97421,les_Hauts
+97422000AB0049,Le Tampon,97422,proprietaire_societe
+97422000AD0661,Le Tampon,97422,prorata
+97422000AD1061,Le Tampon,97422,prorata
+97422000AE8001,Le Tampon,97422,surface_incertaine
+97422000AK0991,Le Tampon,97422,contenance_vs_dessin
+97422000AX0956,Le Tampon,97422,contenance_vs_dessin
+97422000AX1448,Le Tampon,97422,prorata
+97422000AY0017,Le Tampon,97422,proprietaire_societe
+97422000BD1172,Le Tampon,97422,prorata
+97422000BD3213,Le Tampon,97422,bande_A
+97422000BH0078,Le Tampon,97422,bande_A
+97422000BH1561,Le Tampon,97422,contenance_vs_dessin
+97422000BI1005,Le Tampon,97422,prorata
+97422000BL0028,Le Tampon,97422,zones_calibrees_plu8
+97422000BL1219,Le Tampon,97422,prorata
+97422000BM0501,Le Tampon,97422,prorata
+97422000BN2291,Le Tampon,97422,bande_A
+97422000BN2704,Le Tampon,97422,prorata
+97422000BO1094,Le Tampon,97422,zones_calibrees_plu8
+97422000BP1864,Le Tampon,97422,prorata
+97422000BP2028,Le Tampon,97422,prorata
+97422000BR1554,Le Tampon,97422,prorata
+97422000BV0523,Le Tampon,97422,prorata
+97422000BV1983,Le Tampon,97422,prorata
+97422000BW0709,Le Tampon,97422,bande_A
+97422000BW1117,Le Tampon,97422,proprietaire_societe
+97422000BW3474,Le Tampon,97422,prorata
+97422000BX0497,Le Tampon,97422,prorata
+97422000CD0352,Le Tampon,97422,permis
+97422000CL1438,Le Tampon,97422,prorata
+97422000CM0181,Le Tampon,97422,prorata
+97422000CM0592,Le Tampon,97422,prorata
+97422000CO0386,Le Tampon,97422,ventes_recentes
+97422000CR0409,Le Tampon,97422,zones_calibrees_plu8
+97422000CS0365,Le Tampon,97422,prorata
+97422000CS0690,Le Tampon,97422,prorata
+97422000DE0532,Le Tampon,97422,prorata
+97422000DE0563,Le Tampon,97422,prorata
+97422000DH0793,Le Tampon,97422,prorata
+97422000DI0036,Le Tampon,97422,prorata
+97422000DM0562,Le Tampon,97422,prorata
+97422000EH0118,Le Tampon,97422,prorata
+97422000EI0240,Le Tampon,97422,prorata
+97422000EI0316,Le Tampon,97422,prorata
+97422000EM0178,Le Tampon,97422,proprietaire_societe
+97423000AE0142,Les Trois-Bassins,97423,littoral
+97423000AE0220,Les Trois-Bassins,97423,littoral
+97423000AE0238,Les Trois-Bassins,97423,littoral
+97423000AE0261,Les Trois-Bassins,97423,littoral
+97423000AE0275,Les Trois-Bassins,97423,littoral
+97423000AE0289,Les Trois-Bassins,97423,littoral
+97423000AE0561,Les Trois-Bassins,97423,littoral
+97423000AE1118,Les Trois-Bassins,97423,littoral
+97423000AE1119,Les Trois-Bassins,97423,littoral
+97423000AK1937,Les Trois-Bassins,97423,zones_calibrees_plu8
+97424000AE0468,Cilaos,97424,les_Hauts
+97424000AE2248,Cilaos,97424,les_Hauts
+97424000AH0251,Cilaos,97424,les_Hauts
+97424000AI2357,Cilaos,97424,les_Hauts
+97424000AP0456,Cilaos,97424,ppr_rouge_partiel
+97424000AP0464,Cilaos,97424,ppr_rouge_partiel
+97424000AP0468,Cilaos,97424,ppr_rouge_partiel
+97424000AP0483,Cilaos,97424,ppr_rouge_partiel
+97424000AP0495,Cilaos,97424,ppr_rouge_partiel
+97424000AP0522,Cilaos,97424,ppr_rouge_partiel
+97424000AP0528,Cilaos,97424,ppr_rouge_partiel
+97424000AR0036,Cilaos,97424,les_Hauts
+97424000AR0040,Cilaos,97424,bizone
+97424000AR0041,Cilaos,97424,bizone
+97424000AR0045,Cilaos,97424,bizone
+97424000AR0075,Cilaos,97424,bizone
+97424000AR0076,Cilaos,97424,bizone
+97424000AR0078,Cilaos,97424,bizone
+97424000AR0085,Cilaos,97424,bizone
+97424000AR0086,Cilaos,97424,bizone
+97424000AR0101,Cilaos,97424,bizone
+97424000AR0111,Cilaos,97424,ppr_rouge_partiel
