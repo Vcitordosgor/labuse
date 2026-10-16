@@ -1,0 +1,441 @@
+<?xml version='1.0' encoding='UTF-8' standalone='yes'?>
+<feed xmlns:georss="http://www.georss.org/georss" xmlns:gpf_dl="https://data.geopf.fr/annexes/ressources/xsd/gpf_dl.xsd" xmlns="http://www.w3.org/2005/Atom" xmlns:inspire_dls="http://inspire.ec.europa.eu/schemas/inspire_dls/1.0" xml:lang="en" gpf_dl:page="1" gpf_dl:pagesize="10" gpf_dl:pagecount="12" gpf_dl:totalentries="116">
+  <title>Géoplateforme API - Download</title>
+  <subtitle>Discover and Download files dataset according to Atm RFC 4287 norma</subtitle>
+  <keywords>
+    <keywords>download</keywords>
+    <keywords>infoMapAccessService</keywords>
+  </keywords>
+  <id>https://data.geopf.fr/telechargement/capabilities</id>
+  <rights>Conditions Générales d'Utilisation disponibles ici : https://cartes.gouv.fr/cgu</rights>
+  <updated>2026-10-16T14:59:00+01:00</updated>
+  <author>
+    <name>Géoplateforme par IGN</name>
+    <email>geoplateforme@ign.fr</email>
+  </author>
+  <link href="https://data.geopf.fr/csw?REQUEST=GetRecordById&amp;SERVICE=CSW&amp;VERSION=2.0.2&amp;OUTPUTSCHEMA=http://standards.iso.org/iso/19115/-3/mdb/2.0&amp;elementSetName=full&amp;ID=GeoPF_Telechargement" rel="describedby" type="application/vnd.ogc.csw.GetRecordByIdResponse_xml"/>
+  <link href="https://data.geopf.fr/telechargement/capabilities" rel="self" type="application/atom+xml" title="This document"/>
+  <link href="https://data.geopf.fr/telechargement/capabilities?lang=en" hreflang="en" rel="alternate" type="application/atom+xml" title="Géoplateforme API - Download"/>
+  <link href="https://data.geopf.fr/telechargement/capabilities?lang=fr" hreflang="fr" rel="alternate" type="application/atom+xml" title="API Géoplateforme - Téléchargement"/>
+  <link href="https://data.geopf.fr/annexes/recette_dl/os/opensearch_recette.xml" rel="search" type="application/opensearchdescription+xml" title="Open Search Description"/>
+  <link href="https://data.geopf.fr/telechargement/capabilities" rel="up" type="application/atom+xml"/>
+  <entry>
+    <title>ACCESSIBILITE-PHYSIQUE-FORETS</title>
+    <link href="https://data.geopf.fr/telechargement/resource/ACCESSIBILITE-PHYSIQUE-FORETS" rel="alternate" type="application/atom+xml"/>
+    <id>https://data.geopf.fr/telechargement/resource/ACCESSIBILITE-PHYSIQUE-FORETS</id>
+    <updated>2026-02-11T14:59:00+01:00</updated>
+    <content>accessibilité physique des forêts aux engins d’exploitation, produite par l’IGN à partir de la méthodologie développée dans le cadre du projet ACCESSFOR. Il permet d’identifier les zones forestières accessibles ou non accessibles aux principaux engins d’exploitation.</content>
+    <georss:polygon/>
+    <category term="https://registre.ign.fr/ign/IGNF/crs/IGNF/LAMB93" label="IGNF:LAMB93"/>
+    <gpf_dl:zone term="D019" label="D019 Corrèze"/>
+    <gpf_dl:zone term="D014" label="D014 Calvados"/>
+    <gpf_dl:zone term="D043" label="D043 Haute-Loire"/>
+    <gpf_dl:zone term="D057" label="D057 Moselle"/>
+    <gpf_dl:zone term="D036" label="D036 Indre"/>
+    <gpf_dl:zone term="D078" label="D078 Yvelines"/>
+    <gpf_dl:zone term="D027" label="D027 Eure"/>
+    <gpf_dl:zone term="D054" label="D054 Meurthe-et-Moselle"/>
+    <gpf_dl:zone term="D064" label="D064 Pyrénées-Atlantiques"/>
+    <gpf_dl:zone term="D013" label="D013 Bouches-du-Rhône"/>
+    <gpf_dl:zone term="D068" label="D068 Haut-Rhin"/>
+    <gpf_dl:zone term="D010" label="D010 Aube"/>
+    <gpf_dl:zone term="D087" label="D087 Haute-Vienne"/>
+    <gpf_dl:zone term="D089" label="D089 Yonne"/>
+    <gpf_dl:zone term="D041" label="D041 Loir-et-Cher"/>
+    <gpf_dl:zone term="D061" label="D061 Orne"/>
+    <gpf_dl:zone term="D056" label="D056 Morbihan"/>
+    <gpf_dl:zone term="D085" label="D085 Vendée"/>
+    <gpf_dl:zone term="D086" label="D086 Vienne"/>
+    <gpf_dl:zone term="D006" label="D006 Alpes-Maritimes"/>
+    <gpf_dl:zone term="D007" label="D007 Ardèche"/>
+    <gpf_dl:zone term="D094" label="D094 Val-de-Marne"/>
+    <gpf_dl:zone term="D053" label="D053 Mayenne"/>
+    <gpf_dl:zone term="D077" label="D077 Seine-et-Marne"/>
+    <gpf_dl:zone term="D005" label="D005 Hautes-Alpes"/>
+    <gpf_dl:zone term="D049" label="D049 Maine-et-Loire"/>
+    <gpf_dl:zone term="D079" label="D079 Deux-Sèvres"/>
+    <gpf_dl:zone term="D017" label="D017 Charente-Maritime"/>
+    <gpf_dl:zone term="FXX" label="FXX France métropolitaine"/>
+    <gpf_dl:zone term="D071" label="D071 Saône-et-Loire"/>
+    <gpf_dl:zone term="D001" label="D001 Ain"/>
+    <gpf_dl:zone term="D048" label="D048 Lozère"/>
+    <gpf_dl:zone term="D073" label="D073 Savoie"/>
+    <gpf_dl:zone term="D044" label="D044 Loire-Atlantique"/>
+    <gpf_dl:zone term="D075" label="D075 Paris"/>
+    <gpf_dl:zone term="D015" label="D015 Cantal"/>
+    <gpf_dl:zone term="D069" label="D069 Rhône"/>
+    <gpf_dl:zone term="D072" label="D072 Sarthe"/>
+    <gpf_dl:zone term="D012" label="D012 Aveyron"/>
+    <gpf_dl:zone term="D026" label="D026 Drôme"/>
+    <gpf_dl:zone term="D034" label="D034 Hérault"/>
+    <gpf_dl:zone term="D093" label="D093 Seine-Saint-Denis"/>
+    <gpf_dl:zone term="D063" label="D063 Puy-de-Dôme"/>
+    <gpf_dl:zone term="D028" label="D028 Eure-et-Loir"/>
+    <gpf_dl:zone term="D082" label="D082 Tarn-et-Garonne"/>
+    <gpf_dl:zone term="D046" label="D046 Lot"/>
+    <gpf_dl:zone term="D092" label="D092 Hauts-de-Seine"/>
+    <gpf_dl:zone term="D047" label="D047 Lot-et-Garonne"/>
+    <gpf_dl:zone term="D050" label="D050 Manche"/>
+    <gpf_dl:zone term="D024" label="D024 Dordogne"/>
+    <gpf_dl:zone term="D008" label="D008 Ardennes"/>
+    <gpf_dl:zone term="D022" label="D022 Côtes-d’Armor"/>
+    <gpf_dl:zone term="D011" label="D011 Aude"/>
+    <gpf_dl:zone term="D058" label="D058 Nièvre"/>
+    <gpf_dl:zone term="D032" label="D032 Gers"/>
+    <gpf_dl:zone term="D02B" label="D02B Haute-Corse"/>
+    <gpf_dl:zone term="D083" label="D083 Var"/>
+    <gpf_dl:zone term="D090" label="D090 Territoire de Belfort"/>
+    <gpf_dl:zone term="D051" label="D051 Marne"/>
+    <gpf_dl:zone term="D065" label="D065 Hautes-Pyrénées"/>
+    <gpf_dl:zone term="D076" label="D076 Seine-Maritime"/>
+    <gpf_dl:zone term="D067" label="D067 Bas-Rhin"/>
+    <gpf_dl:zone term="D045" label="D045 Loiret"/>
+    <gpf_dl:zone term="D059" label="D059 Nord"/>
+    <gpf_dl:zone term="D070" label="D070 Haute-Saône"/>
+    <gpf_dl:zone term="D016" label="D016 Charente"/>
+    <gpf_dl:zone term="D021" label="D021 Côte-d’Or"/>
+    <gpf_dl:zone term="D040" label="D040 Landes"/>
+    <gpf_dl:zone term="D074" label="D074 Haute-Savoie"/>
+    <gpf_dl:zone term="D023" label="D023 Creuse"/>
+    <gpf_dl:zone term="D052" label="D052 Haute-Marne"/>
+    <gpf_dl:zone term="D095" label="D095 Val-d'Oise"/>
+    <gpf_dl:zone term="D002" label="D002 Aisne"/>
+    <gpf_dl:zone term="D081" label="D081 Tarn"/>
+    <gpf_dl:zone term="D030" label="D030 Gard"/>
+    <gpf_dl:zone term="D004" label="D004 Alpes-de-Haute-Provence"/>
+    <gpf_dl:zone term="D009" label="D009 Ariège"/>
+    <gpf_dl:zone term="D080" label="D080 Somme"/>
+    <gpf_dl:zone term="D033" label="D033 Gironde"/>
+    <gpf_dl:zone term="D039" label="D039 Jura"/>
+    <gpf_dl:zone term="D003" label="D003 Allier"/>
+    <gpf_dl:zone term="D029" label="D029 Finistère"/>
+    <gpf_dl:zone term="D055" label="D055 Meuse"/>
+    <gpf_dl:zone term="D084" label="D084 Vaucluse"/>
+    <gpf_dl:zone term="D025" label="D025 Doubs"/>
+    <gpf_dl:zone term="D018" label="D018 Cher"/>
+    <gpf_dl:zone term="D031" label="D031 Haute-Garonne"/>
+    <gpf_dl:zone term="D091" label="D091 Essonne"/>
+    <gpf_dl:zone term="D037" label="D037 Indre-et-Loire"/>
+    <gpf_dl:zone term="D088" label="D088 Vosges"/>
+    <gpf_dl:zone term="D02A" label="D02A Corse-du-Sud"/>
+    <gpf_dl:zone term="D060" label="D060 Oise"/>
+    <gpf_dl:zone term="D035" label="D035 Ille-et-Vilaine"/>
+    <gpf_dl:zone term="D038" label="D038 Isère"/>
+    <gpf_dl:zone term="D066" label="D066 Pyrénées-Orientales"/>
+    <gpf_dl:zone term="D062" label="D062 Pas-de-Calais"/>
+    <gpf_dl:zone term="D042" label="D042 Loire"/>
+    <gpf_dl:format term="GPKG" label="GPKG (GeoPackage)"/>
+    <gpf_dl:editionDateStart>2025-01-01</gpf_dl:editionDateStart>
+    <gpf_dl:editionDateEnd>2025-01-01</gpf_dl:editionDateEnd>
+  </entry>
+  <entry>
+    <title>ADEME BIOMASSE-HAIES</title>
+    <link href="https://data.geopf.fr/telechargement/resource/ADEME_BIOMASSE-HAIES" rel="alternate" type="application/atom+xml"/>
+    <id>https://data.geopf.fr/telechargement/resource/ADEME_BIOMASSE-HAIES</id>
+    <updated>2026-03-29T14:59:00+01:00</updated>
+    <content>Couche géographique contenant les informations de stocks de bois sur pied et de prélèvements récents de bois dans les haies bocagères de France métropolitaine par EPCI (Établissement Public de Coopération Intercommunale).</content>
+    <georss:polygon/>
+    <category term="https://www.opengis.net/def/crs/EPSG/0/2154" label="RGF93 v1 / Lambert-93 -- France"/>
+    <gpf_dl:zone term="FXX" label="FXX France métropolitaine"/>
+    <gpf_dl:format term="GPKG" label="GPKG (GeoPackage)"/>
+    <gpf_dl:editionDateStart>2025-01-01</gpf_dl:editionDateStart>
+    <gpf_dl:editionDateEnd>2025-01-01</gpf_dl:editionDateEnd>
+  </entry>
+  <entry>
+    <title>ADMIN-EXPRESS</title>
+    <link href="https://data.geopf.fr/telechargement/resource/ADMIN-EXPRESS" rel="alternate" type="application/atom+xml"/>
+    <id>https://data.geopf.fr/telechargement/resource/ADMIN-EXPRESS</id>
+    <updated>2026-09-29T14:59:00+01:00</updated>
+    <content>ADMIN EXPRESS décrit l'ensemble des informations administratives présentes dans la base de données interne de l'IGN sur le territoire métropolitain et les départements d'outre-mer à la date d'extraction des données.</content>
+    <georss:polygon/>
+    <category term="https://www.opengis.net/def/crs/EPSG/0/4326" label="EPSG:4326"/>
+    <category term="https://www.opengis.net/def/crs/EPSG/0/4471" label="EPSG:4471"/>
+    <category term="https://www.opengis.net/def/crs/EPSG/0/2154" label="RGF93 v1 / Lambert-93 -- France"/>
+    <category term="https://www.opengis.net/def/crs/EPSG/0/2975" label="EPSG:2975"/>
+    <category term="https://www.opengis.net/def/crs/EPSG/0/4467" label="EPSG:4467"/>
+    <category term="https://www.opengis.net/def/crs/EPSG/0/5490" label="EPSG:5490"/>
+    <category term="https://www.opengis.net/def/crs/EPSG/0/2972" label="EPSG:2972"/>
+    <gpf_dl:zone term="MYT" label="MYT Mayotte"/>
+    <gpf_dl:zone term="FRA" label="FRA France entière"/>
+    <gpf_dl:zone term="GLP" label="GLP Guadeloupe"/>
+    <gpf_dl:zone term="GUF" label="GUF Guyane"/>
+    <gpf_dl:zone term="BLM" label="BLM Saint-Barthélemy"/>
+    <gpf_dl:zone term="FXX" label="FXX France métropolitaine"/>
+    <gpf_dl:zone term="SPM" label="SPM Saint-Pierre-et-Miquelon"/>
+    <gpf_dl:zone term="MAF" label="MAF Saint-Martin"/>
+    <gpf_dl:zone term="MTQ" label="MTQ Martinique"/>
+    <gpf_dl:zone term="REU" label="REU La Réunion"/>
+    <gpf_dl:format term="GPKG" label="GPKG (GeoPackage)"/>
+    <gpf_dl:editionDateStart>2025-10-15</gpf_dl:editionDateStart>
+    <gpf_dl:editionDateEnd>2026-09-23</gpf_dl:editionDateEnd>
+  </entry>
+  <entry>
+    <title>ADMIN EXPRESS COG</title>
+    <link href="https://data.geopf.fr/telechargement/resource/ADMIN-EXPRESS-COG" rel="alternate" type="application/atom+xml"/>
+    <id>https://data.geopf.fr/telechargement/resource/ADMIN-EXPRESS-COG</id>
+    <updated>2026-07-03T14:59:00+01:00</updated>
+    <content>ADMIN EXPRESS COG est une édition millésimée d’ADMIN EXPRESS (édition annuelle) et prend en compte le COG (Code Officiel Géographique) de l’INSEE qui rassemble les codes et libellés des entités administratives y compris d'outre-mer au 1er janvier de l’année en cours.</content>
+    <georss:polygon/>
+    <category term="https://registre.ign.fr/ign/IGNF/crs/IGNF/WGS84G" label="IGNF:WGS84G"/>
+    <category term="https://www.opengis.net/def/crs/EPSG/0/2154" label="RGF93 v1 / Lambert-93 -- France"/>
+    <category term="https://www.opengis.net/def/crs/EPSG/0/2975" label="EPSG:2975"/>
+    <category term="https://registre.ign.fr/ign/IGNF/crs/IGNF/UTM22RGFG95" label="IGNF:UTM22RGFG95"/>
+    <category term="https://registre.ign.fr/ign/IGNF/crs/IGNF/RGM04UTM38S" label="IGNF:RGM04UTM38S"/>
+    <category term="https://registre.ign.fr/ign/IGNF/crs/IGNF/RGAF09UTM20" label="IGNF:RGAF09UTM20"/>
+    <category term="https://www.opengis.net/def/crs/EPSG/0/4326" label="EPSG:4326"/>
+    <category term="https://registre.ign.fr/ign/IGNF/crs/IGNF/RGR92UTM40S" label="IGNF:RGR92UTM40S"/>
+    <category term="https://www.opengis.net/def/crs/EPSG/0/4471" label="EPSG:4471"/>
+    <category term="https://www.opengis.net/def/crs/EPSG/0/4467" label="EPSG:4467"/>
+    <category term="https://www.opengis.net/def/crs/EPSG/0/5490" label="EPSG:5490"/>
+    <category term="https://www.opengis.net/def/crs/EPSG/0/2972" label="EPSG:2972"/>
+    <category term="https://registre.ign.fr/ign/IGNF/crs/IGNF/LAMB93" label="IGNF:LAMB93"/>
+    <gpf_dl:zone term="MYT" label="MYT Mayotte"/>
+    <gpf_dl:zone term="FRA" label="FRA France entière"/>
+    <gpf_dl:zone term="GLP" label="GLP Guadeloupe"/>
+    <gpf_dl:zone term="GUF" label="GUF Guyane"/>
+    <gpf_dl:zone term="BLM" label="BLM Saint-Barthélemy"/>
+    <gpf_dl:zone term="FXX" label="FXX France métropolitaine"/>
+    <gpf_dl:zone term="SPM" label="SPM Saint-Pierre-et-Miquelon"/>
+    <gpf_dl:zone term="MAF" label="MAF Saint-Martin"/>
+    <gpf_dl:zone term="MTQ" label="MTQ Martinique"/>
+    <gpf_dl:zone term="REU" label="REU La Réunion"/>
+    <gpf_dl:format term="SHP" label="SHP (Shapefile)"/>
+    <gpf_dl:format term="GPKG" label="GPKG (GeoPackage)"/>
+    <gpf_dl:format term="FlatGeoBuf" label="FlatGeoBuf"/>
+    <gpf_dl:format term="GeoParquet" label="GeoParquet"/>
+    <gpf_dl:editionDateStart>2017-06-19</gpf_dl:editionDateStart>
+    <gpf_dl:editionDateEnd>2026-01-01</gpf_dl:editionDateEnd>
+  </entry>
+  <entry>
+    <title>ADMIN EXPRESS COG CARTO</title>
+    <link href="https://data.geopf.fr/telechargement/resource/ADMIN-EXPRESS-COG-CARTO" rel="alternate" type="application/atom+xml"/>
+    <id>https://data.geopf.fr/telechargement/resource/ADMIN-EXPRESS-COG-CARTO</id>
+    <updated>2026-07-03T14:59:00+01:00</updated>
+    <content>ADMIN EXPRESS COG CARTO est une édition millésimée d’ADMIN EXPRESS pour un usage cartographique (édition annuelle) et prend en compte le COG (Code Officiel Géographique) de l’INSEE qui rassemble les codes et libellés des entités administratives y compris d'outre-mer au 1er janvier de l’année en cours.</content>
+    <georss:polygon/>
+    <category term="https://registre.ign.fr/ign/IGNF/crs/IGNF/WGS84G" label="IGNF:WGS84G"/>
+    <category term="https://www.opengis.net/def/crs/EPSG/0/2154" label="RGF93 v1 / Lambert-93 -- France"/>
+    <category term="https://www.opengis.net/def/crs/EPSG/0/2975" label="EPSG:2975"/>
+    <category term="https://registre.ign.fr/ign/IGNF/crs/IGNF/UTM22RGFG95" label="IGNF:UTM22RGFG95"/>
+    <category term="https://registre.ign.fr/ign/IGNF/crs/IGNF/RGM04UTM38S" label="IGNF:RGM04UTM38S"/>
+    <category term="https://registre.ign.fr/ign/IGNF/crs/IGNF/RGAF09UTM20" label="IGNF:RGAF09UTM20"/>
+    <category term="https://www.opengis.net/def/crs/EPSG/0/4326" label="EPSG:4326"/>
+    <category term="https://registre.ign.fr/ign/IGNF/crs/IGNF/RGR92UTM40S" label="IGNF:RGR92UTM40S"/>
+    <category term="https://www.opengis.net/def/crs/EPSG/0/4471" label="EPSG:4471"/>
+    <category term="https://www.opengis.net/def/crs/EPSG/0/4467" label="EPSG:4467"/>
+    <category term="https://www.opengis.net/def/crs/EPSG/0/5490" label="EPSG:5490"/>
+    <category term="https://www.opengis.net/def/crs/EPSG/0/2972" label="EPSG:2972"/>
+    <category term="https://registre.ign.fr/ign/IGNF/crs/IGNF/LAMB93" label="IGNF:LAMB93"/>
+    <gpf_dl:zone term="MYT" label="MYT Mayotte"/>
+    <gpf_dl:zone term="FRA" label="FRA France entière"/>
+    <gpf_dl:zone term="GLP" label="GLP Guadeloupe"/>
+    <gpf_dl:zone term="GUF" label="GUF Guyane"/>
+    <gpf_dl:zone term="BLM" label="BLM Saint-Barthélemy"/>
+    <gpf_dl:zone term="FXX" label="FXX France métropolitaine"/>
+    <gpf_dl:zone term="SPM" label="SPM Saint-Pierre-et-Miquelon"/>
+    <gpf_dl:zone term="MAF" label="MAF Saint-Martin"/>
+    <gpf_dl:zone term="MTQ" label="MTQ Martinique"/>
+    <gpf_dl:zone term="REU" label="REU La Réunion"/>
+    <gpf_dl:format term="SHP" label="SHP (Shapefile)"/>
+    <gpf_dl:format term="GPKG" label="GPKG (GeoPackage)"/>
+    <gpf_dl:format term="FlatGeoBuf" label="FlatGeoBuf"/>
+    <gpf_dl:format term="GeoParquet" label="GeoParquet"/>
+    <gpf_dl:editionDateStart>2021-05-19</gpf_dl:editionDateStart>
+    <gpf_dl:editionDateEnd>2026-01-01</gpf_dl:editionDateEnd>
+  </entry>
+  <entry>
+    <title>ADMIN EXPRESS COG CARTO PE</title>
+    <link href="https://data.geopf.fr/telechargement/resource/ADMIN-EXPRESS-COG-CARTO-PE" rel="alternate" type="application/atom+xml"/>
+    <id>https://data.geopf.fr/telechargement/resource/ADMIN-EXPRESS-COG-CARTO-PE</id>
+    <updated>2026-07-03T14:59:00+01:00</updated>
+    <content>ADMIN EXPRESS COG CARTO PE est une édition millésimée d’ADMIN EXPRESS pour un usage cartographique petite échelle (édition annuelle) et prend en compte le COG (Code Officiel Géographique) de l’INSEE qui rassemble les codes et libellés des entités administratives y compris d'outre-mer au 1er janvier de l’année en cours.</content>
+    <georss:polygon/>
+    <category term="https://www.opengis.net/def/crs/EPSG/0/2154" label="RGF93 v1 / Lambert-93 -- France"/>
+    <category term="https://www.opengis.net/def/crs/EPSG/0/2975" label="EPSG:2975"/>
+    <category term="https://registre.ign.fr/ign/IGNF/crs/IGNF/UTM22RGFG95" label="IGNF:UTM22RGFG95"/>
+    <category term="https://registre.ign.fr/ign/IGNF/crs/IGNF/RGM04UTM38S" label="IGNF:RGM04UTM38S"/>
+    <category term="https://registre.ign.fr/ign/IGNF/crs/IGNF/RGAF09UTM20" label="IGNF:RGAF09UTM20"/>
+    <category term="https://www.opengis.net/def/crs/EPSG/0/4326" label="EPSG:4326"/>
+    <category term="https://registre.ign.fr/ign/IGNF/crs/IGNF/RGR92UTM40S" label="IGNF:RGR92UTM40S"/>
+    <category term="https://www.opengis.net/def/crs/EPSG/0/4471" label="EPSG:4471"/>
+    <category term="https://www.opengis.net/def/crs/EPSG/0/4467" label="EPSG:4467"/>
+    <category term="https://www.opengis.net/def/crs/EPSG/0/5490" label="EPSG:5490"/>
+    <category term="https://www.opengis.net/def/crs/EPSG/0/2972" label="EPSG:2972"/>
+    <category term="https://registre.ign.fr/ign/IGNF/crs/IGNF/LAMB93" label="IGNF:LAMB93"/>
+    <gpf_dl:zone term="MYT" label="MYT Mayotte"/>
+    <gpf_dl:zone term="GLP" label="GLP Guadeloupe"/>
+    <gpf_dl:zone term="BLM" label="BLM Saint-Barthélemy"/>
+    <gpf_dl:zone term="D976" label="D976 Mayotte"/>
+    <gpf_dl:zone term="MAF" label="MAF Saint-Martin"/>
+    <gpf_dl:zone term="REU" label="REU La Réunion"/>
+    <gpf_dl:zone term="D971" label="D971 Guadeloupe"/>
+    <gpf_dl:zone term="FRA" label="FRA France entière"/>
+    <gpf_dl:zone term="D973" label="D973 Guyane"/>
+    <gpf_dl:zone term="GUF" label="GUF Guyane"/>
+    <gpf_dl:zone term="D974" label="D974 La Réunion"/>
+    <gpf_dl:zone term="FXX" label="FXX France métropolitaine"/>
+    <gpf_dl:zone term="D972" label="D972 Martinique"/>
+    <gpf_dl:zone term="SPM" label="SPM Saint-Pierre-et-Miquelon"/>
+    <gpf_dl:zone term="MTQ" label="MTQ Martinique"/>
+    <gpf_dl:format term="SHP" label="SHP (Shapefile)"/>
+    <gpf_dl:format term="GPKG" label="GPKG (GeoPackage)"/>
+    <gpf_dl:format term="FlatGeoBuf" label="FlatGeoBuf"/>
+    <gpf_dl:format term="GeoParquet" label="GeoParquet"/>
+    <gpf_dl:editionDateStart>2024-04-15</gpf_dl:editionDateStart>
+    <gpf_dl:editionDateEnd>2026-01-01</gpf_dl:editionDateEnd>
+  </entry>
+  <entry>
+    <title>ADMIN EXPRESS COG CARTOPLUS</title>
+    <link href="https://data.geopf.fr/telechargement/resource/ADMIN-EXPRESS-COG-CARTOPLUS" rel="alternate" type="application/atom+xml"/>
+    <id>https://data.geopf.fr/telechargement/resource/ADMIN-EXPRESS-COG-CARTOPLUS</id>
+    <updated>2026-07-07T14:59:00+01:00</updated>
+    <content>ADMIN EXPRESS COG CARTOPLUS</content>
+    <georss:polygon/>
+    <category term="https://www.opengis.net/def/crs/EPSG/0/2154" label="RGF93 v1 / Lambert-93 -- France"/>
+    <gpf_dl:zone term="FRA" label="FRA France entière"/>
+    <gpf_dl:zone term="FXX" label="FXX France métropolitaine"/>
+    <gpf_dl:format term="GPKG" label="GPKG (GeoPackage)"/>
+    <gpf_dl:editionDateStart>2025-01-01</gpf_dl:editionDateStart>
+    <gpf_dl:editionDateEnd>2026-01-01</gpf_dl:editionDateEnd>
+  </entry>
+  <entry>
+    <title>ADRESSE PREMIUM</title>
+    <link href="https://data.geopf.fr/telechargement/resource/ADRESSE-PREMIUM" rel="alternate" type="application/atom+xml"/>
+    <id>https://data.geopf.fr/telechargement/resource/ADRESSE-PREMIUM</id>
+    <updated>2023-10-12T14:59:00+01:00</updated>
+    <content>Le produit ADRESSE PREMIUM est un produit complémentaire aux bases de données de l’IGN. Le produit est composé des thèmes suivants : • A_ADR-PARC qui contient des objets géométriques permettant de faire le lien entre les adresses de la BD TOPO® et les parcelles du produit Parcellaire Express (PCI) ; • B_ADR-BATI qui contient des objets géométriques permettant de faire le lien entre les adresses et les bâtiments de la BD TOPO® ; • C_BATI-PARC qui contient des objets géométriques permettant de faire le lien entre les bâtiments de la BD TOPO® et les parcelles du produit Parcellaire Express (PCI) ; • D_ADR-IRIS qui contient les tables attributaires sans géométrie permettant de faire le lien entre les identifiants des adresses de la BD TOPO® et les identifiants des IRIS (Îlots de regroupement pour l’information statistique) de l’INSEE.</content>
+    <georss:polygon/>
+    <gpf_dl:zone term="D019" label="D019 Corrèze"/>
+    <gpf_dl:zone term="D014" label="D014 Calvados"/>
+    <gpf_dl:zone term="D043" label="D043 Haute-Loire"/>
+    <gpf_dl:zone term="D057" label="D057 Moselle"/>
+    <gpf_dl:zone term="D036" label="D036 Indre"/>
+    <gpf_dl:zone term="D078" label="D078 Yvelines"/>
+    <gpf_dl:zone term="D027" label="D027 Eure"/>
+    <gpf_dl:zone term="D971" label="D971 Guadeloupe"/>
+    <gpf_dl:zone term="D054" label="D054 Meurthe-et-Moselle"/>
+    <gpf_dl:zone term="D064" label="D064 Pyrénées-Atlantiques"/>
+    <gpf_dl:zone term="D013" label="D013 Bouches-du-Rhône"/>
+    <gpf_dl:zone term="D068" label="D068 Haut-Rhin"/>
+    <gpf_dl:zone term="D010" label="D010 Aube"/>
+    <gpf_dl:zone term="D087" label="D087 Haute-Vienne"/>
+    <gpf_dl:zone term="D089" label="D089 Yonne"/>
+    <gpf_dl:zone term="D977" label="D977 Saint-Barthélemy"/>
+    <gpf_dl:zone term="D041" label="D041 Loir-et-Cher"/>
+    <gpf_dl:zone term="D061" label="D061 Orne"/>
+    <gpf_dl:zone term="D056" label="D056 Morbihan"/>
+    <gpf_dl:zone term="D085" label="D085 Vendée"/>
+    <gpf_dl:zone term="D086" label="D086 Vienne"/>
+    <gpf_dl:zone term="D006" label="D006 Alpes-Maritimes"/>
+    <gpf_dl:zone term="D007" label="D007 Ardèche"/>
+    <gpf_dl:zone term="D094" label="D094 Val-de-Marne"/>
+    <gpf_dl:zone term="D053" label="D053 Mayenne"/>
+    <gpf_dl:zone term="D077" label="D077 Seine-et-Marne"/>
+    <gpf_dl:zone term="D005" label="D005 Hautes-Alpes"/>
+    <gpf_dl:zone term="D049" label="D049 Maine-et-Loire"/>
+    <gpf_dl:zone term="D079" label="D079 Deux-Sèvres"/>
+    <gpf_dl:zone term="D017" label="D017 Charente-Maritime"/>
+    <gpf_dl:zone term="D071" label="D071 Saône-et-Loire"/>
+    <gpf_dl:zone term="D972" label="D972 Martinique"/>
+    <gpf_dl:zone term="D001" label="D001 Ain"/>
+    <gpf_dl:zone term="D048" label="D048 Lozère"/>
+    <gpf_dl:zone term="D073" label="D073 Savoie"/>
+    <gpf_dl:zone term="D044" label="D044 Loire-Atlantique"/>
+    <gpf_dl:zone term="D075" label="D075 Paris"/>
+    <gpf_dl:zone term="D015" label="D015 Cantal"/>
+    <gpf_dl:zone term="D069" label="D069 Rhône"/>
+    <gpf_dl:zone term="D072" label="D072 Sarthe"/>
+    <gpf_dl:zone term="D976" label="D976 Mayotte"/>
+    <gpf_dl:zone term="D012" label="D012 Aveyron"/>
+    <gpf_dl:zone term="D026" label="D026 Drôme"/>
+    <gpf_dl:zone term="D034" label="D034 Hérault"/>
+    <gpf_dl:zone term="D093" label="D093 Seine-Saint-Denis"/>
+    <gpf_dl:zone term="D063" label="D063 Puy-de-Dôme"/>
+    <gpf_dl:zone term="D028" label="D028 Eure-et-Loir"/>
+    <gpf_dl:zone term="D082" label="D082 Tarn-et-Garonne"/>
+    <gpf_dl:zone term="D046" label="D046 Lot"/>
+    <gpf_dl:zone term="D092" label="D092 Hauts-de-Seine"/>
+    <gpf_dl:zone term="D047" label="D047 Lot-et-Garonne"/>
+    <gpf_dl:zone term="D050" label="D050 Manche"/>
+    <gpf_dl:zone term="D024" label="D024 Dordogne"/>
+    <gpf_dl:zone term="D008" label="D008 Ardennes"/>
+    <gpf_dl:zone term="D022" label="D022 Côtes-d’Armor"/>
+    <gpf_dl:zone term="D011" label="D011 Aude"/>
+    <gpf_dl:zone term="D058" label="D058 Nièvre"/>
+    <gpf_dl:zone term="D032" label="D032 Gers"/>
+    <gpf_dl:zone term="D02B" label="D02B Haute-Corse"/>
+    <gpf_dl:zone term="D083" label="D083 Var"/>
+    <gpf_dl:zone term="D090" label="D090 Territoire de Belfort"/>
+    <gpf_dl:zone term="D051" label="D051 Marne"/>
+    <gpf_dl:zone term="D065" label="D065 Hautes-Pyrénées"/>
+    <gpf_dl:zone term="D076" label="D076 Seine-Maritime"/>
+    <gpf_dl:zone term="D067" label="D067 Bas-Rhin"/>
+    <gpf_dl:zone term="D045" label="D045 Loiret"/>
+    <gpf_dl:zone term="D059" label="D059 Nord"/>
+    <gpf_dl:zone term="D070" label="D070 Haute-Saône"/>
+    <gpf_dl:zone term="D016" label="D016 Charente"/>
+    <gpf_dl:zone term="D021" label="D021 Côte-d’Or"/>
+    <gpf_dl:zone term="D040" label="D040 Landes"/>
+    <gpf_dl:zone term="D978" label="D978 Saint-Martin"/>
+    <gpf_dl:zone term="D074" label="D074 Haute-Savoie"/>
+    <gpf_dl:zone term="D023" label="D023 Creuse"/>
+    <gpf_dl:zone term="D052" label="D052 Haute-Marne"/>
+    <gpf_dl:zone term="D095" label="D095 Val-d'Oise"/>
+    <gpf_dl:zone term="D002" label="D002 Aisne"/>
+    <gpf_dl:zone term="D081" label="D081 Tarn"/>
+    <gpf_dl:zone term="D030" label="D030 Gard"/>
+    <gpf_dl:zone term="D973" label="D973 Guyane"/>
+    <gpf_dl:zone term="D004" label="D004 Alpes-de-Haute-Provence"/>
+    <gpf_dl:zone term="D009" label="D009 Ariège"/>
+    <gpf_dl:zone term="D080" label="D080 Somme"/>
+    <gpf_dl:zone term="D033" label="D033 Gironde"/>
+    <gpf_dl:zone term="D039" label="D039 Jura"/>
+    <gpf_dl:zone term="D003" label="D003 Allier"/>
+    <gpf_dl:zone term="D029" label="D029 Finistère"/>
+    <gpf_dl:zone term="D055" label="D055 Meuse"/>
+    <gpf_dl:zone term="D084" label="D084 Vaucluse"/>
+    <gpf_dl:zone term="D025" label="D025 Doubs"/>
+    <gpf_dl:zone term="D018" label="D018 Cher"/>
+    <gpf_dl:zone term="D031" label="D031 Haute-Garonne"/>
+    <gpf_dl:zone term="D091" label="D091 Essonne"/>
+    <gpf_dl:zone term="D037" label="D037 Indre-et-Loire"/>
+    <gpf_dl:zone term="D088" label="D088 Vosges"/>
+    <gpf_dl:zone term="D02A" label="D02A Corse-du-Sud"/>
+    <gpf_dl:zone term="D060" label="D060 Oise"/>
+    <gpf_dl:zone term="D035" label="D035 Ille-et-Vilaine"/>
+    <gpf_dl:zone term="D038" label="D038 Isère"/>
+    <gpf_dl:zone term="D066" label="D066 Pyrénées-Orientales"/>
+    <gpf_dl:zone term="D974" label="D974 La Réunion"/>
+    <gpf_dl:zone term="D062" label="D062 Pas-de-Calais"/>
+    <gpf_dl:zone term="D042" label="D042 Loire"/>
+    <gpf_dl:format term="HYB" label="Format hybride (Présence de fichiers de différents formats)"/>
+    <gpf_dl:editionDateStart>2022-08-22</gpf_dl:editionDateStart>
+    <gpf_dl:editionDateEnd>2022-08-22</gpf_dl:editionDateEnd>
+  </entry>
+  <entry>
+    <title>Archive -- BDALTI</title>
+    <link href="https://data.geopf.fr/telechargement/resource/archive_BDALTI_COG" rel="alternate" type="application/atom+xml"/>
+    <id>https://data.geopf.fr/telechargement/resource/archive_BDALTI_COG</id>
+    <updated>2024-08-20T14:59:00+01:00</updated>
+    <content>Archive modele de terrain echantillonne au pas de 25m pour telechargement</content>
+    <georss:polygon/>
+    <category term="ESPG:2154" label="ESPG:2154"/>
+    <gpf_dl:zone term="France metropolitaine" label="France metropolitaine"/>
+    <gpf_dl:format term="TIF" label="TIF"/>
+    <gpf_dl:resolution term="25M00" label="25M00"/>
+    <gpf_dl:thematic>Donnee image</gpf_dl:thematic>
+  </entry>
+  <entry>
+    <title>Archive -- BDALTI ELL</title>
+    <link href="https://data.geopf.fr/telechargement/resource/archive_BDALTI_ELL_COG" rel="alternate" type="application/atom+xml"/>
+    <id>https://data.geopf.fr/telechargement/resource/archive_BDALTI_ELL_COG</id>
+    <updated>2024-08-23T14:59:00+01:00</updated>
+    <content>Archive modele de terrain echantillonne au pas de 25m pour telechargement - hauteur ellipsoide</content>
+    <georss:polygon/>
+    <category term="ESPG:2154" label="ESPG:2154"/>
+    <gpf_dl:zone term="France metropolitaine" label="France metropolitaine"/>
+    <gpf_dl:format term="TIF" label="TIF"/>
+    <gpf_dl:resolution term="25M00" label="25M00"/>
+    <gpf_dl:thematic>Donnee image</gpf_dl:thematic>
+  </entry>
+</feed>
