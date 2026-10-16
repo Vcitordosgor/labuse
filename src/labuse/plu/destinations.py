@@ -519,6 +519,13 @@ def referentiel() -> dict:
 #   hauteur       → faitage · egout · niveaux      (les trois séparément — R151-39/40)
 #   emprise_sol   → ces                            (% d'emprise au sol, ou coefficient CES)
 #   retraits      → voie · limites_separatives     (chacune : formule texte + min_m)
+#                   · entre_constructions           (PLU-CALIBRAGE-10, ex-art. 8 : implantation des
+#                     constructions les unes par rapport aux autres sur une même propriété). Formes
+#                     AUTORISÉES, et elles seules : `forme: fixe` (+min_m) · `relative`
+#                     (fraction_hauteur + base_hauteur cumulee|plus_haut [+min_m]) · `conditionnelle`
+#                     (avec_ouvertures_m / sans_ouvertures_m [+ fraction_hauteur]) · `contiguite`
+#                     (contiguite_autorisee: bool) ; `absent: true` = silence prouvé. Toute autre
+#                     forme = STOP (on ne devine pas).
 #   stationnement → par_logement · par_m2_sdp · par_typologie
 #   mixite        → feuille plate (PLU-CALIBRAGE-9). Formes AUTORISÉES, et elles seules :
 #                   · seuil_m2 | seuil_logements  (seuil de déclenchement : SDP en m² — forme
@@ -535,7 +542,7 @@ REGLES_STATUTS = ("propose", "valide")
 REGLES_RUBRIQUES: dict[str, tuple[str, ...]] = {
     "hauteur": ("faitage", "egout", "niveaux"),
     "emprise_sol": ("ces",),
-    "retraits": ("voie", "limites_separatives"),
+    "retraits": ("voie", "limites_separatives", "entre_constructions"),
     "stationnement": ("par_logement", "par_m2_sdp", "par_typologie"),
     "pleine_terre": ("pct",),   # PLU-CALIBRAGE-3 : porté par l'ancien système (unification)
     "mixite": (),   # feuille plate (la rubrique EST la feuille)

@@ -17,7 +17,10 @@ batiment:
   longueur_max_coursive_par_noyau_m: 30.0  # longueur max de coursive desservie par un noyau (distance d'évacuation)
   hauteur_etage_m: 3.0          # hauteur d'un niveau courant (du plancher au plancher)
   coef_plancher_habitable: 0.80 # plancher -> habitable (murs, gaines, cloisons)
-  retrait_inter_barre_m: 6.0    # jeu entre deux volumes bâtis (formes deux_barres / L)
+  retrait_inter_barre_m: 6.0    # jeu entre deux volumes bâtis (formes deux_barres / L). PLU-CALIBRAGE-10 :
+                                # c'est AUSSI la distance inter-bâtiments de CONVENTION (Estimé) appliquée
+                                # quand le règlement ne réglemente pas la distance (silence prouvé) ; le
+                                # contrôle réglementaire reste alors « Non applicable ». Jamais une règle PLU.
   inset_zone_m: 0.1             # marge pour garantir bâtiment STRICTEMENT dans la zone d'implantation
 
 # Surface moyenne de plancher par logement (m²). La largeur d'un module se déduit de la géométrie :

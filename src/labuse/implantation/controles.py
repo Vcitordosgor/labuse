@@ -135,8 +135,9 @@ def verifier_geometrie(scene: Scene, terrain, conv: Conventions, cap: Capacite,
     nb_ok = (cap.logements == len(modules)) and (cap.places == len(places))
     checks.append(CheckGeo("nb annoncé = nb dessiné (logements, places)", nb_ok))
 
+    # SDP mesurée = modules + noyaux (coursive ouverte HORS SDP, art. R111-22 c. urb. — LOT D)
     sdp_mes = round(sum(o.geom_local.area for o in scene.objets
-                        if o.kind in ("module", "noyau", "coursive")), 1)
+                        if o.kind in ("module", "noyau")), 1)
     emp_mes = round(unary_union([o.geom_local for o in scene.of("batiment_emprise")]).area, 1) if batis else 0.0
     surf_ok = abs(sdp_mes - cap.sdp_m2) < 0.2 and abs(emp_mes - cap.emprise_sol_m2) < 0.2
     checks.append(CheckGeo("surfaces tableau = surfaces mesurées", surf_ok))
@@ -166,6 +167,47 @@ class ControleReg:
 
 def _n_batiments(scene: Scene) -> int:
     return len(scene.of("batiment_emprise"))
+
+
+def _distance_min_batiments(scene: Scene) -> Optional[float]:
+    """Plus petite distance MESURÉE (bord à bord) entre deux emprises bâties, en m. None si < 2."""
+    batis = [o.geom_world for o in scene.of("batiment_emprise")]
+    if len(batis) < 2:
+        return None
+    return min(batis[i].distance(batis[j]) for i in range(len(batis)) for j in range(i + 1, len(batis)))
+
+
+def _distance_requise(dc, cap: Capacite, conv: Conventions) -> tuple[float, str, str]:
+    """(distance requise en m, libellé de règle, mention) pour une règle de distance CHIFFRABLE.
+    La hauteur retenue est celle du bâtiment proposé (niveaux × hauteur d'étage) ; `cumulee` = H+h
+    (deux volumes identiques dans le modèle → 2×h), `plus_haut` = H du plus haut (= h)."""
+    h = cap.niveaux * conv.hauteur_etage_m
+    if dc.forme == "fixe":
+        return float(dc.min_m or 0.0), f"≥ {dc.min_m:.1f} m (distance fixe)", ""
+    if dc.forme == "relative":
+        base = 2.0 * h if dc.base_hauteur == "cumulee" else h
+        req = (dc.fraction_hauteur or 0.0) * base
+        plancher = float(dc.min_m or 0.0)
+        req_final = max(req, plancher)
+        quoi = "H+h" if dc.base_hauteur == "cumulee" else "H"
+        lib = f"≥ {dc.fraction_hauteur:g}×{quoi} = {req:.1f} m" + (f", min {plancher:.0f} m" if plancher else "")
+        mention = f"hauteur retenue {h:.1f} m (R+{cap.niveaux - 1})"
+        return req_final, lib, mention
+    if dc.forme == "conditionnelle":
+        # cas le plus strict = façades AVEC ouvertures
+        req = float(dc.avec_ouvertures_m or 0.0)
+        mention = "cas le plus strict retenu (façades avec ouvertures)"
+        if dc.fraction_hauteur is not None:
+            base = 2.0 * h if dc.base_hauteur == "cumulee" else h
+            req = max(req, dc.fraction_hauteur * base)
+            mention += f" ; hauteur retenue {h:.1f} m"
+        lib = f"≥ {req:.1f} m (avec ouvertures ; sans : {dc.sans_ouvertures_m:g} m)" if dc.sans_ouvertures_m \
+            else f"≥ {req:.1f} m (façades avec ouvertures)"
+        return req, lib, mention
+    # contiguité
+    if dc.contiguite_autorisee:
+        return 0.0, "contiguïté autorisée (aucune distance imposée)", "les volumes peuvent être accolés"
+    return 1e-6, "contiguïté non autorisée (volumes disjoints)", ""
 
 
 def _ppr_bleue_touche_bati(scene: Scene, terrain) -> bool:
@@ -242,14 +284,31 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
     else:
         out.append(ControleReg("Stationnement", "barème non validé", f"{cap.places} places dessinées", NON_EFFECTUE))
 
-    # Distance entre constructions : plusieurs bâtiments => Non effectué (non modélisé) ; un seul => Non applicable
+    # Distance entre constructions (PLU-CALIBRAGE-10, ex-art. 8) : MESURÉE sur la géométrie et
+    # confrontée à la règle de la zone. Un seul bâtiment => Non applicable.
     nb_bati = _n_batiments(scene)
-    if nb_bati > 1:
-        out.append(ControleReg("Distance entre constructions", "non modélisée",
-                               f"{nb_bati} bâtiments", NON_EFFECTUE,
-                               detail="plusieurs volumes : la distance inter-bâtiments doit être vérifiée"))
-    else:
+    dc = regles.distance_constructions
+    if nb_bati <= 1:
         out.append(ControleReg("Distance entre constructions", "un seul bâtiment", "—", NON_APPLICABLE))
+    else:
+        dmes = _distance_min_batiments(scene) or 0.0
+        if dc.est_chiffrable:
+            requis, lib, mention = _distance_requise(dc, cap, conv)
+            ok = dmes >= requis - 1e-6
+            out.append(ControleReg("Distance entre constructions", lib, f"{dmes:.1f} m mesurés",
+                                   REUSSI if ok else ECHOUE, dc.citation_complete,
+                                   detail=(mention or None)))
+        elif dc.est_silence:
+            cmin = conv.retrait_inter_barre_m
+            out.append(ControleReg("Distance entre constructions", "non réglementé (silence prouvé)",
+                                   f"{dmes:.1f} m mesurés · convention {cmin:.0f} m (Estimé)",
+                                   NON_APPLICABLE, dc.citation_complete,
+                                   detail=(f"le règlement ne fixe pas de distance entre constructions ; "
+                                           f"distance de convention {cmin:.0f} m appliquée au tracé (Estimé)")))
+        else:
+            out.append(ControleReg("Distance entre constructions", "règle non servie (non lue)",
+                                   f"{nb_bati} bâtiments · {dmes:.1f} m mesurés", NON_EFFECTUE,
+                                   detail="distance inter-bâtiments non calibrée sur cette zone — à vérifier"))
 
     out.append(ControleReg("Locaux vélos · déchets", "non modélisés", "—", NON_EFFECTUE))
 
@@ -288,9 +347,13 @@ def statut_etude(controles: list[ControleReg], geo_ok: bool, *, scene: Scene, te
     # une règle de HAUTEUR non chiffrable (prospect L>H) ne laisse jamais l'étude exploitable
     if regles.hauteur_non_chiffrable:
         return "à compléter"
-    # plusieurs bâtiments (distance non contrôlée) OU PPR bleue qui touche le bâti -> à compléter
+    # PLU-CALIBRAGE-10 : plusieurs bâtiments ne bloquent plus l'étude SI la distance inter-bâtiments
+    # est servie (contrôle Réussi ou Non applicable=silence+convention). Elle ne reste bloquante que
+    # si la règle n'est pas servie (contrôle Non effectué).
     if _n_batiments(scene) > 1:
-        return "à compléter"
+        dc_ctrl = next((c for c in controles if c.nom == "Distance entre constructions"), None)
+        if dc_ctrl is None or dc_ctrl.resultat == NON_EFFECTUE:
+            return "à compléter"
     if _ppr_bleue_touche_bati(scene, terrain):
         return "à compléter"
     return "exploitable en pré-faisabilité"
