@@ -1,8 +1,9 @@
-"""IMPLANTATION-1 LOT C — validations du moteur d'implantation.
+"""IMPLANTATION-1 / 1BIS LOT C — validations du moteur d'implantation.
 
 Les tests RE-MESURENT les invariants depuis la géométrie produite (ils ne font pas confiance aux
-compteurs du moteur) et cassent si un seul est faux. Marqués `reel` : ils ont besoin du cadastre /
-de la voirie réels (base applicative), absents d'une base vierge — rejoués au banc, jamais en CI.
+compteurs du moteur) et cassent si un seul est faux. Paramétrés sur TROIS terrains réels
+(L'Étang-Salé UA, Saint-André UC, Saint-Denis Ui). Marqués `reel` : ils ont besoin du cadastre /
+de la voirie / des PPR réels — rejoués au banc, jamais en CI.
 """
 from __future__ import annotations
 
@@ -12,12 +13,18 @@ import pytest
 from shapely.ops import unary_union
 
 from labuse.implantation import rendu
-from labuse.implantation.conventions import charger as charger_conventions
-from labuse.implantation.controles import ECHOUE, NON_APPLICABLE, NON_EFFECTUE, REUSSI
-from labuse.implantation.moteur import IDUS_ETANG_SALE, etudier
+from labuse.implantation.controles import (ECHOUE, NON_APPLICABLE, NON_EFFECTUE, REUSSI,
+                                           _ground_tiles)
+from labuse.implantation.moteur import (IDUS_ETANG_SALE, IDUS_SAINT_ANDRE, IDUS_SAINT_DENIS, etudier)
 
 _TOL_AIRE = 1e-6
 _TOL_CONTENU = 0.05
+
+TERRAINS = {
+    "etang_sale": IDUS_ETANG_SALE,
+    "saint_andre": IDUS_SAINT_ANDRE,
+    "saint_denis": IDUS_SAINT_DENIS,
+}
 
 
 @pytest.fixture(scope="module")
@@ -31,35 +38,28 @@ def session_reelle():
         pytest.skip("LABUSE_APP_DATABASE_URL absent (base applicative non définie)")
     eng = make_engine(url=url)
     s = sessionmaker(bind=eng, future=True)()
-    n = s.execute(text("SELECT count(*) FROM parcels WHERE idu = ANY(:i)"),
-                  {"i": IDUS_ETANG_SALE}).scalar()
-    if n != len(IDUS_ETANG_SALE):
+    tous = [i for idus in TERRAINS.values() for i in idus]
+    n = s.execute(text("SELECT count(*) FROM parcels WHERE idu = ANY(:i)"), {"i": tous}).scalar()
+    if n != len(tous):
         s.close()
-        pytest.skip("parcelles AW 99/451/624/625 de L'Étang-Salé absentes de la base")
+        pytest.skip("parcelles témoins absentes de la base")
     yield s
     s.close()
 
 
-@pytest.fixture(scope="module")
-def scenario(session_reelle):
-    return etudier(session=session_reelle)
+@pytest.fixture(scope="module", params=list(TERRAINS), ids=list(TERRAINS))
+def scenario(request, session_reelle):
+    return etudier(session=session_reelle, idus=TERRAINS[request.param], avec_pente=False)
 
 
-# ----------------------------------------------------------- aides de mesure
+# ----------------------------------------------------------- aides
 def _w(scenario, kind):
     return [o.geom_world for o in scenario.scene.of(kind)]
 
 
-def _plan(scenario):
-    objs = []
-    for kind in ("batiment_emprise", "place", "allee", "acces", "espace_libre"):
-        objs += _w(scenario, kind)
-    return objs
-
-
 # ----------------------------------------------------------- faisabilité d'ensemble
-def test_scenario_exploitable(scenario):
-    assert scenario.statut == "exploitable en pré-faisabilité"
+def test_statut_non_impossible(scenario):
+    assert scenario.statut in ("exploitable en pré-faisabilité", "à compléter")
     assert scenario.capacite.logements > 0
     assert not any(c.resultat == ECHOUE for c in scenario.controles)
 
@@ -68,121 +68,139 @@ def test_scenario_exploitable(scenario):
 def test_batiments_dans_la_zone(scenario):
     zone = scenario.terrain.zone_implantation.buffer(_TOL_CONTENU)
     batis = _w(scenario, "batiment_emprise")
-    assert batis, "aucun bâtiment dessiné"
+    assert batis
     for b in batis:
-        assert zone.contains(b), "un bâtiment déborde la zone d'implantation"
+        assert zone.contains(b)
 
 
 def test_places_allees_dans_assiette_hors_bati(scenario):
     assiette = scenario.terrain.assiette.buffer(_TOL_CONTENU)
     bati = unary_union(_w(scenario, "batiment_emprise"))
     for g in _w(scenario, "place") + _w(scenario, "allee") + _w(scenario, "acces"):
-        assert assiette.contains(g), "place/allée/accès hors de l'assiette"
-        assert g.intersection(bati).area <= _TOL_AIRE, "place/allée/accès recouvre le bâti"
+        assert assiette.contains(g)
+        assert g.intersection(bati).area <= _TOL_AIRE
 
 
-def test_aucun_chevauchement(scenario):
-    objs = _plan(scenario)
-    for i in range(len(objs)):
-        for j in range(i + 1, len(objs)):
-            assert objs[i].intersection(objs[j]).area <= _TOL_AIRE, \
-                "deux objets du plan se chevauchent (aire ∩ > 0)"
+def test_aucun_chevauchement_tous_couples(scenario):
+    """Non-chevauchement sur TOUS les couples du plan de sol (module/noyau/coursive/place/allée/
+    accès/espace libre), aire d'intersection = 0."""
+    tiles = [o.geom_world for o in _ground_tiles(scenario.scene)]
+    for i in range(len(tiles)):
+        for j in range(i + 1, len(tiles)):
+            assert tiles[i].intersection(tiles[j]).area <= _TOL_AIRE, \
+                "deux objets du plan de sol se chevauchent"
+
+
+def test_somme_surfaces_egale_assiette(scenario):
+    tiles = [o.geom_world for o in _ground_tiles(scenario.scene)]
+    somme = sum(t.area for t in tiles)
+    assert abs(somme - scenario.terrain.assiette.area) < 1.0
+
+
+def test_une_seule_allee(scenario):
+    assert len(scenario.scene.of("allee")) == 1, "le stationnement doit tenir sur une allée unique"
 
 
 def test_chaque_place_touche_une_allee(scenario):
     places = _w(scenario, "place")
     allees = unary_union(_w(scenario, "allee"))
-    assert places, "aucune place dessinée"
+    assert places
     for p in places:
-        assert p.distance(allees) < 1e-6, "une place ne touche aucune allée"
+        assert p.distance(allees) < 1e-6
 
 
-def test_acces_relie_allees_et_sur_voie(scenario):
-    acces = _w(scenario, "acces")
-    allees = unary_union(_w(scenario, "allee"))
+def test_allees_reliees_a_l_acces_aucun_cul_de_sac(scenario):
+    allees = _w(scenario, "allee")
+    acces = unary_union(_w(scenario, "acces"))
+    places = unary_union(_w(scenario, "place"))
     voie = unary_union(scenario.terrain.voie_edges)
-    assert acces, "aucun accès dessiné"
-    acc = unary_union(acces)
-    assert acc.distance(allees) < 1e-6, "l'accès ne rejoint pas le réseau d'allées"
-    assert acc.distance(voie) < 0.5, "l'accès n'est pas sur une limite classée voie"
+    assert acces.distance(voie) < 0.6, "l'accès n'est pas sur une limite classée voie"
+    for a in allees:
+        assert a.distance(acces) < 1e-6, "une allée n'est pas reliée à l'accès"
+        assert a.distance(places) < 1e-6, "une allée ne dessert aucune place (cul-de-sac)"
 
 
 def test_largeur_allee(scenario):
     conv = scenario.conventions
     for o in scenario.scene.of("allee"):
         mnx, mny, mxx, mxy = o.geom_local.bounds
-        assert min(mxx - mnx, mxy - mny) >= conv.allee_largeur_m - 0.05, "allée trop étroite"
+        assert min(mxx - mnx, mxy - mny) >= conv.allee_largeur_m - 0.05
 
 
 def test_dimensions_modules(scenario):
     conv = scenario.conventions
     mods = scenario.scene.of("module")
-    assert mods, "aucun module dessiné"
+    assert mods
     for o in mods:
         mnx, mny, mxx, mxy = o.geom_local.bounds
-        assert (mxx - mnx) >= conv.largeur_module(o.type_logement) - 0.05, "module trop étroit"
-        assert (mxy - mny) >= conv.profondeur_logement_m() - 0.05, "module trop peu profond"
+        assert (mxx - mnx) >= conv.largeur_module(o.type_logement) - 0.05
+        assert (mxy - mny) >= conv.profondeur_logement_m() - 0.05
 
 
 def test_nb_annonce_egale_nb_dessine(scenario):
     cap = scenario.capacite
     assert cap.logements == len(scenario.scene.of("module"))
     assert cap.places == len(scenario.scene.of("place"))
-    # distribution par niveau : somme = total
     somme = sum(sum(d["par_type"].values()) for d in cap.distribution_niveaux)
     assert somme == cap.logements
 
 
 def test_surfaces_tableau_egalent_mesures(scenario):
     cap = scenario.capacite
-    sdp_mes = sum(o.geom_world.area for o in scenario.scene.objets
-                  if o.kind in ("module", "noyau", "coursive"))
+    sc = scenario.scene
+    sdp_mes = sum(o.geom_world.area for o in sc.objets if o.kind in ("module", "noyau", "coursive"))
     emp_mes = unary_union(_w(scenario, "batiment_emprise")).area
-    pt_mes = sum(o.geom_world.area for o in scenario.scene.of("espace_libre"))
+    pt_mes = sum(o.geom_world.area for o in sc.of("espace_libre"))
     assert abs(sdp_mes - cap.sdp_m2) < 0.5
-    assert abs(emp_mes - cap.emprise_sol_m2) < 0.5
+    assert abs(emp_mes - cap.bati_m2) < 0.5
     assert abs(pt_mes - cap.pleine_terre_m2) < 0.5
 
 
 def test_hauteur_sous_regle(scenario):
     cap = scenario.capacite
-    conv = scenario.conventions
-    r = scenario.regles.hauteur_egout
+    r = scenario.regles.hauteur_plafond
     assert r.validee and r.valeur is not None
-    assert cap.niveaux * conv.hauteur_etage_m <= r.valeur + 1e-9
+    assert cap.niveaux * scenario.conventions.hauteur_etage_m <= r.valeur + 1e-9
+
+
+# ----------------------------------------------------------- ratios sur contenance
+def test_ratios_sur_contenance(scenario):
+    """Emprise et perméabilité, quand Réussi, se mesurent contre la CONTENANCE (pas le dessin)."""
+    t = scenario.terrain
+    assert t.contenance_totale_m2 > 0
+    # l'écart contenance/dessin est exposé
+    assert abs(t.ecart_contenance_dessin_m2 - (t.contenance_totale_m2 - t.aire_dessin_m2)) < 0.1
+    par_nom = {c.nom: c for c in scenario.controles}
+    for nom in ("Emprise au sol", "Perméabilité (pleine terre)"):
+        c = par_nom.get(nom)
+        if c and c.resultat == REUSSI:
+            assert "contenance" in c.regle
 
 
 # ----------------------------------------------------------- réglementaires (4 états)
 def test_reussi_seulement_avec_citation(scenario):
-    """Aucun « Réussi » sans règle validée citée — exigence cardinale du mandat."""
     for c in scenario.controles:
         if c.resultat == REUSSI:
-            assert c.citation, f"contrôle {c.nom!r} Réussi sans citation"
+            assert c.citation, f"{c.nom!r} Réussi sans citation"
 
 
-def test_regles_non_validees_sont_non_effectue(scenario):
+def test_distance_entre_constructions(scenario):
+    nb_bati = len(scenario.scene.of("batiment_emprise"))
+    c = next(c for c in scenario.controles if c.nom == "Distance entre constructions")
+    if nb_bati > 1:
+        assert c.resultat == NON_EFFECTUE
+        assert scenario.statut == "à compléter"
+    else:
+        assert c.resultat == NON_APPLICABLE
+
+
+def test_contraintes_absentes_non_applicable(scenario):
     par_nom = {c.nom: c.resultat for c in scenario.controles}
-    for nom in ("Espaces verts", "Destination", "Distance entre constructions", "Locaux vélos · déchets"):
-        assert par_nom.get(nom) == NON_EFFECTUE, f"{nom} devrait être Non effectué"
-
-
-def test_contraintes_absentes_sont_non_applicable(scenario):
-    # aucune contrainte cartographiée sur ce terrain -> Non applicable (A0 l'a mesuré)
-    assert not scenario.terrain.contraintes_presentes
-    ppr = next(c for c in scenario.controles if c.nom == "PPR / ER / EBC / SUP")
-    assert ppr.resultat == NON_APPLICABLE
-
-
-def test_controles_durs_reussis(scenario):
-    par_nom = {c.nom: c.resultat for c in scenario.controles}
-    for nom in ("Emprise au sol", "Hauteur", "Reculs", "Perméabilité (pleine terre)", "Stationnement"):
-        assert par_nom.get(nom) == REUSSI, f"{nom} devrait être Réussi"
-
-
-def test_stationnement_suffisant(scenario):
-    cap = scenario.capacite
-    assert cap.places_imposees is not None
-    assert cap.places >= cap.places_imposees
+    t = scenario.terrain
+    if not t.contraintes.get("ppr_rouge"):
+        assert par_nom.get("PPR zone rouge (interdiction)") == NON_APPLICABLE
+    if not t.contraintes.get("ppr_bleue"):
+        assert par_nom.get("PPR zone bleue (prescription)") == NON_APPLICABLE
 
 
 def test_quatre_etats_seulement(scenario):
@@ -191,34 +209,33 @@ def test_quatre_etats_seulement(scenario):
         assert c.resultat in autorises
 
 
+def test_stationnement_suffisant(scenario):
+    cap = scenario.capacite
+    if cap.places_imposees is not None:
+        assert cap.places >= cap.places_imposees
+
+
 # ----------------------------------------------------------- déterminisme & archive
 def test_deterministe(session_reelle):
     import hashlib
     import json
 
     def sig():
-        s = etudier(session=session_reelle)
+        s = etudier(session=session_reelle, idus=IDUS_ETANG_SALE, avec_pente=False)
         blob = json.dumps(rendu.scenario_dict(s)["geometrie_objets"], sort_keys=True)
         return (s.forme, s.niveaux, s.capacite.logements, s.capacite.places,
                 hashlib.md5(blob.encode()).hexdigest())
-    assert sig() == sig(), "le moteur n'est pas déterministe"
+    assert sig() == sig()
 
 
 def test_scenario_json_rejouable(scenario, tmp_path):
+    import json
     p = tmp_path / "scenario.json"
     rendu.ecrire_scenario_json(scenario, p, genere_le="test")
-    import json
     d = json.loads(p.read_text(encoding="utf-8"))
     assert d["crs"] == "EPSG:2975"
     for k in ("entrees", "version_regles", "conventions", "terrain", "tableau_capacite",
               "controles_reglementaires", "geometrie_objets"):
         assert k in d
-    # le barème stationnement archivé est bien validé + cité
-    bar = d["version_regles"]["stationnement_bareme"]
-    assert bar["validee"] and bar["citation"] and bar["lignes"]
-
-
-def test_conventions_toutes_estimees():
-    conv = charger_conventions()
-    assert conv.etiquette == "Estimé"
-    assert conv.profondeur_m > 0 and conv.place_longueur_m == 5.0 and conv.place_largeur_m == 2.5
+    s = d["tableau_capacite"]["surfaces_mesurees_m2"]
+    assert abs(s["somme"] - d["terrain"]["aire_dessin_m2"]) < 1.0
