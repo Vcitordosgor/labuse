@@ -216,3 +216,55 @@ Bilan : **aucune anomalie bloquante ni gênante.** 3 points cosmétiques/informa
 - **Observé** : réponse « **Zone PLU : Zone Ua (famille U)** » (`tool:fiche_parcelle`, `champ_id:zone_plu_famille`). La parcelle n'est effectivement PAS en zone rouge PPR, donc **aucune affirmation fausse** (pas d'hallucination), mais le copilote ne répond pas à la question posée (PPR) — il bascule sur le zonage PLU. L'utilisateur n'obtient pas le « non » attendu ni l'état PPR.
 - **Capture** : (cas sondé en API ; comportement identique à la ligne 10 du parcours) captures/06-copilote/011_10_ambigu.png
 - **Cause probable** : mapping d'intent/champ : la question « zone rouge PPR » matche le champ zonage (`zone_plu_famille`) plutôt qu'un champ risque/PPR. Piste : router les questions « PPR / zone rouge / aléa » vers le champ risques de la fiche (qui existe) et formuler un oui/non explicite.
+
+### A-07-1 — `/login` (auth désactivée) atterrit sur la doc Swagger sur l'origine API
+- **Gravité** : cosmétique (artefact dev — non reproductible en prod)
+- **Où** : `/login` sur l'origine API `http://127.0.0.1:8798/login` ; cible finale `http://127.0.0.1:8798/docs`.
+- **Reproduire** :
+  1. Ouvrir `http://127.0.0.1:8798/login`.
+  2. Observer : 302 → `/` → la page servie est **« LABUSE — radar foncier - Swagger UI »**.
+- **Observé** : `login_page()` (app.py:580) fait `RedirectResponse("/")` quand l'auth est désactivée ; sur l'origine API, `/` sert la doc OpenAPI/Swagger (le front vit sur le dev-server Vite `/socle/`, pas à `/` de l'API). Un client qui tape `/login` tombe donc sur la doc technique, pas sur l'app. **En prod (Caddy sert le front à `/`) le comportement est correct** → artefact d'environnement dev. S'ajoute le fait que `/login`, `/reset`, `/invitation`, `/onboarding`, `/logout`, `/cgv`, `/flash` ne sont **pas dans le proxy Vite** (`vite.config`) → 404 sur `:5998`.
+- **Capture** : captures/07-compte/003_login_api.png
+- **Cause probable** : `src/labuse/api/app.py:580` `RedirectResponse("/")` + `/` monté sur Swagger côté API en dev ; `frontend/vite.config.ts` `apiPaths` n'inclut pas les routes du parcours compte. Non bloquant : purement dev (prod même-origine).
+
+### A-07-2 — Mot de passe oublié : message « un lien vient d'être envoyé » alors que le mail est en dry-run
+- **Gravité** : gênant (message trompeur dans cet environnement)
+- **Où** : `/reset` → POST `/reset-demande` (page de confirmation). `src/labuse/api/onboarding.py:571-607`.
+- **Reproduire** :
+  1. Ouvrir `http://127.0.0.1:8798/reset`.
+  2. Saisir `integral-7@labuse.test` → « Recevoir le lien ».
+  3. Lire la confirmation.
+- **Observé** : la page affiche **« Vérifiez votre boîte mail — un lien valable 1 heure vient d'être envoyé »** et « un e-mail de réinitialisation vient de lui être envoyé ». Or l'envoi est en **dry-run** (`.eml` écrit, 0 réseau — ligne mail_queue 48 : `etat=a_rejouer`, erreur « dry-run (local, LABUSE_MAIL_REEL absent) — aucun appel Brevo »). Le message affirme un envoi qui n'a pas eu lieu. **Cause racine** : le choix du message dépend de `brevo.etat_configuration().api` (présence de `BREVO_API_KEY`), **pas** de l'autorisation d'envoi réel (`envoi_reel_autorise` = `mail_reel`). Comme `.env` **contient** `BREVO_API_KEY` mais **pas** `LABUSE_MAIL_REEL`, la branche « Brevo configuré → on annonce l'envoi » est prise alors que rien ne part. Il existe bien une branche honnête « L'envoi automatique par e-mail n'est pas actif sur cet environnement », mais elle n'est atteinte que si `BREVO_API_KEY` est absente. En prod (Brevo + mail_reel) le message serait exact ; mais dès que la clé Brevo est présente sans envoi réel (dev/staging), le message ment.
+- **Capture** : captures/07-compte/005_reset_demande_confirmee.png (+ 006 e-mail inconnu : message identique = anti-énumération OK)
+- **Cause probable** : `src/labuse/api/onboarding.py:593-606` — condition `if etat_configuration().get("api")` devrait aussi tester l'autorisation d'envoi réel (ex. `mail.envoi_reel_autorise(settings)`), pas seulement la présence de la clé API.
+
+### A-07-3 — Stripe Checkout : saisie carte non automatisable (accordéon/iframe) + nom marchand « LASTONE »
+- **Gravité** : cosmétique
+- **Où** : `checkout.stripe.com` (mode test) après « Payer 349 € ».
+- **Reproduire** :
+  1. Parcours invitation payante → MDP + CGV → bascule → « Payer 349 € ».
+  2. Observer le checkout.
+- **Observé** : (1) **Fonctionnel confirmé** — `cs_test_…`, bandeau **« Environnement de test »**, produit « S'abonner à LABUSE Intégral · 349,00 €/mois », e-mail pré-rempli. (2) Le bloc carte est un **accordéon** (radio « Carte » replié) et les champs numéro/exp/CVC vivent dans des iframes Stripe cross-origin montées seulement après sélection du radio → **la saisie de la carte test 4242 n'a pas pu être pilotée par Playwright** (limitation Stripe hosted checkout, pas un bug LABUSE). La complétion du paiement test et l'activation seraient à vérifier manuellement ou par simulation de webhook. (3) **Détail cosmétique** : le nom marchand affiché est **« LASTONE »** (nom du compte Stripe de test) au lieu de « LABUSE » — en-tête + « Payez en toute sécurité sur LASTONE ». À corriger côté réglages du compte Stripe prod avant lancement.
+- **Capture** : captures/07-compte/024_paiement_4_checkout.png (bandeau TEST + 349€), 071_paiement_carte_accordeon_ouvert.png (accordéon carte replié, nom « LASTONE »)
+- **Cause probable** : nom marchand = réglage du compte Stripe (Settings → Public business name), pas le code. Saisie carte = sandbox iframe Stripe (hors périmètre LABUSE).
+
+### A-07-4 — Pas d'inscription self-service ; accès client aux pages compte impossible sur le front dev
+- **Gravité** : gênant (dev) / informatif
+- **Où** : parcours d'entrée client (invitation) vs front `:5998`.
+- **Reproduire** :
+  1. Depuis l'app `http://localhost:5998/socle/`, chercher un lien « S'inscrire / Créer un compte ».
+  2. Tenter `http://localhost:5998/socle/../reset` ou `/login`.
+- **Observé** : il n'existe **aucune porte d'inscription libre** dans l'app (par conception : entrée sur invitation signée émise par l'admin — modèle B2B assumé). De plus, sur le front dev `:5998`, les pages du parcours (`/login`, `/reset`, `/invitation`, `/cgv`, `/flash`, `/logout`) renvoient **404** (non proxiées). Le menu compte lie bien `/logout` et `/reset` (`Header.tsx:709,724`) mais ces hrefs, cliqués depuis `:5998`, tombent sur 404 en dev (ils marchent en prod même-origine). En local l'auth est désactivée (`/moi` → `mode:"local"`), donc l'action « Changer mon mot de passe » est masquée (`Header.tsx:706` `mode==='compte'`) — attendu.
+- **Capture** : captures/07-compte/001_app_menu_compte.png (menu « Session locale (dev) », pas d'action MDP)
+- **Cause probable** : `frontend/vite.config.ts` `apiPaths` n'inclut pas les routes serveur du parcours compte → elles ne sont pas proxiées vers `:8798` en dev. Décision produit (invitation-only) = non-anomalie ; le trou de proxy dev = à documenter (sinon un testeur croit les pages cassées).
+
+### A-07-5 — Résiliation : aucun mail de résiliation émis automatiquement sur la transition d'état
+- **Gravité** : gênant
+- **Où** : `suspendre_compte` (`src/labuse/comptes.py:712`) appelé par webhook `customer.subscription.deleted` (`src/labuse/facturation.py:493`) ou endpoint admin `/suspendre`.
+- **Reproduire** :
+  1. Lire `suspendre_compte` : UPDATE statut='suspendu' + DELETE sessions + audit. **Aucun `envoyer_mail`.**
+  2. Lire le webhook `customer.subscription.deleted` → appelle `suspendre_compte` sans mail.
+  3. Comparer avec `invoice.payment_failed` qui, lui, enfile `relance_carte` (template 9).
+- **Observé** : à la résiliation (abonnement Stripe supprimé) **aucun e-mail `resiliation` (template 16) n'est envoyé au client** ; le compte passe silencieusement `suspendu`. Le template `resiliation` existe mais n'est enfilé **nulle part en code** (grep `key="resiliation"` = 0 ; seul `flash_pret` est auto-enfilé) — il n'est envoyable qu'à la main via l'admin (`POST /admin/licences/{id}/mail key=resiliation`, vérifié : produit un `.eml` « Votre abonnement LABUSE prend fin le … »). Même constat pour `suspension`/`retablissement`/`onboarding1`/`essai` : tous **manuels**, aucun déclenché par la transition. Le client peut donc être résilié/suspendu sans confirmation écrite automatique.
+- **Capture** : captures/07-compte/ (mails `resiliation`/`suspension` produits manuellement : fichiers `.eml` 20261016-150657-404412 / -419195, lisibles)
+- **Cause probable** : `src/labuse/comptes.py:712-717` `suspendre_compte` et `facturation.py:493-495` (`customer.subscription.deleted`) n'enfilent pas le mail du cycle de vie. À câbler (best-effort, comme `relance_carte`) si une confirmation automatique est attendue — ou assumé « envoi manuel admin » et documenté.

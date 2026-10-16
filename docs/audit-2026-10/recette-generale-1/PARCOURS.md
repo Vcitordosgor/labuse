@@ -397,3 +397,48 @@ gênantes (2 déclins sur des questions que LABUSE pourrait traiter — A-06-2 ;
 trompeur sur IDU inexistant — A-06-1) et 1 esquive mineure (PPR → zone PLU, A-06-3). **0 bloquant,
 0 hallucination, 0 erreur console/réseau, doctrine HORS-SUJET et PIÈGE tenues.** Captures dans
 `captures/06-copilote/`.
+
+## Famille 7 — Compte client
+
+> **Réalité de l'environnement (à lire avant le tableau).** Le parcours compte de LABUSE n'a
+> **pas d'inscription self-service libre** : un client entre par un **lien d'invitation signé**
+> émis par l'admin (`/admin/licences/creer` ou `/creer-essai`), puis choisit son mot de passe,
+> accepte les CGV, et — pour un abonnement payant — passe par **Stripe Checkout**. Les pages de
+> ce parcours (`/invitation`, `/onboarding/paiement`, `/onboarding/retour`, `/reset`,
+> `/reset-demande`, `/cgv`, `/flash`, `/login`, `/logout`) sont **rendues côté serveur par
+> l'API** (`src/labuse/api/onboarding.py` + `app.py`). En DEV, le proxy Vite du front (`:5998`)
+> **ne couvre pas** ces routes (`vite.config` : ni `/login`, ni `/reset`, ni `/invitation`,
+> ni `/onboarding`, ni `/logout`, ni `/cgv`, ni `/flash`) → elles répondent **404 sur `:5998`**
+> et ne sont servies que sur l'origine API `:8798`. En prod (même origine, Caddy) c'est
+> transparent. **J'ai donc testé ces pages sur l'origine API**, et l'AccountMenu + Signaler
+> **dans l'app** (`:5998`). Auth désactivée en local → `/moi` renvoie `mode:"local"`.
+>
+> **Sûreté respectée** : (a) Stripe en clé **`sk_test_`** — tous les checkouts créés sont
+> `cs_test_…`, bandeau « Environnement de test » vérifié AVANT toute saisie ; (b) **aucun mail
+> réel** : `LABUSE_MAIL_REEL` absent → chaque mail est écrit en `.eml` dry-run, jamais envoyé ;
+> (c) `LABUSE_MAIL_REEL` jamais posé, `.env` jamais commité, aucune modif code/base.
+
+| # | Écran / action | Où (origine) | Verdict |
+|---|----------------|--------------|---------|
+| 0 | App — menu compte (avatar → Mon compte : « Session locale (dev) », Plan Intégral, Contact, Se déconnecter) | `:5998` app | **OK** |
+| 0b | App — bouton « Signaler » (ouvre le formulaire bug/idée/question) | `:5998` app | **OK** |
+| 1 | **Inscription** — pas de self-service public ; parcours = **invitation signée** (admin crée le compte/essai → lien). Page `/invitation?token=…` « Créer votre accès » (Intégral 349 €/mois) : mot de passe + confirmation + CGV | `:8798` | **OK** (modèle invitation, pas d'anomalie — voir note A-07-4 sur l'accès dev) |
+| 1b | Mail de bienvenue (`onboarding1` « Mail de bienvenue ») — produit en `.eml` dry-run via l'endroit prévu | `.eml` | **OK** |
+| 2 | **Connexion** — `/login` : auth désactivée → 302 vers `/` | `:8798` | **ANOMALIE** (voir A-07-1 : `/` sur l'API sert Swagger `/docs`, artefact dev) |
+| 2b | Déconnexion — `/logout` → 302 `/login` (lien présent dans le menu compte) | `:8798` | **OK** |
+| 3 | **Mot de passe oublié** — `/reset` : formulaire e-mail présent ; soumission e-mail valide → confirmation ; e-mail **inconnu** → message identique (anti-énumération) | `:8798` | **ANOMALIE** (voir A-07-2 : message « vient d'être envoyé » alors qu'en local le mail est dry-run) |
+| 3b | Mail de reset (`mdp_oublie`, template 14) produit en `.eml` dry-run, avec `LIEN_RESET` valide | `.eml` | **OK** |
+| 3c | Page `/reset?token=…` « Nouveau mot de passe » ; mail de confirmation `mdp_modifie` (template 15) | `:8798` / `.eml` | **OK** |
+| 4 | **Essai (trial)** — créé via `/admin/licences/creer-essai` (48 h) ; le client activé arrive sur « Votre accès d'essai est ouvert » (pas de Checkout) ; mail `essai` « Essai 48 h » en `.eml` dry-run | `:8798` / `.eml` | **OK** |
+| 5 | **Paiement Stripe TEST** — invitation payante → MDP+CGV → bascule `/onboarding/paiement` (349 €, écran de confiance) → clic « Payer 349 € » → **checkout.stripe.com `cs_test_…`**, bandeau **« Environnement de test » VÉRIFIÉ**, produit « LABUSE Intégral 349,00 €/mois », e-mail pré-rempli | `:8798` → Stripe | **OK** (checkout atteint + TEST confirmé ; voir note A-07-3 saisie carte non automatisable + nom marchand « LASTONE ») |
+| 5b | Retour post-paiement `/onboarding/retour?ok=1` « Bienvenue… abonnement Intégral actif » ; `ok=0` « Paiement interrompu — rien n'a été débité ». Activation réelle = webhook `checkout.session.completed` → statut `actif` | `:8798` | **OK** |
+| 5c | **Flash** 79 € one-shot — `/flash?idu=…` + CGV → checkout.stripe.com `cs_test_…`, bandeau TEST, « LABUSE Flash 79,00 € » | `:8798` → Stripe | **OK** |
+| 6 | **Résiliation** — **pas de bouton self-service** côté client ; la bascule dit « résiliable à tout moment, un e-mail à LABUSE suffit ». Résiliation effective = Stripe (`customer.subscription.deleted` → `suspendre_compte`) ou admin `/suspendre`. Mail `resiliation` (template 16) produit en `.eml` dry-run | `:8798` / `.eml` | **OK** (voir A-07-5 : résiliation non auto-mailée sur transition d'état ; mail manuel admin) |
+| 7 | **Mails produits** — 9 `.eml` dry-run inspectés (bienvenue, essai, souscription, résiliation, suspension, rétablissement, mdp_oublie, mdp_modifie) : expéditeur `LABUSE <contact@labuse.immo>`, objets cohérents, bandeau « ce mail N'EST PAS parti », params (`LIEN_RESET`, dates) valides. **Aucun envoi réel.** | `.eml` | **OK** |
+
+**Bilan Famille 7** : **18 points testés, 15 OK, 3 anomalies** (0 bloquant · 3 gênant/cosmétique).
+Les deux parcours critiques (paiement Stripe TEST, mot de passe oublié) **fonctionnent** ;
+les 3 anomalies sont des **messages/artefacts dev** (login→Swagger sur l'API, message reset
+trop affirmatif en dry-run, saisie carte Stripe non automatisable + nom marchand de test).
+**Sûreté : aucun paiement réel (tous `cs_test_`, bandeau TEST vérifié), aucun mail réel
+(9 `.eml` dry-run, `LABUSE_MAIL_REEL` jamais posé).** Captures dans `captures/07-compte/`.
