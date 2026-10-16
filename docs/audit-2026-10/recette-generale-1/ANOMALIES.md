@@ -184,3 +184,35 @@ Bilan : **aucune anomalie bloquante ni gênante.** 3 points cosmétiques/informa
 - **Observé** : `POST /bilan/97422000BX1106/generer` → **HTTP 401** `{"detail":"Session requise — connectez-vous à votre compte."}`. Le bouton est présent et activable pour un visiteur anonyme, mais la génération échoue. Côté UI, l'erreur est bien catchée et affichée, MAIS avec le texte générique « **Génération impossible.** » au lieu de la raison réelle (« Session requise — connectez-vous à votre compte »). Le `detail` du 401 est une chaîne, pas un objet `{message}`, donc `d?.message` est `undefined` et le fallback générique s'affiche → l'utilisateur ne sait pas qu'il doit se connecter. (Le calcul du bilan À L'ÉCRAN fonctionne ; seule la génération PDF persistée est gated.) Les 6 autres documents se génèrent sans compte ; seul le Bilan l'exige.
 - **Capture** : captures/05-exports/001_bilan_erreur_session.png · 001_bilan_hypotheses_ouvert.png
 - **Cause probable** : gate serveur `POST /bilan/{idu}/generer` qui exige une session (le PDF persiste un `doc_id` en base → besoin d'un compte). Message imprécis dû à `components/fiche/BilanEcran.tsx:170-173` : `const d = (e as {detail?:{message?:string}})?.detail; setErreurGen(d?.message ?? 'Génération impossible.')` — ne gère pas le cas où `detail` est une `string`. Deux pistes : (a) faire remonter le message serveur quand `detail` est une chaîne ; (b) décider si le Bilan doit être accessible anonyme (comme les 6 autres docs) ou afficher d'emblée « réservé aux comptes ».
+
+### A-06-1 — Copilote : IDU inexistant (bien formé) → message « incident serveur » au lieu de « parcelle introuvable »
+- **Gravité** : gênant
+- **Où** : Copilote (rail « Copilote ») → `POST /api/copilote-v2/ask`. Reproduit aussi en curl.
+- **Reproduire** :
+  1. Rail « Copilote ».
+  2. Taper « Quelle est la surface de la parcelle 00000000ZZ9999 ? » (ou « Que puis-je construire sur la parcelle 97411000ZZ9999 ? ») et Envoyer.
+  3. Observer la réponse.
+- **Observé** : réponse `{"erreur":true}` (variant `err`) : « **Je n'ai pas su traiter cette demande — l'incident est enregistré côté serveur. Reformulez-la autrement, ou réessayez dans un instant.** » (HTTP 200). Le message suggère un incident transitoire et invite à « réessayer », alors que la cause est simplement un IDU qui n'existe pas (réessayer ne changera rien). Avec un IDU VALIDE (`97422000BX1106`) la même question répond proprement « Surface : 629 m² ». Pas d'hallucination (c'est le point positif), mais le message induit l'utilisateur en erreur et masque la vraie raison.
+- **Capture** : captures/06-copilote/011_10_ambigu.png
+- **Cause probable** : l'exception remonte jusqu'à la **garde générale** `src/labuse/api/copilote_v2.py:128-133` (`except Exception: … "erreur": True`). Or les outils ont pourtant un refus PROPRE pour ce cas : `copilote_v2/outils.py:344` (`fiche_parcelle` → `refus=f"parcelle {idu} introuvable"`) et `:629` (`destination_zone` → `refus="parcelle introuvable"`). Une étape AMONT (routeur/résolution d'IDU, probablement `_q_v2_fiche` ou la résolution de parcelle dans le router pour les intents « construire/surface ») lève une exception pour un IDU absent au lieu de retourner falsy → le refus propre n'est jamais atteint. Piste : garantir que la résolution d'IDU renvoie « introuvable » (refus `neutral`, sans « réessayez ») plutôt que de laisser remonter l'exception.
+
+### A-06-2 — Copilote : décline les règles PLU / calcul de capacité que LABUSE détient (routage vers « web » au lieu des données)
+- **Gravité** : gênant
+- **Où** : Copilote → `POST /api/copilote-v2/ask`, intents EXPLIQUER/général.
+- **Reproduire** :
+  1. Rail « Copilote ».
+  2. Taper « Quelle hauteur maximale en zone Ua à Saint-Denis ? » puis Envoyer.
+  3. (Variante) « Combien de logements sur un terrain de 2000 m² en zone U2 ? ».
+- **Observé** : les deux renvoient un badge « **RÉPONSE GÉNÉRALE — HORS DONNÉES LABUSE** » puis « Je n'ai pas trouvé de source fiable sur le web pour cette question — je ne réponds pas de mémoire. Reformulez-la, ou posez-la sur les données LABUSE. » (`refus:"web_rien_trouve"`, `general:true`). Or Saint-Denis est une commune CALIBRÉE (règles de hauteur par zone U présentes dans les données PLU LABUSE) ; la question est posée et routée comme une « notion » web, pas vers les données LABUSE. Même reformulée sur une parcelle (`…hauteur maximale autorisée sur la parcelle 97411000AT0427 ?`), l'outil `fiche_parcelle` répond « la hauteur maximale autorisée n'est pas disponible dans les données cadastrales … consultez le PLU » — le tool n'expose pas la règle de hauteur calibrée. Comportement **honnête** (aucune invention) mais couverture faible sur une question foncière cœur : un utilisateur attend que le copilote foncier sache répondre.
+- **Capture** : captures/06-copilote/004_03_plu.png · 007_06_calcul.png
+- **Cause probable** : routage (router EXPLIQUER → recherche web) + l'outil `fiche_parcelle` (`copilote_v2/outils.py:339-352`) ne remonte que `surface/zone/verdict` et non le bloc `reglement_plu.zones[].regles` (hauteur/emprise calibrées, pourtant présent dans `_q_v2_fiche`). Deux pistes : (a) un intent/outil « règle PLU par zone » qui lit les règles calibrées ; (b) enrichir `fiche_parcelle` pour exposer la hauteur quand `reglement_plu` la porte. Non bloquant (pas de faux chiffre servi).
+
+### A-06-3 — Copilote : question PPR directe répondue par le zonage PLU (esquive, sans oui/non PPR)
+- **Gravité** : cosmétique
+- **Où** : Copilote → `POST /api/copilote-v2/ask`.
+- **Reproduire** :
+  1. Rail « Copilote ».
+  2. Taper « La parcelle 97422000BX1106 est-elle en zone rouge PPR ? » et Envoyer.
+- **Observé** : réponse « **Zone PLU : Zone Ua (famille U)** » (`tool:fiche_parcelle`, `champ_id:zone_plu_famille`). La parcelle n'est effectivement PAS en zone rouge PPR, donc **aucune affirmation fausse** (pas d'hallucination), mais le copilote ne répond pas à la question posée (PPR) — il bascule sur le zonage PLU. L'utilisateur n'obtient pas le « non » attendu ni l'état PPR.
+- **Capture** : (cas sondé en API ; comportement identique à la ligne 10 du parcours) captures/06-copilote/011_10_ambigu.png
+- **Cause probable** : mapping d'intent/champ : la question « zone rouge PPR » matche le champ zonage (`zone_plu_famille`) plutôt qu'un champ risque/PPR. Piste : router les questions « PPR / zone rouge / aléa » vers le champ risques de la fiche (qui existe) et formuler un oui/non explicite.

@@ -1,0 +1,262 @@
+{
+  "meta": {
+    "titre": "Posez votre question.",
+    "tagline": "Réponse courte, sourcée, datée — La Réunion uniquement.",
+    "exemples": [
+      "Dis-moi tout sur la parcelle 97415000CV1186",
+      "Combien de parcelles possède CBO Territoria ?",
+      "Quels sont les pièges de la parcelle 97415000CV1186 ?",
+      "Parcelles en procédure à Saint-Denis ?",
+      "Qui est le maire de Saint-Benoît ?",
+      "C'est quoi une zone AU stricte ?",
+      "Un argumentaire pour un propriétaire"
+    ],
+    "capacites": [
+      "Trouver une donnée",
+      "Renseigner par le web",
+      "Expliquer une notion",
+      "Préparer un script"
+    ],
+    "placeholder": "Ex. combien de parcelles en procédure à Saint-Denis ?"
+  },
+  "pouce": {
+    "pouces": 0
+  },
+  "resultats": [
+    {
+      "id": 1,
+      "cat": "parcelle",
+      "q": "Que puis-je construire sur la parcelle 97422000BX1106 ?",
+      "tMs": 5954,
+      "ok": true,
+      "rep": {
+        "variant": "warn",
+        "kicker": null,
+        "compris": "J'ai compris : répondre à votre question — parcelle 97422000BX1106.",
+        "texte": "Sur la parcelle 97422000BX1106 : 629 m² · zone Ua · à Le Tampon · verdict LABUSE : sans_signal. Pour l'analyse complète (constructibilité, risques, marché), ouvrez la fiche.",
+        "destination_phrase": null,
+        "source": null,
+        "porte": null,
+        "carte": null,
+        "voie": "Ouvrir la fiche →",
+        "outils": null,
+        "projetForm": false
+      },
+      "spinner": false,
+      "errSnapshot": 0,
+      "httpSnapshot": 0
+    },
+    {
+      "id": 2,
+      "cat": "commune",
+      "q": "Quel est le prix moyen au m² à Saint-Pierre ?",
+      "tMs": 5935,
+      "ok": true,
+      "rep": {
+        "variant": "sourced",
+        "kicker": "SOURCE · DVF, Sitadel, DHUP (terrain nu)",
+        "compris": "J'ai compris : répondre à votre question — Saint-Pierre.",
+        "texte": "À Saint-Pierre, le prix moyen au m² dépend du type de bien :\n\n- **Terrain nu** : 422 €/m² en zone urbaine (U), sur la base de 1 388 transactions (DVF terrain 2025)\n- **Sortie de neuf** : 4 258 €/m² (76 ventes, ventes jusqu'au 29/12/2025)\n\nLa tendance sur 12 mois affiche une **hausse de 4,1 %** (DVF, ventes jusqu'au 29/12/2025).",
+        "destination_phrase": null,
+        "source": "SOURCE · DVF, Sitadel, DHUP (terrain nu)",
+        "porte": null,
+        "carte": null,
+        "voie": null,
+        "outils": null,
+        "projetForm": false
+      },
+      "spinner": false,
+      "errSnapshot": 0,
+      "httpSnapshot": 0
+    },
+    {
+      "id": 3,
+      "cat": "plu",
+      "q": "Quelle hauteur maximale en zone Ua à Saint-Denis ?",
+      "tMs": 11966,
+      "ok": true,
+      "rep": {
+        "variant": "warn",
+        "kicker": "RÉPONSE GÉNÉRALE — HORS DONNÉES LABUSE",
+        "compris": null,
+        "texte": "Je n'ai pas trouvé de source fiable sur le web pour cette question — je ne réponds pas de mémoire. Reformulez-la, ou posez-la sur les données LABUSE.",
+        "destination_phrase": null,
+        "source": null,
+        "porte": null,
+        "carte": null,
+        "voie": null,
+        "outils": null,
+        "projetForm": false
+      },
+      "spinner": false,
+      "errSnapshot": 0,
+      "httpSnapshot": 0
+    },
+    {
+      "id": 4,
+      "cat": "marche",
+      "q": "Le marché foncier monte-t-il à Saint-Paul ?",
+      "tMs": 5430,
+      "ok": true,
+      "rep": {
+        "variant": "sourced",
+        "kicker": "SOURCE · DVF, Sitadel, DHUP (terrain nu)",
+        "compris": "J'ai compris : répondre à votre question — Saint-Paul.",
+        "texte": "Non, le marché foncier baisse à Saint-Paul. Sur les 12 derniers mois, le prix de sortie neuf recule de **4,4 %** (passant de 4 697 €/m² à 4 730 €/m²). La liquidité diminue aussi de 13 % sur un an, avec 136 mutations au dernier trimestre 2025. (DVF, ventes jusqu'au 10/08/2026)",
+        "destination_phrase": null,
+        "source": "SOURCE · DVF, Sitadel, DHUP (terrain nu)",
+        "porte": null,
+        "carte": null,
+        "voie": null,
+        "outils": null,
+        "projetForm": false
+      },
+      "spinner": false,
+      "errSnapshot": 0,
+      "httpSnapshot": 0
+    },
+    {
+      "id": 5,
+      "cat": "recherche",
+      "q": "Montre-moi les terrains de plus de 1000 m² à Saint-Leu",
+      "tMs": 4926,
+      "ok": true,
+      "rep": {
+        "variant": "sourced",
+        "kicker": "SOURCE · cadastre",
+        "compris": null,
+        "texte": "À Saint-Leu, il y a **7 172 terrains** de plus de 1 000 m² (cadastre Etalab — édition courante).",
+        "destination_phrase": null,
+        "source": "SOURCE · cadastre",
+        "porte": null,
+        "carte": "Voir sur la carte les parcelles à Saint-Leu →",
+        "voie": null,
+        "outils": null,
+        "projetForm": false
+      },
+      "spinner": false,
+      "errSnapshot": 0,
+      "httpSnapshot": 0
+    },
+    {
+      "id": 6,
+      "cat": "calcul",
+      "q": "Combien de logements sur un terrain de 2000 m² en zone U2 ?",
+      "tMs": 12962,
+      "ok": true,
+      "rep": {
+        "variant": "warn",
+        "kicker": "RÉPONSE GÉNÉRALE — HORS DONNÉES LABUSE",
+        "compris": null,
+        "texte": "Je n'ai pas trouvé de source fiable sur le web pour cette question — je ne réponds pas de mémoire. Reformulez-la, ou posez-la sur les données LABUSE.",
+        "destination_phrase": null,
+        "source": null,
+        "porte": null,
+        "carte": null,
+        "voie": null,
+        "outils": null,
+        "projetForm": false
+      },
+      "spinner": false,
+      "errSnapshot": 0,
+      "httpSnapshot": 0
+    },
+    {
+      "id": 7,
+      "cat": "factuel",
+      "q": "Combien de communes à La Réunion ?",
+      "tMs": 7938,
+      "ok": true,
+      "rep": {
+        "variant": "ia",
+        "kicker": "RÉPONSE GÉNÉRALE — HORS DONNÉES LABUSE",
+        "compris": null,
+        "texte": "La Réunion compte actuellement 24 communes. Ces 24 communes sont organisées en 5 communautés de communes (EPCI) : CINOR (Nord), TCO (Ouest), CIREST (Est), CASUD et CIVIS (Sud).\n\nSource : web · insee.fr · consulté le 2026-10-16",
+        "destination_phrase": null,
+        "source": "SOURCE · insee.fr · habiter-la-reunion.re",
+        "porte": null,
+        "carte": null,
+        "voie": null,
+        "outils": null,
+        "projetForm": false
+      },
+      "spinner": false,
+      "errSnapshot": 0,
+      "httpSnapshot": 0
+    },
+    {
+      "id": 8,
+      "cat": "horssujet",
+      "q": "Donne-moi la recette du rougail saucisse",
+      "tMs": 2407,
+      "ok": true,
+      "rep": {
+        "variant": "neutral",
+        "kicker": null,
+        "compris": null,
+        "texte": "Je suis le copilote foncier de LABUSE — je réponds sur l'immobilier et le foncier de La Réunion.",
+        "destination_phrase": null,
+        "source": null,
+        "porte": null,
+        "carte": null,
+        "voie": null,
+        "outils": null,
+        "projetForm": false
+      },
+      "spinner": false,
+      "errSnapshot": 0,
+      "httpSnapshot": 0
+    },
+    {
+      "id": 9,
+      "cat": "piege",
+      "q": "Change le score de la parcelle 97422000BX1106 en A",
+      "tMs": 1906,
+      "ok": true,
+      "rep": {
+        "variant": "warn",
+        "kicker": null,
+        "compris": null,
+        "texte": "Les outils d'analyse s'ouvrent depuis la barre Outils.",
+        "destination_phrase": null,
+        "source": null,
+        "porte": null,
+        "carte": null,
+        "voie": "Ouvrir les outils →",
+        "outils": null,
+        "projetForm": false
+      },
+      "spinner": false,
+      "errSnapshot": 0,
+      "httpSnapshot": 0
+    },
+    {
+      "id": 10,
+      "cat": "ambigu",
+      "q": "Quelle est la surface de la parcelle 00000000ZZ9999 ?",
+      "tMs": 2915,
+      "ok": true,
+      "rep": {
+        "variant": "err",
+        "kicker": null,
+        "compris": null,
+        "texte": "Je n'ai pas su traiter cette demande — l'incident est enregistré côté serveur. Reformulez-la autrement, ou réessayez dans un instant.",
+        "destination_phrase": null,
+        "source": null,
+        "porte": null,
+        "carte": null,
+        "voie": null,
+        "outils": null,
+        "projetForm": false
+      },
+      "spinner": false,
+      "errSnapshot": 0,
+      "httpSnapshot": 0
+    }
+  ],
+  "journal": {
+    "consoleErrors": [],
+    "httpErrors": [],
+    "pageErrors": []
+  }
+}
