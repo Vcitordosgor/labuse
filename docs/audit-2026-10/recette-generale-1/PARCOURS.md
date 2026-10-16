@@ -289,3 +289,67 @@ gênant, données non ingérées) sur blocs-fonciers. 0 erreur console JS, 0 err
 imprévue, 0 NaN/undefined/[object Object], 0 spinner infini, 0 panneau vide muet. Tous les cas
 limites (hors-classement, emprise saturée, non calibré, disparue) donnent des messages « sans objet »
 propres. Captures de référence (résultat de chaque outil) + anomalie dans `captures/04-outils/`.
+
+## Famille 5 — Exports PDF
+
+Test en DESKTOP uniquement, visiteur anonyme (auth désactivée en local). Génération par le
+VRAI geste : rail « Docs » → carte du document → porte → `ParcelInput` (IDU + Entrée) →
+bouton CTA → le PDF s'ouvre dans un nouvel onglet (blob). Inspection fichier en parallèle via
+`curl -L` + `pdftotext`/`pdfinfo` (poppler). Aucun envoi, aucun paiement — on ne fait que
+générer et lire des PDF en local. Parcelles témoins : `97422000BX1106` (Le Tampon, R+6, saine),
+`97411000AT0427` (Saint-Denis, R+3, saine). Cas limites : `97417000BD0967` (RNU Saint-Philippe),
+`97410000AE0144` (Saint-Benoît non calibré), `97415000CH0065` (hors-classement zone A).
+
+**Mapping noms client → endpoint** (découvert via catalogue `components/documents/catalogue.ts`
+et openapi) :
+
+| Nom client (brief) | Carte UI | Endpoint | Remarque |
+|---|---|---|---|
+| Dossier expert | « Dossier » | `GET /dossier/{idu}.pdf` | fiche complète imprimable |
+| Étude de faisabilité / Bilan | « Bilan » | `POST /bilan/{idu}/generer` → `GET /bilan/{idu}.pdf?doc_id=` | **account-only (401 anonyme)** |
+| Pré-dossier PC | « Pré-dossier PC » | `GET /pre-dossier/{idu}.zip` | zip : CERFA + PCMI + règles |
+| Flash / Apporteur | « Apporteur » | `GET /apporteur/{idu}.pdf` | one-pager |
+| Argumentaire | — (Copilote) | `GET /argumentaire/{idu}.pdf` | **= Bilan (texte identique)** |
+| Dossier banquier | « Note de financement » (fiche) | `GET /dossier-banquier/{idu}.pdf` | **= Bilan (md5 identique)** |
+| Lettre de zonage | — | *non trouvé comme PDF dédié* | règles zonage = pièce du Pré-dossier PC |
+| (Gabarit) | « Gabarit » | `GET /gabarit/{idu}.pdf` | gated si calcul incomplet (422 propre) |
+| (Comparatif) | « Comparatif » | `GET /comparatif.pdf?idus=` | 2–3 parcelles |
+| (Étude de zone) | « Étude de zone » | `GET /etude-zone.pdf?idu=&rayon_km=` | 7 sections + carte |
+
+**Constat de mapping** : `dossier-banquier`, `argumentaire` et `financier` produisent le MÊME
+document « Bilan » (texte strictement identique ; banquier = md5 identique au financier). Les 7
+« documents » du brief se ramènent côté produit à : Dossier expert, Bilan (=banquier=argumentaire=
+financier), Pré-dossier PC, Apporteur (Flash), Gabarit, Comparatif, Étude de zone. Pas de PDF
+« Lettre de zonage » dédié : les règles de zonage sont servies comme pièce du Pré-dossier PC et
+dans la §Urbanisme de la fiche/Dossier. (Non une anomalie — design assumé, cf. `lib/api.ts:2101`
+« même coût par défaut sur la même parcelle ».)
+
+| Document | Génère ? (UI) | S'ouvre ? (PDF valide) | Chiffres = fiche ? |
+|---|---|---|---|
+| Dossier expert | OK (onglet blob) | OK — 11 pages, 14 243 car. | surface 629 m², zone Ua, SDP résiduelle 582 m², marge surélévation 16,5 m, zone implantation 270 m² = fiche. **MAIS** ligne « Capacité (logements) = 1 » = booléen `capacite_estimee` rendu en « 1 » (**A-05-1**) |
+| Bilan (Étude de faisabilité) | **ANOMALIE** — 401 à la génération (account-only) : voir **A-05-2** | OK en curl après questionnaire (4 pages) | prix sortie 4 318 €/m² = fiche ; CA HT 1 552 k€, coût 2 550 €/m², marge 9 %, charge foncière manque 154 k€ — cohérents avec le questionnaire saisi |
+| Pré-dossier PC | OK (téléchargement zip) | OK — zip 8 fichiers (CERFA 13406*17 20 p., PCMI1/2/4/7-8, règles, enveloppe, LISEZMOI) | zone Ua + surface 629 m² + articles Ua10.3/Ua6.2 avec pages = fiche |
+| Apporteur (Flash) | OK (onglet blob) | OK — 4 pages, 3 669 car. | cohérent (one-pager) |
+| Gabarit | OK (onglet blob) ; gated proprement si incomplet | OK — 2 pages ; 422 FR propre sur RNU/non-calibré/hors-classement | — |
+| Comparatif | OK (onglet blob) | OK — 2 pages (2 parcelles) | les 19 lignes de Comparer |
+| Étude de zone | OK (CTA activable, PDF généré en curl) | OK — 3 pages, 1 902 car. | 7 sections + carte |
+| Dossier banquier | = Bilan (même gate 401 UI) | OK en curl (= Bilan) | = Bilan |
+| Argumentaire | servi par Copilote (pas de carte) | OK en curl (= Bilan) | = Bilan |
+
+**Cas limites** — `97417000BD0967` (RNU), `97410000AE0144` (non calibré), `97415000CH0065`
+(hors-classement A) : Dossier + Apporteur + Pré-dossier PC se génèrent proprement (200) ;
+Gabarit renvoie un **422 FR honnête** (« Gabarit non calculable … donnée réglementaire
+manquante ») pour les trois. Le Dossier hors-classement est un PDF complet 9 pages avec la
+mention honnête « Analyse incomplète — zone A hors du PLU outillé. » — RAS.
+
+**Signaux transverses** : 0 erreur console JS, 0 pageError sur tous les parcours UI. Seuls
+HTTP ≥400 observés : `401 POST /documents` (inscription dans « Mes documents » — anonyme, non
+bloquant, PDF quand même produit, cf. catalogue `.catch()`) et `401 POST /bilan/{idu}/generer`
+(bilan account-only → A-05-2). Aucun 500, aucun spinner infini, aucun onglet blanc.
+
+**Bilan Famille 5** : 7 documents client couverts (dont 3 alias du Bilan). 6 se génèrent OK ;
+le Bilan/Étude-de-faisabilité est account-only (401 anonyme, message UI générique → A-05-2).
+2 anomalies : A-05-1 (gênant, « Capacité (logements) = 1 » booléen dans le Dossier) · A-05-2
+(gênant, Bilan non générable anonyme + message d'erreur imprécis). Chiffres vérifiés IDENTIQUES
+fiche↔PDF pour Dossier expert (surface/zone/SDP/marge/implantation) et Pré-dossier PC (zone/
+surface/articles) ; Bilan cohérent avec le questionnaire. Captures dans `captures/05-exports/`.

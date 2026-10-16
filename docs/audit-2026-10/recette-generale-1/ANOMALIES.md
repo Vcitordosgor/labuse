@@ -162,3 +162,25 @@ Bilan : **aucune anomalie bloquante ni gênante.** 3 points cosmétiques/informa
   non ingérée), pas un bug de code applicatif.** Le code front/back se comporte correctement
   (empty-state honnête). À corriger côté données : lancer `labuse blocs-build` avant la démo/prod,
   sinon l'outil reste muet. Les 23 autres outils ne dépendent pas de cette table.
+
+### A-05-1 — Dossier expert : « Capacité (logements) = 1 » affiche un booléen, pas un nombre de logements
+- **Gravité** : gênant
+- **Où** : Dossier expert PDF, §10 « Potentiel » (table « Ce qui est constructible ») — `GET /dossier/{idu}.pdf`. Reproduit sur `97422000BX1106` (R+6) et `97411000AT0427` (R+3).
+- **Reproduire** :
+  1. Rail « Docs » → carte « Dossier » → parcelle `97422000BX1106` → « Générer le dossier ».
+  2. Ouvrir le PDF, aller à la section 10 « Potentiel » (ligne « Capacité (logements) »).
+  3. `curl -L -o /tmp/d.pdf "http://127.0.0.1:8798/dossier/97422000BX1106.pdf" && pdftotext -layout /tmp/d.pdf - | grep "Capacité (logements)"`.
+- **Observé** : la ligne affiche « Capacité (logements) : **1** · estimé ». La valeur « 1 » n'est pas un vrai décompte de logements : c'est le drapeau booléen `potentiel_transformation.capacite_estimee = true` rendu en « 1 ». La vraie capacité de cette parcelle R+6 (module faisabilité) est ~8 à 10 logements au sol. Un promoteur lit « 1 logement » → sous-estimation grossière dans un document client. L'écran (fiche React §Potentiel) ne rend PAS ce chiffre : il traite `capacite_estimee` comme un simple badge « Estimé » → le PDF DIVERGE de la fiche sur ce point.
+- **Capture** : captures/05-exports/003_apres_Dossier.png (+ extrait texte ci-dessus).
+- **Cause probable** : `src/labuse/exports/robinet_fiche.py:454-457` — l'extracteur `_c_capacite` retourne `p.get("capacite_estimee")` (un `bool`) au lieu d'un nombre de logements ; le rendu `src/labuse/exports/blocs/potentiel.py:115-118` imprime `str(cap)` dans une ligne libellée « Capacité (logements) », ce qui transforme `True` en « 1 ». Il faudrait soit retirer la ligne, soit servir un vrai décompte (ex. fourchette logements de la faisabilité), soit la renommer en drapeau oui/non.
+
+### A-05-2 — Bilan / Étude de faisabilité : non générable en visiteur anonyme (401) et message d'erreur imprécis
+- **Gravité** : gênant
+- **Où** : carte « Bilan » → écran d'hypothèses → bouton « Générer le bilan ». Endpoint `POST /bilan/{idu}/generer`. (`components/fiche/BilanEcran.tsx:164-174`)
+- **Reproduire** :
+  1. Rail « Docs » → carte « Bilan » → parcelle `97422000BX1106` → « Générer le bilan » (ouvre l'écran d'hypothèses).
+  2. Dans l'écran d'hypothèses, cliquer « Générer le bilan ».
+  3. Observer la requête réseau et le message affiché.
+- **Observé** : `POST /bilan/97422000BX1106/generer` → **HTTP 401** `{"detail":"Session requise — connectez-vous à votre compte."}`. Le bouton est présent et activable pour un visiteur anonyme, mais la génération échoue. Côté UI, l'erreur est bien catchée et affichée, MAIS avec le texte générique « **Génération impossible.** » au lieu de la raison réelle (« Session requise — connectez-vous à votre compte »). Le `detail` du 401 est une chaîne, pas un objet `{message}`, donc `d?.message` est `undefined` et le fallback générique s'affiche → l'utilisateur ne sait pas qu'il doit se connecter. (Le calcul du bilan À L'ÉCRAN fonctionne ; seule la génération PDF persistée est gated.) Les 6 autres documents se génèrent sans compte ; seul le Bilan l'exige.
+- **Capture** : captures/05-exports/001_bilan_erreur_session.png · 001_bilan_hypotheses_ouvert.png
+- **Cause probable** : gate serveur `POST /bilan/{idu}/generer` qui exige une session (le PDF persiste un `doc_id` en base → besoin d'un compte). Message imprécis dû à `components/fiche/BilanEcran.tsx:170-173` : `const d = (e as {detail?:{message?:string}})?.detail; setErreurGen(d?.message ?? 'Génération impossible.')` — ne gère pas le cas où `detail` est une `string`. Deux pistes : (a) faire remonter le message serveur quand `detail` est une chaîne ; (b) décider si le Bilan doit être accessible anonyme (comme les 6 autres docs) ou afficher d'emblée « réservé aux comptes ».
