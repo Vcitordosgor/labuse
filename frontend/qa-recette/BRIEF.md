@@ -10,6 +10,13 @@ aucun mail réellement envoyé, aucun paiement réel (Stripe mode test uniquemen
 - Frontend : http://localhost:5998/socle/  (base path `/socle/` OBLIGATOIRE)
 - Auth désactivée en local (tu es un visiteur anonyme sauf parcours compte).
 
+## MOBILE : l'app cliente est volontairement bloquée (acquis Famille 1)
+L'app cliente affiche un écran « disponible sur ordinateur » (`EcranOrdinateur.tsx`,
+décision produit CHARGEMENT-1) sous 390px — aucun panneau/carte/fiche, même en deep-link.
+Donc **ne refais PAS le parcours mobile** pour les familles client (fiche, commune, outils,
+copilote, exports, courrier). Teste en DESKTOP uniquement. (Le barrage lui-même est propre :
+0 débordement, 0 erreur.) Admin/compte : idem desktop.
+
 ## Outil : Playwright via le Chrome du système
 macOS 13 → pas de binaire Playwright ; on pilote Google Chrome (`channel:'chrome'`).
 Un harnais partagé est fourni : `frontend/qa-recette/harness.mjs`. Écris tes scripts

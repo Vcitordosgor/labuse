@@ -93,3 +93,80 @@ forme/APE) · Réinitialiser.
 Compteur « total foncier » : la barre « Voir les N parcelles » oscille entre **433 229**
 (`/accueil/chiffres`, parc vivant) et **432 350** (`/filtre?limit=0`, base scorée q_v18) — écart
 879. Voir A-01-2 (cosmétique).
+
+## Famille 2 — Fiche parcelle
+Méthode : chaque témoin ouvert via `#idu=<IDU>` + reload (SPA : le hash seul ne remonte pas la
+fiche). Les 11 tiroirs (Identité, Terrain, Bâti · Urbanisme, Risques, Réseaux · Fiscalité,
+Marché, Quartier · Potentiel, Simulation) sont un ACCORDÉON EXCLUSIF (`RefDrawer`,
+`primitives.tsx:87`, `aria-expanded`, `acc.openId`) : ouverts UN PAR UN, contenu `.t-open` lu.
+Le verdict/bande (« Analyse incomplète », « À étudier »…) n'apparaît qu'APRÈS clic « Demander à
+LABUSE » (`verdictRevele`, Fiche.tsx:1058) — ce bouton révèle la carte en place, il NE navigue
+pas (normal). **20/20 témoins : fiche ouverte à droite, 0 erreur console, 0 erreur réseau,
+chargement 4–9 s (1ʳᵉ nav froide ~8 s), les 11 tiroirs se déplient, « Poser une question »
+ouvre l'AskBar inline, « Demander à LABUSE » révèle la bande.** 0 ligne vide muette. 1 seule
+anomalie (cosmétique, A-02-1).
+
+- **97415000DT0397** (bizone, Saint-Paul) — **OK**. Urbanisme : « Parcelle à cheval sur 2 zones
+  du PLU » U6c 73 % / Ncor 27 % (= API 72,8/27,1) ; verdict « À étudier · Signal faible » ;
+  SDP 1 635 m² R+1. Risques : PPR zone rouge/bleue. (`003_97415000DT0397.png`)
+- **97401000AC0428** (bizone variante N, Les Avirons — IDU 97401, note dit « Saint-Benoit » à
+  tort) — **OK**. Zone Nr naturelle, aléa rédhibitoire 9 vigilances, SDP RESTANTE « — zone non
+  constructible ». Bizone non constructible rendu honnêtement. (`005_97401000AC0428.png`)
+- **97415000CY1134** (zone rouge partielle PPR, Saint-Paul) — **OK**. Risques : « PPR — zone
+  rouge 35 % · zone bleue 62 % » ; Potentiel : « Pas de SDP résiduelle exploitable, R+0 ». Zone
+  U2d calibrée mais capacité réduite à 0 par le PPR — cohérent. (`007_97415000CY1134.png`)
+- **97415000CH0065** (Hors classement NC, Saint-Paul) — **OK**. Après « Demander à LABUSE » :
+  bande « Analyse incomplète — zone non résolue » (= API `analyse_labuse.bande=NC`). Pas de
+  score faux. La faisabilité affiche zone A agricole « Construction neuve non autorisée en A »
+  (honnête). (`009_97415000CH0065.png`, `analyse-revelee`)
+- **97411000AY0015** (emprise saturée 19569 %, Saint-Denis) — **OK**. Bâti : emprise 2 482 m² /
+  6 963 m² « Parcelle déjà bâtie probable » ; Potentiel : « Pas de SDP résiduelle exploitable ».
+  AUCUN chiffre absurde (le 19569 % interne n'est pas servi tel quel). (`011_97411000AY0015.png`)
+- **97411000IO0059** (>2 ha, Saint-Denis) — **OK**. Surface 6,40 ha ; SDP restante 25 427 m²
+  R+0 — capacité à l'échelle du terrain. 0 débordement. (`lot2`)
+- **97416000IE0438** (disparue du cadastre, Saint-Pierre) — **OK (bien géré)**. L'UI N'ouvre PAS
+  de fiche active : elle affiche le garde « Parcelle disparue du cadastre (version du
+  2026-09-01). Remplacée par 97416000IE2074 (55 %) / IE2075 (45 %) » (Fiche.tsx:567,
+  `/parcels` renvoie `cadastre_disparue`). L'anomalie redoutée (fiche normale sans avertissement)
+  N'A PAS LIEU côté app, même si `/modules/faisabilite` sert encore une capacité.
+  (`001_97416000IE0438-disparue.png`)
+- **97416000EW0446** (propriétaire société, Saint-Pierre) — **OK**. Identité : « DECORASUD SA
+  propriétaire depuis 2021 », SIREN 538897976, « Personne morale — fichier DGFiP », BODACC aucune
+  procédure. (`lot2`)
+- **97415000BW1877** (sans vente, Saint-Paul) — **OK**. Marché affiche l'agrégat DVF secteur
+  (terrain nu 244 €/m², 68 ventes) ; ne fabrique AUCUNE vente sur la parcelle, pas de vide muet.
+  (`lot2`)
+- **97403000AP2099** (sans vente, Entre-Deux) — **OK**. Marché secteur (190 €/m², 25 ventes,
+  tendance hausse) ; idem, honnête. (`lot2`)
+- **97424000AE1040** (Hauts + bizone, Cilaos) — **OK**. Terrain : pente/exposition RGE ALTI, pas
+  de plantage ; Urbanisme : « à cheval Ub 53 % / Uah 47 % » avec articles cités. (`lot3`)
+- **97424000AI1980** (Hauts simple, Cilaos) — **OK**. Zone Ub calibrée, fiche complète, aucun
+  plantage en altitude. (`lot3`)
+- **97410000AE0144** (Saint-Benoît non calibré) — **OK**. Zone Ub, verdict R+2 ~2-3 logts ;
+  provenance mixte explicite (steps « calibrage validé » pour emprise/reculs, « estimation
+  générique (PLU non outillé) » pour les niveaux) ; marqueur « Estimation » présent ; le détail
+  « Étudier quand même » montre les badges de provenance (4 estimé / 12 sourcé). Le chiffre
+  n'est PAS présenté comme pleinement sourcé. (`noncalibre`, `faisabilite-detail`)
+- **97413000DE1451** (mixité sociale, Saint-Leu) — **OK**. « MIXITÉ SOCIALE (LLS) — Quota 20 %
+  logement social » avec citation intégrale de l'article UA2 (p.19, seuil 600 m²). (`lot3`)
+- **97417000BD0967** (Saint-Philippe RNU) — **OK fond / A-02-1 forme**. Bannière RNU ⚠ « Commune
+  au règlement national d'urbanisme — pas de PLU local » (`data-rnu-banner`) ; Urbanisme : « Zone :
+  Non publié au GPU », « Aucun PLU — RNU » ; Potentiel : « Pas de SDP résiduelle ». Pas d'écran
+  vide/erreur. SEUL défaut : la tuile « Non publié au GPU » est tronquée par ellipsis (A-02-1,
+  cosmétique). (`001_97417000BD0967-rnu-banner.png`, `deb-gpu`)
+- **97422000BX1106** (saine, Le Tampon) — **OK**. SDP 582 m² R+6 (= API). AskBar + porte
+  « Calculette foncière » (hash `m=calculette-fonciere&idu=…`) réagissent. (`lot4`)
+- **97411000AT0427** (saine, Saint-Denis) — **OK**. (`lot4`)
+- **97414000DL0765** (saine, Saint-Louis) — **OK**. (`lot4`)
+- **97412000BM1315** (saine, Saint-Joseph) — **OK**. (`lot4`)
+- **97407000AS0421** (saine + société, Le Port) — **OK**. Identité « SOCIETE ANONYME
+  D'HABITATIONS A LOYER MODERE DE LA REUNION » SIREN 310895172 (nom long tronqué par ellipsis
+  dans la valeur d'en-tête repliée, complet dans le tiroir — même mécanique que A-02-1). (`lot4`)
+
+### Boutons de la fiche — OK
+- « Demander à LABUSE » : révèle la carte Analyse (bande + cause) EN PLACE (ne navigue pas,
+  comportement voulu, Fiche.tsx:1058-1074). Révèle « Analyse incomplète » pour les NC.
+- « Poser une question » : ouvre l'AskBar Copilote inline (placeholder « Expliquez un point… »).
+- Portes outil depuis Simulation : « Calculette foncière » → `#m=calculette-fonciere&idu=…` (sur
+  la parcelle) ; « Densifier l'existant » / « Ouvrir le Gabarit » présentes dans Potentiel.
+  (destination vérifiée sans entrer dans l'outil = Famille Outils.)

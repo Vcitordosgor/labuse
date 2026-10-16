@@ -60,3 +60,24 @@ Bilan : **aucune anomalie bloquante ni gênante.** 3 points cosmétiques/informa
   `estAppareilMobile()` alors seul `EcranOrdinateur` (`components/EcranOrdinateur.tsx`) est monté
   (« CHARGEMENT-1 point 6 : téléphone/tablette, l'app NE s'ouvre PAS »). → Les contrôles mobiles
   demandés (panneaux utilisables, texte coupé) sont donc sans objet sur cette famille.
+
+### A-02-1 — Fiche : la valeur de zone « Non publié au GPU » (RNU) est tronquée par ellipsis
+- **Gravité** : cosmétique
+- **Où** : fiche parcelle, tiroir « Urbanisme », tuile « Zone » · `#idu=97417000BD0967`
+  (Saint-Philippe, commune en RNU) ; concerne toute parcelle RNU/sans zone publiée.
+- **Reproduire** :
+  1. Ouvrir `http://localhost:5998/socle/#idu=97417000BD0967` (recharger pour monter la fiche).
+  2. Déplier le tiroir « Urbanisme ».
+  3. Regarder la tuile « Zone » : la valeur « Non publié au GPU » ne tient pas dans la case.
+- **Observé** : la case `.stat-v` fait 102 px de large pour un contenu de 116 px ;
+  `white-space:nowrap; overflow:hidden; text-overflow:ellipsis` → le texte s'affiche tronqué
+  « Non publié au GP… ». Le libellé complet reste accessible via l'infobulle (ⓘ). Aucun impact
+  fonctionnel, aucun chiffre faux. `debordements()` le remonte (1 seul élément). Même mécanique
+  d'ellipsis sur les noms de société longs en valeur d'en-tête repliée (ex. 97407000AS0421
+  « SOCIETE ANONYME D'… ») — là c'est acceptable car le nom complet est dans le corps du tiroir.
+- **Capture** : captures/02-fiche/001_97417000BD0967-deb-gpu.png · 001_97417000BD0967-rnu-banner.png
+- **Cause probable** : `frontend/src/styles/index.css:503` — `.fiche-v6 .stat-v { white-space:nowrap;
+    overflow:hidden; text-overflow:ellipsis }` ; valeur posée en `frontend/src/components/fiche/
+    Fiche.tsx:957` (`reglesZone ?? 'Non publié au GPU'`). La chaîne RNU « Non publié au GPU » est
+    plus longue que la largeur de la tuile de zone. Correctif possible : autoriser le retour à la
+    ligne (ou réduire la police) pour cette tuile RNU, ou raccourcir le libellé.
