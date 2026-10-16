@@ -4,10 +4,14 @@ Une règle n'est utilisable pour un contrôle « Réussi » que si elle est `val
 « valide » au règlement) ET porte une citation. Toute règle absente ou `propose` reste non
 validée → le contrôle correspondant sera « Non effectué », jamais « Réussi ».
 
-Lecture depuis le fichier PLU de la commune via `labuse.plu.destinations.regles_zone`.
+Généralisé (IMPLANTATION-1BIS) pour servir plusieurs communes sans réglage par terrain :
+barème stationnement scalaire (par_logement validé) ou par typologie (pièces OU surface de
+plancher) ; mixité à seuil en m² OU en logements ; emprise / pleine terre optionnelles ;
+hauteur à l'égout sinon au faîtage.
 """
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from typing import Any, Optional
 
@@ -32,31 +36,53 @@ class Regle:
         if self.page_pdf is not None:
             bout.append(f"p. {self.page_pdf}")
         tete = " · ".join(bout)
-        return f"{tete} — « {self.citation} »" if self.citation else tete or None
+        return f"{tete} — « {self.citation} »" if self.citation else (tete or None)
+
+
+@dataclass(frozen=True)
+class LigneBareme:
+    places: float
+    pieces_min: Optional[int] = None
+    pieces_max: Optional[int] = None
+    sdp_min: Optional[float] = None
+    sdp_max: Optional[float] = None
+    destination: str = "collectif"
+    libelle: str = ""
 
 
 @dataclass(frozen=True)
 class BaremeStationnement:
     validee: bool
+    mode: str                 # 'par_logement' | 'par_typologie' | 'absent'
+    base: Optional[str]       # 'pieces' | 'surface_plancher' | None
+    arrondi: str              # 'inferieur' | 'superieur'
+    flat_places: Optional[float]
+    lignes: tuple[LigneBareme, ...]
     article: Optional[str]
     page_pdf: Optional[int]
     citation: Optional[str]
-    # liste de (pieces_min, pieces_max|None, places, destination, libelle)
-    lignes: tuple[tuple[Optional[int], Optional[int], float, str, str], ...]
 
-    def places_pour(self, pieces: int, destination: str = "collectif") -> Optional[float]:
-        """Minimum de places imposé pour un logement de `pieces` pièces. Déterministe."""
+    def places_pour(self, *, pieces: int, sdp_m2: float, destination: str = "collectif") -> Optional[float]:
         if not self.validee:
             return None
-        for pmin, pmax, places, dest, _lib in self.lignes:
-            if dest != destination:
+        if self.mode == "par_logement":
+            return self.flat_places
+        for l in self.lignes:
+            if l.destination != destination:
                 continue
-            if pmin is not None and pieces < pmin:
+            if l.pieces_min is not None and pieces < l.pieces_min:
                 continue
-            if pmax is not None and pieces > pmax:
+            if l.pieces_max is not None and pieces > l.pieces_max:
                 continue
-            return places
+            if l.sdp_min is not None and sdp_m2 < l.sdp_min:
+                continue
+            if l.sdp_max is not None and sdp_m2 >= l.sdp_max:
+                continue
+            return l.places
         return None
+
+    def arrondir(self, total: float) -> int:
+        return int(math.floor(total + 1e-9)) if self.arrondi == "inferieur" else int(math.ceil(total - 1e-9))
 
     @property
     def citation_complete(self) -> Optional[str]:
@@ -68,7 +94,30 @@ class BaremeStationnement:
         if self.page_pdf is not None:
             tete.append(f"p. {self.page_pdf}")
         t = " · ".join(tete)
-        return f"{t} — « {self.citation} »" if self.citation else t or None
+        return f"{t} — « {self.citation} »" if self.citation else (t or None)
+
+
+@dataclass(frozen=True)
+class Mixite:
+    validee: bool
+    seuil_m2: Optional[float]
+    seuil_logements: Optional[int]
+    quota_pct: Optional[float]
+    article: Optional[str]
+    page_pdf: Optional[int]
+    citation: Optional[str]
+
+    @property
+    def citation_complete(self) -> Optional[str]:
+        if not self.validee:
+            return None
+        t = []
+        if self.article:
+            t.append(f"PLU art. {self.article}")
+        if self.page_pdf is not None:
+            t.append(f"p. {self.page_pdf}")
+        tete = " · ".join(t)
+        return f"{tete} — « {self.citation} »" if self.citation else (tete or None)
 
 
 @dataclass(frozen=True)
@@ -81,11 +130,15 @@ class ReglesZone:
     recul_voie: Regle
     recul_separatives: Regle
     pleine_terre: Regle
-    mixite_seuil_m2: Optional[float]
-    mixite_quota_pct: Optional[float]
-    mixite: Regle
+    mixite: Mixite
     stationnement: BaremeStationnement
-    source_doc: dict[str, Any]
+
+    @property
+    def hauteur_plafond(self) -> Regle:
+        """La hauteur qui borne les niveaux : l'égout si validé, sinon le faîtage."""
+        if self.hauteur_egout.validee:
+            return self.hauteur_egout
+        return self.hauteur_faitage
 
 
 def _leaf_val(leaf: Optional[dict], key: str, nom: str, unite: str) -> Regle:
@@ -98,10 +151,36 @@ def _leaf_val(leaf: Optional[dict], key: str, nom: str, unite: str) -> Regle:
         valeur=float(v) if (valide and isinstance(v, (int, float))) else None,
         unite=unite,
         validee=bool(valide and isinstance(v, (int, float))),
-        article=leaf.get("article"),
-        page_pdf=leaf.get("page_pdf"),
-        citation=leaf.get("citation"),
+        article=leaf.get("article"), page_pdf=leaf.get("page_pdf"), citation=leaf.get("citation"),
     )
+
+
+def _bareme(stat: dict) -> BaremeStationnement:
+    pl = stat.get("par_logement") or {}
+    pt = stat.get("par_typologie") or {}
+    # 1) par_logement scalaire validé
+    if pl.get("statut") == "valide" and isinstance(pl.get("places"), (int, float)):
+        return BaremeStationnement(
+            validee=True, mode="par_logement", base=None, arrondi="superieur",
+            flat_places=float(pl["places"]), lignes=(),
+            article=pl.get("article"), page_pdf=pl.get("page_pdf"), citation=pl.get("citation"))
+    # 2) par_typologie validé (pièces OU surface de plancher)
+    if pt.get("statut") == "valide" and pt.get("detail"):
+        lignes = []
+        for d in pt["detail"]:
+            if not isinstance(d, dict) or d.get("places") is None:
+                continue
+            lignes.append(LigneBareme(
+                places=float(d["places"]),
+                pieces_min=d.get("pieces_min"), pieces_max=d.get("pieces_max"),
+                sdp_min=d.get("sdp_min"), sdp_max=d.get("sdp_max"),
+                destination=d.get("destination") or "collectif", libelle=d.get("tranche") or d.get("typologie") or ""))
+        if lignes:
+            return BaremeStationnement(
+                validee=True, mode="par_typologie", base=pt.get("base") or "pieces",
+                arrondi=pt.get("arrondi") or "superieur", flat_places=None, lignes=tuple(lignes),
+                article=pt.get("article"), page_pdf=pt.get("page_pdf"), citation=pt.get("citation"))
+    return BaremeStationnement(False, "absent", None, "superieur", None, (), None, None, None)
 
 
 def charger(insee: str, zone: str) -> ReglesZone:
@@ -112,36 +191,15 @@ def charger(insee: str, zone: str) -> ReglesZone:
     emprise = reg.get("emprise_sol") or {}
     retraits = reg.get("retraits") or {}
     pleine = reg.get("pleine_terre") or {}
-    stat = reg.get("stationnement") or {}
     mix = reg.get("mixite") or {}
 
-    # stationnement : barème par typologie (feuille validée)
-    pt = stat.get("par_typologie") or {}
-    pt_valide = pt.get("statut") == "valide"
-    lignes = []
-    for d in (pt.get("detail") or []):
-        if not isinstance(d, dict) or d.get("places") is None:
-            continue
-        lignes.append((
-            d.get("pieces_min"), d.get("pieces_max"), float(d["places"]),
-            d.get("destination") or "collectif", d.get("typologie") or "",
-        ))
-    bareme = BaremeStationnement(
-        validee=bool(pt_valide and lignes),
-        article=pt.get("article"), page_pdf=pt.get("page_pdf"), citation=pt.get("citation"),
-        lignes=tuple(lignes),
-    )
-
-    # mixité : validée si statut valide ; seuil + quota numériques
     mix_valide = mix.get("statut") == "valide"
-    seuil = mix.get("seuil_m2") if mix_valide else None
-    quota = mix.get("quota_pct") if mix_valide else None
-    regle_mix = Regle(
-        nom="mixité sociale",
-        valeur=float(quota) if (mix_valide and isinstance(quota, (int, float))) else None,
-        unite="%", validee=bool(mix_valide and quota is not None),
-        article=mix.get("article"), page_pdf=mix.get("page_pdf"), citation=mix.get("citation"),
-    )
+    mixite = Mixite(
+        validee=bool(mix_valide and mix.get("quota_pct") is not None),
+        seuil_m2=mix.get("seuil_m2") if mix_valide else None,
+        seuil_logements=mix.get("seuil_logements") if mix_valide else None,
+        quota_pct=float(mix["quota_pct"]) if (mix_valide and mix.get("quota_pct") is not None) else None,
+        article=mix.get("article"), page_pdf=mix.get("page_pdf"), citation=mix.get("citation"))
 
     return ReglesZone(
         insee=insee, zone=zone,
@@ -152,9 +210,6 @@ def charger(insee: str, zone: str) -> ReglesZone:
         recul_separatives=_leaf_val(retraits.get("limites_separatives"), "min_m",
                                     "recul sur limites séparatives", "m"),
         pleine_terre=_leaf_val(pleine.get("pct"), "pct", "pleine terre (perméabilité)", "%"),
-        mixite_seuil_m2=float(seuil) if isinstance(seuil, (int, float)) else None,
-        mixite_quota_pct=float(quota) if isinstance(quota, (int, float)) else None,
-        mixite=regle_mix,
-        stationnement=bareme,
-        source_doc={},
+        mixite=mixite,
+        stationnement=_bareme(reg.get("stationnement") or {}),
     )

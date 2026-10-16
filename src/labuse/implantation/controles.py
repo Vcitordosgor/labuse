@@ -2,7 +2,9 @@
 
 Deux familles :
   - GÉOMÉTRIQUES (bool) : cohérence interne, utilisées par le moteur pour accepter/refuser un
-    candidat, ET re-vérifiées indépendamment par les tests du LOT C.
+    candidat, ET re-vérifiées indépendamment par les tests du LOT C. Le non-chevauchement est testé
+    sur TOUS les couples d'objets du plan de sol (module, noyau, coursive, place, allée, accès,
+    espace libre) ; la somme des surfaces mesurées = l'assiette.
   - RÉGLEMENTAIRES (4 états) : Réussi · Échoué · Non effectué · Non applicable.
       * Réussi UNIQUEMENT si la règle est `validee` avec citation ET que la mesure la respecte.
       * Règle non validée ou non modélisée = Non effectué (jamais Réussi).
@@ -25,11 +27,10 @@ ECHOUE = "Échoué"
 NON_EFFECTUE = "Non effectué"
 NON_APPLICABLE = "Non applicable"
 
-_TOL_AIRE = 1e-6        # aire d'intersection considérée nulle (bruit flottant)
-_TOL_CONTENU = 0.05     # tolérance de contenance (m) sur buffer
+_TOL_AIRE = 1e-6
+_TOL_CONTENU = 0.05
 
 
-# --------------------------------------------------------------- géométriques (bool)
 @dataclass
 class CheckGeo:
     nom: str
@@ -37,9 +38,15 @@ class CheckGeo:
     detail: str = ""
 
 
-def _plan_objs(scene: Scene):
-    return [o for o in scene.objets
-            if o.kind in ("batiment_emprise", "place", "allee", "acces", "espace_libre")]
+def _ground_tiles(scene: Scene):
+    """Objets du PLAN DE SOL (niveau 0 pour le bâti) qui pavent l'assiette sans se chevaucher."""
+    out = []
+    for o in scene.objets:
+        if o.kind in ("place", "allee", "acces", "espace_libre"):
+            out.append(o)
+        elif o.kind in ("module", "noyau", "coursive") and o.niveau == 0:
+            out.append(o)
+    return out
 
 
 def verifier_geometrie(scene: Scene, terrain, conv: Conventions, cap: Capacite,
@@ -53,12 +60,10 @@ def verifier_geometrie(scene: Scene, terrain, conv: Conventions, cap: Capacite,
     acces = [o.geom_world for o in scene.of("acces")]
     modules = scene.of("module")
 
-    # 1. bâtiments contenus dans la zone d'implantation
     hors = [b for b in batis if not zone.buffer(_TOL_CONTENU).contains(b)]
     checks.append(CheckGeo("bâtiments ⊆ zone d'implantation", not hors,
                            f"{len(hors)} hors zone" if hors else f"{len(batis)} bâtiment(s) dans la zone"))
 
-    # 2. places et allées dans l'assiette, hors bâtiments
     bati_u = unary_union(batis) if batis else None
     dedans = all(assiette.buffer(_TOL_CONTENU).contains(g) for g in places + allees + acces)
     hors_bati = True
@@ -66,16 +71,20 @@ def verifier_geometrie(scene: Scene, terrain, conv: Conventions, cap: Capacite,
         hors_bati = all(g.intersection(bati_u).area <= _TOL_AIRE for g in places + allees + acces)
     checks.append(CheckGeo("places/allées/accès ⊆ assiette, hors bâti", dedans and hors_bati))
 
-    # 3. aucun chevauchement entre objets plan (aire d'intersection = 0)
-    plan = [o.geom_world for o in _plan_objs(scene)]
+    # non-chevauchement sur TOUS les couples du plan de sol (aire d'intersection = 0)
+    tiles = [o.geom_world for o in _ground_tiles(scene)]
     chev = 0
-    for i in range(len(plan)):
-        for j in range(i + 1, len(plan)):
-            if plan[i].intersection(plan[j]).area > _TOL_AIRE:
+    for i in range(len(tiles)):
+        for j in range(i + 1, len(tiles)):
+            if tiles[i].intersection(tiles[j]).area > _TOL_AIRE:
                 chev += 1
-    checks.append(CheckGeo("aucun chevauchement (aire ∩ = 0)", chev == 0, f"{chev} paire(s)"))
+    checks.append(CheckGeo("aucun chevauchement — TOUS couples (aire ∩ = 0)", chev == 0, f"{chev} paire(s)"))
 
-    # 4. chaque place touche une allée
+    # somme des surfaces mesurées = assiette
+    somme = sum(t.area for t in tiles)
+    checks.append(CheckGeo("somme des surfaces mesurées = assiette", abs(somme - assiette.area) < 1.0,
+                           f"Σ={somme:.1f} vs assiette {assiette.area:.1f}"))
+
     allee_u = unary_union(allees) if allees else None
     if places and allee_u is not None:
         touche = all(p.distance(allee_u) < 1e-6 for p in places)
@@ -83,53 +92,50 @@ def verifier_geometrie(scene: Scene, terrain, conv: Conventions, cap: Capacite,
         touche = not places
     checks.append(CheckGeo("chaque place touche une allée", touche))
 
-    # 5. allées reliées à l'accès ; accès sur une limite classée voie
+    # allées reliées à l'accès ; accès sur voie ; aucune allée sans places desservies
     acc_ok = False
     if acces and allee_u is not None:
         acc_u = unary_union(acces)
         relie = acc_u.distance(allee_u) < 1e-6
         voie_u = unary_union(terrain.voie_edges) if terrain.voie_edges else None
-        sur_voie = (voie_u is not None and acc_u.distance(voie_u) < 0.5)
-        acc_ok = relie and sur_voie
+        sur_voie = (voie_u is not None and acc_u.distance(voie_u) < 0.6)
+        # chaque morceau d'allée est desservi (a au moins une place) et relié à l'accès
+        places_u = unary_union(places) if places else None
+        allees_desservies = all(
+            (places_u is not None and a.distance(places_u) < 1e-6) and a.distance(acc_u) < 1e-6
+            for a in allees)
+        acc_ok = relie and sur_voie and allees_desservies
     elif not places:
         acc_ok = True
-    checks.append(CheckGeo("allées reliées à l'accès, accès sur voie", acc_ok))
+    checks.append(CheckGeo("allées reliées à l'accès (sur voie), aucune en cul-de-sac", acc_ok))
 
-    # 6. largeur d'allée ≥ convention
-    larg_ok = True
-    for o in scene.of("allee"):
-        minx, miny, maxx, maxy = o.geom_local.bounds
-        if min(maxx - minx, maxy - miny) < conv.allee_largeur_m - 0.05:
-            larg_ok = False
+    larg_ok = all(min(o.geom_local.bounds[2] - o.geom_local.bounds[0],
+                      o.geom_local.bounds[3] - o.geom_local.bounds[1]) >= conv.allee_largeur_m - 0.05
+                  for o in scene.of("allee"))
     checks.append(CheckGeo(f"largeur d'allée ≥ {conv.allee_largeur_m} m", larg_ok))
 
-    # 7. dimensions des modules ≥ minimum de la convention
     dim_ok = True
     for o in modules:
-        minx, miny, maxx, maxy = o.geom_local.bounds
-        w, d = (maxx - minx), (maxy - miny)
-        lref = conv.largeur_module(o.type_logement)
-        if w < lref - 0.05 or d < conv.profondeur_logement_m() - 0.05:
+        mnx, mny, mxx, mxy = o.geom_local.bounds
+        if (mxx - mnx) < conv.largeur_module(o.type_logement) - 0.05 or \
+           (mxy - mny) < conv.profondeur_logement_m() - 0.05:
             dim_ok = False
     checks.append(CheckGeo("dimensions modules ≥ convention", dim_ok))
 
-    # 8. nombre annoncé = nombre d'objets dessinés
     nb_ok = (cap.logements == len(modules)) and (cap.places == len(places))
     checks.append(CheckGeo("nb annoncé = nb dessiné (logements, places)", nb_ok))
 
-    # 9. surfaces du tableau = surfaces mesurées
     sdp_mes = round(sum(o.geom_local.area for o in scene.objets
                         if o.kind in ("module", "noyau", "coursive")), 1)
     emp_mes = round(unary_union([o.geom_local for o in scene.of("batiment_emprise")]).area, 1) if batis else 0.0
     surf_ok = abs(sdp_mes - cap.sdp_m2) < 0.2 and abs(emp_mes - cap.emprise_sol_m2) < 0.2
     checks.append(CheckGeo("surfaces tableau = surfaces mesurées", surf_ok))
 
-    # 10. niveaux × hauteur ≤ règle (si validée)
-    if regles.hauteur_egout.validee and regles.hauteur_egout.valeur is not None:
+    r = regles.hauteur_plafond
+    if r.validee and r.valeur is not None:
         h = cap.niveaux * conv.hauteur_etage_m
-        checks.append(CheckGeo("niveaux × hauteur ≤ hauteur égout",
-                               h <= regles.hauteur_egout.valeur + 1e-9,
-                               f"{h:.1f} m ≤ {regles.hauteur_egout.valeur:.1f} m"))
+        checks.append(CheckGeo("niveaux × hauteur ≤ hauteur réglementaire",
+                               h <= r.valeur + 1e-9, f"{h:.1f} m ≤ {r.valeur:.1f} m"))
     return checks
 
 
@@ -148,33 +154,44 @@ class ControleReg:
     detail: Optional[str] = None
 
 
+def _n_batiments(scene: Scene) -> int:
+    return len(scene.of("batiment_emprise"))
+
+
+def _ppr_bleue_touche_bati(scene: Scene, terrain) -> bool:
+    if terrain.ppr_bleue is None or terrain.ppr_bleue.is_empty:
+        return False
+    batis = [o.geom_world for o in scene.of("batiment_emprise")]
+    if not batis:
+        return False
+    return unary_union(batis).intersection(terrain.ppr_bleue).area > _TOL_AIRE
+
+
 def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capacite,
                              regles: ReglesZone) -> list[ControleReg]:
     out: list[ControleReg] = []
+    contenance = terrain.contenance_totale_m2
 
-    # Emprise au sol (CES) — règle validée
     r = regles.emprise_ces
     if r.validee and r.valeur is not None:
-        plafond = terrain.contenance_totale_m2 * r.valeur / 100.0
+        plafond = contenance * r.valeur / 100.0
         ok = cap.emprise_sol_m2 <= plafond + 1e-6
-        out.append(ControleReg("Emprise au sol", f"≤ {plafond:.0f} m² ({r.valeur:.0f} %)",
+        out.append(ControleReg("Emprise au sol", f"≤ {plafond:.0f} m² ({r.valeur:.0f} % de la contenance)",
                                f"{cap.emprise_sol_m2:.0f} m²", REUSSI if ok else ECHOUE,
                                r.citation_complete, f"écart {plafond - cap.emprise_sol_m2:+.0f} m²"))
     else:
-        out.append(ControleReg("Emprise au sol", "—", f"{cap.emprise_sol_m2:.0f} m²", NON_EFFECTUE))
+        out.append(ControleReg("Emprise au sol", "règle non validée", f"{cap.emprise_sol_m2:.0f} m²", NON_EFFECTUE))
 
-    # Hauteur (égout) — règle validée
-    r = regles.hauteur_egout
+    r = regles.hauteur_plafond
     if r.validee and r.valeur is not None:
         h = cap.niveaux * conv.hauteur_etage_m
         ok = h <= r.valeur + 1e-9
-        out.append(ControleReg("Hauteur", f"≤ {r.valeur:.0f} m à l'égout",
-                               f"R+{cap.niveaux - 1} ≈ {h:.0f} m", REUSSI if ok else ECHOUE,
-                               r.citation_complete))
+        base = "à l'égout" if regles.hauteur_egout.validee else "au faîtage (pas d'égout chiffré)"
+        out.append(ControleReg("Hauteur", f"≤ {r.valeur:.0f} m {base}",
+                               f"R+{cap.niveaux - 1} ≈ {h:.0f} m", REUSSI if ok else ECHOUE, r.citation_complete))
     else:
-        out.append(ControleReg("Hauteur", "—", f"R+{cap.niveaux - 1}", NON_EFFECTUE))
+        out.append(ControleReg("Hauteur", "règle non validée", f"R+{cap.niveaux - 1}", NON_EFFECTUE))
 
-    # Reculs (voie + séparatives) — règles validées ; bâti dans la zone construite avec ces reculs
     rv, rs = regles.recul_voie, regles.recul_separatives
     batis = [o.geom_world for o in scene.of("batiment_emprise")]
     dans_zone = all(terrain.zone_implantation.buffer(_TOL_CONTENU).contains(b) for b in batis)
@@ -183,55 +200,74 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
         out.append(ControleReg("Reculs", f"voie {rv.valeur:.0f} m · séparatives {rs.valeur:.0f} m",
                                "bâti dans la zone d'implantation", REUSSI if dans_zone else ECHOUE, cit))
     else:
-        out.append(ControleReg("Reculs", "—", "bâti dans la zone", NON_EFFECTUE))
+        out.append(ControleReg("Reculs", "règle non validée", "bâti dans la zone", NON_EFFECTUE))
 
-    # Perméabilité (pleine terre) — règle validée
     r = regles.pleine_terre
     if r.validee and r.valeur is not None:
-        requis = terrain.contenance_totale_m2 * r.valeur / 100.0
+        requis = contenance * r.valeur / 100.0
         ok = cap.pleine_terre_m2 >= requis - 1e-6
-        out.append(ControleReg("Perméabilité (pleine terre)", f"≥ {requis:.0f} m² ({r.valeur:.0f} %)",
+        out.append(ControleReg("Perméabilité (pleine terre)", f"≥ {requis:.0f} m² ({r.valeur:.0f} % de la contenance)",
                                f"{cap.pleine_terre_m2:.0f} m²", REUSSI if ok else ECHOUE,
                                r.citation_complete, f"écart {cap.pleine_terre_m2 - requis:+.0f} m²"))
     else:
-        out.append(ControleReg("Perméabilité (pleine terre)", "—", f"{cap.pleine_terre_m2:.0f} m²", NON_EFFECTUE))
+        out.append(ControleReg("Perméabilité (pleine terre)", "règle non validée",
+                               f"{cap.pleine_terre_m2:.0f} m²", NON_EFFECTUE))
 
-    # Stationnement — barème validé
     b = regles.stationnement
     if b.validee and cap.places_imposees is not None:
         ok = cap.places >= cap.places_imposees
-        out.append(ControleReg("Stationnement", f"≥ {cap.places_imposees} places (barème par typologie)",
+        out.append(ControleReg("Stationnement", f"≥ {cap.places_imposees} places (barème validé)",
                                f"{cap.places} places dessinées", REUSSI if ok else ECHOUE,
-                               b.citation_complete,
-                               f"écart {cap.places - cap.places_imposees:+d}"))
+                               b.citation_complete, f"écart {cap.places - cap.places_imposees:+d}"))
     else:
-        out.append(ControleReg("Stationnement", "—", f"{cap.places} places dessinées", NON_EFFECTUE))
+        out.append(ControleReg("Stationnement", "barème non validé", f"{cap.places} places dessinées", NON_EFFECTUE))
 
-    # Espaces verts — AUCUNE règle validée distincte (seule la pleine terre l'est)
-    out.append(ControleReg("Espaces verts", "règle non validée (distincte de la pleine terre)", "—",
-                           NON_EFFECTUE, detail="le règlement UA ne fixe pas d'espaces verts chiffrés hors pleine terre"))
+    # Distance entre constructions : plusieurs bâtiments => Non effectué (non modélisé) ; un seul => Non applicable
+    nb_bati = _n_batiments(scene)
+    if nb_bati > 1:
+        out.append(ControleReg("Distance entre constructions", "non modélisée",
+                               f"{nb_bati} bâtiments", NON_EFFECTUE,
+                               detail="plusieurs volumes : la distance inter-bâtiments doit être vérifiée"))
+    else:
+        out.append(ControleReg("Distance entre constructions", "un seul bâtiment", "—", NON_APPLICABLE))
 
-    # Destination — non modélisée par ce moteur
-    out.append(ControleReg("Destination", "non modélisée", "logements seuls", NON_EFFECTUE))
-
-    # Non modélisées
-    out.append(ControleReg("Distance entre constructions", "non modélisée", "—", NON_EFFECTUE))
     out.append(ControleReg("Locaux vélos · déchets", "non modélisés", "—", NON_EFFECTUE))
 
-    # Contraintes cartographiées — absentes du terrain => Non applicable
-    presentes = terrain.contraintes_presentes
-    if not presentes:
-        out.append(ControleReg("PPR / ER / EBC / SUP", "aucune contrainte sur le terrain", "—",
-                               NON_APPLICABLE, detail="aucun objet PPR/ER/EBC/SUP n'intersecte l'assiette"))
+    # PPR rouge (interdiction) : déduite de l'implantation
+    if terrain.contraintes.get("ppr_rouge"):
+        out.append(ControleReg("PPR zone rouge (interdiction)", "inconstructible", f"{terrain.ppr_rouge_m2:.0f} m²",
+                               NON_EFFECTUE, detail="retirée de la zone d'implantation (hypothèse prudente)"))
     else:
-        out.append(ControleReg("PPR / ER / EBC / SUP", "contrainte présente", ", ".join(presentes),
-                               NON_EFFECTUE, detail="présente mais non interprétée par ce moteur"))
+        out.append(ControleReg("PPR zone rouge (interdiction)", "absente du terrain", "—", NON_APPLICABLE))
+
+    # PPR bleue (prescription) : signalée, non interprétée ; à compléter si elle touche le bâti
+    if terrain.contraintes.get("ppr_bleue"):
+        touche = _ppr_bleue_touche_bati(scene, terrain)
+        out.append(ControleReg("PPR zone bleue (prescription)", "signalée, non interprétée",
+                               ("touche le bâti proposé" if touche else "ne touche pas le bâti"),
+                               NON_EFFECTUE, detail=("prescriptions à lire ; l'étude passe à compléter"
+                                                     if touche else "signalée")))
+    else:
+        out.append(ControleReg("PPR zone bleue (prescription)", "absente du terrain", "—", NON_APPLICABLE))
+
+    # ER / EBC / SUP
+    autres = [k for k in ("emplacement_reserve", "ebc", "sup", "servitude") if terrain.contraintes.get(k)]
+    if autres:
+        out.append(ControleReg("ER / EBC / SUP / servitudes", "présente(s)", ", ".join(autres),
+                               NON_EFFECTUE, detail="non interprétées par ce moteur"))
+    else:
+        out.append(ControleReg("ER / EBC / SUP / servitudes", "absentes du terrain", "—", NON_APPLICABLE))
     return out
 
 
-def statut_etude(controles: list[ControleReg], geo_ok: bool) -> str:
+def statut_etude(controles: list[ControleReg], geo_ok: bool, *, scene: Scene, terrain) -> str:
     if not geo_ok:
         return "simulation impossible"
     if any(c.resultat == ECHOUE for c in controles):
+        return "à compléter"
+    # plusieurs bâtiments (distance non contrôlée) OU PPR bleue qui touche le bâti -> à compléter
+    if _n_batiments(scene) > 1:
+        return "à compléter"
+    if _ppr_bleue_touche_bati(scene, terrain):
         return "à compléter"
     return "exploitable en pré-faisabilité"

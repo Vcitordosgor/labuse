@@ -4,6 +4,10 @@ Tout en EPSG:2975 (métrique, La Réunion). Réutilise :
   - `ST_Union(geom_2975)` pour fusionner les parcelles (patron assemblage.py) ;
   - `gabarit.limites.classify_parcel_limits(sub_geom_wkt=...)` pour la classification voie/séparative ;
   - shapely buffer/difference pour la zone d'implantation (patron gabarit/engine.py).
+
+IMPLANTATION-1BIS : PPR rouge (interdiction) DÉDUITE de la zone d'implantation ; PPR bleue
+(prescription) conservée pour tester si elle touche le bâti proposé. Dénivelé LiDAR reporté
+(fait contextuel), non pris en compte dans le volume.
 """
 from __future__ import annotations
 
@@ -33,16 +37,25 @@ class Terrain:
     insee: str
     commune: str
     parcelles: list[Parcelle]
-    assiette: Polygon                 # 2975
-    contenance_totale_m2: float       # somme des contenances cadastrales (fait foi)
-    aire_dessin_m2: float             # aire du dessin fusionné
-    zone_implantation: Polygon        # 2975, après reculs
+    assiette: Polygon
+    contenance_totale_m2: float
+    aire_dessin_m2: float
+    zone_implantation: Polygon            # 2975, après reculs ET déduction PPR rouge
     aire_zone_m2: float
-    voie_edges: list[LineString]      # arêtes classées « voie » (2975)
-    autres_edges: list[LineString]    # side / rear / nonclass
+    voie_edges: list[LineString]
+    autres_edges: list[LineString]
     has_voie: bool
-    note_limites: Optional[str]       # réserve (ex. arête nonclass), non bloquante
-    contraintes: dict[str, int] = field(default_factory=dict)  # kind -> nb d'objets intersectant
+    note_limites: Optional[str]
+    contraintes: dict[str, int] = field(default_factory=dict)
+    ppr_rouge: Optional[BaseGeometry] = None      # interdiction, déduite de la zone
+    ppr_bleue: Optional[BaseGeometry] = None       # prescription, signalée
+    ppr_rouge_m2: float = 0.0
+    ppr_bleue_m2: float = 0.0
+    pente: Optional[dict] = None                   # dénivelé LiDAR (fait contextuel)
+
+    @property
+    def ecart_contenance_dessin_m2(self) -> float:
+        return self.contenance_totale_m2 - self.aire_dessin_m2
 
     @property
     def contraintes_presentes(self) -> list[str]:
@@ -55,8 +68,48 @@ def _plus_grand_polygone(geom: BaseGeometry) -> Polygon:
     return geom
 
 
+def _ppr_par_couleur(session, aw: str):
+    """(geom_rouge, geom_bleue) sur l'assiette. rouge = interdiction, bleue = prescription."""
+    from sqlalchemy import text
+    rows = session.execute(text(
+        "SELECT subtype, ST_AsText(ST_Intersection(geom_2975, ST_GeomFromText(:g,2975))) AS wkt "
+        "FROM spatial_layers WHERE kind='ppr' AND ST_Intersects(geom_2975, ST_GeomFromText(:g,2975))"
+    ), {"g": aw}).fetchall()
+    rouges, bleues = [], []
+    for sub, wkt in rows:
+        if not wkt:
+            continue
+        g = shp_wkt.loads(wkt)
+        s = (sub or "").lower()
+        if "interdict" in s or "rouge" in s:
+            rouges.append(g)
+        elif "prescript" in s or "bleu" in s:
+            bleues.append(g)
+    rouge = unary_union(rouges) if rouges else None
+    bleue = unary_union(bleues) if bleues else None
+    return rouge, bleue
+
+
+def _pente_lidar(session, parcelles: list[Parcelle]) -> Optional[dict]:
+    """Dénivelé/pente via le profil altimétrique LiDAR (RGE ALTI). Réseau requis ; None si indisponible."""
+    try:
+        from labuse.faisabilite.profil_altimetrique import profil_parcelle
+    except Exception:
+        return None
+    idu = max(parcelles, key=lambda p: p.aire_dessin_m2).idu
+    try:
+        prof = profil_parcelle(session, idu)
+    except Exception:
+        return None
+    if not prof or not prof.get("disponible"):
+        return {"disponible": False, "motif": (prof or {}).get("motif")}
+    return {"disponible": True, "source": prof.get("source"),
+            "denivele_m": round(prof.get("denivele_positif_m", 0.0) + prof.get("denivele_negatif_m", 0.0), 1),
+            "pente_moyenne_pct": prof.get("pente_moyenne_pct"), "pente_max_pct": prof.get("pente_max_pct")}
+
+
 def charger(session, idus: list[str], *, recul_voie_m: float, recul_separative_m: float,
-            inset_m: float = 0.0) -> Terrain:
+            inset_m: float = 0.0, avec_pente: bool = True) -> Terrain:
     from sqlalchemy import text
     from labuse.gabarit.limites import classify_parcel_limits
 
@@ -66,8 +119,7 @@ def charger(session, idus: list[str], *, recul_voie_m: float, recul_separative_m
     ), {"i": idus}).mappings().all()
     if len(rows) != len(idus):
         trouves = {r["idu"] for r in rows}
-        manquantes = [i for i in idus if i not in trouves]
-        raise ValueError(f"parcelles introuvables : {manquantes}")
+        raise ValueError(f"parcelles introuvables : {[i for i in idus if i not in trouves]}")
 
     ids = [r["id"] for r in rows]
     commune = rows[0]["commune"]
@@ -83,22 +135,24 @@ def charger(session, idus: list[str], *, recul_voie_m: float, recul_separative_m
     aire_dessin = float(assiette.area)
     contenance_totale = sum((p.contenance_m2 or p.aire_dessin_m2) for p in parcelles)
 
-    # classification des limites sur l'assiette fusionnée
     res = classify_parcel_limits(session, ids[0], sub_geom_wkt=aw)
     voie_edges, autres_edges = [], []
     for e in (res.edges if res else []):
         (voie_edges if e.type == "voie" else autres_edges).append(e.geom)
     has_voie = bool(res and res.has_voie)
-    # l'arête nonclass est signalée mais NON bloquante : traitée en recul séparatif (prudent)
     note = None
     if res and res.non_classees:
         note = ("arêtes non qualifiées (ni voie ni voisin cadastré ≤ 0,5 m), traitées en recul "
                 "séparatif : " + " ; ".join(res.non_classees))
 
-    # zone d'implantation = assiette − reculs (voie 4 m, séparative 3 m sur tout le reste)
+    # zone = assiette − reculs (voie 4 m, séparative 3 m sur tout le reste) − PPR rouge
     bufs = [g.buffer(recul_voie_m) for g in voie_edges] + \
            [g.buffer(recul_separative_m) for g in autres_edges]
     zone = assiette.difference(unary_union(bufs)) if bufs else assiette
+
+    ppr_rouge, ppr_bleue = _ppr_par_couleur(session, aw)
+    if ppr_rouge is not None and not ppr_rouge.is_empty:
+        zone = zone.difference(ppr_rouge)
     zone = _plus_grand_polygone(zone)
     if inset_m > 0 and not zone.is_empty:
         zone = _plus_grand_polygone(zone.buffer(-inset_m))
@@ -110,6 +164,10 @@ def charger(session, idus: list[str], *, recul_voie_m: float, recul_separative_m
             "AND ST_Intersects(geom_2975, ST_GeomFromText(:g, 2975))"
         ), {"k": kind, "g": aw}).scalar()
         contraintes[kind] = int(n or 0)
+    contraintes["ppr_rouge"] = 1 if (ppr_rouge is not None and not ppr_rouge.is_empty) else 0
+    contraintes["ppr_bleue"] = 1 if (ppr_bleue is not None and not ppr_bleue.is_empty) else 0
+
+    pente = _pente_lidar(session, parcelles) if avec_pente else None
 
     return Terrain(
         insee=insee, commune=commune, parcelles=parcelles,
@@ -117,4 +175,8 @@ def charger(session, idus: list[str], *, recul_voie_m: float, recul_separative_m
         zone_implantation=zone, aire_zone_m2=float(zone.area),
         voie_edges=voie_edges, autres_edges=autres_edges, has_voie=has_voie, note_limites=note,
         contraintes=contraintes,
+        ppr_rouge=ppr_rouge, ppr_bleue=ppr_bleue,
+        ppr_rouge_m2=round(ppr_rouge.area, 1) if (ppr_rouge is not None and not ppr_rouge.is_empty) else 0.0,
+        ppr_bleue_m2=round(ppr_bleue.area, 1) if (ppr_bleue is not None and not ppr_bleue.is_empty) else 0.0,
+        pente=pente,
     )

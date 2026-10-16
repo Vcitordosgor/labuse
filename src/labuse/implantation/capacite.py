@@ -1,8 +1,7 @@
 """Tableau de capacité — TIRÉ de la géométrie dessinée (jamais l'inverse).
 
-logements = nombre d'objets « module » ; SDP = aire mesurée des planchers ; SHAB = coef × aire
-habitable mesurée ; emprise = aire de l'union des emprises ; pleine terre = aire des espaces libres ;
-places = nombre d'objets « place ».
+Surfaces MESURÉES séparément sur la géométrie (bâti, places, allées, accès, pleine terre, reste
+non affecté) ; leur somme = l'assiette. m² par place = (places + allées + accès) / nb places.
 """
 from __future__ import annotations
 
@@ -22,19 +21,31 @@ class Capacite:
     logements: int
     par_type: dict[str, int]
     niveaux: int
-    sdp_m2: float                      # surface de plancher mesurée (modules + noyau + coursive)
-    shab_estimee_m2: float             # habitable estimée = coef × aire des modules
+    sdp_m2: float
+    shab_estimee_m2: float
     shab_par_type_m2: dict[str, float]
-    emprise_sol_m2: float              # union des emprises bâties
-    pleine_terre_m2: float             # espaces libres mesurés
+    # surfaces mesurées séparément (somme = assiette)
+    bati_m2: float
+    places_m2: float
+    allees_m2: float
+    acces_m2: float
+    pleine_terre_m2: float
+    reste_non_affecte_m2: float
+    surface_stationnement_m2: float
+    m2_par_place: Optional[float]
+    emprise_sol_m2: float
     places: int
-    places_imposees: Optional[int]     # du barème validé, sinon None
-    distribution_niveaux: list[dict]   # [{niveau, par_type:{...}, sdp_m2}]
-    # mixité (règle sourcée)
+    places_imposees: Optional[int]
+    distribution_niveaux: list[dict]
     mixite_applicable: Optional[bool]
     logements_aides_imposes: Optional[int]
     sdp_aidee_imposee_m2: Optional[float]
-    details_places: dict = field(default_factory=dict)  # type -> (nb, places_unitaires)
+    details_places: dict = field(default_factory=dict)
+
+
+def _sdp_logement(conv: Conventions, type_logement: str) -> float:
+    m = conv.modules.get(type_logement)
+    return m.surface_m2 if m else 0.0
 
 
 def _places_imposees(scene: Scene, conv: Conventions, regles: ReglesZone) -> tuple[Optional[int], dict]:
@@ -47,14 +58,16 @@ def _places_imposees(scene: Scene, conv: Conventions, regles: ReglesZone) -> tup
         n = len([o for o in scene.of("module") if o.type_logement == t])
         if n == 0:
             continue
-        unit = bareme.places_pour(m.pieces, "collectif")
+        unit = bareme.places_pour(pieces=m.pieces, sdp_m2=m.surface_m2, destination="collectif")
         detail[t] = (n, unit)
         if unit is not None:
             total += n * unit
-    return (math.ceil(total) if detail else 0), detail
+    if not detail:
+        return 0, {}
+    return bareme.arrondir(total), detail
 
 
-def calculer(scene: Scene, conv: Conventions, regles: ReglesZone) -> Capacite:
+def calculer(scene: Scene, conv: Conventions, regles: ReglesZone, terrain=None) -> Capacite:
     modules = scene.of("module")
     niveaux = (max((o.niveau for o in modules), default=-1) + 1)
     par_type: dict[str, int] = {}
@@ -66,14 +79,23 @@ def calculer(scene: Scene, conv: Conventions, regles: ReglesZone) -> Capacite:
 
     sdp = sum(o.geom_local.area for o in scene.objets if o.kind in ("module", "noyau", "coursive"))
     shab = sum(o.geom_local.area for o in modules) * conv.coef_plancher_habitable
-    emprises = [o.geom_local for o in scene.of("batiment_emprise")]
-    emprise_sol = float(unary_union(emprises).area) if emprises else 0.0
-    pleine_terre = sum(o.geom_local.area for o in scene.of("espace_libre"))
+
+    def aire(kind):
+        gs = [o.geom_local for o in scene.of(kind)]
+        return float(unary_union(gs).area) if gs else 0.0
+
+    bati = aire("batiment_emprise")
+    places_m2 = aire("place")
+    allees_m2 = aire("allee")
+    acces_m2 = aire("acces")
+    pleine_terre = aire("espace_libre")
+    assiette = scene.assiette_local.area
+    reste = assiette - (bati + places_m2 + allees_m2 + acces_m2 + pleine_terre)
+    stat = places_m2 + allees_m2 + acces_m2
     places = len(scene.of("place"))
 
     places_imp, details = _places_imposees(scene, conv, regles)
 
-    # distribution par niveau (mesurée)
     distribution = []
     for n in range(niveaux):
         mods_n = [o for o in modules if o.niveau == n]
@@ -84,23 +106,32 @@ def calculer(scene: Scene, conv: Conventions, regles: ReglesZone) -> Capacite:
                     if o.kind in ("module", "noyau", "coursive") and o.niveau == n)
         distribution.append({"niveau": n, "par_type": pt, "sdp_m2": round(sdp_n, 1)})
 
-    # mixité (règle validée) : seuil sur la SDP d'habitation
+    # mixité : applicable si seuil en SDP franchi, OU seuil en nombre de logements franchi, OU
+    # quota validé sans seuil (s'applique à tout). Quota appliqué à la SDP d'habitation.
+    mix = regles.mixite
     mix_app = aides = sdp_aidee = None
-    if regles.mixite.validee and regles.mixite_seuil_m2 is not None and regles.mixite_quota_pct is not None:
-        mix_app = sdp > regles.mixite_seuil_m2
-        if mix_app:
-            sdp_aidee = sdp * regles.mixite_quota_pct / 100.0
-            aides = math.ceil(len(modules) * regles.mixite_quota_pct / 100.0)
+    if mix.validee and mix.quota_pct is not None:
+        if mix.seuil_m2 is not None:
+            mix_app = sdp > mix.seuil_m2
+        elif mix.seuil_logements is not None:
+            mix_app = len(modules) >= mix.seuil_logements
         else:
-            sdp_aidee = 0.0
-            aides = 0
+            mix_app = True
+        if mix_app:
+            sdp_aidee = sdp * mix.quota_pct / 100.0
+            aides = math.ceil(len(modules) * mix.quota_pct / 100.0)
+        else:
+            sdp_aidee, aides = 0.0, 0
 
     return Capacite(
         logements=len(modules), par_type=par_type, niveaux=niveaux,
         sdp_m2=round(sdp, 1), shab_estimee_m2=round(shab, 1),
         shab_par_type_m2={k: round(v, 1) for k, v in shab_par_type.items()},
-        emprise_sol_m2=round(emprise_sol, 1), pleine_terre_m2=round(pleine_terre, 1),
-        places=places, places_imposees=places_imp,
+        bati_m2=round(bati, 1), places_m2=round(places_m2, 1), allees_m2=round(allees_m2, 1),
+        acces_m2=round(acces_m2, 1), pleine_terre_m2=round(pleine_terre, 1),
+        reste_non_affecte_m2=round(reste, 1), surface_stationnement_m2=round(stat, 1),
+        m2_par_place=(round(stat / places, 1) if places else None),
+        emprise_sol_m2=round(bati, 1), places=places, places_imposees=places_imp,
         distribution_niveaux=distribution,
         mixite_applicable=mix_app, logements_aides_imposes=aides,
         sdp_aidee_imposee_m2=(round(sdp_aidee, 1) if sdp_aidee is not None else None),

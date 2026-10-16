@@ -83,6 +83,7 @@ class Scene:
     voie_bas: bool                 # True si la voie est côté y faible (sinon y fort)
     voie_local: list[LineString]
     objets: list[Objet] = field(default_factory=list)
+    stationnement_note: Optional[dict] = None   # {allee_unique, cotes, deux_cotes, raison}
 
     def ajouter(self, o: Objet) -> None:
         self.objets.append(o)
@@ -225,110 +226,102 @@ def poser_barre(scene: Scene, conv: Conventions, *, x_start: float, x_end: float
 
 # ---------------------------------------------------------------- stationnement aérien
 def poser_stationnement(scene: Scene, conv: Conventions, *, cible: int) -> int:
-    """Pose jusqu'à `cible` places (2,5 × 5 m) desservies par une allée, entre la voie et le bâti.
-    Chaque place TOUCHE l'allée (partage d'arête, aire d'intersection nulle). Un accès relie l'allée
-    à la voie. Renvoie le nombre de places RÉELLEMENT dessinées (contenues dans l'assiette, hors bâti)."""
+    """UNE allée unique, places des DEUX côtés quand la largeur le permet (sinon un seul côté, le
+    `stationnement_note` dit pourquoi). Chaque place touche l'allée (aire ∩ = 0). Un accès relie
+    l'allée à la voie. Renvoie le nb de places dessinées (≤ cible). Allée posée seulement si ≥ 1 place
+    la dessert ET qu'elle est reliée à l'accès (sinon aucune allée, pas de cul-de-sac)."""
     if cible <= 0:
         return 0
-    bati = unary_union([o.geom_local for o in scene.of("batiment_emprise")]) if scene.of("batiment_emprise") else None
+    batis = [o.geom_local for o in scene.of("batiment_emprise")]
+    bati = unary_union(batis) if batis else None
+    free = scene.assiette_local.difference(bati) if bati is not None else scene.assiette_local
     ax0, ay0, ax1, ay1 = scene.assiette_local.bounds
-    pl, pw = conv.place_longueur_m, conv.place_largeur_m         # 5 (profondeur y), 2.5 (largeur x)
-    aw = conv.allee_largeur_m
-    # on garnit TOUTE la hauteur libre de l'assiette : les places/allées sous le bâti sont écartées
-    # par `libre()`. Le stationnement occupe donc la bande devant le bâti ET les bouts au-delà de la
-    # barre (où toute la largeur de l'assiette est disponible). La traversée depuis la voie se fait
-    # en partant du côté voie.
-    if scene.voie_bas:
-        y_lo, y_hi = ay0, ay1
-    else:
-        y_lo, y_hi = ay0, ay1
+    pl, pw, aw, cw = (conv.place_longueur_m, conv.place_largeur_m,
+                      conv.allee_largeur_m, conv.acces_largeur_m)
 
-    def libre(p: Polygon) -> bool:
-        if not scene.assiette_local.contains(p.buffer(-1e-9)):
-            return False
-        if bati is not None and p.intersects(bati) and p.intersection(bati).area > 1e-6:
-            return False
-        return True
+    def dans_libre(p: Polygon) -> bool:
+        return free.covers(p.buffer(-1e-9))
 
-    # bandes alternées sur toute la hauteur de l'assiette : place(5) / allée(5) / place(5) / allée(5)…
-    # Chaque rangée de places est adjacente à une allée. Places/allées sous le bâti ou hors assiette
-    # écartées. On conserve TOUS les morceaux d'allée (le bâti peut couper une bande en deux).
-    pose = 0
-    place_rows: list[tuple[float, float]] = []
-    allee_bandes: list[tuple[float, float]] = []
-    y, est_place = y_lo, True
-    while y < y_hi - 1e-9:
-        if est_place:
-            if y + pl <= y_hi + 1e-9:
-                place_rows.append((y, y + pl))
-            y += pl
-        else:
-            allee_bandes.append((y, y + aw))
-            y += aw
-        est_place = not est_place
-
-    allee_objs: list[Objet] = []
-    for (ya, yb) in allee_bandes:
-        bande = scene.assiette_local.intersection(rect(ax0, ya, ax1, yb))
-        if bati is not None and not bande.is_empty:
-            bande = bande.difference(bati)
-        if bande.is_empty:
+    # choisit la bande d'allée (centre yc, le long de x) maximisant les places des deux côtés
+    best = None
+    yc = ay0 + aw / 2.0
+    while yc + aw / 2.0 <= ay1 + 1e-9:
+        allee_g = free.intersection(rect(ax0, yc - aw / 2.0, ax1, yc + aw / 2.0))
+        allee_g = _plus_grand(allee_g) if not allee_g.is_empty else allee_g
+        yc += 0.5
+        if allee_g.is_empty or not isinstance(allee_g, Polygon):
             continue
-        morceaux = list(bande.geoms) if isinstance(bande, MultiPolygon) else [bande]
-        for g in morceaux:
-            if not isinstance(g, Polygon) or g.area < 2.0:
-                continue
-            mnx, mny, mxx, mxy = g.bounds
-            if min(mxx - mnx, mxy - mny) < aw - 0.05:        # trop étroit pour une allée
-                continue
-            o = Objet("allee", g)
-            scene.ajouter(o)
-            allee_objs.append(o)
-    if not allee_objs:
+        mnx, mny, mxx, mxy = allee_g.bounds
+        if (mxx - mnx) < 2 * pw or (mxy - mny) < aw - 0.05:
+            continue
+        cyc = (mny + mxy) / 2.0
+        cands = []
+        for (yr0, yr1, side) in [(cyc - aw / 2.0 - pl, cyc - aw / 2.0, "bas"),
+                                 (cyc + aw / 2.0, cyc + aw / 2.0 + pl, "haut")]:
+            x = ax0
+            while x + pw <= ax1 + 1e-9:
+                p = rect(x, yr0, x + pw, yr1)
+                x += pw
+                if dans_libre(p) and p.distance(allee_g) < 1e-6:
+                    cands.append((p, side))
+        if not cands:
+            continue
+        key = (len(cands), -cyc)
+        if best is None or key > best[0]:
+            best = (key, allee_g, cands)
+    if best is None:
+        return 0
+    _, allee_g, cands = best
+
+    acces_g = _acces_corridor(scene, conv, allee_g, bati)
+    if acces_g is None:          # pas d'accès reliant la voie à l'allée -> pas de stationnement
         return 0
 
-    # accès d'abord (relie la voie à l'allée la plus proche) : les places ne doivent pas l'empiéter
-    acces_geom = _acces_geom(scene, conv, allee_objs)
-    if acces_geom is not None:
-        scene.ajouter(Objet("acces", acces_geom))
+    # places retenues (hors accès), ordre déterministe (côté puis x), jusqu'à cible
+    places = sorted((pc for pc in cands if pc[0].intersection(acces_g).area <= 1e-6),
+                    key=lambda pc: (round(pc[0].bounds[1], 2), round(pc[0].bounds[0], 2)))
+    retenues = places[:cible]
+    if not retenues:
+        return 0
+    scene.ajouter(Objet("allee", allee_g))
+    scene.ajouter(Objet("acces", acces_g))
+    cotes = set()
+    for (p, side) in retenues:
+        scene.ajouter(Objet("place", p))
+        cotes.add(side)
+    deux = len(cotes) == 2
+    scene.stationnement_note = {
+        "allee_unique": True, "cotes": sorted(cotes), "deux_cotes": deux,
+        "raison": ("places des deux côtés de l'allée unique" if deux else
+                   "places d'un seul côté : la largeur libre perpendiculaire à l'allée n'autorise pas "
+                   "une seconde rangée (il faut allée 5 m + 2 × 5 m de places = 15 m)"),
+    }
+    return len(retenues)
 
-    # places rangée par rangée, de gauche à droite ; chaque place touche une allée (partage d'arête)
-    for (yr0, yr1) in place_rows:
-        x = ax0
-        while x + pw <= ax1 + 1e-9 and pose < cible:
-            p = rect(x, yr0, x + pw, yr1)
-            x += pw
-            if not libre(p):
-                continue
-            if acces_geom is not None and p.intersection(acces_geom).area > 1e-6:
-                continue
-            if not any(p.distance(a.geom_local) < 1e-6 for a in allee_objs):
-                continue
-            scene.ajouter(Objet("place", p))
-            pose += 1
-    return pose
 
-
-def _acces_geom(scene: Scene, conv: Conventions, allee_objs: list[Objet]) -> Optional[Polygon]:
-    ax0, ay0, ax1, ay1 = scene.assiette_local.bounds
-    cw = conv.acces_largeur_m
-    # allée la plus proche de la voie
-    if scene.voie_bas:
-        a = min(allee_objs, key=lambda o: o.geom_local.bounds[1])
-        y_voie, y_all = ay0, a.geom_local.bounds[1]
-        acces = rect(0, y_voie, cw, y_all)
+def _acces_corridor(scene: Scene, conv: Conventions, allee_g: Polygon,
+                    bati: Optional[BaseGeometry]) -> Optional[Polygon]:
+    """Corridor (acces_largeur) reliant la limite voie à l'allée. None si rien ne les relie."""
+    from shapely.ops import nearest_points
+    if not scene.voie_local:
+        return None
+    voie = unary_union(scene.voie_local)
+    vp, ap = nearest_points(voie, allee_g)
+    seg = LineString([vp, ap])
+    if seg.length < 0.1:
+        corridor = vp.buffer(conv.acces_largeur_m / 2.0, cap_style=3)
     else:
-        a = max(allee_objs, key=lambda o: o.geom_local.bounds[3])
-        y_voie, y_all = ay1, a.geom_local.bounds[3]
-        acces = rect(0, y_all, cw, y_voie)
-    # centre l'accès sur l'emprise x de la voie (segments voie en local)
-    vx = unary_union(scene.voie_local).centroid.x if scene.voie_local else (ax0 + ax1) / 2.0
-    acces = translate(acces, xoff=vx - cw / 2.0)
-    acces = scene.assiette_local.intersection(acces)
-    acces = _plus_grand(acces) if not acces.is_empty else acces
-    if not acces.is_empty and isinstance(acces, Polygon) and acces.area > 0.5:
-        return acces
-    return None
+        corridor = seg.buffer(conv.acces_largeur_m / 2.0, cap_style=2)
+    corridor = scene.assiette_local.intersection(corridor)
+    # l'accès TOUCHE l'allée (partage d'arête) mais ne la recouvre pas, et évite le bâti
+    corridor = corridor.difference(allee_g)
+    if bati is not None and not corridor.is_empty:
+        corridor = corridor.difference(bati)
+    corridor = _plus_grand(corridor) if not corridor.is_empty else corridor
+    if (corridor.is_empty or not isinstance(corridor, Polygon) or corridor.area < 0.5
+            or corridor.distance(voie) > 0.6 or corridor.distance(allee_g) > 1e-6):
+        return None
+    return corridor
 
 
 # ---------------------------------------------------------------- espaces libres
