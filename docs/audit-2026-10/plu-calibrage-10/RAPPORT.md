@@ -251,3 +251,110 @@ couvrant fixe / relative / conditionnelle / silence / forme hors schéma.
 (scenario-*.json + plan-*.png des 3 témoins ; `apres/*-deux-barres.*` = démonstration multi-bâtiments).
 
 Commits par lot, **aucun merge**.
+
+---
+---
+
+# ADDENDUM — SUITE PLU-CALIBRAGE-10 (points 1→5)
+
+Cette suite **étend** le premier jet (13 feuilles d'échantillon) à une calibration **exhaustive**,
+lit les 4 communes hors corpus au PDF règlement, ramène la convention de noyau à une valeur usuelle,
+durcit la sémantique des 4 états, et rejoue les témoins. Elle **supersède** les chiffres de ratio et
+le tableau partiel ci-dessus. 5 commits (un par point), aucun merge.
+
+## Point 1 — Calibrage exhaustif (corpus DB) + Point 2 (PDF) : tableau final 24 communes
+
+Source : `plu_reglement_extrait` (corpus DB, 18 communes) **et** règlements PDF GPU/mairie pour les 4
+communes hors corpus (L'Étang-Salé U/AU, Saint-André, Saint-Benoît, Saint-Leu), lus à PyMuPDF via
+`telecharger_reglement` (mêmes sources que PLU-CALIBRAGE-9 / IMPLANTATION-1). **128 feuilles validée,
+22 communes**, chaque valeur recoupée au texte opposable (0 écart). Classification déterministe par
+forme ; **silence seulement s'il est prouvé** ; formes hors schéma laissées NON servies (STOP).
+
+| INSEE | Commune | Zones calibrées | Formes | Statut |
+|------|---------|:---:|--------|--------|
+| 97401 | Les Avirons | 5 | fixe ×2, silence ×3 | calibrée |
+| 97402 | Bras-Panon | 8 | fixe ×3, silence ×5 | calibrée |
+| 97403 | Entre-Deux | 2 | silence ×2 | calibrée (U/AU renvoi) |
+| 97404 | L'Étang-Salé | 8 | **fixe ×8 (3 m)** | calibrée au **PDF** (témoin UA) |
+| 97405 | Petite-Île | 0 | — | **non servie** : art. A.8 seul (zone nulle au corpus, multi-valeurs) |
+| 97406 | La Plaine-des-Palmistes | 7 | fixe ×5, silence ×2 | calibrée |
+| 97407 | Le Port | 10 | fixe ×6, conditionnelle ×1, silence ×3 | calibrée |
+| 97408 | La Possession | 8 | relative ×4, fixe ×1, silence ×3 | calibrée |
+| 97409 | Saint-André | 10 | fixe ×3, silence ×7 | calibrée au **PDF** (témoin UC = silence) |
+| 97410 | Saint-Benoît | 1 | silence ×1 | calibrée au **PDF** (seule UE réglée « non réglementées ») |
+| 97411 | Saint-Denis | 10 | relative ×9, silence ×1 | calibrée (témoin Ui) |
+| 97412 | Saint-Joseph | 6 | relative ×6 (U1–U6) | calibrée |
+| 97413 | Saint-Leu | 10 | fixe ×7, relative ×2, conditionnelle ×1 | calibrée au **PDF** |
+| 97414 | Saint-Louis | 8 | fixe ×6, silence ×2 | calibrée |
+| 97415 | Saint-Paul | 5 | fixe ×5 | calibrée |
+| 97416 | Saint-Pierre | 1 | silence ×1 | calibrée (UA/UE silence ; UD/UF/UG/US/UT par type = STOP) |
+| 97417 | Saint-Philippe | 0 | — | **sans objet — RNU** |
+| 97418 | Sainte-Marie | 2 | fixe ×2 | calibrée |
+| 97419 | Sainte-Rose | 6 | conditionnelle ×4, silence ×2 | calibrée |
+| 97420 | Sainte-Suzanne | 3 | fixe ×1, silence ×2 | calibrée |
+| 97421 | Salazie | 4 | fixe ×1, conditionnelle ×1, silence ×2 | calibrée |
+| 97422 | Le Tampon | 3 | fixe ×3 (Ue/A/N) | calibrée ; **Ua–Ud hors schéma** (seuil >5 logts) = STOP |
+| 97423 | Les Trois-Bassins | 6 | relative ×4, silence ×2 | calibrée |
+| 97424 | Cilaos | 5 | fixe ×5 | calibrée |
+
+**Total : 128 feuilles validée · 22 communes calibrées.** Non servies : Saint-Philippe (RNU) et
+Petite-Île (U/AU hors corpus, art. A.8 multi-valeurs). Les 4 « non lu » du premier jet sont **toutes
+lues au PDF** : seule Petite-Île reste non servie, par absence de source exploitable (jamais un
+silence non prouvé).
+
+### Formes hors schéma (STOP, dites — jamais devinées)
+
+- **Le Tampon Ua–Ud** : 3 m porté à 6 m au-delà de 5 logements (seuil par **nombre de logements**) ;
+- **Saint-Pierre Ud/Uf/Ug/Us/Ut** : 3 m logements individuels / 5 m autres (par **type**), Up par classe de hauteur ;
+- **Saint-Denis Up** : 4 m / 5 m selon R+1+C (par **classe de hauteur**) ; `Uma` « desserte/incendie » (non chiffré) ;
+- **renvois** (« se reporter au règlement de la zone … », AVAP) : non servis.
+
+## Point 3 — Convention de noyau usuelle
+
+`surface_noyau_m2: 20` (Estimé, **escalier + ascenseur + palier**, par niveau et par bâtiment),
+nommée dans `config/implantation_conventions.yaml`. Remplace l'ancienne `largeur_noyau_m: 3,5 m` qui,
+sur toute la profondeur habitable, donnait ≈ 40 m²/niveau — au-dessus des valeurs usuelles. La largeur
+de la tranche en est **dérivée** (surface ÷ profondeur habitable ≈ 1,72 m), de sorte que la **surface**
+reste usuelle.
+
+## Point 4 — Non applicable réservé au silence prouvé
+
+Convention stricte des 4 états du contrôle « Distance entre constructions » :
+
+- **Non applicable** = UNIQUEMENT le **silence prouvé** (le règlement dit ne pas réglementer) ;
+- **Non effectué** = règle **non servie** (zone/commune non calibrée, non lue, forme hors schéma) —
+  **y compris en mono-bâtiment** (une lacune de calibrage n'est plus requalifiée en « Non applicable ») ;
+- **Réussi / Échoué** = règle servie chiffrable confrontée à la mesure (mono-bâtiment = Réussi sans
+  objet, aucun vis-à-vis).
+
+## Points 3+5 — Témoins rejoués (avant → après) et ratio SHAB/SDP
+
+« avant » = `main` (avant PLU-CALIBRAGE-10) ; « après » = ensemble final (calibrage + noyau + sémantique).
+Plans + json dans `avant/` et `apres/` (+ `apres/*-deux-barres.*`).
+
+| Témoin | Zone | Forme retenue (avant → après) | Distance (après) | Ratio SHAB/SDP (avant → après) |
+|--------|------|-------------------------------|------------------|-------------------------------|
+| **L'Étang-Salé** | UA | barre → **deux_barres R+3, 28 logts, 2 bâtiments** | **Réussi** (≥ 3 m fixe ; **10,7 m mesurés**) | 0,596 → **0,729** |
+| **Saint-André** | UC | barre R+2, 27 logts (mono) | **Non applicable** (silence UC + convention 6 m) | 0,610 → **0,743** |
+| **Saint-Denis** | Ui | barre R+2, 12 logts (mono) | **Réussi** (règle servie, mono = sans objet) | 0,528 → **0,740** |
+
+**Fait marquant (point 5) : L'Étang-Salé propose désormais une implantation en DEUX bâtiments qui
+PASSE le contrôle de distance** (3 m fixe calibrée, 10,7 m mesurés → Réussi) et reste **exploitable** —
+exactement l'effet voulu : plusieurs bâtiments ne font plus basculer l'étude « à compléter » quand la
+règle est servie. **Saint-André** est rejoué « plusieurs bâtiments autorisés » : sa règle UC étant un
+silence prouvé, le multi-bâtiments n'est plus bloqué par la distance (Non applicable + convention) ;
+le moteur garde la meilleure implantation qui passe (ici la barre unique, plus capacitaire ; son « à
+compléter » tient à la **PPR bleue**, pas à la distance). La démonstration deux_barres forcée
+(`apres/plan-saint-andre-deux-barres.png`) confirme : distance **Non applicable** (7,7 m mesurés,
+convention 6 m).
+
+Ratio : la sortie des coursives (R111-22) **puis** la convention de noyau usuelle amènent le ratio à
+**~0,73–0,74**, au niveau (voire au-dessus) du ~0,70 de l'architecte — ce qui s'explique (le modèle
+n'a ni sous-sol, ni circulations/locaux supplémentaires que l'architecte compte). Aucune cible visée :
+le ratio est une **conséquence** mesurée, pas un objectif.
+
+## Tests (ensemble final)
+
+`tests/test_implantation_distance.py` (pur/CI) : 17 tests (4 formes + silence + non-servi + mono-bâtiment
+pt 4 + bascule de statut). `tests/test_implantation1.py` (reel, 3 témoins) : 82 tests. **99 verts.**
+⚠ 2 `test_simulplu` **pré-existants** (hors sujet). 128 feuilles chargées validée, 0 écart au verbatim.
