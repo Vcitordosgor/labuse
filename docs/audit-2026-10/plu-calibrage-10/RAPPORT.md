@@ -358,3 +358,107 @@ le ratio est une **conséquence** mesurée, pas un objectif.
 `tests/test_implantation_distance.py` (pur/CI) : 17 tests (4 formes + silence + non-servi + mono-bâtiment
 pt 4 + bascule de statut). `tests/test_implantation1.py` (reel, 3 témoins) : 82 tests. **99 verts.**
 ⚠ 2 `test_simulplu` **pré-existants** (hors sujet). 128 feuilles chargées validée, 0 écart au verbatim.
+
+---
+---
+
+# AUDIT AVANT-MERGE — silences, Saint-André, Saint-Pierre (4 points)
+
+Un commit. Audit de **toutes** les feuilles classées « silence » et correction des classements.
+Résultat net : **128 → 124 feuilles validée** (−2 reclassées fixe, +0 ; −4 silences reclassés
+conditionnelle ; −4 silences retirés STOP ; +… inchangés). Formes : **60 fixe · 28 silence · 25
+relative · 11 conditionnelle**.
+
+## Point 1 — Saint-André UC n'est PAS un silence → conditionnelle 8 m
+
+« Non réglementée, **sous réserve** que la distance minimale entre les ouvertures en vis-à-vis de deux
+pièces principales d'habitations soit de **8 mètres** » (UC 8, p. 39). La distance bâtiment-à-bâtiment
+« avec ouvertures en vis-à-vis » est bien **8 m**. Reclassée **conditionnelle** (`avec_ouvertures_m: 8`,
+sans ouverture = non réglementé) pour **UA/UB/UC/UD**. Le moteur applique **8 m** (cas le plus strict).
+Témoin Saint-André rejoué : barre unique → **Réussi** (règle servie, sans objet en mono-bâtiment) ;
+deux_barres forcé → distance **Réussi « ≥ 8 m (façades avec ouvertures) », 9,2 m mesurés** (le « à
+compléter » tient à la **PPR bleue**, non à la distance).
+
+## Point 2 — Audit de toutes les feuilles « silence » (38 → 28 conservées)
+
+Critère : tout verbatim (fenêtré sur la sous-partie inter-bâtiments) contenant une **distance
+chiffrée**, « sous réserve », « toutefois », « sauf », « excepté », « dans le cas », « en secteur » →
+reclasser ou STOP. 11 feuilles suspectes trouvées :
+
+| Commune / zone | Verbatim | Décision |
+|---|---|---|
+| Bras-Panon **Uc, Ud** | « … d'au moins **6 mètres** » (UC 8 / UD 8) | **reclassées fixe 6 m** (étaient silence par erreur) |
+| Saint-André **UA/UB/UC/UD** | « sous réserve … **8 mètres** entre ouvertures » | **reclassées conditionnelle 8 m** (point 1) |
+| Saint-Denis **Uv** | « Non réglementé **En secteur Uvac** : … (H+h)/2 min 4 » | **STOP** (silence général + règle de sous-secteur) |
+| Sainte-Rose **A** | « Sans objet, **sauf** secteur Ai où … (H+h)/2 min 4 » | **STOP** |
+| Sainte-Rose **N** | « Sans objet, **sauf** secteurs Nec/Nrev où … (H+h)/2 min 6 » | **STOP** |
+| Salazie **A** | « Sans objet, **sauf** secteur Aba où … 3 m **dans le cas** … baies » | **STOP** |
+| Salazie **N** | 8.2 « Sans objet » ; « dans le cas » **seulement en 8.3 (exception)**, aucune distance | **silence conservé** (faux positif) |
+
+Les 4 STOP (sous-secteurs) deviennent « Non effectué » au moteur (zone non servie proprement) :
+la règle n'y vaut que pour un sous-secteur nommé, non représentable par une forme unique de zone.
+
+### Les 28 silences CONSERVÉS (citation complète)
+
+Tous re-vérifiés : « Sans objet. » / « Non réglementée. » sans distance ni réserve (silence prouvé).
+
+| INSEE | Commune | Zone | Réf. | Citation |
+|---|---|---|---|---|
+| 97401 | Les Avirons | AUes | ARTICLE AUES 8 p.43 | Sans objet. |
+| 97401 | Les Avirons | A | ARTICLE A 8 p.47 | Sans objet. |
+| 97401 | Les Avirons | N | ARTICLE N 8 p.54 | Sans objet. |
+| 97402 | Bras-Panon | AUst | ARTICLE AUST 8 p.83 | Sans objet. |
+| 97402 | Bras-Panon | A | ARTICLE A8 p.91 | Non réglementée. |
+| 97402 | Bras-Panon | N | ARTICLE N8 p.101 | Sans objet. |
+| 97403 | Entre-Deux | A | Article A5 p.36 | Sans objet. |
+| 97403 | Entre-Deux | N | Article N5 p.42 | Sans objet. |
+| 97406 | La Plaine-des-Palmistes | AUs | ARTICLE AUs 8 p.73 | Sans objet. |
+| 97406 | La Plaine-des-Palmistes | A | ARTICLE A 8 p.84 | Non réglementée. |
+| 97407 | Le Port | Up | Article Up 6 p.110 | Non réglementée. |
+| 97407 | Le Port | A | Article A 6 p.164 | Non réglementé. |
+| 97407 | Le Port | N | Article N 6 p.173 | Non réglementé. |
+| 97408 | La Possession | AUst | ARTICLE AUST 8 p.82 | Sans objet. |
+| 97408 | La Possession | A | ARTICLE A8 p.89 | Sans objet. |
+| 97408 | La Possession | N | ARTICLE N8 p.97 | Sans objet. |
+| 97409 | Saint-André | 1AUcr | 1AUCR 8 p.98 | Sans objet. |
+| 97409 | Saint-André | A | A 8 p.109 | Non réglementée. |
+| 97409 | Saint-André | N | N 8 p.117 | Sans objet. |
+| 97410 | Saint-Benoît | Ue | Volumétrie p.89 | … les distances entre bâtiments ne sont pas réglementées. |
+| 97414 | Saint-Louis | A | ARTICLE A8 p.123 | Non réglementée. |
+| 97414 | Saint-Louis | N | ARTICLE N8 p.132 | Non réglementée. |
+| 97416 | Saint-Pierre | Ue | ARTICLE Ue3 p.192 | Non réglementée. |
+| 97420 | Sainte-Suzanne | A | Article A6 p.35 | Sans objet. |
+| 97420 | Sainte-Suzanne | N | Article N6 p.42 | Sans objet. |
+| 97421 | Salazie | N | ARTICLE N8 p.54 | Sans objet. (8.2 ; « dans le cas » en 8.3 seulement) |
+| 97423 | Les Trois-Bassins | AUs | ARTICLE AUs 8 p.72 | Sans objet. |
+| 97423 | Les Trois-Bassins | A | ARTICLE A 8 p.79 | Non réglementée. |
+
+## Point 3 — Saint-Pierre, tranché zone par zone (citation à l'appui)
+
+Le LOT A annonçait « silence prouvé » pour toute la commune ; le corpus montre que c'est **FAUX pour
+plusieurs zones**. Verdict par zone (Eco-PLU, art. 3 pt 3/ « les unes par rapport aux autres sur une
+même parcelle ») :
+
+| Zone | Verbatim | Verdict |
+|---|---|---|
+| **Ua** | « Non règlementée » | silence — mais **pas de clé YAML `Ua`** (zone non présente au calibrage) → non servie |
+| **Ue** | « Non réglementée » | **silence prouvé — servi** (seule zone Saint-Pierre calibrée) |
+| **Ud, Uf, Ug, Us, Ut** | « Entre deux constructions … le retrait minimum autorisé est fixé à **3 m pour les logements individuels** et leurs annexes et **5 m pour les autres constructions** » | **forme hors schéma (par TYPE) → STOP** (non servie) |
+| **Up** | « … fixé à **1,90 m pour les bâtiments de hauteur supérieure à 3 m** à l'égout » | **forme hors schéma (par CLASSE DE HAUTEUR) → STOP** |
+| **Ucv** | pas de règle inter-bâtiments chiffrable captée | STOP |
+
+Donc Saint-Pierre n'est PAS un silence d'ensemble : **Ue silence servi** ; les autres zones sont soit
+des règles par type/hauteur (hors schéma, STOP), soit absentes du YAML. Corrige l'affirmation du LOT A.
+
+## Point 4 — SONDAGE-10 refait (≥ 4 silences aléatoires)
+
+`SONDAGE-10.md` : **5 silences** tirés parmi les 28 (La Possession A, Le Port A, Saint-Pierre Ue,
+Saint-Benoît Ue, Salazie N) + 5 règles chiffrées/conditionnelles (dont Saint-André UC reclassé 8 m).
+Chaque silence re-vérifié sur le verbatim complet : aucune distance cachée.
+
+## Tests & témoins
+
+Tests (pur + reel) **verts** après reclassements. Témoins rejoués (`avant/`, `apres/`) : L'Étang-Salé
+**deux_barres** (3 m fixe, 10,7 m, Réussi, exploitable) ; **Saint-André UC conditionnelle 8 m** —
+mono-barre Réussi, deux_barres forcé 9,2 m ≥ 8 m Réussi (à compléter = PPR bleue) ; Saint-Denis Ui
+relative Réussi. Ratio SHAB/SDP inchangé (0,729 / 0,743 / 0,740).

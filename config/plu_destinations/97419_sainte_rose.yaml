@@ -1011,13 +1011,6 @@ zones:
   A:
     regles:
       retraits:
-        entre_constructions:
-          forme: silence
-          absent: true
-          article: 'ARTICLE A8'
-          page_pdf: 70
-          citation: 'Sans objet, sauf pour le secteur Ai où la distance en tout point entre deux constructions non contigües sur une même unité  foncière doit être au moins égale à la moitié de la hauteur cumulée des deux'
-          statut: valide
     silence: interdit
     silence_src: 'Art. A1 1.2, p. 66 : « A l''exception de ceux visés à l''article A2.2., sont interdits toutes
       les constructions, tous les ouvrages et travaux. »'
@@ -1316,13 +1309,6 @@ zones:
   N:
     regles:
       retraits:
-        entre_constructions:
-          forme: silence
-          absent: true
-          article: 'ARTICLE N8'
-          page_pdf: 78
-          citation: 'Sans objet, sauf pour les secteurs Nec et Nrev, où la distance en tout point entre deux constructions non contigües sur une  même unité foncière doit être au moins égale à la moitié de la hauteur cumu'
-          statut: valide
     silence: interdit
     silence_src: 'Art. N1 1.2, p. 74 : « A l''exception de ceux visés à l''article N2.2., sont interdits toutes
       les constructions, ouvrages et travaux. »'

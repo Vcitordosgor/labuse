@@ -417,11 +417,11 @@ zones:
           statut: valide
       retraits:
         entre_constructions:
-          forme: silence
-          absent: true
+          forme: fixe
+          min_m: 6
           article: 'ARTICLE UC 8'
           page_pdf: 44
-          citation: 'Non réglementée.'
+          citation: 'Deux constructions principales non contiguës implantées sur une même unité foncière, doivent respecter une distance entre elles d’au moins 6 mètres.'
           statut: valide
         voie:
           min_m: 4.0
@@ -530,11 +530,11 @@ zones:
           statut: valide
       retraits:
         entre_constructions:
-          forme: silence
-          absent: true
+          forme: fixe
+          min_m: 6
           article: 'ARTICLE UD 8'
           page_pdf: 57
-          citation: 'Non réglementée.'
+          citation: 'Deux constructions principales non contiguës implantées sur une même unité foncière, doivent respecter une distance entre elles d’au moins 6 mètres.'
           statut: valide
         voie:
           min_m: 4.0

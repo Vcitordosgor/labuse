@@ -36,12 +36,11 @@ zones:
           statut: valide
       retraits:
         entre_constructions:
-          forme: silence
-          absent: true
+          forme: conditionnelle
+          avec_ouvertures_m: 8
           article: 'UA 8'
           page_pdf: 16
-          citation: 'Non réglementée, sous réserve que la distance minimale entre les ouvertures en vis-à-vis de deux pièces 
-principales d’habitations soit de 8 mètres.'
+          citation: 'Non réglementée, sous réserve que la distance minimale entre les ouvertures en vis-à-vis de deux pièces principales d’habitations soit de 8 mètres.'
           statut: valide
         voie:
           min_m: 4.0
@@ -181,12 +180,11 @@ principales d’habitations soit de 8 mètres.'
           statut: valide
       retraits:
         entre_constructions:
-          forme: silence
-          absent: true
+          forme: conditionnelle
+          avec_ouvertures_m: 8
           article: 'UB 8'
           page_pdf: 28
-          citation: 'Non réglementée, sous réserve que la distance minimale entre les ouvertures en vis-à-vis de deux pièces 
-principales d’habitations soit de 8 mètres.'
+          citation: 'Non réglementée, sous réserve que la distance minimale entre les ouvertures en vis-à-vis de deux pièces principales d’habitations soit de 8 mètres.'
           statut: valide
         voie:
           min_m: 6.0
@@ -297,12 +295,11 @@ principales d’habitations soit de 8 mètres.'
           statut: valide
       retraits:
         entre_constructions:
-          forme: silence
-          absent: true
+          forme: conditionnelle
+          avec_ouvertures_m: 8
           article: 'UC 8'
           page_pdf: 39
-          citation: 'Non réglementée, sous réserve que la distance minimale entre les ouvertures en vis-à-vis de deux pièces 
-principales d’habitations soit de 8 mètres.'
+          citation: 'Non réglementée, sous réserve que la distance minimale entre les ouvertures en vis-à-vis de deux pièces principales d’habitations soit de 8 mètres.'
           statut: valide
         voie:
           min_m: 4.0
@@ -436,12 +433,11 @@ principales d’habitations soit de 8 mètres.'
           statut: valide
       retraits:
         entre_constructions:
-          forme: silence
-          absent: true
+          forme: conditionnelle
+          avec_ouvertures_m: 8
           article: 'UD 8'
           page_pdf: 50
-          citation: 'Non réglementée, sous réserve que la distance minimale entre les ouvertures en vis-à-vis de deux pièces 
-principales d’habitations soit de 8 mètres.'
+          citation: 'Non réglementée, sous réserve que la distance minimale entre les ouvertures en vis-à-vis de deux pièces principales d’habitations soit de 8 mètres.'
           statut: valide
         voie:
           min_m: 6.0

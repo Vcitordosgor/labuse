@@ -769,13 +769,6 @@ zones:
   A:
     regles:
       retraits:
-        entre_constructions:
-          forme: silence
-          absent: true
-          article: 'ARTICLE A8'
-          page_pdf: 45
-          citation: 'Sans objet, sauf pour le secteur Aba, où la distance séparant deux bâtiments doit être au moins égale à 3 mètres dans le cas où une  des deux façades ou parties de façade concernées comportent des bai'
-          statut: valide
     silence: interdit
     silence_src: 'Art. A1.2, p. 41 : « A l''exception de ceux visés à l''article A2.2., sont interdits toutes les
       constructions et tous les ouvrages et travaux. »'

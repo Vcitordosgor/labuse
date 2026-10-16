@@ -1379,13 +1379,6 @@ zones:
           citation: Non réglementé
           statut: valide
       retraits:
-        entre_constructions:
-          forme: silence
-          absent: true
-          article: 'Article Uv.8'
-          page_pdf: 84
-          citation: 'Non réglementée.'
-          statut: valide
         voie:
           formule: Toute construction ou installation sera implantée avec un recul de 4 m minimum par rapport
             à l’alignement.

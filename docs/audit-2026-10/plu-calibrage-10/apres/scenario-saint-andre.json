@@ -75,11 +75,11 @@
     },
     "distance_constructions": {
       "validee": true,
-      "forme": "silence",
+      "forme": "conditionnelle",
       "min_m": null,
       "fraction_hauteur": null,
       "base_hauteur": null,
-      "avec_ouvertures_m": null,
+      "avec_ouvertures_m": 8.0,
       "sans_ouvertures_m": null,
       "contiguite_autorisee": null,
       "article": "UC 8",
@@ -685,11 +685,11 @@
     },
     {
       "nom": "Distance entre constructions",
-      "regle": "non réglementé (silence prouvé)",
+      "regle": "≥ 8.0 m (façades avec ouvertures)",
       "mesure": "un seul bâtiment",
-      "resultat": "Non applicable",
+      "resultat": "Réussi",
       "citation": "PLU art. UC 8 · p. 39 — « Non réglementée, sous réserve que la distance minimale entre les ouvertures en vis-à-vis de deux pièces principales d’habitations soit de 8 mètres. »",
-      "detail": "le règlement ne fixe pas de distance entre constructions ; distance de convention 6 m appliquée au tracé (Estimé)"
+      "detail": "respectée sans objet (aucune construction en vis-à-vis)"
     },
     {
       "nom": "Locaux vélos · déchets",
