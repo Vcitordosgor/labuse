@@ -3,5 +3,7 @@
 cache/
 # journal d'avancement APPEND-ONLY du comparateur de trajets (reprise) — intermédiaire, non commité.
 _trajets_partiel.csv
+# journal d'avancement APPEND-ONLY du comparateur DPE/permis/Géorisques (reprise) — non commité.
+_dpe_permis_partiel.csv
 # rédacteur d'appoint du rapport (lit le CSV, écrit les tableaux) — pas du moteur, non commité.
 _gen_notes.py
