@@ -1969,6 +1969,36 @@ def faisabilite_scenario_route(idu: str, body: ScenarioIn, db: Session = Depends
     return {"idu": idu, "scenario": pan}
 
 
+class EtudeIn(BaseModel):
+    # IMPLANTATION-2 — l'étude de faisabilité EN LIGNE : 1 à 8 parcelles contiguës (assiette fusionnée,
+    # comme l'Assemblage), collectif seul actif, 4 objectifs, stationnement aérien seul, programme
+    # proposé par LABUSE ou saisi, hypothèses (« Estimé ») modifiables. Aucun calcul dans le front.
+    idus: list[str] = Field(default_factory=list)
+    type_projet: str = Field("collectif")
+    objectif: str = Field("equilibre")
+    stationnement: str = Field("aerien")
+    terrain: str = Field("libere")
+    programme: dict | None = None
+    hypotheses: dict | None = None
+
+
+@router.post("/etude")
+def etude_implantation(body: EtudeIn, db: Session = Depends(get_db)) -> dict:
+    """IMPLANTATION-2 — UN SEUL appel sert l'écran « Étude de faisabilité ». UN SEUL moteur
+    (`labuse.implantation`, déterministe, sans IA) : il dessine jusqu'à 3 scénarios distincts et en
+    TIRE capacité, contrôles 4 états et statut ; le payload porte la géométrie en GeoJSON (WGS84)
+    pour le plan masse de la carte, les hypothèses modifiables et les versions moteur + règles.
+    ValueError → 400 (entrée invalide), jamais un faux chiffre."""
+    from ..implantation.service import etudier_payload
+
+    for idu in (body.idus or []):
+        _check_idu(idu)
+    try:
+        return etudier_payload(db, body.model_dump())
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
+
+
 class ChargeIn(BaseModel):
     # hypothèses métier SAISIES (jamais estimées par LABUSE) — défauts « à ajuster »,
     # DÉRIVÉS de la source unique (mandat hypothèses bilan : plus de 2500 gravé ici).

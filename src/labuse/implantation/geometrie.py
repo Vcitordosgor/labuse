@@ -44,10 +44,14 @@ class Frame:
     @classmethod
     def depuis(cls, assiette: Polygon) -> "Frame":
         mrr = minimum_rotated_rectangle(assiette)
+        # Une assiette dégénérée (sliver, quasi-linéaire) peut rendre un MRR non polygonal ou à
+        # moins de 4 arêtes : on retombe sur un repère non tourné plutôt que de lever.
+        if not isinstance(mrr, Polygon) or mrr.is_empty:
+            return cls(ox=0.0, oy=0.0, angle_deg=0.0)
         xs, ys = mrr.exterior.coords.xy
         # arête la plus longue = grand axe
         best = (0.0, 0, 0.0)
-        for i in range(4):
+        for i in range(len(xs) - 1):
             dx, dy = xs[i + 1] - xs[i], ys[i + 1] - ys[i]
             L = math.hypot(dx, dy)
             if L > best[0]:
@@ -101,8 +105,12 @@ class Scene:
         return [o for o in self.objets if o.kind == kind]
 
     def finaliser_monde(self) -> None:
+        # La rotation affine monde↔local peut, en flottant, rendre AUTO-SÉCANTE une géométrie valide
+        # (typiquement les espaces libres / l'accès issus de différences). On revalide le monde pour
+        # que la géométrie SERVIE (GeoJSON) soit toujours valide — mesures et comptes restent pris
+        # sur le local, inchangé.
         for o in self.objets:
-            o.geom_world = self.frame.to_world(o.geom_local)
+            o.geom_world = _valide(self.frame.to_world(o.geom_local))
 
 
 def scene_depuis(terrain, frame: Frame) -> Scene:

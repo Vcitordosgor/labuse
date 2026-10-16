@@ -70,3 +70,21 @@ def geom_area_m2(geom_4326) -> float:
 
     metric = transform(_transformer_4326_to_2975().transform, geom_4326)
     return float(metric.area)
+
+
+@lru_cache(maxsize=1)
+def _transformer_2975_to_4326():
+    from pyproj import Transformer
+
+    return Transformer.from_crs(SRID_METRIC, SRID_STORAGE, always_xy=True)
+
+
+def to_4326(geom_2975):
+    """Reprojette une géométrie shapely 2975 → 4326 (ce que rendent les API / la carte).
+
+    Inverse de `geom_area_m2`/`to_metric` : l'implantation est dessinée en métrique (2975) et
+    doit être servie en WGS84 pour le plan masse géoréférencé de la carte.
+    """
+    from shapely.ops import transform
+
+    return transform(_transformer_2975_to_4326().transform, geom_2975)

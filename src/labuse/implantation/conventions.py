@@ -62,6 +62,33 @@ class Conventions:
         return self.surface_noyau_m2 / self.profondeur_logement_m()
 
 
+def avec_surcharges(conv: Conventions, *, profondeur_m: float | None = None,
+                    coef_plancher_habitable: float | None = None,
+                    surfaces: dict[str, float] | None = None) -> Conventions:
+    """Conventions avec HYPOTHÈSES surchargées (profondeur, plancher→habitable, surface moyenne par
+    type). Les bornes gardent la géométrie saine ; ces valeurs restent « Estimé » et ne peuvent
+    jamais rendre un contrôle réglementaire « Réussi ». `source` est mis à jour pour transparence."""
+    import copy
+    from dataclasses import replace
+
+    prof = conv.profondeur_m if profondeur_m is None else max(8.0, min(20.0, float(profondeur_m)))
+    coef = (conv.coef_plancher_habitable if coef_plancher_habitable is None
+            else max(0.5, min(1.0, float(coef_plancher_habitable))))
+    mods = dict(conv.modules)
+    if surfaces:
+        for t, s in surfaces.items():
+            if t in mods and s:
+                mods[t] = replace(mods[t], surface_m2=max(20.0, min(160.0, float(s))))
+
+    src = copy.deepcopy(conv.source)
+    src.setdefault("batiment", {})["profondeur_m"] = prof
+    src["batiment"]["coef_plancher_habitable"] = coef
+    for t, m in mods.items():
+        src.setdefault("modules", {}).setdefault(t, {})["surface_m2"] = m.surface_m2
+
+    return replace(conv, profondeur_m=prof, coef_plancher_habitable=coef, modules=mods, source=src)
+
+
 def charger(path: str | Path | None = None) -> Conventions:
     p = Path(path) if path else _DEFAUT
     raw = yaml.safe_load(p.read_text(encoding="utf-8"))
