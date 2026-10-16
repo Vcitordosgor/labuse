@@ -142,3 +142,23 @@ Bilan : **aucune anomalie bloquante ni gênante.** 3 points cosmétiques/informa
 - **Cause probable** : classe `truncate` (Tailwind `overflow:hidden; text-overflow:ellipsis`) sur le
   sous-titre d'aléas de la carte Risques dans `ContextePanel.tsx` (bloc `risques`, ~l.731+).
   Comportement voulu (résumé repliable) — à laisser tel quel ou autoriser le retour à la ligne.
+
+### A-04-1 — Blocs fonciers : table `parcel_blocs` vide → l'outil ne montre jamais rien
+- **Gravité** : gênant
+- **Où** : outil « Blocs fonciers » (`#m=blocs-fonciers`), bouton « Voir les parcelles ».
+- **Reproduire** :
+  1. Ouvrir l'outil Blocs fonciers (rail Outils → « Blocs fonciers », ou `#m=blocs-fonciers`).
+  2. Cliquer « Voir les parcelles » (filtres par défaut, n_min=2).
+- **Observé** : la requête `GET /modules/blocs?limit=200&n_min=2` répond **200** mais
+  `{"total":0,"n":0,"items":[]}`. L'UI affiche correctement l'état vide (data-blocs-vide :
+  « Aucun bloc de deux parcelles ou plus sur l’île. ») — pas de plantage, pas de NaN. Mais QUELLE
+  QUE SOIT la recherche, l'outil renvoie 0 : il ne peut jamais démontrer sa valeur dans cet
+  environnement. Vérifié en base : `SELECT count(*) FROM parcel_blocs;` = **0** (la table existe
+  mais n'a pas été alimentée).
+- **Capture** : captures/04-outils/ (blocs-vide).
+- **Cause probable** : la table `parcel_blocs` est bâtie par le batch `labuse blocs-build`
+  (cf. `src/labuse/api/modules.py:1169-1211`, « table parcel_blocs (bâtie par le batch … ») — ce
+  batch n'a pas été exécuté dans l'environnement de recette. Donc **défaut d'ENVIRONNEMENT (donnée
+  non ingérée), pas un bug de code applicatif.** Le code front/back se comporte correctement
+  (empty-state honnête). À corriger côté données : lancer `labuse blocs-build` avant la démo/prod,
+  sinon l'outil reste muet. Les 23 autres outils ne dépendent pas de cette table.

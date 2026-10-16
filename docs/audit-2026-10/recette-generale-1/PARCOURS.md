@@ -242,3 +242,50 @@ cache `commune_contexte_cache` VIDE en recette (0 ligne) → recalcul en direct 
 - **Erreurs console** : 1 warning React récurrent (clé dupliquée) — A-03-1 (non bloquant).
 - **Débordement** : 1 span tronqué « PPR · mouvement de terrain · CatNat » (classe `truncate`
   volontaire) — A-03-3 (cosmétique).
+
+## Famille 4 — Outils
+
+Périmètre : le menu « Outils » du rail de gauche affiche **16 outils** (confirmés identiques au
+registre `frontend/src/components/outils/registry.ts`, filtre `!hidden`, dans l'ordre fixé par le
+mandat). En plus, 2 clés RÉSOLVANTES masquées du menu mais accessibles par deep-link ont été
+testées (calculette-fonciere, mon-secteur). DESKTOP uniquement (barrage mobile, acquis Famille 1).
+
+Méthode : chaque outil ouvert seul (`#m=key`), puis sur une parcelle normale
+(`#idu=…&m=key`), puis sur un cas limite. **Note technique** : l'app ne lit le hash QU'AU MONTAGE
+(App.tsx `useEffect([])`, aucun listener `hashchange`) → pour commuter d'outil en automation il faut
+un vrai rechargement (query-buster `?r=N` avant le hash, cf. `qa-recette/_outils_lib.mjs`). Les
+VRAIS clics menu (qui passent par `setModule` en React) commutent sans ce contournement — vérifié.
+
+| Outil (clé) | Ouverture seul | Sur parcelle normale | Cas limite | Verdict |
+|---|---|---|---|---|
+| PLU (`plu`) | OK — Annuaire PLU + « Procédure & changement » | OK (97422000BX1106) | OK (97410000AE0144 non calibré) | **OK** |
+| Permis (`permis`) | OK — « 50 808 permis Sitadel » + filtres (récent/dormant…) | — (vue île) | — | **OK** |
+| Communes (`communes`) | OK — 4 entrées (Comparateur · Évolution · Annonces Radar · Acquisitions) | — | — | **OK** |
+| Scan patrimoine (`patrimoine`) | OK — 2 tuiles (Un propriétaire / Toutes les opérations) | OK : recherche SIDR → `/modules/patrimoine?siren=` 200, « 4 188 parcelles · 402,34 ha » (chiffres = API) | — | **OK** |
+| Assemblage (`assemblage`) | OK — saisie parcelles + « Vérifier l'assemblage (0) » | OK (UI de saisie) | OK (disparue 97416000IE0438, pas de casse) | **OK** |
+| Comparer (`comparer`) | OK — « Comparer (0/3) » | OK : « + Ajouter la parcelle courante » + saisie IDU+Entrée → 2 chips, bouton « Comparer (2/3) » actif, tableau s'ouvre | — | **OK** |
+| Pièges et risques (`risques`) | OK — bandeau + 24 communes | OK (97422000BX1106 : « 3 servitude(s)/contrainte(s) », = API n=3) | OK (97415000CY1134 PPR rouge : « 7 » = 7 CATÉGORIES, regroupement voulu de 9 items dont 3 PPR, cf. blocB.tsx:82-95 ; **vérifié non faux**) | **OK** |
+| Étude de zone (`etude-zone`) | OK — rayon 0,5/1/2/5 km + sélecteur d'activité + « Lire la zone » | OK : parcelle + « Lire la zone » → `POST /outils/etude-zone` 200, zone_disponible=true, 11 268 habitants, 312 ha, sections Population/Économie rendues (~4-8 s) | — | **OK** |
+| Remonter le temps (`temps`) | OK — comparateur d'orthos 1950-1965 ⇔ Ortho Express 2025 | OK (62 tuiles ortho chargées) | OK (disparue) | **OK** (voir note 404) |
+| Faisabilité (`programme`) | OK — 2 entrées (par parcelle / par capacité) | OK (97422000BX1106 : zone Ua, SDP restante 582 m², Potentiel R+6) | OK (97415000CH0065 hors-classement : « SDP restante — zone non constructible », « constructibilité très limitée », pas de NaN) | **OK** |
+| Gabarit réglementaire (`gabarit`) | OK | OK (97422000BX1106 : « ZONE D'IMPLANTATION 270 m² ») | OK (97411000AY0015 emprise saturée : « Calcul incomplet — donnée réglementaire manquante / limites non qualifiées », message propre) | **OK** |
+| Taxe d'aménagement (`taxe-amenagement`) | OK | OK (97422000BX1106 : terrain 629 m², formulaire surface taxable + barème) | OK (97411000AY0015 : terrain 6 963 m², formulaire servi) | **OK** |
+| Prospection solaire (`prospection-solaire`) | OK — 2 métiers (💧 Piscines / ☀️ Ensoleillement) | OK (clic Ensoleillement → mode « cliquez une parcelle » ; prospection carto) | — | **OK** |
+| Blocs fonciers (`blocs-fonciers`) | OK — 4 filtres + « Voir les parcelles » | `/modules/blocs` 200 mais `total:0` (table `parcel_blocs` VIDE en recette) ; empty-state honnête affiché | — | **ANOMALIE A-04-1** (gênant, défaut d'environnement/données) |
+| Successions à venir (`successions`) | OK — `/modules/successions` 200, « 6 256 parcelles · RNE INPI au 06/10/2026 », liste rendue + filtre Périmètre | — | — | **OK** |
+| Courrier propriétaire (`courriers`) | OK — étapes 1 Destinataires / 2 Rédaction (envoi NON déroulé, approfondi Famille 8) | OK (97416000EW0446, flux de préparation réagit) | — | **OK** |
+| Calculette foncière (`calculette-fonciere`, masqué) | OK via deep-link — bilan à rebours | OK (97422000BX1106 : SHAB 476 m², prix sortie 4 318 €/m², charge supportable 50 k€ ≈ 79 €/m², confrontation marché 285 €/m²) | — | **OK** |
+| Mon secteur (`mon-secteur`, masqué) | OK via deep-link — médiane DVF secteur, pick parcelle | OK (UI d'entrée + fiche) | — | **OK** |
+
+**Note 404 « Remonter le temps »** : à l'ouverture et au survol, des tuiles `/map/tiles/ortho/{année|express}/…`
+renvoient 404 (36 observées). Vérifié : sur TERRE les tuiles servent (express/2021/1950 → 200 à
+St-Denis/Le Tampon), et l'outil AFFICHE lui-même l'explication « Zones noires : secteurs non couverts
+par l'ortho ancienne (mer, limites de mission IGN) — ce n'est pas un défaut de chargement ». Les 404
+sont le comportement PAR DESIGN du proxy ortho (aplat mer + trous de couverture WMTS transitoires,
+non cachés, cf. `src/labuse/api/ortho_proxy.py:228-262`). **Non compté comme anomalie.**
+
+**Bilan Famille 4** : 17 outils testés OK (16 du menu + comparaison) ; 1 anomalie (A-04-1,
+gênant, données non ingérées) sur blocs-fonciers. 0 erreur console JS, 0 erreur réseau 4xx/5xx
+imprévue, 0 NaN/undefined/[object Object], 0 spinner infini, 0 panneau vide muet. Tous les cas
+limites (hors-classement, emprise saturée, non calibré, disparue) donnent des messages « sans objet »
+propres. Captures de référence (résultat de chaque outil) + anomalie dans `captures/04-outils/`.
