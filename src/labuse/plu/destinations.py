@@ -596,6 +596,38 @@ def iter_regles_feuilles(regles: dict | None):
                     yield (rubrique, sous), feuille
 
 
+# PLU-CALIBRAGE-10 (fix) — rubriques/feuilles qui NE PORTENT PAS l'enveloppe du gabarit (resolve_zone
+# ne les consomme pas). `retraits.entre_constructions` (implantation des bâtiments d'une même unité
+# foncière, ex-art. 8) est lue par le SEUL contrôle d'implantation (labuse.implantation.regles), jamais
+# par le calcul de capacité. Une zone dont le bloc `regles` ne contient QUE de telles feuilles n'est donc
+# PAS « calibrée » au sens de resolve_zone : elle doit se résoudre comme si elle n'avait pas de `regles`
+# (gelée AU*st → non constructible, renvoi → règles de la zone mère, sinon strict→None / progressif→
+# estimation). Sans cela, l'injection de ces feuilles promeut à tort des zones gelées en constructibles.
+_RUBRIQUES_HORS_ENVELOPPE: frozenset = frozenset({("retraits", "entre_constructions")})
+
+
+def regles_portent_enveloppe(regles: dict | None) -> bool:
+    """Vrai si le bloc `regles` porte AU MOINS une feuille qui pèse sur l'enveloppe du gabarit
+    (hauteur, emprise au sol, reculs de voie/limites, stationnement, mixité, pleine terre). Une
+    feuille purement descriptive (`retraits.entre_constructions`) ne compte pas : seule, elle ne
+    calibre pas la zone pour resolve_zone."""
+    for chemin, _feuille in iter_regles_feuilles(regles or {}):
+        cle = (chemin[0], chemin[1] if len(chemin) > 1 else None)
+        if cle not in _RUBRIQUES_HORS_ENVELOPPE:
+            return True
+    return False
+
+
+def zones_calibrees(commune: str) -> set:
+    """Zones dont le bloc `regles` PORTE l'enveloppe du gabarit — le périmètre que resolve_zone
+    reconnaît en correspondance directe (« calibrée »). Exclut les zones qui ne portent qu'une
+    feuille descriptive (ex. entre_constructions), qui restent résolues par leur branche dédiée.
+    Bâti sur `regles_commune`/`regles_zone` (et non le doc brut) pour suivre le MÊME point de lecture
+    que resolve_zone — stubs de test inclus."""
+    zones = {r["zone"] for r in regles_commune(commune)}
+    return {z for z in zones if regles_portent_enveloppe(regles_zone(commune, z))}
+
+
 def regle_feuille_defauts(feuille: dict) -> list[str]:
     """Ce qui manque à une feuille pour être traçable : article, page_pdf, citation (verrou
     V6a). Vaut pour une valeur lue COMME pour un `absent: true` (le silence se prouve aussi)."""
@@ -677,7 +709,10 @@ def renvois_commune(commune: str) -> dict:
         return {}
     out: dict = {}
     for zone, zv in (doc.get("zones") or {}).items():
-        if isinstance(zv, dict) and zv.get("renvoi") and not zv.get("regles"):
+        # une feuille purement descriptive (entre_constructions) ne « porte » pas de règles propres :
+        # la zone renvoie toujours à sa mère (PLU-CALIBRAGE-10 — sinon le renvoi serait masqué par la
+        # feuille injectée et la zone retomberait en estimation générique).
+        if isinstance(zv, dict) and zv.get("renvoi") and not regles_portent_enveloppe(zv.get("regles")):
             out[zone] = zv["renvoi"]
     return out
 
