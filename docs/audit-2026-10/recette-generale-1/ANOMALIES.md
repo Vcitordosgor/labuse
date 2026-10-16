@@ -81,3 +81,64 @@ Bilan : **aucune anomalie bloquante ni gênante.** 3 points cosmétiques/informa
     Fiche.tsx:957` (`reglesZone ?? 'Non publié au GPU'`). La chaîne RNU « Non publié au GPU » est
     plus longue que la largeur de la tuile de zone. Correctif possible : autoriser le retour à la
     ligne (ou réduire la police) pour cette tuile RNU, ou raccourcir le libellé.
+
+### A-03-1 — Fiche commune : warning React « clés dupliquées » à chaque ouverture
+- **Gravité** : gênant
+- **Où** : ContextePanel (fiche commune), toutes les communes. Geste : sélecteur commune → « voir la fiche → ».
+- **Reproduire** :
+  1. Ouvrir la fiche d'une commune (ex. Bras-Panon, Le Port, Entre-Deux…).
+  2. Regarder la console : 1–2 warnings `Warning: Encountered two children with the same key, %s`
+     avec des valeurs comme `IOME2401804A`, `INTE0600904A`, `INTE1802929A`, `IOME2407754A`.
+- **Observé** : warning React de clé non unique émis à chaque rendu de la fiche. La pile pointe
+  `LigneCarte (ContextePanel.tsx:570)` sous `CommuneAccProvider`. Les valeurs ressemblent à des
+  identifiants SITADEL/permis. Non bloquant : les 10 cartes s'affichent, mais React prévient qu'il
+  peut dédupliquer/omettre des enfants (risque de ligne manquante silencieuse). 0 HTTP en erreur.
+- **Capture** : captures/03-commune/001_Bras_Panon.png (contenu OK ; le warning est en console, voir
+  logs du sweep — reproductible sur ~17/24 communes).
+- **Cause probable** : un `.map()` quelque part dans l'arbre de la fiche commune (le plus proche
+  `LigneCarte` est la carte « Permis et rythme », `ContextePanel.tsx:565-591`) utilise une clé non
+  unique construite sur un identifiant qui se répète (deux permis/établissements au même numéro).
+  Les `.map()` du fichier (`ContextePanel.tsx:342,368,505,744,760` + acquéreurs `:172`) sont a priori
+  sûrs (clés dédupliquées) ; la source exacte est probablement un sous-composant alimenté par
+  `permis_bloc`/données SITADEL. À confirmer : ajouter un index à la clé du map concerné.
+
+### A-03-2 — Fiche commune LENTE sur les grandes communes (cache `commune_contexte_cache` vide)
+- **Gravité** : gênant (perçu comme bloquant sur les plus grandes : ~45 s d'attente)
+- **Où** : endpoint `GET /communes/<nom>/contexte` ; fiche des communes volumineuses
+  (Le Tampon ~46 s, Saint-Benoît ~45 s, Saint-Leu ~33 s, Saint-Paul ~24 s, Saint-Denis ~13–20 s).
+- **Reproduire** :
+  1. Ouvrir la fiche de Le Tampon (ou Saint-Benoît / Saint-Leu / Saint-Paul).
+  2. Le panneau affiche « FICHE COMMUNE / <nom> » + un spinner (points animés `labuse-dot`) ;
+     le bandeau et les cartes n'apparaissent qu'après 24–46 s.
+  3. Mesure API directe (à chaud, requête répétée) : `/contexte` répond en 17–35 s pour ces communes
+     (Le Tampon 31 s, Saint-Benoît 35 s, Saint-Leu 26 s, Saint-Paul 18 s, Saint-Denis 13 s).
+- **Observé** : table de cache `commune_contexte_cache` **VIDE** en recette (`SELECT count(*) = 0`).
+  Le job nocturne `fiche-commune-cache` (qui doit remplir ce cache, ~20 s/commune, pour une ouverture
+  < 500 ms) n'a jamais tourné sur cette base. Du coup l'endpoint tombe dans la branche `else` →
+  `_compute_commune_contexte` en DIRECT à CHAQUE appel → 20–45 s. Les données finissent par
+  s'afficher correctement (10 cartes, bandeau plausible, aucun faux zéro), mais l'attente est très
+  longue. Un spinner est présent (retour honnête), ce qui évite le classement « bloquant ».
+- **Capture** : captures/03-commune/001_Saint-Paul_midload_etat.png (panneau pendant l'attente :
+  nom + spinner, pas encore de contenu) · 001_Le_Tampon_slow.png · 002_Saint_Beno_t_slow.png ·
+  003_Saint_Leu_slow.png · 004_Saint_Paul_slow.png (contenu complet après chargement).
+- **Cause probable** : `src/labuse/api/app.py:2296-2328` (`commune_contexte`) — sans entrée de cache,
+  fallback `_compute_commune_contexte` (`app.py:2460`) lent ; cache alimenté par le job
+  `fiche-commune-cache` (`src/labuse/jobs_impl.py:145`, « ~20 s/commune … ouverture < 500 ms »).
+  En environnement servi/prod le cache doit être pré-amorcé (lancer le job une fois) ; en recette il
+  ne l'est pas. Côté produit : envisager aussi une génération à la demande en arrière-plan +
+  squelette de contenu plutôt qu'un simple spinner sur 45 s.
+
+### A-03-3 — Fiche commune : texte PPR tronqué dans la carte Risques
+- **Gravité** : cosmétique
+- **Où** : carte « Risques et contraintes » de la fiche commune, sous-titre PPR. ~17/24 communes.
+- **Reproduire** :
+  1. Ouvrir une fiche commune (ex. Bras-Panon, Saint-Denis, Petite-Île…).
+  2. Repérer le span « PPR · mouvement de terrain · CatNat » (classe `truncate`).
+- **Observé** : le span a `scrollWidth > clientWidth` (débordement détecté par `debordements()`).
+  Classe `block truncate text-[11px] text-txt-mut` → ellipsis volontaire. La liste des aléas est
+  coupée à la largeur de la colonne (420 px). Cosmétique : l'info détaillée est dans le corps de la
+  carte dépliée ; le sous-titre n'est qu'un résumé. Aucune valeur chiffrée n'est perdue.
+- **Capture** : captures/03-commune/001_Bras_Panon.png (sous-titre PPR tronqué visible).
+- **Cause probable** : classe `truncate` (Tailwind `overflow:hidden; text-overflow:ellipsis`) sur le
+  sous-titre d'aléas de la carte Risques dans `ContextePanel.tsx` (bloc `risques`, ~l.731+).
+  Comportement voulu (résumé repliable) — à laisser tel quel ou autoriser le retour à la ligne.

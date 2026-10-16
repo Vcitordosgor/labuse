@@ -170,3 +170,75 @@ anomalie (cosmétique, A-02-1).
 - Portes outil depuis Simulation : « Calculette foncière » → `#m=calculette-fonciere&idu=…` (sur
   la parcelle) ; « Densifier l'existant » / « Ouvrir le Gabarit » présentes dans Potentiel.
   (destination vérifiée sans entrer dans l'outil = Famille Outils.)
+
+## Famille 3 — Fiche commune
+
+Testé en DESKTOP uniquement (1440×900), visiteur anonyme, run servi q_v18.
+Les 24 communes passées au harnais (`frontend/qa-recette/commune_sweep.mjs` + `_commune_lib.mjs`),
+puis inspection détaillée des 6 représentatives. API de référence comparée via
+`/communes/<nom>/contexte` (`frontend/qa-recette/apisweep` → `/tmp/apisweep.py`).
+
+### Chemin d'ouverture de la fiche (geste réel)
+Le deep-link `#c=<Commune>` (= `lien.commune`) NE pose QUE le filtre commune (`setCommune`) —
+il **n'ouvre pas** la fiche. La fiche (ContextePanel) s'ouvre par `setContexteCommune`. Le vrai
+geste client : bouton sélecteur commune en haut (`data-commune-select`) → menu déroulant →
+bouton « voir la fiche → » de la ligne (`data-fiche-commune`). Chemin vérifié fonctionnel sur
+Saint-Denis. Le harnais pilote ce geste (repli `window.__labuse.setContexteCommune`). Ce n'est
+pas une anomalie (le `#c=` est un filtre partageable, pas un lien de fiche) mais c'est un piège
+documenté pour les testeurs : `App.tsx:358` lit `c` → `setCommune` ; la fiche n'a pas de deep-link.
+
+### Verdict par commune (24/24)
+
+| # | Commune | Fiche ouvre | Cartes | Bandeau | Tuiles | Temps (geste→affichage) | Verdict |
+|---|---------|-------------|--------|---------|--------|--------------------------|---------|
+| 1 | Bras-Panon | OK | 10/10 | plausible | 4/4 | ~10 s | OK (console A-03-1, débord. A-03-3) |
+| 2 | Cilaos (Hauts) | OK | 10/10 | plausible (tendance « — » : honnête, <seuil DVF) | 4/4 | ~8 s | OK |
+| 3 | Entre-Deux | OK | 10/10 | plausible | 4/4 | ~7 s | OK (console A-03-1) |
+| 4 | L'Étang-Salé | OK | 10/10 | plausible | 4/4 | ~8 s | OK (console A-03-1) |
+| 5 | La Plaine-des-Palmistes | OK | 10/10 | plausible | 4/4 | ~20 s | OK (lent A-03-2) |
+| 6 | La Possession | OK | 10/10 | plausible | 4/4 | ~10 s | OK (console A-03-1) |
+| 7 | Le Port | OK | 10/10 | plausible | 4/4 | ~7 s | OK (console A-03-1) |
+| 8 | Le Tampon (grande) | OK | 10/10 | plausible | 4/4 | **~46 s** | OK mais LENT (A-03-2) |
+| 9 | Les Avirons | OK | 10/10 | plausible | 4/4 | ~11 s | OK |
+| 10 | Les Trois-Bassins | OK | 10/10 | plausible (PLU « en révision ») | 4/4 | ~9 s | OK |
+| 11 | Petite-Île | OK | 10/10 | plausible (tendance -11,6 %) | 4/4 | ~8 s | OK (débord. A-03-3) |
+| 12 | Saint-André | OK | 10/10 | plausible (PLU « en révision ») | 4/4 | ~9 s | OK |
+| 13 | Saint-Benoît (non calibré) | OK | 10/10 | plausible | 4/4 | **~45 s** | OK mais LENT (A-03-2) |
+| 14 | Saint-Denis (grande) | OK | 10/10 | plausible (155 634 hab.) | 4/4 | ~13–20 s | OK (lent-limite A-03-2) |
+| 15 | Saint-Joseph | OK | 10/10 | plausible | 4/4 | ~18 s | OK |
+| 16 | Saint-Leu (moyenne) | OK | 10/10 | plausible (PLU « en révision ») | 4/4 | **~33 s** | OK mais LENT (A-03-2) |
+| 17 | Saint-Louis | OK | 10/10 | plausible | 4/4 | ~20 s | OK |
+| 18 | Saint-Paul (grande) | OK | 10/10 | plausible (108 088 hab., prix 4 278) | 4/4 | **~24 s** | OK mais LENT (A-03-2) |
+| 19 | Saint-Philippe (RNU) | OK | 10/10 | plausible (ÉTAT PLU=RNU) | 4/4 | ~9 s | OK — bandeau RNU + « N 100 % » honnêtes |
+| 20 | Saint-Pierre (grande) | OK | 10/10 | plausible (85 038 hab.) | 4/4 | ~18 s | OK (débord. A-03-3) |
+| 21 | Sainte-Marie | OK | 10/10 | plausible | 4/4 | ~10 s | OK |
+| 22 | Sainte-Rose | OK | 10/10 | plausible (tendance « — ») | 4/4 | ~9 s | OK |
+| 23 | Sainte-Suzanne | OK | 10/10 | plausible | 4/4 | ~8 s | OK |
+| 24 | Salazie (Hauts) | OK | 10/10 | plausible (tendance « — ») | 4/4 | ~14 s | OK |
+
+Les « temps » mesurent geste → bandeau affiché. Sur les 4 grandes (Le Tampon, Saint-Benoît,
+Saint-Leu, Saint-Paul) l'API `/contexte` répond en 17–35 s **même à chaud** : cause = table de
+cache `commune_contexte_cache` VIDE en recette (0 ligne) → recalcul en direct à chaque appel (A-03-2).
+
+### Détail des points vérifiés (tous OK sauf anomalies listées)
+- **Panneau fiche commune** : s'ouvre pour les 24 ; en-tête « FICHE COMMUNE / <nom> » + EPCI + surface. OK.
+- **Bandeau 6 chiffres** (Parcelles, Habitants, Permis/an, Prix ancien, Tendance 12 m, État du PLU) :
+  valeurs plausibles pour les 24, aucun NaN/null/undefined. « Tendance 12 m = — » sur Cilaos, Salazie,
+  Sainte-Rose, Les Trois-Bassins = honnête (sous le seuil de robustesse DVF, pas un faux zéro). OK.
+- **10 cartes** (Identité, Population, Prix, Activité/annonces, Permis et rythme, Foncier et rareté,
+  Urbanisme, Fiscalité et dispositifs, Risques et contraintes, Équipements) : dépliées une à une
+  (accordéon — une seule ouverte à la fois) ; aucune carte vide muette, aucun NaN/undefined/null
+  dans le texte des 24 communes. OK.
+- **Cas « sans objet » honnêtes** : Saint-Philippe (RNU) → bandeau RNU dédié (« Commune au règlement
+  national d'urbanisme — pas de PLU local… ») + carte Urbanisme « N 100 % » (ni U/AU/A). Carte
+  « Activité/annonces » affiche « Pas d'annonce repérée… le Radar affine » quand vide. PLH « Aucun
+  programme local de l'habitat recensé » quand absent. Tous explicites — OK.
+- **Raccourcis / portes « Étudier cette commune »** (PLU, Permis, Étude de zone, Communes) : les 4
+  tuiles réagissent et ouvrent le bon outil (`#m=plu`, `#m=permis`, `#m=etude-zone`, `#m=communes`)
+  à la maille commune. Vérifié sur Saint-Denis. OK.
+- **Cas à surveiller (BRIEF)** : Saint-Philippe (RNU), Cilaos, Salazie (Hauts), Saint-Benoît
+  (non calibré) — tous affichent des « sans objet » propres, aucune casse de fiche. OK.
+- **Erreurs réseau** : 0 HTTP 4xx/5xx sur les 24. OK.
+- **Erreurs console** : 1 warning React récurrent (clé dupliquée) — A-03-1 (non bloquant).
+- **Débordement** : 1 span tronqué « PPR · mouvement de terrain · CatNat » (classe `truncate`
+  volontaire) — A-03-3 (cosmétique).
