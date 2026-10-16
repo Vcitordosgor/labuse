@@ -345,6 +345,8 @@ LECTURES: tuple[Lecture, ...] = (
       "surface d'intersection parcelle × zones PLU pour choisir la zone DOMINANTE servie — résolution de zone, pas un des chiffres candidats"),
     L("parcels", "flash/data.py", "prix_terrain_secteur_eur_m2", "pdf_flash",
       "collecte du rapport Flash : lit surface/geom de parcels et ancre les requêtes DVF secteur (profil secteur_dossier) du bloc marché — terrain nu secteur imprimé au Flash"),
+    L("parcels", "implantation/terrain.py", None, None,
+      "IMPLANTATION-1 : lit id/geom_2975/contenance_m2/ST_Area des parcelles d'un terrain puis ST_Union pour l'assiette fusionnée du moteur d'implantation (pré-faisabilité collectif) — ancre géométrique d'entrée d'une simulation, aucun chiffre du registre servi"),
     L("parcels", "marche_service.py", "prix_terrain_secteur_eur_m2", "pdf_banquier",
       "point d'appel UNIQUE du marché des documents : geom de la parcelle ancre les comparables DVF (profil banquier_adaptatif = sector_price → prix terrain secteur des PDF)"),
     L("parcels", "pige/api.py", None, None,
