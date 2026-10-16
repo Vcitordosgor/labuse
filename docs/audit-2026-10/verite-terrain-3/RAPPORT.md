@@ -40,8 +40,8 @@ Pièges évités (classés CONFORME après contrôle base) : aléa mvt 23 commun
 
 ## À corriger AVANT le run de ce soir
 
-- **Contrôle unique (si une couche risque alimente le scoring/l'assiette) :** vérifier que le **PPR Saint‑André approuvé le 16/04/2026** est bien dans la couche DEAL servie. Si déjà capté par la veille 07/09 → rien à faire. *(À confirmer par l'équipe ; le worktree dev ne permet pas de recalculer le score.)*
-- **Sinon : RIEN.** Aucun autre écart ne doit être « embarqué » dans le run : les 4 phrases fausses sont du texte front/site (déploiement indépendant du run), et les 5 retards de données sont des couches secondaires qui ne modifient pas le calcul servi.
+- **RIEN.** Le seul contrôle identifié — le **PPR Saint‑André approuvé le 16/04/2026** — a été **vérifié en lecture le 16/10 : la couche servie EST ce PPR** (`approbation 2026‑04‑16`, emprise = source officielle DEAL au m² près, cf. ECARTS § contrôle fait). Rien à ingérer.
+- Aucun autre écart ne doit être « embarqué » dans le run : les 4 phrases fausses sont du texte front/site (déploiement indépendant du run), et les 5 retards de données sont des couches secondaires qui ne modifient pas le calcul servi.
 
 ## Ce qui peut attendre (après le run)
 

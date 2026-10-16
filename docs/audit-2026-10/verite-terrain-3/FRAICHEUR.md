@@ -60,7 +60,7 @@ Toutes les 24 communes ont été interrogées (`pprn?codeInsee=<INSEE>`). LABUSE
 
 | Commune | INSEE | PPR GASPAR | etatRevision | dateModification | Statut vérifié |
 |---|---|---|---|---|---|
-| **Saint-André** | 97409 | 974DEAL20180003 (PPRN-Multi) | true | **18/05/2026** | **PPRN inondations/mouvements de terrain APPROUVÉ par arrêté préfectoral n° 477 du 16/04/2026** (confirmé web). LABUSE sert « 2011–2026 » (veille 07/09/2026) → vraisemblablement capté, **à vérifier à la main** que la version 2026 est bien la couche servie. |
+| **Saint-André** | 97409 | 974DEAL20180003 (PPRN-Multi) | true | **18/05/2026** | **PPRN inondations/mvt APPROUVÉ par AP n° 477 du 16/04/2026.** ✅ **VÉRIFIÉ À JOUR (16/10)** : la couche servie `kind='ppr'` porte `approbation 2026-04-16` (2 INTERDICTION + 3 PRESCRIPTION, document PPR) et son emprise = la source officielle DEAL `PPR_APPROUVE` **au m² près** (INTERDICTION 13 886 488 m², PRESCRIPTION 26 802 341 m² ; cf. ECARTS § contrôle fait). |
 | **Saint-Philippe** | 97417 | PPRN-Multi_2023_0044 (PPRN-Multi) | true | **06/10/2026** | **Procédure PRESCRITE 12/06/2023, toujours en élaboration/concertation** (pas encore approuvée au 16/10/2026). → **PROCÉDURE EN COURS**, rien à ingérer tant que non approuvé. |
 
 Les 22 autres communes : PPR stables (dateModification 14-15/01/2025) → cohérent avec ce que LABUSE sert, **À JOUR**.

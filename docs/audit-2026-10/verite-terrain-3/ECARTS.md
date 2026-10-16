@@ -56,8 +56,8 @@ Preuve amont datée, en cache (`cache/`). Ce sont des **mises à jour de donnée
 | A4 | **DPE ADEME existant** | sync **19/09/2026** | `dataUpdatedAt` **14/10/2026** (flux hebdo) | ~4 sem. | Relancer la sync hebdo (cadence normale) | mineure |
 | A5 | **Base Adresse Nationale** | sync **19/08/2026** | republiée en continu | ~2 mois | Relancer la sync mensuelle | mineure |
 
-**À confirmer (pas un faux prouvé, un contrôle à faire) :**
-- **PPR Saint‑André (97409)** — PPRN inondations/mvt approuvé par **AP n°477 du 16/04/2026** (GASPAR `974DEAL20180003`, `etatRevision=true`, `dateModification 18/05/2026`, vérifié en cache `ppr_97409.json`). LABUSE sert « PPR 2011‑2026 » (veille 07/09/2026) → **vérifier que la couche DEAL servie intègre bien la version 2026**. Si oui : CONFORME ; sinon : écart risque à corriger.
+**Contrôle fait → CONFORME (16/10/2026, lecture seule) :**
+- **PPR Saint‑André (97409)** — **À JOUR, confirmé.** La couche servie `kind='ppr'` (zonage réglementaire, source WFS DEAL `01risque/PPR_APPROUVE`, ingérée 2026‑07‑01) porte `approbation = 2026‑04‑16` / `document = PPR` : c'est bien le PPRN inondations+mouvements de terrain approuvé par l'**AP n°477 du 16/04/2026**. Comparaison à la source officielle vivante (fetch direct 16/10, cache `deal_ppr_approuve_97409.json`) : composition identique (2 INTERDICTION + 3 PRESCRIPTION) et **emprise identique au m² près** (INTERDICTION 13 886 488 m² = 13 886 488 m² ; PRESCRIPTION 26 802 341 ≈ 26 802 342 m²). Le PPRL littoral (`approbation 2024‑07‑17`) est servi séparément (correct). Aléas `georisque_alea` ingérés 2026‑09‑14 (postérieurs à l'approbation). **Rien à ingérer.**
 - **Contours IRIS (64)** / **Filosofi 200 m (52)** : millésime d'édition non exposé / slug de veille incohérent → voir `FRAICHEUR.md` (NON VÉRIFIABLE, à fiabiliser hors run).
 
 ---
