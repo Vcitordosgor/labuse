@@ -176,7 +176,7 @@ export const CLIENT = {
     // infobulle carte : la lecture de la fraction (calibrée sur les ventes réelles)
     fractionBadge: (f: string) =>
       `${f} ≈ une chance sur ${f.split('/')[1]} qu’une vente intervienne dans l’année. ` +
-      `Estimation sur les ventes réelles 2017-2024, calibrée sur 2025.`,
+      `Estimation sur les ventes réelles 2017-2023, calibrée sur 2024 et vérifiée sur 2025.`,
   },
 
   // ── B1/B3 · barre de tri ──────────────────────────────────────────────────
@@ -207,7 +207,7 @@ export const CLIENT = {
     // résiduelle du tri « Potentiel » reste dans l'analyse, nulle part ailleurs).
     adresse: 'Adresse',
     adresseTip: 'Les parcelles avec une adresse renseignée d’abord, puis les plus grandes surfaces — rien que le fait cadastral, sans calcul LABUSE',
-    rangTip: 'Le classement LABUSE — la probabilité de vente sous 1 an, apprise sur les ventes réelles 2017-2024 (calibrée sur 2025), les ex æquo départagés par la qualité du terrain ; copropriétés en queue',
+    rangTip: 'Le classement LABUSE — la probabilité de vente sous 1 an, apprise sur les ventes réelles 2017-2023, calibrée sur 2024 et vérifiée sur 2025 (année tenue à l’écart), les ex æquo départagés par la qualité du terrain ; copropriétés en queue',
     surfaceTip: 'Trie par surface de parcelle',
     // M69 A — le tri « Probabilité de vente » (défaut, analyse) groupe la liste par tier ; les
     // tris de colonne (Surface) s'appliquent GLOBALEMENT. Ce libellé dit l'état pour lever le
@@ -216,7 +216,7 @@ export const CLIENT = {
     // M135 — le « i » de la barre TRIER : la lecture de la fraction + les deux tris.
     // FRONT-CHIFFRES-2 (F26) — le seuil bas (« sous 1/d ») est SERVI (config scoring_client) : le
     // texte le reçoit, il ne code plus « 1/50 » (suit une bascule de bandes). Défaut 50 au chargement.
-    lunettes: (d = 50) => `« 1/5 sous 1 an » ≈ une chance sur cinq qu’une vente intervienne dans l’année — estimation calibrée sur les ventes réelles 2017-2024 (calibrée sur 2025). Sous 1/${d}, un tiret « — » (peu probable). `
+    lunettes: (d = 50) => `« 1/5 sous 1 an » ≈ une chance sur cinq qu’une vente intervienne dans l’année — estimation apprise sur les ventes réelles 2017-2023, calibrée sur 2024 et vérifiée sur 2025. Sous 1/${d}, un tiret « — » (peu probable). `
       + 'La liste est classée par cette probabilité (ex æquo départagés par la qualité du terrain, copropriétés en queue) ; Surface = la plus grande d’abord, re-cliquer inverse.',
   },
 
@@ -284,7 +284,7 @@ export const CLIENT = {
         valeur: '99,99 %',
         methode:
           'Rattachement parcelle ↔ adresse certifiée Base Adresse Nationale, sur l’île entière. ' +
-          'Échantillon : les 431 663 parcelles. Mesure interne consignée.',
+          'Échantillon : toutes les parcelles de l’île (plus de 430 000). Mesure interne consignée.',
       },
       {
         titre: 'Recherche en langage naturel → filtres',
@@ -368,8 +368,8 @@ export const CLIENT = {
       },
       {
         h: 'Comment',
-        p: 'Le modèle a appris sur les ventes réelles de La Réunion — les mutations 2017-2024, ' +
-          'calibré sur les millésimes les plus récents (protocole du run servi, page Données). ' +
+        p: 'Le modèle a appris sur les ventes réelles de La Réunion — les mutations 2017-2023, ' +
+          'calibré sur 2024 et vérifié sur 2025, l’année tenue à l’écart (protocole du run servi, page Données). ' +
           'Il repère les motifs qui précèdent une vente (âge de détention, permis, état bâti ou nu, ' +
           'part bâtie et ventes du secteur, ancienneté du PLU, règles d’urbanisme, marché du secteur…) ' +
           'et les cherche sur les parcelles d’aujourd’hui. La probabilité est recalibrée par segment ' +
@@ -384,7 +384,7 @@ export const CLIENT = {
       {
         h: 'Ce qu’il ne dit pas',
         p: 'Ni que le propriétaire veut vendre, ni le prix, ni la rentabilité. Il trie ' +
-          '431 663 parcelles pour dire lesquelles regarder en premier — la décision reste ' +
+          'plus de 430 000 parcelles pour dire lesquelles regarder en premier — la décision reste ' +
           'votre métier.',
       },
     ] as { h: string; p: string }[],

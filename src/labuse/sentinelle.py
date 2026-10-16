@@ -211,7 +211,7 @@ def sonder_temoin(url: str, selecteur: str | None, empreinte_prec: str | None,
     entière) et on la compare au dernier passage. Ne nomme AUCUNE version : signale « la donnée amont a
     changé ». Premier passage = baseline (ok, mémorise l'empreinte dans `dernier_entete`, marqueur opaque).
 
-    SUITE-1 S4.2 — si `url2` (seconde commune témoin, Saint-Pierre) est fourni, l'empreinte combine les
+    SUITE-1 S4.2 — si `url2` (seconde commune témoin, Saint-Benoît) est fourni, l'empreinte combine les
     DEUX chef-lieux : un changement de L'UN OU L'AUTRE change l'empreinte → « la donnée amont a changé ».
     Les deux appels restent légers et espacés (une passe par jour, délai entre sources déjà appliqué)."""
     val, echec = _lire_temoin(url, selecteur)
@@ -584,7 +584,7 @@ SEED: list[dict] = [
     # `dateModification` par PPR. Requête TÉMOIN figée sur la commune chef-lieu (Saint-Denis 97411) →
     # empreinte du PPR (déterministe, vérifié) ; une révision DEAL/Géorisques change l'empreinte. PPR = à
     # fort enjeu (le risque figure dans les fiches parcelles), donc surveillé même par témoin de commune.
-    # S4.2 — second chef-lieu témoin : Saint-Pierre (97410). Alerte si l'un des deux PPR change.
+    # S4.2 — second chef-lieu témoin : Saint-Benoît (97410). Alerte si l'un des deux PPR change.
     {"name": "DEAL Réunion — PPR / aléas", "methode": "temoin",
      "url": "https://georisques.gouv.fr/api/v1/gaspar/pprn?codeInsee=97411&page=1&page_size=50",
      "url2": "https://georisques.gouv.fr/api/v1/gaspar/pprn?codeInsee=97410&page=1&page_size=50",
@@ -601,7 +601,7 @@ SEED: list[dict] = [
     # Géorisques live (cavités, mouvements de terrain, sites & sols pollués) : pas de millésime, mais un
     # COMPTE stable par commune. Témoin figé sur Saint-Denis 97411 (commune à risques, déterministe vérifié) ;
     # une republication BRGM change le compte/empreinte → « la donnée amont a changé ».
-    # S4.2 — chacune sondée sur DEUX chef-lieux (Saint-Denis 97411 + Saint-Pierre 97410) : empreinte
+    # S4.2 — chacune sondée sur DEUX chef-lieux (Saint-Denis 97411 + Saint-Benoît 97410) : empreinte
     # combinée, alerte si l'un des deux change. Appels toujours légers (page_size=1) et espacés.
     {"name": "Géorisques — cavités souterraines", "methode": "temoin",
      "url": "https://www.georisques.gouv.fr/api/v1/cavites?code_insee=97411&page=1&page_size=1",
