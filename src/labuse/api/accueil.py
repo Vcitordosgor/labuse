@@ -25,8 +25,10 @@ router = APIRouter(tags=["accueil"])
 # Un nom de run hardcodé rendait la purge dangereuse ; une constante figée mentait après une bascule.
 # Le diff des tiers entre les deux runs SERVIS successifs reste TOUJOURS calculé, jamais figé.
 
-#: fenêtre d'entraînement du modèle SERVI (m36-l2f — cf. /v2/modele provenance.train)
-TRAIN_ANNEES = (2017, 2024)
+#: fenêtre d'ENTRAÎNEMENT du modèle SERVI, alignée sur le FREEZE du run (reports/q-v14/FREEZE-q_v14.json,
+#: protocole_12m.train = 2017-2023 ; 2024 = calibration, 2025 = test tenu hors apprentissage). Sert UNIQUEMENT
+#: le compteur affiché `ventes_train` du bloc chiffres de l'accueil — aucun calcul score/Signal/run ne le lit.
+TRAIN_ANNEES = (2017, 2023)
 
 _cache: dict = {"at": 0.0, "data": None}
 _CACHE_TTL_S = 3600
