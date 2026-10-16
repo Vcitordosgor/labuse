@@ -63,8 +63,9 @@ zones:
         par_logement:
           places: 1.5
           article: Ua 12.2
-          page_pdf: 21
-          citation: 12.2 - Normes de stationnement (cf. annexe du règlement)
+          page_pdf: 103
+          citation: 'logement de plus de 30 m² : 1,5 place par logement arrondi à l''entier
+            (NORMES DE STATIONNEMENT, annexe du règlement)'
           statut: valide
           exceptions:
           - texte: "- logement de moins de 30 m² : 1 place par logement … - logement de plus de 30 m² : 1,5 place par logement arrondi à l’entier inférieur pour l’ensemble de l’opération"
@@ -171,8 +172,9 @@ zones:
         par_logement:
           places: 1.5
           article: Ub 12.2
-          page_pdf: 33
-          citation: 12.2 - Normes de stationnement (cf. annexe du règlement)
+          page_pdf: 103
+          citation: 'logement de plus de 30 m² : 1,5 place par logement arrondi à l''entier
+            (NORMES DE STATIONNEMENT, annexe du règlement)'
           statut: valide
           exceptions:
           - texte: "- logement de moins de 30 m² : 1 place par logement … - logement de plus de 30 m² : 1,5 place par logement arrondi à l’entier inférieur pour l’ensemble de l’opération"
@@ -287,8 +289,9 @@ zones:
         par_logement:
           places: 1.5
           article: Uc 12.2
-          page_pdf: 45
-          citation: 12.2 - Normes de stationnement (cf. annexe du règlement)
+          page_pdf: 103
+          citation: 'logement de plus de 30 m² : 1,5 place par logement arrondi à l''entier
+            (NORMES DE STATIONNEMENT, annexe du règlement)'
           statut: valide
           exceptions:
           - texte: "- logement de moins de 30 m² : 1 place par logement … - logement de plus de 30 m² : 1,5 place par logement arrondi à l’entier inférieur pour l’ensemble de l’opération"
@@ -402,8 +405,9 @@ zones:
         par_logement:
           places: 1.5
           article: Ur 12.2
-          page_pdf: 57
-          citation: 12.2 - Normes de stationnement (cf. annexe du règlement)
+          page_pdf: 103
+          citation: 'logement de plus de 30 m² : 1,5 place par logement arrondi à l''entier
+            (NORMES DE STATIONNEMENT, annexe du règlement)'
           statut: valide
           exceptions:
           - texte: "- logement de moins de 30 m² : 1 place par logement … - logement de plus de 30 m² : 1,5 place par logement arrondi à l’entier inférieur pour l’ensemble de l’opération"
@@ -657,8 +661,9 @@ zones:
         par_logement:
           places: 1.5
           article: Ub 12.2
-          page_pdf: 33
-          citation: 12.2 - Normes de stationnement (cf. annexe du règlement)
+          page_pdf: 103
+          citation: 'logement de plus de 30 m² : 1,5 place par logement arrondi à l''entier
+            (NORMES DE STATIONNEMENT, annexe du règlement)'
           statut: valide
           exceptions:
           - texte: "- logement de moins de 30 m² : 1 place par logement … - logement de plus de 30 m² : 1,5 place par logement arrondi à l’entier inférieur pour l’ensemble de l’opération"
@@ -733,8 +738,9 @@ zones:
         par_logement:
           places: 1.5
           article: Uc 12.2
-          page_pdf: 45
-          citation: 12.2 - Normes de stationnement (cf. annexe du règlement)
+          page_pdf: 103
+          citation: 'logement de plus de 30 m² : 1,5 place par logement arrondi à l''entier
+            (NORMES DE STATIONNEMENT, annexe du règlement)'
           statut: valide
           exceptions:
           - texte: "- logement de moins de 30 m² : 1 place par logement … - logement de plus de 30 m² : 1,5 place par logement arrondi à l’entier inférieur pour l’ensemble de l’opération"
@@ -875,8 +881,9 @@ zones:
         par_logement:
           places: 1.5
           article: Ur 12.2
-          page_pdf: 57
-          citation: 12.2 - Normes de stationnement (cf. annexe du règlement)
+          page_pdf: 103
+          citation: 'logement de plus de 30 m² : 1,5 place par logement arrondi à l''entier
+            (NORMES DE STATIONNEMENT, annexe du règlement)'
           statut: valide
           exceptions:
           - texte: "- logement de moins de 30 m² : 1 place par logement … - logement de plus de 30 m² : 1,5 place par logement arrondi à l’entier inférieur pour l’ensemble de l’opération"
