@@ -1,0 +1,13 @@
+# A-06-1 — IDU bien formé mais INEXISTANT (00000000ZZ9999)
+
+## AVANT (pré-fix) : « incident serveur, réessayez » (erreur:true)
+text: Je n'ai pas su traiter cette demande — l'incident est enregistré côté serveur. Reformulez-la autrement, ou réessayez dans un instant.
+erreur: True refus: None
+
+## APRÈS (fix) — message clair « parcelle introuvable », pas d'incident serveur
+### cas a) « Dis-moi tout sur la parcelle 00000000ZZ9999 »
+{"text":"La parcelle 00000000ZZ9999 est introuvable : cet identifiant est bien formé mais ne correspond à aucune parcelle de l'analyse en cours. Vérifiez l'identifiant (14 caractères) ou sélectionnez la parcelle sur la carte.","intent":"QUESTION","refus":"parcelle_introuvable","compris":"J'ai compris : répondre à votre question — parcelle 00000000ZZ9999.","conversation_id":457,"contexte_ttl_minutes":10}
+### cas b) « quelle est la surface de la parcelle 00000000ZZ9999 ? »
+{"text":"La parcelle 00000000ZZ9999 est introuvable : cet identifiant est bien formé mais ne correspond à aucune parcelle de l'analyse en cours. Vérifiez l'identifiant (14 caractères) ou sélectionnez la parcelle sur la carte.","intent":"QUESTION","refus":"parcelle_introuvable","compris":"J'ai compris : répondre à votre question — parcelle 00000000ZZ9999.","conversation_id":458,"contexte_ttl_minutes":10}
+### cas c) « peut-on ouvrir un restaurant sur la parcelle 00000000ZZ9999 ? » (destination_zone, NameError avant)
+{"text":"La parcelle 00000000ZZ9999 est introuvable : cet identifiant est bien formé mais ne correspond à aucune parcelle de l'analyse en cours. Vérifiez l'identifiant (14 caractères) ou sélectionnez la parcelle sur la carte.","intent":"QUESTION","refus":"parcelle_introuvable","compris":"J'ai compris : répondre à votre question — parcelle 00000000ZZ9999.","conversation_id":459,"contexte_ttl_minutes":10}

@@ -1,0 +1,2 @@
+text: Zone PLU : Zone U2d (famille U) (zone_plu_famille).
+tool: fiche_parcelle champ_id: zone_plu_famille

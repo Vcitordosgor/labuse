@@ -18,7 +18,7 @@ import logging
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from .comptes import audit, reactiver_compte, suspendre_compte
+from .comptes import audit, mail_cycle_de_vie_auto, reactiver_compte, suspendre_compte
 from .config import get_settings
 from .offres import offre_flash, offre_integral
 
@@ -461,6 +461,9 @@ def traiter_webhook(db: Session, payload: bytes, signature: str | None) -> dict:
         row = db.execute(text("SELECT statut FROM comptes WHERE id = :c"), {"c": cid}).scalar()
         if row in ("paiement_requis", "suspendu"):
             reactiver_compte(db, cid, "invoice.paid")
+            # A-07-5 — rétablissement AUTOMATIQUE (le compte était coupé, le paiement le rouvre) :
+            # mail `retablissement` (template 11), best-effort comme relance_carte.
+            mail_cycle_de_vie_auto(db, cid, "retablissement", "job:stripe-webhook")
         action = "paiement_ok"
     elif t == "invoice.payment_failed" and cid:
         # relances Stripe d'abord — l'app passe « paiement requis » (bandeau, pas un 500)
@@ -492,6 +495,9 @@ def traiter_webhook(db: Session, payload: bytes, signature: str | None) -> dict:
         action = "paiement_requis"   # relances = Stripe ; PLUS la relance LABUSE (template 9) par la file
     elif t == "customer.subscription.deleted" and cid:
         suspendre_compte(db, cid, "subscription.deleted")
+        # A-07-5 — l'abonnement supprimé côté Stripe = RÉSILIATION : mail `resiliation` (template 16),
+        # best-effort comme relance_carte (un envoi qui ne part pas ne casse jamais le webhook).
+        mail_cycle_de_vie_auto(db, cid, "resiliation", "job:stripe-webhook")
         action = "suspension"
     # P2-41 — flush FINAL : commite la marque de dédup AVEC l'effet, pour les branches qui n'ont
     # pas committé elles-mêmes (invoice.paid sans transition, event ignoré…). No-op là où une

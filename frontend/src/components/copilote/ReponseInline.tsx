@@ -28,7 +28,7 @@ export function ReponseInline({ v2 }: { v2: CopiloteV2Reponse }) {
   const allerVoie = () => {
     const v = v2.voie!
     if (v.cible === 'projets') setView('projets')
-    else if (v.cible === 'surveillance') openSurveillance('secteurs')
+    else if (v.cible === 'surveillance') openSurveillance('parcelles')  // A-08-3 — volet 'secteurs' retiré
     else if (v.cible === 'outils') { if (!outilsOpen) toggleOutils() }
     else if (v.cible === 'fiche' || v.cible === 'courriers') {
       if (v.idu) { focusParcelle(v.idu, { fiche: true }) } else if (v.cible === 'courriers') setModule('courriers')
@@ -133,7 +133,8 @@ export function ReponseInline({ v2 }: { v2: CopiloteV2Reponse }) {
         </button>
       )}
       {v2.surveillance && (
-        <button data-reponse-surveillance onClick={() => openSurveillance(v2.surveillance!.volet)}
+        // A-08-3 — volet 'secteurs' retiré : on n'ouvre que 'parcelles' | 'criteres'.
+        <button data-reponse-surveillance onClick={() => openSurveillance(v2.surveillance!.volet === 'criteres' ? 'criteres' : 'parcelles')}
           className={`mt-3.5 inline-flex rounded-lg border px-3.5 py-2 font-display text-[12.5px] transition-colors duration-quick ${porteCls}`}>
           Ouvrir la Veille →
         </button>

@@ -1,0 +1,12 @@
+A-07-2 — message reset honnête (dépend de l envoi RÉEL, pas de BREVO_API_KEY)
+========================================================================
+Environnement local : env=local, mail_reel=False
+ANCIEN prédicat etat_configuration().api = True (VRAI car clé présente)
+NOUVEAU prédicat envoi_reel_autorise()  = False (dry-run → rien ne part)
+
+AVANT : si BREVO_API_KEY présente → message « un lien valable 1 heure vient d être envoyé »
+        MÊME EN DRY-RUN (aucun mail ne part) → TROMPEUR.
+APRÈS : message suit envoi_reel_autorise() → en dry-run, message NEUTRE :
+        « Demande enregistrée … L envoi automatique par e-mail n est pas actif … »
+        Anti-énumération conservée (« Si un compte est associé … »).
+        En pilote/prod, envoi_reel_autorise()=True → message « vient d être envoyé » (correct).

@@ -11,7 +11,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   getBilanModele, calculerBilan, genererBilan, putBilanRatio,
-  docBilanUrl, docBilanExcelUrl,
+  docBilanUrl, docBilanExcelUrl, ApiError,
   type BilanModele, type BilanEntrees, type BilanResultat, type BilanSaisie, type BilanPoste,
 } from '../../lib/api'
 import { useOuvrirDocument } from '../../lib/ouvrirDocument'
@@ -169,8 +169,13 @@ export function BilanEcran({ idu, onClose, onGenerated }:
       onGenerated?.(doc_id)
       await ouvrir(docBilanUrl(idu, doc_id), 'bilan')
     } catch (e) {
-      const d = (e as { detail?: { message?: string } })?.detail
-      setErreurGen(d?.message ?? 'Génération impossible.')
+      // A-05-2 — message honnête : l'API renvoie un `detail` STRING (ApiError.detail).
+      // Un 401 (ou un détail « compte requis ») = authentification → on invite à se
+      // connecter plutôt que d'afficher un « Génération impossible. » muet.
+      const detail = e instanceof ApiError ? e.detail : undefined
+      const auth = e instanceof ApiError && (e.status === 401 || /compte|connect|authenti/i.test(detail ?? ''))
+      if (auth) setErreurGen('Connectez-vous à votre compte pour générer ce document.')
+      else setErreurGen(detail || 'Génération impossible.')
     }
   }
 

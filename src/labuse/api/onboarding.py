@@ -589,9 +589,13 @@ async def reset_demande(request: Request, db: Session = Depends(get_db)):
     # État HONNÊTE (boussole) : le message dépend de l'état du TRANSPORT (pas de l'existence du
     # compte — anti-énumération). SMTP branché → on annonce l'envoi (conditionnel « si un compte
     # existe ») ; SMTP absent (dev) → on ne prétend PAS qu'un e-mail est parti.
-    # COMPTE-2 (Lot 4) — le reset part par Brevo (template 14) : le message honnête suit la config BREVO.
-    from ..brevo import etat_configuration
-    if etat_configuration().get("api"):
+    # COMPTE-2 (Lot 4) — le reset part par Brevo (template 14) : le message honnête suit l'ÉTAT RÉEL
+    # du transport, PAS la seule présence de BREVO_API_KEY. En dry-run (local sans LABUSE_MAIL_REEL),
+    # le mail est écrit en `.eml` et ne PART PAS — on ne doit donc jamais prétendre qu'un lien « vient
+    # d'être envoyé ». A-07-2 : on lit la MÊME garde que le transport (`envoi_reel_autorise`), pas
+    # `etat_configuration().get("api")` qui était vrai dès qu'une clé existait (message trompeur).
+    from ..config import envoi_reel_autorise
+    if envoi_reel_autorise():
         corps = """<div class="big"><div class="mark ok" aria-hidden="true">✓</div>
 <h1>Vérifiez votre boîte mail</h1><p class="sub">un lien valable 1 heure vient d'être envoyé</p>
 <p style="font-size:13px;line-height:1.6">Si un compte est associé à cette adresse, un e-mail de

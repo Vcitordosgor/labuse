@@ -144,6 +144,11 @@ def courrier_demande(body: DemandeIn, request: Request, db: Session = Depends(ge
     client = _client_label(db, cid)
     com = f" ({body.communes})" if body.communes else ""
     titre = f"{client} demande l'envoi de {d['n']} courrier{'s' if d['n'] > 1 else ''}{com}"
+    # A-08-2 — le récap `communes` arrive formaté « Saint-Denis ×1 · Saint-Paul ×2 ». Dans l'EN-TÊTE
+    # Subject, le « × » (U+00D7) force un encodage RFC2047 fragmenté (« =C3=971 ») qui s'affichait
+    # cassé (« ×1 »). On rend le SUJET en ASCII lisible (× → x, · → -) : l'en-tête reste du texte brut,
+    # proprement wrappé. La cloche et le corps du mail gardent le « × » (contenu UTF-8, pas d'en-tête).
+    titre_sujet = titre.replace("×", "x").replace(" · ", " - ")
     # ① CLOCHE — event_log `systeme`, compte NULL = feed pilote/admin (invisible aux clients ; jamais
     #    exclu du filtre cloche). Même patron que notifier_fraicheur.
     try:
@@ -165,7 +170,7 @@ def courrier_demande(body: DemandeIn, request: Request, db: Session = Depends(ge
                           f"Corps du courrier :\n{body.corps}\n\n"
                           f"→ Vue admin /courrier/admin : rappeler le client, confirmer le tarif, "
                           f"puis faire avancer le statut (À déposer → Déposé → Envoyé).")
-            send_email_async(dest, f"[LABUSE] {titre}", corps_mail, contexte="Courrier")
+            send_email_async(dest, f"[LABUSE] {titre_sujet}", corps_mail, contexte="Courrier")
     except Exception:
         pass
     return {"ok": True, **d}

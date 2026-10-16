@@ -373,11 +373,19 @@ export default function App() {
     // au boot → une URL de fiche partagée rouvre la MÊME fiche (les deep-links outil/filtres l'étaient
     // déjà, la fiche non). `select` déclenche le fetch parcelle ; la vue par défaut « cartes » l'affiche.
     const pidu = p.get('idu')
-    if (pidu && /^[0-9A-Za-z]{10,20}$/.test(pidu)) select(pidu)
-    // M104 — lien profond des notifications de secteur (#surveillance=parcelles|secteurs|criteres) :
-    // ouvre la section unifiée sur le bon volet (aucun lien mort).
+    if (pidu && /^[0-9A-Za-z]{10,20}$/.test(pidu)) {
+      select(pidu)
+      // A-08-1 — deep-link « #idu=…&m=courriers » : amorcer le destinataire comme le fait la tuile
+      // de la fiche (setCourrierPrefill(idu)), sinon l'outil Courrier s'ouvre vide alors qu'une
+      // parcelle est en contexte. Même état/porte que la tuile fiche (ModulePanel lit courrierPrefill).
+      if (m === 'courriers') useApp.getState().setCourrierPrefill(pidu)
+    }
+    // M104 — lien profond des notifications de Veille (#surveillance=parcelles|criteres) : ouvre la
+    // section unifiée sur le bon volet. A-08-3 — le volet 'secteurs' a été retiré : on n'accepte que
+    // les volets réels (parcelles / criteres) ; toute autre valeur ouvre la Veille sur 'parcelles'
+    // (plus de retombée silencieuse sur un volet 'secteurs' mort).
     const sv = p.get('surveillance')
-    if (sv) useApp.getState().openSurveillance(sv === 'parcelles' || sv === 'criteres' ? sv : 'secteurs')
+    if (sv) useApp.getState().openSurveillance(sv === 'criteres' ? 'criteres' : 'parcelles')
     // DASHBOARD-V1 — deep-link de la Tour de contrôle (#admin=1) ; la garde reste au backend.
     if (p.get('admin') === '1') setView('admin')
     // (Alias d'URL #pg=vues / pg=segments retiré avec le spin-off « Vues » — M12 Lot C-bis.)

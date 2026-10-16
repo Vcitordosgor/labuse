@@ -1137,7 +1137,10 @@ def synthese_pour_page(db) -> dict:
     return {
         "dernier_ts": dernier[0].isoformat() if dernier else None,
         "casses": list(details.get("casses") or []),
-        "phrases": {vid: PHRASES.get(vid, "") for vid in (details.get("casses") or [])},
+        # A-09-1 — `phrases` = la phrase de CHAQUE verrou (ce qu'il garantit), plus seulement des
+        # cassés : auparavant c'était {} quand tout était vert (donnée morte). Le Résumé « dit vrai »
+        # en permanence (le détail de chaque verrou est lisible) ; `casses` reste la liste rouge.
+        "phrases": {v.id: v.phrase for v in VERROUS},
         "jamais_joues": dernier is None,
         "orphelines": sorted(T.orphelines(relations_schema(db))),
         "muets": list(verrou_reservoirs_sans_lecteur().details),

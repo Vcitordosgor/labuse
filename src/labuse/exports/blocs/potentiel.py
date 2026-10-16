@@ -114,8 +114,12 @@ def _scenarios(valeurs) -> str:
     # reconstruction
     if a(valeurs, "capacite_logements"):
         cap = val(valeurs, "capacite_logements")
+        # A-05-1 — la capacité est une FOURCHETTE de logements (celle de la fiche), jamais le
+        # drapeau `capacite_estimee` (qui imprimait « 1 »). `texte` = « min–max » (ou un seul
+        # nombre si bornes égales), identique au libellé de la section Constructibilité.
+        txt = cap.get("texte") if isinstance(cap, dict) else str(cap)
         lignes.append(ligne_kv(SCENARIO_RECONSTRUCTION,
-                               f"<strong>{esc(str(cap))}</strong> — démolition à chiffrer.", ""))
+                               f"<strong>{esc(str(txt))}</strong> logements — démolition à chiffrer.", ""))
     if not lignes:
         return ""
     entete = '<tr><th>Scénario</th><th>Résultat</th><th></th></tr>'

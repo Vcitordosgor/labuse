@@ -1,0 +1,13 @@
+# A-06-3 — question PPR → réponse OUI/NON sur le PPR
+
+## AVANT (pré-fix) : esquivée par une réponse sur le zonage PLU
+text: Zone PLU : Zone U2d (famille U) (zone_plu_famille).
+tool: fiche_parcelle champ_id: zone_plu_famille
+
+## APRÈS (fix) — oui/non sur le PPR, depuis la couche de risque servie
+### PPR ROUGE — « Cette parcelle est-elle en zone rouge PPR ? » (97415000CY1134 Saint-Paul, contexte)
+{"text":"Oui, cette parcelle est en zone rouge PPR. La zone rouge couvre 35 % de la surface et correspond au PPR littoral. Selon le règlement, cette zone rouge n'entraîne pas une exclusion automatique de constructibilité, mais elle impose une vigilance forte et nécessite une vérification au règlement spécifique. (DEAL Réunion — PPR / aléas, millésime PPR/PPRL approuvés 2011–2026)","intent":"QUESTION","refus":null,"tool":"statut_ppr","sources":["DEAL Réunion — PPR / aléas"],"partiel":false,"criteres_non_appliques":[],"criteres_appliques":[],"carte_filtre":null,"journal":"J'ai interrogé l'outil statut_ppr.","conversation_id":464,"contexte_ttl_minutes":10}
+### NON-PPR — même question (97411000AK0203 Saint-Denis, hors PPR)
+{"text":"Non, cette parcelle n'est pas en zone rouge PPR. Elle est classée hors PPR selon la couche de données disponible (DEAL Réunion — PPR / aléas).","intent":"QUESTION","refus":null,"tool":"statut_ppr","sources":["DEAL Réunion — PPR / aléas"],"partiel":false,"criteres_non_appliques":[],"criteres_appliques":[],"carte_filtre":null,"journal":"J'ai interrogé l'outil statut_ppr.","conversation_id":465,"contexte_ttl_minutes":10}
+### IDU dans le message — « y a-t-il un risque PPR sur la parcelle 97411000AK0204 ? » (PPR rouge)
+{"text":"Oui, il y a un risque PPR sur cette parcelle. La parcelle 97411000AK0204 à Saint-Denis est concernée par un **PPR inondation et mouvement de terrain en zone rouge** sur **13 % de sa surface**. Cela signifie une vigilance forte : la constructibilité doit être vérifiée au règlement du PPR, mais il n'y a pas d'exclusion automatique de construction.\n\n(DEAL Réunion — PPR / aléas, millésime PPR/PPRL approuvés 2011–2026)","intent":"QUESTION","refus":null,"tool":"statut_ppr","sources":["DEAL Réunion — PPR / aléas"],"partiel":false,"criteres_non_appliques":[],"criteres_appliques":[],"carte_filtre":null,"journal":"J'ai interrogé l'outil statut_ppr.","conversation_id":466,"contexte_ttl_minutes":10}

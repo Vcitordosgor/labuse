@@ -1,0 +1,13 @@
+A-08-2 — sujet du .eml interne « demande de courrier »
+========================================================================
+Récap communes transmis par le front : 'Saint-Denis ×1 · Saint-Paul ×2'
+
+AVANT (bug) — le « × » (U+00D7) force un encodage RFC2047 FRAGMENTÉ, affiché cassé :
+Subject: [LABUSE] Compte #3 demande l'envoi de 3 courriers (Saint-Denis 
+ =?utf-8?q?=C3=971?= =?utf-8?q?=C2=B7?= Saint-Paul =?utf-8?q?=C3=972=29?=
+
+APRÈS (fix) — sujet ASCII lisible (× → x, · → -), en-tête texte brut :
+Subject: [LABUSE] Compte #3 demande l'envoi de 3 courriers (Saint-Denis x1 -
+ Saint-Paul x2)
+
+La CLOCHE et le CORPS du mail gardent le « × » (contenu UTF-8, aucun en-tête concerné).

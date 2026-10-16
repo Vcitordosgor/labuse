@@ -338,8 +338,18 @@ def parcelles_par_entreprise(db: Session, *, q: str) -> ToolResult:
 # ───────────────────────── fiche_parcelle ─────────────────────────
 def fiche_parcelle(db: Session, *, idu: str) -> ToolResult:
     """Données d'UNE parcelle via `_q_v2_fiche` (verdict/zonage/risques LUS, jamais recalculés)."""
+    from fastapi import HTTPException
+
     from ..api.app import _q_v2_fiche
-    f = _q_v2_fiche(db, idu, run_label=runs.current())
+    # A-06-1 — un IDU BIEN FORMÉ mais INEXISTANT fait lever un HTTPException(404) par `_q_v2_fiche`
+    # (« Parcelle … inconnue de l'analyse en cours »). Sans ce filet, l'exception remontait jusqu'à la
+    # garde générale de l'endpoint → « incident serveur, réessayez » (erreur:true) au client, alors que
+    # la VRAIE cause est une parcelle introuvable. On la capte ICI et on rend le refus honnête « parcelle
+    # introuvable » (le même chemin que les autres outils) — jamais un faux incident serveur.
+    try:
+        f = _q_v2_fiche(db, idu, run_label=runs.current())
+    except HTTPException:
+        return ToolResult("fiche_parcelle", ok=False, refus=f"parcelle {idu} introuvable")
     if not f or f.get("commune") is None:
         return ToolResult("fiche_parcelle", ok=False, refus=f"parcelle {idu} introuvable")
     sv2 = f.get("score_v2") or {}
@@ -623,10 +633,14 @@ def destination_zone(db: Session, *, idu: str | None = None, commune: str | None
     # (Usdu 73 % / N 27 %) le verdict d'implantation ignorait la part N ; on la surface désormais.
     _parts = None
     if idu and not (commune and zone):
-        pid = db.execute(text("SELECT id, commune FROM parcels WHERE idu = :idu"),
+        # A-06-1 — `text` n'est PAS importé au module (les autres outils l'importent en local sous `_text`) :
+        # sans ça, destination_zone sur un IDU levait un Name('text') → garde générale → faux incident
+        # serveur. Import local, comme partout dans ce module.
+        from sqlalchemy import text as _text
+        pid = db.execute(_text("SELECT id, commune FROM parcels WHERE idu = :idu"),
                          {"idu": idu.strip().upper()}).mappings().first()
         if not pid:
-            return ToolResult("destination_zone", ok=False, refus="parcelle introuvable")
+            return ToolResult("destination_zone", ok=False, refus=f"parcelle {idu} introuvable")
         from ..faisabilite.zone_servie import zone_dominante
         zs = zone_dominante(db, pid["id"])
         commune = commune or pid["commune"]
@@ -656,6 +670,138 @@ def destination_zone(db: Session, *, idu: str | None = None, commune: str | None
                       millesime=v.get("millesime"))
 
 
+# ───────────────────────── regles_plu_zone (A-06-2) ─────────────────────────
+def _zone_commune_depuis_idu(db: Session, idu: str) -> tuple[str | None, str | None, str | None]:
+    """(commune, zone_dominante, refus) d'une parcelle par IDU — MÊME résolution que la fiche et que
+    destination_zone (`zone_servie.zone_dominante`). Zone LUE du run servi, jamais recalculée."""
+    from sqlalchemy import text as _text
+    pid = db.execute(_text("SELECT id, commune FROM parcels WHERE idu = :idu"),
+                     {"idu": idu.strip().upper()}).mappings().first()
+    if not pid:
+        return None, None, f"parcelle {idu} introuvable"
+    from ..faisabilite.zone_servie import zone_dominante
+    zs = zone_dominante(db, pid["id"])
+    return pid["commune"], (zs.zone if zs else None), None
+
+
+def regles_plu_zone(db: Session, *, idu: str | None = None, commune: str | None = None,
+                    zone: str | None = None) -> ToolResult:
+    """A-06-2 — RESTITUE les règles PLU CALIBRÉES d'une zone (hauteur, emprise au sol, reculs/retraits),
+    telles que déjà servies par LABUSE (`faisabilite.zonage.resolve_zone` — valeurs calibrées, sourcées
+    article/page). Le Copilote LIT ces règles ; il NE recalcule aucun score (doctrine : restituer des
+    données servies est permis). Résout la zone soit d'une parcelle (IDU), soit d'un couple commune+zone.
+    Honnête : une règle absente/non calibrée est dite « non renseignée pour cette zone », jamais inventée."""
+    from ..faisabilite.zonage import reglement_source, resolve_zone
+    if idu and not (commune and zone):
+        c, z, refus = _zone_commune_depuis_idu(db, idu)
+        if refus:
+            return ToolResult("regles_plu_zone", ok=False, refus=refus)
+        commune = commune or c
+        zone = zone or z
+    if not commune:
+        return ToolResult("regles_plu_zone", ok=False,
+                          refus="préciser une commune (et une zone), ou une parcelle (IDU)")
+    if not zone:
+        return ToolResult("regles_plu_zone", ok=False,
+                          refus="zone PLU inconnue pour cette parcelle — règles impossibles sans zone")
+    resolue = resoudre_commune(commune)
+    if resolue is not None:
+        commune = resolue
+    r = resolve_zone(zone, commune)
+    if r is None:
+        return ToolResult("regles_plu_zone", ok=False,
+                          refus=f"zone {zone} non calibrée pour {commune} — règles non disponibles")
+    src = r.sources or {}
+    non = "non renseignée pour cette zone"
+
+    def _num(v):
+        """Le NOMBRE formaté (m/%), ou None si la valeur n'est pas numérique (absente OU sentinelle
+        ambiguë `A_VERIFIER` : jamais collé à une unité, jamais inventé)."""
+        if isinstance(v, bool) or not isinstance(v, (int, float)):
+            return None
+        n = int(v) if float(v).is_integer() else v
+        return str(n).replace(".", ",")
+
+    def _texte(v, unite, align_txt=None, aligne=False):
+        """Rendu honnête d'une règle : un nombre + unité ; « à l'alignement/limite » ; « à vérifier »
+        (sentinelle ambiguë) ; sinon « non renseignée »."""
+        from ..faisabilite.zonage import A_VERIFIER
+        if aligne:
+            return align_txt
+        num = _num(v)
+        if num is not None:
+            return f"{num} {unite}".strip()
+        if v == A_VERIFIER:
+            return "à vérifier au règlement (valeur ambiguë)"
+        return non
+
+    hauteur_val = r.hf_m if r.hf_m is not None else r.he_m
+    hauteur_quoi = "faîtage" if r.hf_m is not None else ("égout/acrotère" if r.he_m is not None else None)
+    hauteur_num = _num(hauteur_val)
+    regles = {
+        "hauteur_m": hauteur_val,
+        "hauteur_texte": (f"{hauteur_num} m ({hauteur_quoi})" if hauteur_num else _texte(hauteur_val, "m")),
+        "emprise_sol_pct": r.emprise_sol_pct,
+        "emprise_texte": _texte(r.emprise_sol_pct, "%"),
+        "recul_voirie_m": r.recul_voirie_m,
+        "recul_voirie_texte": _texte(r.recul_voirie_m, "m", "à l'alignement (0 m)",
+                                     r.recul_voirie_alignement),
+        "recul_limites_m": r.recul_limites_sep_m,
+        "recul_limites_texte": _texte(r.recul_limites_sep_m, "m", "en limite séparative (0 m)",
+                                      r.recul_limites_alignement),
+        "recul_limites_formule": r.recul_limites_formule,
+    }
+    citations = {k: src[k] for k in ("hauteur", "emprise", "recul_voirie", "recul_limites") if src.get(k)}
+    # une source affichée au client : la zone + la commune + l'état de calibrage (sinon l'article le plus
+    # précis disponible). Le millésime du règlement si connu.
+    meta = reglement_source(commune) or {}
+    etat = "règles calibrées" if r.calibree else "estimation générique (PLU non calibré pour cette zone)"
+    source = f"PLU {commune} — zone {zone} ({etat})"
+    return ToolResult("regles_plu_zone",
+                      valeur=(r.hf_m if r.hf_m is not None else r.he_m),
+                      data={"commune": commune, "zone": zone, "calibree": r.calibree,
+                            "regles": regles, "citations": citations,
+                            "via_renvoi": r.via_renvoi},
+                      source=source, millesime=meta.get("millesime"))
+
+
+# ───────────────────────── statut_ppr (A-06-3) ─────────────────────────
+def statut_ppr(db: Session, *, idu: str) -> ToolResult:
+    """A-06-3 — OUI/NON sur le PPR d'une parcelle, à partir des aléas DÉJÀ SERVIS de la fiche
+    (`_q_v2_fiche().aleas.liste` : natures « PPR — zone rouge / bleue »). Le Copilote LIT la couche
+    de risque servie, il n'invente rien. Zone rouge → oui (rouge) ; zone bleue sans rouge → oui (bleue,
+    sous prescriptions) ; aucune zone PPR → NON (dit clairement)."""
+    from fastapi import HTTPException
+
+    from ..api.app import _q_v2_fiche
+    try:
+        f = _q_v2_fiche(db, idu, run_label=runs.current())
+    except HTTPException:
+        return ToolResult("statut_ppr", ok=False, refus=f"parcelle {idu} introuvable")
+    if not f or f.get("commune") is None:
+        return ToolResult("statut_ppr", ok=False, refus=f"parcelle {idu} introuvable")
+    liste = ((f.get("aleas") or {}).get("liste")) or []
+    rouge = next((a for a in liste if "zone rouge" in (a.get("nature") or "").lower()), None)
+    bleue = next((a for a in liste if "zone bleue" in (a.get("nature") or "").lower()), None)
+    if rouge:
+        statut, reponse = "rouge", "oui"
+        txt = rouge.get("libelle") or "Parcelle en zone rouge du PPR."
+    elif bleue:
+        statut, reponse = "bleue", "oui"
+        txt = bleue.get("libelle") or "Parcelle en zone bleue du PPR."
+    else:
+        statut, reponse = "hors", "non"
+        txt = "Cette parcelle n'est PAS classée en zone PPR (ni rouge, ni bleue) d'après la couche servie."
+    ppr_docs = (rouge or bleue or {}).get("ppr")
+    return ToolResult("statut_ppr", valeur=reponse,
+                      data={"idu": idu, "commune": f.get("commune"), "reponse": reponse,
+                            "statut_ppr": statut, "libelle": txt,
+                            "part_pct": (rouge or bleue or {}).get("part_pct"),
+                            "ppr_documents": ppr_docs},
+                      source="DEAL Réunion — PPR / aléas",
+                      millesime=(rouge or bleue or {}).get("millesime"))
+
+
 OUTILS = {
     "compter_parcelles": compter_parcelles,
     "compter_permis": compter_permis,
@@ -666,5 +812,7 @@ OUTILS = {
     "marche": marche,
     "compter_piscines": compter_piscines,
     "destination_zone": destination_zone,
+    "regles_plu_zone": regles_plu_zone,
+    "statut_ppr": statut_ppr,
     "recherche_web": recherche_web,
 }

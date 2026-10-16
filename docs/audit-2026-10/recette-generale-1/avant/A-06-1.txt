@@ -1,0 +1,2 @@
+text: Je n'ai pas su traiter cette demande — l'incident est enregistré côté serveur. Reformulez-la autrement, ou réessayez dans un instant.
+erreur: True refus: None

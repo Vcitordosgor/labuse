@@ -150,6 +150,20 @@ CATALOGUE = [
      "en zone UE à Saint-Denis ».",
      "params": {"idu": "str 14 car. (si parcelle)", "commune": "str (si zone donnée)",
                 "zone": "str (code zone PLU, ex. UE)", "activite": "l'activité, verbatim"}},
+    {"nom": "regles_plu_zone", "desc": "A-06-2 — RÈGLES PLU CALIBRÉES d'une zone (que LABUSE DÉTIENT) : "
+     "HAUTEUR maximale, EMPRISE AU SOL (CES), RECULS/RETRAITS par rapport à la voie et aux limites "
+     "séparatives, sourcés article/page du règlement. Pour « quelle hauteur maximale en zone Ua à "
+     "Saint-Denis », « emprise au sol autorisée zone U2 à Saint-Pierre », « recul par rapport à la "
+     "voirie en zone X », « combien de logements sur un terrain de N m² en zone X » (donne l'emprise/"
+     "hauteur, PAS un score). Donne un IDU (parcelle) OU commune + zone. C'est une RESTITUTION de "
+     "règles déjà servies, jamais un calcul de score.",
+     "params": {"idu": "str 14 car. (si parcelle)", "commune": "str (si zone donnée)",
+                "zone": "str (code zone PLU, ex. Ua, U2)"}},
+    {"nom": "statut_ppr", "desc": "A-06-3 — EST-CE EN ZONE PPR ? Répond OUI/NON sur le PPR (plan de "
+     "prévention des risques) d'une parcelle à partir de la couche de risque servie : zone ROUGE, zone "
+     "BLEUE, ou HORS PPR. Pour « cette parcelle est-elle en zone rouge PPR », « y a-t-il un risque PPR "
+     "sur 974… », « est-elle inondable au PPR ». Exige un IDU (14 car.).",
+     "params": {"idu": "str 14 car."}},
     {"nom": "recherche_web", "desc": "DERNIER RECOURS (M78-ter) — un fait PUBLIC de La Réunion sur le "
      "foncier/immobilier/urbanisme/collectivités et leurs acteurs (élu, organigramme d'une collectivité, "
      "actualité réglementaire, appel à projets, coordonnées d'un service) que AUCUN autre outil ne couvre.",
@@ -325,6 +339,8 @@ _ARG_SPEC = {
     "marche": {"commune": str},
     "compter_piscines": {"commune": str},
     "destination_zone": {"idu": str, "commune": str, "zone": str, "activite": str},
+    "regles_plu_zone": {"idu": str, "commune": str, "zone": str},
+    "statut_ppr": {"idu": str},
     "recherche_web": {"question": str},
 }
 
@@ -613,6 +629,26 @@ def answer(db: Session, message: str, history: list[dict] | None = None,
             rep = _reply(clarif, "QUESTION", clarification=True)
             rep["_route"] = {"intent": "QUESTION", "params": {}, "voie": prior_voie}
             return rep
+    # A-06-2 / A-06-3 — QUESTIONS CIBLÉES PPR et RÈGLES PLU CALIBRÉES, déterministes, AVANT le chemin
+    # fiche (qui, sinon, esquiverait : « ppr » → liste d'aléas générique, « hauteur zone X » → famille de
+    # zone). Une parcelle NOMMÉE (IDU) + une question sur le PPR → réponse OUI/NON (statut_ppr) ; + une
+    # question sur une RÈGLE (hauteur/emprise/recul) → restitution de la règle calibrée (regles_plu_zone).
+    # Un vrai outil servi, lu des données servies ; sinon on laisse le flux normal.
+    if not scenario:
+        idu_cible = (contexte or {}).get("idu") or _idu_dans(message)
+        if idu_cible and not any(k in _fold_py(message.lower()) for k in _RESUME_FICHE_KW):
+            if _est_question_ppr(message):
+                res = OUTILS["statut_ppr"](db, idu=idu_cible)
+                if res.ok:
+                    rep = _reply_compte(db, message, res, faits_fil, "QUESTION")
+                    rep["_route"] = {"intent": "QUESTION", "params": {"idu": idu_cible}, "voie": prior_voie}
+                    return rep
+            if _est_question_regle_plu(message):
+                res = OUTILS["regles_plu_zone"](db, idu=idu_cible)
+                if res.ok:
+                    rep = _reply_compte(db, message, res, faits_fil, "QUESTION")
+                    rep["_route"] = {"intent": "QUESTION", "params": {"idu": idu_cible}, "voie": prior_voie}
+                    return rep
     # COPILOTE-2 lot 1 — LE CHEMIN FICHE, DÉTERMINISTE ET SANS MODÈLE : une parcelle NOMMÉE (IDU dans
     # le message ou le contexte embarqué) avec une demande de résumé ou de champ précis est servie AVANT
     # le routeur — le résumé se construit sans appel modèle (preuve du mandat, mode dégradé compris).
@@ -1423,6 +1459,14 @@ def _answer_with_route(db: Session, message: str, route, contexte: dict | None =
         return _reply(HORS_SUJET, intent, refus="hors_sujet")
 
     if intent == "QUESTION":
+        # A-06-2 — RÈGLES PLU CALIBRÉES par COMMUNE + ZONE (sans IDU) : « quelle hauteur maximale en zone
+        # Ua à Saint-Denis ? », « emprise au sol en zone U2 à Saint-Pierre ? ». Déterministe : on DÉTIENT
+        # ces règles → on les restitue (regles_plu_zone), au lieu de décliner ou de router vers le web.
+        # La variante avec IDU est déjà traitée plus haut (dans `answer`, avant le chemin fiche).
+        if _est_question_regle_plu(message) and params.get("commune") and params.get("zone"):
+            res = OUTILS["regles_plu_zone"](db, commune=params["commune"], zone=params["zone"])
+            if res.ok:
+                return _reply_compte(db, message, res, faits_fil, intent)
         # COPILOTE-2 lot 1 — LE CHEMIN FICHE d'abord : une parcelle/commune nommée reçoit un résumé
         # déterministe (ou la valeur d'un champ précis, ligne déclarée + id) AVANT toute sélection
         # d'outil. Le résumé se construit sans modèle (preuve du mandat, mode dégradé compris).
@@ -1704,6 +1748,42 @@ def _quel_champ_fiche(message: str):
     return RF._quel_champ(message)
 
 
+# A-06-3 — QUESTION PPR : « cette parcelle est-elle en zone rouge PPR ? », « risque PPR sur 974… ? »,
+# « est-elle inondable au PPR ? ». Déterministe (fold accents) : un mot PPR/zone rouge-bleue + une
+# tournure interrogative → la réponse OUI/NON sur le PPR (outil statut_ppr), jamais une esquive sur le
+# zonage PLU ou la liste d'aléas. Un « ppr » nu dans une demande de résumé (« dis-moi tout ») ne doit
+# pas être happé : le chemin résumé prime (traité en amont via _RESUME_FICHE_KW).
+_PPR_KW = ("ppr", "zone rouge", "zone bleue", "plan de prevention des risques",
+           "plan de prévention des risques")
+
+
+def _est_question_ppr(message: str) -> bool:
+    m = _fold_py(message.lower())
+    if not any(k in m for k in (_fold_py(x) for x in _PPR_KW)):
+        return False
+    # une vraie QUESTION de statut (oui/non) — pas « explique le PPR » (notion → voie web/explication).
+    if any(k in m for k in ("explique", "qu'est-ce", "qu est-ce", "c'est quoi", "c est quoi",
+                            "a quoi sert", "definition")):
+        return False
+    return True
+
+
+# A-06-2 — QUESTION RÈGLES PLU CALIBRÉES : hauteur max, emprise au sol, reculs/retraits d'une zone.
+# Déterministe : un terme de RÈGLE PLU + (une zone/commune/parcelle en contexte). Ne PAS happer la
+# constructibilité/capacité au sens score (« que peut accueillir ce terrain » reste la Faisabilité) :
+# on ne match QUE les grandeurs restituables (hauteur/emprise/recul).
+_PLU_REGLE_KW = ("hauteur maximale", "hauteur max", "hauteur autorisee", "hauteur autorisée",
+                 "quelle hauteur", "combien de metres", "combien de mètres", "nombre de niveaux",
+                 "emprise au sol", "emprise maximale", "emprise maximum", "coefficient d'emprise",
+                 "ces maximal", "recul", "retrait", "distance par rapport a la voie",
+                 "distance par rapport à la voie", "marge de recul")
+
+
+def _est_question_regle_plu(message: str) -> bool:
+    m = _fold_py(message.lower())
+    return any(k in m for k in (_fold_py(x) for x in _PLU_REGLE_KW))
+
+
 def _chemin_fiche(db: Session, message: str, params: dict, contexte: dict | None) -> dict | None:
     """Le chemin FICHE : un résumé déterministe d'une parcelle/commune nommée, ou la valeur d'un
     champ précis (ligne déclarée + id). Rend un reply, ou None si la demande n'est pas de ce chemin."""
@@ -1768,6 +1848,15 @@ def _sans_outil(db: Session, message: str, params: dict, intent: str, motif: str
     le Copilote dit ce qu'il sait de plus proche plutôt qu'un refus sec."""
     m = _fold_py(message.lower())
     idu = params.get("idu")
+    # A-06-1 — PARCELLE INTROUVABLE : un IDU bien formé mais inexistant (l'outil a rendu un refus
+    # « introuvable », jamais une exception). On le DIT clairement, sans « incident serveur » ni
+    # « réessayez » : la demande est honnête, la parcelle n'existe simplement pas dans l'analyse servie.
+    if idu and motif and "introuvable" in motif.lower():
+        telemetrie.refus(db, "parcelle_introuvable", message, intent)
+        return _reply(f"La parcelle {idu} est introuvable : cet identifiant est bien formé mais ne "
+                      "correspond à aucune parcelle de l'analyse en cours. Vérifiez l'identifiant (14 "
+                      "caractères) ou sélectionnez la parcelle sur la carte.", intent,
+                      refus="parcelle_introuvable")
     if "divis" in m or "decoup" in m or "detacher un lot" in m or "lotir" in m:
         telemetrie.refus(db, "aucun_outil", message, intent)
         return _division(db, idu, intent)

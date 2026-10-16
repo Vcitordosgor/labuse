@@ -16,6 +16,7 @@ import hashlib
 import logging
 import secrets
 from datetime import date, datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
@@ -433,6 +434,9 @@ def basculer_essai_expire(db: Session, compte_id: int) -> None:
     suspension EXISTANT (mandat : seul le déclencheur change — une date au lieu du bouton).
     Données conservées, réversible ; le client voit « abonnement à régulariser » au login."""
     suspendre_compte(db, compte_id, motif="essai_expire")
+    # A-07-5 — la bascule d'essai est une suspension AUTOMATIQUE : elle émet le mail `suspension`
+    # (template 10), best-effort comme relance_carte (jamais bloquer la bascule).
+    mail_cycle_de_vie_auto(db, compte_id, "suspension", "job:essai-expire")
 
 
 def _essai_echu(r) -> bool:
@@ -707,6 +711,42 @@ def creer_admin_invitation(db: Session, email: str, nom: str | None = None) -> d
     return {"utilisateur_id": int(uid), "compte_id": int(cid), "email": email, "promu": False,
             "lien": f"{get_settings().public_base_url}/invitation?token={tok}",
             "expire_at": exp.isoformat()}
+
+
+def _prenom_titulaire(nom: str | None, email: str) -> str:
+    base = (nom or "").strip()
+    return base.split()[0] if base and "@" not in base else "client"
+
+
+def mail_cycle_de_vie_auto(db: Session, compte_id: int, key: str, demandeur: str) -> None:
+    """A-07-5 — ÉMISSION AUTOMATIQUE d'un mail de cycle de vie (résiliation/suspension/rétablissement)
+    SUR une transition d'état déclenchée par le système (webhook Stripe, bascule d'essai), au contraire
+    des envois MANUELS admin (dashboard). Best-effort EXACTEMENT comme `relance_carte` (facturation.py) :
+    un try/except englobant, l'envoi passe par la FILE `mail_queue` (`mail.envoyer_mail`, son PROPRE
+    engine → ne touche jamais la transaction de la transition), respecte le dry-run (transport `.eml`),
+    et un échec NE REMONTE JAMAIS — la transition d'état est déjà actée. Clés attendues :
+      · `resiliation` (template 16, PRENOM + DATE_FIN_ACCES) ;
+      · `suspension` (template 10, PRENOM + LIEN_PAIEMENT) ;
+      · `retablissement` (template 11, PRENOM)."""
+    try:
+        row = db.execute(text(
+            "SELECT k.nom, k.essai_expire_at,"
+            " (SELECT u.email FROM utilisateurs u WHERE u.compte_id = k.id ORDER BY u.id LIMIT 1) AS email"
+            " FROM comptes k WHERE k.id = :c"), {"c": compte_id}).mappings().first()
+        if not row or not row["email"]:
+            return
+        base = (get_settings().public_base_url or "https://app.labuse.immo").rstrip("/")
+        params: dict = {"PRENOM": _prenom_titulaire(row["nom"], row["email"]), "EMAIL": row["email"]}
+        if key == "suspension":
+            params["LIEN_PAIEMENT"] = f"{base}/facturation"
+        elif key == "resiliation":
+            d = row.get("essai_expire_at")
+            params["DATE_FIN_ACCES"] = (
+                d.astimezone(ZoneInfo("Indian/Reunion")).strftime("%d/%m/%Y") if d else "")
+        from .mail import envoyer_mail
+        envoyer_mail(key=key, to=row["email"], compte_id=compte_id, demandeur=demandeur, params=params)
+    except Exception:  # noqa: BLE001 — le mail est best-effort ; la transition d'état prime (comme relance_carte)
+        log.warning("mail cycle de vie « %s » (auto) non enfilé pour le compte %s", key, compte_id)
 
 
 def suspendre_compte(db: Session, compte_id: int, motif: str = "manuel") -> None:

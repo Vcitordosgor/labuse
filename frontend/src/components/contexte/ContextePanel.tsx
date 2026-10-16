@@ -741,8 +741,11 @@ export function ContextePanel() {
                        « JJ/MM/AAAA → JJ/MM/AAAA · code » (plus de libellé coupé mot par mot, plus de
                        dates qui chevauchent la colonne de droite). */
                     <div className="ml-2 flex flex-col gap-1.5 border-l border-line pl-2">
+                      {/* A-03-1 — clé unique : le code national d'un arrêté CatNat peut être dupliqué
+                          (GASPAR renvoie parfois deux fois le même code) ; on combine code + index pour
+                          que React ne voie plus deux enfants à la même clé (même rendu). */}
                       {d.risques.catnat_detail.slice(0, 6).map((a, i) => (
-                        <div key={a.code_national ?? i}>
+                        <div key={`${a.code_national ?? 'catnat'}-${i}`}>
                           <div className="text-[12px] text-txt">{a.type_peril}</div>
                           <div className="text-[11px] text-txt-dim">{[a.date_debut && a.date_fin ? `${fmtDateNum(a.date_debut)} → ${fmtDateNum(a.date_fin)}` : (a.date_arrete ? fmtDateNum(a.date_arrete) : ''),
                                 a.code_national].filter(Boolean).join(' · ')}</div>

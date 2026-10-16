@@ -656,6 +656,18 @@ def _r_potentiel(v):
     return esc(niv)
 
 
+def _r_capacite(v):
+    # A-05-1 — « Capacité (logements) » = la FOURCHETTE de la fiche (logements_au_sol), rendue
+    # EXACTEMENT comme la section Constructibilité de l'écran : « min–max logements » (ou un seul
+    # nombre si bornes égales). Jamais le drapeau `capacite_estimee` (qui imprimait « 1 »), jamais
+    # le dict brut. L'extracteur renvoie {min, max, texte}.
+    if isinstance(v, dict):
+        txt = v.get("texte") or (str(v.get("max")) if v.get("max") is not None else "")
+    else:
+        txt = str(v)
+    return esc(f"{txt} logements") if txt else ""
+
+
 def _r_dpe(v):
     et, an = v.get("etiquette"), v.get("annee")
     return esc(f"DPE {et}" + (f" ({an})" if an else "")) if et else esc(v.get("libelle") or "")
@@ -779,6 +791,7 @@ _RENDEURS: dict[str, Any] = {
     "ventes_ecartees_n": _r_n, "n_permis_proximite": _r_permis_proximite, "radar_annonces_liste": _r_radar,
     "ventes_100m_n": _r_voisinage, "voisinage_100m_liste": _r_voisinage,
     "equipements_proximite_liste": _r_equipements, "potentiel_verdict": _r_potentiel,
+    "capacite_logements": _r_capacite,   # A-05-1 — fourchette de logements, jamais le drapeau
     "dpe_connu": _r_dpe, "rnb_batiments_liste": _r_rnb, "tfpb_taux_pct": _r_tfpb,
     "taxe_amenagement_estimee_eur": _r_taxe, "rang_tier": _r_rang,
     "filiation_parcelle": _r_filiation,

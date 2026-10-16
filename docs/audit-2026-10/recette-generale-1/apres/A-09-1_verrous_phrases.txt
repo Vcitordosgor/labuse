@@ -1,0 +1,11 @@
+A-09-1 — verrous.phrases dans le résumé /admin/circuit
+========================================================================
+casses (rouge) : ['G5', 'G8']
+phrases : 24 entrées (AVANT = 2 quand tout est vert → donnée morte)
+
+APRÈS — phrases = la phrase de CHAQUE verrou (24), le résumé « dit vrai » en permanence :
+  V1a : Aucun moteur ne lit une table hors de la carte table → réser
+  V1b : Pendant un passage de la sonde sur les témoins, aucune table
+  V1c : Toute table du schéma appartient à la carte, ou est une orph
+  V1d : Chaque réservoir servi est lu par au moins une donnée — aucu
+  … (24 au total)

@@ -419,12 +419,14 @@ interface AppState {
   // M104 — LA section SURVEILLANCE (fusion Suivis + Secteurs + Critères, arbitrage 17/08) :
   // une entrée, trois volets. En surimpression de la carte (l'outil de dessin reste dispo).
   surveillanceOpen: boolean
-  surveillanceVolet: 'parcelles' | 'secteurs' | 'criteres'
+  // A-08-3 — le volet « secteurs » a été RETIRÉ (l'outil secteur n'existe plus) : il n'est
+  // plus une valeur gérée ni exposée. Les deux volets réels : 'parcelles' | 'criteres'.
+  surveillanceVolet: 'parcelles' | 'criteres'
   // RADAR-CATÉGORIE (T4) — la porte de la Veille : 'accueil' (deux portes) · 'interne' (le foncier) ·
   // 'externe' (les annonces Radar).
   surveillancePorte: 'accueil' | 'interne' | 'externe'
   setSurveillancePorte: (p: 'accueil' | 'interne' | 'externe') => void
-  openSurveillance: (volet?: 'parcelles' | 'secteurs' | 'criteres') => void
+  openSurveillance: (volet?: 'parcelles' | 'criteres') => void
   setSurveillanceOpen: (v: boolean) => void
   toggleSurveillance: () => void
   // anciennes entrées (Secteurs / Suivis) : REDIRECTIONS vers la section unifiée — jamais un 404.
@@ -862,14 +864,13 @@ export const useApp = create<AppState>((set, get) => ({
   // volet interne → ils vont DIRECTEMENT à la porte interne (aucun lien de notif cassé).
   surveillancePorte: 'accueil',
   setSurveillancePorte: (p) => set({ surveillancePorte: p }),
-  // RV2-V3 — la Veille est désormais une VUE plein écran (view:'veille'), plus un overlay. Le volet
-  // 'secteurs' a été RETIRÉ (l'outil secteur n'existe plus) : toute demande 'secteurs' retombe sur
-  // 'parcelles'. `surveillanceOpen` reste true tant que la vue est ouverte (compat des consommateurs).
+  // RV2-V3 — la Veille est une VUE plein écran (plus un overlay). Le volet 'secteurs' n'existe
+  // plus (A-08-3) : il n'est plus accepté. `surveillanceOpen` reste true tant que la vue est ouverte.
   // RADAR-2 (Lot 1) — la Veille vit désormais DANS le hub Radar (view:'radar'). Les deep-links de notif
   // ('parcelles' → le foncier, 'criteres' → les annonces) atterrissent directement sur le bon écran Veille.
   openSurveillance: (volet) => set((s) => ({ surveillanceOpen: true, view: 'radar',
     radarEcran: volet === 'criteres' ? 'veille-annonces' : 'veille-foncier', surveillancePorte: 'interne',
-    outilsOpen: false, surveillanceVolet: (volet === 'secteurs' ? 'parcelles' : volet) ?? (s.surveillanceVolet === 'secteurs' ? 'parcelles' : s.surveillanceVolet),
+    outilsOpen: false, surveillanceVolet: volet ?? s.surveillanceVolet,
     selectedIdu: null, module: null, ...CLOSE_OVERLAYS })),
   setSurveillanceOpen: (v) => set(v ? { surveillanceOpen: true, view: 'radar', radarEcran: 'veille' } : { surveillanceOpen: false, view: 'cartes' }),
   toggleSurveillance: () => set((s) => (s.view === 'radar' && s.radarEcran.startsWith('veille')
