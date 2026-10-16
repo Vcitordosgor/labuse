@@ -394,11 +394,12 @@ function NotifBell() {
             // VEILLE-2 (Lot 3) — Radar : le lien est l'ANNONCE (http) → ouvrir dans un onglet.
             else if (/^https?:\/\//.test(e.lien ?? '')) window.open(e.lien!, '_blank', 'noopener')
             else if (e.lien?.startsWith('/copilote')) setView('copilote')
-            // GB-026 — notif de SECTEUR (veille_zone) : lien « …#surveillance=secteurs » ouvre le
-            // bon volet de la Surveillance (avant : handler absent → le clic ne menait nulle part).
+            // GB-026 — notif de Veille (veille_zone/foncier) : lien « …#surveillance=… » ouvre le bon
+            // volet. A-08-3 — le volet 'secteurs' a été retiré : on n'accepte que les volets réels
+            // (parcelles / criteres) ; toute autre valeur ouvre la Veille sur 'parcelles'.
             else if (e.lien?.includes('#surveillance=')) {
               const t = e.lien.split('#surveillance=')[1]
-              openSurveillance(t === 'parcelles' || t === 'criteres' ? t : 'secteurs')
+              openSurveillance(t === 'criteres' ? 'criteres' : 'parcelles')
             }
             setOpen(false)
           }}

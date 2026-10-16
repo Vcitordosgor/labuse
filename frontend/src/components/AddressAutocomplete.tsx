@@ -110,9 +110,19 @@ export function AddressAutocomplete({
       rechercheSuggest(needle, grammaires, ctrl.signal)
         .then((r) => {
           const flat = r.groupes.flatMap((g) => g.items.map((i) => ({ ...i, type: g.type })))
+          // A-01-1 — « aucun résultat » dans le dropdown LIVE quand la recherche ABOUTIE ne renvoie
+          // AUCUNE proposition. On ne flashe pas pendant la frappe (le test length<2 et le debounce
+          // 200 ms gardent la frappe) ni au chargement (ce .then ne tourne qu'après la réponse). Si
+          // la source renvoie une ligne d'information (note : « SIREN inconnu… »), celle-ci — plus
+          // précise — suffit et porte déjà le « rien trouvé ».
           setItems(flat); setNoResults(flat.length === 0); setOpen(true); setActive(-1)
         })
-        .catch(() => { /* abort ou réseau : on n'affiche pas d'erreur bloquante */ })
+        .catch((e) => {
+          // A-01-1 — un échec RÉEL (pas un abort de requête remplacée) ne doit pas rester muet :
+          // on le signale comme « aucun résultat » plutôt que de laisser le dropdown fantôme.
+          if (e?.name === 'AbortError') return
+          setItems([]); setNoResults(true); setOpen(true); setActive(-1)
+        })
         .finally(() => setLoading(false))
     }, 200)
     return () => { clearTimeout(t); ctrl.abort() }
@@ -227,7 +237,7 @@ export function AddressAutocomplete({
           {/* V5.6 — zéro proposition n'est pas muet : les formats ACCEPTÉS par cette barre. */}
           {noResults && (
             <li role="option" aria-disabled data-suggest-vide className="max-w-[340px] px-2.5 py-1.5 text-[11.5px] leading-snug text-txt-dim">
-              Aucune correspondance pour « {text.trim()} » — formats acceptés : {formats}.
+              Aucun résultat pour « {text.trim()} » — formats acceptés : {formats}.
             </li>
           )}
           {items.map((it, i) => (

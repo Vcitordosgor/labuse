@@ -500,7 +500,10 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 .fiche-v6 .stats { display:grid; grid-template-columns:repeat(3,1fr); grid-auto-rows:1fr; gap:0.5px; background:var(--line); border-top:0.5px solid var(--line); }
 .fiche-v6 .stat { padding:9px 10px 10px; min-width:0; min-height:58px; background:var(--bg-2); }
 .fiche-v6 .stat-l { font-size:9px; color:var(--txt-off); letter-spacing:.06em; display:flex; align-items:center; gap:4px; }
-.fiche-v6 .stat-v { font-size:13px; color:var(--txt-hi); margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+/* A-02-1 — la valeur d'une tuile (ex. « Non publié au GPU ») ne se coupe plus par ellipsis : elle
+   s'enroule sur 2 lignes max (comme le sous-titre .stat-s). Les tuiles gardent la même hauteur
+   (grid-auto-rows:1fr) ; les valeurs courtes (prix, code de zone) tiennent toujours sur une ligne. */
+.fiche-v6 .stat-v { font-size:13px; color:var(--txt-hi); margin-top:3px; line-height:1.2; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow-wrap:anywhere; }
 .fiche-v6 .stat-v.vide { color:var(--txt-faint); font-weight:400; }
 .fiche-v6 .stat-v.neuf { color:var(--mint); }
 /* RECETTE-7 (B3) — le sous-titre (« pas de potentiel résiduel ») ne se COUPE plus (« pas de

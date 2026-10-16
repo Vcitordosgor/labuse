@@ -1,0 +1,45 @@
+A-03-1 — clés React dupliquées dans la fiche commune
+=====================================================
+
+CAUSE
+-----
+ContextePanel.tsx, carte « Risques et contraintes » (LigneCarte id="risques").
+La liste des arrêtés CatNat était rendue avec :
+
+    d.risques.catnat_detail.slice(0, 6).map((a, i) => (
+      <div key={a.code_national ?? i}> … </div>
+    ))
+
+La source GASPAR renvoie parfois DEUX arrêtés portant le MÊME code national
+(doublon connu — cf. mémoire VERITE-TERRAIN-1 « GASPAR double un catnat »).
+Deux enfants partageaient alors la même `key` → React émettait, à chaque
+ouverture de fiche commune :
+  « Warning: Encountered two children with the same key, `…`. »
+
+CORRECTIF
+---------
+Clé rendue unique en combinant le code et l'index (le rendu est inchangé) :
+
+    <div key={`${a.code_national ?? 'catnat'}-${i}`}> … </div>
+
+L'index est unique par construction (position dans le slice de 6), donc deux
+arrêtés au même code national ne collisionnent plus — quelle que soit la donnée.
+
+VÉRIFICATION DES AUTRES LISTES DE LA FICHE COMMUNE (ContextePanel.tsx)
+---------------------------------------------------------------------
+- bandeau 6 chiffres  (key={c.n})      : libellés statiques distincts — OK
+- signaux             (key={s.code})   : codes de signaux distincts     — OK
+- prix terrain nu U/AU (key={fam})     : 'U' / 'AU' distincts           — OK
+- contacts mairie     (key={c.id})     : id base distinct               — OK
+- acquéreurs PM       (key={g.siren}/'anon') : siren distinct, 1 seul groupe anonyme — OK
+- CatNat              (key={code-i})   : CORRIGÉ (index → unique)        — OK
+
+=> plus aucune clé dupliquée possible à l'ouverture d'une fiche commune.
+
+NOTE DE RECETTE
+---------------
+Le rendu de la fiche commune (données) est protégé par authentification côté
+backend ; la preuve ci-dessus est structurelle (la clé contient désormais
+l'index, garant d'unicité). Le chef d'orchestre pourra confirmer 0 warning en
+console sur une session authentifiée en ouvrant une commune porteuse de CatNat
+doublés (ex. Saint-Benoît / Saint-Pierre).
