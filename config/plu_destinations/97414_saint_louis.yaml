@@ -481,9 +481,10 @@ zones:
         limites_separatives:
           min_m: 3.0
           article: UC 7.2
-          page_pdf: 44
-          citation: En cas de retrait de la construction, la distance (...) au moins égale 3 mètres. [règle
-            UC ; secteur UC1 seul dérogé]
+          page_pdf: 46
+          citation: 'En cas de retrait de la construction, la distance comptée horizontalement et
+            perpendiculairement de tout point de la façade au point le plus proche de la limite latérale,
+            doit être au moins égale 3 mètres.'
           statut: valide
       stationnement:
         par_logement:
@@ -1180,12 +1181,11 @@ zones:
         limites_separatives:
           min_m: 3.0
           article: UC 7.2
-          page_pdf: 44
-          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
-            reporter en fon => règle UC : En cas de retrait de la construction, la distance (...) doit être
-            au moins égale 3 mètres.'
+          page_pdf: 46
+          citation: '[zone AU indicée — renvoi à la règle UC 7.2] En cas de retrait de la construction, la
+            distance comptée horizontalement et perpendiculairement de tout point de la façade au point le
+            plus proche de la limite latérale, doit être au moins égale 3 mètres.'
           statut: valide
-          raison: citation non retrouvée autour de p.44 (recouvrement 44%)
       stationnement:
         par_logement:
           places: 2.0
@@ -1334,12 +1334,11 @@ zones:
         limites_separatives:
           min_m: 3.0
           article: UC 7.2
-          page_pdf: 44
-          citation: '[Renvoi zone AUindicée p.107] Pour appliquer le présent règlement, il convient de se
-            reporter en fon => règle UC2 : En cas de retrait de la construction, la distance (...) au moins
-            égale 3 mètres. [règle UC ; secteur UC1 seul dérogé]'
+          page_pdf: 46
+          citation: '[zone AU indicée — renvoi à la règle UC 7.2] En cas de retrait de la construction, la
+            distance comptée horizontalement et perpendiculairement de tout point de la façade au point le
+            plus proche de la limite latérale, doit être au moins égale 3 mètres.'
           statut: valide
-          raison: citation non retrouvée autour de p.44 (recouvrement 40%)
       stationnement:
         par_logement:
           places: 2.0
