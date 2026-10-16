@@ -177,7 +177,7 @@ def _tiler_modules(conv: Conventions, x0: float, x1: float, repartition: list[st
     un noyau au début, puis un nouveau dès qu'on dépasse `max_logements_par_noyau` modules OU
     `longueur_max_coursive_par_noyau_m` de coursive depuis le dernier noyau.
     Renvoie (modules=[(xa,xb,type)], noyaux=[(xa,xb)]). Déterministe."""
-    nw = conv.largeur_noyau_m
+    nw = conv.largeur_noyau_m()
     kmax = conv.max_logements_par_noyau
     lmax = conv.longueur_max_coursive_par_noyau_m
     cur = x0

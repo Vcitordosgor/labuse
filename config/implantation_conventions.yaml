@@ -12,7 +12,12 @@ etiquette: Estimé
 batiment:
   profondeur_m: 13.0            # barre traversante, coursive extérieure
   largeur_coursive_m: 1.4       # coursive extérieure de desserte (circulation, non habitable)
-  largeur_noyau_m: 3.5          # noyau escalier + ascenseur (largeur le long de la barre)
+  surface_noyau_m2: 20.0        # PLU-CALIBRAGE-10 pt 3 — surface USUELLE d'un noyau (escalier +
+                                # ascenseur + palier) par niveau et par bâtiment, Estimé. Remplace
+                                # l'ancienne largeur_noyau_m: 3.5 (qui, sur toute la profondeur
+                                # habitable, donnait ≈ 40 m²/niveau, au-dessus des valeurs usuelles).
+                                # La largeur de la tranche de noyau en est dérivée (= surface /
+                                # profondeur habitable), de sorte que la SURFACE reste usuelle.
   max_logements_par_noyau: 6    # un noyau dessert au plus N logements par niveau (sinon on en ajoute un)
   longueur_max_coursive_par_noyau_m: 30.0  # longueur max de coursive desservie par un noyau (distance d'évacuation)
   hauteur_etage_m: 3.0          # hauteur d'un niveau courant (du plancher au plancher)
