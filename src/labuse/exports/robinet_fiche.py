@@ -451,10 +451,59 @@ def _c_sdp(db, idu, f):
     return round(float(v)) if v is not None else None
 
 
+#: mémo par session de la fourchette de capacité (une faisabilité par parcelle / document).
+_CAP_MEMO: "WeakKeyDictionary" = WeakKeyDictionary()
+
+
+def _fourchette_logements(db, idu: str) -> tuple[int, int] | None:
+    """A-05-1 — la capacité en LOGEMENTS que la fiche affiche vient de getFaisabilite(idu)
+    (= /modules/faisabilite → `capacite.fourchette.logements_au_sol = [min, max]`), PAS du
+    payload /parcels (où `potentiel_transformation.capacite_estimee` n'est qu'un DRAPEAU booléen :
+    le servir comme un nombre affichait « 1 » au Dossier). On rejoue le MÊME moteur que l'écran
+    (parcel_faisabilite) et on lit `logements_au_sol`. None si la fiche n'affiche pas de nombre
+    (non constructible ou capacité nulle — comme constructibilite.tsx). Mémoïsé par session."""
+    if db is None or not idu:
+        return None
+    per = _CAP_MEMO.get(db)
+    if per is None:
+        per = {}
+        _CAP_MEMO[db] = per
+    if idu in per:
+        return per[idu]
+    out: tuple[int, int] | None = None
+    try:
+        from sqlalchemy import text as _text
+        from ..faisabilite.db import parcel_faisabilite
+        pid = db.execute(_text("SELECT id FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
+        if pid is not None:
+            fz = parcel_faisabilite(db, pid)
+            if fz is not None:
+                _ctx, fa = fz
+                fr = fa.fourchette or {}
+                au_sol = fr.get("logements_au_sol")
+                # Même garde que la fiche React : constructible + borne haute > 0.
+                if fa.constructible and isinstance(au_sol, (list, tuple)) and len(au_sol) == 2:
+                    lo = int(au_sol[0] or 0)
+                    hi = int(au_sol[1] or 0)
+                    if hi > 0:
+                        out = (lo, hi)
+    except Exception:  # noqa: BLE001 — une capacité non résolue OMET la donnée (jamais un 500)
+        out = None
+    per[idu] = out
+    return out
+
+
 @extracteur("capacite_logements")
 def _c_capacite(db, idu, f):
-    p = f.get("potentiel_transformation") or {}
-    return p.get("capacite_estimee") if p.get("capacite_estimee") else None
+    # A-05-1 — « Capacité (logements) » du Dossier = EXACTEMENT la fourchette de la fiche
+    # (logements_au_sol), plus le drapeau `capacite_estimee`. Le texte reprend le format de
+    # constructibilite.tsx : bornes égales → un seul nombre, sinon « min–max » (demi-cadratin).
+    fl = _fourchette_logements(db, idu)
+    if fl is None:
+        return None
+    lo, hi = fl
+    texte = str(hi) if lo == hi else f"{lo}–{hi}"
+    return {"min": lo, "max": hi, "texte": texte}
 
 
 @extracteur("surface_plancher_m2")

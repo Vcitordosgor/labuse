@@ -1,0 +1,9 @@
+A-05-1 — Dossier expert : champ « Capacité (logements) »
+Parcelle témoin : 97411000AT0427
+Fiche (source de vérité) — getFaisabilite().fourchette.logements_au_sol = (10, 13)
+
+=== AVANT (extracteur = drapeau capacite_estimee) ===
+Capacité (logements)                                    1                                                                            estimé
+
+=== APRES (extracteur = fourchette de la fiche) ===
+Capacité (logements)                                    10–13 logements                                                              estimé

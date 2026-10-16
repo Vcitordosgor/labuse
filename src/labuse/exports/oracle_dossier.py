@@ -99,8 +99,13 @@ ORACLE: dict[str, tuple[str, ...]] = {
 HORS_PAYLOAD: dict[str, str] = {
     "exposition_versant": "React getParcelExposition(idu) — hors payload /parcels",
     "piscine_m2": "React getOrthoEquipements(idu) — hors payload /parcels",
-    "capacite_logements": "React getFaisabilite(idu).logements_au_sol — hors payload /parcels "
-                          "(f.potentiel_transformation.capacite_estimee n'est qu'un drapeau)",
+    # A-05-1 — la capacité en logements de la fiche vient de getFaisabilite(idu) =
+    # /modules/faisabilite (capacite.fourchette.logements_au_sol), PAS du payload /parcels (où
+    # `potentiel_transformation.capacite_estimee` n'est qu'un DRAPEAU booléen). L'extracteur rejoue
+    # donc le MÊME moteur que l'écran (parcel_faisabilite), comme le gabarit §10 ; l'oracle du
+    # payload `f` ne peut pas le confronter → DÉCLARÉ, confronté par test_a05_1 (PDF == fiche).
+    "capacite_logements": "React getFaisabilite(idu).fourchette.logements_au_sol — hors payload "
+                          "/parcels (parcel_faisabilite rejoué par l'extracteur, cf. A-05-1)",
     "prod_spec_kwh_kwc": "non rendu en fiche (outil Prospection solaire, autre payload)",
     "n_permis_proximite": "React modParcellePermis(idu) + extracteur = requête DB live, hors payload",
     "sar_divergence": "rendu via f.lines (couche générique), pas de feuille dédiée",

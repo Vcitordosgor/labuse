@@ -581,8 +581,9 @@ NON_SONDES: dict[str, str] = {
                           "carte annonces) — pas de second chemin machine",
     "azimut_bati_deg": "OUTILS-FIX-1 A2 : servi liste + carte du même moteur solaire — un seul "
                        "producteur, comparaison sans objet tant que le front ne recalcule pas",
-    "capacite_logements": "fiche + PDF lisent le MÊME bloc potentiel (EXPORTS-1) — couverts par "
-                          "le cas recette_exports1 (nocturne), pas par la sonde au bouton",
+    "capacite_logements": "A-05-1 — fiche ET PDF lisent la MÊME fourchette (getFaisabilite / "
+                          "parcel_faisabilite.logements_au_sol), jamais le drapeau capacite_estimee ; "
+                          "confronté par test_a05_1 (PDF==fiche, nocturne), pas par la sonde au bouton",
     "charge_fonciere_eur": "idem potentiel/bilan — cas recette_exports1 (nocturne)",
     "surface_vendable_m2": "idem potentiel/bilan — cas recette_exports1 (nocturne)",
     "potentiel_verdict": "idem potentiel — cas recette_exports1 (nocturne)",
