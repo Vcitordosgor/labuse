@@ -268,3 +268,49 @@ Bilan : **aucune anomalie bloquante ni gênante.** 3 points cosmétiques/informa
 - **Observé** : à la résiliation (abonnement Stripe supprimé) **aucun e-mail `resiliation` (template 16) n'est envoyé au client** ; le compte passe silencieusement `suspendu`. Le template `resiliation` existe mais n'est enfilé **nulle part en code** (grep `key="resiliation"` = 0 ; seul `flash_pret` est auto-enfilé) — il n'est envoyable qu'à la main via l'admin (`POST /admin/licences/{id}/mail key=resiliation`, vérifié : produit un `.eml` « Votre abonnement LABUSE prend fin le … »). Même constat pour `suspension`/`retablissement`/`onboarding1`/`essai` : tous **manuels**, aucun déclenché par la transition. Le client peut donc être résilié/suspendu sans confirmation écrite automatique.
 - **Capture** : captures/07-compte/ (mails `resiliation`/`suspension` produits manuellement : fichiers `.eml` 20261016-150657-404412 / -419195, lisibles)
 - **Cause probable** : `src/labuse/comptes.py:712-717` `suspendre_compte` et `facturation.py:493-495` (`customer.subscription.deleted`) n'enfilent pas le mail du cycle de vie. À câbler (best-effort, comme `relance_carte`) si une confirmation automatique est attendue — ou assumé « envoi manuel admin » et documenté.
+
+---
+
+## Famille 8 — Courrier / Veille / CRM
+
+### A-08-1 — Le deep-link `#idu=…&m=courriers` n'injecte pas la parcelle comme destinataire
+- **Gravité** : gênant
+- **Où** : outil Courriers, hash `#idu=97416000EW0446&m=courriers` (et AT0427, BD0967)
+- **Reproduire** :
+  1. Ouvrir `http://localhost:5998/socle/#idu=97416000EW0446&m=courriers`.
+  2. La fiche EW0446 s'ouvre à droite ET l'outil Courriers s'ouvre à gauche.
+  3. Regarder l'étape 1 « Destinataires ».
+- **Observé** : l'outil affiche « 0 destinataire — un courrier par parcelle » ; la parcelle de la fiche active n'est PAS pré-remplie. Il faut re-saisir l'IDU dans la barre. Le pré-remplissage n'existe QUE via la tuile fiche « Préparer les courriers » (one-shot `courrierPrefill`), pas via le deep-link combiné. Le brief attendait un destinataire « pré-rempli depuis les données parcelle ».
+- **Capture** : captures/08-courrier-veille-crm/001_A_courriers_societe_EW0446.png
+- **Cause probable** : `frontend/src/components/outils/ModulePanel.tsx:1372-1382` — le seed des destinataires lit `courrierPrefillPiste` / `courrierPrefillIdus` / `courrierPrefill`, jamais `selectedIdu` (la parcelle du hash). Le deep-link `m=courriers` ouvre l'outil mais ne pose aucun prefill. Comportement possiblement voulu (l'outil est multi-parcelles), mais l'URL combinée laisse croire au pré-remplissage.
+
+### A-08-2 — `.eml` interne de demande : « ×1 » cassé dans l'en-tête Subject
+- **Gravité** : cosmétique
+- **Où** : `outputs/mails_dryrun/…__LABUSE<contact_at_labuse.immo>.eml` (notification interne de demande de courrier)
+- **Reproduire** :
+  1. Composer un courrier (parcelle EW0446), aller à l'étape Envoi.
+  2. Cliquer « Demander l'envoi à LABUSE ».
+  3. Ouvrir le `.eml` le plus récent dans `outputs/mails_dryrun/`.
+- **Observé** : la ligne `Subject:` contient `Saint-Pierre =?utf-8?q?=C3=971=29?=` — le « ×1 » (× + chiffre) s'encode mal (« =C3=971 » → « ×1 » devient illisible). N'affecte QUE l'en-tête du mail interne LABUSE→LABUSE (le corps est correct) ; aucun impact client, aucun mail réel.
+- **Capture** : (fichier `.eml` lisible, cf. `outputs/mails_dryrun/20261016-151903-404495__LABUSE<contact_at_labuse.immo>.eml`)
+- **Cause probable** : composition du sujet de la notification interne (src/labuse/courrier.py, construction du Subject avec « ×N ») — le « × » (U+00D7) passé dans un en-tête encodé casse le groupage. Purement cosmétique/interne.
+
+### A-08-3 — `#surveillance=secteurs` retombe silencieusement sur « parcelles »
+- **Gravité** : gênant
+- **Où** : deep-link `#surveillance=secteurs`
+- **Reproduire** :
+  1. Ouvrir `http://localhost:5998/socle/#surveillance=secteurs` (chargement frais).
+  2. Observer l'écran.
+- **Observé** : affiche « VEILLE · LE FONCIER / Vos parcelles suivies » — exactement le même écran que `#surveillance=parcelles`. Aucun volet « secteurs » distinct, aucun message expliquant la redirection. Le brief cite 3 volets (parcelles/secteurs/criteres) ; seuls 2 écrans réels existent (LE FONCIER, LES ANNONCES). `criteres` ouvre bien « LES ANNONCES ».
+- **Capture** : captures/08-courrier-veille-crm/002_B_fresh_surveillance_secteurs.png
+- **Cause probable** : `frontend/src/store/useApp.ts:866-867` — « 'secteurs' a été RETIRÉ (l'outil secteur n'existe plus) : toute demande 'secteurs' retombe sur 'parcelles' » ; `App.tsx:379` mappe tout ≠ parcelles/criteres → 'secteurs' → retombe parcelles. Décision produit assumée, mais le deep-link reste exposé et trompeur (pas de 404/message). Retirer le deep-link `secteurs` ou le rediriger explicitement vers « criteres ».
+
+### A-08-4 — Donnée de stress-test `[GB-TEST] AAAA…` (5000 car.) visible dans le CRM client
+- **Gravité** : cosmétique
+- **Où** : CRM, colonne « Repérée », carte parcelle 97404000BA0005 (`pipeline_entries` id 93)
+- **Reproduire** :
+  1. Ouvrir le CRM (rail de gauche).
+  2. Première carte de la colonne « Repérée » (BA0005).
+- **Observé** : la note de la carte contient `[GB-TEST] AAAAA…` (5000 caractères de « A ») — reliquat de test. Le layout n'est PAS cassé : la note est confinée (max-h ~4,5 rem + overflow-y-auto + overflow-wrap:anywhere), aucun débordement horizontal de page (docScrollW = viewport). Reste une donnée polluante affichée côté client. (Une 2ᵉ note test existe : id 91 « [GB-TEST] prospect audit — a supprimer ».)
+- **Capture** : captures/08-courrier-veille-crm/001_C_crm_note_overflow.png, 001_C_crm_pipeline.png
+- **Cause probable** : données de test laissées en base (`pipeline_entries.notes` sur id 91/93), pas un bug code. À purger avant mise en prod (nettoyage de jeu de données), ou borner la longueur de note à la saisie.

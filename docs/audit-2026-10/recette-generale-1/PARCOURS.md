@@ -442,3 +442,65 @@ les 3 anomalies sont des **messages/artefacts dev** (login→Swagger sur l'API, 
 trop affirmatif en dry-run, saisie carte Stripe non automatisable + nom marchand de test).
 **Sûreté : aucun paiement réel (tous `cs_test_`, bandeau TEST vérifié), aucun mail réel
 (9 `.eml` dry-run, `LABUSE_MAIL_REEL` jamais posé).** Captures dans `captures/07-compte/`.
+
+## Famille 8 — Courrier / Veille / CRM
+
+Env : desktop 1440×900, Chrome système, backend 8798 (q_v18), front 5998. Lecture seule.
+Mail dry-run confirmé (`mail_reel=False`, `LABUSE_MAIL_REEL` jamais posé) — étanche, aucun SMTP ouvert.
+
+### Bloc A — Courrier propriétaire (outil `#m=courriers`, M09)
+
+| Écran / action | Résultat |
+|---|---|
+| Ouverture outil Courriers (deep-link + rail Outils) | OK — 3 étapes (Destinataires / Rédaction / Envoi), bandeau « service d'envoi », 0 erreur |
+| Deep-link `#idu=…&m=courriers` pré-remplit le destinataire | ANOMALIE (voir ANOMALIES.md A-08-1) — le deep-link ouvre l'outil VIDE (0 destinataire) ; seule la tuile fiche « Préparer les courriers » amorce (one-shot `courrierPrefill`) |
+| Ajout parcelle société EW0446 par la barre IDU | OK — destinataire « EW 0446 · Saint-Pierre » ajouté |
+| Étape 2 Rédaction = aperçu composé | OK — texte serveur (même source que PDF) : bon objet, bonne adresse, « déjà bâtie » (ouverture B) |
+| Étape 3 Envoi — destinataire société | OK — « DECORASUD SA — au siège social déclaré », adresse « 37 AV DU MIDI FRIBOURG SUISSE », bien « 35 b Chemin Departemental 29 · EW 446 », 1 × 4,04 € TTC |
+| Bouton « Demander l'envoi à LABUSE » | OK — provider postal = stub → crée une **demande** (`courrier_demandes`, n°19), pas un envoi postal ; mail_queue INCHANGÉ |
+| Dry-run étanche vérifié | OK — 1 `.eml` interne (LABUSE→LABUSE « un client demande l'envoi ») écrit dans `outputs/mails_dryrun/` ; rien parti |
+| Parcelle particulier AT0427 (aperçu + envoi) | OK — destinataire « À l'occupant » (PP jamais nommé), ouverture B, adresse BAN |
+| Parcelle « sans proprio » BD0967 (RNU attendu) | OK mais nuance — bâtie + adresse BAN → compose « À l'occupant » (ouverture C secteur actif), NON bloquée (comportement conforme, pas de courrier vide) |
+| Cas limite : terrain nu bloqué (AL0131) | OK — ajout refusé : « ⛔ Terrain nu, aucun occupant à qui écrire — passez par le Courrier SPF », destinataire non ajouté |
+| Chiffres aperçu = fiche (surface, zone, mutations) | OK — EW0446 : 1 232 m², Uf, 28 mutations/3 ans ; AT0427 : 1 375 m², Ud, 151 mutations — cohérents avec la fiche |
+| Encodage sujet du `.eml` interne « ×1 » | ANOMALIE (voir A-08-2) cosmétique — « Saint-Pierre ×1 » devient « Saint-Pierre =C3=971 » dans l'en-tête Subject (interne seulement) |
+
+### Bloc B — Veille + cloche
+
+| Écran / action | Résultat |
+|---|---|
+| `#surveillance=parcelles` | OK — « VEILLE · LE FONCIER / Vos parcelles suivies », tableau (parcelle, commune, secteur, dernier événement) |
+| `#surveillance=criteres` | OK — « VEILLE · LES ANNONCES / Vos alertes », liste filtrée (type, commune, surface, prix), pause/reprise |
+| `#surveillance=secteurs` | ANOMALIE (voir A-08-3) gênant — retombe SILENCIEUSEMENT sur « parcelles » (volet secteurs retiré, documenté dans le code) ; aucun message, deep-link trompeur |
+| Créer une veille parcelle depuis la fiche (« Suivre cette parcelle ») | OK — crée `watched_parcels`, bouton bascule en « Suivie — les événements alimentent la cloche » |
+| « Ne plus suivre » (depuis la liste surveillance) | OK — retire la ligne, `watched_parcels` revient à 0 |
+| Créer une alerte (critères : commune Cilaos + surface 500) | OK — `veilles` id 31, `criteria={"communes":["Cilaos"],"surface_min":500.0}` persisté |
+| Mettre en pause / Reprendre une alerte | OK — `en_pause` bascule |
+| Supprimer une alerte | OK — soft-delete (`actif=false`), disparaît de la liste active |
+| Cloche (en-tête, badge « 99+ ») | OK — s'ouvre, « NOTIFICATIONS · 1130 », regroupement par commune (« N basculements de statut à … »), « tout lire », « préférences » |
+| Clic notification parcelle (« ▲ AI0540 : … ») | OK — navigue vers `#f=1&idu=97402000AI0540` (deep-link correct) |
+| Préférences cloche (canaux + fréquence mails) | OK — par type : Cloche / Brief / E-mail ; fréquences Quotidien / Hebdo / Cloche seulement |
+| Cas limite : liste de veilles vide | OK (via code) — empty-state présent (« Ajoutez une parcelle ici, ou avec la cloche de sa fiche ») |
+
+### Bloc C — CRM (pipeline de prospection)
+
+| Écran / action | Résultat |
+|---|---|
+| Ouverture CRM (rail de gauche) | OK — « CRM — pipeline de prospection · 184 parcelles suivies », 8 colonnes (Repérée → À abandonner), pagination « 1–5 / 8 » |
+| Carte : parcelle + propriétaire + « Déplacer vers… » + « Retirer du CRM » | OK |
+| Clic sur l'IDU d'une carte → fiche | OK — CRM↔foncier : navigue vers `#f=1&idu=97404000BA0005` |
+| Changer de statut (« Déplacer vers… ») | OK — entry 93 reperee→contacte→reperee, persisté en base, 0 erreur |
+| « + Note » (éditeur de note par carte) | OK — ouvre l'éditeur (`data-crm-note` + Enregistrer) |
+| « Personnaliser » (colonnes) | OK — mode édition : + Colonne, Réinitialiser, renommer/réordonner (←→✕) |
+| « Archivées » | OK — panneau cartes archivées (empty-state « Aucune carte archivée. ») |
+| Colonne vide | OK — empty-state parlant « Aucune parcelle · glissez-en une ici » |
+| Fiche « + CRM » (ajouter au pipeline) | OK — propose un menu de colonne (Repérée défaut / Propriétaire à identifier / …) avant ajout |
+| Lien « issue du CRM » (DASHBOARD-4) | OK (code) — une demande de courrier née d'une piste porte `pipeline_entry_id` → affichée « issue du CRM » (admin/Courrier.tsx) |
+| Note de stress-test `[GB-TEST] AAAA…` (5000 car.) visible dans une carte | ANOMALIE (voir A-08-4) cosmétique — donnée de test polluante ; layout NON cassé (max-h + scroll interne + overflow-wrap:anywhere) |
+| Cas limite : empty-state propre | OK — colonnes vides et archives vides parlantes |
+
+**Synthèse Famille 8 :** les 3 blocs fonctionnent. Courrier = aperçu/demande corrects, bon
+destinataire (PM au siège, PP « à l'occupant »), blocage propre des terrains nus. Veille/cloche =
+création/pause/suppression OK, cloche et deep-links OK. CRM = pipeline, déplacement, notes, fiche↔CRM OK.
+**Sûreté : aucun mail réel (1 `.eml` dry-run interne, mail_queue inchangé, `LABUSE_MAIL_REEL` jamais posé) ;
+état base restauré (veilles/suivis/pipeline remis à l'identique).** Captures dans `captures/08-courrier-veille-crm/`.
