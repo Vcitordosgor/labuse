@@ -1895,6 +1895,15 @@ zones:
     - Ouverture à l'urbanisation à partir de 2031 (AUindicée 2-2, p. 41).
     - 'Densité minimale brute : 25 logements/ha (« en zone AUc », AUindicée 2-6, p. 42).'
   A:
+    regles:
+      retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 3.0
+          article: 'Article A6'
+          page_pdf: 47
+          citation: 'La distance entre deux constructions doit respecter un minimum de 3,00 mètres. Aucun point du bâtiment ne doit faire saillie sur la marge d''isolement ainsi déterminée. 6.3 -'
+          statut: valide
     silence: interdit
     silence_src: 'Art. A1.2, p. 44 : « A l''exception de ceux visés à l''article A2.2., sont interdits toutes les
       constructions et tous les ouvrages et travaux non nécessaires à une exploitation agricole »'
@@ -2201,6 +2210,15 @@ zones:
     notes:
     - Logement exclu du secteur (A2.2-4 et -5 excluent Ap).
   N:
+    regles:
+      retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 3.0
+          article: 'Article N6'
+          page_pdf: 55
+          citation: 'La distance entre deux constructions doit respecter un minimum de 3,00 mètres. Aucun point du bâtiment ne doit faire saillie sur la marge d''isolement ainsi déterminée. 6.3 -'
+          statut: valide
     silence: interdit
     silence_src: 'Art. N1.2, p. 52 : « A l''exception de ceux visés à l''article N2.2., sont interdits toutes les
       constructions et tous les ouvrages et travaux »'

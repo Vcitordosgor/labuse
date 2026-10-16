@@ -1375,6 +1375,13 @@ zones:
             sommet de l’acrotère.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 3.0
+          article: 'ARTICLE Ue8'
+          page_pdf: 76
+          citation: '8.2 - Règle générale L’implantation de plusieurs constructions sur une même unité foncière est autorisée à condition que la distance séparant deux bâtiments soit au moins égale à 3 mètres. PLU du Tampon Règlement 2018 75'
+          statut: valide
         voie:
           min_m: 4.0
           article: Ue6.2
@@ -1871,6 +1878,15 @@ zones:
       Ud » sans citer Ue — anomalie relevée, citée telle quelle). S''ajoutent les conditions AUindicée 2.2 (1)-(2)
       : infrastructures suffisantes, respect des OAP.'
   A:
+    regles:
+      retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 8.0
+          article: 'ARTICLE A8'
+          page_pdf: 96
+          citation: '8.2 - Règle générale L’implantation de plusieurs constructions sur une même unité foncière est autorisée à condition que la distance séparant deux bâtiments soit au moins égale à 8 mètres. PLU du Tampon Règlement 2018 95'
+          statut: valide
     silence: interdit
     silence_src: 'Art. A1, 1.2, p. 92 : « A l''exception de ceux visés à l''article A 2.2., sont interdits toutes
       les constructions, ouvrages et travaux, ainsi que le changement de destination des bâtiments à usage agricole
@@ -1964,6 +1980,15 @@ zones:
         citation: « Les ouvrages techniques nécessaires au fonctionnement d'un service public ou d'intérêt collectif
           dont l'implantation dans la zone est rendue nécessaire pour des raisons techniques ou économiques »
   N:
+    regles:
+      retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 8.0
+          article: 'ARTICLE N8'
+          page_pdf: 110
+          citation: '8.2 - Règle générale L’implantation de plusieurs constructions sur une même unité foncière est autorisée à condition que la distance séparant deux bâtiments soit au moins égale à 8 mètres.'
+          statut: valide
     silence: interdit
     silence_src: 'Art. N1, 1.2, p. 105 : « A l''exception de ceux visés à l''article N2.2., sont interdits toutes
       les constructions, ouvrages et travaux. »'

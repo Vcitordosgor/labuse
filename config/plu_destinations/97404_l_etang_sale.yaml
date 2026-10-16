@@ -37,6 +37,13 @@ zones:
             fixé à 70%.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 3.0
+          article: 'UA 2.3'
+          page_pdf: 18
+          citation: 'La distance entre deux constructions doit respecter un minimum de 3,00m. Aucun point du bâtiment ne doit faire saillie sur la marge d''isolement ainsi déterminée, à l’'
+          statut: valide
         voie:
           min_m: 4.0
           article: UA 2.1
@@ -189,6 +196,13 @@ zones:
             fixé à 65%.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 3.0
+          article: 'UB 2.3'
+          page_pdf: 28
+          citation: 'La distance entre deux constructions doit respecter un minimum de 3,00m. Aucun point du bâtiment ne doit faire saillie sur la marge d''isolement ainsi déterminée, à l’'
+          statut: valide
         voie:
           min_m: 4.0
           article: UB 2.1
@@ -383,6 +397,13 @@ zones:
             fixé à 60%.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 3.0
+          article: 'UC 2.3'
+          page_pdf: 38
+          citation: 'La distance entre deux constructions doit respecter un minimum de 3,00m. Aucun point du bâtiment ne doit faire saillie sur la marge d''isolement ainsi déterminée, à l’'
+          statut: valide
         voie:
           min_m: 4.0
           article: UC 2.1
@@ -495,6 +516,13 @@ zones:
             fixé à 60%.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 3.0
+          article: 'UD 2.3'
+          page_pdf: 47
+          citation: 'La distance entre deux constructions doit respecter un minimum de 3,00m. Aucun point du bâtiment ne doit faire saillie sur la marge d''isolement ainsi déterminée, à l’'
+          statut: valide
         voie:
           min_m: 4.0
           article: UD 2.1
@@ -602,6 +630,13 @@ zones:
             fixé à 75%.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 3.0
+          article: 'UE 2.3'
+          page_pdf: 57
+          citation: 'La distance entre deux constructions doit respecter un minimum de 3,00m. Aucun point du bâtiment ne doit faire saillie sur la marge d''isolement ainsi déterminée, à l’'
+          statut: valide
         voie:
           min_m: 4.0
           article: UE 2.1
@@ -721,6 +756,13 @@ zones:
             fixé à 65%.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 3.0
+          article: 'UT 2.3'
+          page_pdf: 65
+          citation: 'La distance entre deux constructions doit respecter un minimum de 3,00m. Aucun point du bâtiment ne doit faire saillie sur la marge d''isolement ainsi déterminée, à l’'
+          statut: valide
         voie:
           min_m: 4.0
           article: UT 2.1
@@ -1352,6 +1394,15 @@ zones:
           à la voirie, au stationnement, à la distribution d''énergie tels que les transformateurs et aux télécommunications.
           »'
   A:
+    regles:
+      retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 3.0
+          article: 'A 2.3'
+          page_pdf: 91
+          citation: 'La distance entre deux constructions doit respecter un minimum de 3,00m. Aucun point du bâtiment ne doit faire saillie sur la marge d''isolement ainsi déterminée, à l’'
+          statut: valide
     silence: interdit
     silence_src: 'A 1.1.2 (1) (p. 89) : « A l''exception de ceux visés à l''article A 1.2, sont interdits les constructions,
       ouvrages et travaux non nécessaires à une exploitation agricole […] » — tout ce qui n''est ni nécessaire à
@@ -1482,6 +1533,15 @@ zones:
       pas tranchée.
     sous_destinations: {}
   N:
+    regles:
+      retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 3.0
+          article: 'N 2.3'
+          page_pdf: 101
+          citation: 'La distance entre deux constructions doit respecter un minimum de 3,00m. Aucun point du bâtiment ne doit faire saillie sur la marge d''isolement ainsi déterminée, à l’'
+          statut: valide
     silence: interdit
     silence_src: 'N 1.1.2 (1) (p. 99) : « En secteur N, toute construction ou utilisation du sol non prévue à l''article
       N 1.2 » est interdite — liste fermée d''autorisations, le silence vaut interdiction (caractère de zone, p.

@@ -1956,6 +1956,13 @@ zones:
             sommet de l''acrotère ; 13 mètres au faitage.'
           statut: valide
       retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 3
+          article: 'ARTICLE AUEC 8'
+          page_pdf: 31
+          citation: 'L’implantation de plusieurs constructions sur une même unité foncière est autorisée. La distance séparant deux constructions non contigües doit être au moins égale à 3 mètres.'
+          statut: valide
         voie:
           min_m: 4.0
           article: AUec 6.2
@@ -2189,6 +2196,13 @@ zones:
             sommet de l''acrotère ; 12 mètres au faitage.'
           statut: valide
       retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 3.0
+          article: 'ARTICLE AUT 8'
+          page_pdf: 37
+          citation: 'L’implantation de plusieurs constructions sur une même unité foncière est autorisée. La distance séparant deux constructions non contigües doit être au moins égale à 3 mètres. PLU DES AVIRONS REGLEMENT 38'
+          statut: valide
         voie:
           min_m: 4.0
           article: AUt 6.2
@@ -2271,6 +2285,15 @@ zones:
           liées au gardiennage et à la surveillance des installations autorisées dans la zone dans la limite de
           surface de 50 m² d'emprise au sol. »
   AUes:
+    regles:
+      retraits:
+        entre_constructions:
+          forme: silence
+          absent: true
+          article: 'ARTICLE AUES 8'
+          page_pdf: 43
+          citation: 'Sans objet.'
+          statut: valide
     silence: interdit
     silence_src: 'Art. AUes 1.2, p. 42 : « Sont interdits toutes les constructions, ouvrages et travaux à l''exception
       de ceux visés à l''article AUes 2. » — zone stricte, ouverture à l''urbanisation conditionnée à une modification
@@ -2295,6 +2318,15 @@ zones:
           réserve de prendre les dispositions utiles pour limiter la gêne qui pourrait en découler et assurer une
           bonne intégration dans le site. »
   A:
+    regles:
+      retraits:
+        entre_constructions:
+          forme: silence
+          absent: true
+          article: 'ARTICLE A 8'
+          page_pdf: 47
+          citation: 'Sans objet.'
+          statut: valide
     silence: interdit
     silence_src: 'Art. A 1.2, p. 44 : « A l''exception de ceux visés à l''article A 2.2., sont interdits toutes
       les constructions et tous les ouvrages et travaux. »'
@@ -2407,6 +2439,15 @@ zones:
           publics, dès lors qu'elles ne sont pas incompatibles avec l'exercice d'une activité agricole, pastorale
           ou forestière dans l'unité foncière où elles sont implantées »
   N:
+    regles:
+      retraits:
+        entre_constructions:
+          forme: silence
+          absent: true
+          article: 'ARTICLE N 8'
+          page_pdf: 54
+          citation: 'Sans objet.'
+          statut: valide
     silence: interdit
     silence_src: 'Art. N 1.2, p. 50 : « A l''exception de ceux visés à l''article N2.2., sont interdits toutes les
       constructions, ouvrages et travaux. »'

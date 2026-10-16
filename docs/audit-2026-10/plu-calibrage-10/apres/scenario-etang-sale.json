@@ -1,0 +1,3865 @@
+{
+  "livrable": "IMPLANTATION-1BIS",
+  "genere_le": "PLU-CALIBRAGE-10 apres",
+  "crs": "EPSG:2975",
+  "entrees": {
+    "parcelles": [
+      "97404000AW0451",
+      "97404000AW0624",
+      "97404000AW0625",
+      "97404000AW0099"
+    ],
+    "commune": "L'Étang-Salé",
+    "insee": "97404",
+    "zone": "UA",
+    "objectif": "equilibre",
+    "type_projet": "collectif",
+    "stationnement": "aérien",
+    "terrain": "libéré",
+    "commerce": false
+  },
+  "version_regles": {
+    "insee": "97404",
+    "zone": "UA",
+    "hauteur_egout": {
+      "nom": "hauteur à l'égout",
+      "valeur": 12.0,
+      "unite": "m",
+      "validee": true,
+      "article": "UA 2.5.2",
+      "page_pdf": 19,
+      "citation": "La hauteur maximale des constructions est limitée à: - 12,00m à l'égout du toit - 15,00 m au faîtage - 13,00m à l'acrotère en cas de toiture-terrasse."
+    },
+    "hauteur_faitage": {
+      "nom": "hauteur au faîtage",
+      "valeur": 15.0,
+      "unite": "m",
+      "validee": true,
+      "article": "UA 2.5.2",
+      "page_pdf": 19,
+      "citation": "La hauteur maximale des constructions est limitée à: - 12,00m à l'égout du toit - 15,00 m au faîtage - 13,00m à l'acrotère en cas de toiture-terrasse."
+    },
+    "emprise_ces": {
+      "nom": "emprise au sol (CES)",
+      "valeur": 70.0,
+      "unite": "%",
+      "validee": true,
+      "article": "UA 2.4",
+      "page_pdf": 18,
+      "citation": "Le pourcentage maximal de l'emprise au sol cumulée de l'ensemble des constructions est fixé à 70%."
+    },
+    "recul_voie": {
+      "nom": "recul sur voie",
+      "valeur": 4.0,
+      "unite": "m",
+      "validee": true,
+      "article": "UA 2.1",
+      "page_pdf": 17,
+      "citation": "Les constructions doivent s'implanter en retrait de l'alignement, avec un recul minimum de 4,00 m par rapport à l'alignement."
+    },
+    "recul_separatives": {
+      "nom": "recul sur limites séparatives",
+      "valeur": 3.0,
+      "unite": "m",
+      "validee": true,
+      "article": "UA 2.2",
+      "page_pdf": 17,
+      "citation": "Si une construction est implantée en retrait des limites séparatives d'une unité foncière, la marge d'isolement minimale doit être de 3,00m."
+    },
+    "pleine_terre": {
+      "nom": "pleine terre (perméabilité)",
+      "valeur": 30.0,
+      "unite": "%",
+      "validee": true,
+      "article": "UA 2.6",
+      "page_pdf": 21,
+      "citation": "Au moins 30% de la surface de la parcelle doit être perméable."
+    },
+    "distance_constructions": {
+      "validee": true,
+      "forme": "fixe",
+      "min_m": 3.0,
+      "fraction_hauteur": null,
+      "base_hauteur": null,
+      "avec_ouvertures_m": null,
+      "sans_ouvertures_m": null,
+      "contiguite_autorisee": null,
+      "article": "UA 2.3",
+      "page_pdf": 18,
+      "citation": "La distance entre deux constructions doit respecter un minimum de 3,00m. Aucun point du bâtiment ne doit faire saillie sur la marge d'isolement ainsi déterminée, à l’"
+    },
+    "prospect": null,
+    "hauteur_non_chiffrable": false,
+    "mixite": {
+      "validee": true,
+      "seuil_m2": 1000,
+      "seuil_logements": null,
+      "quota_pct": 20.0,
+      "article": "UA 1.3 (1)",
+      "page_pdf": 17,
+      "citation": "« Tout projet visant à créer plus de 1 000 m² de surface de plancher destinée à l'habitation doit prévoir d'affecter au logement aidé au moins 20% de la surface de plancher d'habitation prévue dans l'opération. »"
+    },
+    "stationnement_bareme": {
+      "validee": true,
+      "mode": "par_typologie",
+      "base": "pieces",
+      "arrondi": "superieur",
+      "flat_places": null,
+      "article": "UA 2.7.3",
+      "page_pdf": 22,
+      "citation": "Logement individuel Par logement 2 / Logement collectif 1 et 2 pièces 1 / 3 et 4 pièces 1,5 / 5 pièces et plus 2",
+      "lignes": [
+        {
+          "places": 1.0,
+          "pieces_min": 1,
+          "pieces_max": 2,
+          "sdp_min": null,
+          "sdp_max": null,
+          "destination": "collectif",
+          "libelle": "logement collectif 1 et 2 pièces"
+        },
+        {
+          "places": 1.5,
+          "pieces_min": 3,
+          "pieces_max": 4,
+          "sdp_min": null,
+          "sdp_max": null,
+          "destination": "collectif",
+          "libelle": "logement collectif 3 et 4 pièces"
+        },
+        {
+          "places": 2.0,
+          "pieces_min": 5,
+          "pieces_max": null,
+          "sdp_min": null,
+          "sdp_max": null,
+          "destination": "collectif",
+          "libelle": "logement collectif 5 pièces et plus"
+        },
+        {
+          "places": 2.0,
+          "pieces_min": null,
+          "pieces_max": null,
+          "sdp_min": null,
+          "sdp_max": null,
+          "destination": "individuel",
+          "libelle": "logement individuel"
+        }
+      ]
+    }
+  },
+  "conventions": {
+    "version": "implantation-conventions-1",
+    "etiquette": "Estimé",
+    "batiment": {
+      "profondeur_m": 13.0,
+      "largeur_coursive_m": 1.4,
+      "surface_noyau_m2": 20.0,
+      "max_logements_par_noyau": 6,
+      "longueur_max_coursive_par_noyau_m": 30.0,
+      "hauteur_etage_m": 3.0,
+      "coef_plancher_habitable": 0.8,
+      "retrait_inter_barre_m": 6.0,
+      "inset_zone_m": 0.1
+    },
+    "modules": {
+      "T2": {
+        "surface_m2": 50.0,
+        "pieces": 2
+      },
+      "T3": {
+        "surface_m2": 65.0,
+        "pieces": 3
+      },
+      "T4": {
+        "surface_m2": 80.0,
+        "pieces": 4
+      }
+    },
+    "repartition_equilibre": [
+      "T2",
+      "T3",
+      "T2",
+      "T4",
+      "T2",
+      "T3"
+    ],
+    "stationnement": {
+      "place_longueur_m": 5.0,
+      "place_largeur_m": 2.5,
+      "allee_largeur_m": 5.0,
+      "acces_largeur_m": 4.0
+    }
+  },
+  "terrain": {
+    "contenance_totale_m2": 1746.0,
+    "aire_dessin_m2": 1744.2,
+    "ecart_contenance_dessin_m2": 1.8,
+    "zone_implantation_m2": 1155.3,
+    "has_voie": true,
+    "note_limites": null,
+    "contraintes": {
+      "ppr": 0,
+      "emplacement_reserve": 0,
+      "ebc": 0,
+      "sup": 0,
+      "servitude": 0,
+      "ppr_rouge": 0,
+      "ppr_bleue": 0
+    },
+    "ppr_rouge_m2": 0.0,
+    "ppr_bleue_m2": 0.0,
+    "pente_lidar": null,
+    "parcelles": [
+      {
+        "idu": "97404000AW0451",
+        "numero": "451",
+        "contenance_m2": 586.0,
+        "aire_dessin_m2": 582.7
+      },
+      {
+        "idu": "97404000AW0624",
+        "numero": "624",
+        "contenance_m2": 274.0,
+        "aire_dessin_m2": 273.0
+      },
+      {
+        "idu": "97404000AW0625",
+        "numero": "625",
+        "contenance_m2": 385.0,
+        "aire_dessin_m2": 384.2
+      },
+      {
+        "idu": "97404000AW0099",
+        "numero": "99",
+        "contenance_m2": 501.0,
+        "aire_dessin_m2": 504.3
+      }
+    ],
+    "assiette_coords_2975": [
+      [
+        [
+          329939.420972234,
+          7647999.378928449
+        ],
+        [
+          329939.82700913306,
+          7648000.257842985
+        ],
+        [
+          329936.3400293843,
+          7648002.225723001
+        ],
+        [
+          329938.2959221854,
+          7648005.778040227
+        ],
+        [
+          329937.4192465693,
+          7648006.245046694
+        ],
+        [
+          329937.47056122206,
+          7648006.300940003
+        ],
+        [
+          329942.0896121922,
+          7648015.261964591
+        ],
+        [
+          329946.48139036156,
+          7648024.120979726
+        ],
+        [
+          329950.2649023341,
+          7648032.586156245
+        ],
+        [
+          329953.8583614002,
+          7648040.362885255
+        ],
+        [
+          329955.40167686966,
+          7648043.667331323
+        ],
+        [
+          329957.20895869413,
+          7648047.539196394
+        ],
+        [
+          329959.2504520957,
+          7648051.845305636
+        ],
+        [
+          329968.36055877735,
+          7648071.10574021
+        ],
+        [
+          329979.6695943079,
+          7648064.491182679
+        ],
+        [
+          329980.2240989908,
+          7648064.065120429
+        ],
+        [
+          329980.4461681399,
+          7648063.6688261125
+        ],
+        [
+          329981.7236240739,
+          7648059.585376507
+        ],
+        [
+          329984.37856469187,
+          7648052.781391125
+        ],
+        [
+          329984.5892221795,
+          7648052.484627882
+        ],
+        [
+          329976.62879221886,
+          7648034.454067665
+        ],
+        [
+          329964.8252394953,
+          7648007.703051565
+        ],
+        [
+          329956.9618575618,
+          7647990.326742243
+        ],
+        [
+          329955.0296743056,
+          7647991.491416992
+        ],
+        [
+          329954.72350937733,
+          7647990.989992811
+        ],
+        [
+          329939.420972234,
+          7647999.378928449
+        ]
+      ]
+    ],
+    "zone_implantation_coords_2975": [
+      [
+        [
+          329942.8238839475,
+          7648001.048696712
+        ],
+        [
+          329942.8220189348,
+          7648001.057328217
+        ],
+        [
+          329942.81944313686,
+          7648001.066915961
+        ],
+        [
+          329942.7279867948,
+          7648001.350357952
+        ],
+        [
+          329942.7244730195,
+          7648001.359643046
+        ],
+        [
+          329942.6053627399,
+          7648001.632619906
+        ],
+        [
+          329942.6009456188,
+          7648001.641510835
+        ],
+        [
+          329942.45535534766,
+          7648001.901332116
+        ],
+        [
+          329942.4500784158,
+          7648001.909741253
+        ],
+        [
+          329942.27944308467,
+          7648002.153846166
+        ],
+        [
+          329942.27335835114,
+          7648002.161690629
+        ],
+        [
+          329942.0793597347,
+          7648002.387673287
+        ],
+        [
+          329942.0725271706,
+          7648002.394875762
+        ],
+        [
+          329941.85707731126,
+          7648002.600508889
+        ],
+        [
+          329941.84956425795,
+          7648002.606998389
+        ],
+        [
+          329941.6147866205,
+          7648002.790255274
+        ],
+        [
+          329941.60666712624,
+          7648002.795967839
+        ],
+        [
+          329941.3548756693,
+          7648002.955042309
+        ],
+        [
+          329941.3506133025,
+          7648002.957589331
+        ],
+        [
+          329940.53519793943,
+          7648003.417769692
+        ],
+        [
+          329941.0115074167,
+          7648004.282848984
+        ],
+        [
+          329941.0137874919,
+          7648004.287244243
+        ],
+        [
+          329941.1439812547,
+          7648004.554184015
+        ],
+        [
+          329941.1478752806,
+          7648004.563285917
+        ],
+        [
+          329941.2510366605,
+          7648004.841790833
+        ],
+        [
+          329941.2540116292,
+          7648004.851233164
+        ],
+        [
+          329941.32912956126,
+          7648005.138573648
+        ],
+        [
+          329941.3311563158,
+          7648005.148263867
+        ],
+        [
+          329941.37749458366,
+          7648005.441623754
+        ],
+        [
+          329941.37855326006,
+          7648005.451466887
+        ],
+        [
+          329941.3956577114,
+          7648005.747971011
+        ],
+        [
+          329941.39573793387,
+          7648005.757870588
+        ],
+        [
+          329941.38344093115,
+          7648006.054612972
+        ],
+        [
+          329941.3825419134,
+          7648006.064471969
+        ],
+        [
+          329941.3409639773,
+          7648006.358544296
+        ],
+        [
+          329941.3390945305,
+          7648006.368266087
+        ],
+        [
+          329941.26864315826,
+          7648006.656786212
+        ],
+        [
+          329941.2658216044,
+          7648006.666275516
+        ],
+        [
+          329941.21028206585,
+          7648006.824018336
+        ],
+        [
+          329941.3395096527,
+          7648007.073513693
+        ],
+        [
+          329942.5071010585,
+          7648009.327743167
+        ],
+        [
+          329943.67469246435,
+          7648011.581972642
+        ],
+        [
+          329944.8422838701,
+          7648013.836202117
+        ],
+        [
+          329944.8426868363,
+          7648013.8369886
+        ],
+        [
+          329944.86665583804,
+          7648013.88428351
+        ],
+        [
+          329944.86705183855,
+          7648013.885073524
+        ],
+        [
+          329945.96499638073,
+          7648016.099827308
+        ],
+        [
+          329947.06294092303,
+          7648018.3145810915
+        ],
+        [
+          329948.1608854655,
+          7648020.529334875
+        ],
+        [
+          329949.2588300079,
+          7648022.744088659
+        ],
+        [
+          329949.2596986409,
+          7648022.745885697
+        ],
+        [
+          329949.31073544075,
+          7648022.854217354
+        ],
+        [
+          329949.3115680344,
+          7648022.856031371
+        ],
+        [
+          329953.0871498977,
+          7648031.303465175
+        ],
+        [
+          329954.2768176298,
+          7648033.878066247
+        ],
+        [
+          329955.4746373187,
+          7648036.470309251
+        ],
+        [
+          329956.6673072429,
+          7648039.051407471
+        ],
+        [
+          329960.2876187456,
+          7648046.726017637
+        ],
+        [
+          329961.4961351935,
+          7648049.287922217
+        ],
+        [
+          329966.33020098606,
+          7648059.535540535
+        ],
+        [
+          329967.538717434,
+          7648062.0974451145
+        ],
+        [
+          329969.7191882391,
+          7648066.7197720595
+        ],
+        [
+          329971.31906316144,
+          7648065.78401899
+        ],
+        [
+          329973.5808702683,
+          7648064.461107482
+        ],
+        [
+          329975.8426773737,
+          7648063.138195977
+        ],
+        [
+          329977.7047250042,
+          7648062.049100347
+        ],
+        [
+          329978.76502051257,
+          7648058.659814533
+        ],
+        [
+          329978.76610452216,
+          7648058.656547831
+        ],
+        [
+          329978.8344983988,
+          7648058.461722895
+        ],
+        [
+          329978.8356941851,
+          7648058.458495432
+        ],
+        [
+          329979.72067439125,
+          7648056.190500303
+        ],
+        [
+          329980.6056545971,
+          7648053.922505178
+        ],
+        [
+          329981.18268035294,
+          7648052.443724529
+        ],
+        [
+          329979.4279757745,
+          7648048.467884324
+        ],
+        [
+          329978.26538855786,
+          7648045.833673951
+        ],
+        [
+          329972.4524524742,
+          7648032.662622094
+        ],
+        [
+          329971.28986525757,
+          7648030.028411722
+        ],
+        [
+          329965.4769291739,
+          7648016.857359865
+        ],
+        [
+          329964.3143419571,
+          7648014.223149492
+        ],
+        [
+          329964.23292114417,
+          7648014.038664795
+        ],
+        [
+          329964.1429517785,
+          7648013.998610438
+        ],
+        [
+          329964.134193216,
+          7648013.994184034
+        ],
+        [
+          329963.79296044586,
+          7648013.8001506785
+        ],
+        [
+          329963.78467792145,
+          7648013.7948871
+        ],
+        [
+          329963.46410687506,
+          7648013.568341408
+        ],
+        [
+          329963.45638015424,
+          7648013.562291346
+        ],
+        [
+          329963.1595581059,
+          7648013.305415075
+        ],
+        [
+          329963.15246160113,
+          7648013.298636795
+        ],
+        [
+          329962.8822471096,
+          7648013.013903806
+        ],
+        [
+          329962.8758491641,
+          7648013.006462586
+        ],
+        [
+          329962.6348445425,
+          7648012.696615012
+        ],
+        [
+          329962.62920677196,
+          7648012.688582515
+        ],
+        [
+          329962.4197330266,
+          7648012.356604359
+        ],
+        [
+          329962.41490972583,
+          7648012.3480579415
+        ],
+        [
+          329962.2389842034,
+          7648011.997146333
+        ],
+        [
+          329962.23689281434,
+          7648011.992705954
+        ],
+        [
+          329961.0820276576,
+          7648009.375992361
+        ],
+        [
+          329959.96657235135,
+          7648006.911086472
+        ],
+        [
+          329958.84323207516,
+          7648004.428756569
+        ],
+        [
+          329957.7198917989,
+          7648001.946426665
+        ],
+        [
+          329956.5965515227,
+          7647999.464096762
+        ],
+        [
+          329955.4732112465,
+          7647996.981766859
+        ],
+        [
+          329954.8420195465,
+          7647995.586974858
+        ],
+        [
+          329954.45320622914,
+          7647995.550570588
+        ],
+        [
+          329954.4435271339,
+          7647995.549184216
+        ],
+        [
+          329954.05953743646,
+          7647995.474867483
+        ],
+        [
+          329954.0500400057,
+          7647995.47254246
+        ],
+        [
+          329953.6751438226,
+          7647995.361079835
+        ],
+        [
+          329953.6659188594,
+          7647995.357838391
+        ],
+        [
+          329953.4013499799,
+          7647995.250071234
+        ],
+        [
+          329948.5624424589,
+          7647997.902787144
+        ],
+        [
+          329946.0120196024,
+          7647999.300943083
+        ],
+        [
+          329942.8238839475,
+          7648001.048696712
+        ]
+      ]
+    ],
+    "voie_coords_2975": [
+      [
+        [
+          329965.987826712,
+          7648010.337261937
+        ],
+        [
+          329964.8252394953,
+          7648007.703051565
+        ],
+        [
+          329963.7018992191,
+          7648005.220721662
+        ],
+        [
+          329962.5785589429,
+          7648002.738391759
+        ],
+        [
+          329961.45521866664,
+          7648000.256061856
+        ],
+        [
+          329960.33187839045,
+          7647997.7737319525
+        ],
+        [
+          329959.2085381142,
+          7647995.291402049
+        ],
+        [
+          329958.085197838,
+          7647992.809072146
+        ],
+        [
+          329956.9618575618,
+          7647990.326742243
+        ],
+        [
+          329955.0296743056,
+          7647991.491416992
+        ],
+        [
+          329954.72350937733,
+          7647990.989992811
+        ]
+      ]
+    ]
+  },
+  "scenario": {
+    "forme": "deux_barres",
+    "niveaux": 4,
+    "statut_etude": "exploitable en pré-faisabilité",
+    "stationnement_note": {
+      "allee_unique": true,
+      "cotes": [
+        "bas",
+        "haut"
+      ],
+      "deux_cotes": true,
+      "raison": "places des deux côtés de l'allée unique"
+    },
+    "acces": {
+      "distance_angle_m": 3.1,
+      "note": "visibilité à confirmer"
+    }
+  },
+  "tableau_capacite": {
+    "logements": 28,
+    "par_type": {
+      "T2": 16,
+      "T3": 8,
+      "T4": 4
+    },
+    "niveaux": 4,
+    "sdp_m2": 1800.0,
+    "shab_estimee_m2": 1312.0,
+    "shab_par_type_m2": {
+      "T2": 640.0,
+      "T3": 416.0,
+      "T4": 256.0
+    },
+    "coursive_hors_sdp_m2": 217.2,
+    "noyau_m2": 160.0,
+    "noyaux_par_batiment": {
+      "B1": {
+        "m2_par_niveau": 20.0,
+        "niveaux": 4,
+        "m2_total": 80.0
+      },
+      "B2": {
+        "m2_par_niveau": 20.0,
+        "niveaux": 4,
+        "m2_total": 80.0
+      }
+    },
+    "surfaces_mesurees_m2": {
+      "bati": 504.3,
+      "places": 425.0,
+      "allees": 183.2,
+      "acces": 21.3,
+      "pleine_terre": 610.5,
+      "reste_non_affecte": -0.0,
+      "somme": 1744.3
+    },
+    "surface_stationnement_m2": 629.4,
+    "m2_par_place": 18.5,
+    "emprise_sol_m2": 504.3,
+    "places": 34,
+    "places_imposees": 34,
+    "details_places": {
+      "T2": {
+        "nb": 16,
+        "places_unitaires": 1.0
+      },
+      "T3": {
+        "nb": 8,
+        "places_unitaires": 1.5
+      },
+      "T4": {
+        "nb": 4,
+        "places_unitaires": 1.5
+      }
+    },
+    "mixite_applicable": true,
+    "logements_aides_imposes": 6,
+    "sdp_aidee_imposee_m2": 360.0,
+    "ratio_shab_sdp": 0.729,
+    "ratio_shab_sdp_par_batiment": {
+      "B1": 0.714,
+      "B2": 0.74
+    },
+    "distribution_niveaux": [
+      {
+        "niveau": 0,
+        "par_type": {
+          "T2": 4,
+          "T3": 2,
+          "T4": 1
+        },
+        "sdp_m2": 450.0,
+        "noyau_m2": 40.0,
+        "coursive_m2": 54.3
+      },
+      {
+        "niveau": 1,
+        "par_type": {
+          "T2": 4,
+          "T3": 2,
+          "T4": 1
+        },
+        "sdp_m2": 450.0,
+        "noyau_m2": 40.0,
+        "coursive_m2": 54.3
+      },
+      {
+        "niveau": 2,
+        "par_type": {
+          "T2": 4,
+          "T3": 2,
+          "T4": 1
+        },
+        "sdp_m2": 450.0,
+        "noyau_m2": 40.0,
+        "coursive_m2": 54.3
+      },
+      {
+        "niveau": 3,
+        "par_type": {
+          "T2": 4,
+          "T3": 2,
+          "T4": 1
+        },
+        "sdp_m2": 450.0,
+        "noyau_m2": 40.0,
+        "coursive_m2": 54.3
+      }
+    ]
+  },
+  "controles_reglementaires": [
+    {
+      "nom": "Emprise au sol",
+      "regle": "≤ 1222 m² (70 % de la contenance)",
+      "mesure": "504 m²",
+      "resultat": "Réussi",
+      "citation": "PLU art. UA 2.4 · p. 18 — « Le pourcentage maximal de l'emprise au sol cumulée de l'ensemble des constructions est fixé à 70%. »",
+      "detail": "écart +718 m²"
+    },
+    {
+      "nom": "Hauteur",
+      "regle": "≤ 12 m à l'égout",
+      "mesure": "R+3 ≈ 12 m",
+      "resultat": "Réussi",
+      "citation": "PLU art. UA 2.5.2 · p. 19 — « La hauteur maximale des constructions est limitée à: - 12,00m à l'égout du toit - 15,00 m au faîtage - 13,00m à l'acrotère en cas de toiture-terrasse. »",
+      "detail": null
+    },
+    {
+      "nom": "Prospect (hauteur relative)",
+      "regle": "pas de règle de prospect",
+      "mesure": "—",
+      "resultat": "Non applicable",
+      "citation": null,
+      "detail": null
+    },
+    {
+      "nom": "Reculs",
+      "regle": "voie 4 m · séparatives 3 m",
+      "mesure": "bâti dans la zone d'implantation",
+      "resultat": "Réussi",
+      "citation": "PLU art. UA 2.1 · p. 17 — « Les constructions doivent s'implanter en retrait de l'alignement, avec un recul minimum de 4,00 m par rapport à l'alignement. » ; PLU art. UA 2.2 · p. 17 — « Si une construction est implantée en retrait des limites séparatives d'une unité foncière, la marge d'isolement minimale doit être de 3,00m. »",
+      "detail": null
+    },
+    {
+      "nom": "Perméabilité (pleine terre)",
+      "regle": "≥ 524 m² (30 % de la contenance)",
+      "mesure": "610 m²",
+      "resultat": "Réussi",
+      "citation": "PLU art. UA 2.6 · p. 21 — « Au moins 30% de la surface de la parcelle doit être perméable. »",
+      "detail": "écart +87 m²"
+    },
+    {
+      "nom": "Stationnement",
+      "regle": "≥ 34 places (barème validé)",
+      "mesure": "34 places dessinées",
+      "resultat": "Réussi",
+      "citation": "PLU art. UA 2.7.3 · p. 22 — « Logement individuel Par logement 2 / Logement collectif 1 et 2 pièces 1 / 3 et 4 pièces 1,5 / 5 pièces et plus 2 »",
+      "detail": "écart +0"
+    },
+    {
+      "nom": "Distance entre constructions",
+      "regle": "≥ 3.0 m (distance fixe)",
+      "mesure": "10.7 m mesurés",
+      "resultat": "Réussi",
+      "citation": "PLU art. UA 2.3 · p. 18 — « La distance entre deux constructions doit respecter un minimum de 3,00m. Aucun point du bâtiment ne doit faire saillie sur la marge d'isolement ainsi déterminée, à l’ »",
+      "detail": null
+    },
+    {
+      "nom": "Locaux vélos · déchets",
+      "regle": "non modélisés",
+      "mesure": "—",
+      "resultat": "Non effectué",
+      "citation": null,
+      "detail": null
+    },
+    {
+      "nom": "PPR zone rouge (interdiction)",
+      "regle": "absente du terrain",
+      "mesure": "—",
+      "resultat": "Non applicable",
+      "citation": null,
+      "detail": null
+    },
+    {
+      "nom": "PPR zone bleue (prescription)",
+      "regle": "absente du terrain",
+      "mesure": "—",
+      "resultat": "Non applicable",
+      "citation": null,
+      "detail": null
+    },
+    {
+      "nom": "ER / EBC / SUP / servitudes",
+      "regle": "absentes du terrain",
+      "mesure": "—",
+      "resultat": "Non applicable",
+      "citation": null,
+      "detail": null
+    }
+  ],
+  "controles_geometriques": [
+    {
+      "nom": "bâtiments ⊆ zone d'implantation",
+      "ok": true,
+      "detail": "2 bâtiment(s) dans la zone"
+    },
+    {
+      "nom": "places/allées/accès ⊆ assiette, hors bâti",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "nom": "aucun chevauchement — TOUS couples (aire ∩ = 0)",
+      "ok": true,
+      "detail": "0 paire(s)"
+    },
+    {
+      "nom": "somme des surfaces mesurées = assiette",
+      "ok": true,
+      "detail": "Σ=1744.2 vs assiette 1744.2"
+    },
+    {
+      "nom": "chaque place touche une allée",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "nom": "allées reliées à l'accès (sur voie), aucune en cul-de-sac",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "nom": "allée sans tronçon mort (coupée au droit des places)",
+      "ok": true,
+      "detail": "0.0 m² morts"
+    },
+    {
+      "nom": "largeur d'allée ≥ 5.0 m",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "nom": "dimensions modules ≥ convention",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "nom": "nb annoncé = nb dessiné (logements, places)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "nom": "surfaces tableau = surfaces mesurées",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "nom": "niveaux × hauteur ≤ hauteur réglementaire",
+      "ok": true,
+      "detail": "12.0 m ≤ 12.0 m"
+    }
+  ],
+  "geometrie_objets": [
+    {
+      "kind": "batiment_emprise",
+      "niveau": null,
+      "type_logement": null,
+      "ref": "B1",
+      "coords_2975": [
+        [
+          [
+            329967.7960457999,
+            7648062.097648829
+          ],
+          [
+            329960.941871069,
+            7648047.697378285
+          ],
+          [
+            329972.6800375446,
+            7648042.11029964
+          ],
+          [
+            329979.5342122755,
+            7648056.510570183
+          ],
+          [
+            329967.7960457999,
+            7648062.097648829
+          ]
+        ]
+      ],
+      "aire_m2": 207.33
+    },
+    {
+      "kind": "coursive",
+      "niveau": 0,
+      "type_logement": null,
+      "ref": "B1",
+      "coords_2975": [
+        [
+          [
+            329978.2701020397,
+            7648057.112255576
+          ],
+          [
+            329971.4159273087,
+            7648042.711985033
+          ],
+          [
+            329972.6800375446,
+            7648042.11029964
+          ],
+          [
+            329979.5342122755,
+            7648056.510570183
+          ],
+          [
+            329978.2701020397,
+            7648057.112255576
+          ]
+        ]
+      ],
+      "aire_m2": 22.33
+    },
+    {
+      "kind": "noyau",
+      "niveau": 0,
+      "type_logement": null,
+      "ref": "B1",
+      "coords_2975": [
+        [
+          [
+            329967.7960457999,
+            7648062.097648829
+          ],
+          [
+            329967.05505393713,
+            7648060.540862825
+          ],
+          [
+            329977.5291101769,
+            7648055.555469572
+          ],
+          [
+            329978.2701020397,
+            7648057.112255576
+          ],
+          [
+            329967.7960457999,
+            7648062.097648829
+          ]
+        ]
+      ],
+      "aire_m2": 20.0
+    },
+    {
+      "kind": "module",
+      "niveau": 0,
+      "type_logement": "T2",
+      "ref": "B1",
+      "coords_2975": [
+        [
+          [
+            329967.05505393713,
+            7648060.540862825
+          ],
+          [
+            329965.2025742801,
+            7648056.648897813
+          ],
+          [
+            329975.67663051985,
+            7648051.66350456
+          ],
+          [
+            329977.5291101769,
+            7648055.555469572
+          ],
+          [
+            329967.05505393713,
+            7648060.540862825
+          ]
+        ]
+      ],
+      "aire_m2": 50.0
+    },
+    {
+      "kind": "module",
+      "niveau": 0,
+      "type_logement": "T3",
+      "ref": "B1",
+      "coords_2975": [
+        [
+          [
+            329965.2025742801,
+            7648056.648897813
+          ],
+          [
+            329962.794350726,
+            7648051.589343297
+          ],
+          [
+            329973.26840696577,
+            7648046.603950044
+          ],
+          [
+            329975.67663051985,
+            7648051.66350456
+          ],
+          [
+            329965.2025742801,
+            7648056.648897813
+          ]
+        ]
+      ],
+      "aire_m2": 65.0
+    },
+    {
+      "kind": "module",
+      "niveau": 0,
+      "type_logement": "T2",
+      "ref": "B1",
+      "coords_2975": [
+        [
+          [
+            329962.794350726,
+            7648051.589343297
+          ],
+          [
+            329960.941871069,
+            7648047.697378285
+          ],
+          [
+            329971.4159273087,
+            7648042.711985033
+          ],
+          [
+            329973.26840696577,
+            7648046.603950044
+          ],
+          [
+            329962.794350726,
+            7648051.589343297
+          ]
+        ]
+      ],
+      "aire_m2": 50.0
+    },
+    {
+      "kind": "coursive",
+      "niveau": 1,
+      "type_logement": null,
+      "ref": "B1",
+      "coords_2975": [
+        [
+          [
+            329978.2701020397,
+            7648057.112255576
+          ],
+          [
+            329971.4159273087,
+            7648042.711985033
+          ],
+          [
+            329972.6800375446,
+            7648042.11029964
+          ],
+          [
+            329979.5342122755,
+            7648056.510570183
+          ],
+          [
+            329978.2701020397,
+            7648057.112255576
+          ]
+        ]
+      ],
+      "aire_m2": 22.33
+    },
+    {
+      "kind": "noyau",
+      "niveau": 1,
+      "type_logement": null,
+      "ref": "B1",
+      "coords_2975": [
+        [
+          [
+            329967.7960457999,
+            7648062.097648829
+          ],
+          [
+            329967.05505393713,
+            7648060.540862825
+          ],
+          [
+            329977.5291101769,
+            7648055.555469572
+          ],
+          [
+            329978.2701020397,
+            7648057.112255576
+          ],
+          [
+            329967.7960457999,
+            7648062.097648829
+          ]
+        ]
+      ],
+      "aire_m2": 20.0
+    },
+    {
+      "kind": "module",
+      "niveau": 1,
+      "type_logement": "T2",
+      "ref": "B1",
+      "coords_2975": [
+        [
+          [
+            329967.05505393713,
+            7648060.540862825
+          ],
+          [
+            329965.2025742801,
+            7648056.648897813
+          ],
+          [
+            329975.67663051985,
+            7648051.66350456
+          ],
+          [
+            329977.5291101769,
+            7648055.555469572
+          ],
+          [
+            329967.05505393713,
+            7648060.540862825
+          ]
+        ]
+      ],
+      "aire_m2": 50.0
+    },
+    {
+      "kind": "module",
+      "niveau": 1,
+      "type_logement": "T3",
+      "ref": "B1",
+      "coords_2975": [
+        [
+          [
+            329965.2025742801,
+            7648056.648897813
+          ],
+          [
+            329962.794350726,
+            7648051.589343297
+          ],
+          [
+            329973.26840696577,
+            7648046.603950044
+          ],
+          [
+            329975.67663051985,
+            7648051.66350456
+          ],
+          [
+            329965.2025742801,
+            7648056.648897813
+          ]
+        ]
+      ],
+      "aire_m2": 65.0
+    },
+    {
+      "kind": "module",
+      "niveau": 1,
+      "type_logement": "T2",
+      "ref": "B1",
+      "coords_2975": [
+        [
+          [
+            329962.794350726,
+            7648051.589343297
+          ],
+          [
+            329960.941871069,
+            7648047.697378285
+          ],
+          [
+            329971.4159273087,
+            7648042.711985033
+          ],
+          [
+            329973.26840696577,
+            7648046.603950044
+          ],
+          [
+            329962.794350726,
+            7648051.589343297
+          ]
+        ]
+      ],
+      "aire_m2": 50.0
+    },
+    {
+      "kind": "coursive",
+      "niveau": 2,
+      "type_logement": null,
+      "ref": "B1",
+      "coords_2975": [
+        [
+          [
+            329978.2701020397,
+            7648057.112255576
+          ],
+          [
+            329971.4159273087,
+            7648042.711985033
+          ],
+          [
+            329972.6800375446,
+            7648042.11029964
+          ],
+          [
+            329979.5342122755,
+            7648056.510570183
+          ],
+          [
+            329978.2701020397,
+            7648057.112255576
+          ]
+        ]
+      ],
+      "aire_m2": 22.33
+    },
+    {
+      "kind": "noyau",
+      "niveau": 2,
+      "type_logement": null,
+      "ref": "B1",
+      "coords_2975": [
+        [
+          [
+            329967.7960457999,
+            7648062.097648829
+          ],
+          [
+            329967.05505393713,
+            7648060.540862825
+          ],
+          [
+            329977.5291101769,
+            7648055.555469572
+          ],
+          [
+            329978.2701020397,
+            7648057.112255576
+          ],
+          [
+            329967.7960457999,
+            7648062.097648829
+          ]
+        ]
+      ],
+      "aire_m2": 20.0
+    },
+    {
+      "kind": "module",
+      "niveau": 2,
+      "type_logement": "T2",
+      "ref": "B1",
+      "coords_2975": [
+        [
+          [
+            329967.05505393713,
+            7648060.540862825
+          ],
+          [
+            329965.2025742801,
+            7648056.648897813
+          ],
+          [
+            329975.67663051985,
+            7648051.66350456
+          ],
+          [
+            329977.5291101769,
+            7648055.555469572
+          ],
+          [
+            329967.05505393713,
+            7648060.540862825
+          ]
+        ]
+      ],
+      "aire_m2": 50.0
+    },
+    {
+      "kind": "module",
+      "niveau": 2,
+      "type_logement": "T3",
+      "ref": "B1",
+      "coords_2975": [
+        [
+          [
+            329965.2025742801,
+            7648056.648897813
+          ],
+          [
+            329962.794350726,
+            7648051.589343297
+          ],
+          [
+            329973.26840696577,
+            7648046.603950044
+          ],
+          [
+            329975.67663051985,
+            7648051.66350456
+          ],
+          [
+            329965.2025742801,
+            7648056.648897813
+          ]
+        ]
+      ],
+      "aire_m2": 65.0
+    },
+    {
+      "kind": "module",
+      "niveau": 2,
+      "type_logement": "T2",
+      "ref": "B1",
+      "coords_2975": [
+        [
+          [
+            329962.794350726,
+            7648051.589343297
+          ],
+          [
+            329960.941871069,
+            7648047.697378285
+          ],
+          [
+            329971.4159273087,
+            7648042.711985033
+          ],
+          [
+            329973.26840696577,
+            7648046.603950044
+          ],
+          [
+            329962.794350726,
+            7648051.589343297
+          ]
+        ]
+      ],
+      "aire_m2": 50.0
+    },
+    {
+      "kind": "coursive",
+      "niveau": 3,
+      "type_logement": null,
+      "ref": "B1",
+      "coords_2975": [
+        [
+          [
+            329978.2701020397,
+            7648057.112255576
+          ],
+          [
+            329971.4159273087,
+            7648042.711985033
+          ],
+          [
+            329972.6800375446,
+            7648042.11029964
+          ],
+          [
+            329979.5342122755,
+            7648056.510570183
+          ],
+          [
+            329978.2701020397,
+            7648057.112255576
+          ]
+        ]
+      ],
+      "aire_m2": 22.33
+    },
+    {
+      "kind": "noyau",
+      "niveau": 3,
+      "type_logement": null,
+      "ref": "B1",
+      "coords_2975": [
+        [
+          [
+            329967.7960457999,
+            7648062.097648829
+          ],
+          [
+            329967.05505393713,
+            7648060.540862825
+          ],
+          [
+            329977.5291101769,
+            7648055.555469572
+          ],
+          [
+            329978.2701020397,
+            7648057.112255576
+          ],
+          [
+            329967.7960457999,
+            7648062.097648829
+          ]
+        ]
+      ],
+      "aire_m2": 20.0
+    },
+    {
+      "kind": "module",
+      "niveau": 3,
+      "type_logement": "T2",
+      "ref": "B1",
+      "coords_2975": [
+        [
+          [
+            329967.05505393713,
+            7648060.540862825
+          ],
+          [
+            329965.2025742801,
+            7648056.648897813
+          ],
+          [
+            329975.67663051985,
+            7648051.66350456
+          ],
+          [
+            329977.5291101769,
+            7648055.555469572
+          ],
+          [
+            329967.05505393713,
+            7648060.540862825
+          ]
+        ]
+      ],
+      "aire_m2": 50.0
+    },
+    {
+      "kind": "module",
+      "niveau": 3,
+      "type_logement": "T3",
+      "ref": "B1",
+      "coords_2975": [
+        [
+          [
+            329965.2025742801,
+            7648056.648897813
+          ],
+          [
+            329962.794350726,
+            7648051.589343297
+          ],
+          [
+            329973.26840696577,
+            7648046.603950044
+          ],
+          [
+            329975.67663051985,
+            7648051.66350456
+          ],
+          [
+            329965.2025742801,
+            7648056.648897813
+          ]
+        ]
+      ],
+      "aire_m2": 65.0
+    },
+    {
+      "kind": "module",
+      "niveau": 3,
+      "type_logement": "T2",
+      "ref": "B1",
+      "coords_2975": [
+        [
+          [
+            329962.794350726,
+            7648051.589343297
+          ],
+          [
+            329960.941871069,
+            7648047.697378285
+          ],
+          [
+            329971.4159273087,
+            7648042.711985033
+          ],
+          [
+            329973.26840696577,
+            7648046.603950044
+          ],
+          [
+            329962.794350726,
+            7648051.589343297
+          ]
+        ]
+      ],
+      "aire_m2": 50.0
+    },
+    {
+      "kind": "batiment_emprise",
+      "niveau": null,
+      "type_logement": null,
+      "ref": "B2",
+      "coords_2975": [
+        [
+          [
+            329956.5819249288,
+            7648037.955655093
+          ],
+          [
+            329946.7637827467,
+            7648017.328240531
+          ],
+          [
+            329958.5019492223,
+            7648011.741161886
+          ],
+          [
+            329968.3200914044,
+            7648032.368576448
+          ],
+          [
+            329956.5819249288,
+            7648037.955655093
+          ]
+        ]
+      ],
+      "aire_m2": 296.98
+    },
+    {
+      "kind": "coursive",
+      "niveau": 0,
+      "type_logement": null,
+      "ref": "B2",
+      "coords_2975": [
+        [
+          [
+            329967.0559811686,
+            7648032.97026184
+          ],
+          [
+            329957.23783898645,
+            7648012.342847278
+          ],
+          [
+            329958.5019492223,
+            7648011.741161886
+          ],
+          [
+            329968.3200914044,
+            7648032.368576448
+          ],
+          [
+            329967.0559811686,
+            7648032.97026184
+          ]
+        ]
+      ],
+      "aire_m2": 31.98
+    },
+    {
+      "kind": "noyau",
+      "niveau": 0,
+      "type_logement": null,
+      "ref": "B2",
+      "coords_2975": [
+        [
+          [
+            329956.5819249288,
+            7648037.955655093
+          ],
+          [
+            329955.84093306604,
+            7648036.398869089
+          ],
+          [
+            329966.3149893058,
+            7648031.413475836
+          ],
+          [
+            329967.0559811686,
+            7648032.97026184
+          ],
+          [
+            329956.5819249288,
+            7648037.955655093
+          ]
+        ]
+      ],
+      "aire_m2": 20.0
+    },
+    {
+      "kind": "module",
+      "niveau": 0,
+      "type_logement": "T2",
+      "ref": "B2",
+      "coords_2975": [
+        [
+          [
+            329955.84093306604,
+            7648036.398869089
+          ],
+          [
+            329953.98845340905,
+            7648032.506904077
+          ],
+          [
+            329964.46250964876,
+            7648027.521510824
+          ],
+          [
+            329966.3149893058,
+            7648031.413475836
+          ],
+          [
+            329955.84093306604,
+            7648036.398869089
+          ]
+        ]
+      ],
+      "aire_m2": 50.0
+    },
+    {
+      "kind": "module",
+      "niveau": 0,
+      "type_logement": "T3",
+      "ref": "B2",
+      "coords_2975": [
+        [
+          [
+            329953.98845340905,
+            7648032.506904077
+          ],
+          [
+            329951.5802298549,
+            7648027.447349561
+          ],
+          [
+            329962.0542860947,
+            7648022.461956309
+          ],
+          [
+            329964.46250964876,
+            7648027.521510824
+          ],
+          [
+            329953.98845340905,
+            7648032.506904077
+          ]
+        ]
+      ],
+      "aire_m2": 65.0
+    },
+    {
+      "kind": "module",
+      "niveau": 0,
+      "type_logement": "T2",
+      "ref": "B2",
+      "coords_2975": [
+        [
+          [
+            329951.5802298549,
+            7648027.447349561
+          ],
+          [
+            329949.7277501979,
+            7648023.55538455
+          ],
+          [
+            329960.20180643763,
+            7648018.569991297
+          ],
+          [
+            329962.0542860947,
+            7648022.461956309
+          ],
+          [
+            329951.5802298549,
+            7648027.447349561
+          ]
+        ]
+      ],
+      "aire_m2": 50.0
+    },
+    {
+      "kind": "module",
+      "niveau": 0,
+      "type_logement": "T4",
+      "ref": "B2",
+      "coords_2975": [
+        [
+          [
+            329949.7277501979,
+            7648023.55538455
+          ],
+          [
+            329946.7637827467,
+            7648017.328240531
+          ],
+          [
+            329957.23783898645,
+            7648012.342847278
+          ],
+          [
+            329960.20180643763,
+            7648018.569991297
+          ],
+          [
+            329949.7277501979,
+            7648023.55538455
+          ]
+        ]
+      ],
+      "aire_m2": 80.0
+    },
+    {
+      "kind": "coursive",
+      "niveau": 1,
+      "type_logement": null,
+      "ref": "B2",
+      "coords_2975": [
+        [
+          [
+            329967.0559811686,
+            7648032.97026184
+          ],
+          [
+            329957.23783898645,
+            7648012.342847278
+          ],
+          [
+            329958.5019492223,
+            7648011.741161886
+          ],
+          [
+            329968.3200914044,
+            7648032.368576448
+          ],
+          [
+            329967.0559811686,
+            7648032.97026184
+          ]
+        ]
+      ],
+      "aire_m2": 31.98
+    },
+    {
+      "kind": "noyau",
+      "niveau": 1,
+      "type_logement": null,
+      "ref": "B2",
+      "coords_2975": [
+        [
+          [
+            329956.5819249288,
+            7648037.955655093
+          ],
+          [
+            329955.84093306604,
+            7648036.398869089
+          ],
+          [
+            329966.3149893058,
+            7648031.413475836
+          ],
+          [
+            329967.0559811686,
+            7648032.97026184
+          ],
+          [
+            329956.5819249288,
+            7648037.955655093
+          ]
+        ]
+      ],
+      "aire_m2": 20.0
+    },
+    {
+      "kind": "module",
+      "niveau": 1,
+      "type_logement": "T2",
+      "ref": "B2",
+      "coords_2975": [
+        [
+          [
+            329955.84093306604,
+            7648036.398869089
+          ],
+          [
+            329953.98845340905,
+            7648032.506904077
+          ],
+          [
+            329964.46250964876,
+            7648027.521510824
+          ],
+          [
+            329966.3149893058,
+            7648031.413475836
+          ],
+          [
+            329955.84093306604,
+            7648036.398869089
+          ]
+        ]
+      ],
+      "aire_m2": 50.0
+    },
+    {
+      "kind": "module",
+      "niveau": 1,
+      "type_logement": "T3",
+      "ref": "B2",
+      "coords_2975": [
+        [
+          [
+            329953.98845340905,
+            7648032.506904077
+          ],
+          [
+            329951.5802298549,
+            7648027.447349561
+          ],
+          [
+            329962.0542860947,
+            7648022.461956309
+          ],
+          [
+            329964.46250964876,
+            7648027.521510824
+          ],
+          [
+            329953.98845340905,
+            7648032.506904077
+          ]
+        ]
+      ],
+      "aire_m2": 65.0
+    },
+    {
+      "kind": "module",
+      "niveau": 1,
+      "type_logement": "T2",
+      "ref": "B2",
+      "coords_2975": [
+        [
+          [
+            329951.5802298549,
+            7648027.447349561
+          ],
+          [
+            329949.7277501979,
+            7648023.55538455
+          ],
+          [
+            329960.20180643763,
+            7648018.569991297
+          ],
+          [
+            329962.0542860947,
+            7648022.461956309
+          ],
+          [
+            329951.5802298549,
+            7648027.447349561
+          ]
+        ]
+      ],
+      "aire_m2": 50.0
+    },
+    {
+      "kind": "module",
+      "niveau": 1,
+      "type_logement": "T4",
+      "ref": "B2",
+      "coords_2975": [
+        [
+          [
+            329949.7277501979,
+            7648023.55538455
+          ],
+          [
+            329946.7637827467,
+            7648017.328240531
+          ],
+          [
+            329957.23783898645,
+            7648012.342847278
+          ],
+          [
+            329960.20180643763,
+            7648018.569991297
+          ],
+          [
+            329949.7277501979,
+            7648023.55538455
+          ]
+        ]
+      ],
+      "aire_m2": 80.0
+    },
+    {
+      "kind": "coursive",
+      "niveau": 2,
+      "type_logement": null,
+      "ref": "B2",
+      "coords_2975": [
+        [
+          [
+            329967.0559811686,
+            7648032.97026184
+          ],
+          [
+            329957.23783898645,
+            7648012.342847278
+          ],
+          [
+            329958.5019492223,
+            7648011.741161886
+          ],
+          [
+            329968.3200914044,
+            7648032.368576448
+          ],
+          [
+            329967.0559811686,
+            7648032.97026184
+          ]
+        ]
+      ],
+      "aire_m2": 31.98
+    },
+    {
+      "kind": "noyau",
+      "niveau": 2,
+      "type_logement": null,
+      "ref": "B2",
+      "coords_2975": [
+        [
+          [
+            329956.5819249288,
+            7648037.955655093
+          ],
+          [
+            329955.84093306604,
+            7648036.398869089
+          ],
+          [
+            329966.3149893058,
+            7648031.413475836
+          ],
+          [
+            329967.0559811686,
+            7648032.97026184
+          ],
+          [
+            329956.5819249288,
+            7648037.955655093
+          ]
+        ]
+      ],
+      "aire_m2": 20.0
+    },
+    {
+      "kind": "module",
+      "niveau": 2,
+      "type_logement": "T2",
+      "ref": "B2",
+      "coords_2975": [
+        [
+          [
+            329955.84093306604,
+            7648036.398869089
+          ],
+          [
+            329953.98845340905,
+            7648032.506904077
+          ],
+          [
+            329964.46250964876,
+            7648027.521510824
+          ],
+          [
+            329966.3149893058,
+            7648031.413475836
+          ],
+          [
+            329955.84093306604,
+            7648036.398869089
+          ]
+        ]
+      ],
+      "aire_m2": 50.0
+    },
+    {
+      "kind": "module",
+      "niveau": 2,
+      "type_logement": "T3",
+      "ref": "B2",
+      "coords_2975": [
+        [
+          [
+            329953.98845340905,
+            7648032.506904077
+          ],
+          [
+            329951.5802298549,
+            7648027.447349561
+          ],
+          [
+            329962.0542860947,
+            7648022.461956309
+          ],
+          [
+            329964.46250964876,
+            7648027.521510824
+          ],
+          [
+            329953.98845340905,
+            7648032.506904077
+          ]
+        ]
+      ],
+      "aire_m2": 65.0
+    },
+    {
+      "kind": "module",
+      "niveau": 2,
+      "type_logement": "T2",
+      "ref": "B2",
+      "coords_2975": [
+        [
+          [
+            329951.5802298549,
+            7648027.447349561
+          ],
+          [
+            329949.7277501979,
+            7648023.55538455
+          ],
+          [
+            329960.20180643763,
+            7648018.569991297
+          ],
+          [
+            329962.0542860947,
+            7648022.461956309
+          ],
+          [
+            329951.5802298549,
+            7648027.447349561
+          ]
+        ]
+      ],
+      "aire_m2": 50.0
+    },
+    {
+      "kind": "module",
+      "niveau": 2,
+      "type_logement": "T4",
+      "ref": "B2",
+      "coords_2975": [
+        [
+          [
+            329949.7277501979,
+            7648023.55538455
+          ],
+          [
+            329946.7637827467,
+            7648017.328240531
+          ],
+          [
+            329957.23783898645,
+            7648012.342847278
+          ],
+          [
+            329960.20180643763,
+            7648018.569991297
+          ],
+          [
+            329949.7277501979,
+            7648023.55538455
+          ]
+        ]
+      ],
+      "aire_m2": 80.0
+    },
+    {
+      "kind": "coursive",
+      "niveau": 3,
+      "type_logement": null,
+      "ref": "B2",
+      "coords_2975": [
+        [
+          [
+            329967.0559811686,
+            7648032.97026184
+          ],
+          [
+            329957.23783898645,
+            7648012.342847278
+          ],
+          [
+            329958.5019492223,
+            7648011.741161886
+          ],
+          [
+            329968.3200914044,
+            7648032.368576448
+          ],
+          [
+            329967.0559811686,
+            7648032.97026184
+          ]
+        ]
+      ],
+      "aire_m2": 31.98
+    },
+    {
+      "kind": "noyau",
+      "niveau": 3,
+      "type_logement": null,
+      "ref": "B2",
+      "coords_2975": [
+        [
+          [
+            329956.5819249288,
+            7648037.955655093
+          ],
+          [
+            329955.84093306604,
+            7648036.398869089
+          ],
+          [
+            329966.3149893058,
+            7648031.413475836
+          ],
+          [
+            329967.0559811686,
+            7648032.97026184
+          ],
+          [
+            329956.5819249288,
+            7648037.955655093
+          ]
+        ]
+      ],
+      "aire_m2": 20.0
+    },
+    {
+      "kind": "module",
+      "niveau": 3,
+      "type_logement": "T2",
+      "ref": "B2",
+      "coords_2975": [
+        [
+          [
+            329955.84093306604,
+            7648036.398869089
+          ],
+          [
+            329953.98845340905,
+            7648032.506904077
+          ],
+          [
+            329964.46250964876,
+            7648027.521510824
+          ],
+          [
+            329966.3149893058,
+            7648031.413475836
+          ],
+          [
+            329955.84093306604,
+            7648036.398869089
+          ]
+        ]
+      ],
+      "aire_m2": 50.0
+    },
+    {
+      "kind": "module",
+      "niveau": 3,
+      "type_logement": "T3",
+      "ref": "B2",
+      "coords_2975": [
+        [
+          [
+            329953.98845340905,
+            7648032.506904077
+          ],
+          [
+            329951.5802298549,
+            7648027.447349561
+          ],
+          [
+            329962.0542860947,
+            7648022.461956309
+          ],
+          [
+            329964.46250964876,
+            7648027.521510824
+          ],
+          [
+            329953.98845340905,
+            7648032.506904077
+          ]
+        ]
+      ],
+      "aire_m2": 65.0
+    },
+    {
+      "kind": "module",
+      "niveau": 3,
+      "type_logement": "T2",
+      "ref": "B2",
+      "coords_2975": [
+        [
+          [
+            329951.5802298549,
+            7648027.447349561
+          ],
+          [
+            329949.7277501979,
+            7648023.55538455
+          ],
+          [
+            329960.20180643763,
+            7648018.569991297
+          ],
+          [
+            329962.0542860947,
+            7648022.461956309
+          ],
+          [
+            329951.5802298549,
+            7648027.447349561
+          ]
+        ]
+      ],
+      "aire_m2": 50.0
+    },
+    {
+      "kind": "module",
+      "niveau": 3,
+      "type_logement": "T4",
+      "ref": "B2",
+      "coords_2975": [
+        [
+          [
+            329949.7277501979,
+            7648023.55538455
+          ],
+          [
+            329946.7637827467,
+            7648017.328240531
+          ],
+          [
+            329957.23783898645,
+            7648012.342847278
+          ],
+          [
+            329960.20180643763,
+            7648018.569991297
+          ],
+          [
+            329949.7277501979,
+            7648023.55538455
+          ]
+        ]
+      ],
+      "aire_m2": 80.0
+    },
+    {
+      "kind": "allee",
+      "niveau": null,
+      "type_logement": null,
+      "ref": null,
+      "coords_2975": [
+        [
+          [
+            329981.6886366615,
+            7648059.69721546
+          ],
+          [
+            329951.42089078785,
+            7647996.1062294645
+          ],
+          [
+            329946.90621137415,
+            7647998.255105867
+          ],
+          [
+            329954.28141536406,
+            7648013.750032235
+          ],
+          [
+            329958.5019492223,
+            7648011.741161886
+          ],
+          [
+            329968.3200914044,
+            7648032.368576448
+          ],
+          [
+            329964.0995575462,
+            7648034.377446798
+          ],
+          [
+            329968.68523765705,
+            7648044.01172617
+          ],
+          [
+            329972.6800375446,
+            7648042.11029964
+          ],
+          [
+            329979.5342122755,
+            7648056.510570183
+          ],
+          [
+            329975.539412388,
+            7648058.411996713
+          ],
+          [
+            329978.06491920503,
+            7648063.717957365
+          ],
+          [
+            329980.8447182747,
+            7648062.394841353
+          ],
+          [
+            329981.6886366615,
+            7648059.69721546
+          ]
+        ]
+      ],
+      "aire_m2": 183.17
+    },
+    {
+      "kind": "acces",
+      "niveau": null,
+      "type_logement": null,
+      "ref": null,
+      "coords_2975": [
+        [
+          [
+            329952.99636608985,
+            7647997.338251207
+          ],
+          [
+            329956.6051496076,
+            7647992.723438733
+          ],
+          [
+            329954.5265449378,
+            7647991.097969809
+          ],
+          [
+            329951.50168681925,
+            7647992.756213786
+          ],
+          [
+            329949.84541548585,
+            7647994.874207723
+          ],
+          [
+            329951.42089078785,
+            7647996.1062294645
+          ],
+          [
+            329952.99636608985,
+            7647997.338251207
+          ]
+        ]
+      ],
+      "aire_m2": 21.28
+    },
+    {
+      "kind": "place",
+      "niveau": null,
+      "type_logement": null,
+      "ref": null,
+      "coords_2975": [
+        [
+          [
+            329973.55023979134,
+            7648065.866833768
+          ],
+          [
+            329972.4758015903,
+            7648063.609494061
+          ],
+          [
+            329976.990481004,
+            7648061.460617659
+          ],
+          [
+            329978.06491920503,
+            7648063.717957365
+          ],
+          [
+            329973.55023979134,
+            7648065.866833768
+          ]
+        ]
+      ],
+      "aire_m2": 12.5
+    },
+    {
+      "kind": "place",
+      "niveau": null,
+      "type_logement": null,
+      "ref": null,
+      "coords_2975": [
+        [
+          [
+            329972.4758015903,
+            7648063.609494061
+          ],
+          [
+            329971.4013633892,
+            7648061.352154354
+          ],
+          [
+            329975.9160428029,
+            7648059.203277952
+          ],
+          [
+            329976.990481004,
+            7648061.460617659
+          ],
+          [
+            329972.4758015903,
+            7648063.609494061
+          ]
+        ]
+      ],
+      "aire_m2": 12.5
+    },
+    {
+      "kind": "place",
+      "niveau": null,
+      "type_logement": null,
+      "ref": null,
+      "coords_2975": [
+        [
+          [
+            329963.88029598177,
+            7648045.550776406
+          ],
+          [
+            329962.8058577807,
+            7648043.2934367
+          ],
+          [
+            329967.3205371944,
+            7648041.144560297
+          ],
+          [
+            329968.39497539547,
+            7648043.401900004
+          ],
+          [
+            329963.88029598177,
+            7648045.550776406
+          ]
+        ]
+      ],
+      "aire_m2": 12.5
+    },
+    {
+      "kind": "place",
+      "niveau": null,
+      "type_logement": null,
+      "ref": null,
+      "coords_2975": [
+        [
+          [
+            329962.8058577807,
+            7648043.2934367
+          ],
+          [
+            329961.73141957965,
+            7648041.036096992
+          ],
+          [
+            329966.24609899335,
+            7648038.88722059
+          ],
+          [
+            329967.3205371944,
+            7648041.144560297
+          ],
+          [
+            329962.8058577807,
+            7648043.2934367
+          ]
+        ]
+      ],
+      "aire_m2": 12.5
+    },
+    {
+      "kind": "place",
+      "niveau": null,
+      "type_logement": null,
+      "ref": null,
+      "coords_2975": [
+        [
+          [
+            329961.73141957965,
+            7648041.036096992
+          ],
+          [
+            329960.65698137856,
+            7648038.778757285
+          ],
+          [
+            329965.17166079226,
+            7648036.629880884
+          ],
+          [
+            329966.24609899335,
+            7648038.88722059
+          ],
+          [
+            329961.73141957965,
+            7648041.036096992
+          ]
+        ]
+      ],
+      "aire_m2": 12.5
+    },
+    {
+      "kind": "place",
+      "niveau": null,
+      "type_logement": null,
+      "ref": null,
+      "coords_2975": [
+        [
+          [
+            329948.8381611669,
+            7648013.94802051
+          ],
+          [
+            329947.7637229658,
+            7648011.690680804
+          ],
+          [
+            329952.2784023795,
+            7648009.541804401
+          ],
+          [
+            329953.35284058057,
+            7648011.799144108
+          ],
+          [
+            329948.8381611669,
+            7648013.94802051
+          ]
+        ]
+      ],
+      "aire_m2": 12.5
+    },
+    {
+      "kind": "place",
+      "niveau": null,
+      "type_logement": null,
+      "ref": null,
+      "coords_2975": [
+        [
+          [
+            329947.7637229658,
+            7648011.690680804
+          ],
+          [
+            329946.68928476475,
+            7648009.433341096
+          ],
+          [
+            329951.2039641784,
+            7648007.284464695
+          ],
+          [
+            329952.2784023795,
+            7648009.541804401
+          ],
+          [
+            329947.7637229658,
+            7648011.690680804
+          ]
+        ]
+      ],
+      "aire_m2": 12.5
+    },
+    {
+      "kind": "place",
+      "niveau": null,
+      "type_logement": null,
+      "ref": null,
+      "coords_2975": [
+        [
+          [
+            329946.68928476475,
+            7648009.433341096
+          ],
+          [
+            329945.61484656367,
+            7648007.1760013895
+          ],
+          [
+            329950.12952597736,
+            7648005.027124988
+          ],
+          [
+            329951.2039641784,
+            7648007.284464695
+          ],
+          [
+            329946.68928476475,
+            7648009.433341096
+          ]
+        ]
+      ],
+      "aire_m2": 12.5
+    },
+    {
+      "kind": "place",
+      "niveau": null,
+      "type_logement": null,
+      "ref": null,
+      "coords_2975": [
+        [
+          [
+            329945.61484656367,
+            7648007.1760013895
+          ],
+          [
+            329944.5404083626,
+            7648004.918661683
+          ],
+          [
+            329949.0550877763,
+            7648002.76978528
+          ],
+          [
+            329950.12952597736,
+            7648005.027124988
+          ],
+          [
+            329945.61484656367,
+            7648007.1760013895
+          ]
+        ]
+      ],
+      "aire_m2": 12.5
+    },
+    {
+      "kind": "place",
+      "niveau": null,
+      "type_logement": null,
+      "ref": null,
+      "coords_2975": [
+        [
+          [
+            329944.5404083626,
+            7648004.918661683
+          ],
+          [
+            329943.46597016155,
+            7648002.661321976
+          ],
+          [
+            329947.98064957524,
+            7648000.512445574
+          ],
+          [
+            329949.0550877763,
+            7648002.76978528
+          ],
+          [
+            329944.5404083626,
+            7648004.918661683
+          ]
+        ]
+      ],
+      "aire_m2": 12.5
+    },
+    {
+      "kind": "place",
+      "niveau": null,
+      "type_logement": null,
+      "ref": null,
+      "coords_2975": [
+        [
+          [
+            329943.46597016155,
+            7648002.661321976
+          ],
+          [
+            329942.39153196046,
+            7648000.40398227
+          ],
+          [
+            329946.90621137415,
+            7647998.255105867
+          ],
+          [
+            329947.98064957524,
+            7648000.512445574
+          ],
+          [
+            329943.46597016155,
+            7648002.661321976
+          ]
+        ]
+      ],
+      "aire_m2": 12.5
+    },
+    {
+      "kind": "place",
+      "niveau": null,
+      "type_logement": null,
+      "ref": null,
+      "coords_2975": [
+        [
+          [
+            329979.3562840155,
+            7648054.797061843
+          ],
+          [
+            329978.2818458145,
+            7648052.539722136
+          ],
+          [
+            329982.7965252281,
+            7648050.390845734
+          ],
+          [
+            329983.8709634292,
+            7648052.64818544
+          ],
+          [
+            329979.3562840155,
+            7648054.797061843
+          ]
+        ]
+      ],
+      "aire_m2": 12.5
+    },
+    {
+      "kind": "place",
+      "niveau": null,
+      "type_logement": null,
+      "ref": null,
+      "coords_2975": [
+        [
+          [
+            329978.2818458145,
+            7648052.539722136
+          ],
+          [
+            329977.2074076134,
+            7648050.28238243
+          ],
+          [
+            329981.7220870271,
+            7648048.133506027
+          ],
+          [
+            329982.7965252281,
+            7648050.390845734
+          ],
+          [
+            329978.2818458145,
+            7648052.539722136
+          ]
+        ]
+      ],
+      "aire_m2": 12.5
+    },
+    {
+      "kind": "place",
+      "niveau": null,
+      "type_logement": null,
+      "ref": null,
+      "coords_2975": [
+        [
+          [
+            329977.2074076134,
+            7648050.28238243
+          ],
+          [
+            329976.1329694123,
+            7648048.025042722
+          ],
+          [
+            329980.647648826,
+            7648045.87616632
+          ],
+          [
+            329981.7220870271,
+            7648048.133506027
+          ],
+          [
+            329977.2074076134,
+            7648050.28238243
+          ]
+        ]
+      ],
+      "aire_m2": 12.5
+    },
+    {
+      "kind": "place",
+      "niveau": null,
+      "type_logement": null,
+      "ref": null,
+      "coords_2975": [
+        [
+          [
+            329976.1329694123,
+            7648048.025042722
+          ],
+          [
+            329975.0585312113,
+            7648045.767703015
+          ],
+          [
+            329979.573210625,
+            7648043.618826614
+          ],
+          [
+            329980.647648826,
+            7648045.87616632
+          ],
+          [
+            329976.1329694123,
+            7648048.025042722
+          ]
+        ]
+      ],
+      "aire_m2": 12.5
+    },
+    {
+      "kind": "place",
+      "niveau": null,
+      "type_logement": null,
+      "ref": null,
+      "coords_2975": [
+        [
+          [
+            329975.0585312113,
+            7648045.767703015
+          ],
+          [
+            329973.9840930102,
+            7648043.510363309
+          ],
+          [
+            329978.4987724239,
+            7648041.361486906
+          ],
+          [
+            329979.573210625,
+            7648043.618826614
+          ],
+          [
+            329975.0585312113,
+            7648045.767703015
+          ]
+        ]
+      ],
+      "aire_m2": 12.5
+    },
+    {
+      "kind": "place",
+      "niveau": null,
+      "type_logement": null,
+      "ref": null,
+      "coords_2975": [
+        [
+          [
+            329973.9840930102,
+            7648043.510363309
+          ],
+          [
+            329972.90965480916,
+            7648041.253023602
+          ],
+          [
+            329977.42433422286,
+            7648039.1041472
+          ],
+          [
+            329978.4987724239,
+            7648041.361486906
+          ],
+          [
+            329973.9840930102,
+            7648043.510363309
+          ]
+        ]
+      ],
+      "aire_m2": 12.5
+    },
+    {
+      "kind": "place",
+      "niveau": null,
+      "type_logement": null,
+      "ref": null,
+      "coords_2975": [
+        [
+          [
+            329972.90965480916,
+            7648041.253023602
+          ],
+          [
+            329971.8352166081,
+            7648038.995683895
+          ],
+          [
+            329976.34989602177,
+            7648036.846807493
+          ],
+          [
+            329977.42433422286,
+            7648039.1041472
+          ],
+          [
+            329972.90965480916,
+            7648041.253023602
+          ]
+        ]
+      ],
+      "aire_m2": 12.5
+    },
+    {
+      "kind": "place",
+      "niveau": null,
+      "type_logement": null,
+      "ref": null,
+      "coords_2975": [
+        [
+          [
+            329971.8352166081,
+            7648038.995683895
+          ],
+          [
+            329970.76077840704,
+            7648036.738344188
+          ],
+          [
+            329975.2754578207,
+            7648034.589467786
+          ],
+          [
+            329976.34989602177,
+            7648036.846807493
+          ],
+          [
+            329971.8352166081,
+            7648038.995683895
+          ]
+        ]
+      ],
+      "aire_m2": 12.5
+    },
+    {
+      "kind": "place",
+      "niveau": null,
+      "type_logement": null,
+      "ref": null,
+      "coords_2975": [
+        [
+          [
+            329970.76077840704,
+            7648036.738344188
+          ],
+          [
+            329969.68634020595,
+            7648034.481004481
+          ],
+          [
+            329974.20101961965,
+            7648032.33212808
+          ],
+          [
+            329975.2754578207,
+            7648034.589467786
+          ],
+          [
+            329970.76077840704,
+            7648036.738344188
+          ]
+        ]
+      ],
+      "aire_m2": 12.5
+    },
+    {
+      "kind": "place",
+      "niveau": null,
+      "type_logement": null,
+      "ref": null,
+      "coords_2975": [
+        [
+          [
+            329969.68634020595,
+            7648034.481004481
+          ],
+          [
+            329968.61190200486,
+            7648032.223664775
+          ],
+          [
+            329973.12658141856,
+            7648030.074788372
+          ],
+          [
+            329974.20101961965,
+            7648032.33212808
+          ],
+          [
+            329969.68634020595,
+            7648034.481004481
+          ]
+        ]
+      ],
+      "aire_m2": 12.5
+    },
+    {
+      "kind": "place",
+      "niveau": null,
+      "type_logement": null,
+      "ref": null,
+      "coords_2975": [
+        [
+          [
+            329968.61190200486,
+            7648032.223664775
+          ],
+          [
+            329967.53746380383,
+            7648029.966325068
+          ],
+          [
+            329972.05214321753,
+            7648027.817448665
+          ],
+          [
+            329973.12658141856,
+            7648030.074788372
+          ],
+          [
+            329968.61190200486,
+            7648032.223664775
+          ]
+        ]
+      ],
+      "aire_m2": 12.5
+    },
+    {
+      "kind": "place",
+      "niveau": null,
+      "type_logement": null,
+      "ref": null,
+      "coords_2975": [
+        [
+          [
+            329967.53746380383,
+            7648029.966325068
+          ],
+          [
+            329966.46302560274,
+            7648027.70898536
+          ],
+          [
+            329970.97770501644,
+            7648025.560108959
+          ],
+          [
+            329972.05214321753,
+            7648027.817448665
+          ],
+          [
+            329967.53746380383,
+            7648029.966325068
+          ]
+        ]
+      ],
+      "aire_m2": 12.5
+    },
+    {
+      "kind": "place",
+      "niveau": null,
+      "type_logement": null,
+      "ref": null,
+      "coords_2975": [
+        [
+          [
+            329966.46302560274,
+            7648027.70898536
+          ],
+          [
+            329965.3885874017,
+            7648025.451645654
+          ],
+          [
+            329969.90326681535,
+            7648023.302769252
+          ],
+          [
+            329970.97770501644,
+            7648025.560108959
+          ],
+          [
+            329966.46302560274,
+            7648027.70898536
+          ]
+        ]
+      ],
+      "aire_m2": 12.5
+    },
+    {
+      "kind": "place",
+      "niveau": null,
+      "type_logement": null,
+      "ref": null,
+      "coords_2975": [
+        [
+          [
+            329965.3885874017,
+            7648025.451645654
+          ],
+          [
+            329964.3141492006,
+            7648023.194305947
+          ],
+          [
+            329968.8288286143,
+            7648021.0454295445
+          ],
+          [
+            329969.90326681535,
+            7648023.302769252
+          ],
+          [
+            329965.3885874017,
+            7648025.451645654
+          ]
+        ]
+      ],
+      "aire_m2": 12.5
+    },
+    {
+      "kind": "place",
+      "niveau": null,
+      "type_logement": null,
+      "ref": null,
+      "coords_2975": [
+        [
+          [
+            329964.3141492006,
+            7648023.194305947
+          ],
+          [
+            329963.23971099954,
+            7648020.93696624
+          ],
+          [
+            329967.75439041323,
+            7648018.788089838
+          ],
+          [
+            329968.8288286143,
+            7648021.0454295445
+          ],
+          [
+            329964.3141492006,
+            7648023.194305947
+          ]
+        ]
+      ],
+      "aire_m2": 12.5
+    },
+    {
+      "kind": "place",
+      "niveau": null,
+      "type_logement": null,
+      "ref": null,
+      "coords_2975": [
+        [
+          [
+            329963.23971099954,
+            7648020.93696624
+          ],
+          [
+            329962.1652727985,
+            7648018.679626534
+          ],
+          [
+            329966.6799522122,
+            7648016.530750131
+          ],
+          [
+            329967.75439041323,
+            7648018.788089838
+          ],
+          [
+            329963.23971099954,
+            7648020.93696624
+          ]
+        ]
+      ],
+      "aire_m2": 12.5
+    },
+    {
+      "kind": "place",
+      "niveau": null,
+      "type_logement": null,
+      "ref": null,
+      "coords_2975": [
+        [
+          [
+            329962.1652727985,
+            7648018.679626534
+          ],
+          [
+            329961.0908345974,
+            7648016.422286826
+          ],
+          [
+            329965.6055140111,
+            7648014.273410425
+          ],
+          [
+            329966.6799522122,
+            7648016.530750131
+          ],
+          [
+            329962.1652727985,
+            7648018.679626534
+          ]
+        ]
+      ],
+      "aire_m2": 12.5
+    },
+    {
+      "kind": "place",
+      "niveau": null,
+      "type_logement": null,
+      "ref": null,
+      "coords_2975": [
+        [
+          [
+            329961.0908345974,
+            7648016.422286826
+          ],
+          [
+            329960.0163963964,
+            7648014.16494712
+          ],
+          [
+            329964.5310758101,
+            7648012.016070718
+          ],
+          [
+            329965.6055140111,
+            7648014.273410425
+          ],
+          [
+            329961.0908345974,
+            7648016.422286826
+          ]
+        ]
+      ],
+      "aire_m2": 12.5
+    },
+    {
+      "kind": "place",
+      "niveau": null,
+      "type_logement": null,
+      "ref": null,
+      "coords_2975": [
+        [
+          [
+            329960.0163963964,
+            7648014.16494712
+          ],
+          [
+            329958.9419581953,
+            7648011.907607413
+          ],
+          [
+            329963.456637609,
+            7648009.75873101
+          ],
+          [
+            329964.5310758101,
+            7648012.016070718
+          ],
+          [
+            329960.0163963964,
+            7648014.16494712
+          ]
+        ]
+      ],
+      "aire_m2": 12.5
+    },
+    {
+      "kind": "place",
+      "niveau": null,
+      "type_logement": null,
+      "ref": null,
+      "coords_2975": [
+        [
+          [
+            329958.9419581953,
+            7648011.907607413
+          ],
+          [
+            329957.8675199942,
+            7648009.650267706
+          ],
+          [
+            329962.3821994079,
+            7648007.501391304
+          ],
+          [
+            329963.456637609,
+            7648009.75873101
+          ],
+          [
+            329958.9419581953,
+            7648011.907607413
+          ]
+        ]
+      ],
+      "aire_m2": 12.5
+    },
+    {
+      "kind": "place",
+      "niveau": null,
+      "type_logement": null,
+      "ref": null,
+      "coords_2975": [
+        [
+          [
+            329957.8675199942,
+            7648009.650267706
+          ],
+          [
+            329956.7930817932,
+            7648007.392928
+          ],
+          [
+            329961.3077612069,
+            7648005.244051597
+          ],
+          [
+            329962.3821994079,
+            7648007.501391304
+          ],
+          [
+            329957.8675199942,
+            7648009.650267706
+          ]
+        ]
+      ],
+      "aire_m2": 12.5
+    },
+    {
+      "kind": "place",
+      "niveau": null,
+      "type_logement": null,
+      "ref": null,
+      "coords_2975": [
+        [
+          [
+            329956.7930817932,
+            7648007.392928
+          ],
+          [
+            329955.7186435921,
+            7648005.135588292
+          ],
+          [
+            329960.2333230058,
+            7648002.98671189
+          ],
+          [
+            329961.3077612069,
+            7648005.244051597
+          ],
+          [
+            329956.7930817932,
+            7648007.392928
+          ]
+        ]
+      ],
+      "aire_m2": 12.5
+    },
+    {
+      "kind": "place",
+      "niveau": null,
+      "type_logement": null,
+      "ref": null,
+      "coords_2975": [
+        [
+          [
+            329955.7186435921,
+            7648005.135588292
+          ],
+          [
+            329954.64420539106,
+            7648002.878248585
+          ],
+          [
+            329959.15888480475,
+            7648000.729372184
+          ],
+          [
+            329960.2333230058,
+            7648002.98671189
+          ],
+          [
+            329955.7186435921,
+            7648005.135588292
+          ]
+        ]
+      ],
+      "aire_m2": 12.5
+    },
+    {
+      "kind": "espace_libre",
+      "niveau": null,
+      "type_logement": null,
+      "ref": null,
+      "coords_2975": [
+        [
+          [
+            329939.82700913306,
+            7648000.257842985
+          ],
+          [
+            329936.3400293843,
+            7648002.225723001
+          ],
+          [
+            329938.2959221854,
+            7648005.778040227
+          ],
+          [
+            329937.4192465693,
+            7648006.245046694
+          ],
+          [
+            329937.47056122206,
+            7648006.300940003
+          ],
+          [
+            329942.0896121922,
+            7648015.261964591
+          ],
+          [
+            329946.48139036156,
+            7648024.120979726
+          ],
+          [
+            329950.2649023341,
+            7648032.586156245
+          ],
+          [
+            329953.8583614002,
+            7648040.362885255
+          ],
+          [
+            329955.40167686966,
+            7648043.667331323
+          ],
+          [
+            329957.20895869413,
+            7648047.539196394
+          ],
+          [
+            329959.2504520957,
+            7648051.845305636
+          ],
+          [
+            329968.36055877735,
+            7648071.10574021
+          ],
+          [
+            329979.6695943079,
+            7648064.491182679
+          ],
+          [
+            329980.2240989908,
+            7648064.065120429
+          ],
+          [
+            329980.4461681399,
+            7648063.6688261125
+          ],
+          [
+            329981.7236240739,
+            7648059.585376507
+          ],
+          [
+            329984.37856469187,
+            7648052.781391125
+          ],
+          [
+            329984.5892221795,
+            7648052.484627882
+          ],
+          [
+            329976.62879221886,
+            7648034.454067665
+          ],
+          [
+            329964.8252394953,
+            7648007.703051565
+          ],
+          [
+            329956.9618575618,
+            7647990.326742243
+          ],
+          [
+            329955.0296743056,
+            7647991.491416992
+          ],
+          [
+            329954.72350937733,
+            7647990.989992811
+          ],
+          [
+            329952.9874413499,
+            7647991.941714922
+          ],
+          [
+            329954.5265449378,
+            7647991.097969809
+          ],
+          [
+            329956.6051496076,
+            7647992.723438733
+          ],
+          [
+            329952.99636608985,
+            7647997.338251207
+          ],
+          [
+            329951.42089078785,
+            7647996.1062294645
+          ],
+          [
+            329949.84541548585,
+            7647994.874207723
+          ],
+          [
+            329951.50168681925,
+            7647992.756213786
+          ],
+          [
+            329939.420972234,
+            7647999.378928449
+          ],
+          [
+            329939.82700913306,
+            7648000.257842985
+          ]
+        ]
+      ],
+      "aire_m2": 610.49
+    }
+  ]
+}

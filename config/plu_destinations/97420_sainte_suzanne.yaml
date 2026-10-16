@@ -583,6 +583,13 @@ zones:
           citation: L'emprise maximale des constructions est limitée à 70% de la superficie du terrain.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 4.0
+          article: 'Article UE6'
+          page_pdf: 23
+          citation: 'Lorsque deux constructions réalisées sur une même propriété ne sont pas contiguës, la distance mesurée perpendiculairement séparant les façades en tous points, doit être au moins égale à la moitié de la hauteur totale cumulée des deux constructions mesurées du sol naturel à l’égout du toit ou au som'
+          statut: valide
         voie:
           min_m: 5
           article: UE4.2
@@ -983,6 +990,15 @@ zones:
     - Ouverture différée (AUindicée 2-3, p. 29) — voir 2AUa.
     - Densité minimale brute « en zones AUb, 20 logements par hectare » (AUindicée 2-5, p. 30).
   A:
+    regles:
+      retraits:
+        entre_constructions:
+          forme: silence
+          absent: true
+          article: 'Article A6'
+          page_pdf: 35
+          citation: 'Sans objet.'
+          statut: valide
     silence: interdit
     silence_src: 'Art. A1.2, p. 32 : « A l''exception de ceux visés à l''article A2.2., sont interdits toutes les
       constructions et tous les ouvrages et travaux non nécessaires à une exploitation agricole. » (liste positive
@@ -1239,6 +1255,15 @@ zones:
     - 'Ferme éolienne et agrivoltaïque (caractère du secteur, p. 6 et 32) : l''autorisation matérielle passe par
       l''A2.2-8 (EnR) — encadrement L.111-27 à L.111-34 du code de l''urbanisme cité par le texte.'
   N:
+    regles:
+      retraits:
+        entre_constructions:
+          forme: silence
+          absent: true
+          article: 'Article N6'
+          page_pdf: 42
+          citation: 'Sans objet.'
+          statut: valide
     silence: interdit
     silence_src: 'Art. N1.2, p. 39 : « A l''exception de ceux visés à l''article N2.2., sont interdits toutes les
       constructions et tous les ouvrages et travaux. » (liste positive N2.2 → tout le reste est interdit)'

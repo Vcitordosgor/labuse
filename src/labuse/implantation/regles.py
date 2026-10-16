@@ -121,6 +121,53 @@ class Mixite:
 
 
 @dataclass(frozen=True)
+class DistanceConstructions:
+    """PLU-CALIBRAGE-10 — implantation des constructions les unes par rapport aux autres sur une
+    même propriété (ex-article 8). Quatre FORMES servables, et elles seules :
+      · fixe          : distance absolue en m (`min_m`) ;
+      · relative      : fraction de la hauteur (`fraction_hauteur`, base `cumulee`=H+h ou
+                        `plus_haut`=H) avec un `min_m` plancher éventuel ;
+      · conditionnelle: deux valeurs selon que les façades portent (`avec_ouvertures_m`) ou non
+                        (`sans_ouvertures_m`) des ouvertures — le moteur applique la plus stricte ;
+      · contiguite    : contiguïté autorisée (`contiguite_autorisee: true`) ou non.
+    `silence` = le règlement ne réglemente pas (prouvé, cité). Toute autre forme = non servie
+    (STOP — on ne devine pas). Servable (`validee`) seulement avec statut `valide` ET citation."""
+    validee: bool
+    forme: str                          # fixe|relative|conditionnelle|contiguite|silence|absente
+    min_m: Optional[float] = None
+    fraction_hauteur: Optional[float] = None
+    base_hauteur: Optional[str] = None  # 'cumulee' (H+h) | 'plus_haut' (H du plus haut)
+    avec_ouvertures_m: Optional[float] = None
+    sans_ouvertures_m: Optional[float] = None
+    contiguite_autorisee: Optional[bool] = None
+    article: Optional[str] = None
+    page_pdf: Optional[int] = None
+    citation: Optional[str] = None
+
+    @property
+    def est_silence(self) -> bool:
+        return self.validee and self.forme == "silence"
+
+    @property
+    def est_chiffrable(self) -> bool:
+        """Règle servie que le moteur sait transformer en distance requise (fixe/relative/
+        conditionnelle/contiguité) — par opposition au silence et au non-servi."""
+        return self.validee and self.forme in ("fixe", "relative", "conditionnelle", "contiguite")
+
+    @property
+    def citation_complete(self) -> Optional[str]:
+        if not self.validee:
+            return None
+        t = []
+        if self.article:
+            t.append(f"PLU art. {self.article}")
+        if self.page_pdf is not None:
+            t.append(f"p. {self.page_pdf}")
+        tete = " · ".join(t)
+        return f"{tete} — « {self.citation} »" if self.citation else (tete or None)
+
+
+@dataclass(frozen=True)
 class ReglesZone:
     insee: str
     zone: str
@@ -132,6 +179,7 @@ class ReglesZone:
     pleine_terre: Regle
     mixite: Mixite
     stationnement: BaremeStationnement
+    distance_constructions: DistanceConstructions
     prospect: Optional[Regle] = None   # règle de hauteur RELATIVE non chiffrable (ex. L ≥ h/2)
 
     @property
@@ -190,13 +238,37 @@ def _bareme(stat: dict) -> BaremeStationnement:
     return BaremeStationnement(False, "absent", None, "superieur", None, (), None, None, None)
 
 
+def _distance_constructions(retraits: dict) -> DistanceConstructions:
+    """Charge la feuille `retraits.entre_constructions` (PLU-CALIBRAGE-10). Servable seulement si
+    statut `valide`, citation présente, et `forme` reconnue. `absent: true` → silence prouvé."""
+    leaf = (retraits or {}).get("entre_constructions")
+    if not isinstance(leaf, dict):
+        return DistanceConstructions(validee=False, forme="absente")
+    valide = (leaf.get("statut") == "valide" and str(leaf.get("citation") or "").strip() != "")
+    forme = "silence" if leaf.get("absent") else (leaf.get("forme") or "")
+    formes_ok = ("fixe", "relative", "conditionnelle", "contiguite", "silence")
+    frac = leaf.get("fraction_hauteur")
+    return DistanceConstructions(
+        validee=bool(valide and forme in formes_ok),
+        forme=forme if forme in formes_ok else "absente",
+        min_m=float(leaf["min_m"]) if isinstance(leaf.get("min_m"), (int, float)) else None,
+        fraction_hauteur=float(frac) if isinstance(frac, (int, float)) else None,
+        base_hauteur=leaf.get("base_hauteur"),
+        avec_ouvertures_m=float(leaf["avec_ouvertures_m"]) if isinstance(leaf.get("avec_ouvertures_m"), (int, float)) else None,
+        sans_ouvertures_m=float(leaf["sans_ouvertures_m"]) if isinstance(leaf.get("sans_ouvertures_m"), (int, float)) else None,
+        contiguite_autorisee=leaf.get("contiguite_autorisee"),
+        article=leaf.get("article"), page_pdf=leaf.get("page_pdf"), citation=leaf.get("citation"))
+
+
 def _detect_prospect(reg: dict) -> Optional[Regle]:
     """Prospect / hauteur relative (ex. « L ≥ h/2 ») : règle liant distance et HAUTEUR, que le
-    moteur ne sait pas chiffrer. Détectée dans les formules/citations de reculs ou de hauteur."""
+    moteur ne sait pas chiffrer. Détectée dans les formules/citations de reculs ou de hauteur.
+    PLU-CALIBRAGE-10 : la feuille `entre_constructions` est EXCLUE — sa forme relative (L ≥ h/2
+    entre deux bâtiments de la même propriété) est désormais chiffrée par le contrôle dédié."""
     marqueurs = ("h/2", "h / 2", "différence d'altitude", "l ≥ h", "l > h", "l>h", "≥ h/")
     for grp in ("retraits", "hauteur"):
-        for leaf in (reg.get(grp) or {}).values():
-            if not isinstance(leaf, dict):
+        for cle, leaf in (reg.get(grp) or {}).items():
+            if cle == "entre_constructions" or not isinstance(leaf, dict):
                 continue
             txt = " ".join(str(leaf.get(f) or "") for f in ("formule", "citation")).lower()
             if any(m in txt for m in marqueurs):
@@ -235,5 +307,6 @@ def charger(insee: str, zone: str) -> ReglesZone:
         pleine_terre=_leaf_val(pleine.get("pct"), "pct", "pleine terre (perméabilité)", "%"),
         mixite=mixite,
         stationnement=_bareme(reg.get("stationnement") or {}),
+        distance_constructions=_distance_constructions(retraits),
         prospect=_detect_prospect(reg),
     )

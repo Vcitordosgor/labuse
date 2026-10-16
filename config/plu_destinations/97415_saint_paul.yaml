@@ -1244,6 +1244,13 @@ zones:
           citation: La hauteur maximale des constructions est fixée à 14 m.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 3.0
+          article: 'Article 8-'
+          page_pdf: 113
+          citation: 'L’implantation de plusieurs bâtiments sur une même unité foncière est autorisée à condition que la distance séparant deux bâtiments soit au moins égale à 3 m. '
+          statut: valide
         voie:
           min_m: 6
           article: '6'
@@ -1667,6 +1674,13 @@ zones:
           citation: La hauteur maximale des constructions est fixée à 14 m.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 3.0
+          article: 'Article 8-'
+          page_pdf: 150
+          citation: 'Deux bâtiments non contigus, implantés sur une même unité foncière, doivent être distants d''au moins 3 m. '
+          statut: valide
         voie:
           min_m: 6
           article: '6'
@@ -2299,6 +2313,13 @@ zones:
           raison: valeur non numérique ('a_verifier')
           absent: true
       retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 3.0
+          article: 'Article 8-'
+          page_pdf: 259
+          citation: 'Deux bâtiments non contigus, implantés sur une même unité foncière, doivent être distants d''au moins 3 m. '
+          statut: valide
         voie:
           min_m: 6
           article: '6'
@@ -2650,6 +2671,15 @@ zones:
       : « Disposer des infrastructures suffisantes pour desservir le projet de construction (voirie, réseaux, sécurité
       incendie, etc.). »'
   AU6st:
+    regles:
+      retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 4.0
+          article: 'Article 8-'
+          page_pdf: 324
+          citation: ' en zone Ntol Deux constructions non contiguës, implantées sur une même unité foncière, doivent être distantes d''au moins 4m. Toutefois, pour les constructions annexes et les équipements techniques liés à la sécurité, à un service public, à la gestion de l’eau, à la distribution d’énergie ou un bât'
+          statut: valide
     silence: interdit
     silence_src: 'Zone AU6st, Art. 1.2 (p. 314) : « Toutes les occupations et utilisations du sol sont interdites
       à l’exception de celles admises à l’article 2.2 du présent règlement. »'
@@ -3203,6 +3233,15 @@ zones:
       de destination (2.2-1) ; entretien/gestion des sites (2.2-2) ; aménagements légers touristiques sans hébergement
       (2.2-3) ; reconstruction à l''identique (2.2-5).'
   N:
+    regles:
+      retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 3.0
+          article: 'Article 8-'
+          page_pdf: 22
+          citation: ' en zones U1a, U1b, U1c, U1f, U1g et U1pso L’implantation de plusieurs bâtiments sur une même unité foncière est autorisée à condition que la distance séparant deux bâtiments soit au moins égale à 3 m. Règlement – Commune de Saint Paul / Titre 2 – Livret 1 – Bassin de vie Saint Paul centre Zones U1'
+          statut: valide
     silence: interdit
     silence_src: 'Zone N, Art. 1.2, p. 342 : « Sont interdits / Les constructions, ouvrages et travaux non prévus
       à l''article 2.2, ainsi que ceux de nature à porter atteinte à la protection de la zone. » (liste fermée d''admissions

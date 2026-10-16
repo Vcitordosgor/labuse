@@ -3549,6 +3549,13 @@ zones:
             foncière.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: silence
+          absent: true
+          article: 'ARTICLE Ue3'
+          page_pdf: 192
+          citation: 'Non réglementée.'
+          statut: valide
         voie:
           min_m: 4.0
           article: Ue3.1

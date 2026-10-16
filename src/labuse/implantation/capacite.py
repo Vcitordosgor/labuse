@@ -43,6 +43,11 @@ class Capacite:
     ratio_shab_sdp: Optional[float] = None
     ratio_shab_sdp_par_batiment: dict = field(default_factory=dict)
     details_places: dict = field(default_factory=dict)
+    # PLU-CALIBRAGE-10 LOT D : la coursive extérieure OUVERTE n'est pas close et couverte → hors
+    # surface de plancher (art. R111-22 c. urb.). On la MESURE quand même, pour transparence.
+    coursive_m2: float = 0.0           # plancher de coursive ouverte (TOUS niveaux), HORS SDP
+    noyau_m2: float = 0.0              # plancher des noyaux (TOUS niveaux), DANS la SDP
+    noyaux_par_batiment: dict = field(default_factory=dict)   # ref -> {m2_par_niveau, niveaux, m2_total}
 
 
 def _sdp_logement(conv: Conventions, type_logement: str) -> float:
@@ -79,7 +84,10 @@ def calculer(scene: Scene, conv: Conventions, regles: ReglesZone, terrain=None) 
         shab_par_type[o.type_logement] = shab_par_type.get(o.type_logement, 0.0) + \
             o.geom_local.area * conv.coef_plancher_habitable
 
-    sdp = sum(o.geom_local.area for o in scene.objets if o.kind in ("module", "noyau", "coursive"))
+    # PLU-CALIBRAGE-10 LOT D : SDP = modules + noyaux (parties closes et couvertes). La coursive
+    # extérieure OUVERTE n'entre PAS dans la surface de plancher (art. R111-22 c. urb.).
+    sdp = sum(o.geom_local.area for o in scene.objets if o.kind in ("module", "noyau"))
+    coursive = sum(o.geom_local.area for o in scene.of("coursive"))
     shab = sum(o.geom_local.area for o in modules) * conv.coef_plancher_habitable
 
     def aire(kind):
@@ -98,15 +106,23 @@ def calculer(scene: Scene, conv: Conventions, regles: ReglesZone, terrain=None) 
 
     places_imp, details = _places_imposees(scene, conv, regles)
 
-    # ratio SHAB / SDP par bâtiment (et global) : part habitable du plancher construit
+    # ratio SHAB / SDP par bâtiment (et global) : part habitable du plancher construit (SDP = modules
+    # + noyaux, coursive ouverte exclue). Surface des NOYAUX exposée par niveau et par bâtiment.
     refs = sorted({o.ref for o in scene.objets if o.kind in ("module", "noyau", "coursive") and o.ref})
     ratio_bat = {}
+    noyaux_bat: dict[str, dict] = {}
     for ref in refs:
         shab_ref = sum(o.geom_local.area for o in modules if o.ref == ref) * conv.coef_plancher_habitable
         sdp_ref = sum(o.geom_local.area for o in scene.objets
-                      if o.kind in ("module", "noyau", "coursive") and o.ref == ref)
+                      if o.kind in ("module", "noyau") and o.ref == ref)
         if sdp_ref > 0:
             ratio_bat[ref] = round(shab_ref / sdp_ref, 3)
+        noy_ref = [o for o in scene.of("noyau") if o.ref == ref]
+        niv_ref = sorted({o.niveau for o in noy_ref})
+        if noy_ref and niv_ref:
+            m2_niv = round(sum(o.geom_local.area for o in noy_ref if o.niveau == niv_ref[0]), 1)
+            noyaux_bat[ref] = {"m2_par_niveau": m2_niv, "niveaux": len(niv_ref),
+                               "m2_total": round(sum(o.geom_local.area for o in noy_ref), 1)}
     ratio_global = round(shab / sdp, 3) if sdp > 0 else None
 
     distribution = []
@@ -116,8 +132,11 @@ def calculer(scene: Scene, conv: Conventions, regles: ReglesZone, terrain=None) 
         for o in mods_n:
             pt[o.type_logement] = pt.get(o.type_logement, 0) + 1
         sdp_n = sum(o.geom_local.area for o in scene.objets
-                    if o.kind in ("module", "noyau", "coursive") and o.niveau == n)
-        distribution.append({"niveau": n, "par_type": pt, "sdp_m2": round(sdp_n, 1)})
+                    if o.kind in ("module", "noyau") and o.niveau == n)
+        noyau_n = sum(o.geom_local.area for o in scene.of("noyau") if o.niveau == n)
+        coursive_n = sum(o.geom_local.area for o in scene.of("coursive") if o.niveau == n)
+        distribution.append({"niveau": n, "par_type": pt, "sdp_m2": round(sdp_n, 1),
+                             "noyau_m2": round(noyau_n, 1), "coursive_m2": round(coursive_n, 1)})
 
     # mixité : applicable si seuil en SDP franchi, OU seuil en nombre de logements franchi, OU
     # quota validé sans seuil (s'applique à tout). Quota appliqué à la SDP d'habitation.
@@ -150,4 +169,7 @@ def calculer(scene: Scene, conv: Conventions, regles: ReglesZone, terrain=None) 
         sdp_aidee_imposee_m2=(round(sdp_aidee, 1) if sdp_aidee is not None else None),
         ratio_shab_sdp=ratio_global, ratio_shab_sdp_par_batiment=ratio_bat,
         details_places={k: {"nb": v[0], "places_unitaires": v[1]} for k, v in details.items()},
+        coursive_m2=round(coursive, 1),
+        noyau_m2=round(sum(o.geom_local.area for o in scene.of("noyau")), 1),
+        noyaux_par_batiment=noyaux_bat,
     )

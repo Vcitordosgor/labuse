@@ -51,6 +51,15 @@ zones:
             foncière,
           statut: valide
       retraits:
+        entre_constructions:
+          forme: relative
+          base_hauteur: plus_haut
+          fraction_hauteur: 0.5
+          min_m: 4
+          article: 'ARTICLE Ua 8'
+          page_pdf: 16
+          citation: 'La distance (D) entre deux constructions principales non contiguës doit être au moins égale à D=H/2 (H étant la hauteur à l’égout du toit ou au sommet de l’acrotère) du bâtiment le plus haut, sans être inférieure à 4,00 mètres.'
+          statut: valide
         voie:
           min_m: 4.0
           article: Ua 6.2
@@ -239,6 +248,15 @@ zones:
             foncière,
           statut: valide
       retraits:
+        entre_constructions:
+          forme: relative
+          base_hauteur: plus_haut
+          fraction_hauteur: 0.5
+          min_m: 4.0
+          article: 'ARTICLE Ub 8'
+          page_pdf: 31
+          citation: 'La distance (D) entre deux constructions principales non contiguës doit être au moins égale à D=H/2 (H étant la hauteur à l’égout du toit ou au sommet de l’acrotère) du bâtiment le plus haut, sans être inférieure à 4,00 mètres. Les constructions annexes non contigües aux constructions principales de'
+          statut: valide
         voie:
           min_m: 4.0
           article: Ub 6.2
@@ -358,6 +376,15 @@ zones:
             foncière,
           statut: valide
       retraits:
+        entre_constructions:
+          forme: relative
+          base_hauteur: plus_haut
+          fraction_hauteur: 0.5
+          min_m: 4.0
+          article: 'ARTICLE Uc 8'
+          page_pdf: 45
+          citation: 'La distance (D) entre deux constructions principales non contiguës doit être au moins égale à D=H/2 (H étant la hauteur à l’égout du toit ou au sommet de l’acrotère) du bâtiment le plus haut, sans être inférieure à 4,00 mètres. Les constructions annexes non contigües aux constructions principales de'
+          statut: valide
         voie:
           min_m: 4.0
           article: Uc 6.2
@@ -1183,6 +1210,15 @@ zones:
       des articles 3-14 vers la zone U d''indice (caractère de zone, p. 64). Clause densité 20 log/ha / 15 équivalents-logements/ha
       (AUc) et clause logement social : AU 2.2, p. 66.'
   AUs:
+    regles:
+      retraits:
+        entre_constructions:
+          forme: silence
+          absent: true
+          article: 'ARTICLE AUs 8'
+          page_pdf: 72
+          citation: 'Sans objet.'
+          statut: valide
     silence: interdit
     silence_src: 'Art. AUs 1.2, p. 71 : « Toutes les occupations et utilisations du sol sont interdites à l''exception
       de celles admises à l''article AUs 2.2 du présent règlement. » — liste fermée d''autorisations.'
@@ -1214,6 +1250,15 @@ zones:
       aucune règle du chapitre AUs n''autorise l''artisanat dans le secteur — le régime écrit reste celui d''AUs
       (tout interdit sauf AUs 2.2).'
   A:
+    regles:
+      retraits:
+        entre_constructions:
+          forme: silence
+          absent: true
+          article: 'ARTICLE A 8'
+          page_pdf: 79
+          citation: 'Non réglementée.'
+          statut: valide
     silence: interdit
     silence_src: 'Art. A 1.2, p. 74 : « A l''exception de ceux visés à l''article A2.2., sont interdits les nouvelles
       constructions à destination d''habitation, les constructions, ouvrages et travaux non nécessaires à une exploitation
@@ -1400,6 +1445,17 @@ zones:
       » (caractère de zone, p. 74 — indicatif). Les autres exceptions d''A 2.2 (agritourisme 30 m², ICPE, extension
       20 m² de l''existant non agricole) s''appliquent aussi en Arh (aucune exclusion écrite).'
   N:
+    regles:
+      retraits:
+        entre_constructions:
+          forme: relative
+          base_hauteur: plus_haut
+          fraction_hauteur: 0.5
+          min_m: 8.0
+          article: 'ARTICLE N 8'
+          page_pdf: 89
+          citation: 'La distance (D) entre deux constructions principales non contiguës doit être au moins égale à D=H/2 (H étant la hauteur à l’égout du toit ou au sommet de l’acrotère) du bâtiment le plus haut, sans être inférieure à 8,00 mètres.'
+          statut: valide
     silence: interdit
     silence_src: 'Art. N 1.2, p. 84 : « Sont interdits les constructions, ouvrages et travaux non prévus à l''article
       N2.2., ainsi que ceux de nature à porter atteinte à la protection de la zone. » — liste fermée d''autorisations

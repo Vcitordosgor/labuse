@@ -28,7 +28,8 @@ class Conventions:
     # bâtiment
     profondeur_m: float
     largeur_coursive_m: float
-    largeur_noyau_m: float
+    surface_noyau_m2: float        # PLU-CALIBRAGE-10 pt 3 : surface USUELLE d'un noyau (escalier +
+                                   # ascenseur + palier) par niveau et par bâtiment, Estimé.
     max_logements_par_noyau: int
     longueur_max_coursive_par_noyau_m: float
     hauteur_etage_m: float
@@ -53,6 +54,13 @@ class Conventions:
     def profondeur_logement_m(self) -> float:
         return self.profondeur_m - self.largeur_coursive_m
 
+    def largeur_noyau_m(self) -> float:
+        """Largeur de la tranche de noyau, DÉRIVÉE de sa surface usuelle : la tranche traverse la
+        profondeur habitable (comme un module), donc largeur = surface_noyau / profondeur habitable.
+        Le noyau garde ainsi une SURFACE usuelle (≈ escalier + ascenseur + palier), au lieu d'occuper
+        toute la tranche à pleine largeur."""
+        return self.surface_noyau_m2 / self.profondeur_logement_m()
+
 
 def charger(path: str | Path | None = None) -> Conventions:
     p = Path(path) if path else _DEFAUT
@@ -66,7 +74,7 @@ def charger(path: str | Path | None = None) -> Conventions:
         etiquette=str(raw.get("etiquette", "Estimé")),
         profondeur_m=float(bat["profondeur_m"]),
         largeur_coursive_m=float(bat["largeur_coursive_m"]),
-        largeur_noyau_m=float(bat["largeur_noyau_m"]),
+        surface_noyau_m2=float(bat["surface_noyau_m2"]),
         max_logements_par_noyau=int(bat["max_logements_par_noyau"]),
         longueur_max_coursive_par_noyau_m=float(bat["longueur_max_coursive_par_noyau_m"]),
         hauteur_etage_m=float(bat["hauteur_etage_m"]),

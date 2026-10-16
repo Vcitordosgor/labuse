@@ -37,6 +37,13 @@ zones:
             la superficie de l'unité foncière.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 4
+          article: 'ARTICLE Ua 8'
+          page_pdf: 24
+          citation: 'L’implantation de plusieurs constructions sur une même unité foncière est autorisée à condition que la distance séparant deux bâtiments soit au moins égale à 4 mètres.'
+          statut: valide
         voie:
           min_m: 3.0
           article: Ua 6.2
@@ -180,6 +187,13 @@ zones:
             la superficie de l'unité foncière.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 4.0
+          article: 'ARTICLE Ub 8'
+          page_pdf: 36
+          citation: 'L’implantation de plusieurs constructions sur une même unité foncière est autorisée à condition que la distance séparant deux bâtiments soit au moins égale à 4 mètres.'
+          statut: valide
         voie:
           min_m: 3.0
           article: Ub 6.2
@@ -312,6 +326,13 @@ zones:
             de l'acrotère et 8 mètres au faîtage.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 4
+          article: 'ARTICLE Uc 8'
+          page_pdf: 48
+          citation: 'L’implantation de plusieurs constructions sur une même unité foncière est autorisée à condition que la distance séparant deux bâtiments soit au moins égale à 4 mètres.'
+          statut: valide
         voie:
           min_m: 4.0
           article: Uc 6.2
@@ -610,6 +631,15 @@ zones:
           et l'entrepôt exclusif.
     note: Secteur de la ZAC Roland Garros (caractère, p. 58).
   A:
+    regles:
+      retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 4.0
+          article: 'ARTICLE A 8'
+          page_pdf: 69
+          citation: 'Deux constructions non contiguës, implantées sur une même unité foncière, doivent être distantes d''au moins 4 mètres. Toutefois, pour les constructions annexes et les équipements techniques liés à la sécurité, à un service public, à la gestion de l’eau, à la distribution d’énergie ou un bâtiment agr'
+          statut: valide
     silence: interdit
     silence_src: 'Art. A 1.2, p. 64 : « A l''exception de ceux visés à l''article A 2, sont interdits les constructions,
       ouvrages et travaux non liés et nécessaires à une exploitation agricole, ainsi que le changement de destination
@@ -728,6 +758,15 @@ zones:
       des Espaces Naturels, Agricoles et Forestiers (CDPENAF) … préalablement à la délivrance du permis par la municipalité
       » (p. 66).
   N:
+    regles:
+      retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 4.0
+          article: 'ARTICLE N 8'
+          page_pdf: 78
+          citation: 'Deux constructions non contiguës, implantées sur une même unité foncière, doivent être distantes d''au moins 4 mètres. Toutefois, pour les constructions annexes et les équipements techniques liés à la sécurité, à un service public, à la gestion de l’eau, à la distribution d’énergie ou un bâtiment agr'
+          statut: valide
     silence: interdit
     silence_src: 'Art. N 1.2, p. 74 : « Sont interdits les constructions, ouvrages et travaux non prévus à l''article
       N 2, ainsi que ceux de nature à porter atteinte à la protection de la zone. »'

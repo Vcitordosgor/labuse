@@ -192,12 +192,35 @@ def test_nb_annonce_egale_nb_dessine(scenario):
 def test_surfaces_tableau_egalent_mesures(scenario):
     cap = scenario.capacite
     sc = scenario.scene
-    sdp_mes = sum(o.geom_world.area for o in sc.objets if o.kind in ("module", "noyau", "coursive"))
+    # PLU-CALIBRAGE-10 LOT D : la SDP = modules + noyaux (coursive ouverte HORS SDP, R111-22).
+    sdp_mes = sum(o.geom_world.area for o in sc.objets if o.kind in ("module", "noyau"))
+    coursive_mes = sum(o.geom_world.area for o in sc.of("coursive"))
     emp_mes = unary_union(_w(scenario, "batiment_emprise")).area
     pt_mes = sum(o.geom_world.area for o in sc.of("espace_libre"))
     assert abs(sdp_mes - cap.sdp_m2) < 0.5
+    assert abs(coursive_mes - cap.coursive_m2) < 0.5
     assert abs(emp_mes - cap.bati_m2) < 0.5
     assert abs(pt_mes - cap.pleine_terre_m2) < 0.5
+
+
+def test_coursive_hors_sdp(scenario):
+    """LOT D : la coursive extérieure ouverte est MESURÉE mais n'entre pas dans la SDP."""
+    cap = scenario.capacite
+    assert cap.coursive_m2 > 0, "une barre à coursive doit avoir une coursive mesurée"
+    # la SDP ne contient ni coursive : SDP + coursive = plancher total clos+ouvert
+    assert cap.sdp_m2 < cap.sdp_m2 + cap.coursive_m2
+    # le ratio SHAB/SDP se calcule sur la SDP sans coursive
+    assert abs(cap.ratio_shab_sdp - round(cap.shab_estimee_m2 / cap.sdp_m2, 3)) < 1e-6
+
+
+def test_noyau_surface_exposee(scenario):
+    """LOT D : la surface des noyaux est donnée par niveau et par bâtiment."""
+    cap = scenario.capacite
+    assert cap.noyau_m2 > 0 and cap.noyaux_par_batiment
+    for ref, d in cap.noyaux_par_batiment.items():
+        assert d["niveaux"] == cap.niveaux
+        assert abs(d["m2_total"] - d["m2_par_niveau"] * d["niveaux"]) < 0.5
+    assert abs(sum(d["m2_total"] for d in cap.noyaux_par_batiment.values()) - cap.noyau_m2) < 0.6
 
 
 def test_hauteur_sous_regle(scenario):
@@ -241,13 +264,21 @@ def test_hauteur_non_chiffrable_jamais_exploitable(scenario):
 
 
 def test_distance_entre_constructions(scenario):
-    nb_bati = len(scenario.scene.of("batiment_emprise"))
+    """PLU-CALIBRAGE-10 (pt 4) : Non applicable est RÉSERVÉ au silence prouvé ; une zone non servie
+    donne Non effectué (jamais Non applicable), même en mono-bâtiment ; une règle chiffrable donne
+    Réussi/Échoué (mono-bâtiment = Réussi sans objet). L'étude n'est forcée « à compléter » que si
+    plusieurs bâtiments ET contrôle Non effectué."""
     c = next(c for c in scenario.controles if c.nom == "Distance entre constructions")
-    if nb_bati > 1:
+    dc = scenario.regles.distance_constructions
+    assert c.resultat in (REUSSI, ECHOUE, NON_APPLICABLE, NON_EFFECTUE)
+    # Non applicable <=> silence prouvé (et seulement lui)
+    assert (c.resultat == NON_APPLICABLE) == dc.est_silence
+    if not dc.validee:
         assert c.resultat == NON_EFFECTUE
-        assert scenario.statut == "à compléter"
-    else:
-        assert c.resultat == NON_APPLICABLE
+    if dc.est_chiffrable:
+        assert c.resultat in (REUSSI, ECHOUE)
+    if c.resultat == REUSSI:
+        assert c.citation  # Réussi seulement avec citation (verrou)
 
 
 def test_contraintes_absentes_non_applicable(scenario):

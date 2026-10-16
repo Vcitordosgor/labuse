@@ -41,6 +41,13 @@ zones:
             foncière.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 4.0
+          article: 'ARTICLE UA 8'
+          page_pdf: 18
+          citation: 'L’implantation de plusieurs constructions sur une même unité foncière est autorisée à condition que la distance séparant deux bâtiments soit au moins égale à 4 mètres. PLU de Saint-Louis Règlement 2025 17'
+          statut: valide
         voie:
           min_m: 3.0
           article: UA 6.2
@@ -193,6 +200,13 @@ zones:
             foncière.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 4.0
+          article: 'ARTICLE UB 8'
+          page_pdf: 32
+          citation: 'PLU de Saint-Louis Règlement 2025 31 L’implantation de plusieurs constructions sur une même unité foncière est autorisée à condition que la distance séparant deux bâtiments soit au moins égale à 4 mètres.'
+          statut: valide
         voie:
           min_m: 3.0
           article: UB 6.2
@@ -300,6 +314,13 @@ zones:
             foncière. Dans le secteur UC2 ce seuil est limité à 50%.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 4.0
+          article: 'ARTICLE UC 8'
+          page_pdf: 48
+          citation: 'L’implantation de plusieurs constructions sur une même unité foncière est autorisée à condition que la distance séparant deux bâtiments soit au moins égale à 4 mètres.'
+          statut: valide
         voie:
           min_m: 4.0
           article: UC 6.2
@@ -531,6 +552,13 @@ zones:
             foncière. Dans le secteur UD1, ce seuil est limité à 40%.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 4.0
+          article: 'ARTICLE UD 8'
+          page_pdf: 61
+          citation: 'L’implantation de plusieurs constructions sur une même unité foncière est autorisée à condition que la distance séparant deux bâtiments soit au moins égale à 4 mètres.'
+          statut: valide
         voie:
           min_m: 4.0
           article: UD 6.2
@@ -716,6 +744,13 @@ zones:
             foncière.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 3.0
+          article: 'ARTICLE UE 8'
+          page_pdf: 75
+          citation: 'L’implantation de plusieurs constructions sur une même unité foncière est autorisée à condition que la distance séparant deux bâtiments soit au moins égale à 3 mètres.'
+          statut: valide
         voie:
           min_m: 5.0
           article: UE 6.2
@@ -825,6 +860,13 @@ zones:
             foncière.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 3.0
+          article: 'ARTICLE US 8'
+          page_pdf: 87
+          citation: 'L’implantation de plusieurs constructions sur une même unité foncière est autorisée à condition que la distance séparant deux bâtiments soit au moins égale à 3 mètres.'
+          statut: valide
         voie:
           min_m: 5.0
           article: US 6.2
@@ -1647,6 +1689,15 @@ zones:
       » et « les zones 2AUst » ; aucune occurrence de « AUste » dans la pièce écrite. Rien d''écrit ne rattache
       ce code à un régime : non lu.'
   A:
+    regles:
+      retraits:
+        entre_constructions:
+          forme: silence
+          absent: true
+          article: 'ARTICLE A8'
+          page_pdf: 123
+          citation: 'Non réglementée.'
+          statut: valide
     silence: interdit
     silence_src: 'Art. A1.2, p. 119 : « A l''exception de ceux visés à l''article A2.2., sont interdits les constructions,
       ouvrages et travaux non nécessaires à une exploitation agricole, ainsi que le changement de destination des
@@ -1857,6 +1908,15 @@ zones:
           de l'exploitation. Ces constructions sont admises dans la limite totale de 30 m² de surface de plancher.
           »
   N:
+    regles:
+      retraits:
+        entre_constructions:
+          forme: silence
+          absent: true
+          article: 'ARTICLE N8'
+          page_pdf: 132
+          citation: 'Non réglementée.'
+          statut: valide
     silence: interdit
     silence_src: 'Art. N1.2, p. 129 : « A l''exception de ceux visés à l''article N2.2., sont interdits toutes les
       constructions, ouvrages et travaux. » (liste fermée d''admissions : toute destination non mentionnée est interdite).'
