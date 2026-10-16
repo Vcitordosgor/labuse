@@ -51,6 +51,15 @@ zones:
             foncière,
           statut: valide
       retraits:
+        entre_constructions:
+          forme: relative
+          base_hauteur: plus_haut
+          fraction_hauteur: 0.5
+          min_m: 4
+          article: 'ARTICLE Ua 8'
+          page_pdf: 16
+          citation: 'La distance (D) entre deux constructions principales non contiguës doit être au moins égale à D=H/2 (H étant la hauteur à l’égout du toit ou au sommet de l’acrotère) du bâtiment le plus haut, sans être inférieure à 4,00 mètres.'
+          statut: valide
         voie:
           min_m: 4.0
           article: Ua 6.2

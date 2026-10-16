@@ -35,6 +35,13 @@ zones:
             de l'unité foncière,
           statut: valide
       retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 3.5
+          article: 'ARTICLE Ua 8'
+          page_pdf: 17
+          citation: 'Deux constructions principales non contigües, doivent être distantes d’au moins 3,50 mètres.'
+          statut: valide
         voie:
           min_m: 0.0
           article: Ua 6.2
@@ -261,6 +268,13 @@ zones:
             de l'unité foncière.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 7
+          article: 'ARTICLE Uc 8'
+          page_pdf: 41
+          citation: 'Deux constructions principales non contigües, doivent être distantes d’au moins 7,00 mètres.'
+          statut: valide
         voie:
           min_m: 4.0
           article: Uc 6.2

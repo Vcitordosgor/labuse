@@ -37,6 +37,13 @@ zones:
             la superficie de l'unité foncière.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 4
+          article: 'ARTICLE Ua 8'
+          page_pdf: 24
+          citation: 'L’implantation de plusieurs constructions sur une même unité foncière est autorisée à condition que la distance séparant deux bâtiments soit au moins égale à 4 mètres.'
+          statut: valide
         voie:
           min_m: 3.0
           article: Ua 6.2
@@ -312,6 +319,13 @@ zones:
             de l'acrotère et 8 mètres au faîtage.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 4
+          article: 'ARTICLE Uc 8'
+          page_pdf: 48
+          citation: 'L’implantation de plusieurs constructions sur une même unité foncière est autorisée à condition que la distance séparant deux bâtiments soit au moins égale à 4 mètres.'
+          statut: valide
         voie:
           min_m: 4.0
           article: Uc 6.2

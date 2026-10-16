@@ -44,6 +44,13 @@ zones:
             foncière.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 3
+          article: 'Article Ua 6'
+          page_pdf: 25
+          citation: 'Deux constructions implantées sur une même propriété doivent être à une distance l’une de l’autre au moins égale à 3 mètres.'
+          statut: valide
         voie:
           min_m: 3.0
           article: Ua 4

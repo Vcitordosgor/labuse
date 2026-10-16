@@ -46,6 +46,16 @@ zones:
           citation: L’emprise maximale des constructions est fixée à 70% de la superficie du terrain.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: conditionnelle
+          base_hauteur: cumulee
+          fraction_hauteur: 0.5
+          avec_ouvertures_m: 6
+          sans_ouvertures_m: 3
+          article: 'ARTICLE UA 8'
+          page_pdf: 14
+          citation: 'La distance en tout point entre deux constructions non contigües sur une même unité foncière doit être au moins égale à la moitié de la hauteur cumulée des deux constructions mesurée à l’égout du toit ou au sommet de l’acrotère (L ≥ (H+h) /2) avec un minimum de : - 6 mètres dès lors qu’au moins une façade comporte une baie, - 3 mètres dès lors qu’aucune des façades concernées ne comporte de baie ou si au moins une des constructions est une annexe.'
+          statut: valide
         voie:
           min_m: 4.0
           article: UA 6

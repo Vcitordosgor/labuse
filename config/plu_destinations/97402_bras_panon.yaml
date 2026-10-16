@@ -37,6 +37,13 @@ zones:
             de l’unité foncière.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 6
+          article: 'ARTICLE UA 8'
+          page_pdf: 18
+          citation: 'Deux constructions principales non contiguës implantées sur une même unité foncière, doivent respecter une distance entre elles d’au moins 6 mètres.'
+          statut: valide
         voie:
           min_m: 2.0
           article: UA 6.2
@@ -724,6 +731,13 @@ zones:
             de l’unité foncière.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 8
+          article: 'ARTICLE UE 8'
+          page_pdf: 70
+          citation: 'Deux constructions principales non contiguës implantées sur une même unité foncière, doivent respecter une distance entre elles d’au moins 8 mètres.'
+          statut: valide
         voie:
           min_m: 5.0
           article: UE 6.2
@@ -1455,6 +1469,15 @@ zones:
       sur l''extension de l''existant, pas sur une destination. Ouverture à l''urbanisation conditionnée à une modification
       du PLU (caractère, page_pdf 82).'
   A:
+    regles:
+      retraits:
+        entre_constructions:
+          forme: silence
+          absent: true
+          article: 'ARTICLE A8'
+          page_pdf: 91
+          citation: 'Non réglementée.'
+          statut: valide
     silence: interdit
     silence_src: 'Art. A1.2 (1.), page_pdf 86 : « A l''exception de ceux visés à l''article A2.2., sont interdits
       toutes les constructions, ouvrages et travaux. » (liste fermée d''autorisations → le silence vaut interdiction).'
