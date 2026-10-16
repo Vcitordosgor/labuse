@@ -17,6 +17,11 @@ from labuse.implantation.controles import (ECHOUE, NON_APPLICABLE, NON_EFFECTUE,
                                            _ground_tiles)
 from labuse.implantation.moteur import (IDUS_ETANG_SALE, IDUS_SAINT_ANDRE, IDUS_SAINT_DENIS, etudier)
 
+# IMPLANTATION-1 LOT C — le docstring annonce « Marqués `reel` … jamais en CI », mais le marqueur
+# de module manquait : sous le filtre unitaire (`-m "not reel"`) la fixture session_reelle tentait de
+# se connecter à LABUSE_APP_DATABASE_URL et tombait en erreur au lieu d'être désélectionnée. Le voici.
+pytestmark = pytest.mark.reel
+
 _TOL_AIRE = 1e-6
 _TOL_CONTENU = 0.05
 
