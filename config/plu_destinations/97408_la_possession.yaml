@@ -26,6 +26,15 @@ zones:
             est fixée à 16 mètres au faitage.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: relative
+          base_hauteur: cumulee
+          fraction_hauteur: 0.5
+          min_m: 3.0
+          article: 'ARTICLE UA 8'
+          page_pdf: 15
+          citation: 'La distance en tout point entre deux constructions non contigües sur une même unité foncière doit être au moins égale à la moitié de la hauteur cumulée des deux constructions mesurée à l’égout du toit ou au sommet de l’acrotère (L ≥ (H+h) /2) avec un minimum de 3 mètres. Dans le secteur UAv, deux co'
+          statut: valide
         voie:
           min_m: 3.0
           article: UA 6.2
@@ -513,6 +522,15 @@ zones:
             porte: "sous_secteur"
             modifie_calcul: true
       retraits:
+        entre_constructions:
+          forme: relative
+          base_hauteur: cumulee
+          fraction_hauteur: 0.5
+          min_m: 3.0
+          article: 'ARTICLE UB 8'
+          page_pdf: 30
+          citation: 'La distance en tout point entre deux constructions non contigües sur une même unité foncière doit être au moins égale à la moitié de la hauteur cumulée des deux constructions mesurée à l’égout du toit ou au sommet de l’acrotère (L ≥ (H+h) /2) avec un minimum de 3 mètres. 8.2 -'
+          statut: valide
         voie:
           min_m: 3.0
           article: UB 6.2
@@ -1079,6 +1097,13 @@ zones:
             de l’acrotère.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 3.0
+          article: 'ARTICLE UE 8'
+          page_pdf: 42
+          citation: 'L’implantation de plusieurs constructions sur une même unité foncière est autorisée à condition que la distance séparant deux bâtiments soit au moins égale à 3 mètres. 8.2 -'
+          statut: valide
         voie:
           min_m: 3.0
           article: UE 6.2
@@ -1269,6 +1294,15 @@ zones:
           citation: L’emprise au sol des bâtiments de doit pas excéder 70% de l’unité foncière.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: relative
+          base_hauteur: cumulee
+          fraction_hauteur: 0.5
+          min_m: 3.0
+          article: 'ARTICLE UEM 8'
+          page_pdf: 51
+          citation: 'La distance en tout point entre deux constructions non contigües sur une même unité foncière doit être au moins égale à la moitié de la hauteur cumulée des deux constructions mesurée à l’égout du toit ou au sommet de l’acrotère (L ≥ (H+h) /2) avec un minimum de 3 mètres. 8.2 -'
+          statut: valide
         voie:
           min_m: 3.0
           article: UEm 6.2
@@ -1646,6 +1680,15 @@ zones:
           citation: L’emprise au sol des bâtiments de doit pas excéder 60%de l’unité foncière.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: relative
+          base_hauteur: cumulee
+          fraction_hauteur: 0.5
+          min_m: 3.0
+          article: 'ARTICLE AUBM 8'
+          page_pdf: 74
+          citation: 'La distance en tout point entre deux constructions non contigües sur une même unité foncière doit être au moins égale à la moitié de la hauteur cumulée des deux constructions mesurée à l’égout du toit ou au sommet de l’acrotère (L ≥ (H+h) /2) avec un minimum de 3 mètres. Ville de la Possession – Pla'
+          statut: valide
         voie:
           min_m: 4.0
           article: AUBm 6.2
@@ -1709,6 +1752,15 @@ zones:
     - 'AUBm 2 (5°, p.72) : densité minimale 30 logements/ha pour toutes constructions et opérations, appréciée à
       l''échelle de la zone (équivalent logement = 80 m² de surface de plancher pour les destinations hors logement).'
   AUst:
+    regles:
+      retraits:
+        entre_constructions:
+          forme: silence
+          absent: true
+          article: 'ARTICLE AUST 8'
+          page_pdf: 82
+          citation: 'Sans objet.'
+          statut: valide
     silence: interdit
     silence_src: 'Art. AUst 1.2, p.81 : « Toutes les occupations et utilisations du sol sont interdites à l''exception
       de celles admises à l''article AUst 2 du présent règlement. »'
@@ -2088,6 +2140,15 @@ zones:
       » (pas de report possible au règlement des zones urbaines, dit le texte) — mais le chapitre AUEm ne figure
       pas dans les pages fournies (p.71-80 = AUBm, p.81-84 = AUst) ; aucun renvoi écrit vers UEm : non lu.'
   A:
+    regles:
+      retraits:
+        entre_constructions:
+          forme: silence
+          absent: true
+          article: 'ARTICLE A8'
+          page_pdf: 89
+          citation: 'Sans objet.'
+          statut: valide
     silence: interdit
     silence_src: 'Art. A1.2, p.85 : « A l''exception de ceux visés à l''article A2.2., sont interdits toutes les
       constructions et tous les ouvrages et travaux. »'
@@ -2196,6 +2257,15 @@ zones:
     - 'A2.2 admet aussi (p.86) : 6° constructions/ouvrages/travaux liés aux réseaux et à la voirie ; 7° reconstruction
       à l''identique après sinistre — pas des destinations nouvelles.'
   N:
+    regles:
+      retraits:
+        entre_constructions:
+          forme: silence
+          absent: true
+          article: 'ARTICLE N8'
+          page_pdf: 97
+          citation: 'Sans objet.'
+          statut: valide
     silence: interdit
     silence_src: 'Art. N1.2, p.93 : « A l''exception de ceux visés à l''article N2.2., sont interdits toutes les
       constructions, ouvrages et travaux. »'

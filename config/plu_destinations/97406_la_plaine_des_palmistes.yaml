@@ -385,6 +385,13 @@ zones:
             de l'unité foncière,
           statut: valide
       retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 7.0
+          article: 'ARTICLE Ur 8'
+          page_pdf: 53
+          citation: 'Deux constructions principales non contigües, doivent être distantes d’au moins 7,00 mètres. Les équipements techniques liés à la sécurité, à un service public, à la gestion de l’eau, à la distribution d’énergie ou à un local destiné au stockage des ordures ménagères ainsi que les annexes non contig'
+          statut: valide
         voie:
           min_m: 5.0
           article: Ur 6.2
@@ -497,6 +504,13 @@ zones:
             foncière à Bras des Calumets'
           statut: valide
       retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 3.5
+          article: 'ARTICLE Ue 8'
+          page_pdf: 64
+          citation: 'Deux constructions principales non contigües, doivent être distantes d’au moins 3,50 mètres. Les équipements techniques liés à la sécurité, à un service public, à la gestion de l’eau, à la distribution d’énergie ou à un local destiné au stockage des ordures ménagères ainsi que les annexes non contig'
+          statut: valide
         voie:
           min_m: 3.0
           article: Ue 6.2
@@ -603,6 +617,15 @@ zones:
       : camping/ caravaning (5.), dépôts de ferrailles/décharges/containers (6.), carrières (7.), affouillements
       > 2,50 m (8.) — p. 59.'
   AUs:
+    regles:
+      retraits:
+        entre_constructions:
+          forme: silence
+          absent: true
+          article: 'ARTICLE AUs 8'
+          page_pdf: 73
+          citation: 'Sans objet.'
+          statut: valide
     silence: interdit
     silence_src: 'Art. AUs 1.2, p. 71 : « Toutes les occupations et utilisations du sol sont interdites à l''exception
       de celles admises à l''article AUs 2.2 du présent règlement. » — « seules sont admises » : le silence vaut
@@ -918,6 +941,15 @@ zones:
       au règlement des zones urbaines correspondantes à savoir Ub pour AUb, etc. » ; Art. AU indicée 1 et 2, p.
       75 : « Se reporter au règlement de la zone U indiquée en indice. »'
   A:
+    regles:
+      retraits:
+        entre_constructions:
+          forme: silence
+          absent: true
+          article: 'ARTICLE A 8'
+          page_pdf: 84
+          citation: 'Non réglementée.'
+          statut: valide
     silence: interdit
     silence_src: 'Art. A1.2, p. 79 : « A l''exception de ceux visés à l''article A 2.2., sont interdits les constructions,
       ouvrages et travaux non nécessaires à une exploitation agricole, ainsi que le changement de destination des
@@ -1097,6 +1129,15 @@ zones:
         citation: « Les locaux destinés à la vente de produits de l'exploitation ne pourront excéder une surface
           de plancher de 25 m². »
   N:
+    regles:
+      retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 10.5
+          article: 'ARTICLE N 8'
+          page_pdf: 93
+          citation: 'Deux constructions principales non contigües, doivent être distantes d’au moins 10,50 mètres. Les équipements techniques liés à la sécurité, à un service public, à la gestion de l’eau, à la distribution d’énergie ou à un local destiné au stockage des ordures ménagères ainsi que les annexes non conti'
+          statut: valide
     silence: interdit
     silence_src: 'Art. N1.2, p. 89 : « Sont interdits les constructions, ouvrages et travaux non prévus à l''article
       N2.2., ainsi que ceux de nature à porter atteinte à la protection de la zone. » (liste fermée d''admissions

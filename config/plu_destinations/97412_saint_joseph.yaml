@@ -43,6 +43,15 @@ zones:
             foncière.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: relative
+          base_hauteur: plus_haut
+          fraction_hauteur: 0.5
+          min_m: 3
+          article: 'U1 8'
+          page_pdf: 20
+          citation: 'L’implantation de plusieurs constructions principales sur une même unité foncière est autorisée à condition que la distance entre deux constructions soit au moins égale à la moitié de la hauteur du plus haut des bâtiments, avec un retrait minimal de 3 mètres.'
+          statut: valide
         voie:
           article: U1 6.2
           page_pdf: 18
@@ -170,6 +179,15 @@ zones:
             foncière.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: relative
+          base_hauteur: plus_haut
+          fraction_hauteur: 0.5
+          min_m: 3
+          article: 'U2 8'
+          page_pdf: 34
+          citation: 'L’implantation de plusieurs constructions principales sur une même unité foncière est autorisée à condition que la distance entre deux constructions soit au moins égale à la moitié de la hauteur du plus haut des bâtiments, avec un retrait minimal de 3 mètres.'
+          statut: valide
         voie:
           min_m: 3.0
           article: U2 6.2
@@ -372,6 +390,15 @@ zones:
             foncière.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: relative
+          base_hauteur: plus_haut
+          fraction_hauteur: 0.5
+          min_m: 3
+          article: 'U3 8'
+          page_pdf: 49
+          citation: 'L’implantation de plusieurs constructions principales sur une même unité foncière est autorisée à condition que la distance entre deux constructions soit au moins égale à la moitié de la hauteur du plus haut des bâtiments, avec un retrait minimal de 3 mètres.'
+          statut: valide
         voie:
           min_m: 3.0
           article: U3 6.2
@@ -660,6 +687,15 @@ zones:
             foncière.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: relative
+          base_hauteur: plus_haut
+          fraction_hauteur: 0.5
+          min_m: 2
+          article: 'U4 8'
+          page_pdf: 64
+          citation: 'L’implantation de plusieurs constructions principales sur une même unité foncière est autorisée à condition que la distance entre deux constructions soit au moins égale à la moitié de la hauteur du plus haut des bâtiments, avec un retrait minimal de 2 mètres.'
+          statut: valide
         voie:
           min_m: 2.0
           article: U4 6.2
@@ -771,6 +807,15 @@ zones:
             porte: "sous_secteur"
             modifie_calcul: true
       retraits:
+        entre_constructions:
+          forme: relative
+          base_hauteur: plus_haut
+          fraction_hauteur: 0.5
+          min_m: 4
+          article: 'U5 8'
+          page_pdf: 79
+          citation: 'L’implantation de plusieurs constructions principales sur une même unité foncière est autorisée à condition que la distance entre deux constructions soit au moins égale à la moitié de la hauteur du plus haut des bâtiments, avec un retrait minimal de 4 mètres.'
+          statut: valide
         voie:
           min_m: 4.0
           article: U5 6.2
@@ -1345,6 +1390,15 @@ zones:
             foncière.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: relative
+          base_hauteur: plus_haut
+          fraction_hauteur: 0.5
+          min_m: 3
+          article: 'U6 8'
+          page_pdf: 94
+          citation: 'L’implantation de plusieurs constructions principales sur une même unité foncière est autorisée à condition que la distance entre deux constructions soit au moins égale à la moitié de la hauteur du plus haut des bâtiments, avec un retrait minimal de 3 mètres.'
+          statut: valide
         voie:
           min_m: 4.0
           article: U6 6.2

@@ -304,6 +304,13 @@ zones:
             de l'acrotère.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: conditionnelle
+          avec_ouvertures_m: 3.0
+          article: 'ARTICLE UT 8'
+          page_pdf: 23
+          citation: 'L’implantation de plusieurs constructions sur une même unité foncière est autorisée. La distance séparant deux bâtiments doit être au moins égale à 3 mètres dans le cas où une des deux façades ou parties de façade concernées comportent des baies ou fenêtres assurant l’éclairement des pièces principa'
+          statut: valide
         voie:
           min_m: 3.0
           article: UT 6.2
@@ -593,6 +600,13 @@ zones:
             de l'acrotère.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 3.0
+          article: 'ARTICLE AUE 8'
+          page_pdf: 35
+          citation: 'L’implantation de plusieurs constructions sur une même unité foncière est autorisée à condition que la distance séparant deux bâtiments soit au moins égale à 3 mètres. PLU DE SALAZIE REGLEMENT 34'
+          statut: valide
         voie:
           min_m: 3.0
           article: AUe 6.2
@@ -753,6 +767,15 @@ zones:
         citation: « … de services publics et d'équipements d'intérêt collectif sont admis, dès lors que l'emprise
           foncière totale cumulée … n'excède pas 5% de la superficie de la zone d'implantation. »
   A:
+    regles:
+      retraits:
+        entre_constructions:
+          forme: silence
+          absent: true
+          article: 'ARTICLE A8'
+          page_pdf: 45
+          citation: 'Sans objet, sauf pour le secteur Aba, où la distance séparant deux bâtiments doit être au moins égale à 3 mètres dans le cas où une  des deux façades ou parties de façade concernées comportent des bai'
+          statut: valide
     silence: interdit
     silence_src: 'Art. A1.2, p. 41 : « A l''exception de ceux visés à l''article A2.2., sont interdits toutes les
       constructions et tous les ouvrages et travaux. »'
@@ -910,6 +933,15 @@ zones:
           naturels, agricoles et forestiers. Ces constructions sont admises dans la limite totale de 150 m² de surface
           de plancher. »
   N:
+    regles:
+      retraits:
+        entre_constructions:
+          forme: silence
+          absent: true
+          article: 'ARTICLE N8'
+          page_pdf: 54
+          citation: 'Sans objet.'
+          statut: valide
     silence: interdit
     silence_src: 'Art. N1.2, p. 50 : « A l''exception de ceux visés à l''article N2.2., sont interdits toutes les
       constructions, ouvrages et travaux. »'

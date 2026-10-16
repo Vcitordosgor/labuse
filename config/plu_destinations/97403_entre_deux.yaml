@@ -648,6 +648,15 @@ zones:
     sous_destinations: {}
     note: zone à urbaniser gelée — aucune destination admise avant ouverture (modification/révision).
   A:
+    regles:
+      retraits:
+        entre_constructions:
+          forme: silence
+          absent: true
+          article: 'Article A5'
+          page_pdf: 36
+          citation: 'Sans objet.'
+          statut: valide
     silence: interdit
     silence_src: 'Art. A1.2, p. 32 : « A l''exception de ceux visés à l''article A2.2., sont interdits toutes les
       constructions et tous les ouvrages et travaux. » (liste fermée d''admissions : tout ce qui n''est pas visé
@@ -724,6 +733,15 @@ zones:
           s''intègrent dans le milieu environnant sans le dénaturer... » — le texte porte un DOUBLE plafond (surface
           de plancher OU emprise au sol) : seuil_type unique impossible, les deux bornes de 100 m² s''appliquent.'
   N:
+    regles:
+      retraits:
+        entre_constructions:
+          forme: silence
+          absent: true
+          article: 'Article N5'
+          page_pdf: 42
+          citation: 'Sans objet.'
+          statut: valide
     silence: interdit
     silence_src: 'Art. N1.2, p. 40 : « A l''exception de ceux visés à l''article N2.2., sont interdits toutes les
       constructions, ouvrages et travaux. » (liste fermée d''admissions : tout ce qui n''est pas visé à N2.2 est

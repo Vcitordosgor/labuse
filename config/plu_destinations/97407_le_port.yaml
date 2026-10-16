@@ -199,6 +199,13 @@ zones:
             foncière.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 3.0
+          article: 'Article Ub 6'
+          page_pdf: 39
+          citation: 'par rapport aux autres constructions sur une même propriété Deux constructions implantées sur une même propriété doivent être à une distance l’une de l’autre au moins égale à 3 mètres. 40 OAP Spécifiques – interface Ville-Nature 40 PLU - Pièce écrite n°3 – Règlement – modification n°2'
+          statut: valide
         voie:
           min_m: 3.0
           article: Ub 4
@@ -308,6 +315,13 @@ zones:
             porte: "sous_secteur"
             modifie_calcul: true
       retraits:
+        entre_constructions:
+          forme: conditionnelle
+          avec_ouvertures_m: 1.5
+          article: 'Article Uc 6'
+          page_pdf: 54
+          citation: 'par rapport aux autres constructions sur une même propriété Deux constructions implantées sur une même propriété doivent être à une distance l’une de l’autre au moins égale à 3 mètres. En périmètre RHI, deux constructions implantées sur une même propriété doivent être à une distance l’une de l’autre'
+          statut: valide
         voie:
           min_m: 3.0
           article: Uc 4
@@ -478,6 +492,13 @@ zones:
             foncière.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 3.0
+          article: 'Article Ud 6'
+          page_pdf: 68
+          citation: 'par rapport aux autres constructions sur une même propriété Deux constructions implantées sur une même propriété doivent être à une distance l’une de l’autre au moins égale à 3 mètres.'
+          statut: valide
         voie:
           min_m: 3.0
           article: Ud 4
@@ -548,6 +569,15 @@ zones:
         page_pdf: 65
         citation: « ☒ Cuisine dédiée à la vente en ligne » (case cochée = interdit)
   Ue:
+    regles:
+      retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 5.0
+          article: 'Article Ue 6'
+          page_pdf: 82
+          citation: 'par rapport aux autres constructions sur une même propriété Deux constructions implantées sur une même propriété doivent être à une distance l’une de l’autre au moins égale à 5 mètres.'
+          statut: valide
     silence: autorise
     silence_src: 'Art. Ue 2, p. 80 : « Sont admises toutes les occupations et utilisations du sol non cochées à
       l''article Ue 1 dès lors qu''elles respectent les conditions suivantes » (art. Ue 1, p. 79 : liste fermée
@@ -764,6 +794,13 @@ zones:
             foncière.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 3.0
+          article: 'Article Umi 6'
+          page_pdf: 94
+          citation: 'par rapport aux autres constructions sur une même propriété Deux constructions implantées sur une même propriété doivent être à une distance l’une de l’autre au moins égale à 3 mètres.'
+          statut: valide
         voie:
           min_m: 3.0
           article: Umi 4
@@ -906,6 +943,15 @@ zones:
       secteur d''aménagement (art. R.151-8 CU) « dans laquelle l''OAP s''applique seule, en l''absence de dispositions
       réglementaires dans le secteur ». Destinations non lisibles dans la pièce fournie → non_lu.'
   Up:
+    regles:
+      retraits:
+        entre_constructions:
+          forme: silence
+          absent: true
+          article: 'Article Up 6'
+          page_pdf: 110
+          citation: 'Non réglementée.'
+          statut: valide
     silence: autorise
     silence_src: 'Art. Up 2, p. 108 : « Sont admises toutes les occupations et utilisations du sol non cochées à
       l''article Up 1 dès lors qu''elles respectent les conditions suivantes » (art. Up 1, p. 107 : liste fermée
@@ -1057,6 +1103,13 @@ zones:
             foncière.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 5.0
+          article: 'Article Us 6'
+          page_pdf: 122
+          citation: 'par rapport aux autres constructions sur une même propriété Deux constructions implantées sur une même propriété doivent être à une distance l’une de l’autre au moins égale à 5 mètres.'
+          statut: valide
         voie:
           min_m: 5.0
           article: Us 4
@@ -1793,6 +1846,15 @@ zones:
       et exceptionnelles liées au chantier de la Nouvelle Route du Littoral, sous conditions cumulatives (compatibilité
       milieux, aucune aggravation des risques/pollutions, remise en état). Usages, non mappés en sous-destinations.'
   A:
+    regles:
+      retraits:
+        entre_constructions:
+          forme: silence
+          absent: true
+          article: 'Article A 6'
+          page_pdf: 164
+          citation: 'Non réglementée.'
+          statut: valide
     silence: interdit
     silence_src: 'Art. A 1, p. 162 : « A l''exception de ceux visés à l''article A 2., sont interdits toutes les
       utilisations et occupations du sol ainsi que le changement de destination des bâtiments à usage agricole en
@@ -1897,6 +1959,15 @@ zones:
       des forages : interdictions supplémentaires (ICPE, élevages, stockages toxiques, routes revêtues, captages),
       p. 162. Avis CDPENAF rappelé p. 163 (information).'
   N:
+    regles:
+      retraits:
+        entre_constructions:
+          forme: silence
+          absent: true
+          article: 'Article N 6'
+          page_pdf: 173
+          citation: 'Non réglementée.'
+          statut: valide
     silence: interdit
     silence_src: 'Art. N 1, p. 170 : « A l''exception de ceux visés à l''article N 2, sont interdits toutes les
       constructions, ouvrages et travaux. »'

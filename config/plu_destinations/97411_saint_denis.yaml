@@ -346,6 +346,15 @@ zones:
             porte: "sous_secteur"
             modifie_calcul: true
       retraits:
+        entre_constructions:
+          forme: relative
+          base_hauteur: cumulee
+          fraction_hauteur: 0.5
+          min_m: 4.0
+          article: 'Article Ud.8'
+          page_pdf: 43
+          citation: 'les unes par rapport aux autres sur une même propriété En secteur Ud : Deux bâtiments non contigus, implantés sur une même propriété, devront respecter entre eux, une distance L supérieure ou égale à la moyenne des hauteurs des façades en vis-à-vis et/ou des niveaux droits en vis-à-vis avec un minim'
+          statut: valide
         voie:
           formule: 'Voies et emprises publiques de 12 m ou plus : les constructions seront implantées soit
             à l’alignement, soit à 4 m de l''alignement. Voies et emprises publiques de moins de 12 m : les
@@ -646,6 +655,15 @@ zones:
           citation: L'emprise au sol des constructions est limitée à 80 % de la superficie de l'unité foncière.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: relative
+          base_hauteur: cumulee
+          fraction_hauteur: 0.5
+          min_m: 4.0
+          article: 'Article Uu.8'
+          page_pdf: 49
+          citation: 'les unes par rapport aux autres sur une même propriété Deux bâtiments non contigus, implantés sur une même propriété, devront respecter entre eux, une distance L supérieure ou égale à la moyenne des hauteurs des façades en vis-à-vis et/ou des niveaux droits en vis-à-vis avec un minimum de 4m : 4m ≤ '
+          statut: valide
         voie:
           formule: soit à l’alignement soit avec un recul de 4 m minimum par rapport à l’alignement.
           min_m: 4
@@ -890,6 +908,15 @@ zones:
           citation: L'emprise au sol des constructions est limitée à 60 % de la superficie de l'unité foncière.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: relative
+          base_hauteur: cumulee
+          fraction_hauteur: 0.5
+          min_m: 4.0
+          article: 'Article Uj.8'
+          page_pdf: 62
+          citation: 'les unes par rapport aux autres sur une même propriété Deux bâtiments non contigus, implantés sur une même propriété, devront respecter entre eux, une distance L supérieure ou égale à la moyenne des hauteurs des façades en vis-à-vis et/ou des niveaux droits en vis-à-vis avec un minimum de 4m : 4m ≤ '
+          statut: valide
         voie:
           formule: Les constructions principales seront implantées avec un recul de 4 m minimum par rapport
             à l’alignement. En bordure des voies d’une emprise inférieure à 3,50 m, les constructions seront
@@ -989,6 +1016,15 @@ zones:
           citation: L'emprise au sol des constructions est limitée à 50 % de la superficie de l'unité foncière.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: relative
+          base_hauteur: cumulee
+          fraction_hauteur: 0.5
+          min_m: 4.0
+          article: 'Article Um.8'
+          page_pdf: 68
+          citation: 'les unes par rapport aux autres sur une même propriété Deux bâtiments non contigus, implantés sur une même propriété, devront respecter entre eux, une distance L supérieure ou égale à la moyenne des hauteurs des façades en vis-à-vis et/ou des niveaux droits en vis-à-vis avec un minimum de 4m : 4m ≤ '
+          statut: valide
         voie:
           formule: Les constructions principales seront implantées avec un recul de 4 m minimum par rapport
             à l’alignement. En bordure des voies d’une emprise inférieure à 3,50 m, les constructions seront
@@ -1129,6 +1165,15 @@ zones:
           citation: L’emprise au sol des constructions est limitée à 30% de la superficie de l’unité foncière.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: relative
+          base_hauteur: cumulee
+          fraction_hauteur: 0.5
+          min_m: 4.0
+          article: 'Article Uh.8'
+          page_pdf: 73
+          citation: 'les unes par rapport aux autres sur une même propriété Deux bâtiments non contigus, implantés sur une même propriété, devront respecter entre eux, une distance L supérieure ou égale à la moyenne des hauteurs des façades en vis-à-vis et/ou des niveaux droits en vis-à-vis avec un minimum de 4m : 4m ≤ '
+          statut: valide
         voie:
           formule: Les constructions seront implantées avec un recul de 4 m minimum par rapport à l’alignement.
             En bordure des voies d’une emprise inférieure à 3,50 m, les constructions seront implantées à
@@ -1334,6 +1379,13 @@ zones:
           citation: Non réglementé
           statut: valide
       retraits:
+        entre_constructions:
+          forme: silence
+          absent: true
+          article: 'Article Uv.8'
+          page_pdf: 84
+          citation: 'Non réglementée.'
+          statut: valide
         voie:
           formule: Toute construction ou installation sera implantée avec un recul de 4 m minimum par rapport
             à l’alignement.
@@ -2102,6 +2154,17 @@ zones:
       ou révision du PLU (p. 110).
     sous_destinations: {}
   A:
+    regles:
+      retraits:
+        entre_constructions:
+          forme: relative
+          base_hauteur: cumulee
+          fraction_hauteur: 0.5
+          min_m: 4.0
+          article: 'Article A.8'
+          page_pdf: 115
+          citation: 'les unes par rapport aux autres sur une même propriété Deux bâtiments non contigus, implantés sur une même propriété, devront respecter entre eux, une distance L supérieure ou égale à la moyenne des hauteurs des façades en vis-à-vis et/ou des niveaux droits en vis-à-vis avec un minimum de 4m : 4m ≤ '
+          statut: valide
     silence: interdit
     silence_src: 'Art. A.1, page_pdf 113 : « Sont interdits : - les constructions de toute nature sauf celles prévues
       à l''article 2 ; - les occupations et utilisations ne visant pas à exploiter le potentiel agronomique, biologique
@@ -2232,6 +2295,17 @@ zones:
         citation: « les locaux destinés à la vente de produits de l'exploitation, dans la limite de 25 m2 de surface
           de plancher »
   N:
+    regles:
+      retraits:
+        entre_constructions:
+          forme: relative
+          base_hauteur: cumulee
+          fraction_hauteur: 0.5
+          min_m: 4.0
+          article: 'Article N.8'
+          page_pdf: 122
+          citation: 'les unes par rapport aux autres sur une même propriété Deux bâtiments non contigus, implantés sur une même propriété, devront respecter entre eux, une distance L supérieure ou égale à la moyenne des hauteurs des façades en vis-à-vis et/ou des niveaux droits en vis-à-vis avec un minimum de 4m : 4m ≤ '
+          statut: valide
     silence: interdit
     silence_src: 'Art. N.1, page_pdf 119 : « Sont interdits : - les constructions de toute nature sauf celles prévues
       à l''article 2 ; - les occupations et utilisations autres que celles favorisant la préservation des sols agricoles
