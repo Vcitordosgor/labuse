@@ -1,0 +1,17 @@
+import { chromium } from 'playwright';
+const BASE = process.env.RECETTE_BASE || 'http://localhost:5998/socle/';
+const b = await chromium.launch({ channel: 'chrome' });
+const p = await b.newPage();
+const errs = [];
+p.on('console', m => { if (m.type() === 'error') errs.push('CONSOLE: ' + m.text()); });
+p.on('response', r => { if (r.status() >= 400) errs.push(`HTTP ${r.status()} ${r.url()}`); });
+await p.goto(BASE, { waitUntil: 'networkidle', timeout: 45000 });
+await p.waitForTimeout(3000);
+const title = await p.title();
+const bodyLen = (await p.innerText('body').catch(() => '')).length;
+await p.screenshot({ path: '/tmp/recette/smoke.png', fullPage: false });
+console.log('TITLE:', title);
+console.log('BODY_TEXT_LEN:', bodyLen);
+console.log('ERRORS:', errs.length);
+errs.slice(0, 20).forEach(e => console.log('  ', e));
+await b.close();

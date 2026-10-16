@@ -1,0 +1,122 @@
+[
+  {
+    "idu": "97415000DT0397",
+    "commune": "Saint-Paul",
+    "cas": ["bizone"],
+    "note": "API a_cheval=true, 3 zones_parts U6c 72.8% + Ncor 27.1% + A 0.1% (familles U/N/A) ; calibree=true ; verdict R+1 au sol ~12-15 logts. Surface 4492 m2, taux_emprise 10%. Bizone constructible net."
+  },
+  {
+    "idu": "97401000AC0428",
+    "commune": "Saint-Benoit",
+    "cas": ["bizone"],
+    "note": "API a_cheval=true, 3 zones N (Nr 47.9% + Npnr 34.0% + N 18.1% + A 0.0%) ; calibree=false ; verdict 'Construction neuve non autorisee en zone Nr'. Bizone non constructible (variante N)."
+  },
+  {
+    "idu": "97415000CY1134",
+    "commune": "Saint-Paul",
+    "cas": ["zone_rouge_partielle"],
+    "note": "Zone U2d (U) calibree, mais ~34.6% de l'emprise en alea rouge PPR (spatial_layers kind=ppr subtype=INTERDICTION, intersection 34.6% de la parcelle). cause residuel=redhibitoire. API verdict 'Non constructible en l'etat malgre le zonage' ; step emprise mentionne 'PPR zone rouge deduit'. Surface 955 m2."
+  },
+  {
+    "idu": "97415000CH0065",
+    "commune": "Saint-Paul",
+    "cas": ["hors_classement"],
+    "note": "score_labuse q_v18 bande=NC (non_calculable=true), cause='zone non resolue'. Cas 'Hors classement' / 'Analyse incomplete'."
+  },
+  {
+    "idu": "97411000AY0015",
+    "commune": "Saint-Denis",
+    "cas": ["emprise_satur"],
+    "note": "taux_emprise_pct=19569 (run_seq 15 = q_v18) sur terrain 6794 m2 : bati sature tres au-dela du contour (emprise residuelle ~13 m2). capacite_estimee=false. API verdict R+1 ~0 a 1 logt, calibree=true zone Uvl. Cas emprise saturee extreme."
+  },
+  {
+    "idu": "97411000IO0059",
+    "commune": "Saint-Denis",
+    "cas": ["terrain_2ha"],
+    "note": "surface_m2=64046 (>2 ha, cadastre non disparu). Zone Uva calibree, API verdict R+0 ~192 a 193 logts. Grand terrain U constructible, forte capacite."
+  },
+  {
+    "idu": "97416000IE0438",
+    "commune": "Saint-Pierre",
+    "cas": ["disparue_cadastre"],
+    "note": "cadastre_disparue_le=2026-09-01 (parcelle disparue). Absente de parcel_residuel_runs run_seq 15. COMPORTEMENT OBSERVE : l'API faisabilite NE filtre PAS sur la disparition et sert quand meme une fiche complete (zone Ug calibree, R+1 ~1-2 logts, assiette_source='gabarit'). A tester cote app : une parcelle disparue ne devrait pas rester consultable comme active."
+  },
+  {
+    "idu": "97416000EW0446",
+    "commune": "Saint-Pierre",
+    "cas": ["proprietaire_societe"],
+    "note": "presente dans parcelle_personne_morale (proprietaire personne morale). Zone Uf calibree, API R+1 ~3-5 logts. Cas proprietaire societe + parcelle saine."
+  },
+  {
+    "idu": "97415000BW1877",
+    "commune": "Saint-Paul",
+    "cas": ["sans_vente"],
+    "note": "aucune ligne dans dvf_mutations_parcelle (id_parcelle) : 0 vente. Zone U6c calibree, API R+1 ~0-1 logt. Cas 'sans aucune vente'."
+  },
+  {
+    "idu": "97403000AP2099",
+    "commune": "Entre-Deux",
+    "cas": ["sans_vente", "reference_saine"],
+    "note": "0 ligne dvf_mutations_parcelle. Zone Ub1 calibree, API R+1 ~0-1 logt. Second temoin sans vente (commune des Hauts Entre-Deux)."
+  },
+  {
+    "idu": "97424000AE1040",
+    "commune": "Cilaos",
+    "cas": ["Hauts", "bizone"],
+    "note": "Commune Cilaos (cirque, altitude ~1200 m = Hauts ; API rtaa signale les seuils 400/600 m). API a_cheval=true, 2 zones U (Ub 52.9% + Uah 47.1%), calibree=true, R+1 ~10-13 logts. Cumule Hauts + bizone intra-U. Surface 2237 m2."
+  },
+  {
+    "idu": "97424000AI1980",
+    "commune": "Cilaos",
+    "cas": ["Hauts", "reference_saine"],
+    "note": "Cilaos (Hauts). Zone Ub calibree, API R+1 ~3-4 logts, a_cheval=false. Temoin Hauts simple et constructible."
+  },
+  {
+    "idu": "97410000AE0144",
+    "commune": "Saint-Benoit",
+    "cas": ["saint_benoit_non_calibre"],
+    "note": "Commune Saint-Benoit, zone Ub, API calibree=FALSE (Saint-Benoit non calibre). Verdict R+2 ~2-3 logts (calcul par defaut non calibre). Cas Saint-Benoit non calibre."
+  },
+  {
+    "idu": "97413000DE1451",
+    "commune": "Saint-Leu",
+    "cas": ["mixite_sociale"],
+    "note": "Zone UA Saint-Leu, calibree=true, surface 1778 m2. Clause de mixite ACTIVE (regles: seuil_m2=600, quota 20%, statut valide). API step 'Logements sociaux imposes (LLS)' = '20% du programme des 600 m2 SDP ... ~3-3 logements aides imposes'. verdict R+2 ~11-12 logts. Cas mixite sociale imposee declenchee."
+  },
+  {
+    "idu": "97417000BD0967",
+    "commune": "Saint-Philippe",
+    "cas": ["saint_philippe_rnu"],
+    "note": "Saint-Philippe en RNU : 4171/4180 parcelles de la commune sans zone PLU (parcel_zone_plu absente). API capacite=NULL (pas de PLU -> pas de calcul de capacite). Cas Saint-Philippe RNU."
+  },
+  {
+    "idu": "97422000BX1106",
+    "commune": "Le Tampon",
+    "cas": ["reference_saine"],
+    "note": "Reference saine. Zone Ua Le Tampon calibree, residuel run15 sdp=582 m2, API R+6 au sol ~5-8 logts. Doit marcher normalement."
+  },
+  {
+    "idu": "97411000AT0427",
+    "commune": "Saint-Denis",
+    "cas": ["reference_saine"],
+    "note": "Reference saine. Zone Ud Saint-Denis calibree, residuel run15 sdp=543 m2, API R+3 au sol ~10-13 logts."
+  },
+  {
+    "idu": "97414000DL0765",
+    "commune": "Saint-Louis",
+    "cas": ["reference_saine"],
+    "note": "Reference saine. Zone UZ Saint-Louis calibree, residuel run15 sdp=973 m2, API R+2 au sol ~11-13 logts."
+  },
+  {
+    "idu": "97412000BM1315",
+    "commune": "Saint-Joseph",
+    "cas": ["reference_saine"],
+    "note": "Reference saine. Zone U3 Saint-Joseph calibree, residuel run15 sdp=751 m2, API R+2 au sol ~9-12 logts."
+  },
+  {
+    "idu": "97407000AS0421",
+    "commune": "Le Port",
+    "cas": ["reference_saine", "proprietaire_societe"],
+    "note": "Reference saine en commune dense. Zone Uc Le Port calibree, API R+4 au sol ~0-1 logt. Egalement present dans parcelle_personne_morale (second temoin proprietaire societe)."
+  }
+]
