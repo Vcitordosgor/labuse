@@ -504,3 +504,49 @@ destinataire (PM au siège, PP « à l'occupant »), blocage propre des terrains
 création/pause/suppression OK, cloche et deep-links OK. CRM = pipeline, déplacement, notes, fiche↔CRM OK.
 **Sûreté : aucun mail réel (1 `.eml` dry-run interne, mail_queue inchangé, `LABUSE_MAIL_REEL` jamais posé) ;
 état base restauré (veilles/suivis/pipeline remis à l'identique).** Captures dans `captures/08-courrier-veille-crm/`.
+
+## Famille 9 — Admin
+
+Tour de contrôle ouverte via `#admin=1` (deep-link) ET via les clics du rail. Mandat **LECTURE
+SEULE / run de prod ce soir** : aucun bouton mutant n'a été déclenché (voir liste en bas).
+Harnais Playwright (Chrome système, desktop 1440×900). Scripts : `admin_sweep.mjs`,
+`admin_pilotage.mjs`, `admin_details.mjs`, `admin_comptes.mjs`, `admin_fiche_ia.mjs`.
+
+| Écran / section | Verdict | Notes |
+|---|---|---|
+| Ouverture `#admin=1` → Pilotage | OK | 1re nav ~15 s (dev froid), 0 err console/réseau/page |
+| Rail (8 sections) | OK | Pilotage · Comptes · Données · Courrier · Radar · Produit · IA · Contacts ; badges live (Comptes 2, Données 9, Courrier 28, Produit 2) |
+| Pilotage — 5 tuiles | OK | CA 0 € · Licences 2 · Coût IA 0,51 € · Courriers à déposer 28 · Tâches 9 ; aucune valeur NaN/undefined/null |
+| Pilotage — « À faire, dans l'ordre » | OK | 4 gestes (Déployer r · Sondes muettes r · Déposer 28 courriers r · Relire 1 source a) + boutons « Voir/Déposer » |
+| Pilotage — Journal | OK | En-tête présent (le journal circuit est à 0 entrée côté base — pas une anomalie UI) |
+| Comptes — liste + segments | OK | 6 segments (À toucher 0 · Actifs 2 · Essais 2 · Invités 0 · Suspendus 0 · Tous 4) ; colonnes VISITE / À FAIRE / Stripe ; 40 comptes de test masqués (compteur `masques:40`) |
+| Comptes — fiche compte (lecture) | OK | Vraie page « ← Comptes » à onglets Aperçu / Activité / Facturation / IA ; 4 onglets rendus, 0 bad token |
+| Comptes — onglet Facturation (Stripe) | OK | Abonnement + rapprochement Stripe affichés (`stripe_configure:true`) |
+| Comptes — onglet IA (plafond) | OK | Plafond € par compte affiché |
+| Données / Circuit | OK | Run servi **q_v18** · 100 réservoirs (90 à jour) · 169 robinets (168 sans rien à signaler) · 286 chiffres · réservoirs groupés (Fonds de carte 10 · Couches 40 · Outils 33 · Fiches 44 · Copilote 10 · PDF 7 · Admin 9 …) tous « cohérent / tout va bien » |
+| Données — compteurs sources | OK | Vitrine 100 · Hors vitrine 29 · À jour 90 · Nouvelle version 5 · Échue 1 · Jamais vérifiée 4 · Sonde en panne 0 |
+| Données — verrous | OK (signal) | G5 + G8 marqués cassés = signal admin légitime (le déploiement se refuse tant qu'un verrou tient) ; « À faire » top ligne = « Décider — verrou G5 cassé ». Phrases vides dans le résumé circuit : voir A-09-1 (cosmétique) |
+| Données — détail réservoir (lecture) | OK | Ouverture d'un réservoir : détail affiché, 0 débordement |
+| Données — onglets Circuit / Journal / Cohérence | OK | Présents et navigables |
+| Courrier (admin) | OK | S'affiche, 0 err |
+| Radar (admin) | OK | S'affiche, 0 err |
+| Produit | OK (donnée polluée) | S'affiche ; 1 « débordement » = note de test `[GB-TEST] AAAA…` tronquée (`truncate`), pas de débord réel de page — voir A-09-2 |
+| Contacts | OK | S'affiche, 0 err |
+| IA | OK | provider Anthropic · modèles Haiku (`claude-haiku-4-5`) + Sonnet (`claude-sonnet-4-6`) · coût du mois 0,51 € (API 0,50941) · projection ≈ 1 € · 2 blocs disjoints interne/clients · quotas par licence · doctrine « l'IA ne calcule ni ne modifie aucun score » |
+| IA — cohérence chiffres UI↔API | OK | 0,51 € affiché = `/admin/ia` mois.cout_eur ; `/ia/status` provider=anthropic ; `/assistant/status` configured=true |
+
+**Actions DESTRUCTRICES repérées et NON déclenchées** (répertoriées, jamais cliquées) :
+- Données/Circuit : « Décider » (verrou), « Injecter », « Calculer », « Déposer un fichier »,
+  « Sonder maintenant » (POST `/admin/circuit/sonder` → écrit journal), « Vérifier que tout coule »
+  (POST `/admin/circuit/verifier` → tâche détachée qui journalise), « Envoyer les agents »,
+  et dans le détail : vanne/calcul/**bascule**/agent/contrôle/filtre/sonde/cron/tous.
+- Flux (sous Données) : « Lancer un run », « Arrêter un run », « Basculer » (bascule_flux),
+  « Purger les runs », « Dégeler ».
+- Comptes : « Créer l'essai et envoyer l'invitation », « créer sans envoyer », « Suspendre »,
+  « Rétablir », « Convertir », « Prolonger », « Déconnecter partout », « Envoyer » (mail).
+- IA : « Enregistrer » (budget/quota par licence), « Recharger le crédit ↗ » (console Anthropic).
+- Pilotage : boutons « Déployer » / « Déposer » des gestes « À faire ».
+
+**Vérif sûreté** : `/admin/circuit/journal` = 0 entrée (rien écrit) ; `/admin/circuit/taches`
+`verifier` = run « termine » **antérieur** (08:02 UTC, pré-session) — aucune tâche lancée par la recette.
+**Aucune action mutante (run / bascule / purge / compte / mail / cron) déclenchée.** Captures : `captures/09-admin/`.

@@ -314,3 +314,35 @@ Bilan : **aucune anomalie bloquante ni gênante.** 3 points cosmétiques/informa
 - **Observé** : la note de la carte contient `[GB-TEST] AAAAA…` (5000 caractères de « A ») — reliquat de test. Le layout n'est PAS cassé : la note est confinée (max-h ~4,5 rem + overflow-y-auto + overflow-wrap:anywhere), aucun débordement horizontal de page (docScrollW = viewport). Reste une donnée polluante affichée côté client. (Une 2ᵉ note test existe : id 91 « [GB-TEST] prospect audit — a supprimer ».)
 - **Capture** : captures/08-courrier-veille-crm/001_C_crm_note_overflow.png, 001_C_crm_pipeline.png
 - **Cause probable** : données de test laissées en base (`pipeline_entries.notes` sur id 91/93), pas un bug code. À purger avant mise en prod (nettoyage de jeu de données), ou borner la longueur de note à la saisie.
+
+### A-09-1 — Circuit : `verrous.phrases` vide dans le résumé (donnée morte, non affichée)
+- **Gravité** : cosmétique
+- **Où** : Admin → Données (Circuit) ; payload `GET /admin/circuit` champ `verrous.phrases`
+- **Reproduire** :
+  1. `curl -s http://127.0.0.1:8798/admin/circuit | python3 -c "import sys,json;print(json.load(sys.stdin)['verrous'])"`
+  2. Observer `phrases: {'G5': '', 'G8': ''}` alors que `casses: ['G5','G8']`.
+- **Observé** : le dict `verrous.phrases` renvoie des chaînes vides pour G5 et G8. L'UI n'en
+  souffre PAS : la ligne « À faire » lit `a_faire.lignes[].phrase` qui, elle, contient le texte
+  complet et correct (« Le dernier passage de "labuse circuit verrous" a cassé sur G5… » /
+  « G8 est un avertissement de fraîcheur de veille… »). C'est donc un champ de résumé non
+  renseigné et non surfacé — pas un écran vide muet côté client.
+- **Capture** : captures/09-admin/003_section_donnees.png
+- **Cause probable** : dans `src/labuse/api/dashboard.py` (constructeur du bloc `verrous` de
+  `/admin/circuit`, autour de L2585+), `phrases` n'est pas rempli depuis VERROUS.md / la sortie
+  de `labuse circuit verrous` ; la phrase utile est recalculée à part pour `a_faire`. À nettoyer
+  (remplir ou retirer le champ mort) — sans impact fonctionnel.
+
+### A-09-2 — Produit : note de test `[GB-TEST] AAAA…` (5000 « A ») — donnée polluante
+- **Gravité** : cosmétique
+- **Où** : Admin → Produit (et déjà présent via le CRM, cf. A-08 de la Famille 8)
+- **Reproduire** :
+  1. Ouvrir l'admin, section « Produit ».
+  2. `debordements()` remonte 1 élément : `div.max-w-[360px] truncate` = « « AAAAA… ».
+- **Observé** : un reliquat de test (`[GB-TEST]` + 5000 caractères « A ») s'affiche. Le layout
+  n'est PAS cassé : le conteneur est `max-w-[360px] truncate` → texte tronqué, aucun débordement
+  horizontal de page. C'est de la **donnée de test laissée en base**, pas un bug code admin.
+  Même origine que l'anomalie Famille 8 (notes `pipeline_entries`/retours de test).
+- **Capture** : captures/09-admin/004_produit_detail.png, 006_section_produit.png
+- **Cause probable** : jeu de données de recette pollué (`[GB-TEST]`). À purger avant la mise en
+  prod (nettoyage des données de test), ou borner la longueur à la saisie. Aucune correction de
+  code applicatif requise.
