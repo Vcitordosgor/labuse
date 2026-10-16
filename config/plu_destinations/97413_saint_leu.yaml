@@ -44,6 +44,13 @@ zones:
             80% de l'unité foncière (70% en secteur UAt).
           statut: valide
       retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 6.0
+          article: 'UA 8'
+          page_pdf: 23
+          citation: '1. Deux constructions principales non contiguës, implantées sur une même unité foncière, doivent répondre aux conditions permettant une division parcellaire, avec une distance entre elles d’au moins 6,00m. Aucun point, hormis les toitures des deux bâtiments, ne doit débord'
+          statut: valide
         voie:
           min_m: 4.0
           article: UA 6
@@ -367,6 +374,13 @@ zones:
             60% de l'unité foncière.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 6.0
+          article: 'UB 8'
+          page_pdf: 32
+          citation: '1. Deux constructions principales non contiguës, implantées sur une même unité foncière, doivent répondre aux conditions permettant une division parcellaire, avec une distance entre elles d’au moins 6,00m. Aucun point, hormis les toitures des deux bâtiments, ne doit débord'
+          statut: valide
         voie:
           min_m: 4.0
           article: UB 6
@@ -486,6 +500,13 @@ zones:
             de l'unité foncière.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 5.0
+          article: 'UC 8'
+          page_pdf: 43
+          citation: '1. Deux constructions principales non contiguës, implantées sur une même unité foncière, doivent répondre aux conditions permettant une division parcellaire, avec une distance entre elles d’au moins 5,00m. Aucun point, hormis les toitures des deux bâtiments, ne doit débord'
+          statut: valide
         voie:
           min_m: 3.0
           article: UC 6
@@ -766,6 +787,13 @@ zones:
             de l'unité foncière.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 5.0
+          article: 'UD 8'
+          page_pdf: 53
+          citation: '1. Deux constructions principales non contiguës, implantées sur une même unité foncière, doivent répondre aux conditions permettant une division parcellaire, avec une distance entre elles d’au moins 5,00m. Aucun point, hormis les toitures des deux bâtiments, ne doit débord'
+          statut: valide
         voie:
           min_m: 3.0
           article: UD 6
@@ -1023,6 +1051,15 @@ zones:
           citation: L'emprise au sol des bâtiments ne doit pas excéder 60% de la superficie de l'unité foncière.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: conditionnelle
+          base_hauteur: cumulee
+          fraction_hauteur: 0.5
+          sans_ouvertures_m: 4
+          article: 'UE 8'
+          page_pdf: 61
+          citation: '1. Les constructions non contiguës doivent être édifiées de telle manière que la distance de tout point d’un bâtiment au point le plus proche d’un autre bâtiment mesurée horizontalement soit au moins égale à (H+H’)/2. H et H’ sont les hauteurs respectives des deux bâtiment'
+          statut: valide
         voie:
           min_m: 5.0
           article: UE 6
@@ -1101,6 +1138,14 @@ zones:
             foncière.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: relative
+          base_hauteur: cumulee
+          fraction_hauteur: 0.5
+          article: 'UF 8'
+          page_pdf: 69
+          citation: '1. Deux constructions non contiguës, implantées sur une même unité foncière, ne doivent pas être implantées l’une par rapport à l’autre à une distance inférieure à la moitié de la hauteur absolue (L = (H+H’)/2) avec pour minimum : - 8 mètres pour les constructions princip'
+          statut: valide
         voie:
           min_m: 5.0
           article: UF 6
@@ -1185,6 +1230,15 @@ zones:
           citation: Elle est limitée à rez-de-chaussée, avec un maximum de 8,00m au faîtage.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: relative
+          base_hauteur: cumulee
+          fraction_hauteur: 0.5
+          min_m: 4.0
+          article: 'UP 8'
+          page_pdf: 76
+          citation: 'Deux constructions non contiguës, implantées sur une même unité foncière, ne doivent pas être implantées l’une par rapport à l’autre à une distance inférieure à la moitié de la hauteur absolue (L = (H+H’)/2) avec pour minimum 4,00m. H et H’ = hauteurs des constructions L'
+          statut: valide
         voie:
           min_m: 5.0
           article: UP 6
@@ -1265,6 +1319,15 @@ zones:
       mer (clubs de plongées, centres nautiques...) », « la réhabilitation et l''extension des boxes existants ».
       Zone assise sur le Domaine Public Maritime (chapeau p. 73).'
   AU:
+    regles:
+      retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 6.0
+          article: 'AU 8'
+          page_pdf: 89
+          citation: '1. Dans les secteurs AUa, AUb, AUc et AUd, deux constructions principales non contiguës, implantées sur une même unité foncière, doivent répondre aux conditions permettant une division parcellaire, avec une distance entre elles d’au moins 6,00m. Aucun point, hormis les toi'
+          statut: valide
     silence: interdit
     silence_src: 'Art. AU 1 (p. 81) : « Toute construction ou utilisation du sol non prévue à l''article AU 2. »
       — liste fermée d''autorisations : ce qui n''est pas prévu à AU 2 est interdit.'
@@ -1796,6 +1859,15 @@ zones:
       hauteurs, stationnement, espaces libres — p. 85-98), PAS aux articles AU 1/AU 2 (destinations) : il n''est
       donc pas relayé ici.'
   A:
+    regles:
+      retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 8.0
+          article: 'A 8'
+          page_pdf: 104
+          citation: '1. Deux constructions principales non contiguës, implantées sur une même unité foncière, doivent être distantes d''au moins 8,00m. 2. Les constructions à usage de dépendances non contiguës aux constructions principales doivent être distantes d’au moins 4,00m de celles-ci.'
+          statut: valide
     silence: interdit
     silence_src: 'Art. A 1 (p. 100) : « Sont interdites toutes les occupations et utilisations du sol non prévues
       à l''article A2. » — liste fermée.'
@@ -1925,6 +1997,15 @@ zones:
       Règle propre hors destinations : « En secteur Apf1, l''implantation d''essences végétales de haute futaie
       (supérieure à 5m) est interdite » (A 13 al. 2, p. 106).'
   N:
+    regles:
+      retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 8.0
+          article: 'N 8'
+          page_pdf: 111
+          citation: '1. Deux constructions principales non contiguës, implantées sur une même unité foncière, doivent être distantes d''au moins 8,00m. 2. Les constructions à usage de dépendances non contiguës aux constructions principales doivent être distantes d’au moins 4,00m de celles-ci.'
+          statut: valide
     silence: interdit
     silence_src: 'Art. N 1 (p. 108) : « Toute construction ou utilisation du sol non prévue à l''article N 2. »
       — liste fermée.'

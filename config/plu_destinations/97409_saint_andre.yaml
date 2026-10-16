@@ -35,6 +35,14 @@ zones:
           citation: '- 17 metres au faitage.'
           statut: valide
       retraits:
+        entre_constructions:
+          forme: silence
+          absent: true
+          article: 'UA 8'
+          page_pdf: 16
+          citation: 'Non réglementée, sous réserve que la distance minimale entre les ouvertures en vis-à-vis de deux pièces 
+principales d’habitations soit de 8 mètres.'
+          statut: valide
         voie:
           min_m: 4.0
           article: UA 6
@@ -172,6 +180,14 @@ zones:
           citation: '- 14 metres au faitage,'
           statut: valide
       retraits:
+        entre_constructions:
+          forme: silence
+          absent: true
+          article: 'UB 8'
+          page_pdf: 28
+          citation: 'Non réglementée, sous réserve que la distance minimale entre les ouvertures en vis-à-vis de deux pièces 
+principales d’habitations soit de 8 mètres.'
+          statut: valide
         voie:
           min_m: 6.0
           article: UB 6
@@ -280,6 +296,14 @@ zones:
           citation: '- 12 metres au faitage,'
           statut: valide
       retraits:
+        entre_constructions:
+          forme: silence
+          absent: true
+          article: 'UC 8'
+          page_pdf: 39
+          citation: 'Non réglementée, sous réserve que la distance minimale entre les ouvertures en vis-à-vis de deux pièces 
+principales d’habitations soit de 8 mètres.'
+          statut: valide
         voie:
           min_m: 4.0
           article: UC 6
@@ -411,6 +435,14 @@ zones:
           citation: '- 10 metres au faitage.'
           statut: valide
       retraits:
+        entre_constructions:
+          forme: silence
+          absent: true
+          article: 'UD 8'
+          page_pdf: 50
+          citation: 'Non réglementée, sous réserve que la distance minimale entre les ouvertures en vis-à-vis de deux pièces 
+principales d’habitations soit de 8 mètres.'
+          statut: valide
         voie:
           min_m: 6.0
           article: UD 6
@@ -535,6 +567,13 @@ zones:
           citation: La hauteur maximale des constructions est fixee a 16 metres.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 3.0
+          article: 'UE 8'
+          page_pdf: 62
+          citation: 'L’implantation de plusieurs constructions sur une même unité foncière est autorisée à condition que la distance séparant deux bâtiments soit au moins égale à 3 mètres.'
+          statut: valide
         voie:
           min_m: 6.0
           article: UE 6
@@ -699,6 +738,13 @@ zones:
           citation: La hauteur maximale des constructions est fixee a 16 metres.
           statut: valide
       retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 3.0
+          article: 'US 8'
+          page_pdf: 73
+          citation: 'L’implantation de plusieurs constructions sur une même unité foncière est autorisée à condition que la distance séparant deux bâtiments soit au moins égale à 3 mètres.'
+          statut: valide
         voie:
           min_m: 3.0
           article: US 6
@@ -792,6 +838,13 @@ zones:
           citation: '- 12 metres au faitage.'
           statut: valide
       retraits:
+        entre_constructions:
+          forme: fixe
+          min_m: 3.0
+          article: 'UT 8'
+          page_pdf: 83
+          citation: 'L’implantation de plusieurs constructions sur une même unité foncière est autorisée à condition que la distance séparant deux bâtiments soit au moins égale à 3 mètres.'
+          statut: valide
         voie:
           min_m: 6.0
           article: UT 6
@@ -1011,6 +1064,15 @@ zones:
       de réduction des risques d''inondation réalisés et le Plan de Prévention des Risques modifié ou révisé » (art.
       AUindicée 2.2 (6), p. 90).'
   1AUcr:
+    regles:
+      retraits:
+        entre_constructions:
+          forme: silence
+          absent: true
+          article: '1AUCR 8'
+          page_pdf: 98
+          citation: 'Sans objet.'
+          statut: valide
     silence: autorise
     silence_src: 'Art. 1AUcr 2.2, PAGE_PDF 95 : « Sont admises toutes les occupations et utilisations du sol non
       citées à l''article 1AUcr 1.2, ainsi, que celles ci-après dès lors qu''elles respectent les conditions suivantes
@@ -1140,6 +1202,15 @@ zones:
       1.2 (restauration, activites_services_clientele, bureau, industrie, entrepot, hotels, autres_hebergements_touristiques,
       etc.) relèvent du silence = autorisé (clause 2.2, p. 95), sous les conditions générales de la zone.'
   A:
+    regles:
+      retraits:
+        entre_constructions:
+          forme: silence
+          absent: true
+          article: 'A 8'
+          page_pdf: 109
+          citation: 'Non réglementée.'
+          statut: valide
     silence: interdit
     silence_src: 'Art. A1.2 (3), PAGE_PDF 104 : « A l''exception de ceux visés à l''article A2.2., sont interdits
       les constructions, ouvrages et travaux non nécessaires à une exploitation agricole. »'
@@ -1347,6 +1418,15 @@ zones:
       l''eau » (p. 106 — terme non mappé à une sous-destination). Carrières R.151-34 : A2.2 (10), p. 106, sans exclusion
       de secteur écrite.'
   N:
+    regles:
+      retraits:
+        entre_constructions:
+          forme: silence
+          absent: true
+          article: 'N 8'
+          page_pdf: 117
+          citation: 'Sans objet.'
+          statut: valide
     silence: interdit
     silence_src: 'Art. N1.2 (3), PAGE_PDF 113 : « A l''exception de ceux visés à l''article N2.2., sont interdits
       toutes les constructions, ouvrages et travaux. »'

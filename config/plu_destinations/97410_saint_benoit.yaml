@@ -291,6 +291,13 @@ zones:
           statut: valide
           raison: attribution douteuse (secteur None)
       retraits:
+        entre_constructions:
+          forme: silence
+          absent: true
+          article: 'UE (sous-section Volumétrie)'
+          page_pdf: 89
+          citation: 'Implantation des constructions les unes par rapport aux autres : … les distances entre bâtiments ne sont pas réglementées.'
+          statut: valide
         voie:
           absent: true
           article: U 6
