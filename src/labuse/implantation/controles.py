@@ -72,7 +72,8 @@ def verifier_geometrie(scene: Scene, terrain, conv: Conventions, cap: Capacite,
     checks.append(CheckGeo("places/allées/accès ⊆ assiette, hors bâti", dedans and hors_bati))
 
     # non-chevauchement sur TOUS les couples du plan de sol (aire d'intersection = 0)
-    tiles = [o.geom_world for o in _ground_tiles(scene)]
+    tiles = [(o.geom_world if o.geom_world.is_valid else o.geom_world.buffer(0))
+             for o in _ground_tiles(scene)]
     chev = 0
     for i in range(len(tiles)):
         for j in range(i + 1, len(tiles)):
@@ -108,6 +109,15 @@ def verifier_geometrie(scene: Scene, terrain, conv: Conventions, cap: Capacite,
     elif not places:
         acc_ok = True
     checks.append(CheckGeo("allées reliées à l'accès (sur voie), aucune en cul-de-sac", acc_ok))
+
+    # allée COUPÉE au droit des places : aucun tronçon mort (ni place desservie, ni jonction d'accès).
+    # Une place touche l'allée sur sa largeur ; on couvre l'allée par (places ∪ accès) bufferisé d'une
+    # profondeur de place. Un prolongement d'allée dans le vide (ex. au-delà de la dernière place) reste.
+    if places and allee_u is not None:
+        couvre = unary_union(places + acces).buffer(conv.place_longueur_m)
+        mort = allee_u.difference(couvre)
+        checks.append(CheckGeo("allée sans tronçon mort (coupée au droit des places)",
+                               mort.area < 1.0, f"{mort.area:.1f} m² morts"))
 
     larg_ok = all(min(o.geom_local.bounds[2] - o.geom_local.bounds[0],
                       o.geom_local.bounds[3] - o.geom_local.bounds[1]) >= conv.allee_largeur_m - 0.05
@@ -192,6 +202,16 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
     else:
         out.append(ControleReg("Hauteur", "règle non validée", f"R+{cap.niveaux - 1}", NON_EFFECTUE))
 
+    # Prospect / hauteur relative (ex. L ≥ h/2) : non chiffrable par le moteur -> Non effectué
+    if regles.prospect is not None:
+        out.append(ControleReg("Prospect (hauteur relative)", "non chiffrable par le moteur",
+                               "hauteur bornée par la seule règle absolue", NON_EFFECTUE,
+                               citation=None,
+                               detail=(regles.prospect.citation or "règle de prospect L ≥ h/2 — "
+                                       "à vérifier par l'architecte")))
+    else:
+        out.append(ControleReg("Prospect (hauteur relative)", "pas de règle de prospect", "—", NON_APPLICABLE))
+
     rv, rs = regles.recul_voie, regles.recul_separatives
     batis = [o.geom_world for o in scene.of("batiment_emprise")]
     dans_zone = all(terrain.zone_implantation.buffer(_TOL_CONTENU).contains(b) for b in batis)
@@ -260,10 +280,13 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
     return out
 
 
-def statut_etude(controles: list[ControleReg], geo_ok: bool, *, scene: Scene, terrain) -> str:
+def statut_etude(controles: list[ControleReg], geo_ok: bool, *, scene: Scene, terrain, regles) -> str:
     if not geo_ok:
         return "simulation impossible"
     if any(c.resultat == ECHOUE for c in controles):
+        return "à compléter"
+    # une règle de HAUTEUR non chiffrable (prospect L>H) ne laisse jamais l'étude exploitable
+    if regles.hauteur_non_chiffrable:
         return "à compléter"
     # plusieurs bâtiments (distance non contrôlée) OU PPR bleue qui touche le bâti -> à compléter
     if _n_batiments(scene) > 1:

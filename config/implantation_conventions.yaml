@@ -12,7 +12,9 @@ etiquette: Estimé
 batiment:
   profondeur_m: 13.0            # barre traversante, coursive extérieure
   largeur_coursive_m: 1.4       # coursive extérieure de desserte (circulation, non habitable)
-  largeur_noyau_m: 3.5          # noyau escalier + ascenseur, un par barre, répété à chaque niveau
+  largeur_noyau_m: 3.5          # noyau escalier + ascenseur (largeur le long de la barre)
+  max_logements_par_noyau: 6    # un noyau dessert au plus N logements par niveau (sinon on en ajoute un)
+  longueur_max_coursive_par_noyau_m: 30.0  # longueur max de coursive desservie par un noyau (distance d'évacuation)
   hauteur_etage_m: 3.0          # hauteur d'un niveau courant (du plancher au plancher)
   coef_plancher_habitable: 0.80 # plancher -> habitable (murs, gaines, cloisons)
   retrait_inter_barre_m: 6.0    # jeu entre deux volumes bâtis (formes deux_barres / L)

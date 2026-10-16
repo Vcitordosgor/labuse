@@ -132,6 +132,7 @@ class ReglesZone:
     pleine_terre: Regle
     mixite: Mixite
     stationnement: BaremeStationnement
+    prospect: Optional[Regle] = None   # règle de hauteur RELATIVE non chiffrable (ex. L ≥ h/2)
 
     @property
     def hauteur_plafond(self) -> Regle:
@@ -139,6 +140,12 @@ class ReglesZone:
         if self.hauteur_egout.validee:
             return self.hauteur_egout
         return self.hauteur_faitage
+
+    @property
+    def hauteur_non_chiffrable(self) -> bool:
+        """Vrai s'il existe une règle de hauteur que le moteur ne sait pas chiffrer (prospect L>H).
+        Règle générale : une telle règle ne laisse jamais l'étude exploitable."""
+        return self.prospect is not None
 
 
 def _leaf_val(leaf: Optional[dict], key: str, nom: str, unite: str) -> Regle:
@@ -183,6 +190,22 @@ def _bareme(stat: dict) -> BaremeStationnement:
     return BaremeStationnement(False, "absent", None, "superieur", None, (), None, None, None)
 
 
+def _detect_prospect(reg: dict) -> Optional[Regle]:
+    """Prospect / hauteur relative (ex. « L ≥ h/2 ») : règle liant distance et HAUTEUR, que le
+    moteur ne sait pas chiffrer. Détectée dans les formules/citations de reculs ou de hauteur."""
+    marqueurs = ("h/2", "h / 2", "différence d'altitude", "l ≥ h", "l > h", "l>h", "≥ h/")
+    for grp in ("retraits", "hauteur"):
+        for leaf in (reg.get(grp) or {}).values():
+            if not isinstance(leaf, dict):
+                continue
+            txt = " ".join(str(leaf.get(f) or "") for f in ("formule", "citation")).lower()
+            if any(m in txt for m in marqueurs):
+                return Regle(nom="prospect (hauteur relative)", valeur=None, unite="", validee=False,
+                             article=leaf.get("article"), page_pdf=leaf.get("page_pdf"),
+                             citation=leaf.get("citation") or leaf.get("formule"))
+    return None
+
+
 def charger(insee: str, zone: str) -> ReglesZone:
     from labuse.plu.destinations import regles_zone
 
@@ -212,4 +235,5 @@ def charger(insee: str, zone: str) -> ReglesZone:
         pleine_terre=_leaf_val(pleine.get("pct"), "pct", "pleine terre (perméabilité)", "%"),
         mixite=mixite,
         stationnement=_bareme(reg.get("stationnement") or {}),
+        prospect=_detect_prospect(reg),
     )

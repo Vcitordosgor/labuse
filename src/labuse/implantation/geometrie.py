@@ -68,7 +68,15 @@ def rect(x0: float, y0: float, x1: float, y1: float) -> Polygon:
     return Polygon([(x0, y0), (x1, y0), (x1, y1), (x0, y1)])
 
 
+def _valide(geom: BaseGeometry) -> BaseGeometry:
+    """Rend une géométrie valide (les différences/intersections peuvent produire des auto-contacts)."""
+    if geom is None or geom.is_empty or geom.is_valid:
+        return geom
+    return geom.buffer(0)
+
+
 def _plus_grand(geom: BaseGeometry) -> Polygon:
+    geom = _valide(geom)
     if isinstance(geom, MultiPolygon):
         return max(geom.geoms, key=lambda g: g.area)
     return geom
@@ -84,6 +92,7 @@ class Scene:
     voie_local: list[LineString]
     objets: list[Objet] = field(default_factory=list)
     stationnement_note: Optional[dict] = None   # {allee_unique, cotes, deux_cotes, raison}
+    ppr_rouge_local: Optional[BaseGeometry] = None   # PPR interdiction (local), interdite au stationnement
 
     def ajouter(self, o: Objet) -> None:
         self.objets.append(o)
@@ -106,8 +115,11 @@ def scene_depuis(terrain, frame: Frame) -> Scene:
         voie_bas = ymid < (ay0 + ay1) / 2
     else:
         voie_bas = True
+    rouge_l = None
+    if getattr(terrain, "ppr_rouge", None) is not None and not terrain.ppr_rouge.is_empty:
+        rouge_l = frame.to_local(terrain.ppr_rouge)
     return Scene(frame=frame, assiette_local=assiette_l, zone_local=zone_l,
-                 voie_bas=voie_bas, voie_local=voie_l)
+                 voie_bas=voie_bas, voie_local=voie_l, ppr_rouge_local=rouge_l)
 
 
 # ---------------------------------------------------------------- bâtiment : barre
@@ -161,30 +173,48 @@ def _meilleure_bande(zone: Polygon, y_lo: float, y_haut: float, D: float, x0: fl
 
 def _tiler_modules(conv: Conventions, x0: float, x1: float, repartition: list[str]
                    ) -> tuple[list[tuple[float, float, str]], Optional[tuple[float, float]]]:
-    """Garnit [x0,x1] de modules (cycle `repartition`) + UN noyau inséré au plus près du milieu.
-    Renvoie (modules=[(xa,xb,type)], noyau=(xa,xb)|None). Déterministe."""
-    milieu = (x0 + x1) / 2.0
+    """Garnit [x0,x1] de modules (cycle `repartition`) avec autant de NOYAUX que nécessaire :
+    un noyau au début, puis un nouveau dès qu'on dépasse `max_logements_par_noyau` modules OU
+    `longueur_max_coursive_par_noyau_m` de coursive depuis le dernier noyau.
+    Renvoie (modules=[(xa,xb,type)], noyaux=[(xa,xb)]). Déterministe."""
+    nw = conv.largeur_noyau_m
+    kmax = conv.max_logements_par_noyau
+    lmax = conv.longueur_max_coursive_par_noyau_m
     cur = x0
     modules: list[tuple[float, float, str]] = []
-    noyau: Optional[tuple[float, float]] = None
-    i = 0
+    noyaux: list[tuple[float, float]] = []
+    depuis, coursive_depuis, i = 0, 0.0, 0
+
+    def pose_noyau() -> bool:
+        nonlocal cur, depuis, coursive_depuis
+        if cur + nw > x1 + 1e-9:
+            return False
+        noyaux.append((cur, cur + nw))
+        cur += nw
+        depuis, coursive_depuis = 0, 0.0
+        return True
+
+    if not pose_noyau():
+        return [], []
     while True:
-        # insérer le noyau une seule fois, dès qu'on franchit le milieu
-        if noyau is None and cur >= milieu and (cur + conv.largeur_noyau_m) <= x1:
-            noyau = (cur, cur + conv.largeur_noyau_m)
-            cur += conv.largeur_noyau_m
-            continue
         t = repartition[i % len(repartition)]
         w = conv.largeur_module(t)
+        if depuis >= kmax or coursive_depuis + w > lmax + 1e-9:   # noyau supplémentaire requis
+            if not pose_noyau():
+                break
         if cur + w > x1 + 1e-9:
             break
         modules.append((cur, cur + w, t))
         cur += w
+        depuis += 1
+        coursive_depuis += w
         i += 1
-    if noyau is None and modules:        # noyau non casé : remplace le dernier module par le noyau
-        xa, xb, _ = modules.pop()
-        noyau = (xa, min(xa + conv.largeur_noyau_m, xb))
-    return modules, noyau
+    if not modules:
+        return [], []
+    # retire un éventuel noyau terminal sans module après lui
+    if noyaux and noyaux[-1][0] >= max(m[1] for m in modules):
+        noyaux.pop()
+    return modules, noyaux
 
 
 def poser_barre(scene: Scene, conv: Conventions, *, x_start: float, x_end: float,
@@ -206,18 +236,17 @@ def poser_barre(scene: Scene, conv: Conventions, *, x_start: float, x_end: float
     else:                                  # voie côté y fort -> coursive en haut de la barre
         y_coursive = (yb1 - conv.largeur_coursive_m, yb1)
         y_band = (yb0, yb1 - conv.largeur_coursive_m)
-    modules, noyau = _tiler_modules(conv, x0, x1, repartition)
+    modules, noyaux = _tiler_modules(conv, x0, x1, repartition)
     if not modules:
         return 0
-    used_x1 = max([m[1] for m in modules] + ([noyau[1]] if noyau else []))
+    used_x1 = max([m[1] for m in modules] + [n[1] for n in noyaux])
     # emprise (plan) = barre réellement occupée
     scene.ajouter(Objet("batiment_emprise", rect(x0, yb0, used_x1, yb1), ref=ref))
     for n in range(niveaux):
         scene.ajouter(Objet("coursive", rect(x0, y_coursive[0], used_x1, y_coursive[1]),
                             niveau=n, ref=ref))
-        if noyau:
-            scene.ajouter(Objet("noyau", rect(noyau[0], y_band[0], noyau[1], y_band[1]),
-                                niveau=n, ref=ref))
+        for (nxa, nxb) in noyaux:
+            scene.ajouter(Objet("noyau", rect(nxa, y_band[0], nxb, y_band[1]), niveau=n, ref=ref))
         for (xa, xb, t) in modules:
             scene.ajouter(Objet("module", rect(xa, y_band[0], xb, y_band[1]),
                                 niveau=n, type_logement=t, ref=ref))
@@ -235,6 +264,10 @@ def poser_stationnement(scene: Scene, conv: Conventions, *, cible: int) -> int:
     batis = [o.geom_local for o in scene.of("batiment_emprise")]
     bati = unary_union(batis) if batis else None
     free = scene.assiette_local.difference(bati) if bati is not None else scene.assiette_local
+    # aucune allée ni place en PPR rouge (interdiction) : hypothèse prudente
+    if scene.ppr_rouge_local is not None and not scene.ppr_rouge_local.is_empty:
+        free = free.difference(scene.ppr_rouge_local)
+    free = _valide(free)
     ax0, ay0, ax1, ay1 = scene.assiette_local.bounds
     pl, pw, aw, cw = (conv.place_longueur_m, conv.place_largeur_m,
                       conv.allee_largeur_m, conv.acces_largeur_m)
@@ -273,17 +306,48 @@ def poser_stationnement(scene: Scene, conv: Conventions, *, cible: int) -> int:
         return 0
     _, allee_g, cands = best
 
-    acces_g = _acces_corridor(scene, conv, allee_g, bati)
-    if acces_g is None:          # pas d'accès reliant la voie à l'allée -> pas de stationnement
-        return 0
+    # toutes les places candidates, ordre déterministe (côté puis x)
+    tries = sorted(cands, key=lambda pc: (round(pc[0].bounds[1], 2), round(pc[0].bounds[0], 2)))
 
-    # places retenues (hors accès), ordre déterministe (côté puis x), jusqu'à cible
-    places = sorted((pc for pc in cands if pc[0].intersection(acces_g).area <= 1e-6),
-                    key=lambda pc: (round(pc[0].bounds[1], 2), round(pc[0].bounds[0], 2)))
-    retenues = places[:cible]
+    def _trim_allee(places_pc, acces=None):
+        """Allée COUPÉE au droit de la dernière place desservie (+ la jonction d'accès) : aucun
+        tronçon d'allée sans place ni accès en bout."""
+        xs = [p.bounds[0] for p, _ in places_pc] + [p.bounds[2] for p, _ in places_pc]
+        xmin, xmax = min(xs), max(xs)
+        if acces is not None:
+            from shapely.ops import nearest_points
+            ap, _ = nearest_points(allee_g, acces)
+            xmin, xmax = min(xmin, ap.x), max(xmax, ap.x)
+        t = allee_g.intersection(rect(xmin, ay0 - 1, xmax, ay1 + 1))
+        return _plus_grand(t) if not t.is_empty else t
+
+    # 1) allée + accès provisoires (sur les `cible` premières) pour filtrer les places
+    allee0 = _trim_allee(tries[:cible])
+    if allee0.is_empty or not isinstance(allee0, Polygon):
+        return 0
+    acces0 = _acces_corridor(scene, conv, allee0, bati)
+    if acces0 is None:
+        return 0
+    # 2) places retenues = celles hors accès (backfill au-delà de cible), jusqu'à cible
+    retenues = [pc for pc in tries if pc[0].intersection(acces0).area <= 1e-6][:cible]
     if not retenues:
         return 0
-    scene.ajouter(Objet("allee", allee_g))
+    # 3) allée finale coupée au droit des places retenues (+ jonction d'accès)
+    allee_final = _trim_allee(retenues, acces0)
+    if allee_final.is_empty or not isinstance(allee_final, Polygon):
+        return 0
+    # 4) accès reconstruit CONTRE l'allée finale puis soustrait d'elle -> 0 chevauchement garanti
+    acces_g = _acces_corridor(scene, conv, allee_final, bati)
+    if acces_g is None:
+        return 0
+    acces_g = _plus_grand(acces_g.difference(allee_final))
+    if (acces_g.is_empty or not isinstance(acces_g, Polygon) or acces_g.area < 0.5
+            or acces_g.distance(allee_final) > 1e-6):
+        return 0
+    retenues = [pc for pc in retenues if pc[0].intersection(acces_g).area <= 1e-6]
+    if not retenues:
+        return 0
+    scene.ajouter(Objet("allee", allee_final))
     scene.ajouter(Objet("acces", acces_g))
     cotes = set()
     for (p, side) in retenues:
@@ -313,10 +377,12 @@ def _acces_corridor(scene: Scene, conv: Conventions, allee_g: Polygon,
     else:
         corridor = seg.buffer(conv.acces_largeur_m / 2.0, cap_style=2)
     corridor = scene.assiette_local.intersection(corridor)
-    # l'accès TOUCHE l'allée (partage d'arête) mais ne la recouvre pas, et évite le bâti
+    # l'accès TOUCHE l'allée (partage d'arête) mais ne la recouvre pas, évite le bâti et la PPR rouge
     corridor = corridor.difference(allee_g)
     if bati is not None and not corridor.is_empty:
         corridor = corridor.difference(bati)
+    if scene.ppr_rouge_local is not None and not corridor.is_empty:
+        corridor = corridor.difference(scene.ppr_rouge_local)
     corridor = _plus_grand(corridor) if not corridor.is_empty else corridor
     if (corridor.is_empty or not isinstance(corridor, Polygon) or corridor.area < 0.5
             or corridor.distance(voie) > 0.6 or corridor.distance(allee_g) > 1e-6):
@@ -332,7 +398,7 @@ def poser_espaces_libres(scene: Scene) -> None:
     if not occupe:
         libres = scene.assiette_local
     else:
-        libres = scene.assiette_local.difference(unary_union(occupe))
+        libres = _valide(scene.assiette_local.difference(unary_union(occupe)))
     if libres.is_empty:
         return
     geoms = libres.geoms if isinstance(libres, MultiPolygon) else [libres]

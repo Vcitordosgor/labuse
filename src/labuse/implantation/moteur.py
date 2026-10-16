@@ -103,7 +103,8 @@ def _evaluer(terrain, frame, conv, regles, forme, niveaux, fraction):
     geo_ok = ctrl_mod.geometrie_valide(checks)
     sans_echec = not any(c.resultat == ctrl_mod.ECHOUE for c in controles)
     faisable = geo_ok and sans_echec
-    statut = ctrl_mod.statut_etude(controles, geo_ok, scene=scene, terrain=terrain) if geo_ok else "simulation impossible"
+    statut = (ctrl_mod.statut_etude(controles, geo_ok, scene=scene, terrain=terrain, regles=regles)
+              if geo_ok else "simulation impossible")
     motif = "" if faisable else "; ".join(
         [c.nom for c in checks if not c.ok] + [c.nom for c in controles if c.resultat == ctrl_mod.ECHOUE])
     candidat = Candidat(forme, niveaux, fraction, faisable, statut, cap.logements, cap.shab_estimee_m2,

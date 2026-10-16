@@ -161,8 +161,21 @@ def scenario_dict(scenario: Scenario, *, genere_le: str | None = None) -> dict[s
     } for o in sc.objets]
 
     def regle_json(rg):
+        if rg is None:
+            return None
         return {"nom": rg.nom, "valeur": rg.valeur, "unite": rg.unite, "validee": rg.validee,
                 "article": rg.article, "page_pdf": rg.page_pdf, "citation": rg.citation}
+
+    # distance accès -> angle (sommet) de la parcelle le plus proche (item 5)
+    acces_objs = sc.of("acces")
+    acces_angle = None
+    if acces_objs:
+        from shapely.geometry import Point
+        acc = acces_objs[0].geom_world.centroid
+        sommets = [Point(c) for c in t.assiette.exterior.coords[:-1]]
+        d = min(acc.distance(p) for p in sommets)
+        acces_angle = {"distance_angle_m": round(d, 1),
+                       "note": "visibilité à confirmer" if d < 8.0 else "accès éloigné des angles"}
 
     return {
         "livrable": "IMPLANTATION-1BIS",
@@ -177,6 +190,7 @@ def scenario_dict(scenario: Scenario, *, genere_le: str | None = None) -> dict[s
             "hauteur_egout": regle_json(r.hauteur_egout), "hauteur_faitage": regle_json(r.hauteur_faitage),
             "emprise_ces": regle_json(r.emprise_ces), "recul_voie": regle_json(r.recul_voie),
             "recul_separatives": regle_json(r.recul_separatives), "pleine_terre": regle_json(r.pleine_terre),
+            "prospect": regle_json(r.prospect), "hauteur_non_chiffrable": r.hauteur_non_chiffrable,
             "mixite": {"validee": r.mixite.validee, "seuil_m2": r.mixite.seuil_m2,
                        "seuil_logements": r.mixite.seuil_logements, "quota_pct": r.mixite.quota_pct,
                        "article": r.mixite.article, "page_pdf": r.mixite.page_pdf, "citation": r.mixite.citation},
@@ -207,7 +221,8 @@ def scenario_dict(scenario: Scenario, *, genere_le: str | None = None) -> dict[s
             "voie_coords_2975": [list(g.coords) for g in t.voie_edges],
         },
         "scenario": {"forme": scenario.forme, "niveaux": scenario.niveaux,
-                     "statut_etude": scenario.statut, "stationnement_note": sc.stationnement_note},
+                     "statut_etude": scenario.statut, "stationnement_note": sc.stationnement_note,
+                     "acces": acces_angle},
         "tableau_capacite": {
             "logements": cap.logements, "par_type": cap.par_type, "niveaux": cap.niveaux,
             "sdp_m2": cap.sdp_m2, "shab_estimee_m2": cap.shab_estimee_m2,
@@ -224,6 +239,8 @@ def scenario_dict(scenario: Scenario, *, genere_le: str | None = None) -> dict[s
             "places": cap.places, "places_imposees": cap.places_imposees, "details_places": cap.details_places,
             "mixite_applicable": cap.mixite_applicable, "logements_aides_imposes": cap.logements_aides_imposes,
             "sdp_aidee_imposee_m2": cap.sdp_aidee_imposee_m2,
+            "ratio_shab_sdp": cap.ratio_shab_sdp,
+            "ratio_shab_sdp_par_batiment": cap.ratio_shab_sdp_par_batiment,
             "distribution_niveaux": cap.distribution_niveaux,
         },
         "controles_reglementaires": [

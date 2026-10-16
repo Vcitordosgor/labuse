@@ -40,6 +40,8 @@ class Capacite:
     mixite_applicable: Optional[bool]
     logements_aides_imposes: Optional[int]
     sdp_aidee_imposee_m2: Optional[float]
+    ratio_shab_sdp: Optional[float] = None
+    ratio_shab_sdp_par_batiment: dict = field(default_factory=dict)
     details_places: dict = field(default_factory=dict)
 
 
@@ -96,6 +98,17 @@ def calculer(scene: Scene, conv: Conventions, regles: ReglesZone, terrain=None) 
 
     places_imp, details = _places_imposees(scene, conv, regles)
 
+    # ratio SHAB / SDP par bâtiment (et global) : part habitable du plancher construit
+    refs = sorted({o.ref for o in scene.objets if o.kind in ("module", "noyau", "coursive") and o.ref})
+    ratio_bat = {}
+    for ref in refs:
+        shab_ref = sum(o.geom_local.area for o in modules if o.ref == ref) * conv.coef_plancher_habitable
+        sdp_ref = sum(o.geom_local.area for o in scene.objets
+                      if o.kind in ("module", "noyau", "coursive") and o.ref == ref)
+        if sdp_ref > 0:
+            ratio_bat[ref] = round(shab_ref / sdp_ref, 3)
+    ratio_global = round(shab / sdp, 3) if sdp > 0 else None
+
     distribution = []
     for n in range(niveaux):
         mods_n = [o for o in modules if o.niveau == n]
@@ -135,5 +148,6 @@ def calculer(scene: Scene, conv: Conventions, regles: ReglesZone, terrain=None) 
         distribution_niveaux=distribution,
         mixite_applicable=mix_app, logements_aides_imposes=aides,
         sdp_aidee_imposee_m2=(round(sdp_aidee, 1) if sdp_aidee is not None else None),
+        ratio_shab_sdp=ratio_global, ratio_shab_sdp_par_batiment=ratio_bat,
         details_places={k: {"nb": v[0], "places_unitaires": v[1]} for k, v in details.items()},
     )

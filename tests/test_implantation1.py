@@ -120,6 +120,45 @@ def test_allees_reliees_a_l_acces_aucun_cul_de_sac(scenario):
         assert a.distance(places) < 1e-6, "une allée ne dessert aucune place (cul-de-sac)"
 
 
+def test_allee_sans_troncon_mort(scenario):
+    """Allée coupée au droit des places : aucun prolongement dans le vide (ni place, ni accès).
+    Ce test casse sur l'ancien comportement (allée qui se prolongeait au-delà de la dernière place)."""
+    conv = scenario.conventions
+    places = _w(scenario, "place")
+    acces = _w(scenario, "acces")
+    allees = _w(scenario, "allee")
+    if not places:
+        return
+    couvre = unary_union(places + acces).buffer(conv.place_longueur_m)
+    mort = unary_union(allees).difference(couvre)
+    assert mort.area < 1.0, f"allée avec tronçon mort {mort.area:.1f} m²"
+
+
+def test_aucun_stationnement_en_ppr_rouge(scenario):
+    rouge = scenario.terrain.ppr_rouge
+    if rouge is None or rouge.is_empty:
+        return
+    for g in _w(scenario, "place") + _w(scenario, "allee") + _w(scenario, "acces"):
+        assert g.intersection(rouge).area <= _TOL_AIRE, "stationnement en PPR rouge"
+
+
+def test_noyaux_respectent_convention(scenario):
+    import math
+    from collections import Counter
+    conv = scenario.conventions
+    mods = Counter(o.ref for o in scenario.scene.of("module") if o.niveau == 0)
+    noys = Counter(o.ref for o in scenario.scene.of("noyau") if o.niveau == 0)
+    for ref, nmod in mods.items():
+        assert noys[ref] >= math.ceil(nmod / conv.max_logements_par_noyau), \
+            f"{ref} : un noyau dessert trop de logements"
+
+
+def test_ratio_shab_sdp_expose(scenario):
+    cap = scenario.capacite
+    assert cap.ratio_shab_sdp is not None and 0 < cap.ratio_shab_sdp < 1
+    assert cap.ratio_shab_sdp_par_batiment
+
+
 def test_largeur_allee(scenario):
     conv = scenario.conventions
     for o in scenario.scene.of("allee"):
@@ -182,6 +221,18 @@ def test_reussi_seulement_avec_citation(scenario):
     for c in scenario.controles:
         if c.resultat == REUSSI:
             assert c.citation, f"{c.nom!r} Réussi sans citation"
+
+
+def test_hauteur_non_chiffrable_jamais_exploitable(scenario):
+    """Règle générale : une règle de hauteur non chiffrable (prospect L>H) ne laisse jamais
+    l'étude exploitable. Vérifié sur Saint-Denis (prospect Ui.7)."""
+    if scenario.regles.hauteur_non_chiffrable:
+        assert scenario.statut != "exploitable en pré-faisabilité"
+        c = next(c for c in scenario.controles if c.nom == "Prospect (hauteur relative)")
+        assert c.resultat == NON_EFFECTUE
+    else:
+        c = next(c for c in scenario.controles if c.nom == "Prospect (hauteur relative)")
+        assert c.resultat == NON_APPLICABLE
 
 
 def test_distance_entre_constructions(scenario):

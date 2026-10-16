@@ -29,6 +29,8 @@ class Conventions:
     profondeur_m: float
     largeur_coursive_m: float
     largeur_noyau_m: float
+    max_logements_par_noyau: int
+    longueur_max_coursive_par_noyau_m: float
     hauteur_etage_m: float
     coef_plancher_habitable: float
     retrait_inter_barre_m: float
@@ -65,6 +67,8 @@ def charger(path: str | Path | None = None) -> Conventions:
         profondeur_m=float(bat["profondeur_m"]),
         largeur_coursive_m=float(bat["largeur_coursive_m"]),
         largeur_noyau_m=float(bat["largeur_noyau_m"]),
+        max_logements_par_noyau=int(bat["max_logements_par_noyau"]),
+        longueur_max_coursive_par_noyau_m=float(bat["longueur_max_coursive_par_noyau_m"]),
         hauteur_etage_m=float(bat["hauteur_etage_m"]),
         coef_plancher_habitable=float(bat["coef_plancher_habitable"]),
         retrait_inter_barre_m=float(bat["retrait_inter_barre_m"]),
