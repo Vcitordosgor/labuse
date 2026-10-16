@@ -72,11 +72,26 @@ def _ctrl_distance(dc, nb_bati=2, gap_m=7.0, niveaux=3):
     return c, controles, sc, ter
 
 
-# --------------------------------------------------------------------- un seul bâtiment
-def test_un_seul_batiment_non_applicable():
-    dc = _dc("{forme: fixe, min_m: 6, statut: valide, citation: 'x', article: y, page_pdf: 1}")
+# --------------------------------------------------------------------- un seul bâtiment (pt 4)
+# Non applicable est RÉSERVÉ au silence prouvé. En mono-bâtiment : règle chiffrable -> Réussi
+# (respectée sans objet) ; silence -> Non applicable ; règle non servie -> Non effectué.
+def test_mono_batiment_chiffrable_reussi():
+    dc = _dc("{forme: fixe, min_m: 6, statut: valide, citation: 'd’au moins 6 m', article: y, page_pdf: 1}")
+    c, *_ = _ctrl_distance(dc, nb_bati=1)
+    assert c.resultat == REUSSI and c.citation and "seul bâtiment" in c.mesure
+
+
+def test_mono_batiment_silence_non_applicable():
+    dc = _dc("{absent: true, statut: valide, citation: 'Non réglementée.', article: a, page_pdf: 1}")
     c, *_ = _ctrl_distance(dc, nb_bati=1)
     assert c.resultat == NON_APPLICABLE
+
+
+def test_mono_batiment_non_servi_non_effectue():
+    # zone non calibrée + un seul bâtiment -> Non effectué, JAMAIS Non applicable (pt 4)
+    dc = _dc("{forme: fixe, min_m: 6, statut: propose, citation: 'x', article: a, page_pdf: 1}")
+    c, *_ = _ctrl_distance(dc, nb_bati=1)
+    assert c.resultat == NON_EFFECTUE
 
 
 # --------------------------------------------------------------------- FIXE

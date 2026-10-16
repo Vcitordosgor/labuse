@@ -259,19 +259,21 @@ def test_hauteur_non_chiffrable_jamais_exploitable(scenario):
 
 
 def test_distance_entre_constructions(scenario):
-    """PLU-CALIBRAGE-10 : un seul bâtiment => Non applicable. Plusieurs => contrôle MESURÉ
-    (Réussi/Échoué si règle servie chiffrable ; Non applicable si silence+convention ; Non
-    effectué si règle non servie), et l'étude n'est forcée « à compléter » que si Non effectué."""
-    nb_bati = len(scenario.scene.of("batiment_emprise"))
+    """PLU-CALIBRAGE-10 (pt 4) : Non applicable est RÉSERVÉ au silence prouvé ; une zone non servie
+    donne Non effectué (jamais Non applicable), même en mono-bâtiment ; une règle chiffrable donne
+    Réussi/Échoué (mono-bâtiment = Réussi sans objet). L'étude n'est forcée « à compléter » que si
+    plusieurs bâtiments ET contrôle Non effectué."""
     c = next(c for c in scenario.controles if c.nom == "Distance entre constructions")
-    if nb_bati <= 1:
-        assert c.resultat == NON_APPLICABLE
-    else:
-        assert c.resultat in (REUSSI, ECHOUE, NON_APPLICABLE, NON_EFFECTUE)
-        if c.resultat == NON_EFFECTUE:
-            assert scenario.statut == "à compléter"
-        if c.resultat == REUSSI:
-            assert c.citation  # Réussi seulement avec citation (verrou)
+    dc = scenario.regles.distance_constructions
+    assert c.resultat in (REUSSI, ECHOUE, NON_APPLICABLE, NON_EFFECTUE)
+    # Non applicable <=> silence prouvé (et seulement lui)
+    assert (c.resultat == NON_APPLICABLE) == dc.est_silence
+    if not dc.validee:
+        assert c.resultat == NON_EFFECTUE
+    if dc.est_chiffrable:
+        assert c.resultat in (REUSSI, ECHOUE)
+    if c.resultat == REUSSI:
+        assert c.citation  # Réussi seulement avec citation (verrou)
 
 
 def test_contraintes_absentes_non_applicable(scenario):

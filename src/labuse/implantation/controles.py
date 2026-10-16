@@ -285,30 +285,38 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
         out.append(ControleReg("Stationnement", "barème non validé", f"{cap.places} places dessinées", NON_EFFECTUE))
 
     # Distance entre constructions (PLU-CALIBRAGE-10, ex-art. 8) : MESURÉE sur la géométrie et
-    # confrontée à la règle de la zone. Un seul bâtiment => Non applicable.
+    # confrontée à la règle de la zone. Convention stricte des 4 états (PLU-CALIBRAGE-10 pt 4) :
+    #   · Non applicable = RÉSERVÉ au silence prouvé (le règlement dit qu'il ne réglemente pas) ;
+    #   · Non effectué   = règle NON servie (zone/commune non calibrée, non lue, forme hors schéma) —
+    #                      y compris en mono-bâtiment (on ne requalifie pas une lacune en « N/A ») ;
+    #   · Réussi/Échoué  = règle servie chiffrable, confrontée à la mesure (mono-bâtiment : respectée
+    #                      sans objet, aucun vis-à-vis à mesurer).
     nb_bati = _n_batiments(scene)
     dc = regles.distance_constructions
-    if nb_bati <= 1:
-        out.append(ControleReg("Distance entre constructions", "un seul bâtiment", "—", NON_APPLICABLE))
-    else:
-        dmes = _distance_min_batiments(scene) or 0.0
-        if dc.est_chiffrable:
-            requis, lib, mention = _distance_requise(dc, cap, conv)
+    dmes = _distance_min_batiments(scene)
+    if dc.est_silence:
+        cmin = conv.retrait_inter_barre_m
+        mes = (f"{dmes:.1f} m mesurés · convention {cmin:.0f} m (Estimé)" if dmes is not None
+               else "un seul bâtiment")
+        out.append(ControleReg("Distance entre constructions", "non réglementé (silence prouvé)", mes,
+                               NON_APPLICABLE, dc.citation_complete,
+                               detail=(f"le règlement ne fixe pas de distance entre constructions ; "
+                                       f"distance de convention {cmin:.0f} m appliquée au tracé (Estimé)")))
+    elif dc.est_chiffrable:
+        requis, lib, mention = _distance_requise(dc, cap, conv)
+        if dmes is None:  # un seul bâtiment : règle servie mais aucun vis-à-vis à mesurer
+            out.append(ControleReg("Distance entre constructions", lib, "un seul bâtiment", REUSSI,
+                                   dc.citation_complete,
+                                   detail="respectée sans objet (aucune construction en vis-à-vis)"))
+        else:
             ok = dmes >= requis - 1e-6
             out.append(ControleReg("Distance entre constructions", lib, f"{dmes:.1f} m mesurés",
-                                   REUSSI if ok else ECHOUE, dc.citation_complete,
-                                   detail=(mention or None)))
-        elif dc.est_silence:
-            cmin = conv.retrait_inter_barre_m
-            out.append(ControleReg("Distance entre constructions", "non réglementé (silence prouvé)",
-                                   f"{dmes:.1f} m mesurés · convention {cmin:.0f} m (Estimé)",
-                                   NON_APPLICABLE, dc.citation_complete,
-                                   detail=(f"le règlement ne fixe pas de distance entre constructions ; "
-                                           f"distance de convention {cmin:.0f} m appliquée au tracé (Estimé)")))
-        else:
-            out.append(ControleReg("Distance entre constructions", "règle non servie (non lue)",
-                                   f"{nb_bati} bâtiments · {dmes:.1f} m mesurés", NON_EFFECTUE,
-                                   detail="distance inter-bâtiments non calibrée sur cette zone — à vérifier"))
+                                   REUSSI if ok else ECHOUE, dc.citation_complete, detail=(mention or None)))
+    else:
+        mes = (f"{nb_bati} bâtiments · {dmes:.1f} m mesurés" if dmes is not None else "un seul bâtiment")
+        out.append(ControleReg("Distance entre constructions", "règle non servie (zone non calibrée)",
+                               mes, NON_EFFECTUE,
+                               detail="distance inter-bâtiments non calibrée sur cette zone — à vérifier"))
 
     out.append(ControleReg("Locaux vélos · déchets", "non modélisés", "—", NON_EFFECTUE))
 
