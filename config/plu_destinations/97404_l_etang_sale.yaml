@@ -60,6 +60,21 @@ zones:
             1,5 / 5 pièces et plus 2
           statut: propose
           raison: stationnement non chiffrable par logement ('a_verifier')
+        par_typologie:
+          # IMPLANTATION-1 LOT A : barème de stationnement UA chiffré PAR TYPOLOGIE. La feuille
+          # par_logement scalaire ci-dessus reste 'propose' (non réductible à un nombre unique) ;
+          # c'est CE barème, lu verbatim au règlement, qui est validé. places = minimum imposé par
+          # logement selon le nombre de pièces principales (Tn = n pièces). Une zone, une règle.
+          detail:
+            - {typologie: 'logement collectif 1 et 2 pièces', destination: collectif, pieces_min: 1, pieces_max: 2, places: 1}
+            - {typologie: 'logement collectif 3 et 4 pièces', destination: collectif, pieces_min: 3, pieces_max: 4, places: 1.5}
+            - {typologie: 'logement collectif 5 pièces et plus', destination: collectif, pieces_min: 5, pieces_max: null, places: 2}
+            - {typologie: 'logement individuel', destination: individuel, pieces_min: null, pieces_max: null, places: 2}
+          article: UA 2.7.3
+          page_pdf: 22
+          citation: Logement individuel Par logement 2 / Logement collectif 1 et 2 pièces 1 / 3 et 4 pièces
+            1,5 / 5 pièces et plus 2
+          statut: valide
       pleine_terre:
         pct:
           pct: 30.0

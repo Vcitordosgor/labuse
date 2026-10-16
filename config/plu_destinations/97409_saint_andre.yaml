@@ -308,6 +308,21 @@ zones:
           statut: propose
           raison: stationnement non chiffrable ("1 place min par logement (locatif aide, <50m2, ou <500m d'une
             gare routiere) ; 1,5 place min par logement >=50m2 (arrondi entier inferieur)")
+        par_typologie:
+          # IMPLANTATION-1BIS LOT B : barème UC 12.2 chiffré par SURFACE DE PLANCHER du logement.
+          # par_logement reste 'propose' (clauses conditionnelles — locatif aidé, proximité gare — non
+          # réductibles à un nombre unique) ; c'est CE barème-ci, lu verbatim, qui est validé.
+          base: surface_plancher
+          arrondi: inferieur
+          detail:
+            - {tranche: 'logement < 50 m² SDP', destination: collectif, sdp_min: null, sdp_max: 50, places: 1}
+            - {tranche: 'logement >= 50 m² SDP', destination: collectif, sdp_min: 50, sdp_max: null, places: 1.5}
+          article: UC 12.2
+          page_pdf: 42
+          citation: 1 place de stationnement minimum par logement d'une surface de plancher inferieure a 50m2 ;
+            1,5 places de stationnement minimum par logement d'une surface de plancher superieure ou egale a
+            50m2, arrondi a l'entier inferieur.
+          statut: valide
       pleine_terre:
         pct:
           pct: 40.0

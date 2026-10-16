@@ -1,0 +1,39 @@
+# IMPLANTATION-1 — conventions du moteur d'implantation collectif.
+#
+# CHAQUE valeur de ce fichier est une HYPOTHÈSE DE PRÉ-FAISABILITÉ, étiquetée « Estimé ».
+# Ce n'est JAMAIS une règle du PLU : aucune de ces valeurs ne peut produire un contrôle
+# réglementaire « Réussi ». Les règles (reculs, hauteur, emprise, perméabilité, stationnement,
+# mixité) viennent exclusivement du fichier PLU de la commune, avec citation et statut « valide ».
+#
+# Chaque convention porte un nom et une valeur. Modifiable.
+version: implantation-conventions-1
+etiquette: Estimé
+
+batiment:
+  profondeur_m: 13.0            # barre traversante, coursive extérieure
+  largeur_coursive_m: 1.4       # coursive extérieure de desserte (circulation, non habitable)
+  largeur_noyau_m: 3.5          # noyau escalier + ascenseur (largeur le long de la barre)
+  max_logements_par_noyau: 6    # un noyau dessert au plus N logements par niveau (sinon on en ajoute un)
+  longueur_max_coursive_par_noyau_m: 30.0  # longueur max de coursive desservie par un noyau (distance d'évacuation)
+  hauteur_etage_m: 3.0          # hauteur d'un niveau courant (du plancher au plancher)
+  coef_plancher_habitable: 0.80 # plancher -> habitable (murs, gaines, cloisons)
+  retrait_inter_barre_m: 6.0    # jeu entre deux volumes bâtis (formes deux_barres / L)
+  inset_zone_m: 0.1             # marge pour garantir bâtiment STRICTEMENT dans la zone d'implantation
+
+# Surface moyenne de plancher par logement (m²). La largeur d'un module se déduit de la géométrie :
+#   largeur = surface_m2 / (profondeur_m - largeur_coursive_m).
+# SHAB estimée = surface du module dessiné × coef_plancher_habitable.
+modules:
+  T2: {surface_m2: 50.0, pieces: 2}
+  T3: {surface_m2: 65.0, pieces: 3}
+  T4: {surface_m2: 80.0, pieces: 4}
+
+# Motif cyclique de typologies pour l'objectif « équilibre ». Proposé par le moteur, étiqueté
+# « Estimé », modifiable. Sur 6 : T2×3, T3×2, T4×1 (≈ 50 % / 33 % / 17 %).
+repartition_equilibre: [T2, T3, T2, T4, T2, T3]
+
+stationnement:
+  place_longueur_m: 5.0         # place 2,5 × 5 m (dimensions usuelles)
+  place_largeur_m: 2.5
+  allee_largeur_m: 5.0          # allée de desserte double sens
+  acces_largeur_m: 4.0          # débouché sur la voie
