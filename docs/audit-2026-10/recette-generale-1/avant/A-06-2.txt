@@ -1,0 +1,2 @@
+text: Je n'ai pas trouvé de source fiable sur le web pour cette question — je ne réponds pas de mémoire. Reformulez-la, ou posez-la sur les données LABUSE.
+tool: None web: None refus: web_rien_trouve
