@@ -1,0 +1,9 @@
+A-03-1 — console de la fiche commune Saint-Denis (après correctif)
+Date: 2026-10-16T17:27:29.859Z
+Geste : ouverture ContextePanel Saint-Denis + dépliage de 10 cartes.
+
+Warnings « duplicate / same key » : 0 (attendu : 0)
+  (aucun)
+
+--- Toutes les lignes console/http retenues (bruit connu /moi/prefs-carte + favicon filtré) : 0 ---
+  (console vide)
