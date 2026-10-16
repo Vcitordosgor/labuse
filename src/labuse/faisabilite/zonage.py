@@ -367,7 +367,11 @@ def _resolve_zone_base(code: str, commune: str | None = None) -> ZoneRules | Non
     ins = _insee(commune)
     # « commune outillée » = elle a une métadonnée de zonage OU des regles (les communes extraites
     # par l'agent interne n'ont pas d'entrée plu_zonage mais ont des regles).
-    reg_zones = {r["zone"] for r in D.regles_commune(ins)} if ins else set()
+    # « calibrée » = la zone porte une feuille d'ENVELOPPE (hauteur/emprise/reculs/stationnement/…).
+    # Une zone qui ne porte qu'une feuille descriptive (entre_constructions, PLU-CALIBRAGE-10) n'est
+    # PAS reconnue ici en correspondance directe : elle se résout par sa branche dédiée (gelée, renvoi,
+    # estimation), comme avant l'injection de ces feuilles.
+    reg_zones = D.zones_calibrees(ins) if ins else set()
     # PLU-CALIBRAGE-8 (oct.) Lot B — les zones qui tirent leurs règles d'un `renvoi` (sans `regles`
     # propre) sont RÉSOLVABLES et CALIBRÉES : `_zone_regles_brut` suit déjà le renvoi pour les valeurs,
     # il ne manquait que de les reconnaître ici (sinon repli générique → gabarit bloqué « non calibré »).
