@@ -1,16 +1,16 @@
 {
- "scoring_run": "q_v18",
+ "scoring_run": "q_v19",
  "cascade_run": "q_v18_sources",
- "mvt_run": "q_v18",
- "division_run": "q_v18",
- "residuel_run_seq": 15,
- "promoted_at": "2026-10-11T15:30:46.793302+00:00",
+ "mvt_run": "q_v19",
+ "division_run": "q_v19",
+ "residuel_run_seq": 16,
+ "promoted_at": "2026-10-17T05:20:57.993405+00:00",
  "par": "cli",
  "precedent": {
-  "scoring_run": "q_v16",
-  "mvt_run": "q_v16",
-  "division_run": "q_v16",
-  "residuel_run_seq": 15,
-  "cascade_run": "q_v13_sources1"
+  "scoring_run": "q_v18",
+  "mvt_run": "q_v18",
+  "division_run": "q_v18",
+  "residuel_run_seq": 16,
+  "cascade_run": "q_v18_sources"
  }
 }
