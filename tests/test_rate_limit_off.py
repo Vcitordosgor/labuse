@@ -23,10 +23,12 @@ def test_rate_limit_off_wire_et_off_par_defaut(monkeypatch):
 
 
 def test_middleware_court_circuite_sur_le_flag_comme_dev_mode():
-    # même porte que dev_mode : la protection anti-scraping est court-circuitée quand le flag est posé
+    # même porte que dev_mode : la protection anti-scraping est court-circuitée quand le flag est posé.
+    # QUOTA-FICHE a étendu la condition avec le mode local (`_mode_local_dev`) ; `rate_limit_off` reste
+    # un terme du court-circuit — c'est ce qu'on garde ici (sans figer la fin de la ligne).
     src = Path(__file__).resolve().parents[1] / "src/labuse/api/protection.py"
     txt = src.read_text(encoding="utf-8")
-    assert "if s.dev_mode or s.rate_limit_off:" in txt
+    assert "if s.dev_mode or s.rate_limit_off or " in txt
 
 
 def test_banc_ne_depend_pas_de_dev_mode():
