@@ -71,23 +71,14 @@ table.ef-scn tr.retenu { background: var(--mint-bg); }
 """
 
 # ── format ────────────────────────────────────────────────────────────────────────────────────
-def _grp(n: float | int | None) -> str:
-    """Entier, séparateur de milliers = espace ordinaire (retiré par le crible de provenance)."""
-    if n is None:
-        return "—"
-    return f"{int(round(float(n))):,}".replace(",", " ")
+# IMPLANTATION-4 (format des nombres) — LE helper UNIQUE (planche + PDF), miroir de lib/format.ts.
+# Milliers en espace INSÉCABLE (retiré par le crible de provenance `_canon`). `_grp`/`_dec`/`_m2`
+# deviennent de simples alias pour ne rien changer aux appels existants du document.
+from labuse.implantation.format import dec_souple, groupe_fr, m2_fr   # noqa: E402
 
-
-def _dec(v) -> str:
-    """Nombre avec au plus une décimale (séparateur FR), sans zéro inutile : 2.5→« 2,5 », 5.0→« 5 »."""
-    if v is None:
-        return "—"
-    s = f"{float(v):.1f}".rstrip("0").rstrip(".")
-    return s.replace(".", ",")
-
-
-def _m2(v) -> str:
-    return "—" if v is None else f"{_grp(v)} m²"
+_grp = groupe_fr
+_dec = dec_souple
+_m2 = m2_fr
 
 
 def _statut_court(s: str) -> str:

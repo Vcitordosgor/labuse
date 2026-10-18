@@ -3,7 +3,7 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { useApp } from '../../store/useApp'
 import { getMoteursConfig, postEtude, ETUDE_PDF_URL, etudePdfInit, ApiError } from '../../lib/api'
 import type { EtudeIn, EtudePayload, EtudeScenario } from '../../lib/api'
-import { fmtInt } from '../../lib/format'
+import { fmtInt, fmtDec } from '../../lib/format'
 import { Bouton } from '../ui/Bouton'
 import { Badge } from '../ui/Badge'
 import { Case } from '../ui/Case'
@@ -377,7 +377,7 @@ export function M22({ embedded = false, initialIdus, onBilan, onClose }: {
                     {actif.programme.mixite_applicable && (
                       <Ligne l="Logements aidés imposés" v={`${actif.programme.logements_aides_imposes}`} s="Sourcé · PLU mixité" />)}
                     <Ligne l="SHAB estimée" v={`${fmtInt(actif.programme.shab_estimee_m2)} m²`}
-                      s={`ratio SHAB/SDP ${actif.programme.ratio_shab_sdp ?? '—'}`} />
+                      s={`ratio SHAB/SDP ${fmtDec(actif.programme.ratio_shab_sdp, 2)}`} />
                   </Section>
 
                   <Section titre="Distribution par niveau">
@@ -683,7 +683,7 @@ export function M22({ embedded = false, initialIdus, onBilan, onClose }: {
                   {actif.programme.mixite_applicable && (
                     <Ligne l="Logements aidés imposés" v={`${actif.programme.logements_aides_imposes}`} s="Sourcé · PLU mixité" />)}
                   <Ligne l="SHAB estimée" v={`${fmtInt(actif.programme.shab_estimee_m2)} m²`}
-                    s={`ratio SHAB/SDP ${actif.programme.ratio_shab_sdp ?? '—'}`} />
+                    s={`ratio SHAB/SDP ${fmtDec(actif.programme.ratio_shab_sdp, 2)}`} />
                 </Section>
 
                 <Section titre="Contrôles"
@@ -803,7 +803,7 @@ function HypLigne({ l, val, defaut, onChange }: { l: string; val: string; defaut
   return (
     <div className="flex items-center justify-between gap-2 border-b border-surface py-1">
       <span className="text-[10.5px] text-txt-mut">{l}</span>
-      <input inputMode="decimal" value={val} placeholder={String(defaut)} onChange={(e) => onChange(e.target.value)}
+      <input inputMode="decimal" value={val} placeholder={fmtDec(defaut, 2)} onChange={(e) => onChange(e.target.value)}
         className="w-20 rounded border border-line-2 bg-surface px-1.5 py-1 text-right text-[11px]" />
     </div>
   )
