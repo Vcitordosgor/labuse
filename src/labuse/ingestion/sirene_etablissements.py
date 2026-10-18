@@ -104,9 +104,24 @@ def build_sirene_etablissements(session: Session, *, geo_url: str | None = None,
     derniers parquets publiés sur data.gouv."""
     import duckdb
 
+    from ..referentiel_communes import CORRECTIONS_INSEE_HERITEES
+    from .run_all import REUNION_COMMUNES
+
     ensure_tables(session)
     sid = session.execute(text("SELECT id FROM data_sources WHERE name = :n"), {"n": SOURCE_NAME}).scalar()
-    insee2nom = dict(session.execute(text("SELECT insee, commune FROM commune_conso_enaf")).all())
+    # Noms canoniques : le code est la vérité (REUNION_COMMUNES), commune_conso_enaf par-dessus
+    # (mêmes noms en pratique ; le repli évite un `commune` NULL si la table n'est pas chargée).
+    insee2nom = dict(REUNION_COMMUNES)
+    insee2nom.update(session.execute(text("SELECT insee, commune FROM commune_conso_enaf")).all())
+    # FIX-ORFEVRE-1 (1c) — le référentiel communes (CIRCUIT-5) contraint l'ENTRÉE par FK
+    # (`fk_sirene_etablissements_commune`, VALIDÉE) : un code INSEE hors 97401→97424 fait
+    # échouer TOUT le rechargement (DELETE+INSERT rollback). Le chargeur applique donc les
+    # corrections de coquilles CONNUES (ex. siret 83939934200147 : 97454 → 97411, CIRCUIT-5b)
+    # puis ÉCARTE en comptant tout code resté hors référentiel (l'amont INSEE porte la coquille).
+    corrections_insee = {(c["cle"], c["de"]): c["vers"] for c in CORRECTIONS_INSEE_HERITEES
+                         if c["table"] == "sirene_etablissements"
+                         and c["cle_col"] == "siret" and c["col"] == "insee"}
+    insee_valides = {i for i, _ in REUNION_COMMUNES}
 
     mill = "millésime non daté"
     if geo_url is None:
@@ -147,9 +162,13 @@ def build_sirene_etablissements(session: Session, *, geo_url: str | None = None,
            "commune, insee, geom, actif, diffusible, tranche_effectif, date_creation, date_dernier_traitement, qualite_xy, iris, qp24, "
            "millesime, data_source_id) VALUES (%s,%s,%s,%s,%s,%s,%s,%s, "
            "ST_SetSRID(ST_MakePoint(%s,%s),4326), true, %s,%s,%s,%s,%s,%s,%s,%s,%s) ON CONFLICT (siret) DO NOTHING")
-    batch, n, n_masq = [], 0, 0
+    batch, n, n_masq, n_hors_ref = [], 0, 0, 0
     for (siret, naf, diff, denom, enseigne, insee, tranche, date_creation, date_dernier_traitement, adresse, lon, lat, qualite, iris, qp24) in rows:
         if not siret or len(siret) != 14:
+            continue
+        insee = corrections_insee.get((siret, insee), insee)
+        if insee not in insee_valides:            # FK communes : jamais un code hors référentiel
+            n_hors_ref += 1
             continue
         diffusible = (diff == "O")
         if diffusible:
@@ -172,5 +191,6 @@ def build_sirene_etablissements(session: Session, *, geo_url: str | None = None,
         "UPDATE data_sources SET last_sync_at = now(), source_millesime = :m WHERE name = :n"),
         {"m": f"SIRENE géolocalisé {mill} (INSEE)", "n": SOURCE_NAME})
     session.flush()
-    log(f"SIRENE établissements 974 : {n} actifs ({n_masq} en diffusion partielle, noms masqués) · {mill}")
-    return {"n": n, "n_diffusion_partielle": n_masq, "millesime": mill}
+    log(f"SIRENE établissements 974 : {n} actifs ({n_masq} en diffusion partielle, noms masqués, "
+        f"{n_hors_ref} écartés hors référentiel communes) · {mill}")
+    return {"n": n, "n_diffusion_partielle": n_masq, "n_hors_referentiel": n_hors_ref, "millesime": mill}

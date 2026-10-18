@@ -185,3 +185,39 @@ def test_lot5_trafic_rn_dernier_millesime_et_vide():
     assert t["couverte"] is True and len(t["axes"]) == 1
     assert t["axes"][0]["annee"] == 2023 and t["axes"][0]["tmja"] == 12000, "le comptage le plus récent"
     assert vide["vide"] is True, "hors de toute RN → aucun axe national"
+
+
+def test_fix_orfevre1_coquille_insee_corrigee_et_hors_referentiel_ecarte(tmp_path):
+    """FIX-ORFEVRE-1 (1c) — la FK `fk_sirene_etablissements_commune` (CIRCUIT-5, VALIDÉE) interdit
+    l'entrée d'un code hors 97401→97424 : sans garde, UNE coquille amont (INSEE porte 97454) fait
+    échouer TOUT le rechargement (DELETE+INSERT rollback). Le chargeur corrige la coquille CONNUE
+    (97454 → 97411, CIRCUIT-5b) et écarte en comptant tout autre code hors référentiel."""
+    import duckdb
+    con = duckdb.connect()
+    stock, geo = tmp_path / "stock.parquet", tmp_path / "geo.parquet"
+    con.execute(f"""COPY (SELECT * FROM (VALUES
+      ('90000000000011','10.71C','O','NORMALE','',  '97415','01','1','RUE','A','A', DATE '2016-05-04', DATE '2025-12-06'),
+      ('83939934200147','10.71C','O','COQUILLE','', '97454','01','133','RUE','JULES REYDELLET','A', DATE '2019-01-01', DATE '2025-01-01'),
+      ('90000000000066','10.71C','O','INCONNUE','', '97499','01','1','RUE','B','A', DATE '2015-01-01', DATE '2024-01-01')
+     ) AS t(siret, activitePrincipaleEtablissement, statutDiffusionEtablissement,
+            denominationUsuelleEtablissement, enseigne1Etablissement, codeCommuneEtablissement,
+            trancheEffectifsEtablissement, numeroVoieEtablissement, typeVoieEtablissement,
+            libelleVoieEtablissement, etatAdministratifEtablissement,
+            dateCreationEtablissement, dateDernierTraitementEtablissement)) TO '{stock}' (FORMAT parquet)""")
+    con.execute(f"""COPY (SELECT * FROM (VALUES
+      ('90000000000011', 55.2707, -21.0096, '11', '0101', '97415', 'HZ'),
+      ('83939934200147', 55.4558, -20.8930, '11', '0101', '97454', 'HZ'),
+      ('90000000000066', 55.2710, -21.0090, '11', '0101', '97499', 'HZ')
+     ) AS t(siret, x_longitude, y_latitude, qualite_xy, plg_iris, plg_code_commune, plg_qp24))
+     TO '{geo}' (FORMAT parquet)""")
+    with session_scope() as s:
+        seed_sources.seed(s)
+        ensure_tables(s)
+        r = build_sirene_etablissements(s, geo_url=f"file://{geo}", stock_url=f"file://{stock}")
+        corrige = s.execute(text(
+            "SELECT insee, commune FROM sirene_etablissements WHERE siret = '83939934200147'")).first()
+        absente = s.execute(text(
+            "SELECT count(*) FROM sirene_etablissements WHERE siret = '90000000000066'")).scalar()
+    assert r["n"] == 2 and r["n_hors_referentiel"] == 1
+    assert corrige == ("97411", "Saint-Denis"), "coquille connue CORRIGÉE (97454 → 97411), jamais perdue"
+    assert absente == 0, "code inconnu hors référentiel : écarté, compté, jamais inséré"
