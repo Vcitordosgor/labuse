@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useApp } from '../../store/useApp'
-import { getMoteursConfig, postEtude, ETUDE_PDF_URL, etudePdfInit } from '../../lib/api'
+import { getMoteursConfig, postEtude, ETUDE_PDF_URL, etudePdfInit, ApiError } from '../../lib/api'
 import type { EtudeIn, EtudePayload, EtudeScenario } from '../../lib/api'
 import { fmtInt } from '../../lib/format'
 import { Bouton } from '../ui/Bouton'
@@ -141,6 +141,12 @@ export function M22({ embedded = false, initialIdus, onBilan, onClose }: {
   const data: EtudePayload | undefined = run.data
   const scenarios = data?.scenarios ?? []
   const actif: EtudeScenario | undefined = scenarios[Math.min(tab, Math.max(0, scenarios.length - 1))]
+
+  // Message d'erreur de génération : une entrée refusée (400, ex. « parcelles non contiguës ») affiche
+  // le motif EXACT du moteur, SANS bouton réessayer (relancer la même assiette échouerait pareil) ; une
+  // panne quelconque garde le message générique + réessayer.
+  const erreur400 = run.error instanceof ApiError && run.error.status === 400 ? run.error.detail : null
+  const erreurMsg = erreur400 ?? "L'étude a échoué — réessayez."
 
   // GeoJSON du plan masse filtré par couche cochée (affichage, PAS un calcul) — réutilisé par la carte
   // intégrée (embedded) OU poussé à la carte globale (setModuleMap, hors embedded).
@@ -296,7 +302,7 @@ export function M22({ embedded = false, initialIdus, onBilan, onClose }: {
             onClick={() => { setTab(0); run.mutate(corpsBody()) }}>
             {run.isPending ? 'Génération…' : 'Générer les scénarios'}
           </Bouton>
-          {run.isError && <ErrorState message="L'étude a échoué — réessayez." retry={() => run.mutate(corpsBody())} />}
+          {run.isError && <ErrorState message={erreurMsg} retry={erreur400 ? undefined : () => run.mutate(corpsBody())} />}
         </>
       )}
 
@@ -582,7 +588,7 @@ export function M22({ embedded = false, initialIdus, onBilan, onClose }: {
             onClick={() => { setTab(0); setEditing(false); run.mutate(corpsBody()) }}>
             {run.isPending ? 'Génération…' : 'Générer les scénarios'}
           </Bouton>
-          {run.isError && <div className="mt-2"><ErrorState message="L'étude a échoué — réessayez." retry={() => run.mutate(corpsBody())} /></div>}
+          {run.isError && <div className="mt-2"><ErrorState message={erreurMsg} retry={erreur400 ? undefined : () => run.mutate(corpsBody())} /></div>}
         </div>
       )}
 

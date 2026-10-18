@@ -326,3 +326,12 @@ def test_scenario_json_rejouable(scenario, tmp_path):
         assert k in d
     s = d["tableau_capacite"]["surfaces_mesurees_m2"]
     assert abs(s["somme"] - d["terrain"]["aire_dessin_m2"]) < 1.0
+
+
+# IMPLANTATION-4 (parcelles multiples) — une assiette doit être d'UN SEUL TENANT. Deux parcelles de
+# communes différentes (L'Étang-Salé + Saint-Denis) ne sont évidemment pas contiguës : le moteur REFUSE
+# avec un message clair (ValueError → 400 côté route), au lieu de garder silencieusement un morceau.
+def test_parcelles_non_contigues_refusees(session_reelle):
+    idus = [IDUS_ETANG_SALE[0], IDUS_SAINT_DENIS[0]]
+    with pytest.raises(ValueError, match="contigu"):
+        etudier(session=session_reelle, idus=idus, avec_pente=False)

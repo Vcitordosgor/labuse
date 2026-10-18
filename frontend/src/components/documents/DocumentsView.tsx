@@ -440,6 +440,7 @@ function Bibliotheque() {
 
 export function DocumentsView() {
   const [porte, setPorte] = useState<DocCatalogue | null>(null)
+  const ouvrirEtude = useApp((s) => s.ouvrirEtude)
   // fermeture propre si l'on quitte la vue pendant qu'une porte est ouverte.
   const mounted = useRef(true)
   useEffect(() => () => { mounted.current = false }, [])
@@ -455,7 +456,11 @@ export function DocumentsView() {
         </p>
         <div className="grid grid-cols-4 gap-3 max-[1100px]:grid-cols-2">
           {CATALOGUE.map((d) => (
-            <DocCard key={d.key} d={d} onOpen={() => setPorte(d)} />
+            // IMPLANTATION-4 (parcelles multiples) — la carte « Étude de faisabilité » n'ouvre PLUS la
+            // fenêtre « Sur quelle parcelle ? » : elle ouvre directement l'écran d'étude (état 1), dont
+            // le champ AJOUTE les parcelles (assiette de 1 à 8). Les autres documents gardent leur porte.
+            <DocCard key={d.key} d={d}
+              onOpen={() => (d.key === 'etude-faisabilite' ? ouvrirEtude([]) : setPorte(d))} />
           ))}
         </div>
         <Bibliotheque />

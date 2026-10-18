@@ -1,9 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { fireEvent, render, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useApp } from '../../store/useApp'
 import { MODULES } from './registry'
 import { EtudeEcran } from './EtudeEcran'
+import { DocumentsView } from '../documents/DocumentsView'
 
 // IMPLANTATION-4 (LOT A) — l'Étude de faisabilité a QUITTÉ les Outils et vit dans Docs : overlay plein
 // écran piloté par le store (`etudeIdus`), ouvert par la 9e carte Docs / la tuile fiche / le pont
@@ -66,5 +67,25 @@ describe('LOT A — overlay Étude dans Docs', () => {
     await waitFor(() => expect(container.querySelector('[data-etude-ecran]')).toBeTruthy())
     fireEvent.click(getByText('← Fermer'))
     expect(useApp.getState().etudeIdus).toBeNull()
+  })
+})
+
+// IMPLANTATION-4 (parcelles multiples) — dans Docs, la carte « Étude de faisabilité » ouvre DIRECTEMENT
+// l'écran d'étude (état 1, assiette VIDE à composer), SANS la fenêtre « Sur quelle parcelle ? ».
+describe('parcelles multiples — la carte Docs ouvre l\'état 1 (pas de picker)', () => {
+  beforeEach(() => { useApp.setState({ etudeIdus: null }); global.fetch = vi.fn(async (u: string) =>
+    ({ ok: true, json: async () => (String(u).includes('/documents') ? { documents: [], total: 0 } : {}) }) as never) as unknown as typeof fetch })
+  afterEach(() => { vi.restoreAllMocks(); useApp.setState({ etudeIdus: null }) })
+
+  it('clic sur la carte Étude → ouvrirEtude([]) et AUCUNE fenêtre « Sur quelle parcelle ? »', async () => {
+    render(<QueryClientProvider client={qc()}><DocumentsView /></QueryClientProvider>)
+    const carte = await waitFor(() => {
+      const b = [...document.querySelectorAll('button')].find((x) => /Étude de faisabilité/.test(x.textContent ?? ''))
+      if (!b) throw new Error('carte Étude introuvable')
+      return b as HTMLElement
+    })
+    fireEvent.click(carte)
+    expect(useApp.getState().etudeIdus).toEqual([])          // overlay demandé, assiette vide
+    expect(screen.queryByText('Sur quelle parcelle ?')).toBeNull()   // pas de fenêtre de choix
   })
 })

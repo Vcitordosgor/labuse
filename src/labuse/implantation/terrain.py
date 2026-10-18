@@ -131,7 +131,26 @@ def charger(session, idus: list[str], *, recul_voie_m: float, recul_separative_m
 
     aw = session.execute(text("SELECT ST_AsText(ST_Union(geom_2975)) FROM parcels WHERE id = ANY(:i)"),
                          {"i": ids}).scalar()
-    assiette = _plus_grand_polygone(shp_wkt.loads(aw))
+    union = shp_wkt.loads(aw)
+    assiette = _plus_grand_polygone(union)
+    # IMPLANTATION-4 (parcelles multiples) — l'assiette doit être d'UN SEUL TENANT. Contiguïté =
+    # LIMITE PARTAGÉE avec tolérance 0,5 m (même seuil que la classification « voisin cadastré ≤ 0,5 m »).
+    # Des parcelles qui se touchent s'unissent en UN Polygon ; si l'union est un MultiPolygon, on ferme
+    # les micro-écarts ≤ 0,5 m (fermeture morphologique, coins conservés) : s'il reste PLUSIEURS morceaux,
+    # les parcelles ne sont pas contiguës → on REFUSE (message clair, pas de génération) au lieu de garder
+    # silencieusement le plus grand morceau (ancien `_plus_grand_polygone` qui masquait le trou).
+    if len(parcelles) > 1 and isinstance(union, MultiPolygon):
+        morceaux = [g for g in union.geoms if g.area > 1.0]   # on ignore les éclats < 1 m² (flottant)
+        if len(morceaux) > 1:
+            TOL = 0.5
+            ferme = union.buffer(TOL / 2, join_style=2).buffer(-TOL / 2, join_style=2)
+            restants = [g for g in getattr(ferme, "geoms", [ferme]) if g.area > 1.0]
+            if len(restants) > 1:
+                raise ValueError(
+                    "parcelles non contiguës : les parcelles choisies ne partagent pas de limite "
+                    "(tolérance 0,5 m) — l'assiette doit être d'un seul tenant. "
+                    "Choisissez des parcelles mitoyennes.")
+            assiette = _plus_grand_polygone(ferme)            # écart ≤ 0,5 m ponté → un seul tenant
     aire_dessin = float(assiette.area)
     contenance_totale = sum((p.contenance_m2 or p.aire_dessin_m2) for p in parcelles)
 
