@@ -92,10 +92,10 @@ export const CATALOGUE: DocCatalogue[] = [
   {
     // IMPLANTATION-4 (LOT A) — 9e carte : l'Étude de faisabilité a QUITTÉ les Outils, elle vit ICI. La
     // carte n'exporte plus un PDF « par défaut » : elle OUVRE l'écran d'étude complet (configuration,
-    // scénarios A/B/C, plan masse sur carte intégrée, hypothèses), sur le modèle du Bilan — on génère le
-    // PDF DEPUIS l'écran, une fois le scénario choisi. Même composant (M22), même API (POST /modules/etude).
+    // scénarios A/B/C, plan masse DESSINÉ, hypothèses), sur le modèle du Bilan — on génère le PDF DEPUIS
+    // l'écran, une fois le scénario choisi. Même composant (M22), même API (POST /modules/etude).
     key: 'etude-faisabilite', nom: 'Étude de faisabilité', kind: 'parcelle', formats: ['PDF'],
-    desc: 'Scénarios d’implantation collectif : fourchette de logements, plan masse, contrôles 4 états — pré-faisabilité, jamais « conforme ».',
+    desc: 'Scénarios d’implantation collectif : fourchette de logements, plan masse dessiné, contrôles des règles du PLU — pré-faisabilité.',
     cta: 'Ouvrir l’étude de faisabilité',
     explication: 'Ouvre l’écran d’étude : configuration, scénarios A/B/C, plan masse, puis « Générer le PDF ».',
   },

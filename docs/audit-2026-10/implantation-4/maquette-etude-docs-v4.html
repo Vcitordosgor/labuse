@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Maquette v4 — Étude de faisabilité (Docs, sans carte)</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#0B0D0C; --panel:#121614; --card:#171C19; --line:#242B27; --line2:#2E3631;
+  --txt:#E8EDEA; --mut:#8A948E; --mint:#4ADE80; --mint-d:#22C55E; --mint-bg:rgba(74,222,128,.12);
+  --ambre:#F59E0B; --ambre-bg:rgba(245,158,11,.14); --rouge:#F87171; --rouge-bg:rgba(248,113,113,.12);
+}
+*{box-sizing:border-box}
+body{margin:0;background:#050605;font-family:Inter,system-ui,sans-serif;color:var(--txt);font-size:14px;line-height:1.45}
+.note{max-width:1280px;margin:18px auto;background:#FFFBEB;color:#3B2F0A;border-radius:8px;padding:12px 16px;font-size:13px}
+.note b{color:#000}
+.note ul{margin:6px 0 0;padding-left:18px}
+h1.part{max-width:1280px;margin:30px auto 10px;font-size:16px;color:var(--mut);font-weight:600;letter-spacing:.02em;text-transform:uppercase}
+.screen{max-width:1280px;margin:0 auto 28px;background:var(--bg);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+/* header */
+.hd{display:flex;align-items:center;gap:16px;padding:16px 24px;border-bottom:1px solid var(--line);background:var(--panel)}
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line2);border-radius:8px;padding:8px 14px;font-weight:500;color:var(--txt);background:transparent;cursor:pointer;font:inherit;white-space:nowrap}
+.btn:hover{background:var(--mint);color:#0B0D0C;border-color:var(--mint)}
+.btn.pri{background:var(--mint);color:#0B0D0C;border-color:var(--mint);font-weight:600}
+.btn.ghost{border-color:transparent;color:var(--mut)}
+.hd h2{margin:0;font-size:18px;font-weight:600}
+.hd .sub{color:var(--mut);font-size:13px;margin-top:2px}
+.hd .sp{flex:1}
+/* état 1 */
+.cfg{max-width:760px;margin:0 auto;padding:36px 24px 44px}
+.lead{color:var(--mut);margin:0 0 28px;font-size:15px}
+.blk{margin-bottom:26px}
+.lbl{font-size:12px;font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.lbl i{font-style:normal;border:1px solid var(--line2);border-radius:50%;width:15px;height:15px;font-size:10px;display:inline-flex;align-items:center;justify-content:center;text-transform:none}
+.input{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line2);border-radius:10px;padding:6px 6px 6px 14px}
+.input span{flex:1;color:var(--mut)}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.chip{display:inline-flex;align-items:center;gap:8px;background:var(--mint-bg);color:var(--mint);border-radius:999px;padding:5px 12px;font-family:ui-monospace,monospace;font-size:13px}
+.hint{color:var(--mut);font-size:12.5px;margin-top:8px}
+.hint u{color:var(--txt);text-decoration-color:var(--mint)}
+.terrain{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+.terrain div{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.terrain b{display:block;font-size:15px} .terrain span{color:var(--mut);font-size:12px}
+.seg{display:grid;gap:8px}
+.seg.c3{grid-template-columns:repeat(3,1fr)} .seg.c4{grid-template-columns:repeat(4,1fr)} .seg.c2{grid-template-columns:repeat(2,1fr)}
+.opt{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;cursor:pointer}
+.opt b{display:block;font-weight:600}
+.opt small{color:var(--mut);font-size:12px}
+.opt.on{border-color:var(--mint);background:var(--mint-bg)}
+.opt.on b{color:var(--mint)}
+.opt.off{opacity:.45;cursor:default;border-style:dashed}
+.opt.off small::after{content:" · bientôt"}
+.go{display:block;width:100%;margin-top:8px;padding:14px;font-size:15px;justify-content:center}
+/* état 2 */
+.res{display:grid;grid-template-columns:330px 1fr;min-height:760px}
+.side{border-right:1px solid var(--line);padding:20px;background:var(--panel)}
+.main{padding:20px 24px}
+.sc{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px;cursor:pointer;background:var(--card)}
+.sc.sel{border-color:var(--mint);box-shadow:0 0 0 1px var(--mint) inset}
+.sc .t{display:flex;justify-content:space-between;align-items:center;font-weight:600}
+.sc .k{margin-top:6px;font-size:13px}
+.sc .c{margin-top:4px;color:var(--mut);font-size:12px}
+.st{font-size:11px;font-weight:600;border-radius:999px;padding:2px 9px}
+.st.ok{background:var(--mint-bg);color:var(--mint)} .st.cp{background:var(--ambre-bg);color:var(--ambre)}
+.side h4{margin:22px 0 10px;font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.05em}
+.acts{display:grid;gap:8px}
+.acts .btn{justify-content:center}
+.keys{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.key{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.key b{display:block;font-size:24px;font-weight:700;letter-spacing:-.01em}
+.key span{color:var(--mut);font-size:12.5px}
+.key em{font-style:normal;color:var(--mut);font-size:12px}
+.planbox{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:16px}
+.planhd{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.planhd b{font-weight:600}
+.toggles{display:flex;gap:6px;flex-wrap:wrap}
+.tg{font-size:12px;border:1px solid var(--line2);border-radius:999px;padding:3px 10px;color:var(--mut)}
+.tg.on{color:var(--txt);border-color:var(--mint)}
+.plan{width:100%;height:auto;display:block;background:#0F1311;border-radius:8px}
+.leg{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--mut);margin-top:8px}
+.leg i{display:inline-block;width:12px;height:10px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+details{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+summary{cursor:pointer;font-weight:600;list-style:none;display:flex;justify-content:space-between;align-items:center}
+summary::after{content:"+";color:var(--mut);font-size:18px}
+details[open] summary::after{content:"–"}
+summary small{color:var(--mut);font-weight:400;margin-left:8px}
+.row{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}
+.row .l{color:var(--mut)}
+.row .v{font-weight:600;text-align:right}
+.row .s{display:block;font-weight:400;font-size:11.5px;color:var(--mut)}
+.nat{font-size:10.5px;font-weight:600;border-radius:4px;padding:1px 6px;margin-left:6px;vertical-align:1px}
+.nat.s{background:var(--mint-bg);color:var(--mint)} .nat.e{background:#2A302C;color:#B8C2BC} .nat.d{background:#20262A;color:#9DB4C7}
+.okv{color:var(--mint);font-weight:600} .nev{color:var(--ambre);font-weight:600} .nav{color:var(--mut);font-weight:600}
+.warn{margin-top:14px;color:var(--mut);font-size:12px;border-top:1px solid var(--line);padding-top:12px}
+.tbd{border:1px dashed var(--line2);border-radius:4px;padding:0 6px;color:var(--mut);font-weight:500}
+</style>
+</head>
+<body>
+
+<div class="note">
+  <b>Maquette v4 — l'Étude de faisabilité dans Docs, sans carte.</b> Témoin L'Étang-Salé AW 99 + 451 + 624 + 625. Chiffres d'exemple, mais cohérents : les 34 places annoncées sont les 34 places dessinées.
+  <ul>
+    <li><b>Plus de carte</b> : le plan masse est un dessin tiré de la géométrie du scénario (comme dans le PDF), sans fond de carte. Plusieurs parcelles : on les saisit, ou on arrive depuis Assemblage.</li>
+    <li><b>Écran pleine largeur</b> : état 1 = configuration centrée en cartes cliquables ; état 2 = scénarios à gauche, chiffres clés + plan masse au centre, détails repliables dessous.</li>
+    <li>« Réinitialiser » en haut à droite, plus de « Nouvelle étude ». Aucune phrase interne (« jamais conforme ») côté client.</li>
+    <li>Actions du scénario : Générer le PDF · Bilan de ce scénario · Voir en 3D dans le gabarit.</li>
+  </ul>
+</div>
+
+<h1 class="part">État 1 — configuration</h1>
+<div class="screen">
+  <div class="hd">
+    <button class="btn">← Fermer</button>
+    <div><h2>Étude de faisabilité</h2><div class="sub">AW 99 · AW 451 · AW 624 · AW 625 — L'Étang-Salé</div></div>
+    <div class="sp"></div>
+    <button class="btn ghost">↺ Réinitialiser</button>
+  </div>
+  <div class="cfg">
+    <p class="lead">Ce que le terrain peut recevoir en collectif : implantation dessinée, capacité et contrôles des règles du PLU.</p>
+
+    <div class="blk">
+      <div class="lbl">Terrain · 1 à 8 parcelles contiguës</div>
+      <div class="input"><span>Ajouter une parcelle : adresse, IDU ou référence (AW0451)</span><button class="btn">Ajouter</button></div>
+      <div class="chips"><span class="chip">AW 99 ×</span><span class="chip">AW 451 ×</span><span class="chip">AW 624 ×</span><span class="chip">AW 625 ×</span></div>
+      <div class="hint">Pour choisir les parcelles sur la carte, passez par <u>l'outil Assemblage</u>.</div>
+      <div class="terrain">
+        <div><b>1 746 m²</b><span>Contenance cadastrale</span></div>
+        <div><b>UA</b><span>Zone PLU · 17/09/2025</span></div>
+        <div><b>4 parcelles</b><span>Contiguës, assiette fusionnée</span></div>
+      </div>
+    </div>
+
+    <div class="blk">
+      <div class="lbl">Type de projet</div>
+      <div class="seg c3">
+        <div class="opt on"><b>Collectif</b><small>Un ou plusieurs bâtiments</small></div>
+        <div class="opt off"><b>Maisons groupées</b><small>En bande</small></div>
+        <div class="opt off"><b>Lotissement</b><small>Lots + voirie</small></div>
+      </div>
+    </div>
+
+    <div class="blk">
+      <div class="lbl">Objectif <i>i</i></div>
+      <div class="seg c4">
+        <div class="opt on"><b>Équilibre</b><small>Par défaut</small></div>
+        <div class="opt"><b>Plus de logements</b><small>Nombre max</small></div>
+        <div class="opt"><b>Plus de surface</b><small>Surface habitable</small></div>
+        <div class="opt"><b>Plus simple</b><small>Un seul bâtiment</small></div>
+      </div>
+    </div>
+
+    <div class="blk">
+      <div class="lbl">Programme <i>i</i></div>
+      <div class="seg c2">
+        <div class="opt on"><b>LABUSE propose</b><small>Répartition T2 / T3 / T4 estimée, modifiable</small></div>
+        <div class="opt"><b>Je saisis mon programme</b><small>Nombre et surface par type</small></div>
+      </div>
+    </div>
+
+    <div class="blk">
+      <div class="lbl">Stationnement et terrain</div>
+      <div class="seg c4">
+        <div class="opt on"><b>Aérien</b><small>Places au sol</small></div>
+        <div class="opt off"><b>En ouvrage</b><small>Sous-sol</small></div>
+        <div class="opt on"><b>Terrain libéré</b><small>Bâti démoli</small></div>
+        <div class="opt off"><b>Garder le bâti</b><small>Existant conservé</small></div>
+      </div>
+    </div>
+
+    <button class="btn pri go">Générer les scénarios</button>
+  </div>
+</div>
+
+<h1 class="part">État 2 — scénarios</h1>
+<div class="screen">
+  <div class="hd">
+    <button class="btn">← Fermer</button>
+    <div><h2>Étude de faisabilité</h2><div class="sub">AW 99-451-624-625 · Collectif · Équilibre · Aérien · Terrain libéré <a style="color:var(--mint);margin-left:8px">Modifier</a></div></div>
+    <div class="sp"></div>
+    <button class="btn ghost">↺ Réinitialiser</button>
+  </div>
+  <div class="res">
+    <aside class="side">
+      <div class="sc sel"><div class="t"><span>A · Barre R+3</span><span class="st ok">Exploitable</span></div><div class="k">28 logements · 34 places</div><div class="c">7 réussis · 0 échoué · 3 non effectués</div></div>
+      <div class="sc"><div class="t"><span>B · Deux barres R+3</span><span class="st ok">Exploitable</span></div><div class="k">26 logements · 32 places</div><div class="c">8 réussis · 0 échoué · 2 non effectués</div></div>
+      <div class="sc"><div class="t"><span>C · Barre R+2</span><span class="st cp">À compléter</span></div><div class="k">20 logements · 24 places</div><div class="c">6 réussis · 0 échoué · 4 non effectués</div></div>
+
+      <h4>Ce scénario</h4>
+      <div class="acts">
+        <button class="btn pri">Générer le PDF</button>
+        <button class="btn">Bilan de ce scénario</button>
+        <button class="btn">Voir en 3D dans le gabarit</button>
+      </div>
+      <div class="warn">Pré-faisabilité indicative, à faire confirmer par un architecte. Ni étude d'architecte, ni preuve de conformité.</div>
+    </aside>
+
+    <section class="main">
+      <div class="keys">
+        <div class="key"><b>28</b><span>logements</span> <em>T2 ×18 · T3 ×10</em></div>
+        <div class="key"><b>34</b><span>places dessinées</span> <em>/ 34 imposées</em></div>
+        <div class="key"><b>2 020 m²</b><span>SDP du scénario</span></div>
+        <div class="key"><b>R+3</b><span>sous 12 m à l'égout</span></div>
+      </div>
+
+      <div class="planbox">
+        <div class="planhd">
+          <b>Plan masse — scénario A</b>
+          <div class="toggles"><span class="tg on">Bâtiment</span><span class="tg on">Places</span><span class="tg on">Allée</span><span class="tg on">Reculs</span><span class="tg">Modules</span><span class="tg">PPR</span></div>
+        </div>
+        <svg class="plan" id="plan" viewBox="0 0 900 420"></svg>
+        <div class="leg">
+          <span><i style="background:transparent;border:2px dashed #F87171"></i>Limite des parcelles</span>
+          <span><i style="background:rgba(74,222,128,.18);border:1px solid #22C55E"></i>Zone d'implantation</span>
+          <span><i style="background:#E8EDEA"></i>Bâtiment</span>
+          <span><i style="background:#0F1311;border:1px solid #8A948E"></i>Place 2,5 × 5 m</span>
+          <span><i style="background:#2E3631"></i>Allée 5 m</span>
+          <span><i style="background:#F59E0B"></i>Accès</span>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <details open><summary>Programme <small>LABUSE propose</small></summary>
+          <div class="row"><span class="l">Répartition<span class="nat e">Estimé</span></span><span class="v">T2 ×18 · T3 ×10<span class="s">modifiable</span></span></div>
+          <div class="row"><span class="l">Logements aidés imposés<span class="nat s">Sourcé</span></span><span class="v"><span class="tbd">20 % de la SDP habitation</span></span></div>
+          <div class="row"><span class="l">Surface habitable estimée<span class="nat d">ƒ</span></span><span class="v">1 470 m²<span class="s">SHAB / SDP 0,73</span></span></div>
+        </details>
+        <details open><summary>Contrôles <small>7 réussis · 3 non effectués</small></summary>
+          <div class="row"><span class="l">Emprise ≤ 70 % (1 222 m²)</span><span class="v okv">Réussi</span></div>
+          <div class="row"><span class="l">Hauteur ≤ 12 m à l'égout</span><span class="v okv">Réussi</span></div>
+          <div class="row"><span class="l">Stationnement 34 / 34</span><span class="v okv">Réussi</span></div>
+          <div class="row"><span class="l">Distance entre constructions</span><span class="v nav">Non applicable</span></div>
+          <div class="row"><span class="l">Locaux vélos · déchets</span><span class="v nev">Non effectué</span></div>
+        </details>
+        <details><summary>Distribution par niveau <small>7 logements par niveau</small></summary>
+          <div class="row"><span class="l">RDC · R+1 · R+2 · R+3</span><span class="v">7 · 7 · 7 · 7</span></div>
+        </details>
+        <details><summary>Stationnement et accès <small>34 places · accès sud</small></summary>
+          <div class="row"><span class="l">Places dessinées · imposées</span><span class="v">34 · 34</span></div>
+          <div class="row"><span class="l">Accès véhicule</span><span class="v">Avenue Raymond Barre<span class="s">visibilité à confirmer</span></span></div>
+        </details>
+        <details><summary>Hypothèses <small>3 modifiables</small></summary>
+          <div class="row"><span class="l">Profondeur de bâtiment<span class="nat e">Estimé</span></span><span class="v">13 m</span></div>
+          <div class="row"><span class="l">Surface moyenne T2 / T3 / T4<span class="nat e">Estimé</span></span><span class="v">50 / 65 / 80 m²</span></div>
+          <div class="row"><span class="l">Plancher → habitable<span class="nat e">Estimé</span></span><span class="v">0,80</span></div>
+          <div style="display:flex;gap:8px;margin-top:10px"><button class="btn pri">Recalculer</button><button class="btn ghost">Revenir aux valeurs LABUSE</button></div>
+        </details>
+        <details><summary>Règles et sources <small>PLU UA · 17/09/2025</small></summary>
+          <div class="row"><span class="l">Recul voie · emprise · hauteur</span><span class="v">4 m · 70 % · 12 / 15 m</span></div>
+          <div class="row"><span class="l">Perméabilité · espaces verts</span><span class="v">30 % · 20 %</span></div>
+        </details>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+// Plan masse dessiné : le nombre de places affiché (34) est le nombre de places dessinées.
+(function(){
+  const s = document.getElementById('plan'), NS='http://www.w3.org/2000/svg';
+  const el=(t,a)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);s.appendChild(e);return e;};
+  el('rect',{x:0,y:0,width:900,height:420,fill:'#0F1311'});
+  // voie
+  el('rect',{x:0,y:378,width:900,height:42,fill:'#1A201C'});
+  const tx=el('text',{x:24,y:404,fill:'#8A948E','font-size':13});tx.textContent='Avenue Raymond Barre';
+  // parcelle + zone
+  el('polygon',{points:'60,370 860,370 840,30 90,30',fill:'none',stroke:'#F87171','stroke-width':2,'stroke-dasharray':'8 5'});
+  el('polygon',{points:'80,352 840,352 822,48 110,48',fill:'rgba(74,222,128,.10)',stroke:'#22C55E','stroke-dasharray':'4 4'});
+  // bâtiment (barre)
+  el('rect',{x:120,y:60,width:690,height:62,fill:'#E8EDEA',rx:2});
+  const tb=el('text',{x:465,y:97,fill:'#0B0D0C','font-size':14,'font-weight':600,'text-anchor':'middle'});tb.textContent='Barre R+3 · 28 logements';
+  // allée
+  el('rect',{x:120,y:194,width:690,height:38,fill:'#2E3631'});
+  // places : 2 rangs de 17 = 34
+  const n=17, w=690/n; let c=0;
+  for(let r=0;r<2;r++){ for(let i=0;i<n;i++){
+    el('rect',{x:120+i*w+1,y:r?232:150,width:w-2,height:44,fill:'#0F1311',stroke:'#8A948E','stroke-width':1}); c++;
+  }}
+  const tp=el('text',{x:465,y:218,fill:'#B8C2BC','font-size':12,'text-anchor':'middle'});tp.textContent=c+' places · allée 5 m';
+  // accès
+  el('rect',{x:800,y:232,width:40,height:146,fill:'#2E3631'});
+  el('rect',{x:800,y:352,width:40,height:26,fill:'#F59E0B'});
+  const ta=el('text',{x:820,y:345,fill:'#F59E0B','font-size':12,'text-anchor':'middle'});ta.textContent='accès';
+  // espaces libres
+  el('rect',{x:120,y:290,width:670,height:56,fill:'rgba(74,222,128,.22)'});
+  const te=el('text',{x:455,y:323,fill:'#4ADE80','font-size':12,'text-anchor':'middle'});te.textContent='espaces libres / pleine terre';
+  const tr=el('text',{x:90,y:366,fill:'#8A948E','font-size':11});tr.textContent='recul 4 m';
+})();
+</script>
+</body>
+</html>

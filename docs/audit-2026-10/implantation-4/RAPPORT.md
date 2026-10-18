@@ -141,12 +141,53 @@ changements sont d'affichage (front), de libellés d'export (back) et de câblag
 
 ---
 
+## Suite v4 — l'écran d'étude SANS CARTE (maquette `maquette-etude-docs-v4.html`)
+
+Sur retour de CC : l'écran d'étude suit désormais fidèlement la maquette v4, **plein écran, thème sombre,
+sans carte**. Référence : `docs/audit-2026-10/implantation-4/maquette-etude-docs-v4.html`.
+
+- **Plus de carte** : `PlanMasseCarte` (instance MapLibre intégrée) est **supprimée**. Le plan masse est
+  un **dessin SVG** (`PlanMasseSvg.tsx`) tiré de la géométrie du scénario — projection équirectangulaire
+  locale, z-order et palette **repris au trait de `exports/etude_faisabilite.py` `_svg_plan`** (« le même
+  rendu que le PDF »), fond sombre, couches activables (Bâtiments, Modules, Places, Allées, Accès, Reculs,
+  PPR, Espaces libres). Aucun second calcul, aucune requête : il ne projette que `actif.geojson` déjà servi.
+  L'overlay ne charge plus MapLibre.
+- **Parcelles (état 1)** : champ de saisie seul (`ParcelInput`, sans invite carte) + puces ; lien
+  « choisir sur la carte via **l'outil Assemblage** ». Arrivées fiche / Assemblage inchangées.
+- **Mise en page** : état 1 = configuration **centrée** (résumé du terrain : nb de parcelles toujours,
+  contenance + zone dès qu'elles sont servies), « bientôt » grisé, bouton « Générer les scénarios ».
+  État 2 = **colonne gauche** (scénarios à deux statuts + actions Générer le PDF / Bilan de ce scénario /
+  Voir en 3D) · **centre** = 4 chiffres clés + plan masse dessiné · **dessous** = sections repliables sur
+  deux colonnes. « Modifier » (en-tête) revient à l'état 1 sans jeter les scénarios.
+- **En-tête** (porté par M22 en mode `embedded`) : « ← Fermer » à gauche, « Réinitialiser » en haut à
+  droite (plus de « Nouvelle étude »). `EtudeEcran` n'est plus qu'une coquille d'overlay.
+- **Aucune phrase interne côté client** : « jamais conforme » retiré (en-tête, intro, description Docs).
+  Une seule ligne d'intro : « Ce que le terrain peut recevoir en collectif : implantation dessinée,
+  capacité et contrôles des règles du PLU. »
+- **Verrou maintenu** : nombre de places / logements affichés = nombre d'objets dessinés (`resume`).
+
+`tsc` 0 · `vitest` 266 verts · build OK (le chunk Étude ne tire plus MapLibre). Hors `embedded` (chemin
+Outils legacy, rendu par les tests) : comportement historique inchangé (une colonne, carte globale).
+
+### Captures v4 (`captures/`, harnais Vite à fetch bouchonné — `capture-etude.html` ; API et navigateur
+arrêtés, ports 6061/8861 LIBRES vérifiés par `lsof`)
+| Fichier | État | Ce qu'il prouve |
+|---|---|---|
+| `C1-ecran-etude-config.png` | **avant** | Écran d'étude v3 — état configuration (deux colonnes). |
+| `C2-ecran-etude-scenarios-planmasse.png` | **avant** | Scénarios + **carte intégrée** (MapLibre). |
+| `G1-apres-ecran-etude-config-sans-carte.png` | **après** | État 1 v4 — configuration **centrée**, sans carte, « Réinitialiser » en haut à droite. |
+| `G2-apres-ecran-etude-scenarios-planmasse-svg.png` | **après** | État 2 v4 — scénarios à gauche, 4 chiffres clés, **plan masse DESSINÉ (SVG)**, couches, sections ; « Modifier » en en-tête. |
+
+> Toggle de couche vérifié à l'écran (« Modules logements » On → le module se superpose au bâtiment ;
+> 28 / 34 / 2 020 inchangés = le filtre d'affichage ne recalcule rien).
+
 ## Commits (pas de merge)
 
 1. `feat(implantation-4): LOT A — l'Étude de faisabilité quitte les Outils et vit dans Docs`
 2. `feat(implantation-4): LOT B — plus aucun nombre de logements de l'ancien moteur`
 3. `feat(implantation-4): LOT C — libellés de SDP (ancien moteur vs Étude)`
 4. `docs(implantation-4): RAPPORT + captures + hook QA ouvrirEtude`
+5. `feat(implantation-4): suite v4 — écran d'étude SANS carte (plan masse dessiné en SVG), maquette v4`
 
 ## Gestes pour Vic
 

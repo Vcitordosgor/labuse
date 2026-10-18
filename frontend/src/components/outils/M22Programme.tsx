@@ -9,22 +9,25 @@ import { Badge } from '../ui/Badge'
 import { Case } from '../ui/Case'
 import { Reinitialiser } from '../ui/Reinitialiser'
 import { EntreeParcelle } from './EntreeParcelle'
+import { ParcelInput } from '../ParcelInput'
 import { ErrorState } from '../States'
 import { Chargement } from '../Loading'
 import { useOuvrirDocument } from '../../lib/ouvrirDocument'
-import { PlanMasseCarte } from './PlanMasseCarte'
+import { PlanMasseSvg } from './PlanMasseSvg'
 
 /** M22 · ÉTUDE DE FAISABILITÉ — l'étude de faisabilité EN LIGNE. Deux états : (1) configuration
  *  (assiette 1–8 parcelles, type, objectif, programme, stationnement) et (2) scénarios (jusqu'à 3
  *  cartes, plan masse sur la carte, sections repliables). UN SEUL moteur, servi par POST /modules/etude.
  *  AUCUN CALCUL ICI : l'écran n'affiche que le payload de l'API et filtre le GeoJSON par couche cochée.
  *
- *  IMPLANTATION-4 (LOT A) — l'Étude a QUITTÉ les Outils : elle vit dans un overlay Docs (EtudeEcran).
- *  En mode `embedded`, le MÊME composant tourne avec (1) une sélection LOCALE (il ne touche plus au
- *  `msel` global, partagé avec l'Assemblage), (2) sa carte INTÉGRÉE (PlanMasseCarte) au lieu de la carte
- *  de fond (plus de setModuleMap), (3) un pont « Bilan de ce scénario » (onBilan). Hors `embedded`, le
- *  comportement historique (carte globale via setModuleMap) est intact — les tests Etude.test.tsx le
- *  rendent ainsi. Aucun second calcul : le plan masse réutilise `actif.geojson`. */
+ *  IMPLANTATION-4 — l'Étude a QUITTÉ les Outils : elle vit dans un overlay Docs (EtudeEcran), et depuis
+ *  la suite v4 elle n'a PLUS DE CARTE. En mode `embedded`, le MÊME composant tourne avec (1) une sélection
+ *  LOCALE (il ne touche plus au `msel` global, partagé avec l'Assemblage), (2) la MISE EN PAGE de la
+ *  maquette v4 (plein écran, en-tête ← Fermer / Réinitialiser, état 1 = configuration centrée, état 2 =
+ *  scénarios à gauche + chiffres clés + PLAN MASSE DESSINÉ au centre (PlanMasseSvg, plus de carte) +
+ *  sections repliables dessous), (3) un pont « Bilan de ce scénario » (onBilan) et sa fermeture (onClose).
+ *  Hors `embedded`, le comportement historique (une colonne, carte globale via setModuleMap) est intact —
+ *  les tests Etude.test.tsx le rendent ainsi. Aucun second calcul : le plan masse réutilise `actif.geojson`. */
 
 const ASM_MAX_DEFAUT = 8
 const TYPES = ['T2', 'T3', 'T4'] as const
@@ -99,10 +102,11 @@ const Lbl = ({ children, aide }: { children: React.ReactNode; aide?: string }) =
 /** Programme d'un scénario, passé au pont « Bilan de ce scénario » (logements par type + SDP). */
 export type EtudeProgramme = { ref: string; logements: number; par_type: Record<string, number>; sdp_m2: number; shab_m2?: number | null }
 
-export function M22({ embedded = false, initialIdus, onBilan }: {
+export function M22({ embedded = false, initialIdus, onBilan, onClose }: {
   embedded?: boolean
   initialIdus?: string[]
   onBilan?: (prog: EtudeProgramme) => void
+  onClose?: () => void
 } = {}) {
   const { msel, setMsel, setModuleMap, parcelPrefill, setParcelPrefill, select } = useApp()
   const cfgMot = useQuery({ queryKey: ['moteurs-config'], queryFn: getMoteursConfig, staleTime: 3600_000 })
@@ -126,6 +130,9 @@ export function M22({ embedded = false, initialIdus, onBilan }: {
   const [tab, setTab] = useState(0)
   const [couches, setCouches] = useState<Record<string, boolean>>(COUCHES_DEFAUT)
   const [max8, setMax8] = useState(false)
+  // « Modifier » (embedded) : revient à la configuration (état 1) SANS jeter les scénarios déjà servis
+  // — « Générer » les régénère. Hors embedded, l'état 1/2 reste piloté par la seule présence de `data`.
+  const [editing, setEditing] = useState(false)
 
   const run = useMutation({ mutationFn: (body: EtudeIn) => postEtude(body) })
   // export PDF du SCÉNARIO AFFICHÉ (porte 1) : POST /modules/etude/pdf avec la config courante + le
@@ -180,7 +187,7 @@ export function M22({ embedded = false, initialIdus, onBilan }: {
   const wantFit = useRef(false)
   useEffect(() => { wantFit.current = true }, [data, tab])
   useEffect(() => {
-    if (embedded) return   // en overlay, c'est PlanMasseCarte qui affiche planFc — jamais la carte de fond
+    if (embedded) return   // en overlay, c'est PlanMasseSvg qui dessine planFc — jamais la carte de fond
     if (!actif) { setModuleMap({ idus: sel, extra: null }); return }
     setModuleMap({ idus: [], extra: planFc, fit: wantFit.current })
     wantFit.current = false
@@ -206,7 +213,7 @@ export function M22({ embedded = false, initialIdus, onBilan }: {
   }
 
   const resetAll = () => {
-    setSel([]); setMax8(false); run.reset(); setTab(0); setCouches(COUCHES_DEFAUT)
+    setSel([]); setMax8(false); run.reset(); setTab(0); setCouches(COUCHES_DEFAUT); setEditing(false)
     setObjectif('equilibre'); setProgMode('propose')
     setLignes({ T2: { nombre: '', surface: '' }, T3: { nombre: '', surface: '' }, T4: { nombre: '', surface: '' } })
     setHyp({ profondeur_m: '', coef: '', surfaces: { T2: '', T3: '', T4: '' } })
@@ -229,7 +236,7 @@ export function M22({ embedded = false, initialIdus, onBilan }: {
       {(sel.length > 0 || data) && (
         <div className="flex justify-end"><Reinitialiser onReset={resetAll} label="Nouvelle étude" /></div>)}
       <p className="text-[11px] leading-relaxed text-txt-mut">
-        Ce que le terrain peut recevoir en collectif, dessiné et contrôlé — pré-faisabilité, jamais « conforme ».
+        Ce que le terrain peut recevoir en collectif : implantation dessinée, capacité et contrôles des règles du PLU.
       </p>
 
       {/* ───────── ÉTAT 1 — CONFIGURATION ───────── */}
@@ -450,26 +457,327 @@ export function M22({ embedded = false, initialIdus, onBilan }: {
   // Hors overlay (Outils historique) : une seule colonne, la carte est celle de fond.
   if (!embedded) return contenu
 
-  // Overlay Docs (écran d'ordinateur) : deux colonnes — contrôles à gauche, carte intégrée à droite.
-  // La carte n'apparaît qu'une fois des scénarios servis (l'assiette se compose à la saisie).
+  // ── Overlay Docs (maquette v4, plein écran, SANS carte) ──────────────────────────────────────
+  // En-tête ← Fermer / Réinitialiser ; état 1 = configuration centrée ; état 2 = scénarios à gauche,
+  // chiffres clés + PLAN MASSE DESSINÉ (PlanMasseSvg) au centre, sections repliables sur deux colonnes.
+  const refsCourts = sel.map((i) => i.slice(8))
+  const objActuel = data ? data.entrees.objectif : objectif
+  const objLbl = OBJECTIFS.find((o) => o.key === objActuel)?.label ?? 'Équilibre'
+  const etat2 = !!data && !editing
+  const sub = etat2
+    ? `${refsCourts.join('-')} · Collectif · ${objLbl} · Aérien · Terrain libéré`
+    : `${refsCourts.length ? refsCourts.join(' · ') : 'Nouvelle étude'}${data?.entrees.commune ? ` — ${data.entrees.commune}` : ''}`
+
   return (
-    <div className="flex min-h-0 flex-1 gap-4">
-      <div className="flex min-h-0 w-[420px] shrink-0 flex-col">
-        {contenu}
+    <div className="flex min-h-0 flex-1 flex-col">
+      {/* en-tête : ← Fermer (gauche) · titre + Modifier · Réinitialiser (droite) */}
+      <div className="sticky top-0 z-10 flex shrink-0 items-center gap-3 border-b border-line bg-surface-2 px-5 py-3">
+        <Bouton niveau="secondaire" ton="vert" onClick={() => onClose?.()}>← Fermer</Bouton>
+        <div className="min-w-0 leading-tight">
+          <div className="text-[16px] font-bold text-txt">Étude de faisabilité</div>
+          <div className="truncate text-[12px] text-txt-mut">
+            {sub}
+            {etat2 && (
+              <button onClick={() => setEditing(true)}
+                className="ml-2 text-mint underline decoration-mint/40 underline-offset-2">Modifier</button>
+            )}
+          </div>
+        </div>
+        <div className="flex-1" />
+        <Reinitialiser onReset={resetAll} />
       </div>
-      {data && scenarios.length > 0 && (
-        <div className="min-h-0 flex-1 overflow-hidden rounded-lg border border-line-2">
-          <PlanMasseCarte fc={planFc} />
+
+      {/* ───────── ÉTAT 1 — CONFIGURATION (centrée) ───────── */}
+      {!etat2 && (
+        <div className="mx-auto w-full max-w-[760px] overflow-y-auto px-6 py-8">
+          <p className="mb-6 text-[13px] text-txt-mut">
+            Ce que le terrain peut recevoir en collectif : implantation dessinée, capacité et contrôles des règles du PLU.
+          </p>
+
+          <div className="mb-6">
+            <Lbl>Terrain — 1 à {ASM_MAX} parcelles contiguës</Lbl>
+            <ParcelInput dataAttr="etude-parcelle" withCarte={false} onPick={(i) => ajouter(i)}
+              placeholder="Ajouter une parcelle : adresse, IDU ou référence (AW0451)" />
+            <div className="mt-2 flex flex-wrap gap-1">
+              {sel.map((i) => (
+                <button key={i} data-etude-chip onClick={() => { setSel(sel.filter((x) => x !== i)); setMax8(false) }}
+                  className="min-h-7 rounded-full border border-mint/60 px-2 py-0.5 font-mono text-[11px] text-mint transition-colors duration-quick hover:bg-mint/10">
+                  {i.slice(8)} ×
+                </button>
+              ))}
+              {sel.length === 0 && <span className="text-[11px] text-txt-dim">aucune parcelle — saisissez une référence ci-dessus</span>}
+            </div>
+            {max8 && <p className="mt-1 text-[10.5px] text-st-creuser">{ASM_MAX} parcelles maximum.</p>}
+            <p className="mt-2 text-[11.5px] text-txt-mut">
+              Pour choisir les parcelles sur la carte, passez par{' '}
+              <button onClick={() => useApp.getState().setModule('assemblage')}
+                className="text-mint underline decoration-mint/40 underline-offset-2">l'outil Assemblage</button>.
+            </p>
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              <div className="rounded-lg border border-line bg-surface-2 px-3 py-2">
+                <b className="block text-[15px] text-txt">{sel.length} parcelle{sel.length > 1 ? 's' : ''}</b>
+                <span className="text-[11px] text-txt-dim">{sel.length > 1 ? 'Contiguës, assiette fusionnée' : 'Assiette'}</span>
+              </div>
+              {data && (<>
+                <div className="rounded-lg border border-line bg-surface-2 px-3 py-2">
+                  <b className="block text-[15px] text-txt">{fmtInt(data.terrain.contenance_totale_m2)} m²</b>
+                  <span className="text-[11px] text-txt-dim">Contenance cadastrale</span>
+                </div>
+                <div className="rounded-lg border border-line bg-surface-2 px-3 py-2">
+                  <b className="block text-[15px] text-txt">{data.entrees.zone}</b>
+                  <span className="text-[11px] text-txt-dim">Zone PLU</span>
+                </div>
+              </>)}
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <Lbl>Type de projet</Lbl>
+            <Seg value="collectif" onChange={() => {}}
+              options={[{ key: 'collectif', label: 'Collectif' },
+                        { key: 'maisons', label: 'Maisons groupées', bientot: true },
+                        { key: 'lotissement', label: 'Lotissement', bientot: true }]} />
+          </div>
+
+          <div className="mb-6">
+            <Lbl aide="L'objectif oriente le choix du meilleur scénario (répartition, hauteur, forme).">Objectif</Lbl>
+            <Seg value={objectif} onChange={setObjectif} options={OBJECTIFS} />
+          </div>
+
+          <div className="mb-6">
+            <Lbl aide="« LABUSE propose » : le moteur teste des répartitions et garde la meilleure pour l'objectif. « Je saisis » : il cherche une implantation qui contient votre programme, ou dit pourquoi ça ne tient pas.">Programme</Lbl>
+            <Seg value={progMode} onChange={setProgMode}
+              options={[{ key: 'propose', label: 'LABUSE propose' }, { key: 'saisi', label: 'Je saisis mon programme' }]} />
+            {progMode === 'saisi' && (
+              <div className="mt-2 flex flex-col gap-1.5 rounded-lg border border-line-2 bg-surface-2 px-2.5 py-2">
+                {TYPES.map((t) => (
+                  <div key={t} className="flex items-center gap-2 text-[11px]">
+                    <span className="w-6 font-mono text-txt-mut">{t}</span>
+                    <input inputMode="numeric" placeholder="nombre" value={lignes[t].nombre}
+                      onChange={(e) => setLignes({ ...lignes, [t]: { ...lignes[t], nombre: e.target.value } })}
+                      className="w-16 rounded border border-line-2 bg-surface px-1.5 py-1 text-[11px]" />
+                    <input inputMode="numeric" placeholder="m² moy." value={lignes[t].surface}
+                      onChange={(e) => setLignes({ ...lignes, [t]: { ...lignes[t], surface: e.target.value } })}
+                      className="w-20 rounded border border-line-2 bg-surface px-1.5 py-1 text-[11px]" />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="mb-6">
+            <Lbl>Stationnement</Lbl>
+            <Seg value="aerien" onChange={() => {}}
+              options={[{ key: 'aerien', label: 'Aérien' }, { key: 'ouvrage', label: 'En ouvrage', bientot: true }]} />
+          </div>
+
+          <div className="mb-6">
+            <Lbl>Terrain étudié</Lbl>
+            <Seg value="libere" onChange={() => {}}
+              options={[{ key: 'libere', label: 'Terrain libéré' }, { key: 'bati', label: 'En gardant le bâti', bientot: true }]} />
+          </div>
+
+          <Bouton niveau="primaire" ton="vert" data-etude-generer className="w-full"
+            disabled={sel.length === 0 || run.isPending}
+            onClick={() => { setTab(0); setEditing(false); run.mutate(corpsBody()) }}>
+            {run.isPending ? 'Génération…' : 'Générer les scénarios'}
+          </Bouton>
+          {run.isError && <div className="mt-2"><ErrorState message="L'étude a échoué — réessayez." retry={() => run.mutate(corpsBody())} /></div>}
         </div>
       )}
+
+      {/* ───────── ÉTAT 2 — SCÉNARIOS ───────── */}
+      {etat2 && (scenarios.length === 0 ? (
+        <div className="p-6">
+          <div className="rounded-lg border border-st-ecartee/50 bg-st-ecartee/[0.09] px-4 py-3 text-[12px] leading-snug text-st-ecartee">
+            <b>{statutCourt(data!.statut_global)}.</b> {data!.message}
+          </div>
+        </div>
+      ) : (
+        <div className="grid min-h-0 flex-1 grid-cols-[330px_1fr] overflow-hidden">
+          {/* colonne gauche — scénarios (deux statuts) + actions du scénario */}
+          <aside className="flex flex-col gap-2 overflow-y-auto border-r border-line bg-surface-2 p-4">
+            {scenarios.map((s, i) => (
+              <button key={s.ref} data-etude-carte onClick={() => setTab(i)}
+                className={`rounded-lg border px-3 py-2.5 text-left transition-colors duration-quick ${
+                  i === tab ? 'border-mint bg-mint/[0.08]' : 'border-line-2 hover:border-mint/50'}`}>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[12px] font-semibold">{s.ref} · {s.forme.replace('_', ' ')}</span>
+                  <Badge ton={statutTon(s.statut_etude)}>{statutCourt(s.statut_etude)}</Badge>
+                </div>
+                <div className="mt-1 text-[12px] text-txt">{s.resume.logements} logements · {s.resume.places} places</div>
+                <div className="mt-0.5 text-[10.5px] text-txt-dim">
+                  {s.controles_compte.reussi} réussis · {s.controles_compte.echoue} échoués · {s.controles_compte.non_effectue} non effectués
+                </div>
+              </button>
+            ))}
+
+            <h4 className="mt-3 text-[10px] font-semibold uppercase tracking-wide text-txt-dim">Ce scénario</h4>
+            <div className="flex flex-col gap-2">
+              <Bouton niveau="primaire" ton="vert" data-etude-pdf disabled={!!pdf.enCours || !actif}
+                onClick={() => actif && pdf.ouvrir(ETUDE_PDF_URL, 'etude-pdf', etudePdfInit({ ...corpsBody(), scenario_ref: actif.ref }))}>
+                {pdf.enCours ? <Chargement variant="inline" accent="courant" label="Génération…" /> : 'Générer le PDF ↓'}
+              </Bouton>
+              {onBilan && (
+                <Bouton niveau="secondaire" ton="vert" data-etude-bilan disabled={!actif} onClick={ouvrirBilanScenario}>
+                  Bilan de ce scénario →
+                </Bouton>
+              )}
+              <Bouton niveau="secondaire" ton="vert" data-etude-gabarit disabled={!actif}
+                onClick={() => { if (sel[0]) useApp.getState().setParcelPrefill(sel[0]); useApp.getState().setModule('gabarit') }}>
+                Voir en 3D dans le gabarit →
+              </Bouton>
+            </div>
+            {pdf.erreur && <p className="text-[10.5px] text-st-creuser">{pdf.erreur}</p>}
+            <p className="mt-3 border-t border-line pt-3 text-[11px] leading-snug text-txt-dim">
+              Pré-faisabilité indicative, à faire confirmer par un architecte. Ni étude d'architecte, ni preuve de conformité.
+            </p>
+          </aside>
+
+          {/* centre — 4 chiffres clés + plan masse dessiné + sections repliables */}
+          <section className="flex min-h-0 flex-col gap-3 overflow-y-auto p-5">
+            {actif && (<>
+              <div className="grid grid-cols-4 gap-2">
+                <Key v={String(actif.resume.logements)} l="logements"
+                  em={Object.entries(actif.programme.par_type).map(([t, n]) => `${t} ×${n}`).join(' · ')} />
+                <Key v={String(actif.resume.places)} l="places dessinées"
+                  em={`/ ${actif.stationnement.places_imposees ?? '—'} imposées`} />
+                <Key v={`${fmtInt(actif.resume.sdp_m2)} m²`} l="SDP du scénario" />
+                <Key v={actif.niveaux_label} l="niveaux" />
+              </div>
+
+              <div className="rounded-lg border border-line bg-surface-2 p-3">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <b className="text-[12px] text-txt">Plan masse — scénario {actif.ref}</b>
+                  <div className="flex flex-wrap gap-1">
+                    {COUCHES.map((c) => (
+                      <button key={c.key} data-etude-couche={c.key}
+                        onClick={() => setCouches({ ...couches, [c.key]: !couches[c.key] })}
+                        className={`rounded-full border px-2.5 py-0.5 text-[11px] transition-colors duration-quick ${
+                          couches[c.key] ? 'border-mint text-txt' : 'border-line-2 text-txt-dim'}`}>
+                        {c.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <PlanMasseSvg fc={planFc} />
+                <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-txt-dim">
+                  <Leg c="transparent" b="#DC2626" dash>Limite des parcelles</Leg>
+                  <Leg c="#E8EDEA">Bâtiment</Leg>
+                  <Leg c="#0F1311" b="#8A948E">Place 2,5 × 5 m</Leg>
+                  <Leg c="#2E3631">Allée</Leg>
+                  <Leg c="#F59E0B">Accès</Leg>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <Section titre="Programme" sous={data!.entrees.programme_mode === 'saisi' ? 'Projet saisi' : 'LABUSE propose'} open>
+                  <Ligne l="Répartition" v={Object.entries(actif.programme.par_type).map(([t, n]) => `${t} ×${n}`).join(' · ')}
+                    s={data!.entrees.programme_mode === 'saisi' ? 'Projet saisi' : 'Estimé · choisi par le moteur, modifiable'} />
+                  {actif.programme.mixite_applicable && (
+                    <Ligne l="Logements aidés imposés" v={`${actif.programme.logements_aides_imposes}`} s="Sourcé · PLU mixité" />)}
+                  <Ligne l="SHAB estimée" v={`${fmtInt(actif.programme.shab_estimee_m2)} m²`}
+                    s={`ratio SHAB/SDP ${actif.programme.ratio_shab_sdp ?? '—'}`} />
+                </Section>
+
+                <Section titre="Contrôles"
+                  sous={`${actif.controles_compte.reussi} réussis · ${actif.controles_compte.non_effectue} non effectués`} open>
+                  {actif.controles.map((c) => (
+                    <div key={c.nom} className="flex items-center justify-between gap-2 border-b border-line py-1.5 text-[11px] last:border-0">
+                      <span className="text-txt-mut">{c.nom}</span>
+                      <span className={c.resultat === 'Réussi' ? 'font-semibold text-mint'
+                        : c.resultat === 'Échoué' ? 'font-semibold text-st-ecartee' : 'text-txt-dim'}>
+                        {c.resultat}
+                        {c.resultat === 'Réussi' && c.citation && (
+                          <span title={c.citation} className="ml-1 cursor-help text-txt-dim">ⓘ</span>)}
+                      </span>
+                    </div>
+                  ))}
+                </Section>
+
+                <Section titre="Distribution par niveau" sous={`${actif.distribution_niveaux.length} niveaux`}>
+                  {actif.distribution_niveaux.map((d) => (
+                    <Ligne key={d.niveau} l={`Niveau ${d.niveau}`}
+                      v={Object.entries(d.par_type).map(([t, n]) => `${t} ×${n}`).join(' · ') || '—'}
+                      s={`SDP du scénario ${fmtInt(d.sdp_m2)} m²`} />
+                  ))}
+                </Section>
+
+                <Section titre="Stationnement et accès" sous={`${actif.stationnement.places} places`}>
+                  <Ligne l="Places dessinées · imposées"
+                    v={`${actif.stationnement.places} · ${actif.stationnement.places_imposees ?? '—'}`}
+                    s={actif.stationnement.note?.raison ?? 'Estimé · place 2,5 × 5 m, allée 5 m'} />
+                  {actif.stationnement.acces && (
+                    <Ligne l="Accès véhicule" v={`à ${actif.stationnement.acces.distance_angle_m} m d'un angle`} s={actif.stationnement.acces.note} />)}
+                </Section>
+
+                <Section titre="Hypothèses modifiables" sous="modifiables">
+                  <HypLigne l="Profondeur de bâtiment (m)" val={hyp.profondeur_m} defaut={data!.hypotheses.profondeur_m}
+                    onChange={(v) => setHyp({ ...hyp, profondeur_m: v })} />
+                  {TYPES.map((t) => (
+                    <HypLigne key={t} l={`Surface moyenne ${t} (m²)`} val={hyp.surfaces[t]} defaut={data!.hypotheses.surfaces[t]}
+                      onChange={(v) => setHyp({ ...hyp, surfaces: { ...hyp.surfaces, [t]: v } })} />
+                  ))}
+                  <HypLigne l="Plancher → habitable" val={hyp.coef} defaut={data!.hypotheses.coef_plancher_habitable}
+                    onChange={(v) => setHyp({ ...hyp, coef: v })} />
+                  <div className="mt-2 flex gap-1.5">
+                    <Bouton niveau="secondaire" ton="vert" className="flex-1" disabled={run.isPending}
+                      onClick={() => run.mutate(corpsBody())}>Recalculer</Bouton>
+                    <Bouton niveau="lien" ton="vert" onClick={revenirLabuse}>Valeurs LABUSE</Bouton>
+                  </div>
+                </Section>
+
+                {data!.regles.lignes.length > 0 && (
+                  <Section titre="Règles et sources" sous={`PLU ${data!.regles.zone}`}>
+                    {data!.regles.lignes.map((r) => (
+                      <div key={r.nom} className="flex items-start justify-between gap-2 border-b border-line py-1.5 text-[11px] last:border-0">
+                        <span className="text-txt-mut">{r.nom}</span>
+                        <span className="text-right font-semibold text-txt">
+                          {r.valeur != null ? `${r.valeur}${r.unite ? ` ${r.unite}` : ''}` : 'non modélisée'}
+                          {r.article && (
+                            <span className="block text-[9px] font-normal text-txt-dim">{r.article}{r.page_pdf ? ` · p.${r.page_pdf}` : ''}</span>)}
+                        </span>
+                      </div>
+                    ))}
+                  </Section>
+                )}
+              </div>
+            </>)}
+          </section>
+        </div>
+      ))}
     </div>
   )
 }
 
-function Section({ titre, children }: { titre: string; children: React.ReactNode }) {
+/** Un chiffre clé (état 2) : valeur en gros, libellé, détail optionnel (ex. répartition par type). */
+function Key({ v, l, em }: { v: string; l: string; em?: string }) {
   return (
-    <details className="border-t border-line-2 pt-1">
-      <summary className="cursor-pointer text-[11px] font-semibold text-txt">{titre}</summary>
+    <div className="rounded-lg border border-line bg-surface-2 px-3 py-2.5">
+      <b className="block text-[22px] font-bold leading-none text-txt">{v}</b>
+      <span className="mt-1 block text-[11.5px] text-txt-dim">{l}</span>
+      {em && <span className="mt-0.5 block text-[10.5px] text-txt-dim">{em}</span>}
+    </div>
+  )
+}
+
+/** Entrée de légende du plan masse (pastille + libellé). */
+function Leg({ c, b, dash, children }: { c: string; b?: string; dash?: boolean; children: React.ReactNode }) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <i aria-hidden className="inline-block h-2.5 w-3 rounded-sm"
+        style={{ background: c, border: b ? `${dash ? '1.5px dashed' : '1px solid'} ${b}` : undefined }} />
+      {children}
+    </span>
+  )
+}
+
+function Section({ titre, sous, open, children }: { titre: string; sous?: string; open?: boolean; children: React.ReactNode }) {
+  return (
+    <details open={open} className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2">
+      <summary className="flex cursor-pointer items-center gap-2 text-[11px] font-semibold text-txt">
+        {titre}{sous && <small className="font-normal text-txt-dim">{sous}</small>}
+      </summary>
       <div className="mt-1">{children}</div>
     </details>
   )

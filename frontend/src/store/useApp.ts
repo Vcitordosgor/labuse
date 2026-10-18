@@ -521,8 +521,8 @@ interface AppState {
   // écran (patron BilanEcran) monté au niveau App, piloté par ce drapeau. `etudeIdus` = l'assiette
   // (1 à 8 parcelles) ou null (fermé). Ouvert depuis la 9e carte Docs, la tuile fiche et le pont
   // Assemblage ; les anciens liens #m=programme y REDIRIGENT (App.tsx). Rejoint CLOSE_OVERLAYS (toute
-  // navigation le ferme). Le plan masse s'affiche dans une carte INTÉGRÉE à l'overlay (PlanMasseCarte),
-  // jamais la carte de fond — l'overlay la masque.
+  // navigation le ferme). L'overlay est SANS carte : le plan masse est DESSINÉ en SVG (PlanMasseSvg)
+  // à partir de la géométrie du scénario — jamais la carte de fond.
   etudeIdus: string[] | null
   ouvrirEtude: (idus: string[]) => void
   fermerEtude: () => void

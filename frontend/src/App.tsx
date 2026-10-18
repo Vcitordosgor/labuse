@@ -50,8 +50,8 @@ const ModulePanel = lazy(() => import('./components/outils/ModulePanel').then((m
 const AdminView = lazy(() => import('./components/admin/AdminView').then((m) => ({ default: m.AdminView })))
 // DOCS-1 (Lot A) — la catégorie Documents (catalogue + porte + bibliothèque), chargée à la demande.
 const DocumentsView = lazy(() => import('./components/documents/DocumentsView').then((m) => ({ default: m.DocumentsView })))
-// IMPLANTATION-4 (LOT A) — l'overlay Étude de faisabilité (écran M22 + carte intégrée). Chargé à la
-// demande (il embarque maplibre via PlanMasseCarte) : son chunk n'arrive qu'à l'ouverture de l'Étude.
+// IMPLANTATION-4 — l'overlay Étude de faisabilité (écran M22, SANS carte : plan masse dessiné en SVG).
+// Chargé à la demande : son chunk n'arrive qu'à l'ouverture de l'Étude.
 const EtudeEcran = lazy(() => import('./components/outils/EtudeEcran').then((m) => ({ default: m.EtudeEcran })))
 
 // État de chargement de la zone carte pendant que le chunk maplibre arrive (pas d'écran blanc).
