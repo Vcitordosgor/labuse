@@ -456,6 +456,21 @@ LECTEURS_ASSUMES_G6: dict[str, str] = {
         "couche de cascade (FICHE-COUCHES-4) : lit la géométrie de la parcelle évaluée "
         "(parcels.geom_2975 WHERE id) pour ses croisements — machinerie de cascade, "
         "aucun chiffre servi directement.",
+    # VERITE-TERRAIN-2 — modules d'AUDIT (lecture seule, hors produit servi) mergés dans main : ils
+    # lisent les tables du produit pour COMPARER le servi aux sources officielles, ne servent aucun
+    # chiffre de fiche ni robinet. Déclarés assumés ici (le scan G6 les voyait « non déclarés »).
+    "verite_terrain_capacite.py":
+        "audit volet D : lit parcels + sitadel_permits pour confronter la capacité LABUSE aux "
+        "permis réellement autorisés — comparateur read-only, aucun chiffre servi.",
+    "verite_terrain_dpe_permis.py":
+        "audit volet C : lit adresses (BAN) + dpe_records + sitadel_permits pour confronter DPE et "
+        "permis aux sources ADEME/Sit@del — comparateur read-only, aucun chiffre servi.",
+    "verite_terrain_predictions.py":
+        "audit volet E : lit dvf_mutations_parcelle pour le backtest daté du signal et du prix — "
+        "comparateur read-only, aucun chiffre servi.",
+    "verite_terrain_trajets.py":
+        "audit volet B : lit parcels pour stratifier l'échantillon de trajets confronté à l'IGN — "
+        "comparateur read-only, aucun chiffre servi.",
 }
 
 
