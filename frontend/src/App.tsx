@@ -295,7 +295,9 @@ export default function App() {
   // (fiche commune, volet Résultats, mode analyse) ; aucun effet produit (mêmes actions que l'UI).
   // COUCHES-RECETTE-1 — + setTuyauActives / toggleTuyau pour piloter panneau ET légende dans les captures.
   useEffect(() => {
-    ;(window as unknown as Record<string, unknown>).__labuse = { select, setView, setZone, setModule, setFlyTo, setCommune, setVerdict, setMsel, setPermitToOpen, setIaRestitution, setContexteCommune, togglePanel, setFilters, getFilters: () => filters, setTuyauActives, toggleTuyau, setModuleMap }
+    // IMPLANTATION-4 (LOT A) — `ouvrirEtude` exposé au hook d'auto-QA (comme setModule/select) pour
+    // piloter l'overlay Étude dans les captures ; aucun effet produit (même action que les portes UI).
+    ;(window as unknown as Record<string, unknown>).__labuse = { select, setView, setZone, setModule, setFlyTo, setCommune, setVerdict, setMsel, setPermitToOpen, setIaRestitution, setContexteCommune, togglePanel, setFilters, getFilters: () => filters, setTuyauActives, toggleTuyau, setModuleMap, ouvrirEtude: useApp.getState().ouvrirEtude }
   }, [select, setView, setZone, setModule, setFlyTo, setCommune, setVerdict, setMsel, setPermitToOpen, setIaRestitution, setContexteCommune, togglePanel, setFilters, filters, setTuyauActives, toggleTuyau, setModuleMap])
 
   // DASHBOARD-V1 · D1 — capteurs d'usage (Tour de contrôle) : heartbeat de session au boot,
