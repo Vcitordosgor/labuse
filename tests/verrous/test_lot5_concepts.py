@@ -152,15 +152,18 @@ def test_v5f_prouve_casse_sur_une_lecture_directe(monkeypatch):
     assert any("chiffre_lu_en_direct_hors_registre" in d for d in r.details)
 
 
-def test_v5f_vert_sur_les_16_outils():
+def test_v5f_vert_sur_les_15_outils():
     """Sur l'état réel : les outils du menu (registry.ts) ont tous leur robinet, et chaque chiffre
     servi est un id du registre — aucune lecture directe. ETUDIER-BIEN-2 (Lot C) : « Étudier un bien »
     (scoreur-adresse) retiré → 18 → 17. DENSIFIER-PLI (PISCINES-2 Lot B) : « Densifier l'existant »
-    (renouvellement) retiré du menu et plié dans le filtre Capacité (« Déjà bâti ») → 17 → 16."""
+    (renouvellement) retiré du menu et plié dans le filtre Capacité (« Déjà bâti ») → 17 → 16.
+    IMPLANTATION-4 (LOT A) : « Étude de faisabilité » (programme) QUITTE les Outils pour vivre dans Docs
+    (overlay ouvert par ouvrirEtude, `registry` `programme` → hidden) → 16 → 15."""
     cles = CV._cles_outils_menu()
-    assert len(cles) == 16, f"attendu 16 outils au menu, vu {len(cles)} : {sorted(cles)}"
+    assert len(cles) == 15, f"attendu 15 outils au menu, vu {len(cles)} : {sorted(cles)}"
     assert "scoreur-adresse" not in cles
     assert "renouvellement" not in cles
+    assert "programme" not in cles                 # l'Étude de faisabilité a quitté les Outils (→ Docs)
     r = CV.verrou_outils_registre()
     assert r.verdict == "ok", r.details[:5]
-    assert "16 outils du menu" in r.preuve
+    assert "15 outils du menu" in r.preuve
