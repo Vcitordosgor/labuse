@@ -657,6 +657,13 @@ export function M22({ embedded = false, initialIdus, onBilan, onClose }: {
                 <Key v={actif.niveaux_label} l="niveaux" />
               </div>
 
+              {/* recette Vic — en une ligne, ce qui plafonne la capacité (ex. St-Denis R+2 : stationnement). */}
+              {actif.limite_capacite && (
+                <p data-etude-limite className="-mt-1 text-[11px] text-txt-mut">
+                  <span className="font-semibold text-txt">Ce qui limite la capacité :</span> {actif.limite_capacite}.
+                </p>
+              )}
+
               <div className="rounded-lg border border-line bg-surface-2 p-3">
                 <div className="mb-2 flex items-center justify-between gap-2">
                   <b className="text-[12px] text-txt">Plan masse — scénario {actif.ref}</b>

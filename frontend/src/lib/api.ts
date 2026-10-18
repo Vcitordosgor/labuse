@@ -2126,6 +2126,8 @@ export interface EtudeControle {
 export interface EtudeScenario {
   ref: string; forme: string; niveaux: number; niveaux_label: string; statut_etude: string
   resume: { logements: number; places: number; sdp_m2: number }
+  // recette Vic — en une ligne, ce qui plafonne la capacité (stationnement, prospect non chiffré…).
+  limite_capacite?: string | null
   controles_compte: { reussi: number; echoue: number; non_effectue: number; non_applicable: number }
   programme: {
     par_type: Record<string, number>; shab_par_type_m2: Record<string, number>
