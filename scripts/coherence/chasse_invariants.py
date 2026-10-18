@@ -134,10 +134,22 @@ def d1_ratios_bornes(cx, rseq):
 
 @garde
 def d1_surface_run_presente(cx, rseq):
-    """E-09 — surface_terrain_m2 présente et > 0 pour chaque ligne du run servi (attendu 0)."""
+    """E-09 — surface_terrain_m2 présente et > 0 pour chaque parcelle CALCULÉE du run (`cause IS NULL`,
+    = une assiette constructible a été retenue), attendu 0.
+
+    Les parcelles NON constructibles portent une `cause` (terrain_exigu, zone_non_constructible:A/N,
+    redhibitoire, hors_plu, surface_incertaine…) : le writer du résiduel (`faisabilite/residuel.py`,
+    branche « disponible »=True) n'écrit une `surface_terrain_m2` QUE pour les parcelles calculées —
+    une parcelle sans assiette n'a pas de surface de calcul. C'est voulu, et AUCUN chemin servi ne la
+    réclame pour ces parcelles : le seul lecteur de la colonne du run (fiche, bloc potentiel
+    `surface_calcul_m2`, `api/app.py`) est gardé `None` et traite explicitement le cas nul. La garde
+    vise donc la vérité SERVIE — toute parcelle dont le calcul a produit une assiette porte sa surface —
+    au lieu d'exiger une surface là où il n'y a, par construction, rien à calculer."""
     n = cx.scalar("""SELECT count(*) FROM parcel_residuel_runs
-        WHERE run_seq=%s AND (surface_terrain_m2 IS NULL OR surface_terrain_m2<=0)""", (rseq,))
-    return ("OK" if n == 0 else "ECART", f"surface_terrain_m2 du run nulle/<=0 : {n}")
+        WHERE run_seq=%s AND cause IS NULL AND (surface_terrain_m2 IS NULL OR surface_terrain_m2<=0)""",
+                  (rseq,))
+    return ("OK" if (n or 0) == 0 else "ECART",
+            f"surface_terrain_m2 nulle/<=0 sur parcelle calculée (cause IS NULL) : {n}")
 
 
 @garde
