@@ -33,7 +33,14 @@ _REFS = ["A", "B", "C"]
 def _feature(geom_2975, props: dict) -> Optional[dict]:
     if geom_2975 is None or geom_2975.is_empty:
         return None
-    return {"type": "Feature", "properties": props, "geometry": mapping(to_4326(geom_2975))}
+    g = to_4326(geom_2975)
+    # La reprojection 2975→4326 (pyproj) peut, en flottant, rendre AUTO-SÉCANTE une géométrie
+    # pourtant valide côté métrique. On la revalide pour que le GeoJSON servi soit toujours valide.
+    if not g.is_valid:
+        g = g.buffer(0)
+    if g.is_empty:
+        return None
+    return {"type": "Feature", "properties": props, "geometry": mapping(g)}
 
 
 def _fc(features: list) -> dict:
