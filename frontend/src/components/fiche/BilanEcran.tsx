@@ -57,7 +57,12 @@ const ETAT_TON: Record<string, 'vert' | 'neutre'> = {
 // Numérotation des blocs comme le modèle : TOTAL (1) … TOTAL (4).
 const NUM_BLOC: Record<string, number> = { T: 1, C: 2, G: 3, V: 4 }
 
-function entreesInitiales(m: BilanModele): BilanEntrees {
+// IMPLANTATION-4 (LOT B) — le programme d'un scénario de l'Étude, pour pré-remplir le Bilan « depuis
+// l'Étude » (logements par type + SDP). Seul ce chemin pré-remplit un nombre de logements ; l'ancien
+// moteur ne le fait plus (produits à blanc par défaut).
+export type BilanDepuisEtude = { ref?: string; logements: number; par_type?: Record<string, number>; sdp_m2: number; shab_m2?: number | null }
+
+export function entreesInitiales(m: BilanModele, etude?: BilanDepuisEtude | null): BilanEntrees {
   const postes: Record<string, BilanSaisie> = {}
   // Les ratios maison pré-remplissent (état « Mes ratios »), modifiables.
   for (const [pid, r] of Object.entries(m.ratios_compte)) {
@@ -65,12 +70,22 @@ function entreesInitiales(m: BilanModele): BilanEntrees {
   }
   const calendrier: Record<string, number | null> = {}
   for (const c of m.calendrier ?? []) calendrier[c.id] = c.defaut
+  // « Depuis l'Étude » : SDP du scénario + logements (par type) comme 1er produit. Sinon tout à blanc.
+  const parType = etude?.par_type ? Object.entries(etude.par_type).filter(([, n]) => n > 0).map(([t, n]) => `${t}×${n}`).join(' · ') : ''
   return {
-    programme: { terrain: m.sourcee.terrain ?? null, surface_taxable: null, loyer: null, sdp: null },
-    produits: [
-      { libelle: 'Produit 1', lots: null, suv: null, prix_ttc_m2_suv: null, tva: null },
-      { libelle: 'Produit 2', lots: null, suv: null, prix_ttc_m2_suv: null, tva: null },
-    ],
+    programme: {
+      terrain: m.sourcee.terrain ?? null, surface_taxable: null, loyer: null,
+      sdp: etude ? etude.sdp_m2 : null,
+    },
+    produits: etude
+      ? [
+          { libelle: parType ? `Logements · ${parType}` : 'Logements', lots: etude.logements, suv: etude.shab_m2 ?? null, prix_ttc_m2_suv: null, tva: null },
+          { libelle: 'Produit 2', lots: null, suv: null, prix_ttc_m2_suv: null, tva: null },
+        ]
+      : [
+          { libelle: 'Produit 1', lots: null, suv: null, prix_ttc_m2_suv: null, tva: null },
+          { libelle: 'Produit 2', lots: null, suv: null, prix_ttc_m2_suv: null, tva: null },
+        ],
     postes,
     mode: 'marge',
     marge_cible: null,
@@ -78,8 +93,8 @@ function entreesInitiales(m: BilanModele): BilanEntrees {
   }
 }
 
-export function BilanEcran({ idu, onClose, onGenerated }:
-  { idu: string; onClose: () => void; onGenerated?: (docId: number) => void }) {
+export function BilanEcran({ idu, onClose, onGenerated, depuisEtude }:
+  { idu: string; onClose: () => void; onGenerated?: (docId: number) => void; depuisEtude?: BilanDepuisEtude | null }) {
   const { data: modele, isLoading, error } = useQuery({
     queryKey: ['bilan-modele', idu], queryFn: () => getBilanModele(idu), retry: false,
   })
@@ -95,7 +110,7 @@ export function BilanEcran({ idu, onClose, onGenerated }:
   const { ouvrir, enCours } = useOuvrirDocument(setErreurGen)
   const minuterie = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  useEffect(() => { if (modele && !entrees) setEntrees(entreesInitiales(modele)) }, [modele, entrees])
+  useEffect(() => { if (modele && !entrees) setEntrees(entreesInitiales(modele, depuisEtude)) }, [modele, entrees, depuisEtude])
 
   // Recalcul (débounce) : toute saisie repart au moteur ; jamais de calcul local.
   useEffect(() => {
@@ -189,7 +204,12 @@ export function BilanEcran({ idu, onClose, onGenerated }:
       <div className="sticky top-0 z-10 flex h-14 items-center gap-3 border-b border-line bg-surface-2 px-5">
         <Bouton niveau="secondaire" ton="vert" onClick={onClose}>← Fermer</Bouton>
         <div className="leading-tight">
-          <div className="text-[16px] font-bold text-txt">Bilan · {idu}</div>
+          <div className="flex items-center gap-2 text-[16px] font-bold text-txt">
+            Bilan · {idu}
+            {/* IMPLANTATION-4 (LOT B) — Bilan pré-rempli AVEC le programme d'un scénario de l'Étude
+                (logements + SDP du scénario) ; l'ancien moteur ne pré-remplit plus les logements. */}
+            {depuisEtude && <Badge ton="vert">depuis l'Étude{depuisEtude.ref ? ` · scénario ${depuisEtude.ref}` : ''}</Badge>}
+          </div>
           {modele.sourcee.commune && <div className="text-[12px] text-txt-mut">{modele.sourcee.commune}</div>}
         </div>
         {/* compteur discret « N lignes vides » — information, jamais bloquant */}

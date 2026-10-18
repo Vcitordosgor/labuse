@@ -302,10 +302,9 @@ export function M16() {
                     <div className="text-[9px] text-txt-dim">SDP estimée cumulée</div>
                     <div className="tnum text-[14px] font-semibold text-mint">{fmt(d.sdp_combinee_m2)} m²</div>
                   </div>
-                  <div className="rounded-md bg-surface-3 px-2 py-1.5">
-                    <div className="text-[9px] text-txt-dim">Logements</div>
-                    <div className="tnum text-[14px] font-semibold text-txt">{fmt(d.logements_combine?.[0])}–{fmt(d.logements_combine?.[1])}</div>
-                  </div>
+                  {/* IMPLANTATION-4 (LOT B) — la tuile « Logements » (fourchette cumulée de l'ancien
+                      moteur) est RETIRÉE : le nombre de logements se lit dans l'Étude de faisabilité
+                      (pont « Étude de faisabilité de cet assemblage » ci-dessous). */}
                   {ratio != null && (
                     <div data-asm-kpi="ratio" className="rounded-md bg-surface-3 px-2 py-1.5">
                       <div className="text-[9px] text-txt-dim">vs meilleure seule</div>

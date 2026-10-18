@@ -110,11 +110,12 @@ const ROWS: Row[] = [
   { label: 'Prix terrain nu zone', prov: 'estime', val: (r) => r.terrain_zone_eur_m2 != null ? `${fmtInt(r.terrain_zone_eur_m2)} €/m²` : '—', num: (r) => r.terrain_zone_eur_m2 ?? null, best: 'lo', title: 'Médiane DVF du terrain nu dans la zone (calcul, pas un fait) — plus bas = plus intéressant.' },
   // RETOURS-11F M13 (O9) — lignes utiles ajoutées, toutes de la fiche servie (aucun second moteur).
   { label: `Prix bâti · ${PERIM_SECTION_CADASTRALE}`, prov: 'estime', val: (r) => r.prix_secteur_bati_m2 != null ? `${fmtInt(r.prix_secteur_bati_m2)} €/m²` : '—', num: (r) => r.prix_secteur_bati_m2 ?? null, title: 'Médiane DVF du bâti (maison/appartement) sur la section cadastrale (calcul) — même source que la fiche Marché (dvf_parcelle.secteur).' },
-  // OUTILS-FIX-2 D3 — la fourchette de logements affiche ses DEUX bornes (avant : borne haute seule).
-  { label: 'Logements possibles', prov: 'estime',
-    val: (r) => { const hi = r.logements_possibles, lo = r.logements_min
-      return hi == null ? '—' : (lo != null && lo !== hi ? `${fmtInt(lo)}–${fmtInt(hi)}` : `${fmtInt(hi)}`) },
-    num: (r) => r.logements_possibles ?? null, best: 'hi', title: 'Fourchette de logements estimée (au sol ou sous-sol).' },
+  // IMPLANTATION-4 (LOT B) — plus de fourchette de logements de l'ancien moteur dans le Comparatif : le
+  // nombre de logements (dessiné, contrôlé) se lit dans l'Étude de faisabilité. La ligne reste (repère de
+  // lecture), mais sans chiffre ni tri/surlignage — elle renvoie à l'Étude.
+  { label: 'Logements possibles', prov: 'estime', noBadge: true,
+    val: () => 'voir l\'Étude de faisabilité',
+    title: 'Le nombre de logements (dessiné, contrôlé, par scénario) se lit dans l\'Étude de faisabilité — plus de fourchette estimée ici.' },
   { label: 'Bâti existant', prov: 'source', val: (r) => r.bati_existant_pct != null ? `${fmtInt(r.bati_existant_pct)} % du terrain` : '—', num: (r) => r.bati_existant_pct ?? null, best: 'lo', title: 'Part du terrain déjà couverte par le bâti (emprise au sol / surface) — plus bas = plus de place à bâtir.' },
   { label: 'Gabarit max', prov: 'source', val: (r) => r.gabarit_niveaux_max != null ? `R+${Math.max(0, r.gabarit_niveaux_max - 1)}` : '—', num: (r) => r.gabarit_niveaux_max ?? null, best: 'hi', title: 'Nombre de niveaux maximum autorisé (gabarit PLU).' },
   { label: 'Accès & réseaux', prov: 'source', val: (r) => r.acces_reseaux ?? '—', title: 'Un seul verdict de viabilisation (accès voirie + réseaux) — le même que la fiche Réseaux et accès.' },

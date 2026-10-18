@@ -4,15 +4,20 @@
 // sur une CARTE INTÉGRÉE, sections repliables, hypothèses) — le MÊME composant M22, en mode `embedded`,
 // servi par la MÊME API (POST /modules/etude). Aucun second calcul. Entrées : 9e carte Docs, tuile fiche,
 // pont Assemblage, et les anciens liens #m=programme (redirigés ici par App.tsx).
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useApp } from '../../store/useApp'
 import { Bouton } from '../ui/Bouton'
-import { M22 } from './M22Programme'
+import { M22, type EtudeProgramme } from './M22Programme'
+import { BilanEcran } from '../fiche/BilanEcran'
 import { iduComplet } from '../../lib/format'
 
 export function EtudeEcran() {
   const etudeIdus = useApp((s) => s.etudeIdus)
   const fermerEtude = useApp((s) => s.fermerEtude)
+  // IMPLANTATION-4 (LOT B) — pont « Bilan de ce scénario » : ouvre le Bilan (par-dessus l'Étude)
+  // pré-rempli avec le programme du scénario affiché (logements par type + SDP), étiqueté « depuis
+  // l'Étude ». Le Bilan porte sur la 1ʳᵉ parcelle de l'assiette (modèle de bilan par parcelle).
+  const [bilanProg, setBilanProg] = useState<EtudeProgramme | null>(null)
 
   // Échap ferme (comme BilanEcran). Le hook est inconditionnel ; il ne fait rien quand l'overlay est fermé.
   useEffect(() => {
@@ -40,9 +45,16 @@ export function EtudeEcran() {
         </div>
         <div className="flex min-h-0 flex-1 flex-col p-5">
           {/* clé = l'assiette : rouvrir sur une autre parcelle REMONTE M22 (état neuf, sélection locale). */}
-          <M22 key={etudeIdus.join(',')} embedded initialIdus={etudeIdus} />
+          <M22 key={etudeIdus.join(',')} embedded initialIdus={etudeIdus} onBilan={setBilanProg} />
         </div>
       </div>
+
+      {/* Bilan de ce scénario — par-dessus l'Étude (son propre overlay fixed inset-0). */}
+      {bilanProg && etudeIdus[0] && (
+        <div onClick={(e) => e.stopPropagation()}>
+          <BilanEcran idu={etudeIdus[0]} depuisEtude={bilanProg} onClose={() => setBilanProg(null)} />
+        </div>
+      )}
     </div>
   )
 }
