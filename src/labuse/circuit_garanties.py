@@ -471,6 +471,13 @@ LECTEURS_ASSUMES_G6: dict[str, str] = {
     "verite_terrain_trajets.py":
         "audit volet B : lit parcels pour stratifier l'échantillon de trajets confronté à l'IGN — "
         "comparateur read-only, aucun chiffre servi.",
+    # FIX-PRIX-ET-OPPORTUNITES lot 4 — instantané mensuel du Signal servi : lit parcels + "
+    # dvf_mutations_parcelle pour FIGER (dans sa propre table) puis REJOUER forward le Signal contre les
+    # ventes DVF ; aucun chiffre de fiche servi, n'écrit que `signal_instantanes`.
+    "signal_instantane.py":
+        "mesure forward du Signal servi (lot 4) : lit parcels + dvf_mutations_parcelle pour figer "
+        "l'instantané daté dans sa table et le rejouer contre les ventes DVF — aucun chiffre de fiche, "
+        "écrit uniquement signal_instantanes.",
 }
 
 
