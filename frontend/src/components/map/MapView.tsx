@@ -704,6 +704,44 @@ export function MapView() {
 
       // calques MODULE (violet) : surlignage de parcelles + géométries propres (lots, permis)
       m.addSource('module-extra', { type: 'geojson', data: EMPTY_FC as never })
+      // IMPLANTATION-2 — PLAN MASSE de l'Étude de faisabilité : calques dédiés filtrés par `kind`
+      // (source module-extra, alimentée par l'outil M22). Palette alignée sur le rendu PNG du moteur
+      // (rendu.py). L'activation des couches se fait côté outil (il n'injecte que les `kind` cochés).
+      // Ordre d'ajout = ordre d'empilement (zone au fond → modules/bâti au-dessus → voie/parcelle au trait).
+      m.addLayer({ id: 'etude-zone-fill', type: 'fill', source: 'module-extra',
+        filter: ['==', ['get', 'kind'], 'zone'], paint: { 'fill-color': '#4ADE80', 'fill-opacity': 0.1 } })
+      m.addLayer({ id: 'etude-zone-line', type: 'line', source: 'module-extra',
+        filter: ['==', ['get', 'kind'], 'zone'], paint: { 'line-color': '#15803D', 'line-width': 1.4, 'line-dasharray': [3, 2] } })
+      m.addLayer({ id: 'etude-ppr-rouge', type: 'fill', source: 'module-extra',
+        filter: ['==', ['get', 'kind'], 'ppr_rouge'], paint: { 'fill-color': '#DC2626', 'fill-opacity': 0.22 } })
+      m.addLayer({ id: 'etude-ppr-bleue', type: 'fill', source: 'module-extra',
+        filter: ['==', ['get', 'kind'], 'ppr_bleue'], paint: { 'fill-color': '#3B82F6', 'fill-opacity': 0.16 } })
+      m.addLayer({ id: 'etude-libre', type: 'fill', source: 'module-extra',
+        filter: ['==', ['get', 'kind'], 'espace_libre'], paint: { 'fill-color': '#BBF7D0', 'fill-opacity': 0.55 } })
+      m.addLayer({ id: 'etude-allee', type: 'fill', source: 'module-extra',
+        filter: ['==', ['get', 'kind'], 'allee'], paint: { 'fill-color': '#D1D5DB', 'fill-opacity': 0.9 } })
+      m.addLayer({ id: 'etude-acces', type: 'fill', source: 'module-extra',
+        filter: ['==', ['get', 'kind'], 'acces'], paint: { 'fill-color': '#B45309', 'fill-opacity': 0.85 } })
+      m.addLayer({ id: 'etude-place', type: 'fill', source: 'module-extra',
+        filter: ['==', ['get', 'kind'], 'place'], paint: { 'fill-color': '#FFFFFF', 'fill-opacity': 0.9 } })
+      m.addLayer({ id: 'etude-place-line', type: 'line', source: 'module-extra',
+        filter: ['==', ['get', 'kind'], 'place'], paint: { 'line-color': '#6B7280', 'line-width': 0.5 } })
+      m.addLayer({ id: 'etude-bati', type: 'fill', source: 'module-extra',
+        filter: ['==', ['get', 'kind'], 'batiment_emprise'], paint: { 'fill-color': '#1F2A24', 'fill-opacity': 0.88 } })
+      m.addLayer({ id: 'etude-coursive', type: 'fill', source: 'module-extra',
+        filter: ['==', ['get', 'kind'], 'coursive'], paint: { 'fill-color': '#E5E7EB', 'fill-opacity': 0.6 } })
+      m.addLayer({ id: 'etude-module', type: 'fill', source: 'module-extra',
+        filter: ['==', ['get', 'kind'], 'module'], paint: { 'fill-color': '#ECFDF3', 'fill-opacity': 0.72 } })
+      m.addLayer({ id: 'etude-module-line', type: 'line', source: 'module-extra',
+        filter: ['==', ['get', 'kind'], 'module'], paint: { 'line-color': '#15803D', 'line-width': 0.5 } })
+      m.addLayer({ id: 'etude-noyau', type: 'fill', source: 'module-extra',
+        filter: ['==', ['get', 'kind'], 'noyau'], paint: { 'fill-color': '#9CA3AF', 'fill-opacity': 0.9 } })
+      m.addLayer({ id: 'etude-voie', type: 'line', source: 'module-extra',
+        filter: ['==', ['get', 'kind'], 'voie'], paint: { 'line-color': '#B45309', 'line-width': 3, 'line-opacity': 0.9 } })
+      m.addLayer({ id: 'etude-parcelle', type: 'line', source: 'module-extra',
+        filter: ['==', ['get', 'kind'], 'parcelle'], paint: { 'line-color': '#9CA3AF', 'line-width': 0.7, 'line-dasharray': [3, 2] } })
+      m.addLayer({ id: 'etude-assiette', type: 'line', source: 'module-extra',
+        filter: ['==', ['get', 'kind'], 'assiette'], paint: { 'line-color': '#DC2626', 'line-width': 1.6, 'line-dasharray': [4, 2.5] } })
       m.addLayer({ id: 'module-hl', type: 'line', source: 'parcels', filter: ['==', ['get', 'idu'], ''],
         paint: { 'line-color': '#4ADE80', 'line-width': 1.6, 'line-opacity': 0.95 } })
       m.addLayer({ id: 'ile-hl', type: 'line', source: 'parcels-ile', 'source-layer': 'parcels',
@@ -962,7 +1000,7 @@ export function MapView() {
           if (rawIdu == null || rawIdu === '' || rawIdu === 'undefined') return
           const idu = String(rawIdu)
           const st = useApp.getState()
-          if (st.module === 'assemblage') {              // M16 : le clic compose l'assiette
+          if (st.module === 'assemblage' || st.module === 'programme') {  // M16 / M22 Étude : le clic compose l'assiette
             st.setMsel(st.msel.includes(idu) ? st.msel.filter((x) => x !== idu) : [...st.msel, idu])
             return
           }
@@ -1205,7 +1243,7 @@ export function MapView() {
     m.setLayoutProperty('ile-sel', 'visibility', vis(ile))
     m.setLayoutProperty('ile-hl', 'visibility', vis(ile))
     // M15 A1 : couche de picking Assemblage — contours violets visibles seulement quand l'outil est actif
-    m.setLayoutProperty('ile-pick', 'visibility', vis((module === 'assemblage' || comparePicking) && ile))
+    m.setLayoutProperty('ile-pick', 'visibility', vis((module === 'assemblage' || module === 'programme' || comparePicking) && ile))
     // M-RENOUV : segment Renouvellement (cuivre) — OFF par défaut
     m.setLayoutProperty('ov-renouv', 'visibility', vis(layers.renouv))
     m.setLayoutProperty('ov-renouv-line', 'visibility', vis(layers.renouv))

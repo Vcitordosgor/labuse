@@ -2116,6 +2116,71 @@ export const postChargeFonciere = (idu: string, body: ChargeIn) =>
 // « chercher des parcelles par capacité » passe désormais par le groupe Capacité du panneau Filtre
 // (endpoint /filtre, compteur SQL exact). L'endpoint backend est retiré (aucun autre appelant).
 
+// IMPLANTATION-2 — l'Étude de faisabilité EN LIGNE. UN SEUL appel sert l'écran (config → scénarios) :
+// scénarios dessinés (GeoJSON WGS84 pour le plan masse), capacité, contrôles 4 états, statut,
+// hypothèses modifiables, versions moteur + règles. AUCUN calcul dans le front : il affiche ce payload.
+export interface EtudeControle {
+  nom: string; regle: string; mesure: string; resultat: string
+  citation: string | null; detail: string | null
+}
+export interface EtudeScenario {
+  ref: string; forme: string; niveaux: number; niveaux_label: string; statut_etude: string
+  resume: { logements: number; places: number; sdp_m2: number }
+  controles_compte: { reussi: number; echoue: number; non_effectue: number; non_applicable: number }
+  programme: {
+    par_type: Record<string, number>; shab_par_type_m2: Record<string, number>
+    shab_estimee_m2: number; ratio_shab_sdp: number | null
+    mixite_applicable: boolean | null; logements_aides_imposes: number | null
+    sdp_aidee_imposee_m2: number | null
+  }
+  distribution_niveaux: Array<{ niveau: number; par_type: Record<string, number>; sdp_m2: number }>
+  stationnement: {
+    places: number; places_imposees: number | null; details_places: Record<string, { nb: number; places_unitaires: number | null }>
+    m2_par_place: number | null; surface_stationnement_m2: number
+    note: { allee_unique: boolean; deux_cotes: boolean; raison: string } | null
+    acces: { distance_angle_m: number; note: string } | null
+  }
+  surfaces_mesurees_m2: Record<string, number>
+  emprise_sol_m2: number; pleine_terre_m2: number
+  controles: EtudeControle[]
+  checks_geometriques: Array<{ nom: string; ok: boolean; detail: string }>
+  geojson: GeoJSON.FeatureCollection
+}
+export interface EtudeRegle {
+  nom: string; valeur: number | null; unite: string | null; validee: boolean
+  article: string | null; page_pdf: number | null; citation: string | null; seuil_m2?: number | null
+}
+export interface EtudePayload {
+  moteur: { livrable: string; version_conventions: string; etiquette: string; crs_dessin: string; crs_carte: string }
+  entrees: {
+    idus: string[]; commune: string; insee: string; zone: string; type_projet: string
+    objectif: string; programme_mode: 'propose' | 'saisi'; stationnement: string; terrain: string
+  }
+  regles: { zone: string; insee: string; lignes: EtudeRegle[] }
+  terrain: {
+    contenance_totale_m2: number; aire_dessin_m2: number; zone_implantation_m2: number
+    has_voie: boolean; note_limites: string | null; contraintes: Record<string, number>
+    ppr_rouge_m2: number; ppr_bleue_m2: number; pente_lidar: Record<string, any> | null
+    parcelles: Array<{ idu: string; numero: string; contenance_m2: number; aire_dessin_m2: number }>
+  }
+  hypotheses: {
+    profondeur_m: number; coef_plancher_habitable: number; surfaces: Record<string, number>
+    largeur_coursive_m: number; hauteur_etage_m: number; place_m: [number, number]
+    allee_largeur_m: number; etiquette: string
+  }
+  programme_saisi: { demande: Record<string, number> } | null
+  statut_global: string; message: string | null; scenarios: EtudeScenario[]
+}
+export interface EtudeIn {
+  idus: string[]; type_projet?: string; objectif?: string; stationnement?: string; terrain?: string
+  programme?: { mode: 'propose' | 'saisi'; lignes?: Array<{ type: string; nombre: number; surface_m2?: number }> } | null
+  hypotheses?: { profondeur_m?: number; coef_plancher_habitable?: number; surfaces?: Record<string, number> } | null
+}
+export const postEtude = (body: EtudeIn) =>
+  j<EtudePayload>('/modules/etude', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+  })
+
 // ── Projets (copilote-projet) — l'objet persistant de l'entretien de cadrage ──
 // M120 — le CADRAGE d'un projet EST un jeu de filtres (le même objet que la carte). L'IDENTITÉ
 // porte les infos indicatives (budget/type) qui n'alimentent AUCUN filtre. M120-B : date retirée.

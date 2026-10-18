@@ -1,8 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { useApp } from '../../store/useApp'
-import { M22 } from './M22Programme'
 import { FaisabiliteTab } from '../fiche/Fiche'
 
 // FAISABILITE-3 (Vic 27/09) — LE panneau de la maquette validée, partagé fiche + outil (une
@@ -64,28 +62,10 @@ function mockFetch() {
 const qc = () => new QueryClient({ defaultOptions: { queries: { retry: false } } })
 const renderTab = () => render(<QueryClientProvider client={qc()}><FaisabiliteTab idu="97411000BZ1065" /></QueryClientProvider>)
 
-describe('FAISABILITE-3 — l\'outil ouvre sur la saisie de parcelle + lien vers le filtre Capacité', () => {
-  beforeEach(() => { mockFetch(); useApp.setState({ parcelPrefill: null }) })
-  afterEach(() => vi.restoreAllMocks())
-
-  it('sous-titre présent, PAS de sélecteur de mode « Par critères »', () => {
-    render(<QueryClientProvider client={qc()}><M22 /></QueryClientProvider>)
-    expect(screen.getByText(/Ce que le PLU laisse construire sur cette parcelle/)).toBeTruthy()
-    expect(document.querySelector('[data-faisa-mode]')).toBeFalsy()
-    expect(screen.queryByText('Par critères')).toBeFalsy()
-  })
-
-  it('le lien « Chercher des parcelles par capacité → » ouvre la carte sur le panneau Filtre', () => {
-    render(<QueryClientProvider client={qc()}><M22 /></QueryClientProvider>)
-    const lien = document.querySelector('[data-chercher-capacite]') as HTMLElement
-    fireEvent.click(lien)
-    const st = useApp.getState()
-    expect(st.view).toBe('cartes')
-    expect(st.panneauSection).toBe('filtres')
-    expect(st.module).toBeNull()
-  })
-})
-
+// IMPLANTATION-2 — l'OUTIL « Étude de faisabilité » (M22) a été refondu : il n'ouvre plus l'ancien
+// panneau faisabilité mais le moteur d'implantation (cf. Etude.test.tsx). Ce fichier ne garde que
+// les tests du composant partagé FaisabiliteTab (encore rendu par l'ancien chemin / tests de non-
+// régression du panneau servi par /modules/faisabilite/.../scenario).
 describe('FAISABILITE-3 — le panneau (verdict, PLU, hypothèses, étapes)', () => {
   beforeEach(mockFetch)
   afterEach(() => vi.restoreAllMocks())

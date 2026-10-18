@@ -36,8 +36,10 @@ import { IC, FicheAccordionCtx, RefDrawer, GroupLabel, MicroPastilles, RateLimit
 // chacune un RefDrawer inline qui COMPOSE les blocs feuilles (extraits aux étapes 3a-3c). Les
 // sections « fourre-tout » ConstructibiliteSection / LeBienSection sont dissoutes ; les quatre
 // sections encore mono-nature (Risques, Réseaux, Marché, Quartier) restent des composants réutilisés.
-// Fiche ré-exporte Calculette + FaisabiliteTab (consommés par CalculetteFonciere / M22Programme).
-import { TransformationBlock, FaisabiliteTab, BilanTab, TaxeAmenagementBlock, RtaaFromBilan, DispositifsBody, ModeBBody } from './constructibilite'
+// IMPLANTATION-2 (LOT C) — la fiche ne REND plus le panneau de calcul FaisabiliteTab : elle offre un
+// bouton « Étude de faisabilité → » vers l'outil (M22). Le composant reste RÉ-EXPORTÉ (ci-dessous)
+// pour CalculetteFonciere et les tests de non-régression du panneau, mais n'est plus monté ici.
+import { TransformationBlock, BilanTab, TaxeAmenagementBlock, RtaaFromBilan, DispositifsBody, ModeBBody } from './constructibilite'
 import { BatiBlock, FiliationBlock } from './leBien'
 // KELFONCIER-FIX-2 (Partie B) — les formes de la maquette v3 (Verdict · Tuiles · BarreEmpilée…).
 import { Verdict, Tuiles, type Tuile, BarreEmpilee, type Part, Lignes, Ligne, Pastilles, type Pastille, OutilsSection, type OutilSection, InfoI, Repli } from './formes'
@@ -1974,14 +1976,16 @@ export function Fiche({ idu }: { idu: string }) {
                       : zoneFamille === 'N' ? 'Zone naturelle — construction non autorisée.'
                       : sdpNulle ? 'Aucune SDP résiduelle exploitable sur cette parcelle — le détail du calcul (terrain libéré, hypothèses, gabarit) est dans « Étudier quand même ».' : null)
                   const outils: OutilSection[] = []
+                  // IMPLANTATION-2 (LOT C) — l'étude de faisabilité n'est plus CALCULÉE dans la fiche :
+                  // un bouton ouvre l'outil « Étude de faisabilité » (M22) sur cette parcelle (idiome
+                  // parcelPrefill). Le scénario dessiné, les contrôles et les hypothèses y sont servis.
+                  outils.push({ label: 'Étude de faisabilité', principal: true, data: 'etude-outil',
+                    onClick: () => { setParcelPrefill(idu); setModule('programme') } })
                   if (f.commune) outils.push({ label: "Densifier l'existant", data: 'densifier-filtre',
                     onClick: () => { const st = useApp.getState(); st.setCommunesFilter([f.commune!]); st.setFilter('renouvellement', true); st.setFilter('sdpMin', 200); st.openFiltres() } })
-                  outils.push({ label: 'Ouvrir le Gabarit', principal: true, data: 'gabarit',
-                    onClick: () => { setParcelPrefill(idu); setModule('programme') } })
                   const panneau = (
                     <div className="flex flex-col gap-3">
                       {f.potentiel_transformation && <TransformationBlock pt={f.potentiel_transformation} />}
-                      <FaisabiliteTab idu={idu} />
                       <GabaritLine idu={idu} />
                     </div>
                   )
@@ -2043,7 +2047,7 @@ export function Fiche({ idu }: { idu: string }) {
                   ? <BlocIndisponible titre="Réhabilitation (Mode B)" />
                   : f.mode_b?.disponible && <ModeBBody idu={idu} initial={f.mode_b} />}
                 <OutilsSection outils={[
-                  { label: 'Faisabilité', principal: true, data: 'faisabilite-outil',
+                  { label: 'Étude de faisabilité', principal: true, data: 'faisabilite-outil',
                     onClick: () => { setParcelPrefill(idu); setModule('programme') } },
                   { label: 'Calculette foncière', data: 'calculette',
                     onClick: () => { setCalcPrefill(idu); setModule('calculette-fonciere') } },
