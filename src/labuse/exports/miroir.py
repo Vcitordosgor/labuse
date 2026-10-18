@@ -1205,6 +1205,16 @@ def rendu_sections(valeurs: dict[str, Valeur], fiche: dict, *, plan_html: str = 
                 absents.append(("gabarit_motif_blocage", _ph))
                 continue
             vals_lus.append(v)
+            if l.quoi == "capacite_logements":
+                # IMPLANTATION-3 LOT B — le Dossier (et donc le Flash) ne CHIFFRE plus la capacité : le
+                # NOMBRE de logements vit désormais dans le document « Étude de faisabilité » (moteur dédié
+                # src/labuse/implantation). On imprime un RENVOI, jamais un nombre tiré de l'ancien moteur
+                # de faisabilité (qui, au départ, imprimait le drapeau « 1 »). La partie réglementaire
+                # (SDP résiduelle, surélévation) reste INCHANGÉE — ce sont d'autres lignes du §Potentiel.
+                groupes.setdefault("", []).append(_ligne_tr(
+                    "capacite_logements", "Nombre de logements",
+                    esc("voir l'Étude de faisabilité"), ""))
+                continue
             if l.quoi == "reglement_plu_bloc":
                 blocs_pleins.append(f'<div data-quoi="reglement_plu_bloc">{_bloc_reglement(valeurs)}</div>')
                 continue
