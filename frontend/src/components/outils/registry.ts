@@ -106,9 +106,10 @@ export const MODULES: ModuleDef[] = [
   { key: 'temps', num: 'M08', group: 'temps',
     label: 'Remonter le temps', desc: 'La parcelle vue du ciel, année après année.' },
 
-  // 11. Faisabilité — M22 : ce que le PLU laisse construire (2 entrées : par critères / par parcelle).
+  // 11. Étude de faisabilité — M22 (IMPLANTATION-2) : le moteur d'implantation collectif EN LIGNE
+  //   (assiette 1–8 parcelles → scénarios dessinés + contrôles 4 états). Remplace l'ancien onglet.
   { key: 'programme', num: 'M22', group: 'instruire', phare: true,
-    label: 'Faisabilité', desc: 'Ce que le PLU laisse construire sur la parcelle.' },
+    label: 'Étude de faisabilité', desc: 'Ce que le terrain peut recevoir en collectif, dessiné et contrôlé.' },
 
   // Gabarit réglementaire — M24 : où et jusqu'où implanter, selon les règles sourcées (PLU + PPR +
   // classification des limites voie/séparative = adjacence cadastre + BD TOPO, mesurée 0 faux/70).
