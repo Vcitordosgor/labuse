@@ -232,6 +232,50 @@ def test_dev_mode_absent_la_garde_reste_active(client, monkeypatch):
     assert client.get("/discover").status_code == 429
 
 
+# ── QUOTA-FICHE : exemptions mode local + comptes admin ─────────────────────────────────
+
+def test_mode_local_exempte_quota_fiches(client, engine, monkeypatch):
+    """Mode local (LABUSE_ENV=local, hors pytest) → jamais soumis au quota, comme dev_mode.
+    On retire PYTEST_CURRENT_TEST pour simuler un vrai run local (la garde ne doit alors plus
+    compter les fiches de développement)."""
+    monkeypatch.delenv("LABUSE_DEV_MODE", raising=False)
+    monkeypatch.setenv("LABUSE_ENV", "local")
+    monkeypatch.setenv("LABUSE_QUOTA_FICHES_JOUR", "3")
+    monkeypatch.delenv("PYTEST_CURRENT_TEST", raising=False)   # simule un run local réel
+    from labuse import config
+    config.get_settings.cache_clear()
+
+    for i in range(8):                        # 8 fiches distinctes > quota 3 : aucun 429
+        assert client.get(f"/parcels/97416000AA00{i:02d}").status_code != 429
+    with engine.connect() as c:               # rien consommé en base
+        n = c.execute(text("SELECT COALESCE(sum(n), 0) FROM usage_compteurs WHERE kind = 'fiche'")).scalar()
+    assert n == 0
+
+
+def test_admin_jamais_soumis_au_quota_fiches(client, engine, monkeypatch):
+    """Un compte ADMIN n'est jamais soumis au quota : il ne bute pas sur le plafond ET ne
+    consomme rien. Le rôle est résolu par la garde d'auth (session_info) → request.state.role."""
+    monkeypatch.delenv("LABUSE_DEV_MODE", raising=False)
+    monkeypatch.setenv("LABUSE_QUOTA_FICHES_JOUR", "3")
+    from labuse import config
+    from labuse.api import auth
+    config.get_settings.cache_clear()
+
+    # session admin simulée : le cookie « u.ADMIN » résout un compte de rôle 'admin'
+    def _faux_session_info(token):
+        if token == "u.ADMIN":
+            return {"utilisateur_id": 1, "compte_id": 42, "role": "admin", "statut_compte": "actif"}
+        return None
+    monkeypatch.setattr(auth, "session_info", _faux_session_info)
+    client.cookies.set("labuse_session", "u.ADMIN")
+
+    for i in range(8):                        # 8 fiches distinctes > quota 3 : aucun 429
+        assert client.get(f"/parcels/97416000AA00{i:02d}").status_code != 429
+    with engine.connect() as c:               # le compteur du compte admin reste vierge
+        n = c.execute(text("SELECT COALESCE(sum(n), 0) FROM usage_compteurs WHERE kind = 'fiche'")).scalar()
+    assert n == 0
+
+
 class _ReqStub:
     def __init__(self, peer, xff=None):
         self.client = type("C", (), {"host": peer})()

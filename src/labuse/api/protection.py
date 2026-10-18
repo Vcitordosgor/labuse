@@ -309,6 +309,31 @@ def _actif_sous_pytest() -> bool:
                 or os.environ.get("LABUSE_QUOTA_CARTO_JOUR"))
 
 
+def _mode_local_dev(s) -> bool:
+    """QUOTA-FICHE — le mode LOCAL (développement) n'est JAMAIS soumis aux quotas/anti-scraping,
+    exactement comme `dev_mode` : personne qui développe ne doit buter sur le plafond de 300
+    fiches/jour. `env` est une valeur d'opérateur EXPLICITE (LABUSE_ENV) — hors 'local' (pilote,
+    prod) la garde reste pleinement active, aucun passe-droit accidentel.
+    Sous pytest, la décision d'activer la garde reste à `_actif_sous_pytest` (une suite qui teste
+    le quota le pose explicitement), on n'exempte donc pas ici pour ne pas neutraliser ces tests."""
+    return s.env == "local" and not os.environ.get("PYTEST_CURRENT_TEST")
+
+
+def _exempt_quota_metier(request: Request) -> bool:
+    """QUOTA-FICHE — les comptes ADMIN (rôle 'admin') et la session PILOTE (mot de passe partagé
+    = admin de fait, usage ops) ne sont JAMAIS soumis au quota de consultation de fiches : ils ne
+    le déclenchent pas ET ne le consomment pas. N'ouvre AUCUNE session BDD — le rôle est lu sur
+    request.state (posé par la garde d'auth au même lookup), la session pilote est reconnue par la
+    signature HMAC de son cookie (pur calcul, jamais un lookup)."""
+    role = getattr(getattr(request, "state", None), "role", None)
+    if role == "admin":
+        return True
+    from . import auth
+    cookie = request.cookies.get(auth.COOKIE) or request.cookies.get("session")
+    # cookie pilote = « v1.<expiry>.<hmac> » (jamais « u.… ») : admin de fait, vérifié sans BDD.
+    return bool(cookie and not cookie.startswith("u.") and auth.token_ok(cookie))
+
+
 async def garde_protection(request: Request, call_next):
     """Rate limiting + quota fiches — s'exécute APRÈS l'auth (trafic authentifié)."""
     path = request.url.path
@@ -323,7 +348,7 @@ async def garde_protection(request: Request, call_next):
             or not _actif_sous_pytest():
         return await call_next(request)
     s = config.get_settings()
-    if s.dev_mode or s.rate_limit_off:
+    if s.dev_mode or s.rate_limit_off or _mode_local_dev(s):
         # Exemption DEV EXPLICITE (flag d'env, jamais une détection localhost — derrière
         # nginx tout arrive en 127.0.0.1). Quotas + rate-limit court-circuités.
         # FRONT-CHIFFRES-2 — `rate_limit_off` (LABUSE_RATE_LIMIT_OFF=1) : MÊME court-circuit de la
@@ -399,6 +424,10 @@ async def garde_protection(request: Request, call_next):
     m = _FICHE_RE.match(path)
     if m and request.method == "GET":
         idu = m.group(1)
+        # QUOTA-FICHE — un compte ADMIN (ou la session pilote, admin de fait) n'est jamais soumis
+        # au quota : il ne le déclenche pas ET ne le consomme pas. Contrôle sans session BDD.
+        if _exempt_quota_metier(request):
+            return await call_next(request)
         # M-K (P2-38) : le quota de fiches est compté PAR COMPTE (sujet_q) — un logout/login
         # ne le réinitialise plus. La journalisation forensic (consultation_log, abuse-scan)
         # garde le sujet session/IP : c'est la corrélation d'un comportement, pas un quota.

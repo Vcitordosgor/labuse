@@ -390,6 +390,10 @@ async def _auth_guard(request, call_next):
     # cookie, mêmes règles — seul le FIL d'exécution change.
     info = await run_in_threadpool(auth.session_info, cookie)
     request.state.compte_id = info["compte_id"] if info else None
+    # QUOTA-FICHE — le rôle de la session (lu du MÊME lookup) est posé sur request.state pour que
+    # la garde anti-scraping (protection.garde_protection, plus externe) exempte les admins du
+    # quota de consultation SANS rouvrir une session BDD. None = pilote/public/local.
+    request.state.role = info.get("role") if info else None
     # DASHBOARD-V1 · D1 — attribue le coût IA de la requête au compte (ledger ia_log) : le socle
     # IA lit ce ContextVar, jamais le cookie (direction de dépendance propre).
     from ..ai import core as _ia_core
