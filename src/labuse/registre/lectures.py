@@ -621,6 +621,23 @@ LECTURES: tuple[Lecture, ...] = (
       "VERITE-TERRAIN-1 (contrôle LECTURE SEULE) — compte les permis rattachés à la parcelle (source 8, documentaire : pas d'API Sitadel au point pour un contrôle vif). Comparaison d'audit, aucun robinet servi, aucune écriture."),
     L("dpe_records", "verite_terrain_sources.py", None, None,
       "VERITE-TERRAIN-1 (contrôle LECTURE SEULE) — lit numero_dpe/etiquette_dpe/parcelle_idu pour vérifier chaque DPE rattaché à la parcelle contre l'ADEME (par numéro de DPE). Comparaison d'audit, aucun robinet servi, aucune écriture."),
+    # ── VERITE-TERRAIN-2 — second comparateur « tout ce que LABUSE affirme face à la réalité »
+    # (volets A-E). MÊME nature que VERITE-TERRAIN-1 : MACHINERIE hors app, LECTURE SEULE, aucune
+    # donnée servie au client, aucun robinet, aucune écriture en base. La raison est dans la note.
+    L("adresses", "verite_terrain_dpe_permis.py", None, None,
+      "VERITE-TERRAIN-2 volet C (contrôle LECTURE SEULE) — lit l'adresse BAN (id_ban/numero/voie) de la parcelle pour interroger l'ADEME PAR IDENTIFIANT BAN (la géoloc ADEME 974 étant corrompue) et tester le RAPPEL des DPE rattachés. Comparaison d'audit, aucun robinet servi, aucune écriture."),
+    L("dpe_records", "verite_terrain_dpe_permis.py", None, None,
+      "VERITE-TERRAIN-2 volet C (contrôle LECTURE SEULE) — lit les DPE rattachés (parcelle_idu/numero_dpe/etiquette) pour les confronter aux DPE que l'ADEME porte à l'adresse BAN (test du rappel LABUSE). Comparaison d'audit, aucun robinet servi, aucune écriture."),
+    L("sitadel_permits", "verite_terrain_dpe_permis.py", None, None,
+      "VERITE-TERRAIN-2 volet C (contrôle LECTURE SEULE) — relit les permis rattachés à la parcelle pour la validation croisée avec la source Sit@del 974 indépendante (couverture par commune, 0 permis inventé). Comparaison d'audit, aucun robinet servi, aucune écriture."),
+    L("parcels", "verite_terrain_trajets.py", None, None,
+      "VERITE-TERRAIN-2 volet B (contrôle LECTURE SEULE) — lit le point représentatif/commune/altitude des parcelles pour stratifier l'échantillon (littoral/mi-pentes/Hauts/cirques) et ancrer les isochrones IGN. Tirage/comparaison d'audit, aucun robinet servi, aucune écriture."),
+    L("parcels", "verite_terrain_capacite.py", None, None,
+      "VERITE-TERRAIN-2 volet D (contrôle LECTURE SEULE) — lit geom/commune/zone des parcelles d'un permis pour rattacher l'autorisé Sitadel à la capacité servie et agréger l'écart par commune/type de zone. Comparaison d'audit, aucun robinet servi, aucune écriture."),
+    L("sitadel_permits", "verite_terrain_capacite.py", None, None,
+      "VERITE-TERRAIN-2 volet D (contrôle LECTURE SEULE) — lit les permis (idu_codes/date/raw : SDP et logements créés) postérieurs à l'entrée en vigueur du PLU pour comparer l'autorisé réel à la capacité max servie (q_v19). Comparaison d'audit, aucun robinet servi, aucune écriture."),
+    L("dvf_mutations_parcelle", "verite_terrain_predictions.py", None, None,
+      "VERITE-TERRAIN-2 volet E (contrôle LECTURE SEULE) — lit les mutations par parcelle (dates/prix) pour le backtest du signal de mutation (ventes postérieures à l'instantané daté) et l'écart prix estimé/réel sans fuite. Comparaison d'audit, aucun robinet servi, aucune écriture."),
 )
 
 
