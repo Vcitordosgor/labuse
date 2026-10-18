@@ -269,17 +269,20 @@ function SourceRef({ line, hideDate }: { line: FicheLine; hideDate?: boolean }) 
   // M70 décision 6 — la clé technique `source_table#source_id` (ex. « parcel_amenites#56909 ») ne
   // s'affiche PLUS au client (violation libellés_client). Le nom de source reste cliquable (drawer).
   return (
-    <div className="mt-0.5 flex items-center gap-2 text-[11px] text-txt-dim">
+    // FICHE-ORFEVRERIE-1 (reprise, pt 21) — la source et le millésime amont PASSENT À LA LIGNE (flex-wrap,
+    // break-words), jamais une ellipse « … » : la traçabilité se lit en entier (ex. « géo-DVF Etalab
+    // 2021–2025 + archives DVF historiques »).
+    <div className="mt-0.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-[11px] text-txt-dim">
       {line.source && (
-        <button onClick={() => openSourceDrawer(line)} className="shrink-0 truncate text-txt-dim transition-colors duration-quick hover:text-mint hover:underline">
+        <button onClick={() => openSourceDrawer(line)} className="break-words text-left text-txt-dim transition-colors duration-quick hover:text-mint hover:underline">
           {line.source}
         </button>
       )}
       {/* FIX-FICHE F4 — le MILLÉSIME AMONT (vraie fraîcheur de la source, pas la date de run) est
-          affiché INLINE, discret et tronqué : la traçabilité se lit sans ouvrir un tiroir. Le full
-          au survol. La date de run (line.date) reste masquée (hideDate) car uniforme/trompeuse. */}
+          affiché INLINE, discret : la traçabilité se lit sans ouvrir un tiroir. La date de run
+          (line.date) reste masquée (hideDate) car uniforme/trompeuse. */}
       {line.millesime_amont && (
-        <span className="min-w-0 truncate text-[10px] text-txt-dim">· {line.millesime_amont}</span>
+        <span className="break-words text-[10px] text-txt-dim">· {line.millesime_amont}</span>
       )}
       {!hideDate && line.date && <span className="ml-auto shrink-0 font-mono tnum">{fmtDateNum(line.date)}</span>}
     </div>

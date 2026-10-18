@@ -8,7 +8,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState, type ReactNode } from 'react'
 import { getCalculetteDefaults, getFaisabilite, getModeB, getPipelineForParcel, patchPipeline, postChargeFonciere, postFaisabiliteScenario, type CalculetteDefaults } from '../../lib/api'
-import { fmtEurCompact, fmtInt, fmtM2, fmtPctConsomme, fmtSup } from '../../lib/format'
+import { fmtEurCompact, fmtInt, fmtDec, fmtM2, fmtPctConsomme, fmtSup } from '../../lib/format'
 import { Chevron } from '../ui/Chevron'
 import { PERIM_POTENTIEL_COURT } from '../../lib/perimetres'
 import { CAPACITE_MAX_MENTION } from '../../lib/capaciteMax'
@@ -42,8 +42,12 @@ export function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
     <div data-transformation>
       {/* FICHE-FIX-5 (reste 2) — Potentiel de transformation en Lignes : SDP consommée % et marge en
           hauteur ; la phrase (libellé) et le détail de contrainte passent derrière le « i ». */}
-      <GroupLabel right={
-        <span className="rounded-full px-2 py-0.5 text-[10.5px] font-medium capitalize" style={{ background: `${color}22`, color }}>{PT_CHIP[pt.niveau] ?? pt.niveau}</span>
+      {/* FICHE-ORFEVRERIE-1 (Lot B, pt 18) — plus de badge « Fort / Modéré… » (verdict DÉDUIT) : on ne
+          garde à droite que les états OPÉRATOIRES factuels (différé zone AU, non retenue à cause). Les
+          faits restent dans les lignes ci-dessous (SDP consommée/autorisée, marge en hauteur). */}
+      <GroupLabel right={PT_CHIP[pt.niveau]
+        ? <span className="rounded-full px-2 py-0.5 text-[10.5px] font-medium capitalize" style={{ background: `${color}22`, color }}>{PT_CHIP[pt.niveau]}</span>
+        : undefined
       }>Potentiel de transformation</GroupLabel>
       <Lignes>
         {/* COHERENCE-FIX-1 (lot B) — plus jamais « 999 % » : au-delà de 300, « > 300 % » (l'« i »
@@ -55,9 +59,31 @@ export function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
         {pt.hauteur_marge_m != null && (
           <Ligne ton={pt.hauteur_discordante ? 'ambre' : undefined}
             label={<>Marge en hauteur<InfoI aria="Sur la marge en hauteur" tip={`${pt.hauteur_contrainte ? `Contrainte : ${pt.hauteur_contrainte === 'faîtage' ? 'le faîtage' : "l'égout"}. ` : ''}${pt.hauteur_survol ? `Mesuré au LiDAR HD, survol de ${pt.hauteur_survol}. ` : ''}${pt.hauteur_permis_posterieur ? `Antérieur au permis du ${pt.hauteur_permis_posterieur}, possiblement dépassé.` : ''}` || 'Marge mesurée sous la règle de hauteur.'} /></>}
-            valeur={<>~{pt.hauteur_marge_m} <small>m sous la règle</small></>} />
+            valeur={<>~{fmtDec(pt.hauteur_marge_m)} <small>m sous la règle {pt.hauteur_contrainte === 'faîtage' ? 'au faîtage' : "à l'égout"}{pt.hauteur_regle_m != null ? ` (${fmtInt(pt.hauteur_regle_m)} m)` : ''}</small></>} />
         )}
       </Lignes>
+      {/* FICHE-ORFEVRERIE-1 (Lot A, pt 7) — « comment on arrive à N m² » : la chaîne du calcul rendue
+          visible (plafond d'emprise → niveaux → SDP maximale − bâti conservé = SDP restante) avec
+          l'étape qui LIMITE nommée. Les chiffres sont ceux du calcul (retombent sur la SDP servie). */}
+      {pt.calcul && pt.calcul.sdp_residuelle_m2 != null && pt.calcul.sdp_max_m2 != null && (
+        <Repli label={`comment on arrive à ${fmtInt(pt.calcul.sdp_residuelle_m2)} m²`}>
+          <Lignes>
+            {/* SDP maximale du gabarit : l'emprise au sol constructible et les niveaux sont rappelés en
+                sous-ligne — la SDP n'est PAS un simple « emprise × niveaux » (circulations, murs,
+                efficacité nette sont déjà retranchés), d'où « 512 m² × R+1 » ≠ la SDP maximale brute. */}
+            <Ligne label="SDP maximale (gabarit)"
+              valeur={<>{fmtInt(pt.calcul.sdp_max_m2)} <small>m²{pt.calcul.emprise_constructible_m2 != null && pt.calcul.niveaux_max != null ? ` · emprise ${fmtInt(pt.calcul.emprise_constructible_m2)} m² · R+${Math.max(0, Math.round(pt.calcul.niveaux_max) - 1)}, net` : ''}</small></>} />
+            {pt.calcul.sdp_existante_m2 != null && (
+              <Ligne label="− bâti conservé (SDP existante)"
+                valeur={<>−{fmtInt(pt.calcul.sdp_existante_m2)} <small>m²{pt.calcul.emprise_batie_m2 != null && pt.calcul.niveaux_existants != null ? ` · ${fmtInt(pt.calcul.emprise_batie_m2)} m² × ${fmtDec(pt.calcul.niveaux_existants)} niv.` : ''}</small></>} />
+            )}
+            <Ligne label="= SDP restante" valeur={<>{fmtInt(pt.calcul.sdp_residuelle_m2)} <small>m²</small></>} />
+          </Lignes>
+          {pt.calcul.etape_limitante && (
+            <FactNote>Étape qui limite la SDP restante : {pt.calcul.etape_limitante}.</FactNote>
+          )}
+        </Repli>
+      )}
       {/* CHASSE-CALCULS-FIX-1 Lot 3 (E-B1) — jamais de mélange vif/gelé : la SDP est calculée sur la
           surface DU RUN ; si la surface cadastrale vive a changé depuis, on le DIT (ligne datée). */}
       {pt.surface_calcul_note && (
@@ -1030,19 +1056,26 @@ export function DispositifsBody({ d }: { d: NonNullable<Fiche['dispositifs']> })
               ? `${d.peb.libelle ? `${d.peb.libelle}. ` : ''}${PEB_PHRASES[d.peb.zone]}`
               : d.peb.zone === 'hors' ? `Hors zones PEB${d.peb.detail ? ` — ${d.peb.detail}` : ''}.` : `Non déterminée${d.peb.detail ? ` — ${d.peb.detail}` : ''}.`} /></>}
             valeur={['A', 'B', 'C', 'D'].includes(d.peb.zone) ? `Zone ${d.peb.zone}` : d.peb.zone === 'hors' ? 'hors zone' : 'non déterminée'} />
-          {(d.sup ?? []).map((sv, i) => (
-            <Ligne key={`sup${i}`} data-dispositifs-sup title={sv.libelle || sv.categorie}
-              label={<>Servitude (SUP)<InfoI aria="Sur la servitude" tip={`${sv.categorie} · ${sv.libelle || 'servitude'}. Assiettes publiées au GPU (T5/PT1/PT2 restreintes ; AS1 captages non publiée pour le 974).`} /></>}
-              /* RECETTE-2 (A5c/T6) — libellé de la servitude, jamais un code brut (« EL10 · EL10_Reunion_ass »).
-                 On garde le nom servi s'il est humain (nomsuplitt) ; sinon le libellé officiel de la catégorie.
-                 Le code exact reste dans le `i`. */
-              valeur={(() => {
-                const brut = (sv.libelle ?? '').trim()
-                const estCode = !brut || /_/.test(brut) || brut.toUpperCase() === (sv.categorie ?? '').toUpperCase() || /^[A-Z0-9]{1,8}$/.test(brut)
-                return estCode ? fmtSup(sv.categorie) : brut
-              })()} />
-          ))}
         </Lignes>
+        {/* FICHE-ORFEVRERIE-1 (Lot D, pt 27 · Lot C, pt 20) — les SERVITUDES en forme VALEUR-LONGUE
+            (libellé en tête, valeur dessous qui passe à la ligne) : « Plan de prévention des risques
+            naturels » ne casse plus la grille mono. Code brut (« EL10_Reunion_ass ») jamais affiché :
+            libellé humain (nom servi ou catégorie officielle), code exact au survol. */}
+        {(d.sup ?? []).length > 0 && (
+          <div data-dispositifs-sup-list className="mt-1 flex flex-col gap-1">
+            {(d.sup ?? []).map((sv, i) => {
+              const brut = (sv.libelle ?? '').trim()
+              const estCode = !brut || /_/.test(brut) || brut.toUpperCase() === (sv.categorie ?? '').toUpperCase() || /^[A-Z0-9]{1,8}$/.test(brut)
+              const lib = estCode ? fmtSup(sv.categorie) : brut
+              return (
+                <div key={`sup${i}`} data-dispositifs-sup title={sv.libelle || sv.categorie} className="text-[12px] leading-snug">
+                  <span className="text-txt-dim">Servitude (SUP)<InfoI aria="Sur la servitude" tip={`${sv.categorie} · ${sv.libelle || 'servitude'}. Assiettes publiées au GPU (T5/PT1/PT2 restreintes ; AS1 captages non publiée pour le 974).`} /></span>
+                  <div className="text-txt-hi">{lib}{sv.categorie ? <small className="text-txt-dim"> · {sv.categorie}</small> : null}</div>
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
   )
 }

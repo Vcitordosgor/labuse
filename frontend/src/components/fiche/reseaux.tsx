@@ -55,9 +55,11 @@ export function ReseauxSection({ f }: { f: Fiche; idu: string }) {
   // mappe plus band→libellé/ton en dur. Repli neutre « à confirmer » si non servi.
   const viabMot = f.viabilisation ? { mot: f.viabilisation.mot ?? 'à confirmer', ton: f.viabilisation.ton ?? 'neutre' } : null
   const assain = assainissementResume(f.anc)
-  // RECETTE-2 (A7b) — le badge « eau/élec … » du bandeau est retiré (doublon de la ligne Verdict).
-  const viabContext = (f.gestionnaires || f.viabilisation || f.anc)
-    ? `Assainissement : ${assain.court}` : null
+  // FICHE-ORFEVRERIE-1 (Lot B pt 13 + Lot D pt 25) — l'assainissement vit à DEUX endroits voulus : la
+  // VALEUR d'en-tête (valeur clé, comme les autres sections) et la « case » Réseaux (CasesEtat). On
+  // RETIRE les doublons : le sous-titre « Assainissement : collectif » et le contexte du Verdict.
+  const assainAvailable = !!(f.gestionnaires || f.viabilisation || f.anc)
+  const viabContext = viabMot ? `viabilisation ${viabMot.mot}` : null
   // ① ACCÈS — le VERDICT vient du moteur `acces` (source unique). Plus de phrase codée en dur.
   const accesLignes = f.lines.filter((l) => l.layer === 'acces')
   const trans = f.proximites
@@ -73,13 +75,12 @@ export function ReseauxSection({ f }: { f: Fiche; idu: string }) {
     // plus bas : on garde la LIGNE, on retire le badge du bandeau (plus de doublon). Le contexte
     // assainissement reste le résumé replié.
     <RefDrawer id="reseaux" icon={IC.viab} name="Réseaux et desserte" context={viabContext}
-      value={undefined}>
+      value={assainAvailable ? `assainissement ${assain.court}` : undefined}>
       <div className="flex flex-col gap-3">
         {/* KELFONCIER-FIX-2 (Lot H) — Verdict (viabilisation servie) + CasesEtat en glance. Le détail
             (accès, transport, gestionnaires, viabilisation, axes…) reste rendu en dessous, inchangé. */}
         <Verdict ton={viabMot?.ton === 'vert' ? 'vert' : viabMot?.ton === 'ambre' ? 'ambre' : 'gris'}
-          reponse={viabMot ? `Viabilisation eau/élec ${viabMot.mot}` : (f.gestionnaires ? 'Réseaux renseignés' : 'Réseaux non renseignés')}
-          contexte={(f.gestionnaires || f.viabilisation || f.anc) ? `assainissement ${assain.court}` : undefined} />
+          reponse={viabMot ? `Viabilisation eau/élec ${viabMot.mot}` : (f.gestionnaires ? 'Réseaux renseignés' : 'Réseaux non renseignés')} />
         {cases.length > 0 && <CasesEtat cases={cases} />}
         {/* FICHE-RANGEMENT-2 Lot 1 — les caractéristiques du terrain (piscine, EquipementsBadges) sont
             relocalisées en §2 Terrain ; §6 Réseaux et desserte ne porte plus que réseaux/accès/desserte. */}
@@ -92,7 +93,7 @@ export function ReseauxSection({ f }: { f: Fiche; idu: string }) {
             <Ligne ton={f.fibre.etat === 'servi' ? (f.fibre.ftth ? undefined : 'gris') : 'gris'}
               label={<>Fibre (Arcep)<InfoI aria="Sur la fibre" tip={`${f.fibre.etat === 'servi' ? `Immeuble Arcep le plus proche à ~${f.fibre.distance_m} m.${f.fibre.operateurs?.length ? ` Opérateurs : ${f.fibre.operateurs.join(', ')}.` : ''}` : (f.fibre.detail ?? '')} Arcep, Ma connexion internet (${f.fibre.millesime}).`} /></>}
               valeur={f.fibre.etat === 'servi'
-                ? <>{f.fibre.ftth ? 'FttH' : 'non FttH'}{f.fibre.distance_m != null ? <small> · {f.fibre.distance_m} m</small> : null}{f.fibre.ftth && f.fibre.operateurs?.length ? <small> · {f.fibre.operateurs.length} op.</small> : null}</>
+                ? <>{f.fibre.ftth ? 'FttH' : 'non FttH'}{f.fibre.distance_m != null ? <small> · {f.fibre.distance_m === 0 ? 'sur place' : `${f.fibre.distance_m} m`}</small> : null}{f.fibre.ftth && f.fibre.operateurs?.length ? <small> · {f.fibre.operateurs.length} opérateur{f.fibre.operateurs.length > 1 ? 's' : ''}</small> : null}</>
                 : 'non renseignée'} />
           )}
           {trans?.arret && <Ligne label="Arrêt de bus" title={trans.arret.nom} valeur={<>{trans.arret.nom}<small> · {fmtDistanceM(trans.arret.distance_m)}</small></>} />}
@@ -126,7 +127,8 @@ export function ReseauxSection({ f }: { f: Fiche; idu: string }) {
                   const dash = det.indexOf('—')
                   const src = l.source ? String(l.source) : ''
                   return (
-                    <Ligne key={i} title={det}
+                    /* FICHE-ORFEVRERIE-1 (reprise, pt 21/23) — valeur-longue (plus de paragraphe gris ni d'ellipse). */
+                    <Ligne long key={i} title={det}
                       label={<>{dash >= 0 ? det.slice(0, dash).trim() : 'Accès voirie'}{src ? <InfoI aria="Source de l'accès" tip={src} /> : null}</>}
                       valeur={dash >= 0 ? det.slice(dash + 1).trim() : det} />
                   )

@@ -35,6 +35,18 @@ function shortReglLabel(l: string): string {
 }
 // Valeur COURTE : « 18 m au faîtage » → « 18 m » ; « 1 place / logement » → « 1 / logt ».
 function shortReglValeur(v: string): string {
+  // FICHE-ORFEVRERIE-1 (Lot A, pt 3) — un recul CALCULÉ (formule) est une règle à part entière : on en
+  // garde la contrainte dimensionnante (« sur limite · ou L ≥ h/2 »), pas la phrase entière du PLU
+  // (qui reste lisible via « voir l'article »). Sans ça la tuile tombait sur un « — » muet.
+  if (/limite\s+s[ée]par|h\s*\/\s*2|\bL\s*≥|retrait/i.test(v)) {
+    const parts: string[] = []
+    if (/sur\s+(?:1|une|2|deux|la|les)\s+limite/i.test(v)) parts.push('sur limite')
+    const h2 = /h\s*\/\s*2/i.test(v)
+    const plancher = v.match(/plancher\s+(\d[\d.,]*)\s*m/i) || v.match(/(\d[\d.,]*)\s*m\b/i)
+    if (h2) parts.push(`${parts.length ? 'ou ' : ''}L ≥ h/2`)
+    else if (plancher) parts.push(`${parts.length ? 'ou ' : ''}L ≥ ${plancher[1].replace('.', ',')} m`)
+    if (parts.length) return parts.join(' ')
+  }
   // « 18 m au faîtage » → « 18 m » (l'unité est déjà là) ; « R+2 au faîtage » → « R+2 ».
   const s = v.trim().replace(/\s+au\s+fa[iî]t\w*.*/i, '').replace(/\s+à\s+l['’]égout.*/i, '')
   const place = s.match(/(\d[\d.,]*)\s*place/i)
@@ -86,8 +98,12 @@ export function ZoneDestinationsLigne({ d }: { d: FicheZoneDestinations }) {
 }
 
 // ── M9 lot 2 — Règlement PLU par zone (règles + valeurs, destinations, à-cheval) ──
-export function ReglementPluBlock({ rp }: { rp: ReglementPlu }) {
+// FICHE-ORFEVRERIE-1 (Lot A pt 10 · reprise pt 9) — `tcsp` : une station de GARE / transport public
+// GUIDÉ (téléphérique, tram) OU en site propre sous 800 m. L151-36 (loi 2025-1129) couvre les trois :
+// le plafond s'impose au PLU (≤ 1 place/logement) → la tuile Stationnement le DIT, avec le MODE.
+export function ReglementPluBlock({ rp, tcsp }: { rp: ReglementPlu; tcsp?: { station: string; distance_m: number; sous_800m: boolean; mode?: string } | null }) {
   if (rp.indisponible) return <BlocIndisponible titre="Règlement PLU" />   // M125 — panne ≠ absence
+  const tcspPlafond = !!tcsp?.sous_800m
   // M62-P1 (j) : la phrase d'explication (`note`) était répétée par zone alors qu'elle est
   // identique pour les deux → une seule fois, en gris, sous les lignes. Si les notes diffèrent,
   // on reste par zone (repli honnête).
@@ -129,16 +145,37 @@ export function ReglementPluBlock({ rp }: { rp: ReglementPlu }) {
             <Tuiles cols={z.regles_valeurs.length >= 5 ? 3 : 2}
               items={z.regles_valeurs.map((rv): Tuile => {
                 const exc = (rv.exceptions ?? []) as PluException[]
+                // FICHE-ORFEVRERIE-1 (Lot A, pt 3) — jamais un « — » muet. Une règle SERVIE (chiffre /
+                // texte / formule calculée) se montre (abrégée). « non réglementé » (état 'absent', mais
+                // la zone EST calibrée → l'article a été lu) se DIT en toutes lettres (gris) et se
+                // distingue de « non calibré » (règle non lue, valeur vide). « — » ne reste que si la
+                // règle n'a strictement aucune valeur ET aucun état exploitable.
+                const hasVal = !!(rv.valeur && String(rv.valeur).trim())
+                const reglee = (rv.etat === 'chiffre' || rv.etat === 'texte' || rv.etat === 'formule') && hasVal
+                const valeur = reglee ? shortReglValeur(String(rv.valeur))
+                  : rv.etat === 'absent' ? (hasVal ? shortReglValeur(String(rv.valeur)) : 'non réglementé')
+                  : hasVal ? shortReglValeur(String(rv.valeur)) : 'non calibré'
+                // FICHE-ORFEVRERIE-1 (Lot A, pt 10) — Stationnement + TCSP sous 800 m : on étiquette le
+                // plafond légal qui s'impose au PLU (L151-36, loi 2025-1129 — au plus 1 place/logement).
+                const estStationnement = shortReglLabel(rv.libelle) === 'Stationnement'
+                const tcspSous = estStationnement && tcspPlafond
                 return {
                   label: shortReglLabel(rv.libelle),
-                  valeur: (rv.etat === 'chiffre' || rv.etat === 'texte') && rv.valeur ? shortReglValeur(rv.valeur) : '—',
-                  sous: rv.reference ? (rv.reference.split(',')[0].replace(/^Zone \S+ /, '').trim() || undefined) : undefined,
-                  ton: rv.etat === 'chiffre' || rv.etat === 'texte' ? undefined : 'gris',
+                  valeur,
+                  // FICHE-ORFEVRERIE-1 (Lot C, pts 21 & 22) — plus de « (PLU » tronqué : on retire le
+                  // parenthétique « (PLU, calibrage validé) » proprement (au lieu de couper au 1ᵉʳ virgule),
+                  // et on normalise « p.68 » → « p. 68 » (espace).
+                  sous: tcspSous
+                    ? `plafond TCSP ≤ 800 m (${tcsp!.distance_m} m)`
+                    : rv.reference ? (rv.reference.replace(/\s*\((PLU|GPU)[^)]*\)/i, '').replace(/^Zone \S+ /, '').replace(/\bp\.(\d)/g, 'p. $1').trim() || undefined) : undefined,
+                  ton: reglee ? undefined : 'gris',
                   // PLU-EXCEPTIONS-1 — la tuile porte un point d'exception + un « i » qui ouvre le
                   // texte (verbatim), l'article et la page. Une règle sans exception n'affiche rien.
                   marque: exc.length > 0 || undefined,
                   info: exc.length > 0
                     ? <InfoI aria={`Exception au règlement — ${rv.libelle}`} tip={<ExceptionTip regle={rv.libelle} exceptions={exc} />} />
+                    : tcspSous
+                    ? <InfoI aria="Plafond TCSP" tip={`Station de ${tcsp!.mode ?? 'transport collectif en site propre'} « ${tcsp!.station} » à ${tcsp!.distance_m} m : à moins de 800 m d'une gare ou d'une station de transport public guidé / en site propre, le PLU ne peut pas exiger plus d'une place de stationnement par logement (0,5 pour le logement social) — art. L151-34 à L151-36 du code de l'urbanisme (loi n° 2025-1129). Reste à instruire la qualité de la desserte.`} />
                     : undefined,
                 }
               })} />

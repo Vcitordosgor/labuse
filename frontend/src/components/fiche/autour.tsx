@@ -18,7 +18,6 @@ import { DepotsBlock } from './DepotsBlock'
 import { AutourZoneBlock } from './AutourZoneBlock'
 import { useApp } from '../../store/useApp'
 import { IC, RefDrawer, GroupLabel, FactNote } from './primitives'
-import { Badge } from '../ui/Badge'
 // KELFONCIER-FIX-2 (Lot I) — maquette v3 : Verdict + OutilsSection (Permis commune · Fiche commune).
 // FICHE-FIX-4 (Lot K) — Proximité en 3 tuiles, quartier INSEE en tuiles 2 colonnes.
 import { Verdict, OutilsSection, type OutilSection, Tuiles, type Tuile } from './formes'
@@ -86,10 +85,12 @@ export function AutourSection({ f, idu }: { f: Fiche; idu: string }) {
     outils.push({ label: 'Fiche commune', data: 'fiche-commune',
       onClick: () => { const st = useApp.getState(); st.setCommune(f.commune!); st.setContexteCommune(f.commune!) } })
   }
+  // FICHE-ORFEVRERIE-1 (Lot D, pt 25) — valeur d'en-tête = une valeur clé de même nature que les autres
+  // sections (distance d'un équipement du quotidien), plus le badge « isochrone » (une mesure, pas une valeur).
   return (
     <RefDrawer id="quartier" icon={IC.contexte} name="Quartier"
       context="Équipements, population et permis du voisinage"
-      value={<Badge ton="vert">isochrone</Badge>}>
+      value={commerce ? `commerces ${fmtDist(commerce.distance_m)}` : undefined}>
       {/* FICHE-FIX-4 (Lot K) — Verdict utile : secteur + niveau de vie + pauvreté + commerces (servis). */}
       <Verdict ton="vert"
         reponse={f.secteur ? `Secteur ${f.secteur}` : (iris?.nom ? `Quartier ${iris.nom}` : 'Voisinage')}

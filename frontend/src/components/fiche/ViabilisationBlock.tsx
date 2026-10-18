@@ -35,26 +35,29 @@ export function ViabilisationBlock({ via, anc }: { via: Viabilisation; anc?: Anc
         <Ligne ton={via.band === 'confirmee' ? 'vert' : (via.band === 'probable' || via.band === 'lourde') ? 'ambre' : undefined}
           label={<>Viabilisation eau · élec<InfoI aria="Sur la viabilisation" tip={`Probabilité par faisceau de preuves, jamais une certitude. ${via.disclaimer}`} /></>}
           valeur={via.libelle.replace(/^Viabilisation\s+/i, '')} />
-        <Ligne title={via.cout_raccordement.niveau}
+        {/* FICHE-ORFEVRERIE-1 (reprise, pt 21) — raccordement / solaire : forme valeur-longue (jamais d'ellipse). */}
+        <Ligne long title={via.cout_raccordement.niveau}
           label={<>Raccordement eau · élec<InfoI aria="Sur le raccordement" tip={via.cout_raccordement.niveau} /></>}
           valeur={via.cout_raccordement.niveau} />
         {via.solaire && (
-          <Ligne title={`${via.solaire.note} ${via.solaire.etat}`}
+          <Ligne long title={`${via.solaire.note} ${via.solaire.etat}`}
             label={<>Solaire<InfoI aria="Sur le solaire" tip={`${via.solaire.note} ${via.solaire.etat}.`} /></>}
             valeur={<>{via.solaire.note} <Badge ton="ambre">Estimé</Badge></>} />
         )}
         {anc && (
-          <Ligne ton={assain.ton === 'vert' ? 'vert' : assain.ton === 'ambre' ? 'ambre' : 'gris'}
+          <Ligne long ton={assain.ton === 'vert' ? 'vert' : assain.ton === 'ambre' ? 'ambre' : 'gris'}
             title={`${anc.libelle} — ${anc.phrase}`}
             label={<>Assainissement<InfoI aria="Sur l'assainissement" tip={`${anc.libelle}. ${anc.phrase} ${via.cout_raccordement.assainissement}`} /></>}
             valeur={assain.plein} />
         )}
       </Lignes>
+      {/* FICHE-ORFEVRERIE-1 (reprise, pt 19/23) — « faisceau de preuves » (jargon) → « indices » ; chaque
+          indice en valeur-longue (plus de paragraphe gris ni de valeur tronquée). */}
       {via.contributions.length > 0 && (
-        <Repli compteur={via.contributions.length} label="indices (faisceau de preuves)">
+        <Repli compteur={via.contributions.length} label="indices">
           <Lignes>
             {via.contributions.map((c, i) => (
-              <Ligne key={i} title={c.detail} label={c.libelle} valeur={c.detail} />
+              <Ligne long key={i} title={c.detail} label={c.libelle} valeur={c.detail} />
             ))}
           </Lignes>
         </Repli>

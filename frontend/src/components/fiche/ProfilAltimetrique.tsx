@@ -75,16 +75,17 @@ function Corps({ p }: { p: Profil }) {
             on garde la garde PAR CHAMP (« — » sec, jamais « — m » que donnerait nf(null) + unité),
             et le nf/nf1 null-safe de main sert le graphe. */}
         <Chiffre l="Distance" v={p.distance_m != null ? `${nf(p.distance_m)} m` : '—'} />
-        <Chiffre l="Dénivelé +" v={p.denivele_positif_m != null ? `+${nf(p.denivele_positif_m)} m` : '—'} tone="up" />
-        <Chiffre l="Dénivelé −" v={p.denivele_negatif_m != null ? `−${nf(p.denivele_negatif_m)} m` : '—'} tone="down" />
+        {/* FICHE-ORFEVRERIE-1 (Lot A, pt 5) — une décimale : « +0 m » masquait une remontée réelle du profil. */}
+        <Chiffre l="Dénivelé +" v={p.denivele_positif_m != null ? `+${nf1(p.denivele_positif_m)} m` : '—'} tone="up" />
+        <Chiffre l="Dénivelé −" v={p.denivele_negatif_m != null ? `−${nf1(p.denivele_negatif_m)} m` : '—'} tone="down" />
         <Chiffre l="Pente moyenne" v={p.pente_moyenne_pct != null ? `${nf1(p.pente_moyenne_pct)} %` : '—'} />
         <Chiffre l="Plus forte pente" v={p.pente_max_pct != null ? `${nf1(p.pente_max_pct)} %` : '—'} />
         <Chiffre l="Altitude" v={p.altitude_min_m != null && p.altitude_max_m != null
           ? `${nf(p.altitude_min_m)}–${nf(p.altitude_max_m)} m` : '—'} />
       </div>
       <p className="text-[9px] leading-snug text-txt-dim">
-        {p.axe === 'trace' ? 'Le long de la ligne tracée. ' : 'Le long du plus grand axe de la parcelle. '}
-        Source {p.source}. Vocabulaire cartes.gouv (pente moyenne = grade absolu moyen).
+        {p.axe === 'trace' ? 'Profil le long de la ligne tracée. ' : 'Profil le long du plus grand axe de la parcelle — une seule ligne, distincte de la pente moyenne du terrain (tuile « Pente », calculée sur toute l’emprise) : la pente de cet axe peut être plus douce que la pente d’ensemble. '}
+        Source {p.source}. Pente moyenne = dénivelé rapporté à la distance.
       </p>
     </div>
   )
