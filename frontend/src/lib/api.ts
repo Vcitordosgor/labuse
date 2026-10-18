@@ -2145,6 +2145,10 @@ export interface EtudeScenario {
   controles: EtudeControle[]
   checks_geometriques: Array<{ nom: string; ok: boolean; detail: string }>
   geojson: GeoJSON.FeatureCollection
+  // IMPLANTATION-4 — la PLANCHE plan masse « façon archi », UN SEUL SVG dessiné côté serveur depuis la
+  // géométrie (le MÊME à l'écran et dans le PDF). Vide si le dessin a échoué → l'écran retombe sur le
+  // plan schématique (geojson). Les couches de l'écran montrent/masquent des groupes `<g id="g-…">`.
+  planche_svg?: string
 }
 export interface EtudeRegle {
   nom: string; valeur: number | null; unite: string | null; validee: boolean

@@ -19,7 +19,9 @@ from shapely.geometry import mapping
 
 from labuse.geo import to_4326
 
+from . import contexte as contexte_mod
 from . import moteur as moteur_mod
+from . import planche as planche_mod
 from . import rendu as rendu_mod
 from .conventions import avec_surcharges, charger as charger_conventions
 from .controles import ECHOUE, NON_APPLICABLE, NON_EFFECTUE, REUSSI
@@ -237,6 +239,30 @@ def etudier_payload(session, entree: dict) -> dict:
     t = ref_scn.terrain
 
     scenarios_pub = [_scenario_public(s, _REFS[i]) for i, s in enumerate(scenarios)]
+
+    # IMPLANTATION-4 (planche plan masse) — UN SEUL SVG par scénario, le même à l'écran et dans le PDF,
+    # DESSINÉ depuis la géométrie (contexte cadastre/bâti/voies + TN LiDAR chargé UNE fois pour l'assiette).
+    # Robuste : toute panne de contexte/dessin laisse `planche_svg` vide (l'écran retombe sur le plan
+    # schématique) — l'étude est toujours servie.
+    if scenarios_pub:
+        try:
+            from labuse.tz import today_reunion
+            genere_le = today_reunion().strftime("%d/%m/%Y")
+        except Exception:
+            genere_le = ""
+        numero = planche_mod.numero_etude(idus, genere_le)
+        ent_planche = {"commune": t.commune, "zone": ref_scn.regles.zone, "idus": idus}
+        try:
+            ctx = contexte_mod.charger_contexte(session, t.assiette, idus, avec_tn=True)
+        except Exception:
+            ctx = contexte_mod.Contexte()
+        for pub, scn in zip(scenarios_pub, scenarios):
+            try:
+                pub["planche_svg"] = planche_mod.planche_svg(
+                    scn, ctx, ref=pub["ref"], genere_le=genere_le, numero=numero, entrees=ent_planche)
+            except Exception:
+                pub["planche_svg"] = ""
+
     if scenarios_pub:
         statut_global = scenarios_pub[0]["statut_etude"]
     elif demande:

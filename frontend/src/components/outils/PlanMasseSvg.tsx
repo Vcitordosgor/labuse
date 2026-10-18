@@ -5,7 +5,7 @@
 // features, y inversé (nord en haut), même z-order. Aucun calcul, aucune requête : on ne fait que
 // projeter le GeoJSON déjà servi (actif.geojson), filtré en amont par couche cochée. Fond sombre (thème
 // de l'app), palette dérivée de celle du PDF adaptée au sombre (bâtiment clair, places/allées sombres).
-import { useMemo, type ReactElement } from 'react'
+import { useEffect, useMemo, useRef, type ReactElement } from 'react'
 import type { FeatureCollection, Geometry } from 'geojson'
 
 type FC = FeatureCollection
@@ -40,7 +40,28 @@ function ringsOf(g: Geometry): number[][][] {
   return []
 }
 
-export function PlanMasseSvg({ fc, className }: { fc: FC | null; className?: string }) {
+// IMPLANTATION-4 (planche) — quand le serveur fournit la PLANCHE (SVG « façon archi » dessiné depuis la
+// géométrie, le MÊME qu'au PDF), on l'INJECTE telle quelle (feuille blanche dans l'app sombre) et on
+// montre/masque ses GROUPES `<g id="g-…">` selon les couches cochées. Sinon on retombe sur le plan
+// schématique projeté depuis le GeoJSON (ci-dessous). Aucun second calcul dans les deux cas.
+export function PlanMasseSvg({ fc, svg, groupesCaches, className }: {
+  fc?: FC | null; svg?: string | null; groupesCaches?: string[]; className?: string
+}) {
+  const host = useRef<HTMLDivElement | null>(null)
+  useEffect(() => {
+    if (!svg || !host.current) return
+    host.current.innerHTML = svg
+    const el = host.current.querySelector('svg')
+    if (el) { el.setAttribute('width', '100%'); el.removeAttribute('height'); (el as SVGElement).style.height = 'auto'; (el as SVGElement).style.display = 'block' }
+  }, [svg])
+  useEffect(() => {
+    if (!svg || !host.current) return
+    const cacher = new Set(groupesCaches ?? [])
+    host.current.querySelectorAll('g[id^="g-"]').forEach((g) => {
+      (g as SVGGElement).style.display = cacher.has((g as SVGGElement).id) ? 'none' : ''
+    })
+  }, [svg, groupesCaches])
+
   const W = 900, H = 420
   const els = useMemo<ReactElement[]>(() => {
     const kindOf = (f: FC['features'][number]) => (f.properties as { kind?: string } | null)?.kind ?? ''
@@ -79,6 +100,11 @@ export function PlanMasseSvg({ fc, className }: { fc: FC | null; className?: str
     return out
   }, [fc])
 
+  // planche serveur présente → feuille blanche injectée (groupes toggés) ; sinon plan schématique.
+  if (svg) {
+    return <div ref={host} data-planche-svg
+      className={className ?? 'block w-full overflow-hidden rounded-md border border-line-2 bg-white'} />
+  }
   return (
     <svg data-plan-masse-svg viewBox={`0 0 ${W} ${H}`} className={className ?? 'block h-auto w-full rounded-md'}
       style={{ background: '#0F1311' }} role="img" aria-label="Plan masse du scénario">

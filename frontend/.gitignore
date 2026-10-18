@@ -5,3 +5,6 @@ dist/
 tsconfig.tsbuildinfo
 *.tsbuildinfo
 vite.config.js
+
+# IMPLANTATION-4 — payloads de capture (régénérés par le moteur, non versionnés)
+public/capture/

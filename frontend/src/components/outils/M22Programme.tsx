@@ -40,17 +40,17 @@ const OBJECTIFS: { key: Objectif; label: string }[] = [
   { key: 'plus_simple', label: 'Projet plus simple' },
 ]
 
-// Couches activables du plan masse → `kind` du GeoJSON servi. Parcelle/voie/assiette TOUJOURS visibles.
-const ALWAYS = new Set(['parcelle', 'voie', 'assiette'])
-const COUCHES: { key: string; label: string; kinds: string[]; defaut: boolean }[] = [
-  { key: 'batiments', label: 'Bâtiments', kinds: ['batiment_emprise'], defaut: true },
-  { key: 'modules', label: 'Modules logements', kinds: ['module', 'noyau', 'coursive'], defaut: false },
-  { key: 'places', label: 'Places', kinds: ['place'], defaut: true },
-  { key: 'allees', label: 'Allées', kinds: ['allee'], defaut: true },
-  { key: 'acces', label: 'Accès', kinds: ['acces'], defaut: true },
-  { key: 'reculs', label: 'Reculs', kinds: ['zone'], defaut: true },
-  { key: 'ppr', label: 'PPR', kinds: ['ppr_rouge', 'ppr_bleue'], defaut: true },
-  { key: 'libres', label: 'Espaces libres', kinds: ['espace_libre'], defaut: true },
+// Couches activables de la PLANCHE (maquette) → GROUPE `<g id>` du SVG serveur, + `kinds` du GeoJSON
+// pour le plan schématique de repli. Parcelle/voie/assiette/zone/espaces libres/accès toujours visibles.
+const ALWAYS = new Set(['parcelle', 'voie', 'assiette', 'zone', 'espace_libre', 'acces'])
+const COUCHES: { key: string; label: string; groupe: string; kinds: string[]; defaut: boolean }[] = [
+  { key: 'batiment', label: 'Bâtiment', groupe: 'g-batiment', kinds: ['batiment_emprise', 'noyau', 'coursive'], defaut: true },
+  { key: 'modules', label: 'Modules', groupe: 'g-modules', kinds: ['module'], defaut: false },
+  { key: 'places', label: 'Places', groupe: 'g-places', kinds: ['place'], defaut: true },
+  { key: 'allee', label: 'Allée', groupe: 'g-allee', kinds: ['allee'], defaut: true },
+  { key: 'cotes', label: 'Cotes', groupe: 'g-cotes', kinds: [], defaut: true },
+  { key: 'voisins', label: 'Voisins', groupe: 'g-voisins', kinds: [], defaut: true },
+  { key: 'ppr', label: 'PPR', groupe: 'g-ppr', kinds: ['ppr_rouge', 'ppr_bleue'], defaut: true },
 ]
 const COUCHES_DEFAUT = Object.fromEntries(COUCHES.map((c) => [c.key, c.defaut])) as Record<string, boolean>
 
@@ -162,6 +162,11 @@ export function M22({ embedded = false, initialIdus, onBilan, onClose }: {
       }),
     }
   }, [actif, couches])
+
+  // Planche serveur (SVG « façon archi ») : groupes `<g id="g-…">` à masquer selon les couches décochées.
+  const groupesCaches = useMemo(
+    () => COUCHES.filter((c) => !couches[c.key]).map((c) => c.groupe),
+    [couches])
 
   // ouvrir l'Étude FERME la fiche en cours (le clic-carte compose l'assiette) — seulement hors overlay.
   useEffect(() => { if (!embedded) select(null) }, [])  // eslint-disable-line react-hooks/exhaustive-deps
@@ -666,14 +671,17 @@ export function M22({ embedded = false, initialIdus, onBilan, onClose }: {
                     ))}
                   </div>
                 </div>
-                <PlanMasseSvg fc={planFc} />
-                <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-txt-dim">
-                  <Leg c="transparent" b="#DC2626" dash>Limite des parcelles</Leg>
-                  <Leg c="#E8EDEA">Bâtiment</Leg>
-                  <Leg c="#0F1311" b="#8A948E">Place 2,5 × 5 m</Leg>
-                  <Leg c="#2E3631">Allée</Leg>
-                  <Leg c="#F59E0B">Accès</Leg>
-                </div>
+                <PlanMasseSvg fc={planFc} svg={actif.planche_svg} groupesCaches={groupesCaches} />
+                {/* la planche serveur porte SA propre légende ; on ne montre celle-ci qu'en repli schématique. */}
+                {!actif.planche_svg && (
+                  <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-txt-dim">
+                    <Leg c="transparent" b="#DC2626" dash>Limite des parcelles</Leg>
+                    <Leg c="#E8EDEA">Bâtiment</Leg>
+                    <Leg c="#0F1311" b="#8A948E">Place 2,5 × 5 m</Leg>
+                    <Leg c="#2E3631">Allée</Leg>
+                    <Leg c="#F59E0B">Accès</Leg>
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-2">

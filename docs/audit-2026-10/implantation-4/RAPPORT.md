@@ -141,6 +141,56 @@ changements sont d'affichage (front), de libellés d'export (back) et de câblag
 
 ---
 
+## Complément — 4 correctifs + PLANCHE plan masse « façon archi »
+
+Après la suite v4, 4 correctifs (1 commit chacun) puis la planche (1 commit) et la coupe (1 commit).
+
+### Les 4 correctifs
+1. **Parcelles multiples** (`081ac4d4`) — l'assiette doit être d'UN SEUL TENANT (contiguïté = limite
+   partagée, tolérance 0,5 m) ; sinon refus clair (ValueError → 400), plus de morceau gardé en silence.
+   Dans Docs, la carte « Étude » ouvre directement l'état 1 (champ qui AJOUTE les parcelles), sans la
+   fenêtre « Sur quelle parcelle ? ».
+2. **Scénarios dominés** (`cf8b8888`) — filtre de Pareto sur logements / surface habitable / simplicité
+   (moins de bâtiments). Les places ne comptent pas. Dominé = ≤ sur les trois et < quelque part → écarté ;
+   un seul survivant = un seul affiché (sur les 3 témoins : 1 scénario chacun).
+3. **Distance mono-bâtiment** (`f39073cd`) — un seul bâtiment → « Non applicable · un seul bâtiment »
+   (zone calibrée ou non) ; plusieurs bâtiments inchangé ; reculs séparatifs toujours contrôlés.
+4. **Format des nombres** (`c9728a83`) — un helper par langage (`implantation/format.py` ↔ `lib/format.ts`),
+   virgule décimale + espace insécable : « 1 746 », « 13,00 », « 0,57 », « 1 746 m² ».
+
+### Planche plan masse (maquette `maquette-planche-plan-masse-v1.html`)
+**UN SEUL SVG** par scénario, **le même à l'écran et dans le PDF**, DESSINÉ depuis la géométrie (jamais
+redessiné à la main), généré côté serveur :
+- `implantation/contexte.py` charge le contexte 2975 autour de l'assiette : **parcelles voisines** (+ n°),
+  **bâti voisin BD TOPO** (gris), **voies nommées** (toponyme de l'adresse BAN la plus proche — « Avenue
+  Raymond Barre »…), **TN LiDAR** aux 4 angles (raster `rgealti_mnt_5m` puis complément IGN). Tolérant :
+  ce qui manque = vide.
+- `implantation/planche.py` projette la géométrie MONDE 2975 → SVG (nord en haut, Y inversé), cadré sur
+  l'assiette. Codes archi : fond blanc, bâtiment rose + coursive, zone d'implantation vert pointillé,
+  places blanches **numérotées** (verrou : nb dessiné = nb affiché), pleine terre verte, PPR hachurée ;
+  cotes RÉELLES (rectangle mini orienté) « 13,00 » ; TN aux angles ; flèche nord ; échelle graphique +
+  « 1 : N » ; légende ; **tableau des surfaces** mesurées ; cartouche LABUSE. Couches de l'écran =
+  groupes `<g id="g-…">` montrés/masqués (Bâtiment, Modules, Places, Allée, Cotes, Voisins, PPR).
+- `service.etudier_payload` attache `planche_svg` à chaque scénario (contexte chargé UNE fois). Robuste :
+  toute panne laisse `planche_svg` vide → l'écran retombe sur le plan schématique.
+- Écran : `PlanMasseSvg` injecte le SVG serveur (feuille blanche dans l'app sombre) et toggle les groupes.
+  PDF : `exports/etude_faisabilite._p_planche` embarque le MÊME SVG sur une page PAYSAGE pleine.
+
+**Captures** (`captures/`, 3 communes — L'Étang-Salé 4 parcelles, Saint-André, Saint-Denis) :
+| Écran | PDF |
+|---|---|
+| `H1-ecran-planche-etang-sale.png` | `I1-pdf-planche-etang-sale.png` |
+| `H2-ecran-planche-saint-andre.png` | `I2-pdf-planche-saint-andre.png` |
+| `H3-ecran-planche-saint-denis.png` | `I3-pdf-planche-saint-denis.png` |
+
+**Tests** : `test_implantation_pareto` (6), `test_implantation_distance` (mono → N/A), `test_implantation1`
+(contiguïté refusée + distance mono), `test_implantation2` (planche servie, **places numérotées = objets**),
+front `EtudeDocs` (carte Docs → état 1). Reel verts (impl1 89, impl2 14, distance 17, pdf 13) ; vitest 267,
+tsc 0. Harnais de capture : `frontend/capture-etude.html` + payloads réels régénérés sous
+`frontend/public/capture/` (non versionnés).
+
+---
+
 ## Suite v4 — l'écran d'étude SANS CARTE (maquette `maquette-etude-docs-v4.html`)
 
 Sur retour de CC : l'écran d'étude suit désormais fidèlement la maquette v4, **plein écran, thème sombre,

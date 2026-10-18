@@ -196,3 +196,15 @@ def test_route_etude_entrees_invalides(session_reelle):
         etude_implantation(EtudeIn(idus=IDUS_ETANG_SALE, type_projet="lotissement"),
                            db=session_reelle)
     assert e3.value.status_code == 400
+
+
+# IMPLANTATION-4 (planche) — le payload sert la PLANCHE (SVG « façon archi »), et le VERROU tient :
+# le nombre de places NUMÉROTÉES dessinées sur la planche = le nombre de places du résumé (= objets).
+def test_planche_servie_places_numerotees_egalent_objets(payload):
+    import re
+    sc = payload["scenarios"][0]
+    svg = sc.get("planche_svg") or ""
+    assert svg and 'class="planche"' in svg and 'id="g-places"' in svg
+    gpl = re.search(r'<g id="g-places".*?</g>', svg, flags=re.S)
+    n_num = len(re.findall(r'>\d+</text>', gpl.group(0))) if gpl else 0
+    assert n_num == sc["resume"]["places"]

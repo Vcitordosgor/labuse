@@ -68,6 +68,12 @@ table.ef-scn tr.retenu { background: var(--mint-bg); }
 .ef-fig svg { width: 100%; height: auto; display: block; }
 .ef-leg { font-size: 7.8pt; color: var(--muted); margin-top: 3pt; display: flex; flex-wrap: wrap; gap: 10pt; }
 .ef-leg i { display: inline-block; width: 9pt; height: 9pt; border-radius: 1.5pt; vertical-align: -1pt; margin-right: 3pt; }
+/* IMPLANTATION-4 — la PLANCHE plan masse (le MÊME SVG qu'à l'écran) sur une page PAYSAGE pleine. */
+@page planche-land { size: A4 landscape; margin: 9mm; }
+.ef-planche-page { page: planche-land; }
+/* le SVG porte width="100%" + viewBox : WeasyPrint le dimensionne seul. Ne PAS forcer height:auto ici
+   (sous page paysage nommée, WeasyPrint calcule alors une hauteur nulle → planche blanche). */
+.ef-planche { width: 96%; margin: 0 auto; border: 1px solid var(--line); border-radius: 3pt; background: #fff; }
 """
 
 # ── format ────────────────────────────────────────────────────────────────────────────────────
@@ -461,6 +467,20 @@ def _p5_plan_masse(payload: dict, retenu: dict, *, titre: str = None) -> str:
           '(verrou de test). Plan rendu depuis la géométrie servie.</p></section>')
 
 
+def _p_planche(payload: dict, retenu: dict) -> str:
+    """La PLANCHE plan masse « façon archi » — le MÊME SVG que l'écran (servi dans le payload par
+    `service.etudier_payload`), sur une page paysage pleine. Rien n'est redessiné ici."""
+    svg = retenu.get("planche_svg") or ""
+    if not svg:
+        return ""
+    # pas de <h2> ici : la planche porte SON cartouche (titre) ; un en-tête en plus débordait la page
+    # paysage et laissait une page d'orphelin. On garde juste le dessin pleine page + une note discrète.
+    return ('<section class="ef-planche-page"><div class="ef-planche">' + svg + '</div>'
+            '<p class="note">Planche — plan masse « façon architecte », dessinée depuis la géométrie du '
+            "scénario (contexte : cadastre et bâti voisins BD TOPO, voies nommées, TN LiDAR aux angles). "
+            "Esquisse indicative — pas une étude d'architecte.</p></section>")
+
+
 def _p6_distribution(payload: dict, retenu: dict) -> str:
     sc = retenu
     types = sorted({k for d in sc["distribution_niveaux"] for k in (d.get("par_type") or {})})
@@ -609,11 +629,8 @@ def _annexe(payload: dict, retenu: dict) -> str:
 
 
 # ════════════════════════════════════════════════════════════════════════════════════════════
-def numero_etude(idus: list[str], genere_le: str) -> str:
-    """N° de document DÉTERMINISTE : EF-AAAAMMJJ-XXXX (XXXX stable par assiette → rejeu à l'identique)."""
-    d = re.sub(r"\D", "", genere_le)[:8] or "00000000"
-    h = hashlib.md5((",".join(sorted(idus))).encode()).hexdigest()
-    return f"EF-{d}-{int(h[:4], 16) % 10000:04d}"
+# n° de document : source UNIQUE dans implantation.planche (partagée planche + PDF).
+from labuse.implantation.planche import numero_etude   # noqa: E402,F401
 
 
 def rendu_etude(payload: dict, *, genere_le: str, scenario_ref: Optional[str] = None) -> dict:
@@ -637,6 +654,7 @@ def rendu_etude(payload: dict, *, genere_le: str, scenario_ref: Optional[str] = 
         + _p3_regles(payload, retenu)
         + _p4_enveloppe(payload, retenu)
         + _p5_plan_masse(payload, retenu)
+        + _p_planche(payload, retenu)
         + _p6_distribution(payload, retenu)
         + _p7_capacite(payload, retenu)
         + _p8_hypotheses(payload, retenu, numero)
