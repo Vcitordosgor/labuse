@@ -11,6 +11,7 @@ import { getCalculetteDefaults, getFaisabilite, getModeB, getPipelineForParcel, 
 import { fmtEurCompact, fmtInt, fmtM2, fmtPctConsomme, fmtSup } from '../../lib/format'
 import { Chevron } from '../ui/Chevron'
 import { PERIM_POTENTIEL_COURT } from '../../lib/perimetres'
+import { CAPACITE_MAX_MENTION } from '../../lib/capaciteMax'
 import { Chargement, Squelette } from '../Loading'
 import { ErrorState } from '../States'
 import { BlocIndisponible } from './BlocIndisponible'
@@ -1100,8 +1101,13 @@ export function ConstructibiliteSection({ f, idu }: { f: Fiche; idu: string }) {
             : [fo?.niveaux ?? null, 'calcul tracé'].filter(Boolean).join(' · ') || 'calcul tracé'}
         micro={<MicroTriple items={delaisse
           ? [`surface ${delaisse.surface_m2} m²`, `seuil délaissé ${delaisse.seuil_m2} m²`, 'bilan non servi']
-          : [fo?.niveaux ?? 'gabarit', <>SDP <span style={{ color: 'var(--txt-dim)' }}>{fo?.surface_plancher_m2 ?? reglesSdp ?? '—'} m²</span></>, 'calcul tracé']} />}>
+          : [fo?.niveaux ?? 'gabarit', <>SDP max <span style={{ color: 'var(--txt-dim)' }}>{fo?.surface_plancher_m2 ?? reglesSdp ?? '—'} m²</span></>, 'calcul tracé']} />}>
         <div className="flex flex-col gap-3">
+          {/* FIX-PRIX-ET-OPPORTUNITES (lot 3) — la capacité (SDP, logements) est un MAXIMUM réglementaire ;
+              les permis réels en utilisent ~½ en médiane (volet D). Dit une fois, dès qu'il y a une capacité. */}
+          {!logementsNonCalculable && !delaisse && (((fo?.surface_plancher_m2 ?? 0) > 0) || ((logMax ?? 0) > 0)) && (
+            <FactNote>{CAPACITE_MAX_MENTION}</FactNote>
+          )}
           {/* KELFONCIER-FIX-1 (Lot A) — CAUSE §10 : une zone AU FERMÉE (ou au statut non déterminé)
               explique un potentiel nul — la parcelle n'est pas constructible tant que le PLU n'a pas
               ouvert la zone. Le motif cité vient du règlement (moteur d'ouverture AU). */}

@@ -273,6 +273,11 @@ def champ_precis(db: Session, idu: str, message: str) -> dict | None:
         return {"texte": f"{libelle} : non renseigné pour la parcelle {idu} (donnée absente au run servi).",
                 "champ_id": cid, "valeur": None, "source": "fiche LABUSE"}
     texte = _rendre_champ(cid, libelle, v.valeur, valeurs)
+    # FIX-PRIX-ET-OPPORTUNITES (lot 3) — une capacité constructible est un MAXIMUM réglementaire ; on
+    # ajoute la mention mesurée (volet D : ~½ utilisé en médiane par les permis réels).
+    if cid == "sdp_residuelle_m2":
+        from ..capacite_max import MENTION_COURTE as _CAP
+        texte = f"{texte} C'est un {_CAP}."
     return {"texte": texte, "champ_id": cid, "valeur": v.valeur, "source": f"fiche LABUSE · {cid}"}
 
 

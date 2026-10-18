@@ -168,17 +168,25 @@ def _hypotheses(resolved: dict) -> str:
 
 
 def _programme(prog: dict, valeurs) -> str:
+    # FIX-PRIX-ET-OPPORTUNITES (lot 3) — SDP et logements sont le MAXIMUM réglementaire (gabarit) ;
+    # les permis réels en utilisent ~½ en médiane (volet D). Libellé « (maximum) » + note mesurée.
     lignes = []
+    plafond = False
     if prog.get("surface_plancher"):
-        lignes.append(ligne_kv("Surface de plancher", esc(f"~{groupe(round(prog['surface_plancher']))} m²"), chip_span("e", "estimé")))
+        plafond = True
+        lignes.append(ligne_kv("Surface de plancher (maximum)", esc(f"~{groupe(round(prog['surface_plancher']))} m²"), chip_span("e", "estimé")))
     if prog.get("surface_vendable"):
         lignes.append(ligne_kv("Surface habitable vendable", esc(f"~{groupe(round(prog['surface_vendable']))} m²"), chip_span("e", "estimé")))
     if prog.get("logements"):
-        lignes.append(ligne_kv("Logements", esc(str(prog["logements"])), chip_span("e", "estimé")))
+        plafond = True
+        lignes.append(ligne_kv("Logements (maximum)", esc(str(prog["logements"])), chip_span("e", "estimé")))
     mx = val(valeurs, "mixite_clause")
     if mx:
         lignes.append(ligne_kv("Mixité sociale", esc(str(mx)), chip_span("s", "sourcé")))
-    return ("<h2>Le programme</h2>" + table_kv(lignes)) if lignes else ""
+    if not lignes:
+        return ""
+    from ...capacite_max import MENTION as _CAP
+    return "<h2>Le programme</h2>" + table_kv(lignes) + (note(_CAP) if plafond else "")
 
 
 def _bilan_rebours(bilan: dict, resolved: dict | None = None) -> str:
