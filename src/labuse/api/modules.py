@@ -1999,6 +1999,86 @@ def etude_implantation(body: EtudeIn, db: Session = Depends(get_db)) -> dict:
         raise HTTPException(400, str(exc))
 
 
+class EtudePdfIn(EtudeIn):
+    # IMPLANTATION-3 — l'export FIGÉ de l'outil : mêmes entrées que l'écran (EtudeIn) + le scénario
+    # AFFICHÉ (scenario_ref) que la tuile « Étude de faisabilité (PDF) » transmet. La 9e carte Docs
+    # n'en envoie pas (configuration par défaut → scénario retenu = 1er exploitable).
+    scenario_ref: str | None = None
+
+
+def _archiver_etude(db: Session, request: Request, body: dict, payload: dict,
+                    numero: str, retenu_ref: str) -> None:
+    """Archive la RECETTE du document dans `documents_generes` (jamais le PDF) : entrées, configuration,
+    version du moteur et des règles, + instantané des millésimes — le PDF se rejoue à l'identique.
+    Best-effort : une base nue (table absente) ne doit jamais faire échouer l'export (journalisé)."""
+    import json
+
+    from .documents_bibliotheque import millesimes_servis
+    from .tenant import current_compte
+    recette = {
+        "config": {k: body.get(k) for k in ("idus", "type_projet", "objectif", "programme",
+                                             "hypotheses", "stationnement", "terrain", "scenario_ref")},
+        "scenario_retenu": retenu_ref,
+        "numero": numero,
+        "moteur": payload.get("moteur"),
+        "regles": {"zone": payload.get("regles", {}).get("zone"),
+                   "insee": payload.get("regles", {}).get("insee")},
+    }
+    try:
+        db.execute(text(
+            "INSERT INTO documents_generes (compte_id, doc_type, cible_idus, hypotheses, millesimes)"
+            " VALUES (:cid, 'etude-faisabilite', :idus, CAST(:hyp AS jsonb), CAST(:mil AS jsonb))"),
+            {"cid": current_compte(request), "idus": payload["entrees"].get("idus") or [],
+             "hyp": json.dumps(recette), "mil": json.dumps(millesimes_servis(db))})
+        db.commit()
+    except Exception:  # noqa: BLE001 — l'archivage ne bloque jamais la livraison du PDF
+        db.rollback()
+        logging.getLogger("labuse").exception("étude de faisabilité : archivage documents_generes impossible")
+
+
+@router.post("/etude/pdf")
+def etude_pdf(body: EtudePdfIn, request: Request, db: Session = Depends(get_db)) -> Response:
+    """IMPLANTATION-3 — le document « Étude de faisabilité » (PDF 8 pages). UN SEUL calcul : on sert le
+    MÊME payload que l'écran (`etudier_payload`) et on le REND (jamais un second calcul) ; chaque ligne
+    du PDF est une ligne de l'outil (verrou `nombres_hors_payload`). Deux portes, un document : la tuile
+    de l'outil passe `scenario_ref` (le scénario affiché) ; la carte Docs sert la config par défaut."""
+    from datetime import date
+    from urllib.parse import quote
+
+    from ..exports import etude_faisabilite as ef
+    from ..exports.rendu import render_pdf
+    from ..implantation.service import etudier_payload
+
+    for idu in (body.idus or []):
+        _check_idu(idu)
+    data = body.model_dump()
+    scenario_ref = data.pop("scenario_ref", None)
+    try:
+        payload = etudier_payload(db, data)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
+    genere_le = date.today().strftime("%d/%m/%Y")
+    try:
+        rendu = ef.rendu_etude(payload, genere_le=genere_le, scenario_ref=scenario_ref)
+    except ValueError as exc:
+        # aucun scénario : le document n'a rien à montrer (400, jamais un PDF vide ni un faux chiffre).
+        raise HTTPException(400, str(exc))
+    try:
+        pdf = render_pdf(rendu["html"])
+    except Exception:  # noqa: BLE001 — échec de rendu WeasyPrint : dit comme technique.
+        logging.getLogger("labuse").exception("étude de faisabilité : échec du rendu PDF")
+        raise HTTPException(500, detail={"erreur": "erreur_technique",
+                            "message": "Le document n'a pas pu être rendu (erreur technique)."})
+    _archiver_etude(db, request, {**data, "scenario_ref": scenario_ref}, payload,
+                    rendu["numero"], rendu["retenu_ref"])
+    nom = f"Étude de faisabilité — {rendu['numero']}.pdf"
+    dispo = f'inline; filename="{rendu["numero"]}.pdf"; filename*=UTF-8\'\'{quote(nom)}'
+    return Response(pdf, media_type="application/pdf",
+                    headers={"Content-Disposition": dispo,
+                             "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+                             "Pragma": "no-cache"})
+
+
 class ChargeIn(BaseModel):
     # hypothèses métier SAISIES (jamais estimées par LABUSE) — défauts « à ajuster »,
     # DÉRIVÉS de la source unique (mandat hypothèses bilan : plus de 2500 gravé ici).

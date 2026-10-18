@@ -89,4 +89,13 @@ export const CATALOGUE: DocCatalogue[] = [
     cta: 'Générer l’étude de zone',
     explication: 'Les 7 sections et la carte du périmètre.',
   },
+  {
+    // IMPLANTATION-3 — 9e carte : le document « Étude de faisabilité » (8 pages, plan masse). La carte
+    // produit la CONFIGURATION PAR DÉFAUT sur une parcelle (collectif, objectif équilibre, programme
+    // proposé) ; l'outil « Étude de faisabilité » exporte, lui, le scénario affiché + ses réglages.
+    key: 'etude-faisabilite', nom: 'Étude de faisabilité', kind: 'parcelle', formats: ['PDF'],
+    desc: 'Scénarios d’implantation collectif : fourchette de logements, plan masse, contrôles 4 états — pré-faisabilité, jamais « conforme ».',
+    cta: 'Générer l’étude de faisabilité',
+    explication: 'Configuration par défaut (collectif, équilibre). Réglages et assemblage de parcelles dans l’outil.',
+  },
 ]

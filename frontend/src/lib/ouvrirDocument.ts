@@ -37,10 +37,13 @@ async function messageDErreur(r: Response): Promise<string> {
 export function useOuvrirDocument(onErreur?: (msg: string) => void) {
   const [enCours, setEnCours] = useState<string | null>(null)
   const [erreur, setErreur] = useState<string | null>(null)
-  const ouvrir = async (url: string, cle: string = url): Promise<boolean> => {
+  // IMPLANTATION-3 — `init` optionnel : certains documents (l'Étude de faisabilité) se génèrent par
+  // POST (la configuration voyage dans le corps), pas par une URL GET. Le reste (blob, erreurs FR,
+  // état d'attente) est IDENTIQUE — les deux portes se comportent comme les 7 autres documents.
+  const ouvrir = async (url: string, cle: string = url, init?: RequestInit): Promise<boolean> => {
     setErreur(null); setEnCours(cle)
     try {
-      const r = await fetch(url)
+      const r = await fetch(url, init)
       if (!r.ok) { const m = await messageDErreur(r); (onErreur ?? setErreur)(m); return false }
       window.open(URL.createObjectURL(await r.blob()), '_blank', 'noopener')
       return true
