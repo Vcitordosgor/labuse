@@ -498,10 +498,10 @@ def d8_24_communes(cx):
 
 
 @garde
-def d8_surface_ha_vivant(cx, api):
+def d8_surface_ha_vivant(cx, api, run):
     """E-12 — dans chaque fiche commune, surface_ha et n_parcelles portent sur le MÊME parc (vivant).
     Recompose la surface vivante par commune et la compare à /communes/{c}/contexte.foncier.surface_ha.
-    SKIP si l'API n'est pas joignable."""
+    SKIP si l'API n'est pas joignable. `run` = run servi VIVANT (jamais un label figé — fix/banc2-run-servi)."""
     if _api_code(api, "/healthz") != 200:
         return ("SKIP", "API non joignable (garde E-12 nécessite /communes/{c}/contexte)")
     ecarts = []
@@ -512,7 +512,7 @@ def d8_surface_ha_vivant(cx, api):
         surf_vivant = cx.scalar("""SELECT round(sum(surface_m2) FILTER
             (WHERE cadastre_disparue_le IS NULL)/10000.0) FROM parcels WHERE commune=%s""", (c,))
         try:
-            url = api + "/communes/" + urllib.parse.quote(c) + "/contexte?source=q_v18"
+            url = api + "/communes/" + urllib.parse.quote(c) + f"/contexte?source={run}"
             with urllib.request.urlopen(url, timeout=30) as r:
                 payload = json.loads(r.read())
             servi = (payload.get("foncier") or {}).get("surface_ha")
@@ -658,7 +658,7 @@ def _plan(run, rseq, cascade, api):
         ]),
         ("8 communes & agrégats", [
             ("24 communes, 0 NULL", d8_24_communes),
-            ("surface_ha = parc vivant [E-12]", lambda cx: d8_surface_ha_vivant(cx, api)),
+            ("surface_ha = parc vivant [E-12]", lambda cx: d8_surface_ha_vivant(cx, api, run)),
         ]),
         ("9 dates & fraîcheur", [
             ("dates sources non futures", d9_dates_futures_sources),

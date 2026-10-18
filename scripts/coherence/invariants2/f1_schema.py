@@ -39,13 +39,14 @@ from scripts.coherence.invariants2.noyau import (
     bilan,
     colonnes,
     connexion,
+    run_servi,
     run_specs,
     table_existe,
 )
 
 API = "http://127.0.0.1:8793"
 ANNEE = datetime.date.today().year
-RUN_SERVI = "q_v18"  # run servi (score_labuse)
+RUN_SERVI = run_servi()[0]  # run servi VIVANT (manifeste, source API), jamais figé — cf. fix/banc2-run-servi
 
 # ── tables servies au client (feeders fiche / carte / liste) ──────────────────────────────────
 # Chaque entrée : (table, predicat-de-lignes-servies). Le prédicat borne la règle aux lignes
@@ -155,7 +156,9 @@ ENUMS: list[tuple[str, str, str, tuple]] = [
     # (table, colonne, predicat-lignes, valeurs légales)
     ("dpe_records", "etiquette_dpe", "TRUE", ("A", "B", "C", "D", "E", "F", "G")),
     ("dpe_records", "etiquette_ges", "TRUE", ("A", "B", "C", "D", "E", "F", "G")),
-    ("score_labuse", "bande", f"run_label='{RUN_SERVI}'", ("A", "B", "C", "D", "0", "NC")),
+    # Domaine aligné sur la source canonique score_labuse_combine.BANDE_RANG : « HC » (hors-classement,
+    # E-10 — cascade_exclue sortie du classement) est une bande SERVIE légitime, pas une valeur hors domaine.
+    ("score_labuse", "bande", f"run_label='{RUN_SERVI}'", ("A", "B", "C", "D", "0", "NC", "HC")),
 ]
 
 # ── nullités attendues sur lignes servies ───────────────────────────────────────────────────

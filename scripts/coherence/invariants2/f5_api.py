@@ -215,7 +215,7 @@ def generer(cx):
     idu0 = idu_ok[0]
     com0 = com_ok[0]
 
-    SRC = "q_v18"
+    SRC = N.run_servi()[0]   # run servi VIVANT (manifeste), jamais un label figé — cf. fix/banc2-run-servi
     # payloads d'agression réutilisés
     SQLI = "' OR 1=1--"
     LONG = "A" * 500

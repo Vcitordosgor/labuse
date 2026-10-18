@@ -9,7 +9,7 @@ Trois AXES de croisement (au-delà du registre nu, trop maigre à 19 règles) :
   AXIS 1 — liste `/parcels` vs SOURCE DE VÉRITÉ EN BASE (île, pas cher, haute valeur).
     La route liste rend, par parcelle, ~35 scalaires. Chacun a une table/colonne maîtresse
     (lue DANS le code du handler `_q_v2_list`, app.py:3624 — pas devinée). On pagine
-    `/parcels?source=q_v18&commune=<C>&limit=1000` sur plusieurs communes (plusieurs milliers
+    `/parcels?source=<run servi>&commune=<C>&limit=1000` sur plusieurs communes (plusieurs milliers
     de parcelles), on joint chaque idu à sa source en base, on exige l'égalité. 1 règle/chiffre.
 
   AXIS 2 — liste `/parcels` vs fiche `/parcels/{idu}` (DEUX chemins de code distincts, échantillon).
@@ -29,12 +29,14 @@ Mappings de source (lus dans app.py:3624 `_q_v2_list` et app.py:3398 geojson, V�
   surface_m2          → round(parcels.surface_m2)
   contenance_m2       → parcels.contenance_m2
   surface_terrain_m2  → round(COALESCE(parcels.contenance_m2, parcels.surface_m2))  (surface.py)
-  bande/signal_niveau/cause/non_calculable → score_labuse (run q_v18)
+  bande/signal_niveau/cause/non_calculable → score_labuse (run_label = RUN servi)
   sdp_residuelle_m2   → score_labuse.sdp_residuelle_m2 (NULL si cause présente — convention liste)
-  tier_v2/rang_v2/mult_v2 → parcel_p_score_v2 (run_id q_v18)
+  tier_v2/rang_v2/mult_v2 → parcel_p_score_v2 (run_id = RUN servi)
   v_band/v_score/owner_type → parcel_v_score (1 ligne/parcelle, sans run)
   zone_lib/zone_fam   → parcel_zone_plu
-  completeness_score  → dryrun_parcel_evaluations (run cascade = q_v18_sources)
+  completeness_score  → dryrun_parcel_evaluations (run cascade = RUN_CASCADE servi)
+
+  RUN/RUN_CASCADE sont lus dans le manifeste VIVANT (noyau.run_servi → _served_run), jamais figés.
 """
 from __future__ import annotations
 
@@ -53,6 +55,7 @@ from scripts.coherence.invariants2.noyau import (
     echantillon_stratifie,
     registre_chiffres,
     registre_robinets,
+    run_servi,
     run_specs,
 )
 
@@ -64,8 +67,11 @@ PAUSE_S = 1.15
 N_API = 120          # fiches DISTINCTES réutilisées à travers TOUTES les règles API (< 300/jour)
 TOL = 1.0            # tolérance d'arrondi (m² entiers)
 TOL_RATIO = 0.1      # tolérance pour les ratios (mult_v2)
-RUN = "q_v18"
-RUN_CASCADE = "q_v18_sources"   # _cascade_run(q_v18) — cascade dont provient dryrun_parcel_evaluations
+# Run servi + sa cascade, lus dans le manifeste VIVANT (`noyau.run_servi` → `_served_run`, LA MÊME
+# SOURCE QUE L'API : config/served_manifest.json). Plus jamais un label figé qui survivrait à une
+# bascule — un banc épinglé à l'ancien run comparait le produit servi (nouveau run) contre une base
+# périmée et criait des faux écarts (cf. fix/banc2-run-servi).
+RUN, _RESIDUEL_SEQ, RUN_CASCADE = run_servi()
 
 # Communes couvertes par l'AXE 1 (liste vs base) : un panel large mais borné (≈ 40 k parcelles
 # cumulées sur ~6 communes — chaque /parcels sert jusqu'à 1000 lignes, donc on couvre le HAUT du
@@ -569,7 +575,7 @@ def generer(cx):
         "sdp_residuelle_m2", "SDP résiduelle",
         "analyse_labuse.sdp_residuelle_m2",
         lambda p: _d(p, "analyse_labuse", "sdp_residuelle_m2"),
-        "SELECT round(sdp_residuelle_m2)::int FROM score_labuse WHERE run_label='q_v18' AND idu=%s"))
+        f"SELECT round(sdp_residuelle_m2)::int FROM score_labuse WHERE run_label='{RUN}' AND idu=%s"))
     specs.append(_mk_fiche_dualkey(
         "surface_parcelle_m2", "Surface parcelle",
         "surface_m2", "le_bien.surface_parcelle_m2",
@@ -586,7 +592,7 @@ def generer(cx):
         "tier_opportunite", "Verdict · classement servi",
         "score_v2.tier",
         lambda p: _d(p, "score_v2", "tier"),
-        "SELECT tier FROM parcel_p_score_v2 WHERE parcelle_id=%s AND run_id='q_v18' LIMIT 1",
+        f"SELECT tier FROM parcel_p_score_v2 WHERE parcelle_id=%s AND run_id='{RUN}' LIMIT 1",
         gravite="FAUX-CLIENT"))
     ecartees.append(Ecartee(
         "F2.tier_opportunite.surfaces_couche_pdf", "F2", "chiffre tier_opportunite",
@@ -596,7 +602,7 @@ def generer(cx):
         "bande_score", "Bande de score (A..0/NC)",
         "analyse_labuse.bande",
         lambda p: _d(p, "analyse_labuse", "bande"),
-        "SELECT bande FROM score_labuse WHERE run_label='q_v18' AND idu=%s",
+        f"SELECT bande FROM score_labuse WHERE run_label='{RUN}' AND idu=%s",
         gravite="FAUX-CLIENT"))
     specs.append(_mk_fiche_vs_db(
         "surface_parcelle_m2", "Surface parcelle (= surface_m2)",
@@ -613,7 +619,7 @@ def generer(cx):
     specs.append(_mk_fiche_vs_db(
         "signal_niveau", "Signal (niveau)",
         "analyse_labuse.signal_niveau", lambda p: _d(p, "analyse_labuse", "signal_niveau"),
-        "SELECT signal_niveau FROM score_labuse WHERE run_label='q_v18' AND idu=%s"))
+        f"SELECT signal_niveau FROM score_labuse WHERE run_label='{RUN}' AND idu=%s"))
     specs.append(_mk_fiche_vs_db(
         "sdp_residuelle_m2", "SDP résiduelle (bloc potentiel)",
         "potentiel_transformation.sdp_residuelle_m2",
@@ -642,32 +648,32 @@ def generer(cx):
     # base SQL île
     specs.append(RuleSpec(
         id="F2.base.sdp_residuelle_m2.residuel_vs_score", famille="F2",
-        source="chiffre sdp_residuelle_m2 — parcel_residuel vs score_labuse(q_v18)",
+        source=f"chiffre sdp_residuelle_m2 — parcel_residuel vs score_labuse({RUN})",
         libelle="SDP résiduelle identique entre parcel_residuel et score_labuse (run servi)",
         gravite="INCOHERENT", attendu="0 ligne divergente",
-        sql_violations="""
+        sql_violations=f"""
             SELECT count(*) FROM parcel_residuel r
-              JOIN score_labuse s ON s.parcel_id=r.parcel_id AND s.run_label='q_v18'
+              JOIN score_labuse s ON s.parcel_id=r.parcel_id AND s.run_label='{RUN}'
             WHERE round(coalesce(r.sdp_residuelle_m2,0))::int
                   <> round(coalesce(s.sdp_residuelle_m2,0))::int""",
-        exemples_sql="""
+        exemples_sql=f"""
             SELECT s.idu, r.sdp_residuelle_m2 AS residuel, s.sdp_residuelle_m2 AS score
             FROM parcel_residuel r
-              JOIN score_labuse s ON s.parcel_id=r.parcel_id AND s.run_label='q_v18'
+              JOIN score_labuse s ON s.parcel_id=r.parcel_id AND s.run_label='{RUN}'
             WHERE round(coalesce(r.sdp_residuelle_m2,0))::int
                   <> round(coalesce(s.sdp_residuelle_m2,0))::int LIMIT 3"""))
     specs.append(RuleSpec(
         id="F2.base.commune.parcels_vs_score", famille="F2",
-        source="chiffre commune — parcels vs score_labuse(q_v18)",
+        source=f"chiffre commune — parcels vs score_labuse({RUN})",
         libelle="Commune d'une parcelle identique entre parcels et score_labuse (run servi)",
         gravite="FAUX-CLIENT", attendu="0 ligne divergente",
-        sql_violations="""
+        sql_violations=f"""
             SELECT count(*) FROM score_labuse s JOIN parcels p ON p.idu=s.idu
-            WHERE s.run_label='q_v18' AND s.commune IS DISTINCT FROM p.commune""",
-        exemples_sql="""
+            WHERE s.run_label='{RUN}' AND s.commune IS DISTINCT FROM p.commune""",
+        exemples_sql=f"""
             SELECT s.idu, p.commune AS parcels, s.commune AS score
             FROM score_labuse s JOIN parcels p ON p.idu=s.idu
-            WHERE s.run_label='q_v18' AND s.commune IS DISTINCT FROM p.commune LIMIT 3"""))
+            WHERE s.run_label='{RUN}' AND s.commune IS DISTINCT FROM p.commune LIMIT 3"""))
     specs.append(RuleSpec(
         id="F2.base.dvf.valeur_fonciere.mutations_vs_parcelle", famille="F2",
         source="chiffre valeur_fonciere — dvf_mutations vs dvf_mutations_parcelle",
