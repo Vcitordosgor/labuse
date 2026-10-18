@@ -7837,10 +7837,14 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
                 # pas un verdict. M128-5-§2.3 : « validée sur cette commune » (verdict live, non fondé)
                 # est masqué au rendu SANS attendre le rebuild de score_e (détail figé au build).
                 # Filet read-time consigné au registre de dette M128.
+                # FIX-PRIX-ET-OPPORTUNITES (lot 1) — les rows score_e FIGÉES au build portent encore
+                # l'ancien « ± 12 % » (fausse précision). On le remplace AU RENDU par l'écart médian
+                # réellement mesuré (backtest DVF, ~27 %) sans attendre le rebuild de la table.
                 _rt = {"Marge estimée": "Repère sectoriel (barème)",
                        "marge foncière": "repère sectoriel",
                        "charge foncière supportable": "charge au barème sectoriel",
-                       "± 12 %, validée sur cette commune": "± 12 %"}
+                       "± 12 %, validée sur cette commune": "écart médian mesuré ~27 % (backtest DVF)",
+                       "± 12 %": "écart médian mesuré ~27 % (backtest DVF)"}
                 for _k in ("libelle_court", "detail"):
                     if score_e_block.get(_k):
                         for _a, _b in _rt.items():

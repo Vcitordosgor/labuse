@@ -136,8 +136,11 @@ def resume_parcelle(db: Session, idu: str) -> dict | None:
         vd = _verdict_section(sid, valeurs)
         if vd is not None:
             sections.append({"id": sid, "titre": s["titre"], "verdict": vd[0], "ton": vd[1]})
-    return {"idu": idu, "commune": fiche.get("commune"), "tuiles": tuiles, "sections": sections,
-            "source": "fiche LABUSE (run servi)", "millesime": runs.current()}
+    # FIX-PRIX-ET-OPPORTUNITES (lot 1) — commune OFFICIELLE dérivée de l'INSEE de l'IDU (jamais le
+    # `parcels.commune` texte qui nommait « Saint-Denis » une parcelle de L'Étang-Salé).
+    from ..communes import nom_officiel
+    return {"idu": idu, "commune": nom_officiel(idu) or fiche.get("commune"), "tuiles": tuiles,
+            "sections": sections, "source": "fiche LABUSE (run servi)", "millesime": runs.current()}
 
 
 def phrase(resume: dict) -> str:

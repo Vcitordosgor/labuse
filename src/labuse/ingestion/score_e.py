@@ -128,7 +128,9 @@ def niveau_label(niveau_prix: str | None) -> str:
     Tooltip/détail fiche + dossier banquier s'appuient dessus. Repli île = mandat couverture prix."""
     return {"secteur": "estimation niveau secteur",
             "commune": "estimation niveau commune",
-            "ile_validee": "estimation à l'échelle de l'île (± 12 %)",
+            # FIX-PRIX-ET-OPPORTUNITES (lot 1) — « ± 12 % » n'était fondé sur aucune mesure : remplacé par
+            # l'écart médian réellement mesuré au backtest (VERITE-TERRAIN-2 vol. E, ~27 %), en le disant.
+            "ile_validee": "estimation à l'échelle de l'île (repli ; écart médian mesuré ~27 %, backtest DVF)",
             "ile_sans_operation": "estimation île, aucune opération de marché observée sur cette commune",
             }.get(niveau_prix, "estimation niveau non déterminé")
 

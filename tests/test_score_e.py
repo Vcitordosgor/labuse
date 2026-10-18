@@ -34,8 +34,10 @@ def test_niveau_label_client_visible():
     # mandat couverture prix (Vic 28/07/2026) : 4 niveaux de confiance, jamais de fausse précision.
     assert se.niveau_label("secteur") == "estimation niveau secteur"
     assert se.niveau_label("commune") == "estimation niveau commune"
-    assert se.niveau_label("ile_validee") == "estimation à l'échelle de l'île (± 12 %)"
+    # FIX-PRIX-ET-OPPORTUNITES (lot 1) — « ± 12 % » (non mesuré) → écart médian réellement mesuré.
+    assert se.niveau_label("ile_validee") == "estimation à l'échelle de l'île (repli ; écart médian mesuré ~27 %, backtest DVF)"
     assert "validée" not in se.niveau_label("ile_validee")   # M128-C10 — plus d'auto-validation commune
+    assert "± 12" not in se.niveau_label("ile_validee")      # plus de fausse précision
     assert "aucune opération de marché observée" in se.niveau_label("ile_sans_operation")
     assert "non déterminé" in se.niveau_label(None)
 

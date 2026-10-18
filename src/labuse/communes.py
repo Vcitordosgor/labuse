@@ -56,6 +56,17 @@ def commune_known(insee: str | None = None, nom: str | None = None) -> bool:
     return False
 
 
+def nom_officiel(insee_ou_idu: str | None) -> str | None:
+    """FIX-PRIX-ET-OPPORTUNITES (lot 1) — nom OFFICIEL de la commune depuis l'INSEE cadastral, ou depuis
+    un IDU (ses 5 premiers caractères = l'INSEE). Source de vérité = `REUNION_COMMUNES` (la loi), jamais
+    un `parcels.commune` texte qui peut être périmé/erroné à l'ingestion (ex. une parcelle 97404 /
+    L'Étang-Salé stockée « Saint-Denis »). None si l'INSEE n'est pas une des 24 communes."""
+    if not insee_ou_idu:
+        return None
+    insee = str(insee_ou_idu)[:5]
+    return _OFFICIAL_BY_INSEE.get(insee)
+
+
 def get(nom: str) -> dict[str, Any] | None:
     return load_communes().get(nom)
 

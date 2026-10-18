@@ -285,7 +285,11 @@ def _face_prix(bilan: dict, prix_demande, valeurs) -> str:
         lignes.append(ligne_kv("Prix de revient", esc(f"{groupe(round(bilan['prix_revient']))} €/m² vendable"), _chip_nat("derive")))
     tn = val(valeurs, "prix_terrain_secteur_eur_m2")
     if isinstance(tn, dict) and tn.get("valeur_eur"):
-        lignes.append(ligne_kv("Terrain nu au prix du marché", f'<span class="num">{fmt_eur(tn["valeur_eur"])}</span>', chip_span("d", "dérivé")))
+        # FIX-PRIX-ET-OPPORTUNITES (lot 1) — fourchette ±30 % (repli montant seul) + mention mesurée en titre.
+        _vtn = tn.get("valeur_fourchette_libelle") or fmt_eur(tn["valeur_eur"])
+        _inc = tn.get("incertitude") or ""
+        lignes.append(ligne_kv("Terrain nu au prix du marché",
+                               f'<span class="num" title="{esc(_inc)}">{esc(_vtn)}</span>', chip_span("d", "dérivé")))
     # EXPORTS-REBRANCHEMENT-2 lot 2 — le prix d'achat HISTORIQUE de la parcelle (DVF, dernière
     # mutation) : information de contexte, HORS calcul (il n'entre dans aucun poste). Absent si la
     # parcelle n'a jamais muté seule (fréquent). Sourcé (DVF).
@@ -295,7 +299,12 @@ def _face_prix(bilan: dict, prix_demande, valeurs) -> str:
         lib = fmt_eur(ph["valeur"]) + (f" (dernière mutation {quand})" if quand else " (dernière mutation)")
         lignes.append(ligne_kv("Prix d'achat historique — information, hors calcul",
                                f'<span class="num">{esc(lib)}</span>', chip_span("s", "sourcé")))
-    return ("<h2>Face au prix demandé</h2>" + table_kv(lignes)) if lignes else ""
+    corps = ("<h2>Face au prix demandé</h2>" + table_kv(lignes)) if lignes else ""
+    # FIX-PRIX-ET-OPPORTUNITES (lot 1) — la valeur estimée du terrain porte sa mention d'incertitude
+    # mesurée, VISIBLE au PDF (un title= n'y paraît pas), dès qu'elle est servie.
+    if corps and isinstance(tn, dict) and tn.get("valeur_eur") and tn.get("incertitude"):
+        corps += note(tn["incertitude"])         # texte interne de confiance ; note() rend brut (pas d'esc)
+    return corps
 
 
 def _pct(v) -> str:
