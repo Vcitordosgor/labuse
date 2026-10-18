@@ -13,9 +13,10 @@ export function Chevron({ open, boite = false, className = '' }: { open: boolean
   return (
     <span aria-hidden="true"
       className={`inline-flex shrink-0 items-center justify-center transition-colors duration-quick ${box} ${className}`.trim()}>
-      <svg viewBox="0 0 12 12" className={`h-3 w-3 transition-transform duration-quick ${open ? '-rotate-90' : ''}`}>
-        {/* dessiné vers la GAUCHE (fermé = ◀) ; ouvert = -90° → pointe en bas (▼). */}
-        <polyline points="7.5,2.75 4,6 7.5,9.25" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+      <svg viewBox="0 0 12 12" className={`h-3 w-3 transition-transform duration-quick ${open ? 'rotate-90' : ''}`}>
+        {/* FICHE-ORFEVRERIE-1 (Lot D, pt 26 · règle RETOURS-19) — dessiné vers la DROITE (fermé = ▶) ;
+            ouvert = +90° → pointe en bas (▼). Accordéon standard : fermé → droite, ouvert → bas. */}
+        <polyline points="4.5,2.75 8,6 4.5,9.25" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     </span>
   )

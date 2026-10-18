@@ -10,6 +10,7 @@
  */
 import { useState, type CSSProperties, type ReactNode } from 'react'
 import { Bouton } from '../ui/Bouton'
+import { Chevron } from '../ui/Chevron'   // FICHE-ORFEVRERIE-1 (Lot D, pt 26) — accordéon standard partagé
 import { Chip } from '../ui/Chip'
 import { Tip } from '../Tip'
 
@@ -243,7 +244,9 @@ export function Repli({ compteur, label, children, defaultOpen = false }: {
     <div data-forme="repli">
       <button type="button" data-repli-toggle aria-expanded={open} onClick={() => setOpen((o) => !o)}
         style={{ display: 'flex', alignItems: 'center', gap: 6, color: open ? 'var(--mint)' : 'var(--txt-dim)', fontSize: 12, padding: '6px 0 0', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
-        <span style={{ fontSize: 9, color: open ? 'var(--mint)' : 'var(--txt-faint)' }}>{open ? '▼' : '◀'}</span>
+        {/* FICHE-ORFEVRERIE-1 (Lot D, pt 26) — le MÊME chevron d'accordéon que les sections (fermé →
+            droite, ouvert → bas), plus un glyphe texte ◀/▼ bespoke. */}
+        <Chevron open={open} />
         {compteur != null && <b style={{ color: 'var(--txt-hi)', fontWeight: 500 }}>{compteur}</b>}
         <span>{label}</span>
       </button>

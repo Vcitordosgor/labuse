@@ -6485,7 +6485,9 @@ def _potentiel_transformation_block(db: Session, idu: str, commune: str | None =
         # RECETTE-11 A4 — date d'un permis autorisé APRÈS le survol (mesure possiblement dépassée).
         "hauteur_permis_posterieur": h_permis_posterieur,
         "avertissement_surelevation": sur.get("avertissement"),
-        "source": "Ratio SDP consommée/autorisée (bloc D du modèle P) + surélévation au moteur "
+        # FICHE-ORFEVRERIE-1 (Lot C, pt 19) — plus de jargon interne « bloc D du modèle P » : on dit en
+        # clair d'où vient le chiffre (ratio de densité + surélévation au moteur commun).
+        "source": "Ratio de densité (surface de plancher consommée / autorisée) + surélévation au moteur "
                   "commun (règles PLU calibrées × bâti "
                   + ("LiDAR HD, hauteur à l'égout MESURÉE)" if h_nature == "sourcé"
                      else "BD TOPO, hauteur à l'égout)"),

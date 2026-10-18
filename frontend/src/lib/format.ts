@@ -225,3 +225,23 @@ export const fmtSup = (categorie: string | null | undefined): string => {
   const c = categorie.toUpperCase().trim()
   return SUP_LABELS[c] ?? `Servitude ${c}`
 }
+
+// FICHE-ORFEVRERIE-1 (Lot C/D, pts 20 & 28) — casse normale d'un nom de société/lieu écrit en
+// CAPITALES (« SCCV LE JARDIN DE LA BOURGOGNE » → « SCCV Le Jardin de la Bourgogne », « TI PLUS
+// FORMATION » → « Ti Plus Formation »). Les sigles de forme juridique restent en majuscules ; les
+// petits mots de liaison restent en minuscules (hors première position). N'agit que sur un texte
+// TOUT EN CAPITALES (sinon on respecte la casse d'origine, déjà soignée).
+const _SIGLES = new Set(['SCCV', 'SCI', 'SARL', 'SAS', 'SASU', 'SA', 'EURL', 'SNC', 'SCA', 'GFA',
+  'GAEC', 'EARL', 'SCM', 'SEM', 'SEML', 'OPH', 'HLM', 'CCAS', 'SDIS', 'EHPAD', 'CHU', 'CHR', 'RSMA'])
+const _PETITS = new Set(['de', 'du', 'des', 'la', 'le', 'les', 'et', 'en', 'au', 'aux', 'sur', 'sous'])
+export function casseSociete(s: string | null | undefined): string {
+  if (!s) return ''
+  const t = s.trim()
+  if (t !== t.toUpperCase()) return t   // déjà en casse normale → on ne touche pas
+  return t.toLowerCase().split(/\s+/).map((w, i) => {
+    if (_SIGLES.has(w.toUpperCase())) return w.toUpperCase()
+    if (i > 0 && _PETITS.has(w)) return w
+    // garde les apostrophes/traits d'union : capitalise chaque segment
+    return w.replace(/(^|[-'’])([a-zà-ÿ])/g, (_, sep, c) => sep + c.toUpperCase())
+  }).join(' ')
+}

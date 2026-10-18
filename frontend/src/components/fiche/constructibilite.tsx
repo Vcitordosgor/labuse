@@ -1056,19 +1056,26 @@ export function DispositifsBody({ d }: { d: NonNullable<Fiche['dispositifs']> })
               ? `${d.peb.libelle ? `${d.peb.libelle}. ` : ''}${PEB_PHRASES[d.peb.zone]}`
               : d.peb.zone === 'hors' ? `Hors zones PEB${d.peb.detail ? ` — ${d.peb.detail}` : ''}.` : `Non déterminée${d.peb.detail ? ` — ${d.peb.detail}` : ''}.`} /></>}
             valeur={['A', 'B', 'C', 'D'].includes(d.peb.zone) ? `Zone ${d.peb.zone}` : d.peb.zone === 'hors' ? 'hors zone' : 'non déterminée'} />
-          {(d.sup ?? []).map((sv, i) => (
-            <Ligne key={`sup${i}`} data-dispositifs-sup title={sv.libelle || sv.categorie}
-              label={<>Servitude (SUP)<InfoI aria="Sur la servitude" tip={`${sv.categorie} · ${sv.libelle || 'servitude'}. Assiettes publiées au GPU (T5/PT1/PT2 restreintes ; AS1 captages non publiée pour le 974).`} /></>}
-              /* RECETTE-2 (A5c/T6) — libellé de la servitude, jamais un code brut (« EL10 · EL10_Reunion_ass »).
-                 On garde le nom servi s'il est humain (nomsuplitt) ; sinon le libellé officiel de la catégorie.
-                 Le code exact reste dans le `i`. */
-              valeur={(() => {
-                const brut = (sv.libelle ?? '').trim()
-                const estCode = !brut || /_/.test(brut) || brut.toUpperCase() === (sv.categorie ?? '').toUpperCase() || /^[A-Z0-9]{1,8}$/.test(brut)
-                return estCode ? fmtSup(sv.categorie) : brut
-              })()} />
-          ))}
         </Lignes>
+        {/* FICHE-ORFEVRERIE-1 (Lot D, pt 27 · Lot C, pt 20) — les SERVITUDES en forme VALEUR-LONGUE
+            (libellé en tête, valeur dessous qui passe à la ligne) : « Plan de prévention des risques
+            naturels » ne casse plus la grille mono. Code brut (« EL10_Reunion_ass ») jamais affiché :
+            libellé humain (nom servi ou catégorie officielle), code exact au survol. */}
+        {(d.sup ?? []).length > 0 && (
+          <div data-dispositifs-sup-list className="mt-1 flex flex-col gap-1">
+            {(d.sup ?? []).map((sv, i) => {
+              const brut = (sv.libelle ?? '').trim()
+              const estCode = !brut || /_/.test(brut) || brut.toUpperCase() === (sv.categorie ?? '').toUpperCase() || /^[A-Z0-9]{1,8}$/.test(brut)
+              const lib = estCode ? fmtSup(sv.categorie) : brut
+              return (
+                <div key={`sup${i}`} data-dispositifs-sup title={sv.libelle || sv.categorie} className="text-[12px] leading-snug">
+                  <span className="text-txt-dim">Servitude (SUP)<InfoI aria="Sur la servitude" tip={`${sv.categorie} · ${sv.libelle || 'servitude'}. Assiettes publiées au GPU (T5/PT1/PT2 restreintes ; AS1 captages non publiée pour le 974).`} /></span>
+                  <div className="text-txt-hi">{lib}{sv.categorie ? <small className="text-txt-dim"> · {sv.categorie}</small> : null}</div>
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
   )
 }

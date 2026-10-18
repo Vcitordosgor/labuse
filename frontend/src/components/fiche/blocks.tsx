@@ -161,9 +161,12 @@ export function ReglementPluBlock({ rp, tcsp }: { rp: ReglementPlu; tcsp?: { sta
                 return {
                   label: shortReglLabel(rv.libelle),
                   valeur,
+                  // FICHE-ORFEVRERIE-1 (Lot C, pts 21 & 22) — plus de « (PLU » tronqué : on retire le
+                  // parenthétique « (PLU, calibrage validé) » proprement (au lieu de couper au 1ᵉʳ virgule),
+                  // et on normalise « p.68 » → « p. 68 » (espace).
                   sous: tcspSous
                     ? `plafond TCSP ≤ 800 m (${tcsp!.distance_m} m)`
-                    : rv.reference ? (rv.reference.split(',')[0].replace(/^Zone \S+ /, '').trim() || undefined) : undefined,
+                    : rv.reference ? (rv.reference.replace(/\s*\((PLU|GPU)[^)]*\)/i, '').replace(/^Zone \S+ /, '').replace(/\bp\.(\d)/g, 'p. $1').trim() || undefined) : undefined,
                   ton: reglee ? undefined : 'gris',
                   // PLU-EXCEPTIONS-1 — la tuile porte un point d'exception + un « i » qui ouvre le
                   // texte (verbatim), l'article et la page. Une règle sans exception n'affiche rien.

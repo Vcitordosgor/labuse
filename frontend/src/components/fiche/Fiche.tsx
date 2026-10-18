@@ -1771,16 +1771,21 @@ export function Fiche({ idu }: { idu: string }) {
                 {f.dispositifs && <DispositifsBody d={f.dispositifs} />}
                 {/* SOURCES-FIX-1 A3 — SCOT (document supra-communal opposable au PLU). FICHE-FIX-4
                     (Lot F) : en Ligne comme les autres, source derrière le « i ». */}
-                {f.scot && (
+                {f.scot && (() => {
+                  // FICHE-ORFEVRERIE-1 (Lot C, pt 20) — « SCOT DE LA CINOR » → « SCoT de la CINOR » :
+                  // le sigle SCoT en casse normale, les mots de liaison en minuscules, l'acronyme CINOR intact.
+                  const scotNom = (f.scot.nom ?? 'SCoT').replace(/\bSCOT\b/gi, 'SCoT')
+                    .replace(/\b(DE|DU|DES|LA|LE|LES|D')\b/g, (m) => m.toLowerCase())
+                  return (
                   <div data-scot><Lignes>
-                    <Ligne label={<>SCOT<InfoI tip={<>Schéma de cohérence territoriale — document supra-communal opposable au PLU. {f.scot.source}</>} aria="Sur le SCOT" /></>}
+                    <Ligne label={<>SCoT<InfoI tip={<>Schéma de cohérence territoriale — document supra-communal opposable au PLU. {f.scot.source}</>} aria="Sur le SCoT" /></>}
                       valeur={f.scot.disponible
-                        ? <>{f.scot.nom ?? 'SCOT'}{f.scot.date_approbation ? <small> · approuvé le {fmtDateNum(f.scot.date_approbation)}</small> : (f.scot.statut ? <small> · {f.scot.statut}</small> : null)}</>
+                        ? <>{scotNom}{f.scot.date_approbation ? <small> · approuvé le {fmtDateNum(f.scot.date_approbation)}</small> : (f.scot.statut ? <small> · {f.scot.statut}</small> : null)}</>
                         : 'hors périmètre'}
                       ton={f.scot.disponible ? undefined : 'gris'}
                       title={f.scot.disponible ? (f.scot.nom ?? undefined) : undefined} />
                   </Lignes></div>
-                )}
+                  ) })()}
                 {/* FICHE-FIX-2 P4 — mixité sociale (LLS) branchée sur la règle VALIDÉE de la zone
                     (reglement_plu.mixite, lue des regles calibrées). Validée → seuil + quota + citation
                     sourcés ; propose/absente → « non modélisée pour cette zone » (jamais « non

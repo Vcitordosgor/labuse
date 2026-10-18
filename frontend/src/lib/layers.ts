@@ -66,6 +66,8 @@ export const LAYER_LABEL: Record<string, string> = {
   construction_surfacique: 'Barrages & constructions surfaciques (BD TOPO)',
   zone_activite: 'Zones d’activité (BD TOPO)',
   bassin_versant: 'Bassins versants (BD TOPO)',
+  // FICHE-ORFEVRERIE-1 (Lot C, pt 20) — libellé humain (le code « vefa_neuf » ne doit pas s'afficher).
+  vefa_neuf: 'Logement neuf (VEFA)',
 }
 
 export const layerLabel = (key: string): string => LAYER_LABEL[key] ?? key

@@ -11,8 +11,9 @@
  */
 import { useQuery } from '@tanstack/react-query'
 import { getFaisabilite, getMonSecteur, radarClic } from '../../lib/api'
-import { fmtInt, fmtDateNum } from '../../lib/format'
-import { fourchette, FOURCHETTE_MENTION } from '../../lib/fourchette'
+import { fmtInt, fmtDateNum, casseSociete } from '../../lib/format'
+import { fourchette, FOURCHETTE_MENTION } from '../../lib/fourchette'   // FIX-PRIX-ET-OPPORTUNITES — fourchette ±30 %
+import { Siren } from '../shared/Siren'   // FICHE-ORFEVRERIE-1 (Lot D, pt 28) — SIREN cliquable Pappers
 import type { Fiche } from '../../lib/types'
 import { useApp } from '../../store/useApp'
 import { IC, RefDrawer, MicroSpark, Line, GroupLabel, FactRow, FactNote } from './primitives'
@@ -267,7 +268,8 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
           {f.pm_voisines?.disponible && f.pm_voisines.acquereurs.length > 0 && (
             <Ligne title={f.pm_voisines.acquereurs[0].denomination ?? undefined}
               label={<>Acquéreur PM voisin{f.pm_voisines.acquereurs.length > 1 ? ` (${f.pm_voisines.acquereurs.length})` : ''}<InfoI aria="Sur les acquéreurs PM voisins" tip={`PM ayant acquis dans ${f.pm_voisines.rayon_m} m sur ${f.pm_voisines.mois} mois · ${f.pm_voisines.source}`} /></>}
-              valeur={<>{f.pm_voisines.acquereurs[0].denomination}{f.pm_voisines.acquereurs[0].date ? <small> · {fmtDateNum(f.pm_voisines.acquereurs[0].date)}</small> : null}</>} />
+              /* FICHE-ORFEVRERIE-1 (Lot D, pt 28) — nom en casse normale + SIREN cliquable vers Pappers. */
+              valeur={<>{casseSociete(f.pm_voisines.acquereurs[0].denomination)}{f.pm_voisines.acquereurs[0].siren ? <> · <Siren value={f.pm_voisines.acquereurs[0].siren} /></> : null}{f.pm_voisines.acquereurs[0].date ? <small> · {fmtDateNum(f.pm_voisines.acquereurs[0].date)}</small> : null}</>} />
           )}
         </Lignes>
       )}

@@ -26,11 +26,16 @@ const aleaCran = (niveau: string | null | undefined, redhibitoire: boolean): 0 |
 export function RisquesSection({ f }: { f: Fiche; idu: string }) {
   const setModule = useApp((s) => s.setModule)
   const lignes = f.lines.filter((l) => l.onglet === 'risques')
-  const vigilances = lignes.filter((l) => l.result === 'SOFT_FLAG' || l.result === 'HARD_EXCLUDE')
+  // FICHE-ORFEVRERIE-1 (Lot D, pt 29) — le BASSIN VERSANT est un CONTEXTE hydrographique, pas une
+  // vigilance (pas une contrainte opposable) : il sort des vigilances (bandeau/badge passent à 3) et
+  // devient une ligne d'information. Il reste compté parmi les couches évaluées.
+  const vigilancesAll = lignes.filter((l) => l.result === 'SOFT_FLAG' || l.result === 'HARD_EXCLUDE')
+  const bassinVersant = vigilancesAll.find((l) => l.layer === 'bassin_versant') ?? null
+  const vigilances = vigilancesAll.filter((l) => l.layer !== 'bassin_versant')
   const inconnues = lignes.filter((l) => l.result === 'UNKNOWN')
   const sansObjet = lignes.filter((l) => l.result === 'PASS')
-  // compteur VRAI : toutes les couches réellement évaluées (vigilance + sans objet + inconnu).
-  const evaluees = vigilances.length + sansObjet.length + inconnues.length
+  // compteur VRAI : toutes les couches réellement évaluées (vigilance + info + sans objet + inconnu).
+  const evaluees = vigilances.length + sansObjet.length + inconnues.length + (bassinVersant ? 1 : 0)
   // FICHE-1 lot 3 — les ALÉAS en détail (f.aleas) remplacent les lignes brutes « risques » (layer
   // 'risques') : nature, niveau, part, référence PPR. Les AUTRES vigilances (accès, sol, SUP…)
   // restent affichées telles quelles. Même moteur que Pièges et risques (cascade servie).
@@ -239,6 +244,21 @@ export function RisquesSection({ f }: { f: Fiche; idu: string }) {
             </Lignes>
           </div>
         )}
+        {/* FICHE-ORFEVRERIE-1 (Lot D, pt 29 · Lot C, pt 20/21) — BASSIN VERSANT : ligne d'INFORMATION
+            (contexte hydrographique), hors vigilances. Le « code hydro » brut est retiré de l'affichage
+            (il reste au survol via le titre complet) ; le libellé n'est pas tronqué. */}
+        {bassinVersant && (() => {
+          const det = (bassinVersant.detail || '') as string
+          const propre = det.replace(/\s*\(code hydro[^)]*\)/i, '')
+          return (
+            <div data-bassin-versant-info>
+              <GroupLabel>Information</GroupLabel>
+              <p className="text-[11.5px] leading-snug text-txt-mut" title={det}>
+                {propre}{bassinVersant.source ? <InfoI aria="Source du bassin versant" tip={String(bassinVersant.source)} /> : null}
+              </p>
+            </div>
+          )
+        })()}
         {/* lignes non évaluées (donnée absente) — dites, jamais masquées. */}
         {inconnues.length > 0 && (
           <div className="flex flex-col gap-1">
