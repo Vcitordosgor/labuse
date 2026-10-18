@@ -1229,7 +1229,7 @@ export const docEtudeZoneUrl = (idu: string, rayonKm: number) =>
   `/etude-zone.pdf?idu=${encodeURIComponent(idu)}&rayon_km=${encodeURIComponent(String(rayonKm))}`
 
 // DOCS-1 (Lot B) — la bibliothèque « Mes documents » (recette d'un document, jamais le PDF).
-export type DocType = 'dossier' | 'bilan' | 'apporteur' | 'pre-dossier' | 'gabarit' | 'comparatif' | 'etude-zone'
+export type DocType = 'dossier' | 'bilan' | 'apporteur' | 'pre-dossier' | 'gabarit' | 'comparatif' | 'etude-zone' | 'etude-faisabilite'
 export interface DocGenereRow {
   id: number
   doc_type: DocType
@@ -2180,6 +2180,16 @@ export const postEtude = (body: EtudeIn) =>
   j<EtudePayload>('/modules/etude', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
   })
+
+// IMPLANTATION-3 — le document « Étude de faisabilité » (PDF). Généré par POST (la configuration
+// voyage dans le corps), via `useOuvrirDocument` (blob + erreurs FR). `scenario_ref` = le scénario
+// AFFICHÉ (tuile de l'outil) ; absent = configuration par défaut (9e carte Docs). L'archivage dans
+// « Mes documents » est fait côté serveur (config + version du moteur + millésimes).
+export interface EtudePdfIn extends EtudeIn { scenario_ref?: string | null }
+export const ETUDE_PDF_URL = '/modules/etude/pdf'
+export const etudePdfInit = (body: EtudePdfIn): RequestInit => ({
+  method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+})
 
 // ── Projets (copilote-projet) — l'objet persistant de l'entretien de cadrage ──
 // M120 — le CADRAGE d'un projet EST un jeu de filtres (le même objet que la carte). L'IDENTITÉ

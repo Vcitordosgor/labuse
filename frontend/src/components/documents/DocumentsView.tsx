@@ -16,8 +16,9 @@ import { BilanEcran } from '../fiche/BilanEcran'
 import {
   getFiche, getGabarit,
   docDossierUrl, docBilanUrl, docBilanExcelUrl, docApporteurUrl, docPreDossierUrl, docGabaritUrl, docComparatifUrl, docEtudeZoneUrl,
+  ETUDE_PDF_URL, etudePdfInit,
   listerDocuments, enregistrerDocument, rafraichirDocument,
-  type DocType, type DocGenereRow,
+  type DocType, type DocGenereRow, type EtudePdfIn,
 } from '../../lib/api'
 import { fmtM2, iduComplet } from '../../lib/format'
 import { useOuvrirDocument } from '../../lib/ouvrirDocument'
@@ -191,6 +192,15 @@ function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
       return
     }
     if (!idu) return
+    // IMPLANTATION-3 — l'Étude de faisabilité se génère par POST (config par défaut sur la parcelle).
+    // L'archivage « Mes documents » est fait côté serveur (config + version moteur + millésimes) : on
+    // n'appelle donc PAS enregistrer ici ; on rafraîchit juste la liste au succès.
+    if (d.key === 'etude-faisabilite') {
+      if (await ouvrir(ETUDE_PDF_URL, d.key, etudePdfInit({ idus: [idu], objectif: 'equilibre' }))) {
+        qc.invalidateQueries({ queryKey: ['documents'] }); onClose()
+      }
+      return
+    }
     const url =
       d.key === 'dossier' ? docDossierUrl(idu)
       : d.key === 'apporteur' ? docApporteurUrl(idu)
@@ -297,14 +307,20 @@ const FILTRES: { label: string; type: DocType | null }[] = [
   { label: 'Dossier', type: 'dossier' }, { label: 'Bilan', type: 'bilan' },
   { label: 'Apporteur', type: 'apporteur' }, { label: 'Pré-dossier PC', type: 'pre-dossier' },
   { label: 'Gabarit', type: 'gabarit' }, { label: 'Comparatif', type: 'comparatif' },
-  { label: 'Étude de zone', type: 'etude-zone' },
+  { label: 'Étude de zone', type: 'etude-zone' }, { label: 'Étude de faisabilité', type: 'etude-faisabilite' },
 ]
 const dateFr = (iso: string) => { const d = new Date(iso); return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}` }
 
 function sur(r: DocGenereRow): string {
   if (r.doc_type === 'etude-zone') return `Rayon ${r.rayon_km ?? 2} km autour de ${iduComplet(r.idus[0] ?? '')}`
-  if (r.doc_type === 'comparatif') return r.idus.join(' · ')
+  if (r.doc_type === 'comparatif' || r.doc_type === 'etude-faisabilite') return r.idus.join(' · ')
   return iduComplet(r.idus[0] ?? '')
+}
+
+// IMPLANTATION-3 — la recette d'une Étude de faisabilité = la config archivée (POST), jamais une URL GET.
+function etudeInitDe(r: DocGenereRow): RequestInit | null {
+  const cfg = (r.hypotheses as { config?: EtudePdfIn } | null)?.config
+  return cfg ? etudePdfInit(cfg) : null
 }
 
 function LigneDoc({ r, onChange }: { r: DocGenereRow; onChange: () => void }) {
@@ -314,8 +330,16 @@ function LigneDoc({ r, onChange }: { r: DocGenereRow; onChange: () => void }) {
   const { ouvrir: ouvrirDoc, enCours } = useOuvrirDocument(setToast)
   const [confirmSuppr, setConfirmSuppr] = useState(false)
   const busy = enCours === String(r.id)
-  const ouvrir = () => { const u = urlDocument(r); if (u) void ouvrirDoc(u, String(r.id)) }
-  const regenerer = async () => { const u = urlDocument(r); if (u && await ouvrirDoc(u, String(r.id))) rafraichirDocument(r.id).then(onChange).catch(() => {}) }
+  const ouvrir = () => {
+    if (r.doc_type === 'etude-faisabilite') { const i = etudeInitDe(r); if (i) void ouvrirDoc(ETUDE_PDF_URL, String(r.id), i); return }
+    const u = urlDocument(r); if (u) void ouvrirDoc(u, String(r.id))
+  }
+  const regenerer = async () => {
+    if (r.doc_type === 'etude-faisabilite') {
+      const i = etudeInitDe(r); if (i && await ouvrirDoc(ETUDE_PDF_URL, String(r.id), i)) rafraichirDocument(r.id).then(onChange).catch(() => {}); return
+    }
+    const u = urlDocument(r); if (u && await ouvrirDoc(u, String(r.id))) rafraichirDocument(r.id).then(onChange).catch(() => {})
+  }
   // DOCS-FIX-1 (P6) — « Supprimer » : la route DELETE et supprimerDocument existaient, mais AUCUN
   // bouton ne les appelait. Deux temps (Supprimer → Confirmer) pour éviter la suppression accidentelle.
   const supprimer = () => {
@@ -428,7 +452,7 @@ export function DocumentsView() {
           {/* BILAN-1 (Lot 6) — la 8ᵉ tuile « Comparables DVF » (bientôt) est de retour dans la grille :
               7 documents produits aujourd'hui + Comparables DVF à venir. On ne dit plus « Sept » (qui
               contredisait les 8 cartes) ni « tous produits » (le 8ᵉ ne l'est pas encore). */}
-          Sept documents produits depuis les données de la fiche parcelle — plus les Comparables DVF, bientôt. Choisissez le document, puis la parcelle, et générez.
+          Huit documents produits depuis les données de la fiche et de l’outil d’étude — plus les Comparables DVF, bientôt. Choisissez le document, puis la parcelle, et générez.
         </p>
         <div className="grid grid-cols-4 gap-3 max-[1100px]:grid-cols-2">
           {CATALOGUE.map((d) => (

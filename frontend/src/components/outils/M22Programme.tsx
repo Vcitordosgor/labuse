@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useApp } from '../../store/useApp'
-import { getMoteursConfig, postEtude } from '../../lib/api'
+import { getMoteursConfig, postEtude, ETUDE_PDF_URL, etudePdfInit } from '../../lib/api'
 import type { EtudeIn, EtudePayload, EtudeScenario } from '../../lib/api'
 import { fmtInt } from '../../lib/format'
 import { Bouton } from '../ui/Bouton'
@@ -10,6 +10,8 @@ import { Case } from '../ui/Case'
 import { Reinitialiser } from '../ui/Reinitialiser'
 import { EntreeParcelle } from './EntreeParcelle'
 import { ErrorState } from '../States'
+import { Chargement } from '../Loading'
+import { useOuvrirDocument } from '../../lib/ouvrirDocument'
 
 /** M22 · ÉTUDE DE FAISABILITÉ (IMPLANTATION-2) — l'étude de faisabilité EN LIGNE.
  *  Deux états : (1) configuration (assiette 1–8 parcelles, type, objectif, programme, stationnement)
@@ -107,6 +109,9 @@ export function M22() {
   const [max8, setMax8] = useState(false)
 
   const run = useMutation({ mutationFn: (body: EtudeIn) => postEtude(body) })
+  // IMPLANTATION-3 — export PDF du SCÉNARIO AFFICHÉ (porte 1) : POST /modules/etude/pdf avec la config
+  // courante + le scénario sélectionné. Le PDF lit la même réponse que l'écran (jamais un 2e calcul).
+  const pdf = useOuvrirDocument()
   const data: EtudePayload | undefined = run.data
   const scenarios = data?.scenarios ?? []
   const actif: EtudeScenario | undefined = scenarios[Math.min(tab, Math.max(0, scenarios.length - 1))]
@@ -372,6 +377,17 @@ export function M22() {
                       <Bouton niveau="lien" ton="vert" onClick={revenirLabuse}>Valeurs LABUSE</Bouton>
                     </div>
                   </Section>
+
+                  {/* IMPLANTATION-3 — porte 1 : exporter le SCÉNARIO AFFICHÉ (config courante + onglet actif)
+                      en PDF « Étude de faisabilité ». Même document que la 9e carte Docs. */}
+                  <Bouton niveau="secondaire" ton="vert" data-etude-pdf className="mt-2 w-full"
+                    disabled={!!pdf.enCours}
+                    onClick={() => pdf.ouvrir(ETUDE_PDF_URL, 'etude-pdf',
+                      etudePdfInit({ ...corpsBody(), scenario_ref: actif.ref }))}>
+                    {pdf.enCours ? <Chargement variant="inline" accent="courant" label="Génération…" />
+                      : 'Étude de faisabilité (PDF) ↓'}
+                  </Bouton>
+                  {pdf.erreur && <p className="text-[10.5px] text-st-creuser">{pdf.erreur}</p>}
 
                   <button data-etude-gabarit onClick={() => { if (msel[0]) { useApp.getState().setParcelPrefill(msel[0]) } ; useApp.getState().setModule('gabarit') }}
                     className="mt-1 self-start text-[11px] text-txt-dim underline decoration-txt-dim/40 underline-offset-2 transition-colors duration-quick hover:text-mint">
