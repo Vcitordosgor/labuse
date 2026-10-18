@@ -69,3 +69,96 @@ constructible à tort » (mitoyen à 0 m², micro-bâtis). **0 parcelle reclass�
 modification.** Les 46 permis sont des exclusions **conservatrices mais correctes** (mitoyen non
 modélisable, PPR, ER). (Reproductible : `scripts/diagnostic_opportunites_lot2.py` + moteur de faisabilité
 sur les 46.)
+
+---
+
+## C — rédhibitoire en zone U : le RPG (indicatif) ne bloque plus en U/AU
+
+**Instruction :** ne garder l'exclusion « rédhibitoire » que pour les causes **réellement bloquantes**.
+
+**Cause identifiée.** Sur les 83 parcelles « rédhibitoire » en zone U du gisement, **seules 3** ont une
+exclusion de la **cascade** (DPF, PPR rouge). Les **80 autres** viennent du **moteur de faisabilité**
+(`estimate_capacity`), qui posait `facteur = 0` (→ cause `redhibitoire`) dès que la parcelle est
+**déclarée agricole au RPG** (`agricole_sar`, couche SAFER). Or le code lui-même le disait :
+« usage agricole … **indicatif, n'emporte pas d'interdiction automatique** ». Le RPG (registre
+parcellaire graphique) est une déclaration d'usage, **pas** une interdiction d'urbanisme : en zone U/AU,
+c'est le **zonage PLU** qui gouverne. Des permis logements ont bien été accordés sur ces parcelles.
+
+**Correction** (`src/labuse/faisabilite/engine.py`, modulation réunionnaise). En zone **U/AU**, le RPG
+devient une **note informative** (plus de `facteur = 0`). En zone **A/N**, comportement **inchangé** (le
+RPG reste l'exclusion de fait — périmètre de C = zone U). Causes **réellement bloquantes conservées** :
+aléa **PPR fort**, **bande littorale**.
+
+**Parcelles qui changent de statut.** Sur les **4 768** parcelles servies « rédhibitoire » touchant le
+RPG, après correction :
+
+- **4 756 passent constructibles** (12 restent NC pour une autre cause) ;
+- réparties en **4 191 zone U + 565 zone AU** (zone résolue par le moteur) ;
+- **0 en zone A/N** → **aucune parcelle agricole devenue constructible à tort** (contrôle sur les 4 768).
+
+**Garde-fou zone A/N validé.** Un premier correctif non borné faisait basculer des parcelles de zone A ;
+le correctif final est **borné à la famille U/AU** (lu sur `rules.code`, la zone que le moteur utilise).
+Contrôle avant/après : **0** nouvelle constructible de famille moteur A/N.
+
+**20 parcelles tirées au hasard, vérifiées à la main** (toutes constructibles, zone U/AU, SDP réelle,
+aucune en A/N) :
+
+| idu | commune | zone | surface | SDP max |
+|---|---|---|--:|--:|
+| 97401000AN0645 | Les Avirons | Uc | 899 | 485 |
+| 97403000AR1203 | Entre-Deux | Ub | 356 | 217 |
+| 97405000AR1155 | Petite-Île | UD | 202 | 15 |
+| 97405000BE0918 | Petite-Île | UZ | 397 | 643 |
+| 97409000AI0898 | Saint-André | UB | 306 | 234 |
+| 97409000BK0325 | Saint-André | UB | 469 | 335 |
+| 97410000AH1314 | Saint-Benoît | Ub | 84 | 91 |
+| 97410000BL0340 | Saint-Benoît | Ub | 560 | 185 |
+| 97412000AO0791 | Saint-Joseph | U5vi | 1205 | 434 |
+| 97412000BX0523 | Saint-Joseph | U3ar | 659 | 344 |
+| 97412000CY0150 | Saint-Joseph | U5ru | 4490 | 871 |
+| 97414000CV0700 | Saint-Louis | UD | 551 | 248 |
+| 97415000CP1937 | Saint-Paul | U3c | 379 | 188 |
+| 97416000CZ0005 | Saint-Pierre | Uf | 11840 | 4039 |
+| 97416000EX1097 | Saint-Pierre | Uf | 645 | 141 |
+| 97418000AT1020 | Sainte-Marie | UD | 1500 | 563 |
+| 97419000AX0402 | Sainte-Rose | UC | 493 | 221 |
+| 97420000BE0003 | Sainte-Suzanne | UC | 1340 | 722 |
+| 97422000BD0583 | Le Tampon | Uc | 1410 | 1276 |
+| 97422000CT0226 | Le Tampon | Ud | 415 | 129 |
+
+→ **20/20 OK**, aucune devenue constructible à tort.
+
+---
+
+## Séquence du run à lancer cette nuit (sans la lancer)
+
+**La cascade `q_v19_sources` doit-elle être refaite ? → NON.** Justification : la seule correction de code
+(C) est dans le **moteur de faisabilité** (`estimate_capacity`, modulation réunionnaise), **en aval de la
+cascade**. La cascade (`phase1`/`phase2`) produit les verdicts de couches (PPR, DPF, A/N, ER, littoral,
+50 pas…) ; **aucun ne dépend du RPG** — la couche cascade `safer` est un **flag informatif** (sauf zone A
+cannière, HARD_EXCLUDE, inchangé). Vérifié : sur les 83 parcelles, seules 3 avaient une exclusion
+cascade ; les 80 venaient du moteur. La cascade `q_v19_sources` reste donc **valide et réutilisable** —
+on la relit, on ne la recalcule pas (A et B n'ont aucun changement de code).
+
+**Séquence (base servie `labuse`, run NEUF, jamais le servi) :**
+
+1. **Résiduel** — rejoue le moteur de faisabilité (prend le correctif C) sur toute l'île, dans un run neuf :
+   ```
+   labuse compute-residuel --ile --new-run q_v20
+   ```
+   (réutilise la cascade `q_v19_sources` existante ; ~4 756 parcelles passent constructibles).
+2. **Score LABUSE + Signal** — re-score en **lisant la cascade existante** `q_v19_sources` + le nouveau résiduel :
+   ```
+   labuse score-labuse --run q_v20 --cascade-label q_v19_sources --signal-run <id p_score_v2 servi>
+   ```
+3. **Score É (marge)** — recalcule la marge sur le nouveau résiduel : `labuse score-e …` (mêmes options que le run servi).
+4. **Bascule** (gestes servis, après banc vert) : `labuse residuel-serve <seq q_v20>` + promotion golden +
+   manifeste **`cascade_run = q_v19_sources` (inchangé)** + `served_run.txt → q_v20`.
+5. **Contrôle** : banc de cohérence + `labuse parite` ; vérifier que les 4 756 passent constructibles et
+   **0 en zone A/N**.
+
+Les étapes 2–4 reprennent exactement les flags du run servi q_v19 (cf. `docs/EXPLOITATION.md`), **sans
+l'étape cascade** : c'est le seul écart, et il est justifié ci-dessus.
+
+> ⚠ Ampleur : C ajoute ~4 756 parcelles constructibles (foncier urbain cultivé, longtemps zéroté à tort
+> par le RPG). C'est volumineux mais **mesuré et sûr** (0 à tort). À confirmer par Vic avant la bascule.

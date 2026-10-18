@@ -775,8 +775,23 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
     # ---- Modulation réunionnaise ----
     facteur = 1.0
     if c.agricole_sar:
-        facteur = 0.0
-        modul.append("Parcelle déclarée agricole (RPG) — usage agricole à confirmer au PLU (indicatif, n'emporte pas d'interdiction automatique).")
+        # FIX-OPPORTUNITES (correction C — rédhibitoire en zone U) — le RPG (registre parcellaire
+        # graphique) est une déclaration d'usage agricole INDICATIVE : en zone CONSTRUCTIBLE (U/AU) il
+        # n'emporte PAS d'interdiction de construire (le code le disait déjà : « n'emporte pas
+        # d'interdiction automatique ») — c'est le ZONAGE PLU qui gouverne. On n'y pose donc PLUS
+        # facteur=0, on garde la seule note informative. Confirmé par les permis logements réellement
+        # accordés sur ces parcelles U/AU cultivées (VERITE-TERRAIN-2 volet D).
+        # En zone A/N en revanche, le RPG RESTE l'exclusion de fait (comportement INCHANGÉ : la
+        # correction C est bornée à la zone U — sans ce garde, des parcelles agricoles zonées A
+        # deviendraient constructibles à tort, cf. vérification du contrôle zone A).
+        _famz = (rules.code or "").lstrip("0123456789").upper()
+        if _famz.startswith("U") or _famz.startswith("AU"):
+            modul.append("Parcelle déclarée agricole (RPG) — usage agricole indicatif ; n'emporte pas "
+                         "d'interdiction de construire (le zonage PLU U/AU gouverne la constructibilité).")
+        else:
+            facteur = 0.0
+            modul.append("Parcelle déclarée agricole (RPG) — usage agricole à confirmer au PLU "
+                         "(indicatif, n'emporte pas d'interdiction automatique).")
     if c.alea_ppr == "fort":
         facteur = 0.0
         modul.append("Aléa FORT (PPR) → quasi inconstructible : étude/refus spécifique requis.")
