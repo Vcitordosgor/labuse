@@ -103,6 +103,8 @@ def _scenario_public(scenario, ref: str) -> dict:
             "places": cap.places,
             "sdp_m2": cap.sdp_m2,
         },
+        # recette Vic — en une ligne, ce qui plafonne la capacité (pas plus de logements / pas plus haut).
+        "limite_capacite": moteur_mod.limite_capacite(scenario, scenario.regles),
         "controles_compte": _compte_controles(scenario.controles),
         "programme": {
             "par_type": cap.par_type,
@@ -253,7 +255,8 @@ def etudier_payload(session, entree: dict) -> dict:
         numero = planche_mod.numero_etude(idus, genere_le)
         ent_planche = {"commune": t.commune, "zone": ref_scn.regles.zone, "idus": idus}
         try:
-            ctx = contexte_mod.charger_contexte(session, t.assiette, idus, avec_tn=True)
+            ctx = contexte_mod.charger_contexte(session, t.assiette, idus, avec_tn=True,
+                                                voie_edges=t.voie_edges)
         except Exception:
             ctx = contexte_mod.Contexte()
         for pub, scn in zip(scenarios_pub, scenarios):

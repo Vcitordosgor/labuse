@@ -275,6 +275,49 @@ def _n_batiments(scene) -> int:
     return sum(1 for o in scene.objets if o.kind == "batiment_emprise")
 
 
+def limite_capacite(scenario, regles) -> Optional[str]:
+    """IMPLANTATION-4 (recette Vic) — EN UNE LIGNE, ce qui PLAFONNE la capacité du scénario retenu
+    (pourquoi pas plus de logements / pas plus haut). Lu dans la trace des candidats :
+
+    - si monter en niveaux N'AJOUTE PAS de logements → c'est le stationnement aérien + la taille de
+      la parcelle (cas Saint-Denis : R+2 atteint déjà le plafond, R+5 n'ajoute rien) ;
+    - sinon, le motif dominant des candidats plus hauts INFAISABLES (stationnement / largeur de zone /
+      distance entre bâtiments / hauteur) ;
+    - en préfixe, le prospect quand la hauteur relative n'est pas chiffrée (hauteur bornée par prudence).
+    """
+    from collections import Counter
+
+    cand = getattr(scenario, "candidats", None) or []
+    niv0, logts0 = scenario.niveaux, scenario.capacite.logements
+    best: dict[int, int] = {}
+    for c in cand:
+        if c.faisable:
+            best[c.niveaux] = max(best.get(c.niveaux, 0), c.logements)
+    plus_haut = [best[n] for n in best if n > niv0]
+    monte = any(v > logts0 for v in plus_haut)
+
+    raisons: list[str] = []
+    if getattr(regles, "hauteur_non_chiffrable", False):
+        raisons.append("le prospect (hauteur relative non chiffrée) borne la hauteur par prudence")
+    if plus_haut and not monte:
+        raisons.append("le stationnement aérien et la taille de la parcelle "
+                       "(monter plus haut n'ajoute pas de logements)")
+    else:
+        sup = [c for c in cand if c.niveaux > niv0 and not c.faisable and c.motif]
+        motifs = Counter(mo.strip() for c in sup for mo in c.motif.split(";") if mo.strip())
+        if motifs:
+            top = motifs.most_common(1)[0][0].lower()
+            if "stationnement" in top:
+                raisons.append("le stationnement aérien")
+            elif "module" in top or "largeur" in top or "zone" in top or " l " in f" {top} ":
+                raisons.append("la largeur de la zone d'implantation après reculs")
+            elif "distance" in top:
+                raisons.append("la distance entre bâtiments")
+            elif "hauteur" in top:
+                raisons.append("la hauteur réglementaire")
+    return " ; ".join(raisons) or None
+
+
 def _domine(a: tuple, b: tuple) -> bool:
     """a domine b : a ≥ b sur (logements, SHAB) ET ≤ sur (nb de bâtiments), avec AU MOINS une inégalité
     stricte. Métrique = (logements, shab_m2, n_batiments)."""

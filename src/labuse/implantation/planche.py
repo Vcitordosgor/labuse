@@ -32,6 +32,16 @@ COL_X = 872.0                 # colonne de droite (x de départ)
 _ESC = lambda s: html.escape(str(s), quote=True)   # noqa: E731
 
 
+def _refs_courts(idus) -> str:
+    """« AW 99, 451, 624, 625 » (section une fois + numéros) — compact pour le cartouche (anti-débordement)."""
+    sec, nums = "", []
+    for i in sorted(idus or []):
+        if len(i) >= 12:
+            sec = i[8:10]
+            nums.append(str(int(i[10:])) if i[10:].isdigit() else i[10:])
+    return (f"{sec} " + ", ".join(nums)) if nums else ""
+
+
 def numero_etude(idus: list[str], genere_le: str) -> str:
     """N° de document DÉTERMINISTE : EF-AAAAMMJJ-XXXX (XXXX stable par assiette → rejeu à l'identique).
     Source UNIQUE, partagée par la planche (cartouche) et le PDF (cartouche + crible de provenance)."""
@@ -275,19 +285,18 @@ def _cotes_mrr(geom, vue, *, off_px) -> str:
 
 
 def _g_cotes(terrain, scene, vue) -> str:
-    """Cotes RÉELLES (format « 13,00 ») : largeur + longueur de l'assiette et du bâtiment, le long de
-    leur rectangle minimal orienté (cotes d'enveloppe du terrain et du volume proposé)."""
-    b = ['<g id="g-cotes">', _cotes_mrr(terrain.assiette, vue, off_px=16)]
-    batis = _of(scene, "batiment_emprise")
-    if batis:
-        b.append(_cotes_mrr(_geom(batis[0]), vue, off_px=8))
-    b.append("</g>")
+    """Cotes RÉELLES (format « 13,00 ») : largeur + longueur de l'ASSIETTE le long de son rectangle
+    minimal orienté. (Les cotes du bâtiment sont retirées : elles tombaient sur les places — recette Vic ;
+    les dimensions du volume sont dans le tableau des surfaces / la coupe.)"""
+    b = ['<g id="g-cotes">', _cotes_mrr(terrain.assiette, vue, off_px=16), "</g>"]
+    _ = scene
     return "".join(b)
 
 
 def _nord_echelle(vue) -> str:
     b = []
-    nx, ny = W - 150, PY0 + 34
+    # flèche du nord DANS l'aire de plan (coin haut-droit), plus sur la colonne de légende (recette Vic).
+    nx, ny = PX1 - 22, PY0 + 34
     b.append(f'<polygon points="{nx},{ny-16} {nx+8},{ny+14} {nx},{ny+6} {nx-8},{ny+14}" fill="#111"/>')
     b.append(_txt(nx, ny - 22, "N", size=13, anchor="middle", weight="700"))
     # échelle graphique : 10 m par segment, 2 segments
@@ -356,17 +365,17 @@ def _cartouche(entrees: dict, cap, forme: str, niveaux: int, ref: str, *, genere
     x, y0 = COL_X, 566
     commune = entrees.get("commune") or ""
     zone = entrees.get("zone") or ""
-    nums = ", ".join((p or "").replace(commune, "") for p in [])  # placeholder (numéros ci-dessous)
-    parcelles = ", ".join(sorted({i[8:] for i in (entrees.get("idus") or [])}))
-    b = [f'<rect x="{x}" y="{y0}" width="292" height="150" fill="#fff" stroke="#111" stroke-width="1.2"/>']
+    parcelles = _refs_courts(entrees.get("idus"))
+    # commune·zone et parcelles sur DEUX lignes (anti-débordement, recette Vic).
+    b = [f'<rect x="{x}" y="{y0}" width="292" height="158" fill="#fff" stroke="#111" stroke-width="1.2"/>']
     b.append(_txt(x + 12, y0 + 20, "LABUSE", size=15, weight="800"))
-    b.append(_txt(x + 12, y0 + 38, "Étude de faisabilité — plan masse", size=11, weight="600"))
-    b.append(_txt(x + 12, y0 + 56, f"{commune} · {parcelles} · zone {zone}", size=10))
-    b.append(_txt(x + 12, y0 + 72, f"Scénario {ref} · {forme.replace('_', ' ')} R+{max(0, niveaux-1)} · stationnement aérien", size=10))
-    b.append(_txt(x + 12, y0 + 88, f"PLU {millesime_plu or 'millésime en vigueur'} · LiDAR HD IGN · BD TOPO", size=9, fill="#555"))
-    b.append(_txt(x + 12, y0 + 104, f"Généré le {genere_le} · {numero}", size=9, fill="#555"))
-    b.append(_txt(x + 12, y0 + 122, "Esquisse indicative — pas une étude d’architecte", size=9, fill="#B45309", weight="600"))
-    _ = nums
+    b.append(_txt(x + 12, y0 + 37, "Étude de faisabilité — plan masse", size=10.5, weight="600"))
+    b.append(_txt(x + 12, y0 + 53, f"{commune} · zone {zone}", size=9.5))
+    b.append(_txt(x + 12, y0 + 68, f"Parcelles {parcelles}", size=9.5))
+    b.append(_txt(x + 12, y0 + 84, f"Scénario {ref} · {forme.replace('_', ' ')} R+{max(0, niveaux-1)} · stationnement aérien", size=9))
+    b.append(_txt(x + 12, y0 + 100, f"PLU {millesime_plu or 'millésime en vigueur'} · LiDAR HD IGN · BD TOPO", size=8.5, fill="#555"))
+    b.append(_txt(x + 12, y0 + 115, f"Généré le {genere_le} · {numero}", size=8.5, fill="#555"))
+    b.append(_txt(x + 12, y0 + 134, "Esquisse indicative — pas une étude d’architecte", size=9, fill="#B45309", weight="600"))
     return "".join(b)
 
 
@@ -398,8 +407,10 @@ def planche_svg(scenario, contexte: Contexte, *, ref: str, genere_le: str, numer
         _defs(),
         _g_voisins(contexte, vue),
         _g_voies(contexte, vue),
-        _g_ppr(terrain, vue),
         _g_projet(scene, vue),
+        # PPR APRÈS la pleine terre / les objets : sinon l'aplat vert des espaces libres recouvrait les
+        # hachures (bug recette Vic). Dessinée au-dessus du sol, sous les limites rouges et les cotes.
+        _g_ppr(terrain, vue),
         _g_zone_limites(terrain, vue),
         _g_tn(contexte, vue),
         _g_cotes(terrain, scene, vue),
@@ -431,7 +442,7 @@ def coupe_svg(scenario, contexte: Contexte, *, ref: str, genere_le: str, numero:
     if terrain is None or terrain.assiette is None or terrain.assiette.is_empty:
         return ""
     conv, regles = scenario.conventions, scenario.regles
-    cap = scenario.capacite
+    scene = scenario.scene
     niveaux = max(1, int(scenario.niveaux or 1))
     h_et = float(getattr(conv, "hauteur_etage_m", 3.0) or 3.0)
     H_bat = niveaux * h_et
@@ -442,104 +453,144 @@ def coupe_svg(scenario, contexte: Contexte, *, ref: str, genere_le: str, numero:
     prospect = getattr(regles, "prospect", None)
     prospect_val = prospect.valeur if (prospect is not None and getattr(prospect, "valeur", None)) else None
 
-    # profondeur du terrain = grand côté du rectangle minimal orienté de l'assiette
-    cs = list(terrain.assiette.minimum_rotated_rectangle.exterior.coords)[:4]
-    s1 = math.hypot(cs[1][0] - cs[0][0], cs[1][1] - cs[0][1])
-    s2 = math.hypot(cs[2][0] - cs[1][0], cs[2][1] - cs[1][1])
-    span = max(max(s1, s2), recul + prof + 6.0)
+    # IMPLANTATION-4 (recette Vic) — COUPE À TRAVERS LE PLAN RÉEL : axe perpendiculaire à la voie, on
+    # PROJETTE le bâtiment et le stationnement à leur VRAIE position le long de l'axe (plus « collés à
+    # la voie »), et le TN suit le profil LiDAR échantillonné sur cet axe.
+    axe = contexte.axe
+    if axe:
+        ox, oy, ux, uy, L = axe["ox"], axe["oy"], axe["ux"], axe["uy"], axe["L"]
+        def proj(x, y):   # distance le long de l'axe depuis l'origine « voie »
+            return (x - ox) * ux + (y - oy) * uy
+    else:
+        L = max(recul + prof + 6.0, 20.0)
+        def proj(x, y):   # repli (pas de voie servie) : bâtiment au recul
+            return recul
+    span = max(L, 6.0)
 
-    # terrain naturel : élévations des coins (relatives au point bas)
-    alts = sorted(c["alt_m"] for c in contexte.tn_coins if c.get("alt_m") is not None)
-    tn_lo, tn_hi = (alts[0], alts[-1]) if alts else (0.0, 0.0)
-    tn_left, tn_right = 0.0, (tn_hi - tn_lo)
+    def dspan(kind):
+        ds = []
+        for o in _of(scene, kind):
+            g = _geom(o)
+            polys = g.geoms if getattr(g, "geom_type", "").startswith("Multi") else [g]
+            for p in polys:
+                ds += [proj(x, y) for x, y in p.exterior.coords]
+        return (min(ds), max(ds)) if ds else None
 
-    hmax = max(H_bat, h_ft or 0.0, h_eg or 0.0, prospect_val or 0.0) + max(tn_left, tn_right) + 2.5
+    bld = dspan("batiment_emprise")
+    if not bld:
+        bld = (recul, recul + prof)
+    bf, bb = max(0.0, bld[0]), min(span, bld[1])
+    if bb - bf < 1.0:
+        bf, bb = recul, recul + prof
+    park = None
+    for k in ("place", "allee", "acces"):
+        dp = dspan(k)
+        if dp:
+            park = (min(park[0], dp[0]), max(park[1], dp[1])) if park else dp
+
+    # profil TN le long de l'axe (relatif au point bas) ; plat si pas de LiDAR
+    tnpts = [(p["d_m"], p["alt_m"]) for p in (contexte.tn_section or []) if p.get("alt_m") is not None]
+    tnpts = [(max(0.0, min(span, d)), a) for d, a in tnpts]
+    if len(tnpts) >= 2:
+        amin = min(a for _, a in tnpts)
+        tn = sorted((d, a - amin) for d, a in tnpts)
+        tn_abs0 = amin
+    else:
+        tn = [(0.0, 0.0), (span, 0.0)]
+        tn_abs0 = None
+
+    def tn_at(d):
+        if d <= tn[0][0]:
+            return tn[0][1]
+        if d >= tn[-1][0]:
+            return tn[-1][1]
+        for i in range(1, len(tn)):
+            if d <= tn[i][0]:
+                (d0, a0), (d1, a1) = tn[i - 1], tn[i]
+                return a0 + (a1 - a0) * ((d - d0) / ((d1 - d0) or 1.0))
+        return tn[-1][1]
+
+    relief = max(a for _, a in tn) - min(a for _, a in tn)
+    hmax = max(H_bat, h_ft or 0.0, h_eg or 0.0, prospect_val or 0.0) + relief + 2.5
     sc = min((CPX1 - CPX0) / span, (CPY1 - CPY0) / hmax)
-    x0 = CPX0
-    base = CPY1                                        # y du niveau 0 (altitude 0 relative)
 
-    def X(xm):   # noqa: E743
-        return x0 + xm * sc
+    def X(d):   # noqa: E743
+        return CPX0 + d * sc
 
-    def Y(hm):   # noqa: E743
-        return base - hm * sc
+    def Y(h):   # noqa: E743
+        return CPY1 - h * sc
 
-    tn_at = lambda xm: tn_left + (tn_right - tn_left) * (xm / span)   # noqa: E731
-
+    sol = tn_at((bf + bb) / 2.0)                   # plateforme du bâtiment = TN sous son milieu
     b = [f'<rect x="0" y="0" width="{CW:.0f}" height="{CH:.0f}" fill="#fff"/>']
 
-    # ── terrain naturel (LiDAR), rouge
+    # ── stationnement (sous le bâtiment dans l'ordre de dessin) — à sa vraie position, au niveau du TN
+    b.append('<g id="g-places">')
+    if park:
+        pf, pb = max(0.0, park[0]), min(span, park[1])
+        if pb > pf:
+            yb = min(Y(tn_at(pf)), Y(tn_at(pb)))
+            b.append(f'<rect x="{X(pf):.1f}" y="{yb - 6:.1f}" width="{(X(pb) - X(pf)):.1f}" height="6" '
+                     'fill="#E5E7EB" stroke="#111" stroke-width="0.6"/>')
+    b.append("</g>")
+
+    # ── terrain naturel (LiDAR), rouge — polyligne du profil échantillonné
     b.append('<g id="g-tn">')
-    b.append(f'<polyline points="{X(0):.1f},{Y(tn_left):.1f} {X(span):.1f},{Y(tn_right):.1f}" '
-             'fill="none" stroke="#DC2626" stroke-width="1.6"/>')
-    b.append(_txt(X(span * 0.5), Y(max(tn_left, tn_right)) - 6, "Terrain naturel (LiDAR)", size=10, fill="#B91C1C"))
-    if alts:
-        b.append(_txt(X(0) - 6, Y(tn_left), dec_fr(tn_lo, 1), size=9, anchor="end", fill="#B91C1C"))
-        b.append(_txt(X(span) + 6, Y(tn_right), dec_fr(tn_hi, 1), size=9, anchor="start", fill="#B91C1C"))
+    pts = " ".join(f"{X(d):.1f},{Y(a):.1f}" for d, a in tn)
+    b.append(f'<polyline points="{pts}" fill="none" stroke="#DC2626" stroke-width="1.6"/>')
+    b.append(_txt(X(span * 0.6), Y(tn_at(span * 0.6)) + 14, "Terrain naturel (LiDAR)", size=10, fill="#B91C1C"))
+    if tn_abs0 is not None:
+        b.append(_txt(X(0) - 6, Y(tn[0][1]), dec_fr(tn_abs0 + tn[0][1], 1), size=9, anchor="end", fill="#B91C1C"))
+        b.append(_txt(X(span) + 6, Y(tn[-1][1]), dec_fr(tn_abs0 + tn[-1][1], 1), size=9, anchor="start", fill="#B91C1C"))
     b.append("</g>")
 
     # ── limites de propriété (verticales)
     b.append('<g id="g-limites">')
-    for xm, lab in ((0.0, "limite sur voie"), (span, "limite de fond")):
+    for xm, lab, anc in ((0.0, "limite sur voie", "start"), (span, "limite de fond", "end")):
         b.append(f'<line x1="{X(xm):.1f}" y1="{Y(tn_at(xm)):.1f}" x2="{X(xm):.1f}" y2="{Y(hmax):.1f}" '
                  'stroke="#111" stroke-width="1" stroke-dasharray="4 3"/>')
-        b.append(_txt(X(xm), Y(hmax) - 4, lab, size=9, anchor="middle", fill="#555"))
+        b.append(_txt(X(xm), Y(hmax) - 4, lab, size=9, anchor=anc, fill="#555"))
     b.append("</g>")
 
-    # ── hauteurs réglementaires égout / faîtage (pointillé bleu), mesurées depuis le TN au bâtiment
-    bx0 = recul
-    sol = tn_at(bx0)
+    # ── hauteurs réglementaires égout / faîtage : MESURÉES DEPUIS LE TN → polylignes PARALLÈLES au terrain
     b.append('<g id="g-hauteurs">')
     for h, lab in ((h_eg, "hauteur à l’égout"), (h_ft, "hauteur au faîtage")):
         if h is None:
             continue
-        yy = Y(sol + h)
-        b.append(f'<line x1="{X(0):.1f}" y1="{yy:.1f}" x2="{CPX1:.1f}" y2="{yy:.1f}" '
-                 'stroke="#2563EB" stroke-width="1" stroke-dasharray="6 3"/>')
-        b.append(_txt(CPX1 - 4, yy - 3, f"{lab} {dec_fr(h, 2)} m", size=9, anchor="end", fill="#1D4ED8"))
+        hp = " ".join(f"{X(d):.1f},{Y(a + h):.1f}" for d, a in tn)
+        b.append(f'<polyline points="{hp}" fill="none" stroke="#2563EB" stroke-width="1" stroke-dasharray="6 3"/>')
+        b.append(_txt(CPX1 - 4, Y(tn[-1][1] + h) - 3, f"{lab} {dec_fr(h, 2)} m", size=9, anchor="end", fill="#1D4ED8"))
     b.append("</g>")
 
     # ── prospect (seulement s'il est CHIFFRÉ) : droite de pente depuis la limite de fond
     if prospect_val:
         b.append('<g id="g-prospect">')
-        b.append(f'<line x1="{X(span):.1f}" y1="{Y(tn_at(span)):.1f}" x2="{X(bx0):.1f}" '
+        b.append(f'<line x1="{X(span):.1f}" y1="{Y(tn_at(span)):.1f}" x2="{X(bf):.1f}" '
                  f'y2="{Y(sol + prospect_val):.1f}" stroke="#B45309" stroke-width="1" stroke-dasharray="2 2"/>')
-        b.append(_txt(X(span * 0.72), Y(sol + prospect_val * 0.5), "prospect", size=9, fill="#B45309"))
+        b.append(_txt(X(span * 0.8), Y(sol + prospect_val * 0.5), "prospect", size=9, fill="#B45309"))
         b.append("</g>")
 
-    # ── bâtiment en coupe + niveaux nommés (RDC, R+1…)
+    # ── bâtiment en coupe à sa VRAIE position (bf→bb), plateforme au TN, niveaux nommés
     b.append('<g id="g-batiment">')
-    bX, bW = X(bx0), prof * sc
-    b.append(f'<rect x="{bX:.1f}" y="{Y(sol + H_bat):.1f}" width="{bW:.1f}" height="{(H_bat) * sc:.1f}" '
+    bX, bW = X(bf), X(bb) - X(bf)
+    b.append(f'<rect x="{bX:.1f}" y="{Y(sol + H_bat):.1f}" width="{bW:.1f}" height="{H_bat * sc:.1f}" '
              'fill="#F5C6B8" stroke="#111" stroke-width="1.4"/>')
     for n in range(niveaux):
         yb = Y(sol + (n + 1) * h_et)
         b.append(f'<line x1="{bX:.1f}" y1="{yb:.1f}" x2="{bX + bW:.1f}" y2="{yb:.1f}" stroke="#111" stroke-width="0.6"/>')
-        lab = "RDC" if n == 0 else f"R+{n}"
-        b.append(_txt(bX + 6, Y(sol + n * h_et) - 4, lab, size=9, fill="#7A3B2C"))
-    # toiture jusqu'au faîtage (si faîtage servi et > égout)
+        b.append(_txt(bX + 6, Y(sol + n * h_et) - 4, "RDC" if n == 0 else f"R+{n}", size=9, fill="#7A3B2C"))
     if h_ft and h_eg and h_ft > h_eg:
         yft = Y(sol + h_ft)
         b.append(f'<polygon points="{bX:.1f},{Y(sol + H_bat):.1f} {bX + bW / 2:.1f},{yft:.1f} '
                  f'{bX + bW:.1f},{Y(sol + H_bat):.1f}" fill="#E8D5CE" stroke="#111" stroke-width="0.8"/>')
     b.append("</g>")
 
-    # ── stationnement aérien (au sol, entre la voie et le bâtiment)
-    b.append('<g id="g-places">')
-    if recul > 2:
-        pw = min(recul, 6.0) * sc
-        b.append(f'<rect x="{X(0.5):.1f}" y="{Y(tn_at(0.5) + 0.3):.1f}" width="{pw:.1f}" height="6" '
-                 'fill="#E5E7EB" stroke="#111" stroke-width="0.7"/>')
-        # pas de libellé inline (collision avec « RDC ») : la légende nomme déjà le stationnement.
-    b.append("</g>")
-
-    # ── cote de hauteur du bâtiment (à droite du volume)
+    # ── cote de hauteur du bâtiment (à gauche du volume, côté voie)
     b.append('<g id="g-cotes">')
-    cx = bX + bW + 10
+    cx = bX - 10
     b.append(f'<line x1="{cx:.1f}" y1="{Y(sol):.1f}" x2="{cx:.1f}" y2="{Y(sol + H_bat):.1f}" stroke="#111" stroke-width="0.8"/>')
     for yy in (Y(sol), Y(sol + H_bat)):
         b.append(f'<line x1="{cx - 3:.1f}" y1="{yy:.1f}" x2="{cx + 3:.1f}" y2="{yy:.1f}" stroke="#111" stroke-width="0.8"/>')
-    b.append(_txt(cx + 5, (Y(sol) + Y(sol + H_bat)) / 2, f"{dec_fr(H_bat, 2)} m", size=9, fill="#111"))
+    b.append(_txt(cx - 5, (Y(sol) + Y(sol + H_bat)) / 2, f"{dec_fr(H_bat, 2)} m", size=9, anchor="end", fill="#111"))
     b.append("</g>")
 
     # ── légende + cartouche (colonne de droite)
@@ -553,16 +604,17 @@ def coupe_svg(scenario, contexte: Contexte, *, ref: str, genere_le: str, numero:
         ly += 18
     ent = entrees or {}
     commune = ent.get("commune") or ""
-    parcelles = ", ".join(sorted({i[8:] for i in (ent.get("idus") or [])}))
+    parcelles = _refs_courts(ent.get("idus"))
     cy = CPY0 + 150
-    b.append(f'<rect x="{CCOL}" y="{cy}" width="268" height="138" fill="#fff" stroke="#111" stroke-width="1.2"/>')
+    b.append(f'<rect x="{CCOL}" y="{cy}" width="280" height="150" fill="#fff" stroke="#111" stroke-width="1.2"/>')
     b.append(_txt(CCOL + 12, cy + 20, "LABUSE", size=15, weight="800"))
-    b.append(_txt(CCOL + 12, cy + 38, "Étude de faisabilité — coupe de principe", size=11, weight="600"))
-    b.append(_txt(CCOL + 12, cy + 56, f"{commune} · {parcelles} · zone {ent.get('zone') or ''}", size=10))
-    b.append(_txt(CCOL + 12, cy + 72, f"Scénario {ref} · R+{max(0, niveaux - 1)} · {niveaux} niveaux × {dec_fr(h_et, 2)} m", size=10))
-    b.append(_txt(CCOL + 12, cy + 90, "TN LiDAR HD IGN · règles PLU servies", size=9, fill="#555"))
-    b.append(_txt(CCOL + 12, cy + 106, f"Généré le {genere_le} · {numero}", size=9, fill="#555"))
-    b.append(_txt(CCOL + 12, cy + 124, "Esquisse indicative — pas une étude d’architecte", size=9, fill="#B45309", weight="600"))
+    b.append(_txt(CCOL + 12, cy + 37, "Étude de faisabilité — coupe de principe", size=10.5, weight="600"))
+    b.append(_txt(CCOL + 12, cy + 53, f"{commune} · zone {ent.get('zone') or ''}", size=9.5))
+    b.append(_txt(CCOL + 12, cy + 68, f"Parcelles {parcelles}", size=9.5))
+    b.append(_txt(CCOL + 12, cy + 84, f"Scénario {ref} · R+{max(0, niveaux - 1)} · {niveaux} niveaux × {dec_fr(h_et, 2)} m", size=9))
+    b.append(_txt(CCOL + 12, cy + 100, "TN LiDAR HD IGN · règles PLU servies", size=8.5, fill="#555"))
+    b.append(_txt(CCOL + 12, cy + 115, f"Généré le {genere_le} · {numero}", size=8.5, fill="#555"))
+    b.append(_txt(CCOL + 12, cy + 134, "Esquisse indicative — pas une étude d’architecte", size=9, fill="#B45309", weight="600"))
 
     return (f'<svg viewBox="0 0 {CW:.0f} {CH:.0f}" width="100%" xmlns="http://www.w3.org/2000/svg" '
             f'class="coupe" font-family="Inter, Arial, sans-serif">' + "".join(b) + "</svg>")

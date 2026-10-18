@@ -219,3 +219,26 @@ def test_coupe_servie_niveaux_nommes(payload):
     assert svg and 'class="coupe"' in svg and ">RDC<" in svg
     labs = set(re.findall(r'>(RDC|R\+\d+)<', svg))
     assert len(labs) == sc["niveaux"]
+
+
+# IMPLANTATION-4 (recette Vic, item 1) — la PPR SERVIE est HACHURÉE sur la planche (pas seulement dans
+# la légende). Saint-Denis a une PPR rouge + bleue ; l'Étang-Salé n'en a pas.
+def test_planche_ppr_hachuree_si_servie(session_reelle):
+    import re
+    from labuse.implantation.moteur import IDUS_SAINT_DENIS
+    p = etudier_payload(session_reelle, {"idus": IDUS_SAINT_DENIS, "objectif": "equilibre"})
+    svg = p["scenarios"][0].get("planche_svg") or ""
+    # un <polygon> (pas un <rect> de légende) rempli d'une hachure PPR
+    drawn = re.findall(r'<polygon[^>]*fill="url\(#ppr[b]?\)"', svg)
+    assert drawn, "PPR servie à Saint-Denis mais non hachurée sur la planche"
+
+
+def test_planche_sans_ppr_pas_de_hachure(payload):
+    import re
+    svg = payload["scenarios"][0].get("planche_svg") or ""
+    assert not re.findall(r'<polygon[^>]*fill="url\(#ppr', svg)   # Étang-Salé : aucune PPR dessinée
+
+
+# IMPLANTATION-4 (recette Vic, item 5) — « ce qui limite la capacité » est servi (une ligne non vide).
+def test_limite_capacite_servie(payload):
+    assert payload["scenarios"][0].get("limite_capacite")
