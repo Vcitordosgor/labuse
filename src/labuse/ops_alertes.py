@@ -29,6 +29,7 @@ from pathlib import Path
 from sqlalchemy import text
 
 from .config import get_settings
+from .tz import today_reunion   # FIX-ORFEVRE-1 pt 3 (D-04) — le « jour » de dédup = jour Réunion
 
 log = logging.getLogger("labuse.ops")
 
@@ -140,8 +141,13 @@ def signaler(db, cle: str, sujet: str, detail: str) -> str:
             "VALUES (:c, :s, :d, now(), now(), 0)"), {"c": cle, "s": sujet, "d": detail})
         _sink(db, sujet_mail, detail + "\n\n— LABUSE, exploitation", dedup=f"ops:{cle}:ouvert")
         return "ouvert"
+    # FIX-ORFEVRE-1 pt 3 (D-04) — UNE SEULE définition du « jour » de dédup des alertes : le jour
+    # RÉUNION (comme protection._aujourdhui et les clés de jobs_impl). Avant : jour UTC ici, jour
+    # process dans jobs_impl → autour de 04:00 Réunion un rappel pouvait partir deux fois ou être
+    # retenu un jour de plus. Fuseau EXPLICITE dans le SQL (indépendant du timezone de session).
     deja_aujourdhui = db.execute(text(
-        "SELECT (dernier_envoi_at AT TIME ZONE 'UTC')::date = (now() AT TIME ZONE 'UTC')::date "
+        "SELECT (dernier_envoi_at AT TIME ZONE 'Indian/Reunion')::date "
+        "= (now() AT TIME ZONE 'Indian/Reunion')::date "
         "FROM ops_incidents WHERE id = :i"), {"i": row["id"]}).scalar()
     if deja_aujourdhui:
         db.execute(text("UPDATE ops_incidents SET sujet = :s, detail = :d WHERE id = :i"),
@@ -150,7 +156,7 @@ def signaler(db, cle: str, sujet: str, detail: str) -> str:
     db.execute(text(
         "UPDATE ops_incidents SET sujet = :s, detail = :d, dernier_envoi_at = now(), "
         "rappels = rappels + 1 WHERE id = :i"), {"s": sujet, "d": detail, "i": row["id"]})
-    jour = datetime.now(timezone.utc).date().isoformat()
+    jour = today_reunion().isoformat()   # FIX-ORFEVRE-1 pt 3 (D-04) — même jour que le test SQL ci-dessus
     _sink(db, f"{sujet_mail} (toujours ouvert)",
           detail + "\n\nIncident non résolu depuis l'ouverture — rappel quotidien.\n— LABUSE, exploitation",
           dedup=f"ops:{cle}:{jour}")

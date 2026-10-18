@@ -1402,7 +1402,7 @@ def _m28_badges(db: Session, idu: str) -> dict:
         # (< 1800 ou future) n'est JAMAIS servie, même si le cache n'a pas encore été reconstruit
         # (le builder la borne déjà) → « année inconnue » (annee_construction NULL, étiquette Absent).
         _ac = _fb.get("annee_construction")
-        if _ac is not None and (_ac < 1800 or _ac > datetime.now().year):
+        if _ac is not None and (_ac < 1800 or _ac > _today_reunion().year):   # FIX-ORFEVRE-1 pt 3 (ORF-17)
             _fb["annee_construction"] = None
             _fb["annee_etiquette"] = "Absent"
         out["filtre_bati"] = {**_fb, "ratio_pct": round(_fb["ratio_pct"], 1),

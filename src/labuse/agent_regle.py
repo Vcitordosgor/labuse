@@ -168,8 +168,9 @@ def fiches_a_reverifier(plus_de_jours: int = 180) -> list[str]:
     from datetime import date, timedelta
 
     from . import regles
+    from .tz import today_reunion   # FIX-ORFEVRE-1 pt 3 (ORF-17) — jour Réunion, pas le fuseau du process
     fiches = regles.charger()
-    seuil = date.today() - timedelta(days=plus_de_jours)
+    seuil = today_reunion() - timedelta(days=plus_de_jours)
     cibles = []
     for did, f in fiches.items():
         if f.reference is None or did != f.donnees[0]:

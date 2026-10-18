@@ -20,6 +20,7 @@ from sqlalchemy.orm import Session
 
 from .. import plans
 from ..config import get_settings
+from ..tz import today_reunion   # FIX-ORFEVRE-1 pt 3 (D-03) — borne du mois au jour RÉUNION
 
 log = logging.getLogger("labuse.dossier")
 router = APIRouter(prefix="/dossier", tags=["dossier"])
@@ -32,8 +33,11 @@ def get_db():
 
 def _quota_mois(db: Session, sujet: str) -> int:
     """Dossiers générés par ce sujet depuis le début du mois (usage_compteurs).
-    Jour de référence = heure LOCALE python (cohérent avec protection._aujourdhui)."""
-    premier = date.today().replace(day=1)
+    Jour de référence = jour RÉUNION (`today_reunion`, cohérent avec `protection._aujourdhui` qui
+    POSE les compteurs au jour Réunion — FIX-ORFEVRE-1 pt 3, D-03 : la docstring disait « heure
+    LOCALE », c'était faux, et la borne locale reprenait tout le mois écoulé à la bascule de mois
+    sur une machine CEST/UTC)."""
+    premier = today_reunion().replace(day=1)
     return int(db.execute(text(
         "SELECT COALESCE(sum(n), 0) FROM usage_compteurs "
         "WHERE kind = 'dossier' AND sujet = :s AND jour >= :p"),

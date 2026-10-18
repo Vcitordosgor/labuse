@@ -553,8 +553,8 @@ def ecrire(lignes: list[dict], bilan: dict) -> None:
     nc = [l for l in lignes if l["verdict"] == NC]
     recents = [l for l in lignes if l["verdict"] == RECENTE]
 
-    import datetime
-    date = datetime.date.today().isoformat()
+    from .tz import today_reunion   # FIX-ORFEVRE-1 pt 3 (ORF-17) — date du rapport au jour Réunion
+    date = today_reunion().isoformat()
 
     M: list[str] = []
     M += [

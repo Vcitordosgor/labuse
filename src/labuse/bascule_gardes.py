@@ -178,7 +178,8 @@ def check_fraicheur(seuil_facteur: float = 2.0, session=None) -> dict:
         rows = conn.execute(text("SELECT name, source_horizon_at FROM data_sources WHERE name = ANY(:n)"),
                             {"n": all_names}).all()
         horizons = {name: hz for name, hz in rows}
-        today = datetime.date.today()
+        from labuse.tz import today_reunion   # FIX-ORFEVRE-1 pt 3 (ORF-17) — jour Réunion, pas le fuseau du process
+        today = today_reunion()
         evaluees, retards, inconnues, non_bornables = 0, [], [], []
         for key, s in SOURCES.items():
             jours = CADENCE_JOURS.get((s.get("cadence_norme") or "").lower())
@@ -217,9 +218,9 @@ def check_fraicheur(seuil_facteur: float = 2.0, session=None) -> dict:
 
 def _ts() -> str:
     """Horodatage HH:MM:SS pour la journalisation (Date.now() indisponible dans les workflows,
-    mais ici on est en script Python standard)."""
-    import datetime
-    return datetime.datetime.now().strftime("%H:%M:%S")
+    mais ici on est en script Python standard). Heure Réunion (FIX-ORFEVRE-1 pt 3, ORF-17)."""
+    from labuse.tz import now_reunion
+    return now_reunion().strftime("%H:%M:%S")
 
 
 def check_disque(target: str = TARGET, marge: float = 1.25, session=None) -> dict:

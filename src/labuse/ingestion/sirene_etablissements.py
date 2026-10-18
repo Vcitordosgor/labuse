@@ -58,6 +58,11 @@ CREATE TABLE IF NOT EXISTS sirene_etablissements (
 CREATE INDEX IF NOT EXISTS ix_sirene_etab_geom ON sirene_etablissements USING gist (geom);
 CREATE INDEX IF NOT EXISTS ix_sirene_etab_naf  ON sirene_etablissements (naf);
 CREATE INDEX IF NOT EXISTS ix_sirene_etab_insee ON sirene_etablissements (insee);
+-- FIX-ORFEVRE-1 point 3 (ORF-18 / H2.1) : fiche propriétaire WHERE siren = <siren> (app.py) + jointures
+-- `ON se.siren = pm.siren` — sans lui, 1 seq scan de 155 k lignes PAR fiche (129 ms → 0,1 ms).
+-- Le rebuild (DELETE+INSERT ci-dessous) PRÉSERVE les index ; aussi déclaré côté boot
+-- (models.ensure_index_lectures_unitaires) pour les bases déjà créées.
+CREATE INDEX IF NOT EXISTS ix_sirene_etab_siren ON sirene_etablissements (siren);
 """
 #: colonnes ajoutées après coup (table pré-existante d'un mandat antérieur) — migration douce.
 _ALTERS = [

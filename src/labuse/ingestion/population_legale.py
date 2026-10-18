@@ -18,6 +18,8 @@ from __future__ import annotations
 import datetime as _dt
 
 import httpx
+
+from ..tz import today_reunion   # FIX-ORFEVRE-1 pt 3 (ORF-17) — jour Réunion, pas le fuseau du process
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -40,7 +42,7 @@ CREATE TABLE IF NOT EXISTS population_legale (
 def millesime_en_vigueur(aujourdhui: _dt.date | None = None) -> int:
     """L'année de référence des populations légales EN VIGUEUR : N−3 (convention INSEE — les
     populations légales « millésimées A » entrent en vigueur au 1er janvier A+3)."""
-    d = aujourdhui or _dt.date.today()
+    d = aujourdhui or today_reunion()
     return d.year - 3
 
 

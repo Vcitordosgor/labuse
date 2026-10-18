@@ -15,6 +15,8 @@ from datetime import date
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from ..tz import today_reunion   # FIX-ORFEVRE-1 pt 3 (ORF-17/D-13) — « généré le » au jour Réunion
+
 #: Disclaimer réglementaire — AU MOT PRÈS (mandat M6 2a) : repris dans les PDF et les CGU.
 DISCLAIMER_CU = "Ces informations ne remplacent pas un certificat d'urbanisme."
 
@@ -179,7 +181,7 @@ def pied_de_page_pdf(pdf, doc_label: str, *, dpe: bool = False, inpi: bool = Fal
                    new_x="LMARGIN", new_y="NEXT")
     pdf.set_font(fam, size=6)
     pdf.cell(0, 3.2, f"LABUSE · radar foncier La Réunion · {doc_label} · "
-                     f"généré le {date.today().isoformat()} · page {pdf.page_no()}/{{nb}}",
+                     f"généré le {today_reunion().isoformat()} · page {pdf.page_no()}/{{nb}}",
              align="C")
 
 

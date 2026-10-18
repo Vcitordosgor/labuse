@@ -13,6 +13,7 @@ import datetime
 import re
 
 from ..config import get_settings, load_yaml_config
+from ..tz import today_reunion   # FIX-ORFEVRE-1 pt 3 (ORF-17) — année courante au jour Réunion
 
 #: premier millésime disponible (plancher si le dossier de config est vide).
 _ANNEE_PLANCHER = 2026
@@ -36,7 +37,7 @@ def annee_active(today: datetime.date | None = None) -> int:
     dont Y ≤ année courante. Au 1er janvier, si le barème de la nouvelle année n'existe pas
     encore, on sert le dernier disponible (avec son millésime affiché + un signalement page
     Données — jamais un chiffre muet), au lieu de servir des plafonds périmés sans le dire."""
-    an = (today or datetime.date.today()).year
+    an = (today or today_reunion()).year
     dispo = _annees_disponibles()
     if not dispo:
         return _ANNEE_PLANCHER
@@ -46,7 +47,7 @@ def annee_active(today: datetime.date | None = None) -> int:
 
 def bareme_perime(today: datetime.date | None = None) -> bool:
     """True quand le barème servi est plus vieux que l'année courante (geste annuel non fait)."""
-    return annee_active(today) < (today or datetime.date.today()).year
+    return annee_active(today) < (today or today_reunion()).year
 
 
 def signalement_fraicheur(today: datetime.date | None = None) -> str | None:
@@ -54,7 +55,7 @@ def signalement_fraicheur(today: datetime.date | None = None) -> str | None:
     if not bareme_perime(today):
         return None
     ba = annee_active(today)
-    an = (today or datetime.date.today()).year
+    an = (today or today_reunion()).year
     return (f"Barème de défiscalisation {ba} servi en {an} : les plafonds de loyer et le "
             f"coefficient de surface n'ont pas encore été mis à jour pour {an} (geste annuel de "
             f"loi de finances). Valeurs {ba} servies avec leur millésime affiché, jamais un "

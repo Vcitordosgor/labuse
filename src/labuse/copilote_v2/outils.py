@@ -522,9 +522,9 @@ def recherche_web(db: Session, *, question: str, history: list[dict] | None = No
 
     M117 · D9 — `history` (fil) : les derniers tours résolvent un enchaînement (« et à Saint-Pierre ? »)."""
     import urllib.parse as up
-    from datetime import date
 
     from ..ai import core
+    from ..tz import today_reunion   # FIX-ORFEVRE-1 pt 3 (ORF-17) — jour Réunion, pas le fuseau du process
     if not core.has_key():
         return ToolResult("recherche_web", ok=False, refus="recherche web indisponible")
     import anthropic
@@ -561,7 +561,7 @@ def recherche_web(db: Session, *, question: str, history: list[dict] | None = No
     # une notion se dit en 2-4 phrases (~600 car.) ; un fait en 1-2 phrases (~180). Jamais un pavé.
     rendu = _deux_phrases(texte, max_car=600, max_phrases=4) if connaissance else _deux_phrases(texte)
     return ToolResult("recherche_web", ok=True, web=True, valeur=None,
-                      data={"reponse": rendu, "domaines": domaines[:3], "date": date.today().isoformat()},
+                      data={"reponse": rendu, "domaines": domaines[:3], "date": today_reunion().isoformat()},
                       source="web")
 
 

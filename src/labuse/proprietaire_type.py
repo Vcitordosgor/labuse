@@ -10,6 +10,8 @@ from __future__ import annotations
 
 from datetime import date
 
+from .tz import today_reunion   # FIX-ORFEVRE-1 pt 3 (ORF-17) — jour Réunion, jamais le fuseau du process
+
 # type -> (libellé, public ?, acquérabilité / interlocuteur). `public=None` = indéterminé.
 OWNER_TYPES: dict[str, tuple[str, bool | None, str]] = {
     "commune": ("Commune", True, "cession/préemption — interlocuteur public"),
@@ -133,7 +135,7 @@ def needs_spf(owner: dict) -> bool:
 def spf_letter(parcel: dict, *, demandeur: str | None = None, today: date | None = None) -> str:
     """Courrier de demande de renseignement au Service de la Publicité Foncière (SPF), pré-rempli
     avec la seule référence cadastrale (donnée publique). Aucune donnée personnelle. Texte brut."""
-    d = (today or date.today()).strftime("%d/%m/%Y")
+    d = (today or today_reunion()).strftime("%d/%m/%Y")
     idu = parcel.get("idu", "—")
     commune = parcel.get("commune", "—")
     section = parcel.get("section") or "—"

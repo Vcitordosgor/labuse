@@ -2042,10 +2042,10 @@ def etude_pdf(body: EtudePdfIn, request: Request, db: Session = Depends(get_db))
     MÊME payload que l'écran (`etudier_payload`) et on le REND (jamais un second calcul) ; chaque ligne
     du PDF est une ligne de l'outil (verrou `nombres_hors_payload`). Deux portes, un document : la tuile
     de l'outil passe `scenario_ref` (le scénario affiché) ; la carte Docs sert la config par défaut."""
-    from datetime import date
     from urllib.parse import quote
 
     from ..exports import etude_faisabilite as ef
+    from ..tz import today_reunion   # FIX-ORFEVRE-1 pt 3 (D-13) — « généré le » au jour Réunion
     from ..exports.rendu import render_pdf
     from ..implantation.service import etudier_payload
 
@@ -2057,7 +2057,7 @@ def etude_pdf(body: EtudePdfIn, request: Request, db: Session = Depends(get_db))
         payload = etudier_payload(db, data)
     except ValueError as exc:
         raise HTTPException(400, str(exc))
-    genere_le = date.today().strftime("%d/%m/%Y")
+    genere_le = today_reunion().strftime("%d/%m/%Y")
     try:
         rendu = ef.rendu_etude(payload, genere_le=genere_le, scenario_ref=scenario_ref)
     except ValueError as exc:
@@ -2297,8 +2297,7 @@ def verif_procedure(idu: str, db: Session = Depends(get_db)) -> dict:
     # collé avec un espace/retour en queue, ou saisi en minuscules (97413000cj0096), ne matchait pas.
     idu = (idu or "").strip().upper()
     _check_idu(idu)   # M-K (P2-31)
-    import datetime
-
+    from ..tz import today_reunion   # FIX-ORFEVRE-1 pt 3 (ORF-17) — « consulté le » au jour Réunion
     from ..verdict_servi import verdict_servi
     from .. import veille_plu as V
 
@@ -2311,7 +2310,7 @@ def verif_procedure(idu: str, db: Session = Depends(get_db)) -> dict:
     except Exception:  # noqa: BLE001 - l'outil ne doit jamais 500 sur le tier
         tier = None
     e = V.entry(insee)
-    today = datetime.date.today().isoformat()
+    today = today_reunion().isoformat()
     out = {"idu": idu, "commune": p["commune"], "insee": insee, "tier_servi": tier,
            "consulte_le": today}
     if not e:

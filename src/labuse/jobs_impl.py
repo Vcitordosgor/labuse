@@ -15,6 +15,7 @@ from sqlalchemy import text
 
 from .config import get_settings
 from .jobs import JobContext, lire_etat, state_path
+from .tz import today_reunion   # FIX-ORFEVRE-1 pt 3 (ORF-17/D-02/D-04) — LE jour métier = jour Réunion
 
 log = logging.getLogger("labuse.jobs.impl")
 
@@ -220,12 +221,14 @@ def coherence_banc(ctx: JobContext) -> None:
     # le sous-ensemble RAPIDE (`--nuit` : SQL île + moteur, ~4 min, sans les 2 boucles API cadencées) ;
     # le DIMANCHE, TOUT (`--tout`, ~18 min, inclut F2 valeur inter-surfaces et F5 API). Lecture seule.
     import os
-    from datetime import datetime
     try:
         from scripts.coherence.invariants2.banc2 import executer as _banc2
     except Exception as e:  # noqa: BLE001 — le banc fait partie du produit : introuvable = échec
         raise RuntimeError(f"banc2 (invariants générés) introuvable : {e}") from e
-    _mode = "tout" if datetime.now().weekday() == 6 else "nuit"   # dimanche = l'intégrale hebdo
+    # FIX-ORFEVRE-1 pt 3 (D-02) — « dimanche » = dimanche RÉUNION, pas le fuseau du process : sur un
+    # serveur UTC (branche admise par deploy.sh), le naïf disait samedi 23:45 → l'intégrale glissait
+    # d'une nuit, silencieusement. Le cron vise 03:45 Réunion : le jour Réunion est LA référence.
+    _mode = "tout" if today_reunion().weekday() == 6 else "nuit"   # dimanche = l'intégrale hebdo
     _api = os.environ.get("LABUSE_BANC2_API") or "http://127.0.0.1:8793"
     _bil = _banc2(mode=_mode, api=_api, base=True)
     ctx.compte(banc2_mode=_mode, banc2_ok=_bil["ok"], banc2_ecart=_bil["ecart"],
@@ -473,14 +476,13 @@ def sante_endpoints(ctx: JobContext) -> None:
     en_echec = [e["endpoint"] for e in res["endpoints"] if not e["ok"]]
     ctx.compte(ok=res["ok"], total=len(res["endpoints"]), en_echec=en_echec or None)
     if not res["ok"]:
-        from datetime import date as _date
         from .api.events import creer_notification
         detail = " · ".join(f"{e['endpoint']} : {e['detail']}"
                             for e in res["endpoints"] if not e["ok"])
         creer_notification(
             ctx.db, kind="systeme", compte_id=None, source="Sonde endpoints",
             titre=f"Endpoints métier en échec ({len(en_echec)})", detail=detail[:500],
-            dedup=f"sante_endpoints:{_date.today().isoformat()}")
+            dedup=f"sante_endpoints:{today_reunion().isoformat()}")
         ctx.db.commit()
         raise RuntimeError(f"sonde endpoints : {len(en_echec)} en échec ({', '.join(en_echec)})")
 
@@ -504,13 +506,12 @@ def coherence_run(ctx: JobContext) -> None:
     en_echec = [c["libelle"] for c in res["checks"] if not c["ok"]]
     ctx.compte(ok=res["ok"], run=res["run"], n_surfaces=res["n_surfaces"], en_echec=en_echec or None)
     if not res["ok"]:
-        from datetime import date as _date
         from .api.events import creer_notification
         detail = " · ".join(f"{c['libelle']} : {c['detail']}" for c in res["checks"] if not c["ok"])
         creer_notification(
             ctx.db, kind="systeme", compte_id=None, source="Cohérence run",
             titre=f"Garde de cohérence : {len(en_echec)} divergence(s)", detail=detail[:500],
-            lien="/admin", dedup=f"coherence_run:{_date.today().isoformat()}")
+            lien="/admin", dedup=f"coherence_run:{today_reunion().isoformat()}")
         ctx.db.commit()
         raise RuntimeError(f"garde de cohérence : {len(en_echec)} divergence(s) ({', '.join(en_echec)})")
 
@@ -893,22 +894,20 @@ def coherence_robinets(ctx: JobContext) -> None:
          "preuves": {r.id: r.preuve for r in resultats}})
     ctx.compte(verrous_joues=len(resultats), verrous_casses=len(casses))
     if casses:
-        from datetime import date as _date
         from .api.events import creer_notification
         creer_notification(
             ctx.db, kind="systeme", compte_id=None, source="Circuit",
             titre=f"Verrous cassés : {', '.join(casses)}",
             detail="Le déploiement refusera tant que ça tient. Détail : labuse circuit verrous.",
-            lien="/admin", dedup=f"verrous:{_date.today().isoformat()}")
+            lien="/admin", dedup=f"verrous:{today_reunion().isoformat()}")
     if res.get("fuites_ouvertes") or res.get("eau_ancienne_ouverte"):
-        from datetime import date as _date
         from .api.events import creer_notification
         creer_notification(
             ctx.db, kind="systeme", compte_id=None, source="Circuit",
             titre=f"Sonde du circuit : {res.get('fuites_ouvertes', 0)} fuite(s) ouverte(s), "
                   f"{res.get('eau_ancienne_ouverte', 0)} eau(x) ancienne(s)",
             detail="Détail dans circuit_ecarts / circuit_eau_ancienne (page Circuit).",
-            lien="/admin", dedup=f"coherence_robinets:{_date.today().isoformat()}")
+            lien="/admin", dedup=f"coherence_robinets:{today_reunion().isoformat()}")
 
 
 def filtres_sources(ctx: JobContext) -> None:
@@ -936,14 +935,13 @@ def filtres_sources(ctx: JobContext) -> None:
             n_ok += 1
     ctx.compte(sources_ok=n_ok, sources_avertissements=n_avert, sources_quarantaine=n_quar)
     if nouveaux_quarantaine:
-        from datetime import date as _date
         from .api.events import creer_notification
         creer_notification(
             ctx.db, kind="systeme", compte_id=None, source="Circuit",
             titre=f"Filtre de nuit : {n_quar} source(s) en quarantaine",
             detail="Sources en quarantaine : " + ", ".join(nouveaux_quarantaine)
                    + " (page Circuit — « servir quand même » ou corriger la source).",
-            lien="/admin", dedup=f"filtres_sources:{_date.today().isoformat()}")
+            lien="/admin", dedup=f"filtres_sources:{today_reunion().isoformat()}")
 
 
 def ingest_bodacc(ctx: JobContext) -> None:

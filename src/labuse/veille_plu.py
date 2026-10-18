@@ -17,6 +17,7 @@ from __future__ import annotations
 from datetime import date
 
 from .config import load_yaml_config
+from .tz import today_reunion   # FIX-ORFEVRE-1 pt 3 (ORF-17) — jour Réunion, jamais le fuseau du process
 
 REQUIRED = ("commune", "procedure", "stade", "date_acte", "debat_padd", "source",
             "source_url", "date_constat", "confiance")
@@ -148,7 +149,7 @@ def a_reverifier(registre: dict | None = None, today=None) -> list[dict]:
     Pur/testable (`today` injectable). Retourne la liste triée par âge décroissant, avec l'URL à
     visiter. C'est la matière du geste trimestriel de Vic."""
     reg = _registre() if registre is None else registre
-    today = today or date.today()
+    today = today or today_reunion()
     out = []
     for insee, e in (reg or {}).items():
         dc = e.get("date_constat")

@@ -5565,10 +5565,10 @@ def circuit_suite_cmd(
     tolérance (raison + date + échéance), ou dont l'échéance est passée, sort en code 1 —
     deploy.sh refuse alors, même commande, même verdict. Suite injouable = refus aussi
     (on ne déploie pas sans jouer)."""
-    from datetime import date as _date
     from pathlib import Path
 
     from . import suite_verte
+    from .tz import today_reunion   # FIX-ORFEVRE-1 pt 3 (ORF-17) — échéances jugées au jour Réunion
 
     r = Path(racine).resolve()
     if not (r / "tests").is_dir():
@@ -5582,7 +5582,7 @@ def circuit_suite_cmd(
     except (RuntimeError, ValueError) as exc:
         typer.echo(f"✗ REFUS : {exc}")
         raise typer.Exit(1)
-    v = suite_verte.confronter(echecs, tolerances, aujourd_hui=_date.today())
+    v = suite_verte.confronter(echecs, tolerances, aujourd_hui=today_reunion())
     typer.echo(f"  {resume}")
     for a in v.avertissements:
         typer.echo(f"  ⚠ {a}")

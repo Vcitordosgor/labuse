@@ -10,8 +10,7 @@ millésimes viennent de data_sources quand une base est ouverte (sinon « (base 
 """
 from __future__ import annotations
 
-from datetime import date
-
+from ..tz import today_reunion   # FIX-ORFEVRE-1 pt 3 (ORF-17) — « généré le » au jour Réunion
 from .donnees import DONNEES
 from .robinets import ROBINETS
 from .valeur import _millesimes
@@ -98,7 +97,7 @@ def doc_fiche_parcelle(db=None) -> str:
     lignes = [
         "# FICHE PARCELLE — donnée par donnée",
         "",
-        f"*Généré du registre le {date.today().isoformat()} par `labuse registre fiche parcelle` "
+        f"*Généré du registre le {today_reunion().isoformat()} par `labuse registre fiche parcelle` "
         "(le code est la vérité — ne pas éditer à la main ; relu avant commit).*",
         "",
         "Chaque section est un tiroir de la fiche. Pour chaque donnée : d'où elle vient (source et "
@@ -122,7 +121,7 @@ def doc_autres_fiches(db=None) -> str:
     lignes = [
         "# FICHES — donnée par donnée (commune · annonce · propriétaire · soleil)",
         "",
-        f"*Généré du registre le {date.today().isoformat()} par `labuse registre fiche autres` "
+        f"*Généré du registre le {today_reunion().isoformat()} par `labuse registre fiche autres` "
         "(même format que FICHE-PARCELLE-DONNEES.md, plus court).*",
     ]
     for titre, rids in familles:

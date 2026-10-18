@@ -54,9 +54,9 @@ def _dryrun_dir(settings=None):
 
 def _ecrire_eml(msg: EmailMessage, *, settings=None):
     """Écrit un EmailMessage en `.eml` dans le dossier dry-run. Retourne le chemin (str)."""
-    from datetime import datetime
+    from .tz import now_reunion   # FIX-ORFEVRE-1 pt 3 (ORF-17) — stamp en heure Réunion, pas process
     d = _dryrun_dir(settings)
-    stamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
+    stamp = now_reunion().strftime("%Y%m%d-%H%M%S-%f")
     dest = (msg.get("To") or "x").replace("/", "_").replace("@", "_at_").replace(" ", "")[:48]
     path = d / f"{stamp}__{dest}.eml"
     path.write_bytes(bytes(msg))

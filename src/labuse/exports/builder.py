@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from datetime import date
 
 from ..registre.valeur import Valeur
+from ..tz import today_reunion   # FIX-ORFEVRE-1 pt 3 (ORF-17/D-13) — « généré le » au jour Réunion
 from . import archive, numeros
 
 
@@ -489,7 +490,7 @@ def construire(db, idu: str, document: str = "dossier", *, fiche: dict | None = 
     from .robinet_fiche import EXTRACTEURS, collecte
     if document not in DOCUMENTS:
         raise ValueError(f"document inconnu : {document!r} (câblé : {sorted(DOCUMENTS)})")
-    j = jour or date.today()
+    j = jour or today_reunion()
     f = fiche or {}
     # EXPORTS-REBRANCHEMENT-1 lot 1 — Flash = Dossier (nom commercial) : rendu, libellé et
     # NUMÉRO identiques (preuve : pdftotext diff vide). L'entrée « flash » reste acceptée
@@ -581,7 +582,7 @@ def construire_gabarit(db, idu: str, *, jour: date | None = None) -> ResultatDoc
     from ..gabarit.engine import compute_gabarit
     from .blocs import gabarit as bloc_gabarit
     from .robinet_fiche import collecte
-    j = jour or date.today()
+    j = jour or today_reunion()
     build = build_gabarit_input(db, idu)
     if build is None or build.blocking:
         raise DocumentNonEtablissable([{"libelle": _GABARIT_INCALCULABLE}])
@@ -602,7 +603,7 @@ def construire_comparatif(idus: list[str], rows: list[dict], *, jour: date | Non
     """Le Comparatif, miroir de l'outil Comparer (/compare) : 2-3 parcelles en colonnes sur les lignes
     de Comparer, EN PAGE PAYSAGE. `rows` sont les CompareRow servis (aucun recalcul ici)."""
     from .blocs import comparatif as bloc_comparatif
-    j = jour or date.today()
+    j = jour or today_reunion()
     ids = [i.strip() for i in idus if i and i.strip()][:3]
     ref0 = ids[0] if ids else ""
     numero = numeros.numero_rapport("comparatif", ref0, j)
@@ -619,7 +620,7 @@ def construire_etude_zone(idu: str, rayon_km, zone: dict, map_html: str, *,
     """L'Étude de zone, miroir de l'outil /outils/etude-zone en mode rayon : page 1 carte du périmètre
     + « Rayon N km autour de <IDU> », puis les 7 sections. `zone` est le résultat servi (aucun recalcul)."""
     from .blocs import etude_zone as bloc_zone
-    j = jour or date.today()
+    j = jour or today_reunion()
     numero = numeros.numero_rapport("etude-zone", idu, j)
     # CHASSE-DONNEES-FIX-1 (Lot 7, E-69) — le titre dit le périmètre RÉELLEMENT calculé (lu de `zone`),
     # plus le rayon DEMANDÉ (un rayon hors whitelist retombe sur l'isochrone).
@@ -642,7 +643,7 @@ def generer_pdf(db, idu: str, document: str = "dossier", *, fiche: dict | None =
     if chemin_pdf is not None:
         from pathlib import Path
         Path(chemin_pdf).write_bytes(pdf)
-        j = (jour or date.today()).isoformat()
+        j = (jour or today_reunion()).isoformat()
         archive.ecrire_archive(chemin_pdf, archive.payload_archive(
             document, idu, res.numero, res.valeurs, genere_le=j))
     return pdf, res

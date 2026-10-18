@@ -33,6 +33,8 @@ import pandas as pd
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from ...tz import today_reunion   # FIX-ORFEVRE-1 pt 3 (ORF-17) — run_id/label datés au jour Réunion
+
 from .. import score_v  # mécanisme snapshot M1 (lecture seule, réutilisé)
 from ... import runs  # source unique du run SERVI, relu à la requête (S3, bascule centralisée)
 from ..p_model import ext_sql
@@ -270,8 +272,8 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
         model_version = MODEL_VERSION
     else:
         raise RuntimeError(f"recette inconnue : {recette!r} (attendu m36 | q_v12 | q_v14 | q_v15)")
-    annee = annee or date.today().year
-    run_id = run_id or f"{model_version}-{date.today().isoformat()}"
+    annee = annee or today_reunion().year
+    run_id = run_id or f"{model_version}-{today_reunion().isoformat()}"
 
     if session.execute(text("SELECT 1 FROM p_score_v2_runs WHERE run_id = :r"),
                        {"r": run_id}).scalar():
@@ -531,7 +533,7 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
     if snapshot:
         # M1 : un label ne s'écrase JAMAIS — en cas de 2e run le même jour (ex. deux bascules
         # le 04/08), on SUFFIXE vers un label libre au lieu d'échouer (bascule bâtie révélée).
-        base_label = f"m5-{date.today().isoformat()}"
+        base_label = f"m5-{today_reunion().isoformat()}"
         snapshot_label = base_label
         k = 2
         while session.execute(text("SELECT 1 FROM score_snapshots WHERE label = :l"),

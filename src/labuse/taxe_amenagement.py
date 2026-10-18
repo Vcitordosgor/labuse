@@ -18,6 +18,8 @@ from datetime import date, datetime
 
 from sqlalchemy import text
 
+from .tz import today_reunion   # FIX-ORFEVRE-1 pt 3 (ORF-17) — jour Réunion, jamais le fuseau du process
+
 from .config import load_yaml_config
 
 # TAXE-AMÉNAGEMENT-1 lot C — un taux public non rafraîchi depuis plus d'un an est signalé
@@ -102,7 +104,7 @@ def taux_communal_public(db, insee: str | None, *, today: date | None = None) ->
     delib = row[2]
     maj = row[3]
     maj_d = maj.date() if isinstance(maj, datetime) else maj
-    ref = today or date.today()
+    ref = today or today_reunion()
     perime = bool(maj_d is not None and (ref - maj_d).days > _PERIME_JOURS)
     depuis = _fr_date(delib)
     # EXPORTS-REBRANCHEMENT-1 lot 0 — la phrase servie au client dit le FAIT juridique
@@ -134,7 +136,7 @@ def taux_secteur(db, idu: str | None, *, today: date | None = None) -> dict | No
         return None
     delib, maj = row[2], row[3]
     maj_d = maj.date() if isinstance(maj, datetime) else maj
-    ref = today or date.today()
+    ref = today or today_reunion()
     perime = bool(maj_d is not None and (ref - maj_d).days > _PERIME_JOURS)
     depuis = _fr_date(delib)
     millesime = "Secteur à taux majoré"

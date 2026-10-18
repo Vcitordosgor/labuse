@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from datetime import date
 
+from ..tz import today_reunion   # FIX-ORFEVRE-1 pt 3 (ORF-17/D-13) — numéro daté au jour Réunion
+
 #: préfixe par document (mandat lot 1.6 + lot 2 pour le Flash).
 PREFIXE = {
     "dossier": "DP", "financier": "FI", "apporteur": "AP",
@@ -26,5 +28,5 @@ def numero_rapport(document: str, idu: str, jour: date | None = None) -> str:
     doc_ref — et sur la page de garde). `document` ∈ PREFIXE ; `jour` injectable (test/repro)."""
     if document not in PREFIXE:
         raise ValueError(f"document inconnu : {document!r} (attendu {sorted(PREFIXE)})")
-    j = jour or date.today()
+    j = jour or today_reunion()
     return f"{PREFIXE[document]}-{j:%Y%m%d}-{idu[-4:]}"

@@ -19,6 +19,7 @@ from sqlalchemy.orm import Session
 
 from ..api.export_commun import nettoyer_libelle_client  # M127-A3 — meme hygiene de libelle que la fiche
 from ..dvf_fenetre import fenetre_dvf_sql  # E-04 — fenêtre DVF ancrée sur max(date_mutation)
+from ..tz import today_reunion  # FIX-ORFEVRE-1 pt 3 (ORF-17/D-13) — date de génération au jour Réunion
 from .. import runs  # S3 : run servi relu à la requête
 from .. import surface as _surface  # CONTENANCE-1 (Lot B) — surface de terrain = contenance|dessin
 
@@ -968,7 +969,7 @@ def collect_report_data(db: Session, idu: str, adresse: str | None = None) -> di
         "contexte_commune": _contexte_commune(db, idu, parcelle["commune"], avail),
         # M75 — obligation APER (grand parking) : MÊME libellé que la fiche (point de calcul unique).
         "aper": _aper(db, idu, avail),
-        "date_generation": date.today().isoformat(),
+        "date_generation": today_reunion().isoformat(),
         # FLASH-ZONE F2 — section « Autour de cette parcelle » (isochrone IGN + INSEE/BPE/SIRENE).
         # Consomme zone.etude_de_zone (calcul unique) ; toujours rendable (dégradé honnête).
         "zone": _zone(db, parcelle),

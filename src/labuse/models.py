@@ -1182,6 +1182,42 @@ def _ensure_schema_steps(engine, *, geom_backfill: bool) -> None:
     ensure_promesses_index(engine)          # index partiel /promesses
     ensure_flags_probe_index(engine)        # M45 (P1)
     ensure_parcel_flags(engine)             # M45 (P2)
+    ensure_index_lectures_unitaires(engine)  # FIX-ORFEVRE-1 point 3 (ORF-18) : ancre DVF + siren
+
+
+def ensure_index_lectures_unitaires(engine) -> None:
+    """FIX-ORFEVRE-1 point 3 (ORF-18 / ANGLE-H §2) — index des LECTURES UNITAIRES chaudes, prouvés
+    par pg_stat_user_tables + EXPLAIN :
+    - `dvf_mutations(date_mutation DESC)` : l'ancre `ANCRE_DVF_SQL` (dvf_fenetre.py), injectée dans
+      CHAQUE fenêtre de ventes (fiche/Flash/Dossier), seq-scannait la table à chaque appel
+      (885 231 seq_scan / 11,2 G tuples — record de la base ; 34 ms → 0,1 ms). Le `max()` devient un
+      parcours descendant de l'index, qui saute les éventuelles lignes non-minuit (le prédicat
+      `date_trunc` n'est pas indexable — timestamptz → non IMMUTABLE — mais il filtre en descente).
+    - `sirene_etablissements(siren)` : fiche propriétaire `WHERE siren = :s` (app.py `_pm_identite`)
+      + 2 jointures (app.py, proprietaire_facettes.py) sur 155 k lignes (129 ms → 0,1 ms). L'index est
+      AUSSI dans le DDL de `ingestion/sirene_etablissements.py` (table créée par l'ingestion ; le
+      rebuild DELETE+INSERT préserve les index) — ici pour les bases déjà créées.
+    - `parcelle_personne_morale(siren)` : lectures unitaires réelles par requête utilisateur
+      (veille_promoteurs.py:229/292 `count(*) WHERE siren`, modules.py:330/337, promo.py:35) à
+      60 ms de seq scan chacune (82 7xx lignes filtrées) — l'indice ANGLE-H H2.3 confirmé à l'EXPLAIN.
+    Garde-catalogue BOOT-VERROU-1 (idem ensure_promesses_index) : on ne crée que si l'index manque
+    vraiment (chemin nominal = zéro verrou) ; et seulement si la table existe (sirene_etablissements
+    et parcelle_personne_morale naissent hors create_all sur une base neuve)."""
+    from sqlalchemy import text as _t
+
+    cibles = [
+        ("ix_dvf_date_mutation", "dvf_mutations",
+         "CREATE INDEX ix_dvf_date_mutation ON dvf_mutations (date_mutation DESC)"),
+        ("ix_sirene_etab_siren", "sirene_etablissements",
+         "CREATE INDEX ix_sirene_etab_siren ON sirene_etablissements (siren)"),
+        ("ix_parcelle_pm_siren", "parcelle_personne_morale",
+         "CREATE INDEX ix_parcelle_pm_siren ON parcelle_personne_morale (siren)"),
+    ]
+    with engine.begin() as c:
+        for nom, table, ddl in cibles:
+            table_la = c.execute(_t("SELECT to_regclass(:n) IS NOT NULL"), {"n": table}).scalar()
+            if table_la and not _index_present(c, nom):
+                c.execute(_t(ddl))
 
 
 # ZONES-FAMILLE-1 — SOURCE SQL UNIQUE de la famille de zone (U/AU/A/N) à partir du typezone GPU
