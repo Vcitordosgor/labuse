@@ -2149,6 +2149,9 @@ export interface EtudeScenario {
   // géométrie (le MÊME à l'écran et dans le PDF). Vide si le dessin a échoué → l'écran retombe sur le
   // plan schématique (geojson). Les couches de l'écran montrent/masquent des groupes `<g id="g-…">`.
   planche_svg?: string
+  // IMPLANTATION-4 — la COUPE DE PRINCIPE (SVG, même esprit : TN LiDAR, limites de propriété, bâtiment
+  // en coupe + niveaux nommés, hauteurs égout/faîtage, cotes). Le MÊME à l'écran et dans le PDF.
+  coupe_svg?: string
 }
 export interface EtudeRegle {
   nom: string; valeur: number | null; unite: string | null; validee: boolean

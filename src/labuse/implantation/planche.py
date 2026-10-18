@@ -413,3 +413,156 @@ def planche_svg(scenario, contexte: Contexte, *, ref: str, genere_le: str, numer
     # planche s'imprime en pleine page paysage. À l'écran, PlanMasseSvg réimpose width/height de toute façon.
     return (f'<svg viewBox="0 0 {W:.0f} {H:.0f}" width="100%" xmlns="http://www.w3.org/2000/svg" '
             f'class="planche" font-family="Inter, Arial, sans-serif">' + "".join(body) + "</svg>")
+
+
+# ── COUPE DE PRINCIPE ───────────────────────────────────────────────────────────────────────
+# Même esprit que la planche (UN SEUL SVG, écran + PDF, dessiné depuis la géométrie) : une coupe
+# SCHÉMATIQUE — terrain naturel LiDAR (rouge), limites de propriété, bâtiment en coupe avec ses niveaux
+# nommés (RDC, R+1…), hauteurs à l'égout/au faîtage en pointillé bleu, prospect si CHIFFRÉ, stationnement,
+# cotes, légende, cartouche. Les hauteurs sont à l'échelle ; l'axe horizontal suit la profondeur du terrain.
+CW, CH = 1180.0, 560.0
+CPX0, CPY0, CPX1, CPY1 = 60.0, 60.0, 860.0, 480.0     # aire de dessin de la coupe
+CCOL = 884.0                                          # colonne de droite (légende/cartouche)
+
+
+def coupe_svg(scenario, contexte: Contexte, *, ref: str, genere_le: str, numero: str,
+              entrees: Optional[dict] = None) -> str:
+    terrain = scenario.terrain
+    if terrain is None or terrain.assiette is None or terrain.assiette.is_empty:
+        return ""
+    conv, regles = scenario.conventions, scenario.regles
+    cap = scenario.capacite
+    niveaux = max(1, int(scenario.niveaux or 1))
+    h_et = float(getattr(conv, "hauteur_etage_m", 3.0) or 3.0)
+    H_bat = niveaux * h_et
+    h_eg = regles.hauteur_egout.valeur if regles.hauteur_egout.validee else None
+    h_ft = regles.hauteur_faitage.valeur if regles.hauteur_faitage.validee else None
+    recul = float(regles.recul_voie.valeur or 0.0)
+    prof = float(getattr(conv, "profondeur_m", 13.0) or 13.0)
+    prospect = getattr(regles, "prospect", None)
+    prospect_val = prospect.valeur if (prospect is not None and getattr(prospect, "valeur", None)) else None
+
+    # profondeur du terrain = grand côté du rectangle minimal orienté de l'assiette
+    cs = list(terrain.assiette.minimum_rotated_rectangle.exterior.coords)[:4]
+    s1 = math.hypot(cs[1][0] - cs[0][0], cs[1][1] - cs[0][1])
+    s2 = math.hypot(cs[2][0] - cs[1][0], cs[2][1] - cs[1][1])
+    span = max(max(s1, s2), recul + prof + 6.0)
+
+    # terrain naturel : élévations des coins (relatives au point bas)
+    alts = sorted(c["alt_m"] for c in contexte.tn_coins if c.get("alt_m") is not None)
+    tn_lo, tn_hi = (alts[0], alts[-1]) if alts else (0.0, 0.0)
+    tn_left, tn_right = 0.0, (tn_hi - tn_lo)
+
+    hmax = max(H_bat, h_ft or 0.0, h_eg or 0.0, prospect_val or 0.0) + max(tn_left, tn_right) + 2.5
+    sc = min((CPX1 - CPX0) / span, (CPY1 - CPY0) / hmax)
+    x0 = CPX0
+    base = CPY1                                        # y du niveau 0 (altitude 0 relative)
+
+    def X(xm):   # noqa: E743
+        return x0 + xm * sc
+
+    def Y(hm):   # noqa: E743
+        return base - hm * sc
+
+    tn_at = lambda xm: tn_left + (tn_right - tn_left) * (xm / span)   # noqa: E731
+
+    b = [f'<rect x="0" y="0" width="{CW:.0f}" height="{CH:.0f}" fill="#fff"/>']
+
+    # ── terrain naturel (LiDAR), rouge
+    b.append('<g id="g-tn">')
+    b.append(f'<polyline points="{X(0):.1f},{Y(tn_left):.1f} {X(span):.1f},{Y(tn_right):.1f}" '
+             'fill="none" stroke="#DC2626" stroke-width="1.6"/>')
+    b.append(_txt(X(span * 0.5), Y(max(tn_left, tn_right)) - 6, "Terrain naturel (LiDAR)", size=10, fill="#B91C1C"))
+    if alts:
+        b.append(_txt(X(0) - 6, Y(tn_left), dec_fr(tn_lo, 1), size=9, anchor="end", fill="#B91C1C"))
+        b.append(_txt(X(span) + 6, Y(tn_right), dec_fr(tn_hi, 1), size=9, anchor="start", fill="#B91C1C"))
+    b.append("</g>")
+
+    # ── limites de propriété (verticales)
+    b.append('<g id="g-limites">')
+    for xm, lab in ((0.0, "limite sur voie"), (span, "limite de fond")):
+        b.append(f'<line x1="{X(xm):.1f}" y1="{Y(tn_at(xm)):.1f}" x2="{X(xm):.1f}" y2="{Y(hmax):.1f}" '
+                 'stroke="#111" stroke-width="1" stroke-dasharray="4 3"/>')
+        b.append(_txt(X(xm), Y(hmax) - 4, lab, size=9, anchor="middle", fill="#555"))
+    b.append("</g>")
+
+    # ── hauteurs réglementaires égout / faîtage (pointillé bleu), mesurées depuis le TN au bâtiment
+    bx0 = recul
+    sol = tn_at(bx0)
+    b.append('<g id="g-hauteurs">')
+    for h, lab in ((h_eg, "hauteur à l’égout"), (h_ft, "hauteur au faîtage")):
+        if h is None:
+            continue
+        yy = Y(sol + h)
+        b.append(f'<line x1="{X(0):.1f}" y1="{yy:.1f}" x2="{CPX1:.1f}" y2="{yy:.1f}" '
+                 'stroke="#2563EB" stroke-width="1" stroke-dasharray="6 3"/>')
+        b.append(_txt(CPX1 - 4, yy - 3, f"{lab} {dec_fr(h, 2)} m", size=9, anchor="end", fill="#1D4ED8"))
+    b.append("</g>")
+
+    # ── prospect (seulement s'il est CHIFFRÉ) : droite de pente depuis la limite de fond
+    if prospect_val:
+        b.append('<g id="g-prospect">')
+        b.append(f'<line x1="{X(span):.1f}" y1="{Y(tn_at(span)):.1f}" x2="{X(bx0):.1f}" '
+                 f'y2="{Y(sol + prospect_val):.1f}" stroke="#B45309" stroke-width="1" stroke-dasharray="2 2"/>')
+        b.append(_txt(X(span * 0.72), Y(sol + prospect_val * 0.5), "prospect", size=9, fill="#B45309"))
+        b.append("</g>")
+
+    # ── bâtiment en coupe + niveaux nommés (RDC, R+1…)
+    b.append('<g id="g-batiment">')
+    bX, bW = X(bx0), prof * sc
+    b.append(f'<rect x="{bX:.1f}" y="{Y(sol + H_bat):.1f}" width="{bW:.1f}" height="{(H_bat) * sc:.1f}" '
+             'fill="#F5C6B8" stroke="#111" stroke-width="1.4"/>')
+    for n in range(niveaux):
+        yb = Y(sol + (n + 1) * h_et)
+        b.append(f'<line x1="{bX:.1f}" y1="{yb:.1f}" x2="{bX + bW:.1f}" y2="{yb:.1f}" stroke="#111" stroke-width="0.6"/>')
+        lab = "RDC" if n == 0 else f"R+{n}"
+        b.append(_txt(bX + 6, Y(sol + n * h_et) - 4, lab, size=9, fill="#7A3B2C"))
+    # toiture jusqu'au faîtage (si faîtage servi et > égout)
+    if h_ft and h_eg and h_ft > h_eg:
+        yft = Y(sol + h_ft)
+        b.append(f'<polygon points="{bX:.1f},{Y(sol + H_bat):.1f} {bX + bW / 2:.1f},{yft:.1f} '
+                 f'{bX + bW:.1f},{Y(sol + H_bat):.1f}" fill="#E8D5CE" stroke="#111" stroke-width="0.8"/>')
+    b.append("</g>")
+
+    # ── stationnement aérien (au sol, entre la voie et le bâtiment)
+    b.append('<g id="g-places">')
+    if recul > 2:
+        pw = min(recul, 6.0) * sc
+        b.append(f'<rect x="{X(0.5):.1f}" y="{Y(tn_at(0.5) + 0.3):.1f}" width="{pw:.1f}" height="6" '
+                 'fill="#E5E7EB" stroke="#111" stroke-width="0.7"/>')
+        # pas de libellé inline (collision avec « RDC ») : la légende nomme déjà le stationnement.
+    b.append("</g>")
+
+    # ── cote de hauteur du bâtiment (à droite du volume)
+    b.append('<g id="g-cotes">')
+    cx = bX + bW + 10
+    b.append(f'<line x1="{cx:.1f}" y1="{Y(sol):.1f}" x2="{cx:.1f}" y2="{Y(sol + H_bat):.1f}" stroke="#111" stroke-width="0.8"/>')
+    for yy in (Y(sol), Y(sol + H_bat)):
+        b.append(f'<line x1="{cx - 3:.1f}" y1="{yy:.1f}" x2="{cx + 3:.1f}" y2="{yy:.1f}" stroke="#111" stroke-width="0.8"/>')
+    b.append(_txt(cx + 5, (Y(sol) + Y(sol + H_bat)) / 2, f"{dec_fr(H_bat, 2)} m", size=9, fill="#111"))
+    b.append("</g>")
+
+    # ── légende + cartouche (colonne de droite)
+    leg = [("#DC2626", "Terrain naturel (LiDAR)"), ("#2563EB", "Hauteur égout / faîtage (règle)"),
+           ("#F5C6B8", "Bâtiment en coupe"), ("#E5E7EB", "Stationnement aérien")]
+    b.append(_txt(CCOL, CPY0 + 6, "LÉGENDE", size=10, weight="700"))
+    ly = CPY0 + 22
+    for col, lab in leg:
+        b.append(f'<rect x="{CCOL}" y="{ly}" width="16" height="10" fill="{col}" stroke="#111" stroke-width="0.6"/>')
+        b.append(_txt(CCOL + 24, ly + 9, lab, size=10))
+        ly += 18
+    ent = entrees or {}
+    commune = ent.get("commune") or ""
+    parcelles = ", ".join(sorted({i[8:] for i in (ent.get("idus") or [])}))
+    cy = CPY0 + 150
+    b.append(f'<rect x="{CCOL}" y="{cy}" width="268" height="138" fill="#fff" stroke="#111" stroke-width="1.2"/>')
+    b.append(_txt(CCOL + 12, cy + 20, "LABUSE", size=15, weight="800"))
+    b.append(_txt(CCOL + 12, cy + 38, "Étude de faisabilité — coupe de principe", size=11, weight="600"))
+    b.append(_txt(CCOL + 12, cy + 56, f"{commune} · {parcelles} · zone {ent.get('zone') or ''}", size=10))
+    b.append(_txt(CCOL + 12, cy + 72, f"Scénario {ref} · R+{max(0, niveaux - 1)} · {niveaux} niveaux × {dec_fr(h_et, 2)} m", size=10))
+    b.append(_txt(CCOL + 12, cy + 90, "TN LiDAR HD IGN · règles PLU servies", size=9, fill="#555"))
+    b.append(_txt(CCOL + 12, cy + 106, f"Généré le {genere_le} · {numero}", size=9, fill="#555"))
+    b.append(_txt(CCOL + 12, cy + 124, "Esquisse indicative — pas une étude d’architecte", size=9, fill="#B45309", weight="600"))
+
+    return (f'<svg viewBox="0 0 {CW:.0f} {CH:.0f}" width="100%" xmlns="http://www.w3.org/2000/svg" '
+            f'class="coupe" font-family="Inter, Arial, sans-serif">' + "".join(b) + "</svg>")

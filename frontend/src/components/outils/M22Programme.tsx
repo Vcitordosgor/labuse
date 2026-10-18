@@ -684,6 +684,14 @@ export function M22({ embedded = false, initialIdus, onBilan, onClose }: {
                 )}
               </div>
 
+              {/* Coupe de principe (même esprit que la planche : feuille blanche, TN LiDAR, hauteurs). */}
+              {actif.coupe_svg && (
+                <div data-coupe-box className="rounded-lg border border-line bg-surface-2 p-3">
+                  <b className="mb-2 block text-[12px] text-txt">Coupe de principe — scénario {actif.ref}</b>
+                  <PlanMasseSvg svg={actif.coupe_svg} />
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-2">
                 <Section titre="Programme" sous={data!.entrees.programme_mode === 'saisi' ? 'Projet saisi' : 'LABUSE propose'} open>
                   <Ligne l="Répartition" v={Object.entries(actif.programme.par_type).map(([t, n]) => `${t} ×${n}`).join(' · ')}

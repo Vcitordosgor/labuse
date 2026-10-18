@@ -262,6 +262,11 @@ def etudier_payload(session, entree: dict) -> dict:
                     scn, ctx, ref=pub["ref"], genere_le=genere_le, numero=numero, entrees=ent_planche)
             except Exception:
                 pub["planche_svg"] = ""
+            try:
+                pub["coupe_svg"] = planche_mod.coupe_svg(
+                    scn, ctx, ref=pub["ref"], genere_le=genere_le, numero=numero, entrees=ent_planche)
+            except Exception:
+                pub["coupe_svg"] = ""
 
     if scenarios_pub:
         statut_global = scenarios_pub[0]["statut_etude"]

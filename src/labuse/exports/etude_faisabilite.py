@@ -498,27 +498,15 @@ def _p6_distribution(payload: dict, retenu: dict) -> str:
     totcells = "".join(f'<td class="num">{tot[x]}</td>' for x in types)
     rows.append(f'<tr><td class="k"><strong>Total</strong></td>{totcells}'
                 f'<td class="num"><strong>{_grp(sc["resume"]["sdp_m2"])}</strong></td></tr>')
-    # coupe schématique (labels depuis le payload : niveaux + règle de hauteur)
-    haut = next((l for l in payload["regles"]["lignes"] if "hauteur" in (l.get("nom") or "").lower()
-                 or "égout" in (l.get("nom") or "")), None)
-    htxt = (f'{esc(haut["nom"])} {_grp(haut["valeur"])} {esc(str(haut.get("unite") or "m"))}'
-            if haut and haut.get("valeur") is not None else "règle de hauteur")
-    nlab = sc.get("niveaux_label", "")
+    # COUPE DE PRINCIPE — le MÊME SVG que l'écran (servi dans le payload par service.etudier_payload),
+    # dessiné depuis la géométrie (TN LiDAR, limites, bâtiment en coupe + niveaux, hauteurs). Repli : une
+    # note seule si le dessin a échoué (jamais l'ancien schéma en dur, qui n'était pas tiré de la donnée).
+    coupe_svg = retenu.get("coupe_svg") or ""
     coupe = (
-        '<div class="ef-fig"><svg viewBox="0 0 600 170" width="100%">'
-        '<rect width="600" height="170" fill="#FBFCFB"/>'
-        '<rect x="0" y="140" width="600" height="30" fill="#E5E7EB"/>'
-        '<line x1="30" y1="140" x2="570" y2="130" stroke="#DC2626" stroke-width="1.3"/>'
-        '<text x="36" y="134" font-size="8.5" fill="#DC2626">Terrain naturel (LiDAR)</text>'
-        '<rect x="150" y="40" width="150" height="100" fill="#1F2A24" fill-opacity="0.85"/>'
-        f'<text x="160" y="90" font-size="9" fill="#fff">{esc(nlab)}</text>'
-        '<rect x="330" y="128" width="140" height="6" fill="#fff" stroke="#6B7280"/>'
-        '<text x="335" y="124" font-size="8" fill="#6B7280">stationnement aérien</text>'
-        f'<text x="305" y="52" font-size="8.5" fill="#15803D">{htxt}</text>'
-        '</svg></div>'
-        '<p class="note">Coupe de principe : le volume bâti sous la règle de hauteur, le '
-        'stationnement aérien au sol. La vue 3D de l\'outil montre ce bâtiment dans l\'enveloppe du '
-        'Gabarit, pas seulement le maximum théorique.</p>')
+        ('<div class="ef-fig">' + coupe_svg + '</div>') if coupe_svg else ''
+    ) + ('<p class="note">Coupe de principe : le volume bâti sous la règle de hauteur, le terrain '
+         'naturel (LiDAR), le stationnement aérien au sol. Esquisse indicative, pas une étude '
+         "d'architecte.</p>")
     return (
         '<section><h2>5. Distribution et coupe</h2>'
         f'<div class="verdict">{esc(sc.get("niveaux_label", ""))} : la répartition des logements par '

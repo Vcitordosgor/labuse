@@ -208,3 +208,14 @@ def test_planche_servie_places_numerotees_egalent_objets(payload):
     gpl = re.search(r'<g id="g-places".*?</g>', svg, flags=re.S)
     n_num = len(re.findall(r'>\d+</text>', gpl.group(0))) if gpl else 0
     assert n_num == sc["resume"]["places"]
+
+
+# IMPLANTATION-4 (coupe) — le payload sert la COUPE DE PRINCIPE (SVG), avec les niveaux NOMMÉS
+# (RDC, R+1…) : autant d'étiquettes de niveau que de niveaux du scénario.
+def test_coupe_servie_niveaux_nommes(payload):
+    import re
+    sc = payload["scenarios"][0]
+    svg = sc.get("coupe_svg") or ""
+    assert svg and 'class="coupe"' in svg and ">RDC<" in svg
+    labs = set(re.findall(r'>(RDC|R\+\d+)<', svg))
+    assert len(labs) == sc["niveaux"]

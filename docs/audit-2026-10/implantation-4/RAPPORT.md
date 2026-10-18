@@ -183,11 +183,27 @@ redessiné à la main), généré côté serveur :
 | `H2-ecran-planche-saint-andre.png` | `I2-pdf-planche-saint-andre.png` |
 | `H3-ecran-planche-saint-denis.png` | `I3-pdf-planche-saint-denis.png` |
 
+### Coupe de principe (même esprit, même SVG écran + PDF)
+`planche.coupe_svg` dessine une **coupe schématique** depuis la géométrie et les règles : **terrain
+naturel LiDAR** (rouge, élévations des coins), **limites de propriété** (voie / fond), **bâtiment en
+coupe** avec ses **niveaux nommés** (RDC, R+1…), **hauteurs à l'égout et au faîtage** en pointillé bleu
+(toiture jusqu'au faîtage), **prospect** tracé s'il est chiffré, **stationnement** au sol, cotes, légende,
+cartouche. Robuste aux règles manquantes (Saint-Denis : pas d'égout servi → faîtage seul, toit plat).
+Servie dans le payload (`coupe_svg`), injectée à l'écran sous la planche (`PlanMasseSvg`), et embarquée
+dans le PDF (section « Distribution et coupe », remplace l'ancien schéma en dur non tiré de la donnée).
+
+**Captures** (3 communes) :
+| Planche écran / PDF | Coupe écran / PDF |
+|---|---|
+| `H1` / `I1` (L'Étang-Salé) | `J1` / `K1` |
+| `H2` / `I2` (Saint-André) | `J2` / `K2` |
+| `H3` / `I3` (Saint-Denis) | `J3` / `K3` |
+
 **Tests** : `test_implantation_pareto` (6), `test_implantation_distance` (mono → N/A), `test_implantation1`
-(contiguïté refusée + distance mono), `test_implantation2` (planche servie, **places numérotées = objets**),
-front `EtudeDocs` (carte Docs → état 1). Reel verts (impl1 89, impl2 14, distance 17, pdf 13) ; vitest 267,
-tsc 0. Harnais de capture : `frontend/capture-etude.html` + payloads réels régénérés sous
-`frontend/public/capture/` (non versionnés).
+(contiguïté refusée + distance mono), `test_implantation2` (planche servie **places numérotées = objets** ;
+coupe servie **niveaux nommés = niveaux**), front `EtudeDocs` (carte Docs → état 1). Reel verts (impl1 89,
+impl2 15, distance 17, pdf 13) ; vitest 267, tsc 0. Harnais de capture : `frontend/capture-etude.html` +
+payloads réels régénérés sous `frontend/public/capture/` (non versionnés).
 
 ---
 
