@@ -82,13 +82,17 @@ export function BatiBlock({ f }: { f: Fiche }) {
     <div className="flex flex-col gap-3" data-le-bien>
       {/* Verdict — restitution de faits servis (occupation, emprise, hauteur), aucun recalcul. */}
       {bati ? (
-        /* RECETTE-2 (A4) — quand BD TOPO et RNB s'accordent sur un compte clair (N ≥ 1), le titre dit
-           « N bâtiments » plutôt qu'un « Présence de bâti à vérifier » vague (bande peu_bati sur l'emprise). */
-        <Verdict ton="vert" reponse={(nb != null && nb === nbRnb && nb >= 1)
+        /* FICHE-ORFEVRERIE-1 (Lot A, pt 6) — plus de « Présence de bâti à vérifier » vague : on tranche.
+           BD TOPO et RNB s'accordent (N = M ≥ 1, ou RNB absent) → « N bâtiments » ; ils DIVERGENT → on le
+           DIT (« Sources discordantes : N BD TOPO · M RNB »), c'est un fait, pas un doute ; emprise sans
+           compte clair → « Bâti présent ». Le faîtage mesuré est celui du bâtiment principal (le plus grand). */
+        <Verdict ton="vert" reponse={(nb != null && nb >= 1 && nbRnb > 0 && nb !== nbRnb)
+          ? `Sources discordantes : ${nb} BD TOPO · ${nbRnb} RNB`
+          : (nb != null && nb >= 1)
           ? `${nb} bâtiment${nb > 1 ? 's' : ''}`
-          : (b.occupation_label || `${nb ?? ''} bâtiment${(nb ?? 0) > 1 ? 's' : ''}`)}
+          : 'Bâti présent'}
           contexte={[emprise > 0 ? `emprise ${fmtInt(emprise)} m²` : null,
-            faitageSourced ? `faîtage ${fmtDec(b.hauteur_faitage_m)} m mesuré (LiDAR)` : null].filter(Boolean).join(' · ') || undefined} />
+            faitageSourced ? `faîtage ${fmtDec(b.hauteur_faitage_m)} m mesuré (LiDAR, bâtiment principal)` : null].filter(Boolean).join(' · ') || undefined} />
       ) : (
         <Verdict ton="vert" reponse="Terrain nu"
           contexte={`aucun bâtiment BD TOPO, aucune hauteur LiDAR${etabList.length ? '' : ', aucun établissement rattaché'}`} />
@@ -172,7 +176,7 @@ export function BatiBlock({ f }: { f: Fiche }) {
         <Lignes><Ligne label="Établissements sur la parcelle" valeur={<>aucun <small>SIRENE, adresse exacte</small></>} ton="gris" /></Lignes>
       ))}
 
-      <FactNote>Bâti existant — {b.source_bati}. Information de fiche, jamais un signal de classement.</FactNote>
+      <FactNote>Bâti existant — {b.source_bati}.</FactNote>
     </div>
   )
 }
@@ -232,7 +236,7 @@ export function FiliationBlock({ f }: { f: Fiche }) {
             valeur={<>{x.idu}{x.date ? <small> · {fmtDateNum(x.date)}</small> : null}{x.nature ? <small> · {x.nature}</small> : null}</>} />
         ))}
       </Lignes>
-      <FactNote>{fi.division_recente ? 'Division récente (événement ≥ 2023) — signal de mouvement foncier. ' : ''}{fi.source}. Contrôle croisé avec le cadastre d'époque (géométrie) — deux canaux, jamais un conflit.</FactNote>
+      <FactNote>{fi.division_recente ? 'Division récente (événement ≥ 2023) — signal de mouvement foncier. ' : ''}{fi.source}. Contrôle croisé avec le cadastre d'époque (géométrie).</FactNote>
     </div>
   )
 }

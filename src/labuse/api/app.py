@@ -6387,7 +6387,42 @@ def _potentiel_transformation_block(db: Session, idu: str, commune: str | None =
         surface_calcul_note = (f"Calcul du {_run_at.strftime('%d/%m/%Y')} ; parcelle mise à jour "
                                f"le {_maj_at.strftime('%d/%m/%Y')} — chiffres susceptibles d'avoir "
                                "changé, recalcul au prochain run.")
+    # FICHE-ORFEVRERIE-1 (Lot A, pt 7) — « COMMENT ON ARRIVE À N m² » : la chaîne lisible du résiduel
+    # (surface → plafond d'emprise au sol → niveaux → SDP maximale − bâti conservé = SDP restante) +
+    # l'ÉTAPE QUI LIMITE. Le run ne stocke que la SDP finale ; on recalcule la chaîne EN LECTURE SEULE
+    # (compute_residuel) pour exposer les intermédiaires, et on ne l'attache QUE si elle retombe sur la
+    # SDP servie (tolérance 1 m²) — jamais une chaîne qui contredirait le chiffre de tête.
+    calcul = None
+    if sdp_servie is not None and not estimation_simplifiee and cause is None and not capacite_differee:
+        try:
+            from ..faisabilite.residuel import compute_residuel as _compute_residuel
+            _br = _compute_residuel(db, row["pid"])
+            if (_br.get("disponible") and _br.get("sdp_residuelle_m2") is not None
+                    and abs(float(_br["sdp_residuelle_m2"]) - float(sdp_servie)) <= 1.0):
+                _empr = _br.get("emprise_constructible_m2")
+                _sdp_exist = _br.get("sdp_existante_m2") or 0
+                _sdp_max = _br.get("sdp_max_m2") or 0
+                # L'étape limitante : le bâti déjà présent (il consomme ≥ 15 % de la SDP maximale) ou,
+                # à défaut, le plafond d'emprise au sol (50 % du terrain) qui borne l'assise.
+                _limitante = ("le bâti conservé (surface de plancher déjà existante)"
+                              if _sdp_max and _sdp_exist >= 0.15 * _sdp_max
+                              else "le plafond d'emprise au sol (règlement de zone)")
+                calcul = {
+                    "surface_m2": _br.get("surface_terrain_m2"),
+                    "emprise_constructible_m2": _empr,
+                    "niveaux_max": _br.get("niveaux_max"),
+                    "sdp_max_m2": _sdp_max or None,
+                    "emprise_batie_m2": _br.get("emprise_batie_m2"),
+                    "niveaux_existants": _br.get("niveaux_existants"),
+                    "sdp_existante_m2": _br.get("sdp_existante_m2"),
+                    "sdp_residuelle_m2": _br.get("sdp_residuelle_m2"),
+                    "etape_limitante": _limitante,
+                }
+        except Exception:  # noqa: BLE001 — la chaîne explicative ne casse jamais la fiche
+            db.rollback()
+            calcul = None
     return {
+        "calcul": calcul,
         "niveau": niveau, "libelle": libelle,
         # CHASSE-CALCULS-FIX-1 Lot 3 (E-B1) — surface DU RUN servie à côté de la SDP + note de péremption.
         "surface_calcul_m2": (int(_surf_run) if _surf_run is not None else None),

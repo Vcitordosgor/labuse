@@ -958,7 +958,7 @@ export function Fiche({ idu }: { idu: string }) {
             })(),
             { l: 'Zone', v: reglesZone ?? 'Non publié au GPU', s: zoneSous, vide: reglesZone == null,
               i: 'Zone du PLU au point de la parcelle (règlement communal, archive GPU). « Non publié au GPU » : la commune n’a pas déposé de document opposable.' },
-            { l: 'Pente', v: pente != null ? `${nf(pente)} °` : '—', s: penteSous, vide: pente == null,
+            { l: 'Pente', v: pente != null ? `${nf(pente)}°` : '—', s: penteSous, vide: pente == null,
               i: 'Pente moyenne du terrain, calculée sur le modèle de relief RGE ALTI (IGN). À La Réunion elle commande le coût de terrassement autant que la constructibilité. « — » : relief non disponible sur la parcelle.' },
             (() => {
               const e = expo.data
@@ -1335,7 +1335,11 @@ export function Fiche({ idu }: { idu: string }) {
           // plus de seuils 5/15/30° au front.
           const penteDeg = f.terrain?.pente_moy_deg
           const penteSous = f.terrain?.pente_bande ?? undefined
-          const tuilePente = { v: penteDeg != null ? `${nf(penteDeg)} °` : '—', s: penteSous, vide: penteDeg == null,
+          // FICHE-ORFEVRERIE-1 (Lot A, pt 5) — la pente de la PARCELLE exprimée aussi en % (tan), la
+          // même unité que le profil altimétrique ci-dessous, pour que les deux chiffres se comparent
+          // (sans quoi « plus forte pente de l'axe 13,3 % » semblait, à tort, sous la pente parcelle).
+          const pentePct = penteDeg != null ? Math.round(Math.tan(penteDeg * Math.PI / 180) * 100) : null
+          const tuilePente = { v: penteDeg != null ? `${nf(penteDeg)}°` : '—', s: penteSous, vide: penteDeg == null,
             i: 'Pente moyenne du terrain, calculée sur le modèle de relief RGE ALTI (IGN). À La Réunion elle commande le coût de terrassement autant que la constructibilité. « — » : relief non disponible sur la parcelle.' }
           // Exposition → §2 Terrain (orientation du versant + pente, MNT RGE ALTI, sans ligne de vue).
           const expoData = expo.data
@@ -1540,7 +1544,7 @@ export function Fiche({ idu }: { idu: string }) {
                 + artificialisation OCS GE (TerrainDuBienBlock §2), piscine (EquipementsBadges, ex-Réseaux). */}
             <RefDrawer id="terrain" icon={IC.terrain} name="Terrain"
               context={[penteSous ? `pente ${penteSous}` : null, expoOrient && expoOrient !== 'plat' ? String(expoOrient) : null].filter(Boolean).join(' · ') || undefined}
-              value={penteDeg != null ? `${nf(penteDeg)} °` : (expoOrient && expoOrient !== 'plat' ? String(expoOrient) : undefined)}>
+              value={penteDeg != null ? `${nf(penteDeg)}°` : (expoOrient && expoOrient !== 'plat' ? String(expoOrient) : undefined)}>
               <div className="flex flex-col gap-3">
                 {/* KELFONCIER-FIX-2 (Lot F) — maquette v3 : Verdict + Tuiles (pente·expo·surface
                     libre·sol artificialisé) + BarreEmpilée CoSIA. Toutes les valeurs sont servies
@@ -1553,7 +1557,7 @@ export function Fiche({ idu }: { idu: string }) {
                     : expoOrient ? `Versant ${expoOrient}`
                     : (penteSous ? `Terrain ${penteSous}` : 'Terrain')
                   const vCtx = [
-                    penteDeg != null ? `${nf(penteDeg)} °` : null,
+                    penteDeg != null ? `${nf(penteDeg)}° (≈ ${pentePct} %)` : null,
                     lb?.surface_libre_m2 != null ? `${fmtInt(lb.surface_libre_m2)} m² au sol libre` : null,
                     artif != null ? `${artif.toLocaleString('fr-FR')} % artificialisé (OCS GE)` : null,
                   ].filter(Boolean).join(' · ')
@@ -1586,7 +1590,7 @@ export function Fiche({ idu }: { idu: string }) {
                 {expoData?.aspect_deg != null && (
                   <div data-terrain-azimut>
                     <Ligne label="Azimut du versant"
-                      valeur={<>{nf(expoData.aspect_deg)} <small>° (0 = Nord, sens horaire)</small></>} />
+                      valeur={<>{nf(expoData.aspect_deg)}<small>° (0 = Nord, sens horaire)</small></>} />
                   </div>
                 )}
                 <EquipementsBadges idu={idu} />
@@ -1604,9 +1608,14 @@ export function Fiche({ idu }: { idu: string }) {
                 /* RECETTE-2 (A4) — quand BD TOPO et RNB s'accordent sur N bâtiments, le sous-titre dit
                    « N bâtiments » (cohérent avec le badge) plutôt qu'un « Présence de bâti à vérifier » vague. */
                 context={(() => {
+                  // FICHE-ORFEVRERIE-1 (Lot A, pt 6) — sous-titre ALIGNÉ sur le verdict interne : accord
+                  // BD TOPO = RNB → « N bâtiments » ; divergence → « sources discordantes : N / M » ; sinon
+                  // « bâti présent » — plus de « Présence de bâti à vérifier » muet.
                   const nb = f.le_bien.nb_batiments
-                  const nbRnb = Array.isArray(f.le_bien.rnb) ? f.le_bien.rnb.length : null
-                  return (nb != null && nb === nbRnb && nb >= 1) ? `${nb} bâtiment${nb > 1 ? 's' : ''}` : (f.le_bien.occupation_label || 'bâti existant')
+                  const nbRnb = Array.isArray(f.le_bien.rnb) ? f.le_bien.rnb.length : 0
+                  return (nb != null && nb >= 1 && nbRnb > 0 && nb !== nbRnb)
+                    ? `sources discordantes : ${nb} BD TOPO · ${nbRnb} RNB`
+                    : (nb != null && nb >= 1) ? `${nb} bâtiment${nb > 1 ? 's' : ''}` : 'bâti présent'
                 })()}
                 value={f.le_bien.nb_batiments != null && f.le_bien.nb_batiments > 0
                   ? <Badge ton="vert">{f.le_bien.nb_batiments} bâtiment{f.le_bien.nb_batiments > 1 ? 's' : ''}</Badge>
@@ -1711,7 +1720,7 @@ export function Fiche({ idu }: { idu: string }) {
                     (ICD, tiroir Données) reste. Le champ back q_score n'est PAS touché (consommé
                     ailleurs : App, Kanban, MapView, filtres…) — seul l'affichage fiche disparaît. */}
                 {/* FINITIONS-1 (P13) — l'encart « Demander à l'IA de traduire le PLU » est RETIRÉ. */}
-                {f.reglement_plu && <ReglementPluBlock rp={f.reglement_plu} />}
+                {f.reglement_plu && <ReglementPluBlock rp={f.reglement_plu} tcsp={f.proximites?.tcsp ?? null} />}
                 {/* KELFONCIER-FIX-1 (Lot A) — STATUT D'OUVERTURE de la zone AU, sous la zone. Une zone
                     AU n'est constructible que si son règlement l'a ouverte ; « fermée »/« sous condition »
                     en ambre, avec le motif cité du règlement. Rien si la parcelle n'est pas en AU marquée. */}
@@ -1865,11 +1874,16 @@ export function Fiche({ idu }: { idu: string }) {
                   const allTxt = [...(terf?.perimetres ?? []).map((p) => p.libelle), ...dom.map((d) => d.libelle)].join(' | ').toLowerCase()
                   const has = (re: RegExp) => re.test(allTxt)
                   const ortDate = dom.find((d) => /revitalisation|\bort\b/i.test(d.libelle))?.libelle.match(/(\d{4}-\d{2}-\d{2})/)?.[1]
+                  // FICHE-ORFEVRERIE-1 (Lot A, pt 11) — le QPV est un fait GÉOMÉTRIQUE de la parcelle
+                  // (le back teste ST_Intersects), pas un dispositif de la commune : la pastille « QPV »
+                  // ne doit PAS s'allumer parce que la parcelle est à 500 m d'un QPV (bande TVA, dérivée).
+                  // On distingue « dans un QPV » (périmètre non dérivé « — QPV ») de « hors QPV / bande 500 m ».
+                  const qpvDans = (terf?.perimetres ?? []).some((p) => !p.derive && /quartier prioritaire\s*[—-]\s*qpv/i.test(p.libelle))
+                  const qpvBande = (terf?.perimetres ?? []).some((p) => /bande autour d.un quartier prioritaire/i.test(p.libelle))
                   const disp: Pastille[] = [
                     { label: 'ZFANG', on: !!terf?.zfang },
                     { label: 'FRR', on: !!terf?.frr },
                     { label: 'ORT', on: has(/\bort\b|revitalisation/), date: ortDate ? fmtDateNum(ortDate) : undefined },
-                    { label: 'QPV', on: has(/\bqpv\b|quartier prioritaire/) },
                     { label: 'PVD', on: has(/petites villes/) },
                     { label: 'Cœur de ville', on: has(/c[œo]eur de ville/) },
                   ]
@@ -1896,6 +1910,15 @@ export function Fiche({ idu }: { idu: string }) {
                       ))}
                       <GroupLabel>Dispositifs de la commune</GroupLabel>
                       <Pastilles items={disp} />
+                      {/* FICHE-ORFEVRERIE-1 (Lot A, pt 11) — statut QPV À LA PARCELLE (géométrie), dit en
+                          clair « dans / hors QPV », séparé des dispositifs de la commune. */}
+                      {(qpvDans || qpvBande) && (
+                        <p data-qpv-parcelle className="text-[11px] leading-snug text-txt-mut">
+                          <span className="text-txt-dim">QPV (parcelle) :</span>{' '}
+                          {qpvDans ? <b className="text-amber">dans un quartier prioritaire</b>
+                            : <>hors QPV <span className="text-txt-dim">— à moins de 500 m (bande TVA accession, cf. détail)</span></>}
+                        </p>
+                      )}
                       {/* FICHE-1 lot 5 — taxe d'aménagement en BOUTON (change les hypothèses). */}
                       {f.taxe_amenagement && (
                         <OutilsSection outils={[{ label: "Calculer la taxe d'aménagement", principal: true, full: true, data: 'taxe-amenagement-outil',

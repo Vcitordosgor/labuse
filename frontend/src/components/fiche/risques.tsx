@@ -71,9 +71,17 @@ export function RisquesSection({ f }: { f: Fiche; idu: string }) {
                 label={<>{fmtAlea(a.nature)}{a.niveau ? <small className="ml-1 text-txt-mut"> niveau {fmtIntensite(a.niveau)}</small> : null}{a.redhibitoire && <Badge ton="ambre" className="ml-1.5">rédhibitoire</Badge>}</>}
                 pct={a.part_pct != null ? `${a.part_pct} %` : undefined} />
             ) : (
-              <div key={i} className="flex items-center justify-between border-b border-line py-[5px] text-[12.5px]">
-                <span>{fmtAlea(a.nature)}</span>
-                <span className="flex items-center gap-2"><Badge ton="ambre">zone bleue</Badge><span className="font-mono text-[11px] text-txt-dim">{a.part_pct != null ? `${a.part_pct} %` : ''}</span></span>
+              /* FICHE-ORFEVRERIE-1 (Lot A, pts 8 & 9) — plus de « PPR — zone bleue » nu : on sert la
+                 ligne COMPLÈTE (aléa + zone + prescription), c.-à-d. le libellé servi, et la part « % »
+                 porte sa nature MESURÉE (intersection géométrique parcelle × zonage) au survol. */
+              <div key={i} data-aleas-ligne className="border-b border-line py-[6px] text-[12.5px]">
+                <div className="flex items-start justify-between gap-2">
+                  <span className="min-w-0 flex-1">{a.libelle || fmtAlea(a.nature)}</span>
+                  <span className="flex flex-none items-center gap-2">
+                    <Badge ton="ambre">zone bleue</Badge>
+                    {a.part_pct != null && <span className="font-mono text-[11px] text-txt-dim" title="Part de la parcelle mesurée (intersection géométrique parcelle × zonage PPR)">{a.part_pct} %</span>}
+                  </span>
+                </div>
               </div>
             ))}
             <FactNote>
@@ -214,9 +222,10 @@ export function RisquesSection({ f }: { f: Fiche; idu: string }) {
                   valeur="au contact" />
               )}
               {f.proximites?.ligne_mt && (
+                /* FICHE-ORFEVRERIE-1 (Lot A, pt 24) — la distance en mètres, pas un « à proximité » muet. */
                 <Ligne ton="ambre" title={f.proximites.ligne_mt.libelle}
                   label={<><span className="text-amber">Ligne moyenne tension</span><InfoI aria="Sur la ligne HTA" tip={`${f.proximites.ligne_mt.libelle} — ${f.proximites.ligne_mt.source}`} /></>}
-                  valeur="à proximité" />
+                  valeur={f.proximites.ligne_mt.distance_m != null ? <>~{f.proximites.ligne_mt.distance_m} <small>m</small></> : 'à proximité'} />
               )}
             </Lignes>
           </div>

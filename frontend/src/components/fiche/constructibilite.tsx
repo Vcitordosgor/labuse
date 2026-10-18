@@ -8,7 +8,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState, type ReactNode } from 'react'
 import { getCalculetteDefaults, getFaisabilite, getModeB, getPipelineForParcel, patchPipeline, postChargeFonciere, postFaisabiliteScenario, type CalculetteDefaults } from '../../lib/api'
-import { fmtEurCompact, fmtInt, fmtM2, fmtPctConsomme, fmtSup } from '../../lib/format'
+import { fmtEurCompact, fmtInt, fmtDec, fmtM2, fmtPctConsomme, fmtSup } from '../../lib/format'
 import { Chevron } from '../ui/Chevron'
 import { PERIM_POTENTIEL_COURT } from '../../lib/perimetres'
 import { CAPACITE_MAX_MENTION } from '../../lib/capaciteMax'
@@ -55,9 +55,31 @@ export function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
         {pt.hauteur_marge_m != null && (
           <Ligne ton={pt.hauteur_discordante ? 'ambre' : undefined}
             label={<>Marge en hauteur<InfoI aria="Sur la marge en hauteur" tip={`${pt.hauteur_contrainte ? `Contrainte : ${pt.hauteur_contrainte === 'faîtage' ? 'le faîtage' : "l'égout"}. ` : ''}${pt.hauteur_survol ? `Mesuré au LiDAR HD, survol de ${pt.hauteur_survol}. ` : ''}${pt.hauteur_permis_posterieur ? `Antérieur au permis du ${pt.hauteur_permis_posterieur}, possiblement dépassé.` : ''}` || 'Marge mesurée sous la règle de hauteur.'} /></>}
-            valeur={<>~{pt.hauteur_marge_m} <small>m sous la règle</small></>} />
+            valeur={<>~{fmtDec(pt.hauteur_marge_m)} <small>m sous la règle {pt.hauteur_contrainte === 'faîtage' ? 'au faîtage' : "à l'égout"}{pt.hauteur_regle_m != null ? ` (${fmtInt(pt.hauteur_regle_m)} m)` : ''}</small></>} />
         )}
       </Lignes>
+      {/* FICHE-ORFEVRERIE-1 (Lot A, pt 7) — « comment on arrive à N m² » : la chaîne du calcul rendue
+          visible (plafond d'emprise → niveaux → SDP maximale − bâti conservé = SDP restante) avec
+          l'étape qui LIMITE nommée. Les chiffres sont ceux du calcul (retombent sur la SDP servie). */}
+      {pt.calcul && pt.calcul.sdp_residuelle_m2 != null && pt.calcul.sdp_max_m2 != null && (
+        <Repli label={`comment on arrive à ${fmtInt(pt.calcul.sdp_residuelle_m2)} m²`}>
+          <Lignes>
+            {/* SDP maximale du gabarit : l'emprise au sol constructible et les niveaux sont rappelés en
+                sous-ligne — la SDP n'est PAS un simple « emprise × niveaux » (circulations, murs,
+                efficacité nette sont déjà retranchés), d'où « 512 m² × R+1 » ≠ la SDP maximale brute. */}
+            <Ligne label="SDP maximale (gabarit)"
+              valeur={<>{fmtInt(pt.calcul.sdp_max_m2)} <small>m²{pt.calcul.emprise_constructible_m2 != null && pt.calcul.niveaux_max != null ? ` · emprise ${fmtInt(pt.calcul.emprise_constructible_m2)} m² · R+${Math.max(0, Math.round(pt.calcul.niveaux_max) - 1)}, net` : ''}</small></>} />
+            {pt.calcul.sdp_existante_m2 != null && (
+              <Ligne label="− bâti conservé (SDP existante)"
+                valeur={<>−{fmtInt(pt.calcul.sdp_existante_m2)} <small>m²{pt.calcul.emprise_batie_m2 != null && pt.calcul.niveaux_existants != null ? ` · ${fmtInt(pt.calcul.emprise_batie_m2)} m² × ${fmtDec(pt.calcul.niveaux_existants)} niv.` : ''}</small></>} />
+            )}
+            <Ligne label="= SDP restante" valeur={<>{fmtInt(pt.calcul.sdp_residuelle_m2)} <small>m²</small></>} />
+          </Lignes>
+          {pt.calcul.etape_limitante && (
+            <FactNote>Étape qui limite la SDP restante : {pt.calcul.etape_limitante}.</FactNote>
+          )}
+        </Repli>
+      )}
       {/* CHASSE-CALCULS-FIX-1 Lot 3 (E-B1) — jamais de mélange vif/gelé : la SDP est calculée sur la
           surface DU RUN ; si la surface cadastrale vive a changé depuis, on le DIT (ligne datée). */}
       {pt.surface_calcul_note && (
