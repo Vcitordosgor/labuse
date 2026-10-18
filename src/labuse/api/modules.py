@@ -1278,7 +1278,7 @@ def prospection_piscines(commune: str | None = None,
     bandes = db.execute(text(
         "SELECT count(*) FILTER (WHERE statut='servie') AS haute, "
         "count(*) FILTER (WHERE statut='a_confirmer') AS incertaines "
-        "FROM piscines pi WHERE statut IN ('servie','a_confirmer') "
+        "FROM piscines pi WHERE statut IN ('servie','a_confirmer') AND pi.idu IS NOT NULL "  # ORF-14
         "AND NOT EXISTS (SELECT 1 FROM piscine_corrections pc WHERE pc.idu = pi.idu)")).mappings().first() or {}
     n_corrigees = int(db.execute(text("SELECT count(*) FROM piscine_corrections")).scalar() or 0)
     return {"total": total, "communes": [dict(c) for c in communes],
@@ -1309,7 +1309,9 @@ def prospection_piscines_points(commune: str | None = None, bati: str = "tous",
     statuts = "('servie','a_confirmer')" if inclure_incertaines else "('servie')"
     surf_cond = " AND pi.surface_m2 >= :psmin" if piscine_surf_min else ""
     corr_cond = " AND NOT EXISTS (SELECT 1 FROM piscine_corrections pc WHERE pc.idu = pi.idu)"
-    where = (f"WHERE pi.statut IN {statuts}" + surf_cond + corr_cond
+    # ORF-14 (FIX-ORFEVRE-1) — une détection HORS parcelle (idu NULL : voirie/limite, le rattachement
+    # spatial a tranché) n'est pas servable : introuvable depuis une fiche. Exclue, comme /liste.
+    where = (f"WHERE pi.statut IN {statuts} AND pi.idu IS NOT NULL" + surf_cond + corr_cond
              + (" AND pi.commune = :c" if commune else ""))
     rows = db.execute(text(
         f"""SELECT pi.idu, pi.commune, round(pi.surface_m2::numeric, 0) AS m2, pi.source, pi.statut,
@@ -1345,7 +1347,8 @@ def prospection_piscines_parcelles(commune: str | None = None,
                else "('a_confirmer')" if statut == "a_confirmer" else "('servie')")
     surf_cond = " AND pi.surface_m2 >= :psmin" if piscine_surf_min else ""
     corr_cond = " AND NOT EXISTS (SELECT 1 FROM piscine_corrections pc WHERE pc.idu = pi.idu)"
-    where = (f"WHERE pi.statut IN {statuts}" + surf_cond + corr_cond
+    # ORF-14 — hors parcelle (idu NULL) exclu du service, comme /points et /liste.
+    where = (f"WHERE pi.statut IN {statuts} AND pi.idu IS NOT NULL" + surf_cond + corr_cond
              + (" AND pi.commune = :c" if commune else ""))
     # RECETTE-2 (D14d, Vic 05/10) — on ne PEINT PLUS la parcelle entière : une GOUTTE au centroïde de
     # CHAQUE piscine (kind='piscine' → symbole goutte de MapView). La couche fill/line (kind=

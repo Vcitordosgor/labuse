@@ -24,10 +24,21 @@ from ...enums import Severity
 # valeurs héritées à l'identique — gravées diff-zéro du run SP q_v2 ; repli historique si
 # config absente, base de test nue).
 def _seuils_cfg() -> dict:
+    """ORF-19 (FIX-ORFEVRE-1) — le repli « seuils historiques gravés » reste ASSUMÉ (diff-zéro
+    documenté, et lever ici casserait l'import du module), mais il n'est plus MUET : une config
+    PRÉSENTE et illisible se dit en error (avant, un YAML corrompu en prod repassait sur les seuils
+    figés sans un bruit). Fichier absent (base de test nue) = debug seulement."""
+    import logging
+    _log = logging.getLogger("labuse.cascade.etage0_ext")
     try:
         from ... import config as _cfg
         return _cfg.seuils_geometrie().get("etage0_ext", {})
-    except Exception:  # noqa: BLE001
+    except FileNotFoundError:
+        _log.debug("seuils_geometrie.yaml absent — seuils historiques gravés (base nue)")
+        return {}
+    except Exception as exc:  # noqa: BLE001 — repli diff-zéro assumé, mais DIT (jamais muet)
+        _log.error("seuils_geometrie.yaml ILLISIBLE (%s) — repli sur les seuils historiques "
+                   "gravés etage0_ext (diff-zéro du run SP q_v2)", exc)
         return {}
 
 

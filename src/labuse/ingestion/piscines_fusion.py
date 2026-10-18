@@ -105,7 +105,7 @@ def build(session: Session, log=print) -> dict[str, Any]:
     n_cosia = session.execute(text("""
         INSERT INTO piscines (idu, commune, surface_m2, source, classe, statut, confiance,
                               geom, geom_2975, millesime_flair, millesime_cosia)
-        SELECT p.idu, t.commune, (t.attrs->>'surface_m2')::numeric,
+        SELECT p.idu, COALESCE(t.commune, p.commune), (t.attrs->>'surface_m2')::numeric,
                'cosia' AS source,
                CASE t.subtype WHEN 'confirmee' THEN 'cosia_confirmee'
                               WHEN 'rare' THEN 'cosia_rare'
@@ -128,5 +128,16 @@ def build(session: Session, log=print) -> dict[str, Any]:
     stats = dict(session.execute(text(
         "SELECT statut, count(*) FROM piscines GROUP BY statut")).all())
     total = int(session.execute(text("SELECT count(*) FROM piscines")).scalar() or 0)
+    # ORF-14 (FIX-ORFEVRE-1) — COMPTAGE à l'ingestion des détections hors parcelle (le rattachement
+    # spatial a déjà tranché : centroïde hors de tout dessin = voirie/limite). Elles RESTENT en base
+    # (traçabilité) mais les lecteurs qui servent la couche les EXCLUENT (une piscine « servie »
+    # introuvable depuis une parcelle n'est pas servable) — cf. api/modules + compte_piscines.
+    sans_idu = dict(session.execute(text(
+        "SELECT statut, count(*) FROM piscines WHERE idu IS NULL GROUP BY statut")).all())
+    sans_commune = int(session.execute(text(
+        "SELECT count(*) FROM piscines WHERE commune IS NULL OR commune = ''")).scalar() or 0)
     log(f"  total {total} · servie {stats.get('servie',0)} · a_confirmer {stats.get('a_confirmer',0)} · ecartee {stats.get('ecartee',0)}")
-    return {"total": total, "flair": n_flair, "cosia": n_cosia, "par_statut": stats}
+    log(f"  hors parcelle (idu NULL, exclues du service) : {sum(sans_idu.values())} "
+        f"dont servie {sans_idu.get('servie', 0)} · sans commune : {sans_commune}")
+    return {"total": total, "flair": n_flair, "cosia": n_cosia, "par_statut": stats,
+            "sans_idu": sans_idu, "sans_commune": sans_commune}

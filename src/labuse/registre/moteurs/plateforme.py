@@ -9,7 +9,12 @@ Restent chez leur producteur nommé (délégation, une seule vérité — pas de
 """
 from __future__ import annotations
 
+import logging
+
 from sqlalchemy import text
+
+# ORF-19 (FIX-ORFEVRE-1) — un chiffre déclaré qui devient muet se DIT (warning), jamais sans trace.
+log = logging.getLogger("labuse.registre.moteurs")
 
 
 def compte_parcelles_ile(db, run: str | None) -> int | None:
@@ -20,7 +25,8 @@ def compte_parcelles_ile(db, run: str | None) -> int | None:
         try:
             v = db.execute(text(sql), params).scalar()
             return int(v) if v is not None else None
-        except Exception:  # noqa: BLE001 — un chiffre indisponible = null, jamais une invention
+        except Exception as exc:  # noqa: BLE001 — un chiffre indisponible = null, jamais une invention
+            log.warning("n_parcelles_ile : chiffre muet (%s) sur « %s » (ORF-19)", exc, sql[:80])
             return None
     return (_one("SELECT n_parcelles FROM p_score_v2_runs WHERE run_id = :r", {"r": run})
             or _one("SELECT count(*) FROM parcel_p_score_v2 WHERE run_id = :r", {"r": run}))
@@ -37,7 +43,8 @@ def bascules_tiers_hauts(db, run_courant: str | None, run_precedent: str | None)
             "  AND (a.tier IS NULL OR a.tier NOT IN ('brulante','chaude','priorite','a_suivre'))",
         ), {"cur": run_courant, "prev": run_precedent}).scalar()
         return int(v) if v is not None else None
-    except Exception:  # noqa: BLE001 — un chiffre indisponible = null, jamais une invention
+    except Exception as exc:  # noqa: BLE001 — un chiffre indisponible = null, jamais une invention
+        log.warning("n_bascules_7j : chiffre muet (%s) — null servi (ORF-19)", exc)
         return None
 
 

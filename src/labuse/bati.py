@@ -184,7 +184,8 @@ _COSIA_SOL_NU = frozenset({"Sol nu", "Terre labourée"})
 
 def _cosia_couverture(session: Session, idu: str, surface: float | None) -> dict | None:
     """DONNEES-2 — couverture du sol CoSIA agrégée par parcelle : part imperméabilisée / végétalisée-
-    boisée / sol nu = Σ(surface de classe CoSIA) / contenance cadastrale. COMPLÈTE OCS GE (donnée
+    boisée / sol nu = Σ(surface de classe CoSIA) / max(surface cadastrale, Σ CoSIA — cf. ORF-05 dans
+    le corps : le raster peut déborder le dessin). COMPLÈTE OCS GE (donnée
     d'îlot, part artificialisée) sans la recouper : CoSIA mesure la parcelle elle-même à 20 cm, et
     « imperméabilisé » n'est pas « artificialisé ». Table absente ou parcelle hors couverture → None."""
     if not surface or surface <= 0:
@@ -200,19 +201,33 @@ def _cosia_couverture(session: Session, idu: str, surface: float | None) -> dict
     if not rows:
         return None
     imper = veg = nu = 0.0
+    total_cosia = 0.0
     for r in rows:
         c, m2 = r["classe"], float(r["m2"] or 0.0)
+        total_cosia += m2
         if c in _COSIA_IMPERMEABLE:
             imper += m2
         elif c in _COSIA_VEGETAL:
             veg += m2
         elif c in _COSIA_SOL_NU:
             nu += m2
+    # ORF-05 (FIX-ORFEVRE-1) — le raster CoSIA (20 cm) DÉBORDE le dessin cadastral (bordures,
+    # sur-détection) : Σ m² CoSIA > surface sur 2,6 % du parc → « Part imperméabilisée : 199,3 % »
+    # servie au client (une part > 100 % est une impossibilité logique). Le dénominateur devient
+    # max(surface cadastrale, Σ classes CoSIA) : les parts redeviennent des PARTS (≤ 100, somme ≤ 100),
+    # et le débordement est DIT (`mesure_saturee` + source annotée), jamais masqué en silence.
+    # La table n'est PAS réécrite (borne au service, doctrine FIX-1 « borner à la lecture »).
+    denom = max(surface, total_cosia)
+    saturee = total_cosia > surface
+    src = "CoSIA (IGN, détection par IA, 20 cm)"
+    if saturee:
+        src += " — mesure CoSIA > surface cadastrale : parts rapportées à la mesure (saturé)"
     return {
-        "part_impermeabilisee_pct": round(100.0 * imper / surface, 1),
-        "part_vegetalisee_boisee_pct": round(100.0 * veg / surface, 1),
-        "part_sol_nu_pct": round(100.0 * nu / surface, 1),
-        "source": "CoSIA (IGN, détection par IA, 20 cm)",
+        "part_impermeabilisee_pct": round(100.0 * imper / denom, 1),
+        "part_vegetalisee_boisee_pct": round(100.0 * veg / denom, 1),
+        "part_sol_nu_pct": round(100.0 * nu / denom, 1),
+        "mesure_saturee": saturee,
+        "source": src,
     }
 
 

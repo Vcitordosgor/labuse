@@ -485,11 +485,21 @@ def ingester(db: Session, html: str, nom_fichier: str | None = None, *, archiver
     # compte comme une MAJ pour le dépôt (nb_nouvelles ne compte que les vrais biens neufs), et est
     # exposée à part pour l'écran d'ingestion.
     nb_fusion = compte.get("fusion", 0)
+    # ORF-09 (FIX-ORFEVRE-1) — IDEMPOTENCE RÉELLE du dépôt (état constaté : 19 lignes pige_depots
+    # pour le MÊME hash). Un fichier (hash sha256) = UNE ligne de dépôt, tenue par l'index unique
+    # `uq_pige_depots_hash` + ON CONFLICT DO NOTHING ; un re-dépôt reste une CONFIRMATION des annonces
+    # (last_seen, dédup list_id — contrat Lot 5), mais ne fabrique plus ni 2ᵉ ligne de dépôt ni 2ᵉ
+    # événement de journal le même jour (dédup event_log `pige:depot:<hash>` + jour, tenue en base).
     depot_id = db.execute(text(
         "INSERT INTO pige_depots (nom_fichier, hash, chemin_archive, nb_annonces, nb_nouvelles, "
-        " nb_maj, nb_a_qualifier) VALUES (:nf, :h, :c, :na, :nn, :nm, :aq) RETURNING id"),
+        " nb_maj, nb_a_qualifier) VALUES (:nf, :h, :c, :na, :nn, :nm, :aq) "
+        "ON CONFLICT (hash) WHERE hash <> '' DO NOTHING RETURNING id"),
         {"nf": nom_fichier, "h": h, "c": chemin, "na": len(records),
          "nn": compte["nouvelle"], "nm": compte["maj"] + nb_fusion, "aq": nb_aq}).scalar()
+    deja_depose = depot_id is None and bool(h)
+    if deja_depose:   # re-dépôt : on rend l'id du dépôt EXISTANT (confirmation, pas un dépôt neuf)
+        depot_id = db.execute(text("SELECT id FROM pige_depots WHERE hash = :h ORDER BY id LIMIT 1"),
+                              {"h": h}).scalar()
     enregistrer_fraicheur(db)
     journaliser(db, EV_DEPOT_HTML, f"Dépôt Radar HTML — {len(records)} annonces [{degrade_lbl}]",
                 detail=f"{compte['nouvelle']} nouvelles, {compte['maj']} MAJ"
@@ -498,7 +508,7 @@ def ingester(db: Session, html: str, nom_fichier: str | None = None, *, archiver
                        + (f", {compte['hors_perimetre']} hors périmètre" if compte["hors_perimetre"] else ""),
                 dedup=f"pige:depot:{h[:16]}")
     db.commit()
-    return {"depot_id": depot_id, "nb_annonces": len(records),
+    return {"depot_id": depot_id, "deja_depose": deja_depose, "nb_annonces": len(records),
             "nb_nouvelles": compte["nouvelle"], "nb_maj": compte["maj"] + nb_fusion,
             "nb_fusion": nb_fusion,
             "nb_hors_perimetre": compte["hors_perimetre"], "nb_a_qualifier": nb_aq,

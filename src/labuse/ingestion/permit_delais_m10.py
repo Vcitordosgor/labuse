@@ -97,6 +97,17 @@ def _months(dep: date | None, aut: date | None) -> int | None:
     return (aut.year - dep.year) * 12 + (aut.month - dep.month)
 
 
+def _valide(dep: date | None, aut: date | None, delai: int | None) -> bool:
+    """La règle de VALIDITÉ, en un seul endroit : dépôt ET autorisation présents, délai (mois) ≥ 0,
+    ET causalité respectée AU JOUR (autorisation ≥ dépôt).
+
+    ORF-15 (FIX-ORFEVRE-1) — l'ancienne règle (`delai >= 0` seul) laissait passer 127 lignes
+    `valide=true` avec `date_autorisation < date_depot` de quelques jours (même mois → delai_mois = 0) :
+    un délai négatif, quelle qu'en soit l'échelle, vaut TOUJOURS valide=false. Les médianes (modules
+    M10, Flash, repères) filtrent sur `valide` — vérifié."""
+    return delai is not None and delai >= 0 and dep is not None and aut is not None and aut >= dep
+
+
 def build_delais(session: Session, log=print) -> dict:
     """Construit/rafraîchit m10_permit_delais depuis SDES/Dido (backfill complet, idempotent)."""
     t0 = time.time()
@@ -124,13 +135,13 @@ def build_delais(session: Session, log=print) -> dict:
             aut = _pdate(rec.get("DATE_REELLE_AUTORISATION"))
             ach = _pdate(rec.get("DATE_REELLE_DAACT"))
             delai = _months(dep, aut)
-            # valide = dépôt ET autorisation présents ET causalité respectée (dépôt ≤ autor.)
-            valide = delai is not None and delai >= 0
+            # valide = dépôt ET autorisation présents ET causalité respectée AU JOUR (ORF-15).
+            valide = _valide(dep, aut, delai)
             if valide:
                 stats["valides"] += 1
             elif dep is None:
                 stats["sans_depot"] += 1
-            elif delai is not None and delai < 0:
+            elif aut is not None and aut < dep:   # ORF-15 : causalité au jour (couvre delai_mois = 0)
                 stats["exclus_causalite"] += 1
             session.execute(_UPSERT, {
                 "pid": pid, "c": communes.get(insee, insee), "nat": nature, "fam": fam,

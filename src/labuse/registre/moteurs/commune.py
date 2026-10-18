@@ -176,7 +176,13 @@ def couverture_sources(db) -> dict:
     def _scal(sql: str):
         try:
             return db.execute(text(sql)).scalar()
-        except Exception:  # noqa: BLE001 — base partielle : la tuile dira « — », jamais un crash
+        except Exception as exc:  # noqa: BLE001 — base partielle : la tuile dira « — », jamais un crash
+            # ORF-19 (FIX-ORFEVRE-1) — un chiffre déclaré qui devient muet se DIT (jamais sans trace).
+            import logging
+            logging.getLogger("labuse.registre.moteurs").warning(
+                "couverture_sources : chiffre muet (%s) sur « %s » — rollback + null (ORF-19)",
+                exc, sql[:80])
+            db.rollback()
             return None
     parcelles = _scal("SELECT count(*) FROM parcels")
     # RETOURS-14 P6 — parcelles EXPLORABLES au filtre : le compteur du panneau Filtre (/filtre) masque
@@ -201,8 +207,11 @@ def couverture_sources(db) -> dict:
             d = db.execute(text("SELECT computed_at FROM p_score_v2_runs WHERE run_id = :r"),
                            {"r": analyse_label}).scalar()
             analyse_date = d.isoformat() if d else None
-    except Exception:  # noqa: BLE001
-        pass
+    except Exception as exc:  # noqa: BLE001
+        # ORF-19 — la date d'analyse muette se DIT (avant : pass silencieux, aucun moyen de le voir).
+        import logging
+        logging.getLogger("labuse.registre.moteurs").warning(
+            "couverture_sources : date du run servi muette (%s) — champ null (ORF-19)", exc)
     return {
         "parcelles": int(parcelles) if parcelles is not None else None,
         "parcelles_filtrables": int(parcelles_filtrables) if parcelles_filtrables is not None else None,
@@ -332,7 +341,9 @@ def compte_piscines(db, commune: str | None, bati: str, piscine_surf_min: int,
         else " AND coalesce(b.emprise_bati_m2, 0) = 0" if bati == "non" else ""
     surf_cond = " AND pi.surface_m2 >= :psmin" if piscine_surf_min else ""
     corr_cond = " AND NOT EXISTS (SELECT 1 FROM piscine_corrections pc WHERE pc.idu = pi.idu)"
-    where = (f"WHERE pi.statut IN {statuts}" + bati_cond + surf_cond + corr_cond
+    # ORF-14 (FIX-ORFEVRE-1) — hors parcelle (idu NULL) exclu : le total du bandeau compte EXACTEMENT
+    # ce que la carte/la liste servent (une « servie » introuvable depuis une parcelle n'est pas servie).
+    where = (f"WHERE pi.statut IN {statuts} AND pi.idu IS NOT NULL" + bati_cond + surf_cond + corr_cond
              + (" AND pi.commune = :c" if commune else ""))
     params = {"c": commune, "psmin": piscine_surf_min}
     total = int(db.execute(text(
@@ -341,7 +352,8 @@ def compte_piscines(db, commune: str | None, bati: str, piscine_surf_min: int,
     # `a_confirmer`), indépendamment de la bascule : l'écran liste les 24 communes avec « N confirmées ·
     # N à confirmer » (plus de compteur unique ambigu ni de « +11 706 » hors contexte). Filtres bati/surf/
     # corrections/commune conservés ; `ecartee` jamais compté. `n` reste le total gouverné par la bascule.
-    where_bandes = ("WHERE pi.statut IN ('servie','a_confirmer')" + bati_cond + surf_cond + corr_cond
+    where_bandes = ("WHERE pi.statut IN ('servie','a_confirmer') AND pi.idu IS NOT NULL"  # ORF-14
+                    + bati_cond + surf_cond + corr_cond
                     + (" AND pi.commune = :c" if commune else ""))
     communes = db.execute(text(f"""
         SELECT pi.commune AS commune,

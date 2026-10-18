@@ -601,12 +601,64 @@ def rapport_admin(ctx: JobContext) -> None:
     ctx.compte(sources_en_retard=retard, veilles_actives=veilles, dernier_dump=dernier_dump)
 
 
+#: ORF-10 — marge (s) entre la mort du sous-process et le SIGALRM du job : le kill et l'écriture de
+#: l'état doivent tenir dedans.
+_SOUS_PROCESS_MARGE_S = 60
+
+
+class SousProcessTimeout(RuntimeError):
+    """ORF-10 — le sous-process a dépassé son budget : son GROUPE a été tué (aucun orphelin)."""
+
+    def __init__(self, message: str, pid: int):
+        super().__init__(message)
+        self.pid = pid
+
+
+def _run_sous_process_borne(cmd: list[str], budget_s: float) -> subprocess.CompletedProcess:
+    """ORF-10 (FIX-ORFEVRE-1) — lance `cmd` dans SON PROPRE groupe de process, borné à `budget_s`.
+    Au-delà (ou sur toute interruption, SIGALRM du job compris) : kill du GROUPE entier (SIGKILL) puis
+    récolte — plus jamais d'enfant qui survit au « timeout » du job et continue de committer en base
+    (le piège SCORING-6 : relance manuelle = deux ingestions concurrentes sur la même table)."""
+    import signal as _signal
+
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+                            cwd=os.getcwd(), start_new_session=True)
+
+    def _tuer_groupe() -> None:
+        try:
+            os.killpg(proc.pid, _signal.SIGKILL)
+        except (ProcessLookupError, PermissionError):
+            proc.kill()
+
+    try:
+        out, err = proc.communicate(timeout=budget_s)
+    except subprocess.TimeoutExpired:
+        _tuer_groupe()
+        out, err = proc.communicate()        # récolte (jamais de zombie)
+        raise SousProcessTimeout(
+            f"sous-process tué après {round(budget_s)} s (budget du job) — groupe de process arrêté, "
+            f"aucune ingestion orpheline. Dernière sortie : {(err or out or '')[-300:]}", proc.pid)
+    except BaseException:                    # _Timeout du job (SIGALRM), KeyboardInterrupt… même geste
+        _tuer_groupe()
+        proc.communicate()
+        raise
+    return subprocess.CompletedProcess(cmd, proc.returncode, out, err)
+
+
 def _ingest_via_cli(ctx: JobContext, *args: str) -> None:
     """Lance une commande d'ingestion EXISTANTE (même venv), capture le résultat. Les ingestions lourdes
-    (données externes) restent le pipeline existant — le job n'ajoute que l'ordonnancement + l'état."""
+    (données externes) restent le pipeline existant — le job n'ajoute que l'ordonnancement + l'état.
+    ORF-10 — borné SOUS le timeout du job (marge) + kill du groupe : le « timeout » d'un job tue
+    VRAIMENT l'ingestion (statut d'échec propre, compteurs posés), au lieu de la laisser orpheline."""
     import sys
     cmd = [sys.executable, "-m", "labuse.cli", *args]
-    proc = subprocess.run(cmd, capture_output=True, text=True, cwd=os.getcwd())
+    budget = max(60.0, float(getattr(ctx, "timeout_s", 900) or 900) - _SOUS_PROCESS_MARGE_S)
+    try:
+        proc = _run_sous_process_borne(cmd, budget)
+    except SousProcessTimeout as exc:
+        ctx.compte(commande=" ".join(args), code="timeout-tue", budget_s=round(budget),
+                   sortie=str(exc)[-400:])
+        raise RuntimeError(f"{' '.join(args)} : {exc}") from exc
     ctx.compte(commande=" ".join(args), code=proc.returncode,
                sortie=(proc.stdout or proc.stderr)[-400:])
     if proc.returncode != 0:

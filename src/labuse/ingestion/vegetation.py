@@ -451,6 +451,11 @@ def preparer_validation(session: Session, log=print) -> dict[str, Any]:
             f"{len(manquantes) - len(echecs)}/{len(manquantes)}")
     n = session.execute(text(
         "SELECT count(*) FROM ortho_detections WHERE type = 'vegetation'")).scalar_one()
+    # ORF-20 (FIX-ORFEVRE-1) — le lien de validation est construit sur l'URL PUBLIQUE configurée
+    # (settings.public_base_url, comme tous les liens servis : Checkout, mails), plus jamais un
+    # `127.0.0.1:8000` codé en dur (faux partout sauf en local — en env 'local' le défaut de config
+    # redonne exactement l'ancien lien).
+    from ..config import get_settings
+    base = (get_settings().public_base_url or "http://127.0.0.1:8000").rstrip("/")
     return {"vignettes": n, "quota": quota,
-            "url": "http://127.0.0.1:8000/ortho/validation?type=vegetation"
-                   f"&profil=vegetation&quota={quota}"}
+            "url": f"{base}/ortho/validation?type=vegetation&profil=vegetation&quota={quota}"}

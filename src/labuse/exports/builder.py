@@ -8,12 +8,18 @@ bout sur les quatre témoins ; les lots 2-7 ajoutent les blocs.
 """
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from datetime import date
 
 from ..registre.valeur import Valeur
 from ..tz import today_reunion   # FIX-ORFEVRE-1 pt 3 (ORF-17/D-13) — « généré le » au jour Réunion
 from . import archive, numeros
+
+# ORF-19 (FIX-ORFEVRE-1) — les best-effort du builder restent (jamais un 500 sur un document client),
+# mais un échec N'EST PLUS MUET : chaque repli se dit en warning (un bug de code ne doit pas être
+# indistinguable d'une vraie absence de donnée).
+log = logging.getLogger("labuse.exports.builder")
 
 
 def _donnees_labuse_au() -> str | None:
@@ -30,7 +36,10 @@ def _donnees_labuse_au() -> str | None:
         if len(p) == 10:
             a, mo, d = p.split("-")
             return f"{d}/{mo}/{a}"
-    except Exception:  # noqa: BLE001 — jamais bloquant
+    except Exception as exc:  # noqa: BLE001 — jamais bloquant, mais DIT (ORF-19)
+        import logging
+        logging.getLogger("labuse.exports.builder").warning(
+            "served_manifest.json illisible (%s) — « Données LABUSE au » retombe sur la date du jour", exc)
         return None
     return None
 # EXPORTS-REBRANCHEMENT-1 lot 1 — le Dossier miroir ne consomme plus les anciens blocs de
@@ -328,7 +337,9 @@ def _emetteur(db, compte_id: int | None) -> dict | None:
     try:
         row = db.execute(text("SELECT nom, marque FROM comptes WHERE id = :i"),
                          {"i": compte_id}).mappings().first()
-    except Exception:  # noqa: BLE001 — colonne/table absente (base de test) : émetteur non servi
+    except Exception as exc:  # noqa: BLE001 — colonne/table absente (base de test) : émetteur non servi
+        log.warning("émetteur du brief non servi (compte %s) : %s — bloc émetteur omis (ORF-19)",
+                    compte_id, exc)
         return None
     if not row:
         return None
@@ -371,7 +382,9 @@ def _apporteur_voisines(db, idu: str) -> dict:
                LEFT JOIN parcels p ON p.idu = m.idu
                WHERE m.idu <> :idu ORDER BY COALESCE(p.contenance_m2, m.surface_m2) DESC NULLS LAST, m.idu"""),
             {"idu": idu}).mappings().all()
-    except Exception:  # noqa: BLE001 — table absente / base de test : pas de voisines, jamais d'erreur
+    except Exception as exc:  # noqa: BLE001 — table absente / base de test : pas de voisines, jamais d'erreur
+        log.warning("voisines du bloc non servies (%s) : %s — document rendu sans voisines (ORF-19)",
+                    idu, exc)
         return {"n": 0, "membres": [], "surface_totale_m2": None}
     membres = [{"idu": r["idu"], "ref": _ref_courte(r["idu"]),
                 "surface_m2": round(r["surface_m2"]) if r["surface_m2"] else None} for r in rows]
@@ -408,7 +421,9 @@ def _apporteur_plan(db, idu: str, voisines: dict) -> dict | None:
     from sqlalchemy import text
     try:
         gj = db.execute(text("SELECT ST_AsGeoJSON(geom) FROM parcels WHERE idu = :idu"), {"idu": idu}).scalar()
-    except Exception:  # noqa: BLE001
+    except Exception as exc:  # noqa: BLE001
+        log.warning("géométrie de %s illisible pour le plan de situation : %s — cadre neutre (ORF-19)",
+                    idu, exc)
         return None
     if not gj:
         return None
@@ -428,7 +443,8 @@ def _apporteur_plan(db, idu: str, voisines: dict) -> dict | None:
         # ne reste pas un point. Même appel pour le Dossier (§1) et l'Apporteur.
         res = plan_ortho(gj, cache_dir=storage_dir() / "tiles", extra_geojson=extra,
                          zoom_delta=0, zoom_max=19)
-    except Exception:  # noqa: BLE001 — la carte est un plus, jamais un bloqueur du document
+    except Exception as exc:  # noqa: BLE001 — la carte est un plus, jamais un bloqueur du document
+        log.warning("plan de situation de %s non rendu : %s — cadre neutre (ORF-19)", idu, exc)
         return None
     if not res.get("ok"):
         return None

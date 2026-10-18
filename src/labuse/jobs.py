@@ -40,6 +40,10 @@ class JobContext:
     dry_run: bool
     compteurs: dict = field(default_factory=dict)
     precedent: dict | None = None
+    # ORF-10 (FIX-ORFEVRE-1) — le TIMEOUT du job voyage avec le contexte : les sous-process
+    # (`_ingest_via_cli`) se bornent DESSOUS (marge), pour mourir AVANT le SIGALRM du runner —
+    # jamais d'ingestion ORPHELINE qui continue d'écrire après le « timeout » du job.
+    timeout_s: int = 900
 
     def compte(self, **kw) -> None:
         self.compteurs.update(kw)
@@ -181,7 +185,7 @@ def exec_one(nom: str) -> int:
             "statut": "en_cours", "dry_run": dry_run, "compteurs": {}, "erreur": None}
     _ecrire_etat(nom, etat)
 
-    ctx = JobContext(db=None, dry_run=dry_run, precedent=precedent)
+    ctx = JobContext(db=None, dry_run=dry_run, precedent=precedent, timeout_s=job.timeout_s)
     ancien = signal.getsignal(signal.SIGALRM)
     # ORF-01 — mémorise que l'alarme A SONNÉ, même si le _Timeout est ensuite MASQUÉ par une autre
     # exception (ex. : rollback impossible sur la connexion interrompue) : le finally purge le pool.

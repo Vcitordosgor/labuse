@@ -1249,21 +1249,46 @@ def moi_marque_get(request: Request, db: Session = Depends(get_db)) -> dict:
 
 
 # ── COMPTE-2 (Lot 6) — MÉMOIRE DU COMPTE : préférences de carte (fond + couches) remontées en base ──
+
+def _compte_prefs_ou_local(request: Request) -> int | None:
+    """ORF-21 (FIX-ORFEVRE-1) — MÊME règle que `/moi` : une session sans compte en mode fail-open
+    local (cookie absent / non `u.`) n'est PAS une erreur — `/moi` répond `mode:"local"`, mais
+    prefs-carte 401-ait quand même → 2 erreurs console rouges sur CHAQUE écran en dev et mémoire de
+    carte morte. Désormais : mode local → None (GET sert des prefs vides, POST no-op) ; un cookie de
+    session PRÉSENT mais non résolu reste un 401 (session expirée). En prod le rideau d'auth interdit
+    le chemin anonyme, comme pour `/moi`."""
+    from .auth import COOKIE
+    from .tenant import current_compte
+    cid = current_compte(request)
+    if cid is not None:
+        return int(cid)
+    tok = request.cookies.get(COOKIE) or ""
+    if not tok.startswith("u."):
+        return None           # mode local (fail-open dev) — même diagnostic que /moi
+    raise HTTPException(401, "Session requise — connectez-vous à votre compte.")
+
+
 @router.get("/moi/prefs-carte", include_in_schema=False)
 def moi_prefs_carte_get(request: Request, db: Session = Depends(get_db)) -> dict:
     """Préférences de carte du compte (fond + couches actives) pour rouvrir la carte comme le client
-    l'avait laissée — MÊME sur un autre poste (avant : localStorage, perdues au changement de poste)."""
+    l'avait laissée — MÊME sur un autre poste (avant : localStorage, perdues au changement de poste).
+    ORF-21 — en mode local (pas de compte), 200 avec des prefs vides (le front garde sa session)."""
     from ..comptes import lire_prefs_carte
-    cid = _compte_session(request, db)
+    cid = _compte_prefs_ou_local(request)
+    if cid is None:
+        return {"basemap": None, "couches": None, "mode": "local"}
     return lire_prefs_carte(db, cid) or {"basemap": None, "couches": None}
 
 
 @router.post("/moi/prefs-carte", include_in_schema=False)
 def moi_prefs_carte_set(payload: dict, request: Request, db: Session = Depends(get_db)) -> dict:
     """Enregistre le fond de carte et les couches actives du compte (upsert). Best-effort côté client :
-    un enregistrement qui rate ne casse jamais la carte (le front continue en session)."""
+    un enregistrement qui rate ne casse jamais la carte (le front continue en session).
+    ORF-21 — en mode local (pas de compte), no-op 200 (il n'y a pas de compte où mémoriser)."""
     from ..comptes import ecrire_prefs_carte
-    cid = _compte_session(request, db)
+    cid = _compte_prefs_ou_local(request)
+    if cid is None:
+        return {"ok": True, "mode": "local"}
     basemap = payload.get("basemap")
     basemap = str(basemap)[:16] if basemap else None
     couches = payload.get("couches")

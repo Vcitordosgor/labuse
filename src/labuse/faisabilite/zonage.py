@@ -15,12 +15,15 @@ ne branche jamais le calcul (l'étape reste ESTIMÉE). `resolve_zone` = base + o
 """
 from __future__ import annotations
 
+import logging
 import re
 from dataclasses import dataclass, field, replace as _replace
 from functools import lru_cache
 from pathlib import Path
 
 import yaml
+
+log = logging.getLogger("labuse.faisabilite.zonage")
 
 _CONFIG = Path(__file__).resolve().parents[3] / "config"
 _ZONAGE = _CONFIG / "plu_zonage.yaml"
@@ -473,12 +476,21 @@ _EXC_EFFET = _CONFIG / "plu_exceptions_effet.json"
 
 @lru_cache(maxsize=1)
 def _exceptions_effet() -> dict[tuple[str, str], list[dict]]:
-    """Calibrage des 81 exceptions `modifie_calcul=true`, indexé par (insee, zone). SOURCE UNIQUE."""
+    """Calibrage des 81 exceptions `modifie_calcul=true`, indexé par (insee, zone). SOURCE UNIQUE.
+
+    ORF-19 (FIX-ORFEVRE-1) — un JSON CORROMPU **lève** (avant : `except ValueError: return {}` faisait
+    disparaître EN SILENCE les 81 exceptions PLU `modifie_calcul=true` → capacités recalculées sans
+    elles, zéro signal). Seul le fichier ABSENT reste un repli assumé (base de test nue)."""
     import json
     try:
         raw = json.loads(_EXC_EFFET.read_text(encoding="utf-8"))
-    except (FileNotFoundError, ValueError):
+    except FileNotFoundError:
+        log.debug("plu_exceptions_effet.json absent — aucune exception PLU appliquée (base nue)")
         return {}
+    except ValueError as exc:
+        log.error("plu_exceptions_effet.json CORROMPU : %s — les 81 exceptions PLU seraient perdues "
+                  "en silence, on refuse de calculer sans elles", exc)
+        raise ValueError(f"config/plu_exceptions_effet.json illisible (JSON corrompu) : {exc}") from exc
     out: dict[tuple[str, str], list[dict]] = {}
     for e in (raw.get("entries") or {}).values():
         out.setdefault((e["insee"], e["zone"]), []).append(e)
@@ -816,9 +828,18 @@ hypotheses_faisabilite_v2 = hypotheses_faisabilite
 
 def _hypotheses_ile() -> dict:
     """Hypothèses ÎLE-GÉNÉRIQUES (source NEUTRE `config/hypotheses_ile.yaml`), base AVANT tout
-    override commune. Valeurs identiques aux anciens défauts → golden = baseline."""
+    override commune. Valeurs identiques aux anciens défauts → golden = baseline.
+
+    ORF-19 (FIX-ORFEVRE-1) — seul le fichier ABSENT est un repli assumé (défauts dataclass, base de
+    test nue). Un YAML CASSÉ **lève** (avant : `except Exception: return {}` → chiffres qui bougent
+    sans trace)."""
     from .. import config
     try:
         return (config.load_yaml_config("hypotheses_ile") or {}).get("hypotheses_ile") or {}
-    except Exception:  # noqa: BLE001 — fichier absent = repli défauts dataclass, jamais un crash
+    except FileNotFoundError:
+        log.debug("hypotheses_ile.yaml absent — défauts dataclass (base nue)")
         return {}
+    except Exception as exc:  # noqa: BLE001 — YAML corrompu : on refuse le repli silencieux
+        log.error("hypotheses_ile.yaml ILLISIBLE : %s — repli silencieux refusé (les hypothèses de "
+                  "calcul bougeraient sans trace)", exc)
+        raise ValueError(f"config/hypotheses_ile.yaml illisible : {exc}") from exc
