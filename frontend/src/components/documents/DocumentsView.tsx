@@ -147,6 +147,7 @@ function ParcelleResolue({ idu, onFiche }: { idu: string; onFiche: () => void })
 function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
   const select = useApp((s) => s.select)
   const setView = useApp((s) => s.setView)
+  const ouvrirEtude = useApp((s) => s.ouvrirEtude)   // IMPLANTATION-4 (LOT A) — la carte Étude ouvre l'overlay
   const qc = useQueryClient()
   // enregistre la génération dans « Mes documents » (best-effort : la bibliothèque n'empêche jamais
   // de produire le PDF — un compte pilote/non connecté génère sans trace, sans erreur bloquante).
@@ -192,13 +193,11 @@ function Porte({ d, onClose }: { d: DocCatalogue; onClose: () => void }) {
       return
     }
     if (!idu) return
-    // IMPLANTATION-3 — l'Étude de faisabilité se génère par POST (config par défaut sur la parcelle).
-    // L'archivage « Mes documents » est fait côté serveur (config + version moteur + millésimes) : on
-    // n'appelle donc PAS enregistrer ici ; on rafraîchit juste la liste au succès.
+    // IMPLANTATION-4 (LOT A) — la 9e carte n'exporte plus directement un PDF : elle OUVRE l'écran d'étude
+    // complet (overlay M22 + carte intégrée), sur le modèle du Bilan. L'utilisateur configure, choisit son
+    // scénario, PUIS « Générer le PDF » depuis l'écran (qui archive côté serveur). Même composant, même API.
     if (d.key === 'etude-faisabilite') {
-      if (await ouvrir(ETUDE_PDF_URL, d.key, etudePdfInit({ idus: [idu], objectif: 'equilibre' }))) {
-        qc.invalidateQueries({ queryKey: ['documents'] }); onClose()
-      }
+      ouvrirEtude([idu]); onClose()
       return
     }
     const url =

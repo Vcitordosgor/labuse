@@ -136,7 +136,7 @@ export function M15({ communeOverride }: { communeOverride?: string | null } = {
 const ASM_MAX_DEFAUT = 8   // repli ; CHASSE-DONNEES-FIX-1 (E-78) la valeur vient de /moteurs/config.
 
 export function M16() {
-  const { msel, setMsel, setModuleMap, parcelPrefill, setParcelPrefill, select } = useApp()
+  const { msel, setMsel, setModuleMap, parcelPrefill, setParcelPrefill, select, ouvrirEtude } = useApp()
   // CHASSE-DONNEES-FIX-1 (suite 2, E-78) — plafond d'écran SERVI (config/moteurs.yaml), plus codé en
   // dur : un seul endroit décide « 8 max » (décision Vic RECETTE-1 H5), le back plafonne à 30 (API).
   const cfgMot = useQuery({ queryKey: ['moteurs-config'], queryFn: getMoteursConfig, staleTime: 3600_000 })
@@ -334,6 +334,16 @@ export function M16() {
               </>
             )}
           </div>
+
+          {/* IMPLANTATION-4 (LOT A) — pont vers l'Étude de faisabilité : ouvre l'écran d'étude (Docs,
+              overlay M22 + carte intégrée) avec l'assiette de l'assemblage. Le nombre de logements
+              dessiné/contrôlé se lit DANS l'Étude (plus de fourchette de l'ancien moteur ici, LOT B). */}
+          {msel.length >= 1 && (
+            <Bouton niveau="secondaire" ton="vert" data-asm-etude className="w-full"
+              onClick={() => ouvrirEtude(msel)}>
+              Étude de faisabilité de cet assemblage →
+            </Bouton>
+          )}
 
           {/* B — approche propriétaire (privacy : PM nommée / particulier masqué) */}
           <div data-asm-proprio className={`rounded-lg border px-3 py-1.5 text-[11px] ${d.tous_personnes_morales ? 'border-mint/40 bg-mint/[0.06]' : 'border-line-2 bg-surface-2'}`}>

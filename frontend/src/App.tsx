@@ -50,6 +50,9 @@ const ModulePanel = lazy(() => import('./components/outils/ModulePanel').then((m
 const AdminView = lazy(() => import('./components/admin/AdminView').then((m) => ({ default: m.AdminView })))
 // DOCS-1 (Lot A) — la catégorie Documents (catalogue + porte + bibliothèque), chargée à la demande.
 const DocumentsView = lazy(() => import('./components/documents/DocumentsView').then((m) => ({ default: m.DocumentsView })))
+// IMPLANTATION-4 (LOT A) — l'overlay Étude de faisabilité (écran M22 + carte intégrée). Chargé à la
+// demande (il embarque maplibre via PlanMasseCarte) : son chunk n'arrive qu'à l'ouverture de l'Étude.
+const EtudeEcran = lazy(() => import('./components/outils/EtudeEcran').then((m) => ({ default: m.EtudeEcran })))
 
 // État de chargement de la zone carte pendant que le chunk maplibre arrive (pas d'écran blanc).
 // DA — squelette unique (plus de spinner rotatif), on garde le conteneur flex-1.
@@ -282,7 +285,7 @@ function Toast() {
 }
 
 export default function App() {
-  const { view, selectedIdu, select, setView, filters, setFilters, zone, setZone, module, setModule, setFlyTo, flyTo, commune, setCommune, verdict, setVerdict, outilsOpen, parcours, setMsel, setPermitToOpen, setIaRestitution, compareOpen, contexteCommune, setContexteCommune, togglePanel, setTuyauActives, toggleTuyau, setModuleMap } = useApp()
+  const { view, selectedIdu, select, setView, filters, setFilters, zone, setZone, module, setModule, setFlyTo, flyTo, commune, setCommune, verdict, setVerdict, outilsOpen, parcours, setMsel, setPermitToOpen, setIaRestitution, compareOpen, contexteCommune, setContexteCommune, togglePanel, setTuyauActives, toggleTuyau, setModuleMap, etudeIdus } = useApp()
   // feat/ouverture — le voile d'ouverture (oiseau LABUSE) monté AU-DESSUS de l'app ; `montre` est vrai
   // à chaque chargement de page (Cmd+R), `fini` le retire. L'app se charge DERRIÈRE le voile.
   const [montre, fini] = useOuvertureUneFois()
@@ -361,11 +364,18 @@ export default function App() {
     if (c) setCommune(decodeURIComponent(c))
     if (p.get('v') === '1') setVerdict(true)   // les liens de démo ouvrent verdict allumé
     const m = p.get('m')
+    // IMPLANTATION-4 (LOT A) — l'Étude a QUITTÉ les Outils : les anciens liens #m=programme ne doivent
+    // plus ouvrir le panneau d'outil (404 de fait, module retiré du menu) mais REDIRIGER vers l'écran
+    // Étude dans Docs (overlay). Si le lien porte aussi #idu=…, on amorce l'assiette avec cette parcelle.
+    if (m === 'programme') {
+      const pid = p.get('idu')
+      useApp.getState().ouvrirEtude(pid && /^[0-9A-Za-z]{10,20}$/.test(pid) ? [pid] : [])
+    }
     // GB-059 (FIX-C6) — ne poser le module que si la clé EXISTE au registre (MODULES, alias
     // hidden compris). Une clé inconnue dans #m= (faute, casse, injection) laissait `module`
     // truthy alors que ModulePanel `MODULES.find` renvoyait undefined → LeftPanel démonté ET
     // panneau vide = colonne gauche blanche muette. Clé invalide → on ignore (état d'accueil).
-    if (m && MODULES.some((mod) => mod.key === m)) setModule(m)
+    else if (m && MODULES.some((mod) => mod.key === m)) setModule(m)
     // RADAR-CATÉGORIE (T1) — Radar n'est plus un module d'outil : #radar=1 (ou l'ancien #m=radar,
     // rétro-compat des liens) ouvre la catégorie plein écran.
     if (p.get('radar') === '1' || m === 'radar') useApp.getState().openRadar()
@@ -492,6 +502,9 @@ export default function App() {
           <IaRestitution />
         </div>
       </div>
+      {/* IMPLANTATION-4 (LOT A) — l'overlay Étude de faisabilité par-dessus TOUTE l'app (fixed inset-0),
+          monté seulement quand on l'ouvre (son chunk maplibre n'arrive qu'alors). */}
+      {etudeIdus != null && <Suspense fallback={null}><EtudeEcran /></Suspense>}
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useApp } from '../../store/useApp'
 import { getMoteursConfig, postEtude, ETUDE_PDF_URL, etudePdfInit } from '../../lib/api'
@@ -12,13 +12,19 @@ import { EntreeParcelle } from './EntreeParcelle'
 import { ErrorState } from '../States'
 import { Chargement } from '../Loading'
 import { useOuvrirDocument } from '../../lib/ouvrirDocument'
+import { PlanMasseCarte } from './PlanMasseCarte'
 
-/** M22 · ÉTUDE DE FAISABILITÉ (IMPLANTATION-2) — l'étude de faisabilité EN LIGNE.
- *  Deux états : (1) configuration (assiette 1–8 parcelles, type, objectif, programme, stationnement)
- *  et (2) scénarios (jusqu'à 3 cartes, plan masse sur la carte, sections repliables). UN SEUL moteur,
- *  servi par POST /modules/etude. AUCUN CALCUL ICI : l'écran n'affiche que le payload de l'API et
- *  filtre le GeoJSON par couche cochée (affichage, pas calcul). Remplace l'ancien onglet Faisabilité
- *  porté dans l'outil ; le verrou « 17 outils » tient (même clé `programme`). */
+/** M22 · ÉTUDE DE FAISABILITÉ — l'étude de faisabilité EN LIGNE. Deux états : (1) configuration
+ *  (assiette 1–8 parcelles, type, objectif, programme, stationnement) et (2) scénarios (jusqu'à 3
+ *  cartes, plan masse sur la carte, sections repliables). UN SEUL moteur, servi par POST /modules/etude.
+ *  AUCUN CALCUL ICI : l'écran n'affiche que le payload de l'API et filtre le GeoJSON par couche cochée.
+ *
+ *  IMPLANTATION-4 (LOT A) — l'Étude a QUITTÉ les Outils : elle vit dans un overlay Docs (EtudeEcran).
+ *  En mode `embedded`, le MÊME composant tourne avec (1) une sélection LOCALE (il ne touche plus au
+ *  `msel` global, partagé avec l'Assemblage), (2) sa carte INTÉGRÉE (PlanMasseCarte) au lieu de la carte
+ *  de fond (plus de setModuleMap), (3) un pont « Bilan de ce scénario » (onBilan). Hors `embedded`, le
+ *  comportement historique (carte globale via setModuleMap) est intact — les tests Etude.test.tsx le
+ *  rendent ainsi. Aucun second calcul : le plan masse réutilise `actif.geojson`. */
 
 const ASM_MAX_DEFAUT = 8
 const TYPES = ['T2', 'T3', 'T4'] as const
@@ -90,10 +96,23 @@ const Lbl = ({ children, aide }: { children: React.ReactNode; aide?: string }) =
   </p>
 )
 
-export function M22() {
+/** Programme d'un scénario, passé au pont « Bilan de ce scénario » (logements par type + SDP). */
+export type EtudeProgramme = { ref: string; logements: number; par_type: Record<string, number>; sdp_m2: number; shab_m2?: number | null }
+
+export function M22({ embedded = false, initialIdus, onBilan }: {
+  embedded?: boolean
+  initialIdus?: string[]
+  onBilan?: (prog: EtudeProgramme) => void
+} = {}) {
   const { msel, setMsel, setModuleMap, parcelPrefill, setParcelPrefill, select } = useApp()
   const cfgMot = useQuery({ queryKey: ['moteurs-config'], queryFn: getMoteursConfig, staleTime: 3600_000 })
   const ASM_MAX = cfgMot.data?.assemblage_max_ecran ?? ASM_MAX_DEFAUT
+
+  // Sélection : LOCALE en mode embedded (overlay Docs — ne touche pas au msel global de l'Assemblage) ;
+  // sinon le msel du store (carte globale, clic-carte, idiome historique).
+  const [selLocal, setSelLocal] = useState<string[]>(embedded ? (initialIdus ?? []) : [])
+  const sel = embedded ? selLocal : msel
+  const setSel = embedded ? setSelLocal : setMsel
 
   // configuration (état 1)
   const [objectif, setObjectif] = useState<Objectif>('equilibre')
@@ -109,58 +128,67 @@ export function M22() {
   const [max8, setMax8] = useState(false)
 
   const run = useMutation({ mutationFn: (body: EtudeIn) => postEtude(body) })
-  // IMPLANTATION-3 — export PDF du SCÉNARIO AFFICHÉ (porte 1) : POST /modules/etude/pdf avec la config
-  // courante + le scénario sélectionné. Le PDF lit la même réponse que l'écran (jamais un 2e calcul).
+  // export PDF du SCÉNARIO AFFICHÉ (porte 1) : POST /modules/etude/pdf avec la config courante + le
+  // scénario sélectionné. Le PDF lit la même réponse que l'écran (jamais un 2e calcul).
   const pdf = useOuvrirDocument()
   const data: EtudePayload | undefined = run.data
   const scenarios = data?.scenarios ?? []
   const actif: EtudeScenario | undefined = scenarios[Math.min(tab, Math.max(0, scenarios.length - 1))]
 
-  // ouvrir l'Étude FERME la fiche en cours (le clic-carte compose l'assiette, cf. MapView programme).
-  useEffect(() => { select(null) }, [])  // eslint-disable-line react-hooks/exhaustive-deps
-  // porte fiche/Assemblage → Étude : la parcelle amorce l'assiette (idiome parcelPrefill).
-  useEffect(() => {
-    if (parcelPrefill) { setMsel([parcelPrefill]); setParcelPrefill(null) }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [parcelPrefill])
-
-  const ajouter = (idu: string) => {
-    const i = idu.trim().toUpperCase()
-    if (!i || msel.includes(i)) return
-    if (msel.length >= ASM_MAX) { setMax8(true); return }
-    setMax8(false); setMsel([...msel, i])
-  }
-  // garde-fou : un clic-carte (MapView programme) pousse dans msel → on plafonne aussi côté store.
-  useEffect(() => {
-    if (msel.length > ASM_MAX) { setMsel(msel.slice(0, ASM_MAX)); setMax8(true) }
-    // toute modification de l'assiette PÉRIME les scénarios : on revient à l'état configuration.
-    run.reset()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [msel])
-  // quitter l'outil VIDE son état (assiette + plan masse), comme l'Assemblage (GB-010).
-  useEffect(() => () => { setMsel([]); setModuleMap({ idus: [], extra: null }) }, [])  // eslint-disable-line react-hooks/exhaustive-deps
-
-  // ── carte : plan masse (état 2) filtré par couche cochée, sinon surbrillance de l'assiette ──
-  const wantFit = useRef(false)
-  useEffect(() => { wantFit.current = true }, [data, tab])
-  useEffect(() => {
-    if (!actif) { setModuleMap({ idus: msel, extra: null }); return }
+  // GeoJSON du plan masse filtré par couche cochée (affichage, PAS un calcul) — réutilisé par la carte
+  // intégrée (embedded) OU poussé à la carte globale (setModuleMap, hors embedded).
+  const planFc = useMemo(() => {
+    if (!actif) return null
     const kinds = new Set<string>()
     COUCHES.forEach((c) => { if (couches[c.key]) c.kinds.forEach((k) => kinds.add(k)) })
-    const fc = {
-      type: 'FeatureCollection',
+    return {
+      type: 'FeatureCollection' as const,
       features: actif.geojson.features.filter((f) => {
         const k = (f.properties as { kind?: string } | null)?.kind ?? ''
         return ALWAYS.has(k) || kinds.has(k)
       }),
     }
-    setModuleMap({ idus: [], extra: fc, fit: wantFit.current })
+  }, [actif, couches])
+
+  // ouvrir l'Étude FERME la fiche en cours (le clic-carte compose l'assiette) — seulement hors overlay.
+  useEffect(() => { if (!embedded) select(null) }, [])  // eslint-disable-line react-hooks/exhaustive-deps
+  // porte fiche/Assemblage → Étude (mode carte globale) : la parcelle amorce l'assiette (parcelPrefill).
+  // En embedded, l'assiette est amorcée par initialIdus (sélection locale) — pas de parcelPrefill.
+  useEffect(() => {
+    if (!embedded && parcelPrefill) { setMsel([parcelPrefill]); setParcelPrefill(null) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [parcelPrefill])
+
+  const ajouter = (idu: string) => {
+    const i = idu.trim().toUpperCase()
+    if (!i || sel.includes(i)) return
+    if (sel.length >= ASM_MAX) { setMax8(true); return }
+    setMax8(false); setSel([...sel, i])
+  }
+  // garde-fou : un clic-carte (MapView programme) pousse dans msel → on plafonne aussi côté store.
+  // Toute modification de l'assiette PÉRIME les scénarios : on revient à l'état configuration.
+  useEffect(() => {
+    if (sel.length > ASM_MAX) { setSel(sel.slice(0, ASM_MAX)); setMax8(true) }
+    run.reset()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sel])
+  // quitter l'outil VIDE son état (carte globale) — seulement hors overlay (embedded : sélection locale,
+  // rien à nettoyer dans le store).
+  useEffect(() => () => { if (!embedded) { setMsel([]); setModuleMap({ idus: [], extra: null }) } }, [])  // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── carte GLOBALE (hors embedded) : plan masse filtré, sinon surbrillance de l'assiette ──
+  const wantFit = useRef(false)
+  useEffect(() => { wantFit.current = true }, [data, tab])
+  useEffect(() => {
+    if (embedded) return   // en overlay, c'est PlanMasseCarte qui affiche planFc — jamais la carte de fond
+    if (!actif) { setModuleMap({ idus: sel, extra: null }); return }
+    setModuleMap({ idus: [], extra: planFc, fit: wantFit.current })
     wantFit.current = false
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, tab, couches, msel])
+  }, [data, tab, couches, sel, planFc])
 
   const corpsBody = (): EtudeIn => {
-    const body: EtudeIn = { idus: msel, objectif }
+    const body: EtudeIn = { idus: sel, objectif }
     if (progMode === 'saisi') {
       const ls = TYPES.map((t) => ({ type: t, nombre: parseInt(lignes[t].nombre || '0', 10) || 0,
                                      surface_m2: parseFloat(lignes[t].surface || '0') || undefined }))
@@ -178,19 +206,27 @@ export function M22() {
   }
 
   const resetAll = () => {
-    setMsel([]); setMax8(false); run.reset(); setTab(0); setCouches(COUCHES_DEFAUT)
+    setSel([]); setMax8(false); run.reset(); setTab(0); setCouches(COUCHES_DEFAUT)
     setObjectif('equilibre'); setProgMode('propose')
     setLignes({ T2: { nombre: '', surface: '' }, T3: { nombre: '', surface: '' }, T4: { nombre: '', surface: '' } })
     setHyp({ profondeur_m: '', coef: '', surfaces: { T2: '', T3: '', T4: '' } })
   }
   const revenirLabuse = () => {
     setHyp({ profondeur_m: '', coef: '', surfaces: { T2: '', T3: '', T4: '' } })
-    run.mutate({ idus: msel, objectif, ...(progMode === 'saisi' ? { programme: corpsBody().programme } : {}) })
+    run.mutate({ idus: sel, objectif, ...(progMode === 'saisi' ? { programme: corpsBody().programme } : {}) })
   }
 
-  return (
+  // pont « Bilan de ce scénario » (embedded) : programme du scénario affiché (logements par type + SDP).
+  const ouvrirBilanScenario = () => {
+    if (!actif || !onBilan) return
+    onBilan({ ref: actif.ref, logements: actif.resume.logements, par_type: actif.programme.par_type,
+              sdp_m2: actif.resume.sdp_m2, shab_m2: actif.programme.shab_estimee_m2 })
+  }
+
+  // ── contenu (commun aux deux modes) ─────────────────────────────────────
+  const contenu = (
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-0.5">
-      {(msel.length > 0 || data) && (
+      {(sel.length > 0 || data) && (
         <div className="flex justify-end"><Reinitialiser onReset={resetAll} label="Nouvelle étude" /></div>)}
       <p className="text-[11px] leading-relaxed text-txt-mut">
         Ce que le terrain peut recevoir en collectif, dessiné et contrôlé — pré-faisabilité, jamais « conforme ».
@@ -202,13 +238,13 @@ export function M22() {
           <Lbl>Terrain — 1 à {ASM_MAX} parcelles contiguës</Lbl>
           <EntreeParcelle source={null} onPick={(i) => ajouter(i)} />
           <div className="flex flex-wrap gap-1">
-            {msel.map((i) => (
-              <button key={i} data-etude-chip onClick={() => { setMsel(msel.filter((x) => x !== i)); setMax8(false) }}
+            {sel.map((i) => (
+              <button key={i} data-etude-chip onClick={() => { setSel(sel.filter((x) => x !== i)); setMax8(false) }}
                 className="min-h-7 rounded-full border border-mint/60 px-2 py-0.5 font-mono text-[11px] text-mint transition-colors duration-quick hover:bg-mint/10">
                 {i.slice(8)} ×
               </button>
             ))}
-            {msel.length === 0 && <span className="text-[11px] text-txt-dim">aucune parcelle — saisissez ou cliquez la carte</span>}
+            {sel.length === 0 && <span className="text-[11px] text-txt-dim">aucune parcelle — saisissez ou cliquez la carte</span>}
           </div>
           {max8 && <p className="text-[10.5px] text-st-creuser">{ASM_MAX} parcelles maximum.</p>}
 
@@ -249,7 +285,7 @@ export function M22() {
             options={[{ key: 'libere', label: 'Terrain libéré' }, { key: 'bati', label: 'En gardant le bâti', bientot: true }]} />
 
           <Bouton niveau="primaire" ton="vert" data-etude-generer className="mt-3 w-full"
-            disabled={msel.length === 0 || run.isPending}
+            disabled={sel.length === 0 || run.isPending}
             onClick={() => { setTab(0); run.mutate(corpsBody()) }}>
             {run.isPending ? 'Génération…' : 'Générer les scénarios'}
           </Bouton>
@@ -261,7 +297,7 @@ export function M22() {
       {data && (
         <>
           <p className="text-[10px] text-txt-dim">
-            {msel.map((i) => i.slice(8)).join(' · ')} · collectif · {OBJECTIFS.find((o) => o.key === data.entrees.objectif)?.label.toLowerCase()} · aérien
+            {sel.map((i) => i.slice(8)).join(' · ')} · collectif · {OBJECTIFS.find((o) => o.key === data.entrees.objectif)?.label.toLowerCase()} · aérien
           </p>
 
           {scenarios.length === 0 ? (
@@ -303,7 +339,7 @@ export function M22() {
                   {/* 3 chiffres clés */}
                   <div className="mt-1 grid grid-cols-3 gap-1.5">
                     {[['logements', actif.resume.logements], ['places dessinées', actif.resume.places],
-                      ['m² SDP', fmtInt(actif.resume.sdp_m2)]].map(([lbl, val]) => (
+                      ['m² SDP du scénario', fmtInt(actif.resume.sdp_m2)]].map(([lbl, val]) => (
                       <div key={lbl} className="rounded border border-line-2 px-1 py-1.5 text-center">
                         <b className="block text-[15px] text-txt">{val}</b>
                         <span className="text-[8.5px] text-txt-dim">{lbl}</span>
@@ -335,7 +371,7 @@ export function M22() {
                     {actif.distribution_niveaux.map((d) => (
                       <Ligne key={d.niveau} l={`Niveau ${d.niveau}`}
                         v={Object.entries(d.par_type).map(([t, n]) => `${t} ×${n}`).join(' · ') || '—'}
-                        s={`SDP ${fmtInt(d.sdp_m2)} m²`} />
+                        s={`SDP du scénario ${fmtInt(d.sdp_m2)} m²`} />
                     ))}
                   </Section>
 
@@ -378,18 +414,27 @@ export function M22() {
                     </div>
                   </Section>
 
-                  {/* IMPLANTATION-3 — porte 1 : exporter le SCÉNARIO AFFICHÉ (config courante + onglet actif)
-                      en PDF « Étude de faisabilité ». Même document que la 9e carte Docs. */}
-                  <Bouton niveau="secondaire" ton="vert" data-etude-pdf className="mt-2 w-full"
+                  {/* pont « Bilan de ce scénario » (embedded) : ouvre le Bilan pré-rempli AVEC le programme
+                      du scénario affiché (logements par type + SDP), étiqueté « depuis l'Étude ». */}
+                  {embedded && onBilan && (
+                    <Bouton niveau="secondaire" ton="vert" data-etude-bilan className="mt-2 w-full"
+                      disabled={!actif} onClick={ouvrirBilanScenario}>
+                      Bilan de ce scénario →
+                    </Bouton>
+                  )}
+
+                  {/* porte 1 : exporter le SCÉNARIO AFFICHÉ (config courante + onglet actif) en PDF
+                      « Étude de faisabilité ». Même document que la 9e carte Docs. */}
+                  <Bouton niveau={embedded ? 'primaire' : 'secondaire'} ton="vert" data-etude-pdf className="mt-2 w-full"
                     disabled={!!pdf.enCours}
                     onClick={() => pdf.ouvrir(ETUDE_PDF_URL, 'etude-pdf',
                       etudePdfInit({ ...corpsBody(), scenario_ref: actif.ref }))}>
                     {pdf.enCours ? <Chargement variant="inline" accent="courant" label="Génération…" />
-                      : 'Étude de faisabilité (PDF) ↓'}
+                      : (embedded ? 'Générer le PDF ↓' : 'Étude de faisabilité (PDF) ↓')}
                   </Bouton>
                   {pdf.erreur && <p className="text-[10.5px] text-st-creuser">{pdf.erreur}</p>}
 
-                  <button data-etude-gabarit onClick={() => { if (msel[0]) { useApp.getState().setParcelPrefill(msel[0]) } ; useApp.getState().setModule('gabarit') }}
+                  <button data-etude-gabarit onClick={() => { if (sel[0]) { useApp.getState().setParcelPrefill(sel[0]) } ; useApp.getState().setModule('gabarit') }}
                     className="mt-1 self-start text-[11px] text-txt-dim underline decoration-txt-dim/40 underline-offset-2 transition-colors duration-quick hover:text-mint">
                     Voir en 3D dans le gabarit →
                   </button>
@@ -398,6 +443,24 @@ export function M22() {
             </>
           )}
         </>
+      )}
+    </div>
+  )
+
+  // Hors overlay (Outils historique) : une seule colonne, la carte est celle de fond.
+  if (!embedded) return contenu
+
+  // Overlay Docs (écran d'ordinateur) : deux colonnes — contrôles à gauche, carte intégrée à droite.
+  // La carte n'apparaît qu'une fois des scénarios servis (l'assiette se compose à la saisie).
+  return (
+    <div className="flex min-h-0 flex-1 gap-4">
+      <div className="flex min-h-0 w-[420px] shrink-0 flex-col">
+        {contenu}
+      </div>
+      {data && scenarios.length > 0 && (
+        <div className="min-h-0 flex-1 overflow-hidden rounded-lg border border-line-2">
+          <PlanMasseCarte fc={planFc} />
+        </div>
       )}
     </div>
   )

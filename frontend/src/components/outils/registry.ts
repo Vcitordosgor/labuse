@@ -46,10 +46,15 @@ export const GROUPS: { key: OutilGroup; label: string }[] = [
 export const MODULES: ModuleDef[] = [
   // RECETTE-1 R18 (Vic 08/09/2026) — MENU PLAT dont l'ORDRE EST FIXÉ par le mandat. Rail rend
   // `MODULES.filter((m) => !m.hidden)` dans CET ordre, gabarit unique :
-  //   1 PLU · 2 Permis · 3 Commune · 4 Étudier un bien · 5 Scan patrimoine · 6 Assemblage ·
-  //   7 Comparer des parcelles · 8 Pièges et risques · 9 Étude de zone · 10 Remonter le temps ·
-  //   11 Faisabilité · 12 Taxe d'aménagement · 13 Prospection solaire · 14 Densifier l'existant ·
-  //   15 Blocs fonciers · 16 Successions à venir · 17 Courrier propriétaire.
+  //   1 PLU · 2 Permis · 3 Communes · 4 Scan patrimoine · 5 Assemblage · 6 Comparer des parcelles ·
+  //   7 Pièges et risques · 8 Étude de zone · 9 Remonter le temps · 10 Gabarit réglementaire ·
+  //   11 Taxe d'aménagement · 12 Prospection solaire · 13 Blocs fonciers · 14 Successions à venir ·
+  //   15 Courrier propriétaire.
+  // IMPLANTATION-4 (LOT A) — « Étude de faisabilité » (clé `programme`) a QUITTÉ le menu : elle vit
+  // désormais dans Docs (9e carte + overlay plein écran). L'entrée reste au registre en `hidden: true`
+  // (clé valide pour COMPONENTS, la garde clic-carte de MapView et la rétro-compat des liens
+  // #m=programme redirigés par App.tsx vers l'overlay) — mais SANS carte au Rail. Le compte de tuiles
+  // passe de 16 à 15 (le « verrou du nombre d'outils » : il est DYNAMIQUE, cf. Rail `…!m.hidden).length`).
   // Les champs `group`/`phare` RESTENT en donnée (internes, inertes à l'affichage) ; les clés `hidden`
   // sont des ALIAS sans carte, placées près de l'outil qui les résout (ordre sans effet sur le menu).
 
@@ -106,9 +111,11 @@ export const MODULES: ModuleDef[] = [
   { key: 'temps', num: 'M08', group: 'temps',
     label: 'Remonter le temps', desc: 'La parcelle vue du ciel, année après année.' },
 
-  // 11. Étude de faisabilité — M22 (IMPLANTATION-2) : le moteur d'implantation collectif EN LIGNE
-  //   (assiette 1–8 parcelles → scénarios dessinés + contrôles 4 états). Remplace l'ancien onglet.
-  { key: 'programme', num: 'M22', group: 'instruire', phare: true,
+  // Étude de faisabilité — M22 : le moteur d'implantation collectif EN LIGNE (assiette 1–8 parcelles →
+  //   scénarios dessinés + contrôles 4 états). IMPLANTATION-4 (LOT A) : `hidden: true` — l'Étude a quitté
+  //   le menu Outils pour vivre dans Docs (9e carte + overlay). La clé reste valide (COMPONENTS, garde
+  //   clic-carte MapView, rétro-compat #m=programme → ouvrirEtude), mais plus de carte au Rail.
+  { key: 'programme', num: 'M22', group: 'instruire', phare: true, hidden: true,
     label: 'Étude de faisabilité', desc: 'Ce que le terrain peut recevoir en collectif, dessiné et contrôlé.' },
 
   // Gabarit réglementaire — M24 : où et jusqu'où implanter, selon les règles sourcées (PLU + PPR +

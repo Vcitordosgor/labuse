@@ -517,6 +517,15 @@ interface AppState {
   // « tout le périmètre » des parcelles à piscine — sinon, au zoom île, les parcelles colorées sont invisibles).
   moduleMap: { idus: string[]; extra: unknown | null; fit?: boolean }
   setModuleMap: (m: { idus: string[]; extra: unknown | null; fit?: boolean }) => void
+  // IMPLANTATION-4 (LOT A) — l'Étude de faisabilité QUITTE les Outils et vit dans Docs : overlay plein
+  // écran (patron BilanEcran) monté au niveau App, piloté par ce drapeau. `etudeIdus` = l'assiette
+  // (1 à 8 parcelles) ou null (fermé). Ouvert depuis la 9e carte Docs, la tuile fiche et le pont
+  // Assemblage ; les anciens liens #m=programme y REDIRIGENT (App.tsx). Rejoint CLOSE_OVERLAYS (toute
+  // navigation le ferme). Le plan masse s'affiche dans une carte INTÉGRÉE à l'overlay (PlanMasseCarte),
+  // jamais la carte de fond — l'overlay la masque.
+  etudeIdus: string[] | null
+  ouvrirEtude: (idus: string[]) => void
+  fermerEtude: () => void
   // ÉTUDE DE ZONE Z3 — segment du tiroir « Autour de cette parcelle » : 0 = à pied 15 min, 1 = voiture 5 min
   zoneSeg: number
   setZoneSeg: (i: number) => void
@@ -623,7 +632,11 @@ interface AppState {
 // OUTILS-FIX-3 Lot D — `outilRetour: []` rejoint le cleanup centralisé : TOUTE navigation (setModule,
 // openCompare, setView, toggleOutils…) vide la pile de retour, donc un outil ouvert depuis le menu n'a
 // jamais de « ← ». Les ponts empilent APRÈS avoir navigué ; `retourOutil` réécrit la pile après ce spread.
-const CLOSE_OVERLAYS = { compareOpen: false, comparePicking: false, communesTableOpen: false, evolutionTableOpen: false, radarTableOpen: false, densifierTableOpen: false, sourceLine: null, outilRetour: [] as OutilRetour[] } as const
+// IMPLANTATION-4 (LOT A) — `etudeIdus: null` rejoint le cleanup centralisé : l'overlay Étude (monté au
+// niveau App) tombe à TOUTE navigation (setModule, setView, openCompare…), comme les autres overlays
+// plein écran. `ouvrirEtude` pose le drapeau APRÈS ce spread (il ne spread pas CLOSE_OVERLAYS) → pas
+// d'auto-fermeture.
+const CLOSE_OVERLAYS = { compareOpen: false, comparePicking: false, communesTableOpen: false, evolutionTableOpen: false, radarTableOpen: false, densifierTableOpen: false, sourceLine: null, outilRetour: [] as OutilRetour[], etudeIdus: null as string[] | null } as const
 // SOCLE — la sélection de comparaison est gardée 15 min après le dernier geste (retour sans perte).
 const COMPARE_TTL_MS = 15 * 60 * 1000
 
@@ -974,6 +987,12 @@ export const useApp = create<AppState>((set, get) => ({
     }
     set({ module, view: 'cartes', outilsOpen: false, moduleMap: { idus: [], extra: null }, moduleFiche: {}, parcours: null, openProjet: null, iaRestitution: null, surveillanceOpen: false, zone: null, tool: null, focusIdu: null, ...CLOSE_OVERLAYS })
   },
+  // IMPLANTATION-4 (LOT A) — ouverture/fermeture de l'overlay Étude. `ouvrirEtude` NE spread PAS
+  // CLOSE_OVERLAYS (il ne se saborde pas) : il pose seulement l'assiette. La fermeture rend la main à
+  // l'écran dessous (Docs, fiche, Assemblage) inchangé.
+  etudeIdus: null,
+  ouvrirEtude: (idus) => set({ etudeIdus: idus }),
+  fermerEtude: () => set({ etudeIdus: null }),
   // OUTILS-FIX-3 Lot D — fil de retour entre outils. `pushOutilRetour` est appelé par un pont APRÈS sa
   // navigation (la nav a déjà vidé la pile via CLOSE_OVERLAYS) → il ne reste que l'entrée de départ.
   outilRetour: [],

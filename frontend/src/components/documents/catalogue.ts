@@ -90,12 +90,13 @@ export const CATALOGUE: DocCatalogue[] = [
     explication: 'Les 7 sections et la carte du périmètre.',
   },
   {
-    // IMPLANTATION-3 — 9e carte : le document « Étude de faisabilité » (8 pages, plan masse). La carte
-    // produit la CONFIGURATION PAR DÉFAUT sur une parcelle (collectif, objectif équilibre, programme
-    // proposé) ; l'outil « Étude de faisabilité » exporte, lui, le scénario affiché + ses réglages.
+    // IMPLANTATION-4 (LOT A) — 9e carte : l'Étude de faisabilité a QUITTÉ les Outils, elle vit ICI. La
+    // carte n'exporte plus un PDF « par défaut » : elle OUVRE l'écran d'étude complet (configuration,
+    // scénarios A/B/C, plan masse sur carte intégrée, hypothèses), sur le modèle du Bilan — on génère le
+    // PDF DEPUIS l'écran, une fois le scénario choisi. Même composant (M22), même API (POST /modules/etude).
     key: 'etude-faisabilite', nom: 'Étude de faisabilité', kind: 'parcelle', formats: ['PDF'],
     desc: 'Scénarios d’implantation collectif : fourchette de logements, plan masse, contrôles 4 états — pré-faisabilité, jamais « conforme ».',
-    cta: 'Générer l’étude de faisabilité',
-    explication: 'Configuration par défaut (collectif, équilibre). Réglages et assemblage de parcelles dans l’outil.',
+    cta: 'Ouvrir l’étude de faisabilité',
+    explication: 'Ouvre l’écran d’étude : configuration, scénarios A/B/C, plan masse, puis « Générer le PDF ».',
   },
 ]

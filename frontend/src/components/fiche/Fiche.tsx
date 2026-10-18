@@ -1976,11 +1976,11 @@ export function Fiche({ idu }: { idu: string }) {
                       : zoneFamille === 'N' ? 'Zone naturelle — construction non autorisée.'
                       : sdpNulle ? 'Aucune SDP résiduelle exploitable sur cette parcelle — le détail du calcul (terrain libéré, hypothèses, gabarit) est dans « Étudier quand même ».' : null)
                   const outils: OutilSection[] = []
-                  // IMPLANTATION-2 (LOT C) — l'étude de faisabilité n'est plus CALCULÉE dans la fiche :
-                  // un bouton ouvre l'outil « Étude de faisabilité » (M22) sur cette parcelle (idiome
-                  // parcelPrefill). Le scénario dessiné, les contrôles et les hypothèses y sont servis.
+                  // IMPLANTATION-4 (LOT A) — l'étude de faisabilité vit maintenant dans Docs (overlay) :
+                  // le bouton OUVRE l'écran d'étude sur cette parcelle (ouvrirEtude), plus l'ancien outil.
+                  // Le scénario dessiné, les contrôles et les hypothèses y sont servis (même composant M22).
                   outils.push({ label: 'Étude de faisabilité', principal: true, data: 'etude-outil',
-                    onClick: () => { setParcelPrefill(idu); setModule('programme') } })
+                    onClick: () => useApp.getState().ouvrirEtude([idu]) })
                   if (f.commune) outils.push({ label: "Densifier l'existant", data: 'densifier-filtre',
                     onClick: () => { const st = useApp.getState(); st.setCommunesFilter([f.commune!]); st.setFilter('renouvellement', true); st.setFilter('sdpMin', 200); st.openFiltres() } })
                   const panneau = (
@@ -2048,7 +2048,7 @@ export function Fiche({ idu }: { idu: string }) {
                   : f.mode_b?.disponible && <ModeBBody idu={idu} initial={f.mode_b} />}
                 <OutilsSection outils={[
                   { label: 'Étude de faisabilité', principal: true, data: 'faisabilite-outil',
-                    onClick: () => { setParcelPrefill(idu); setModule('programme') } },
+                    onClick: () => useApp.getState().ouvrirEtude([idu]) },   // IMPLANTATION-4 (LOT A) — ouvre l'écran d'étude dans Docs
                   { label: 'Calculette foncière', data: 'calculette',
                     onClick: () => { setCalcPrefill(idu); setModule('calculette-fonciere') } },
                   { label: 'Assemblage', full: true, data: 'assemblage-outil',

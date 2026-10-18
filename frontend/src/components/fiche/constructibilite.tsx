@@ -1126,9 +1126,11 @@ export function ConstructibiliteSection({ f, idu }: { f: Fiche; idu: string }) {
               sous="Changer les hypothèses (résidence principale, logement aidé, piscine, taux communal)"
               onClick={() => { setParcelPrefill(idu); setModule('taxe-amenagement') }} />
           )}
-          <PorteOutil ico="◱" data="faisabilite-outil" titre="Faisabilité"
-            sous={`La capacité constructible de ces ${fmtM2(f.surface_m2)} : SDP, hauteur PLU, calcul tracé`}
-            onClick={() => { setParcelPrefill(idu); setModule('programme') }} />
+          {/* IMPLANTATION-4 (LOT A) — l'Étude de faisabilité vit dans Docs : la tuile OUVRE l'écran d'étude
+              (overlay M22 + carte intégrée) sur cette parcelle, plus l'ancien outil des Outils. */}
+          <PorteOutil ico="◱" data="faisabilite-outil" titre="Étude de faisabilité"
+            sous={`Les scénarios d'implantation collectif sur ces ${fmtM2(f.surface_m2)} : plan masse, SDP du scénario, contrôles`}
+            onClick={() => useApp.getState().ouvrirEtude([idu])} />
           <PorteOutil ico="▦" data="calculette" titre="Calculette foncière"
             sous={`Ce terrain de ${fmtM2(f.surface_m2)} : SDP, prix de sortie, votre coût et marge`}
             onClick={() => { setCalcPrefill(idu); setModule('calculette-fonciere') }} />
