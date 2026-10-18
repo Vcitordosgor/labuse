@@ -62,7 +62,12 @@ def verification(db: Session, params: dict) -> dict:
         return {"text": f"À quel prix la parcelle {idu} vous est-elle proposée ?",
                 "intent": "VERIFICATION", "clarification": True}
     d = f.data
-    commune = d.get("commune")
+    # FIX-PRIX-ET-OPPORTUNITES (lot 1) — commune OFFICIELLE dérivée de l'INSEE de l'IDU, jamais le
+    # `parcels.commune` texte (qui pouvait nommer « Saint-Denis » une parcelle de L'Étang-Salé). C'est
+    # cette commune qui nomme la parcelle ET qui choisit le marché (build_marche_commune) : un nom faux
+    # faisait estimer la parcelle au marché de la MAUVAISE commune.
+    from ..communes import nom_officiel
+    commune = nom_officiel(idu) or d.get("commune")
     surface = d.get("surface_m2")
     # marché du secteur — MÊME point de calcul que la fiche (build_marche_commune, DVF terrain nu M79).
     # Prix terrain nu par ZONE (€/m²) × surface ; sous le seuil M79 (n ventes) → échantillon insuffisant.
@@ -88,9 +93,15 @@ def verification(db: Session, params: dict) -> dict:
                          f"{d.get('zone') or fam or '?'}, proposée à {_eur(prix)}."]
     if terrain_m2 and surface and not insuffisant:
         projection = round(terrain_m2 * surface)
+        # FIX-PRIX-ET-OPPORTUNITES (lot 1) — jamais un chiffre sec : fourchette ±30 % + mention
+        # d'incertitude mesurée (backtest VERITE-TERRAIN-2). Point de calcul unique estimation_prix.
+        from ..estimation_prix import DEMI_LARGEUR_PCT, fourchette as _fourchette
+        _fr = _fourchette(projection)
         lignes.append(f"À ce prix médian de zone ({_eur(terrain_m2)}/m², {n_ventes} ventes DVF), "
-                      f"{_m2(surface)} représenteraient {_eur(projection)} — une projection arithmétique, "
-                      f"PAS une valeur vénale.")
+                      f"{_m2(surface)} représenteraient une fourchette de {_eur(_fr['bas'])} à "
+                      f"{_eur(_fr['haut'])} (±{DEMI_LARGEUR_PCT} %) — une projection arithmétique, PAS une "
+                      f"valeur vénale. Au dernier backtest (ventes DVF), ce type d'estimation s'écarte "
+                      f"en médiane de 27 % du prix réel.")
         ecart = projection / prix if prix and prix < projection else (prix / projection if prix else None)
         sens = "sous" if prix < projection else "au-dessus de"
         if ecart:

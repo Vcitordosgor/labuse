@@ -112,8 +112,13 @@ def rehab_bloc(mode_b: dict | None) -> dict:
                                  f"~{mb['achat_max_libelle']} — hors valeur du terrain{fonc}."))
     tn = mb.get("terrain_nu")
     if tn:
-        lignes.append(("ligne", f"Terrain nu au prix du secteur : ~{tn.get('valeur_libelle', '')} "
-                                f"({tn.get('prix_m2', '')} €/m² × {tn.get('surface_m2', '')} m² · Estimé)"))
+        # FIX-PRIX-ET-OPPORTUNITES (lot 1) — valeur estimée en fourchette ±30 % (repli libellé simple
+        # si la fourchette n'est pas servie) + mention d'incertitude mesurée (backtest VERITE-TERRAIN-2).
+        _vtn = tn.get("valeur_fourchette_libelle") or tn.get("valeur_libelle", "")
+        lignes.append(("ligne", f"Terrain nu au prix du secteur : ~{_vtn} "
+                                f"({tn.get('prix_m2', '')} €/m² × {tn.get('surface_m2', '')} m² · Estimé, fourchette ±30 %)"))
+        if tn.get("incertitude"):
+            lignes.append(("note", str(tn["incertitude"])))
     if mb.get("porte_par_terrain"):
         lignes.append(("phrase_forte", "À ces hypothèses, la valeur de cette parcelle est portée "
                                        "par le terrain, pas par le bâti."))

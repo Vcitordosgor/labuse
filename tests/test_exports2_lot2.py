@@ -54,6 +54,14 @@ FICHE = {
                     "tendance": "hausse", "tendance_pct": 16, "type_prix": "appartement", "periode": [2022, 2025],
                     "prix_points": [1569, 3067, 3811, 4746, 10135]},
     "mode_b": {"terrain_nu": {"prix_m2": 768, "valeur_eur": 569831, "surface_m2": 742,
+                             # FIX-PRIX-ET-OPPORTUNITES (lot 1) — le bilan sert désormais la fourchette
+                             # ±30 % + la mention d'incertitude mesurée avec la valeur de terrain estimée.
+                             "valeur_bas_eur": 390000, "valeur_haut_eur": 750000,
+                             "valeur_fourchette_libelle": "390 000 € – 750 000 €",
+                             "incertitude": ("Estimation indicative, pas une valeur vénale : fourchette "
+                                             "±30 %. Au dernier backtest (ventes DVF, VERITE-TERRAIN-2), "
+                                             "ce type d'estimation s'écarte en médiane de 27 % du prix "
+                                             "réel et seulement 37 % des ventes tombaient à ±20 %."),
                              "libelle": "terrain nu — secteur"}},
     "dvf_parcelle": {"secteur": [{"type_bien": "appartement", "n_ventes": 36, "mediane_prix_m2": 3804,
                                   "fenetre": "2021-2025"}], "derniere_mutation": None},

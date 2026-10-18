@@ -539,6 +539,15 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
        raison="Une sauvegarde non restaurable ne vaut rien : une fois par mois, on restaure le dernier dump "
               "dans une base jetable, on vérifie, on DROP. Alerte si la restauration échoue.",
        test="tests/test_cron1_registre.py::test_job_a_une_raison"),
+    _j("signal-instantane", "Instantané mensuel du Signal servi (fige la prédiction datée, mesurable forward)",
+       "mensuel (1er)", "0 2 1 * *", "06:00 le 1er", touche="exploitation", timeout_s=1800,
+       besoin_db=True,
+       raison="FIX-PRIX-ET-OPPORTUNITES lot 4 — le volet E a montré que le Signal servi (P de vente 12 "
+              "mois) sépare, mais que l'instantané réellement livré n'est pas jugeable tant que DVF "
+              "n'a pas avancé. Chaque 1er du mois, on FIGE une copie datée du Signal servi (signal_p, "
+              "niveau, bande par parcelle) dans sa seule table `signal_instantanes` — rien d'autre, aucun "
+              "mail — pour la rejouer plus tard contre les ventes DVF postérieures (protocole forward).",
+       test="tests/test_signal_instantane.py::test_job_signal_instantane_dans_le_registre"),
 
     # ── NON REPRIS (retirés du registre par CRON-1 lot 1, avec la raison — cf. CRON-1-LOT1.md) ──
     # Radar : PAS de job. Le traitement des dépôts est déclenché au dépôt (manuel) ; une ÉCHÉANCE

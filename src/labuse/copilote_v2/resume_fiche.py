@@ -136,8 +136,11 @@ def resume_parcelle(db: Session, idu: str) -> dict | None:
         vd = _verdict_section(sid, valeurs)
         if vd is not None:
             sections.append({"id": sid, "titre": s["titre"], "verdict": vd[0], "ton": vd[1]})
-    return {"idu": idu, "commune": fiche.get("commune"), "tuiles": tuiles, "sections": sections,
-            "source": "fiche LABUSE (run servi)", "millesime": runs.current()}
+    # FIX-PRIX-ET-OPPORTUNITES (lot 1) — commune OFFICIELLE dérivée de l'INSEE de l'IDU (jamais le
+    # `parcels.commune` texte qui nommait « Saint-Denis » une parcelle de L'Étang-Salé).
+    from ..communes import nom_officiel
+    return {"idu": idu, "commune": nom_officiel(idu) or fiche.get("commune"), "tuiles": tuiles,
+            "sections": sections, "source": "fiche LABUSE (run servi)", "millesime": runs.current()}
 
 
 def phrase(resume: dict) -> str:
@@ -270,6 +273,11 @@ def champ_precis(db: Session, idu: str, message: str) -> dict | None:
         return {"texte": f"{libelle} : non renseigné pour la parcelle {idu} (donnée absente au run servi).",
                 "champ_id": cid, "valeur": None, "source": "fiche LABUSE"}
     texte = _rendre_champ(cid, libelle, v.valeur, valeurs)
+    # FIX-PRIX-ET-OPPORTUNITES (lot 3) — une capacité constructible est un MAXIMUM réglementaire ; on
+    # ajoute la mention mesurée (volet D : ~½ utilisé en médiane par les permis réels).
+    if cid == "sdp_residuelle_m2":
+        from ..capacite_max import MENTION_COURTE as _CAP
+        texte = f"{texte} C'est un {_CAP}."
     return {"texte": texte, "champ_id": cid, "valeur": v.valeur, "source": f"fiche LABUSE · {cid}"}
 
 

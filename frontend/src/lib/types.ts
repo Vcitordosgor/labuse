@@ -237,6 +237,8 @@ export interface ModeB extends Indisponible {
   // M59-P1 (Q1) : repère « terrain nu au prix du secteur » (Estimé, hors formule réhab) + drapeau
   // « valeur portée par le terrain » (le foncier vaut plus que ce que le bâti justifie).
   terrain_nu?: { valeur_eur: number; valeur_libelle: string; prix_m2: number; surface_m2: number
+    // FIX-PRIX-ET-OPPORTUNITES (lot 1) — fourchette ±30 % + mention d'incertitude (backtest VT2).
+    valeur_bas_eur?: number; valeur_haut_eur?: number; valeur_fourchette_libelle?: string; incertitude?: string
     niveau: string; libelle: string; etiquette: string } | null
   porte_par_terrain?: boolean
   // M101 A2 : la PORTE du mode B — pourquoi cette parcelle est « bâtie », en français lisible

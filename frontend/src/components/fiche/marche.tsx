@@ -12,6 +12,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { getFaisabilite, getMonSecteur, radarClic } from '../../lib/api'
 import { fmtInt, fmtDateNum } from '../../lib/format'
+import { fourchette, FOURCHETTE_MENTION } from '../../lib/fourchette'
 import type { Fiche } from '../../lib/types'
 import { useApp } from '../../store/useApp'
 import { IC, RefDrawer, MicroSpark, Line, GroupLabel, FactRow, FactNote } from './primitives'
@@ -136,10 +137,15 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
             <Ligne label={<>Prix de l'ancien (secteur)<InfoI aria="Méthode du prix de l'ancien" tip={`Référence de revente du bâti EXISTANT du secteur (DVF ventes actées) — ce n'est pas le prix de sortie d'un programme neuf. ${mb.type_prix}, ${mb.n} ventes ≤ ${Math.round(mb.radius_m)} m (rayon adaptatif) · fiabilité ${mb.fiabilite}${mb.tendance ? ` · tendance ${mb.tendance}` : ''}${horizon ? ` · DVF — ${horizon}` : ''}`} /></>}
               valeur={<>{fmtInt(Number(mb.median))} <small>€/m²</small></>} />
           )}
-          {f.dvf_parcelle?.valeur_terrain_secteur_eur != null && (
-            <Ligne label={<>Valeur au prix du secteur<InfoI aria="Méthode de la valeur" tip="Contenance × prix médian du terrain nu au m² du secteur — estimé, pas une valeur vénale." /></>}
-              valeur={<>≈ {fmtInt(f.dvf_parcelle.valeur_terrain_secteur_eur)} <small>€</small></>} />
-          )}
+          {f.dvf_parcelle?.valeur_terrain_secteur_eur != null && (() => {
+            // FIX-PRIX-ET-OPPORTUNITES (lot 1) — jamais un chiffre sec : fourchette ±30 % + mention
+            // d'incertitude mesurée (backtest VERITE-TERRAIN-2). Source unique lib/fourchette.ts.
+            const fr = fourchette(f.dvf_parcelle.valeur_terrain_secteur_eur)!
+            return (
+              <Ligne label={<>Valeur au prix du secteur<InfoI aria="Méthode de la valeur" tip={`Contenance × prix médian du terrain nu au m² du secteur. ${FOURCHETTE_MENTION}`} /></>}
+                valeur={<>≈ {fmtInt(fr.bas)} – {fmtInt(fr.haut)} <small>€</small></>} />
+            )
+          })()}
         </Lignes>
       )}
       {/* NEUF (VEFA) commune — grandeur nommée, effectif, fenêtre ; sous le seuil : « échantillon insuffisant ». */}

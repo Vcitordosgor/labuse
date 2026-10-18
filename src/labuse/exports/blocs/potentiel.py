@@ -67,6 +67,10 @@ def _scenarios(valeurs) -> str:
         _note_simpl = p.get("estimation_simplifiee_note") if isinstance(p, dict) else None
         if _note_simpl:
             detail += f' <span class="note" style="display:block">{esc(_note_simpl)}</span>'
+        # FIX-PRIX-ET-OPPORTUNITES (lot 3) — la SDP est un MAXIMUM réglementaire ; les permis réels en
+        # utilisent ~½ en médiane (volet D). Mention mesurée sous le scénario.
+        from ...capacite_max import MENTION_COURTE as _CAP
+        detail += f' <span class="note" style="display:block">{esc(_CAP)}</span>'
         lignes.append(ligne_kv(SCENARIO_AU_SOL, detail, ""))
     # en hauteur — RECETTE-7 (E1) : comparé au FAÎTAGE (le bâti BD TOPO est mesuré au faîtage) ;
     # omise si les hauteurs ne sont pas servies (parcelle non bâtie).

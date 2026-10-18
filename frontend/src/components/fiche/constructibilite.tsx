@@ -11,6 +11,7 @@ import { getCalculetteDefaults, getFaisabilite, getModeB, getPipelineForParcel, 
 import { fmtEurCompact, fmtInt, fmtM2, fmtPctConsomme, fmtSup } from '../../lib/format'
 import { Chevron } from '../ui/Chevron'
 import { PERIM_POTENTIEL_COURT } from '../../lib/perimetres'
+import { CAPACITE_MAX_MENTION } from '../../lib/capaciteMax'
 import { Chargement, Squelette } from '../Loading'
 import { ErrorState } from '../States'
 import { BlocIndisponible } from './BlocIndisponible'
@@ -856,9 +857,11 @@ export function ModeBBody({ idu, initial }: { idu: string; initial: import('../.
             </>
           )}
           {mb.terrain_nu && (
-            <p data-mode-b-terrain-nu style={{ margin: 0, fontSize: 10.5, color: '#8FA69A' }}>
-              terrain nu au prix du secteur : <b style={{ color: 'var(--txt-hi)' }}>~{mb.terrain_nu.valeur_libelle}</b>{' '}
-              <span style={{ fontSize: 10 }}>({fmtInt(mb.terrain_nu.prix_m2)} €/m² × {fmtInt(mb.terrain_nu.surface_m2)} m² · Estimé)</span>
+            // FIX-PRIX-ET-OPPORTUNITES (lot 1) — fourchette ±30 % au lieu du chiffre sec ; mention
+            // d'incertitude mesurée (backtest VT2) en title. Repli sur l'ancien libellé si absent.
+            <p data-mode-b-terrain-nu style={{ margin: 0, fontSize: 10.5, color: '#8FA69A' }} title={mb.terrain_nu.incertitude}>
+              terrain nu au prix du secteur : <b style={{ color: 'var(--txt-hi)' }}>~{mb.terrain_nu.valeur_fourchette_libelle ?? mb.terrain_nu.valeur_libelle}</b>{' '}
+              <span style={{ fontSize: 10 }}>({fmtInt(mb.terrain_nu.prix_m2)} €/m² × {fmtInt(mb.terrain_nu.surface_m2)} m² · Estimé, fourchette ±30 %)</span>
             </p>
           )}
           {mb.porte_par_terrain && (
@@ -1098,8 +1101,13 @@ export function ConstructibiliteSection({ f, idu }: { f: Fiche; idu: string }) {
             : [fo?.niveaux ?? null, 'calcul tracé'].filter(Boolean).join(' · ') || 'calcul tracé'}
         micro={<MicroTriple items={delaisse
           ? [`surface ${delaisse.surface_m2} m²`, `seuil délaissé ${delaisse.seuil_m2} m²`, 'bilan non servi']
-          : [fo?.niveaux ?? 'gabarit', <>SDP <span style={{ color: 'var(--txt-dim)' }}>{fo?.surface_plancher_m2 ?? reglesSdp ?? '—'} m²</span></>, 'calcul tracé']} />}>
+          : [fo?.niveaux ?? 'gabarit', <>SDP max <span style={{ color: 'var(--txt-dim)' }}>{fo?.surface_plancher_m2 ?? reglesSdp ?? '—'} m²</span></>, 'calcul tracé']} />}>
         <div className="flex flex-col gap-3">
+          {/* FIX-PRIX-ET-OPPORTUNITES (lot 3) — la capacité (SDP, logements) est un MAXIMUM réglementaire ;
+              les permis réels en utilisent ~½ en médiane (volet D). Dit une fois, dès qu'il y a une capacité. */}
+          {!logementsNonCalculable && !delaisse && (((fo?.surface_plancher_m2 ?? 0) > 0) || ((logMax ?? 0) > 0)) && (
+            <FactNote>{CAPACITE_MAX_MENTION}</FactNote>
+          )}
           {/* KELFONCIER-FIX-1 (Lot A) — CAUSE §10 : une zone AU FERMÉE (ou au statut non déterminé)
               explique un potentiel nul — la parcelle n'est pas constructible tant que le PLU n'a pas
               ouvert la zone. Le motif cité vient du règlement (moteur d'ouverture AU). */}
