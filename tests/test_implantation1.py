@@ -264,19 +264,21 @@ def test_hauteur_non_chiffrable_jamais_exploitable(scenario):
 
 
 def test_distance_entre_constructions(scenario):
-    """PLU-CALIBRAGE-10 (pt 4) : Non applicable est RÉSERVÉ au silence prouvé ; une zone non servie
-    donne Non effectué (jamais Non applicable), même en mono-bâtiment ; une règle chiffrable donne
-    Réussi/Échoué (mono-bâtiment = Réussi sans objet). L'étude n'est forcée « à compléter » que si
-    plusieurs bâtiments ET contrôle Non effectué."""
+    """IMPLANTATION-4 (distance mono-bâtiment) : UN SEUL bâtiment → « Non applicable · un seul
+    bâtiment », quelle que soit la règle (rien à mesurer). PLUSIEURS bâtiments : Non applicable =
+    silence prouvé, Non effectué = règle non servie, Réussi/Échoué = règle chiffrable mesurée."""
     c = next(c for c in scenario.controles if c.nom == "Distance entre constructions")
     dc = scenario.regles.distance_constructions
+    nb_bati = sum(1 for o in scenario.scene.objets if o.kind == "batiment_emprise")
     assert c.resultat in (REUSSI, ECHOUE, NON_APPLICABLE, NON_EFFECTUE)
-    # Non applicable <=> silence prouvé (et seulement lui)
-    assert (c.resultat == NON_APPLICABLE) == dc.est_silence
-    if not dc.validee:
-        assert c.resultat == NON_EFFECTUE
-    if dc.est_chiffrable:
-        assert c.resultat in (REUSSI, ECHOUE)
+    if nb_bati <= 1:
+        assert c.resultat == NON_APPLICABLE and "seul bâtiment" in c.mesure
+    else:
+        assert (c.resultat == NON_APPLICABLE) == dc.est_silence
+        if not dc.validee:
+            assert c.resultat == NON_EFFECTUE
+        if dc.est_chiffrable:
+            assert c.resultat in (REUSSI, ECHOUE)
     if c.resultat == REUSSI:
         assert c.citation  # Réussi seulement avec citation (verrou)
 
@@ -326,3 +328,12 @@ def test_scenario_json_rejouable(scenario, tmp_path):
         assert k in d
     s = d["tableau_capacite"]["surfaces_mesurees_m2"]
     assert abs(s["somme"] - d["terrain"]["aire_dessin_m2"]) < 1.0
+
+
+# IMPLANTATION-4 (parcelles multiples) — une assiette doit être d'UN SEUL TENANT. Deux parcelles de
+# communes différentes (L'Étang-Salé + Saint-Denis) ne sont évidemment pas contiguës : le moteur REFUSE
+# avec un message clair (ValueError → 400 côté route), au lieu de garder silencieusement un morceau.
+def test_parcelles_non_contigues_refusees(session_reelle):
+    idus = [IDUS_ETANG_SALE[0], IDUS_SAINT_DENIS[0]]
+    with pytest.raises(ValueError, match="contigu"):
+        etudier(session=session_reelle, idus=idus, avec_pente=False)

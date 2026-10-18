@@ -7,6 +7,8 @@ import { useQuery } from '@tanstack/react-query'
 import { getCompare, type CompareRow } from '../../lib/api'
 import { fmtEurCompact, fmtInt, fmtTauxEmprise, iduCourt } from '../../lib/format'
 import { PERIM_POTENTIEL_COURT, PERIM_RESIDUEL_COURT, PERIM_SECTION_CADASTRALE } from '../../lib/perimetres'
+// CAPACITE_MAX_MENTION_COURTE (main) : ne sert PLUS la ligne logements (retirée → renvoi à l'Étude),
+// mais la MENTION reste, en note sous le tableau (la SDP affichée est un maximum réglementaire, volet D).
 import { CAPACITE_MAX_MENTION_COURTE } from '../../lib/capaciteMax'
 import { bandeMeta, signalMeta } from '../../lib/status'   // COMPARER-2 §4 — bande + Signal (comme l'Analyse)
 import { useApp } from '../../store/useApp'
@@ -83,7 +85,9 @@ const ROWS: Row[] = [
     title: 'La ZONE du PLU autorise-t-elle de construire (famille U/AU) ? Distinct du potentiel résiduel restant (ligne SDP résiduelle) : une zone constructible peut n\'avoir aucun potentiel si la parcelle est déjà saturée ou trop exiguë.' },
   // O2-5 — chaque capacité porte son périmètre (source unique lib/perimetres) : la « max » suppose le
   // terrain libéré, la « résiduelle » suppose le bâti conservé — sinon les deux se contredisent à l'œil.
-  { label: `SDP max estimée · ${PERIM_POTENTIEL_COURT}`, prov: 'estime', val: (r) => r.sdp_max_m2 != null ? `${fmtInt(r.sdp_max_m2)} m²` : '—', num: (r) => r.sdp_max_m2 ?? null, best: 'hi' },
+  // IMPLANTATION-4 (LOT C) — SDP de l'ancien moteur = « SDP maximale réglementaire » (jamais « du
+  // scénario », réservé à l'Étude) : les deux libellés ne se croisent jamais.
+  { label: `SDP maximale réglementaire · ${PERIM_POTENTIEL_COURT}`, prov: 'estime', val: (r) => r.sdp_max_m2 != null ? `${fmtInt(r.sdp_max_m2)} m²` : '—', num: (r) => r.sdp_max_m2 ?? null, best: 'hi' },
   { label: `SDP résiduelle · ${PERIM_RESIDUEL_COURT}`, prov: 'estime',
     // RECETTE-PROD-1 (12) — potentiel résiduel + CAUSE COURTE quand il n'y a pas de potentiel (0/—) :
     // le client voit POURQUOI (terrain exigu, zone non constructible…), pas un « 0 » muet. La phrase
@@ -111,12 +115,14 @@ const ROWS: Row[] = [
   { label: 'Prix terrain nu zone', prov: 'estime', val: (r) => r.terrain_zone_eur_m2 != null ? `${fmtInt(r.terrain_zone_eur_m2)} €/m²` : '—', num: (r) => r.terrain_zone_eur_m2 ?? null, best: 'lo', title: 'Médiane DVF du terrain nu dans la zone (calcul, pas un fait) — plus bas = plus intéressant.' },
   // RETOURS-11F M13 (O9) — lignes utiles ajoutées, toutes de la fiche servie (aucun second moteur).
   { label: `Prix bâti · ${PERIM_SECTION_CADASTRALE}`, prov: 'estime', val: (r) => r.prix_secteur_bati_m2 != null ? `${fmtInt(r.prix_secteur_bati_m2)} €/m²` : '—', num: (r) => r.prix_secteur_bati_m2 ?? null, title: 'Médiane DVF du bâti (maison/appartement) sur la section cadastrale (calcul) — même source que la fiche Marché (dvf_parcelle.secteur).' },
-  // OUTILS-FIX-2 D3 — la fourchette de logements affiche ses DEUX bornes (avant : borne haute seule).
-  // FIX-PRIX-ET-OPPORTUNITES (lot 3) — capacité = MAXIMUM réglementaire ; mention mesurée (volet D) au survol.
-  { label: 'Logements possibles (max.)', prov: 'estime',
-    val: (r) => { const hi = r.logements_possibles, lo = r.logements_min
-      return hi == null ? '—' : (lo != null && lo !== hi ? `${fmtInt(lo)}–${fmtInt(hi)}` : `${fmtInt(hi)}`) },
-    num: (r) => r.logements_possibles ?? null, best: 'hi', title: `Fourchette de logements estimée (au sol ou sous-sol) — ${CAPACITE_MAX_MENTION_COURTE}.` },
+  // IMPLANTATION-4 (LOT B) — plus de fourchette de logements de l'ancien moteur dans le Comparatif : le
+  // nombre de logements (dessiné, contrôlé) se lit dans l'Étude de faisabilité. La ligne reste (repère de
+  // lecture), mais sans chiffre ni tri/surlignage — elle renvoie à l'Étude. On ÉCARTE donc, pour CETTE
+  // ligne, la fourchette « Logements possibles (max.) » que main avait ajoutée (OUTILS-FIX-2 D3 +
+  // FIX-PRIX-ET-OPPORTUNITES lot 3) : c'est précisément le chiffre de l'ancien moteur qu'on retire ici.
+  { label: 'Logements possibles', prov: 'estime', noBadge: true,
+    val: () => 'voir l\'Étude de faisabilité',
+    title: 'Le nombre de logements (dessiné, contrôlé, par scénario) se lit dans l\'Étude de faisabilité — plus de fourchette estimée ici.' },
   { label: 'Bâti existant', prov: 'source', val: (r) => r.bati_existant_pct != null ? `${fmtInt(r.bati_existant_pct)} % du terrain` : '—', num: (r) => r.bati_existant_pct ?? null, best: 'lo', title: 'Part du terrain déjà couverte par le bâti (emprise au sol / surface) — plus bas = plus de place à bâtir.' },
   { label: 'Gabarit max', prov: 'source', val: (r) => r.gabarit_niveaux_max != null ? `R+${Math.max(0, r.gabarit_niveaux_max - 1)}` : '—', num: (r) => r.gabarit_niveaux_max ?? null, best: 'hi', title: 'Nombre de niveaux maximum autorisé (gabarit PLU).' },
   { label: 'Accès & réseaux', prov: 'source', val: (r) => r.acces_reseaux ?? '—', title: 'Un seul verdict de viabilisation (accès voirie + réseaux) — le même que la fiche Réseaux et accès.' },
@@ -351,7 +357,10 @@ export function ComparePanel() {
               </tbody>
             </table>
           )}
-          <p className="mt-3 text-[10.5px] text-txt-dim">Chaque valeur vient du même point de calcul que la fiche (run servi). Ajoutez par la carte, ou depuis une fiche → « Comparer » — jusqu’à 3.</p>
+          {/* FIX-PRIX-ET-OPPORTUNITES (lot 3, de main) — mention GARDÉE (ex-ligne logements) : la SDP
+              maximale réglementaire affichée est un plafond ; les permis réels en utilisent ~½ (volet D). */}
+          <p className="mt-3 text-[10.5px] text-txt-dim">{CAPACITE_MAX_MENTION_COURTE}.</p>
+          <p className="mt-1 text-[10.5px] text-txt-dim">Chaque valeur vient du même point de calcul que la fiche (run servi). Ajoutez par la carte, ou depuis une fiche → « Comparer » — jusqu’à 3.</p>
         </div>
       </div>
     </div>

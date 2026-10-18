@@ -68,26 +68,23 @@ table.ef-scn tr.retenu { background: var(--mint-bg); }
 .ef-fig svg { width: 100%; height: auto; display: block; }
 .ef-leg { font-size: 7.8pt; color: var(--muted); margin-top: 3pt; display: flex; flex-wrap: wrap; gap: 10pt; }
 .ef-leg i { display: inline-block; width: 9pt; height: 9pt; border-radius: 1.5pt; vertical-align: -1pt; margin-right: 3pt; }
+/* IMPLANTATION-4 — la PLANCHE plan masse (le MÊME SVG qu'à l'écran) sur une page PAYSAGE pleine. */
+@page planche-land { size: A4 landscape; margin: 9mm; }
+.ef-planche-page { page: planche-land; }
+/* le SVG porte width="100%" + viewBox : WeasyPrint le dimensionne seul. Ne PAS forcer height:auto ici
+   (sous page paysage nommée, WeasyPrint calcule alors une hauteur nulle → planche blanche). */
+.ef-planche { width: 96%; margin: 0 auto; border: 1px solid var(--line); border-radius: 3pt; background: #fff; }
 """
 
 # ── format ────────────────────────────────────────────────────────────────────────────────────
-def _grp(n: float | int | None) -> str:
-    """Entier, séparateur de milliers = espace ordinaire (retiré par le crible de provenance)."""
-    if n is None:
-        return "—"
-    return f"{int(round(float(n))):,}".replace(",", " ")
+# IMPLANTATION-4 (format des nombres) — LE helper UNIQUE (planche + PDF), miroir de lib/format.ts.
+# Milliers en espace INSÉCABLE (retiré par le crible de provenance `_canon`). `_grp`/`_dec`/`_m2`
+# deviennent de simples alias pour ne rien changer aux appels existants du document.
+from labuse.implantation.format import dec_souple, groupe_fr, m2_fr   # noqa: E402
 
-
-def _dec(v) -> str:
-    """Nombre avec au plus une décimale (séparateur FR), sans zéro inutile : 2.5→« 2,5 », 5.0→« 5 »."""
-    if v is None:
-        return "—"
-    s = f"{float(v):.1f}".rstrip("0").rstrip(".")
-    return s.replace(".", ",")
-
-
-def _m2(v) -> str:
-    return "—" if v is None else f"{_grp(v)} m²"
+_grp = groupe_fr
+_dec = dec_souple
+_m2 = m2_fr
 
 
 def _statut_court(s: str) -> str:
@@ -307,7 +304,7 @@ def _p1_synthese(payload: dict, retenu: dict, numero: str, genere_le: str) -> st
             f'<td><span class="st {stc}">{esc(_statut_court(s["statut_etude"]))}</span></td></tr>')
     scn_table = (
         '<table class="ef-scn"><tr><th>Scénario</th><th>Forme</th><th class="num">Logements</th>'
-        '<th class="num">Niveaux</th><th class="num">SDP</th><th class="num">Places</th>'
+        '<th class="num">Niveaux</th><th class="num">SDP du scénario</th><th class="num">Places</th>'
         '<th>Étude</th></tr>' + "".join(rows) + "</table>") if rows else ""
     return (
         '<div class="cover">'
@@ -470,6 +467,20 @@ def _p5_plan_masse(payload: dict, retenu: dict, *, titre: str = None) -> str:
           '(verrou de test). Plan rendu depuis la géométrie servie.</p></section>')
 
 
+def _p_planche(payload: dict, retenu: dict) -> str:
+    """La PLANCHE plan masse « façon archi » — le MÊME SVG que l'écran (servi dans le payload par
+    `service.etudier_payload`), sur une page paysage pleine. Rien n'est redessiné ici."""
+    svg = retenu.get("planche_svg") or ""
+    if not svg:
+        return ""
+    # pas de <h2> ici : la planche porte SON cartouche (titre) ; un en-tête en plus débordait la page
+    # paysage et laissait une page d'orphelin. On garde juste le dessin pleine page + une note discrète.
+    return ('<section class="ef-planche-page"><div class="ef-planche">' + svg + '</div>'
+            '<p class="note">Planche — plan masse « façon architecte », dessinée depuis la géométrie du '
+            "scénario (contexte : cadastre et bâti voisins BD TOPO, voies nommées, TN LiDAR aux angles). "
+            "Esquisse indicative — pas une étude d'architecte.</p></section>")
+
+
 def _p6_distribution(payload: dict, retenu: dict) -> str:
     sc = retenu
     types = sorted({k for d in sc["distribution_niveaux"] for k in (d.get("par_type") or {})})
@@ -487,32 +498,20 @@ def _p6_distribution(payload: dict, retenu: dict) -> str:
     totcells = "".join(f'<td class="num">{tot[x]}</td>' for x in types)
     rows.append(f'<tr><td class="k"><strong>Total</strong></td>{totcells}'
                 f'<td class="num"><strong>{_grp(sc["resume"]["sdp_m2"])}</strong></td></tr>')
-    # coupe schématique (labels depuis le payload : niveaux + règle de hauteur)
-    haut = next((l for l in payload["regles"]["lignes"] if "hauteur" in (l.get("nom") or "").lower()
-                 or "égout" in (l.get("nom") or "")), None)
-    htxt = (f'{esc(haut["nom"])} {_grp(haut["valeur"])} {esc(str(haut.get("unite") or "m"))}'
-            if haut and haut.get("valeur") is not None else "règle de hauteur")
-    nlab = sc.get("niveaux_label", "")
+    # COUPE DE PRINCIPE — le MÊME SVG que l'écran (servi dans le payload par service.etudier_payload),
+    # dessiné depuis la géométrie (TN LiDAR, limites, bâtiment en coupe + niveaux, hauteurs). Repli : une
+    # note seule si le dessin a échoué (jamais l'ancien schéma en dur, qui n'était pas tiré de la donnée).
+    coupe_svg = retenu.get("coupe_svg") or ""
     coupe = (
-        '<div class="ef-fig"><svg viewBox="0 0 600 170" width="100%">'
-        '<rect width="600" height="170" fill="#FBFCFB"/>'
-        '<rect x="0" y="140" width="600" height="30" fill="#E5E7EB"/>'
-        '<line x1="30" y1="140" x2="570" y2="130" stroke="#DC2626" stroke-width="1.3"/>'
-        '<text x="36" y="134" font-size="8.5" fill="#DC2626">Terrain naturel (LiDAR)</text>'
-        '<rect x="150" y="40" width="150" height="100" fill="#1F2A24" fill-opacity="0.85"/>'
-        f'<text x="160" y="90" font-size="9" fill="#fff">{esc(nlab)}</text>'
-        '<rect x="330" y="128" width="140" height="6" fill="#fff" stroke="#6B7280"/>'
-        '<text x="335" y="124" font-size="8" fill="#6B7280">stationnement aérien</text>'
-        f'<text x="305" y="52" font-size="8.5" fill="#15803D">{htxt}</text>'
-        '</svg></div>'
-        '<p class="note">Coupe de principe : le volume bâti sous la règle de hauteur, le '
-        'stationnement aérien au sol. La vue 3D de l\'outil montre ce bâtiment dans l\'enveloppe du '
-        'Gabarit, pas seulement le maximum théorique.</p>')
+        ('<div class="ef-fig">' + coupe_svg + '</div>') if coupe_svg else ''
+    ) + ('<p class="note">Coupe de principe : le volume bâti sous la règle de hauteur, le terrain '
+         'naturel (LiDAR), le stationnement aérien au sol. Esquisse indicative, pas une étude '
+         "d'architecte.</p>")
     return (
         '<section><h2>5. Distribution et coupe</h2>'
         f'<div class="verdict">{esc(sc.get("niveaux_label", ""))} : la répartition des logements par '
         'niveau, chaque module dessiné = un logement compté.</div>'
-        f'<table class="kv"><tr><th>Niveau</th>{thead}<th class="num">SDP</th></tr>'
+        f'<table class="kv"><tr><th>Niveau</th>{thead}<th class="num">SDP du scénario</th></tr>'
         + "".join(rows) + "</table>" + coupe + "</section>")
 
 
@@ -618,11 +617,8 @@ def _annexe(payload: dict, retenu: dict) -> str:
 
 
 # ════════════════════════════════════════════════════════════════════════════════════════════
-def numero_etude(idus: list[str], genere_le: str) -> str:
-    """N° de document DÉTERMINISTE : EF-AAAAMMJJ-XXXX (XXXX stable par assiette → rejeu à l'identique)."""
-    d = re.sub(r"\D", "", genere_le)[:8] or "00000000"
-    h = hashlib.md5((",".join(sorted(idus))).encode()).hexdigest()
-    return f"EF-{d}-{int(h[:4], 16) % 10000:04d}"
+# n° de document : source UNIQUE dans implantation.planche (partagée planche + PDF).
+from labuse.implantation.planche import numero_etude   # noqa: E402,F401
 
 
 def rendu_etude(payload: dict, *, genere_le: str, scenario_ref: Optional[str] = None) -> dict:
@@ -646,6 +642,7 @@ def rendu_etude(payload: dict, *, genere_le: str, scenario_ref: Optional[str] = 
         + _p3_regles(payload, retenu)
         + _p4_enveloppe(payload, retenu)
         + _p5_plan_masse(payload, retenu)
+        + _p_planche(payload, retenu)
         + _p6_distribution(payload, retenu)
         + _p7_capacite(payload, retenu)
         + _p8_hypotheses(payload, retenu, numero)

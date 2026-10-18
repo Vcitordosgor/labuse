@@ -30,7 +30,11 @@ def test_exports_portent_la_mention_capacite():
     # libellés « maximum » posés
     assert "Surface de plancher (maximum)" in _lire("src/labuse/exports/blocs/financier.py")
     assert "Logements (maximum)" in _lire("src/labuse/exports/blocs/financier.py")
-    assert "Logements possibles (max.)" in _lire("src/labuse/exports/blocs/comparatif.py")
+    # IMPLANTATION-4 (merge) — le Comparatif ne porte plus la LIGNE « Logements possibles (max.) » (le
+    # nombre de l'ancien moteur part dans l'Étude) ; la mention « capacité = maximum réglementaire » reste
+    # en NOTE sous le tableau (note(_CAP) depuis capacite_max.MENTION).
+    _cmp = _lire("src/labuse/exports/blocs/comparatif.py")
+    assert "note(_CAP)" in _cmp and "import MENTION as _CAP" in _cmp
 
 
 def test_fiche_et_gabarit_portent_la_mention():

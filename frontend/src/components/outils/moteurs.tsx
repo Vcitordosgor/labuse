@@ -136,7 +136,7 @@ export function M15({ communeOverride }: { communeOverride?: string | null } = {
 const ASM_MAX_DEFAUT = 8   // repli ; CHASSE-DONNEES-FIX-1 (E-78) la valeur vient de /moteurs/config.
 
 export function M16() {
-  const { msel, setMsel, setModuleMap, parcelPrefill, setParcelPrefill, select } = useApp()
+  const { msel, setMsel, setModuleMap, parcelPrefill, setParcelPrefill, select, ouvrirEtude } = useApp()
   // CHASSE-DONNEES-FIX-1 (suite 2, E-78) — plafond d'écran SERVI (config/moteurs.yaml), plus codé en
   // dur : un seul endroit décide « 8 max » (décision Vic RECETTE-1 H5), le back plafonne à 30 (API).
   const cfgMot = useQuery({ queryKey: ['moteurs-config'], queryFn: getMoteursConfig, staleTime: 3600_000 })
@@ -302,10 +302,9 @@ export function M16() {
                     <div className="text-[9px] text-txt-dim">SDP estimée cumulée</div>
                     <div className="tnum text-[14px] font-semibold text-mint">{fmt(d.sdp_combinee_m2)} m²</div>
                   </div>
-                  <div className="rounded-md bg-surface-3 px-2 py-1.5">
-                    <div className="text-[9px] text-txt-dim">Logements</div>
-                    <div className="tnum text-[14px] font-semibold text-txt">{fmt(d.logements_combine?.[0])}–{fmt(d.logements_combine?.[1])}</div>
-                  </div>
+                  {/* IMPLANTATION-4 (LOT B) — la tuile « Logements » (fourchette cumulée de l'ancien
+                      moteur) est RETIRÉE : le nombre de logements se lit dans l'Étude de faisabilité
+                      (pont « Étude de faisabilité de cet assemblage » ci-dessous). */}
                   {ratio != null && (
                     <div data-asm-kpi="ratio" className="rounded-md bg-surface-3 px-2 py-1.5">
                       <div className="text-[9px] text-txt-dim">vs meilleure seule</div>
@@ -338,6 +337,16 @@ export function M16() {
               </>
             )}
           </div>
+
+          {/* IMPLANTATION-4 (LOT A) — pont vers l'Étude de faisabilité : ouvre l'écran d'étude (Docs,
+              overlay M22 + carte intégrée) avec l'assiette de l'assemblage. Le nombre de logements
+              dessiné/contrôlé se lit DANS l'Étude (plus de fourchette de l'ancien moteur ici, LOT B). */}
+          {msel.length >= 1 && (
+            <Bouton niveau="secondaire" ton="vert" data-asm-etude className="w-full"
+              onClick={() => ouvrirEtude(msel)}>
+              Étude de faisabilité de cet assemblage →
+            </Bouton>
+          )}
 
           {/* B — approche propriétaire (privacy : PM nommée / particulier masqué) */}
           <div data-asm-proprio className={`rounded-lg border px-3 py-1.5 text-[11px] ${d.tous_personnes_morales ? 'border-mint/40 bg-mint/[0.06]' : 'border-line-2 bg-surface-2'}`}>

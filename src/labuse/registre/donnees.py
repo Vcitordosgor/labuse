@@ -1272,7 +1272,7 @@ DONNEES: dict[str, Donnee] = {
     moteur="potentiel", calcul="moteur",
     fonction="src/labuse/faisabilite/potentiel.py:bloc_potentiel (table_rase.vendable_m2)",
     reservoirs=("bd_topo", "cosia", "gpu_plu_api_carto",), portee="run"),
- "surface_plancher_m2": C("Surface de plancher créée (table rase)", "m²", "parcelle",
+ "surface_plancher_m2": C("SDP maximale réglementaire (table rase)", "m²", "parcelle",
     "surface de plancher CRÉÉE par le scénario table rase (moteur commun, emprise constructible × "
     "occupation × niveaux) — c'est l'ASSIETTE de taxe_amenagement_estimee_eur ; distincte de "
     "capacite_logements ET de sdp_residuelle_m2 (potentiel au sol après bâti existant) : deux "

@@ -195,7 +195,10 @@ def reperes_publics(db: Session, idu: str, sourcee: dict) -> dict[str, dict]:
     if rap:
         out["redevance_archeologie"] = rap
 
-    # Faisabilité LABUSE — SDP possible (+ parkings, logements) repris de la fiche
+    # Faisabilité LABUSE — SDP possible reprise de la fiche (repère de SDP pour le Bilan).
+    # IMPLANTATION-4 (LOT B) — on NE renvoie PLUS le nombre de logements de l'ancien moteur : le Bilan
+    # ne doit pas pré-remplir un nombre de logements depuis la faisabilité estimée (il se pré-remplit
+    # « depuis l'Étude » via le pont de l'écran d'étude, ou reste vide/saisi). On ne garde que la SDP.
     if parcel_id is not None:
 
         def _fais():
@@ -207,10 +210,11 @@ def reperes_publics(db: Session, idu: str, sourcee: dict) -> dict[str, dict]:
                 return None
             return {
                 "valeur": float(sdp),
-                "label": f"Faisabilité {round(float(sdp)):g} m² SDP (estimation)",
+                # IMPLANTATION-4 (LOT C) — SDP de l'ancien moteur = « SDP maximale réglementaire »
+                # (jamais « SDP du scénario », réservé à l'Étude) : les deux libellés ne se croisent jamais.
+                "label": f"SDP maximale réglementaire {round(float(sdp)):g} m² (estimation)",
                 "source": "faisabilité LABUSE (estimation, à confirmer)",
                 "parkings": d.get("stationnement_places"),
-                "logements": d.get("logements"),
             }
 
         fais = _sans_poison(db, _fais)

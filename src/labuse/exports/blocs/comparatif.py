@@ -23,15 +23,6 @@ def _ref_courte(idu: str) -> str:
     return f"{idu[8:10]} {idu[10:14]}" if idu and len(idu) >= 14 else (idu or "")
 
 
-def _logements(r) -> str | None:
-    hi, lo = r.get("logements_possibles"), r.get("logements_min")
-    if hi is None:
-        return None
-    if lo is not None and lo != hi:
-        return f"{int(lo)} à {int(hi)}"
-    return str(int(hi))
-
-
 def _classement(r) -> str | None:
     bande = r.get("bande")
     if not bande:
@@ -93,7 +84,9 @@ _LIGNES = [
     # constructible mais 0 potentiel résiduel = « oui » trompeur). On sert la constructibilité de
     # ZONE (famille ∉ A/N), le potentiel vivant sur la ligne « SDP résiduelle » suffixée de sa cause.
     ("Zone constructible", "s", lambda r: _oui_non(r.get("zone_constructible"))),
-    ("SDP max estimée", "e", lambda r: _m2(r, "sdp_max_m2")),
+    # IMPLANTATION-4 (LOT C) — SDP de l'ancien moteur = « SDP maximale réglementaire » (jamais « du
+    # scénario », réservé à l'Étude) ; même libellé qu'à l'écran Comparer.
+    ("SDP maximale réglementaire", "e", lambda r: _m2(r, "sdp_max_m2")),
     ("SDP résiduelle", "e", lambda r: _sdp_residuelle_cause(r)),
     ("Emprise au sol max (PLU)", "s", lambda r: (_pct(r, "emprise_ces_pct") or "non réglementée")),
     ("Taux d'occupation du gabarit", "e", lambda r: esc(fmt_taux_emprise(r.get("taux_emprise_pct")))),
@@ -101,7 +94,10 @@ _LIGNES = [
     ("Charge foncière /m² terrain", "e", lambda r: (f"{_i(r.get('charge_fonciere_m2'))} €/m²" if r.get("charge_fonciere_m2") is not None else None)),
     ("Prix terrain nu zone", "e", lambda r: _eur_m2(r, "terrain_zone_eur_m2")),
     ("Prix bâti (section cadastrale)", "e", lambda r: _eur_m2(r, "prix_secteur_bati_m2")),
-    ("Logements possibles (max.)", "e", _logements),
+    # IMPLANTATION-4 (LOT B) — plus de fourchette de logements de l'ancien moteur : renvoi à l'Étude de
+    # faisabilité (comme à l'écran Comparer). prov=None → aucun badge, comme « Classement LABUSE ».
+    # On écarte donc, pour cette ligne, la fourchette « Logements possibles (max.) » (_logements) de main.
+    ("Logements possibles", None, lambda r: "voir l'Étude de faisabilité"),
     ("Bâti existant", "s", lambda r: (f"{_i(r.get('bati_existant_pct'))} % du terrain" if r.get("bati_existant_pct") is not None else None)),
     ("Gabarit max", "s", lambda r: (f"R+{max(0, int(r['gabarit_niveaux_max']) - 1)}" if r.get("gabarit_niveaux_max") is not None else None)),
     ("Accès & réseaux", "s", lambda r: esc(r.get("acces_reseaux")) if r.get("acces_reseaux") else None),

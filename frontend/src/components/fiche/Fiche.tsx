@@ -2025,13 +2025,12 @@ export function Fiche({ idu }: { idu: string }) {
                       : zoneFamille === 'N' ? 'Zone naturelle — construction non autorisée.'
                       : sdpNulle ? 'Aucune SDP résiduelle exploitable sur cette parcelle — le détail du calcul (terrain libéré, hypothèses, gabarit) est dans « Étudier quand même ».' : null)
                   const outils: OutilSection[] = []
-                  // IMPLANTATION-2 (LOT C) — l'étude de faisabilité n'est plus CALCULÉE dans la fiche :
-                  // un bouton ouvre l'outil « Étude de faisabilité » (M22) sur cette parcelle (idiome
-                  // parcelPrefill). Le scénario dessiné, les contrôles et les hypothèses y sont servis.
-                  // FICHE-ORFEVRERIE-1 (Lot B, pt 16) — la section « Simulation » est fondue ICI : un SEUL
-                  // « Étude de faisabilité », plus « Densifier », « Calculette foncière » et « Assemblage ».
+                  // IMPLANTATION-4 (LOT A) — l'étude de faisabilité vit maintenant dans Docs (overlay) : le
+                  // bouton OUVRE l'écran d'étude sur cette parcelle (ouvrirEtude), plus aucun calcul dans la fiche.
+                  // FICHE-ORFEVRERIE-1 (Lot B, pt 16, de main) — la section « Simulation » est FONDUE ici : un
+                  // seul « Étude de faisabilité » + « Densifier », « Calculette foncière » et « Assemblage ».
                   outils.push({ label: 'Étude de faisabilité', principal: true, data: 'etude-outil',
-                    onClick: () => { setParcelPrefill(idu); setModule('programme') } })
+                    onClick: () => useApp.getState().ouvrirEtude([idu]) })
                   if (f.commune) outils.push({ label: "Densifier l'existant", data: 'densifier-filtre',
                     onClick: () => { const st = useApp.getState(); st.setCommunesFilter([f.commune!]); st.setFilter('renouvellement', true); st.setFilter('sdpMin', 200); st.openFiltres() } })
                   outils.push({ label: 'Calculette foncière', data: 'calculette',

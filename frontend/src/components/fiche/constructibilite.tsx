@@ -1114,19 +1114,18 @@ export function ConstructibiliteSection({ f, idu }: { f: Fiche; idu: string }) {
     : (typeof fo?.logements_au_sol === 'number' ? fo.logements_au_sol : null)
   const capaciteNulle = logMax != null && logMax <= 0
   const logementsNonCalculable = nonConstructible || capaciteNulle
-  // RETOURS-11F4 F5 — fourchette bornes égales → un seul nombre (« 2 », jamais « 2–2 »), comme la grille capacité.
-  const logtsInterval = Array.isArray(fo?.logements_au_sol)
-    ? (fo.logements_au_sol[0] === fo.logements_au_sol[1] ? `${fo.logements_au_sol[0]}` : `${fo.logements_au_sol[0]}–${fo.logements_au_sol[1]}`)
-    : null
-  const logementsTxt = delaisse ? `délaissé (${delaisse.surface_m2} m²)`
+  // IMPLANTATION-4 (LOT B) — la fiche n'affiche PLUS un nombre de logements de l'ancien moteur en tête
+  // de la Constructibilité : elle donne la SDP MAXIMALE RÉGLEMENTAIRE (LOT C) ; le nombre de logements
+  // (dessiné, contrôlé) se lit dans l'Étude de faisabilité (renvoi dans le corps du tiroir). `logMax`
+  // reste INTERNE (couleur grise « rien à bâtir » / contexte « sans objet »), il n'imprime aucun nombre.
+  const sdpMax = fo?.surface_plancher_m2 ?? reglesSdp
+  const capaciteTxt = delaisse ? `délaissé (${delaisse.surface_m2} m²)`
     : nonConstructible ? 'non calculable'
       : capaciteNulle ? undefined
-        : (logMax != null && logMax > 0)
-          ? (logtsInterval ? `${logtsInterval} logts` : `${fo!.logements_au_sol} logts`)
-          : (reglesSdp != null && reglesSdp > 0 ? `~${fmtInt(reglesSdp)} m² SDP` : 'à estimer')
+        : (sdpMax != null && sdpMax > 0) ? `${fmtInt(sdpMax)} m² SDP` : 'à estimer'
   return (
     <>
-      <RefDrawer id="faisabilite" icon={IC.faisa} name="Constructibilité" value={logementsTxt}
+      <RefDrawer id="faisabilite" icon={IC.faisa} name="Constructibilité" value={capaciteTxt}
         valueColor={logementsNonCalculable ? 'var(--txt-faint)' : undefined}
         context={delaisse
           ? `surface ${delaisse.surface_m2} m² · seuil ${delaisse.seuil_m2} m²`
@@ -1134,10 +1133,19 @@ export function ConstructibiliteSection({ f, idu }: { f: Fiche; idu: string }) {
             : [fo?.niveaux ?? null, 'calcul tracé'].filter(Boolean).join(' · ') || 'calcul tracé'}
         micro={<MicroTriple items={delaisse
           ? [`surface ${delaisse.surface_m2} m²`, `seuil délaissé ${delaisse.seuil_m2} m²`, 'bilan non servi']
-          : [fo?.niveaux ?? 'gabarit', <>SDP max <span style={{ color: 'var(--txt-dim)' }}>{fo?.surface_plancher_m2 ?? reglesSdp ?? '—'} m²</span></>, 'calcul tracé']} />}>
+          : [fo?.niveaux ?? 'gabarit', <>SDP maximale réglementaire <span style={{ color: 'var(--txt-dim)' }}>{fo?.surface_plancher_m2 ?? reglesSdp ?? '—'} m²</span></>, 'calcul tracé']} />}>
         <div className="flex flex-col gap-3">
-          {/* FIX-PRIX-ET-OPPORTUNITES (lot 3) — la capacité (SDP, logements) est un MAXIMUM réglementaire ;
-              les permis réels en utilisent ~½ en médiane (volet D). Dit une fois, dès qu'il y a une capacité. */}
+          {/* IMPLANTATION-4 (LOT B) — renvoi : le nombre de logements (dessiné, contrôlé) et le plan masse
+              vivent dans l'Étude de faisabilité ; la fiche ne donne qu'une SDP maximale réglementaire. */}
+          {!delaisse && !nonConstructible && (
+            <button data-faisa-renvoi-etude onClick={() => useApp.getState().ouvrirEtude([idu])}
+              className="self-start text-[11px] text-mint underline decoration-mint/40 underline-offset-2 transition-colors duration-quick hover:text-mint/80">
+              Nombre de logements et plan masse : voir l'Étude de faisabilité →
+            </button>
+          )}
+          {/* FIX-PRIX-ET-OPPORTUNITES (lot 3, de main) — GARDÉ à côté du renvoi : la capacité (la SDP
+              maximale réglementaire affichée) est un MAXIMUM ; les permis réels en utilisent ~½ en médiane
+              (volet D). Dit une fois, dès qu'il y a une capacité. */}
           {!logementsNonCalculable && !delaisse && (((fo?.surface_plancher_m2 ?? 0) > 0) || ((logMax ?? 0) > 0)) && (
             <FactNote>{CAPACITE_MAX_MENTION}</FactNote>
           )}
@@ -1167,9 +1175,11 @@ export function ConstructibiliteSection({ f, idu }: { f: Fiche; idu: string }) {
               sous="Changer les hypothèses (résidence principale, logement aidé, piscine, taux communal)"
               onClick={() => { setParcelPrefill(idu); setModule('taxe-amenagement') }} />
           )}
-          <PorteOutil ico="◱" data="faisabilite-outil" titre="Faisabilité"
-            sous={`La capacité constructible de ces ${fmtM2(f.surface_m2)} : SDP, hauteur PLU, calcul tracé`}
-            onClick={() => { setParcelPrefill(idu); setModule('programme') }} />
+          {/* IMPLANTATION-4 (LOT A) — l'Étude de faisabilité vit dans Docs : la tuile OUVRE l'écran d'étude
+              (overlay M22 + carte intégrée) sur cette parcelle, plus l'ancien outil des Outils. */}
+          <PorteOutil ico="◱" data="faisabilite-outil" titre="Étude de faisabilité"
+            sous={`Les scénarios d'implantation collectif sur ces ${fmtM2(f.surface_m2)} : plan masse, SDP du scénario, contrôles`}
+            onClick={() => useApp.getState().ouvrirEtude([idu])} />
           <PorteOutil ico="▦" data="calculette" titre="Calculette foncière"
             sous={`Ce terrain de ${fmtM2(f.surface_m2)} : SDP, prix de sortie, votre coût et marge`}
             onClick={() => { setCalcPrefill(idu); setModule('calculette-fonciere') }} />

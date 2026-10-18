@@ -259,17 +259,92 @@ def etudier_multi(session=None, *, idus: Optional[list[str]] = None, zone: Optio
             return [], _message_ne_tient_pas(faisables, programme, regles, conv), terrain, regles, conv
         faisables = couvrants
 
-    # jusqu'à N scénarios, distincts par (forme, niveaux)
-    choisis, vus = [], set()
-    for it in faisables:
-        sig = (it[2], it[3])
-        if sig in vus:
-            continue
-        vus.add(sig)
-        choisis.append(_paquet_en_scenario(terrain, conv, regles, objectif, candidats, it))
-        if len(choisis) >= max_scenarios:
-            break
+    # IMPLANTATION-4 (scénarios dominés) — ne proposer que des scénarios NON DOMINÉS (filtre de Pareto
+    # sur logements, surface habitable, simplicité=moins de bâtiments ; les places ne comptent pas).
+    # `faisables` est déjà trié par l'objectif (meilleur d'abord) → A reste le meilleur pour l'objectif.
+    survivants = _pareto(faisables)
+
+    choisis = [_paquet_en_scenario(terrain, conv, regles, objectif, candidats, it)
+               for it in survivants[:max_scenarios]]
     return choisis, None, terrain, regles, conv
+
+
+def _n_batiments(scene) -> int:
+    """Nombre de bâtiments DESSINÉS (emprises). Sert la « simplicité » (moins de bâtiments = plus
+    simple) du filtre de Pareto et la règle de distance mono-bâtiment."""
+    return sum(1 for o in scene.objets if o.kind == "batiment_emprise")
+
+
+def limite_capacite(scenario, regles) -> Optional[str]:
+    """IMPLANTATION-4 (recette Vic) — EN UNE LIGNE, ce qui PLAFONNE la capacité du scénario retenu
+    (pourquoi pas plus de logements / pas plus haut). Lu dans la trace des candidats :
+
+    - si monter en niveaux N'AJOUTE PAS de logements → c'est le stationnement aérien + la taille de
+      la parcelle (cas Saint-Denis : R+2 atteint déjà le plafond, R+5 n'ajoute rien) ;
+    - sinon, le motif dominant des candidats plus hauts INFAISABLES (stationnement / largeur de zone /
+      distance entre bâtiments / hauteur) ;
+    - en préfixe, le prospect quand la hauteur relative n'est pas chiffrée (hauteur bornée par prudence).
+    """
+    from collections import Counter
+
+    cand = getattr(scenario, "candidats", None) or []
+    niv0, logts0 = scenario.niveaux, scenario.capacite.logements
+    best: dict[int, int] = {}
+    for c in cand:
+        if c.faisable:
+            best[c.niveaux] = max(best.get(c.niveaux, 0), c.logements)
+    plus_haut = [best[n] for n in best if n > niv0]
+    monte = any(v > logts0 for v in plus_haut)
+
+    raisons: list[str] = []
+    if getattr(regles, "hauteur_non_chiffrable", False):
+        raisons.append("le prospect (hauteur relative non chiffrée) borne la hauteur par prudence")
+    if plus_haut and not monte:
+        raisons.append("le stationnement aérien et la taille de la parcelle "
+                       "(monter plus haut n'ajoute pas de logements)")
+    else:
+        sup = [c for c in cand if c.niveaux > niv0 and not c.faisable and c.motif]
+        motifs = Counter(mo.strip() for c in sup for mo in c.motif.split(";") if mo.strip())
+        if motifs:
+            top = motifs.most_common(1)[0][0].lower()
+            if "stationnement" in top:
+                raisons.append("le stationnement aérien")
+            elif "module" in top or "largeur" in top or "zone" in top or " l " in f" {top} ":
+                raisons.append("la largeur de la zone d'implantation après reculs")
+            elif "distance" in top:
+                raisons.append("la distance entre bâtiments")
+            elif "hauteur" in top:
+                raisons.append("la hauteur réglementaire")
+    return " ; ".join(raisons) or None
+
+
+def _domine(a: tuple, b: tuple) -> bool:
+    """a domine b : a ≥ b sur (logements, SHAB) ET ≤ sur (nb de bâtiments), avec AU MOINS une inégalité
+    stricte. Métrique = (logements, shab_m2, n_batiments)."""
+    return (a[0] >= b[0] and a[1] >= b[1] and a[2] <= b[2]
+            and (a[0] > b[0] or a[1] > b[1] or a[2] < b[2]))
+
+
+def _pareto(faisables: list) -> list:
+    """Garde les candidats non dominés. Métriques identiques (logements, SHAB arrondi, nb bâtiments) →
+    on garde le PREMIER, càd le plus simple à objectif égal (ordre d'entrée = ordre de l'objectif).
+    Un scénario strictement inférieur sur les trois (ou ≤ partout et < quelque part) disparaît ; un
+    seul survivant = un seul scénario affiché."""
+    def metrique(it) -> tuple:
+        cap, scene = it[1][1], it[1][0]
+        return (cap.logements, cap.shab_estimee_m2, _n_batiments(scene))
+
+    pts = [(metrique(it), it) for it in faisables]
+    survivants, vus = [], set()
+    for i, (m, it) in enumerate(pts):
+        if any(_domine(mo, m) for j, (mo, _) in enumerate(pts) if j != i):
+            continue                                   # dominé par un autre → écarté
+        cle = (m[0], round(m[1], 1), m[2])
+        if cle in vus:
+            continue                                   # métriques identiques → on garde le 1er
+        vus.add(cle)
+        survivants.append(it)
+    return survivants
 
 
 def _contient(cap: cap_mod.Capacite, programme: dict[str, int]) -> bool:
