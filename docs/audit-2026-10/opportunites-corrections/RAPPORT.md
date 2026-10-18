@@ -33,3 +33,39 @@ Saint-Leu UD du gisement :
 **combles** quand le règlement l'accorde — est une modification de **modélisation des niveaux**, qui
 toucherait **toutes les zones « R+combles » de l'île** (pas seulement Saint-Leu UD) : décision distincte,
 hors du périmètre « corriger la valeur de hauteur ». **Signalé à Vic, non implémenté.**
+
+---
+
+## B — terrain_exigu : seuil déjà au **minimum justifié** → pas d'abaissement sûr
+
+**Instruction :** abaisser le seuil au minimum justifié par les permis réels, **pas plus** — et aucune
+parcelle ne doit devenir constructible à tort.
+
+**Ce que recouvrent les 46 permis « terrain_exigu ».** En rejouant le moteur sur leurs parcelles :
+
+| sous-cause (exigu_raison) | n | nature |
+|---|--:|---|
+| `reculs` (contour inseté vidé) | 20 | les reculs vident l'assiette |
+| `hors_rouge_trop_petit` (PPR, < 200 m²) | 16 | partie hors zone rouge trop petite |
+| `ppr_rouge` / `emplacement_reserve` / `contraintes` | 8 | **réellement bloquant** (PPR rouge, ER) |
+| `portion_reduite` (à cheval) | 2 | portion U/AU réduite |
+
+**Les 20 « reculs » ne sont pas abaissables.** Leur assiette insetée mesurée vaut **≈ 0 m²** (« contour
+vidé »), sur de petites parcelles (38–354 m²) : les reculs (3 m voirie + 3 m séparatif) consomment tout.
+Les permis réels y sont des constructions **mitoyennes / à l'alignement** (mur mitoyen, recul nul sur
+limite partagée) que LABUSE **ne peut pas déduire** du cadastre. Abaisser le seuil `SEUIL_EXIGU_M2` (5 m²)
+ne les reclasse pas (l'assiette est ~0) et tout seuil plus bas fabriquerait des « constructibles » à
+~0 m² — **faux positifs interdits**.
+
+**Les 16 « hors_rouge » : abaisser le seuil de 200 m² fabrique des micro-bâtis.** Les fragments hors zone
+rouge des permis vont de 70 à 198 m². Mais en simulant l'abaissement, la SDP obtenue sur ces fragments
+est **absurde** (micro-bâtis) : SDP de **10, 11, 12, 17, 19, 26…** m² ; seuls les fragments ~195–198 m²
+donnent une SDP réelle (71–120 m²). Un fragment de 70–140 m² après reculs ne porte qu'un micro-bâti —
+donc « constructible à tort ». Le **minimum justifié où un bâti réel résulte** est ~195 m² ≈ le seuil
+**actuel (200 m²)**.
+
+**Conséquence.** Le seuil `terrain_exigu` est **déjà au minimum justifié** : l'abaisser violerait « aucune
+constructible à tort » (mitoyen à 0 m², micro-bâtis). **0 parcelle reclassée sûrement → aucune
+modification.** Les 46 permis sont des exclusions **conservatrices mais correctes** (mitoyen non
+modélisable, PPR, ER). (Reproductible : `scripts/diagnostic_opportunites_lot2.py` + moteur de faisabilité
+sur les 46.)
