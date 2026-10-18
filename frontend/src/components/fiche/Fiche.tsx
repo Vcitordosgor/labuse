@@ -71,8 +71,8 @@ const SECTION_LABELS: Record<string, string> = {
   fiscalite: 'Fiscalité et dispositifs',
   marche: 'Marché',
   quartier: 'Quartier',
+  // FICHE-ORFEVRERIE-1 (Lot B, pt 16) — « Simulation » fondue dans Potentiel : 10 sections (plus de 11e).
   potentiel: 'Potentiel',
-  simulation: 'Simulation',
 }
 
 // ── M9 lot 3 — Signaler une erreur (file de QA humaine, aucune action automatique) ──
@@ -1404,11 +1404,11 @@ export function Fiche({ idu }: { idu: string }) {
             {/* M137-E — le Copilote embarqué « Demander au Copilote sur cette parcelle… » est RETIRÉ :
                 la loupe (recherche intra-fiche) + « Poser une question » (AskBar) couvrent déjà le besoin. */}
 
-            {/* ═══ FICHE-RANGEMENT-2 Lot 1 — LES 11 SECTIONS PAR NATURE (basculement) ═══
+            {/* ═══ FICHE-RANGEMENT-2 Lot 1 — LES 10 SECTIONS PAR NATURE (basculement) ═══
                 Groupes silencieux : Le bien (Identité·Terrain·Bâti) · Le droit du sol (Urbanisme·
-                Risques·Réseaux·Fiscalité) · Le marché (Marché·Quartier) · Le projet (Potentiel·
-                Simulation). Accordéon exclusif inchangé (RefDrawer / FicheAccordionCtx). Chaque
-                section COMPOSE des blocs feuilles ; aucune ligne n'est perdue vs les 12 tiroirs. */}
+                Risques·Réseaux·Fiscalité) · Le marché (Marché·Quartier) · Le projet (Potentiel, qui
+                absorbe la Simulation — FICHE-ORFEVRERIE-1 Lot B pt 16). Accordéon exclusif inchangé
+                (RefDrawer / FicheAccordionCtx). Chaque section COMPOSE des blocs feuilles. */}
             <GroupLabel>Le bien</GroupLabel>
 
             {/* ① IDENTITÉ — ce qui identifie le bien : surface (ex-tuile), propriétaire (relocalisé
@@ -1751,7 +1751,10 @@ export function Fiche({ idu }: { idu: string }) {
                 {/* FICHE-RANGEMENT-3 Lot 2 — la ligne « Zonage PLU » (layer zonage_plu_gpu) répète la
                     tuile « Zone » en tête → retirée (une seule ligne pour la zone). La ligne « bâti :
                     N bâtiments » (layer bati) répète §3 Bâti (nb_batiments) → retirée. */}
-                {(() => { const rl = reglesLines.filter((l) => l.result !== 'PASS' && l.layer !== 'zonage_plu_gpu' && l.layer !== 'bati'); return rl.length > 0
+                {/* FICHE-ORFEVRERIE-1 (Lot B, pt 14) — DPU et PEB vivent UNE fois, dans « Dispositifs et
+                    périmètres » (DispositifsBody) ci-dessous : on les retire de « Situation » pour ne pas
+                    les répéter dans la même section. */}
+                {(() => { const rl = reglesLines.filter((l) => l.result !== 'PASS' && !['zonage_plu_gpu', 'bati', 'dpu', 'peb'].includes(l.layer)); return rl.length > 0
                   ? <div><GroupLabel>Situation</GroupLabel><div className="flex flex-col gap-1">{rl.map((l, i) => <Line key={i} line={l} hideWeight hideDate />)}</div></div> : null })()}
                 {/* FICHE-FIX-4 (Lot F) — les 2 outils PLU (Annuaire · Vérif procédure) en boutons
                     OutilsSection au lieu de grandes cartes PorteOutil. M137-P : Annuaire ouvre le hub
@@ -2002,10 +2005,20 @@ export function Fiche({ idu }: { idu: string }) {
                   // IMPLANTATION-2 (LOT C) — l'étude de faisabilité n'est plus CALCULÉE dans la fiche :
                   // un bouton ouvre l'outil « Étude de faisabilité » (M22) sur cette parcelle (idiome
                   // parcelPrefill). Le scénario dessiné, les contrôles et les hypothèses y sont servis.
+                  // FICHE-ORFEVRERIE-1 (Lot B, pt 16) — la section « Simulation » est fondue ICI : un SEUL
+                  // « Étude de faisabilité », plus « Densifier », « Calculette foncière » et « Assemblage ».
                   outils.push({ label: 'Étude de faisabilité', principal: true, data: 'etude-outil',
                     onClick: () => { setParcelPrefill(idu); setModule('programme') } })
                   if (f.commune) outils.push({ label: "Densifier l'existant", data: 'densifier-filtre',
                     onClick: () => { const st = useApp.getState(); st.setCommunesFilter([f.commune!]); st.setFilter('renouvellement', true); st.setFilter('sdpMin', 200); st.openFiltres() } })
+                  outils.push({ label: 'Calculette foncière', data: 'calculette',
+                    onClick: () => { setCalcPrefill(idu); setModule('calculette-fonciere') } })
+                  outils.push({ label: 'Assemblage', full: true, data: 'assemblage-outil',
+                    onClick: () => { setParcelPrefill(idu); setModule('assemblage') } })
+                  // Prix de sortie NEUF servi (source unique `prix_sortie`) — une LIGNE du Potentiel, base
+                  // du bilan de charge foncière ci-dessous (ex-verdict de « Simulation »).
+                  const ps = faisa.data?.prix_sortie
+                  const prixSortie = ps && !ps.non_calculable ? ps.prix : null
                   const panneau = (
                     <div className="flex flex-col gap-3">
                       {f.potentiel_transformation && <TransformationBlock pt={f.potentiel_transformation} />}
@@ -2020,6 +2033,14 @@ export function Fiche({ idu }: { idu: string }) {
                           : (reglesSdp != null && reglesSdp > 0 ? `${fmtInt(reglesSdp)} m² de SDP constructible restante · bâti conservé` : 'Pas de SDP résiduelle exploitable')}
                         contexte={!inconstructible && fo?.niveaux ? `capacité ${fo.niveaux}` : undefined} />
                       <ChiffreDissous l="SDP restante" t={tuileSdp} />
+                      {/* FICHE-ORFEVRERIE-1 (Lot B, pt 16) — « Prix de sortie retenu » : une LIGNE du
+                          Potentiel (ex-verdict de « Simulation »), base du bilan de charge foncière. */}
+                      {prixSortie != null && (
+                        <ChiffreDissous l="Prix de sortie retenu" t={{
+                          v: `${fmtInt(Number(prixSortie))} €/m²`,
+                          s: ps?.label ?? 'neuf servi — base du bilan',
+                          i: `Prix de sortie NEUF servi${ps?.label ? ` — ${ps.label}` : ''}. C'est la base du bilan de charge foncière ci-dessous, et le même chiffre dans la Calculette, l'Assemblage et les documents. Distinct du prix de l'ancien (secteur) affiché dans « Marché ».` }} />
+                      )}
                       {/* PPR-PARTIEL-FIX-1 (étape B) — tiroir Potentiel : la parcelle touche une zone
                           rouge PPR (servie 0 par prudence) mais garde du foncier HORS rouge (≥ 200 m²).
                           On le RÉVÈLE « à étudier » (jamais « constructible »). Même chiffre que la tuile
@@ -2037,46 +2058,16 @@ export function Fiche({ idu }: { idu: string }) {
                       {sdpNulle
                         ? <Repli label="Étudier quand même">{panneau}</Repli>
                         : panneau}
+                      {/* FICHE-ORFEVRERIE-1 (Lot B, pt 16) — la SIMULATION (charge foncière + réhabilitation
+                          Mode B) est FONDUE dans le Potentiel : plus une 11e section, un sous-groupe ici. */}
+                      <GroupLabel>Simulation</GroupLabel>
+                      <BilanTab idu={idu} />
+                      {f.mode_b?.indisponible
+                        ? <BlocIndisponible titre="Réhabilitation (Mode B)" />
+                        : f.mode_b?.disponible && <ModeBBody idu={idu} initial={f.mode_b} />}
                     </>
                   )
                 })()}
-              </div>
-            </RefDrawer>
-
-            {/* ⑪ SIMULATION — la charge foncière (bilan) + la Réhabilitation (Mode B, FICHE-RANGEMENT-3
-                Lot 3 : rentrée DANS §11, plus un 12e tiroir) + les outils de projet (Faisabilité,
-                Calculette, Assemblage). 11 tiroirs au total. */}
-            <RefDrawer id="simulation" icon={IC.confiance} name="Simulation"
-              context="charge foncière · réhabilitation · outils projet"
-              value={<Badge ton="vert">bilan</Badge>}>
-              <div className="flex flex-col gap-3">
-                {/* KELFONCIER-FIX-2 (Lot J) — maquette v3 : Verdict prix de sortie (servi, base du
-                    bilan) + OutilsSection en pied (Faisabilité · Calculette · Assemblage). */}
-                {/* FICHE-FIX-4 (Lot L) — le paragraphe explicatif passe derrière le « i » ; les 3 boutons restent. */}
-                {(() => {
-                  // PRIX-SORTIE-1 (Vic 05/10/2026) — prix de sortie = prix NEUF servi (source unique
-                  // `prix_sortie`), plus jamais `marche.median` (prix de l'ancien). Non calculable /
-                  // non constructible → pas de prix de sortie affiché (jamais un prix de l'ancien à la place).
-                  const ps = faisa.data?.prix_sortie
-                  const prix = ps && !ps.non_calculable ? ps.prix : null
-                  return (
-                    <Verdict ton="vert"
-                      reponse={<>Prix de sortie retenu {prix != null ? `${fmtInt(Number(prix))} €/m²` : '—'}<InfoI aria="Sur le prix de sortie" tip={`Prix de sortie NEUF servi${ps?.label ? ` — ${ps.label}` : ' (médiane du neuf de marché, DVF)'}. C'est la base du bilan de charge foncière ci-dessous, et le même chiffre dans la Calculette, l'Assemblage et les documents. Distinct du prix de l'ancien (secteur) affiché dans « Marché ».`} /></>} />
-                  )
-                })()}
-                <BilanTab idu={idu} />
-                {/* Réhabilitation (Mode B) — bloc inline (ModeBBody), plus un tiroir séparé. */}
-                {f.mode_b?.indisponible
-                  ? <BlocIndisponible titre="Réhabilitation (Mode B)" />
-                  : f.mode_b?.disponible && <ModeBBody idu={idu} initial={f.mode_b} />}
-                <OutilsSection outils={[
-                  { label: 'Étude de faisabilité', principal: true, data: 'faisabilite-outil',
-                    onClick: () => { setParcelPrefill(idu); setModule('programme') } },
-                  { label: 'Calculette foncière', data: 'calculette',
-                    onClick: () => { setCalcPrefill(idu); setModule('calculette-fonciere') } },
-                  { label: 'Assemblage', full: true, data: 'assemblage-outil',
-                    onClick: () => { setParcelPrefill(idu); setModule('assemblage') } },
-                ] satisfies OutilSection[]} />
               </div>
             </RefDrawer>
 

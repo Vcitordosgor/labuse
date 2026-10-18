@@ -36,7 +36,10 @@ export function RisquesSection({ f }: { f: Fiche; idu: string }) {
   // restent affichées telles quelles. Même moteur que Pièges et risques (cascade servie).
   const aleas = f.aleas?.liste ?? []
   const sols = f.sols
-  const autresVig = vigilances.filter((l) => l.layer !== 'risques')
+  // FICHE-ORFEVRERIE-1 (Lot B, pt 14) — les SERVITUDES d'utilité publique (SUP, layer 'sup') vivent
+  // UNE fois, en §Urbanisme (« Dispositifs et périmètres ») : ici on ne les répète pas, on RENVOIE.
+  const autresVig = vigilances.filter((l) => l.layer !== 'risques' && l.layer !== 'sup')
+  const aUneSup = vigilances.some((l) => l.layer === 'sup')
   return (
     <RefDrawer id="risques" icon={IC.risques} name="Risques et environnement"
       context={`${evaluees} couche${evaluees > 1 ? 's' : ''} évaluée${evaluees > 1 ? 's' : ''}`}
@@ -189,7 +192,7 @@ export function RisquesSection({ f }: { f: Fiche; idu: string }) {
         {/* FICHE-FIX-5 (Lot F) — VIGILANCES en Lignes AMBRE (plus de puce ▲ ni d'encadré) : le libellé
             avant « — », le détail après, la source derrière le « i ». Les lignes HT/HTA (ex-Rappel
             encadré) rejoignent la même liste. Aucune donnée retirée. */}
-        {(autresVig.length > 0 || f.proximites?.ligne_ht || f.proximites?.ligne_mt) && (
+        {(autresVig.length > 0 || f.proximites?.ligne_ht || f.proximites?.ligne_mt || aUneSup) && (
           <div>
             <GroupLabel>Vigilances</GroupLabel>
             <Lignes>
@@ -226,6 +229,12 @@ export function RisquesSection({ f }: { f: Fiche; idu: string }) {
                 <Ligne ton="ambre" title={f.proximites.ligne_mt.libelle}
                   label={<><span className="text-amber">Ligne moyenne tension</span><InfoI aria="Sur la ligne HTA" tip={`${f.proximites.ligne_mt.libelle} — ${f.proximites.ligne_mt.source}`} /></>}
                   valeur={f.proximites.ligne_mt.distance_m != null ? <>~{f.proximites.ligne_mt.distance_m} <small>m</small></> : 'à proximité'} />
+              )}
+              {/* FICHE-ORFEVRERIE-1 (Lot B, pt 14) — RENVOI : la SUP est détaillée en §Urbanisme (plus de
+                  doublon), on signale seulement sa présence ici. */}
+              {aUneSup && (
+                <Ligne label={<span className="text-amber">Servitude d'utilité publique</span>}
+                  valeur={<small className="text-txt-dim">détail en « Urbanisme »</small>} />
               )}
             </Lignes>
           </div>

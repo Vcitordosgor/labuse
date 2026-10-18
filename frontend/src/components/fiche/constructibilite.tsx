@@ -42,8 +42,12 @@ export function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
     <div data-transformation>
       {/* FICHE-FIX-5 (reste 2) — Potentiel de transformation en Lignes : SDP consommée % et marge en
           hauteur ; la phrase (libellé) et le détail de contrainte passent derrière le « i ». */}
-      <GroupLabel right={
-        <span className="rounded-full px-2 py-0.5 text-[10.5px] font-medium capitalize" style={{ background: `${color}22`, color }}>{PT_CHIP[pt.niveau] ?? pt.niveau}</span>
+      {/* FICHE-ORFEVRERIE-1 (Lot B, pt 18) — plus de badge « Fort / Modéré… » (verdict DÉDUIT) : on ne
+          garde à droite que les états OPÉRATOIRES factuels (différé zone AU, non retenue à cause). Les
+          faits restent dans les lignes ci-dessous (SDP consommée/autorisée, marge en hauteur). */}
+      <GroupLabel right={PT_CHIP[pt.niveau]
+        ? <span className="rounded-full px-2 py-0.5 text-[10.5px] font-medium capitalize" style={{ background: `${color}22`, color }}>{PT_CHIP[pt.niveau]}</span>
+        : undefined
       }>Potentiel de transformation</GroupLabel>
       <Lignes>
         {/* COHERENCE-FIX-1 (lot B) — plus jamais « 999 % » : au-delà de 300, « > 300 % » (l'« i »

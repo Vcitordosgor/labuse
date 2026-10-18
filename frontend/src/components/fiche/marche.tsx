@@ -77,7 +77,9 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
   const annoncesRayon = ms?.annonces_radar ?? []
   // COHERENCE-FIX-2 (lot B) — « secteur » ne paraît jamais seul : le périmètre (servi par le back,
   // `dvfSecteur.perimetre` = « section cadastrale ») accompagne le chiffre. Aucun libellé en dur ici.
-  const contexte = (dvfSecteur?.n_ventes ? `${dvfSecteur.n_ventes} vente${dvfSecteur.n_ventes > 1 ? 's' : ''}${dvfSecteur.perimetre ? ` · ${dvfSecteur.perimetre}` : ''}` : 'comparables DVF') + (horizon ? ` · DVF — ${horizon}` : '')
+  // FICHE-ORFEVRERIE-1 (Lot D, pt 25) — plus de « DVF · DVF » : la source (DVF) est nommée UNE fois ;
+  // l'horizon suit sans redoubler le sigle.
+  const contexte = (dvfSecteur?.n_ventes ? `${dvfSecteur.n_ventes} vente${dvfSecteur.n_ventes > 1 ? 's' : ''}${dvfSecteur.perimetre ? ` · ${dvfSecteur.perimetre}` : ''} · DVF` : 'comparables DVF') + (horizon ? ` — ${horizon}` : '')
   return (
     <RefDrawer id="marche" icon={IC.marche} name="Marché"
       context={contexte}
@@ -131,16 +133,16 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
           EXISTANT (sector_price/`marche.median`). Ce n'est PAS le prix de sortie du bilan (celui-ci est
           le prix NEUF servi, affiché en Simulation). Sous le seuil : dit tel quel, jamais un chiffre inventé. */}
       {/* FICHE-FIX-4 (Lot J) — prix de sortie + valeur au prix du secteur en Lignes, méthode en « i ». */}
-      {(mb?.median != null || f.dvf_parcelle?.valeur_terrain_secteur_eur != null) && (
+      {/* FICHE-ORFEVRERIE-1 (Lot B, pt 15) — la ligne « Prix de l'ancien (secteur) » est RETIRÉE : elle
+          répétait la tuile « Appartement » ci-dessus (même médiane de secteur). Le prix de l'ancien vit
+          une fois, dans la tuile par type. On garde la « Valeur au prix du secteur » (fait distinct). */}
+      {f.dvf_parcelle?.valeur_terrain_secteur_eur != null && (
         <Lignes>
-          {mb?.median != null && (
-            <Ligne label={<>Prix de l'ancien (secteur)<InfoI aria="Méthode du prix de l'ancien" tip={`Référence de revente du bâti EXISTANT du secteur (DVF ventes actées) — ce n'est pas le prix de sortie d'un programme neuf. ${mb.type_prix}, ${mb.n} ventes ≤ ${Math.round(mb.radius_m)} m (rayon adaptatif) · fiabilité ${mb.fiabilite}${mb.tendance ? ` · tendance ${mb.tendance}` : ''}${horizon ? ` · DVF — ${horizon}` : ''}`} /></>}
-              valeur={<>{fmtInt(Number(mb.median))} <small>€/m²</small></>} />
-          )}
-          {f.dvf_parcelle?.valeur_terrain_secteur_eur != null && (() => {
-            // FIX-PRIX-ET-OPPORTUNITES (lot 1) — jamais un chiffre sec : fourchette ±30 % + mention
-            // d'incertitude mesurée (backtest VERITE-TERRAIN-2). Source unique lib/fourchette.ts.
-            const fr = fourchette(f.dvf_parcelle.valeur_terrain_secteur_eur)!
+          {/* MERGE FICHE-ORFEVRERIE-1 × FIX-PRIX-ET-OPPORTUNITES — la ligne « Prix de l'ancien (secteur) »
+              reste RETIRÉE (pt 15 : elle répétait la tuile « Appartement ») ; la « Valeur au prix du
+              secteur » est servie EN FOURCHETTE ±30 % + mention d'incertitude mesurée (lot 1). */}
+          {(() => {
+            const fr = fourchette(f.dvf_parcelle!.valeur_terrain_secteur_eur!)!
             return (
               <Ligne label={<>Valeur au prix du secteur<InfoI aria="Méthode de la valeur" tip={`Contenance × prix médian du terrain nu au m² du secteur. ${FOURCHETTE_MENTION}`} /></>}
                 valeur={<>≈ {fmtInt(fr.bas)} – {fmtInt(fr.haut)} <small>€</small></>} />
