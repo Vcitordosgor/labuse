@@ -307,7 +307,7 @@ def _p1_synthese(payload: dict, retenu: dict, numero: str, genere_le: str) -> st
             f'<td><span class="st {stc}">{esc(_statut_court(s["statut_etude"]))}</span></td></tr>')
     scn_table = (
         '<table class="ef-scn"><tr><th>Scénario</th><th>Forme</th><th class="num">Logements</th>'
-        '<th class="num">Niveaux</th><th class="num">SDP</th><th class="num">Places</th>'
+        '<th class="num">Niveaux</th><th class="num">SDP du scénario</th><th class="num">Places</th>'
         '<th>Étude</th></tr>' + "".join(rows) + "</table>") if rows else ""
     return (
         '<div class="cover">'
@@ -512,7 +512,7 @@ def _p6_distribution(payload: dict, retenu: dict) -> str:
         '<section><h2>5. Distribution et coupe</h2>'
         f'<div class="verdict">{esc(sc.get("niveaux_label", ""))} : la répartition des logements par '
         'niveau, chaque module dessiné = un logement compté.</div>'
-        f'<table class="kv"><tr><th>Niveau</th>{thead}<th class="num">SDP</th></tr>'
+        f'<table class="kv"><tr><th>Niveau</th>{thead}<th class="num">SDP du scénario</th></tr>'
         + "".join(rows) + "</table>" + coupe + "</section>")
 
 

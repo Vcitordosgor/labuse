@@ -210,7 +210,9 @@ def reperes_publics(db: Session, idu: str, sourcee: dict) -> dict[str, dict]:
                 return None
             return {
                 "valeur": float(sdp),
-                "label": f"Faisabilité {round(float(sdp)):g} m² SDP (estimation)",
+                # IMPLANTATION-4 (LOT C) — SDP de l'ancien moteur = « SDP maximale réglementaire »
+                # (jamais « SDP du scénario », réservé à l'Étude) : les deux libellés ne se croisent jamais.
+                "label": f"SDP maximale réglementaire {round(float(sdp)):g} m² (estimation)",
                 "source": "faisabilité LABUSE (estimation, à confirmer)",
                 "parkings": d.get("stationnement_places"),
             }

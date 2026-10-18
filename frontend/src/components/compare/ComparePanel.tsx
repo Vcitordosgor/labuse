@@ -82,7 +82,9 @@ const ROWS: Row[] = [
     title: 'La ZONE du PLU autorise-t-elle de construire (famille U/AU) ? Distinct du potentiel résiduel restant (ligne SDP résiduelle) : une zone constructible peut n\'avoir aucun potentiel si la parcelle est déjà saturée ou trop exiguë.' },
   // O2-5 — chaque capacité porte son périmètre (source unique lib/perimetres) : la « max » suppose le
   // terrain libéré, la « résiduelle » suppose le bâti conservé — sinon les deux se contredisent à l'œil.
-  { label: `SDP max estimée · ${PERIM_POTENTIEL_COURT}`, prov: 'estime', val: (r) => r.sdp_max_m2 != null ? `${fmtInt(r.sdp_max_m2)} m²` : '—', num: (r) => r.sdp_max_m2 ?? null, best: 'hi' },
+  // IMPLANTATION-4 (LOT C) — SDP de l'ancien moteur = « SDP maximale réglementaire » (jamais « du
+  // scénario », réservé à l'Étude) : les deux libellés ne se croisent jamais.
+  { label: `SDP maximale réglementaire · ${PERIM_POTENTIEL_COURT}`, prov: 'estime', val: (r) => r.sdp_max_m2 != null ? `${fmtInt(r.sdp_max_m2)} m²` : '—', num: (r) => r.sdp_max_m2 ?? null, best: 'hi' },
   { label: `SDP résiduelle · ${PERIM_RESIDUEL_COURT}`, prov: 'estime',
     // RECETTE-PROD-1 (12) — potentiel résiduel + CAUSE COURTE quand il n'y a pas de potentiel (0/—) :
     // le client voit POURQUOI (terrain exigu, zone non constructible…), pas un « 0 » muet. La phrase

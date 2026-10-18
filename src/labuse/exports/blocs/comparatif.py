@@ -84,7 +84,9 @@ _LIGNES = [
     # constructible mais 0 potentiel résiduel = « oui » trompeur). On sert la constructibilité de
     # ZONE (famille ∉ A/N), le potentiel vivant sur la ligne « SDP résiduelle » suffixée de sa cause.
     ("Zone constructible", "s", lambda r: _oui_non(r.get("zone_constructible"))),
-    ("SDP max estimée", "e", lambda r: _m2(r, "sdp_max_m2")),
+    # IMPLANTATION-4 (LOT C) — SDP de l'ancien moteur = « SDP maximale réglementaire » (jamais « du
+    # scénario », réservé à l'Étude) ; même libellé qu'à l'écran Comparer.
+    ("SDP maximale réglementaire", "e", lambda r: _m2(r, "sdp_max_m2")),
     ("SDP résiduelle", "e", lambda r: _sdp_residuelle_cause(r)),
     ("Emprise au sol max (PLU)", "s", lambda r: (_pct(r, "emprise_ces_pct") or "non réglementée")),
     ("Taux d'occupation du gabarit", "e", lambda r: esc(fmt_taux_emprise(r.get("taux_emprise_pct")))),
