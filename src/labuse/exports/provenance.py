@@ -119,6 +119,16 @@ def nombres_ancres(valeurs: dict[str, Valeur], ctx: dict | None = None) -> dict[
             _poser(base, cid)
             _poser(base / 1000.0, cid)
 
+    # FIX-ORFEVRE-1 (décision Vic 18/10/2026) — la note « capacité maximale » (capacite_max.MENTION,
+    # imprimée par le Financier et le Comparatif) porte les deux ratios médians mesurés du volet D
+    # (0,46 SDP / 0,40 logements). Ils ne passaient le crible QUE par accident (round(0,46)=0, ancré
+    # dès qu'une donnée vaut zéro) : ils sont désormais DÉCLARÉS au registre
+    # (capacite_ratio_median_sdp / capacite_ratio_median_logements) et ancrés nommément à leurs ids —
+    # aucune exception, aucune entrée de liste blanche.
+    # Ancrage EXACT (pas _poser : ses arrondis ancreraient aussi 0 et 0,5, affaiblissant le crible).
+    from ..capacite_max import RATIO_MEDIAN_LOGEMENTS, RATIO_MEDIAN_SDP
+    ancres.setdefault(float(RATIO_MEDIAN_SDP), "capacite_ratio_median_sdp")
+    ancres.setdefault(float(RATIO_MEDIAN_LOGEMENTS), "capacite_ratio_median_logements")
     for cid, v in valeurs.items():
         for x in _scalaires(v.valeur):
             _poser(x, cid)

@@ -145,6 +145,22 @@ DONNEES: dict[str, Donnee] = {
     moteur="potentiel", calcul="moteur",
     fonction="src/labuse/faisabilite/potentiel.py:bloc_potentiel (table_rase.logements)",
     reservoirs=("bd_topo", "cosia", "gpu_plu_api_carto",), portee="run"),
+ # FIX-ORFEVRE-1 (décision Vic 18/10/2026) — les deux ratios de la note « capacité maximale »
+ # (capacite_max.MENTION) étaient imprimés SANS id du registre (ils ne passaient le verrou de
+ # provenance que par accident d'ancrage). Déclarés ici comme constantes MESURÉES : médiane du
+ # ratio autorisé réel / capacité maximale LABUSE sur 6 601 permis Sit@del post-PLU
+ # (VERITE-TERRAIN-2 volet D, docs/audit-2026-10/verite-terrain-2). Ancrés nommément par
+ # exports/provenance.nombres_ancres — plus aucune exception.
+ "capacite_ratio_median_sdp": C("Ratio médian autorisé / capacité (SDP)", "nombre", "global",
+    "0,46 = médiane du ratio SDP autorisée (6 601 permis Sit@del post-PLU) / capacité maximale "
+    "LABUSE — VERITE-TERRAIN-2 volet D ; imprimé par la note « capacité maximale »",
+    moteur=None, calcul="constante", fonction="src/labuse/capacite_max.py:RATIO_MEDIAN_SDP",
+    reservoirs=("sitadel",), portee="live"),
+ "capacite_ratio_median_logements": C("Ratio médian autorisé / capacité (logements)", "nombre", "global",
+    "0,40 = médiane du ratio logements autorisés (6 601 permis Sit@del post-PLU) / capacité "
+    "maximale LABUSE — VERITE-TERRAIN-2 volet D ; imprimé par la note « capacité maximale »",
+    moteur=None, calcul="constante", fonction="src/labuse/capacite_max.py:RATIO_MEDIAN_LOGEMENTS",
+    reservoirs=("sitadel",), portee="live"),
  "sdp_residuelle_m2": C("SDP résiduelle", "m²", "parcelle",
     "max(0, SDP_max − SDP_existante) du run servi, sous garde de lecture zone dominante "
     "(A/N → 0 avec cause dite — ZONE-1)",

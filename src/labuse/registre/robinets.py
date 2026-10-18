@@ -400,7 +400,10 @@ ROBINETS: dict[str, Robinet] = {
         "bilan_aleas_eur", "bilan_depollution_eur", "bilan_portage_eur", "redevance_archeologie_eur",
         "bilan_demolition_eur", "charge_fonciere_basse_eur", "charge_fonciere_haute_eur",
         "sensibilite_cout_construction", "sensibilite_prix_sortie", "seuil_rentabilite_eur",
-        "prix_revient_eur_m2",)),
+        # FIX-ORFEVRE-1 (décision Vic 18/10/2026) — la note « capacité maximale » du programme
+        # (capacite_max.MENTION) imprime les deux ratios médians mesurés (volet D) : déclarés au
+        # registre, lus ici (le Financier imprime la note complète — le Comparatif la reprend).
+        "prix_revient_eur_m2", "capacite_ratio_median_sdp", "capacite_ratio_median_logements",)),
  # EXPORTS-2 lot 4 — l'écran questionnaire du Financier (4 écrans) sert ses saisies client
  # (les 4 saisies déjà servies par la calculette — prix_demande/cout_construction/démolition/
  # dépollution — restent à leurs robinets ; on ne les redéclare pas ici, V5c).

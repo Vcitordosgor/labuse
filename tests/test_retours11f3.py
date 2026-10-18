@@ -83,7 +83,9 @@ def test_m13_compare_row_colonnes_ajoutees():
     assert row["proprietaire"] == "morale"                 # PM connue
     assert row["bati_existant_pct"] == 15                  # 150 / 1000
     assert row["gabarit_niveaux_max"] == 3
-    assert row["logements_possibles"] == 6                 # borne haute (au sol)
+    # FIX-ORFEVRE-1 (décision Vic 18/10/2026) — aucun nombre de logements de l'ancien calcul de
+    # capacité dans Comparer : les champs ne sont plus servis (la ligne renvoie à l'Étude de faisabilité).
+    assert "logements_possibles" not in row and "logements_min" not in row
     assert row["acces_reseaux"] == "Viabilisation probable"  # UN verdict
     assert row["assainissement"] == "Tout-à-l'égout (collectif)"
     assert row["prix_secteur_bati_m2"] == 2800            # bâti (maison), JAMAIS le terrain nu
@@ -98,7 +100,7 @@ def test_m13_compare_row_particulier_et_absences_sans_zero_invente():
     assert row["proprietaire"] == "particulier"
     assert row["bati_existant_pct"] is None                # surface absente → None, pas 0
     assert row["prix_secteur_bati_m2"] is None
-    assert row["logements_possibles"] is None
+    assert "logements_possibles" not in row   # FIX-ORFEVRE-1 — champ retiré (voir l'Étude de faisabilité)
 
 
 def test_m13_evolution_barometre_accepte_commune():
