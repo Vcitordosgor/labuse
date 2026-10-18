@@ -443,13 +443,15 @@ def _clause_mixite(eco: dict, hyp: Hypotheses) -> dict:
 
 def _fiabilite_prix_neuf(niveau: str | None) -> tuple[str, list[str]]:
     """M-N P2-47 — fiabilité du bilan DÉRIVÉE du prix de sortie NEUF résolu (jamais de la dispersion
-    de l'ancien). Local observé (secteur/commune) ou bassin sourcé → « fiable » ; repli ÎLE
-    (estimation ±12 %) → « fragile » (montants arrondis + avertissement). Renvoie (niveau, raisons)."""
+    de l'ancien). Local observé (secteur/commune) ou bassin sourcé → « fiable » ; repli ÎLE → « fragile »
+    (montants arrondis + avertissement). Renvoie (niveau, raisons).
+    FIX-PRIX-ET-OPPORTUNITES (lot 1) : l'ancien « ± 12 % » n'était fondé sur aucune mesure → remplacé par
+    l'écart médian réellement mesuré au backtest (VERITE-TERRAIN-2 vol. E, ~27 %), en le disant."""
     if niveau in ("override_bassin", "secteur", "commune"):
         return "fiable", []
     if niveau == "ile_validee":
-        return "fragile", ["prix de sortie neuf estimé à l'échelle de l'île (± 12 %) — "
-                           "montants arrondis"]
+        return "fragile", ["prix de sortie neuf estimé par repli à l'échelle de l'île — écart médian "
+                           "mesuré ~27 % (backtest DVF) ; montants arrondis"]
     if niveau == "ile_sans_operation":
         return "fragile", ["prix de sortie neuf estimé par repli île — aucune opération de marché "
                            "observée sur cette commune ; ordre de grandeur"]
@@ -1089,8 +1091,15 @@ def compute_mode_b(session: Session, idu: str, *,
     terrain_nu = None
     if px_terrain and surface_parcelle:
         valeur_terrain = round(float(surface_parcelle) * px_terrain["prix_m2"])
+        # FIX-PRIX-ET-OPPORTUNITES (lot 1) — une valeur de parcelle estimée ne s'affiche jamais en
+        # chiffre sec : fourchette ±30 % + mention d'incertitude mesurée (backtest VERITE-TERRAIN-2).
+        from ..estimation_prix import MENTION as _INCERT, fourchette as _fourchette
+        _fr = _fourchette(valeur_terrain)
         terrain_nu = {
             "valeur_eur": valeur_terrain, "valeur_libelle": _eur(valeur_terrain),
+            "valeur_bas_eur": _fr["bas"], "valeur_haut_eur": _fr["haut"],
+            "valeur_fourchette_libelle": f"{_eur(_fr['bas'])} – {_eur(_fr['haut'])}",
+            "incertitude": _INCERT,
             "prix_m2": round(px_terrain["prix_m2"]), "surface_m2": round(float(surface_parcelle)),
             "niveau": px_terrain["niveau"], "libelle": px_terrain["libelle"],
             "etiquette": "Estimé",

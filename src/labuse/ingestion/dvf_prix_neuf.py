@@ -164,7 +164,11 @@ def niveau_prix_label(niveau: str | None, n: int | None = None) -> str:
     if niveau == "override_bassin":
         return "Estimé — prix de bassin sourcé (observatoire)"
     if niveau == "ile_validee":
-        return "Estimé — estimation à l'échelle de l'île (± 12 %)"
+        # FIX-PRIX-ET-OPPORTUNITES (lot 1) — l'ancien « ± 12 % » n'était fondé sur AUCUNE mesure (chiffre
+        # posé à la main). Remplacé par la marge réellement MESURÉE au backtest (VERITE-TERRAIN-2 vol. E :
+        # écart médian estimé↔réel ~27 %), en le disant. Le repli île ne connaît pas le local → au moins
+        # cette dispersion.
+        return "Estimé — repli à l'échelle de l'île ; écart médian mesuré ~27 % (backtest DVF)"
     if niveau == "ile_sans_operation":
         return "Estimé — estimation île, aucune opération de marché observée sur cette commune"
     return "Estimé"

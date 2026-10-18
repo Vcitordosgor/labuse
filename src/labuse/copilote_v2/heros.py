@@ -42,7 +42,11 @@ def _phrase_ok(prose: str, autor: set[float]) -> bool:
 
 def _gabarit(p: dict) -> str:
     """Phrase de repli DÉTERMINISTE (aucun modèle) — jamais l'affirmation douteuse."""
-    bouts = [f"Parcelle {p.get('idu')} à {p.get('commune')}"]
+    # FIX-PRIX-ET-OPPORTUNITES (lot 1) — commune OFFICIELLE dérivée de l'INSEE de l'IDU (jamais un
+    # `parcels.commune` texte erroné : une parcelle 97404 ne doit jamais s'afficher « Saint-Denis »).
+    from ..communes import nom_officiel
+    commune = nom_officiel(p.get("idu")) or p.get("commune")
+    bouts = [f"Parcelle {p.get('idu')} à {commune}"]
     if p.get("surface_m2") is not None:
         bouts.append(f"{round(p['surface_m2'])} m²")
     if p.get("zone"):

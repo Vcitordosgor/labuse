@@ -69,8 +69,11 @@ def rendu(valeurs) -> str:
     lignes = []
     tn = val(valeurs, "prix_terrain_secteur_eur_m2")
     if isinstance(tn, dict) and tn.get("valeur_eur"):
+        # FIX-PRIX-ET-OPPORTUNITES (lot 1) — valeur estimée en FOURCHETTE ±30 %, jamais en chiffre sec
+        # (repli sur le montant seul si la fourchette n'est pas servie). Mention d'incertitude en note.
+        _val = tn.get("valeur_fourchette_libelle") or fmt_eur(tn["valeur_eur"])
         lignes.append(ligne_kv("Terrain nu au prix du secteur (section cadastrale)",
-                               esc(f"{fmt_eur(tn['valeur_eur'])} ({groupe(tn['prix_m2'])} €/m² × "
+                               esc(f"{_val} ({groupe(tn['prix_m2'])} €/m² × "
                                    f"{tn.get('surface_m2', '?')} m²)"), chip_span("d", "dérivé")))
     if isinstance(pa, dict) and pa.get("tendance_pct") is not None:
         sens = pa.get("tendance") or ""
@@ -119,5 +122,9 @@ def rendu(valeurs) -> str:
                      "EXISTANT du secteur pour ce type de bien (segment le plus représenté à proximité) — "
                      "un indicateur de marché, pas le prix de sortie d'un programme neuf (celui-ci, prix du "
                      "neuf de marché, est servi au bilan / au Financier).")
+    # FIX-PRIX-ET-OPPORTUNITES (lot 1) — dès qu'une valeur de parcelle estimée est servie (terrain nu au
+    # prix du secteur), on joint sa mention d'incertitude mesurée (backtest VERITE-TERRAIN-2, point unique).
+    if isinstance(tn, dict) and tn.get("valeur_eur") and tn.get("incertitude"):
+        note_txt += " " + tn["incertitude"]      # texte interne de confiance ; note() rend brut (pas d'esc)
     corps = data + note(note_txt) + pied(valeurs, IDS)
     return section("5. Marché et prix", corps)

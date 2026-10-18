@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from ...faisabilite.residuel import fmt_taux_emprise
 from ..registre_fmt import groupe
-from ..rendu import chip_span, esc, section
+from ..rendu import chip_span, esc, note, section
 
 
 def _i(v):   # entier groupé (séparateur de milliers)
@@ -96,6 +96,7 @@ _LIGNES = [
     ("Prix bâti (section cadastrale)", "e", lambda r: _eur_m2(r, "prix_secteur_bati_m2")),
     # IMPLANTATION-4 (LOT B) — plus de fourchette de logements de l'ancien moteur : renvoi à l'Étude de
     # faisabilité (comme à l'écran Comparer). prov=None → aucun badge, comme « Classement LABUSE ».
+    # On écarte donc, pour cette ligne, la fourchette « Logements possibles (max.) » (_logements) de main.
     ("Logements possibles", None, lambda r: "voir l'Étude de faisabilité"),
     ("Bâti existant", "s", lambda r: (f"{_i(r.get('bati_existant_pct'))} % du terrain" if r.get("bati_existant_pct") is not None else None)),
     ("Gabarit max", "s", lambda r: (f"R+{max(0, int(r['gabarit_niveaux_max']) - 1)}" if r.get("gabarit_niveaux_max") is not None else None)),
@@ -128,4 +129,8 @@ def rendu(rows) -> str:
             v = fn(r)
             cells += f"<td>{v if v is not None else '—'}</td>"
         body += f'<tr><td class="lbl">{esc(label)}{badge}</td>{cells}</tr>'
-    return section("Comparatif", f'<table class="cmp"><thead>{thead}</thead><tbody>{body}</tbody></table>')
+    # FIX-PRIX-ET-OPPORTUNITES (lot 3) — SDP max / logements possibles = plafond réglementaire ; les
+    # permis réels en utilisent ~½ en médiane (volet D). Note mesurée sous le tableau.
+    from ...capacite_max import MENTION as _CAP
+    corps = f'<table class="cmp"><thead>{thead}</thead><tbody>{body}</tbody></table>' + note(_CAP)
+    return section("Comparatif", corps)

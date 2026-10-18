@@ -228,7 +228,7 @@ def le_bien_block(session: Session, idu: str) -> dict | None:
     calculée » (chaîne en échec). Renvoie None si RIEN n'est évaluable (couche bâtiments non
     ingérée) → le front OMET le tiroir (jamais un bloc creux)."""
     head = session.execute(text(
-        "SELECT id, round(surface_m2) AS surface_m2 FROM parcels WHERE idu = :i"),
+        "SELECT id, round(surface_m2) AS surface_m2, contenance_m2 FROM parcels WHERE idu = :i"),
         {"i": idu}).mappings().first()
     if head is None:
         return None
@@ -236,7 +236,14 @@ def le_bien_block(session: Session, idu: str) -> dict | None:
     if not layer_available(session):
         return None
     pid = head["id"]
-    surface = float(head["surface_m2"]) if head["surface_m2"] is not None else None
+    # FICHE-ORFEVRERIE-1 (Lot A, pts 1 & 2) — LA surface du terrain, c'est la CONTENANCE cadastrale
+    # (acte, CONTENANCE-1), jamais l'aire du dessin (ST_Area). « Surface au sol libre » = contenance −
+    # emprise bâtie (1 024 − 151 = 873, plus 1 026 − 151 = 875) ; « surface parcelle » servie = contenance.
+    # CoSIA et la classification d'occupation rapportent leurs parts à la MÊME surface (contenance),
+    # comme le dit déjà le docstring de `_cosia_couverture`.
+    from .surface import surface_terrain
+    _st = surface_terrain(head["surface_m2"], head.get("contenance_m2"))
+    surface = float(_st.valeur) if _st.valeur is not None else None
     bloc = fiche_block(session, pid, surface)
     nb = bloc.get("nb_batiments")
     # Emprise au sol du bâti = empreinte VECTEUR BD TOPO (SUM des intersections) — cohérente avec

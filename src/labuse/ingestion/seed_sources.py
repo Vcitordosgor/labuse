@@ -181,7 +181,7 @@ SOURCES: list[dict] = [
          legal_notes="Licence Ouverte 2.0 (Etalab) — attribution : « Source : Géorisques (BRGM/MTE) ».",
          technical_notes="✓ live 05/07/2026 : /installations_classees (régime, statut Seveso, NAF), lon-lat → Point. spatial_layers kind='icpe'. Vague B (# TODO étage 1)."),
     dict(name="DEAL Réunion — PPR / aléas", category="risques", provider="DEAL Réunion (Lizmap)",
-         source_millesime="PPR/PPRL approuvés 2011–2026 (arrêtés, DEAL Lizmap)",   # M125-1bis : attrs.approbation min/max sur 164 zonages en base
+         source_millesime="PPR/PPRL approuvés 2011–2026 (arrêtés, DEAL Réunion)",   # FICHE-ORFEVRERIE-1 pt 19/20 (ex-« DEAL Lizmap ») · M125-1bis : attrs.approbation min/max sur 164 zonages en base
          access_type="WFS/GeoJSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
          documentation_url="https://deal974.lizmap.com/cartes/index.php/view/map?repository=02sprinr&project=01risque",
          endpoint_url="https://deal974.lizmap.com/cartes/index.php/lizmap/service?repository=02sprinr&project=01risque",

@@ -7,6 +7,9 @@ import { useQuery } from '@tanstack/react-query'
 import { getCompare, type CompareRow } from '../../lib/api'
 import { fmtEurCompact, fmtInt, fmtTauxEmprise, iduCourt } from '../../lib/format'
 import { PERIM_POTENTIEL_COURT, PERIM_RESIDUEL_COURT, PERIM_SECTION_CADASTRALE } from '../../lib/perimetres'
+// CAPACITE_MAX_MENTION_COURTE (main) : ne sert PLUS la ligne logements (retirée → renvoi à l'Étude),
+// mais la MENTION reste, en note sous le tableau (la SDP affichée est un maximum réglementaire, volet D).
+import { CAPACITE_MAX_MENTION_COURTE } from '../../lib/capaciteMax'
 import { bandeMeta, signalMeta } from '../../lib/status'   // COMPARER-2 §4 — bande + Signal (comme l'Analyse)
 import { useApp } from '../../store/useApp'
 import { ParcelInput } from '../ParcelInput'   // OUTILS-FIX-2 D1 — saisie clavier (IDU/adresse/réf courte)
@@ -114,7 +117,9 @@ const ROWS: Row[] = [
   { label: `Prix bâti · ${PERIM_SECTION_CADASTRALE}`, prov: 'estime', val: (r) => r.prix_secteur_bati_m2 != null ? `${fmtInt(r.prix_secteur_bati_m2)} €/m²` : '—', num: (r) => r.prix_secteur_bati_m2 ?? null, title: 'Médiane DVF du bâti (maison/appartement) sur la section cadastrale (calcul) — même source que la fiche Marché (dvf_parcelle.secteur).' },
   // IMPLANTATION-4 (LOT B) — plus de fourchette de logements de l'ancien moteur dans le Comparatif : le
   // nombre de logements (dessiné, contrôlé) se lit dans l'Étude de faisabilité. La ligne reste (repère de
-  // lecture), mais sans chiffre ni tri/surlignage — elle renvoie à l'Étude.
+  // lecture), mais sans chiffre ni tri/surlignage — elle renvoie à l'Étude. On ÉCARTE donc, pour CETTE
+  // ligne, la fourchette « Logements possibles (max.) » que main avait ajoutée (OUTILS-FIX-2 D3 +
+  // FIX-PRIX-ET-OPPORTUNITES lot 3) : c'est précisément le chiffre de l'ancien moteur qu'on retire ici.
   { label: 'Logements possibles', prov: 'estime', noBadge: true,
     val: () => 'voir l\'Étude de faisabilité',
     title: 'Le nombre de logements (dessiné, contrôlé, par scénario) se lit dans l\'Étude de faisabilité — plus de fourchette estimée ici.' },
@@ -352,7 +357,10 @@ export function ComparePanel() {
               </tbody>
             </table>
           )}
-          <p className="mt-3 text-[10.5px] text-txt-dim">Chaque valeur vient du même point de calcul que la fiche (run servi). Ajoutez par la carte, ou depuis une fiche → « Comparer » — jusqu’à 3.</p>
+          {/* FIX-PRIX-ET-OPPORTUNITES (lot 3, de main) — mention GARDÉE (ex-ligne logements) : la SDP
+              maximale réglementaire affichée est un plafond ; les permis réels en utilisent ~½ (volet D). */}
+          <p className="mt-3 text-[10.5px] text-txt-dim">{CAPACITE_MAX_MENTION_COURTE}.</p>
+          <p className="mt-1 text-[10.5px] text-txt-dim">Chaque valeur vient du même point de calcul que la fiche (run servi). Ajoutez par la carte, ou depuis une fiche → « Comparer » — jusqu’à 3.</p>
         </div>
       </div>
     </div>

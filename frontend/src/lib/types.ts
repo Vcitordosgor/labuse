@@ -237,6 +237,8 @@ export interface ModeB extends Indisponible {
   // M59-P1 (Q1) : repère « terrain nu au prix du secteur » (Estimé, hors formule réhab) + drapeau
   // « valeur portée par le terrain » (le foncier vaut plus que ce que le bâti justifie).
   terrain_nu?: { valeur_eur: number; valeur_libelle: string; prix_m2: number; surface_m2: number
+    // FIX-PRIX-ET-OPPORTUNITES (lot 1) — fourchette ±30 % + mention d'incertitude (backtest VT2).
+    valeur_bas_eur?: number; valeur_haut_eur?: number; valeur_fourchette_libelle?: string; incertitude?: string
     niveau: string; libelle: string; etiquette: string } | null
   porte_par_terrain?: boolean
   // M101 A2 : la PORTE du mode B — pourquoi cette parcelle est « bâtie », en français lisible
@@ -960,6 +962,19 @@ export interface PotentielTransformation extends Indisponible {
   pct_consomme: number | null
   pct_residuel: number | null
   sdp_residuelle_m2: number | null
+  // FICHE-ORFEVRERIE-1 (Lot A, pt 7) — la chaîne lisible du calcul (comment on arrive à N m²) +
+  // l'étape qui limite. Présent seulement quand elle retombe sur la SDP servie (sinon null).
+  calcul?: {
+    surface_m2: number | null
+    emprise_constructible_m2: number | null
+    niveaux_max: number | null
+    sdp_max_m2: number | null
+    emprise_batie_m2: number | null
+    niveaux_existants: number | null
+    sdp_existante_m2: number | null
+    sdp_residuelle_m2: number | null
+    etape_limitante: string | null
+  } | null
   sous_densite: boolean | null
   capacite_estimee: boolean | null
   surelevation_possible: boolean | null
@@ -968,6 +983,9 @@ export interface PotentielTransformation extends Indisponible {
   hauteur_marge_m: number | null
   // RECETTE-10 T1 — la hauteur qui mord (« égout »/« faîtage ») quand le LiDAR a mesuré les deux.
   hauteur_contrainte?: string | null
+  // FICHE-ORFEVRERIE-1 (Lot A, pt 4) — la règle qui mord, chiffrée (ex. 7 m à l'égout) + sa base.
+  hauteur_regle_m?: number | null
+  hauteur_base?: string | null
   // RECETTE-11 A3 — date de survol LiDAR HD, servie avec la mesure.
   hauteur_survol?: string | null
   hauteur_nature?: string | null

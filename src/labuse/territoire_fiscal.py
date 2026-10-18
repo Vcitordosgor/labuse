@@ -73,16 +73,30 @@ _FRR_LIBELLE_PARTIE = {
 
 
 def frr_position(db: Session, idu: str) -> str | None:
-    """RECETTE-11 D3 — position de la parcelle vs la zone spéciale d'action rurale (les Hauts) :
-    'dans' | 'hors', ou None si le périmètre (couche frr) n'est pas disponible."""
+    """Position de la parcelle vs la zone spéciale d'action rurale (les Hauts) : 'dans' | 'hors',
+    ou None si aucun CONTOUR INFRA-COMMUNAL n'est disponible.
+
+    FRR-MOUFIA-1 (correctif) — la ZSAR « les Hauts » (décret n° 78-690) est INFRA-COMMUNALE, et le jeu
+    Région (ZRR 2017) la donne comme un ÉTAT DE COMMUNE (« partiellement classée » pour Saint-Denis),
+    SANS tracé parcellable. La couche `spatial_layers` kind='frr' servie est donc, elle aussi, à la
+    MAILLE COMMUNE (`attrs.maille='commune'` : un polygone = toute la commune — vérifié, 141,8 km² pour
+    Saint-Denis, soit 99,8 % de la commune). Un `ST_Intersects` contre ce polygone renvoyait « dans »
+    pour TOUTE parcelle de la commune, y compris les BAS (Moufia, le campus littoral vers 150 m) :
+    conclusion géométriquement FAUSSE, contraire à la doctrine même de la source (« on ne conclut
+    JAMAIS à la parcelle » — cf. en-tête du module). On ne tranche donc 'dans'/'hors' QUE si un vrai
+    contour infra-communal est servi (`attrs.maille <> 'commune'`) ; sinon None → le lecteur affiche
+    « position non déterminée ». Dès qu'un tracé ZSAR réel est ingéré, le test géométrique reprend."""
     try:
+        # Contours INFRA-COMMUNAUX réels uniquement : jamais l'attribut servi à la maille commune.
         n = db.execute(text(
-            "SELECT count(*) FROM spatial_layers WHERE kind='frr' AND geom_2975 IS NOT NULL")).scalar()
+            "SELECT count(*) FROM spatial_layers WHERE kind='frr' AND geom_2975 IS NOT NULL "
+            "AND COALESCE(attrs->>'maille','') <> 'commune'")).scalar()
         if not n:
-            return None
+            return None   # pas de délimitation « les Hauts » exploitable à la parcelle → non déterminé
         dedans = db.execute(text(
             "SELECT EXISTS(SELECT 1 FROM spatial_layers f JOIN parcels p ON p.idu = :i "
-            "WHERE f.kind='frr' AND f.geom_2975 IS NOT NULL AND ST_Intersects(f.geom_2975, p.geom_2975))"),
+            "WHERE f.kind='frr' AND f.geom_2975 IS NOT NULL AND COALESCE(f.attrs->>'maille','') <> 'commune' "
+            "AND ST_Intersects(f.geom_2975, p.geom_2975))"),
             {"i": idu}).scalar()
         return "dans" if dedans else "hors"
     except Exception:  # noqa: BLE001 — couche absente → non déterminé, jamais un 500

@@ -62,39 +62,65 @@ export function BatiBlock({ f }: { f: Fiche }) {
 
   // ── Tuiles d'en-tête (bâti présent) : emprise · hauteur. Le NB et la NATURE DU TOIT quittent les
   // tuiles (Lot E) : le nb passe dans la ligne de comptes, le toit dans le repli « détail du bâti ».
+  const nbRnb = b.rnb?.length ?? 0
+  const nbBan = b.adresses_bati?.adresses ?? 0
+  const egoutTon = b.hauteur_discordante && b.hauteur_discordance_motif === 'égout ↔ BD TOPO' ? ('ambre' as const) : undefined
+  // FICHE-ORFEVRERIE-1 (reprise, pt 4) — quand le LiDAR a mesuré, on affiche FAÎTAGE **et** ÉGOUT côte à
+  // côte (l'égout commande la surélévation), avec la date de survol et, si un permis a été autorisé
+  // APRÈS le survol, la mention « possiblement périmée ». La mesure porte sur le bâtiment PRINCIPAL (le
+  // plus grand de la parcelle, cf. hauteur_parcelle_lidar) — dit dans le verdict.
+  const survol = b.hauteur_survol ?? null
+  const permisPost = f.potentiel_transformation?.hauteur_permis_posterieur ?? null
   const tuiles: Tuile[] = []
   if (bati) {
     tuiles.push({ label: 'Emprise bâtie au sol',
       valeur: emprise > 0 ? <>{fmtInt(emprise)} <small>m²</small></> : '—',
       ton: emprise > 0 ? undefined : 'gris', sous: b.emprise_source })
-    tuiles.push(faitageSourced
-      ? { label: 'Faîtage (LiDAR)', valeur: <>{fmtDec(b.hauteur_faitage_m)} <small>m</small></>, sous: 'haut de toit',
-          ton: b.hauteur_discordante && b.hauteur_discordance_motif === 'faîtage aberrant' ? 'ambre' : undefined }
-      : { label: 'Hauteur du bâti',
-          valeur: b.hauteur_bati_m != null ? <>{fmtDec(b.hauteur_bati_m)} <small>m</small></> : 'non déterminée',
-          ton: b.hauteur_bati_m != null ? undefined : 'gris', sous: b.hauteur_bati_m != null ? 'BD TOPO' : undefined })
+    if (faitageSourced) {
+      tuiles.push({ label: 'Faîtage (LiDAR)', valeur: <>{fmtDec(b.hauteur_faitage_m)} <small>m</small></>,
+        sous: survol ? `survol ${survol}` : 'haut de toit',
+        ton: b.hauteur_discordante && b.hauteur_discordance_motif === 'faîtage aberrant' ? 'ambre' : undefined })
+      if (b.hauteur_egout_m != null) tuiles.push({ label: 'Égout (LiDAR)',
+        valeur: <>{fmtDec(b.hauteur_egout_m)} <small>m</small></>, sous: 'bord de toit · commande la surélévation',
+        ton: egoutTon })
+    } else {
+      tuiles.push({ label: 'Hauteur du bâti',
+        valeur: b.hauteur_bati_m != null ? <>{fmtDec(b.hauteur_bati_m)} <small>m</small></> : 'non déterminée',
+        ton: b.hauteur_bati_m != null ? undefined : 'gris', sous: b.hauteur_bati_m != null ? 'BD TOPO' : undefined })
+    }
   }
-  const nbRnb = b.rnb?.length ?? 0
-  const nbBan = b.adresses_bati?.adresses ?? 0
-  const egoutTon = b.hauteur_discordante && b.hauteur_discordance_motif === 'égout ↔ BD TOPO' ? ('ambre' as const) : undefined
 
   return (
     <div className="flex flex-col gap-3" data-le-bien>
       {/* Verdict — restitution de faits servis (occupation, emprise, hauteur), aucun recalcul. */}
       {bati ? (
-        /* RECETTE-2 (A4) — quand BD TOPO et RNB s'accordent sur un compte clair (N ≥ 1), le titre dit
-           « N bâtiments » plutôt qu'un « Présence de bâti à vérifier » vague (bande peu_bati sur l'emprise). */
-        <Verdict ton="vert" reponse={(nb != null && nb === nbRnb && nb >= 1)
+        /* FICHE-ORFEVRERIE-1 (Lot A, pt 6) — plus de « Présence de bâti à vérifier » vague : on tranche.
+           BD TOPO et RNB s'accordent (N = M ≥ 1, ou RNB absent) → « N bâtiments » ; ils DIVERGENT → on le
+           DIT (« Sources discordantes : N BD TOPO · M RNB »), c'est un fait, pas un doute ; emprise sans
+           compte clair → « Bâti présent ». Le faîtage mesuré est celui du bâtiment principal (le plus grand). */
+        <Verdict ton="vert" reponse={(nb != null && nb >= 1 && nbRnb > 0 && nb !== nbRnb)
+          ? `Sources discordantes : ${nb} BD TOPO · ${nbRnb} RNB`
+          : (nb != null && nb >= 1)
           ? `${nb} bâtiment${nb > 1 ? 's' : ''}`
-          : (b.occupation_label || `${nb ?? ''} bâtiment${(nb ?? 0) > 1 ? 's' : ''}`)}
+          : 'Bâti présent'}
           contexte={[emprise > 0 ? `emprise ${fmtInt(emprise)} m²` : null,
-            faitageSourced ? `faîtage ${fmtDec(b.hauteur_faitage_m)} m mesuré (LiDAR)` : null].filter(Boolean).join(' · ') || undefined} />
+            faitageSourced
+              ? `faîtage ${fmtDec(b.hauteur_faitage_m)} m${b.hauteur_egout_m != null ? ` / égout ${fmtDec(b.hauteur_egout_m)} m` : ''} mesurés (LiDAR, bâtiment principal${survol ? `, survol ${survol}` : ''})`
+              : null].filter(Boolean).join(' · ') || undefined} />
       ) : (
         <Verdict ton="vert" reponse="Terrain nu"
           contexte={`aucun bâtiment BD TOPO, aucune hauteur LiDAR${etabList.length ? '' : ', aucun établissement rattaché'}`} />
       )}
 
       {bati && <Tuiles items={tuiles} />}
+      {/* FICHE-ORFEVRERIE-1 (reprise, pt 4) — permis autorisé APRÈS le survol LiDAR : la hauteur mesurée
+          peut être dépassée (bâti modifié depuis). On le DIT, sans recalculer. */}
+      {bati && faitageSourced && permisPost && (
+        <div data-hauteur-perimee>
+          <Badge ton="ambre">Mesure possiblement périmée</Badge>
+          <p className="mt-0.5 text-[11px] leading-snug text-amber">Un permis autorisé le {permisPost} est postérieur au survol LiDAR{survol ? ` (${survol})` : ''} — le bâti a pu changer depuis la mesure.</p>
+        </div>
+      )}
 
       {/* FICHE-FIX-4 (Lot E) — UNE ligne de comptes cohérente : bâtiments BD TOPO · RNB · adresses BAN
           (les identifiants RNB liés vivent dans le repli « détail du bâti » ci-dessous). */}
@@ -124,9 +150,8 @@ export function BatiBlock({ f }: { f: Fiche }) {
       {bati && (
         <Repli label="détail du bâti">
           <Lignes>
-            {faitageSourced && b.hauteur_egout_m != null && (
-              <Ligne label="Égout mesuré (LiDAR)" valeur={<>{fmtDec(b.hauteur_egout_m)} <small>m — bord de toit</small></>} ton={egoutTon} />
-            )}
+            {/* FICHE-ORFEVRERIE-1 (reprise, pt 4) — l'égout mesuré est désormais une TUILE d'en-tête
+                (à côté du faîtage) ; le repli ne garde que la comparaison BD TOPO et le reste du détail. */}
             {faitageSourced && b.hauteur_bdtopo_m != null && (
               <Ligne label="Hauteur BD TOPO (≈ égout)" valeur={<>{fmtDec(b.hauteur_bdtopo_m)} <small>m</small></>} ton={egoutTon} />
             )}
@@ -172,7 +197,7 @@ export function BatiBlock({ f }: { f: Fiche }) {
         <Lignes><Ligne label="Établissements sur la parcelle" valeur={<>aucun <small>SIRENE, adresse exacte</small></>} ton="gris" /></Lignes>
       ))}
 
-      <FactNote>Bâti existant — {b.source_bati}. Information de fiche, jamais un signal de classement.</FactNote>
+      <FactNote>Bâti existant — {b.source_bati}.</FactNote>
     </div>
   )
 }
@@ -232,7 +257,7 @@ export function FiliationBlock({ f }: { f: Fiche }) {
             valeur={<>{x.idu}{x.date ? <small> · {fmtDateNum(x.date)}</small> : null}{x.nature ? <small> · {x.nature}</small> : null}</>} />
         ))}
       </Lignes>
-      <FactNote>{fi.division_recente ? 'Division récente (événement ≥ 2023) — signal de mouvement foncier. ' : ''}{fi.source}. Contrôle croisé avec le cadastre d'époque (géométrie) — deux canaux, jamais un conflit.</FactNote>
+      <FactNote>{fi.division_recente ? 'Division récente (événement ≥ 2023) — signal de mouvement foncier. ' : ''}{fi.source}. Contrôle croisé avec le cadastre d'époque (géométrie).</FactNote>
     </div>
   )
 }

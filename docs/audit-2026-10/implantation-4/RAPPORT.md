@@ -141,6 +141,48 @@ changements sont d'affichage (front), de libellés d'export (back) et de câblag
 
 ---
 
+## Merge `origin/main` (2c475149) dans `feat/implantation-4`
+
+`git fetch && git merge origin/main` — 4 conflits, résolus en GARDANT LES DEUX CÔTÉS (de la branche :
+aucun nombre de logements de l'ancien moteur → renvoi « voir l'Étude », libellés « SDP maximale
+réglementaire », bouton fiche → Docs ; de main : tout l'apport intermédiaire). Ce que **main** avait
+changé dans chaque fichier et comment c'est **gardé** :
+
+- **`frontend/src/components/compare/ComparePanel.tsx`** — main (OUTILS-FIX-2 D3 + prix-et-opportunites
+  lot 3) remplaçait la ligne par « Logements possibles (max.) » (fourchette lo–hi) avec la mention
+  `CAPACITE_MAX_MENTION_COURTE`. **Gardé** : la ligne « Logements possibles » de la branche (renvoi
+  « voir l'Étude de faisabilité », sans chiffre ni tri) ; la **mention capacité = maximum réglementaire**
+  de main RÉIMPLANTÉE en NOTE sous le tableau (plus sur la ligne logements) → les deux intentions.
+- **`frontend/src/components/fiche/Fiche.tsx`** — main (FICHE-ORFEVRERIE-1 Lot B) a refondu la fiche à
+  **10 sections** : la section « Simulation » (prix de sortie, Bilan, Réhabilitation Mode B, OutilsSection
+  Faisabilité/Calculette/Assemblage) est **FONDUE dans le Potentiel** (§10) ; le tiroir §11 autonome
+  disparaît. **Gardé** : l'architecture de main (on retire le §11 devenu un DOUBLON) ; le **bouton
+  fiche → Docs** de la branche (`ouvrirEtude([idu])`) SURVIT dans l'OutilsSection du Potentiel fondu.
+- **`frontend/src/components/fiche/constructibilite.tsx`** — main (prix-et-opportunites lot 3) a ajouté
+  la `FactNote(CAPACITE_MAX_MENTION)` et raccourci le micro-libellé en « SDP max ». **Gardé les DEUX** :
+  le bouton renvoi `data-faisa-renvoi-etude` + le micro « SDP maximale réglementaire » de la branche,
+  ET la `FactNote` capacité-maximum de main (les deux blocs coexistent).
+- **`src/labuse/exports/blocs/comparatif.py`** (PDF) — main a mis la ligne « Logements possibles (max.) »
+  (`_logements`) et une **note `note(_CAP)`** (mention capacité = maximum, volet D). **Gardé** : la ligne
+  renvoi « voir l'Étude » de la branche + la note `note(_CAP)` de main. Les ratios cités par la note
+  (0,46 / 0,40) ont été ajoutés à l'**allowlist de provenance** (`exports/provenance.py`) — une référence
+  de mesure (volet D), pas une grandeur de parcelle : sans quoi le VERROU « toute ligne = une donnée du
+  registre » faisait fuir ces deux nombres (le CI de main l'avait manqué, la note ne s'imprimant que si
+  ≥ 2 témoins Comparatif). `test_capacite_max` mis à jour (le Comparatif porte la mention en NOTE, plus
+  en ligne « (max.) »).
+
+Autres fichiers de main : fusionnés automatiquement sans perte (ex. `outils/moteurs.tsx`, captures
+`captures/prix-et-opportunites/**`, fiche-orfèvrerie…).
+
+**Tests** : `vitest` 267, `tsc` 0, pytest unitaire (capacité 4, Comparatif verrou, docs1 4) et **reel
+implantation** (impl1 89, impl2 18, distance 17, pareto 6, pdf 13) VERTS. ⚠ `test_lot3_cascade_exclue`
+(reel SCORING, hors « reel implantation ») échoue sur la base locale : c'est le **changement de scoring
+de main** (`b227a255` — le RPG indicatif ne bloque plus en zone U/AU) confronté au run SERVI `q_v18`
+(antérieur) ; passe après le **re-run `q_v19`** (geste data déjà noté dans OPPORTUNITES-CORRECTIONS),
+pas une erreur de résolution de merge.
+
+---
+
 ## Recette Vic — corrections des captures (items 1-6)
 
 Captures **refaites dans la VRAIE app** (uvicorn `labuse.api.app` + Vite, DB locale), plus les PDF

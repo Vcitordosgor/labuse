@@ -21,12 +21,12 @@ export function MarcheSecteurBlock({ ms }: { ms: MarcheSecteur }) {
   // FactRow (valeur mono à droite, source datée dessous). Données/libellés/millésimes inchangés.
   return (
     <div data-marche-secteur>
-      <GroupLabel>Contexte socio-économique (secteur)</GroupLabel>
       {f && (
         <>
-          {/* RETOURS-11F4 F9 — Filosofi = carreau INSEE 200 m : Sourcé (jamais « estimé »). */}
-          {/* CHASSE-DONNEES-FIX-1 (Lot 7, E-70) — c'est la MOYENNE du carreau Filosofi (nivvie_moyen_eur),
-              jamais une médiane : « moyen » (comme le PDF corrigé C11 et la fiche commune). */}
+          {/* FICHE-ORFEVRERIE-1 (Lot B, pt 17) — chaque bloc porte SON ÉCHELLE : revenus = carreau INSEE
+              200 m. « Niveau de vie moyen » est VÉRIFIÉ : le champ servi est la MOYENNE du carreau
+              Filosofi (nivvie_moyen_eur, CHASSE-DONNEES-FIX-1 E-70), pas la médiane — « moyen » est exact. */}
+          <GroupLabel>Revenus du secteur · carreau INSEE 200 m</GroupLabel>
           <FactRow label="Niveau de vie moyen" value={eur(f.nivvie_moyen_eur)}
             src={<><span className="b s">sourcé</span>{f.millesime}</>} />
           {partProp != null && (
@@ -39,17 +39,18 @@ export function MarcheSecteurBlock({ ms }: { ms: MarcheSecteur }) {
       )}
       {r && (
         <>
-          {/* FICHE-FIX-2 P5 — le RPLS est à maille COMMUNE (rpls_commune, insee=left(idu,5)), pas
-              secteur : la maille est DITE sur la ligne (§1.5), on ne laisse pas un chiffre communal
-              se lire comme du secteur. Le RPLS n'existe pas à l'IRIS/carreau en base (vérifié). */}
-          <FactRow label="Parc social — commune entière" value={<>{r.nb_logements.toLocaleString('fr-FR')} <small>logements</small></>}
+          {/* FICHE-ORFEVRERIE-1 (Lot B, pt 17) — le PARC SOCIAL (RPLS, maille COMMUNE) SORT du bloc
+              « secteur » : son propre kicker d'échelle, pour qu'un chiffre communal ne se lise pas
+              comme du secteur (carreau 200 m). */}
+          <GroupLabel>Parc social · commune entière</GroupLabel>
+          <FactRow label="Parc social" value={<>{r.nb_logements.toLocaleString('fr-FR')} <small>logements</small></>}
             src={<>{r.millesime} · maille commune</>} />
           {r.pct_qpv != null && (
             <FactRow label="En QPV — commune" value={<>{r.pct_qpv} <small>%</small></>} />
           )}
         </>
       )}
-      <FactNote>Contexte informatif — hors scoring. Niveau de vie/pauvreté au carreau 200 m ; parc social à la commune.</FactNote>
+      <FactNote>Contexte informatif. Revenus et pauvreté au carreau 200 m ; parc social à la commune.</FactNote>
     </div>
   )
 }

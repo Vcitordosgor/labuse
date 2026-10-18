@@ -165,6 +165,18 @@ def fiche_commune_cache(ctx: JobContext) -> None:
         raise RuntimeError(f"fiche-commune-cache : {echecs} échecs sur {len(communes)}, 0 succès")
 
 
+def signal_instantane(ctx: JobContext) -> None:
+    """FIX-PRIX-ET-OPPORTUNITES lot 4 — fige l'instantané mensuel DATÉ du Signal servi (signal_p,
+    niveau, bande par parcelle) dans SA table `signal_instantanes`, pour le juger forward contre les
+    ventes DVF à venir (protocole volet E). N'écrit QUE dans sa table, n'envoie aucun mail. Idempotent
+    (une clé par date×parcelle) : relancé le même jour, il ne duplique rien."""
+    from .signal_instantane import figer
+    r = figer(ctx.db)
+    ctx.compte(snapshot_le=r.get("snapshot_le"), run=r.get("run_label"),
+               figees=r.get("n"), inserees=r.get("inseres"), par_niveau=r.get("par_niveau"),
+               note=r.get("note"))
+
+
 def coherence_banc(ctx: JobContext) -> None:
     """COHERENCE-FIX-1 (lot G) + PRE-DEPLOY-1 (lot A) — joue le banc de cohérence (mode --ile)
     EN-PROCESS (TestClient FastAPI), journalise le passage (coherence_runs) et laisse la cloche

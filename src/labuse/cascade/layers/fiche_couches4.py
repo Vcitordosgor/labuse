@@ -68,10 +68,13 @@ class VefaNeufLayer(Layer):
         prix = a.get("prix_m2_neuf")
         tr = a.get("tranche") or "—"
         n = a.get("n_ventes")
-        prix_txt = f" — prix médian ~{prix} €/m²" if prix else ""
+        # FICHE-ORFEVRERIE-1 (Lot C, pts 20 & 22) — prix au format français (« ~4 878 €/m² », pas
+        # « ~4878 ») et « aplat commune » (terme de carto) remplacé par « à l'échelle de la commune ».
+        prix_fr = f"{round(prix):,}".replace(",", " ") if prix else None
+        prix_txt = f" — prix médian ~{prix_fr} €/m²" if prix_fr else ""
         n_txt = f" ({n} ventes VEFA / 36 mois)" if n is not None else ""
         return _trace(soft_flag(
             self.name,
             f"Marché du logement neuf (VEFA) sur la commune : {tr}{n_txt}{prix_txt}. "
-            "Repère de marché (aplat commune), pas une contrainte de la parcelle.",
+            "Repère de marché à l'échelle de la commune, pas une contrainte de la parcelle.",
             Severity.INFO, source=SRC_VEFA), i.id)

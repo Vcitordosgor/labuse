@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getGabarit, type GabaritResult, type GabGeom } from '../../lib/api'
 import { fmtInt } from '../../lib/format'
+import { CAPACITE_MAX_MENTION_COURTE } from '../../lib/capaciteMax'
 import { useApp } from '../../store/useApp'
 import { EntreeParcelle, type SourceParcelle } from './EntreeParcelle'   // RECETTE-1 F2
 import { Reinitialiser } from '../ui/Reinitialiser'   // RECETTE-1 F3
@@ -291,6 +292,9 @@ export function Gabarit() {
               statusLabel={res.hauteurStatus === 'not_integrated' ? 'Non chiffrée' : null}
               sub={res.hauteurStatus === 'not_integrated' ? 'prospect L ≥ H (non intégré)' : null} />
           </div>
+          {/* FIX-PRIX-ET-OPPORTUNITES (lot 3) — l'enveloppe est un MAXIMUM réglementaire ; les permis
+              réels en réalisent ~½ en médiane (volet D). Point de texte unique lib/capaciteMax. */}
+          <p data-gabarit-plafond className="text-[10.5px] leading-snug text-txt-dim">{CAPACITE_MAX_MENTION_COURTE}</p>
 
           {/* COUVERTURE — les 4 familles (ni segments ni articles) */}
           <div data-gabarit-couverture className="rounded-lg border border-line-2 bg-surface-2 p-3">

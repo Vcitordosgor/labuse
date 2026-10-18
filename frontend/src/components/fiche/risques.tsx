@@ -26,17 +26,25 @@ const aleaCran = (niveau: string | null | undefined, redhibitoire: boolean): 0 |
 export function RisquesSection({ f }: { f: Fiche; idu: string }) {
   const setModule = useApp((s) => s.setModule)
   const lignes = f.lines.filter((l) => l.onglet === 'risques')
-  const vigilances = lignes.filter((l) => l.result === 'SOFT_FLAG' || l.result === 'HARD_EXCLUDE')
+  // FICHE-ORFEVRERIE-1 (Lot D, pt 29) — le BASSIN VERSANT est un CONTEXTE hydrographique, pas une
+  // vigilance (pas une contrainte opposable) : il sort des vigilances (bandeau/badge passent à 3) et
+  // devient une ligne d'information. Il reste compté parmi les couches évaluées.
+  const vigilancesAll = lignes.filter((l) => l.result === 'SOFT_FLAG' || l.result === 'HARD_EXCLUDE')
+  const bassinVersant = vigilancesAll.find((l) => l.layer === 'bassin_versant') ?? null
+  const vigilances = vigilancesAll.filter((l) => l.layer !== 'bassin_versant')
   const inconnues = lignes.filter((l) => l.result === 'UNKNOWN')
   const sansObjet = lignes.filter((l) => l.result === 'PASS')
-  // compteur VRAI : toutes les couches réellement évaluées (vigilance + sans objet + inconnu).
-  const evaluees = vigilances.length + sansObjet.length + inconnues.length
+  // compteur VRAI : toutes les couches réellement évaluées (vigilance + info + sans objet + inconnu).
+  const evaluees = vigilances.length + sansObjet.length + inconnues.length + (bassinVersant ? 1 : 0)
   // FICHE-1 lot 3 — les ALÉAS en détail (f.aleas) remplacent les lignes brutes « risques » (layer
   // 'risques') : nature, niveau, part, référence PPR. Les AUTRES vigilances (accès, sol, SUP…)
   // restent affichées telles quelles. Même moteur que Pièges et risques (cascade servie).
   const aleas = f.aleas?.liste ?? []
   const sols = f.sols
-  const autresVig = vigilances.filter((l) => l.layer !== 'risques')
+  // FICHE-ORFEVRERIE-1 (Lot B, pt 14) — les SERVITUDES d'utilité publique (SUP, layer 'sup') vivent
+  // UNE fois, en §Urbanisme (« Dispositifs et périmètres ») : ici on ne les répète pas, on RENVOIE.
+  const autresVig = vigilances.filter((l) => l.layer !== 'risques' && l.layer !== 'sup')
+  const aUneSup = vigilances.some((l) => l.layer === 'sup')
   return (
     <RefDrawer id="risques" icon={IC.risques} name="Risques et environnement"
       context={`${evaluees} couche${evaluees > 1 ? 's' : ''} évaluée${evaluees > 1 ? 's' : ''}`}
@@ -71,9 +79,17 @@ export function RisquesSection({ f }: { f: Fiche; idu: string }) {
                 label={<>{fmtAlea(a.nature)}{a.niveau ? <small className="ml-1 text-txt-mut"> niveau {fmtIntensite(a.niveau)}</small> : null}{a.redhibitoire && <Badge ton="ambre" className="ml-1.5">rédhibitoire</Badge>}</>}
                 pct={a.part_pct != null ? `${a.part_pct} %` : undefined} />
             ) : (
-              <div key={i} className="flex items-center justify-between border-b border-line py-[5px] text-[12.5px]">
-                <span>{fmtAlea(a.nature)}</span>
-                <span className="flex items-center gap-2"><Badge ton="ambre">zone bleue</Badge><span className="font-mono text-[11px] text-txt-dim">{a.part_pct != null ? `${a.part_pct} %` : ''}</span></span>
+              /* FICHE-ORFEVRERIE-1 (Lot A, pts 8 & 9) — plus de « PPR — zone bleue » nu : on sert la
+                 ligne COMPLÈTE (aléa + zone + prescription), c.-à-d. le libellé servi, et la part « % »
+                 porte sa nature MESURÉE (intersection géométrique parcelle × zonage) au survol. */
+              <div key={i} data-aleas-ligne className="border-b border-line py-[6px] text-[12.5px]">
+                <div className="flex items-start justify-between gap-2">
+                  <span className="min-w-0 flex-1">{a.libelle || fmtAlea(a.nature)}</span>
+                  <span className="flex flex-none items-center gap-2">
+                    <Badge ton="ambre">zone bleue</Badge>
+                    {a.part_pct != null && <span className="font-mono text-[11px] text-txt-dim" title="Part de la parcelle mesurée (intersection géométrique parcelle × zonage PPR)">{a.part_pct} %</span>}
+                  </span>
+                </div>
               </div>
             ))}
             <FactNote>
@@ -181,7 +197,7 @@ export function RisquesSection({ f }: { f: Fiche; idu: string }) {
         {/* FICHE-FIX-5 (Lot F) — VIGILANCES en Lignes AMBRE (plus de puce ▲ ni d'encadré) : le libellé
             avant « — », le détail après, la source derrière le « i ». Les lignes HT/HTA (ex-Rappel
             encadré) rejoignent la même liste. Aucune donnée retirée. */}
-        {(autresVig.length > 0 || f.proximites?.ligne_ht || f.proximites?.ligne_mt) && (
+        {(autresVig.length > 0 || f.proximites?.ligne_ht || f.proximites?.ligne_mt || aUneSup) && (
           <div>
             <GroupLabel>Vigilances</GroupLabel>
             <Lignes>
@@ -203,7 +219,8 @@ export function RisquesSection({ f }: { f: Fiche; idu: string }) {
                 const val = dash >= 0 ? det.slice(dash + 1).trim() : ''
                 const src = l.source ? String(l.source) : ''
                 return (
-                  <Ligne key={`v-${i}`} ton="ambre" title={det}
+                  /* FICHE-ORFEVRERIE-1 (reprise, pt 21) — bruit routier & co. en valeur-longue (plus d'ellipse). */
+                  <Ligne long key={`v-${i}`} ton="ambre" title={det}
                     label={<><span className="text-amber">{label}</span>{src ? <InfoI aria="Source de la vigilance" tip={src} /> : null}</>}
                     valeur={val} />
                 )
@@ -214,13 +231,35 @@ export function RisquesSection({ f }: { f: Fiche; idu: string }) {
                   valeur="au contact" />
               )}
               {f.proximites?.ligne_mt && (
+                /* FICHE-ORFEVRERIE-1 (Lot A, pt 24) — la distance en mètres, pas un « à proximité » muet. */
                 <Ligne ton="ambre" title={f.proximites.ligne_mt.libelle}
                   label={<><span className="text-amber">Ligne moyenne tension</span><InfoI aria="Sur la ligne HTA" tip={`${f.proximites.ligne_mt.libelle} — ${f.proximites.ligne_mt.source}`} /></>}
-                  valeur="à proximité" />
+                  valeur={f.proximites.ligne_mt.distance_m != null ? <>~{f.proximites.ligne_mt.distance_m} <small>m</small></> : 'à proximité'} />
+              )}
+              {/* FICHE-ORFEVRERIE-1 (Lot B, pt 14) — RENVOI : la SUP est détaillée en §Urbanisme (plus de
+                  doublon), on signale seulement sa présence ici. */}
+              {aUneSup && (
+                <Ligne label={<span className="text-amber">Servitude d'utilité publique</span>}
+                  valeur={<small className="text-txt-dim">détail en « Urbanisme »</small>} />
               )}
             </Lignes>
           </div>
         )}
+        {/* FICHE-ORFEVRERIE-1 (Lot D, pt 29 · Lot C, pt 20/21) — BASSIN VERSANT : ligne d'INFORMATION
+            (contexte hydrographique), hors vigilances. Le « code hydro » brut est retiré de l'affichage
+            (il reste au survol via le titre complet) ; le libellé n'est pas tronqué. */}
+        {bassinVersant && (() => {
+          const det = (bassinVersant.detail || '') as string
+          const propre = det.replace(/\s*\(code hydro[^)]*\)/i, '')
+          return (
+            <div data-bassin-versant-info>
+              <GroupLabel>Information</GroupLabel>
+              <p className="text-[11.5px] leading-snug text-txt-mut" title={det}>
+                {propre}{bassinVersant.source ? <InfoI aria="Source du bassin versant" tip={String(bassinVersant.source)} /> : null}
+              </p>
+            </div>
+          )
+        })()}
         {/* lignes non évaluées (donnée absente) — dites, jamais masquées. */}
         {inconnues.length > 0 && (
           <div className="flex flex-col gap-1">

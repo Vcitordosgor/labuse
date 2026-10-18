@@ -10,6 +10,7 @@
  */
 import { useState, type CSSProperties, type ReactNode } from 'react'
 import { Bouton } from '../ui/Bouton'
+import { Chevron } from '../ui/Chevron'   // FICHE-ORFEVRERIE-1 (Lot D, pt 26) — accordéon standard partagé
 import { Chip } from '../ui/Chip'
 import { Tip } from '../Tip'
 
@@ -85,13 +86,21 @@ export function Lignes({ children }: { children: ReactNode }) {
 // rendu caractère par caractère) ; le seul retour à la ligne autorisé est ENTRE le libellé et la
 // valeur (flex-wrap sur la ligne → la valeur descend en bloc si elle ne tient pas). `title` porte le
 // texte complet quand la valeur est tronquée.
-export function Ligne({ label, valeur, ton, info, title }: {
-  label: ReactNode; valeur: ReactNode; ton?: FormeTon; info?: ReactNode; title?: string
+// FICHE-ORFEVRERIE-1 (reprise, pt 21) — `long` : une valeur longue ne s'ellipse JAMAIS. Elle descend
+// sur sa propre ligne SOUS le libellé (flex-basis 100 %), alignée à gauche et passant à la ligne autant
+// que nécessaire (overflow-wrap). Sans `long`, comportement historique (valeur mono à droite, ellipse
+// de repli pour les valeurs courtes-mais-serrées, `title` complet au besoin).
+export function Ligne({ label, valeur, ton, info, title, long }: {
+  label: ReactNode; valeur: ReactNode; ton?: FormeTon; info?: ReactNode; title?: string; long?: boolean
 }) {
   return (
     <div data-forme="ligne" style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'baseline', gap: '2px 10px', padding: '5px 0', borderBottom: '1px solid var(--line)', fontSize: 12.5 }}>
       <span style={{ color: 'var(--txt-hi)', display: 'flex', alignItems: 'baseline', gap: 5, minWidth: 0 }}>{label}{info}</span>
-      <span title={title} style={{ ...mono, textAlign: 'right', flex: 'none', marginLeft: 'auto', minWidth: 0, maxWidth: '100%', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: (ton && VAL_COLOR[ton]) || 'var(--txt-hi)' }}>{valeur}</span>
+      <span title={title} style={{ ...mono,
+        ...(long
+          ? { flex: '1 1 100%', textAlign: 'left', whiteSpace: 'normal', overflowWrap: 'anywhere', marginLeft: 0 }
+          : { textAlign: 'right', flex: 'none', marginLeft: 'auto', minWidth: 0, maxWidth: '100%', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }),
+        color: (ton && VAL_COLOR[ton]) || 'var(--txt-hi)' }}>{valeur}</span>
     </div>
   )
 }
@@ -243,7 +252,9 @@ export function Repli({ compteur, label, children, defaultOpen = false }: {
     <div data-forme="repli">
       <button type="button" data-repli-toggle aria-expanded={open} onClick={() => setOpen((o) => !o)}
         style={{ display: 'flex', alignItems: 'center', gap: 6, color: open ? 'var(--mint)' : 'var(--txt-dim)', fontSize: 12, padding: '6px 0 0', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
-        <span style={{ fontSize: 9, color: open ? 'var(--mint)' : 'var(--txt-faint)' }}>{open ? '▼' : '◀'}</span>
+        {/* FICHE-ORFEVRERIE-1 (Lot D, pt 26) — le MÊME chevron d'accordéon que les sections (fermé →
+            droite, ouvert → bas), plus un glyphe texte ◀/▼ bespoke. */}
+        <Chevron open={open} />
         {compteur != null && <b style={{ color: 'var(--txt-hi)', fontWeight: 500 }}>{compteur}</b>}
         <span>{label}</span>
       </button>

@@ -22,7 +22,7 @@ import { AskBar } from './AskBar'
 import { BilanEcran } from './BilanEcran'   // BILAN-1 — le bilan promoteur remplace l'ancien écran d'hypothèses
 import { GabaritLine } from './GabaritLine'
 import { cadastreGeoportailUrl, errialUrl, googleEarthKmzUrl, googleMapsUrl, pagesJaunes } from './liensExternes'
-import { LogoCadastre, LogoPagesJaunes, LogoGoogleMaps } from './logosServices'
+import { LogoCadastre, LogoPagesJaunes, LogoGoogleMaps, LogoGeorisques, LogoGoogleEarth } from './logosServices'
 import { PourquoiPasTab } from './PourquoiPas'
 import { ScoreV2Block } from './ScoreV2Block'
 import { BlocIndisponible } from './BlocIndisponible'
@@ -71,8 +71,8 @@ const SECTION_LABELS: Record<string, string> = {
   fiscalite: 'Fiscalité et dispositifs',
   marche: 'Marché',
   quartier: 'Quartier',
+  // FICHE-ORFEVRERIE-1 (Lot B, pt 16) — « Simulation » fondue dans Potentiel : 10 sections (plus de 11e).
   potentiel: 'Potentiel',
-  simulation: 'Simulation',
 }
 
 // ── M9 lot 3 — Signaler une erreur (file de QA humaine, aucune action automatique) ──
@@ -833,8 +833,8 @@ export function Fiche({ idu }: { idu: string }) {
                     {er.url && (
                       <Tip side="bottom" tip="État des risques (Errial)" garder>
                         <a data-errial-link data-errial-commune-seule={er.commune_seule || undefined} className="hbtn"
-                          target="_blank" rel="noreferrer noopener" href={er.url} aria-label="État des risques (Errial)">
-                          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" /><path d="M12 9v4" /><path d="M12 17h.01" /></svg>
+                          target="_blank" rel="noreferrer noopener" href={er.url} aria-label="État des risques (Géorisques / Errial)">
+                          <LogoGeorisques />
                         </a>
                       </Tip>
                     )}
@@ -843,7 +843,7 @@ export function Fiche({ idu }: { idu: string }) {
                     <Tip side="bottom" tip="Ouvrir dans Google Earth" garder>
                       <a data-earth-link className="hbtn" target="_blank" rel="noreferrer noopener"
                         href={googleEarthKmzUrl(idu)} aria-label="Ouvrir dans Google Earth">
-                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M3 12h18" /><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18Z" /></svg>
+                        <LogoGoogleEarth />
                       </a>
                     </Tip>
                   </>
@@ -958,7 +958,7 @@ export function Fiche({ idu }: { idu: string }) {
             })(),
             { l: 'Zone', v: reglesZone ?? 'Non publié au GPU', s: zoneSous, vide: reglesZone == null,
               i: 'Zone du PLU au point de la parcelle (règlement communal, archive GPU). « Non publié au GPU » : la commune n’a pas déposé de document opposable.' },
-            { l: 'Pente', v: pente != null ? `${nf(pente)} °` : '—', s: penteSous, vide: pente == null,
+            { l: 'Pente', v: pente != null ? `${nf(pente)}°` : '—', s: penteSous, vide: pente == null,
               i: 'Pente moyenne du terrain, calculée sur le modèle de relief RGE ALTI (IGN). À La Réunion elle commande le coût de terrassement autant que la constructibilité. « — » : relief non disponible sur la parcelle.' },
             (() => {
               const e = expo.data
@@ -1335,7 +1335,11 @@ export function Fiche({ idu }: { idu: string }) {
           // plus de seuils 5/15/30° au front.
           const penteDeg = f.terrain?.pente_moy_deg
           const penteSous = f.terrain?.pente_bande ?? undefined
-          const tuilePente = { v: penteDeg != null ? `${nf(penteDeg)} °` : '—', s: penteSous, vide: penteDeg == null,
+          // FICHE-ORFEVRERIE-1 (Lot A, pt 5) — la pente de la PARCELLE exprimée aussi en % (tan), la
+          // même unité que le profil altimétrique ci-dessous, pour que les deux chiffres se comparent
+          // (sans quoi « plus forte pente de l'axe 13,3 % » semblait, à tort, sous la pente parcelle).
+          const pentePct = penteDeg != null ? Math.round(Math.tan(penteDeg * Math.PI / 180) * 100) : null
+          const tuilePente = { v: penteDeg != null ? `${nf(penteDeg)}°` : '—', s: penteSous, vide: penteDeg == null,
             i: 'Pente moyenne du terrain, calculée sur le modèle de relief RGE ALTI (IGN). À La Réunion elle commande le coût de terrassement autant que la constructibilité. « — » : relief non disponible sur la parcelle.' }
           // Exposition → §2 Terrain (orientation du versant + pente, MNT RGE ALTI, sans ligne de vue).
           const expoData = expo.data
@@ -1400,11 +1404,11 @@ export function Fiche({ idu }: { idu: string }) {
             {/* M137-E — le Copilote embarqué « Demander au Copilote sur cette parcelle… » est RETIRÉ :
                 la loupe (recherche intra-fiche) + « Poser une question » (AskBar) couvrent déjà le besoin. */}
 
-            {/* ═══ FICHE-RANGEMENT-2 Lot 1 — LES 11 SECTIONS PAR NATURE (basculement) ═══
+            {/* ═══ FICHE-RANGEMENT-2 Lot 1 — LES 10 SECTIONS PAR NATURE (basculement) ═══
                 Groupes silencieux : Le bien (Identité·Terrain·Bâti) · Le droit du sol (Urbanisme·
-                Risques·Réseaux·Fiscalité) · Le marché (Marché·Quartier) · Le projet (Potentiel·
-                Simulation). Accordéon exclusif inchangé (RefDrawer / FicheAccordionCtx). Chaque
-                section COMPOSE des blocs feuilles ; aucune ligne n'est perdue vs les 12 tiroirs. */}
+                Risques·Réseaux·Fiscalité) · Le marché (Marché·Quartier) · Le projet (Potentiel, qui
+                absorbe la Simulation — FICHE-ORFEVRERIE-1 Lot B pt 16). Accordéon exclusif inchangé
+                (RefDrawer / FicheAccordionCtx). Chaque section COMPOSE des blocs feuilles. */}
             <GroupLabel>Le bien</GroupLabel>
 
             {/* ① IDENTITÉ — ce qui identifie le bien : surface (ex-tuile), propriétaire (relocalisé
@@ -1540,7 +1544,7 @@ export function Fiche({ idu }: { idu: string }) {
                 + artificialisation OCS GE (TerrainDuBienBlock §2), piscine (EquipementsBadges, ex-Réseaux). */}
             <RefDrawer id="terrain" icon={IC.terrain} name="Terrain"
               context={[penteSous ? `pente ${penteSous}` : null, expoOrient && expoOrient !== 'plat' ? String(expoOrient) : null].filter(Boolean).join(' · ') || undefined}
-              value={penteDeg != null ? `${nf(penteDeg)} °` : (expoOrient && expoOrient !== 'plat' ? String(expoOrient) : undefined)}>
+              value={penteDeg != null ? `${nf(penteDeg)}°` : (expoOrient && expoOrient !== 'plat' ? String(expoOrient) : undefined)}>
               <div className="flex flex-col gap-3">
                 {/* KELFONCIER-FIX-2 (Lot F) — maquette v3 : Verdict + Tuiles (pente·expo·surface
                     libre·sol artificialisé) + BarreEmpilée CoSIA. Toutes les valeurs sont servies
@@ -1553,7 +1557,7 @@ export function Fiche({ idu }: { idu: string }) {
                     : expoOrient ? `Versant ${expoOrient}`
                     : (penteSous ? `Terrain ${penteSous}` : 'Terrain')
                   const vCtx = [
-                    penteDeg != null ? `${nf(penteDeg)} °` : null,
+                    penteDeg != null ? `${nf(penteDeg)}° (≈ ${pentePct} %)` : null,
                     lb?.surface_libre_m2 != null ? `${fmtInt(lb.surface_libre_m2)} m² au sol libre` : null,
                     artif != null ? `${artif.toLocaleString('fr-FR')} % artificialisé (OCS GE)` : null,
                   ].filter(Boolean).join(' · ')
@@ -1586,7 +1590,7 @@ export function Fiche({ idu }: { idu: string }) {
                 {expoData?.aspect_deg != null && (
                   <div data-terrain-azimut>
                     <Ligne label="Azimut du versant"
-                      valeur={<>{nf(expoData.aspect_deg)} <small>° (0 = Nord, sens horaire)</small></>} />
+                      valeur={<>{nf(expoData.aspect_deg)}<small>° (0 = Nord, sens horaire)</small></>} />
                   </div>
                 )}
                 <EquipementsBadges idu={idu} />
@@ -1604,9 +1608,14 @@ export function Fiche({ idu }: { idu: string }) {
                 /* RECETTE-2 (A4) — quand BD TOPO et RNB s'accordent sur N bâtiments, le sous-titre dit
                    « N bâtiments » (cohérent avec le badge) plutôt qu'un « Présence de bâti à vérifier » vague. */
                 context={(() => {
+                  // FICHE-ORFEVRERIE-1 (Lot A, pt 6) — sous-titre ALIGNÉ sur le verdict interne : accord
+                  // BD TOPO = RNB → « N bâtiments » ; divergence → « sources discordantes : N / M » ; sinon
+                  // « bâti présent » — plus de « Présence de bâti à vérifier » muet.
                   const nb = f.le_bien.nb_batiments
-                  const nbRnb = Array.isArray(f.le_bien.rnb) ? f.le_bien.rnb.length : null
-                  return (nb != null && nb === nbRnb && nb >= 1) ? `${nb} bâtiment${nb > 1 ? 's' : ''}` : (f.le_bien.occupation_label || 'bâti existant')
+                  const nbRnb = Array.isArray(f.le_bien.rnb) ? f.le_bien.rnb.length : 0
+                  return (nb != null && nb >= 1 && nbRnb > 0 && nb !== nbRnb)
+                    ? `sources discordantes : ${nb} BD TOPO · ${nbRnb} RNB`
+                    : (nb != null && nb >= 1) ? `${nb} bâtiment${nb > 1 ? 's' : ''}` : 'bâti présent'
                 })()}
                 value={f.le_bien.nb_batiments != null && f.le_bien.nb_batiments > 0
                   ? <Badge ton="vert">{f.le_bien.nb_batiments} bâtiment{f.le_bien.nb_batiments > 1 ? 's' : ''}</Badge>
@@ -1711,7 +1720,21 @@ export function Fiche({ idu }: { idu: string }) {
                     (ICD, tiroir Données) reste. Le champ back q_score n'est PAS touché (consommé
                     ailleurs : App, Kanban, MapView, filtres…) — seul l'affichage fiche disparaît. */}
                 {/* FINITIONS-1 (P13) — l'encart « Demander à l'IA de traduire le PLU » est RETIRÉ. */}
-                {f.reglement_plu && <ReglementPluBlock rp={f.reglement_plu} />}
+                {/* FICHE-ORFEVRERIE-1 (reprise, pt 9) — le plafond L151-36 couvre « gare / station de
+                    transport public GUIDÉ ou de transport collectif en SITE PROPRE » sous 800 m. Le
+                    téléphérique urbain (Papang) est un transport public GUIDÉ : s'il est sous 800 m, il
+                    déclenche le plafond au même titre qu'un TCSP en site propre. On prend la station
+                    qualifiante la plus proche (site propre prioritaire, sinon téléphérique). */}
+                {f.reglement_plu && (() => {
+                  const sp = f.proximites?.tcsp
+                  const tel = f.proximites?.telepherique
+                  const tcspPlaf = sp?.sous_800m
+                    ? { station: sp.station, distance_m: sp.distance_m, sous_800m: true, mode: 'transport collectif en site propre' }
+                    : (tel && tel.distance_m < 800)
+                    ? { station: tel.station, distance_m: tel.distance_m, sous_800m: true, mode: 'transport public guidé (téléphérique)' }
+                    : null
+                  return <ReglementPluBlock rp={f.reglement_plu} tcsp={tcspPlaf} />
+                })()}
                 {/* KELFONCIER-FIX-1 (Lot A) — STATUT D'OUVERTURE de la zone AU, sous la zone. Une zone
                     AU n'est constructible que si son règlement l'a ouverte ; « fermée »/« sous condition »
                     en ambre, avec le motif cité du règlement. Rien si la parcelle n'est pas en AU marquée. */}
@@ -1742,7 +1765,14 @@ export function Fiche({ idu }: { idu: string }) {
                 {/* FICHE-RANGEMENT-3 Lot 2 — la ligne « Zonage PLU » (layer zonage_plu_gpu) répète la
                     tuile « Zone » en tête → retirée (une seule ligne pour la zone). La ligne « bâti :
                     N bâtiments » (layer bati) répète §3 Bâti (nb_batiments) → retirée. */}
-                {(() => { const rl = reglesLines.filter((l) => l.result !== 'PASS' && l.layer !== 'zonage_plu_gpu' && l.layer !== 'bati'); return rl.length > 0
+                {/* FICHE-ORFEVRERIE-1 (Lot B, pt 14) — DPU et PEB vivent UNE fois, dans « Dispositifs et
+                    périmètres » (DispositifsBody) ci-dessous : on les retire de « Situation » pour ne pas
+                    les répéter dans la même section.
+                    FICHE-ORFEVRERIE-1 (reprise, pt 18) — `residuel_socle` est un SIGNAL DE SCORING (socle
+                    −25…+30) qui fuite en Situation un VERDICT DÉDUIT (« petit collectif / 2-4 lots ») + du
+                    jargon de barème : retiré de l'affichage de la fiche (la SDP restante, elle, vit déjà
+                    au bandeau et en Potentiel). Le scoring n'est PAS touché (la couche calcule toujours). */}
+                {(() => { const rl = reglesLines.filter((l) => l.result !== 'PASS' && !['zonage_plu_gpu', 'bati', 'dpu', 'peb', 'residuel_socle'].includes(l.layer)); return rl.length > 0
                   ? <div><GroupLabel>Situation</GroupLabel><div className="flex flex-col gap-1">{rl.map((l, i) => <Line key={i} line={l} hideWeight hideDate />)}</div></div> : null })()}
                 {/* FICHE-FIX-4 (Lot F) — les 2 outils PLU (Annuaire · Vérif procédure) en boutons
                     OutilsSection au lieu de grandes cartes PorteOutil. M137-P : Annuaire ouvre le hub
@@ -1759,16 +1789,21 @@ export function Fiche({ idu }: { idu: string }) {
                 {f.dispositifs && <DispositifsBody d={f.dispositifs} />}
                 {/* SOURCES-FIX-1 A3 — SCOT (document supra-communal opposable au PLU). FICHE-FIX-4
                     (Lot F) : en Ligne comme les autres, source derrière le « i ». */}
-                {f.scot && (
+                {f.scot && (() => {
+                  // FICHE-ORFEVRERIE-1 (Lot C, pt 20) — « SCOT DE LA CINOR » → « SCoT de la CINOR » :
+                  // le sigle SCoT en casse normale, les mots de liaison en minuscules, l'acronyme CINOR intact.
+                  const scotNom = (f.scot.nom ?? 'SCoT').replace(/\bSCOT\b/gi, 'SCoT')
+                    .replace(/\b(DE|DU|DES|LA|LE|LES|D')\b/g, (m) => m.toLowerCase())
+                  return (
                   <div data-scot><Lignes>
-                    <Ligne label={<>SCOT<InfoI tip={<>Schéma de cohérence territoriale — document supra-communal opposable au PLU. {f.scot.source}</>} aria="Sur le SCOT" /></>}
+                    <Ligne label={<>SCoT<InfoI tip={<>Schéma de cohérence territoriale — document supra-communal opposable au PLU. {f.scot.source}</>} aria="Sur le SCoT" /></>}
                       valeur={f.scot.disponible
-                        ? <>{f.scot.nom ?? 'SCOT'}{f.scot.date_approbation ? <small> · approuvé le {fmtDateNum(f.scot.date_approbation)}</small> : (f.scot.statut ? <small> · {f.scot.statut}</small> : null)}</>
+                        ? <>{scotNom}{f.scot.date_approbation ? <small> · approuvé le {fmtDateNum(f.scot.date_approbation)}</small> : (f.scot.statut ? <small> · {f.scot.statut}</small> : null)}</>
                         : 'hors périmètre'}
                       ton={f.scot.disponible ? undefined : 'gris'}
                       title={f.scot.disponible ? (f.scot.nom ?? undefined) : undefined} />
                   </Lignes></div>
-                )}
+                  ) })()}
                 {/* FICHE-FIX-2 P4 — mixité sociale (LLS) branchée sur la règle VALIDÉE de la zone
                     (reglement_plu.mixite, lue des regles calibrées). Validée → seuil + quota + citation
                     sourcés ; propose/absente → « non modélisée pour cette zone » (jamais « non
@@ -1865,11 +1900,16 @@ export function Fiche({ idu }: { idu: string }) {
                   const allTxt = [...(terf?.perimetres ?? []).map((p) => p.libelle), ...dom.map((d) => d.libelle)].join(' | ').toLowerCase()
                   const has = (re: RegExp) => re.test(allTxt)
                   const ortDate = dom.find((d) => /revitalisation|\bort\b/i.test(d.libelle))?.libelle.match(/(\d{4}-\d{2}-\d{2})/)?.[1]
+                  // FICHE-ORFEVRERIE-1 (Lot A, pt 11) — le QPV est un fait GÉOMÉTRIQUE de la parcelle
+                  // (le back teste ST_Intersects), pas un dispositif de la commune : la pastille « QPV »
+                  // ne doit PAS s'allumer parce que la parcelle est à 500 m d'un QPV (bande TVA, dérivée).
+                  // On distingue « dans un QPV » (périmètre non dérivé « — QPV ») de « hors QPV / bande 500 m ».
+                  const qpvDans = (terf?.perimetres ?? []).some((p) => !p.derive && /quartier prioritaire\s*[—-]\s*qpv/i.test(p.libelle))
+                  const qpvBande = (terf?.perimetres ?? []).some((p) => /bande autour d.un quartier prioritaire/i.test(p.libelle))
                   const disp: Pastille[] = [
                     { label: 'ZFANG', on: !!terf?.zfang },
                     { label: 'FRR', on: !!terf?.frr },
                     { label: 'ORT', on: has(/\bort\b|revitalisation/), date: ortDate ? fmtDateNum(ortDate) : undefined },
-                    { label: 'QPV', on: has(/\bqpv\b|quartier prioritaire/) },
                     { label: 'PVD', on: has(/petites villes/) },
                     { label: 'Cœur de ville', on: has(/c[œo]eur de ville/) },
                   ]
@@ -1896,6 +1936,15 @@ export function Fiche({ idu }: { idu: string }) {
                       ))}
                       <GroupLabel>Dispositifs de la commune</GroupLabel>
                       <Pastilles items={disp} />
+                      {/* FICHE-ORFEVRERIE-1 (Lot A, pt 11) — statut QPV À LA PARCELLE (géométrie), dit en
+                          clair « dans / hors QPV », séparé des dispositifs de la commune. */}
+                      {(qpvDans || qpvBande) && (
+                        <p data-qpv-parcelle className="text-[11px] leading-snug text-txt-mut">
+                          <span className="text-txt-dim">QPV (parcelle) :</span>{' '}
+                          {qpvDans ? <b className="text-amber">dans un quartier prioritaire</b>
+                            : <>hors QPV <span className="text-txt-dim">— à moins de 500 m (bande TVA accession, cf. détail)</span></>}
+                        </p>
+                      )}
                       {/* FICHE-1 lot 5 — taxe d'aménagement en BOUTON (change les hypothèses). */}
                       {f.taxe_amenagement && (
                         <OutilsSection outils={[{ label: "Calculer la taxe d'aménagement", principal: true, full: true, data: 'taxe-amenagement-outil',
@@ -1976,13 +2025,22 @@ export function Fiche({ idu }: { idu: string }) {
                       : zoneFamille === 'N' ? 'Zone naturelle — construction non autorisée.'
                       : sdpNulle ? 'Aucune SDP résiduelle exploitable sur cette parcelle — le détail du calcul (terrain libéré, hypothèses, gabarit) est dans « Étudier quand même ».' : null)
                   const outils: OutilSection[] = []
-                  // IMPLANTATION-4 (LOT A) — l'étude de faisabilité vit maintenant dans Docs (overlay) :
-                  // le bouton OUVRE l'écran d'étude sur cette parcelle (ouvrirEtude), plus l'ancien outil.
-                  // Le scénario dessiné, les contrôles et les hypothèses y sont servis (même composant M22).
+                  // IMPLANTATION-4 (LOT A) — l'étude de faisabilité vit maintenant dans Docs (overlay) : le
+                  // bouton OUVRE l'écran d'étude sur cette parcelle (ouvrirEtude), plus aucun calcul dans la fiche.
+                  // FICHE-ORFEVRERIE-1 (Lot B, pt 16, de main) — la section « Simulation » est FONDUE ici : un
+                  // seul « Étude de faisabilité » + « Densifier », « Calculette foncière » et « Assemblage ».
                   outils.push({ label: 'Étude de faisabilité', principal: true, data: 'etude-outil',
                     onClick: () => useApp.getState().ouvrirEtude([idu]) })
                   if (f.commune) outils.push({ label: "Densifier l'existant", data: 'densifier-filtre',
                     onClick: () => { const st = useApp.getState(); st.setCommunesFilter([f.commune!]); st.setFilter('renouvellement', true); st.setFilter('sdpMin', 200); st.openFiltres() } })
+                  outils.push({ label: 'Calculette foncière', data: 'calculette',
+                    onClick: () => { setCalcPrefill(idu); setModule('calculette-fonciere') } })
+                  outils.push({ label: 'Assemblage', full: true, data: 'assemblage-outil',
+                    onClick: () => { setParcelPrefill(idu); setModule('assemblage') } })
+                  // Prix de sortie NEUF servi (source unique `prix_sortie`) — une LIGNE du Potentiel, base
+                  // du bilan de charge foncière ci-dessous (ex-verdict de « Simulation »).
+                  const ps = faisa.data?.prix_sortie
+                  const prixSortie = ps && !ps.non_calculable ? ps.prix : null
                   const panneau = (
                     <div className="flex flex-col gap-3">
                       {f.potentiel_transformation && <TransformationBlock pt={f.potentiel_transformation} />}
@@ -1997,6 +2055,14 @@ export function Fiche({ idu }: { idu: string }) {
                           : (reglesSdp != null && reglesSdp > 0 ? `${fmtInt(reglesSdp)} m² de SDP constructible restante · bâti conservé` : 'Pas de SDP résiduelle exploitable')}
                         contexte={!inconstructible && fo?.niveaux ? `capacité ${fo.niveaux}` : undefined} />
                       <ChiffreDissous l="SDP restante" t={tuileSdp} />
+                      {/* FICHE-ORFEVRERIE-1 (Lot B, pt 16) — « Prix de sortie retenu » : une LIGNE du
+                          Potentiel (ex-verdict de « Simulation »), base du bilan de charge foncière. */}
+                      {prixSortie != null && (
+                        <ChiffreDissous l="Prix de sortie retenu" t={{
+                          v: `${fmtInt(Number(prixSortie))} €/m²`,
+                          s: ps?.label ?? 'neuf servi — base du bilan',
+                          i: `Prix de sortie NEUF servi${ps?.label ? ` — ${ps.label}` : ''}. C'est la base du bilan de charge foncière ci-dessous, et le même chiffre dans la Calculette, l'Assemblage et les documents. Distinct du prix de l'ancien (secteur) affiché dans « Marché ».` }} />
+                      )}
                       {/* PPR-PARTIEL-FIX-1 (étape B) — tiroir Potentiel : la parcelle touche une zone
                           rouge PPR (servie 0 par prudence) mais garde du foncier HORS rouge (≥ 200 m²).
                           On le RÉVÈLE « à étudier » (jamais « constructible »). Même chiffre que la tuile
@@ -2014,46 +2080,16 @@ export function Fiche({ idu }: { idu: string }) {
                       {sdpNulle
                         ? <Repli label="Étudier quand même">{panneau}</Repli>
                         : panneau}
+                      {/* FICHE-ORFEVRERIE-1 (Lot B, pt 16) — la SIMULATION (charge foncière + réhabilitation
+                          Mode B) est FONDUE dans le Potentiel : plus une 11e section, un sous-groupe ici. */}
+                      <GroupLabel>Simulation</GroupLabel>
+                      <BilanTab idu={idu} />
+                      {f.mode_b?.indisponible
+                        ? <BlocIndisponible titre="Réhabilitation (Mode B)" />
+                        : f.mode_b?.disponible && <ModeBBody idu={idu} initial={f.mode_b} />}
                     </>
                   )
                 })()}
-              </div>
-            </RefDrawer>
-
-            {/* ⑪ SIMULATION — la charge foncière (bilan) + la Réhabilitation (Mode B, FICHE-RANGEMENT-3
-                Lot 3 : rentrée DANS §11, plus un 12e tiroir) + les outils de projet (Faisabilité,
-                Calculette, Assemblage). 11 tiroirs au total. */}
-            <RefDrawer id="simulation" icon={IC.confiance} name="Simulation"
-              context="charge foncière · réhabilitation · outils projet"
-              value={<Badge ton="vert">bilan</Badge>}>
-              <div className="flex flex-col gap-3">
-                {/* KELFONCIER-FIX-2 (Lot J) — maquette v3 : Verdict prix de sortie (servi, base du
-                    bilan) + OutilsSection en pied (Faisabilité · Calculette · Assemblage). */}
-                {/* FICHE-FIX-4 (Lot L) — le paragraphe explicatif passe derrière le « i » ; les 3 boutons restent. */}
-                {(() => {
-                  // PRIX-SORTIE-1 (Vic 05/10/2026) — prix de sortie = prix NEUF servi (source unique
-                  // `prix_sortie`), plus jamais `marche.median` (prix de l'ancien). Non calculable /
-                  // non constructible → pas de prix de sortie affiché (jamais un prix de l'ancien à la place).
-                  const ps = faisa.data?.prix_sortie
-                  const prix = ps && !ps.non_calculable ? ps.prix : null
-                  return (
-                    <Verdict ton="vert"
-                      reponse={<>Prix de sortie retenu {prix != null ? `${fmtInt(Number(prix))} €/m²` : '—'}<InfoI aria="Sur le prix de sortie" tip={`Prix de sortie NEUF servi${ps?.label ? ` — ${ps.label}` : ' (médiane du neuf de marché, DVF)'}. C'est la base du bilan de charge foncière ci-dessous, et le même chiffre dans la Calculette, l'Assemblage et les documents. Distinct du prix de l'ancien (secteur) affiché dans « Marché ».`} /></>} />
-                  )
-                })()}
-                <BilanTab idu={idu} />
-                {/* Réhabilitation (Mode B) — bloc inline (ModeBBody), plus un tiroir séparé. */}
-                {f.mode_b?.indisponible
-                  ? <BlocIndisponible titre="Réhabilitation (Mode B)" />
-                  : f.mode_b?.disponible && <ModeBBody idu={idu} initial={f.mode_b} />}
-                <OutilsSection outils={[
-                  { label: 'Étude de faisabilité', principal: true, data: 'faisabilite-outil',
-                    onClick: () => useApp.getState().ouvrirEtude([idu]) },   // IMPLANTATION-4 (LOT A) — ouvre l'écran d'étude dans Docs
-                  { label: 'Calculette foncière', data: 'calculette',
-                    onClick: () => { setCalcPrefill(idu); setModule('calculette-fonciere') } },
-                  { label: 'Assemblage', full: true, data: 'assemblage-outil',
-                    onClick: () => { setParcelPrefill(idu); setModule('assemblage') } },
-                ] satisfies OutilSection[]} />
               </div>
             </RefDrawer>
 

@@ -91,19 +91,19 @@ def _gardes_lot5(db: Session, idu: str, lignes: list[dict]) -> list[dict]:
             if v is None:
                 continue     # pas de faisceau viabilisation → la ligne intersection-stricte est omise
             l = dict(l)
+            # FICHE-ORFEVRERIE-1 (reprise, pt 19) — libellés en clair : plus de jargon « faisceau
+            # viabilisation » ni de détail de méthode interne (« test au contact strict de l'axe BD TOPO »).
             if v["voie10"]:
                 l.update(result="PASS", severity="INFO", weight_applied=0.0,
-                         detail="Accès voirie : voie publique à ≤ 10 m de la parcelle "
-                                "(faisceau viabilisation — le test au contact strict de l'axe "
-                                "BD TOPO est retiré).")
+                         detail="Accès voirie : une voie publique passe à moins de 10 m de la parcelle.")
             elif v["voie75"]:
                 l.update(result="SOFT_FLAG", severity="INFO", weight_applied=0.0,
-                         detail="Accès voirie : voie publique à ≤ 75 m mais pas au droit de la "
-                                "parcelle — accès à vérifier sur site (faisceau viabilisation).")
+                         detail="Accès voirie : voie publique à moins de 75 m mais pas au droit de la "
+                                "parcelle — accès à vérifier sur site.")
             else:
                 l.update(result="SOFT_FLAG", severity="INFO",
-                         detail="Accès voirie : aucune voie publique détectée à moins de 75 m "
-                                "(faisceau viabilisation) — enclavement possible, à vérifier.")
+                         detail="Accès voirie : aucune voie publique détectée à moins de 75 m — "
+                                "enclavement possible, à vérifier.")
         elif nom == "icpe":
             # RECETTE-1 (C5, décision Vic 04/10) — la fiche et la CARTE lisent le MÊME rattachement
             # (ST_Contains, TOUS régimes, régime affiché). Deux notions : « sur la parcelle » (point

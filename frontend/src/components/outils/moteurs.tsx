@@ -319,11 +319,15 @@ export function M16() {
                   const neg = c < 0
                   return (
                     <div data-asm-charge data-neg={neg ? '1' : '0'} className={`rounded-lg border px-3 py-2 text-[11px] leading-snug ${neg ? 'border-st-ecartee/40 bg-st-ecartee/[0.07]' : 'border-mint/40 bg-mint/[0.06]'}`}>
-                      <span className={neg ? 'text-st-ecartee' : 'text-mint'}>Charge foncière cumulée : <b>{fmtEurCompact(c)}</b> ({fmt(d.charge_fonciere.par_m2_terrain)} €/m² de terrain)</span>
+                      {/* FIX-PRIX-ET-OPPORTUNITES (lot 1) — marquée « estimée » : c'est un bilan à rebours,
+                          pas une valeur de marché. Pas de fourchette ±30 % ici (la soustraction CA−coûts
+                          AMPLIFIE l'incertitude du prix de sortie → un ±30 % la SOUS-dirait) : on le dit. */}
+                      <span className={neg ? 'text-st-ecartee' : 'text-mint'}>Charge foncière cumulée (estimée) : <b>{fmtEurCompact(c)}</b> ({fmt(d.charge_fonciere.par_m2_terrain)} €/m² de terrain)</span>
                       {/* RETOURS-12 T7 — résultat d'un scénario d'opération, pas un verdict sur les parcelles. */}
                       {neg
                         ? <span className="text-txt-dim"> — à ces hypothèses, une opération sur cet ensemble ne dégage rien pour le terrain (résultat d'un scénario, pas la valeur des parcelles).</span>
                         : <span className="text-txt-dim"> — chiffre d'affaires (CA) cumulé ~{fmtEurCompact(d.ca?.central)}.</span>}
+                      <span className="text-txt-dim"> Estimée (bilan à rebours) : repose sur un prix de sortie estimé (écart médian mesuré ~27 % au backtest DVF) et des hypothèses de coût — pas une valeur de marché.</span>
                       {d.terrain_zone_eur_m2 != null && <span className="text-txt-dim"> Marché zone : <b className="text-txt">{fmt(d.terrain_zone_eur_m2)} €/m²</b> (DVF · fiab. {String(d.terrain_zone_fiabilite ?? '—')}{d.zones_mixtes ? ' · zones mixtes' : ''}).</span>}
                       {d.n_chiffrables < d.n && <span className="text-st-creuser"> · {d.n_chiffrables}/{d.n} parcelles chiffrables</span>}
                     </div>
