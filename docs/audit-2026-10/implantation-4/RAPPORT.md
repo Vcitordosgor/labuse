@@ -141,6 +141,42 @@ changements sont d'affichage (front), de libellés d'export (back) et de câblag
 
 ---
 
+## Recette Vic — corrections des captures (items 1-6)
+
+Captures **refaites dans la VRAIE app** (uvicorn `labuse.api.app` + Vite, DB locale), plus les PDF
+rendus par le moteur réel.
+
+- **Item 1 — PPR hachurée** : la PPR servie était dessinée AVANT la pleine terre → l'aplat vert la
+  recouvrait. `_g_ppr` passe APRÈS les objets (au-dessus du sol, sous les limites) → rouge + bleue
+  hachurées, écran + PDF (Saint-Denis rouge 548 m² + bleue, Saint-André bleue). Test :
+  `test_planche_ppr_hachuree_si_servie` (polygone `fill="url(#ppr|pprb)"` présent) + absence si pas de PPR.
+- **Item 2 — Coupe à travers le plan RÉEL** : nouvel **axe de coupe** (perpendiculaire à la voie, passant
+  par le bâtiment) dans `contexte.py` (`_axe_coupe` + `_tn_section` = profil LiDAR échantillonné le long de
+  l'axe). `coupe_svg` PROJETTE bâtiment et stationnement à leur **vraie position** (plus « collés à la
+  voie ») et les hauteurs égout/faîtage sont des **polylignes PARALLÈLES au TN** (mesurées depuis le
+  terrain), plus des horizontales.
+- **Item 3 — Cohérence des chiffres** : G2/D1 étaient des captures du **harnais (données simulées)**. Dans
+  la vraie app, écran = planche = PDF (SDP 1 800 m², 28 · T2×16·T3×8·T4×4) ; le **Bilan depuis l'Étude**
+  pré-remplit **SUV = SHAB du scénario (1 312 m²)** et **Terrain = 501 m²** (contenance AW 99), pas 1 100
+  / 1 746 (capture `N1`). Aucune correction de code : les chiffres servis étaient déjà justes.
+- **Item 4 — Comparatif / Assemblage** : E1/F1 étaient aussi des captures **simulées**. Vérifié sur données
+  réelles : AW 99 seule = **501 m²** (et non 1 746) ; Assemblage de 3 parcelles (~1 360 m²) = **1 360 m²**
+  (et non 14 111) — capture `M1`. Aucun bug : pas de correction.
+- **Item 5 — « Ce qui limite la capacité »** : nouvelle ligne servie (`moteur.limite_capacite`, lue dans la
+  trace des candidats) + affichée sous les chiffres clés. Saint-Denis R+2 : « le prospect (hauteur relative
+  non chiffrée) borne la hauteur par prudence ; le stationnement aérien et la taille de la parcelle (monter
+  plus haut n'ajoute pas de logements) ». Étang-Salé / Saint-André : « la hauteur réglementaire ».
+- **Item 6 — Cosmétique** : flèche du nord ramenée DANS l'aire de plan (plus sur la légende) ; cartouche
+  sur deux lignes avec parcelles compactes (« AW 99, 451, 624, 625 ») → plus de débordement ; cotes du
+  bâtiment retirées de la planche (tombaient sur la place 1) ; « limite de fond » ancrée sur la coupe
+  (plus coupée).
+
+**Captures recette** (`captures/`, vraie app + PDF réel) : planche `H1-3` (écran) / `I1-3` (PDF),
+coupe `J1-3` (écran) / `K1-3` (PDF), Bilan `N1`, Assemblage `M1`. Tests : reel impl2 18 (dont PPR +
+limite), pareto+distance 23, impl1 89 ; vitest 267, tsc 0.
+
+---
+
 ## Complément — 4 correctifs + PLANCHE plan masse « façon archi »
 
 Après la suite v4, 4 correctifs (1 commit chacun) puis la planche (1 commit) et la coupe (1 commit).
