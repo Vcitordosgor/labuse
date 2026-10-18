@@ -59,9 +59,38 @@ LIBELLES_ETAT = {
 }
 
 
+def _schema_conforme(c) -> bool:
+    """ORF-01 (FIX-ORFEVRE-1) — LE SCHÉMA EST-IL DÉJÀ EN PLACE ? Lecture seule des catalogues
+    (to_regclass/pg_indexes/pg_constraint) : AUCUN verrou, jouable même pendant le pg_dump quotidien.
+    C'est la garde qui évite de rejouer les DDL à chaque run du worker (toutes les 5 min) : l'ALTER
+    CONSTRAINT prenait un verrou ACCESS EXCLUSIVE, bloqué par le backup 13:30-13:48 → timeout 300 s
+    → échec quotidien du job mail-queue-consommer (journaux prod 14-18/10)."""
+    if c.execute(text("SELECT to_regclass('mail_queue')")).scalar() is None:
+        return False
+    if not c.execute(text(
+            "SELECT 1 FROM information_schema.columns "
+            "WHERE table_name = 'mail_queue' AND column_name = 'avert'")).first():
+        return False
+    idx = {r[0] for r in c.execute(text(
+        "SELECT indexname FROM pg_indexes WHERE tablename = 'mail_queue'"))}
+    if not {"ix_mail_queue_etat_cree", "ix_mail_queue_compte", "ix_mail_queue_dedup"} <= idx:
+        return False
+    # la contrainte CHECK doit connaître TOUS les états (dont `a_rejouer`, VEILLE-FIX-2).
+    cdef = c.execute(text(
+        "SELECT pg_get_constraintdef(oid) FROM pg_constraint "
+        "WHERE conname = 'mail_queue_etat_check' AND conrelid = 'mail_queue'::regclass")).scalar()
+    return bool(cdef) and all(f"'{e}'" in cdef for e in ETATS)
+
+
 def ensure_tables(engine) -> None:
-    """Idempotent (pattern maison CREATE IF NOT EXISTS), appelable au boot."""
+    """Idempotent (pattern maison CREATE IF NOT EXISTS), appelable au boot.
+
+    ORF-01 — en RÉGIME ÉTABLI (schéma conforme), cette fonction ne tente plus AUCUNE DDL : une
+    vérification lecture seule suffit. Les DDL ne sont rejouées que si un morceau manque vraiment
+    (première installation, migration) — le cas « déploiement », pas le cas « worker toutes les 5 min »."""
     with engine.begin() as c:
+        if _schema_conforme(c):
+            return
         c.execute(text("""
             CREATE TABLE IF NOT EXISTS mail_queue (
                 id           bigserial PRIMARY KEY,
@@ -98,10 +127,15 @@ def ensure_tables(engine) -> None:
         c.execute(text("CREATE INDEX IF NOT EXISTS ix_mail_queue_compte ON mail_queue(compte_id, cree_at DESC)"))
         c.execute(text("CREATE INDEX IF NOT EXISTS ix_mail_queue_dedup ON mail_queue(dedup, cree_at DESC)"))
         # VEILLE-FIX-2 (Lot D) — la contrainte CHECK d'une table EXISTANTE ne connaît pas `a_rejouer` :
-        # on la remplace (idempotent : DROP IF EXISTS puis ADD). Nom de contrainte auto = mail_queue_etat_check.
-        c.execute(text("ALTER TABLE mail_queue DROP CONSTRAINT IF EXISTS mail_queue_etat_check"))
-        c.execute(text("ALTER TABLE mail_queue ADD CONSTRAINT mail_queue_etat_check "
-                       "CHECK (etat IN ('en_attente','a_rejouer','parti','recu','echec','annule'))"))
+        # on la remplace. ORF-01 : SEULEMENT si elle est vraiment périmée (le DROP/ADD systématique
+        # prenait un verrou ACCESS EXCLUSIVE à chaque run — cf. _schema_conforme).
+        cdef = c.execute(text(
+            "SELECT pg_get_constraintdef(oid) FROM pg_constraint "
+            "WHERE conname = 'mail_queue_etat_check' AND conrelid = 'mail_queue'::regclass")).scalar()
+        if not cdef or not all(f"'{e}'" in cdef for e in ETATS):
+            c.execute(text("ALTER TABLE mail_queue DROP CONSTRAINT IF EXISTS mail_queue_etat_check"))
+            c.execute(text("ALTER TABLE mail_queue ADD CONSTRAINT mail_queue_etat_check "
+                           "CHECK (etat IN ('en_attente','a_rejouer','parti','recu','echec','annule'))"))
 
 
 def _now() -> datetime:

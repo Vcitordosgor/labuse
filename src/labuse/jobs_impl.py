@@ -368,8 +368,10 @@ def healthcheck(ctx: JobContext) -> None:
     import urllib.request
     s = get_settings()
     port = os.environ.get("LABUSE_HEALTH_PORT", "8000")
-    etat = lire_etat("healthcheck") or {}
-    echecs = (etat.get("compteurs") or {}).get("echecs_consecutifs", 0)
+    # ORF-02 — le compteur d'échecs vient de l'état PRÉCÉDENT transmis par le runner (ctx.precedent) :
+    # relire son propre fichier d'état ici lisait « en_cours, compteurs {} » que le runner venait
+    # d'écrire → echecs valait toujours 0 → l'alerte « 2 échecs consécutifs » ne partait jamais.
+    echecs = ((ctx.precedent or {}).get("compteurs") or {}).get("echecs_consecutifs", 0)
     try:
         with urllib.request.urlopen(f"http://127.0.0.1:{port}/health", timeout=10) as resp:
             ok = resp.status == 200
@@ -385,24 +387,35 @@ def healthcheck(ctx: JobContext) -> None:
         pct = None
     from . import ops_alertes
     ready, motif = ops_alertes._readyz_local()
-    # tout par la porte unique (session courte ; base injoignable → on logue, jamais bloquant).
+    # ORF-02 — on DÉCIDE d'abord quoi signaler/résoudre, puis on écrit par la porte unique. Si la base
+    # est indisponible (ex. : verrouillée pendant le pg_dump — précisément quand le disque franchit le
+    # seuil), chaque alerte décidée part en REPLI local (fichier + journald) : la sonde n'est plus
+    # aveugle au moment exact où elle sonne.
+    a_signaler: list[tuple[str, str, str]] = []
+    a_resoudre: list[str] = []
+    if pct is not None and pct >= s.disque_seuil_pct:
+        a_signaler.append(("disque", f"Disque à {pct}% (seuil {s.disque_seuil_pct}%)",
+                           f"Le disque du serveur est à {pct}% (seuil {s.disque_seuil_pct}%). "
+                           "Faire de la place (cf. inventaire SOLIDITE-1 Lot 3)."))
+    elif pct is not None:
+        a_resoudre.append("disque")
+    if not ready:
+        a_signaler.append(("readyz", "/readyz répond « pas prêt »",
+                           f"La sonde /readyz locale dit le service NON prêt : {motif}."))
+    else:
+        a_resoudre.append("readyz")
     try:
         from .db import session_scope
         with session_scope() as db:
-            if pct is not None and pct >= s.disque_seuil_pct:
-                ops_alertes.signaler(db, "disque", f"Disque à {pct}% (seuil {s.disque_seuil_pct}%)",
-                                     f"Le disque du serveur est à {pct}% (seuil {s.disque_seuil_pct}%). "
-                                     "Faire de la place (cf. inventaire SOLIDITE-1 Lot 3).")
-            elif pct is not None:
-                ops_alertes.resoudre(db, "disque")
-            if not ready:
-                ops_alertes.signaler(db, "readyz", "/readyz répond « pas prêt »",
-                                     f"La sonde /readyz locale dit le service NON prêt : {motif}.")
-            else:
-                ops_alertes.resoudre(db, "readyz")
+            for cle, sujet, detail in a_signaler:
+                ops_alertes.signaler(db, cle, sujet, detail)
+            for cle in a_resoudre:
+                ops_alertes.resoudre(db, cle)
             db.commit()
-    except Exception as exc:  # noqa: BLE001 — l'alerte qui rate ne casse pas la sonde
+    except Exception as exc:  # noqa: BLE001 — l'alerte qui rate ne casse pas la sonde… mais elle EXISTE
         log.error("healthcheck : alerte ops impossible (%s)", exc)
+        for cle, sujet, detail in a_signaler:
+            ops_alertes.repli_local(cle, sujet, detail, erreur=f"{type(exc).__name__}: {exc}")
     ctx.compte(health_ok=ok, readyz_ok=ready, readyz_motif=motif,
                echecs_consecutifs=echecs, disque_pct=pct)
     if not ok and echecs >= 2:
@@ -504,25 +517,48 @@ def coherence_run(ctx: JobContext) -> None:
 
 # ═══════════════════════════ K4 — hebdo & mensuels ═══════════════════════════
 
+#: ORF-03 — module-niveau (testable) : les tables chaudes à VACUUM ANALYZE chaque dimanche.
+TABLES_CHAUDES = ["parcels", "event_log", "pige_biens", "pige_faits", "veilles", "dvf_mutations"]
+
+
 def pg_maintenance(ctx: JobContext) -> None:
-    """VACUUM ANALYZE des tables chaudes (hors transaction — connexion autocommit dédiée)."""
+    """VACUUM ANALYZE des tables chaudes (hors transaction — connexion autocommit dédiée).
+
+    ORF-03 (FIX-ORFEVRE-1) — deux racines corrigées (le VACUUM hebdo n'avait JAMAIS fonctionné, job vert) :
+    1. `raw.autocommit = True` posait un attribut FANTÔME sur le proxy de pool SQLAlchemy
+       (PoolProxiedConnection) — no-op : psycopg restait en transaction → « VACUUM cannot run inside a
+       transaction block » chaque dimanche. L'autocommit se pose sur la VRAIE connexion psycopg via
+       `raw.driver_connection` (même porte que scoring/score_v.py:585 pour son COPY).
+    2. L'`except` par table avalait TOUT → `fin (code 0)` mensonger. Seule une table ABSENTE est
+       tolérée (UndefinedTable) ; tout autre échec remonte → job ROUGE. Et zéro table vacuumée = ROUGE
+       aussi (jamais de vert par vacuité)."""
+    from psycopg.errors import UndefinedTable
+
     from .db import engine
-    chaudes = ["parcels", "event_log", "pige_biens", "pige_faits", "veilles", "dvf_mutations"]
-    faites = []
+    faites, absentes = [], []
     raw = engine().raw_connection()
     try:
-        raw.autocommit = True
-        cur = raw.cursor()
-        for t in chaudes:
-            try:
-                cur.execute(f"VACUUM ANALYZE {t}")
-                faites.append(t)
-            except Exception as exc:  # noqa: BLE001 — une table absente ne casse pas la maintenance
-                log.warning("VACUUM %s ignoré (%s)", t, exc)
-        cur.close()
+        dbapi = raw.driver_connection                   # la connexion psycopg réelle, pas le proxy
+        autocommit_avant = dbapi.autocommit
+        dbapi.autocommit = True                         # VACUUM est interdit dans une transaction
+        try:
+            with dbapi.cursor() as cur:
+                for t in TABLES_CHAUDES:
+                    try:
+                        cur.execute(f"VACUUM ANALYZE {t}")
+                        faites.append(t)
+                    except UndefinedTable:              # une table absente ne casse pas la maintenance
+                        absentes.append(t)
+                        log.warning("VACUUM %s ignoré : table absente", t)
+        finally:
+            dbapi.autocommit = autocommit_avant         # la connexion retourne PROPRE au pool
     finally:
         raw.close()
-    ctx.compte(tables=faites)
+    ctx.compte(tables=faites, absentes=absentes or None)
+    if not faites:
+        raise RuntimeError(
+            f"pg-maintenance : AUCUNE table vacuumée (absentes : {', '.join(absentes) or '—'}) "
+            "— un vert ici serait un vert par vacuité")
 
 
 def rapport_admin(ctx: JobContext) -> None:
