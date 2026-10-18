@@ -210,11 +210,9 @@ ALLOWLIST: dict[float, str] = {
     974.0: "code du département (La Réunion) cité dans un descriptif de source",
     1990.0: "borne du libellé INSEE « bâti avant 1990 » — définition, pas une mesure",
     0.0: "zéro explicite (rien à construire, aucun aléa) — jamais une valeur inventée",
-    # FIX-PRIX-ET-OPPORTUNITES (lot 3) — ratios médians MESURÉS autorisé/LABUSE (volet D VERITE-TERRAIN-2),
-    # cités dans la mention « capacité = maximum réglementaire » (fiche/exports/Copilote) : une référence
-    # de mesure, pas une grandeur de la parcelle → jamais une fuite (comme les taux légaux ci-dessus).
-    0.46: "ratio médian mesuré autorisé/LABUSE en surface (volet D) — référence de la mention capacité",
-    0.4: "ratio médian mesuré autorisé/LABUSE en logements (volet D) — référence de la mention capacité",
+    # FIX-ORFEVRE-1 (décision Vic 18/10/2026) — les ratios médians 0,46/0,40 de la mention capacité ne
+    # sont PLUS une exception : déclarés au registre (capacite_ratio_median_sdp/_logements) et ancrés
+    # exactement par nombres_ancres — le verrou les suit comme toute donnée.
     2024.0: "millésime/année de source cité", 2025.0: "millésime/année de source cité",
     2026.0: "millésime/année de source cité", 2023.0: "millésime/année de source cité",
     2022.0: "millésime/année de source cité", 2021.0: "millésime/année de source cité",
