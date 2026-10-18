@@ -98,9 +98,10 @@ export function ZoneDestinationsLigne({ d }: { d: FicheZoneDestinations }) {
 }
 
 // ── M9 lot 2 — Règlement PLU par zone (règles + valeurs, destinations, à-cheval) ──
-// FICHE-ORFEVRERIE-1 (Lot A, pt 10) — `tcsp` (station en site propre sous 800 m) : quand il est servi,
-// le plafond L151-36 (loi 2025-1129) s'impose au PLU (≤ 1 place/logement) → la tuile Stationnement le DIT.
-export function ReglementPluBlock({ rp, tcsp }: { rp: ReglementPlu; tcsp?: { station: string; distance_m: number; sous_800m: boolean } | null }) {
+// FICHE-ORFEVRERIE-1 (Lot A pt 10 · reprise pt 9) — `tcsp` : une station de GARE / transport public
+// GUIDÉ (téléphérique, tram) OU en site propre sous 800 m. L151-36 (loi 2025-1129) couvre les trois :
+// le plafond s'impose au PLU (≤ 1 place/logement) → la tuile Stationnement le DIT, avec le MODE.
+export function ReglementPluBlock({ rp, tcsp }: { rp: ReglementPlu; tcsp?: { station: string; distance_m: number; sous_800m: boolean; mode?: string } | null }) {
   if (rp.indisponible) return <BlocIndisponible titre="Règlement PLU" />   // M125 — panne ≠ absence
   const tcspPlafond = !!tcsp?.sous_800m
   // M62-P1 (j) : la phrase d'explication (`note`) était répétée par zone alors qu'elle est
@@ -174,7 +175,7 @@ export function ReglementPluBlock({ rp, tcsp }: { rp: ReglementPlu; tcsp?: { sta
                   info: exc.length > 0
                     ? <InfoI aria={`Exception au règlement — ${rv.libelle}`} tip={<ExceptionTip regle={rv.libelle} exceptions={exc} />} />
                     : tcspSous
-                    ? <InfoI aria="Plafond TCSP" tip={`Station en site propre « ${tcsp!.station} » à ${tcsp!.distance_m} m : à moins de 800 m, le PLU ne peut pas exiger plus d'une place de stationnement par logement (0,5 pour le logement social) — art. L151-34 à 36 du code de l'urbanisme (loi n° 2025-1129). Reste à instruire la qualité de la desserte.`} />
+                    ? <InfoI aria="Plafond TCSP" tip={`Station de ${tcsp!.mode ?? 'transport collectif en site propre'} « ${tcsp!.station} » à ${tcsp!.distance_m} m : à moins de 800 m d'une gare ou d'une station de transport public guidé / en site propre, le PLU ne peut pas exiger plus d'une place de stationnement par logement (0,5 pour le logement social) — art. L151-34 à L151-36 du code de l'urbanisme (loi n° 2025-1129). Reste à instruire la qualité de la desserte.`} />
                     : undefined,
                 }
               })} />

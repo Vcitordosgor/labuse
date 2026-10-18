@@ -22,7 +22,7 @@ import { AskBar } from './AskBar'
 import { BilanEcran } from './BilanEcran'   // BILAN-1 — le bilan promoteur remplace l'ancien écran d'hypothèses
 import { GabaritLine } from './GabaritLine'
 import { cadastreGeoportailUrl, errialUrl, googleEarthKmzUrl, googleMapsUrl, pagesJaunes } from './liensExternes'
-import { LogoCadastre, LogoPagesJaunes, LogoGoogleMaps } from './logosServices'
+import { LogoCadastre, LogoPagesJaunes, LogoGoogleMaps, LogoGeorisques, LogoGoogleEarth } from './logosServices'
 import { PourquoiPasTab } from './PourquoiPas'
 import { ScoreV2Block } from './ScoreV2Block'
 import { BlocIndisponible } from './BlocIndisponible'
@@ -833,8 +833,8 @@ export function Fiche({ idu }: { idu: string }) {
                     {er.url && (
                       <Tip side="bottom" tip="État des risques (Errial)" garder>
                         <a data-errial-link data-errial-commune-seule={er.commune_seule || undefined} className="hbtn"
-                          target="_blank" rel="noreferrer noopener" href={er.url} aria-label="État des risques (Errial)">
-                          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" /><path d="M12 9v4" /><path d="M12 17h.01" /></svg>
+                          target="_blank" rel="noreferrer noopener" href={er.url} aria-label="État des risques (Géorisques / Errial)">
+                          <LogoGeorisques />
                         </a>
                       </Tip>
                     )}
@@ -843,7 +843,7 @@ export function Fiche({ idu }: { idu: string }) {
                     <Tip side="bottom" tip="Ouvrir dans Google Earth" garder>
                       <a data-earth-link className="hbtn" target="_blank" rel="noreferrer noopener"
                         href={googleEarthKmzUrl(idu)} aria-label="Ouvrir dans Google Earth">
-                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="M3 12h18" /><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18Z" /></svg>
+                        <LogoGoogleEarth />
                       </a>
                     </Tip>
                   </>
@@ -1720,7 +1720,21 @@ export function Fiche({ idu }: { idu: string }) {
                     (ICD, tiroir Données) reste. Le champ back q_score n'est PAS touché (consommé
                     ailleurs : App, Kanban, MapView, filtres…) — seul l'affichage fiche disparaît. */}
                 {/* FINITIONS-1 (P13) — l'encart « Demander à l'IA de traduire le PLU » est RETIRÉ. */}
-                {f.reglement_plu && <ReglementPluBlock rp={f.reglement_plu} tcsp={f.proximites?.tcsp ?? null} />}
+                {/* FICHE-ORFEVRERIE-1 (reprise, pt 9) — le plafond L151-36 couvre « gare / station de
+                    transport public GUIDÉ ou de transport collectif en SITE PROPRE » sous 800 m. Le
+                    téléphérique urbain (Papang) est un transport public GUIDÉ : s'il est sous 800 m, il
+                    déclenche le plafond au même titre qu'un TCSP en site propre. On prend la station
+                    qualifiante la plus proche (site propre prioritaire, sinon téléphérique). */}
+                {f.reglement_plu && (() => {
+                  const sp = f.proximites?.tcsp
+                  const tel = f.proximites?.telepherique
+                  const tcspPlaf = sp?.sous_800m
+                    ? { station: sp.station, distance_m: sp.distance_m, sous_800m: true, mode: 'transport collectif en site propre' }
+                    : (tel && tel.distance_m < 800)
+                    ? { station: tel.station, distance_m: tel.distance_m, sous_800m: true, mode: 'transport public guidé (téléphérique)' }
+                    : null
+                  return <ReglementPluBlock rp={f.reglement_plu} tcsp={tcspPlaf} />
+                })()}
                 {/* KELFONCIER-FIX-1 (Lot A) — STATUT D'OUVERTURE de la zone AU, sous la zone. Une zone
                     AU n'est constructible que si son règlement l'a ouverte ; « fermée »/« sous condition »
                     en ambre, avec le motif cité du règlement. Rien si la parcelle n'est pas en AU marquée. */}
@@ -1753,8 +1767,12 @@ export function Fiche({ idu }: { idu: string }) {
                     N bâtiments » (layer bati) répète §3 Bâti (nb_batiments) → retirée. */}
                 {/* FICHE-ORFEVRERIE-1 (Lot B, pt 14) — DPU et PEB vivent UNE fois, dans « Dispositifs et
                     périmètres » (DispositifsBody) ci-dessous : on les retire de « Situation » pour ne pas
-                    les répéter dans la même section. */}
-                {(() => { const rl = reglesLines.filter((l) => l.result !== 'PASS' && !['zonage_plu_gpu', 'bati', 'dpu', 'peb'].includes(l.layer)); return rl.length > 0
+                    les répéter dans la même section.
+                    FICHE-ORFEVRERIE-1 (reprise, pt 18) — `residuel_socle` est un SIGNAL DE SCORING (socle
+                    −25…+30) qui fuite en Situation un VERDICT DÉDUIT (« petit collectif / 2-4 lots ») + du
+                    jargon de barème : retiré de l'affichage de la fiche (la SDP restante, elle, vit déjà
+                    au bandeau et en Potentiel). Le scoring n'est PAS touché (la couche calcule toujours). */}
+                {(() => { const rl = reglesLines.filter((l) => l.result !== 'PASS' && !['zonage_plu_gpu', 'bati', 'dpu', 'peb', 'residuel_socle'].includes(l.layer)); return rl.length > 0
                   ? <div><GroupLabel>Situation</GroupLabel><div className="flex flex-col gap-1">{rl.map((l, i) => <Line key={i} line={l} hideWeight hideDate />)}</div></div> : null })()}
                 {/* FICHE-FIX-4 (Lot F) — les 2 outils PLU (Annuaire · Vérif procédure) en boutons
                     OutilsSection au lieu de grandes cartes PorteOutil. M137-P : Annuaire ouvre le hub

@@ -124,8 +124,15 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
         )
       })()}
       {/* RECETTE-2 (A9) — « Aucun signal sur cet onglet. » retiré (rien plutôt qu'un aveu vide). */}
+      {/* FICHE-ORFEVRERIE-1 (reprise, pt 22) — format français des montants DANS le libellé servi par le
+          run (ex. « ~4878 €/m² » → « ~4 878 €/m² ») : on espace les milliers des entiers de 4 chiffres et
+          plus collés à « € » (les valeurs déjà espacées « 4 500 » ne sont pas re-touchées). Le correctif
+          amont est dans la cascade (fiche_couches4) pour les prochains runs ; ici on sert proprement le run gelé. */}
       {marcheLines.length > 0 && (
-        <div className="flex flex-col gap-1">{marcheLines.map((l, i) => <Line key={i} line={l} hideWeight hideDate />)}</div>
+        <div className="flex flex-col gap-1">{marcheLines.map((l, i) =>
+          <Line key={i} line={l.detail ? { ...l, detail: l.detail
+            .replace(/\b(\d{4,})(\s*€)/g, (_, n, e) => `${Number(n).toLocaleString('fr-FR')}${e}`)
+            .replace(/aplat commune/gi, 'à l’échelle de la commune') } : l} hideWeight hideDate />)}</div>
       )}
       {/* FICHE-RANGEMENT-2 Lot 1 — la DERNIÈRE VENTE (fait d'identité du bien) est relocalisée en
           §1 Identité (DerniereVenteBlock composé là) ; Marché ne porte plus que du prix de secteur. */}
@@ -142,8 +149,10 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
           {/* MERGE FICHE-ORFEVRERIE-1 × FIX-PRIX-ET-OPPORTUNITES — la ligne « Prix de l'ancien (secteur) »
               reste RETIRÉE (pt 15 : elle répétait la tuile « Appartement ») ; la « Valeur au prix du
               secteur » est servie EN FOURCHETTE ±30 % + mention d'incertitude mesurée (lot 1). */}
-          {(() => {
-            const fr = fourchette(f.dvf_parcelle!.valeur_terrain_secteur_eur!)!
+          {f.dvf_parcelle?.valeur_terrain_secteur_eur != null && (() => {
+            // FIX-PRIX-ET-OPPORTUNITES (lot 1) — jamais un chiffre sec : fourchette ±30 % + mention
+            // d'incertitude mesurée (backtest VERITE-TERRAIN-2). Source unique lib/fourchette.ts.
+            const fr = fourchette(f.dvf_parcelle.valeur_terrain_secteur_eur)!
             return (
               <Ligne label={<>Valeur au prix du secteur<InfoI aria="Méthode de la valeur" tip={`Contenance × prix médian du terrain nu au m² du secteur. ${FOURCHETTE_MENTION}`} /></>}
                 valeur={<>≈ {fmtInt(fr.bas)} – {fmtInt(fr.haut)} <small>€</small></>} />

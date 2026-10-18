@@ -178,7 +178,8 @@ RESERVOIR_TABLES: dict[str, ReservoirTables] = {
                               "SIS/CASIAS/MVT de leurs réservoirs Géorisques dédiés."),
     "catnat_gaspar": Rt(("catnat_arretes",), millesime="GASPAR — 426 arrêtés sur 24 communes"),
     "deal_ppr": Rt(("spatial_layers",), couches=("ppr", "georisque_alea"),
-                   millesime="PPR/PPRL approuvés 2011–2026 (arrêtés, DEAL Lizmap)"),
+                   # FICHE-ORFEVRERIE-1 (reprise, pt 19/20) — « DEAL Lizmap » (nom du portail) → « DEAL Réunion » (le producteur).
+                   millesime="PPR/PPRL approuvés 2011–2026 (arrêtés, DEAL Réunion)"),
     "georisques_ssp": Rt(("spatial_layers",), couches=("sol_pollue",)),
     "georisques_cavites": Rt(("spatial_layers",), couches=("cavite",)),
     "georisques_icpe": Rt(("spatial_layers",), couches=("icpe",)),

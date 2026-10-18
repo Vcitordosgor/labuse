@@ -81,12 +81,29 @@ Faisabilité / exports NON touchés. DA existante respectée (primitives fiche-v
 
 ---
 
-## Écarts assumés (récapitulatif)
+## REPRISE (5 points + 2 questions) — commit `fix/fiche-orfevrerie-1` (pas de merge)
 
-- **pt 10** — plafond TCSP non affiché sur HR0025 (pas de station site-propre sous 800 m dans la couche ; câblage prêt).
-- **pt 18** — « petit collectif / 2-4 lots » introuvable dans le code actuel (déjà absent).
-- **pt 19 / 20 / 21 / 23** — quelques textes résiduels (faisceau viabilisation, DEAL Lizmap, troncatures `Ligne`, paragraphes gris Réseaux) non traités, par arbitrage de budget — tous documentés, aucun n'est une donnée fausse.
-- **pt 30** — logos de marque non intégrés (le sens reste donné par survol + aria-label ; liens corrects).
+Les écarts assumés de la première passe ont été repris — zéro troncature est une règle.
+
+- **pt 4 — l'égout.** Bâti affiche désormais **faîtage ET égout mesurés** côte à côte (tuiles « Faîtage (LiDAR) 5,0 m · survol septembre 2023 » et « Égout (LiDAR) 3,5 m · bord de toit · commande la surélévation »), le verdict dit la **date de survol** et **lequel des 3 bâtiments** (« bâtiment principal », le plus grand — `hauteur_parcelle_lidar`). La mention **« Mesure possiblement périmée »** s'affiche si un permis a été autorisé après le survol (`hauteur_permis_posterieur`) — absente sur HR0025 (aucun permis postérieur).
+- **pt 9 — TCSP, activé.** Le **Téléphérique Papang** (Moufia, 531 m) est un **transport public GUIDÉ** (câble urbain), couvert par l'art. **L151-34 à L151-36** du code de l'urbanisme (« gare ou station de transport public **guidé** ou de transport collectif en site propre », loi n° 2025-1129). À 531 m (< 800 m), il déclenche le plafond : la tuile Stationnement affiche **« 1 / logt · plafond TCSP ≤ 800 m (531 m) »** et le « i » cite l'article + le mode. Le pôle d'échange bus Moufia (528 m) n'était pas marqué « site propre » dans la couche TCSP ; c'est le **téléphérique** (guidé) qui qualifie. Activé plutôt que justifié non-applicable.
+- **pt 18 — « petit collectif / 2-4 lots ».** Trouvé au back (`cascade/layers/etage0_ext.py`, barème `SOCLE_TIERS` de la couche de **scoring** `residuel_socle`). Comme le scoring ne se touche pas, la couche continue de scorer ; sa ligne — un **verdict déduit + du jargon de barème (« socle +5 »)** qui fuitait en Situation — est **retirée de l'affichage de la fiche** (filtre `residuel_socle`, comme DPU/PEB). La SDP restante, elle, vit déjà au bandeau et en Potentiel. Vérifié : plus de « petit collectif / 2-4 lots » en Urbanisme → Situation.
+- **pt 19 / 21 / 23 — zéro troncature, zéro jargon (Réseaux et ailleurs).** Primitive `Ligne` dotée d'un mode **`long`** (valeur pleine SOUS le libellé, passage à la ligne, **jamais d'ellipse**) ; `SourceRef` ne tronque plus (wrap). Appliqués : compétence **CINOR** (nom complet), **DSP eau** et **DSP assainissement** (complets), **raccordement**, **solaire**, **bruit routier** (plein), **DVF archives** (« géo-DVF Etalab 2021–2025 + archives DGFiP 2014–2020 », complet), **accès voirie** (plein). Jargon retiré : **« faisceau viabilisation »** et le détail de méthode interne (`served_cascade.py`, libellés en clair) ; **« faisceau de preuves »** → « indices » ; **« aplat commune »** → « à l'échelle de la commune » ; **« DEAL Lizmap »** → **« DEAL Réunion »** (corrigé au code *et* dans `data_sources` live). Le paragraphe gris d'accès n'est plus un paragraphe : une ligne valeur-longue.
+- **pt 30 — logos reconnaissables sans survol.** Deux vrais logos ajoutés (`logosServices.tsx`), même boîte 16 px que Géoportail/PJ/Maps : **Géorisques** (triangle d'alerte **bleu sur fond blanc**) et **Google Earth** (**globe bleu océan / vert continents**). `aria-label` conservé **en plus**. Liens vérifiés sur la bonne parcelle (Google Earth → `/parcels/97411000HR0025.kmz`).
+
+### Deux questions (sans code — déjà faites en 1ʳᵉ passe)
+
+- **Date « 01/01/2024 » du dépôt de permis** — **FAIT.** `DepotsBlock` sert la date via `fmtDateSitadel` : une date Sitadel au 1ᵉʳ janvier (précision annuelle) s'affiche **« 2024 »**, jamais un faux jour. Vérifié au DOM : « Sur le secteur : 1 dépôt sur 36 mois · section cadastrale · dernier 2024 ».
+- **FRR Saint-Denis** — **FAIT (vérifié à la source).** `territoire_fiscal` sert `frr.classement = "partie"` (commune FRR **en partie**) et tranche la position de LA parcelle par géométrie (`frr_position` sur la couche `frr`) : `position = "dans"` → la parcelle est **DANS la zone spéciale d'action rurale (les Hauts)**, donc FRR s'applique (art. 44 quindecies A CGI, en vigueur 01/07/2024). La pastille FRR est allumée à juste titre ; l'éligibilité effective reste à confirmer par un fiscaliste (dit tel quel).
+
+### Note — correctifs d'affichage sur un run gelé
+
+Deux libellés (« ~4878 » et « aplat commune ») sont **gravés dans la cascade du run servi** (table `dryrun_cascade_results`). Le correctif amont est en place (`cascade/layers/fiche_couches4.py`) pour les prochains runs ; pour servir le run GELÉ proprement **sans toucher au run**, le formatage (espace des milliers devant « € », « aplat commune » → « à l'échelle de la commune ») est appliqué à l'affichage des lignes Marché. L'accès voirie et le millésime PPR, eux, sont servis en direct → corrigés au back (effet immédiat).
+
+## Écarts assumés (récapitulatif — après reprise)
+
+- **pt 10/11 original (tier/score)** — RAS : aucun verdict déduit ne subsiste dans la fiche.
+- Aucun autre écart assumé. Les 30 points sont traités (voir le tableau et la reprise ci-dessus).
 
 ## Note méthode — banc de cohérence
 

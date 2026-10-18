@@ -19,8 +19,10 @@ const CONF_META = { high: { t: 'confirmé', ton: 'vert' as const }, med: { t: '�
 function GestLigne({ label, op }: { label: string; op: GestOperateur | null }) {
   if (!op) return <Ligne label={label} ton="gris" valeur="non renseigné" />
   const c = op.confidence ? CONF_META[op.confidence] : null
+  // FICHE-ORFEVRERIE-1 (reprise, pt 21) — compétence CINOR, DSP eau/assainissement, raccordement EDF :
+  // valeurs longues → forme VALEUR-LONGUE (sous le libellé, qui passe à la ligne), jamais une ellipse.
   return (
-    <Ligne label={label} title={`${op.operateur}${op.type ? ` · ${op.type}` : ''}`}
+    <Ligne long label={label} title={`${op.operateur}${op.type ? ` · ${op.type}` : ''}`}
       valeur={<>{op.operateur}{op.type ? <small> · {op.type}</small> : null}{c ? <> <Badge ton={c.ton}>{c.t}</Badge></> : null}</>} />
   )
 }

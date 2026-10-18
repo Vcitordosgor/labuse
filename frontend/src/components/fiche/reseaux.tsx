@@ -127,7 +127,8 @@ export function ReseauxSection({ f }: { f: Fiche; idu: string }) {
                   const dash = det.indexOf('—')
                   const src = l.source ? String(l.source) : ''
                   return (
-                    <Ligne key={i} title={det}
+                    /* FICHE-ORFEVRERIE-1 (reprise, pt 21/23) — valeur-longue (plus de paragraphe gris ni d'ellipse). */
+                    <Ligne long key={i} title={det}
                       label={<>{dash >= 0 ? det.slice(0, dash).trim() : 'Accès voirie'}{src ? <InfoI aria="Source de l'accès" tip={src} /> : null}</>}
                       valeur={dash >= 0 ? det.slice(dash + 1).trim() : det} />
                   )

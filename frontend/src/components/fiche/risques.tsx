@@ -219,7 +219,8 @@ export function RisquesSection({ f }: { f: Fiche; idu: string }) {
                 const val = dash >= 0 ? det.slice(dash + 1).trim() : ''
                 const src = l.source ? String(l.source) : ''
                 return (
-                  <Ligne key={`v-${i}`} ton="ambre" title={det}
+                  /* FICHE-ORFEVRERIE-1 (reprise, pt 21) — bruit routier & co. en valeur-longue (plus d'ellipse). */
+                  <Ligne long key={`v-${i}`} ton="ambre" title={det}
                     label={<><span className="text-amber">{label}</span>{src ? <InfoI aria="Source de la vigilance" tip={src} /> : null}</>}
                     valeur={val} />
                 )
