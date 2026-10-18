@@ -1,0 +1,3346 @@
+{
+ "screens": [
+  {
+   "screen": "carte",
+   "url": "http://localhost:6002/socle/",
+   "console": [
+    "error|Failed to load resource: the server responded with a status of 401 (Unauthorized) (×2)"
+   ],
+   "pageErrors": [],
+   "reseau": [
+    "401 http://localhost:6002/moi/prefs-carte"
+   ],
+   "analyse": {
+    "fuyantes": [],
+    "doubleEspace": [],
+    "plurielsFaux": [],
+    "unAnsEtc": [],
+    "nbApostropheTypo": 1,
+    "apostropheDroite": [],
+    "espaceSecablePonct": [],
+    "ponctCollee": [],
+    "nombresSansSeparateur": [],
+    "euros": {
+     "sym": 0,
+     "eur": 0,
+     "mot": 0
+    },
+    "tirets": {
+     "court": 0,
+     "moyen": 0,
+     "long": 1
+    }
+   },
+   "champs": [
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "Rechercher : IDU, SIREN, propriétaire, adresse…",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    }
+   ],
+   "textLen": 805
+  },
+  {
+   "screen": "fiche-AC0428/tiroir-urbanisme",
+   "analyse": {
+    "fuyantes": [],
+    "doubleEspace": [],
+    "plurielsFaux": [
+     "document complet. Destinations · 22 interdites · 1 sous condition RÈGLEMENT — ZONE NPNR · 34 % DE LA PARC"
+    ],
+    "unAnsEtc": [],
+    "nbApostropheTypo": 2,
+    "apostropheDroite": [
+     "e règlement Le règlement des zones agricoles et naturelles n'est pas indexé article par article dans LABUSE. Consultez le",
+     "e règlement Le règlement des zones agricoles et naturelles n'est pas indexé article par article dans LABUSE. Consultez le",
+     "e règlement Le règlement des zones agricoles et naturelles n'est pas indexé article par article dans LABUSE. Consultez le",
+     "s condition Le règlement des zones agricoles et naturelles n'est pas indexé article par article dans LABUSE. Consultez le",
+     "urs affichées sont une aide à la lecture, non un certificat d'urbanisme. SITUATION Ravines et reculs (DPF) Domaine public",
+     "de marchepied de 3,25 m (art. L2131-2 CGPPP) : bande grevée d'un passage public, inconstructible ; lit du cours d'eau doman",
+     "grevée d'un passage public, inconstructible ; lit du cours d'eau domanial inaliénable (arrêté préfectoral n°06-3077 du 21/",
+     "sé (90 % de la parcelle) — toute construction interdite sur l'emprise boisée (Art. L113-1 CU), assiette restante résiduelle"
+    ],
+    "espaceSecablePonct": [
+     "000AC0428 22 bis Ruelle des Cypres, 97425 Les Avirons Secteur : le Tévelave SURFACE i 8 500 m² Dessin du plan : 8 313 m² ZO",
+     "irons Secteur : le Tévelave SURFACE i 8 500 m² Dessin du plan : 8 313 m² ZONE i Nr naturelle PENTE i 30,4 ° très forte EXPO",
+     "he que la zone dominante — voici la surface réelle de chacune : Nr 48 % Npnr 34 % N 18 % Tracé officiel : couche « Limites",
+     "e réelle de chacune : Nr 48 % Npnr 34 % N 18 % Tracé officiel : couche « Limites officielles du PLU » (sous-option du zonag",
+     "SE. Consultez le document complet. Le règlement PLU fait foi ; les valeurs affichées sont une aide à la lecture, non un ce",
+     "DPF) — servitude de marchepied de 3,25 m (art. L2131-2 CGPPP) : bande grevée d'un passage public, inconstructible ; lit du",
+     "-2 CGPPP) : bande grevée d'un passage public, inconstructible ; lit du cours d'eau domanial inaliénable (arrêté préfectoral",
+     "RTO® V5 — occupation du sol (IGN, proxy) Parc national Exclue : intersecte le cœur du Parc National (UNESCO « Pitons, cirqu"
+    ],
+    "ponctCollee": [],
+    "nombresSansSeparateur": [],
+    "euros": {
+     "sym": 1,
+     "eur": 0,
+     "mot": 0
+    },
+    "tirets": {
+     "court": 0,
+     "moyen": 0,
+     "long": 22
+    }
+   },
+   "console": [],
+   "reseau": []
+  },
+  {
+   "screen": "fiche-AC0428",
+   "url": "http://localhost:6002/socle/#idu=97401000AC0428",
+   "console": [
+    "error|Failed to load resource: the server responded with a status of 401 (Unauthorized) (×2)"
+   ],
+   "pageErrors": [],
+   "reseau": [
+    "401 http://localhost:6002/moi/prefs-carte",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/10/669/573.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/10/670/573.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/10/670/574.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/10/669/573.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/11/1338/1148.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/11/1339/1148.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/11/1340/1147.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/11/1340/1146.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/11/1338/1148.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/11/1339/1146.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/11/1339/1146.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/11/1338/1147.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/12/2679/2294.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/12/2679/2295.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/12/2678/2294.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/12/2677/2294.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/12/2677/2294.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/12/2678/2294.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/12/2678/2295.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/12/2677/2295.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/13/5356/4590.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/13/5356/4589.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/13/5355/4589.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/13/5355/4590.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/13/5356/4590.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/13/5356/4589.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/13/5355/4589.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/13/5355/4590.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/14/10711/9179.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/14/10712/9179.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/14/10712/9180.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/14/10711/9180.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/14/10711/9179.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/14/10712/9179.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/14/10712/9180.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/14/10711/9180.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/15/21424/18359.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/15/21424/18360.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/15/21424/18359.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/15/21424/18360.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/15/21423/18360.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/15/21423/18359.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/15/21422/18359.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/15/21422/18360.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/15/21422/18360.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/15/21422/18359.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/15/21423/18359.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/15/21423/18360.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/16/42847/36719.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/16/42847/36720.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/16/42846/36719.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/16/42845/36720.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/16/42845/36719.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/16/42846/36720.pbf"
+   ],
+   "analyse": {
+    "fuyantes": [],
+    "doubleEspace": [],
+    "plurielsFaux": [],
+    "unAnsEtc": [],
+    "nbApostropheTypo": 1,
+    "apostropheDroite": [
+     "sitifs 29,55 % LE MARCHÉ Marché comparables DVF · DVF — jusqu'à déc. 2025 1 896 €/m² Quartier Équipements, population et pe",
+     "ctibilité. Ces informations ne remplacent pas un certificat d'urbanisme. ⚑ Signaler une erreur"
+    ],
+    "espaceSecablePonct": [
+     "000AC0428 22 bis Ruelle des Cypres, 97425 Les Avirons Secteur : le Tévelave SURFACE i 8 500 m² Dessin du plan : 8 313 m² ZO",
+     "irons Secteur : le Tévelave SURFACE i 8 500 m² Dessin du plan : 8 313 m² ZONE i Nr naturelle PENTE i 30,4 ° très forte EXPO",
+     "ches évaluées 8 vigilances Réseaux et desserte Assainissement : non renseigné — Fiscalité et dispositifs 29,55 % LE MARCHÉ"
+    ],
+    "ponctCollee": [],
+    "nombresSansSeparateur": [],
+    "euros": {
+     "sym": 1,
+     "eur": 0,
+     "mot": 0
+    },
+    "tirets": {
+     "court": 0,
+     "moyen": 0,
+     "long": 7
+    }
+   },
+   "champs": [
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "Rechercher : IDU, SIREN, propriétaire, adresse…",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    }
+   ],
+   "textLen": 1731
+  },
+  {
+   "screen": "fiche-CR0849/tiroir-urbanisme",
+   "analyse": {
+    "fuyantes": [],
+    "doubleEspace": [],
+    "plurielsFaux": [
+     "m U3c, constructible 2 destinations interdites · 1 sous condition Zone i U3cconstructible SDP consommée",
+     "rtisanat et commerce de détail…) · 2 interdites · 1 sous condition Le règlement PLU fait foi ; les valeur"
+    ],
+    "unAnsEtc": [],
+    "nbApostropheTypo": 2,
+    "apostropheDroite": [
+     "urs affichées sont une aide à la lecture, non un certificat d'urbanisme. SITUATION SDP résiduelle SDP résiduelle 266 m² —",
+     "LE MARCHÉ Marché 14 ventes · section cadastrale · DVF — jusqu'à déc. 2025 232 €/m² Quartier Équipements, population et perm",
+     "ctibilité. Ces informations ne remplacent pas un certificat d'urbanisme. ⚑ Signaler une erreur"
+    ],
+    "espaceSecablePonct": [
+     "iP pj 97415000CR0849 adresse non rattachée (Absent) i Secteur : Grande Terre SURFACE i 536 m² Dessin du plan : 528 m² ZONE",
+     "ent) i Secteur : Grande Terre SURFACE i 536 m² Dessin du plan : 528 m² ZONE i U3c constructible PENTE i 5,5 ° modérée EXPOS",
+     "· 2 interdites · 1 sous condition Le règlement PLU fait foi ; les valeurs affichées sont une aide à la lecture, non un ce",
+     "a commune peut préempter à la vente (DIA obligatoire, ~2 mois ; pèse sur la transaction, pas sur la constructibilité). GPU",
+     "ches évaluées 3 vigilances Réseaux et desserte Assainissement : non renseigné — Fiscalité et dispositifs 41,77 % LE MARCHÉ"
+    ],
+    "ponctCollee": [],
+    "nombresSansSeparateur": [],
+    "euros": {
+     "sym": 1,
+     "eur": 0,
+     "mot": 0
+    },
+    "tirets": {
+     "court": 0,
+     "moyen": 0,
+     "long": 16
+    }
+   },
+   "console": [],
+   "reseau": []
+  },
+  {
+   "screen": "fiche-CR0849",
+   "url": "http://localhost:6002/socle/#idu=97415000CR0849",
+   "console": [
+    "error|Failed to load resource: the server responded with a status of 401 (Unauthorized) (×2)"
+   ],
+   "pageErrors": [],
+   "reseau": [
+    "401 http://localhost:6002/moi/prefs-carte",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/9/335/286.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/9/335/287.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/9/334/286.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/9/334/287.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/9/335/286.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/9/335/287.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/9/334/286.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/9/334/287.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/10/669/574.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/10/668/574.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/10/670/574.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/10/670/574.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/10/669/574.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/10/668/574.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/10/669/573.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/10/670/573.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/10/669/572.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/10/670/572.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/10/669/573.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/10/670/572.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/10/668/572.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/10/668/573.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/10/670/573.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/10/668/572.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/10/669/572.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/10/668/573.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/11/1337/1146.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/11/1337/1147.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/11/1337/1145.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/11/1337/1145.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/11/1337/1146.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/11/1337/1147.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/11/1338/1147.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/11/1338/1145.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/11/1339/1147.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/11/1339/1145.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/11/1339/1145.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/11/1338/1147.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/11/1338/1145.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/11/1339/1147.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/11/1339/1146.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/11/1338/1146.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/11/1339/1146.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/11/1338/1146.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/12/2676/2292.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/12/2677/2293.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/12/2676/2293.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/12/2677/2292.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/12/2676/2292.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/12/2677/2293.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/12/2676/2293.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/12/2677/2292.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/13/5354/4585.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/13/5354/4586.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/13/5353/4585.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/13/5353/4586.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/13/5354/4585.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/13/5354/4586.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/13/5353/4585.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/13/5353/4586.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/14/10708/9171.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/14/10708/9172.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/14/10707/9171.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/14/10707/9172.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/14/10707/9171.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/14/10706/9171.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/14/10707/9172.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/14/10706/9172.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/14/10706/9171.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/14/10708/9171.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/14/10706/9172.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/14/10708/9172.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/15/21416/18343.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/15/21416/18344.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/15/21416/18343.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/15/21415/18342.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/15/21416/18342.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/15/21416/18344.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/15/21414/18342.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/15/21415/18342.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/15/21416/18342.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/15/21414/18342.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/15/21415/18343.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/15/21414/18343.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/15/21414/18344.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/15/21415/18344.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/15/21414/18344.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/15/21415/18343.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/15/21415/18344.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/15/21414/18343.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/16/42830/36686.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/16/42829/36688.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/16/42828/36687.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/16/42829/36686.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/16/42828/36686.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/16/42828/36688.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/16/42830/36688.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/16/42830/36687.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/16/42829/36687.pbf"
+   ],
+   "analyse": {
+    "fuyantes": [],
+    "doubleEspace": [],
+    "plurielsFaux": [],
+    "unAnsEtc": [],
+    "nbApostropheTypo": 1,
+    "apostropheDroite": [
+     "LE MARCHÉ Marché 14 ventes · section cadastrale · DVF — jusqu'à déc. 2025 232 €/m² Quartier Équipements, population et perm",
+     "² Prix du NEUF servi — Estimé — médiane locale, 54 ventes. C'est la base de la charge foncière ci-dessous. À distinguer du",
+     "de la charge foncière ci-dessous. À distinguer du « Prix de l'ancien (secteur) » de l'onglet Marché (référence de revente d",
+     "-dessous. À distinguer du « Prix de l'ancien (secteur) » de l'onglet Marché (référence de revente du bâti existant) — ce n'",
+     "'onglet Marché (référence de revente du bâti existant) — ce n'est pas le prix de sortie d'un programme neuf. Étude de fais",
+     "revente du bâti existant) — ce n'est pas le prix de sortie d'un programme neuf. Étude de faisabilité → Calculette foncièr",
+     "ctibilité. Ces informations ne remplacent pas un certificat d'urbanisme. ⚑ Signaler une erreur"
+    ],
+    "espaceSecablePonct": [
+     "iP pj 97415000CR0849 adresse non rattachée (Absent) i Secteur : Grande Terre SURFACE i 536 m² Dessin du plan : 528 m² ZONE",
+     "ent) i Secteur : Grande Terre SURFACE i 536 m² Dessin du plan : 528 m² ZONE i U3c constructible PENTE i 5,5 ° modérée EXPOS",
+     "ches évaluées 3 vigilances Réseaux et desserte Assainissement : non renseigné — Fiscalité et dispositifs 41,77 % LE MARCHÉ"
+    ],
+    "ponctCollee": [],
+    "nombresSansSeparateur": [],
+    "euros": {
+     "sym": 3,
+     "eur": 0,
+     "mot": 0
+    },
+    "tirets": {
+     "court": 0,
+     "moyen": 0,
+     "long": 7
+    }
+   },
+   "champs": [
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "Rechercher : IDU, SIREN, propriétaire, adresse…",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    }
+   ],
+   "textLen": 2080
+  },
+  {
+   "screen": "commune-st-denis",
+   "url": "http://localhost:6002/socle/#f=1&c=Saint-Denis",
+   "console": [
+    "error|Failed to load resource: the server responded with a status of 401 (Unauthorized) (×2)"
+   ],
+   "pageErrors": [],
+   "reseau": [
+    "401 http://localhost:6002/moi/prefs-carte",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/10/668/573.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_parcelles/10/668/572.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/10/668/572.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_parcelles/10/668/573.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/10/669/572.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_communes/10/670/572.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_parcelles/10/669/573.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_parcelles/10/670/573.pbf",
+    "FAILED(net::ERR_ABORTED) http://localhost:6002/map/tiles/limites_parcelles/10/669/572.pbf"
+   ],
+   "analyse": {
+    "fuyantes": [],
+    "doubleEspace": [],
+    "plurielsFaux": [],
+    "unAnsEtc": [],
+    "nbApostropheTypo": 0,
+    "apostropheDroite": [],
+    "espaceSecablePonct": [],
+    "ponctCollee": [],
+    "nombresSansSeparateur": [],
+    "euros": {
+     "sym": 0,
+     "eur": 0,
+     "mot": 0
+    },
+    "tirets": {
+     "court": 0,
+     "moyen": 0,
+     "long": 1
+    }
+   },
+   "champs": [
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "Rechercher : IDU, SIREN, propriétaire, adresse…",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    }
+   ],
+   "textLen": 532
+  },
+  {
+   "screen": "outil-plu",
+   "url": "http://localhost:6002/socle/#m=plu",
+   "console": [
+    "error|Failed to load resource: the server responded with a status of 401 (Unauthorized) (×2)"
+   ],
+   "pageErrors": [],
+   "reseau": [
+    "401 http://localhost:6002/moi/prefs-carte"
+   ],
+   "analyse": {
+    "fuyantes": [],
+    "doubleEspace": [],
+    "plurielsFaux": [],
+    "unAnsEtc": [],
+    "nbApostropheTypo": 2,
+    "apostropheDroite": [],
+    "espaceSecablePonct": [],
+    "ponctCollee": [],
+    "nombresSansSeparateur": [],
+    "euros": {
+     "sym": 0,
+     "eur": 0,
+     "mot": 0
+    },
+    "tirets": {
+     "court": 0,
+     "moyen": 0,
+     "long": 2
+    }
+   },
+   "champs": [
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "Rechercher : IDU, SIREN, propriétaire, adresse…",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    }
+   ],
+   "textLen": 729
+  },
+  {
+   "screen": "outil-permis",
+   "url": "http://localhost:6002/socle/#m=permis",
+   "console": [
+    "error|Failed to load resource: the server responded with a status of 401 (Unauthorized) (×2)"
+   ],
+   "pageErrors": [],
+   "reseau": [
+    "401 http://localhost:6002/moi/prefs-carte"
+   ],
+   "analyse": {
+    "fuyantes": [],
+    "doubleEspace": [],
+    "plurielsFaux": [],
+    "unAnsEtc": [],
+    "nbApostropheTypo": 1,
+    "apostropheDroite": [
+     "rmis autorisés en base Sitadel : les permis autorisés, pas l'instruction en cours. Filtrer par état Récent autorisé ≤ 24"
+    ],
+    "espaceSecablePonct": [
+     "es permis dormants. 50 808 permis autorisés en base Sitadel : les permis autorisés, pas l'instruction en cours. Filtrer"
+    ],
+    "ponctCollee": [],
+    "nombresSansSeparateur": [],
+    "euros": {
+     "sym": 0,
+     "eur": 0,
+     "mot": 0
+    },
+    "tirets": {
+     "court": 0,
+     "moyen": 0,
+     "long": 1
+    }
+   },
+   "champs": [
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "Rechercher : IDU, SIREN, propriétaire, adresse…",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "Adresse, n° de permis ou parcelle",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    }
+   ],
+   "textLen": 903
+  },
+  {
+   "screen": "outil-promesses",
+   "url": "http://localhost:6002/socle/#m=promesses",
+   "console": [
+    "error|Failed to load resource: the server responded with a status of 401 (Unauthorized) (×2)"
+   ],
+   "pageErrors": [],
+   "reseau": [
+    "401 http://localhost:6002/moi/prefs-carte"
+   ],
+   "analyse": {
+    "fuyantes": [],
+    "doubleEspace": [],
+    "plurielsFaux": [],
+    "unAnsEtc": [],
+    "nbApostropheTypo": 2,
+    "apostropheDroite": [
+     "rmis autorisés en base Sitadel : les permis autorisés, pas l'instruction en cours. Filtrer par état Récent autorisé ≤ 24"
+    ],
+    "espaceSecablePonct": [
+     "e de l’outil Permis 50 808 permis autorisés en base Sitadel : les permis autorisés, pas l'instruction en cours. Filtrer"
+    ],
+    "ponctCollee": [],
+    "nombresSansSeparateur": [],
+    "euros": {
+     "sym": 0,
+     "eur": 0,
+     "mot": 0
+    },
+    "tirets": {
+     "court": 0,
+     "moyen": 0,
+     "long": 0
+    }
+   },
+   "champs": [
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "Rechercher : IDU, SIREN, propriétaire, adresse…",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "Adresse, n° de permis ou parcelle",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    }
+   ],
+   "textLen": 926
+  },
+  {
+   "screen": "outil-communes",
+   "url": "http://localhost:6002/socle/#m=communes",
+   "console": [
+    "error|Failed to load resource: the server responded with a status of 401 (Unauthorized) (×2)"
+   ],
+   "pageErrors": [],
+   "reseau": [
+    "401 http://localhost:6002/moi/prefs-carte"
+   ],
+   "analyse": {
+    "fuyantes": [],
+    "doubleEspace": [],
+    "plurielsFaux": [],
+    "unAnsEtc": [],
+    "nbApostropheTypo": 1,
+    "apostropheDroite": [],
+    "espaceSecablePonct": [
+     "Signaler 99+ ← Outils ✕ Communes Les 24 communes en chiffres : marché, rareté, rythme. Comparaison communes Le tableau co",
+     "d — indicateurs sourcés, tri par colonne. Évolution du marché : ventes et permis DVF ancien bâti, DVF terrain nu et permis"
+    ],
+    "ponctCollee": [],
+    "nombresSansSeparateur": [],
+    "euros": {
+     "sym": 0,
+     "eur": 0,
+     "mot": 0
+    },
+    "tirets": {
+     "court": 0,
+     "moyen": 0,
+     "long": 3
+    }
+   },
+   "champs": [
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "Rechercher : IDU, SIREN, propriétaire, adresse…",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    }
+   ],
+   "textLen": 1004
+  },
+  {
+   "screen": "outil-barometre",
+   "url": "http://localhost:6002/socle/#m=barometre",
+   "console": [
+    "error|Failed to load resource: the server responded with a status of 401 (Unauthorized) (×2)"
+   ],
+   "pageErrors": [],
+   "reseau": [
+    "401 http://localhost:6002/moi/prefs-carte"
+   ],
+   "analyse": {
+    "fuyantes": [],
+    "doubleEspace": [],
+    "plurielsFaux": [],
+    "unAnsEtc": [],
+    "nbApostropheTypo": 2,
+    "apostropheDroite": [],
+    "espaceSecablePonct": [
+     "d — indicateurs sourcés, tri par colonne. Évolution du marché : ventes et permis DVF ancien bâti, DVF terrain nu et permis"
+    ],
+    "ponctCollee": [],
+    "nombresSansSeparateur": [],
+    "euros": {
+     "sym": 0,
+     "eur": 0,
+     "mot": 0
+    },
+    "tirets": {
+     "court": 0,
+     "moyen": 0,
+     "long": 3
+    }
+   },
+   "champs": [
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "Rechercher : IDU, SIREN, propriétaire, adresse…",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    }
+   ],
+   "textLen": 1035
+  },
+  {
+   "screen": "outil-calculette-fonciere",
+   "url": "http://localhost:6002/socle/#m=calculette-fonciere",
+   "console": [
+    "error|Failed to load resource: the server responded with a status of 401 (Unauthorized) (×2)"
+   ],
+   "pageErrors": [],
+   "reseau": [
+    "401 http://localhost:6002/moi/prefs-carte"
+   ],
+   "analyse": {
+    "fuyantes": [],
+    "doubleEspace": [],
+    "plurielsFaux": [],
+    "unAnsEtc": [],
+    "nbApostropheTypo": 2,
+    "apostropheDroite": [
+     "ours). Calculette foncière La charge foncière supportable d'une parcelle, par bilan à rebours — mêmes hypothèses que le B"
+    ],
+    "espaceSecablePonct": [],
+    "ponctCollee": [],
+    "nombresSansSeparateur": [],
+    "euros": {
+     "sym": 0,
+     "eur": 0,
+     "mot": 0
+    },
+    "tirets": {
+     "court": 0,
+     "moyen": 0,
+     "long": 3
+    }
+   },
+   "champs": [
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "Rechercher : IDU, SIREN, propriétaire, adresse…",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "Adresse, IDU ou référence (BW0917)",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    }
+   ],
+   "textLen": 729
+  },
+  {
+   "screen": "outil-mon-secteur",
+   "url": "http://localhost:6002/socle/#m=mon-secteur",
+   "console": [
+    "error|Failed to load resource: the server responded with a status of 401 (Unauthorized) (×2)"
+   ],
+   "pageErrors": [],
+   "reseau": [
+    "401 http://localhost:6002/moi/prefs-carte"
+   ],
+   "analyse": {
+    "fuyantes": [],
+    "doubleEspace": [],
+    "plurielsFaux": [],
+    "unAnsEtc": [],
+    "nbApostropheTypo": 1,
+    "apostropheDroite": [
+     "rcelle (§ Marché). Mon secteur Les prix DU SECTEUR autour d'une parcelle — médiane locale DVF par type (5 % extrêmes excl"
+    ],
+    "espaceSecablePonct": [],
+    "ponctCollee": [],
+    "nombresSansSeparateur": [],
+    "euros": {
+     "sym": 0,
+     "eur": 0,
+     "mot": 0
+    },
+    "tirets": {
+     "court": 0,
+     "moyen": 0,
+     "long": 1
+    }
+   },
+   "champs": [
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "Rechercher : IDU, SIREN, propriétaire, adresse…",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "Adresse, IDU ou référence (BW0917)",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    }
+   ],
+   "textLen": 831
+  },
+  {
+   "screen": "outil-patrimoine",
+   "url": "http://localhost:6002/socle/#m=patrimoine",
+   "console": [
+    "error|Failed to load resource: the server responded with a status of 401 (Unauthorized) (×2)"
+   ],
+   "pageErrors": [],
+   "reseau": [
+    "401 http://localhost:6002/moi/prefs-carte"
+   ],
+   "analyse": {
+    "fuyantes": [],
+    "doubleEspace": [],
+    "plurielsFaux": [],
+    "unAnsEtc": [],
+    "nbApostropheTypo": 1,
+    "apostropheDroite": [
+     "SE Toute l’île Signaler 99+ ← Outils ✕ Scan patrimoine Ce qu'un propriétaire possède et construit. Scan patrimoine Ce qu",
+     "un propriétaire possède et construit. Scan patrimoine Ce qu'un propriétaire possède, et ce qu'il construit. Un propriéta",
+     "it. Scan patrimoine Ce qu'un propriétaire possède, et ce qu'il construit. Un propriétaire Ce qu'une société possède et c",
+     "étaire possède, et ce qu'il construit. Un propriétaire Ce qu'une société possède et construit — par nom, SIREN, adresse ou",
+     "— par nom, SIREN, adresse ou IDU. Toutes les opérations de l'île Ce que les promoteurs, bailleurs et SEM construisent — fi"
+    ],
+    "espaceSecablePonct": [],
+    "ponctCollee": [],
+    "nombresSansSeparateur": [],
+    "euros": {
+     "sym": 0,
+     "eur": 0,
+     "mot": 0
+    },
+    "tirets": {
+     "court": 0,
+     "moyen": 0,
+     "long": 2
+    }
+   },
+   "champs": [
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "Rechercher : IDU, SIREN, propriétaire, adresse…",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    }
+   ],
+   "textLen": 822
+  },
+  {
+   "screen": "outil-veille-promoteurs",
+   "url": "http://localhost:6002/socle/#m=veille-promoteurs",
+   "console": [
+    "error|Failed to load resource: the server responded with a status of 401 (Unauthorized) (×2)"
+   ],
+   "pageErrors": [],
+   "reseau": [
+    "401 http://localhost:6002/moi/prefs-carte"
+   ],
+   "analyse": {
+    "fuyantes": [],
+    "doubleEspace": [],
+    "plurielsFaux": [],
+    "unAnsEtc": [],
+    "nbApostropheTypo": 1,
+    "apostropheDroite": [
+     "tions sont désormais dans « Scan patrimoine » (onglet « Ce qu'ils construisent »). Scan patrimoine Ce qu'un propriétaire",
+     "(onglet « Ce qu'ils construisent »). Scan patrimoine Ce qu'un propriétaire possède, et ce qu'il construit. Un propriéta",
+     "»). Scan patrimoine Ce qu'un propriétaire possède, et ce qu'il construit. Un propriétaire Ce qu'une société possède et c",
+     "étaire possède, et ce qu'il construit. Un propriétaire Ce qu'une société possède et construit — par nom, SIREN, adresse ou",
+     "— par nom, SIREN, adresse ou IDU. Toutes les opérations de l'île Ce que les promoteurs, bailleurs et SEM construisent — fi"
+    ],
+    "espaceSecablePonct": [],
+    "ponctCollee": [],
+    "nombresSansSeparateur": [],
+    "euros": {
+     "sym": 0,
+     "eur": 0,
+     "mot": 0
+    },
+    "tirets": {
+     "court": 0,
+     "moyen": 0,
+     "long": 2
+    }
+   },
+   "champs": [
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "Rechercher : IDU, SIREN, propriétaire, adresse…",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    }
+   ],
+   "textLen": 872
+  },
+  {
+   "screen": "outil-assemblage",
+   "url": "http://localhost:6002/socle/#m=assemblage",
+   "console": [
+    "error|Failed to load resource: the server responded with a status of 401 (Unauthorized) (×2)"
+   ],
+   "pageErrors": [],
+   "reseau": [
+    "401 http://localhost:6002/moi/prefs-carte"
+   ],
+   "analyse": {
+    "fuyantes": [],
+    "doubleEspace": [],
+    "plurielsFaux": [],
+    "unAnsEtc": [],
+    "nbApostropheTypo": 1,
+    "apostropheDroite": [
+     "es réunies. Réunissez des parcelles voisines pour voir ce qu'elles valent ensemble : surface, droits à bâtir cumulés, loge",
+     "parcelle sur la carte aucune parcelle sélectionnée Vérifier l'assemblage (0) Saint-Denis Saint-Pierre Saint-Paul La Possess"
+    ],
+    "espaceSecablePonct": [
+     "des parcelles voisines pour voir ce qu'elles valent ensemble : surface, droits à bâtir cumulés, logements possibles, charg"
+    ],
+    "ponctCollee": [],
+    "nombresSansSeparateur": [],
+    "euros": {
+     "sym": 0,
+     "eur": 0,
+     "mot": 0
+    },
+    "tirets": {
+     "court": 0,
+     "moyen": 0,
+     "long": 3
+    }
+   },
+   "champs": [
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "Rechercher : IDU, SIREN, propriétaire, adresse…",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "Adresse, IDU ou référence (BW0917)",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    }
+   ],
+   "textLen": 923
+  },
+  {
+   "screen": "outil-comparer",
+   "url": "http://localhost:6002/socle/#m=comparer",
+   "console": [
+    "error|Failed to load resource: the server responded with a status of 401 (Unauthorized) (×2)"
+   ],
+   "pageErrors": [],
+   "reseau": [
+    "401 http://localhost:6002/moi/prefs-carte"
+   ],
+   "analyse": {
+    "fuyantes": [],
+    "doubleEspace": [],
+    "plurielsFaux": [],
+    "unAnsEtc": [],
+    "nbApostropheTypo": 1,
+    "apostropheDroite": [
+     "elles Des parcelles côte à côte, critère par critère. Jusqu'à 3 parcelles, côte à côte, aux mêmes points de calcul que la",
+     "Échap — votre sélection reste dans ce panneau. En quittant l'outil, le tableau se ferme ; votre sélection est gardée 15 mi"
+    ],
+    "espaceSecablePonct": [
+     "te dans ce panneau. En quittant l'outil, le tableau se ferme ; votre sélection est gardée 15 min si vous revenez. Saint-De"
+    ],
+    "ponctCollee": [],
+    "nombresSansSeparateur": [],
+    "euros": {
+     "sym": 0,
+     "eur": 0,
+     "mot": 0
+    },
+    "tirets": {
+     "court": 0,
+     "moyen": 0,
+     "long": 3
+    }
+   },
+   "champs": [
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "Rechercher : IDU, SIREN, propriétaire, adresse…",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "Adresse, IDU ou référence (BW0917)",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    }
+   ],
+   "textLen": 993
+  },
+  {
+   "screen": "outil-risques",
+   "url": "http://localhost:6002/socle/#m=risques",
+   "console": [
+    "error|Failed to load resource: the server responded with a status of 401 (Unauthorized) (×2)"
+   ],
+   "pageErrors": [],
+   "reseau": [
+    "401 http://localhost:6002/moi/prefs-carte"
+   ],
+   "analyse": {
+    "fuyantes": [],
+    "doubleEspace": [],
+    "plurielsFaux": [],
+    "unAnsEtc": [],
+    "nbApostropheTypo": 1,
+    "apostropheDroite": [
+     "s ✕ Pièges et risques Ce qui peut bloquer le projet, avant d'acheter. Ce qui peut bloquer un projet sans se voir sur la c"
+    ],
+    "espaceSecablePonct": [
+     "ter. Ce qui peut bloquer un projet sans se voir sur la carte : servitudes, sols, bruit, assainissement. Chaque servitude e"
+    ],
+    "ponctCollee": [],
+    "nombresSansSeparateur": [],
+    "euros": {
+     "sym": 0,
+     "eur": 0,
+     "mot": 0
+    },
+    "tirets": {
+     "court": 0,
+     "moyen": 0,
+     "long": 2
+    }
+   },
+   "champs": [
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "Rechercher : IDU, SIREN, propriétaire, adresse…",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "Adresse, IDU ou référence (BW0917)",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    }
+   ],
+   "textLen": 734
+  },
+  {
+   "screen": "outil-etude-zone",
+   "url": "http://localhost:6002/socle/#m=etude-zone",
+   "console": [
+    "error|Failed to load resource: the server responded with a status of 401 (Unauthorized) (×2)"
+   ],
+   "pageErrors": [],
+   "reseau": [
+    "401 http://localhost:6002/moi/prefs-carte"
+   ],
+   "analyse": {
+    "fuyantes": [],
+    "doubleEspace": [],
+    "plurielsFaux": [],
+    "unAnsEtc": [],
+    "nbApostropheTypo": 1,
+    "apostropheDroite": [
+     "e de zone Habitants, emplois, concurrents : la zone autour d'un point. 1 Définir la zone une parcelle + un rayon en km ◎",
+     "tail Restauration Commerce de gros Activités de services où s'effectue l'accueil d'une clientèle Cinéma Hôtels Autres héber",
+     "ration Commerce de gros Activités de services où s'effectue l'accueil d'une clientèle Cinéma Hôtels Autres hébergements tou",
+     "merce de gros Activités de services où s'effectue l'accueil d'une clientèle Cinéma Hôtels Autres hébergements touristiques",
+     "s des administrations publiques et assimilés Établissements d'enseignement, de santé et d'action sociale Salles d'art et de",
+     "ues et assimilés Établissements d'enseignement, de santé et d'action sociale Salles d'art et de spectacles Équipements spor",
+     "sements d'enseignement, de santé et d'action sociale Salles d'art et de spectacles Équipements sportifs Lieux de culte Autr",
+     "nt du public Industrie Entrepôt Bureau Centre de congrès et d'exposition Cuisine dédiée à la vente en ligne Lire la zone Sa"
+    ],
+    "espaceSecablePonct": [
+     "99+ ← Outils ✕ Étude de zone Habitants, emplois, concurrents : la zone autour d'un point. 1 Définir la zone une parcelle"
+    ],
+    "ponctCollee": [],
+    "nombresSansSeparateur": [],
+    "euros": {
+     "sym": 0,
+     "eur": 0,
+     "mot": 0
+    },
+    "tirets": {
+     "court": 0,
+     "moyen": 0,
+     "long": 2
+    }
+   },
+   "champs": [
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "Rechercher : IDU, SIREN, propriétaire, adresse…",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "Adresse, IDU ou référence (BW0917)",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    }
+   ],
+   "textLen": 1387
+  },
+  {
+   "screen": "outil-temps",
+   "url": "http://localhost:6002/socle/#m=temps",
+   "console": [
+    "error|Failed to load resource: the server responded with a status of 401 (Unauthorized) (×2)",
+    "error|Failed to load resource: the server responded with a status of 404 (Not Found) (×36)"
+   ],
+   "pageErrors": [],
+   "reseau": [
+    "401 http://localhost:6002/moi/prefs-carte",
+    "404 http://localhost:6002/map/tiles/ortho/1950/13/5352/4584",
+    "404 http://localhost:6002/map/tiles/ortho/1950/13/5352/4588",
+    "404 http://localhost:6002/map/tiles/ortho/1950/13/5352/4583",
+    "404 http://localhost:6002/map/tiles/ortho/express/13/5352/4584",
+    "404 http://localhost:6002/map/tiles/ortho/express/13/5352/4588",
+    "404 http://localhost:6002/map/tiles/ortho/express/13/5352/4583",
+    "404 http://localhost:6002/map/tiles/ortho/1950/13/5351/4586",
+    "404 http://localhost:6002/map/tiles/ortho/1950/13/5351/4585",
+    "404 http://localhost:6002/map/tiles/ortho/1950/13/5351/4587",
+    "404 http://localhost:6002/map/tiles/ortho/1950/13/5351/4584",
+    "404 http://localhost:6002/map/tiles/ortho/1950/13/5351/4588",
+    "404 http://localhost:6002/map/tiles/ortho/1950/13/5351/4583",
+    "404 http://localhost:6002/map/tiles/ortho/express/13/5351/4586",
+    "404 http://localhost:6002/map/tiles/ortho/express/13/5351/4585",
+    "404 http://localhost:6002/map/tiles/ortho/express/13/5351/4587",
+    "404 http://localhost:6002/map/tiles/ortho/express/13/5351/4584",
+    "404 http://localhost:6002/map/tiles/ortho/express/13/5351/4588",
+    "404 http://localhost:6002/map/tiles/ortho/express/13/5351/4583",
+    "404 http://localhost:6002/map/tiles/ortho/1950/12/2675/2293",
+    "404 http://localhost:6002/map/tiles/ortho/1950/12/2675/2292",
+    "404 http://localhost:6002/map/tiles/ortho/1950/12/2675/2294",
+    "404 http://localhost:6002/map/tiles/ortho/1950/12/2675/2291",
+    "404 http://localhost:6002/map/tiles/ortho/express/12/2675/2293",
+    "404 http://localhost:6002/map/tiles/ortho/express/12/2675/2292",
+    "404 http://localhost:6002/map/tiles/ortho/express/12/2675/2294",
+    "404 http://localhost:6002/map/tiles/ortho/express/12/2675/2291",
+    "404 http://localhost:6002/map/tiles/ortho/1950/11/1337/1146",
+    "404 http://localhost:6002/map/tiles/ortho/1950/11/1337/1145",
+    "404 http://localhost:6002/map/tiles/ortho/express/11/1337/1146",
+    "404 http://localhost:6002/map/tiles/ortho/1950/11/1337/1147",
+    "404 http://localhost:6002/map/tiles/ortho/1950/10/668/573",
+    "404 http://localhost:6002/map/tiles/ortho/express/11/1337/1145",
+    "404 http://localhost:6002/map/tiles/ortho/express/11/1337/1147",
+    "404 http://localhost:6002/map/tiles/ortho/express/10/668/573",
+    "404 http://localhost:6002/map/tiles/ortho/1950/10/668/572",
+    "404 http://localhost:6002/map/tiles/ortho/express/10/668/572"
+   ],
+   "analyse": {
+    "fuyantes": [],
+    "doubleEspace": [],
+    "plurielsFaux": [],
+    "unAnsEtc": [],
+    "nbApostropheTypo": 1,
+    "apostropheDroite": [
+     "s La parcelle vue du ciel, année après année. La parcelle d'abord : son IDU, une adresse, ou cliquez-la sur la carte. Pui",
+     "U, une adresse, ou cliquez-la sur la carte. Puis choisissez l'année à revoir — l'« après » est toujours aujourd'hui. QUELL",
+     "hoisissez l'année à revoir — l'« après » est toujours aujourd'hui. QUELLE PARCELLE VOIR ÉVOLUER ? — ou — cliquez une parc",
+     "Ortho Express 2025 Zones noires : secteurs non couverts par l'ortho ancienne (mer, limites de mission IGN) — ce n'est pas u",
+     "rts par l'ortho ancienne (mer, limites de mission IGN) — ce n'est pas un défaut de chargement."
+    ],
+    "espaceSecablePonct": [
+     "parcelle vue du ciel, année après année. La parcelle d'abord : son IDU, une adresse, ou cliquez-la sur la carte. Puis choi",
+     "ez une parcelle sur la carte Accès direct depuis toute fiche : bouton « 1950 ». ⇔ 1950-1965 Actuelle · Ortho Express 2025",
+     "50 ». ⇔ 1950-1965 Actuelle · Ortho Express 2025 Zones noires : secteurs non couverts par l'ortho ancienne (mer, limites de"
+    ],
+    "ponctCollee": [],
+    "nombresSansSeparateur": [],
+    "euros": {
+     "sym": 0,
+     "eur": 0,
+     "mot": 0
+    },
+    "tirets": {
+     "court": 0,
+     "moyen": 0,
+     "long": 4
+    }
+   },
+   "champs": [
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "Rechercher : IDU, SIREN, propriétaire, adresse…",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "Adresse, IDU ou référence (BW0917)",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    }
+   ],
+   "textLen": 607
+  },
+  {
+   "screen": "outil-programme",
+   "url": "http://localhost:6002/socle/#m=programme",
+   "console": [
+    "error|Failed to load resource: the server responded with a status of 401 (Unauthorized) (×2)"
+   ],
+   "pageErrors": [],
+   "reseau": [
+    "401 http://localhost:6002/moi/prefs-carte"
+   ],
+   "analyse": {
+    "fuyantes": [],
+    "doubleEspace": [],
+    "plurielsFaux": [],
+    "unAnsEtc": [],
+    "nbApostropheTypo": 1,
+    "apostropheDroite": [],
+    "espaceSecablePonct": [],
+    "ponctCollee": [],
+    "nombresSansSeparateur": [],
+    "euros": {
+     "sym": 0,
+     "eur": 0,
+     "mot": 0
+    },
+    "tirets": {
+     "court": 0,
+     "moyen": 0,
+     "long": 5
+    }
+   },
+   "champs": [
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "Rechercher : IDU, SIREN, propriétaire, adresse…",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "Adresse, IDU ou référence (BW0917)",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    }
+   ],
+   "textLen": 1144
+  },
+  {
+   "screen": "outil-gabarit",
+   "url": "http://localhost:6002/socle/#m=gabarit",
+   "console": [
+    "error|Failed to load resource: the server responded with a status of 401 (Unauthorized) (×2)"
+   ],
+   "pageErrors": [],
+   "reseau": [
+    "401 http://localhost:6002/moi/prefs-carte"
+   ],
+   "analyse": {
+    "fuyantes": [],
+    "doubleEspace": [],
+    "plurielsFaux": [],
+    "unAnsEtc": [],
+    "nbApostropheTypo": 2,
+    "apostropheDroite": [
+     "t jusqu’où implanter, selon les règles sourcées. Où et jusqu'où une construction peut s'implanter, selon les règles réglem",
+     "les règles sourcées. Où et jusqu'où une construction peut s'implanter, selon les règles réglementaires intégrées et sourc"
+    ],
+    "espaceSecablePonct": [],
+    "ponctCollee": [],
+    "nombresSansSeparateur": [],
+    "euros": {
+     "sym": 0,
+     "eur": 0,
+     "mot": 0
+    },
+    "tirets": {
+     "court": 0,
+     "moyen": 0,
+     "long": 2
+    }
+   },
+   "champs": [
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "Rechercher : IDU, SIREN, propriétaire, adresse…",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "Adresse, IDU ou référence (BW0917)",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    }
+   ],
+   "textLen": 715
+  },
+  {
+   "screen": "outil-taxe-amenagement",
+   "url": "http://localhost:6002/socle/#m=taxe-amenagement",
+   "console": [
+    "error|Failed to load resource: the server responded with a status of 401 (Unauthorized) (×2)"
+   ],
+   "pageErrors": [],
+   "reseau": [
+    "401 http://localhost:6002/moi/prefs-carte"
+   ],
+   "analyse": {
+    "fuyantes": [],
+    "doubleEspace": [],
+    "plurielsFaux": [],
+    "unAnsEtc": [],
+    "nbApostropheTypo": 1,
+    "apostropheDroite": [
+     "min Sources LABUSE Toute l’île Signaler 99+ ← Outils ✕ Taxe d'aménagement La taxe du projet, calculée d'avance. Désignez",
+     "← Outils ✕ Taxe d'aménagement La taxe du projet, calculée d'avance. Désignez la parcelle du projet : i — ou — cliquez u"
+    ],
+    "espaceSecablePonct": [
+     "du projet, calculée d'avance. Désignez la parcelle du projet : i — ou — cliquez une parcelle sur la carte Saint-Denis Sai"
+    ],
+    "ponctCollee": [],
+    "nombresSansSeparateur": [],
+    "euros": {
+     "sym": 0,
+     "eur": 0,
+     "mot": 0
+    },
+    "tirets": {
+     "court": 0,
+     "moyen": 0,
+     "long": 2
+    }
+   },
+   "champs": [
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "Rechercher : IDU, SIREN, propriétaire, adresse…",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "Adresse, IDU ou référence (BW0917)",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    }
+   ],
+   "textLen": 615
+  },
+  {
+   "screen": "outil-prospection-solaire",
+   "url": "http://localhost:6002/socle/#m=prospection-solaire",
+   "console": [
+    "error|Failed to load resource: the server responded with a status of 401 (Unauthorized) (×2)"
+   ],
+   "pageErrors": [],
+   "reseau": [
+    "401 http://localhost:6002/moi/prefs-carte"
+   ],
+   "analyse": {
+    "fuyantes": [],
+    "doubleEspace": [],
+    "plurielsFaux": [],
+    "unAnsEtc": [],
+    "nbApostropheTypo": 1,
+    "apostropheDroite": [],
+    "espaceSecablePonct": [],
+    "ponctCollee": [],
+    "nombresSansSeparateur": [],
+    "euros": {
+     "sym": 0,
+     "eur": 0,
+     "mot": 0
+    },
+    "tirets": {
+     "court": 0,
+     "moyen": 0,
+     "long": 2
+    }
+   },
+   "champs": [
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "Rechercher : IDU, SIREN, propriétaire, adresse…",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    }
+   ],
+   "textLen": 708
+  },
+  {
+   "screen": "outil-blocs-fonciers",
+   "url": "http://localhost:6002/socle/#m=blocs-fonciers",
+   "console": [
+    "error|Failed to load resource: the server responded with a status of 401 (Unauthorized) (×2)"
+   ],
+   "pageErrors": [],
+   "reseau": [
+    "401 http://localhost:6002/moi/prefs-carte"
+   ],
+   "analyse": {
+    "fuyantes": [],
+    "doubleEspace": [],
+    "plurielsFaux": [],
+    "unAnsEtc": [],
+    "nbApostropheTypo": 3,
+    "apostropheDroite": [
+     "ême propriétaire, sur toute l’île. Les parcelles contiguës d'un même propriétaire (personne morale) regroupées en une assi",
+     "riétaire (personne morale) regroupées en une assiette — ce qu'un promoteur ne voit pas parcelle par parcelle. i Filtres Pér",
+     "e voit pas parcelle par parcelle. i Filtres Périmètre Toute l'île Saint-Denis Saint-Pierre Saint-Paul La Possession Le Tamp"
+    ],
+    "espaceSecablePonct": [],
+    "ponctCollee": [],
+    "nombresSansSeparateur": [],
+    "euros": {
+     "sym": 0,
+     "eur": 0,
+     "mot": 0
+    },
+    "tirets": {
+     "court": 0,
+     "moyen": 0,
+     "long": 1
+    }
+   },
+   "champs": [
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "Rechercher : IDU, SIREN, propriétaire, adresse…",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "checkbox",
+     "name": "",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    }
+   ],
+   "textLen": 1235
+  },
+  {
+   "screen": "outil-successions",
+   "url": "http://localhost:6002/socle/#m=successions",
+   "console": [
+    "error|Failed to load resource: the server responded with a status of 401 (Unauthorized) (×2)"
+   ],
+   "pageErrors": [],
+   "reseau": [
+    "401 http://localhost:6002/moi/prefs-carte"
+   ],
+   "analyse": {
+    "fuyantes": [],
+    "doubleEspace": [],
+    "plurielsFaux": [],
+    "unAnsEtc": [],
+    "nbApostropheTypo": 2,
+    "apostropheDroite": [
+     "ar à 3-7 ans, pas une succession ouverte. i Périmètre Toute l'île Saint-Denis Saint-Pierre Saint-Paul La Possession Le Tamp",
+     "1 6 182 m² Estimé Saint-Denis · 3 905 m² · Ua TRANSPORTS DE L'OISEAU BLEU · 401903877 LOUIS NICOLAS MOUTOUSSAMY · 78 ans 97",
+     "Estimé Saint-Paul · 5 800 m² · AU2h SOCIETE IMMOBILIERE DE L'OUEST · 330783630 MAHMED SALIM HATHIA · 70 ans 97422000EI0255",
+     "m² Estimé Saint-Benoît · 4 040 m² · Ub SOCIETE BENEDICTINE D'INVESTISSEMENT · 389586975 ALAIN CHAN FAT · 70 ans 97420000BC",
+     "7421000AP0522 3 480 m² Estimé Salazie · 2 862 m² · UB POULE D'EAU · 888393808 MARIE AURORE MAILLOT · 75 ans 97411000DW0225",
+     "97411000DW0225 3 466 m² Estimé Saint-Denis · 11 049 m² · Um L'OCEANITE · 407506112 JEAN PIERRE CHEUNG AH SEUNG · 78 ans 974",
+     "2 856 m² Estimé Bras-Panon · 3 008 m² · 2AUa LA FONCIERE DE L'UNION · 807846373 CHRISTIAN ALEX KICHENIN · 84 ans 97415000CZ",
+     "UVIEUX COLIMACONS · 414843466 JACQUES MARIE JOSEPH NARCISSE D'ARMAND DE CHATEAUVIEUX · 75 ans 97419000AL1116 2 296 m² Estim"
+    ],
+    "espaceSecablePonct": [
+     "che une succession — dirigeant âgé (≥ 70 ans) ou SCI dormante : un radar à 3-7 ans, pas une succession ouverte. i Périmètre"
+    ],
+    "ponctCollee": [],
+    "nombresSansSeparateur": [
+     "1491 13 455 m² Estimé Saint-Paul · 17 491 m² · U2h ZOGREV · 388712853 JEAN-FRANCOIS MARIUS EDOUARD VERGOZ · 7",
+     "· Uc SOFIPAR HOLDING SOCIETE FINANCIERE DE PARTICIPATION · 383968716 JANINE MARIE RAYMONDE JAUZELON · 80 ans",
+     "12 340 m² Estimé Saint-André · 10 146 m² · US SCI SAVIMMO · 392404968 MARIE YVETTE SOLANGE LATCHOUMY · 76 ans",
+     "1281 12 031 m² Estimé Saint-André · 34 107 m² · A BATITEC · 341465854 YVES LAI ONG TEUNG · 76 ans · aucun dép",
+     "204 10 830 m² Estimé La Possession · 19 319 m² · UEm TITA · 403047202 ELIZABETH MARIE GEORGES CHATEL · 73 ans",
+     "é Saint-Denis · 3 905 m² · Ua TRANSPORTS DE L'OISEAU BLEU · 401903877 LOUIS NICOLAS MOUTOUSSAMY · 78 ans 9741",
+     "005 m² Estimé La Possession · 8 692 m² · UTfr2 LE BERNICA · 329890214 EVE MARIE LUCE JACQUELINE LECHAT · 73 a",
+     "36 m² Estimé Le Tampon · 6 694 m² · Uc SCI TANG CHIM FONG · 383628385 RAYMOND MAXIME TANG CHIM FONG · 88 ans",
+     "5 340 m² Estimé Saint-Leu · 17 871 m² · UC HORIZON OCEAN · 421758475 PAUL SERGE MICHEL CLAUDE MAGNAN DE BELL",
+     "2 m² Estimé Saint-André · 4 840 m² · UB SCI LES ORCHIDEES · 332468602 MARIE YVETTE SOLANGE LATCHOUMY · 76 ans"
+    ],
+    "euros": {
+     "sym": 0,
+     "eur": 0,
+     "mot": 0
+    },
+    "tirets": {
+     "court": 2,
+     "moyen": 0,
+     "long": 2
+    }
+   },
+   "champs": [
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "Rechercher : IDU, SIREN, propriétaire, adresse…",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    }
+   ],
+   "textLen": 24730
+  },
+  {
+   "screen": "outil-courriers",
+   "url": "http://localhost:6002/socle/#m=courriers",
+   "console": [
+    "error|Failed to load resource: the server responded with a status of 401 (Unauthorized) (×2)"
+   ],
+   "pageErrors": [],
+   "reseau": [
+    "401 http://localhost:6002/moi/prefs-carte"
+   ],
+   "analyse": {
+    "fuyantes": [],
+    "doubleEspace": [],
+    "plurielsFaux": [],
+    "unAnsEtc": [],
+    "nbApostropheTypo": 1,
+    "apostropheDroite": [
+     "étaire Écrivez au propriétaire, LABUSE envoie. Un service d'envoi : vous préparez vos courriers (destinataires + rédactio"
+    ],
+    "espaceSecablePonct": [
+     "Écrivez au propriétaire, LABUSE envoie. Un service d'envoi : vous préparez vos courriers (destinataires + rédaction), LA",
+     "es à démarcher — une barre (adresse ou IDU), autant que voulu : ◎ ou cliquez une parcelle sur la carte 0 destinataire — u"
+    ],
+    "ponctCollee": [],
+    "nombresSansSeparateur": [],
+    "euros": {
+     "sym": 0,
+     "eur": 0,
+     "mot": 0
+    },
+    "tirets": {
+     "court": 0,
+     "moyen": 0,
+     "long": 3
+    }
+   },
+   "champs": [
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "Rechercher : IDU, SIREN, propriétaire, adresse…",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "Adresse, IDU ou référence (BW0917)",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    }
+   ],
+   "textLen": 972
+  },
+  {
+   "screen": "radar",
+   "url": "http://localhost:6002/socle/#radar=1",
+   "console": [
+    "error|Failed to load resource: the server responded with a status of 401 (Unauthorized) (×2)"
+   ],
+   "pageErrors": [],
+   "reseau": [
+    "401 http://localhost:6002/moi/prefs-carte"
+   ],
+   "analyse": {
+    "fuyantes": [],
+    "doubleEspace": [],
+    "plurielsFaux": [],
+    "unAnsEtc": [],
+    "nbApostropheTypo": 1,
+    "apostropheDroite": [],
+    "espaceSecablePonct": [
+     "ens en vente sur les portails, et le marché de chaque commune : ce qui est demandé, ce qui se vend vraiment. Veille Vos p"
+    ],
+    "ponctCollee": [],
+    "nombresSansSeparateur": [],
+    "euros": {
+     "sym": 0,
+     "eur": 0,
+     "mot": 0
+    },
+    "tirets": {
+     "court": 0,
+     "moyen": 0,
+     "long": 0
+    }
+   },
+   "champs": [
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "Rechercher : IDU, SIREN, propriétaire, adresse…",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    }
+   ],
+   "textLen": 385
+  },
+  {
+   "screen": "veille-parcelles",
+   "url": "http://localhost:6002/socle/#surveillance=parcelles",
+   "console": [
+    "error|Failed to load resource: the server responded with a status of 401 (Unauthorized) (×2)"
+   ],
+   "pageErrors": [],
+   "reseau": [
+    "401 http://localhost:6002/moi/prefs-carte"
+   ],
+   "analyse": {
+    "fuyantes": [],
+    "doubleEspace": [],
+    "plurielsFaux": [],
+    "unAnsEtc": [],
+    "nbApostropheTypo": 1,
+    "apostropheDroite": [],
+    "espaceSecablePonct": [
+     "but du suivi — Ne plus suivre Surveillé pour chaque parcelle : vente (DVF), permis (Sitadel), changement de propriétaire ("
+    ],
+    "ponctCollee": [],
+    "nombresSansSeparateur": [],
+    "euros": {
+     "sym": 0,
+     "eur": 0,
+     "mot": 0
+    },
+    "tirets": {
+     "court": 0,
+     "moyen": 0,
+     "long": 10
+    }
+   },
+   "champs": [
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "Rechercher : IDU, SIREN, propriétaire, adresse…",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "Adresse, IDU ou référence (BW0917)",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    }
+   ],
+   "textLen": 1131
+  },
+  {
+   "screen": "veille-criteres",
+   "url": "http://localhost:6002/socle/#surveillance=criteres",
+   "console": [
+    "error|Failed to load resource: the server responded with a status of 401 (Unauthorized) (×2)"
+   ],
+   "pageErrors": [],
+   "reseau": [
+    "401 http://localhost:6002/moi/prefs-carte"
+   ],
+   "analyse": {
+    "fuyantes": [],
+    "doubleEspace": [],
+    "plurielsFaux": [],
+    "unAnsEtc": [],
+    "nbApostropheTypo": 1,
+    "apostropheDroite": [],
+    "espaceSecablePonct": [],
+    "ponctCollee": [],
+    "nombresSansSeparateur": [],
+    "euros": {
+     "sym": 2,
+     "eur": 0,
+     "mot": 0
+    },
+    "tirets": {
+     "court": 0,
+     "moyen": 0,
+     "long": 0
+    }
+   },
+   "champs": [
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "Rechercher : IDU, SIREN, propriétaire, adresse…",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    }
+   ],
+   "textLen": 697
+  },
+  {
+   "screen": "vue-documents",
+   "url": "http://localhost:6002/socle/ +rail:documents",
+   "console": [
+    "error|Failed to load resource: the server responded with a status of 401 (Unauthorized) (×2)"
+   ],
+   "pageErrors": [],
+   "reseau": [
+    "401 http://localhost:6002/moi/prefs-carte"
+   ],
+   "analyse": {
+    "fuyantes": [],
+    "doubleEspace": [],
+    "plurielsFaux": [],
+    "unAnsEtc": [],
+    "nbApostropheTypo": 5,
+    "apostropheDroite": [],
+    "espaceSecablePonct": [
+     "générez. Dossier PDF La fiche parcelle complète, imprimable : zonage, capacité, risques, marché, réseaux. Bilan PDF Charg",
+     "Apporteur PDF Présenter un terrain à un acheteur en une page : plan, faits, dernière vente, contact. Pré-dossier PC PDF Ce",
+     ". Gabarit PDF Zone d’implantation, plafond d’emprise, hauteur : le plan, les règles appliquées et celles non intégrées. Com"
+    ],
+    "ponctCollee": [],
+    "nombresSansSeparateur": [],
+    "euros": {
+     "sym": 0,
+     "eur": 0,
+     "mot": 0
+    },
+    "tirets": {
+     "court": 0,
+     "moyen": 0,
+     "long": 3
+    }
+   },
+   "champs": [
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "Rechercher : IDU, SIREN, propriétaire, adresse…",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    }
+   ],
+   "textLen": 1387
+  },
+  {
+   "screen": "vue-copilote",
+   "url": "http://localhost:6002/socle/ +rail:copilote",
+   "console": [
+    "error|Failed to load resource: the server responded with a status of 401 (Unauthorized) (×2)"
+   ],
+   "pageErrors": [],
+   "reseau": [
+    "401 http://localhost:6002/moi/prefs-carte"
+   ],
+   "analyse": {
+    "fuyantes": [],
+    "doubleEspace": [],
+    "plurielsFaux": [],
+    "unAnsEtc": [],
+    "nbApostropheTypo": 1,
+    "apostropheDroite": [
+     "secteurs depuis hier. Rien de neuf depuis hier. Retrouvez l'historique complet et vos préférences d'envoi dans la cloche,",
+     "is hier. Retrouvez l'historique complet et vos préférences d'envoi dans la cloche, en haut à droite. Envoyer CE QU'IL SAI",
+     "nces d'envoi dans la cloche, en haut à droite. Envoyer CE QU'IL SAIT FAIRE Trouver une donnée Renseigner par le web Expli",
+     "rocédure à Saint-Denis ? Qui est le maire de Saint-Benoît ? C'est quoi une zone AU stricte ? Un argumentaire pour un propri"
+    ],
+    "espaceSecablePonct": [
+     "le 97415000CV1186 Combien de parcelles possède CBO Territoria ? Quels sont les pièges de la parcelle 97415000CV1186 ? Parce",
+     "ritoria ? Quels sont les pièges de la parcelle 97415000CV1186 ? Parcelles en procédure à Saint-Denis ? Qui est le maire de",
+     "arcelle 97415000CV1186 ? Parcelles en procédure à Saint-Denis ? Qui est le maire de Saint-Benoît ? C'est quoi une zone AU s",
+     "en procédure à Saint-Denis ? Qui est le maire de Saint-Benoît ? C'est quoi une zone AU stricte ? Un argumentaire pour un pr",
+     "est le maire de Saint-Benoît ? C'est quoi une zone AU stricte ? Un argumentaire pour un propriétaire MÉMOIRE voir tout · 20",
+     "y a 2 h y a-t-il un risque PPR sur la parcelle 97411000AK0204 ? il y a 1 j Cette parcelle est-elle en zone rouge PPR ? il y"
+    ],
+    "ponctCollee": [],
+    "nombresSansSeparateur": [],
+    "euros": {
+     "sym": 0,
+     "eur": 0,
+     "mot": 0
+    },
+    "tirets": {
+     "court": 0,
+     "moyen": 0,
+     "long": 1
+    }
+   },
+   "champs": [
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "Rechercher : IDU, SIREN, propriétaire, adresse…",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "textarea",
+     "type": "textarea",
+     "name": "Ex. combien de parcelles en procédure à Saint-Denis ?",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    }
+   ],
+   "textLen": 1151
+  },
+  {
+   "screen": "vue-projets",
+   "url": "http://localhost:6002/socle/ +rail:projets",
+   "console": [
+    "error|Failed to load resource: the server responded with a status of 401 (Unauthorized) (×2)"
+   ],
+   "pageErrors": [],
+   "reseau": [
+    "401 http://localhost:6002/moi/prefs-carte"
+   ],
+   "analyse": {
+    "fuyantes": [],
+    "doubleEspace": [],
+    "plurielsFaux": [],
+    "unAnsEtc": [],
+    "nbApostropheTypo": 3,
+    "apostropheDroite": [],
+    "espaceSecablePonct": [],
+    "ponctCollee": [],
+    "nombresSansSeparateur": [],
+    "euros": {
+     "sym": 5,
+     "eur": 0,
+     "mot": 0
+    },
+    "tirets": {
+     "court": 0,
+     "moyen": 0,
+     "long": 1
+    }
+   },
+   "champs": [
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "Rechercher : IDU, SIREN, propriétaire, adresse…",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    }
+   ],
+   "textLen": 1190
+  },
+  {
+   "screen": "vue-crm",
+   "url": "http://localhost:6002/socle/ +rail:crm",
+   "console": [
+    "error|Failed to load resource: the server responded with a status of 401 (Unauthorized) (×2)"
+   ],
+   "pageErrors": [],
+   "reseau": [
+    "401 http://localhost:6002/moi/prefs-carte"
+   ],
+   "analyse": {
+    "fuyantes": [],
+    "doubleEspace": [],
+    "plurielsFaux": [],
+    "unAnsEtc": [],
+    "nbApostropheTypo": 1,
+    "apostropheDroite": [
+     "ion 184 parcelles suivies · glisser une carte pour changer d'étape · ajout depuis la fiche (+ CRM) ‹ 1–5 / 8 › Archivées",
+     "du CRM + Note 97408000AP1605 373 m² · La Possession SOCIETE D'EQUIPEMENT DU DEPARTEMENT DE LA REUNION Déplacer vers… Repéré",
+     "er du CRM + Note 97415000ET1707 431 m² · Saint-Paul SOCIETE D'ECONOMIE MIXTE D'AMENAGEMENT DE DEVELOPPEMENT ET D Déplacer v",
+     "97415000ET1707 431 m² · Saint-Paul SOCIETE D'ECONOMIE MIXTE D'AMENAGEMENT DE DEVELOPPEMENT ET D Déplacer vers… Repérée Prop",
+     "du CRM + Note 97408000AP1610 426 m² · La Possession SOCIETE D'EQUIPEMENT DU DEPARTEMENT DE LA REUNION Déplacer vers… Repéré",
+     "du CRM + Note 97408000AP1609 365 m² · La Possession SOCIETE D'EQUIPEMENT DU DEPARTEMENT DE LA REUNION Déplacer vers… Repéré",
+     "+ Note 97415000CT2988 1,28 ha · Saint-Paul SOCIETE ANONYME D'HABITATIONS A LOYER MODERE DE LA REUNION Déplacer vers… Repér",
+     "r du CRM + Note 97415000CT3140 1,32 ha · Saint-Paul SOCIETE D'EQUIPEMENT DU DEPARTEMENT DE LA REUNION Déplacer vers… Repéré"
+    ],
+    "espaceSecablePonct": [],
+    "ponctCollee": [],
+    "nombresSansSeparateur": [],
+    "euros": {
+     "sym": 0,
+     "eur": 0,
+     "mot": 0
+    },
+    "tirets": {
+     "court": 0,
+     "moyen": 0,
+     "long": 52
+    }
+   },
+   "champs": [
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "Rechercher : IDU, SIREN, propriétaire, adresse…",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "search",
+     "name": "Rechercher dans le CRM",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    }
+   ],
+   "textLen": 49478
+  },
+  {
+   "screen": "vue-sources",
+   "url": "http://localhost:6002/socle/ +rail:sources",
+   "console": [
+    "error|Failed to load resource: the server responded with a status of 401 (Unauthorized) (×2)"
+   ],
+   "pageErrors": [],
+   "reseau": [
+    "401 http://localhost:6002/moi/prefs-carte"
+   ],
+   "analyse": {
+    "fuyantes": [],
+    "doubleEspace": [],
+    "plurielsFaux": [],
+    "unAnsEtc": [],
+    "nbApostropheTypo": 3,
+    "apostropheDroite": [
+     "oration. Toutes 99 Filtrer par thème ▸ ACCES 6 Annuaire de l'administration (service-public.fr / DILA) DILA (service-publi",
+     "data La Réunion (portail Koumoul) ↗ OSM — transport (pôles d'échange & téléphérique) OpenStreetMap ↗ TCSP — voies bus en s",
+     "ité ORT / Action cœur de ville / Petites villes de demain à l'échelle de la commune : 19 communes concernées, dont 13 ORT s",
+     "dont 13 ORT signées (table DGALN). Les périmètres précis à l'intérieur des communes (déterminants pour Denormandie) ne son",
+     "publiés par la DGALN. ↗ DYNAMIQUE 1 SITADEL (autorisations d'urbanisme) SDES (Dido) Le producteur publie habituellement c",
+     "eants) INPI (Registre National des Entreprises) ↗ Recherche d'entreprises (DINUM) DINUM (api.gouv.fr) Identification des p",
+     "fr) Identification des propriétaires personnes morales via l'API Recherche d'entreprises (Sirene/RNE). L'enrichissement se",
+     "ion des propriétaires personnes morales via l'API Recherche d'entreprises (Sirene/RNE). L'enrichissement se fait au fil de"
+    ],
+    "espaceSecablePonct": [
+     "art de nos sources sont vérifiées automatiquement chaque jour : une sentinelle repère quand leur producteur publie une nouv",
+     "de ville / Petites villes de demain à l'échelle de la commune : 19 communes concernées, dont 13 ORT signées (table DGALN).",
+     "prises (Sirene/RNE). L'enrichissement se fait au fil de l'eau : environ 9 700 propriétaires déjà enrichis, les autres sont",
+     "n (campagnes 2003, 2009, 2011 et 2019), réalisés par secteurs : toute l'île n'a pas été inventoriée. Une parcelle hors inve",
+     "ité publique telles que publiées au Géoportail de l'urbanisme : 9 catégories en vigueur à La Réunion, certaines restreintes",
+     ", échéance 4) Cartes de bruit stratégiques de la DEAL (2022) : seules les zones de dépassement des seuils réglementaires l",
+     "Secteurs d'information sur les sols recensés par Géorisques : 4 secteurs existent à ce jour à La Réunion. Ce faible nombr",
+     "Zonages d'assainissement issus du Géoportail de l'urbanisme : seules 4 communes sur 24 y ont publié leur plan au format S"
+    ],
+    "ponctCollee": [],
+    "nombresSansSeparateur": [],
+    "euros": {
+     "sym": 0,
+     "eur": 0,
+     "mot": 0
+    },
+    "tirets": {
+     "court": 0,
+     "moyen": 0,
+     "long": 68
+    }
+   },
+   "champs": [
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "Rechercher : IDU, SIREN, propriétaire, adresse…",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "Chercher une source, un producteur…",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    }
+   ],
+   "textLen": 10808
+  },
+  {
+   "screen": "admin-pilotage",
+   "url": "http://localhost:6002/socle/#admin=1",
+   "console": [
+    "error|Failed to load resource: the server responded with a status of 401 (Unauthorized) (×2)"
+   ],
+   "pageErrors": [],
+   "reseau": [
+    "401 http://localhost:6002/moi/prefs-carte"
+   ],
+   "analyse": {
+    "fuyantes": [],
+    "doubleEspace": [],
+    "plurielsFaux": [
+     "envoi de 1 courrier (Saint-Pierre ×1) Traiter 1 / 1 affichées Les trois derniers jours, comptes de test masqué"
+    ],
+    "unAnsEtc": [],
+    "nbApostropheTypo": 0,
+    "apostropheDroite": [
+     "backups Horloge 0 / 30 Verrous 22 / 24 · 06/10 16:18 Ouvrir l'app cliente → Pilotage comment va LABUSE ce matin ? 0€ Chiffr",
+     "cliente → Pilotage comment va LABUSE ce matin ? 0€ Chiffre d'affaires du mois 2 Licences actives 0,69€ Coût IA du mois 28",
+     "38 j ouvrés · seuil 5 j 8 Tâches à effectuer À FAIRE, DANS L'ORDRE Déployer — 1289 commits d'avance sur la prod main est e",
+     "s à effectuer À FAIRE, DANS L'ORDRE Déployer — 1289 commits d'avance sur la prod main est en avance sur la production, dern",
+     "direct (déploiement, jobs, comptes) — les lignes à zéro ne s'affichent pas. JOURNAL Tout Courrier 16/10 17:19 courrier Un",
+     "OURNAL Tout Courrier 16/10 17:19 courrier Un client demande l'envoi de 1 courrier (Saint-Pierre ×1) Traiter 1 / 1 affichées"
+    ],
+    "espaceSecablePonct": [
+     "uit 2 ✦ IA ☎ Contacts Serveur OK Run servi q_v19 Backup local : voir ~/labuse-backups Horloge 0 / 30 Verrous 22 / 24 · 06/1",
+     "18 Ouvrir l'app cliente → Pilotage comment va LABUSE ce matin ? 0€ Chiffre d'affaires du mois 2 Licences actives 0,69€ Coût",
+     "sources sans contrôle les horloges ne sont pas posées en prod : rien ne se met à jour seul — déployer les pose Voir Déposer"
+    ],
+    "ponctCollee": [],
+    "nombresSansSeparateur": [],
+    "euros": {
+     "sym": 2,
+     "eur": 0,
+     "mot": 0
+    },
+    "tirets": {
+     "court": 0,
+     "moyen": 0,
+     "long": 6
+    }
+   },
+   "champs": [],
+   "textLen": 1338
+  },
+  {
+   "screen": "admin-licences",
+   "url": "http://localhost:6002/socle/#admin=1 +section:licences",
+   "console": [
+    "error|Failed to load resource: the server responded with a status of 401 (Unauthorized) (×2)"
+   ],
+   "pageErrors": [],
+   "reseau": [
+    "401 http://localhost:6002/moi/prefs-carte"
+   ],
+   "analyse": {
+    "fuyantes": [],
+    "doubleEspace": [],
+    "plurielsFaux": [],
+    "unAnsEtc": [],
+    "nbApostropheTypo": 0,
+    "apostropheDroite": [
+     "backups Horloge 0 / 30 Verrous 22 / 24 · 06/10 16:18 Ouvrir l'app cliente → Comptes que dois-je faire pour ce client, maint"
+    ],
+    "espaceSecablePonct": [
+     "uit 2 ✦ IA ☎ Contacts Serveur OK Run servi q_v19 Backup local : voir ~/labuse-backups Horloge 0 / 30 Verrous 22 / 24 · 06/1",
+     "liente → Comptes que dois-je faire pour ce client, maintenant ? 2 licences actives Ouvrir un essai 48 h Créer un client Les"
+    ],
+    "ponctCollee": [],
+    "nombresSansSeparateur": [],
+    "euros": {
+     "sym": 0,
+     "eur": 0,
+     "mot": 0
+    },
+    "tirets": {
+     "court": 0,
+     "moyen": 0,
+     "long": 3
+    }
+   },
+   "champs": [
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "Nom, e-mail…",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    }
+   ],
+   "textLen": 919
+  },
+  {
+   "screen": "admin-donnees",
+   "url": "http://localhost:6002/socle/#admin=1 +section:donnees",
+   "console": [
+    "error|Failed to load resource: the server responded with a status of 401 (Unauthorized) (×2)"
+   ],
+   "pageErrors": [],
+   "reseau": [
+    "401 http://localhost:6002/moi/prefs-carte"
+   ],
+   "analyse": {
+    "fuyantes": [],
+    "doubleEspace": [],
+    "plurielsFaux": [],
+    "unAnsEtc": [],
+    "nbApostropheTypo": 1,
+    "apostropheDroite": [
+     "backups Horloge 0 / 30 Verrous 22 / 24 · 06/10 16:18 Ouvrir l'app cliente → Données le circuit de la donnée : d’où elle vie",
+     "r quand tu veux, sans urgence. Décider Injecter Annuaire de l'administration (service-public.fr / DILA) Le producteur a pub",
+     "fr / DILA) Le producteur a publié « 93781 » que ce que sert l'app (annuaire service-public.fr — 24 mairies (OUTILS K2)). In",
+     "IN EXPRESS COG 2026 — v4.0 (ED2026-01-01) » que ce que sert l'app (ADMIN EXPRESS — contours communaux). Injecter Injecter F",
+     "rs communaux). Injecter Injecter FRR ex-ZRR — zone spéciale d'action rurale (Légifrance) Le producteur a publié « Arrêté du",
+     "ié « Arrêté du 14 avril 2025 (NOR : ATDB2508688A) modifiant l'arrêté » que ce que sert l'app (ZSAR 1978 · FRR 01/07/2024 ·",
+     "5 (NOR : ATDB2508688A) modifiant l'arrêté » que ce que sert l'app (ZSAR 1978 · FRR 01/07/2024 · réf. ZRR 2017 (Région)). In",
+     "01/01/2026, avec correctif du 17/09/2026 » que ce que sert l'app (version inconnue). Injecter Injecter DEAL — cartes de br"
+    ],
+    "espaceSecablePonct": [
+     "uit 2 ✦ IA ☎ Contacts Serveur OK Run servi q_v19 Backup local : voir ~/labuse-backups Horloge 0 / 30 Verrous 22 / 24 · 06/1",
+     "16:18 Ouvrir l'app cliente → Données le circuit de la donnée : d’où elle vient, où elle va, ce qui cloche À faire8 Sources",
+     "Circuit Journal Cohérence 8 choses à faire sonde des sources : 24/09 18:52contrôle du circuit : 17/10 07:21agents : — Déci",
+     "es à faire sonde des sources : 24/09 18:52contrôle du circuit : 17/10 07:21agents : — Décider — verrou G5 cassé Le dernier",
+     "sources : 24/09 18:52contrôle du circuit : 17/10 07:21agents : — Décider — verrou G5 cassé Le dernier passage de « labuse",
+     "ous » a cassé sur G5. Le déploiement refuse tant que ça tient ; chaque verrou a sa phrase dans VERROUS.md. Décider Décider",
+     "ant) Le verrou G8 est un avertissement de fraîcheur de veille : le déploiement PASSE (deploy -w). Il pointe des sources san",
+     "assainissement (SPANC) Source manuelle échue — cadence 365 j : dernier dépôt jamais. Ne touche ni le résiduel ni le score."
+    ],
+    "ponctCollee": [],
+    "nombresSansSeparateur": [
+     "tration (service-public.fr / DILA) Le producteur a publié « 93781 » que ce que sert l'app (annuaire servi"
+    ],
+    "euros": {
+     "sym": 0,
+     "eur": 0,
+     "mot": 0
+    },
+    "tirets": {
+     "court": 0,
+     "moyen": 1,
+     "long": 14
+    }
+   },
+   "champs": [
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "Chercher une source (cadastre, permis, PLU, LiDAR…)",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "Un réservoir, un robinet, un chiffre — ou un élément de l'app (couche, section, outil) pour remonter à ses sources",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    }
+   ],
+   "textLen": 2495
+  },
+  {
+   "screen": "admin-courrier",
+   "url": "http://localhost:6002/socle/#admin=1 +section:courrier",
+   "console": [
+    "error|Failed to load resource: the server responded with a status of 401 (Unauthorized) (×2)"
+   ],
+   "pageErrors": [],
+   "reseau": [
+    "401 http://localhost:6002/moi/prefs-carte"
+   ],
+   "analyse": {
+    "fuyantes": [],
+    "doubleEspace": [],
+    "plurielsFaux": [],
+    "unAnsEtc": [],
+    "nbApostropheTypo": 3,
+    "apostropheDroite": [
+     "backups Horloge 0 / 30 Verrous 22 / 24 · 06/10 16:18 Ouvrir l'app cliente → Courrier les demandes d’envoi — la page qui man"
+    ],
+    "espaceSecablePonct": [
+     "uit 2 ✦ IA ☎ Contacts Serveur OK Run servi q_v19 Backup local : voir ~/labuse-backups Horloge 0 / 30 Verrous 22 / 24 · 06/1",
+     "ndes d’envoi — la page qui manquait Coût prestataire (lettre) : 2.69 € Modifier — non affiché au client (tarif donné au rap",
+     "issue du CRM À déposer € aperçu Déposé Un seul vocabulaire : à déposer → déposé → envoyé → répondu / sans réponse. Le cl"
+    ],
+    "ponctCollee": [],
+    "nombresSansSeparateur": [],
+    "euros": {
+     "sym": 29,
+     "eur": 0,
+     "mot": 0
+    },
+    "tirets": {
+     "court": 0,
+     "moyen": 0,
+     "long": 37
+    }
+   },
+   "champs": [
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "nouveau",
+     "maxlength": null,
+     "inputmode": "decimal",
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "—",
+     "maxlength": null,
+     "inputmode": "decimal",
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "—",
+     "maxlength": null,
+     "inputmode": "decimal",
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "—",
+     "maxlength": null,
+     "inputmode": "decimal",
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "—",
+     "maxlength": null,
+     "inputmode": "decimal",
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "—",
+     "maxlength": null,
+     "inputmode": "decimal",
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "—",
+     "maxlength": null,
+     "inputmode": "decimal",
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "—",
+     "maxlength": null,
+     "inputmode": "decimal",
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "—",
+     "maxlength": null,
+     "inputmode": "decimal",
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "—",
+     "maxlength": null,
+     "inputmode": "decimal",
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "—",
+     "maxlength": null,
+     "inputmode": "decimal",
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "—",
+     "maxlength": null,
+     "inputmode": "decimal",
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "—",
+     "maxlength": null,
+     "inputmode": "decimal",
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "—",
+     "maxlength": null,
+     "inputmode": "decimal",
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "—",
+     "maxlength": null,
+     "inputmode": "decimal",
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "—",
+     "maxlength": null,
+     "inputmode": "decimal",
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "—",
+     "maxlength": null,
+     "inputmode": "decimal",
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "—",
+     "maxlength": null,
+     "inputmode": "decimal",
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "—",
+     "maxlength": null,
+     "inputmode": "decimal",
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "—",
+     "maxlength": null,
+     "inputmode": "decimal",
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "—",
+     "maxlength": null,
+     "inputmode": "decimal",
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "—",
+     "maxlength": null,
+     "inputmode": "decimal",
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "—",
+     "maxlength": null,
+     "inputmode": "decimal",
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "—",
+     "maxlength": null,
+     "inputmode": "decimal",
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "—",
+     "maxlength": null,
+     "inputmode": "decimal",
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "—",
+     "maxlength": null,
+     "inputmode": "decimal",
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "—",
+     "maxlength": null,
+     "inputmode": "decimal",
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "—",
+     "maxlength": null,
+     "inputmode": "decimal",
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "—",
+     "maxlength": null,
+     "inputmode": "decimal",
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "12 rue du Port, 97420 Le Port",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "97411000BZ1065",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "BZ 1065",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    }
+   ],
+   "textLen": 3750
+  },
+  {
+   "screen": "admin-radar",
+   "url": "http://localhost:6002/socle/#admin=1 +section:radar",
+   "console": [
+    "error|Failed to load resource: the server responded with a status of 401 (Unauthorized) (×2)"
+   ],
+   "pageErrors": [],
+   "reseau": [
+    "401 http://localhost:6002/moi/prefs-carte"
+   ],
+   "analyse": {
+    "fuyantes": [],
+    "doubleEspace": [],
+    "plurielsFaux": [],
+    "unAnsEtc": [],
+    "nbApostropheTypo": 6,
+    "apostropheDroite": [
+     "backups Horloge 0 / 30 Verrous 22 / 24 · 06/10 16:18 Ouvrir l'app cliente → Radar la pige d’annonces — déposer, valider, re"
+    ],
+    "espaceSecablePonct": [
+     "uit 2 ✦ IA ☎ Contacts Serveur OK Run servi q_v19 Backup local : voir ~/labuse-backups Horloge 0 / 30 Verrous 22 / 24 · 06/1",
+     "matique depuis plus de 26 h (Mac éteint ou extension bloquée) : déposer la page du jour à la main ci-dessus (⌘S). 0 annonce"
+    ],
+    "ponctCollee": [],
+    "nombresSansSeparateur": [],
+    "euros": {
+     "sym": 0,
+     "eur": 0,
+     "mot": 0
+    },
+    "tirets": {
+     "court": 0,
+     "moyen": 0,
+     "long": 6
+    }
+   },
+   "champs": [
+    {
+     "tag": "input",
+     "type": "file",
+     "name": "",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    }
+   ],
+   "textLen": 1223
+  },
+  {
+   "screen": "admin-produit",
+   "url": "http://localhost:6002/socle/#admin=1 +section:produit",
+   "console": [
+    "error|Failed to load resource: the server responded with a status of 401 (Unauthorized) (×2)"
+   ],
+   "pageErrors": [],
+   "reseau": [
+    "401 http://localhost:6002/moi/prefs-carte"
+   ],
+   "analyse": {
+    "fuyantes": [],
+    "doubleEspace": [],
+    "plurielsFaux": [],
+    "unAnsEtc": [],
+    "nbApostropheTypo": 0,
+    "apostropheDroite": [
+     "backups Horloge 0 / 30 Verrous 22 / 24 · 06/10 16:18 Ouvrir l'app cliente → Produit ce qui est utilisé · ce que les clients",
+     "temps · Étude de faisabilité · Gabarit réglementaire · Taxe d'aménagement · Prospection solaire · Blocs fonciers · Successi"
+    ],
+    "espaceSecablePonct": [
+     "uit 2 ✦ IA ☎ Contacts Serveur OK Run servi q_v19 Backup local : voir ~/labuse-backups Horloge 0 / 30 Verrous 22 / 24 · 06/1",
+     "0 J 90 J Carte / fiches 3 documents 3 Jamais ouverts sur 30 j : PLU · Permis · Communes · Scan patrimoine · Assemblage · Co"
+    ],
+    "ponctCollee": [],
+    "nombresSansSeparateur": [],
+    "euros": {
+     "sym": 0,
+     "eur": 0,
+     "mot": 0
+    },
+    "tirets": {
+     "court": 0,
+     "moyen": 0,
+     "long": 2
+    }
+   },
+   "champs": [],
+   "textLen": 1049542
+  },
+  {
+   "screen": "admin-ia",
+   "url": "http://localhost:6002/socle/#admin=1 +section:ia",
+   "console": [
+    "error|Failed to load resource: the server responded with a status of 401 (Unauthorized) (×2)"
+   ],
+   "pageErrors": [],
+   "reseau": [
+    "401 http://localhost:6002/moi/prefs-carte"
+   ],
+   "analyse": {
+    "fuyantes": [],
+    "doubleEspace": [],
+    "plurielsFaux": [],
+    "unAnsEtc": [],
+    "nbApostropheTypo": 0,
+    "apostropheDroite": [
+     "backups Horloge 0 / 30 Verrous 22 / 24 · 06/10 16:18 Ouvrir l'app cliente → IA consommation, plafonds par compte, registre",
+     "CLIENTS 38 AVEC CONSO 0 TOUS, TESTS COMPRIS 44 COMPTE AUJOURD'HUI ≈ QUESTIONS COÛT 30 J PLAFOND € / JOUR Recette Pay5 0,000"
+    ],
+    "espaceSecablePonct": [
+     "uit 2 ✦ IA ☎ Contacts Serveur OK Run servi q_v19 Backup local : voir ~/labuse-backups Horloge 0 / 30 Verrous 22 / 24 · 06/1",
+     ",00 € € Vide = défaut (2,00 €/jour). Le plafond est en euros : une mission lourde (Sonnet) pèse à son coût réel, pas comme",
+     "n coût réel, pas comme une question. Enregistrer est immédiat : la question suivante du compte lit le nouveau plafond. MODÈ"
+    ],
+    "ponctCollee": [],
+    "nombresSansSeparateur": [],
+    "euros": {
+     "sym": 161,
+     "eur": 0,
+     "mot": 1
+    },
+    "tirets": {
+     "court": 0,
+     "moyen": 0,
+     "long": 3
+    }
+   },
+   "champs": [
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "2.00",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "2.00",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "2.00",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "2.00",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "2.00",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "2.00",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "2.00",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "2.00",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "2.00",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "2.00",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "2.00",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "2.00",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "2.00",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "2.00",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "2.00",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "2.00",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "2.00",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "2.00",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "2.00",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "2.00",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "2.00",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "2.00",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "2.00",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "2.00",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "2.00",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "2.00",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "2.00",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "2.00",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "2.00",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "2.00",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "2.00",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "2.00",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "2.00",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "2.00",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "2.00",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "2.00",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "2.00",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "text",
+     "name": "2.00",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    }
+   ],
+   "textLen": 3797
+  },
+  {
+   "screen": "admin-contacts",
+   "url": "http://localhost:6002/socle/#admin=1 +section:contacts",
+   "console": [
+    "error|Failed to load resource: the server responded with a status of 401 (Unauthorized) (×2)"
+   ],
+   "pageErrors": [],
+   "reseau": [
+    "401 http://localhost:6002/moi/prefs-carte"
+   ],
+   "analyse": {
+    "fuyantes": [],
+    "doubleEspace": [],
+    "plurielsFaux": [],
+    "unAnsEtc": [],
+    "nbApostropheTypo": 0,
+    "apostropheDroite": [
+     "backups Horloge 0 / 30 Verrous 22 / 24 · 06/10 16:18 Ouvrir l'app cliente → Contacts le carnet des communes — standard + co",
+     ", Petite-Île, Saint-Louis, Saint-Pierre CASUD — Communauté d'agglomération du Sud 4 communes : Entre-Deux, Saint-Joseph,",
+     "t & information logement DEAL DEAL La Réunion (Direction de l'Environnement, de l'Aménagement et du Logement) 2 rue Juliet",
+     "ment DEAL DEAL La Réunion (Direction de l'Environnement, de l'Aménagement et du Logement) 2 rue Juliette Dodu, 97706 Saint",
+     "ble.gouv.fr ADIL ADIL de La Réunion (Agence Départementale d'Information sur le Logement) 12 rue Colbert, 97400 Saint-Den"
+    ],
+    "espaceSecablePonct": [
+     "uit 2 ✦ IA ☎ Contacts Serveur OK Run servi q_v19 Backup local : voir ~/labuse-backups Horloge 0 / 30 Verrous 22 / 24 · 06/1",
+     "— Communauté intercommunale du Nord de La Réunion 3 communes : Saint-Denis, Sainte-Marie, Sainte-Suzanne CIREST — Communa",
+     "e CIREST — Communauté intercommunale Réunion Est 6 communes : Bras-Panon, La Plaine-des-Palmistes, Saint-André, Saint-Ben",
+     "-Rose, Salazie TCO — Territoire de la Côte Ouest 5 communes : Le Port, La Possession, Saint-Leu, Saint-Paul, Les Trois-Ba",
+     "— Communauté intercommunale des Villes solidaires 6 communes : Les Avirons, Cilaos, L'Étang-Salé, Petite-Île, Saint-Louis,",
+     "Pierre CASUD — Communauté d'agglomération du Sud 4 communes : Entre-Deux, Saint-Joseph, Saint-Philippe, Le Tampon Servic"
+    ],
+    "ponctCollee": [],
+    "nombresSansSeparateur": [
+     "89 89 · cabinet.maire.cilaos@ville-cilaos.fr · site jordan 0648345707 · victorlaganepro@gmail.com ✎ 🗑 Le co"
+    ],
+    "euros": {
+     "sym": 0,
+     "eur": 0,
+     "mot": 0
+    },
+    "tirets": {
+     "court": 0,
+     "moyen": 0,
+     "long": 6
+    }
+   },
+   "champs": [],
+   "textLen": 2763
+  },
+  {
+   "screen": "srv-login",
+   "url": "http://127.0.0.1:8802/login",
+   "console": [
+    "error|Loading the stylesheet 'https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css' violates the following Content Security Policy directive: \"style-src 'self' 'unsafe-inline'\". Note that 'style-src-elem' was not explicitly set, so 'style-src' is used as a fallback. The action has been blocked.",
+    "error|Loading the image 'https://fastapi.tiangolo.com/img/favicon.png' violates the following Content Security Policy directive: \"img-src 'self' data: blob: https://data.geopf.fr https://s3.amazonaws.com\". The action has been blocked. (×2)",
+    "error|Loading the script 'https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js' violates the following Content Security Policy directive: \"script-src 'self'\". Note that 'script-src-elem' was not explicitly set, so 'script-src' is used as a fallback. The action has been blocked.",
+    "error|Executing inline script violates the following Content Security Policy directive 'script-src 'self''. Either the 'unsafe-inline' keyword, a hash ('sha256-QOOQu4W1oxGqd2nbXbxiA1Di6OHQOLQD+o+G9oWL8YY='), or a nonce ('nonce-...') is required to enable inline execution. The action has been blocked."
+   ],
+   "pageErrors": [],
+   "reseau": [
+    "FAILED(csp) https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css",
+    "FAILED(csp) https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js",
+    "FAILED(csp) https://fastapi.tiangolo.com/img/favicon.png"
+   ],
+   "analyse": {
+    "fuyantes": [],
+    "doubleEspace": [],
+    "plurielsFaux": [],
+    "unAnsEtc": [],
+    "nbApostropheTypo": 0,
+    "apostropheDroite": [],
+    "espaceSecablePonct": [],
+    "ponctCollee": [],
+    "nombresSansSeparateur": [],
+    "euros": {
+     "sym": 0,
+     "eur": 0,
+     "mot": 0
+    },
+    "tirets": {
+     "court": 0,
+     "moyen": 0,
+     "long": 0
+    }
+   },
+   "champs": [],
+   "textLen": 0
+  },
+  {
+   "screen": "srv-reset",
+   "url": "http://127.0.0.1:8802/reset",
+   "console": [
+    "error|Failed to load resource: the server responded with a status of 404 (Not Found) (×3)"
+   ],
+   "pageErrors": [],
+   "reseau": [
+    "404 http://127.0.0.1:8802/socle/fonts/inter-latin-400-normal.woff2",
+    "FAILED(net::ERR_ABORTED) http://127.0.0.1:8802/socle/fonts/inter-latin-400-normal.woff2",
+    "404 http://127.0.0.1:8802/socle/fonts/space-grotesk-latin-700-normal.woff2",
+    "FAILED(net::ERR_ABORTED) http://127.0.0.1:8802/socle/fonts/space-grotesk-latin-700-normal.woff2",
+    "404 http://127.0.0.1:8802/socle/fonts/space-grotesk-latin-500-normal.woff2",
+    "FAILED(net::ERR_ABORTED) http://127.0.0.1:8802/socle/fonts/space-grotesk-latin-500-normal.woff2"
+   ],
+   "analyse": {
+    "fuyantes": [],
+    "doubleEspace": [],
+    "plurielsFaux": [],
+    "unAnsEtc": [],
+    "nbApostropheTypo": 0,
+    "apostropheDroite": [
+     "cevoir le lien → Le lien est valable une heure et ne sert qu'une fois. ← Retour à la connexion LABUSE · La Réunion — CGV"
+    ],
+    "espaceSecablePonct": [],
+    "ponctCollee": [],
+    "nombresSansSeparateur": [],
+    "euros": {
+     "sym": 0,
+     "eur": 0,
+     "mot": 0
+    },
+    "tirets": {
+     "court": 0,
+     "moyen": 0,
+     "long": 1
+    }
+   },
+   "champs": [
+    {
+     "tag": "input",
+     "type": "email",
+     "name": "email",
+     "maxlength": null,
+     "inputmode": "email",
+     "required": true
+    }
+   ],
+   "textLen": 242
+  },
+  {
+   "screen": "srv-cgv",
+   "url": "http://127.0.0.1:8802/cgv",
+   "console": [
+    "error|Failed to load resource: the server responded with a status of 404 (Not Found) (×5)"
+   ],
+   "pageErrors": [],
+   "reseau": [
+    "404 http://127.0.0.1:8802/socle/fonts/inter-latin-400-normal.woff2",
+    "FAILED(net::ERR_ABORTED) http://127.0.0.1:8802/socle/fonts/inter-latin-400-normal.woff2",
+    "404 http://127.0.0.1:8802/socle/fonts/space-grotesk-latin-500-normal.woff2",
+    "FAILED(net::ERR_ABORTED) http://127.0.0.1:8802/socle/fonts/space-grotesk-latin-500-normal.woff2",
+    "404 http://127.0.0.1:8802/socle/fonts/space-grotesk-latin-700-normal.woff2",
+    "FAILED(net::ERR_ABORTED) http://127.0.0.1:8802/socle/fonts/space-grotesk-latin-700-normal.woff2",
+    "404 http://127.0.0.1:8802/socle/fonts/space-grotesk-latin-600-normal.woff2",
+    "FAILED(net::ERR_ABORTED) http://127.0.0.1:8802/socle/fonts/space-grotesk-latin-600-normal.woff2",
+    "404 http://127.0.0.1:8802/socle/fonts/inter-latin-600-normal.woff2",
+    "FAILED(net::ERR_ABORTED) http://127.0.0.1:8802/socle/fonts/inter-latin-600-normal.woff2"
+   ],
+   "analyse": {
+    "fuyantes": [],
+    "doubleEspace": [],
+    "plurielsFaux": [],
+    "unAnsEtc": [],
+    "nbApostropheTypo": 0,
+    "apostropheDroite": [
+     "CONDITIONS GÉNÉRALES DE VENTE ET D'UTILISATION version 2026-10-09 — service LABUSE Contrat B2B",
+     "6-10-09 — service LABUSE Contrat B2B entre professionnels. L'acceptation est recueillie à la création du compte (case à co",
+     "é Droit applicable 1. Objet LABUSE est un service en ligne d'aide à la prospection foncière à La Réunion : agrégation, cro",
+     "rbanisme, risques, marchés, publications légales), assortis d'indicateurs et d'analyses produits par des traitements automa",
+     ", marchés, publications légales), assortis d'indicateurs et d'analyses produits par des traitements automatisés. 2. Nature",
+     "ilité ou de faisabilité. Ils ne remplacent ni un certificat d'urbanisme, ni l'instruction d'une autorisation, ni l'interven",
+     "abilité. Ils ne remplacent ni un certificat d'urbanisme, ni l'instruction d'une autorisation, ni l'intervention d'un notair",
+     "e remplacent ni un certificat d'urbanisme, ni l'instruction d'une autorisation, ni l'intervention d'un notaire ou de tout p"
+    ],
+    "espaceSecablePonct": [
+     "compte (case à cocher horodatée, version consignée). Éditeur : Victor Lagane, entrepreneur individuel · 3 chemin de la Cit",
+     "on. SIREN : 987 641 917 · SIRET : 987 641 917 00016 · contact : contact@labuse.immo SOMMAIRE Objet Nature des analyses Com",
+     "ervice en ligne d'aide à la prospection foncière à La Réunion : agrégation, croisement et lecture de données publiques (cad",
+     "l ouvre un accès nominatif unique (1 licence = 1 utilisateur) ; les identifiants sont personnels et incessibles. LABUSE peu",
+     "cès, contournement technique). 4. Prix et paiement Intégral : abonnement mensuel de 349 € par licence, accès complet au s",
+     "mensuel de 349 € par licence, accès complet au service. Flash : 79 € par rapport — paiement unique donnant droit à UN rappo",
+     "ise en base). Paiement par carte via Stripe (paiement hébergé : aucune donnée de carte ne transite par LABUSE), factures et",
+     "ement sur la parcelle confirmée par l'acheteur avant paiement ; l'article 2 (nature des analyses) s'y applique intégralemen"
+    ],
+    "ponctCollee": [],
+    "nombresSansSeparateur": [],
+    "euros": {
+     "sym": 2,
+     "eur": 0,
+     "mot": 0
+    },
+    "tirets": {
+     "court": 0,
+     "moyen": 0,
+     "long": 6
+    }
+   },
+   "champs": [],
+   "textLen": 5999
+  },
+  {
+   "screen": "srv-invitation-sans-token",
+   "url": "http://127.0.0.1:8802/invitation",
+   "console": [
+    "error|Failed to load resource: the server responded with a status of 404 (Not Found) (×5)"
+   ],
+   "pageErrors": [],
+   "reseau": [
+    "404 http://127.0.0.1:8802/invitation",
+    "404 http://127.0.0.1:8802/socle/fonts/space-grotesk-latin-700-normal.woff2",
+    "FAILED(net::ERR_ABORTED) http://127.0.0.1:8802/socle/fonts/space-grotesk-latin-700-normal.woff2",
+    "404 http://127.0.0.1:8802/socle/fonts/space-grotesk-latin-500-normal.woff2",
+    "FAILED(net::ERR_ABORTED) http://127.0.0.1:8802/socle/fonts/space-grotesk-latin-500-normal.woff2",
+    "404 http://127.0.0.1:8802/socle/fonts/inter-latin-600-normal.woff2",
+    "FAILED(net::ERR_ABORTED) http://127.0.0.1:8802/socle/fonts/inter-latin-600-normal.woff2",
+    "404 http://127.0.0.1:8802/socle/fonts/inter-latin-400-normal.woff2",
+    "FAILED(net::ERR_ABORTED) http://127.0.0.1:8802/socle/fonts/inter-latin-400-normal.woff2"
+   ],
+   "analyse": {
+    "fuyantes": [],
+    "doubleEspace": [],
+    "plurielsFaux": [],
+    "unAnsEtc": [],
+    "nbApostropheTypo": 0,
+    "apostropheDroite": [
+     "CE LIEN N'EST PLUS VALIDE expiré, déjà utilisé, ou incomplet Si vous",
+     "mplet Si vous avez déjà créé votre accès, connectez-vous — c'est peut-être que ce lien a déjà servi. Se connecter → Sino"
+    ],
+    "espaceSecablePonct": [],
+    "ponctCollee": [],
+    "nombresSansSeparateur": [],
+    "euros": {
+     "sym": 0,
+     "eur": 0,
+     "mot": 0
+    },
+    "tirets": {
+     "court": 0,
+     "moyen": 0,
+     "long": 3
+    }
+   },
+   "champs": [],
+   "textLen": 335
+  },
+  {
+   "screen": "srv-onboarding-retour-ok",
+   "url": "http://127.0.0.1:8802/onboarding/retour?ok=1",
+   "console": [
+    "error|Failed to load resource: the server responded with a status of 404 (Not Found) (×3)"
+   ],
+   "pageErrors": [],
+   "reseau": [
+    "404 http://127.0.0.1:8802/socle/fonts/space-grotesk-latin-700-normal.woff2",
+    "FAILED(net::ERR_ABORTED) http://127.0.0.1:8802/socle/fonts/space-grotesk-latin-700-normal.woff2",
+    "404 http://127.0.0.1:8802/socle/fonts/space-grotesk-latin-500-normal.woff2",
+    "FAILED(net::ERR_ABORTED) http://127.0.0.1:8802/socle/fonts/space-grotesk-latin-500-normal.woff2",
+    "404 http://127.0.0.1:8802/socle/fonts/inter-latin-400-normal.woff2",
+    "FAILED(net::ERR_ABORTED) http://127.0.0.1:8802/socle/fonts/inter-latin-400-normal.woff2"
+   ],
+   "analyse": {
+    "fuyantes": [],
+    "doubleEspace": [],
+    "plurielsFaux": [],
+    "unAnsEtc": [],
+    "nbApostropheTypo": 0,
+    "apostropheDroite": [
+     "— le scoring des parcelles, les fiches sourcées, les outils d'analyse et le dossier banquier. Un guide de prise en main vou"
+    ],
+    "espaceSecablePonct": [],
+    "ponctCollee": [],
+    "nombresSansSeparateur": [],
+    "euros": {
+     "sym": 0,
+     "eur": 0,
+     "mot": 0
+    },
+    "tirets": {
+     "court": 0,
+     "moyen": 0,
+     "long": 2
+    }
+   },
+   "champs": [],
+   "textLen": 441
+  },
+  {
+   "screen": "srv-onboarding-retour-ko",
+   "url": "http://127.0.0.1:8802/onboarding/retour?ok=0",
+   "console": [
+    "error|Failed to load resource: the server responded with a status of 404 (Not Found) (×4)"
+   ],
+   "pageErrors": [],
+   "reseau": [
+    "404 http://127.0.0.1:8802/socle/fonts/space-grotesk-latin-700-normal.woff2",
+    "FAILED(net::ERR_ABORTED) http://127.0.0.1:8802/socle/fonts/space-grotesk-latin-700-normal.woff2",
+    "404 http://127.0.0.1:8802/socle/fonts/space-grotesk-latin-500-normal.woff2",
+    "FAILED(net::ERR_ABORTED) http://127.0.0.1:8802/socle/fonts/space-grotesk-latin-500-normal.woff2",
+    "404 http://127.0.0.1:8802/socle/fonts/inter-latin-400-normal.woff2",
+    "FAILED(net::ERR_ABORTED) http://127.0.0.1:8802/socle/fonts/inter-latin-400-normal.woff2",
+    "404 http://127.0.0.1:8802/socle/fonts/inter-latin-600-normal.woff2",
+    "FAILED(net::ERR_ABORTED) http://127.0.0.1:8802/socle/fonts/inter-latin-600-normal.woff2"
+   ],
+   "analyse": {
+    "fuyantes": [],
+    "doubleEspace": [],
+    "plurielsFaux": [],
+    "unAnsEtc": [],
+    "nbApostropheTypo": 0,
+    "apostropheDroite": [
+     "↺ PAIEMENT INTERROMPU rien n'a été débité Votre compte existe déjà. Connectez-vous et le",
+     "te déjà. Connectez-vous et le paiement reprendra là où vous l'aviez laissé. Reprendre le paiement → Un doute avant de pay",
+     "immo — je réponds moi-même, et je peux vous ouvrir un accès d'essai de 48 h. LABUSE · La Réunion — CGV · mentions légales"
+    ],
+    "espaceSecablePonct": [
+     "iez laissé. Reprendre le paiement → Un doute avant de payer ? Écrivez à victor@labuse.immo — je réponds moi-même, et je p"
+    ],
+    "ponctCollee": [],
+    "nombresSansSeparateur": [],
+    "euros": {
+     "sym": 0,
+     "eur": 0,
+     "mot": 0
+    },
+    "tirets": {
+     "court": 0,
+     "moyen": 0,
+     "long": 2
+    }
+   },
+   "champs": [],
+   "textLen": 353
+  },
+  {
+   "screen": "srv-flash",
+   "url": "http://127.0.0.1:8802/flash?idu=97401000AC0428",
+   "console": [
+    "error|Failed to load resource: the server responded with a status of 404 (Not Found) (×4)"
+   ],
+   "pageErrors": [],
+   "reseau": [
+    "404 http://127.0.0.1:8802/socle/fonts/space-grotesk-latin-700-normal.woff2",
+    "FAILED(net::ERR_ABORTED) http://127.0.0.1:8802/socle/fonts/space-grotesk-latin-700-normal.woff2",
+    "404 http://127.0.0.1:8802/socle/fonts/space-grotesk-latin-500-normal.woff2",
+    "FAILED(net::ERR_ABORTED) http://127.0.0.1:8802/socle/fonts/space-grotesk-latin-500-normal.woff2",
+    "404 http://127.0.0.1:8802/socle/fonts/inter-latin-600-normal.woff2",
+    "FAILED(net::ERR_ABORTED) http://127.0.0.1:8802/socle/fonts/inter-latin-600-normal.woff2",
+    "404 http://127.0.0.1:8802/socle/fonts/inter-latin-400-normal.woff2",
+    "FAILED(net::ERR_ABORTED) http://127.0.0.1:8802/socle/fonts/inter-latin-400-normal.woff2"
+   ],
+   "analyse": {
+    "fuyantes": [],
+    "doubleEspace": [],
+    "plurielsFaux": [],
+    "unAnsEtc": [],
+    "nbApostropheTypo": 0,
+    "apostropheDroite": [
+     "ement reste valable 30 jours. Paiement unique de 79 €. Pas d'abonnement, pas de compte à créer. Aucune donnée bancaire ne",
+     "e ne passe par LABUSE : le paiement est traité par Stripe. J'AGIS POUR LES BESOINS DE MON ACTIVITÉ PROFESSIONNELLE ET J'AC",
+     "J'AGIS POUR LES BESOINS DE MON ACTIVITÉ PROFESSIONNELLE ET J'ACCEPTE LES CONDITIONS GÉNÉRALES DE VENTE. Payer 79 € et rece",
+     "jouter — TVA non applicable, article 293 B du CGI. Document d'aide à la décision établi à partir des données publiques. Il",
+     "rtir des données publiques. Il ne remplace ni le certificat d'urbanisme délivré par la mairie, ni le conseil d'un notaire.",
+     "certificat d'urbanisme délivré par la mairie, ni le conseil d'un notaire."
+    ],
+    "espaceSecablePonct": [],
+    "ponctCollee": [],
+    "nombresSansSeparateur": [],
+    "euros": {
+     "sym": 2,
+     "eur": 0,
+     "mot": 0
+    },
+    "tirets": {
+     "court": 0,
+     "moyen": 0,
+     "long": 2
+    }
+   },
+   "champs": [
+    {
+     "tag": "input",
+     "type": "hidden",
+     "name": "idu",
+     "maxlength": null,
+     "inputmode": null,
+     "required": false
+    },
+    {
+     "tag": "input",
+     "type": "checkbox",
+     "name": "cgv",
+     "maxlength": null,
+     "inputmode": null,
+     "required": true
+    }
+   ],
+   "textLen": 757
+  }
+ ],
+ "probes": {
+  "doubleClicRecherche": {
+   "requetes": 5,
+   "detail": [
+    "http://localhost:6002/parcels/search?q=97401000AC0428",
+    "http://localhost:6002/parcels/97401000AC0428/geojson",
+    "http://localhost:6002/parcels/search?q=97401000AC0428",
+    "http://localhost:6002/parcels/97401000AC0428?source=q_v19",
+    "http://localhost:6002/parcels/97401000AC0428/exposition"
+   ]
+  },
+  "omnibox10k": {
+   "lenAccepte": 10000,
+   "maxlength": null
+  },
+  "champsSurface": [
+   {
+    "type": "number",
+    "inputmode": "numeric",
+    "ph": "min",
+    "refusTexte": true,
+    "valeurApresTexte": ""
+   },
+   {
+    "type": "number",
+    "inputmode": "numeric",
+    "ph": "max",
+    "refusTexte": true,
+    "valeurApresTexte": ""
+   }
+  ]
+ }
+}
