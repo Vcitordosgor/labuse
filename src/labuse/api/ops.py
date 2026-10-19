@@ -50,6 +50,10 @@ def _crons_du_registre() -> dict:
         trace, motif = _TRACES.get(nom, ("etat_json", None))
         out[nom] = {"trace": trace, "motif": motif,
                     "attendu_jours": _CADENCE_JOURS.get(job.cadence, 9),
+                    # CRON-PROD-1 — gel VOLONTAIRE (ex. ingest-dvf, Phase 8) : porté depuis le registre
+                    # pour que /healthz/crons le classe « gele » sans dégrader (jamais une fausse alerte
+                    # « jamais_vu » sur un cron qu'on a sciemment commenté).
+                    "gele": job.gel,
                     "note": f"{job.cadence} — {job.titre}"}
     return out
 
@@ -68,6 +72,11 @@ def healthz_crons(db: Session = Depends(get_db)) -> dict:
     out: dict[str, dict] = {}
     degrade = False
     for nom, c in CRONS.items():
+        if c.get("gele"):
+            # CRON-PROD-1 — gel volontaire (crontab commenté) : statut informatif, JAMAIS une alerte.
+            # Le monitoring VPS lit `statut` ≠ panne ; `ok` global n'est pas dégradé par un gel assumé.
+            out[nom] = {"statut": "gele", "motif_gel": c["gele"], "note": c["note"]}
+            continue
         if c["trace"] == "aucune":
             out[nom] = {"statut": "non_trace_db", "note": c["note"]}
             continue

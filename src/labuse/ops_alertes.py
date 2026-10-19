@@ -302,6 +302,8 @@ def _jobs_en_retard(db) -> list[dict]:
     now = datetime.now(timezone.utc)
     retards = []
     for nom, j in JOBS.items():
+        if j.gel:                          # CRON-PROD-1 — gel volontaire : ne jamais alerter « en retard »
+            continue
         le = succes.get(nom)
         if le is None:
             continue
