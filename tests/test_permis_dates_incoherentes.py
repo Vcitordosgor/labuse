@@ -28,7 +28,9 @@ def test_dossier_ecart_plus_d_un_mois_dit_modificatif_ou_transfere():
     transféré ». Toujours pas de « modifié, dernier dépôt le… » (pas de n° de modificatif au flux)."""
     permis = [{"type": "PC", "date_depot": "2018-10-15", "date_autorisation": "2017-08-25"}]  # ~14 mois
     out = _r_permis_liste(permis)
-    assert "déposé 2018-10-15, autorisé 2017-08-25" in out            # ordre des LABELS conservé
+    # CHASSE-DOCS-FIX-1 (E-13) — dates servies au format FR (jamais ISO) ; l'ordre des LABELS reste
+    # (déposé = date de dépôt, autorisé = date d'autorisation), jamais échangé même si dépôt > autorisation.
+    assert "déposé 15/10/2018, autorisé 25/08/2017" in out
     assert "Dépôt enregistré après l'autorisation — souvent un permis modificatif ou transféré" in out
     assert "dates incohérentes chez le producteur" not in out
 
@@ -37,7 +39,7 @@ def test_dossier_ecart_sous_un_mois_reste_incoherence():
     """DONNEES-7 — sous 1 mois d'écart, on ne présume rien : « dates incohérentes chez le producteur »."""
     permis = [{"type": "PC", "date_depot": "2017-08-25", "date_autorisation": "2017-08-10"}]  # 15 jours
     out = _r_permis_liste(permis)
-    assert "déposé 2017-08-25, autorisé 2017-08-10" in out
+    assert "déposé 25/08/2017, autorisé 10/08/2017" in out            # format FR (E-13), non échangé
     assert "dates incohérentes chez le producteur" in out
     assert "modificatif" not in out
 
@@ -45,13 +47,14 @@ def test_dossier_ecart_sous_un_mois_reste_incoherence():
 def test_dossier_permis_coherent_sans_mention():
     permis = [{"type": "PC", "date_depot": "2017-01-10", "date_autorisation": "2017-07-30"}]
     out = _r_permis_liste(permis)
-    assert "déposé 2017-01-10, autorisé 2017-07-30" in out
+    assert "déposé 10/01/2017, autorisé 30/07/2017" in out            # format FR (E-13)
     assert "incohérentes" not in out
 
 
 def test_dossier_liste_vide_ou_dates_manquantes_ne_casse_pas():
     assert _r_permis_liste([]) == ""
     assert _r_permis_liste(None) == ""
-    # une seule date : pas d'incohérence possible, pas de mention, pas d'échec
+    # une seule date : pas d'incohérence possible, pas de mention, pas d'échec.
+    # E-13 — Sitadel ne publie que l'ANNÉE de dépôt (jour fabriqué « -01-01 ») → « en 2020 », jamais ISO.
     out = _r_permis_liste([{"type": "DP", "date_depot": "2020-01-01"}])
-    assert "déposé 2020-01-01" in out and "incohérentes" not in out
+    assert "déposé en 2020" in out and "incohérentes" not in out
