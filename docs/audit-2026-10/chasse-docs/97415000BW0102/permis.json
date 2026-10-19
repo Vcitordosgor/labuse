@@ -1,0 +1,229 @@
+{
+ "_status": 200,
+ "data": {
+  "idu": "97415000BW0102",
+  "c100": 4,
+  "c200": 12,
+  "localises": 12,
+  "non_localises": 0,
+  "note": "Permis autorisés géolocalisés < 200 m (source du signal viabilisation M-VIA).",
+  "items": [
+   {
+    "permit_id": "97441523A0659",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2024-05-18",
+    "etat": "5",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 21,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.298140178,
+      -21.01753945
+     ]
+    }
+   },
+   {
+    "permit_id": "9744152600130",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2026-05-26",
+    "etat": "2",
+    "nb_lgt": "2",
+    "porteur": null,
+    "distance_m": 63,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.297477602,
+      -21.019002978
+     ]
+    }
+   },
+   {
+    "permit_id": "97441517A0146",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2017-07-05",
+    "etat": "5",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 72,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.297077625,
+      -21.018344197
+     ]
+    }
+   },
+   {
+    "permit_id": "97441521A0379",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2021-10-28",
+    "etat": "6",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 78,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.298850735,
+      -21.01946673
+     ]
+    }
+   },
+   {
+    "permit_id": "97441518O0002",
+    "nature": "PD",
+    "nature_libelle": "Permis de démolir",
+    "date": "2018-08-30",
+    "etat": "2",
+    "nb_lgt": null,
+    "porteur": null,
+    "distance_m": 132,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.299269696,
+      -21.019765273
+     ]
+    }
+   },
+   {
+    "permit_id": "97441522A0394",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2022-09-14",
+    "etat": "6",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 159,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.300018811,
+      -21.019258112
+     ]
+    }
+   },
+   {
+    "permit_id": "97441519A0642",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2020-03-04",
+    "etat": "2",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 159,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.300018811,
+      -21.019258112
+     ]
+    }
+   },
+   {
+    "permit_id": "97441521A0020",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2021-06-26",
+    "etat": "2",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 173,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.300233757,
+      -21.019021461
+     ]
+    }
+   },
+   {
+    "permit_id": "97441522O0011",
+    "nature": "PD",
+    "nature_libelle": "Permis de démolir",
+    "date": "2024-03-25",
+    "etat": "2",
+    "nb_lgt": null,
+    "porteur": null,
+    "distance_m": 180,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.299992624,
+      -21.01768375
+     ]
+    }
+   },
+   {
+    "permit_id": "97441521O0006",
+    "nature": "PD",
+    "nature_libelle": "Permis de démolir",
+    "date": "2022-01-24",
+    "etat": "2",
+    "nb_lgt": null,
+    "porteur": null,
+    "distance_m": 181,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.299630676,
+      -21.020067681
+     ]
+    }
+   },
+   {
+    "permit_id": "97441522A0755",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2023-09-18",
+    "etat": "6",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 190,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.295319792,
+      -21.017666644
+     ]
+    }
+   },
+   {
+    "permit_id": "97441521A0251",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2021-08-03",
+    "etat": "6",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 193,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.295786764,
+      -21.018726701
+     ]
+    }
+   }
+  ]
+ }
+}

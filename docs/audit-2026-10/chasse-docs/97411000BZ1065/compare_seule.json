@@ -1,0 +1,51 @@
+{
+ "_status": 200,
+ "data": {
+  "count": 1,
+  "parcels": [
+   {
+    "idu": "97411000BZ1065",
+    "commune": "Saint-Denis",
+    "surface_m2": 1567,
+    "surface_incertaine": false,
+    "tier_v2": "sans_signal",
+    "rang_v2": 276268,
+    "etage0": false,
+    "status": "sans_signal",
+    "label": "Sans signal",
+    "fraction": null,
+    "raison": "zone urbaine",
+    "zone": "Uh",
+    "constructible": true,
+    "zone_constructible": true,
+    "cause": null,
+    "cause_libelle": null,
+    "sdp_max_m2": 212,
+    "taux_emprise_pct": 40,
+    "sdp_residuelle_m2": 35,
+    "sous_densite": false,
+    "charge_fonciere_m2": -20,
+    "n_contraintes": 7,
+    "contraintes": [
+     "SDP résiduelle 35 m² — rien à construire.",
+     "Zone bleue PPR inondation et mouvement de terrain — constructible SOUS PRESCRIPTIONS (règlement DEAL).",
+     "Droit de préemption urbain — la commune peut préempter à la vente (DIA obligatoire, ~2 mois ; pèse sur la transaction, pas sur la constructibilité).",
+     "Prescription PLU : Périmètre zone souple (~100% de la parcelle) — à vérifier au règlement."
+    ],
+    "contrainte_majeure": "SDP résiduelle 35 m² — rien à construire.",
+    "proprietaire": "particulier",
+    "bati_existant_pct": 11,
+    "gabarit_niveaux_max": 1,
+    "acces_reseaux": "Viabilisation confirmée par les faits",
+    "assainissement": "Assainissement non collectif",
+    "prix_secteur_bati_m2": 3494,
+    "zone_parts": null,
+    "terrain_zone_eur_m2": 482,
+    "emprise_ces_pct": 30.0,
+    "emprise_ces_source": "Art. Uh.9 · p.73 (PLU, calibrage validé)",
+    "bande": "D",
+    "signal_niveau": "faible"
+   }
+  ]
+ }
+}

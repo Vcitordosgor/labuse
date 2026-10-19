@@ -441,9 +441,11 @@ def build_gabarit_input(session: Session, idu: str) -> Optional[BuildResult]:
                                      sub_geom_wkt=mz_sub_geom_wkt,
                                      extra_neighbors_wkt=mz_extra_neighbors or None)
         mill = _bdtopo_millesime(session)
+        # CHASSE-DOCS-FIX-1 (E-17) — le millésime (ex. « BD TOPO® V3 (IGN) … ») est DÉJÀ porté par
+        # versionDate ; ne pas le recoller dans provider, sinon « …+ BD TOPO BD TOPO® V3 … » (doublon).
         bdtopo_src = RegulatorySource(
             document="BD TOPO® — troncon_de_route (voirie) + cadastre",
-            versionDate=mill, provider=f"LABUSE — adjacence cadastre + BD TOPO {mill}")
+            versionDate=mill, provider="LABUSE — adjacence cadastre + BD TOPO")
         # arête sur domaine public non cadastré, classée voie par la citation « voies et emprises publiques »
         empub_src = RegulatorySource(
             document=f"Domaine public non cadastré — PLU {commune} {work_zone} {voie_article}".strip(),

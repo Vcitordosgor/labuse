@@ -1,0 +1,50 @@
+{
+ "_status": 200,
+ "data": {
+  "count": 1,
+  "parcels": [
+   {
+    "idu": "97416000CZ0678",
+    "commune": "Saint-Pierre",
+    "surface_m2": 3279,
+    "surface_incertaine": false,
+    "tier_v2": "ecartee",
+    "rang_v2": 348151,
+    "etage0": true,
+    "status": "ecartee",
+    "label": "Écartée",
+    "fraction": null,
+    "raison": null,
+    "zone": "A",
+    "constructible": false,
+    "zone_constructible": false,
+    "cause": "zone_non_constructible:A",
+    "cause_libelle": "Non retenue — zone A inconstructible au PLU.",
+    "sdp_max_m2": null,
+    "taux_emprise_pct": null,
+    "sdp_residuelle_m2": null,
+    "sous_densite": null,
+    "charge_fonciere_m2": null,
+    "n_contraintes": 11,
+    "contraintes": [
+     "Bassin versant (code hydro 10B0000002150455476) — 100 % de la parcelle : contexte hydrographique (ruissellement amont/aval, submersion). L'urbanisation en amont pèse sur l'aval — à considérer avec les aléas et scénarios d'inondation.",
+     "Sol classé naturel — artificialisation à justifier (occupation du sol BD CARTO V5, grain grossier, précision limitée à la parcelle).",
+     "SDP résiduelle 0 m² — rien à construire.",
+     "PPR zone rouge sur 39 % de la surface — vigilance forte ; constructibilité à vérifier au règlement (pas d'exclusion automatique)."
+    ],
+    "contrainte_majeure": "Zone A PLU — inconstructible (recouvrement 100 %).",
+    "proprietaire": "particulier",
+    "bati_existant_pct": null,
+    "gabarit_niveaux_max": null,
+    "acces_reseaux": "Viabilisation probable",
+    "assainissement": "50 % des logements du secteur ne sont pas raccordés au réseau collectif",
+    "prix_secteur_bati_m2": 3402,
+    "zone_parts": null,
+    "emprise_ces_pct": null,
+    "emprise_ces_source": null,
+    "bande": "0",
+    "signal_niveau": "faible"
+   }
+  ]
+ }
+}

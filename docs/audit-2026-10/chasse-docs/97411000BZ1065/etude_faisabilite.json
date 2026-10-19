@@ -1,0 +1,158 @@
+{
+ "_status": 200,
+ "data": {
+  "moteur": {
+   "livrable": "IMPLANTATION-2",
+   "version_conventions": "implantation-conventions-1",
+   "etiquette": "Estimé",
+   "crs_dessin": "EPSG:2975",
+   "crs_carte": "EPSG:4326"
+  },
+  "entrees": {
+   "idus": [
+    "97411000BZ1065"
+   ],
+   "commune": "Saint-Denis",
+   "insee": "97411",
+   "zone": "Uh",
+   "type_projet": "collectif",
+   "objectif": "equilibre",
+   "programme_mode": "propose",
+   "stationnement": "aerien",
+   "terrain": "libere"
+  },
+  "regles": {
+   "zone": "Uh",
+   "insee": "97411",
+   "lignes": [
+    {
+     "nom": "recul sur voie",
+     "valeur": 3.0,
+     "unite": "m",
+     "validee": true,
+     "article": "Article Uh.6",
+     "page_pdf": 72,
+     "citation": "En bordure des voies d’une emprise inférieure à 3,50 m, les constructions seront implantées à 3 m minimum de l'alignement."
+    },
+    {
+     "nom": "recul sur limites séparatives",
+     "valeur": 4.0,
+     "unite": "m",
+     "validee": true,
+     "article": "Article Uh.7",
+     "page_pdf": 73,
+     "citation": "supérieure ou égale à la moitié de la différence d'altitude h entre ces deux points, avec un minimum de 4m : 4m ≤ L ≥ h/2."
+    },
+    {
+     "nom": "emprise au sol (CES)",
+     "valeur": 30.0,
+     "unite": "%",
+     "validee": true,
+     "article": "Article Uh.9",
+     "page_pdf": 73,
+     "citation": "L’emprise au sol des constructions est limitée à 30% de la superficie de l’unité foncière."
+    },
+    {
+     "nom": "hauteur à l'égout",
+     "valeur": 4.5,
+     "unite": "m",
+     "validee": true,
+     "article": "Article Uh.10",
+     "page_pdf": 73,
+     "citation": "4,5 m pour la hauteur d’égout he"
+    },
+    {
+     "nom": "hauteur au faîtage",
+     "valeur": 7.0,
+     "unite": "m",
+     "validee": true,
+     "article": "Article Uh.10",
+     "page_pdf": 73,
+     "citation": "7 m pour la hauteur maximale H"
+    },
+    {
+     "nom": "pleine terre (perméabilité)",
+     "valeur": null,
+     "unite": "%",
+     "validee": false,
+     "article": null,
+     "page_pdf": null,
+     "citation": null
+    },
+    {
+     "nom": "mixité sociale",
+     "valeur": 15.0,
+     "unite": "%",
+     "validee": true,
+     "article": "Article Uh.2",
+     "page_pdf": 71,
+     "citation": "les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve qu’elles comportent un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité sociale.",
+     "seuil_m2": null
+    },
+    {
+     "nom": "stationnement (barème)",
+     "valeur": null,
+     "unite": null,
+     "validee": true,
+     "article": "XVII. STATIONNEMENT",
+     "page_pdf": 19,
+     "citation": "1 place par logement d'une surface plancher < 100 m2"
+    }
+   ]
+  },
+  "terrain": {
+   "contenance_totale_m2": 1567.0,
+   "aire_dessin_m2": 1625.0,
+   "zone_implantation_m2": 908.5,
+   "has_voie": true,
+   "note_limites": null,
+   "contraintes": {
+    "ppr": 1,
+    "emplacement_reserve": 0,
+    "ebc": 0,
+    "sup": 5,
+    "servitude": 0,
+    "ppr_rouge": 0,
+    "ppr_bleue": 1
+   },
+   "ppr_rouge_m2": 0.0,
+   "ppr_bleue_m2": 1625.0,
+   "pente_lidar": {
+    "disponible": true,
+    "source": "RGE ALTI 5 m (IGN)",
+    "denivele_m": 7.2,
+    "pente_moyenne_pct": 10.0,
+    "pente_max_pct": 32.3
+   },
+   "parcelles": [
+    {
+     "idu": "97411000BZ1065",
+     "numero": "1065",
+     "contenance_m2": 1567.0,
+     "aire_dessin_m2": 1625.0
+    }
+   ]
+  },
+  "hypotheses": {
+   "profondeur_m": 13.0,
+   "coef_plancher_habitable": 0.8,
+   "surfaces": {
+    "T2": 50.0,
+    "T3": 65.0,
+    "T4": 80.0
+   },
+   "largeur_coursive_m": 1.4,
+   "hauteur_etage_m": 3.0,
+   "place_m": [
+    2.5,
+    5.0
+   ],
+   "allee_largeur_m": 5.0,
+   "etiquette": "Estimé"
+  },
+  "programme_saisi": null,
+  "statut_global": "simulation impossible",
+  "message": "simulation impossible : la hauteur réglementaire (4 m) n'autorise pas un niveau de logements habitable.",
+  "scenarios": []
+ }
+}

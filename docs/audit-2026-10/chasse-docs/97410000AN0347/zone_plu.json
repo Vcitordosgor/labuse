@@ -1,0 +1,163 @@
+{
+ "_status": 200,
+ "data": {
+  "mode": "pied",
+  "minutes": 15,
+  "hors_trafic": true,
+  "renvoi": "Les ventes (DVF), les transports et les réseaux restent dans leurs tiroirs Marché et Réseaux — rien n'est dupliqué.",
+  "note": "INSEE Filosofi 2021 (carreaux 200 m) · BPE 2025 · isochrones IGN — temps hors trafic.",
+  "disponible": true,
+  "statut": "ign",
+  "geom": {
+   "coordinates": [
+    [
+     [
+      55.718485,
+      -21.031639
+     ],
+     [
+      55.71557,
+      -21.031656
+     ],
+     [
+      55.71502,
+      -21.032106
+     ],
+     [
+      55.71212,
+      -21.032571
+     ],
+     [
+      55.711935,
+      -21.033571
+     ],
+     [
+      55.712622,
+      -21.034708
+     ],
+     [
+      55.712302,
+      -21.035571
+     ],
+     [
+      55.713485,
+      -21.039289
+     ],
+     [
+      55.714689,
+      -21.039367
+     ],
+     [
+      55.715485,
+      -21.040638
+     ],
+     [
+      55.720485,
+      -21.040089
+     ],
+     [
+      55.723485,
+      -21.041121
+     ],
+     [
+      55.724179,
+      -21.039571
+     ],
+     [
+      55.723336,
+      -21.03872
+     ],
+     [
+      55.723148,
+      -21.037908
+     ],
+     [
+      55.722388,
+      -21.037668
+     ],
+     [
+      55.722269,
+      -21.035787
+     ],
+     [
+      55.7214,
+      -21.035571
+     ],
+     [
+      55.721321,
+      -21.033735
+     ],
+     [
+      55.720436,
+      -21.03362
+     ],
+     [
+      55.720348,
+      -21.032708
+     ],
+     [
+      55.719441,
+      -21.032615
+     ],
+     [
+      55.71935,
+      -21.031706
+     ],
+     [
+      55.718485,
+      -21.031639
+     ]
+    ]
+   ],
+   "type": "Polygon"
+  },
+  "population": {
+   "inhabitee": false,
+   "iris": {
+    "n_iris": 3,
+    "vacance_pct": 12.4,
+    "part_bati_avant_1990_pct": 43.5,
+    "source": "INSEE RP2022 par IRIS (quartiers intersectés)"
+   },
+   "habitants": 3720,
+   "menages": 1455,
+   "revenu_median_eur": null,
+   "revenu_estime": true,
+   "revenu_impute_n": 2,
+   "revenu_carreaux_n": 20,
+   "revenu_majorite_imputee": false,
+   "pct_moins_25": 41,
+   "taux_pauvrete_pct": 55,
+   "n_carreaux": 20,
+   "millesime": "Filosofi 2021 (INSEE, carreaux 200 m)",
+   "revenu_source": "carreau Filosofi au centroïde (source unique de la fiche)"
+  },
+  "equipements": [
+   {
+    "domaine": "Sports, loisirs et culture",
+    "nom": "STRUCTURE ARTIFICIELLE D ESCALADE",
+    "temps_min": 2
+   },
+   {
+    "domaine": "Commerces",
+    "nom": "CHARCUTERIE DES EAUX VIVES CHEZ CLO",
+    "temps_min": 6
+   },
+   {
+    "domaine": "Santé et action sociale",
+    "nom": "SELARL DE CHIRURGIENS DENTISTES DR ALBUFFY",
+    "temps_min": 6
+   },
+   {
+    "domaine": "Services aux particuliers",
+    "nom": "WEIN LOCATION EST",
+    "temps_min": 6
+   },
+   {
+    "domaine": "Enseignement",
+    "nom": "INSTITUT REGIONAL DU TRAVAIL SOCIAL DE LA REUNION",
+    "temps_min": 15
+   }
+  ]
+ }
+}

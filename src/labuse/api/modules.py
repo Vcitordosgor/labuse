@@ -13,6 +13,7 @@ Score division = 30·min(lot/500,1) + 25·(1−emprise) + 20·min(r/12,1) + 15·
 """
 from __future__ import annotations
 
+import concurrent.futures
 import csv
 import io
 import logging
@@ -1837,7 +1838,16 @@ def faisabilite_sens1(idu: str, db: Session = Depends(get_db)) -> dict:
     fz = parcel_faisabilite(db, row["id"])
     if fz:
         _ctx, f = fz
-        out["capacite"] = {"zone": f.zone, "verdict": f.verdict, "calibree": f.calibree,
+        # CHASSE-DOCS-FIX-1 (E-09) — sur parcelle à cheval, `f.zone` est la zone CONSTRUCTIBLE (celle
+        # où la capacité est calculée, ≠ dominante). On la nomme AVEC sa part (« Ud sur 46 % ») pour
+        # ne pas prétendre que toute la parcelle est en Ud (le libellé disait « Ud » nu, la fiche « N »).
+        _zone_lbl = f.zone
+        if _ctx.a_cheval and _ctx.zone_parts:
+            _pct = next((p.get("pct") for p in _ctx.zone_parts
+                         if (p.get("zone") == f.zone and p.get("pct") is not None)), None)
+            if _pct is not None:
+                _zone_lbl = f"{f.zone} sur {round(_pct)} %"
+        out["capacite"] = {"zone": _zone_lbl, "verdict": f.verdict, "calibree": f.calibree,
                            # ZONE-1 : zone = DOMINANTE PAR SURFACE (la même que l'écran) ;
                            # sur parcelle à cheval, drapeau + parts servis avec la capacité.
                            "a_cheval": _ctx.a_cheval, "zone_parts": _ctx.zone_parts,
@@ -1985,21 +1995,65 @@ class EtudeIn(BaseModel):
     hypotheses: dict | None = None
 
 
+# CHASSE-DOCS-FIX-1 (E-04) — borne DURE de 30 s sur le moteur d'implantation : au-delà, le client
+# reçoit un message honnête (jamais un HTTP 000 / timeout silencieux). Le moteur n'est PAS optimisé ;
+# il tourne dans un thread avec SA PROPRE session (SQLAlchemy n'est pas thread-safe), et on ABANDONNE
+# l'attente à 30 s (le thread finit en arrière-plan, son résultat est ignoré).
+_ETUDE_TIMEOUT_S = 30
+_ETUDE_TROP_LOURDE = {
+    "erreur": "etude_trop_lourde",
+    "message": "Étude trop lourde pour cette parcelle, non générée. Essayez une assiette plus simple "
+               "(moins de parcelles) ou contactez-nous.",
+}
+
+
+def _etudier_borne(data: dict) -> dict:
+    from ..db import session_scope
+    from ..implantation.service import etudier_payload
+
+    def _run():
+        with session_scope() as s:
+            return etudier_payload(s, data)
+
+    ex = concurrent.futures.ThreadPoolExecutor(max_workers=1, thread_name_prefix="etude")
+    fut = ex.submit(_run)
+    try:
+        return fut.result(timeout=_ETUDE_TIMEOUT_S)
+    except concurrent.futures.TimeoutError:
+        raise HTTPException(503, detail=_ETUDE_TROP_LOURDE)
+    finally:
+        ex.shutdown(wait=False)   # ne JAMAIS bloquer à la sortie (sinon la borne ne sert à rien)
+
+
+def _attach_au_ouverture(db: Session, payload: dict, idus) -> None:
+    """CHASSE-DOCS-FIX-1 (vérif #2) — l'Étude de faisabilité porte, comme la fiche et Comparer, le caveat
+    d'ouverture d'une zone AU (« ouverture sous conditions ») : jamais une capacité servie nue sur une AU
+    conditionnée. Même source que la fiche §4 (`_au_ouverture_block` → table `parcel_au_statut`)."""
+    if not isinstance(payload, dict):
+        return
+    from .app import _au_ouverture_block
+    for idu in (idus or []):
+        au = _au_ouverture_block(db, idu)
+        if au:                       # première parcelle AU marquée de l'assiette
+            payload["au_ouverture"] = au
+            return
+
+
 @router.post("/etude")
 def etude_implantation(body: EtudeIn, db: Session = Depends(get_db)) -> dict:
     """IMPLANTATION-2 — UN SEUL appel sert l'écran « Étude de faisabilité ». UN SEUL moteur
     (`labuse.implantation`, déterministe, sans IA) : il dessine jusqu'à 3 scénarios distincts et en
     TIRE capacité, contrôles 4 états et statut ; le payload porte la géométrie en GeoJSON (WGS84)
     pour le plan masse de la carte, les hypothèses modifiables et les versions moteur + règles.
-    ValueError → 400 (entrée invalide), jamais un faux chiffre."""
-    from ..implantation.service import etudier_payload
-
+    ValueError → 400 (entrée invalide), jamais un faux chiffre. Au-delà de 30 s → 503 honnête (E-04)."""
     for idu in (body.idus or []):
         _check_idu(idu)
     try:
-        return etudier_payload(db, body.model_dump())
+        out = _etudier_borne(body.model_dump())
     except ValueError as exc:
         raise HTTPException(400, str(exc))
+    _attach_au_ouverture(db, out, body.idus)   # vérif #2 — caveat AU porté par l'Étude, comme Comparer
+    return out
 
 
 class EtudePdfIn(EtudeIn):
@@ -2007,6 +2061,9 @@ class EtudePdfIn(EtudeIn):
     # AFFICHÉ (scenario_ref) que la tuile « Étude de faisabilité (PDF) » transmet. La 9e carte Docs
     # n'en envoie pas (configuration par défaut → scénario retenu = 1er exploitable).
     scenario_ref: str | None = None
+    # CHASSE-DOCS-FIX-1 (Lot 5.1) — empreinte de la config, calculée par le front, STOCKÉE avec le
+    # document (serveur) pour que « Sources modifiées depuis » marche d'un autre poste.
+    empreinte: str | None = None
 
 
 def _archiver_etude(db: Session, request: Request, body: dict, payload: dict,
@@ -2026,6 +2083,7 @@ def _archiver_etude(db: Session, request: Request, body: dict, payload: dict,
         "moteur": payload.get("moteur"),
         "regles": {"zone": payload.get("regles", {}).get("zone"),
                    "insee": payload.get("regles", {}).get("insee")},
+        "_empreinte": body.get("empreinte"),   # Lot 5.1 — clé uniforme lue par la bibliothèque
     }
     try:
         db.execute(text(
@@ -2050,16 +2108,17 @@ def etude_pdf(body: EtudePdfIn, request: Request, db: Session = Depends(get_db))
     from ..exports import etude_faisabilite as ef
     from ..tz import today_reunion   # FIX-ORFEVRE-1 pt 3 (D-13) — « généré le » au jour Réunion
     from ..exports.rendu import render_pdf
-    from ..implantation.service import etudier_payload
 
     for idu in (body.idus or []):
         _check_idu(idu)
     data = body.model_dump()
     scenario_ref = data.pop("scenario_ref", None)
+    empreinte = data.pop("empreinte", None)   # Lot 5.1 — hors moteur, rangée dans la recette archivée
     try:
-        payload = etudier_payload(db, data)
+        payload = _etudier_borne(data)   # E-04 — borne 30 s (503 honnête, jamais un timeout silencieux)
     except ValueError as exc:
         raise HTTPException(400, str(exc))
+    _attach_au_ouverture(db, payload, body.idus)   # vérif #2 — caveat AU dans le PDF comme à l'écran
     genere_le = today_reunion().strftime("%d/%m/%Y")
     try:
         rendu = ef.rendu_etude(payload, genere_le=genere_le, scenario_ref=scenario_ref)
@@ -2072,7 +2131,7 @@ def etude_pdf(body: EtudePdfIn, request: Request, db: Session = Depends(get_db))
         logging.getLogger("labuse").exception("étude de faisabilité : échec du rendu PDF")
         raise HTTPException(500, detail={"erreur": "erreur_technique",
                             "message": "Le document n'a pas pu être rendu (erreur technique)."})
-    _archiver_etude(db, request, {**data, "scenario_ref": scenario_ref}, payload,
+    _archiver_etude(db, request, {**data, "scenario_ref": scenario_ref, "empreinte": empreinte}, payload,
                     rendu["numero"], rendu["retenu_ref"])
     nom = f"Étude de faisabilité — {rendu['numero']}.pdf"
     dispo = f'inline; filename="{rendu["numero"]}.pdf"; filename*=UTF-8\'\'{quote(nom)}'

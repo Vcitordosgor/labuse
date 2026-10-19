@@ -1,0 +1,62 @@
+{
+ "_status": 200,
+ "data": {
+  "idu": "97416000DY0106",
+  "commune": "Saint-Pierre",
+  "lon": 55.48279246963363,
+  "lat": -21.33209398302177,
+  "productible": 1429,
+  "prod_mensuel": [
+   128,
+   115,
+   122,
+   110,
+   108,
+   101,
+   106,
+   119,
+   128,
+   131,
+   123,
+   135
+  ],
+  "mois_optimal": 12,
+  "azimut": 17,
+  "azimut_confiance": "haute",
+  "pente": 20.8,
+  "toit_m2": 811,
+  "piscine": false,
+  "piscine_m2": null,
+  "abf": true,
+  "ombrage_topo": false,
+  "ombrage_vegetal": false,
+  "proba_occ": 50,
+  "tier_v2": "ecartee",
+  "etage0": true,
+  "enr_sol_exclu_zone": null,
+  "ok": true,
+  "classement": "Écartée",
+  "ombrage": false,
+  "enr_au_sol_exclu": false,
+  "millesime": "PVGIS v5_3 · SARAH3 · relevé 2026-08-23",
+  "kwc_par_m2": 0.2,
+  "kwc": 162.2,
+  "prod_annuel": 231784,
+  "inclinaison_deg": 15,
+  "toiture": {
+   "verdict": "double_pente",
+   "libelle": "double pente",
+   "libelle_court": "double pente",
+   "pente_mediane_deg": 19.7,
+   "pans_orientation_deg": [
+    292,
+    112
+   ],
+   "part_pentue": 0.95,
+   "confiance": 0.975,
+   "seuil": 0.7,
+   "statut": "Dérivé",
+   "methode": "Nature du toit lue sur le LiDAR HD IGN (MNH 50 cm) quand les pans sont nets — confiance ≥ 0,70, calibrée à l'œil sur 50 bâtiments contre l'ortho (0 faux au seuil, 36 % des toits classés) ; « non déterminée » sinon. À vérifier sur la photo aérienne."
+  }
+ }
+}

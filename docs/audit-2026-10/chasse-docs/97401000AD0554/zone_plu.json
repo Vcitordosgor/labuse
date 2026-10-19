@@ -1,0 +1,183 @@
+{
+ "_status": 200,
+ "data": {
+  "mode": "pied",
+  "minutes": 15,
+  "hors_trafic": true,
+  "renvoi": "Les ventes (DVF), les transports et les réseaux restent dans leurs tiroirs Marché et Réseaux — rien n'est dupliqué.",
+  "note": "INSEE Filosofi 2021 (carreaux 200 m) · BPE 2025 · isochrones IGN — temps hors trafic.",
+  "disponible": true,
+  "statut": "ign",
+  "geom": {
+   "coordinates": [
+    [
+     [
+      55.356357,
+      -21.204821
+     ],
+     [
+      55.354905,
+      -21.204625
+     ],
+     [
+      55.352592,
+      -21.205312
+     ],
+     [
+      55.352441,
+      -21.207161
+     ],
+     [
+      55.350357,
+      -21.207318
+     ],
+     [
+      55.349598,
+      -21.208077
+     ],
+     [
+      55.349765,
+      -21.210077
+     ],
+     [
+      55.349223,
+      -21.210943
+     ],
+     [
+      55.349357,
+      -21.211726
+     ],
+     [
+      55.350868,
+      -21.213566
+     ],
+     [
+      55.353357,
+      -21.214929
+     ],
+     [
+      55.354681,
+      -21.214401
+     ],
+     [
+      55.355357,
+      -21.212947
+     ],
+     [
+      55.356357,
+      -21.214054
+     ],
+     [
+      55.35781,
+      -21.21353
+     ],
+     [
+      55.358357,
+      -21.2129
+     ],
+     [
+      55.362436,
+      -21.213077
+     ],
+     [
+      55.362647,
+      -21.212077
+     ],
+     [
+      55.362276,
+      -21.211077
+     ],
+     [
+      55.361237,
+      -21.210197
+     ],
+     [
+      55.361021,
+      -21.208413
+     ],
+     [
+      55.360228,
+      -21.208077
+     ],
+     [
+      55.362438,
+      -21.207158
+     ],
+     [
+      55.361822,
+      -21.205612
+     ],
+     [
+      55.361357,
+      -21.205314
+     ],
+     [
+      55.360543,
+      -21.206263
+     ],
+     [
+      55.357357,
+      -21.206178
+     ],
+     [
+      55.357068,
+      -21.205077
+     ],
+     [
+      55.356357,
+      -21.204821
+     ]
+    ]
+   ],
+   "type": "Polygon"
+  },
+  "population": {
+   "inhabitee": false,
+   "iris": {
+    "n_iris": 2,
+    "vacance_pct": 14.0,
+    "part_bati_avant_1990_pct": 33.0,
+    "source": "INSEE RP2022 par IRIS (quartiers intersectés)"
+   },
+   "habitants": 1308,
+   "menages": 474,
+   "revenu_median_eur": 21128,
+   "revenu_estime": true,
+   "revenu_impute_n": 8,
+   "revenu_carreaux_n": 25,
+   "revenu_majorite_imputee": false,
+   "pct_moins_25": 35,
+   "taux_pauvrete_pct": 39,
+   "n_carreaux": 25,
+   "millesime": "Filosofi 2021 (INSEE, carreaux 200 m)",
+   "revenu_source": "carreau Filosofi au centroïde (source unique de la fiche)"
+  },
+  "equipements": [
+   {
+    "domaine": "Commerces",
+    "nom": "SVLH PHARMA",
+    "temps_min": 4
+   },
+   {
+    "domaine": "Santé et action sociale",
+    "nom": "CABINET DU DR ERWAN BOTHEREL",
+    "temps_min": 4
+   },
+   {
+    "domaine": "Services aux particuliers",
+    "nom": "DEVEAU ERIC",
+    "temps_min": 4
+   },
+   {
+    "domaine": "Sports, loisirs et culture",
+    "nom": "PLATEAU SPORTIF",
+    "temps_min": 4
+   },
+   {
+    "domaine": "Enseignement",
+    "nom": "ECOLE PRIMAIRE PUBLIQUE MARCEL LE GUEN",
+    "temps_min": 6
+   }
+  ]
+ }
+}

@@ -1,0 +1,895 @@
+{
+ "_status": 200,
+ "data": {
+  "idu": "97415000EV0324",
+  "c100": 28,
+  "c200": 49,
+  "localises": 49,
+  "non_localises": 0,
+  "note": "Permis autorisés géolocalisés < 200 m (source du signal viabilisation M-VIA).",
+  "items": [
+   {
+    "permit_id": "97441516G0450",
+    "nature": "DP",
+    "nature_libelle": "Déclaration préalable",
+    "date": "2016-12-28",
+    "etat": "2",
+    "nb_lgt": null,
+    "porteur": "LE WESTY",
+    "distance_m": 0,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.236319178,
+      -21.091247031
+     ]
+    }
+   },
+   {
+    "permit_id": "97441519A0177",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2020-02-06",
+    "etat": "2",
+    "nb_lgt": null,
+    "porteur": "SCE DEPARTEMENTAL INCENDIE ET SECOURS",
+    "distance_m": 0,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.236319178,
+      -21.091247031
+     ]
+    }
+   },
+   {
+    "permit_id": "97441523A0399",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2023-12-14",
+    "etat": "2",
+    "nb_lgt": null,
+    "porteur": "COMMUNE DE SAINT PAUL",
+    "distance_m": 0,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.236319178,
+      -21.091247031
+     ]
+    }
+   },
+   {
+    "permit_id": "97441524A0560",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2025-04-29",
+    "etat": "2",
+    "nb_lgt": null,
+    "porteur": "SCE DEPARTEMENTAL INCENDIE ET SECOURS",
+    "distance_m": 0,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.236319178,
+      -21.091247031
+     ]
+    }
+   },
+   {
+    "permit_id": "97441522D0007",
+    "nature": "PA",
+    "nature_libelle": "Permis d'aménager",
+    "date": "2022-08-03",
+    "etat": "5",
+    "nb_lgt": null,
+    "porteur": "COMMUNE DE SAINT PAUL",
+    "distance_m": 0,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.236319178,
+      -21.091247031
+     ]
+    }
+   },
+   {
+    "permit_id": "9744151400014",
+    "nature": "DP",
+    "nature_libelle": "Déclaration préalable",
+    "date": "2014-03-18",
+    "etat": "2",
+    "nb_lgt": null,
+    "porteur": "CLAIRE JOIE",
+    "distance_m": 0,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.236319178,
+      -21.091247031
+     ]
+    }
+   },
+   {
+    "permit_id": "97441522G0247",
+    "nature": "DP",
+    "nature_libelle": "Déclaration préalable",
+    "date": "2022-08-02",
+    "etat": "2",
+    "nb_lgt": null,
+    "porteur": "LE SANTA CRUZ",
+    "distance_m": 0,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.236319178,
+      -21.091247031
+     ]
+    }
+   },
+   {
+    "permit_id": "97441519A0436",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2019-11-06",
+    "etat": "6",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 37,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.238495381,
+      -21.09135435
+     ]
+    }
+   },
+   {
+    "permit_id": "97441520A0133",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2020-07-29",
+    "etat": "6",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 40,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.23841153,
+      -21.091185537
+     ]
+    }
+   },
+   {
+    "permit_id": "97441519A0447",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2019-10-24",
+    "etat": "6",
+    "nb_lgt": "1",
+    "porteur": "MIHUMA",
+    "distance_m": 51,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.238332476,
+      -21.091014442
+     ]
+    }
+   },
+   {
+    "permit_id": "97441519A0610",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2019-12-27",
+    "etat": "6",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 52,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.238635236,
+      -21.091582619
+     ]
+    }
+   },
+   {
+    "permit_id": "97441521A0154",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2021-06-08",
+    "etat": "6",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 64,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.238247918,
+      -21.090834842
+     ]
+    }
+   },
+   {
+    "permit_id": "97441520A0203",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2020-08-27",
+    "etat": "6",
+    "nb_lgt": "1",
+    "porteur": "SCI RESERPHARM",
+    "distance_m": 66,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.238787296,
+      -21.091454464
+     ]
+    }
+   },
+   {
+    "permit_id": "97441516A0279",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2017-01-19",
+    "etat": "5",
+    "nb_lgt": null,
+    "porteur": "OASIS LAGOON",
+    "distance_m": 68,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.235881832,
+      -21.089567517
+     ]
+    }
+   },
+   {
+    "permit_id": "97441519A0608",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2020-02-05",
+    "etat": "6",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 69,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.238605898,
+      -21.090993077
+     ]
+    }
+   },
+   {
+    "permit_id": "97441519A0587",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2020-03-04",
+    "etat": "5",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 76,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.238497774,
+      -21.090844656
+     ]
+    }
+   },
+   {
+    "permit_id": "97441519A0463",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2019-11-27",
+    "etat": "5",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 78,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.23888894,
+      -21.091306929
+     ]
+    }
+   },
+   {
+    "permit_id": "97441519A0370",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2019-11-14",
+    "etat": "6",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 85,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.238120546,
+      -21.090556503
+     ]
+    }
+   },
+   {
+    "permit_id": "97441519A0536",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2019-10-30",
+    "etat": "6",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 85,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.238477585,
+      -21.090735375
+     ]
+    }
+   },
+   {
+    "permit_id": "97441519A0458",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2019-12-04",
+    "etat": "6",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 86,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.238691711,
+      -21.090854183
+     ]
+    }
+   },
+   {
+    "permit_id": "97441518A0646",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2019-03-20",
+    "etat": "6",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 95,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.234360303,
+      -21.09121505
+     ]
+    }
+   },
+   {
+    "permit_id": "97441513A0395",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2013-11-26",
+    "etat": "5",
+    "nb_lgt": null,
+    "porteur": "CBO TERRITORIA",
+    "distance_m": 96,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.234079835,
+      -21.090437559
+     ]
+    }
+   },
+   {
+    "permit_id": "97441516A0640",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2017-02-02",
+    "etat": "2",
+    "nb_lgt": "1",
+    "porteur": "SCI SINAL",
+    "distance_m": 97,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.234118713,
+      -21.090180719
+     ]
+    }
+   },
+   {
+    "permit_id": "97441519A0402",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2019-10-09",
+    "etat": "6",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 97,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.238703792,
+      -21.090741648
+     ]
+    }
+   },
+   {
+    "permit_id": "97441520A0537",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2021-04-22",
+    "etat": "2",
+    "nb_lgt": "1",
+    "porteur": "SCI SINAL",
+    "distance_m": 97,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.234118713,
+      -21.090180719
+     ]
+    }
+   },
+   {
+    "permit_id": "9744152500167",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2025-12-02",
+    "etat": "2",
+    "nb_lgt": null,
+    "porteur": "EDEN LODGE",
+    "distance_m": 97,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.234614333,
+      -21.091836452
+     ]
+    }
+   },
+   {
+    "permit_id": "97441519A0730",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2020-03-13",
+    "etat": "6",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 98,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.238918819,
+      -21.090930462
+     ]
+    }
+   },
+   {
+    "permit_id": "97441519A0354",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2019-11-06",
+    "etat": "6",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 99,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.238301546,
+      -21.090497337
+     ]
+    }
+   },
+   {
+    "permit_id": "9744151400243",
+    "nature": "DP",
+    "nature_libelle": "Déclaration préalable",
+    "date": "2014-08-04",
+    "etat": "2",
+    "nb_lgt": null,
+    "porteur": null,
+    "distance_m": 101,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.236531649,
+      -21.093207004
+     ]
+    }
+   },
+   {
+    "permit_id": "9744151400441",
+    "nature": "DP",
+    "nature_libelle": "Déclaration préalable",
+    "date": "2014-12-05",
+    "etat": "2",
+    "nb_lgt": null,
+    "porteur": null,
+    "distance_m": 101,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.236531649,
+      -21.093207004
+     ]
+    }
+   },
+   {
+    "permit_id": "97441516A0205",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2016-07-27",
+    "etat": "6",
+    "nb_lgt": "3",
+    "porteur": null,
+    "distance_m": 101,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.236531649,
+      -21.093207004
+     ]
+    }
+   },
+   {
+    "permit_id": "97441513A0688",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2014-01-30",
+    "etat": "2",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 101,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.236531649,
+      -21.093207004
+     ]
+    }
+   },
+   {
+    "permit_id": "97441519A0222",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2019-09-26",
+    "etat": "6",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 109,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.238518657,
+      -21.09051338
+     ]
+    }
+   },
+   {
+    "permit_id": "97441522A0596",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2022-12-27",
+    "etat": "6",
+    "nb_lgt": "1",
+    "porteur": "EDEN IMMO",
+    "distance_m": 112,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.238925474,
+      -21.090747317
+     ]
+    }
+   },
+   {
+    "permit_id": "97441519A0406",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2019-11-18",
+    "etat": "6",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 116,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.238701255,
+      -21.090536319
+     ]
+    }
+   },
+   {
+    "permit_id": "97441524A0157",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2024-05-02",
+    "etat": "5",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 119,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.238105492,
+      -21.092665003
+     ]
+    }
+   },
+   {
+    "permit_id": "97441520A0475",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2021-02-10",
+    "etat": "6",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 121,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.234136367,
+      -21.091324089
+     ]
+    }
+   },
+   {
+    "permit_id": "97441519A0692",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2020-06-23",
+    "etat": "5",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 124,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.238875414,
+      -21.090562599
+     ]
+    }
+   },
+   {
+    "permit_id": "97441513A0344",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2014-01-30",
+    "etat": "4",
+    "nb_lgt": null,
+    "porteur": null,
+    "distance_m": 144,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.239539781,
+      -21.091510443
+     ]
+    }
+   },
+   {
+    "permit_id": "97441523A0155",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2023-06-13",
+    "etat": "2",
+    "nb_lgt": "1",
+    "porteur": "LMDB",
+    "distance_m": 152,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.239581248,
+      -21.0917621
+     ]
+    }
+   },
+   {
+    "permit_id": "97441522D0011",
+    "nature": "PA",
+    "nature_libelle": "Permis d'aménager",
+    "date": "2023-02-23",
+    "etat": "6",
+    "nb_lgt": null,
+    "porteur": null,
+    "distance_m": 152,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.239581248,
+      -21.0917621
+     ]
+    }
+   },
+   {
+    "permit_id": "97441519A0145",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2019-05-16",
+    "etat": "4",
+    "nb_lgt": "9",
+    "porteur": "SCCV MOZAIC",
+    "distance_m": 152,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.239581248,
+      -21.0917621
+     ]
+    }
+   },
+   {
+    "permit_id": "97441523G0355",
+    "nature": "DP",
+    "nature_libelle": "Déclaration préalable",
+    "date": "2023-06-29",
+    "etat": "2",
+    "nb_lgt": null,
+    "porteur": null,
+    "distance_m": 155,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.23382107,
+      -21.089525639
+     ]
+    }
+   },
+   {
+    "permit_id": "97441520A0501",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2021-06-02",
+    "etat": "5",
+    "nb_lgt": "2",
+    "porteur": null,
+    "distance_m": 171,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.239793537,
+      -21.09134035
+     ]
+    }
+   },
+   {
+    "permit_id": "97441518A0055",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2018-05-30",
+    "etat": "6",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 179,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.239321948,
+      -21.0926418
+     ]
+    }
+   },
+   {
+    "permit_id": "97441513A0636",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2013-11-25",
+    "etat": "4",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 181,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.239826717,
+      -21.091897796
+     ]
+    }
+   },
+   {
+    "permit_id": "97441520A0574",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2021-02-18",
+    "etat": "6",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 186,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.239625521,
+      -21.092413017
+     ]
+    }
+   },
+   {
+    "permit_id": "97441516A0231",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2016-07-06",
+    "etat": "5",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 195,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.237997735,
+      -21.093486914
+     ]
+    }
+   },
+   {
+    "permit_id": "97441522A0488",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2023-03-07",
+    "etat": "6",
+    "nb_lgt": null,
+    "porteur": "DOUDOU HOTEL",
+    "distance_m": 199,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.238297023,
+      -21.093385497
+     ]
+    }
+   }
+  ]
+ }
+}

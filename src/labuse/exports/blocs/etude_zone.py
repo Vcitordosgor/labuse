@@ -48,10 +48,15 @@ def _population(z) -> str:
 def _economie(z) -> str:
     e = z.get("emplois") or {}
     lignes = []
-    if e.get("libelle"):
+    # CHASSE-DOCS-FIX-1 (E-10) — la FOURCHETTE d'abord : `libelle` (toujours posé par zone.py, sans
+    # le nombre) ne doit pas court-circuiter `postes_min/max` ; il n'en est que le SUFFIXE (comme le Flash).
+    if e.get("postes_min") is not None:
+        val = f"{_i(e.get('postes_min'))} à {_i(e.get('postes_max'))}"
+        if e.get("libelle"):
+            val += " " + esc(e["libelle"])
+        lignes.append(_kv("Emplois salariés", val))
+    elif e.get("libelle"):
         lignes.append(_kv("Emplois salariés", esc(e.get("libelle"))))
-    elif e.get("postes_min") is not None:
-        lignes.append(_kv("Emplois salariés", f"{_i(e.get('postes_min'))} à {_i(e.get('postes_max'))}"))
     if _i(e.get("n_etablissements")):
         lignes.append(_kv("Établissements", f"{_i(e.get('n_etablissements'))}"))
     conc = z.get("concurrents") or {}
@@ -170,7 +175,9 @@ def rendu(zone, *, map_html: str, idu: str, rayon_km) -> str:
     # CHASSE-DONNEES-FIX-1 (suite 2d, C-42) — la note RELAIE les sources DATÉES servies (zone['note'] :
     # « INSEE Filosofi 2021 · SIRENE · BPE 2025 · DVF · isochrones IGN · Arcep… »), plus une note
     # statique muette : les millésimes calculés côté outil s'impriment enfin dans le PDF.
-    _note_servie = (z.get("note") or "").strip()
+    # CHASSE-DOCS-FIX-1 (E-14) — la note servie finit déjà par « . » ; on la débarrasse de sa ponctuation
+    # finale avant d'ajouter « . » + le rappel, sinon « …chiffre d'affaires.. Les mailles ».
+    _note_servie = (z.get("note") or "").strip().rstrip(".")
     _rappel = ("Les mailles « " + ECHELLE_COMMUNE + " » portent sur toute la commune, pas sur le seul rayon.")
     corps += note((f"Sources : {_note_servie}. {_rappel}" if _note_servie
                    else "Agrégats de sources publiques dans le périmètre. " + _rappel))

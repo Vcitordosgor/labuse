@@ -1,0 +1,463 @@
+{
+ "_status": 200,
+ "data": {
+  "idu": "97401000AD0554",
+  "c100": 6,
+  "c200": 25,
+  "localises": 25,
+  "non_localises": 0,
+  "note": "Permis autorisés géolocalisés < 200 m (source du signal viabilisation M-VIA).",
+  "items": [
+   {
+    "permit_id": "97440122A0092",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2023-03-29",
+    "etat": "2",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 19,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.355260611,
+      -21.209450873
+     ]
+    }
+   },
+   {
+    "permit_id": "97440123A0061",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2024-01-18",
+    "etat": "5",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 50,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.355327848,
+      -21.208421822
+     ]
+    }
+   },
+   {
+    "permit_id": "9744012520052",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2025-12-17",
+    "etat": "2",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 50,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.355327848,
+      -21.208421822
+     ]
+    }
+   },
+   {
+    "permit_id": "97440116A0096",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2017-01-31",
+    "etat": "4",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 51,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.354600104,
+      -21.209335512
+     ]
+    }
+   },
+   {
+    "permit_id": "97440121A0101",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2022-03-03",
+    "etat": "2",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 55,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.356357123,
+      -21.208900996
+     ]
+    }
+   },
+   {
+    "permit_id": "97440114A0052",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2014-10-28",
+    "etat": "6",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 61,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.355982252,
+      -21.2084923
+     ]
+    }
+   },
+   {
+    "permit_id": "97440124A0005",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2024-04-26",
+    "etat": "6",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 109,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.355853991,
+      -21.207906664
+     ]
+    }
+   },
+   {
+    "permit_id": "97440120G0029",
+    "nature": "DP",
+    "nature_libelle": "Déclaration préalable",
+    "date": "2020-09-08",
+    "etat": "2",
+    "nb_lgt": null,
+    "porteur": "COMMUNE DES AVIRONS",
+    "distance_m": 112,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.356391456,
+      -21.208209843
+     ]
+    }
+   },
+   {
+    "permit_id": "97440123A0012",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2023-06-13",
+    "etat": "2",
+    "nb_lgt": "2",
+    "porteur": null,
+    "distance_m": 124,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.356039987,
+      -21.207832792
+     ]
+    }
+   },
+   {
+    "permit_id": "9744012620002",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2026-04-27",
+    "etat": "2",
+    "nb_lgt": null,
+    "porteur": "JEUNE ASSOCIATION POUR LE DEVELOPPEMENT ECONOMIQUE ET SOCIAL",
+    "distance_m": 136,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.356695607,
+      -21.208172461
+     ]
+    }
+   },
+   {
+    "permit_id": "97440121A0024",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2021-12-14",
+    "etat": "4",
+    "nb_lgt": null,
+    "porteur": null,
+    "distance_m": 153,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.356060208,
+      -21.210540912
+     ]
+    }
+   },
+   {
+    "permit_id": "97440122A0068",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2022-10-04",
+    "etat": "4",
+    "nb_lgt": "2",
+    "porteur": null,
+    "distance_m": 161,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.354636239,
+      -21.207639139
+     ]
+    }
+   },
+   {
+    "permit_id": "97440113A0003",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2013-04-11",
+    "etat": "6",
+    "nb_lgt": null,
+    "porteur": "COMMUNE DES AVIRONS",
+    "distance_m": 162,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.357269625,
+      -21.208447725
+     ]
+    }
+   },
+   {
+    "permit_id": "97440119G0055",
+    "nature": "DP",
+    "nature_libelle": "Déclaration préalable",
+    "date": "2019-09-27",
+    "etat": "2",
+    "nb_lgt": null,
+    "porteur": "COMMUNE DES AVIRONS",
+    "distance_m": 164,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.357404151,
+      -21.209573233
+     ]
+    }
+   },
+   {
+    "permit_id": "97440122A0066",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2022-10-06",
+    "etat": "6",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 168,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.354200507,
+      -21.207958694
+     ]
+    }
+   },
+   {
+    "permit_id": "97440118A0027",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2018-07-20",
+    "etat": "5",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 172,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.356629142,
+      -21.210554562
+     ]
+    }
+   },
+   {
+    "permit_id": "97440124A0052",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2024-12-18",
+    "etat": "2",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 173,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.356523029,
+      -21.207586698
+     ]
+    }
+   },
+   {
+    "permit_id": "97440123A0062",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2024-02-29",
+    "etat": "2",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 174,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.353436575,
+      -21.209554851
+     ]
+    }
+   },
+   {
+    "permit_id": "97440122A0025",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2022-07-12",
+    "etat": "6",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 185,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.353663971,
+      -21.20828884
+     ]
+    }
+   },
+   {
+    "permit_id": "97440117A0068",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2017-11-20",
+    "etat": "5",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 195,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.353334243,
+      -21.2099195
+     ]
+    }
+   },
+   {
+    "permit_id": "97440115G0009",
+    "nature": "DP",
+    "nature_libelle": "Déclaration préalable",
+    "date": "2015-04-18",
+    "etat": "2",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 197,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.35416587,
+      -21.207591818
+     ]
+    }
+   },
+   {
+    "permit_id": "97440119A0043",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2019-11-12",
+    "etat": "5",
+    "nb_lgt": "2",
+    "porteur": null,
+    "distance_m": 198,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.35401931,
+      -21.207726194
+     ]
+    }
+   },
+   {
+    "permit_id": "97440116A0105",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2017-02-09",
+    "etat": "4",
+    "nb_lgt": "2",
+    "porteur": null,
+    "distance_m": 198,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.35401931,
+      -21.207726194
+     ]
+    }
+   },
+   {
+    "permit_id": "97440121A0074",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2022-02-01",
+    "etat": "2",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 199,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.353446372,
+      -21.20836507
+     ]
+    }
+   },
+   {
+    "permit_id": "97440122A0044",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2022-09-26",
+    "etat": "2",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 200,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.356280794,
+      -21.210934413
+     ]
+    }
+   }
+  ]
+ }
+}

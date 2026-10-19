@@ -1,0 +1,18 @@
+{
+ "_status": 200,
+ "data": {
+  "idu": "97416000DY0106",
+  "commune": "Saint-Pierre",
+  "insee": "97416",
+  "surface_terrain_m2": 5391.0,
+  "zone_plu": "N",
+  "zone_famille": "N",
+  "sdp_gabarit_m2": null,
+  "deja_batie": true,
+  "taux_communal_pct": 5.0,
+  "taux_communal_source": "public",
+  "taux_communal_millesime": "Taux communal en vigueur depuis le 01/01/2022 (délibération communale)",
+  "taux_communal_perime": false,
+  "secteur_majore": false
+ }
+}

@@ -155,10 +155,17 @@ def _a_cote(voisines: dict | None) -> str:
     n = v.get("n") or 0
     if not n:
         return ""
+    # CHASSE-DOCS-FIX-1 (E-16) — jamais une liste de données coupée par « … » : au-delà de 4 voisines,
+    # on renvoie vers l'outil Assemblage (liste complète) plutôt que de tronquer silencieusement.
     refs = ", ".join(m["ref"] for m in v.get("membres", [])[:4] if m.get("ref"))
-    reste = " …" if n > 4 else ""
+    if n > 4:
+        liste = " (voir Assemblage)"
+    elif refs:
+        liste = f" ({refs})"
+    else:
+        liste = ""
     txt = (f"{n} parcelle{'s' if n > 1 else ''} voisine{'s' if n > 1 else ''} au même propriétaire"
-           + (f" ({refs}{reste})" if refs else ""))
+           + liste)
     tot = v.get("surface_totale_m2")
     if tot:
         txt += f" — {fmt_m2(tot)} de plus"
@@ -407,8 +414,11 @@ def rendu(valeurs, ctx=None) -> str:
              "tout élément qui gêne (eau, dépôt, pente, ligne électrique)"]
     q += ('<p class="aide">Cinq vues numérotées, à prendre sur place :</p><ol class="vues">'
           + "".join(f"<li>{esc(v)}</li>" for v in _vues) + "</ol>"
-          + f'<p class="aide">Envoyez-les à {dest} par message, en citant la référence '
-          f'<b>{esc(idu)}</b> et le numéro de vue — pas collées ici.</p>')
+          # CHASSE-DOCS-FIX-1 (E-15) — l'IDU en FIN de phrase, suivi de « — » : en justification, l'espace
+          # après un IDU en gras se collait au mot suivant (« …AV0110et le numéro »). Plus aucun mot ne
+          # suit l'IDU (le tiret cadratin le sépare quoi qu'il arrive).
+          + f'<p class="aide">Envoyez-les à {dest} par message, en citant le numéro de vue et la '
+          f'référence <b>{esc(idu)}</b> — pas collées ici.</p>')
 
     # ── §10 — Votre retour (impression, prochaine étape, chance d'aboutir) ──
     q += "<h3>10. Votre retour</h3>"

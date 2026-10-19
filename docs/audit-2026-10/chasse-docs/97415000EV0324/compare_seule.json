@@ -1,0 +1,62 @@
+{
+ "_status": 200,
+ "data": {
+  "count": 1,
+  "parcels": [
+   {
+    "idu": "97415000EV0324",
+    "commune": "Saint-Paul",
+    "surface_m2": 41009,
+    "surface_incertaine": false,
+    "tier_v2": "sans_signal",
+    "rang_v2": 17010,
+    "etage0": false,
+    "status": "sans_signal",
+    "label": "Sans signal",
+    "fraction": "1/20",
+    "raison": "permis récent",
+    "zone": "AU2c",
+    "constructible": true,
+    "zone_constructible": true,
+    "cause": null,
+    "cause_libelle": null,
+    "sdp_max_m2": 18454,
+    "taux_emprise_pct": 16,
+    "sdp_residuelle_m2": 15333,
+    "sous_densite": true,
+    "charge_fonciere_m2": -83,
+    "n_contraintes": 16,
+    "contraintes": [
+     "Zone bleue PPR inondation et mouvement de terrain (~56% de la parcelle) — constructible SOUS PRESCRIPTIONS (règlement DEAL).",
+     "Aléa inondation — niveau fort.",
+     "Parcelle protégée par un système d'endiguement — SE Ermitage-La Saline (classe B) : inondation RÉSIDUELLE en cas de défaillance ou de dépassement du niveau de protection.",
+     "Proximité d'une ravine (traversée par l'axe, seuil 10 m) — mesuré à l'AXE (sur une ravine large, la berge est plus proche — recul réel à vérifier) ; recul et risque de crue à vérifier (BD TOPO hydrographie)."
+    ],
+    "contrainte_majeure": "Zone bleue PPR inondation et mouvement de terrain (~56% de la parcelle) — constructible SOUS PRESCRIPTIONS (règlement DEAL).",
+    "proprietaire": "morale",
+    "bati_existant_pct": 8,
+    "gabarit_niveaux_max": 2,
+    "acces_reseaux": "Viabilisation confirmée par les faits",
+    "assainissement": "Tout-à-l'égout (collectif)",
+    "prix_secteur_bati_m2": 4907,
+    "zone_parts": [
+     {
+      "zone": "AU2c",
+      "fam": "AU",
+      "pct": 60.4
+     },
+     {
+      "zone": "U2c",
+      "fam": "U",
+      "pct": 39.6
+     }
+    ],
+    "terrain_zone_eur_m2": 328,
+    "emprise_ces_pct": null,
+    "emprise_ces_source": null,
+    "bande": "A",
+    "signal_niveau": "faible"
+   }
+  ]
+ }
+}

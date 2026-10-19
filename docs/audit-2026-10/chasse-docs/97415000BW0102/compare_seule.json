@@ -1,0 +1,67 @@
+{
+ "_status": 200,
+ "data": {
+  "count": 1,
+  "parcels": [
+   {
+    "idu": "97415000BW0102",
+    "commune": "Saint-Paul",
+    "surface_m2": 10500,
+    "surface_incertaine": false,
+    "tier_v2": "sans_signal",
+    "rang_v2": 335499,
+    "etage0": false,
+    "status": "sans_signal",
+    "label": "Sans signal",
+    "fraction": null,
+    "raison": "secteur qui bouge",
+    "zone": "U6c",
+    "constructible": true,
+    "zone_constructible": true,
+    "cause": null,
+    "cause_libelle": null,
+    "sdp_max_m2": 4099,
+    "taux_emprise_pct": 0,
+    "sdp_residuelle_m2": 4099,
+    "sous_densite": true,
+    "charge_fonciere_m2": -59,
+    "n_contraintes": 11,
+    "contraintes": [
+     "PPR zone rouge sur 9 % de la surface — vigilance forte ; constructibilité à vérifier au règlement (pas d'exclusion automatique).",
+     "Zone bleue PPR inondation et mouvement de terrain (~16% de la parcelle) — constructible SOUS PRESCRIPTIONS (règlement DEAL).",
+     "Aléa inondation — niveau fort.",
+     "Aléa mouvement de terrain — niveau fort."
+    ],
+    "contrainte_majeure": "PPR zone rouge sur 9 % de la surface — vigilance forte ; constructibilité à vérifier au règlement (pas d'exclusion automatique).",
+    "proprietaire": "particulier",
+    "bati_existant_pct": 0,
+    "gabarit_niveaux_max": 2,
+    "acces_reseaux": "Viabilisation confirmée par les faits",
+    "assainissement": "93 % des logements du secteur ne sont pas raccordés au réseau collectif",
+    "prix_secteur_bati_m2": 3630,
+    "zone_parts": [
+     {
+      "zone": "U6c",
+      "fam": "U",
+      "pct": 72.3
+     },
+     {
+      "zone": "A",
+      "fam": "A",
+      "pct": 24.2
+     },
+     {
+      "zone": "N",
+      "fam": "N",
+      "pct": 3.5
+     }
+    ],
+    "terrain_zone_eur_m2": 479,
+    "emprise_ces_pct": null,
+    "emprise_ces_source": null,
+    "bande": "A",
+    "signal_niveau": "faible"
+   }
+  ]
+ }
+}

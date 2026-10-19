@@ -1,0 +1,51 @@
+{
+ "_status": 200,
+ "data": {
+  "count": 1,
+  "parcels": [
+   {
+    "idu": "97415000BO0852",
+    "commune": "Saint-Paul",
+    "surface_m2": 745,
+    "surface_incertaine": false,
+    "tier_v2": "sans_signal",
+    "rang_v2": 8875,
+    "etage0": false,
+    "status": "sans_signal",
+    "label": "Sans signal",
+    "fraction": "1/20",
+    "raison": "zone urbaine",
+    "zone": "U1a",
+    "constructible": true,
+    "zone_constructible": true,
+    "cause": null,
+    "cause_libelle": null,
+    "sdp_max_m2": 797,
+    "taux_emprise_pct": 122,
+    "sdp_residuelle_m2": 0,
+    "sous_densite": false,
+    "charge_fonciere_m2": 259,
+    "n_contraintes": 14,
+    "contraintes": [
+     "SDP résiduelle 0 m² — rien à construire.",
+     "Zone bleue PPR inondation et mouvement de terrain — constructible SOUS PRESCRIPTIONS (règlement DEAL).",
+     "Secteur affecté par le bruit routier (classement sonore cat. 1, bande 300 m) — isolement acoustique renforcé obligatoire (R.571-32 CE).",
+     "Parcelle protégée par un système d'endiguement — SE Route Digue (classe B) : inondation RÉSIDUELLE en cas de défaillance ou de dépassement du niveau de protection."
+    ],
+    "contrainte_majeure": "SDP résiduelle 0 m² — rien à construire.",
+    "proprietaire": "morale",
+    "bati_existant_pct": 73,
+    "gabarit_niveaux_max": 4,
+    "acces_reseaux": "Viabilisation confirmée par les faits",
+    "assainissement": "Tout-à-l'égout (collectif)",
+    "prix_secteur_bati_m2": 3804,
+    "zone_parts": null,
+    "terrain_zone_eur_m2": 479,
+    "emprise_ces_pct": null,
+    "emprise_ces_source": null,
+    "bande": "0",
+    "signal_niveau": "faible"
+   }
+  ]
+ }
+}

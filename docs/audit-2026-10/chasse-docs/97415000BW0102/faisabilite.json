@@ -1,0 +1,481 @@
+{
+ "_status": 200,
+ "data": {
+  "idu": "97415000BW0102",
+  "delaisse": null,
+  "capacite": {
+   "zone": "U6c",
+   "verdict": "R+1 · jusqu'à ~4099 m² de plancher",
+   "calibree": true,
+   "a_cheval": true,
+   "zone_parts": [
+    {
+     "zone": "U6c",
+     "fam": "U",
+     "pct": 72.3
+    },
+    {
+     "zone": "A",
+     "fam": "A",
+     "pct": 24.2
+    },
+    {
+     "zone": "N",
+     "fam": "N",
+     "pct": 3.5
+    }
+   ],
+   "fourchette": {
+    "niveaux": "R+1",
+    "niveaux_max": 2,
+    "hauteur_m": 6.0,
+    "hauteur_etage_m": 3.0,
+    "zone_implantation_m2": 5976,
+    "emprise_sol_max_m2": null,
+    "emprise_constructible_m2": 4555,
+    "emprise_batie_max_m2": 2050,
+    "surface_plancher_m2": 4099,
+    "shab_vendable_m2": 2296,
+    "shab_vendable_silo_m2": 2296,
+    "logements_au_sol": [
+     28,
+     32
+    ],
+    "logements_sous_sol": [
+     28,
+     32
+    ],
+    "stationnement_regime": "borne",
+    "assiette_source": "gabarit"
+   },
+   "hypotheses": [
+    "Emprise = zone d'implantation du gabarit réglementaire (reculs par côté voie/limites, PPR zone rouge découpé, projection métrique).",
+    "Hauteur d'étage supposée 3 m ; niveaux comptés sur hé (égout), pas hf.",
+    "Coefficient d'occupation du gabarit supposé 45% (on ne bâtit pas 100 % de l'emprise constructible).",
+    "Emprise au sol non réglementée par le PLU de Saint-Paul (silence du règlement) : occupation du gabarit ~45% posée par hypothèse de modélisation ; la capacité est bornée par les reculs, la hauteur et la pleine terre.",
+    "Coefficient de rendement SDP→habitable supposé 80%.",
+    "Surface moyenne par logement supposée 65–80 m².",
+    "Plafond de densité 30 logts/ha par niveau : filet de MODÉLISATION (ex-COS) — le PLU ne fixe aucune densité (mesuré : aucune commune, aucune zone), la capacité reste bornée par reculs, hauteur et pleine terre.",
+    "1 place de stationnement supposée 25 m² au sol (Estimé — modélisation, non réglementée pour cette commune)."
+   ],
+   "bandeau": "Pré-faisabilité indicative sur règlement PLU public — ne remplace pas une étude de faisabilité réglementaire par un professionnel.",
+   "steps": [
+    {
+     "label": "Emprise au sol — zone d'implantation réglementaire",
+     "formule": "zone d'implantation réglementaire — reculs par côté (voie/limites séparatives), PPR zone rouge déduit",
+     "valeur": "~5976 m²",
+     "source": "Moteur gabarit — reculs par côté sourcés PLU",
+     "prov": "sourcee"
+    },
+    {
+     "label": "Emprise au sol — % réglementé",
+     "formule": "non réglementée (Art. 9 « il n'est pas fixé de règle ») → bornée par les reculs",
+     "valeur": "—",
+     "source": "Art. 9",
+     "prov": "sourcee"
+    },
+    {
+     "label": "Contrainte pleine terre",
+     "formule": "emprise ≤ 7592×(1−40%) = 4555 m²",
+     "valeur": "~4555 m² retenu",
+     "source": "Art. 13.1 · p.292 (PLU, calibrage validé)",
+     "prov": "sourcee"
+    },
+    {
+     "label": "Niveaux constructibles",
+     "formule": "hauteur d'égout retenue 6 m ÷ 3 m/niveau = 2 niveaux",
+     "valeur": "R+1",
+     "source": "Art. 10.2 · p.282 (PLU, calibrage validé)",
+     "prov": "sourcee"
+    },
+    {
+     "label": "Emprise bâtie (occupation du gabarit)",
+     "formule": "4555 m² × 45% (espaces entre bâtiments, accès…)",
+     "valeur": "~2050 m²",
+     "source": "hypothèse occupation",
+     "prov": "estimee"
+    },
+    {
+     "label": "Surface de plancher brute",
+     "formule": "2050 m² × 2 niveaux",
+     "valeur": "~4099 m²",
+     "source": "dérivé occupation×hauteur",
+     "prov": "derive"
+    },
+    {
+     "label": "Surface habitable (rendement)",
+     "formule": "4099 m² × 80% (murs, communs, circulations, locaux techniques déduits)",
+     "valeur": "~3280 m²",
+     "source": "hypothèse rendement",
+     "prov": "estimee"
+    },
+    {
+     "label": "Logements — après plafond de densité (≤ 46 logts)",
+     "formule": "0.76 ha × 60 logts/ha (30/niveau × 2)",
+     "valeur": "~41 à 46",
+     "source": "hypothèse densité (ex-COS)",
+     "prov": "estimee"
+    },
+    {
+     "label": "Stationnement — scénario au sol",
+     "formule": "sol restant = terrain 7592 − emprise bâtie 2050 − pleine terre 3037 = 2505 m² ; 2 pl./logt × 25 m² → ≤ 50 logts",
+     "valeur": "plafond au sol",
+     "source": "Art. 12.2 · p.288 (PLU, calibrage validé)",
+     "prov": "sourcee"
+    },
+    {
+     "label": "Stationnement — scénario sous-sol/silo",
+     "formule": "parking enterré/silo : le sol n'est plus consommé → borné par le plancher",
+     "valeur": "~41–46 logts",
+     "source": "Art. 12.2 · p.288 (PLU, calibrage validé)",
+     "prov": "derive"
+    },
+    {
+     "label": "Logements retenus au sol",
+     "formule": "plafond de densité ∩ stationnement au sol (après modulation réunionnaise)",
+     "valeur": "~28 à 32",
+     "source": "dérivé",
+     "prov": "derive"
+    },
+    {
+     "label": "Logements sociaux imposés (LLS)",
+     "formule": "aucune clause de mixité validée pour cette zone",
+     "valeur": "sans objet",
+     "source": "règlement PLU",
+     "prov": "absent"
+    }
+   ],
+   "hypotheses_modifiables": [
+    {
+     "key": "coef_occupation",
+     "label": "Occupation du gabarit",
+     "valeur": 45.0,
+     "unite": "%",
+     "min": 10.0,
+     "max": 100.0
+    },
+    {
+     "key": "coef_rendement",
+     "label": "Rendement SDP → habitable",
+     "valeur": 80.0,
+     "unite": "%",
+     "min": 50.0,
+     "max": 100.0
+    },
+    {
+     "key": "logement_m2",
+     "label": "Surface moyenne / logement",
+     "valeur": 72.5,
+     "unite": "m²",
+     "min": 20.0,
+     "max": 200.0
+    }
+   ],
+   "avertissements": [],
+   "modulation": [
+    "Plafond de densité 60 logts/ha appliqué : le calcul détaillé donnait ~40 à 51 → borné à ~46 logts (enveloppe théorique trop optimiste).",
+    "Pente 28% → surcoût, capacité réduite (~×0,7).",
+    "Assiette = zone d'implantation réglementaire (moteur gabarit) : reculs par côté voie/limites.",
+    "Zonage mixte : assiette calculée sur le seul morceau constructible U6c (72.3 %).",
+    "Parcelle à cheval sur plusieurs zones PLU (« U6c » 72.3 % + « A » 24.2 % + « N » 3.5 %) — capacité calculée sur la seule portion constructible (~72.3 % de la surface)."
+   ]
+  },
+  "marche": {
+   "type_prix": "appartement",
+   "median": 3317,
+   "q1": 3142,
+   "q3": 4202,
+   "n": 9,
+   "fiabilite": "fiable",
+   "tendance": "indéterminée",
+   "volatilite": "modérée",
+   "radius_m": 1000.0,
+   "dvf_couverture": {
+    "depuis": "2021",
+    "jusqu_au": "2025-12",
+    "n": 29565,
+    "libelle": "ventes jusqu'à déc. 2025"
+   },
+   "fraicheur": {
+    "horizon": "2025-12-31",
+    "horizon_libelle": "jusqu'à déc. 2025",
+    "millesime": "géo-DVF Etalab 2021–2025 + archives DGFiP 2014–2020",
+    "cadence": "semestriel",
+    "prochain": "2026-10-01"
+   }
+  },
+  "bilan": {
+   "fiable": true,
+   "fiabilite": "fiable",
+   "verdict": "Simulation indicative (prix de sortie fiable) — CA ~9,60 M€ · charge foncière médiane ~-616 k€ (fourchette -1,33 M€–102 k€)",
+   "prix_dvf": {
+    "type_prix": "appartement",
+    "n": 9,
+    "n_exclus": 0,
+    "n_doublons": 0,
+    "radius_m": 1000.0,
+    "commune_fallback": false,
+    "fiabilite": "fiable",
+    "fiabilite_raisons": [],
+    "distribution": {
+     "avant": {
+      "n": 9,
+      "min": 2297,
+      "p25": 3142,
+      "median": 3317,
+      "p75": 4202,
+      "max": 5851
+     },
+     "apres": {
+      "n": 9,
+      "min": 2297,
+      "p25": 3142,
+      "median": 3317,
+      "p75": 4202,
+      "max": 5851
+     },
+     "n_exclus_extremes": 0,
+     "n_min_vise": 8,
+     "periode_segment": "récente"
+    },
+    "fiable": true,
+    "pct_appartement": 100,
+    "periode": [
+     2022,
+     2025
+    ],
+    "q1": 3142,
+    "median": 3317,
+    "q3": 4202,
+    "min": 2297,
+    "max": 5851,
+    "prix_points": [
+     2297,
+     3068,
+     3216,
+     3311,
+     3317,
+     3406,
+     3732,
+     4672,
+     5851
+    ],
+    "prix_points_ecartes": [],
+    "volatilite_pct": 32,
+    "volatilite": "modérée",
+    "tendance_pct": null,
+    "tendance": "indéterminée",
+    "comparables": {
+     "n_ancien": 9,
+     "mediane_ancien": 3317,
+     "n_vefa": 0,
+     "mediane_vefa": null,
+     "ecart_vefa_ancien_pct": null,
+     "exploitable": false,
+     "note": "aucune vente VEFA dans le comparable retenu (prix = ancien)",
+     "fiabilite_prix": "fiable"
+    }
+   },
+   "ca": {
+    "bas": 9599576,
+    "central": 9599576,
+    "haut": 9599576
+   },
+   "charge_fonciere": {
+    "bas": -1333058,
+    "central": -615558,
+    "haut": 101942,
+    "par_m2_terrain": -59
+   },
+   "steps": [
+    {
+     "label": "Surface habitable vendable",
+     "formule": "issue de la faisabilité (post-rendement, plafond, modulation)",
+     "valeur": "~2296 m²",
+     "source": "faisabilité",
+     "prov": "derive"
+    },
+    {
+     "label": "Prix de sortie neuf (marché)",
+     "formule": "Estimé — médiane locale, 54 ventes · comparables ancien : 9 ventes (2022-2025)",
+     "valeur": "4730 €/m² (habitable, neuf)",
+     "source": "prix de sortie neuf · commune",
+     "prov": "estimee"
+    },
+    {
+     "label": "Secteur de mixité sociale — servitude au zonage",
+     "formule": "Clause logements aidés",
+     "valeur": "OUI — quota conditionné au programme (ligne suivante)",
+     "source": "Art. 2 règlement PLU",
+     "prov": "derive"
+    },
+    {
+     "label": "CA pondéré — clause de mixité DÉCLENCHÉE",
+     "formule": "programme SDP ~4099 m² ≥ seuil 1500 m² · prix mixé = (1−30%)×prix DVF + 30%×2900 €/m² (LLS)",
+     "valeur": "4181 €/m² (médiane pondérée)",
+     "source": "Art. 2 règlement PLU · pct_lls / prix_m2_lls",
+     "prov": "estimee"
+    },
+    {
+     "label": "VRD / viabilisation",
+     "formule": "90 €/m² × emprise aménagée ~4249 m² (bâti + stationnement + voirie, sur terrain 10500 m²) × (1 + 55 % : pente 28 %, assainissement autonome)",
+     "valeur": "~593 k€",
+     "source": "param cout_vrd_base",
+     "prov": "estimee"
+    },
+    {
+     "label": "Chiffre d'affaires potentiel",
+     "formule": "2296 m² × 4181–4181 €/m² (prix mixés LLS)",
+     "valeur": "~9,60 M€",
+     "source": "dérivé",
+     "prov": "derive"
+    },
+    {
+     "label": "Coût de construction",
+     "formule": "2870 m² de plancher (vendable 2296 ÷ rendement 80%) × 2300–2800 €/m²",
+     "valeur": "~6,60 M€ – 8,04 M€",
+     "source": "hypothèse coût (prudente, Réunion)",
+     "prov": "estimee"
+    },
+    {
+     "label": "Marge + frais (déduits du CA)",
+     "formule": "marge 9 % + honoraires 12 % + frais financiers 3 %",
+     "valeur": "24 % du CA",
+     "source": "params marge/honoraires/frais",
+     "prov": "estimee"
+    },
+    {
+     "label": "Charge foncière supportable (bilan à rebours)",
+     "formule": "CA×0.76 − coût construction − VRD",
+     "valeur": "médiane -616 k€ ≈ -59 €/m² terrain",
+     "source": "dérivé",
+     "prov": "derive"
+    }
+   ],
+   "hypotheses": [
+    "Zonage eaux pluviales (zonage d'eau pluviale - zone reglt Modérée) : majoration VRD paramétrable (majoration_vrd_pluvial = 0, PLACEHOLDER) → coût inchangé tant que non calibrée.",
+    "Coût de construction supposé 2300–2800 €/m² de surface de plancher (habitable × 1.15) — hypothèse prudente Réunion.",
+    "Marge promoteur supposée 9% du CA ; frais annexes 12%.",
+    "Prix de sortie = médiane du NEUF de marché (Estimé — médiane locale, 54 ventes) ≈ 4730 €/m² habitable ; l'ancien DVF ne sert que de comparable documentaire.",
+    "Le prix de sortie est une donnée de MARCHÉ (DVF) ; le bilan complet reste INDICATIF. À valider par un professionnel : coût travaux, marge, frais, TVA, VRD, stationnement et aléas."
+   ],
+   "avertissements": [
+    "Charge foncière NÉGATIVE en bas de fourchette : aux prix bas / coûts hauts, l'opération ne dégage pas de valeur pour le terrain."
+   ],
+   "bandeau": "Estimation économique indicative (DVF public + hypothèses) — ne remplace pas un bilan promoteur professionnel.",
+   "calc": {
+    "surf": 2296,
+    "terrain_m2": 10500,
+    "q1": 4730.0,
+    "median": 4730.0,
+    "q3": 4730.0,
+    "coef": 0.76,
+    "sdp": 2870,
+    "cm_bas": 2300,
+    "cm_haut": 2800,
+    "cc_bas": 6601000,
+    "cc_haut": 8036000,
+    "cout_vrd": 592736,
+    "mixite": true,
+    "pluvial": true,
+    "pondere": true,
+    "pct_lls": 30.0,
+    "prix_m2_lls": 2900.0,
+    "majoration_vrd_pluvial": 0.0,
+    "clause_declenchee": true,
+    "clause_critere": "SDP 4099 m² ≥ 1500 m²",
+    "clause_detail": "programme SDP ~4099 m² ≥ seuil 1500 m²"
+   },
+   "non_calculable": false,
+   "niveau_prix_neuf": "commune",
+   "prix_neuf_label": "Estimé — médiane locale, 54 ventes",
+   "prix_neuf_repli_ile": false
+  },
+  "prix_sortie": {
+   "prix": 4730.0,
+   "niveau": "commune",
+   "n": 54,
+   "label": "Estimé — médiane locale, 54 ventes",
+   "non_calculable": false,
+   "repli_ile": false
+  },
+  "fiscal": {
+   "qpv": false,
+   "tva": "8,5 % (taux DOM) — 2,1 % possible en LLS selon montage"
+  },
+  "rtaa": {
+   "meta": {
+    "intitule": "RTAA DOM — réglementation thermique, acoustique et aération (logements neufs)",
+    "champ": "Bâtiments d'habitation NOUVEAUX et parties nouvelles de bâtiments existants (extensions) — art. 1er des trois arrêtés du 17/04/2009 modifiés ; version 2016 applicable aux PC/DP déposés depuis le 01/07/2016 ; cadre CCH R.192-1 à R.192-4 en vigueur depuis le 01/01/2025.\n",
+    "verifie_le": "2026-07-08",
+    "altitude_note": "Deux seuils à La Réunion : 400 m (facteurs solaires des baies, taux d'ouverture) et 600 m (bascule protection solaire + ventilation naturelle → isolation + chauffage).\n"
+   },
+   "exigences": [
+    {
+     "volet": "cadre",
+     "exigence": "Limiter le recours à la climatisation par solutions techniques (protection solaire, ventilation naturelle) fixées par arrêtés — ou atteindre un indice de confort thermique de référence (voie de résultat ouverte par la réécriture 2025).\n",
+     "reference": "CCH art. R.192-1 (décret n°2024-168 du 01/03/2024)",
+     "url": "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000043819607"
+    },
+    {
+     "volet": "thermique",
+     "exigence": "Protection solaire des parois opaques des pièces principales : facteur solaire ≤ 0,03 en toiture et ≤ 0,09 en vertical.\n",
+     "reference": "Arrêté du 17/04/2009 (thermique) modifié 11/01/2016, art. 5 1°",
+     "url": "https://www.legifrance.gouv.fr/loda/id/JORFTEXT000020530547",
+     "condition_altitude": "≤ 600 m — au-dessus : isolation U ≤ 0,5 (toiture) / 2 W/m²·K (vertical), art. 5 2°"
+    },
+    {
+     "volet": "thermique",
+     "exigence": "Facteur solaire maximal des baies PAR ORIENTATION : < 400 m — Nord 0,6 · Sud 0,8 · Est 0,6 · Ouest 0,6 ; entre 400 et 600 m — 0,8 (pas d'exigence au sud).\n",
+     "reference": "Arrêté du 17/04/2009 (thermique) modifié, art. 6",
+     "url": "https://www.legifrance.gouv.fr/loda/id/JORFTEXT000020530547",
+     "condition_altitude": "seuils 400 m / 600 m"
+    },
+    {
+     "volet": "thermique",
+     "exigence": "Ventilation naturelle TRAVERSANTE : taux d'ouverture minimal des pièces principales (séjour 22 %, chambres 18 % sous 400 m ; 18 %/14 % entre 400 et 600 m), au moins deux ouvertures > 0,5 m² en parois opposées ou latérales, au plus 70 % des ouvertures sur une même façade.\n",
+     "reference": "Arrêté du 17/04/2009 (thermique) modifié, art. 9",
+     "url": "https://www.legifrance.gouv.fr/loda/id/JORFTEXT000020530547",
+     "condition_altitude": "exemption > 600 m"
+    },
+    {
+     "volet": "thermique",
+     "exigence": "Brasseurs d'air : ventilateur de plafond fixe dans les chambres mono-orientées, attentes électriques dans les autres pièces principales (2 si séjour > 20 m²) ; au-dessus de 600 m : thermostats sur les équipements de chauffage.\n",
+     "reference": "Arrêté du 17/04/2009 (thermique) modifié, art. 10 et 13",
+     "url": "https://www.legifrance.gouv.fr/loda/id/JORFTEXT000020530547",
+     "condition_altitude": "art. 10 exempté > 600 m"
+    },
+    {
+     "volet": "acoustique",
+     "exigence": "Séparatifs entre logements : paroi ≥ 350 kg/m² ou Rw+C ≥ 54 dB (57 dB face aux locaux d'activité) ; plancher ≥ 450 kg/m² ou Rw+C ≥ 57 dB avec L'n,w ≤ 67 dB ; porte palière Rw+C ≥ 28 dB.\n",
+     "reference": "Arrêté du 17/04/2009 (acoustique) modifié 11/01/2016, art. 3 et 4",
+     "url": "https://www.legifrance.gouv.fr/loda/id/JORFTEXT000020530580"
+    },
+    {
+     "volet": "acoustique",
+     "exigence": "Équipements : chauffage/climatisation individuels ≤ 35 dB(A) en pièces principales, ≤ 50 dB(A) en cuisine ; VMC ≤ 35 dB(A). En secteur affecté par une infrastructure classée : isolement de façade DnT,A,tr requis (rue en U : 40/37/33 dB selon catégorie).\n",
+     "reference": "Arrêté du 17/04/2009 (acoustique) modifié, art. 7, 8 et 11",
+     "url": "https://www.legifrance.gouv.fr/loda/id/JORFTEXT000020530580"
+    },
+    {
+     "volet": "aeration",
+     "exigence": "Cuisine : baie ≥ 1 m² sur l'extérieur (dont 0,2 m² au-dessus de 1,9 m) ; salle de bains ≥ 0,30 m² et WC ≥ 0,15 m², sinon extraction mécanique (cuisine 20/30/45 m³/h selon typologie, SdB 15-30, WC 15).\n",
+     "reference": "Arrêté du 17/04/2009 (aération) modifié 11/01/2016, art. 3 et 4",
+     "url": "https://www.legifrance.gouv.fr/loda/id/JORFTEXT000020530610"
+    },
+    {
+     "volet": "aeration",
+     "exigence": "Pièces climatisées ou façades soumises à isolement acoustique : ventilation mécanique obligatoire avec entrées d'air (pièces principales 35 m³/h en dépression, ou insufflation 20/40 m³/h chambre/séjour).\n",
+     "reference": "Arrêté du 17/04/2009 (aération) modifié, art. 5 à 7",
+     "url": "https://www.legifrance.gouv.fr/loda/id/JORFTEXT000020530610"
+    },
+    {
+     "volet": "ecs",
+     "exigence": "Tout logement neuf est pourvu d'un système d'ECS ; l'eau chaude est produite à au moins 50 % des besoins par sources de chaleur RENOUVELABLES (solaire thermique en pratique à La Réunion), sauf potentiel insuffisant de la parcelle. Depuis 2025 ce n'est plus « solaire » strict (ancien R.162-2 abrogé).\n",
+     "reference": "CCH art. R.192-2 (décret n°2024-168), en vigueur 01/01/2025",
+     "url": "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000049228826"
+    }
+   ]
+  }
+ }
+}

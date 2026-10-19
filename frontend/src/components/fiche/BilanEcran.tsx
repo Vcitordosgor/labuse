@@ -15,6 +15,7 @@ import {
   type BilanModele, type BilanEntrees, type BilanResultat, type BilanSaisie, type BilanPoste,
 } from '../../lib/api'
 import { useOuvrirDocument } from '../../lib/ouvrirDocument'
+import { empreinte, noterEditeur } from '../../lib/empreinteDoc'
 import { Bouton } from '../ui/Bouton'
 import { Badge } from '../ui/Badge'
 import { Chargement } from '../Loading'
@@ -119,6 +120,9 @@ export function BilanEcran({ idu, onClose, onGenerated, depuisEtude }:
     minuterie.current = setTimeout(() => {
       calculerBilan(idu, entrees).then(setRes).catch(() => {})
       setDocId(null)  // toute modification invalide le document généré
+      // CHASSE-DOCS-FIX-1 (Lot 5.1) — l'empreinte des hypothèses VIVANTES, pour que « Mes documents »
+      // marque « Sources modifiées depuis » si l'on édite sans régénérer.
+      noterEditeur('bilan', idu, entrees)
     }, 250)
     return () => { if (minuterie.current) clearTimeout(minuterie.current) }
   }, [entrees, idu])
@@ -179,7 +183,8 @@ export function BilanEcran({ idu, onClose, onGenerated, depuisEtude }:
   const generer = async () => {
     setErreurGen(null)
     try {
-      const { doc_id } = await genererBilan(idu, entrees)
+      // Lot 5.1 — l'empreinte des hypothèses est STOCKÉE AVEC LE DOCUMENT côté serveur (cross-poste).
+      const { doc_id } = await genererBilan(idu, entrees, empreinte(entrees))
       setDocId(doc_id)
       onGenerated?.(doc_id)
       await ouvrir(docBilanUrl(idu, doc_id), 'bilan')
@@ -278,7 +283,7 @@ export function BilanEcran({ idu, onClose, onGenerated, depuisEtude }:
                     <td className="py-1 pr-3 text-right">
                       <span className="inline-flex items-center gap-1">
                         <span className="text-[11px] text-txt-dim">J+</span>
-                        <input key={rev} className="h-7 w-16 rounded border border-line-2 bg-surface px-1.5 text-right tabular-nums"
+                        <input key={rev} className="h-7 w-16 rounded border border-line-2 bg-surface px-1.5 text-right tabular-nums text-[color:var(--ink)] placeholder:text-txt-mut"
                           defaultValue={entrees.calendrier[c.id] ?? ''} placeholder="0"
                           onChange={(ev) => majCalendrier(c.id, parseNum(ev.target.value))} />
                         <span className="text-[11px] text-txt-dim">mois</span>
@@ -310,7 +315,7 @@ export function BilanEcran({ idu, onClose, onGenerated, depuisEtude }:
             {entrees.mode === 'prix' && (
               <label className="grid gap-1 text-[12px] text-txt-mut">Marge visée
                 <span className="flex items-center gap-2">
-                  <input className="h-8 w-full rounded-md border border-line-2 bg-surface px-2.5 text-right tabular-nums"
+                  <input className="h-8 w-full rounded-md border border-line-2 bg-surface px-2.5 text-right tabular-nums text-[color:var(--ink)] placeholder:text-txt-mut"
                     defaultValue={entrees.marge_cible ?? ''} placeholder="à saisir"
                     onChange={(ev) => setEntrees((e) => e && ({ ...e, marge_cible: parseNum(ev.target.value) }))} />
                   <span className="min-w-[44px] text-[12px] text-txt-dim">% CA HT</span>
@@ -351,7 +356,7 @@ export function BilanEcran({ idu, onClose, onGenerated, depuisEtude }:
                 const caTtc = (p.suv ?? 0) * (p.prix_ttc_m2_suv ?? 0)
                 return (
                   <tr key={i} className="border-b border-line">
-                    <td className="p-2"><input className="w-32 rounded border border-line-2 bg-surface px-1.5 py-1" defaultValue={p.libelle} onChange={(e) => majProduit(i, { libelle: e.target.value })} /></td>
+                    <td className="p-2"><input className="w-32 rounded border border-line-2 bg-surface px-1.5 py-1 text-[color:var(--ink)] placeholder:text-txt-mut" defaultValue={p.libelle} onChange={(e) => majProduit(i, { libelle: e.target.value })} /></td>
                     <td className="p-2"><CellNum revKey={rev} value={p.lots} onChange={(v) => majProduit(i, { lots: v })} /></td>
                     <td className="p-2"><CellNum revKey={rev} value={p.suv} onChange={(v) => majProduit(i, { suv: v })} /></td>
                     <td className="p-2">
@@ -454,7 +459,7 @@ function TeteInput({ label, unite, value, source, repere, revKey, onChange, onPi
       <td className="py-1 pl-3 text-txt-mut"><span className="inline-flex items-center gap-1.5">{label}{source && <Badge ton="vert">Sourcé</Badge>}</span></td>
       <td className="py-1 pr-3 text-right">
         <span className="inline-flex items-center gap-1">
-          <input key={revKey} className="h-7 w-24 rounded border border-line-2 bg-surface px-1.5 text-right tabular-nums"
+          <input key={revKey} className="h-7 w-24 rounded border border-line-2 bg-surface px-1.5 text-right tabular-nums text-[color:var(--ink)] placeholder:text-txt-mut"
             defaultValue={value == null ? '' : fmtNum(value)} placeholder="0" onChange={(e) => onChange(parseNum(e.target.value))} />
           <span className="text-[11px] text-txt-dim">{unite}</span>
           {value == null && repere && (
@@ -479,7 +484,7 @@ function TeteCalc({ label, value, alerte }: { label: string; value: string; aler
 
 function CellNum({ value, onChange, revKey }: { value: number | null; onChange: (v: number | null) => void; revKey?: number }) {
   return (
-    <input key={revKey} className="w-24 rounded border border-line-2 bg-surface px-1.5 py-1 text-right tabular-nums"
+    <input key={revKey} className="w-24 rounded border border-line-2 bg-surface px-1.5 py-1 text-right tabular-nums text-[color:var(--ink)] placeholder:text-txt-mut"
       defaultValue={value == null ? '' : fmtNum(value)} placeholder="0" onChange={(e) => onChange(parseNum(e.target.value))} />
   )
 }

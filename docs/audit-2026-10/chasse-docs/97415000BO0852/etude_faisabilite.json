@@ -1,0 +1,158 @@
+{
+ "_status": 200,
+ "data": {
+  "moteur": {
+   "livrable": "IMPLANTATION-2",
+   "version_conventions": "implantation-conventions-1",
+   "etiquette": "Estimé",
+   "crs_dessin": "EPSG:2975",
+   "crs_carte": "EPSG:4326"
+  },
+  "entrees": {
+   "idus": [
+    "97415000BO0852"
+   ],
+   "commune": "Saint-Paul",
+   "insee": "97415",
+   "zone": "U1a",
+   "type_projet": "collectif",
+   "objectif": "equilibre",
+   "programme_mode": "propose",
+   "stationnement": "aerien",
+   "terrain": "libere"
+  },
+  "regles": {
+   "zone": "U1a",
+   "insee": "97415",
+   "lignes": [
+    {
+     "nom": "recul sur voie",
+     "valeur": null,
+     "unite": "m",
+     "validee": false,
+     "article": "6",
+     "page_pdf": 18,
+     "citation": "en zone U1a — Cas général : Les constructions s'implanteront à l'alignement de la voie ou de l'emprise publique."
+    },
+    {
+     "nom": "recul sur limites séparatives",
+     "valeur": 3.0,
+     "unite": "m",
+     "validee": true,
+     "article": "7.2",
+     "page_pdf": 21,
+     "citation": "en zone U1a — ... Pour les étages, en cas de retrait, un recul de 3 m minimum est obligatoire."
+    },
+    {
+     "nom": "emprise au sol (CES)",
+     "valeur": null,
+     "unite": "%",
+     "validee": false,
+     "article": null,
+     "page_pdf": null,
+     "citation": null
+    },
+    {
+     "nom": "hauteur à l'égout",
+     "valeur": 12.0,
+     "unite": "m",
+     "validee": true,
+     "article": "10.2",
+     "page_pdf": 24,
+     "citation": "Pour les constructions s'implantant au-delà de cette bande de 15 m : la hauteur maximale hé est fixée à 12 m ;"
+    },
+    {
+     "nom": "hauteur au faîtage",
+     "valeur": 16.0,
+     "unite": "m",
+     "validee": true,
+     "article": "10.2",
+     "page_pdf": 24,
+     "citation": "Pour les constructions s'implantant au-delà de cette bande de 15 m : ... la hauteur maximale hf est fixée à 16 m."
+    },
+    {
+     "nom": "pleine terre (perméabilité)",
+     "valeur": 10.0,
+     "unite": "%",
+     "validee": true,
+     "article": "13.1",
+     "page_pdf": 35,
+     "citation": "en zone U1a — Le pourcentage minimal d'espaces libres perméables sera de 10 % de la surface totale du terrain d'assiette du projet."
+    },
+    {
+     "nom": "mixité sociale",
+     "valeur": 30.0,
+     "unite": "%",
+     "validee": true,
+     "article": "Zones U1a à U1pso, Art. 2, § 2.2 (3)",
+     "page_pdf": 14,
+     "citation": "« En cas de réalisation d'un programme de logements représentant une surface de plancher supérieure ou égale à 1 800 m², un minimum de 30 % de la programmation logement doit être affecté à des logements aidés »",
+     "seuil_m2": 1800
+    },
+    {
+     "nom": "stationnement (barème)",
+     "valeur": null,
+     "unite": null,
+     "validee": true,
+     "article": "12.2",
+     "page_pdf": 30,
+     "citation": "Autres logements — en zones U1a, U1b, U1c, U1d: 1 place / logement"
+    }
+   ]
+  },
+  "terrain": {
+   "contenance_totale_m2": 745.0,
+   "aire_dessin_m2": 742.0,
+   "zone_implantation_m2": 432.2,
+   "has_voie": false,
+   "note_limites": "arêtes non qualifiées (ni voie ni voisin cadastré ≤ 0,5 m), traitées en recul séparatif : arête sans voie ni voisin cadastré (ravine, littoral ou domaine public non routier)",
+   "contraintes": {
+    "ppr": 1,
+    "emplacement_reserve": 0,
+    "ebc": 0,
+    "sup": 4,
+    "servitude": 0,
+    "ppr_rouge": 0,
+    "ppr_bleue": 1
+   },
+   "ppr_rouge_m2": 0.0,
+   "ppr_bleue_m2": 742.0,
+   "pente_lidar": {
+    "disponible": true,
+    "source": "RGE ALTI 5 m (IGN)",
+    "denivele_m": 1.1,
+    "pente_moyenne_pct": 2.7,
+    "pente_max_pct": 6.0
+   },
+   "parcelles": [
+    {
+     "idu": "97415000BO0852",
+     "numero": "852",
+     "contenance_m2": 745.0,
+     "aire_dessin_m2": 742.0
+    }
+   ]
+  },
+  "hypotheses": {
+   "profondeur_m": 13.0,
+   "coef_plancher_habitable": 0.8,
+   "surfaces": {
+    "T2": 50.0,
+    "T3": 65.0,
+    "T4": 80.0
+   },
+   "largeur_coursive_m": 1.4,
+   "hauteur_etage_m": 3.0,
+   "place_m": [
+    2.5,
+    5.0
+   ],
+   "allee_largeur_m": 5.0,
+   "etiquette": "Estimé"
+  },
+  "programme_saisi": null,
+  "statut_global": "simulation impossible",
+  "message": "simulation impossible : aucune limite classée « voie » sur l'assiette — un accès véhicule ne peut être tracé.",
+  "scenarios": []
+ }
+}

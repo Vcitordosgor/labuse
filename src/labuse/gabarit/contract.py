@@ -155,6 +155,9 @@ class GabaritResult(BaseModel):
     # (round(portion / cadastre × 100)), calculé UNE fois au service. Deux sites front (GabaritLine +
     # panneau Gabarit) le recomputaient à l'identique → divergence possible ; ils lisent ce champ. None si non « à cheval ».
     pctPortionZone: Optional[int] = None
+    # CHASSE-DOCS-FIX-1 (Lot 5) — sur parcelle à cheval, la surface servie EST la contenance cadastrale ;
+    # cette note dit la part en zone constructible (« dont ~X m² en zone Ud »). None hors à-cheval.
+    surfaceNote: Optional[str] = None
     plafondEmpriseM2: Optional[float] = None
     plafondEmpriseStatus: Optional[str] = None   # 'absent' → « Non réglementé » (silence prouvé)
     hauteurReglementaireM: Optional[float] = None

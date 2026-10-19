@@ -1,0 +1,82 @@
+{
+ "_status": 200,
+ "data": {
+  "idu": "97410000AN0347",
+  "n": 11,
+  "servitudes": [
+   {
+    "categorie": "50 pas géométriques (bande littorale)",
+    "effet": "Limite haute des 50 pas (historique)",
+    "source": "50 pas géométriques — limite haute (DEAL)",
+    "date": "millésime cadastre 1877 (géoréf. 2012/1950)"
+   },
+   {
+    "categorie": "Recul du trait de côte",
+    "effet": "Évolution trait de côte (taux -0.172 m/an)",
+    "source": "Cerema / GéoLittoral — indicateur d'érosion côtière",
+    "date": "millésime millésime 2018"
+   },
+   {
+    "categorie": "Recul du trait de côte",
+    "effet": "Évolution trait de côte (taux -0.04 m/an)",
+    "source": "Cerema / GéoLittoral — indicateur d'érosion côtière",
+    "date": "millésime millésime 2018"
+   },
+   {
+    "categorie": "Risque naturel (PPR / aléa)",
+    "effet": "PPR inondation et mouvement de terrain — zone rouge (inconstructible) sur 54 % de la surface.",
+    "source": "DEAL Réunion — PPR / aléas",
+    "date": "millésime PPR/PPRL approuvés 2011–2026 (arrêtés, DEAL Lizmap)"
+   },
+   {
+    "categorie": "Risque naturel (PPR / aléa)",
+    "effet": "PPR recul du trait de cote, SUBMERSION_MARINE — zone rouge (inconstructible) sur 100 % de la surface.",
+    "source": "DEAL Réunion — PPR / aléas",
+    "date": "millésime PPR/PPRL approuvés 2011–2026 (arrêtés, DEAL Lizmap)"
+   },
+   {
+    "categorie": "Risque naturel (PPR / aléa)",
+    "effet": "Zone bleue PPR inondation et mouvement de terrain (~19% de la parcelle) — constructible SOUS PRESCRIPTIONS (règlement DEAL).",
+    "source": "DEAL Réunion — PPR / aléas",
+    "date": "millésime PPR/PPRL approuvés 2011–2026 (arrêtés, DEAL Lizmap)"
+   },
+   {
+    "categorie": "Risque naturel (PPR / aléa)",
+    "effet": "Aléa inondation — niveau fort (~54% de la parcelle).",
+    "source": "DEAL Réunion — PPR / aléas",
+    "date": "millésime PPR/PPRL approuvés 2011–2026 (arrêtés, DEAL Lizmap)"
+   },
+   {
+    "categorie": "Risque naturel (PPR / aléa)",
+    "effet": "Aléa mouvement de terrain — niveau fort (~54% de la parcelle).",
+    "source": "DEAL Réunion — PPR / aléas",
+    "date": "millésime PPR/PPRL approuvés 2011–2026 (arrêtés, DEAL Lizmap)"
+   },
+   {
+    "categorie": "Risque naturel (PPR / aléa)",
+    "effet": "Aléa submersion marine — niveau fort (toute la parcelle).",
+    "source": "DEAL Réunion — PPR / aléas",
+    "date": "millésime PPR/PPRL approuvés 2011–2026 (arrêtés, DEAL Lizmap)"
+   },
+   {
+    "categorie": "Servitude d'Utilité Publique",
+    "effet": "Risques naturels (PPR) — prescriptions constructives — Enveloppe des zonages réglementaires",
+    "source": "SUP — assiettes GPU (API Carto)",
+    "date": "ingéré le 14/09/2026"
+   },
+   {
+    "categorie": "ZNIEFF — zone naturelle d'intérêt écologique",
+    "effet": "type II — Bas et mi-pentes de l'Est : contrainte environnementale (études d'impact renforcées, risque de recours) ; n'interdit pas de construire",
+    "source": "ZNIEFF (INPN/MNHN)",
+    "date": "millésime INPN, mise à jour 29/08/2025"
+   }
+  ],
+  "synthese": "11 servitude(s)/contrainte(s) dormante(s) intersecte(nt) cette parcelle.",
+  "non_couvert": [
+   "Procédures PLU en cours (révision/élaboration) — voir l'outil PLU (radar Sudocuh) ; non reprises ici",
+   "Canalisations de transport de matières dangereuses (gaz, hydrocarbures) — couche non ingérée",
+   "Servitudes d'Utilité Publique hors GPU Réunion — 417 SUP ingérées (8 familles présentes, toutes décodées) ; une SUP non publiée au Géoportail de l'urbanisme n'est pas vue (certificat d'urbanisme indispensable)"
+  ],
+  "avertissement": "Lecture des couches déjà ingérées — sourcée et datée. L'absence d'une servitude ici ne vaut pas absence réelle (couches non exhaustives) ; vérifiez le certificat d'urbanisme."
+ }
+}

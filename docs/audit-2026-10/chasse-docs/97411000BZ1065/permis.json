@@ -1,0 +1,211 @@
+{
+ "_status": 200,
+ "data": {
+  "idu": "97411000BZ1065",
+  "c100": 5,
+  "c200": 11,
+  "localises": 11,
+  "non_localises": 0,
+  "note": "Permis autorisés géolocalisés < 200 m (source du signal viabilisation M-VIA).",
+  "items": [
+   {
+    "permit_id": "97441113A0067",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2013-04-29",
+    "etat": "5",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 11,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.429238362,
+      -20.885417396
+     ]
+    }
+   },
+   {
+    "permit_id": "97441123A0163",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2023-09-12",
+    "etat": "6",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 36,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.429086554,
+      -20.8856011
+     ]
+    }
+   },
+   {
+    "permit_id": "97441119A0205",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2019-10-07",
+    "etat": "6",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 95,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.428457145,
+      -20.885676571
+     ]
+    }
+   },
+   {
+    "permit_id": "97441121A0267",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2022-04-20",
+    "etat": "6",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 99,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.428773062,
+      -20.88425405
+     ]
+    }
+   },
+   {
+    "permit_id": "97441122A0020",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2022-06-28",
+    "etat": "5",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 99,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.428494933,
+      -20.884473465
+     ]
+    }
+   },
+   {
+    "permit_id": "97441116A0018",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2016-06-07",
+    "etat": "2",
+    "nb_lgt": "4",
+    "porteur": null,
+    "distance_m": 147,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.429780979,
+      -20.883672482
+     ]
+    }
+   },
+   {
+    "permit_id": "97441117A0186",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2017-09-04",
+    "etat": "6",
+    "nb_lgt": "1",
+    "porteur": "AYAR",
+    "distance_m": 151,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.430439485,
+      -20.8839683
+     ]
+    }
+   },
+   {
+    "permit_id": "97441117A0103",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2017-06-08",
+    "etat": "6",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 152,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.42922539,
+      -20.886854876
+     ]
+    }
+   },
+   {
+    "permit_id": "9744111800012",
+    "nature": "PD",
+    "nature_libelle": "Permis de démolir",
+    "date": "2018-09-20",
+    "etat": "2",
+    "nb_lgt": null,
+    "porteur": null,
+    "distance_m": 168,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.429271015,
+      -20.88342999
+     ]
+    }
+   },
+   {
+    "permit_id": "97441114A0225",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2014-09-15",
+    "etat": "6",
+    "nb_lgt": "28",
+    "porteur": "B.D.M. SALAZES",
+    "distance_m": 168,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.429271015,
+      -20.88342999
+     ]
+    }
+   },
+   {
+    "permit_id": "97441118A0059",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2018-05-30",
+    "etat": "5",
+    "nb_lgt": "2",
+    "porteur": null,
+    "distance_m": 180,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.430336982,
+      -20.883587459
+     ]
+    }
+   }
+  ]
+ }
+}

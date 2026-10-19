@@ -1,0 +1,82 @@
+LABUSE           Comparatif
+
+
+
+
+Comparatif
+Deux à trois parcelles côte à côte, sur les lignes de Comparer.
+
+2 parcelles · CO-20261019-0347 · 19/10/2026
+
+
+
+   Comparatif
+                                                      AN 0347                                                                  BO 0852
+                                                      Saint-Benoît                                                             Saint-Paul
+
+  Surface      sourcé                                 4 546 m²                                                                 745 m²
+
+  Zone PLU      sourcé                                N                                                                        U1a
+
+  Classement LABUSE                                   0 · Non retenue · Signal faible                                          0 · Non retenue · Signal faible
+
+  Zone constructible         sourcé                   non                                                                      oui
+
+  SDP maximale réglementaire             estimé       —                                                                        797 m²
+
+  SDP résiduelle        estimé                        — · zone non constructible                                               0 m²
+
+  Emprise au sol max (PLU)            sourcé          non réglementée                                                          non réglementée
+
+  Taux d'occupation du gabarit                                                                                                 Saturé : le bâti existant dépasse déjà le plafond d'emprise du
+     estimé                                                                                                                    PLU actuel
+
+  Sous-densité        estimé                          —                                                                        non
+
+  Charge foncière /m² terrain           estimé        —                                                                        259 €/m²
+
+                                                                                                                                                                                Généré via LABUSE
+
+
+
+
+Comparatif indicatif de parcelles établi sur des données publiques. Ni un prix, ni un conseil. Données LABUSE au 19/10/2026.                                                                1/2
+                                                      AN 0347                                                                  BO 0852
+                                                      Saint-Benoît                                                             Saint-Paul
+
+  Prix terrain nu zone        estimé                  —                                                                        479 €/m²
+
+  Prix bâti (section cadastrale)                      1 445 €/m²                                                               3 804 €/m²
+     estimé
+
+
+  Logements possibles                                 voir l'Étude de faisabilité                                              voir l'Étude de faisabilité
+
+  Bâti existant      sourcé                           —                                                                        73 % du terrain
+
+  Gabarit max       sourcé                            —                                                                        R+3
+
+  Accès & réseaux        sourcé                       Viabilisation probable                                                   Viabilisation confirmée par les faits
+
+  Assainissement        estimé                        18 % des logements du secteur ne sont pas raccordés au                   Tout-à-l'égout (collectif)
+                                                      réseau collectif
+
+  Propriétaire     sourcé                             personne morale                                                          personne morale
+
+  Contrainte majeure          sourcé                  Exclue : PPR zone rouge (inconstructible) — 100 % de la                  SDP résiduelle 0 m² — rien à construire.
+                                                      surface.
+
+
+Maximum réglementaire (gabarit) : le total que la parcelle peut porter selon les règles, pas le programme qui sera déposé. Face aux permis réellement autorisés (volet D VERITE-TERRAIN-2),
+les projets en utilisent en médiane environ la moitié (0,46 en surface, 0,40 en logements).
+
+
+
+
+                                                                                                                                                                            Généré via LABUSE
+
+
+
+
+Comparatif indicatif de parcelles établi sur des données publiques. Ni un prix, ni un conseil. Données LABUSE au 19/10/2026.                                                            2/2
+

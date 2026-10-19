@@ -117,13 +117,37 @@ def gabarit_detail(idu: str, db: Session = Depends(get_db)) -> GabaritResult:
         if _dessin and float(_dessin) > 0:
             res.zoneImplantationM2 = round(
                 float(res.zoneImplantationM2) * float(res.surfaceParcelleM2) / float(_dessin), 1)
-    # FRONT-CHIFFRES-2 (F57/F50) — % « à cheval » calculé ICI, une seule fois : round(portion / cadastre
-    # × 100), même arithmétique que les deux sites front qui le recomputaient (GabaritLine + panneau).
+    # CHASSE-DOCS-FIX-1 (vérif #3) — SOURCE UNIQUE pour la part en zone constructible : le ZONAGE
+    # (faisabilite.zone_servie.zone_dominante — la MÊME que la fiche §PLU, Comparer et le Copilote),
+    # JAMAIS un recalcul géométrique sur le dessin (qui divergeait de 1 à 3 points : Dossier « Ud 45,6 % »
+    # vs Gabarit « 43 % »). pctPortionZone + surfaceNote dérivent donc du même % et de la contenance.
     _rac = build.raccordement or {}
-    _cad = (_rac.get("parcelle") or {}).get("surface_m2")
-    if (_rac.get("zone") or {}).get("a_cheval") and _cad and res.surfaceParcelleM2 is not None:
-        res.pctPortionZone = round(res.surfaceParcelleM2 / _cad * 100)
+    if (_rac.get("zone") or {}).get("a_cheval"):
+        from ..faisabilite.zone_servie import zone_dominante as _zdom
+        _pid = db.execute(text("SELECT id FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
+        _zs = _zdom(db, _pid) if _pid else None
+        _pct = _zs.pct_constructible if _zs else None
+        if _pct is not None:
+            _contenance = db.execute(text("SELECT contenance_m2 FROM parcels WHERE idu = :i"),
+                                     {"i": idu}).scalar()
+            res.pctPortionZone = round(_pct)
+            _uu = [p["zone"] for p in (_zs.parts or []) if p.get("fam") in ("U", "AU")]
+            _zn = _uu[0] if len(_uu) == 1 else None
+            if _contenance:
+                _portion = round(float(_contenance) * _pct / 100)   # % NON arrondi × contenance
+                res.surfaceNote = (f"Contenance cadastrale {int(_contenance)} m² — dont ~{_portion} m² "
+                                   + (f"en zone {_zn}" if _zn else "en zone constructible")
+                                   + " (parcelle à cheval).")
     res.batiExistantGeoJSON = _bati_existant(db, idu)
+    # CHASSE-DOCS-FIX-1 (E-07) — zone d'implantation NULLE (terrain exigu : rien ne passe après reculs) :
+    # le plafond d'emprise et la hauteur n'ont pas d'objet (ils donneraient un gabarit chiffré sur un
+    # terrain où rien ne s'implante). On les masque et on le DIT.
+    if res.zoneImplantationM2 == 0:
+        res.plafondEmpriseM2 = None
+        res.hauteurReglementaireM = None
+        res.terrainNote = ("Aucune zone d'implantation après reculs (terrain exigu) : plafond "
+                           "d'emprise et hauteur sans objet ici.")
+        return res
     # CHASSE-CALCULS-FIX-1 Lot 6 (E-C1) — l'extrusion 3D est posée à plat : on le DIT dès qu'une
     # hauteur réglementaire permet un volume (le mode 3D l'affiche).
     if res.hauteurReglementaireM is not None:

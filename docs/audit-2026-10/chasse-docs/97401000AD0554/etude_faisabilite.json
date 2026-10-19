@@ -1,0 +1,148 @@
+{
+ "_status": 200,
+ "data": {
+  "moteur": {
+   "livrable": "IMPLANTATION-2",
+   "version_conventions": "implantation-conventions-1",
+   "etiquette": "Estimé",
+   "crs_dessin": "EPSG:2975",
+   "crs_carte": "EPSG:4326"
+  },
+  "entrees": {
+   "idus": [
+    "97401000AD0554"
+   ],
+   "commune": "Les Avirons",
+   "insee": "97401",
+   "zone": "Ud3",
+   "type_projet": "collectif",
+   "objectif": "equilibre",
+   "programme_mode": "propose",
+   "stationnement": "aerien",
+   "terrain": "libere"
+  },
+  "regles": {
+   "zone": "Ud3",
+   "insee": "97401",
+   "lignes": [
+    {
+     "nom": "recul sur voie",
+     "valeur": 4.0,
+     "unite": "m",
+     "validee": true,
+     "article": "U 6.2",
+     "page_pdf": 10,
+     "citation": "Les constructions doivent être implantées en recul de la voie, avec une distance comptée horizontalement et perpendiculairement de tout point de la façade au point le plus proche de la voie, au moins égale à 4 mètres."
+    },
+    {
+     "nom": "recul sur limites séparatives",
+     "valeur": 1.9,
+     "unite": "m",
+     "validee": true,
+     "article": "U 7.2",
+     "page_pdf": 11,
+     "citation": "En secteurs Uc3 et Ud3, les constructions peuvent être implantées sur une seule limite séparative ... En cas de retrait, la distance comptée horizontalement et perpendiculairement de tout point de la façade de la construction au point le plus proche de la limite séparative, doit être au minimum de 1,90 mètre."
+    },
+    {
+     "nom": "emprise au sol (CES)",
+     "valeur": 40.0,
+     "unite": "%",
+     "validee": true,
+     "article": "U 9.2",
+     "page_pdf": 11,
+     "citation": "en secteurs Uc3, Ud2 et Ud3 : 40%"
+    },
+    {
+     "nom": "hauteur à l'égout",
+     "valeur": 6.0,
+     "unite": "m",
+     "validee": true,
+     "article": "U 10.2",
+     "page_pdf": 12,
+     "citation": "en secteur Uc1, Uc3, Ud2 et Ud3 : - 6 mètres à l'égout du toit ou au sommet de l'acrotère ; - 9 mètres au faitage."
+    },
+    {
+     "nom": "hauteur au faîtage",
+     "valeur": 9.0,
+     "unite": "m",
+     "validee": true,
+     "article": "U 10.2",
+     "page_pdf": 12,
+     "citation": "en secteur Uc1, Uc3, Ud2 et Ud3 : - 6 mètres à l'égout du toit ou au sommet de l'acrotère ; - 9 mètres au faitage."
+    },
+    {
+     "nom": "pleine terre (perméabilité)",
+     "valeur": 40.0,
+     "unite": "%",
+     "validee": true,
+     "article": "U 13.1",
+     "page_pdf": 18,
+     "citation": "En secteurs Uc3, Ud2 et Ud3 : 40% de la superficie totale de l'unité foncière"
+    },
+    {
+     "nom": "stationnement (barème)",
+     "valeur": null,
+     "unite": null,
+     "validee": true,
+     "article": "U 12.2",
+     "page_pdf": 17,
+     "citation": "1,5 place par logement. En outre, il est demandé 0,5 place de stationnement supplémentaire sur voie par terrain, pour les lotissements de plus de 5 lots."
+    }
+   ]
+  },
+  "terrain": {
+   "contenance_totale_m2": 700.0,
+   "aire_dessin_m2": 634.2,
+   "zone_implantation_m2": 74.5,
+   "has_voie": true,
+   "note_limites": null,
+   "contraintes": {
+    "ppr": 2,
+    "emplacement_reserve": 0,
+    "ebc": 0,
+    "sup": 8,
+    "servitude": 0,
+    "ppr_rouge": 1,
+    "ppr_bleue": 1
+   },
+   "ppr_rouge_m2": 46.5,
+   "ppr_bleue_m2": 23.1,
+   "pente_lidar": {
+    "disponible": true,
+    "source": "RGE ALTI 5 m (IGN)",
+    "denivele_m": 5.0,
+    "pente_moyenne_pct": 5.8,
+    "pente_max_pct": 12.7
+   },
+   "parcelles": [
+    {
+     "idu": "97401000AD0554",
+     "numero": "554",
+     "contenance_m2": 700.0,
+     "aire_dessin_m2": 634.2
+    }
+   ]
+  },
+  "hypotheses": {
+   "profondeur_m": 13.0,
+   "coef_plancher_habitable": 0.8,
+   "surfaces": {
+    "T2": 50.0,
+    "T3": 65.0,
+    "T4": 80.0
+   },
+   "largeur_coursive_m": 1.4,
+   "hauteur_etage_m": 3.0,
+   "place_m": [
+    2.5,
+    5.0
+   ],
+   "allee_largeur_m": 5.0,
+   "etiquette": "Estimé"
+  },
+  "programme_saisi": null,
+  "statut_global": "simulation impossible",
+  "message": "simulation impossible : aucune implantation ne passe tous les contrôles durs sur cette assiette (zone trop étroite, reculs, ou stationnement aérien impossible).",
+  "scenarios": []
+ }
+}

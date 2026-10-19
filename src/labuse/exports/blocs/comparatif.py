@@ -112,7 +112,12 @@ _LIGNES = [
     ("Emprise au sol max (PLU)", "s", lambda r: (_pct(r, "emprise_ces_pct") or "non réglementée")),
     ("Taux d'occupation du gabarit", "e", lambda r: esc(fmt_taux_emprise(r.get("taux_emprise_pct")))),
     ("Sous-densité", "e", lambda r: _oui_non(r.get("sous_densite"))),
-    ("Charge foncière /m² terrain", "e", lambda r: (f"{_i(r.get('charge_fonciere_m2'))} €/m²" if r.get("charge_fonciere_m2") is not None else None)),
+    # CHASSE-DOCS-FIX-1 (Lot 5) — charge foncière NÉGATIVE : on garde le chiffre mais on DIT ce qu'il
+    # signifie (« le foncier ne se paie pas » à ces hypothèses), jamais un « -59 €/m² » nu et énigmatique.
+    ("Charge foncière /m² terrain", "e", lambda r: ((f"{_i(r.get('charge_fonciere_m2'))} €/m²"
+        + (" — Bilan déficitaire : à ces hypothèses, le foncier ne se paie pas"
+           if (r.get("charge_fonciere_m2") or 0) < 0 else ""))
+        if r.get("charge_fonciere_m2") is not None else None)),
     ("Prix terrain nu zone", "e", lambda r: _eur_m2(r, "terrain_zone_eur_m2")),
     ("Prix bâti (section cadastrale)", "e", lambda r: _eur_m2(r, "prix_secteur_bati_m2")),
     # IMPLANTATION-4 (LOT B) + FIX-ORFEVRE-1 (décision Vic 18/10/2026) — aucun nombre de logements de

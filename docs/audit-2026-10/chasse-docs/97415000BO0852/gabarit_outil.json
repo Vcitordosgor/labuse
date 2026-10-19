@@ -1,0 +1,206 @@
+{
+ "_status": 200,
+ "data": {
+  "status": "incomplete",
+  "message": "Calcul incomplet — donnée réglementaire manquante",
+  "validationErrors": [
+   "Limites de la parcelle non qualifiées (voie / limite séparative) — arête sans voie ni voisin cadastré (ravine, littoral ou domaine public non routier)"
+  ],
+  "raccordement": {
+   "parcelle": {
+    "idu": "97415000BO0852",
+    "commune": "Saint-Paul",
+    "surface_m2": 745.0
+   },
+   "zone": {
+    "code": "U1a",
+    "famille": "U",
+    "a_cheval": false,
+    "via_renvoi": null
+   },
+   "plu": {
+    "emprise_pct": null,
+    "hauteur_faitage_m": 16.0,
+    "hauteur_egout_m": 12.0,
+    "recul_voie_m": null,
+    "recul_sep_m": 3.0,
+    "source": "PLU — Saint-Paul"
+   },
+   "silences": [
+    "emprise_sol.ces"
+   ],
+   "ppr": {
+    "result": "SOFT_FLAG",
+    "detail": "Zone bleue PPR INONDATION_MOUVEMENT_DE_TERRAIN — constructible SOUS PRESCRIPTIONS (règlement DEAL).",
+    "rouge": false
+   },
+   "citation_voie": {
+    "emprises_publiques": false,
+    "voies_privees": false,
+    "article": "",
+    "citation": ""
+   },
+   "classification": {
+    "provider": "LABUSE — adjacence cadastre + BD TOPO BD TOPO® V3 (IGN) — édition non enregistrée",
+    "voie": 0,
+    "side": 0,
+    "rear": 1,
+    "emprise_publique": 0,
+    "voie_privee": 0,
+    "aretes_residuelles_rattachees": 0,
+    "non_classees": [
+     "arête sans voie ni voisin cadastré (ravine, littoral ou domaine public non routier)"
+    ]
+   }
+  },
+  "surfaceParcelleM2": 745.0,
+  "zoneImplantationM2": null,
+  "pctPortionZone": null,
+  "plafondEmpriseM2": null,
+  "plafondEmpriseStatus": null,
+  "hauteurReglementaireM": null,
+  "hauteurSource": null,
+  "hauteurStatus": null,
+  "hauteurBase": null,
+  "hauteurEgoutM": null,
+  "terrainNote": null,
+  "coverage": null,
+  "appliedRules": [],
+  "nonIntegratedRules": [],
+  "contourGeoJSON": {
+   "type": "Polygon",
+   "coordinates": [
+    [
+     [
+      55.2733987,
+      -21.011178
+     ],
+     [
+      55.2733789,
+      -21.0111519
+     ],
+     [
+      55.2733664,
+      -21.0111352
+     ],
+     [
+      55.2732891,
+      -21.011033
+     ],
+     [
+      55.2732798,
+      -21.0110206
+     ],
+     [
+      55.2730113,
+      -21.0112119
+     ],
+     [
+      55.2731313,
+      -21.0113664
+     ],
+     [
+      55.2733987,
+      -21.011178
+     ]
+    ]
+   ]
+  },
+  "zoneImplantationGeoJSON": null,
+  "retraitsGeoJSON": null,
+  "exclusionsGeoJSON": null,
+  "batiExistantGeoJSON": {
+   "type": "FeatureCollection",
+   "features": [
+    {
+     "type": "Feature",
+     "properties": {
+      "hauteur_m": 12.7,
+      "h_source": "lidar"
+     },
+     "geometry": {
+      "type": "MultiPolygon",
+      "coordinates": [
+       [
+        [
+         [
+          55.27336726,
+          -21.0111315
+         ],
+         [
+          55.27328956,
+          -21.01102955
+         ],
+         [
+          55.2731664,
+          -21.01111592
+         ],
+         [
+          55.27318725,
+          -21.01114232
+         ],
+         [
+          55.27315914,
+          -21.01116101
+         ],
+         [
+          55.27313924,
+          -21.01113551
+         ],
+         [
+          55.27301997,
+          -21.0112174
+         ],
+         [
+          55.27309866,
+          -21.01131756
+         ],
+         [
+          55.27336726,
+          -21.0111315
+         ]
+        ]
+       ]
+      ]
+     }
+    },
+    {
+     "type": "Feature",
+     "properties": {
+      "hauteur_m": 12.7,
+      "h_source": "lidar"
+     },
+     "geometry": {
+      "type": "MultiPolygon",
+      "coordinates": [
+       [
+        [
+         [
+          55.27337958,
+          -21.01114789
+         ],
+         [
+          55.27336726,
+          -21.0111315
+         ],
+         [
+          55.27309866,
+          -21.01131756
+         ],
+         [
+          55.27311194,
+          -21.01133395
+         ],
+         [
+          55.27337958,
+          -21.01114789
+         ]
+        ]
+       ]
+      ]
+     }
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,10 @@
+{
+ "_status": 200,
+ "data": {
+  "idu": "97410000AN0347",
+  "parcel_id": 285779,
+  "orientation": "Nord",
+  "aspect_deg": 21.0,
+  "pente_moyenne_deg": 3.4
+ }
+}

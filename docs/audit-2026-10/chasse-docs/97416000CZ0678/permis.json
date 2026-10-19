@@ -1,0 +1,67 @@
+{
+ "_status": 200,
+ "data": {
+  "idu": "97416000CZ0678",
+  "c100": 1,
+  "c200": 3,
+  "localises": 3,
+  "non_localises": 0,
+  "note": "Permis autorisés géolocalisés < 200 m (source du signal viabilisation M-VIA).",
+  "items": [
+   {
+    "permit_id": "97441617E0210",
+    "nature": "DP",
+    "nature_libelle": "Déclaration préalable",
+    "date": "2017-07-10",
+    "etat": "2",
+    "nb_lgt": null,
+    "porteur": null,
+    "distance_m": 0,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.48620638,
+      -21.308956267
+     ]
+    }
+   },
+   {
+    "permit_id": "97441616A0474",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2016-11-04",
+    "etat": "2",
+    "nb_lgt": null,
+    "porteur": null,
+    "distance_m": 176,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.487177148,
+      -21.307448143
+     ]
+    }
+   },
+   {
+    "permit_id": "97441617A0679",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2018-08-16",
+    "etat": "6",
+    "nb_lgt": null,
+    "porteur": null,
+    "distance_m": 176,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.487177148,
+      -21.307448143
+     ]
+    }
+   }
+  ]
+ }
+}

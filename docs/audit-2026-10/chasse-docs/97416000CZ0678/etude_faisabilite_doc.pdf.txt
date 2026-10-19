@@ -1,0 +1,448 @@
+L A B U S E · D O C U M E N T N ° E F - 1 9 1 0 2 0 2 6 - 5 74 1
+
+
+Étude de faisabilité
+— parcelles 678
+3 279 m² · zone A · collectif · stationnement aerien
+
+
+
+   Selon nos hypothèses d'implantation, ce terrain peut recevoir 84 logements en
+   collectif avec stationnement aérien.
+
+
+   CONTRÔLES AUTOMATISÉS (SCÉNARIO A)                                            STATUT DE L'ÉTUDE
+   0 réussis · 0 échoués · 8 non effectués                                       Exploitable — à faire confirmer par un architecte
+
+
+ Scénario                  Forme                  Logements           Niveaux              SDP du scénario        Places   Étude
+
+
+ A (retenu)                barre                             84           R+5                        5 370             0     Exploitable
+
+
+Fourchette = scénarios « Exploitable » seulement. Jamais « ce terrain permet N logements » ; ce document n'affirme aucune
+conformité réglementaire.
+
+
+
+   3 279 m²                                                 —                                             —
+   Contenance cadastrale                                    Emprise au sol max                            Hauteur (hauteur à l'égout)
+
+
+
+
+   sans objet                                               —                                             8
+   Logements aidés imposés                                  Places imposées (scénario A)                  Contrôles non effectués
+
+
+
+   Pré-faisabilité automatisée : scénarios indicatifs d'implantation établis à partir des règles publiées du PLU et
+   des données publiques. Ce document n'est ni une étude d'architecte, ni une preuve de conformité, ni un
+   dossier de permis.
+
+
+
+
+Étude de faisabilité · 678 · scénario A · Généré via LABUSE le 19/10/2026 · pré-faisabilité, non contractuel                               1/8
+   1. Le terrain
+
+   1 parcelle(s), 3 279 m² au cadastre.
+
+
+
+
+                                                                                                                        N
+
+
+
+
+    Parcelles        Assiette        Limite classée voie
+
+Parcelle                                               Contenance                                              Nature
+
+678                                                    3 279 m²                                                         Sourcé
+
+
+Assiette fusionnée                                     3 279 m²
+
+
+Terrain                                                Valeur                                                  Nature
+
+Pente moyenne                                          5,4 %                                                        LiDAR HD
+
+
+
+
+   2. Règles et contraintes
+
+   Zone A du PLU. Chaque valeur est citée ; une règle non validée reste « non
+   effectuée », jamais tenue pour acquise.
+
+Règle                                                  Valeur                                                  Nature
+
+recul sur voie                                         —                                                        ƒ Non validée
+
+
+
+
+Étude de faisabilité · 678 · scénario A · Généré via LABUSE le 19/10/2026 · pré-faisabilité, non contractuel                2/8
+recul sur limites séparatives                          —                                                                        ƒ Non validée
+
+
+emprise au sol (CES)                                   —                                                                        ƒ Non validée
+
+
+hauteur à l'égout                                      —                                                                        ƒ Non validée
+
+
+hauteur au faîtage                                     —                                                                        ƒ Non validée
+
+
+pleine terre (perméabilité)                            —                                                                        ƒ Non validée
+
+
+
+Contraintes cartographiées
+
+Contrainte                                             Sur le           Traitement
+                                                       terrain
+
+PPR zone rouge                                         1 308 m²         retirée de l'implantation (hypothèse prudente ;
+                                                                        prescriptions à lire)
+
+Servitude d'utilité publique                           présente         retirée seulement si elle interdit de construire ; sinon
+                                                                        signalée
+
+Ligne absente quand la contrainte ne touche pas le terrain.
+
+
+
+   3. Enveloppe constructible
+
+   Zone d'implantation de 2 012 m² après reculs et contraintes. Ce plafond n'est pas
+   ce qu'on peut construire : c'est le scénario (plan masse) qui le dit.
+
+
+
+
+                                                                                                                                      N
+
+
+
+
+    Parcelles        Assiette        Zone d'implantation           PPR rouge (retirée)          PPR bleue (signalée)   Limite classée voie
+
+
+
+Étude de faisabilité · 678 · scénario A · Généré via LABUSE le 19/10/2026 · pré-faisabilité, non contractuel                                 3/8
+Surface                                                Valeur                                                         Nature
+
+Terrain (contenance)                                   3 279 m²                                                                Sourcé
+
+
+Zone d'implantation réglementaire                      2 012 m²                                                            ƒ Dérivé
+
+
+Retiré par PPR rouge                                   1 308 m²                                                                Sourcé
+
+
+Plafond d'emprise                                      règle non validée                                                   ƒ Dérivé
+
+
+
+
+   4. Plan masse du scénario A
+
+   Scénario A — barre en R+5 : 84 logements, 0 places aériennes.
+
+
+
+
+                                                                                                                               N
+
+
+
+
+    Bâtiment proposé           Places         Allée        Espaces libres         Accès         Zone d'implantation
+
+Élément                                                Valeur                                                         Nature
+
+Emprise des bâtiments                                  1 003 m²                                                                Estimé
+
+
+Places dessinées                                       0                                                                       Estimé
+
+
+Espaces libres · dont pleine terre                     2 338 m²                                                            ƒ Dérivé
+
+
+Chaque nombre de ce tableau = nombre d'objets dans la géométrie (verrou de test). Plan rendu depuis la géométrie servie.
+
+
+
+
+Étude de faisabilité · 678 · scénario A · Généré via LABUSE le 19/10/2026 · pré-faisabilité, non contractuel                       4/8
+                                                                                                                                                                    N   LÉGENDE
+
+                                                                                                                                                                             Limite des parcelles étudiées
+                                            TN 202,0                                                                                                     TN 206,2            Zone d’implantation réglementaire
+                                                                                                                                                                             Bâtiment proposé
+                                                 ,11
+                                               25
+                                                                                                                                                                             Place de stationnement 2,50 × 5,00
+                                             Chemin Boulaki
+                                                                                                                                                                             Allée, accès
+                                                                                                                                                                             Espaces libres, pleine terre
+                                                                                                                                                                             Bâti voisin (BD TOPO)
+                                                                                                                                                                             PPR zone rouge (retirée)
+                                                                                                                                                                             PPR zone bleue (signalée)
+
+
+
+
+                                                                                                                 677
+
+
+
+
+                                                                                                                                                                        SURFACES (mesurées sur le plan)
+                                                                                                                                                                        Terrain (contenance)                                        3 279 m²
+                                                                                   T3                                                                                   Emprise bâtie                                          1 003 m² · 31 %
+                                   AW 678
+                                                                                        T2                                                                              SDP du scénario (R+5)                                       5 370 m²
+
+                                                                                             T3
+                                                                                                                                                                        Stationnement + allée                                            0 m²
+                                                                                                                                                                        Pleine terre                                                2 338 m²
+                                                                                                  T2
+                                                                                138,                                                                                    Places dessinées / imposées                                     0/—
+                                                                                  23
+                                                                                                       T4                                                               Logements                             84 · T2 ×42 · T3 ×30 · T4 ×12
+                                                                                                            T2
+
+                                                                                                                 T3
+
+                                                                                                                      T2
+
+                                                                                                                           T3
+
+                                                                                                                                T2
+
+                                                                                                                                     T4
+
+                                                                                                                                          T2
+                                                                                                                                                                                                                              536
+                                                                                                                                               T3                         LABUSE
+                                                                                                                                                    Chemin
+                                                                                                                                                    T2     Luspot         Étude de faisabilité — plan masse
+                                                                                                                                                                          Saint-Pierre · zone A
+                                                                                                                                                                          Parcelles CZ 678
+                                            TN 196,8                                                                                                     TN 201,2
+                                                                                                                                                                          Scénario A · barre R+5 · stationnement aérien
+                                                                                                                                                                          PLU millésime en vigueur · LiDAR HD IGN · BD TOPO
+                                                                                                                                                                          Généré le 19/10/2026 · EF-19102026-5741
+
+                                                                                                                                                                          Esquisse indicative — pas une étude d’architecte
+                       563
+
+              Échelle ≈ 1 : 500
+
+              0         10        20 m
+
+
+
+
+Planche — plan masse « façon architecte », dessinée depuis la géométrie du scénario (contexte : cadastre et bâti voisins BD TOPO, voies nommées, TN LiDAR aux angles). Esquisse indicative — pas
+une étude d'architecte.                                                                                                                               537
+
+
+
+Étude de faisabilité · 678 · scénario A · Généré via LABUSE le 19/10/2026 · pré-faisabilité, non contractuel                                                                                                                                     5/8
+     5. Distribution et coupe
+
+     R+5 : la répartition des logements par niveau, chaque module dessiné = un
+     logement compté.
+
+Niveau                                                      T2           T3           T4          SDP du scénario
+
+R+5                                                                  7            5          2                                                                      895
+
+R+4                                                                  7            5          2                                                                      895
+
+R+3                                                                  7            5          2                                                                      895
+
+R+2                                                                  7            5          2                                                                      895
+
+R+1                                                                  7            5          2                                                                      895
+
+RDC                                                                  7            5          2                                                                      895
+
+Total                                                            42             30           12                                                                    5 370
+
+
+
+
+                limite sur voie limite de fond
+                                                                                                               LÉGENDE
+
+                                                                                                                    Terrain naturel (LiDAR)
+                                                                                                                    Hauteur égout / faîtage (règle)
+                                                                                                                    Bâtiment en coupe
+                                                                                                                    Stationnement aérien
+
+                 R+5
+
+
+
+
+                 R+4                                                                                            LABUSE
+                                                                                                                Étude de faisabilité — coupe de principe
+                                                                                                                Saint-Pierre · zone A
+                                                                                                                Parcelles CZ 678
+     18,00 m     R+3                                                                                            Scénario A · R+5 · 6 niveaux × 3,00 m
+                                                                                                                TN LiDAR HD IGN · règles PLU servies
+                                                                                                                Généré le 19/10/2026 · EF-19102026-5741
+
+                                                                                                                Esquisse indicative — pas une étude d’architecte
+                 R+2
+
+
+
+
+                 R+1
+
+
+
+
+        204,4    RDC                             204,4
+                                  Terrain naturel (LiDAR)
+
+
+
+
+Coupe de principe : le volume bâti sous la règle de hauteur, le terrain naturel (LiDAR), le stationnement aérien au sol. Esquisse
+indicative, pas une étude d'architecte.
+
+
+
+     6. Capacité et contrôles
+
+     Scénario A : 0 contrôles réussis, 0 échoués, 8 non effectués. Ce n'est pas une
+     validation réglementaire.
+
+Programme                                                   Nombre            Surface moy.             SHAB estimée                                    Nature
+
+T2                                                                       42                   50 m²                         1 680 m²                               Estimé
+
+
+
+
+Étude de faisabilité · 678 · scénario A · Généré via LABUSE le 19/10/2026 · pré-faisabilité, non contractuel                                                          6/8
+T3                                                                  30                        65 m²                1 560 m²         Estimé
+
+
+T4                                                                   12                      80 m²                  768 m²          Estimé
+
+
+Répartition proposée par le moteur pour l'objectif choisi. Programme saisi par le client : mêmes lignes en chip Projet.
+
+Contrôle                                               Règle                                          Scénario                Résultat
+
+Emprise au sol                                         règle non validée                              1003 m²                  Non effectué
+
+Hauteur                                                règle non validée                              R+5                      Non effectué
+
+Prospect (hauteur relative)                            pas de règle de prospect                       —                                  Non
+                                                                                                                                  applicable
+
+Reculs                                                 règle non validée                              bâti dans la zone        Non effectué
+
+Perméabilité (pleine terre)                            règle non validée                              2338 m²                  Non effectué
+
+Stationnement                                          barème non validé                              0 places dessinées       Non effectué
+
+Distance entre constructions                           sans objet (un seul bâtiment)                  un seul bâtiment                   Non
+                                                                                                                                  applicable
+
+Locaux vélos · déchets                                 non modélisés                                  —                        Non effectué
+
+PPR zone rouge (interdiction)                          inconstructible                                1308 m²                  Non effectué
+
+PPR zone bleue (prescription)                          absente du terrain                             —                                  Non
+                                                                                                                                  applicable
+
+ER / EBC / SUP / servitudes                            présente(s)                                    sup                      Non effectué
+
+
+Un contrôle « Échoué » retire le scénario des « Exploitable ». « Non effectué » ne vaut jamais « Réussi ».
+
+
+
+     7. Hypothèses, limites, sources
+
+     Ce que l'étude suppose, ce qu'elle ne sait pas, d'où viennent les chiffres.
+
+
+Hypothèses (toutes « Estimé », modifiables dans l'outil)
+
+Hypothèse                                              Valeur                        Convention
+
+Profondeur de bâtiment                                 13 m                          logements traversants, coursive extérieure
+
+Surface moyenne par type                               50 / 65 / 80 m²               modifiable
+
+Plancher → habitable                                   0,8                           circulations et noyaux hors habitable
+
+Place · allée                                          2,5 × 5 m · allée 5 m         dimensions usuelles
+
+Hauteur de niveau                                      3m                            convention
+
+Stationnement                                          aérien seul                   pas de sous-sol dans cette version
+
+
+
+
+Étude de faisabilité · 678 · scénario A · Généré via LABUSE le 19/10/2026 · pré-faisabilité, non contractuel                             7/8
+À faire confirmer par l'architecte
+
+Point                                                  Pourquoi
+
+Distance entre constructions · locaux règles non modélisées
+vélos et déchets
+
+Prescriptions PPR bleue · servitudes                   signalées, non interprétées
+signalées
+
+Accès véhicule                                         limite classée voie ; visibilité et autorisation non vérifiées
+
+Sous-sol ou stationnement en                           non simulé : la capacité peut être plus haute
+ouvrage
+
+Sol, réseaux, arbres, vues, voisinage                  aucune donnée publique fiable à la parcelle
+
+Conception (plans, façades)                            métier de l'architecte
+
+
+Sources
+
+Source                                                 Nature
+
+PLU — zone A                                           règlement, zonage, prescriptions publiés
+
+Cadastre DGFiP · PPR, servitudes (GPU, données publiques
+Géorisques)
+
+LiDAR HD IGN · BD TOPO                                 terrain naturel, limites
+
+Moteur d'implantation —                                hypothèses « Estimé » · conventions implantation-conventions-1
+IMPLANTATION-2
+
+Entrées, configuration, version du moteur et des règles archivées avec le document n° EF-19102026-5741 : le scénario se
+rejoue à l'identique.
+
+
+
+
+Étude de faisabilité · 678 · scénario A · Généré via LABUSE le 19/10/2026 · pré-faisabilité, non contractuel              8/8
+

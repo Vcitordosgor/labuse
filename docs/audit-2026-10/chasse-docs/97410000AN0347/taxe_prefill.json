@@ -1,0 +1,18 @@
+{
+ "_status": 200,
+ "data": {
+  "idu": "97410000AN0347",
+  "commune": "Saint-Benoît",
+  "insee": "97410",
+  "surface_terrain_m2": 4546.0,
+  "zone_plu": "N",
+  "zone_famille": "N",
+  "sdp_gabarit_m2": null,
+  "deja_batie": false,
+  "taux_communal_pct": 5.0,
+  "taux_communal_source": "public",
+  "taux_communal_millesime": "Taux communal en vigueur depuis le 01/01/2022 (délibération communale)",
+  "taux_communal_perime": false,
+  "secteur_majore": false
+ }
+}

@@ -1,0 +1,355 @@
+{
+ "_status": 200,
+ "data": {
+  "idu": "97415000BO0852",
+  "c100": 8,
+  "c200": 19,
+  "localises": 19,
+  "non_localises": 0,
+  "note": "Permis autorisés géolocalisés < 200 m (source du signal viabilisation M-VIA).",
+  "items": [
+   {
+    "permit_id": "97441522A0312",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2022-11-28",
+    "etat": "4",
+    "nb_lgt": null,
+    "porteur": "OLA ENERGY REUNION",
+    "distance_m": 13,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.273438658,
+      -21.011022777
+     ]
+    }
+   },
+   {
+    "permit_id": "9744151500402",
+    "nature": "DP",
+    "nature_libelle": "Déclaration préalable",
+    "date": "2015-12-16",
+    "etat": "2",
+    "nb_lgt": null,
+    "porteur": "LIBYA OIL REUNION",
+    "distance_m": 13,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.273438658,
+      -21.011022777
+     ]
+    }
+   },
+   {
+    "permit_id": "97441516A0322",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2016-09-07",
+    "etat": "6",
+    "nb_lgt": "26",
+    "porteur": "IANEIRA",
+    "distance_m": 35,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.273203545,
+      -21.010709473
+     ]
+    }
+   },
+   {
+    "permit_id": "97441522A0672",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2023-01-10",
+    "etat": "2",
+    "nb_lgt": null,
+    "porteur": "FBKC IMMO",
+    "distance_m": 38,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.272677882,
+      -21.01107155
+     ]
+    }
+   },
+   {
+    "permit_id": "97441518A0017",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2018-03-07",
+    "etat": "6",
+    "nb_lgt": null,
+    "porteur": "AMATHEA ALPHA",
+    "distance_m": 40,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.272972822,
+      -21.0107844
+     ]
+    }
+   },
+   {
+    "permit_id": "97441518A0678",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2019-07-23",
+    "etat": "5",
+    "nb_lgt": null,
+    "porteur": "SCI CA RUN DEVELOPPEMENT",
+    "distance_m": 47,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.272622362,
+      -21.011428734
+     ]
+    }
+   },
+   {
+    "permit_id": "97441521A0148",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2021-08-19",
+    "etat": "6",
+    "nb_lgt": "11",
+    "porteur": "SCI CRYSTAL",
+    "distance_m": 91,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.272561192,
+      -21.010502617
+     ]
+    }
+   },
+   {
+    "permit_id": "97441516A0508",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2016-12-22",
+    "etat": "6",
+    "nb_lgt": null,
+    "porteur": null,
+    "distance_m": 100,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.274106657,
+      -21.010552729
+     ]
+    }
+   },
+   {
+    "permit_id": "97441518G0108",
+    "nature": "DP",
+    "nature_libelle": "Déclaration préalable",
+    "date": "2018-04-19",
+    "etat": "6",
+    "nb_lgt": null,
+    "porteur": "MAAF ASSURANCES",
+    "distance_m": 112,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.27198714,
+      -21.011518041
+     ]
+    }
+   },
+   {
+    "permit_id": "97441522A0203",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2022-07-20",
+    "etat": "2",
+    "nb_lgt": null,
+    "porteur": "SECRETARIAT D'ETAT AUPRES DU MINISTRE DE L'ECONOMIE ET DES FINANCES",
+    "distance_m": 117,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.272284046,
+      -21.010404032
+     ]
+    }
+   },
+   {
+    "permit_id": "97441517A0437",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2018-05-11",
+    "etat": "5",
+    "nb_lgt": null,
+    "porteur": "VIRPORE",
+    "distance_m": 120,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.272496879,
+      -21.010212908
+     ]
+    }
+   },
+   {
+    "permit_id": "9744152500034",
+    "nature": "PA",
+    "nature_libelle": "Permis d'aménager",
+    "date": "2026-01-19",
+    "etat": "2",
+    "nb_lgt": null,
+    "porteur": null,
+    "distance_m": 125,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.272954748,
+      -21.009928989
+     ]
+    }
+   },
+   {
+    "permit_id": "97441522O0008",
+    "nature": "PD",
+    "nature_libelle": "Permis de démolir",
+    "date": "2022-09-14",
+    "etat": "2",
+    "nb_lgt": null,
+    "porteur": "ISLAM SOUNNATE DJAMATE DE SAINT PAUL",
+    "distance_m": 150,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.274414395,
+      -21.010183674
+     ]
+    }
+   },
+   {
+    "permit_id": "9744151400399",
+    "nature": "DP",
+    "nature_libelle": "Déclaration préalable",
+    "date": "2014-12-05",
+    "etat": "2",
+    "nb_lgt": null,
+    "porteur": "ADECOM'S",
+    "distance_m": 159,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.271856891,
+      -21.010270061
+     ]
+    }
+   },
+   {
+    "permit_id": "97441519A0745",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2020-09-16",
+    "etat": "5",
+    "nb_lgt": null,
+    "porteur": null,
+    "distance_m": 159,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.272004734,
+      -21.010128917
+     ]
+    }
+   },
+   {
+    "permit_id": "97441522G0313",
+    "nature": "DP",
+    "nature_libelle": "Déclaration préalable",
+    "date": "2022-07-31",
+    "etat": "2",
+    "nb_lgt": null,
+    "porteur": "BANQUE FRANCAISE COMMERCIALE OCEAN INDIEN",
+    "distance_m": 172,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.271568167,
+      -21.010448062
+     ]
+    }
+   },
+   {
+    "permit_id": "97441522G0033",
+    "nature": "DP",
+    "nature_libelle": "Déclaration préalable",
+    "date": "2022-05-18",
+    "etat": "2",
+    "nb_lgt": null,
+    "porteur": null,
+    "distance_m": 176,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.271996459,
+      -21.009942928
+     ]
+    }
+   },
+   {
+    "permit_id": "97441516D0009",
+    "nature": "PA",
+    "nature_libelle": "Permis d'aménager",
+    "date": "2016-11-25",
+    "etat": "5",
+    "nb_lgt": null,
+    "porteur": "TAMARUN SPL",
+    "distance_m": 187,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.273365264,
+      -21.01304002
+     ]
+    }
+   },
+   {
+    "permit_id": "97441524O0014",
+    "nature": "PD",
+    "nature_libelle": "Permis de démolir",
+    "date": "2025-05-07",
+    "etat": "2",
+    "nb_lgt": null,
+    "porteur": null,
+    "distance_m": 200,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.272075472,
+      -21.009615117
+     ]
+    }
+   }
+  ]
+ }
+}

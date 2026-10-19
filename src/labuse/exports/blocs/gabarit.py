@@ -6,7 +6,7 @@ incomplet, le document NE se génère PAS (builder.construire_gabarit lève Docu
 from __future__ import annotations
 
 from ..lignes import ligne, pied
-from ..registre_fmt import fmt_m, fmt_m2
+from ..registre_fmt import fmt_m, fmt_m2, fmt_pct
 from ..rendu import esc, note, section, table_kv, verdict
 
 IDS = ("gabarit_implantation_m2", "gabarit_emprise_plafond_m2", "gabarit_hauteur_m",
@@ -36,7 +36,20 @@ def _regles(rules, *, appliquees: bool) -> str:
         nom = esc(getattr(r, "label", "") or "")
         val = getattr(r, "value", None)
         unit = getattr(r, "unit", None)
-        chiffre = f" : {fmt_m(val) if unit in ('m', 'm.') else (fmt_m2(val) if unit == 'm²' else esc(str(val)))}" if (appliquees and val is not None) else ""
+        # CHASSE-DOCS-FIX-1 (E-12) — format FR par unité ; « % » passait en esc(str(val)) → « 40.0 »
+        # (point décimal, sans unité). fmt_pct rend « 40 % ».
+        if appliquees and val is not None:
+            if unit in ("m", "m."):
+                num = fmt_m(val)
+            elif unit == "m²":
+                num = fmt_m2(val)
+            elif unit == "%":
+                num = fmt_pct(val, 0 if float(val) == int(val) else 1)
+            else:
+                num = esc(str(val))
+            chiffre = f" : {num}"
+        else:
+            chiffre = ""
         detail = getattr(r, "detail", None)
         det = f" — {esc(detail)}" if detail else ""
         src = _source(getattr(r, "source", None))

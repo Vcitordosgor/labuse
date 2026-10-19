@@ -1,0 +1,81 @@
+LABUSE           Comparatif
+
+
+
+
+Comparatif
+Deux à trois parcelles côte à côte, sur les lignes de Comparer.
+
+2 parcelles · CO-20261019-0852 · 19/10/2026
+
+
+
+   Comparatif
+                                                      BO 0852                                                        BW 0102
+                                                      Saint-Paul                                                     Saint-Paul
+
+  Surface      sourcé                                 745 m²                                                         10 500 m²
+
+  Zone PLU      sourcé                                U1a                                                            U6c
+
+  Classement LABUSE                                   0 · Non retenue · Signal faible                                A · Excellente · Signal faible
+
+  Zone constructible         sourcé                   oui                                                            oui
+
+  SDP maximale réglementaire             estimé       797 m²                                                         4 099 m²
+
+  SDP résiduelle        estimé                        0 m²                                                           4 099 m²
+
+  Emprise au sol max (PLU)            sourcé          non réglementée                                                non réglementée
+
+  Taux d'occupation du gabarit                        Saturé : le bâti existant dépasse déjà le                      0%
+     estimé                                           plafond d'emprise du PLU actuel
+
+  Sous-densité        estimé                          non                                                            oui
+
+  Charge foncière /m² terrain           estimé        259 €/m²                                                       -59 €/m²
+
+                                                                                                                                                      Généré via LABUSE
+
+
+
+
+Comparatif indicatif de parcelles établi sur des données publiques. Ni un prix, ni un conseil. Données LABUSE au 19/10/2026.                                      1/2
+                                                      BO 0852                                                        BW 0102
+                                                      Saint-Paul                                                     Saint-Paul
+
+  Prix terrain nu zone        estimé                  479 €/m²                                                       479 €/m²
+
+  Prix bâti (section cadastrale)                      3 804 €/m²                                                     3 630 €/m²
+     estimé
+
+
+  Logements possibles                                 voir l'Étude de faisabilité                                    voir l'Étude de faisabilité
+
+  Bâti existant      sourcé                           73 % du terrain                                                0 % du terrain
+
+  Gabarit max       sourcé                            R+3                                                            R+1
+
+  Accès & réseaux        sourcé                       Viabilisation confirmée par les faits                          Viabilisation confirmée par les faits
+
+  Assainissement        estimé                        Tout-à-l'égout (collectif)                                     93 % des logements du secteur ne sont pas raccordés au réseau collectif
+
+  Propriétaire     sourcé                             personne morale                                                particulier
+
+  Contrainte majeure          sourcé                  SDP résiduelle 0 m² — rien à construire.                       PPR zone rouge sur 9 % de la surface — vigilance forte ; constructibilité à
+                                                                                                                     vérifier au règlement (pas d'exclusion automatique).
+
+
+Maximum réglementaire (gabarit) : le total que la parcelle peut porter selon les règles, pas le programme qui sera déposé. Face aux permis réellement autorisés (volet D VERITE-TERRAIN-2),
+les projets en utilisent en médiane environ la moitié (0,46 en surface, 0,40 en logements).
+
+
+
+
+                                                                                                                                                                                        Généré via LABUSE
+
+
+
+
+Comparatif indicatif de parcelles établi sur des données publiques. Ni un prix, ni un conseil. Données LABUSE au 19/10/2026.                                                                        2/2
+

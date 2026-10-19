@@ -1,0 +1,228 @@
+{
+ "_status": 200,
+ "data": {
+  "status": "incomplete",
+  "message": "Calcul incomplet — donnée réglementaire manquante",
+  "validationErrors": [
+   "PLU non calibré pour la zone A (estimation générique)"
+  ],
+  "raccordement": {
+   "parcelle": {
+    "idu": "97416000CZ0678",
+    "commune": "Saint-Pierre",
+    "surface_m2": 3279.0
+   },
+   "zone": {
+    "code": "A",
+    "famille": "A",
+    "a_cheval": false
+   },
+   "ppr": {
+    "result": "SOFT_FLAG",
+    "detail": "PPR zone rouge sur 39 % de la surface — vigilance forte ; constructibilité à vérifier au règlement (pas d'exclusion automatique).",
+    "rouge": false
+   }
+  },
+  "surfaceParcelleM2": 3279.0,
+  "zoneImplantationM2": null,
+  "pctPortionZone": null,
+  "plafondEmpriseM2": null,
+  "plafondEmpriseStatus": null,
+  "hauteurReglementaireM": null,
+  "hauteurSource": null,
+  "hauteurStatus": null,
+  "hauteurBase": null,
+  "hauteurEgoutM": null,
+  "terrainNote": null,
+  "coverage": null,
+  "appliedRules": [],
+  "nonIntegratedRules": [],
+  "contourGeoJSON": {
+   "type": "Polygon",
+   "coordinates": [
+    [
+     [
+      55.4856648,
+      -21.3085825
+     ],
+     [
+      55.4856724,
+      -21.3085889
+     ],
+     [
+      55.486582,
+      -21.3094882
+     ],
+     [
+      55.486651,
+      -21.3094016
+     ],
+     [
+      55.4867296,
+      -21.3093044
+     ],
+     [
+      55.4858379,
+      -21.3084363
+     ],
+     [
+      55.4856648,
+      -21.3085825
+     ]
+    ]
+   ]
+  },
+  "zoneImplantationGeoJSON": null,
+  "retraitsGeoJSON": null,
+  "exclusionsGeoJSON": null,
+  "batiExistantGeoJSON": {
+   "type": "FeatureCollection",
+   "features": [
+    {
+     "type": "Feature",
+     "properties": {
+      "hauteur_m": 4.1,
+      "h_source": "lidar"
+     },
+     "geometry": {
+      "type": "MultiPolygon",
+      "coordinates": [
+       [
+        [
+         [
+          55.48588115,
+          -21.3087864
+         ],
+         [
+          55.48595557,
+          -21.30886204
+         ],
+         [
+          55.48599836,
+          -21.30882539
+         ],
+         [
+          55.48592297,
+          -21.30875064
+         ],
+         [
+          55.48588115,
+          -21.3087864
+         ]
+        ]
+       ]
+      ]
+     }
+    },
+    {
+     "type": "Feature",
+     "properties": {
+      "hauteur_m": 4.1,
+      "h_source": "lidar"
+     },
+     "geometry": {
+      "type": "MultiPolygon",
+      "coordinates": [
+       [
+        [
+         [
+          55.48659953,
+          -21.30932762
+         ],
+         [
+          55.48655659,
+          -21.30937872
+         ],
+         [
+          55.48661496,
+          -21.3094217
+         ],
+         [
+          55.48665596,
+          -21.30937148
+         ],
+         [
+          55.48659953,
+          -21.30932762
+         ]
+        ]
+       ]
+      ]
+     }
+    },
+    {
+     "type": "Feature",
+     "properties": {
+      "hauteur_m": 4.1,
+      "h_source": "lidar"
+     },
+     "geometry": {
+      "type": "MultiPolygon",
+      "coordinates": [
+       [
+        [
+         [
+          55.48659953,
+          -21.30932762
+         ],
+         [
+          55.48655659,
+          -21.30937872
+         ],
+         [
+          55.48661496,
+          -21.3094217
+         ],
+         [
+          55.48665596,
+          -21.30937148
+         ],
+         [
+          55.48659953,
+          -21.30932762
+         ]
+        ]
+       ]
+      ]
+     }
+    },
+    {
+     "type": "Feature",
+     "properties": {
+      "hauteur_m": 4.1,
+      "h_source": "lidar"
+     },
+     "geometry": {
+      "type": "MultiPolygon",
+      "coordinates": [
+       [
+        [
+         [
+          55.48588115,
+          -21.3087864
+         ],
+         [
+          55.48595557,
+          -21.30886204
+         ],
+         [
+          55.48599836,
+          -21.30882539
+         ],
+         [
+          55.48592297,
+          -21.30875064
+         ],
+         [
+          55.48588115,
+          -21.3087864
+         ]
+        ]
+       ]
+      ]
+     }
+    }
+   ]
+  }
+ }
+}

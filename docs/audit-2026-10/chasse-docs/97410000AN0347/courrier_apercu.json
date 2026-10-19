@@ -1,0 +1,22 @@
+{
+ "_status": 200,
+ "data": {
+  "recto": "Objet : Votre parcelle AN 347, à Saint-Benoît\n\nCe courrier est destiné au propriétaire de la parcelle AN 347. Si vous n'en êtes pas le propriétaire, nous vous remercions de bien vouloir le lui transmettre.\n\nMadame, Monsieur,\n\nLABUSE est une plateforme d'intelligence foncière spécialisée sur La Réunion. Elle croise des dizaines de sources cadastrales, réglementaires, immobilières et territoriales afin de mieux comprendre les caractéristiques et les règles qui concernent chaque parcelle.\n\nPlusieurs mutations immobilières ont été publiées récemment autour de la parcelle située 7 Rue du Stade de l’Ilet, 97470 Saint-Benoît. Elles permettent de disposer de repères récents sur l'activité immobilière du secteur : 48 mutations publiées dans le périmètre analysé sur les 3 dernières années.\n\nVous trouverez au dos une synthèse des principales informations dont nous disposons sur cette parcelle : ses caractéristiques cadastrales, son contexte réglementaire et quelques repères sur son environnement immobilier.\n\nSi vous souhaitez aller plus loin, nous pouvons vous adresser gratuitement une analyse plus complète de votre terrain : règles d'urbanisme identifiées, contraintes connues, caractéristiques de la parcelle et données immobilières disponibles autour de celle-ci. Il suffit de la demander à contact@labuse.immo.\n\nLes données foncières et réglementaires évoluent dans le temps. Vous pourrez donc demander une nouvelle analyse ultérieurement afin de disposer d'informations actualisées.\n\nCette étude vous est offerte par LABUSE qui intervient à Saint-Benoît. Cette démarche ne vous engage à rien.\n\nCordialement,",
+  "verso": [
+   "Synthèse de la parcelle",
+   "Référence cadastrale : AN 347",
+   "Commune : Saint-Benoît",
+   "Adresse : 7 Rue du Stade de l’Ilet, 97470 Saint-Benoît",
+   "Surface cadastrale : 4 546 m²",
+   "Zone d'urbanisme : N",
+   "Contraintes connues : PPR zone rouge (inconstructible) — 100 % de la surface.",
+   "Environnement immobilier : 48 mutation(s) publiée(s) dans le périmètre analysé sur les 3 dernières années."
+  ],
+  "ouverture": "C",
+  "reference": "AN 347",
+  "destinataire": "À l'occupant",
+  "adresse_envoi": "7 Rue du Stade de l’Ilet, 97470 Saint-Benoît",
+  "bloque": false,
+  "motif": null
+ }
+}

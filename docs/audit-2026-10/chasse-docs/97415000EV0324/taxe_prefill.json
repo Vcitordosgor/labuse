@@ -1,0 +1,18 @@
+{
+ "_status": 200,
+ "data": {
+  "idu": "97415000EV0324",
+  "commune": "Saint-Paul",
+  "insee": "97415",
+  "surface_terrain_m2": 41009.0,
+  "zone_plu": "AU2c",
+  "zone_famille": "AU",
+  "sdp_gabarit_m2": 15333,
+  "deja_batie": true,
+  "taux_communal_pct": 10.0,
+  "taux_communal_source": "public",
+  "taux_communal_millesime": "Secteur à taux majoré en vigueur depuis le 01/01/2022 (délibération communale)",
+  "taux_communal_perime": false,
+  "secteur_majore": true
+ }
+}

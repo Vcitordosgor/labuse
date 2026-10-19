@@ -56,8 +56,13 @@ export const is429 = (e: unknown): boolean => e instanceof ApiError && e.status 
 async function j<T>(url: string, init?: RequestInit): Promise<T> {
   const r = await fetch(url, init)
   if (!r.ok) {
+    // CHASSE-DOCS-FIX-1 (vérif #4) — `detail` peut être une CHAÎNE (400) ou un OBJET `{erreur, message}`
+    // (ex. 503 « étude trop lourde », 422 gabarit). On en extrait le message, sinon il était perdu et le
+    // client ne lisait qu'un message générique.
     const detail = (await r.json().catch(() => null))?.detail
-    throw new ApiError(url, r.status, typeof detail === 'string' ? detail : undefined)
+    const detailStr = typeof detail === 'string' ? detail
+      : (detail && typeof detail === 'object' && typeof detail.message === 'string' ? detail.message : undefined)
+    throw new ApiError(url, r.status, detailStr)
   }
   return r.json() as Promise<T>
 }
@@ -2196,7 +2201,7 @@ export const postEtude = (body: EtudeIn) =>
 // voyage dans le corps), via `useOuvrirDocument` (blob + erreurs FR). `scenario_ref` = le scénario
 // AFFICHÉ (tuile de l'outil) ; absent = configuration par défaut (9e carte Docs). L'archivage dans
 // « Mes documents » est fait côté serveur (config + version du moteur + millésimes).
-export interface EtudePdfIn extends EtudeIn { scenario_ref?: string | null }
+export interface EtudePdfIn extends EtudeIn { scenario_ref?: string | null; empreinte?: string }
 export const ETUDE_PDF_URL = '/modules/etude/pdf'
 export const etudePdfInit = (body: EtudePdfIn): RequestInit => ({
   method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
@@ -2830,9 +2835,11 @@ export const getBilanModele = (idu: string) =>
 export const calculerBilan = (idu: string, entrees: BilanEntrees) =>
   j<BilanResultat>(`/bilan/${encodeURIComponent(idu)}/calcul`,
     { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(entrees) })
-export const genererBilan = (idu: string, entrees: BilanEntrees) =>
+export const genererBilan = (idu: string, entrees: BilanEntrees, empreinte?: string) =>
   j<{ doc_id: number; complet: boolean; lignes_vides: number }>(`/bilan/${encodeURIComponent(idu)}/generer`,
-    { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(entrees) })
+    // CHASSE-DOCS-FIX-1 (Lot 5.1) — l'empreinte des hypothèses voyage avec le document et est STOCKÉE
+    // côté serveur (documents_generes), pour que « Sources modifiées depuis » marche sur un autre poste.
+    { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...entrees, empreinte }) })
 export const getBilanRatios = () =>
   j<Record<string, { valeur: number; tva: number | null }>>('/bilan-ratios')
 export const putBilanRatio = (posteId: string, valeur: number, tva: number | null = null) =>

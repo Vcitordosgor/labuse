@@ -1,0 +1,153 @@
+{
+ "_status": 200,
+ "data": {
+  "mode": "pied",
+  "minutes": 15,
+  "hors_trafic": true,
+  "renvoi": "Les ventes (DVF), les transports et les réseaux restent dans leurs tiroirs Marché et Réseaux — rien n'est dupliqué.",
+  "note": "INSEE Filosofi 2021 (carreaux 200 m) · BPE 2025 · isochrones IGN — temps hors trafic.",
+  "disponible": true,
+  "statut": "ign",
+  "geom": {
+   "coordinates": [
+    [
+     [
+      55.428478,
+      -20.880066
+     ],
+     [
+      55.427478,
+      -20.880234
+     ],
+     [
+      55.426975,
+      -20.882194
+     ],
+     [
+      55.425551,
+      -20.883194
+     ],
+     [
+      55.425292,
+      -20.88438
+     ],
+     [
+      55.427501,
+      -20.886171
+     ],
+     [
+      55.427513,
+      -20.889159
+     ],
+     [
+      55.427944,
+      -20.889728
+     ],
+     [
+      55.429805,
+      -20.889867
+     ],
+     [
+      55.429911,
+      -20.891194
+     ],
+     [
+      55.430837,
+      -20.891553
+     ],
+     [
+      55.431478,
+      -20.891358
+     ],
+     [
+      55.432243,
+      -20.889959
+     ],
+     [
+      55.433623,
+      -20.889339
+     ],
+     [
+      55.434112,
+      -20.88756
+     ],
+     [
+      55.433369,
+      -20.885303
+     ],
+     [
+      55.432478,
+      -20.885
+     ],
+     [
+      55.432334,
+      -20.884194
+     ],
+     [
+      55.433013,
+      -20.883194
+     ],
+     [
+      55.432883,
+      -20.882789
+     ],
+     [
+      55.43162,
+      -20.882052
+     ],
+     [
+      55.430478,
+      -20.882751
+     ],
+     [
+      55.429289,
+      -20.882383
+     ],
+     [
+      55.428478,
+      -20.880066
+     ]
+    ]
+   ],
+   "type": "Polygon"
+  },
+  "population": {
+   "inhabitee": false,
+   "iris": {
+    "n_iris": 2,
+    "vacance_pct": 7.2,
+    "part_bati_avant_1990_pct": 41.3,
+    "source": "INSEE RP2022 par IRIS (quartiers intersectés)"
+   },
+   "habitants": 892,
+   "menages": 306,
+   "revenu_median_eur": 30014,
+   "revenu_estime": true,
+   "revenu_impute_n": 6,
+   "revenu_carreaux_n": 17,
+   "revenu_majorite_imputee": false,
+   "pct_moins_25": 34,
+   "taux_pauvrete_pct": 12,
+   "n_carreaux": 17,
+   "millesime": "Filosofi 2021 (INSEE, carreaux 200 m)",
+   "revenu_source": "carreau Filosofi au centroïde (source unique de la fiche)"
+  },
+  "equipements": [
+   {
+    "domaine": "Services aux particuliers",
+    "nom": "ISMAEL BERNARD",
+    "temps_min": 6
+   },
+   {
+    "domaine": "Commerces",
+    "nom": "OLA ENERGY LA MONTAGNE",
+    "temps_min": 10
+   },
+   {
+    "domaine": "Sports, loisirs et culture",
+    "nom": "STADE DE LA MONTAGNE 7EME",
+    "temps_min": 15
+   }
+  ]
+ }
+}

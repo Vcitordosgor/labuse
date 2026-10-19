@@ -24,6 +24,9 @@ MOTIF_PM_SANS_CANAL = "Aucune adresse : ni siège déclaré, ni parcelle bâtie 
 MOTIF_INCONNUE = "Parcelle inconnue"
 MENTION_OCCUPANT = "pli à l'occupant, non nominatif"
 MENTION_SIEGE = "au siège social déclaré"
+# CHASSE-DOCS-FIX-1 (E-03) — personne morale CONNUE mais sans siège enrichi : on l'adresse à SON NOM,
+# à l'adresse du bien (jamais « À l'occupant » — le Dossier la nomme, le courrier doit la nommer aussi).
+MENTION_PM_BIEN = "au nom du propriétaire, à l'adresse du bien"
 
 # OUTILS-S2 Lot B — code machine du blocage (le front bloque l'AJOUT sur un terrain sans occupant
 # joignable — nu / sans adresse / sans canal / inconnue — et renvoie au Courrier SPF ; l'opposition
@@ -86,9 +89,11 @@ def resoudre_destinataire(db, idu: str) -> dict:
         if siege:
             res = {**base, "type": "siege", "destinataire": f"{row['denomination']} — {MENTION_SIEGE}",
                    "adresse_envoi": siege, "mention": MENTION_SIEGE, "bloque": False}
-        elif row["batie"] and ban:
-            res = {**base, "type": "occupant", "destinataire": "À l'occupant",
-                   "adresse_envoi": ban, "mention": MENTION_OCCUPANT, "bloque": False}
+        elif ban:
+            # E-03 — PM connue sans siège enrichi : adressée à SON NOM, à l'adresse du bien (BAN),
+            # jamais « À l'occupant » (la dénomination est connue et nommée par le Dossier).
+            res = {**base, "type": "siege", "destinataire": row["denomination"],
+                   "adresse_envoi": ban, "mention": MENTION_PM_BIEN, "bloque": False}
         else:
             return _bloque(base, MOTIF_PM_SANS_CANAL)
     else:

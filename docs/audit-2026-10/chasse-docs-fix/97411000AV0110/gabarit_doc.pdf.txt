@@ -1,0 +1,97 @@
+LABUSE           Gabarit
+
+
+
+
+Gabarit
+L'enveloppe réglementaire de la parcelle : zone d'implantation, plafond d'emprise, hauteur.
+
+97411000AV0110 · GA-20261019-0110 · 19/10/2026
+
+
+
+   Enveloppe réglementaire (gabarit)
+
+   Vérifié : reculs, emprise, hauteur, risques · non modélisé : Stationnement, Espaces
+   libres, Servitudes d'utilité publique
+
+
+
+
+         Zone d'implantation réglementaire (schéma — pas un plan de masse)
+
+              Retraits                                                             Contour cadastral
+
+
+
+
+Zone d'implantation                                  0 m²                                                                                 sourcé
+
+
+Plafond d'emprise                                    115 m²                                                                               sourcé
+
+
+Hauteur réglementaire                                7,0 m                                                                                sourcé
+
+
+
+
+                                                                                                                                  Généré via LABUSE
+
+
+
+Gabarit réglementaire 2D, pré-faisabilité sur règlement public. Ne remplace ni un certificat d'urbanisme, ni une étude de faisabilité           1/
+réglementaire. Données LABUSE au 19/10/2026.                                                                                                     2
+Règles appliquées
+
+Recul voie : 3,0 m
+BD TOPO® — troncon_de_route (voirie) + cadastre · BD TOPO® V3 (IGN) — édition non enregistrée · LABUSE — adjacence cadastre +
+BD TOPO
+
+
+Limites séparatives : 4,0 m
+BD TOPO® — troncon_de_route (voirie) + cadastre · BD TOPO® V3 (IGN) — édition non enregistrée · LABUSE — adjacence cadastre +
+BD TOPO
+
+
+Emprise maximale : 30 %
+PLU — Saint-Denis · Uh · LABUSE — règlement PLU validé (config/plu_destinations)
+
+
+Hauteur maximale : 7,0 m
+PLU — Saint-Denis · Uh · LABUSE — règlement PLU validé (config/plu_destinations)
+
+
+
+Règles non intégrées
+
+Stationnement — Règle connue, non chiffrée
+PLU — Saint-Denis · Uh · LABUSE — règlement PLU validé (config/plu_destinations)
+
+
+Espaces libres — Règle connue, non chiffrée
+PLU — Saint-Denis · Uh · LABUSE — règlement PLU validé (config/plu_destinations)
+
+
+PPR — analyse — PPR zone rouge sur 39 % de la surface — vigilance forte ; constructibilité à vérifier au
+règlement (pas d'exclusion automatique).
+PPR — zonage réglementaire · DEAL Réunion — PPR (zonage réglementaire)
+
+
+Servitudes d'utilité publique — Aucune SUP sur la parcelle
+SUP — servitudes d'utilité publique · GPU / API Carto — servitudes d'utilité publique (assiettes)
+
+Gabarit réglementaire 2D, pré-faisabilité sur règlement public. Une étude par un professionnel peut modifier ces valeurs.
+
+Sources : Cadastre (API Carto PCI) · Urbanisme PLU/GPU (API Carto) · DEAL Réunion — PPR / aléas
+
+
+
+
+                                                                                                                                  Généré via LABUSE
+
+
+
+Gabarit réglementaire 2D, pré-faisabilité sur règlement public. Ne remplace ni un certificat d'urbanisme, ni une étude de faisabilité           2/
+réglementaire. Données LABUSE au 19/10/2026.                                                                                                     2
+

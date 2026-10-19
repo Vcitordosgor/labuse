@@ -1,0 +1,85 @@
+LABUSE           Comparatif
+
+
+
+
+Comparatif
+Deux à trois parcelles côte à côte, sur les lignes de Comparer.
+
+2 parcelles · CO-20261019-1065 · 19/10/2026
+
+
+
+   Comparatif
+                                                      BZ 1065                               AV 0110
+                                                      Saint-Denis                           Saint-Denis
+
+  Surface      sourcé                                 1 567 m²                              690 m²
+
+  Zone PLU      sourcé                                Uh                                    Uh
+
+  Classement LABUSE                                   D · Faible · Signal faible            0 · Non retenue · Signal faible
+
+  Zone constructible         sourcé                   oui                                   oui
+
+  SDP maximale réglementaire             estimé       212 m²                                —
+
+  SDP résiduelle        estimé                        35 m²                                 — · terrain exigu
+
+  Emprise au sol max (PLU)            sourcé          30 %                                  30 %
+
+  Taux d'occupation du gabarit                        40 %
+     estimé
+
+
+  Sous-densité        estimé                          non                                   —
+
+  Charge foncière /m² terrain           estimé        -20 €/m²                              —
+
+                                                                                                                               Généré via LABUSE
+
+
+
+
+Comparatif indicatif de parcelles établi sur des données publiques. Ni un prix, ni un conseil. Données LABUSE au 19/10/2026.               1/2
+                                                      BZ 1065                               AV 0110
+                                                      Saint-Denis                           Saint-Denis
+
+  Prix terrain nu zone        estimé                  482 €/m²                              482 €/m²
+
+  Prix bâti (section cadastrale)                      3 494 €/m²                            2 966 €/m²
+     estimé
+
+
+  Logements possibles                                 voir l'Étude de faisabilité           voir l'Étude de faisabilité
+
+  Bâti existant      sourcé                           11 % du terrain                       —
+
+  Gabarit max       sourcé                            R+0                                   —
+
+  Accès & réseaux        sourcé                       Viabilisation confirmée               Viabilisation confirmée par les faits
+                                                      par les faits
+
+  Assainissement        estimé                        Assainissement non                    77 % des logements du secteur ne sont pas raccordés au réseau collectif
+                                                      collectif
+
+  Propriétaire     sourcé                             particulier                           particulier
+
+  Contrainte majeure          sourcé                  SDP résiduelle 35 m² —                Emprise routière — 133 m d'axes routiers sur la parcelle (densité d'emprise 1.20 ≥ 0.5, bâti 0% < 10
+                                                      rien à construire.                    %) ; aucun signal privé (ni PM privée, ni mutation DVF) : voirie publique/rétrocédée probable, non
+                                                                                            marchande.
+
+
+Maximum réglementaire (gabarit) : le total que la parcelle peut porter selon les règles, pas le programme qui sera déposé. Face aux permis réellement autorisés (volet D VERITE-TERRAIN-2),
+les projets en utilisent en médiane environ la moitié (0,46 en surface, 0,40 en logements).
+
+
+
+
+                                                                                                                                                                                    Généré via LABUSE
+
+
+
+
+Comparatif indicatif de parcelles établi sur des données publiques. Ni un prix, ni un conseil. Données LABUSE au 19/10/2026.                                                                    2/2
+
