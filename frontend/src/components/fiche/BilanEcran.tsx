@@ -15,7 +15,7 @@ import {
   type BilanModele, type BilanEntrees, type BilanResultat, type BilanSaisie, type BilanPoste,
 } from '../../lib/api'
 import { useOuvrirDocument } from '../../lib/ouvrirDocument'
-import { noterEditeur, noterGeneration } from '../../lib/empreinteDoc'
+import { empreinte, noterEditeur } from '../../lib/empreinteDoc'
 import { Bouton } from '../ui/Bouton'
 import { Badge } from '../ui/Badge'
 import { Chargement } from '../Loading'
@@ -183,9 +183,9 @@ export function BilanEcran({ idu, onClose, onGenerated, depuisEtude }:
   const generer = async () => {
     setErreurGen(null)
     try {
-      const { doc_id } = await genererBilan(idu, entrees)
+      // Lot 5.1 — l'empreinte des hypothèses est STOCKÉE AVEC LE DOCUMENT côté serveur (cross-poste).
+      const { doc_id } = await genererBilan(idu, entrees, empreinte(entrees))
       setDocId(doc_id)
-      noterGeneration('bilan', idu, entrees)   // Lot 5.1 — fige l'empreinte à la génération (= « à jour »)
       onGenerated?.(doc_id)
       await ouvrir(docBilanUrl(idu, doc_id), 'bilan')
     } catch (e) {

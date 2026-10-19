@@ -4,7 +4,7 @@ import { useApp } from '../../store/useApp'
 import { getMoteursConfig, postEtude, ETUDE_PDF_URL, etudePdfInit, ApiError } from '../../lib/api'
 import type { EtudeIn, EtudePayload, EtudeScenario } from '../../lib/api'
 import { fmtInt, fmtDec } from '../../lib/format'
-import { noterEditeur, noterGeneration } from '../../lib/empreinteDoc'
+import { empreinte, noterEditeur } from '../../lib/empreinteDoc'
 import { Bouton } from '../ui/Bouton'
 import { Badge } from '../ui/Badge'
 import { Case } from '../ui/Case'
@@ -453,9 +453,8 @@ export function M22({ embedded = false, initialIdus, onBilan, onClose }: {
                       « Étude de faisabilité ». Même document que la 9e carte Docs. */}
                   <Bouton niveau={embedded ? 'primaire' : 'secondaire'} ton="vert" data-etude-pdf className="mt-2 w-full"
                     disabled={!!pdf.enCours}
-                    onClick={() => { noterGeneration('etude-faisabilite', sel[0], corpsBody())
-                      pdf.ouvrir(ETUDE_PDF_URL, 'etude-pdf',
-                        etudePdfInit({ ...corpsBody(), scenario_ref: actif.ref })) }}>
+                    onClick={() => pdf.ouvrir(ETUDE_PDF_URL, 'etude-pdf',
+                      etudePdfInit({ ...corpsBody(), scenario_ref: actif.ref, empreinte: empreinte(corpsBody()) }))}>
                     {pdf.enCours ? <Chargement variant="inline" accent="courant" label="Génération…" />
                       : (embedded ? 'Générer le PDF ↓' : 'Étude de faisabilité (PDF) ↓')}
                   </Bouton>
@@ -635,8 +634,8 @@ export function M22({ embedded = false, initialIdus, onBilan, onClose }: {
             <h4 className="mt-3 text-[10px] font-semibold uppercase tracking-wide text-txt-dim">Ce scénario</h4>
             <div className="flex flex-col gap-2">
               <Bouton niveau="primaire" ton="vert" data-etude-pdf disabled={!!pdf.enCours || !actif}
-                onClick={() => { if (actif) { noterGeneration('etude-faisabilite', sel[0], corpsBody())
-                  pdf.ouvrir(ETUDE_PDF_URL, 'etude-pdf', etudePdfInit({ ...corpsBody(), scenario_ref: actif.ref })) } }}>
+                onClick={() => actif && pdf.ouvrir(ETUDE_PDF_URL, 'etude-pdf',
+                  etudePdfInit({ ...corpsBody(), scenario_ref: actif.ref, empreinte: empreinte(corpsBody()) }))}>
                 {pdf.enCours ? <Chargement variant="inline" accent="courant" label="Génération…" /> : 'Générer le PDF ↓'}
               </Bouton>
               {onBilan && (

@@ -2201,7 +2201,7 @@ export const postEtude = (body: EtudeIn) =>
 // voyage dans le corps), via `useOuvrirDocument` (blob + erreurs FR). `scenario_ref` = le scénario
 // AFFICHÉ (tuile de l'outil) ; absent = configuration par défaut (9e carte Docs). L'archivage dans
 // « Mes documents » est fait côté serveur (config + version du moteur + millésimes).
-export interface EtudePdfIn extends EtudeIn { scenario_ref?: string | null }
+export interface EtudePdfIn extends EtudeIn { scenario_ref?: string | null; empreinte?: string }
 export const ETUDE_PDF_URL = '/modules/etude/pdf'
 export const etudePdfInit = (body: EtudePdfIn): RequestInit => ({
   method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
@@ -2835,9 +2835,11 @@ export const getBilanModele = (idu: string) =>
 export const calculerBilan = (idu: string, entrees: BilanEntrees) =>
   j<BilanResultat>(`/bilan/${encodeURIComponent(idu)}/calcul`,
     { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(entrees) })
-export const genererBilan = (idu: string, entrees: BilanEntrees) =>
+export const genererBilan = (idu: string, entrees: BilanEntrees, empreinte?: string) =>
   j<{ doc_id: number; complet: boolean; lignes_vides: number }>(`/bilan/${encodeURIComponent(idu)}/generer`,
-    { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(entrees) })
+    // CHASSE-DOCS-FIX-1 (Lot 5.1) — l'empreinte des hypothèses voyage avec le document et est STOCKÉE
+    // côté serveur (documents_generes), pour que « Sources modifiées depuis » marche sur un autre poste.
+    { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...entrees, empreinte }) })
 export const getBilanRatios = () =>
   j<Record<string, { valeur: number; tva: number | null }>>('/bilan-ratios')
 export const putBilanRatio = (posteId: string, valeur: number, tva: number | null = null) =>

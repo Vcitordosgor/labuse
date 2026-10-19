@@ -21,7 +21,7 @@ import {
   type DocType, type DocGenereRow, type EtudePdfIn,
 } from '../../lib/api'
 import { fmtM2, iduComplet } from '../../lib/format'
-import { editeurModifie } from '../../lib/empreinteDoc'
+import { editeurDiffere } from '../../lib/empreinteDoc'
 import { useOuvrirDocument } from '../../lib/ouvrirDocument'
 import { supprimerDocument, getMoteursConfig } from '../../lib/api'
 import { CATALOGUE, type DocCatalogue } from './catalogue'
@@ -349,8 +349,10 @@ function LigneDoc({ r, onChange }: { r: DocGenereRow; onChange: () => void }) {
   }
   const btn = 'h-[26px] px-[9px] text-[12px]'
   // CHASSE-DOCS-FIX-1 (Lot 5.1) — « Sources modifiées depuis » s'allume AUSSI quand l'éditeur (Bilan/
-  // Étude) a changé ses saisies depuis la génération (empreinte locale), pas seulement sur les sources.
-  const modifie = r.etat !== 'a_jour' || editeurModifie(r.doc_type, r.idus?.[0] ?? null)
+  // Étude) a changé ses saisies depuis la génération : on compare l'empreinte STOCKÉE AVEC LE DOCUMENT
+  // (serveur, `hypotheses._empreinte` — cross-poste) à l'empreinte de l'éditeur vivant (local).
+  const empServeur = (r.hypotheses as { _empreinte?: string } | null)?._empreinte
+  const modifie = r.etat !== 'a_jour' || editeurDiffere(r.doc_type, r.idus?.[0] ?? null, empServeur)
   return (
     <tr className="group border-b border-line hover:bg-mint hover:text-mint-on">
       <td className="h-11 px-2.5 align-middle">{dateFr(r.created_at)}</td>

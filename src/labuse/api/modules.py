@@ -2061,6 +2061,9 @@ class EtudePdfIn(EtudeIn):
     # AFFICHÉ (scenario_ref) que la tuile « Étude de faisabilité (PDF) » transmet. La 9e carte Docs
     # n'en envoie pas (configuration par défaut → scénario retenu = 1er exploitable).
     scenario_ref: str | None = None
+    # CHASSE-DOCS-FIX-1 (Lot 5.1) — empreinte de la config, calculée par le front, STOCKÉE avec le
+    # document (serveur) pour que « Sources modifiées depuis » marche d'un autre poste.
+    empreinte: str | None = None
 
 
 def _archiver_etude(db: Session, request: Request, body: dict, payload: dict,
@@ -2080,6 +2083,7 @@ def _archiver_etude(db: Session, request: Request, body: dict, payload: dict,
         "moteur": payload.get("moteur"),
         "regles": {"zone": payload.get("regles", {}).get("zone"),
                    "insee": payload.get("regles", {}).get("insee")},
+        "_empreinte": body.get("empreinte"),   # Lot 5.1 — clé uniforme lue par la bibliothèque
     }
     try:
         db.execute(text(
@@ -2109,6 +2113,7 @@ def etude_pdf(body: EtudePdfIn, request: Request, db: Session = Depends(get_db))
         _check_idu(idu)
     data = body.model_dump()
     scenario_ref = data.pop("scenario_ref", None)
+    empreinte = data.pop("empreinte", None)   # Lot 5.1 — hors moteur, rangée dans la recette archivée
     try:
         payload = _etudier_borne(data)   # E-04 — borne 30 s (503 honnête, jamais un timeout silencieux)
     except ValueError as exc:
@@ -2126,7 +2131,7 @@ def etude_pdf(body: EtudePdfIn, request: Request, db: Session = Depends(get_db))
         logging.getLogger("labuse").exception("étude de faisabilité : échec du rendu PDF")
         raise HTTPException(500, detail={"erreur": "erreur_technique",
                             "message": "Le document n'a pas pu être rendu (erreur technique)."})
-    _archiver_etude(db, request, {**data, "scenario_ref": scenario_ref}, payload,
+    _archiver_etude(db, request, {**data, "scenario_ref": scenario_ref, "empreinte": empreinte}, payload,
                     rendu["numero"], rendu["retenu_ref"])
     nom = f"Étude de faisabilité — {rendu['numero']}.pdf"
     dispo = f'inline; filename="{rendu["numero"]}.pdf"; filename*=UTF-8\'\'{quote(nom)}'

@@ -130,6 +130,9 @@ class CalculIn(BaseModel):
     mode: str = "marge"
     marge_cible: float | None = None
     calendrier: dict[str, int | None] = {}  # étape → J+n (mois), info seulement
+    # CHASSE-DOCS-FIX-1 (Lot 5.1) — empreinte des hypothèses calculée par le front, STOCKÉE avec le
+    # document (serveur), pour que « Sources modifiées depuis » marche d'un autre poste. Ignorée au calcul.
+    empreinte: str | None = None
 
 
 def _entrees(corps: CalculIn) -> EntreesBilan:
@@ -335,7 +338,10 @@ def generer_bilan(
         {
             "cid": cid,
             "idus": [idu],
-            "hyp": json.dumps(corps.model_dump()),
+            # Lot 5.1 — l'empreinte est rangée sous `_empreinte` (clé uniforme lue par la bibliothèque) ;
+            # le reste des saisies sert à régénérer le PDF à l'identique (CalculIn ignore `_empreinte`).
+            "hyp": json.dumps({**{k: v for k, v in corps.model_dump().items() if k != "empreinte"},
+                               "_empreinte": corps.empreinte}),
             "mil": json.dumps(millesimes_servis(db)),
         },
     ).scalar()

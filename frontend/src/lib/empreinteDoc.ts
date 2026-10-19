@@ -1,11 +1,11 @@
 // CHASSE-DOCS-FIX-1 (Lot 5.1) — « Sources modifiées depuis » réagit AUSSI aux SAISIES.
 //
-// À la génération d'un Bilan (hypothèses) ou d'une Étude de faisabilité (scénario/config), on fige
-// l'EMPREINTE de ces saisies. Quand l'éditeur change ensuite SANS régénérer, « Mes documents » compare
-// l'empreinte de l'éditeur à celle figée et allume le badge EXISTANT « Sources modifiées depuis ».
-//
-// Tout côté client (localStorage) : aucun nouveau composant, aucune route, DA existante. Clé = (type, idu)
-// → une seule génération suivie par parcelle et par type de document (la plus récente).
+// L'empreinte des hypothèses est calculée par le front À LA GÉNÉRATION et STOCKÉE AVEC LE DOCUMENT
+// CÔTÉ SERVEUR (documents_generes, cf. api.ts genererBilan / etudePdfInit → hypotheses._empreinte,
+// renvoyée par la bibliothèque). Le badge compare cette empreinte serveur (cross-poste, visible d'un
+// autre poste ou pour un collègue) à l'empreinte de l'ÉDITEUR VIVANT — celle-ci reste locale par nature
+// (une édition en cours n'existe que là où on édite), publiée en localStorage par l'éditeur (noterEditeur).
+// Aucun nouveau composant, DA existante. Clé éditeur = (type, idu).
 
 function _stable(obj: unknown): string {
   // JSON canonique (clés triées à chaque niveau) → insensible à l'ordre d'insertion des clés.
@@ -32,28 +32,19 @@ export function empreinte(obj: unknown): string {
 }
 
 const _kEd = (t: string, idu: string) => `labuse:doc-ed:${t}:${idu}`
-const _kGen = (t: string, idu: string) => `labuse:doc-gen:${t}:${idu}`
 
 function _set(k: string, v: string): void { try { localStorage.setItem(k, v) } catch { /* navigation privée */ } }
 function _get(k: string): string | null { try { return localStorage.getItem(k) } catch { return null } }
 
-/** L'éditeur a bougé : on note l'empreinte COURANTE des saisies. */
+/** L'éditeur a bougé : on note l'empreinte COURANTE des saisies (publiée en localStorage, par nature locale). */
 export function noterEditeur(docType: string, idu: string | null | undefined, hypotheses: unknown): void {
   if (idu) _set(_kEd(docType, idu), empreinte(hypotheses))
 }
 
-/** Un document vient d'être généré : on fige l'empreinte (éditeur = génération → « à jour »). */
-export function noterGeneration(docType: string, idu: string | null | undefined, hypotheses: unknown): void {
-  if (!idu) return
-  const e = empreinte(hypotheses)
-  _set(_kGen(docType, idu), e)
-  _set(_kEd(docType, idu), e)
-}
-
-/** Vrai si l'éditeur diffère de la dernière génération suivie (→ badge « Sources modifiées depuis »). */
-export function editeurModifie(docType: string, idu: string | null | undefined): boolean {
-  if (!idu) return false
-  const gen = _get(_kGen(docType, idu))
+/** Vrai si l'éditeur vivant diffère de l'empreinte STOCKÉE AVEC LE DOCUMENT (serveur) → badge « Sources
+ * modifiées depuis ». Pas d'empreinte serveur (vieux doc) ou pas d'éditeur ouvert ici → pas de faux positif. */
+export function editeurDiffere(docType: string, idu: string | null | undefined, empreinteServeur?: string | null): boolean {
+  if (!idu || !empreinteServeur) return false
   const ed = _get(_kEd(docType, idu))
-  return !!(gen && ed && gen !== ed)
+  return !!(ed && ed !== empreinteServeur)
 }
