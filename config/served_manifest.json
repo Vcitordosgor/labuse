@@ -1,11 +1,11 @@
 {
  "scoring_run": "q_v19",
- "cascade_run": "q_v18_sources",
+ "cascade_run": "q_v19_sources",
  "mvt_run": "q_v19",
  "division_run": "q_v19",
  "residuel_run_seq": 16,
- "promoted_at": "2026-10-17T05:20:57.993405+00:00",
- "par": "cli",
+ "promoted_at": "2026-10-19T08:00:00+00:00",
+ "par": "fix/rouges-restants — ré-épinglage cascade q_v19_sources (étage 0 du re-score q_v19 du 18/10, vérifié complet en base)",
  "precedent": {
   "scoring_run": "q_v18",
   "mvt_run": "q_v18",
