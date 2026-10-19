@@ -1,0 +1,13 @@
+{
+ "_status": 200,
+ "data": {
+  "idu": "97410000AN0347",
+  "commune": "Saint-Benoît",
+  "insee": "97410",
+  "tier_servi": "ecartee",
+  "consulte_le": "2026-10-19",
+  "procedure_en_cours": false,
+  "confiance": "SOURCE",
+  "message": "Aucune procédure PLU en cours servie au 2026-10-19 — aucune procédure PLU lourde. Dernier constat le 2026-08-06."
+ }
+}

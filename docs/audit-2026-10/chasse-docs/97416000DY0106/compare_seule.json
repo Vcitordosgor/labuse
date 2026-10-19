@@ -1,0 +1,61 @@
+{
+ "_status": 200,
+ "data": {
+  "count": 1,
+  "parcels": [
+   {
+    "idu": "97416000DY0106",
+    "commune": "Saint-Pierre",
+    "surface_m2": 5391,
+    "surface_incertaine": false,
+    "tier_v2": "ecartee",
+    "rang_v2": 100053,
+    "etage0": true,
+    "status": "ecartee",
+    "label": "Écartée",
+    "fraction": null,
+    "raison": null,
+    "zone": "N",
+    "constructible": true,
+    "zone_constructible": false,
+    "cause": null,
+    "cause_libelle": null,
+    "sdp_max_m2": 350,
+    "taux_emprise_pct": 418,
+    "sdp_residuelle_m2": 0,
+    "sous_densite": false,
+    "charge_fonciere_m2": -4,
+    "n_contraintes": 14,
+    "contraintes": [
+     "Bassin versant (code hydro 10B0000002150455476) — 100 % de la parcelle : contexte hydrographique (ruissellement amont/aval, submersion). L'urbanisation en amont pèse sur l'aval — à considérer avec les aléas et scénarios d'inondation.",
+     "Secteur affecté par le bruit routier (classement sonore cat. 3, bande 100 m) — isolement acoustique renforcé obligatoire (R.571-32 CE).",
+     "Propriété publique (COMMUNE DE SAINT PIERRE) — cession/préemption : interlocuteur public [DGFiP groupe 4 : Commune].",
+     "Installation (ICPE) à proximité — BANDAG, régime Autres régimes, 79 m."
+    ],
+    "contrainte_majeure": "Exclue : PPR zone rouge (inconstructible) — 93 % de la surface.",
+    "proprietaire": "morale",
+    "bati_existant_pct": 13,
+    "gabarit_niveaux_max": 5,
+    "acces_reseaux": "Viabilisation probable",
+    "assainissement": "15 % des logements du secteur ne sont pas raccordés au réseau collectif",
+    "prix_secteur_bati_m2": 2941,
+    "zone_parts": [
+     {
+      "zone": "N",
+      "fam": "N",
+      "pct": 54.4
+     },
+     {
+      "zone": "Ud",
+      "fam": "U",
+      "pct": 45.6
+     }
+    ],
+    "emprise_ces_pct": null,
+    "emprise_ces_source": null,
+    "bande": "0",
+    "signal_niveau": "faible"
+   }
+  ]
+ }
+}

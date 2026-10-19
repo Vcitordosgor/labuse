@@ -1,0 +1,2959 @@
+{
+ "_status": 200,
+ "data": {
+  "idu": "97411000DS0186",
+  "commune": "Saint-Denis",
+  "prix_ancien": {
+   "type_prix": "appartement",
+   "n": 113,
+   "n_exclus": 4,
+   "n_doublons": 0,
+   "radius_m": 500.0,
+   "commune_fallback": false,
+   "fiabilite": "fiable",
+   "fiabilite_raisons": [],
+   "distribution": {
+    "avant": {
+     "n": 117,
+     "min": 1079,
+     "p25": 1862,
+     "median": 2185,
+     "p75": 2604,
+     "max": 5009
+    },
+    "apres": {
+     "n": 113,
+     "min": 1366,
+     "p25": 1894,
+     "median": 2185,
+     "p75": 2599,
+     "max": 3508
+    },
+    "n_exclus_extremes": 4,
+    "n_min_vise": 8,
+    "periode_segment": "récente"
+   },
+   "fiable": true,
+   "pct_appartement": 100,
+   "periode": [
+    2022,
+    2025
+   ],
+   "q1": 1894,
+   "median": 2185,
+   "q3": 2599,
+   "min": 1366,
+   "max": 3508,
+   "prix_points": [
+    1366,
+    1400,
+    1403,
+    1476,
+    1519,
+    1562,
+    1565,
+    1585,
+    1591,
+    1623,
+    1627,
+    1667,
+    1692,
+    1698,
+    1750,
+    1750,
+    1765,
+    1773,
+    1794,
+    1795,
+    1800,
+    1800,
+    1806,
+    1818,
+    1849,
+    1851,
+    1853,
+    1872,
+    1917,
+    1935,
+    1946,
+    1969,
+    1970,
+    1983,
+    1986,
+    2000,
+    2000,
+    2025,
+    2030,
+    2031,
+    2047,
+    2050,
+    2062,
+    2063,
+    2064,
+    2069,
+    2069,
+    2078,
+    2109,
+    2125,
+    2125,
+    2143,
+    2150,
+    2174,
+    2179,
+    2182,
+    2185,
+    2196,
+    2200,
+    2220,
+    2250,
+    2261,
+    2281,
+    2286,
+    2286,
+    2328,
+    2332,
+    2333,
+    2335,
+    2340,
+    2350,
+    2360,
+    2371,
+    2381,
+    2432,
+    2453,
+    2458,
+    2500,
+    2500,
+    2500,
+    2500,
+    2532,
+    2545,
+    2548,
+    2599,
+    2600,
+    2609,
+    2643,
+    2659,
+    2667,
+    2675,
+    2679,
+    2690,
+    2702,
+    2725,
+    2727,
+    2738,
+    2750,
+    2759,
+    2773,
+    2800,
+    2857,
+    2886,
+    2909,
+    2910,
+    2955,
+    2976,
+    3000,
+    3095,
+    3200,
+    3214,
+    3374,
+    3508
+   ],
+   "prix_points_ecartes": [
+    1079,
+    1273,
+    3565,
+    5009
+   ],
+   "volatilite_pct": 32,
+   "volatilite": "modérée",
+   "tendance_pct": 12,
+   "tendance": "hausse",
+   "comparables": {
+    "n_ancien": 113,
+    "mediane_ancien": 2185,
+    "n_vefa": 0,
+    "mediane_vefa": null,
+    "ecart_vefa_ancien_pct": null,
+    "exploitable": false,
+    "note": "aucune vente VEFA dans le comparable retenu (prix = ancien)",
+    "fiabilite_prix": "fiable"
+   }
+  },
+  "marche_synthese": "Prix ancien médian 2 185 €/m² (appartement, 113 ventes, rayon 500 m, ventes 2022–2025)",
+  "prescriptions_verifiables": true,
+  "prescriptions_non_verifiables_motif": null,
+  "adresse": "70 Avenue Joseph Bédier, 97490 Saint-Denis",
+  "secteur": "Lotissement Lacroix",
+  "proprietaire_moral": {
+   "denomination": "DEPARTEMENT DE LA REUNION",
+   "siren": "229740014",
+   "groupe": 3,
+   "groupe_label": "Département",
+   "etat_societe": null,
+   "identite": {
+    "ape": "8622C",
+    "activite": "Autres activités des médecins spécialistes",
+    "siege": "RUE ADRIEN LAGOURGUE",
+    "siege_commune": "Saint-Leu",
+    "date_creation": "1962-01-01",
+    "actif": true,
+    "etat_administratif": null,
+    "etat_maj": null,
+    "annuaire_url": "https://annuaire-entreprises.data.gouv.fr/entreprise/229740014",
+    "source": "SIRENE (INSEE, open data) · état société : recherche-entreprises"
+   },
+   "dirigeant": null,
+   "proprietaire_public": true
+  },
+  "proprietaire_historique": {
+   "source": "DGFiP — parcelles des personnes morales (millésimes annuels, Licence Ouverte 2.0)",
+   "millesimes": [
+    {
+     "millesime": 2019,
+     "situation": "1ᵉʳ janvier 2019",
+     "siren": "229740014",
+     "denomination": "DEPARTEMENT DE LA REUNION",
+     "forme_juridique": "DEPT",
+     "groupe": "3"
+    },
+    {
+     "millesime": 2020,
+     "situation": "1ᵉʳ janvier 2020",
+     "siren": "229740014",
+     "denomination": "DEPARTEMENT DE LA REUNION",
+     "forme_juridique": "DEPT",
+     "groupe": "3"
+    },
+    {
+     "millesime": 2021,
+     "situation": "1ᵉʳ janvier 2021",
+     "siren": "229740014",
+     "denomination": "DEPARTEMENT DE LA REUNION",
+     "forme_juridique": "DEPT",
+     "groupe": "3"
+    },
+    {
+     "millesime": 2022,
+     "situation": "1ᵉʳ janvier 2022",
+     "siren": "229740014",
+     "denomination": "DEPARTEMENT DE LA REUNION",
+     "forme_juridique": "DEPT",
+     "groupe": "3"
+    },
+    {
+     "millesime": 2023,
+     "situation": "1ᵉʳ janvier 2023",
+     "siren": "229740014",
+     "denomination": "DEPARTEMENT DE LA REUNION",
+     "forme_juridique": "DEPT",
+     "groupe": "3"
+    },
+    {
+     "millesime": 2024,
+     "situation": "1ᵉʳ janvier 2024",
+     "siren": "229740014",
+     "denomination": "DEPARTEMENT DE LA REUNION",
+     "forme_juridique": "DEPT",
+     "groupe": "3"
+    },
+    {
+     "millesime": 2025,
+     "situation": "1ᵉʳ janvier 2025",
+     "siren": "229740014",
+     "denomination": "DEPARTEMENT DE LA REUNION",
+     "forme_juridique": "DEPT",
+     "groupe": "Département"
+    }
+   ],
+   "n_millesimes": 7,
+   "changements": [],
+   "n_changements": 0,
+   "n_transitions": 0,
+   "note": "Constat de la source DGFiP (situation au 1ᵉʳ janvier). Un changement de propriétaire moral n'affirme pas une vente ; ce n'est pas un signal de scoring."
+  },
+  "anru": null,
+  "surface_m2": 20271,
+  "surface_terrain_m2": 20001,
+  "surface_source": "cadastre",
+  "surface_dessin_m2": 20271,
+  "contenance_m2": 20001,
+  "surface_incertaine": false,
+  "surface_incertaine_libelle": null,
+  "score_v2": {
+   "tier": "sans_signal",
+   "rang": 106522,
+   "mult_base": 1.27,
+   "fraction": null,
+   "percentile": 75.22,
+   "copro": false,
+   "label": "Sans signal",
+   "motif": "SDP saturée par le bâti existant (pct_potentiel ≥ 100) — même chemin A4",
+   "declasse": true,
+   "exception_registre": false,
+   "couleur_hex": "#8C7468",
+   "rang_total": 429799,
+   "verbal": {
+    "info": "Ce chiffre compare la probabilité RELATIVE que la parcelle soit vendue à court terme à la moyenne de l'île — un modèle backtesté sur les ventes réelles (DVF). Ce n'est ni une garantie, ni une prédiction de prix, ni une certitude. La performance mesurée varie selon la commune.",
+    "mot": "proche de la moyenne",
+    "cle": "proche",
+    "reglette_pct": 7.4
+   },
+   "pourquoi": [
+    {
+     "bin": "true",
+     "signe": "-",
+     "feature": "pm_vendeur_actif",
+     "libelle": "personne morale vendeuse récente",
+     "log_hazard": -0.6273,
+     "phrase": "personne morale vendeuse récente : true"
+    },
+    {
+     "bin": "> 1.204e+04",
+     "signe": "-",
+     "feature": "surface_m2",
+     "libelle": "surface de la parcelle",
+     "log_hazard": -0.4254,
+     "phrase": "grande parcelle"
+    },
+    {
+     "bin": "> 4",
+     "signe": "+",
+     "feature": "permis_100m_24m",
+     "libelle": "permis à 100 m (24 mois)",
+     "log_hazard": 0.2544,
+     "phrase": "permis à 100 m (24 mois) : > 4"
+    },
+    {
+     "bin": "> 9",
+     "signe": "+",
+     "feature": "ventes_150m_24m",
+     "libelle": "ventes à 150 m (24 mois)",
+     "log_hazard": 0.2542,
+     "phrase": "ventes à 150 m (24 mois) : > 9"
+    },
+    {
+     "bin": "(0.008375, 0.0111]",
+     "signe": "+",
+     "feature": "rot_nu",
+     "libelle": "rotation foncier nu du secteur",
+     "log_hazard": 0.1841,
+     "phrase": "rotation du foncier nu élevée dans le secteur"
+    }
+   ]
+  },
+  "etage0": false,
+  "parc_analysees": 433229,
+  "data_sources": [
+   {
+    "nom": "RPG — déclarations agricoles (IGN/ASP)",
+    "categorie": "agricole",
+    "fournisseur": "DAAF RPG/IGN",
+    "millesime": "RPG (IGN) — campagne 2024 (data.gouv RPG-R)",
+    "fiabilite": "à confirmer"
+   },
+   {
+    "nom": "SITADEL (autorisations d'urbanisme)",
+    "categorie": "dynamique",
+    "fournisseur": "SDES (Dido)",
+    "millesime": "2026-08",
+    "fiabilite": "surveillée"
+   },
+   {
+    "nom": "BODACC (procédures collectives)",
+    "categorie": "economie",
+    "fournisseur": "DILA (Opendatasoft)",
+    "millesime": "2026",
+    "fiabilite": "surveillée"
+   },
+   {
+    "nom": "INPI RNE (dirigeants)",
+    "categorie": "economie",
+    "fournisseur": "INPI (Registre National des Entreprises)",
+    "millesime": null,
+    "fiabilite": "surveillée"
+   },
+   {
+    "nom": "Forêts publiques (ONF)",
+    "categorie": "environnement",
+    "fournisseur": "ONF / IGN (BD TOPO)",
+    "millesime": "BD TOPO® V3 — forêt publique (IGN)",
+    "fiabilite": "surveillée"
+   },
+   {
+    "nom": "INPN / patrinat — espaces protégés",
+    "categorie": "environnement",
+    "fournisseur": "INPN/MNHN (espaces protégés)",
+    "millesime": "INPN/patrinat espaces protégés",
+    "fiabilite": "à confirmer"
+   },
+   {
+    "nom": "Parc National de La Réunion (INPN)",
+    "categorie": "environnement",
+    "fournisseur": "INPN/MNHN · API Carto · Région ODS",
+    "millesime": "millésime 2021",
+    "fiabilite": "surveillée"
+   },
+   {
+    "nom": "Zones humides — inventaires DEAL (Carmen)",
+    "categorie": "environnement",
+    "fournisseur": "DEAL Réunion (Lizmap — deal974.lizmap.com)",
+    "millesime": "inventaires 2003/2009/2011/2019 par secteurs (partiels)",
+    "fiabilite": "surveillée"
+   },
+   {
+    "nom": "Cartofriches (Cerema)",
+    "categorie": "foncier",
+    "fournisseur": "Cerema / DGALN",
+    "millesime": null,
+    "fiabilite": "surveillée"
+   },
+   {
+    "nom": "DVF / valeurs foncières",
+    "categorie": "marche",
+    "fournisseur": "DGFiP / Etalab — géo-DVF",
+    "millesime": "géo-DVF Etalab 2021–2025 + archives DGFiP 2014–2020",
+    "fiabilite": "surveillée"
+   },
+   {
+    "nom": "IGN BD CARTO V5 — occupation du sol",
+    "categorie": "occupation_sol",
+    "fournisseur": "IGN / Géoplateforme",
+    "millesime": "BD CARTO® V5 — occupation du sol (IGN)",
+    "fiabilite": "à confirmer"
+   },
+   {
+    "nom": "ABF / Monuments historiques",
+    "categorie": "patrimoine",
+    "fournisseur": "Base Mérimée (Ministère Culture)",
+    "millesime": null,
+    "fiabilite": "surveillée"
+   },
+   {
+    "nom": "data.regionreunion.com — Potentiel foncier",
+    "categorie": "potentiel",
+    "fournisseur": "Région Réunion (Opendatasoft)",
+    "millesime": null,
+    "fiabilite": "surveillée"
+   },
+   {
+    "nom": "DGFiP — parcelles des personnes morales",
+    "categorie": "proprietaire",
+    "fournisseur": "DGFiP",
+    "millesime": "Panel millésimes 2019→2025 (situation 1ᵉʳ janvier)",
+    "fiabilite": "surveillée"
+   },
+   {
+    "nom": "50 pas géométriques — limite haute (DEAL)",
+    "categorie": "reglement",
+    "fournisseur": "DEAL Réunion (Lizmap)",
+    "millesime": "cadastre 1877 (géoréf. 2012/1950)",
+    "fiabilite": "à confirmer"
+   },
+   {
+    "nom": "Classement sonore ITT (Cerema)",
+    "categorie": "reglement",
+    "fournisseur": "Cerema (Cartagène)",
+    "millesime": "arrêtés déc. 2023",
+    "fiabilite": "surveillée"
+   },
+   {
+    "nom": "SUP — assiettes GPU (API Carto)",
+    "categorie": "reglement",
+    "fournisseur": "IGN (Géoportail de l'urbanisme)",
+    "millesime": null,
+    "fiabilite": "surveillée"
+   },
+   {
+    "nom": "Cerema / GéoLittoral — indicateur d'érosion côtière",
+    "categorie": "risques",
+    "fournisseur": "Cerema / GéoLittoral",
+    "millesime": "millésime 2018",
+    "fiabilite": "surveillée"
+   },
+   {
+    "nom": "Géorisques",
+    "categorie": "risques",
+    "fournisseur": "BRGM / MTE",
+    "millesime": null,
+    "fiabilite": "surveillée"
+   },
+   {
+    "nom": "Géorisques — CASIAS (anciens sites industriels)",
+    "categorie": "risques",
+    "fournisseur": "BRGM / MTE (Géorisques — CASIAS, ex-BASIAS)",
+    "millesime": "453 sites 974 (435 points, 18 emprises) — canal SSP, 07/09/2026",
+    "fiabilite": "surveillée"
+   },
+   {
+    "nom": "Géorisques — ICPE",
+    "categorie": "risques",
+    "fournisseur": "BRGM / Géorisques",
+    "millesime": null,
+    "fiabilite": "surveillée"
+   },
+   {
+    "nom": "Géorisques — cavités souterraines",
+    "categorie": "risques",
+    "fournisseur": "BRGM / Géorisques",
+    "millesime": null,
+    "fiabilite": "surveillée"
+   },
+   {
+    "nom": "Géorisques — mouvements de terrain",
+    "categorie": "risques",
+    "fournisseur": "BRGM / Géorisques",
+    "millesime": null,
+    "fiabilite": "surveillée"
+   },
+   {
+    "nom": "PEB — plans d'exposition au bruit (DGAC via annexes GPU)",
+    "categorie": "risques",
+    "fournisseur": "DGAC / DEAL (PEB approuvés) — republication annexes GPU",
+    "millesime": "Roland-Garros B/C/D (GPU) ; Pierrefonds non publié",
+    "fiabilite": "surveillée"
+   },
+   {
+    "nom": "Ravines — domaine public fluvial (DEAL Carmen)",
+    "categorie": "risques",
+    "fournisseur": "DEAL Réunion (Lizmap — deal974.lizmap.com)",
+    "millesime": "DPF arrêté 06-3077 du 21/08/2006 — 275 tronçons + 6 plans",
+    "fiabilite": "surveillée"
+   },
+   {
+    "nom": "OpenStreetMap / Overpass",
+    "categorie": "signal",
+    "fournisseur": "OSM",
+    "millesime": null,
+    "fiabilite": "surveillée"
+   },
+   {
+    "nom": "BD TOPO IGN",
+    "categorie": "topographie",
+    "fournisseur": "IGN / Géoplateforme",
+    "millesime": "BD TOPO® V3 (IGN) — édition courante",
+    "fiabilite": "surveillée"
+   },
+   {
+    "nom": "RGE ALTI (altimétrie)",
+    "categorie": "topographie",
+    "fournisseur": "IGN / Géoplateforme",
+    "millesime": "RGE ALTI® (IGN) — édition courante",
+    "fiabilite": "surveillée"
+   },
+   {
+    "nom": "GPU — droit de préemption urbain (info-surf)",
+    "categorie": "urbanisme",
+    "fournisseur": "IGN / Géoportail de l'urbanisme (informations des PLU)",
+    "millesime": "GPU",
+    "fiabilite": "surveillée"
+   },
+   {
+    "nom": "GPU — emplacements réservés (prescriptions CNIG)",
+    "categorie": "urbanisme",
+    "fournisseur": "IGN / Géoportail de l'urbanisme (prescriptions des PLU)",
+    "millesime": "GPU — prescriptions typepsc 05 (idurba par commune)",
+    "fiabilite": "surveillée"
+   },
+   {
+    "nom": "Potentiel foncier Région (Région ODS)",
+    "categorie": "urbanisme",
+    "fournisseur": "Région Réunion / AGORAH",
+    "millesime": "îlots non urbanisés — estimation Région (ODS, non versionné)",
+    "fiabilite": "à confirmer"
+   },
+   {
+    "nom": "Urbanisme PLU/GPU (API Carto)",
+    "categorie": "urbanisme",
+    "fournisseur": "IGN / API Carto GPU",
+    "millesime": "GPU/PLU par commune (révisions — détail en fiche)",
+    "fiabilite": "surveillée"
+   },
+   {
+    "nom": "Base Adresse Nationale",
+    "categorie": "acces",
+    "fournisseur": "DINUM / IGN",
+    "millesime": "2026",
+    "fiabilite": "surveillée",
+    "socle": true
+   },
+   {
+    "nom": "BAN PLUS — lien adresse ↔ bâtiment (IGN)",
+    "categorie": "cadastre",
+    "fournisseur": "IGN (Géoplateforme — BAN PLUS)",
+    "millesime": "BAN PLUS (data.gouv maj 27/08/2026), moisson 13/09/2026",
+    "fiabilite": "surveillée",
+    "socle": true
+   },
+   {
+    "nom": "Cadastre (API Carto PCI)",
+    "categorie": "cadastre",
+    "fournisseur": "IGN / API Carto",
+    "millesime": "PCI Parcellaire Express (DGFiP), édition courante",
+    "fiabilite": "surveillée",
+    "socle": true
+   },
+   {
+    "nom": "Cadastre Etalab (bulk DGFiP/Etalab)",
+    "categorie": "cadastre",
+    "fournisseur": "DGFiP / Etalab",
+    "millesime": "Etalab cadastre, édition courante (DGFiP)",
+    "fiabilite": "surveillée",
+    "socle": true
+   },
+   {
+    "nom": "CatNat (arrêtés GASPAR / Géorisques)",
+    "categorie": "risques",
+    "fournisseur": "BRGM / Géorisques (GASPAR)",
+    "millesime": "GASPAR — arrêtés CatNat 974 (paginés, 06/09/2026)",
+    "fiabilite": "surveillée",
+    "socle": true
+   },
+   {
+    "nom": "Cadastre d'époque (Etalab / PCI vecteur DGFiP)",
+    "categorie": "topographie",
+    "fournisseur": "Etalab / DGFiP via cadastre.data.gouv.fr",
+    "millesime": "archives 2017-02 (PCI) et 2017-07→2026-06 (Etalab)",
+    "fiabilite": "surveillée",
+    "socle": true
+   }
+  ],
+  "qualite_commune": {
+   "commune": "Saint-Denis",
+   "insee": "97411",
+   "rr_intra": 3.8,
+   "rr_ile": 6.73,
+   "rr_ile_dit": "~6,7",
+   "echantillon": 36981,
+   "taux_base_pct": 1.6,
+   "fragile": false,
+   "degradee": false,
+   "libelle": "Saint-Denis : pouvoir discriminant RR 3.8 mesuré sur 36 981 parcelles (robuste, ≥ 5 ventes dans le haut du classement) — île ~6,7.",
+   "source": "audit RR fold 2025 (out-of-sample) · mesure seule"
+  },
+  "icd": {
+   "score": 90,
+   "bande": "haute",
+   "libelle": "confiance haute",
+   "detail": {
+    "pente": true,
+    "tenure": false,
+    "filosofi": true,
+    "residuel": true,
+    "zone_plu": true,
+    "prix_bati": true,
+    "vegetation": true,
+    "prix_terrain": true,
+    "tendance_prix": true
+   },
+   "manquants": [
+    "historique de propriété inconnu"
+   ],
+   "cloisonnement": "Complétude des données de la parcelle — n'entre PAS dans le score d'opportunité (score P gelé, calculé indépendamment)."
+  },
+  "reglement_plu": {
+   "zones": [
+    {
+     "zone": "Ui",
+     "calibree": true,
+     "document": "97411_reglement_20260805.pdf",
+     "url": "https://data.geopf.fr/annexes/gpu/documents/DU_97411/eee143f619882c020cfb0fbd52e178b7/97411_reglement_20260805.pdf#page=19",
+     "url_document": "https://data.geopf.fr/annexes/gpu/documents/DU_97411/eee143f619882c020cfb0fbd52e178b7/97411_reglement_20260805.pdf",
+     "approbation": "Modification simplifiée n°8 du PLU — règlement approuvé, février 2024 (pièce servie par le document GPU 97411_PLU_20260805, MAJ18)",
+     "edition": "Modification simplifiée n°8 du PLU — règlement approuvé, février 2024 (pièce servie par le document GPU 97411_PLU_20260805, MAJ18)",
+     "idurba": "97411_PLU_20260805",
+     "articles": [
+      {
+       "regle": "stationnement",
+       "reference": "Art. XVII. STATIONNEMENT · p.19 (PLU, calibrage validé)",
+       "page_imprimee": 19,
+       "url": "https://data.geopf.fr/annexes/gpu/documents/DU_97411/eee143f619882c020cfb0fbd52e178b7/97411_reglement_20260805.pdf#page=19"
+      },
+      {
+       "regle": "recul_voirie",
+       "reference": "Art. Ui.6 · p.54 (PLU, calibrage validé)",
+       "page_imprimee": 54,
+       "url": "https://data.geopf.fr/annexes/gpu/documents/DU_97411/eee143f619882c020cfb0fbd52e178b7/97411_reglement_20260805.pdf#page=54"
+      },
+      {
+       "regle": "recul_limites",
+       "reference": "Art. Ui.7 · p.55 (PLU, calibrage validé)",
+       "page_imprimee": 55,
+       "url": "https://data.geopf.fr/annexes/gpu/documents/DU_97411/eee143f619882c020cfb0fbd52e178b7/97411_reglement_20260805.pdf#page=55"
+      },
+      {
+       "regle": "hauteur",
+       "reference": "Art. Ui.10 · p.56 (PLU, calibrage validé)",
+       "page_imprimee": 56,
+       "url": "https://data.geopf.fr/annexes/gpu/documents/DU_97411/eee143f619882c020cfb0fbd52e178b7/97411_reglement_20260805.pdf#page=56"
+      },
+      {
+       "regle": "emprise",
+       "reference": "Art. Ui.9 · p.56 (PLU, calibrage validé)",
+       "page_imprimee": 56,
+       "url": "https://data.geopf.fr/annexes/gpu/documents/DU_97411/eee143f619882c020cfb0fbd52e178b7/97411_reglement_20260805.pdf#page=56"
+      }
+     ],
+     "regles_valeurs": [
+      {
+       "cle": "hauteur",
+       "libelle": "Hauteur max",
+       "valeur": "18 m au faîtage",
+       "etat": "chiffre",
+       "reference": "Art. Ui.10 · p.56 (PLU, calibrage validé)",
+       "url": "https://data.geopf.fr/annexes/gpu/documents/DU_97411/eee143f619882c020cfb0fbd52e178b7/97411_reglement_20260805.pdf#page=56",
+       "exceptions": []
+      },
+      {
+       "cle": "emprise",
+       "libelle": "Emprise au sol max",
+       "valeur": "60 %",
+       "etat": "chiffre",
+       "reference": "Art. Ui.9 · p.56 (PLU, calibrage validé)",
+       "url": "https://data.geopf.fr/annexes/gpu/documents/DU_97411/eee143f619882c020cfb0fbd52e178b7/97411_reglement_20260805.pdf#page=56",
+       "exceptions": [
+        {
+         "id": "emprise.exception",
+         "texte": "En secteur Uicm : L'emprise au sol des constructions est limitée à 40 % de la superficie de l'unité foncière. … En secteur Uip : L'emprise au sol des constructions est limitée à 60 % de la superficie de l'unité foncière, 40% minimum de la parcelle doit être en pleine terre.",
+         "article": "Article Ui.9",
+         "page_pdf": 56,
+         "porte": "sous_secteur",
+         "modifie_calcul": true
+        }
+       ]
+      },
+      {
+       "cle": "recul_voirie",
+       "libelle": "Recul sur voie",
+       "valeur": "3 m",
+       "etat": "chiffre",
+       "reference": "Art. Ui.6 · p.54 (PLU, calibrage validé)",
+       "url": "https://data.geopf.fr/annexes/gpu/documents/DU_97411/eee143f619882c020cfb0fbd52e178b7/97411_reglement_20260805.pdf#page=54",
+       "exceptions": [
+        {
+         "id": "recul_voirie.exception",
+         "texte": "Voies d'une emprise de moins de 12 m : les constructions seront implantées à 4 m minimum de l'alignement. Voies d'une emprise de moins de 3,50 m : les constructions seront implantées à 3 m minimum de l'alignement.",
+         "article": "Article Ui.6",
+         "page_pdf": 54,
+         "porte": "autre",
+         "modifie_calcul": true
+        }
+       ]
+      },
+      {
+       "cle": "recul_limites",
+       "libelle": "Recul limites séparatives",
+       "valeur": "En secteur Ui : Chaque construction pourra s'implanter sur 1 ou 2 limites séparatives sur une longueur maximale de 18 mètres par limite. ... 4m ≤ L ≥ h/2. (plancher 4 m)",
+       "etat": "formule",
+       "reference": "Art. Ui.7 · p.55 (PLU, calibrage validé)",
+       "url": "https://data.geopf.fr/annexes/gpu/documents/DU_97411/eee143f619882c020cfb0fbd52e178b7/97411_reglement_20260805.pdf#page=55",
+       "exceptions": []
+      },
+      {
+       "cle": "pleine_terre",
+       "libelle": "Pleine terre min",
+       "valeur": "non réglementé",
+       "etat": "absent",
+       "reference": null,
+       "url": "https://data.geopf.fr/annexes/gpu/documents/DU_97411/eee143f619882c020cfb0fbd52e178b7/97411_reglement_20260805.pdf",
+       "exceptions": []
+      },
+      {
+       "cle": "stationnement",
+       "libelle": "Stationnement",
+       "valeur": "1 place / logement",
+       "etat": "texte",
+       "reference": null,
+       "url": "https://data.geopf.fr/annexes/gpu/documents/DU_97411/eee143f619882c020cfb0fbd52e178b7/97411_reglement_20260805.pdf",
+       "exceptions": []
+      }
+     ],
+     "annuaire": {
+      "insee": "97411",
+      "zone": "Ui"
+     },
+     "note": null,
+     "part": 1.0,
+     "destinations": {
+      "etat_calibration": "calibree",
+      "zone": "Ui",
+      "millesime": "2026-08-05",
+      "document": "97411_reglement_20260805.pdf",
+      "url": "https://data.geopf.fr/annexes/gpu/documents/DU_97411/eee143f619882c020cfb0fbd52e178b7/97411_reglement_20260805.pdf",
+      "autorisees": [
+       "Hébergement",
+       "Artisanat et commerce de détail",
+       "Restauration",
+       "Commerce de gros",
+       "Activités de services où s'effectue l'accueil d'une clientèle",
+       "Cinéma",
+       "Hôtels",
+       "Autres hébergements touristiques",
+       "Locaux et bureaux accueillant du public des administrations publiques et assimilés",
+       "Locaux techniques et industriels des administrations publiques et assimilés",
+       "Établissements d'enseignement, de santé et d'action sociale",
+       "Salles d'art et de spectacles",
+       "Équipements sportifs",
+       "Lieux de culte",
+       "Autres équipements recevant du public",
+       "Bureau",
+       "Centre de congrès et d'exposition",
+       "Cuisine dédiée à la vente en ligne"
+      ],
+      "interdites": [
+       "Exploitation agricole",
+       "Exploitation forestière",
+       "Industrie"
+      ],
+      "sous_conditions": [
+       "Logement",
+       "Entrepôt"
+      ],
+      "seuil_commerce_m2": null,
+      "seuil_commerce_type": null,
+      "commerce_cdac": {
+       "seuil_m2": 1000,
+       "mention": "soumis à CDAC au-delà de 1 000 m² de surface de vente",
+       "source": "art. L752-1 du code de commerce : autorisation d'exploitation commerciale obligatoire au-delà de 1 000 m² de surface de vente"
+      },
+      "lignes": [
+       {
+        "commune": "Saint-Denis",
+        "zone": "Ui",
+        "sous_destination": "exploitation_agricole",
+        "libelle": "Exploitation agricole",
+        "etat_calibration": "calibree",
+        "millesime": "2026-08-05",
+        "lu_le": "2026-09-03",
+        "document": "97411_reglement_20260805.pdf",
+        "statut": "interdit",
+        "statut_effectif": "interdit",
+        "condition": null,
+        "seuil_m2": null,
+        "seuil_type": null,
+        "article": "Ui 1",
+        "page_pdf": 51,
+        "citation": "« les constructions à fonction d'industrie, d'exploitation agricole et forestière »",
+        "silence": null,
+        "cdac": null,
+        "rnu": false,
+        "phrase": "Exploitation agricole : interdit — zone Ui — art. Ui 1 — p. 51 (PDF) — PLU millésime 2026-08-05"
+       },
+       {
+        "commune": "Saint-Denis",
+        "zone": "Ui",
+        "sous_destination": "exploitation_forestiere",
+        "libelle": "Exploitation forestière",
+        "etat_calibration": "calibree",
+        "millesime": "2026-08-05",
+        "lu_le": "2026-09-03",
+        "document": "97411_reglement_20260805.pdf",
+        "statut": "interdit",
+        "statut_effectif": "interdit",
+        "condition": null,
+        "seuil_m2": null,
+        "seuil_type": null,
+        "article": "Ui 1",
+        "page_pdf": 51,
+        "citation": "« les constructions à fonction d'industrie, d'exploitation agricole et forestière »",
+        "silence": null,
+        "cdac": null,
+        "rnu": false,
+        "phrase": "Exploitation forestière : interdit — zone Ui — art. Ui 1 — p. 51 (PDF) — PLU millésime 2026-08-05"
+       },
+       {
+        "commune": "Saint-Denis",
+        "zone": "Ui",
+        "sous_destination": "logement",
+        "libelle": "Logement",
+        "etat_calibration": "calibree",
+        "millesime": "2026-08-05",
+        "lu_le": "2026-09-03",
+        "document": "97411_reglement_20260805.pdf",
+        "statut": "sous_condition",
+        "statut_effectif": "sous_condition",
+        "condition": "condition portant uniquement sur les opérations nouvelles d'habitat collectif de 30 logements et plus : minimum 15 % de logements sociaux et/ou intermédiaires ; les autres constructions de logement ne sont ni interdites ni conditionnées par les articles Ui.1/Ui.2",
+        "seuil_m2": null,
+        "seuil_type": null,
+        "article": "Ui 2",
+        "page_pdf": 52,
+        "citation": "« les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve qu'elles comportent un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité sociale »",
+        "silence": null,
+        "cdac": null,
+        "rnu": false,
+        "phrase": "Logement : condition portant uniquement sur les opérations nouvelles d'habitat collectif de 30 logements et plus : minimum 15 % de logements sociaux et/ou intermédiaires ; les autres constructions de logement ne sont ni interdites ni conditionnées par les articles Ui.1/Ui.2 — zone Ui — art. Ui 2 — p. 52 (PDF) — PLU millésime 2026-08-05"
+       },
+       {
+        "commune": "Saint-Denis",
+        "zone": "Ui",
+        "sous_destination": "hebergement",
+        "libelle": "Hébergement",
+        "etat_calibration": "calibree",
+        "millesime": "2026-08-05",
+        "lu_le": "2026-09-03",
+        "document": "97411_reglement_20260805.pdf",
+        "statut": "non_mentionne",
+        "statut_effectif": "autorise",
+        "condition": null,
+        "seuil_m2": null,
+        "seuil_type": null,
+        "article": null,
+        "page_pdf": null,
+        "citation": null,
+        "silence": {
+         "regle": "autorise",
+         "source": "Art. Ui.1 « Occupations et utilisations du sol interdites » : « Sont interdits : … » (liste fermée d'interdictions, p. 51) ; art. Ui.2 « Occupations et utilisations du sol soumises à des conditions particulières » : « Sont admis et soumis à des conditions particulières : … » (p. 52). Ce qui n'est ni interdit ni conditionné est admis."
+        },
+        "cdac": null,
+        "rnu": false,
+        "phrase": "Hébergement : autorisée (non mentionnée — silence de la zone : autorisé) — Art. Ui.1 « Occupations et utilisations du sol interdites » : « Sont interdits : … » (liste fermée d'interdictions, p. 51) ; art. Ui.2 « Occupations et utilisations du sol soumises à des conditions particulières » : « Sont admis et soumis à des conditions particulières : … » (p. 52). Ce qui n'est ni interdit ni conditionné est admis."
+       },
+       {
+        "commune": "Saint-Denis",
+        "zone": "Ui",
+        "sous_destination": "artisanat_commerce_detail",
+        "libelle": "Artisanat et commerce de détail",
+        "etat_calibration": "calibree",
+        "millesime": "2026-08-05",
+        "lu_le": "2026-09-03",
+        "document": "97411_reglement_20260805.pdf",
+        "statut": "non_mentionne",
+        "statut_effectif": "autorise",
+        "condition": null,
+        "seuil_m2": null,
+        "seuil_type": null,
+        "article": null,
+        "page_pdf": null,
+        "citation": null,
+        "silence": {
+         "regle": "autorise",
+         "source": "Art. Ui.1 « Occupations et utilisations du sol interdites » : « Sont interdits : … » (liste fermée d'interdictions, p. 51) ; art. Ui.2 « Occupations et utilisations du sol soumises à des conditions particulières » : « Sont admis et soumis à des conditions particulières : … » (p. 52). Ce qui n'est ni interdit ni conditionné est admis."
+        },
+        "cdac": {
+         "seuil_m2": 1000,
+         "mention": "soumis à CDAC au-delà de 1 000 m² de surface de vente",
+         "source": "art. L752-1 du code de commerce : autorisation d'exploitation commerciale obligatoire au-delà de 1 000 m² de surface de vente"
+        },
+        "rnu": false,
+        "phrase": "Artisanat et commerce de détail : autorisée (non mentionnée — silence de la zone : autorisé) — Art. Ui.1 « Occupations et utilisations du sol interdites » : « Sont interdits : … » (liste fermée d'interdictions, p. 51) ; art. Ui.2 « Occupations et utilisations du sol soumises à des conditions particulières » : « Sont admis et soumis à des conditions particulières : … » (p. 52). Ce qui n'est ni interdit ni conditionné est admis. · au-delà de 1 000 m² de surface de vente : soumis à CDAC (L752-1 c. commerce)"
+       },
+       {
+        "commune": "Saint-Denis",
+        "zone": "Ui",
+        "sous_destination": "restauration",
+        "libelle": "Restauration",
+        "etat_calibration": "calibree",
+        "millesime": "2026-08-05",
+        "lu_le": "2026-09-03",
+        "document": "97411_reglement_20260805.pdf",
+        "statut": "non_mentionne",
+        "statut_effectif": "autorise",
+        "condition": null,
+        "seuil_m2": null,
+        "seuil_type": null,
+        "article": null,
+        "page_pdf": null,
+        "citation": null,
+        "silence": {
+         "regle": "autorise",
+         "source": "Art. Ui.1 « Occupations et utilisations du sol interdites » : « Sont interdits : … » (liste fermée d'interdictions, p. 51) ; art. Ui.2 « Occupations et utilisations du sol soumises à des conditions particulières » : « Sont admis et soumis à des conditions particulières : … » (p. 52). Ce qui n'est ni interdit ni conditionné est admis."
+        },
+        "cdac": null,
+        "rnu": false,
+        "phrase": "Restauration : autorisée (non mentionnée — silence de la zone : autorisé) — Art. Ui.1 « Occupations et utilisations du sol interdites » : « Sont interdits : … » (liste fermée d'interdictions, p. 51) ; art. Ui.2 « Occupations et utilisations du sol soumises à des conditions particulières » : « Sont admis et soumis à des conditions particulières : … » (p. 52). Ce qui n'est ni interdit ni conditionné est admis."
+       },
+       {
+        "commune": "Saint-Denis",
+        "zone": "Ui",
+        "sous_destination": "commerce_gros",
+        "libelle": "Commerce de gros",
+        "etat_calibration": "calibree",
+        "millesime": "2026-08-05",
+        "lu_le": "2026-09-03",
+        "document": "97411_reglement_20260805.pdf",
+        "statut": "non_mentionne",
+        "statut_effectif": "autorise",
+        "condition": null,
+        "seuil_m2": null,
+        "seuil_type": null,
+        "article": null,
+        "page_pdf": null,
+        "citation": null,
+        "silence": {
+         "regle": "autorise",
+         "source": "Art. Ui.1 « Occupations et utilisations du sol interdites » : « Sont interdits : … » (liste fermée d'interdictions, p. 51) ; art. Ui.2 « Occupations et utilisations du sol soumises à des conditions particulières » : « Sont admis et soumis à des conditions particulières : … » (p. 52). Ce qui n'est ni interdit ni conditionné est admis."
+        },
+        "cdac": null,
+        "rnu": false,
+        "phrase": "Commerce de gros : autorisée (non mentionnée — silence de la zone : autorisé) — Art. Ui.1 « Occupations et utilisations du sol interdites » : « Sont interdits : … » (liste fermée d'interdictions, p. 51) ; art. Ui.2 « Occupations et utilisations du sol soumises à des conditions particulières » : « Sont admis et soumis à des conditions particulières : … » (p. 52). Ce qui n'est ni interdit ni conditionné est admis."
+       },
+       {
+        "commune": "Saint-Denis",
+        "zone": "Ui",
+        "sous_destination": "activites_services_clientele",
+        "libelle": "Activités de services où s'effectue l'accueil d'une clientèle",
+        "etat_calibration": "calibree",
+        "millesime": "2026-08-05",
+        "lu_le": "2026-09-03",
+        "document": "97411_reglement_20260805.pdf",
+        "statut": "non_mentionne",
+        "statut_effectif": "autorise",
+        "condition": null,
+        "seuil_m2": null,
+        "seuil_type": null,
+        "article": null,
+        "page_pdf": null,
+        "citation": null,
+        "silence": {
+         "regle": "autorise",
+         "source": "Art. Ui.1 « Occupations et utilisations du sol interdites » : « Sont interdits : … » (liste fermée d'interdictions, p. 51) ; art. Ui.2 « Occupations et utilisations du sol soumises à des conditions particulières » : « Sont admis et soumis à des conditions particulières : … » (p. 52). Ce qui n'est ni interdit ni conditionné est admis."
+        },
+        "cdac": null,
+        "rnu": false,
+        "phrase": "Activités de services où s'effectue l'accueil d'une clientèle : autorisée (non mentionnée — silence de la zone : autorisé) — Art. Ui.1 « Occupations et utilisations du sol interdites » : « Sont interdits : … » (liste fermée d'interdictions, p. 51) ; art. Ui.2 « Occupations et utilisations du sol soumises à des conditions particulières » : « Sont admis et soumis à des conditions particulières : … » (p. 52). Ce qui n'est ni interdit ni conditionné est admis."
+       },
+       {
+        "commune": "Saint-Denis",
+        "zone": "Ui",
+        "sous_destination": "cinema",
+        "libelle": "Cinéma",
+        "etat_calibration": "calibree",
+        "millesime": "2026-08-05",
+        "lu_le": "2026-09-03",
+        "document": "97411_reglement_20260805.pdf",
+        "statut": "non_mentionne",
+        "statut_effectif": "autorise",
+        "condition": null,
+        "seuil_m2": null,
+        "seuil_type": null,
+        "article": null,
+        "page_pdf": null,
+        "citation": null,
+        "silence": {
+         "regle": "autorise",
+         "source": "Art. Ui.1 « Occupations et utilisations du sol interdites » : « Sont interdits : … » (liste fermée d'interdictions, p. 51) ; art. Ui.2 « Occupations et utilisations du sol soumises à des conditions particulières » : « Sont admis et soumis à des conditions particulières : … » (p. 52). Ce qui n'est ni interdit ni conditionné est admis."
+        },
+        "cdac": null,
+        "rnu": false,
+        "phrase": "Cinéma : autorisée (non mentionnée — silence de la zone : autorisé) — Art. Ui.1 « Occupations et utilisations du sol interdites » : « Sont interdits : … » (liste fermée d'interdictions, p. 51) ; art. Ui.2 « Occupations et utilisations du sol soumises à des conditions particulières » : « Sont admis et soumis à des conditions particulières : … » (p. 52). Ce qui n'est ni interdit ni conditionné est admis."
+       },
+       {
+        "commune": "Saint-Denis",
+        "zone": "Ui",
+        "sous_destination": "hotels",
+        "libelle": "Hôtels",
+        "etat_calibration": "calibree",
+        "millesime": "2026-08-05",
+        "lu_le": "2026-09-03",
+        "document": "97411_reglement_20260805.pdf",
+        "statut": "non_mentionne",
+        "statut_effectif": "autorise",
+        "condition": null,
+        "seuil_m2": null,
+        "seuil_type": null,
+        "article": null,
+        "page_pdf": null,
+        "citation": null,
+        "silence": {
+         "regle": "autorise",
+         "source": "Art. Ui.1 « Occupations et utilisations du sol interdites » : « Sont interdits : … » (liste fermée d'interdictions, p. 51) ; art. Ui.2 « Occupations et utilisations du sol soumises à des conditions particulières » : « Sont admis et soumis à des conditions particulières : … » (p. 52). Ce qui n'est ni interdit ni conditionné est admis."
+        },
+        "cdac": null,
+        "rnu": false,
+        "phrase": "Hôtels : autorisée (non mentionnée — silence de la zone : autorisé) — Art. Ui.1 « Occupations et utilisations du sol interdites » : « Sont interdits : … » (liste fermée d'interdictions, p. 51) ; art. Ui.2 « Occupations et utilisations du sol soumises à des conditions particulières » : « Sont admis et soumis à des conditions particulières : … » (p. 52). Ce qui n'est ni interdit ni conditionné est admis."
+       },
+       {
+        "commune": "Saint-Denis",
+        "zone": "Ui",
+        "sous_destination": "autres_hebergements_touristiques",
+        "libelle": "Autres hébergements touristiques",
+        "etat_calibration": "calibree",
+        "millesime": "2026-08-05",
+        "lu_le": "2026-09-03",
+        "document": "97411_reglement_20260805.pdf",
+        "statut": "non_mentionne",
+        "statut_effectif": "autorise",
+        "condition": null,
+        "seuil_m2": null,
+        "seuil_type": null,
+        "article": null,
+        "page_pdf": null,
+        "citation": null,
+        "silence": {
+         "regle": "autorise",
+         "source": "Art. Ui.1 « Occupations et utilisations du sol interdites » : « Sont interdits : … » (liste fermée d'interdictions, p. 51) ; art. Ui.2 « Occupations et utilisations du sol soumises à des conditions particulières » : « Sont admis et soumis à des conditions particulières : … » (p. 52). Ce qui n'est ni interdit ni conditionné est admis."
+        },
+        "cdac": null,
+        "rnu": false,
+        "phrase": "Autres hébergements touristiques : autorisée (non mentionnée — silence de la zone : autorisé) — Art. Ui.1 « Occupations et utilisations du sol interdites » : « Sont interdits : … » (liste fermée d'interdictions, p. 51) ; art. Ui.2 « Occupations et utilisations du sol soumises à des conditions particulières » : « Sont admis et soumis à des conditions particulières : … » (p. 52). Ce qui n'est ni interdit ni conditionné est admis."
+       },
+       {
+        "commune": "Saint-Denis",
+        "zone": "Ui",
+        "sous_destination": "locaux_bureaux_administrations",
+        "libelle": "Locaux et bureaux accueillant du public des administrations publiques et assimilés",
+        "etat_calibration": "calibree",
+        "millesime": "2026-08-05",
+        "lu_le": "2026-09-03",
+        "document": "97411_reglement_20260805.pdf",
+        "statut": "non_mentionne",
+        "statut_effectif": "autorise",
+        "condition": null,
+        "seuil_m2": null,
+        "seuil_type": null,
+        "article": null,
+        "page_pdf": null,
+        "citation": null,
+        "silence": {
+         "regle": "autorise",
+         "source": "Art. Ui.1 « Occupations et utilisations du sol interdites » : « Sont interdits : … » (liste fermée d'interdictions, p. 51) ; art. Ui.2 « Occupations et utilisations du sol soumises à des conditions particulières » : « Sont admis et soumis à des conditions particulières : … » (p. 52). Ce qui n'est ni interdit ni conditionné est admis."
+        },
+        "cdac": null,
+        "rnu": false,
+        "phrase": "Locaux et bureaux accueillant du public des administrations publiques et assimilés : autorisée (non mentionnée — silence de la zone : autorisé) — Art. Ui.1 « Occupations et utilisations du sol interdites » : « Sont interdits : … » (liste fermée d'interdictions, p. 51) ; art. Ui.2 « Occupations et utilisations du sol soumises à des conditions particulières » : « Sont admis et soumis à des conditions particulières : … » (p. 52). Ce qui n'est ni interdit ni conditionné est admis."
+       },
+       {
+        "commune": "Saint-Denis",
+        "zone": "Ui",
+        "sous_destination": "locaux_techniques_administrations",
+        "libelle": "Locaux techniques et industriels des administrations publiques et assimilés",
+        "etat_calibration": "calibree",
+        "millesime": "2026-08-05",
+        "lu_le": "2026-09-03",
+        "document": "97411_reglement_20260805.pdf",
+        "statut": "non_mentionne",
+        "statut_effectif": "autorise",
+        "condition": null,
+        "seuil_m2": null,
+        "seuil_type": null,
+        "article": null,
+        "page_pdf": null,
+        "citation": null,
+        "silence": {
+         "regle": "autorise",
+         "source": "Art. Ui.1 « Occupations et utilisations du sol interdites » : « Sont interdits : … » (liste fermée d'interdictions, p. 51) ; art. Ui.2 « Occupations et utilisations du sol soumises à des conditions particulières » : « Sont admis et soumis à des conditions particulières : … » (p. 52). Ce qui n'est ni interdit ni conditionné est admis."
+        },
+        "cdac": null,
+        "rnu": false,
+        "phrase": "Locaux techniques et industriels des administrations publiques et assimilés : autorisée (non mentionnée — silence de la zone : autorisé) — Art. Ui.1 « Occupations et utilisations du sol interdites » : « Sont interdits : … » (liste fermée d'interdictions, p. 51) ; art. Ui.2 « Occupations et utilisations du sol soumises à des conditions particulières » : « Sont admis et soumis à des conditions particulières : … » (p. 52). Ce qui n'est ni interdit ni conditionné est admis."
+       },
+       {
+        "commune": "Saint-Denis",
+        "zone": "Ui",
+        "sous_destination": "enseignement_sante_action_sociale",
+        "libelle": "Établissements d'enseignement, de santé et d'action sociale",
+        "etat_calibration": "calibree",
+        "millesime": "2026-08-05",
+        "lu_le": "2026-09-03",
+        "document": "97411_reglement_20260805.pdf",
+        "statut": "non_mentionne",
+        "statut_effectif": "autorise",
+        "condition": null,
+        "seuil_m2": null,
+        "seuil_type": null,
+        "article": null,
+        "page_pdf": null,
+        "citation": null,
+        "silence": {
+         "regle": "autorise",
+         "source": "Art. Ui.1 « Occupations et utilisations du sol interdites » : « Sont interdits : … » (liste fermée d'interdictions, p. 51) ; art. Ui.2 « Occupations et utilisations du sol soumises à des conditions particulières » : « Sont admis et soumis à des conditions particulières : … » (p. 52). Ce qui n'est ni interdit ni conditionné est admis."
+        },
+        "cdac": null,
+        "rnu": false,
+        "phrase": "Établissements d'enseignement, de santé et d'action sociale : autorisée (non mentionnée — silence de la zone : autorisé) — Art. Ui.1 « Occupations et utilisations du sol interdites » : « Sont interdits : … » (liste fermée d'interdictions, p. 51) ; art. Ui.2 « Occupations et utilisations du sol soumises à des conditions particulières » : « Sont admis et soumis à des conditions particulières : … » (p. 52). Ce qui n'est ni interdit ni conditionné est admis."
+       },
+       {
+        "commune": "Saint-Denis",
+        "zone": "Ui",
+        "sous_destination": "salles_art_spectacles",
+        "libelle": "Salles d'art et de spectacles",
+        "etat_calibration": "calibree",
+        "millesime": "2026-08-05",
+        "lu_le": "2026-09-03",
+        "document": "97411_reglement_20260805.pdf",
+        "statut": "non_mentionne",
+        "statut_effectif": "autorise",
+        "condition": null,
+        "seuil_m2": null,
+        "seuil_type": null,
+        "article": null,
+        "page_pdf": null,
+        "citation": null,
+        "silence": {
+         "regle": "autorise",
+         "source": "Art. Ui.1 « Occupations et utilisations du sol interdites » : « Sont interdits : … » (liste fermée d'interdictions, p. 51) ; art. Ui.2 « Occupations et utilisations du sol soumises à des conditions particulières » : « Sont admis et soumis à des conditions particulières : … » (p. 52). Ce qui n'est ni interdit ni conditionné est admis."
+        },
+        "cdac": null,
+        "rnu": false,
+        "phrase": "Salles d'art et de spectacles : autorisée (non mentionnée — silence de la zone : autorisé) — Art. Ui.1 « Occupations et utilisations du sol interdites » : « Sont interdits : … » (liste fermée d'interdictions, p. 51) ; art. Ui.2 « Occupations et utilisations du sol soumises à des conditions particulières » : « Sont admis et soumis à des conditions particulières : … » (p. 52). Ce qui n'est ni interdit ni conditionné est admis."
+       },
+       {
+        "commune": "Saint-Denis",
+        "zone": "Ui",
+        "sous_destination": "equipements_sportifs",
+        "libelle": "Équipements sportifs",
+        "etat_calibration": "calibree",
+        "millesime": "2026-08-05",
+        "lu_le": "2026-09-03",
+        "document": "97411_reglement_20260805.pdf",
+        "statut": "non_mentionne",
+        "statut_effectif": "autorise",
+        "condition": null,
+        "seuil_m2": null,
+        "seuil_type": null,
+        "article": null,
+        "page_pdf": null,
+        "citation": null,
+        "silence": {
+         "regle": "autorise",
+         "source": "Art. Ui.1 « Occupations et utilisations du sol interdites » : « Sont interdits : … » (liste fermée d'interdictions, p. 51) ; art. Ui.2 « Occupations et utilisations du sol soumises à des conditions particulières » : « Sont admis et soumis à des conditions particulières : … » (p. 52). Ce qui n'est ni interdit ni conditionné est admis."
+        },
+        "cdac": null,
+        "rnu": false,
+        "phrase": "Équipements sportifs : autorisée (non mentionnée — silence de la zone : autorisé) — Art. Ui.1 « Occupations et utilisations du sol interdites » : « Sont interdits : … » (liste fermée d'interdictions, p. 51) ; art. Ui.2 « Occupations et utilisations du sol soumises à des conditions particulières » : « Sont admis et soumis à des conditions particulières : … » (p. 52). Ce qui n'est ni interdit ni conditionné est admis."
+       },
+       {
+        "commune": "Saint-Denis",
+        "zone": "Ui",
+        "sous_destination": "lieux_culte",
+        "libelle": "Lieux de culte",
+        "etat_calibration": "calibree",
+        "millesime": "2026-08-05",
+        "lu_le": "2026-09-03",
+        "document": "97411_reglement_20260805.pdf",
+        "statut": "non_mentionne",
+        "statut_effectif": "autorise",
+        "condition": null,
+        "seuil_m2": null,
+        "seuil_type": null,
+        "article": null,
+        "page_pdf": null,
+        "citation": null,
+        "silence": {
+         "regle": "autorise",
+         "source": "Art. Ui.1 « Occupations et utilisations du sol interdites » : « Sont interdits : … » (liste fermée d'interdictions, p. 51) ; art. Ui.2 « Occupations et utilisations du sol soumises à des conditions particulières » : « Sont admis et soumis à des conditions particulières : … » (p. 52). Ce qui n'est ni interdit ni conditionné est admis."
+        },
+        "cdac": null,
+        "rnu": false,
+        "phrase": "Lieux de culte : autorisée (non mentionnée — silence de la zone : autorisé) — Art. Ui.1 « Occupations et utilisations du sol interdites » : « Sont interdits : … » (liste fermée d'interdictions, p. 51) ; art. Ui.2 « Occupations et utilisations du sol soumises à des conditions particulières » : « Sont admis et soumis à des conditions particulières : … » (p. 52). Ce qui n'est ni interdit ni conditionné est admis."
+       },
+       {
+        "commune": "Saint-Denis",
+        "zone": "Ui",
+        "sous_destination": "autres_equipements_public",
+        "libelle": "Autres équipements recevant du public",
+        "etat_calibration": "calibree",
+        "millesime": "2026-08-05",
+        "lu_le": "2026-09-03",
+        "document": "97411_reglement_20260805.pdf",
+        "statut": "non_mentionne",
+        "statut_effectif": "autorise",
+        "condition": null,
+        "seuil_m2": null,
+        "seuil_type": null,
+        "article": null,
+        "page_pdf": null,
+        "citation": null,
+        "silence": {
+         "regle": "autorise",
+         "source": "Art. Ui.1 « Occupations et utilisations du sol interdites » : « Sont interdits : … » (liste fermée d'interdictions, p. 51) ; art. Ui.2 « Occupations et utilisations du sol soumises à des conditions particulières » : « Sont admis et soumis à des conditions particulières : … » (p. 52). Ce qui n'est ni interdit ni conditionné est admis."
+        },
+        "cdac": null,
+        "rnu": false,
+        "phrase": "Autres équipements recevant du public : autorisée (non mentionnée — silence de la zone : autorisé) — Art. Ui.1 « Occupations et utilisations du sol interdites » : « Sont interdits : … » (liste fermée d'interdictions, p. 51) ; art. Ui.2 « Occupations et utilisations du sol soumises à des conditions particulières » : « Sont admis et soumis à des conditions particulières : … » (p. 52). Ce qui n'est ni interdit ni conditionné est admis."
+       },
+       {
+        "commune": "Saint-Denis",
+        "zone": "Ui",
+        "sous_destination": "industrie",
+        "libelle": "Industrie",
+        "etat_calibration": "calibree",
+        "millesime": "2026-08-05",
+        "lu_le": "2026-09-03",
+        "document": "97411_reglement_20260805.pdf",
+        "statut": "interdit",
+        "statut_effectif": "interdit",
+        "condition": null,
+        "seuil_m2": null,
+        "seuil_type": null,
+        "article": "Ui 1",
+        "page_pdf": 51,
+        "citation": "« les constructions à fonction d'industrie, d'exploitation agricole et forestière »",
+        "silence": null,
+        "cdac": null,
+        "rnu": false,
+        "phrase": "Industrie : interdit — zone Ui — art. Ui 1 — p. 51 (PDF) — PLU millésime 2026-08-05"
+       },
+       {
+        "commune": "Saint-Denis",
+        "zone": "Ui",
+        "sous_destination": "entrepot",
+        "libelle": "Entrepôt",
+        "etat_calibration": "calibree",
+        "millesime": "2026-08-05",
+        "lu_le": "2026-09-03",
+        "document": "97411_reglement_20260805.pdf",
+        "statut": "sous_condition",
+        "statut_effectif": "sous_condition",
+        "condition": "interdits (Ui.1, p. 51 : « les entrepôts sauf ceux mentionnés à l'article 2 ») sauf s'ils sont liés aux occupations et utilisations du sol admises dans la zone et n'entraînent pas pour leur voisinage des nuisances inacceptables",
+        "seuil_m2": null,
+        "seuil_type": null,
+        "article": "Ui 2",
+        "page_pdf": 52,
+        "citation": "« les constructions destinées à la fonction d'entrepôt liées aux occupations et utilisations des sols admises la zone et sous réserve qu'elles n'entraînent pas pour leur voisinage des nuisances inacceptables »",
+        "silence": null,
+        "cdac": null,
+        "rnu": false,
+        "phrase": "Entrepôt : interdits (Ui.1, p. 51 : « les entrepôts sauf ceux mentionnés à l'article 2 ») sauf s'ils sont liés aux occupations et utilisations du sol admises dans la zone et n'entraînent pas pour leur voisinage des nuisances inacceptables — zone Ui — art. Ui 2 — p. 52 (PDF) — PLU millésime 2026-08-05"
+       },
+       {
+        "commune": "Saint-Denis",
+        "zone": "Ui",
+        "sous_destination": "bureau",
+        "libelle": "Bureau",
+        "etat_calibration": "calibree",
+        "millesime": "2026-08-05",
+        "lu_le": "2026-09-03",
+        "document": "97411_reglement_20260805.pdf",
+        "statut": "non_mentionne",
+        "statut_effectif": "autorise",
+        "condition": null,
+        "seuil_m2": null,
+        "seuil_type": null,
+        "article": null,
+        "page_pdf": null,
+        "citation": null,
+        "silence": {
+         "regle": "autorise",
+         "source": "Art. Ui.1 « Occupations et utilisations du sol interdites » : « Sont interdits : … » (liste fermée d'interdictions, p. 51) ; art. Ui.2 « Occupations et utilisations du sol soumises à des conditions particulières » : « Sont admis et soumis à des conditions particulières : … » (p. 52). Ce qui n'est ni interdit ni conditionné est admis."
+        },
+        "cdac": null,
+        "rnu": false,
+        "phrase": "Bureau : autorisée (non mentionnée — silence de la zone : autorisé) — Art. Ui.1 « Occupations et utilisations du sol interdites » : « Sont interdits : … » (liste fermée d'interdictions, p. 51) ; art. Ui.2 « Occupations et utilisations du sol soumises à des conditions particulières » : « Sont admis et soumis à des conditions particulières : … » (p. 52). Ce qui n'est ni interdit ni conditionné est admis."
+       },
+       {
+        "commune": "Saint-Denis",
+        "zone": "Ui",
+        "sous_destination": "centre_congres_exposition",
+        "libelle": "Centre de congrès et d'exposition",
+        "etat_calibration": "calibree",
+        "millesime": "2026-08-05",
+        "lu_le": "2026-09-03",
+        "document": "97411_reglement_20260805.pdf",
+        "statut": "non_mentionne",
+        "statut_effectif": "autorise",
+        "condition": null,
+        "seuil_m2": null,
+        "seuil_type": null,
+        "article": null,
+        "page_pdf": null,
+        "citation": null,
+        "silence": {
+         "regle": "autorise",
+         "source": "Art. Ui.1 « Occupations et utilisations du sol interdites » : « Sont interdits : … » (liste fermée d'interdictions, p. 51) ; art. Ui.2 « Occupations et utilisations du sol soumises à des conditions particulières » : « Sont admis et soumis à des conditions particulières : … » (p. 52). Ce qui n'est ni interdit ni conditionné est admis."
+        },
+        "cdac": null,
+        "rnu": false,
+        "phrase": "Centre de congrès et d'exposition : autorisée (non mentionnée — silence de la zone : autorisé) — Art. Ui.1 « Occupations et utilisations du sol interdites » : « Sont interdits : … » (liste fermée d'interdictions, p. 51) ; art. Ui.2 « Occupations et utilisations du sol soumises à des conditions particulières » : « Sont admis et soumis à des conditions particulières : … » (p. 52). Ce qui n'est ni interdit ni conditionné est admis."
+       },
+       {
+        "commune": "Saint-Denis",
+        "zone": "Ui",
+        "sous_destination": "cuisine_vente_en_ligne",
+        "libelle": "Cuisine dédiée à la vente en ligne",
+        "etat_calibration": "calibree",
+        "millesime": "2026-08-05",
+        "lu_le": "2026-09-03",
+        "document": "97411_reglement_20260805.pdf",
+        "statut": "non_mentionne",
+        "statut_effectif": "autorise",
+        "condition": null,
+        "seuil_m2": null,
+        "seuil_type": null,
+        "article": null,
+        "page_pdf": null,
+        "citation": null,
+        "silence": {
+         "regle": "autorise",
+         "source": "Art. Ui.1 « Occupations et utilisations du sol interdites » : « Sont interdits : … » (liste fermée d'interdictions, p. 51) ; art. Ui.2 « Occupations et utilisations du sol soumises à des conditions particulières » : « Sont admis et soumis à des conditions particulières : … » (p. 52). Ce qui n'est ni interdit ni conditionné est admis."
+        },
+        "cdac": null,
+        "rnu": false,
+        "phrase": "Cuisine dédiée à la vente en ligne : autorisée (non mentionnée — silence de la zone : autorisé) — Art. Ui.1 « Occupations et utilisations du sol interdites » : « Sont interdits : … » (liste fermée d'interdictions, p. 51) ; art. Ui.2 « Occupations et utilisations du sol soumises à des conditions particulières » : « Sont admis et soumis à des conditions particulières : … » (p. 52). Ce qui n'est ni interdit ni conditionné est admis."
+       }
+      ],
+      "referentiel": "art. R151-27 et R151-28 du code de l'urbanisme, version en vigueur depuis le 01/07/2023 (décret n° 2023-195 du 22/03/2023)"
+     }
+    }
+   ],
+   "disclaimer": "Le règlement PLU fait foi ; les valeurs affichées sont une aide à la lecture, non un certificat d'urbanisme.",
+   "mixite": {
+    "seuil_logements": 30,
+    "seuil_m2": null,
+    "quota_pct": 15,
+    "quota_base": null,
+    "produits": null,
+    "portee": "zone",
+    "article": "Article Ui.2",
+    "page_pdf": 52,
+    "citation": "les opérations nouvelles d'habitat collectif de 30 logements et plus sous réserve qu’elles comportent un minimum de 15% de logements sociaux et/ou intermédiaires dans le respect de la mixité sociale.",
+    "statut": "valide"
+   },
+   "zone_famille": "U",
+   "constructible_neuf": true,
+   "a_cheval": false
+  },
+  "au_ouverture": null,
+  "plu_fraicheur": {
+   "idurba": "97411_PLU_20260805",
+   "horizon": "2026-08-05",
+   "statut": "a_jour",
+   "libelle": "PLU approuvé le 2026-08-05 — Document opposable — il fait foi à ce jour.",
+   "note": null,
+   "cadence": "révisions (périodique)",
+   "document_servi": "PLU approuvé le 2026-08-05",
+   "fait_foi": "Document opposable — il fait foi à ce jour.",
+   "en_cours": null,
+   "action": null,
+   "fait_foi_ok": true
+  },
+  "radar_procedure": null,
+  "historique_site": {
+   "titre": "Sur cette parcelle",
+   "permis": [
+    {
+     "permit_id": "97441125A0269",
+     "type": "PC",
+     "type_label": "Permis de construire",
+     "date_autorisation": "2026-03-09",
+     "date_depot": "2025-01-01",
+     "etat_libelle": "autorisé",
+     "annule": false,
+     "note_incoherence": null
+    },
+    {
+     "permit_id": "9744112300022",
+     "type": "DP",
+     "type_label": "Déclaration préalable",
+     "date_autorisation": "2023-02-28",
+     "date_depot": "2023-01-01",
+     "etat_libelle": "autorisé",
+     "annule": false,
+     "note_incoherence": null
+    }
+   ],
+   "n_permis": 2,
+   "caducite": null,
+   "source": "Sitadel (autorisations d'urbanisme, dépôts datés)",
+   "honnetete": "Autorisations et dépôts uniquement — refus et dossiers en cours non publiés."
+  },
+  "voisinage_proche": {
+   "titre": "Autour, à moins de 100 m",
+   "rayon_m": 100,
+   "fenetre_mois": 36,
+   "ventes_dvf": 14,
+   "prix_median_eur": 12000,
+   "prix_note": null,
+   "permis": 2,
+   "source": "DVF / valeurs foncières (Etalab) · Sitadel (autorisations d'urbanisme, dépôts datés)",
+   "honnetete": "Ventes et autorisations publiées uniquement ; dossiers en cours non publiés."
+  },
+  "potentiel_transformation": {
+   "calcul": null,
+   "niveau": "fort",
+   "libelle": "Fort potentiel — parcelle en forte sous-densité",
+   "surface_calcul_m2": 20001,
+   "surface_actuelle_m2": 20001,
+   "surface_calcul_note": null,
+   "estimation_simplifiee": true,
+   "estimation_simplifiee_note": "Estimation simplifiée — le gabarit réglementaire (reculs par côté) n'est pas disponible pour cette parcelle ; capacité approchée, à affiner par une étude.",
+   "capacite_differee": false,
+   "capacite_differee_detail": null,
+   "exceptions_calcul": [
+    {
+     "regle": "emprise",
+     "porte": "sous_secteur",
+     "article": "Article Ui.9",
+     "page_pdf": 56
+    },
+    {
+     "regle": "recul_voirie",
+     "porte": "autre",
+     "article": "Article Ui.6",
+     "page_pdf": 54
+    }
+   ],
+   "regles_non_modelisees": [
+    {
+     "regle": "emprise_sol.ces",
+     "porte": "sous_secteur",
+     "article": "Article Ui.9",
+     "page_pdf": "56",
+     "texte": "En secteur Uicm : L'emprise au sol des constructions est limitée à 40 % de la superficie de l'unité foncière. … En secteur Uip : L'emprise au sol des constructions est limitée à 60 % de la superficie de l'unité foncière, 40% minimum de la parcelle doit être en pleine terre."
+    },
+    {
+     "regle": "retraits.voie",
+     "porte": "autre",
+     "article": "Article Ui.6",
+     "page_pdf": "54",
+     "texte": "Voies d'une emprise de moins de 12 m : les constructions seront implantées à 4 m minimum de l'alignement. Voies d'une emprise de moins de 3,50 m : les constructions seront implantées à 3 m minimum de l'alignement."
+    }
+   ],
+   "pct_consomme": 16,
+   "pct_residuel": 84,
+   "sdp_residuelle_m2": 22769.0,
+   "cause": null,
+   "exigu_raison": null,
+   "hors_ppr_rouge": null,
+   "sous_densite": true,
+   "capacite_estimee": true,
+   "surelevation_possible": true,
+   "hauteur_bati_m": 6.6,
+   "hauteur_regle_m": 18.0,
+   "hauteur_base": "faîtage mesuré (LiDAR HD)",
+   "hauteur_marge_m": 11.4,
+   "hauteur_nature": "sourcé",
+   "hauteur_contrainte": "faîtage",
+   "hauteur_contraintes": [
+    {
+     "base": "faîtage",
+     "regle_m": 18.0,
+     "mesure_m": 6.6,
+     "marge_m": 11.4
+    }
+   ],
+   "hauteur_faitage_lidar_m": 6.6,
+   "hauteur_egout_lidar_m": 2.6,
+   "hauteur_source_lidar": "LiDAR HD MNS (IGN), mesuré, survol de septembre 2023",
+   "hauteur_bdtopo_m": 5.3,
+   "ecart_egout_bdtopo_m": -2.7,
+   "hauteur_discordante": false,
+   "hauteur_discordance_motif": null,
+   "hauteur_survol": "septembre 2023",
+   "hauteur_permis_posterieur": "09/03/2026",
+   "avertissement_surelevation": null,
+   "source": "Ratio de densité (surface de plancher consommée / autorisée) + surélévation au moteur commun (règles PLU calibrées × bâti LiDAR HD, hauteur à l'égout MESURÉE)",
+   "note": "Remplace l'ancien mode carte « Mutabilité » : même donnée résiduelle, à la parcelle, complétée du signal surélévation."
+  },
+  "etablissements": null,
+  "completeness_score": 92,
+  "coords": [
+   55.485351,
+   -20.899349
+  ],
+  "evenement": null,
+  "evenement_detail": null,
+  "lines": [
+   {
+    "layer": "residuel_socle",
+    "axis": "q",
+    "onglet": "regles",
+    "result": "POSITIVE",
+    "severity": null,
+    "weight": 30,
+    "detail": "SDP résiduelle 22769 m² — opération majeure.",
+    "source": null,
+    "source_table": "parcel_residuel",
+    "source_id": "344956",
+    "date": "2026-10-18",
+    "millesime_amont": null
+   },
+   {
+    "layer": "bruit_route",
+    "axis": "q",
+    "onglet": "risques",
+    "result": "SOFT_FLAG",
+    "severity": "moyen",
+    "weight": -10,
+    "detail": "Secteur affecté par le bruit routier (classement sonore cat. 2, bande 250 m) — isolement acoustique renforcé obligatoire (R.571-32 CE).",
+    "source": "Classement sonore ITT (Cerema)",
+    "source_table": "spatial_layers",
+    "source_id": "2215856",
+    "date": "2026-10-18",
+    "millesime_amont": "arrêtés déc. 2023"
+   },
+   {
+    "layer": "icpe",
+    "axis": "q",
+    "onglet": "risques",
+    "result": "SOFT_FLAG",
+    "severity": "moyen",
+    "weight": -10,
+    "detail": "Installation (ICPE) à proximité — TPROI, régime Enregistrement, 53 m.",
+    "source": "Géorisques — ICPE",
+    "source_table": "spatial_layers",
+    "source_id": "2078044",
+    "date": "2026-10-18",
+    "millesime_amont": null
+   },
+   {
+    "layer": "prescription_plu",
+    "axis": "q",
+    "onglet": "regles",
+    "result": "SOFT_FLAG",
+    "severity": "moyen",
+    "weight": -10,
+    "detail": "Emplacement réservé : ER - Boulevard Sud, mise à deux fois deux voies et pôle d'échange — emprise grevée au profit d'un projet public ; surface ER déduite de l'emprise constructible (pré-faisabilité).",
+    "source": "GPU — emplacements réservés (prescriptions CNIG)",
+    "source_table": null,
+    "source_id": null,
+    "date": "2026-10-18",
+    "millesime_amont": "GPU — prescriptions typepsc 05 (idurba par commune)"
+   },
+   {
+    "layer": "dvf",
+    "axis": "q",
+    "onglet": "marche",
+    "result": "POSITIVE",
+    "severity": null,
+    "weight": 8,
+    "detail": "Prix médian terrain 699 €/m² — 21 ventes secteur cadastral 2021-2025 (millésimes géo-DVF disponibles). Contexte de marché favorable.",
+    "source": "DVF / valeurs foncières",
+    "source_table": null,
+    "source_id": null,
+    "date": "2026-10-18",
+    "millesime_amont": "géo-DVF Etalab 2021–2025 + archives DGFiP 2014–2020"
+   },
+   {
+    "layer": "sitadel",
+    "axis": "q",
+    "onglet": "marche",
+    "result": "POSITIVE",
+    "severity": null,
+    "weight": 8,
+    "detail": "1 permis récent(s) RATTACHÉ(S) par IDU (≤ 60 mois).",
+    "source": "SITADEL (autorisations d'urbanisme)",
+    "source_table": null,
+    "source_id": null,
+    "date": "2026-10-18",
+    "millesime_amont": "2026-08"
+   },
+   {
+    "layer": "surface",
+    "axis": "q",
+    "onglet": "regles",
+    "result": "POSITIVE",
+    "severity": null,
+    "weight": 8,
+    "detail": "Surface utile 20271 m².",
+    "source": null,
+    "source_table": null,
+    "source_id": null,
+    "date": "2026-10-18",
+    "millesime_amont": null
+   },
+   {
+    "layer": "zonage_plu_gpu",
+    "axis": "q",
+    "onglet": "regles",
+    "result": "POSITIVE",
+    "severity": null,
+    "weight": 8,
+    "detail": "Zone PLU « U » (urbaine — constructible).",
+    "source": "Urbanisme PLU/GPU (API Carto)",
+    "source_table": null,
+    "source_id": null,
+    "date": "2026-10-18",
+    "millesime_amont": "GPU/PLU par commune (révisions — détail en fiche)"
+   },
+   {
+    "layer": "amenites",
+    "axis": "q",
+    "onglet": "marche",
+    "result": "POSITIVE",
+    "severity": null,
+    "weight": 7,
+    "detail": "Commerces et services à proximité : école 0m, commerce 475m, santé 279m, bus 121m (score 1.00).",
+    "source": "OpenStreetMap / Overpass",
+    "source_table": "parcel_amenites",
+    "source_id": "344956",
+    "date": "2026-10-18",
+    "millesime_amont": null
+   },
+   {
+    "layer": "bruit_carte",
+    "axis": "q",
+    "onglet": "risques",
+    "result": "SOFT_FLAG",
+    "severity": "faible",
+    "weight": -5,
+    "detail": "Dépassement de bruit (carte stratégique) : CBS RN — dépassement Lden 68 dB(A) — journée entière — 5 % de la parcelle : constat de nuisance sonore (≠ classement sonore, qui impose l'isolement).",
+    "source": null,
+    "source_table": "spatial_layers",
+    "source_id": "2190700",
+    "date": "2026-10-18",
+    "millesime_amont": null
+   },
+   {
+    "layer": "dpu",
+    "axis": "q",
+    "onglet": "regles",
+    "result": "SOFT_FLAG",
+    "severity": "faible",
+    "weight": -5,
+    "detail": "Droit de préemption urbain — la commune peut préempter à la vente (DIA obligatoire, ~2 mois ; pèse sur la transaction, pas sur la constructibilité).",
+    "source": "GPU — droit de préemption urbain (info-surf)",
+    "source_table": null,
+    "source_id": null,
+    "date": "2026-10-18",
+    "millesime_amont": "GPU typeinf 04 — partiel, non-publiées listées"
+   },
+   {
+    "layer": "prescription_plu",
+    "axis": "q",
+    "onglet": "regles",
+    "result": "SOFT_FLAG",
+    "severity": "faible",
+    "weight": -5,
+    "detail": "Prescription PLU : Zone d'aménagement concerté N°10 : Rhi Hyacinthe Caramboles — à vérifier au règlement.",
+    "source": "Urbanisme PLU/GPU (API Carto)",
+    "source_table": null,
+    "source_id": null,
+    "date": "2026-10-18",
+    "millesime_amont": "GPU/PLU par commune (révisions — détail en fiche)"
+   },
+   {
+    "layer": "prescription_plu",
+    "axis": "q",
+    "onglet": "regles",
+    "result": "SOFT_FLAG",
+    "severity": "faible",
+    "weight": -5,
+    "detail": "Prescription PLU : Périmètre zone souple (~100% de la parcelle) — à vérifier au règlement.",
+    "source": "Urbanisme PLU/GPU (API Carto)",
+    "source_table": null,
+    "source_id": null,
+    "date": "2026-10-18",
+    "millesime_amont": "GPU/PLU par commune (révisions — détail en fiche)"
+   },
+   {
+    "layer": "zone_activite",
+    "axis": "q",
+    "onglet": "marche",
+    "result": "SOFT_FLAG",
+    "severity": "faible",
+    "weight": -5,
+    "detail": "Parcelle dans une zone d'activité ou d'intérêt — Collège « Collège les Alizés » (95 % de la parcelle) : destination économique à considérer (valeur, nuisances éventuelles, règles propres à la zone).",
+    "source": null,
+    "source_table": "spatial_layers",
+    "source_id": "2176949",
+    "date": "2026-10-18",
+    "millesime_amont": null
+   },
+   {
+    "layer": "acces",
+    "axis": "q",
+    "onglet": "reseaux",
+    "result": "PASS",
+    "severity": "INFO",
+    "weight": 3,
+    "detail": "Accès voirie : une voie publique passe à moins de 10 m de la parcelle.",
+    "source": "BD TOPO IGN",
+    "source_table": null,
+    "source_id": null,
+    "date": "2026-10-18",
+    "millesime_amont": "BD TOPO® V3 (IGN) — édition non enregistrée",
+    "weight_applied": 0.0
+   },
+   {
+    "layer": "abf",
+    "axis": "q",
+    "onglet": "risques",
+    "result": "PASS",
+    "severity": null,
+    "weight": null,
+    "detail": "Hors périmètre ABF.",
+    "source": "ABF / Monuments historiques",
+    "source_table": null,
+    "source_id": null,
+    "date": "2026-10-18",
+    "millesime_amont": null
+   },
+   {
+    "layer": "age_dirigeant",
+    "axis": "a",
+    "onglet": "proprio",
+    "result": "UNKNOWN",
+    "severity": null,
+    "weight": null,
+    "detail": "Âge dirigeant inconnu (PM sans dirigeant physique daté).",
+    "source": "INPI RNE (dirigeants)",
+    "source_table": null,
+    "source_id": null,
+    "date": "2026-10-18",
+    "millesime_amont": null
+   },
+   {
+    "layer": "bassin_versant",
+    "axis": "q",
+    "onglet": "risques",
+    "result": "SOFT_FLAG",
+    "severity": "info",
+    "weight": null,
+    "detail": "Bassin versant (code hydro 10B0000002150455501) — 100 % de la parcelle : contexte hydrographique (ruissellement amont/aval, submersion). L'urbanisation en amont pèse sur l'aval — à considérer avec les aléas et scénarios d'inondation.",
+    "source": null,
+    "source_table": "spatial_layers",
+    "source_id": "2173572",
+    "date": "2026-10-18",
+    "millesime_amont": null
+   },
+   {
+    "layer": "bati",
+    "axis": "q",
+    "onglet": "regles",
+    "result": "SOFT_FLAG",
+    "severity": "info",
+    "weight": null,
+    "detail": "ensemble bâti : 16 bâtiments couvrant 22 % de la parcelle (BD TOPO)",
+    "source": null,
+    "source_table": null,
+    "source_id": null,
+    "date": "2026-10-18",
+    "millesime_amont": null
+   },
+   {
+    "layer": "bodacc",
+    "axis": "a",
+    "onglet": "proprio",
+    "result": "PASS",
+    "severity": null,
+    "weight": null,
+    "detail": "Aucune procédure collective — propriétaire sondé le 06/09/2026.",
+    "source": "BODACC (procédures collectives)",
+    "source_table": null,
+    "source_id": null,
+    "date": "2026-10-18",
+    "millesime_amont": null
+   },
+   {
+    "layer": "cavite",
+    "axis": "q",
+    "onglet": "risques",
+    "result": "PASS",
+    "severity": null,
+    "weight": null,
+    "detail": "Aucun objet recensé à proximité.",
+    "source": "Géorisques — cavités souterraines",
+    "source_table": null,
+    "source_id": null,
+    "date": "2026-10-18",
+    "millesime_amont": null
+   },
+   {
+    "layer": "cimetiere",
+    "axis": "q",
+    "onglet": "risques",
+    "result": "PASS",
+    "severity": null,
+    "weight": null,
+    "detail": "Aucun cimetière à moins de 100 m.",
+    "source": null,
+    "source_table": null,
+    "source_id": null,
+    "date": "2026-10-18",
+    "millesime_amont": null
+   },
+   {
+    "layer": "cinquante_pas",
+    "axis": "q",
+    "onglet": "risques",
+    "result": "PASS",
+    "severity": null,
+    "weight": null,
+    "detail": "Hors zone des 50 pas géométriques.",
+    "source": "50 pas géométriques — limite haute (DEAL)",
+    "source_table": null,
+    "source_id": null,
+    "date": "2026-10-18",
+    "millesime_amont": "cadastre 1877 (géoréf. 2012/1950)"
+   },
+   {
+    "layer": "dpf",
+    "axis": "q",
+    "onglet": "regles",
+    "result": "PASS",
+    "severity": null,
+    "weight": null,
+    "detail": "Hors servitude de marchepied du domaine public fluvial.",
+    "source": "Ravines — domaine public fluvial (DEAL Carmen)",
+    "source_table": null,
+    "source_id": null,
+    "date": "2026-10-18",
+    "millesime_amont": "DPF arrêté 06-3077 du 21/08/2006 — 275 tronçons + 6 plans"
+   },
+   {
+    "layer": "eau",
+    "axis": "q",
+    "onglet": "risques",
+    "result": "PASS",
+    "severity": null,
+    "weight": null,
+    "detail": "Hors hydrographie.",
+    "source": "BD TOPO IGN",
+    "source_table": null,
+    "source_id": null,
+    "date": "2026-10-18",
+    "millesime_amont": "BD TOPO® V3 (IGN) — édition non enregistrée"
+   },
+   {
+    "layer": "emprise_lineaire",
+    "axis": "q",
+    "onglet": "regles",
+    "result": "PASS",
+    "severity": null,
+    "weight": null,
+    "detail": "Forme non linéaire (largeur 98 m, allongement 2.2×).",
+    "source": null,
+    "source_table": null,
+    "source_id": null,
+    "date": "2026-10-18",
+    "millesime_amont": null
+   },
+   {
+    "layer": "emprise_routiere",
+    "axis": "q",
+    "onglet": "regles",
+    "result": "PASS",
+    "severity": null,
+    "weight": null,
+    "detail": "Pas une emprise routière (0 m d'axes, densité 0.00, bâti 22%).",
+    "source": null,
+    "source_table": null,
+    "source_id": null,
+    "date": "2026-10-18",
+    "millesime_amont": null
+   },
+   {
+    "layer": "endiguement",
+    "axis": "q",
+    "onglet": "risques",
+    "result": "PASS",
+    "severity": null,
+    "weight": null,
+    "detail": "Hors zone protégée par un système d'endiguement.",
+    "source": null,
+    "source_table": null,
+    "source_id": null,
+    "date": "2026-10-18",
+    "millesime_amont": null
+   },
+   {
+    "layer": "ens",
+    "axis": "q",
+    "onglet": "risques",
+    "result": "PASS",
+    "severity": null,
+    "weight": null,
+    "detail": "Hors espace protégé (INPN).",
+    "source": "INPN / patrinat — espaces protégés",
+    "source_table": null,
+    "source_id": null,
+    "date": "2026-10-18",
+    "millesime_amont": "INPN/patrinat espaces protégés — passe 05/07/2026"
+   },
+   {
+    "layer": "foncier_public",
+    "axis": "q",
+    "onglet": "regles",
+    "result": "SOFT_FLAG",
+    "severity": "info",
+    "weight": null,
+    "detail": "Propriété publique (DEPARTEMENT DE LA REUNION) — cession/préemption : interlocuteur public [DGFiP groupe 3 : Département].",
+    "source": null,
+    "source_table": null,
+    "source_id": null,
+    "date": "2026-10-18",
+    "millesime_amont": null
+   },
+   {
+    "layer": "foret_publique",
+    "axis": "q",
+    "onglet": "regles",
+    "result": "PASS",
+    "severity": null,
+    "weight": null,
+    "detail": "Hors forêt publique.",
+    "source": "Forêts publiques (ONF)",
+    "source_table": null,
+    "source_id": null,
+    "date": "2026-10-18",
+    "millesime_amont": "BD TOPO® V3 — forêt publique (IGN)"
+   },
+   {
+    "layer": "friche",
+    "axis": "q",
+    "onglet": "regles",
+    "result": "PASS",
+    "severity": null,
+    "weight": null,
+    "detail": "Aucune friche recensée.",
+    "source": "Cartofriches (Cerema)",
+    "source_table": null,
+    "source_id": null,
+    "date": "2026-10-18",
+    "millesime_amont": null
+   },
+   {
+    "layer": "mvt",
+    "axis": "q",
+    "onglet": "risques",
+    "result": "PASS",
+    "severity": null,
+    "weight": null,
+    "detail": "Aucun objet recensé à proximité.",
+    "source": "Géorisques — mouvements de terrain",
+    "source_table": null,
+    "source_id": null,
+    "date": "2026-10-18",
+    "millesime_amont": null
+   },
+   {
+    "layer": "ocs_ge",
+    "axis": "q",
+    "onglet": "regles",
+    "result": "PASS",
+    "severity": null,
+    "weight": null,
+    "detail": "Sol classé artificialisé (occupation du sol BD CARTO V5, grain grossier, précision limitée à la parcelle).",
+    "source": "IGN BD CARTO V5 — occupation du sol",
+    "source_table": null,
+    "source_id": null,
+    "date": "2026-10-18",
+    "millesime_amont": "BD CARTO® V5 — occupation du sol (IGN, proxy)"
+   },
+   {
+    "layer": "osm_faux_positif",
+    "axis": "q",
+    "onglet": "regles",
+    "result": "PASS",
+    "severity": null,
+    "weight": null,
+    "detail": "Aucun faux positif géométrique OSM.",
+    "source": "OpenStreetMap / Overpass",
+    "source_table": null,
+    "source_id": null,
+    "date": "2026-10-18",
+    "millesime_amont": null
+   },
+   {
+    "layer": "parc_national",
+    "axis": "q",
+    "onglet": "regles",
+    "result": "PASS",
+    "severity": null,
+    "weight": null,
+    "detail": "Hors Parc National.",
+    "source": "Parc National de La Réunion (INPN)",
+    "source_table": null,
+    "source_id": null,
+    "date": "2026-10-18",
+    "millesime_amont": "millésime 2021"
+   },
+   {
+    "layer": "peb",
+    "axis": "q",
+    "onglet": "regles",
+    "result": "PASS",
+    "severity": null,
+    "weight": null,
+    "detail": "Hors zones du plan d'exposition au bruit.",
+    "source": "PEB — plans d'exposition au bruit (DGAC via annexes GPU)",
+    "source_table": null,
+    "source_id": null,
+    "date": "2026-10-18",
+    "millesime_amont": "Roland-Garros B/C/D (GPU) ; Pierrefonds non publié"
+   },
+   {
+    "layer": "pente",
+    "axis": "q",
+    "onglet": "risques",
+    "result": "PASS",
+    "severity": null,
+    "weight": null,
+    "detail": "Pente modérée (~12%) — calculée, non éliminatoire.",
+    "source": "RGE ALTI (altimétrie)",
+    "source_table": null,
+    "source_id": null,
+    "date": "2026-10-18",
+    "millesime_amont": "RGE ALTI® (IGN) — édition non enregistrée"
+   },
+   {
+    "layer": "potentiel_foncier_region",
+    "axis": "q",
+    "onglet": "marche",
+    "result": "PASS",
+    "severity": null,
+    "weight": null,
+    "detail": "Hors îlot « Potentiel foncier » Région.",
+    "source": "data.regionreunion.com — Potentiel foncier",
+    "source_table": null,
+    "source_id": null,
+    "date": "2026-10-18",
+    "millesime_amont": null
+   },
+   {
+    "layer": "proprietaire",
+    "axis": "a",
+    "onglet": "proprio",
+    "result": "PASS",
+    "severity": "INFO",
+    "weight": null,
+    "detail": "Propriétaire personne morale : DEPARTEMENT DE LA REUNION (fichier DGFiP — même assiette que la carte propriétaire).",
+    "source": "DGFiP — parcelles des personnes morales",
+    "source_table": null,
+    "source_id": null,
+    "date": "2026-10-18",
+    "millesime_amont": "Panel millésimes 2019→2025 (situation 1ᵉʳ janvier)"
+   },
+   {
+    "layer": "ravine",
+    "axis": "q",
+    "onglet": "risques",
+    "result": "PASS",
+    "severity": null,
+    "weight": null,
+    "detail": "Hors voisinage immédiat d'une ravine.",
+    "source": "BD TOPO IGN",
+    "source_table": null,
+    "source_id": null,
+    "date": "2026-10-18",
+    "millesime_amont": "BD TOPO® V3 (IGN) — édition non enregistrée"
+   },
+   {
+    "layer": "risques",
+    "axis": "q",
+    "onglet": "risques",
+    "result": "PASS",
+    "severity": null,
+    "weight": null,
+    "detail": "Aucun risque PPR/aléa intersecté.",
+    "source": "Géorisques",
+    "source_table": null,
+    "source_id": null,
+    "date": "2026-10-18",
+    "millesime_amont": null
+   },
+   {
+    "layer": "safer",
+    "axis": "q",
+    "onglet": "regles",
+    "result": "PASS",
+    "severity": null,
+    "weight": null,
+    "detail": "Hors parcelle agricole déclarée (RPG).",
+    "source": "RPG — déclarations agricoles (IGN/ASP)",
+    "source_table": null,
+    "source_id": null,
+    "date": "2026-10-18",
+    "millesime_amont": "proxy RPG.LATEST (IGN) — campagne 2024 (data.gouv RPG-R)"
+   },
+   {
+    "layer": "sar",
+    "axis": "q",
+    "onglet": "regles",
+    "result": "PASS",
+    "severity": null,
+    "weight": null,
+    "detail": "Hors îlot cartographié — aucune contrainte déduite automatiquement.",
+    "source": "Potentiel foncier Région (Région ODS)",
+    "source_table": null,
+    "source_id": null,
+    "date": "2026-10-18",
+    "millesime_amont": "îlots non urbanisés — estimation Région (ODS, non versionné)"
+   },
+   {
+    "layer": "sol_pollue",
+    "axis": "q",
+    "onglet": "risques",
+    "result": "PASS",
+    "severity": null,
+    "weight": null,
+    "detail": "Aucun objet recensé à proximité.",
+    "source": "Géorisques — CASIAS (anciens sites industriels)",
+    "source_table": null,
+    "source_id": null,
+    "date": "2026-10-18",
+    "millesime_amont": "453 sites 974 (435 points, 18 emprises) — canal SSP, 07/09/2026"
+   },
+   {
+    "layer": "sup",
+    "axis": "q",
+    "onglet": "risques",
+    "result": "PASS",
+    "severity": null,
+    "weight": null,
+    "detail": "Aucune servitude d'utilité publique recensée.",
+    "source": "SUP — assiettes GPU (API Carto)",
+    "source_table": null,
+    "source_id": null,
+    "date": "2026-10-18",
+    "millesime_amont": null
+   },
+   {
+    "layer": "trait_de_cote",
+    "axis": "q",
+    "onglet": "risques",
+    "result": "PASS",
+    "severity": null,
+    "weight": null,
+    "detail": "Hors zone de recul du trait de côte.",
+    "source": "Cerema / GéoLittoral — indicateur d'érosion côtière",
+    "source_table": null,
+    "source_id": null,
+    "date": "2026-10-18",
+    "millesime_amont": "millésime 2018"
+   },
+   {
+    "layer": "tri_zone",
+    "axis": "q",
+    "onglet": "risques",
+    "result": "PASS",
+    "severity": null,
+    "weight": null,
+    "detail": "Hors zone inondable TRI.",
+    "source": null,
+    "source_table": null,
+    "source_id": null,
+    "date": "2026-10-18",
+    "millesime_amont": null
+   },
+   {
+    "layer": "vefa_neuf",
+    "axis": "q",
+    "onglet": "marche",
+    "result": "SOFT_FLAG",
+    "severity": "info",
+    "weight": null,
+    "detail": "Marché du logement neuf (VEFA) sur la commune : 4 500–5 000 €/m² (355 ventes VEFA / 36 mois) — prix médian ~4878 €/m². Repère de marché (aplat commune), pas une contrainte de la parcelle.",
+    "source": null,
+    "source_table": "spatial_layers",
+    "source_id": "2243140",
+    "date": "2026-10-18",
+    "millesime_amont": null
+   },
+   {
+    "layer": "znieff",
+    "axis": "q",
+    "onglet": "risques",
+    "result": "PASS",
+    "severity": null,
+    "weight": null,
+    "detail": "Hors ZNIEFF.",
+    "source": null,
+    "source_table": null,
+    "source_id": null,
+    "date": "2026-10-18",
+    "millesime_amont": null
+   },
+   {
+    "layer": "zone_humide",
+    "axis": "q",
+    "onglet": "regles",
+    "result": "PASS",
+    "severity": null,
+    "weight": null,
+    "detail": "Hors zone humide inventoriée (inventaires DEAL par secteurs — l'absence d'inventaire n'est pas une preuve d'absence).",
+    "source": "Zones humides — inventaires DEAL (Carmen)",
+    "source_table": null,
+    "source_id": null,
+    "date": "2026-10-18",
+    "millesime_amont": "inventaires 2003/2009/2011/2019 par secteurs (partiels)"
+   }
+  ],
+  "flags": [
+   {
+    "layer": "age_dirigeant",
+    "axis": "a",
+    "onglet": "proprio",
+    "result": "UNKNOWN",
+    "severity": null,
+    "weight": null,
+    "detail": "Âge dirigeant inconnu (PM sans dirigeant physique daté).",
+    "source": "INPI RNE (dirigeants)",
+    "source_table": null,
+    "source_id": null,
+    "date": "2026-10-18",
+    "millesime_amont": null
+   },
+   {
+    "layer": "bassin_versant",
+    "axis": "q",
+    "onglet": "risques",
+    "result": "SOFT_FLAG",
+    "severity": "info",
+    "weight": null,
+    "detail": "Bassin versant (code hydro 10B0000002150455501) — 100 % de la parcelle : contexte hydrographique (ruissellement amont/aval, submersion). L'urbanisation en amont pèse sur l'aval — à considérer avec les aléas et scénarios d'inondation.",
+    "source": null,
+    "source_table": "spatial_layers",
+    "source_id": "2173572",
+    "date": "2026-10-18",
+    "millesime_amont": null
+   },
+   {
+    "layer": "bati",
+    "axis": "q",
+    "onglet": "regles",
+    "result": "SOFT_FLAG",
+    "severity": "info",
+    "weight": null,
+    "detail": "ensemble bâti : 16 bâtiments couvrant 22 % de la parcelle (BD TOPO)",
+    "source": null,
+    "source_table": null,
+    "source_id": null,
+    "date": "2026-10-18",
+    "millesime_amont": null
+   },
+   {
+    "layer": "foncier_public",
+    "axis": "q",
+    "onglet": "regles",
+    "result": "SOFT_FLAG",
+    "severity": "info",
+    "weight": null,
+    "detail": "Propriété publique (DEPARTEMENT DE LA REUNION) — cession/préemption : interlocuteur public [DGFiP groupe 3 : Département].",
+    "source": null,
+    "source_table": null,
+    "source_id": null,
+    "date": "2026-10-18",
+    "millesime_amont": null
+   },
+   {
+    "layer": "vefa_neuf",
+    "axis": "q",
+    "onglet": "marche",
+    "result": "SOFT_FLAG",
+    "severity": "info",
+    "weight": null,
+    "detail": "Marché du logement neuf (VEFA) sur la commune : 4 500–5 000 €/m² (355 ventes VEFA / 36 mois) — prix médian ~4878 €/m². Repère de marché (aplat commune), pas une contrainte de la parcelle.",
+    "source": null,
+    "source_table": "spatial_layers",
+    "source_id": "2243140",
+    "date": "2026-10-18",
+    "millesime_amont": null
+   }
+  ],
+  "score_v": {
+   "v_score": null,
+   "v_band": "na",
+   "v_band_label": "N.A.",
+   "v_coverage": "full",
+   "v_confidence": 1.0,
+   "owner_type": "public",
+   "owner_siren": "229740014",
+   "owner_denomination": "DEPARTEMENT DE LA REUNION",
+   "badge": "Foncier public — démarche dédiée",
+   "signals": [],
+   "computed_at": "2026-10-06T03:35:18.381702+04:00"
+  },
+  "dvf_parcelle": {
+   "derniere_mutation": null,
+   "secteur": [
+    {
+     "type_bien": "appartement",
+     "n_ventes": 41,
+     "mediane_valeur": 65000,
+     "mediane_prix_m2": 2667,
+     "fenetre": "2021-2025",
+     "perimetre": "section cadastrale"
+    },
+    {
+     "type_bien": "terrain",
+     "n_ventes": 21,
+     "mediane_valeur": 74000,
+     "mediane_prix_m2": 699,
+     "fenetre": "2021-2025",
+     "perimetre": "section cadastrale"
+    },
+    {
+     "type_bien": "maison",
+     "n_ventes": 19,
+     "mediane_valeur": 70000,
+     "mediane_prix_m2": 1084,
+     "fenetre": "2021-2025",
+     "perimetre": "section cadastrale"
+    },
+    {
+     "type_bien": "autre",
+     "n_ventes": 3,
+     "mediane_valeur": 71222,
+     "mediane_prix_m2": null,
+     "fenetre": "2021-2025",
+     "perimetre": "section cadastrale"
+    }
+   ],
+   "valeur_terrain_secteur_eur": 13980699,
+   "secteur_etiquette": "médianes du secteur cadastral — indicateur secondaire",
+   "caveat": "valeur = mutation entière (multi-parcelles possible) ; fenêtre 2021-2025"
+  },
+  "terrain": {
+   "pente_moy_deg": 4.8,
+   "pente_max_deg": 20.0,
+   "flag_terrassement_lourd": false,
+   "pente_bande": "plat"
+  },
+  "coproprietes": [],
+  "radar_bien": null,
+  "marche_secteur": {
+   "filosofi_200m": {
+    "ind": 52.0,
+    "men": 23.0,
+    "men_pauv": 9.0,
+    "men_prop": 4.0,
+    "nivvie_moyen_eur": "21408",
+    "taux_pauvrete_pct": 39,
+    "part_proprietaires_pct": 17,
+    "millesime": "Filosofi 2021 (INSEE, carreaux 200 m)"
+   },
+   "rpls_commune": {
+    "nb_logements": 25185,
+    "construct_median": 1994,
+    "millesime": "RPLS 01/01/2025"
+   }
+  },
+  "secteur_opportunites": {
+   "section": "97411000DS",
+   "n": 2
+  },
+  "viabilisation": {
+   "score": 100,
+   "band": "confirmee",
+   "libelle": "Viabilisation confirmée par les faits",
+   "mot": "confirmée",
+   "ton": "vert",
+   "contributions": [
+    {
+     "libelle": "Permis accordés à proximité",
+     "points": 40,
+     "detail": "7 permis autorisé(s) < 100 m · 5 depuis 2022 (secteur en développement actif) · 1 achevé(s) — raccordements réalisés (DAACT)",
+     "signe": "+"
+    },
+    {
+     "libelle": "Façade sur voie publique urbanisée",
+     "points": 25,
+     "detail": "voie au contact + bâti riverain → réseaux enterrés sous voirie",
+     "signe": "+"
+    },
+    {
+     "libelle": "Zone urbaine (U)",
+     "points": 20,
+     "detail": "pondération de fond (zonage PLU)",
+     "signe": "+"
+    },
+    {
+     "libelle": "Adjacence au bâti existant",
+     "points": 15,
+     "detail": "bâti ≤ 10 m (le bâti voisin est raccordé)",
+     "signe": "+"
+    }
+   ],
+   "cout_raccordement": {
+    "niveau": "Raccordement a priori SIMPLE : réseaux présumés en façade/voirie, secteur déjà desservi et construit.",
+    "assainissement": "Zonage assainissement COLLECTIF sur ce secteur → raccordement au réseau à confirmer.",
+    "disclaimer": "Estimation qualitative — jamais un chiffrage en euros (trop variable). À confirmer."
+   },
+   "disclaimer": "Indicateur de PROBABILITÉ de viabilisation (faisceau de preuves), pas une certitude ni un droit à construire. Aucun tracé de réseau (donnée sensible). À confirmer auprès des gestionnaires et via DT-DICT (reseaux-et-canalisations.gouv.fr).",
+   "solaire": {
+    "prod_kwh_kwc": 1554,
+    "qualite": "très favorable",
+    "ombrage": false,
+    "note": "Ensoleillement très favorable à une installation solaire — productible estimé ~1 550 kWh/kWc/an (modèle SARAH3, hors gradient côtier local).",
+    "etat": "Estimé"
+   }
+  },
+  "anc": {
+   "statut": "source",
+   "libelle": "Tout-à-l'égout (collectif)",
+   "anc": false,
+   "phrase": "Zonage réglementaire à Saint-Denis : raccordement au tout-à-l'égout (collectif).",
+   "source": "Zonage d'assainissement (Géoportail de l'urbanisme / GPU)",
+   "commune": "Saint-Denis",
+   "couverture": {
+    "communes_avec_zonage": 4,
+    "communes_total": 24
+   }
+  },
+  "gestionnaires": {
+   "commune": "Saint-Denis",
+   "a_jour_au": "2026-07",
+   "epci": {
+    "code": "CINOR",
+    "nom": "Communauté intercommunale du Nord de La Réunion",
+    "contact": "cinor.re"
+   },
+   "eau": {
+    "operateur": "Dionéo (CINOR + Runéo/Veolia)",
+    "type": "DSP concession → 30/06/2030",
+    "confidence": "high"
+   },
+   "assainissement": {
+    "operateur": "Dionéo ; STEP Grand Prado (Runéo)",
+    "type": "DSP → 16/06/2030",
+    "confidence": "med"
+   },
+   "spanc": "Régie SPANC CINOR",
+   "electricite": {
+    "gestionnaire": "EDF SEI",
+    "detail": "La Réunion = zone non interconnectée, gérée par EDF SEI (hors Enedis).",
+    "raccordement": "EDF SEI Réunion — raccordement.reunion@edf.fr / edf.re"
+   },
+   "note": "2023 : bascule Runéo → Dionéo (entité CINOR+Runéo). Collecte CISE, contrat 2020-2024 échu — à revérifier.",
+   "disclaimer": "Gestionnaires administratifs à jour au 2026-07, à revérifier annuellement (les délégations changent aux renouvellements de contrat). Contact administratif uniquement — aucun tracé de réseau (donnée sensible). Viabilité (eau, électricité, assainissement) à confirmer auprès des concessionnaires via DT-DICT (reseaux-et-canalisations.gouv.fr)."
+  },
+  "aper": null,
+  "renouvellement": null,
+  "rnu": null,
+  "mode_b": {
+   "disponible": false,
+   "motif": "hors population mode B (réservé aux parcelles déclassées pour cause de bâti : saturé ou révélé)"
+  },
+  "territoire_fiscal": {
+   "commune": "Saint-Denis",
+   "zfang": {
+    "regime": "standard",
+    "libelle": "Régime standard (ZFANG, art. 44 quaterdecies CGI) — sous réserve d'éligibilité de l'activité, abattement d'environ 50 % sur les bénéfices — à confirmer auprès d'un fiscaliste.",
+    "source_ref": "Décret n° 2026-421 du 29 mai 2026 (LF 2026, art. 18)",
+    "lien": "https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000054153903"
+   },
+   "frr": {
+    "classement": "partie",
+    "libelle": "Commune classée FRR en partie seulement (les Hauts, délimitation infra-communale) — position de la parcelle non déterminée (périmètre non disponible).",
+    "source_ref": "ZSAR 1978 · FRR 01/07/2024 · réf. ZRR 2017 (Région)",
+    "lien": "https://www.legifrance.gouv.fr/jorf/id/JORFTEXT000049746820",
+    "position": "non_determine"
+   },
+   "avertissement": "Fait territorial sourcé et daté. Les taux cités sont les taux LÉGAUX du dispositif (décret / CGI), pas un calcul de votre avantage : l'éligibilité et l'effet réel relèvent de votre expert-comptable ou avocat fiscaliste.",
+   "perimetres": [
+    {
+     "libelle": "Quartier prioritaire — QPV",
+     "detail": "La parcelle est dans le quartier « Le Chaudron » : un logement neuf destiné à l'accession y ouvre la TVA réduite pour l'accession sociale (sous conditions de ressources de l'acquéreur).",
+     "source": "ANCT — quartiers de génération 2024",
+     "derive": false
+    }
+   ],
+   "dispositifs_dom": [
+    {
+     "libelle": "Zonage d'investissement locatif : B1",
+     "detail": "La commune est classée en zone B1 (arrêté zonage A/B/C, DHUP) — la zone commande l'éligibilité PTZ dans le neuf, les plafonds de loyer et de ressources des dispositifs, et le prix de vente au bailleur social.",
+     "source": "Arrêté de zonage A/B/C (DHUP) — arrêté du 23/06/2026 — en vigueur 26/06/2026"
+    },
+    {
+     "libelle": "TVA outre-mer : 8,5 % (taux normal DOM) · 2,1 % logement locatif social",
+     "detail": "Dans les DOM, le taux normal de TVA est 8,5 % ; la construction/vente de logements locatifs sociaux (LLS/LLTS) relève du taux de 2,1 %. Repères territoriaux — le régime exact dépend de l'opération.",
+     "source": "CGI (TVA DOM, art. 296 et 278 sexies)"
+    }
+   ]
+  },
+  "proximites": {
+   "arret": {
+    "nom": "Campus",
+    "reseau": "Papang",
+    "distance_m": 29
+   },
+   "pole": {
+    "nom": "Campus",
+    "distance_m": 20,
+    "statut": "Sourcé",
+    "source": "station OSM",
+    "concordance": "osm_seul",
+    "nb_lignes": null
+   },
+   "telepherique": {
+    "station": "Campus",
+    "distance_m": 18,
+    "licence": "OSM (ODbL)"
+   },
+   "axe": {
+    "nom": "N6",
+    "nature": "Route à 2 chaussées",
+    "distance_m": 16,
+    "libelle": "Axe structurant N6 (route à 2 chaussées) à ~16 m — deux faces : accessibilité (desserte rapide) ET nuisances potentielles (bruit, pollution ; recul le long des axes classés, art. L. 111-6 — non cartographié en donnée ouverte, à vérifier au PLU). Le classement sonore, lui, est évalué au tiroir Risques.",
+    "source": "BD TOPO IGN — hiérarchie « importance » de l'IGN (niveaux 1-2)"
+   },
+   "ligne_mt": {
+    "distance_m": 0,
+    "tension": "HTA",
+    "libelle": "Ligne moyenne tension (HTA) au contact de la parcelle — contrainte de proximité (recul, sécurité). À vérifier auprès du gestionnaire de réseau (EDF SEI).",
+    "source": "EDF — réseau HTA (open data ; aérien et souterrain)"
+   },
+   "transport_ligne": {
+    "nom": "O1X — Express St-Denis / St-Pierre",
+    "reseau": "Car Jaune",
+    "distance_m": 13,
+    "libelle": "Ligne de transport public (Car Jaune) à ~13 m — desserte (le tracé passe à proximité).",
+    "source": "réseaux de transport public — tracés (OSM / GTFS)"
+   },
+   "tcsp": {
+    "station": "Station Chaudron",
+    "distance_m": 480,
+    "sous_800m": true,
+    "libelle": "Station de transport en commun en site propre « Station Chaudron » à ~480 m (à vol d'oiseau) — à moins de 800 m d'une station, le PLU ne peut pas exiger plus d'une place de stationnement par logement (0,5 pour le logement social), si la desserte est de qualité. Moins de parking à construire = plus de surface vendable et un bilan plus léger. Source : code de l'urbanisme, art. L151-34 à 36 (loi n° 2025-1129 du 26/11/2025). Le plafond s'impose au PLU ; reste à instruire la qualité de la desserte.",
+    "source": "stations dérivées : arrêts GTFS sur voie bus en site propre (OSM, ODbL) — distance à vol d'oiseau depuis la station (CE 2022)"
+   }
+  },
+  "proximites_equipements": {
+   "items": [
+    {
+     "cat": "École",
+     "nom": "COLLEGE BORIS GAMALEYA LES ALIZES",
+     "distance_m": 0
+    },
+    {
+     "cat": "Commerces",
+     "nom": "CHAN HONE",
+     "distance_m": 55
+    },
+    {
+     "cat": "Santé",
+     "nom": "CABINET THIEBAULD LAURENCE",
+     "distance_m": 44
+    },
+    {
+     "cat": "Bus",
+     "nom": "Campus",
+     "distance_m": 29
+    }
+   ],
+   "source": "INSEE BPE (millésime 2025) · arrêts BD TOPO/GTFS — distance à vol d'oiseau"
+  },
+  "depots": {
+   "fenetre_mois": 36,
+   "source": "Sitadel3 / SDES",
+   "sourcage": "Sourcé",
+   "millesime": "2026-08",
+   "libelle": "activité de dépôt (permis aboutis — les refus et dossiers en cours ne sont pas publiés)",
+   "granularite": "permis autorisés, datés au dépôt",
+   "parcelle": {
+    "count": 1,
+    "dernier": "2025-01-01"
+   },
+   "secteur": {
+    "count": 7,
+    "dernier": "2025-01-01",
+    "maille": "section cadastrale"
+   }
+  },
+  "le_bien": {
+   "disponible": true,
+   "code": "ensemble_bati",
+   "occupation_label": "Ensemble bâti détecté (résidence / équipement)",
+   "emprise_batie_m2": 4515,
+   "emprise_source": "BD TOPO IGN",
+   "cosia_detecte_m2": null,
+   "nb_batiments": 16,
+   "hauteur_bati_m": 6.6,
+   "hauteur_faitage_m": 6.6,
+   "hauteur_egout_m": 2.6,
+   "hauteur_nature": "sourcé",
+   "adresses_bati": {
+    "liens": 16,
+    "adresses": 1,
+    "batiments": 16,
+    "source": "BAN PLUS (IGN) — lien adresse ↔ bâtiment"
+   },
+   "hauteur_survol": "septembre 2023",
+   "hauteur_source": "LiDAR HD MNS (IGN), mesuré, survol de septembre 2023",
+   "hauteur_bdtopo_m": 5.3,
+   "ecart_faitage_bdtopo_m": 1.3,
+   "ecart_egout_bdtopo_m": -2.7,
+   "hauteur_discordante": false,
+   "hauteur_discordance_motif": null,
+   "surface_libre_m2": 15486,
+   "surface_parcelle_m2": 20001,
+   "toit": null,
+   "rnb": [
+    {
+     "rnb_id": "2HGDQ5J13SGW",
+     "statut": "constructed",
+     "lien": "https://rnb.beta.gouv.fr/batiments/2HGDQ5J13SGW"
+    },
+    {
+     "rnb_id": "ZZ81SR5WSRZF",
+     "statut": "constructed",
+     "lien": "https://rnb.beta.gouv.fr/batiments/ZZ81SR5WSRZF"
+    },
+    {
+     "rnb_id": "ZWM838FXWWM9",
+     "statut": "constructed",
+     "lien": "https://rnb.beta.gouv.fr/batiments/ZWM838FXWWM9"
+    },
+    {
+     "rnb_id": "RT7WN2BXDEEP",
+     "statut": "constructed",
+     "lien": "https://rnb.beta.gouv.fr/batiments/RT7WN2BXDEEP"
+    },
+    {
+     "rnb_id": "86MDHS7WRPT7",
+     "statut": "constructed",
+     "lien": "https://rnb.beta.gouv.fr/batiments/86MDHS7WRPT7"
+    },
+    {
+     "rnb_id": "DX48WVCRBYFP",
+     "statut": "constructed",
+     "lien": "https://rnb.beta.gouv.fr/batiments/DX48WVCRBYFP"
+    },
+    {
+     "rnb_id": "CB13N66N6G49",
+     "statut": "constructed",
+     "lien": "https://rnb.beta.gouv.fr/batiments/CB13N66N6G49"
+    },
+    {
+     "rnb_id": "3811YHCDGTXJ",
+     "statut": "constructed",
+     "lien": "https://rnb.beta.gouv.fr/batiments/3811YHCDGTXJ"
+    },
+    {
+     "rnb_id": "2KV8QKVYGCQ7",
+     "statut": "constructed",
+     "lien": "https://rnb.beta.gouv.fr/batiments/2KV8QKVYGCQ7"
+    },
+    {
+     "rnb_id": "8WG7P5BWFWPY",
+     "statut": "constructed",
+     "lien": "https://rnb.beta.gouv.fr/batiments/8WG7P5BWFWPY"
+    },
+    {
+     "rnb_id": "EB9C18NV72SS",
+     "statut": "constructed",
+     "lien": "https://rnb.beta.gouv.fr/batiments/EB9C18NV72SS"
+    },
+    {
+     "rnb_id": "6J9JSMSYZH2J",
+     "statut": "constructed",
+     "lien": "https://rnb.beta.gouv.fr/batiments/6J9JSMSYZH2J"
+    }
+   ],
+   "ocsge": {
+    "part_artif_pct": 94.5,
+    "cs_dominant": "CS2.2.1",
+    "us_dominant": "US3",
+    "millesime": "2022",
+    "source": "OCS GE (IGN) — donnée d'îlot, matrice du décret 2023-1096"
+   },
+   "cosia_couverture": {
+    "part_impermeabilisee_pct": 52.2,
+    "part_vegetalisee_boisee_pct": 47.4,
+    "part_sol_nu_pct": 0.0,
+    "mesure_saturee": true,
+    "source": "CoSIA (IGN, détection par IA, 20 cm) — mesure CoSIA > surface cadastrale : parts rapportées à la mesure (saturé)"
+   },
+   "source_bati": "BD TOPO® V3 (IGN) + CoSIA 2025"
+  },
+  "dpe_connu": null,
+  "aleas": null,
+  "taxe_amenagement": {
+   "projet_saisi": false,
+   "total_eur": null,
+   "taux_communal_pct": 3.0,
+   "taux_communal_source": "public",
+   "taux_communal_millesime": "Taux communal en vigueur depuis le 01/01/2022 (délibération communale)",
+   "taux_communal_perime": false,
+   "taux_communal_secteur_majore": false,
+   "taux_departemental_pct": 2.5,
+   "taux_departemental_confirme": true,
+   "taux_communal_manquant": false,
+   "message_taux_communal": null,
+   "annee": 2026,
+   "source": "service-public.gouv.fr — Taxe d'aménagement : quels montants en 2026 (indexation ICC INSEE) ; base légale CGI art. 1635 quater A s.",
+   "url": "https://www.service-public.gouv.fr/particuliers/actualites/A15416"
+  },
+  "fiscalite": {
+   "tfpb_commune_pct": 36.73,
+   "tfpb_epci_pct": 1.0,
+   "teom_pct": 15.8,
+   "millesime": "REI 2025 (impositions primitives)",
+   "tfpnb_commune_pct": 13.03,
+   "tfpnb_epci_pct": 1.29,
+   "maj_at": "2026-09-14T16:32:17.600926+04:00",
+   "perime": false,
+   "source": "DGFiP — fichier REI (impositions primitives)",
+   "lignes": [
+    {
+     "label": "Taxe foncière (bâti)",
+     "detail": "part communale 36,73 % · TEOM 15,80 % · hors part départementale et taxes spéciales",
+     "ligne": "Taxe foncière (bâti) — part communale 36,73 % · TEOM 15,80 % · hors part départementale et taxes spéciales"
+    },
+    {
+     "label": "Taxe foncière (non bâti)",
+     "detail": "part communale 13,03 % · hors part départementale et taxes spéciales",
+     "ligne": "Taxe foncière (non bâti) — part communale 13,03 % · hors part départementale et taxes spéciales"
+    }
+   ]
+  },
+  "radar_annonces": null,
+  "sols": {
+   "sis": null,
+   "sis_classe": "hors",
+   "casias": null,
+   "casias_statut": "hors"
+  },
+  "filiation": null,
+  "iris_quartier": {
+   "iris": "974110702",
+   "nom": "Le Mail Ouest",
+   "millesime": "RP2022 (parution 16/10/2025, géographie 01/01/2024)",
+   "logements": 665,
+   "vacants": 28,
+   "menages": 637,
+   "habitants": 1536,
+   "vacance_pct": 4.3,
+   "part_bati_avant_1990_pct": 83.5,
+   "taille_menages": 2.41,
+   "part_60_plus_pct": 24.2,
+   "part_locataires_pct": 92.0,
+   "part_hlm_pct": 61.7,
+   "source": "INSEE — recensement de la population, bases IRIS (maille quartier)"
+  },
+  "dispositifs": {
+   "er": null,
+   "ebc": null,
+   "dpu": {
+    "etat": "servi",
+    "statut": "simple",
+    "libelle": "Droit de préemption urbain"
+   },
+   "sup_etat": "hors",
+   "sup_note": null,
+   "plu_procedure": null,
+   "peb": {
+    "zone": "hors",
+    "detail": "Roland-Garros (annexes GPU) et Pierrefonds (DGAC/STAC, arrêté du 29/03/2017) tous deux servis"
+   },
+   "sup": null
+  },
+  "fibre": {
+   "etat": "servi",
+   "ftth": true,
+   "operateurs": [
+    "FRTE",
+    "MIAS",
+    "MILK",
+    "SRR",
+    "ZEOP"
+   ],
+   "distance_m": 0,
+   "adresse": "70 Avenue Joseph Bédier",
+   "millesime": "2026_T2"
+  },
+  "cartofriches": {
+   "disponible": false,
+   "friches": [],
+   "source": "Cartofriches (Cerema / DGALN)",
+   "millesime": "édition courante (Cerema, mise à jour trimestrielle)"
+  },
+  "loyers_oll": {
+   "disponible": false,
+   "source": "Loyers OLL — ADIL / AGORAH (réseau des observatoires)",
+   "millesime": "OLL 2024 — Île de La Réunion (L9740, agrément 28/08/2024)"
+  },
+  "trafic_rn": {
+   "disponible": false,
+   "rayon_m": 300,
+   "source": "Trafic RN — Région Réunion (Système d'Information Routier)",
+   "millesime": null
+  },
+  "catnat": {
+   "disponible": true,
+   "total": 21,
+   "arretes": [
+    {
+     "peril": "Mouvement de Terrain",
+     "date_arrete": "2025-07-08",
+     "debut": "2025-02-26",
+     "fin": "2025-03-01"
+    },
+    {
+     "peril": "Vents Cycloniques",
+     "date_arrete": "2025-03-20",
+     "debut": "2025-02-26",
+     "fin": "2025-02-28"
+    },
+    {
+     "peril": "Mouvement de Terrain",
+     "date_arrete": "2024-06-17",
+     "debut": "2024-01-14",
+     "fin": "2024-01-16"
+    },
+    {
+     "peril": "Chocs Mécaniques liés à l'action des Vagues",
+     "date_arrete": "2024-01-19",
+     "debut": "2024-01-13",
+     "fin": "2024-01-15"
+    },
+    {
+     "peril": "Inondations et/ou Coulées de Boue",
+     "date_arrete": "2024-01-19",
+     "debut": "2024-01-13",
+     "fin": "2024-01-15"
+    }
+   ],
+   "source": "GASPAR / Géorisques — arrêtés CatNat (au grain commune)",
+   "millesime": "GASPAR"
+  },
+  "pm_voisines": {
+   "disponible": true,
+   "rayon_m": 300,
+   "mois": 36,
+   "acquereurs": [
+    {
+     "denomination": "SOCIETE IMMOBILIERE DEPARTEMENT REUNION",
+     "siren": "310863592",
+     "date": "2025-07-11"
+    },
+    {
+     "denomination": "ARISTOTE",
+     "siren": "854075850",
+     "date": "2024-12-09"
+    }
+   ],
+   "source": "DVF (mutations) × DGFiP (fichier des parcelles des personnes morales)",
+   "millesime": "DVF + DGFiP 2025"
+  },
+  "anciennete_detention": {
+   "disponible": true,
+   "type": "personne_morale",
+   "denomination": "DEPARTEMENT DE LA REUNION",
+   "siren": "229740014",
+   "depuis_annee": 2019,
+   "depuis_ans": 7,
+   "source": "DGFiP — fichier des parcelles des personnes morales (millésimes)",
+   "millesime": "DGFiP 2019→2025"
+  },
+  "enr_exclue_toiture": {
+   "disponible": false,
+   "zones": [],
+   "source": "OFB / INPN (loi APER) — zones exclues des aires d'accélération EnR (sauf toitures)",
+   "millesime": "OFB / APER 2025"
+  },
+  "mesures_compensatoires": {
+   "disponible": false,
+   "mesures": [],
+   "source": "GéoMCE (MTE/OFB) — géoportail des mesures compensatoires",
+   "millesime": "GéoMCE (national)"
+  },
+  "scot": {
+   "disponible": true,
+   "nom": "SCOT DE LA CINOR",
+   "statut": "approuvé",
+   "date_approbation": null,
+   "source": "Géoportail de l'urbanisme (GPU) — wfs_scot",
+   "millesime": "GPU"
+  },
+  "analyse_labuse": {
+   "bande": "A",
+   "signal_niveau": "faible",
+   "contributions": [
+    {
+     "sens": "hausse",
+     "libelle": "22769 m² de surface de plancher constructible restante (bâti conservé)"
+    },
+    {
+     "sens": "baisse",
+     "libelle": "bâti existant sur 37 % de la parcelle — démolition à prévoir"
+    }
+   ],
+   "cause": null,
+   "non_calculable": false,
+   "sdp_residuelle_m2": 22769
+  }
+ }
+}

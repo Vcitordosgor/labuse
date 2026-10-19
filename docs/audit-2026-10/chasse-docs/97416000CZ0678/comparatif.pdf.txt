@@ -1,0 +1,82 @@
+LABUSE           Comparatif
+
+
+
+
+Comparatif
+Deux à trois parcelles côte à côte, sur les lignes de Comparer.
+
+2 parcelles · CO-20261019-0678 · 19/10/2026
+
+
+
+   Comparatif
+                                                      CZ 0678                                                                  DY 0106
+                                                      Saint-Pierre                                                             Saint-Pierre
+
+  Surface      sourcé                                 3 279 m²                                                                 5 391 m²
+
+  Zone PLU      sourcé                                A                                                                        N
+
+  Classement LABUSE                                   0 · Non retenue · Signal faible                                          0 · Non retenue · Signal faible
+
+  Zone constructible         sourcé                   non                                                                      non
+
+  SDP maximale réglementaire             estimé       —                                                                        350 m²
+
+  SDP résiduelle        estimé                        — · zone non constructible                                               0 m²
+
+  Emprise au sol max (PLU)            sourcé          non réglementée                                                          non réglementée
+
+  Taux d'occupation du gabarit                                                                                                 Saturé : le bâti existant dépasse déjà le plafond d'emprise du
+     estimé                                                                                                                    PLU actuel
+
+  Sous-densité        estimé                          —                                                                        non
+
+  Charge foncière /m² terrain           estimé        —                                                                        -4 €/m²
+
+                                                                                                                                                                                 Généré via LABUSE
+
+
+
+
+Comparatif indicatif de parcelles établi sur des données publiques. Ni un prix, ni un conseil. Données LABUSE au 19/10/2026.                                                                 1/2
+                                                      CZ 0678                                                                  DY 0106
+                                                      Saint-Pierre                                                             Saint-Pierre
+
+  Prix terrain nu zone        estimé                  —                                                                        —
+
+  Prix bâti (section cadastrale)                      3 402 €/m²                                                               2 941 €/m²
+     estimé
+
+
+  Logements possibles                                 voir l'Étude de faisabilité                                              voir l'Étude de faisabilité
+
+  Bâti existant      sourcé                           —                                                                        13 % du terrain
+
+  Gabarit max       sourcé                            —                                                                        R+4
+
+  Accès & réseaux        sourcé                       Viabilisation probable                                                   Viabilisation probable
+
+  Assainissement        estimé                        50 % des logements du secteur ne sont pas raccordés au                   15 % des logements du secteur ne sont pas raccordés au
+                                                      réseau collectif                                                         réseau collectif
+
+  Propriétaire     sourcé                             particulier                                                              personne morale
+
+  Contrainte majeure          sourcé                  Zone A PLU — inconstructible (recouvrement 100 %).                       Exclue : PPR zone rouge (inconstructible) — 93 % de la
+                                                                                                                               surface.
+
+
+Maximum réglementaire (gabarit) : le total que la parcelle peut porter selon les règles, pas le programme qui sera déposé. Face aux permis réellement autorisés (volet D VERITE-TERRAIN-2),
+les projets en utilisent en médiane environ la moitié (0,46 en surface, 0,40 en logements).
+
+
+
+
+                                                                                                                                                                                Généré via LABUSE
+
+
+
+
+Comparatif indicatif de parcelles établi sur des données publiques. Ni un prix, ni un conseil. Données LABUSE au 19/10/2026.                                                                2/2
+

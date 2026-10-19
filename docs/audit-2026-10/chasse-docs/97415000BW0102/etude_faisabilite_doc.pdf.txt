@@ -1,0 +1,523 @@
+L A B U S E · D O C U M E N T N ° E F - 1 9 1 0 2 0 2 6 -7 2 6 0
+
+
+Étude de faisabilité
+— parcelles 102
+10 500 m² · zone U6c · collectif · stationnement aerien
+
+
+
+   Aucun scénario exploitable sur ce terrain selon nos hypothèses — voir le détail.
+
+
+   CONTRÔLES AUTOMATISÉS (SCÉNARIO A)                                            STATUT DE L'ÉTUDE
+   4 réussis · 0 échoués · 5 non effectués                                       À compléter — à faire confirmer par un
+                                                                                 architecte
+
+
+ Scénario                 Forme                  Logements           Niveaux             SDP du scénario          Places   Étude
+
+
+ A (retenu)               barre                             64           R+1                         4 110           128     À compléter
+
+
+Fourchette = scénarios « Exploitable » seulement. Jamais « ce terrain permet N logements » ; ce document n'affirme aucune
+conformité réglementaire.
+
+
+
+   10 500 m²                                               —                                               6m
+   Contenance cadastrale                                   Emprise au sol max                              Hauteur (hauteur à l'égout)
+
+
+
+
+   sans objet                                              128                                             5
+   Logements aidés imposés                                 Places imposées (scénario A)                    Contrôles non effectués
+
+
+
+   Pré-faisabilité automatisée : scénarios indicatifs d'implantation établis à partir des règles publiées du PLU et
+   des données publiques. Ce document n'est ni une étude d'architecte, ni une preuve de conformité, ni un
+   dossier de permis.
+
+
+
+
+Étude de faisabilité · 102 · scénario A · Généré via LABUSE le 19/10/2026 · pré-faisabilité, non contractuel                               1/9
+   1. Le terrain
+
+   1 parcelle(s), 10 500 m² au cadastre.
+
+
+
+
+                                                                                                                        N
+
+
+
+
+    Parcelles        Assiette        Limite classée voie
+
+Parcelle                                               Contenance                                              Nature
+
+102                                                    10 500 m²                                                        Sourcé
+
+
+Assiette fusionnée                                     10 500 m²
+
+
+Terrain                                                Valeur                                                  Nature
+
+Pente moyenne                                          19,5 %                                                      LiDAR HD
+
+
+Accès véhicule                                         visibilité à confirmer — à confirmer                         ƒ Dérivé
+
+
+
+
+   2. Règles et contraintes
+
+   Zone U6c du PLU. Chaque valeur est citée ; une règle non validée reste « non
+   effectuée », jamais tenue pour acquise.
+
+Règle                                                  Valeur                                                  Nature
+
+
+
+
+Étude de faisabilité · 102 · scénario A · Généré via LABUSE le 19/10/2026 · pré-faisabilité, non contractuel                2/9
+recul sur voie                                         4m                                                                      Sourcé
+PLU · art. 6 · p. 278
+
+
+recul sur limites séparatives                          3m                                                                      Sourcé
+PLU · art. 7.2 · p. 279
+
+
+emprise au sol (CES)                                   —                                                                 ƒ Non validée
+
+
+hauteur à l'égout                                      6m                                                                      Sourcé
+PLU · art. 10.2 · p. 282
+
+
+hauteur au faîtage                                     9m                                                                      Sourcé
+PLU · art. 10.2 · p. 282
+
+
+pleine terre (perméabilité)                            40 %                                                                    Sourcé
+PLU · art. 13.1 · p. 292
+
+
+stationnement (barème)                                 —                                                                       Sourcé
+PLU · art. 12.2 · p. 288
+
+
+
+Contraintes cartographiées
+
+Contrainte                                             Sur le           Traitement
+                                                       terrain
+
+PPR zone rouge                                         921 m²           retirée de l'implantation (hypothèse prudente ;
+                                                                        prescriptions à lire)
+
+PPR zone bleue                                         1 613 m²         signalée, non interprétée ; si elle touche l'implantation,
+                                                                        « à compléter »
+
+Servitude d'utilité publique                           présente         retirée seulement si elle interdit de construire ; sinon
+                                                                        signalée
+
+Ligne absente quand la contrainte ne touche pas le terrain.
+
+
+
+    3. Enveloppe constructible
+
+    Zone d'implantation de 7 924 m² après reculs et contraintes. Ce plafond n'est pas
+    ce qu'on peut construire : c'est le scénario (plan masse) qui le dit.
+
+
+
+
+Étude de faisabilité · 102 · scénario A · Généré via LABUSE le 19/10/2026 · pré-faisabilité, non contractuel                         3/9
+                                                                                                                                       N
+
+
+
+
+    Parcelles        Assiette        Zone d'implantation           PPR rouge (retirée)          PPR bleue (signalée)   Limite classée voie
+
+Surface                                                Valeur                                                                 Nature
+
+Terrain (contenance)                                   10 500 m²                                                                       Sourcé
+
+
+Zone d'implantation réglementaire                      7 924 m²                                                                      ƒ Dérivé
+
+
+Retiré par PPR rouge                                   921 m²                                                                          Sourcé
+
+
+Plafond d'emprise                                      règle non validée                                                             ƒ Dérivé
+
+
+
+
+   4. Plan masse du scénario A
+
+   Scénario A — barre en R+1 : 64 logements, 128 places aériennes.
+
+
+
+
+Étude de faisabilité · 102 · scénario A · Généré via LABUSE le 19/10/2026 · pré-faisabilité, non contractuel                                 4/9
+                                                                                                                               N
+
+
+
+
+    Bâtiment proposé           Places         Allée       Espaces libres          Accès         Zone d'implantation
+
+Élément                                                Valeur                                                         Nature
+
+Emprise des bâtiments                                  2 303 m²                                                                Estimé
+
+
+Places dessinées                                       128                                                                     Estimé
+
+
+Espaces libres · dont pleine terre                     5 506 m²                                                            ƒ Dérivé
+
+
+Accès                                                  visibilité à confirmer                                              ƒ Dérivé
+
+
+Chaque nombre de ce tableau = nombre d'objets dans la géométrie (verrou de test). Plan rendu depuis la géométrie servie.
+
+
+
+
+Étude de faisabilité · 102 · scénario A · Généré via LABUSE le 19/10/2026 · pré-faisabilité, non contractuel                       5/9
+                                                                             359                          360
+
+103
+
+
+
+                                                                                           Chemin Cassis
+
+                                                                                                                                                                                                         N   LÉGENDE
+
+                                                                                                                                                                        2130
+                                                                      , 28                                                                                                                                        Limite des parcelles étudiées
+                                                                    71                                            356
+                                                         TN 312,5                                                                                                        TN 338,2                                 Zone d’implantation réglementaire
+
+                                                                                  1        75                                                                                                                     Bâtiment proposé
+                                                                                   2        76
+                                                                                    3         77
+                                                                                     4         78                                                                                                                 Place de stationnement 2,50 × 5,00
+                                                                              T2      5          79
+                                                                                       6          80
+                                                                                T3      7           81                                                                                                            Allée, accès
+                                                                                          8          82                                                                            1767
+                                                                                  T2       9          83                                  357
+                                                                                            10         84                                                                                                         Espaces libres, pleine terre
+                                                                                    T4        11         85
+                                                                                                          86
+                                                                                               12
+                                                                                                 13        87                                                                                                     Bâti voisin (BD TOPO)
+                                                                                       T2                   88
+                                        610                                                       14          89
+                                                                                          T3
+                                                                                                   15
+                                                                                                    16         90                                                                                                 PPR zone rouge (retirée)
+                                                                                                      17        91
+                                                                                                                  92
+                                                                                             T2        18
+                                                                                                        19         93                                     2131                                                    PPR zone bleue (signalée)
+                                                          930                                   T3       20          94
+                                                                                                           21         95
+                                                                                                   T2       22         96
+                                                                                                             23         97
+                                                                                                     T4       24         98
+                                                                                                                25         99
+                                              929                                                                26        100
+                                                                                                         T2        27       101
+                                                                                                                    28        102
+                                                                    612                                    T3        29        103
+                                                                                                                      30        104
+                                                                                                              T2        31       105
+                                                                                                                         32       106
+                                                                                                                 T3       33       107
+                                                                                                                           34       108
+                                                                                                                    T2      35       109                                                                     SURFACES (mesurées sur le plan)
+                                                                                                                              36       110
+                                                                                                                               37       111
+                                                                                 613                                   T4       38       112                                                                 Terrain (contenance)                                       10 500 m²
+                                                                                                                                 39       113
+                                                                                                                                            114
+                                                                                                                          T2      40
+                                                                                                                                   41        115                                            1768             Emprise bâtie                                         2 303 m² · 22 %
+                                                                                                                            T3      42
+                                                                              Chemin de la Source                                    43                                                                      SDP du scénario (R+1)                                       4 110 m²
+                                              AW 102                                                                           T2     44
+                                                                                                  614                                   45                                                                   Stationnement + allée                                       2 512 m²
+                                                                                                                                 T3      46
+                                                                                         20                                               47
+                                                                                                                                    T2
+                                                                                                                                            48                                                               Pleine terre                                                5 506 m²
+                                                                                           4, 4                                              49
+                                                                                                                                              50
+                                                                                             9
+                                                                                                                                      T4        51                                                           Places dessinées / imposées                                 128 / 128
+                                                                                                                                                 52
+                                                    94                                                                                   T2       53                                                         Logements                              64 · T2 ×32 · T3 ×22 · T4 ×10
+                                                                                                                                                   54
+                                                                                                                                            T3      55
+                                                                                                                                                     56       116
+                                                                                                                                              T2      57       117
+                                                                                                          615                                          58
+                                                                                                                                                        59      118
+                                                                                                                                                  T3     60       119
+                                                                                                                                                          61       120
+                                                                                                                                                    T2     62       121
+                                                                                                                                                            63       122
+                                                                                                                                                      T4     64        123
+                                                                                                                                                              65        124
+                                                                                                                                                               66        125
+                                                                                                                                                        T2      67        126
+                                                                                                                                                                 68        127
+                                                                                                                                                          T3                128
+                                                                                                                                                                   69
+                                                                                                                                                                    70
+                                                                                                                                                             T2       71
+                                                                                                                                                                       72
+                                                                                                                                                               T3       73                         963
+                                                                                                                                                                         74
+                                                                                                                                                                                          1070
+
+                                                                                                                                                                                  1273
+                                                                                                                                                                                                               LABUSE
+                                                                                                                                                                                                               Étude de faisabilité — plan masse
+                                                                                                                                                                                                               Saint-Paul · zone U6c
+                                                                                                                                                                                         1270                  Parcelles BW 102
+                                                         TN 320,7                  397                                                                    1272           TN 355,9
+                                                                                                                                                                                                               Scénario A · barre R+1 · stationnement aérien
+                                                                                                                                                                                                               PLU millésime en vigueur · LiDAR HD IGN · BD TOPO
+
+                                                                                                                                     97                                                                        Généré le 19/10/2026 · EF-19102026-7260
+
+                                                                                                                                                                 1271             1274                         Esquisse indicative — pas une étude d’architecte
+
+                Échelle ≈ 1 : 1000
+
+                0    10    20 m
+                                                                                                                                                                     418
+
+
+
+  Planche — plan masse « façon architecte », dessinée depuis la géométrie du scénario (contexte : cadastre et bâti voisins BD TOPO, voies nommées, TN LiDAR aux angles). Esquisse indicative — pas
+                                                          398
+  une étude d'architecte.
+
+
+  Étude de faisabilité · 102 · scénario A · Généré via LABUSE le 19/10/2026 · pré-faisabilité, non contractuel                                                                                                                                                                       6/9
+     5. Distribution et coupe
+
+     R+1 : la répartition des logements par niveau, chaque module dessiné = un
+     logement compté.
+
+Niveau                                                 T2            T3                    T4         SDP du scénario
+
+R+1                                                             16                  11          5                                                                                             2 055
+
+RDC                                                             16                  11          5                                                                                             2 055
+
+Total                                                          32                 22            10                                                                                            4 110
+
+
+
+
+                                                                                                                                      LÉGENDE
+
+                                                                                                                                             Terrain naturel (LiDAR)
+                                                                                                                                             Hauteur égout / faîtage (règle)
+                                                                                                                                             Bâtiment en coupe
+                                                                                                                                             Stationnement aérien
+
+
+
+
+                                                                                                                                           LABUSE
+                                                                                                                                           Étude de faisabilité — coupe de principe
+                                                                                                                                           Saint-Paul · zone U6c
+                                                                                                                                           Parcelles BW 102
+                                                                                                                                           Scénario A · R+1 · 2 niveaux × 3,00 m
+                                                                                                                                           TN LiDAR HD IGN · règles PLU servies
+                                                                                                                                           Généré le 19/10/2026 · EF-19102026-7260
+
+                                                                                                                                           Esquisse indicative — pas une étude d’architecte
+
+              limite sur voie                                                                                     limite de fond
+
+                                                                                                      hauteur au faîtage 9,00 m
+
+                                                                                                       hauteur à l’égout 6,00 m
+                                6,00 m   R+1
+
+                                         RDC
+                                                                                                                                   335,4
+                                                                      Terrain naturel (LiDAR)
+      330,3
+
+
+
+
+Coupe de principe : le volume bâti sous la règle de hauteur, le terrain naturel (LiDAR), le stationnement aérien au sol. Esquisse
+indicative, pas une étude d'architecte.
+
+
+
+     6. Capacité et contrôles
+
+     Scénario A : 4 contrôles réussis, 0 échoués, 5 non effectués. Ce n'est pas une
+     validation réglementaire.
+
+Programme                                              Nombre               Surface moy.                           SHAB estimée                                                    Nature
+
+T2                                                                   32                              50 m²                                             1 280 m²                               Estimé
+
+
+T3                                                                   22                              65 m²                                              1 144 m²                              Estimé
+
+
+T4                                                                   10                          80 m²                                                     640 m²                             Estimé
+
+
+Répartition proposée par le moteur pour l'objectif choisi. Programme saisi par le client : mêmes lignes en chip Projet.
+
+Contrôle                                               Règle                                           Scénario                                                                    Résultat
+
+
+
+
+Étude de faisabilité · 102 · scénario A · Généré via LABUSE le 19/10/2026 · pré-faisabilité, non contractuel                                                                                     7/9
+Emprise au sol                                         règle non validée                        2303 m²                   Non effectué
+
+Hauteur                                                ≤ 6 m à l'égout                          R+1 ≈ 6 m                        Réussi
+PLU art. 10.2 · p. 282 — « en zone U6c la hauteur
+maximale hé est fixée à 6 m ; »
+
+
+Prospect (hauteur relative)                            pas de règle de prospect                 —                                   Non
+                                                                                                                              applicable
+
+Reculs                                                 voie 4 m · séparatives 3 m               bâti dans la zone                Réussi
+PLU art. 6 · p. 278 — « en zone U6c Les                                                         d'implantation
+constructions devront être implantées en
+retrait de 4 m minimum de la voie ou de l'emprise
+publique. » ; PLU art. 7.2 · p. 279 — « en zone U6b
+et U6c ... En cas de retrait, les constructions
+respecteront un recul minimal de 3 m. »
+
+
+Perméabilité (pleine terre)                            ≥ 4200 m² (40 % de la                    5506 m²                          Réussi
+PLU art. 13.1 · p. 292 — « en zone U6c Le              contenance)
+pourcentage minimal d'espaces libres
+perméables sera de 40% de la surface totale du
+terrain d'assiette du projet. »
+
+
+Stationnement                                          ≥ 128 places (barème validé) 128 places dessinées                         Réussi
+PLU art. 12.2 · p. 288 — « en zones U6b, U6c : 2
+places / logement »
+
+
+Distance entre constructions                           sans objet (un seul                      un seul bâtiment                    Non
+                                                       bâtiment)                                                              applicable
+
+Locaux vélos · déchets                                 non modélisés                            —                         Non effectué
+
+PPR zone rouge (interdiction)                          inconstructible                          921 m²                    Non effectué
+
+PPR zone bleue (prescription)                          signalée, non interprétée                touche le bâti proposé    Non effectué
+
+ER / EBC / SUP / servitudes                            présente(s)                              sup                       Non effectué
+
+
+Un contrôle « Échoué » retire le scénario des « Exploitable ». « Non effectué » ne vaut jamais « Réussi ».
+
+
+
+   7. Hypothèses, limites, sources
+
+   Ce que l'étude suppose, ce qu'elle ne sait pas, d'où viennent les chiffres.
+
+
+Hypothèses (toutes « Estimé », modifiables dans l'outil)
+
+Hypothèse                                              Valeur                         Convention
+
+Profondeur de bâtiment                                 13 m                           logements traversants, coursive extérieure
+
+Surface moyenne par type                               50 / 65 / 80 m²                modifiable
+
+Plancher → habitable                                   0,8                            circulations et noyaux hors habitable
+
+Place · allée                                          2,5 × 5 m · allée 5 m          dimensions usuelles
+
+Hauteur de niveau                                      3m                             convention
+
+
+
+
+Étude de faisabilité · 102 · scénario A · Généré via LABUSE le 19/10/2026 · pré-faisabilité, non contractuel                        8/9
+Stationnement                                          aérien seul                    pas de sous-sol dans cette version
+
+
+À faire confirmer par l'architecte
+
+Point                                                  Pourquoi
+
+Distance entre constructions · locaux règles non modélisées
+vélos et déchets
+
+Prescriptions PPR bleue · servitudes                   signalées, non interprétées
+signalées
+
+Accès véhicule                                         limite classée voie ; visibilité et autorisation non vérifiées
+
+Sous-sol ou stationnement en                           non simulé : la capacité peut être plus haute
+ouvrage
+
+Sol, réseaux, arbres, vues, voisinage                  aucune donnée publique fiable à la parcelle
+
+Conception (plans, façades)                            métier de l'architecte
+
+
+Sources
+
+Source                                                 Nature
+
+PLU — zone U6c                                         règlement, zonage, prescriptions publiés
+
+Cadastre DGFiP · PPR, servitudes (GPU, données publiques
+Géorisques)
+
+LiDAR HD IGN · BD TOPO                                 terrain naturel, limites
+
+Moteur d'implantation —                                hypothèses « Estimé » · conventions implantation-conventions-1
+IMPLANTATION-2
+
+Entrées, configuration, version du moteur et des règles archivées avec le document n° EF-19102026-7260 : le scénario se
+rejoue à l'identique.
+
+
+
+
+Étude de faisabilité · 102 · scénario A · Généré via LABUSE le 19/10/2026 · pré-faisabilité, non contractuel               9/9
+

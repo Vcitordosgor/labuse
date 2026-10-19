@@ -1,0 +1,139 @@
+{
+ "_status": 200,
+ "data": {
+  "idu": "97416000DY0106",
+  "c100": 2,
+  "c200": 7,
+  "localises": 7,
+  "non_localises": 0,
+  "note": "Permis autorisés géolocalisés < 200 m (source du signal viabilisation M-VIA).",
+  "items": [
+   {
+    "permit_id": "97441616E0152",
+    "nature": "DP",
+    "nature_libelle": "Déclaration préalable",
+    "date": "2016-06-29",
+    "etat": "2",
+    "nb_lgt": null,
+    "porteur": "COMMUNE DE SAINT PIERRE",
+    "distance_m": 42,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.482452119,
+      -21.331718438
+     ]
+    }
+   },
+   {
+    "permit_id": "97441617A0233",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2017-06-12",
+    "etat": "5",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 75,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.481289305,
+      -21.332935787
+     ]
+    }
+   },
+   {
+    "permit_id": "97441616A0312",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2016-08-12",
+    "etat": "6",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 132,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.481067613,
+      -21.333649394
+     ]
+    }
+   },
+   {
+    "permit_id": "97441624A0061",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2024-06-06",
+    "etat": "5",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 173,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.48299052,
+      -21.329778244
+     ]
+    }
+   },
+   {
+    "permit_id": "97441618E0259",
+    "nature": "DP",
+    "nature_libelle": "Déclaration préalable",
+    "date": "2018-09-10",
+    "etat": "6",
+    "nb_lgt": null,
+    "porteur": "T D F",
+    "distance_m": 175,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.481913522,
+      -21.330394012
+     ]
+    }
+   },
+   {
+    "permit_id": "97441625A0253",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2025-09-22",
+    "etat": "5",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 179,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.480614264,
+      -21.33380077
+     ]
+    }
+   },
+   {
+    "permit_id": "97441624A0056",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2024-07-01",
+    "etat": "5",
+    "nb_lgt": "2",
+    "porteur": null,
+    "distance_m": 189,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.48280542,
+      -21.334516454
+     ]
+    }
+   }
+  ]
+ }
+}

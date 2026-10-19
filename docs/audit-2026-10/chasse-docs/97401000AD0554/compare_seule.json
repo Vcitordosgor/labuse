@@ -1,0 +1,51 @@
+{
+ "_status": 200,
+ "data": {
+  "count": 1,
+  "parcels": [
+   {
+    "idu": "97401000AD0554",
+    "commune": "Les Avirons",
+    "surface_m2": 700,
+    "surface_incertaine": false,
+    "tier_v2": "ecartee",
+    "rang_v2": 108801,
+    "etage0": true,
+    "status": "ecartee",
+    "label": "Écartée",
+    "fraction": null,
+    "raison": "secteur qui bouge",
+    "zone": "Ud3",
+    "constructible": true,
+    "zone_constructible": true,
+    "cause": null,
+    "cause_libelle": null,
+    "sdp_max_m2": 88,
+    "taux_emprise_pct": 0,
+    "sdp_residuelle_m2": 88,
+    "sous_densite": true,
+    "charge_fonciere_m2": -13,
+    "n_contraintes": 12,
+    "contraintes": [
+     "Bassin versant (code hydro 10B0000002150455291) — 100 % de la parcelle : contexte hydrographique (ruissellement amont/aval, submersion). L'urbanisation en amont pèse sur l'aval — à considérer avec les aléas et scénarios d'inondation.",
+     "Emprise routière — 96 m d'axes routiers sur la parcelle (densité d'emprise 0.91 ≥ 0.5, bâti 0% < 10 %) ; aucun signal privé (ni PM privée, ni mutation DVF) : voirie publique/rétrocédée probable, non marchande.",
+     "Installation (ICPE) à proximité — LTM, régime Autorisation, 249 m.",
+     "Aire d'adhésion du Parc National — contraintes de charte."
+    ],
+    "contrainte_majeure": "Emprise routière — 96 m d'axes routiers sur la parcelle (densité d'emprise 0.91 ≥ 0.5, bâti 0% < 10 %) ; aucun signal privé (ni PM privée, ni mutation DVF) : voirie publique/rétrocédée probable, non marchande.",
+    "proprietaire": "particulier",
+    "bati_existant_pct": 0,
+    "gabarit_niveaux_max": 2,
+    "acces_reseaux": "Viabilisation confirmée par les faits",
+    "assainissement": "93 % des logements du secteur ne sont pas raccordés au réseau collectif",
+    "prix_secteur_bati_m2": 1709,
+    "zone_parts": null,
+    "terrain_zone_eur_m2": 376,
+    "emprise_ces_pct": 40.0,
+    "emprise_ces_source": "Art. U 9.2 · p.11 (PLU, calibrage validé)",
+    "bande": "HC",
+    "signal_niveau": "faible"
+   }
+  ]
+ }
+}

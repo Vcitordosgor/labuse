@@ -1,0 +1,203 @@
+{
+ "_status": 200,
+ "data": {
+  "mode": "pied",
+  "minutes": 15,
+  "hors_trafic": true,
+  "renvoi": "Les ventes (DVF), les transports et les réseaux restent dans leurs tiroirs Marché et Réseaux — rien n'est dupliqué.",
+  "note": "INSEE Filosofi 2021 (carreaux 200 m) · BPE 2025 · isochrones IGN — temps hors trafic.",
+  "disponible": true,
+  "statut": "ign",
+  "geom": {
+   "coordinates": [
+    [
+     [
+      55.481792,
+      -21.325091
+     ],
+     [
+      55.479792,
+      -21.326866
+     ],
+     [
+      55.476792,
+      -21.326458
+     ],
+     [
+      55.47513,
+      -21.329431
+     ],
+     [
+      55.474336,
+      -21.330094
+     ],
+     [
+      55.474416,
+      -21.33147
+     ],
+     [
+      55.478926,
+      -21.33996
+     ],
+     [
+      55.479792,
+      -21.339868
+     ],
+     [
+      55.480431,
+      -21.339094
+     ],
+     [
+      55.480627,
+      -21.337094
+     ],
+     [
+      55.481664,
+      -21.336094
+     ],
+     [
+      55.481736,
+      -21.334038
+     ],
+     [
+      55.482323,
+      -21.334094
+     ],
+     [
+      55.483016,
+      -21.33587
+     ],
+     [
+      55.483792,
+      -21.336423
+     ],
+     [
+      55.486688,
+      -21.33499
+     ],
+     [
+      55.486768,
+      -21.334094
+     ],
+     [
+      55.486265,
+      -21.333621
+     ],
+     [
+      55.484792,
+      -21.333325
+     ],
+     [
+      55.484468,
+      -21.332418
+     ],
+     [
+      55.48373,
+      -21.332094
+     ],
+     [
+      55.484594,
+      -21.331896
+     ],
+     [
+      55.484724,
+      -21.330026
+     ],
+     [
+      55.485559,
+      -21.329861
+     ],
+     [
+      55.485704,
+      -21.329005
+     ],
+     [
+      55.486488,
+      -21.32879
+     ],
+     [
+      55.486663,
+      -21.327965
+     ],
+     [
+      55.487343,
+      -21.327645
+     ],
+     [
+      55.487465,
+      -21.326094
+     ],
+     [
+      55.486792,
+      -21.325207
+     ],
+     [
+      55.485792,
+      -21.325127
+     ],
+     [
+      55.484792,
+      -21.325793
+     ],
+     [
+      55.482792,
+      -21.325593
+     ],
+     [
+      55.481792,
+      -21.325091
+     ]
+    ]
+   ],
+   "type": "Polygon"
+  },
+  "population": {
+   "inhabitee": false,
+   "iris": {
+    "n_iris": 6,
+    "vacance_pct": 7.9,
+    "part_bati_avant_1990_pct": 34.7,
+    "source": "INSEE RP2022 par IRIS (quartiers intersectés)"
+   },
+   "habitants": 4740,
+   "menages": 1955,
+   "revenu_median_eur": null,
+   "revenu_estime": true,
+   "revenu_impute_n": 3,
+   "revenu_carreaux_n": 29,
+   "revenu_majorite_imputee": false,
+   "pct_moins_25": 32,
+   "taux_pauvrete_pct": 33,
+   "n_carreaux": 29,
+   "millesime": "Filosofi 2021 (INSEE, carreaux 200 m)",
+   "revenu_source": "carreau Filosofi au centroïde (source unique de la fiche)"
+  },
+  "equipements": [
+   {
+    "domaine": "Commerces",
+    "nom": "TROC 974",
+    "temps_min": 4
+   },
+   {
+    "domaine": "Services aux particuliers",
+    "nom": "NOUMANE CONSTRUCTION SARL",
+    "temps_min": 4
+   },
+   {
+    "domaine": "Enseignement",
+    "nom": "LM ACADEMIE",
+    "temps_min": 6
+   },
+   {
+    "domaine": "Sports, loisirs et culture",
+    "nom": "TERRAIN SYNTHETIQUE",
+    "temps_min": 6
+   },
+   {
+    "domaine": "Santé et action sociale",
+    "nom": "ALIZES ASSISTANCE",
+    "temps_min": 15
+   }
+  ]
+ }
+}

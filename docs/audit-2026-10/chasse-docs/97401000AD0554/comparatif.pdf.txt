@@ -1,0 +1,82 @@
+LABUSE           Comparatif
+
+
+
+
+Comparatif
+Deux à trois parcelles côte à côte, sur les lignes de Comparer.
+
+2 parcelles · CO-20261019-0554 · 19/10/2026
+
+
+
+   Comparatif
+                                                      AD 0554                                                                  BO 0852
+                                                      Les Avirons                                                              Saint-Paul
+
+  Surface      sourcé                                 700 m²                                                                   745 m²
+
+  Zone PLU      sourcé                                Ud3                                                                      U1a
+
+  Classement LABUSE                                   HC · Hors classement · Signal faible                                     0 · Non retenue · Signal faible
+
+  Zone constructible         sourcé                   oui                                                                      oui
+
+  SDP maximale réglementaire             estimé       88 m²                                                                    797 m²
+
+  SDP résiduelle        estimé                        88 m²                                                                    0 m²
+
+  Emprise au sol max (PLU)            sourcé          40 %                                                                     non réglementée
+
+  Taux d'occupation du gabarit                        0%                                                                       Saturé : le bâti existant dépasse
+     estimé                                                                                                                    déjà le plafond d'emprise du PLU
+                                                                                                                               actuel
+
+  Sous-densité        estimé                          oui                                                                      non
+
+  Charge foncière /m² terrain           estimé        -13 €/m²                                                                 259 €/m²
+                                                                                                                                                        Généré via LABUSE
+
+
+
+
+Comparatif indicatif de parcelles établi sur des données publiques. Ni un prix, ni un conseil. Données LABUSE au 19/10/2026.                                        1/2
+                                                      AD 0554                                                                                       BO 0852
+                                                      Les Avirons                                                                                   Saint-Paul
+
+  Prix terrain nu zone        estimé                  376 €/m²                                                                                      479 €/m²
+
+  Prix bâti (section cadastrale)                      1 709 €/m²                                                                                    3 804 €/m²
+     estimé
+
+
+  Logements possibles                                 voir l'Étude de faisabilité                                                                   voir l'Étude de faisabilité
+
+  Bâti existant      sourcé                           0 % du terrain                                                                                73 % du terrain
+
+  Gabarit max       sourcé                            R+1                                                                                           R+3
+
+  Accès & réseaux        sourcé                       Viabilisation confirmée par les faits                                                         Viabilisation confirmée par les faits
+
+  Assainissement        estimé                        93 % des logements du secteur ne sont pas raccordés au réseau collectif                       Tout-à-l'égout (collectif)
+
+  Propriétaire     sourcé                             particulier                                                                                   personne morale
+
+  Contrainte majeure          sourcé                  Emprise routière — 96 m d'axes routiers sur la parcelle (densité d'emprise 0.91 ≥ 0.5, bâti   SDP résiduelle 0 m² — rien à
+                                                      0% < 10 %) ; aucun signal privé (ni PM privée, ni mutation DVF) : voirie publique/            construire.
+                                                      rétrocédée probable, non marchande.
+
+
+Maximum réglementaire (gabarit) : le total que la parcelle peut porter selon les règles, pas le programme qui sera déposé. Face aux permis réellement autorisés (volet D VERITE-TERRAIN-2),
+les projets en utilisent en médiane environ la moitié (0,46 en surface, 0,40 en logements).
+
+
+
+
+                                                                                                                                                                             Généré via LABUSE
+
+
+
+
+Comparatif indicatif de parcelles établi sur des données publiques. Ni un prix, ni un conseil. Données LABUSE au 19/10/2026.                                                             2/2
+

@@ -1,0 +1,18 @@
+{
+ "_status": 200,
+ "data": {
+  "idu": "97411000DS0186",
+  "commune": "Saint-Denis",
+  "insee": "97411",
+  "surface_terrain_m2": 20001.0,
+  "zone_plu": "Ui",
+  "zone_famille": "U",
+  "sdp_gabarit_m2": 22769,
+  "deja_batie": true,
+  "taux_communal_pct": 3.0,
+  "taux_communal_source": "public",
+  "taux_communal_millesime": "Taux communal en vigueur depuis le 01/01/2022 (délibération communale)",
+  "taux_communal_perime": false,
+  "secteur_majore": false
+ }
+}

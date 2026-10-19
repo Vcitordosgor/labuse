@@ -1,0 +1,157 @@
+{
+ "_status": 200,
+ "data": {
+  "idu": "97410000AN0347",
+  "c100": 1,
+  "c200": 8,
+  "localises": 8,
+  "non_localises": 0,
+  "note": "Permis autorisés géolocalisés < 200 m (source du signal viabilisation M-VIA).",
+  "items": [
+   {
+    "permit_id": "97441024A0088",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2024-09-03",
+    "etat": "2",
+    "nb_lgt": "9",
+    "porteur": "ALAMELE OI",
+    "distance_m": 45,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.718694616,
+      -21.034476291
+     ]
+    }
+   },
+   {
+    "permit_id": "97441014A0170",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2015-03-18",
+    "etat": "6",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 128,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.718703691,
+      -21.035247239
+     ]
+    }
+   },
+   {
+    "permit_id": "97441023G0211",
+    "nature": "DP",
+    "nature_libelle": "Déclaration préalable",
+    "date": "2024-02-12",
+    "etat": "6",
+    "nb_lgt": null,
+    "porteur": "COMMUNE DE SAINT-BENOIT",
+    "distance_m": 143,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.716235575,
+      -21.03439381
+     ]
+    }
+   },
+   {
+    "permit_id": "97441013G0186",
+    "nature": "DP",
+    "nature_libelle": "Déclaration préalable",
+    "date": "2014-03-31",
+    "etat": "2",
+    "nb_lgt": null,
+    "porteur": null,
+    "distance_m": 143,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.716235575,
+      -21.03439381
+     ]
+    }
+   },
+   {
+    "permit_id": "97441017A0156",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2018-01-08",
+    "etat": "6",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 173,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.716737373,
+      -21.035406346
+     ]
+    }
+   },
+   {
+    "permit_id": "97441023A0088",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2023-09-07",
+    "etat": "6",
+    "nb_lgt": null,
+    "porteur": "O COLIBRI GARDEN",
+    "distance_m": 173,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.716737373,
+      -21.035406346
+     ]
+    }
+   },
+   {
+    "permit_id": "97441017A0169",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2018-01-03",
+    "etat": "6",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 184,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.717765298,
+      -21.035702256
+     ]
+    }
+   },
+   {
+    "permit_id": "97441015A0023",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2015-04-09",
+    "etat": "6",
+    "nb_lgt": "2",
+    "porteur": "SCI KAF MALBAR",
+    "distance_m": 193,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.717810091,
+      -21.035779305
+     ]
+    }
+   }
+  ]
+ }
+}

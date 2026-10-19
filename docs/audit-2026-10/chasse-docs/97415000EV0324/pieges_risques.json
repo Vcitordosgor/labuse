@@ -1,0 +1,64 @@
+{
+ "_status": 200,
+ "data": {
+  "idu": "97415000EV0324",
+  "n": 8,
+  "servitudes": [
+   {
+    "categorie": "Classement sonore des voies (isolement acoustique)",
+    "effet": "catégorie 3",
+    "source": "Classement sonore ITT (Cerema)",
+    "date": "millésime arrêtés déc. 2023"
+   },
+   {
+    "categorie": "Droit de préemption (DPU)",
+    "effet": "Droit de préemption urbain — la commune peut se substituer à l'acquéreur à la vente",
+    "source": "GPU — droit de préemption urbain (info-surf)",
+    "date": "millésime GPU"
+   },
+   {
+    "categorie": "Prescription du PLU (constructibilité)",
+    "effet": "Clause de logements aidés (mixité sociale, art. L151-15) — part de logements sociaux imposée au programme — « Clause logements aidés »",
+    "source": "Urbanisme PLU/GPU (API Carto)",
+    "date": "millésime GPU/PLU par commune (révisions — détail en fiche)"
+   },
+   {
+    "categorie": "Risque naturel (PPR / aléa)",
+    "effet": "PPR inondation et mouvement de terrain — zone rouge marginale (1 %), hors emprise probable.",
+    "source": "DEAL Réunion — PPR / aléas",
+    "date": "millésime PPR/PPRL approuvés 2011–2026 (arrêtés, DEAL Lizmap)"
+   },
+   {
+    "categorie": "Risque naturel (PPR / aléa)",
+    "effet": "Zone bleue PPR inondation et mouvement de terrain (~56% de la parcelle) — constructible SOUS PRESCRIPTIONS (règlement DEAL).",
+    "source": "DEAL Réunion — PPR / aléas",
+    "date": "millésime PPR/PPRL approuvés 2011–2026 (arrêtés, DEAL Lizmap)"
+   },
+   {
+    "categorie": "Risque naturel (PPR / aléa)",
+    "effet": "Aléa inondation — niveau fort (~1% de la parcelle).",
+    "source": "DEAL Réunion — PPR / aléas",
+    "date": "millésime PPR/PPRL approuvés 2011–2026 (arrêtés, DEAL Lizmap)"
+   },
+   {
+    "categorie": "Risque naturel (PPR / aléa)",
+    "effet": "Aléa mouvement de terrain — niveau faible (~1% de la parcelle).",
+    "source": "DEAL Réunion — PPR / aléas",
+    "date": "millésime PPR/PPRL approuvés 2011–2026 (arrêtés, DEAL Lizmap)"
+   },
+   {
+    "categorie": "Servitude d'Utilité Publique",
+    "effet": "Risques naturels (PPR) — prescriptions constructives — Enveloppe des zonages réglementaires",
+    "source": "SUP — assiettes GPU (API Carto)",
+    "date": "ingéré le 14/09/2026"
+   }
+  ],
+  "synthese": "8 servitude(s)/contrainte(s) dormante(s) intersecte(nt) cette parcelle.",
+  "non_couvert": [
+   "Procédures PLU en cours (révision/élaboration) — voir l'outil PLU (radar Sudocuh) ; non reprises ici",
+   "Canalisations de transport de matières dangereuses (gaz, hydrocarbures) — couche non ingérée",
+   "Servitudes d'Utilité Publique hors GPU Réunion — 417 SUP ingérées (8 familles présentes, toutes décodées) ; une SUP non publiée au Géoportail de l'urbanisme n'est pas vue (certificat d'urbanisme indispensable)"
+  ],
+  "avertissement": "Lecture des couches déjà ingérées — sourcée et datée. L'absence d'une servitude ici ne vaut pas absence réelle (couches non exhaustives) ; vérifiez le certificat d'urbanisme."
+ }
+}

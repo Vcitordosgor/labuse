@@ -1,0 +1,199 @@
+{
+ "_status": 200,
+ "data": {
+  "mode": "pied",
+  "minutes": 15,
+  "hors_trafic": true,
+  "renvoi": "Les ventes (DVF), les transports et les réseaux restent dans leurs tiroirs Marché et Réseaux — rien n'est dupliqué.",
+  "note": "INSEE Filosofi 2021 (carreaux 200 m) · BPE 2025 · isochrones IGN — temps hors trafic.",
+  "disponible": true,
+  "statut": "ign",
+  "geom": {
+   "coordinates": [
+    [
+     [
+      55.488351,
+      -20.891104
+     ],
+     [
+      55.487351,
+      -20.890396
+     ],
+     [
+      55.484351,
+      -20.89193
+     ],
+     [
+      55.483351,
+      -20.892071
+     ],
+     [
+      55.480531,
+      -20.894349
+     ],
+     [
+      55.478465,
+      -20.895349
+     ],
+     [
+      55.477831,
+      -20.896349
+     ],
+     [
+      55.478634,
+      -20.897349
+     ],
+     [
+      55.479531,
+      -20.900349
+     ],
+     [
+      55.479117,
+      -20.901349
+     ],
+     [
+      55.479725,
+      -20.901975
+     ],
+     [
+      55.480351,
+      -20.904335
+     ],
+     [
+      55.481622,
+      -20.904349
+     ],
+     [
+      55.483583,
+      -20.906117
+     ],
+     [
+      55.487351,
+      -20.906763
+     ],
+     [
+      55.488116,
+      -20.905349
+     ],
+     [
+      55.488046,
+      -20.904044
+     ],
+     [
+      55.488705,
+      -20.903995
+     ],
+     [
+      55.489351,
+      -20.904807
+     ],
+     [
+      55.492127,
+      -20.904349
+     ],
+     [
+      55.49188,
+      -20.902349
+     ],
+     [
+      55.493099,
+      -20.901349
+     ],
+     [
+      55.493248,
+      -20.900349
+     ],
+     [
+      55.492351,
+      -20.899538
+     ],
+     [
+      55.491351,
+      -20.899587
+     ],
+     [
+      55.490351,
+      -20.898623
+     ],
+     [
+      55.488152,
+      -20.898548
+     ],
+     [
+      55.488351,
+      -20.897519
+     ],
+     [
+      55.490439,
+      -20.897437
+     ],
+     [
+      55.492156,
+      -20.896349
+     ],
+     [
+      55.491149,
+      -20.895551
+     ],
+     [
+      55.490357,
+      -20.892349
+     ],
+     [
+      55.488351,
+      -20.891104
+     ]
+    ]
+   ],
+   "type": "Polygon"
+  },
+  "population": {
+   "inhabitee": false,
+   "iris": {
+    "n_iris": 16,
+    "vacance_pct": 8.3,
+    "part_bati_avant_1990_pct": 49.1,
+    "source": "INSEE RP2022 par IRIS (quartiers intersectés)"
+   },
+   "habitants": 15714,
+   "menages": 6954,
+   "revenu_median_eur": 21408,
+   "revenu_estime": true,
+   "revenu_impute_n": 6,
+   "revenu_carreaux_n": 46,
+   "revenu_majorite_imputee": false,
+   "pct_moins_25": 36,
+   "taux_pauvrete_pct": 46,
+   "n_carreaux": 46,
+   "millesime": "Filosofi 2021 (INSEE, carreaux 200 m)",
+   "revenu_source": "carreau Filosofi au centroïde (source unique de la fiche)"
+  },
+  "equipements": [
+   {
+    "domaine": "Enseignement",
+    "nom": "COLLEGE BORIS GAMALEYA LES ALIZES",
+    "temps_min": 2
+   },
+   {
+    "domaine": "Sports, loisirs et culture",
+    "nom": "PLATEAU EPS MULTISPORT",
+    "temps_min": 2
+   },
+   {
+    "domaine": "Commerces",
+    "nom": "CHAN HONE",
+    "temps_min": 4
+   },
+   {
+    "domaine": "Santé et action sociale",
+    "nom": "CABINET THIEBAULD LAURENCE",
+    "temps_min": 4
+   },
+   {
+    "domaine": "Services aux particuliers",
+    "nom": "JOVIEN HUGUES",
+    "temps_min": 4
+   }
+  ]
+ }
+}

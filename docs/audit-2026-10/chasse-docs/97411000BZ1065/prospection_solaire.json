@@ -1,0 +1,61 @@
+{
+ "_status": 200,
+ "data": {
+  "idu": "97411000BZ1065",
+  "commune": "Saint-Denis",
+  "lon": 55.42947823228144,
+  "lat": -20.88519366268687,
+  "productible": 1548,
+  "prod_mensuel": [
+   135,
+   126,
+   134,
+   125,
+   118,
+   106,
+   116,
+   127,
+   135,
+   144,
+   137,
+   144
+  ],
+  "mois_optimal": 12,
+  "azimut": 65,
+  "azimut_confiance": "basse",
+  "pente": 13.8,
+  "toit_m2": 197,
+  "piscine": false,
+  "piscine_m2": null,
+  "abf": false,
+  "ombrage_topo": false,
+  "ombrage_vegetal": true,
+  "proba_occ": 72,
+  "tier_v2": "sans_signal",
+  "etage0": false,
+  "enr_sol_exclu_zone": null,
+  "ok": true,
+  "classement": "Sans signal",
+  "ombrage": true,
+  "enr_au_sol_exclu": false,
+  "millesime": "PVGIS v5_3 · SARAH3 · relevé 2026-08-23",
+  "kwc_par_m2": 0.2,
+  "kwc": 39.4,
+  "prod_annuel": 60991,
+  "inclinaison_deg": 15,
+  "toiture": {
+   "verdict": "monopente",
+   "libelle": "simple pente (monopente)",
+   "libelle_court": "simple pente",
+   "pente_mediane_deg": 22.2,
+   "pans_orientation_deg": [
+    0
+   ],
+   "part_pentue": 0.82,
+   "confiance": 0.757,
+   "seuil": 0.7,
+   "statut": "Dérivé",
+   "methode": "Nature du toit lue sur le LiDAR HD IGN (MNH 50 cm) quand les pans sont nets — confiance ≥ 0,70, calibrée à l'œil sur 50 bâtiments contre l'ortho (0 faux au seuil, 36 % des toits classés) ; « non déterminée » sinon. À vérifier sur la photo aérienne."
+  }
+ }
+}

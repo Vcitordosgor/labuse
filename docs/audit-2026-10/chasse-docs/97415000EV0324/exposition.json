@@ -1,0 +1,9 @@
+{
+ "_status": 200,
+ "data": {
+  "idu": "97415000EV0324",
+  "parcel_id": 56500,
+  "orientation": null,
+  "erreur": "Client error '400 Bad Request' for url 'https://data.geopf.fr/wms-r/wms?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=ELEVATION.ELEVATIONGRIDCOVERAGE.HIGHRES&CRS=EPSG%3A2975&BBOX=316692.7902133333%2"
+ }
+}

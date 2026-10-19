@@ -1,0 +1,2 @@
+HTTP 400
+{"detail":"simulation impossible : aucune implantation ne passe tous les contrôles durs sur cette assiette (zone trop étroite, reculs, ou stationnement aérien impossible)."}

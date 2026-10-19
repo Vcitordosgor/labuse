@@ -1,0 +1,184 @@
+{
+ "_status": 200,
+ "data": {
+  "mode": "pied",
+  "minutes": 15,
+  "hors_trafic": true,
+  "renvoi": "Les ventes (DVF), les transports et les réseaux restent dans leurs tiroirs Marché et Réseaux — rien n'est dupliqué.",
+  "note": "INSEE Filosofi 2021 (carreaux 200 m) · BPE 2025 · isochrones IGN — temps hors trafic.",
+  "disponible": true,
+  "statut": "ign",
+  "geom": {
+   "coordinates": [
+    [
+     [
+      55.442203,
+      -20.906431
+     ],
+     [
+      55.441203,
+      -20.906227
+     ],
+     [
+      55.440203,
+      -20.906796
+     ],
+     [
+      55.43929,
+      -20.910586
+     ],
+     [
+      55.438354,
+      -20.910737
+     ],
+     [
+      55.43827,
+      -20.912586
+     ],
+     [
+      55.437341,
+      -20.912724
+     ],
+     [
+      55.437254,
+      -20.913637
+     ],
+     [
+      55.436935,
+      -20.912854
+     ],
+     [
+      55.435471,
+      -20.912854
+     ],
+     [
+      55.435443,
+      -20.914826
+     ],
+     [
+      55.434805,
+      -20.914984
+     ],
+     [
+      55.434203,
+      -20.914074
+     ],
+     [
+      55.43306,
+      -20.915443
+     ],
+     [
+      55.434485,
+      -20.917304
+     ],
+     [
+      55.436488,
+      -20.917301
+     ],
+     [
+      55.43717,
+      -20.918619
+     ],
+     [
+      55.438203,
+      -20.918605
+     ],
+     [
+      55.439203,
+      -20.919325
+     ],
+     [
+      55.439986,
+      -20.917586
+     ],
+     [
+      55.44095,
+      -20.917333
+     ],
+     [
+      55.441131,
+      -20.916514
+     ],
+     [
+      55.442935,
+      -20.916318
+     ],
+     [
+      55.442859,
+      -20.91393
+     ],
+     [
+      55.441131,
+      -20.913586
+     ],
+     [
+      55.442024,
+      -20.913407
+     ],
+     [
+      55.442133,
+      -20.912516
+     ],
+     [
+      55.442943,
+      -20.912326
+     ],
+     [
+      55.442943,
+      -20.910846
+     ],
+     [
+      55.442078,
+      -20.910586
+     ],
+     [
+      55.443203,
+      -20.910368
+     ],
+     [
+      55.443532,
+      -20.909586
+     ],
+     [
+      55.442203,
+      -20.906431
+     ]
+    ]
+   ],
+   "type": "Polygon"
+  },
+  "population": {
+   "inhabitee": false,
+   "iris": {
+    "n_iris": 1,
+    "vacance_pct": 12.9,
+    "part_bati_avant_1990_pct": 38.6,
+    "source": "INSEE RP2022 par IRIS (quartiers intersectés)"
+   },
+   "habitants": 294,
+   "menages": 104,
+   "revenu_median_eur": 30738,
+   "revenu_estime": true,
+   "revenu_impute_n": 11,
+   "revenu_carreaux_n": 14,
+   "revenu_majorite_imputee": true,
+   "pct_moins_25": 24,
+   "taux_pauvrete_pct": 16,
+   "n_carreaux": 14,
+   "millesime": "Filosofi 2021 (INSEE, carreaux 200 m)",
+   "revenu_source": "carreau Filosofi au centroïde (source unique de la fiche)"
+  },
+  "equipements": [
+   {
+    "domaine": "Services aux particuliers",
+    "nom": "BOURBON ENERGIE",
+    "temps_min": 4
+   },
+   {
+    "domaine": "Sports, loisirs et culture",
+    "nom": "BOULODROME",
+    "temps_min": 15
+   }
+  ]
+ }
+}

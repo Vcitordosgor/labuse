@@ -1,0 +1,21 @@
+{
+ "_status": 200,
+ "data": {
+  "recto": "Objet : Votre parcelle AD 554, à Les Avirons\n\nMadame, Monsieur,\n\nLABUSE est une plateforme d'intelligence foncière spécialisée sur La Réunion. Elle croise des dizaines de sources cadastrales, réglementaires, immobilières et territoriales afin de mieux comprendre les caractéristiques et les règles qui concernent chaque parcelle.\n\nPlusieurs mutations immobilières ont été publiées récemment autour de la parcelle située 5 Rue des Longoses, 97425 Les Avirons. Elles permettent de disposer de repères récents sur l'activité immobilière du secteur : 21 mutations publiées dans le périmètre analysé sur les 3 dernières années.\n\nVous trouverez au dos une synthèse des principales informations dont nous disposons sur cette parcelle : ses caractéristiques cadastrales, son contexte réglementaire et quelques repères sur son environnement immobilier.\n\nSi vous souhaitez aller plus loin, nous pouvons vous adresser gratuitement une analyse plus complète de votre terrain : règles d'urbanisme identifiées, contraintes connues, caractéristiques de la parcelle et données immobilières disponibles autour de celle-ci. Il suffit de la demander à contact@labuse.immo.\n\nLes données foncières et réglementaires évoluent dans le temps. Vous pourrez donc demander une nouvelle analyse ultérieurement afin de disposer d'informations actualisées.\n\nCette étude vous est offerte par LABUSE qui intervient à Les Avirons. Cette démarche ne vous engage à rien.\n\nCordialement,",
+  "verso": [
+   "Synthèse de la parcelle",
+   "Référence cadastrale : AD 554",
+   "Commune : Les Avirons",
+   "Adresse : 5 Rue des Longoses, 97425 Les Avirons",
+   "Surface cadastrale : 700 m²",
+   "Zone d'urbanisme : Ud3 (règles calibrées)",
+   "Environnement immobilier : 21 mutation(s) publiée(s) dans le périmètre analysé sur les 3 dernières années."
+  ],
+  "ouverture": "C",
+  "reference": "AD 554",
+  "destinataire": null,
+  "adresse_envoi": null,
+  "bloque": true,
+  "motif": "Parcelle non bâtie : aucun destinataire à l'adresse"
+ }
+}

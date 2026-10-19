@@ -1,0 +1,319 @@
+{
+ "_status": 200,
+ "data": {
+  "idu": "97411000DS0186",
+  "c100": 7,
+  "c200": 17,
+  "localises": 17,
+  "non_localises": 0,
+  "note": "Permis autorisés géolocalisés < 200 m (source du signal viabilisation M-VIA).",
+  "items": [
+   {
+    "permit_id": "97441125A0269",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2026-03-09",
+    "etat": "2",
+    "nb_lgt": null,
+    "porteur": "DEPARTEMENT DE LA REUNION",
+    "distance_m": 0,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.485350687,
+      -20.899349415
+     ]
+    }
+   },
+   {
+    "permit_id": "9744112300022",
+    "nature": "DP",
+    "nature_libelle": "Déclaration préalable",
+    "date": "2023-02-28",
+    "etat": "2",
+    "nb_lgt": null,
+    "porteur": "ELECTRICITE DE FRANCE",
+    "distance_m": 0,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.485350687,
+      -20.899349415
+     ]
+    }
+   },
+   {
+    "permit_id": "97441118A0252",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2019-01-24",
+    "etat": "2",
+    "nb_lgt": null,
+    "porteur": "COMMUNAUTE INTERCOMMUNALE NORD REUNION",
+    "distance_m": 6,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.485761014,
+      -20.89985895
+     ]
+    }
+   },
+   {
+    "permit_id": "97441124A0071",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2024-07-30",
+    "etat": "5",
+    "nb_lgt": "5",
+    "porteur": "SOCIETE IMMOBILIERE DEPARTEMENT REUNION",
+    "distance_m": 34,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.484457123,
+      -20.899813726
+     ]
+    }
+   },
+   {
+    "permit_id": "97441113A0370",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2014-01-31",
+    "etat": "2",
+    "nb_lgt": null,
+    "porteur": "CTRE RGAL OEUVRES UNIVERSITAIRES SCOLAIR",
+    "distance_m": 84,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.486464534,
+      -20.900193742
+     ]
+    }
+   },
+   {
+    "permit_id": "97441123A0242",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2023-11-24",
+    "etat": "6",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 86,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.484199716,
+      -20.898652819
+     ]
+    }
+   },
+   {
+    "permit_id": "97441124A0326",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2025-07-03",
+    "etat": "2",
+    "nb_lgt": null,
+    "porteur": "SOCIETE IMMOBILIERE DEPARTEMENT REUNION",
+    "distance_m": 99,
+    "rayon": "100m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.483741431,
+      -20.900015184
+     ]
+    }
+   },
+   {
+    "permit_id": "97441125A0188",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2025-11-19",
+    "etat": "2",
+    "nb_lgt": null,
+    "porteur": "INSTITUT DE RECHERCHE POUR LE DEVELOPPEMENT",
+    "distance_m": 101,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.483790849,
+      -20.900614332
+     ]
+    }
+   },
+   {
+    "permit_id": "9744112200168",
+    "nature": "DP",
+    "nature_libelle": "Déclaration préalable",
+    "date": "2022-06-25",
+    "etat": "2",
+    "nb_lgt": null,
+    "porteur": "ELECTRICITE DE FRANCE",
+    "distance_m": 107,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.483802106,
+      -20.89953585
+     ]
+    }
+   },
+   {
+    "permit_id": "97441124A0070",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2024-07-30",
+    "etat": "5",
+    "nb_lgt": "3",
+    "porteur": "SOCIETE IMMOBILIERE DEPARTEMENT REUNION",
+    "distance_m": 119,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.48369105,
+      -20.899482411
+     ]
+    }
+   },
+   {
+    "permit_id": "9744112000096",
+    "nature": "DP",
+    "nature_libelle": "Déclaration préalable",
+    "date": "2020-06-29",
+    "etat": "2",
+    "nb_lgt": null,
+    "porteur": "CTRE RGAL OEUVRES UNIVERSITAIRES SCOLAIR",
+    "distance_m": 126,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.486677774,
+      -20.900895681
+     ]
+    }
+   },
+   {
+    "permit_id": "97441122A0319",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2022-12-12",
+    "etat": "5",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 126,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.483686698,
+      -20.899208505
+     ]
+    }
+   },
+   {
+    "permit_id": "97441121A0365",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2021-12-02",
+    "etat": "5",
+    "nb_lgt": null,
+    "porteur": "UNIVERSITE DE LA REUNION",
+    "distance_m": 133,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.484916939,
+      -20.90148545
+     ]
+    }
+   },
+   {
+    "permit_id": "97441122A0379",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2023-02-09",
+    "etat": "6",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 163,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.483318687,
+      -20.899223387
+     ]
+    }
+   },
+   {
+    "permit_id": "97441115A0330",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2015-11-18",
+    "etat": "5",
+    "nb_lgt": "1",
+    "porteur": null,
+    "distance_m": 168,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.485113163,
+      -20.896779882
+     ]
+    }
+   },
+   {
+    "permit_id": "97441118A0027",
+    "nature": "PC",
+    "nature_libelle": "Permis de construire",
+    "date": "2018-06-04",
+    "etat": "6",
+    "nb_lgt": "72",
+    "porteur": null,
+    "distance_m": 173,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.483849394,
+      -20.897322626
+     ]
+    }
+   },
+   {
+    "permit_id": "9744111300017",
+    "nature": "PD",
+    "nature_libelle": "Permis de démolir",
+    "date": "2013-07-29",
+    "etat": "2",
+    "nb_lgt": null,
+    "porteur": null,
+    "distance_m": 181,
+    "rayon": "200m",
+    "geom": {
+     "type": "Point",
+     "coordinates": [
+      55.485937769,
+      -20.896778009
+     ]
+    }
+   }
+  ]
+ }
+}

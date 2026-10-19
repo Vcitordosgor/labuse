@@ -1,0 +1,199 @@
+{
+ "_status": 200,
+ "data": {
+  "mode": "pied",
+  "minutes": 15,
+  "hors_trafic": true,
+  "renvoi": "Les ventes (DVF), les transports et les réseaux restent dans leurs tiroirs Marché et Réseaux — rien n'est dupliqué.",
+  "note": "INSEE Filosofi 2021 (carreaux 200 m) · BPE 2025 · isochrones IGN — temps hors trafic.",
+  "disponible": true,
+  "statut": "ign",
+  "geom": {
+   "coordinates": [
+    [
+     [
+      55.232319,
+      -21.084118
+     ],
+     [
+      55.231319,
+      -21.084639
+     ],
+     [
+      55.22998,
+      -21.087247
+     ],
+     [
+      55.229895,
+      -21.089671
+     ],
+     [
+      55.230654,
+      -21.091912
+     ],
+     [
+      55.231407,
+      -21.092159
+     ],
+     [
+      55.231564,
+      -21.093002
+     ],
+     [
+      55.23239,
+      -21.093176
+     ],
+     [
+      55.232536,
+      -21.09403
+     ],
+     [
+      55.233395,
+      -21.094171
+     ],
+     [
+      55.233563,
+      -21.095003
+     ],
+     [
+      55.234394,
+      -21.095172
+     ],
+     [
+      55.234559,
+      -21.096007
+     ],
+     [
+      55.236402,
+      -21.096164
+     ],
+     [
+      55.236619,
+      -21.096947
+     ],
+     [
+      55.237432,
+      -21.097134
+     ],
+     [
+      55.238319,
+      -21.098015
+     ],
+     [
+      55.241348,
+      -21.098276
+     ],
+     [
+      55.241915,
+      -21.094247
+     ],
+     [
+      55.244319,
+      -21.093694
+     ],
+     [
+      55.244683,
+      -21.093247
+     ],
+     [
+      55.244049,
+      -21.092247
+     ],
+     [
+      55.244608,
+      -21.089958
+     ],
+     [
+      55.243991,
+      -21.089575
+     ],
+     [
+      55.241319,
+      -21.089381
+     ],
+     [
+      55.24095,
+      -21.088616
+     ],
+     [
+      55.238319,
+      -21.087356
+     ],
+     [
+      55.237506,
+      -21.087434
+     ],
+     [
+      55.237319,
+      -21.087881
+     ],
+     [
+      55.237281,
+      -21.087247
+     ],
+     [
+      55.234937,
+      -21.085629
+     ],
+     [
+      55.234319,
+      -21.084386
+     ],
+     [
+      55.232319,
+      -21.084118
+     ]
+    ]
+   ],
+   "type": "Polygon"
+  },
+  "population": {
+   "inhabitee": false,
+   "iris": {
+    "n_iris": 2,
+    "vacance_pct": 6.8,
+    "part_bati_avant_1990_pct": 35.6,
+    "source": "INSEE RP2022 par IRIS (quartiers intersectés)"
+   },
+   "habitants": 2569,
+   "menages": 1110,
+   "revenu_median_eur": 30713,
+   "revenu_estime": true,
+   "revenu_impute_n": 10,
+   "revenu_carreaux_n": 32,
+   "revenu_majorite_imputee": false,
+   "pct_moins_25": 28,
+   "taux_pauvrete_pct": 13,
+   "n_carreaux": 32,
+   "millesime": "Filosofi 2021 (INSEE, carreaux 200 m)",
+   "revenu_source": "carreau Filosofi au centroïde (source unique de la fiche)"
+  },
+  "equipements": [
+   {
+    "domaine": "Santé et action sociale",
+    "nom": "OU GINGN",
+    "temps_min": 2
+   },
+   {
+    "domaine": "Sports, loisirs et culture",
+    "nom": "TERRAIN DE RUGBY",
+    "temps_min": 2
+   },
+   {
+    "domaine": "Enseignement",
+    "nom": "ECOLE MATERNELLE PUBLIQUE ANNE MOUSSE",
+    "temps_min": 4
+   },
+   {
+    "domaine": "Commerces",
+    "nom": "AU PETRIN DE PROVENCE",
+    "temps_min": 4
+   },
+   {
+    "domaine": "Services aux particuliers",
+    "nom": "LE SANTA CRUZ",
+    "temps_min": 4
+   }
+  ]
+ }
+}

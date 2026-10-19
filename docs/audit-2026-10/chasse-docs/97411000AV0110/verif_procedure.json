@@ -1,0 +1,13 @@
+{
+ "_status": 200,
+ "data": {
+  "idu": "97411000AV0110",
+  "commune": "Saint-Denis",
+  "insee": "97411",
+  "tier_servi": "ecartee",
+  "consulte_le": "2026-10-19",
+  "procedure_en_cours": false,
+  "confiance": "DEDUIT",
+  "message": "Aucune procédure PLU en cours servie au 2026-10-19 — procédure Sudocuh sans suite connue (clôture probable, non servie). Dernier constat le 2026-08-06."
+ }
+}

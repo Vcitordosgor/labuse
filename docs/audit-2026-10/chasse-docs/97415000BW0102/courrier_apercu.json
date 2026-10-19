@@ -1,0 +1,21 @@
+{
+ "_status": 200,
+ "data": {
+  "recto": "Objet : Votre parcelle BW 102, à Saint-Paul\n\nCe courrier est destiné au propriétaire de la parcelle BW 102. Si vous n'en êtes pas le propriétaire, nous vous remercions de bien vouloir le lui transmettre.\n\nMadame, Monsieur,\n\nLABUSE est une plateforme d'intelligence foncière spécialisée sur La Réunion. Elle croise des dizaines de sources cadastrales, réglementaires, immobilières et territoriales afin de mieux comprendre les caractéristiques et les règles qui concernent chaque parcelle.\n\nLa parcelle située 43 Chemin Cassis, 97460 Saint-Paul est déjà bâtie. Les données réglementaires actuellement intégrées par LABUSE indiquent qu'elle mérite néanmoins une analyse complémentaire de ses possibilités d'évolution.\n\nVous trouverez au dos une synthèse des principales informations dont nous disposons sur cette parcelle : ses caractéristiques cadastrales, son contexte réglementaire et quelques repères sur son environnement immobilier.\n\nSi vous souhaitez aller plus loin, nous pouvons vous adresser gratuitement une analyse plus complète de votre terrain : règles d'urbanisme identifiées, contraintes connues, caractéristiques de la parcelle et données immobilières disponibles autour de celle-ci. Il suffit de la demander à contact@labuse.immo.\n\nLes données foncières et réglementaires évoluent dans le temps. Vous pourrez donc demander une nouvelle analyse ultérieurement afin de disposer d'informations actualisées.\n\nCette étude vous est offerte par LABUSE qui intervient à Saint-Paul. Cette démarche ne vous engage à rien.\n\nCordialement,",
+  "verso": [
+   "Synthèse de la parcelle",
+   "Référence cadastrale : BW 102",
+   "Commune : Saint-Paul",
+   "Adresse : 43 Chemin Cassis, 97460 Saint-Paul",
+   "Surface cadastrale : 10 500 m²",
+   "Zone d'urbanisme : U6c (règles calibrées)",
+   "Environnement immobilier : 4 mutation(s) publiée(s) dans le périmètre analysé sur les 3 dernières années."
+  ],
+  "ouverture": "B",
+  "reference": "BW 102",
+  "destinataire": "À l'occupant",
+  "adresse_envoi": "43 Chemin Cassis, 97460 Saint-Paul",
+  "bloque": false,
+  "motif": null
+ }
+}

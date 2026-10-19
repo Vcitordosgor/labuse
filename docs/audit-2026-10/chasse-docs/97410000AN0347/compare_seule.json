@@ -1,0 +1,50 @@
+{
+ "_status": 200,
+ "data": {
+  "count": 1,
+  "parcels": [
+   {
+    "idu": "97410000AN0347",
+    "commune": "Saint-Benoît",
+    "surface_m2": 4546,
+    "surface_incertaine": false,
+    "tier_v2": "ecartee",
+    "rang_v2": 95893,
+    "etage0": true,
+    "status": "ecartee",
+    "label": "Écartée",
+    "fraction": null,
+    "raison": "secteur qui bouge",
+    "zone": "N",
+    "constructible": false,
+    "zone_constructible": false,
+    "cause": "zone_non_constructible:N",
+    "cause_libelle": "Non retenue — zone N inconstructible au PLU.",
+    "sdp_max_m2": null,
+    "taux_emprise_pct": null,
+    "sdp_residuelle_m2": null,
+    "sous_densite": null,
+    "charge_fonciere_m2": null,
+    "n_contraintes": 15,
+    "contraintes": [
+     "Bassin versant (code hydro 10B0000002150455274) — 100 % de la parcelle : contexte hydrographique (ruissellement amont/aval, submersion). L'urbanisation en amont pèse sur l'aval — à considérer avec les aléas et scénarios d'inondation.",
+     "Parcelle au contact de la bande des 50 pas géométriques (corridor ±90 m de la limite haute 1877) — régime foncier SPÉCIFIQUE à vérifier : domaine public littoral, cession encadrée (agence des 50 pas).",
+     "Propriété publique (COMMUNE DE SAINT BENOIT) — cession/préemption : interlocuteur public [DGFiP groupe 4 : Commune].",
+     "SDP résiduelle 0 m² — rien à construire."
+    ],
+    "contrainte_majeure": "Exclue : PPR zone rouge (inconstructible) — 100 % de la surface.",
+    "proprietaire": "morale",
+    "bati_existant_pct": null,
+    "gabarit_niveaux_max": null,
+    "acces_reseaux": "Viabilisation probable",
+    "assainissement": "18 % des logements du secteur ne sont pas raccordés au réseau collectif",
+    "prix_secteur_bati_m2": 1445,
+    "zone_parts": null,
+    "emprise_ces_pct": null,
+    "emprise_ces_source": null,
+    "bande": "0",
+    "signal_niveau": "faible"
+   }
+  ]
+ }
+}

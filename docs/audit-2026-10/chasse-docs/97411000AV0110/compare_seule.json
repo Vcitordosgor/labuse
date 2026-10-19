@@ -1,0 +1,62 @@
+{
+ "_status": 200,
+ "data": {
+  "count": 1,
+  "parcels": [
+   {
+    "idu": "97411000AV0110",
+    "commune": "Saint-Denis",
+    "surface_m2": 690,
+    "surface_incertaine": false,
+    "tier_v2": "ecartee",
+    "rang_v2": 158082,
+    "etage0": true,
+    "status": "ecartee",
+    "label": "Écartée",
+    "fraction": null,
+    "raison": "secteur qui bouge",
+    "zone": "Uh",
+    "constructible": false,
+    "zone_constructible": true,
+    "cause": "terrain_exigu",
+    "cause_libelle": "Non retenue — terrain trop étroit une fois appliqués les reculs réglementaires.",
+    "sdp_max_m2": null,
+    "taux_emprise_pct": null,
+    "sdp_residuelle_m2": null,
+    "sous_densite": null,
+    "charge_fonciere_m2": null,
+    "n_contraintes": 17,
+    "contraintes": [
+     "Bassin versant (code hydro 10B0000002150455501) — 100 % de la parcelle : contexte hydrographique (ruissellement amont/aval, submersion). L'urbanisation en amont pèse sur l'aval — à considérer avec les aléas et scénarios d'inondation.",
+     "Droit de préemption urbain — la commune peut préempter à la vente (DIA obligatoire, ~2 mois ; pèse sur la transaction, pas sur la constructibilité).",
+     "Emprise routière — 133 m d'axes routiers sur la parcelle (densité d'emprise 1.20 ≥ 0.5, bâti 0% < 10 %) ; aucun signal privé (ni PM privée, ni mutation DVF) : voirie publique/rétrocédée probable, non marchande.",
+     "Mouvement de terrain recensé à proximité (aléa réglementaire déjà pris en compte via PPR). (Glissement, 15 m)"
+    ],
+    "contrainte_majeure": "Emprise routière — 133 m d'axes routiers sur la parcelle (densité d'emprise 1.20 ≥ 0.5, bâti 0% < 10 %) ; aucun signal privé (ni PM privée, ni mutation DVF) : voirie publique/rétrocédée probable, non marchande.",
+    "proprietaire": "particulier",
+    "bati_existant_pct": null,
+    "gabarit_niveaux_max": null,
+    "acces_reseaux": "Viabilisation confirmée par les faits",
+    "assainissement": "77 % des logements du secteur ne sont pas raccordés au réseau collectif",
+    "prix_secteur_bati_m2": 2966,
+    "zone_parts": [
+     {
+      "zone": "Uh",
+      "fam": "U",
+      "pct": 57.4
+     },
+     {
+      "zone": "N",
+      "fam": "N",
+      "pct": 42.6
+     }
+    ],
+    "terrain_zone_eur_m2": 482,
+    "emprise_ces_pct": 30.0,
+    "emprise_ces_source": "Art. Uh.9 · p.73 (PLU, calibrage validé)",
+    "bande": "0",
+    "signal_niveau": "faible"
+   }
+  ]
+ }
+}

@@ -1,0 +1,195 @@
+{
+ "_status": 200,
+ "data": {
+  "mode": "pied",
+  "minutes": 15,
+  "hors_trafic": true,
+  "renvoi": "Les ventes (DVF), les transports et les réseaux restent dans leurs tiroirs Marché et Réseaux — rien n'est dupliqué.",
+  "note": "INSEE Filosofi 2021 (carreaux 200 m) · BPE 2025 · isochrones IGN — temps hors trafic.",
+  "disponible": true,
+  "statut": "ign",
+  "geom": {
+   "coordinates": [
+    [
+     [
+      55.277205,
+      -21.004987
+     ],
+     [
+      55.272989,
+      -21.004977
+     ],
+     [
+      55.272413,
+      -21.005402
+     ],
+     [
+      55.271205,
+      -21.00544
+     ],
+     [
+      55.269609,
+      -21.006598
+     ],
+     [
+      55.266045,
+      -21.011034
+     ],
+     [
+      55.26593,
+      -21.012194
+     ],
+     [
+      55.26455,
+      -21.014194
+     ],
+     [
+      55.265083,
+      -21.015316
+     ],
+     [
+      55.266205,
+      -21.015846
+     ],
+     [
+      55.266516,
+      -21.015505
+     ],
+     [
+      55.267906,
+      -21.015493
+     ],
+     [
+      55.272262,
+      -21.016137
+     ],
+     [
+      55.272841,
+      -21.017558
+     ],
+     [
+      55.274226,
+      -21.019215
+     ],
+     [
+      55.274836,
+      -21.017194
+     ],
+     [
+      55.274054,
+      -21.016345
+     ],
+     [
+      55.274056,
+      -21.015045
+     ],
+     [
+      55.276205,
+      -21.015592
+     ],
+     [
+      55.278205,
+      -21.015331
+     ],
+     [
+      55.280564,
+      -21.012194
+     ],
+     [
+      55.280205,
+      -21.010969
+     ],
+     [
+      55.279513,
+      -21.011502
+     ],
+     [
+      55.277121,
+      -21.011278
+     ],
+     [
+      55.27794,
+      -21.010929
+     ],
+     [
+      55.278111,
+      -21.0091
+     ],
+     [
+      55.278868,
+      -21.008857
+     ],
+     [
+      55.279861,
+      -21.00685
+     ],
+     [
+      55.279724,
+      -21.005675
+     ],
+     [
+      55.279205,
+      -21.005293
+     ],
+     [
+      55.278205,
+      -21.005454
+     ],
+     [
+      55.277205,
+      -21.004987
+     ]
+    ]
+   ],
+   "type": "Polygon"
+  },
+  "population": {
+   "inhabitee": false,
+   "iris": {
+    "n_iris": 5,
+    "vacance_pct": 9.2,
+    "part_bati_avant_1990_pct": 44.0,
+    "source": "INSEE RP2022 par IRIS (quartiers intersectés)"
+   },
+   "habitants": 3448,
+   "menages": 1431,
+   "revenu_median_eur": 25993,
+   "revenu_estime": true,
+   "revenu_impute_n": 10,
+   "revenu_carreaux_n": 33,
+   "revenu_majorite_imputee": false,
+   "pct_moins_25": 28,
+   "taux_pauvrete_pct": 30,
+   "n_carreaux": 33,
+   "millesime": "Filosofi 2021 (INSEE, carreaux 200 m)",
+   "revenu_source": "carreau Filosofi au centroïde (source unique de la fiche)"
+  },
+  "equipements": [
+   {
+    "domaine": "Santé et action sociale",
+    "nom": "MONTAGNON LAETITIA",
+    "temps_min": 2
+   },
+   {
+    "domaine": "Services aux particuliers",
+    "nom": "REUNION OUEST IMMOBILIER",
+    "temps_min": 2
+   },
+   {
+    "domaine": "Enseignement",
+    "nom": "FORMA OUEST INSERTION",
+    "temps_min": 4
+   },
+   {
+    "domaine": "Commerces",
+    "nom": "SUPER U",
+    "temps_min": 4
+   },
+   {
+    "domaine": "Sports, loisirs et culture",
+    "nom": "FALAISE GRANDE RAVINE",
+    "temps_min": 6
+   }
+  ]
+ }
+}

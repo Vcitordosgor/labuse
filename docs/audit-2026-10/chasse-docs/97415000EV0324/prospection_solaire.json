@@ -1,0 +1,63 @@
+{
+ "_status": 200,
+ "data": {
+  "idu": "97415000EV0324",
+  "commune": "Saint-Paul",
+  "lon": 55.236319178465195,
+  "lat": -21.091247031422668,
+  "productible": 1296,
+  "prod_mensuel": [
+   118,
+   110,
+   114,
+   102,
+   100,
+   93,
+   98,
+   101,
+   107,
+   119,
+   113,
+   122
+  ],
+  "mois_optimal": 12,
+  "azimut": 64,
+  "azimut_confiance": "basse",
+  "pente": 1.6,
+  "toit_m2": 5253,
+  "piscine": false,
+  "piscine_m2": null,
+  "abf": false,
+  "ombrage_topo": false,
+  "ombrage_vegetal": false,
+  "proba_occ": 58,
+  "tier_v2": "sans_signal",
+  "etage0": false,
+  "enr_sol_exclu_zone": null,
+  "ok": true,
+  "classement": "Sans signal",
+  "ombrage": false,
+  "enr_au_sol_exclu": false,
+  "millesime": "PVGIS v5_3 · SARAH3 · relevé 2026-08-23",
+  "kwc_par_m2": 0.2,
+  "kwc": 1050.6,
+  "prod_annuel": 1361578,
+  "inclinaison_deg": 15,
+  "toiture": {
+   "verdict": "croupe_complexe",
+   "libelle": "croupe ou toit complexe (3 pans et plus)",
+   "libelle_court": "croupe / complexe",
+   "pente_mediane_deg": 15.5,
+   "pans_orientation_deg": [
+    157,
+    337,
+    67
+   ],
+   "part_pentue": 0.95,
+   "confiance": 0.79,
+   "seuil": 0.7,
+   "statut": "Dérivé",
+   "methode": "Nature du toit lue sur le LiDAR HD IGN (MNH 50 cm) quand les pans sont nets — confiance ≥ 0,70, calibrée à l'œil sur 50 bâtiments contre l'ortho (0 faux au seuil, 36 % des toits classés) ; « non déterminée » sinon. À vérifier sur la photo aérienne."
+  }
+ }
+}

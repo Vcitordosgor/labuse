@@ -1,0 +1,51 @@
+{
+ "_status": 200,
+ "data": {
+  "count": 1,
+  "parcels": [
+   {
+    "idu": "97411000DS0186",
+    "commune": "Saint-Denis",
+    "surface_m2": 20001,
+    "surface_incertaine": false,
+    "tier_v2": "sans_signal",
+    "rang_v2": 106522,
+    "etage0": false,
+    "status": "sans_signal",
+    "label": "Sans signal",
+    "fraction": null,
+    "raison": "secteur qui bouge",
+    "zone": "Ui",
+    "constructible": true,
+    "zone_constructible": true,
+    "cause": null,
+    "cause_libelle": null,
+    "sdp_max_m2": 27001,
+    "taux_emprise_pct": 37,
+    "sdp_residuelle_m2": 22769,
+    "sous_densite": true,
+    "charge_fonciere_m2": -35,
+    "n_contraintes": 12,
+    "contraintes": [
+     "Secteur affecté par le bruit routier (classement sonore cat. 2, bande 250 m) — isolement acoustique renforcé obligatoire (R.571-32 CE).",
+     "Installation (ICPE) à proximité — TPROI, régime Enregistrement, 53 m.",
+     "Emplacement réservé : ER - Boulevard Sud, mise à deux fois deux voies et pôle d'échange — emprise grevée au profit d'un projet public ; surface ER déduite de l'emprise constructible (pré-faisabilité).",
+     "Dépassement de bruit (carte stratégique) : CBS RN — dépassement Lden 68 dB(A) — journée entière — 5 % de la parcelle : constat de nuisance sonore (≠ classement sonore, qui impose l'isolement)."
+    ],
+    "contrainte_majeure": "Secteur affecté par le bruit routier (classement sonore cat. 2, bande 250 m) — isolement acoustique renforcé obligatoire (R.571-32 CE).",
+    "proprietaire": "morale",
+    "bati_existant_pct": 22,
+    "gabarit_niveaux_max": 5,
+    "acces_reseaux": "Viabilisation confirmée par les faits",
+    "assainissement": "Tout-à-l'égout (collectif)",
+    "prix_secteur_bati_m2": 2667,
+    "zone_parts": null,
+    "terrain_zone_eur_m2": 482,
+    "emprise_ces_pct": 60.0,
+    "emprise_ces_source": "Art. Ui.9 · p.56 (PLU, calibrage validé)",
+    "bande": "A",
+    "signal_niveau": "faible"
+   }
+  ]
+ }
+}

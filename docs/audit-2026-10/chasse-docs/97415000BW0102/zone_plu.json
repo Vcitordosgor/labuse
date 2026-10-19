@@ -1,0 +1,230 @@
+{
+ "_status": 200,
+ "data": {
+  "mode": "pied",
+  "minutes": 15,
+  "hors_trafic": true,
+  "renvoi": "Les ventes (DVF), les transports et les réseaux restent dans leurs tiroirs Marché et Réseaux — rien n'est dupliqué.",
+  "note": "INSEE Filosofi 2021 (carreaux 200 m) · BPE 2025 · isochrones IGN — temps hors trafic.",
+  "disponible": true,
+  "statut": "ign",
+  "geom": {
+   "coordinates": [
+    [
+     [
+      55.29897,
+      -21.011996
+     ],
+     [
+      55.298215,
+      -21.013391
+     ],
+     [
+      55.298024,
+      -21.0162
+     ],
+     [
+      55.296874,
+      -21.016146
+     ],
+     [
+      55.296867,
+      -21.015043
+     ],
+     [
+      55.297606,
+      -21.014782
+     ],
+     [
+      55.297788,
+      -21.014146
+     ],
+     [
+      55.297631,
+      -21.013146
+     ],
+     [
+      55.29697,
+      -21.012667
+     ],
+     [
+      55.295309,
+      -21.013485
+     ],
+     [
+      55.29497,
+      -21.015246
+     ],
+     [
+      55.294588,
+      -21.014528
+     ],
+     [
+      55.29397,
+      -21.014337
+     ],
+     [
+      55.291051,
+      -21.014227
+     ],
+     [
+      55.290559,
+      -21.015146
+     ],
+     [
+      55.291508,
+      -21.016608
+     ],
+     [
+      55.292761,
+      -21.017355
+     ],
+     [
+      55.292758,
+      -21.018358
+     ],
+     [
+      55.293538,
+      -21.019578
+     ],
+     [
+      55.295131,
+      -21.019985
+     ],
+     [
+      55.294647,
+      -21.022146
+     ],
+     [
+      55.296096,
+      -21.023146
+     ],
+     [
+      55.295803,
+      -21.024313
+     ],
+     [
+      55.296145,
+      -21.024971
+     ],
+     [
+      55.29697,
+      -21.024907
+     ],
+     [
+      55.297757,
+      -21.023933
+     ],
+     [
+      55.299416,
+      -21.023592
+     ],
+     [
+      55.29997,
+      -21.022026
+     ],
+     [
+      55.301088,
+      -21.022028
+     ],
+     [
+      55.30297,
+      -21.023604
+     ],
+     [
+      55.303938,
+      -21.023114
+     ],
+     [
+      55.304044,
+      -21.021072
+     ],
+     [
+      55.303121,
+      -21.019146
+     ],
+     [
+      55.303439,
+      -21.017677
+     ],
+     [
+      55.30297,
+      -21.017083
+     ],
+     [
+      55.30197,
+      -21.017221
+     ],
+     [
+      55.301587,
+      -21.016146
+     ],
+     [
+      55.302643,
+      -21.015146
+     ],
+     [
+      55.30197,
+      -21.013885
+     ],
+     [
+      55.300778,
+      -21.014338
+     ],
+     [
+      55.300476,
+      -21.01264
+     ],
+     [
+      55.29897,
+      -21.011996
+     ]
+    ]
+   ],
+   "type": "Polygon"
+  },
+  "population": {
+   "inhabitee": false,
+   "iris": {
+    "n_iris": 1,
+    "vacance_pct": 12.0,
+    "part_bati_avant_1990_pct": 39.3,
+    "source": "INSEE RP2022 par IRIS (quartiers intersectés)"
+   },
+   "habitants": 1455,
+   "menages": 513,
+   "revenu_median_eur": 20237,
+   "revenu_estime": true,
+   "revenu_impute_n": 6,
+   "revenu_carreaux_n": 21,
+   "revenu_majorite_imputee": false,
+   "pct_moins_25": 34,
+   "taux_pauvrete_pct": 38,
+   "n_carreaux": 21,
+   "millesime": "Filosofi 2021 (INSEE, carreaux 200 m)",
+   "revenu_source": "carreau Filosofi au centroïde (source unique de la fiche)"
+  },
+  "equipements": [
+   {
+    "domaine": "Services aux particuliers",
+    "nom": "WOODWORK BROS",
+    "temps_min": 4
+   },
+   {
+    "domaine": "Commerces",
+    "nom": "SDL BOUTIK",
+    "temps_min": 10
+   },
+   {
+    "domaine": "Santé et action sociale",
+    "nom": "CABINET ABAUZIT MYLENE",
+    "temps_min": 10
+   },
+   {
+    "domaine": "Sports, loisirs et culture",
+    "nom": "STADE JEAN LUC NATIO",
+    "temps_min": 15
+   }
+  ]
+ }
+}

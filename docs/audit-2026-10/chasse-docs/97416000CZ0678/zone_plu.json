@@ -1,0 +1,220 @@
+{
+ "_status": 200,
+ "data": {
+  "mode": "pied",
+  "minutes": 15,
+  "hors_trafic": true,
+  "renvoi": "Les ventes (DVF), les transports et les réseaux restent dans leurs tiroirs Marché et Réseaux — rien n'est dupliqué.",
+  "note": "INSEE Filosofi 2021 (carreaux 200 m) · BPE 2025 · isochrones IGN — temps hors trafic.",
+  "disponible": true,
+  "statut": "ign",
+  "geom": {
+   "coordinates": [
+    [
+     [
+      55.491206,
+      -21.301668
+     ],
+     [
+      55.489645,
+      -21.302395
+     ],
+     [
+      55.489313,
+      -21.304063
+     ],
+     [
+      55.488485,
+      -21.304235
+     ],
+     [
+      55.488285,
+      -21.305034
+     ],
+     [
+      55.487416,
+      -21.305165
+     ],
+     [
+      55.487258,
+      -21.307008
+     ],
+     [
+      55.485355,
+      -21.307105
+     ],
+     [
+      55.485206,
+      -21.308044
+     ],
+     [
+      55.482535,
+      -21.308285
+     ],
+     [
+      55.482313,
+      -21.309063
+     ],
+     [
+      55.481581,
+      -21.309331
+     ],
+     [
+      55.481362,
+      -21.310112
+     ],
+     [
+      55.480742,
+      -21.310492
+     ],
+     [
+      55.480449,
+      -21.311956
+     ],
+     [
+      55.481206,
+      -21.312299
+     ],
+     [
+      55.483206,
+      -21.311559
+     ],
+     [
+      55.48339,
+      -21.312772
+     ],
+     [
+      55.484318,
+      -21.312956
+     ],
+     [
+      55.483625,
+      -21.313375
+     ],
+     [
+      55.483441,
+      -21.315191
+     ],
+     [
+      55.482742,
+      -21.315956
+     ],
+     [
+      55.483206,
+      -21.316652
+     ],
+     [
+      55.483415,
+      -21.316165
+     ],
+     [
+      55.484304,
+      -21.316054
+     ],
+     [
+      55.485084,
+      -21.314834
+     ],
+     [
+      55.485931,
+      -21.314681
+     ],
+     [
+      55.486136,
+      -21.312886
+     ],
+     [
+      55.48697,
+      -21.31272
+     ],
+     [
+      55.487136,
+      -21.311885
+     ],
+     [
+      55.488024,
+      -21.311774
+     ],
+     [
+      55.48815,
+      -21.310899
+     ],
+     [
+      55.489053,
+      -21.310803
+     ],
+     [
+      55.489153,
+      -21.309903
+     ],
+     [
+      55.49003,
+      -21.30978
+     ],
+     [
+      55.490139,
+      -21.308889
+     ],
+     [
+      55.490982,
+      -21.308732
+     ],
+     [
+      55.491116,
+      -21.307866
+     ],
+     [
+      55.492206,
+      -21.307737
+     ],
+     [
+      55.492525,
+      -21.307275
+     ],
+     [
+      55.493482,
+      -21.30468
+     ],
+     [
+      55.491206,
+      -21.301668
+     ]
+    ]
+   ],
+   "type": "Polygon"
+  },
+  "population": {
+   "inhabitee": false,
+   "iris": {
+    "n_iris": 3,
+    "vacance_pct": 8.2,
+    "part_bati_avant_1990_pct": 29.8,
+    "source": "INSEE RP2022 par IRIS (quartiers intersectés)"
+   },
+   "habitants": 444,
+   "menages": 169,
+   "revenu_median_eur": null,
+   "revenu_estime": true,
+   "revenu_impute_n": 5,
+   "revenu_carreaux_n": 9,
+   "revenu_majorite_imputee": true,
+   "pct_moins_25": 32,
+   "taux_pauvrete_pct": 25,
+   "n_carreaux": 9,
+   "millesime": "Filosofi 2021 (INSEE, carreaux 200 m)",
+   "revenu_source": "carreau Filosofi au centroïde (source unique de la fiche)"
+  },
+  "equipements": [
+   {
+    "domaine": "Santé et action sociale",
+    "nom": "CABINET DU DR RAPHAELLE PELC",
+    "temps_min": 15
+   },
+   {
+    "domaine": "Services aux particuliers",
+    "nom": "LA CASA D'EMMA",
+    "temps_min": 15
+   }
+  ]
+ }
+}

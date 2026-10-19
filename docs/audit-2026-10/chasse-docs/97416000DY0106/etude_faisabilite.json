@@ -1,0 +1,139 @@
+{
+ "_status": 200,
+ "data": {
+  "moteur": {
+   "livrable": "IMPLANTATION-2",
+   "version_conventions": "implantation-conventions-1",
+   "etiquette": "Estimé",
+   "crs_dessin": "EPSG:2975",
+   "crs_carte": "EPSG:4326"
+  },
+  "entrees": {
+   "idus": [
+    "97416000DY0106"
+   ],
+   "commune": "Saint-Pierre",
+   "insee": "97416",
+   "zone": "N",
+   "type_projet": "collectif",
+   "objectif": "equilibre",
+   "programme_mode": "propose",
+   "stationnement": "aerien",
+   "terrain": "libere"
+  },
+  "regles": {
+   "zone": "N",
+   "insee": "97416",
+   "lignes": [
+    {
+     "nom": "recul sur voie",
+     "valeur": null,
+     "unite": "m",
+     "validee": false,
+     "article": null,
+     "page_pdf": null,
+     "citation": null
+    },
+    {
+     "nom": "recul sur limites séparatives",
+     "valeur": null,
+     "unite": "m",
+     "validee": false,
+     "article": null,
+     "page_pdf": null,
+     "citation": null
+    },
+    {
+     "nom": "emprise au sol (CES)",
+     "valeur": null,
+     "unite": "%",
+     "validee": false,
+     "article": null,
+     "page_pdf": null,
+     "citation": null
+    },
+    {
+     "nom": "hauteur à l'égout",
+     "valeur": null,
+     "unite": "m",
+     "validee": false,
+     "article": null,
+     "page_pdf": null,
+     "citation": null
+    },
+    {
+     "nom": "hauteur au faîtage",
+     "valeur": null,
+     "unite": "m",
+     "validee": false,
+     "article": null,
+     "page_pdf": null,
+     "citation": null
+    },
+    {
+     "nom": "pleine terre (perméabilité)",
+     "valeur": null,
+     "unite": "%",
+     "validee": false,
+     "article": null,
+     "page_pdf": null,
+     "citation": null
+    }
+   ]
+  },
+  "terrain": {
+   "contenance_totale_m2": 5391.0,
+   "aire_dessin_m2": 5064.1,
+   "zone_implantation_m2": 342.2,
+   "has_voie": true,
+   "note_limites": "arêtes non qualifiées (ni voie ni voisin cadastré ≤ 0,5 m), traitées en recul séparatif : arête sans voie ni voisin cadastré (ravine, littoral ou domaine public non routier)",
+   "contraintes": {
+    "ppr": 2,
+    "emplacement_reserve": 0,
+    "ebc": 0,
+    "sup": 6,
+    "servitude": 0,
+    "ppr_rouge": 1,
+    "ppr_bleue": 0
+   },
+   "ppr_rouge_m2": 4701.6,
+   "ppr_bleue_m2": 0.0,
+   "pente_lidar": {
+    "disponible": true,
+    "source": "RGE ALTI 5 m (IGN)",
+    "denivele_m": 23.2,
+    "pente_moyenne_pct": 10.4,
+    "pente_max_pct": 83.9
+   },
+   "parcelles": [
+    {
+     "idu": "97416000DY0106",
+     "numero": "106",
+     "contenance_m2": 5391.0,
+     "aire_dessin_m2": 5064.1
+    }
+   ]
+  },
+  "hypotheses": {
+   "profondeur_m": 13.0,
+   "coef_plancher_habitable": 0.8,
+   "surfaces": {
+    "T2": 50.0,
+    "T3": 65.0,
+    "T4": 80.0
+   },
+   "largeur_coursive_m": 1.4,
+   "hauteur_etage_m": 3.0,
+   "place_m": [
+    2.5,
+    5.0
+   ],
+   "allee_largeur_m": 5.0,
+   "etiquette": "Estimé"
+  },
+  "programme_saisi": null,
+  "statut_global": "simulation impossible",
+  "message": "simulation impossible : aucune implantation ne passe tous les contrôles durs sur cette assiette (zone trop étroite, reculs, ou stationnement aérien impossible).",
+  "scenarios": []
+ }
+}

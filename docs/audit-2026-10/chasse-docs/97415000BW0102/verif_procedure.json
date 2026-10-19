@@ -1,0 +1,13 @@
+{
+ "_status": 200,
+ "data": {
+  "idu": "97415000BW0102",
+  "commune": "Saint-Paul",
+  "insee": "97415",
+  "tier_servi": "sans_signal",
+  "consulte_le": "2026-10-19",
+  "procedure_en_cours": false,
+  "confiance": "DEDUIT",
+  "message": "Aucune procédure PLU en cours servie au 2026-10-19 — procédure Sudocuh sans suite connue (clôture probable, non servie). Dernier constat le 2026-08-06."
+ }
+}

@@ -1,0 +1,928 @@
+{
+ "_status": 200,
+ "data": {
+  "version": 1,
+  "tva_legales": {
+   "dom_standard": 0.085,
+   "logement_social": 0.021,
+   "exonere": 0.0
+  },
+  "assiettes": {
+   "terrain": "Surface du terrain (m²) — cadastre, ou union des géométries d'un assemblage",
+   "surface_taxable": "Surface taxable (m²)",
+   "suv": "Surface utile vendable (m²) — somme des produits",
+   "lots": "Nombre de lots — somme des produits",
+   "prix_terrain": "Prix d'achat du terrain HT (poste « achat »)",
+   "pret": "Montant du prêt (saisie)",
+   "valeur_ajoutee": "Valeur ajoutée (saisie) — assiette CVAE",
+   "ca_ttc": "Chiffre d'affaires TTC total",
+   "ca_produit_1": "CA TTC du produit 1",
+   "ca_produit_2": "CA TTC du produit 2",
+   "construction": "Coût de construction HT (poste « constr »)",
+   "demi_construction_ttc": "½ du coût de construction TTC",
+   "total2_ttc": "Total du bloc Construction & honoraires, TTC",
+   "total2_ht": "Total du bloc Construction & honoraires, HT",
+   "total2_ttc_sol_imprevus": "Total (2) TTC + étude de sol TTC − imprévus TTC (assiette assurance D.O, modèle promotrice)",
+   "total2_ht_sol_imprevus": "Total (2) HT + étude de sol HT − imprévus HT (assiette assurance TRC, modèle promotrice)",
+   "loyers_annuels": "Loyer €/m² × SUV",
+   "forfait": "Montant forfaitaire (pas d'assiette)"
+  },
+  "produit_modele": {
+   "lignes_modele": [
+    112,
+    113
+   ],
+   "champs": [
+    {
+     "id": "lots",
+     "libelle": "Lots",
+     "unite": "lots"
+    },
+    {
+     "id": "suv",
+     "libelle": "SUV",
+     "unite": "m²"
+    },
+    {
+     "id": "prix_ttc_m2_suv",
+     "libelle": "Prix TTC /m² SUV yc pkg",
+     "unite": "€"
+    },
+    {
+     "id": "tva",
+     "libelle": "TVA de vente",
+     "unite": "%",
+     "tva": "selon_produit"
+    }
+   ],
+   "repere": "dvf_neuf"
+  },
+  "programme": [
+   {
+    "id": "terrain",
+    "libelle": "Terrain",
+    "unite": "m²",
+    "sourcee": "cadastre",
+    "repere": null
+   },
+   {
+    "id": "zonage",
+    "libelle": "Zonage au PLU",
+    "type": "texte",
+    "sourcee": "plu",
+    "repere": null
+   },
+   {
+    "id": "shob",
+    "libelle": "SHOB",
+    "unite": "m²",
+    "facultatif": true,
+    "repere": null
+   },
+   {
+    "id": "sdp",
+    "libelle": "Surface de plancher",
+    "unite": "m²",
+    "repere": "faisabilite"
+   },
+   {
+    "id": "stax",
+    "libelle": "Surface taxable",
+    "unite": "m²",
+    "repere": "faisabilite"
+   },
+   {
+    "id": "pkg_aer",
+    "libelle": "Parkings aériens",
+    "unite": "pl.",
+    "facultatif": true,
+    "repere": null
+   },
+   {
+    "id": "pkg_cou",
+    "libelle": "Parkings couverts",
+    "unite": "pl.",
+    "repere": "faisabilite"
+   },
+   {
+    "id": "loyer",
+    "libelle": "Loyer au m² de SUV yc pkg",
+    "unite": "€/m²",
+    "facultatif": true,
+    "repere": null
+   }
+  ],
+  "calendrier": [
+   {
+    "id": "compromis",
+    "libelle": "Compromis",
+    "defaut": 0
+   },
+   {
+    "id": "depot_pc",
+    "libelle": "Dépôt PC",
+    "defaut": 2
+   },
+   {
+    "id": "obtention_pc",
+    "libelle": "Obtention PC",
+    "defaut": 6,
+    "repere": "sitadel"
+   },
+   {
+    "id": "purge_pc",
+    "libelle": "Purge PC",
+    "defaut": 9
+   },
+   {
+    "id": "reiteration",
+    "libelle": "Réitération authentique",
+    "defaut": 18
+   },
+   {
+    "id": "droc",
+    "libelle": "DROC",
+    "defaut": 18
+   },
+   {
+    "id": "dat",
+    "libelle": "DAT",
+    "defaut": 36
+   },
+   {
+    "id": "reception",
+    "libelle": "Réception travaux",
+    "defaut": 36
+   },
+   {
+    "id": "livraison",
+    "libelle": "Livraison",
+    "defaut": 36
+   }
+  ],
+  "blocs": [
+   {
+    "id": "T",
+    "titre": "Charge foncière",
+    "postes": [
+     {
+      "id": "achat",
+      "libelle": "Achat terrain privé",
+      "sub": null,
+      "note": "TVA selon le vendeur : à saisir",
+      "mode": "unit",
+      "base": "ht",
+      "assiette": "terrain",
+      "unite": "€/m²",
+      "tva": "a_saisir",
+      "tva_sourcee": false,
+      "besoin_assiette": false,
+      "alea": false,
+      "repere": {
+       "kind": "registre",
+       "registre_id": "dvf_terrain_nu"
+      }
+     },
+     {
+      "id": "apport",
+      "libelle": "Commission apport",
+      "sub": null,
+      "note": "Commission toutes taxes (3 % du prix), ramenée HT",
+      "mode": "pct",
+      "base": "ttc",
+      "assiette": "prix_terrain",
+      "unite": null,
+      "tva": 0.085,
+      "tva_sourcee": true,
+      "besoin_assiette": false,
+      "alea": false,
+      "repere": null
+     },
+     {
+      "id": "notT",
+      "libelle": "Notaire terrain",
+      "sub": null,
+      "note": null,
+      "mode": "pct",
+      "base": "ht",
+      "assiette": "prix_terrain",
+      "unite": null,
+      "tva": "a_saisir",
+      "tva_sourcee": false,
+      "besoin_assiette": false,
+      "alea": false,
+      "repere": null
+     },
+     {
+      "id": "notP",
+      "libelle": "Notaire prêt",
+      "sub": null,
+      "note": null,
+      "mode": "pct",
+      "base": "ht",
+      "assiette": "pret",
+      "unite": null,
+      "tva": "a_saisir",
+      "tva_sourcee": false,
+      "besoin_assiette": true,
+      "alea": false,
+      "repere": null
+     },
+     {
+      "id": "txLog",
+      "libelle": "Taxe logements",
+      "sub": null,
+      "note": null,
+      "mode": "unit",
+      "base": "ht",
+      "assiette": "surface_taxable",
+      "unite": "€/m²",
+      "tva": 0.0,
+      "tva_sourcee": true,
+      "besoin_assiette": false,
+      "alea": false,
+      "repere": {
+       "kind": "registre",
+       "registre_id": "outil_taxe"
+      }
+     },
+     {
+      "id": "txPkg",
+      "libelle": "TA parking extérieurs + archéo",
+      "sub": null,
+      "note": null,
+      "mode": "unit",
+      "base": "ht",
+      "assiette": "surface_taxable",
+      "unite": "€/m²",
+      "tva": 0.0,
+      "tva_sourcee": true,
+      "besoin_assiette": false,
+      "alea": false,
+      "repere": null
+     },
+     {
+      "id": "tre",
+      "libelle": "TRE",
+      "sub": null,
+      "note": null,
+      "mode": "unit",
+      "base": "ht",
+      "assiette": "surface_taxable",
+      "unite": "€/m²",
+      "tva": 0.0,
+      "tva_sourcee": true,
+      "besoin_assiette": false,
+      "alea": false,
+      "repere": null
+     },
+     {
+      "id": "archeo",
+      "libelle": "Taxe d'archéologie préventive",
+      "sub": null,
+      "note": null,
+      "mode": "unit",
+      "base": "ht",
+      "assiette": "surface_taxable",
+      "unite": "€/m²",
+      "tva": 0.0,
+      "tva_sourcee": true,
+      "besoin_assiette": false,
+      "alea": false,
+      "repere": {
+       "kind": "registre",
+       "registre_id": "redevance_archeologie"
+      }
+     },
+     {
+      "id": "topo",
+      "libelle": "Relevé topo",
+      "sub": null,
+      "note": null,
+      "mode": "forfait",
+      "base": "ht",
+      "assiette": null,
+      "unite": null,
+      "tva": 0.085,
+      "tva_sourcee": true,
+      "besoin_assiette": false,
+      "alea": false,
+      "repere": null
+     },
+     {
+      "id": "born",
+      "libelle": "Géomètre bornage",
+      "sub": null,
+      "note": null,
+      "mode": "forfait",
+      "base": "ht",
+      "assiette": null,
+      "unite": null,
+      "tva": 0.085,
+      "tva_sourcee": true,
+      "besoin_assiette": false,
+      "alea": false,
+      "repere": null
+     },
+     {
+      "id": "sol",
+      "libelle": "Étude de sol",
+      "sub": null,
+      "note": null,
+      "mode": "forfait",
+      "base": "ht",
+      "assiette": null,
+      "unite": null,
+      "tva": 0.085,
+      "tva_sourcee": true,
+      "besoin_assiette": false,
+      "alea": false,
+      "repere": null
+     },
+     {
+      "id": "hydro",
+      "libelle": "Étude hydraulique",
+      "sub": null,
+      "note": "PPR inondation sur la parcelle",
+      "mode": "forfait",
+      "base": "ht",
+      "assiette": null,
+      "unite": null,
+      "tva": 0.085,
+      "tva_sourcee": true,
+      "besoin_assiette": false,
+      "alea": false,
+      "repere": null
+     },
+     {
+      "id": "affPC",
+      "libelle": "Constat affichage PC",
+      "sub": null,
+      "note": null,
+      "mode": "forfait",
+      "base": "ht",
+      "assiette": null,
+      "unite": null,
+      "tva": 0.085,
+      "tva_sourcee": true,
+      "besoin_assiette": false,
+      "alea": false,
+      "repere": null
+     },
+     {
+      "id": "branch",
+      "libelle": "Branchements",
+      "sub": null,
+      "note": null,
+      "mode": "unit",
+      "base": "ht",
+      "assiette": "lots",
+      "unite": "€/lot",
+      "tva": 0.085,
+      "tva_sourcee": true,
+      "besoin_assiette": false,
+      "alea": false,
+      "repere": null
+     },
+     {
+      "id": "edf",
+      "libelle": "Transfo EDF",
+      "sub": null,
+      "note": null,
+      "mode": "forfait",
+      "base": "ht",
+      "assiette": null,
+      "unite": null,
+      "tva": 0.085,
+      "tva_sourcee": true,
+      "besoin_assiette": false,
+      "alea": false,
+      "repere": null
+     },
+     {
+      "id": "amiante",
+      "libelle": "Diag amiante",
+      "sub": null,
+      "note": "Bâti existant avant 1997",
+      "mode": "forfait",
+      "base": "ht",
+      "assiette": null,
+      "unite": null,
+      "tva": 0.085,
+      "tva_sourcee": true,
+      "besoin_assiette": false,
+      "alea": false,
+      "repere": null
+     },
+     {
+      "id": "demol",
+      "libelle": "Défrichage · préparation terrain",
+      "sub": null,
+      "note": "Démolition et désamiantage",
+      "mode": "forfait",
+      "base": "ht",
+      "assiette": null,
+      "unite": null,
+      "tva": 0.085,
+      "tva_sourcee": true,
+      "besoin_assiette": false,
+      "alea": false,
+      "repere": null
+     },
+     {
+      "id": "aleaT",
+      "libelle": "Aléas",
+      "sub": null,
+      "note": null,
+      "mode": "pct",
+      "base": "ht",
+      "assiette": "ca_ttc",
+      "unite": null,
+      "tva": 0.085,
+      "tva_sourcee": true,
+      "besoin_assiette": false,
+      "alea": true,
+      "repere": null
+     }
+    ]
+   },
+   {
+    "id": "C",
+    "titre": "Construction et honoraires",
+    "postes": [
+     {
+      "id": "constr",
+      "libelle": "Construction yc VRD",
+      "sub": null,
+      "note": null,
+      "mode": "unit",
+      "base": "ht",
+      "assiette": "suv",
+      "unite": "€/m²",
+      "tva": 0.085,
+      "tva_sourcee": true,
+      "besoin_assiette": false,
+      "alea": false,
+      "repere": {
+       "kind": "registre",
+       "registre_id": "cout_construction_ref"
+      }
+     },
+     {
+      "id": "deco",
+      "libelle": "Déco et aménagement intérieur",
+      "sub": null,
+      "note": null,
+      "mode": "forfait",
+      "base": "ht",
+      "assiette": null,
+      "unite": null,
+      "tva": 0.085,
+      "tva_sourcee": true,
+      "besoin_assiette": false,
+      "alea": false,
+      "repere": null
+     },
+     {
+      "id": "archi",
+      "libelle": "Hono. architecte conception",
+      "sub": null,
+      "note": null,
+      "mode": "pct",
+      "base": "ht",
+      "assiette": "construction",
+      "unite": null,
+      "tva": 0.085,
+      "tva_sourcee": true,
+      "besoin_assiette": false,
+      "alea": false,
+      "repere": null
+     },
+     {
+      "id": "pays",
+      "libelle": "Honos paysagiste hydrau",
+      "sub": null,
+      "note": null,
+      "mode": "pct",
+      "base": "ht",
+      "assiette": "construction",
+      "unite": null,
+      "tva": 0.085,
+      "tva_sourcee": true,
+      "besoin_assiette": false,
+      "alea": false,
+      "repere": null
+     },
+     {
+      "id": "moe",
+      "libelle": "Hono MOE + BET",
+      "sub": null,
+      "note": null,
+      "mode": "pct",
+      "base": "ht",
+      "assiette": "construction",
+      "unite": null,
+      "tva": 0.085,
+      "tva_sourcee": true,
+      "besoin_assiette": false,
+      "alea": false,
+      "repere": null
+     },
+     {
+      "id": "opc",
+      "libelle": "Honos OPC",
+      "sub": null,
+      "note": null,
+      "mode": "pct",
+      "base": "ht",
+      "assiette": "construction",
+      "unite": null,
+      "tva": 0.085,
+      "tva_sourcee": true,
+      "besoin_assiette": false,
+      "alea": false,
+      "repere": null
+     },
+     {
+      "id": "labels",
+      "libelle": "Labels GIEP et NF",
+      "sub": null,
+      "note": null,
+      "mode": "forfait",
+      "base": "ht",
+      "assiette": null,
+      "unite": null,
+      "tva": 0.085,
+      "tva_sourcee": true,
+      "besoin_assiette": false,
+      "alea": false,
+      "repere": null
+     },
+     {
+      "id": "sps",
+      "libelle": "SPS",
+      "sub": null,
+      "note": null,
+      "mode": "pct",
+      "base": "ht",
+      "assiette": "construction",
+      "unite": null,
+      "tva": 0.085,
+      "tva_sourcee": true,
+      "besoin_assiette": false,
+      "alea": false,
+      "repere": null
+     },
+     {
+      "id": "ctrl",
+      "libelle": "Bureau de contrôle",
+      "sub": null,
+      "note": null,
+      "mode": "pct",
+      "base": "ht",
+      "assiette": "construction",
+      "unite": null,
+      "tva": 0.085,
+      "tva_sourcee": true,
+      "besoin_assiette": false,
+      "alea": false,
+      "repere": null
+     },
+     {
+      "id": "aleaC",
+      "libelle": "Imprévus (aléas techniques)",
+      "sub": null,
+      "note": null,
+      "mode": "pct",
+      "base": "ht",
+      "assiette": "construction",
+      "unite": null,
+      "tva": 0.085,
+      "tva_sourcee": true,
+      "besoin_assiette": false,
+      "alea": true,
+      "repere": null
+     }
+    ]
+   },
+   {
+    "id": "G",
+    "titre": "Gestion",
+    "postes": [
+     {
+      "id": "pub",
+      "libelle": "Publicité commerciale",
+      "sub": null,
+      "note": null,
+      "mode": "pct",
+      "base": "ht",
+      "assiette": "ca_ttc",
+      "unite": null,
+      "tva": 0.085,
+      "tva_sourcee": true,
+      "besoin_assiette": false,
+      "alea": false,
+      "repere": null
+     },
+     {
+      "id": "jur",
+      "libelle": "Juridique / divers",
+      "sub": null,
+      "note": null,
+      "mode": "pct",
+      "base": "ht",
+      "assiette": "ca_ttc",
+      "unite": null,
+      "tva": 0.085,
+      "tva_sourcee": true,
+      "besoin_assiette": false,
+      "alea": false,
+      "repere": null
+     },
+     {
+      "id": "cvae",
+      "libelle": "CVAE (ex taxe pro)",
+      "sub": null,
+      "note": null,
+      "mode": "pct",
+      "base": "ht",
+      "assiette": "valeur_ajoutee",
+      "unite": null,
+      "tva": 0.0,
+      "tva_sourcee": true,
+      "besoin_assiette": true,
+      "alea": false,
+      "repere": null
+     },
+     {
+      "id": "mod",
+      "libelle": "M.O.D. AMO",
+      "sub": null,
+      "note": null,
+      "mode": "pct",
+      "base": "ht",
+      "assiette": "ca_ttc",
+      "unite": null,
+      "tva": 0.085,
+      "tva_sourcee": true,
+      "besoin_assiette": false,
+      "alea": false,
+      "repere": null
+     },
+     {
+      "id": "gfa",
+      "libelle": "Garantie achèvement",
+      "sub": null,
+      "note": null,
+      "mode": "pct",
+      "base": "ht",
+      "assiette": "ca_ttc",
+      "unite": null,
+      "tva": 0.0,
+      "tva_sourcee": true,
+      "besoin_assiette": false,
+      "alea": false,
+      "repere": null
+     },
+     {
+      "id": "gp",
+      "libelle": "Garantie de paiement",
+      "sub": null,
+      "note": null,
+      "mode": "pct",
+      "base": "ht",
+      "assiette": "demi_construction_ttc",
+      "unite": null,
+      "tva": 0.0,
+      "tva_sourcee": true,
+      "besoin_assiette": false,
+      "alea": false,
+      "repere": null
+     },
+     {
+      "id": "ff",
+      "libelle": "Frais financiers",
+      "sub": null,
+      "note": null,
+      "mode": "pct",
+      "base": "ht",
+      "assiette": "ca_ttc",
+      "unite": null,
+      "tva": 0.0,
+      "tva_sourcee": true,
+      "besoin_assiette": false,
+      "alea": false,
+      "repere": null
+     },
+     {
+      "id": "do",
+      "libelle": "Assurances D.O / C.N.R",
+      "sub": null,
+      "note": null,
+      "mode": "pct",
+      "base": "ht",
+      "assiette": "total2_ttc_sol_imprevus",
+      "unite": null,
+      "tva": 0.0,
+      "tva_sourcee": true,
+      "besoin_assiette": false,
+      "alea": false,
+      "repere": null
+     },
+     {
+      "id": "trc",
+      "libelle": "Assurance TRC + GAREAT",
+      "sub": null,
+      "note": null,
+      "mode": "pct",
+      "base": "ht",
+      "assiette": "total2_ht_sol_imprevus",
+      "unite": null,
+      "tva": 0.0,
+      "tva_sourcee": true,
+      "besoin_assiette": false,
+      "alea": false,
+      "repere": null
+     },
+     {
+      "id": "aleaG",
+      "libelle": "Aléas",
+      "sub": null,
+      "note": null,
+      "mode": "pct",
+      "base": "ht",
+      "assiette": "ca_ttc",
+      "unite": null,
+      "tva": 0.085,
+      "tva_sourcee": true,
+      "besoin_assiette": false,
+      "alea": true,
+      "repere": null
+     }
+    ]
+   },
+   {
+    "id": "V",
+    "titre": "Commercialisation",
+    "postes": [
+     {
+      "id": "com1",
+      "libelle": "Commercialisation logements",
+      "sub": "Produit 1",
+      "note": null,
+      "mode": "pct",
+      "base": "ht",
+      "assiette": "ca_produit_1",
+      "unite": null,
+      "tva": 0.085,
+      "tva_sourcee": true,
+      "besoin_assiette": false,
+      "alea": false,
+      "repere": null
+     },
+     {
+      "id": "com2",
+      "libelle": "Commercialisation logements",
+      "sub": "Produit 2",
+      "note": null,
+      "mode": "pct",
+      "base": "ht",
+      "assiette": "ca_produit_2",
+      "unite": null,
+      "tva": 0.085,
+      "tva_sourcee": true,
+      "besoin_assiette": false,
+      "alea": false,
+      "repere": null
+     },
+     {
+      "id": "acte",
+      "libelle": "Frais d'acte et de prêt",
+      "sub": "Pack",
+      "note": null,
+      "mode": "pct",
+      "base": "ht",
+      "assiette": "ca_produit_1",
+      "unite": null,
+      "tva": 0.085,
+      "tva_sourcee": true,
+      "besoin_assiette": false,
+      "alea": false,
+      "repere": null
+     },
+     {
+      "id": "pack",
+      "libelle": "Frais package (int int)",
+      "sub": "Pack",
+      "note": null,
+      "mode": "pct",
+      "base": "ht",
+      "assiette": "ca_produit_1",
+      "unite": null,
+      "tva": 0.085,
+      "tva_sourcee": true,
+      "besoin_assiette": false,
+      "alea": false,
+      "repere": null
+     },
+     {
+      "id": "proc",
+      "libelle": "Frais de proc et dossier bancaire",
+      "sub": "Pack",
+      "note": null,
+      "mode": "unit",
+      "base": "ht",
+      "assiette": "lots",
+      "unite": "€/lot",
+      "tva": 0.085,
+      "tva_sourcee": true,
+      "besoin_assiette": false,
+      "alea": false,
+      "repere": null
+     },
+     {
+      "id": "gpl",
+      "libelle": "Garantie premier locataire",
+      "sub": "Pack",
+      "note": null,
+      "mode": "pct",
+      "base": "ht",
+      "assiette": "loyers_annuels",
+      "unite": null,
+      "tva": 0.085,
+      "tva_sourcee": true,
+      "besoin_assiette": false,
+      "alea": false,
+      "repere": null
+     },
+     {
+      "id": "aleaV",
+      "libelle": "Aléas",
+      "sub": null,
+      "note": null,
+      "mode": "pct",
+      "base": "ht",
+      "assiette": "ca_ttc",
+      "unite": null,
+      "tva": 0.085,
+      "tva_sourcee": true,
+      "besoin_assiette": false,
+      "alea": true,
+      "repere": null
+     }
+    ]
+   }
+  ],
+  "sourcee": {
+   "idu": "97411000AV0110",
+   "parcel_id": 330830,
+   "commune": "Saint-Denis",
+   "terrain": 690,
+   "zonage": "Uh 57 % · N 43 %",
+   "zonage_parts": [
+    {
+     "zone": "Uh",
+     "fam": "U",
+     "pct": 57.4
+    },
+    {
+     "zone": "N",
+     "fam": "N",
+     "pct": 42.6
+    }
+   ],
+   "non_constructible_pct": 42.6,
+   "constructible_m2": 396,
+   "prix_achat_dvf": null
+  },
+  "reperes_publics": {
+   "dvf_neuf": {
+    "valeur": 4275.0,
+    "n": 77,
+    "label": "Estimé — médiane locale, 77 ventes",
+    "source": "DVF (ventes de logements neufs)"
+   },
+   "outil_taxe": {
+    "valeur": 26.76,
+    "label": "Outil Taxe : 26.76 €/m²",
+    "source": "taxe d'aménagement, part communale 3.0 % × 892 €/m²"
+   },
+   "redevance_archeologie": {
+    "valeur": 3.57,
+    "label": "Redevance : 3.57 €/m²",
+    "source": "redevance d'archéologie préventive — 0,40 % de la valeur forfaitaire"
+   },
+   "sitadel": {
+    "valeur": 10.0,
+    "label": "Sitadel : 10 mois dépôt → PC",
+    "source": "Sitadel — délai médian dépôt→autorisation (PC) de la commune"
+   },
+   "cout_construction_ref": {
+    "valeur": 2550.0,
+    "label": "Coût de référence 2550 €/m²",
+    "source": "calibrage de construction LABUSE"
+   }
+  },
+  "ratios_compte": {}
+ }
+}

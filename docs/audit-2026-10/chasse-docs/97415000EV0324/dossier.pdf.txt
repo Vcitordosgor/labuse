@@ -1,0 +1,652 @@
+D O S S I E R PA R C E L L E
+
+97415000EV0324
+1 Route du Trou d'eau, 97434 Saint-Paul
+Saint-Paul
+
+
+DP-20261019-0324                19/10/2026           41 009 m²
+n° de rapport                   généré le            surface (plan)
+
+
+
+   41 009 m²                                     AU2c                                         1,6°
+   SURFACE                                       ZONE                                         PENTE
+
+
+
+
+   plat                                          4 relevés                                    15 333 m²
+   EXPOSITION                                    RISQUES                                      SDP RESTANTE (BÂTI CONSERVÉ)
+
+
+
+
+1. Identité                                                             7. Fiscalité et dispositifs
+2. Terrain                                                              8. Marché
+3. Bâti                                                                 9. Quartier
+4. Urbanisme                                                            10. Potentiel
+5. Risques et environnement                                             11. Simulation
+6. Réseaux et desserte                                                  12. Limites et sources
+
+ sourcé      lu dans la source · ƒ dérivé calculé · estimé hypothèse dite · projet saisi par vous
+
+
+
+
+Document d'information établi à partir de données publiques.
+Ne remplace ni un certificat d'urbanisme, ni une étude de
+                                                             Généré via LABUSE                                               1 / 11
+faisabilité réglementaire, ni un conseil juridique. Données
+LABUSE au 19/10/2026.
+   1. Identité
+
+   Personne morale — COMMUNE DE SAINT PAUL — propriétaire depuis au moins
+   2019.
+
+
+Adresse                                           1 Route du Trou d'eau, 97434 Saint-Paul                            sourcé
+
+
+Qui détient
+
+Type de propriétaire                              Personne morale — COMMUNE DE SAINT PAUL (SIREN                     sourcé
+                                                  219740156)
+
+Historique de détention (PM)                      COMMUNE DE SAINT PAUL (2019–2025)                                  sourcé
+
+
+Historique cadastral
+
+Filiation cadastrale                              Issue de 97415000EV0091 (document d’arpentage,                     sourcé
+                                                  10/02/1997)
+
+Sur la parcelle
+
+Sur cette parcelle (permis)                       7 permis sur la parcelle (Sitadel) — PC — déposé                   sourcé
+                                                  2024-01-01, autorisé 2025-04-29 ; PC — déposé
+                                                  2023-01-01, autorisé 2023-12-14 ; PA — déposé
+                                                  2022-01-01, autorisé 2022-08-03 ; DP — déposé
+                                                  2022-01-01, autorisé 2022-08-02 ; PC — déposé
+                                                  2019-01-01, autorisé 2020-02-06 ; DP — déposé
+                                                  2016-01-01, autorisé 2016-12-28 (+1 autres)
+
+
+
+
+  Plan de situation — la parcelle (contour) et ses voisines · © IGN — BD ORTHO
+
+
+
+   VÉRIFIÉ : RIEN
+     • Copropriétés : aucune copropriété immatriculée sur la parcelle.
+     • Dernière vente : aucune mutation DVF publiée sur cette parcelle (fenêtre 2014-2025).
+
+
+Sources : Base Adresse Nationale · DGFiP — parcelles des personnes morales · DFI — documents de filiation informatisés
+(DGFiP) · SITADEL (autorisations d'urbanisme) · cadastre_epoque
+
+
+
+
+Document d'information établi à partir de données publiques.
+Ne remplace ni un certificat d'urbanisme, ni une étude de
+                                                             Généré via LABUSE                                           2 / 11
+faisabilité réglementaire, ni un conseil juridique. Données
+LABUSE au 19/10/2026.
+   2. Terrain
+
+   Pente 1,6° · 37 694 m² de sol libre.
+
+
+Ce qu'il reste à bâtir
+
+Surface au sol libre                             37 694 m²                                                             ƒ dérivé
+
+
+Couverture du sol
+
+Part artificialisée (OCS GE)                     82,2 %                                                                 sourcé
+
+
+Usage du sol dominant (OCS GE)                   Production tertiaire                                                   sourcé
+
+
+Part imperméabilisée (CoSIA)                     28,7 %                                                                 sourcé
+
+
+Part végétalisée/boisée (CoSIA)                  68,4 %                                                                 sourcé
+
+
+Part sol nu (CoSIA)                              0,0 %                                                                  sourcé
+
+
+
+   VÉRIFIÉ : RIEN
+     • Piscine détectée : aucune piscine repérée sur la parcelle.
+
+
+Sources : BD TOPO IGN · CoSIA (couverture du sol IA, IGN) · Cadastre (API Carto PCI) · OCS GE — occupation du sol et
+artificialisation (IGN)
+
+
+
+
+Document d'information établi à partir de données publiques.
+Ne remplace ni un certificat d'urbanisme, ni une étude de
+                                                             Généré via LABUSE                                             3 / 11
+faisabilité réglementaire, ni un conseil juridique. Données
+LABUSE au 19/10/2026.
+   3. Bâti
+
+   16 bâtiments, 3 315 m² au sol.
+
+
+Ce qu'il y a dessus
+
+Bâtiments                                        16                                                                       sourcé
+
+
+Emprise bâtie                                    3 315 m²                                                                 sourcé
+
+
+Hauteur du bâti                                  4,5 m                                                                    estimé
+
+
+Identifiants et références
+
+Identifiants RNB                                 12 identifiants RNB                                                      sourcé
+
+
+Adresses liées au bâti (BAN PLUS)                68                                                                       sourcé
+
+
+
+   VÉRIFIÉ : RIEN
+     • Bâti détecté par IA (CoSIA) : cohérent avec la cartographie IGN, rien à signaler.
+
+
+
+   NON DISPONIBLE ICI
+     • Pente du toit : non relevée (LiDAR toiture non calculé sur ce bâti).
+     • Forme du toit : non déterminée (pans non nets ou LiDAR indisponible).
+
+
+Sources : BD TOPO IGN · CoSIA (couverture du sol IA, IGN) · LiDAR HD — MNH 50 cm (IGN) · RNB — Référentiel national des
+bâtiments (IGN) · BAN PLUS — liens adresse-bâtiment (IGN)
+
+
+
+   4. Urbanisme
+
+   Zone AU2c (famille AU) — à urbaniser (ouverture sous conditions). Le document
+   opposable du Géoportail de l'urbanisme fait foi ; les valeurs de règle ci-dessous
+   sont une aide à la lecture.
+
+
+Rappel RTAA DOM                                  Conception réglementée pour tout logement neuf                           sourcé
+                                                 (aération traversante, protection solaire, eau chaude
+                                                 solaire) — à intégrer au projet.
+
+Droit des sols (ER · EBC · DPU · PEB)
+
+Prescriptions du droit des sols                  1 servitude — PM1 — plan de prévention des risques                       sourcé
+                                                 naturels (PPR) · ingéré le 14/09/2026
+
+SCOT                                             TCO — approuvé le 03/10/2022                                             sourcé
+
+
+Droit de préemption urbain (DPU)                 Parcelle dans le périmètre du droit de préemption                        sourcé
+                                                 urbain (DPU) : la commune peut préempter à la vente
+
+
+
+
+Document d'information établi à partir de données publiques.
+Ne remplace ni un certificat d'urbanisme, ni une étude de
+                                                             Généré via LABUSE                                              4 / 11
+faisabilité réglementaire, ni un conseil juridique. Données
+LABUSE au 19/10/2026.
+Règlement
+
+PLU                                              PLU approuvé le 27/09/2012 — version publiée au                      sourcé
+                                                 Géoportail de l'urbanisme le 17/12/2025 (document
+                                                 opposable).
+
+Mixité sociale
+
+Mixité sociale — seuil de                        1800                                                                 sourcé
+déclenchement
+
+Mixité sociale — quota de logements              30                                                                   sourcé
+aidés
+
+
+Ce que le règlement fixe ici
+
+Règle                                            Valeur retenue
+
+Hauteur max                                      9 m au faîtage · 6 m à l'égout Art. 10.2 · p.74                      sourcé
+
+
+Emprise au sol max                               non réglementé                                                       estimé
+
+
+Recul sur voie                                   4 m Art. 6 · p.70                                                    sourcé
+
+
+Recul limites séparatives                        4 m Art. 7.2 · p.72                                                  sourcé
+
+
+Pleine terre min                                 50 % Art. 13.1 · p.85                                                sourcé
+
+
+Stationnement                                    2 places / logement                                                  sourcé
+
+
+
+Ce que le règlement autorise ici
+
+Autorisées                                       Exploitation forestière · Hébergement · Artisanat et                 sourcé
+                                                 commerce de détail · Restauration · Commerce de gros ·
+                                                 Activités de services où s'effectue l'accueil d'une
+                                                 clientèle · Cinéma · Hôtels · Autres hébergements
+                                                 touristiques · Locaux et bureaux accueillant du public
+                                                 des administrations publiques et assimilés · Locaux
+                                                 techniques et industriels des administrations publiques
+                                                 et assimilés · Établissements d'enseignement, de santé
+                                                 et d'action sociale · Salles d'art et de spectacles ·
+                                                 Équipements sportifs · Lieux de culte · Autres
+                                                 équipements recevant du public · Industrie · Bureau ·
+                                                 Centre de congrès et d'exposition · Cuisine dédiée à la
+                                                 vente en ligne
+
+Sous conditions                                  Logement                                                             sourcé
+
+
+Interdites                                       Exploitation agricole · Entrepôt                                     sourcé
+
+
+Surface commerciale                              Au-delà de 1000 m² de surface de vente : autorisation                sourcé
+                                                 d'exploitation commerciale (CDAC)
+
+Règlement complet : 97415_PLU_20251217 sur le Géoportail de l'urbanisme. Les valeurs ci-dessus sont une aide à la lecture ; le
+règlement fait foi.
+
+
+
+Document d'information établi à partir de données publiques.
+Ne remplace ni un certificat d'urbanisme, ni une étude de
+                                                             Généré via LABUSE                                           5 / 11
+faisabilité réglementaire, ni un conseil juridique. Données
+LABUSE au 19/10/2026.
+   VÉRIFIÉ : RIEN
+     • Hors emplacement réservé du PLU.
+     • Hors espace boisé classé du PLU.
+     • Hors zones du plan d'exposition au bruit.
+
+
+
+   NON DISPONIBLE ICI
+     • Mixité sociale : seuils de la zone non renseignés à ce jour.
+
+
+Sources : Urbanisme PLU/GPU (API Carto) · Sudocuh (procédures d'urbanisme) · GPU — emplacements réservés (prescriptions
+CNIG) · GPU — espaces boisés classés (prescriptions CNIG) · GPU — droit de préemption urbain (info-surf) · PEB — plans
+d'exposition au bruit (DGAC via annexes GPU) · SUP — assiettes GPU (API Carto) · SCOT (GPU)
+
+
+
+   5. Risques et environnement
+
+   Aléas relevés — aucun rédhibitoire.
+
+
+Ce qui contraint
+
+Points de risque                                 4                                                               sourcé
+
+
+Pour information
+
+Système d'endiguement                            Parcelle protégée par un système d'endiguement — SE             sourcé
+                                                 Ermitage-La Saline (classe B) : inondation RÉSIDUELLE
+                                                 en cas de défaillance ou de dépassement du niveau de
+                                                 protection.
+
+
+Aléa inondation                                  Aléa inondation — niveau fort (~1% de la parcelle). ·           sourcé
+                                                 millésime PPR/PPRL approuvés 2011–2026 (arrêtés, DEAL
+                                                 Lizmap)
+
+Aléa mouvement de terrain                        Aléa mouvement de terrain — niveau faible (~1% de la            sourcé
+                                                 parcelle). · millésime PPR/PPRL approuvés 2011–2026
+                                                 (arrêtés, DEAL Lizmap)
+
+PPR — zone rouge                                 PPR inondation et mouvement de terrain — zone rouge             sourcé
+                                                 marginale (1 %), hors emprise probable. · millésime PPR/
+                                                 PPRL approuvés 2011–2026 (arrêtés, DEAL Lizmap)
+
+PPR — zone bleue                                 Zone bleue PPR inondation et mouvement de terrain               sourcé
+                                                 (~56% de la parcelle) — constructible SOUS
+                                                 PRESCRIPTIONS (règlement DEAL). · millésime PPR/PPRL
+                                                 approuvés 2011–2026 (arrêtés, DEAL Lizmap)
+
+
+
+
+Document d'information établi à partir de données publiques.
+Ne remplace ni un certificat d'urbanisme, ni une étude de
+                                                             Généré via LABUSE                                      6 / 11
+faisabilité réglementaire, ni un conseil juridique. Données
+LABUSE au 19/10/2026.
+   VÉRIFIÉ : RIEN
+     • Sols pollués (SIS) : la parcelle n'est dans aucun secteur d'information sur les sols.
+     • Anciens sites industriels (CASIAS) : aucun site recensé sur ou près de la parcelle.
+     • EnR au sol interdites (APER) : la parcelle n'est dans aucune zone d'exclusion.
+     • Mesure compensatoire (GéoMCE) : aucune mesure ne recoupe la parcelle.
+     • Aucun secteur d'information sur les sols ni site CASIAS à proximité.
+     • ABF / Monuments historiques : hors périmètre de protection.
+     • Cavités souterraines : aucune recensée à proximité.
+     • ICPE : aucune installation classée relevée à proximité.
+
+
+Sources : ABF / Monuments historiques · DEAL Réunion — PPR / aléas · Géorisques — mouvements de terrain · Géorisques — ICPE
+· Géorisques — cavités souterraines · Géorisques — sites et sols pollués · ZNIEFF (INPN/MNHN) · AZI / TRI — inondation
+(Géorisques GASPAR) · endiguement
+
+
+
+   6. Réseaux et desserte
+
+   Viabilisation probable — le tracé et la capacité exacts des réseaux ne sont pas
+   relevés à cette échelle : à confirmer auprès des gestionnaires par une DT-DICT.
+
+
+Fibre
+
+Fibre (FTTH)                                     Immeuble raccordable (Arcep)                                         sourcé
+
+
+Viabilisation
+
+Viabilisation                                    Viabilisation probable                                               estimé
+
+
+Logements raccordés à l'égout                    Zonage réglementaire à Saint-Paul : raccordement au                  sourcé
+                                                 tout-à-l'égout (collectif).
+
+Accès
+
+Arrêt de transport le plus proche                Arrêt La Saline les Bains (Kar'Ouest) à 170 m                        sourcé
+
+
+
+   VÉRIFIÉ : RIEN
+     • Hors rayon de 800 m d'une station TCSP.
+
+
+
+   NON DISPONIBLE ICI
+     • Productible solaire : non calculé sur cette toiture.
+
+
+Sources : Fibre Arcep — Ma connexion internet (immeuble) · BD TOPO IGN · RGE ALTI (altimétrie) · Parkings OSM (loi APER) ·
+Transport public — GTFS (PAN, 7 réseaux) · OSM — transport (pôles d'échange & téléphérique) · INSEE RP2022 — fichier détail
+Logements (EGOUL) · GPU — zonages d'assainissement
+
+
+
+   7. Fiscalité et dispositifs
+
+   Zonage d'investissement locatif : A · 4 dispositifs territoriaux.
+
+
+
+Document d'information établi à partir de données publiques.
+Ne remplace ni un certificat d'urbanisme, ni une étude de
+                                                             Généré via LABUSE                                           7 / 11
+faisabilité réglementaire, ni un conseil juridique. Données
+LABUSE au 19/10/2026.
+Taxes
+
+Taxe foncière (bâti)                             part communale 41,77 % · TEOM 16,00 % · hors part                   sourcé
+                                                 départementale et taxes spéciales
+
+Taxe d'aménagement — taux                        Taux communal 10,0 % — Secteur à taux majoré en                     sourcé
+communal                                         vigueur depuis le 01/01/2022 (délibération communale).
+                                                 Se calcule sur la surface de plancher créée par le projet
+                                                 — montant chiffré dans le document Bilan.
+
+
+Zonage du logement                               Zonage d'investissement locatif : A                                 sourcé
+
+
+TVA outre-mer                                    TVA outre-mer : 8,5 % (taux normal DOM) · 2,1 %                     sourcé
+                                                 logement locatif social
+
+Opération de revitalisation (ORT)                Opération de Revitalisation de Territoire (ORT) (signée le          sourcé
+                                                 25/04/2022)
+
+ZFANG                                            Régime standard (ZFANG, art. 44 quaterdecies CGI) —                 sourcé
+                                                 sous réserve d'éligibilité de l'activité, abattement
+                                                 d'environ 50 % sur les bénéfices — à confirmer auprès
+                                                 d'un fiscaliste.
+
+FRR (ex-ZRR)                                     Commune classée FRR en partie — zone spéciale                       sourcé
+                                                 d'action rurale des Hauts (décret 1978) ; position de
+                                                 cette parcelle dans le périmètre non vérifiée
+                                                 géométriquement. À La Réunion, ce classement n'ouvre
+                                                 que les mesures NON FISCALES (FAQ FRR DGCL, juillet
+                                                 2025) : l'exonération d'impôt de l'art. 44 quindecies A
+                                                 CGI ne s'y applique pas — à confirmer par un fiscaliste.
+
+Sources : Taux de taxe foncière — fichier REI (DGFiP) · QPV 2024 (ANCT) · NPNRU (DEAL Réunion / ANCT) · ZFANG — zone franche
+d'activité nouvelle génération (Légifrance) · FRR ex-ZRR — zone spéciale d'action rurale (Légifrance) · Taxe d'aménagement —
+barème public (DGFiP/DELTA)
+
+
+
+   8. Marché
+
+   Prix ancien médian 5 205 €/m² (70 ventes à moins de 500 m).
+
+
+Constaté — ventes actées (DVF)
+
+Ancien bâti — secteur                            5 205 €/m² — ancien, 70 ventes à moins de 500 m                     sourcé
+
+
+Ventes retenues                                  70                                                                  sourcé
+
+
+Ventes écartées                                  2                                                                   sourcé
+
+
+Affiché — neuf déclaré (VEFA)
+
+Neuf VEFA — commune                              4 745 €/m² — VEFA déclaré à l'acte, 326 ventes                      sourcé
+                                                 (commune, 5 ans)
+
+
+
+
+Document d'information établi à partir de données publiques.
+Ne remplace ni un certificat d'urbanisme, ni une étude de
+                                                             Généré via LABUSE                                          8 / 11
+faisabilité réglementaire, ni un conseil juridique. Données
+LABUSE au 19/10/2026.
+Le secteur
+
+Ventes à moins de 100 m (36 mois)                11 ventes DVF · 1 permis (< 100 m, 36 mois)                            sourcé
+
+
+
+Appartement                                      4 907 €/m² — 69 ventes · secteur cadastral, 2021-2025                  sourcé
+
+
+Maison                                           6 209 €/m² — 24 ventes · secteur cadastral, 2021-2025                  sourcé
+
+
+
+   VÉRIFIÉ : RIEN
+     • Terrain nu — section cadastrale : échantillon DVF insuffisant pour une médiane fiable.
+     • Annonces en cours (Radar) : aucune annonce active repérée dans le secteur.
+
+
+Sources : DVF / valeurs foncières
+
+
+
+   9. Quartier
+
+   La Saline-L'Ermitage — 2 908 habitants (RP2022 (parution 16/10/2025,
+   géographie 01/01/2024)).
+
+
+Le secteur
+
+Permis à proximité                               4 permis (< 500 m, 24 mois)                                            sourcé
+
+
+À proximité
+
+À proximité (équipements)                        École : ECOLE MATERNELLE PUBLIQUE ANNE MOUSSE (40                      sourcé
+                                                 m) · Commerces : AU PETRIN DE PROVENCE (72 m) ·
+                                                 Santé : OU GINGN (0 m) · Arrêt de bus : La Saline les Bains
+                                                 (170 m)
+
+
+
+  2 908                                          19,8 %                                   45,1 %
+  habitants, 1 216 ménages                       de 60 ans et plus                        de locataires
+
+
+
+Parc de logements du quartier                    1 716 logements, 8,3 % de vacance                                      sourcé
+
+
+Sources : INSEE RP2022 — bases IRIS (logement, population) · Contours IRIS (IGN/INSEE) · SITADEL (autorisations d'urbanisme) ·
+BPE INSEE · OpenStreetMap / Overpass
+
+
+
+   10. Potentiel
+
+   Potentiel de construction : Fort potentiel — parcelle en forte sous-densité —
+   surface de plancher constructible restante (bâti conservé) ≈ 15 333 m².
+
+
+Ce qui est constructible
+
+Potentiel (verdict)                              Fort potentiel — parcelle en forte sous-densité                        estimé
+
+
+Document d'information établi à partir de données publiques.
+Ne remplace ni un certificat d'urbanisme, ni une étude de
+                                                             Généré via LABUSE                                             9 / 11
+faisabilité réglementaire, ni un conseil juridique. Données
+LABUSE au 19/10/2026.
+Marge de surélévation (au faîtage)               2,8 m                                                                   estimé
+
+
+Nombre de logements                              voir l'Étude de faisabilité
+
+
+   NON DISPONIBLE ICI
+     • Gabarit réglementaire : parcelle sur ≥ 2 zones constructibles distinctes (AU2c, U2c) : découpage multi-CES non servi
+       — non chiffré ici.
+     • Surface vendable non calculable pour cette parcelle.
+
+
+Sources : BD TOPO IGN · CoSIA (couverture du sol IA, IGN) · Urbanisme PLU/GPU (API Carto) · LiDAR HD — MNH 50 cm (IGN)
+
+
+
+   11. Simulation
+
+   Renseignez votre opération pour obtenir le bilan
+   Le bilan dépend de chiffres que vous seul connaissez : prix demandé par le vendeur, coût de construction,
+   marge visée. LABUSE ne les suppose pas à votre place. Le document Bilan les recueille et imprime le chiffre
+   d'affaires, la charge foncière supportable, l'écart au prix demandé et la sensibilité au coût de construction.
+
+
+
+
+   12. Limites et sources
+
+Ce que ce document ne peut pas dire
+
+Constructibilité définitive                      Certificat d'urbanisme — mairie, service instructeur
+
+Valeur vénale                                    Avis de valeur — notaire, expert
+
+État du bâti, servitudes privées                 Visite et acte notarié
+
+Coût de démolition, de dépollution               Devis d'entreprise
+
+Réseaux et raccordements chiffrés                Gestionnaires, DT-DICT
+
+Position du propriétaire, prix demandé Contact direct ou apporteur d'affaires
+
+
+Sources
+
+SITADEL (autorisations d'urbanisme)              SDES (Dido)
+
+DVF / valeurs foncières                          DGFiP / Etalab — géo-DVF
+
+ABF / Monuments historiques                      Base Mérimée (Ministère Culture)
+
+DGFiP — parcelles des personnes                  DGFiP
+morales
+
+SUP — assiettes GPU (API Carto)                  IGN (Géoportail de l'urbanisme)
+
+DEAL Réunion — PPR / aléas                       DEAL Réunion (Lizmap)
+
+Géorisques — ICPE                                BRGM / Géorisques
+
+Géorisques — cavités souterraines                BRGM / Géorisques
+
+
+Document d'information établi à partir de données publiques.
+Ne remplace ni un certificat d'urbanisme, ni une étude de
+                                                             Généré via LABUSE                                             10 / 11
+faisabilité réglementaire, ni un conseil juridique. Données
+LABUSE au 19/10/2026.
+Géorisques — mouvements de terrain               BRGM / Géorisques
+
+PEB — plans d'exposition au bruit                DGAC / DEAL (PEB approuvés) — republication annexes
+(DGAC via annexes GPU)                           GPU
+
+OpenStreetMap / Overpass                         OSM
+
+BD TOPO IGN                                      IGN / Géoplateforme
+
+RGE ALTI (altimétrie)                            IGN / Géoplateforme
+
+GPU — droit de préemption urbain                 IGN / Géoportail de l'urbanisme (informations des PLU)
+(info-surf)
+
+Urbanisme PLU/GPU (API Carto)                    IGN / API Carto GPU
+
+Base Adresse Nationale                           DINUM / IGN
+
+Cadastre (API Carto PCI)                         IGN / API Carto
+
+LiDAR HD (MNS) — hauteurs mesurées               IGN / Géoplateforme
+
+Document d'information établi à partir de données publiques. Il ne constitue ni un document d'urbanisme opposable, ni une
+étude de faisabilité réglementaire, ni un conseil juridique, et ne remplace pas un certificat d'urbanisme. Fonds
+cartographiques : © IGN, © contributeurs OpenStreetMap (ODbL).
+
+
+
+
+Document d'information établi à partir de données publiques.
+Ne remplace ni un certificat d'urbanisme, ni une étude de
+                                                             Généré via LABUSE                                        11 / 11
+faisabilité réglementaire, ni un conseil juridique. Données
+LABUSE au 19/10/2026.
+
