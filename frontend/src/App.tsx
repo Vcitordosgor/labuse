@@ -287,7 +287,8 @@ function Toast() {
 export default function App() {
   const { view, selectedIdu, select, setView, filters, setFilters, zone, setZone, module, setModule, setFlyTo, flyTo, commune, setCommune, verdict, setVerdict, outilsOpen, parcours, setMsel, setPermitToOpen, setIaRestitution, compareOpen, contexteCommune, setContexteCommune, togglePanel, setTuyauActives, toggleTuyau, setModuleMap, etudeIdus } = useApp()
   // feat/ouverture — le voile d'ouverture (oiseau LABUSE) monté AU-DESSUS de l'app ; `montre` est vrai
-  // à chaque chargement de page (Cmd+R), `fini` le retire. L'app se charge DERRIÈRE le voile.
+  // une fois par session (jeton sessionStorage, pas à chaque navigation interne), `fini` le retire.
+  // L'app se charge DERRIÈRE le voile.
   const [montre, fini] = useOuvertureUneFois()
 
   // Hook d'auto-QA (stable, sans effet produit) : sélection directe d'une parcelle / d'une vue.

@@ -8,7 +8,7 @@ import { useCallback, useLayoutEffect, useRef, useState } from 'react'
  * labuse.immo). Mêmes durées, mêmes amortissements, même battement d'ailes.
  *
  * Trois règles :
- *  — à chaque rechargement de page (Cmd+R), pas à chaque navigation interne ;
+ *  — une fois par session, pas à chaque navigation ;
  *  — « animations réduites » dans le système → on passe directement à l'app ;
  *  — un clic ou une touche écourte l'animation.
  *
@@ -16,7 +16,23 @@ import { useCallback, useLayoutEffect, useRef, useState } from 'react'
  * Sans lui, on retombe sur un coin haut-gauche plausible — mais posez l'attribut.
  */
 
-const TRAJET = 'M2 15 C58 10 100 18 120 27 C140 18 182 10 238 15 C202 29 162 40 135 46 C127 49 122 53 120 60 C118 53 113 49 105 46 C78 40 38 29 2 15 Z'
+// Les 19 points du tracé de l'oiseau. On les PLIE autour de l'axe du corps (x = 120) :
+// l'angle croît avec l'éloignement du centre, donc le centre ne bouge jamais et l'aile se
+// courbe comme une vraie aile. L'ancienne version faisait pivoter deux moitiés découpées,
+// et au plus fort du battement un coin sombre s'ouvrait au milieu.
+const PTS: [number, number][] = [[2,15],[58,10],[100,18],[120,27],[140,18],[182,10],[238,15],[202,29],[162,40],[135,46],[127,49],[122,53],[120,60],[118,53],[113,49],[105,46],[78,40],[38,29],[2,15]];
+const AXE = 120, PIVOT = 30, DEMI = 118, COURBE = 1.6;
+
+function plie(deg: number): string {
+  const P = PTS.map(([x, y]) => {
+    const u = (x - AXE) / DEMI
+    const phi = (deg * Math.PI) / 180 * Math.pow(Math.abs(u), COURBE) * (u < 0 ? -1 : 1)
+    const dx = x - AXE, dy = y - PIVOT, c = Math.cos(phi), s = Math.sin(phi)
+    return [AXE + dx * c - dy * s, PIVOT + dx * s + dy * c] as [number, number]
+  })
+  const f = (i: number) => P[i]![0].toFixed(2) + ' ' + P[i]![1].toFixed(2)
+  return `M${f(0)} C${f(1)} ${f(2)} ${f(3)} C${f(4)} ${f(5)} ${f(6)} C${f(7)} ${f(8)} ${f(9)} C${f(10)} ${f(11)} ${f(12)} C${f(13)} ${f(14)} ${f(15)} C${f(16)} ${f(17)} ${f(18)} Z`
+}
 
 /** Repères de la timeline, en secondes. Ne pas y toucher sans revoir la vidéo du site. */
 const ARRIVEE = 1.3   // vol d'arrivée
@@ -32,16 +48,27 @@ const smooth = (x: number) => { const c = clamp(x, 0, 1); return c * c * (3 - 2 
 
 export function LogoIntro({ onFini }: { onFini?: () => void }) {
   const oiseau = useRef<SVGSVGElement>(null)
-  const aileG = useRef<SVGGElement>(null)
-  const aileD = useRef<SVGGElement>(null)
+  const aile = useRef<SVGPathElement>(null)
   const mot = useRef<HTMLDivElement>(null)
   const voile = useRef<HTMLDivElement>(null)
   const [parti, setParti] = useState(false)
+  // onFini gardé dans une ref : si l'app re-rend pendant l'animation (chargement des
+  // données), une nouvelle fonction ne doit PAS relancer l'effet — sinon l'oiseau repart de zéro.
+  const rappel = useRef(onFini)
+  rappel.current = onFini
 
   // CORRECTIF (premières images) — useLayoutEffect : la toute première image peinte doit DÉJÀ porter
   // la bonne transformation (pas l'oiseau en haut à gauche, taille réelle, l'espace d'une frame).
   useLayoutEffect(() => {
-    const fini = () => { setParti(true); onFini?.() }
+    let brut = 0
+    let termine = false
+    const fini = () => {
+      if (termine) return
+      termine = true
+      cancelAnimationFrame(brut)
+      setParti(true)
+      rappel.current?.()
+    }
 
     // Système réglé sur « animations réduites » : on n'impose rien.
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) { fini(); return }
@@ -61,7 +88,6 @@ export function LogoIntro({ onFini }: { onFini?: () => void }) {
     const DEPART = AU_REPOS * 0.58
     const POSE_Y = H * 0.42
 
-    let brut = 0
     const debut = performance.now()
 
     const dessine = (t: number) => {
@@ -93,8 +119,7 @@ export function LogoIntro({ onFini }: { onFini?: () => void }) {
       if (oiseau.current) {
         oiseau.current.style.transform = `translate(${cx - 120}px, ${cy - 30}px) scale(${s})`
       }
-      aileG.current?.setAttribute('transform', `rotate(${-a} 120 30)`)
-      aileD.current?.setAttribute('transform', `rotate(${a} 120 30)`)
+      aile.current?.setAttribute('d', plie(a))
 
       // « LABUSE » s'écrit une fois l'oiseau posé, et s'efface quand il repart.
       const o = t < 1.45 ? 0
@@ -124,7 +149,7 @@ export function LogoIntro({ onFini }: { onFini?: () => void }) {
       window.removeEventListener('pointerdown', ecourter)
       window.removeEventListener('keydown', ecourter)
     }
-  }, [onFini])
+  }, [])
 
   if (parti) return null
 
@@ -147,14 +172,7 @@ export function LogoIntro({ onFini }: { onFini?: () => void }) {
         // CORRECTIF : hors écran tant que la 1re transformation n'est pas appliquée (ceinture + bretelles).
         style={{ position: 'absolute', left: 0, top: 0, transformOrigin: '120px 30px', transform: 'translate(-9999px, 0)' }}
       >
-        <defs>
-          {/* Chaque aile pivote dans sa moitié : les deux moitiés se recouvrent d'un cheveu
-              pour qu'aucune fente ne s'ouvre au milieu pendant le battement. */}
-          <clipPath id="li-g"><rect x="-50" y="-100" width="170.6" height="300" /></clipPath>
-          <clipPath id="li-d"><rect x="119.4" y="-100" width="170.6" height="300" /></clipPath>
-        </defs>
-        <g ref={aileG} clipPath="url(#li-g)"><path fill="#4ADE80" d={TRAJET} /></g>
-        <g ref={aileD} clipPath="url(#li-d)"><path fill="#4ADE80" d={TRAJET} /></g>
+        <path ref={aile} fill="#4ADE80" d={plie(0)} />
       </svg>
 
       <div
@@ -172,12 +190,14 @@ export function LogoIntro({ onFini }: { onFini?: () => void }) {
   )
 }
 
-/** Une ouverture par CHARGEMENT de page : elle se rejoue à chaque Cmd+R, jamais à une
- *  navigation interne (le composant App reste monté). CORRECTIFS : plus de sessionStorage
- *  (un simple état monté-une-fois suffit) ; `fini` STABILISÉ (useCallback) pour que l'animation
- *  ne redémarre pas si App se redessine pendant qu'elle joue (dépendance de l'effet de LogoIntro). */
+/** Une seule ouverture par session : au rechargement d'une page, pas à chaque navigation. */
 export function useOuvertureUneFois(): [boolean, () => void] {
-  const [montre, setMontre] = useState(true)
-  const fini = useCallback(() => setMontre(false), [])
+  const [montre, setMontre] = useState(() => {
+    try { return sessionStorage.getItem('labuse.intro') !== 'vue' } catch { return true }
+  })
+  const fini = useCallback(() => {
+    try { sessionStorage.setItem('labuse.intro', 'vue') } catch { /* navigation privée */ }
+    setMontre(false)
+  }, [])
   return [montre, fini]
 }
