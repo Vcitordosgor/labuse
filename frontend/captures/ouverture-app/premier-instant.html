@@ -1,0 +1,55 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>LogoIntro — premier instant</title>
+<style>html,body{margin:0;height:100%;background:#0A0C0B;font-family:ui-sans-serif,system-ui,sans-serif}</style>
+<!--
+  Isole « le premier instant » : l'état peint AVANT que le premier requestAnimationFrame ne tourne.
+  AVANT (sans garde-fous) : l'oiseau, sans transformation, retombe à left:0/top:0 → flash haut-gauche.
+  APRÈS (garde-fous) : transform initial hors écran + dessine(0) placent déjà l'oiseau à sa position
+  de départ (hors écran à gauche) → aucun flash. Mêmes plie()/durées/géométrie que le composant.
+-->
+<div id="badge" style="position:fixed;top:14px;left:16px;z-index:2;color:#9fb3a6;font:600 15px/1.2 ui-sans-serif,system-ui;letter-spacing:.02em"></div>
+<script>
+// --- repris à l'identique de LogoIntro.tsx ---
+const PTS = [[2,15],[58,10],[100,18],[120,27],[140,18],[182,10],[238,15],[202,29],[162,40],[135,46],[127,49],[122,53],[120,60],[118,53],[113,49],[105,46],[78,40],[38,29],[2,15]];
+const AXE = 120, PIVOT = 30, DEMI = 118, COURBE = 1.6;
+function plie(deg){
+  const P = PTS.map(([x,y])=>{
+    const u=(x-AXE)/DEMI;
+    const phi=(deg*Math.PI)/180*Math.pow(Math.abs(u),COURBE)*(u<0?-1:1);
+    const dx=x-AXE,dy=y-PIVOT,c=Math.cos(phi),s=Math.sin(phi);
+    return [AXE+dx*c-dy*s,PIVOT+dx*s+dy*c];
+  });
+  const f=i=>P[i][0].toFixed(2)+' '+P[i][1].toFixed(2);
+  return `M${f(0)} C${f(1)} ${f(2)} ${f(3)} C${f(4)} ${f(5)} ${f(6)} C${f(7)} ${f(8)} ${f(9)} C${f(10)} ${f(11)} ${f(12)} C${f(13)} ${f(14)} ${f(15)} C${f(16)} ${f(17)} ${f(18)} Z`;
+}
+const lerp=(a,b,t)=>a+(b-a)*t;
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const ease=t=>(t<0.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2);
+
+const mode = new URLSearchParams(location.search).get('mode')==='apres' ? 'apres' : 'avant';
+document.getElementById('badge').textContent = mode==='apres'
+  ? 'APRÈS — garde-fous (useLayoutEffect + transform initial + dessine(0))'
+  : 'AVANT — sans garde-fous : flash haut-gauche au premier instant';
+
+// voile (fixed inset 0), identique au composant
+const voile=document.createElement('div');
+voile.style.cssText='position:fixed;inset:0;z-index:9999;background:#0A0C0B;overflow:hidden;pointer-events:none';
+const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+svg.setAttribute('viewBox','0 0 240 82');svg.setAttribute('width','240');svg.setAttribute('height','82');svg.setAttribute('overflow','visible');
+// APRÈS : transform initial hors écran ; AVANT : aucun (l'oiseau tombe en haut-gauche).
+svg.style.cssText='position:absolute;left:0;top:0;transform-origin:120px 30px'+(mode==='apres'?';transform:translate(-9999px, 0)':'');
+const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+path.setAttribute('fill','#4ADE80');path.setAttribute('d',plie(0));
+svg.appendChild(path);voile.appendChild(svg);document.body.appendChild(voile);
+
+// APRÈS applique dessine(0) AVANT la première frame (ce que fait le composant dans useLayoutEffect).
+if(mode==='apres'){
+  const W=innerWidth,H=innerHeight;
+  const AU_REPOS=clamp(W*0.18,190,520),DEPART=AU_REPOS*0.58;
+  const u=ease(0),cx=lerp(-AU_REPOS,W/2,u),cy=lerp(H*0.69,H*0.42,u),l=lerp(DEPART,AU_REPOS,u);
+  svg.style.transform=`translate(${cx-120}px, ${cy-30}px) scale(${l/240})`;
+  path.setAttribute('d',plie(0));
+}
+// Dans les deux cas on NE lance PAS de requestAnimationFrame : on fige « le premier instant ».
+</script>
