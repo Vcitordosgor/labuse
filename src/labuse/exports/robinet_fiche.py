@@ -470,12 +470,12 @@ _CAP_MEMO: "WeakKeyDictionary" = WeakKeyDictionary()
 
 
 def _fourchette_logements(db, idu: str) -> tuple[int, int] | None:
-    """A-05-1 — la capacité en LOGEMENTS que la fiche affiche vient de getFaisabilite(idu)
-    (= /modules/faisabilite → `capacite.fourchette.logements_au_sol = [min, max]`), PAS du
-    payload /parcels (où `potentiel_transformation.capacite_estimee` n'est qu'un DRAPEAU booléen :
-    le servir comme un nombre affichait « 1 » au Dossier). On rejoue le MÊME moteur que l'écran
-    (parcel_faisabilite) et on lit `logements_au_sol`. None si la fiche n'affiche pas de nombre
-    (non constructible ou capacité nulle — comme constructibilite.tsx). Mémoïsé par session."""
+    """A-05-1 → LOGEMENTS-SOURCE-UNIQUE — SEUL lecteur sanctionné des champs logements de
+    l'ancien calcul de capacité (`fourchette.logements_au_sol`), et UNIQUEMENT comme PRÉSENCE :
+    aucun document n'imprime plus ces nombres (le Dossier imprime le renvoi « voir l'Étude de
+    faisabilité », cf. miroir ; la fiche React fait pareil). On rejoue le MÊME moteur que l'écran
+    (parcel_faisabilite). None si la fiche ne considère aucune capacité (non constructible ou
+    capacité nulle — même garde que constructibilite.tsx). Mémoïsé par session."""
     if db is None or not idu:
         return None
     per = _CAP_MEMO.get(db)
@@ -509,15 +509,15 @@ def _fourchette_logements(db, idu: str) -> tuple[int, int] | None:
 
 @extracteur("capacite_logements")
 def _c_capacite(db, idu, f):
-    # A-05-1 — « Capacité (logements) » du Dossier = EXACTEMENT la fourchette de la fiche
-    # (logements_au_sol), plus le drapeau `capacite_estimee`. Le texte reprend le format de
-    # constructibilite.tsx : bornes égales → un seul nombre, sinon « min–max » (demi-cadratin).
+    # A-05-1 → IMPLANTATION-3 → LOGEMENTS-SOURCE-UNIQUE — la donnée ne porte PLUS de nombre :
+    # le Dossier imprime le RENVOI « voir l'Étude de faisabilité » (miroir) quand une capacité
+    # existe, « non chiffrée » sinon. On ne sert plus {min, max} (aucun lecteur ne doit pouvoir
+    # réimprimer la fourchette de l'ancien calcul) — seule la PRÉSENCE est extraite.
+    from ..capacite_max import RENVOI_ETUDE
     fl = _fourchette_logements(db, idu)
     if fl is None:
         return None
-    lo, hi = fl
-    texte = str(hi) if lo == hi else f"{lo}–{hi}"
-    return {"min": lo, "max": hi, "texte": texte}
+    return {"renvoi": RENVOI_ETUDE, "texte": RENVOI_ETUDE}
 
 
 @extracteur("surface_plancher_m2")

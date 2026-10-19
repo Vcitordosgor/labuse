@@ -66,7 +66,9 @@ def test_deux_scenarios_stationnement():
     sol = f.fourchette["logements_au_sol"]
     sous = f.fourchette["logements_sous_sol"]
     assert sous[1] >= sol[1] and f.fourchette["stationnement_regime"] == "borne"
-    assert "au sol" in f.verdict and "sous-sol" in f.verdict
+    # LOGEMENTS-SOURCE-UNIQUE — le verdict ne cite plus de fourchette de logements (le nombre de
+    # logements vit dans l'Étude de faisabilité) : il dit la SDP maximale réglementaire.
+    assert "logts" not in f.verdict and "m² de plancher" in f.verdict
 
 
 def test_u1pru_stationnement_exempte_non_borne():

@@ -233,12 +233,13 @@ def _capacite_union(session: Session, parcels: list) -> dict | None:
     # prix de sortie du secteur de la parcelle dominante (même secteur pour des parcelles contiguës).
     b, _ps = compute_bilan_servi(session, p_dom.id, fz=(ctx_union, f_union))
     fr = f_union.fourchette or {}
-    log = fr.get("logements_sous_sol") or fr.get("logements_au_sol") or [0, 0]
+    # LOGEMENTS-SOURCE-UNIQUE — `logements` (fourchette de l'ancien calcul de capacité, qui en plus
+    # préférait le scénario SOUS-SOL optimiste) RETIRÉ : l'écran Assemblage renvoie déjà vers
+    # l'Étude de faisabilité (moteurs.tsx), on cesse de servir le chiffre sans lecteur.
     return {
         "surface_m2": round(surface_union),
         "emprise_m2": round(emprise),
         "sdp_m2": round(float(fr.get("surface_plancher_m2") or 0.0)),
-        "logements": [log[0] or 0, log[1] or 0],
         "ca": (b.ca if (b and b.fiable) else None),
         "charge_fonciere": (b.charge_fonciere if (b and b.fiable) else None),
     }
@@ -265,7 +266,7 @@ def aggregate_assiette(session: Session, parcels: list) -> dict:
         zones.append((getattr(p, "commune", None), (fa or {}).get("zone")))
     u = _capacite_union(session, parcels)
     if not u:
-        return {"surface_cumulee_m2": surface, "sdp_m2": 0, "logements": [0, 0], "ca": None,
+        return {"surface_cumulee_m2": surface, "sdp_m2": 0, "ca": None,
                 "charge_fonciere": None, "n_chiffrables": 0, "sdp_par_parcelle": par_parcelle,
                 "zones": zones, "assiette": "aucune", "emprise_union_m2": None}
     cf = u["charge_fonciere"]
@@ -273,7 +274,6 @@ def aggregate_assiette(session: Session, parcels: list) -> dict:
     return {
         "surface_cumulee_m2": surface,
         "sdp_m2": u["sdp_m2"],
-        "logements": u["logements"],
         "ca": u["ca"],
         "charge_fonciere": cf_out,
         "n_chiffrables": 1 if u["ca"] else 0,

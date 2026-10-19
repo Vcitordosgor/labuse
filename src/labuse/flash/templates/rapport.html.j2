@@ -203,8 +203,12 @@
   {% endif %}
   <div class="cartouche"><div class="titre">Surface vendable — scénario retenu</div>
     <div class="valeur">{{ c.faisa.vendable_m2 }} <small>m² · plancher (SDP) ~{{ c.faisa.plancher_m2 }} m² = vendable ÷ rendement {{ c.faisa.rendement_pct }}&nbsp;%</small></div>
-    {% if c.faisa.logements_au_sol %}
-    <div class="note-sdp">Scénario retenu : {{ c.faisa.logements_au_sol[0] }}{% if c.faisa.logements_au_sol[1] != c.faisa.logements_au_sol[0] %}–{{ c.faisa.logements_au_sol[1] }}{% endif %} logements, stationnement AU SOL (le stationnement plafonne la capacité).{% if c.faisa.vendable_silo_m2 and c.faisa.vendable_silo_m2 > c.faisa.vendable_m2 %} Un stationnement en ouvrage (sous-sol/silo) porterait le vendable à ~{{ c.faisa.vendable_silo_m2 }} m², au prix d'un coût de place enterrée non estimé ici.{% endif %}</div>
+    {# LOGEMENTS-SOURCE-UNIQUE — plus de fourchette de logements de l'ancien calcul de capacité :
+       renvoi de la fiche (le nombre vit dans l'Étude de faisabilité) + mention « maximum
+       réglementaire » (volet D). La phrase silo (des m² vendables, pas des logements) reste. #}
+    <div class="note-sdp">Nombre de logements : {{ c.faisa.logements_renvoi }}.{% if c.faisa.vendable_silo_m2 and c.faisa.vendable_silo_m2 > c.faisa.vendable_m2 %} Un stationnement en ouvrage (sous-sol/silo) porterait le vendable à ~{{ c.faisa.vendable_silo_m2 }} m², au prix d'un coût de place enterrée non estimé ici.{% endif %}</div>
+    {% if c.faisa.capacite_mention %}
+    <div class="note-sdp">Surfaces : {{ c.faisa.capacite_mention }}.</div>
     {% endif %}
     {% if c.faisa.run and c.faisa.run.date %}
     <div class="note-sdp">Valeurs : analyse LABUSE arrêtée au {{ c.faisa.run.date }}.</div>

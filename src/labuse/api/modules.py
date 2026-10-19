@@ -2216,9 +2216,14 @@ def _faisa_explain_facts(db: Session, row, core_mod) -> dict | None:
         pv = _PROV_SOCLE.get(_faisa_step_prov(s.source, s.prov), "ESTIME")
         facts[f"etape_{i}"] = core_mod.Fact(f"{s.label} : {s.valeur} (source : {s.source})", pv)
     fo = f.fourchette or {}
+    # LOGEMENTS-SOURCE-UNIQUE — plus de nombre de logements de l'ancien calcul de capacité dans les
+    # faits (le tuple brut `(lo, hi)` était en plus imprimé tel quel) : SDP = maximum réglementaire
+    # (mention volet D) et le nombre de logements renvoie à l'Étude de faisabilité.
+    from ..capacite_max import MENTION_COURTE as _CAP_MENTION
+    from ..capacite_max import RENVOI_ETUDE_PHRASE as _CAP_RENVOI
     facts["resultat"] = core_mod.Fact(
-        f"gabarit {fo.get('niveaux')}, SDP {fo.get('surface_plancher_m2')} m², "
-        f"{fo.get('logements_au_sol')} logements, hauteur {fo.get('hauteur_m')} m", "ESTIME")
+        f"gabarit {fo.get('niveaux')}, SDP {fo.get('surface_plancher_m2')} m² ({_CAP_MENTION}), "
+        f"hauteur {fo.get('hauteur_m')} m ; {_CAP_RENVOI}", "ESTIME")
     # bilan (si capacité vendable) — MANDAT PRIX SORTIE CONSOMMATEURS (Vic 28/07/2026) : l'explication
     # IA porte sur LE MÊME bilan que la fiche (compute_bilan_servi), pas une variante. Non calculable
     # (social-dominant) → dit honnêtement.

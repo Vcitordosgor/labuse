@@ -907,12 +907,12 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
                     "contrainte rédhibitoire (voir modulation).", fourch,
                     cause="redhibitoire")
 
-    if regime == "borne":
-        a, b = fourch["logements_au_sol"]
-        cc, d = fourch["logements_sous_sol"]
-        verdict = f"{rp} · au sol ~{a}-{b} / sous-sol ~{cc}-{d} logts"
-    else:
-        a, b = fourch["logements_sous_sol"]
-        suffix = " — stationnement non réglementé, capacité non bornée" if regime == "exempt" else ""
-        verdict = f"{rp} · ~{a} à {b} logts{suffix}"
+    # LOGEMENTS-SOURCE-UNIQUE — le verdict du moteur ne cite PLUS de fourchette de logements
+    # (SDP ÷ logement moyen) : cette phrase est servie telle quelle (capacité /modules/faisabilite,
+    # faits Copilote) et seul le moteur d'implantation de l'Étude de faisabilité compte des
+    # logements. Le verdict dit le gabarit + la SDP maximale réglementaire ; les champs
+    # `logements_au_sol`/`logements_sous_sol` restent dans la fourchette pour les CALCULS internes
+    # (bilan, mixité, scénarios) — plus aucun affichage ne les imprime.
+    suffix = " — stationnement non réglementé, capacité non bornée" if regime == "exempt" else ""
+    verdict = f"{rp} · jusqu'à ~{round(sdp)} m² de plancher{suffix}"
     return fini(True, verdict, fourch)

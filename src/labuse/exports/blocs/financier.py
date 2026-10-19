@@ -177,9 +177,15 @@ def _programme(prog: dict, valeurs) -> str:
         lignes.append(ligne_kv("Surface de plancher (maximum)", esc(f"~{groupe(round(prog['surface_plancher']))} m²"), chip_span("e", "estimé")))
     if prog.get("surface_vendable"):
         lignes.append(ligne_kv("Surface habitable vendable", esc(f"~{groupe(round(prog['surface_vendable']))} m²"), chip_span("e", "estimé")))
+    # LOGEMENTS-SOURCE-UNIQUE — `prog["logements"]` n'existe plus que SAISI par le porteur (builder) :
+    # chip « projet », jamais « (maximum) » (c'est SON programme, pas un plafond). Sans saisie, la
+    # ligne imprime LE renvoi de la fiche : le nombre de logements vit dans l'Étude de faisabilité
+    # (moteur d'implantation), plus jamais un chiffre de l'ancien calcul (SDP ÷ logement moyen).
     if prog.get("logements"):
-        plafond = True
-        lignes.append(ligne_kv("Logements (maximum)", esc(str(prog["logements"])), chip_span("e", "estimé")))
+        lignes.append(ligne_kv("Logements (projet)", esc(str(prog["logements"])), chip_span("p", "projet")))
+    elif lignes:    # un programme existe (SDP/vendable) mais aucun nombre saisi → renvoi, jamais un chiffre
+        from ...capacite_max import RENVOI_ETUDE as _RENVOI
+        lignes.append(ligne_kv("Nombre de logements", esc(_RENVOI), ""))
     mx = val(valeurs, "mixite_clause")
     if mx:
         lignes.append(ligne_kv("Mixité sociale", esc(str(mx)), chip_span("s", "sourcé")))

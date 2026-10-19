@@ -99,13 +99,13 @@ ORACLE: dict[str, tuple[str, ...]] = {
 HORS_PAYLOAD: dict[str, str] = {
     "exposition_versant": "React getParcelExposition(idu) — hors payload /parcels",
     "piscine_m2": "React getOrthoEquipements(idu) — hors payload /parcels",
-    # A-05-1 — la capacité en logements de la fiche vient de getFaisabilite(idu) =
-    # /modules/faisabilite (capacite.fourchette.logements_au_sol), PAS du payload /parcels (où
-    # `potentiel_transformation.capacite_estimee` n'est qu'un DRAPEAU booléen). L'extracteur rejoue
-    # donc le MÊME moteur que l'écran (parcel_faisabilite), comme le gabarit §10 ; l'oracle du
-    # payload `f` ne peut pas le confronter → DÉCLARÉ, confronté par test_a05_1 (PDF == fiche).
-    "capacite_logements": "React getFaisabilite(idu).fourchette.logements_au_sol — hors payload "
-                          "/parcels (parcel_faisabilite rejoué par l'extracteur, cf. A-05-1)",
+    # A-05-1 → IMPLANTATION-3 → LOGEMENTS-SOURCE-UNIQUE — le Dossier ne CHIFFRE plus la capacité en
+    # logements : la ligne imprime le RENVOI « voir l'Étude de faisabilité » (moteur d'implantation,
+    # seule source d'un nombre de logements). L'extracteur (parcel_faisabilite rejoué) ne sert plus
+    # que de PRÉSENCE (renvoi vs « non chiffrée ») ; l'oracle du payload `f` ne peut pas le
+    # confronter → DÉCLARÉ, confronté par test_a05_1 (le PDF imprime le renvoi, jamais un nombre).
+    "capacite_logements": "renvoi « voir l'Étude de faisabilité » — présence tirée de "
+                          "parcel_faisabilite (hors payload /parcels), cf. A-05-1/IMPLANTATION-3",
     "prod_spec_kwh_kwc": "non rendu en fiche (outil Prospection solaire, autre payload)",
     "n_permis_proximite": "React modParcellePermis(idu) + extracteur = requête DB live, hors payload",
     "sar_divergence": "rendu via f.lines (couche générique), pas de feuille dédiée",

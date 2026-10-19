@@ -26,3 +26,13 @@ MENTION = (
 )
 #: mention courte (chip / inline).
 MENTION_COURTE = "maximum réglementaire — les permis réels en utilisent ~½ en médiane (volet D)"
+
+# LOGEMENTS-SOURCE-UNIQUE (décision Vic 18/10/2026, généralisée) — le NOMBRE de logements n'est
+# plus jamais tiré de l'ancien calcul de capacité (`estimate_capacity` : SDP ÷ logement moyen) :
+# seul le moteur d'implantation de l'Étude de faisabilité compte des logements (dessinés, contrôlés).
+# PARTOUT où une surface affichait ce nombre (fiche, Comparatif, Dossier, Financier, Flash,
+# Copilote, Assemblage, calculette), elle imprime CE renvoi — un seul texte, le même que la fiche.
+#: renvoi unique (valeur de ligne) — « Nombre de logements : voir l'Étude de faisabilité ».
+RENVOI_ETUDE = "voir l'Étude de faisabilité"
+#: renvoi en phrase (prose Copilote / notes).
+RENVOI_ETUDE_PHRASE = "nombre de logements : voir l'Étude de faisabilité"

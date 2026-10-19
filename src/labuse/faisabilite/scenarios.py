@@ -21,6 +21,10 @@ import math
 
 from sqlalchemy.orm import Session
 
+# LOGEMENTS-SOURCE-UNIQUE — textes uniques (les mêmes que la fiche) : mention « maximum
+# réglementaire » (volet D) + renvoi vers l'Étude de faisabilité pour le nombre de logements.
+from ..capacite_max import MENTION_COURTE, RENVOI_ETUDE
+
 SCENARIOS = ("terrain_libere", "bati_garde")
 _DEFAUT = "terrain_libere"
 
@@ -41,10 +45,6 @@ def _rng_bati_garde(log_enveloppe: list[int], sdp_residuelle: float,
     lo = math.floor(int(log_enveloppe[0]) * ratio)
     hi = math.ceil(int(log_enveloppe[1]) * ratio)
     return max(0, lo), max(0, hi)
-
-
-def _fmt_range(lo: int, hi: int) -> str:
-    return f"{lo}" if lo == hi else f"{lo}–{hi}"
 
 
 def _fmt_m2(v) -> str:
@@ -161,12 +161,10 @@ def faisabilite_scenario(session: Session, parcel_id: int, scenario: str | None 
         except Exception:  # noqa: BLE001 — vue résiduel absente : on garde le calcul live
             sdp_servie = None
 
-    # hypothèses EFFECTIVES (après overrides) — pour dériver les logements du scénario bâti gardé
-    # avec EXACTEMENT la même convention que le moteur (aucune divergence).
+    # hypothèses EFFECTIVES (après overrides) — étape 4 (coef d'occupation) et garde interne.
     hyp = Hypotheses.charger(ctx.commune)
     if hyp_overrides:
         appliquer_overrides_hypotheses(hyp, hyp_overrides)
-    logt_moyen = (hyp.logement_m2_bas + hyp.logement_m2_haut) / 2.0
 
     # ── Bâti existant (résiduel servi) — présence + numéros du scénario « bâti gardé » ──
     try:
@@ -233,7 +231,7 @@ def faisabilite_scenario(session: Session, parcel_id: int, scenario: str | None 
         verdict, limite, logement_ok = _cause_limite(f, zone)
         base.update({
             "logement_autorise": logement_ok, "verdict": verdict, "ce_qui_limite": limite,
-            "sdp_possible_m2": 0, "logements": [0, 0], "stationnement_places": None,
+            "sdp_possible_m2": 0,
             "surface_a_demolir_m2": None, "etapes": [],
             "test": _tester(test, 0, logement_ok, "terrain_libere", False, None, plu),
         })
@@ -278,24 +276,22 @@ def faisabilite_scenario(session: Session, parcel_id: int, scenario: str | None 
             logements = [int(log_enveloppe[0]), int(log_enveloppe[1])]
         surface_a_demolir = round(sdp_existante) if (bati_present and sdp_existante) else None
 
+    # LOGEMENTS-SOURCE-UNIQUE — la fourchette `logements` (ancien calcul de capacité, SDP ÷ logement
+    # moyen) n'est PLUS affichée (verdict, étape 7) ni servie : le nombre de logements se lit dans
+    # l'Étude de faisabilité (moteur d'implantation), comme sur la fiche. `log_max` ne reste qu'en
+    # GARDE interne (« rien à bâtir » / saturation), comme le fait la fiche React.
     log_max = max(logements) if logements else 0
-    places = round(log_max * ppl_num) if ppl_num else None
 
     # Verdict + « ce qui limite »
     if scenario == "bati_garde":
         if log_max <= 0 or sdp_possible <= 30:
             verdict = f"Presque saturée : {_fmt_m2(sdp_possible)} de plancher encore possibles."
         else:
-            verdict = (f"Encore {_fmt_m2(sdp_possible)} de plancher · "
-                       f"{_fmt_range(logements[0], logements[1])} logement(s), bâti conservé.")
+            verdict = f"Encore {_fmt_m2(sdp_possible)} de plancher, bâti conservé."
         limite = (f"le bâti existant conservé (~{_fmt_m2(sdp_existante)} de plancher déduits, "
                   f"{residuel.get('niveaux_existants')} niveau(x) au LiDAR).")
     else:
-        if log_max <= 0:
-            verdict = f"Jusqu'à {_fmt_m2(sdp_possible)} de plancher."
-        else:
-            verdict = (f"Jusqu'à {_fmt_m2(sdp_possible)} de plancher · "
-                       f"{_fmt_range(logements[0], logements[1])} logement(s).")
+        verdict = f"Jusqu'à {_fmt_m2(sdp_possible)} de plancher."
         parts = []
         if emprise_sol_max is not None and rules_pan is not None and \
                 isinstance(getattr(rules_pan, "emprise_sol_pct", None), (int, float)):
@@ -341,18 +337,23 @@ def faisabilite_scenario(session: Session, parcel_id: int, scenario: str | None 
         {"n": 6, "label": "Plancher possible", "valeur": e6_val,
          "source": ("plafond − bâti conservé" if scenario == "bati_garde"
                     else "enveloppe du terrain, bâti rasé"), "prov": "derive"},
-        {"n": 7, "label": "Logements",
-         "valeur": _fmt_range(logements[0], logements[1]) if log_max > 0 else "—",
-         "source": f"plancher habitable ÷ {logt_moyen:g} m²/logt", "prov": "derive"},
+        # LOGEMENTS-SOURCE-UNIQUE — l'étape « Logements » n'imprime plus la fourchette de l'ancien
+        # calcul : renvoi unique (le même que la fiche), le stationnement cite la RÈGLE (pl./logt)
+        # sans total (le total dépend du programme, chiffré par l'Étude).
+        {"n": 7, "label": "Nombre de logements", "valeur": RENVOI_ETUDE,
+         "source": "moteur d'implantation (Étude de faisabilité)", "prov": "derive"},
         {"n": 8, "label": "Stationnement",
-         "valeur": (f"~{places} place(s)" if places is not None else "non borné (non réglementé)"),
+         "valeur": (f"{ppl_num:g} place(s) par logement" if (regime == "borne" and ppl_num)
+                    else "non borné (non réglementé)"),
          "source": src.get("stationnement", "Art. 12") if regime == "borne" else "non réglementé",
          "prov": "sourcee" if regime == "borne" else "absent"},
     ]
 
     base.update({
         "logement_autorise": True, "verdict": verdict, "ce_qui_limite": limite,
-        "sdp_possible_m2": sdp_possible, "logements": logements, "stationnement_places": places,
+        "sdp_possible_m2": sdp_possible,
+        # mention « maximum réglementaire » (volet D) + renvoi — les mêmes textes que la fiche.
+        "capacite_mention": MENTION_COURTE, "logements_renvoi": RENVOI_ETUDE,
         "surface_a_demolir_m2": surface_a_demolir, "etapes": etapes,
         "test": _tester(test, sdp_possible, True, scenario, bati_present, ppl_num, plu,
                         demolition=surface_a_demolir),

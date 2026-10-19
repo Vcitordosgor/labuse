@@ -278,7 +278,10 @@ def assemblage(body: AssemblageIn, db: Session = Depends(get_db)) -> dict:
         # #1 — capacité + bilan cumulés RÉELS (fiche_payload agrégé)
         "sdp_combinee_m2": sdp, "sdp_max_seule_m2": sdp_max_seule,
         "gain_ratio": gain_ratio, "gain_pct": gain_pct,
-        "logements_combine": agg["logements"], "n_chiffrables": agg["n_chiffrables"],
+        # LOGEMENTS-SOURCE-UNIQUE — la fourchette de logements combinée (ancien calcul de capacité)
+        # n'est plus servie : l'écran Assemblage renvoie déjà vers l'Étude de faisabilité (aucun
+        # lecteur front depuis IMPLANTATION-4) — le nombre de logements n'a qu'une seule source.
+        "n_chiffrables": agg["n_chiffrables"],
         "ca": agg["ca"], "charge_fonciere": agg["charge_fonciere"],
         "note_sdp": "Capacité et bilan calculés sur l'UNION des géométries (ASSEMBLAGE-2) : une seule "
                     "assiette (reculs INTERNES supprimés à la fusion), un seul moteur de capacité, une "

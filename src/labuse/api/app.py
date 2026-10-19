@@ -7371,7 +7371,9 @@ def assemblage_study(idus: str, db: Session = Depends(get_db)) -> dict:
         "n_parcelles": len(parcels),
         "contigu": contigu,
         "surface_cumulee_m2": agg["surface_cumulee_m2"],
-        "capacite": {"sdp_m2": agg["sdp_m2"], "logements": agg["logements"]},
+        # LOGEMENTS-SOURCE-UNIQUE — plus de fourchette de logements (ancien calcul de capacité) :
+        # le nombre de logements n'a qu'une source, l'Étude de faisabilité (moteur d'implantation).
+        "capacite": {"sdp_m2": agg["sdp_m2"]},
         "ca": agg["ca"],
         "charge_fonciere": agg["charge_fonciere"],
         "n_chiffrables": agg["n_chiffrables"],
@@ -7785,14 +7787,14 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
     except Exception:  # noqa: BLE001
         pass
 
-    # LOT 4.1 — Orientations PLH (TCO) pour la commune, avec alignement sur la capacité estimée.
+    # LOT 4.1 — Orientations PLH (TCO) pour la commune. LOGEMENTS-SOURCE-UNIQUE : l'« alignement »
+    # (qui citait « ~N logements estimés » de l'ancien calcul de capacité) n'est plus produit — le
+    # nombre de logements n'a qu'une source (l'Étude de faisabilité) ; les orientations de la
+    # commune (cible, besoin, typologies) restent servies telles quelles.
     plh_block = None
     try:
         from .. import plh as plh_mod
-        fr = ((faisabilite or {}).get("fourchette") or {})
-        rng = fr.get("logements_sous_sol") or fr.get("logements_au_sol") or [0, 0]
-        logements_est = rng[1] or None
-        plh_block = plh_mod.orientations(p.commune, logements_est)
+        plh_block = plh_mod.orientations(p.commune)
     except Exception:  # noqa: BLE001 - orientation optionnelle, jamais bloquante
         plh_block = None
 

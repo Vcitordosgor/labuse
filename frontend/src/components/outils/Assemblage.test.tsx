@@ -11,7 +11,7 @@ import { M16 } from './moteurs'
 const IDUS = ['97415000CT1917', '97415000CT2565', '97415000CT3327']
 const STUDY_OK = {
   n: 3, contigu: true, isolees: [], surface_totale_m2: 14111, sdp_combinee_m2: 11065, sdp_max_seule_m2: 10726,
-  gain_ratio: 1.03, gain_pct: 3, logements_combine: [78, 89], n_proprietaires: 3, n_personnes_morales: 1, n_particuliers: 2,
+  gain_ratio: 1.03, gain_pct: 3, n_proprietaires: 3, n_personnes_morales: 1, n_particuliers: 2,
   tous_personnes_morales: false, proprietaires_pm: [], sans_potentiel: false, n_chiffrables: 3,
   ca: { central: 5000000 }, charge_fonciere: { central: -1879117, par_m2_terrain: -133 },
   terrain_zone_eur_m2: 479, terrain_zone_fiabilite: 'moyenne', zones_mixtes: false, note_sdp: 'Indicatif.',

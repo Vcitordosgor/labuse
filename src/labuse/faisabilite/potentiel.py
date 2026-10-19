@@ -129,8 +129,8 @@ def bloc_potentiel(session: Session, parcel_id: int, fz=None) -> dict | None:
 
     - au_sol   : SDP résiduelle du run SERVI (`parcel_residuel`), lue TELLE QUELLE ;
     - en_hauteur : surélévation au moteur commun (égout — 3.2) ;
-    - table_rase : le scénario du moteur commun (vendable, logements APRÈS plafond de
-      densité et stationnement — 3.3).
+    - table_rase : le scénario du moteur commun (vendable APRÈS plafond de densité et
+      stationnement — 3.3 ; le nombre de logements, lui, vit dans l'Étude de faisabilité).
     None si la parcelle est inconnue.
 
     FAISABILITE-clip (Vic 24/09/2026) — la garde de lecture « zone dominante A/N → 0 »
@@ -160,10 +160,12 @@ def bloc_potentiel(session: Session, parcel_id: int, fz=None) -> dict | None:
     # table rase — le scénario du moteur commun
     f = fz[1] if fz else None
     fo = (f.fourchette or {}) if f else {}
+    # LOGEMENTS-SOURCE-UNIQUE — `logements` (fourchette de l'ancien calcul de capacité,
+    # SDP ÷ logement moyen) RETIRÉ du bloc et du verdict : le nombre de logements ne se lit que
+    # dans l'Étude de faisabilité (moteur d'implantation) — les lecteurs (Flash) impriment le renvoi.
     table_rase = {"constructible": bool(f.constructible) if f else False,
                   "vendable_m2": fo.get("shab_vendable_m2"),
                   "plancher_m2": fo.get("surface_plancher_m2"),
-                  "logements": fo.get("logements_au_sol"),
                   "mention": "après plafond de densité et stationnement"}
     # verdict — une phrase, composée des trois lignes
     morceaux: list[str] = []
@@ -176,10 +178,8 @@ def bloc_potentiel(session: Session, parcel_id: int, fz=None) -> dict | None:
         morceaux.append(f"marge en hauteur ~{en_hauteur['marge_m']:g} m sous "
                         f"la hauteur {en_hauteur['base']}")
     if table_rase["constructible"] and table_rase["vendable_m2"]:
-        lo, hi = (table_rase.get("logements") or (None, None))
-        logts = f", {lo}–{hi} logements" if lo is not None else ""
         morceaux.append(f"en table rase : ~{round(table_rase['vendable_m2'])} m² "
-                        f"vendables{logts} ({table_rase['mention']})")
+                        f"vendables ({table_rase['mention']})")
     elif f is not None and not table_rase["constructible"]:
         morceaux.append(f"table rase non constructible ({f.cause or 'règles de zone'})")
     if not morceaux:

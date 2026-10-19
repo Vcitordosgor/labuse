@@ -11,7 +11,7 @@ import { getCalculetteDefaults, getFaisabilite, getModeB, getPipelineForParcel, 
 import { fmtEurCompact, fmtInt, fmtDec, fmtM2, fmtPctConsomme, fmtSup } from '../../lib/format'
 import { Chevron } from '../ui/Chevron'
 import { PERIM_POTENTIEL_COURT } from '../../lib/perimetres'
-import { CAPACITE_MAX_MENTION } from '../../lib/capaciteMax'
+import { CAPACITE_MAX_MENTION, CAPACITE_MAX_MENTION_COURTE } from '../../lib/capaciteMax'
 import { Chargement, Squelette } from '../Loading'
 import { ErrorState } from '../States'
 import { BlocIndisponible } from './BlocIndisponible'
@@ -641,6 +641,20 @@ export function FaisabiliteTab({ idu }: { idu: string; embedded?: boolean }) {
           </p>
         )}
         {pan.ce_qui_limite && <p className="mt-2 text-[12px] leading-snug text-txt-mut">{pan.ce_qui_limite}</p>}
+        {/* LOGEMENTS-SOURCE-UNIQUE — le panneau (Calculette foncière comprise) ne chiffre plus les
+            logements de l'ancien calcul : renvoi unique vers l'Étude de faisabilité (le même geste
+            que la fiche) + mention « maximum réglementaire » (volet D), le même texte que la fiche. */}
+        {pan.constructible && (
+          <button data-faisa-renvoi-etude-panneau onClick={() => useApp.getState().ouvrirEtude([idu])}
+            className="mt-2 block text-left text-[11px] text-mint underline decoration-mint/40 underline-offset-2 transition-colors duration-quick hover:text-mint/80">
+            Nombre de logements et plan masse : voir l'Étude de faisabilité →
+          </button>
+        )}
+        {pan.constructible && (
+          <p data-faisa-capacite-mention className="mt-1.5 text-[10.5px] leading-snug text-txt-dim">
+            Surfaces : {pan.capacite_mention ?? CAPACITE_MAX_MENTION_COURTE}.
+          </p>
+        )}
         {badges.plu_approuve_le && <p className="mt-2 text-[10.5px] text-txt-dim">PLU — {String(badges.plu_approuve_le)}</p>}
       </div>
 

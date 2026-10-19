@@ -241,17 +241,14 @@ def _financier_contexte(db, idu: str, fiche: dict, compte_id: int | None) -> dic
         "rap": None,   # TAXE-FIX-1 point 2 — RAP (0,40 % assiette), chiffrée ci-dessous par calculer()
     }
     pot = fiche.get("potentiel_transformation") or {}
-    # A-05-1 — le NOMBRE de logements du programme vient de la fourchette de la fiche
-    # (logements_au_sol, borne haute = capacité maximale estimée), PAS du drapeau booléen
-    # `capacite_estimee` (qui faisait tomber le programme sur « 1 logement »). La saisie du
-    # porteur (logements_vises_saisi) reste prioritaire.
-    from .robinet_fiche import _fourchette_logements
-    _fl = _fourchette_logements(db, idu)
-    cap = _fl[1] if _fl else None
+    # LOGEMENTS-SOURCE-UNIQUE — le programme ne tire PLUS un nombre de logements de l'ancien calcul
+    # de capacité (A-05-1 prenait la borne haute de `logements_au_sol`) : seule la SAISIE du porteur
+    # (logements_vises_saisi) porte un nombre ; sinon le Financier imprime le renvoi de la fiche
+    # (« voir l'Étude de faisabilité » — moteur d'implantation, seul à compter des logements).
     program = {
         # CONTENANCE-1 (Lot B) : surface de terrain = contenance si présente, sinon dessin.
         "surface_terrain": fiche.get("surface_terrain_m2") or fiche.get("surface_m2"),
-        "logements": rv("logements_vises_saisi") or cap,
+        "logements": rv("logements_vises_saisi"),
         "surface_vendable": pot.get("surface_vendable_m2"),
         "surface_plancher": pot.get("surface_plancher_m2"),
     }
