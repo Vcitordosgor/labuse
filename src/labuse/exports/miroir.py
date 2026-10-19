@@ -657,15 +657,12 @@ def _r_potentiel(v):
 
 
 def _r_capacite(v):
-    # A-05-1 — « Capacité (logements) » = la FOURCHETTE de la fiche (logements_au_sol), rendue
-    # EXACTEMENT comme la section Constructibilité de l'écran : « min–max logements » (ou un seul
-    # nombre si bornes égales). Jamais le drapeau `capacite_estimee` (qui imprimait « 1 »), jamais
-    # le dict brut. L'extracteur renvoie {min, max, texte}.
-    if isinstance(v, dict):
-        txt = v.get("texte") or (str(v.get("max")) if v.get("max") is not None else "")
-    else:
-        txt = str(v)
-    return esc(f"{txt} logements") if txt else ""
+    # A-05-1 → IMPLANTATION-3 → LOGEMENTS-SOURCE-UNIQUE — la donnée ne porte plus de nombre : le
+    # renvoi « voir l'Étude de faisabilité » (l'extracteur renvoie {renvoi, texte}, plus jamais
+    # {min, max}). Le Dossier passe par le cas spécial (plus bas) ; ce rendeur, s'il est appelé,
+    # imprime le même renvoi — aucun chemin ne peut réimprimer la fourchette de l'ancien calcul.
+    txt = (v.get("renvoi") or v.get("texte")) if isinstance(v, dict) else str(v or "")
+    return esc(txt) if txt else ""
 
 
 def _r_dpe(v):

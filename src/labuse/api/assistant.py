@@ -21,6 +21,11 @@ from typing import Any
 
 # M11 socle 0 : plus de client httpx propre ici — l'appel modèle passe par labuse.ai.core.
 from ..ai.core import ENV_KEY  # noqa: F401 — nom de la variable d'env (source unique = core ; rétro-compat)
+# LOGEMENTS-SOURCE-UNIQUE — textes uniques (les mêmes que la fiche) : mention « maximum
+# réglementaire » (volet D) + renvoi vers l'Étude de faisabilité pour le nombre de logements.
+from ..capacite_max import MENTION_COURTE as _MENTION_COURTE
+from ..capacite_max import RENVOI_ETUDE as _RENVOI_ETUDE
+from ..capacite_max import RENVOI_ETUDE_PHRASE as _RENVOI_ETUDE_PHRASE
 
 ENV_MODEL = "LABUSE_ASSISTANT_MODEL"  # surcharge de modèle éventuelle (rétro-compat)
 
@@ -137,11 +142,14 @@ def assistant_facts(fiche: dict) -> dict[str, Any]:
                     "motif_servi": v.get("motif"),
                     "micro_opportunite": v.get("micro_opportunite"),
                     "signaux_vigilance": v.get("downgrade_reason")},
+        # LOGEMENTS-SOURCE-UNIQUE — `logements_au_sol` (ancien calcul de capacité) RETIRÉ des faits :
+        # l'IA ne peut plus citer un nombre de logements — elle cite le renvoi de la fiche (le nombre
+        # vit dans l'Étude de faisabilité, moteur d'implantation).
         "faisabilite": ({
             "zone_plu": fa.get("zone"), "constructible": fa.get("constructible"),
             "synthese": fa.get("verdict"),
             "niveaux": fr.get("niveaux"), "surface_plancher_m2": fr.get("surface_plancher_m2"),
-            "logements_au_sol": fr.get("logements_au_sol"),
+            "nombre_logements": _RENVOI_ETUDE,
             "hauteur_m": fr.get("hauteur_m"), "volume_enveloppe_m3": v3.get("volume_m3"),
         } if fa else None),
         "bilan_promoteur": ({
@@ -240,13 +248,11 @@ def rules_summary(facts: dict) -> str:
     if fa.get("zone_plu"):
         cap = f" Zone {fa['zone_plu']}"
         if fa.get("surface_plancher_m2"):
-            logts = fa.get("logements_au_sol")
-            # M36 Lot C (Q2) : bornes identiques → valeur unique (« 2 logements », pas « 2–2 »)
-            lg = ""
-            if isinstance(logts, list) and len(logts) == 2:
-                lg = (f", {logts[0]} logements" if logts[0] == logts[1]
-                      else f", {logts[0]}–{logts[1]} logements")
-            cap += f", capacité ESTIMÉE ~{round(fa['surface_plancher_m2'])} m² de plancher{lg}"
+            # LOGEMENTS-SOURCE-UNIQUE — plus de fourchette de logements (ancien calcul de capacité) :
+            # la SDP est dite MAXIMUM réglementaire (mention volet D, la même que la fiche) et le
+            # nombre de logements RENVOIE à l'Étude de faisabilité (moteur d'implantation).
+            cap += (f", capacité ESTIMÉE ~{round(fa['surface_plancher_m2'])} m² de plancher "
+                    f"({_MENTION_COURTE}) ; {_RENVOI_ETUDE_PHRASE}")
         cap += "."
     lignes.append(f"**Potentiel** — {pot}.{cap}")
 

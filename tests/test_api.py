@@ -253,7 +253,9 @@ def test_assemblage_study_endpoint(client):
     assert d["n_parcelles"] == 2
     assert isinstance(d["contigu"], bool)
     assert d["surface_cumulee_m2"] >= 0
-    assert "sdp_m2" in d["capacite"] and "logements" in d["capacite"]
+    # LOGEMENTS-SOURCE-UNIQUE — la capacité cumulée ne sert plus de fourchette de logements
+    # (le nombre de logements n'a qu'une source : l'Étude de faisabilité).
+    assert "sdp_m2" in d["capacite"] and "logements" not in d["capacite"]
     assert "à valider" in d["note"]
 
 

@@ -256,11 +256,16 @@ def _constructibilite(db: Session, idu: str, avail: set[str]) -> dict | None:
             vend = fo.get("shab_vendable_m2")
             if vend:
                 rend = float(Hypotheses.charger().coef_rendement) or 0.80
+                # LOGEMENTS-SOURCE-UNIQUE — plus de `logements_au_sol` (ancien calcul de capacité) :
+                # le Flash imprime LE renvoi de la fiche (le nombre de logements vit dans l'Étude de
+                # faisabilité) + la mention « maximum réglementaire » (volet D), comme la fiche.
+                from ..capacite_max import MENTION_COURTE, RENVOI_ETUDE
                 out["faisa"] = {
                     "vendable_m2": int(vend),
                     "plancher_m2": round(vend / rend),
                     "rendement_pct": round(rend * 100),
-                    "logements_au_sol": fo.get("logements_au_sol"),
+                    "logements_renvoi": RENVOI_ETUDE,
+                    "capacite_mention": MENTION_COURTE,
                     "vendable_silo_m2": fo.get("shab_vendable_silo_m2"),
                     "run": _residuel_run_servi(db),
                 }

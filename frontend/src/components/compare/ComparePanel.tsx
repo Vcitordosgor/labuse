@@ -61,15 +61,19 @@ const ROWS: Row[] = [
   { label: 'Zone PLU', prov: 'source', val: (r) => r.zone || '—' },
   // COMPARER-2 §4 / SOURCES-FIX-2 lot B — Classement LABUSE (bande du RUN SERVI) + Signal de mutation en badge,
   // MÊME source et MÊMES couleurs que l'écran Analyse (score_labuse). 2e ligne, sous la zone PLU.
+  // BANDES-UNIFIEES (fix/logements-source-unique) — UN SEUL libellé de bande, écran ET PDF :
+  // « lettre · libellé client · Signal X » (BANDE_META/SIGNAL_META = vocabulaire de la fiche ;
+  // le PDF comparatif.py rend la même chaîne depuis le barème). Avant : « À étudier » à l'écran
+  // vs « C · signal faible » au PDF — deux rendus pour la même donnée.
   { label: 'Classement LABUSE', prov: 'estime', noBadge: true,
-    val: (r) => bandeMeta(r.bande)?.label ?? '—',
+    val: (r) => { const bm = bandeMeta(r.bande); return bm ? `${r.bande} · ${bm.label}` : '—' },
     render: (r) => {
       const bm = bandeMeta(r.bande)
       if (!bm) return <span className="text-txt-dim">—</span>
       const sm = signalMeta(r.signal_niveau)
       return (
         <span className="inline-flex flex-nowrap items-center gap-1.5">
-          <span className="rounded px-1.5 py-0.5 text-[10px] font-semibold" style={{ backgroundColor: `${bm.color}22`, color: bm.color }}>{bm.label}</span>
+          <span className="rounded px-1.5 py-0.5 text-[10px] font-semibold" style={{ backgroundColor: `${bm.color}22`, color: bm.color }}>{r.bande} · {bm.label}</span>
           {sm && <span className="rounded px-1 py-0.5 text-[9px] font-medium" style={{ backgroundColor: `${sm.color}1F`, color: sm.color }}>{sm.label}</span>}
         </span>
       )

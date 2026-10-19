@@ -14,13 +14,16 @@ const SCEN = (scenario: 'terrain_libere' | 'bati_garde', test: any = null) => ({
   portion_constructible_m2: null, portion_zone: null,
   scenario, bati_present: true, bati_libelle: '193 m² bâtis · 3 niveau(x) (lidar)',
   constructible: true, cause: null, logement_autorise: true,
+  // LOGEMENTS-SOURCE-UNIQUE — le panneau ne sert plus `logements`/`stationnement_places` (ancien
+  // calcul de capacité) : verdict sans fourchette + renvoi vers l'Étude + mention volet D.
   verdict: scenario === 'bati_garde'
     ? 'Presque saturée : 26 m² de plancher encore possibles.'
-    : "Jusqu'à 245 m² de plancher · 2–3 logement(s).",
+    : "Jusqu'à 245 m² de plancher.",
   ce_qui_limite: 'emprise au sol 30 % · hauteur 7 m (R+1)',
   sdp_possible_m2: scenario === 'bati_garde' ? 26 : 245,
-  logements: scenario === 'bati_garde' ? [0, 1] : [2, 3],
-  stationnement_places: 3, surface_a_demolir_m2: scenario === 'bati_garde' ? null : 219,
+  capacite_mention: 'maximum réglementaire — les permis réels en utilisent ~½ en médiane (volet D)',
+  logements_renvoi: "voir l'Étude de faisabilité",
+  surface_a_demolir_m2: scenario === 'bati_garde' ? null : 219,
   badges: { regles_sourcees: true, plancher_estime: true, plu_approuve_le: '05/08/2026' },
   bandeau: 'Pré-faisabilité sur règlement public, pas un certificat d’urbanisme.',
   plu: { zone: 'Uh', regles_valeurs: [

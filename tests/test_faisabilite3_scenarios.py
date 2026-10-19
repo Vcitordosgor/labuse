@@ -98,10 +98,18 @@ def test_bati_garde_egale_le_residuel_servi():
     assert "conservés" in e5["valeur"]
 
 
-def test_bati_garde_jamais_plus_de_logements_que_terrain_libere():
-    tl = scenarios.faisabilite_scenario(None, 1, "terrain_libere")
-    bg = scenarios.faisabilite_scenario(None, 1, "bati_garde")
-    assert max(bg["logements"]) <= max(tl["logements"])
+def test_panneau_sans_fourchette_logements_et_renvoi_etude():
+    # LOGEMENTS-SOURCE-UNIQUE — le panneau ne sert plus `logements`/`stationnement_places` (ancien
+    # calcul de capacité) : verdict sans fourchette, étape « Nombre de logements » = renvoi unique
+    # (le même que la fiche) + mention « maximum réglementaire » (volet D).
+    from labuse.capacite_max import MENTION_COURTE, RENVOI_ETUDE
+    for sc in ("terrain_libere", "bati_garde"):
+        r = scenarios.faisabilite_scenario(None, 1, sc)
+        assert "logements" not in r and "stationnement_places" not in r
+        assert "logement" not in r["verdict"].lower()
+        e7 = next(e for e in r["etapes"] if e["n"] == 7)
+        assert e7["label"] == "Nombre de logements" and e7["valeur"] == RENVOI_ETUDE
+        assert r["capacite_mention"] == MENTION_COURTE and r["logements_renvoi"] == RENVOI_ETUDE
 
 
 # ── PARCELLE NUE : un seul scénario ──
@@ -134,7 +142,7 @@ def test_au_non_ouverte(monkeypatch):
     monkeypatch.setattr("labuse.faisabilite.db.parcel_faisabilite",
                         lambda s, pid, hyp_overrides=None: (_Ctx(zone="2AU"), f))
     r = scenarios.faisabilite_scenario(None, 1, "terrain_libere")
-    assert r["sdp_possible_m2"] == 0 and r["logements"] == [0, 0]
+    assert r["sdp_possible_m2"] == 0 and "logements" not in r
     assert "AU non ouverte" in r["ce_qui_limite"]
 
 

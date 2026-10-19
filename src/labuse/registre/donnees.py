@@ -139,11 +139,12 @@ DONNEES: dict[str, Donnee] = {
     moteur="gabarit", calcul="moteur",
     fonction="src/labuse/gabarit/plan_svg.py:gabarit_svg",
     reservoirs=("cadastre_api_carto", "gpu_plu_api_carto",), portee="live", type="texte"),
- "capacite_logements": C("Capacité (logements)", "logements", "parcelle",
-    "logements estimés du scénario table rase (après plafond de densité et stationnement) — "
-    "bloc potentiel (EXPORTS-1 lot 3)",
+ "capacite_logements": C("Nombre de logements (renvoi)", "logements", "parcelle",
+    "LOGEMENTS-SOURCE-UNIQUE — plus un nombre : renvoi « voir l'Étude de faisabilité » (moteur "
+    "d'implantation, seule source d'un nombre de logements) ; la donnée ne sert plus que de "
+    "PRÉSENCE (capacité existante → renvoi ; sinon « non chiffrée »)",
     moteur="potentiel", calcul="moteur",
-    fonction="src/labuse/faisabilite/potentiel.py:bloc_potentiel (table_rase.logements)",
+    fonction="src/labuse/exports/robinet_fiche.py:_c_capacite (présence via _fourchette_logements)",
     reservoirs=("bd_topo", "cosia", "gpu_plu_api_carto",), portee="run"),
  # FIX-ORFEVRE-1 (décision Vic 18/10/2026) — les deux ratios de la note « capacité maximale »
  # (capacite_max.MENTION) étaient imprimés SANS id du registre (ils ne passaient le verrou de
