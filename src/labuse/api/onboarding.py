@@ -1031,7 +1031,7 @@ def flash_page(idu: str = "", q: str = "", annule: int = 0, cgv: str = "",
     parcelle = None
     if idu and len(idu) == 14:
         parcelle = db.execute(text(
-            "SELECT idu, commune, round(surface_m2) AS m2, "
+            "SELECT idu, commune, round(surface_m2) AS dessin_m2, contenance_m2, "
             # CORRECTIFS-1 A7 — géométrie simplifiée en 3857 pour l'aperçu ortho (écran de validation).
             # CONTENANCE-FIX : on simplifie APRÈS le passage en mètres (3857). Simplifier `geom` (SRID
             # 4326, en degrés) avec une tolérance de 0,5 revenait à 0,5° ≈ 55 km → le contour s'écrasait
@@ -1041,13 +1041,30 @@ def flash_page(idu: str = "", q: str = "", annule: int = 0, cgv: str = "",
             {"i": idu.upper()}).mappings().first()
     if parcelle:
         _apercu = _flash_apercu_ortho(parcelle.get("gj3857"))
+        # CHASSE-APP-FIX-1 (pt 2) — MÊME traitement que la fiche (CONTENANCE-1, lib surface) : la
+        # surface affichée est la CONTENANCE cadastrale (chiffre de l'acte) si présente, sinon le
+        # dessin (repli). Avant, /flash montrait round(surface_m2) = l'aire du DESSIN (ST_Area), d'où
+        # « 27 156 m² » là où le cadastre dit « 25 633 m² », juste avant le paiement. Le dessin passe
+        # en MENTION SECONDAIRE « Dessin du plan » (même règle que la fiche : source cadastre + écart ≥ 1 %).
+        from ..surface import SOURCE_CADASTRE, _fmt_m2, ecart_pct, surface_terrain
+        _st = surface_terrain(parcelle.get("dessin_m2"), parcelle.get("contenance_m2"))
         _legende = (f"{html.escape(parcelle['idu'][8:10])} {html.escape(parcelle['idu'][10:])} — "
-                    f"{html.escape(parcelle['commune'])} · {('%d' % (parcelle['m2'] or 0))} m² · "
+                    f"{html.escape(parcelle['commune'])} · {_fmt_m2(_st.valeur)} · "
                     "Vue aérienne IGN")
+        _e = ecart_pct(_st.dessin_m2, _st.contenance_m2)
+        if _st.source == SOURCE_CADASTRE and _e is not None and abs(_e) >= 1:
+            _dessin_note = (f'<p class="note" style="margin:-10px 0 16px;font-size:11.5px;color:var(--mut)">'
+                            f'Dessin du plan : {_fmt_m2(_st.dessin_m2)}</p>')
+        elif _st.source != SOURCE_CADASTRE and _st.valeur is not None:
+            _dessin_note = ('<p class="note" style="margin:-10px 0 16px;font-size:11.5px;color:var(--mut)">'
+                            'Surface mesurée sur le plan cadastral.</p>')
+        else:
+            _dessin_note = ""
         return HTMLResponse(_page("rapport Flash", f"""
 <h1>Est-ce le bon terrain ?</h1>
 {_apercu}
 <p class="note" style="margin:0 0 16px;font-weight:600;color:var(--txt)">{_legende}</p>
+{_dessin_note}
 <p class="note">Livré dès le paiement. Le lien de téléchargement reste valable {of['validite_lien_jours']} jours.</p>
 <p class="note">Paiement unique de {of['eur']} €. Pas d'abonnement, pas de compte à créer.</p>
 <p class="note">Aucune donnée bancaire ne passe par LABUSE : le paiement est traité par Stripe.</p>
