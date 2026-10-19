@@ -415,7 +415,7 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
        "hebdo (mar)", "0 1 * * 2", "05:00 mardi", touche="eau", timeout_s=3600,
        raison="DVF (mutations) nourrit le marché (prix secteur, radar). Détection J+2 (Last-Modified) : "
               "contrôle HEBDOMADAIRE (mardi) qui ne recharge QUE si une nouvelle livraison est publiée.",
-       test="tests/test_cron1_registre.py::test_job_a_une_raison", gel="Phase 8 Stéphanie"),
+       test="tests/test_cron1_registre.py::test_job_a_une_raison"),   # dégel prod 20/10 : gel= retiré (job actif)
 
     # ══════════════════ L'EXPLOITATION — faire tourner le serveur ══════════════════
     _j("backup-postgres", "Sauvegarde PostgreSQL (dump + rotation, 4 conservés)", "quotidien",
