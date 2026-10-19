@@ -2649,6 +2649,51 @@ def parcel_kmz(idu: str, db: Session = Depends(get_db)) -> Response:
         headers={"Content-Disposition": f'attachment; filename="{idu}.kmz"'})
 
 
+# PARCOURS-EXPERT-19-10 (B) — détection d'une commune dans la saisie pour la traiter en FILTRE.
+_COMMUNES_ADR_CACHE: list[tuple[str, str]] = []   # (forme pliée hyphen→espace, nom original en base)
+
+
+def _fold_commune(s: str) -> str:
+    """Pliage pour la DÉTECTION de commune : minuscules, sans accents ni apostrophes, tirets et
+    espaces unifiés (« L'Étang-Salé » → « letang sale », « Saint-Paul » → « saint paul »)."""
+    import unicodedata
+    s = unicodedata.normalize("NFKD", s or "").encode("ascii", "ignore").decode().lower()
+    s = s.replace("'", "").replace("’", "").replace("-", " ")
+    return " ".join(s.split())
+
+
+def _communes_adresses(db: Session) -> list[tuple[str, str]]:
+    """Les communes RÉELLES de la table adresses (plié, nom original), en cache process, triées les
+    plus longues d'abord pour un match le plus spécifique (« saint paul » avant « saint »)."""
+    if not _COMMUNES_ADR_CACHE:
+        noms = db.execute(text("SELECT DISTINCT commune FROM adresses WHERE commune IS NOT NULL")).scalars().all()
+        paires = sorted(((_fold_commune(n), n) for n in noms), key=lambda p: len(p[0]), reverse=True)
+        _COMMUNES_ADR_CACHE.extend(p for p in paires if p[0])
+    return _COMMUNES_ADR_CACHE
+
+
+def _commune_en_filtre(db: Session, needle: str) -> tuple[str | None, str]:
+    """PARCOURS-EXPERT-19-10 (B) — un nom de commune reconnu dans la saisie devient un FILTRE ; il
+    n'est plus cherché comme texte dans « numéro voie ». Reconnu si la saisie EST une commune (filtre
+    seul) ou se TERMINE par une commune (« voie commune » → filtre + voie). Le suffixe le plus long
+    gagne (commune la plus complète). Retourne (commune_filtre | None, texte_restant)."""
+    import re
+    nf = _fold_commune(needle)
+    communes = _communes_adresses(db)
+    for plie, nom in communes:          # saisie = commune seule
+        if nf == plie:
+            return nom, ""
+    for m in re.finditer(r"\S+", needle):   # commune en SUFFIXE (début de mot le plus à gauche)
+        i = m.start()
+        if i == 0 or needle[i - 1] not in " -,":
+            continue
+        suffixe = _fold_commune(needle[i:])
+        for plie, nom in communes:
+            if suffixe == plie:
+                return nom, needle[:i].rstrip(" -,").strip()
+    return None, needle
+
+
 @app.get("/adresses/autocomplete")
 def adresses_autocomplete(q: str = Query(..., min_length=3),
                           limit: int = Query(6, ge=1, le=12),
@@ -2668,6 +2713,25 @@ def adresses_autocomplete(q: str = Query(..., min_length=3),
     # apostrophe typographique) — même fonction des deux côtés, même point que le patrimoine.
     from ..constants import params_pliage, sql_plie
     _col = sql_plie("coalesce(numero,'') || ' ' || voie")
+    # PARCOURS-EXPERT-19-10 (B) — une commune reconnue FILTRE (commune = …) au lieu d'être cherchée
+    # comme texte dans « numéro voie » : « Saint-Paul » ne ramène plus « Rue de Saint-Paul, Le Port »,
+    # et « rue des Béliers Saint-Paul » ne ramène que Saint-Paul. RECHERCHE-2 Lot 3a vit dans
+    # recherche.py (endpoint /api/recherche/suggest, distinct) — aucune de ses règles n'est touchée ici.
+    commune_f, reste = _commune_en_filtre(db, needle)
+    where = ["idu IS NOT NULL", "geom IS NOT NULL"]
+    params: dict = {"lim": limit, **params_pliage()}
+    if commune_f:
+        where.append("commune = :commune")
+        params["commune"] = commune_f
+    txt = reste if commune_f else needle
+    if txt:
+        like_expr = sql_plie("'%' || :q || '%'")
+        prefixe_expr = sql_plie(":q || '%'")
+        where.append(f"{_col} LIKE {like_expr}")
+        params["q"] = txt
+        order = f"({_col} LIKE {prefixe_expr}) DESC, length(voie), voie, numero"
+    else:
+        order = "length(voie), voie, numero"
     rows = db.execute(text(
         f"""
         SELECT id_ban,
@@ -2675,13 +2739,10 @@ def adresses_autocomplete(q: str = Query(..., min_length=3),
                commune, code_postal, idu,
                ST_X(geom) AS lon, ST_Y(geom) AS lat
         FROM adresses
-        WHERE idu IS NOT NULL AND geom IS NOT NULL
-          AND {_col} LIKE {sql_plie("'%' || :q || '%'")}
-        ORDER BY ({_col} LIKE {sql_plie(":q || '%'")}) DESC,
-                 length(voie), voie, numero
+        WHERE {" AND ".join(where)}
+        ORDER BY {order}
         LIMIT :lim
-        """),
-        {"q": needle, "lim": limit, **params_pliage()}).mappings().all()
+        """), params).mappings().all()
     feats = []
     for r in rows:
         label = r["label_court"]

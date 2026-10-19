@@ -79,3 +79,44 @@ def test_autocomplete_label_contient_commune(client, adresses):
     feats = r.json()["features"]
     assert feats
     assert "Entre-Deux" in feats[0]["label"]
+
+
+@pytest.fixture
+def adresses_commune(engine):
+    """B — une voie dans Saint-Paul et une voie HOMONYME « Rue de Saint-Paul » au Port (le piège)."""
+    from labuse.api import app as app_mod
+    from labuse.db import session_scope
+    rows = [
+        ("BAN_B1", "7", "Rue des Béliers", "97460", "Saint-Paul", "97415000ZZ0007", 55.29, -21.03),
+        ("BAN_B2", "9", "Rue de Saint-Paul", "97420", "Le Port", "97407000ZZ0009", 55.29, -20.94),
+    ]
+    with session_scope() as s:
+        for idb, num, voie, cp, com, idu, lon, lat in rows:
+            s.execute(_t(
+                "INSERT INTO adresses (id_ban, numero, voie, code_postal, commune, idu, geom) "
+                "VALUES (:i, :n, :v, :cp, :c, :idu, ST_SetSRID(ST_MakePoint(:lon, :lat), 4326)) "
+                "ON CONFLICT (id_ban) DO NOTHING"),
+                {"i": idb, "n": num, "v": voie, "cp": cp, "c": com, "idu": idu, "lon": lon, "lat": lat})
+        s.commit()
+    app_mod._COMMUNES_ADR_CACHE.clear()   # recharge les communes AVEC ces lignes (cache process)
+    yield
+    with session_scope() as s:
+        s.execute(_t("DELETE FROM adresses WHERE id_ban IN ('BAN_B1', 'BAN_B2')"))
+        s.commit()
+    app_mod._COMMUNES_ADR_CACHE.clear()
+
+
+def test_autocomplete_commune_seule_est_un_filtre(client, adresses_commune):
+    """PARCOURS-EXPERT-19-10 (B) — un nom de commune reconnu FILTRE, il n'est plus cherché comme
+    texte : « Saint-Paul » ne renvoie QUE Saint-Paul, plus « Rue de Saint-Paul, Le Port »."""
+    feats = client.get("/adresses/autocomplete", params={"q": "Saint-Paul"}).json()["features"]
+    assert feats, "Saint-Paul doit renvoyer ses adresses"
+    assert all(f["commune"] == "Saint-Paul" for f in feats), feats
+    assert not any(f["idu"] == "97407000ZZ0009" for f in feats)   # jamais la rue homonyme du Port
+
+
+def test_autocomplete_voie_plus_commune_filtree(client, adresses_commune):
+    """« rue des Béliers Saint-Paul » → la voie, filtrée à Saint-Paul (commune = filtre, pas texte)."""
+    feats = client.get("/adresses/autocomplete", params={"q": "rue des Béliers Saint-Paul"}).json()["features"]
+    assert any(f["idu"] == "97415000ZZ0007" for f in feats), feats
+    assert all(f["commune"] == "Saint-Paul" for f in feats), feats
