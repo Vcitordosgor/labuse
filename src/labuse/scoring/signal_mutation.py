@@ -20,6 +20,11 @@ NIVEAU_FORT = "fort"
 NIVEAU_MOYEN = "moyen"
 NIVEAU_FAIBLE = "faible"
 
+# BANDES-UNIFIEES (fix/logements-source-unique, volet bandes) — libellés CLIENT du niveau, les
+# MÊMES que la fiche (frontend/src/lib/status.ts › SIGNAL_META, à garder synchrone) : le PDF
+# Comparatif les lit ici (il écrivait « signal faible » en slug brut, différent de l'écran).
+NIVEAU_LABELS = {NIVEAU_FORT: "Signal fort", NIVEAU_MOYEN: "Signal moyen", NIVEAU_FAIBLE: "Signal faible"}
+
 
 def signal_niveau(p: float | None, cfg: PaliersConfig | None = None) -> str | None:
     """`signal_p` → niveau fort/moyen/faible (seuils absolus PALIERS-1). None si p indéfini."""

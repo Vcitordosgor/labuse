@@ -24,11 +24,32 @@ def _ref_courte(idu: str) -> str:
 
 
 def _classement(r) -> str | None:
+    # BANDES-UNIFIEES (fix/logements-source-unique) — UN SEUL libellé de bande, celui de la fiche :
+    # « lettre · libellé client · Signal X » (vocabulaire_client du barème = BANDE_META front,
+    # NIVEAU_LABELS = SIGNAL_META front). Avant : « C · signal faible » (lettre + slug brut) au PDF
+    # vs « À étudier » + « Signal faible » à l'écran — deux rendus pour la même donnée.
     bande = r.get("bande")
     if not bande:
         return None
-    sig = r.get("signal_niveau")
-    return f"{esc(bande)}" + (f" · signal {esc(sig)}" if sig else "")
+    from ...scoring.signal_mutation import NIVEAU_LABELS
+    lib = _libelle_bande(str(bande))
+    txt = f"{bande} · {lib}" if lib and lib != str(bande) else str(bande)
+    sig = NIVEAU_LABELS.get(str(r.get("signal_niveau") or ""))
+    return esc(txt + (f" · {sig}" if sig else ""))
+
+
+def _libelle_bande(bande: str) -> str:
+    """Libellé CLIENT d'une bande — la MÊME source que la fiche (barème `vocabulaire_client`,
+    miroir de frontend/src/lib/status.ts › BANDE_META). « HC » (écartée en dur, E-10) n'est pas
+    au barème (catégorie hors score) : libellé front repris ici, à garder synchrone."""
+    if bande == "HC":
+        return "Hors classement"
+    from ...scoring.score_labuse import charger_bareme, libelle_client_bande
+    try:
+        bareme, _sha = charger_bareme()
+        return libelle_client_bande(bande, bareme)
+    except Exception:  # noqa: BLE001 — barème illisible : la lettre seule, jamais un crash de PDF
+        return bande
 
 
 def _m2(r, k):
