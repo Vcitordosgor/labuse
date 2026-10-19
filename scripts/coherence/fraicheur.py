@@ -38,36 +38,34 @@ def _db():
     return cx
 
 
-# ────────────────────────── vocabulaire du calendrier DVF ──────────────────────────
-# DVF (DGFiP/Etalab) publie DEUX fois l'an : avril (→ données jusqu'au 31/12 de l'an précédent) et
-# octobre (→ données jusqu'au 30/06 de l'an courant). On en déduit la couverture MINIMALE attendue.
-
-def _dvf_couverture_attendue(j: date) -> date:
-    if j.month >= 10:                         # octobre publiée : S1 de l'année courante
-        return date(j.year, 6, 30)
-    if j.month >= 4:                          # avril publiée : toute l'année précédente
-        return date(j.year - 1, 12, 31)
-    return date(j.year - 1, 6, 30)            # avant avril : octobre de l'an précédent
-
-
 # ─────────────────────────────────────── GARDES ───────────────────────────────────────
 
 def g01_dvf_en_retard():
-    """DVF : la couverture RÉELLE de la base atteint-elle le dernier semestre publié par le producteur ?
-    Ligne réelle = date_mutation à minuit (les dates DVF sont des dates ; une ligne horodatée est
-    synthétique, cf. g02). EN RETARD si le réel est en-deçà de la couverture attendue aujourd'hui."""
-    with _db() as cx:
-        reel = cx.execute(
-            "SELECT max(date_mutation)::date FROM dvf_mutations "
-            "WHERE date_mutation::time = '00:00:00'").fetchone()[0]
-    if reel is None:
-        return "SKIP", "dvf_mutations vide ou absente"
-    attendu = _dvf_couverture_attendue(datetime.now(tz=timezone.utc).date())
-    if reel < attendu:
-        return "ECART", (f"EN RETARD : base DVF jusqu'à {reel} < couverture attendue {attendu} "
-                         f"(producteur publie avril/octobre ; ingest-dvf est gelé → la nouvelle "
-                         f"livraison n'arrivera pas seule).")
-    return "OK", f"couverture DVF {reel} ≥ attendu {attendu}"
+    """DVF : le producteur a-t-il, SUR LE MIROIR QUE LABUSE CONSOMME (geo-dvf latest, par département),
+    une livraison plus récente que ce qui est en base ? On réutilise la logique de l'app
+    `ingestion.fraicheur.check_dvf_livraison` (compare le Last-Modified HTTP de chaque CSV annuel à
+    l'état stocké `fraicheur_etat`). EN RETARD si une livraison a changé sans être chargée.
+
+    ⚠ Le calendrier Etalab (avril/octobre) NE SUFFIT PAS : la version « octobre » annoncée sur la page
+    data.gouv du jeu DVF brut peut ne pas être encore propagée au miroir geo-dvf géolocalisé que LABUSE
+    ingère (fichier de l'année en cours en 404, Last-Modified inchangé). Confronter le calendrier aurait
+    produit un faux « EN RETARD ». On confronte donc le miroir réel. SKIP si l'app/le réseau manquent."""
+    try:
+        from sqlalchemy import text
+        from labuse.db import session_scope
+        from labuse.ingestion.fraicheur import check_dvf_livraison
+    except Exception as exc:  # noqa: BLE001 — app non importable (banc partiel) : on ne tranche pas
+        return "SKIP", f"app non importable ({type(exc).__name__}) — garde DVF amont non jouée"
+    with session_scope() as s:
+        check = check_dvf_livraison(s)
+        reel = s.execute(text("SELECT max(date_mutation)::date FROM dvf_mutations "
+                              "WHERE date_mutation::time = '00:00:00'")).scalar()
+    if check["modifies"]:
+        annees = ", ".join(str(m["annee"]) for m in check["modifies"])
+        return "ECART", (f"EN RETARD : livraison geo-dvf plus récente non chargée (années {annees}) — "
+                         f"base jusqu'à {reel} ; lancer ingest-dvf.")
+    return "OK", (f"base DVF jusqu'à {reel} = dernière livraison geo-dvf disponible "
+                  f"(aucun Last-Modified amont plus récent).")
 
 
 def g02_dvf_ligne_incoherente():
