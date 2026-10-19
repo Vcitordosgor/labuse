@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- LA BUSE — rapatriement quotidien (07:30) des dumps VPS → poste local (sens TIRÉ, le VPS n'a
+     aucun accès vers chez nous). Modèle versionné : le script vit dans ~/.labuse/ops (JAMAIS ~/Desktop,
+     que macOS/TCC interdit à launchd → code 126). deploy/mac/install_agents.sh substitue /Users/VIC → $HOME. -->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>Label</key><string>immo.labuse.pull-backups</string>
+  <key>ProgramArguments</key><array>
+    <string>/bin/bash</string>
+    <string>/Users/VIC/.labuse/ops/pull_backups.sh</string>
+    <string>labuse-vps</string>
+    <string>/Users/VIC/labuse-backups/vps</string>
+  </array>
+  <key>EnvironmentVariables</key><dict>
+    <!-- pg_restore >= majeure du VPS, chemin ABSOLU (PATH launchd minimal). Env conda labusedb (PG 18). -->
+    <key>PG_RESTORE_BIN</key><string>/Users/VIC/miniforge3/envs/labusedb/bin/pg_restore</string>
+  </dict>
+  <key>StartCalendarInterval</key><dict><key>Hour</key><integer>7</integer><key>Minute</key><integer>30</integer></dict>
+  <key>StandardOutPath</key><string>/Users/VIC/labuse-backups/pull.log</string>
+  <key>StandardErrorPath</key><string>/Users/VIC/labuse-backups/pull.log</string>
+</dict></plist>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- LA BUSE — sentinelle de PROD (poste local), toutes les 10 min : healthz + état des crons.
+     Modèle versionné : le script vit dans ~/.labuse/ops (JAMAIS ~/Desktop, interdit à launchd par
+     macOS/TCC → code 126). deploy/mac/install_agents.sh substitue /Users/VIC → $HOME.
+     Secrets lus par le script depuis ~/labuse-backups/M7_SECRETS.txt (jamais en git). -->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>Label</key><string>immo.labuse.watch-prod</string>
+  <key>ProgramArguments</key><array>
+    <string>/bin/bash</string>
+    <string>/Users/VIC/.labuse/ops/watch_prod.sh</string>
+  </array>
+  <key>StartInterval</key><integer>600</integer>
+  <key>StandardErrorPath</key><string>/Users/VIC/labuse-backups/watch_prod.log</string>
+</dict></plist>

@@ -2,7 +2,11 @@
 <!-- DISQUE-EXTERNE-1 (14/10) — copie des sauvegardes hors du VPS, sur le disque externe du Mac.
      Déclenché (1) à CHAQUE montage de volume (StartOnMount : le script filtre le bon disque et
      ne fait rien si ce n'est pas lui), et (2) chaque DIMANCHE à 14:30 (s'il est branché).
-     Installation : voir deploy/mac/README.md. ADAPTER les chemins /Users/VIC au dépôt/home réels. -->
+
+     Le script NE DOIT PAS vivre sous ~/Desktop : macOS (TCC) interdit à launchd d'y lire un fichier
+     → l'agent échoue en code 126 « Operation not permitted ». On l'installe dans ~/.labuse/ops via
+     deploy/mac/install_agents.sh (qui y copie le script et tout ce dont il dépend). Ce fichier est le
+     MODÈLE versionné (placeholders /Users/VIC) ; l'installeur substitue /Users/VIC → $HOME réel. -->
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
@@ -12,8 +16,7 @@
   <key>ProgramArguments</key>
   <array>
     <string>/bin/bash</string>
-    <!-- ADAPTER ce chemin au dépôt local -->
-    <string>/Users/VIC/Desktop/labuse/deploy/mac/backup_offsite_disque.sh</string>
+    <string>/Users/VIC/.labuse/ops/backup_offsite_disque.sh</string>
   </array>
 
   <key>EnvironmentVariables</key>
@@ -27,9 +30,10 @@
     <string>/Volumes/MUSIQUE-VIDEO</string>
     <key>LABUSE_OFFSITE_DIRNAME</key>
     <string>LABUSE-SAUVEGARDES</string>
-    <!-- pg_restore >= la majeure PostgreSQL du VPS (ex. 18). Adapter si le PATH est ancien. -->
+    <!-- pg_restore >= la majeure PostgreSQL du VPS (ex. 18). launchd a un PATH minimal : chemin ABSOLU
+         obligatoire (un « pg_restore » nu ne se résout pas). Ici l'env conda labusedb (PostgreSQL 18). -->
     <key>PG_RESTORE_BIN</key>
-    <string>pg_restore</string>
+    <string>/Users/VIC/miniforge3/envs/labusedb/bin/pg_restore</string>
     <!-- Rétention : 8 hebdomadaires + 1 par mois sur 12 mois. -->
     <key>LABUSE_OFFSITE_KEEP_WEEKLY</key>
     <string>8</string>
