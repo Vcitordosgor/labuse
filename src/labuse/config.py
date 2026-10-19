@@ -355,6 +355,24 @@ class Settings(BaseSettings):
                 f"le remplacer (défaut : {_DEFAULT_AGENT_MODEL}).")
         return self
 
+    @model_validator(mode="after")
+    def _dossiers_jobs_absolus(self) -> "Settings":
+        # CRON-PROD-1 — les dossiers d'ÉTAT / LOG / VERROU des jobs DOIVENT être absolus et IDENTIQUES
+        # entre le CRON (qui ÉCRIT l'état, CWD = $HOME de l'utilisateur `labuse`) et l'API (qui LIT
+        # l'état pour /healthz/crons, systemd WorkingDirectory=/opt/labuse/app). Un défaut RELATIF
+        # (`.local/state/jobs`) se résolvait contre le CWD de CHAQUE process : le cron écrivait dans
+        # /home/labuse/.local/state/jobs, l'API lisait /opt/labuse/app/.local/state/jobs — un snapshot
+        # GELÉ de l'ancien déploiement → /healthz/crons voyait 6 crons « en retard / jamais vus »
+        # alors qu'ils tournaient chaque nuit (constat 19/10). On ancre tout chemin RELATIF sur $HOME
+        # (sémantique XDG de `.local/state`) : cron et API tournent tous deux sous `labuse`, donc
+        # convergent. Un chemin ABSOLU (env explicite, tests en tmp) passe INCHANGÉ.
+        base = Path.home()
+        for champ in ("jobs_state_dir", "jobs_log_dir", "jobs_lock_dir"):
+            p = Path(getattr(self, champ))
+            if not p.is_absolute():
+                setattr(self, champ, str(base / p))
+        return self
+
     @property
     def config_path(self) -> Path:
         p = Path(self.config_dir)

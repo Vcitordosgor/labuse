@@ -70,6 +70,13 @@ class Job:
     # exécutable (bouton admin / `labuse jobs run`). Ex. agents-sources (pas de crédit API, choix
     # assumé — le bouton manuel reste). Décision 13/10.
     planifie: bool = True
+    # CRON-PROD-1 — GEL VOLONTAIRE (motif court, ex. « Phase 8 Stéphanie »). Un job gelé RESTE au
+    # registre (connu, exécutable à la main, monitoré), mais : (1) le crontab généré l'émet COMMENTÉ
+    # (jamais lancé par cron — dégel = décommenter), (2) /healthz/crons le classe « gele » SANS
+    # dégrader (gel assumé ≠ panne), (3) la vigie « jobs en retard » l'ignore. Avant : le gel vivait
+    # en commentaire posé À LA MAIN (poser_crontab_solidite.sh), invisible du registre et du healthz
+    # (→ ingest-dvf comptait comme « jamais vu » et faisait sonner la sonde). None = job actif.
+    gel: str | None = None
 
 
 # ─────────────────────────────── le runner commun ───────────────────────────────
@@ -318,7 +325,7 @@ def liste() -> list[dict]:
             # CRON-1 lot 3 — la page Horloge lit LE REGISTRE : la raison (fr) et ce qu'il touche
             # (eau/exploitation) voyagent avec chaque job, à côté de son dernier passage.
             "raison": j.raison, "touche": j.touche, "test": j.test,
-            "timeout_s": j.timeout_s, "envoie_mail": j.envoie_mail,
+            "timeout_s": j.timeout_s, "envoie_mail": j.envoie_mail, "gel": j.gel,
             "prochaine_utc": p.isoformat() if p else None,
             "prochaine_reunion": p.astimezone(REUNION_TZ).strftime("%d/%m %H:%M") if p else None,
             "dernier": {"statut": e.get("statut"), "fin": e.get("fin"),
@@ -340,11 +347,11 @@ def _impl(nom: str) -> Callable[[JobContext], None]:
 
 
 def _j(nom, titre, cadence, cron_utc, heure_reunion, *, raison, touche, test,
-       timeout_s=900, envoie_mail=False, besoin_db=True, planifie=True):
+       timeout_s=900, envoie_mail=False, besoin_db=True, planifie=True, gel=None):
     assert raison and test and touche in ("eau", "exploitation"), f"job {nom} : raison/touche/test obligatoires"
     return Job(nom, titre, cadence, cron_utc, heure_reunion, _impl(nom),
                raison=raison, touche=touche, test=test,
-               timeout_s=timeout_s, envoie_mail=envoie_mail, besoin_db=besoin_db, planifie=planifie)
+               timeout_s=timeout_s, envoie_mail=envoie_mail, besoin_db=besoin_db, planifie=planifie, gel=gel)
 
 
 JOBS: dict[str, Job] = {j.nom: j for j in [
@@ -408,7 +415,7 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
        "hebdo (mar)", "0 1 * * 2", "05:00 mardi", touche="eau", timeout_s=3600,
        raison="DVF (mutations) nourrit le marché (prix secteur, radar). Détection J+2 (Last-Modified) : "
               "contrôle HEBDOMADAIRE (mardi) qui ne recharge QUE si une nouvelle livraison est publiée.",
-       test="tests/test_cron1_registre.py::test_job_a_une_raison"),
+       test="tests/test_cron1_registre.py::test_job_a_une_raison", gel="Phase 8 Stéphanie"),
 
     # ══════════════════ L'EXPLOITATION — faire tourner le serveur ══════════════════
     _j("backup-postgres", "Sauvegarde PostgreSQL (dump + rotation, 4 conservés)", "quotidien",
@@ -466,7 +473,7 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
        raison="Chaque annonce du jour qui matche une veille Radar d'un client se pose à SA cloche (kind "
               "radar → l'annonce), pour que le digest du matin l'e-maile avec les parcelles suivies et les "
               "nouveautés. Idempotent (dédup compte+bien+jour). N'envoie aucun mail (le digest s'en charge).",
-       test="tests/test_veille2_lot5.py::test_un_seul_mail_par_jour_trois_comptes"),
+       test="tests/test_veille2_lot5.py::test_un_seul_mail_par_jour_trois_comptes", gel="Phase 8 Stéphanie"),
     # ── RADAR-AUTO-1 (Lot C) — le cycle de vie, DÉSORMAIS PLANIFIÉ. La capture automatique (extension,
     # rythme humain) rend ces jobs utiles chaque nuit : sans eux, une annonce expirée reste « active »,
     # aucune vente DVF ne se rapproche, la cible Courrier ne se qualifie jamais (cf. RADAR-AUDIT-1 §6c).
@@ -477,19 +484,19 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
               "ligne → `en_vente_longue`, > 60 j sans confirmation → `a_reverifier`. Sans ce job, le "
               "cycle fige et une annonce expirée reste « active » indéfiniment (RADAR-AUDIT-1 §6c). "
               "Idempotent, zéro réseau.",
-       test="tests/test_radar_auto1.py::test_jobs_cycle_planifies"),
+       test="tests/test_radar_auto1.py::test_jobs_cycle_planifies", gel="Phase 8 Stéphanie"),
     _j("radar-cycle-dvf", "Radar — rapprochement DVF (bien rattaché Sourcé + vente → vendue)",
        "quotidien", "30 0 * * *", "04:30", touche="exploitation", timeout_s=900,
        raison="Un bien RATTACHÉ Sourcé dont la parcelle a une mutation DVF « Vente » dans [3;18] mois "
               "après publication passe `vendue` (+ délai, écart affiché/acté). Alimente l'entonnoir "
               "vendue → Courrier et le digest. Après l'ingestion DVF. Jamais sur une PISTE.",
-       test="tests/test_radar_auto1.py::test_jobs_cycle_planifies"),
+       test="tests/test_radar_auto1.py::test_jobs_cycle_planifies", gel="Phase 8 Stéphanie"),
     _j("radar-cycle-mensuel", "Radar — qualification mensuelle retiree_sans_vente (cible Courrier)",
        "mensuel (1er)", "30 1 1 * *", "05:30 le 1er", touche="exploitation", timeout_s=600,
        raison="La CIBLE Courrier : un bien `retiree` rattaché, retiré depuis > 12 mois et SANS mutation "
               "DVF « Vente » depuis la publication → `retiree_sans_vente`. JAMAIS depuis un lien mort — "
               "seule l'absence de vente DVF prouvée qualifie. Sans ce job, l'entonnoir Courrier dort.",
-       test="tests/test_radar_auto1.py::test_jobs_cycle_planifies"),
+       test="tests/test_radar_auto1.py::test_jobs_cycle_planifies", gel="Phase 8 Stéphanie"),
 
     # ── VEILLE-FIX-1 (lot 1) — les quatre fonctions du LEGACY du matin que le registre ne portait pas.
     # Sans elles, retirer les crons legacy éteignait la veille (suivis/secteurs/recherches) et le digest.
@@ -515,7 +522,7 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
        raison="TOUT ce qui change pour un compte la veille (parcelles suivies, Radar, nouveautés de l'app) "
               "part en UN digest quotidien, filtré par préférence, jamais vide, un par jour (dédup mail_queue). "
               "Passe par mail_queue. Sans événement la veille : pas de mail (dry-run si SMTP absent).",
-       test="tests/test_veille_fix1.py::test_les_jobs_veille_existent"),
+       test="tests/test_veille_fix1.py::test_les_jobs_veille_existent", gel="Phase 8 Stéphanie"),
     # VEILLE-FIX-2 (Lot D) — LE CONSOMMATEUR DE LA FILE. Toutes les 5 min, il fait partir ce qui est
     # `en_attente` (immédiats différés, dont le digest ; programmés J+3/J+10) et rejoue les `a_rejouer`
     # dont l'heure est venue (5 min → 1 h → 24 h). Sans lui, un mail programmé ne partait jamais et un
@@ -576,7 +583,7 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
        envoie_mail=True, besoin_db=False,
        raison="Une sauvegarde non restaurable ne vaut rien : une fois par mois, on restaure le dernier dump "
               "dans une base jetable, on vérifie, on DROP. Alerte si la restauration échoue.",
-       test="tests/test_cron1_registre.py::test_job_a_une_raison"),
+       test="tests/test_cron1_registre.py::test_job_a_une_raison", gel="Phase 8 Stéphanie"),
     _j("signal-instantane", "Instantané mensuel du Signal servi (fige la prédiction datée, mesurable forward)",
        "mensuel (1er)", "0 2 1 * *", "06:00 le 1er", touche="exploitation", timeout_s=1800,
        besoin_db=True,

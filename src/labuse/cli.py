@@ -4961,7 +4961,12 @@ def _crontab_du_registre(tz: str) -> str:
         # du cron ne passe RIEN au process (ni DB, ni Brevo) et les jobs échouent/dérivent en silence
         # (constat 13/10 : mail-queue-consommer en échec, alerte dry-run). Chemin COMPLET du venv (pas de
         # `labuse` nu qui dépend du PATH). Les crons legacy font déjà pareil.
-        lignes.append(f"{conv(j.cron_utc)}   labuse  sh -c 'set -a; . /etc/labuse/labuse.env; set +a; exec /opt/labuse/venv/bin/labuse jobs run {nom}'")
+        ligne = f"{conv(j.cron_utc)}   labuse  sh -c 'set -a; . /etc/labuse/labuse.env; set +a; exec /opt/labuse/venv/bin/labuse jobs run {nom}'"
+        # CRON-PROD-1 — un job GELÉ (volontaire) reste au crontab mais COMMENTÉ : trace de son horaire,
+        # jamais lancé par cron, dégel = décommenter. Le gel vit DÉSORMAIS au registre (Job.gel) → deploy.sh
+        # qui régénère depuis le registre ne le perd plus (avant : commenté à la main par
+        # poser_crontab_solidite.sh, effacé à chaque régénération de deploy.sh).
+        lignes.append(f"# GELÉ ({j.gel}) {ligne}" if j.gel else ligne)
         lignes.append("")
     return "\n".join(lignes).rstrip("\n") + "\n"
 
