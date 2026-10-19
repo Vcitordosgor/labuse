@@ -574,6 +574,14 @@ TABLES_EXPLOITATION: dict[str, str] = {
     "entite_acronyme": "référentiel des acronymes",
     "lettre_zonage_refs": "références lettre de zonage",
     "piscine_corrections": "curation humaine (piscines)",
+    # ROUGES-RESTANTS (V1c) — cinq tables créées par le code servi mais jamais déclarées à la
+    # carte (même recette que coherence_runs/fraicheur_etat : table d'EXPLOITATION active, un
+    # écriveur + un lecteur dans le code servi, jamais une orpheline à purger) :
+    "job_runs": "journal des passages de jobs (jobs_journal.py, SOLIDITE-1)",
+    "ops_incidents": "incidents d'exploitation (ops_alertes.py)",
+    "bilan_ratios": "ratios de bilan maison par compte (models.ensure_bilan_ratios, BILAN-1)",
+    "parcel_zone_plu_version": "cache — signature de version du zonage PLU des tuiles (api/tiles.py)",
+    "parcel_couche_intersection_build": "cache — build des intersections parcelle×couche (api/tiles.py)",
     # CIRCUIT-5b lot 1 — rpls_commune (→ rpls_sdes) et commune_conso_enaf (→ enaf_cerema) sont
     # désormais des RÉSERVOIRS de première classe (voir RESERVOIR_TABLES), plus des tables
     # d'exploitation « servies sans réservoir » : une source = une ligne data_sources.

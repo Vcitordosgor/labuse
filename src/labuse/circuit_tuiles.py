@@ -306,7 +306,12 @@ def _dims_declarees(geometrie: str) -> set[int]:
 def _kept_count(db, c, z, x, y) -> int:
     """Le nombre de features que la tuile RETIENT : celles dont `ST_AsMVTGeom` n'est pas nul —
     exactement ce que `ST_AsMVT` a encodé. La disparition, correcte, des objets sous le pixel
-    n'est donc pas comptée comme une perte. Source-aware (§2)."""
+    n'est donc pas comptée comme une perte. Source-aware (§2).
+    ROUGES-RESTANTS item 3 — la géométrie comptée est la brute RENDUE par le tuyau à ce zoom
+    (`geom_rendue_sql` : simplification sous-pixel z < 12 de RECETTE-PROD-1 #7, SOURCE UNIQUE
+    partagée) : compter la brute non simplifiée faisait « servi < retenu » sur les couches denses
+    à z10, alors que le tuyau est fidèle à sa rétention déclarée."""
+    from .api.couches_tuyau import geom_rendue_sql
     p: dict = {"z": z, "x": x, "y": y}
     wk = _where_src(c, p)
     g_src, g_3857 = _src_geom(c)
@@ -315,7 +320,7 @@ def _kept_count(db, c, z, x, y) -> int:
         WITH b AS (SELECT ST_TileEnvelope(:z, :x, :y, margin => 0.02) AS env)
         SELECT count(*) FROM {c.table} m, b
         WHERE {wk} AND {g_src} && {filtre}
-          AND ST_AsMVTGeom({g_3857}, ST_TileEnvelope(:z, :x, :y), 4096, 64, true) IS NOT NULL
+          AND ST_AsMVTGeom({geom_rendue_sql(g_3857, z)}, ST_TileEnvelope(:z, :x, :y), 4096, 64, true) IS NOT NULL
     """), p).scalar() or 0)
 
 
@@ -323,8 +328,10 @@ def _hausdorff_pg(db, c, z, x, y, dimtype: int, served_wkb: bytes | None):
     """retour §4 : Hausdorff (mètres 3857) entre la géométrie SERVIE décodée (WKB — les octets
     RÉELLEMENT servis) et la BRUTE RENDUE À LA TUILE : `ST_AsMVTGeom` de la `geom_2975` ENTIÈRE
     (extent 4096 — exactement le MVT que l'endpoint sert), ramenée en 3857 par l'affine inverse.
-    AUCUNE simplification de notre fait (pas de ST_SimplifyPreserveTopology) — la seule
-    transformation est la quantification MVT que le tuyau applique DE TOUTE FAÇON pour servir.
+    AUCUNE simplification de NOTRE fait : les seules transformations sont celles que le tuyau
+    applique DE TOUTE FAÇON pour servir — la quantification MVT, et la simplification sous-pixel
+    z < 12 de RECETTE-PROD-1 #7 (`geom_rendue_sql`, SOURCE UNIQUE — ROUGES-RESTANTS item 3 : sans
+    elle, les parties fines absentes à bon droit de la tuile servie gonflaient le Hausdorff à z10).
 
     Pourquoi pas la brute PLEINE résolution : mesuré, un tel Hausdorff échoue à z10 sur les couches
     à contour fin (znieff 199 m, tcsp 277 m > 1 px) — non pas parce que le tuyau se trompe, mais
@@ -333,6 +340,7 @@ def _hausdorff_pg(db, c, z, x, y, dimtype: int, served_wkb: bytes | None):
     RENDUE À LA TUILE est donc la bonne tolérance « < 1 pixel » : H ≈ 0 quand le tuyau est fidèle,
     H ≫ px sous le moindre bug de décodeur, d'enveloppe, d'extent, de transform ou de SRID.
     Une requête qui n'aboutit pas (timeout, base) remonte en exception → couche ROUGE."""
+    from .api.couches_tuyau import geom_rendue_sql
     p: dict = {"z": z, "x": x, "y": y, "dt": dimtype, "sv": served_wkb, "has_sv": served_wkb is not None}
     wk = _where_src(c, p)
     g_src, g_3857 = _src_geom(c)
@@ -349,7 +357,7 @@ def _hausdorff_pg(db, c, z, x, y, dimtype: int, served_wkb: bytes | None):
                 -- post-subdivide) puis affine inverse → 3857. Jamais un géant réassemblé à rendre.
             SELECT ST_SetSRID(ST_Affine(
                        ST_CollectionExtract(
-                           ST_AsMVTGeom({g_3857}, b.env, 4096, 64, true), :dt),
+                           ST_AsMVTGeom({geom_rendue_sql(g_3857, z)}, b.env, 4096, 64, true), :dt),
                        b.sx, 0, 0, -b.sx, b.xmin, b.ymax), 3857) AS g
             FROM {c.table} m, b
             WHERE {wk} AND {g_src} && {filtre}

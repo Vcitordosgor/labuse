@@ -38,13 +38,18 @@ def _seed_cascade(s, pid, run, layer, result, detail):
 
 @pytest.mark.reel  # CI-1 : exige la cascade du run SERVI (données réelles) — pas reproduite sur base vierge
 def test_default_run_est_le_run_servi_pas_q_v8(db_session):
+    # ROUGES-RESTANTS item 6 — les étiquettes du run servi sont SCINDÉES depuis les runs
+    # `*_sources` (COHÉRENCE-RUN-1 : scoring q_v19, cascade q_v19_sources au manifeste) : la
+    # cascade se sème sous `runs.cascade()` (ce que served_cascade_lines lit), jamais sous le
+    # label de scoring Q_A_RUN_LABEL (hypothèse cascade == scoring fausse en permanence).
+    from labuse import runs
     s = db_session
     idu = "97499000SC0001"
     pid = _seed_parcel(s, idu)
-    _seed_cascade(s, pid, Q_A_RUN_LABEL, "zonage_plu_gpu", "PASS", "Zone U — servi")
+    _seed_cascade(s, pid, runs.cascade(), "zonage_plu_gpu", "PASS", "Zone U — servi")
     _seed_cascade(s, pid, "q_v8_calibre", "zonage_plu_gpu", "HARD_EXCLUDE", "LEURRE run périmé")
 
-    lignes = served_cascade_lines(s, idu)   # SANS run explicite → doit prendre Q_A_RUN_LABEL
+    lignes = served_cascade_lines(s, idu)   # SANS run explicite → doit prendre runs.cascade()
     details = [l["detail"] for l in lignes]
     assert any("servi" in (d or "") for d in details)
     assert not any("LEURRE" in (d or "") for d in details), \

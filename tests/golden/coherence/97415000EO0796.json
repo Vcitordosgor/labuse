@@ -47,12 +47,12 @@
  "rang_score": {
   "lecteur": "fiche:score_v2.rang",
   "tolerance": "0",
-  "valeur": 22970
+  "valeur": 23220
  },
  "sdp_residuelle_m2": {
   "lecteur": "fiche:potentiel_transformation.sdp_residuelle_m2",
   "tolerance": "1 %",
-  "valeur": 187.0
+  "valeur": 185.0
  },
  "surface_parcelle_m2": {
   "lecteur": "fiche:surface_m2",

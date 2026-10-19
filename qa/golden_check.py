@@ -193,9 +193,13 @@ def collect_db(cur, idu: str, v2run: str | None) -> dict:
         FROM parcel_p_score_v2
         WHERE run_id = %(r)s AND parcelle_id = %(idu)s""", r=v2run, idu=idu) if v2run else None
 
-    vue_mer = _row(cur, """
+    # ROUGES-RESTANTS item 6 — parcel_vue_mer est une orpheline « archiver (plus aucun lecteur) »
+    # (registre/tables.py ACTIONS_PROPOSEES) : absente des bases qui l'ont purgée → None, pas un crash.
+    _vm_existe = _row(cur, "SELECT to_regclass('parcel_vue_mer') AS t")
+    vue_mer = (_row(cur, """
         SELECT vue, distance_cote_m, obstruction_pct
         FROM parcel_vue_mer WHERE parcel_id = %(pid)s""", pid=pid)
+        if (_vm_existe or {}).get("t") else None)
     solar = _row(cur, """
         SELECT score_solaire, round(prod_spec_kwh_kwc)::int AS prod_spec_kwh_kwc
         FROM parcel_solar WHERE idu = %(idu)s""", idu=idu)
@@ -637,7 +641,10 @@ def main() -> int:
         from sqlalchemy import text as _t
 
         from labuse import db as _db
-        from labuse.scoring.score_v_constants import Q_A_RUN_LABEL as _run
+        # ROUGES-RESTANTS item 6 — étiquettes scindées (`*_sources`) : les évaluations vivent sous
+        # le run de CASCADE servi (runs.cascade()), plus sous le label de scoring.
+        from labuse import runs as _runs
+        _run = _runs.cascade()
         with _db.engine().connect() as _c:
             _n_parc = _c.execute(_t("SELECT count(*) FROM parcels")).scalar()
             _n_eval = _c.execute(_t(

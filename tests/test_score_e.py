@@ -83,11 +83,14 @@ def _seed_medianes(s, secteur, terrain=200, neuf=5000):
     # précalcul dvf_prix_sortie_neuf, divergent — RETOURS-11F M1) : on sème des mutations VEFA
     # RÉELLES de la commune ; le build calcule la médiane live lui-même (niveau 'commune').
     insee = secteur[:5]
+    # ROUGES-RESTANTS item 6 / correctif VEFA-1 (docs/audit-2026-10/VEFA-1, VOULU) :
+    # `neuf_vefa_commune` ne compte au dénominateur que les lots `type_local` HABITATION
+    # (VEFA_LOTS_HABITATION) — un seed SANS type_local rendait la médiane neuf vide (non estimable).
     for i in range(8):   # seuil VEFA source unique = 8 (neuf_vefa_seuil)
         s.execute(text(
             "INSERT INTO dvf_mutations_parcelle (id_mutation, id_parcelle, code_commune, "
-            "nature_mutation, date_mutation, valeur_fonciere, surface_reelle_bati, millesime) VALUES "
-            "(:m, :p, :c, 'Vente en l''état futur d''achèvement', now()::date, :v, 100, '2025')"),
+            "nature_mutation, date_mutation, valeur_fonciere, surface_reelle_bati, type_local, millesime) VALUES "
+            "(:m, :p, :c, 'Vente en l''état futur d''achèvement', now()::date, :v, 100, 'Appartement', '2025')"),
             {"m": f"vefa-{secteur}-{i}", "p": f"{secteur}{i:04d}", "c": insee, "v": neuf * 100})
 
 

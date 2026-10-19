@@ -160,18 +160,30 @@ def test_lot3_cause_libelle_traduit_hors_classement():
 def test_lot3_cascade_exclue_sort_du_classement_avec_raison():
     """E-10 — une parcelle bande A ET exclue en dur bascule en « HC » (Hors classement) avec sa
     raison ; une parcelle A NON exclue reste A."""
+    # ROUGES-RESTANTS item 6 — témoins repointés du label figé « q_v18 » (run PÉRIMÉ : recombiner
+    # avec le code courant comparait deux époques du moteur — orfèvre-1 logements/ratios) vers le
+    # run SERVI (Q_A_RUN_LABEL, recalculé le 18/10 avec le code courant) et sa cascade servie
+    # (`runs.cascade()`), même famille que ORF-40 « labels périmés ». Dans le run servi, E-10 est
+    # DÉJÀ appliqué au scoring : plus aucune ligne « bande A ET exclue » n'existe — les témoins
+    # exclus se prennent donc en bande 'HC' (l'invariant devient : une exclue en dur RESTE HC avec
+    # sa raison à la recombinaison ; une A non exclue reste A).
+    from labuse import runs
     from labuse.scoring.score_labuse_combine import combiner
+    from labuse.scoring.score_v_constants import Q_A_RUN_LABEL
     from labuse.faisabilite.engine import cause_libelle
     from sqlalchemy import text
     with app_session() as s:
         exclues = s.execute(text("""SELECT parcel_id FROM score_labuse
-            WHERE run_label='q_v18' AND bande='A' AND cascade_exclue=true LIMIT 3""")).fetchall()
+            WHERE run_label=:r AND bande='HC' AND cascade_exclue=true AND score IS NOT NULL
+            LIMIT 3"""), {"r": Q_A_RUN_LABEL}).fetchall()
         gardees = s.execute(text("""SELECT parcel_id FROM score_labuse
-            WHERE run_label='q_v18' AND bande='A' AND cascade_exclue=false LIMIT 2""")).fetchall()
+            WHERE run_label=:r AND bande='A' AND cascade_exclue=false LIMIT 2"""),
+            {"r": Q_A_RUN_LABEL}).fetchall()
         if not exclues or not gardees:
-            pytest.skip("pas de témoin bande A exclu/gardé dans le run servi")
+            pytest.skip("pas de témoin exclu (HC)/gardé (A) dans le run servi")
         pids = [r[0] for r in exclues] + [r[0] for r in gardees]
-        lignes = {l.parcel_id: l for l in combiner(s, pids, "q_v18_test", cascade_label="q_v18_sources")}
+        lignes = {l.parcel_id: l for l in combiner(s, pids, f"{Q_A_RUN_LABEL}_test",
+                                                   cascade_label=runs.cascade())}
         for r in exclues:
             l = lignes[r[0]]
             assert l.bande == "HC", "une parcelle exclue en dur ne reste jamais en A/B/C/D"

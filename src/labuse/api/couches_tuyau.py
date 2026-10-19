@@ -591,6 +591,19 @@ def _table_manquante(db: Session, table: str) -> bool:
 _SRID_REEL: dict[tuple[str, str], int | None] = {}
 
 
+def geom_rendue_sql(g_3857: str, z: int) -> str:
+    """RECETTE-PROD-1 (#7) — la géométrie telle que le tuyau la REND à ce zoom : à z < 12,
+    simplification SOUS-PIXEL (tolérance = largeur de tuile 3857 ÷ 1024 ≈ ¼ px) AVANT l'encodage
+    MVT ; z ≥ 12 inchangé. SOURCE UNIQUE partagée avec le verrou V7a (`circuit_tuiles`) —
+    ROUGES-RESTANTS item 3 : le verrou comparait la tuile servie à une brute NON simplifiée que
+    le tuyau ne sert plus à bas zoom (écarts « servi < retenu » + Hausdorff z10) ; il rejoue
+    désormais EXACTEMENT cette rétention déclarée."""
+    if z < 12:
+        tol = 40075016.686 / (2 ** z) / 1024
+        return f"ST_SimplifyPreserveTopology({g_3857}, {tol:.4f})"
+    return g_3857
+
+
 def _srid_reel(db: Session, table: str, geom: str) -> int | None:
     key = (table, geom)
     if key not in _SRID_REEL:
@@ -636,10 +649,7 @@ def _construire_tuile(db: Session, c: CoucheTuyau, z: int, x: int, y: int) -> by
     # → AUCUN changement visible, mais bien moins de sommets → tuile île légère, servie à tous les zooms.
     # `ST_SimplifyPreserveTopology` (jamais de géométrie invalide qui ferait sauter des features).
     # z ≥ 12 INCHANGÉ (même SQL → octets identiques → cache de détail et déterminisme VITESSE-PROD-1 intacts).
-    geom_in = g_3857
-    if z < 12:
-        tol = 40075016.686 / (2 ** z) / 1024
-        geom_in = f"ST_SimplifyPreserveTopology({g_3857}, {tol:.4f})"
+    geom_in = geom_rendue_sql(g_3857, z)
     props_sql = "".join(f', {expr} AS "{nom}"' for nom, expr in c.props)
     sql = text(f"""
         WITH b AS (

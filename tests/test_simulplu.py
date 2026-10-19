@@ -9,8 +9,14 @@ from __future__ import annotations
 import pytest
 from sqlalchemy import text
 
+from labuse import runs
 from labuse.api import moteurs
 from labuse.scoring.score_v_constants import Q_A_RUN_LABEL as RUN
+
+# ROUGES-RESTANTS item 6 — étiquettes de run SCINDÉES depuis les runs `*_sources`
+# (COHÉRENCE-RUN-1 : scoring q_v19, cascade q_v19_sources au manifeste) : simulplu lit la
+# cascade via `runs.cascade()` — les seeds de cascade/évaluations se sèment sous CE label
+# (relu à l'appel), le scoring (p_score_v2) reste sous Q_A_RUN_LABEL.
 
 pytestmark = pytest.mark.db
 
@@ -29,13 +35,15 @@ def _parcel(s, idu: str, surface: int) -> int:
 def _cascade_zone(s, pid: int, detail: str) -> None:
     s.execute(text(
         "INSERT INTO dryrun_cascade_results (run_label, parcel_id, layer_name, result, detail) "
-        "VALUES (:r, :p, 'zonage_plu_gpu', 'PASS', :d)"), {"r": RUN, "p": pid, "d": detail})
+        "VALUES (:r, :p, 'zonage_plu_gpu', 'PASS', :d)"),
+        {"r": runs.cascade(), "p": pid, "d": detail})
 
 
 def _eval(s, pid: int, status: str) -> None:
     s.execute(text(
         "INSERT INTO dryrun_parcel_evaluations (run_label, parcel_id, completeness_score, "
-        "opportunity_score, status) VALUES (:r, :p, 80, 40, :st)"), {"r": RUN, "p": pid, "st": status})
+        "opportunity_score, status) VALUES (:r, :p, 80, 40, :st)"),
+        {"r": runs.cascade(), "p": pid, "st": status})
 
 
 def _score(s, idu: str, tier: str) -> None:

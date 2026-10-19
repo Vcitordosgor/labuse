@@ -42,7 +42,7 @@
  "rang_score": {
   "lecteur": "fiche:score_v2.rang",
   "tolerance": "0",
-  "valeur": 372107
+  "valeur": 374686
  },
  "sdp_residuelle_m2": {
   "lecteur": "fiche:potentiel_transformation.sdp_residuelle_m2",

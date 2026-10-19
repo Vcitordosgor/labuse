@@ -193,7 +193,9 @@ def test_front_un_seul_composant_plus_d_autocompletion_maison():
     assert "banAutocomplete" not in aa                      # la barre ne parle qu'au suggest unifié
     assert "bg-mint text-mint-ink" in aa                    # survol : vert opaque, contenu inversé
     assert "pick(items[0])" not in aa                       # Entrée ne devine JAMAIS la 1re ligne
-    assert "Aucune correspondance pour" in aa               # zéro-résultat parlant
+    # ROUGES-RESTANTS item 6 / FIX-1 recette A-01-1 (commit b55481e4, VOULU) : le zéro-résultat
+    # est devenu « Aucun résultat pour « … » — formats acceptés : … ».
+    assert "Aucun résultat pour" in aa                      # zéro-résultat parlant
     scan = (ROOT / "frontend/src/components/outils/ScanPatrimoine.tsx").read_text(encoding="utf-8")
     # RECHERCHE-2 — Scan patrimoine passe par le composant PARTAGÉ (ParcelInput → AddressAutocomplete),
     # jamais une autocomplétion maison ; l'ancienne prop d'exception `grammaireProprietaire` a disparu
