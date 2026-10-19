@@ -76,3 +76,15 @@ Mécanique : le front calcule l'empreinte des hypothèses à la génération (`e
 ## Banc final
 
 **`scripts/coherence/chasse_docs.py` : 19 gardes → 19 OK · 0 ECART · 0 SKIP** (E-18 #3 + E-19 #2 inclus). Front : `tsc -b` 0 erreur, vitest 11/11.
+
+---
+
+## Correctifs UX pré-merge (Bilan / Étude / « Mes documents »)
+
+**Compte local de test** créé sans toucher aux autres : `badge-test@labuse.test` / `TestBadge2026!` (titulaire · plan integral · actif · marqué test, masqué des chiffres client). Login → page `/login`, « identifiant » = l'email. Flux vérifié end-to-end (login 303, génération Bilan, « Mes documents », et `hypotheses._empreinte` renvoyée = empreinte serveur du Lot 5.1).
+
+- **B — texte saisi en gris sur les cases blanches (Bilan + Étude).** Cause : les inputs portaient `bg-surface` (classe INERTE — aucun token `surface` sans suffixe) → fond **blanc** par défaut du navigateur + texte hérité `--txt` (#B8C4BC, clair) → gris sur blanc, comme le placeholder. Le Bilan est « façon Excel » (cases blanches). **Corrigé** : chaque input reçoit `text-[color:var(--ink)]` (encre `--ink` #071009, token DA existant) + `placeholder:text-txt-mut` (gris #6B776F). Texte saisi foncé/lisible, placeholder gris distinct. 10 inputs (BilanEcran ×5, M22Programme ×5). Preuve : `captures-ux/B-avant-apres-comparaison.png` (T3 « 30 » gris = avant · T2 « 12 » encre = après) + mesure live (texte `rgb(7,16,9)`, placeholder `rgb(107,119,111)`).
+- **C1 — survol de ligne vert vif (« Mes documents »).** Cause : `hover:bg-mint hover:text-mint-on` peignait la ligne en vert vif → « Ouvrir » (bouton vert) invisible, badge illisible. **Corrigé** : `hover:bg-surface-3` (fond légèrement éclairci, token DA) ; boutons et badge gardent leurs couleurs. Preuve : `captures-ux/C-avant-survol.png` → `C1-apres-survol.png`.
+- **C2 — badge « Sources modifiées depuis » chevauchant « Ouvrir ».** Cause : la ligne « modifiée » a 3 boutons (Ouvrir+Régénérer+Supprimer ≈ 240px) dans une colonne actions de 210px (inner 190px) → débordement de 47px À GAUCHE (justify-end) sur le badge (+14px mesurés à 1280px). **Corrigé** : colonne actions 210→270px (colgroup) + `flex-wrap` sur les actions (filet mobile/étroit : les boutons passent à la ligne au lieu de déborder). Chevauchement 1280px : +14px → **-46px (gap)**. Preuve : `captures-ux/C-avant-badge.png` → `C2-apres-badge.png`.
+
+DA existante, aucun nouveau composant, aucun autre écran. `tsc -b` 0 erreur · vitest 12/12 · banc HTTP 19 OK.

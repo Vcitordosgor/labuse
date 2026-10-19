@@ -353,19 +353,24 @@ function LigneDoc({ r, onChange }: { r: DocGenereRow; onChange: () => void }) {
   // (serveur, `hypotheses._empreinte` — cross-poste) à l'empreinte de l'éditeur vivant (local).
   const empServeur = (r.hypotheses as { _empreinte?: string } | null)?._empreinte
   const modifie = r.etat !== 'a_jour' || editeurDiffere(r.doc_type, r.idus?.[0] ?? null, empServeur)
+  // CHASSE-DOCS-FIX-1 — survol DISCRET (fond légèrement éclairci) : l'aplat vert vif rendait « Ouvrir »
+  // (bouton vert) invisible et le badge illisible. Boutons et badge gardent leurs couleurs.
   return (
-    <tr className="group border-b border-line hover:bg-mint hover:text-mint-on">
+    <tr className="group border-b border-line hover:bg-surface-3">
       <td className="h-11 px-2.5 align-middle">{dateFr(r.created_at)}</td>
       <td className="px-2.5">{r.document}</td>
-      <td className="truncate px-2.5">{sur(r)}{r.commune ? <span className="text-txt-dim group-hover:text-mint-on/75"> · {r.commune}</span> : null}</td>
-      <td className="px-2.5">{r.projet || <span className="text-txt-dim group-hover:text-mint-on/75">—</span>}</td>
+      <td className="truncate px-2.5">{sur(r)}{r.commune ? <span className="text-txt-dim"> · {r.commune}</span> : null}</td>
+      <td className="px-2.5">{r.projet || <span className="text-txt-dim">—</span>}</td>
       <td className="px-2.5">
         {modifie
           ? <Badge ton="ambre">Sources modifiées depuis</Badge>
           : <Badge ton="vert">À jour</Badge>}
       </td>
       <td className="px-2.5">
-        <div className="flex justify-end gap-1.5">
+        {/* CHASSE-DOCS-FIX-1 — flex-wrap : sur la ligne « modifiée » (3 boutons Ouvrir/Régénérer/
+            Supprimer) ou en écran étroit, les boutons PASSENT À LA LIGNE au lieu de déborder sur le
+            badge d'état (plus de chevauchement). La colonne actions est aussi élargie (colgroup). */}
+        <div className="flex flex-wrap justify-end gap-1.5">
           <Bouton niveau="secondaire" ton="vert" className={btn} disabled={busy} onClick={ouvrir}>{busy ? <Chargement variant="inline" accent="courant" label="Ouverture…" /> : 'Ouvrir'}</Bouton>
           {/* Excel : seulement sur les lignes Bilan ET si l'export existe (sinon absent, pas grisé). */}
           {r.doc_type === 'bilan' && r.excel && r.idus[0] && (
@@ -419,7 +424,7 @@ function Bibliotheque() {
       ) : (
         <table className="w-full table-fixed border-collapse">
           <colgroup>
-            <col style={{ width: '110px' }} /><col style={{ width: '150px' }} /><col /><col style={{ width: '160px' }} /><col style={{ width: '190px' }} /><col style={{ width: '210px' }} />
+            <col style={{ width: '110px' }} /><col style={{ width: '150px' }} /><col /><col style={{ width: '160px' }} /><col style={{ width: '190px' }} /><col style={{ width: '270px' }} />
           </colgroup>
           <thead>
             <tr className="border-b border-line text-left text-[12px] font-semibold text-txt-mut">

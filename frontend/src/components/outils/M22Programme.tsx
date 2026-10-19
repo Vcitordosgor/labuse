@@ -293,10 +293,10 @@ export function M22({ embedded = false, initialIdus, onBilan, onClose }: {
                   <span className="w-6 font-mono text-txt-mut">{t}</span>
                   <input inputMode="numeric" placeholder="nombre" value={lignes[t].nombre}
                     onChange={(e) => setLignes({ ...lignes, [t]: { ...lignes[t], nombre: e.target.value } })}
-                    className="w-16 rounded border border-line-2 bg-surface px-1.5 py-1 text-[11px]" />
+                    className="w-16 rounded border border-line-2 bg-surface px-1.5 py-1 text-[11px] text-[color:var(--ink)] placeholder:text-txt-mut" />
                   <input inputMode="numeric" placeholder="m² moy." value={lignes[t].surface}
                     onChange={(e) => setLignes({ ...lignes, [t]: { ...lignes[t], surface: e.target.value } })}
-                    className="w-20 rounded border border-line-2 bg-surface px-1.5 py-1 text-[11px]" />
+                    className="w-20 rounded border border-line-2 bg-surface px-1.5 py-1 text-[11px] text-[color:var(--ink)] placeholder:text-txt-mut" />
                 </div>
               ))}
             </div>
@@ -574,10 +574,10 @@ export function M22({ embedded = false, initialIdus, onBilan, onClose }: {
                     <span className="w-6 font-mono text-txt-mut">{t}</span>
                     <input inputMode="numeric" placeholder="nombre" value={lignes[t].nombre}
                       onChange={(e) => setLignes({ ...lignes, [t]: { ...lignes[t], nombre: e.target.value } })}
-                      className="w-16 rounded border border-line-2 bg-surface px-1.5 py-1 text-[11px]" />
+                      className="w-16 rounded border border-line-2 bg-surface px-1.5 py-1 text-[11px] text-[color:var(--ink)] placeholder:text-txt-mut" />
                     <input inputMode="numeric" placeholder="m² moy." value={lignes[t].surface}
                       onChange={(e) => setLignes({ ...lignes, [t]: { ...lignes[t], surface: e.target.value } })}
-                      className="w-20 rounded border border-line-2 bg-surface px-1.5 py-1 text-[11px]" />
+                      className="w-20 rounded border border-line-2 bg-surface px-1.5 py-1 text-[11px] text-[color:var(--ink)] placeholder:text-txt-mut" />
                   </div>
                 ))}
               </div>
@@ -836,7 +836,7 @@ function HypLigne({ l, val, defaut, onChange }: { l: string; val: string; defaut
     <div className="flex items-center justify-between gap-2 border-b border-surface py-1">
       <span className="text-[10.5px] text-txt-mut">{l}</span>
       <input inputMode="decimal" value={val} placeholder={fmtDec(defaut, 2)} onChange={(e) => onChange(e.target.value)}
-        className="w-20 rounded border border-line-2 bg-surface px-1.5 py-1 text-right text-[11px]" />
+        className="w-20 rounded border border-line-2 bg-surface px-1.5 py-1 text-right text-[11px] text-[color:var(--ink)] placeholder:text-txt-mut" />
     </div>
   )
 }
