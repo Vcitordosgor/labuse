@@ -56,8 +56,13 @@ export const is429 = (e: unknown): boolean => e instanceof ApiError && e.status 
 async function j<T>(url: string, init?: RequestInit): Promise<T> {
   const r = await fetch(url, init)
   if (!r.ok) {
+    // CHASSE-DOCS-FIX-1 (vérif #4) — `detail` peut être une CHAÎNE (400) ou un OBJET `{erreur, message}`
+    // (ex. 503 « étude trop lourde », 422 gabarit). On en extrait le message, sinon il était perdu et le
+    // client ne lisait qu'un message générique.
     const detail = (await r.json().catch(() => null))?.detail
-    throw new ApiError(url, r.status, typeof detail === 'string' ? detail : undefined)
+    const detailStr = typeof detail === 'string' ? detail
+      : (detail && typeof detail === 'object' && typeof detail.message === 'string' ? detail.message : undefined)
+    throw new ApiError(url, r.status, detailStr)
   }
   return r.json() as Promise<T>
 }

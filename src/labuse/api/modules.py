@@ -2025,6 +2025,20 @@ def _etudier_borne(data: dict) -> dict:
         ex.shutdown(wait=False)   # ne JAMAIS bloquer à la sortie (sinon la borne ne sert à rien)
 
 
+def _attach_au_ouverture(db: Session, payload: dict, idus) -> None:
+    """CHASSE-DOCS-FIX-1 (vérif #2) — l'Étude de faisabilité porte, comme la fiche et Comparer, le caveat
+    d'ouverture d'une zone AU (« ouverture sous conditions ») : jamais une capacité servie nue sur une AU
+    conditionnée. Même source que la fiche §4 (`_au_ouverture_block` → table `parcel_au_statut`)."""
+    if not isinstance(payload, dict):
+        return
+    from .app import _au_ouverture_block
+    for idu in (idus or []):
+        au = _au_ouverture_block(db, idu)
+        if au:                       # première parcelle AU marquée de l'assiette
+            payload["au_ouverture"] = au
+            return
+
+
 @router.post("/etude")
 def etude_implantation(body: EtudeIn, db: Session = Depends(get_db)) -> dict:
     """IMPLANTATION-2 — UN SEUL appel sert l'écran « Étude de faisabilité ». UN SEUL moteur
@@ -2035,9 +2049,11 @@ def etude_implantation(body: EtudeIn, db: Session = Depends(get_db)) -> dict:
     for idu in (body.idus or []):
         _check_idu(idu)
     try:
-        return _etudier_borne(body.model_dump())
+        out = _etudier_borne(body.model_dump())
     except ValueError as exc:
         raise HTTPException(400, str(exc))
+    _attach_au_ouverture(db, out, body.idus)   # vérif #2 — caveat AU porté par l'Étude, comme Comparer
+    return out
 
 
 class EtudePdfIn(EtudeIn):
@@ -2097,6 +2113,7 @@ def etude_pdf(body: EtudePdfIn, request: Request, db: Session = Depends(get_db))
         payload = _etudier_borne(data)   # E-04 — borne 30 s (503 honnête, jamais un timeout silencieux)
     except ValueError as exc:
         raise HTTPException(400, str(exc))
+    _attach_au_ouverture(db, payload, body.idus)   # vérif #2 — caveat AU dans le PDF comme à l'écran
     genere_le = today_reunion().strftime("%d/%m/%Y")
     try:
         rendu = ef.rendu_etude(payload, genere_le=genere_le, scenario_ref=scenario_ref)

@@ -4,6 +4,7 @@ import { useApp } from '../../store/useApp'
 import { getMoteursConfig, postEtude, ETUDE_PDF_URL, etudePdfInit, ApiError } from '../../lib/api'
 import type { EtudeIn, EtudePayload, EtudeScenario } from '../../lib/api'
 import { fmtInt, fmtDec } from '../../lib/format'
+import { noterEditeur, noterGeneration } from '../../lib/empreinteDoc'
 import { Bouton } from '../ui/Bouton'
 import { Badge } from '../ui/Badge'
 import { Case } from '../ui/Case'
@@ -134,7 +135,13 @@ export function M22({ embedded = false, initialIdus, onBilan, onClose }: {
   // — « Générer » les régénère. Hors embedded, l'état 1/2 reste piloté par la seule présence de `data`.
   const [editing, setEditing] = useState(false)
 
-  const run = useMutation({ mutationFn: (body: EtudeIn) => postEtude(body) })
+  const run = useMutation({
+    mutationFn: (body: EtudeIn) => postEtude(body),
+    // CHASSE-DOCS-FIX-1 (Lot 5.1) — empreinte de la CONFIG vivante de l'Étude (objectif/programme/
+    // hypothèses), pour que « Mes documents » marque « Sources modifiées depuis » si l'on change la
+    // config sans régénérer le PDF. On fige la config seule (hors scenario_ref = quel scénario exporter).
+    onMutate: (body: EtudeIn) => { noterEditeur('etude-faisabilite', body.idus?.[0], body) },
+  })
   // export PDF du SCÉNARIO AFFICHÉ (porte 1) : POST /modules/etude/pdf avec la config courante + le
   // scénario sélectionné. Le PDF lit la même réponse que l'écran (jamais un 2e calcul).
   const pdf = useOuvrirDocument()
@@ -142,11 +149,12 @@ export function M22({ embedded = false, initialIdus, onBilan, onClose }: {
   const scenarios = data?.scenarios ?? []
   const actif: EtudeScenario | undefined = scenarios[Math.min(tab, Math.max(0, scenarios.length - 1))]
 
-  // Message d'erreur de génération : une entrée refusée (400, ex. « parcelles non contiguës ») affiche
-  // le motif EXACT du moteur, SANS bouton réessayer (relancer la même assiette échouerait pareil) ; une
-  // panne quelconque garde le message générique + réessayer.
-  const erreur400 = run.error instanceof ApiError && run.error.status === 400 ? run.error.detail : null
-  const erreurMsg = erreur400 ?? "L'étude a échoué — réessayez."
+  // Message d'erreur de génération : une entrée refusée (400, ex. « parcelles non contiguës ») OU une
+  // étude trop lourde (503, CHASSE-DOCS-FIX-1 vérif #4) affiche le motif EXACT du moteur, SANS bouton
+  // réessayer (relancer la même assiette échouerait pareil) ; une panne quelconque garde le générique.
+  const erreurTerminale = run.error instanceof ApiError
+    && (run.error.status === 400 || run.error.status === 503) ? run.error.detail : null
+  const erreurMsg = erreurTerminale ?? "L'étude a échoué — réessayez."
 
   // GeoJSON du plan masse filtré par couche cochée (affichage, PAS un calcul) — réutilisé par la carte
   // intégrée (embedded) OU poussé à la carte globale (setModuleMap, hors embedded).
@@ -307,7 +315,7 @@ export function M22({ embedded = false, initialIdus, onBilan, onClose }: {
             onClick={() => { setTab(0); run.mutate(corpsBody()) }}>
             {run.isPending ? 'Génération…' : 'Générer les scénarios'}
           </Bouton>
-          {run.isError && <ErrorState message={erreurMsg} retry={erreur400 ? undefined : () => run.mutate(corpsBody())} />}
+          {run.isError && <ErrorState message={erreurMsg} retry={erreurTerminale ? undefined : () => run.mutate(corpsBody())} />}
         </>
       )}
 
@@ -445,8 +453,9 @@ export function M22({ embedded = false, initialIdus, onBilan, onClose }: {
                       « Étude de faisabilité ». Même document que la 9e carte Docs. */}
                   <Bouton niveau={embedded ? 'primaire' : 'secondaire'} ton="vert" data-etude-pdf className="mt-2 w-full"
                     disabled={!!pdf.enCours}
-                    onClick={() => pdf.ouvrir(ETUDE_PDF_URL, 'etude-pdf',
-                      etudePdfInit({ ...corpsBody(), scenario_ref: actif.ref }))}>
+                    onClick={() => { noterGeneration('etude-faisabilite', sel[0], corpsBody())
+                      pdf.ouvrir(ETUDE_PDF_URL, 'etude-pdf',
+                        etudePdfInit({ ...corpsBody(), scenario_ref: actif.ref })) }}>
                     {pdf.enCours ? <Chargement variant="inline" accent="courant" label="Génération…" />
                       : (embedded ? 'Générer le PDF ↓' : 'Étude de faisabilité (PDF) ↓')}
                   </Bouton>
@@ -593,7 +602,7 @@ export function M22({ embedded = false, initialIdus, onBilan, onClose }: {
             onClick={() => { setTab(0); setEditing(false); run.mutate(corpsBody()) }}>
             {run.isPending ? 'Génération…' : 'Générer les scénarios'}
           </Bouton>
-          {run.isError && <div className="mt-2"><ErrorState message={erreurMsg} retry={erreur400 ? undefined : () => run.mutate(corpsBody())} /></div>}
+          {run.isError && <div className="mt-2"><ErrorState message={erreurMsg} retry={erreurTerminale ? undefined : () => run.mutate(corpsBody())} /></div>}
         </div>
       )}
 
@@ -626,7 +635,8 @@ export function M22({ embedded = false, initialIdus, onBilan, onClose }: {
             <h4 className="mt-3 text-[10px] font-semibold uppercase tracking-wide text-txt-dim">Ce scénario</h4>
             <div className="flex flex-col gap-2">
               <Bouton niveau="primaire" ton="vert" data-etude-pdf disabled={!!pdf.enCours || !actif}
-                onClick={() => actif && pdf.ouvrir(ETUDE_PDF_URL, 'etude-pdf', etudePdfInit({ ...corpsBody(), scenario_ref: actif.ref }))}>
+                onClick={() => { if (actif) { noterGeneration('etude-faisabilite', sel[0], corpsBody())
+                  pdf.ouvrir(ETUDE_PDF_URL, 'etude-pdf', etudePdfInit({ ...corpsBody(), scenario_ref: actif.ref })) } }}>
                 {pdf.enCours ? <Chargement variant="inline" accent="courant" label="Génération…" /> : 'Générer le PDF ↓'}
               </Bouton>
               {onBilan && (

@@ -15,6 +15,7 @@ import {
   type BilanModele, type BilanEntrees, type BilanResultat, type BilanSaisie, type BilanPoste,
 } from '../../lib/api'
 import { useOuvrirDocument } from '../../lib/ouvrirDocument'
+import { noterEditeur, noterGeneration } from '../../lib/empreinteDoc'
 import { Bouton } from '../ui/Bouton'
 import { Badge } from '../ui/Badge'
 import { Chargement } from '../Loading'
@@ -119,6 +120,9 @@ export function BilanEcran({ idu, onClose, onGenerated, depuisEtude }:
     minuterie.current = setTimeout(() => {
       calculerBilan(idu, entrees).then(setRes).catch(() => {})
       setDocId(null)  // toute modification invalide le document généré
+      // CHASSE-DOCS-FIX-1 (Lot 5.1) — l'empreinte des hypothèses VIVANTES, pour que « Mes documents »
+      // marque « Sources modifiées depuis » si l'on édite sans régénérer.
+      noterEditeur('bilan', idu, entrees)
     }, 250)
     return () => { if (minuterie.current) clearTimeout(minuterie.current) }
   }, [entrees, idu])
@@ -181,6 +185,7 @@ export function BilanEcran({ idu, onClose, onGenerated, depuisEtude }:
     try {
       const { doc_id } = await genererBilan(idu, entrees)
       setDocId(doc_id)
+      noterGeneration('bilan', idu, entrees)   // Lot 5.1 — fige l'empreinte à la génération (= « à jour »)
       onGenerated?.(doc_id)
       await ouvrir(docBilanUrl(idu, doc_id), 'bilan')
     } catch (e) {

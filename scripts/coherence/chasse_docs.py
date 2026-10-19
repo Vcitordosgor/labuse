@@ -343,6 +343,46 @@ def g17_gabarit_source_dupliquee():
     return "OK", "pas de source dupliquée"
 
 
+def g18_acheval_part_source_unique():
+    """Vérif #3 — sur parcelle à cheval, la part en zone constructible doit être LA MÊME partout :
+    Dossier/fiche (zonage %) = Gabarit (pctPortionZone) = Gabarit surfaceNote (m²). Source unique = zonage."""
+    idu = "97411000AV0110"   # à cheval Uh/N, gabarit calculable
+    st, fiche = _get_json(f"/parcels/{idu}")
+    zones = ((fiche or {}).get("reglement_plu") or {}).get("zones") or []
+
+    def _fam(z):
+        z = str(z or "").upper()
+        return "AU" if z.startswith("AU") else (z[:1] if z else "")
+    pct_dossier = sum((z.get("part") or 0) for z in zones if _fam(z.get("zone")) in ("U", "AU")) * 100
+    cont = (fiche or {}).get("contenance_m2")
+    st2, gab = _get_json(f"/outils/gabarit/{idu}")
+    if not gab or gab.get("status") != "ok" or gab.get("pctPortionZone") is None:
+        return "SKIP", "gabarit non calculable sur ce témoin"
+    pct_gab = gab.get("pctPortionZone")
+    m = re.search(r"dont\s*~?([\d\s]+)\s*m²", gab.get("surfaceNote") or "")
+    m2_gab = int(re.sub(r"\s", "", m.group(1))) if m else None
+    m2_attendu = round((cont or 0) * pct_dossier / 100)
+    if abs(round(pct_dossier) - pct_gab) > 1:
+        return "ECART", f"part Dossier {pct_dossier:.1f} % vs Gabarit pctPortionZone {pct_gab} %"
+    if m2_gab is not None and abs(m2_gab - m2_attendu) > max(2, 0.01 * m2_attendu):
+        return "ECART", f"m² Gabarit {m2_gab} vs zonage {m2_attendu} (part {pct_dossier:.1f} % × {cont})"
+    return "OK", (f"part {pct_dossier:.1f} % · gabarit {pct_gab} % · {m2_gab} m² ≈ {m2_attendu} m² "
+                  "(source zonage unique)")
+
+
+def g19_etude_porte_caveat_au():
+    """Vérif #2 — l'Étude de faisabilité (POST /modules/etude) porte le caveat d'ouverture AU
+    (« ouverture sous conditions »), comme la fiche §4 et Comparer. Jamais une capacité servie nue."""
+    idu = "97415000HK0130"   # AU2c conditionnelle, Étude 200
+    st, payload, err = _post_json("/modules/etude", {"idus": [idu]}, timeout=40)
+    if payload is None:
+        return "SKIP", f"Étude indisponible (HTTP {st}{' ' + err if err else ''})"
+    au = payload.get("au_ouverture")
+    if not au:
+        return "ECART", "l'Étude ne porte pas le caveat AU (au_ouverture absent)"
+    return "OK", f"caveat AU porté par l'Étude : « {au.get('statut')} »"
+
+
 GARDES = [
     ("E-01 mixité : seuil servi ET « non renseigné »", g01_mixite_contradiction),
     ("E-02 §Sols : dict Python brut", g02_sols_dict_brut),
@@ -361,6 +401,8 @@ GARDES = [
     ("E-15 apporteur : IDU collé", g15_apporteur_idu_colle),
     ("E-16 apporteur : voisines tronquées", g16_apporteur_voisines_tronquees),
     ("E-17 gabarit : source dupliquée", g17_gabarit_source_dupliquee),
+    ("E-18 à cheval : part zone = Dossier = Gabarit (source zonage unique)", g18_acheval_part_source_unique),
+    ("E-19 Étude de faisabilité porte le caveat AU", g19_etude_porte_caveat_au),
 ]
 
 

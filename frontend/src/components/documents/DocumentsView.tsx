@@ -21,6 +21,7 @@ import {
   type DocType, type DocGenereRow, type EtudePdfIn,
 } from '../../lib/api'
 import { fmtM2, iduComplet } from '../../lib/format'
+import { editeurModifie } from '../../lib/empreinteDoc'
 import { useOuvrirDocument } from '../../lib/ouvrirDocument'
 import { supprimerDocument, getMoteursConfig } from '../../lib/api'
 import { CATALOGUE, type DocCatalogue } from './catalogue'
@@ -347,6 +348,9 @@ function LigneDoc({ r, onChange }: { r: DocGenereRow; onChange: () => void }) {
       .catch(() => setToast('Suppression échouée — réessayez.'))
   }
   const btn = 'h-[26px] px-[9px] text-[12px]'
+  // CHASSE-DOCS-FIX-1 (Lot 5.1) — « Sources modifiées depuis » s'allume AUSSI quand l'éditeur (Bilan/
+  // Étude) a changé ses saisies depuis la génération (empreinte locale), pas seulement sur les sources.
+  const modifie = r.etat !== 'a_jour' || editeurModifie(r.doc_type, r.idus?.[0] ?? null)
   return (
     <tr className="group border-b border-line hover:bg-mint hover:text-mint-on">
       <td className="h-11 px-2.5 align-middle">{dateFr(r.created_at)}</td>
@@ -354,9 +358,9 @@ function LigneDoc({ r, onChange }: { r: DocGenereRow; onChange: () => void }) {
       <td className="truncate px-2.5">{sur(r)}{r.commune ? <span className="text-txt-dim group-hover:text-mint-on/75"> · {r.commune}</span> : null}</td>
       <td className="px-2.5">{r.projet || <span className="text-txt-dim group-hover:text-mint-on/75">—</span>}</td>
       <td className="px-2.5">
-        {r.etat === 'a_jour'
-          ? <Badge ton="vert">À jour</Badge>
-          : <Badge ton="ambre">Sources modifiées depuis</Badge>}
+        {modifie
+          ? <Badge ton="ambre">Sources modifiées depuis</Badge>
+          : <Badge ton="vert">À jour</Badge>}
       </td>
       <td className="px-2.5">
         <div className="flex justify-end gap-1.5">
@@ -366,7 +370,7 @@ function LigneDoc({ r, onChange }: { r: DocGenereRow; onChange: () => void }) {
             <Bouton niveau="secondaire" ton="vert" className={btn} disabled={busy}
               onClick={() => void ouvrirDoc(docBilanExcelUrl(r.idus[0], r.id), `xls-${r.id}`)}>Excel</Bouton>
           )}
-          {r.etat === 'modifie' && (
+          {modifie && (
             <Bouton niveau="secondaire" ton="vert" className={btn} disabled={busy} onClick={regenerer}>Régénérer</Bouton>
           )}
           {confirmSuppr ? (

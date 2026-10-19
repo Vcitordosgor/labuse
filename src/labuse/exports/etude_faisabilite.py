@@ -306,6 +306,11 @@ def _p1_synthese(payload: dict, retenu: dict, numero: str, genere_le: str) -> st
         '<table class="ef-scn"><tr><th>Scénario</th><th>Forme</th><th class="num">Logements</th>'
         '<th class="num">Niveaux</th><th class="num">SDP du scénario</th><th class="num">Places</th>'
         '<th>Étude</th></tr>' + "".join(rows) + "</table>") if rows else ""
+    # CHASSE-DOCS-FIX-1 (vérif #2) — caveat d'ouverture AU (« ouverture sous conditions »), comme la
+    # fiche §4 et Comparer : jamais une capacité servie nue sur une zone AU conditionnée.
+    _au = payload.get("au_ouverture") if isinstance(payload, dict) else None
+    _au_html = (f'<p class="note"><b>Zone à urbaniser (AU)</b> — {esc(_au.get("statut") or "")}. '
+                f'{esc(_au.get("motif") or "")}</p>' if _au else '')
     return (
         '<div class="cover">'
         f'<div class="kicker">LABUSE · Document n° {esc(numero)}</div>'
@@ -313,7 +318,8 @@ def _p1_synthese(payload: dict, retenu: dict, numero: str, genere_le: str) -> st
         f'<p class="address">{esc(t.get("commune") or "")} — parcelles {esc(refs)}</p>'
         f'<p class="idu">{_m2(t.get("contenance_totale_m2"))} · zone {esc(e.get("zone") or "")} · '
         f'collectif · stationnement {esc(e.get("stationnement") or "aérien")}</p>'
-        f'<div class="{vclass}">{esc(txt)}</div>'
+        + _au_html
+        + f'<div class="{vclass}">{esc(txt)}</div>'
         '<div class="ef-status">'
         f'<div><b>Contrôles automatisés (scénario {esc(retenu["ref"])})</b>'
         f'{cc["reussi"]} réussis · {cc["echoue"]} échoués · {cc["non_effectue"]} non effectués</div>'
