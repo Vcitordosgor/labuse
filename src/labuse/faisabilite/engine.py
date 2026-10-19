@@ -829,7 +829,8 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
     # règle VALIDÉE de la zone (`rules.mixite`, lue des regles calibrées). Deux formes de seuil, lues
     # au même endroit : `seuil_m2` (SDP, forme majoritaire 974 : « programme > N m² SDP → X % aidé »)
     # OU `seuil_logements` (nb de logements, Saint-Denis). La ligne s'affiche TOUJOURS : validée au-delà
-    # du seuil → « ~N logements aidés imposés » (Sourcé) ; validée sous le seuil → « non imposé » ;
+    # du seuil → la RÈGLE « X % du programme en logements aidés » (Sourcé — jamais un nombre de
+    # logements dérivé, décision Vic ROUGES-RESTANTS item 9) ; validée sous le seuil → « non imposé » ;
     # `propose` → « non modélisée » ; absente → « sans objet » (jamais un 0 muet, jamais « non renseigné »).
     _mx = rules.mixite if isinstance(rules.mixite, dict) else None
     if _mx and _mx.get("statut") == "valide" and _mx.get("quota_pct"):
@@ -849,7 +850,9 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
         elif _mx_seuil_log is not None:
             _declenchee = _fin_hi >= float(_mx_seuil_log)
             _seuil_desc = f"dès {int(_mx_seuil_log)} logts"
-            _seuil_non = f"programme ~{_fin_lo}-{_fin_hi} logts < {int(_mx_seuil_log)}"
+            # ROUGES-RESTANTS (item 9) — le seuil déclencheur (règle) se dit ; la fourchette de
+            # logements estimée du programme, jamais (la mixité s'affiche en règle, pas en nombres).
+            _seuil_non = f"programme sous le seuil de {int(_mx_seuil_log)} logts"
         else:
             _declenchee, _seuil_desc, _seuil_non = True, "sans seuil", ""
         if not _declenchee:
@@ -857,10 +860,12 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
                               f"clause « {_mx_quota:.0f} % {_seuil_desc} »{_prod_txt} — {_seuil_non} : seuil non atteint",
                               "non imposé", _mx_src, prov="sourcee"))
         else:
-            _lls_lo, _lls_hi = math.ceil(_mx_quota / 100.0 * _fin_lo), math.ceil(_mx_quota / 100.0 * _fin_hi)
+            # ROUGES-RESTANTS (item 9, décision Vic) — la mixité s'affiche en RÈGLE (quota % et
+            # seuil déclencheur), JAMAIS en nombre de logements : plus de « sur ~a-b logts » ni de
+            # « ~x-y logements aidés imposés » dérivés d'une fourchette estimée.
             steps.append(Step("Logements sociaux imposés (LLS)",
-                              f"{_mx_quota:.0f} % du programme {_seuil_desc}{_prod_txt} — sur ~{_fin_lo}-{_fin_hi} logts",
-                              f"~{_lls_lo}-{_lls_hi} logements aidés imposés", _mx_src, prov="sourcee"))
+                              f"clause « {_mx_quota:.0f} % {_seuil_desc} »{_prod_txt} — seuil atteint",
+                              f"{_mx_quota:.0f} % du programme en logements aidés", _mx_src, prov="sourcee"))
     elif _mx and _mx.get("statut") == "propose":
         steps.append(Step("Logements sociaux imposés (LLS)",
                           "clause détectée au règlement mais non validée (feuille « propose »)",

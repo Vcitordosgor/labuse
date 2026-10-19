@@ -1,10 +1,9 @@
 """PLU-CALIBRAGE-9 — la clause de mixité sociale (seuil → quota de logements aidés) est LUE du
-règlement de zone calibré et branchée : la capacité sort « N logements aidés imposés » (Sourcé),
+règlement de zone calibré et branchée : la capacité sort la RÈGLE « X % du programme en
+logements aidés » (Sourcé — jamais un nombre de logements dérivé, ROUGES-RESTANTS item 9),
 « non imposé » (sous le seuil) ou « sans objet » (zone sans clause) ; le registre sert
 `mixite_seuil_m2` / `mixite_quota_pct` au même robinet que l'écran (plus en_attente)."""
 from __future__ import annotations
-
-import math
 
 from labuse.faisabilite.engine import estimate_capacity
 from labuse.faisabilite.zonage import resolve_zone
@@ -29,21 +28,21 @@ def test_temoin_etang_sale_ua_seuil_m2_lu():
     assert "UA 1.3" in (zr.mixite["article"] or "")
 
 
-def test_temoin_capacite_sort_logements_aides_imposes():
-    """Au-delà de 1 000 m² de SDP, la capacité sort « ~N logements aidés imposés » (Sourcé) et le
-    nombre = quota % du programme (arrondi au plancher légal) — l'archi trouve 20 % sur ~29 logts."""
+def test_temoin_capacite_sort_la_regle_de_mixite():
+    """ROUGES-RESTANTS item 9 (décision Vic, fix/rouges-restants) — au-delà de 1 000 m² de SDP, la
+    capacité sort la RÈGLE « 20 % du programme en logements aidés » (Sourcé) : quota % et seuil
+    déclencheur, JAMAIS un nombre de logements dérivé (plus de « sur ~a-b logts » ni « ~x-y
+    logements aidés imposés »)."""
     zr = resolve_zone("UA", "L'Étang-Salé")
     fa = estimate_capacity(zr, 2000.0, emprise_geo=(1400.0, 4.0))
     st = _step(fa)
     assert st.prov == "sourcee"
-    assert "logements aidés imposés" in st.valeur
+    assert st.valeur == "20 % du programme en logements aidés"
     assert "UA 1.3" in st.source
-    # le quota est bien 20 % (LU du règlement, pas une constante nationale)
-    assert "20 %" in st.formule or "20%" in st.formule
-    # le nombre imposé = 20 % de la fourchette finale, arrondi au plancher légal (math.ceil)
-    import re
-    nums = [int(n) for n in re.findall(r"\d+", st.valeur)]
-    assert nums and nums[-1] >= 1          # au moins 1 logement aidé imposé sur un grand programme
+    # le quota est bien 20 % (LU du règlement, pas une constante nationale) et le seuil est dit
+    assert "20 %" in st.formule and "1000 m²" in st.formule and "seuil atteint" in st.formule
+    # jamais une fourchette de logements dérivée dans la ligne mixité
+    assert "logts" not in st.valeur and "sur ~" not in st.formule
 
 
 def test_sous_le_seuil_non_impose():
