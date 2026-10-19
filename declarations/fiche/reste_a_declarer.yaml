@@ -117,7 +117,7 @@ donnees:
       libelle: "Mixité sociale (clause)"
       format:  verdict
       i:       "Déclenchement de la clause de mixité (SDP/logements/terrain ≥ seuil de la zone)."
-    absence: "Mixité sociale : seuils de la zone non renseignés à ce jour."
+    absence: "Mixité sociale : clause non renseignée pour cette zone à ce jour."
     absence_type: non_ingeree
     statut_juridique: opposable
     pourquoi: "La clause de mixité impose un quota de logements sociaux ; change le programme."

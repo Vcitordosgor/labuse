@@ -318,6 +318,20 @@ def permis_incoherence_note(dep, aut) -> str:
     return "dates incohérentes chez le producteur"
 
 
+def _date_permis(iso, *, depot=False):
+    """CHASSE-DOCS-FIX-1 (E-13) — Sitadel ne publie que l'ANNÉE de dépôt (jour fabriqué « -01-01 ») :
+    rendu « en 2024 », jamais une date ISO ni un faux jour. Les autres dates passent en FR JJ/MM/AAAA."""
+    if not iso:
+        return None
+    m = _re.match(r"(\d{4})-(\d{2})-(\d{2})", str(iso))
+    if not m:
+        return str(iso)
+    y, mo, da = m.groups()
+    if depot and mo == "01" and da == "01":
+        return f"en {y}"
+    return f"{da}/{mo}/{y}"
+
+
 def _r_permis_liste(v):
     # DONNEES-5 — la MÊME liste que l'écran (HistoriqueSiteBlock) : chaque permis daté (type,
     # dépôt, autorisation), 6 max comme la fiche, plus le reste compté. Même source (historique_site).
@@ -328,8 +342,8 @@ def _r_permis_liste(v):
         t = esc(pm.get("type") or "permis")
         dep = pm.get("date_depot")
         aut = pm.get("date_autorisation")
-        dep_txt = esc(dep or aut or "?")
-        auto = f", autorisé {esc(aut)}" if aut else ""
+        dep_txt = esc(_date_permis(dep, depot=True) or _date_permis(aut) or "?")
+        auto = f", autorisé {esc(_date_permis(aut))}" if aut else ""
         note = permis_incoherence_note(dep, aut)   # littéral de confiance (2 valeurs fixes) — pas d'esc
         lignes.append(f"{t} — déposé {dep_txt}{auto}" + (f" · {note}" if note else ""))
     reste = f" (+{len(v) - 6} autres)" if len(v) > 6 else ""
@@ -443,12 +457,36 @@ def _r_aleas(v, val: Valeur):
     return '<table class="kv">' + "".join(rows) + "</table>"
 
 
+def _phrase_site_sol(d: dict, prefixe: str) -> str:
+    """CHASSE-DOCS-FIX-1 (E-02) — une entrée sols (SIS/CASIAS) est un dict {nom, statut, distance_m,
+    sur_place, …} : on en fait une PHRASE, jamais un `str(dict)` servi au client. Ex. :
+    « Ancien site industriel (CASIAS) Sucrerie Casernes, en arrêt, à 44 m »."""
+    morceaux = [prefixe]
+    if d.get("nom"):
+        morceaux.append(str(d["nom"]))
+    suffixes = []
+    if d.get("statut"):
+        suffixes.append(str(d["statut"]).lower())
+    if d.get("sur_place"):
+        suffixes.append("sur la parcelle")
+    elif d.get("distance_m") is not None:
+        suffixes.append(f"à {groupe(d['distance_m'])} m")
+    phrase = " ".join(morceaux)
+    return phrase + (", " + ", ".join(suffixes) if suffixes else "")
+
+
 def _r_sols(v):
     bits = []
-    if v.get("sis") or v.get("sis_classe"):
-        bits.append(f"SIS : {v.get('sis') or v.get('sis_classe')}")
-    if v.get("casias") or v.get("casias_statut"):
-        bits.append(f"CASIAS : {v.get('casias') or v.get('casias_statut')}")
+    sis = v.get("sis")
+    if isinstance(sis, dict):
+        bits.append("SIS : " + _phrase_site_sol(sis, "Secteur d'information sur les sols"))
+    elif sis or v.get("sis_classe"):
+        bits.append(f"SIS : {sis or v.get('sis_classe')}")
+    cas = v.get("casias")
+    if isinstance(cas, dict):
+        bits.append("CASIAS : " + _phrase_site_sol(cas, "Ancien site industriel (CASIAS)"))
+    elif cas or v.get("casias_statut"):
+        bits.append(f"CASIAS : {cas or v.get('casias_statut')}")
     return esc(" · ".join(bits))
 
 
@@ -641,7 +679,10 @@ def _r_equipements(v):
         cat = _CAT_EQUIP.get(it.get("cat") or "", it.get("cat") or "")
         nom = it.get("nom")
         d = it.get("distance_m")
-        s = cat + (f" : {nom}" if nom else "") + (f" ({groupe(d)} m)" if d is not None else "")
+        # CHASSE-DOCS-FIX-1 (E-11) — distance 0 = équipement non géocodé (une distance nulle n'existe
+        # pas) : on le DIT, jamais « (0 m) ».
+        dist_txt = f" ({groupe(d)} m)" if d else (" (distance non géocodée)" if d == 0 else "")
+        s = cat + (f" : {nom}" if nom else "") + dist_txt
         if s:
             bits.append(s)
     return esc(" · ".join(bits))
@@ -1263,11 +1304,23 @@ def rendu_sections(valeurs: dict[str, Valeur], fiche: dict, *, plan_html: str = 
             # calculable (capacité nulle) » et on dit la vraie raison de la capacité (pas « capacité nulle »).
             _sdp = _v(valeurs, "sdp_residuelle_m2")
             _has_sdp = isinstance(_sdp, (int, float)) and not isinstance(_sdp, bool) and _sdp > 0
+            # CHASSE-DOCS-FIX-1 (E-05) — parcelle À CHEVAL avec une portion CONSTRUCTIBLE (famille U/AU) :
+            # la portion constructible fait foi. On ne dit JAMAIS « zone non constructible » (Comparer et
+            # l'Étude servent une capacité) ; on renvoie à l'Étude, comme pour la capacité en logements.
+            def _fam_z(z):
+                z = str(z or "").upper()
+                return "AU" if z.startswith("AU") else (z[:1] if z else "")
+            _rp = fiche.get("reglement_plu") or {}
+            _acheval_const = bool(_rp.get("a_cheval")) and any(
+                _fam_z(z.get("zone")) in ("U", "AU") for z in (_rp.get("zones") or []))
             verifie: list[str] = []
             nondispo: list[str] = []
             for q, ph in absents:
                 if _has_sdp and q == "surface_plancher_m2":
                     continue
+                if _acheval_const and q == "surface_plancher_m2":
+                    ph = ("Surface de plancher : non chiffrée ici — la portion constructible de cette "
+                          "parcelle à cheval relève de l'Étude de faisabilité.")
                 if _has_sdp and q == "capacite_logements":
                     ph = ("Capacité en logements : non chiffrée ici — le potentiel relève des droits "
                           "à bâtir résiduels (la SDP ci-dessus), pas un programme de logements.")

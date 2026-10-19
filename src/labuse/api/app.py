@@ -3064,6 +3064,11 @@ def taxe_amenagement_prefill(idu: str, db: Session = Depends(get_db)) -> dict:
             # sur le libellé (même notion que la fiche §PLU, cf. F01a).
             "zone_famille": row["zone_fam"],
             "sdp_gabarit_m2": int(sdp) if (sdp is not None and sdp > 0) else None,
+            # CHASSE-DOCS-FIX-1 (Lot 5) — ce pré-remplissage est la SDP RÉSIDUELLE (droits à bâtir
+            # restants, bâti conservé), DISTINCTE de la « SDP du scénario » de l'Étude de faisabilité :
+            # on le libelle pour que l'utilisateur ne confonde pas les deux.
+            "sdp_gabarit_libelle": ("SDP résiduelle (droits à bâtir restants, bâti conservé)"
+                                    if (sdp is not None and sdp > 0) else None),
             "deja_batie": bool(row["taux_emprise_pct"] and float(row["taux_emprise_pct"]) > 0),
             "taux_communal_pct": (pub["part_communale_pct"] if pub else None),
             "taux_communal_source": ("public" if pub else None),
@@ -6241,7 +6246,13 @@ def _potentiel_transformation_block(db: Session, idu: str, commune: str | None =
     if estimation_simplifiee and pct is not None and pct > 100:
         pct = None   # un « % consommé » > 100 du moteur simplifié n'est pas un fait servable
     if pct is None:
-        niveau, libelle = "indetermine", "Marge SDP non calculée"
+        # CHASSE-DOCS-FIX-1 (E-06) — le « % consommé > 100 » du moteur de secours a été supprimé
+        # (None), MAIS une SDP résiduelle nulle = parcelle SATURÉE (densité consommée) : on TRANCHE
+        # « saturée », jamais « Marge SDP non calculée » (qui contredit le bandeau de saturation du §10).
+        if sdp_servie is not None and sdp_servie <= 0:
+            niveau, libelle = "nul", "Densité autorisée atteinte ou dépassée"
+        else:
+            niveau, libelle = "indetermine", "Marge SDP non calculée"
     elif pct < 40:
         niveau, libelle = "fort", "Fort potentiel — parcelle en forte sous-densité"
     elif pct < 70:
@@ -6298,6 +6309,11 @@ def _potentiel_transformation_block(db: Session, idu: str, commune: str | None =
             niveau = "exclu"
         else:
             niveau, sdp_servie = "indetermine", None
+    # CHASSE-DOCS-FIX-1 (E-06) — sous un verdict de SATURATION (densité consommée), on ne sert PAS de
+    # marge de surélévation positive : elle contredirait « déjà consommée » pour le lecteur (§10 tranche
+    # une seule histoire). La hauteur du bâti reste dans « Le bien » ; c'est la MARGE qui est masquée ici.
+    if niveau == "nul":
+        sur = {}
     sur = sur or {}
     # RECETTE-9 T9 — le scénario de surélévation branché sur le LiDAR : la surélévation se décide à
     # l'ÉGOUT (bord de toit) vs la règle d'égout (cause de fond de E1). Le bâti BD TOPO est un faîtage
@@ -8515,6 +8531,10 @@ def compare(idus: str = Query(..., description="2 à 3 IDU séparés par des vir
             row["zone_constructible"] = (None if _zs.zone_fam is None else _zs.zone_fam not in ("A", "N"))
             # parts sur une bizone (« A 70 % · N 28 % »), comme la fiche ; None hors bizone.
             row["zone_parts"] = (_zs.parts if _zs.a_cheval and _zs.parts else None)
+        # CHASSE-DOCS-FIX-1 (E-08) — propage le caveat d'ouverture AU (« ouverture sous conditions »),
+        # comme le Dossier §4 : une AU conditionnée ne doit pas être servie « constructible » nue, sans
+        # sa réserve. Le front l'affiche en note sous la ligne de constructibilité.
+        row["au_ouverture"] = _au_ouverture_block(db, idu)
         # M82 — prix terrain nu PAR ZONE (point de calcul M79 unique, comme la fiche et l'outil Marché).
         commune, zone = row.get("commune"), (row.get("zone") or "")
         fam = "AU" if zone.upper().startswith("AU") else (zone[:1].upper() if zone else "")

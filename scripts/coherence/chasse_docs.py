@@ -228,18 +228,21 @@ def g08_au_fermee_caveat_manquant():
 
 
 def g09_zone_label_acheval():
-    """E-09 — à cheval : la faisabilité nomme `capacite.zone` = la zone CONSTRUCTIBLE (Ud) tandis que
-    fiche/Comparer nomment la zone DOMINANTE (N). Libellé « zone » divergent. Incohérence (cosmétique)."""
+    """E-09 — à cheval : la faisabilité nomme la zone CONSTRUCTIBLE (≠ dominante). Elle doit la nommer
+    AVEC sa part (« Ud sur 46 % »), sinon elle laisse croire que toute la parcelle y est. Incohérence."""
     st, fiche = _get_json(f"/parcels/{T_ACHEVAL}")
     st2, fai = _get_json(f"/modules/faisabilite/{T_ACHEVAL}")
-    z_fiche = ((fiche or {}).get("reglement_plu") or {}).get("zones") or []
-    dom = z_fiche[0].get("zone") if z_fiche else None
-    z_fai = ((fai or {}).get("capacite") or {}).get("zone")
-    st3, cmp_ = _get_json(f"/compare?idus={T_ACHEVAL}")
-    z_cmp = ((cmp_ or {}).get("parcels") or [{}])[0].get("zone")
-    if dom and z_fai and z_fai != dom and z_cmp == dom:
-        return "ECART", f"zone : fiche/Comparer={dom} · faisabilité={z_fai}"
-    return "OK", f"libellé zone cohérent (dominante {dom}, faisa {z_fai})"
+    cap = (fai or {}).get("capacite") or {}
+    acheval = bool(((fiche or {}).get("reglement_plu") or {}).get("a_cheval") or cap.get("a_cheval"))
+    z_fai = cap.get("zone")
+    dom = (((fiche or {}).get("reglement_plu") or {}).get("zones") or [{}])[0].get("zone")
+    if not acheval:
+        return "OK", "parcelle mono-zone (pas d'enjeu de part)"
+    if z_fai and re.search(r"\bsur\s+\d+\s*%", z_fai):
+        return "OK", f"zone constructible nommée avec sa part : « {z_fai} »"
+    if z_fai and dom and z_fai != dom:
+        return "ECART", f"zone constructible « {z_fai} » nommée sans sa part (dominante {dom})"
+    return "OK", f"libellé zone cohérent (faisa {z_fai})"
 
 
 def g10_emplois_salaries_vide():

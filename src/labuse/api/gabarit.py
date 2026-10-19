@@ -123,7 +123,23 @@ def gabarit_detail(idu: str, db: Session = Depends(get_db)) -> GabaritResult:
     _cad = (_rac.get("parcelle") or {}).get("surface_m2")
     if (_rac.get("zone") or {}).get("a_cheval") and _cad and res.surfaceParcelleM2 is not None:
         res.pctPortionZone = round(res.surfaceParcelleM2 / _cad * 100)
+        # CHASSE-DOCS-FIX-1 (Lot 5) — la surface servie est la CONTENANCE cadastrale (règle CONTENANCE-1) ;
+        # sur une parcelle à cheval, on précise la part en zone constructible (« dont ~X m² en zone Ud »).
+        _zn = (_rac.get("zone") or {}).get("zone") or (_rac.get("zone") or {}).get("zone_calcul")
+        _portion = round(_cad * (res.pctPortionZone or 0) / 100)
+        res.surfaceNote = (f"Contenance cadastrale {int(_cad)} m² — dont ~{_portion} m² "
+                           + (f"en zone {_zn}" if _zn else "en zone constructible")
+                           + " (parcelle à cheval).")
     res.batiExistantGeoJSON = _bati_existant(db, idu)
+    # CHASSE-DOCS-FIX-1 (E-07) — zone d'implantation NULLE (terrain exigu : rien ne passe après reculs) :
+    # le plafond d'emprise et la hauteur n'ont pas d'objet (ils donneraient un gabarit chiffré sur un
+    # terrain où rien ne s'implante). On les masque et on le DIT.
+    if res.zoneImplantationM2 == 0:
+        res.plafondEmpriseM2 = None
+        res.hauteurReglementaireM = None
+        res.terrainNote = ("Aucune zone d'implantation après reculs (terrain exigu) : plafond "
+                           "d'emprise et hauteur sans objet ici.")
+        return res
     # CHASSE-CALCULS-FIX-1 Lot 6 (E-C1) — l'extrusion 3D est posée à plat : on le DIT dès qu'une
     # hauteur réglementaire permet un volume (le mode 3D l'affiche).
     if res.hauteurReglementaireM is not None:

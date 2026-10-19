@@ -13,6 +13,7 @@ Score division = 30·min(lot/500,1) + 25·(1−emprise) + 20·min(r/12,1) + 15·
 """
 from __future__ import annotations
 
+import concurrent.futures
 import csv
 import io
 import logging
@@ -1837,7 +1838,16 @@ def faisabilite_sens1(idu: str, db: Session = Depends(get_db)) -> dict:
     fz = parcel_faisabilite(db, row["id"])
     if fz:
         _ctx, f = fz
-        out["capacite"] = {"zone": f.zone, "verdict": f.verdict, "calibree": f.calibree,
+        # CHASSE-DOCS-FIX-1 (E-09) — sur parcelle à cheval, `f.zone` est la zone CONSTRUCTIBLE (celle
+        # où la capacité est calculée, ≠ dominante). On la nomme AVEC sa part (« Ud sur 46 % ») pour
+        # ne pas prétendre que toute la parcelle est en Ud (le libellé disait « Ud » nu, la fiche « N »).
+        _zone_lbl = f.zone
+        if _ctx.a_cheval and _ctx.zone_parts:
+            _pct = next((p.get("pct") for p in _ctx.zone_parts
+                         if (p.get("zone") == f.zone and p.get("pct") is not None)), None)
+            if _pct is not None:
+                _zone_lbl = f"{f.zone} sur {round(_pct)} %"
+        out["capacite"] = {"zone": _zone_lbl, "verdict": f.verdict, "calibree": f.calibree,
                            # ZONE-1 : zone = DOMINANTE PAR SURFACE (la même que l'écran) ;
                            # sur parcelle à cheval, drapeau + parts servis avec la capacité.
                            "a_cheval": _ctx.a_cheval, "zone_parts": _ctx.zone_parts,
@@ -1985,19 +1995,47 @@ class EtudeIn(BaseModel):
     hypotheses: dict | None = None
 
 
+# CHASSE-DOCS-FIX-1 (E-04) — borne DURE de 30 s sur le moteur d'implantation : au-delà, le client
+# reçoit un message honnête (jamais un HTTP 000 / timeout silencieux). Le moteur n'est PAS optimisé ;
+# il tourne dans un thread avec SA PROPRE session (SQLAlchemy n'est pas thread-safe), et on ABANDONNE
+# l'attente à 30 s (le thread finit en arrière-plan, son résultat est ignoré).
+_ETUDE_TIMEOUT_S = 30
+_ETUDE_TROP_LOURDE = {
+    "erreur": "etude_trop_lourde",
+    "message": "Étude trop lourde pour cette parcelle, non générée. Essayez une assiette plus simple "
+               "(moins de parcelles) ou contactez-nous.",
+}
+
+
+def _etudier_borne(data: dict) -> dict:
+    from ..db import session_scope
+    from ..implantation.service import etudier_payload
+
+    def _run():
+        with session_scope() as s:
+            return etudier_payload(s, data)
+
+    ex = concurrent.futures.ThreadPoolExecutor(max_workers=1, thread_name_prefix="etude")
+    fut = ex.submit(_run)
+    try:
+        return fut.result(timeout=_ETUDE_TIMEOUT_S)
+    except concurrent.futures.TimeoutError:
+        raise HTTPException(503, detail=_ETUDE_TROP_LOURDE)
+    finally:
+        ex.shutdown(wait=False)   # ne JAMAIS bloquer à la sortie (sinon la borne ne sert à rien)
+
+
 @router.post("/etude")
 def etude_implantation(body: EtudeIn, db: Session = Depends(get_db)) -> dict:
     """IMPLANTATION-2 — UN SEUL appel sert l'écran « Étude de faisabilité ». UN SEUL moteur
     (`labuse.implantation`, déterministe, sans IA) : il dessine jusqu'à 3 scénarios distincts et en
     TIRE capacité, contrôles 4 états et statut ; le payload porte la géométrie en GeoJSON (WGS84)
     pour le plan masse de la carte, les hypothèses modifiables et les versions moteur + règles.
-    ValueError → 400 (entrée invalide), jamais un faux chiffre."""
-    from ..implantation.service import etudier_payload
-
+    ValueError → 400 (entrée invalide), jamais un faux chiffre. Au-delà de 30 s → 503 honnête (E-04)."""
     for idu in (body.idus or []):
         _check_idu(idu)
     try:
-        return etudier_payload(db, body.model_dump())
+        return _etudier_borne(body.model_dump())
     except ValueError as exc:
         raise HTTPException(400, str(exc))
 
@@ -2050,14 +2088,13 @@ def etude_pdf(body: EtudePdfIn, request: Request, db: Session = Depends(get_db))
     from ..exports import etude_faisabilite as ef
     from ..tz import today_reunion   # FIX-ORFEVRE-1 pt 3 (D-13) — « généré le » au jour Réunion
     from ..exports.rendu import render_pdf
-    from ..implantation.service import etudier_payload
 
     for idu in (body.idus or []):
         _check_idu(idu)
     data = body.model_dump()
     scenario_ref = data.pop("scenario_ref", None)
     try:
-        payload = etudier_payload(db, data)
+        payload = _etudier_borne(data)   # E-04 — borne 30 s (503 honnête, jamais un timeout silencieux)
     except ValueError as exc:
         raise HTTPException(400, str(exc))
     genere_le = today_reunion().strftime("%d/%m/%Y")

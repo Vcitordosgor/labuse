@@ -313,7 +313,15 @@ def _c_sar(db, idu, f):
 
 @extracteur("mixite_clause")
 def _c_mixite(db, idu, f):
-    return _nz(f.get("mixite_clause"))
+    v = _nz(f.get("mixite_clause"))
+    if v:
+        return v
+    # CHASSE-DOCS-FIX-1 (E-01) — zone à clause VALIDE (seuil/quota servis) mais sans programme saisi
+    # (cas de la fiche) : le déclenchement dépend du programme. On le DIT, au lieu de laisser la phrase
+    # d'absence affirmer « seuils de la zone non renseignés » alors qu'ils le sont (contradiction).
+    if _mixite_valide(f):
+        return "déclenchement selon le programme (aucun programme saisi)"
+    return None
 
 
 def _mixite_valide(f):
