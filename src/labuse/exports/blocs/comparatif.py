@@ -94,9 +94,10 @@ _LIGNES = [
     ("Charge foncière /m² terrain", "e", lambda r: (f"{_i(r.get('charge_fonciere_m2'))} €/m²" if r.get("charge_fonciere_m2") is not None else None)),
     ("Prix terrain nu zone", "e", lambda r: _eur_m2(r, "terrain_zone_eur_m2")),
     ("Prix bâti (section cadastrale)", "e", lambda r: _eur_m2(r, "prix_secteur_bati_m2")),
-    # IMPLANTATION-4 (LOT B) — plus de fourchette de logements de l'ancien moteur : renvoi à l'Étude de
-    # faisabilité (comme à l'écran Comparer). prov=None → aucun badge, comme « Classement LABUSE ».
-    # On écarte donc, pour cette ligne, la fourchette « Logements possibles (max.) » (_logements) de main.
+    # IMPLANTATION-4 (LOT B) + FIX-ORFEVRE-1 (décision Vic 18/10/2026) — aucun nombre de logements de
+    # l'ancien calcul (fourchette estimate_capacity) : la ligne renvoie à l'Étude de faisabilité, seule
+    # à compter des logements. prov=None → aucun badge, comme « Classement LABUSE » (un renvoi, pas une
+    # donnée). La note « capacité maximale » reste sous le tableau.
     ("Logements possibles", None, lambda r: "voir l'Étude de faisabilité"),
     ("Bâti existant", "s", lambda r: (f"{_i(r.get('bati_existant_pct'))} % du terrain" if r.get("bati_existant_pct") is not None else None)),
     ("Gabarit max", "s", lambda r: (f"R+{max(0, int(r['gabarit_niveaux_max']) - 1)}" if r.get("gabarit_niveaux_max") is not None else None)),

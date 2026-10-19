@@ -369,7 +369,7 @@ def render_fiche_pdf(fiche: dict) -> bytes:
 
     # ── M126 pt.1 — EN-TÊTE : logo + wordmark LABUSE à gauche, IDU + date à droite, trait vert 3 px
     #    dessous. Plus de tagline « Radar foncier premium ».
-    from datetime import date as _date
+    from ..tz import today_reunion as _tz_today   # FIX-ORFEVRE-1 pt 3 (D-13) — date au jour Réunion
     y_top = pdf.get_y()
     _logo(pdf, 14, y_top + 1.2, 11)
     pdf.set_xy(27, y_top + 1.4)
@@ -385,7 +385,7 @@ def render_fiche_pdf(fiche: dict) -> bytes:
     pdf.set_xy(pdf.w - 14 - 74, y_top + 5.0)
     pdf.set_font("inter", size=8)
     pdf.set_text_color(*SRC)
-    pdf.cell(74, 4, f"généré le {_date.today().strftime('%d/%m/%Y')}", align="R")
+    pdf.cell(74, 4, f"généré le {_tz_today().strftime('%d/%m/%Y')}", align="R")
     y_line = y_top + 11.5
     pdf.set_draw_color(*GREEN)
     pdf.set_line_width(1.0)                           # ~3 px

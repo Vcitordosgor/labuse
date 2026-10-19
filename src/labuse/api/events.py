@@ -142,6 +142,20 @@ def ensure_tables(engine) -> None:
         for stmt in sql_statements(DDL):
             if stmt.strip():
                 c.execute(text(stmt))
+        # ORF-09 (FIX-ORFEVRE-1) — unicité RÉELLE des événements Radar (dedup + jour Réunion) : la
+        # même garde que pige/tables.ensure_idempotence (le premier passé la pose, l'autre est no-op).
+        from ..pige.tables import ensure_idempotence as _pige_idem
+        if c.execute(text("SELECT to_regclass('pige_depots')")).scalar() is not None:
+            _pige_idem(c)
+        elif c.execute(text("SELECT to_regclass('uq_event_log_pige_jour')")).scalar() is None:
+            c.execute(text(
+                "DELETE FROM event_log a USING event_log b "
+                "WHERE a.dedup LIKE 'pige:%' AND b.dedup = a.dedup "
+                "AND timezone('Indian/Reunion', a.ts)::date = timezone('Indian/Reunion', b.ts)::date "
+                "AND a.id > b.id"))
+            c.execute(text(
+                "CREATE UNIQUE INDEX IF NOT EXISTS uq_event_log_pige_jour ON event_log "
+                "(dedup, (timezone('Indian/Reunion', ts)::date)) WHERE dedup LIKE 'pige:%'"))
         # VEILLE-FIX-2 (Lot C) — la fréquence devient RÉGLABLE ; le défaut GRILLE est QUOTIDIEN. Le défaut
         # HISTORIQUE 'hebdo' n'a JAMAIS été choisi par un client (champ jamais réglable) → normalisation
         # UNE FOIS : convertir les 'hebdo'/NULL spurieux en 'quotidien' et poser le défaut à 'quotidien'.

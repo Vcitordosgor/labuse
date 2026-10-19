@@ -18,6 +18,7 @@ from datetime import date
 
 from ..exports import numeros
 from ..exports.rendu import Cartouche, esc, page_html, render_pdf
+from ..tz import today_reunion   # FIX-ORFEVRE-1 pt 3 (ORF-17/D-13) — jour Réunion, pas process
 from .catalogue import Catalogue, assiette_unite, charger_catalogue
 from .moteur import ResultatBilan
 
@@ -157,7 +158,7 @@ def construire_html(
     jour: date | None = None,
 ) -> tuple[str, Cartouche]:
     cat = cat or charger_catalogue()
-    j = jour or date.today()
+    j = jour or today_reunion()
     numero = numeros.numero_rapport("bilan", idu, j)
 
     tete = (

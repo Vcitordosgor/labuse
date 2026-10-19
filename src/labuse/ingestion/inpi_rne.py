@@ -19,6 +19,8 @@ from datetime import date
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from ..tz import today_reunion   # FIX-ORFEVRE-1 pt 3 (ORF-17) — jour Réunion, pas le fuseau du process
+
 from ..connectors.inpi_rne import SOURCE_NAME, InpiRneConnector, QuotaExceededError
 
 # Groupes de la classification PM manifestement NON marchands (collectivités / établissements
@@ -106,7 +108,7 @@ def sample_report(session: Session, insee: str, today: date | None = None,
     Ne fait AUCUN appel réseau : lit la base. Fournit compteurs, distribution des bandes d'âge,
     TAUX GIGOGNE (SIREN sans aucun dirigeant individu daté) et `n_examples` exemples vérifiables.
     """
-    today = today or date.today()
+    today = today or today_reunion()
 
     # SIREN de la commune présents dans pm_dirigeants (croisement via la vue parcelle).
     rows = session.execute(text(

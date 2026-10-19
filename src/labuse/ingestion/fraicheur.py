@@ -17,6 +17,8 @@ from datetime import date
 
 import httpx
 from sqlalchemy import text
+
+from ..tz import today_reunion   # FIX-ORFEVRE-1 pt 3 (ORF-17) — jour Réunion, pas le fuseau du process
 from sqlalchemy.orm import Session
 
 from .. import runs  # S3 : run servi relu à la requête
@@ -201,7 +203,7 @@ def etat_sources(session: Session) -> list[dict]:
         derniere_ingestion = session.execute(text(
             "SELECT max(last_sync_at)::date FROM data_sources WHERE name ILIKE :n"),
             {"n": s["ds_name"]}).scalar()
-        delta = (date.today() - derniere_donnee).days if isinstance(derniere_donnee, date) else None
+        delta = (today_reunion() - derniere_donnee).days if isinstance(derniere_donnee, date) else None
         out.append({"source": key, "label": s["label"], "cadence": s["cadence"],
                     "derniere_donnee": str(derniere_donnee) if derniere_donnee else None,
                     "derniere_ingestion": str(derniere_ingestion) if derniere_ingestion else None,
@@ -343,7 +345,7 @@ def check_dvf_livraison(session: Session, timeout: float = 20.0) -> dict:
     _ensure(session)
     modifies = []
     with httpx.Client(timeout=timeout, follow_redirects=True) as c:
-        for year in range(2021, date.today().year + 1):
+        for year in range(2021, today_reunion().year + 1):
             try:
                 r = c.head(GEO_DVF_URL.format(year=year))
                 if r.status_code != 200:
@@ -457,7 +459,7 @@ def compteur_reveil_dpe(session: Session) -> dict:
     franchi = n >= SEUIL_REVEIL_DPE
     _ensure(session)
     _etat_set(session, "dpe:compteur_reveil", json.dumps(
-        {"n": int(n), "seuil": SEUIL_REVEIL_DPE, "franchi": franchi, "jour": str(date.today())}))
+        {"n": int(n), "seuil": SEUIL_REVEIL_DPE, "franchi": franchi, "jour": str(today_reunion())}))
     return {"n": int(n), "seuil": SEUIL_REVEIL_DPE, "franchi": franchi}
 
 

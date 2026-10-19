@@ -19,9 +19,10 @@ table quasi vide (< SEUIL_QUASI_VIDE lignes). Jamais d'intersection spatiale par
 from __future__ import annotations
 
 import hashlib
-from datetime import date
 
 from sqlalchemy import text
+
+from ..tz import today_reunion   # FIX-ORFEVRE-1 pt 3 (ORF-17) — témoins tirés sur le jour Réunion
 
 #: sous ce nombre de lignes, une table « parcelle » vide sur tous les témoins est un VRAI
 #: creux (signature DPE : 17 lignes), pas un échantillon clairsemé.
@@ -48,7 +49,7 @@ def temoins_du_jour(db) -> list[tuple[str, str, str]]:
     (déterministe : md5(idu ‖ date), rejouable dans la nuit, différents chaque jour)."""
     fixes = list(TEMOINS_URBAINS + TEMOINS_RURAUX)
     exclus = {t[0] for t in fixes}
-    jour = date.today().isoformat()
+    jour = today_reunion().isoformat()
     rows = db.execute(text(
         "SELECT idu, commune FROM parcels"
         " WHERE md5(idu || :jour) < '0002' AND geom IS NOT NULL LIMIT 200"),

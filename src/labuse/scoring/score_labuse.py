@@ -278,9 +278,17 @@ def score_parcelle(e: ScoreEntrees, bareme: dict, version: str, run_label: str) 
     if f_acces < 1.0:
         contributions.append({"sens": "baisse", "libelle": "accès à la voie non identifié"})
     if f_bati < 1.0:
-        contributions.append({"sens": "baisse",
-                              "libelle": f"bâti existant sur {round(emp or 0)} % de la parcelle — "
-                                         "démolition à prévoir"})
+        # FIX-ORFEVRE-1 (C-01) : cette phrase est FIGÉE dans `contributions` au run — les
+        # formatteurs de lecture (fmt_taux_emprise / fmtTauxEmprise) ne la voient jamais. On
+        # applique donc la MÊME doctrine À L'ÉCRITURE : au-delà de 100 % (valeur ARRONDIE,
+        # comme fmt_taux_emprise), jamais le % brut (c'était le « 19 569 % » servi au client).
+        emp_r = round(emp or 0)
+        if emp_r > 100:
+            libelle_bati = ("bâti existant au-delà du plafond d'emprise du PLU (saturé) — "
+                            "démolition à prévoir")
+        else:
+            libelle_bati = f"bâti existant sur {emp_r} % de la parcelle — démolition à prévoir"
+        contributions.append({"sens": "baisse", "libelle": libelle_bati})
 
     return ScoreLabuse(
         e.parcel_id, e.idu, e.commune, score, bande_de_score(score, bareme), False, None,

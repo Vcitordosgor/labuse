@@ -191,7 +191,11 @@ ON CONFLICT (run_label, parcel_id) DO UPDATE SET
 def persister(session: Session, run_label: str, lignes: list[LigneScoreLabuse], *,
               cascade_label: str, signal_run_id: str | None, communes: str | None) -> int:
     """Écrit les lignes dans la table versionnée `score_labuse` + la métadonnée de run.
-    Table NEUVE (jamais lue par le servi) — aucune écriture dans une table de service."""
+    Table NEUVE (jamais lue par le servi) — aucune écriture dans une table de service.
+
+    ORF-16 (FIX-ORFEVRE-1) — `n_parcelles` est RECOMPTÉ après l'upsert (count réel de la table pour ce
+    run) : l'ancien upsert écrivait `len(lignes)` du DERNIER lot (persister est appelé par chunks) →
+    les 3 runs en base affichaient la taille du dernier chunk (1 229) au lieu du parc (433 229)."""
     if not lignes:
         return 0
     sv = lignes[0].score_version
@@ -221,6 +225,11 @@ def persister(session: Session, run_label: str, lignes: list[LigneScoreLabuse], 
             "cascade_exclue": l.cascade_exclue,
             "cascade_motifs": json.dumps(l.cascade_motifs, ensure_ascii=False),
             "sdp_residuelle_m2": l.sdp_residuelle_m2})
+    # ORF-16 — la métadonnée dit le CUMUL RÉEL du run, pas la taille du dernier lot.
+    session.execute(text(
+        "UPDATE score_labuse_runs SET n_parcelles ="
+        " (SELECT count(*) FROM score_labuse WHERE run_label = :r) WHERE run_label = :r"),
+        {"r": run_label})
     session.flush()
     return len(lignes)
 

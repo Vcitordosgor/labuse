@@ -30,10 +30,20 @@ log = logging.getLogger("labuse.jobs")
 @dataclass
 class JobContext:
     """Ce qu'un job reçoit : une session DB (ouverte/fermée par le runner), l'état dry-run global, un
-    logger, et un dict de compteurs à remplir (remontés dans l'état + le mail admin)."""
+    logger, et un dict de compteurs à remplir (remontés dans l'état + le mail admin).
+
+    ORF-02 (FIX-ORFEVRE-1) — `precedent` = l'état JSON du DERNIER passage, lu par le runner AVANT
+    d'écraser le fichier avec « en_cours » (compteurs vides). Avant, healthcheck relisait son propre
+    fichier d'état PENDANT son exécution → `echecs_consecutifs` valait toujours 0 → l'alerte « 2 échecs
+    consécutifs » était du code mort (le ping témoin restait vert, /health pouvait être HS des heures)."""
     db: object
     dry_run: bool
     compteurs: dict = field(default_factory=dict)
+    precedent: dict | None = None
+    # ORF-10 (FIX-ORFEVRE-1) — le TIMEOUT du job voyage avec le contexte : les sous-process
+    # (`_ingest_via_cli`) se bornent DESSOUS (marge), pour mourir AVANT le SIGALRM du runner —
+    # jamais d'ingestion ORPHELINE qui continue d'écrire après le « timeout » du job.
+    timeout_s: int = 900
 
     def compte(self, **kw) -> None:
         self.compteurs.update(kw)
@@ -109,6 +119,22 @@ def _ping_temoin(nom: str, ok: bool) -> None:
         log.warning("ping témoin %s injoignable (%s) — sans conséquence sur le job", nom, exc)
 
 
+def _purger_connexions() -> None:
+    """ORF-01 (FIX-ORFEVRE-1) — après un TIMEOUT (SIGALRM reçu en plein échange psycopg), la connexion
+    interrompue est SALE : le serveur attend encore la fin de la requête et tout usage suivant répond
+    « another command is already in progress » (incidents quotidiens mail-queue-consommer 13:35, fenêtre
+    pg_dump). Si elle retourne au pool, c'est la trace (_journaliser_et_alerter) puis les passages
+    suivants qui échouent en cascade. On jette donc TOUT le pool : les connexions saines coûtent une
+    reconnexion (processus cron de toute façon court), la sale ne ressert jamais."""
+    try:
+        from . import db
+        if db._engine is not None:
+            db._engine.dispose()
+            log.info("pool de connexions purgé après timeout (connexion potentiellement sale)")
+    except Exception:  # noqa: BLE001 — la purge qui rate ne doit pas masquer l'erreur du job
+        log.error("purge du pool après timeout impossible", exc_info=True)
+
+
 def _journaliser_et_alerter(job: Job, etat: dict, ok: bool) -> None:
     """SOLIDITE-1 (Lot 1.1/1.2) — après chaque passage : pose la ligne d'HISTORIQUE durable (`job_runs`)
     ET ouvre/referme l'incident `job-echec:<nom>` par la PORTE D'ALERTE UNIQUE (ops_alertes — mail + cloche,
@@ -151,15 +177,23 @@ def exec_one(nom: str) -> int:
     from .mail import mail_configured
     dry_run = job.envoie_mail and not mail_configured()
     debut = datetime.now(timezone.utc)
+    # ORF-02 — l'état du passage PRÉCÉDENT est lu AVANT d'être écrasé par « en_cours » : c'est la seule
+    # façon pour un job (healthcheck) de voir ses compteurs d'avant (`echecs_consecutifs`).
+    precedent = lire_etat(nom)
     etat = {"nom": nom, "titre": job.titre, "debut": debut.isoformat(),
             "debut_reunion": now_reunion().strftime("%Y-%m-%d %H:%M:%S"),
             "statut": "en_cours", "dry_run": dry_run, "compteurs": {}, "erreur": None}
     _ecrire_etat(nom, etat)
 
-    ctx = JobContext(db=None, dry_run=dry_run)
+    ctx = JobContext(db=None, dry_run=dry_run, precedent=precedent, timeout_s=job.timeout_s)
     ancien = signal.getsignal(signal.SIGALRM)
+    # ORF-01 — mémorise que l'alarme A SONNÉ, même si le _Timeout est ensuite MASQUÉ par une autre
+    # exception (ex. : rollback impossible sur la connexion interrompue) : le finally purge le pool.
+    alarme_sonnee = False
 
     def _sonne(_s, _f):
+        nonlocal alarme_sonnee
+        alarme_sonnee = True
         raise _Timeout(f"dépassement du timeout ({job.timeout_s}s)")
 
     ok = False
@@ -184,6 +218,10 @@ def exec_one(nom: str) -> int:
     finally:
         signal.alarm(0)
         signal.signal(signal.SIGALRM, ancien)
+        if alarme_sonnee:
+            # ORF-01 — connexion possiblement interrompue en plein échange : on purge le pool AVANT la
+            # trace/alerte (sinon « journal/alerte impossible pour le job » — la connexion sale ressert).
+            _purger_connexions()
 
     fin = datetime.now(timezone.utc)
     etat["fin"] = fin.isoformat()

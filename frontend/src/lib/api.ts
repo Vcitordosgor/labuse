@@ -1307,7 +1307,9 @@ export interface CompareRow {
   n_contraintes?: number; contraintes?: string[]
   // RETOURS-11F M13 (O9) — colonnes ajoutées, toutes de la fiche servie / du bilan servi.
   proprietaire?: string | null; bati_existant_pct?: number | null
-  gabarit_niveaux_max?: number | null; logements_possibles?: number | null; logements_min?: number | null
+  // FIX-ORFEVRE-1 (décision Vic 18/10/2026) — logements_possibles/logements_min RETIRÉS : aucun nombre
+  // de logements de l'ancien calcul de capacité dans Comparer (la ligne renvoie à l'Étude de faisabilité).
+  gabarit_niveaux_max?: number | null
   acces_reseaux?: string | null; assainissement?: string | null
   prix_secteur_bati_m2?: number | null
 }

@@ -68,3 +68,19 @@ def test_nc_ne_vaut_jamais_zero():
         assert r.non_calculable and r.score is None
     r2 = score_parcelle(_e(residuel_present=False), BAREME, VERSION, "t")
     assert r2.non_calculable and r2.score is None
+
+
+def test_contribution_bati_bornee_a_l_ecriture():
+    """FIX-ORFEVRE-1 (C-01) — la phrase « bâti existant … » est FIGÉE dans `contributions` au
+    run : la doctrine fmt_taux_emprise (jamais un % brut au-delà de 100, valeur ARRONDIE)
+    s'applique donc À L'ÉCRITURE, pas seulement aux formatteurs de lecture."""
+    def _phrase(emp):
+        r = score_parcelle(_e(taux_emprise_pct=emp), BAREME, VERSION, "t")
+        return next(c["libelle"] for c in r.contributions if c["libelle"].startswith("bâti existant"))
+
+    assert "35 %" in _phrase(35.0)                               # ≤ 100 : le chiffre, inchangé
+    aberrant = _phrase(19569.0)                                  # le cas réel de l'audit (C-01)
+    assert "19569" not in aberrant and "19 569" not in aberrant
+    assert "saturé" in aberrant and "démolition à prévoir" in aberrant
+    assert "100 %" in _phrase(100.4)                             # arrondi à 100 → reste chiffré
+    assert "saturé" in _phrase(101.0)                            # 101+ → jamais le % brut

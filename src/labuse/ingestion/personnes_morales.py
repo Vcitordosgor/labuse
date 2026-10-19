@@ -94,6 +94,21 @@ def ingest_personnes_morales(session: Session, csv_path: str | Path,
              "m": millesime, "src": SOURCE, "url": url_source})
         n += 1
     session.flush()
+    # ORF-13 (FIX-ORFEVRE-1) — COMPTE (sans écarter) les idu du millésime MAJIC absents du cadastre
+    # chargé (divisions/remembrements : le MAJIC 2025 est plus frais que les `parcels`). Décision
+    # d'après les consommateurs : ces lignes NE sont PAS mortes — bodacc (sondage SIREN),
+    # deposants_actifs, filtres par SIREN les lisent SANS jointure parcels ; seule la fiche parcelle
+    # ne peut pas les montrer. On ne les supprime donc pas (on ne fausse pas les agrégats), on ne
+    # les rattache pas non plus (aucun rattachement inventé) — mais l'écart est DIT et compté.
+    orphelins = int(session.execute(text(
+        "SELECT count(*) FROM parcelle_personne_morale x "
+        "WHERE NOT EXISTS (SELECT 1 FROM parcels p WHERE p.idu = x.idu)")).scalar() or 0)
+    if orphelins:
+        import logging
+        logging.getLogger("labuse.ingestion.personnes_morales").warning(
+            "parcelle_personne_morale : %d idu hors du cadastre chargé (millésime MAJIC %s plus "
+            "frais que parcels) — lignes conservées (consommées par SIREN), invisibles des fiches",
+            orphelins, millesime)
     return n
 
 

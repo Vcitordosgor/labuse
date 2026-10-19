@@ -23,6 +23,8 @@ from __future__ import annotations
 import asyncio
 import time
 from datetime import date, timedelta
+
+from ..tz import today_reunion   # FIX-ORFEVRE-1 pt 3 (ORF-17) — jour Réunion, pas le fuseau du process
 from typing import Any
 
 import httpx
@@ -42,7 +44,7 @@ def _cfg() -> dict[str, Any]:
 
 def source_millesime() -> str:
     """Millésime porté sur chaque ligne — SARAH3 est le référentiel, le relevé date le run."""
-    return f"PVGIS {_cfg()['pvgis']['version']} · SARAH3 · relevé {date.today().isoformat()}"
+    return f"PVGIS {_cfg()['pvgis']['version']} · SARAH3 · relevé {today_reunion().isoformat()}"
 
 
 # ── Schéma (idempotent + migration de l'existant vers les 14 colonnes) ────────
@@ -319,7 +321,7 @@ def compute_flag_ombrage_vegetal(session: Session) -> int:
 
 def compute_proba(session: Session, *, aujourd_hui: date | None = None) -> int:
     f = _cfg()["flags"]
-    ref = aujourd_hui or date.today()   # heure LOCALE (leçon QA : pas CURRENT_DATE)
+    ref = aujourd_hui or today_reunion()   # jour RÉUNION explicite (leçon QA : pas CURRENT_DATE ; ORF-17 : pas le fuseau du process)
     depuis = ref - timedelta(days=int(f["proprio_bonus_fenetre_mois"]) * 30)
     n = session.execute(text("""
         WITH base AS (

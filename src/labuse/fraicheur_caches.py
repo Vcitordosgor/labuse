@@ -312,10 +312,9 @@ def _etat_intersections(db) -> dict:
 def _etat_defisc_bareme() -> dict:
     """CALCULS-FIX-1 (Lot C) — fraîcheur du barème de défiscalisation (config millésimée). Périmé
     dès que l'année du barème servi est < année courante (geste annuel de loi de finances non fait)."""
-    import datetime
-
     from .faisabilite import defisc
-    an = datetime.date.today().year
+    from .tz import today_reunion   # FIX-ORFEVRE-1 pt 3 (ORF-17) — année au jour Réunion
+    an = today_reunion().year
     ba = defisc.annee_active()
     perime = ba < an
     return {"cache": "barème défiscalisation (config millésimée)",

@@ -14,6 +14,8 @@ from datetime import date, timedelta
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from ..tz import today_reunion   # FIX-ORFEVRE-1 pt 3 (ORF-17) — relevés au jour Réunion, pas process
+
 #: en-dessous de ce nombre de paires, l'écart médian est affiché « encore fragile » (jamais caché,
 #: jamais présenté comme sûr) — la mesure de finesse doit dire sa propre solidité (F3.3).
 SEUIL_PAIRES_FIABLE = 30
@@ -25,7 +27,7 @@ def _scalar(db: Session, sql: str, **kw) -> int:
 
 def compteurs(db: Session) -> dict:
     """Les 5 compteurs cumulés + « +N cette semaine » (F3.1). Lecture seule."""
-    depuis = date.today() - timedelta(days=7)
+    depuis = today_reunion() - timedelta(days=7)
     annonces = _scalar(db, "SELECT count(*) FROM pige_annonces")
     annonces_sem = _scalar(db, "SELECT count(*) FROM pige_annonces WHERE date_saisie >= :d", d=depuis)
     biens = _scalar(db, "SELECT count(*) FROM pige_biens")
@@ -66,7 +68,7 @@ def ecart_par_type(db: Session) -> list[dict]:
 def courbe(db: Session, jours: int = 120) -> dict:
     """F3.2 — la courbe cumulée des paires depuis le déploiement (relevés quotidiens). `depuis_le` =
     premier relevé (la courbe DIT quand elle commence, pas de reconstruction inventée)."""
-    depuis = date.today() - timedelta(days=jours)
+    depuis = today_reunion() - timedelta(days=jours)
     rows = db.execute(text(
         "SELECT jour, paires, annonces, rattachees FROM radar_releves "
         "WHERE jour >= :d ORDER BY jour"), {"d": depuis}).mappings().all()
@@ -86,7 +88,7 @@ def bloc_radar(db: Session) -> dict:
 def ecrire_releve(db: Session, jour: date | None = None) -> dict:
     """F3.2 — le JOB de fin de journée : écrit (upsert) la photo cumulée du jour dans `radar_releves`.
     Idempotent (ON CONFLICT jour) : rejouer le même jour rafraîchit la ligne, ne la duplique pas."""
-    j = jour or date.today()
+    j = jour or today_reunion()
     c = compteurs(db)
     db.execute(text(
         "INSERT INTO radar_releves (jour, annonces, rattachees, paires, communes, types) "

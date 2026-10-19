@@ -11,6 +11,8 @@ from datetime import date
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from ..tz import today_reunion   # FIX-ORFEVRE-1 pt 3 (ORF-17) — année au jour Réunion
+
 TMJA_RAYON_M = 300          # « axe le plus proche » : au-delà, la RN n'est plus une nuisance de la parcelle
 PM_VOISIN_RAYON_M = 300     # rayon des acquisitions de PM voisines (mandat C.13)
 PM_VOISIN_MOIS = 36         # fenêtre 36 mois
@@ -179,7 +181,7 @@ def anciennete_detention(db: Session, idu: str) -> dict:
     PP (ou non recensé PM) : dernière mutation DVF (sans nom). « sans objet » si ni l'un ni l'autre."""
     if not _has(db, "parcelle_personne_morale", "pm_proprietaires_millesimes", "v_parcel_dvf_last"):
         return {"disponible": False, "source": "DGFiP (PM) / DVF", "millesime": None}
-    an = date.today().year
+    an = today_reunion().year
     pm = db.execute(text(
         "SELECT pm.denomination, pm.siren, min(m.millesime) AS depuis "
         "FROM parcelle_personne_morale pm "

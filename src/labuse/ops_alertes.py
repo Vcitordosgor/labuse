@@ -29,6 +29,7 @@ from pathlib import Path
 from sqlalchemy import text
 
 from .config import get_settings
+from .tz import today_reunion   # FIX-ORFEVRE-1 pt 3 (D-04) — le « jour » de dédup = jour Réunion
 
 log = logging.getLogger("labuse.ops")
 
@@ -53,8 +54,42 @@ PREFIX = "[LABUSE]"
 
 
 def ensure_table(db) -> None:
+    """ORF-02 (FIX-ORFEVRE-1) — plus AUCUNE DDL sur le chemin d'alerte quand le schéma est en place :
+    `signaler()` passait par CREATE TABLE/CREATE UNIQUE INDEX « IF NOT EXISTS » à CHAQUE appel ; pendant
+    la fenêtre pg_dump 13:30-13:48, ces DDL attendaient le verrou → timeout 120 s → l'alerte disque ne
+    s'écrivait JAMAIS au moment précis où le disque franchissait le seuil (journaux prod 14-18/10).
+    La garde est une lecture des catalogues (to_regclass) : zéro verrou, jouable pendant le backup."""
+    present = db.execute(text(
+        "SELECT to_regclass('ops_incidents') IS NOT NULL "
+        "AND to_regclass('ux_ops_incidents_cle_ouvert') IS NOT NULL")).scalar()
+    if present:
+        return
     db.execute(text(DDL))
     db.execute(text(DDL_INDEX))
+
+
+#: ORF-02 — fichier de REPLI : quand l'alerte elle-même ne peut pas s'écrire en base (base verrouillée,
+#: injoignable…), elle doit exister QUELQUE PART. Une ligne JSON horodatée par alerte, dans le répertoire
+#: d'état des jobs (toujours inscriptible par le user du service), en plus de stderr/journald (log.error).
+FICHIER_REPLI = "ops_alertes_repli.log"
+
+
+def repli_local(cle: str, sujet: str, detail: str, erreur: str) -> Path | None:
+    """Écrit l'alerte en LOCAL (fichier + stderr/journald) quand la base est indisponible. Ne lève
+    jamais : le repli qui rate laisse au moins la trace stderr. Retourne le chemin écrit (ou None)."""
+    log.error("ALERTE OPS EN REPLI (base indisponible : %s) — %s : %s — %s", erreur, cle, sujet, detail)
+    try:
+        d = Path(get_settings().jobs_state_dir)
+        d.mkdir(parents=True, exist_ok=True)
+        p = d / FICHIER_REPLI
+        with p.open("a", encoding="utf-8") as f:
+            f.write(json.dumps({
+                "quand": datetime.now(timezone.utc).isoformat(), "cle": cle, "sujet": sujet,
+                "detail": detail, "erreur_base": erreur}, ensure_ascii=False) + "\n")
+        return p
+    except Exception:  # noqa: BLE001 — le repli ne doit jamais faire tomber la sonde
+        log.error("repli local d'alerte impossible (le log ci-dessus reste la seule trace)")
+        return None
 
 
 def _destinataire(s) -> str | None:
@@ -106,8 +141,13 @@ def signaler(db, cle: str, sujet: str, detail: str) -> str:
             "VALUES (:c, :s, :d, now(), now(), 0)"), {"c": cle, "s": sujet, "d": detail})
         _sink(db, sujet_mail, detail + "\n\n— LABUSE, exploitation", dedup=f"ops:{cle}:ouvert")
         return "ouvert"
+    # FIX-ORFEVRE-1 pt 3 (D-04) — UNE SEULE définition du « jour » de dédup des alertes : le jour
+    # RÉUNION (comme protection._aujourdhui et les clés de jobs_impl). Avant : jour UTC ici, jour
+    # process dans jobs_impl → autour de 04:00 Réunion un rappel pouvait partir deux fois ou être
+    # retenu un jour de plus. Fuseau EXPLICITE dans le SQL (indépendant du timezone de session).
     deja_aujourdhui = db.execute(text(
-        "SELECT (dernier_envoi_at AT TIME ZONE 'UTC')::date = (now() AT TIME ZONE 'UTC')::date "
+        "SELECT (dernier_envoi_at AT TIME ZONE 'Indian/Reunion')::date "
+        "= (now() AT TIME ZONE 'Indian/Reunion')::date "
         "FROM ops_incidents WHERE id = :i"), {"i": row["id"]}).scalar()
     if deja_aujourdhui:
         db.execute(text("UPDATE ops_incidents SET sujet = :s, detail = :d WHERE id = :i"),
@@ -116,7 +156,7 @@ def signaler(db, cle: str, sujet: str, detail: str) -> str:
     db.execute(text(
         "UPDATE ops_incidents SET sujet = :s, detail = :d, dernier_envoi_at = now(), "
         "rappels = rappels + 1 WHERE id = :i"), {"s": sujet, "d": detail, "i": row["id"]})
-    jour = datetime.now(timezone.utc).date().isoformat()
+    jour = today_reunion().isoformat()   # FIX-ORFEVRE-1 pt 3 (D-04) — même jour que le test SQL ci-dessus
     _sink(db, f"{sujet_mail} (toujours ouvert)",
           detail + "\n\nIncident non résolu depuis l'ouverture — rappel quotidien.\n— LABUSE, exploitation",
           dedup=f"ops:{cle}:{jour}")

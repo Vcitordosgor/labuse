@@ -10,12 +10,22 @@ Règles : les extracteurs lisent la FICHE (payload), jamais la base — sauf `n_
 """
 from __future__ import annotations
 
+import logging
+from collections import Counter
 from typing import Any, Callable
 from weakref import WeakKeyDictionary
 
 from ..registre.valeur import Valeur, valeurs_pour
 
+log = logging.getLogger("labuse.exports.robinet_fiche")
+
 EXTRACTEURS: dict[str, Callable[[Any, str, dict], Any]] = {}
+
+#: ORF-19 (FIX-ORFEVRE-1) — COMPTEUR des extracteurs qui PLANTENT : avant, un bug de code devenait
+#: indistinguable d'une vraie absence dans le DOCUMENT CLIENT (phrase d'absence déclarée, zéro trace).
+#: Le best-effort reste (jamais un 500 sur un PDF), mais chaque échec est LOGGÉ (warning, avec l'id et
+#: la parcelle) et COMPTÉ ici — lisible par les sondes/tests ({id extracteur: nb d'échecs du process}).
+ECHECS_EXTRACTEURS: Counter = Counter()
 
 
 def extracteur(*ids: str):
@@ -37,7 +47,11 @@ def collecte(db, idu: str, ids: list[str], *, fiche: dict | None = None) -> dict
             continue
         try:
             val = fn(db, idu, f)
-        except Exception:  # noqa: BLE001 — un extracteur qui échoue OMET sa donnée, jamais un 500
+        except Exception as exc:  # noqa: BLE001 — un extracteur qui échoue OMET sa donnée, jamais un 500
+            # ORF-19 — mais l'échec est VU : log + compteur (un extracteur planté n'est pas une absence).
+            ECHECS_EXTRACTEURS[cid] += 1
+            log.warning("extracteur %s en échec sur %s (%s: %s) — rendu « donnée absente » dans le "
+                        "document", cid, idu, type(exc).__name__, exc)
             val = None
         if val is not None:
             brut[cid] = val

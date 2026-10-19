@@ -15,6 +15,7 @@ from sqlalchemy import text
 
 from .config import get_settings
 from .jobs import JobContext, lire_etat, state_path
+from .tz import today_reunion   # FIX-ORFEVRE-1 pt 3 (ORF-17/D-02/D-04) — LE jour métier = jour Réunion
 
 log = logging.getLogger("labuse.jobs.impl")
 
@@ -220,12 +221,14 @@ def coherence_banc(ctx: JobContext) -> None:
     # le sous-ensemble RAPIDE (`--nuit` : SQL île + moteur, ~4 min, sans les 2 boucles API cadencées) ;
     # le DIMANCHE, TOUT (`--tout`, ~18 min, inclut F2 valeur inter-surfaces et F5 API). Lecture seule.
     import os
-    from datetime import datetime
     try:
         from scripts.coherence.invariants2.banc2 import executer as _banc2
     except Exception as e:  # noqa: BLE001 — le banc fait partie du produit : introuvable = échec
         raise RuntimeError(f"banc2 (invariants générés) introuvable : {e}") from e
-    _mode = "tout" if datetime.now().weekday() == 6 else "nuit"   # dimanche = l'intégrale hebdo
+    # FIX-ORFEVRE-1 pt 3 (D-02) — « dimanche » = dimanche RÉUNION, pas le fuseau du process : sur un
+    # serveur UTC (branche admise par deploy.sh), le naïf disait samedi 23:45 → l'intégrale glissait
+    # d'une nuit, silencieusement. Le cron vise 03:45 Réunion : le jour Réunion est LA référence.
+    _mode = "tout" if today_reunion().weekday() == 6 else "nuit"   # dimanche = l'intégrale hebdo
     _api = os.environ.get("LABUSE_BANC2_API") or "http://127.0.0.1:8793"
     _bil = _banc2(mode=_mode, api=_api, base=True)
     ctx.compte(banc2_mode=_mode, banc2_ok=_bil["ok"], banc2_ecart=_bil["ecart"],
@@ -368,8 +371,10 @@ def healthcheck(ctx: JobContext) -> None:
     import urllib.request
     s = get_settings()
     port = os.environ.get("LABUSE_HEALTH_PORT", "8000")
-    etat = lire_etat("healthcheck") or {}
-    echecs = (etat.get("compteurs") or {}).get("echecs_consecutifs", 0)
+    # ORF-02 — le compteur d'échecs vient de l'état PRÉCÉDENT transmis par le runner (ctx.precedent) :
+    # relire son propre fichier d'état ici lisait « en_cours, compteurs {} » que le runner venait
+    # d'écrire → echecs valait toujours 0 → l'alerte « 2 échecs consécutifs » ne partait jamais.
+    echecs = ((ctx.precedent or {}).get("compteurs") or {}).get("echecs_consecutifs", 0)
     try:
         with urllib.request.urlopen(f"http://127.0.0.1:{port}/health", timeout=10) as resp:
             ok = resp.status == 200
@@ -385,24 +390,35 @@ def healthcheck(ctx: JobContext) -> None:
         pct = None
     from . import ops_alertes
     ready, motif = ops_alertes._readyz_local()
-    # tout par la porte unique (session courte ; base injoignable → on logue, jamais bloquant).
+    # ORF-02 — on DÉCIDE d'abord quoi signaler/résoudre, puis on écrit par la porte unique. Si la base
+    # est indisponible (ex. : verrouillée pendant le pg_dump — précisément quand le disque franchit le
+    # seuil), chaque alerte décidée part en REPLI local (fichier + journald) : la sonde n'est plus
+    # aveugle au moment exact où elle sonne.
+    a_signaler: list[tuple[str, str, str]] = []
+    a_resoudre: list[str] = []
+    if pct is not None and pct >= s.disque_seuil_pct:
+        a_signaler.append(("disque", f"Disque à {pct}% (seuil {s.disque_seuil_pct}%)",
+                           f"Le disque du serveur est à {pct}% (seuil {s.disque_seuil_pct}%). "
+                           "Faire de la place (cf. inventaire SOLIDITE-1 Lot 3)."))
+    elif pct is not None:
+        a_resoudre.append("disque")
+    if not ready:
+        a_signaler.append(("readyz", "/readyz répond « pas prêt »",
+                           f"La sonde /readyz locale dit le service NON prêt : {motif}."))
+    else:
+        a_resoudre.append("readyz")
     try:
         from .db import session_scope
         with session_scope() as db:
-            if pct is not None and pct >= s.disque_seuil_pct:
-                ops_alertes.signaler(db, "disque", f"Disque à {pct}% (seuil {s.disque_seuil_pct}%)",
-                                     f"Le disque du serveur est à {pct}% (seuil {s.disque_seuil_pct}%). "
-                                     "Faire de la place (cf. inventaire SOLIDITE-1 Lot 3).")
-            elif pct is not None:
-                ops_alertes.resoudre(db, "disque")
-            if not ready:
-                ops_alertes.signaler(db, "readyz", "/readyz répond « pas prêt »",
-                                     f"La sonde /readyz locale dit le service NON prêt : {motif}.")
-            else:
-                ops_alertes.resoudre(db, "readyz")
+            for cle, sujet, detail in a_signaler:
+                ops_alertes.signaler(db, cle, sujet, detail)
+            for cle in a_resoudre:
+                ops_alertes.resoudre(db, cle)
             db.commit()
-    except Exception as exc:  # noqa: BLE001 — l'alerte qui rate ne casse pas la sonde
+    except Exception as exc:  # noqa: BLE001 — l'alerte qui rate ne casse pas la sonde… mais elle EXISTE
         log.error("healthcheck : alerte ops impossible (%s)", exc)
+        for cle, sujet, detail in a_signaler:
+            ops_alertes.repli_local(cle, sujet, detail, erreur=f"{type(exc).__name__}: {exc}")
     ctx.compte(health_ok=ok, readyz_ok=ready, readyz_motif=motif,
                echecs_consecutifs=echecs, disque_pct=pct)
     if not ok and echecs >= 2:
@@ -460,14 +476,13 @@ def sante_endpoints(ctx: JobContext) -> None:
     en_echec = [e["endpoint"] for e in res["endpoints"] if not e["ok"]]
     ctx.compte(ok=res["ok"], total=len(res["endpoints"]), en_echec=en_echec or None)
     if not res["ok"]:
-        from datetime import date as _date
         from .api.events import creer_notification
         detail = " · ".join(f"{e['endpoint']} : {e['detail']}"
                             for e in res["endpoints"] if not e["ok"])
         creer_notification(
             ctx.db, kind="systeme", compte_id=None, source="Sonde endpoints",
             titre=f"Endpoints métier en échec ({len(en_echec)})", detail=detail[:500],
-            dedup=f"sante_endpoints:{_date.today().isoformat()}")
+            dedup=f"sante_endpoints:{today_reunion().isoformat()}")
         ctx.db.commit()
         raise RuntimeError(f"sonde endpoints : {len(en_echec)} en échec ({', '.join(en_echec)})")
 
@@ -491,38 +506,60 @@ def coherence_run(ctx: JobContext) -> None:
     en_echec = [c["libelle"] for c in res["checks"] if not c["ok"]]
     ctx.compte(ok=res["ok"], run=res["run"], n_surfaces=res["n_surfaces"], en_echec=en_echec or None)
     if not res["ok"]:
-        from datetime import date as _date
         from .api.events import creer_notification
         detail = " · ".join(f"{c['libelle']} : {c['detail']}" for c in res["checks"] if not c["ok"])
         creer_notification(
             ctx.db, kind="systeme", compte_id=None, source="Cohérence run",
             titre=f"Garde de cohérence : {len(en_echec)} divergence(s)", detail=detail[:500],
-            lien="/admin", dedup=f"coherence_run:{_date.today().isoformat()}")
+            lien="/admin", dedup=f"coherence_run:{today_reunion().isoformat()}")
         ctx.db.commit()
         raise RuntimeError(f"garde de cohérence : {len(en_echec)} divergence(s) ({', '.join(en_echec)})")
 
 
 # ═══════════════════════════ K4 — hebdo & mensuels ═══════════════════════════
 
+#: ORF-03 — module-niveau (testable) : les tables chaudes à VACUUM ANALYZE chaque dimanche.
+TABLES_CHAUDES = ["parcels", "event_log", "pige_biens", "pige_faits", "veilles", "dvf_mutations"]
+
+
 def pg_maintenance(ctx: JobContext) -> None:
-    """VACUUM ANALYZE des tables chaudes (hors transaction — connexion autocommit dédiée)."""
+    """VACUUM ANALYZE des tables chaudes (hors transaction — connexion autocommit dédiée).
+
+    ORF-03 (FIX-ORFEVRE-1) — deux racines corrigées (le VACUUM hebdo n'avait JAMAIS fonctionné, job vert) :
+    1. `raw.autocommit = True` posait un attribut FANTÔME sur le proxy de pool SQLAlchemy
+       (PoolProxiedConnection) — no-op : psycopg restait en transaction → « VACUUM cannot run inside a
+       transaction block » chaque dimanche. L'autocommit se pose sur la VRAIE connexion psycopg via
+       `raw.driver_connection` (même porte que scoring/score_v.py:585 pour son COPY).
+    2. L'`except` par table avalait TOUT → `fin (code 0)` mensonger. Seule une table ABSENTE est
+       tolérée (UndefinedTable) ; tout autre échec remonte → job ROUGE. Et zéro table vacuumée = ROUGE
+       aussi (jamais de vert par vacuité)."""
+    from psycopg.errors import UndefinedTable
+
     from .db import engine
-    chaudes = ["parcels", "event_log", "pige_biens", "pige_faits", "veilles", "dvf_mutations"]
-    faites = []
+    faites, absentes = [], []
     raw = engine().raw_connection()
     try:
-        raw.autocommit = True
-        cur = raw.cursor()
-        for t in chaudes:
-            try:
-                cur.execute(f"VACUUM ANALYZE {t}")
-                faites.append(t)
-            except Exception as exc:  # noqa: BLE001 — une table absente ne casse pas la maintenance
-                log.warning("VACUUM %s ignoré (%s)", t, exc)
-        cur.close()
+        dbapi = raw.driver_connection                   # la connexion psycopg réelle, pas le proxy
+        autocommit_avant = dbapi.autocommit
+        dbapi.autocommit = True                         # VACUUM est interdit dans une transaction
+        try:
+            with dbapi.cursor() as cur:
+                for t in TABLES_CHAUDES:
+                    try:
+                        cur.execute(f"VACUUM ANALYZE {t}")
+                        faites.append(t)
+                    except UndefinedTable:              # une table absente ne casse pas la maintenance
+                        absentes.append(t)
+                        log.warning("VACUUM %s ignoré : table absente", t)
+        finally:
+            dbapi.autocommit = autocommit_avant         # la connexion retourne PROPRE au pool
     finally:
         raw.close()
-    ctx.compte(tables=faites)
+    ctx.compte(tables=faites, absentes=absentes or None)
+    if not faites:
+        raise RuntimeError(
+            f"pg-maintenance : AUCUNE table vacuumée (absentes : {', '.join(absentes) or '—'}) "
+            "— un vert ici serait un vert par vacuité")
 
 
 def rapport_admin(ctx: JobContext) -> None:
@@ -564,12 +601,64 @@ def rapport_admin(ctx: JobContext) -> None:
     ctx.compte(sources_en_retard=retard, veilles_actives=veilles, dernier_dump=dernier_dump)
 
 
+#: ORF-10 — marge (s) entre la mort du sous-process et le SIGALRM du job : le kill et l'écriture de
+#: l'état doivent tenir dedans.
+_SOUS_PROCESS_MARGE_S = 60
+
+
+class SousProcessTimeout(RuntimeError):
+    """ORF-10 — le sous-process a dépassé son budget : son GROUPE a été tué (aucun orphelin)."""
+
+    def __init__(self, message: str, pid: int):
+        super().__init__(message)
+        self.pid = pid
+
+
+def _run_sous_process_borne(cmd: list[str], budget_s: float) -> subprocess.CompletedProcess:
+    """ORF-10 (FIX-ORFEVRE-1) — lance `cmd` dans SON PROPRE groupe de process, borné à `budget_s`.
+    Au-delà (ou sur toute interruption, SIGALRM du job compris) : kill du GROUPE entier (SIGKILL) puis
+    récolte — plus jamais d'enfant qui survit au « timeout » du job et continue de committer en base
+    (le piège SCORING-6 : relance manuelle = deux ingestions concurrentes sur la même table)."""
+    import signal as _signal
+
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+                            cwd=os.getcwd(), start_new_session=True)
+
+    def _tuer_groupe() -> None:
+        try:
+            os.killpg(proc.pid, _signal.SIGKILL)
+        except (ProcessLookupError, PermissionError):
+            proc.kill()
+
+    try:
+        out, err = proc.communicate(timeout=budget_s)
+    except subprocess.TimeoutExpired:
+        _tuer_groupe()
+        out, err = proc.communicate()        # récolte (jamais de zombie)
+        raise SousProcessTimeout(
+            f"sous-process tué après {round(budget_s)} s (budget du job) — groupe de process arrêté, "
+            f"aucune ingestion orpheline. Dernière sortie : {(err or out or '')[-300:]}", proc.pid)
+    except BaseException:                    # _Timeout du job (SIGALRM), KeyboardInterrupt… même geste
+        _tuer_groupe()
+        proc.communicate()
+        raise
+    return subprocess.CompletedProcess(cmd, proc.returncode, out, err)
+
+
 def _ingest_via_cli(ctx: JobContext, *args: str) -> None:
     """Lance une commande d'ingestion EXISTANTE (même venv), capture le résultat. Les ingestions lourdes
-    (données externes) restent le pipeline existant — le job n'ajoute que l'ordonnancement + l'état."""
+    (données externes) restent le pipeline existant — le job n'ajoute que l'ordonnancement + l'état.
+    ORF-10 — borné SOUS le timeout du job (marge) + kill du groupe : le « timeout » d'un job tue
+    VRAIMENT l'ingestion (statut d'échec propre, compteurs posés), au lieu de la laisser orpheline."""
     import sys
     cmd = [sys.executable, "-m", "labuse.cli", *args]
-    proc = subprocess.run(cmd, capture_output=True, text=True, cwd=os.getcwd())
+    budget = max(60.0, float(getattr(ctx, "timeout_s", 900) or 900) - _SOUS_PROCESS_MARGE_S)
+    try:
+        proc = _run_sous_process_borne(cmd, budget)
+    except SousProcessTimeout as exc:
+        ctx.compte(commande=" ".join(args), code="timeout-tue", budget_s=round(budget),
+                   sortie=str(exc)[-400:])
+        raise RuntimeError(f"{' '.join(args)} : {exc}") from exc
     ctx.compte(commande=" ".join(args), code=proc.returncode,
                sortie=(proc.stdout or proc.stderr)[-400:])
     if proc.returncode != 0:
@@ -857,22 +946,20 @@ def coherence_robinets(ctx: JobContext) -> None:
          "preuves": {r.id: r.preuve for r in resultats}})
     ctx.compte(verrous_joues=len(resultats), verrous_casses=len(casses))
     if casses:
-        from datetime import date as _date
         from .api.events import creer_notification
         creer_notification(
             ctx.db, kind="systeme", compte_id=None, source="Circuit",
             titre=f"Verrous cassés : {', '.join(casses)}",
             detail="Le déploiement refusera tant que ça tient. Détail : labuse circuit verrous.",
-            lien="/admin", dedup=f"verrous:{_date.today().isoformat()}")
+            lien="/admin", dedup=f"verrous:{today_reunion().isoformat()}")
     if res.get("fuites_ouvertes") or res.get("eau_ancienne_ouverte"):
-        from datetime import date as _date
         from .api.events import creer_notification
         creer_notification(
             ctx.db, kind="systeme", compte_id=None, source="Circuit",
             titre=f"Sonde du circuit : {res.get('fuites_ouvertes', 0)} fuite(s) ouverte(s), "
                   f"{res.get('eau_ancienne_ouverte', 0)} eau(x) ancienne(s)",
             detail="Détail dans circuit_ecarts / circuit_eau_ancienne (page Circuit).",
-            lien="/admin", dedup=f"coherence_robinets:{_date.today().isoformat()}")
+            lien="/admin", dedup=f"coherence_robinets:{today_reunion().isoformat()}")
 
 
 def filtres_sources(ctx: JobContext) -> None:
@@ -900,14 +987,13 @@ def filtres_sources(ctx: JobContext) -> None:
             n_ok += 1
     ctx.compte(sources_ok=n_ok, sources_avertissements=n_avert, sources_quarantaine=n_quar)
     if nouveaux_quarantaine:
-        from datetime import date as _date
         from .api.events import creer_notification
         creer_notification(
             ctx.db, kind="systeme", compte_id=None, source="Circuit",
             titre=f"Filtre de nuit : {n_quar} source(s) en quarantaine",
             detail="Sources en quarantaine : " + ", ".join(nouveaux_quarantaine)
                    + " (page Circuit — « servir quand même » ou corriger la source).",
-            lien="/admin", dedup=f"filtres_sources:{_date.today().isoformat()}")
+            lien="/admin", dedup=f"filtres_sources:{today_reunion().isoformat()}")
 
 
 def ingest_bodacc(ctx: JobContext) -> None:

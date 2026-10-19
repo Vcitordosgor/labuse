@@ -326,6 +326,36 @@ def ensure_tables(engine: Engine) -> None:
         for stmt in sql_statements(DDL):
             if stmt.strip():
                 c.execute(text(stmt))
+        ensure_idempotence(c)
+
+
+def ensure_idempotence(c) -> None:
+    """ORF-09 (FIX-ORFEVRE-1) — la dédup du dépôt Radar était DÉCORATIVE (colonnes remplies, jamais
+    vérifiées) : état réel constaté = 19 lignes `pige_depots` pour le MÊME hash de fichier, 31 couples
+    (dedup, jour) dupliqués dans `event_log` (jusqu'à ×19). On grave l'unicité EN BASE (clé naturelle :
+    hash du fichier côté dépôts, dedup + jour Réunion côté journal). Auto-réparant : les doublons
+    existants sont résorbés (plus ancienne ligne conservée) UNE FOIS, avant la pose de l'index."""
+    # dépôts : un fichier (hash sha256) = UNE ligne. hash = '' (dépôt non archivé) exclu de l'unicité.
+    if c.execute(text("SELECT to_regclass('uq_pige_depots_hash')")).scalar() is None:
+        c.execute(text("DELETE FROM pige_depots a USING pige_depots b "
+                       "WHERE a.hash = b.hash AND a.hash <> '' AND a.id > b.id"))
+        c.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS uq_pige_depots_hash "
+                       "ON pige_depots (hash) WHERE hash <> ''"))
+    # journal : un événement Radar (dedup) par JOUR Réunion. Index PARTIEL (kinds pige seulement) —
+    # les autres producteurs d'event_log gardent leur sémantique. Posé ici ET par api/events
+    # (ensure_tables) : le premier passé gagne, l'autre est no-op.
+    if (c.execute(text("SELECT to_regclass('event_log')")).scalar() is not None
+            and c.execute(text("SELECT 1 FROM information_schema.columns WHERE table_name = 'event_log'"
+                               " AND column_name = 'dedup'")).first()
+            and c.execute(text("SELECT to_regclass('uq_event_log_pige_jour')")).scalar() is None):
+        c.execute(text(
+            "DELETE FROM event_log a USING event_log b "
+            "WHERE a.dedup LIKE 'pige:%' AND b.dedup = a.dedup "
+            "AND timezone('Indian/Reunion', a.ts)::date = timezone('Indian/Reunion', b.ts)::date "
+            "AND a.id > b.id"))
+        c.execute(text(
+            "CREATE UNIQUE INDEX IF NOT EXISTS uq_event_log_pige_jour ON event_log "
+            "(dedup, (timezone('Indian/Reunion', ts)::date)) WHERE dedup LIKE 'pige:%'"))
 
 
 def journaliser(db: Session, kind: str, titre: str, *, detail: str | None = None,
@@ -333,11 +363,17 @@ def journaliser(db: Session, kind: str, titre: str, *, detail: str | None = None
                 compte_id: int | None = None, dedup: str | None = None) -> int:
     """Écrit un ÉVÉNEMENT de domaine Radar dans l'event_log unifié (insert direct — ce sont des faits
     de domaine, pas des notifications client ; la livraison cloche/mail au client passe par la veille,
-    lot P4). `compte_id` NULL = flux pilote/admin (le rituel de Vic). `kind` ∈ EVENEMENTS."""
+    lot P4). `compte_id` NULL = flux pilote/admin (le rituel de Vic). `kind` ∈ EVENEMENTS.
+
+    ORF-09 (FIX-ORFEVRE-1) — la clé `dedup` est désormais TENUE par la base (index unique partiel
+    `uq_event_log_pige_jour` : un événement par dedup et par jour Réunion) : l'insert fait
+    ON CONFLICT DO NOTHING et retourne 0 quand l'événement du jour existe déjà (rejeu = 0)."""
     assert kind in EVENEMENTS, f"événement Radar non déclaré : {kind!r}"
     return db.execute(text(
         "INSERT INTO event_log (kind, titre, detail, idu, lien, compte_id, source, dedup) "
-        "VALUES (:k, :t, :d, :i, :l, :c, 'Radar', :dd) RETURNING id"),
+        "VALUES (:k, :t, :d, :i, :l, :c, 'Radar', :dd) "
+        "ON CONFLICT (dedup, (timezone('Indian/Reunion', ts)::date)) WHERE dedup LIKE 'pige:%' "
+        "DO NOTHING RETURNING id"),
         {"k": kind, "t": titre, "d": detail, "i": idu, "l": lien, "c": compte_id, "dd": dedup}
     ).scalar() or 0
 

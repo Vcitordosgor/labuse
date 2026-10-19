@@ -3,9 +3,14 @@
 C'est le lot qui rend l'envoi VISIBLE. Avant, un mail partait (ou ne partait pas) sans que rien ne le
 raconte. Désormais TOUT envoi de template passe par cette file, y compris les envois immédiats :
 
-    en attente ──(départ)──► parti ──(2xx Brevo)──► reçu par Brevo
+    en attente ──(revendication)──► parti (= envoi EN COURS) ──(2xx Brevo)──► reçu par Brevo
         │                                   │
         └────────(3 échecs)────────────────┴──► échec  (rejouable d'un clic)
+
+ORF-08 (FIX-ORFEVRE-1) — l'état `parti` est la REVENDICATION transactionnelle posée AVANT l'appel
+réseau : deux consommateurs concurrents (worker ↔ bouton « rejouer ») ne peuvent jamais envoyer le
+même mail deux fois (le second trouve l'entrée déjà revendiquée). Un `parti` trop vieux (processus
+tué pendant l'envoi) est repris par le worker (→ `a_rejouer`).
 
 Règles dures (mandat) :
 - **Rien n'affiche « envoyé » si rien n'est parti** (RV-013) : l'état d'une entrée est le RÉEL renvoyé
@@ -24,6 +29,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import os
 import time
 from datetime import datetime, timezone
 
@@ -43,6 +49,14 @@ TENTATIVES_MAX = 3
 BUDGET_CONSOMMER_S = 240.0
 #: fenêtre anti-doublon par défaut (double-clic) : deux enfilages identiques sous ce délai = un seul.
 FENETRE_DOUBLON_S = 30
+#: ORF-07 (FIX-ORFEVRE-1) — FRAÎCHEUR maximale d'un mail encore « dû » : au-delà, le worker l'ANNULE
+#: (motif lisible) au lieu de l'envoyer. Garde contre les résidus de recette : 12 mails de test du
+#: 16/10 restaient éligibles À JAMAIS — le premier passage avec un transport réel les aurait envoyés
+#: (dont 3 vers un compte supprimé). Surchargable par env (jamais < 1 jour).
+FRAICHEUR_MAX_JOURS = max(1, int(os.environ.get("LABUSE_MAIL_FRAICHEUR_MAX_JOURS", "7")))
+#: ORF-08 — un `parti` (envoi revendiqué) plus vieux que ce délai = processus tué pendant l'envoi ;
+#: le worker le repasse `a_rejouer` (at-least-once assumé : on ne sait pas si Brevo a reçu).
+PARTI_REPRISE_MIN = 15
 
 # VEILLE-FIX-2 (Lot D) — REJEU espacé : après un échec Brevo, l'entrée passe `a_rejouer` avec une date de
 # prochaine tentative (5 min, puis 1 h, puis 24 h). Le worker `mail-queue-consommer` (cron 5 min) la
@@ -50,18 +64,49 @@ FENETRE_DOUBLON_S = 30
 from datetime import timedelta as _td
 DELAIS_REJEU = (_td(minutes=5), _td(hours=1), _td(hours=24))
 
-# vocabulaire d'état UNIQUE (mandat). `annule` = un programmé décommandé avant départ (jamais supprimé).
-# `a_rejouer` (VEILLE-FIX-2) = échec transitoire Brevo, une nouvelle tentative est programmée (prevu_at).
+# vocabulaire d'état UNIQUE (mandat). `annule` = un programmé décommandé avant départ (jamais supprimé)
+# OU une ligne refusée par les gardes du worker (compte supprimé, dû trop vieux — ORF-07, motif dans
+# `erreur`). `a_rejouer` (VEILLE-FIX-2) = échec transitoire Brevo, nouvelle tentative programmée
+# (prevu_at). `parti` (ORF-08) = envoi EN COURS, revendiqué transactionnellement avant l'appel réseau.
 ETATS = ("en_attente", "a_rejouer", "parti", "recu", "echec", "annule")
 LIBELLES_ETAT = {
-    "en_attente": "En attente", "a_rejouer": "À rejouer", "parti": "Parti", "recu": "Reçu par Brevo",
-    "echec": "Échec", "annule": "Annulé",
+    "en_attente": "En attente", "a_rejouer": "À rejouer", "parti": "Envoi en cours",
+    "recu": "Reçu par Brevo", "echec": "Échec", "annule": "Annulé",
 }
 
 
+def _schema_conforme(c) -> bool:
+    """ORF-01 (FIX-ORFEVRE-1) — LE SCHÉMA EST-IL DÉJÀ EN PLACE ? Lecture seule des catalogues
+    (to_regclass/pg_indexes/pg_constraint) : AUCUN verrou, jouable même pendant le pg_dump quotidien.
+    C'est la garde qui évite de rejouer les DDL à chaque run du worker (toutes les 5 min) : l'ALTER
+    CONSTRAINT prenait un verrou ACCESS EXCLUSIVE, bloqué par le backup 13:30-13:48 → timeout 300 s
+    → échec quotidien du job mail-queue-consommer (journaux prod 14-18/10)."""
+    if c.execute(text("SELECT to_regclass('mail_queue')")).scalar() is None:
+        return False
+    if not c.execute(text(
+            "SELECT 1 FROM information_schema.columns "
+            "WHERE table_name = 'mail_queue' AND column_name = 'avert'")).first():
+        return False
+    idx = {r[0] for r in c.execute(text(
+        "SELECT indexname FROM pg_indexes WHERE tablename = 'mail_queue'"))}
+    if not {"ix_mail_queue_etat_cree", "ix_mail_queue_compte", "ix_mail_queue_dedup"} <= idx:
+        return False
+    # la contrainte CHECK doit connaître TOUS les états (dont `a_rejouer`, VEILLE-FIX-2).
+    cdef = c.execute(text(
+        "SELECT pg_get_constraintdef(oid) FROM pg_constraint "
+        "WHERE conname = 'mail_queue_etat_check' AND conrelid = 'mail_queue'::regclass")).scalar()
+    return bool(cdef) and all(f"'{e}'" in cdef for e in ETATS)
+
+
 def ensure_tables(engine) -> None:
-    """Idempotent (pattern maison CREATE IF NOT EXISTS), appelable au boot."""
+    """Idempotent (pattern maison CREATE IF NOT EXISTS), appelable au boot.
+
+    ORF-01 — en RÉGIME ÉTABLI (schéma conforme), cette fonction ne tente plus AUCUNE DDL : une
+    vérification lecture seule suffit. Les DDL ne sont rejouées que si un morceau manque vraiment
+    (première installation, migration) — le cas « déploiement », pas le cas « worker toutes les 5 min »."""
     with engine.begin() as c:
+        if _schema_conforme(c):
+            return
         c.execute(text("""
             CREATE TABLE IF NOT EXISTS mail_queue (
                 id           bigserial PRIMARY KEY,
@@ -98,10 +143,15 @@ def ensure_tables(engine) -> None:
         c.execute(text("CREATE INDEX IF NOT EXISTS ix_mail_queue_compte ON mail_queue(compte_id, cree_at DESC)"))
         c.execute(text("CREATE INDEX IF NOT EXISTS ix_mail_queue_dedup ON mail_queue(dedup, cree_at DESC)"))
         # VEILLE-FIX-2 (Lot D) — la contrainte CHECK d'une table EXISTANTE ne connaît pas `a_rejouer` :
-        # on la remplace (idempotent : DROP IF EXISTS puis ADD). Nom de contrainte auto = mail_queue_etat_check.
-        c.execute(text("ALTER TABLE mail_queue DROP CONSTRAINT IF EXISTS mail_queue_etat_check"))
-        c.execute(text("ALTER TABLE mail_queue ADD CONSTRAINT mail_queue_etat_check "
-                       "CHECK (etat IN ('en_attente','a_rejouer','parti','recu','echec','annule'))"))
+        # on la remplace. ORF-01 : SEULEMENT si elle est vraiment périmée (le DROP/ADD systématique
+        # prenait un verrou ACCESS EXCLUSIVE à chaque run — cf. _schema_conforme).
+        cdef = c.execute(text(
+            "SELECT pg_get_constraintdef(oid) FROM pg_constraint "
+            "WHERE conname = 'mail_queue_etat_check' AND conrelid = 'mail_queue'::regclass")).scalar()
+        if not cdef or not all(f"'{e}'" in cdef for e in ETATS):
+            c.execute(text("ALTER TABLE mail_queue DROP CONSTRAINT IF EXISTS mail_queue_etat_check"))
+            c.execute(text("ALTER TABLE mail_queue ADD CONSTRAINT mail_queue_etat_check "
+                           "CHECK (etat IN ('en_attente','a_rejouer','parti','recu','echec','annule'))"))
 
 
 def _now() -> datetime:
@@ -171,14 +221,26 @@ def enfiler(engine, *, key: str, to: str, params: dict | None = None,
 
 def _tenter_depart(engine, mail_id: int) -> dict:
     """Tente le DÉPART d'une entrée : appelle le transport Brevo, écrit l'état RÉEL. Idempotent sur
-    `recu`/`annule` (ne renvoie pas un mail déjà parti). Retourne la ligne à jour."""
+    `recu`/`annule` (ne renvoie pas un mail déjà parti). Retourne la ligne à jour.
+
+    ORF-08 (FIX-ORFEVRE-1) — REVENDICATION transactionnelle : avant l'appel réseau, l'entrée passe
+    `parti` (= envoi en cours) DANS la transaction qui tient le FOR UPDATE. L'ancien code relâchait le
+    verrou (commit) AVANT l'appel Brevo : worker ↔ « rejouer » admin pouvaient tous deux lire un état
+    envoyable → le client recevait le mail DEUX fois. Désormais le second lecteur trouve `parti` et
+    repart sans envoyer. Un `parti` orphelin (processus tué en plein envoi) est repris par `consommer`
+    après PARTI_REPRISE_MIN minutes."""
     with engine.begin() as c:
         row = c.execute(text("SELECT * FROM mail_queue WHERE id = :i FOR UPDATE"),
                         {"i": mail_id}).mappings().first()
         if not row:
             raise ValueError(f"mail {mail_id} introuvable")
-        if row["etat"] in ("recu", "annule"):
+        if row["etat"] not in ("en_attente", "a_rejouer"):
+            # recu/annule : idempotent ; echec : seul `rejouer` (qui remet en_attente) le relance ;
+            # parti : un AUTRE consommateur l'envoie en ce moment même — on ne double jamais.
             return _ligne(row)
+        # la revendication : visible de tout autre consommateur dès le commit, AVANT l'I/O réseau.
+        c.execute(text("UPDATE mail_queue SET etat = 'parti', parti_at = :now WHERE id = :i"),
+                  {"now": _now(), "i": mail_id})
         key, to, params = row["mail_key"], row["destinataire"], row["params"] or {}
         demandeur, compte_id, template_id = row["demandeur"], row["compte_id"], row["template_id"]
     raw = params.get("__raw") if isinstance(params, dict) else None
@@ -213,7 +275,9 @@ def _tenter_depart(engine, mail_id: int) -> dict:
     # VEILLE-FIX-2 (Lot D) — échec Brevo : REJEU ESPACÉ. On incrémente le compteur ; tant qu'il reste des
     # délais (5 min, 1 h, 24 h), l'entrée passe `a_rejouer` avec la date de la prochaine tentative (le
     # worker la reprendra). Au-delà → `echec` définitif (ligne rouge, rejeu manuel). Jamais d'envoi en
-    # double : le SELECT ... FOR UPDATE ci-dessus sérialise, et un `recu` n'est jamais retenté.
+    # double : la REVENDICATION `parti` (ORF-08) posée transactionnellement ci-dessus sérialise les
+    # consommateurs — l'ancien commentaire « le FOR UPDATE sérialise » était FAUX entre processus (le
+    # verrou était relâché avant l'appel réseau). `parti_at` est remis à NULL : rien n'est parti (RV-013).
     raison = res.get("raison") or "échec inconnu"
     with engine.begin() as c:
         cur = c.execute(text("SELECT tentatives FROM mail_queue WHERE id = :i FOR UPDATE"),
@@ -222,12 +286,13 @@ def _tenter_depart(engine, mail_id: int) -> dict:
         if nouv <= len(DELAIS_REJEU):
             prochain = _now() + DELAIS_REJEU[nouv - 1]
             row = c.execute(text(
-                "UPDATE mail_queue SET tentatives = :n, erreur = :err, etat = 'a_rejouer', prevu_at = :p"
-                " WHERE id = :i RETURNING *"),
+                "UPDATE mail_queue SET tentatives = :n, erreur = :err, etat = 'a_rejouer', prevu_at = :p,"
+                " parti_at = NULL WHERE id = :i RETURNING *"),
                 {"n": nouv, "err": raison, "p": prochain, "i": mail_id}).mappings().first()
         else:
             row = c.execute(text(
-                "UPDATE mail_queue SET tentatives = :n, erreur = :err, etat = 'echec' WHERE id = :i RETURNING *"),
+                "UPDATE mail_queue SET tentatives = :n, erreur = :err, etat = 'echec', parti_at = NULL"
+                " WHERE id = :i RETURNING *"),
                 {"n": nouv, "err": raison, "i": mail_id}).mappings().first()
     suite = (f" — rejeu prévu {row['prevu_at'].astimezone().isoformat(timespec='minutes')}"
              if row["etat"] == "a_rejouer" and row["prevu_at"] else " — ÉCHEC définitif (rejeu manuel)")
@@ -298,11 +363,47 @@ def consommer(engine, demandeur: str = "job:mail-queue-consommer", limite: int =
       · `en_attente` sans `prevu_at` (immédiats différés, ex. digest) OU `prevu_at ≤ now` (programmés
         J+3 / J+10) ;
       · `a_rejouer` dont l'heure de rejeu est venue (`prevu_at ≤ now`).
-    Idempotent, jamais d'envoi en double (`_tenter_depart` verrouille FOR UPDATE et ne retente pas un
-    `recu`). S'ARRÊTE après `budget_s` (ne lance plus de nouveau mail) pour ne JAMAIS se faire couper
-    par le timeout du job en pleine requête (cf. BUDGET_CONSOMMER_S) ; le reliquat part au passage
-    suivant. Retourne {traites, envoyes, a_rejouer, echecs, restants} — `restants` > 0 = budget atteint."""
+    Idempotent, jamais d'envoi en double (`_tenter_depart` REVENDIQUE l'entrée — état `parti` — dans
+    la transaction qui tient le FOR UPDATE, ORF-08). S'ARRÊTE après `budget_s` (ne lance plus de
+    nouveau mail) pour ne JAMAIS se faire couper par le timeout du job en pleine requête (cf.
+    BUDGET_CONSOMMER_S) ; le reliquat part au passage suivant.
+
+    ORF-07 (FIX-ORFEVRE-1) — DEUX GARDES avant tout envoi (annulation motivée, jamais silencieuse) :
+      · compte supprimé : une ligne dont le `compte_id` n'existe plus ne part JAMAIS ;
+      · fraîcheur : une ligne due depuis plus de FRAICHEUR_MAX_JOURS (résidu de recette, file gelée
+        en dry-run) ne part JAMAIS — un mail transactionnel vieux d'une semaine est un mail faux.
+    ORF-08 — REPRISE des `parti` orphelins (> PARTI_REPRISE_MIN min : processus tué pendant l'envoi)
+    → `a_rejouer` immédiat (at-least-once assumé, dit dans `erreur`).
+
+    Retourne {traites, envoyes, a_rejouer, echecs, annules, repris, restants} — `restants` > 0 =
+    budget atteint."""
     with engine.begin() as c:
+        # ORF-08 — reprise des envois revendiqués puis abandonnés (kill -9 / coupure en plein appel).
+        repris = c.execute(text(
+            "UPDATE mail_queue SET etat = 'a_rejouer', prevu_at = now(), parti_at = NULL,"
+            " erreur = 'départ interrompu (processus arrêté pendant l''envoi) — repris par le worker'"
+            " WHERE etat = 'parti' AND parti_at < now() - make_interval(mins => :m)"),
+            {"m": PARTI_REPRISE_MIN}).rowcount
+        # ORF-07 garde 1 — compte supprimé → annulé (motif lisible, la ligne reste : l'historique EST
+        # la preuve). Gardée par l'existence de la table (base de test minimale sans `comptes`).
+        annules = 0
+        if c.execute(text("SELECT to_regclass('comptes')")).scalar() is not None:
+            annules += c.execute(text(
+                "UPDATE mail_queue SET etat = 'annule',"
+                " erreur = 'compte supprimé — envoi annulé par la garde du worker'"
+                " WHERE etat IN ('en_attente','a_rejouer') AND (prevu_at IS NULL OR prevu_at <= now())"
+                " AND compte_id IS NOT NULL"
+                " AND NOT EXISTS (SELECT 1 FROM comptes k WHERE k.id = mail_queue.compte_id)")).rowcount
+        # ORF-07 garde 2 — dû depuis trop longtemps → annulé (il ne « rattrapera » jamais son retard).
+        annules += c.execute(text(
+            "UPDATE mail_queue SET etat = 'annule',"
+            " erreur = 'dû depuis plus de ' || :j || ' jours — envoi annulé par la garde du worker'"
+            " WHERE etat IN ('en_attente','a_rejouer')"
+            " AND coalesce(prevu_at, cree_at) < now() - make_interval(days => :j)"),
+            {"j": FRAICHEUR_MAX_JOURS}).rowcount
+        if repris or annules:
+            log.warning("mail-queue : %d envoi(s) interrompu(s) repris, %d ligne(s) annulée(s) "
+                        "(compte supprimé / dû > %d j)", repris, annules, FRAICHEUR_MAX_JOURS)
         ids = [r[0] for r in c.execute(text(
             "SELECT id FROM mail_queue WHERE etat IN ('en_attente','a_rejouer') "
             "AND (prevu_at IS NULL OR prevu_at <= now()) "
@@ -325,7 +426,7 @@ def consommer(engine, demandeur: str = "job:mail-queue-consommer", limite: int =
         log.info("mail-queue : budget %.0fs atteint — %d traité(s), %d reliquat(s) au prochain passage",
                  budget_s or 0, traites, restants)
     return {"traites": traites, "envoyes": envoyes, "a_rejouer": rejeu, "echecs": echecs,
-            "restants": restants}
+            "annules": annules, "repris": repris, "restants": restants}
 
 
 def depart_des_programmes(engine, demandeur: str = "job:mail-queue") -> int:

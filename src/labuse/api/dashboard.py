@@ -1210,9 +1210,9 @@ def admin_ia(request: Request) -> dict:
         quotas = [dict(r) for r in c.execute(text(
             "SELECT id, nom, plan, copilote_quota_jour, copilote_budget_eur FROM comptes"
             " WHERE statut NOT IN ('resilie') ORDER BY created_at DESC")).mappings()]
-    from datetime import date
     import calendar
-    today = date.today()
+    from ..tz import today_reunion   # FIX-ORFEVRE-1 pt 3 (ORF-17) — projection du mois au jour Réunion
+    today = today_reunion()
     jours_restants = calendar.monthrange(today.year, today.month)[1] - today.day
     projection = float(mois["cout"]) + (cout_7j / 7.0) * jours_restants
     appels = int(mois["appels"])

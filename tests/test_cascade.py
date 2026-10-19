@@ -157,3 +157,22 @@ def test_persistance_cascade_et_evaluation(db_session, demo):
         text("SELECT count(*) FROM parcel_evaluations WHERE parcel_id = :p"), {"p": pid}
     ).scalar()
     assert n_cascade > 0 and n_eval == 1
+
+
+def test_dvf_demo_toujours_marquees_et_hors_fenetre_servie(db_session):
+    """FIX-ORFEVRE-1 (B-01) — toute mutation semée par le jeu démo est EXPLICITEMENT marquée
+    (mutation_id 'DVF-DEMO-*' ET raw.synthetique) : jamais une fausse vente anonyme en base
+    (la ligne parasite id 33217 de l'audit — mutation_id NULL, raw NULL — ne venait PAS de ce
+    semeur, mais l'invariant est désormais GRAVÉ). Et la garde de service `dvf_fenetre`
+    (lignes « minuit » seules) les écarte de l'ancre et des fenêtres servies."""
+    seed_sources.seed(db_session)
+    demo_saint_paul.seed_demo(db_session)
+    non_marquees = db_session.execute(text(
+        "SELECT count(*) FROM dvf_mutations WHERE mutation_id IS NULL "
+        "OR mutation_id NOT LIKE 'DVF-DEMO-%' OR raw IS NULL "
+        "OR (raw->>'synthetique') IS DISTINCT FROM 'true'")).scalar()
+    assert non_marquees == 0, "le semeur démo ne produit QUE des mutations marquées synthétiques"
+    a_minuit = db_session.execute(text(
+        "SELECT count(*) FROM dvf_mutations "
+        "WHERE date_mutation = date_trunc('day', date_mutation)")).scalar()
+    assert a_minuit == 0, "aucune ligne démo à minuit : l'ancre/fenêtre DVF servie les exclut toutes"

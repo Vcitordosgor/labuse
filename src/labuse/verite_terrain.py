@@ -109,9 +109,11 @@ def fetch_texte(url: str, source: str, timeout: int = 40) -> tuple[str, bool]:
 
 
 def _horodatage() -> str:
-    # Date du système, en ISO ; utilisée pour tracer QUAND la réponse officielle a été lue.
-    import datetime
-    return datetime.datetime.now().astimezone().isoformat(timespec="seconds")
+    # Heure RÉUNION, en ISO aware (offset inclus) ; trace QUAND la réponse officielle a été lue.
+    # FIX-ORFEVRE-1 pt 3 (ORF-17) — même instant qu'avant (l'aware l'a toujours garanti), mais
+    # affiché dans LE fuseau métier au lieu de celui du process.
+    from .tz import now_reunion
+    return now_reunion().isoformat(timespec="seconds")
 
 
 # ═════════════════════════════════════════════════════════════════════════════════════════

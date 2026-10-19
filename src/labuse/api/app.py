@@ -1402,7 +1402,7 @@ def _m28_badges(db: Session, idu: str) -> dict:
         # (< 1800 ou future) n'est JAMAIS servie, même si le cache n'a pas encore été reconstruit
         # (le builder la borne déjà) → « année inconnue » (annee_construction NULL, étiquette Absent).
         _ac = _fb.get("annee_construction")
-        if _ac is not None and (_ac < 1800 or _ac > datetime.now().year):
+        if _ac is not None and (_ac < 1800 or _ac > _today_reunion().year):   # FIX-ORFEVRE-1 pt 3 (ORF-17)
             _fb["annee_construction"] = None
             _fb["annee_etiquette"] = "Absent"
         out["filtre_bati"] = {**_fb, "ratio_pct": round(_fb["ratio_pct"], 1),
@@ -8117,14 +8117,11 @@ def _compare_row(qv2: dict, faisab: dict | None) -> dict:
     surf = qv2.get("surface_m2") or 0
     bati_pct = (round(100 * res["emprise_batie_m2"] / surf)
                 if res.get("disponible") and res.get("emprise_batie_m2") is not None and surf else None)
-    # logements possibles — OUTILS-FIX-2 D3 : la fourchette COMPLÈTE (deux bornes), plus seulement la
-    # borne haute. On retient la fourchette (au sol ou sous-sol) dont la borne haute est la plus grande.
-    def _pair(pair):
-        return tuple(pair) if isinstance(pair, (list, tuple)) and len(pair) == 2 else None
-    _cands = [p for p in (_pair(fr.get("logements_au_sol")), _pair(fr.get("logements_sous_sol"))) if p is not None]
-    _best = max(_cands, key=lambda p: p[1]) if _cands else None
-    log_lo = _best[0] if _best else None
-    log_hi = _best[1] if _best else None
+    # FIX-ORFEVRE-1 (décision Vic 18/10/2026) — logements_min/logements_possibles NE SONT PLUS SERVIS :
+    # aucun nombre de logements de l'ancien calcul de capacité (fourchette estimate_capacity,
+    # SDP ÷ logement moyen) dans Comparer — la ligne (écran ET PDF) renvoie à l'Étude de faisabilité
+    # (moteur d'implantation), seul à compter des logements. Les deux champs n'avaient aucun autre
+    # lecteur (doctrine : rien de servi sans lecteur).
     # accès & réseaux : UN verdict (le faisceau de viabilisation servi, F0/F8) ; assainissement à part.
     via = qv2.get("viabilisation") or {}
     anc = qv2.get("anc") or {}
@@ -8175,8 +8172,6 @@ def _compare_row(qv2: dict, faisab: dict | None) -> dict:
         "proprietaire": proprietaire,                                   # moral / particulier
         "bati_existant_pct": bati_pct,                                  # emprise bâtie ÷ terrain
         "gabarit_niveaux_max": res.get("niveaux_max") if res.get("disponible") else None,  # hauteur max (R+N)
-        "logements_min": log_lo,                                        # D3 — borne BASSE de la fourchette
-        "logements_possibles": log_hi,                                  # borne haute fourchette
         "acces_reseaux": via.get("libelle"),                            # UN verdict viabilisation
         "assainissement": anc.get("libelle") or anc.get("statut_court") or anc.get("statut"),
         "prix_secteur_bati_m2": prix_bati,                              # médiane DVF bâti secteur

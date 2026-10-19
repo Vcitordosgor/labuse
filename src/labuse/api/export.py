@@ -442,5 +442,5 @@ def _comparables_view(fiche: dict) -> dict | None:
 
 
 def _today() -> str:
-    from datetime import date
-    return date.today().strftime("%d/%m/%Y")
+    from ..tz import today_reunion   # FIX-ORFEVRE-1 pt 3 (ORF-17/D-13) — jour Réunion, pas process
+    return today_reunion().strftime("%d/%m/%Y")

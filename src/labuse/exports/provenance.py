@@ -119,6 +119,16 @@ def nombres_ancres(valeurs: dict[str, Valeur], ctx: dict | None = None) -> dict[
             _poser(base, cid)
             _poser(base / 1000.0, cid)
 
+    # FIX-ORFEVRE-1 (décision Vic 18/10/2026) — la note « capacité maximale » (capacite_max.MENTION,
+    # imprimée par le Financier et le Comparatif) porte les deux ratios médians mesurés du volet D
+    # (0,46 SDP / 0,40 logements). Ils ne passaient le crible QUE par accident (round(0,46)=0, ancré
+    # dès qu'une donnée vaut zéro) : ils sont désormais DÉCLARÉS au registre
+    # (capacite_ratio_median_sdp / capacite_ratio_median_logements) et ancrés nommément à leurs ids —
+    # aucune exception, aucune entrée de liste blanche.
+    # Ancrage EXACT (pas _poser : ses arrondis ancreraient aussi 0 et 0,5, affaiblissant le crible).
+    from ..capacite_max import RATIO_MEDIAN_LOGEMENTS, RATIO_MEDIAN_SDP
+    ancres.setdefault(float(RATIO_MEDIAN_SDP), "capacite_ratio_median_sdp")
+    ancres.setdefault(float(RATIO_MEDIAN_LOGEMENTS), "capacite_ratio_median_logements")
     for cid, v in valeurs.items():
         for x in _scalaires(v.valeur):
             _poser(x, cid)
@@ -200,11 +210,9 @@ ALLOWLIST: dict[float, str] = {
     974.0: "code du département (La Réunion) cité dans un descriptif de source",
     1990.0: "borne du libellé INSEE « bâti avant 1990 » — définition, pas une mesure",
     0.0: "zéro explicite (rien à construire, aucun aléa) — jamais une valeur inventée",
-    # FIX-PRIX-ET-OPPORTUNITES (lot 3) — ratios médians MESURÉS autorisé/LABUSE (volet D VERITE-TERRAIN-2),
-    # cités dans la mention « capacité = maximum réglementaire » (fiche/exports/Copilote) : une référence
-    # de mesure, pas une grandeur de la parcelle → jamais une fuite (comme les taux légaux ci-dessus).
-    0.46: "ratio médian mesuré autorisé/LABUSE en surface (volet D) — référence de la mention capacité",
-    0.4: "ratio médian mesuré autorisé/LABUSE en logements (volet D) — référence de la mention capacité",
+    # FIX-ORFEVRE-1 (décision Vic 18/10/2026) — les ratios médians 0,46/0,40 de la mention capacité ne
+    # sont PLUS une exception : déclarés au registre (capacite_ratio_median_sdp/_logements) et ancrés
+    # exactement par nombres_ancres — le verrou les suit comme toute donnée.
     2024.0: "millésime/année de source cité", 2025.0: "millésime/année de source cité",
     2026.0: "millésime/année de source cité", 2023.0: "millésime/année de source cité",
     2022.0: "millésime/année de source cité", 2021.0: "millésime/année de source cité",

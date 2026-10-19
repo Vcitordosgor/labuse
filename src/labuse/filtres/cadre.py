@@ -27,6 +27,7 @@ from typing import Callable
 from sqlalchemy import text
 
 from ..ingestion.run_all import REUNION_COMMUNES
+from ..tz import today_reunion   # FIX-ORFEVRE-1 pt 3 (ORF-17) — jour Réunion, pas le fuseau du process
 
 log = logging.getLogger("labuse.filtres")
 
@@ -290,7 +291,7 @@ def _u_geom_emprise(db, f: Filtre, version: str) -> Resultat:
 def _u_dates_plausibles(db, f: Filtre, version: str) -> Resultat:
     if not (f.table and f.date_cols and _table_existe(db, f.table)):
         return skip("pas de colonne date ou table absente")
-    borne_haute = date.today().isoformat()
+    borne_haute = today_reunion().isoformat()
     total_hors = 0
     detail: dict[str, int] = {}
     for col in f.date_cols:

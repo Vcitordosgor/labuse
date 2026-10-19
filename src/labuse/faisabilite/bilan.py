@@ -17,8 +17,6 @@ from __future__ import annotations
 
 import statistics
 from dataclasses import dataclass, field
-from datetime import date
-
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -26,7 +24,15 @@ from .engine import Hypotheses, Step
 
 _BANDEAU = ("Estimation économique indicative (DVF public + hypothèses) — "
             "ne remplace pas un bilan promoteur professionnel.")
-ANNEE_REF = date.today().year
+
+
+def annee_ref() -> int:
+    """FIX-ORFEVRE-1 pt 3 (D-06) — l'année de référence du bilan, calculée À L'APPEL (jour Réunion).
+    Avant : `ANNEE_REF = date.today().year` figée à l'IMPORT du module → un worker API démarré en
+    décembre et toujours vivant en janvier calculait âges et fenêtres secteur sur l'année N−1
+    jusqu'au redémarrage (defisc.py et fiche_blocs3.py recalculaient déjà à l'appel, eux)."""
+    from ..tz import today_reunion
+    return today_reunion().year
 
 # COMPARER-2 §2 — la VRD s'applique à l'emprise réellement AMÉNAGÉE du scénario, pas au terrain brut :
 # emprise_aménagée = (empreinte au sol du programme + stationnement) × (1 + voirie interne), plafonnée
@@ -163,7 +169,7 @@ def _fiabilite(kept: list[dict], type_label: str, commune_fallback: bool, min_n:
     q1, _m, q3 = _quartiles([s["prix"] for s in kept])
     raisons: list[str] = []
     niveau = "fiable"
-    age = ANNEE_REF - annee_max
+    age = annee_ref() - annee_max
     if age > 3:
         niveau = "fragile"
         raisons.append(f"ventes anciennes (la plus récente : {annee_max}, il y a {age} ans)")
@@ -244,7 +250,7 @@ def _selection_secteur(sales: list[dict], base_plans: list[tuple], min_n: int) -
     """Sélection adaptative COMMUNE (SECTEUR-2 T1) : période RÉCENTE (5 ans) préférée puis élargie ;
     au sein d'une période, le premier plan (type × rayon) qui atteint `min_n` après trim des aberrants.
     Retourne (label, kept, ecartees, radius, commune, sub, periode_seg) ou None si aucun plan ne tient."""
-    an_recent = ANNEE_REF - PERIODE_SECTEUR_ANS + 1
+    an_recent = annee_ref() - PERIODE_SECTEUR_ANS + 1
     for periode_label, an_min in (("récente", an_recent), ("élargie", 0)):
         for label, cats, r, commune in base_plans:
             sub = [s for s in sales if s["cat"] in cats and s["annee"] >= an_min and (commune or s["dist"] <= r)]

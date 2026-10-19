@@ -1278,7 +1278,7 @@ def prospection_piscines(commune: str | None = None,
     bandes = db.execute(text(
         "SELECT count(*) FILTER (WHERE statut='servie') AS haute, "
         "count(*) FILTER (WHERE statut='a_confirmer') AS incertaines "
-        "FROM piscines pi WHERE statut IN ('servie','a_confirmer') "
+        "FROM piscines pi WHERE statut IN ('servie','a_confirmer') AND pi.idu IS NOT NULL "  # ORF-14
         "AND NOT EXISTS (SELECT 1 FROM piscine_corrections pc WHERE pc.idu = pi.idu)")).mappings().first() or {}
     n_corrigees = int(db.execute(text("SELECT count(*) FROM piscine_corrections")).scalar() or 0)
     return {"total": total, "communes": [dict(c) for c in communes],
@@ -1309,7 +1309,9 @@ def prospection_piscines_points(commune: str | None = None, bati: str = "tous",
     statuts = "('servie','a_confirmer')" if inclure_incertaines else "('servie')"
     surf_cond = " AND pi.surface_m2 >= :psmin" if piscine_surf_min else ""
     corr_cond = " AND NOT EXISTS (SELECT 1 FROM piscine_corrections pc WHERE pc.idu = pi.idu)"
-    where = (f"WHERE pi.statut IN {statuts}" + surf_cond + corr_cond
+    # ORF-14 (FIX-ORFEVRE-1) — une détection HORS parcelle (idu NULL : voirie/limite, le rattachement
+    # spatial a tranché) n'est pas servable : introuvable depuis une fiche. Exclue, comme /liste.
+    where = (f"WHERE pi.statut IN {statuts} AND pi.idu IS NOT NULL" + surf_cond + corr_cond
              + (" AND pi.commune = :c" if commune else ""))
     rows = db.execute(text(
         f"""SELECT pi.idu, pi.commune, round(pi.surface_m2::numeric, 0) AS m2, pi.source, pi.statut,
@@ -1345,7 +1347,8 @@ def prospection_piscines_parcelles(commune: str | None = None,
                else "('a_confirmer')" if statut == "a_confirmer" else "('servie')")
     surf_cond = " AND pi.surface_m2 >= :psmin" if piscine_surf_min else ""
     corr_cond = " AND NOT EXISTS (SELECT 1 FROM piscine_corrections pc WHERE pc.idu = pi.idu)"
-    where = (f"WHERE pi.statut IN {statuts}" + surf_cond + corr_cond
+    # ORF-14 — hors parcelle (idu NULL) exclu du service, comme /points et /liste.
+    where = (f"WHERE pi.statut IN {statuts} AND pi.idu IS NOT NULL" + surf_cond + corr_cond
              + (" AND pi.commune = :c" if commune else ""))
     # RECETTE-2 (D14d, Vic 05/10) — on ne PEINT PLUS la parcelle entière : une GOUTTE au centroïde de
     # CHAQUE piscine (kind='piscine' → symbole goutte de MapView). La couche fill/line (kind=
@@ -2042,10 +2045,10 @@ def etude_pdf(body: EtudePdfIn, request: Request, db: Session = Depends(get_db))
     MÊME payload que l'écran (`etudier_payload`) et on le REND (jamais un second calcul) ; chaque ligne
     du PDF est une ligne de l'outil (verrou `nombres_hors_payload`). Deux portes, un document : la tuile
     de l'outil passe `scenario_ref` (le scénario affiché) ; la carte Docs sert la config par défaut."""
-    from datetime import date
     from urllib.parse import quote
 
     from ..exports import etude_faisabilite as ef
+    from ..tz import today_reunion   # FIX-ORFEVRE-1 pt 3 (D-13) — « généré le » au jour Réunion
     from ..exports.rendu import render_pdf
     from ..implantation.service import etudier_payload
 
@@ -2057,7 +2060,7 @@ def etude_pdf(body: EtudePdfIn, request: Request, db: Session = Depends(get_db))
         payload = etudier_payload(db, data)
     except ValueError as exc:
         raise HTTPException(400, str(exc))
-    genere_le = date.today().strftime("%d/%m/%Y")
+    genere_le = today_reunion().strftime("%d/%m/%Y")
     try:
         rendu = ef.rendu_etude(payload, genere_le=genere_le, scenario_ref=scenario_ref)
     except ValueError as exc:
@@ -2297,8 +2300,7 @@ def verif_procedure(idu: str, db: Session = Depends(get_db)) -> dict:
     # collé avec un espace/retour en queue, ou saisi en minuscules (97413000cj0096), ne matchait pas.
     idu = (idu or "").strip().upper()
     _check_idu(idu)   # M-K (P2-31)
-    import datetime
-
+    from ..tz import today_reunion   # FIX-ORFEVRE-1 pt 3 (ORF-17) — « consulté le » au jour Réunion
     from ..verdict_servi import verdict_servi
     from .. import veille_plu as V
 
@@ -2311,7 +2313,7 @@ def verif_procedure(idu: str, db: Session = Depends(get_db)) -> dict:
     except Exception:  # noqa: BLE001 - l'outil ne doit jamais 500 sur le tier
         tier = None
     e = V.entry(insee)
-    today = datetime.date.today().isoformat()
+    today = today_reunion().isoformat()
     out = {"idu": idu, "commune": p["commune"], "insee": insee, "tier_servi": tier,
            "consulte_le": today}
     if not e:

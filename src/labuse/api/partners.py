@@ -7,7 +7,7 @@ from __future__ import annotations
 import secrets
 from datetime import date, datetime
 
-from ..tz import today_reunion   # REVUE · R2 — jour métier en heure Réunion (bug fuseau consigné)
+from ..tz import now_reunion, today_reunion   # REVUE · R2 — jour métier en heure Réunion (bug fuseau consigné)
 # Vert de marque : source unique (config/brand_colors.json). Ces pages avaient gardé l'ANCIEN vert
 # écran #5CE6A1 (orphelin, raté la migration M83-D) — on repointe tout sur le vert de marque #4ADE80.
 from ..brand import MINT as _MINT, MINT_RGB as _MINT_RGB
@@ -396,7 +396,9 @@ def share_public(token: str, db: Session = Depends(get_db)) -> str:
     except Exception:  # noqa: BLE001 — la photo est un plus, jamais un bloqueur
         photo = ""
     points_cles = _points_cles_html(lines_pub)   # pitch dérivé des facteurs FILTRÉS (jamais proprio)
-    horodatage = datetime.now().strftime("%d/%m/%Y à %H:%M")
+    # FIX-ORFEVRE-1 pt 3 (D-05) — heure RÉUNION (comme `created_at`, rendu en session Réunion) :
+    # sur machine CEST, les deux lignes voisines de la même page divergeaient de 2 h.
+    horodatage = now_reunion().strftime("%d/%m/%Y à %H:%M")
     cree = link["created_at"].strftime("%d/%m/%Y à %H:%M")
     lignes = "".join(
         f"<div style='display:flex;gap:10px;padding:7px 0;border-bottom:1px solid #1E2A23'>"
