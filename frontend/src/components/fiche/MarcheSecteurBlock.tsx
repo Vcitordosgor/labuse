@@ -1,7 +1,8 @@
 /**
  * M125-2 — Contexte socio-économique du secteur (Filosofi 200 m au centroïde + parc social RPLS
- * de la commune). Contexte informatif, HORS scoring. Chaque sous-bloc porte SON millésime (daté,
- * jamais un millésime unique). Rendu seulement si au moins une source est présente.
+ * de la commune). Contexte informatif, HORS scoring. Rendu seulement si au moins une source est
+ * présente. CHASSE-APP-FIX-1 (pt 1) : le millésime de source n'est plus affiché au client (décision
+ * Vic 18/09, réservé à l'admin) ; seules l'échelle et la provenance restent.
  */
 import type { MarcheSecteur } from '../../lib/types'
 import { GroupLabel, FactRow, FactNote } from './primitives'
@@ -27,8 +28,10 @@ export function MarcheSecteurBlock({ ms }: { ms: MarcheSecteur }) {
               200 m. « Niveau de vie moyen » est VÉRIFIÉ : le champ servi est la MOYENNE du carreau
               Filosofi (nivvie_moyen_eur, CHASSE-DONNEES-FIX-1 E-70), pas la médiane — « moyen » est exact. */}
           <GroupLabel>Revenus du secteur · carreau INSEE 200 m</GroupLabel>
+          {/* CHASSE-APP-FIX-1 (pt 1) — le millésime de SOURCE (Filosofi) n'est plus affiché au client
+              (décision Vic 18/09, réservé à l'admin) ; le badge « sourcé » reste (provenance, pas une date). */}
           <FactRow label="Niveau de vie moyen" value={eur(f.nivvie_moyen_eur)}
-            src={<><span className="b s">sourcé</span>{f.millesime}</>} />
+            src={<span className="b s">sourcé</span>} />
           {partProp != null && (
             <FactRow label="Propriétaires" value={<>{partProp} <small>%</small></>} />
           )}
@@ -43,8 +46,10 @@ export function MarcheSecteurBlock({ ms }: { ms: MarcheSecteur }) {
               « secteur » : son propre kicker d'échelle, pour qu'un chiffre communal ne se lise pas
               comme du secteur (carreau 200 m). */}
           <GroupLabel>Parc social · commune entière</GroupLabel>
+          {/* CHASSE-APP-FIX-1 (pt 1) — millésime de SOURCE (RPLS) retiré de l'affichage client ; on garde
+              l'échelle (« maille commune »), qui n'est pas une date. */}
           <FactRow label="Parc social" value={<>{r.nb_logements.toLocaleString('fr-FR')} <small>logements</small></>}
-            src={<>{r.millesime} · maille commune</>} />
+            src={<>maille commune</>} />
           {r.pct_qpv != null && (
             <FactRow label="En QPV — commune" value={<>{r.pct_qpv} <small>%</small></>} />
           )}
