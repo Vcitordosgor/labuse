@@ -1,3 +1,43 @@
+# Agents launchd du Mac — installation HORS DU BUREAU (`install_agents.sh`)
+
+> ⚠️ **Ne jamais ranger les scripts d'agent sous `~/Desktop`.** macOS (TCC) interdit à launchd d'y
+> LIRE un fichier : l'agent échoue alors en **code 126 « Operation not permitted »**. On installe
+> les scripts dans **`~/.labuse/ops`** (non protégé) et on repointe les `.plist` vers ce dossier.
+
+Les 3 agents de sauvegarde/veille (`com.labuse.backup-offsite`, `immo.labuse.pull-backups`,
+`immo.labuse.watch-prod`) s'installent/réparent en une commande, **depuis un clone à jour de `main`
+(pas depuis un checkout en HEAD détachée)** :
+
+```sh
+bash deploy/mac/install_agents.sh
+```
+
+Le script : copie les 3 scripts (et leurs dépendances) dans `~/.labuse/ops`, vérifie qu'aucun ne lit
+plus `~/Desktop`, installe les `.plist` dans `~/Library/LaunchAgents` (en substituant `/Users/VIC` →
+`$HOME`), décharge/recharge chaque agent, puis les `kickstart` et pointe vers leurs journaux. Rejouable
+à volonté. Dépendances externes (hors `~/Desktop`) : `pg_restore` ≥ majeure du VPS dans
+`$HOME/miniforge3/envs/labusedb/bin`, alias ssh `labuse-vps`, secrets watch-prod dans
+`~/labuse-backups/M7_SECRETS.txt`. Les scripts sont du bash autonome : **aucun venv de projet requis**.
+Le VPS n'est jamais modifié (lecture des dumps par ssh uniquement).
+
+Retirer un agent : `launchctl bootout gui/$(id -u)/<label>` puis supprimer son `.plist`.
+
+### Seconde garde macOS pour la copie sur disque externe (Accès complet au disque)
+
+Sortir les scripts de `~/Desktop` lève le `126` de **lecture** du script. Mais **écrire sur un volume
+amovible** (`/Volumes/…`) depuis un contexte launchd réclame en plus **« Accès complet au disque »**
+pour l'interpréteur `/bin/bash` — sinon `rsync` échoue en `mkstemp … Operation not permitted`. C'est un
+réglage macOS **qui ne peut pas être posé en ligne de commande** ; il se fait une fois, à la main :
+
+> Réglages Système ▸ Confidentialité et sécurité ▸ **Accès complet au disque** ▸ `+` → ajouter **`/bin/bash`**
+> (dans le sélecteur : `⌘⇧.` pour voir les fichiers cachés, `⌘⇧G` puis coller `/bin/bash`).
+> Volet direct : `open "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles"`
+
+Puis relancer la copie : `launchctl kickstart -k gui/$(id -u)/com.labuse.backup-offsite`.
+`pull-backups` et `watch-prod` n'écrivent que sous `~/` : eux n'ont besoin de rien de plus.
+
+---
+
 # Garde externe `/readyz` (SOLIDITE-1 Lot 1.5)
 
 **Pourquoi.** L'alerte in-app (mail Brevo + cloche) part _depuis le VPS_. Si le VPS tombe en entier,
@@ -68,16 +108,10 @@ vérification, puis renommage atomique).
   via `sudo -n -u labuse tee`). Le **récap du matin** affiche cette date, et une alerte **« branche le
   disque »** part si elle a **plus de 10 jours** (vigie `ops_alertes`).
 
-Installation :
-```sh
-# éditer com.labuse.backup-offsite.plist (chemins /Users/VIC, clé Brevo éventuelle), puis :
-cp deploy/mac/com.labuse.backup-offsite.plist ~/Library/LaunchAgents/
-launchctl load  ~/Library/LaunchAgents/com.labuse.backup-offsite.plist
-launchctl start com.labuse.backup-offsite      # pour forcer une copie tout de suite
-tail -f ~/.labuse/backup_offsite_disque.log
-```
+Installation : `bash deploy/mac/install_agents.sh` (voir en tête de ce README — il installe ce
+`.plist` dans `~/Library/LaunchAgents`, copie le script dans `~/.labuse/ops`, et le `kickstart`).
 Pré-requis : `pg_restore` ≥ la majeure PostgreSQL du VPS, l'accès ssh `labuse-vps`, et le disque branché.
-Pour retirer : `launchctl unload ~/Library/LaunchAgents/com.labuse.backup-offsite.plist`.
+Pour retirer : `launchctl bootout gui/$(id -u)/com.labuse.backup-offsite`.
 
 ## Alternative sans Mac allumé
 
