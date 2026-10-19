@@ -9,11 +9,12 @@ rouge qu'il n'a pas nommé, daté et justifié.**
 
 | test | raison | depuis | échéance |
 |---|---|---|---|
-| tests/verrous/test_lot2_sources.py::test_v2a_68_partout_sur_la_base_reelle | Base réelle mi-opération : source « Population légale (INSEE via geo.api.gouv) » ajoutée par COHERENCE-FIX-1 mais pas encore câblée au pont NOM_VERS_SLUG. LEVÉE par COHERENCE-FIX-1 (câblage source → réservoir). Hors périmètre PRE-DEPLOY-1. | 2026-09-29 | 2026-10-20 |
-| tests/verrous/test_garanties.py::test_g4_vert_et_vide_jamais_a_jour | Base réelle : la même source « Population légale (INSEE) » n'a ni sonde de fraîcheur ni raison de non-vérifiabilité (ajoutée par COHERENCE-FIX-1). LEVÉE par COHERENCE-FIX-1 (sonde/raison de la source). Hors périmètre PRE-DEPLOY-1. | 2026-09-29 | 2026-10-20 |
-| tests/verrous/test_lot1_tables.py::test_verrous_lot1_passent_sur_la_base_reelle | Base réelle : `parcel_couche_intersection_build` orphelin = `labuse build-intersections` de Vic EN COURS (cf. PRE-DEPLOY-1 lot D). LEVÉE quand Vic termine build-intersections (bascule staging → table finale). À revérifier après. | 2026-09-29 | 2026-10-20 |
 
-*PRE-DEPLOY-1 (29/09/2026) — trois tolérances de BASE RÉELLE, chacune levée par le mandat nommé
-(COHERENCE-FIX-1 pour le câblage « Population légale » ; build-intersections de Vic pour l'orphelin).
-Ce sont des `@pytest.mark.local` (base servie réelle), hors CI. Les autres échecs de l'étape 0
-(les_24/V6b, f4/fuite inter-fichiers, verrou VEFA-à-l'acte périmé) ont été CORRIGÉS en code.*
+*(Aucune tolérance en cours — la table vide est l'état normal.)*
+
+*ROUGES-RESTANTS (19/10/2026, fix/rouges-restants) — les trois tolérances PRE-DEPLOY-1 du 29/09
+sont LEVÉES avant leur échéance du 20/10 : v2a et g4 étaient repassés au vert (lignes mortes —
+« Population légale » câblée par COHERENCE-FIX-1) ; lot1 est ÉTEINT (V1c : 5 tables d'exploitation
+déclarées au registre dont `parcel_couche_intersection_build`, + purge du staging SM1 du worktree
+voisin ; V6b : dérive du re-run q_v19 du 18/10 acceptée ; V7a : le verrou rejoue la rétention
+sous-pixel z < 12 du tuyau — `geom_rendue_sql`, source unique).*
