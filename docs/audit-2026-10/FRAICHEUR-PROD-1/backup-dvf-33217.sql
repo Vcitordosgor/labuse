@@ -1,0 +1,1 @@
+INSERT INTO dvf_mutations (id,mutation_id,date_mutation,valeur_fonciere,type_local,surface_reelle_bati,surface_terrain,nature_mutation,commune,geom,raw) VALUES ('33217',NULL,'2026-08-10 03:43:00.150591+04','380000',NULL,NULL,NULL,'Vente','Saint-Paul',ST_GeomFromEWKT('SRID=4326;POINT(55.28 -21)'),NULL);
