@@ -312,12 +312,18 @@ def test_f46_valeur_secteur_servie():
 def test_f57_f50_pct_portion_zone_servie():
     """F57 + F50 (P2) — le « % à cheval » (portion de parcelle dans la zone dominante) vivait à DEUX
     sites front (GabaritLine + panneau Gabarit) qui le recalculaient à l'identique : divergence
-    possible si l'un changeait. Calculé UNE fois au service (`gabarit.py`, round(portion/cadastre×100))
-    et servi `pctPortionZone` ; les deux front le lisent. Valeur inchangée (vérifié témoins à cheval)."""
+    possible si l'un changeait. Calculé UNE fois au service et servi `pctPortionZone` ; les deux front
+    le lisent, sans recalcul.
+    CHASSE-DOCS-FIX-1 (vérif #3) — la SOURCE UNIQUE est désormais le ZONAGE `zone_dominante`
+    (`pct_constructible`), la MÊME que la fiche §PLU / Comparer / Copilote — plus un recalcul géométrique
+    sur le dessin (qui divergeait du Dossier : « Ud 45,6 % » vs « 43 % »)."""
     contract = (ROOT / "src/labuse/gabarit/contract.py").read_text(encoding="utf-8")
     assert "pctPortionZone" in contract
     gab = (ROOT / "src/labuse/api/gabarit.py").read_text(encoding="utf-8")
-    assert "res.pctPortionZone = round(res.surfaceParcelleM2 / _cad * 100)" in gab
+    # source UNIQUE = zonage (zone_dominante.pct_constructible), plus de recalcul sur le dessin
+    assert "from ..faisabilite.zone_servie import zone_dominante" in gab
+    assert "pct_constructible" in gab and "res.pctPortionZone = round(_pct)" in gab
+    assert "round(res.surfaceParcelleM2 / _cad * 100)" not in gab, "pctPortionZone recalculé sur le dessin"
     gl = (SRC / "components/fiche/GabaritLine.tsx").read_text(encoding="utf-8")
     gp = (SRC / "components/outils/Gabarit.tsx").read_text(encoding="utf-8")
     assert "r?.pctPortionZone" in gl and "res?.pctPortionZone" in gp
