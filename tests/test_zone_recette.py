@@ -68,7 +68,10 @@ def test_flash_par_adresse_trouve_la_parcelle(monkeypatch):
     with session_scope() as s:
         s.execute(text("DELETE FROM parcels WHERE idu = :i"), {"i": idu})
     assert r.status_code == 200
-    assert "Votre rapport Flash" in r.text, "l'adresse résout la parcelle → écran de confirmation"
+    # ROUGES-RESTANTS item 6 / CORRECTIFS-1 A5 (commit 0507cd5a, texte /flash de Vic, VOULU) :
+    # « Votre rapport Flash » n'existe plus — l'écran de confirmation s'intitule
+    # « Est-ce le bon terrain ? ».
+    assert "Est-ce le bon terrain ?" in r.text, "l'adresse résout la parcelle → écran de confirmation"
     assert "Saint-André" in r.text
 
 
