@@ -11,21 +11,57 @@ from labuse.cli import _crontab_du_registre
 from labuse.jobs import JOBS
 
 
-# ─────────────── Correction A — mail-queue à 14:10 ───────────────
+# ─────────────── Correction A — mail-queue reste */5 mais cède à la sauvegarde ───────────────
 
-def test_mail_queue_a_1410_dans_le_registre():
+def test_mail_queue_reste_toutes_les_5_min():
+    """Les mails clients (mot de passe, confirmation, invitation) ne peuvent pas attendre un jour :
+    le worker RESTE à */5. Registre + crontab généré."""
     j = JOBS["mail-queue-consommer"]
-    assert j.cron_utc == "10 10 * * *"      # 10:10 UTC = 14:10 Réunion
-    assert j.heure_reunion == "14:10" and j.cadence == "quotidien"
-
-
-def test_mail_queue_a_1410_dans_le_crontab():
+    assert j.cron_utc == "*/5 * * * *" and j.cadence == "5 min"
     for tz in ("utc", "reunion"):
-        c = _crontab_du_registre(tz)
-        ligne = [l for l in c.splitlines() if "mail-queue-consommer" in l and not l.strip().startswith("#")]
-        assert len(ligne) == 1, "une seule ligne active pour mail-queue"
-        assert ("10 10 " in ligne[0]) if tz == "utc" else ("10 14 " in ligne[0])
-        assert "*/5" not in ligne[0]        # plus toutes les 5 min (fini la collision 13:35)
+        ligne = [l for l in _crontab_du_registre(tz).splitlines()
+                 if "mail-queue-consommer" in l and not l.strip().startswith("#")]
+        assert len(ligne) == 1 and "*/5" in ligne[0]
+
+
+def test_sauvegarde_en_cours_lit_le_verrou(tmp_path, monkeypatch):
+    """`_sauvegarde_en_cours` lit le MÊME verrou que run-job.sh pose pour backup-postgres (repli mkdir
+    testé partout) : dossier présent → dump en cours → True ; absent → False."""
+    from labuse import jobs_impl
+    monkeypatch.setenv("LABUSE_LOCK_DIR", str(tmp_path))
+    assert jobs_impl._sauvegarde_en_cours() is False
+    (tmp_path / "labuse-job-backup-postgres.lock.d").mkdir()
+    assert jobs_impl._sauvegarde_en_cours() is True
+
+
+def test_mail_queue_cede_a_la_sauvegarde(tmp_path, monkeypatch):
+    """Verrou du dump TENU → passage SAUTÉ (consommer pas appelé, pas d'exception = statut ok). Verrou
+    LIBRE → envoi (consommer appelé)."""
+    import types
+
+    from labuse import db, jobs_impl, mailfile
+    monkeypatch.setenv("LABUSE_LOCK_DIR", str(tmp_path))
+    appels = {"n": 0}
+    monkeypatch.setattr(mailfile, "consommer", lambda eng: (appels.__setitem__("n", appels["n"] + 1), {"traites": 1})[1])
+    monkeypatch.setattr(mailfile, "ensure_tables", lambda eng: None)
+    monkeypatch.setattr(db, "engine", lambda: "ENGINE")
+
+    def _ctx():
+        c = types.SimpleNamespace(dry_run=False, compteurs={})
+        c.compte = lambda **k: c.compteurs.update(k)
+        return c
+
+    # verrou TENU (dump en cours) → passage cédé, aucun envoi, retour PROPRE (→ statut ok côté runner)
+    (tmp_path / "labuse-job-backup-postgres.lock.d").mkdir()
+    ctx = _ctx()
+    jobs_impl.mail_queue_consommer(ctx)        # ne lève pas
+    assert appels["n"] == 0 and "saute" in ctx.compteurs
+
+    # verrou LIBRE → le worker envoie
+    (tmp_path / "labuse-job-backup-postgres.lock.d").rmdir()
+    ctx2 = _ctx()
+    jobs_impl.mail_queue_consommer(ctx2)
+    assert appels["n"] == 1 and ctx2.compteurs.get("traites") == 1
 
 
 # ─────────────── Correction C — oracle risque zonal ───────────────

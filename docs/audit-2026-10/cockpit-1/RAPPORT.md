@@ -56,11 +56,10 @@ MÊME verrou flock que le cron).
 ### Lot C — tri des 31 jobs
 `JOBS.md` : 23 GARDER · 5 GELER (digest + 4 Radar) · 2 SUPPRIMER. Doublons signalés
 (coherence-robinets ⟲ coherence-banc ; recap-matin ⟲ healthcheck). `labuse.cron` généré.
-**Appliqué** : **B** agents-sources remis au crontab (`planifie=True`) ; **E** restore-test retiré du
-registre (doublon Mac). **Spécifié précisément** (touche la surveillance + ses tests, ne jamais
-éteindre « les ALERTES restent ») : **A** garde mail-queue × sauvegarde, **C** oracle risque zonal +
-fermeture d'incident, **D** suppression du *mail* récap-matin après migration de ses vigies dans
-healthcheck.
+**Les 5 corrections sont APPLIQUÉES** (détail § « Corrections C appliquées » ci-dessous) : **B**
+agents-sources au crontab, **E** restore-test retiré, **A** mail-queue reste */5 + cède à la
+sauvegarde, **D** recap-matin supprimé (vigies → healthcheck), **C** oracle risque zonal. → registre
+**29 jobs**, 24 lignes actives.
 
 ### Lot D — Circuit, bandeau de propagation
 Circuit INCHANGÉ ; un seul ajout : au clic/à la recherche d'une donnée, un bandeau (nom, fraîcheur
@@ -112,10 +111,11 @@ catégorie FR (jamais l'identifiant brut).
 
 Les 3 corrections qui restaient spécifiées sont **appliquées** sur `feat/cockpit-1`, chacune testée,
 en préservant « les ALERTES restent » :
-- **A — mail-queue à 14:10** : `mail-queue-consommer` passe de `*/5` à `10 10 * * *` (14:10 Réunion),
-  dans le registre ET le crontab généré (`labuse.cron`) → fini la collision quotidienne 13:35 avec le
-  pg_dump. (⚠ choix pré-lancement : volume mail ~nul ; à l'arrivée des clients, repasser fréquent +
-  garde « cède à la sauvegarde ».) Tests : `test_cockpit_corrections_c.py`.
+- **A — mail-queue cède à la sauvegarde** : `mail-queue-consommer` **reste `*/5`** (les mails clients —
+  mot de passe, confirmation, invitation — ne peuvent pas attendre un jour) mais s'il démarre pendant le
+  pg_dump (verrou de `backup-postgres` tenu), il **saute ce passage proprement** (statut ok, ni échec ni
+  alerte) et repart 5 min plus tard → fini la fausse alerte quotidienne 13:35. Lecture du même verrou que
+  run-job.sh (`jobs_impl._sauvegarde_en_cours`). Tests : verrou tenu → sauté/ok ; libre → envoi.
 - **D — recap-matin supprimé** du registre et du crontab ; ses vigies (sauvegarde, copie externe,
   jobs-en-retard) passent dans **healthcheck** (15 min) via `ops_alertes.verifier_declencheurs`. Prouvé
   par test : **site en panne** (healthcheck lève à 2 échecs → incident), **disque/sauvegarde ratée**
@@ -146,13 +146,13 @@ en préservant « les ALERTES restent » :
 - **Crédit API** (Anthropic) + `LABUSE_AGENT_PLAFOND_EUR=5` dans `/etc/labuse/labuse.env` → les
   enquêteurs IA (agents-sources, désormais au crontab) tournent le dimanche 1 semaine sur 2.
 - **Crontab** : régénérer (`labuse jobs crontab`) et déployer via `deploy.sh` (agents ajoutés ;
-  recap-matin + restore-test retirés ; mail-queue à 14:10). Dégeler digest + Radar aux premiers clients.
+  recap-matin + restore-test retirés ; mail-queue reste */5 + garde sauvegarde). Dégeler digest + Radar aux premiers clients.
 - **Déploiement q_v19** : la prod sert q_v18 ; `deploy_donnees.sh --run-label q_v19 --residuel-seq 16`
   (ou le bouton « Envoyer en prod » du Tableau de bord local).
 - **verite-sources** : l'incident du 15/10 s'éteint au prochain run (oracle recalibré) ; relancer
   `labuse ops verite-sources` pour l'éteindre tout de suite.
-- **mail-queue** : au lancement (vrais clients/volume), repasser le worker en cadence fréquente + garde
-  « cède à la sauvegarde » (la cadence quotidienne 14:10 retarde les rejeux backoff).
+- **`LABUSE_LOCK_DIR`** (labuse.env) doit pointer là où run-job.sh pose les verrous (le garde mail-queue
+  « cède à la sauvegarde » lit ce dossier) — déjà le cas depuis OPS-CRONS-1.
 
 ## Hors mandat (non touché)
 Refonte de Sources/Radar/moteur de calcul, DA, mail du matin (supprimé, pas remplacé), notifications

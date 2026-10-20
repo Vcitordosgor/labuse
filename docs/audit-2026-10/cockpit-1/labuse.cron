@@ -78,8 +78,8 @@ PATH=/opt/labuse/venv/bin:/usr/local/bin:/usr/bin:/bin
 # quotidien · 07:15 Réunion · exploitation — Veille — DIGEST du matin (UN mail par compte : suivis + Radar + nouveautés)
 # GELÉ (Phase 8 Stéphanie) 15 7 * * *   labuse  sh -c 'set -a; . /etc/labuse/labuse.env; set +a; exec /opt/labuse/venv/bin/labuse jobs run digest'
 
-# quotidien · 14:10 Réunion · exploitation — File des mails — envoie les dûs + rejoue les échecs (après la sauvegarde)
-10 14 * * *   labuse  sh -c 'set -a; . /etc/labuse/labuse.env; set +a; exec /opt/labuse/venv/bin/labuse jobs run mail-queue-consommer'
+# 5 min · toutes les 5 min Réunion · exploitation — File des mails — envoie les dûs + rejoue les échecs transitoires
+*/5 * * * *   labuse  sh -c 'set -a; . /etc/labuse/labuse.env; set +a; exec /opt/labuse/venv/bin/labuse jobs run mail-queue-consommer'
 
 # quotidien · 03:00 Réunion · exploitation — Fiche commune — précalcul nocturne du contexte (24 communes)
 0 3 * * *   labuse  sh -c 'set -a; . /etc/labuse/labuse.env; set +a; exec /opt/labuse/venv/bin/labuse jobs run fiche-commune-cache'

@@ -23,7 +23,7 @@ radar-cycle-mensuel;mensuel (1er);05:30 le 1er;exploitation;deploy.sh → /etc/c
 evaluer-suivis;quotidien;07:02;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run evaluer-suivis
 detect-events;quotidien;07:04;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run detect-events
 digest;quotidien;07:15;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run digest
-mail-queue-consommer;quotidien;14:10;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run mail-queue-consommer
+mail-queue-consommer;5 min;toutes les 5 min;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run mail-queue-consommer
 fiche-commune-cache;quotidien;03:00;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run fiche-commune-cache
 coherence-banc;quotidien;03:45;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run coherence-banc
 verite-sources;mensuel (15);06:00 le 15;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run verite-sources

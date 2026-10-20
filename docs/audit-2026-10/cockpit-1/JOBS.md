@@ -50,7 +50,7 @@ quotidiennes · **3** Le moteur · **4** Contrôle, clients, sécurité.*
 restent » → **registre = 29 jobs**, dont **5 gelés**, **24 lignes actives** au crontab.
 - **B** — `agents-sources` remis au crontab (`planifie=True`).
 - **E** — `restore-test` retiré du registre (doublon : l'agent Mac launchd le fait).
-- **A** — `mail-queue-consommer` déplacé à **14:10** (après la sauvegarde) — fini la collision 13:35.
+- **A** — `mail-queue-consommer` **reste `*/5`** mais **cède à la sauvegarde** (saut propre si le pg_dump tient son verrou) — fini la fausse alerte 13:35, sans ralentir les mails clients.
 - **D** — `recap-matin` (le mail) retiré ; ses vigies passent dans `healthcheck` (les ALERTES restent).
 - **C** — oracle risque `verite-sources` recalibré (aléas zonaux seulement) + l'incident se referme.
 
@@ -76,12 +76,14 @@ restent » → **registre = 29 jobs**, dont **5 gelés**, **24 lignes actives** 
 ### A — mail-queue × sauvegarde (la fausse alerte quotidienne de 13:35)
 - **Fait.** `mail-queue-consommer` (toutes les 5 min) se cogne au `pg_dump` (`backup-postgres`, 13:30,
   ~18 min) → `another command is already in progress` → incident + mail tous les jours (ECARTS.md #1).
-- **Correction.** `mail-queue-consommer` doit **céder la main à la sauvegarde** : au début du passage,
-  si `backup-postgres` est en cours (son état JSON = `en_cours`, ou un verrou de dump présent), **sauter
-  proprement ce tour** (compteur `saute=sauvegarde en cours`) et reprendre 5 min plus tard — la file
-  repart **après la sauvegarde** (~13:48, d'où « 14:10 » de marge). Le cron reste `*/5` (la file doit
-  rester réactive) ; c'est le WORKER qui cède, pas l'horloge. Fichier : `src/labuse/jobs_impl.py`
-  (`mail_queue_consommer`). Aucune logique mail changée, juste un garde d'exclusion.
+- **Appliqué.** `mail-queue-consommer` **reste `*/5`** (les mails clients — mot de passe, confirmation,
+  invitation — ne peuvent pas attendre un jour) mais **cède à la sauvegarde** : au début du passage,
+  `jobs_impl._sauvegarde_en_cours()` lit le MÊME verrou que pose run-job.sh pour `backup-postgres`
+  (flock `<LOCK_DIR>/labuse-job-backup-postgres.lock` en prod, repli dossier `…​.lock.d` en dev) ;
+  tenu → **saut propre** (compteur `saute=…`, **statut ok**, ni échec ni alerte), reprise 5 min plus
+  tard hors de la fenêtre du dump. C'est le WORKER qui cède, pas l'horloge. Fichier :
+  `src/labuse/jobs_impl.py`. Tests : `test_cockpit_corrections_c.py` (verrou tenu → sauté/ok ;
+  verrou libre → envoi).
 
 ### B — agents-sources remis au crontab
 - **Fait.** `planifie=False` → hors crontab ; `LABUSE_AGENT_PLAFOND_EUR=0` par défaut → passage sauté.
@@ -127,5 +129,5 @@ restent » → **registre = 29 jobs**, dont **5 gelés**, **24 lignes actives** 
 - Poser `LABUSE_AGENT_PLAFOND_EUR=5` + recharger quelques euros de crédit API (Anthropic) pour les enquêteurs.
 - Dégeler digest + Radar à l'arrivée des premiers clients (retirer le préfixe `# GELÉ` — le crontab le régénère).
 - `verite-sources` : l'incident du 15/10 s'éteint au prochain run ; le relancer pour l'éteindre tout de suite.
-- **mail-queue à 14:10** : choix pré-lancement (volume mail ~nul). À l'arrivée des clients, repasser à une
-  cadence fréquente + garde « cède à la sauvegarde » (sinon les rejeux backoff sont retardés jusqu'au lendemain).
+- Vérifier en prod que `LABUSE_LOCK_DIR` (labuse.env) pointe bien là où run-job.sh pose les verrous (le
+  garde « cède à la sauvegarde » lit ce dossier) — c'est déjà le cas depuis OPS-CRONS-1.

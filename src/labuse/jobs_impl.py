@@ -333,12 +333,46 @@ def digest(ctx: JobContext) -> None:
     ctx.compte(**{k: r.get(k) for k in ("envoyes", "ignores", "echecs", "simules")})
 
 
+def _sauvegarde_en_cours(nom: str = "backup-postgres") -> bool:
+    """COCKPIT-1 (Lot C, correction A) — la SAUVEGARDE (pg_dump) tient-elle son verrou en ce moment ?
+    On inspecte le MÊME verrou que pose le wrapper run-job.sh pour `backup-postgres` :
+      · Linux (prod) : verrou flock sur `<LOCK_DIR>/labuse-job-backup-postgres.lock` — si on ne peut PAS
+        le prendre en non bloquant, c'est qu'il est tenu (le dump tourne) ;
+      · macOS (dev) : repli mkdir → le dossier `…​.lock.d` existe tant que le dump tourne.
+    Jamais bloquant, jamais une exception qui remonte : en cas de doute on répond False (on envoie)."""
+    lock_dir = os.environ.get("LABUSE_LOCK_DIR", "/run/lock")
+    base = os.path.join(lock_dir, f"labuse-job-{nom}.lock")
+    if os.path.isdir(base + ".d"):           # repli mkdir (macOS) : dossier présent = verrou tenu
+        return True
+    try:
+        import fcntl
+        fd = os.open(base, os.O_RDWR | os.O_CREAT, 0o644)
+    except OSError:
+        return False                         # pas de LOCK_DIR accessible → on n'empêche pas l'envoi
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        fcntl.flock(fd, fcntl.LOCK_UN)       # libre : on a pu le prendre → le dump ne tourne pas
+        return False
+    except OSError:
+        return True                          # verrou tenu → le dump tourne
+    finally:
+        os.close(fd)
+
+
 def mail_queue_consommer(ctx: JobContext) -> None:
     """VEILLE-FIX-2 (Lot D) — LE CONSOMMATEUR DE LA FILE (cron 5 min). Envoie les mails `en_attente` dûs
     (digest différé, programmés J+3/J+10) et rejoue les `a_rejouer` dont l'heure est venue. En dry-run
-    (SMTP absent) : ne fait rien partir (les tentatives échoueraient → on n'appelle pas le worker)."""
+    (SMTP absent) : ne fait rien partir (les tentatives échoueraient → on n'appelle pas le worker).
+
+    COCKPIT-1 (Lot C, correction A) — CÈDE À LA SAUVEGARDE : s'il démarre pendant le pg_dump (verrou
+    de backup-postgres tenu), il SAUTE ce passage proprement (statut ok, ni échec ni alerte) et repart
+    5 min plus tard, hors de la fenêtre du dump — fin de la fausse alerte quotidienne de 13:35, sans
+    jamais ralentir les mails clients (mot de passe, confirmation, invitation)."""
     from .mailfile import consommer, ensure_tables
     from .db import engine
+    if _sauvegarde_en_cours():
+        ctx.compte(traites=0, saute="sauvegarde en cours — passage cédé, reprise dans 5 min")
+        return
     ensure_tables(engine())
     if ctx.dry_run:
         ctx.compte(traites=0, note="dry-run (SMTP absent) — worker non lancé")
