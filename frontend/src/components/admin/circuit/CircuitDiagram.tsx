@@ -22,8 +22,9 @@ const CAT_LABEL: Record<string, string> = {
   outils: 'Outil', documents: 'Document', copilote: 'Copilote', radar: 'Radar',
 }
 
-export function CircuitDiagram({ data, groupe, onOpen, elements = [] }:
-  { data: CircuitData; groupe: (number | string)[] | null; onOpen: Ouvrir; elements?: ElementInverse[] }) {
+export function CircuitDiagram({ data, groupe, onOpen, elements = [], onInjecter }:
+  { data: CircuitData; groupe: (number | string)[] | null; onOpen: Ouvrir; elements?: ElementInverse[]
+    onInjecter?: (sourceId: number) => void }) {
   const maps = useMemo(() => construireMaps(data), [data])
   const [openFam, setOpenFam] = useState<string | null>(null)
   const [openCat, setOpenCat] = useState<string | null>(null)
@@ -160,6 +161,49 @@ export function CircuitDiagram({ data, groupe, onOpen, elements = [] }:
         <span><i style={{ background: 'var(--gris)' }} />vide, manuel, jamais vérifié</span>
         <span><i style={{ background: 'var(--mauve)' }} />en cours</span>
       </div>
+
+      {/* COCKPIT-1 (Lot D) — le bandeau de PROPAGATION : au clic/à la recherche d'une donnée, par où
+          elle passe et si ses robinets sont à jour. Apparaît quand la recherche désigne UN réservoir. */}
+      {(() => {
+        if (q.length < 2) return null
+        const matchs = data.reservoirs.filter((t) => (t.nom + ' ' + (t.producteur || '')).toLowerCase().includes(q))
+        const r = matchs.length === 1 ? matchs[0] : null
+        const p = r?.propagation
+        if (!r || !p) return null
+        const noms = p.robinets.map((rb) => ({ ...rb, nom: maps.robinetById.get(rb.id)?.nom || rb.id }))
+        const nMot = p.moteurs
+        const nRob = p.robinets.length
+        return (
+          <div className={`cx-prop ${p.en_retard ? 'retard' : ''}`}>
+            <div className="cx-prop-h">
+              <div>
+                <b>{r.nom}</b>
+                <span className={`st ${r.etat[0] === 'mint' ? '' : r.etat[0]}`}> · {r.etat[1]}</span>
+              </div>
+              {p.nouvelle && onInjecter && (
+                <button className="btn solid" onClick={() => onInjecter(r.id)}>Injecter</button>)}
+            </div>
+            <div className="cx-prop-g">
+              <div><span className="l">Passe par</span><span className="v">{nMot} moteur{nMot > 1 ? 's' : ''}</span></div>
+              <div><span className="l">Arrive dans</span><span className="v">{nRob} robinet{nRob > 1 ? 's' : ''}</span></div>
+            </div>
+            <div className="cx-prop-rob">
+              {noms.map((rb) => (
+                <span key={rb.id} className={`chip ${rb.verdict === 'en_retard' ? 'retard' : 'ajour'}`}
+                  onClick={() => onOpen('robinet', rb.id)}>{rb.nom}</span>
+              ))}
+            </div>
+            <div className="cx-prop-note">
+              {p.nouvelle
+                ? `Ces ${nRob} écran${nRob > 1 ? 's' : ''} passe${nRob > 1 ? 'nt' : ''} au vert après l'injection, quand ils liront la nouvelle version.`
+                : p.en_retard
+                  ? `${p.en_retard} robinet${p.en_retard > 1 ? 's' : ''} en retard : un calcul les remettra à jour.`
+                  : 'Tous les robinets de ce réservoir sont à jour.'}
+              {p.tuiles_perime && ' Les couches découpées de la carte sont à reconstruire.'}
+            </div>
+          </div>
+        )
+      })()}
 
       {elementsMatch.length > 0 && (
         <div className="card si-results">

@@ -17,6 +17,11 @@ export type Reservoir = {
   vanne: { type: string; label?: string; motif?: string }
   veille: any | null; filtre: any
   sans_millesime?: string | null   // CIRCUIT-P6 : la raison écrite du « à jour par construction »
+  // COCKPIT-1 (Lot D) — la propagation : par où passe la donnée, et si les robinets sont à jour.
+  propagation?: {
+    nouvelle: boolean; moteurs: number; en_retard: number; tuiles_perime: boolean
+    robinets: { id: string; verdict: 'a_jour' | 'en_retard'; geste: string | null }[]
+  }
 }
 export type Robinet = {
   id: string; categorie: string; nom: string; parent: string | null; route: string

@@ -340,6 +340,18 @@ exports[`CIRCUIT-P2 lot 1 — la page Données EST le Circuit > snapshot 1`] = `
 .cxp .us-geles b{color:var(--text)} .cxp .us-geles .g{color:var(--faint)}
 @media (max-width:1100px){ .cxp .us-cols{grid-template-columns:1fr 1fr} }
 @media (max-width:640px){ .cxp .us-cols{grid-template-columns:1fr} }
+/* ══ COCKPIT-1 (Lot D) — le bandeau de propagation du Circuit ══ */
+.cxp .cx-prop{border:1px solid var(--line-2);border-radius:8px;background:var(--panel);padding:14px 16px;margin:0 0 16px}
+.cxp .cx-prop.retard{border-color:var(--ambre)}
+.cxp .cx-prop-h{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.cxp .cx-prop-h b{font-size:15px}
+.cxp .cx-prop-h .st{color:var(--muted);font-size:12.5px} .cxp .cx-prop-h .st.ambre{color:var(--ambre)} .cxp .cx-prop-h .st.rouge{color:var(--rouge)} .cxp .cx-prop-h .st.gris{color:var(--muted)} .cxp .cx-prop-h .st.mauve{color:var(--mauve)}
+.cxp .cx-prop-g{display:flex;gap:30px;margin:11px 0 9px}
+.cxp .cx-prop-g .l{color:var(--faint);font-size:11px;display:block} .cxp .cx-prop-g .v{font-weight:600;font-size:13px}
+.cxp .cx-prop-rob{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:9px}
+.cxp .cx-prop-rob .chip.retard{border-color:var(--ambre);color:var(--ambre)}
+.cxp .cx-prop-rob .chip.ajour{border-color:var(--line-2);color:var(--muted)}
+.cxp .cx-prop-note{color:var(--muted);font-size:12.5px;line-height:1.4}
 @media (max-width:1100px){ .cxp .diagram{grid-template-columns:1fr;column-gap:0} .cxp .diagram svg{display:none} .cxp .pump{position:static;margin:12px 0} .cxp .dg{grid-template-columns:1fr} .cxp .kpis{grid-template-columns:1fr 1fr} .cxp .jl{grid-template-columns:1fr 1fr} .cxp .controles{grid-template-columns:1fr} }
 
   </style>

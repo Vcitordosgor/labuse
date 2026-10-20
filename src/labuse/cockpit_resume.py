@@ -314,6 +314,42 @@ def _etapes_mise_a_jour(a_faire: dict, *, run_servi: str, candidat: str | None,
 
 # ══════════════════════ l'assemblage ══════════════════════
 
+# ══════════════════════ COCKPIT-1 (Lot D) — la propagation dans le Circuit ══════════════════════
+
+def propagation_reservoir(reservoir: dict, *, eau_rob: set, tuiles_perime: bool,
+                          chiffres: dict) -> dict:
+    """COCKPIT-1 (Lot D) — pour UN réservoir : par où sa donnée passe et si ses robinets sont à jour.
+
+    RÈGLE DE PROPAGATION (le front ne recalcule rien) : un robinet est « à jour » quand son cache/run a
+    été produit APRÈS la dernière injection de chacun de ses réservoirs ; sinon « en retard », avec le
+    geste qui le rattrape :
+      · le réservoir a une NOUVELLE VERSION pas encore injectée → ses robinets sont en retard · Injecter ;
+      · le réservoir est injecté mais le run n'a pas été recalculé (robinet qui sert de l'eau ancienne,
+        `eau_rob`) → en retard · Calculer ;
+      · sinon à jour.
+    (Les tuiles périmées, elles, sont un geste GLOBAL « Reconstruire » — signalé au niveau du bandeau,
+    pas par robinet, car la péremption des tuiles ne dépend pas d'UN réservoir.)
+    """
+    etat = reservoir.get("etat") or ["", ""]
+    nouvelle = etat[1] == "nouvelle version"
+    taps = []
+    for rid in reservoir.get("taps", []):
+        if nouvelle:
+            verdict, geste = "en_retard", "injecter"
+        elif rid in eau_rob:
+            verdict, geste = "en_retard", "calculer"
+        else:
+            verdict, geste = "a_jour", None
+        taps.append({"id": rid, "verdict": verdict, "geste": geste})
+    moteurs = sorted({(chiffres.get(cid) or {}).get("moteur")
+                      for cid in reservoir.get("chiffres_ids", [])
+                      if (chiffres.get(cid) or {}).get("moteur")})
+    return {"nouvelle": nouvelle, "moteurs": len(moteurs),
+            "robinets": taps,
+            "en_retard": sum(1 for t in taps if t["verdict"] == "en_retard"),
+            "tuiles_perime": bool(tuiles_perime)}
+
+
 # ══════════════════════ COCKPIT-1 (Lot B) — la page « L'usine » ══════════════════════
 
 FAMILLES_USINE = [(1, "Veille des sources"), (2, "Livraisons quotidiennes"),

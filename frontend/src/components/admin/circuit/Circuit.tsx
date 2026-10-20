@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from 'react'
 
 import {
   getAdminCircuit, getAdminCircuitTaches, getSourcesParElement, postAdminCircuitAgents,
-  postAdminCircuitSonder, postAdminCircuitVerifier,
+  postAdminCircuitSonder, postAdminCircuitVerifier, postCockpitInjecter,
 } from '../../../lib/api'
 
 import { DestinationsDetail } from '../Destinations'
@@ -72,6 +72,11 @@ export function CircuitSection() {
   const sonder = useMutation({
     mutationFn: () => postAdminCircuitSonder(),
     onSuccess: () => { setMsgLocal(null); setFerme(null); taches.refetch() },
+  })
+  // COCKPIT-1 (Lot D) — « Injecter » depuis le bandeau de propagation du Circuit.
+  const injecterProp = useMutation({
+    mutationFn: (sourceId: number) => postCockpitInjecter([sourceId]),
+    onSuccess: () => { setMsgLocal('Injection lancée — suivi dans le Journal.'); qc.invalidateQueries({ queryKey: ['admin-circuit'] }) },
   })
   const agents = useMutation({
     mutationFn: (arg?: { portee?: Portee; sourceId?: number }) => postAdminCircuitAgents(arg),
@@ -201,7 +206,8 @@ export function CircuitSection() {
           ? (detail.type === 'destinations'
             ? <DestinationsDetail onBack={fermerDetail} />
             : <DetailPage type={detail.type} id={detail.id} data={d} onClose={fermerDetail} onOpen={ouvrirDetail} />)
-          : <CircuitDiagram data={d} groupe={groupe} onOpen={ouvrirDetail} elements={elements} />}
+          : <CircuitDiagram data={d} groupe={groupe} onOpen={ouvrirDetail} elements={elements}
+              onInjecter={(id) => injecterProp.mutate(id)} />}
       </section>
 
       <section className={`tab ${onglet === 'journal' ? 'on' : ''}`}>

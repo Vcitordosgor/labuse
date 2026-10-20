@@ -2888,6 +2888,13 @@ def admin_circuit(request: Request) -> dict:
         _jobs_list = _jobs_mod.liste()
     except Exception:  # noqa: BLE001 — le registre ne bloque jamais la page
         _jobs_list = []
+    # ── COCKPIT-1 (Lot D) — la PROPAGATION : pour chaque réservoir, par où sa donnée passe et si ses
+    #    robinets sont à jour (bandeau du Circuit au clic/à la recherche). Règle unique, côté serveur. ──
+    _eau_set = set(_eau_rob)
+    _tuiles_perime = bool((_tuiles_af or {}).get("perime"))
+    for _r in reservoirs:
+        _r["propagation"] = _cockpit.propagation_reservoir(
+            _r, eau_rob=_eau_set, tuiles_perime=_tuiles_perime, chiffres=chiffres)
     cockpit = _cockpit.composer_cockpit(
         a_faire=a_faire, etats_sources=_etats_compte, reservoirs=reservoirs,
         verrous=_verrous, fuites_rob=_fuites_rob, tuiles=_tuiles_af,
