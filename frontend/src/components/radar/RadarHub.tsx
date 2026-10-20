@@ -83,7 +83,7 @@ function PortesRadar() {
         <EcranTete surtitre="RADAR" titre="Le marché en vente, et ce que vous surveillez" sous="Deux chemins." />
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
           <PorteCard data="radar-porte-radar" ic={<IcoRadar />} titre="Radar"
-            desc="Les biens en vente sur les portails, et le marché de chaque commune : ce qui est demandé, ce qui se vend vraiment."
+            desc="Les biens en vente sur Leboncoin, et le marché de chaque commune : ce qui est demandé, ce qui se vend vraiment."
             onClick={() => setRadarEcran('radar')} />
           <PorteCard data="radar-porte-veille" ic={<IcoCloche />} titre="Veille"
             desc="Vos parcelles suivies et vos alertes sur les annonces. Soyez prévenu quand quelque chose bouge."
