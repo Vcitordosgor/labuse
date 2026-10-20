@@ -18,7 +18,7 @@ constats disparus sont signalés, pas refaits.
 | 1 | **Courrier dit la vérité (C)** — `disponible:false` affiche la `raison` serveur, la ligne de prix n'est plus présentée comme une prestation en cours | corrigé | `af9b1254` |
 | 2 | **Adresses barre principale (H)** — l'ordre numérique de `/api/recherche/suggest` était **déjà corrigé par chasse-app-1** (vérifié live : 5<15, 2<12, 1<10). Reste : **doublon `/flash`** supprimé (dédoublonnage `/adresses/autocomplete`) | partiel / corrigé | `b5684338` |
 | 3 | **Surface carte CRM (I)** — contenance cadastrale (1 111 m²) au lieu du dessin (1 150). `/flash` était **déjà aligné** par chasse-app-1 (contenance + espace des milliers) | corrigé | `c0114167` |
-| 4N | **Projets « 0 ressortent »** — le compteur EST calculé (tiers brûlante/chaude), juste 0 ici ; c'est la **phrase** qui est fausse sur un ensemble vide → reformulée | corrigé | `748d8172` |
+| 4N | **Projets « 0 ressortent »** — phrase reformulée sur ensemble vide (`748d8172`) PUIS **cause racine** corrigée : le compteur lisait des libellés de tier LEGACY absents des runs v2 → 0 partout ; corrigé via le mapping canonique `codes_stockes` (`68c60612`). Voir vérif pré-merge §2. | corrigé | `748d8172`+`68c60612` |
 | 4O | **Projets date de liste** — carte de liste affiche la date du **run servi** (valeurs_run), plus la date du jour (proposee_at) | corrigé | `977beb07` |
 | 4P | **Projets étape 5** — « rien n'est retiré » remplacé par la phrase « figeable » de l'étape 4 | corrigé | `a3d5073c` |
 | 4R | **Courrier « EY 0109 »** — référence dérivée de l'IDU partout (objet, corps, synthèse, opposition RGPD) | corrigé | `96618556` |
@@ -123,6 +123,57 @@ cf. commentaire `app.py:3213`). Sur prod (cache froid, plan générique, base pl
 s'empilent. **Prochain pas pour localiser :** `parcel_fiche` accepte un paramètre `trace=1`
 (`app.py:6660`) — appeler `/parcels/{idu}?source=q_v19&trace=1` sur prod donne le détail par requête
 et pointera la ou les requêtes responsables des 9,1 s.
+
+---
+
+---
+
+# Vérifications pré-merge (demandées) — et correctif de fond du compteur
+
+## 1. « valeurs au » : figé ou en direct ? → EN DIRECT, le commit O reste
+
+Un projet **n'est pas figé** sur sa date. Les **décidées** (retenue/écartée) sont stockées ; les
+**proposées** (le vivier classé qui porte les « valeurs ») sont *« servies EN DIRECT »* sur le run
+SERVI courant (`projets.py:1104`, scoring `_score_v2_run_id`). `proposee_at` est l'horodatage du
+**cache de total de cadrage**, réécrit à `now()` à **chaque ouverture** (`projets.py:1152`) — pas une
+date de valeurs. Le projet ouvert affiche déjà `valeurs_run` (le run servi) : le commit O
+(`977beb07`) ne fait qu'aligner la liste dessus. **Conservé.**
+
+## 2. « ressortent » = 0 partout — CAUSE RACINE : bug de libellé de tier (corrigé en profondeur)
+
+Oui, 0 sur **tous** les projets — mais **pas** parce que le run ne classe rien : q_v19 classe
+**142 Priorité + 662 À suivre** (île). `_analyse_cadrage` filtrait `tier = 'brulante'/'chaude'` EN
+DUR (libellés LEGACY absents des runs v2, qui stockent `'priorite'/'a_suivre'`).
+
+**Correctif de fond (`68c60612`)** — par le **mapping canonique** `codes_stockes(palier)` (legacy + v2,
+suit `PRIORITE_SERVIE`), plus de libellé en dur. Appliqué à `_analyse_cadrage` (bandeau) **et à
+`_restant_a_trier`** (chips) — moitié couplée du **même** compteur R8, sinon les chips restaient faux
+sur v2 et le test verrouillait un bug. `test_r8` recalé sur la sémantique repliée + **nouvelle garde**
+`test_r8_compteur_voit_les_tiers_v2_du_run_servi` (sème des tiers v2 → échoue sur l'ancien code,
+`signalees=0` ; passe sur le correctif). Résultat : projet 238 « 7 ressortent » (était 0). Ma
+reformulation N (`748d8172`) reste : phrase d'origine en cas normal, « aucune ne se détache » seulement
+si le vrai compte vaut 0. Captures `N2-bandeau-compteur-{avant,apres}.png`.
+
+### Autres endroits lisant 'brulante'/'chaude' (listés, NON corrigés)
+
+**Sûrs — gèrent les DEUX vocabulaires (legacy + v2), aucune action :**
+- `golden_ops.py:41` (`_promues` additionne brulante/chaude **+ priorite/a_suivre**)
+- `verdict_servi.py:31` (`TIERS_SERVABLES` inclut les deux)
+- `veille_plu.py:175` (`_TIERS_SURSIS` inclut les deux)
+- `demo.py:116,175` ; `shortlist.py:188` (`_action_defaut`) ; `filtres/sources.py:810`
+- `registre/moteurs/plateforme.py:bascules_tiers_hauts` — la **SQL** inclut `'priorite','a_suivre'`
+  (seule la docstring/`n_bascules_7j.py` dit « {brûlante, chaude} »)
+
+**À surveiller — mappés/clés sur les codes LEGACY seuls (même classe de bug possible) :**
+- `copilote_v2/outils.py:52` `_TIER_ALIAS` : facette Copilote « opportunités/brûlante/chaude » →
+  `'brulante,chaude'`. Correct **si** `mvt_parcels.tier_v2` stocke du legacy (table MVT, vocabulaire à
+  confirmer) ; sinon la facette par tier ne matcherait aucune tête sur un run v2.
+- `shortlist.py:22` `verdict_base = {brulante:120, chaude:120, …}` : poids de figement **clés sur les
+  tiers legacy** ; un run v2 (`priorite/a_suivre`) retomberait sur le défaut. À vérifier à l'usage.
+
+*(Faux positifs du grep, non pertinents : `cli.py` q_chaude/a_chaude = params de calibrage ;
+`models.py` colonne/commentaires ; `exports/miroir.py` « eau chaude solaire » ; prompts LLM
+`copilote_v2/answering.py`.)*
 
 ---
 
