@@ -78,7 +78,7 @@ export function AddressAutocomplete({
   const skipSearchRef = useRef(false)
   const boxRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
-  const listRef = useRef<HTMLUListElement>(null)
+  const listRef = useRef<HTMLDivElement>(null)   // CHASSE-APP-FIX-2 (point 5) — conteneur (statut + liste)
   const listId = useId()
   // M13-B1 : la liste est rendue en PORTAL (position: fixed) pour échapper aux ancêtres
   // `overflow-hidden` (le conteneur de contenu sous l'en-tête clippait le menu déroulant).
@@ -227,22 +227,28 @@ export function AddressAutocomplete({
         <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-txt-dim" aria-hidden>…</span>
       )}
       {open && pos && (items.length > 0 || noResults) && createPortal(
-        <ul
+        <div
           ref={listRef}
-          id={listId}
-          role="listbox"
           style={{ position: 'fixed', left: pos.left, top: pos.top, minWidth: pos.width, maxWidth: Math.max(pos.width, 360) }}
-          className="floating z-[1000] max-h-72 w-max overflow-y-auto p-1"
+          className="z-[1000] w-max"
         >
           {/* V5.6 — zéro proposition n'est pas muet : les formats ACCEPTÉS par cette barre.
-              CHASSE-APP-FIX-1 (pt 4) — ce message N'EST PLUS un role="option" (ce n'est pas une
-              proposition sélectionnable) : role="presentation" pour qu'un lecteur d'écran ne l'annonce
-              pas comme une option de la liste ni ne le compte dans la navigation. */}
+              CHASSE-APP-FIX-1 (pt 4) l'avait sorti du rôle option (role="presentation").
+              CHASSE-APP-FIX-2 (point 5) — il quitte AUSSI la liste des options : c'est un role="status"
+              (aria-live) HORS du <ul role="listbox">, annoncé comme un message et non comme une option.
+              Le listbox n'existe que s'il y a de vraies propositions. */}
           {noResults && (
-            <li role="presentation" data-suggest-vide className="max-w-[340px] px-2.5 py-1.5 text-[11.5px] leading-snug text-txt-dim">
+            <div role="status" aria-live="polite" data-suggest-vide
+              className="floating max-w-[360px] px-2.5 py-1.5 text-[11.5px] leading-snug text-txt-dim">
               Aucun résultat pour « {text.trim()} » — formats acceptés : {formats}.
-            </li>
+            </div>
           )}
+          {items.length > 0 && (
+          <ul
+            id={listId}
+            role="listbox"
+            className="floating mt-0 max-h-72 w-max overflow-y-auto p-1"
+          >
           {items.map((it, i) => (
             <li
               key={`${it.type}-${it.idu ?? it.siren ?? it.projet_id ?? it.label}-${i}`}
@@ -271,7 +277,9 @@ export function AddressAutocomplete({
               {it.sub && <span className={`text-[10px] ${!it.note && i === active ? 'text-mint-ink/70' : 'text-txt-dim'}`}>{it.sub}</span>}
             </li>
           ))}
-        </ul>,
+          </ul>
+          )}
+        </div>,
         document.body,
       )}
     </div>
