@@ -73,7 +73,10 @@ def resoudre_destinataire(db, idu: str) -> dict:
         return _bloque({"idu": idu, "bien": {"reference": idu, "adresse": ban, "commune": None},
                         "type": None, "destinataire": None, "adresse_envoi": None,
                         "mention": None}, MOTIF_INCONNUE)
-    ref = " ".join(x for x in (row["section"], row["numero"]) if x) or idu
+    # CHASSE-APP-FIX-2 (point 4 R) — référence dérivée de l'IDU (section + numéro 4 chiffres),
+    # comme la fiche (« EY 0109 »), plus de section+numero bruts (« EY 109 », zéros de tête perdus).
+    ref = (f"{idu[8:10]} {idu[10:14]}" if len(idu) >= 14
+           else " ".join(x for x in (row["section"], row["numero"]) if x) or idu)
     bien = {"reference": ref, "adresse": ban, "commune": row["commune"]}
     base = {"idu": idu, "bien": bien, "type": None, "destinataire": None,
             "adresse_envoi": None, "mention": None, "bloque": True, "motif": None, "code": None}

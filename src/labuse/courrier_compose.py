@@ -82,7 +82,12 @@ def _synthese(db, idu: str) -> dict:
          "pm": False, "adresse": None, "zone": None, "zone_document": None, "zone_calibree": False,
          "n_mutations": 0, "x_annees": X_ANNEES_DVF, "risques": []}
     if row:
-        reference = " ".join(x for x in (row["section"], row["numero"]) if x) or idu
+        # CHASSE-APP-FIX-2 (point 4 R) — la référence cadastrale est dérivée de l'IDU (section +
+        # numéro sur 4 chiffres), comme la fiche et le Dossier PDF (« EY 0109 »), plus de
+        # `section + numero` bruts qui perdaient les zéros de tête (« EY 109 »). Un propriétaire
+        # citait une référence qui n'était pas la sienne (objet, corps, synthèse, opposition RGPD).
+        reference = (f"{idu[8:10]} {idu[10:14]}" if len(idu) >= 14
+                     else " ".join(x for x in (row["section"], row["numero"]) if x) or idu)
         # CHASSE-DONNEES-FIX-1 (Lot 1) — « surface cadastrale » = la CONTENANCE de l'acte
         # (surface_terrain), plus le dessin brut : le propriétaire lit son acte, pas le ST_Area.
         st = _surface.surface_terrain(row["surface_m2"], row["contenance_m2"])
