@@ -57,6 +57,10 @@ export function PluAnnuaire() {
           <p className="px-0.5 text-[11.5px] leading-snug text-txt-mut">
             Cliquez sur la commune dont vous voulez consulter le PLU.
           </p>
+          {/* CHASSE-APP-FIX-1 (pt 3) — squelette IMMÉDIAT pendant le chargement des 24 communes :
+              avant, la liste était rendue sous `{communes.data && …}` seulement → zone BLANCHE tant que
+              la réponse n'arrivait pas (constat chasse : PLU 37 s au 1er chargement, rien à l'écran). */}
+          {communes.isLoading && <Squelette lignes={8} className="mt-1" label="Chargement des communes" />}
           {communes.data && (
             <div data-plu-biblio>
               {/* RETOURS-12 O4 — le bandeau lit désormais la SOURCE UNIQUE des procédures (veille_plu,

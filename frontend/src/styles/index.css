@@ -143,9 +143,16 @@
      le menu Outils est ouvert suit cette règle, comme toutes les entrées du rail. Mauve opaque pour l'IA. */
   .rail-item.active { background:var(--fill-mint); color:var(--ink); }
   .rail-item.ia.active { background:var(--fill-mauve); color:var(--mauve-ink); }
-  /* DA-FIX-4 Lot 0 : le focus CLAVIER prend le rendu du SURVOL (aplat vert / mauve IA), plus d'anneau. */
+  /* CHASSE-APP-FIX-1 (pt 4) — HALO de focus CLAVIER sur les 8 entrées du rail (anneau mint, token
+     --focus), y compris l'entrée ACTIVE : avant, :focus-visible n'avait de règle que pour :not(.active)
+     → l'entrée active ne montrait AUCUN indicateur au clavier (constat chasse « halo absent »). Le
+     survol garde son aplat plein ; le halo distingue le focus clavier du survol. Jamais au clic
+     (:focus-visible seulement). Revient sur DA-FIX-4 Lot 0 (« plus d'anneau ») à la demande de Vic. */
   .rail-item:focus { outline:none; }
-  .rail-item:not(.active):focus-visible { outline:none; background:var(--fill-mint); color:var(--ink); }
+  /* Anneau AVEC écart (outline-offset) : un liseré sombre sépare l'entrée de l'anneau mint, pour que
+     le halo reste visible même sur l'entrée ACTIVE (fond mint plein) — un anneau collé se fondrait. */
+  .rail-item:focus-visible { outline:2px solid var(--mint); outline-offset:2px; }
+  .rail-item:not(.active):focus-visible { background:var(--fill-mint); color:var(--ink); }
   .rail-item.ia:not(.active):focus-visible { background:var(--fill-mauve); color:var(--mauve-ink); }
   @media (hover:hover) and (pointer:fine) {
     /* RETOURS-4 S8 — même teinte de survol partout : dégradé vert profond (mauve sur l'IA), encre presque noire. */

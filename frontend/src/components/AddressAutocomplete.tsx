@@ -234,19 +234,25 @@ export function AddressAutocomplete({
           style={{ position: 'fixed', left: pos.left, top: pos.top, minWidth: pos.width, maxWidth: Math.max(pos.width, 360) }}
           className="floating z-[1000] max-h-72 w-max overflow-y-auto p-1"
         >
-          {/* V5.6 — zéro proposition n'est pas muet : les formats ACCEPTÉS par cette barre. */}
+          {/* V5.6 — zéro proposition n'est pas muet : les formats ACCEPTÉS par cette barre.
+              CHASSE-APP-FIX-1 (pt 4) — ce message N'EST PLUS un role="option" (ce n'est pas une
+              proposition sélectionnable) : role="presentation" pour qu'un lecteur d'écran ne l'annonce
+              pas comme une option de la liste ni ne le compte dans la navigation. */}
           {noResults && (
-            <li role="option" aria-disabled data-suggest-vide className="max-w-[340px] px-2.5 py-1.5 text-[11.5px] leading-snug text-txt-dim">
+            <li role="presentation" data-suggest-vide className="max-w-[340px] px-2.5 py-1.5 text-[11.5px] leading-snug text-txt-dim">
               Aucun résultat pour « {text.trim()} » — formats acceptés : {formats}.
             </li>
           )}
           {items.map((it, i) => (
             <li
               key={`${it.type}-${it.idu ?? it.siren ?? it.projet_id ?? it.label}-${i}`}
-              id={`${listId}-${i}`}
-              role="option"
-              aria-selected={i === active}
-              aria-disabled={it.note || undefined}
+              /* CHASSE-APP-FIX-1 (pt 4) — une ligne d'information (it.note : « SIREN inconnu… »,
+                 « N° X introuvable — plus proches ») n'est PAS une proposition : role="presentation",
+                 sans id ni aria-selected, pour ne pas être annoncée/comptée comme une option. Seules
+                 les vraies suggestions sont des role="option" navigables. */
+              id={it.note ? undefined : `${listId}-${i}`}
+              role={it.note ? 'presentation' : 'option'}
+              aria-selected={it.note ? undefined : i === active}
               data-suggest-item={it.type}
               data-suggest-note={it.note || undefined}
               onMouseDown={(e) => { e.preventDefault(); pick(it) }}

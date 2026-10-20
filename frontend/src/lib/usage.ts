@@ -6,10 +6,20 @@
 const last: Record<string, number> = {}
 
 function send(body: { kind: 'outil' | 'heartbeat'; outil?: string }) {
+  const json = JSON.stringify(body)
+  // CHASSE-APP-FIX-1 (pt 3) — la mesure d'usage sort du CHEMIN CRITIQUE : navigator.sendBeacon
+  // envoie la balise en tâche de fond, SANS consommer un des 6 créneaux de connexion HTTP que se
+  // partagent les requêtes de données (fiche/PLU/outils). Avant, le fetch de télémétrie pouvait se
+  // retrouver en file derrière une requête lente et « bloquer » l'UI (constat chasse : 4,8 s). Repli
+  // fetch keepalive pour les rares navigateurs sans sendBeacon. Dans les deux cas : best-effort,
+  // aucune erreur ne remonte à l'app.
+  try {
+    if (navigator.sendBeacon?.('/usage/event', new Blob([json], { type: 'application/json' }))) return
+  } catch { /* sendBeacon indisponible → repli */ }
   try {
     fetch('/usage/event', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body), keepalive: true,
+      body: json, keepalive: true,
     }).catch(() => {})
   } catch { /* capteur best-effort */ }
 }

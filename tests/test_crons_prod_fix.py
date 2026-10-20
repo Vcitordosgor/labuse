@@ -50,11 +50,14 @@ def test_dossier_absolu_passe_inchange(monkeypatch, tmp_path):
 
 # ─────────────────────────── 2. gel volontaire au registre ───────────────────────────
 
-def test_ingest_dvf_est_gele_au_registre():
+def test_ingest_dvf_degele_le_20_10():
+    """DÉGEL prod 20/10 : ingest-dvf n'est PLUS gelé (gel=None) → job actif, planifié, surveillé
+    comme un job normal. Le mécanisme de gel reste exercé par les autres jobs Phase 8 (digest,
+    radar-*, restore-test)."""
     from labuse.jobs import JOBS
-    assert JOBS["ingest-dvf"].gel == "Phase 8 Stéphanie"
-    # un job gelé reste PLANIFIÉ (connu, monitoré, exécutable à la main) — c'est `gel` qui le fige.
+    assert JOBS["ingest-dvf"].gel is None
     assert JOBS["ingest-dvf"].planifie is True
+    assert any(j.gel for j in JOBS.values()), "le mécanisme de gel reste utilisé par d'autres jobs"
 
 
 def test_gel_commente_au_crontab_mais_present():
@@ -82,7 +85,7 @@ def test_vigie_retard_ignore_les_geles(monkeypatch):
     monkeypatch.setattr(jobs_journal, "dernier_succes", lambda _db: {nom: vieux for nom in JOBS})
     retards = {r["nom"] for r in ops_alertes._jobs_en_retard(db=None)}
     geles = {nom for nom, j in JOBS.items() if j.gel}
-    assert geles, "au moins ingest-dvf doit être gelé"
+    assert geles, "au moins un job Phase 8 (digest, radar-*, restore-test) doit être gelé"
     assert not (geles & retards), f"un job gelé ne doit jamais être « en retard » : {geles & retards}"
     # garde-fou : sans gel, un quotidien très en retard DOIT être capté (preuve que le test mord)
     assert "sonde-sources" in retards
@@ -90,23 +93,30 @@ def test_vigie_retard_ignore_les_geles(monkeypatch):
 
 # ─────────────────────────── 3. /healthz/crons : gele ≠ alerte ───────────────────────────
 
-def test_crons_portent_le_gel():
-    """Le registre des crons surveillés expose le gel (pour que healthz ne sonne pas dessus)."""
+def test_ingest_dvf_degel_propage_au_healthz():
+    """Le registre healthz (ops.CRONS) DÉRIVE le gel du registre JOBS → le dégel d'ingest-dvf
+    (jobs.py, prod 20/10) se propage automatiquement : plus aucun gel côté crons surveillés."""
     from labuse.api import ops
-    assert ops.CRONS["ingest-dvf"]["gele"] == "Phase 8 Stéphanie"
+    assert ops.CRONS["ingest-dvf"]["gele"] is None
 
 
 @pytest.mark.db
-def test_healthz_classe_le_gele_sans_degrader(db_session, monkeypatch, tmp_path):
-    """ingest-dvf (gelé) ressort « gele » avec son motif, JAMAIS « jamais_vu » (= pas une alerte)."""
+def test_healthz_classe_un_gele_sans_degrader(db_session, monkeypatch, tmp_path):
+    """La LOGIQUE healthz « gele » (ne sonne jamais sur un cron volontairement gelé) reste exercée :
+    on injecte un cron gelé dans le registre surveillé → statut='gele' + motif, jamais 'jamais_vu'.
+    ingest-dvf, DÉGELÉ le 20/10, ressort désormais surveillé normalement (plus « gele »)."""
     from labuse import config
     from labuse.api import ops
     monkeypatch.setenv("LABUSE_JOBS_STATE_DIR", str(tmp_path))
+    monkeypatch.setitem(ops.CRONS, "cron-gele-test",
+                        {"trace": "etat_json", "motif": None, "attendu_jours": 9,
+                         "gele": "Phase 8 test", "note": "cron de test gelé"})
     config.get_settings.cache_clear()
     try:
         r = ops.healthz_crons(db_session)
-        dvf = r["crons"]["ingest-dvf"]
-        assert dvf["statut"] == "gele"
-        assert dvf["motif_gel"] == "Phase 8 Stéphanie"
+        gele = r["crons"]["cron-gele-test"]
+        assert gele["statut"] == "gele"
+        assert gele["motif_gel"] == "Phase 8 test"
+        assert r["crons"]["ingest-dvf"]["statut"] != "gele"   # dégelé → surveillé comme un job normal
     finally:
         config.get_settings.cache_clear()

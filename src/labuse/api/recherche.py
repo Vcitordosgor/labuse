@@ -164,20 +164,44 @@ def _sugg_adresse(db: Session, q: str, n: int) -> list[dict]:
     tokens = [t for t in plied.split(" ") if t]
     if not tokens:
         return []
-    conds = " AND ".join(f"{col} LIKE '%' || :t{i} || '%'" for i in range(len(tokens)))
-    params = {f"t{i}": t for i, t in enumerate(tokens)}
+    # PARCOURS-EXPERT-19-10 (A) — le numéro de voie est comparé comme un NOMBRE, pas comme du texte :
+    # avant, « numero » (colonne texte) triait « 112 » < « 12 » < « 2 » → en cherchant « 2 Chemin
+    # Dubuisson » le client voyait 112, 12, 120… et jamais le 2 (ni le plus proche). On extrait le
+    # numéro de tête de la saisie (1er jeton numérique) et on classe : préfixe contigu (cas idéal) →
+    # numéro EXACT → PROXIMITÉ numérique (|numero − saisi|) → voie. `numero_num` = chiffres de `numero`
+    # castés en entier (NULL si la voie n'a pas de numéro → relégué en fin, NULLS LAST).
+    num_tete = int(tokens[0]) if tokens[0].isdigit() else None
+    num_expr = "nullif(regexp_replace(numero, '[^0-9]', '', 'g'), '')::int"
+    # Le numéro de tête PILOTE le tri, il ne FILTRE pas : quand une voie est aussi tapée, on ne l'exige
+    # plus comme sous-chaîne (sinon « 3 Rue X » ne renvoyait rien si aucun « 3 » n'existe — impossible
+    # d'afficher « les plus proches »). On filtre sur le reste (voie/commune) et on ordonne par le numéro.
+    filtre = tokens[1:] if (num_tete is not None and len(tokens) > 1) else tokens
+    conds = " AND ".join(f"{col} LIKE '%' || :t{i} || '%'" for i in range(len(filtre)))
+    params = {f"t{i}": t for i, t in enumerate(filtre)}
     params["qp"] = plied
     params["lim"] = n
+    if num_tete is not None:
+        params["num"] = num_tete
+        ordre = (f"({col} LIKE :qp || '%') DESC, ({num_expr} = :num) DESC, "
+                 f"abs({num_expr} - :num) NULLS LAST, length(voie), voie, {num_expr}")
+    else:
+        ordre = f"({col} LIKE :qp || '%') DESC, length(voie), voie, {num_expr} NULLS LAST, numero"
     rows = db.execute(text(
         f"""SELECT trim(concat_ws(' ', nullif(numero,''), nullif(rep,''), voie)) AS label,
-                   commune, code_postal, idu,
+                   commune, code_postal, idu, {num_expr} AS numero_num,
                    ST_X(geom) lon, ST_Y(geom) lat
             FROM adresses
             WHERE idu IS NOT NULL AND geom IS NOT NULL AND {conds}
-            ORDER BY ({col} LIKE :qp || '%') DESC, length(voie), voie, numero
+            ORDER BY {ordre}
             LIMIT :lim"""), params).mappings().all()
-    return [{"label": r["label"], "sub": f"{r['code_postal'] or ''} {r['commune'] or ''}".strip(),
-             "idu": r["idu"], "lon": r["lon"], "lat": r["lat"]} for r in rows]
+    out = [{"label": r["label"], "sub": f"{r['code_postal'] or ''} {r['commune'] or ''}".strip(),
+            "idu": r["idu"], "lon": r["lon"], "lat": r["lat"]} for r in rows]
+    # PARCOURS-EXPERT-19-10 (A) — « à défaut, les plus proches avec un message qui le dit » : si un
+    # numéro a été saisi mais qu'aucune adresse exacte ne sort, une ligne-note (non cliquable, même
+    # mécanisme `note` que le SIREN inconnu) ouvre le groupe pour dire que ce sont les voisins.
+    if num_tete is not None and out and not any(r["numero_num"] == num_tete for r in rows):
+        out.insert(0, {"label": f"N° {num_tete} introuvable — voici les plus proches", "note": True})
+    return out
 
 
 def _sugg_proprietaire(db: Session, q: str, n: int) -> list[dict]:

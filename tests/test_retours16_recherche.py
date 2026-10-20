@@ -187,6 +187,37 @@ def test_siren_valide_absent_note_honnete(client):
     assert any(i.get("siren") == "512345678" for i in sir2) and not any(i.get("note") for i in sir2), d2
 
 
+def test_adresse_numero_compare_comme_un_nombre(client, engine):
+    """PARCOURS-EXPERT-19-10 (A) — le numéro de voie est comparé comme un NOMBRE : exact d'abord,
+    puis les plus proches (|numéro − saisi|), jamais l'ordre texte « 100 < 12 < 2 ». Quand le numéro
+    exact n'existe pas, une ligne-note (non cliquable) ouvre le groupe adresse."""
+    seed = [("rnum-1", "2"), ("rnum-2", "10"), ("rnum-3", "12"), ("rnum-4", "100")]
+    with engine.begin() as c:
+        for ban, num in seed:
+            c.execute(text(
+                """INSERT INTO adresses (id_ban, numero, voie, commune, code_postal, idu, geom)
+                   VALUES (:b, :n, 'Rue Numero Test', 'Saint-Denis', '97400', '97411000ZX0042',
+                           ST_SetSRID(ST_MakePoint(55.45, -20.88), 4326))
+                   ON CONFLICT DO NOTHING"""), {"b": ban, "n": num})
+    try:
+        # (1) tri NUMÉRIQUE (pas texte) : 2 < 10 < 12 < 100
+        adr = _groupes(client, "rue numero test").get("adresse", [])
+        nums = [i["label"].split()[0] for i in adr if "Numero Test" in i["label"]]
+        assert nums == ["2", "10", "12", "100"], nums
+        # (2) numéro EXACT présent → en tête, pas de note
+        adr100 = _groupes(client, "100 rue numero test").get("adresse", [])
+        assert adr100 and not adr100[0].get("note"), adr100
+        assert adr100[0]["label"].startswith("100 "), adr100
+        # (3) numéro EXACT absent → note en tête + le plus proche (2) devant le plus loin (100)
+        adr3 = _groupes(client, "3 rue numero test").get("adresse", [])
+        assert adr3 and adr3[0].get("note") and "N° 3 introuvable" in adr3[0]["label"], adr3
+        reels = [i for i in adr3 if not i.get("note")]
+        assert reels and reels[0]["label"].startswith("2 "), reels
+    finally:
+        with engine.begin() as c:
+            c.execute(text("DELETE FROM adresses WHERE id_ban LIKE 'rnum-%'"))
+
+
 def test_front_un_seul_composant_plus_d_autocompletion_maison():
     aa = (ROOT / "frontend/src/components/AddressAutocomplete.tsx").read_text(encoding="utf-8")
     assert "rechercheSuggest" in aa and "data-suggest-input" in aa and "data-suggest-item" in aa

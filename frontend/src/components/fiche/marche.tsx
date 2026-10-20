@@ -59,7 +59,6 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
   // DepotsBlock) → retirés de §8 Marché pour qu'un fait ne vive qu'une fois.
   const marcheLines = f.lines.filter((l) => l.onglet === 'marche' && l.layer !== 'amenites' && l.layer !== 'sitadel')
   const mb = faisa.data?.marche
-  const horizon = mb?.fraicheur?.horizon_libelle || mb?.dvf_couverture?.libelle
   // ETUDIER-BIEN-2 Lot A — les 3 faits UNIQUES de l'outil « Étudier un bien » (supprimé, cf.
   // ETUDIER-BIEN-1) rapatriés ICI, servis par le MÊME endpoint /outils/mon-secteur (rendu, pas
   // nouveau calcul) : écart secteur ↔ commune entière, médiane par type au rayon, annonces Radar
@@ -78,9 +77,11 @@ export function MarcheSection({ f, idu }: { f: Fiche; idu: string }) {
   const annoncesRayon = ms?.annonces_radar ?? []
   // COHERENCE-FIX-2 (lot B) — « secteur » ne paraît jamais seul : le périmètre (servi par le back,
   // `dvfSecteur.perimetre` = « section cadastrale ») accompagne le chiffre. Aucun libellé en dur ici.
-  // FICHE-ORFEVRERIE-1 (Lot D, pt 25) — plus de « DVF · DVF » : la source (DVF) est nommée UNE fois ;
-  // l'horizon suit sans redoubler le sigle.
-  const contexte = (dvfSecteur?.n_ventes ? `${dvfSecteur.n_ventes} vente${dvfSecteur.n_ventes > 1 ? 's' : ''}${dvfSecteur.perimetre ? ` · ${dvfSecteur.perimetre}` : ''} · DVF` : 'comparables DVF') + (horizon ? ` — ${horizon}` : '')
+  // FICHE-ORFEVRERIE-1 (Lot D, pt 25) — plus de « DVF · DVF » : la source (DVF) est nommée UNE fois.
+  // CHASSE-APP-FIX-1 (pt 1) — l'horizon de couverture DVF (« DVF — jusqu'à déc. 2025 ») est RETIRÉ du
+  // contexte client : décision Vic 18/09, aucune date ni millésime de SOURCE n'est montré au client
+  // (réservé à l'admin). La donnée reste servie (fraicheur/dvf_couverture), elle n'est plus affichée.
+  const contexte = dvfSecteur?.n_ventes ? `${dvfSecteur.n_ventes} vente${dvfSecteur.n_ventes > 1 ? 's' : ''}${dvfSecteur.perimetre ? ` · ${dvfSecteur.perimetre}` : ''} · DVF` : 'comparables DVF'
   return (
     <RefDrawer id="marche" icon={IC.marche} name="Marché"
       context={contexte}
