@@ -278,38 +278,45 @@ def champ_precis(db: Session, idu: str, message: str) -> dict | None:
     if cid == "sdp_residuelle_m2":
         from ..capacite_max import MENTION_COURTE as _CAP
         texte = f"{texte} C'est un {_CAP}."
-    return {"texte": texte, "champ_id": cid, "valeur": v.valeur, "source": f"fiche LABUSE · {cid}"}
+    # CHASSE-APP-FIX-2 (point 4 U) — la source LISIBLE ne porte plus le cid (nom de colonne) : il
+    # restait affiché dans l'accueil Copilote (sources.join). Le cid vit dans `champ_id` (structuré).
+    return {"texte": texte, "champ_id": cid, "valeur": v.valeur, "source": "fiche LABUSE"}
 
 
 def _rendre_champ(cid: str, libelle: str, valeur: Any, valeurs: dict) -> str:
-    """Rendu en clair d'un champ précis — lisible, jamais le JSON brut, et cite l'id du registre."""
+    """Rendu en clair d'un champ précis — lisible, jamais le JSON brut.
+
+    CHASSE-APP-FIX-2 (point 4 U) — on NE cite PLUS l'id technique du registre (cid) entre
+    parenthèses dans la réponse : « (surface_parcelle_m2) », « (zone_plu_famille) » fuitaient des
+    noms de colonnes au client. La traçabilité reste côté serveur via le champ `champ_id` renvoyé
+    par champ_precis() (structuré, non affiché), plus dans le texte ni dans la source lisible."""
     from ..exports.registre_fmt import fmt_m2, fmt_pct
     if cid == "type_proprietaire":
-        return f"Propriétaire : {str(valeur).split(' (SIREN')[0]} ({cid})."
+        return f"Propriétaire : {str(valeur).split(' (SIREN')[0]}."
     if cid == "zone_plu_famille":
         from ..exports.verdicts import zone_libelle
         lib = zone_libelle(valeurs) or f"famille {valeur}"
-        return f"Zone PLU : {lib} ({cid})."
+        return f"Zone PLU : {lib}."
     if cid == "aleas_parcelle_liste" and isinstance(valeur, list):
         red = [a for a in valeur if isinstance(a, dict) and a.get("redhibitoire")]
         if red:
-            return f"Risques : {red[0].get('libelle')} — rédhibitoire ({cid})."
+            return f"Risques : {red[0].get('libelle')} — rédhibitoire."
         libs = [a.get("libelle") for a in valeur if isinstance(a, dict) and a.get("libelle")]
-        return f"Risques : {' ; '.join(libs[:3]) if libs else 'aucun aléa rédhibitoire relevé'} ({cid})."
+        return f"Risques : {' ; '.join(libs[:3]) if libs else 'aucun aléa rédhibitoire relevé'}."
     if cid == "taxe_amenagement_estimee_eur" and isinstance(valeur, dict):
         taux = valeur.get("taux_communal_pct")
         mill = valeur.get("taux_communal_millesime") or ""
-        return (f"Taxe d'aménagement — taux communal {fmt_pct(taux)}" + (f" ({mill})" if mill else "")
-                + f" ({cid}).")
+        # (mill) = le millésime (année) du taux, pas un nom de colonne — on le garde.
+        return (f"Taxe d'aménagement — taux communal {fmt_pct(taux)}" + (f" ({mill})" if mill else "") + ".")
     if cid in ("surface_parcelle_m2", "sdp_residuelle_m2"):
-        return f"{libelle} : {fmt_m2(valeur)} ({cid})."
+        return f"{libelle} : {fmt_m2(valeur)}."
     if cid in ("tfpb_taux_pct",):
         # RETOUCHES-1 point 2 — la MÊME ligne canonique que la fiche et le Dossier (producteur unique).
         from ..fiscalite_libelle import lignes_taxe_fonciere
         _lignes = lignes_taxe_fonciere(valeur if isinstance(valeur, dict) else {})
         if _lignes:
-            return f"{_lignes[0]['ligne']} ({cid})."
-        return f"{libelle} : non renseigné ({cid})."
+            return f"{_lignes[0]['ligne']}."
+        return f"{libelle} : non renseigné."
     if cid == "pente_deg":
-        return f"Pente : {str(valeur).replace('.', ',')}° ({cid})."
-    return f"{libelle} : {valeur} ({cid})."
+        return f"Pente : {str(valeur).replace('.', ',')}°."
+    return f"{libelle} : {valeur}."

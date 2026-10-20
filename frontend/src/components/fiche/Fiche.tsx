@@ -227,6 +227,10 @@ function PipelineButton({ idu }: { idu: string }) {
     onSuccess: invalider,
   })
   const cols = meta.data?.columns ?? []
+  // CHASSE-APP-FIX-2 (point 6) — « Dans le CRM » nomme désormais l'ÉTAPE où se trouve la carte
+  // (libellé de sa colonne), plus seulement « ✓ Dans le CRM ». Le déplacement/retrait existe déjà
+  // (DeplacerMenu, DA-FIX-5c ci-dessous). Repli sur le libellé générique tant que les colonnes chargent.
+  const etapeLabel = cols.find((c) => c.key === state.data?.entry?.status)?.label
   // RETOURS-11 T3 (03/09) — le menu se ferme au clic n'importe où ailleurs et à Échap.
   const wrap = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -247,7 +251,9 @@ function PipelineButton({ idu }: { idu: string }) {
         aria-disabled={!!inPipe}
         className={`act w-full whitespace-nowrap ${inPipe ? 'act-cmp cursor-default' : open ? 'act-cmp' : 'act-mint hover-fill'}`}
       > {/* RECETTE-1 R28 — infobulle au survol retirée (le bouton porte déjà son libellé) */}
-        {add.isPending ? 'Ajout…' : inPipe ? CLIENT.fiche.crmDedans : CLIENT.fiche.crmAjouter}
+        {add.isPending ? 'Ajout…'
+          : inPipe ? `${CLIENT.fiche.crmDedans}${etapeLabel ? ` · ${etapeLabel}` : ''}`
+          : CLIENT.fiche.crmAjouter}
       </button>
       {open && !inPipe && (
         <div data-crm-menu className="absolute right-0 z-30 mt-1 min-w-[190px] rounded-lg border border-line bg-surface-2 p-1 shadow-lg">

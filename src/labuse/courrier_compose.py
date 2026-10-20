@@ -82,7 +82,12 @@ def _synthese(db, idu: str) -> dict:
          "pm": False, "adresse": None, "zone": None, "zone_document": None, "zone_calibree": False,
          "n_mutations": 0, "x_annees": X_ANNEES_DVF, "risques": []}
     if row:
-        reference = " ".join(x for x in (row["section"], row["numero"]) if x) or idu
+        # CHASSE-APP-FIX-2 (point 4 R) — la référence cadastrale est dérivée de l'IDU (section +
+        # numéro sur 4 chiffres), comme la fiche et le Dossier PDF (« EY 0109 »), plus de
+        # `section + numero` bruts qui perdaient les zéros de tête (« EY 109 »). Un propriétaire
+        # citait une référence qui n'était pas la sienne (objet, corps, synthèse, opposition RGPD).
+        reference = (f"{idu[8:10]} {idu[10:14]}" if len(idu) >= 14
+                     else " ".join(x for x in (row["section"], row["numero"]) if x) or idu)
         # CHASSE-DONNEES-FIX-1 (Lot 1) — « surface cadastrale » = la CONTENANCE de l'acte
         # (surface_terrain), plus le dessin brut : le propriétaire lit son acte, pas le ST_Area.
         st = _surface.surface_terrain(row["surface_m2"], row["contenance_m2"])
@@ -109,12 +114,21 @@ def _synthese(db, idu: str) -> dict:
         try:
             # CHASSE-FIX-1 (C03) — mutations DISTINCTES (même règle que le bloc voisinage C01),
             # jamais les lignes brutes (1 ligne par parcelle × lot × nature_culture).
-            d["n_mutations"] = int(db.execute(text(f"""
-                SELECT count(DISTINCT m.id_mutation) FROM dvf_mutations_parcelle m
+            # CHASSE-APP-FIX-2 (point 4 T) — on relève aussi les années MIN/MAX des mutations comptées :
+            # la synthèse écrit la PÉRIODE réelle (« sur 2023-2025 ») plutôt que « sur les 3 dernières
+            # années » — les ventes DVF s'arrêtent à 2025, « 3 dernières années » laisserait croire 2026.
+            _mr = db.execute(text(f"""
+                SELECT count(DISTINCT m.id_mutation) AS n,
+                       extract(year FROM min(m.date_mutation))::int AS y0,
+                       extract(year FROM max(m.date_mutation))::int AS y1
+                FROM dvf_mutations_parcelle m
                 JOIN parcels pp ON pp.idu = m.id_parcelle
                 WHERE ST_DWithin(pp.geom_2975, (SELECT geom_2975 FROM parcels WHERE idu = :i), :r)
                   AND m.date_mutation >= current_date - make_interval(years => :x)"""),
-                {"i": idu, "r": RAYON_DVF_M, "x": X_ANNEES_DVF}).scalar() or 0)
+                {"i": idu, "r": RAYON_DVF_M, "x": X_ANNEES_DVF}).mappings().first()
+            d["n_mutations"] = int(_mr["n"] or 0)
+            if _mr["y0"] and _mr["y1"]:
+                d["periode_dvf"] = str(_mr["y0"]) if _mr["y0"] == _mr["y1"] else f"{_mr['y0']}-{_mr['y1']}"
         except Exception:  # noqa: BLE001 — DVF optionnel
             d["n_mutations"] = 0
         # risques CERTAINS (HARD_EXCLUDE des couches d'aléas)
@@ -236,6 +250,10 @@ def composer_verso(d: dict) -> list[str]:
     if d.get("risques"):
         lignes.append("Contraintes connues : " + " ; ".join(d["risques"][:4]))
     if (d.get("n_mutations") or 0) > 0:
+        # CHASSE-APP-FIX-2 (point 4 T) — période RÉELLE des ventes (« sur 2023-2025 ») ; repli sur
+        # « les X dernières années » si on n'a pas les bornes (cas sans mutation géo-datée).
+        periode = (f"sur {d['periode_dvf']}" if d.get("periode_dvf")
+                   else f"sur les {d.get('x_annees', X_ANNEES_DVF)} dernières années")
         lignes.append(f"Environnement immobilier : {d['n_mutations']} mutation(s) publiée(s) "
-                      f"dans le périmètre analysé sur les {d.get('x_annees', X_ANNEES_DVF)} dernières années.")
+                      f"dans le périmètre analysé {periode}.")
     return lignes

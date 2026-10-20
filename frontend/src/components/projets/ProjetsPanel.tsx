@@ -52,7 +52,11 @@ function ProjetRow({ p }: { p: Projet }) {
   const deZero = Boolean((p.cadrage as Record<string, unknown> | undefined)?.__de_zero__)
   const vivierZero = vivier === 0 && !deZero    // cadrage sans résultat (cas légitime)
   const ouvrir = () => setOpenProjet({ id: p.id, nom: p.nom })
-  const valeurs = p.proposee_at ? `valeurs au ${new Date(p.proposee_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}` : null
+  // CHASSE-APP-FIX-2 (point 4 O) — « valeurs au … » = la date du RUN SERVI (valeurs_run), pas
+  // proposee_at (date du cadrage = aujourd'hui). La liste dit maintenant la même date que le projet
+  // ouvert et le PDF. Repli sur proposee_at si le run servi n'est pas connu.
+  const valeursDate = p.valeurs_run?.date ?? p.proposee_at
+  const valeurs = valeursDate ? `valeurs au ${new Date(valeursDate).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}` : null
   const pct = vivier > 0 ? Math.round((decidees / vivier) * 100) : 0
   const barLabel = vivierZero ? '—'
     : deZero && vivier === 0 ? 'aucune parcelle pour l’instant'

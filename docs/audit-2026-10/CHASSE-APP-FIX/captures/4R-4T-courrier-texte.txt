@@ -1,0 +1,10 @@
+CHASSE-APP-FIX-2 — points 4 R (EY 0109) et 4 T (période DVF) — preuve API /courrier/composer (idu 97415000EY0109)
+
+AVANT (rapport CHASSE-APP-20-10, relevé prod) :
+  R — référence cadastrale écrite « EY 109 » (objet, corps, synthèse au dos, consigne RGPD stop@labuse.immo)
+  T — « 72 mutation(s) publiée(s) dans le périmètre analysé sur les 3 dernières années. »
+
+APRÈS (worktree fix/chasse-app-2, composer live) :
+  R — reference = "EY 0109"  (recto contient « EY 0109 », ne contient plus « EY 109 »)
+  T — « Environnement immobilier : 72 mutation(s) publiée(s) dans le périmètre analysé sur 2023-2025. »
+      (période = années min..max RÉELLES des mutations comptées ; les ventes DVF s'arrêtent à 2025)

@@ -323,9 +323,17 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
             {/* la LIGNE repliée : le résumé (formulation gravée, chiffres du cadrage) */}
             <p className="text-[13px] leading-snug text-txt-2">
               {/* REPARATIONS-1 lot 2b — « Priorité » retiré : la tête classée fusionnée sous « À suivre ». */}
-              LABUSE a analysé <b className="text-txt-hi">{analyse.total.toLocaleString('fr-FR')} parcelles</b> :
-              {' '}<b className="text-mint">{analyse.signalees.toLocaleString('fr-FR')}</b> ressortent
-              {' '}— {(analyse.priorite + analyse.a_suivre).toLocaleString('fr-FR')} À suivre.
+              {/* CHASSE-APP-FIX-2 (point 4 N) — quand AUCUNE parcelle ne ressort (signalees = 0,
+                  compteur bien calculé côté back, mais rien n'atteint les tiers brûlante/chaude), on
+                  ne dit plus « 0 ressortent — 0 À suivre » : le cadrage est classé, les plus probables d'abord. */}
+              {analyse.signalees > 0 ? (
+                <>LABUSE a analysé <b className="text-txt-hi">{analyse.total.toLocaleString('fr-FR')} parcelles</b> :
+                {' '}<b className="text-mint">{analyse.signalees.toLocaleString('fr-FR')}</b> ressortent
+                {' '}— {(analyse.priorite + analyse.a_suivre).toLocaleString('fr-FR')} À suivre.</>
+              ) : (
+                <>LABUSE a analysé <b className="text-txt-hi">{analyse.total.toLocaleString('fr-FR')} parcelles</b> :
+                {' '}aucune ne se détache pour l'instant — toutes sont classées par probabilité de mutation.</>
+              )}
             </p>
             <button data-kanban-pourquoi aria-expanded={analyseOuvert} onClick={() => setAnalyseOuvert((o) => !o)}
               className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-mint/40 px-3 py-1.5 text-[12px] text-mint transition-colors duration-quick hover:bg-mint/15">
@@ -335,10 +343,17 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
           {analyseOuvert && (
             <div data-kanban-analyse-detail className="mt-2.5 border-t border-mint/15 pl-[50px] pt-2.5">
               <p className="text-[13.5px] leading-relaxed text-txt-2">
-                LABUSE a analysé les <b className="text-txt-hi">{analyse.total.toLocaleString('fr-FR')} parcelles</b> de votre cadrage :
-                {' '}<b className="text-mint">{analyse.signalees.toLocaleString('fr-FR')}</b> ont plus de chances que les autres d'être vendues
-                {' '}— {(analyse.priorite + analyse.a_suivre).toLocaleString('fr-FR')} À suivre.
-                {' '}Elles arrivent en tête de votre tri ; les {(analyse.total - analyse.signalees).toLocaleString('fr-FR')} autres suivent, sans jugement.
+                {/* CHASSE-APP-FIX-2 (point 4 N) — phrase honnête sur un ensemble vide : si rien ne
+                    ressort, « Elles arrivent en tête » / « les N autres » n'ont pas de sens. */}
+                {analyse.signalees > 0 ? (
+                  <>LABUSE a analysé les <b className="text-txt-hi">{analyse.total.toLocaleString('fr-FR')} parcelles</b> de votre cadrage :
+                  {' '}<b className="text-mint">{analyse.signalees.toLocaleString('fr-FR')}</b> ont plus de chances que les autres d'être vendues
+                  {' '}— {(analyse.priorite + analyse.a_suivre).toLocaleString('fr-FR')} À suivre.
+                  {' '}Elles arrivent en tête de votre tri ; les {(analyse.total - analyse.signalees).toLocaleString('fr-FR')} autres suivent, sans jugement.</>
+                ) : (
+                  <>LABUSE a analysé les <b className="text-txt-hi">{analyse.total.toLocaleString('fr-FR')} parcelles</b> de votre cadrage :
+                  {' '}aucune ne se détache pour l'instant. Toutes sont classées par probabilité de mutation, les plus probables en tête de votre tri, sans jugement.</>
+                )}
               </p>
               <p data-kanban-analyse-sub className="mt-1 text-[11px] text-txt-dim">
                 {(() => {

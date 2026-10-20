@@ -120,3 +120,34 @@ def test_autocomplete_voie_plus_commune_filtree(client, adresses_commune):
     feats = client.get("/adresses/autocomplete", params={"q": "rue des Béliers Saint-Paul"}).json()["features"]
     assert any(f["idu"] == "97415000ZZ0007" for f in feats), feats
     assert all(f["commune"] == "Saint-Paul" for f in feats), feats
+
+
+@pytest.fixture
+def adresses_doublon(engine):
+    """CHASSE-APP-FIX-2 (point 2) — deux `id_ban` pour une MÊME adresse (même parcelle, même
+    « numéro voie », géométries à quelques cm près) : le doublon observé sur /flash."""
+    from labuse.db import session_scope
+    rows = [
+        ("BAN_D1", "15", "Rue des Caroubiers", "97424", "Saint-Leu", "97413000ZZ0015", 55.3032, -21.2180),
+        ("BAN_D1bis", "15", "Rue des Caroubiers", "97424", "Saint-Leu", "97413000ZZ0015", 55.3033, -21.2179),
+    ]
+    with session_scope() as s:
+        for idb, num, voie, cp, com, idu, lon, lat in rows:
+            s.execute(_t(
+                "INSERT INTO adresses (id_ban, numero, voie, code_postal, commune, idu, geom) "
+                "VALUES (:i, :n, :v, :cp, :c, :idu, ST_SetSRID(ST_MakePoint(:lon, :lat), 4326)) "
+                "ON CONFLICT (id_ban) DO NOTHING"),
+                {"i": idb, "n": num, "v": voie, "cp": cp, "c": com, "idu": idu, "lon": lon, "lat": lat})
+        s.commit()
+    yield
+    with session_scope() as s:
+        s.execute(_t("DELETE FROM adresses WHERE id_ban IN ('BAN_D1', 'BAN_D1bis')"))
+        s.commit()
+
+
+def test_autocomplete_dedoublonne(client, adresses_doublon):
+    """Une même adresse (idu + « numéro voie » + commune) n'apparaît qu'UNE fois, même si la
+    table `adresses` porte plusieurs id_ban pour elle."""
+    feats = client.get("/adresses/autocomplete", params={"q": "15 rue des caroubiers"}).json()["features"]
+    caroubiers = [f for f in feats if f["idu"] == "97413000ZZ0015"]
+    assert len(caroubiers) == 1, caroubiers

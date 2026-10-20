@@ -1420,18 +1420,22 @@ export function M09() {
     finally { setPdfBusy(false) }
   }
 
-  const STEPS: [1 | 2 | 3, string][] = [[1, 'Destinataires'], [2, 'Rédaction'], [3, 'Envoi']]
+  // CHASSE-APP-FIX-2 (point 4 S) — l'étape 2 s'appelle « Relecture », pas « Rédaction » : elle ne
+  // contient aucun champ de saisie, seulement la lettre générée automatiquement, en lecture (décision
+  // Vic : renommer plutôt qu'ajouter une saisie libre).
+  const STEPS: [1 | 2 | 3, string][] = [[1, 'Destinataires'], [2, 'Relecture'], [3, 'Envoi']]
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
-      <Banner>Un <b>service d'envoi</b> : vous préparez vos courriers (destinataires + rédaction), LABUSE
+      <Banner>Un <b>service d'envoi</b> : vous préparez vos courriers (destinataires + relecture), LABUSE
         <b> les imprime, les affranchit et les poste</b>. Adressage générique (SPF/CERFA) — aucune identité
         de propriétaire particulier.</Banner>
       {/* OUTILS-FIX-4 D1/D2 — ÉTAT DU SERVICE + PLAFOND DU JOUR, à l'ouverture, avant toute saisie.
-          RECETTE-1 R27 — l'encadré « Envoi automatique indisponible — L'envoi postal n'est pas encore
-          disponible » est RETIRÉ : la carte d'état ne s'affiche QUE quand le service est disponible
-          (elle porte alors le plafond du jour). Rien à l'écran quand l'envoi n'est pas encore ouvert. */}
-      {statut.data?.disponible && (
+          CHASSE-APP-FIX-2 (point 1) — REVIENT sur RECETTE-1 R27 : tant que /courrier/statut renvoie
+          disponible:false, on AFFICHE la raison du serveur (le fournisseur est un bouchon ; la demande
+          est seulement enregistrée). Sans ça, le client lisait un tarif + « Demander l'envoi » et
+          croyait que sa lettre partait. Disponible → carte verte + plafond ; indisponible → raison. */}
+      {statut.data?.disponible ? (
         <div data-courrier-etat className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-lg border border-line-2 bg-surface-2 px-3 py-1.5 text-[11px]">
           <span className="flex items-center gap-1.5">
             <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-mint" />
@@ -1441,7 +1445,12 @@ export function M09() {
             <span data-courrier-plafond className="whitespace-nowrap text-txt-mut">Plafond du jour : <b className="tnum text-txt">{statut.data.reste_jour}</b>/{statut.data.plafond_jour} restant{(statut.data.reste_jour ?? 0) > 1 ? 's' : ''}</span>
           )}
         </div>
-      )}
+      ) : statut.data ? (
+        <div data-courrier-indispo className="flex items-start gap-1.5 rounded-lg border border-line-2 bg-surface-2 px-3 py-1.5 text-[11px] text-txt-mut">
+          <span className="mt-[4px] h-1.5 w-1.5 shrink-0 rounded-full bg-txt-dim" />
+          <span>{statut.data.raison ?? "L'envoi postal n'est pas encore disponible — la demande est enregistrée."}</span>
+        </div>
+      ) : null}
       {/* stepper 3 étapes */}
       <div className="flex items-center gap-1 text-[10px]">
         {STEPS.map(([n, l], i) => (
@@ -1490,7 +1499,7 @@ export function M09() {
           )}
           <p className="text-[10px] text-txt-dim">{dest.length} destinataire{dest.length > 1 ? 's' : ''} — un courrier par parcelle.</p>
           <Bouton niveau="primaire" ton="vert" data-courrier-next onClick={() => dest.length && setStep(2)} disabled={dest.length === 0}
-            className="mt-auto">Rédiger ›</Bouton>
+            className="mt-auto">Relire ›</Bouton>
         </div>
       )}
 
@@ -1560,8 +1569,11 @@ export function M09() {
           </div>
 
           {/* OUTILS-S2 Lot B (décision Vic) — ligne de prix DISCRÈTE avant le bouton : N × tarif unitaire
-              = total TTC. Tarif lu du back (config/param admin), jamais codé ici. Repli honnête si absent. */}
-          {!demande && (
+              = total TTC. Tarif lu du back (config/param admin), jamais codé ici. Repli honnête si absent.
+              CHASSE-APP-FIX-2 (point 1) — la ligne de prix (prestation en cours : impression + affranch. +
+              suivi) ne s'affiche QUE si le service est disponible ; sinon la raison (bandeau du haut) dit
+              que la demande est seulement enregistrée — on ne facture pas une prestation qui n'a pas lieu. */}
+          {!demande && statut.data?.disponible && (
             <p data-courrier-tarif className="text-[10.5px] leading-snug text-txt-dim">
               {statut.data?.tarif_unitaire_eur != null ? (
                 <>{dest.length} courrier{dest.length > 1 ? 's' : ''} × {fmtEur2(statut.data.tarif_unitaire_eur)} = <b className="text-txt-mut">{fmtEur2(statut.data.tarif_unitaire_eur * dest.length)} TTC</b> — impression, mise sous pli, affranchissement, suivi.</>
@@ -1578,8 +1590,12 @@ export function M09() {
             // PK global (qui fuitait le volume plateforme : « n° 44 » au 1ᵉʳ courrier). Repli sur id.
             <div data-courrier-confirm className="rounded-lg border border-line-2 bg-mint/[0.05] px-3 py-2 text-[11px] leading-snug text-txt-mut">
               <b className="text-mint">✓ Demande n° {demande.rang_compte ?? demande.id} transmise.</b>
-              {/* OUTILS-S2 Lot B — le MÊME montant qu'à l'étape 3 est repris ici. */}
-              {statut.data?.tarif_unitaire_eur != null
+              {/* OUTILS-S2 Lot B — le MÊME montant qu'à l'étape 3 est repris ici.
+                  CHASSE-APP-FIX-2 (point 1) — tant que le service est un bouchon, on ne reprend PAS la
+                  prestation tarifée : la raison serveur dit que la demande est seulement enregistrée. */}
+              {statut.data && !statut.data.disponible
+                ? ` ${statut.data.raison ?? "L'envoi postal n'est pas encore disponible — la demande est enregistrée."}`
+                : statut.data?.tarif_unitaire_eur != null
                 ? <> {demande.n} courrier{demande.n > 1 ? 's' : ''} × {fmtEur2(statut.data.tarif_unitaire_eur)} = <b className="text-txt-mut">{fmtEur2(statut.data.tarif_unitaire_eur * demande.n)} TTC</b> — impression, mise sous pli, affranchissement et suivi compris.</>
                 : ' LABUSE vous rappelle sous 24 h ouvrées avec le tarif — impression, mise sous pli, affranchissement et suivi compris.'}
               <span className="mt-1.5 block text-[10.5px] text-txt-dim">Retrouvez vos demandes dans <b className="text-txt-mut">Projets → Mes courriers</b>.</span>
@@ -1606,7 +1622,9 @@ export function M09() {
             </div>
           )}
 
-          <Retour label="Destinataires" onClick={() => setStep(1)} className="mt-auto" />
+          {/* CHASSE-APP-FIX-2 (point 4 S) — le retour de l'étape 3 (Envoi) mène à l'étape PRÉCÉDENTE
+              (2 · Relecture), plus directement à l'étape 1 : on peut reculer d'un pas. */}
+          <Retour label="Relecture" onClick={() => setStep(2)} className="mt-auto" />
         </div>
       )}
     </div>

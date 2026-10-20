@@ -2732,15 +2732,28 @@ def adresses_autocomplete(q: str = Query(..., min_length=3),
         order = f"({_col} LIKE {prefixe_expr}) DESC, length(voie), voie, numero"
     else:
         order = "length(voie), voie, numero"
+    # CHASSE-APP-FIX-2 (point 2) — DÉDOUBLONNAGE : la table `adresses` porte parfois plusieurs
+    # `id_ban` pour une MÊME adresse (même parcelle, même « numéro voie », géométries à quelques
+    # cm près) → la liste /flash affichait « 15 Rue des Beliers, Saint-Leu » DEUX fois. On garde la
+    # meilleure ligne par (idu, « numéro voie » plié, commune) via row_number sur l'ORDRE existant,
+    # puis on reclasse sur ce même ordre (rk). Deux parcelles distinctes à la même adresse (idu
+    # différents) restent toutes deux présentes. L'ordre d'affichage n'est pas touché.
     rows = db.execute(text(
         f"""
-        SELECT id_ban,
-               trim(coalesce(numero, '') || ' ' || voie) AS label_court,
-               commune, code_postal, idu,
-               ST_X(geom) AS lon, ST_Y(geom) AS lat
-        FROM adresses
-        WHERE {" AND ".join(where)}
-        ORDER BY {order}
+        SELECT id_ban, label_court, commune, code_postal, idu, lon, lat FROM (
+          SELECT id_ban,
+                 trim(coalesce(numero, '') || ' ' || voie) AS label_court,
+                 commune, code_postal, idu,
+                 ST_X(geom) AS lon, ST_Y(geom) AS lat,
+                 row_number() OVER (
+                   PARTITION BY idu, {sql_plie("coalesce(numero,'') || ' ' || voie")}, commune
+                   ORDER BY {order}) AS rn,
+                 row_number() OVER (ORDER BY {order}) AS rk
+          FROM adresses
+          WHERE {" AND ".join(where)}
+        ) t
+        WHERE rn = 1
+        ORDER BY rk
         LIMIT :lim
         """), params).mappings().all()
     feats = []
@@ -8884,6 +8897,10 @@ def _entry_dict(db: Session, e: models.PipelineEntry, *,
         "proprietaire_label": prospection.statut_label((e.prospection or {}).get("statut_proprietaire")),
         "has_manual_contact": prospection.has_manual_contact(e.prospection),
         "parcel": {"commune": p.commune, "section": p.section, "surface_m2": p.surface_m2,
+                   # CHASSE-APP-FIX-2 (point 3) — la carte CRM affiche la CONTENANCE cadastrale en
+                   # valeur principale (comme la fiche), plus le dessin ST_Area. champs_terrain()
+                   # ajoute surface_terrain_m2 / surface_source / surface_dessin_m2 / contenance_m2.
+                   **_surface.champs_terrain(p.surface_m2, p.contenance_m2),
                    # M6 2a (§1.8) : l'adresse BAN sur les cartes CRM (pipeline = volume faible)
                    "adresse": adresse},
         # d'où vient la piste (copilote-projet) — None si ajoutée hors projet

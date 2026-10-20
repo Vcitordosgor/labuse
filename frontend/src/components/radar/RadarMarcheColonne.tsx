@@ -8,7 +8,6 @@ import {
   getRadarBienVsMarche, getRadarMarcheTableau, radarClic,
   type EcartNiveau, type RadarBienCmp, type RadarBienVsMarche, type RadarMarcheChiffre, type RadarMarcheTypeLigne,
 } from '../../lib/api'
-import { fmtCapture } from './RadarHub'
 import { Squelette } from '../Loading'
 import { ErrorState } from '../States'
 
@@ -197,7 +196,10 @@ export function RadarMarcheColonne({ commune, bienId, onCloseBien }: {
 
           {/* pied de colonne */}
           <p className="mt-5 text-[10.5px] leading-relaxed text-txt-dim">
-            Prix demandés : annonces collectées sur les portails, dernière capture le {fmtCapture(data.derniere_capture_at)}.
+            {/* CHASSE-APP-FIX-2 (point 7, Radar) — « les portails » → « Leboncoin » (seule source
+                servie) ; la DATE DE RELEVÉ (« dernière capture le … ») est retirée (décision Vic 18/09 :
+                on n'affiche aucune date de relevé). */}
+            Prix demandés : annonces collectées sur Leboncoin.
             Prix actés : DVF (DGFiP){data.millesime_dvf ? ` — ${data.millesime_dvf}` : ''}. L’écart est « indicatif »
             de {data.seuil_indicatif_n} à {data.seuil_ecart_n - 1} annonces, ferme à {data.seuil_ecart_n}, « sous le seuil » en deçà.
             Les appartements comptent dans les chiffres mais ne sont pas listés.
