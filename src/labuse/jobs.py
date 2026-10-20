@@ -543,12 +543,18 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
     # `en_attente` (immédiats différés, dont le digest ; programmés J+3/J+10) et rejoue les `a_rejouer`
     # dont l'heure est venue (5 min → 1 h → 24 h). Sans lui, un mail programmé ne partait jamais et un
     # échec Brevo n'était jamais rejoué (VEILLE-AUDIT-2 §2.2). envoie_mail=True → dry-run si SMTP absent.
-    _j("mail-queue-consommer", "File des mails — envoie les dûs + rejoue les échecs transitoires",
-       "5 min", "*/5 * * * *", "toutes les 5 min", touche="exploitation", timeout_s=300, envoie_mail=True,
-       raison="La file mail_queue ne part pas toute seule : ce worker (toutes les 5 min) envoie les mails "
-              "`en_attente` dûs (digest différé, programmés J+3/J+10) et rejoue les `a_rejouer` (échec "
-              "Brevo transitoire, backoff 5 min/1 h/24 h) ; au-delà de 3 rejeux → `echec` (ligne rouge "
-              "Comptes). Idempotent, jamais d'envoi en double.",
+    # COCKPIT-1 (Lot C, correction A) — DÉCALÉ APRÈS LA SAUVEGARDE (14:10 Réunion = 10:10 UTC). Avant,
+    # le worker tournait toutes les 5 min et tombait EN PLEIN pg_dump (backup-postgres 13:30, ~18 min) :
+    # « another command is already in progress », un incident + un mail FAUX chaque jour à 13:35
+    # (ECARTS.md #1). Un passage quotidien juste APRÈS la sauvegarde supprime la collision à la racine.
+    # ⚠ PRÉ-LANCEMENT (digest gelé, aucun client, volume mail ~nul) : à l'arrivée des clients, repasser
+    # à une cadence fréquente AVEC un garde « cède à la sauvegarde » (sinon les rejeux backoff sont retardés).
+    _j("mail-queue-consommer", "File des mails — envoie les dûs + rejoue les échecs (après la sauvegarde)",
+       "quotidien", "10 10 * * *", "14:10", touche="exploitation", timeout_s=300, envoie_mail=True,
+       raison="La file mail_queue ne part pas toute seule : ce worker envoie les mails `en_attente` dûs "
+              "(digest différé, programmés J+3/J+10) et rejoue les `a_rejouer` (échec Brevo transitoire, "
+              "backoff) ; au-delà de 3 rejeux → `echec` (ligne rouge Comptes). Idempotent, jamais d'envoi "
+              "en double. Placé à 14:10 (APRÈS la sauvegarde de 13:30) pour ne plus se cogner au pg_dump.",
        test="tests/test_veille_fix2_lot_d.py::test_worker_envoie_et_rejoue"),
     # COMMUNE-FIX-1 — RÉINSCRIT (le pied de la fiche commune promet « rafraîchis chaque nuit » : il faut
     # que la tâche existe VRAIMENT). Précalcule le contexte des 24 communes chaque nuit → ouverture < 500 ms
@@ -573,17 +579,12 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
               "— le sous-ensemble rapide `--nuit` chaque nuit (SQL île + moteur), l'intégrale `--tout` le dimanche ; "
               "un FAUX-CLIENT nouveau / une garde en écart ouvre un incident à J+1 — plus jamais des mois.",
        test="tests/verrous/test_v6b_coherence.py::test_v6b_coherence_banc"),
-    # SOLIDITE-1 (Lot 1.4) — LE RÉCAP DU MATIN : un seul mail à 07:30 Réunion (03:30 UTC), APRÈS le
-    # digest (07:15). Tout vert en une ligne, ou la liste de ce qui ne va pas. Évalue aussi les quatre
-    # vigies sans point d'appel naturel (disque, /readyz, sauvegarde, jobs en retard) → ouvre/referme
-    # les incidents par la porte unique. Un seul mail par jour, jamais le déluge.
-    _j("recap-matin", "Récapitulatif d'exploitation du matin (un seul mail : vert, ou la liste des soucis)",
-       "quotidien", "30 3 * * *", "07:30", touche="exploitation", timeout_s=600, envoie_mail=True,
-       raison="Le point d'exploitation du jour, en un mail : disque, /readyz, sauvegarde, jobs en retard, "
-              "incidents ouverts. Tout vert = une ligne ; sinon la liste. Évalue les vigies qui n'ont pas "
-              "de point d'appel naturel ailleurs et ouvre/referme leurs incidents (une alerte, un rappel "
-              "par jour, un « résolu »). C'est l'anti-silence du 07/10.",
-       test="tests/test_solidite1_lot1.py::test_recap_matin_au_registre"),
+    # COCKPIT-1 (Lot C, correction D) — `recap-matin` RETIRÉ du registre (Vic ne veut plus le mail récap
+    # de 07:30). Mais « les ALERTES restent » : les vigies qu'il évaluait (disque, /readyz, sauvegarde,
+    # copie externe, jobs en retard) via `ops_alertes.verifier_declencheurs` sont désormais ÉVALUÉES par
+    # `healthcheck` (toutes les 15 min, besoin_db ouvre sa propre session) — chaque incident part par la
+    # PORTE UNIQUE ops_alertes (mail Brevo + cloche, un rappel/jour, un « résolu »), SANS mail récap.
+    # Le site en panne reste couvert par /health (healthcheck lève à 2 échecs → incident job-echec).
     # SOLIDITE-1 (Lot 5) — la vérité face aux sources, chaque mois : 20 parcelles au hasard (stratifiées)
     # comparées aux sources officielles EN LIGNE (cadastre IGN, Géorisques, DVF, bâtiments). Le 15 à 06:00.
     _j("verite-sources", "Vérité sources — 20 parcelles au hasard confrontées aux sources officielles en ligne",
@@ -666,7 +667,7 @@ _FAMILLE_LIBELLE_ROLE: dict[str, tuple[int, str, str, bool]] = {
     "pg-maintenance": (4, "L'entretien de la base",
                        "Réaligne le moteur PostgreSQL chaque dimanche pour garder les requêtes rapides.", True),
     "healthcheck": (4, "La sonde de vie",
-                    "Vérifie toutes les 15 min que l'app répond et que le disque respire.", False),
+                    "Vérifie toutes les 15 min que l'app répond, le disque, la sauvegarde et les jobs en retard.", False),
     "sante-endpoints": (4, "La sonde métier",
                         "Vérifie toutes les 30 min que les écrans clés répondent avec la base.", False),
     "copilote-purge": (4, "La purge du Copilote",
@@ -676,9 +677,7 @@ _FAMILLE_LIBELLE_ROLE: dict[str, tuple[int, str, str, bool]] = {
     "purge-sessions": (4, "Le ménage des sessions",
                        "Supprime chaque jour les sessions de connexion expirées.", True),
     "mail-queue-consommer": (4, "Le courrier aux clients",
-                             "Envoie les mails en attente et rejoue les échecs, toutes les 5 minutes.", True),
-    "recap-matin": (4, "Le récap du matin",
-                    "Un seul mail à 07:30 : tout vert, ou la liste de ce qui ne va pas.", False),
+                             "Envoie les mails en attente et rejoue les échecs, chaque jour après la sauvegarde.", True),
     "evaluer-suivis": (4, "La veille des parcelles suivies",
                        "Prévient un client quand un fait tombe sur une parcelle qu'il suit.", True),
     "detect-events": (4, "La veille du marché",

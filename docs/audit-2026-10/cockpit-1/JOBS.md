@@ -45,17 +45,14 @@ quotidiennes · **3** Le moteur · **4** Contrôle, clients, sécurité.*
 | 30 | filtres-sources | 4 | Rejoue les contrôles qualité sur les versions servies | **GARDER** | ⚠ **doublon partiel** avec coherence-banc (voir ci-dessous) |
 | 31 | coherence-robinets | 4 | Fuites entre robinets + eau ancienne | **GARDER** | ⚠ **doublon partiel** avec coherence-banc (voir ci-dessous) |
 
-**Bilan :** 23 GARDER · 5 GELER (digest + 4 Radar) · 2 SUPPRIMER (recap-matin *mail* + restore-test *VPS*).
-
-**Appliqué dans ce lot (code + registre), sans casser les garanties :**
+**Bilan :** 23 GARDER · 5 GELER (digest + 4 Radar) · 2 SUPPRIMER (recap-matin + restore-test *VPS*).
+**Les 5 corrections sont APPLIQUÉES** (code + registre + crontab + tests), sans casser « les ALERTES
+restent » → **registre = 29 jobs**, dont **5 gelés**, **24 lignes actives** au crontab.
 - **B** — `agents-sources` remis au crontab (`planifie=True`).
-- **E** — `restore-test` retiré du registre (doublon : l'agent Mac launchd le fait). → **registre = 30 jobs**, dont **5 gelés**.
-
-**Spécifié ici, à appliquer avec soin (touche la surveillance + ses tests) :**
-- **A** — garde mail-queue × sauvegarde · **C** — recalibrage de l'oracle risque + fermeture d'incident ·
-  **D** — suppression du *mail* récap-matin APRÈS avoir déplacé ses vigies dans healthcheck.
-Ces trois-là sont décrits précisément plus bas ; elles ne sont **pas** appliquées à l'aveugle pour ne
-jamais éteindre « les ALERTES restent ».
+- **E** — `restore-test` retiré du registre (doublon : l'agent Mac launchd le fait).
+- **A** — `mail-queue-consommer` déplacé à **14:10** (après la sauvegarde) — fini la collision 13:35.
+- **D** — `recap-matin` (le mail) retiré ; ses vigies passent dans `healthcheck` (les ALERTES restent).
+- **C** — oracle risque `verite-sources` recalibré (aléas zonaux seulement) + l'incident se referme.
 
 ## Doublons de contrôle signalés
 
@@ -71,10 +68,10 @@ jamais éteindre « les ALERTES restent ».
   (toutes les 15 min). Seules sauvegarde / copie externe / jobs-en-retard sont propres à recap-matin.
   → la correction D déplace ces trois vigies pour que la suppression du récap ne les perde pas.
 
-## Les corrections (à appliquer — spécifiées ici, protègent les garanties d'alerte)
+## Les corrections (APPLIQUÉES — code + registre + crontab + tests)
 
-> Ces quatre corrections touchent la surveillance (alertes, oracle) et ses tests. Elles sont **spécifiées
-> précisément** ici plutôt qu'appliquées à l'aveugle, pour ne jamais casser « les ALERTES restent ».
+> Les cinq corrections sont faites sur `feat/cockpit-1`, chacune avec son test, en préservant
+> « les ALERTES restent ». Détail ci-dessous.
 
 ### A — mail-queue × sauvegarde (la fausse alerte quotidienne de 13:35)
 - **Fait.** `mail-queue-consommer` (toutes les 5 min) se cogne au `pg_dump` (`backup-postgres`, 13:30,
@@ -100,31 +97,35 @@ jamais éteindre « les ALERTES restent ».
   Géorisques « au point » renvoie les aléas valables **partout à La Réunion** (séisme zone 2, feu),
   alors que LABUSE sert le risque **ZONAL** (intersection d'une zone PPR/TRI/inondation). Les 3 parcelles
   n'intersectent aucune couche de risque mappée (vérifié en local q_v19) — c'est **correct** (ECARTS.md #2).
-- **Correction.** Dans `src/labuse/verite_sources.py` (l'oracle risques) : **comparer uniquement les
-  aléas ZONAUX** (ceux que LABUSE mappe par intersection) ; **marquer séisme et feu comme NON
-  DISCRIMINANTS à La Réunion** (île-wide, hors doctrine zonale) → les exclure de l'écart. Puis **fermer
-  l'incident** ouvert avec sa raison (`ops_alertes.resoudre(db, "verite-sources:…", motif="doctrine
-  zonale — séisme/feu non discriminants à La Réunion")`). Après recalibrage : l'oracle ne sonne plus un
-  rouge permanent impossible à éteindre.
+- **Appliqué.** Dans `scripts/coherence/oracles/__init__.py` (l'oracle `oracle_georisques`) : helper
+  **`aleas_zonaux()`** qui retire séisme + feu (non discriminants, île-wide) ; la comparaison porte
+  désormais sur `bool(risques_zonaux) == risque_labuse` (notion « aléas zonaux au point », séisme/feu
+  notés mais exclus de l'écart). L'incident **« verite-sources » se referme tout seul** au prochain
+  passage sans faux (`verite_sources.journaliser_passage` → `ops_alertes.resoudre(db, "verite-sources")`)
+  — prouvé par `test_incident_verite_sources_se_referme_sans_faux`. Sur prod, le rouge du 15/10 s'éteint
+  au run du 15/11 (ou immédiatement si Vic relance `labuse ops verite-sources`). Tests :
+  `test_cockpit_corrections_c.py`.
 
 ### D — recap-matin : supprimer le récap, garder les vigies
 - **Fait.** Vic ne veut plus le mail récap de 07:30. Mais `recap-matin` est le **seul** appelant de
   `ops_alertes.verifier_declencheurs()` (vigies sauvegarde / copie externe / jobs-en-retard). Le
   supprimer naïvement **éteindrait ces alertes**.
-- **Correction (ordre important).** 1) Déplacer l'évaluation des vigies restantes (sauvegarde, copie
-  externe, jobs-en-retard) dans **healthcheck** (qui évalue déjà disque + /readyz par la porte unique,
-  toutes les 15 min) — `verifier_declencheurs()` est idempotent (un incident, un rappel/jour, un
-  « résolu »). 2) **Supprimer `recap-matin`** du registre (plus de mail). Les alertes continuent à partir
-  via `ops_alertes` (porte unique). Tests à mettre à jour : `test_solidite1_lot1.py`
-  (`test_recap_matin_au_registre` + l'envoi), et le compte de familles (`test_cockpit_lot_b.py`).
+- **Appliqué (ordre important).** 1) `recap_matin` (fonction + job) SUPPRIMÉ ; 2) `healthcheck`
+  (toutes les 15 min) appelle désormais `ops_alertes.verifier_declencheurs()` → les vigies sauvegarde /
+  copie externe / jobs-en-retard (disque/readyz déjà couverts) partent par la **porte unique** ops_alertes,
+  SANS mail récap. Le **site en panne** reste couvert par /health (healthcheck lève à 2 échecs → incident
+  job-echec). Prouvé : `test_cockpit_corrections_c.py` (site en panne, sauvegarde ratée) +
+  `test_disque_externe_1.py` (copie externe) + `test_solidite1_lot1.py` (vigies dans healthcheck).
 
 ### E — restore-test : retiré du VPS
-- Le test mensuel de restauration tourne **déjà hors-VPS** sur le Mac (agent launchd `restore_test.sh`,
-  DISQUE-EXTERNE-1 / AGENTS-LAUNCHD). Le poste VPS (gelé) fait **doublon** → **SUPPRIMER** du registre
-  (absent du crontab). Le Mac reste la seule place où la restauration est éprouvée.
+- **Appliqué.** Le test mensuel de restauration tourne **déjà hors-VPS** sur le Mac (agent launchd
+  `restore_test.sh`). Le poste VPS (gelé) faisait **doublon** → retiré du registre (l'impl
+  `jobs_impl.restore_test` reste exécutable à la main).
 
 ## Ce qui reste à Vic (prod)
-- Appliquer les corrections A–E (code + registre), régénérer le crontab (`labuse jobs crontab`), déployer
-  via `deploy.sh` (qui refuse toute dérive manuelle).
+- Régénérer le crontab (`labuse jobs crontab`) et déployer via `deploy.sh` (refuse toute dérive manuelle).
 - Poser `LABUSE_AGENT_PLAFOND_EUR=5` + recharger quelques euros de crédit API (Anthropic) pour les enquêteurs.
 - Dégeler digest + Radar à l'arrivée des premiers clients (retirer le préfixe `# GELÉ` — le crontab le régénère).
+- `verite-sources` : l'incident du 15/10 s'éteint au prochain run ; le relancer pour l'éteindre tout de suite.
+- **mail-queue à 14:10** : choix pré-lancement (volume mail ~nul). À l'arrivée des clients, repasser à une
+  cadence fréquente + garde « cède à la sauvegarde » (sinon les rejeux backoff sont retardés jusqu'au lendemain).

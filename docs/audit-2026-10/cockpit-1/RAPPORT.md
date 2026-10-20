@@ -108,31 +108,51 @@ catégorie FR (jamais l'identifiant brut).
 6. Vérifier dans Circuit que le bandeau du réservoir ne montre plus de robinet « en retard ».
 7. `dropdb labuse_jetable`.
 
+## Corrections C (Lot C) appliquées avant merge
+
+Les 3 corrections qui restaient spécifiées sont **appliquées** sur `feat/cockpit-1`, chacune testée,
+en préservant « les ALERTES restent » :
+- **A — mail-queue à 14:10** : `mail-queue-consommer` passe de `*/5` à `10 10 * * *` (14:10 Réunion),
+  dans le registre ET le crontab généré (`labuse.cron`) → fini la collision quotidienne 13:35 avec le
+  pg_dump. (⚠ choix pré-lancement : volume mail ~nul ; à l'arrivée des clients, repasser fréquent +
+  garde « cède à la sauvegarde ».) Tests : `test_cockpit_corrections_c.py`.
+- **D — recap-matin supprimé** du registre et du crontab ; ses vigies (sauvegarde, copie externe,
+  jobs-en-retard) passent dans **healthcheck** (15 min) via `ops_alertes.verifier_declencheurs`. Prouvé
+  par test : **site en panne** (healthcheck lève à 2 échecs → incident), **disque/sauvegarde ratée**
+  (incident ouvert par leur propre chemin), **copie externe** (`test_disque_externe_1`). Plus aucun mail
+  récap, mais chaque alerte part toujours par la porte unique ops_alertes.
+- **C — verite-sources** : l'oracle (`oracle_georisques`) ne compare plus que les **aléas zonaux** ;
+  **séisme et feu** sont marqués non discriminants à La Réunion (île-wide) et exclus de l'écart ; une
+  parcelle hors zone de risque ne produit donc plus un rouge permanent. L'incident « verite-sources »
+  **se referme** au prochain passage sans faux (test unitaire + db). Fichier :
+  `scripts/coherence/oracles/__init__.py` (helper `aleas_zonaux`).
+
+→ Registre = **29 jobs** (recap-matin + restore-test retirés), **24 lignes actives** au crontab.
+
 ## Écarts restants
 
-- **chasse_donnees : 2 ECART** (`cloche-fraicheur`, `digest-vs-cloche`) — **pré-existants**, dus à
+- **chasse_donnees : 2 ECART** (`cloche-fraicheur`, `digest-vs-cloche`) — **pré-existants, PROUVÉ** :
+  rejoué avec le code `origin/main` propre (worktree `labuse-main`, `8b410d99`) sur la MÊME base → les
+  **mêmes** 2 ECART · 21 OK · 2 SKIP. Donc COCKPIT-1 ne les a pas créés : ils sont dus à
   `detect_events`/la cloche non rejoués après la bascule q_v19 (geste PROD, déjà noté
-  CHASSE-INVARIANTS-FIX-1). **Hors du périmètre COCKPIT-1** : le diff ne touche aucune donnée, aucun
-  scoring, aucune cascade, aucune cloche — identiques avant/après le mandat.
+  CHASSE-INVARIANTS-FIX-1), DB-state, hors de tout code du mandat.
 - **chasse_donnees : 2 SKIP** (`export-disparue`, `disparue-documents`, HTTP 500 sur `/export`) —
   pré-existants, dépendants des données locales.
 - **« Est-ce que tout tourne ? » et L'usine, en LOCAL, montrent peu de postes actifs** : les jobs
   tournent en PROD (le registre y laisse 3 007 lignes `job_runs`) ; sur le Mac leurs états locaux sont
   rares. L'affichage est correct PAR ENVIRONNEMENT — sur le VPS (env=production) il reflètera la
   réalité prod. Pas un bug : une propriété du dashboard lu hors du serveur qui exécute les jobs.
-- **Corrections C/A/C/D de Lot C non appliquées en code** (mail-queue × sauvegarde ; oracle
-  verite-sources ; suppression du mail recap-matin) : spécifiées précisément dans `JOBS.md`, laissées
-  en « à appliquer » pour ne pas casser les garanties d'alerte sans vérification dédiée.
-
 ## Reste à Vic
 - **Crédit API** (Anthropic) + `LABUSE_AGENT_PLAFOND_EUR=5` dans `/etc/labuse/labuse.env` → les
   enquêteurs IA (agents-sources, désormais au crontab) tournent le dimanche 1 semaine sur 2.
-- **Crontab** : régénérer (`labuse jobs crontab`) et déployer via `deploy.sh` (agents ajoutés,
-  restore-test retiré). Dégeler digest + Radar à l'arrivée des premiers clients.
+- **Crontab** : régénérer (`labuse jobs crontab`) et déployer via `deploy.sh` (agents ajoutés ;
+  recap-matin + restore-test retirés ; mail-queue à 14:10). Dégeler digest + Radar aux premiers clients.
 - **Déploiement q_v19** : la prod sert q_v18 ; `deploy_donnees.sh --run-label q_v19 --residuel-seq 16`
   (ou le bouton « Envoyer en prod » du Tableau de bord local).
-- **Appliquer les corrections A/C/D de Lot C** (mail-queue, oracle verite-sources, recap-matin) selon
-  les specs de `JOBS.md`, avec leurs mises à jour de tests.
+- **verite-sources** : l'incident du 15/10 s'éteint au prochain run (oracle recalibré) ; relancer
+  `labuse ops verite-sources` pour l'éteindre tout de suite.
+- **mail-queue** : au lancement (vrais clients/volume), repasser le worker en cadence fréquente + garde
+  « cède à la sauvegarde » (la cadence quotidienne 14:10 retarde les rejeux backoff).
 
 ## Hors mandat (non touché)
 Refonte de Sources/Radar/moteur de calcul, DA, mail du matin (supprimé, pas remplacé), notifications

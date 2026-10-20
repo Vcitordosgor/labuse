@@ -14,31 +14,16 @@ from labuse.jobs import JOBS, Job
 
 # ─────────────────────────── 1.1/1.4 — câblage (sans DB) ───────────────────────────
 
-def test_recap_matin_au_registre():
-    """Le récap du matin existe, part en mail, et tombe à 03:30 UTC = 07:30 Réunion, APRÈS le digest."""
-    j = JOBS.get("recap-matin")
-    assert j is not None and j.envoie_mail is True
-    assert j.cron_utc == "30 3 * * *" and j.heure_reunion == "07:30"
-
-
-def test_recap_sujet_porte_la_date(monkeypatch):
-    """SOLIDITE-1 / incident 14/10 — le sujet du récap porte LA DATE du jour (sujet unique chaque jour)
-    pour que Gmail ne regroupe/replie plus le récap quotidien (Brevo l'avait pourtant livré)."""
-    import types
-    from labuse import jobs_impl, ops_alertes
-    monkeypatch.setattr(ops_alertes, "verifier_declencheurs",
-                        lambda db: {"incidents_ouverts": [], "disque_pct": 50.0,
-                                    "sauvegarde": {"dernier": "x.dump"}, "readyz": {"ready": True},
-                                    "retards": []})
-    capte = {}
-    monkeypatch.setattr(jobs_impl, "_envoyer_alerte",
-                        lambda corps, *, sujet, ctx=None: capte.update(sujet=sujet))
-    ctx = types.SimpleNamespace(db=types.SimpleNamespace(commit=lambda: None),
-                                dry_run=False, compte=lambda **k: None)
-    jobs_impl.recap_matin(ctx)
-    jour = datetime.now(timezone.utc).astimezone().strftime("%d/%m")
-    assert jour in capte["sujet"], f"la date {jour} doit figurer dans le sujet : {capte.get('sujet')!r}"
-    assert "récap du matin" in capte["sujet"] and "tout vert" in capte["sujet"]
+def test_recap_matin_retire_mais_vigies_gardees():
+    """COCKPIT-1 (Lot C, correction D) — le récap du matin (mail 07:30) est SUPPRIMÉ du registre, MAIS
+    « les ALERTES restent » : les vigies qu'il évaluait passent dans healthcheck (toutes les 15 min)."""
+    assert "recap-matin" not in JOBS                               # plus de job récap
+    assert not hasattr(__import__("labuse.jobs_impl", fromlist=["x"]), "recap_matin")  # ni la fonction
+    # healthcheck porte désormais l'évaluation des vigies (verifier_declencheurs).
+    import inspect
+    from labuse import jobs_impl
+    src = inspect.getsource(jobs_impl.healthcheck)
+    assert "verifier_declencheurs" in src, "healthcheck doit évaluer les vigies (ex recap-matin)"
 
 
 def test_mailto_vide_dans_crontab():

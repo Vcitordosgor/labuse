@@ -157,6 +157,24 @@ def oracle_contenance(v: V, conn, temoins: list[dict]):
 
 # ───────────────────────── oracle : Géorisques multirisque
 
+# COCKPIT-1 (Lot C, correction C) — à La Réunion, le SÉISME (zone de sismicité 2, TOUTE l'île) et le
+# FEU de forêt sont présents PARTOUT : ils ne DISCRIMINENT aucune parcelle. LABUSE sert le risque
+# ZONAL (intersection d'une zone PPR/TRI/inondation/mouvement/recul) ; comparer son « aucune
+# vigilance » au rapport Géorisques « au point » qui liste séisme+feu partout produisait un écart
+# SYSTÉMATIQUE (incident verite-sources du 15/10, jamais vert). On ne compare donc QUE les aléas
+# zonaux ; séisme et feu sont marqués non discriminants et exclus de l'écart.
+_RISQUE_NON_DISCRIMINANT = ("séisme", "seisme", "sismic", "feu", "forêt", "foret")
+
+
+def aleas_zonaux(risques_geo: list[str]) -> list[str]:
+    """Ne garde que les aléas ZONAUX (comparables au zonage servi) : retire séisme et feu, non
+    discriminants à La Réunion (île entière)."""
+    def _zonal(r: str) -> bool:
+        rb = (r or "").lower()
+        return not any(mot in rb for mot in _RISQUE_NON_DISCRIMINANT)
+    return [r for r in risques_geo if _zonal(r)]
+
+
 def oracle_georisques(v: V, conn, temoins: list[dict]):
     """Risques au point (inondation, mouvement de terrain, submersion, ICPE…) via le
     rapport risque Géorisques ; sismicité et potentiel radon par code commune. On vérifie
@@ -183,17 +201,21 @@ def oracle_georisques(v: V, conn, temoins: list[dict]):
                         out.append(val.get("libelle") or k)
                 return out
             risques_geo = _present(nat) + _present(tech)
+            # COCKPIT-1 (corr. C) — on ne compare QUE les aléas ZONAUX ; séisme/feu (île-wide) exclus.
+            risques_zonaux = aleas_zonaux(risques_geo)
+            non_disc = [r for r in risques_geo if r not in risques_zonaux]
             # LABUSE porte-t-il une vigilance risque/aléa ?
             risque_labuse = bool(fiche.get("aleas")) or any(
                 l.get("layer") in ("risques", "mvt", "icpe") and
                 l.get("result") in ("SOFT_FLAG", "HARD_EXCLUDE") for l in lines)
-            ok = bool(risques_geo) == risque_labuse
+            ok = bool(risques_zonaux) == risque_labuse
+            note_nd = " · séisme/feu île-wide (non discriminants)" if non_disc else ""
             v.verdict("risques_presence", idu,
-                      "vigilance(s) risque servie" if risque_labuse else "aucune vigilance risque",
-                      (", ".join(risques_geo)[:70] or "aucun risque Géorisques"),
-                      "Géorisques rapport risque (au point)",
+                      "vigilance(s) risque zonale servie" if risque_labuse else "aucune vigilance risque zonale",
+                      (", ".join(risques_zonaux)[:70] or "aucun risque ZONAL Géorisques") + note_nd,
+                      "Géorisques rapport risque (aléas zonaux au point)",
                       ok=ok,
-                      pourquoi="" if ok else "présence de risque divergente fiche vs Géorisques",
+                      pourquoi="" if ok else "présence de risque ZONAL divergente fiche vs Géorisques",
                       url=url)
         except Exception as e:  # noqa: BLE001
             v.skip("risques_presence", idu, f"Géorisques rapport instable : {str(e)[:50]}", url)

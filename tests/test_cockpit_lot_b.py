@@ -93,9 +93,9 @@ def test_familles_attendues():
     par_fam: dict[int, int] = {}
     for j in jobs.liste():
         par_fam[j["famille"]] = par_fam.get(j["famille"], 0) + 1
-    # COCKPIT-1 Lot C : restore-test retiré du registre (doublon Mac) → 30 jobs, F4 passe de 21 à 20.
-    assert par_fam == {1: 2, 2: 6, 3: 2, 4: 20}
-    assert sum(par_fam.values()) == 30
+    # COCKPIT-1 Lot C : restore-test + recap-matin retirés du registre → 29 jobs, F4 passe de 21 à 19.
+    assert par_fam == {1: 2, 2: 6, 3: 2, 4: 19}
+    assert sum(par_fam.values()) == 29
 
 
 # ─────────────── endpoints (db) ───────────────
