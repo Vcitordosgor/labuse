@@ -1420,11 +1420,14 @@ export function M09() {
     finally { setPdfBusy(false) }
   }
 
-  const STEPS: [1 | 2 | 3, string][] = [[1, 'Destinataires'], [2, 'Rédaction'], [3, 'Envoi']]
+  // CHASSE-APP-FIX-2 (point 4 S) — l'étape 2 s'appelle « Relecture », pas « Rédaction » : elle ne
+  // contient aucun champ de saisie, seulement la lettre générée automatiquement, en lecture (décision
+  // Vic : renommer plutôt qu'ajouter une saisie libre).
+  const STEPS: [1 | 2 | 3, string][] = [[1, 'Destinataires'], [2, 'Relecture'], [3, 'Envoi']]
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
-      <Banner>Un <b>service d'envoi</b> : vous préparez vos courriers (destinataires + rédaction), LABUSE
+      <Banner>Un <b>service d'envoi</b> : vous préparez vos courriers (destinataires + relecture), LABUSE
         <b> les imprime, les affranchit et les poste</b>. Adressage générique (SPF/CERFA) — aucune identité
         de propriétaire particulier.</Banner>
       {/* OUTILS-FIX-4 D1/D2 — ÉTAT DU SERVICE + PLAFOND DU JOUR, à l'ouverture, avant toute saisie.
@@ -1496,7 +1499,7 @@ export function M09() {
           )}
           <p className="text-[10px] text-txt-dim">{dest.length} destinataire{dest.length > 1 ? 's' : ''} — un courrier par parcelle.</p>
           <Bouton niveau="primaire" ton="vert" data-courrier-next onClick={() => dest.length && setStep(2)} disabled={dest.length === 0}
-            className="mt-auto">Rédiger ›</Bouton>
+            className="mt-auto">Relire ›</Bouton>
         </div>
       )}
 
