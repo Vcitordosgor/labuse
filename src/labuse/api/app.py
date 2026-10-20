@@ -2732,15 +2732,28 @@ def adresses_autocomplete(q: str = Query(..., min_length=3),
         order = f"({_col} LIKE {prefixe_expr}) DESC, length(voie), voie, numero"
     else:
         order = "length(voie), voie, numero"
+    # CHASSE-APP-FIX-2 (point 2) — DÉDOUBLONNAGE : la table `adresses` porte parfois plusieurs
+    # `id_ban` pour une MÊME adresse (même parcelle, même « numéro voie », géométries à quelques
+    # cm près) → la liste /flash affichait « 15 Rue des Beliers, Saint-Leu » DEUX fois. On garde la
+    # meilleure ligne par (idu, « numéro voie » plié, commune) via row_number sur l'ORDRE existant,
+    # puis on reclasse sur ce même ordre (rk). Deux parcelles distinctes à la même adresse (idu
+    # différents) restent toutes deux présentes. L'ordre d'affichage n'est pas touché.
     rows = db.execute(text(
         f"""
-        SELECT id_ban,
-               trim(coalesce(numero, '') || ' ' || voie) AS label_court,
-               commune, code_postal, idu,
-               ST_X(geom) AS lon, ST_Y(geom) AS lat
-        FROM adresses
-        WHERE {" AND ".join(where)}
-        ORDER BY {order}
+        SELECT id_ban, label_court, commune, code_postal, idu, lon, lat FROM (
+          SELECT id_ban,
+                 trim(coalesce(numero, '') || ' ' || voie) AS label_court,
+                 commune, code_postal, idu,
+                 ST_X(geom) AS lon, ST_Y(geom) AS lat,
+                 row_number() OVER (
+                   PARTITION BY idu, {sql_plie("coalesce(numero,'') || ' ' || voie")}, commune
+                   ORDER BY {order}) AS rn,
+                 row_number() OVER (ORDER BY {order}) AS rk
+          FROM adresses
+          WHERE {" AND ".join(where)}
+        ) t
+        WHERE rn = 1
+        ORDER BY rk
         LIMIT :lim
         """), params).mappings().all()
     feats = []
