@@ -16,6 +16,11 @@ exports[`snapshots des onglets > Journal 1`] = `
   <div
     class="jf"
   >
+    <span
+      class="jf-lab"
+    >
+      Geste
+    </span>
     <button
       class=""
     >

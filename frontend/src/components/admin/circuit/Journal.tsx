@@ -44,12 +44,13 @@ const quand = (ts: string) =>
 export function Journal({ data, onOpen, onAujourdhui }:
   { data: CircuitData; onOpen: Ouvrir; onAujourdhui?: (n: number) => void }) {
   const [type, setType] = useState('')     // '' = tous
+  const [famille, setFamille] = useState('')   // COCKPIT-1 (Lot E) — filtre par famille, '' = toutes
   const [page, setPage] = useState(1)
   const [ouverts, setOuverts] = useState<Record<string, boolean>>({})
   const taille = 50
   const q = useQuery({
-    queryKey: ['circuit-journal', type, page],
-    queryFn: () => getAdminCircuitJournal({ type: type || undefined, page, taille }),
+    queryKey: ['circuit-journal', type, famille, page],
+    queryFn: () => getAdminCircuitJournal({ type: type || undefined, famille: famille || undefined, page, taille }),
   })
 
   useEffect(() => { if (q.data && onAujourdhui) onAujourdhui(q.data.aujourdhui) }, [q.data, onAujourdhui])
@@ -67,6 +68,7 @@ export function Journal({ data, onOpen, onAujourdhui }:
 
   // filtres = la liste FIXE des catégories (backend), « tous » d'abord, présents même vides.
   const cats: { slug: string; label: string }[] = q.data?.categories || []
+  const familles: { slug: string; label: string }[] = q.data?.familles || []
   const entrees = q.data?.entrees || []
   const total = q.data?.total || 0
   const pages = Math.max(1, Math.ceil(total / taille))
@@ -82,8 +84,20 @@ export function Journal({ data, onOpen, onAujourdhui }:
 
   return (
     <div>
+      {/* COCKPIT-1 (Lot E) — filtre par FAMILLE (les 4 colonnes de L'usine), en PLUS des gestes. */}
+      {familles.length > 0 && (
+        <div className="jf jf-fam">
+          <span className="jf-lab">Famille</span>
+          {familles.map((f) => (
+            <button key={f.slug} className={famille === f.slug ? 'on' : ''}
+              onClick={() => { setFamille(f.slug); setPage(1) }}>{f.label}</button>
+          ))}
+          <button className={famille === '' ? 'on' : ''} onClick={() => { setFamille(''); setPage(1) }}>toutes</button>
+        </div>
+      )}
       {/* CIRCUIT-P7 (lot 5) — « tous » EN DERNIER à droite (règle des filtres, comme Sources). */}
       <div className="jf">
+        <span className="jf-lab">Geste</span>
         {cats.map((cat) => (
           <button key={cat.slug} className={type === cat.slug ? 'on' : ''}
             onClick={() => { setType(cat.slug); setPage(1) }}>{cat.label}</button>

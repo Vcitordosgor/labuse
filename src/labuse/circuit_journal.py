@@ -35,6 +35,8 @@ GESTES = ("injecter", "calculer", "basculer", "revenir", "purger", "agent", "job
 CATEGORIES = [
     ("vanne", "vanne"), ("calcul", "calcul"), ("bascule", "bascule"), ("agent", "agent"),
     ("controle", "contrôle"), ("filtre", "filtre"), ("sonde", "sonde"), ("cron", "cron"),
+    # COCKPIT-1 (Lot E) — deux catégories pour les gestes du Tableau de bord qui n'en avaient pas.
+    ("reconstruction", "reconstruction"), ("deploiement", "mise en ligne"),
 ]
 CATEGORIE_LABEL = dict(CATEGORIES)
 #: stored geste → catégorie d'affichage (les libellés techniques ne remontent jamais tels quels).
@@ -44,6 +46,10 @@ GESTE_CATEGORIE = {
     "agent": "agent", "controle": "controle", "filtre": "filtre",
     "sonde": "sonde", "job": "cron", "purger": "cron",
     "candidat": "bascule",        # REPARATIONS-1 lot 1 : assumer/retirer un candidat = famille bascule
+    # COCKPIT-1 (Lot E) — les gestes des boutons du Tableau de bord / de L'usine (qui, quoi, résultat).
+    "cockpit:injecter": "vanne", "cockpit:reconstruire": "reconstruction",
+    "cockpit:accepter-ecarts": "controle", "cockpit:envoyer-prod": "deploiement",
+    "cockpit:lancer-job": "cron",
 }
 
 
@@ -54,6 +60,48 @@ def categorie_de(geste: str) -> str:
 def gestes_de_categorie(categorie: str) -> list[str]:
     """Les gestes stockés qui tombent dans une catégorie (pour filtrer le journal)."""
     return [g for g, c in GESTE_CATEGORIE.items() if c == categorie] or [categorie]
+
+
+# COCKPIT-1 (Lot E) — LA FAMILLE d'une entrée (en plus des gestes) : les 4 colonnes de L'usine. Pour
+# un passage de JOB (cron / « Lancer maintenant »), la famille est LUE DU REGISTRE (la cible = le nom
+# du job) ; pour les autres gestes, elle découle de la catégorie.
+FAMILLES_JOURNAL = [("veille", "Veille des sources"), ("livraisons", "Livraisons"),
+                    ("moteur", "Le moteur"), ("controle", "Contrôle, clients, sécurité")]
+_CAT_FAMILLE = {
+    "vanne": "veille", "sonde": "veille", "agent": "veille",
+    "calcul": "moteur", "bascule": "moteur", "reconstruction": "moteur", "deploiement": "moteur",
+    "controle": "controle", "filtre": "controle", "cron": "controle",
+}
+_FAM_NUM = {1: "veille", 2: "livraisons", 3: "moteur", 4: "controle"}
+
+
+def famille_de(geste: str, cible: str | None) -> str:
+    """La famille d'une entrée : un job → sa famille au registre ; sinon la famille de sa catégorie."""
+    if geste in ("job", "cockpit:lancer-job") and cible:
+        try:
+            from .jobs import JOBS
+            j = JOBS.get(cible)
+            if j:
+                return _FAM_NUM.get(j.famille, "controle")
+        except Exception:  # noqa: BLE001 — le registre indisponible ne casse pas le journal
+            pass
+    return _CAT_FAMILLE.get(categorie_de(geste), "controle")
+
+
+def gestes_et_jobs_de_famille(famille: str) -> tuple[list[str], list[str]]:
+    """Pour filtrer le journal par famille : les gestes non-job de cette famille + les NOMS de jobs
+    (cibles) de cette famille au registre."""
+    gestes = [g for g in GESTE_CATEGORIE if _CAT_FAMILLE.get(categorie_de(g)) == famille
+              and g not in ("job", "cockpit:lancer-job")]
+    jobs: list[str] = []
+    try:
+        from .jobs import JOBS
+        num = {v: k for k, v in _FAM_NUM.items()}.get(famille)
+        if num:
+            jobs = [n for n, j in JOBS.items() if j.famille == num]
+    except Exception:  # noqa: BLE001
+        pass
+    return gestes, jobs
 
 
 def nouveau_lot() -> str:

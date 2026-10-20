@@ -349,5 +349,8 @@ export const CIRCUIT_CSS = `
 .cxp .cx-prop-rob .chip.retard{border-color:var(--ambre);color:var(--ambre)}
 .cxp .cx-prop-rob .chip.ajour{border-color:var(--line-2);color:var(--muted)}
 .cxp .cx-prop-note{color:var(--muted);font-size:12.5px;line-height:1.4}
+/* COCKPIT-1 (Lot E) — étiquette des deux rangées de filtres du Journal (Famille / Geste) */
+.cxp .jf-lab{color:var(--faint);font-size:11px;margin-right:6px;align-self:center;text-transform:uppercase;letter-spacing:.04em}
+.cxp .jf-fam{margin-bottom:6px}
 @media (max-width:1100px){ .cxp .diagram{grid-template-columns:1fr;column-gap:0} .cxp .diagram svg{display:none} .cxp .pump{position:static;margin:12px 0} .cxp .dg{grid-template-columns:1fr} .cxp .kpis{grid-template-columns:1fr 1fr} .cxp .jl{grid-template-columns:1fr 1fr} .cxp .controles{grid-template-columns:1fr} }
 `

@@ -3495,7 +3495,7 @@ def admin_circuit_revenir(request: Request) -> dict:
 
 
 @router.get("/admin/circuit/journal")
-def admin_circuit_journal(request: Request, type: str = "", depuis: str = "",
+def admin_circuit_journal(request: Request, type: str = "", famille: str = "", depuis: str = "",
                           page: int = 1, taille: int = 50) -> dict:
     """CIRCUIT-P2 (lot 4) — LE JOURNAL LISIBLE : les passages GROUPÉS (un job de filtres sur 39
     sources, une volée d'agents = même `lot`) tiennent sur UNE ligne dépliable ; un geste isolé
@@ -3514,6 +3514,13 @@ def admin_circuit_journal(request: Request, type: str = "", depuis: str = "",
     if type and type != "tous":
         gestes_cat = _cj.gestes_de_categorie(type)
         conds.append("geste = ANY(:gestes)"); params["gestes"] = gestes_cat
+    # COCKPIT-1 (Lot E) — filtre par FAMILLE (les 4 colonnes de L'usine), en plus des gestes : les
+    # gestes non-job de la famille OU un job (cible) de cette famille au registre.
+    if famille and famille != "tous":
+        gestes_f, jobs_f = _cj.gestes_et_jobs_de_famille(famille)
+        conds.append("(geste = ANY(:gestes_f) OR (geste IN ('job','cockpit:lancer-job')"
+                     " AND cible = ANY(:jobs_f)))")
+        params["gestes_f"] = gestes_f; params["jobs_f"] = jobs_f
     if depuis:
         conds.append("ts >= :depuis"); params["depuis"] = depuis
     where = " AND ".join(conds)
@@ -3589,6 +3596,7 @@ def admin_circuit_journal(request: Request, type: str = "", depuis: str = "",
         entrees.append({
             "gk": g["gk"], "n": int(g["n"]),
             "categorie": cat, "categorie_label": _cj.CATEGORIE_LABEL.get(cat, cat),
+            "famille": _cj.famille_de(g["geste"], membs[0]["cible"] if membs else None),
             "geste": g["geste"], "par_nom": _cj.par_nom(g.get("par")),
             "ts": g["ts"].isoformat() if hasattr(g["ts"], "isoformat") else g["ts"],
             "resultat": membs[0]["resultat"] if membs else "ok",
@@ -3600,7 +3608,9 @@ def admin_circuit_journal(request: Request, type: str = "", depuis: str = "",
         })
     return {"entrees": entrees, "page": page, "taille": taille, "total": int(total),
             "aujourdhui": int(aujourdhui),
-            "categories": [{"slug": s, "label": lab} for s, lab in _cj.CATEGORIES]}
+            "categories": [{"slug": s, "label": lab} for s, lab in _cj.CATEGORIES],
+            # COCKPIT-1 (Lot E) — les 4 familles (filtre en plus des gestes).
+            "familles": [{"slug": s, "label": lab} for s, lab in _cj.FAMILLES_JOURNAL]}
 
 
 def _graphe():

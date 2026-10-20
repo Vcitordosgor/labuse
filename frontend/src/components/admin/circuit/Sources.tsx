@@ -6,7 +6,7 @@
 // français et date de décision — rien n'y est masqué. Clic sur une ligne vitrine → page de détail.
 import { useEffect, useMemo, useState } from 'react'
 
-import { getSanteFraicheur } from '../../../lib/api'
+import { getSanteFraicheur, postCockpitReconstruire } from '../../../lib/api'
 import type { Portee } from './Circuit'
 import type { CircuitData, Reservoir } from './types'
 
@@ -174,6 +174,9 @@ function Fraicheur() {
   // QueryClientProvider ; un refetch toutes les 2 min suffit largement pour un état de cache.
   const [data, setData] = useState<Awaited<ReturnType<typeof getSanteFraicheur>> | null>(null)
   const [ouvert, setOuvert] = useState(false)
+  // COCKPIT-1 (Lot E) — « labuse rebuild » (commande de terminal) DISPARAÎT de l'écran : à la place,
+  // un bouton « Reconstruire » qui lance le même geste en tâche de fond (progression dans le Journal).
+  const [recon, setRecon] = useState<'idle' | 'lance'>('idle')
   useEffect(() => {
     let vivant = true
     const lire = () => { getSanteFraicheur().then((d) => { if (vivant) setData(d) }).catch(() => {}) }
@@ -190,8 +193,14 @@ function Fraicheur() {
         {perimes.length === 0
           ? <span style={{ color: 'var(--mint, #1a7f5a)', fontSize: 12 }}>tous à jour</span>
           : <span style={{ color: 'var(--rouge, #c0392b)', fontSize: 12, fontWeight: 600 }}>
-              {perimes.length} périmé{perimes.length > 1 ? 's' : ''} — <code>labuse rebuild</code>
+              {perimes.length} périmé{perimes.length > 1 ? 's' : ''}
             </span>}
+        {perimes.length > 0 && (
+          <button className="btn solid" style={{ fontSize: 11, padding: '2px 10px' }}
+            disabled={recon === 'lance'}
+            onClick={() => { setRecon('lance'); postCockpitReconstruire().catch(() => {}) }}>
+            {recon === 'lance' ? 'Reconstruction lancée' : 'Reconstruire'}
+          </button>)}
         <button className="btn" style={{ fontSize: 11, padding: '1px 8px' }}
           onClick={() => setOuvert((o) => !o)}>{ouvert ? 'replier' : 'détail'}</button>
       </div>
