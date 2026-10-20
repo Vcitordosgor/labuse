@@ -278,7 +278,9 @@ def flash_omnibox_js():
 _FLASH_PIED = (
     'Vendu par LABUSE (CLOSING CREST) · <a href="mailto:contact@labuse.immo">contact@labuse.immo</a><br>'
     'Prix total, sans TVA à ajouter — TVA non applicable, article 293 B du CGI.<br>'
-    "Document d'aide à la décision établi à partir des données publiques. Il ne remplace ni le "
+    # CHASSE-APP-FIX-2 (point 4 J) — la clause nomme LABUSE comme sujet (« LABUSE ne remplace ni… »),
+    # plus « Document d'aide à la décision… Il ne remplace ni… » (sujet flou).
+    "Document d'aide à la décision établi à partir des données publiques. LABUSE ne remplace ni le "
     "certificat d'urbanisme délivré par la mairie, ni le conseil d'un notaire.")
 
 
