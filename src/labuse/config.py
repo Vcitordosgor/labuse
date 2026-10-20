@@ -210,7 +210,7 @@ class Settings(BaseSettings):
     # RETOURS-9 (Q2.4) — dossier des VERROUS de jobs. Défaut DEV repo-local (le VPS pointe /run/lock).
     # Passé au wrapper run-job.sh par « Lancer maintenant » pour que le bouton marche EN LOCAL (le Mac
     # n'a ni /var/log/labuse ni /run/lock écrivables — sinon le job échoue silencieusement).
-    jobs_lock_dir: str = ".local/lock"               # LABUSE_LOCK_DIR
+    jobs_lock_dir: str = ".local/lock"               # LABUSE_JOBS_LOCK_DIR (env_prefix + nom de champ)
     disque_seuil_pct: int = 85                        # K9 — alerte disque au-delà (constante nommée)
     # DISQUE-EXTERNE-1 (14/10) — fraîcheur de la copie hors-VPS sur le disque externe du Mac. Le Mac
     # dépose un marqueur `.copie-externe.json` dans backup_dir après chaque copie vérifiée ; au-delà de

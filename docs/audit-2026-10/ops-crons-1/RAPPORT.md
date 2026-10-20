@@ -121,28 +121,54 @@ l'absence de rafraîchissement PLU relève du dossier fraîcheur/déploiement q_
 
 ---
 
-## Geste unique (répare les six d'un coup) — à faire AVEC go
+## Geste appliqué (20/10, avec go) — répare les six d'un coup
 
-La divergence est sur le **chemin d'état** lu par l'API. Deux voies, même résultat :
+La divergence est sur le **chemin d'état** lu par l'API. **Découverte en cours d'exécution :**
+l'unit `labuse.service` porte **`ProtectHome=true`** (+ `ProtectSystem=full`). Le service tourne
+donc avec **`/home` MASQUÉ** — même sous l'utilisateur `labuse`, l'API ne voit pas
+`/home/labuse/...`. Conséquences :
 
-1. **Recommandé / durable** — déployer `main` (qui contient déjà `_dossiers_jobs_absolus`,
-   ancrage `$HOME`) puis `systemctl restart labuse`. *Mais* `deploy_app.sh` est interdit par ce
-   mandat → geste de Vic hors de cette branche.
+- Pointer l'API sur `/home/labuse/.local/state/jobs` (où les crons écrivent) donne `erreur_lecture`.
+- **Le correctif de code mergé est insuffisant en prod** : `_dossiers_jobs_absolus` ancre les chemins
+  relatifs sur `Path.home()` = `/home/labuse` → même mur `ProtectHome`. Le défaut `Path.home()`
+  convient en DEV (pas de `ProtectHome`) ; en PROD, il FAUT un chemin **absolu hors `/home`**
+  (le validateur laisse tout chemin absolu INCHANGÉ). `/var` reste lisible sous `ProtectSystem=full`.
 
-2. **Pont sans déploiement (dans le périmètre)** — poser dans `/etc/labuse/labuse.env` le chemin
-   **absolu** où les crons écrivent déjà, puis redémarrer l'API :
+**Geste retenu** — chemin d'état neutre `/var/lib/labuse/state/jobs` (hors `/home`, survit aux
+déploiements car `rsync` ne vise que `/opt/labuse/app`) :
+
+1. Copie datée de `/etc/labuse/labuse.env` → `labuse.env.bak-ops-crons-20261020-120953`.
+2. `mkdir -p /var/lib/labuse/state/jobs` (`labuse:labuse`, 775) + **semé** avec les 20 états frais
+   copiés depuis `/home/labuse/.local/state/jobs` → `/healthz/crons` vert immédiatement.
+3. Ajout dans `labuse.env` :
    ```
-   LABUSE_JOBS_STATE_DIR=/home/labuse/.local/state/jobs
+   LABUSE_JOBS_STATE_DIR=/var/lib/labuse/state/jobs
    LABUSE_JOBS_LOG_DIR=/var/log/labuse/jobs
-   LABUSE_LOCK_DIR=/run/lock
+   LABUSE_JOBS_LOCK_DIR=/run/lock   # cf. note lock ci-dessous
    ```
-   `sudo systemctl restart labuse`. `env_prefix=LABUSE_` → le code *actuel* lit ces chemins ; les
-   crons sourcent le même `labuse.env` → convergence immédiate. Chemin absolu = **inchangé** par le
-   futur validateur, donc compatible avec le déploiement (1). Répare aussi le visualiseur de logs admin.
+4. `sudo systemctl restart labuse`.
 
-**Vérification attendue après geste :** `/healthz/crons` → `"ok": true`, `backup-postgres` daté du
-jour (ou 19/10 jusqu'au run de 13:30), et `sonde-sources` / `filtres-sources` / `coherence-robinets` /
-`sync-gpu` en `ok`. **On ne touche ni à la sauvegarde ni aux jobs** — uniquement au chemin de lecture.
+`env_prefix=LABUSE_` → le code *actuel* lit ces chemins ; les crons sourcent le même `labuse.env`
+→ convergence. Chemin absolu = compatible avec le futur déploiement de `main`. Les crons
+continueront d'écrire dans `/var/lib/labuse/state/jobs` (vérifié : `get_settings().jobs_state_dir`
+résolu via le même env = `/var/lib/labuse/state/jobs`).
+
+**Résultat : `/healthz/crons` → `"ok": true`, les 6 crons `ok`, aucun cron en défaut.**
+On n'a touché ni à la sauvegarde ni aux jobs — uniquement au chemin de lecture.
+
+### Note lock — un bug d'intitulé à part
+
+La ligne `LABUSE_LOCK_DIR=…` (recommandée à tort par la note crons-prod et par `labuse.env.example`)
+**ne se lie à rien** : pydantic dérive le nom de l'env du nom du champ (`env_prefix` `LABUSE_` +
+`jobs_lock_dir`) → le bon nom est **`LABUSE_JOBS_LOCK_DIR`**. Le commentaire `# LABUSE_LOCK_DIR` du
+code était faux. `jobs_lock_dir` restait donc au défaut relatif `.local/lock` (status quo, sans
+incidence sur la trace des crons, déjà réparée). Corrigé dans `config.py` (commentaire) et dans
+`labuse.env.example` sur cette branche. ⚠ **À surveiller au déploiement de `main`** : sans
+`LABUSE_JOBS_LOCK_DIR` absolu, `_dossiers_jobs_absolus` ancrera le verrou sur
+`/home/labuse/.local/lock` → masqué par `ProtectHome` → le bouton « Lancer maintenant » échouerait.
+La prod a reçu `LABUSE_JOBS_LOCK_DIR=/run/lock` (hors `/home`) pour prévenir cela — **effectif au
+prochain restart/déploiement** ; le process API courant utilise encore le défaut `.local/lock`
+(sans incidence, le verrou ne sert qu'au bouton « Lancer maintenant »).
 
 ## Détail annexe (hors scope, inerte)
 
