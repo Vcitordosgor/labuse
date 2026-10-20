@@ -1622,7 +1622,9 @@ export function M09() {
             </div>
           )}
 
-          <Retour label="Destinataires" onClick={() => setStep(1)} className="mt-auto" />
+          {/* CHASSE-APP-FIX-2 (point 4 S) — le retour de l'étape 3 (Envoi) mène à l'étape PRÉCÉDENTE
+              (2 · Relecture), plus directement à l'étape 1 : on peut reculer d'un pas. */}
+          <Retour label="Relecture" onClick={() => setStep(2)} className="mt-auto" />
         </div>
       )}
     </div>
