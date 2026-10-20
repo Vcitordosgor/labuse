@@ -333,12 +333,46 @@ def digest(ctx: JobContext) -> None:
     ctx.compte(**{k: r.get(k) for k in ("envoyes", "ignores", "echecs", "simules")})
 
 
+def _sauvegarde_en_cours(nom: str = "backup-postgres") -> bool:
+    """COCKPIT-1 (Lot C, correction A) — la SAUVEGARDE (pg_dump) tient-elle son verrou en ce moment ?
+    On inspecte le MÊME verrou que pose le wrapper run-job.sh pour `backup-postgres` :
+      · Linux (prod) : verrou flock sur `<LOCK_DIR>/labuse-job-backup-postgres.lock` — si on ne peut PAS
+        le prendre en non bloquant, c'est qu'il est tenu (le dump tourne) ;
+      · macOS (dev) : repli mkdir → le dossier `…​.lock.d` existe tant que le dump tourne.
+    Jamais bloquant, jamais une exception qui remonte : en cas de doute on répond False (on envoie)."""
+    lock_dir = os.environ.get("LABUSE_LOCK_DIR", "/run/lock")
+    base = os.path.join(lock_dir, f"labuse-job-{nom}.lock")
+    if os.path.isdir(base + ".d"):           # repli mkdir (macOS) : dossier présent = verrou tenu
+        return True
+    try:
+        import fcntl
+        fd = os.open(base, os.O_RDWR | os.O_CREAT, 0o644)
+    except OSError:
+        return False                         # pas de LOCK_DIR accessible → on n'empêche pas l'envoi
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        fcntl.flock(fd, fcntl.LOCK_UN)       # libre : on a pu le prendre → le dump ne tourne pas
+        return False
+    except OSError:
+        return True                          # verrou tenu → le dump tourne
+    finally:
+        os.close(fd)
+
+
 def mail_queue_consommer(ctx: JobContext) -> None:
     """VEILLE-FIX-2 (Lot D) — LE CONSOMMATEUR DE LA FILE (cron 5 min). Envoie les mails `en_attente` dûs
     (digest différé, programmés J+3/J+10) et rejoue les `a_rejouer` dont l'heure est venue. En dry-run
-    (SMTP absent) : ne fait rien partir (les tentatives échoueraient → on n'appelle pas le worker)."""
+    (SMTP absent) : ne fait rien partir (les tentatives échoueraient → on n'appelle pas le worker).
+
+    COCKPIT-1 (Lot C, correction A) — CÈDE À LA SAUVEGARDE : s'il démarre pendant le pg_dump (verrou
+    de backup-postgres tenu), il SAUTE ce passage proprement (statut ok, ni échec ni alerte) et repart
+    5 min plus tard, hors de la fenêtre du dump — fin de la fausse alerte quotidienne de 13:35, sans
+    jamais ralentir les mails clients (mot de passe, confirmation, invitation)."""
     from .mailfile import consommer, ensure_tables
     from .db import engine
+    if _sauvegarde_en_cours():
+        ctx.compte(traites=0, saute="sauvegarde en cours — passage cédé, reprise dans 5 min")
+        return
     ensure_tables(engine())
     if ctx.dry_run:
         ctx.compte(traites=0, note="dry-run (SMTP absent) — worker non lancé")
@@ -407,6 +441,7 @@ def healthcheck(ctx: JobContext) -> None:
                            f"La sonde /readyz locale dit le service NON prêt : {motif}."))
     else:
         a_resoudre.append("readyz")
+    vigies: dict = {}
     try:
         from .db import session_scope
         with session_scope() as db:
@@ -414,56 +449,33 @@ def healthcheck(ctx: JobContext) -> None:
                 ops_alertes.signaler(db, cle, sujet, detail)
             for cle in a_resoudre:
                 ops_alertes.resoudre(db, cle)
+            # COCKPIT-1 (Lot C, correction D) — recap-matin SUPPRIMÉ : ce sont désormais ces 15 min qui
+            # évaluent les vigies sans point d'appel naturel (sauvegarde absente/rétrécie, copie externe
+            # ancienne, jobs en retard — disque/readyz déjà traités ci-dessus, re-signalés à l'identique,
+            # idempotent). « Les ALERTES restent » : chaque incident part par la porte unique ops_alertes,
+            # SANS mail récap. Jamais bloquant (une vigie qui rate ne casse pas la sonde /health).
+            try:
+                vigies = ops_alertes.verifier_declencheurs(db)
+            except Exception as exc_v:  # noqa: BLE001
+                log.error("healthcheck : vigies (ex recap-matin) impossibles (%s)", exc_v)
             db.commit()
     except Exception as exc:  # noqa: BLE001 — l'alerte qui rate ne casse pas la sonde… mais elle EXISTE
         log.error("healthcheck : alerte ops impossible (%s)", exc)
         for cle, sujet, detail in a_signaler:
             ops_alertes.repli_local(cle, sujet, detail, erreur=f"{type(exc).__name__}: {exc}")
     ctx.compte(health_ok=ok, readyz_ok=ready, readyz_motif=motif,
-               echecs_consecutifs=echecs, disque_pct=pct)
+               echecs_consecutifs=echecs, disque_pct=pct,
+               sauvegarde=(vigies.get("sauvegarde") or {}).get("dernier"),
+               jobs_en_retard=len(vigies.get("retards") or []))
     if not ok and echecs >= 2:
         raise RuntimeError(f"/health injoignable ({echecs} échec(s) consécutif(s))")
 
 
-def recap_matin(ctx: JobContext) -> None:
-    """SOLIDITE-1 (Lot 1.4) — LE RÉCAP DU MATIN : un seul mail. Évalue les vigies (disque, /readyz,
-    sauvegarde, jobs en retard) via la porte unique (ouvre/referme les incidents), puis envoie le point
-    du jour : tout vert en UNE ligne, sinon la liste de ce qui ne va pas. Respecte dry-run."""
-    from . import ops_alertes
-    etat = ops_alertes.verifier_declencheurs(ctx.db)
-    ctx.db.commit()
-    ouverts = etat.get("incidents_ouverts") or []
-    pct = etat.get("disque_pct")
-    sb = etat.get("sauvegarde") or {}
-    ready = (etat.get("readyz") or {}).get("ready")
-    ce = etat.get("copie_externe") or {}
-    copie_ext = ce.get("derniere") or "jamais"            # date de la dernière copie hors-VPS (disque Mac)
-    ligne_vigies = (
-        f"Disque {pct}% · /readyz {'prêt' if ready else 'PAS prêt'} · "
-        f"sauvegarde {sb.get('dernier','absente')}"
-        + (f" ({sb.get('taille_mo')} Mo)" if sb.get("taille_mo") else "")
-        + f" · copie externe {copie_ext}"
-        + f" · {len(etat.get('retards') or [])} job(s) en retard")
-    date_run = datetime.now(timezone.utc).astimezone().strftime("%d/%m")
-    # Le sujet porte LA DATE : identique chaque jour, Gmail regroupait/repliait le récap (incident
-    # 14/10 : « récap non reçu » alors que Brevo l'avait livré). Un sujet daté unique le fait ressortir.
-    if not ouverts:
-        sujet = f"[LABUSE] récap du matin {date_run} — tout vert"
-        corps = (f"RÉCAP D'EXPLOITATION — {date_run}\n\n"
-                 f"✓ Tout vert. {ligne_vigies}.\n\n— LABUSE, exploitation")
-    else:
-        sujet = f"[LABUSE] récap du matin {date_run} — {len(ouverts)} souci(s)"
-        lignes = []
-        for inc in ouverts:
-            rap = f" · {inc['rappels']} rappel(s)" if inc.get("rappels") else ""
-            lignes.append(f"  • {inc['sujet']} (depuis {inc['ouvert_at'][:16]}{rap})")
-        corps = (f"RÉCAP D'EXPLOITATION — {date_run}\n\n"
-                 f"⚠ {len(ouverts)} incident(s) ouvert(s) :\n" + "\n".join(lignes)
-                 + f"\n\nÉtat des vigies : {ligne_vigies}.\n\n— LABUSE, exploitation")
-    _envoyer_alerte(corps, sujet=sujet, ctx=ctx)
-    ctx.compte(incidents_ouverts=len(ouverts), disque_pct=pct, readyz_ok=bool(ready),
-               jobs_en_retard=len(etat.get("retards") or []),
-               sauvegarde=sb.get("dernier"), copie_externe=copie_ext)
+# COCKPIT-1 (Lot C, correction D) — `recap_matin` RETIRÉ : le mail récap de 07:30 est supprimé (Vic
+# ne le veut plus). Les vigies qu'il évaluait (disque, /readyz, sauvegarde, copie externe, jobs en
+# retard) sont désormais évaluées par `healthcheck` (toutes les 15 min) via
+# `ops_alertes.verifier_declencheurs` → chaque incident part par la porte unique (mail Brevo + cloche),
+# SANS mail récap. « Les ALERTES restent ». Le site en panne reste couvert par /health (healthcheck).
 
 
 def sante_endpoints(ctx: JobContext) -> None:

@@ -81,11 +81,9 @@ def accueil_chiffres(db: Session = Depends(get_db)) -> dict:
         # (~2 s mesuré sur la base réelle). Repli sur le count vif si le registre ne connaît pas le run.
         "parcelles": compte_parcelles_ile(db, runs.current()),
         "communes": one("SELECT count(DISTINCT commune) FROM parcels"),
-        # M71 F / M87 P0 : UN SEUL chiffre partout — définition CANONIQUE des sources affichées
-        # (`sources_catalog.WHERE_AFFICHEES` : connecte, hors DOUBLON, hors masquées). accueil ET
-        # /sources lisent d'ici. Dynamique, aucun chiffre en dur. (Office de l'eau masquée → 50.)
-        "sources": one(f"SELECT count(*) FROM data_sources WHERE {_srccat.WHERE_AFFICHEES}",
-                       {"masquees": _srccat.masquees_param()}),
+        # COCKPIT-1b (point 6) — UN SEUL compteur partout : `sources_catalog.compter_vitrine` (99).
+        # accueil (site public), /sources (app) et le badge du dashboard admin branchent dessus.
+        "sources": _srccat.compter_vitrine(db),
         # ── bloc 2 · « Je ne devine pas » ──
         "ventes_train": one(
             "SELECT count(*) FROM p_model_ext_dataset WHERE label_l2 = 1 AND annee BETWEEN :a AND :b",

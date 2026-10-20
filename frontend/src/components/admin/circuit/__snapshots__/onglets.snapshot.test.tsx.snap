@@ -17,19 +17,14 @@ exports[`snapshots des onglets > Journal 1`] = `
     class="jf"
   >
     <button
-      class=""
-    >
-      vanne
-    </button>
-    <button
-      class=""
-    >
-      cron
-    </button>
-    <button
       class="on"
     >
-      tous
+      Tout
+    </button>
+    <button
+      class=""
+    >
+      Échecs seulement
     </button>
   </div>
   <div

@@ -1,0 +1,94 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# GÉNÉRÉ depuis le registre labuse.jobs (CRON-1) — NE PAS ÉDITER À LA MAIN.
+#   deploy.sh régénère et refuse tout écart. Heures en Réunion.
+# ─────────────────────────────────────────────────────────────────────────────
+SHELL=/bin/sh
+MAILTO=""
+PATH=/opt/labuse/venv/bin:/usr/local/bin:/usr/bin:/bin
+
+# quotidien · 07:00 Réunion · eau — Sonde des sources amont — détecte une nouvelle version, n'ingère pas
+0 7 * * *   labuse  sh -c 'set -a; . /etc/labuse/labuse.env; set +a; exec /opt/labuse/venv/bin/labuse jobs run sonde-sources'
+
+# tous les 15 j (dim) · 23:00 dim Réunion · eau — Agents de source (veille amont par IA) — le dimanche, 1 semaine sur 2, plafonné
+0 23 * * 0   labuse  sh -c 'set -a; . /etc/labuse/labuse.env; set +a; exec /opt/labuse/venv/bin/labuse jobs run agents-sources'
+
+# quotidien · 07:05 Réunion · eau — Filtres des sources : rejoue les contrôles qualité sur les versions servies
+5 7 * * *   labuse  sh -c 'set -a; . /etc/labuse/labuse.env; set +a; exec /opt/labuse/venv/bin/labuse jobs run filtres-sources'
+
+# quotidien · 07:25 Réunion · eau — Sonde du circuit : fuites entre robinets + eau ancienne (tampons)
+25 7 * * *   labuse  sh -c 'set -a; . /etc/labuse/labuse.env; set +a; exec /opt/labuse/venv/bin/labuse jobs run coherence-robinets'
+
+# quotidien · 06:40 Réunion · eau — BODACC quotidien (procédures collectives) + chaîne des dérivés légers
+40 6 * * *   labuse  sh -c 'set -a; . /etc/labuse/labuse.env; set +a; exec /opt/labuse/venv/bin/labuse jobs run ingest-bodacc'
+
+# mensuel (10) · 04:30 le 10 Réunion · eau — Permis SITADEL → événements de veille foncière + golden candidat
+30 4 10 * *   labuse  sh -c 'set -a; . /etc/labuse/labuse.env; set +a; exec /opt/labuse/venv/bin/labuse jobs run ingest-sitadel'
+
+# mensuel (12) · 04:00 le 12 Réunion · eau — DPE ADEME mensuel
+0 4 12 * *   labuse  sh -c 'set -a; . /etc/labuse/labuse.env; set +a; exec /opt/labuse/venv/bin/labuse jobs run ingest-dpe'
+
+# mensuel (7) · 04:00 le 7 Réunion · eau — SIRENE mensuel (refresh des concurrents géolocalisés)
+0 4 7 * *   labuse  sh -c 'set -a; . /etc/labuse/labuse.env; set +a; exec /opt/labuse/venv/bin/labuse jobs run ingest-sirene'
+
+# mensuel (15) · 04:00 le 15 Réunion · eau — Diff PLU des 24 communes → événements de veille foncière + bandeau PLU
+0 4 15 * *   labuse  sh -c 'set -a; . /etc/labuse/labuse.env; set +a; exec /opt/labuse/venv/bin/labuse jobs run sync-gpu'
+
+# hebdo (mar) · 05:00 mardi Réunion · eau — DVF — recharge à la nouvelle livraison Etalab
+0 5 * * 2   labuse  sh -c 'set -a; . /etc/labuse/labuse.env; set +a; exec /opt/labuse/venv/bin/labuse jobs run ingest-dvf'
+
+# quotidien · 13:30 Réunion · exploitation — Sauvegarde PostgreSQL (dump + rotation, 4 conservés)
+30 13 * * *   labuse  sh -c 'set -a; . /etc/labuse/labuse.env; set +a; exec /opt/labuse/venv/bin/labuse jobs run backup-postgres'
+
+# hebdo (dim) · 04:00 dim Réunion · exploitation — VACUUM ANALYZE des tables chaudes
+0 4 * * 0   labuse  sh -c 'set -a; . /etc/labuse/labuse.env; set +a; exec /opt/labuse/venv/bin/labuse jobs run pg-maintenance'
+
+# 15 min · toutes les 15 min Réunion · exploitation — Sonde /health locale + espace disque (2 échecs → alerte)
+*/15 * * * *   labuse  sh -c 'set -a; . /etc/labuse/labuse.env; set +a; exec /opt/labuse/venv/bin/labuse jobs run healthcheck'
+
+# 15 min · toutes les 30 min Réunion · exploitation — Sonde endpoints métier (accueil/sources/fiche/radar/projets/ask) avec DB
+7,37 * * * *   labuse  sh -c 'set -a; . /etc/labuse/labuse.env; set +a; exec /opt/labuse/venv/bin/labuse jobs run sante-endpoints'
+
+# quotidien · 03:30 Réunion · exploitation — Copilote — purge des conversations au-delà de la rétention (défaut 7 j)
+30 3 * * *   labuse  sh -c 'set -a; . /etc/labuse/labuse.env; set +a; exec /opt/labuse/venv/bin/labuse jobs run copilote-purge'
+
+# quotidien · 10:00 Réunion · exploitation — Détection d'abus (usage anormal / partage de compte)
+0 10 * * *   labuse  sh -c 'set -a; . /etc/labuse/labuse.env; set +a; exec /opt/labuse/venv/bin/labuse jobs run abuse-scan'
+
+# quotidien · 08:00 Réunion · exploitation — Purge des sessions d'authentification expirées
+0 8 * * *   labuse  sh -c 'set -a; . /etc/labuse/labuse.env; set +a; exec /opt/labuse/venv/bin/labuse jobs run purge-sessions'
+
+# quotidien · 07:05 Réunion · exploitation — Radar — annonces du jour qui matchent une veille → cloche (avant le digest)
+# GELÉ (Phase 8 Stéphanie) 5 7 * * *   labuse  sh -c 'set -a; . /etc/labuse/labuse.env; set +a; exec /opt/labuse/venv/bin/labuse jobs run radar-cloche'
+
+# quotidien · 04:00 Réunion · exploitation — Radar — cycle de vie quotidien (expirées / en-vente-longue / à-revérifier)
+# GELÉ (Phase 8 Stéphanie) 0 4 * * *   labuse  sh -c 'set -a; . /etc/labuse/labuse.env; set +a; exec /opt/labuse/venv/bin/labuse jobs run radar-cycle'
+
+# quotidien · 04:30 Réunion · exploitation — Radar — rapprochement DVF (bien rattaché Sourcé + vente → vendue)
+# GELÉ (Phase 8 Stéphanie) 30 4 * * *   labuse  sh -c 'set -a; . /etc/labuse/labuse.env; set +a; exec /opt/labuse/venv/bin/labuse jobs run radar-cycle-dvf'
+
+# mensuel (1er) · 05:30 le 1er Réunion · exploitation — Radar — qualification mensuelle retiree_sans_vente (cible Courrier)
+# GELÉ (Phase 8 Stéphanie) 30 5 1 * *   labuse  sh -c 'set -a; . /etc/labuse/labuse.env; set +a; exec /opt/labuse/venv/bin/labuse jobs run radar-cycle-mensuel'
+
+# quotidien · 07:02 Réunion · exploitation — Veille — parcelles suivies (mutation/permis/BODACC/zonage SUR la parcelle)
+2 7 * * *   labuse  sh -c 'set -a; . /etc/labuse/labuse.env; set +a; exec /opt/labuse/venv/bin/labuse jobs run evaluer-suivis'
+
+# quotidien · 07:04 Réunion · exploitation — Veille — bascules du marché (diff du run servi et du précédent)
+4 7 * * *   labuse  sh -c 'set -a; . /etc/labuse/labuse.env; set +a; exec /opt/labuse/venv/bin/labuse jobs run detect-events'
+
+# quotidien · 07:15 Réunion · exploitation — Veille — DIGEST du matin (UN mail par compte : suivis + Radar + nouveautés)
+# GELÉ (Phase 8 Stéphanie) 15 7 * * *   labuse  sh -c 'set -a; . /etc/labuse/labuse.env; set +a; exec /opt/labuse/venv/bin/labuse jobs run digest'
+
+# 5 min · toutes les 5 min Réunion · exploitation — File des mails — envoie les dûs + rejoue les échecs transitoires
+*/5 * * * *   labuse  sh -c 'set -a; . /etc/labuse/labuse.env; set +a; exec /opt/labuse/venv/bin/labuse jobs run mail-queue-consommer'
+
+# quotidien · 03:00 Réunion · exploitation — Fiche commune — précalcul nocturne du contexte (24 communes)
+0 3 * * *   labuse  sh -c 'set -a; . /etc/labuse/labuse.env; set +a; exec /opt/labuse/venv/bin/labuse jobs run fiche-commune-cache'
+
+# quotidien · 03:45 Réunion · exploitation — Banc de cohérence nocturne — chaque notion, tous ses lecteurs (île)
+45 3 * * *   labuse  sh -c 'set -a; . /etc/labuse/labuse.env; set +a; exec /opt/labuse/venv/bin/labuse jobs run coherence-banc'
+
+# mensuel (15) · 06:00 le 15 Réunion · exploitation — Vérité sources — 20 parcelles au hasard confrontées aux sources officielles en ligne
+0 6 15 * *   labuse  sh -c 'set -a; . /etc/labuse/labuse.env; set +a; exec /opt/labuse/venv/bin/labuse jobs run verite-sources'
+
+# mensuel (1er) · 06:00 le 1er Réunion · exploitation — Instantané mensuel du Signal servi (fige la prédiction datée, mesurable forward)
+0 6 1 * *   labuse  sh -c 'set -a; . /etc/labuse/labuse.env; set +a; exec /opt/labuse/venv/bin/labuse jobs run signal-instantane'

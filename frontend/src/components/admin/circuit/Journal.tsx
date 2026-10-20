@@ -43,13 +43,17 @@ const quand = (ts: string) =>
 
 export function Journal({ data, onOpen, onAujourdhui }:
   { data: CircuitData; onOpen: Ouvrir; onAujourdhui?: (n: number) => void }) {
-  const [type, setType] = useState('')     // '' = tous
+  // COCKPIT-1b (retour recette, point 2) — UNE seule rangée de filtres : '' = Tout · une famille ·
+  // 'echecs' = Échecs seulement. Plus de rangée « Geste ».
+  const [filtre, setFiltre] = useState('')
   const [page, setPage] = useState(1)
   const [ouverts, setOuverts] = useState<Record<string, boolean>>({})
   const taille = 50
   const q = useQuery({
-    queryKey: ['circuit-journal', type, page],
-    queryFn: () => getAdminCircuitJournal({ type: type || undefined, page, taille }),
+    queryKey: ['circuit-journal', filtre, page],
+    queryFn: () => getAdminCircuitJournal({
+      famille: filtre && filtre !== 'echecs' ? filtre : undefined,
+      echecs: filtre === 'echecs' ? true : undefined, page, taille }),
   })
 
   useEffect(() => { if (q.data && onAujourdhui) onAujourdhui(q.data.aujourdhui) }, [q.data, onAujourdhui])
@@ -65,8 +69,7 @@ export function Journal({ data, onOpen, onAujourdhui }:
           : rob.has(cible) ? { type: 'robinet', id: rob.get(cible)! } : null
   }, [data])
 
-  // filtres = la liste FIXE des catégories (backend), « tous » d'abord, présents même vides.
-  const cats: { slug: string; label: string }[] = q.data?.categories || []
+  const familles: { slug: string; label: string }[] = q.data?.familles || []
   const entrees = q.data?.entrees || []
   const total = q.data?.total || 0
   const pages = Math.max(1, Math.ceil(total / taille))
@@ -82,13 +85,14 @@ export function Journal({ data, onOpen, onAujourdhui }:
 
   return (
     <div>
-      {/* CIRCUIT-P7 (lot 5) — « tous » EN DERNIER à droite (règle des filtres, comme Sources). */}
+      {/* COCKPIT-1b (point 2) — UNE seule rangée : Tout · les 4 familles · Échecs seulement. */}
       <div className="jf">
-        {cats.map((cat) => (
-          <button key={cat.slug} className={type === cat.slug ? 'on' : ''}
-            onClick={() => { setType(cat.slug); setPage(1) }}>{cat.label}</button>
+        <button className={filtre === '' ? 'on' : ''} onClick={() => { setFiltre(''); setPage(1) }}>Tout</button>
+        {familles.map((f) => (
+          <button key={f.slug} className={filtre === f.slug ? 'on' : ''}
+            onClick={() => { setFiltre(f.slug); setPage(1) }}>{f.label}</button>
         ))}
-        <button className={type === '' ? 'on' : ''} onClick={() => { setType(''); setPage(1) }}>tous</button>
+        <button className={filtre === 'echecs' ? 'on' : ''} onClick={() => { setFiltre('echecs'); setPage(1) }}>Échecs seulement</button>
       </div>
       <div className="jl h"><span>quand</span><span>geste</span><span>cible</span><span>par</span><span>résultat</span></div>
       {q.isLoading ? <div className="muted" style={{ padding: 12 }}><Chargement variant="bloc" /></div>

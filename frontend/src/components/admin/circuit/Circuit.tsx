@@ -7,22 +7,25 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 
 import {
-  getAdminCircuit, getAdminCircuitTaches, getAdminCoherence, getSourcesParElement, postAdminCircuitAgents,
-  postAdminCircuitSonder, postAdminCircuitVerifier,
+  getAdminCircuit, getAdminCircuitTaches, getSourcesParElement, postAdminCircuitAgents,
+  postAdminCircuitSonder, postAdminCircuitVerifier, postCockpitInjecter,
 } from '../../../lib/api'
 
 import { DestinationsDetail } from '../Destinations'
 
-import { AFaire } from './AFaire'
 import { CircuitDiagram } from './CircuitDiagram'
 import { Detail as DetailPage } from './Detail'
 import { ecrireCx, parseCx } from './hash'
 import { Journal } from './Journal'
 import { Sources } from './Sources'
 import { CIRCUIT_CSS } from './style'
-import { focusDeCible, type AFaireLigne, type Cible, type CircuitData } from './types'
+import { TableauDeBord } from './TableauDeBord'
+import { Usine } from './Usine'
+import { type CircuitData } from './types'
 
-type Onglet = 'todo' | 'sources' | 'circuit' | 'journal' | 'coherence'
+// COCKPIT-1b (retour recette) — « L'usine » devient un ONGLET à part entière (plus de page cachée
+// derrière « Voir l'usine ») : Tableau de bord · Usine · Sources · Circuit · Journal.
+type Onglet = 'tableau' | 'usine' | 'sources' | 'circuit' | 'journal'
 // CIRCUIT-P5 — « destinations » : le détail du calibrage PLU par commune (composant Destinations),
 // atteint depuis la page de détail de la source GPU (plus par un lien en bas de la page).
 type DetailType = 'reservoir' | 'robinet' | 'pompe' | 'compteur' | 'destinations'
@@ -36,7 +39,7 @@ const quandCourt = (iso?: string | null) =>
 export function CircuitSection() {
   const qc = useQueryClient()
   const q = useQuery({ queryKey: ['admin-circuit'], queryFn: getAdminCircuit, refetchInterval: 60_000 })
-  const [onglet, setOnglet] = useState<Onglet>('todo')
+  const [onglet, setOnglet] = useState<Onglet>('tableau')
   const [detail, setDetail] = useState<Detail>(null)
   const [srcDetail, setSrcDetail] = useState<number | null>(null)   // CIRCUIT-P7 (lot 2) — la fiche source (page Sources)
   const [groupe, setGroupe] = useState<(number | string)[] | null>(null)
@@ -67,6 +70,11 @@ export function CircuitSection() {
   const sonder = useMutation({
     mutationFn: () => postAdminCircuitSonder(),
     onSuccess: () => { setMsgLocal(null); setFerme(null); taches.refetch() },
+  })
+  // COCKPIT-1 (Lot D) — « Injecter » depuis le bandeau de propagation du Circuit.
+  const injecterProp = useMutation({
+    mutationFn: (sourceId: number) => postCockpitInjecter([sourceId]),
+    onSuccess: () => { setMsgLocal('Injection lancée — suivi dans le Journal.'); qc.invalidateQueries({ queryKey: ['admin-circuit'] }) },
   })
   const agents = useMutation({
     mutationFn: (arg?: { portee?: Portee; sourceId?: number }) => postAdminCircuitAgents(arg),
@@ -108,12 +116,6 @@ export function CircuitSection() {
     if (suivant !== window.location.hash) window.history.replaceState(null, '', suivant || window.location.pathname + window.location.search)
   }, [detail])
 
-  const allerVersCircuit = (c: Cible) => {
-    const f = focusDeCible(c)
-    if (f?.kind === 'detail') { setDetail({ type: f.type, id: f.id }); setGroupe(null) }
-    else if (f?.kind === 'groupe') { setGroupe(f.ids); setDetail(null) }
-    setOnglet('circuit')
-  }
   const ouvrirDetail = (type: DetailType, id: number | string) => {
     setDetail({ type, id }); setGroupe(null); setSrcDetail(null); setOnglet('circuit')
   }
@@ -122,14 +124,6 @@ export function CircuitSection() {
   // reste dans l'onglet Sources (retour « ← Sources », Échap). Un clic vers un robinet depuis la
   // fiche bascule sur Circuit (ouvrirDetail, qui referme la fiche source).
   const ouvrirSource = (sid: number) => { setSrcDetail(sid); setOnglet('sources') }
-
-  // CIRCUIT-P4 (lot 2) — un geste de l'onglet « À faire » ROUTE vers l'endroit où il se fait.
-  const gesteAFaire = (l: AFaireLigne) => {
-    if (l.type === 'calculer' || l.type === 'basculer') { ouvrirDetail('pompe', 'pompe'); return }
-    if (l.ghost && (l.type === 'injecter' || l.type === 'deposer')) { /* voir la source */ }
-    if (l.cible) allerVersCircuit(l.cible)
-    else ouvrirDetail('compteur', 'compteur')
-  }
 
   if (q.isLoading) return <div className="cxp"><style>{CIRCUIT_CSS}</style><div className="muted">Circuit — chargement…</div></div>
   if (!d) return <div className="cxp"><style>{CIRCUIT_CSS}</style><div className="muted">Circuit indisponible.</div></div>
@@ -153,18 +147,16 @@ export function CircuitSection() {
           l'en-tête générique d'AdminView (commun à toutes les sections admin). Doublon retiré : seul
           l'en-tête d'AdminView porte désormais le titre. On garde directement les quatre onglets. */}
       <div className="tabs">
-        <button className={onglet === 'todo' ? 'on' : ''} onClick={() => setOnglet('todo')}>
-          À faire{d.a_faire?.total ? <span className="n">{d.a_faire.total}</span> : ''}
-        </button>
+        {/* COCKPIT-1b — Tableau de bord · Usine · Sources · Circuit · Journal. */}
+        <button className={onglet === 'tableau' ? 'on' : ''} onClick={() => setOnglet('tableau')}>Tableau de bord</button>
+        <button className={onglet === 'usine' ? 'on' : ''} onClick={() => setOnglet('usine')}>Usine</button>
         <button className={onglet === 'sources' ? 'on' : ''} onClick={() => setOnglet('sources')}>
-          Sources{d.etats_sources?.total ? <span className="n neutre">{d.etats_sources.total}</span> : ''}
+          Sources{d.etats_sources?.vitrine ? <span className="n neutre">{d.etats_sources.vitrine}</span> : ''}
         </button>
         <button className={onglet === 'circuit' ? 'on' : ''} onClick={() => setOnglet('circuit')}>Circuit</button>
         <button className={onglet === 'journal' ? 'on' : ''} onClick={() => setOnglet('journal')}>
           Journal{nJour ? <span className="n neutre">{nJour}</span> : ''}
         </button>
-        {/* COHERENCE-FIX-1 (lot G) — le banc nocturne a sa fenêtre. */}
-        <button className={onglet === 'coherence' ? 'on' : ''} onClick={() => setOnglet('coherence')}>Cohérence</button>
       </div>
 
       {barre && (
@@ -175,8 +167,12 @@ export function CircuitSection() {
         </div>
       )}
 
-      <section className={`tab ${onglet === 'todo' ? 'on' : ''}`}>
-        <AFaire data={d} onGeste={gesteAFaire} onOuvrirSources={() => setOnglet('sources')} />
+      <section className={`tab ${onglet === 'tableau' ? 'on' : ''}`}>
+        <TableauDeBord data={d} onVoirUsine={() => setOnglet('usine')} onDepotManuel={() => setOnglet('sources')} />
+      </section>
+
+      <section className={`tab ${onglet === 'usine' ? 'on' : ''}`}>
+        {onglet === 'usine' && <Usine data={d} />}
       </section>
 
       <section className={`tab ${onglet === 'sources' ? 'on' : ''}`}>
@@ -201,7 +197,7 @@ export function CircuitSection() {
             <div className="cx-verif-res">
               {tv?.etat === 'en_cours'
                 ? <span className="muted">{tv.message || 'Contrôle en cours…'}</span>
-                : <ResultatControle d={d} tv={tv} onAfaire={() => setOnglet('todo')} />}
+                : <ResultatControle d={d} tv={tv} onAfaire={() => setOnglet('tableau')} />}
             </div>
           </div>
         )}
@@ -210,83 +206,34 @@ export function CircuitSection() {
           ? (detail.type === 'destinations'
             ? <DestinationsDetail onBack={fermerDetail} />
             : <DetailPage type={detail.type} id={detail.id} data={d} onClose={fermerDetail} onOpen={ouvrirDetail} />)
-          : <CircuitDiagram data={d} groupe={groupe} onOpen={ouvrirDetail} elements={elements} />}
+          : <CircuitDiagram data={d} groupe={groupe} onOpen={ouvrirDetail} elements={elements}
+              onInjecter={(id) => injecterProp.mutate(id)} />}
       </section>
 
       <section className={`tab ${onglet === 'journal' ? 'on' : ''}`}>
         <Journal data={d} onOpen={ouvrirDetail} onAujourdhui={setNJour} />
       </section>
-
-      {/* COHERENCE-FIX-1 (lot G) — l'onglet Cohérence : les passages du banc nocturne. */}
-      <section className={`tab ${onglet === 'coherence' ? 'on' : ''}`}>
-        {onglet === 'coherence' && <Coherence />}
-      </section>
     </div>
   )
 }
 
-// COHERENCE-FIX-1 (lot G) — les derniers passages du banc de cohérence (job coherence-banc,
-// labuse coherence) : écarts par gravité, erreurs lecteur (banc illisible ≠ banc vert), golden.
-function Coherence() {
-  const q = useQuery({ queryKey: ['admin-coherence'], queryFn: getAdminCoherence })
-  if (q.isLoading) return <div className="muted">Cohérence — chargement…</div>
-  const d = q.data
-  if (!d) return <div className="muted">Cohérence indisponible.</div>
-  const passages: any[] = d.passages ?? []
-  return (
-    <div>
-      <p className="muted" style={{ margin: '6px 0 10px', fontSize: 12 }}>
-        Le banc rejoue chaque nuit chaque notion sur TOUS ses lecteurs (fiche, SQL, tuiles, outils)
-        et compare à la tolérance près. Golden posés : <b>{d.golden_temoins}</b> témoin{d.golden_temoins > 1 ? 's' : ''}.
-        {' '}Commande : <code>{d.commande}</code>
-      </p>
-      {passages.length === 0
-        ? <p className="muted">Aucun passage journalisé — le job « coherence-banc » tourne à 03:45, ou <code>labuse coherence</code> à la main.</p>
-        : (
-          <div className="svt">
-            <div className="svt-h" style={{ gridTemplateColumns: '1.2fr 0.7fr 0.7fr 0.9fr 0.9fr 0.9fr 0.9fr' }}>
-              <div>Passage</div><div>Mode</div><div>Écarts</div><div>Faux-client</div>
-              <div>Incohérent</div><div>Tolérable</div><div>Erreurs lecteur</div>
-            </div>
-            {passages.map((p, i) => (
-              <div className="svt-r" key={i} style={{ gridTemplateColumns: '1.2fr 0.7fr 0.7fr 0.9fr 0.9fr 0.9fr 0.9fr', cursor: 'default' }}>
-                <div>{new Date(p.ts).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</div>
-                <div>{p.mode}</div>
-                <div>{p.n_ecarts}</div>
-                <div style={{ color: p.faux_client ? 'var(--rouge, #c0392b)' : 'inherit', fontWeight: p.faux_client ? 600 : 400 }}>{p.faux_client}</div>
-                <div>{p.incoherent}</div>
-                <div>{p.tolerable}</div>
-                <div style={{ color: p.erreurs_lecteur > 100 ? 'var(--ambre, #b8860b)' : 'inherit' }}>{p.erreurs_lecteur}</div>
-              </div>
-            ))}
-          </div>
-        )}
-      <p className="muted" style={{ marginTop: 8, fontSize: 11 }}>Détail du dernier passage : <code>{d.fichier_ecarts}</code></p>
-    </div>
-  )
-}
-
-// CIRCUIT-P7 (lot 1) — le résultat du dernier contrôle, écrit sous le bouton « Vérifier ». Il lit
-// la dernière ligne de contrôle (fuites/eau) et la synthèse des verrous (n/N) — jamais un recompte
-// au front — et renvoie vers « À faire » où chaque problème a sa ligne.
+// COCKPIT-1b (retour recette, point 3) — UNE seule phrase sous « Vérifier que tout coule » : « Tout
+// coule » ou « N fuite(s) → voir » (lien vers le Tableau de bord). Plus de compteurs eau ancienne /
+// verrous ici (ils vivent dans le Tableau de bord et l'Usine), plus de lien « voir dans À faire »
+// (l'onglet a disparu). Jamais un recompte au front — on lit la dernière ligne de contrôle.
 function ResultatControle({ d, tv, onAfaire }:
   { d: CircuitData; tv: any; onAfaire: () => void }) {
   const c: any = d.dernier_controle
-  const verrousTot = d.compteurs_coherence?.verrous ?? 22
-  const casses = (d as any).verrous?.casses?.length ?? 0
-  const verrousOk = verrousTot - casses
   if (!c && tv?.etat !== 'termine') return <span className="muted">Pas encore de contrôle. Lance-le.</span>
   const fuites = tv?.resultat?.fuites_ouvertes ?? c?.fuites_ouvertes ?? 0
-  const eau = tv?.resultat?.eau_ancienne_ouverte ?? c?.eau_ancienne ?? 0
   const ts = tv?.etat === 'termine' ? (tv.maj || tv.fin) : c?.ts
-  const souci = fuites > 0 || casses > 0
   return (
     <>
-      <span className="muted">Dernier contrôle {quandCourt(ts)} —</span>{' '}
-      <b className={fuites ? 'r' : ''}>{fuites} fuite{fuites > 1 ? 's' : ''}</b>{' · '}
-      <b>{eau} eau ancienne</b>{' · '}
-      <b className={casses ? 'r' : ''}>verrous {verrousOk}/{verrousTot}</b>
-      {souci && <>{' — '}<button className="lienc" onClick={onAfaire}>voir dans À faire</button></>}
+      <span className="muted">Dernier contrôle {quandCourt(ts)} — </span>
+      {fuites > 0
+        ? <><b className="r">{fuites} fuite{fuites > 1 ? 's' : ''}</b>{' '}
+            <button className="lienc" onClick={onAfaire}>→ voir</button></>
+        : <b>Tout coule.</b>}
     </>
   )
 }

@@ -68,24 +68,23 @@ def test_vigie_absente_recente_puis_ancienne(db_session, tmp_path, monkeypatch):
     assert "branche le disque" in inc["copie-externe-ancienne"]["sujet"].lower()
 
 
-def test_recap_affiche_la_copie_externe(db_session, tmp_path, monkeypatch):
-    """Le récap du matin porte la date de la dernière copie externe dans la ligne des vigies."""
-    from labuse import jobs_impl
+def test_vigie_copie_externe_par_son_propre_chemin(db_session, tmp_path, monkeypatch):
+    """COCKPIT-1 (Lot C, corr. D) — le récap du matin est SUPPRIMÉ, mais la vigie « copie externe »
+    PART TOUJOURS par la porte unique ops_alertes (verifier_declencheurs, désormais appelé par
+    healthcheck). Copie récente → date connue, pas d'incident ; copie trop vieille → « branche le disque »."""
+    from sqlalchemy import text
     ops_alertes.ensure_table(db_session)
     s = config.get_settings()
     monkeypatch.setattr(s, "backup_dir", str(tmp_path))
+
+    # copie récente (1 j) → connue, pas d'incident copie-externe
     quand = _ecrire_marqueur(tmp_path, age_j=1)
+    db_session.execute(text("DELETE FROM ops_incidents WHERE cle='copie-externe-ancienne'"))
+    out = ops_alertes.verifier_declencheurs(db_session)
+    assert out["copie_externe"]["derniere"] == quand.astimezone().strftime("%d/%m")
+    assert all(i["cle"] != "copie-externe-ancienne" for i in ops_alertes.incidents_ouverts(db_session))
 
-    capte = {}
-    monkeypatch.setattr(jobs_impl, "_envoyer_alerte",
-                        lambda corps, **kw: capte.update(corps=corps, sujet=kw.get("sujet", "")))
-
-    class _Ctx:
-        db = db_session
-        dry_run = True
-        def compte(self, **kw): capte.setdefault("compte", {}).update(kw)
-
-    jobs_impl.recap_matin(_Ctx())
-    attendu = quand.astimezone().strftime("%d/%m")
-    assert f"copie externe {attendu}" in capte["corps"]
-    assert capte["compte"]["copie_externe"] == attendu
+    # copie trop vieille (20 j > seuil 10) → l'alerte « branche le disque » PART par son propre chemin
+    _ecrire_marqueur(tmp_path, age_j=20)
+    ops_alertes.verifier_declencheurs(db_session)
+    assert any(i["cle"] == "copie-externe-ancienne" for i in ops_alertes.incidents_ouverts(db_session))

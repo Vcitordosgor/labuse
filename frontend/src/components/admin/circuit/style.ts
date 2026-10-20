@@ -256,5 +256,101 @@ export const CIRCUIT_CSS = `
 .cxp .clegend .sw{margin-left:auto}
 .cxp .si-results{margin-bottom:14px}
 .cxp .node.masque{display:none}
+/* ══ COCKPIT-1 (Lot A) — le Tableau de bord : 3 sections, cartes PAR PROBLÈME ══ */
+.cxp .ck{max-width:1000px}
+.cxp .ck-sect{margin:0 0 34px}
+.cxp .ck-head{display:flex;align-items:baseline;gap:12px;margin:0 0 14px}
+.cxp .ck-head h2{margin:0;font-size:21px;font-weight:650;letter-spacing:-.02em}
+.cxp .ck-head .sub{color:var(--muted);font-size:13px}
+.cxp .ck-head .right{margin-left:auto}
+.cxp .ck-card{display:grid;grid-template-columns:22px 1fr auto;gap:0 14px;align-items:center;padding:16px 18px;border:1px solid var(--line);border-radius:8px;background:var(--panel);margin-bottom:10px}
+.cxp .ck-card:hover{border-color:var(--line-2)}
+.cxp .ck-card.rouge{border-color:rgba(248,113,113,.35)}
+.cxp .ck-dot{width:9px;height:9px;border-radius:50%;align-self:start;margin-top:5px;background:var(--gris)}
+.cxp .ck-dot.jaune{background:var(--ambre)} .cxp .ck-dot.rouge{background:var(--rouge)} .cxp .ck-dot.gris{background:var(--gris)} .cxp .ck-dot.vert{background:var(--mint)}
+.cxp .ck-card .ti{font-weight:600;font-size:15px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.cxp .ck-card .ph{color:var(--muted);font-size:13px;margin-top:5px;max-width:66ch}
+.cxp .ck-card .acts{display:flex;gap:8px;align-items:center;white-space:nowrap}
+.cxp .ck-badge{font-size:11px;color:var(--faint);border:1px solid var(--line-2);border-radius:999px;padding:2px 9px;font-weight:500}
+.cxp .btn.solid{background:var(--mint);border-color:var(--mint);color:var(--ink)} .cxp .btn.solid:hover{filter:brightness(1.05)}
+.cxp .ck-depot{color:var(--muted);font-size:13px;margin:12px 0 0;padding:14px 2px 0;border-top:1px solid var(--line)}
+.cxp .ck-depot button{color:var(--mint);font-weight:600} .cxp .ck-depot button:hover{text-decoration:underline;text-underline-offset:3px}
+.cxp .ck-msg{margin:-4px 0 16px;padding:10px 14px;border:1px solid var(--mint);border-radius:8px;background:var(--panel);font-size:12.5px}
+.cxp .ck-msg.err{border-color:var(--rouge)}
+/* tuiles « Est-ce que tout tourne ? » */
+.cxp .ck-tuiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.cxp .ck-tuile{padding:14px 15px;border:1px solid var(--line);border-radius:8px;background:var(--panel)}
+.cxp .ck-tuile.rouge{border-color:var(--rouge)}
+.cxp .ck-tuile .th{display:flex;align-items:center;gap:8px;font-weight:600;font-size:13px}
+.cxp .ck-tuile .tl{color:var(--muted);font-size:12px;margin-top:7px;line-height:1.35}
+.cxp .ck-tdot{width:8px;height:8px;border-radius:50%;flex:none;background:var(--gris)}
+.cxp .ck-tdot.vert{background:var(--mint)} .cxp .ck-tdot.rouge{background:var(--rouge)} .cxp .ck-tdot.violet{background:var(--mauve)} .cxp .ck-tdot.gris{background:var(--gris)}
+/* étapes « Où en est la mise à jour ? » */
+.cxp .ck-etapes{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.cxp .ck-etape{padding:14px 15px;border:1px solid var(--line);border-radius:8px;background:var(--panel);display:flex;flex-direction:column;gap:6px;min-height:118px}
+.cxp .ck-etape.afaire{border-color:var(--ambre)}
+.cxp .ck-etape .no{color:var(--faint);font-size:11px}
+.cxp .ck-etape .nm{font-weight:650;font-size:15px}
+.cxp .ck-etape .ln{color:var(--muted);font-size:12px;flex:1}
+.cxp .ck-etape .fa{font-size:12px;color:var(--mint);display:inline-flex;align-items:center;gap:6px}
+.cxp .ck-etape .fa i{width:7px;height:7px;border-radius:50%;background:var(--mint);display:inline-block}
+.cxp .ck-etape .fa.todo{color:var(--ambre)} .cxp .ck-etape .fa.todo i{background:var(--ambre)}
+.cxp .ck-etape .btn{align-self:flex-start}
+.cxp .ck-foot{color:var(--faint);font-size:12px;margin-top:14px}
+/* fenêtre « Voir le détail » / confirmations */
+.cxp .ck-modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:60;padding:24px}
+.cxp .ck-dlg{background:var(--panel);border:1px solid var(--line-2);border-radius:12px;max-width:720px;width:100%;padding:24px}
+.cxp .ck-dlg h3{margin:0 0 14px;font-size:18px;display:flex;align-items:center;gap:10px}
+.cxp .ck-dlg h3 .x{margin-left:auto;color:var(--muted);font-size:20px}
+.cxp .ck-pre{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:16px;font-family:var(--mono);font-size:12.5px;white-space:pre-wrap;color:var(--text);margin:0 0 16px;max-height:40vh;overflow:auto}
+.cxp .ck-dlg .note{color:var(--muted);font-size:13px;margin:0 0 18px;line-height:1.5}
+.cxp .ck-dlg .foot{display:flex;gap:10px;justify-content:flex-end}
+@media (max-width:1100px){ .cxp .ck-tuiles,.cxp .ck-etapes{grid-template-columns:1fr 1fr} }
+@media (max-width:640px){ .cxp .ck-tuiles,.cxp .ck-etapes{grid-template-columns:1fr} }
+/* ══ COCKPIT-1 (Lot B) — « L'usine » : 4 colonnes de postes ══ */
+.cxp .us-top{display:flex;align-items:baseline;gap:12px;margin:0 0 16px}
+.cxp .us-top h2{margin:0;font-size:24px;font-weight:650;letter-spacing:-.02em}
+.cxp .us-top .sub{color:var(--muted);font-size:13px}
+.cxp .us-leg{display:flex;gap:16px;color:var(--faint);font-size:12px;margin:0 0 16px;flex-wrap:wrap}
+.cxp .us-leg i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.cxp .us-cols{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;align-items:start}
+.cxp .us-col>h3{margin:0 0 10px;font-size:13px;font-weight:600;color:var(--text);padding:9px 11px;background:var(--panel-2);border-radius:6px}
+.cxp .us-poste{padding:11px 13px;border:1px solid var(--line);border-radius:8px;background:var(--panel);margin-bottom:8px}
+.cxp .us-poste:hover{border-color:var(--line-2)}
+.cxp .us-ph{display:flex;align-items:center;gap:8px}
+.cxp .us-dot{width:8px;height:8px;border-radius:50%;flex:none;background:var(--gris)}
+.cxp .us-dot.vert{background:var(--mint)} .cxp .us-dot.violet{background:var(--mauve)} .cxp .us-dot.rouge{background:var(--rouge)} .cxp .us-dot.gris{background:var(--gris)}
+.cxp .us-poste .nm{font-weight:600;font-size:13px;flex:1}
+.cxp .us-poste .hr{color:var(--faint);font-size:11px;white-space:nowrap}
+.cxp .us-poste .ro{color:var(--muted);font-size:11.5px;margin-top:6px;line-height:1.4}
+.cxp .us-poste .mt{color:var(--faint);font-size:11px;margin-top:7px;display:flex;justify-content:space-between;gap:8px}
+.cxp .us-poste .mt .r{color:var(--mint)} .cxp .us-poste .mt .r.rouge{color:var(--rouge)}
+.cxp .us-poste .act{margin-top:9px;display:flex;gap:6px;flex-wrap:wrap}
+.cxp .us-poste .act .btn{padding:5px 10px;font-size:12px}
+.cxp .us-moteur{padding:12px 13px;border:1px solid var(--line-2);border-radius:8px;background:var(--panel);margin-bottom:10px}
+.cxp .us-moteur h4{margin:0 0 8px;font-size:13px;font-weight:650}
+.cxp .us-step{display:grid;grid-template-columns:18px 1fr auto;gap:2px 8px;font-size:12px;padding:5px 0;border-top:1px solid var(--line)}
+.cxp .us-step:first-of-type{border-top:0}
+.cxp .us-step .n{color:var(--faint)} .cxp .us-step .s{color:var(--mint);font-size:11px;text-align:right} .cxp .us-step .s.todo{color:var(--ambre)}
+.cxp .us-moteur .act{margin-top:10px;display:flex;gap:6px;flex-wrap:wrap} .cxp .us-moteur .act .btn{padding:5px 10px;font-size:12px}
+.cxp .us-geles{margin-top:22px;padding:14px 16px;border:1px dashed var(--line-2);border-radius:8px;color:var(--muted);font-size:12.5px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.cxp .us-geles b{color:var(--text)} .cxp .us-geles .g{color:var(--faint)}
+@media (max-width:1100px){ .cxp .us-cols{grid-template-columns:1fr 1fr} }
+@media (max-width:640px){ .cxp .us-cols{grid-template-columns:1fr} }
+/* ══ COCKPIT-1 (Lot D) — le bandeau de propagation du Circuit ══ */
+.cxp .cx-prop{border:1px solid var(--line-2);border-radius:8px;background:var(--panel);padding:14px 16px;margin:0 0 16px}
+.cxp .cx-prop.retard{border-color:var(--ambre)}
+.cxp .cx-prop-h{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.cxp .cx-prop-h b{font-size:15px}
+.cxp .cx-prop-h .st{color:var(--muted);font-size:12.5px} .cxp .cx-prop-h .st.ambre{color:var(--ambre)} .cxp .cx-prop-h .st.rouge{color:var(--rouge)} .cxp .cx-prop-h .st.gris{color:var(--muted)} .cxp .cx-prop-h .st.mauve{color:var(--mauve)}
+.cxp .cx-prop-g{display:flex;gap:30px;margin:11px 0 9px}
+.cxp .cx-prop-g .l{color:var(--faint);font-size:11px;display:block} .cxp .cx-prop-g .v{font-weight:600;font-size:13px}
+.cxp .cx-prop-rob{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:9px}
+.cxp .cx-prop-rob .chip.retard{border-color:var(--ambre);color:var(--ambre)}
+.cxp .cx-prop-rob .chip.ajour{border-color:var(--line-2);color:var(--muted)}
+.cxp .cx-prop-note{color:var(--muted);font-size:12.5px;line-height:1.4}
+/* COCKPIT-1 (Lot E) — étiquette des deux rangées de filtres du Journal (Famille / Geste) */
+.cxp .jf-lab{color:var(--faint);font-size:11px;margin-right:6px;align-self:center;text-transform:uppercase;letter-spacing:.04em}
+.cxp .jf-fam{margin-bottom:6px}
 @media (max-width:1100px){ .cxp .diagram{grid-template-columns:1fr;column-gap:0} .cxp .diagram svg{display:none} .cxp .pump{position:static;margin:12px 0} .cxp .dg{grid-template-columns:1fr} .cxp .kpis{grid-template-columns:1fr 1fr} .cxp .jl{grid-template-columns:1fr 1fr} .cxp .controles{grid-template-columns:1fr} }
 `

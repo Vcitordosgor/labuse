@@ -2239,7 +2239,7 @@ def _assembler_reservoirs(c, only_id: int | None = None) -> list[dict]:
         params["only_id"] = only_id
     rows = c.execute(text(
         "SELECT d.id, d.name, d.provider, d.category, d.source_millesime, d.source_horizon_at,"
-        "       d.last_sync_at,"
+        "       d.last_sync_at, d.status,"
         "       d.mode_remplissage, d.cadence_attendue_jours, d.cadence_statut,"
         "       v.methode, v.dernier_statut, v.dernier_passage_at, v.dernier_vu, v.actif,"
         "       v.echecs_consecutifs, v.dernier_message,"
@@ -2292,6 +2292,9 @@ def _assembler_reservoirs(c, only_id: int | None = None) -> list[dict]:
             "a_verifier": a_verifier,
             "dernier_controle": _dernier_controle.isoformat() if _dernier_controle else None,
             "id": r["id"], "nom": r["name"], "producteur": r["provider"],
+            # COCKPIT-1b (point 6) — le RÉFÉRENTIEL interne (lu par la pompe, montré dans le Circuit)
+            # n'est PAS en vitrine : la page Sources l'écarte de son segment « Vitrine » (compté 99).
+            "interne": (r["status"] or "").lower() == "interne",
             "famille": r["category"] or "aucune", "millesime": _millesime,
             "ingere_le": r["last_sync_at"].isoformat() if r["last_sync_at"] else None,
             "mode": mode, "cadence_jours": r["cadence_attendue_jours"],
@@ -2598,6 +2601,11 @@ def admin_circuit(request: Request) -> dict:
     with engine().begin() as c:
         # ── réservoirs : catalogue affiché + veille + mode/cadence + vanne + filtre (helper) ──
         reservoirs = _assembler_reservoirs(c)
+        # COCKPIT-1b (point 6) — le compteur VITRINE canonique (99), le MÊME que /sources et l'accueil.
+        # Les réservoirs du Circuit incluent en plus le référentiel INTERNE (lu par la pompe) : on ne
+        # confond plus « vitrine » (99) avec « réservoirs admin » (100).
+        from .. import sources_catalog as _srccat
+        _vitrine_n = _srccat.compter_vitrine(c)
         # ── CIRCUIT-P4 (lot 3) — le segment « Hors vitrine » de l'onglet Sources (raison en clair) ──
         try:
             hors_vitrine = _sources_hors_vitrine(c)
@@ -2765,7 +2773,11 @@ def admin_circuit(request: Request) -> dict:
     # ── CIRCUIT-P4 (lot 2) — l'onglet « À FAIRE » : la liste ordonnée des cinq gestes possibles.
     #    Le compte par état (lot 1) alimente la ligne « Rien d'autre » ; le contexte (dernière sonde)
     #    et la dépendance injection→recalcul (lot 4, `_calculer_af`) enrichissent la ligne Calculer. ──
-    _etats_compte = _etats.compter_etats(reservoirs)
+    # COCKPIT-1b (point 6) — les COMPTES d'état (badge, segment, pastilles) portent sur la VITRINE
+    # SEULE (99) : le référentiel interne reste dans `reservoirs` (le Circuit le montre) mais ne compte
+    # pas comme une source vitrine. `vitrine` (= compter_vitrine, cross-check) reste servi explicitement.
+    _etats_compte = _etats.compter_etats([r for r in reservoirs if not r.get("interne")])
+    _etats_compte["vitrine"] = _vitrine_n
     _passages = [r["veille"]["passage"] for r in reservoirs
                  if r.get("veille") and r["veille"].get("passage")]
     _derniere_sonde = max(_passages) if _passages else None
@@ -2871,7 +2883,55 @@ def admin_circuit(request: Request) -> dict:
                         "cout_estime_sans_amont": round(_n_sans_amont * _par_src, 2),
                         "cout_estime_g8": round(_n_g8 * _par_src, 2),
                         "cout_estime_tous": round(_n_vitrine * _par_src, 2)})
+    # ── COCKPIT-1 (Lot A) — le Tableau de bord, composé CÔTÉ SERVEUR à partir de ce qui est déjà en
+    #    main (à faire, verrous, fuites, tuiles, états sources, run/candidat), + deux lectures légères :
+    #    les écarts TOLÉRÉS du dernier banc de cohérence et le registre des jobs (dernier passage de
+    #    chacun). L'état PROD (version servie chez les clients) n'est PAS lu ici (appel réseau) : le
+    #    front le complète via /admin/cockpit/etat-prod. ──
+    from .. import cockpit_resume as _cockpit, config as _config, jobs as _jobs_mod
+    try:
+        from ..coherence_journal import derniers_passages as _coh_passages
+        with session_scope() as _sc:
+            _coh = _coh_passages(_sc)
+        _ecarts_toleres = int((_coh[0] or {}).get("tolerable") or 0) if _coh else 0
+    except Exception:  # noqa: BLE001 — pas de banc encore : 0 écart toléré
+        _ecarts_toleres = 0
+    try:
+        _jobs_list = _jobs_mod.liste()
+    except Exception:  # noqa: BLE001 — le registre ne bloque jamais la page
+        _jobs_list = []
+    # ── COCKPIT-1 (Lot D) — la PROPAGATION : pour chaque réservoir, par où sa donnée passe et si ses
+    #    robinets sont à jour (bandeau du Circuit au clic/à la recherche). Règle unique, côté serveur. ──
+    _eau_set = set(_eau_rob)
+    _tuiles_perime = bool((_tuiles_af or {}).get("perime"))
+    for _r in reservoirs:
+        _r["propagation"] = _cockpit.propagation_reservoir(
+            _r, eau_rob=_eau_set, tuiles_perime=_tuiles_perime, chiffres=chiffres)
+    # ── COCKPIT-1b (point 4) — chaque cache PÉRIMÉ (/sante/fraicheur) devient une carte « Reconstruire »
+    #    du Tableau de bord (le bloc « Fraîcheur des caches » quitte Sources). Jamais bloquant. ──
+    try:
+        from ..fraicheur_caches import etat as _fr_etat
+        with session_scope() as _sf:
+            _caches_perimes = [c for c in (_fr_etat(_sf).get("caches") or []) if c.get("perime")]
+    except Exception:  # noqa: BLE001 — pas de caches lisibles : aucune carte (jamais un crash)
+        _caches_perimes = []
+    # ── COCKPIT-1b (point 5) — les vigies d'exploitation (sauvegarde, disque, copie externe, /readyz),
+    #    qui ont quitté le rail du Pilotage, deviennent des cartes du Tableau de bord quand elles cassent. ──
+    try:
+        from .. import ops_alertes as _ops
+        with session_scope() as _si:
+            _incidents = _ops.incidents_ouverts(_si)
+    except Exception:  # noqa: BLE001 — table d'incidents absente : aucune carte (jamais un crash)
+        _incidents = []
+    cockpit = _cockpit.composer_cockpit(
+        a_faire=a_faire, etats_sources=_etats_compte, reservoirs=reservoirs,
+        verrous=_verrous, fuites_rob=_fuites_rob, caches_perimes=_caches_perimes, incidents=_incidents,
+        ecarts_toleres=_ecarts_toleres, jobs_list=_jobs_list, run_servi=runs.current(),
+        candidat=_candidat, calculer_present=_resume._calculer_present(_calculer_af, residuel),
+        dernier_calcul=_run_date, env=_config.get_settings().env, prod_run=None,
+        dates=_dates_af)
     return {
+        "cockpit": cockpit,   # COCKPIT-1 Lot A — l'onglet « Tableau de bord » (3 sections)
         "run_servi": runs.current(), "candidat": _candidat, "manifeste": m,
         "verrous": _verrous,
         "garanties": _garanties, "catalogue": _catalogue, "doublons": _doublons,
@@ -2914,6 +2974,218 @@ def _executer_controle(par: str) -> dict:
         from .. import circuit_taches as _ct
         _ct.echouer("verifier", message=f"Contrôle interrompu ({type(exc).__name__}).")
         raise
+
+
+# ══════════════════════ COCKPIT-1 (Lot A) — les gestes du Tableau de bord ══════════════════════
+
+def _qui(request: Request) -> str:
+    return getattr(getattr(request, "state", None), "compte_email", None) or "admin"
+
+
+def _lancer_cli_detache(*, argv, log_path, par, geste, cible, resume):
+    """Lance une commande détachée (CLI labuse ou script de déploiement) depuis la racine du repo,
+    log fichier, et pose UNE ligne de journal (qui / quoi / résultat « lancé »). Même mécanique que
+    « Injecter » (X6). Jamais bloquant : la trace qui rate ne fait pas échouer le lancement."""
+    import os
+    import subprocess
+    from pathlib import Path
+    from fastapi import HTTPException
+    racine = Path(__file__).resolve().parents[3]
+    env = {**os.environ, "PYTHONPATH": os.pathsep.join(
+        [str(racine / "src"), os.environ.get("PYTHONPATH", "")]).rstrip(os.pathsep)}
+    try:
+        with open(log_path, "ab") as fh:
+            subprocess.Popen(argv, cwd=str(racine), stdout=fh, stderr=fh,
+                             start_new_session=True, env=env)
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(500, f"Lancement impossible ({type(exc).__name__}).") from exc
+    try:
+        from .. import circuit_journal
+        from ..db import session_scope
+        with session_scope() as s:
+            circuit_journal.journaliser(s, geste, cible, par, "lancé",
+                                        {"log": log_path, "resume": resume})
+            s.commit()
+    except Exception:  # noqa: BLE001 — la trace ne bloque jamais le geste
+        pass
+    return {"ok": True, "log": log_path}
+
+
+@router.get("/admin/cockpit/etat-prod")
+def admin_cockpit_etat_prod(request: Request) -> dict:
+    """COCKPIT-1 (Lot A, section 3) — l'état PROD (version servie chez les clients), lu en LECTURE
+    SEULE. Sur le VPS (env≠local), c'est NOTRE propre run. Sur le Mac (env=local), on interroge
+    /version de l'app en ligne (serveur→serveur, jamais une URL dans le front). Injoignable → la
+    carte le dit, sans bloquer."""
+    import os
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from .. import config, manifeste, runs
+    env = config.get_settings().env
+    if env != "local":
+        m = manifeste.lire() or {}
+        return {"env": env, "local": False, "joignable": True,
+                "run": runs.current(), "promu_le": m.get("promoted_at")}
+    url = os.environ.get("LABUSE_PROD_URL", "https://app.labuse.immo").rstrip("/") + "/version"
+    try:
+        import json
+        import urllib.request
+        with urllib.request.urlopen(url, timeout=6) as r:   # noqa: S310 — URL interne configurée
+            data = json.loads(r.read().decode("utf-8"))
+        return {"env": env, "local": True, "joignable": True,
+                "run": data.get("run"), "promu_le": data.get("promu_le")}
+    except Exception:  # noqa: BLE001 — prod injoignable : la carte l'affiche
+        return {"env": env, "local": True, "joignable": False, "run": None, "promu_le": None}
+
+
+class CockpitInjecterIn(BaseModel):
+    sources: list[int] = Field(default_factory=list)
+
+
+@router.post("/admin/cockpit/injecter")
+def admin_cockpit_injecter(request: Request, body: CockpitInjecterIn) -> dict:
+    """COCKPIT-1 (Lot A) — « Injecter les N » : relance l'ingestion EXISTANTE (même commande que le
+    cron, détachée) de chaque source en nouvelle version, et journalise le geste groupé. DOCTRINE
+    INTACTE : rien ne s'ingère sans ce clic humain."""
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from .. import circuit_journal
+    from ..db import engine, session_scope
+    lances: list[str] = []
+    with engine().begin() as c:
+        for sid in body.sources[:50]:
+            r = c.execute(text(
+                "SELECT d.name FROM source_veille v JOIN data_sources d ON d.id = v.source_id"
+                " WHERE v.source_id = :i"), {"i": sid}).mappings().first()
+            if not r:
+                continue
+            try:
+                _lancer_ingestion(r["name"])
+                lances.append(r["name"])
+            except Exception:  # noqa: BLE001 — une source sans commande connue est sautée, pas une erreur globale
+                continue
+    try:
+        with session_scope() as s:
+            circuit_journal.journaliser(s, "cockpit:injecter", f"{len(lances)} sources", _qui(request),
+                                        "lancé", {"sources": lances})
+            s.commit()
+    except Exception:  # noqa: BLE001
+        pass
+    return {"ok": True, "lances": lances, "n": len(lances)}
+
+
+@router.post("/admin/cockpit/reconstruire")
+def admin_cockpit_reconstruire(request: Request) -> dict:
+    """COCKPIT-1 (Lot A) — « Reconstruire » : relance `labuse rebuild` (tuiles/intersections/caches)
+    en tâche de fond ; la progression s'écrit au Journal (geste « cockpit:reconstruire »)."""
+    import sys
+    from .auth import exiger_admin
+    exiger_admin(request)
+    argv = [sys.executable, "-c", "from labuse.cli import app; app()", "rebuild"]
+    return _lancer_cli_detache(argv=argv, log_path="/tmp/labuse-cockpit-rebuild.log",
+                               par=_qui(request), geste="cockpit:reconstruire", cible="tuiles",
+                               resume="labuse rebuild (tuiles, intersections, caches)")
+
+
+@router.post("/admin/cockpit/accepter-ecarts")
+def admin_cockpit_accepter_ecarts(request: Request) -> dict:
+    """COCKPIT-1 (Lot A) — « Accepter les N » : rejoue `labuse coherence --accepter` (regénère les
+    témoins golden ; le motif ira dans le commit de Vic). En tâche de fond, journalisé."""
+    import sys
+    from .auth import exiger_admin
+    exiger_admin(request)
+    argv = [sys.executable, "-c", "from labuse.cli import app; app()", "coherence", "--accepter"]
+    return _lancer_cli_detache(argv=argv, log_path="/tmp/labuse-cockpit-accepter.log",
+                               par=_qui(request), geste="cockpit:accepter-ecarts", cible="écarts tolérés",
+                               resume="labuse coherence --accepter (regénère les golden)")
+
+
+@router.post("/admin/cockpit/envoyer-prod")
+def admin_cockpit_envoyer_prod(request: Request) -> dict:
+    """COCKPIT-1 (Lot A, section 3) — « Envoyer en prod » : copie les données du Mac vers l'app en
+    ligne via `deploy_donnees.sh` (8 gardes, bascule en dernier) PUIS `labuse parite`. JAMAIS
+    deploy.sh. DISPONIBLE SEULEMENT en local (le Mac fait foi) ; sur le VPS, refusé (se fait depuis
+    le Mac). Le run/seq viennent du manifeste servi. Détaché, journalisé, sortie dans le log."""
+    import shlex
+    import sys
+    from fastapi import HTTPException
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from .. import config, manifeste
+    if config.get_settings().env != "local":
+        raise HTTPException(409, "L'envoi en prod se fait depuis le Mac (dashboard local).")
+    m = manifeste.lire() or {}
+    run = m.get("scoring_run")
+    seq = m.get("residuel_run_seq")
+    if not run:
+        raise HTTPException(409, "Aucun run servi à envoyer (manifeste vide).")
+    labuse = f"{shlex.quote(sys.executable)} -c 'from labuse.cli import app; app()'"
+    deploy = ("sh deploy/scripts/deploy_donnees.sh --run-label " + shlex.quote(str(run))
+              + (f" --residuel-seq {int(seq)}" if seq is not None else ""))
+    wrapper = ["sh", "-c", f"{deploy} && {labuse} parite"]
+    return _lancer_cli_detache(argv=wrapper, log_path="/tmp/labuse-cockpit-envoyer-prod.log",
+                               par=_qui(request), geste="cockpit:envoyer-prod", cible=str(run),
+                               resume=f"deploy_donnees.sh {run} + labuse parite")
+
+
+@router.get("/admin/usine")
+def admin_usine(request: Request) -> dict:
+    """COCKPIT-1 (Lot B) — « L'usine » : le registre des jobs en 4 colonnes (familles), chaque poste
+    avec son libellé/rôle, dernier & prochain passage, pastille et bouton possible. Les gelés sortent
+    dans un bandeau. Les étapes du moteur (Calculer/Basculer/Envoyer) viennent de /admin/circuit."""
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from .. import cockpit_resume as _cockpit, jobs as _jobs_mod
+    return _cockpit.composer_usine(_jobs_mod.liste())
+
+
+@router.post("/admin/jobs/{nom}/lancer")
+def admin_job_lancer(nom: str, request: Request) -> dict:
+    """COCKPIT-1 (Lot B) — « Lancer maintenant » / « Réveiller… » : lance UN job par le wrapper commun
+    scripts/jobs/run-job.sh (le MÊME verrou flock que le cron → jamais deux passages du même job en
+    même temps, ni en parallèle du cron). Autorisé pour les jobs « lançables » sans risque et pour les
+    gelés (réveil ponctuel à la main — le gel ne touche que le crontab). Les agents IA ont leur propre
+    porte (/admin/circuit/agents, coût/plafond)."""
+    import os
+    import subprocess
+    from pathlib import Path
+    from fastapi import HTTPException
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from .. import circuit_journal, jobs as _jobs_mod
+    from ..db import session_scope
+    job = _jobs_mod.JOBS.get(nom)
+    if job is None:
+        raise HTTPException(404, "Job inconnu.")
+    if nom == "agents-sources":
+        raise HTTPException(409, "Les enquêteurs IA se lancent depuis leur bouton « Démarrer » (coût/plafond).")
+    # COCKPIT-1b (point 5) — `backup-postgres` n'a pas de bouton « Lancer » libre dans l'Usine (lancable
+    # False, geste à part) MAIS la carte « sauvegarde en retard » du Tableau de bord peut le RELANCER :
+    # re-faire un dump est sûr et c'est exactement le remède à une sauvegarde manquée.
+    _relance_alerte = {"backup-postgres"}
+    if not (job.lancable or job.gel or nom in _relance_alerte):
+        raise HTTPException(409, "Ce poste ne se lance pas à la main depuis l'usine.")
+    racine = Path(__file__).resolve().parents[3]
+    wrapper = str(racine / "scripts" / "jobs" / "run-job.sh")
+    # local (Mac) : /run/lock n'existe pas → on retombe sur des dossiers écrivables (prod les pose déjà).
+    env = {**os.environ,
+           "PYTHONPATH": os.pathsep.join([str(racine / "src"), os.environ.get("PYTHONPATH", "")]).rstrip(os.pathsep),
+           "LABUSE_LOCK_DIR": os.environ.get("LABUSE_LOCK_DIR") or "/tmp/labuse-locks",
+           "LABUSE_JOBS_LOG_DIR": os.environ.get("LABUSE_JOBS_LOG_DIR") or "/tmp/labuse-logs"}
+    try:
+        with open(f"/tmp/labuse-job-{nom}.lancer.log", "ab") as fh:
+            subprocess.Popen(["sh", wrapper, nom], cwd=str(racine), stdout=fh, stderr=fh,
+                             start_new_session=True, env=env)
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(500, f"Lancement impossible ({type(exc).__name__}).") from exc
+    try:
+        with session_scope() as s:
+            circuit_journal.journaliser(s, "cockpit:lancer-job", nom, _qui(request), "lancé",
+                                        {"reveil": bool(job.gel)})
+            s.commit()
+    except Exception:  # noqa: BLE001
+        pass
+    return {"ok": True, "nom": nom, "reveil": bool(job.gel)}
 
 
 @router.post("/admin/circuit/verifier")
@@ -3255,8 +3527,8 @@ def admin_circuit_revenir(request: Request) -> dict:
 
 
 @router.get("/admin/circuit/journal")
-def admin_circuit_journal(request: Request, type: str = "", depuis: str = "",
-                          page: int = 1, taille: int = 50) -> dict:
+def admin_circuit_journal(request: Request, type: str = "", famille: str = "", echecs: bool = False,
+                          depuis: str = "", page: int = 1, taille: int = 50) -> dict:
     """CIRCUIT-P2 (lot 4) — LE JOURNAL LISIBLE : les passages GROUPÉS (un job de filtres sur 39
     sources, une volée d'agents = même `lot`) tiennent sur UNE ligne dépliable ; un geste isolé
     reste une ligne. Chaque cible porte son NOM affiché (jamais l'identifiant technique), « par »
@@ -3274,6 +3546,17 @@ def admin_circuit_journal(request: Request, type: str = "", depuis: str = "",
     if type and type != "tous":
         gestes_cat = _cj.gestes_de_categorie(type)
         conds.append("geste = ANY(:gestes)"); params["gestes"] = gestes_cat
+    # COCKPIT-1 (Lot E) — filtre par FAMILLE (les 4 colonnes de L'usine), en plus des gestes : les
+    # gestes non-job de la famille OU un job (cible) de cette famille au registre.
+    if famille and famille != "tous":
+        gestes_f, jobs_f = _cj.gestes_et_jobs_de_famille(famille)
+        conds.append("(geste = ANY(:gestes_f) OR (geste IN ('job','cockpit:lancer-job')"
+                     " AND cible = ANY(:jobs_f)))")
+        params["gestes_f"] = gestes_f; params["jobs_f"] = jobs_f
+    # COCKPIT-1b (point 2) — « Échecs seulement » : ne garder que les passages en échec/refus/timeout.
+    if echecs:
+        conds.append("resultat = ANY(:ech)")
+        params["ech"] = ["echec", "refuse", "timeout"]
     if depuis:
         conds.append("ts >= :depuis"); params["depuis"] = depuis
     where = " AND ".join(conds)
@@ -3305,9 +3588,12 @@ def admin_circuit_journal(request: Request, type: str = "", depuis: str = "",
         membres = []
         if gks:
             params2 = {**params, "gks": gks}
+            # COCKPIT-1b (point 2) — « Échecs seulement » filtre AUSSI les membres : un lot mixte ne
+            # montre que ses passages en échec (sinon un `ok` du même lot ressortait dans la vue échecs).
+            _memb_where = f"{gk} = ANY(:gks)" + (" AND resultat = ANY(:ech)" if echecs else "")
             membres = [dict(x) for x in c.execute(text(
                 f"SELECT {gk} AS gk, ts, geste, cible, par, resultat, details"
-                f" FROM circuit_journal WHERE {gk} = ANY(:gks) ORDER BY id DESC"),
+                f" FROM circuit_journal WHERE {_memb_where} ORDER BY id DESC"),
                 params2).mappings()]
         # 1.3 — le compteur de l'onglet compte les entrées du JOUR de La Réunion (pas l'UTC serveur).
         aujourdhui = c.execute(text(
@@ -3349,6 +3635,7 @@ def admin_circuit_journal(request: Request, type: str = "", depuis: str = "",
         entrees.append({
             "gk": g["gk"], "n": int(g["n"]),
             "categorie": cat, "categorie_label": _cj.CATEGORIE_LABEL.get(cat, cat),
+            "famille": _cj.famille_de(g["geste"], membs[0]["cible"] if membs else None),
             "geste": g["geste"], "par_nom": _cj.par_nom(g.get("par")),
             "ts": g["ts"].isoformat() if hasattr(g["ts"], "isoformat") else g["ts"],
             "resultat": membs[0]["resultat"] if membs else "ok",
@@ -3360,7 +3647,9 @@ def admin_circuit_journal(request: Request, type: str = "", depuis: str = "",
         })
     return {"entrees": entrees, "page": page, "taille": taille, "total": int(total),
             "aujourdhui": int(aujourdhui),
-            "categories": [{"slug": s, "label": lab} for s, lab in _cj.CATEGORIES]}
+            "categories": [{"slug": s, "label": lab} for s, lab in _cj.CATEGORIES],
+            # COCKPIT-1 (Lot E) — les 4 familles (filtre en plus des gestes).
+            "familles": [{"slug": s, "label": lab} for s, lab in _cj.FAMILLES_JOURNAL]}
 
 
 def _graphe():

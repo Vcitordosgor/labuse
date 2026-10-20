@@ -11,7 +11,9 @@ from labuse import circuit_journal as J
 # ── 4.3 / 4.4 — les mappings purs ─────────────────────────────────────────────────────────────
 def test_categories_ordre_fixe():
     slugs = [s for s, _ in J.CATEGORIES]
-    assert slugs == ["vanne", "calcul", "bascule", "agent", "controle", "filtre", "sonde", "cron"]
+    # COCKPIT-1 (Lot E) : + « reconstruction » et « mise en ligne » pour les gestes du Tableau de bord.
+    assert slugs == ["vanne", "calcul", "bascule", "agent", "controle", "filtre", "sonde", "cron",
+                     "reconstruction", "deploiement"]
 
 
 def test_geste_vers_categorie():
@@ -20,7 +22,8 @@ def test_geste_vers_categorie():
     assert J.categorie_de("basculer") == "bascule"
     assert J.categorie_de("controle") == "controle"
     assert J.categorie_de("job") == "cron"
-    assert set(J.gestes_de_categorie("vanne")) == {"injecter"}
+    # COCKPIT-1 (Lot E) : le bouton « Injecter » du Tableau de bord tombe dans la même catégorie « vanne ».
+    assert set(J.gestes_de_categorie("vanne")) == {"injecter", "cockpit:injecter"}
 
 
 def test_par_nom_jamais_cli_ni_admin():
@@ -58,7 +61,8 @@ def test_journal_groupe_et_isole(client, engine):
     d = client.get("/admin/circuit/journal?taille=50").json()
     # la barre de filtres = les catégories FIXES (pas les gestes techniques)
     assert [x["slug"] for x in d["categories"]] == \
-        ["vanne", "calcul", "bascule", "agent", "controle", "filtre", "sonde", "cron"]
+        ["vanne", "calcul", "bascule", "agent", "controle", "filtre", "sonde", "cron",
+         "reconstruction", "deploiement"]
 
     par_gk = {e["gk"]: e for e in d["entrees"]}
     grp = par_gk.get(lot)

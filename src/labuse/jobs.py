@@ -63,6 +63,16 @@ class Job:
     raison: str = ""
     touche: str = "exploitation"    # 'eau' | 'exploitation'
     test: str = ""
+    # COCKPIT-1 (Lot B) — l'habillage HUMAIN du poste pour la page « L'usine » : son libellé (jamais
+    # un identifiant technique à l'écran), sa FAMILLE (colonne : 1 Veille des sources · 2 Livraisons
+    # quotidiennes · 3 Le moteur · 4 Contrôle, clients, sécurité) et son rôle en une phrase. Posés
+    # APRÈS la construction du registre (table _FAMILLE_LIBELLE_ROLE, un méta-test vérifie la couverture
+    # des 31). `lancable` = Vic peut le « Lancer maintenant » sans risque (sonde/contrôle/livraison) ;
+    # les agents IA ont leur propre bouton « Démarrer » (coût + plafond), jamais lancable.
+    famille: int = 4
+    libelle: str = ""
+    role: str = ""
+    lancable: bool = False
     timeout_s: int = 900
     envoie_mail: bool = False       # concerné par la règle dry-run
     besoin_db: bool = True
@@ -325,6 +335,9 @@ def liste() -> list[dict]:
             # CRON-1 lot 3 — la page Horloge lit LE REGISTRE : la raison (fr) et ce qu'il touche
             # (eau/exploitation) voyagent avec chaque job, à côté de son dernier passage.
             "raison": j.raison, "touche": j.touche, "test": j.test,
+            # COCKPIT-1 (Lot B) — l'habillage humain de « L'usine ».
+            "famille": j.famille, "libelle": j.libelle, "role": j.role, "lancable": j.lancable,
+            "planifie": j.planifie,
             "timeout_s": j.timeout_s, "envoie_mail": j.envoie_mail, "gel": j.gel,
             "prochaine_utc": p.isoformat() if p else None,
             "prochaine_reunion": p.astimezone(REUNION_TZ).strftime("%d/%m %H:%M") if p else None,
@@ -369,7 +382,10 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
               "réellement consultée). Un passage TOUS LES 15 JOURS (dimanche nuit, semaines ISO paires), "
               "sous PLAFOND de dépense (LABUSE_AGENT_PLAFOND_EUR, défaut 0 = ne dépense rien) qui arrête "
               "proprement et signale les sources non traitées.",
-       test="tests/test_cron1_registre.py::test_agents_sources_dimanche", planifie=False),
+       # COCKPIT-1 (Lot C, correction B) — REMIS AU CRONTAB (dimanche, 1 semaine sur 2 via
+       # semaine_agents) : sans lui, les sources illisibles par la sonde n'étaient vérifiées par
+       # personne. Prod : poser LABUSE_AGENT_PLAFOND_EUR=5 (le job cède au plafond, zéro surprise).
+       test="tests/test_cron1_registre.py::test_agents_sources_dimanche"),
     _j("filtres-sources", "Filtres des sources : rejoue les contrôles qualité sur les versions servies",
        "quotidien", "5 3 * * *", "07:05", touche="eau", timeout_s=1800,
        raison="Le filtre de nuit : rejoue les contrôles qualité sur les versions RÉELLEMENT servies (une "
@@ -527,12 +543,19 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
     # `en_attente` (immédiats différés, dont le digest ; programmés J+3/J+10) et rejoue les `a_rejouer`
     # dont l'heure est venue (5 min → 1 h → 24 h). Sans lui, un mail programmé ne partait jamais et un
     # échec Brevo n'était jamais rejoué (VEILLE-AUDIT-2 §2.2). envoie_mail=True → dry-run si SMTP absent.
+    # COCKPIT-1 (Lot C, correction A) — RESTE toutes les 5 min (mots de passe, confirmations, invitations
+    # ne peuvent pas attendre un jour), mais CÈDE À LA SAUVEGARDE : s'il démarre pendant le pg_dump
+    # (verrou de backup-postgres tenu), il SAUTE ce passage proprement (statut ok, ni échec ni alerte) et
+    # repart 5 min plus tard, hors de la fenêtre du dump. Fin de la fausse alerte quotidienne de 13:35
+    # (ECARTS.md #1) SANS ralentir les mails clients. Garde : jobs_impl._sauvegarde_en_cours.
     _j("mail-queue-consommer", "File des mails — envoie les dûs + rejoue les échecs transitoires",
        "5 min", "*/5 * * * *", "toutes les 5 min", touche="exploitation", timeout_s=300, envoie_mail=True,
        raison="La file mail_queue ne part pas toute seule : ce worker (toutes les 5 min) envoie les mails "
-              "`en_attente` dûs (digest différé, programmés J+3/J+10) et rejoue les `a_rejouer` (échec "
-              "Brevo transitoire, backoff 5 min/1 h/24 h) ; au-delà de 3 rejeux → `echec` (ligne rouge "
-              "Comptes). Idempotent, jamais d'envoi en double.",
+              "`en_attente` dûs (mot de passe, confirmation, invitation, digest différé, programmés "
+              "J+3/J+10) et rejoue les `a_rejouer` (échec Brevo transitoire, backoff 5 min/1 h/24 h) ; "
+              "au-delà de 3 rejeux → `echec` (ligne rouge Comptes). Idempotent, jamais d'envoi en double. "
+              "CÈDE à la sauvegarde : s'il démarre pendant le pg_dump, il saute ce passage (sans échec) "
+              "et repart 5 min plus tard.",
        test="tests/test_veille_fix2_lot_d.py::test_worker_envoie_et_rejoue"),
     # COMMUNE-FIX-1 — RÉINSCRIT (le pied de la fiche commune promet « rafraîchis chaque nuit » : il faut
     # que la tâche existe VRAIMENT). Précalcule le contexte des 24 communes chaque nuit → ouverture < 500 ms
@@ -557,17 +580,12 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
               "— le sous-ensemble rapide `--nuit` chaque nuit (SQL île + moteur), l'intégrale `--tout` le dimanche ; "
               "un FAUX-CLIENT nouveau / une garde en écart ouvre un incident à J+1 — plus jamais des mois.",
        test="tests/verrous/test_v6b_coherence.py::test_v6b_coherence_banc"),
-    # SOLIDITE-1 (Lot 1.4) — LE RÉCAP DU MATIN : un seul mail à 07:30 Réunion (03:30 UTC), APRÈS le
-    # digest (07:15). Tout vert en une ligne, ou la liste de ce qui ne va pas. Évalue aussi les quatre
-    # vigies sans point d'appel naturel (disque, /readyz, sauvegarde, jobs en retard) → ouvre/referme
-    # les incidents par la porte unique. Un seul mail par jour, jamais le déluge.
-    _j("recap-matin", "Récapitulatif d'exploitation du matin (un seul mail : vert, ou la liste des soucis)",
-       "quotidien", "30 3 * * *", "07:30", touche="exploitation", timeout_s=600, envoie_mail=True,
-       raison="Le point d'exploitation du jour, en un mail : disque, /readyz, sauvegarde, jobs en retard, "
-              "incidents ouverts. Tout vert = une ligne ; sinon la liste. Évalue les vigies qui n'ont pas "
-              "de point d'appel naturel ailleurs et ouvre/referme leurs incidents (une alerte, un rappel "
-              "par jour, un « résolu »). C'est l'anti-silence du 07/10.",
-       test="tests/test_solidite1_lot1.py::test_recap_matin_au_registre"),
+    # COCKPIT-1 (Lot C, correction D) — `recap-matin` RETIRÉ du registre (Vic ne veut plus le mail récap
+    # de 07:30). Mais « les ALERTES restent » : les vigies qu'il évaluait (disque, /readyz, sauvegarde,
+    # copie externe, jobs en retard) via `ops_alertes.verifier_declencheurs` sont désormais ÉVALUÉES par
+    # `healthcheck` (toutes les 15 min, besoin_db ouvre sa propre session) — chaque incident part par la
+    # PORTE UNIQUE ops_alertes (mail Brevo + cloche, un rappel/jour, un « résolu »), SANS mail récap.
+    # Le site en panne reste couvert par /health (healthcheck lève à 2 échecs → incident job-echec).
     # SOLIDITE-1 (Lot 5) — la vérité face aux sources, chaque mois : 20 parcelles au hasard (stratifiées)
     # comparées aux sources officielles EN LIGNE (cadastre IGN, Géorisques, DVF, bâtiments). Le 15 à 06:00.
     _j("verite-sources", "Vérité sources — 20 parcelles au hasard confrontées aux sources officielles en ligne",
@@ -578,12 +596,10 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
               "ouvre un incident (parcelle + les deux valeurs). Séquentiel et espacé (quotas respectés), "
               "aucune écriture en base hors le rapport. L'œil extérieur qui ne dépend pas de nos propres caches.",
        test="tests/test_solidite1_lot5.py::test_verite_sources_au_registre"),
-    _j("restore-test", "Restaure le dernier dump dans une base jetable et vérifie (puis DROP)",
-       "mensuel (1er)", "0 1 1 * *", "05:00 le 1er", touche="exploitation", timeout_s=3600,
-       envoie_mail=True, besoin_db=False,
-       raison="Une sauvegarde non restaurable ne vaut rien : une fois par mois, on restaure le dernier dump "
-              "dans une base jetable, on vérifie, on DROP. Alerte si la restauration échoue.",
-       test="tests/test_cron1_registre.py::test_job_a_une_raison", gel="Phase 8 Stéphanie"),
+    # COCKPIT-1 (Lot C, correction E) — `restore-test` RETIRÉ du registre (donc du crontab VPS) : le
+    # test mensuel de restauration tourne DÉJÀ hors-VPS sur le Mac (agent launchd deploy/mac/restore_test.sh,
+    # DISQUE-EXTERNE-1 / AGENTS-LAUNCHD). Le poste VPS faisait doublon (et restait gelé). L'implémentation
+    # `jobs_impl.restore_test` reste (exécutable à la main / testée) ; seul le JOB du registre part.
     _j("signal-instantane", "Instantané mensuel du Signal servi (fige la prédiction datée, mesurable forward)",
        "mensuel (1er)", "0 2 1 * *", "06:00 le 1er", touche="exploitation", timeout_s=1800,
        besoin_db=True,
@@ -609,3 +625,82 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
 #: CRON-1 lot 1 — les jobs qui TOUCHENT L'EAU, DÉRIVÉS du registre (`touche == 'eau'`) : chacun laisse
 #: une ligne au journal unifié `circuit_journal`. Plus de liste tenue à la main (une seule source).
 TOUCHE_EAU = frozenset(nom for nom, j in JOBS.items() if j.touche == "eau")
+
+
+# ─────────── COCKPIT-1 (Lot B) — l'habillage humain de « L'usine » ───────────
+# Quatre familles (colonnes, dans ce sens) : 1 Veille des sources · 2 Livraisons quotidiennes ·
+# 3 Le moteur · 4 Contrôle, clients, sécurité. Chaque poste : (famille, libellé humain, rôle en une
+# phrase, lancable). `lancable=True` = « Lancer maintenant » sans risque (sonde, contrôles, livraisons,
+# ménage) ; les agents IA ont leur bouton « Démarrer » dédié (coût/plafond), jamais lancable ici ;
+# sauvegarde/restauration/déploiement restent des gestes à part (pas de bouton de lancement libre).
+FAMILLES = {1: "Veille des sources", 2: "Livraisons quotidiennes",
+            3: "Le moteur", 4: "Contrôle, clients, sécurité"}
+
+_FAMILLE_LIBELLE_ROLE: dict[str, tuple[int, str, str, bool]] = {
+    # ── 1 · Veille des sources ──
+    "sonde-sources": (1, "Le veilleur de nuit",
+                      "Regarde chaque nuit si les producteurs ont publié une nouvelle version. Gratuit.", True),
+    "agents-sources": (1, "Les enquêteurs IA",
+                       "Pour les sources que le veilleur ne sait pas lire : un agent lit la page amont. Coûte quelques centimes le passage.", False),
+    # ── 2 · Livraisons quotidiennes ──
+    "ingest-bodacc": (2, "Livreur BODACC", "Procédures collectives, chaque matin.", True),
+    "ingest-dvf": (2, "Livreur DVF", "Ventes immobilières, à chaque nouvelle livraison.", True),
+    "ingest-sitadel": (2, "Livreur Sitadel", "Permis de construire, une fois par mois.", True),
+    "ingest-dpe": (2, "Livreur DPE", "Diagnostics énergie, une fois par mois.", True),
+    "ingest-sirene": (2, "Livreur SIRENE", "Entreprises géolocalisées, une fois par mois.", True),
+    "sync-gpu": (2, "Livreur GPU", "Documents d'urbanisme (PLU), une fois par mois.", True),
+    # ── 3 · Le moteur ──
+    "fiche-commune-cache": (3, "Le précalcul des fiches commune",
+                            "Prépare chaque nuit le contexte des 24 communes pour que la fiche ouvre vite.", True),
+    "signal-instantane": (3, "L'instantané du Signal",
+                          "Fige une copie datée du Signal servi, une fois par mois, pour la mesurer plus tard.", True),
+    # ── 4 · Contrôle, clients, sécurité ──
+    "filtres-sources": (4, "Le filtre des sources",
+                        "Rejoue chaque nuit les contrôles qualité sur les versions réellement servies.", True),
+    "coherence-robinets": (4, "La sonde du circuit",
+                           "Vérifie que deux chemins d'un même chiffre donnent bien la même valeur (fuites).", True),
+    "coherence-banc": (4, "Le contrôleur de nuit",
+                       "Relit chaque chiffre sur tous les écrans — zéro faux chez le client.", True),
+    "verite-sources": (4, "Le vérificateur mensuel",
+                       "Compare 20 parcelles au hasard aux sites officiels, une fois par mois.", True),
+    "backup-postgres": (4, "La sauvegarde",
+                        "Copie complète de la base chaque jour, 4 conservées.", False),
+    "pg-maintenance": (4, "L'entretien de la base",
+                       "Réaligne le moteur PostgreSQL chaque dimanche pour garder les requêtes rapides.", True),
+    "healthcheck": (4, "La sonde de vie",
+                    "Vérifie toutes les 15 min que l'app répond, le disque, la sauvegarde et les jobs en retard.", False),
+    "sante-endpoints": (4, "La sonde métier",
+                        "Vérifie toutes les 30 min que les écrans clés répondent avec la base.", False),
+    "copilote-purge": (4, "La purge du Copilote",
+                       "Efface les conversations Copilote au-delà de la rétention.", True),
+    "abuse-scan": (4, "Le détecteur d'abus",
+                   "Repère chaque jour les usages anormaux (partage de compte). Informatif.", True),
+    "purge-sessions": (4, "Le ménage des sessions",
+                       "Supprime chaque jour les sessions de connexion expirées.", True),
+    "mail-queue-consommer": (4, "Le courrier aux clients",
+                             "Envoie les mails en attente toutes les 5 min ; cède à la sauvegarde.", True),
+    "evaluer-suivis": (4, "La veille des parcelles suivies",
+                       "Prévient un client quand un fait tombe sur une parcelle qu'il suit.", True),
+    "detect-events": (4, "La veille du marché",
+                      "Repère les bascules de classement entre le run servi et le précédent.", True),
+    "digest": (4, "Le digest du matin",
+               "Un mail par client avec tout ce qui a changé pour lui la veille.", False),
+    "radar-cloche": (4, "Le Radar → cloche",
+                     "Pose à la cloche de chaque client les annonces du jour qui matchent sa veille.", True),
+    "radar-cycle": (4, "Le cycle du Radar",
+                    "Fait vivre les annonces : expirées, en vente longue, à revérifier.", True),
+    "radar-cycle-dvf": (4, "Le rapprochement Radar ↔ ventes",
+                        "Marque « vendue » une annonce dont la parcelle a une vente DVF.", True),
+    "radar-cycle-mensuel": (4, "La cible Courrier du Radar",
+                            "Qualifie chaque mois les biens retirés sans vente (cible Courrier).", True),
+}
+
+# un méta-contrôle : chaque job du registre a son habillage (et réciproquement) — sinon l'assertion
+# saute au chargement du module (plus jamais un poste « nu » ou une entrée morte à l'écran).
+assert set(_FAMILLE_LIBELLE_ROLE) == set(JOBS), (
+    "COCKPIT-1 : écart registre ↔ habillage usine — "
+    f"manquants : {sorted(set(JOBS) - set(_FAMILLE_LIBELLE_ROLE))} · "
+    f"en trop : {sorted(set(_FAMILLE_LIBELLE_ROLE) - set(JOBS))}")
+for _nom, (_fam, _lib, _role, _lanc) in _FAMILLE_LIBELLE_ROLE.items():
+    _j_obj = JOBS[_nom]
+    _j_obj.famille, _j_obj.libelle, _j_obj.role, _j_obj.lancable = _fam, _lib, _role, _lanc

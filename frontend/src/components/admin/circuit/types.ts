@@ -14,9 +14,15 @@ export type Reservoir = {
   millesime: string | null; ingere_le: string | null; mode: string
   cadence_jours: number | null; cadence_statut: string | null; a_verifier: boolean
   dernier_controle: string | null; etat: Etat; ko: boolean; taps: string[]; chiffres_ids: string[]
+  interne?: boolean   // COCKPIT-1b (point 6) — référentiel interne (lu par la pompe), hors vitrine
   vanne: { type: string; label?: string; motif?: string }
   veille: any | null; filtre: any
   sans_millesime?: string | null   // CIRCUIT-P6 : la raison écrite du « à jour par construction »
+  // COCKPIT-1 (Lot D) — la propagation : par où passe la donnée, et si les robinets sont à jour.
+  propagation?: {
+    nouvelle: boolean; moteurs: number; en_retard: number; tuiles_perime: boolean
+    robinets: { id: string; verdict: 'a_jour' | 'en_retard'; geste: string | null }[]
+  }
 }
 export type Robinet = {
   id: string; categorie: string; nom: string; parent: string | null; route: string
@@ -45,6 +51,7 @@ export type AFaire = {
 export type EtatsSources = {
   'à jour': number; 'nouvelle version': number; 'échue': number
   'jamais vérifiée': number; 'sonde en panne': number; total: number
+  vitrine?: number   // COCKPIT-1b (point 6) — le compteur VITRINE canonique (99), badge Sources
 }
 // CIRCUIT-P4 (lot 3) — une source HORS vitrine, avec sa raison en clair et la date de la décision.
 export type HorsVitrine = {
@@ -52,7 +59,28 @@ export type HorsVitrine = {
   raison: string; depuis: string | null
 }
 
+// COCKPIT-1 (Lot A) — l'onglet « Tableau de bord » (remplace « À faire » + « Cohérence »), composé
+// côté serveur (le front ne recalcule rien) : trois sections, cartes PAR PROBLÈME.
+export type CockpitPastille = 'jaune' | 'rouge' | 'gris'
+export type CockpitBouton = { label: string; action: string; sources?: number[]; candidat?: string | null; n?: number; nom?: string }
+export type CockpitCarte = {
+  id: string; pastille: CockpitPastille; titre: string; phrase: string
+  code: boolean; voir_detail: boolean; tri: number
+  bouton?: CockpitBouton; detail?: { texte: string }
+}
+export type CockpitTuile = { id: string; titre: string; pastille: 'vert' | 'rouge' | 'violet' | 'gris'; ligne: string }
+export type CockpitEtape = {
+  id: string; titre: string; ordre: number; fait: boolean; ligne: string
+  bouton?: CockpitBouton | null; local?: boolean
+}
+export type Cockpit = {
+  aujourdhui: { n: number; cartes: CockpitCarte[] }
+  tout_tourne: { resume: { postes: number; vert: number; echec: number; arret: number }; tuiles: CockpitTuile[] }
+  mise_a_jour: { etapes: CockpitEtape[] }
+}
+
 export type CircuitData = {
+  cockpit?: Cockpit   // COCKPIT-1 Lot A
   run_servi: string; candidat: string | null; manifeste: any
   reservoirs: Reservoir[]; robinets: Robinet[]; chiffres: Record<string, any>
   familles: Famille[]; categories: Categorie[]; resume: Resume

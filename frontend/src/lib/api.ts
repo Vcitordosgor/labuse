@@ -2685,6 +2685,39 @@ export const getSanteFraicheur = () =>
   j<{ empreinte_attendue: string; perimes: string[]; caches: CacheFraicheur[] }>('/sante/fraicheur')
 // COHERENCE-FIX-1 (lot G) — les passages du banc de cohérence (onglet Cohérence, page Données).
 export const getAdminCoherence = () => j<any>('/admin/coherence')
+// COCKPIT-1 (Lot A) — les gestes du Tableau de bord. L'état PROD (version servie chez les clients)
+// est lu serveur→serveur (jamais une URL dans le front) ; les actions passent par les mêmes
+// commandes que le cron, détachées et journalisées.
+export interface CockpitEtatProd { env: string; local: boolean; joignable: boolean; run: string | null; promu_le: string | null }
+export const getAdminCockpitEtatProd = () => j<CockpitEtatProd>('/admin/cockpit/etat-prod')
+export const postCockpitInjecter = (sources: number[]) =>
+  j<{ ok: boolean; lances: string[]; n: number }>('/admin/cockpit/injecter',
+    { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sources }) })
+export const postCockpitReconstruire = () => j<{ ok: boolean; log: string }>('/admin/cockpit/reconstruire', { method: 'POST' })
+export const postCockpitAccepterEcarts = () => j<{ ok: boolean; log: string }>('/admin/cockpit/accepter-ecarts', { method: 'POST' })
+export const postCockpitEnvoyerProd = () => j<{ ok: boolean; log: string }>('/admin/cockpit/envoyer-prod', { method: 'POST' })
+
+// COCKPIT-1 (Lot B) — « L'usine » : le registre des jobs en 4 familles + « Lancer maintenant » /
+// « Réveiller… » (le même verrou flock que le cron, via run-job.sh).
+export interface UsinePoste {
+  nom: string; libelle: string; role: string
+  pastille: 'vert' | 'violet' | 'rouge' | 'gris'
+  cadence: string | null; heure_reunion: string | null
+  dernier: { statut: string | null; fin: string | null; duree_s: number | null }
+  prochaine: string | null; gel: string | null
+  bouton?: { label: string; action: string; nom?: string } | null
+  voir_detail: boolean; detail?: { texte: string }
+}
+export interface UsineData {
+  familles: { n: number; nom: string; postes: UsinePoste[] }[]
+  geles: UsinePoste[]
+  resume: { postes: number; vert: number; echec: number; arret: number }
+  legende: [string, string][]
+}
+export const getAdminUsine = () => j<UsineData>('/admin/usine')
+export const postJobLancer = (nom: string) =>
+  j<{ ok: boolean; nom: string; reveil: boolean }>(`/admin/jobs/${encodeURIComponent(nom)}/lancer`, { method: 'POST' })
+
 export const postAdminCircuitVerifier = () => j<any>('/admin/circuit/verifier', { method: 'POST' })
 // CIRCUIT-P2 (lot 3.2/3.3) / CIRCUIT-P7 — tâches longues : lancer l'agent LLM (une source via
 // `sourceId`, ou une portée « sans_amont » (défaut) / « g8 » / « tous » depuis la carte Agents).
@@ -2711,9 +2744,11 @@ export const postAdminCircuitFiltreServir = (source: string, motif = '') =>
 export const postAdminCircuitFiltreRevenir = (source: string) =>
   j<any>(`/admin/circuit/filtre/revenir?source=${encodeURIComponent(source)}`, { method: 'POST' })
 // CIRCUIT-P — journal filtrable/paginé + pages de détail (un appel chacun).
-export const getAdminCircuitJournal = (p: { type?: string; depuis?: string; page?: number; taille?: number } = {}) => {
+export const getAdminCircuitJournal = (p: { type?: string; famille?: string; echecs?: boolean; depuis?: string; page?: number; taille?: number } = {}) => {
   const q = new URLSearchParams()
   if (p.type) q.set('type', p.type)
+  if (p.famille) q.set('famille', p.famille)   // COCKPIT-1 (Lot E) — filtre par famille
+  if (p.echecs) q.set('echecs', '1')           // COCKPIT-1b — « Échecs seulement »
   if (p.depuis) q.set('depuis', p.depuis)
   if (p.page) q.set('page', String(p.page))
   if (p.taille) q.set('taille', String(p.taille))
