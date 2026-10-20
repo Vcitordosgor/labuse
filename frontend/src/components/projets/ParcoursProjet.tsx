@@ -121,7 +121,9 @@ export function ParcoursProjet({ prefill, onVoir, onFermer, accent }: {
           </p>
         ) : (
           <p data-cree-vivier style={{ fontSize: 13, color: '#8FA69A', margin: '0 0 16px' }}>
-            Le vivier entier est dans le projet, classé par probabilité de mutation — rien n'est retiré, tout est ordonné.
+            {/* CHASSE-APP-FIX-2 (point 4 P) — on reprend la définition « figeable » de l'étape 4 au
+                lieu de « rien n'est retiré » : les terrains non constructibles et faux positifs SONT exclus. */}
+            Le vivier figeable est dans le projet, classé par probabilité de mutation — hors terrains non constructibles et faux positifs (exclusions automatiques du moteur).
           </p>
         )}
         <div style={{ display: 'flex', gap: 12 }}>
@@ -185,7 +187,9 @@ export function ParcoursProjet({ prefill, onVoir, onFermer, accent }: {
     ['Sur quel périmètre ?', 'Une ou plusieurs communes, ou toute l’île.'],
     ['Le contexte du projet', 'Indicatif — figure sur le projet et le PDF, sans effet sur la sélection.'],
     ['Affinez le cadrage.', 'Les mêmes critères que la carte. Chaque critère resserre le vivier — le reste arrive classé, les mieux d’abord.'],
-    ['On récapitule.', 'Le vivier entier entre dans le projet, classé — rien n’est retiré, tout est ordonné.'],
+    // CHASSE-APP-FIX-2 (point 4 P) — récap aligné sur l'étape 4 (« figeable ») : on n'affirme plus
+    // « rien n'est retiré » alors que les non constructibles et faux positifs sont exclus du vivier.
+    ['On récapitule.', 'Le vivier figeable entre dans le projet, classé — hors terrains non constructibles et faux positifs (exclusions automatiques du moteur), tout le reste est ordonné.'],
   ]
   const noteInfo = (txt: string) => (
     <p style={{ fontSize: 12, color: '#6F8578', margin: '10px 0 0', display: 'flex', alignItems: 'center', gap: 6 }}>
