@@ -1,0 +1,10 @@
+CHASSE-APP-FIX-2 — point 4 U — Copilote : plus de noms de colonnes dans la réponse
+
+AVANT (rapport CHASSE-APP-20-10) :
+  « Surface : 1 111 m² (surface_parcelle_m2). »
+  « Zone PLU : Zone U3c (famille U) (zone_plu_famille). »
+
+APRÈS (worktree, /api/copilote-v2/ask) :
+  « Surface : 1 111 m². »                 (champ_id="surface_parcelle_m2" reste structuré, non affiché)
+  « Zone PLU : Zone U3c (famille U). »
+  sources = ["fiche LABUSE"]              (plus « fiche LABUSE · surface_parcelle_m2 »)
