@@ -8897,6 +8897,10 @@ def _entry_dict(db: Session, e: models.PipelineEntry, *,
         "proprietaire_label": prospection.statut_label((e.prospection or {}).get("statut_proprietaire")),
         "has_manual_contact": prospection.has_manual_contact(e.prospection),
         "parcel": {"commune": p.commune, "section": p.section, "surface_m2": p.surface_m2,
+                   # CHASSE-APP-FIX-2 (point 3) — la carte CRM affiche la CONTENANCE cadastrale en
+                   # valeur principale (comme la fiche), plus le dessin ST_Area. champs_terrain()
+                   # ajoute surface_terrain_m2 / surface_source / surface_dessin_m2 / contenance_m2.
+                   **_surface.champs_terrain(p.surface_m2, p.contenance_m2),
                    # M6 2a (§1.8) : l'adresse BAN sur les cartes CRM (pipeline = volume faible)
                    "adresse": adresse},
         # d'où vient la piste (copilote-projet) — None si ajoutée hors projet

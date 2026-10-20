@@ -5,6 +5,7 @@ import {
   getPipelineMeta, patchPipeline, renameCrmColumn, reorderCrmColumns, resetCrmColumns, restorePipeline,
 } from '../../lib/api'
 import { fmtM2 } from '../../lib/format'
+import { surfaceTerrain } from '../../lib/surface'
 import type { PipelineColumn, PipelineEntry, PipelineMeta } from '../../lib/types'
 import { Tip } from '../Tip'
 import { EmptyState, ErrorState } from '../States'
@@ -135,7 +136,9 @@ function Card({ e, onDragStart, newEvents, onArchive, onEdit, columns, onMove, o
             (menu « Déplacer vers… », P7). */}
       </div>
       <div className="tnum mt-1 truncate text-[11px] text-txt-mut">
-        {e.parcel.surface_m2 ? `${fmtM2(e.parcel.surface_m2)} · ` : ''}{e.parcel.commune}
+        {/* CHASSE-APP-FIX-2 (point 3) — contenance cadastrale en valeur principale (comme la fiche),
+            plus le dessin ST_Area. surfaceTerrain = contenance si présente, sinon dessin. */}
+        {surfaceTerrain(e.parcel) ? `${fmtM2(surfaceTerrain(e.parcel))} · ` : ''}{e.parcel.commune}
       </div>
       {/* Phase 2 : d'où vient la piste (projet) */}
       {e.projet && (
