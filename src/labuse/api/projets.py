@@ -1008,19 +1008,28 @@ def _analyse_cadrage(db: Session, cadrage: dict) -> dict:
     if (cadrage or {}).get("__de_zero__"):
         return {"total": 0, "priorite": 0, "a_suivre": 0, "signalees": 0}
     from .app import _ETAGE0_SQL, MIN_DISPLAY_SURFACE_M2, _score_v2_run_id
+    from ..scoring.tiers_client import codes_stockes
     fc = _cadrage_to_filtre(cadrage)
     where, params = fc.where()
     base = "" if ("f_tiers" in params or "s2.tier" in where or _ETAGE0_SQL in where) \
         else f"AND NOT {_ETAGE0_SQL}"
+    # CHASSE-APP-FIX-2 (point N, correctif de FOND) — on comptait `s2.tier = 'brulante'` / `'chaude'`
+    # EN DUR : ces libellés LEGACY n'existent PAS dans les runs à politique v2 (tiers servis
+    # 'priorite'/'a_suivre') → le compteur rendait 0 sur TOUS les projets alors que le run servi
+    # classait des parcelles (q_v19 : 142 priorité + 662 à suivre). On passe par le mapping CANONIQUE
+    # `codes_stockes` (legacy + v2, et qui suit PRIORITE_SERVIE : Priorité repliée sur À suivre tant
+    # qu'elle n'est pas servie) → robuste au prochain renommage. ANY(CAST(.. AS text[])) gère le
+    # tableau VIDE (codes_stockes('priorite') = () tant que Priorité n'est pas servie).
+    cp, cs = list(codes_stockes("priorite")), list(codes_stockes("a_suivre"))
     r = db.execute(text(
         f"SELECT count(*) AS total, "
-        f"  count(*) FILTER (WHERE s2.tier = 'brulante') AS priorite, "
-        f"  count(*) FILTER (WHERE s2.tier = 'chaude') AS a_suivre "
+        f"  count(*) FILTER (WHERE s2.tier = ANY(CAST(:cp AS text[]))) AS priorite, "
+        f"  count(*) FILTER (WHERE s2.tier = ANY(CAST(:cs AS text[]))) AS a_suivre "
         f"FROM parcels p JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run "
         f"JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run "
         f"WHERE (p.surface_m2 IS NULL OR p.surface_m2 >= :minsurf) {base} {where}"),
         {"run": runs.cascade(), "v2run": _score_v2_run_id(db), "minsurf": MIN_DISPLAY_SURFACE_M2,
-         **params}).mappings().first()
+         "cp": cp, "cs": cs, **params}).mappings().first()
     p, s = int(r["priorite"] or 0), int(r["a_suivre"] or 0)
     return {"total": int(r["total"] or 0), "priorite": p, "a_suivre": s, "signalees": p + s}
 
@@ -1038,8 +1047,16 @@ def _restant_a_trier(db: Session, pid: int, v2run: str, analyse: dict) -> dict:
         "WHERE pp.projet_id = :pid AND pp.statut IN ('retenue', 'ecartee') GROUP BY s2.tier"),
         {"pid": pid, "v2run": v2run}).mappings().all()
     decid = {r["tier"]: int(r["n"] or 0) for r in rows}
-    prio = max(0, int(analyse.get("priorite", 0)) - decid.get("brulante", 0))
-    suiv = max(0, int(analyse.get("a_suivre", 0)) - decid.get("chaude", 0))
+    # CHASSE-APP-FIX-2 (point N) — moitié « reste à trier » du MÊME compteur R8 que le bandeau : elle
+    # soustrayait decid['brulante']/decid['chaude'] EN DUR. Au run v2 les décidées portent
+    # 'priorite'/'a_suivre' → jamais soustraites (le chip « À suivre » ne décroissait pas en triant).
+    # Même mapping canonique que le bandeau (codes_stockes), legacy + v2.
+    from ..scoring.tiers_client import codes_stockes
+    cp, cs = set(codes_stockes("priorite")), set(codes_stockes("a_suivre"))
+    decid_prio = sum(n for t, n in decid.items() if t in cp)
+    decid_suiv = sum(n for t, n in decid.items() if t in cs)
+    prio = max(0, int(analyse.get("priorite", 0)) - decid_prio)
+    suiv = max(0, int(analyse.get("a_suivre", 0)) - decid_suiv)
     return {"priorite": prio, "a_suivre": suiv, "signalees": prio + suiv}
 
 

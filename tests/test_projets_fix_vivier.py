@@ -164,7 +164,10 @@ def test_r8_chips_comptent_le_restant_a_trier(db_session):
 
     cadrage = {"communes": ["Zeta"]}
     analyse = _analyse_cadrage(db_session, cadrage)
-    assert analyse["priorite"] == 2 and analyse["a_suivre"] == 1   # le BANDEAU = total du cadrage
+    # CHASSE-APP-FIX-2 — PRIORITE_SERVIE=False : Priorité est repliée sur À suivre (codes_stockes),
+    # donc les 3 têtes (2 brûlantes + 1 chaude) comptent toutes sous « À suivre ». signalees = 3
+    # (le repli ne change PAS le total signalé, que le bandeau affiche ; il change juste la ventilation).
+    assert analyse["priorite"] == 0 and analyse["a_suivre"] == 3 and analyse["signalees"] == 3
 
     projet_id = db_session.execute(text(
         "INSERT INTO projets (nom, filtres) VALUES ('R8', :f) RETURNING id"),
@@ -177,6 +180,42 @@ def test_r8_chips_comptent_le_restant_a_trier(db_session):
     db_session.flush()
 
     restant = _restant_a_trier(db_session, projet_id, _score_v2_run_id(db_session), analyse)
-    assert restant["priorite"] == 1     # 2 brûlantes − 1 retenue = 1 restante à trier
-    assert restant["a_suivre"] == 0     # 1 chaude − 1 écartée = 0 restante
+    # têtes décidées = 1 retenue + 1 écartée = 2 ; restant tête = 3 − 2 = 1 (sous À suivre, repli
+    # Priorité). signalees restant inchangé (1) par rapport à l'avant-repli.
+    assert restant["priorite"] == 0
+    assert restant["a_suivre"] == 1
     assert restant["signalees"] == 1
+
+
+@pytest.mark.db
+def test_r8_compteur_voit_les_tiers_v2_du_run_servi(db_session):
+    """CHASSE-APP-FIX-2 (point N) — GARDE anti-régression : le run SERVI (politique v2) stocke les
+    tiers 'priorite'/'a_suivre'. Le bandeau DOIT les compter → signalees > 0 quand le cadrage contient
+    des parcelles classées. Le bug fermé : _analyse_cadrage filtrait 'brulante'/'chaude' EN DUR
+    (libellés LEGACY absents des runs v2) → signalees = 0 sur TOUS les projets alors que le run classe
+    des parcelles. Ce test ÉCHOUE sur l'ancien code (signalees == 0) et passe sur le correctif."""
+    from labuse.api.projets import _analyse_cadrage
+
+    db_session.execute(text(
+        "INSERT INTO p_score_v2_runs (run_id, model_version, model_sha256, params, n_parcelles) "
+        "VALUES (:r, 'v2-test', 'abc', '{}', 3) ON CONFLICT (run_id) DO NOTHING"), {"r": RUN})
+    # 3 parcelles de la TÊTE classée, écrites avec le vocabulaire V2 SERVI ('priorite'/'a_suivre') —
+    # exactement ce que l'ancien filtre 'brulante'/'chaude' ratait. Le dryrun reste non-étage0.
+    rang = 300
+    for k, tier in enumerate(["priorite", "a_suivre", "a_suivre"]):
+        idu = f"97996VA{k:04d}00"[:14].ljust(14, "0")
+        pid = _parcel(db_session, idu, "Vmega", 800)
+        db_session.execute(text(
+            "INSERT INTO dryrun_parcel_evaluations (run_label, parcel_id, completeness_score, "
+            "opportunity_score, status, q_score, a_score, matrice_statut) "
+            "VALUES (:r, :p, 70, 10, 'a_creuser', 60, 40, 'a_creuser')"), {"r": CASCADE, "p": pid})
+        rang += 1
+        db_session.execute(text(
+            "INSERT INTO parcel_p_score_v2 (run_id, parcelle_id, p_raw, mult_base, percentile, rang, "
+            "contrib_z, contrib_d, top5_contributions, copro, tier, model_version) "
+            "VALUES (:r, :i, 0.5, 10, 90, :rg, 0.2, 1.5, '[]', false, :t, 'v2-test')"),
+            {"r": RUN, "i": idu, "rg": rang, "t": tier})
+    db_session.flush()
+
+    analyse = _analyse_cadrage(db_session, {"communes": ["Vmega"]})
+    assert analyse["signalees"] == 3, f"le compteur ignore les tiers v2 du run servi : {analyse}"
