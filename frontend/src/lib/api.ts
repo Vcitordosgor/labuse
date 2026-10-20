@@ -2744,10 +2744,11 @@ export const postAdminCircuitFiltreServir = (source: string, motif = '') =>
 export const postAdminCircuitFiltreRevenir = (source: string) =>
   j<any>(`/admin/circuit/filtre/revenir?source=${encodeURIComponent(source)}`, { method: 'POST' })
 // CIRCUIT-P — journal filtrable/paginé + pages de détail (un appel chacun).
-export const getAdminCircuitJournal = (p: { type?: string; famille?: string; depuis?: string; page?: number; taille?: number } = {}) => {
+export const getAdminCircuitJournal = (p: { type?: string; famille?: string; echecs?: boolean; depuis?: string; page?: number; taille?: number } = {}) => {
   const q = new URLSearchParams()
   if (p.type) q.set('type', p.type)
   if (p.famille) q.set('famille', p.famille)   // COCKPIT-1 (Lot E) — filtre par famille
+  if (p.echecs) q.set('echecs', '1')           // COCKPIT-1b — « Échecs seulement »
   if (p.depuis) q.set('depuis', p.depuis)
   if (p.page) q.set('page', String(p.page))
   if (p.taille) q.set('taille', String(p.taille))

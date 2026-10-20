@@ -4,9 +4,8 @@
 // bouton SEULEMENT si une action existe. ⟳ sur les automatiques. Recherche. Segment Vitrine / Hors
 // vitrine : le hors-vitrine (alias, retirées, internes, hubs, à obtenir) avec statut, RAISON en
 // français et date de décision — rien n'y est masqué. Clic sur une ligne vitrine → page de détail.
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 
-import { getSanteFraicheur, postCockpitReconstruire } from '../../../lib/api'
 import type { Portee } from './Circuit'
 import type { CircuitData, Reservoir } from './types'
 
@@ -164,69 +163,9 @@ function Cartes({ data, tacheSonde, tacheAgents, onSonder, onAgents }: {
   )
 }
 
-// COHERENCE-FIX-1 (lot A) — LA FRAÎCHEUR DES CACHES en tête de Données : chaque cache (fiche
-// commune, tuiles carte, tuiles pré-générées, couches subdivisées, réponses IA) avec sa clé
-// attendue / réelle. Un cache périmé s'affiche « périmé » EN ROUGE (plus jamais en silence) ;
-// tout à jour → une seule ligne discrète. Source : /sante/fraicheur (même prédicat que
-// `labuse rebuild --dry-run`, la fumée du déploiement).
-function Fraicheur() {
-  // fetch direct (pas react-query) : le composant vit aussi dans des rendus de test sans
-  // QueryClientProvider ; un refetch toutes les 2 min suffit largement pour un état de cache.
-  const [data, setData] = useState<Awaited<ReturnType<typeof getSanteFraicheur>> | null>(null)
-  const [ouvert, setOuvert] = useState(false)
-  // COCKPIT-1 (Lot E) — « labuse rebuild » (commande de terminal) DISPARAÎT de l'écran : à la place,
-  // un bouton « Reconstruire » qui lance le même geste en tâche de fond (progression dans le Journal).
-  const [recon, setRecon] = useState<'idle' | 'lance'>('idle')
-  useEffect(() => {
-    let vivant = true
-    const lire = () => { getSanteFraicheur().then((d) => { if (vivant) setData(d) }).catch(() => {}) }
-    lire()
-    const t = setInterval(lire, 120_000)
-    return () => { vivant = false; clearInterval(t) }
-  }, [])
-  if (!data) return null
-  const perimes = data.caches.filter((c) => c.perime)
-  return (
-    <div className="fraicheur" style={{ margin: '10px 0 14px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-        <b style={{ fontSize: 13 }}>Fraîcheur des caches</b>
-        {perimes.length === 0
-          ? <span style={{ color: 'var(--mint, #1a7f5a)', fontSize: 12 }}>tous à jour</span>
-          : <span style={{ color: 'var(--rouge, #c0392b)', fontSize: 12, fontWeight: 600 }}>
-              {perimes.length} périmé{perimes.length > 1 ? 's' : ''}
-            </span>}
-        {perimes.length > 0 && (
-          <button className="btn solid" style={{ fontSize: 11, padding: '2px 10px' }}
-            disabled={recon === 'lance'}
-            onClick={() => { setRecon('lance'); postCockpitReconstruire().catch(() => {}) }}>
-            {recon === 'lance' ? 'Reconstruction lancée' : 'Reconstruire'}
-          </button>)}
-        <button className="btn" style={{ fontSize: 11, padding: '1px 8px' }}
-          onClick={() => setOuvert((o) => !o)}>{ouvert ? 'replier' : 'détail'}</button>
-      </div>
-      {(ouvert || perimes.length > 0) && (
-        <div style={{ marginTop: 6, display: 'grid', gap: 4 }}>
-          {(ouvert ? data.caches : perimes).map((c) => (
-            <div key={c.cache} style={{ fontSize: 12, display: 'flex', gap: 8, alignItems: 'baseline' }}>
-              <span style={{ minWidth: 90, fontWeight: 600,
-                color: c.perime ? 'var(--rouge, #c0392b)' : 'inherit' }}>
-                {c.perime ? 'périmé' : 'à jour'}
-              </span>
-              <span>
-                <b>{c.cache}</b> — {c.detail || c.erreur || ''}
-                {c.perime && c.cle_attendue && (
-                  <span className="muted" style={{ display: 'block' }}>
-                    attendu {c.cle_attendue} · réel {c.cle_reelle ?? '∅'}
-                  </span>
-                )}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
+// COCKPIT-1b (retour recette, point 4) — le bloc « Fraîcheur des caches » QUITTE Sources : chaque
+// cache périmé devient une carte « Reconstruire » du Tableau de bord (composée côté serveur,
+// cockpit_resume), en français, les codes techniques seulement dans « Voir le détail ».
 
 export function Sources({ data, onOpen, tacheSonde, tacheAgents, onSonder, onAgents }: {
   data: CircuitData; onOpen: (id: number) => void
@@ -241,9 +180,11 @@ export function Sources({ data, onOpen, tacheSonde, tacheAgents, onSonder, onAge
   const hv = data.hors_vitrine ?? []
 
   const cherche = (s: string) => !q || s.toLowerCase().includes(q.toLowerCase())
+  // COCKPIT-1b (point 6) — la VITRINE exclut le référentiel interne (compté hors vitrine) : le segment
+  // « Vitrine » et ses pastilles tombent à 99, cohérents avec le badge, /sources et l'accueil.
   const vitrine = useMemo(
     () => data.reservoirs
-      .filter((r) => (etatActif === 'tous' || r.etat[1] === etatActif) && cherche(`${r.nom} ${r.famille}`))
+      .filter((r) => !r.interne && (etatActif === 'tous' || r.etat[1] === etatActif) && cherche(`${r.nom} ${r.famille}`))
       .sort((a, b) => (RANG[a.etat[1]] ?? 9) - (RANG[b.etat[1]] ?? 9) || a.nom.localeCompare(b.nom, 'fr')),
     [data.reservoirs, etatActif, q],
   )
@@ -254,7 +195,6 @@ export function Sources({ data, onOpen, tacheSonde, tacheAgents, onSonder, onAge
         <Cartes data={data} tacheSonde={tacheSonde} tacheAgents={tacheAgents}
           onSonder={onSonder} onAgents={onAgents} />
       )}
-      <Fraicheur />
       <div className="src-bar">
         <input className="search" value={q} onChange={(e) => setQ(e.target.value)}
           placeholder="Chercher une source (cadastre, permis, PLU, LiDAR…)" />

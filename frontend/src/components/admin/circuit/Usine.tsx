@@ -1,4 +1,4 @@
-// COCKPIT-1 (Lot B) — « L'usine » : la page atteinte depuis « Voir l'usine » du Tableau de bord.
+// COCKPIT-1b — « L'usine » : un ONGLET (ex-page « Voir l'usine ») du dashboard Données.
 // Lue du REGISTRE des jobs (/admin/usine, rafraîchie toutes les 60 s) : 4 colonnes (familles), chaque
 // poste avec son libellé/rôle, dernier & prochain passage, pastille (vert/violet/rouge/gris) et le
 // bouton possible — « Lancer maintenant » (sans risque), « Démarrer » (agents IA, coût/plafond),
@@ -21,7 +21,7 @@ const resultat = (s: string | null) =>
   s === 'ok' ? 'ok' : s === 'dry-run' ? 'ok (à vide)' : s === 'echec' ? 'échec'
     : s === 'timeout' ? 'trop long' : s === 'en_cours' ? 'en cours' : 'jamais'
 
-export function Usine({ data, onBack }: { data: CircuitData; onBack: () => void }) {
+export function Usine({ data }: { data: CircuitData }) {
   const qc = useQueryClient()
   const q = useQuery({ queryKey: ['admin-usine'], queryFn: getAdminUsine, refetchInterval: 60_000 })
   const [detail, setDetail] = useState<UsinePoste | null>(null)
@@ -113,10 +113,6 @@ export function Usine({ data, onBack }: { data: CircuitData; onBack: () => void 
 
   return (
     <div className="ck">
-      <div className="ck-head" style={{ marginBottom: 10 }}>
-        <span className="right" />
-        <button className="btn" onClick={onBack}>← Tableau de bord</button>
-      </div>
       {msg && <div className={`ck-msg ${msg.err ? 'err' : ''}`}>{msg.t}
         <button className="btn" style={{ marginLeft: 12, padding: '3px 9px' }} onClick={() => setMsg(null)}>OK</button></div>}
 

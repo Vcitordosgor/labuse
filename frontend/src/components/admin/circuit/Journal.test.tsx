@@ -40,6 +40,11 @@ const reponse = {
       verdicts: {}, resultats: { ok: 1 }, membres: [] },
   ],
   page: 1, taille: 50, total: 2, aujourdhui: 1, categories: CATS,
+  // COCKPIT-1b (point 2) — une SEULE rangée : Tout · 4 familles · Échecs seulement.
+  familles: [
+    { slug: 'veille', label: 'Veille des sources' }, { slug: 'livraisons', label: 'Livraisons' },
+    { slug: 'moteur', label: 'Le moteur' }, { slug: 'controle', label: 'Contrôle, clients, sécurité' },
+  ],
 }
 
 describe('Journal', () => {
@@ -49,13 +54,14 @@ describe('Journal', () => {
     return render(<QueryClientProvider client={qc}>{ui}</QueryClientProvider>)
   }
 
-  it('filtres de catégorie « tous » EN DERNIER à droite (CIRCUIT-P7 lot 5) ; compteur du jour remonté', async () => {
+  it('UNE rangée de filtres : Tout · les 4 familles · Échecs seulement (COCKPIT-1b) ; compteur du jour remonté', async () => {
     const onJour = vi.fn()
     const { getByText, container } = wrap(<Journal data={data} onOpen={() => {}} onAujourdhui={onJour} />)
     await waitFor(() => expect(getByText('SITADEL')).toBeInTheDocument())
     // on ne regarde QUE les boutons de la barre de filtres (pas les libellés des passages).
     const boutons = Array.from(container.querySelectorAll('.jf button')).map((b) => b.textContent)
-    expect(boutons).toEqual(['vanne', 'calcul', 'bascule', 'filtre', 'tous'])   // « tous » à droite
+    expect(boutons).toEqual(['Tout', 'Veille des sources', 'Livraisons', 'Le moteur',
+      'Contrôle, clients, sécurité', 'Échecs seulement'])
     expect(getByText('quand')).toBeInTheDocument()
     expect(onJour).toHaveBeenCalledWith(1)
   })
@@ -80,10 +86,17 @@ describe('Journal', () => {
     expect(onOpen).toHaveBeenCalledWith('reservoir', 42)
   })
 
-  it('filtrer par catégorie relance la requête', async () => {
+  it('filtrer par famille relance la requête', async () => {
     const { getByText, getByRole } = wrap(<Journal data={data} onOpen={() => {}} />)
     await waitFor(() => expect(getByText('SITADEL')).toBeInTheDocument())
-    fireEvent.click(getByRole('button', { name: 'bascule' }))
-    await waitFor(() => expect(getJournal).toHaveBeenCalledWith(expect.objectContaining({ type: 'bascule' })))
+    fireEvent.click(getByRole('button', { name: 'Livraisons' }))
+    await waitFor(() => expect(getJournal).toHaveBeenCalledWith(expect.objectContaining({ famille: 'livraisons' })))
+  })
+
+  it('« Échecs seulement » relance la requête avec echecs=true', async () => {
+    const { getByText, getByRole } = wrap(<Journal data={data} onOpen={() => {}} />)
+    await waitFor(() => expect(getByText('SITADEL')).toBeInTheDocument())
+    fireEvent.click(getByRole('button', { name: 'Échecs seulement' }))
+    await waitFor(() => expect(getJournal).toHaveBeenCalledWith(expect.objectContaining({ echecs: true })))
   })
 })

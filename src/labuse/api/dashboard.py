@@ -2239,7 +2239,7 @@ def _assembler_reservoirs(c, only_id: int | None = None) -> list[dict]:
         params["only_id"] = only_id
     rows = c.execute(text(
         "SELECT d.id, d.name, d.provider, d.category, d.source_millesime, d.source_horizon_at,"
-        "       d.last_sync_at,"
+        "       d.last_sync_at, d.status,"
         "       d.mode_remplissage, d.cadence_attendue_jours, d.cadence_statut,"
         "       v.methode, v.dernier_statut, v.dernier_passage_at, v.dernier_vu, v.actif,"
         "       v.echecs_consecutifs, v.dernier_message,"
@@ -2292,6 +2292,9 @@ def _assembler_reservoirs(c, only_id: int | None = None) -> list[dict]:
             "a_verifier": a_verifier,
             "dernier_controle": _dernier_controle.isoformat() if _dernier_controle else None,
             "id": r["id"], "nom": r["name"], "producteur": r["provider"],
+            # COCKPIT-1b (point 6) — le RÉFÉRENTIEL interne (lu par la pompe, montré dans le Circuit)
+            # n'est PAS en vitrine : la page Sources l'écarte de son segment « Vitrine » (compté 99).
+            "interne": (r["status"] or "").lower() == "interne",
             "famille": r["category"] or "aucune", "millesime": _millesime,
             "ingere_le": r["last_sync_at"].isoformat() if r["last_sync_at"] else None,
             "mode": mode, "cadence_jours": r["cadence_attendue_jours"],
@@ -2598,6 +2601,11 @@ def admin_circuit(request: Request) -> dict:
     with engine().begin() as c:
         # ── réservoirs : catalogue affiché + veille + mode/cadence + vanne + filtre (helper) ──
         reservoirs = _assembler_reservoirs(c)
+        # COCKPIT-1b (point 6) — le compteur VITRINE canonique (99), le MÊME que /sources et l'accueil.
+        # Les réservoirs du Circuit incluent en plus le référentiel INTERNE (lu par la pompe) : on ne
+        # confond plus « vitrine » (99) avec « réservoirs admin » (100).
+        from .. import sources_catalog as _srccat
+        _vitrine_n = _srccat.compter_vitrine(c)
         # ── CIRCUIT-P4 (lot 3) — le segment « Hors vitrine » de l'onglet Sources (raison en clair) ──
         try:
             hors_vitrine = _sources_hors_vitrine(c)
@@ -2765,7 +2773,11 @@ def admin_circuit(request: Request) -> dict:
     # ── CIRCUIT-P4 (lot 2) — l'onglet « À FAIRE » : la liste ordonnée des cinq gestes possibles.
     #    Le compte par état (lot 1) alimente la ligne « Rien d'autre » ; le contexte (dernière sonde)
     #    et la dépendance injection→recalcul (lot 4, `_calculer_af`) enrichissent la ligne Calculer. ──
-    _etats_compte = _etats.compter_etats(reservoirs)
+    # COCKPIT-1b (point 6) — les COMPTES d'état (badge, segment, pastilles) portent sur la VITRINE
+    # SEULE (99) : le référentiel interne reste dans `reservoirs` (le Circuit le montre) mais ne compte
+    # pas comme une source vitrine. `vitrine` (= compter_vitrine, cross-check) reste servi explicitement.
+    _etats_compte = _etats.compter_etats([r for r in reservoirs if not r.get("interne")])
+    _etats_compte["vitrine"] = _vitrine_n
     _passages = [r["veille"]["passage"] for r in reservoirs
                  if r.get("veille") and r["veille"].get("passage")]
     _derniere_sonde = max(_passages) if _passages else None
@@ -2895,9 +2907,17 @@ def admin_circuit(request: Request) -> dict:
     for _r in reservoirs:
         _r["propagation"] = _cockpit.propagation_reservoir(
             _r, eau_rob=_eau_set, tuiles_perime=_tuiles_perime, chiffres=chiffres)
+    # ── COCKPIT-1b (point 4) — chaque cache PÉRIMÉ (/sante/fraicheur) devient une carte « Reconstruire »
+    #    du Tableau de bord (le bloc « Fraîcheur des caches » quitte Sources). Jamais bloquant. ──
+    try:
+        from ..fraicheur_caches import etat as _fr_etat
+        with session_scope() as _sf:
+            _caches_perimes = [c for c in (_fr_etat(_sf).get("caches") or []) if c.get("perime")]
+    except Exception:  # noqa: BLE001 — pas de caches lisibles : aucune carte (jamais un crash)
+        _caches_perimes = []
     cockpit = _cockpit.composer_cockpit(
         a_faire=a_faire, etats_sources=_etats_compte, reservoirs=reservoirs,
-        verrous=_verrous, fuites_rob=_fuites_rob, tuiles=_tuiles_af,
+        verrous=_verrous, fuites_rob=_fuites_rob, caches_perimes=_caches_perimes,
         ecarts_toleres=_ecarts_toleres, jobs_list=_jobs_list, run_servi=runs.current(),
         candidat=_candidat, calculer_present=_resume._calculer_present(_calculer_af, residuel),
         dernier_calcul=_run_date, env=_config.get_settings().env, prod_run=None,
@@ -3495,8 +3515,8 @@ def admin_circuit_revenir(request: Request) -> dict:
 
 
 @router.get("/admin/circuit/journal")
-def admin_circuit_journal(request: Request, type: str = "", famille: str = "", depuis: str = "",
-                          page: int = 1, taille: int = 50) -> dict:
+def admin_circuit_journal(request: Request, type: str = "", famille: str = "", echecs: bool = False,
+                          depuis: str = "", page: int = 1, taille: int = 50) -> dict:
     """CIRCUIT-P2 (lot 4) — LE JOURNAL LISIBLE : les passages GROUPÉS (un job de filtres sur 39
     sources, une volée d'agents = même `lot`) tiennent sur UNE ligne dépliable ; un geste isolé
     reste une ligne. Chaque cible porte son NOM affiché (jamais l'identifiant technique), « par »
@@ -3521,6 +3541,10 @@ def admin_circuit_journal(request: Request, type: str = "", famille: str = "", d
         conds.append("(geste = ANY(:gestes_f) OR (geste IN ('job','cockpit:lancer-job')"
                      " AND cible = ANY(:jobs_f)))")
         params["gestes_f"] = gestes_f; params["jobs_f"] = jobs_f
+    # COCKPIT-1b (point 2) — « Échecs seulement » : ne garder que les passages en échec/refus/timeout.
+    if echecs:
+        conds.append("resultat = ANY(:ech)")
+        params["ech"] = ["echec", "refuse", "timeout"]
     if depuis:
         conds.append("ts >= :depuis"); params["depuis"] = depuis
     where = " AND ".join(conds)
@@ -3552,9 +3576,12 @@ def admin_circuit_journal(request: Request, type: str = "", famille: str = "", d
         membres = []
         if gks:
             params2 = {**params, "gks": gks}
+            # COCKPIT-1b (point 2) — « Échecs seulement » filtre AUSSI les membres : un lot mixte ne
+            # montre que ses passages en échec (sinon un `ok` du même lot ressortait dans la vue échecs).
+            _memb_where = f"{gk} = ANY(:gks)" + (" AND resultat = ANY(:ech)" if echecs else "")
             membres = [dict(x) for x in c.execute(text(
                 f"SELECT {gk} AS gk, ts, geste, cible, par, resultat, details"
-                f" FROM circuit_journal WHERE {gk} = ANY(:gks) ORDER BY id DESC"),
+                f" FROM circuit_journal WHERE {_memb_where} ORDER BY id DESC"),
                 params2).mappings()]
         # 1.3 — le compteur de l'onglet compte les entrées du JOUR de La Réunion (pas l'UTC serveur).
         aujourdhui = c.execute(text(

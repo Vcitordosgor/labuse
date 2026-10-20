@@ -48,6 +48,20 @@ def masquees_param() -> list[str]:
     return list(SOURCES_MASQUEES)
 
 
+def compter_vitrine(conn) -> int:
+    """COCKPIT-1b (retour recette, point 6) — LE compteur CANONIQUE des sources EN VITRINE (99).
+
+    UN seul endroit pour les TROIS surfaces : le compteur d'accueil (site public), la liste /sources
+    (app cliente) ET le badge du dashboard admin branchent ici → fini « 100 d'un côté, 99 de l'autre ».
+    Le 99 est le bon chiffre : la vitrine = ce qui SERT au client (`WHERE_AFFICHEES`). La source de
+    statut `interne` est un RÉFÉRENTIEL lu par la pompe (le Circuit admin la montre pour la traçabilité)
+    mais elle n'est PAS en vitrine — le dashboard comptait à tort sa liste de réservoirs (vitrine ∪
+    interne = 100). `conn` est une Connection ou une Session (les deux savent `execute`)."""
+    from sqlalchemy import text as _t
+    return int(conn.execute(_t(f"SELECT count(*) FROM data_sources WHERE {WHERE_AFFICHEES}"),
+                            {"masquees": masquees_param()}).scalar() or 0)
+
+
 def est_affichee(name: str, technical_notes: str | None, status: str | None,
                  affichage_desactive: bool | None = False) -> bool:
     """Une source data_sources est-elle AFFICHÉE ? Prédicat CANONIQUE (même règle que WHERE_AFFICHEES,

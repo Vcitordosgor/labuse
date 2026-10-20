@@ -14,6 +14,7 @@ export type Reservoir = {
   millesime: string | null; ingere_le: string | null; mode: string
   cadence_jours: number | null; cadence_statut: string | null; a_verifier: boolean
   dernier_controle: string | null; etat: Etat; ko: boolean; taps: string[]; chiffres_ids: string[]
+  interne?: boolean   // COCKPIT-1b (point 6) — référentiel interne (lu par la pompe), hors vitrine
   vanne: { type: string; label?: string; motif?: string }
   veille: any | null; filtre: any
   sans_millesime?: string | null   // CIRCUIT-P6 : la raison écrite du « à jour par construction »
@@ -50,6 +51,7 @@ export type AFaire = {
 export type EtatsSources = {
   'à jour': number; 'nouvelle version': number; 'échue': number
   'jamais vérifiée': number; 'sonde en panne': number; total: number
+  vitrine?: number   // COCKPIT-1b (point 6) — le compteur VITRINE canonique (99), badge Sources
 }
 // CIRCUIT-P4 (lot 3) — une source HORS vitrine, avec sa raison en clair et la date de la décision.
 export type HorsVitrine = {

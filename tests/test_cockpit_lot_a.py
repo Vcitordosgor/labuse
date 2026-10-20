@@ -28,7 +28,10 @@ def _entrees(**over):
                     {"id": 20, "nom": "SPANC"}, {"id": 30, "nom": "OSM transport"}],
         verrous={"casses": ["V1c", "G5"]},
         fuites_rob=[{"id": "couches:x", "nom": "Couches découpées"}],
-        tuiles={"perime": True, "estimation_min": 2},
+        # COCKPIT-1b (point 4) — un cache périmé = une carte « Reconstruire ».
+        caches_perimes=[{"cache": "commune_contexte_cache", "perime": True,
+                         "detail": "23 périmée(s), 0 manquante(s)", "porte_sur": "24 communes",
+                         "cle_attendue": "abc", "cle_reelle": "def"}],
         ecarts_toleres=48,
         jobs_list=[
             {"nom": "sonde-sources", "gel": None, "dernier": {"statut": "ok", "fin": "2026-10-20T07:00:00+00:00"}},
@@ -48,14 +51,28 @@ def _entrees(**over):
 def test_cartes_groupees_par_probleme_et_triees():
     c = ck.composer_cockpit(**_entrees())
     cartes = {x["id"]: x for x in c["aujourdhui"]["cartes"]}
-    # UNE carte par problème (pas par occurrence) : 2 sources en nouvelle version = 1 carte.
-    assert set(cartes) == {"injecter", "reconstruire", "verrous", "sondes", "fuites",
+    # UNE carte par problème (pas par occurrence) : 2 sources en nouvelle version = 1 carte ;
+    # un cache périmé = 1 carte « cache:… » (COCKPIT-1b point 4).
+    assert set(cartes) == {"injecter", "cache:commune_contexte_cache", "verrous", "sondes", "fuites",
                            "ecarts-toleres", "deposer"}
     # les données à injecter d'abord (tri=0), puis le reste.
     assert c["aujourdhui"]["cartes"][0]["id"] == "injecter"
     assert [x["id"] for x in c["aujourdhui"]["cartes"]] == [
-        "injecter", "reconstruire", "verrous", "sondes", "fuites", "ecarts-toleres", "deposer"]
+        "injecter", "cache:commune_contexte_cache", "verrous", "sondes", "fuites",
+        "ecarts-toleres", "deposer"]
     assert c["aujourdhui"]["n"] == 7
+
+
+def test_carte_cache_perime_en_francais():
+    """COCKPIT-1b (point 4) — un cache périmé = une carte EN FRANÇAIS avec « Reconstruire » ; les
+    codes techniques (clé attendue/réelle, run) seulement dans « Voir le détail »."""
+    c = ck.composer_cockpit(**_entrees())
+    cache = next(x for x in c["aujourdhui"]["cartes"] if x["id"].startswith("cache:"))
+    assert cache["pastille"] == "jaune" and cache["code"] is False
+    assert cache["titre"] == "23 fiches communes en retard sur les dernières sources"
+    assert cache["bouton"]["action"] == "reconstruire"
+    assert "abc" in cache["detail"]["texte"]           # clé attendue dans le détail…
+    assert "abc" not in cache["titre"]                 # …jamais dans le titre
 
 
 def test_carte_injecter_bulk():

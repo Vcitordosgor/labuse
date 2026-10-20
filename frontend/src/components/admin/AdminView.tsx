@@ -464,32 +464,11 @@ export function AdminView() {
           })}
         </div>
         <div className="mt-auto border-t border-line px-5 pt-4">
+          {/* COCKPIT-1b (retour recette, point 5) — le rail ne garde que Serveur, Run servi et « Ouvrir
+              l'app cliente ». Backup, Horloge et Verrous ont quitté le rail : ils vivent dans l'onglet
+              Usine (les postes, leur dernier/prochain passage) et le Tableau de bord (ce qui cloche). */}
           <Led ok={d?.sante.ok === false ? 'err' : d?.sante.ok ? 'ok' : 'off'} label="Serveur" value={d?.sante.ok == null ? '—' : d.sante.ok ? 'OK' : 'dégradé'} />
           <Led ok={d?.run.label ? 'ok' : 'off'} label="Run servi" value={d?.run.label ?? '—'} />
-          {/* RETOURS-8 (R10) — la tuile lit le même endroit/motif que le job (cron .sql.gz + CLI .dump).
-              DASHBOARD-2 (Lot 1) — la VRAIE date du dernier dump (mtime), pas « répertoire non configuré »
-              par défaut : ambre/rouge selon l'âge, « non configuré » / « aucun » distincts. */}
-          <Led ok={d ? ({ ok: 'ok', ambre: 'warn', rouge: 'err', absent: 'err', non_configure: 'off', local: 'off' } as const)[d.backup.etat] ?? 'off' : 'off'}
-            label="Backup" value={
-              /* DASHBOARD-FIX-1 (point 2) — hors VPS, pointer le miroir local au lieu de « non configuré ». */
-              d?.backup.etat === 'local' ? 'local : voir ~/labuse-backups'
-                : d?.backup.etat === 'non_configure' ? 'non configuré'
-                  : d?.backup.etat === 'absent' ? 'aucun'
-                    : d?.backup.mtime
-                      ? fmtReu(d.backup.mtime)
-                      : d?.backup.age_jours != null ? `il y a ${Math.floor(d.backup.age_jours)} j` : '—'} />
-          {/* DASHBOARD-2 (Lot 1) — Horloge : jobs posés / attendus. Écart = ambre (« ce qui cloche »). */}
-          <Led ok={d?.horloge?.poses == null ? 'off' : d.horloge.poses < (d.horloge.attendus ?? 0) ? 'warn' : 'ok'}
-            label="Horloge" value={d?.horloge?.poses == null ? '—' : `${d.horloge.poses} / ${d.horloge.attendus}`} />
-          {/* DASHBOARD-2 (Lot 1) + DASHBOARD-FIX-1 (point 4) — Verrous : n / 24, DATÉ (dernier passage),
-              « à rejouer » (ambre) si une bascule a eu lieu depuis — l'état affiché précède le run servi. */}
-          <Led ok={d?.verrous?.ok == null ? (d?.verrous?.a_rejouer ? 'warn' : 'off')
-            : d.verrous.a_rejouer ? 'warn' : d.verrous.ok < (d.verrous.sur ?? 24) ? 'err' : 'ok'}
-            label="Verrous" value={
-              d?.verrous?.a_rejouer
-                ? (d?.verrous?.ok == null ? 'à rejouer' : `${d.verrous.ok} / ${d.verrous.sur} · à rejouer`)
-                : d?.verrous?.ok == null ? '—'
-                  : `${d.verrous.ok} / ${d.verrous.sur}${d.verrous.dernier_ts ? ` · ${fmtReu(d.verrous.dernier_ts)}` : ''}`} />
           <button onClick={() => setView('cartes')} className="mt-3 text-xs text-mint hover:underline">Ouvrir l'app cliente →</button>
         </div>
       </aside>

@@ -23,10 +23,9 @@ import { TableauDeBord } from './TableauDeBord'
 import { Usine } from './Usine'
 import { type CircuitData } from './types'
 
-// COCKPIT-1 (Lot A) — quatre onglets : le « Tableau de bord » (ex « À faire » + « Cohérence »
-// fondus), Sources, Circuit, Journal. « L'usine » n'est pas un onglet mais une page atteinte par le
-// bouton « Voir l'usine » du Tableau de bord (Lot B).
-type Onglet = 'tableau' | 'sources' | 'circuit' | 'journal'
+// COCKPIT-1b (retour recette) — « L'usine » devient un ONGLET à part entière (plus de page cachée
+// derrière « Voir l'usine ») : Tableau de bord · Usine · Sources · Circuit · Journal.
+type Onglet = 'tableau' | 'usine' | 'sources' | 'circuit' | 'journal'
 // CIRCUIT-P5 — « destinations » : le détail du calibrage PLU par commune (composant Destinations),
 // atteint depuis la page de détail de la source GPU (plus par un lien en bas de la page).
 type DetailType = 'reservoir' | 'robinet' | 'pompe' | 'compteur' | 'destinations'
@@ -41,7 +40,6 @@ export function CircuitSection() {
   const qc = useQueryClient()
   const q = useQuery({ queryKey: ['admin-circuit'], queryFn: getAdminCircuit, refetchInterval: 60_000 })
   const [onglet, setOnglet] = useState<Onglet>('tableau')
-  const [usine, setUsine] = useState(false)   // COCKPIT-1 — « Voir l'usine » (page, Lot B)
   const [detail, setDetail] = useState<Detail>(null)
   const [srcDetail, setSrcDetail] = useState<number | null>(null)   // CIRCUIT-P7 (lot 2) — la fiche source (page Sources)
   const [groupe, setGroupe] = useState<(number | string)[] | null>(null)
@@ -130,9 +128,6 @@ export function CircuitSection() {
   if (q.isLoading) return <div className="cxp"><style>{CIRCUIT_CSS}</style><div className="muted">Circuit — chargement…</div></div>
   if (!d) return <div className="cxp"><style>{CIRCUIT_CSS}</style><div className="muted">Circuit indisponible.</div></div>
 
-  // COCKPIT-1 — « L'usine » prend tout l'écran (page, pas onglet) ; « ← Tableau de bord » y revient.
-  if (usine) return <div className="cxp"><style>{CIRCUIT_CSS}</style><Usine data={d} onBack={() => setUsine(false)} /></div>
-
   // ── la ligne de progression / message générique (verrous + messages locaux) sous les onglets.
   //    La sonde, les agents et le contrôle ont désormais leur PLACE (cartes de Sources, bouton de
   //    Circuit) ; seule la tâche verrous (déclenchée depuis le détail de la pompe) reste ici. ──
@@ -152,10 +147,11 @@ export function CircuitSection() {
           l'en-tête générique d'AdminView (commun à toutes les sections admin). Doublon retiré : seul
           l'en-tête d'AdminView porte désormais le titre. On garde directement les quatre onglets. */}
       <div className="tabs">
-        {/* COCKPIT-1 (Lot A) — « Tableau de bord » remplace « À faire » + « Cohérence ». */}
+        {/* COCKPIT-1b — Tableau de bord · Usine · Sources · Circuit · Journal. */}
         <button className={onglet === 'tableau' ? 'on' : ''} onClick={() => setOnglet('tableau')}>Tableau de bord</button>
+        <button className={onglet === 'usine' ? 'on' : ''} onClick={() => setOnglet('usine')}>Usine</button>
         <button className={onglet === 'sources' ? 'on' : ''} onClick={() => setOnglet('sources')}>
-          Sources{d.etats_sources?.total ? <span className="n neutre">{d.etats_sources.total}</span> : ''}
+          Sources{d.etats_sources?.vitrine ? <span className="n neutre">{d.etats_sources.vitrine}</span> : ''}
         </button>
         <button className={onglet === 'circuit' ? 'on' : ''} onClick={() => setOnglet('circuit')}>Circuit</button>
         <button className={onglet === 'journal' ? 'on' : ''} onClick={() => setOnglet('journal')}>
@@ -172,7 +168,11 @@ export function CircuitSection() {
       )}
 
       <section className={`tab ${onglet === 'tableau' ? 'on' : ''}`}>
-        <TableauDeBord data={d} onVoirUsine={() => setUsine(true)} onDepotManuel={() => setOnglet('sources')} />
+        <TableauDeBord data={d} onVoirUsine={() => setOnglet('usine')} onDepotManuel={() => setOnglet('sources')} />
+      </section>
+
+      <section className={`tab ${onglet === 'usine' ? 'on' : ''}`}>
+        {onglet === 'usine' && <Usine data={d} />}
       </section>
 
       <section className={`tab ${onglet === 'sources' ? 'on' : ''}`}>
@@ -217,27 +217,23 @@ export function CircuitSection() {
   )
 }
 
-// CIRCUIT-P7 (lot 1) — le résultat du dernier contrôle, écrit sous le bouton « Vérifier ». Il lit
-// la dernière ligne de contrôle (fuites/eau) et la synthèse des verrous (n/N) — jamais un recompte
-// au front — et renvoie vers « À faire » où chaque problème a sa ligne.
+// COCKPIT-1b (retour recette, point 3) — UNE seule phrase sous « Vérifier que tout coule » : « Tout
+// coule » ou « N fuite(s) → voir » (lien vers le Tableau de bord). Plus de compteurs eau ancienne /
+// verrous ici (ils vivent dans le Tableau de bord et l'Usine), plus de lien « voir dans À faire »
+// (l'onglet a disparu). Jamais un recompte au front — on lit la dernière ligne de contrôle.
 function ResultatControle({ d, tv, onAfaire }:
   { d: CircuitData; tv: any; onAfaire: () => void }) {
   const c: any = d.dernier_controle
-  const verrousTot = d.compteurs_coherence?.verrous ?? 22
-  const casses = (d as any).verrous?.casses?.length ?? 0
-  const verrousOk = verrousTot - casses
   if (!c && tv?.etat !== 'termine') return <span className="muted">Pas encore de contrôle. Lance-le.</span>
   const fuites = tv?.resultat?.fuites_ouvertes ?? c?.fuites_ouvertes ?? 0
-  const eau = tv?.resultat?.eau_ancienne_ouverte ?? c?.eau_ancienne ?? 0
   const ts = tv?.etat === 'termine' ? (tv.maj || tv.fin) : c?.ts
-  const souci = fuites > 0 || casses > 0
   return (
     <>
-      <span className="muted">Dernier contrôle {quandCourt(ts)} —</span>{' '}
-      <b className={fuites ? 'r' : ''}>{fuites} fuite{fuites > 1 ? 's' : ''}</b>{' · '}
-      <b>{eau} eau ancienne</b>{' · '}
-      <b className={casses ? 'r' : ''}>verrous {verrousOk}/{verrousTot}</b>
-      {souci && <>{' — '}<button className="lienc" onClick={onAfaire}>voir dans À faire</button></>}
+      <span className="muted">Dernier contrôle {quandCourt(ts)} — </span>
+      {fuites > 0
+        ? <><b className="r">{fuites} fuite{fuites > 1 ? 's' : ''}</b>{' '}
+            <button className="lienc" onClick={onAfaire}>→ voir</button></>
+        : <b>Tout coule.</b>}
     </>
   )
 }

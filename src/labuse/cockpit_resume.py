@@ -83,9 +83,48 @@ def _lignes_par_type(a_faire: dict, type_: str) -> list[dict]:
     return [l for l in (a_faire or {}).get("lignes", []) if l.get("type") == type_]
 
 
+# COCKPIT-1b (retour recette, point 4) — chaque cache périmé devient une carte EN FRANÇAIS (aucun code
+# run/cascade/hash à l'écran : il ne sort que dans « Voir le détail »). Libellé humain par cache.
+_CACHE_NOM = {
+    "commune_contexte_cache": "fiches communes",
+    "mvt_parcels": "couches subdivisées de la carte",
+    "spatial_layers_sub": "couches découpées de la carte",
+    "tile_cache": "tuiles pré-rendues",
+    "ia_cache": "réponses IA pré-calculées",
+    "manifeste": "pointeurs du run servi",
+    "defisc_bareme": "barème de défiscalisation",
+    "derives_regle": "dérivés des règles",
+    "parcel_couche_intersection": "servitudes matérialisées",
+}
+
+
+def _carte_cache(cache: dict) -> dict:
+    """Une carte « Reconstruire » pour un cache périmé : titre en français (+ compte si le détail en
+    porte un), bouton Reconstruire ; les faits techniques (clé attendue/réelle, run) → « Voir le détail »."""
+    nom_tech = str(cache.get("cache") or "cache")
+    noun = next((v for k, v in _CACHE_NOM.items() if nom_tech.startswith(k)), None) or "un cache"
+    det = str(cache.get("detail") or "")
+    import re
+    m = re.match(r"\s*(\d+)\s+périmée", det)
+    titre = (f"{m.group(1)} {noun} en retard sur les dernières sources" if m
+             else f"Les {noun} sont en retard sur les dernières sources")
+    texte = "\n".join(x for x in [
+        nom_tech,
+        cache.get("porte_sur"),
+        f"attendu {cache.get('cle_attendue')}" if cache.get("cle_attendue") else None,
+        f"réel {cache.get('cle_reelle')}" if cache.get("cle_reelle") else None,
+        cache.get("detail"),
+    ] if x)
+    return _carte(
+        f"cache:{nom_tech.split(' ')[0]}", "jaune", titre,
+        "Reconstruire remet ce cache à jour avec les dernières sources. Quelques minutes.",
+        bouton={"label": "Reconstruire", "action": "reconstruire"},
+        detail={"texte": texte}, tri=1)
+
+
 def _cartes_aujourdhui(a_faire: dict, *, noms_source: dict, ecarts_toleres: int,
                        verrous: dict | None, fuites_rob: list[dict],
-                       tuiles: dict | None, dates: dict | None) -> list[dict]:
+                       caches_perimes: list[dict], dates: dict | None) -> list[dict]:
     cartes: list[dict] = []
     dates = dates or {}
 
@@ -107,23 +146,20 @@ def _cartes_aujourdhui(a_faire: dict, *, noms_source: dict, ecarts_toleres: int,
             detail={"texte": "Sources en nouvelle version :\n- " + "\n- ".join(noms)},
             tri=0))
 
-    # (2) CACHE / TUILES PÉRIMÉ — « les couches subdivisées de la carte sont en retard ».
-    tu = tuiles or {}
-    if tu.get("perime"):
-        est = tu.get("estimation_min")
-        cartes.append(_carte(
-            "reconstruire", "jaune",
-            "Les couches subdivisées de la carte sont en retard",
-            "Les couches ont bougé, la version découpée pour la carte n'a pas suivi."
-            + (f" Environ {est} min." if est else " Quelques minutes."),
-            bouton={"label": "Reconstruire", "action": "reconstruire"},
-            tri=1))
+    # (2) CACHES PÉRIMÉS — COCKPIT-1b (point 4) : une carte par cache en retard sur les dernières
+    # sources (ex. « 23 fiches communes en retard… »), chacune avec « Reconstruire ». Les codes
+    # techniques (clé attendue/réelle, run) ne sortent QUE dans « Voir le détail ».
+    for cache in (caches_perimes or []):
+        if cache.get("perime"):
+            cartes.append(_carte_cache(cache))
 
     # (3) VERROUS CASSÉS — « N contrôles de sécurité échouent » : DEMANDE DU CODE (pas un clic ici).
     casses = list((verrous or {}).get("casses", []))
     if casses:
         n = len(casses)
-        depuis = (verrous or {}).get("depuis") or (dates.get("verrous") if isinstance(dates, dict) else None)
+        # COCKPIT-1b (point 5) — UNE seule date de dernier contrôle des verrous, partout : `dernier_ts`
+        # de la synthèse (le MÊME que lisait l'ancienne LED du rail). Plus de date divergente.
+        depuis = (verrous or {}).get("dernier_ts") or (verrous or {}).get("depuis")
         texte = (
             "Contrôles en échec : " + ", ".join(casses) + "\n"
             + (f"Depuis : {_jour(depuis)}\n" if depuis else "")
@@ -417,10 +453,11 @@ def composer_usine(jobs_list: list[dict], *, en_cours: set[str] | None = None) -
 
 
 def composer_cockpit(*, a_faire: dict, etats_sources: dict | None, reservoirs: list[dict],
-                     verrous: dict | None, fuites_rob: list[dict], tuiles: dict | None,
-                     ecarts_toleres: int, jobs_list: list[dict], run_servi: str,
-                     candidat: str | None, calculer_present: bool, dernier_calcul: str | None,
-                     env: str, prod_run: str | None, dates: dict | None = None) -> dict:
+                     verrous: dict | None, fuites_rob: list[dict],
+                     caches_perimes: list[dict] | None, ecarts_toleres: int, jobs_list: list[dict],
+                     run_servi: str, candidat: str | None, calculer_present: bool,
+                     dernier_calcul: str | None, env: str, prod_run: str | None,
+                     dates: dict | None = None) -> dict:
     """Compose le payload du Tableau de bord (trois sections). Tout est déjà calculé en amont par
     l'endpoint — ici on ne fait que GROUPER par problème et formuler en français. `prod_run` est
     None quand l'état prod n'est pas encore lu (le front le complète via /admin/cockpit/etat-prod)."""
@@ -429,7 +466,7 @@ def composer_cockpit(*, a_faire: dict, etats_sources: dict | None, reservoirs: l
 
     cartes = _cartes_aujourdhui(
         a_faire, noms_source=noms_source, ecarts_toleres=ecarts_toleres, verrous=verrous,
-        fuites_rob=fuites_rob, tuiles=tuiles, dates=dates)
+        fuites_rob=fuites_rob, caches_perimes=caches_perimes or [], dates=dates)
 
     return {
         "aujourdhui": {"n": len(cartes), "cartes": cartes},

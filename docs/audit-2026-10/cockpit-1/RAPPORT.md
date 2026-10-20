@@ -154,6 +154,36 @@ en préservant « les ALERTES restent » :
 - **`LABUSE_LOCK_DIR`** (labuse.env) doit pointer là où run-job.sh pose les verrous (le garde mail-queue
   « cède à la sauvegarde » lit ce dossier) — déjà le cas depuis OPS-CRONS-1.
 
+## COCKPIT-1b — retours de recette de Vic (6 points)
+
+1. **L'usine devient un ONGLET** : Tableau de bord · **Usine** · Sources · Circuit · Journal. Plus de
+   page cachée derrière « Voir l'usine » — le bouton mène à l'onglet (`Circuit.tsx`, `Usine.tsx`).
+2. **Journal — une seule rangée** : Tout · Veille des sources · Livraisons · Le moteur · Contrôle,
+   clients, sécurité · **Échecs seulement**. La rangée « Geste » est retirée. Backend : filtre `echecs`
+   (resultat echec/refuse/timeout), appliqué au groupe ET aux membres (un lot mixte ne montre que ses
+   échecs). Test : `test_cockpit_1b.py`.
+3. **Circuit — phrase unique** sous « Vérifier que tout coule » : « Tout coule » ou « N fuite(s) →
+   voir » (lien vers le Tableau de bord). Retirés : les compteurs eau ancienne / verrous et le lien
+   « voir dans À faire » (onglet disparu).
+4. **Sources — plus de bloc « Fraîcheur des caches »** : chaque cache périmé devient une carte du
+   Tableau de bord EN FRANÇAIS (« 23 fiches communes en retard sur les dernières sources ») avec
+   « Reconstruire » ; les codes (run/cascade/clé) ne sortent que dans « Voir le détail »
+   (`cockpit_resume._carte_cache`, lu de `/sante/fraicheur`). Test : `test_cockpit_lot_a.py`.
+5. **Rail Pilotage réduit** : Serveur · Run servi · Ouvrir l'app cliente. Backup, Horloge, Verrous
+   retirés (ils vivent dans l'Usine et le Tableau de bord). Les verrous n'ont plus qu'UNE date de
+   dernier contrôle (`dernier_ts` de la synthèse), affichée au seul Tableau de bord.
+6. **Vitrine 100 vs 99 — une seule fonction de comptage.** Cause : le dashboard comptait la liste des
+   réservoirs admin (vitrine ∪ **référentiel interne** = 100) ; l'app et le site public comptent la
+   vitrine (`WHERE_AFFICHEES` = 99). **99 est le bon chiffre** : l'interne est un référentiel lu par la
+   pompe (montré dans le Circuit), pas une source vitrine. Correctif : fonction canonique
+   **`sources_catalog.compter_vitrine`** branchée par les TROIS surfaces (badge dashboard, /sources,
+   accueil) ; les comptes d'état de la page Sources portent sur la vitrine seule (99, l'interne est
+   marqué `interne` et écarté du segment « Vitrine ») ; `reservoirs` reste à 100 pour le Circuit. Tests
+   db : badge == /sources == accueil == compter_vitrine ; l'interne n'est jamais compté en vitrine.
+
+Captures : `captures/apres-1b/` (01 Tableau de bord + rail + carte de cache, 02 Usine onglet, 03
+Journal une rangée, 04 Sources sans Fraîcheur « Vitrine 99 »).
+
 ## Hors mandat (non touché)
 Refonte de Sources/Radar/moteur de calcul, DA, mail du matin (supprimé, pas remplacé), notifications
 Telegram/Signal, Mac mini.
