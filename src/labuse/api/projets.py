@@ -651,7 +651,11 @@ def projets_list(request: Request, db: Session = Depends(get_db)) -> list[dict]:
     db.flush()
     ids = [p.id for p in rows]
     by_projet = _counts_by_projet(db, ids)
-    return [_projet_dict_counts(p, by_projet) for p in rows]
+    # CHASSE-APP-FIX-2 (point 4 O) — la carte de liste affichait la date du jour (proposee_at, date
+    # du cadrage). On expose le run SERVI (valeurs, global) pour que la liste et le projet ouvert
+    # disent la MÊME chose (« valeurs au 11 oct. » partout, plus « au 19/10 » sur la liste).
+    vr = _residuel_run_servi(db)
+    return [{**_projet_dict_counts(p, by_projet), "valeurs_run": vr} for p in rows]
 
 
 def _find_doublon(db: Session, nom: str, filtres: dict, cid: int | None) -> models.Projet | None:

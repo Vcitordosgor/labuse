@@ -2229,6 +2229,9 @@ export interface Projet {
   created_at: string | null; updated_at: string | null; derniere_execution_at: string | null
   counts?: ProjetCounts   // FIX-PROJETS : `proposee` = total VIF du cadrage − décidées (= l'ouverture) ; décidées depuis projet_parcelles
   proposee_at?: string | null   // fraîcheur du compte vif « à trier » (cache `cadrage_total`) — affichée « au JJ/MM »
+  // CHASSE-APP-FIX-2 (point 4 O) — run SERVI (valeurs), global, pour que la liste affiche la MÊME
+  // date que le projet ouvert (« valeurs au 11/10 »), plus la date du jour (proposee_at).
+  valeurs_run?: { label: string; seq: number; date: string | null } | null
 }
 // M120 — le diff d'un run (create/rejeu) : ce qui change, dit au client.
 // M129-D P4 : ajoutees_refonte = entrées dues au nouveau vivier (refonte cascade), dites au rejeu.
