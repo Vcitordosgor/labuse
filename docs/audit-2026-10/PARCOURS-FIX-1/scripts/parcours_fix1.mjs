@@ -26,8 +26,13 @@ async function étape(page, device, { etape, phrase, verdict = 'OK', clics = 1, 
 const browser = await launchChromium()
 const EMAIL = 'promoteur.parcoursfix@cabinet-parcours.re'
 const NOM = '[CT-PARCOURS] Rémi Téoulé'
-const PW1 = 'ParcoursFix-2026!'
-const PW2 = 'NouveauMotDePasse-2026!'
+// CHASSE-APP-FIX-1 (pt 3) — plus AUCUN mot de passe en clair dans le dépôt : les mots de passe du
+// compte de test (initial PW1, puis le nouveau PW2 du flux « mot de passe oublié ») viennent de
+// l'environnement. Exporter avant de lancer : PARCOURS_PW1='…' PARCOURS_PW2='…'. Absent → échec
+// immédiat avec message clair (jamais un secret versionné).
+const PW1 = process.env.PARCOURS_PW1
+const PW2 = process.env.PARCOURS_PW2
+if (!PW1 || !PW2) throw new Error('PARCOURS_PW1 / PARCOURS_PW2 manquants : exporter les mots de passe du compte de test avant de lancer le script')
 
 try {
   // ───────────────────────── A · Vic (desktop) ─────────────────────────
