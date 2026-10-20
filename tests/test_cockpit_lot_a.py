@@ -32,6 +32,7 @@ def _entrees(**over):
         caches_perimes=[{"cache": "commune_contexte_cache", "perime": True,
                          "detail": "23 périmée(s), 0 manquante(s)", "porte_sur": "24 communes",
                          "cle_attendue": "abc", "cle_reelle": "def"}],
+        incidents=[],
         ecarts_toleres=48,
         jobs_list=[
             {"nom": "sonde-sources", "gel": None, "dernier": {"statut": "ok", "fin": "2026-10-20T07:00:00+00:00"}},
@@ -61,6 +62,22 @@ def test_cartes_groupees_par_probleme_et_triees():
         "injecter", "cache:commune_contexte_cache", "verrous", "sondes", "fuites",
         "ecarts-toleres", "deposer"]
     assert c["aujourdhui"]["n"] == 7
+
+
+def test_carte_sauvegarde_en_retard():
+    """COCKPIT-1b (point 5) — une sauvegarde en retard (incident ops ouvert), qui a quitté le rail du
+    Pilotage, apparaît comme une CARTE rouge du Tableau de bord avec « Réessayer » (relance le dump)."""
+    inc = [{"cle": "sauvegarde-absente", "sujet": "Aucune sauvegarde présente",
+            "detail": "Aucun dump dans /var/backups — la sauvegarde ne tourne plus.",
+            "ouvert_at": "2026-10-20T13:50:00+00:00", "rappels": 1}]
+    c = ck.composer_cockpit(**_entrees(incidents=inc))
+    carte = next(x for x in c["aujourdhui"]["cartes"] if x["id"] == "incident:sauvegarde-absente")
+    assert carte["pastille"] == "rouge"
+    assert carte["titre"] == "La sauvegarde ne tourne plus"
+    assert carte["bouton"] == {"label": "Réessayer", "action": "lancer-job", "nom": "backup-postgres"}
+    assert "Aucune sauvegarde présente" in carte["detail"]["texte"]
+    # une vigie sans incident ne crée AUCUNE carte (pas de bruit).
+    assert not any(x["id"].startswith("incident:") for x in ck.composer_cockpit(**_entrees(incidents=[]))["aujourdhui"]["cartes"])
 
 
 def test_carte_cache_perime_en_francais():

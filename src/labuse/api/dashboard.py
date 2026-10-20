@@ -2915,9 +2915,17 @@ def admin_circuit(request: Request) -> dict:
             _caches_perimes = [c for c in (_fr_etat(_sf).get("caches") or []) if c.get("perime")]
     except Exception:  # noqa: BLE001 — pas de caches lisibles : aucune carte (jamais un crash)
         _caches_perimes = []
+    # ── COCKPIT-1b (point 5) — les vigies d'exploitation (sauvegarde, disque, copie externe, /readyz),
+    #    qui ont quitté le rail du Pilotage, deviennent des cartes du Tableau de bord quand elles cassent. ──
+    try:
+        from .. import ops_alertes as _ops
+        with session_scope() as _si:
+            _incidents = _ops.incidents_ouverts(_si)
+    except Exception:  # noqa: BLE001 — table d'incidents absente : aucune carte (jamais un crash)
+        _incidents = []
     cockpit = _cockpit.composer_cockpit(
         a_faire=a_faire, etats_sources=_etats_compte, reservoirs=reservoirs,
-        verrous=_verrous, fuites_rob=_fuites_rob, caches_perimes=_caches_perimes,
+        verrous=_verrous, fuites_rob=_fuites_rob, caches_perimes=_caches_perimes, incidents=_incidents,
         ecarts_toleres=_ecarts_toleres, jobs_list=_jobs_list, run_servi=runs.current(),
         candidat=_candidat, calculer_present=_resume._calculer_present(_calculer_af, residuel),
         dernier_calcul=_run_date, env=_config.get_settings().env, prod_run=None,
@@ -3151,7 +3159,11 @@ def admin_job_lancer(nom: str, request: Request) -> dict:
         raise HTTPException(404, "Job inconnu.")
     if nom == "agents-sources":
         raise HTTPException(409, "Les enquêteurs IA se lancent depuis leur bouton « Démarrer » (coût/plafond).")
-    if not (job.lancable or job.gel):
+    # COCKPIT-1b (point 5) — `backup-postgres` n'a pas de bouton « Lancer » libre dans l'Usine (lancable
+    # False, geste à part) MAIS la carte « sauvegarde en retard » du Tableau de bord peut le RELANCER :
+    # re-faire un dump est sûr et c'est exactement le remède à une sauvegarde manquée.
+    _relance_alerte = {"backup-postgres"}
+    if not (job.lancable or job.gel or nom in _relance_alerte):
         raise HTTPException(409, "Ce poste ne se lance pas à la main depuis l'usine.")
     racine = Path(__file__).resolve().parents[3]
     wrapper = str(racine / "scripts" / "jobs" / "run-job.sh")

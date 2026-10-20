@@ -171,7 +171,11 @@ en préservant « les ALERTES restent » :
    (`cockpit_resume._carte_cache`, lu de `/sante/fraicheur`). Test : `test_cockpit_lot_a.py`.
 5. **Rail Pilotage réduit** : Serveur · Run servi · Ouvrir l'app cliente. Backup, Horloge, Verrous
    retirés (ils vivent dans l'Usine et le Tableau de bord). Les verrous n'ont plus qu'UNE date de
-   dernier contrôle (`dernier_ts` de la synthèse), affichée au seul Tableau de bord.
+   dernier contrôle (`dernier_ts` de la synthèse), affichée au seul Tableau de bord. **Conséquence
+   (vérifiée)** : une vigie d'exploitation qui casse — sauvegarde en retard, disque plein, copie
+   externe ancienne, /readyz — devient une **carte** du Tableau de bord (ex. « La sauvegarde ne tourne
+   plus », rouge, « Réessayer » relance le dump + « Voir le détail »). Source : les incidents
+   `ops_alertes` ouverts (`cockpit_resume._cartes_incidents`) ; plus de panne invisible hors du rail.
 6. **Vitrine 100 vs 99 — une seule fonction de comptage.** Cause : le dashboard comptait la liste des
    réservoirs admin (vitrine ∪ **référentiel interne** = 100) ; l'app et le site public comptent la
    vitrine (`WHERE_AFFICHEES` = 99). **99 est le bon chiffre** : l'interne est un référentiel lu par la

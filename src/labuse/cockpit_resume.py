@@ -122,11 +122,51 @@ def _carte_cache(cache: dict) -> dict:
         detail={"texte": texte}, tri=1)
 
 
+# COCKPIT-1b (retour recette, point 5) — les VIGIES d'exploitation (sauvegarde, disque, copie externe,
+# /readyz) ont quitté le rail du Pilotage : quand l'une casse (incident ops ouvert), elle devient une
+# carte du Tableau de bord — le point « à faire aujourd'hui » où on la voit vraiment. Mappe la clé
+# d'incident → (pastille, titre FR, bouton). Une sauvegarde en retard a un « Réessayer » (relance le dump).
+_INCIDENT_CARTE = {
+    "sauvegarde-absente": ("rouge", "La sauvegarde ne tourne plus",
+                           {"label": "Réessayer", "action": "lancer-job", "nom": "backup-postgres"}),
+    "sauvegarde-retrecie": ("rouge", "La dernière sauvegarde a rétréci",
+                            {"label": "Réessayer", "action": "lancer-job", "nom": "backup-postgres"}),
+    "disque": ("rouge", "Le disque du serveur se remplit", None),
+    "readyz": ("rouge", "L'app n'est pas prête à répondre", None),
+    "copie-externe-ancienne": ("jaune", "La copie hors ligne est ancienne — branche le disque", None),
+}
+
+
+def _cartes_incidents(incidents: list[dict]) -> list[dict]:
+    """Une carte par incident d'EXPLOITATION ouvert (sauvegarde / disque / copie externe / readyz).
+    Les détails (seuils, dates) ne sortent que dans « Voir le détail »."""
+    out = []
+    for inc in incidents or []:
+        conf = _INCIDENT_CARTE.get(inc.get("cle"))
+        if not conf:
+            continue
+        pastille, titre, bouton = conf
+        depuis = (inc.get("ouvert_at") or "")[:16].replace("T", " ")
+        texte = "\n".join(x for x in [
+            inc.get("sujet"), inc.get("detail"),
+            f"ouvert depuis {depuis}" if depuis else None,
+            f"{inc['rappels']} rappel(s)" if inc.get("rappels") else None,
+        ] if x)
+        out.append(_carte(
+            f"incident:{inc['cle']}", pastille, titre,
+            inc.get("sujet") or "Un contrôle d'exploitation est au rouge.",
+            bouton=bouton, detail={"texte": texte}, tri=0.5))
+    return out
+
+
 def _cartes_aujourdhui(a_faire: dict, *, noms_source: dict, ecarts_toleres: int,
                        verrous: dict | None, fuites_rob: list[dict],
-                       caches_perimes: list[dict], dates: dict | None) -> list[dict]:
+                       caches_perimes: list[dict], incidents: list[dict], dates: dict | None) -> list[dict]:
     cartes: list[dict] = []
     dates = dates or {}
+
+    # (0) VIGIES D'EXPLOITATION (sauvegarde en retard, disque, copie externe, /readyz) — ex-rail.
+    cartes.extend(_cartes_incidents(incidents))
 
     # (1) DONNÉES À INJECTER — en premier (tri=0). Les N sources en nouvelle version → UNE carte.
     inj = _lignes_par_type(a_faire, "injecter")
@@ -454,7 +494,8 @@ def composer_usine(jobs_list: list[dict], *, en_cours: set[str] | None = None) -
 
 def composer_cockpit(*, a_faire: dict, etats_sources: dict | None, reservoirs: list[dict],
                      verrous: dict | None, fuites_rob: list[dict],
-                     caches_perimes: list[dict] | None, ecarts_toleres: int, jobs_list: list[dict],
+                     caches_perimes: list[dict] | None, incidents: list[dict] | None,
+                     ecarts_toleres: int, jobs_list: list[dict],
                      run_servi: str, candidat: str | None, calculer_present: bool,
                      dernier_calcul: str | None, env: str, prod_run: str | None,
                      dates: dict | None = None) -> dict:
@@ -466,7 +507,7 @@ def composer_cockpit(*, a_faire: dict, etats_sources: dict | None, reservoirs: l
 
     cartes = _cartes_aujourdhui(
         a_faire, noms_source=noms_source, ecarts_toleres=ecarts_toleres, verrous=verrous,
-        fuites_rob=fuites_rob, caches_perimes=caches_perimes or [], dates=dates)
+        fuites_rob=fuites_rob, caches_perimes=caches_perimes or [], incidents=incidents or [], dates=dates)
 
     return {
         "aujourdhui": {"n": len(cartes), "cartes": cartes},

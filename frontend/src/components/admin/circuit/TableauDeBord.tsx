@@ -12,6 +12,7 @@ import { useRef, useState } from 'react'
 import {
   getAdminCockpitEtatProd, postAdminCircuitSonder, postAdminFluxBascule, postAdminFluxLancerRun,
   postCockpitAccepterEcarts, postCockpitEnvoyerProd, postCockpitInjecter, postCockpitReconstruire,
+  postJobLancer,
 } from '../../../lib/api'
 
 import type { CircuitData, CockpitCarte, CockpitEtape } from './types'
@@ -46,6 +47,9 @@ export function TableauDeBord({ data, onVoirUsine, onDepotManuel }:
     onSuccess: () => apres('Bascule faite — l\'app sert la nouvelle version.'), onError: surErreur })
   const envoyer = useMutation({ mutationFn: postCockpitEnvoyerProd,
     onSuccess: () => apres('Envoi en prod lancé (deploy + parité) — suivi dans le Journal.'), onError: surErreur })
+  // COCKPIT-1b (point 5) — « Réessayer » d'une carte vigie (ex. sauvegarde en retard) relance le poste.
+  const lancerJob = useMutation({ mutationFn: (nom: string) => postJobLancer(nom),
+    onSuccess: () => apres('Relancé — suivi dans le Journal.'), onError: surErreur })
 
   if (!ck) return <div className="muted">Tableau de bord indisponible.</div>
 
@@ -62,6 +66,7 @@ export function TableauDeBord({ data, onVoirUsine, onDepotManuel }:
           + 'Les témoins de cohérence seront regénérés (à commiter ensuite).')) accepter.mutate()
         break
       case 'deposer': onDepotManuel(); break
+      case 'lancer-job': if (b.nom) lancerJob.mutate(b.nom); break
     }
   }
 
@@ -86,7 +91,7 @@ export function TableauDeBord({ data, onVoirUsine, onDepotManuel }:
   }
 
   const enCours = injecter.isPending || reconstruire.isPending || reessayer.isPending
-    || accepter.isPending || calculer.isPending || basculer.isPending || envoyer.isPending
+    || accepter.isPending || calculer.isPending || basculer.isPending || envoyer.isPending || lancerJob.isPending
 
   const r = ck.tout_tourne.resume
 
