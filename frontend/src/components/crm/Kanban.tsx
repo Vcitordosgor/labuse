@@ -449,6 +449,20 @@ export function Kanban() {
   const maxStart = Math.max(0, cols.length - COLS_PAR_VUE)
   const start = Math.min(winStart, maxStart)
   const visibleCols = paginated ? cols.slice(start, start + COLS_PAR_VUE) : cols
+  // CHASSE-APP-FIX-2 (point 6) — déplacer une carte vers une colonne HORS fenêtre (menu « Déplacer
+  // vers… ») la faisait disparaître de l'écran : il fallait paginer à la main pour la retrouver. On
+  // fait désormais DÉFILER la fenêtre jusqu'à la colonne de destination après le déplacement.
+  const revealCol = (status: string) => {
+    const idx = cols.findIndex((c) => c.key === status)
+    if (idx < 0 || !paginated) return
+    setWinStart((s) => {
+      const cur = Math.min(s, maxStart)
+      if (idx < cur) return idx
+      if (idx > cur + COLS_PAR_VUE - 1) return Math.min(maxStart, idx - COLS_PAR_VUE + 1)
+      return cur
+    })
+  }
+  const moveAndReveal = (id: number, status: string) => { move.mutate({ id, status }); revealCol(status) }
   // GB-027 — RECHERCHE CRM (nom, commune, IDU, société), insensible à la CASSE et aux ACCENTS. Les
   // entrées sont déjà toutes chargées → simple filtre client, aucun aller-retour serveur.
   const fold = (s: unknown) => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
@@ -616,7 +630,7 @@ export function Kanban() {
                     onArchive={() => setPendingArchive(e)}
                     onEdit={() => setEditingEntry(e)}
                     columns={meta.data?.columns ?? []}
-                    onMove={(status) => move.mutate({ id: e.id, status })}
+                    onMove={(status) => moveAndReveal(e.id, status)}
                     onNote={(notes) => patch.mutate({ id: e.id, body: { notes } })} />
                 ))}
                 {items.length === 0 && (
@@ -663,7 +677,7 @@ export function Kanban() {
           saving={patch.isPending}
           onCancel={() => setEditingEntry(null)}
           onSave={(body) => patch.mutate({ id: editingEntry.id, body })}
-          onMove={(status) => { move.mutate({ id: editingEntry.id, status }); setEditingEntry((c) => c ? { ...c, status } : c) }}
+          onMove={(status) => { moveAndReveal(editingEntry.id, status); setEditingEntry((c) => c ? { ...c, status } : c) }}
         />
       )}
       {/* M137 — confirmation avant ARCHIVAGE (réversible, mais on prévient : la carte quitte le tableau). */}
