@@ -47,6 +47,11 @@ class Terrain:
     has_voie: bool
     note_limites: Optional[str]
     contraintes: dict[str, int] = field(default_factory=dict)
+    # ETUDE-ZONE-1 — l'assiette est déjà restreinte à la portion CONSTRUCTIBLE (familles U/AU, même
+    # source zone_servie que Dossier/Gabarit) : le non-constructible (A/N) en est retiré AVANT reculs/PPR.
+    aire_hors_zone_m2: float = 0.0         # part non constructible retirée de l'assiette (dessin, 2975)
+    pct_constructible: Optional[float] = None   # part constructible de la parcelle (surface dessin)
+    note_constructibilite: Optional[str] = None
     ppr_rouge: Optional[BaseGeometry] = None      # interdiction, déduite de la zone
     ppr_bleue: Optional[BaseGeometry] = None       # prescription, signalée
     ppr_rouge_m2: float = 0.0
@@ -88,6 +93,42 @@ def _ppr_par_couleur(session, aw: str):
     rouge = unary_union(rouges) if rouges else None
     bleue = unary_union(bleues) if bleues else None
     return rouge, bleue
+
+
+def _zone_constructible(session, aw: str):
+    """ETUDE-ZONE-1 — portion CONSTRUCTIBLE de l'assiette, déjà intersectée avec elle (2975).
+
+    Source UNIQUE : les zones PLU `plu_gpu_zone` et la famille via `labuse_zone_famille(subtype)`,
+    EXACTEMENT la même que `faisabilite.zone_servie.zone_dominante` (donc que le Dossier et le
+    Gabarit). Constructible = familles U/AU (`FAMILLES_CONSTRUCTIBLES`) ; A/N (et « autre ») exclus.
+
+    Renvoie (geom_constructible | None, zonee) :
+      - `zonee=False` quand AUCUNE zone PLU ne touche l'assiette (commune non zonée / RNU) : on NE
+        clippe PAS (impossible de statuer sur la constructibilité → on garde l'assiette pleine) ;
+      - `zonee=True` sinon ; `geom=None` si la zone PLU existe mais est entièrement A/N.
+    """
+    from sqlalchemy import text
+    from labuse.faisabilite.zone_servie import FAMILLES_CONSTRUCTIBLES
+
+    rows = session.execute(text(
+        "SELECT labuse_zone_famille(subtype) AS fam, "
+        "ST_AsText(ST_CollectionExtract(ST_MakeValid(ST_Intersection("
+        "ST_MakeValid(geom_2975), ST_GeomFromText(:g,2975))), 3)) AS wkt "
+        "FROM spatial_layers WHERE kind='plu_gpu_zone' "
+        "AND ST_Intersects(geom_2975, ST_GeomFromText(:g,2975))"
+    ), {"g": aw}).fetchall()
+    if not rows:
+        return None, False
+    cons = []
+    for fam, wkt in rows:
+        if fam in FAMILLES_CONSTRUCTIBLES and wkt:
+            g = shp_wkt.loads(wkt)
+            if not g.is_empty:
+                cons.append(g)
+    geom = unary_union(cons) if cons else None
+    if geom is not None and not geom.is_valid:
+        geom = geom.buffer(0)
+    return (geom if (geom is not None and not geom.is_empty) else None), True
 
 
 def _pente_lidar(session, parcelles: list[Parcelle]) -> Optional[dict]:
@@ -151,8 +192,43 @@ def charger(session, idus: list[str], *, recul_voie_m: float, recul_separative_m
                     "(tolérance 0,5 m) — l'assiette doit être d'un seul tenant. "
                     "Choisissez des parcelles mitoyennes.")
             assiette = _plus_grand_polygone(ferme)            # écart ≤ 0,5 m ponté → un seul tenant
+    aire_dessin_pleine = float(assiette.area)
+    contenance_pleine = sum((p.contenance_m2 or p.aire_dessin_m2) for p in parcelles)
+
+    # ETUDE-ZONE-1 — DEUX usages de la constructibilité, qu'on ne MÉLANGE pas :
+    #   • le CHIFFRE servi au client (surface constructible = `contenance_totale`) est LU de la source
+    #     de zonage UNIQUE `zone_servie.zone_dominante` (part × contenance) — EXACTEMENT ce qu'affichent
+    #     le Dossier (fiche §PLU) et le Gabarit (`api/gabarit.py` : contenance × pct_constructible) ;
+    #     JAMAIS un recalcul géométrique sur le dessin (qui divergeait de 1-3 pts : « Dossier 45,6 % »
+    #     vs « Gabarit 43 % »). Même nombre partout.
+    #   • le DESSIN (assiette → zone d'implantation) est clippé GÉOMÉTRIQUEMENT à la portion U/AU pour
+    #     ne rien implanter en A/N. Les limites (voie/séparative) restent classées sur le contour
+    #     cadastral RÉEL (`aw`) : la coupure interne U↔A/N ne porte aucun recul.
+    from labuse.faisabilite.zone_servie import zone_dominante as _zdom
+    contenance_constructible = 0.0
+    for p, pid in zip(parcelles, ids):
+        base = p.contenance_m2 if p.contenance_m2 is not None else p.aire_dessin_m2
+        pct = _zdom(session, pid).pct_constructible   # None si zone indéterminée (RNU) → on ne retranche rien
+        contenance_constructible += base * (100.0 if pct is None else pct) / 100.0
+    contenance_totale = contenance_constructible
+    pct_c = (round(100.0 * contenance_constructible / contenance_pleine, 1)
+             if contenance_pleine > 0 else None)
+    aire_hors_zone = max(0.0, contenance_pleine - contenance_constructible)
+    note_c = None
+    if aire_hors_zone > 1.0:
+        note_c = (f"Implantation limitée à la portion constructible (~{pct_c:g} % de la parcelle) ; "
+                  f"{aire_hors_zone:.0f} m² en zone non constructible (A/N) exclus.")
+
+    # Clip GÉOMÉTRIQUE de l'assiette (dessin) à la portion constructible. No-op si ~100 % U/AU :
+    # l'intersection PostGIS, même pleine, perturberait les sommets au flottant → dérive des témoins `reel`.
+    geom_c, zonee = _zone_constructible(session, aw)
+    if zonee and geom_c is None:                # zone PLU connue mais 100 % A/N → rien de constructible
+        assiette = Polygon()
+    elif zonee and geom_c is not None:
+        full_c = assiette.intersection(geom_c)
+        if aire_dessin_pleine - float(full_c.area) > max(1.0, 0.005 * aire_dessin_pleine):
+            assiette = _plus_grand_polygone(full_c)  # frame d'implantation = plus grand morceau constructible
     aire_dessin = float(assiette.area)
-    contenance_totale = sum((p.contenance_m2 or p.aire_dessin_m2) for p in parcelles)
 
     res = classify_parcel_limits(session, ids[0], sub_geom_wkt=aw)
     voie_edges, autres_edges = [], []
@@ -194,6 +270,8 @@ def charger(session, idus: list[str], *, recul_voie_m: float, recul_separative_m
         zone_implantation=zone, aire_zone_m2=float(zone.area),
         voie_edges=voie_edges, autres_edges=autres_edges, has_voie=has_voie, note_limites=note,
         contraintes=contraintes,
+        aire_hors_zone_m2=round(aire_hors_zone, 1), pct_constructible=pct_c,
+        note_constructibilite=note_c,
         ppr_rouge=ppr_rouge, ppr_bleue=ppr_bleue,
         ppr_rouge_m2=round(ppr_rouge.area, 1) if (ppr_rouge is not None and not ppr_rouge.is_empty) else 0.0,
         ppr_bleue_m2=round(ppr_bleue.area, 1) if (ppr_bleue is not None and not ppr_bleue.is_empty) else 0.0,

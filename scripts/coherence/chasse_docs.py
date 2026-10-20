@@ -41,6 +41,8 @@ T_AU = "97415000EV0324"          # AU2c « ouverture sous conditions » (+ grand
 T_ZONE = "97415000BO0852"        # témoin générique (étude de zone)
 T_AD = "97401000AD0554"          # Les Avirons Ud3 — gabarit calculable
 T_VOISINES = "97410000AN0347"    # apporteur avec liste de voisines
+T_HORS_ZONE = "97405000AL0751"   # ETUDE-ZONE-1 — Petite-Île UC(70 %)/N(30 %), SANS PPR : l'Étude rend
+#                                   un scénario bâti ; l'implantation doit rester dans la portion UC.
 
 _PDF_CACHE: dict[str, str] = {}
 
@@ -383,6 +385,109 @@ def g19_etude_porte_caveat_au():
     return "OK", f"caveat AU porté par l'Étude : « {au.get('statut')} »"
 
 
+def _surface_constructible_affichee_coherente(idu, cont_etude):
+    """ETUDE-ZONE-1 (vérif #3) — la surface constructible SERVIE par l'Étude doit être LA MÊME que
+    celle du Dossier (fiche §PLU : Σ parts U/AU × contenance) et du Gabarit (surfaceNote « ~X m² »),
+    car toutes lisent la source de zonage unique (part × contenance), pas un recalcul géométrique.
+    Renvoie (ok|None, detail). None = endpoints indisponibles → sous-vérif ignorée (jamais faux OK)."""
+    st, fiche = _get_json(f"/parcels/{idu}")
+    if not fiche:
+        return None, "fiche indisponible"
+    zones = ((fiche or {}).get("reglement_plu") or {}).get("zones") or []
+
+    def _fam(z):
+        z = str(z or "").upper()
+        return "AU" if z.startswith("AU") else (z[:1] if z else "")
+    cont = fiche.get("contenance_m2")
+    if cont is None or not zones:
+        return None, "fiche sans contenance/zonage"
+    pct_dossier = sum((z.get("part") or 0) for z in zones if _fam(z.get("zone")) in ("U", "AU")) * 100
+    m2_dossier = round(cont * pct_dossier / 100)
+    tol = max(2.0, 0.01 * m2_dossier)
+    if abs((cont_etude or 0) - m2_dossier) > tol:
+        return False, (f"surface Étude {cont_etude} m² ≠ Dossier {m2_dossier} m² "
+                       f"(part {pct_dossier:.1f} % × contenance {cont})")
+    st2, gab = _get_json(f"/outils/gabarit/{idu}")
+    m2_gab = None
+    if gab and gab.get("status") == "ok":
+        m = re.search(r"dont\s*~?([\d\s]+)\s*m²", gab.get("surfaceNote") or "")
+        m2_gab = int(re.sub(r"\s", "", m.group(1))) if m else None
+    if m2_gab is not None and abs((cont_etude or 0) - m2_gab) > tol:
+        return False, f"surface Étude {cont_etude} m² ≠ Gabarit {m2_gab} m²"
+    detail = f"surface {cont_etude} m² = Dossier {m2_dossier} m²"
+    detail += f" = Gabarit {m2_gab} m²" if m2_gab is not None else " (Gabarit n/d)"
+    return True, detail
+
+
+def g20_etude_implante_zone_constructible():
+    """ETUDE-ZONE-1 — l'Étude de faisabilité n'implante QUE dans la zone constructible.
+
+    Sur un témoin à cheval U/N (sans PPR), trois conditions :
+      (1) l'assiette est RESTREINTE à la portion constructible (U/AU) : `pct_constructible` < 100,
+          `aire_hors_zone_m2` > 0 et la note le dit — la part A/N est retirée AVANT reculs/PPR ;
+      (2) la surface constructible AFFICHÉE (`contenance_totale_m2`) est LA MÊME que celle du Dossier
+          et du Gabarit (part de zonage × contenance, source unique — pas un recalcul géométrique) ;
+      (3) AUCUN objet du plan masse (bâtiment, module, noyau, coursive, places, allées, accès,
+          espace libre, zone d'implantation) ne déborde de cette assiette constructible.
+    (3) exige shapely pour tester la géométrie GeoJSON → SKIP (jamais faux OK) s'il manque."""
+    st, payload, err = _post_json("/modules/etude", {"idus": [T_HORS_ZONE]}, timeout=60)
+    if payload is None:
+        return "SKIP", f"Étude indisponible (HTTP {st}{' ' + err if err else ''})"
+    t = payload.get("terrain") or {}
+    pct_c = t.get("pct_constructible")
+    hors = t.get("aire_hors_zone_m2")
+    note = t.get("note_constructibilite") or ""
+    if pct_c is None or hors is None:
+        return "ECART", "terrain sans pct_constructible/aire_hors_zone — le clip zone n'est pas servi"
+    if not (0 < pct_c < 100) or not (hors > 0):
+        return "ECART", (f"assiette NON restreinte au constructible (pct_constructible={pct_c}, "
+                         f"aire_hors_zone={hors}) sur un témoin à cheval U/N")
+    if "non constructible" not in note.lower():
+        return "ECART", f"note de constructibilité absente/incomplète : {note!r}"
+
+    # (2) la surface servie = celle du Dossier/Gabarit (source zonage unique), jamais le clip géométrique.
+    ok_surf, detail_surf = _surface_constructible_affichee_coherente(T_HORS_ZONE,
+                                                                     t.get("contenance_totale_m2"))
+    if ok_surf is False:
+        return "ECART", detail_surf
+    surf_note = detail_surf if ok_surf else f"surface source zonage non recoupée ({detail_surf})"
+
+    scenarios = payload.get("scenarios") or []
+    if not scenarios:
+        return "OK", (f"assiette restreinte (~{pct_c:g} %, {hors:.0f} m² A/N exclus) ; {surf_note} ; "
+                      "aucun scénario bâti à vérifier géométriquement")
+    try:
+        from shapely.geometry import shape
+        from shapely.ops import unary_union
+    except Exception:
+        return "SKIP", (f"shapely absent — clip OK (~{pct_c:g} %, {hors:.0f} m² exclus) mais "
+                        "débordement géométrique non vérifié")
+    feats = (scenarios[0].get("geojson") or {}).get("features") or []
+    assiette_parts = [shape(f["geometry"]) for f in feats
+                      if (f.get("properties") or {}).get("kind") == "assiette" and f.get("geometry")]
+    if not assiette_parts:
+        return "ECART", "GeoJSON sans feature « assiette » — impossible de borner l'implantation"
+    assiette = unary_union(assiette_parts)
+    marge = assiette.buffer(1e-6)   # ~0,1 m en WGS84 : tolérance flottante de reprojection
+    bati = {"zone", "batiment_emprise", "module", "noyau", "coursive",
+            "place", "allee", "acces", "espace_libre"}
+    debords = []
+    for f in feats:
+        kind = (f.get("properties") or {}).get("kind")
+        if kind not in bati or not f.get("geometry"):
+            continue
+        g = shape(f["geometry"])
+        if g.is_empty or g.area <= 0:
+            continue
+        frac = g.difference(marge).area / g.area
+        if frac > 0.01:             # plus de 1 % de l'objet hors de la portion constructible
+            debords.append(f"{kind} {frac*100:.1f} %")
+    if debords:
+        return "ECART", "objets du plan masse hors zone constructible : " + ", ".join(debords[:6])
+    return "OK", (f"assiette restreinte (~{pct_c:g} %, {hors:.0f} m² A/N exclus) ; {surf_note} ; "
+                  f"{len(scenarios)} scénario(s), aucun objet du plan masse hors zone")
+
+
 GARDES = [
     ("E-01 mixité : seuil servi ET « non renseigné »", g01_mixite_contradiction),
     ("E-02 §Sols : dict Python brut", g02_sols_dict_brut),
@@ -403,6 +508,7 @@ GARDES = [
     ("E-17 gabarit : source dupliquée", g17_gabarit_source_dupliquee),
     ("E-18 à cheval : part zone = Dossier = Gabarit (source zonage unique)", g18_acheval_part_source_unique),
     ("E-19 Étude de faisabilité porte le caveat AU", g19_etude_porte_caveat_au),
+    ("E-20 Étude : implantation confinée à la zone constructible", g20_etude_implante_zone_constructible),
 ]
 
 
