@@ -310,6 +310,36 @@ exports[`CIRCUIT-P2 lot 1 — la page Données EST le Circuit > snapshot 1`] = `
 .cxp .ck-dlg .foot{display:flex;gap:10px;justify-content:flex-end}
 @media (max-width:1100px){ .cxp .ck-tuiles,.cxp .ck-etapes{grid-template-columns:1fr 1fr} }
 @media (max-width:640px){ .cxp .ck-tuiles,.cxp .ck-etapes{grid-template-columns:1fr} }
+/* ══ COCKPIT-1 (Lot B) — « L'usine » : 4 colonnes de postes ══ */
+.cxp .us-top{display:flex;align-items:baseline;gap:12px;margin:0 0 16px}
+.cxp .us-top h2{margin:0;font-size:24px;font-weight:650;letter-spacing:-.02em}
+.cxp .us-top .sub{color:var(--muted);font-size:13px}
+.cxp .us-leg{display:flex;gap:16px;color:var(--faint);font-size:12px;margin:0 0 16px;flex-wrap:wrap}
+.cxp .us-leg i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.cxp .us-cols{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;align-items:start}
+.cxp .us-col&gt;h3{margin:0 0 10px;font-size:13px;font-weight:600;color:var(--text);padding:9px 11px;background:var(--panel-2);border-radius:6px}
+.cxp .us-poste{padding:11px 13px;border:1px solid var(--line);border-radius:8px;background:var(--panel);margin-bottom:8px}
+.cxp .us-poste:hover{border-color:var(--line-2)}
+.cxp .us-ph{display:flex;align-items:center;gap:8px}
+.cxp .us-dot{width:8px;height:8px;border-radius:50%;flex:none;background:var(--gris)}
+.cxp .us-dot.vert{background:var(--mint)} .cxp .us-dot.violet{background:var(--mauve)} .cxp .us-dot.rouge{background:var(--rouge)} .cxp .us-dot.gris{background:var(--gris)}
+.cxp .us-poste .nm{font-weight:600;font-size:13px;flex:1}
+.cxp .us-poste .hr{color:var(--faint);font-size:11px;white-space:nowrap}
+.cxp .us-poste .ro{color:var(--muted);font-size:11.5px;margin-top:6px;line-height:1.4}
+.cxp .us-poste .mt{color:var(--faint);font-size:11px;margin-top:7px;display:flex;justify-content:space-between;gap:8px}
+.cxp .us-poste .mt .r{color:var(--mint)} .cxp .us-poste .mt .r.rouge{color:var(--rouge)}
+.cxp .us-poste .act{margin-top:9px;display:flex;gap:6px;flex-wrap:wrap}
+.cxp .us-poste .act .btn{padding:5px 10px;font-size:12px}
+.cxp .us-moteur{padding:12px 13px;border:1px solid var(--line-2);border-radius:8px;background:var(--panel);margin-bottom:10px}
+.cxp .us-moteur h4{margin:0 0 8px;font-size:13px;font-weight:650}
+.cxp .us-step{display:grid;grid-template-columns:18px 1fr auto;gap:2px 8px;font-size:12px;padding:5px 0;border-top:1px solid var(--line)}
+.cxp .us-step:first-of-type{border-top:0}
+.cxp .us-step .n{color:var(--faint)} .cxp .us-step .s{color:var(--mint);font-size:11px;text-align:right} .cxp .us-step .s.todo{color:var(--ambre)}
+.cxp .us-moteur .act{margin-top:10px;display:flex;gap:6px;flex-wrap:wrap} .cxp .us-moteur .act .btn{padding:5px 10px;font-size:12px}
+.cxp .us-geles{margin-top:22px;padding:14px 16px;border:1px dashed var(--line-2);border-radius:8px;color:var(--muted);font-size:12.5px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.cxp .us-geles b{color:var(--text)} .cxp .us-geles .g{color:var(--faint)}
+@media (max-width:1100px){ .cxp .us-cols{grid-template-columns:1fr 1fr} }
+@media (max-width:640px){ .cxp .us-cols{grid-template-columns:1fr} }
 @media (max-width:1100px){ .cxp .diagram{grid-template-columns:1fr;column-gap:0} .cxp .diagram svg{display:none} .cxp .pump{position:static;margin:12px 0} .cxp .dg{grid-template-columns:1fr} .cxp .kpis{grid-template-columns:1fr 1fr} .cxp .jl{grid-template-columns:1fr 1fr} .cxp .controles{grid-template-columns:1fr} }
 
   </style>

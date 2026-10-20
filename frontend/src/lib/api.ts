@@ -2697,6 +2697,27 @@ export const postCockpitReconstruire = () => j<{ ok: boolean; log: string }>('/a
 export const postCockpitAccepterEcarts = () => j<{ ok: boolean; log: string }>('/admin/cockpit/accepter-ecarts', { method: 'POST' })
 export const postCockpitEnvoyerProd = () => j<{ ok: boolean; log: string }>('/admin/cockpit/envoyer-prod', { method: 'POST' })
 
+// COCKPIT-1 (Lot B) — « L'usine » : le registre des jobs en 4 familles + « Lancer maintenant » /
+// « Réveiller… » (le même verrou flock que le cron, via run-job.sh).
+export interface UsinePoste {
+  nom: string; libelle: string; role: string
+  pastille: 'vert' | 'violet' | 'rouge' | 'gris'
+  cadence: string | null; heure_reunion: string | null
+  dernier: { statut: string | null; fin: string | null; duree_s: number | null }
+  prochaine: string | null; gel: string | null
+  bouton?: { label: string; action: string; nom?: string } | null
+  voir_detail: boolean; detail?: { texte: string }
+}
+export interface UsineData {
+  familles: { n: number; nom: string; postes: UsinePoste[] }[]
+  geles: UsinePoste[]
+  resume: { postes: number; vert: number; echec: number; arret: number }
+  legende: [string, string][]
+}
+export const getAdminUsine = () => j<UsineData>('/admin/usine')
+export const postJobLancer = (nom: string) =>
+  j<{ ok: boolean; nom: string; reveil: boolean }>(`/admin/jobs/${encodeURIComponent(nom)}/lancer`, { method: 'POST' })
+
 export const postAdminCircuitVerifier = () => j<any>('/admin/circuit/verifier', { method: 'POST' })
 // CIRCUIT-P2 (lot 3.2/3.3) / CIRCUIT-P7 — tâches longues : lancer l'agent LLM (une source via
 // `sourceId`, ou une portée « sans_amont » (défaut) / « g8 » / « tous » depuis la carte Agents).

@@ -126,7 +126,7 @@ export function CircuitSection() {
   if (!d) return <div className="cxp"><style>{CIRCUIT_CSS}</style><div className="muted">Circuit indisponible.</div></div>
 
   // COCKPIT-1 — « L'usine » prend tout l'écran (page, pas onglet) ; « ← Tableau de bord » y revient.
-  if (usine) return <div className="cxp"><style>{CIRCUIT_CSS}</style><Usine onBack={() => setUsine(false)} /></div>
+  if (usine) return <div className="cxp"><style>{CIRCUIT_CSS}</style><Usine data={d} onBack={() => setUsine(false)} /></div>
 
   // ── la ligne de progression / message générique (verrous + messages locaux) sous les onglets.
   //    La sonde, les agents et le contrôle ont désormais leur PLACE (cartes de Sources, bouton de

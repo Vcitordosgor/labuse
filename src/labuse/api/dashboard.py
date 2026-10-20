@@ -3093,6 +3093,62 @@ def admin_cockpit_envoyer_prod(request: Request) -> dict:
                                resume=f"deploy_donnees.sh {run} + labuse parite")
 
 
+@router.get("/admin/usine")
+def admin_usine(request: Request) -> dict:
+    """COCKPIT-1 (Lot B) — « L'usine » : le registre des jobs en 4 colonnes (familles), chaque poste
+    avec son libellé/rôle, dernier & prochain passage, pastille et bouton possible. Les gelés sortent
+    dans un bandeau. Les étapes du moteur (Calculer/Basculer/Envoyer) viennent de /admin/circuit."""
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from .. import cockpit_resume as _cockpit, jobs as _jobs_mod
+    return _cockpit.composer_usine(_jobs_mod.liste())
+
+
+@router.post("/admin/jobs/{nom}/lancer")
+def admin_job_lancer(nom: str, request: Request) -> dict:
+    """COCKPIT-1 (Lot B) — « Lancer maintenant » / « Réveiller… » : lance UN job par le wrapper commun
+    scripts/jobs/run-job.sh (le MÊME verrou flock que le cron → jamais deux passages du même job en
+    même temps, ni en parallèle du cron). Autorisé pour les jobs « lançables » sans risque et pour les
+    gelés (réveil ponctuel à la main — le gel ne touche que le crontab). Les agents IA ont leur propre
+    porte (/admin/circuit/agents, coût/plafond)."""
+    import os
+    import subprocess
+    from pathlib import Path
+    from fastapi import HTTPException
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from .. import circuit_journal, jobs as _jobs_mod
+    from ..db import session_scope
+    job = _jobs_mod.JOBS.get(nom)
+    if job is None:
+        raise HTTPException(404, "Job inconnu.")
+    if nom == "agents-sources":
+        raise HTTPException(409, "Les enquêteurs IA se lancent depuis leur bouton « Démarrer » (coût/plafond).")
+    if not (job.lancable or job.gel):
+        raise HTTPException(409, "Ce poste ne se lance pas à la main depuis l'usine.")
+    racine = Path(__file__).resolve().parents[3]
+    wrapper = str(racine / "scripts" / "jobs" / "run-job.sh")
+    # local (Mac) : /run/lock n'existe pas → on retombe sur des dossiers écrivables (prod les pose déjà).
+    env = {**os.environ,
+           "PYTHONPATH": os.pathsep.join([str(racine / "src"), os.environ.get("PYTHONPATH", "")]).rstrip(os.pathsep),
+           "LABUSE_LOCK_DIR": os.environ.get("LABUSE_LOCK_DIR") or "/tmp/labuse-locks",
+           "LABUSE_JOBS_LOG_DIR": os.environ.get("LABUSE_JOBS_LOG_DIR") or "/tmp/labuse-logs"}
+    try:
+        with open(f"/tmp/labuse-job-{nom}.lancer.log", "ab") as fh:
+            subprocess.Popen(["sh", wrapper, nom], cwd=str(racine), stdout=fh, stderr=fh,
+                             start_new_session=True, env=env)
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(500, f"Lancement impossible ({type(exc).__name__}).") from exc
+    try:
+        with session_scope() as s:
+            circuit_journal.journaliser(s, "cockpit:lancer-job", nom, _qui(request), "lancé",
+                                        {"reveil": bool(job.gel)})
+            s.commit()
+    except Exception:  # noqa: BLE001
+        pass
+    return {"ok": True, "nom": nom, "reveil": bool(job.gel)}
+
+
 @router.post("/admin/circuit/verifier")
 def admin_circuit_verifier(request: Request) -> dict:
     """CIRCUIT-P2 (lot 3.2) — le bouton « Vérifier que tout coule » : lance le contrôle en TÂCHE

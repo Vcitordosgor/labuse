@@ -314,6 +314,72 @@ def _etapes_mise_a_jour(a_faire: dict, *, run_servi: str, candidat: str | None,
 
 # ══════════════════════ l'assemblage ══════════════════════
 
+# ══════════════════════ COCKPIT-1 (Lot B) — la page « L'usine » ══════════════════════
+
+FAMILLES_USINE = [(1, "Veille des sources"), (2, "Livraisons quotidiennes"),
+                  (3, "Le moteur"), (4, "Contrôle, clients, sécurité")]
+
+
+def _pastille_poste(job: dict, en_cours: set[str]) -> str:
+    """vert = ok · violet = tourne en ce moment (verrou tenu / état en_cours) · rouge = dernier
+    passage en échec · gris = gelé ou jamais parti."""
+    if job.get("gel"):
+        return "gris"
+    dernier = job.get("dernier") or {}
+    if job["nom"] in en_cours or dernier.get("statut") == "en_cours":
+        return "violet"
+    statut = dernier.get("statut")
+    if statut in ("echec", "timeout"):
+        return "rouge"
+    if statut in ("ok", "dry-run"):
+        return "vert"
+    return "gris"
+
+
+def _poste(job: dict, en_cours: set[str]) -> dict:
+    dernier = job.get("dernier") or {}
+    statut = dernier.get("statut")
+    pastille = _pastille_poste(job, en_cours)
+    # le bouton possible : agents IA → « Démarrer » (coût/plafond, géré à part côté front) ; job
+    # lançable sans risque et pas gelé → « Lancer maintenant » ; échec → « Voir le détail ».
+    bouton = None
+    if job["nom"] == "agents-sources":
+        bouton = {"label": "Démarrer", "action": "agents"}
+    elif job.get("gel"):
+        bouton = {"label": "Réveiller…", "action": "reveiller", "nom": job["nom"]}
+    elif job.get("lancable"):
+        bouton = {"label": "Lancer maintenant", "action": "lancer", "nom": job["nom"]}
+    detail = None
+    if statut in ("echec", "timeout") and dernier.get("erreur"):
+        detail = {"texte": f"{job['nom']} — {statut}\n{dernier.get('erreur')}"}
+    return {
+        "nom": job["nom"], "libelle": job.get("libelle") or job["nom"],
+        "role": job.get("role") or "", "pastille": pastille,
+        "cadence": job.get("cadence"), "heure_reunion": job.get("heure_reunion"),
+        "dernier": {"statut": statut, "fin": dernier.get("fin"), "duree_s": dernier.get("duree_s")},
+        "prochaine": job.get("prochaine_reunion") if not job.get("gel") else None,
+        "gel": job.get("gel"), "bouton": bouton,
+        "voir_detail": bool(detail), "detail": detail,
+    }
+
+
+def composer_usine(jobs_list: list[dict], *, en_cours: set[str] | None = None) -> dict:
+    """Compose « L'usine » : 4 colonnes (familles), chaque poste avec son libellé/rôle, dernier &
+    prochain passage, pastille et le bouton possible. Les postes GELÉS sortent de leurs colonnes et
+    vivent dans un bandeau en bas (« volontairement à l'arrêt … Réveiller… »)."""
+    en_cours = en_cours or set()
+    postes = [_poste(j, en_cours) for j in jobs_list]
+    par_nom = {j["nom"]: j for j in jobs_list}
+    familles = []
+    for n, nom in FAMILLES_USINE:
+        dedans = [p for p in postes if par_nom.get(p["nom"], {}).get("famille") == n and not p["gel"]]
+        familles.append({"n": n, "nom": nom, "postes": dedans})
+    geles = [p for p in postes if p["gel"]]
+    return {"familles": familles, "geles": geles, "resume": _resume_usine(jobs_list),
+            "legende": [["vert", "au vert"], ["violet", "travaille en ce moment"],
+                        ["rouge", "en échec"], ["gris", "à l'arrêt"]]}
+
+
 def composer_cockpit(*, a_faire: dict, etats_sources: dict | None, reservoirs: list[dict],
                      verrous: dict | None, fuites_rob: list[dict], tuiles: dict | None,
                      ecarts_toleres: int, jobs_list: list[dict], run_servi: str,

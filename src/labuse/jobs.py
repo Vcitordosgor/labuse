@@ -63,6 +63,16 @@ class Job:
     raison: str = ""
     touche: str = "exploitation"    # 'eau' | 'exploitation'
     test: str = ""
+    # COCKPIT-1 (Lot B) — l'habillage HUMAIN du poste pour la page « L'usine » : son libellé (jamais
+    # un identifiant technique à l'écran), sa FAMILLE (colonne : 1 Veille des sources · 2 Livraisons
+    # quotidiennes · 3 Le moteur · 4 Contrôle, clients, sécurité) et son rôle en une phrase. Posés
+    # APRÈS la construction du registre (table _FAMILLE_LIBELLE_ROLE, un méta-test vérifie la couverture
+    # des 31). `lancable` = Vic peut le « Lancer maintenant » sans risque (sonde/contrôle/livraison) ;
+    # les agents IA ont leur propre bouton « Démarrer » (coût + plafond), jamais lancable.
+    famille: int = 4
+    libelle: str = ""
+    role: str = ""
+    lancable: bool = False
     timeout_s: int = 900
     envoie_mail: bool = False       # concerné par la règle dry-run
     besoin_db: bool = True
@@ -325,6 +335,9 @@ def liste() -> list[dict]:
             # CRON-1 lot 3 — la page Horloge lit LE REGISTRE : la raison (fr) et ce qu'il touche
             # (eau/exploitation) voyagent avec chaque job, à côté de son dernier passage.
             "raison": j.raison, "touche": j.touche, "test": j.test,
+            # COCKPIT-1 (Lot B) — l'habillage humain de « L'usine ».
+            "famille": j.famille, "libelle": j.libelle, "role": j.role, "lancable": j.lancable,
+            "planifie": j.planifie,
             "timeout_s": j.timeout_s, "envoie_mail": j.envoie_mail, "gel": j.gel,
             "prochaine_utc": p.isoformat() if p else None,
             "prochaine_reunion": p.astimezone(REUNION_TZ).strftime("%d/%m %H:%M") if p else None,
@@ -609,3 +622,86 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
 #: CRON-1 lot 1 — les jobs qui TOUCHENT L'EAU, DÉRIVÉS du registre (`touche == 'eau'`) : chacun laisse
 #: une ligne au journal unifié `circuit_journal`. Plus de liste tenue à la main (une seule source).
 TOUCHE_EAU = frozenset(nom for nom, j in JOBS.items() if j.touche == "eau")
+
+
+# ─────────── COCKPIT-1 (Lot B) — l'habillage humain de « L'usine » ───────────
+# Quatre familles (colonnes, dans ce sens) : 1 Veille des sources · 2 Livraisons quotidiennes ·
+# 3 Le moteur · 4 Contrôle, clients, sécurité. Chaque poste : (famille, libellé humain, rôle en une
+# phrase, lancable). `lancable=True` = « Lancer maintenant » sans risque (sonde, contrôles, livraisons,
+# ménage) ; les agents IA ont leur bouton « Démarrer » dédié (coût/plafond), jamais lancable ici ;
+# sauvegarde/restauration/déploiement restent des gestes à part (pas de bouton de lancement libre).
+FAMILLES = {1: "Veille des sources", 2: "Livraisons quotidiennes",
+            3: "Le moteur", 4: "Contrôle, clients, sécurité"}
+
+_FAMILLE_LIBELLE_ROLE: dict[str, tuple[int, str, str, bool]] = {
+    # ── 1 · Veille des sources ──
+    "sonde-sources": (1, "Le veilleur de nuit",
+                      "Regarde chaque nuit si les producteurs ont publié une nouvelle version. Gratuit.", True),
+    "agents-sources": (1, "Les enquêteurs IA",
+                       "Pour les sources que le veilleur ne sait pas lire : un agent lit la page amont. Coûte quelques centimes le passage.", False),
+    # ── 2 · Livraisons quotidiennes ──
+    "ingest-bodacc": (2, "Livreur BODACC", "Procédures collectives, chaque matin.", True),
+    "ingest-dvf": (2, "Livreur DVF", "Ventes immobilières, à chaque nouvelle livraison.", True),
+    "ingest-sitadel": (2, "Livreur Sitadel", "Permis de construire, une fois par mois.", True),
+    "ingest-dpe": (2, "Livreur DPE", "Diagnostics énergie, une fois par mois.", True),
+    "ingest-sirene": (2, "Livreur SIRENE", "Entreprises géolocalisées, une fois par mois.", True),
+    "sync-gpu": (2, "Livreur GPU", "Documents d'urbanisme (PLU), une fois par mois.", True),
+    # ── 3 · Le moteur ──
+    "fiche-commune-cache": (3, "Le précalcul des fiches commune",
+                            "Prépare chaque nuit le contexte des 24 communes pour que la fiche ouvre vite.", True),
+    "signal-instantane": (3, "L'instantané du Signal",
+                          "Fige une copie datée du Signal servi, une fois par mois, pour la mesurer plus tard.", True),
+    # ── 4 · Contrôle, clients, sécurité ──
+    "filtres-sources": (4, "Le filtre des sources",
+                        "Rejoue chaque nuit les contrôles qualité sur les versions réellement servies.", True),
+    "coherence-robinets": (4, "La sonde du circuit",
+                           "Vérifie que deux chemins d'un même chiffre donnent bien la même valeur (fuites).", True),
+    "coherence-banc": (4, "Le contrôleur de nuit",
+                       "Relit chaque chiffre sur tous les écrans — zéro faux chez le client.", True),
+    "verite-sources": (4, "Le vérificateur mensuel",
+                       "Compare 20 parcelles au hasard aux sites officiels, une fois par mois.", True),
+    "backup-postgres": (4, "La sauvegarde",
+                        "Copie complète de la base chaque jour, 4 conservées.", False),
+    "pg-maintenance": (4, "L'entretien de la base",
+                       "Réaligne le moteur PostgreSQL chaque dimanche pour garder les requêtes rapides.", True),
+    "healthcheck": (4, "La sonde de vie",
+                    "Vérifie toutes les 15 min que l'app répond et que le disque respire.", False),
+    "sante-endpoints": (4, "La sonde métier",
+                        "Vérifie toutes les 30 min que les écrans clés répondent avec la base.", False),
+    "copilote-purge": (4, "La purge du Copilote",
+                       "Efface les conversations Copilote au-delà de la rétention.", True),
+    "abuse-scan": (4, "Le détecteur d'abus",
+                   "Repère chaque jour les usages anormaux (partage de compte). Informatif.", True),
+    "purge-sessions": (4, "Le ménage des sessions",
+                       "Supprime chaque jour les sessions de connexion expirées.", True),
+    "mail-queue-consommer": (4, "Le courrier aux clients",
+                             "Envoie les mails en attente et rejoue les échecs, toutes les 5 minutes.", True),
+    "recap-matin": (4, "Le récap du matin",
+                    "Un seul mail à 07:30 : tout vert, ou la liste de ce qui ne va pas.", False),
+    "restore-test": (4, "Le test de restauration",
+                     "Restaure le dernier dump dans une base jetable et vérifie, une fois par mois.", False),
+    "evaluer-suivis": (4, "La veille des parcelles suivies",
+                       "Prévient un client quand un fait tombe sur une parcelle qu'il suit.", True),
+    "detect-events": (4, "La veille du marché",
+                      "Repère les bascules de classement entre le run servi et le précédent.", True),
+    "digest": (4, "Le digest du matin",
+               "Un mail par client avec tout ce qui a changé pour lui la veille.", False),
+    "radar-cloche": (4, "Le Radar → cloche",
+                     "Pose à la cloche de chaque client les annonces du jour qui matchent sa veille.", True),
+    "radar-cycle": (4, "Le cycle du Radar",
+                    "Fait vivre les annonces : expirées, en vente longue, à revérifier.", True),
+    "radar-cycle-dvf": (4, "Le rapprochement Radar ↔ ventes",
+                        "Marque « vendue » une annonce dont la parcelle a une vente DVF.", True),
+    "radar-cycle-mensuel": (4, "La cible Courrier du Radar",
+                            "Qualifie chaque mois les biens retirés sans vente (cible Courrier).", True),
+}
+
+# un méta-contrôle : chaque job du registre a son habillage (et réciproquement) — sinon l'assertion
+# saute au chargement du module (plus jamais un poste « nu » ou une entrée morte à l'écran).
+assert set(_FAMILLE_LIBELLE_ROLE) == set(JOBS), (
+    "COCKPIT-1 : écart registre ↔ habillage usine — "
+    f"manquants : {sorted(set(JOBS) - set(_FAMILLE_LIBELLE_ROLE))} · "
+    f"en trop : {sorted(set(_FAMILLE_LIBELLE_ROLE) - set(JOBS))}")
+for _nom, (_fam, _lib, _role, _lanc) in _FAMILLE_LIBELLE_ROLE.items():
+    _j_obj = JOBS[_nom]
+    _j_obj.famille, _j_obj.libelle, _j_obj.role, _j_obj.lancable = _fam, _lib, _role, _lanc
