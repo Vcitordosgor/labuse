@@ -45,6 +45,9 @@ NON_PROXIFIE = {
     "/p",                                  # lien court (redirection serveur)
     "/stripe",                             # webhook Stripe (serveur → serveur)
     "/suggestions",                        # non appelé par le front
+    "/version",                            # COCKPIT-1 — état servi, lu SERVEUR→SERVEUR par
+                                           # /admin/cockpit/etat-prod (le Mac interroge la prod) ;
+                                           # la SPA ne le fetch jamais en direct.
 }
 
 

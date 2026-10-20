@@ -52,7 +52,28 @@ export type HorsVitrine = {
   raison: string; depuis: string | null
 }
 
+// COCKPIT-1 (Lot A) — l'onglet « Tableau de bord » (remplace « À faire » + « Cohérence »), composé
+// côté serveur (le front ne recalcule rien) : trois sections, cartes PAR PROBLÈME.
+export type CockpitPastille = 'jaune' | 'rouge' | 'gris'
+export type CockpitBouton = { label: string; action: string; sources?: number[]; candidat?: string | null; n?: number }
+export type CockpitCarte = {
+  id: string; pastille: CockpitPastille; titre: string; phrase: string
+  code: boolean; voir_detail: boolean; tri: number
+  bouton?: CockpitBouton; detail?: { texte: string }
+}
+export type CockpitTuile = { id: string; titre: string; pastille: 'vert' | 'rouge' | 'violet' | 'gris'; ligne: string }
+export type CockpitEtape = {
+  id: string; titre: string; ordre: number; fait: boolean; ligne: string
+  bouton?: CockpitBouton | null; local?: boolean
+}
+export type Cockpit = {
+  aujourdhui: { n: number; cartes: CockpitCarte[] }
+  tout_tourne: { resume: { postes: number; vert: number; echec: number; arret: number }; tuiles: CockpitTuile[] }
+  mise_a_jour: { etapes: CockpitEtape[] }
+}
+
 export type CircuitData = {
+  cockpit?: Cockpit   // COCKPIT-1 Lot A
   run_servi: string; candidat: string | null; manifeste: any
   reservoirs: Reservoir[]; robinets: Robinet[]; chiffres: Record<string, any>
   familles: Famille[]; categories: Categorie[]; resume: Resume

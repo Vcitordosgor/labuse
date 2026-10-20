@@ -2871,7 +2871,32 @@ def admin_circuit(request: Request) -> dict:
                         "cout_estime_sans_amont": round(_n_sans_amont * _par_src, 2),
                         "cout_estime_g8": round(_n_g8 * _par_src, 2),
                         "cout_estime_tous": round(_n_vitrine * _par_src, 2)})
+    # ── COCKPIT-1 (Lot A) — le Tableau de bord, composé CÔTÉ SERVEUR à partir de ce qui est déjà en
+    #    main (à faire, verrous, fuites, tuiles, états sources, run/candidat), + deux lectures légères :
+    #    les écarts TOLÉRÉS du dernier banc de cohérence et le registre des jobs (dernier passage de
+    #    chacun). L'état PROD (version servie chez les clients) n'est PAS lu ici (appel réseau) : le
+    #    front le complète via /admin/cockpit/etat-prod. ──
+    from .. import cockpit_resume as _cockpit, config as _config, jobs as _jobs_mod
+    try:
+        from ..coherence_journal import derniers_passages as _coh_passages
+        with session_scope() as _sc:
+            _coh = _coh_passages(_sc)
+        _ecarts_toleres = int((_coh[0] or {}).get("tolerable") or 0) if _coh else 0
+    except Exception:  # noqa: BLE001 — pas de banc encore : 0 écart toléré
+        _ecarts_toleres = 0
+    try:
+        _jobs_list = _jobs_mod.liste()
+    except Exception:  # noqa: BLE001 — le registre ne bloque jamais la page
+        _jobs_list = []
+    cockpit = _cockpit.composer_cockpit(
+        a_faire=a_faire, etats_sources=_etats_compte, reservoirs=reservoirs,
+        verrous=_verrous, fuites_rob=_fuites_rob, tuiles=_tuiles_af,
+        ecarts_toleres=_ecarts_toleres, jobs_list=_jobs_list, run_servi=runs.current(),
+        candidat=_candidat, calculer_present=_resume._calculer_present(_calculer_af, residuel),
+        dernier_calcul=_run_date, env=_config.get_settings().env, prod_run=None,
+        dates=_dates_af)
     return {
+        "cockpit": cockpit,   # COCKPIT-1 Lot A — l'onglet « Tableau de bord » (3 sections)
         "run_servi": runs.current(), "candidat": _candidat, "manifeste": m,
         "verrous": _verrous,
         "garanties": _garanties, "catalogue": _catalogue, "doublons": _doublons,
@@ -2914,6 +2939,158 @@ def _executer_controle(par: str) -> dict:
         from .. import circuit_taches as _ct
         _ct.echouer("verifier", message=f"Contrôle interrompu ({type(exc).__name__}).")
         raise
+
+
+# ══════════════════════ COCKPIT-1 (Lot A) — les gestes du Tableau de bord ══════════════════════
+
+def _qui(request: Request) -> str:
+    return getattr(getattr(request, "state", None), "compte_email", None) or "admin"
+
+
+def _lancer_cli_detache(*, argv, log_path, par, geste, cible, resume):
+    """Lance une commande détachée (CLI labuse ou script de déploiement) depuis la racine du repo,
+    log fichier, et pose UNE ligne de journal (qui / quoi / résultat « lancé »). Même mécanique que
+    « Injecter » (X6). Jamais bloquant : la trace qui rate ne fait pas échouer le lancement."""
+    import os
+    import subprocess
+    from pathlib import Path
+    from fastapi import HTTPException
+    racine = Path(__file__).resolve().parents[3]
+    env = {**os.environ, "PYTHONPATH": os.pathsep.join(
+        [str(racine / "src"), os.environ.get("PYTHONPATH", "")]).rstrip(os.pathsep)}
+    try:
+        with open(log_path, "ab") as fh:
+            subprocess.Popen(argv, cwd=str(racine), stdout=fh, stderr=fh,
+                             start_new_session=True, env=env)
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(500, f"Lancement impossible ({type(exc).__name__}).") from exc
+    try:
+        from .. import circuit_journal
+        from ..db import session_scope
+        with session_scope() as s:
+            circuit_journal.journaliser(s, geste, cible, par, "lancé",
+                                        {"log": log_path, "resume": resume})
+            s.commit()
+    except Exception:  # noqa: BLE001 — la trace ne bloque jamais le geste
+        pass
+    return {"ok": True, "log": log_path}
+
+
+@router.get("/admin/cockpit/etat-prod")
+def admin_cockpit_etat_prod(request: Request) -> dict:
+    """COCKPIT-1 (Lot A, section 3) — l'état PROD (version servie chez les clients), lu en LECTURE
+    SEULE. Sur le VPS (env≠local), c'est NOTRE propre run. Sur le Mac (env=local), on interroge
+    /version de l'app en ligne (serveur→serveur, jamais une URL dans le front). Injoignable → la
+    carte le dit, sans bloquer."""
+    import os
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from .. import config, manifeste, runs
+    env = config.get_settings().env
+    if env != "local":
+        m = manifeste.lire() or {}
+        return {"env": env, "local": False, "joignable": True,
+                "run": runs.current(), "promu_le": m.get("promoted_at")}
+    url = os.environ.get("LABUSE_PROD_URL", "https://app.labuse.immo").rstrip("/") + "/version"
+    try:
+        import json
+        import urllib.request
+        with urllib.request.urlopen(url, timeout=6) as r:   # noqa: S310 — URL interne configurée
+            data = json.loads(r.read().decode("utf-8"))
+        return {"env": env, "local": True, "joignable": True,
+                "run": data.get("run"), "promu_le": data.get("promu_le")}
+    except Exception:  # noqa: BLE001 — prod injoignable : la carte l'affiche
+        return {"env": env, "local": True, "joignable": False, "run": None, "promu_le": None}
+
+
+class CockpitInjecterIn(BaseModel):
+    sources: list[int] = Field(default_factory=list)
+
+
+@router.post("/admin/cockpit/injecter")
+def admin_cockpit_injecter(request: Request, body: CockpitInjecterIn) -> dict:
+    """COCKPIT-1 (Lot A) — « Injecter les N » : relance l'ingestion EXISTANTE (même commande que le
+    cron, détachée) de chaque source en nouvelle version, et journalise le geste groupé. DOCTRINE
+    INTACTE : rien ne s'ingère sans ce clic humain."""
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from .. import circuit_journal
+    from ..db import engine, session_scope
+    lances: list[str] = []
+    with engine().begin() as c:
+        for sid in body.sources[:50]:
+            r = c.execute(text(
+                "SELECT d.name FROM source_veille v JOIN data_sources d ON d.id = v.source_id"
+                " WHERE v.source_id = :i"), {"i": sid}).mappings().first()
+            if not r:
+                continue
+            try:
+                _lancer_ingestion(r["name"])
+                lances.append(r["name"])
+            except Exception:  # noqa: BLE001 — une source sans commande connue est sautée, pas une erreur globale
+                continue
+    try:
+        with session_scope() as s:
+            circuit_journal.journaliser(s, "cockpit:injecter", f"{len(lances)} sources", _qui(request),
+                                        "lancé", {"sources": lances})
+            s.commit()
+    except Exception:  # noqa: BLE001
+        pass
+    return {"ok": True, "lances": lances, "n": len(lances)}
+
+
+@router.post("/admin/cockpit/reconstruire")
+def admin_cockpit_reconstruire(request: Request) -> dict:
+    """COCKPIT-1 (Lot A) — « Reconstruire » : relance `labuse rebuild` (tuiles/intersections/caches)
+    en tâche de fond ; la progression s'écrit au Journal (geste « cockpit:reconstruire »)."""
+    import sys
+    from .auth import exiger_admin
+    exiger_admin(request)
+    argv = [sys.executable, "-c", "from labuse.cli import app; app()", "rebuild"]
+    return _lancer_cli_detache(argv=argv, log_path="/tmp/labuse-cockpit-rebuild.log",
+                               par=_qui(request), geste="cockpit:reconstruire", cible="tuiles",
+                               resume="labuse rebuild (tuiles, intersections, caches)")
+
+
+@router.post("/admin/cockpit/accepter-ecarts")
+def admin_cockpit_accepter_ecarts(request: Request) -> dict:
+    """COCKPIT-1 (Lot A) — « Accepter les N » : rejoue `labuse coherence --accepter` (regénère les
+    témoins golden ; le motif ira dans le commit de Vic). En tâche de fond, journalisé."""
+    import sys
+    from .auth import exiger_admin
+    exiger_admin(request)
+    argv = [sys.executable, "-c", "from labuse.cli import app; app()", "coherence", "--accepter"]
+    return _lancer_cli_detache(argv=argv, log_path="/tmp/labuse-cockpit-accepter.log",
+                               par=_qui(request), geste="cockpit:accepter-ecarts", cible="écarts tolérés",
+                               resume="labuse coherence --accepter (regénère les golden)")
+
+
+@router.post("/admin/cockpit/envoyer-prod")
+def admin_cockpit_envoyer_prod(request: Request) -> dict:
+    """COCKPIT-1 (Lot A, section 3) — « Envoyer en prod » : copie les données du Mac vers l'app en
+    ligne via `deploy_donnees.sh` (8 gardes, bascule en dernier) PUIS `labuse parite`. JAMAIS
+    deploy.sh. DISPONIBLE SEULEMENT en local (le Mac fait foi) ; sur le VPS, refusé (se fait depuis
+    le Mac). Le run/seq viennent du manifeste servi. Détaché, journalisé, sortie dans le log."""
+    import shlex
+    import sys
+    from fastapi import HTTPException
+    from .auth import exiger_admin
+    exiger_admin(request)
+    from .. import config, manifeste
+    if config.get_settings().env != "local":
+        raise HTTPException(409, "L'envoi en prod se fait depuis le Mac (dashboard local).")
+    m = manifeste.lire() or {}
+    run = m.get("scoring_run")
+    seq = m.get("residuel_run_seq")
+    if not run:
+        raise HTTPException(409, "Aucun run servi à envoyer (manifeste vide).")
+    labuse = f"{shlex.quote(sys.executable)} -c 'from labuse.cli import app; app()'"
+    deploy = ("sh deploy/scripts/deploy_donnees.sh --run-label " + shlex.quote(str(run))
+              + (f" --residuel-seq {int(seq)}" if seq is not None else ""))
+    wrapper = ["sh", "-c", f"{deploy} && {labuse} parite"]
+    return _lancer_cli_detache(argv=wrapper, log_path="/tmp/labuse-cockpit-envoyer-prod.log",
+                               par=_qui(request), geste="cockpit:envoyer-prod", cible=str(run),
+                               resume=f"deploy_donnees.sh {run} + labuse parite")
 
 
 @router.post("/admin/circuit/verifier")

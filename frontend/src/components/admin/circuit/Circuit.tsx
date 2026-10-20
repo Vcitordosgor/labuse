@@ -7,22 +7,26 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 
 import {
-  getAdminCircuit, getAdminCircuitTaches, getAdminCoherence, getSourcesParElement, postAdminCircuitAgents,
+  getAdminCircuit, getAdminCircuitTaches, getSourcesParElement, postAdminCircuitAgents,
   postAdminCircuitSonder, postAdminCircuitVerifier,
 } from '../../../lib/api'
 
 import { DestinationsDetail } from '../Destinations'
 
-import { AFaire } from './AFaire'
 import { CircuitDiagram } from './CircuitDiagram'
 import { Detail as DetailPage } from './Detail'
 import { ecrireCx, parseCx } from './hash'
 import { Journal } from './Journal'
 import { Sources } from './Sources'
 import { CIRCUIT_CSS } from './style'
-import { focusDeCible, type AFaireLigne, type Cible, type CircuitData } from './types'
+import { TableauDeBord } from './TableauDeBord'
+import { Usine } from './Usine'
+import { type CircuitData } from './types'
 
-type Onglet = 'todo' | 'sources' | 'circuit' | 'journal' | 'coherence'
+// COCKPIT-1 (Lot A) — quatre onglets : le « Tableau de bord » (ex « À faire » + « Cohérence »
+// fondus), Sources, Circuit, Journal. « L'usine » n'est pas un onglet mais une page atteinte par le
+// bouton « Voir l'usine » du Tableau de bord (Lot B).
+type Onglet = 'tableau' | 'sources' | 'circuit' | 'journal'
 // CIRCUIT-P5 — « destinations » : le détail du calibrage PLU par commune (composant Destinations),
 // atteint depuis la page de détail de la source GPU (plus par un lien en bas de la page).
 type DetailType = 'reservoir' | 'robinet' | 'pompe' | 'compteur' | 'destinations'
@@ -36,7 +40,8 @@ const quandCourt = (iso?: string | null) =>
 export function CircuitSection() {
   const qc = useQueryClient()
   const q = useQuery({ queryKey: ['admin-circuit'], queryFn: getAdminCircuit, refetchInterval: 60_000 })
-  const [onglet, setOnglet] = useState<Onglet>('todo')
+  const [onglet, setOnglet] = useState<Onglet>('tableau')
+  const [usine, setUsine] = useState(false)   // COCKPIT-1 — « Voir l'usine » (page, Lot B)
   const [detail, setDetail] = useState<Detail>(null)
   const [srcDetail, setSrcDetail] = useState<number | null>(null)   // CIRCUIT-P7 (lot 2) — la fiche source (page Sources)
   const [groupe, setGroupe] = useState<(number | string)[] | null>(null)
@@ -108,12 +113,6 @@ export function CircuitSection() {
     if (suivant !== window.location.hash) window.history.replaceState(null, '', suivant || window.location.pathname + window.location.search)
   }, [detail])
 
-  const allerVersCircuit = (c: Cible) => {
-    const f = focusDeCible(c)
-    if (f?.kind === 'detail') { setDetail({ type: f.type, id: f.id }); setGroupe(null) }
-    else if (f?.kind === 'groupe') { setGroupe(f.ids); setDetail(null) }
-    setOnglet('circuit')
-  }
   const ouvrirDetail = (type: DetailType, id: number | string) => {
     setDetail({ type, id }); setGroupe(null); setSrcDetail(null); setOnglet('circuit')
   }
@@ -123,16 +122,11 @@ export function CircuitSection() {
   // fiche bascule sur Circuit (ouvrirDetail, qui referme la fiche source).
   const ouvrirSource = (sid: number) => { setSrcDetail(sid); setOnglet('sources') }
 
-  // CIRCUIT-P4 (lot 2) — un geste de l'onglet « À faire » ROUTE vers l'endroit où il se fait.
-  const gesteAFaire = (l: AFaireLigne) => {
-    if (l.type === 'calculer' || l.type === 'basculer') { ouvrirDetail('pompe', 'pompe'); return }
-    if (l.ghost && (l.type === 'injecter' || l.type === 'deposer')) { /* voir la source */ }
-    if (l.cible) allerVersCircuit(l.cible)
-    else ouvrirDetail('compteur', 'compteur')
-  }
-
   if (q.isLoading) return <div className="cxp"><style>{CIRCUIT_CSS}</style><div className="muted">Circuit — chargement…</div></div>
   if (!d) return <div className="cxp"><style>{CIRCUIT_CSS}</style><div className="muted">Circuit indisponible.</div></div>
+
+  // COCKPIT-1 — « L'usine » prend tout l'écran (page, pas onglet) ; « ← Tableau de bord » y revient.
+  if (usine) return <div className="cxp"><style>{CIRCUIT_CSS}</style><Usine onBack={() => setUsine(false)} /></div>
 
   // ── la ligne de progression / message générique (verrous + messages locaux) sous les onglets.
   //    La sonde, les agents et le contrôle ont désormais leur PLACE (cartes de Sources, bouton de
@@ -153,9 +147,8 @@ export function CircuitSection() {
           l'en-tête générique d'AdminView (commun à toutes les sections admin). Doublon retiré : seul
           l'en-tête d'AdminView porte désormais le titre. On garde directement les quatre onglets. */}
       <div className="tabs">
-        <button className={onglet === 'todo' ? 'on' : ''} onClick={() => setOnglet('todo')}>
-          À faire{d.a_faire?.total ? <span className="n">{d.a_faire.total}</span> : ''}
-        </button>
+        {/* COCKPIT-1 (Lot A) — « Tableau de bord » remplace « À faire » + « Cohérence ». */}
+        <button className={onglet === 'tableau' ? 'on' : ''} onClick={() => setOnglet('tableau')}>Tableau de bord</button>
         <button className={onglet === 'sources' ? 'on' : ''} onClick={() => setOnglet('sources')}>
           Sources{d.etats_sources?.total ? <span className="n neutre">{d.etats_sources.total}</span> : ''}
         </button>
@@ -163,8 +156,6 @@ export function CircuitSection() {
         <button className={onglet === 'journal' ? 'on' : ''} onClick={() => setOnglet('journal')}>
           Journal{nJour ? <span className="n neutre">{nJour}</span> : ''}
         </button>
-        {/* COHERENCE-FIX-1 (lot G) — le banc nocturne a sa fenêtre. */}
-        <button className={onglet === 'coherence' ? 'on' : ''} onClick={() => setOnglet('coherence')}>Cohérence</button>
       </div>
 
       {barre && (
@@ -175,8 +166,8 @@ export function CircuitSection() {
         </div>
       )}
 
-      <section className={`tab ${onglet === 'todo' ? 'on' : ''}`}>
-        <AFaire data={d} onGeste={gesteAFaire} onOuvrirSources={() => setOnglet('sources')} />
+      <section className={`tab ${onglet === 'tableau' ? 'on' : ''}`}>
+        <TableauDeBord data={d} onVoirUsine={() => setUsine(true)} onDepotManuel={() => setOnglet('sources')} />
       </section>
 
       <section className={`tab ${onglet === 'sources' ? 'on' : ''}`}>
@@ -201,7 +192,7 @@ export function CircuitSection() {
             <div className="cx-verif-res">
               {tv?.etat === 'en_cours'
                 ? <span className="muted">{tv.message || 'Contrôle en cours…'}</span>
-                : <ResultatControle d={d} tv={tv} onAfaire={() => setOnglet('todo')} />}
+                : <ResultatControle d={d} tv={tv} onAfaire={() => setOnglet('tableau')} />}
             </div>
           </div>
         )}
@@ -216,52 +207,6 @@ export function CircuitSection() {
       <section className={`tab ${onglet === 'journal' ? 'on' : ''}`}>
         <Journal data={d} onOpen={ouvrirDetail} onAujourdhui={setNJour} />
       </section>
-
-      {/* COHERENCE-FIX-1 (lot G) — l'onglet Cohérence : les passages du banc nocturne. */}
-      <section className={`tab ${onglet === 'coherence' ? 'on' : ''}`}>
-        {onglet === 'coherence' && <Coherence />}
-      </section>
-    </div>
-  )
-}
-
-// COHERENCE-FIX-1 (lot G) — les derniers passages du banc de cohérence (job coherence-banc,
-// labuse coherence) : écarts par gravité, erreurs lecteur (banc illisible ≠ banc vert), golden.
-function Coherence() {
-  const q = useQuery({ queryKey: ['admin-coherence'], queryFn: getAdminCoherence })
-  if (q.isLoading) return <div className="muted">Cohérence — chargement…</div>
-  const d = q.data
-  if (!d) return <div className="muted">Cohérence indisponible.</div>
-  const passages: any[] = d.passages ?? []
-  return (
-    <div>
-      <p className="muted" style={{ margin: '6px 0 10px', fontSize: 12 }}>
-        Le banc rejoue chaque nuit chaque notion sur TOUS ses lecteurs (fiche, SQL, tuiles, outils)
-        et compare à la tolérance près. Golden posés : <b>{d.golden_temoins}</b> témoin{d.golden_temoins > 1 ? 's' : ''}.
-        {' '}Commande : <code>{d.commande}</code>
-      </p>
-      {passages.length === 0
-        ? <p className="muted">Aucun passage journalisé — le job « coherence-banc » tourne à 03:45, ou <code>labuse coherence</code> à la main.</p>
-        : (
-          <div className="svt">
-            <div className="svt-h" style={{ gridTemplateColumns: '1.2fr 0.7fr 0.7fr 0.9fr 0.9fr 0.9fr 0.9fr' }}>
-              <div>Passage</div><div>Mode</div><div>Écarts</div><div>Faux-client</div>
-              <div>Incohérent</div><div>Tolérable</div><div>Erreurs lecteur</div>
-            </div>
-            {passages.map((p, i) => (
-              <div className="svt-r" key={i} style={{ gridTemplateColumns: '1.2fr 0.7fr 0.7fr 0.9fr 0.9fr 0.9fr 0.9fr', cursor: 'default' }}>
-                <div>{new Date(p.ts).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</div>
-                <div>{p.mode}</div>
-                <div>{p.n_ecarts}</div>
-                <div style={{ color: p.faux_client ? 'var(--rouge, #c0392b)' : 'inherit', fontWeight: p.faux_client ? 600 : 400 }}>{p.faux_client}</div>
-                <div>{p.incoherent}</div>
-                <div>{p.tolerable}</div>
-                <div style={{ color: p.erreurs_lecteur > 100 ? 'var(--ambre, #b8860b)' : 'inherit' }}>{p.erreurs_lecteur}</div>
-              </div>
-            ))}
-          </div>
-        )}
-      <p className="muted" style={{ marginTop: 8, fontSize: 11 }}>Détail du dernier passage : <code>{d.fichier_ecarts}</code></p>
     </div>
   )
 }

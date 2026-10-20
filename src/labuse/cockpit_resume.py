@@ -1,0 +1,339 @@
+"""COCKPIT-1 (Lot A) — LE TABLEAU DE BORD, composé CÔTÉ SERVEUR.
+
+Le nouvel onglet « Tableau de bord » (remplace « À faire » + « Cohérence ») répond à trois questions,
+dans cet ordre, et le front NE RECALCULE RIEN — il rend ce que `composer_cockpit()` produit :
+
+  1. « Qu'est-ce que je dois faire aujourd'hui ? »  — UNE carte PAR PROBLÈME (pas par occurrence) :
+     les N sources en nouvelle version = 1 carte, les N verrous cassés = 1 carte, les N sondes en
+     panne = 1 carte, etc. Tri : les données à injecter d'abord, puis le reste. Chaque carte porte une
+     pastille (jaune = un geste de Vic · rouge = cassé · gris = toléré) et UN bouton primaire
+     (Injecter · Reconstruire · Réessayer · Accepter). Ce qui demande du code porte l'étiquette
+     « demande du code » + seulement « Voir le détail » (faits techniques + Copier). Plus aucun
+     bouton « Décider ».
+  2. « Est-ce que tout tourne ? »  — 4 tuiles (veille des sources, livraisons du jour, contrôle de
+     nuit, courrier aux clients), chacune lue du registre des jobs (dernier passage).
+  3. « Où en est la mise à jour ? »  — 4 étapes (Injecter → Calculer → Basculer → Envoyer en prod),
+     chacune fait / à faire avec le bouton de l'étape à faire.
+
+La vérité technique (ids, dates, fichiers) ne sort QUE dans « Voir le détail ». Les identifiants
+techniques (V1c, q_v…, noms de table) ne figurent jamais dans les titres/phrases des cartes.
+"""
+from __future__ import annotations
+
+
+# ── les quatre « livreurs » des livraisons quotidiennes (famille 2), pour la tuile « Livraisons » ──
+LIVRAISONS = ("ingest-bodacc", "ingest-dvf", "ingest-sitadel", "ingest-dpe", "ingest-sirene", "sync-gpu")
+# libellés clairs pour la tuile livraisons (jamais d'identifiant technique à l'écran).
+_LIVRAISON_NOM = {
+    "ingest-bodacc": "BODACC", "ingest-dvf": "DVF", "ingest-sitadel": "Sitadel",
+    "ingest-dpe": "DPE", "ingest-sirene": "SIRENE", "sync-gpu": "GPU",
+}
+
+
+def _pastille_job(dernier: dict | None, gel: str | None) -> str:
+    """La couleur d'un poste : gris = gelé ou jamais parti · rouge = dernier passage en échec ·
+    vert = ok/dry-run. (Le « violet = tourne en ce moment » est décidé côté L'usine, Lot B : ici on
+    ne lit que le dernier état journalisé.)"""
+    if gel:
+        return "gris"
+    statut = (dernier or {}).get("statut")
+    if statut is None:
+        return "gris"
+    if statut in ("echec", "timeout"):
+        return "rouge"
+    return "vert"
+
+
+def _hhmm(iso: str | None) -> str:
+    if not iso:
+        return "—"
+    s = str(iso)
+    # ISO « 2026-10-20T07:00:12+00:00 » → « 07:00 » (on ne reconvertit pas le fuseau : le registre
+    # expose déjà l'heure Réunion dans `heure_reunion`, et le dernier passage est en UTC ; la tuile
+    # reste volontairement approximative, l'heure exacte vit dans L'usine).
+    if "T" in s:
+        return s.split("T", 1)[1][:5]
+    return s[:5]
+
+
+def _jour(iso: str | None) -> str:
+    if not iso:
+        return "jamais"
+    return str(iso)[:10]
+
+
+# ══════════════════════ section 1 — « Qu'est-ce que je dois faire aujourd'hui ? » ══════════════════════
+
+def _carte(cid, pastille, titre, phrase, *, bouton=None, code=False, detail=None, tri=5):
+    """Une carte = un problème. `bouton` = le bouton primaire (ou None pour « demande du code »).
+    `code=True` → étiquette « demande du code » + bouton secondaire « Voir le détail » automatique.
+    `detail` (dict {texte}) → les faits techniques du « Voir le détail » (copiables)."""
+    c = {"id": cid, "pastille": pastille, "titre": titre, "phrase": phrase,
+         "code": code, "tri": tri}
+    if bouton:
+        c["bouton"] = bouton
+    if detail is not None:
+        c["detail"] = detail
+    # « Voir le détail » : toujours présent pour ce qui demande du code ; sinon seulement si un détail existe.
+    c["voir_detail"] = bool(code or detail)
+    return c
+
+
+def _lignes_par_type(a_faire: dict, type_: str) -> list[dict]:
+    return [l for l in (a_faire or {}).get("lignes", []) if l.get("type") == type_]
+
+
+def _cartes_aujourdhui(a_faire: dict, *, noms_source: dict, ecarts_toleres: int,
+                       verrous: dict | None, fuites_rob: list[dict],
+                       tuiles: dict | None, dates: dict | None) -> list[dict]:
+    cartes: list[dict] = []
+    dates = dates or {}
+
+    # (1) DONNÉES À INJECTER — en premier (tri=0). Les N sources en nouvelle version → UNE carte.
+    inj = _lignes_par_type(a_faire, "injecter")
+    if inj:
+        ids = [l.get("bouton", {}).get("source") for l in inj if l.get("bouton", {}).get("source")]
+        noms = [noms_source.get(i) or f"source {i}" for i in ids]
+        n = len(inj)
+        cartes.append(_carte(
+            "injecter", "jaune",
+            f"{n} source{'s' if n > 1 else ''} ont une nouvelle version" if n > 1
+            else "Une source a une nouvelle version",
+            (", ".join(noms[:6]) + (f" et {len(noms) - 6} autre{'s' if len(noms) - 6 > 1 else ''}"
+                                    if len(noms) > 6 else "")
+             + " — le producteur a publié plus récent que ce que sert l'app."),
+            bouton={"label": f"Injecter les {n}" if n > 1 else "Injecter",
+                    "action": "injecter", "sources": ids},
+            detail={"texte": "Sources en nouvelle version :\n- " + "\n- ".join(noms)},
+            tri=0))
+
+    # (2) CACHE / TUILES PÉRIMÉ — « les couches subdivisées de la carte sont en retard ».
+    tu = tuiles or {}
+    if tu.get("perime"):
+        est = tu.get("estimation_min")
+        cartes.append(_carte(
+            "reconstruire", "jaune",
+            "Les couches subdivisées de la carte sont en retard",
+            "Les couches ont bougé, la version découpée pour la carte n'a pas suivi."
+            + (f" Environ {est} min." if est else " Quelques minutes."),
+            bouton={"label": "Reconstruire", "action": "reconstruire"},
+            tri=1))
+
+    # (3) VERROUS CASSÉS — « N contrôles de sécurité échouent » : DEMANDE DU CODE (pas un clic ici).
+    casses = list((verrous or {}).get("casses", []))
+    if casses:
+        n = len(casses)
+        depuis = (verrous or {}).get("depuis") or (dates.get("verrous") if isinstance(dates, dict) else None)
+        texte = (
+            "Contrôles en échec : " + ", ".join(casses) + "\n"
+            + (f"Depuis : {_jour(depuis)}\n" if depuis else "")
+            + "Ce que ça bloque : le déploiement refuse tant que ça tient\n"
+            + "Fichiers : VERROUS.md (une phrase par contrôle), src/labuse/circuit_verrous.py")
+        cartes.append(_carte(
+            "verrous", "rouge",
+            f"{n} contrôle{'s' if n > 1 else ''} de sécurité échoue{'nt' if n > 1 else ''}",
+            "Pas un clic : à confier à Claude Code. Le détail est prêt à copier.",
+            code=True, detail={"texte": texte}, tri=2))
+
+    # (4) SONDES EN PANNE — « N sources ne répondent plus au veilleur de nuit » : Réessayer.
+    sondes = _lignes_par_type(a_faire, "decider")
+    sondes = [l for l in sondes if l.get("bouton", {}).get("source")
+              and "sonde en panne" in (l.get("titre") or "")]
+    if sondes:
+        ids = [l["bouton"]["source"] for l in sondes]
+        noms = [noms_source.get(i) or f"source {i}" for i in ids]
+        n = len(sondes)
+        cartes.append(_carte(
+            "sondes", "rouge",
+            f"{n} source{'s' if n > 1 else ''} ne répond{'ent' if n > 1 else ''} plus au veilleur de nuit",
+            (", ".join(noms[:6]) + " — trois passages ratés d'affilée. "
+             "Souvent un site amont qui a changé d'adresse."),
+            bouton={"label": "Réessayer maintenant", "action": "reessayer"},
+            detail={"texte": "Sources dont la sonde amont est en panne :\n- " + "\n- ".join(noms)},
+            tri=3))
+
+    # (5) FUITES / ÉCARTS OUVERTS entre lectures — DEMANDE DU CODE (un robinet lit hors moteur).
+    if fuites_rob:
+        n = len(fuites_rob)
+        noms = [f.get("nom") or f.get("id") for f in fuites_rob]
+        texte = ("Robinets qui lisent hors du moteur :\n- " + "\n- ".join(str(x) for x in noms)
+                 + "\nChacun prend son chiffre dans une requête propre au lieu du moteur.")
+        cartes.append(_carte(
+            "fuites", "rouge",
+            f"{n} affichage{'s' if n > 1 else ''} calculé{'s' if n > 1 else ''} hors du moteur",
+            "Pas un clic : à confier à Claude Code. Le détail est prêt à copier.",
+            code=True, detail={"texte": texte}, tri=4))
+
+    # (6) ÉCARTS TOLÉRÉS (banc de cohérence) — « N petits écarts entre écrans » : Accepter / confier à CC.
+    if ecarts_toleres and ecarts_toleres > 0:
+        cartes.append(_carte(
+            "ecarts-toleres", "gris",
+            f"{ecarts_toleres} petit{'s' if ecarts_toleres > 1 else ''} écart"
+            f"{'s' if ecarts_toleres > 1 else ''} entre écrans",
+            "Aucun ne ment au client. Soit tu les acceptes une fois pour toutes, soit tu les confies "
+            "à Claude Code.",
+            bouton={"label": f"Accepter les {ecarts_toleres}" if ecarts_toleres > 1 else "Accepter",
+                    "action": "accepter-ecarts", "n": ecarts_toleres},
+            detail={"texte": f"{ecarts_toleres} écarts tolérés au dernier passage du banc de cohérence "
+                             "(0 faux-client). « Accepter » rejoue « labuse coherence --accepter » "
+                             "(regénère les témoins golden). Les écarts restent affichés tant qu'ils "
+                             "ne sont pas acceptés ou corrigés."},
+            tri=6))
+
+    # (7) SOURCES MANUELLES ÉCHUES — à redéposer (un fichier reçu par mail / la DEAL).
+    dep = _lignes_par_type(a_faire, "deposer")
+    if dep:
+        ids = [l.get("bouton", {}).get("source") for l in dep if l.get("bouton", {}).get("source")]
+        noms = [noms_source.get(i) or f"source {i}" for i in ids]
+        n = len(dep)
+        cartes.append(_carte(
+            "deposer", "jaune",
+            f"{n} source{'s' if n > 1 else ''} manuelle{'s' if n > 1 else ''} à redéposer",
+            ", ".join(noms[:6]) + " — la cadence de dépôt est dépassée.",
+            bouton={"label": "Déposer un fichier", "action": "deposer", "sources": ids},
+            detail={"texte": "Sources manuelles échues :\n- " + "\n- ".join(noms)},
+            tri=7))
+
+    cartes.sort(key=lambda c: c["tri"])
+    return cartes
+
+
+# ══════════════════════ section 2 — « Est-ce que tout tourne ? » ══════════════════════
+
+def _job(jobs_par_nom: dict, nom: str) -> dict:
+    return jobs_par_nom.get(nom) or {}
+
+
+def _tuiles_tout_tourne(jobs_par_nom: dict, etats_sources: dict) -> list[dict]:
+    def tuile(cid, titre, nom_job, ligne_ok, *, gel_from=None):
+        j = _job(jobs_par_nom, nom_job)
+        pastille = _pastille_job(j.get("dernier"), j.get("gel"))
+        return {"id": cid, "titre": titre, "pastille": pastille, "ligne": ligne_ok(j)}
+
+    veille = tuile(
+        "veille", "Veille des sources", "sonde-sources",
+        lambda j: (f"Le veilleur est passé à {_hhmm((j.get('dernier') or {}).get('fin'))} · "
+                   f"{(etats_sources or {}).get('total', '—')} sources suivies"))
+
+    # Livraisons : état agrégé des 6 livreurs + ceux qui sont ok.
+    etats_liv = []
+    for n in LIVRAISONS:
+        j = _job(jobs_par_nom, n)
+        etats_liv.append((_LIVRAISON_NOM[n], _pastille_job(j.get("dernier"), j.get("gel"))))
+    past_liv = ("rouge" if any(p == "rouge" for _, p in etats_liv)
+                else "gris" if all(p == "gris" for _, p in etats_liv) else "vert")
+    oks = ", ".join(nom for nom, p in etats_liv if p == "vert") or "aucune ce jour"
+    livraisons = {"id": "livraisons", "titre": "Livraisons du jour", "pastille": past_liv,
+                  "ligne": oks}
+
+    controle = tuile(
+        "controle", "Contrôle de nuit", "coherence-banc",
+        lambda j: "0 chiffre faux chez le client" if _pastille_job(j.get("dernier"), j.get("gel")) == "vert"
+        else "dernier passage à revoir")
+
+    courrier = tuile(
+        "courrier", "Courrier aux clients", "mail-queue-consommer",
+        lambda j: ("part régulièrement" if _pastille_job(j.get("dernier"), j.get("gel")) == "vert"
+                   else "dernier passage en échec"))
+
+    return [veille, livraisons, controle, courrier]
+
+
+def _resume_usine(jobs_list: list[dict]) -> dict:
+    """Le compteur « N postes · X au vert · Y en échec · Z à l'arrêt » affiché en tête de section 2
+    (et repris par L'usine, Lot B). On ne compte QUE les jobs planifiés+non gelés comme « postes
+    actifs » ; les gelés et le job non planifié (agents) comptent « à l'arrêt »."""
+    vert = echec = arret = 0
+    for j in jobs_list:
+        if j.get("gel"):
+            arret += 1
+            continue
+        statut = (j.get("dernier") or {}).get("statut")
+        if statut in ("echec", "timeout"):
+            echec += 1
+        elif statut in ("ok", "dry-run"):
+            vert += 1
+        else:
+            arret += 1
+    return {"postes": len(jobs_list), "vert": vert, "echec": echec, "arret": arret}
+
+
+# ══════════════════════ section 3 — « Où en est la mise à jour ? » ══════════════════════
+
+def _etapes_mise_a_jour(a_faire: dict, *, run_servi: str, candidat: str | None,
+                        calculer_present: bool, dernier_calcul: str | None,
+                        env: str, prod_run: str | None) -> list[dict]:
+    inj = _lignes_par_type(a_faire, "injecter")
+    n_inj = len(inj)
+
+    # Étape 1 — Injecter.
+    e1 = {"id": "injecter", "titre": "Injecter", "ordre": 1,
+          "fait": n_inj == 0,
+          "ligne": "Rien en attente" if n_inj == 0
+                   else f"{n_inj} source{'s' if n_inj > 1 else ''} attend{'ent' if n_inj > 1 else ''}",
+          "bouton": None if n_inj == 0 else {"label": "Injecter", "action": "voir-cartes"}}
+
+    # Étape 2 — Calculer (sur le Mac). « à faire » si des entrées ont changé.
+    e2 = {"id": "calculer", "titre": "Calculer", "ordre": 2,
+          "fait": not calculer_present,
+          "ligne": (f"Dernier calcul {_jour(dernier_calcul)}" if dernier_calcul else "sur le Mac, à ta demande")
+                   + (" · des entrées ont changé" if calculer_present else ""),
+          "bouton": {"label": "Calculer", "action": "calculer"} if calculer_present else None}
+
+    # Étape 3 — Basculer (chez toi). « à faire » s'il y a un candidat prêt.
+    e3 = {"id": "basculer", "titre": "Basculer", "ordre": 3,
+          "fait": candidat is None,
+          "ligne": (f"Un candidat est prêt" if candidat else "L'app affiche la dernière version"),
+          "bouton": {"label": "Basculer", "action": "basculer", "candidat": candidat} if candidat else None}
+
+    # Étape 4 — Envoyer en prod. « à faire » si la prod sert un autre run que le local.
+    local_env = (env or "local") == "local"
+    retard = prod_run is not None and prod_run != run_servi
+    if not local_env:
+        ligne4 = "se fait depuis le Mac"
+        bouton4 = None
+        fait4 = True
+    elif prod_run is None:
+        ligne4 = "état de la prod en cours de lecture…"
+        bouton4 = None
+        fait4 = False
+    elif retard:
+        ligne4 = "Les clients sont encore sur la version précédente"
+        bouton4 = {"label": "Envoyer en prod", "action": "envoyer-prod"}
+        fait4 = False
+    else:
+        ligne4 = "Les clients ont la dernière version"
+        bouton4 = None
+        fait4 = True
+    e4 = {"id": "envoyer-prod", "titre": "Envoyer en prod", "ordre": 4,
+          "fait": fait4, "ligne": ligne4, "bouton": bouton4,
+          "local": local_env}
+
+    return [e1, e2, e3, e4]
+
+
+# ══════════════════════ l'assemblage ══════════════════════
+
+def composer_cockpit(*, a_faire: dict, etats_sources: dict | None, reservoirs: list[dict],
+                     verrous: dict | None, fuites_rob: list[dict], tuiles: dict | None,
+                     ecarts_toleres: int, jobs_list: list[dict], run_servi: str,
+                     candidat: str | None, calculer_present: bool, dernier_calcul: str | None,
+                     env: str, prod_run: str | None, dates: dict | None = None) -> dict:
+    """Compose le payload du Tableau de bord (trois sections). Tout est déjà calculé en amont par
+    l'endpoint — ici on ne fait que GROUPER par problème et formuler en français. `prod_run` est
+    None quand l'état prod n'est pas encore lu (le front le complète via /admin/cockpit/etat-prod)."""
+    noms_source = {r["id"]: r.get("nom") for r in (reservoirs or [])}
+    jobs_par_nom = {j["nom"]: j for j in (jobs_list or [])}
+
+    cartes = _cartes_aujourdhui(
+        a_faire, noms_source=noms_source, ecarts_toleres=ecarts_toleres, verrous=verrous,
+        fuites_rob=fuites_rob, tuiles=tuiles, dates=dates)
+
+    return {
+        "aujourdhui": {"n": len(cartes), "cartes": cartes},
+        "tout_tourne": {"resume": _resume_usine(jobs_list),
+                        "tuiles": _tuiles_tout_tourne(jobs_par_nom, etats_sources or {})},
+        "mise_a_jour": {"etapes": _etapes_mise_a_jour(
+            a_faire, run_servi=run_servi, candidat=candidat, calculer_present=calculer_present,
+            dernier_calcul=dernier_calcul, env=env, prod_run=prod_run)},
+    }

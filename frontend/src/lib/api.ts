@@ -2685,6 +2685,18 @@ export const getSanteFraicheur = () =>
   j<{ empreinte_attendue: string; perimes: string[]; caches: CacheFraicheur[] }>('/sante/fraicheur')
 // COHERENCE-FIX-1 (lot G) — les passages du banc de cohérence (onglet Cohérence, page Données).
 export const getAdminCoherence = () => j<any>('/admin/coherence')
+// COCKPIT-1 (Lot A) — les gestes du Tableau de bord. L'état PROD (version servie chez les clients)
+// est lu serveur→serveur (jamais une URL dans le front) ; les actions passent par les mêmes
+// commandes que le cron, détachées et journalisées.
+export interface CockpitEtatProd { env: string; local: boolean; joignable: boolean; run: string | null; promu_le: string | null }
+export const getAdminCockpitEtatProd = () => j<CockpitEtatProd>('/admin/cockpit/etat-prod')
+export const postCockpitInjecter = (sources: number[]) =>
+  j<{ ok: boolean; lances: string[]; n: number }>('/admin/cockpit/injecter',
+    { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sources }) })
+export const postCockpitReconstruire = () => j<{ ok: boolean; log: string }>('/admin/cockpit/reconstruire', { method: 'POST' })
+export const postCockpitAccepterEcarts = () => j<{ ok: boolean; log: string }>('/admin/cockpit/accepter-ecarts', { method: 'POST' })
+export const postCockpitEnvoyerProd = () => j<{ ok: boolean; log: string }>('/admin/cockpit/envoyer-prod', { method: 'POST' })
+
 export const postAdminCircuitVerifier = () => j<any>('/admin/circuit/verifier', { method: 'POST' })
 // CIRCUIT-P2 (lot 3.2/3.3) / CIRCUIT-P7 — tâches longues : lancer l'agent LLM (une source via
 // `sourceId`, ou une portée « sans_amont » (défaut) / « g8 » / « tous » depuis la carte Agents).

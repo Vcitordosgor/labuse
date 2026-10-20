@@ -483,6 +483,22 @@ def config_run() -> dict:
     return {"run": runs.current()}
 
 
+@app.get("/version")
+def version() -> dict:
+    """COCKPIT-1 (Lot A) — ÉTAT SERVI, lecture seule et PUBLIQUE : la version (run) que cette app sert
+    réellement, la date de sa mise en ligne et l'environnement. Sert au Tableau de bord LOCAL à lire
+    « où en sont les clients » : le Mac interroge /version de l'app en ligne (serveur à serveur, pas
+    d'URL dans le front) pour comparer le run servi en prod au run calculé localement. Zéro écriture,
+    zéro secret. Le `promu_le`/`par` viennent du manifeste servi (le point de vérité de la bascule)."""
+    from .. import config, manifeste
+    m = manifeste.lire() or {}
+    return {"run": runs.current(),
+            "run_precedent": runs.precedent(),
+            "promu_le": m.get("promoted_at"),
+            "par": m.get("par"),
+            "env": config.get_settings().env}
+
+
 @app.get("/vocabulaire/paliers")
 def vocabulaire_paliers() -> dict:
     """FRONT-CHIFFRES-2 (F13/F29) — LA DA DES PALIERS servie depuis la source unique
