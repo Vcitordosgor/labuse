@@ -70,3 +70,22 @@ def test_circuit_attache_propagation_aux_reservoirs():
     for res in reservoirs:
         p = res.get("propagation")
         assert p is not None and set(p) >= {"nouvelle", "moteurs", "robinets", "en_retard"}
+
+
+@pytest.mark.db
+def test_garde_propagation_nouvelle_version_en_retard():
+    """COCKPIT-1 (Lot D) — LA GARDE : sur le run servi, tout réservoir en « nouvelle version » (pas
+    encore injecté) a TOUS ses robinets « en retard » avec le geste « injecter ». C'est la moitié LIVE
+    de la garde du mandat (« robinets en retard → à jour après le geste ») ; la bascule en_retard→à_jour
+    quand le réservoir n'est plus en nouvelle version est prouvée en unitaire (test_nouvelle_version_*
+    + test_tout_a_jour). Une injection réelle sur base jetable (recette) la rejoue de bout en bout."""
+    from fastapi.testclient import TestClient
+
+    from labuse.api.app import app
+    with TestClient(app) as c:
+        reservoirs = c.get("/admin/circuit").json()["reservoirs"]
+    nouvelles = [r for r in reservoirs if (r.get("etat") or ["", ""])[1] == "nouvelle version"]
+    for r in nouvelles:
+        p = r["propagation"]
+        assert p["nouvelle"] is True
+        assert all(t["verdict"] == "en_retard" and t["geste"] == "injecter" for t in p["robinets"]), r["nom"]
