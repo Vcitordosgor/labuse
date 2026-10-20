@@ -382,7 +382,10 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
               "réellement consultée). Un passage TOUS LES 15 JOURS (dimanche nuit, semaines ISO paires), "
               "sous PLAFOND de dépense (LABUSE_AGENT_PLAFOND_EUR, défaut 0 = ne dépense rien) qui arrête "
               "proprement et signale les sources non traitées.",
-       test="tests/test_cron1_registre.py::test_agents_sources_dimanche", planifie=False),
+       # COCKPIT-1 (Lot C, correction B) — REMIS AU CRONTAB (dimanche, 1 semaine sur 2 via
+       # semaine_agents) : sans lui, les sources illisibles par la sonde n'étaient vérifiées par
+       # personne. Prod : poser LABUSE_AGENT_PLAFOND_EUR=5 (le job cède au plafond, zéro surprise).
+       test="tests/test_cron1_registre.py::test_agents_sources_dimanche"),
     _j("filtres-sources", "Filtres des sources : rejoue les contrôles qualité sur les versions servies",
        "quotidien", "5 3 * * *", "07:05", touche="eau", timeout_s=1800,
        raison="Le filtre de nuit : rejoue les contrôles qualité sur les versions RÉELLEMENT servies (une "
@@ -591,12 +594,10 @@ JOBS: dict[str, Job] = {j.nom: j for j in [
               "ouvre un incident (parcelle + les deux valeurs). Séquentiel et espacé (quotas respectés), "
               "aucune écriture en base hors le rapport. L'œil extérieur qui ne dépend pas de nos propres caches.",
        test="tests/test_solidite1_lot5.py::test_verite_sources_au_registre"),
-    _j("restore-test", "Restaure le dernier dump dans une base jetable et vérifie (puis DROP)",
-       "mensuel (1er)", "0 1 1 * *", "05:00 le 1er", touche="exploitation", timeout_s=3600,
-       envoie_mail=True, besoin_db=False,
-       raison="Une sauvegarde non restaurable ne vaut rien : une fois par mois, on restaure le dernier dump "
-              "dans une base jetable, on vérifie, on DROP. Alerte si la restauration échoue.",
-       test="tests/test_cron1_registre.py::test_job_a_une_raison", gel="Phase 8 Stéphanie"),
+    # COCKPIT-1 (Lot C, correction E) — `restore-test` RETIRÉ du registre (donc du crontab VPS) : le
+    # test mensuel de restauration tourne DÉJÀ hors-VPS sur le Mac (agent launchd deploy/mac/restore_test.sh,
+    # DISQUE-EXTERNE-1 / AGENTS-LAUNCHD). Le poste VPS faisait doublon (et restait gelé). L'implémentation
+    # `jobs_impl.restore_test` reste (exécutable à la main / testée) ; seul le JOB du registre part.
     _j("signal-instantane", "Instantané mensuel du Signal servi (fige la prédiction datée, mesurable forward)",
        "mensuel (1er)", "0 2 1 * *", "06:00 le 1er", touche="exploitation", timeout_s=1800,
        besoin_db=True,
@@ -678,8 +679,6 @@ _FAMILLE_LIBELLE_ROLE: dict[str, tuple[int, str, str, bool]] = {
                              "Envoie les mails en attente et rejoue les échecs, toutes les 5 minutes.", True),
     "recap-matin": (4, "Le récap du matin",
                     "Un seul mail à 07:30 : tout vert, ou la liste de ce qui ne va pas.", False),
-    "restore-test": (4, "Le test de restauration",
-                     "Restaure le dernier dump dans une base jetable et vérifie, une fois par mois.", False),
     "evaluer-suivis": (4, "La veille des parcelles suivies",
                        "Prévient un client quand un fait tombe sur une parcelle qu'il suit.", True),
     "detect-events": (4, "La veille du marché",

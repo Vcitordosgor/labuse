@@ -93,8 +93,9 @@ def test_familles_attendues():
     par_fam: dict[int, int] = {}
     for j in jobs.liste():
         par_fam[j["famille"]] = par_fam.get(j["famille"], 0) + 1
-    assert par_fam == {1: 2, 2: 6, 3: 2, 4: 21}
-    assert sum(par_fam.values()) == 31
+    # COCKPIT-1 Lot C : restore-test retiré du registre (doublon Mac) → 30 jobs, F4 passe de 21 à 20.
+    assert par_fam == {1: 2, 2: 6, 3: 2, 4: 20}
+    assert sum(par_fam.values()) == 30
 
 
 # ─────────────── endpoints (db) ───────────────
@@ -109,7 +110,7 @@ def test_usine_endpoint():
     assert r.status_code == 200
     j = r.json()
     assert [f["n"] for f in j["familles"]] == [1, 2, 3, 4]
-    assert len(j["geles"]) == 6   # 4 Radar + digest + restore-test
+    assert len(j["geles"]) == 5   # 4 Radar + digest (restore-test retiré du registre, Lot C)
 
 
 @pytest.mark.db

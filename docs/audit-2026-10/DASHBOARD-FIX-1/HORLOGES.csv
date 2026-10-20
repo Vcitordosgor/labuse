@@ -28,5 +28,4 @@ fiche-commune-cache;quotidien;03:00;exploitation;deploy.sh → /etc/cron.d/labus
 coherence-banc;quotidien;03:45;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run coherence-banc
 recap-matin;quotidien;07:30;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run recap-matin
 verite-sources;mensuel (15);06:00 le 15;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run verite-sources
-restore-test;mensuel (1er);05:00 le 1er;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run restore-test
 signal-instantane;mensuel (1er);06:00 le 1er;exploitation;deploy.sh → /etc/cron.d/labuse (généré du registre labuse.jobs);labuse jobs run signal-instantane
