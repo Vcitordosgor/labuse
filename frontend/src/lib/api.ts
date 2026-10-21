@@ -1981,11 +1981,13 @@ export const getAdminFlux = () => j<AdminFlux>('/admin/flux')
 export const getAdminFluxRuns = () => j<{ runs: FluxRunTermine[]; derniere: FluxDerniereBascule | null }>('/admin/flux/runs')
 export const postAdminFluxLancerRun = (recette: 'm36' | 'q_v12' = 'm36') =>
   j<{ ok: boolean; label: string; estimation: string; log: string }>('/admin/flux/run/lancer', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ recette }) })
-export const postAdminFluxBascule = (run: string) =>
+// BASCULE-DIVISION-UI — `divisionRun` optionnel : garder la division d'or sur un run ANTÉRIEUR
+// (découpe du nouveau run incomplète). Omis/null → la division suit le nouveau run (défaut).
+export const postAdminFluxBascule = (run: string, divisionRun?: string | null) =>
   j<{ ok: boolean; ancien?: string; nouveau?: string; caches_purges?: string[]; coherence?: FluxCoherence; note?: string; motif?: string
       // DONNEES-2 (B1) — reconstruction détachée des tables servies run-scopées après la bascule.
       reconstruction?: { lancee: boolean; run?: string; log?: string; motif?: string } | null }>(
-    '/admin/flux/bascule', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ run }) })
+    '/admin/flux/bascule', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ run, division_run: divisionRun ?? null }) })
 // D7 — Produit
 export interface AdminProduit {
   usage: Array<{ outil: string; n: number }>

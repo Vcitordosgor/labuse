@@ -197,6 +197,30 @@ def _run_complet(db: Session, run: str) -> tuple[bool, str]:
     return True, f"run complet (score v2 + cascade — {motif})"
 
 
+def division_incomplete(db: Session, run: str) -> dict:
+    """BASCULE-DIVISION-UI — la découpe de division d'or (`division_or_candidates type='decoupe'`,
+    famille MASQUÉE, hors chemin critique) du run candidat est-elle MOINS couverte que celle de la
+    division actuellement servie ? Si oui, le bouton Basculer PROPOSE de garder `division_run` sur
+    la division servie (la découpe du nouveau run se terminera plus tard, sans bloquer le Score).
+
+    Heuristique assumée (aucun suivi de complétude par commune pour une famille masquée) : on compare
+    le nombre de communes PORTANT des candidats 'decoupe' entre le run et la division servie. C'est un
+    SIGNAL pour proposer, jamais une contrainte : l'admin tranche."""
+    from . import manifeste
+    div_servi = manifeste.division_run() if manifeste.existe() else None
+
+    def _n(label: str | None) -> int:
+        if not label or not db.execute(text("SELECT to_regclass('division_or_candidates')")).scalar():
+            return 0
+        return db.execute(text("SELECT count(DISTINCT commune) FROM division_or_candidates "
+                               "WHERE run_label = :r AND type_division = 'decoupe'"),
+                          {"r": label}).scalar() or 0
+    n_run, n_servi = _n(run), _n(div_servi)
+    return {"incomplete": bool(div_servi and div_servi != run and n_run < n_servi),
+            "division_run_a_garder": div_servi,
+            "communes_decoupe_run": n_run, "communes_decoupe_servies": n_servi}
+
+
 def runs_termines(db: Session, limit_ecart: int = 4) -> list[dict]:
     """F2.3 — la liste des runs terminés, avec pour chacun l'ÉCART au run courant (tiers qui changent,
     répartition Priorité/À suivre avant/après). Le run servi est marqué. Lecture seule.
@@ -269,7 +293,9 @@ def runs_termines(db: Session, limit_ecart: int = 4) -> list[dict]:
                     # SCORING-3 (L1.3) — la note de version du candidat, lisible AVANT de basculer.
                     "modele": row["model_version"] if row else None,
                     "recette": (row["recette"] or row["model_version"]) if row else None,
-                    "note_de_version": row["note_de_version"] if row else None})
+                    "note_de_version": row["note_de_version"] if row else None,
+                    # BASCULE-DIVISION-UI — signal pour proposer de garder la division sur le run servi.
+                    "division_incomplete": division_incomplete(db, lab)})
     # DONNEES-2 (B2/D3) — AJOUTE les runs LANCÉS mais non terminés (en cours / abandonnés) : ils
     # n'existent pas dans p_score_v2_runs (aucune ligne écrite), seulement via leur état de progression.
     connus = {r["label"] for r in out}
