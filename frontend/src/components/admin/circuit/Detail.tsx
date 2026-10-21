@@ -473,13 +473,31 @@ function DetailPompe({ back, rafraichir }: { back: JSX.Element; rafraichir: () =
     rafraichir()
   }
   const lancer = useMutation({ mutationFn: () => postAdminFluxLancerRun('m36'), onSuccess: rafraichir })
-  const basculer = useMutation({ mutationFn: (run: string) => postAdminFluxBascule(run), onSuccess: apresGeste })
+  const basculer = useMutation({ mutationFn: ({ run, divisionRun }: { run: string; divisionRun?: string | null }) => postAdminFluxBascule(run, divisionRun), onSuccess: apresGeste })
   const revenir = useMutation({ mutationFn: postAdminCircuitRevenir, onSuccess: apresGeste })
 
   if (q.isLoading || !q.data) return <div className="detail on">{back}<div className="muted"><Chargement variant="bloc" /></div></div>
   const p = q.data
   const candidat = p.candidat as string | null
   const precedent = p.precedent?.scoring_run as string | undefined
+  // BASCULE-DIVISION-UI — quand la découpe de division d'or du candidat est incomplète, PROPOSER de
+  // garder `division_run` sur le run servi (famille masquée, hors chemin critique). L'admin tranche.
+  const lancerBascule = () => {
+    if (!candidat) return
+    const di = p.division_incomplete as { incomplete: boolean; division_run_a_garder: string | null;
+      communes_decoupe_run: number; communes_decoupe_servies: number } | null
+    let divisionRun: string | null | undefined
+    if (di?.incomplete && di.division_run_a_garder) {
+      divisionRun = window.confirm(
+        `La découpe de division d'or de « ${candidat} » est incomplète `
+        + `(${di.communes_decoupe_run}/${di.communes_decoupe_servies} communes).\n\n`
+        + `Garder la division d'or sur « ${di.division_run_a_garder} » (le run servi) pendant que le `
+        + `Score passe à « ${candidat} » ?\n\n`
+        + `OK = garder « ${di.division_run_a_garder} »  ·  Annuler = la division passe à « ${candidat} ».`)
+        ? di.division_run_a_garder : null
+    }
+    basculer.mutate({ run: candidat, divisionRun })
+  }
 
   return (
     <div className="detail on">
@@ -502,7 +520,7 @@ function DetailPompe({ back, rafraichir }: { back: JSX.Element; rafraichir: () =
             <div className="actions">
               <button className="btn mint" disabled={lancer.isPending || (!p.residuel?.changees && !candidat)} onClick={() => lancer.mutate()}>Faire tourner la pompe</button>
               {candidat && <button className="btn ambre" onClick={async () => { setNote(await getAdminCircuitNoteVersion(candidat)); setNoteLue(candidat) }}>Note de version</button>}
-              {candidat && <button className="btn ambre" disabled={noteLue !== candidat} onClick={() => basculer.mutate(candidat)}>Basculer sur {candidat}</button>}
+              {candidat && <button className="btn ambre" disabled={noteLue !== candidat} onClick={lancerBascule}>Basculer sur {candidat}</button>}
               {precedent && <button className="btn" disabled={revenir.isPending} onClick={() => revenir.mutate()}>Revenir à {precedent}</button>}
             </div>
             <div className="muted" style={{ marginTop: 10 }}>Calculer produit un candidat, jamais servi tout seul. Basculer déplace tous les pointeurs d'un geste.</div>

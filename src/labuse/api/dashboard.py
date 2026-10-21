@@ -1900,6 +1900,10 @@ def admin_flux_run_etat(request: Request) -> dict:
 
 class BasculeIn(BaseModel):
     run: str = Field(min_length=1, max_length=64)
+    # BASCULE-DIVISION-UI — garder la division d'or sur un run ANTÉRIEUR tant que la découpe du
+    # nouveau run est incomplète (famille masquée, hors chemin critique). None → la division suit
+    # le nouveau run (comportement par défaut). Le front le propose quand `division_incomplete`.
+    division_run: str | None = Field(default=None, max_length=64)
 
 
 @router.post("/admin/flux/bascule")
@@ -1917,7 +1921,7 @@ def admin_flux_bascule(request: Request, body: BasculeIn) -> dict:
     from ..db import session_scope
     qui = getattr(getattr(request, "state", None), "compte_email", None) or "admin"
     with session_scope() as s:
-        res = bascule_flux.basculer(s, body.run, par=str(qui))
+        res = bascule_flux.basculer(s, body.run, par=str(qui), division_run=body.division_run)
         if not res.get("ok"):
             raise HTTPException(409, res.get("motif", "bascule refusée"))
         try:
@@ -3831,6 +3835,10 @@ def admin_circuit_pompe(request: Request) -> dict:
     distincts = {v for k, v in pointeurs.items() if k != "residuel_run_seq" and v}
     return {"run_servi": servi, "candidat": candidat, "manifeste": m, "residuel": residuel,
             "precedent": (m or {}).get("precedent"),
+            # BASCULE-DIVISION-UI — signal « garder la division sur le run servi » (découpe du candidat
+            # incomplète) ; réutilise la valeur déjà calculée par runs_termines (aucune requête en plus).
+            "division_incomplete": next((r.get("division_incomplete") for r in runs_list
+                                         if r.get("label") == candidat), None),
             "moteurs": [{"nom": x} for x in moteurs], "n_moteurs": len(moteurs),
             "n_chiffres": len(CHIFFRES), "pointeurs": pointeurs,
             "pointeurs_multiples": len(distincts) > 1,
