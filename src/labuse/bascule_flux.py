@@ -315,14 +315,20 @@ def _residuel_seq_servi(db: Session) -> int | None:
         return None
 
 
-def basculer(db: Session, nouveau_run: str, par: str) -> dict:
+def basculer(db: Session, nouveau_run: str, par: str,
+             division_run: str | None = None) -> dict:
     """LA BASCULE (F2.3). Refuse un run incomplet ; sinon promeut, fait suivre le précédent, purge les
     caches, journalise, et lance la garde de cohérence immédiatement (F4.3). `par` = qui (traçabilité).
     Le retour arrière est cette même fonction appelée avec le run précédent.
 
     ALGO-FIX-1 (point 1) — la bascule SCORING ne lit ni n'écrit JAMAIS le résiduel : le manifeste
     recopie `residuel_runs.is_served` (la seule vérité) au lieu de le piloter. Le résiduel se déplace
-    uniquement par `labuse residuel-serve`."""
+    uniquement par `labuse residuel-serve`.
+
+    `division_run` (défaut None → `nouveau_run`) — override pour GARDER la division d'or sur un run
+    ANTÉRIEUR pendant que scoring/mvt passent au neuf (ex. la découpe q_v20 pas encore terminée :
+    bascule q_v20 avec `division_run='q_v19'`). N'affecte QUE la bascule avant ; un retour arrière
+    (`nouveau_run == ancien_precedent`) restaure le manifeste précédent ENTIER, division comprise."""
     from . import runs
     from .golden_ops import promote
 
@@ -367,7 +373,7 @@ def basculer(db: Session, nouveau_run: str, par: str) -> dict:
         # cascade est absente (base de test).
         cascade_run, _ = resoudre_cascade_run(db, nouveau_run)
         cible = {"scoring_run": nouveau_run, "cascade_run": cascade_run or nouveau_run,
-                 "mvt_run": nouveau_run, "division_run": nouveau_run}
+                 "mvt_run": nouveau_run, "division_run": division_run or nouveau_run}
     # le résiduel (courant ET précédent) = la vérité is_served, jamais une valeur portée d'un ancien
     # manifeste : une bascule scoring ne peut plus déplacer le résiduel dans un sens ou dans l'autre.
     cible["residuel_run_seq"] = residuel_seq_servi
