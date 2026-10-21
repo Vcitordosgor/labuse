@@ -3449,10 +3449,13 @@ def detect_events_cmd(run_from: str | None = None, run_to: str = "q_v2_demo",
     `--rattrapage` : le run de référence vient de p_score_v2_runs (précédent du servi), pas d'un q_v9 en dur."""
     from sqlalchemy.orm import Session
 
+    from . import runs
     from .api.events import detect_events, ensure_tables, run_precedent_servi
-    from .api.tiles import RUN
     from .db import engine
 
+    # FIX detect-events : la constante `RUN` de `api.tiles` a été retirée (refactor → runs.current()).
+    # Le run servi est la source unique de vérité (manifeste/served_run.txt), lue ici une fois.
+    RUN = runs.current()
     ensure_tables(engine())
     with Session(engine()) as s:
         if rattrapage:
