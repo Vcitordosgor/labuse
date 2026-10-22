@@ -355,14 +355,26 @@ def _roles(base: list, programme: Optional[dict[str, int]]) -> list[tuple[str, o
 def etudier_complet(session=None, *, idus: Optional[list[str]] = None, zone: Optional[str] = None,
                     objectif: str = "equilibre", conv: Optional[Conventions] = None,
                     avec_pente: bool = True, programme: Optional[dict[str, int]] = None,
-                    repartition: Optional[list[str]] = None, max_scenarios: int = 3):
+                    repartition: Optional[list[str]] = None, max_scenarios: int = 3,
+                    stationnement_ratio: Optional[float] = None):
     """ETUDE-V6 (Lot B) — UN SEUL passage de recherche, deux vues :
     `scenarios` = sémantique historique (Pareto des candidats couvrant la demande ; [] si la demande
     ne tient pas), et `variantes` = les 3 rôles du mandat (best-effort si dépassement). Renvoie
-    (scenarios, variantes, depassement, message, terrain, regles, conv)."""
+    (scenarios, variantes, depassement, message, terrain, regles, conv).
+
+    ETUDE-V6 (Lot C) — `stationnement_ratio` (ex. 0,5) remplace le barème servi par un plafond par
+    logement, pour chiffrer la capacité SOUS un régime réduit (plafond national L151-35, à confirmer)."""
     idus = idus or IDUS_ETANG_SALE
     conv = conv or charger_conventions()
     terrain, regles, _zone = _charger(session, idus, zone, conv, avec_pente)
+    if stationnement_ratio is not None:
+        from dataclasses import replace
+
+        from .regles import BaremeStationnement
+        regles = replace(regles, stationnement=BaremeStationnement(
+            validee=True, mode="par_logement", base=None, arrondi="superieur",
+            flat_places=stationnement_ratio, lignes=(), article="L151-35 (plafond national)",
+            page_pdf=None, citation=f"plafond {stationnement_ratio:g} place/logt sous condition d'éligibilité"))
     zi = terrain.zone_implantation
     if zi is None or zi.is_empty or terrain.aire_zone_m2 < 60:
         return [], [], None, _message_impossible(terrain, regles, []), terrain, regles, conv

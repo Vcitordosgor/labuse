@@ -12,6 +12,7 @@ Aucun calcul ici n'échappe au moteur : les chiffres sont TIRÉS de la géométr
 """
 from __future__ import annotations
 
+import logging
 from math import gcd
 from typing import Any, Optional
 
@@ -257,6 +258,90 @@ def _programme_vers_demande(programme: dict) -> tuple[dict[str, int], list[str],
     return demande, repartition, surfaces
 
 
+# ------------------------------------------------------------------ ETUDE-V6 (Lot C) : stationnement
+_TYPES_PROJET = {"collectif", "etudiante", "senior", "social", "lotissement"}
+
+# Destinations ouvrant une catégorie L151-34 (donc un plafond national L151-35 « sous condition
+# d'éligibilité ») : le NOM commercial ne prouve pas la catégorie juridique → toujours « À confirmer ».
+_L15134 = {
+    "social": "logement locatif aidé (L151-34, 1°)",
+    "senior": "résidence pour personnes âgées (L151-34, 3°)",
+    "etudiante": "résidence universitaire (L151-34)",
+}
+_PLAFOND_L15135 = 0.5   # « il ne peut être exigé plus de 0,5 aire / logement » (1° à 3° de L151-34, < 800 m TCSP)
+_CITATION_L15135 = (
+    "Code de l'urbanisme L151-35 : à moins de 800 m d'une gare / station de transport collectif en site "
+    "propre, « il ne peut être exigé la réalisation de plus de 0,5 aire de stationnement par logement » "
+    "pour les logements aidés et résidences des 1° à 3° de L151-34 (en vigueur depuis le 28/11/2025).")
+
+
+def _tcsp_sous_800m(session, idus: list[str]) -> tuple[bool, Optional[int]]:
+    """Condition géographique du plafond L151-35/36 : distance au plus proche TCSP (< 800 m). LABUSE la
+    VÉRIFIE (c'est une donnée), contrairement à l'éligibilité juridique de catégorie (non prouvable ici)."""
+    from sqlalchemy import text
+    d = session.execute(text(
+        "SELECT min(round(ST_Distance(s.geom_2975, p.geom_2975))::int) FROM parcels p, spatial_layers s "
+        "WHERE p.idu = ANY(:i) AND s.kind IN ('tcsp_station', 'transport_arret') AND s.geom_2975 IS NOT NULL"
+    ), {"i": idus}).scalar()
+    return (d is not None and d < 800), (int(d) if d is not None else None)
+
+
+def _plu_millesime(session, insee: str) -> Optional[str]:
+    from sqlalchemy import text
+    try:
+        m = session.execute(text("SELECT max(millesime) FROM plu_reglement_extrait WHERE insee = :i"),
+                            {"i": insee}).scalar()
+        return str(m) if m else None
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _stationnement_regimes(session, idus: list[str], type_projet: str, regles, insee: str) -> dict:
+    """Les deux régimes de stationnement du mandat : la RÈGLE GÉNÉRALE du PLU (appliquée, sourcée) et,
+    pour une destination L151-34, le PLAFOND NATIONAL L151-35 « sous condition d'éligibilité » (À confirmer).
+    On ne préremplit jamais un ratio réduit comme s'il était la règle du PLU."""
+    b = regles.stationnement
+    general = {
+        "mode": b.mode, "validee": b.validee,
+        "ratio_par_logement": b.flat_places if b.mode == "par_logement" else None,
+        "article": b.article, "page_pdf": b.page_pdf, "millesime": _plu_millesime(session, insee),
+        "citation": b.citation, "applique": True,
+        "etat": ("règle vérifiée" if b.validee else "document manquant — à confirmer"),
+    }
+    cat = _L15134.get(type_projet)
+    plafond = None
+    if cat:
+        sous_800, dist = _tcsp_sous_800m(session, idus)
+        plafond = {
+            "categorie": cat, "reference": "L151-35", "ratio_plafond": _PLAFOND_L15135,
+            "condition_tcsp_sous_800m": sous_800, "distance_tcsp_m": dist,
+            "eligibilite_categorie": "À confirmer",
+            "statut": "À confirmer",
+            "applicable_si_eligible": sous_800,   # la condition TCSP, elle, est vérifiée
+            "citation": _CITATION_L15135,
+            "note": ("Le nom « " + type_projet + " » ne prouve pas l'éligibilité juridique à cette catégorie. "
+                     "Un ratio de 1 place / 3 logements n'est PAS une règle du PLU de cette commune "
+                     "(on le trouve ailleurs, ex. Saint-Benoît) — ne pas le présenter comme opposable ici."),
+        }
+    return {"general": general, "plafond_national": plafond}
+
+
+def stationnement_payload(session, idus: list[str], type_projet: str) -> dict:
+    """ETUDE-V6 (Lot C, étape 2) — la règle de stationnement applicable, SANS lancer le moteur : règle
+    générale du PLU (commune/zone/destination : unité, article, millésime, état) + plafond L151-35
+    « sous condition d'éligibilité » pour les destinations L151-34. Rapide (pas de recherche)."""
+    idus = [str(i).strip() for i in (idus or []) if str(i).strip()]
+    if not idus:
+        raise ValueError("au moins une parcelle est requise")
+    if type_projet not in _TYPES_PROJET:
+        raise ValueError(f"type de projet inconnu : {type_projet}")
+    conv = charger_conventions()
+    terrain, regles, _zone = moteur_mod._charger(session, idus, None, conv, avec_pente=False)
+    return {"commune": terrain.commune, "insee": terrain.insee, "zone": regles.zone,
+            "type_projet": type_projet,
+            "regimes": _stationnement_regimes(session, idus, type_projet, regles, terrain.insee)}
+
+
 # ------------------------------------------------------------------ point d'entrée
 def etudier_payload(session, entree: dict) -> dict:
     """Payload d'étude servi par l'API. `entree` = {idus, type_projet, objectif, programme,
@@ -269,9 +354,13 @@ def etudier_payload(session, entree: dict) -> dict:
     objectif = entree.get("objectif") or "equilibre"
     if objectif not in OBJECTIFS:
         raise ValueError(f"objectif inconnu : {objectif}")
+    # ETUDE-V6 (Lot C) — 4 destinations ouvrent (ou non) un régime de stationnement réduit (L151-34/35).
+    # L'implantation reste collective (le lotissement = division, Lot D) ; seul le STATIONNEMENT dépend
+    # du type : le barème PLU GÉNÉRAL s'applique toujours ; un plafond national ne s'affiche que « sous
+    # condition d'éligibilité ». On n'écrit jamais « 1 place/logt » comme règle du PLU si elle ne l'est pas.
     type_projet = entree.get("type_projet") or "collectif"
-    if type_projet != "collectif":
-        raise ValueError("seul le collectif est actif dans cette version")
+    if type_projet not in _TYPES_PROJET:
+        raise ValueError(f"type de projet inconnu : {type_projet}")
     stationnement = entree.get("stationnement") or "aerien"
     terrain_mode = entree.get("terrain") or "libere"
 
@@ -358,6 +447,40 @@ def etudier_payload(session, entree: dict) -> dict:
     verdict = next((v["verdict"] for v in variantes_pub if not v.get("absente")),
                    "Impossible pour cause établie")
 
+    # ETUDE-V6 (Lot C) — régimes de stationnement (règle générale PLU + plafond L151-35 à confirmer),
+    # et capacité SOUS le régime réduit (2ᵉ passage moteur au plafond 0,5), seulement si une destination
+    # L151-34 est choisie ET la condition TCSP (< 800 m) est vérifiée — jamais présenté comme acquis.
+    stationnement_regimes = _stationnement_regimes(session, idus, type_projet, ref_scn.regles, t.insee)
+    capacite_reduite = None
+    pf = stationnement_regimes["plafond_national"]
+    # on ne lance le 2ᵉ passage (coûteux) QUE si le stationnement PLAFONNE réellement la capacité —
+    # sinon le régime réduit ne change rien (et on l'écrit), et l'étude reste dans le budget de 30 s.
+    stat_limitante = any("stationnement" in (v.get("limite_capacite") or "").lower()
+                         for v in variantes_pub if not v.get("absente"))
+    if pf and pf["applicable_si_eligible"] and demande and not stat_limitante:
+        capacite_reduite = {"logements": None, "places": None, "ratio_par_logement": _PLAFOND_L15135,
+                            "reference": "L151-35", "statut": "sans effet",
+                            "note": "Le stationnement n'est pas le facteur limitant ici : le plafond réduit "
+                                    "ne changerait pas la capacité."}
+    elif pf and pf["applicable_si_eligible"] and demande:
+        try:
+            r_sc, r_var, r_dep, _m, _ter, _reg, _cv = moteur_mod.etudier_complet(
+                session=session, idus=idus, objectif=objectif, conv=conv,
+                programme=demande or None, repartition=repartition, max_scenarios=1,
+                stationnement_ratio=_PLAFOND_L15135)
+            best = (r_sc[0] if r_sc else next((s for _r, s, _rz in r_var if s is not None), None))
+            if best is not None:
+                capacite_reduite = {
+                    "logements": best.capacite.logements, "places": best.capacite.places,
+                    "ratio_par_logement": _PLAFOND_L15135, "reference": "L151-35",
+                    "statut": "À confirmer",
+                    "note": "Capacité SI le projet est éligible au plafond L151-35 (0,5 place/logt) — "
+                            "éligibilité juridique de catégorie à confirmer ; la règle générale du PLU "
+                            "(appliquée ci-dessus) reste la base servie.",
+                }
+        except Exception:  # noqa: BLE001 — la capacité réduite est un bonus, jamais bloquante
+            logging.getLogger("labuse").exception("étude v6 : passage stationnement réduit impossible")
+
     return {
         "moteur": {"livrable": "IMPLANTATION-2",
                    "version_conventions": conv.version, "etiquette": conv.etiquette,
@@ -403,4 +526,6 @@ def etudier_payload(session, entree: dict) -> dict:
         "scenarios": scenarios_pub,
         "variantes": variantes_pub,
         "depassement": depassement,
+        "stationnement_regimes": stationnement_regimes,
+        "capacite_reduite": capacite_reduite,
     }

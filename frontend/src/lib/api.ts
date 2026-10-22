@@ -2193,7 +2193,35 @@ export interface EtudePayload {
   verdict?: string
   variantes?: EtudeVariante[]
   depassement?: EtudeDepassement | null
+  // ETUDE-V6 (Lot C) — régimes de stationnement (règle générale PLU + plafond L151-35 à confirmer) et
+  // capacité sous le régime réduit (si une destination L151-34 est choisie et le plafond s'applique).
+  stationnement_regimes?: EtudeStationnementRegimes
+  capacite_reduite?: {
+    logements: number | null; places: number | null; ratio_par_logement: number
+    reference: string; statut: string; note: string
+  } | null
 }
+export interface EtudeStationnementRegimes {
+  general: {
+    mode: string; validee: boolean; ratio_par_logement: number | null
+    article: string | null; page_pdf: number | null; millesime: string | null
+    citation: string | null; applique: boolean; etat: string
+  }
+  plafond_national: {
+    categorie: string; reference: string; ratio_plafond: number
+    condition_tcsp_sous_800m: boolean; distance_tcsp_m: number | null
+    eligibilite_categorie: string; statut: string; applicable_si_eligible: boolean
+    citation: string; note: string
+  } | null
+}
+export interface EtudeStationnementOut {
+  commune: string; insee: string; zone: string; type_projet: string
+  regimes: EtudeStationnementRegimes
+}
+export const postEtudeStationnement = (idus: string[], type_projet: string) =>
+  j<EtudeStationnementOut>('/modules/etude/stationnement', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idus, type_projet }),
+  })
 export interface EtudeGrandeur { valeur_m2: number | null; statut: string; detail: string }
 // Variante PRÉSENTE = tous les champs d'un scénario + rôle/verdict/grandeurs/écart. Une variante
 // ABSENTE (mandat §C) ne porte que role/role_label + absente=true + raison ; on garde les champs

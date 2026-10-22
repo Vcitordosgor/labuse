@@ -2063,6 +2063,27 @@ def etude_parcelles(body: EtudeParcellesIn, db: Session = Depends(get_db)) -> di
         raise HTTPException(400, str(exc))
 
 
+class EtudeStationnementIn(BaseModel):
+    # ETUDE-V6 (Lot C, étape 2) — la règle de stationnement applicable à l'assiette et à la destination.
+    idus: list[str] = Field(default_factory=list)
+    type_projet: str = Field("collectif")
+
+
+@router.post("/etude/stationnement")
+def etude_stationnement(body: EtudeStationnementIn, db: Session = Depends(get_db)) -> dict:
+    """ETUDE-V6 (étape 2) — règle de stationnement par (commune, zone, destination) : règle générale du
+    PLU (unité, article, millésime, état) + plafond national L151-35 « sous condition d'éligibilité »
+    pour les destinations L151-34. Sans moteur. ValueError → 400."""
+    from ..implantation.service import stationnement_payload
+
+    for idu in (body.idus or []):
+        _check_idu(idu)
+    try:
+        return stationnement_payload(db, body.idus, body.type_projet)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
+
+
 @router.post("/etude")
 def etude_implantation(body: EtudeIn, db: Session = Depends(get_db)) -> dict:
     """IMPLANTATION-2 — UN SEUL appel sert l'écran « Étude de faisabilité ». UN SEUL moteur

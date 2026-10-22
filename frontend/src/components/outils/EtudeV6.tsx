@@ -6,8 +6,8 @@
 // (« ce que le terrain accueille », variantes, facteurs limitants) est repris au Lot B ; ici, base servie.
 import { useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { postEtude, postEtudeParcelles } from '../../lib/api'
-import type { EtudeParcellesOut, EtudePayload, EtudeVariante, EtudeGrandeur } from '../../lib/api'
+import { postEtude, postEtudeParcelles, postEtudeStationnement } from '../../lib/api'
+import type { EtudeParcellesOut, EtudePayload, EtudeVariante, EtudeGrandeur, EtudeStationnementRegimes } from '../../lib/api'
 import { fmtInt, fmtDec } from '../../lib/format'
 import { Bouton } from '../ui/Bouton'
 import { Badge } from '../ui/Badge'
@@ -32,11 +32,8 @@ const PROJETS: { key: ProjetKey; label: string; desc: string }[] = [
   { key: 'social', label: 'Logement social', desc: 'Programme locatif social ou assimilé' },
   { key: 'lotissement', label: 'Lotissement', desc: 'Division foncière en lots destinés à bâtir' },
 ]
-// Le moteur d'implantation ne connaît pour l'instant que le collectif ; la spécialisation par type
-// (stationnement = Lot C, division = Lot D) suit. Lot A : les 3 types résidentiels passent en collectif.
-const VERS_MOTEUR: Record<ProjetKey, string> = {
-  etudiante: 'collectif', senior: 'collectif', social: 'collectif', lotissement: 'collectif',
-}
+// Lot C — le vrai type est transmis au moteur : l'implantation reste collective (le lotissement =
+// division, Lot D), mais le STATIONNEMENT dépend de la destination (règle générale PLU + plafond L151-35).
 
 const ETAPES = [
   { n: 1, titre: 'Choix des parcelles', sous: 'Assiette foncière' },
@@ -74,11 +71,19 @@ export function EtudeV6({ initialIdus, onClose, onBilan }: {
   })
   const v: EtudeParcellesOut | undefined = valide.data
 
+  // Étape 2 — la règle de stationnement applicable (règle PLU + plafond L151-35), dès le choix du type.
+  const statio = useQuery({
+    queryKey: ['etude-stationnement', sel.join(','), projet],
+    queryFn: () => postEtudeStationnement(sel, projet!),
+    enabled: step === 2 && !!projet && sel.length > 0,
+    staleTime: 60_000,
+  })
+
   // Analyse (étape finale) : un seul appel moteur, on bascule vers le résultat.
   const analyse = useMutation({
     mutationFn: () => postEtude({
       idus: sel,
-      type_projet: projet ? VERS_MOTEUR[projet] : 'collectif',
+      type_projet: projet ?? 'collectif',
       programme: { mode: 'saisi', lignes: TYPES.filter((t) => nb[t] > 0).map((t) => ({ type: t, nombre: nb[t], surface_m2: SURF[t].area })) },
     }),
   })
@@ -155,6 +160,11 @@ export function EtudeV6({ initialIdus, onClose, onBilan }: {
                   <p className="mb-2 text-[11px] font-semibold text-txt">Plan masse — {active.role_label} · {active.forme} · {active.niveaux_label}</p>
                   <PlanMasseSvg fc={active.geojson} svg={active.planche_svg} groupesCaches={[]} />
                 </div>
+              )}
+              {/* stationnement par destination : règle générale PLU + plafond L151-35 + capacité réduite */}
+              {resultat.stationnement_regimes && (
+                <StationnementResultat regimes={resultat.stationnement_regimes} reduite={resultat.capacite_reduite}
+                  placesActive={active.resume.places} logtsActive={active.resume.logements} />
               )}
               {/* contrôles — 5 états */}
               <Controles v={active} />
@@ -247,7 +257,7 @@ export function EtudeV6({ initialIdus, onClose, onBilan }: {
       <div className="grid flex-1 gap-4 p-4 lg:grid-cols-[1fr_340px]">
         <div className="rounded-lg border border-line-2 bg-surface-2 p-4">
           {step === 1 && <EtapeParcelles sel={sel} v={v} chargement={valide.isFetching} erreur={valide.error} onAjouter={ajouter} onRetirer={retirer} />}
-          {step === 2 && <EtapeType projet={projet} onChoisir={setProjet} />}
+          {step === 2 && <EtapeType projet={projet} onChoisir={setProjet} regimes={statio.data?.regimes} chargement={statio.isFetching} />}
           {step === 3 && <EtapeProgramme nb={nb} setNb={setNb} totalLogts={totalLogts} surfaceProg={surfaceProg} surfaceVar={surfaceVar} surfaceInt={surfaceInt} lotissement={projet === 'lotissement'} />}
         </div>
         <Recap sel={sel} v={v} projet={projet} totalLogts={totalLogts} surfaceProg={surfaceProg} surfaceVar={surfaceVar} />
@@ -327,6 +337,42 @@ function Controles({ v }: { v: EtudeVariante }) {
           </div>
         ))}
       </div>
+    </div>
+  )
+}
+
+// ── Lot C — stationnement dans le résultat : règle générale (appliquée) + plafond L151-35 (à confirmer)
+//    + la capacité SOUS le régime réduit, jamais présentée comme acquise ───────────────────────────
+function StationnementResultat({ regimes, reduite, placesActive, logtsActive }: {
+  regimes: EtudeStationnementRegimes
+  reduite: EtudePayload['capacite_reduite']
+  placesActive: number; logtsActive: number
+}) {
+  const g = regimes.general, pf = regimes.plafond_national
+  return (
+    <div data-stationnement-resultat className="rounded-lg border border-line-2 bg-surface-2 p-3">
+      <b className="text-[11px] font-semibold text-txt">Stationnement</b>
+      <div className="mt-2 flex items-start justify-between gap-2 border-t border-line-2 py-1.5">
+        <div><span className="text-[11px] text-txt">Règle générale du PLU</span>
+          <span className="ml-1.5 text-[10px] text-txt-dim">{g.ratio_par_logement != null ? `${fmtDec(g.ratio_par_logement)} pl./logt` : 'par typologie'}{g.millesime ? ` · ${g.millesime}` : ''} · {placesActive} places dessinées</span></div>
+        <Badge ton="vert">appliquée</Badge>
+      </div>
+      {pf && (
+        <div className="flex items-start justify-between gap-2 border-t border-line-2 py-1.5">
+          <div><span className="text-[11px] text-txt">Plafond {pf.reference} ({pf.categorie})</span>
+            <span className="ml-1.5 text-[10px] text-txt-dim">≤ {fmtDec(pf.ratio_plafond)} pl./logt · TCSP {pf.condition_tcsp_sous_800m ? `${fmtInt(pf.distance_tcsp_m ?? 0)} m ✓` : 'hors 800 m'} · catégorie à confirmer</span></div>
+          <Badge ton="ambre">{pf.statut}</Badge>
+        </div>
+      )}
+      {reduite && reduite.statut === 'À confirmer' && reduite.logements != null && (
+        <div className="mt-1.5 rounded-md border border-amber/40 bg-amber-bg px-2.5 py-1.5">
+          <p className="text-[10.5px] text-txt"><b className="text-amber">Sous le régime réduit (à confirmer)</b> : {reduite.logements} logements tiendraient (vs {logtsActive} à la règle générale) — le stationnement cesserait d'être le facteur limitant.</p>
+          <p className="mt-0.5 text-[9.5px] text-txt-dim">{reduite.note}</p>
+        </div>
+      )}
+      {reduite && reduite.statut === 'sans effet' && (
+        <p className="mt-1.5 text-[9.5px] text-txt-dim">{reduite.note}</p>
+      )}
     </div>
   )
 }
@@ -435,7 +481,10 @@ function Sources({ v }: { v: EtudeParcellesOut }) {
 }
 
 // ── Étape 2 — Type de projet ─────────────────────────────────────────────────────────────────────
-function EtapeType({ projet, onChoisir }: { projet: ProjetKey | null; onChoisir: (k: ProjetKey) => void }) {
+function EtapeType({ projet, onChoisir, regimes, chargement }: {
+  projet: ProjetKey | null; onChoisir: (k: ProjetKey) => void
+  regimes?: EtudeStationnementRegimes; chargement: boolean
+}) {
   return (
     <div>
       <EnTetePanneau n="02" titre="Quel type de projet ?" sous="Sélectionnez la destination de votre opération." />
@@ -451,19 +500,46 @@ function EtapeType({ projet, onChoisir }: { projet: ProjetKey | null; onChoisir:
           )
         })}
       </div>
-      {projet && (
-        <div className="mt-3 rounded-md border border-line-2 bg-surface-1 px-3 py-2">
-          <div className="flex items-center gap-2">
-            <b className="text-[11.5px] text-txt">Stationnement PLU</b>
-            <Badge ton="ambre">à vérifier</Badge>
-          </div>
-          <p className="mt-1 text-[10.5px] text-txt-mut">
-            LABUSE recherchera les prescriptions de stationnement applicables à la parcelle et à cette catégorie
-            (commune, zone, article et version du règlement), ainsi que les plafonds nationaux éventuels sous condition
-            d'éligibilité. La règle détaillée est servie dans le résultat.
-            {projet === 'lotissement' && ' Lotissement : division foncière — les obligations portent sur les futures constructions des lots.'}
-          </p>
+      {projet && chargement && <div className="mt-3"><Chargement /></div>}
+      {projet && regimes && <StationnementRegle regimes={regimes} lotissement={projet === 'lotissement'} />}
+    </div>
+  )
+}
+
+// ── Lot C — la règle de stationnement applicable (règle générale PLU + plafond L151-35 à confirmer) ──
+function StationnementRegle({ regimes, lotissement }: { regimes: EtudeStationnementRegimes; lotissement?: boolean }) {
+  const g = regimes.general, pf = regimes.plafond_national
+  return (
+    <div data-stationnement className="mt-3 flex flex-col gap-2">
+      <div className="rounded-md border border-line-2 bg-surface-1 px-3 py-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <b className="text-[11.5px] text-txt">Règle générale du PLU</b>
+          <Badge ton={g.validee ? 'vert' : 'ambre'}>{g.etat}</Badge>
         </div>
+        <p className="mt-1 text-[11px] text-txt">
+          {g.ratio_par_logement != null ? `${fmtDec(g.ratio_par_logement)} place / logement` : 'barème par typologie'}
+          {g.article && <span className="text-txt-dim"> · art. {g.article}</span>}
+          {g.millesime && <span className="text-txt-dim"> · millésime {g.millesime}</span>}
+        </p>
+        {g.citation && <p className="mt-0.5 text-[9.5px] text-txt-dim">« {g.citation} »</p>}
+      </div>
+      {pf && (
+        <div className="rounded-md border border-amber/40 bg-amber-bg px-3 py-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <b className="text-[11.5px] text-amber">Plafond national {pf.reference} — sous condition d'éligibilité</b>
+            <Badge ton="ambre">{pf.statut}</Badge>
+          </div>
+          <p className="mt-1 text-[11px] text-txt">
+            Au plus <b>{fmtDec(pf.ratio_plafond)} place / logement</b> pour {pf.categorie}.
+            {' '}Condition « à moins de 800 m d'un transport collectif » : {pf.condition_tcsp_sous_800m
+              ? <span className="text-mint">vérifiée{pf.distance_tcsp_m != null ? ` (${fmtInt(pf.distance_tcsp_m)} m)` : ''}</span>
+              : <span className="text-coral">non remplie</span>}. Éligibilité de catégorie : <b className="text-amber">{pf.eligibilite_categorie}</b>.
+          </p>
+          <p className="mt-0.5 text-[9.5px] text-txt-dim">{pf.note}</p>
+        </div>
+      )}
+      {lotissement && (
+        <p className="text-[10.5px] text-txt-mut">Lotissement : division foncière — les obligations de stationnement portent sur les futures constructions des lots (Lot D).</p>
       )}
     </div>
   )

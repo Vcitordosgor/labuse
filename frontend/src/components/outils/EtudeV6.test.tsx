@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
@@ -53,17 +53,29 @@ const RESULTAT_ALT_ABSENTE = {
                 raison: 'Aucune autre forme ne fait mieux que l\'optimisation sur ce terrain.' }],
 }
 
+const STATIO = {
+  commune: "L'Étang-Salé", insee: '97404', zone: 'UA', type_projet: 'senior',
+  regimes: {
+    general: { mode: 'par_logement', validee: true, ratio_par_logement: 1, article: 'Ua.12', page_pdf: 46,
+      millesime: '2026-08-05', citation: '1 place par logement', applique: true, etat: 'règle vérifiée' },
+    plafond_national: { categorie: 'résidence pour personnes âgées (L151-34, 3°)', reference: 'L151-35',
+      ratio_plafond: 0.5, condition_tcsp_sous_800m: true, distance_tcsp_m: 120, eligibilite_categorie: 'À confirmer',
+      statut: 'À confirmer', applicable_si_eligible: true, citation: 'L151-35 …', note: 'Le nom ne prouve pas…' },
+  },
+}
 vi.mock('../../lib/api', () => ({
   postEtudeParcelles: vi.fn(),
   postEtude: vi.fn(),
+  postEtudeStationnement: vi.fn(),
 }))
-import { postEtudeParcelles, postEtude } from '../../lib/api'
+import { postEtudeParcelles, postEtude, postEtudeStationnement } from '../../lib/api'
 import { EtudeV6 } from './EtudeV6'
 
 const qc = () => new QueryClient({ defaultOptions: { queries: { retry: false } } })
 const renderV6 = (idus: string[]) => render(<QueryClientProvider client={qc()}><EtudeV6 initialIdus={idus} /></QueryClientProvider>)
 
 afterEach(() => vi.clearAllMocks())
+beforeEach(() => vi.mocked(postEtudeStationnement).mockResolvedValue(STATIO as any))
 
 describe('ETUDE-V6 Lot A — parcours 3 étapes', () => {
   it('étape 1 : affiche les faits par parcelle + l\'assiette contiguë, Continuer actif', async () => {
@@ -138,7 +150,7 @@ describe('ETUDE-V6 Lot A — parcours 3 étapes', () => {
     expect(document.querySelector('[data-recit="Ce que le terrain accueille"]')).toBeTruthy()
     expect(document.querySelector('[data-recit="Ce qui limite"]')).toBeTruthy()
     expect(vi.mocked(postEtude)).toHaveBeenCalledWith(expect.objectContaining({
-      idus: ['97404000AW0099', '97404000AW0451'], type_projet: 'collectif',
+      idus: ['97404000AW0099', '97404000AW0451'], type_projet: 'social',  // Lot C : le vrai type est transmis
       programme: expect.objectContaining({ mode: 'saisi' }),
     }))
   })
@@ -160,6 +172,25 @@ describe('ETUDE-V6 Lot A — parcours 3 étapes', () => {
     expect(document.querySelector('[data-recit="Ce que le terrain accueille"]')!.textContent).toContain('20 logements')
     fireEvent.click(document.querySelector('[data-variante="optimisation"]') as HTMLElement)
     expect(document.querySelector('[data-recit="Ce que le terrain accueille"]')!.textContent).toContain('28 logements')
+  })
+
+  it('étape 2 (Lot C) : affiche la règle générale PLU + le plafond L151-35 « À confirmer »', async () => {
+    vi.mocked(postEtudeParcelles).mockResolvedValue(OUT(true) as any)
+    renderV6(['97404000AW0099', '97404000AW0451'])
+    await waitFor(() => screen.getByText('AW 99'))
+    fireEvent.click(screen.getByRole('button', { name: /Continuer/ }))
+    await waitFor(() => screen.getByText('Quel type de projet ?'))
+    fireEvent.click(screen.getByText('Résidence senior'))
+    // le bloc stationnement apparaît sans autre action : règle générale + plafond national
+    const bloc = await waitFor(() => {
+      const b = document.querySelector('[data-stationnement]'); if (!b) throw new Error('no statio'); return b
+    })
+    expect(bloc.textContent).toContain('Règle générale du PLU')
+    expect(bloc.textContent).toContain('place / logement')
+    expect(bloc.textContent).toContain('L151-35')
+    expect(bloc.textContent).toContain('À confirmer')
+    // on ne préremplit JAMAIS « 1 place/logement » comme un acquis réduit : le plafond est marqué à confirmer
+    expect(bloc.textContent).toMatch(/vérifiée|non remplie/)
   })
 
   it('variante absente : l\'onglet reste et dit pourquoi (mandat §C)', async () => {
