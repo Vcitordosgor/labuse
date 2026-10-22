@@ -89,6 +89,16 @@ const RESULTAT_LOTISSEMENT = {
   },
   study_id: 'EF-abc123def456',
 }
+// ETUDE-V6-2 (Lot 1) — résultat 10×T1 : la demande (programme_saisi) + les surfaces/varangues servies
+// dans le payload. « Votre demande » DOIT lire ces surfaces payload (30/6), pas l'état de l'éditeur.
+const RESULTAT_T1 = {
+  ...RESULTAT,
+  programme_saisi: { demande: { T1: 10 } },
+  hypotheses: { surfaces: { T1: 30 }, varangues: { T1: 6 } },
+  variantes: [VARIANTE('votre_programme', 'Votre programme', 10, 'Exploitable sous hypothèses'),
+              VARIANTE('optimisation', 'Optimisation', 10, 'Exploitable sous hypothèses'),
+              VARIANTE('alternative', 'Alternative', 10, 'Exploitable sous hypothèses')],
+}
 vi.mock('../../lib/api', () => ({
   postEtudeParcelles: vi.fn(),
   postEtude: vi.fn(),
@@ -293,5 +303,51 @@ describe('ETUDE-V6 Lot A — parcours 3 étapes', () => {
     const panneau = document.querySelector('[data-variante-absente="alternative"]')
     expect(panneau).toBeTruthy()
     expect(panneau!.textContent).toContain('Aucune autre forme ne fait mieux')
+  })
+
+  it('Lot 1 : « Votre demande » lit les surfaces du payload (10×T1 = 300 / 60 varangues / 240 intérieur)', async () => {
+    vi.mocked(postEtudeParcelles).mockResolvedValue(OUT(true) as any)
+    vi.mocked(postEtude).mockResolvedValue(RESULTAT_T1 as any)
+    renderV6(['97404000AW0099', '97404000AW0451'])
+    await waitFor(() => screen.getByText('AW 99'))
+    fireEvent.click(screen.getByRole('button', { name: /Continuer/ }))
+    await waitFor(() => screen.getByText('Quel type de projet ?'))
+    fireEvent.click(screen.getByText('Logement social'))
+    fireEvent.click(screen.getByRole('button', { name: /Continuer/ }))
+    await waitFor(() => screen.getByText('Combien de logements souhaitez-vous ?'))
+    fireEvent.change(document.querySelector('[data-etude-count="T1"]') as HTMLInputElement, { target: { value: '10' } })
+    fireEvent.click(screen.getByRole('button', { name: /Analyser mon projet/ }))
+    const dem = await waitFor(() => { const d = document.querySelector('[data-recit="Votre demande"]'); if (!d) throw new Error('no'); return d as HTMLElement })
+    expect(dem.textContent).toContain('10 logements')
+    expect(dem.textContent).toContain('300,0 m² de programme')
+    expect(dem.textContent).toContain('60,0 m² de varangues')
+    expect(dem.textContent).toContain("240,0 m² d'intérieur")
+    expect(dem.textContent).toContain('10×T1')
+  })
+
+  it('Lot 1 : la surface éditée ne FUIT PAS — « Modifier le programme » rétablit les défauts (T1 30)', async () => {
+    vi.mocked(postEtudeParcelles).mockResolvedValue(OUT(true) as any)
+    vi.mocked(postEtude).mockResolvedValue(RESULTAT_T1 as any)
+    renderV6(['97404000AW0099', '97404000AW0451'])
+    await waitFor(() => screen.getByText('AW 99'))
+    fireEvent.click(screen.getByRole('button', { name: /Continuer/ }))
+    await waitFor(() => screen.getByText('Quel type de projet ?'))
+    fireEvent.click(screen.getByText('Logement social'))
+    fireEvent.click(screen.getByRole('button', { name: /Continuer/ }))
+    await waitFor(() => screen.getByText('Combien de logements souhaitez-vous ?'))
+    fireEvent.change(document.querySelector('[data-etude-count="T1"]') as HTMLInputElement, { target: { value: '10' } })
+    fireEvent.click(screen.getByRole('button', { name: /Analyser mon projet/ }))
+    // dans le résultat, on bricole la surface T1 à 9 dans l'éditeur (sans recalculer)
+    const hyp = await waitFor(() => { const h = document.querySelector('[data-hypotheses]'); if (!h) throw new Error('no hyp'); return h as HTMLElement })
+    const champSurf = hyp.querySelectorAll('input[type="number"]')[0] as HTMLInputElement
+    fireEvent.change(champSurf, { target: { value: '9' } })
+    // puis « Modifier le programme » : on revient à l'étape 3, la saisie de l'éditeur est OUBLIÉE
+    fireEvent.click(screen.getByRole('button', { name: /Modifier le programme/ }))
+    await waitFor(() => screen.getByText('Combien de logements souhaitez-vous ?'))
+    fireEvent.change(document.querySelector('[data-etude-count="T1"]') as HTMLInputElement, { target: { value: '10' } })
+    await waitFor(() => expect(document.body.textContent).toContain('10 logements au programme'))
+    // 10 × 30 = 300 (le 9 saisi ne FUIT pas → surtout pas 90)
+    expect(document.body.textContent).toContain('300,0 m²')
+    expect(document.body.textContent).not.toContain('90,0 m²')
   })
 })

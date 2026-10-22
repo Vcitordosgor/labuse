@@ -112,16 +112,21 @@ export function EtudeV6({ initialIdus, onClose, onBilan }: {
   const recalculer = () => analyse.mutate()
   const resultat: EtudePayload | undefined = analyse.data
 
+  // ETUDE-V6-2 (Lot 1) — l'étape 3 et le récap lisent TOUJOURS les surfaces par défaut (SURF), source
+  // unique. Les hypothèses éditées (dans le résultat) n'affectent QUE le résultat, après « Recalculer ».
   const totalLogts = TYPES.reduce((s, t) => s + nb[t], 0)
-  const surfaceProg = TYPES.reduce((s, t) => s + nb[t] * surfOf(t), 0)
-  const surfaceVar = TYPES.reduce((s, t) => s + nb[t] * varOf(t), 0)
+  const surfaceProg = TYPES.reduce((s, t) => s + nb[t] * SURF[t].area, 0)
+  const surfaceVar = TYPES.reduce((s, t) => s + nb[t] * SURF[t].varangue, 0)
   const surfaceInt = surfaceProg - surfaceVar
 
   const contiguOk = sel.length > 0 && !!v?.contiguite.ok
   const peutContinuer1 = contiguOk && !valide.isFetching
   const peutAnalyser = contiguOk && !!projet && totalLogts > 0
 
-  function reset() { setStep(1); setSel([]); setProjet(null); setNb({ T1: 0, T2: 0, T3: 0, T4: 0 }); setHyp({ surf: { T1: '', T2: '', T3: '', T4: '' }, varangue: { T1: '', T2: '', T3: '', T4: '' }, profondeur: '', coef: '' }); analyse.reset() }
+  function reset() { setStep(1); setSel([]); setProjet(null); setNb({ T1: 0, T2: 0, T3: 0, T4: 0 }); resetHyp(); analyse.reset() }
+  function resetHyp() { setHyp({ surf: { T1: '', T2: '', T3: '', T4: '' }, varangue: { T1: '', T2: '', T3: '', T4: '' }, profondeur: '', coef: '' }) }
+  // « Modifier le programme » revient au formulaire ET réinitialise les hypothèses éditées (pas de fuite).
+  function modifierProgramme() { resetHyp(); analyse.reset() }
   const editeurHyp = (collectif: boolean) => (
     <HypothesesEditor hyp={hyp} setHyp={setHyp} surfOf={surfOf} varOf={varOf} types={TYPES.filter((t) => nb[t] > 0)}
       collectif={collectif} onRecalculer={recalculer} enCours={analyse.isPending} />
@@ -133,7 +138,7 @@ export function EtudeV6({ initialIdus, onClose, onBilan }: {
   if (resultat?.lotissement) {
     return (
       <div className="flex min-h-full flex-col">
-        <Entete onClose={onClose} onReset={() => { analyse.reset() }} resetLabel="← Modifier le programme" />
+        <Entete onClose={onClose} onReset={modifierProgramme} resetLabel="← Modifier le programme" />
         <div className="flex items-center gap-3 border-b border-line-2 px-4 py-3">
           <span className="text-[12px] text-txt-dim">Verdict de l'étude</span>
           <Badge ton="ambre">{resultat.verdict}</Badge>
@@ -151,12 +156,19 @@ export function EtudeV6({ initialIdus, onClose, onBilan }: {
     const variantes = resultat.variantes ?? []
     const active = variantes.find((v) => v.role === variantActive) ?? variantes[0]
     const alternative = variantes.find((v) => v.role === 'alternative')
-    const dem = TYPES.filter((t) => nb[t] > 0)
+    // ETUDE-V6-2 (Lot 1) — « Votre demande » lit la config RÉELLEMENT ANALYSÉE (payload), source unique :
+    // ni l'état live de l'éditeur ni des défauts recalculés → jamais de décalage avec le moteur/le PDF.
+    const demMap: Record<string, number> = resultat.programme_saisi?.demande ?? Object.fromEntries(TYPES.filter((t) => nb[t] > 0).map((t) => [t, nb[t]]))
+    const surfA = (t: string) => resultat.hypotheses?.surfaces?.[t] ?? SURF[t as TypeKey]?.area ?? 0
+    const varA = (t: string) => resultat.hypotheses?.varangues?.[t] ?? SURF[t as TypeKey]?.varangue ?? 0
+    const demProg = Object.entries(demMap).reduce((s, [t, n]) => s + n * surfA(t), 0)
+    const demVar = Object.entries(demMap).reduce((s, [t, n]) => s + n * varA(t), 0)
+    const demTotal = Object.values(demMap).reduce((s, n) => s + n, 0)
     const bilanDe = (v: EtudeVariante): EtudeProgramme =>
       ({ ref: v.role_label, logements: v.resume.logements, par_type: v.programme.par_type, sdp_m2: v.resume.sdp_m2, shab_m2: v.programme.shab_estimee_m2 })
     return (
       <div className="flex min-h-full flex-col">
-        <Entete onClose={onClose} onReset={() => { analyse.reset() }} resetLabel="← Modifier le programme" />
+        <Entete onClose={onClose} onReset={modifierProgramme} resetLabel="← Modifier le programme" />
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line-2 px-4 py-3">
           <div className="flex items-center gap-3">
             <span className="text-[12px] text-txt-dim">Verdict de l'étude</span>
@@ -216,9 +228,9 @@ export function EtudeV6({ initialIdus, onClose, onBilan }: {
             {/* Récit : demande → accueil → écart → limite → alternative */}
             <aside className="flex flex-col gap-3">
               <Recit titre="Votre demande">
-                <p className="text-[12px] text-txt">{fmtInt(totalLogts)} logements · {fmtDec(surfaceProg)} m² de programme</p>
-                <p className="text-[10.5px] text-txt-dim">dont {fmtDec(surfaceVar)} m² de varangues · {fmtDec(surfaceInt)} m² d'intérieur indicatif</p>
-                <p className="mt-1 text-[10.5px] text-txt-dim">{dem.map((t) => `${nb[t]}×${t}`).join(' · ')}</p>
+                <p className="text-[12px] text-txt">{fmtInt(demTotal)} logements · {fmtDec(demProg)} m² de programme</p>
+                <p className="text-[10.5px] text-txt-dim">dont {fmtDec(demVar)} m² de varangues · {fmtDec(demProg - demVar)} m² d'intérieur indicatif</p>
+                <p className="mt-1 text-[10.5px] text-txt-dim">{Object.entries(demMap).filter(([, n]) => n > 0).map(([t, n]) => `${n}×${t}`).join(' · ')}</p>
               </Recit>
               <Recit titre="Ce que le terrain accueille" ton={verdictTon(active.verdict)}>
                 <p className="text-[12px] text-txt-hi">{fmtInt(active.resume.logements)} logements · {fmtInt(active.resume.places)} places · {active.niveaux_label}</p>

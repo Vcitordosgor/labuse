@@ -2183,6 +2183,7 @@ export interface EtudePayload {
   }
   hypotheses: {
     profondeur_m: number; coef_plancher_habitable: number; surfaces: Record<string, number>
+    varangues?: Record<string, number>
     largeur_coursive_m: number; hauteur_etage_m: number; place_m: [number, number]
     allee_largeur_m: number; etiquette: string
   }

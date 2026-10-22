@@ -582,6 +582,9 @@ def etudier_payload(session, entree: dict) -> dict:
             "profondeur_m": conv.profondeur_m,
             "coef_plancher_habitable": conv.coef_plancher_habitable,
             "surfaces": {k: m.surface_m2 for k, m in conv.modules.items()},
+            # ETUDE-V6-2 (Lot 1) — on RENVOIE les varangues saisies (le moteur ne les utilise pas, mais le
+            # résultat « Votre demande » les lit du payload — source unique de ce qui a été analysé).
+            "varangues": (hyp.get("varangues") or {}),
             "largeur_coursive_m": conv.largeur_coursive_m,
             "hauteur_etage_m": conv.hauteur_etage_m,
             "place_m": [conv.place_largeur_m, conv.place_longueur_m],
