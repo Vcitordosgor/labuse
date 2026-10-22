@@ -2195,9 +2195,14 @@ export interface EtudePayload {
   depassement?: EtudeDepassement | null
 }
 export interface EtudeGrandeur { valeur_m2: number | null; statut: string; detail: string }
+// Variante PRÉSENTE = tous les champs d'un scénario + rôle/verdict/grandeurs/écart. Une variante
+// ABSENTE (mandat §C) ne porte que role/role_label + absente=true + raison ; on garde les champs
+// scénario typés (on NE les lit QU'APRÈS avoir vérifié `!absente`).
 export interface EtudeVariante extends EtudeScenario {
   role: 'votre_programme' | 'optimisation' | 'alternative'
   role_label: string
+  absente?: boolean
+  raison?: string | null
   verdict: string
   grandeurs: {
     sol_restant: EtudeGrandeur; emprise_mobilisable: EtudeGrandeur

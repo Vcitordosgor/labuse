@@ -173,10 +173,18 @@ def _grandeurs(terrain, regles, conv, scenario) -> dict:
     return out
 
 
+def _variante_absente(role: str, reason: str) -> dict:
+    """Une variante ABSENTE garde son onglet et DIT pourquoi (mandat §C : une variante vide s'explique)."""
+    return {"ref": role, "role": role, "role_label": _ROLE_LABELS.get(role, role),
+            "absente": True, "raison": reason}
+
+
 def _variante_public(role: str, scenario, terrain, conv, regles, demande: dict) -> dict:
     """Vue servie d'une variante : le scénario public + rôle (mandat), verdict global (3 libellés),
     les 4 grandeurs, et l'écart CHIFFRÉ demande ↔ variante dessinée (donc prouvé)."""
     pub = _scenario_public(scenario, role)
+    pub["absente"] = False
+    pub["raison"] = None
     pub["role"] = role
     pub["role_label"] = _ROLE_LABELS.get(role, role)
     pub["verdict"] = verdict_global(scenario.controles, statut_base=scenario.statut, terrain=terrain)
@@ -295,21 +303,24 @@ def etudier_payload(session, entree: dict) -> dict:
         programme=demande or None, repartition=repartition, max_scenarios=3,
     )
 
-    # entêtes partagés (terrain / règles / versions) — depuis le 1er scénario/variante, sinon un scénario
-    # vide (même terrain/règles, scène vide) : aucune 2e recherche coûteuse.
-    ref_scn = (scenarios[0] if scenarios else (variantes[0][1] if variantes else None)) \
+    # entêtes partagés (terrain / règles / versions) — depuis le 1er scénario/variante PRÉSENT, sinon un
+    # scénario vide (même terrain/règles, scène vide) : aucune 2e recherche coûteuse.
+    premiere_var = next((s for _r, s, _raison in variantes if s is not None), None)
+    ref_scn = (scenarios[0] if scenarios else premiere_var) \
         or moteur_mod._scenario_vide(terrain, conv, regles, objectif, [])
     sd0 = rendu_mod.scenario_dict(ref_scn)
     t = ref_scn.terrain
 
     scenarios_pub = [_scenario_public(s, _REFS[i]) for i, s in enumerate(scenarios)]
-    variantes_pub = [_variante_public(role, s, terrain, conv, regles, demande) for role, s in variantes]
+    variantes_pub = [(_variante_public(role, s, terrain, conv, regles, demande) if s is not None
+                      else _variante_absente(role, raison))
+                     for role, s, raison in variantes]
 
     # IMPLANTATION-4 (planche plan masse) — UN SEUL SVG par scénario, le même à l'écran et dans le PDF,
     # DESSINÉ depuis la géométrie (contexte cadastre/bâti/voies + TN LiDAR chargé UNE fois pour l'assiette).
     # Robuste : toute panne de contexte/dessin laisse `planche_svg` vide (l'écran retombe sur le plan
     # schématique) — l'étude est toujours servie.
-    paires = list(zip(scenarios_pub, scenarios)) + [(p, s) for p, (_r, s) in zip(variantes_pub, variantes)]
+    paires = list(zip(scenarios_pub, scenarios)) + [(p, s) for p, (_r, s, _raison) in zip(variantes_pub, variantes) if s is not None]
     if paires:
         try:
             from labuse.tz import today_reunion
@@ -342,14 +353,10 @@ def etudier_payload(session, entree: dict) -> dict:
     else:
         statut_global = "simulation impossible"
 
-    # ETUDE-V6 (Lot B) — verdict GLOBAL de l'étude (3 libellés mandat) : sur la variante « votre
-    # programme », sinon « impossible pour cause établie » si la demande ne tient pas / rien n'est faisable.
-    if variantes_pub:
-        verdict = variantes_pub[0]["verdict"]
-    elif demande:
-        verdict = "Impossible pour cause établie"
-    else:
-        verdict = "Impossible pour cause établie"
+    # ETUDE-V6 (Lot B) — verdict GLOBAL de l'étude (3 libellés mandat) : sur la 1ʳᵉ variante PRÉSENTE
+    # (votre programme en tête), sinon « impossible pour cause établie » si rien n'est faisable.
+    verdict = next((v["verdict"] for v in variantes_pub if not v.get("absente")),
+                   "Impossible pour cause établie")
 
     return {
         "moteur": {"livrable": "IMPLANTATION-2",

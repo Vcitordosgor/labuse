@@ -44,6 +44,14 @@ const RESULTAT = {
                              VARIANTE('optimisation', 'Optimisation', 28, 'Exploitable sous hypothèses'),
                              VARIANTE('alternative', 'Alternative', 27, 'Exploitable sous hypothèses')],
 }
+// variante ABSENTE : seul le rôle + une raison (mandat §C : l'onglet reste, il dit pourquoi).
+const RESULTAT_ALT_ABSENTE = {
+  ...RESULTAT,
+  variantes: [VARIANTE('votre_programme', 'Votre programme', 12, 'À compléter'),
+              VARIANTE('optimisation', 'Optimisation', 12, 'À compléter'),
+              { ref: 'alternative', role: 'alternative', role_label: 'Alternative', absente: true,
+                raison: 'Aucune autre forme ne fait mieux que l\'optimisation sur ce terrain.' }],
+}
 
 vi.mock('../../lib/api', () => ({
   postEtudeParcelles: vi.fn(),
@@ -152,5 +160,26 @@ describe('ETUDE-V6 Lot A — parcours 3 étapes', () => {
     expect(document.querySelector('[data-recit="Ce que le terrain accueille"]')!.textContent).toContain('20 logements')
     fireEvent.click(document.querySelector('[data-variante="optimisation"]') as HTMLElement)
     expect(document.querySelector('[data-recit="Ce que le terrain accueille"]')!.textContent).toContain('28 logements')
+  })
+
+  it('variante absente : l\'onglet reste et dit pourquoi (mandat §C)', async () => {
+    vi.mocked(postEtudeParcelles).mockResolvedValue(OUT(true) as any)
+    vi.mocked(postEtude).mockResolvedValue(RESULTAT_ALT_ABSENTE as any)
+    renderV6(['97404000AW0099', '97404000AW0451'])
+    await waitFor(() => screen.getByText('AW 99'))
+    fireEvent.click(screen.getByRole('button', { name: /Continuer/ }))
+    await waitFor(() => screen.getByText('Quel type de projet ?'))
+    fireEvent.click(screen.getByText('Résidence senior'))
+    fireEvent.click(screen.getByRole('button', { name: /Continuer/ }))
+    await waitFor(() => screen.getByText('Combien de logements souhaitez-vous ?'))
+    fireEvent.change(document.querySelector('[data-etude-count="T2"]') as HTMLInputElement, { target: { value: '12' } })
+    fireEvent.click(screen.getByRole('button', { name: /Analyser mon projet/ }))
+    // l'onglet Alternative existe toujours
+    await waitFor(() => expect(document.querySelector('[data-variante="alternative"]')).toBeTruthy())
+    fireEvent.click(document.querySelector('[data-variante="alternative"]') as HTMLElement)
+    // et il affiche la raison de l'absence (pas un panneau vide)
+    const panneau = document.querySelector('[data-variante-absente="alternative"]')
+    expect(panneau).toBeTruthy()
+    expect(panneau!.textContent).toContain('Aucune autre forme ne fait mieux')
   })
 })

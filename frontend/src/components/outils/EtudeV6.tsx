@@ -129,9 +129,17 @@ export function EtudeV6({ initialIdus, onClose, onBilan }: {
           )}
         </div>
 
-        {resultat.depassement && <Depassement d={resultat.depassement} limite={active?.limite_capacite} />}
+        {resultat.depassement && <Depassement d={resultat.depassement} limite={variantes.find((v) => !v.absente)?.limite_capacite} />}
 
-        {active && (
+        {/* variante ABSENTE : l'onglet reste, il dit pourquoi (mandat §C). */}
+        {active?.absente && (
+          <div data-variante-absente={active.role} className="mx-4 my-6 rounded-lg border border-line-2 bg-surface-2 p-6 text-center">
+            <b className="text-[13px] text-txt-hi">{active.role_label} — non proposée</b>
+            <p className="mx-auto mt-1 max-w-[520px] text-[12px] text-txt-mut">{active.raison}</p>
+          </div>
+        )}
+
+        {active && !active.absente && (
           <div className="grid flex-1 gap-4 p-4 lg:grid-cols-[1fr_360px]">
             <section className="flex flex-col gap-4">
               {/* 4 grandeurs séparées */}
@@ -182,8 +190,14 @@ export function EtudeV6({ initialIdus, onClose, onBilan }: {
               </Recit>
               {alternative && alternative.role !== active.role && (
                 <Recit titre="Une alternative concrète">
-                  <p className="text-[11.5px] text-txt">{alternative.forme} {alternative.niveaux_label} — {fmtInt(alternative.resume.logements)} logements.</p>
-                  <button type="button" onClick={() => setVariantActive('alternative')} className="mt-1 text-[11px] text-mint hover:underline">Voir l'alternative →</button>
+                  {alternative.absente ? (
+                    <p className="text-[11.5px] text-txt-mut">{alternative.raison}</p>
+                  ) : (
+                    <>
+                      <p className="text-[11.5px] text-txt">{alternative.forme} {alternative.niveaux_label} — {fmtInt(alternative.resume.logements)} logements.</p>
+                      <button type="button" onClick={() => setVariantActive('alternative')} className="mt-1 text-[11px] text-mint hover:underline">Voir l'alternative →</button>
+                    </>
+                  )}
                 </Recit>
               )}
               {onBilan && (

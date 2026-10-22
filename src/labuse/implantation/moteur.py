@@ -297,12 +297,25 @@ def _depassement(faisables, programme: dict[str, int]) -> dict:
     }
 
 
-def _roles(base: list, programme: Optional[dict[str, int]]) -> list[tuple[str, object]]:
-    """Choisit jusqu'à 3 variantes DISTINCTES (signature forme+niveaux) avec leur rôle mandat :
-    votre_programme (le plus serré qui tient la demande ; au mieux si dépassement), optimisation
-    (max logements), alternative (autre forme, sinon autres niveaux). Pas de 2ᵉ recherche."""
+def _metrique_it(it) -> tuple:
+    """Métrique de Pareto d'un candidat : (logements, SHAB, nb de bâtiments)."""
+    return (it[1][1].logements, it[1][1].shab_estimee_m2, _n_batiments(it[1][0]))
+
+
+def _sig_it(it) -> tuple:
+    return (it[2], it[3])   # (forme, niveaux)
+
+
+def _roles(base: list, programme: Optional[dict[str, int]]) -> list[tuple[str, object, Optional[str]]]:
+    """Les 3 rôles mandat, chacun = (role, candidat ou None, raison d'absence ou None).
+
+    votre_programme = le plus serré qui tient la demande (au mieux si dépassement). optimisation =
+    max logements, DISTINCT de votre_programme. alternative = un candidat DISTINCT, **jamais dominé**
+    par optimisation ni votre_programme, et jamais un doublon de l'optimisation ; s'il n'en existe pas
+    d'utile, l'onglet reste mais dit pourquoi. Même logique pour une variante absente. Pas de 2ᵉ recherche."""
     if not base:
-        return []
+        return [("votre_programme", None, "Aucune implantation ne passe les contrôles sur cette assiette."),
+                ("optimisation", None, None), ("alternative", None, None)]
     by_max = sorted(base, key=lambda it: (_logts_it(it), -_n_batiments(it[1][0]), -it[3]), reverse=True)
     if programme:
         couvr = [it for it in base if _contient(it[1][1], programme)]
@@ -310,22 +323,32 @@ def _roles(base: list, programme: Optional[dict[str, int]]) -> list[tuple[str, o
                  if couvr else by_max[0])
     else:
         votre = base[0]
-    optim = by_max[0]
-    alt = (next((it for it in by_max if it[2] != votre[2]), None)
-           or next((it for it in by_max if (it[2], it[3]) != (votre[2], votre[3])), None))
-    out: list[tuple[str, object]] = []
-    seen: set = set()
-    for role, it in (("votre_programme", votre), ("optimisation", optim), ("alternative", alt)):
-        if it is None:
-            continue
-        sig = (it[2], it[3])
-        if sig in seen:
-            repl = next((x for x in by_max if (x[2], x[3]) not in seen), None)
-            if repl is None:
-                continue
-            it, sig = repl, (repl[2], repl[3])
-        seen.add(sig)
-        out.append((role, it))
+    out: list[tuple[str, object, Optional[str]]] = [("votre_programme", votre, None)]
+    seen = {_sig_it(votre)}
+    m_votre = _metrique_it(votre)
+
+    # Optimisation : la MEILLEURE occupation, distincte et STRICTEMENT meilleure que « votre programme »
+    # (ni doublon, ni dominée par lui) — sinon il n'y a rien à optimiser, et on le dit.
+    optim = next((it for it in by_max if _sig_it(it) not in seen
+                  and _metrique_it(it) != m_votre and not _domine(m_votre, _metrique_it(it))), None)
+    if optim is not None:
+        out.append(("optimisation", optim, None)); seen.add(_sig_it(optim))
+    else:
+        out.append(("optimisation", None, "Votre programme atteint déjà le maximum sur ce terrain."))
+
+    # Alternative : distincte, NON dominée par optimisation NI par votre programme, et NON un doublon
+    # (mêmes logements/SHAB/bâtiments) de l'une ou l'autre — sinon elle n'apporte rien.
+    m_optim = _metrique_it(optim) if optim is not None else None
+    utiles = [it for it in by_max if _sig_it(it) not in seen
+              and _metrique_it(it) != m_votre and _metrique_it(it) != m_optim
+              and not _domine(m_votre, _metrique_it(it))
+              and not (m_optim and _domine(m_optim, _metrique_it(it)))]
+    if utiles:
+        # on préfère une AUTRE FORME que « votre programme », puis le plus de logements.
+        alt = sorted(utiles, key=lambda it: (it[2] != votre[2], _logts_it(it)), reverse=True)[0]
+        out.append(("alternative", alt, None))
+    else:
+        out.append(("alternative", None, "Aucune autre forme ne fait mieux que l'optimisation sur ce terrain."))
     return out
 
 
@@ -362,8 +385,10 @@ def etudier_complet(session=None, *, idus: Optional[list[str]] = None, zone: Opt
                      for it in _pareto(couvrants)[:max_scenarios]]
         base_var = couvrants
 
-    variantes = [(role, _paquet_en_scenario(terrain, conv, regles, objectif, candidats, it))
-                 for role, it in _roles(base_var, programme)]
+    variantes = [(role,
+                  _paquet_en_scenario(terrain, conv, regles, objectif, candidats, it) if it is not None else None,
+                  reason)
+                 for role, it, reason in _roles(base_var, programme)]
     return scenarios, variantes, depassement, message, terrain, regles, conv
 
 
