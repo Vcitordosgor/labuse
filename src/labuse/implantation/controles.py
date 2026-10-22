@@ -256,6 +256,39 @@ def controles_reglementaires(scene: Scene, terrain, conv: Conventions, cap: Capa
     else:
         out.append(ControleReg("Hauteur", "règle non validée", f"R+{cap.niveaux - 1}", NON_EFFECTUE))
 
+    # ETUDE-V6-2 (Lot 3, correction) — HAUTEUR SUR TERRAIN EN PENTE : la hauteur à l'égout se mesure depuis
+    # le terrain NATUREL. Sur une pente, la façade AVAL est plus haute que niveaux × étage du dénivelé sous
+    # le bâtiment. On VÉRIFIE (dénivelé LiDAR) si un volume à toiture plate dépasserait le plafond à l'égout
+    # côté aval : si oui, le bâtiment doit être EN GRADINS (partie aval possiblement R+(N-1), comme
+    # l'architecte). LABUSE suppose des gradins (R+N conservé) et le SIGNALE — à confirmer par l'architecte.
+    pente = getattr(terrain, "pente", None)
+    he = regles.hauteur_egout
+    if isinstance(pente, dict) and pente.get("disponible") and he.validee and he.valeur is not None:
+        import math
+        denivele_parcelle = float(pente.get("denivele_m") or 0.0)
+        # dénivelé SOUS le bâti ≈ pente moyenne × longueur caractéristique du footprint (isotrope), borné
+        # par le dénivelé de la parcelle. Estimé (le profil exact dépend de l'orientation du bâtiment).
+        pm = float(pente.get("pente_moyenne_pct") or 0.0) / 100.0
+        lc = math.sqrt(max(0.0, cap.emprise_sol_m2))
+        denivele_bati = round(min(denivele_parcelle, pm * lc), 1)
+        egout_aval = cap.niveaux * conv.hauteur_etage_m + denivele_bati
+        exces = round(egout_aval - he.valeur, 1)
+        if denivele_bati < 0.5:
+            out.append(ControleReg("Hauteur sur terrain en pente", "terrain quasi plat",
+                                   f"dénivelé sous bâti ≈ {denivele_bati:.1f} m", NON_APPLICABLE))
+        elif exces > 0.1:
+            out.append(ControleReg(
+                "Hauteur sur terrain en pente", f"toiture plate R+{cap.niveaux - 1} → {egout_aval:.1f} m à l'égout aval",
+                f"dénivelé sous bâti ≈ {denivele_bati:.1f} m (pente {pente.get('pente_moyenne_pct')} %)",
+                A_CONFIRMER, he.citation,
+                detail=(f"un volume à toiture plate dépasserait de {exces:.1f} m le plafond égout ({he.valeur:.0f} m) "
+                        f"côté aval → bâtiment EN GRADINS requis, partie aval possiblement R+{max(0, cap.niveaux - 2)} "
+                        f"(comme l'architecte). LABUSE suppose des gradins ; à confirmer.")))
+        else:
+            out.append(ControleReg("Hauteur sur terrain en pente",
+                                   f"dénivelé sous bâti ≈ {denivele_bati:.1f} m absorbable en gradins",
+                                   f"R+{cap.niveaux - 1} tenable à l'égout", REUSSI, he.citation))
+
     # Prospect / hauteur relative (ex. L ≥ h/2) : non chiffrable par le moteur -> Non effectué
     if regles.prospect is not None:
         out.append(ControleReg("Prospect (hauteur relative)", "non chiffrable par le moteur",

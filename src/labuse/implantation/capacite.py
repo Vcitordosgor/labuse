@@ -54,6 +54,7 @@ class Capacite:
     places_sous_sol: int = 0
     emprise_sous_sol_m2: float = 0.0
     rampe_m2: float = 0.0
+    sur_dalle_m2: float = 0.0           # surface au-dessus du sous-sol (sur dalle) retranchée de la pleine terre
 
 
 def _sdp_logement(conv: Conventions, type_logement: str) -> float:
@@ -114,6 +115,14 @@ def calculer(scene: Scene, conv: Conventions, regles: ReglesZone, terrain=None) 
     ss = scene.sous_sol
     mode_ss = bool(ss)
     places = ss["places"] if mode_ss else len(scene.of("place"))
+    # ETUDE-V6-2 (Lot 3, correction) — la surface AU-DESSUS du sous-sol n'est JAMAIS de la pleine terre
+    # (dalle sous le sol → non perméable). On RETRANCHE de la pleine terre la part de l'emprise enterrée
+    # qui DÉBORDE le bâti (le reste est déjà sous le bâtiment, donc déjà non perméable). Le contrôle des
+    # 30 % (UA 2.6) s'applique alors sur la pleine terre RÉELLE → l'emprise du sous-sol s'en trouve limitée.
+    sur_dalle = 0.0
+    if mode_ss:
+        sur_dalle = min(pleine_terre, max(0.0, ss["emprise_m2"] - bati))
+        pleine_terre = pleine_terre - sur_dalle
 
     places_imp, details = _places_imposees(scene, conv, regles)
 
@@ -187,4 +196,5 @@ def calculer(scene: Scene, conv: Conventions, regles: ReglesZone, terrain=None) 
         places_sous_sol=(ss["places"] if mode_ss else 0),
         emprise_sous_sol_m2=(ss["emprise_m2"] if mode_ss else 0.0),
         rampe_m2=round(rampe_m2, 1),
+        sur_dalle_m2=round(sur_dalle, 1),
     )

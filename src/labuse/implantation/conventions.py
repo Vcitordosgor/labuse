@@ -44,9 +44,13 @@ class Conventions:
     place_largeur_m: float
     allee_largeur_m: float
     acces_largeur_m: float
-    # ETUDE-V6-2 (Lot 3) — surface USUELLE d'une place EN SOUS-SOL, rampes et circulation comprises
-    # (Estimé) : sert à chiffrer l'emprise du parking enterré et à la confronter à l'emprise réglementaire.
+    # ETUDE-V6-2 (Lot 3) — surface USUELLE d'une place EN SOUS-SOL, circulation comprise (Estimé) :
+    # sert à chiffrer l'emprise du parking enterré. La RAMPE d'accès (largeur mini, pente max, hauteur de
+    # niveau) donne sa longueur réelle → emprise au sol de la rampe.
     m2_par_place_sous_sol: float
+    rampe_largeur_m: float
+    rampe_pente_max_pct: float
+    hauteur_sous_sol_m: float
     source: dict[str, Any]
 
     def largeur_module(self, type_logement: str) -> float:
@@ -118,5 +122,8 @@ def charger(path: str | Path | None = None) -> Conventions:
         allee_largeur_m=float(st["allee_largeur_m"]),
         acces_largeur_m=float(st["acces_largeur_m"]),
         m2_par_place_sous_sol=float(st.get("m2_par_place_sous_sol", 25.0)),
+        rampe_largeur_m=float(st.get("rampe_largeur_m", 3.5)),
+        rampe_pente_max_pct=float(st.get("rampe_pente_max_pct", 18.0)),
+        hauteur_sous_sol_m=float(st.get("hauteur_sous_sol_m", 3.0)),
         source=raw,
     )

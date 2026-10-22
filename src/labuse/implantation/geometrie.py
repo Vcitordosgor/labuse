@@ -410,7 +410,8 @@ def poser_sous_sol(scene: Scene, conv: Conventions, *, cible: int) -> int:
                           "m2_par_place": conv.m2_par_place_sous_sol}
         return 0
     emprise = round(cible * conv.m2_par_place_sous_sol, 1)
-    # rampe au sol : un rectangle (accès véhicule) adossé à la voie, dans l'espace libre (hors bâti/PPR).
+    # rampe au sol RÉALISTE : largeur ≥ 3,5 m, pente ≤ rampe_pente_max_pct, longueur = hauteur du
+    # sous-sol / pente (ex. 3 m / 18 % ≈ 16,7 m) → emprise au sol en conséquence. Adossée à la voie.
     rampe_m2 = 0.0
     batis = [o.geom_local for o in scene.of("batiment_emprise")]
     bati = unary_union(batis) if batis else None
@@ -419,8 +420,9 @@ def poser_sous_sol(scene: Scene, conv: Conventions, *, cible: int) -> int:
         free = free.difference(scene.ppr_rouge_local)
     free = _valide(free)
     ax0, ay0, ax1, ay1 = scene.assiette_local.bounds
-    w, d = conv.acces_largeur_m, max(6.0, conv.place_longueur_m)   # rampe ≈ 4 × 6 m
-    y0, y1 = (ay0, ay0 + d) if scene.voie_bas else (ay1 - d, ay1)  # adossée à la voie
+    w = conv.rampe_largeur_m
+    longueur = conv.hauteur_sous_sol_m / (conv.rampe_pente_max_pct / 100.0)   # h / pente
+    y0, y1 = (ay0, ay0 + longueur) if scene.voie_bas else (ay1 - longueur, ay1)  # adossée à la voie
     xc = (ax0 + ax1) / 2.0
     rampe = free.intersection(rect(xc - w / 2.0, y0, xc + w / 2.0, y1))
     rampe = _plus_grand(rampe) if not rampe.is_empty else rampe
@@ -428,7 +430,7 @@ def poser_sous_sol(scene: Scene, conv: Conventions, *, cible: int) -> int:
         scene.ajouter(Objet("rampe", rampe))
         rampe_m2 = round(rampe.area, 1)
     scene.sous_sol = {"places": cible, "emprise_m2": emprise, "rampe_m2": rampe_m2,
-                      "m2_par_place": conv.m2_par_place_sous_sol}
+                      "m2_par_place": conv.m2_par_place_sous_sol, "longueur_rampe_m": round(longueur, 1)}
     return cible
 
 

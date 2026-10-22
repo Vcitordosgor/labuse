@@ -29,6 +29,16 @@ from .controles import (A_CONFIRMER, ECHOUE, NON_APPLICABLE, NON_EFFECTUE, REUSS
                         verdict_global)
 
 OBJECTIFS = {"equilibre", "plus_logements", "plus_surface", "plus_simple"}
+
+# ETUDE-V6-2 (Lot 3, correction §4) — obligations d'aménagement fréquentes au règlement (espaces verts,
+# marge plantée) que le PLU CALIBRÉ LABUSE ne modélise pas encore. Exemple cité par l'architecte sur
+# Étang-Salé UA. Servies comme « non vérifiées » : elles réduiraient la capacité si on les appliquait.
+_REGLES_NON_VERIFIEES = [
+    {"nom": "Espaces verts (hors stationnement)", "exemple": "UA Étang-Salé : 20 % de la parcelle en espaces verts, hors aires de stationnement",
+     "statut": "non vérifié", "note": "non modélisé par le PLU calibré LABUSE — à vérifier au règlement ; réduirait la capacité servie."},
+    {"nom": "Marge plantée périphérique", "exemple": "UA Étang-Salé : bande plantée de 2 m sur 75 % du linéaire, hors limites mitoyennes",
+     "statut": "non vérifié", "note": "non modélisé par le PLU calibré LABUSE — à vérifier au règlement ; réduirait la capacité servie."},
+]
 TYPES_LOGEMENT = ("T1", "T2", "T3", "T4")  # ETUDE-V6 — le programme saisi va du T1 au T4
 _REFS = ["A", "B", "C"]
 
@@ -131,6 +141,8 @@ def _scenario_public(scenario, ref: str) -> dict:
             "places_sous_sol": cap.places_sous_sol,
             "emprise_sous_sol_m2": cap.emprise_sous_sol_m2,
             "rampe_m2": cap.rampe_m2,
+            # ETUDE-V6-2 (Lot 3, correction) — surface au-dessus du sous-sol RETRANCHÉE de la pleine terre.
+            "sur_dalle_m2": cap.sur_dalle_m2,
         },
         "surfaces_mesurees_m2": sd["tableau_capacite"]["surfaces_mesurees_m2"],
         "emprise_sol_m2": cap.emprise_sol_m2,
@@ -646,4 +658,8 @@ def etudier_payload(session, entree: dict) -> dict:
         "confrontation": confrontation,
         "stationnement_regimes": stationnement_regimes,
         "capacite_reduite": capacite_reduite,
+        # ETUDE-V6-2 (Lot 3, correction §4) — règles d'aménagement que le PLU CALIBRÉ LABUSE ne modélise
+        # PAS encore : si le règlement de la zone les impose (ex. UA Étang-Salé), elles ne sont PAS
+        # vérifiées ici et RÉDUIRAIENT la capacité servie. Signalées, jamais appliquées en douce.
+        "regles_non_verifiees": _REGLES_NON_VERIFIEES,
     }

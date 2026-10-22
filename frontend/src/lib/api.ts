@@ -2152,6 +2152,7 @@ export interface EtudeScenario {
     acces: { distance_angle_m: number; note: string } | null
     // ETUDE-V6-2 (Lot 3) — parking enterré : mode, places au −1, emprise du sous-sol, rampe au sol.
     mode?: 'aerien' | 'sous_sol'; places_sous_sol?: number; emprise_sous_sol_m2?: number; rampe_m2?: number
+    sur_dalle_m2?: number   // surface au-dessus du sous-sol retranchée de la pleine terre
   }
   surfaces_mesurees_m2: Record<string, number>
   emprise_sol_m2: number; pleine_terre_m2: number
@@ -2213,6 +2214,9 @@ export interface EtudePayload {
     demande_logements: number; capacite_maximale_logements: number
     tient: boolean; reserve_logements: number
   } | null
+  // ETUDE-V6-2 (Lot 3, correction §4) — règles d'aménagement non modélisées par le PLU calibré (ex. UA
+  // espaces verts 20 %, marge plantée) : signalées « non vérifiées », jamais appliquées en douce.
+  regles_non_verifiees?: Array<{ nom: string; exemple: string; statut: string; note: string }>
   // ETUDE-V6 (Lot C) — régimes de stationnement (règle générale PLU + plafond L151-35 à confirmer) et
   // capacité sous le régime réduit (si une destination L151-34 est choisie et le plafond s'applique).
   stationnement_regimes?: EtudeStationnementRegimes
