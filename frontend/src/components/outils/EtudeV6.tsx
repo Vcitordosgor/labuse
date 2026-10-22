@@ -7,7 +7,7 @@
 import { useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { postEtude, postEtudeParcelles, postEtudeStationnement } from '../../lib/api'
-import type { EtudeParcellesOut, EtudePayload, EtudeVariante, EtudeGrandeur, EtudeStationnementRegimes } from '../../lib/api'
+import type { EtudeParcellesOut, EtudePayload, EtudeVariante, EtudeGrandeur, EtudeStationnementRegimes, EtudeLotissement } from '../../lib/api'
 import { fmtInt, fmtDec } from '../../lib/format'
 import { Bouton } from '../ui/Bouton'
 import { Badge } from '../ui/Badge'
@@ -101,6 +101,22 @@ export function EtudeV6({ initialIdus, onClose, onBilan }: {
   function reset() { setStep(1); setSel([]); setProjet(null); setNb({ T1: 0, T2: 0, T3: 0, T4: 0 }); analyse.reset() }
   function ajouter(idu: string) { setSel((xs) => (xs.includes(idu) || xs.length >= 8 ? xs : [...xs, idu])) }
   function retirer(idu: string) { setSel((xs) => xs.filter((x) => x !== idu)) }
+
+  // ── RÉSULTAT LOTISSEMENT (Lot D) — plan de division, pas des scénarios d'implantation.
+  if (resultat?.lotissement) {
+    return (
+      <div className="flex min-h-full flex-col">
+        <Entete onClose={onClose} onReset={() => { analyse.reset() }} resetLabel="← Modifier le programme" />
+        <div className="flex items-center gap-3 border-b border-line-2 px-4 py-3">
+          <span className="text-[12px] text-txt-dim">Verdict de l'étude</span>
+          <Badge ton="ambre">{resultat.verdict}</Badge>
+          <span className="text-[11px] text-txt-dim">{resultat.entrees.commune} · zone {resultat.entrees.zone} · lotissement</span>
+        </div>
+        <LotissementResultat lot={resultat.lotissement} hypothese={resultat.logements_hypothese} />
+        <p className="px-4 pb-4 text-[10px] leading-snug text-txt-dim">{resultat.lotissement.note}</p>
+      </div>
+    )
+  }
 
   // ── RÉSULTAT (Lot B) — le résultat qui explique : Votre demande → Ce que le terrain accueille →
   //    L'écart → Ce qui limite → Alternative ; 4 grandeurs séparées ; 3 variantes ; 5 états ; verdict.
@@ -289,6 +305,15 @@ function Entete({ onClose, onReset, resetLabel }: { onClose?: () => void; onRese
   )
 }
 
+function Chiffre({ v, l }: { v: string; l: string }) {
+  return (
+    <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
+      <div className="font-display text-[22px] font-bold leading-none text-txt-hi">{v}</div>
+      <div className="mt-1 text-[10.5px] text-txt-dim">{l}</div>
+    </div>
+  )
+}
+
 // ── Lot B — une des 4 grandeurs (valeur + statut mesuré/dérivé/non vérifié) ──────────────────────
 function GrandeurCard({ l, g }: { l: string; g: EtudeGrandeur }) {
   const val = g.valeur_m2 == null ? '—' : `${fmtDec(g.valeur_m2)} m²`
@@ -337,6 +362,79 @@ function Controles({ v }: { v: EtudeVariante }) {
           </div>
         ))}
       </div>
+    </div>
+  )
+}
+
+// ── Lot D — résultat LOTISSEMENT : plan de division + tableau des lots + voirie/pleine terre/réseaux ──
+function LotissementResultat({ lot, hypothese }: { lot: EtudeLotissement; hypothese?: { demande: Record<string, number> } | null }) {
+  const tl = lot.tableau_lots
+  const hyp = hypothese?.demande ?? {}
+  return (
+    <div className="grid flex-1 gap-4 p-4 lg:grid-cols-[1fr_360px]">
+      <section className="flex flex-col gap-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <Chiffre v={fmtInt(tl.nombre)} l="lots" />
+          <Chiffre v={`${fmtDec(tl.surface_moyenne_m2 ?? 0)} m²`} l="surface moyenne" />
+          <Chiffre v={`${fmtDec(tl.surface_min_m2 ?? 0)} m²`} l="surface mini" />
+          <Chiffre v={`${fmtDec(lot.voirie_m2)} m²`} l="voirie" />
+        </div>
+        {lot.geojson && (
+          <div className="rounded-lg border border-line-2 bg-surface-2 p-3">
+            <p className="mb-2 text-[11px] font-semibold text-txt">Plan de division — {tl.nombre} lots · voirie {fmtDec(lot.voirie_largeur_m)} m</p>
+            <PlanMasseSvg fc={lot.geojson} groupesCaches={[]} />
+          </div>
+        )}
+        {/* tableau des lots */}
+        <div className="rounded-lg border border-line-2 bg-surface-2 p-3">
+          <b className="text-[11px] font-semibold text-txt">Tableau des lots — accès {tl.acces}</b>
+          <div className="mt-1.5 grid grid-cols-6 gap-1 text-[10.5px] sm:grid-cols-8">
+            {tl.surfaces_m2.map((s, i) => (
+              <span key={i} className="rounded border border-line-2 bg-surface-1 px-1.5 py-1 text-center"><b className="text-txt">#{i + 1}</b> <span className="text-txt-dim">{fmtInt(s)}</span></span>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <aside className="flex flex-col gap-3">
+        <Recit titre="Division foncière">
+          <p className="text-[12px] text-txt-hi">{tl.nombre} lots · {fmtDec(tl.surface_moyenne_m2 ?? 0)} m² en moyenne ({fmtDec(tl.surface_min_m2 ?? 0)}–{fmtDec(tl.surface_max_m2 ?? 0)})</p>
+          <p className="text-[10.5px] text-txt-dim">Assiette {fmtDec(lot.assiette_m2)} m² · net constructible {fmtDec(lot.net_constructible_m2)} m²{lot.ppr_rouge_m2 > 0 ? ` · PPR rouge ${fmtDec(lot.ppr_rouge_m2)} m² retiré` : ''}</p>
+        </Recit>
+        <LigneInfo l="Voirie" v={`${fmtDec(lot.voirie_m2)} m² (desserte ${fmtDec(lot.voirie_largeur_m)} m)`} />
+        <LigneInfo l="Pleine terre" v={`exigée ${fmtDec(lot.pleine_terre.exigee_m2)} m² (${lot.pleine_terre.exigee_pct} % · ${lot.pleine_terre.article})`} sous={`estimée ${fmtDec(lot.pleine_terre.estimee_m2)} m²`} />
+        <LigneInfo l="Stationnement" v={`${lot.stationnement.total_lots} places (${lot.stationnement.par_lot}/lot · ${lot.stationnement.article})`} sous={`+ ${lot.stationnement.visiteurs_estimes} visiteurs (estimé)`} />
+        <Recit titre="EBC" ton={lot.ebc.m2 > 0 ? 'ambre' : undefined}>
+          <p className="text-[11px] text-txt">{lot.ebc.m2 > 0 ? `${fmtDec(lot.ebc.m2)} m² d'EBC` : lot.ebc.statut}</p>
+        </Recit>
+        <Recit titre="Surface minimale de lot (PLU)">
+          <p className="text-[11px] text-txt">{lot.min_lot_plu.existe ? 'règle présente' : 'aucune règle au PLU Ud'}</p>
+          <p className="mt-0.5 text-[9.5px] text-txt-dim">{lot.min_lot_plu.note}</p>
+        </Recit>
+        <Recit titre="Raccordements">
+          {lot.raccordements.map((r) => (
+            <p key={r.reseau} className="text-[10.5px] text-txt">{r.reseau} — <span className="text-txt-dim">{r.distance_m == null ? 'non vérifié' : `${fmtInt(r.distance_m)} m (${r.statut})`}</span></p>
+          ))}
+        </Recit>
+        <Recit titre="Régime procédural" ton="ambre">
+          <p className="text-[11px] text-txt">{lot.regime_procedural}</p>
+        </Recit>
+        {Object.keys(hyp).length > 0 && (
+          <Recit titre="Logements futurs (hypothèse)">
+            <p className="text-[11px] text-txt">{Object.entries(hyp).map(([t, n]) => `${n}×${t}`).join(' · ')}</p>
+            <p className="mt-0.5 text-[9.5px] text-txt-dim">Hypothèse de constructions futures — jamais un nombre de lots garanti.</p>
+          </Recit>
+        )}
+      </aside>
+    </div>
+  )
+}
+function LigneInfo({ l, v, sous }: { l: string; v: string; sous?: string }) {
+  return (
+    <div className="rounded-md border border-line-2 bg-surface-2 px-3 py-2">
+      <p className="text-[9px] font-semibold uppercase tracking-wide text-txt-dim">{l}</p>
+      <p className="text-[11px] text-txt">{v}</p>
+      {sous && <p className="text-[9.5px] text-txt-dim">{sous}</p>}
     </div>
   )
 }

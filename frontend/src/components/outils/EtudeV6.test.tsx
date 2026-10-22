@@ -63,6 +63,25 @@ const STATIO = {
       statut: 'À confirmer', applicable_si_eligible: true, citation: 'L151-35 …', note: 'Le nom ne prouve pas…' },
   },
 }
+const RESULTAT_LOTISSEMENT = {
+  moteur: {}, entrees: { commune: 'Saint-Leu', insee: '97413', zone: 'UD', type_projet: 'lotissement' },
+  regles: {}, terrain: {}, hypotheses: {}, statut_global: 'à compléter', verdict: 'À compléter', message: null,
+  type_projet: 'lotissement', logements_hypothese: { demande: { T3: 14 } },
+  lotissement: {
+    commune: 'Saint-Leu', insee: '97413', zone: 'UD', assiette_m2: 9578, contenance_m2: 9979,
+    net_constructible_m2: 9578, lot_cible_m2: 450,
+    tableau_lots: { nombre: 14, surface_moyenne_m2: 435, surface_min_m2: 357, surface_max_m2: 450,
+      surfaces_m2: Array.from({ length: 14 }, (_, i) => 400 + i), acces: 'sur voirie de desserte créée' },
+    voirie_m2: 831, voirie_largeur_m: 6,
+    pleine_terre: { exigee_pct: 40, exigee_m2: 3992, estimee_m2: 3657, article: 'UD 13' },
+    stationnement: { par_lot: 2, article: 'UD 12', total_lots: 28, visiteurs_estimes: 12, note: '…' },
+    ebc: { m2: 0, statut: 'non trouvé dans les données LABUSE (à vérifier)' }, ppr_rouge_m2: 0,
+    raccordements: [{ reseau: 'Électricité (ligne MT)', distance_m: 0, statut: 'adjacent' }],
+    regime_procedural: "Permis d'aménager (lotissement de plus de 2 lots…) — à qualifier.",
+    min_lot_plu: { existe: false, note: 'Zone Ud de Saint-Leu : aucune superficie/largeur minimale (loi ALUR).' },
+    geojson: { type: 'FeatureCollection', features: [] }, note: 'Pré-lotissement indicatif…',
+  },
+}
 vi.mock('../../lib/api', () => ({
   postEtudeParcelles: vi.fn(),
   postEtude: vi.fn(),
@@ -191,6 +210,30 @@ describe('ETUDE-V6 Lot A — parcours 3 étapes', () => {
     expect(bloc.textContent).toContain('À confirmer')
     // on ne préremplit JAMAIS « 1 place/logement » comme un acquis réduit : le plafond est marqué à confirmer
     expect(bloc.textContent).toMatch(/vérifiée|non remplie/)
+  })
+
+  it('lotissement (Lot D) : plan de division, tableau des lots, voirie, pas de superficie minimale PLU', async () => {
+    vi.mocked(postEtudeParcelles).mockResolvedValue(OUT(true) as any)
+    vi.mocked(postEtude).mockResolvedValue(RESULTAT_LOTISSEMENT as any)
+    renderV6(['97413000AC0264'])
+    await waitFor(() => screen.getByText('AW 99'))
+    fireEvent.click(screen.getByRole('button', { name: /Continuer/ }))
+    await waitFor(() => screen.getByText('Quel type de projet ?'))
+    fireEvent.click(screen.getByText('Lotissement'))
+    fireEvent.click(screen.getByRole('button', { name: /Continuer/ }))
+    await waitFor(() => screen.getByText('Combien de logements souhaitez-vous ?'))
+    fireEvent.change(document.querySelector('[data-etude-count="T3"]') as HTMLInputElement, { target: { value: '14' } })
+    fireEvent.click(screen.getByRole('button', { name: /Analyser mon projet/ }))
+    // résultat lotissement : lots + voirie + tableau, pas des scénarios d'implantation
+    await waitFor(() => expect(screen.getByText('Division foncière')).toBeTruthy())
+    expect(screen.getByText('lots')).toBeTruthy()      // la carte « N lots »
+    expect(screen.getAllByText('14').length).toBeGreaterThan(0)
+    expect(screen.getByText(/Plan de division/)).toBeTruthy()
+    expect(screen.getByText('Régime procédural')).toBeTruthy()
+    expect(document.body.textContent).toContain('aucune règle au PLU Ud')  // pas de superficie minimale (ALUR)
+    expect(document.body.textContent).toContain('Permis d\'aménager')
+    // les T1–T4 saisis = hypothèse, jamais le nombre de lots
+    expect(document.body.textContent).toContain('Logements futurs (hypothèse)')
   })
 
   it('variante absente : l\'onglet reste et dit pourquoi (mandat §C)', async () => {

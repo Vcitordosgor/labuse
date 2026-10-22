@@ -2200,6 +2200,28 @@ export interface EtudePayload {
     logements: number | null; places: number | null; ratio_par_logement: number
     reference: string; statut: string; note: string
   } | null
+  // ETUDE-V6 (Lot D) — type « Lotissement » : plan de division (pas des scénarios d'implantation).
+  type_projet?: string
+  lotissement?: EtudeLotissement
+  logements_hypothese?: { demande: Record<string, number> } | null
+}
+export interface EtudeLotissement {
+  commune: string; insee: string; zone: string | null
+  assiette_m2: number; contenance_m2: number; net_constructible_m2: number; lot_cible_m2: number
+  tableau_lots: {
+    nombre: number; surface_moyenne_m2: number | null; surface_min_m2: number | null
+    surface_max_m2: number | null; surfaces_m2: number[]; acces: string
+  }
+  voirie_m2: number; voirie_largeur_m: number
+  pleine_terre: { exigee_pct: number; exigee_m2: number; estimee_m2: number; article: string }
+  stationnement: { par_lot: number; article: string; total_lots: number; visiteurs_estimes: number; note: string }
+  ebc: { m2: number; statut: string }
+  ppr_rouge_m2: number
+  raccordements: Array<{ reseau: string; distance_m: number | null; statut: string }>
+  regime_procedural: string
+  min_lot_plu: { existe: boolean; note: string }
+  geojson: GeoJSON.FeatureCollection
+  note: string
 }
 export interface EtudeStationnementRegimes {
   general: {

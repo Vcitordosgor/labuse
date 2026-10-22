@@ -27,11 +27,14 @@ const COUL: Record<string, [string | null, string]> = {
   voie: [null, '#B45309'],
   ppr_rouge: ['#DC2626', '#991B1B'],
   ppr_bleue: ['#3B82F6', '#1D4ED8'],
+  // ETUDE-V6 (Lot D) — lotissement : lot à bâtir (vert clair, liseré mint) et EBC (vert boisé translucide).
+  lot: ['#ECFDF3', '#15803D'],
+  ebc: ['#16A34A', '#166534'],
 }
 // ordre de dessin (z-order) — contexte terrain d'abord, objets du plan ensuite (identique au PDF).
-const Z = ['parcelle', 'assiette', 'ppr_rouge', 'ppr_bleue', 'zone', 'espace_libre', 'allee',
-  'acces', 'place', 'batiment_emprise', 'coursive', 'noyau', 'module', 'voie']
-const TRANSLUCIDE = new Set(['zone', 'ppr_rouge', 'ppr_bleue', 'espace_libre'])
+const Z = ['parcelle', 'assiette', 'ppr_rouge', 'ppr_bleue', 'zone', 'espace_libre', 'ebc', 'allee',
+  'acces', 'place', 'lot', 'batiment_emprise', 'coursive', 'noyau', 'module', 'voie']
+const TRANSLUCIDE = new Set(['zone', 'ppr_rouge', 'ppr_bleue', 'espace_libre', 'ebc'])
 
 function ringsOf(g: Geometry): number[][][] {
   if (g.type === 'Polygon') return g.coordinates as number[][][]

@@ -342,6 +342,32 @@ def stationnement_payload(session, idus: list[str], type_projet: str) -> dict:
             "regimes": _stationnement_regimes(session, idus, type_projet, regles, terrain.insee)}
 
 
+# ------------------------------------------------------------------ ETUDE-V6 (Lot D) : lotissement
+def _lotissement_payload(session, idus: list[str], entree: dict) -> dict:
+    """Plan de division servi pour le type « Lotissement ». Les T1–T4 saisis = hypothèses de
+    constructions futures (affichées), JAMAIS le nombre de lots. ValueError → 400 (comme l'Étude)."""
+    from .lotissement import etudier_lotissement
+
+    programme = entree.get("programme")
+    demande = {}
+    if isinstance(programme, dict) and programme.get("mode") == "saisi":
+        demande, _rep, _surf = _programme_vers_demande(programme)
+    lot = etudier_lotissement(session, idus)
+    return {
+        "moteur": {"livrable": "ETUDE-V6-LOTISSEMENT", "version_conventions": "lotissement-1",
+                   "etiquette": "Estimé", "crs_dessin": "EPSG:2975", "crs_carte": "EPSG:4326"},
+        "entrees": {"idus": idus, "commune": lot["commune"], "insee": lot["insee"], "zone": lot["zone"],
+                    "type_projet": "lotissement", "objectif": "division", "programme_mode": "saisi" if demande else "propose",
+                    "stationnement": "aerien", "terrain": "libere"},
+        "type_projet": "lotissement",
+        "lotissement": lot,
+        "logements_hypothese": ({"demande": demande} if demande else None),
+        "statut_global": "à compléter",
+        "verdict": "À compléter",
+        "message": None,
+    }
+
+
 # ------------------------------------------------------------------ point d'entrée
 def etudier_payload(session, entree: dict) -> dict:
     """Payload d'étude servi par l'API. `entree` = {idus, type_projet, objectif, programme,
@@ -363,6 +389,12 @@ def etudier_payload(session, entree: dict) -> dict:
         raise ValueError(f"type de projet inconnu : {type_projet}")
     stationnement = entree.get("stationnement") or "aerien"
     terrain_mode = entree.get("terrain") or "libere"
+
+    # ETUDE-V6 (Lot D) — le LOTISSEMENT n'est pas un collectif : on branche la division foncière de
+    # l'assiette (division-or à la demande, pas le batch île) et on sert un plan de division, pas des
+    # scénarios d'implantation. Même borne de temps (la route 30 s enveloppe cet appel) et même message.
+    if type_projet == "lotissement":
+        return _lotissement_payload(session, idus, entree)
 
     # hypothèses modifiables → conventions surchargées
     hyp = entree.get("hypotheses") or {}
