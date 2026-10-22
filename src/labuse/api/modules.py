@@ -2039,6 +2039,30 @@ def _attach_au_ouverture(db: Session, payload: dict, idus) -> None:
             return
 
 
+class EtudeParcellesIn(BaseModel):
+    # ETUDE-V6 (Lot A, étape 1) — valide l'assiette AVANT le moteur : faits par parcelle, union,
+    # contiguïté (graphe, frontière partagée > tolérance), signaux et sources. Rapide, pas d'implantation.
+    idus: list[str] = Field(default_factory=list)
+
+
+@router.post("/etude/parcelles")
+def etude_parcelles(body: EtudeParcellesIn, db: Session = Depends(get_db)) -> dict:
+    """ETUDE-V6 (étape 1) — valide 1 à 8 parcelles pour l'Étude de faisabilité : commune, référence,
+    contenance (surface de référence), surface réelle et écart, zone PLU, qualité géométrique ; union
+    (surface réelle, périmètre, aire cadastrale, écart) ; CONTIGUÏTÉ par graphe d'adjacence (frontière
+    partagée > 0,5 m — jamais un sommet, jamais les centroïdes ; réévaluée à chaque appel) ; signaux
+    (communes/zones/ravine, propriétaires présumés) ; sources + millésimes. Ne conclut jamais sur la
+    constructibilité. ValueError → 400 (référence introuvable / > 8), jamais un faux chiffre."""
+    from ..implantation.assiette import valider_parcelles
+
+    for idu in (body.idus or []):
+        _check_idu(idu)
+    try:
+        return valider_parcelles(db, body.idus)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
+
+
 @router.post("/etude")
 def etude_implantation(body: EtudeIn, db: Session = Depends(get_db)) -> dict:
     """IMPLANTATION-2 — UN SEUL appel sert l'écran « Étude de faisabilité ». UN SEUL moteur

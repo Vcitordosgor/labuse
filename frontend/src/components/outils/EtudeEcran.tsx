@@ -5,20 +5,18 @@
 // scénarios, chiffres clés, PLAN MASSE DESSINÉ, sections) est rendu par le MÊME composant M22 en mode
 // `embedded`, servi par la MÊME API (POST /modules/etude). Aucun second calcul. Entrées : 9e carte Docs,
 // tuile fiche, pont Assemblage, et les anciens liens #m=programme (redirigés ici par App.tsx).
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useApp } from '../../store/useApp'
-import { M22, type EtudeProgramme } from './M22Programme'
-import { BilanEcran } from '../fiche/BilanEcran'
+import { EtudeV6 } from './EtudeV6'
 
+// ETUDE-V6 (Lot A) — l'overlay Docs monte désormais le parcours en 3 étapes (EtudeV6) au lieu de la
+// config monolithique de M22. M22 reste pour son mode outil (non-embedded) et ses tests. Le pont Bilan
+// « de ce scénario » sera recâblé depuis le RÉSULTAT au Lot B (avec les variantes).
 export function EtudeEcran() {
   const etudeIdus = useApp((s) => s.etudeIdus)
   const fermerEtude = useApp((s) => s.fermerEtude)
-  // IMPLANTATION-4 (LOT B) — pont « Bilan de ce scénario » : ouvre le Bilan (par-dessus l'Étude)
-  // pré-rempli avec le programme du scénario affiché (logements par type + SDP), étiqueté « depuis
-  // l'Étude ». Le Bilan porte sur la 1ʳᵉ parcelle de l'assiette (modèle de bilan par parcelle).
-  const [bilanProg, setBilanProg] = useState<EtudeProgramme | null>(null)
 
-  // Échap ferme (comme BilanEcran). Le hook est inconditionnel ; il ne fait rien quand l'overlay est fermé.
+  // Échap ferme. Le hook est inconditionnel ; il ne fait rien quand l'overlay est fermé.
   useEffect(() => {
     if (etudeIdus == null) return
     const h = (e: KeyboardEvent) => { if (e.key === 'Escape') fermerEtude() }
@@ -32,17 +30,9 @@ export function EtudeEcran() {
     <div data-etude-ecran className="fixed inset-0 z-50 overflow-auto bg-bg" onClick={fermerEtude}>
       <div className="mx-auto my-6 flex min-h-[calc(100vh-3rem)] max-w-[1400px] flex-col overflow-hidden rounded-lg border border-line bg-surface-1"
         onClick={(e) => e.stopPropagation()}>
-        {/* clé = l'assiette : rouvrir sur une autre parcelle REMONTE M22 (état neuf, sélection locale).
-            M22 (embedded) rend l'écran COMPLET, en-tête compris (← Fermer → onClose / Réinitialiser). */}
-        <M22 key={etudeIdus.join(',')} embedded initialIdus={etudeIdus} onBilan={setBilanProg} onClose={fermerEtude} />
+        {/* clé = l'assiette : rouvrir sur une autre parcelle REMONTE le wizard (état neuf). */}
+        <EtudeV6 key={etudeIdus.join(',')} initialIdus={etudeIdus} onClose={fermerEtude} />
       </div>
-
-      {/* Bilan de ce scénario — par-dessus l'Étude (son propre overlay fixed inset-0). */}
-      {bilanProg && etudeIdus[0] && (
-        <div onClick={(e) => e.stopPropagation()}>
-          <BilanEcran idu={etudeIdus[0]} depuisEtude={bilanProg} onClose={() => setBilanProg(null)} />
-        </div>
-      )}
     </div>
   )
 }

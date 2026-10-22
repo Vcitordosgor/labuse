@@ -2197,6 +2197,33 @@ export const postEtude = (body: EtudeIn) =>
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
   })
 
+// ETUDE-V6 (Lot A, étape 1) — valide l'assiette AVANT le moteur : faits par parcelle, union,
+// contiguïté (graphe, frontière partagée > 0,5 m), signaux et sources. Rapide, pas d'implantation.
+export interface EtudeParcelle {
+  idu: string; commune: string; section: string; numero: string; reference: string
+  contenance_cadastrale_m2: number | null; surface_reelle_m2: number | null; ecart_m2: number | null
+  zone_plu: string | null; zone_famille: string | null
+  qualite_geometrique: string; polsby_popper: number | null; largeur_inscriptible_m: number | null
+  disparue_le: string | null
+}
+export interface EtudeParcellesOut {
+  parcelles: EtudeParcelle[]
+  union: {
+    surface_reelle_m2: number | null; perimetre_m: number | null
+    aire_cadastrale_m2: number; ecart_m2: number | null; nb_parcelles: number
+  }
+  contiguite: { ok: boolean; composantes: string[][]; aretes: [string, string, number][]; tolerance_m: number; message: string | null }
+  signaux: {
+    communes_differentes: string[] | null; zones_differentes: string[] | null
+    ravine_traversante: boolean | null; proprietaires_presumes: number | null; proprietaires_statut: string
+  }
+  sources: Record<string, { source: string; millesime: string | null; derniere_synchro: string | null }>
+}
+export const postEtudeParcelles = (idus: string[]) =>
+  j<EtudeParcellesOut>('/modules/etude/parcelles', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idus }),
+  })
+
 // IMPLANTATION-3 — le document « Étude de faisabilité » (PDF). Généré par POST (la configuration
 // voyage dans le corps), via `useOuvrirDocument` (blob + erreurs FR). `scenario_ref` = le scénario
 // AFFICHÉ (tuile de l'outil) ; absent = configuration par défaut (9e carte Docs). L'archivage dans

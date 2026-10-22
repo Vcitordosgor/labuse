@@ -27,7 +27,7 @@ from .conventions import avec_surcharges, charger as charger_conventions
 from .controles import ECHOUE, NON_APPLICABLE, NON_EFFECTUE, REUSSI
 
 OBJECTIFS = {"equilibre", "plus_logements", "plus_surface", "plus_simple"}
-TYPES_LOGEMENT = ("T2", "T3", "T4")
+TYPES_LOGEMENT = ("T1", "T2", "T3", "T4")  # ETUDE-V6 — le programme saisi va du T1 au T4
 _REFS = ["A", "B", "C"]
 
 
